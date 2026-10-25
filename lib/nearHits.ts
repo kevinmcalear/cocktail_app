@@ -11,7 +11,7 @@ import type { SearchItem } from '@/types/search';
 
 import { itemHref } from './itemRoutes';
 import { itemIdOf } from './libraryFilters';
-import { nearMatcher } from './nearName';
+import { nearMatcher, nearReason } from './nearName';
 import { searchItemHref } from './openSearchItem';
 
 export type NearKind = 'drink' | 'bar' | 'person' | 'ingredient';
@@ -117,6 +117,26 @@ export function mergeNear(lists: readonly (readonly NearHit[])[], shown: Readonl
   return all
     .sort((a, b) => Number(b.known) - Number(a.known) || a.score - b.score || a.name.length - b.name.length || a.name.localeCompare(b.name))
     .slice(0, limit);
+}
+
+/**
+ * Why a close row is here, after its place (canvas 1B, 1C): "sounds like
+ * “salty boy”", "spelled close to “salty boy”", "starts like “salt”". Null
+ * when its words are what was typed (a saved spelling).
+ */
+export function nearWhy(query: string, name: string): string | null {
+  const q = query.trim();
+  switch (nearReason(q, name)) {
+    case 'sound':
+      return `sounds like “${q}”`;
+    case 'slip':
+    case 'whole':
+      return `spelled close to “${q}”`;
+    case 'start':
+      return `starts like “${q}”`;
+    default:
+      return null;
+  }
 }
 
 export type NearView =

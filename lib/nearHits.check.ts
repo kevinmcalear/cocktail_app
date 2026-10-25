@@ -3,7 +3,7 @@ import assert from 'node:assert/strict';
 
 import type { SearchItem } from '@/types/search';
 
-import { classicHit, fromRow, mergeNear, nearIn, nearView, searchItemHit, type NearHit } from './nearHits';
+import { classicHit, fromRow, mergeNear, nearIn, nearView, nearWhy, searchItemHit, type NearHit } from './nearHits';
 
 const hit = (id: string, name: string, score: number, known = false): NearHit => ({
   kind: 'drink',
@@ -68,5 +68,12 @@ const known = nearView(0, [hit('k', 'Salti Boi', 0, true), hit('s', 'Salty Dog',
 assert.deepEqual(known.kind === 'known' && [known.known.map((h) => h.id), known.also.map((h) => h.id)], [['k'], ['s']]);
 const listed = nearView(2, [hit('a', 'Salti Boi', 4)]);
 assert.deepEqual(listed.kind === 'listed' && listed.hits.map((h) => h.id), ['a']);
+
+// Why a row is here, in a few words.
+assert.equal(nearWhy(' salty boy ', 'Salti Boi'), 'spelled close to “salty boy”');
+assert.equal(nearWhy('peeny colada', 'Pina Colada'), 'sounds like “peeny colada”');
+assert.equal(nearWhy('salt', 'Salty Guava'), 'starts like “salt”');
+assert.equal(nearWhy('jungel bird', 'Jungle Bird'), 'spelled close to “jungel bird”');
+assert.equal(nearWhy('salty boi', 'Salty Boi'), null);
 
 console.log('nearHits checks passed');
