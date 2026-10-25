@@ -1,5 +1,5 @@
 import { useRouter, type Href } from 'expo-router';
-import type { ReactNode } from 'react';
+import { createContext, useContext, type ReactNode } from 'react';
 import { StyleSheet, View } from 'react-native';
 
 import { Body, Surface } from '@/components/ds';
@@ -8,6 +8,9 @@ import { space } from '@/constants/tokens';
 import { useIsWideWeb } from '@/hooks/useIsWideWeb';
 
 export type KitKind = 'glassware' | 'ice' | 'tools';
+
+/** Inside another page (setup's Kit tabs): just the list, under that page's own title. */
+export const KitInline = createContext(false);
 
 /** Where one thing in the kit opens: /settings/bar/<venue>/kit/ice/<id>. */
 export const kitItemHref = (barId: string, kind: KitKind, id: string) => `/settings/bar/${barId}/kit/${kind}/${id}` as Href;
@@ -49,8 +52,10 @@ interface KitPageProps {
  */
 export function KitPage({ barId, kind, title, intro, openId, openName, list, item, loading, failed }: KitPageProps) {
   const wide = useIsWideWeb();
+  const inline = useContext(KitInline);
   const listHref = `/settings/bar/${barId}/${kind}` as Href;
   const gone = loading || item ? null : <Body tone="muted">{failed ? 'Couldn’t load it. Check your connection and try again.' : 'That’s not in the kit any more.'}</Body>;
+  if (inline) return list;
   if (openId && !wide) {
     return (
       <VenueSubPage barId={barId} title={openName ?? title} up={{ label: title, href: listHref }}>

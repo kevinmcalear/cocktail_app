@@ -1,7 +1,7 @@
 // Checks for lib/whatNext.ts. Run: npm run test:unit
 import assert from 'node:assert/strict';
 
-import { anyKind, brandGroups, classicsToAdd, groupGlasses, haveClassics, heldGlassPlan, heldNotOnPage, topClassics } from './whatNext';
+import { anyKind, brandGroups, classicsToAdd, haveClassics, heldGlassPlan, heldNotOnPage, topClassics } from './whatNext';
 
 const ids = (xs: { id: string }[]) => xs.map((x) => x.id);
 
@@ -27,31 +27,6 @@ assert.equal(haveClassics(classics, []).size, 0);
 // --- classicsToAdd: ticked and not already there, so running it again adds nothing twice ---
 assert.deepEqual(ids(classicsToAdd(classics, new Set(['m']), new Set(['n']))), ['d']);
 assert.deepEqual(ids(classicsToAdd(classics, new Set(), new Set(['n', 'd', 'm']))), []);
-
-// --- groupGlasses: runs of maker and range, in order ---
-const cc = { display_name: 'Cocktail Kingdom' };
-const lib = { display_name: 'Libbey' };
-const glasses = [
-  { name: 'Leopold Mini', series: 'Leopold', maker: cc },
-  { name: 'Leopold 6oz', series: 'Leopold', maker: cc },
-  { name: 'Coupette', series: null, maker: cc },
-  { name: 'Perception', series: 'Perception', maker: lib },
-];
-assert.deepEqual(
-  groupGlasses(glasses, 'range').map((g) => [g.title, g.models.length]),
-  [
-    ['Cocktail Kingdom · Leopold', 2],
-    ['Cocktail Kingdom', 1],
-    ['Libbey · Perception', 1],
-  ]
-);
-assert.deepEqual(
-  groupGlasses(glasses, 'maker').map((g) => [g.title, g.models.length]),
-  [
-    ['Cocktail Kingdom', 3],
-    ['Libbey', 1],
-  ]
-);
 
 // --- heldGlassPlan: each catalog glass once, first of a type the main one ---
 const held = [

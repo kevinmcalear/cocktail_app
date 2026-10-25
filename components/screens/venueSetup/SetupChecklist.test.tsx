@@ -32,14 +32,14 @@ jest.mock('./SetupChecklistParts', () => {
   };
 });
 // The steps it opens in place: each hands back with Next, Done or Back.
-jest.mock('./GlassesStep', () => {
+jest.mock('./KitStep', () => {
   const { Pressable, Text } = jest.requireActual('react-native');
   return {
-    GlassesStep: ({ step, onNext, onSkip }: { step: string; onNext: () => void; onSkip: () => void }) => (
+    KitStep: ({ step, onBack, onDone }: { step: string; onBack: () => void; onDone: () => void }) => (
       <>
         <Text>{step}</Text>
-        <Pressable role="button" accessibilityLabel="Next" onPress={onNext} />
-        <Pressable role="button" accessibilityLabel="Skip" onPress={onSkip} />
+        <Pressable role="button" accessibilityLabel="Back" onPress={onBack} />
+        <Pressable role="button" accessibilityLabel="Done, back to setup" onPress={onDone} />
       </>
     ),
   };
@@ -61,11 +61,12 @@ test('six rows, Kit next; Kit opens in place and comes back here', async () => {
   for (const row of ['Your bar, done', 'Kit, now', 'Bottles, todo', 'First menu, done', 'First drinks, todo', 'Your team, skipped']) expect(screen.getByRole('button', { name: row })).toBeTruthy();
   await fireEvent.press(screen.getByRole('button', { name: 'Kit, now' }));
   expect(screen.getByText('Set up Little Rye · Kit')).toBeTruthy();
-  await fireEvent.press(screen.getByRole('button', { name: 'Next' }));
+  await fireEvent.press(screen.getByRole('button', { name: 'Back' }));
   expect(screen.getByRole('button', { name: 'Kit, now' })).toBeTruthy();
-  // Skip inside the step skips the row, and comes back here too.
+  expect(mockSkip).not.toHaveBeenCalled();
+  // Done with nothing in the kit leaves the row for later, and comes back here too.
   await fireEvent.press(screen.getByRole('button', { name: 'Kit, now' }));
-  await fireEvent.press(screen.getByRole('button', { name: 'Skip' }));
+  await fireEvent.press(screen.getByRole('button', { name: 'Done, back to setup' }));
   expect(mockSkip).toHaveBeenCalledWith('kit');
   expect(screen.getByRole('button', { name: 'Kit, now' })).toBeTruthy();
 });
