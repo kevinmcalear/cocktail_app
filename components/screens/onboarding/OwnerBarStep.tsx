@@ -20,8 +20,9 @@ function barLine(b: ClaimableBar): string {
 
 /**
  * "Find your bar" on the owner's path (owner-setup step 2): one field, bars
- * only, by name or street. A listed bar opens its page, where the claim runs
- * venue setup for it; a bar that isn't here is added with its address.
+ * only, by name or street. A listed bar opens its page with the claim on top
+ * (?owner=1, BarClaimCard), which runs venue setup for it; a bar that isn't
+ * here is added with its address.
  */
 export function OwnerFindStep({ onAdd, onSkip }: { onAdd: (typed: string) => void; onSkip: () => void }) {
   const router = useRouter();
@@ -39,7 +40,7 @@ export function OwnerFindStep({ onAdd, onSkip }: { onAdd: (typed: string) => voi
       badge={b.claimed ? undefined : 'Not claimed yet'}
       tag={b.claimed ? 'Claimed' : undefined}
       query={search}
-      onPress={() => router.push(`/p/${b.handle || b.id}` as Href)}
+      onPress={() => router.push(`/p/${b.handle || b.id}?owner=1` as Href)}
     />
   );
   return (
