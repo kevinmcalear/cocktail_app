@@ -61,3 +61,18 @@ test('made house from a bottle in the drink: made from that bottle, and a stand-
   expect(mockUpdates).toContainEqual(['items', { made_from_id: 'bacardi' }, 'prep-3']);
   expect(names).not.toContain('Spirit');
 });
+
+test('a line made in-house too is a prep of its own, its recipe saved after (a recipe inside a recipe)', async () => {
+  mockUpdates.length = 0;
+  const syrup = startPrep('syrup', 'Honey-ginger syrup');
+  const batch = startPrep('batch', 'Penicillin batch');
+  batch.lines.push({ key: 'hg', id: null, name: 'Honey-ginger syrup', parts: null, unit: 'ml', amount: '200', prep: syrup });
+  const own = jest.fn(async () => 'honey-ginger');
+  const ensured: string[] = [];
+  await savePrepRecipe('batch-1', batch, async (p) => (ensured.push(p.name), 'other'), null, own);
+  expect(own).toHaveBeenCalledWith({ id: null, name: 'Honey-ginger syrup' });
+  expect(ensured).not.toContain('Honey-ginger syrup');
+  // Both are marked as preps: the batch first, then the syrup inside it.
+  const roles = mockUpdates.filter(([, v]) => v.ingredient_role === 'prep').map(([, , id]) => id);
+  expect(roles).toEqual(['batch-1', 'honey-ginger']);
+});

@@ -209,7 +209,7 @@ export function useCreateDrink() {
       const saveOwnPreps = async () => {
         for (const p of ownPreps) {
           try {
-            await savePrepRecipe(p.id, p.prep, ensure, barId);
+            await savePrepRecipe(p.id, p.prep, ensure, barId, own);
           } catch (e) {
             warnings.push(plainDbMessage(e) ?? `${capitalize(p.name)}’s recipe wasn’t saved. Add it on its page.`);
           }

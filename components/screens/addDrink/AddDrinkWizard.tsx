@@ -40,6 +40,7 @@ import { NameStepBody } from './NameStepBody';
 import { NotesStep } from './TextSteps';
 import { ServeGuessCard } from './ServeGuessCard';
 import { SketchHeader } from './SketchHeader';
+import { useDrinkTrail } from './Trail';
 import { useLineStock } from './StockToggle';
 import { useClassicPreview, useStartFromClassic } from '@/hooks/useStartFromClassic';
 import { WizardFooter } from './WizardChrome';
@@ -114,6 +115,7 @@ function Wizard({ barId = null, menuSectionId, initialName, startFrom, firstRoun
     setStoredStep(place, to);
   };
   const back = () => (at > 0 ? go(WIZARD_STEPS[at - 1]) : onClose());
+  const { trail, menu } = useDrinkTrail(draft.name, { menuSectionId, venueName: barId ? venueName : null, onClose });
 
   // A name passed in ("Make 'Paloma'" from search) names its own fresh draft. With a drink to start from, it names that draft (below).
   useEffect(() => {
@@ -218,9 +220,8 @@ function Wizard({ barId = null, menuSectionId, initialName, startFrom, firstRoun
             aliases={dropdowns?.ingredientAliases}
             coreIds={coreIds}
             shelf={barId ? undefined : new Set(shelfIds ?? [])}
-            backBar={barId ? stock.backBar : undefined}
-            stock={stock}
-            bar={barId ? { id: barId, name: venueName } : null}
+            backBar={barId ? stock.backBar : undefined} stock={stock}
+            bar={barId ? { id: barId, name: venueName } : null} trail={trail}
           />
         );
       case 'method':
@@ -267,7 +268,7 @@ function Wizard({ barId = null, menuSectionId, initialName, startFrom, firstRoun
       testID="add-drink"
       pageTitle="Add a drink"
       embedded={embedded}
-      band={(place) => <SketchHeader draft={drawn} step={step} onBack={back} barVariants={barVariants} barIce={barIceKinds} onTint={(tint) => set({ tint })} {...place} />}
+      band={(place) => <SketchHeader draft={drawn} step={step} onBack={back} barVariants={barVariants} barIce={barIceKinds} onTint={(tint) => set({ tint })} trail={trail} forMenu={menu} {...place} />}
       stepKey={step}
       direction={direction}
       // Naming a new drink it's "New drink"; a kept draft picked up again goes by its name.

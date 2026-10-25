@@ -146,16 +146,20 @@ export async function savePrepRecipe(
   itemId: string,
   prep: PrepDraft,
   ensure: (pick: { id: string | null; name: string }, type: 'ingredient') => Promise<string>,
-  barId: string | null = null
+  barId: string | null = null,
+  own?: (pick: { id: string | null; name: string }) => Promise<string>
 ) {
   const role = await supabase.from('items').update({ ingredient_role: 'prep' }).eq('id', itemId);
   if (role.error) throw role.error;
   const rows = [];
   let baseId: string | null = null;
+  // Lines made in-house too (make-anything-steps-2, step 8): each a prep row of its own, its recipe saved after this one's.
+  const inside: { id: string; prep: PrepDraft }[] = [];
   for (const [i, { line, amount }] of prepAmounts(prep).entries()) {
     // A stand-in nobody filled ("Spirit") is never an ingredient.
     if (!line.name.trim() || line.slot) continue;
-    const id = await ensure({ id: line.id, name: line.name }, 'ingredient');
+    const id = line.prep && own ? await own({ id: null, name: line.name }) : await ensure({ id: line.id, name: line.name }, 'ingredient');
+    if (line.prep && own) inside.push({ id, prep: line.prep });
     if (line.key === prep.baseKey) baseId = id;
     rows.push({ recipe_item_id: itemId, ingredient_item_id: id, amount, unit: line.unit || null, preparation_notes: line.note?.trim() || null, sort_order: i });
   }
@@ -185,6 +189,7 @@ export async function savePrepRecipe(
   });
   // Allergens the maker set by hand are declared, and checked, for where it's made.
   if (prep.allergensSet) await saveItemAllergens(itemId, barId, prep.allergens ?? []);
+  for (const p of inside) await savePrepRecipe(p.id, p.prep, ensure, barId, own);
 }
 
 /**

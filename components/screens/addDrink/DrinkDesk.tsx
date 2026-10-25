@@ -30,6 +30,7 @@ import type { CatalogIngredient } from './IngredientSearch';
 import { IceStep } from './IceStep';
 import { PickStep } from './PickStep';
 import { PREP_CARD_ID } from './prep/PrepCard';
+import { drinkTrail, Trail } from './Trail';
 import { PublishStep } from './PublishStep';
 import { ReviewPhotos } from './ReviewPhotos';
 import { BracketField, SameNameCard, useSameNamePicks } from './SameNameCard';
@@ -149,6 +150,7 @@ export function DrinkDesk(p: DrinkDeskProps) {
 
   const look = sketchLook(p.drawn, p.barVariants, p.barIceKinds);
   const eyebrow = menu ? ['New drink for ' + menu, place?.section].filter(Boolean).join(' · ') : barId ? `New drink at ${p.venueName}` : 'New drink';
+  const trail = drinkTrail(draft.name, { menu, venueName: barId ? p.venueName : null, onClose: p.onClose });
   const saveLabel = p.saving ? 'Saving…' : menu ? `Add to ${menu}` : 'Save drink';
 
   return (
@@ -159,7 +161,7 @@ export function DrinkDesk(p: DrinkDeskProps) {
       <View style={[styles.header, { borderBottomColor: ds.c.line }]}>
         <Button label={menu ?? 'Back'} icon="chevron.left" variant="secondary" onPress={p.onClose} accessibilityLabel={`Back to ${menu ?? 'where you were'}. Your draft is kept`} />
         <View style={styles.flex}>
-          <Eyebrow>{eyebrow}</Eyebrow>
+          {trail ? <Trail items={trail} /> : <Eyebrow>{eyebrow}</Eyebrow>}
         </View>
         {waitNote ? <Caption tone="muted">{waitNote}</Caption> : hasContent(draft) ? <Caption tone="muted">Draft saved</Caption> : null}
         <Button label={saveLabel} onPress={p.onSave} disabled={!p.canSave || p.saving} />
@@ -211,6 +213,7 @@ export function DrinkDesk(p: DrinkDeskProps) {
             onNewBottle={onNewBottle}
             inlinePrep={{ venueName: barId ? p.venueName : null, onOpen: setPrepOpen }}
             bar={barId ? { id: barId, name: p.venueName } : null}
+            trail={trail}
             placeholder="Add an ingredient: “30 pommeau” works too"
           />
           <Row label="Method">

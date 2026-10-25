@@ -82,6 +82,31 @@ describe('PrepBuilder', () => {
     expect(screen.queryByRole('button', { name: 'Pick the spirit' })).toBeNull();
   });
 
+  test('a line can be made in-house too, one level down, with the trail back; Done returns to the recipe with it made', async () => {
+    const onDone = await open('Penicillin batch');
+    await fireEvent.press(screen.getByRole('button', { name: 'Next: what goes in' }));
+    await fireEvent.changeText(screen.getByLabelText('Add an ingredient'), 'Honey-ginger syrup');
+    await fireEvent.press(screen.getByRole('button', { name: 'Make “Honey-ginger syrup” in-house' }));
+    await laidOut();
+    // One level down: the trail runs Daiquiri › Penicillin batch › Honey-ginger syrup.
+    expect(screen.getByRole('link', { name: 'Up to Daiquiri' })).toBeTruthy();
+    expect(screen.getByRole('link', { name: 'Up to Penicillin batch' })).toBeTruthy();
+    expect(screen.getByText('What are you making?')).toBeTruthy();
+    await fireEvent.press(screen.getByRole('button', { name: 'Next: what goes in' }));
+    await fireEvent.press(screen.getByRole('button', { name: 'Next: how it’s made' }));
+    await fireEvent.press(screen.getByRole('button', { name: 'Add it to Penicillin batch' }));
+    await laidOut();
+    // Back in the batch's recipe, where it was left, the syrup made in-house.
+    expect(screen.getByText('What goes in?')).toBeTruthy();
+    expect(screen.getByText(/^Made in-house · Syrup · Sugar, water/)).toBeTruthy();
+    expect(onDone).not.toHaveBeenCalled();
+    // A tap on it opens its recipe again, one level down.
+    await fireEvent.press(screen.getByLabelText('Honey-ginger syrup, made in-house. Open its recipe'));
+    await laidOut();
+    expect(screen.getByRole('link', { name: 'Up to Penicillin batch' })).toBeTruthy();
+    expect(screen.getByText('Sugar')).toBeTruthy();
+  });
+
   test('a clarified juice is its own kind, made the first way the kit covers', async () => {
     await open('Clarified grapefruit');
     expect(screen.getByRole('radio', { name: /^Clarified, /, checked: true })).toBeTruthy();
@@ -111,7 +136,8 @@ describe('PrepBuilder', () => {
     const onLater = jest.fn();
     const onDone = await open('Pineapple chili shrub', jest.fn(), onLater);
     expect(screen.getByRole('button', { name: 'Back to Daiquiri' })).toBeTruthy();
-    expect(screen.getByText('New prep · 1 of 3')).toBeTruthy();
+    expect(screen.getByText('1 of 3')).toBeTruthy();
+    expect(screen.getByRole('link', { name: 'Up to Daiquiri' })).toBeTruthy();
     expect(screen.getByRole('radio', { name: /^Cold\. 3 days · Jar, fine strainer · brighter fruit/, checked: true })).toBeTruthy();
     expect(screen.getByText('300 g pineapple')).toBeTruthy();
     expect(screen.getByText('300 g white sugar, 300 g apple cider vinegar, 2 whole fresno chili')).toBeTruthy();
@@ -121,7 +147,7 @@ describe('PrepBuilder', () => {
     expect(screen.getByText('1. Muddle the fruit, and any citrus peel, with the sugar.')).toBeTruthy();
 
     await fireEvent.press(screen.getByRole('button', { name: 'Next: what goes in' }));
-    expect(screen.getByText('Daiquiri › New prep · 2 of 3')).toBeTruthy();
+    expect(screen.getByText('2 of 3')).toBeTruthy();
     expect(screen.getByText('OLEO SHRUB · EQUAL PARTS BY WEIGHT')).toBeTruthy();
     await fireEvent.press(screen.getByRole('button', { name: /^Allergens: none/ }));
     await fireEvent.press(screen.getByRole('checkbox', { name: 'Sulphites' }));

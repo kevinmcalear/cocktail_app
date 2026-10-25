@@ -39,6 +39,8 @@ export interface PrepDraftLine {
   removed?: boolean;
   /** How it goes in ("Sliced, seeds in for more heat"): saved as the line's preparation note. */
   note?: string;
+  /** Made in-house too, one level down (make-anything-steps-2, step 8): its own recipe, saved as its own prep. */
+  prep?: PrepDraft;
 }
 
 export interface PrepDraftStep {
