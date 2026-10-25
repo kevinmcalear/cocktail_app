@@ -12,13 +12,10 @@ export interface SpecMatchRow {
   notes: SpecNote;
 }
 
-/** public.spec_matches for up to 500 drinks; nothing on a server without the function yet. */
+/** public.spec_matches for up to 500 drinks. */
 async function fetchSpecMatches(ids: string[]): Promise<SpecMatchRow[]> {
   const { data, error } = await supabase.rpc('spec_matches', { p_item_ids: ids.slice(0, 500) });
-  if (error) {
-    if (error.code === 'PGRST202') return [];
-    throw error;
-  }
+  if (error) throw error;
   return (data ?? []) as SpecMatchRow[];
 }
 
@@ -122,7 +119,7 @@ export function useSetSpecMatch() {
 /**
  * Where a drink's spec came from: its own ('bar'), or filled in from a classic
  * ('classic', spec_from_id) because the bar published none
- * (20261011140000_classic_fill.sql). Null on a server without the column yet.
+ * (20261011140000_classic_fill.sql). Null when the drink isn't found.
  */
 export function useSpecSource(itemId: string | undefined) {
   return useQuery({
@@ -130,10 +127,7 @@ export function useSpecSource(itemId: string | undefined) {
     enabled: !!itemId,
     queryFn: async (): Promise<{ spec_source: 'bar' | 'classic'; spec_from_id: string | null } | null> => {
       const { data, error } = await supabase.from('items').select('spec_source, spec_from_id').eq('id', itemId!).maybeSingle();
-      if (error) {
-        if (error.code === '42703' || error.code === 'PGRST204') return null;
-        throw error;
-      }
+      if (error) throw error;
       return (data as { spec_source: 'bar' | 'classic'; spec_from_id: string | null } | null) ?? null;
     },
   });

@@ -1,5 +1,4 @@
 import { deleteCocktailFn, updateCocktailFn } from '@/hooks/useCocktails';
-import { addIngredientFn, updateIngredientFn } from '@/hooks/useIngredients';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import NetInfo from '@react-native-community/netinfo';
 import Constants from 'expo-constants';
@@ -124,5 +123,3 @@ for (const { queryKey, options } of queryDefaults(PERSISTED_KEYS)) {
 const refreshAll = () => queryClient.invalidateQueries();
 queryClient.setMutationDefaults(['updateCocktail'], { mutationFn: updateCocktailFn, onSettled: refreshAll });
 queryClient.setMutationDefaults(['deleteCocktail'], { mutationFn: deleteCocktailFn, onSettled: refreshAll });
-queryClient.setMutationDefaults(['updateIngredient'], { mutationFn: updateIngredientFn, onSettled: refreshAll });
-queryClient.setMutationDefaults(['addIngredient'], { mutationFn: addIngredientFn, onSettled: refreshAll });
