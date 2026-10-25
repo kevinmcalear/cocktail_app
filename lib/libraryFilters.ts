@@ -29,7 +29,7 @@ export const LIST_FILTERS: { value: Show; label: string }[] = [
  */
 export const SHELF_FILTERS: { value: Show; label: string }[] = [
   { value: 'batched', label: 'Batched' },
-  { value: 'preps', label: 'Made in-house' },
+  { value: 'preps', label: 'House-made' },
   { value: 'garnishes', label: 'Garnishes' },
   { value: 'bottles', label: 'Bottles' },
 ];

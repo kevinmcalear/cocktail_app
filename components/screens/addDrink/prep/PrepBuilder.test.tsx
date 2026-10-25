@@ -100,10 +100,10 @@ describe('PrepBuilder', () => {
     await laidOut();
     // Back in the batch's recipe, where it was left, the syrup made in-house.
     expect(screen.getByText('What goes in?')).toBeTruthy();
-    expect(screen.getByText(/^Made in-house · Syrup · Sugar, water/)).toBeTruthy();
+    expect(screen.getByText(/^House-made · Syrup · Sugar, water/)).toBeTruthy();
     expect(onDone).not.toHaveBeenCalled();
     // A tap on it opens its recipe again, one level down.
-    await fireEvent.press(screen.getByLabelText('Honey-ginger syrup, made in-house. Open its recipe'));
+    await fireEvent.press(screen.getByLabelText('Honey-ginger syrup, house-made. Open its recipe'));
     await laidOut();
     expect(screen.getByRole('link', { name: 'Up to Penicillin batch' })).toBeTruthy();
     expect(screen.getByText('Sugar')).toBeTruthy();

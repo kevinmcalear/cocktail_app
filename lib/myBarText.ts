@@ -3,10 +3,10 @@
 
 const plural = (n: number, one: string, many = `${one}s`) => `${n} ${n === 1 ? one : many}`;
 
-/** Under "My Bar": "7 drinks ready · 2 preps you can make now". */
+/** Under "My Bar": "7 drinks ready · 2 house-made ingredients you can make now". */
 export function barSubtitle(ready: number, preps: number): string {
   const parts = [ready ? `${plural(ready, 'drink')} ready` : 'Nothing ready yet'];
-  if (preps) parts.push(`${plural(preps, 'prep')} you can make now`);
+  if (preps) parts.push(`${plural(preps, 'house-made ingredient')} you can make now`);
   return parts.join(' · ');
 }
 
@@ -16,7 +16,7 @@ export function shelfCountsLine(c: { bottles: number; fridge: number; lab: numbe
     c.bottles ? plural(c.bottles, 'bottle') : null,
     c.fridge ? `${c.fridge} in the fridge` : null,
     c.lab ? `${c.lab} on the lab shelf` : null,
-    c.preps ? `${c.preps} made in-house` : null,
+    c.preps ? `${c.preps} house-made` : null,
     c.kit ? plural(c.kit, 'piece of kit', 'pieces of kit') : null,
   ]
     .filter(Boolean)

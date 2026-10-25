@@ -110,7 +110,7 @@ export function LabelCard({ label }: { label: BatchLabel }) {
           <Path d={d} fill={backbar.light.ink} />
         </Svg>
       </View>
-      <Caption tone="muted">{`The stripe is ${day}'s colour. The code opens this prep's page.`}</Caption>
+      <Caption tone="muted">{`The stripe is ${day}'s colour. The code opens its page.`}</Caption>
     </View>
   );
 }

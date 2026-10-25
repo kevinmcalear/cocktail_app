@@ -9,7 +9,7 @@ import { shareText } from '@/lib/shareLink';
 
 interface BatchActionsProps {
   name: string;
-  /** A venue batch: Save as prep card and Make now; at home, Share and Make it, tick as I go. */
+  /** A venue batch: Save as house-made and Make now; at home, Share and Make it, tick as I go. */
   barId: string | null;
   /** May make a house prep at the venue (house_made). */
   canPrep: boolean;
@@ -35,12 +35,12 @@ export function BatchActions({ name, barId, canPrep, making, onMake, onDilution,
   return (
     <View style={styles.block}>
       <TextLink label="Dilution calculator ›" onPress={onDilution} />
-      {save.error ? <Caption tone="accent">{save.error.message || "Couldn't save the prep card. Check your connection and try again."}</Caption> : null}
+      {save.error ? <Caption tone="accent">{save.error.message || "Couldn't save it as house-made. Check your connection and try again."}</Caption> : null}
       <View style={styles.row}>
         {barId ? (
           canPrep ? (
             <Button
-              label={save.isPending ? 'Saving…' : 'Save as prep card'}
+              label={save.isPending ? 'Saving…' : 'Save as house-made'}
               variant="secondary"
               disabled={save.isPending}
               onPress={() =>

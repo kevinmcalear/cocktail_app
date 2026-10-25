@@ -126,7 +126,7 @@ function Builder({ name: started, drinkName, initial, first, combinedFrom, inDri
     <WizardFrame
       testID="add-prep"
       overNav
-      pageTitle={`Made in-house: ${shown || 'something you make'}`}
+      pageTitle={`House-made: ${shown || 'something you make'}`}
       band={(place) => (
         <PaperBand
           progress={{ now: at + 1, of: STEPS.length, label: `${at + 1} of ${STEPS.length}` }}
@@ -137,7 +137,7 @@ function Builder({ name: started, drinkName, initial, first, combinedFrom, inDri
           art={<IngredientDrawing name={shown} />}
           artKey={shown}
           artLabel={`Drawing of ${shown}`}
-          tag="Made in-house"
+          tag="House-made"
           note={page ? 'Your recipes' : `For ${drinkName || 'your drink'}`}
           {...place}
         />

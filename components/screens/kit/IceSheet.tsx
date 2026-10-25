@@ -111,7 +111,7 @@ function IceSheetBody({ barId, visible, onClose, ice, initial, startAt, onSaved,
     },
     {
       title: 'How do you make it?',
-      intro: 'Start from one of these and change anything. It’s a recipe, like your house preps.',
+      intro: 'Start from one of these and change anything. It’s a recipe, like your house-made ingredients.',
       body: third ? madeStep(change(src)) : null,
       next: ice ? 'Save' : 'Make it',
     },

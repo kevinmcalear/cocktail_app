@@ -113,9 +113,9 @@ describe('IngredientsStep', () => {
 
     await renderWithTamagui(<IngredientsStep draft={{ ...EMPTY_DRAFT, lines: set.mock.calls[0][0].lines }} set={set} ingredients={[CAMPARI]} />);
     // The row stays one ingredient and its pour; what it is and what to do sit behind a tap on the name.
-    expect(screen.queryByText('Made in-house, recipe to write')).toBeNull();
+    expect(screen.queryByText('House-made, recipe to write')).toBeNull();
     await fireEvent.press(screen.getByRole('button', { name: /^Pineapple chili shrub, / }));
-    expect(screen.getByText('Made in-house, recipe to write')).toBeTruthy();
+    expect(screen.getByText('House-made, recipe to write')).toBeTruthy();
     expect(screen.getByRole('button', { name: 'Write the recipe for Pineapple chili shrub' })).toBeTruthy();
   });
 
@@ -166,9 +166,9 @@ describe('IngredientsStep', () => {
     const prep = { ...startPrep('shrub', 'Pineapple shrub'), way: 'hot' };
     const draft = { ...EMPTY_DRAFT, name: 'Pineapple Heat', lines: [{ key: 'a', id: null, name: 'Pineapple shrub', amount: '15', unit: 'ml', prep }] };
     await renderWithTamagui(<IngredientsStep draft={draft} set={jest.fn()} ingredients={[CAMPARI]} />);
-    expect(screen.getByText('Made in-house')).toBeTruthy();
+    expect(screen.getByText('House-made')).toBeTruthy();
     expect(screen.getByText('Shrub, hot · Pineapple, white sugar, apple cider vinegar · 5 steps')).toBeTruthy();
-    await fireEvent.press(screen.getByRole('button', { name: /^Pineapple shrub, 15 ml\. Made in-house/ }));
+    await fireEvent.press(screen.getByRole('button', { name: /^Pineapple shrub, 15 ml\. House-made/ }));
     await laidOut();
     expect(screen.getByText('What goes in?')).toBeTruthy();
     expect(screen.getByText('In Pineapple Heat')).toBeTruthy();

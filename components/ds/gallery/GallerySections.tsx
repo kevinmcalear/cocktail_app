@@ -112,7 +112,7 @@ export function GallerySections() {
         <View style={styles.wrap}>
           <Tag label="Stirred" />
           <Tag label="House-made" tone="accent" />
-          <Tag label="Made in-house" tone="paper" />
+          <Tag label="House-made" tone="paper" />
           <Tag label="Ready" tone="success" />
           <Tag label="Needs photo" tone="warning" />
         </View>

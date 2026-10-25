@@ -132,7 +132,7 @@ export function LabSection({ items, prepUses, cols, editing, onEdit, onAdd, onRe
       <TileGrid cols={cols}>
         {editing ? null : <AddTile label={SECTIONS.lab.add} sub={SECTIONS.lab.addSub} onPress={onAdd} />}
         {items.map((item) => (
-          <ShelfTile key={item.id} item={item} meta={usedLine(prepUses[item.id] ?? 0, 'prep')} editing={editing} onRemove={onRemove} onHold={() => onEdit(true)} />
+          <ShelfTile key={item.id} item={item} meta={usedLine(prepUses[item.id] ?? 0, 'recipe')} editing={editing} onRemove={onRemove} onHold={() => onEdit(true)} />
         ))}
       </TileGrid>
     </View>

@@ -87,7 +87,7 @@ export function RecipeSpec({ recipe: read, choices, data, files, usual, label = 
             return <ReviewRow key={i} state="pick" amount={amount} onAmount={onAmount} title={sentence(line.ingredient)} detail="Which one?" flag={flag} end={crop} choices={options} onChoose={(id) => onChoose(i, { pick: id })} />;
           }
           const ratio = prepRatio(line.ingredient);
-          const detail = ratio ? `New prep · ${ratio}` : isPrepName(line.ingredient) ? 'New prep' : 'New ingredient';
+          const detail = ratio ? `New house-made · ${ratio}` : isPrepName(line.ingredient) ? 'New house-made' : 'New ingredient';
           return <ReviewRow key={i} state="new" amount={amount} onAmount={onAmount} title={sentence(line.ingredient)} detail={detail} flag={flag} end={crop} action={fresh ? { label: 'Undo', hint: 'Use the match again', onPress: () => onChoose(i, null) } : undefined} />;
         })}
       </View>

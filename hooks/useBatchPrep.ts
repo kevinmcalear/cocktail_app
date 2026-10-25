@@ -23,7 +23,7 @@ export function useShelfLives(itemIds: readonly string[]) {
 }
 
 /**
- * "Save as prep card" on a venue batch: a house prep named "<drink> batch"
+ * "Save as house-made" on a venue batch: a house prep named "<drink> batch"
  * with the bottle's recipe for this many serves, its yield and how long it
  * keeps. lib/itemImages matches "<drink> batch" back to the drink by name.
  */

@@ -61,7 +61,7 @@ export function drinkFacts(id: string, kind: string, facts: MineFacts, years = f
 export function ingredientFacts(id: string, facts: MineFacts): string | undefined {
   const n = facts.usedIn.get(id)?.length ?? 0;
   const count = n ? `${n} ${n === 1 ? 'drink' : 'drinks'}` : null;
-  if (facts.preps.has(id)) return count ? `Made in-house · in ${count}` : 'Made in-house';
+  if (facts.preps.has(id)) return count ? `House-made · in ${count}` : 'House-made';
   return count ? `In ${count}` : undefined;
 }
 
