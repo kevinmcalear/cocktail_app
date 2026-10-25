@@ -4,7 +4,7 @@ import { useDraftPacks, useLineMakers, useSetLineSupplier } from '@/hooks/useDri
 import { useVenueIngredients } from '@/hooks/useVenueIngredients';
 import { useSupplierSuggestionData, useVenueSuppliers } from '@/hooks/useVenueSuppliers';
 import { perDrinkLines } from '@/lib/batchLines';
-import { lineCostMinor } from '@/lib/costing';
+import { lineCostMinor, prepCostMinor } from '@/lib/costing';
 import { density } from '@/lib/drinkMath';
 import { amountOf, type WizardDraft, type WizardLine } from '@/lib/drinkWizard';
 import { formatMoney, parseMoney } from '@/lib/money';
@@ -38,14 +38,22 @@ interface DeskLinesArgs {
 export function useDeskLines({ draft, set, barId, venueName, ingredients, coreIds, canBuy, canCost, currency }: DeskLinesArgs) {
   // A batch costs what one drink's own pours do.
   const costed = [...perDrinkLines(draft.lines), ...draft.garnishes];
-  const ids = costed.flatMap((l) => (l.id ? [l.id] : []));
+  // A house prep being written costs from its parts, so their packs are read too (m08).
+  // Its recipe's lines start as names ("Sugar"): the catalog row of that name stands in.
+  const partId = (p: { id: string | null; name: string }) => p.id ?? ingredients.find((i) => i.name?.toLowerCase() === p.name.trim().toLowerCase())?.id ?? null;
+  const ids = costed.flatMap((l) => (l.id ? [l.id] : !l.prep ? [] : l.prep.lines.flatMap((p) => partId(p) ?? [])));
   const packs = useDraftPacks(barId, ids, canBuy).data ?? [];
   const pack = (l: WizardLine) => packs.find((k) => k.itemId === l.id) ?? null;
+  const packOf = (part: { id: string | null; name: string }) => {
+    const k = packs.find((p) => p.itemId === partId(part));
+    return k?.costMinor != null && k.amount && k.unit ? { amount: k.amount, unit: k.unit, costMinor: k.costMinor } : null;
+  };
   const cost = (l: WizardLine) => {
     // A new bottle counts from the pack typed on its card.
     const b = !l.id ? l.bottle : null;
     const typed = b && Number(b.packAmount.replace(',', '.')) > 0 && b.packPrice.trim() ? parseMoney(b.packPrice, currency) : null;
     if (b) return canCost && typed != null ? lineCostMinor(amountOf(l.amount), l.unit, { amount: Number(b.packAmount.replace(',', '.')), unit: b.packUnit, costMinor: typed }, density(l.name, null)) : null;
+    if (!l.id && l.prep) return canCost ? (prepCostMinor(l.prep, { amount: amountOf(l.amount), unit: l.unit }, packOf)?.pourMinor ?? null) : null;
     const k = pack(l);
     return canCost && k?.costMinor != null && k.amount && k.unit ? lineCostMinor(amountOf(l.amount), l.unit, { amount: k.amount, unit: k.unit, costMinor: k.costMinor }, density(l.name, null)) : null;
   };
