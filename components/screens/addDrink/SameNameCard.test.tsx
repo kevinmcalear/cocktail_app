@@ -20,6 +20,8 @@ jest.mock('@/hooks/useDiscover', () => ({ useDrinkLists: () => ({ data: [] }) })
 jest.mock('@/hooks/useMyProfile', () => ({ useMyProfile: () => ({ data: { id: 'p-me', displayName: 'Jo' } }) }));
 jest.mock('@/hooks/useProfiles', () => ({ usePublicPeople: () => ({ data: [] }) }));
 jest.mock('@/hooks/useRankings', () => ({ usePublicBars: () => ({ data: [] }) }));
+jest.mock('@/hooks/useNearNameDrink', () => ({ useNearNameDrink: () => null }));
+jest.mock('@/hooks/useSearchNear', () => ({ useSaveSpelling: () => ({ mutate: jest.fn() }) }));
 
 const negroni: SameNameDrink = {
   id: 'lr-negroni',

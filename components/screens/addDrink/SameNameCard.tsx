@@ -7,7 +7,7 @@ import type { SameNameDrink } from '@/hooks/useSameNameDrink';
 import { useStartFromClassic } from '@/hooks/useStartFromClassic';
 import type { WizardDraft } from '@/lib/drinkWizard';
 import { withArticle } from '@/lib/closestClassic';
-import { versionName } from '@/lib/sameName';
+import { sameName, versionName } from '@/lib/sameName';
 
 // The box is the field: no browser focus ring on the word (as BigName).
 const NO_OUTLINE = Platform.OS === 'web' ? ({ outlineStyle: 'none' } as object) : null;
@@ -21,6 +21,8 @@ interface CardProps {
   /** Desktop: the drink beside the heading and the three choices in a row. */
   wide?: boolean;
   busy?: boolean;
+  /** A close spelling, not the same name (canvas 3A): where it's from ("Pale Moth · Collingwood"), and the card asks "Is it the…?". */
+  near?: string;
   onOpen: () => void;
   onVersion: () => void;
   onDifferent: () => void;
@@ -31,10 +33,10 @@ interface CardProps {
  * has, then Open it, Make this a version or It's a different drink. Whatever
  * it sits on waits until one is picked.
  */
-export function SameNameCard({ bar, drink, caption, wide, busy, onOpen, onVersion, onDifferent }: CardProps) {
+export function SameNameCard({ bar, drink, caption, wide, busy, near, onOpen, onVersion, onDifferent }: CardProps) {
   const ds = useDs();
-  const title = `${bar} already has ${withArticle(drink.name)}`;
-  const line = [drink.line, drink.menu].filter(Boolean).join(' · ');
+  const title = near === undefined ? `${bar} already has ${withArticle(drink.name)}` : `Is it the ${drink.name}${bar ? ` from ${bar}` : ''}?`;
+  const line = (near === undefined ? [drink.line, drink.menu] : [near, drink.classic && !sameName(drink.classic.name, drink.name) ? `Riff on ${withArticle(drink.classic.name)}` : null]).filter(Boolean).join(' · ');
   const thumb = <DrinkImage source={drink.imageUrl} itemId={drink.id} glass={drink.glass} thumb sketchDetail="thumb" radius="control" accessibilityLabel={drink.name} style={wide ? styles.thumbWide : styles.thumb} />;
   return (
     <Surface raised>
@@ -66,9 +68,9 @@ export function SameNameCard({ bar, drink, caption, wide, busy, onOpen, onVersio
           </>
         )}
         <View style={styles.choices}>
-          <Button label="Open it" size="sm" onPress={onOpen} disabled={busy} accessibilityLabel={`Open ${bar}’s ${drink.name}. Your draft is kept`} />
-          <Button label={busy ? 'Loading…' : 'Make this a version'} size="sm" variant="secondary" onPress={onVersion} disabled={busy} />
-          <Button label="It’s a different drink" size="sm" variant="secondary" onPress={onDifferent} disabled={busy} />
+          <Button label={near === undefined ? 'Open it' : 'Yes, open it'} size="sm" onPress={onOpen} disabled={busy} accessibilityLabel={`Open ${bar}’s ${drink.name}. Your draft is kept`} />
+          <Button label={busy ? 'Loading…' : near === undefined ? 'Make this a version' : 'Make our version'} size="sm" variant="secondary" onPress={onVersion} disabled={busy} />
+          <Button label={near === undefined ? 'It’s a different drink' : 'No, a different drink'} size="sm" variant="secondary" onPress={onDifferent} disabled={busy} />
         </View>
         <Caption tone="muted">{caption}</Caption>
       </View>

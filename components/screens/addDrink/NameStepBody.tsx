@@ -10,6 +10,7 @@ import type { WizardDraft } from '@/lib/drinkWizard';
 import { sameName, theirs, versionName } from '@/lib/sameName';
 
 import { StartPhotos } from './ReviewPhotos';
+import { NearNameCard } from './NearNameCard';
 import { BracketField, SameNameCard, useSameNamePicks } from './SameNameCard';
 import { StartFromClassic } from './StartFromClassic';
 import { NameStep } from './TextSteps';
@@ -58,6 +59,7 @@ export function NameStepBody({ draft, set, barId, venueName, match, classic, res
           onDifferent={() => picks.different(match, venueName)}
         />
       ) : null}
+      <NearNameCard draft={draft} set={set} barId={barId} venueName={venueName} hidden={!!match || !!classic} onStarted={onStarted} />
       <StartPhotos photos={draft.photos ?? {}} onChange={(photos) => set({ photos })} barId={barId} />
       {/* The bar's drink is already linked to the classic: its card comes back once the name is the bar's no more. */}
       {classic && !asking && apart !== false ? <StartFromClassic set={set} match={classic} onStarted={onStarted} /> : null}
