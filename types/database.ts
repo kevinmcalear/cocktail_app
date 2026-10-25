@@ -63,6 +63,7 @@ export type Database = {
       }
       bar_glassware: {
         Row: {
+          capacity_ml: number | null
           count: number | null
           created_at: string
           designer: string | null
@@ -73,6 +74,8 @@ export type Database = {
           maker_profile_id: string | null
           model_id: string | null
           name: string | null
+          outline: Json | null
+          photo_path: string | null
           profile_id: string
           series: string | null
           shape_note: string | null
@@ -84,6 +87,7 @@ export type Database = {
           variant: string | null
         }
         Insert: {
+          capacity_ml?: number | null
           count?: number | null
           created_at?: string
           designer?: string | null
@@ -94,6 +98,8 @@ export type Database = {
           maker_profile_id?: string | null
           model_id?: string | null
           name?: string | null
+          outline?: Json | null
+          photo_path?: string | null
           profile_id: string
           series?: string | null
           shape_note?: string | null
@@ -105,6 +111,7 @@ export type Database = {
           variant?: string | null
         }
         Update: {
+          capacity_ml?: number | null
           count?: number | null
           created_at?: string
           designer?: string | null
@@ -115,6 +122,8 @@ export type Database = {
           maker_profile_id?: string | null
           model_id?: string | null
           name?: string | null
+          outline?: Json | null
+          photo_path?: string | null
           profile_id?: string
           series?: string | null
           shape_note?: string | null
@@ -1237,6 +1246,7 @@ export type Database = {
           created_at: string
           designer: string | null
           discontinued: boolean
+          from_photo: boolean
           glass: string
           height_mm: number | null
           id: string
@@ -1250,6 +1260,7 @@ export type Database = {
           series: string | null
           shape_item_id: string | null
           source_urls: string[]
+          traced_by_profile_id: string | null
           updated_at: string
           variant: string | null
         }
@@ -1260,6 +1271,7 @@ export type Database = {
           created_at?: string
           designer?: string | null
           discontinued?: boolean
+          from_photo?: boolean
           glass: string
           height_mm?: number | null
           id?: string
@@ -1273,6 +1285,7 @@ export type Database = {
           series?: string | null
           shape_item_id?: string | null
           source_urls: string[]
+          traced_by_profile_id?: string | null
           updated_at?: string
           variant?: string | null
         }
@@ -1283,6 +1296,7 @@ export type Database = {
           created_at?: string
           designer?: string | null
           discontinued?: boolean
+          from_photo?: boolean
           glass?: string
           height_mm?: number | null
           id?: string
@@ -1296,6 +1310,7 @@ export type Database = {
           series?: string | null
           shape_item_id?: string | null
           source_urls?: string[]
+          traced_by_profile_id?: string | null
           updated_at?: string
           variant?: string | null
         }
@@ -1319,6 +1334,71 @@ export type Database = {
             columns: ["shape_item_id"]
             isOneToOne: false
             referencedRelation: "items"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "glass_models_traced_by_profile_id_fkey"
+            columns: ["traced_by_profile_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      glass_shares: {
+        Row: {
+          bar_glass_id: string | null
+          created_at: string
+          home_glass_id: string | null
+          id: string
+          model_id: string | null
+          note: string | null
+          reviewed_at: string | null
+          sent_by: string | null
+          status: string
+        }
+        Insert: {
+          bar_glass_id?: string | null
+          created_at?: string
+          home_glass_id?: string | null
+          id?: string
+          model_id?: string | null
+          note?: string | null
+          reviewed_at?: string | null
+          sent_by?: string | null
+          status?: string
+        }
+        Update: {
+          bar_glass_id?: string | null
+          created_at?: string
+          home_glass_id?: string | null
+          id?: string
+          model_id?: string | null
+          note?: string | null
+          reviewed_at?: string | null
+          sent_by?: string | null
+          status?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "glass_shares_bar_glass_id_fkey"
+            columns: ["bar_glass_id"]
+            isOneToOne: true
+            referencedRelation: "bar_glassware"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "glass_shares_home_glass_id_fkey"
+            columns: ["home_glass_id"]
+            isOneToOne: true
+            referencedRelation: "home_glassware"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "glass_shares_model_id_fkey"
+            columns: ["model_id"]
+            isOneToOne: false
+            referencedRelation: "glass_models"
             referencedColumns: ["id"]
           },
         ]
@@ -1423,6 +1503,7 @@ export type Database = {
       }
       home_glassware: {
         Row: {
+          capacity_ml: number | null
           count: number | null
           created_at: string
           glass: string
@@ -1430,11 +1511,14 @@ export type Database = {
           is_default: boolean
           model_id: string | null
           name: string | null
+          outline: Json | null
+          photo_path: string | null
           source: string | null
           user_id: string
           variant: string | null
         }
         Insert: {
+          capacity_ml?: number | null
           count?: number | null
           created_at?: string
           glass: string
@@ -1442,11 +1526,14 @@ export type Database = {
           is_default?: boolean
           model_id?: string | null
           name?: string | null
+          outline?: Json | null
+          photo_path?: string | null
           source?: string | null
           user_id?: string
           variant?: string | null
         }
         Update: {
+          capacity_ml?: number | null
           count?: number | null
           created_at?: string
           glass?: string
@@ -1454,6 +1541,8 @@ export type Database = {
           is_default?: boolean
           model_id?: string | null
           name?: string | null
+          outline?: Json | null
+          photo_path?: string | null
           source?: string | null
           user_id?: string
           variant?: string | null
@@ -4681,6 +4770,71 @@ export type Database = {
           },
         ]
       }
+      shopping_list_items: {
+        Row: {
+          added_at: string
+          cleared_at: string | null
+          for_item_id: string | null
+          got_at: string | null
+          id: string
+          item_id: string | null
+          name: string
+          source: string
+          user_id: string
+        }
+        Insert: {
+          added_at?: string
+          cleared_at?: string | null
+          for_item_id?: string | null
+          got_at?: string | null
+          id?: string
+          item_id?: string | null
+          name: string
+          source?: string
+          user_id?: string
+        }
+        Update: {
+          added_at?: string
+          cleared_at?: string | null
+          for_item_id?: string | null
+          got_at?: string | null
+          id?: string
+          item_id?: string | null
+          name?: string
+          source?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "shopping_list_items_for_item_id_fkey"
+            columns: ["for_item_id"]
+            isOneToOne: false
+            referencedRelation: "app_item_presentation"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "shopping_list_items_for_item_id_fkey"
+            columns: ["for_item_id"]
+            isOneToOne: false
+            referencedRelation: "items"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "shopping_list_items_item_id_fkey"
+            columns: ["item_id"]
+            isOneToOne: false
+            referencedRelation: "app_item_presentation"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "shopping_list_items_item_id_fkey"
+            columns: ["item_id"]
+            isOneToOne: false
+            referencedRelation: "items"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       source_recipe_lines: {
         Row: {
           amount_ml: number | null
@@ -5785,6 +5939,15 @@ export type Database = {
           isSetofReturn: false
         }
       }
+      add_shared_glass: {
+        Args: {
+          p_capacity_ml?: number
+          p_maker_profile_id: string
+          p_name?: string
+          p_share_id: string
+        }
+        Returns: string
+      }
       add_user_to_bar_by_email: {
         Args: {
           p_bar_id: string
@@ -6151,6 +6314,10 @@ export type Database = {
         }
       }
       decline_profile_position: { Args: { p_id: string }; Returns: undefined }
+      decline_shared_glass: {
+        Args: { p_note: string; p_share_id: string }
+        Returns: undefined
+      }
       discover_bars: {
         Args: {
           p_city?: string
@@ -7168,6 +7335,7 @@ export type Database = {
           created_at: string
           designer: string | null
           discontinued: boolean
+          from_photo: boolean
           glass: string
           height_mm: number | null
           id: string
@@ -7181,6 +7349,7 @@ export type Database = {
           series: string | null
           shape_item_id: string | null
           source_urls: string[]
+          traced_by_profile_id: string | null
           updated_at: string
           variant: string | null
         }[]
