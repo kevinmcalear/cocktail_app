@@ -44,7 +44,7 @@ function PlaceRow({ icon, label, detail, last, onPress }: { icon: IconName; labe
 }
 
 /**
- * Switch, under the name beside your role: a short menu of Home bar and your venues, the one
+ * Switch, in the title row beside the X: a short menu of Home bar and your venues, the one
  * you're in checked. The sheet opens on where you are; switching is a tap
  * away, not the first screen (venue-menu proposal A, 24 Oct 2026).
  */
@@ -70,7 +70,7 @@ function SwitchButton({ home, active, onPick }: { home: boolean; active: Venue |
   );
 }
 
-// The pill is 32 tall on the subtitle line; the slop makes it a full tap target.
+// The pill is 32 tall; the slop makes it a full tap target.
 const SLOP = (layout.minTapTarget - 32) / 2;
 
 // Settings is the sliders and Menus the menu card, as everywhere else (nav-icons).
@@ -173,7 +173,7 @@ function HomePlaces({ onGo }: { onGo: (p: Place) => void }) {
 /**
  * The venue menu, opened from the logo on phones, the tablet rail and the
  * desktop sidebar. Titled with where you are (the venue and your role, or
- * Home bar) with Switch under the name, then that place's pages: at a venue
+ * Home bar) with Switch beside the X, then that place's pages: at a venue
  * its working pages, Venue and You; at home My Bar, Collection, You and
  * Settings (venue-menu proposal A, approved 24 Oct 2026).
  */
