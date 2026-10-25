@@ -71,6 +71,15 @@ describe('A line that matched nothing (owner-setup-path, step 10)', () => {
     expect(set.mock.calls[1][0].lines[1]).toMatchObject({ name: 'House miso banana liqueur', later: true });
   });
 
+  test('a spec pasted while the catalog loads waits for it, so a known bottle is never read as new', async () => {
+    const set = jest.fn();
+    await renderWithTamagui(<IngredientsStep draft={EMPTY_DRAFT} set={set} ingredients={[]} loading />);
+    await fireEvent.press(screen.getByRole('button', { name: 'Paste a whole spec' }));
+    await fireEvent.changeText(screen.getByLabelText('The spec'), '45 ml mezcal');
+    await fireEvent.press(screen.getByRole('button', { name: 'Loading ingredients…' }));
+    expect(set).not.toHaveBeenCalled();
+  });
+
   test('"Just add the name" in the search has already said: its line asks nothing', async () => {
     const set = jest.fn();
     await renderWithTamagui(<IngredientsStep draft={EMPTY_DRAFT} set={set} ingredients={[MEZCAL]} />);
