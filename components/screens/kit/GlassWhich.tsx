@@ -62,7 +62,13 @@ export function GlassWhich({ value, onChange, venueModelIds, venueName, shape, o
     return (
       <View style={styles.stack}>
         <GlassModelCard model={value.model} variant={value.glass === value.model.glass ? value.variant : null} />
-        {value.glass !== value.model.glass ? <Caption tone="muted">{`Your ${GLASS_TYPE_LABEL[value.glass]} drinks are drawn in it.`}</Caption> : null}
+        {value.glass !== value.model.glass ? (
+          <>
+            <Caption tone="muted">{`Your ${GLASS_TYPE_LABEL[value.glass]} drinks are drawn in it.`}</Caption>
+            {/* Or it does the job the catalog files it under. */}
+            <Button label={`Use it as a ${GLASS_TYPE_LABEL[value.model.glass]}`} variant="ghost" onPress={() => set({ glass: value.model!.glass, variant: value.model!.variant })} style={styles.start} />
+          </>
+        ) : null}
         <Button label="Another glass" variant="secondary" onPress={() => set({ mode: 'find' })} style={styles.start} />
         {nameField}
       </View>

@@ -1,4 +1,4 @@
-import { waitFor } from '@testing-library/react-native';
+import { fireEvent, waitFor } from '@testing-library/react-native';
 
 import { renderWithTamagui } from '@/jest.setup';
 
@@ -36,4 +36,12 @@ test('a new glass takes the type the catalog files it under', async () => {
   await waitFor(() => expect(mockPick).toBeTruthy());
   mockPick!(pony);
   expect(onChange).toHaveBeenCalledWith(expect.objectContaining({ mode: 'picked', glass: 'nick', variant: 'nick_little' }));
+});
+
+test('a glass kept as the Coupe can still be filed under its own type', async () => {
+  const onChange = jest.fn();
+  const model = { ...pony, maker: null } as unknown as GlassWhichValue['model'];
+  const { getByRole } = await renderWithTamagui(<GlassWhich value={{ ...find, mode: 'picked', model }} onChange={onChange} keepShape />);
+  fireEvent.press(getByRole('button', { name: 'Use it as a Nick & Nora' }));
+  expect(onChange).toHaveBeenCalledWith(expect.objectContaining({ glass: 'nick', variant: 'nick_little' }));
 });
