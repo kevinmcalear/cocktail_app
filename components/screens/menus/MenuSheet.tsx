@@ -16,7 +16,7 @@ interface MenuSheetProps {
   eyebrow?: string;
   /** A picture before the title: the bottle a back bar sheet is about. */
   leading?: ReactNode;
-  /** Beside the subtitle, under the title: the venue menu's Switch. Keeps the title its whole width. */
+  /** In the title row, beside the X: the venue menu's Switch. The title then keeps to one line. */
   aside?: ReactNode;
   children: ReactNode;
   /** Pinned under the scrolling body: the sheet's main action. */
@@ -58,7 +58,7 @@ export function MenuSheet({ visible, onClose, title, subtitle, eyebrow, leading,
         save || form ? (
           <FormHeader title={title} save={save} />
         ) : (
-          <View style={styles.header}>
+          <View style={[styles.header, aside ? styles.centred : null]}>
             {leading}
             <View style={styles.flex}>
               {eyebrow ? (
@@ -66,16 +66,16 @@ export function MenuSheet({ visible, onClose, title, subtitle, eyebrow, leading,
                   {eyebrow.toUpperCase()}
                 </Caption>
               ) : null}
-              {plain ? <Headline role="heading">{title}</Headline> : <Title>{title}</Title>}
-              {aside ? (
-                <View style={styles.aside}>
-                  {subtitle ? <Caption tone="muted">{subtitle}</Caption> : null}
-                  {aside}
-                </View>
-              ) : subtitle ? (
-                <Caption tone="muted">{subtitle}</Caption>
-              ) : null}
+              {plain ? (
+                <Headline role="heading" numberOfLines={aside ? 1 : undefined}>
+                  {title}
+                </Headline>
+              ) : (
+                <Title numberOfLines={aside ? 1 : undefined}>{title}</Title>
+              )}
+              {subtitle ? <Caption tone="muted">{subtitle}</Caption> : null}
             </View>
+            {aside}
             <SheetCloseButton />
           </View>
         )
@@ -211,7 +211,7 @@ export function Choice({ label, selected, onPress, kind = 'radio', detail, disab
 const styles = StyleSheet.create({
   dialog: { paddingTop: space.md },
   header: { flexDirection: 'row', alignItems: 'flex-start', gap: space.md, paddingHorizontal: space.xl, paddingTop: space.md },
-  aside: { flexDirection: 'row', flexWrap: 'wrap', alignItems: 'center', columnGap: space.sm, rowGap: space.xs },
+  centred: { alignItems: 'center' },
   form: { alignItems: 'center', paddingHorizontal: space.md },
   formButton: { minWidth: 72, minHeight: layout.minTapTarget, justifyContent: 'center', paddingHorizontal: space.sm },
   formSave: { alignItems: 'flex-end' },

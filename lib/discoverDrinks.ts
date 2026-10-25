@@ -409,15 +409,26 @@ export function drinkCount(n: number): string {
   return `${n} ${n === 1 ? 'drink' : 'drinks'}`;
 }
 
+/** The search's count, "14 drinks at 9 bars near you", once there is one (disc-desk-search). */
+export function resultsCaption(totals: { drinks: number; bars: number } | null | undefined, where: string): string {
+  return totals?.drinks ? `${drinkCount(totals.drinks)} at ${barCount(totals.bars)} ${where}` : '';
+}
+
+/** "1 bar", "9 bars". */
+export function barCount(n: number): string {
+  return `${n} ${n === 1 ? 'bar' : 'bars'}`;
+}
+
 /**
- * The results head's count: "14 drinks at 9 bars near you" while searching, else on the phone
- * sheet how many bars the map shows. Wide screens have no sheet to swipe, so with no search
- * count they show no caption (disc-desk-search draws only the search count).
+ * What the phone sheet's line says beside its title (disc-map-sheet, approved
+ * 24 Oct): "229 bars" browsing (the pins), "31 at 24 bars" for a style's
+ * list, "14 drinks at 9 bars" for a search; from the server's totals, or
+ * nothing until they're in.
  */
-export function resultsCaption(searching: boolean, totals: { drinks: number; bars: number } | null | undefined, where: string, pins: number, sheet = true): string {
-  if (searching && totals?.drinks) return `${drinkCount(totals.drinks)} at ${totals.bars} ${totals.bars === 1 ? 'bar' : 'bars'} ${where}`;
-  if (!sheet) return '';
-  return `${pins} ${pins === 1 ? 'bar' : 'bars'} in view · tap or swipe up for the list`;
+export function sheetCount({ list, totals, pins }: { list: 'browse' | 'style' | 'search'; totals?: { drinks: number; bars: number } | null; pins: number }): string {
+  if (list === 'browse') return pins ? barCount(pins) : '';
+  if (!totals?.drinks) return '';
+  return `${list === 'search' ? drinkCount(totals.drinks) : totals.drinks} at ${barCount(totals.bars)}`;
 }
 
 /** A bar row's drinks in search: "14 drinks on now" when some are on, else how many match ("3 drinks"), else nothing. */

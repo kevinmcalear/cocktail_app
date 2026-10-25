@@ -20,6 +20,7 @@ import {
   kindsTitle,
   pickFilter,
   resultsCaption,
+  sheetCount,
   scorePins,
   toDiscoverBar,
   toDiscoverDrink,
@@ -192,10 +193,14 @@ console.log('discoverDrinks: ok');
 // The results caption: the search count, else the phone sheet's line; wide screens have no sheet, so no line.
 {
   const totals = { drinks: 14, bars: 9 };
-  assert.equal(resultsCaption(true, totals, 'near you', 0, false), '14 drinks at 9 bars near you');
-  assert.equal(resultsCaption(true, { drinks: 1, bars: 1 }, 'near you', 0), '1 drink at 1 bar near you');
-  assert.equal(resultsCaption(false, null, 'near you', 3), '3 bars in view · tap or swipe up for the list', 'phone sheet unchanged');
-  assert.equal(resultsCaption(true, { drinks: 0, bars: 0 }, 'near you', 1), '1 bar in view · tap or swipe up for the list', 'phone sheet, nothing found');
-  assert.equal(resultsCaption(true, { drinks: 0, bars: 0 }, 'near you', 0, false), '', 'wide: no "0 bars in view" over an empty search');
-  assert.equal(resultsCaption(true, null, 'near you', 0, false), '', 'wide: nothing while totals load');
+  assert.equal(resultsCaption(totals, 'near you'), '14 drinks at 9 bars near you');
+  assert.equal(resultsCaption({ drinks: 1, bars: 1 }, 'near you'), '1 drink at 1 bar near you');
+  assert.equal(resultsCaption({ drinks: 0, bars: 0 }, 'near you'), '', 'nothing over an empty search');
+  assert.equal(resultsCaption(null, 'near you'), '', 'nothing while totals load');
+  assert.equal(sheetCount({ list: 'browse', pins: 229 }), '229 bars', 'browsing: the pins');
+  assert.equal(sheetCount({ list: 'browse', pins: 1 }), '1 bar');
+  assert.equal(sheetCount({ list: 'browse', pins: 0 }), '', 'nothing while the pins load');
+  assert.equal(sheetCount({ list: 'style', totals: { drinks: 31, bars: 24 }, pins: 9 }), '31 at 24 bars', "a style's list: the server's totals, not the page loaded");
+  assert.equal(sheetCount({ list: 'style', totals: null, pins: 9 }), '', 'nothing until the totals are in');
+  assert.equal(sheetCount({ list: 'search', totals, pins: 3 }), '14 drinks at 9 bars', 'searching: the title says where');
 }

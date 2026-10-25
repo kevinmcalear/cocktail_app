@@ -15,22 +15,24 @@ const NO_ROWS: never[] = [];
 const NO_SCORES: Readonly<Record<string, number>> = {};
 
 /**
- * "Best Martini" ("Top rated" while searching): every one of the picked
- * drink in the area, the scores people gave each, and each bar's score for
- * it. The map and the wide list's tapped bar both read it, from the same
- * cached queries, so they show the same scores.
+ * A style's best ("Martinis in this area", best first; "Top rated" while
+ * searching): every one of the picked drink in the area, or every drink the
+ * filter's styles match when there's no classic to pick (Low & no), the
+ * scores people gave each, and each bar's score for it. The map and the wide
+ * list both read it, from the same cached queries, so they show the same scores.
  *
- * `load`: fetch (the map loads it ahead, before the layer is picked).
- * `active`: the layer is showing, so `picked` and `scores` are filled.
+ * `load`: fetch (the map loads it ahead, before the sort is picked).
+ * `active`: the sort is showing, so `picked` and `scores` are filled.
  */
 export function useBestDrink(drink: { id: string; name: string } | null, filter: DrinkFilter, { load, active }: { load: boolean; active: boolean }) {
+  const any = !!drink || filter.kinds.length > 0;
   const rankings = useDiscoverRankings(drink?.id, filter.area, load);
-  const list = useDiscoverList(drink ? pickFilter(filter, drink.name) : filter, { enabled: !!drink && load, pageSize: 300 });
-  const drinkScores = useItemScores(drink ? list.drinks.map((d) => d.id) : NO_ROWS).data ?? NO_SCORES;
-  const on = active && !!drink;
+  const list = useDiscoverList(drink ? pickFilter(filter, drink.name) : filter, { enabled: any && load, pageSize: 300 });
+  const drinkScores = useItemScores(any ? list.drinks.map((d) => d.id) : NO_ROWS).data ?? NO_SCORES;
+  const on = active && any;
   const picked = on ? list.drinks : NO_DRINKS;
   const scores: DrinkScores | undefined = on ? { drinks: drinkScores, bars: barScoresFor(picked, drinkScores, rankings.data?.ranked ?? NO_ROWS) } : undefined;
-  return { picked, scores, isLoading: list.isLoading };
+  return { picked, scores, totals: on ? list.totals : null, isLoading: list.isLoading };
 }
 
 /**

@@ -1,5 +1,5 @@
 import { useRouter } from 'expo-router';
-import { useContext, useState } from 'react';
+import { useContext, useState, type ReactNode } from 'react';
 import { StyleSheet, View } from 'react-native';
 
 import { Button, Caption, DrinkImage, DsText, MatchText, RowScore, Surface } from '@/components/ds';
@@ -13,7 +13,7 @@ import { barSearchHref, searchTitle } from '@/lib/discoverMatch';
 import { itemHref } from '@/lib/itemRoutes';
 import { areaLabel } from '@/lib/nearMe';
 
-import { MapLayers, type MapLayer } from './DiscoverControls';
+import type { MapLayer } from './DiscoverControls';
 import { AddBarPrompt } from './AddBar';
 import { BarAway, DrinkAtBarList, type MoreDrinks } from './DrinksAtBars';
 import { ClassicLine, ResultsHead } from './ResultsHead';
@@ -23,9 +23,9 @@ interface DeskSearchResultsProps {
   /** The drink the search names, for Top rated. */
   drink: { id: string; name: string } | null;
   results: { drinks: DiscoverDrink[]; more: MoreDrinks; isLoading: boolean; totals: { drinks: number; bars: number } | null };
-  /** The sort, shared with the map's pins. */
+  /** The sort, shared with the map's pins, and the row that picks it (OptionChips). */
   layer: MapLayer;
-  onLayer: (layer: MapLayer) => void;
+  options?: ReactNode;
   /** Where Nearest counts from; no Nearest without it. */
   from: { latitude: number; longitude: number } | null;
   /** The pin tapped on the map: its best match opens in place at the top. */
@@ -39,10 +39,10 @@ interface DeskSearchResultsProps {
 /**
  * Wide screens, searching (disc-desk-search): the list pane holds the ranked
  * results, as the phone sheet does: "14 drinks at 9 bars near you",
- * "Martinis and more", Best match / Top rated / Nearest, the classic line,
+ * "Martinis and more", the options row (Best match / Top rated / Nearest), the classic line,
  * the picked bar's match opened in place, then the scored rows.
  */
-export function DeskSearchResults({ filter, drink, results, layer, onLayer, from, picked, onAddBar, onShowBar }: DeskSearchResultsProps) {
+export function DeskSearchResults({ filter, drink, results, layer, options, from, picked, onAddBar, onShowBar }: DeskSearchResultsProps) {
   const nearest = layer === 'nearest' && !!from;
   const best = layer === 'best' && !!drink;
   const ranked = useBestDrink(drink, filter, { load: best, active: best });
@@ -64,9 +64,9 @@ export function DeskSearchResults({ filter, drink, results, layer, onLayer, from
   return (
     <View style={styles.pane}>
       <ResultsHead
-        caption={resultsCaption(true, results.totals, where, 0, false)}
+        caption={resultsCaption(results.totals, where)}
         title={searchTitle(filter.search)}
-        chips={<MapLayers layer={nearest ? 'nearest' : best ? 'best' : 'drinks'} onLayer={onLayer} drinkName={drink?.name ?? null} searching nearest={!!from} />}
+        chips={options}
         below={<ClassicLine drinks={results.drinks} search={filter.search} where={where} />}
       />
       {top ? <PickedRow key={top.drink.id} drink={top.drink} also={top.also} pin={top.bar} filter={filter} score={scores.drinks[top.drink.id]} /> : null}
