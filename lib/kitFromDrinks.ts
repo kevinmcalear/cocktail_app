@@ -7,7 +7,7 @@ import { iceKind } from './iceBuild';
 import { draftSketchInputs } from './sketch/draft';
 import type { SketchGlass } from './sketch/types';
 import { equipmentById } from './techniques/equipment';
-import { iceDrawKind, inTheGlass, type IceKind } from './venueKit';
+import { venueIceKinds, type IceKind } from './venueKit';
 
 export interface DrinkKit {
   glass: string | null;
@@ -32,7 +32,11 @@ export interface FromDrinks {
   tools: { key: string; why: string }[];
 }
 
-const glassOf = (name: string) => draftSketchInputs({ name: '', lines: [], glass: name }).glass;
+/** The shape a glass name is drawn as; null for a name the drawings don't know ("Custom"). */
+function glassOf(name: string): SketchGlass | null {
+  const inputs = draftSketchInputs({ name: '', lines: [], glass: name });
+  return inputs.from.glass === 'data' ? inputs.glass : null;
+}
 const plural = (n: number, one: string, many = `${one}s`) => `${n} ${n === 1 ? one : many}`;
 
 /** What the venue's drinks name that its Kit doesn't have, most-named first. */
@@ -46,12 +50,19 @@ export function kitFromDrinks(drinks: readonly DrinkKit[], have: KitHave): FromD
   const glasses: FromDrinks['glasses'] = [];
   for (const [name, n] of count(drinks.map((d) => d.glass))) {
     const glass = glassOf(name);
+    if (!glass) continue;
+    // One row a shape, its drinks added up: "Rocks" and "Small Rocks" are both the rocks glass to add.
+    const same = glasses.find((g) => g.glass === glass);
+    if (same) {
+      same.drinks += n;
+      continue;
+    }
     const mine = have.glasses.filter((g) => g.glass === glass);
     if (!mine.length) glasses.push({ name, glass, drinks: n, match: null });
-    else if (mine.every((g) => !g.model_id) && !glasses.some((g) => g.match === mine[0].id)) glasses.push({ name, glass, drinks: n, match: mine[0].id });
+    else if (mine.every((g) => !g.model_id)) glasses.push({ name, glass, drinks: n, match: mine[0].id });
   }
 
-  const kinds = new Set(have.ice.filter(inTheGlass).map((i) => iceDrawKind(i)));
+  const kinds = new Set(venueIceKinds(have.ice));
   const ice: FromDrinks['ice'] = [];
   for (const [name, n] of count(drinks.map((d) => d.ice))) {
     const kind = iceKind(name);

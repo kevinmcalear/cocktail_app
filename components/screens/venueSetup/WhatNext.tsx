@@ -62,9 +62,10 @@ export function WhatNext({
   useFlushHeldGlasses(barId);
   const top = useTopClassics();
   const libraryQuery = useBarClassics(barId, top.classics);
-  const fromDrinks = fromDrinksCount(useKitFromDrinks(barId));
   const caps = capsQuery.data ?? [];
   const pageId = pageQuery.data ?? null;
+  // Only Prep adds to the Kit: nobody else loads what the drinks name.
+  const fromDrinks = fromDrinksCount(useKitFromDrinks(caps.includes('prep') ? barId : null), pageId);
   // On the page, then held on this device until it's checked (a held one already saved isn't counted twice).
   const onPage = glassQuery.data ?? [];
   const glasses = [...onPage, ...heldNotOnPage(held, onPage).map((h) => ({ ...h, id: h.key, maker_page: null }))];

@@ -66,7 +66,7 @@ export function GlasswarePrompt({ barId, glass, variant, name, drink, style }: G
         barId={barId}
         pageId={pageId}
         visible={open}
-        initial={{ glass, variant: drawn, name: name?.trim() && name.trim() !== GLASS_TYPE_LABEL[glass] ? name.trim() : null }}
+        initial={{ glass, variant: drawn, name: name?.trim() && name.trim().toLowerCase() !== GLASS_TYPE_LABEL[glass].toLowerCase() ? name.trim() : null }}
         from={drink?.trim() ? `From the ${drink.trim()}` : undefined}
         venueName={venueName}
         onSaved={() => setAdded(key)}

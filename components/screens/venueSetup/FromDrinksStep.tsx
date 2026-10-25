@@ -21,8 +21,8 @@ type Open =
 
 const drinksLine = (n: number) => `${n} ${n === 1 ? 'drink' : 'drinks'}`;
 
-/** How many things the venue's drinks name that its Kit doesn't have; null while it loads. */
-export const fromDrinksCount = (f: FromDrinks | null) => (f ? f.glasses.length + f.ice.length + f.tools.length : null);
+/** How many things the venue's drinks name that its Kit doesn't have, as the step lists them; null while it loads. */
+export const fromDrinksCount = (f: FromDrinks | null, pageId: string | null) => (f ? (pageId ? f.glasses.length : 0) + f.ice.length + f.tools.length : null);
 
 /**
  * What next › From your drinks (Kit and ice, step 12): the glasses, ice and
@@ -36,9 +36,11 @@ export function FromDrinksStep({ barId, pageId, name, onBack }: { barId: string;
   const glasses = useBarGlassware(barId).data ?? [];
   const [open, setOpen] = useState<Open | null>(null);
   const close = () => setOpen(null);
+  // Rows are "glass:0", "ice:1": by place, so a name can be anything.
   const pick = (id: string) => {
-    const [kind, key] = id.split('|');
-    const row = kind === 'glass' ? found?.glasses.find((g) => g.name === key) : kind === 'ice' ? found?.ice.find((i) => i.name === key) : found?.tools.find((t) => t.key === key);
+    const [kind, at] = id.split(':');
+    const i = Number(at);
+    const row = kind === 'glass' ? found?.glasses[i] : kind === 'ice' ? found?.ice[i] : found?.tools[i];
     if (row) setOpen({ kind, row } as Open);
   };
   const matching = open?.kind === 'glass' && open.row.match ? (glasses.find((g) => g.id === open.row.match) ?? null) : null;
@@ -53,8 +55,8 @@ export function FromDrinksStep({ barId, pageId, name, onBack }: { barId: string;
               {
                 title: 'Glasses',
                 // Glassware hangs off the venue's page: none to add to before it's checked.
-                entries: (pageId ? found.glasses : []).map((g) => ({
-                  id: `glass|${g.name}`,
+                entries: (pageId ? found.glasses : []).map((g, i) => ({
+                  id: `glass:${i}`,
                   name: g.name,
                   line: `${drinksLine(g.drinks)} · ${g.match ? 'in your Kit, no real glass' : 'not in your Kit'}`,
                   thumb: <GlassThumb glass={g.glass} variant={null} />,
@@ -63,12 +65,12 @@ export function FromDrinksStep({ barId, pageId, name, onBack }: { barId: string;
               },
               {
                 title: 'Ice',
-                entries: found.ice.map((i) => ({ id: `ice|${i.name}`, name: i.name, line: `${drinksLine(i.drinks)} · not in your ice`, thumb: <IceThumb kind={i.kind} />, action: 'Add' })),
+                entries: found.ice.map((i, n) => ({ id: `ice:${n}`, name: i.name, line: `${drinksLine(i.drinks)} · not in your ice`, thumb: <IceThumb kind={i.kind} />, action: 'Add' })),
               },
               {
                 title: 'Tools',
-                entries: found.tools.map((t) => ({
-                  id: `tool|${t.key}`,
+                entries: found.tools.map((t, i) => ({
+                  id: `tool:${i}`,
                   name: equipmentById(t.key)?.name ?? t.key,
                   line: t.why,
                   thumb: <EquipmentThumb id={t.key} name={t.key} size={48} />,
@@ -89,7 +91,7 @@ export function FromDrinksStep({ barId, pageId, name, onBack }: { barId: string;
         visible={open?.kind === 'glass'}
         glass={matching}
         match={!!matching}
-        initial={open?.kind === 'glass' && !matching ? { glass: open.row.glass, name: open.row.name !== GLASS_TYPE_LABEL[open.row.glass] ? open.row.name : null } : undefined}
+        initial={open?.kind === 'glass' && !matching ? { glass: open.row.glass, name: open.row.name.toLowerCase() !== GLASS_TYPE_LABEL[open.row.glass].toLowerCase() ? open.row.name : null } : undefined}
         from={open?.kind === 'glass' ? drinksLine(open.row.drinks) : undefined}
         venueName={name}
         onClose={close}

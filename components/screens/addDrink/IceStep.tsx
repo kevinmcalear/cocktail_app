@@ -10,7 +10,7 @@ import type { VenueIce } from '@/hooks/useVenueIce';
 import { methodIceLabel, samePick, sketchLook, type StepProps, type WizardPick } from '@/lib/drinkWizard';
 import { iceBuildLine, iceKind, iceTip, QUICK_BUILDS, QUICK_LABEL, quickBuild, saysMore, whichQuick, type IceLayer } from '@/lib/iceBuild';
 import { draftSketchInputs } from '@/lib/sketch/draft';
-import { iceDrawKind, inTheGlass, isVenueIce, kitIceRow, kitSourceLine } from '@/lib/venueKit';
+import { iceDrawKind, inTheGlass, isVenueIce, kitIceRow, kitSourceLine, venueIceKinds } from '@/lib/venueKit';
 
 import { AddLayerSheet } from './AddLayerSheet';
 import { IceLayers } from './IceLayers';
@@ -106,7 +106,8 @@ export function IceStep({ draft, set, ices, barIce, suggested, why, compact, kit
           ) : (
             <PickStep label="In the glass" ownLabel="Other ice" compact={compact} options={ices} selected={draft.ice ? [draft.ice] : []} onChange={([ice]) => set({ ice: ice ?? null, iceBuild: null })} suggested={suggested} why={why} mine={mine} />
           )}
-          <IcePrompt barId={barId} ice={top?.ice} drink={draft.name} />
+          {/* ponytail: the first layer from the bottom the venue may lack; a build of two missing asks one at a time. */}
+          <IcePrompt barId={barId} ice={firstMissing(named, kit)} drink={draft.name} />
           {tip ? (
             <IceTipCard
               tip={tip}
@@ -130,6 +131,12 @@ export function IceStep({ draft, set, ices, barIce, suggested, why, compact, kit
       {tellUs ? <TellUs screen="Adding a drink › Ice" line="We’ll add your ice to the app." {...tellUs} /> : null}
     </>
   );
+}
+
+/** The lowest ice in the build the venue pours nothing drawn like, else the top (IcePrompt then stays quiet). */
+function firstMissing(layers: readonly { ice: string }[], kit: readonly VenueIce[]): string | undefined {
+  const kinds = venueIceKinds(kit);
+  return layers.find((l) => !kinds.includes(iceKind(l.ice) as never))?.ice ?? layers[layers.length - 1]?.ice;
 }
 
 const styles = StyleSheet.create({

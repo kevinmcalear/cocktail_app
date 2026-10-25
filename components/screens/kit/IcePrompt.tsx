@@ -5,7 +5,7 @@ import { useActiveVenue } from '@/hooks/useActiveVenue';
 import { useCapabilities } from '@/hooks/useCapabilities';
 import { useVenueIce } from '@/hooks/useVenueIce';
 import { iceKind } from '@/lib/iceBuild';
-import { iceDrawKind, inTheGlass, isVenueIce } from '@/lib/venueKit';
+import { venueIceKinds } from '@/lib/venueKit';
 import { useSettingsStore } from '@/store/useSettingsStore';
 
 import { IceSheet } from './IceSheet';
@@ -31,7 +31,8 @@ export function IcePrompt({ barId, ice, drink }: { barId: string | null | undefi
   const kind = iceKind(ice);
   if (!barId || !ice?.trim() || !kit || !caps.includes('prep') || !kind || kind === 'none') return null;
   const key = `ice:${barId}:${kind}`;
-  const has = kit.filter(inTheGlass).some((r) => iceDrawKind(r) === kind) || isVenueIce(kit.map((r) => r.name), ice);
+  // As What next › From your drinks counts it (lib/kitFromDrinks.ts): by how it's drawn.
+  const has = venueIceKinds(kit).includes(kind);
   if (added !== key && (has || notNow.includes(key))) return null;
   const name = ice.trim();
   return (
