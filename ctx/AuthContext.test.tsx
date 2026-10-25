@@ -255,61 +255,44 @@ const wrongCode = () => ({ data: { user: null, session: null }, error: new AuthA
 const signedIn = () => ({ data: { user: { id: 'u1' }, session: sessionOf('u1') }, error: null });
 const httpError = (status: number) => ({ data: null, error: new FunctionsHttpError({ status } as Response) });
 
-test('a right emailed code signs in without asking review-sign-in', async () => {
+async function verify(email: string, code: string) {
   const { result } = await launch(null);
-  mockVerifyOtp.mockResolvedValueOnce(signedIn());
-  let answer: { error: unknown } = { error: 'unset' };
+  let answer: { error: { message: string; code?: string } | null } = { error: { message: 'unset' } };
   await act(async () => {
-    answer = await result.current.verifyCode('a@example.test', '123456');
+    answer = await result.current.verifyCode(email, code);
   });
-  expect(answer.error).toBeNull();
+  return answer.error;
+}
+
+test('a right emailed code signs in without asking review-sign-in', async () => {
+  mockVerifyOtp.mockResolvedValueOnce(signedIn());
+  expect(await verify('a@example.test', '123456')).toBeNull();
   expect(mockInvoke).not.toHaveBeenCalled();
 });
 
 test("a code the email didn't send is tried as the review code, and its token signs in", async () => {
-  const { result } = await launch(null);
   mockVerifyOtp.mockResolvedValueOnce(wrongCode()).mockResolvedValueOnce(signedIn());
   mockInvoke.mockResolvedValueOnce({ data: { token_hash: 'th' }, error: null });
-  let answer: { error: unknown } = { error: 'unset' };
-  await act(async () => {
-    answer = await result.current.verifyCode('review@example.test', '424242');
-  });
-  expect(answer.error).toBeNull();
+  expect(await verify('review@example.test', '424242')).toBeNull();
   expect(mockInvoke).toHaveBeenCalledWith('review-sign-in', { body: { email: 'review@example.test', code: '424242' } });
   expect(mockVerifyOtp).toHaveBeenLastCalledWith({ token_hash: 'th', type: 'email' });
 });
 
 test("anyone else's wrong code keeps the emailed code's answer", async () => {
-  const { result } = await launch(null);
   mockVerifyOtp.mockResolvedValueOnce(wrongCode());
   mockInvoke.mockResolvedValueOnce(httpError(401));
-  let answer: { error: { code?: string } | null } = { error: null };
-  await act(async () => {
-    answer = await result.current.verifyCode('a@example.test', '000000');
-  });
-  expect(answer.error?.code).toBe('otp_expired');
+  expect((await verify('a@example.test', '000000'))?.code).toBe('otp_expired');
   expect(mockVerifyOtp).toHaveBeenCalledTimes(1);
 });
 
 test('a locked review account says so instead of wrong code', async () => {
-  const { result } = await launch(null);
   mockVerifyOtp.mockResolvedValueOnce(wrongCode());
   mockInvoke.mockResolvedValueOnce(httpError(429));
-  let answer: { error: { message: string } | null } = { error: null };
-  await act(async () => {
-    answer = await result.current.verifyCode('review@example.test', '424242');
-  });
-  expect(answer.error?.message).toMatch(/too many tries/i);
+  expect((await verify('review@example.test', '424242'))?.message).toMatch(/too many tries/i);
 });
 
 test('rate limited by Auth: review-sign-in is not asked', async () => {
-  const { result } = await launch(null);
-  mockVerifyOtp.mockResolvedValueOnce({
-    data: { user: null, session: null },
-    error: new AuthApiError('Too many requests', 429, 'over_request_rate_limit'),
-  });
-  await act(async () => {
-    await result.current.verifyCode('a@example.test', '000000');
-  });
+  mockVerifyOtp.mockResolvedValueOnce({ data: { user: null, session: null }, error: new AuthApiError('Too many requests', 429, 'over_request_rate_limit') });
+  await verify('a@example.test', '000000');
   expect(mockInvoke).not.toHaveBeenCalled();
 });
