@@ -25,10 +25,10 @@ export interface ShoppingRow {
 export function shopFor(section: BarSection): string {
   if (section === 'bottles') return 'Bottle shop';
   if (section === 'lab') return 'Online or a cook’s shop';
-  if (section === 'preps') return 'Make it yourself';
+  if (section === 'preps') return 'House-made';
   return 'Grocer';
 }
-const SHOP_ORDER = ['Bottle shop', 'Grocer', 'Online or a cook’s shop', 'Make it yourself'];
+const SHOP_ORDER = ['Bottle shop', 'Grocer', 'Online or a cook’s shop', 'House-made'];
 
 /** The drinks one bottle opens on its own: its One away group. */
 export function opensWith(itemId: string | null, oneAway: readonly AwayGroup[]): { id: string; name?: string }[] {

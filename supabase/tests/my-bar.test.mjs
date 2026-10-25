@@ -6,7 +6,7 @@
 // 20261010510000_my_bar_ready_specs.sql), the kit list from
 // 20261010410000_home_kit.sql, the preps one thing short and finished
 // bottles from 20261014400000_my_bar_short_and_finished.sql, and the shopping
-// list from 20261116100000_shopping_list.sql. The can-make cases are
+// list from 20261117300000_shopping_list.sql. The can-make cases are
 // the ones lib/canMake.check.ts held when this ran on the phone. Both
 // functions run as the caller, so they must return nothing the caller
 // couldn't already read. Local stack only: `npm run test:security`.
