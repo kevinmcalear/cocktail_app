@@ -12,6 +12,8 @@ import { SKETCH } from '../../constants/sketch';
 import { band, ell, glassShape, hw, unitsPerMm, type Pt } from './geometry';
 import { paintGarnish } from './garnish';
 import { paintBuild, paintIce } from './ice';
+import { paintBody, paintHandle, paintSleeve } from './material';
+import { shapeFromOutline, tracedIce } from './outline';
 import { makePainter, type LineOpts, type Painter } from './painter';
 import { gauss, hashString, mixHex, rng, type Rng } from './random';
 import { GLASS_BANDS, SceneBuilder, type Scene, type StageName } from './scene';
@@ -44,6 +46,8 @@ function glassParts(P: Painter): [Pt[], LineOpts][] {
     const fl = g.flare ?? 5;
     const ex = g.stemW ? 9 : 6;
     const stem = (side: number) => {
+      // A traced stem and foot follow the real glass; otherwise a fine stem that flares into the foot.
+      if (g.stemProf) return [...g.stemProf, ...(g.footProf ?? [])].map(([y, w]): Pt => [50 + side * w, y]);
       const o: Pt[] = [];
       for (let y = s0; y <= s1; y += 1) {
         const t = (y - s0) / (s1 - s0);
@@ -115,7 +119,8 @@ export function paintSketch(inputs: SketchInputs, { seed, style = DEFAULT_SKETCH
   // looks the same in a tile and on its page.
   const key = `${seed}|${style}`;
   const r = rng(hashString(key));
-  const g = { ...glassShape(inputs.glass, inputs.variant) };
+  // The real glass when its outline was traced; otherwise the family's shape in the drink's variant.
+  const g = { ...(inputs.outline ? shapeFromOutline(inputs.glass, inputs.outline) : glassShape(inputs.glass, inputs.variant)) };
   const build = inputs.build?.length ? inputs.build : null;
   const ice = build ? build[build.length - 1].kind : inputs.ice;
   // Loose ice to the top lifts the surface; a build's top layer at Half doesn't.
@@ -149,11 +154,12 @@ export function paintSketch(inputs: SketchInputs, { seed, style = DEFAULT_SKETCH
   const strength = clear ? 0.55 : Math.min(1.15, 0.55 + liquid.alpha * 0.6);
   const floor = g.stemmed ? bot : g.base!;
   if (g.opaque) {
-    P.wash(P.silhouette, g.opaque, 0.75, { spill: 0.4, fadeTo: 0.55 });
+    if (!paintBody(P, g)) P.wash(P.silhouette, g.opaque, 0.75, { spill: 0.4, fadeTo: 0.55 });
     // Anchored mid-drink: AnimatedSketch spreads the liquid out from there.
     stage('liquid', g.top + 1.6);
     P.wash(band(g, g.top, g.top + 3.2), tone, strength, { layers: 0.6, spill: 0.2, n: 12, blooms: 0 });
   } else {
+    paintBody(P, g);
     stage('liquid', (g.top + floor) / 2);
     P.wash(band(g, g.top, floor), tone, strength);
     P.wash(band(g, g.top + (floor - g.top) * 0.45, floor), mixHex(tone, SKETCH.pool, 0.15), strength * 0.3, { layers: 0.5, spill: 0.5, n: 12, fadeAngle: -Math.PI / 2, fadeTo: 0, blooms: 0.3, v1: 0.2 });
@@ -194,9 +200,12 @@ export function paintSketch(inputs: SketchInputs, { seed, style = DEFAULT_SKETCH
   stage('ice', g.rim);
   const Rt0 = hw(g, g.top);
   P.line(ell(50, g.top, Rt0, Rt0 * e, Math.PI + 0.3, Math.PI * 2 - 0.4, 24), { weight: 0.5, alpha: 0.5, gaps: 1.5 });
-  // Ice sizes are drawn to scale against the glass's real height.
-  const upm = unitsPerMm(g, inputs.glass, inputs.glassMm);
-  const iced = build ? paintBuild(P, build, inputs.glass, upm) : paintIce(P, ice, inputs.glass, readIceLook(inputs.iceLook), upm);
+  // Ice sizes are drawn to scale against the glass's real height (a traced glass knows its own).
+  const upm = unitsPerMm(g, inputs.glass, inputs.outline?.height_mm ?? inputs.glassMm);
+  const look = readIceLook(inputs.iceLook);
+  const iced = !inputs.outline
+    ? build ? paintBuild(P, build, inputs.glass, upm) : paintIce(P, ice, inputs.glass, look, upm)
+    : build ? paintBuild(P, build.map((L) => ({ ...L, ...tracedIce(L.kind, L) })), inputs.glass, upm) : paintIce(P, ice, inputs.glass, tracedIce(ice, look), upm);
   if (inputs.fizz && !g.opaque) {
     stage('fizz', floor);
     const n = P.clipInner();
@@ -235,6 +244,7 @@ export function paintSketch(inputs: SketchInputs, { seed, style = DEFAULT_SKETCH
   }
   for (const [p, o] of iced.late) P.line(p, o);
 
+  paintSleeve(P, g);
   // --- garnish colour, shadow, then the pencil on top ---
   stage('garnish', g.rim);
   const garnishLines = paintGarnish(P, inputs.garnish, iced.crown, surface);
@@ -248,7 +258,7 @@ export function paintSketch(inputs: SketchInputs, { seed, style = DEFAULT_SKETCH
     }
   }
   for (const [p, o] of parts) P.line(p, o);
-  if (g.handle) {
+  if (!paintHandle(P, g) && g.handle) {
     const hx0 = 50 + hw(g, g.rim + 10);
     P.line([[hx0, g.rim + 10], [hx0 + 8, g.rim + 12], [hx0 + 9, g.rim + 26], [hx0 + 1, g.rim + 32]], { weight: 1, wob: 1.2 });
     P.line([[hx0, g.rim + 15], [hx0 + 4.5, g.rim + 16], [hx0 + 5, g.rim + 25], [hx0 + 0.5, g.rim + 28]], { weight: 0.6, alpha: 0.7 });

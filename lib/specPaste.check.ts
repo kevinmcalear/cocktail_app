@@ -69,3 +69,13 @@ assert.equal(readSpec('2 oz lime juice\n- Ice cream', rows)[1].kind, 'line', 'an
 assert.deepEqual(readSpec('\n  \n', rows), [], 'nothing pasted, nothing read');
 
 console.log('specPaste checks passed');
+
+// A bottle said with its kind after it, in any case, is the catalogue's bottle, not a new one (owner walkthrough, 25 Oct).
+{
+  const agave = [{ id: 'vida', name: 'Del Maguey Vida' }, { id: 'rye', name: 'Rye' }];
+  const aliases = [{ key: 'del maguey vida clasico', item_id: 'vida' }];
+  assert.equal(readSpec('1 oz Del Maguey Vida mezcal', agave)[0].pick.id, 'vida');
+  assert.equal(readSpec('1 oz DEL MAGUEY VIDA', agave)[0].pick.id, 'vida');
+  assert.equal(readSpec('1 oz Del Maguey Vida Clásico mezcal', agave, { aliases })[0].pick.id, 'vida', 'through an alias too');
+  assert.equal(readSpec('2 oz Rye whiskey', agave)[0].pick.id, null, 'one word left is never the bottle');
+}

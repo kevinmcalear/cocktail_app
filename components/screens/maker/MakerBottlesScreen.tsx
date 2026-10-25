@@ -3,16 +3,19 @@ import { useState } from 'react';
 import { ScrollView, StyleSheet, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
-import { BackbarTheme, Body, Caption, Chip, Display, DsText, GlassButton, PressableScale, Surface, useDs, useGutter } from '@/components/ds';
+import { BackbarTheme, Body, Button, Caption, Chip, Display, DsText, GlassButton, PressableScale, Surface, useBreakpoint, useDs, useGutter } from '@/components/ds';
 import { NoteSheet } from '@/components/feedback/NoteSheet';
 import { IconSymbol } from '@/components/ui/icon-symbol';
 import { WebHead } from '@/components/WebHead';
 import { fontFamilies, layout, radius, space } from '@/constants/tokens';
 import { useMakerBottles, type MakerBottle } from '@/hooks/useMakers';
 import { useBottleUses, useMakerBottlePhotos, useOnMakerTeam } from '@/hooks/useMakerPhotos';
+import { usePhotoFolder } from '@/hooks/usePhotoFolder';
 import { useProfile } from '@/hooks/useProfiles';
+import { pickPhotoFolder } from '@/lib/photoFolder';
 
 import { BottlePhotoSheet } from './BottlePhotoSheet';
+import { FolderTray } from './FolderTray';
 import { MakerBottleRow } from './MakerBottleRow';
 
 type Filter = 'all' | 'need' | 'have';
@@ -44,6 +47,9 @@ function Page({ profileRef, welcome }: { profileRef: string; welcome: boolean })
   const [filter, setFilter] = useState<Filter>('all');
   const [open, setOpen] = useState<MakerBottle | null>(null);
   const [tellUs, setTellUs] = useState(false);
+  const [pickError, setPickError] = useState<string | null>(null);
+  const folder = usePhotoFolder(profile?.id ?? '', bottles);
+  const wide = useBreakpoint() !== 'phone';
 
   const withPhoto = bottles.filter((b) => photos[b.id]).length;
   const shown = bottles.filter((b) => (filter === 'all' ? true : filter === 'have' ? !!photos[b.id] : !photos[b.id]));
@@ -53,15 +59,32 @@ function Page({ profileRef, welcome }: { profileRef: string; welcome: boolean })
     if (isLoading || teamLoading) return <Caption tone="muted">Loading…</Caption>;
     if (!profile || profile.kind !== 'maker') return <Body tone="muted">There’s no maker page here.</Body>;
     if (!onTeam) return <Body tone="muted">{`Only ${profile.display_name}’s own team can add photos of its bottles.`}</Body>;
+    if (folder.photos.length) return <FolderTray folder={folder} bottles={bottles} photos={photos} maker={profile.display_name} />;
+    const addMany = (
+      <Button
+        label={wide ? 'Add a folder of photos' : 'Add photos'}
+        icon={wide ? 'folder.fill' : 'photo'}
+        variant="secondary"
+        style={wide ? null : styles.addMany}
+        onPress={() => {
+          setPickError(null);
+          void pickPhotoFolder({ folder: wide }).then(folder.add, (e: Error) => setPickError(e.message));
+        }}
+      />
+    );
     return (
       <View style={styles.page}>
         {welcome ? <Welcome name={profile.display_name} /> : null}
-        <View style={styles.head}>
-          <Display role="heading">Your bottles</Display>
-          <Caption tone="muted">
-            {bottlesLoading ? 'Loading bottles…' : `${bottles.length} ${bottles.length === 1 ? 'bottle' : 'bottles'} in the catalogue · ${withPhoto} with a photo`}
-          </Caption>
+        <View style={wide ? styles.headRow : null}>
+          <View style={styles.head}>
+            <Display role="heading">Your bottles</Display>
+            <Caption tone="muted">
+              {bottlesLoading ? 'Loading bottles…' : `${bottles.length} ${bottles.length === 1 ? 'bottle' : 'bottles'} in the catalogue · ${withPhoto} with a photo`}
+            </Caption>
+          </View>
+          {bottles.length ? addMany : null}
         </View>
+        {pickError ? <Caption tone="accent" role="alert">{pickError}</Caption> : null}
         {bottles.length ? (
           <View role="radiogroup" aria-label="Show" style={styles.chips}>
             <Chip label="All" count={bottles.length} selected={filter === 'all'} onPress={() => setFilter('all')} />
@@ -129,7 +152,9 @@ const styles = StyleSheet.create({
   readable: { width: '100%', maxWidth: 960, alignSelf: 'center' },
   controls: { position: 'absolute' },
   page: { gap: space.lg },
-  head: { gap: space.xs },
+  head: { flex: 1, minWidth: 0, gap: space.xs },
+  headRow: { flexDirection: 'row', alignItems: 'flex-end', gap: space.md },
+  addMany: { alignSelf: 'flex-start', marginTop: space.md },
   chips: { flexDirection: 'row', flexWrap: 'wrap', gap: space.sm },
   welcome: { flexDirection: 'row', alignItems: 'center', gap: space.md, borderWidth: 1, borderRadius: radius.card },
   tick: { width: 32, height: 32, borderRadius: radius.pill, alignItems: 'center', justifyContent: 'center' },

@@ -1,0 +1,977 @@
+{
+ "maker": "krosno",
+ "models": [
+  {
+   "name": "Avant-Garde Cocktail 290 ml",
+   "series": "Avant-Garde",
+   "designer": "Anna Grabowska-Szczur",
+   "model_code": "F579917023003110",
+   "glass": "coupe",
+   "variant": null,
+   "capacity_ml": 290,
+   "capacity_as_stated": "290 ml",
+   "height_mm": null,
+   "rim_mm": null,
+   "material": "lead-free crystal",
+   "product_url": "https://krosno.com/en/products/avant-garde-cocktail-glasses-290ml",
+   "source_urls": [
+    "https://krosno.com/en/products/avant-garde-cocktail-glasses-290ml",
+    "https://krosno.com/en/collections/avant-garde/products.json"
+   ]
+  },
+  {
+   "name": "Avant-Garde Highball 550 ml",
+   "series": "Avant-Garde",
+   "designer": "Anna Grabowska-Szczur",
+   "model_code": "F68B042054003040",
+   "glass": "highball",
+   "variant": null,
+   "capacity_ml": 550,
+   "capacity_as_stated": "550 ml",
+   "height_mm": 150,
+   "rim_mm": null,
+   "material": "lead-free crystal",
+   "product_url": "https://krosno.com/en/products/avant-garde-tumblers-550ml",
+   "source_urls": [
+    "https://krosno.com/en/products/avant-garde-tumblers-550ml",
+    "https://www.amazon.co.uk/Krosno-Avant-Garde-Collection-Restaurants-Dishwasher/dp/B07K1HPQMQ",
+    "https://krosno.com/en/collections/avant-garde/products.json"
+   ]
+  },
+  {
+   "name": "Avant-Garde Martini 240 ml",
+   "series": "Avant-Garde",
+   "designer": "Anna Grabowska-Szczur",
+   "model_code": "F5782350150B3N90",
+   "glass": "martini",
+   "variant": null,
+   "capacity_ml": 240,
+   "capacity_as_stated": "240 ml total (150 ml fill)",
+   "height_mm": 167,
+   "rim_mm": null,
+   "material": "lead-free crystal",
+   "product_url": "https://krosno.com/en/products/avant-garde-martini-glasses-240ml",
+   "source_urls": [
+    "https://krosno.com/en/products/avant-garde-martini-glasses-240ml",
+    "https://krosno.com.pl/kieliszki-do-martini-avant-garde-150ml",
+    "https://krosno.com/en/collections/avant-garde/products.json"
+   ]
+  },
+  {
+   "name": "Avant-Garde Tumbler 430 ml",
+   "series": "Avant-Garde",
+   "designer": "Anna Grabowska-Szczur",
+   "model_code": "F68B042038002040",
+   "glass": "rocks",
+   "variant": null,
+   "capacity_ml": 430,
+   "capacity_as_stated": "430 ml total",
+   "height_mm": 100,
+   "rim_mm": null,
+   "material": "lead-free crystal",
+   "product_url": "https://krosno.com/en/products/avant-garde-tumblers-430ml",
+   "source_urls": [
+    "https://krosno.com/en/products/avant-garde-tumblers-430ml",
+    "https://www.amazon.com/Avant-Garde-Collection-Restaurants-Dishwasher-Microwave/dp/B08R6PJC2C",
+    "https://krosno.com/en/collections/avant-garde/products.json"
+   ]
+  },
+  {
+   "name": "Avant-Garde Whisky Tasting 125 ml",
+   "series": "Avant-Garde",
+   "designer": "Anna Grabowska-Szczur",
+   "model_code": "F57C684011001010",
+   "glass": "snifter",
+   "variant": null,
+   "capacity_ml": 125,
+   "capacity_as_stated": "125 ml total (110 ml fill)",
+   "height_mm": 153,
+   "rim_mm": null,
+   "material": "lead-free crystal",
+   "product_url": "https://krosno.com/en/products/avant-garde-whisky-tasting-glasses-125ml",
+   "source_urls": [
+    "https://krosno.com/en/products/avant-garde-whisky-tasting-glasses-125ml",
+    "https://krosno.com.pl/kieliszki-do-degustacji-whisky-avant-garde-110ml",
+    "https://krosno.com/en/collections/avant-garde/products.json"
+   ]
+  },
+  {
+   "name": "Ballerina Cocktail 270 ml (clear)",
+   "series": "Ballerina",
+   "designer": null,
+   "model_code": "F077089027001010",
+   "glass": "coupe",
+   "variant": null,
+   "capacity_ml": 270,
+   "capacity_as_stated": "270 ml",
+   "height_mm": null,
+   "rim_mm": null,
+   "material": "lead-free crystal",
+   "product_url": "https://krosno.com/en/products/ballerina-cocktail-glasses-clear-270ml",
+   "source_urls": [
+    "https://krosno.com/en/products/ballerina-cocktail-glasses-clear-270ml",
+    "https://krosno.com/en/collections/do-drinkow-i-koktajli/products.json"
+   ]
+  },
+  {
+   "name": "Divine Gin & Tonic Balloon 790 ml",
+   "series": "Divine",
+   "designer": null,
+   "model_code": "F57C676067005010",
+   "glass": "spritz",
+   "variant": null,
+   "capacity_ml": 790,
+   "capacity_as_stated": "790 ml total (670 ml fill)",
+   "height_mm": 195,
+   "rim_mm": null,
+   "material": "lead-free crystal",
+   "product_url": "https://krosno.com/en/products/divine-gin-tonic-balloon-glasses-790ml",
+   "source_urls": [
+    "https://krosno.com/en/products/divine-gin-tonic-balloon-glasses-790ml",
+    "https://krosno.com.pl/kieliszki-typu-baloon-gin-tonic-divine",
+    "https://krosno.com/en/collections/divine/products.json"
+   ]
+  },
+  {
+   "name": "Divine Martini 250 ml",
+   "series": "Divine",
+   "designer": null,
+   "model_code": "F57C735017002010",
+   "glass": "martini",
+   "variant": null,
+   "capacity_ml": 250,
+   "capacity_as_stated": "250 ml",
+   "height_mm": 200,
+   "rim_mm": null,
+   "material": "glass",
+   "product_url": "https://krosno.com/en/products/divine-martini-glasses-250ml",
+   "source_urls": [
+    "https://krosno.com/en/products/divine-martini-glasses-250ml",
+    "https://www.empik.com/kieliszki-do-martini-krosno-divine-250ml-komplet-6szt-krosno,p1614860075,dom-i-ogrod-p",
+    "https://krosno.com/en/collections/divine/products.json"
+   ]
+  },
+  {
+   "name": "Harmony Gin & Tonic 700 ml",
+   "series": "Harmony",
+   "designer": null,
+   "model_code": "F579689070001010",
+   "glass": "spritz",
+   "variant": null,
+   "capacity_ml": 700,
+   "capacity_as_stated": "700 ml",
+   "height_mm": 210,
+   "rim_mm": null,
+   "material": "glass",
+   "product_url": "https://krosno.com/en/products/harmony-gin-tonic-glasses-700ml",
+   "source_urls": [
+    "https://krosno.com/en/products/harmony-gin-tonic-glasses-700ml",
+    "https://krosno.com.pl/kieliszki-gin-tonic-harmon-700ml",
+    "https://krosno.com/en/collections/do-drinkow-i-koktajli/products.json"
+   ]
+  },
+  {
+   "name": "Harmony Martini 340 ml",
+   "series": "Harmony",
+   "designer": null,
+   "model_code": "F579270024501010",
+   "glass": "martini",
+   "variant": null,
+   "capacity_ml": 340,
+   "capacity_as_stated": "340 ml total (245 ml fill)",
+   "height_mm": 185,
+   "rim_mm": null,
+   "material": "lead-free crystal",
+   "product_url": "https://krosno.com/en/products/harmony-martini-glasses-340ml",
+   "source_urls": [
+    "https://krosno.com/en/products/harmony-martini-glasses-340ml",
+    "https://krosno.com.pl/kieliszki-do-martini-harmony",
+    "https://krosno.com/en/collections/do-drinkow-i-koktajli/products.json"
+   ]
+  },
+  {
+   "name": "Krista Martini 280 ml",
+   "series": "Krista",
+   "designer": null,
+   "model_code": "F576030017020500",
+   "glass": "martini",
+   "variant": null,
+   "capacity_ml": 280,
+   "capacity_as_stated": "280 ml total (170 ml fill)",
+   "height_mm": 167,
+   "rim_mm": null,
+   "material": "lead-free crystal",
+   "product_url": "https://krosno.com/en/products/krista-martini-glasses-280ml",
+   "source_urls": [
+    "https://krosno.com/en/products/krista-martini-glasses-280ml",
+    "https://krosno.com/en/products/kieliszek-do-martini-krista-170ml",
+    "https://krosno.com/en/collections/do-drinkow-i-koktajli/products.json"
+   ]
+  },
+  {
+   "name": "Mixology Hourglass Beer 670 ml",
+   "series": "Mixology",
+   "designer": null,
+   "model_code": "F688466050006120",
+   "glass": "beer",
+   "variant": null,
+   "capacity_ml": 670,
+   "capacity_as_stated": "670 ml",
+   "height_mm": 235,
+   "rim_mm": null,
+   "material": "glass",
+   "product_url": "https://krosno.com/en/products/mixology-hourglass-beer-glasses-670ml",
+   "source_urls": [
+    "https://krosno.com/en/products/mixology-hourglass-beer-glasses-670ml",
+    "https://krosno.com/en/collections/do-piwa/products.json"
+   ]
+  },
+  {
+   "name": "Mixology Margarita 270 ml",
+   "series": "Mixology",
+   "designer": null,
+   "model_code": "F578545027028210",
+   "glass": "coupe",
+   "variant": null,
+   "capacity_ml": 270,
+   "capacity_as_stated": "270 ml",
+   "height_mm": 169,
+   "rim_mm": null,
+   "material": "lead-free crystal",
+   "product_url": "https://krosno.com/en/products/mixology-margarita-glasses-270ml",
+   "source_urls": [
+    "https://krosno.com/en/products/mixology-margarita-glasses-270ml",
+    "https://krosno.com/en/collections/do-drinkow-i-koktajli/products.json"
+   ]
+  },
+  {
+   "name": "Mixology Nonic 500 ml",
+   "series": "Mixology",
+   "designer": null,
+   "model_code": "F68A144050017680",
+   "glass": "beer",
+   "variant": null,
+   "capacity_ml": 500,
+   "capacity_as_stated": "500 ml",
+   "height_mm": null,
+   "rim_mm": null,
+   "material": "glass",
+   "product_url": "https://krosno.com/en/products/mixology-nonic-beer-glasses-500ml",
+   "source_urls": [
+    "https://krosno.com/en/products/mixology-nonic-beer-glasses-500ml",
+    "https://krosno.com/en/collections/do-piwa/products.json"
+   ]
+  },
+  {
+   "name": "Mixology Pilsner 500 ml",
+   "series": "Mixology",
+   "designer": null,
+   "model_code": "F689866050020370",
+   "glass": "beer",
+   "variant": null,
+   "capacity_ml": 500,
+   "capacity_as_stated": "500 ml (680 ml total)",
+   "height_mm": 230,
+   "rim_mm": null,
+   "material": "glass",
+   "product_url": "https://krosno.com/en/products/mixology-pilsner-beer-glasses-500ml",
+   "source_urls": [
+    "https://krosno.com/en/products/mixology-pilsner-beer-glasses-500ml",
+    "https://krosno.com/en/collections/do-piwa/products.json"
+   ]
+  },
+  {
+   "name": "Roma Water and Cocktail Goblet 470 ml",
+   "series": "Roma",
+   "designer": null,
+   "model_code": "F57C978047001010",
+   "glass": "wine",
+   "variant": null,
+   "capacity_ml": 470,
+   "capacity_as_stated": "470 ml",
+   "height_mm": 175,
+   "rim_mm": null,
+   "material": "lead-free crystal",
+   "product_url": "https://krosno.com/en/products/roma-water-cocktail-goblets-470ml",
+   "source_urls": [
+    "https://krosno.com/en/products/roma-water-cocktail-goblets-470ml",
+    "https://krosno.com/en/products/kieliszki-do-wody-goblet-roma-360ml",
+    "https://krosno.com/en/collections/do-drinkow-i-koktajli/products.json"
+   ]
+  },
+  {
+   "name": "Shake N°2 Breakfast Martini 180 ml",
+   "series": "Shake",
+   "designer": null,
+   "model_code": "F68C505015001010",
+   "glass": "martini",
+   "variant": null,
+   "capacity_ml": 180,
+   "capacity_as_stated": "180 ml",
+   "height_mm": null,
+   "rim_mm": null,
+   "material": "glass",
+   "product_url": "https://krosno.com/en/products/shake-breakfast-martini-drinks-glasses-180ml",
+   "source_urls": [
+    "https://krosno.com/en/products/shake-breakfast-martini-drinks-glasses-180ml",
+    "https://krosno.com/en/collections/do-drinkow-i-koktajli/products.json"
+   ]
+  },
+  {
+   "name": "Shake N°7 French 75 120 ml",
+   "series": "Shake",
+   "designer": null,
+   "model_code": "F57C979012001010",
+   "glass": "flute",
+   "variant": null,
+   "capacity_ml": 120,
+   "capacity_as_stated": "120 ml",
+   "height_mm": null,
+   "rim_mm": null,
+   "material": "lead-free crystal",
+   "product_url": "https://krosno.com/en/products/shake-french-75-tall-cocktail-glasses-120ml",
+   "source_urls": [
+    "https://krosno.com/en/products/shake-french-75-tall-cocktail-glasses-120ml",
+    "https://krosno.com/en/collections/do-drinkow-i-koktajli/products.json"
+   ]
+  },
+  {
+   "name": "Shake N°3 Ginger 230 ml",
+   "series": "Shake",
+   "designer": null,
+   "model_code": "F68C509020001010",
+   "glass": "rocks",
+   "variant": null,
+   "capacity_ml": 230,
+   "capacity_as_stated": "230 ml",
+   "height_mm": 105,
+   "rim_mm": null,
+   "material": "glass",
+   "product_url": "https://krosno.com/en/products/shake-ginger-drinks-glasses-230ml",
+   "source_urls": [
+    "https://krosno.com/en/products/shake-ginger-drinks-glasses-230ml",
+    "https://krosno.com/en/products/szklanki-do-drinkow-shake-ginger",
+    "https://szklosklep.pl/szklanki-do-drinkow-krosno-shake-n3-ginger-p-272.html",
+    "https://krosno.com/en/collections/do-drinkow-i-koktajli/products.json"
+   ]
+  },
+  {
+   "name": "Shake N°1 Manhattan 230 ml",
+   "series": "Shake",
+   "designer": "Anna Grabowska-Szczur",
+   "model_code": "F68C506019001010",
+   "glass": "rocks",
+   "variant": null,
+   "capacity_ml": 230,
+   "capacity_as_stated": "230 ml total (190 ml fill)",
+   "height_mm": 105,
+   "rim_mm": null,
+   "material": "glass",
+   "product_url": "https://krosno.com/en/products/shake-manhattan-drinks-glasses-230ml",
+   "source_urls": [
+    "https://krosno.com/en/products/shake-manhattan-drinks-glasses-230ml",
+    "https://krosno.com.pl/szklanki-do-drinkow-shake-manhattan",
+    "https://krosno.com/en/collections/do-drinkow-i-koktajli/products.json"
+   ]
+  },
+  {
+   "name": "Splendour IPA 400 ml",
+   "series": "Splendour",
+   "designer": null,
+   "model_code": "F68A784040014460",
+   "glass": "beer",
+   "variant": null,
+   "capacity_ml": 400,
+   "capacity_as_stated": "400 ml",
+   "height_mm": null,
+   "rim_mm": null,
+   "material": "glass",
+   "product_url": "https://krosno.com/en/products/splendour-ipa-beer-glasses-400ml",
+   "source_urls": [
+    "https://krosno.com/en/products/splendour-ipa-beer-glasses-400ml",
+    "https://krosno.com/en/collections/do-piwa/products.json"
+   ]
+  },
+  {
+   "name": "Splendour Liqueur or Vodka 70 ml",
+   "series": "Splendour",
+   "designer": null,
+   "model_code": "F578187006016310",
+   "glass": "snifter",
+   "variant": null,
+   "capacity_ml": 70,
+   "capacity_as_stated": "70 ml",
+   "height_mm": null,
+   "rim_mm": null,
+   "material": "lead-free crystal",
+   "product_url": "https://krosno.com/en/products/splendour-liqueur-vodka-glasses-70ml",
+   "source_urls": [
+    "https://krosno.com/en/products/splendour-liqueur-vodka-glasses-70ml",
+    "https://krosno.com/en/collections/splendour/products.json"
+   ]
+  },
+  {
+   "name": "Splendour Long Drink 480 ml",
+   "series": "Splendour",
+   "designer": null,
+   "model_code": "F688596048060F50",
+   "glass": "highball",
+   "variant": null,
+   "capacity_ml": 480,
+   "capacity_as_stated": "490 ml total (480 ml fill)",
+   "height_mm": 155,
+   "rim_mm": null,
+   "material": "lead-free crystal",
+   "product_url": "https://krosno.com/en/products/splendour-long-drink-tumblers-480ml",
+   "source_urls": [
+    "https://krosno.com/en/products/splendour-long-drink-tumblers-480ml",
+    "https://krosno.com.pl/szklanki-long-drink-splendour-480ml",
+    "https://krosno.com/en/collections/splendour/products.json"
+   ]
+  },
+  {
+   "name": "Splendour Tumbler 400 ml",
+   "series": "Splendour",
+   "designer": null,
+   "model_code": "F6885960400H9EF0",
+   "glass": "rocks",
+   "variant": null,
+   "capacity_ml": 400,
+   "capacity_as_stated": "430 ml total (400 ml fill)",
+   "height_mm": 109,
+   "rim_mm": null,
+   "material": "glass",
+   "product_url": "https://krosno.com/en/products/splendour-tumblers-400ml",
+   "source_urls": [
+    "https://krosno.com/en/products/splendour-tumblers-400ml",
+    "https://krosno.com.pl/szklanki-do-napojow-splendour-400ml",
+    "https://krosno.com/en/collections/splendour/products.json"
+   ]
+  },
+  {
+   "name": "Splendour Wheat Beer 580 ml",
+   "series": "Splendour",
+   "designer": null,
+   "model_code": "F689879050014240",
+   "glass": "beer",
+   "variant": null,
+   "capacity_ml": 580,
+   "capacity_as_stated": "580 ml",
+   "height_mm": 235,
+   "rim_mm": null,
+   "material": "glass",
+   "product_url": "https://krosno.com/en/products/splendour-wheat-beer-glasses-580ml",
+   "source_urls": [
+    "https://krosno.com/en/products/splendour-wheat-beer-glasses-580ml",
+    "https://krosno.com/en/collections/do-piwa/products.json"
+   ]
+  },
+  {
+   "name": "Xno Beer Goblet 430",
+   "series": "Xno",
+   "designer": null,
+   "model_code": "F57A764042041930",
+   "glass": "beer",
+   "variant": null,
+   "capacity_ml": 430,
+   "capacity_as_stated": "430 ml (fill line 330 ml)",
+   "height_mm": 206,
+   "rim_mm": null,
+   "material": "lead-free crystal",
+   "product_url": "https://krosno.com/en/products/xno-beer-goblet-430-glasses-430ml",
+   "source_urls": [
+    "https://krosno.com/en/products/xno-beer-goblet-430-glasses-430ml",
+    "https://krosno.com/en/collections/do-piwa/products.json"
+   ]
+  },
+  {
+   "name": "Xno Beer Goblet 540",
+   "series": "Xno",
+   "designer": null,
+   "model_code": "FKMD127048003000",
+   "glass": "beer",
+   "variant": null,
+   "capacity_ml": 540,
+   "capacity_as_stated": "540 ml",
+   "height_mm": 196,
+   "rim_mm": null,
+   "material": "lead-free crystal",
+   "product_url": "https://krosno.com/en/products/xno-beer-goblet-540-540ml",
+   "source_urls": [
+    "https://krosno.com/en/products/xno-beer-goblet-540-540ml",
+    "https://krosno.com/en/collections/do-piwa/products.json"
+   ]
+  },
+  {
+   "name": "Xno Copa 270 Axis",
+   "series": "Xno",
+   "designer": null,
+   "model_code": "F57C978025001010",
+   "glass": "spritz",
+   "variant": null,
+   "capacity_ml": 275,
+   "capacity_as_stated": "275 ml",
+   "height_mm": null,
+   "rim_mm": null,
+   "material": "lead-free crystal",
+   "product_url": "https://krosno.com/en/products/xno-copa-270-axis-glasses-275ml",
+   "source_urls": [
+    "https://krosno.com/en/products/xno-copa-270-axis-glasses-275ml",
+    "https://krosno.com/en/collections/xno/products.json"
+   ]
+  },
+  {
+   "name": "Xno Copa 390 Axis",
+   "series": "Xno",
+   "designer": null,
+   "model_code": "F57C978036004100",
+   "glass": "spritz",
+   "variant": null,
+   "capacity_ml": 390,
+   "capacity_as_stated": "390 ml",
+   "height_mm": null,
+   "rim_mm": null,
+   "material": "lead-free crystal",
+   "product_url": "https://krosno.com/en/products/xno-copa-390-axis-glasses-390ml",
+   "source_urls": [
+    "https://krosno.com/en/products/xno-copa-390-axis-glasses-390ml",
+    "https://krosno.com/en/collections/xno/products.json"
+   ]
+  },
+  {
+   "name": "Xno Copa 515 Axis",
+   "series": "Xno",
+   "designer": null,
+   "model_code": "F57C978047002030",
+   "glass": "spritz",
+   "variant": null,
+   "capacity_ml": 515,
+   "capacity_as_stated": "515 ml",
+   "height_mm": null,
+   "rim_mm": null,
+   "material": "lead-free crystal",
+   "product_url": "https://krosno.com/en/products/xno-copa-515-axis-glasses-515ml",
+   "source_urls": [
+    "https://krosno.com/en/products/xno-copa-515-axis-glasses-515ml",
+    "https://krosno.com/en/collections/xno/products.json"
+   ]
+  },
+  {
+   "name": "Xno Copa 530",
+   "series": "Xno",
+   "designer": null,
+   "model_code": "F578235048041940",
+   "glass": "spritz",
+   "variant": null,
+   "capacity_ml": 530,
+   "capacity_as_stated": "530 ml",
+   "height_mm": 207,
+   "rim_mm": null,
+   "material": "lead-free crystal",
+   "product_url": "https://krosno.com/en/products/xno-copa-530-glasses-530ml",
+   "source_urls": [
+    "https://krosno.com/en/products/xno-copa-530-glasses-530ml",
+    "https://krosno.com/en/collections/xno/products.json"
+   ]
+  },
+  {
+   "name": "Xno Copa 660 Axis",
+   "series": "Xno",
+   "designer": null,
+   "model_code": "F57C978061001010",
+   "glass": "spritz",
+   "variant": null,
+   "capacity_ml": 660,
+   "capacity_as_stated": "660 ml",
+   "height_mm": null,
+   "rim_mm": null,
+   "material": "lead-free crystal",
+   "product_url": "https://krosno.com/en/products/xno-copa-660-axis-glasses-660ml",
+   "source_urls": [
+    "https://krosno.com/en/products/xno-copa-660-axis-glasses-660ml",
+    "https://krosno.com/en/collections/xno/products.json"
+   ]
+  },
+  {
+   "name": "Xno Coupette 240",
+   "series": "Xno",
+   "designer": null,
+   "model_code": "F57D492023001010",
+   "glass": "coupe",
+   "variant": null,
+   "capacity_ml": 240,
+   "capacity_as_stated": "240 ml",
+   "height_mm": 141,
+   "rim_mm": null,
+   "material": "lead-free crystal",
+   "product_url": "https://krosno.com/en/products/xno-coupette-240-glasses-240ml",
+   "source_urls": [
+    "https://krosno.com/en/products/xno-coupette-240-glasses-240ml",
+    "https://krosno.com/wp-content/uploads/2025/12/krosno_xno_en_v03.pdf",
+    "https://krosno.com/en/collections/xno/products.json"
+   ]
+  },
+  {
+   "name": "Xno Coupette 250",
+   "series": "Xno",
+   "designer": null,
+   "model_code": "F57D493022001010",
+   "glass": "coupe",
+   "variant": null,
+   "capacity_ml": 250,
+   "capacity_as_stated": "250 ml",
+   "height_mm": 150,
+   "rim_mm": null,
+   "material": "lead-free crystal",
+   "product_url": "https://krosno.com/en/products/xno-coupette-250-glasses-250ml",
+   "source_urls": [
+    "https://krosno.com/en/products/xno-coupette-250-glasses-250ml",
+    "https://krosno.com/wp-content/uploads/2025/12/krosno_xno_en_v03.pdf",
+    "https://krosno.com/en/collections/xno/products.json"
+   ]
+  },
+  {
+   "name": "Xno Coupette 260 Axis",
+   "series": "Xno",
+   "designer": null,
+   "model_code": "F57C978023005100",
+   "glass": "coupe",
+   "variant": null,
+   "capacity_ml": 260,
+   "capacity_as_stated": "260 ml",
+   "height_mm": 140,
+   "rim_mm": null,
+   "material": "lead-free crystal",
+   "product_url": "https://krosno.com/en/products/xno-coupette-260-axis-glasses-260ml",
+   "source_urls": [
+    "https://krosno.com/en/products/xno-coupette-260-axis-glasses-260ml",
+    "https://krosno.com/en/products/kieliszki-xno-coupette-260-axis",
+    "https://krosno.com/en/collections/xno/products.json"
+   ]
+  },
+  {
+   "name": "Xno Coupette 260",
+   "series": "Xno",
+   "designer": null,
+   "model_code": "F57D494022001010",
+   "glass": "coupe",
+   "variant": null,
+   "capacity_ml": 260,
+   "capacity_as_stated": "260 ml",
+   "height_mm": 140,
+   "rim_mm": null,
+   "material": "lead-free crystal",
+   "product_url": "https://krosno.com/en/products/xno-coupette-260-glasses-260ml",
+   "source_urls": [
+    "https://krosno.com/en/products/xno-coupette-260-glasses-260ml",
+    "https://krosno.com/wp-content/uploads/2025/12/krosno_xno_en_v03.pdf",
+    "https://krosno.com/en/collections/xno/products.json"
+   ]
+  },
+  {
+   "name": "Xno Highball 280 Ice",
+   "series": "Xno",
+   "designer": null,
+   "model_code": "F682945023508020",
+   "glass": "collins",
+   "variant": null,
+   "capacity_ml": 280,
+   "capacity_as_stated": "280 ml",
+   "height_mm": 135,
+   "rim_mm": null,
+   "material": "lead-free crystal",
+   "product_url": "https://krosno.com/en/products/xno-highball-280-ice-tumblers-280ml",
+   "source_urls": [
+    "https://krosno.com/en/products/xno-highball-280-ice-tumblers-280ml",
+    "https://krosno.com/en/collections/xno/products.json"
+   ]
+  },
+  {
+   "name": "Xno Highball 330 Ice",
+   "series": "Xno",
+   "designer": null,
+   "model_code": "F68D416030001030",
+   "glass": "collins",
+   "variant": null,
+   "capacity_ml": 330,
+   "capacity_as_stated": "330 ml",
+   "height_mm": 148,
+   "rim_mm": null,
+   "material": "lead-free crystal",
+   "product_url": "https://krosno.com/en/products/xno-highball-330-ice-tumblers-330ml",
+   "source_urls": [
+    "https://krosno.com/en/products/xno-highball-330-ice-tumblers-330ml",
+    "https://krosno.com/wp-content/uploads/2025/12/krosno_xno_en_v03.pdf",
+    "https://krosno.com/en/collections/xno/products.json"
+   ]
+  },
+  {
+   "name": "Xno Highball 360 Ice",
+   "series": "Xno",
+   "designer": null,
+   "model_code": "F68D430034001010",
+   "glass": "collins",
+   "variant": null,
+   "capacity_ml": 360,
+   "capacity_as_stated": "360 ml",
+   "height_mm": 174,
+   "rim_mm": null,
+   "material": "lead-free crystal",
+   "product_url": "https://krosno.com/en/products/xno-highball-360-ice-tumblers-360ml",
+   "source_urls": [
+    "https://krosno.com/en/products/xno-highball-360-ice-tumblers-360ml",
+    "https://krosno.com/wp-content/uploads/2025/12/krosno_xno_en_v03.pdf",
+    "https://krosno.com/en/collections/xno/products.json"
+   ]
+  },
+  {
+   "name": "Xno Highball 380",
+   "series": "Xno",
+   "designer": null,
+   "model_code": "F688486038002010",
+   "glass": "highball",
+   "variant": null,
+   "capacity_ml": 380,
+   "capacity_as_stated": "380 ml",
+   "height_mm": 109,
+   "rim_mm": null,
+   "material": "lead-free crystal",
+   "product_url": "https://krosno.com/en/products/xno-highball-380-tumblers-380ml",
+   "source_urls": [
+    "https://krosno.com/en/products/xno-highball-380-tumblers-380ml",
+    "https://krosno.com/wp-content/uploads/2025/12/krosno_xno_en_v03.pdf",
+    "https://krosno.com/en/products/szklanki-xno-highball-380",
+    "https://krosno.com/en/collections/xno/products.json"
+   ]
+  },
+  {
+   "name": "Xno Martini 200",
+   "series": "Xno",
+   "designer": null,
+   "model_code": "F57D477017001010",
+   "glass": "martini",
+   "variant": null,
+   "capacity_ml": 200,
+   "capacity_as_stated": "200 ml",
+   "height_mm": 162,
+   "rim_mm": null,
+   "material": "lead-free crystal",
+   "product_url": "https://krosno.com/en/products/xno-martini-200-glasses-200ml",
+   "source_urls": [
+    "https://krosno.com/en/products/xno-martini-200-glasses-200ml",
+    "https://krosno.com/en/products/kieliszki-xno-martini-200",
+    "https://krosno.com/en/collections/xno/products.json"
+   ]
+  },
+  {
+   "name": "Xno Nick & Nora 140",
+   "series": "Xno",
+   "designer": null,
+   "model_code": "F57D479013001010",
+   "glass": "nick",
+   "variant": null,
+   "capacity_ml": 140,
+   "capacity_as_stated": "140 ml",
+   "height_mm": 140,
+   "rim_mm": null,
+   "material": "lead-free crystal",
+   "product_url": "https://krosno.com/en/products/xno-nick-nora-140-glasses-140ml",
+   "source_urls": [
+    "https://krosno.com/en/products/xno-nick-nora-140-glasses-140ml",
+    "https://krosno.com/wp-content/uploads/2025/12/krosno_xno_en_v03.pdf",
+    "https://krosno.com/en/collections/xno/products.json"
+   ]
+  },
+  {
+   "name": "Xno Nick & Nora 165 Axis",
+   "series": "Xno",
+   "designer": null,
+   "model_code": "F57C978014006090",
+   "glass": "nick",
+   "variant": null,
+   "capacity_ml": 165,
+   "capacity_as_stated": "165 ml",
+   "height_mm": 150,
+   "rim_mm": null,
+   "material": "lead-free crystal",
+   "product_url": "https://krosno.com/en/products/xno-nick-nora-165-axis-glasses-165ml",
+   "source_urls": [
+    "https://krosno.com/en/products/xno-nick-nora-165-axis-glasses-165ml",
+    "https://krosno.com/wp-content/uploads/2025/12/krosno_xno_en_v03.pdf",
+    "https://krosno.com/en/collections/xno/products.json"
+   ]
+  },
+  {
+   "name": "Xno Shot 40 Ice",
+   "series": "Xno",
+   "designer": null,
+   "model_code": "F688032005012000",
+   "glass": "rocks",
+   "variant": null,
+   "capacity_ml": 40,
+   "capacity_as_stated": "40 ml",
+   "height_mm": 58,
+   "rim_mm": null,
+   "material": "lead-free crystal",
+   "product_url": "https://krosno.com/en/products/xno-shot-40-ice-glasses-40ml",
+   "source_urls": [
+    "https://krosno.com/en/products/xno-shot-40-ice-glasses-40ml",
+    "https://krosno.com/wp-content/uploads/2025/12/krosno_xno_en_v03.pdf",
+    "https://krosno.com/en/collections/xno/products.json"
+   ]
+  },
+  {
+   "name": "Xno Shot 50",
+   "series": "Xno",
+   "designer": null,
+   "model_code": "FKMA230004013120",
+   "glass": "rocks",
+   "variant": null,
+   "capacity_ml": 50,
+   "capacity_as_stated": "50 ml (shop lists 60 ml)",
+   "height_mm": 80,
+   "rim_mm": null,
+   "material": "lead-free crystal",
+   "product_url": "https://krosno.com/en/products/xno-shot-50-glasses-60ml",
+   "source_urls": [
+    "https://krosno.com/en/products/xno-shot-50-glasses-60ml",
+    "https://krosno.com/wp-content/uploads/2025/12/krosno_xno_en_v03.pdf",
+    "https://krosno.com/en/products/kieliszki-xno-shot-50",
+    "https://krosno.com/en/collections/xno/products.json"
+   ]
+  },
+  {
+   "name": "Xno Shot 55 Axis",
+   "series": "Xno",
+   "designer": null,
+   "model_code": "F57C978004001010",
+   "glass": "snifter",
+   "variant": null,
+   "capacity_ml": 55,
+   "capacity_as_stated": "55 ml",
+   "height_mm": 131,
+   "rim_mm": null,
+   "material": "lead-free crystal",
+   "product_url": "https://krosno.com/en/products/xno-shot-55-axis-glasses-55ml",
+   "source_urls": [
+    "https://krosno.com/en/products/xno-shot-55-axis-glasses-55ml",
+    "https://krosno.com/wp-content/uploads/2025/12/krosno_xno_en_v03.pdf",
+    "https://krosno.com/en/collections/xno/products.json"
+   ]
+  },
+  {
+   "name": "Xno Shot 60 Ice",
+   "series": "Xno",
+   "designer": null,
+   "model_code": "F685092004839000",
+   "glass": "rocks",
+   "variant": null,
+   "capacity_ml": 60,
+   "capacity_as_stated": "60 ml",
+   "height_mm": 100,
+   "rim_mm": null,
+   "material": "lead-free crystal",
+   "product_url": "https://krosno.com/en/products/xno-shot-60-ice-glasses-60ml",
+   "source_urls": [
+    "https://krosno.com/en/products/xno-shot-60-ice-glasses-60ml",
+    "https://krosno.com/wp-content/uploads/2025/12/krosno_xno_en_v03.pdf",
+    "https://krosno.com/en/collections/xno/products.json"
+   ]
+  },
+  {
+   "name": "Xno Shot 75 Axis",
+   "series": "Xno",
+   "designer": null,
+   "model_code": "F57C978007001010",
+   "glass": "snifter",
+   "variant": null,
+   "capacity_ml": 75,
+   "capacity_as_stated": "75 ml",
+   "height_mm": 120,
+   "rim_mm": null,
+   "material": "lead-free crystal",
+   "product_url": "https://krosno.com/en/products/xno-shot-75-axis-glasses-75ml",
+   "source_urls": [
+    "https://krosno.com/en/products/xno-shot-75-axis-glasses-75ml",
+    "https://krosno.com/wp-content/uploads/2025/12/krosno_xno_en_v03.pdf",
+    "https://krosno.com/en/collections/xno/products.json"
+   ]
+  },
+  {
+   "name": "Xno Tumbler 260 Ice",
+   "series": "Xno",
+   "designer": null,
+   "model_code": "F682482022058U80",
+   "glass": "rocks",
+   "variant": null,
+   "capacity_ml": 260,
+   "capacity_as_stated": "260 ml",
+   "height_mm": 85,
+   "rim_mm": null,
+   "material": "lead-free crystal",
+   "product_url": "https://krosno.com/en/products/xno-tumbler-260-ice-260ml",
+   "source_urls": [
+    "https://krosno.com/en/products/xno-tumbler-260-ice-260ml",
+    "https://krosno.com/wp-content/uploads/2025/12/krosno_xno_en_v03.pdf",
+    "https://krosno.com/en/collections/xno/products.json"
+   ]
+  },
+  {
+   "name": "Xno Tumbler 310",
+   "series": "Xno",
+   "designer": null,
+   "model_code": "F68D451029001010",
+   "glass": "rocks",
+   "variant": null,
+   "capacity_ml": 310,
+   "capacity_as_stated": "310 ml",
+   "height_mm": null,
+   "rim_mm": null,
+   "material": "lead-free crystal",
+   "product_url": "https://krosno.com/en/products/xno-tumbler-310-310ml",
+   "source_urls": [
+    "https://krosno.com/en/products/xno-tumbler-310-310ml",
+    "https://krosno.com/en/collections/xno/products.json"
+   ]
+  },
+  {
+   "name": "Xno Tumbler 360 Ice",
+   "series": "Xno",
+   "designer": null,
+   "model_code": "F6873390300F7AB1",
+   "glass": "rocks",
+   "variant": null,
+   "capacity_ml": 360,
+   "capacity_as_stated": "360 ml",
+   "height_mm": 97,
+   "rim_mm": null,
+   "material": "lead-free crystal",
+   "product_url": "https://krosno.com/en/products/xno-tumbler-360-ice-360ml",
+   "source_urls": [
+    "https://krosno.com/en/products/xno-tumbler-360-ice-360ml",
+    "https://krosno.com/wp-content/uploads/2025/12/krosno_xno_en_v03.pdf",
+    "https://krosno.com/en/collections/xno/products.json"
+   ]
+  },
+  {
+   "name": "Xno Tumbler 390",
+   "series": "Xno",
+   "designer": null,
+   "model_code": "F685179031008040",
+   "glass": "rocks",
+   "variant": null,
+   "capacity_ml": 390,
+   "capacity_as_stated": "390 ml",
+   "height_mm": 75,
+   "rim_mm": null,
+   "material": "lead-free crystal",
+   "product_url": "https://krosno.com/en/products/xno-tumbler-390-390ml",
+   "source_urls": [
+    "https://krosno.com/en/products/xno-tumbler-390-390ml",
+    "https://krosno.com/wp-content/uploads/2025/12/krosno_xno_en_v03.pdf",
+    "https://krosno.com/en/products/szklanki-xno-tumbler-390-optic",
+    "https://krosno.com/en/collections/xno/products.json"
+   ]
+  }
+ ]
+}

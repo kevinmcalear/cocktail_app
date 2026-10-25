@@ -1,19 +1,9 @@
 import assert from 'node:assert/strict';
 
-import { EQUIPMENT } from './techniques/equipment';
-import { houseIce, iceDrawKind, ICE_KINDS, isVenueIce, kitIceRow, kitSourceLine, supplierLine, toolGroups, venueIceKinds, venueIceNames } from './venueKit';
+import { houseIce, iceDrawKind, iceMm, kitCount, kitHasTool, kitLine, ICE_KINDS, isVenueIce, kitIceRow, iceLooksLine, iceName, kitSourceLine, supplierLine, toolLabel, toolName, venueIceKinds, venueIceNames } from './venueKit';
 
 // The drawings' kinds less 'none' (item_ice.draw_as, private.house_ice): keep them in step.
 assert.deepEqual([...ICE_KINDS], ['cubes', 'large', 'spear', 'crushed', 'pebble', 'shaved', 'sphere']);
-
-// Every bar tool behind the bar; the prep kitchen's common few are real ids.
-const [bar, prep] = toolGroups([], false);
-assert.deepEqual(bar.ids, EQUIPMENT.filter((e) => e.kind === 'bar').map((e) => e.id));
-assert.equal(prep.ids.length, 7, 'the seven common prep tools');
-for (const id of prep.ids) assert.ok(EQUIPMENT.some((e) => e.id === id), id);
-// A tool the venue has always shows; "all" shows every one.
-assert.ok(toolGroups(['pacojet'], false)[1].ids.includes('pacojet'));
-assert.equal(toolGroups([], true).flatMap((g) => g.ids).length, EQUIPMENT.length);
 
 assert.equal(supplierLine({ supplies: ['glassware', 'bottles'], order_by: 'Tue 2 pm', delivers: null }), 'Bottles and glassware · Order by Tue 2 pm');
 assert.equal(supplierLine({ supplies: [], order_by: null, delivers: 'Wed and Fri' }), 'Delivers Wed and Fri');
@@ -21,11 +11,11 @@ assert.equal(supplierLine({ supplies: [], order_by: null, delivers: null }), '')
 
 assert.equal(kitSourceLine({ source: 'made', note: 'cut from our block', supplier_name: null }), 'Made here · cut from our block');
 assert.equal(kitSourceLine({ source: 'machine', machine: 'Hoshizaki under the well', note: null, supplier_name: null }), 'Our machine · Hoshizaki under the well');
-assert.equal(kitSourceLine({ source: 'bought', note: null, supplier_name: 'Coldwater Ice Co.' }), 'Coldwater Ice Co.');
+assert.equal(kitSourceLine({ source: 'bought', note: null, supplier_name: 'Coldwater Ice Co.' }), 'Bought from Coldwater Ice Co.');
 assert.equal(kitSourceLine({ source: 'bought', note: null, supplier_name: null }), 'Bought', 'a supplier this person can\'t see');
 assert.equal(kitSourceLine({ source: 'ours', note: null, supplier_name: null }), 'Already ours');
 assert.equal(kitSourceLine({ source: null, note: null, supplier_name: null }), '');
-assert.equal(kitSourceLine({ source: 'bought', note: 'Collins spears', supplier_name: 'Coldwater Ice Co.', length_mm: 130 }), 'Coldwater Ice Co. · Collins spears · 130 mm');
+assert.equal(kitSourceLine({ source: 'bought', note: 'Collins spears', supplier_name: 'Coldwater Ice Co.', length_mm: 130 }), 'Bought from Coldwater Ice Co. · Collins spears · 130 mm');
 
 // The wizard's Ice step: the venue's ice in the glass by its names, blocks and slabs left out.
 const ice = [
@@ -58,3 +48,33 @@ assert.equal(houseIce('cubes', []), null, 'no ice listed');
 assert.equal(kitIceRow([{ name: 'Spear', shape: 'slab' }, { name: 'Spear', shape: 'spear' }], 'spear')?.shape, 'spear');
 assert.equal(kitIceRow(ice, 'Large Cube')?.shape, 'large');
 assert.equal(kitIceRow(ice, 'Pebble'), null);
+
+// The Add sheet's names (Kit and ice, step 4): clear and the size say themselves; a block's is its length.
+assert.equal(iceName({ shape: 'large', size_mm: 50, clear: true }), 'Clear cube · 50 mm');
+assert.equal(iceName({ shape: 'large', size_mm: null, clear: null }), 'Large cube');
+assert.equal(iceName({ shape: 'spear', size_mm: 30, length_mm: 120, clear: false }), 'Collins block · 120 mm');
+assert.equal(iceName({ shape: 'sphere', size_mm: 60, clear: true }), 'Clear sphere · 60 mm');
+assert.equal(iceName({ shape: 'block', length_mm: 500, clear: true }), 'Block · 500 mm');
+assert.equal(iceName({ shape: 'crushed', size_mm: 9 }), 'Crushed', 'crushed has no size');
+assert.equal(iceName({ shape: 'other' }), '', 'something else is named by the bar');
+assert.equal(iceMm({ shape: 'spear', size_mm: 30, length_mm: 120 }), 120);
+assert.equal(iceLooksLine({ shape: 'large', size_mm: 50, clear: true, stamped: true }), 'Large cube · 50 mm · clear · stamped');
+assert.equal(iceLooksLine({ shape: 'cubes', clear: false, frozen_inside: 'A viola' }), 'Cubes · cloudy · A viola inside');
+
+assert.equal(toolName({ name: null, key: 'jigger' }), 'Jigger');
+assert.equal(toolName({ name: 'Ice stamp', key: null }), 'Ice stamp');
+
+assert.equal(kitLine(['Prep kitchen', null, '2', 'Already ours']), 'Prep kitchen · 2 · already ours');
+assert.equal(kitLine([null, 'Bought from Harbour Supply']), 'Bought from Harbour Supply');
+assert.deepEqual(kitCount(' 24 '), { n: 24, ok: true });
+assert.deepEqual(kitCount(''), { n: null, ok: true });
+assert.equal(kitCount('0').ok, false);
+assert.equal(kitCount('2.5').ok, false);
+
+// A step's tools: ours by id, the venue's own by name, any case.
+const tools = [{ key: 'bandsaw', name: null }, { key: null, name: 'Our ice stamp' }];
+assert.ok(kitHasTool(tools, 'bandsaw'));
+assert.ok(kitHasTool(tools, 'our ice stamp '));
+assert.ok(!kitHasTool(tools, 'ice-ball-press'));
+assert.equal(toolLabel('ice-ball-press'), 'Ice ball press');
+assert.equal(toolLabel('Our ice stamp'), 'Our ice stamp');

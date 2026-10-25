@@ -42,7 +42,7 @@ export function useNewMenu({ menus, now, onClose }: { menus: MenuSummary[]; now:
     now
   );
   const copyable = [...groups.on, ...groups.upcoming, ...groups.draft, ...groups.previous];
-  const { data: layouts = [] } = useMenuLayouts(barId);
+  const { data: layouts = [] } = useMenuLayouts();
   const [start, setStart] = useState<Start>({ kind: 'blank' });
   const { data: source } = useMenu(start.kind === 'copy' ? start.menuId : null);
   const create = useCreateMenu();

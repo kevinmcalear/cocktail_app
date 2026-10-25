@@ -8,10 +8,10 @@ import { imageUrisFromDataTransfer } from '@/lib/imageDrop';
  * Native Web's View doesn't pass drag events through as props, so this
  * listens on its DOM node. Does nothing on native, or without `onUris`.
  */
-export function useWebImageDrop(onUris: ((uris: string[]) => void) | undefined, onActive?: (active: boolean) => void) {
+export function useWebImageDrop(onUris: ((uris: string[], files: File[]) => void) | undefined, onActive?: (active: boolean) => void) {
     const ref = useRef<ComponentRef<typeof View>>(null);
     const enabled = Platform.OS === 'web' && !!onUris;
-    const dropped = useEffectEvent((uris: string[]) => onUris?.(uris));
+    const dropped = useEffectEvent((uris: string[], files: File[]) => onUris?.(uris, files));
     const active = useEffectEvent((value: boolean) => onActive?.(value));
 
     useEffect(() => {
@@ -41,7 +41,8 @@ export function useWebImageDrop(onUris: ((uris: string[]) => void) | undefined, 
             depth = 0;
             active(false);
             const uris = imageUrisFromDataTransfer(e.dataTransfer);
-            if (uris.length) dropped(uris);
+            // The image files themselves, in the same order, for a caller that needs their names.
+            if (uris.length) dropped(uris, Array.from(e.dataTransfer?.files ?? []).filter((f) => f.type?.startsWith('image/')));
         };
         node.addEventListener('dragenter', onEnter);
         node.addEventListener('dragover', onOver);

@@ -137,7 +137,9 @@ assert.equal(nameToMake(library, 'Fig leaf Spritz'), 'Fig leaf Spritz', 'typed w
 assert.equal(nameToMake(library, 'bolo tie'), null, 'a drink already has it');
 assert.equal(nameToMake(library, '  '), null);
 assert.deepEqual(names(nearLibrary(library, { allowedTypes: ['cocktail'] }, 'stamp collector')), ['Champ Stamp']);
-assert.deepEqual(names(nearLibrary(library, { allowedTypes: ['cocktail'] }, 'tie')), [], 'short words don\'t count');
+assert.deepEqual(names(nearLibrary(library, { allowedTypes: ['cocktail'] }, 'ti')), [], 'short words don\'t count');
+assert.deepEqual(names(nearLibrary(library, { allowedTypes: ['cocktail'] }, 'martni')), ['Martini'], 'spelled close');
+assert.deepEqual(names(nearLibrary(library, { allowedTypes: ['cocktail'] }, 'bolo tye')), ['Bolo Tie']);
 assert.deepEqual(names(nearLibrary(library, { allowedTypes: ['beer'] }, 'stamp')), []);
 
 // A price is the drink's own: set on every row of it, kept as typed, and it counts as a change to save.

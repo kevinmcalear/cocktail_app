@@ -6,7 +6,7 @@
  * is components/screens/addDrink/PasteSpecSheet.
  */
 import type { WizardPick } from '@/lib/drinkWizard';
-import { nearIngredient, sameIngredient, type IngredientAlias, type IngredientRow } from '@/lib/ingredientNames';
+import { nearIngredient, sameBottle, type IngredientAlias, type IngredientRow } from '@/lib/ingredientNames';
 import { readHouse } from '@/lib/makeItHouse';
 import { normName, typedPour } from '@/lib/paste';
 import { capitalizeFirst } from '@/lib/stringUtils';
@@ -44,7 +44,7 @@ export function readSpec<T extends IngredientRow>(
 ): SpecRow[] {
   const { aliases = [], drinkName = '' } = opts;
   const pickFor = (name: string): WizardPick => {
-    const hit = sameIngredient(name, rows, aliases) ?? nearIngredient(name, rows, aliases);
+    const hit = sameBottle(name, rows, aliases) ?? nearIngredient(name, rows, aliases);
     return hit ? { id: hit.id, name: hit.name ?? name } : { id: null, name: capitalizeFirst(name) };
   };
   return text
@@ -57,7 +57,7 @@ export function readSpec<T extends IngredientRow>(
       const skip = (note: string): SpecRow => ({ key, source, kind: 'skip', note, amount: '', unit: null, pick: { id: null, name: source } });
       if (drinkName.trim() && normName(row) === normName(drinkName)) return skip('The drink’s name');
       // A first line with no amount that isn't an ingredient is the spec's title, whatever the drink is called here.
-      if (i === 0 && !typedPour(row) && !TOP.test(row) && !GARNISH.test(row) && !sameIngredient(row, rows, aliases) && !nearIngredient(row, rows, aliases)) return skip('The title');
+      if (i === 0 && !typedPour(row) && !TOP.test(row) && !GARNISH.test(row) && !sameBottle(row, rows, aliases) && !nearIngredient(row, rows, aliases)) return skip('The title');
       const garnish = row.match(GARNISH);
       if (garnish) return { key, source, kind: 'finish', amount: '', unit: null, pick: pickFor(garnish[1].trim()) };
       if (NOT_A_LINE.test(row)) return skip('Set in its own step');

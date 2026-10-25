@@ -111,7 +111,7 @@ function Service({ item, start, venueName }: { item: DatabaseItem; start: Servic
                 </View>
               </Group>
             ) : null}
-            {!notes.garnish && !notes.handoff.length ? <Body tone="muted">No garnish or hand-off notes yet. Editors add them on the drink page.</Body> : null}
+            {!notes.garnish && !notes.handoff.length ? <Body tone="muted">No garnish or hand-off notes yet. Editors add them in Edit, under Service.</Body> : null}
             {!batched ? (style ? <Tag label={style} /> : null) : access.amounts && lines.length ? (
               <Group title="AT THE STATION" tag={style}>
                 {spec.pour ? <Line amount={spec.pour} name={`${item.name} base, from the bottle`} /> : null}

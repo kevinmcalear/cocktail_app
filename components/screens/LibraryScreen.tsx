@@ -10,6 +10,7 @@ import { DRAWN_LIST_WINDOW } from '@/components/ds/SketchDrawing';
 import { BottlePhotoSheet } from '@/components/screens/bottles/BottlePhotoSheet';
 import { MatchClassicsNudge } from '@/components/screens/classics/MatchClassicsNudge';
 import { ResumeCard } from '@/components/screens/bringin/ResumeCard';
+import { LibrarySetupBanner } from '@/components/screens/venueSetup/SetupBanner';
 import { FeatureNewsLine } from '@/components/screens/library/FeatureNewsLine';
 import { FirstRoundCard, RoundOpened } from '@/components/screens/firstRound/FirstRoundCard';
 import { useFirstRound } from '@/hooks/useFirstRound';
@@ -160,7 +161,7 @@ export function LibraryScreen() {
   const count = (value: Show) => (value === 'staff' ? (staff.data?.length ?? 0) : lists[value].length);
   const groups = filterGroups(!!activeId, canCost, extras);
   const pick = (value: Show) => router.setParams({ show: value, menu: undefined, kind: undefined });
-  const filterSet: FilterSet = { ...splitFilters(groups), show, count, onPick: pick };
+  const filterSet: FilterSet = { ...splitFilters(groups), show, count, onPick: pick, nothing: !isLoading && !staff.isLoading && groups.flat().every((f) => count(f.value) === 0) };
   const columns = COLUMNS[breakpoint];
   const staffView = show === 'staff' && !!activeId;
   // The last tiles scroll clear of the phone's filter dock.
@@ -171,7 +172,7 @@ export function LibraryScreen() {
       <View onLayout={(e) => setTitleEnd(e.nativeEvent.layout.y + e.nativeEvent.layout.height)}>
         <PageHeader title="Library" width="full" display action={phone || staffView ? undefined : <SearchField query={find} onQuery={setFind} placeholder="Find in Library" />} />
       </View>
-      {activeId ? <ResumeCard barId={activeId} /> : null}
+      {activeId ? (<><ResumeCard barId={activeId} /><LibrarySetupBanner barId={activeId} /></>) : null}
       <FeatureNewsLine />
       <FirstRoundCard />
       {active && canEdit ? <MatchClassicsNudge barId={active.id} /> : null}

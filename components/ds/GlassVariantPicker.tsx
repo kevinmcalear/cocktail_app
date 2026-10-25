@@ -65,7 +65,8 @@ function Tile({ variant, inputs, seed, selected, onChange, note }: TileProps) {
 export function GlassVariantPicker({ glass, inputs, seed, value, onChange, notes, accessibilityLabel }: GlassVariantPickerProps) {
   const list = variantsOf(glass);
   const chosen = list.find((x) => x.key === value)?.key ?? list[0].key;
-  const base = useMemo(() => ({ ...inputs, glass }), [inputs, glass]);
+  // The family's drawings, side by side: a traced glass's outline would draw every tile the same.
+  const base = useMemo(() => ({ ...inputs, glass, outline: null }), [inputs, glass]);
   const noted = list.some((x) => notes?.[x.key]);
   return (
     <View role={onChange ? 'radiogroup' : undefined} accessibilityLabel={accessibilityLabel} style={styles.row}>

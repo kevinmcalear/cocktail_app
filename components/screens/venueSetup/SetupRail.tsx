@@ -47,7 +47,7 @@ export function SetupRail({ name, logoUrl, at, done, status, onPick, onLeave }: 
         })}
       </View>
       <View style={styles.foot}>
-        <Caption tone="muted">Stop at any step. What you’ve done is saved, and Tonight lists what’s left.</Caption>
+        <Caption tone="muted">Stop at any step. What you’ve done is saved, and the Setup banner lists what’s left.</Caption>
         <Button label="Not now" variant="ghost" onPress={onLeave} />
       </View>
     </View>

@@ -30,7 +30,6 @@ export function ClaimSent({ claim, onNext }: { claim: MyPersonClaim; onNext: () 
         ...chrome,
         title: 'Claim sent',
         intro: 'A person checks it, usually within a day. We tell you here once it’s yours.',
-        progress: { at: 3, of: 4, label: 'Step 3 of 4' },
         mark: <Clock />,
       }}
     >

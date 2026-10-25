@@ -322,3 +322,24 @@ export function directionsUrl(place: BarPlace | null | undefined, apple: boolean
   if (apple) return `https://maps.apple.com/?q=${query}${at ? `&ll=${at}` : ''}`;
   return `https://www.google.com/maps/search/?api=1&query=${at && !address ? at : query}`;
 }
+
+/**
+ * The guest's bar named in an imported guest shift, for "Link to <bar> so it's
+ * credited?": the words after "from", "at" or "of" in the event's name,
+ * or else in its description's first line ("Mara Q. from The Lantern Room").
+ * ponytail: a phrase guess, not a search of every bar's name; a calendar that
+ * names the bar some other way gets no prompt and is linked from the event.
+ */
+export function guestBarGuess(name: string, description?: string | null): string | null {
+  for (const text of [name, description?.split('\n')[0] ?? '']) {
+    const m = /\b(?:from|at|of)\s+(.+)$/i.exec(text.trim());
+    // Up to the next joining word or a break: "Pale Moth at Little Rye" is Pale Moth.
+    const guess = m?.[1].split(/\s+(?:at|from|of|on|with|for)\s+|\s[-–·|]\s|[.,!:;()]/i)[0].trim();
+    if (guess && guess.length >= 2 && !/^\d/.test(guess)) return guess;
+  }
+  return null;
+}
+
+/** A bar's name to compare or search by: case, a leading "The" and spacing don't count. */
+export const barNameKey = (s: string) => s.toLowerCase().replace(/^the\s+/, '').replace(/\s+/g, ' ').trim();
+export const sameBarName = (a: string, b: string) => barNameKey(a) === barNameKey(b);

@@ -1,7 +1,7 @@
 import { Platform, StyleSheet, View } from 'react-native';
 import DraggableFlatList, { NestableDraggableFlatList, ScaleDecorator, type RenderItemParams } from 'react-native-draggable-flatlist';
 
-import { Body, Caption, Headline, PressableScale, useDs } from '@/components/ds';
+import { Body, Caption, Headline, PressableScale, Tag, useDs } from '@/components/ds';
 import { dragGripStyle, gripOnly, supportsNestableDrag } from '@/components/recipe/FormScrollContainer';
 import { IconSymbol } from '@/components/ui/icon-symbol';
 import { fontFamilies, layout, radius, space, type } from '@/constants/tokens';
@@ -17,11 +17,21 @@ const List = supportsNestableDrag ? NestableDraggableFlatList : DraggableFlatLis
 const web = Platform.OS === 'web';
 const NO_OUTLINE = web ? ({ outlineStyle: 'none' } as object) : null;
 
+/** The tools each step names (a venue's ice): their names, which the kit lacks, and the sheet that picks them. */
+export interface StepTools {
+  label: (tool: string) => string;
+  missing: (tool: string) => boolean;
+  onEdit: (stepKey: string) => void;
+}
+
 interface MethodEditProps {
   steps: Step[];
   onChange: (steps: Step[]) => void;
   /** "3 steps · 20 min", beside the heading. */
   summary: string | null;
+  heading?: string;
+  placeholder?: string;
+  tools?: StepTools;
 }
 
 /**
@@ -29,7 +39,7 @@ interface MethodEditProps {
  * grip to reorder, its number, its words in a box, and an x to remove it; a
  * dashed row adds one. Saved with Done.
  */
-export function MethodEdit({ steps, onChange, summary }: MethodEditProps) {
+export function MethodEdit({ steps, onChange, summary, heading = 'Method', placeholder = 'Stir the honey into the hot water', tools }: MethodEditProps) {
   const ds = useDs();
   const set = (key: string, body: string) => onChange(steps.map((s) => (s.key === key ? { ...s, body } : s)));
   const renderItem = ({ item, drag, isActive, getIndex }: RenderItemParams<Step>) => {
@@ -49,11 +59,19 @@ export function MethodEdit({ steps, onChange, summary }: MethodEditProps) {
               minHeight={type.body.lineHeight + space.lg}
               value={item.body}
               onChangeText={(body) => set(item.key, body)}
-              placeholder="Stir the honey into the hot water"
+              placeholder={placeholder}
               placeholderTextColor={ds.c.faint}
               aria-label={`Step ${i + 1}`}
               style={[styles.body, NO_OUTLINE, { color: ds.c.ink, backgroundColor: ds.c.surface }]}
             />
+            {tools ? (
+              <PressableScale role="button" accessibilityLabel={`Tools for step ${i + 1}: ${item.tools.map(tools.label).join(', ') || 'none'}. Change them`} onPress={() => tools.onEdit(item.key)} style={styles.tools}>
+                {item.tools.map((t) => (
+                  <Tag key={t} label={tools.missing(t) ? `${tools.label(t)} · not in your kit` : tools.label(t)} tone={tools.missing(t) ? 'warning' : 'outline'} icon={tools.missing(t) ? 'xmark' : 'checkmark'} />
+                ))}
+                <Tag label={item.tools.length ? 'Change' : 'Tools'} tone="outline" icon="plus" />
+              </PressableScale>
+            ) : null}
           </View>
           <PressableScale role="button" accessibilityLabel={`Remove step ${i + 1}`} onPress={() => onChange(steps.filter((s) => s.key !== item.key))} style={styles.remove}>
             <IconSymbol name="xmark" size={16} color={ds.c.muted} />
@@ -66,7 +84,7 @@ export function MethodEdit({ steps, onChange, summary }: MethodEditProps) {
   return (
     <View style={styles.section}>
       <View style={styles.head}>
-        <Headline role="heading">Method</Headline>
+        <Headline role="heading">{heading}</Headline>
         {summary ? <Caption tone="muted">{summary}</Caption> : null}
       </View>
       <List data={steps} keyExtractor={(s) => s.key} renderItem={renderItem} onDragEnd={({ data }) => onChange(data)} activationDistance={8} dragHitSlop={gripOnly(GRIP)} />
@@ -89,4 +107,5 @@ const styles = StyleSheet.create({
   remove: { width: 32, height: layout.minTapTarget, alignItems: 'center', justifyContent: 'center' },
   add: { flexDirection: 'row', alignItems: 'center', gap: space.sm, minHeight: 52, paddingHorizontal: space.md, borderRadius: radius.control, borderWidth: 1.5, borderStyle: 'dashed', marginTop: space.xs },
   medium: { fontFamily: fontFamilies.bodyMedium },
+  tools: { flexDirection: 'row', flexWrap: 'wrap', gap: space.xs, paddingTop: space.xs },
 });

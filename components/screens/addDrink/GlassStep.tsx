@@ -77,7 +77,7 @@ export function GlassStep({ draft, set, options, barId, barGlasses, barVariants,
           <Caption tone="muted">{`The sketch ${compact ? 'on the right' : 'at the top'} redraws in the shape you pick.`}</Caption>
         </View>
       ) : null}
-      {draft.glass ? <GlasswarePrompt barId={barId} glass={picked} variant={inputs.variant} name={draft.glass.name} /> : null}
+      {draft.glass ? <GlasswarePrompt barId={barId} glass={picked} variant={inputs.variant} name={draft.glass.name} drink={draft.name} /> : null}
     </PickStep>
   );
 }

@@ -12,6 +12,7 @@ import { useCapabilities } from '@/hooks/useCapabilities';
 import { useSaveProfileInstagram } from '@/hooks/useMyProfile';
 import { useBarPublishing, useSetPublish } from '@/hooks/usePublishing';
 import { instagramProblem } from '@/lib/profiles';
+import { nextPageChange } from '@/lib/pageVisibility';
 
 import { SwitchRow } from '../settings/SettingsParts';
 
@@ -168,6 +169,8 @@ function PublishingPage({ barId }: { barId: string }) {
                   radios
                   venueName={venueName}
                   value={data.pageVisibility}
+                  privateAllowed={data.privateAllowed}
+                  note={changeNote(data.pageChangedAt)}
                   disabled={!canPublish || set.isPending}
                   error={errorFor('page')}
                   onChange={(visibility) => set.mutate({ level: 'page', visibility })}
@@ -263,6 +266,13 @@ function PublishingPage({ barId }: { barId: string }) {
       )}
     </View>
   );
+}
+
+/** The line under the choice: the 30-day rule, and when the next change opens if it's waiting. */
+function changeNote(changedAt: string | null): string {
+  const next = nextPageChange(changedAt);
+  const when = next ? ` Your next change opens ${next.toLocaleDateString(undefined, { day: 'numeric', month: 'long' })}.` : '';
+  return `Any single drink can still be kept private from its own page. You can change this once every 30 days.${when}`;
 }
 
 const styles = StyleSheet.create({

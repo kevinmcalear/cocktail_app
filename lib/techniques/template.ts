@@ -15,6 +15,7 @@ const TECH_WORDS = [
   'washed', 'wash', 'infused', 'infusion', 'clarified', 'smoked', 'steeped', 'compressed', 'pickled', 'fermented', 'carbonated',
   'redistilled', 'distilled', 'tincture', 'bitters', 'oil', 'syrup', 'shrub', 'cordial', 'oleo', 'foam', 'air', 'spheres', 'caviar',
   'powder', 'concentrate', 'kombucha', 'tepache', 'brine', 'dried', 'dehydrated', 'suspended', 'gomme', 'orgeat', 'grenadine', 'saline',
+  'liqueur', 'batch',
 ];
 /** Words that say nothing about what's in it. */
 const NOISE = new Set(['house', 'homemade', 'home', 'made', 'rich', 'simple', 'our', 'the', 'a', 'with']);
@@ -35,6 +36,8 @@ export function splitName(name: string): { before: string[]; word: string | null
     for (const w of TECH_WORDS) {
       // "Coconut oil washed rum": the oil is what it's washed with, not an oil.
       if (w === 'oil' && /^(washed|wash)$/.test(tokens[i + 1] ?? '')) continue;
+      // Kinds that end a name: "Miso banana liqueur" is a house liqueur; "banana liqueur fat washed rum" is washed with one.
+      if ((w === 'liqueur' || w === 'batch') && i < tokens.length - 1) continue;
       const parts = w.split(' ');
       if (parts.every((p, k) => tokens[i + k] === p)) return { before: tokens.slice(0, i), word: w, after: tokens.slice(i + parts.length) };
     }

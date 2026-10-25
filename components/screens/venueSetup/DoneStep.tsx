@@ -126,7 +126,7 @@ function SetupSummary({ barId, profileId, name, claim, claimState, held, waiting
       </View>
       {count ? (
         <>
-          <SetupHead>On Tonight</SetupHead>
+          <SetupHead>At the top of the app</SetupHead>
           <SetupBanner count={count} />
         </>
       ) : null}

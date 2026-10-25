@@ -1,0 +1,141 @@
+{
+ "maker": "tiki.farm",
+ "models": [
+  {
+   "name": "Clifton's Pacific Seas Fogcutter Mug",
+   "series": "Pacific Seas",
+   "designer": null,
+   "model_code": null,
+   "glass": "tiki",
+   "variant": null,
+   "capacity_ml": 355,
+   "capacity_as_stated": "12 fl. oz.",
+   "height_mm": 190,
+   "rim_mm": null,
+   "material": "ceramic",
+   "product_url": "https://thesearchfortiki.com/tiki-mug/pacific-seas-fogcutter-cliftons-open-edition/",
+   "source_urls": [
+    "https://thesearchfortiki.com/tiki-mug/pacific-seas-fogcutter-cliftons-open-edition/"
+   ]
+  },
+  {
+   "name": "False Idol Volcano Barrel Mug",
+   "series": "False Idol",
+   "designer": "Trader Dane",
+   "model_code": null,
+   "glass": "tiki",
+   "variant": null,
+   "capacity_ml": 532,
+   "capacity_as_stated": "18 fl. oz.",
+   "height_mm": 133,
+   "rim_mm": null,
+   "material": "ceramic",
+   "product_url": "https://thesearchfortiki.com/tiki-mug/volcano-barrel-false-idol-3rd-edition/",
+   "source_urls": [
+    "https://thesearchfortiki.com/tiki-mug/volcano-barrel-false-idol-3rd-edition/"
+   ]
+  },
+  {
+   "name": "Smuggler's Cove Kuhiko (Sunken Tiki) Mug",
+   "series": "Smuggler's Cove",
+   "designer": "Crazy Al",
+   "model_code": null,
+   "glass": "tiki",
+   "variant": null,
+   "capacity_ml": 473,
+   "capacity_as_stated": "16 fl. oz.",
+   "height_mm": 203,
+   "rim_mm": null,
+   "material": "ceramic",
+   "product_url": "https://thesearchfortiki.com/tiki-mug/kuhiko-tiki-mug-sunken-tiki-smugglers-cove-dark-brown-edition/",
+   "source_urls": [
+    "https://thesearchfortiki.com/tiki-mug/kuhiko-tiki-mug-sunken-tiki-smugglers-cove-dark-brown-edition/"
+   ]
+  },
+  {
+   "name": "Three Dots and a Dash Coconut Mug",
+   "series": "Three Dots and a Dash",
+   "designer": "Darick Maasen",
+   "model_code": null,
+   "glass": "tiki",
+   "variant": null,
+   "capacity_ml": 591,
+   "capacity_as_stated": "20 fl. oz.",
+   "height_mm": null,
+   "rim_mm": null,
+   "material": "ceramic",
+   "product_url": "https://thesearchfortiki.com/tiki-mug/coconut-mug-three-dots-and-a-dash-1st-edition/",
+   "source_urls": [
+    "https://thesearchfortiki.com/tiki-mug/coconut-mug-three-dots-and-a-dash-1st-edition/"
+   ]
+  },
+  {
+   "name": "Three Dots and a Dash Keko Pepeiao Mug",
+   "series": "Three Dots and a Dash",
+   "designer": "Tank Standing Buffalo",
+   "model_code": null,
+   "glass": "tiki",
+   "variant": null,
+   "capacity_ml": 710,
+   "capacity_as_stated": "24 fl. oz.",
+   "height_mm": 165,
+   "rim_mm": null,
+   "material": "ceramic",
+   "product_url": "https://thesearchfortiki.com/tiki-mug/keko-pepeiao-three-dots-and-a-dash-1st-edition/",
+   "source_urls": [
+    "https://thesearchfortiki.com/tiki-mug/keko-pepeiao-three-dots-and-a-dash-1st-edition/"
+   ]
+  },
+  {
+   "name": "Three Dots and a Dash Rum Barrel Mug",
+   "series": "Three Dots and a Dash",
+   "designer": null,
+   "model_code": null,
+   "glass": "tiki",
+   "variant": null,
+   "capacity_ml": 355,
+   "capacity_as_stated": "12 fl. oz.",
+   "height_mm": 108,
+   "rim_mm": null,
+   "material": "ceramic",
+   "product_url": "https://thesearchfortiki.com/tiki-mug/rum-barrel-three-dots-and-a-dash-1st-edition/",
+   "source_urls": [
+    "https://thesearchfortiki.com/tiki-mug/rum-barrel-three-dots-and-a-dash-1st-edition/"
+   ]
+  },
+  {
+   "name": "Tiki Farm Moai Exotique Mug",
+   "series": "Moai Exotique",
+   "designer": "Derek Yaniger",
+   "model_code": null,
+   "glass": "tiki",
+   "variant": null,
+   "capacity_ml": 444,
+   "capacity_as_stated": "15 fl. oz.",
+   "height_mm": 213,
+   "rim_mm": null,
+   "material": "ceramic",
+   "product_url": "https://thesearchfortiki.com/tiki-mug/moai-exotique-mug-tiki-farm-steely-dang-edition/",
+   "source_urls": [
+    "https://thesearchfortiki.com/tiki-mug/moai-exotique-mug-tiki-farm-steely-dang-edition/"
+   ]
+  },
+  {
+   "name": "Tiki Farm Mr. Moai Mug",
+   "series": "Mr. Moai",
+   "designer": "Joe Vitale",
+   "model_code": null,
+   "glass": "tiki",
+   "variant": null,
+   "capacity_ml": 384,
+   "capacity_as_stated": "13 fl. oz.",
+   "height_mm": 178,
+   "rim_mm": null,
+   "material": "ceramic",
+   "product_url": "https://thesearchfortiki.com/tiki-mug/mr-moai-tiki-farm-green-edition/",
+   "source_urls": [
+    "https://thesearchfortiki.com/tiki-mug/mr-moai-tiki-farm-green-edition/"
+   ]
+  }
+ ]
+}

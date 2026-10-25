@@ -58,7 +58,7 @@ export function TimelineView({
   const ds = useDs();
   const insets = useSafeAreaInsets();
   const gutter = useGutter();
-  const wide = useBreakpoint() === 'desktop';
+  const wide = useBreakpoint() !== 'phone'; // Wide from 768, like the drink pages (i05, 24 Oct 2026).
   const [filter, setFilter] = useState<TimelineFilter>({ family: null, styles: true, spirit: null, place: null });
   // undefined: untouched, so a drink opened from its page shows its thread.
   const [threadChoice, setThreadKey] = useState<string | null | undefined>(undefined);
