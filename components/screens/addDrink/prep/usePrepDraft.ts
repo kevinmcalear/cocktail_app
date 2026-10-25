@@ -2,7 +2,7 @@ import { useState } from 'react';
 
 import { useMakingKit } from '@/hooks/useBarKit';
 import { useCatalogRecipe } from '@/hooks/usePrepCard';
-import { FROM_TECHNIQUE, guessKind, keepLines, KIND_WAYS, kitFirstWay, openSlots, prepFromCatalog, prepFromTechnique, prepPhrase, sourceSite, startPrep, withMethod, type PrepDraft, type PrepKindId, type PrepPick } from '@/lib/prepKinds';
+import { FROM_TECHNIQUE, guessKind, keepLines, KIND_WAYS, kitFirstWay, wayOf, openSlots, prepFromCatalog, prepFromTechnique, prepPhrase, sourceSite, startPrep, withMethod, type PrepDraft, type PrepKindId, type PrepPick } from '@/lib/prepKinds';
 import { methodOf, prepCardFor, waysToMake } from '@/lib/techniques/makeIt';
 import { techniqueById } from '@/lib/techniques';
 
@@ -20,15 +20,17 @@ export interface PrepStart {
   combined?: boolean;
   /** The name as it's typed now, for a kind picked after it changed; `name` is the one it started with. */
   nameNow?: string;
+  /** The venue the drink is for, whose Kit the ways are checked against; null at home. */
+  bar?: { id: string; name: string } | null;
 }
 
 /** A new prep's first draft: the technique picked, else the kind its name says, else the technique that most likely makes it, else blank. */
-function firstDraft(name: string, picked: PrepStart['picked'], technique: string | null | undefined): PrepDraft {
+function firstDraft(name: string, picked: PrepStart['picked'], technique: string | null | undefined, kit: ReadonlySet<string> | null): PrepDraft {
   const chosen = techniqueById(technique);
   if (chosen) return prepFromTechnique(chosen, name, prepCardFor(chosen), picked);
   const kind = guessKind(name);
-  // A kind made one of the library's ways (a clarified juice) starts from the way its name points to, else its first.
-  const way = kind && !FROM_TECHNIQUE.includes(kind) ? null : (waysToMake(name)[0] ?? techniqueById(KIND_WAYS[kind ?? 'other']?.[0]?.technique));
+  // A kind made one of the library's ways (a clarified juice) starts from the way its name points to, else the first the kit covers.
+  const way = kind && !FROM_TECHNIQUE.includes(kind) ? null : (waysToMake(name)[0] ?? techniqueById(kind ? kitFirstWay(kind, kit)?.technique : null));
   return way ? prepFromTechnique(way, name, prepCardFor(way), picked) : startPrep(kind ?? 'other', name);
 }
 
@@ -39,12 +41,12 @@ function firstDraft(name: string, picked: PrepStart['picked'], technique: string
  * desktop page (PrepCard) both write it. `onSeeded` runs when the catalog's
  * recipe arrives, so the builder can move on to the recipe.
  */
-export function usePrepDraft({ name: started, initial, picked, technique, combined, nameNow }: PrepStart, onSeeded?: () => void) {
-  const { kit } = useMakingKit();
+export function usePrepDraft({ name: started, initial, picked, technique, combined, nameNow, bar = null }: PrepStart, onSeeded?: () => void) {
+  const { kit } = useMakingKit(bar);
   const name = nameNow?.trim() || started;
   // A recipe already written (or lines just combined) keeps what goes in when another kind is picked.
   const keep = combined || !!initial;
-  const [draft, setDraftState] = useState<PrepDraft>(() => initial ?? firstDraft(started, picked, technique));
+  const [draft, setDraftState] = useState<PrepDraft>(() => initial ?? firstDraft(started, picked, technique, kit));
   // Amounts typed as they go in (make-anything-steps-2, step 5) for lines combined from the drink's own.
   const [view, setView] = useState<RecipeViewKind>(combined || initial?.kind === 'batch' ? 'amounts' : 'parts');
   // Goes up when the draft starts over (a kind, a technique, the catalog's recipe): steps that keep their own rows remount.
@@ -80,10 +82,12 @@ export function usePrepDraft({ name: started, initial, picked, technique, combin
     const k = way?.kind ?? kind;
     const t = way?.fills ? techniqueById(way.technique) : null;
     const method = (d: PrepDraft) => (t && way ? withMethod(d, t, { ...prepCardFor(t), steps: methodOf(t) }, way.id) : d);
-    const own = FROM_TECHNIQUE.includes(k) && !keep ? techniqueById((way ?? kitFirstWay(k, kit))?.technique) : null;
+    // Its own parts: a wash, a clarified juice, a distillate (the way picked, else the kit's first), or an oil or tincture.
+    const ownWay = keep ? null : FROM_TECHNIQUE.includes(k) ? (way ?? kitFirstWay(k, kit)) : way?.own ? way : null;
+    const own = ownWay ? techniqueById(ownWay.technique) : null;
     if (own) return restart(prepFromTechnique(own, name, prepCardFor(own), picked));
-    // The same kind made another way: what goes in stays.
-    if (t && draft.kind === k) return restart(method(draft));
+    // The same kind made another way: what goes in stays, unless it was an oil's or a tincture's own.
+    if (t && draft.kind === k && !wayOf(draft)?.own) return restart(method(draft));
     const fresh = startPrep(k, name, way?.id);
     restart(method(keep ? keepLines(fresh, draft) : fresh));
   };

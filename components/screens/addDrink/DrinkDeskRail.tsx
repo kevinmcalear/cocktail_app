@@ -113,13 +113,12 @@ function tasteParts(lines: readonly WizardLine[], ingredients: readonly CatalogI
   return lines.map((l) => ({ name: l.name, genericName: (l.id && byId.get(byId.get(l.id)?.generic_id ?? '')?.name) || null, amount: amountOf(l.amount), unit: l.unit || null }));
 }
 
-/** On the way to a menu: how the drink sits among its others ("On Winter menu it’s the lightest drink, and the only sherry one"). */
 /** While a recipe is written under its line (make-anything-steps-1, step 4, more to it): the kit its ways are checked against, and where to change it. */
-export function DeskKit() {
+export function DeskKit({ bar }: { bar: { id: string; name: string } | null }) {
   const ds = useDs();
   const router = useRouter();
-  const { kit, where, edit } = useMakingKit();
-  const names = [...kit].map((id) => equipmentById(id)?.name ?? id);
+  const { kit, where, edit } = useMakingKit(bar);
+  const names = [...(kit ?? [])].map((id) => equipmentById(id)?.name ?? id);
   return (
     <View style={styles.kit}>
       <Eyebrow>{`Your kit, from ${where}`}</Eyebrow>
@@ -132,13 +131,16 @@ export function DeskKit() {
             ))
           : <Caption tone="muted">Nothing on it yet: every way shows, dimmed until you add its kit.</Caption>}
       </View>
-      <PressableScale role="link" onPress={() => router.push(edit as never)} accessibilityLabel="Change your kit" style={styles.kitEdit}>
-        <Body tone="accent">Change your kit</Body>
-      </PressableScale>
+      {edit ? (
+        <PressableScale role="link" onPress={() => router.push(edit as never)} accessibilityLabel="Change your kit" style={styles.kitEdit}>
+          <Body tone="accent">Change your kit</Body>
+        </PressableScale>
+      ) : null}
     </View>
   );
 }
 
+/** On the way to a menu: how the drink sits among its others ("On Winter menu it’s the lightest drink, and the only sherry one"). */
 export function DeskMenuNote({ sectionId, menu, lines, ingredients }: { sectionId: string | null | undefined; menu: string | null; lines: readonly WizardLine[]; ingredients: readonly CatalogIngredient[] }) {
   const others = useMenuDrinkSpecs(menu ? sectionId : null).data;
   const note = menu && others ? menuNote(menu, tasteParts(lines, ingredients), others) : null;

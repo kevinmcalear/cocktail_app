@@ -13,6 +13,7 @@
 import type { Allergen } from './allergens';
 import { asLike, keepFor, nameParts, partsFor, prepFacts, slotIngredient, splitName } from './techniques/template';
 import { techniqueById } from './techniques';
+import { byKit } from './techniques/kitFirst';
 import type { Technique } from './techniques/types';
 
 /** 'batch' is a drink's pours bottled ahead (lib/batchLines): where combining two lines starts. 'wash' is a fat or milk wash; 'clarified' and 'distillate' are made one of the library's clarifying or distilling ways. */
@@ -119,7 +120,7 @@ const KIND_WORDS: [RegExp, PrepKindId][] = [
   [/\bshrub\b/i, 'shrub'],
   [/\bcordial\b/i, 'cordial'],
   [/\boleo\b/i, 'oleo'],
-  // Not tinctures or bitters: those are their own technique (strong spirit, kept a year). A house liqueur is a spirit with a flavour in it.
+  // Not tinctures or bitters by name: Tincture is a way of an infusion, made from its own technique (strong spirit, kept a year). A house liqueur is a spirit with a flavour in it.
   [/\b(infused|infusion|liqueur)\b/i, 'infusion'],
   [/\bsyrup\b|\bgomme\b/i, 'syrup'],
   [/\bclarified\b/i, 'clarified'],
@@ -148,6 +149,8 @@ export interface PrepWay {
   kind?: PrepKindId;
   /** Its row in How?, when the technique's own name doesn't fit ("Fat wash", not "Fat washing"). */
   label?: string;
+  /** Made from its technique's own parts (an oil is herbs and oil, not a spirit and a flavour): picking it starts what goes in again, unless lines were combined. */
+  own?: boolean;
   /** How it's said after a kind's name, when its name doesn't read there: "Infusion, tincture" says "a tincture". */
   words?: string;
 }
@@ -170,10 +173,10 @@ export const KIND_WAYS: Partial<Record<PrepKindId, PrepWay[]>> = {
     { id: 'sous-vide', name: 'Sous vide', time: 'Hours', kit: [], note: 'sealed bag in a water bath, then strain', how: 'It’s sealed in a bag and held in a water bath, then chilled and strained.', technique: 'sous-vide-infusion', fills: 'seal, water bath, strain' },
     { id: 'nitrous', name: 'Nitrous', time: 'Minutes', kit: [], note: 'a cream whipper', how: 'It’s charged in a cream whipper, vented fast, then strained.', technique: 'nitrous-infusion', fills: 'charge, rest, vent, strain' },
     // The rest of the library's infusions (make-anything-steps-1, step 4, more to it): How? lists each by its technique, your kit first.
-    { id: 'oil', name: 'Oil', time: '1 day', kit: [], words: 'an infused oil', how: 'The herbs are blanched, blended hot into the oil, chilled fast and strained.', technique: 'infused-oil', fills: 'blanch, blend hot, chill, strain' },
-    { id: 'vacuum', name: 'Vacuum', time: 'Minutes', kit: [], how: 'A chamber vacuum pushes the liquid into the fruit; serve the fruit or strain the liquid.', technique: 'vacuum-infusion', fills: 'seal at full vacuum, strain' },
+    { id: 'oil', name: 'Oil', own: true, time: '1 day', kit: [], words: 'an infused oil', how: 'The herbs are blanched, blended hot into the oil, chilled fast and strained.', technique: 'infused-oil', fills: 'blanch, blend hot, chill, strain' },
+    { id: 'vacuum', name: 'Vacuum', own: true, time: 'Minutes', kit: [], how: 'A chamber vacuum pushes the liquid into the fruit; serve the fruit or strain the liquid.', technique: 'vacuum-infusion', fills: 'seal at full vacuum, strain' },
     { id: 'microwave', name: 'Microwave', time: '3 min', kit: [], how: 'It’s heated a few minutes with the flavour in, cooled with the lid on, then strained.', technique: 'microwave-infusion', fills: 'heat, cool covered, strain' },
-    { id: 'tincture', name: 'Tincture', time: '2 weeks', kit: [], words: 'a tincture', how: 'Dried botanicals steep in strong spirit for two weeks, then it’s strained into dropper bottles.', technique: 'tincture', fills: 'steep, shake, strain into droppers' },
+    { id: 'tincture', name: 'Tincture', own: true, time: '2 weeks', kit: [], words: 'a tincture', how: 'Dried botanicals steep in strong spirit for two weeks, then it’s strained into dropper bottles.', technique: 'tincture', fills: 'steep, shake, strain into droppers' },
   ],
   clarified: [
     { id: 'agar-freeze', name: 'Agar freeze-thaw', time: '1 to 2 days', kit: [], how: 'Set with agar, frozen, then thawed through a cloth.', technique: 'agar-freeze-thaw', fills: 'set with agar, freeze, thaw through a cloth' },
@@ -203,15 +206,15 @@ export const FROM_TECHNIQUE: PrepKindId[] = ['wash', 'clarified', 'distillate'];
  * nothing is hidden, the rest just follow. Syrups' and shrubs' ways are
  * recipes, not techniques, and come back as they are under `have`.
  */
-export function waysByKit(kind: PrepKindId, kit: ReadonlySet<string>): { have: PrepWay[]; need: PrepWay[] } {
+export function waysByKit(kind: PrepKindId, kit: ReadonlySet<string> | null): { have: PrepWay[]; need: PrepWay[] } {
   const ways = KIND_WAYS[kind] ?? [];
   if (!ways.every((w) => w.fills)) return { have: ways, need: [] };
-  const covered = (w: PrepWay) => (techniqueById(w.technique)?.equipment ?? []).every((id) => kit.has(id));
-  return { have: ways.filter(covered), need: ways.filter((w) => !covered(w)) };
+  const split = byKit(ways.map((w) => ({ w, equipment: techniqueById(w.technique)?.equipment ?? [] })), kit);
+  return { have: split.have.map((x) => x.w), need: split.need.map((x) => x.w) };
 }
 
 /** The way a kind starts as: the first the kit covers, else its first. */
-export function kitFirstWay(kind: PrepKindId, kit: ReadonlySet<string>): PrepWay | undefined {
+export function kitFirstWay(kind: PrepKindId, kit: ReadonlySet<string> | null): PrepWay | undefined {
   const { have, need } = waysByKit(kind, kit);
   return have[0] ?? need[0];
 }

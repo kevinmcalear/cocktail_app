@@ -210,6 +210,7 @@ export function DrinkDesk(p: DrinkDeskProps) {
             lineBelow={lineBelow}
             onNewBottle={onNewBottle}
             inlinePrep={{ venueName: barId ? p.venueName : null, onOpen: setPrepOpen }}
+            bar={barId ? { id: barId, name: p.venueName } : null}
             placeholder="Add an ingredient: “30 pommeau” works too"
           />
           <Row label="Method">
@@ -243,7 +244,7 @@ export function DrinkDesk(p: DrinkDeskProps) {
         <ScrollView style={[styles.rail, { backgroundColor: ds.c.surface, borderLeftColor: ds.c.line }]} contentContainerStyle={styles.railBody}>
           <Eyebrow>The drink, as you go</Eyebrow>
           <DeskDrinkCard draft={draft} look={look} seed={draft.id ?? 'new-drink'} onTint={(tint) => set({ tint })} />
-          {prepOpen ? <DeskKit /> : null}
+          {prepOpen ? <DeskKit bar={barId ? { id: barId, name: p.venueName } : null} /> : null}
           <DeskTaste lines={perDrinkLines(draft.lines)} ingredients={p.ingredients} onAdd={addByName} />
           {canCost ? <DeskCost lines={costLines} pricing={pricing} price={draft.price ?? ''} onPrice={(price) => set({ price })} /> : null}
           <DeskMenuNote sectionId={p.menuSectionId} menu={menu} lines={perDrinkLines(draft.lines)} ingredients={p.ingredients} />

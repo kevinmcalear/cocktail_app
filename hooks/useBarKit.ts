@@ -1,7 +1,7 @@
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 
 import { useKit } from '@/hooks/useKit';
-import { useHereVenue } from '@/hooks/useMode';
+import { useCapabilities } from '@/hooks/useCapabilities';
 import { supabase } from '@/lib/supabase';
 import type { Row } from '@/types/db';
 
@@ -80,22 +80,25 @@ export function useToolsFor(barId: string | null, venueName: string | null): { l
 
 /**
  * The kit a recipe being made is checked against (make-anything-steps-1,
- * step 4, more to it): the venue's Kit when you're working at one, else My
- * Bar's. `add` is "I have this": it puts the piece on that list; `edit` is
- * where the list is changed.
+ * step 4, more to it): the Kit of the venue the drink is for, else My Bar's.
+ * `kit` is null while the venue's list loads, so nothing dims early. `add`
+ * is "I have this": it puts the pieces on that list, and is null for someone
+ * who can't change a venue's Kit (it takes Prep); `edit` is where the list
+ * is changed, null likewise.
  */
-export function useMakingKit(): { kit: ReadonlySet<string>; where: string; add: (id: string) => void; edit: string } {
-  const venue = useHereVenue();
-  const tools = useBarKit(venue?.id).data;
+export function useMakingKit(bar: { id: string; name: string } | null): { kit: ReadonlySet<string> | null; where: string; add: ((ids: string[]) => void) | null; edit: string | null } {
+  const tools = useBarKit(bar?.id);
+  const caps = useCapabilities(bar?.id).data;
   const home = useKit();
-  const setTools = useSetTools(venue?.id ?? '');
-  if (venue) {
+  const setTools = useSetTools(bar?.id ?? '');
+  if (bar) {
+    const canEdit = !!caps?.includes('prep');
     return {
-      kit: new Set((tools ?? []).flatMap((r) => (r.kind === 'tool' && r.key ? [r.key] : []))),
-      where: `${venue.name}’s Kit`,
-      add: (id) => setTools.mutate({ ids: [id], on: true }),
-      edit: `/settings/bar/${venue.id}/tools`,
+      kit: tools.data ? new Set(tools.data.flatMap((r) => (r.kind === 'tool' && r.key ? [r.key] : []))) : null,
+      where: `${bar.name}’s Kit`,
+      add: canEdit ? (ids) => setTools.mutate({ ids, on: true }) : null,
+      edit: canEdit ? `/settings/bar/${bar.id}/tools` : null,
     };
   }
-  return { kit: home.kit, where: 'My Bar', add: (id) => (home.kit.has(id) ? undefined : home.toggle(id)), edit: '/equipment' };
+  return { kit: home.kit, where: 'My Bar', add: (ids) => ids.filter((id) => !home.kit.has(id)).forEach((id) => home.toggle(id)), edit: '/equipment' };
 }

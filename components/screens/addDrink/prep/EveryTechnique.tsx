@@ -34,10 +34,11 @@ interface EveryTechniqueProps {
   name: string;
   /** The technique picked, if any. */
   selected: string | null;
-  kit: ReadonlySet<string>;
+  /** Null while it loads: nothing dims. */
+  kit: ReadonlySet<string> | null;
   onPick: (id: string) => void;
-  /** "I have this": the piece goes on the kit. */
-  onAdd: (equipmentId: string) => void;
+  /** "I have this": the pieces go on the kit. Null for someone who can't change it. */
+  onAdd: ((equipmentIds: string[]) => void) | null;
   /** Write it yourself: a blank recipe. */
   onWrite: () => void;
 }
@@ -93,9 +94,9 @@ export function EveryTechnique({ name, selected, kit, onPick, onAdd, onWrite }: 
  * name and grade, how long, and the kit it takes ("Nothing special"); one
  * the kit doesn't cover is dimmed, says what it needs and offers I have this.
  */
-export function TechniqueRow({ t, label, kit, on, onPress, onAdd }: { t: Technique; label?: string; kit: ReadonlySet<string>; on: boolean; onPress: () => void; onAdd: (equipmentId: string) => void }) {
+export function TechniqueRow({ t, label, kit, on, onPress, onAdd }: { t: Technique; label?: string; kit: ReadonlySet<string> | null; on: boolean; onPress: () => void; onAdd: ((equipmentIds: string[]) => void) | null }) {
   const ds = useDs();
-  const missing = t.equipment.filter((id) => !kit.has(id));
+  const missing = kit ? t.equipment.filter((id) => !kit.has(id)) : [];
   const tools = t.equipment.map((id) => equipmentById(id)?.name ?? id).join(', ') || 'Nothing special';
   const needs = missing.length ? needsText(missing) : null;
   const name = label ?? t.name;
@@ -118,8 +119,8 @@ export function TechniqueRow({ t, label, kit, on, onPress, onAdd }: { t: Techniq
         </View>
         <Caption tone="muted">{`${t.time} · ${needs ?? tools}`}</Caption>
       </PressableScale>
-      {missing.length ? (
-        <PressableScale role="button" onPress={() => missing.forEach((id) => onAdd(id))} accessibilityLabel={`I have this: add ${missing.map((id) => equipmentById(id)?.name ?? id).join(' and ')} to your kit`} style={styles.have}>
+      {missing.length && onAdd ? (
+        <PressableScale role="button" onPress={() => onAdd(missing)} accessibilityLabel={`I have this: add ${missing.map((id) => equipmentById(id)?.name ?? id).join(' and ')} to your kit`} style={styles.have}>
           <Caption tone="accent">I have this</Caption>
         </PressableScale>
       ) : null}

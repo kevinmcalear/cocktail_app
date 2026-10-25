@@ -61,7 +61,7 @@ describe('PrepBuilder', () => {
     expect(screen.getByRole('radio', { name: /^Rapid nitrous infusion\. 2 min\. / })).toBeTruthy();
     expect(screen.getByText('Needs kit you haven’t added')).toBeTruthy();
     await fireEvent.press(screen.getByRole('button', { name: /^I have this: add Sous vide circulator/ }));
-    expect(mockAdd).toHaveBeenCalledWith('sous-vide');
+    expect(mockAdd).toHaveBeenCalledWith(['sous-vide']);
     await fireEvent.press(screen.getByRole('button', { name: 'Every technique' }));
     expect(screen.getByText('Search techniques')).toBeTruthy();
     // Something else is every technique; picking one there starts from it.
@@ -69,6 +69,17 @@ describe('PrepBuilder', () => {
     expect(screen.getByText('Something else: every technique')).toBeTruthy();
     await fireEvent.press(screen.getByRole('radio', { name: /^Tepache\. / }));
     expect(screen.getByRole('radio', { name: /^Tepache\. /, checked: true })).toBeTruthy();
+  });
+
+  test('an oil is made from its own parts, not the spirit the infusion started with', async () => {
+    await open('Chamomile infusion');
+    await fireEvent.press(screen.getByRole('button', { name: 'Skip' }));
+    expect(screen.getByRole('button', { name: 'Pick the spirit' })).toBeTruthy();
+    await fireEvent.press(screen.getByRole('button', { name: 'Back' }));
+    await fireEvent.press(screen.getByRole('radio', { name: /^Herb, chile and garlic oils\. / }));
+    await fireEvent.press(screen.getByRole('button', { name: 'Skip' }));
+    expect(screen.getByText('Neutral oil')).toBeTruthy();
+    expect(screen.queryByRole('button', { name: 'Pick the spirit' })).toBeNull();
   });
 
   test('a clarified juice is its own kind, made the first way the kit covers', async () => {

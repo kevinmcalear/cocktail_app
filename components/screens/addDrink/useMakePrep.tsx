@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 
 import { linePrep, uncombine } from '@/lib/batchLines';
 import type { WizardDraft, WizardLine, WizardPick } from '@/lib/drinkWizard';
@@ -16,11 +16,12 @@ interface MakePrepArgs {
   set: (change: Partial<WizardDraft>) => void;
   ingredients: readonly CatalogIngredient[];
   aliases: readonly IngredientAlias[];
-  /** The desktop page: the prep is written under its own line, not over the page. */
   /** On the desktop page: the card opens under its line; `onOpen` says when one is open, for the page's kit box. */
   inlinePrep?: { venueName: string | null; onOpen?: (open: boolean) => void };
   add: (pick: WizardPick, prep?: PrepDraft, later?: boolean, pour?: TypedPour) => WizardLine;
   change: (key: string, c: Partial<WizardLine>) => void;
+  /** The venue the drink is for, whose Kit How? is checked against; null at home. */
+  bar?: { id: string; name: string } | null;
 }
 
 /** What's being made: a new line, the recipe of a line in the drink (its key), or a bottle line made in house (its key, `replace`). */
@@ -42,12 +43,8 @@ interface Making {
  * steps it's the builder over the page; on the desktop page, a card under
  * its line. Done goes back to the line, which shows the prep.
  */
-export function useMakePrep({ draft, set, ingredients, aliases, inlinePrep, add, change }: MakePrepArgs) {
-  const [making, setMakingState] = useState<Making | null>(null);
-  const setMaking = (m: Making | null) => {
-    setMakingState(m);
-    inlinePrep?.onOpen?.(!!m);
-  };
+export function useMakePrep({ draft, set, ingredients, aliases, inlinePrep, add, change, bar = null }: MakePrepArgs) {
+  const [making, setMaking] = useState<Making | null>(null);
   // Plain values: the React Compiler reads `making.key` eagerly for its memo deps, which throws while it's closed.
   const editingKey = making?.key ?? null;
   const makingName = making?.name ?? null;
@@ -67,10 +64,15 @@ export function useMakePrep({ draft, set, ingredients, aliases, inlinePrep, add,
   };
 
   const line = editingKey ? draft.lines.find((l) => l.key === editingKey) : null;
+  // A card is open while its line is there (a line taken out takes its card with it): the page's kit box follows.
+  const open = !!makingName && (!editingKey || !!line);
+  const onOpen = inlinePrep?.onOpen;
+  useEffect(() => onOpen?.(open), [onOpen, open]);
   const editingPrep = line && !replacing ? linePrep(line) : null;
   const combined = !!line?.combined;
   const drinkName = draft.name.trim();
   const props = {
+    bar,
     initial: editingPrep,
     technique: makingTechnique,
     picked: makingBase ? { base: makingBase } : undefined,

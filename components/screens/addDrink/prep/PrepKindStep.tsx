@@ -19,6 +19,8 @@ interface PrepKindStepProps {
   onTechnique: (id: string) => void;
   /** "· change" on the amounts: the base's amount is set on the recipe step. */
   onChangeAmount: () => void;
+  /** The venue the drink is for, whose Kit the ways are checked against; null at home. */
+  bar?: { id: string; name: string } | null;
 }
 
 /**
@@ -31,9 +33,9 @@ interface PrepKindStepProps {
  * library. A way that fills the method says so. Under them, what the picked
  * way takes and how it keeps.
  */
-export function PrepKindStep({ name, draft, combined, onKind, onTechnique, onChangeAmount }: PrepKindStepProps) {
+export function PrepKindStep({ name, draft, combined, onKind, onTechnique, onChangeAmount, bar = null }: PrepKindStepProps) {
   const ds = useDs();
-  const { kit, where, add } = useMakingKit();
+  const { kit, where, add } = useMakingKit(bar);
   const columns = useBreakpoint() === 'phone' ? 2 : 3;
   const guess = guessKind(name);
   const named = guess ? tileOf(guess) : null;
