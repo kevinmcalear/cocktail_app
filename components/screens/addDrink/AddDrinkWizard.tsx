@@ -24,7 +24,7 @@ import { draftSketchInputs } from '@/lib/sketch/draft';
 import { iceWhy, serveGuess } from '@/lib/specDefaults';
 import { toastDone } from '@/lib/toast';
 import { venueIceNames } from '@/lib/venueKit';
-import { useDrinkWizardStore, wizardPlace } from '@/store/useDrinkWizardStore';
+import { draftSlot, useDrinkWizardStore, wizardPlace } from '@/store/useDrinkWizardStore';
 
 import { CreditsStep } from './CreditsStep';
 import { DrinkDesk } from './DrinkDesk';
@@ -73,7 +73,7 @@ export function AddDrinkWizard(props: AddDrinkWizardProps) {
 }
 
 function Wizard({ barId = null, menuSectionId, initialName, startFrom, firstRound, embedded, onClose, onSaved }: AddDrinkWizardProps) {
-  const place = wizardPlace(barId);
+  const place = draftSlot(wizardPlace(barId), { menuSectionId, name: initialName, from: startFrom });
   const kept = useDrinkWizardStore((s) => s.kept[place]);
   const patch = useDrinkWizardStore((s) => s.patch);
   const setStoredStep = useDrinkWizardStore((s) => s.setStep);
@@ -115,7 +115,7 @@ function Wizard({ barId = null, menuSectionId, initialName, startFrom, firstRoun
   };
   const back = () => (at > 0 ? go(WIZARD_STEPS[at - 1]) : onClose());
 
-  // A name passed in ("Add 'Paloma'" from search) starts a fresh draft. With a drink to start from, it names that draft (below).
+  // A name passed in ("Make 'Paloma'" from search) names its own fresh draft. With a drink to start from, it names that draft (below).
   useEffect(() => {
     const kept = useDrinkWizardStore.getState().kept[place]?.draft;
     if (!startFrom && initialName?.trim() && !(kept && hasContent(kept))) patch(place, { name: initialName.trim() });

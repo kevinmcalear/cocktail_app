@@ -3,6 +3,8 @@ import { EMPTY_DRAFT, newDraftId, type WizardDraft, type WizardStep } from '@/li
 import { createWizardStore } from './createWizardStore';
 
 export { wizardPlace } from './createWizardStore';
+/** The kept draft a wizard opens: the place's one, or a drink started from a menu, by name or from another drink. */
+export { draftSlot, sectionSlots } from '@/lib/wizardSlots';
 
 /**
  * The drink being added (components/screens/addDrink), kept on the device

@@ -12,10 +12,13 @@ import { sectionLine } from '@/lib/menus';
 import type { MenuDrink } from '@/types/menus';
 
 import { DropSlot, EditorRow, GRIP, PriceHeads } from './EditorRow';
+import { UnfinishedDrinks } from './UnfinishedDrinks';
 import { dropSection } from './useMenuDrag';
 
 interface EditorSectionProps {
   section: EditSection;
+  /** The menu's venue, or null at home: where its unfinished drinks were kept. */
+  barId: string | null;
   /** The section new drinks go into on desktop (clicking one in the library). */
   targeted?: boolean;
   onTarget?: () => void;
@@ -49,7 +52,7 @@ const ListComponent = supportsNestableDrag ? NestableDraggableFlatList : Draggab
  * reorder), and adding more. No box of its own: on desktop the section the
  * library adds to sits on a raised ground, tagged "Adding here".
  */
-export function EditorSection({ section, sections, targeted, onTarget, onAdd, onSettings, home, made, onRemove, onReorder, onMove, onMoveTo, drag: web, pricing, elsewhere }: EditorSectionProps) {
+export function EditorSection({ section, barId, sections, targeted, onTarget, onAdd, onSettings, home, made, onRemove, onReorder, onMove, onMoveTo, drag: web, pricing, elsewhere }: EditorSectionProps) {
   const ds = useDs();
   const breakpoint = useBreakpoint();
   // A desktop browser: the rows have price fields, with heads over them.
@@ -123,6 +126,7 @@ export function EditorSection({ section, sections, targeted, onTarget, onAdd, on
         />
       ) : null}
       {web && !count && web.at === 0 ? <DropSlot /> : null}
+      <UnfinishedDrinks barId={barId} sectionKey={section.key} />
       {onAdd ? (
         <PressableScale accessibilityLabel={`Add a drink to ${section.name}`} onPress={onAdd} style={[styles.add, { borderColor: ds.c.lineStrong }]}>
           <IconSymbol name="plus" size={16} color={ds.c.ink} />

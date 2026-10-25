@@ -217,13 +217,19 @@ describe('IngredientsStep', () => {
     expect(screen.getByText('Batch · mezcal, agave syrup')).toBeTruthy();
     await fireEvent.press(screen.getByRole('button', { name: /^Ash Garden batch, 60 ml/ }));
     expect(screen.getByText('NEW BATCH · FROM ASH GARDEN')).toBeTruthy();
-    expect(screen.getByText('562.5 ml')).toBeTruthy();
-    expect(screen.getByText('187.5 ml')).toBeTruthy();
+    expect(screen.getByLabelText('Mezcal in the bottle, ml').props.value).toBe('562.5');
+    expect(screen.getByLabelText('Agave syrup in the bottle, ml').props.value).toBe('187.5');
     expect(screen.getByText('about 12 drinks')).toBeTruthy();
     // The per-drink amounts stay folded until asked for.
     expect(screen.queryByText('45 ml')).toBeNull();
-    await fireEvent.press(screen.getByRole('button', { name: 'Per drink amounts' }));
+    await fireEvent.press(screen.getByRole('button', { name: 'What one drink gets' }));
     expect(screen.getByText('45 ml')).toBeTruthy();
+    // An amount typed in the bottle: 600 ml of mezcal, the agave as it was, one drink still 60 ml.
+    await fireEvent(screen.getByLabelText('Mezcal in the bottle, ml'), 'focus');
+    await fireEvent.changeText(screen.getByLabelText('Mezcal in the bottle, ml'), '600');
+    const typed = set.mock.calls.at(-1)[0].lines[0];
+    expect(typed.batch.bottleMl).toBe(787.5);
+    expect(typed.amount).toBe('60');
     await fireEvent.press(screen.getByRole('radio', { name: '1 L' }));
     expect(set.mock.calls.at(-1)[0].lines[0].batch.bottleMl).toBe(1000);
     await fireEvent.press(screen.getByRole('button', { name: 'Split back into lines' }));

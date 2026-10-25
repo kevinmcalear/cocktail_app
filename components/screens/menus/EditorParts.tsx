@@ -111,6 +111,7 @@ export function EditorSections({ editor, targetable, drag }: { editor: LayoutEdi
         <EditorSection
           key={s.key}
           section={s}
+          barId={editor.menu.barId}
           sections={editor.layout.sections}
           targeted={targetable && editor.targetKey === s.key}
           onTarget={targetable ? () => editor.setTargetKey(s.key) : undefined}
