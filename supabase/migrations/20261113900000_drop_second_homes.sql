@@ -9,11 +9,12 @@
 --    again without the column (a view can't lose a column in place).
 -- 2. The old menu creator's template links (#369). Nothing writes
 --    menus.template_id, menu_drinks.template_section_id or
---    menu_sections.template_section_id any more, and the
---    menu_drinks_fill_section trigger only existed so that creator's writes,
---    which named no section, landed in one. Every writer now names the
---    section (save_menu, move_menu_history_to_venue). menu_templates and
---    template_sections stay: they are the saved layouts. Their
+--    menu_sections.template_section_id any more, so the
+--    menu_drinks_fill_section trigger loses its template half. It keeps the
+--    other: a drink added with no section lands in the menu's first one (or
+--    a new "Drinks"), so no drink is on a menu but missing from its page
+--    (seed_demo.sql and older scripts add drinks that way). menu_templates
+--    and template_sections stay: they are the saved layouts. Their
 --    menu_templates.description, which layouts never show, goes too.
 -- 3. public.get_my_taste, unused since #345 (taste is worked out in the app).
 -- 4. recipes' last two keys keep the names they had as new_recipes. The app
@@ -111,10 +112,36 @@ GRANT ALL ON TABLE "public"."app_item_presentation" TO "service_role";
 
 -- --- 2. The old menu creator's template links ---
 
+-- As 20260927100000, without the template sections.
+CREATE OR REPLACE FUNCTION private.menu_drinks_fill_section()
+RETURNS trigger
+LANGUAGE plpgsql
+SET search_path = ''
+AS $$
+BEGIN
+  IF NEW.menu_section_id IS NOT NULL OR NEW.menu_id IS NULL THEN
+    RETURN NEW;
+  END IF;
+  SELECT s.id INTO NEW.menu_section_id
+  FROM public.menu_sections s
+  WHERE s.menu_id = NEW.menu_id
+  ORDER BY s.sort_order, s.created_at
+  LIMIT 1;
+  IF NEW.menu_section_id IS NULL THEN
+    INSERT INTO public.menu_sections (menu_id, name, min_items)
+    VALUES (NEW.menu_id, 'Drinks', 0)
+    RETURNING id INTO NEW.menu_section_id;
+  END IF;
+  RETURN NEW;
+END;
+$$;
+
 DROP TRIGGER IF EXISTS "menu_drinks_fill_section" ON "public"."menu_drinks";
-DROP FUNCTION IF EXISTS private.menu_drinks_fill_section();
 
 ALTER TABLE "public"."menu_drinks" DROP COLUMN "template_section_id";
+CREATE TRIGGER "menu_drinks_fill_section"
+  BEFORE INSERT ON "public"."menu_drinks"
+  FOR EACH ROW EXECUTE FUNCTION private.menu_drinks_fill_section();
 ALTER TABLE "public"."menu_sections" DROP COLUMN "template_section_id";
 ALTER TABLE "public"."menus" DROP COLUMN "template_id";
 ALTER TABLE "public"."menu_templates" DROP COLUMN "description";
