@@ -69,7 +69,7 @@ export function EditBody({ edit, savedId, isPrep, wide, venueName, used, spiritT
     <>
       {wide ? null : nameField}
       <IngredientTags isPrep actions={[]} venueName={venueName} shared={!form.barId} mine={false} role={editor.role} technical={false} />
-      <KindOf name={form.generic?.name ?? null} onPick={() => onSheet('kind')} onClear={() => set({ generic: null })} />
+      <KindOf name={form.generic?.name ?? null} onPick={() => onSheet('kind')} />
       {wide ? nameField : null}
       {about}
       <EditSpecList
