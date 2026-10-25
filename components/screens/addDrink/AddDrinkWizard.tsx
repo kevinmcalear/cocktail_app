@@ -84,8 +84,7 @@ function Wizard({ barId = null, menuSectionId, initialName, startFrom, firstRoun
   // Filled out with today's fields: a draft kept by an older version of the app may lack some.
   const draft: WizardDraft = { ...EMPTY_DRAFT, ...kept?.draft };
   const step: WizardStep = kept?.step ?? 'name';
-  // On the web the page can draw before the kept draft has loaded (AsyncStorage is async there):
-  // once it has, say it was picked up. Set while rendering, like any value derived from a change.
+  // On the web the page can draw before the kept draft loads (AsyncStorage is async there): once it has, say it was picked up. Set while rendering, like any value derived from a change.
   const loaded = useSyncExternalStore(hydrated, isHydrated, () => false);
   const [seenLoad, setSeenLoad] = useState(loaded);
   const [resumed, setResumed] = useState(() => loaded && hasContent(draft));
@@ -222,8 +221,7 @@ function Wizard({ barId = null, menuSectionId, initialName, startFrom, firstRoun
             aliases={dropdowns?.ingredientAliases}
             coreIds={coreIds}
             shelf={barId ? undefined : new Set(shelfIds ?? [])}
-            backBar={barId ? stock.backBar : undefined} stock={stock}
-            bar={barId ? { id: barId, name: venueName } : null} trail={trail}
+            backBar={barId ? stock.backBar : undefined} stock={stock} bar={barId ? { id: barId, name: venueName } : null} trail={trail}
           />
         );
       case 'method':

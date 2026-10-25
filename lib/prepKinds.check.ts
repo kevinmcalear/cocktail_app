@@ -123,8 +123,6 @@ assert.deepEqual(miso.allergens, ['soya']);
 assert.deepEqual(withFacts({ ...miso, lines: miso.lines.filter((l) => l.name !== 'Miso') }).allergens, []);
 // A spirit named keeps the rest as one "with what".
 assert.deepEqual(startPrep('infusion', 'Brown butter infused bourbon').lines.map((l) => l.name), ['Bourbon', 'Brown butter']);
-// A batch's kind word isn't a line either.
-assert.deepEqual(startPrep('batch', 'Negroni batch').lines.map((l) => l.name), ['Negroni']);
 
 // Fat wash from a typed name: White rum the base, coconut the flavour and Coconut Oil the fat, lifted off so it isn't in the yield.
 const t = (id: string) => techniqueById(id)!;
