@@ -285,3 +285,9 @@ assert.equal(sourceSite('http://blog.khymos.org/x?y=1'), 'blog.khymos.org');
   assert.match(syrup.steps[0].body, /sugar and water/);
 }
 console.log('prepKinds technique checks passed');
+
+// A batch named for its drink starts with one line to pick, not the name's words.
+{
+  const b = startPrep('batch', 'Penicillin batch');
+  assert.deepEqual(b.lines.map((l) => l.slot), ['main ingredient']);
+}

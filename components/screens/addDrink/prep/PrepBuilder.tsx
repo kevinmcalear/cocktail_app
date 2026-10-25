@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useEffect, useRef, useState, type RefObject } from 'react';
 import { Modal, StyleSheet, View } from 'react-native';
 import { GestureHandlerRootView } from 'react-native-gesture-handler';
 
@@ -9,19 +9,19 @@ import type { IngredientAlias } from '@/lib/ingredientNames';
 
 import type { CatalogIngredient } from '../IngredientSearch';
 import { PaperBand } from '../PaperBand';
+import { trailInto, type TrailItem } from '../Trail';
 import { WizardFooter } from '../WizardChrome';
 import { WizardFrame } from '../WizardFrame';
 import type { InDrinkPour } from './InDrink';
 import { PrepKindStep } from './PrepKindStep';
 import { PrepMethodStep } from './PrepMethodStep';
 import { PrepRecipeStep, RecipeView } from './PrepRecipeStep';
+import { aboveRecipe, useInside } from './useInside';
 import { usePrepDraft } from './usePrepDraft';
 
 const STEPS = ['kind', 'recipe', 'method'] as const;
 type Step = (typeof STEPS)[number];
 const TITLES: Record<Step, string> = { kind: 'What are you making?', recipe: 'What goes in?', method: 'How it’s made' };
-/** A drink name longer than this leaves the band's label, so the progress bar keeps its room. */
-const SHORT_NAME = 16;
 
 export interface PrepBuilderProps {
   /** The prep's name ("Pineapple chili shrub"); null when closed. */
@@ -50,6 +50,8 @@ export interface PrepBuilderProps {
   onClose: () => void;
   /** The venue the drink is for, whose Kit How? is checked against; null at home. */
   bar?: { id: string; name: string } | null;
+  /** Where it's made, from the menu down to the drink (make-anything-overview, rule 3); its own name is added below them. */
+  above?: readonly TrailItem[];
 }
 
 /**
@@ -61,15 +63,17 @@ export interface PrepBuilderProps {
  * hands the prep back to the drink's line.
  */
 export function PrepBuilder(props: PrepBuilderProps) {
+  // Android's back goes to the Modal, not the steps: it goes back on the level showing, one level at a time.
+  const back = useRef(props.onClose);
   return (
-    <Modal visible={!!props.name} animationType="slide" presentationStyle="fullScreen" onRequestClose={props.onClose}>
+    <Modal visible={!!props.name} animationType="slide" presentationStyle="fullScreen" onRequestClose={() => back.current()}>
       {/* A native Modal is its own root: the method step's drag needs gestures inside it. */}
-      <GestureHandlerRootView style={styles.root}>{props.name ? <Builder {...props} name={props.name} /> : null}</GestureHandlerRootView>
+      <GestureHandlerRootView style={styles.root}>{props.name ? <Builder {...props} name={props.name} backRef={back} /> : null}</GestureHandlerRootView>
     </Modal>
   );
 }
 
-function Builder({ name: started, drinkName, initial, first, combinedFrom, inDrink, picked, technique, ingredients, aliases, onDone, onLater, onClose, bar = null }: PrepBuilderProps & { name: string }) {
+function Builder({ name: started, drinkName, initial, first, combinedFrom, inDrink, picked, technique, ingredients, aliases, onDone, onLater, onClose, bar = null, above, backRef }: PrepBuilderProps & { name: string; backRef: RefObject<() => void> }) {
   const [step, setStep] = useState<Step>(!first && (initial || technique) ? 'recipe' : 'kind');
   const [direction, setDirection] = useState<1 | -1>(1);
   const [name, setName] = useState(started);
@@ -86,10 +90,17 @@ function Builder({ name: started, drinkName, initial, first, combinedFrom, inDri
   const shown = name.trim() || started;
   const next = () => (step === 'method' ? onDone(withFacts(draft), shown) : go(STEPS[at + 1]));
   const ready = named && (step === 'kind' || !slotsOpen);
+  const trail = trailInto(aboveRecipe(above ?? [{ label: drinkName || 'Your drink' }]), onClose, name.trim() || started);
+  // A line of this recipe being made in-house too, one level down (make-anything-steps-2, step 8).
+  const inside = useInside(draft, setDraft, name.trim() || started);
+  // The level showing takes Android's back: this one, unless a level below it is open.
+  useEffect(() => {
+    if (!inside.props) backRef.current = back;
+  });
 
   const drink = drinkName || 'your drink';
   const intro = 'Start from a step or write your own. A time you write becomes a timer when you make it.';
-  const where = drinkName && drinkName.length <= SHORT_NAME ? `${drinkName} › New prep` : 'New prep';
+  if (inside.props) return <Builder key={inside.line!.key} {...inside.props} ingredients={ingredients} aliases={aliases} bar={bar} above={trail} backRef={backRef} />;
   const from = combinedFrom?.length ? `From ${combinedFrom.slice(0, -1).join(', ')} and ${combinedFrom.at(-1)}` : null;
   return (
     <WizardFrame
@@ -98,7 +109,8 @@ function Builder({ name: started, drinkName, initial, first, combinedFrom, inDri
       pageTitle={`New prep: ${shown}`}
       band={(place) => (
         <PaperBand
-          progress={{ now: at + 1, of: STEPS.length, label: at === 0 ? `New prep · 1 of ${STEPS.length}` : `${where} · ${at + 1} of ${STEPS.length}` }}
+          progress={{ now: at + 1, of: STEPS.length, label: `${at + 1} of ${STEPS.length}` }}
+          trail={trail}
           first={at === 0}
           backTo={drink}
           onBack={back}
@@ -138,7 +150,7 @@ function Builder({ name: started, drinkName, initial, first, combinedFrom, inDri
           <PrepKindStep name={shown} draft={draft} combined={combined} onKind={pickKind} onTechnique={pickTechnique} onChangeAmount={() => go('recipe')} bar={bar} />
         </View>
       ) : step === 'recipe' ? (
-        <PrepRecipeStep draft={draft} view={view} set={(c) => setDraft({ ...draft, ...c })} ingredients={ingredients} aliases={aliases} inDrink={inDrink} />
+        <PrepRecipeStep draft={draft} view={view} set={(c) => setDraft({ ...draft, ...c })} ingredients={ingredients} aliases={aliases} inDrink={inDrink} onMake={inside.open} />
       ) : (
         <PrepMethodStep draft={draft} set={(c) => setDraft({ ...draft, ...c })} phrase={phrase} />
       )}

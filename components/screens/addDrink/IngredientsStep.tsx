@@ -18,6 +18,7 @@ import type { Technique } from '@/lib/techniques';
 import { nameFor } from '@/lib/techniques/template';
 import { getPreferredUnit } from '@/store/useSettingsStore';
 
+import type { TrailItem } from './Trail';
 import { DragRow } from './DragRow';
 import { BalanceCard } from './GoesWith';
 import { IngredientSearch, type CatalogIngredient } from './IngredientSearch';
@@ -60,6 +61,8 @@ interface IngredientsStepProps extends StepProps {
   inlinePrep?: { venueName: string | null; onOpen?: (open: boolean) => void };
   /** The venue the drink is for, whose Kit a recipe's ways are checked against; null at home. */
   bar?: { id: string; name: string } | null;
+  /** Where the drink is, from the menu down to it, for a recipe's trail. */
+  trail?: readonly TrailItem[];
 }
 
 /**
@@ -71,7 +74,7 @@ interface IngredientsStepProps extends StepProps {
  * (make-anything-overview): from the search, or by holding one line over
  * another to combine them.
  */
-export function IngredientsStep({ draft, set, ingredients, loading, aliases = [], coreIds, forDrink = true, shelf, backBar, balance = true, lineDetail, lineBelow, stock, placeholder, onNewBottle, inlinePrep, bar }: IngredientsStepProps) {
+export function IngredientsStep({ draft, set, ingredients, loading, aliases = [], coreIds, forDrink = true, shelf, backBar, balance = true, lineDetail, lineBelow, stock, placeholder, onNewBottle, inlinePrep, bar, trail }: IngredientsStepProps) {
   const ds = useDs();
   const [typing, setTyping] = useState(false);
   const [swapKey, setSwapKey] = useState<string | null>(null);
@@ -117,7 +120,7 @@ export function IngredientsStep({ draft, set, ingredients, loading, aliases = []
     setRemoved({ line, at: draft.lines.indexOf(line) });
     set({ lines: draft.lines.filter((x) => x.key !== line.key) });
   };
-  const prep = useMakePrep({ draft, set, ingredients, aliases, inlinePrep, add, change, bar });
+  const prep = useMakePrep({ draft, set, ingredients, aliases, inlinePrep, add, change, bar, trail });
   // Lines typed or pasted as made house ask first, then the drink's name does.
   const typed = useTypedHouse({ draft, set, lineFor, add: (pick, pour) => add(pick, undefined, false, pour), makeHouse });
   const nudge = typed.next ?? nameNudge;

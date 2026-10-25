@@ -8,6 +8,7 @@ import type { PrepDraft } from '@/lib/prepKinds';
 import { capitalizeFirst } from '@/lib/stringUtils';
 
 import type { CatalogIngredient } from './IngredientSearch';
+import type { TrailItem } from './Trail';
 import { PrepBuilder } from './prep/PrepBuilder';
 import { PrepCard } from './prep/PrepCard';
 
@@ -22,6 +23,8 @@ interface MakePrepArgs {
   change: (key: string, c: Partial<WizardLine>) => void;
   /** The venue the drink is for, whose Kit How? is checked against; null at home. */
   bar?: { id: string; name: string } | null;
+  /** Where the drink is, from the menu down to it: the recipe's trail starts here. */
+  trail?: readonly TrailItem[];
 }
 
 /** What's being made: a new line, the recipe of a line in the drink (its key), or a bottle line made in house (its key, `replace`). */
@@ -43,7 +46,7 @@ interface Making {
  * steps it's the builder over the page; on the desktop page, a card under
  * its line. Done goes back to the line, which shows the prep.
  */
-export function useMakePrep({ draft, set, ingredients, aliases, inlinePrep, add, change, bar = null }: MakePrepArgs) {
+export function useMakePrep({ draft, set, ingredients, aliases, inlinePrep, add, change, bar = null, trail }: MakePrepArgs) {
   const [making, setMaking] = useState<Making | null>(null);
   // Plain values: the React Compiler reads `making.key` eagerly for its memo deps, which throws while it's closed.
   const editingKey = making?.key ?? null;
@@ -73,6 +76,7 @@ export function useMakePrep({ draft, set, ingredients, aliases, inlinePrep, add,
   const drinkName = draft.name.trim();
   const props = {
     bar,
+    above: trail,
     initial: editingPrep,
     technique: makingTechnique,
     picked: makingBase ? { base: makingBase } : undefined,
@@ -114,7 +118,7 @@ export function useMakePrep({ draft, set, ingredients, aliases, inlinePrep, add,
     /** Make it house: the bottle line becomes a prep by this technique, the bottle its base; `ask` opens on What is it to check it first. */
     house: (l: WizardLine, name: string, technique: string, ask?: boolean) => setMaking({ name, key: l.key, replace: true, technique, base: { id: l.id, name: l.name }, first: ask }),
     /** The card under this line, when its prep is being written on the desktop page. */
-    card: (key: string) => (inlinePrep && makingName && key === editingKey ? <PrepCard key={key} name={makingName} venueName={inlinePrep.venueName} {...props} /> : null),
+    card: (key: string) => (inlinePrep && makingName && key === editingKey ? <PrepCard key={key} name={makingName} drinkName={drinkName} venueName={inlinePrep.venueName} {...props} /> : null),
     builder: inlinePrep ? null : <PrepBuilder name={makingName} drinkName={drinkName} {...props} />,
   };
 }
