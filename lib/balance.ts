@@ -3,7 +3,7 @@
  * profiles use (supabase/functions/_shared/flavor.ts). A hint, never a rule:
  * bartenders break balance on purpose.
  */
-import { profileFromSpec, type SpecPart } from '../supabase/functions/_shared/flavor';
+import { profileFromSpec, type Profile, type SpecPart, type TasteDimension } from '../supabase/functions/_shared/flavor';
 
 export interface BalanceLine {
   name: string;
@@ -19,6 +19,8 @@ export interface Balance {
   bitter: number;
   /** One plain sentence, or null when there's nothing worth saying. */
   hint: string | null;
+  /** What guests would taste, in words: "Dry, bright and bitter. Spirit-forward." (tasteSentence). */
+  words: string;
   /** What would round it out, for one-tap fixes (fixesFor). */
   need: Need | null;
 }
@@ -49,7 +51,40 @@ export function balanceOf(lines: readonly BalanceLine[]): Balance | null {
     hint = 'All spirit so far. Stirred drinks usually add a vermouth, or a little sugar and bitters.';
     need = 'body';
   }
-  return { strong, sour, sweet, bitter, hint, need };
+  return { strong, sour, sweet, bitter, hint, need, words: tasteSentence(profile) };
+}
+
+// How each taste reads in a sentence about the drink (sour reads as bright, as bartenders say it).
+const TASTE_ADJECTIVE: Record<TasteDimension, string> = {
+  sweet: 'sweet',
+  sour: 'bright',
+  bitter: 'bitter',
+  botanical: 'juniper-led',
+  herbal: 'herbal',
+  fruity: 'fruity',
+  spiced: 'spiced',
+  spicy: 'hot',
+  smoky: 'smoky',
+  savory: 'savory',
+  creamy: 'creamy',
+};
+const NOTABLE = 0.3;
+
+/**
+ * The desktop taste card's line (make-create-desktop, m07): up to three tastes
+ * that stand out, "dry" first when there's next to no sugar, then how strong
+ * it is. "Dry, bright and bitter. Spirit-forward."
+ */
+export function tasteSentence(profile: Profile): string {
+  const top = (Object.keys(TASTE_ADJECTIVE) as TasteDimension[])
+    .filter((d) => profile[d] >= NOTABLE && !(d === 'sweet' && profile.sweet < LOW))
+    .sort((a, b) => profile[b] - profile[a])
+    .map((d) => TASTE_ADJECTIVE[d]);
+  const words = [...(profile.sweet < LOW ? ['dry'] : []), ...top].slice(0, 3);
+  const strength = profile.strong < 0.35 ? 'Light on alcohol.' : profile.strong < 0.7 ? 'Medium strength.' : 'Spirit-forward.';
+  if (!words.length) return strength;
+  const said = words.length === 1 ? words[0] : `${words.slice(0, -1).join(', ')} and ${words[words.length - 1]}`;
+  return `${said.charAt(0).toUpperCase()}${said.slice(1)}. ${strength}`;
 }
 
 /** A taste meter's value as the desktop page says it: strength is light to strong, the rest none to a lot. */
