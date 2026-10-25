@@ -50,34 +50,40 @@ after(async () => {
   await db.end();
 });
 
+// Drinks older than any style, so their own root (Mulled Wine, c. 1390: d51 on the Open decisions page).
+const ROOTS = ['Mulled Wine'];
+
 describe('cocktail family tree', () => {
-  test('every classic in the tree has a family and a parent that is a classic or a style', async () => {
+  test('every classic in the tree has a family and a parent that is a classic or a style, but the roots', async () => {
     const { rows } = await db.query(`
       SELECT count(*)::int AS n,
-             count(*) FILTER (WHERE i.lineage_parent_id IS NULL AND i.lineage_style_id IS NULL)::int AS orphans,
+             count(*) FILTER (WHERE i.lineage_parent_id IS NULL AND i.lineage_style_id IS NULL AND NOT (i.is_catalog AND i.name = ANY($1)))::int AS orphans,
+             count(*) FILTER (WHERE i.lineage_parent_id IS NULL AND i.lineage_style_id IS NULL AND i.is_catalog AND i.name = ANY($1))::int AS roots,
              count(*) FILTER (WHERE p.id IS NOT NULL AND NOT p.is_catalog)::int AS bad_parent
       FROM public.items i
       LEFT JOIN public.items p ON p.id = i.lineage_parent_id
-      WHERE i.lineage_family IS NOT NULL`);
+      WHERE i.lineage_family IS NOT NULL`, [ROOTS]);
     assert.ok(rows[0].n >= 390, `expected the tree's classics, found ${rows[0].n}`);
     assert.equal(rows[0].orphans, 0);
+    assert.equal(rows[0].roots, ROOTS.length);
     assert.equal(rows[0].bad_parent, 0);
   });
 
-  test('every line climbs to a root style without a loop', async () => {
+  test('every line climbs to a root style or a root drink without a loop', async () => {
     const { rows } = await db.query(`
       WITH RECURSIVE up AS (
-        SELECT i.id AS start, i.lineage_parent_id AS drink, i.lineage_style_id AS style, 1 AS depth
+        SELECT i.id AS start, i.id AS node, i.lineage_parent_id AS drink, i.lineage_style_id AS style, 1 AS depth
         FROM public.items i WHERE i.lineage_family IS NOT NULL
         UNION ALL
-        SELECT u.start, p.lineage_parent_id, p.lineage_style_id, u.depth + 1
+        SELECT u.start, p.id, p.lineage_parent_id, p.lineage_style_id, u.depth + 1
         FROM up u JOIN public.items p ON p.id = u.drink
         WHERE u.depth < 40
       )
       SELECT count(DISTINCT start)::int AS reached, max(depth)::int AS deepest
-      FROM up WHERE drink IS NULL AND style IS NOT NULL`);
+      FROM up u WHERE u.drink IS NULL
+        AND (u.style IS NOT NULL OR EXISTS (SELECT 1 FROM public.items r WHERE r.id = u.node AND r.is_catalog AND r.name = ANY($1)))`, [ROOTS]);
     const total = await db.query('SELECT count(*)::int AS n FROM public.items WHERE lineage_family IS NOT NULL');
-    assert.equal(rows[0].reached, total.rows[0].n, 'every classic reaches a style');
+    assert.equal(rows[0].reached, total.rows[0].n, 'every classic reaches a style or a root drink');
     assert.ok(rows[0].deepest < 40, 'no loops');
 
     const styles = await db.query(`

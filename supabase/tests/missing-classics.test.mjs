@@ -38,7 +38,7 @@ before(() => db.connect());
 after(() => db.end());
 
 describe('missing classics', () => {
-  test('each is a classic in the tree with a parent, a spec and a source', async () => {
+  test('each is a classic in the tree with a parent (Mulled Wine is a root), a spec and a source', async () => {
     const { rows } = await db.query(
       `SELECT i.name,
               i.lineage_family IS NOT NULL AS in_tree,
@@ -50,7 +50,7 @@ describe('missing classics', () => {
       [NAMES]
     );
     assert.deepEqual(rows.map((r) => r.name).sort(), [...NAMES].sort());
-    for (const r of rows) assert.ok(r.in_tree && r.has_parent && r.has_spec && r.has_source, `${r.name}: ${JSON.stringify(r)}`);
+    for (const r of rows) assert.ok(r.in_tree && r.has_parent !== (r.name === 'Mulled Wine') && r.has_spec && r.has_source, `${r.name}: ${JSON.stringify(r)}`);
   });
 
   test('the Charlie Chaplin is from the Waldorf-Astoria and the Spicy Fifty is Salvatore Calabrese\'s', async () => {
