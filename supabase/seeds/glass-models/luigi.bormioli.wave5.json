@@ -1,0 +1,379 @@
+{
+ "maker": "luigi.bormioli",
+ "models": [
+  {
+   "name": "Atelier Barolo Shiraz",
+   "series": "Atelier",
+   "designer": null,
+   "model_code": "400167",
+   "glass": "wine",
+   "variant": null,
+   "capacity_ml": 800,
+   "capacity_as_stated": "80 cl - 27 oz",
+   "height_mm": 242,
+   "rim_mm": null,
+   "material": "crystal",
+   "product_url": "https://bormioliluigi.com/glassware/en/product/400167/barolo-shiraz-atelier",
+   "source_urls": [
+    "https://bormioliluigi.com/glassware/en/product/400167/barolo-shiraz-atelier"
+   ]
+  },
+  {
+   "name": "Atelier Cabernet Merlot",
+   "series": "Atelier",
+   "designer": null,
+   "model_code": "400170",
+   "glass": "wine",
+   "variant": null,
+   "capacity_ml": 700,
+   "capacity_as_stated": "70 cl - 23 3/4 oz",
+   "height_mm": 244,
+   "rim_mm": null,
+   "material": "crystal",
+   "product_url": "https://bormioliluigi.com/glassware/en/product/400170/cabernet-merlot-atelier",
+   "source_urls": [
+    "https://bormioliluigi.com/glassware/en/product/400170/cabernet-merlot-atelier"
+   ]
+  },
+  {
+   "name": "Atelier Orvieto Classico Chardonnay",
+   "series": "Atelier",
+   "designer": null,
+   "model_code": "400169",
+   "glass": "wine",
+   "variant": null,
+   "capacity_ml": 700,
+   "capacity_as_stated": "70 cl - 23 3/4 oz",
+   "height_mm": 217,
+   "rim_mm": null,
+   "material": "crystal",
+   "product_url": "https://bormioliluigi.com/glassware/en/product/400169/orvieto-classico-chardonnay-atelier",
+   "source_urls": [
+    "https://bormioliluigi.com/glassware/en/product/400169/orvieto-classico-chardonnay-atelier"
+   ]
+  },
+  {
+   "name": "Atelier Pinot Noir Rioja",
+   "series": "Atelier",
+   "designer": null,
+   "model_code": "400173",
+   "glass": "wine",
+   "variant": null,
+   "capacity_ml": 610,
+   "capacity_as_stated": "61 cl - 20 3/4 oz",
+   "height_mm": 222,
+   "rim_mm": null,
+   "material": "crystal",
+   "product_url": "https://bormioliluigi.com/glassware/en/product/400173/pinot-noir-rioja-atelier",
+   "source_urls": [
+    "https://bormioliluigi.com/glassware/en/product/400173/pinot-noir-rioja-atelier"
+   ]
+  },
+  {
+   "name": "Atelier Riesling Tocai",
+   "series": "Atelier",
+   "designer": null,
+   "model_code": "400176",
+   "glass": "wine",
+   "variant": null,
+   "capacity_ml": 440,
+   "capacity_as_stated": "44 cl - 15 oz",
+   "height_mm": 220,
+   "rim_mm": null,
+   "material": "crystal",
+   "product_url": "https://bormioliluigi.com/glassware/en/product/400176/riesling-tocai-atelier",
+   "source_urls": [
+    "https://bormioliluigi.com/glassware/en/product/400176/riesling-tocai-atelier"
+   ]
+  },
+  {
+   "name": "Atelier Sangiovese",
+   "series": "Atelier",
+   "designer": null,
+   "model_code": "400175",
+   "glass": "wine",
+   "variant": null,
+   "capacity_ml": 550,
+   "capacity_as_stated": "55 cl - 18 1/2 oz",
+   "height_mm": 232,
+   "rim_mm": null,
+   "material": "crystal",
+   "product_url": "https://bormioliluigi.com/glassware/en/product/400175/sangiovese-atelier",
+   "source_urls": [
+    "https://bormioliluigi.com/glassware/en/product/400175/sangiovese-atelier"
+   ]
+  },
+  {
+   "name": "Atelier Sauvignon",
+   "series": "Atelier",
+   "designer": null,
+   "model_code": "400179",
+   "glass": "wine",
+   "variant": null,
+   "capacity_ml": 350,
+   "capacity_as_stated": "35 cl - 11 3/4 oz",
+   "height_mm": 203,
+   "rim_mm": null,
+   "material": "crystal",
+   "product_url": "https://bormioliluigi.com/glassware/en/product/400179/sauvignon-atelier",
+   "source_urls": [
+    "https://bormioliluigi.com/glassware/en/product/400179/sauvignon-atelier"
+   ]
+  },
+  {
+   "name": "Magnifico Large",
+   "series": "Magnifico",
+   "designer": null,
+   "model_code": "400443",
+   "glass": "wine",
+   "variant": null,
+   "capacity_ml": 590,
+   "capacity_as_stated": "59 cl - 20 oz",
+   "height_mm": 253,
+   "rim_mm": null,
+   "material": "crystal",
+   "product_url": "https://bormioliluigi.com/glassware/en/product/400443/large-magnifico",
+   "source_urls": [
+    "https://bormioliluigi.com/glassware/en/product/400443/large-magnifico"
+   ]
+  },
+  {
+   "name": "Magnifico Magnifico 450",
+   "series": "Magnifico",
+   "designer": null,
+   "model_code": "400453",
+   "glass": "wine",
+   "variant": null,
+   "capacity_ml": 450,
+   "capacity_as_stated": "45 cl - 15 1/4 oz",
+   "height_mm": 260,
+   "rim_mm": null,
+   "material": "crystal",
+   "product_url": "https://bormioliluigi.com/glassware/en/product/400453/magnifico-450-magnifico",
+   "source_urls": [
+    "https://bormioliluigi.com/glassware/en/product/400453/magnifico-450-magnifico"
+   ]
+  },
+  {
+   "name": "Magnifico Magnifico 650",
+   "series": "Magnifico",
+   "designer": null,
+   "model_code": "400452",
+   "glass": "wine",
+   "variant": null,
+   "capacity_ml": 650,
+   "capacity_as_stated": "65 cl - 22 oz",
+   "height_mm": 260,
+   "rim_mm": null,
+   "material": "crystal",
+   "product_url": "https://bormioliluigi.com/glassware/en/product/400452/magnifico-650-magnifico",
+   "source_urls": [
+    "https://bormioliluigi.com/glassware/en/product/400452/magnifico-650-magnifico"
+   ]
+  },
+  {
+   "name": "Magnifico Medium",
+   "series": "Magnifico",
+   "designer": null,
+   "model_code": "400446",
+   "glass": "wine",
+   "variant": null,
+   "capacity_ml": 460,
+   "capacity_as_stated": "46 cl - 15 1/2 oz",
+   "height_mm": 240,
+   "rim_mm": null,
+   "material": "crystal",
+   "product_url": "https://bormioliluigi.com/glassware/en/product/400446/medium-magnifico",
+   "source_urls": [
+    "https://bormioliluigi.com/glassware/en/product/400446/medium-magnifico"
+   ]
+  },
+  {
+   "name": "Magnifico Small",
+   "series": "Magnifico",
+   "designer": null,
+   "model_code": "400449",
+   "glass": "wine",
+   "variant": null,
+   "capacity_ml": 350,
+   "capacity_as_stated": "35 cl - 11 3/4 oz",
+   "height_mm": 230,
+   "rim_mm": null,
+   "material": "crystal",
+   "product_url": "https://bormioliluigi.com/glassware/en/product/400449/small-magnifico",
+   "source_urls": [
+    "https://bormioliluigi.com/glassware/en/product/400449/small-magnifico"
+   ]
+  },
+  {
+   "name": "Magnifico Xl",
+   "series": "Magnifico",
+   "designer": null,
+   "model_code": "400441",
+   "glass": "wine",
+   "variant": null,
+   "capacity_ml": 700,
+   "capacity_as_stated": "70 cl - 23 3/4 oz",
+   "height_mm": 260,
+   "rim_mm": null,
+   "material": "crystal",
+   "product_url": "https://bormioliluigi.com/glassware/en/product/400441/xl-magnifico",
+   "source_urls": [
+    "https://bormioliluigi.com/glassware/en/product/400441/xl-magnifico"
+   ]
+  },
+  {
+   "name": "Palace Fine Wines",
+   "series": "Palace",
+   "designer": null,
+   "model_code": "400484",
+   "glass": "wine",
+   "variant": null,
+   "capacity_ml": 570,
+   "capacity_as_stated": "57 cl - 19 1/4 oz",
+   "height_mm": 225,
+   "rim_mm": null,
+   "material": "crystal",
+   "product_url": "https://bormioliluigi.com/glassware/en/product/400484/fine-wines-palace",
+   "source_urls": [
+    "https://bormioliluigi.com/glassware/en/product/400484/fine-wines-palace"
+   ]
+  },
+  {
+   "name": "Palace Goblet",
+   "series": "Palace",
+   "designer": null,
+   "model_code": "400485",
+   "glass": "wine",
+   "variant": null,
+   "capacity_ml": 480,
+   "capacity_as_stated": "48 cl - 16 1/4 oz",
+   "height_mm": 212,
+   "rim_mm": null,
+   "material": "crystal",
+   "product_url": "https://bormioliluigi.com/glassware/en/product/400485/goblet-palace",
+   "source_urls": [
+    "https://bormioliluigi.com/glassware/en/product/400485/goblet-palace"
+   ]
+  },
+  {
+   "name": "Palace Red Wine",
+   "series": "Palace",
+   "designer": null,
+   "model_code": "400488",
+   "glass": "wine",
+   "variant": null,
+   "capacity_ml": 365,
+   "capacity_as_stated": "36.5 cl - 12 1/4 oz",
+   "height_mm": 194,
+   "rim_mm": null,
+   "material": "crystal",
+   "product_url": "https://bormioliluigi.com/glassware/en/product/400488/red-wine-palace",
+   "source_urls": [
+    "https://bormioliluigi.com/glassware/en/product/400488/red-wine-palace"
+   ]
+  },
+  {
+   "name": "Palace White Wine",
+   "series": "Palace",
+   "designer": null,
+   "model_code": "400489",
+   "glass": "wine",
+   "variant": null,
+   "capacity_ml": 325,
+   "capacity_as_stated": "32.5 cl - 11 oz",
+   "height_mm": 183,
+   "rim_mm": null,
+   "material": "crystal",
+   "product_url": "https://bormioliluigi.com/glassware/en/product/400489/white-wine-palace",
+   "source_urls": [
+    "https://bormioliluigi.com/glassware/en/product/400489/white-wine-palace"
+   ]
+  },
+  {
+   "name": "Supremo Bordeaux",
+   "series": "Supremo",
+   "designer": null,
+   "model_code": "400493",
+   "glass": "wine",
+   "variant": null,
+   "capacity_ml": 550,
+   "capacity_as_stated": "55 cl - 18 1/2 oz",
+   "height_mm": 243,
+   "rim_mm": null,
+   "material": "crystal",
+   "product_url": "https://bormioliluigi.com/glassware/en/product/400493/bordeaux-supremo",
+   "source_urls": [
+    "https://bormioliluigi.com/glassware/en/product/400493/bordeaux-supremo"
+   ]
+  },
+  {
+   "name": "Supremo Burgundy",
+   "series": "Supremo",
+   "designer": null,
+   "model_code": "400491",
+   "glass": "wine",
+   "variant": null,
+   "capacity_ml": 650,
+   "capacity_as_stated": "65 cl - 22 oz",
+   "height_mm": 245,
+   "rim_mm": null,
+   "material": "crystal",
+   "product_url": "https://bormioliluigi.com/glassware/en/product/400491/burgundy-supremo",
+   "source_urls": [
+    "https://bormioliluigi.com/glassware/en/product/400491/burgundy-supremo"
+   ]
+  },
+  {
+   "name": "Supremo Chardonnay",
+   "series": "Supremo",
+   "designer": null,
+   "model_code": "400497",
+   "glass": "wine",
+   "variant": null,
+   "capacity_ml": 350,
+   "capacity_as_stated": "35 cl - 11 3/4 oz",
+   "height_mm": 221,
+   "rim_mm": null,
+   "material": "crystal",
+   "product_url": "https://bormioliluigi.com/glassware/en/product/400497/chardonnay-supremo",
+   "source_urls": [
+    "https://bormioliluigi.com/glassware/en/product/400497/chardonnay-supremo"
+   ]
+  },
+  {
+   "name": "Supremo Pinot Noir (stemless)",
+   "series": "Supremo",
+   "designer": null,
+   "model_code": "400501",
+   "glass": "wine",
+   "variant": null,
+   "capacity_ml": 450,
+   "capacity_as_stated": "45 cl - 15 1/4 oz",
+   "height_mm": 98,
+   "rim_mm": null,
+   "material": "crystal",
+   "product_url": "https://bormioliluigi.com/glassware/en/product/400501/pinot-noir-supremo",
+   "source_urls": [
+    "https://bormioliluigi.com/glassware/en/product/400501/pinot-noir-supremo"
+   ]
+  },
+  {
+   "name": "Supremo Sangiovese Pinot Grigio",
+   "series": "Supremo",
+   "designer": null,
+   "model_code": "400495",
+   "glass": "wine",
+   "variant": null,
+   "capacity_ml": 450,
+   "capacity_as_stated": "45 cl - 15 1/4 oz",
+   "height_mm": 233,
+   "rim_mm": null,
+   "material": "crystal",
+   "product_url": "https://bormioliluigi.com/glassware/en/product/400495/sangiovese-pinot-grigio-supremo",
+   "source_urls": [
+    "https://bormioliluigi.com/glassware/en/product/400495/sangiovese-pinot-grigio-supremo"
+   ]
+  }
+ ]
+}

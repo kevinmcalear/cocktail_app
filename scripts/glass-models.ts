@@ -63,6 +63,8 @@ interface Load {
   pages?: MakerPage[];
   /** A supabase/seeds/glass-models/<name>.json of Fills to apply. */
   fills?: string;
+  /** Seed files to read, when they aren't all named for their makers (a maker's later wave). */
+  files?: string[];
 }
 
 export const LOADS: Load[] = [
@@ -170,6 +172,32 @@ export const LOADS: Load[] = [
 --     fixed from the makers' pages; Outline's heights, seen only in search
 --     snippets, are left empty.`,
   },
+  {
+    file: 'supabase/migrations/20261113200000_glass_models_wave5.sql',
+    makers: ['arcoroc', 'chef.sommelier', 'bormioli.rocco', 'krosno', 'rona', 'stolzle.lausitz', 'rastal', 'sahm', 'sghr.sugahara', 'toyo.sasaki.glass', 'zalto', 'gabriel.glas', 'grassl', 'josephinenhutte', 'richard.brendon', 'sophienwald', 'sertodo', 'tiki.farm', 'munktiki', 'nude', 'bobo', 'kimura.glass', 'kinto', 'john.jenkins', 'libbey', 'urban.bar', 'luigi.bormioli', 'riedel', 'schott.zwiesel', 'spiegelau', 'cocktail.kingdom'],
+    files: ['arcoroc', 'chef.sommelier', 'bormioli.rocco', 'krosno', 'rona', 'stolzle.lausitz', 'rastal', 'sahm', 'sghr.sugahara', 'toyo.sasaki.glass', 'zalto', 'gabriel.glas', 'grassl', 'josephinenhutte', 'richard.brendon', 'sophienwald', 'sertodo', 'tiki.farm', 'munktiki', 'nude.wave5', 'bobo.wave5', 'kimura.glass.wave5', 'kinto.wave5', 'john.jenkins.wave5', 'libbey.wave5', 'urban.bar.wave5', 'luigi.bormioli.wave5', 'riedel.wave5', 'schott.zwiesel.wave5', 'spiegelau.wave5', 'cocktail.kingdom.wave5'],
+    header: `
+-- Glass models, wave 5: beer, wine and the makers bars buy from, after
+-- 20261113110000 (traced outlines) and 20261112100000 (the maker pages).
+-- Kevin, 24 Oct 2026: every glass a bar might own, drawn as itself, "beer
+-- and wine glasses too". 20261113300000 loads their traced outlines.
+--
+--   * New glasses from the 19 makers whose pages 20261112100000 added
+--     (Bormioli Rocco, Arcoroc, Chef & Sommelier, Rona, Krosno, Stolzle,
+--     Sugahara, Toyo-Sasaki, Rastal, Sahm, Zalto and smaller houses), and
+--     more from makers already here (Nude, BOBO, Kimura, Libbey, Riedel,
+--     Schott Zwiesel, Spiegelau and others), wine and beer glasses among
+--     them, under the shared Wine and Beer shapes.
+--   * Facts only, each row citing its pages (the maker's own, or a large
+--     stockist's where the maker's states none); no copied text or photos.
+--     rim_mm stays empty: makers publish the widest diameter, not the rim.
+--     A German beer glass's capacity is the fill line it is named for
+--     ("0,3l"), as its maker states it; other glasses' is the full capacity.
+--   * Held: Difford's Guide rows that repeat a maker's own, tiki mugs whose
+--     factory has no maker page, ceramic cups that aren't a glass type, and
+--     what isn't a drinking glass (carafes, a punch bowl, a serving dish).
+--   * AUDIT: pending`,
+  },
 ];
 
 // The catalog shape each type of glass is a kind of (a shared glassware item).
@@ -189,6 +217,7 @@ export const SHAPE_NAME: Partial<Record<SketchGlass, string>> = {
   julep: 'Julep Cup',
   tiki: 'Tiki Mug',
   mug: 'Mug',
+  beer: 'Beer',
 };
 
 export const MATERIALS = ['glass', 'crystal', 'lead-free crystal', 'ceramic', 'metal', 'plastic'];
@@ -240,6 +269,10 @@ export function problemWith(m: SeedModel): string | null {
   if (m.variant && !isVariant(m.glass, m.variant)) return `drawing ${m.variant} is not a ${m.glass}'s`;
   if (m.material && !MATERIALS.includes(m.material)) return `material ${m.material}`;
   for (const n of [m.capacity_ml, m.height_mm, m.rim_mm]) if (n !== null && !(n > 0 && n < 5000)) return 'a measure out of range';
+  // As glass_models' checks, so a load fails here and not halfway through its migration.
+  if ((m.height_mm ?? 0) >= 1000 || (m.rim_mm ?? 0) >= 500) return 'a measure out of range';
+  if ((m.capacity_as_stated?.length ?? 0) > 40 || (m.model_code?.trim().length ?? 0) > 40) return 'a size or code over 40 letters';
+  if ((m.series?.trim().length ?? 0) > 80 || (m.designer?.trim().length ?? 0) > 80) return 'a series or designer over 80 letters';
   const urls = [...m.source_urls, ...(m.product_url ? [m.product_url] : [])];
   if (!m.source_urls.length || m.source_urls.length > 10) return 'sources';
   if (urls.some((u) => !/^https:\/\/[^\s]+$/.test(u) || u.length > 500)) return 'a source that is not an https page';
@@ -342,7 +375,7 @@ export function rowsOf(seeds: Seed[]) {
 }
 
 export function render(load: Load): string {
-  const rows = rowsOf(load.makers.map(readSeed));
+  const rows = rowsOf((load.files ?? load.makers).map(readSeed));
   const shapes = [...new Set(rows.map((r) => SHAPE_NAME[r.glass]!))].sort();
   const values = rows
     .map(

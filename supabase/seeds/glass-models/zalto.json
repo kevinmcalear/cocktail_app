@@ -1,0 +1,141 @@
+{
+ "maker": "zalto",
+ "models": [
+  {
+   "name": "Denk'Art Balance",
+   "series": "Denk'Art",
+   "designer": null,
+   "model_code": "11150",
+   "glass": "wine",
+   "variant": null,
+   "capacity_ml": 590,
+   "capacity_as_stated": "filling quantity: 590 ml",
+   "height_mm": 195,
+   "rim_mm": null,
+   "material": "lead-free crystal",
+   "product_url": "https://www.zaltoglas.at/en/products/denkart/",
+   "source_urls": [
+    "https://www.zaltoglas.at/en/products/denkart/"
+   ]
+  },
+  {
+   "name": "Denk'Art Bordeaux",
+   "series": "Denk'Art",
+   "designer": null,
+   "model_code": "11200",
+   "glass": "wine",
+   "variant": null,
+   "capacity_ml": 765,
+   "capacity_as_stated": "filling quantity: 765 ml",
+   "height_mm": 240,
+   "rim_mm": null,
+   "material": "lead-free crystal",
+   "product_url": "https://www.zaltoglas.at/en/products/denkart/",
+   "source_urls": [
+    "https://www.zaltoglas.at/en/products/denkart/"
+   ]
+  },
+  {
+   "name": "Denk'Art Burgundy",
+   "series": "Denk'Art",
+   "designer": null,
+   "model_code": "11100",
+   "glass": "wine",
+   "variant": null,
+   "capacity_ml": 960,
+   "capacity_as_stated": "filling quantity: 960 ml",
+   "height_mm": 230,
+   "rim_mm": null,
+   "material": "lead-free crystal",
+   "product_url": "https://www.zaltoglas.at/en/products/denkart/",
+   "source_urls": [
+    "https://www.zaltoglas.at/en/products/denkart/"
+   ]
+  },
+  {
+   "name": "Denk'Art Champagne",
+   "series": "Denk'Art",
+   "designer": null,
+   "model_code": "11550",
+   "glass": "flute",
+   "variant": null,
+   "capacity_ml": 250,
+   "capacity_as_stated": "filling quantity: 250 ml",
+   "height_mm": 240,
+   "rim_mm": null,
+   "material": "lead-free crystal",
+   "product_url": "https://www.zaltoglas.at/en/products/denkart/",
+   "source_urls": [
+    "https://www.zaltoglas.at/en/products/denkart/"
+   ]
+  },
+  {
+   "name": "Denk'Art Digestif",
+   "series": "Denk'Art",
+   "designer": null,
+   "model_code": "11700",
+   "glass": "snifter",
+   "variant": null,
+   "capacity_ml": 140,
+   "capacity_as_stated": "filling quantity: 140 ml",
+   "height_mm": 210,
+   "rim_mm": null,
+   "material": "lead-free crystal",
+   "product_url": "https://www.zaltoglas.at/en/products/denkart/",
+   "source_urls": [
+    "https://www.zaltoglas.at/en/products/denkart/"
+   ]
+  },
+  {
+   "name": "Denk'Art Sweet wine",
+   "series": "Denk'Art",
+   "designer": null,
+   "model_code": "11600",
+   "glass": "wine",
+   "variant": null,
+   "capacity_ml": 320,
+   "capacity_as_stated": "filling quantity: 320 ml",
+   "height_mm": 230,
+   "rim_mm": null,
+   "material": "lead-free crystal",
+   "product_url": "https://www.zaltoglas.at/en/products/denkart/",
+   "source_urls": [
+    "https://www.zaltoglas.at/en/products/denkart/"
+   ]
+  },
+  {
+   "name": "Denk'Art Universal",
+   "series": "Denk'Art",
+   "designer": null,
+   "model_code": "11300",
+   "glass": "wine",
+   "variant": null,
+   "capacity_ml": 555,
+   "capacity_as_stated": "filling quantity: 555 ml",
+   "height_mm": 235,
+   "rim_mm": null,
+   "material": "lead-free crystal",
+   "product_url": "https://www.zaltoglas.at/en/products/denkart/",
+   "source_urls": [
+    "https://www.zaltoglas.at/en/products/denkart/"
+   ]
+  },
+  {
+   "name": "Denk'Art White wine",
+   "series": "Denk'Art",
+   "designer": null,
+   "model_code": "11400",
+   "glass": "wine",
+   "variant": null,
+   "capacity_ml": 420,
+   "capacity_as_stated": "filling quantity: 420 ml",
+   "height_mm": 230,
+   "rim_mm": null,
+   "material": "lead-free crystal",
+   "product_url": "https://www.zaltoglas.at/en/products/denkart/",
+   "source_urls": [
+    "https://www.zaltoglas.at/en/products/denkart/"
+   ]
+  }
+ ]
+}

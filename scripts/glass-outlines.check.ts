@@ -1,23 +1,31 @@
 import assert from 'node:assert/strict';
 import { readFileSync } from 'node:fs';
 
-import { FILE, outlineProblem, readSeeds, render } from './glass-outlines';
-import { readSeed } from './glass-models';
+import { LOADS, outlineProblem, readSeeds, render } from './glass-outlines';
+import { LOADS as MODEL_LOADS, readFills, readSeed } from './glass-models';
 
-// The migration is what the seeds generate.
-const file = readFileSync(FILE, 'utf8');
-assert.equal(render(), file, `${FILE} drifted from supabase/seeds/glass-outlines; run node --import tsx scripts/glass-outlines.ts`);
+// Each migration is what its seeds generate.
 const longDash = new RegExp(`[${String.fromCharCode(0x2013, 0x2014)}]`);
-assert.doesNotMatch(file, longDash, `${FILE} has a long dash`);
+for (const load of LOADS) {
+  const file = readFileSync(load.file, 'utf8');
+  assert.equal(render(load), file, `${load.file} drifted from ${load.dir}; run node --import tsx scripts/glass-outlines.ts`);
+  assert.doesNotMatch(file, longDash, `${load.file} has a long dash`);
+  assert.doesNotMatch(file, /AUDIT: pending/, `${load.file} ships without its audit`);
+}
 
-// Every outline names a catalog glass, once, and stores numbers, colours and a page only.
-const seeds = readSeeds();
+// Every outline names a catalog glass, once across the loads, and stores numbers, colours and a page only.
+const seeds = LOADS.flatMap((l) => readSeeds(l.dir));
 const seen = new Set<string>();
 const key = (s: string) => s.toLowerCase().replace(/[^a-z0-9]+/g, ' ').trim();
+// A maker's catalog: its own seed and its later waves' files.
+const waves = new Set(MODEL_LOADS.flatMap((l) => l.files ?? []));
+const seedFiles = (maker: string) => [maker, ...(waves.has(`${maker}.wave5`) ? [`${maker}.wave5`] : [])];
 for (const s of seeds) {
   let catalog: Set<string> | null = null;
   try {
-    catalog = new Set(readSeed(s.maker).models.map((m) => `${key(m.name)}\0${m.capacity_ml ?? 0}`));
+    // A capacity a later load filled in counts as the row's.
+    const fills = new Map(MODEL_LOADS.flatMap((l) => (l.fills ? readFills(l.fills).fills : [])).map((f) => [f.model_code, f.capacity_ml]));
+    catalog = new Set(seedFiles(s.maker).flatMap((f) => readSeed(f).models.map((m) => `${key(m.name)}\0${m.capacity_ml ?? (m.model_code && fills.get(m.model_code)) ?? 0}`)));
   } catch {
     // A maker whose rows were loaded from a migration that isn't generated from a seed.
   }

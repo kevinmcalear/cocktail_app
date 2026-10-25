@@ -1,0 +1,2032 @@
+{
+ "maker": "arcoroc",
+ "models": [
+  {
+   "name": "09232 Excalibur 7.5 oz. Martini Glass",
+   "series": "Excalibur",
+   "designer": null,
+   "model_code": "09232",
+   "glass": "martini",
+   "variant": null,
+   "capacity_ml": 222,
+   "capacity_as_stated": "7.5 oz.",
+   "height_mm": 171.4,
+   "rim_mm": null,
+   "material": "glass",
+   "product_url": "https://www.webstaurantstore.com/arcoroc-09232-excalibur-7-5-oz-martini-glass-by-arc-cardinal-case/55209232.html",
+   "source_urls": [
+    "https://www.webstaurantstore.com/arcoroc-09232-excalibur-7-5-oz-martini-glass-by-arc-cardinal-case/55209232.html"
+   ]
+  },
+  {
+   "name": "1.75 oz. Shot Glass",
+   "series": null,
+   "designer": null,
+   "model_code": "H5057",
+   "glass": "rocks",
+   "variant": null,
+   "capacity_ml": 52,
+   "capacity_as_stated": "1.75 oz.",
+   "height_mm": 57.1,
+   "rim_mm": null,
+   "material": "glass",
+   "product_url": "https://www.webstaurantstore.com/arcoroc-h5057-1-75-oz-shot-glass-by-arc-cardinal-case/552H5057.html",
+   "source_urls": [
+    "https://www.webstaurantstore.com/arcoroc-h5057-1-75-oz-shot-glass-by-arc-cardinal-case/552H5057.html"
+   ]
+  },
+  {
+   "name": "1 oz. Shot Glass",
+   "series": null,
+   "designer": null,
+   "model_code": "00016",
+   "glass": "rocks",
+   "variant": null,
+   "capacity_ml": 30,
+   "capacity_as_stated": "1 oz.",
+   "height_mm": 50.8,
+   "rim_mm": null,
+   "material": "glass",
+   "product_url": "https://www.webstaurantstore.com/arcoroc-00016-1-oz-shot-glass-by-arc-cardinal-case/55200016.html",
+   "source_urls": [
+    "https://www.webstaurantstore.com/arcoroc-00016-1-oz-shot-glass-by-arc-cardinal-case/55200016.html"
+   ]
+  },
+  {
+   "name": "12652 Islande 8.5 oz. Rocks / Old Fashioned Glass",
+   "series": "Islande",
+   "designer": null,
+   "model_code": "12652",
+   "glass": "rocks",
+   "variant": null,
+   "capacity_ml": 251,
+   "capacity_as_stated": "8.5 oz.",
+   "height_mm": 85.7,
+   "rim_mm": null,
+   "material": "glass",
+   "product_url": "https://www.webstaurantstore.com/arcoroc-12652-islande-8-5-oz-rocks-old-fashioned-glass-by-arc-cardinal-case/55212652.html",
+   "source_urls": [
+    "https://www.webstaurantstore.com/arcoroc-12652-islande-8-5-oz-rocks-old-fashioned-glass-by-arc-cardinal-case/55212652.html"
+   ]
+  },
+  {
+   "name": "15012 Essentials 10.5 oz. Highball Glass",
+   "series": "Essentials",
+   "designer": null,
+   "model_code": "15012",
+   "glass": "highball",
+   "variant": null,
+   "capacity_ml": 311,
+   "capacity_as_stated": "10.5 oz.",
+   "height_mm": 165.1,
+   "rim_mm": null,
+   "material": "glass",
+   "product_url": "https://www.webstaurantstore.com/arcoroc-15012-essentials-10-5-oz-hi-ball-glass-by-arc-cardinal-case/55215012.html",
+   "source_urls": [
+    "https://www.webstaurantstore.com/arcoroc-15012-essentials-10-5-oz-hi-ball-glass-by-arc-cardinal-case/55215012.html"
+   ]
+  },
+  {
+   "name": "2.5 oz. Square Shot Glass",
+   "series": null,
+   "designer": null,
+   "model_code": "19188",
+   "glass": "rocks",
+   "variant": null,
+   "capacity_ml": 74,
+   "capacity_as_stated": "2.5 oz.",
+   "height_mm": 61.9,
+   "rim_mm": null,
+   "material": "glass",
+   "product_url": "https://www.webstaurantstore.com/arcoroc-19188-2-5-oz-square-shot-glass-by-arc-cardinal-case/55219188.html",
+   "source_urls": [
+    "https://www.webstaurantstore.com/arcoroc-19188-2-5-oz-square-shot-glass-by-arc-cardinal-case/55219188.html"
+   ]
+  },
+  {
+   "name": "2.75 oz. Tall Square Shot Glass",
+   "series": null,
+   "designer": null,
+   "model_code": "C3966",
+   "glass": "rocks",
+   "variant": null,
+   "capacity_ml": 81,
+   "capacity_as_stated": "2.75 oz.",
+   "height_mm": 95.2,
+   "rim_mm": null,
+   "material": "glass",
+   "product_url": "https://www.webstaurantstore.com/arcoroc-c3966-2-75-oz-tall-square-shot-glass-by-arc-cardinal-case/552C3966.html",
+   "source_urls": [
+    "https://www.webstaurantstore.com/arcoroc-c3966-2-75-oz-tall-square-shot-glass-by-arc-cardinal-case/552C3966.html"
+   ]
+  },
+  {
+   "name": "20866 Excalibur 11 oz. Highball Glass",
+   "series": "Excalibur",
+   "designer": null,
+   "model_code": "20866",
+   "glass": "highball",
+   "variant": null,
+   "capacity_ml": 325,
+   "capacity_as_stated": "11 oz.",
+   "height_mm": 133.3,
+   "rim_mm": null,
+   "material": "glass",
+   "product_url": "https://www.webstaurantstore.com/arcoroc-20866-excalibur-11-oz-hi-ball-glass-by-arc-cardinal-case/55220866.html",
+   "source_urls": [
+    "https://www.webstaurantstore.com/arcoroc-20866-excalibur-11-oz-hi-ball-glass-by-arc-cardinal-case/55220866.html"
+   ]
+  },
+  {
+   "name": "20867 Excalibur 10.5 oz. Highball Glass",
+   "series": "Excalibur",
+   "designer": null,
+   "model_code": "20867",
+   "glass": "highball",
+   "variant": null,
+   "capacity_ml": 311,
+   "capacity_as_stated": "10.5 oz.",
+   "height_mm": 128.6,
+   "rim_mm": null,
+   "material": "glass",
+   "product_url": "https://www.webstaurantstore.com/arcoroc-20867-excalibur-10-5-oz-hi-ball-glass-by-arc-cardinal-case/55220867.html",
+   "source_urls": [
+    "https://www.webstaurantstore.com/arcoroc-20867-excalibur-10-5-oz-hi-ball-glass-by-arc-cardinal-case/55220867.html"
+   ]
+  },
+  {
+   "name": "20869 Excalibur 8 oz. Highball Glass",
+   "series": "Excalibur",
+   "designer": null,
+   "model_code": "20869",
+   "glass": "highball",
+   "variant": null,
+   "capacity_ml": 237,
+   "capacity_as_stated": "8 oz.",
+   "height_mm": 115.9,
+   "rim_mm": null,
+   "material": "glass",
+   "product_url": "https://www.webstaurantstore.com/arcoroc-20869-excalibur-8-oz-hi-ball-glass-by-arc-cardinal-case/55220869.html",
+   "source_urls": [
+    "https://www.webstaurantstore.com/arcoroc-20869-excalibur-8-oz-hi-ball-glass-by-arc-cardinal-case/55220869.html"
+   ]
+  },
+  {
+   "name": "20871 Excalibur 6 oz. Highball Glass",
+   "series": "Excalibur",
+   "designer": null,
+   "model_code": "20871",
+   "glass": "highball",
+   "variant": null,
+   "capacity_ml": 177,
+   "capacity_as_stated": "6 oz.",
+   "height_mm": 101.6,
+   "rim_mm": null,
+   "material": "glass",
+   "product_url": "https://www.webstaurantstore.com/arcoroc-20871-excalibur-6-oz-hi-ball-glass-by-arc-cardinal-case/55220871.html",
+   "source_urls": [
+    "https://www.webstaurantstore.com/arcoroc-20871-excalibur-6-oz-hi-ball-glass-by-arc-cardinal-case/55220871.html"
+   ]
+  },
+  {
+   "name": "20873 Excalibur 10.5 oz. Rocks / Old Fashioned Glass",
+   "series": "Excalibur",
+   "designer": null,
+   "model_code": "20873",
+   "glass": "rocks",
+   "variant": null,
+   "capacity_ml": 311,
+   "capacity_as_stated": "10.5 oz.",
+   "height_mm": 88.9,
+   "rim_mm": null,
+   "material": "glass",
+   "product_url": "https://www.webstaurantstore.com/arcoroc-20873-excalibur-10-5-oz-rocks-old-fashioned-glass-by-arc-cardinal-case/55220873.html",
+   "source_urls": [
+    "https://www.webstaurantstore.com/arcoroc-20873-excalibur-10-5-oz-rocks-old-fashioned-glass-by-arc-cardinal-case/55220873.html"
+   ]
+  },
+  {
+   "name": "20874 Excalibur 9 oz. Rocks / Old Fashioned Glass",
+   "series": "Excalibur",
+   "designer": null,
+   "model_code": "20874",
+   "glass": "rocks",
+   "variant": null,
+   "capacity_ml": 266,
+   "capacity_as_stated": "9 oz.",
+   "height_mm": 82.5,
+   "rim_mm": null,
+   "material": "glass",
+   "product_url": "https://www.webstaurantstore.com/arcoroc-20874-excalibur-9-oz-rocks-old-fashioned-glass-by-arc-cardinal-case/55220874.html",
+   "source_urls": [
+    "https://www.webstaurantstore.com/arcoroc-20874-excalibur-9-oz-rocks-old-fashioned-glass-by-arc-cardinal-case/55220874.html"
+   ]
+  },
+  {
+   "name": "20875 Excalibur 7 oz. Rocks / Old Fashioned Glass",
+   "series": "Excalibur",
+   "designer": null,
+   "model_code": "20875",
+   "glass": "rocks",
+   "variant": null,
+   "capacity_ml": 207,
+   "capacity_as_stated": "7 oz.",
+   "height_mm": 77.8,
+   "rim_mm": null,
+   "material": "glass",
+   "product_url": "https://www.webstaurantstore.com/arcoroc-20875-excalibur-7-oz-rocks-old-fashioned-glass-by-arc-cardinal-case/55220875.html",
+   "source_urls": [
+    "https://www.webstaurantstore.com/arcoroc-20875-excalibur-7-oz-rocks-old-fashioned-glass-by-arc-cardinal-case/55220875.html"
+   ]
+  },
+  {
+   "name": "24 oz. Gin and Tonic Glass",
+   "series": null,
+   "designer": null,
+   "model_code": "N2760",
+   "glass": "spritz",
+   "variant": null,
+   "capacity_ml": 710,
+   "capacity_as_stated": "24 oz.",
+   "height_mm": 196.8,
+   "rim_mm": null,
+   "material": "glass",
+   "product_url": "https://www.webstaurantstore.com/arcoroc-n2760-24-oz-wine-cocktail-glass-by-arc-cardinal-case/552N2760.html",
+   "source_urls": [
+    "https://www.webstaurantstore.com/arcoroc-n2760-24-oz-wine-cocktail-glass-by-arc-cardinal-case/552N2760.html"
+   ]
+  },
+  {
+   "name": "53232 Aristocrat 14 oz. Rocks / Double Old Fashioned Glass",
+   "series": "Aristocrat",
+   "designer": null,
+   "model_code": "53232",
+   "glass": "rocks",
+   "variant": null,
+   "capacity_ml": 414,
+   "capacity_as_stated": "14 oz.",
+   "height_mm": 104.8,
+   "rim_mm": null,
+   "material": "glass",
+   "product_url": "https://www.webstaurantstore.com/arcoroc-53232-aristocrat-14-oz-double-old-fashioned-glass-by-arc-cardinal-case/55253232.html",
+   "source_urls": [
+    "https://www.webstaurantstore.com/arcoroc-53232-aristocrat-14-oz-double-old-fashioned-glass-by-arc-cardinal-case/55253232.html"
+   ]
+  },
+  {
+   "name": "62664 Cabernet 13.75 oz. Brandy Glass",
+   "series": "Cabernet",
+   "designer": null,
+   "model_code": "62664",
+   "glass": "snifter",
+   "variant": null,
+   "capacity_ml": 407,
+   "capacity_as_stated": "13.75 oz.",
+   "height_mm": 128.6,
+   "rim_mm": null,
+   "material": "glass",
+   "product_url": "https://www.webstaurantstore.com/arcoroc-62664-cabernet-13-75-oz-brandy-glass-by-arc-cardinal-case/55262664.html",
+   "source_urls": [
+    "https://www.webstaurantstore.com/arcoroc-62664-cabernet-13-75-oz-brandy-glass-by-arc-cardinal-case/55262664.html"
+   ]
+  },
+  {
+   "name": "71079 Excalibur 12 oz. Brandy Glass",
+   "series": "Excalibur",
+   "designer": null,
+   "model_code": "71079",
+   "glass": "snifter",
+   "variant": null,
+   "capacity_ml": 355,
+   "capacity_as_stated": "12 oz.",
+   "height_mm": 133.3,
+   "rim_mm": null,
+   "material": "glass",
+   "product_url": "https://www.webstaurantstore.com/arcoroc-71079-excalibur-12-oz-brandy-glass-by-arc-cardinal-case/55271079.html",
+   "source_urls": [
+    "https://www.webstaurantstore.com/arcoroc-71079-excalibur-12-oz-brandy-glass-by-arc-cardinal-case/55271079.html"
+   ]
+  },
+  {
+   "name": "71092 Excalibur 8 oz. Footed Highball Glass",
+   "series": "Excalibur",
+   "designer": null,
+   "model_code": "71092",
+   "glass": "highball",
+   "variant": null,
+   "capacity_ml": 237,
+   "capacity_as_stated": "8 oz.",
+   "height_mm": 133.3,
+   "rim_mm": null,
+   "material": "glass",
+   "product_url": "https://www.webstaurantstore.com/arcoroc-71092-excalibur-8-oz-footed-hi-ball-glass-by-arc-cardinal-case/55271092.html",
+   "source_urls": [
+    "https://www.webstaurantstore.com/arcoroc-71092-excalibur-8-oz-footed-hi-ball-glass-by-arc-cardinal-case/55271092.html"
+   ]
+  },
+  {
+   "name": "75926 Artic 8.75 oz. Highball Glass",
+   "series": "Artic",
+   "designer": null,
+   "model_code": "75926",
+   "glass": "highball",
+   "variant": null,
+   "capacity_ml": 259,
+   "capacity_as_stated": "8.75 oz.",
+   "height_mm": 111.1,
+   "rim_mm": null,
+   "material": "glass",
+   "product_url": "https://www.webstaurantstore.com/arcoroc-75926-artic-8-75-oz-hi-ball-glass-by-arc-cardinal-case/55275926.html",
+   "source_urls": [
+    "https://www.webstaurantstore.com/arcoroc-75926-artic-8-75-oz-hi-ball-glass-by-arc-cardinal-case/55275926.html"
+   ]
+  },
+  {
+   "name": "76495 Sterling 9.75 oz. Rocks / Old Fashioned Glass",
+   "series": null,
+   "designer": null,
+   "model_code": "76495",
+   "glass": "rocks",
+   "variant": null,
+   "capacity_ml": 288,
+   "capacity_as_stated": "9.75 oz.",
+   "height_mm": 84.1,
+   "rim_mm": null,
+   "material": "glass",
+   "product_url": "https://www.webstaurantstore.com/arcoroc-76495-sterling-9-75-oz-rocks-glass-by-arc-cardinal-case/55276495.html",
+   "source_urls": [
+    "https://www.webstaurantstore.com/arcoroc-76495-sterling-9-75-oz-rocks-glass-by-arc-cardinal-case/55276495.html"
+   ]
+  },
+  {
+   "name": "79320 Excalibur 10 oz. Martini Glass",
+   "series": "Excalibur",
+   "designer": null,
+   "model_code": "79320",
+   "glass": "martini",
+   "variant": null,
+   "capacity_ml": 296,
+   "capacity_as_stated": "10 oz.",
+   "height_mm": 188.9,
+   "rim_mm": null,
+   "material": "glass",
+   "product_url": "https://www.webstaurantstore.com/arcoroc-79320-excalibur-10-oz-martini-glass-by-arc-cardinal-case/55279320.html",
+   "source_urls": [
+    "https://www.webstaurantstore.com/arcoroc-79320-excalibur-10-oz-martini-glass-by-arc-cardinal-case/55279320.html"
+   ]
+  },
+  {
+   "name": "79736 Shetland 7.5 oz. Highball Glass",
+   "series": "Shetland",
+   "designer": null,
+   "model_code": "79736",
+   "glass": "highball",
+   "variant": null,
+   "capacity_ml": 222,
+   "capacity_as_stated": "7.5 oz.",
+   "height_mm": 120.6,
+   "rim_mm": null,
+   "material": "glass",
+   "product_url": "https://www.webstaurantstore.com/arcoroc-79736-shetland-7-5-oz-hi-ball-glass-by-arc-cardinal-case/55279736.html",
+   "source_urls": [
+    "https://www.webstaurantstore.com/arcoroc-79736-shetland-7-5-oz-hi-ball-glass-by-arc-cardinal-case/55279736.html"
+   ]
+  },
+  {
+   "name": "Arcadie 11.75 oz. Rocks / Old Fashioned Glass",
+   "series": "Arcadie",
+   "designer": null,
+   "model_code": "Q2750",
+   "glass": "rocks",
+   "variant": null,
+   "capacity_ml": 347,
+   "capacity_as_stated": "11.75 oz.",
+   "height_mm": 98.4,
+   "rim_mm": null,
+   "material": "glass",
+   "product_url": "https://www.webstaurantstore.com/arcoroc-q2750-arcadie-11-75-oz-rocks-old-fashioned-glass-by-arc-cardinal-case/552Q2750.html",
+   "source_urls": [
+    "https://www.webstaurantstore.com/arcoroc-q2750-arcadie-11-75-oz-rocks-old-fashioned-glass-by-arc-cardinal-case/552Q2750.html"
+   ]
+  },
+  {
+   "name": "Arcadie 13.5 oz. Highball Glass",
+   "series": "Arcadie",
+   "designer": null,
+   "model_code": "Q2751",
+   "glass": "highball",
+   "variant": null,
+   "capacity_ml": 399,
+   "capacity_as_stated": "13.5 oz.",
+   "height_mm": 127,
+   "rim_mm": null,
+   "material": "glass",
+   "product_url": "https://www.webstaurantstore.com/arcoroc-q2751-arcadie-13-5-oz-highball-glass-by-arc-cardinal-case/552Q2751.html",
+   "source_urls": [
+    "https://www.webstaurantstore.com/arcoroc-q2751-arcadie-13-5-oz-highball-glass-by-arc-cardinal-case/552Q2751.html"
+   ]
+  },
+  {
+   "name": "Arcadie 3 oz. Rocks / Old Fashioned Glass",
+   "series": "Arcadie",
+   "designer": null,
+   "model_code": "Q2233",
+   "glass": "rocks",
+   "variant": null,
+   "capacity_ml": 89,
+   "capacity_as_stated": "3 oz.",
+   "height_mm": 63.5,
+   "rim_mm": null,
+   "material": "glass",
+   "product_url": "https://www.webstaurantstore.com/arcoroc-q2233-arcadie-3-oz-rocks-old-fashioned-glass-by-arc-cardinal-case/552Q2233.html",
+   "source_urls": [
+    "https://www.webstaurantstore.com/arcoroc-q2233-arcadie-3-oz-rocks-old-fashioned-glass-by-arc-cardinal-case/552Q2233.html"
+   ]
+  },
+  {
+   "name": "Arcadie 5.25 oz. Rocks / Old Fashioned Glass",
+   "series": "Arcadie",
+   "designer": null,
+   "model_code": "Q2234",
+   "glass": "rocks",
+   "variant": null,
+   "capacity_ml": 155,
+   "capacity_as_stated": "5.25 oz.",
+   "height_mm": 76.2,
+   "rim_mm": null,
+   "material": "glass",
+   "product_url": "https://www.webstaurantstore.com/arcoroc-q2234-arcadie-5-25-oz-rocks-old-fashioned-glass-by-arc-cardinal-case/552Q2234.html",
+   "source_urls": [
+    "https://www.webstaurantstore.com/arcoroc-q2234-arcadie-5-25-oz-rocks-old-fashioned-glass-by-arc-cardinal-case/552Q2234.html"
+   ]
+  },
+  {
+   "name": "Arcadie 8 oz. Rocks / Old Fashioned Glass",
+   "series": "Arcadie",
+   "designer": null,
+   "model_code": "Q2967",
+   "glass": "rocks",
+   "variant": null,
+   "capacity_ml": 237,
+   "capacity_as_stated": "8 oz.",
+   "height_mm": 85.7,
+   "rim_mm": null,
+   "material": "glass",
+   "product_url": "https://www.webstaurantstore.com/arcoroc-q2967-arcadie-8-oz-rocks-old-fashioned-glass-by-arc-cardinal-case/552Q2967.html",
+   "source_urls": [
+    "https://www.webstaurantstore.com/arcoroc-q2967-arcadie-8-oz-rocks-old-fashioned-glass-by-arc-cardinal-case/552Q2967.html"
+   ]
+  },
+  {
+   "name": "Brixton 12.5 oz. Rocks / Old Fashioned Glass",
+   "series": "Brixton",
+   "designer": null,
+   "model_code": "P9067",
+   "glass": "rocks",
+   "variant": null,
+   "capacity_ml": 370,
+   "capacity_as_stated": "12.5 oz.",
+   "height_mm": 111.1,
+   "rim_mm": null,
+   "material": "glass",
+   "product_url": "https://www.webstaurantstore.com/arcoroc-brixton-12-5-oz-rocks-old-fashioned-glass-by-arc-cardinal-case/552P9067.html",
+   "source_urls": [
+    "https://www.webstaurantstore.com/arcoroc-brixton-12-5-oz-rocks-old-fashioned-glass-by-arc-cardinal-case/552P9067.html"
+   ]
+  },
+  {
+   "name": "Broadway 10.5 oz. Rocks / Old Fashioned Glass",
+   "series": "Broadway",
+   "designer": null,
+   "model_code": "L7254",
+   "glass": "rocks",
+   "variant": null,
+   "capacity_ml": 311,
+   "capacity_as_stated": "10.5 oz.",
+   "height_mm": 88.9,
+   "rim_mm": null,
+   "material": "lead-free crystal",
+   "product_url": "https://www.webstaurantstore.com/arcoroc-l7254-broadway-10-5-oz-rocks-glass-by-arc-cardinal-case/552L7254.html",
+   "source_urls": [
+    "https://www.webstaurantstore.com/arcoroc-l7254-broadway-10-5-oz-rocks-glass-by-arc-cardinal-case/552L7254.html",
+    "https://www.webstaurantstore.com/documents/pdf/brochure/arcoroc_broadway.pdf"
+   ]
+  },
+  {
+   "name": "Broadway 12.5 oz. Rocks / Double Old Fashioned Glass",
+   "series": "Broadway",
+   "designer": null,
+   "model_code": "FP321",
+   "glass": "rocks",
+   "variant": null,
+   "capacity_ml": 370,
+   "capacity_as_stated": "12.5 oz.",
+   "height_mm": 95.2,
+   "rim_mm": null,
+   "material": "glass",
+   "product_url": "https://www.webstaurantstore.com/arcoroc-broadway-125-oz-rocks-double-old-fashioned-glass-by-arc-cardinal-case/552FP321.html",
+   "source_urls": [
+    "https://www.webstaurantstore.com/arcoroc-broadway-125-oz-rocks-double-old-fashioned-glass-by-arc-cardinal-case/552FP321.html"
+   ]
+  },
+  {
+   "name": "Broadway 12 oz. Highball Glass",
+   "series": "Broadway",
+   "designer": null,
+   "model_code": "L7255",
+   "glass": "highball",
+   "variant": null,
+   "capacity_ml": 355,
+   "capacity_as_stated": "12 oz.",
+   "height_mm": 146,
+   "rim_mm": null,
+   "material": "lead-free crystal",
+   "product_url": "https://www.webstaurantstore.com/arcoroc-l7255-broadway-12-oz-hi-ball-glass-by-arc-cardinal-case/552L7255.html",
+   "source_urls": [
+    "https://www.webstaurantstore.com/arcoroc-l7255-broadway-12-oz-hi-ball-glass-by-arc-cardinal-case/552L7255.html",
+    "https://www.webstaurantstore.com/documents/pdf/brochure/arcoroc_broadway.pdf"
+   ]
+  },
+  {
+   "name": "Broadway 19.5 oz. Gin and Tonic Glass",
+   "series": "Broadway",
+   "designer": null,
+   "model_code": "P8821",
+   "glass": "spritz",
+   "variant": null,
+   "capacity_ml": 577,
+   "capacity_as_stated": "19.5 oz.",
+   "height_mm": 190.5,
+   "rim_mm": null,
+   "material": "lead-free crystal",
+   "product_url": "https://www.webstaurantstore.com/arcoroc-p8821-broadway-19-5-oz-gin-and-tonic-glass-by-arc-cardinal-case/552P8821.html",
+   "source_urls": [
+    "https://www.webstaurantstore.com/arcoroc-p8821-broadway-19-5-oz-gin-and-tonic-glass-by-arc-cardinal-case/552P8821.html",
+    "https://www.webstaurantstore.com/documents/pdf/brochure/arcoroc_broadway.pdf"
+   ]
+  },
+  {
+   "name": "Broadway 2 oz. Shot Glass",
+   "series": "Broadway",
+   "designer": null,
+   "model_code": "V2910",
+   "glass": "rocks",
+   "variant": null,
+   "capacity_ml": 59,
+   "capacity_as_stated": "2 oz.",
+   "height_mm": 60.3,
+   "rim_mm": null,
+   "material": "glass",
+   "product_url": "https://www.webstaurantstore.com/arcoroc-l7253-broadway-2-oz-shot-glass-by-arc-cardinal-case/552V2910.html",
+   "source_urls": [
+    "https://www.webstaurantstore.com/arcoroc-l7253-broadway-2-oz-shot-glass-by-arc-cardinal-case/552V2910.html"
+   ]
+  },
+  {
+   "name": "Broadway 7.5 oz. Rocks / Old Fashioned Glass",
+   "series": "Broadway",
+   "designer": null,
+   "model_code": "FP320",
+   "glass": "rocks",
+   "variant": null,
+   "capacity_ml": 222,
+   "capacity_as_stated": "7.5 oz.",
+   "height_mm": 77.8,
+   "rim_mm": null,
+   "material": "glass",
+   "product_url": "https://www.webstaurantstore.com/arcoroc-broadway-7-5-oz-rocks-old-fashioned-glass-by-arc-cardinal-case/552FP320.html",
+   "source_urls": [
+    "https://www.webstaurantstore.com/arcoroc-broadway-7-5-oz-rocks-old-fashioned-glass-by-arc-cardinal-case/552FP320.html"
+   ]
+  },
+  {
+   "name": "Broadway 7 oz. Martini Glass",
+   "series": "Broadway",
+   "designer": null,
+   "model_code": "P8795",
+   "glass": "martini",
+   "variant": null,
+   "capacity_ml": 207,
+   "capacity_as_stated": "7 oz.",
+   "height_mm": 155.6,
+   "rim_mm": null,
+   "material": "lead-free crystal",
+   "product_url": "https://www.webstaurantstore.com/arcoroc-p8795-broadway-7-oz-martini-glass-by-arc-cardinal-case/552P8795.html",
+   "source_urls": [
+    "https://www.webstaurantstore.com/arcoroc-p8795-broadway-7-oz-martini-glass-by-arc-cardinal-case/552P8795.html",
+    "https://www.webstaurantstore.com/documents/pdf/brochure/arcoroc_broadway.pdf"
+   ]
+  },
+  {
+   "name": "Broadway 8 oz. Coupe Glass",
+   "series": "Broadway",
+   "designer": null,
+   "model_code": "P8796",
+   "glass": "coupe",
+   "variant": null,
+   "capacity_ml": 237,
+   "capacity_as_stated": "8 oz.",
+   "height_mm": 139.7,
+   "rim_mm": null,
+   "material": "lead-free crystal",
+   "product_url": "https://www.webstaurantstore.com/arcoroc-p8796-broadway-8-oz-coupe-glass-by-arc-cardinal-case/552P8796.html",
+   "source_urls": [
+    "https://www.webstaurantstore.com/arcoroc-p8796-broadway-8-oz-coupe-glass-by-arc-cardinal-case/552P8796.html",
+    "https://www.webstaurantstore.com/documents/pdf/brochure/arcoroc_broadway.pdf"
+   ]
+  },
+  {
+   "name": "Broadway 9.25 oz. Highball Glass",
+   "series": "Broadway",
+   "designer": null,
+   "model_code": "L7256",
+   "glass": "highball",
+   "variant": null,
+   "capacity_ml": 274,
+   "capacity_as_stated": "9.25 oz.",
+   "height_mm": 133.3,
+   "rim_mm": null,
+   "material": "lead-free crystal",
+   "product_url": "https://www.webstaurantstore.com/arcoroc-l7256-broadway-9-25-oz-hi-ball-glass-by-arc-cardinal-case/552L7256.html",
+   "source_urls": [
+    "https://www.webstaurantstore.com/arcoroc-l7256-broadway-9-25-oz-hi-ball-glass-by-arc-cardinal-case/552L7256.html",
+    "https://www.webstaurantstore.com/documents/pdf/brochure/arcoroc_broadway.pdf"
+   ]
+  },
+  {
+   "name": "C2172 15 oz. Hurricane Glass",
+   "series": null,
+   "designer": null,
+   "model_code": "C2172",
+   "glass": "collins",
+   "variant": null,
+   "capacity_ml": 444,
+   "capacity_as_stated": "15 oz.",
+   "height_mm": 209.5,
+   "rim_mm": null,
+   "material": "glass",
+   "product_url": "https://www.webstaurantstore.com/arcoroc-c2172-15-oz-hurricane-glass-by-arc-cardinal-case/552C2172.html",
+   "source_urls": [
+    "https://www.webstaurantstore.com/arcoroc-c2172-15-oz-hurricane-glass-by-arc-cardinal-case/552C2172.html"
+   ]
+  },
+  {
+   "name": "CA030 Mix Collection 6 oz. Coupe Cocktail Glass",
+   "series": "by Chris Adams and Arc Cardinal",
+   "designer": "Chris Adams",
+   "model_code": "CA030",
+   "glass": "coupe",
+   "variant": null,
+   "capacity_ml": 177,
+   "capacity_as_stated": "6 oz.",
+   "height_mm": 146,
+   "rim_mm": null,
+   "material": "glass",
+   "product_url": "https://www.webstaurantstore.com/arcoroc-ca030-chris-adams-6-oz-coupe-cocktail-glass-by-arc-cardinal-case/552CA030.html",
+   "source_urls": [
+    "https://www.webstaurantstore.com/arcoroc-ca030-chris-adams-6-oz-coupe-cocktail-glass-by-arc-cardinal-case/552CA030.html"
+   ]
+  },
+  {
+   "name": "CA031 Mix Collection 6 oz. Tall Coupe Cocktail Glass",
+   "series": "by Chris Adams and Arc Cardinal",
+   "designer": "Chris Adams",
+   "model_code": "CA031",
+   "glass": "coupe",
+   "variant": null,
+   "capacity_ml": 177,
+   "capacity_as_stated": "6 oz.",
+   "height_mm": 149.2,
+   "rim_mm": null,
+   "material": "glass",
+   "product_url": "https://www.webstaurantstore.com/arcoroc-ca031-chris-adams-6-oz-tall-coupe-cocktail-glass-by-arc-cardinal-case/552CA031.html",
+   "source_urls": [
+    "https://www.webstaurantstore.com/arcoroc-ca031-chris-adams-6-oz-tall-coupe-cocktail-glass-by-arc-cardinal-case/552CA031.html"
+   ]
+  },
+  {
+   "name": "Cabernet 10007 10.5 oz. Rocks / Old Fashioned Glass",
+   "series": "Cabernet",
+   "designer": null,
+   "model_code": "10007",
+   "glass": "rocks",
+   "variant": null,
+   "capacity_ml": 311,
+   "capacity_as_stated": "10.5 oz.",
+   "height_mm": 82.5,
+   "rim_mm": null,
+   "material": "glass",
+   "product_url": "https://www.webstaurantstore.com/arcoroc-10007-cabernet-10-5-oz-rocks-glass-by-arc-cardinal-case/55210007.html",
+   "source_urls": [
+    "https://www.webstaurantstore.com/arcoroc-10007-cabernet-10-5-oz-rocks-glass-by-arc-cardinal-case/55210007.html"
+   ]
+  },
+  {
+   "name": "Cabernet 2.5 oz. Cordial Glass",
+   "series": "Cabernet",
+   "designer": null,
+   "model_code": "47346",
+   "glass": "snifter",
+   "variant": null,
+   "capacity_ml": 74,
+   "capacity_as_stated": "2.5 oz.",
+   "height_mm": 88.9,
+   "rim_mm": null,
+   "material": "glass",
+   "product_url": "https://www.webstaurantstore.com/arcoroc-47346-cabernet-2-5-oz-cordial-glass-by-arc-cardinal-case/55247346.html",
+   "source_urls": [
+    "https://www.webstaurantstore.com/arcoroc-47346-cabernet-2-5-oz-cordial-glass-by-arc-cardinal-case/55247346.html"
+   ]
+  },
+  {
+   "name": "D6315 Artic 10.5 oz. Highball Glass",
+   "series": "Artic",
+   "designer": null,
+   "model_code": "D6315",
+   "glass": "highball",
+   "variant": null,
+   "capacity_ml": 311,
+   "capacity_as_stated": "10.5 oz.",
+   "height_mm": 127,
+   "rim_mm": null,
+   "material": "glass",
+   "product_url": "https://www.webstaurantstore.com/arcoroc-d6315-artic-10-5-oz-hi-ball-glass-by-arc-cardinal-case/552D6315.html",
+   "source_urls": [
+    "https://www.webstaurantstore.com/arcoroc-d6315-artic-10-5-oz-hi-ball-glass-by-arc-cardinal-case/552D6315.html"
+   ]
+  },
+  {
+   "name": "Discora 10.75 oz. Rocks / Old Fashioned Glass",
+   "series": "Discora",
+   "designer": null,
+   "model_code": "X2767",
+   "glass": "rocks",
+   "variant": null,
+   "capacity_ml": 318,
+   "capacity_as_stated": "10.75 oz.",
+   "height_mm": 79.4,
+   "rim_mm": null,
+   "material": "crystal",
+   "product_url": "https://www.webstaurantstore.com/arcoroc-discora-10-75-oz-rocks-old-fashioned-glass-by-arc-cardinal-case/552X2767.html",
+   "source_urls": [
+    "https://www.webstaurantstore.com/arcoroc-discora-10-75-oz-rocks-old-fashioned-glass-by-arc-cardinal-case/552X2767.html"
+   ]
+  },
+  {
+   "name": "Discora 12.5 oz. Rocks / Double Old Fashioned Glass",
+   "series": "Discora",
+   "designer": null,
+   "model_code": "X2607",
+   "glass": "rocks",
+   "variant": null,
+   "capacity_ml": 370,
+   "capacity_as_stated": "12.5 oz.",
+   "height_mm": 88.9,
+   "rim_mm": null,
+   "material": "crystal",
+   "product_url": "https://www.webstaurantstore.com/arcoroc-discora-12-5-oz-rocks-double-old-fashioned-glass-by-arc-cardinal-case/552X2607.html",
+   "source_urls": [
+    "https://www.webstaurantstore.com/arcoroc-discora-12-5-oz-rocks-double-old-fashioned-glass-by-arc-cardinal-case/552X2607.html"
+   ]
+  },
+  {
+   "name": "Discora 15.25 oz. Highball Glass",
+   "series": "Discora",
+   "designer": null,
+   "model_code": "X2702",
+   "glass": "highball",
+   "variant": null,
+   "capacity_ml": 451,
+   "capacity_as_stated": "15.25 oz.",
+   "height_mm": 133.3,
+   "rim_mm": null,
+   "material": "crystal",
+   "product_url": "https://www.webstaurantstore.com/arcoroc-discora-15-25-oz-highball-glass-by-arc-cardinal-case/552X2702.html",
+   "source_urls": [
+    "https://www.webstaurantstore.com/arcoroc-discora-15-25-oz-highball-glass-by-arc-cardinal-case/552X2702.html"
+   ]
+  },
+  {
+   "name": "Discora 20 oz. Gin and Tonic Glass",
+   "series": "Discora",
+   "designer": null,
+   "model_code": "X2606",
+   "glass": "spritz",
+   "variant": null,
+   "capacity_ml": 591,
+   "capacity_as_stated": "20 oz.",
+   "height_mm": 215.9,
+   "rim_mm": null,
+   "material": "crystal",
+   "product_url": "https://www.webstaurantstore.com/arcoroc-discora-20-oz-gin-and-tonic-glass-by-arc-cardinal-case/552X2606.html",
+   "source_urls": [
+    "https://www.webstaurantstore.com/arcoroc-discora-20-oz-gin-and-tonic-glass-by-arc-cardinal-case/552X2606.html"
+   ]
+  },
+  {
+   "name": "Discora 6 oz. Nick and Nora Glass",
+   "series": "Discora",
+   "designer": null,
+   "model_code": "X2604",
+   "glass": "nick",
+   "variant": null,
+   "capacity_ml": 177,
+   "capacity_as_stated": "6 oz.",
+   "height_mm": 171.4,
+   "rim_mm": null,
+   "material": "crystal",
+   "product_url": "https://www.webstaurantstore.com/arcoroc-discora-6-oz-nick-and-nora-glass-by-arc-cardinal-case/552X2604.html",
+   "source_urls": [
+    "https://www.webstaurantstore.com/arcoroc-discora-6-oz-nick-and-nora-glass-by-arc-cardinal-case/552X2604.html"
+   ]
+  },
+  {
+   "name": "Discora 7 oz. Coupe Glass",
+   "series": "Discora",
+   "designer": null,
+   "model_code": "X2600",
+   "glass": "coupe",
+   "variant": null,
+   "capacity_ml": 207,
+   "capacity_as_stated": "7 oz.",
+   "height_mm": 160.3,
+   "rim_mm": null,
+   "material": "crystal",
+   "product_url": "https://www.webstaurantstore.com/arcoroc-discora-7-oz-coupe-glass-by-arc-cardinal-case/552X2600.html",
+   "source_urls": [
+    "https://www.webstaurantstore.com/arcoroc-discora-7-oz-coupe-glass-by-arc-cardinal-case/552X2600.html"
+   ]
+  },
+  {
+   "name": "E1514 Prysm 12.5 oz. Rocks / Double Old Fashioned Glass",
+   "series": "Prysm",
+   "designer": null,
+   "model_code": "E1514",
+   "glass": "rocks",
+   "variant": null,
+   "capacity_ml": 370,
+   "capacity_as_stated": "12.5 oz.",
+   "height_mm": 95.2,
+   "rim_mm": null,
+   "material": "glass",
+   "product_url": "https://www.webstaurantstore.com/arcoroc-e1514-prysm-12-5-oz-double-rocks-old-fashioned-glass-by-arc-cardinal-pack/552E1514.html",
+   "source_urls": [
+    "https://www.webstaurantstore.com/arcoroc-e1514-prysm-12-5-oz-double-rocks-old-fashioned-glass-by-arc-cardinal-pack/552E1514.html"
+   ]
+  },
+  {
+   "name": "E1907 Shetland 10.5 oz. Rocks / Old Fashioned Glass",
+   "series": "Shetland",
+   "designer": null,
+   "model_code": "E1907",
+   "glass": "rocks",
+   "variant": null,
+   "capacity_ml": 311,
+   "capacity_as_stated": "10.5 oz.",
+   "height_mm": 96.8,
+   "rim_mm": null,
+   "material": "glass",
+   "product_url": "https://www.webstaurantstore.com/arcoroc-e1907-shetland-10-5-oz-old-fashioned-glass-by-arc-cardinal-case/552E1907.html",
+   "source_urls": [
+    "https://www.webstaurantstore.com/arcoroc-e1907-shetland-10-5-oz-old-fashioned-glass-by-arc-cardinal-case/552E1907.html"
+   ]
+  },
+  {
+   "name": "E1908 Petale 8.75 oz. Fully Tempered Highball Glass",
+   "series": null,
+   "designer": null,
+   "model_code": "E1908",
+   "glass": "highball",
+   "variant": null,
+   "capacity_ml": 259,
+   "capacity_as_stated": "8.75 oz.",
+   "height_mm": 103.2,
+   "rim_mm": null,
+   "material": "glass",
+   "product_url": "https://www.webstaurantstore.com/arcoroc-e1908-petale-8-75-oz-hi-ball-glass-by-arc-cardinal-case/552E1908.html",
+   "source_urls": [
+    "https://www.webstaurantstore.com/arcoroc-e1908-petale-8-75-oz-hi-ball-glass-by-arc-cardinal-case/552E1908.html"
+   ]
+  },
+  {
+   "name": "Elysees 10.5 oz. Rocks / Old Fashioned Glass",
+   "series": "Elysees",
+   "designer": null,
+   "model_code": "V8954",
+   "glass": "rocks",
+   "variant": null,
+   "capacity_ml": 311,
+   "capacity_as_stated": "10.5 oz.",
+   "height_mm": 92.1,
+   "rim_mm": null,
+   "material": "glass",
+   "product_url": "https://www.webstaurantstore.com/arcoroc-elysees-10-5-oz-rocks-old-fashioned-glass-by-arc-cardinal-case/552V8954.html",
+   "source_urls": [
+    "https://www.webstaurantstore.com/arcoroc-elysees-10-5-oz-rocks-old-fashioned-glass-by-arc-cardinal-case/552V8954.html",
+    "https://www.webstaurantstore.com/documents/pdf/brochure/552v8953_vintage_tumblers.pdf"
+   ]
+  },
+  {
+   "name": "Essentials 13 oz. Collins Glass",
+   "series": "Essentials",
+   "designer": null,
+   "model_code": "Q1774",
+   "glass": "collins",
+   "variant": null,
+   "capacity_ml": 384,
+   "capacity_as_stated": "13 oz.",
+   "height_mm": 155.6,
+   "rim_mm": null,
+   "material": "glass",
+   "product_url": "https://www.webstaurantstore.com/arcoroc-essentials-13-oz-collins-glass-by-arc-cardinal-case/552Q1774.html",
+   "source_urls": [
+    "https://www.webstaurantstore.com/arcoroc-essentials-13-oz-collins-glass-by-arc-cardinal-case/552Q1774.html"
+   ]
+  },
+  {
+   "name": "Excalibur 20868 9 oz. Highball Glass",
+   "series": "Excalibur",
+   "designer": null,
+   "model_code": "20868",
+   "glass": "highball",
+   "variant": null,
+   "capacity_ml": 266,
+   "capacity_as_stated": "9 oz.",
+   "height_mm": 120.6,
+   "rim_mm": null,
+   "material": "glass",
+   "product_url": "https://www.webstaurantstore.com/arcoroc-20868-excalibur-9-oz-hi-ball-glass-by-arc-cardinal-case/55220868.html",
+   "source_urls": [
+    "https://www.webstaurantstore.com/arcoroc-20868-excalibur-9-oz-hi-ball-glass-by-arc-cardinal-case/55220868.html"
+   ]
+  },
+  {
+   "name": "Forum 5.5 oz. Fully Tempered Stackable Rocks / Old Fashioned Glass",
+   "series": "Forum",
+   "designer": null,
+   "model_code": "V8009",
+   "glass": "rocks",
+   "variant": null,
+   "capacity_ml": 163,
+   "capacity_as_stated": "5.5 oz.",
+   "height_mm": 69.8,
+   "rim_mm": null,
+   "material": "glass",
+   "product_url": "https://www.webstaurantstore.com/arcoroc-forum-5-5-oz-fully-tempered-stackable-rocks-old-fashioned-glass-by-arc-cardinal-case/552V8009.html",
+   "source_urls": [
+    "https://www.webstaurantstore.com/arcoroc-forum-5-5-oz-fully-tempered-stackable-rocks-old-fashioned-glass-by-arc-cardinal-case/552V8009.html"
+   ]
+  },
+  {
+   "name": "Forum 7.75 oz. Fully Tempered Stackable Rocks / Old Fashioned Glass",
+   "series": "Forum",
+   "designer": null,
+   "model_code": "V8005",
+   "glass": "rocks",
+   "variant": null,
+   "capacity_ml": 229,
+   "capacity_as_stated": "7.75 oz.",
+   "height_mm": 76.2,
+   "rim_mm": null,
+   "material": "glass",
+   "product_url": "https://www.webstaurantstore.com/arcoroc-forum-7-75-oz-fully-tempered-stackable-rocks-old-fashioned-glass-by-arc-cardinal-case/552V8005.html",
+   "source_urls": [
+    "https://www.webstaurantstore.com/arcoroc-forum-7-75-oz-fully-tempered-stackable-rocks-old-fashioned-glass-by-arc-cardinal-case/552V8005.html"
+   ]
+  },
+  {
+   "name": "Forum 9 oz. Fully Tempered Stackable Highball Glass",
+   "series": "Forum",
+   "designer": null,
+   "model_code": "V7999",
+   "glass": "highball",
+   "variant": null,
+   "capacity_ml": 266,
+   "capacity_as_stated": "9 oz.",
+   "height_mm": 101.6,
+   "rim_mm": null,
+   "material": "glass",
+   "product_url": "https://www.webstaurantstore.com/arcoroc-forum-9-oz-fully-tempered-stackable-highball-glass-by-arc-cardinal-case/552V7999.html",
+   "source_urls": [
+    "https://www.webstaurantstore.com/arcoroc-forum-9-oz-fully-tempered-stackable-highball-glass-by-arc-cardinal-case/552V7999.html"
+   ]
+  },
+  {
+   "name": "G3611 Shetland 14 oz. Highball Glass",
+   "series": "Shetland",
+   "designer": null,
+   "model_code": "G3611",
+   "glass": "highball",
+   "variant": null,
+   "capacity_ml": 414,
+   "capacity_as_stated": "14 oz.",
+   "height_mm": 146,
+   "rim_mm": null,
+   "material": "glass",
+   "product_url": "https://www.webstaurantstore.com/arcoroc-g3611-shetland-14-oz-customizable-highball-glass-by-arc-cardinal-case/55279698.html",
+   "source_urls": [
+    "https://www.webstaurantstore.com/arcoroc-g3611-shetland-14-oz-customizable-highball-glass-by-arc-cardinal-case/55279698.html"
+   ]
+  },
+  {
+   "name": "Granite 5.25 oz. Stackable Rocks / Old Fashioned Glass",
+   "series": "Granite",
+   "designer": null,
+   "model_code": "J2610",
+   "glass": "rocks",
+   "variant": null,
+   "capacity_ml": 155,
+   "capacity_as_stated": "5.25 oz.",
+   "height_mm": 76.2,
+   "rim_mm": null,
+   "material": "glass",
+   "product_url": "https://www.webstaurantstore.com/arcoroc-j2610-granite-5-25-oz-stackable-rocks-glass-by-arc-cardinal-case/552J2610.html",
+   "source_urls": [
+    "https://www.webstaurantstore.com/arcoroc-j2610-granite-5-25-oz-stackable-rocks-glass-by-arc-cardinal-case/552J2610.html",
+    "https://www.webstaurantstore.com/documents/pdf/brochure/granite_brochure.pdf"
+   ]
+  },
+  {
+   "name": "Granite 7 oz. Stackable Rocks / Old Fashioned Glass",
+   "series": "Granite",
+   "designer": null,
+   "model_code": "J2611",
+   "glass": "rocks",
+   "variant": null,
+   "capacity_ml": 207,
+   "capacity_as_stated": "7 oz.",
+   "height_mm": 82.5,
+   "rim_mm": null,
+   "material": "glass",
+   "product_url": "https://www.webstaurantstore.com/arcoroc-j2611-granite-7-oz-stackable-rocks-glass-by-arc-cardinal-case/552J2611.html",
+   "source_urls": [
+    "https://www.webstaurantstore.com/arcoroc-j2611-granite-7-oz-stackable-rocks-glass-by-arc-cardinal-case/552J2611.html",
+    "https://www.webstaurantstore.com/documents/pdf/brochure/granite_brochure.pdf"
+   ]
+  },
+  {
+   "name": "Hot Shot 2.5 oz. Shot Glass",
+   "series": null,
+   "designer": null,
+   "model_code": "G2639",
+   "glass": "rocks",
+   "variant": null,
+   "capacity_ml": 74,
+   "capacity_as_stated": "2.5 oz.",
+   "height_mm": 84.1,
+   "rim_mm": null,
+   "material": "glass",
+   "product_url": "https://www.webstaurantstore.com/arcoroc-g2639-hot-shot-2-5-oz-shot-glass-by-arc-cardinal-case/552G2639.html",
+   "source_urls": [
+    "https://www.webstaurantstore.com/arcoroc-g2639-hot-shot-2-5-oz-shot-glass-by-arc-cardinal-case/552G2639.html"
+   ]
+  },
+  {
+   "name": "Imperator 10.25 oz. Rocks / Old Fashioned Glass",
+   "series": "Imperator",
+   "designer": null,
+   "model_code": "V8953",
+   "glass": "rocks",
+   "variant": null,
+   "capacity_ml": 303,
+   "capacity_as_stated": "10.25 oz.",
+   "height_mm": 92.1,
+   "rim_mm": null,
+   "material": "glass",
+   "product_url": "https://www.webstaurantstore.com/arcoroc-imperator-10-25-oz-rocks-old-fashioned-glass-by-arc-cardinal-case/552V8953.html",
+   "source_urls": [
+    "https://www.webstaurantstore.com/arcoroc-imperator-10-25-oz-rocks-old-fashioned-glass-by-arc-cardinal-case/552V8953.html",
+    "https://www.webstaurantstore.com/documents/pdf/brochure/552v8953_vintage_tumblers.pdf"
+   ]
+  },
+  {
+   "name": "J4094 Gotham 4.5 oz. Espresso / Rocks Glass",
+   "series": "Gotham",
+   "designer": null,
+   "model_code": "J4094",
+   "glass": "rocks",
+   "variant": null,
+   "capacity_ml": 133,
+   "capacity_as_stated": "4.5 oz.",
+   "height_mm": 82.5,
+   "rim_mm": null,
+   "material": "glass",
+   "product_url": "https://www.webstaurantstore.com/arcoroc-j4094-gotham-4-5-oz-rocks-glass-by-arc-cardinal-case/552J4094.html",
+   "source_urls": [
+    "https://www.webstaurantstore.com/arcoroc-j4094-gotham-4-5-oz-rocks-glass-by-arc-cardinal-case/552J4094.html"
+   ]
+  },
+  {
+   "name": "J4096 Gotham 8 oz. Rocks / Old Fashioned Glass",
+   "series": "Gotham",
+   "designer": null,
+   "model_code": "J4096",
+   "glass": "rocks",
+   "variant": null,
+   "capacity_ml": 237,
+   "capacity_as_stated": "8 oz.",
+   "height_mm": 88.9,
+   "rim_mm": null,
+   "material": "glass",
+   "product_url": "https://www.webstaurantstore.com/arcoroc-j4096-gotham-8-oz-rocks-glass-by-arc-cardinal-case/552J4096.html",
+   "source_urls": [
+    "https://www.webstaurantstore.com/arcoroc-j4096-gotham-8-oz-rocks-glass-by-arc-cardinal-case/552J4096.html"
+   ]
+  },
+  {
+   "name": "J4097 Gotham 9 oz. Rocks / Old Fashioned Glass",
+   "series": "Gotham",
+   "designer": null,
+   "model_code": "J4097",
+   "glass": "rocks",
+   "variant": null,
+   "capacity_ml": 266,
+   "capacity_as_stated": "9 oz.",
+   "height_mm": 88.9,
+   "rim_mm": null,
+   "material": "glass",
+   "product_url": "https://www.webstaurantstore.com/arcoroc-j4097-gotham-9-oz-rocks-glass-by-arc-cardinal-case/552J4097.html",
+   "source_urls": [
+    "https://www.webstaurantstore.com/arcoroc-j4097-gotham-9-oz-rocks-glass-by-arc-cardinal-case/552J4097.html"
+   ]
+  },
+  {
+   "name": "J4099 Gotham 12 oz. Rocks / Double Old Fashioned Glass",
+   "series": "Gotham",
+   "designer": null,
+   "model_code": "J4099",
+   "glass": "rocks",
+   "variant": null,
+   "capacity_ml": 355,
+   "capacity_as_stated": "12 oz.",
+   "height_mm": 95.2,
+   "rim_mm": null,
+   "material": "glass",
+   "product_url": "https://www.webstaurantstore.com/arcoroc-j4099-gotham-12-oz-double-old-fashioned-glass-by-arc-cardinal-case/552J4099.html",
+   "source_urls": [
+    "https://www.webstaurantstore.com/arcoroc-j4099-gotham-12-oz-double-old-fashioned-glass-by-arc-cardinal-case/552J4099.html"
+   ]
+  },
+  {
+   "name": "J4226 Islande 13 oz. Collins Glass",
+   "series": "Islande",
+   "designer": null,
+   "model_code": "V3475",
+   "glass": "collins",
+   "variant": null,
+   "capacity_ml": 384,
+   "capacity_as_stated": "13 oz.",
+   "height_mm": 171.4,
+   "rim_mm": null,
+   "material": "glass",
+   "product_url": "https://www.webstaurantstore.com/arcoroc-j4226-islande-13-oz-collins-glass-by-arc-cardinal-case/552J4226.html",
+   "source_urls": [
+    "https://www.webstaurantstore.com/arcoroc-j4226-islande-13-oz-collins-glass-by-arc-cardinal-case/552J4226.html"
+   ]
+  },
+  {
+   "name": "J4764 Essentials 7.5 oz. Rocks / Old Fashioned Glass",
+   "series": "Essentials",
+   "designer": null,
+   "model_code": "V3871",
+   "glass": "rocks",
+   "variant": null,
+   "capacity_ml": 222,
+   "capacity_as_stated": "7.5 oz.",
+   "height_mm": 69.8,
+   "rim_mm": null,
+   "material": "glass",
+   "product_url": "https://www.webstaurantstore.com/arcoroc-j4764-essentials-7-5-oz-customizable-rocks-old-fashioned-glass-by-arc-cardinal-case/552V3871.html",
+   "source_urls": [
+    "https://www.webstaurantstore.com/arcoroc-j4764-essentials-7-5-oz-customizable-rocks-old-fashioned-glass-by-arc-cardinal-case/552V3871.html"
+   ]
+  },
+  {
+   "name": "L0371 Excalibur 8 oz. Coupe Cocktail Glass",
+   "series": "Excalibur",
+   "designer": null,
+   "model_code": "L0371",
+   "glass": "coupe",
+   "variant": null,
+   "capacity_ml": 237,
+   "capacity_as_stated": "8 oz.",
+   "height_mm": 142.9,
+   "rim_mm": null,
+   "material": "glass",
+   "product_url": "https://www.webstaurantstore.com/arcoroc-l0371-excalibur-8-oz-coupe-cocktail-glass-by-arc-cardinal-case/552L0371.html",
+   "source_urls": [
+    "https://www.webstaurantstore.com/arcoroc-l0371-excalibur-8-oz-coupe-cocktail-glass-by-arc-cardinal-case/552L0371.html"
+   ]
+  },
+  {
+   "name": "L6119 Kenzie 5.75 oz. Whiskey Taster Glass",
+   "series": null,
+   "designer": null,
+   "model_code": "L6119",
+   "glass": "snifter",
+   "variant": null,
+   "capacity_ml": 170,
+   "capacity_as_stated": "5.75 oz.",
+   "height_mm": 101.6,
+   "rim_mm": null,
+   "material": "glass",
+   "product_url": "https://www.webstaurantstore.com/arcoroc-l6119-kenzie-5-75-oz-whiskey-taster-glass-by-arc-cardinal-case/552L6119.html",
+   "source_urls": [
+    "https://www.webstaurantstore.com/arcoroc-l6119-kenzie-5-75-oz-whiskey-taster-glass-by-arc-cardinal-case/552L6119.html"
+   ]
+  },
+  {
+   "name": "L7844 Granite 11.75 oz. Rocks / Double Old Fashioned Glass",
+   "series": "Granite",
+   "designer": null,
+   "model_code": "L7844",
+   "glass": "rocks",
+   "variant": null,
+   "capacity_ml": 347,
+   "capacity_as_stated": "11.75 oz.",
+   "height_mm": 107.9,
+   "rim_mm": null,
+   "material": "glass",
+   "product_url": "https://www.webstaurantstore.com/arcoroc-l7844-granite-11-75-oz-rocks-double-old-fashioned-glass-by-arc-cardinal-case/552L7844.html",
+   "source_urls": [
+    "https://www.webstaurantstore.com/arcoroc-l7844-granite-11-75-oz-rocks-double-old-fashioned-glass-by-arc-cardinal-case/552L7844.html"
+   ]
+  },
+  {
+   "name": "Luxe 10.5 oz. Rocks / Old Fashioned Glass",
+   "series": "Luxe",
+   "designer": null,
+   "model_code": "FP683",
+   "glass": "rocks",
+   "variant": null,
+   "capacity_ml": 311,
+   "capacity_as_stated": "10.5 oz.",
+   "height_mm": 85.7,
+   "rim_mm": null,
+   "material": "glass",
+   "product_url": "https://www.webstaurantstore.com/arcoroc-luxe-10-5-oz-rocks-old-fashioned-glass-by-arc-cardinal-case/552FP683.html",
+   "source_urls": [
+    "https://www.webstaurantstore.com/arcoroc-luxe-10-5-oz-rocks-old-fashioned-glass-by-arc-cardinal-case/552FP683.html",
+    "https://www.webstaurantstore.com/documents/pdf/brochure/552fp684_luxe_sellsheet_2024.pdf"
+   ]
+  },
+  {
+   "name": "Luxe 12 oz. Highball Glass",
+   "series": "Luxe",
+   "designer": null,
+   "model_code": "FP684",
+   "glass": "highball",
+   "variant": null,
+   "capacity_ml": 355,
+   "capacity_as_stated": "12 oz.",
+   "height_mm": 152.4,
+   "rim_mm": null,
+   "material": "glass",
+   "product_url": "https://www.webstaurantstore.com/arcoroc-luxe-12-oz-highball-glass-by-arc-cardinal-case/552FP684.html",
+   "source_urls": [
+    "https://www.webstaurantstore.com/arcoroc-luxe-12-oz-highball-glass-by-arc-cardinal-case/552FP684.html",
+    "https://www.webstaurantstore.com/documents/pdf/brochure/552fp684_luxe_sellsheet_2024.pdf"
+   ]
+  },
+  {
+   "name": "Monti 9 oz. Cocktail Glass",
+   "series": "Monti",
+   "designer": null,
+   "model_code": "Q8701",
+   "glass": "martini",
+   "variant": null,
+   "capacity_ml": 266,
+   "capacity_as_stated": "9 oz.",
+   "height_mm": 171.4,
+   "rim_mm": null,
+   "material": "glass",
+   "product_url": "https://www.webstaurantstore.com/arcoroc-monti-9-oz-cocktail-glass-by-arc-cardinal-case/552Q8701.html",
+   "source_urls": [
+    "https://www.webstaurantstore.com/arcoroc-monti-9-oz-cocktail-glass-by-arc-cardinal-case/552Q8701.html"
+   ]
+  },
+  {
+   "name": "N5812 Salto 11.75 oz. Highball Glass",
+   "series": "Salto",
+   "designer": null,
+   "model_code": "N5812",
+   "glass": "highball",
+   "variant": null,
+   "capacity_ml": 347,
+   "capacity_as_stated": "11.75 oz.",
+   "height_mm": 120.6,
+   "rim_mm": null,
+   "material": "glass",
+   "product_url": "https://www.webstaurantstore.com/arcoroc-n5812-salto-11-75-oz-hi-ball-glass-by-arc-cardinal-case/552N5812.html",
+   "source_urls": [
+    "https://www.webstaurantstore.com/arcoroc-n5812-salto-11-75-oz-hi-ball-glass-by-arc-cardinal-case/552N5812.html"
+   ]
+  },
+  {
+   "name": "N5831 Salto 10.75 oz. Rocks / Old Fashioned Glass",
+   "series": "Salto",
+   "designer": null,
+   "model_code": "G2562",
+   "glass": "rocks",
+   "variant": null,
+   "capacity_ml": 318,
+   "capacity_as_stated": "10.75 oz.",
+   "height_mm": 82.5,
+   "rim_mm": null,
+   "material": "glass",
+   "product_url": "https://www.webstaurantstore.com/arcoroc-n5831-salto-10-75-oz-rocks-glass-by-arc-cardinal-case/552N5831.html",
+   "source_urls": [
+    "https://www.webstaurantstore.com/arcoroc-n5831-salto-10-75-oz-rocks-glass-by-arc-cardinal-case/552N5831.html"
+   ]
+  },
+  {
+   "name": "N6216 Kyoto 5 oz. Footed Martini Glass",
+   "series": null,
+   "designer": null,
+   "model_code": "N6216",
+   "glass": "martini",
+   "variant": null,
+   "capacity_ml": 148,
+   "capacity_as_stated": "5 oz.",
+   "height_mm": 76.2,
+   "rim_mm": null,
+   "material": "glass",
+   "product_url": "https://www.webstaurantstore.com/arcoroc-n6216-kyoto-5-oz-footed-martini-glass-by-arc-cardinal-case/552N6216.html",
+   "source_urls": [
+    "https://www.webstaurantstore.com/arcoroc-n6216-kyoto-5-oz-footed-martini-glass-by-arc-cardinal-case/552N6216.html"
+   ]
+  },
+  {
+   "name": "N6640 Islande 10 oz. Highball Glass",
+   "series": "Islande",
+   "designer": null,
+   "model_code": "V3472",
+   "glass": "highball",
+   "variant": null,
+   "capacity_ml": 296,
+   "capacity_as_stated": "10 oz.",
+   "height_mm": 142.9,
+   "rim_mm": null,
+   "material": "glass",
+   "product_url": "https://www.webstaurantstore.com/arcoroc-n6640-islande-10-oz-hi-ball-glass-by-arc-cardinal-case/552N6640.html",
+   "source_urls": [
+    "https://www.webstaurantstore.com/arcoroc-n6640-islande-10-oz-hi-ball-glass-by-arc-cardinal-case/552N6640.html"
+   ]
+  },
+  {
+   "name": "Norvege 8.5 oz. Stackable Rocks / Old Fashioned Glass",
+   "series": "Norvege",
+   "designer": null,
+   "model_code": "V7535",
+   "glass": "rocks",
+   "variant": null,
+   "capacity_ml": 251,
+   "capacity_as_stated": "8.5 oz.",
+   "height_mm": 92.1,
+   "rim_mm": null,
+   "material": "glass",
+   "product_url": "https://www.webstaurantstore.com/arcoroc-v7535-norvege-8-5-oz-stackable-rocks-old-fashioned-glass-by-arc-cardinal-case/55261697.html",
+   "source_urls": [
+    "https://www.webstaurantstore.com/arcoroc-v7535-norvege-8-5-oz-stackable-rocks-old-fashioned-glass-by-arc-cardinal-case/55261697.html"
+   ]
+  },
+  {
+   "name": "P8500 Precision 10 oz. Rocks / Old Fashioned Glass",
+   "series": "Precision",
+   "designer": null,
+   "model_code": "P8500",
+   "glass": "rocks",
+   "variant": null,
+   "capacity_ml": 296,
+   "capacity_as_stated": "10 oz.",
+   "height_mm": 82.5,
+   "rim_mm": null,
+   "material": "glass",
+   "product_url": "https://www.webstaurantstore.com/arcoroc-p8500-precision-10-oz-rocks-glass-by-arc-cardinal-case/552P8500.html",
+   "source_urls": [
+    "https://www.webstaurantstore.com/arcoroc-p8500-precision-10-oz-rocks-glass-by-arc-cardinal-case/552P8500.html"
+   ]
+  },
+  {
+   "name": "Q2538 ArcoPrime 14 oz. Rocks / Double Old Fashioned Glass",
+   "series": "ArcoPrime",
+   "designer": null,
+   "model_code": "Q2538",
+   "glass": "rocks",
+   "variant": null,
+   "capacity_ml": 414,
+   "capacity_as_stated": "14 oz.",
+   "height_mm": 104.8,
+   "rim_mm": null,
+   "material": "glass",
+   "product_url": "https://www.webstaurantstore.com/arcoroc-q2538-arcoprime-14-oz-rocks-double-old-fashioned-glass-by-arc-cardinal-case/552Q2538.html",
+   "source_urls": [
+    "https://www.webstaurantstore.com/arcoroc-q2538-arcoprime-14-oz-rocks-double-old-fashioned-glass-by-arc-cardinal-case/552Q2538.html"
+   ]
+  },
+  {
+   "name": "Q2539 ArcoPrime 10.5 oz. Rocks / Old Fashioned Glass",
+   "series": "ArcoPrime",
+   "designer": null,
+   "model_code": "Q2539",
+   "glass": "rocks",
+   "variant": null,
+   "capacity_ml": 311,
+   "capacity_as_stated": "10.5 oz.",
+   "height_mm": 88.9,
+   "rim_mm": null,
+   "material": "glass",
+   "product_url": "https://www.webstaurantstore.com/arcoroc-q2539-arcoprime-10-5-oz-rocks-old-fashioned-glass-by-arc-cardinal-case/552Q2539.html",
+   "source_urls": [
+    "https://www.webstaurantstore.com/arcoroc-q2539-arcoprime-10-5-oz-rocks-old-fashioned-glass-by-arc-cardinal-case/552Q2539.html"
+   ]
+  },
+  {
+   "name": "Q2540 ArcoPrime 7.5 oz. Rocks / Old Fashioned Glass",
+   "series": "ArcoPrime",
+   "designer": null,
+   "model_code": "Q2540",
+   "glass": "rocks",
+   "variant": null,
+   "capacity_ml": 222,
+   "capacity_as_stated": "7.5 oz.",
+   "height_mm": 88.9,
+   "rim_mm": null,
+   "material": "glass",
+   "product_url": "https://www.webstaurantstore.com/arcoroc-q2540-arcoprime-7-5-oz-rocks-old-fashioned-glass-by-arc-cardinal-case/552Q2540.html",
+   "source_urls": [
+    "https://www.webstaurantstore.com/arcoroc-q2540-arcoprime-7-5-oz-rocks-old-fashioned-glass-by-arc-cardinal-case/552Q2540.html"
+   ]
+  },
+  {
+   "name": "Quadrille 10.25 oz. Rocks / Old Fashioned Glass",
+   "series": "Quadrille",
+   "designer": null,
+   "model_code": "V8956",
+   "glass": "rocks",
+   "variant": null,
+   "capacity_ml": 303,
+   "capacity_as_stated": "10.25 oz.",
+   "height_mm": 88.9,
+   "rim_mm": null,
+   "material": "glass",
+   "product_url": "https://www.webstaurantstore.com/arcoroc-quadrille-10-25-oz-rocks-old-fashioned-glass-by-arc-cardinal-case/552V8956.html",
+   "source_urls": [
+    "https://www.webstaurantstore.com/arcoroc-quadrille-10-25-oz-rocks-old-fashioned-glass-by-arc-cardinal-case/552V8956.html",
+    "https://www.webstaurantstore.com/documents/pdf/brochure/552v8953_vintage_tumblers.pdf"
+   ]
+  },
+  {
+   "name": "Romeo 12 oz. Margarita Glass",
+   "series": "Romeo",
+   "designer": null,
+   "model_code": "V4222",
+   "glass": "coupe",
+   "variant": null,
+   "capacity_ml": 355,
+   "capacity_as_stated": "12 oz.",
+   "height_mm": 169.9,
+   "rim_mm": null,
+   "material": "glass",
+   "product_url": "https://www.webstaurantstore.com/arcoroc-romeo-12-oz-margarita-glass-by-arc-cardinal-case/552V4222.html",
+   "source_urls": [
+    "https://www.webstaurantstore.com/arcoroc-romeo-12-oz-margarita-glass-by-arc-cardinal-case/552V4222.html"
+   ]
+  },
+  {
+   "name": "Romeo 5.5 oz. Nick and Nora Glass",
+   "series": "Romeo",
+   "designer": null,
+   "model_code": "V2760",
+   "glass": "nick",
+   "variant": null,
+   "capacity_ml": 163,
+   "capacity_as_stated": "5.5 oz.",
+   "height_mm": 141.3,
+   "rim_mm": null,
+   "material": "glass",
+   "product_url": "https://www.webstaurantstore.com/arcoroc-romeo-5-5-oz-nick-and-nora-glass-by-arc-cardinal-case/552V2760.html",
+   "source_urls": [
+    "https://www.webstaurantstore.com/arcoroc-romeo-5-5-oz-nick-and-nora-glass-by-arc-cardinal-case/552V2760.html"
+   ]
+  },
+  {
+   "name": "Romeo 5 oz. Martini Glass",
+   "series": "Romeo",
+   "designer": null,
+   "model_code": "V4025",
+   "glass": "martini",
+   "variant": null,
+   "capacity_ml": 148,
+   "capacity_as_stated": "5 oz.",
+   "height_mm": 152.4,
+   "rim_mm": null,
+   "material": "glass",
+   "product_url": "https://www.webstaurantstore.com/arcoroc-romeo-5-oz-martini-glass-by-arc-cardinal-case/552V4025.html",
+   "source_urls": [
+    "https://www.webstaurantstore.com/arcoroc-romeo-5-oz-martini-glass-by-arc-cardinal-case/552V4025.html"
+   ]
+  },
+  {
+   "name": "Romeo 7.5 oz. Rim Tempered Martini Glass",
+   "series": "Romeo",
+   "designer": null,
+   "model_code": "X4065",
+   "glass": "martini",
+   "variant": null,
+   "capacity_ml": 222,
+   "capacity_as_stated": "7.5 oz.",
+   "height_mm": 171.4,
+   "rim_mm": null,
+   "material": "glass",
+   "product_url": "https://www.webstaurantstore.com/arcoroc-romeo-7-5-oz-martini-glass-by-arc-cardinal-case/552X4065.html",
+   "source_urls": [
+    "https://www.webstaurantstore.com/arcoroc-romeo-7-5-oz-martini-glass-by-arc-cardinal-case/552X4065.html",
+    "https://www.webstaurantstore.com/documents/pdf/brochure/552x4065_romeo_martini_arcoroc_sellsheet.pdf"
+   ]
+  },
+  {
+   "name": "Romeo 8 oz. Coupe Glass",
+   "series": "Romeo",
+   "designer": null,
+   "model_code": "V2761",
+   "glass": "coupe",
+   "variant": null,
+   "capacity_ml": 237,
+   "capacity_as_stated": "8 oz.",
+   "height_mm": 149.2,
+   "rim_mm": null,
+   "material": "glass",
+   "product_url": "https://www.webstaurantstore.com/arcoroc-romeo-8-oz-coupe-glass-by-arc-cardinal-case/552V2761.html",
+   "source_urls": [
+    "https://www.webstaurantstore.com/arcoroc-romeo-8-oz-coupe-glass-by-arc-cardinal-case/552V2761.html"
+   ]
+  },
+  {
+   "name": "Serena 10 oz. Rim Tempered Coupe Glass",
+   "series": "Serena",
+   "designer": null,
+   "model_code": "FP695",
+   "glass": "coupe",
+   "variant": null,
+   "capacity_ml": 296,
+   "capacity_as_stated": "10 oz.",
+   "height_mm": 190.5,
+   "rim_mm": null,
+   "material": "glass",
+   "product_url": "https://www.webstaurantstore.com/arcoroc-serena-10-oz-rim-tempered-coupe-glass-by-arc-cardinal-case/552FP695.html",
+   "source_urls": [
+    "https://www.webstaurantstore.com/arcoroc-serena-10-oz-rim-tempered-coupe-glass-by-arc-cardinal-case/552FP695.html"
+   ]
+  },
+  {
+   "name": "Stack Up 10.5 oz. Rocks / Old Fashioned Glass",
+   "series": "Stack Up",
+   "designer": null,
+   "model_code": "H3032",
+   "glass": "rocks",
+   "variant": null,
+   "capacity_ml": 311,
+   "capacity_as_stated": "10.5 oz.",
+   "height_mm": 92.1,
+   "rim_mm": null,
+   "material": "glass",
+   "product_url": "https://www.webstaurantstore.com/arcoroc-h3032-stack-up-10-5-oz-rocks-old-fashioned-glass-by-arc-cardinal-case/552H3032.html",
+   "source_urls": [
+    "https://www.webstaurantstore.com/arcoroc-h3032-stack-up-10-5-oz-rocks-old-fashioned-glass-by-arc-cardinal-case/552H3032.html"
+   ]
+  },
+  {
+   "name": "Stack Up 10 oz. Highball Glass",
+   "series": "Stack Up",
+   "designer": null,
+   "model_code": "H3839",
+   "glass": "highball",
+   "variant": null,
+   "capacity_ml": 296,
+   "capacity_as_stated": "10 oz.",
+   "height_mm": 138.1,
+   "rim_mm": null,
+   "material": "glass",
+   "product_url": "https://www.webstaurantstore.com/arcoroc-h3839-stack-up-10-oz-hi-ball-glass-by-arc-cardinal-case/552H3839.html",
+   "source_urls": [
+    "https://www.webstaurantstore.com/arcoroc-h3839-stack-up-10-oz-hi-ball-glass-by-arc-cardinal-case/552H3839.html"
+   ]
+  },
+  {
+   "name": "Stack Up 11.75 oz. Highball Glass",
+   "series": "Stack Up",
+   "designer": null,
+   "model_code": "H7763",
+   "glass": "highball",
+   "variant": null,
+   "capacity_ml": 347,
+   "capacity_as_stated": "11.75 oz.",
+   "height_mm": 139.7,
+   "rim_mm": null,
+   "material": "glass",
+   "product_url": "https://www.webstaurantstore.com/arcoroc-l5217-stack-up-1175-oz-customizable-highball-glass-by-arc-cardinal-case/552H7763.html",
+   "source_urls": [
+    "https://www.webstaurantstore.com/arcoroc-l5217-stack-up-1175-oz-customizable-highball-glass-by-arc-cardinal-case/552H7763.html"
+   ]
+  },
+  {
+   "name": "Stack Up 12 oz. Rocks / Double Old Fashioned Glass",
+   "series": "Stack Up",
+   "designer": null,
+   "model_code": "H5169",
+   "glass": "rocks",
+   "variant": null,
+   "capacity_ml": 355,
+   "capacity_as_stated": "12 oz.",
+   "height_mm": 98.4,
+   "rim_mm": null,
+   "material": "glass",
+   "product_url": "https://www.webstaurantstore.com/arcoroc-h5169-stack-up-12-oz-double-old-fashioned-glass-by-arc-cardinal-case/552H5169.html",
+   "source_urls": [
+    "https://www.webstaurantstore.com/arcoroc-h5169-stack-up-12-oz-double-old-fashioned-glass-by-arc-cardinal-case/552H5169.html"
+   ]
+  },
+  {
+   "name": "Stack Up 7 oz. Rocks / Old Fashioned Glass",
+   "series": "Stack Up",
+   "designer": null,
+   "model_code": "H3858",
+   "glass": "rocks",
+   "variant": null,
+   "capacity_ml": 207,
+   "capacity_as_stated": "7 oz.",
+   "height_mm": 79.4,
+   "rim_mm": null,
+   "material": "glass",
+   "product_url": "https://www.webstaurantstore.com/arcoroc-h3858-stack-up-7-oz-rocks-glass-by-arc-cardinal-case/552H3858.html",
+   "source_urls": [
+    "https://www.webstaurantstore.com/arcoroc-h3858-stack-up-7-oz-rocks-glass-by-arc-cardinal-case/552H3858.html"
+   ]
+  },
+  {
+   "name": "Stack Up 8.75 oz. Rocks / Old Fashioned Glass",
+   "series": "Stack Up",
+   "designer": null,
+   "model_code": "J0317",
+   "glass": "rocks",
+   "variant": null,
+   "capacity_ml": 259,
+   "capacity_as_stated": "8.75 oz.",
+   "height_mm": 92.1,
+   "rim_mm": null,
+   "material": "glass",
+   "product_url": "https://www.webstaurantstore.com/arcoroc-j0317-stack-up-8-75-oz-old-fashioned-glass-by-arc-cardinal-case/552J0317.html",
+   "source_urls": [
+    "https://www.webstaurantstore.com/arcoroc-j0317-stack-up-8-75-oz-old-fashioned-glass-by-arc-cardinal-case/552J0317.html"
+   ]
+  },
+  {
+   "name": "Stack Up Cross 11.75 oz. Highball Glass",
+   "series": "Stack Up",
+   "designer": null,
+   "model_code": "X0391",
+   "glass": "highball",
+   "variant": null,
+   "capacity_ml": 347,
+   "capacity_as_stated": "11.75 oz.",
+   "height_mm": 139.7,
+   "rim_mm": null,
+   "material": "glass",
+   "product_url": "https://www.webstaurantstore.com/arcoroc-stack-up-cross-11-75-oz-highball-glass-by-arc-cardinal-case/552V4138.html",
+   "source_urls": [
+    "https://www.webstaurantstore.com/arcoroc-stack-up-cross-11-75-oz-highball-glass-by-arc-cardinal-case/552V4138.html",
+    "https://www.webstaurantstore.com/documents/pdf/brochure/552v4138_stackup_cross_sellsheet_2024.pdf"
+   ]
+  },
+  {
+   "name": "Stack Up Cross 7 oz. Rocks / Old Fashioned Glass",
+   "series": "Stack Up",
+   "designer": null,
+   "model_code": "V4140",
+   "glass": "rocks",
+   "variant": null,
+   "capacity_ml": 207,
+   "capacity_as_stated": "7 oz.",
+   "height_mm": 79.4,
+   "rim_mm": null,
+   "material": "glass",
+   "product_url": "https://www.webstaurantstore.com/arcoroc-stack-up-cross-7-oz-rocks-old-fashioned-glass-by-arc-cardinal-case/552V4140.html",
+   "source_urls": [
+    "https://www.webstaurantstore.com/arcoroc-stack-up-cross-7-oz-rocks-old-fashioned-glass-by-arc-cardinal-case/552V4140.html",
+    "https://www.webstaurantstore.com/documents/pdf/brochure/552v4138_stackup_cross_sellsheet_2024.pdf"
+   ]
+  },
+  {
+   "name": "Starline 10 oz. Fully Tempered Stackable Rocks / Old Fashioned Glass",
+   "series": "Starline",
+   "designer": null,
+   "model_code": "V9573",
+   "glass": "rocks",
+   "variant": null,
+   "capacity_ml": 296,
+   "capacity_as_stated": "10 oz.",
+   "height_mm": 98.4,
+   "rim_mm": null,
+   "material": "glass",
+   "product_url": "https://www.webstaurantstore.com/arcoroc-starline-10-oz-fully-tempered-stackable-rocks-old-fashioned-glass-by-arc-cardinal-case/552V9573.html",
+   "source_urls": [
+    "https://www.webstaurantstore.com/arcoroc-starline-10-oz-fully-tempered-stackable-rocks-old-fashioned-glass-by-arc-cardinal-case/552V9573.html",
+    "https://www.webstaurantstore.com/documents/pdf/brochure/arcoroc_starline.pdf"
+   ]
+  },
+  {
+   "name": "Starline 11 oz. Fully Tempered Stackable Highball Glass",
+   "series": "Starline",
+   "designer": null,
+   "model_code": "V9571",
+   "glass": "highball",
+   "variant": null,
+   "capacity_ml": 325,
+   "capacity_as_stated": "11 oz.",
+   "height_mm": 139.7,
+   "rim_mm": null,
+   "material": "glass",
+   "product_url": "https://www.webstaurantstore.com/arcoroc-starline-11-oz-fully-tempered-stackable-highball-glass-by-arc-cardinal-case/552V9571.html",
+   "source_urls": [
+    "https://www.webstaurantstore.com/arcoroc-starline-11-oz-fully-tempered-stackable-highball-glass-by-arc-cardinal-case/552V9571.html",
+    "https://www.webstaurantstore.com/documents/pdf/brochure/arcoroc_starline.pdf"
+   ]
+  },
+  {
+   "name": "Starline 12.5 oz. Fully Tempered Stackable Highball Glass",
+   "series": "Starline",
+   "designer": null,
+   "model_code": "V9572",
+   "glass": "highball",
+   "variant": null,
+   "capacity_ml": 370,
+   "capacity_as_stated": "12.5 oz.",
+   "height_mm": 120.6,
+   "rim_mm": null,
+   "material": "glass",
+   "product_url": "https://www.webstaurantstore.com/arcoroc-starline-12-5-oz-fully-tempered-stackable-highball-glass-by-arc-cardinal-case/552V9572.html",
+   "source_urls": [
+    "https://www.webstaurantstore.com/arcoroc-starline-12-5-oz-fully-tempered-stackable-highball-glass-by-arc-cardinal-case/552V9572.html",
+    "https://www.webstaurantstore.com/documents/pdf/brochure/arcoroc_starline.pdf"
+   ]
+  },
+  {
+   "name": "Urbane 10 oz. Stackable Highball Glass",
+   "series": "Urbane",
+   "designer": null,
+   "model_code": "N0513",
+   "glass": "highball",
+   "variant": null,
+   "capacity_ml": 296,
+   "capacity_as_stated": "10 oz.",
+   "height_mm": 158.8,
+   "rim_mm": null,
+   "material": "glass",
+   "product_url": "https://www.webstaurantstore.com/arcoroc-n0513-urbane-10-oz-stackable-hi-ball-glass-by-arc-cardinal-case/552N0513.html",
+   "source_urls": [
+    "https://www.webstaurantstore.com/arcoroc-n0513-urbane-10-oz-stackable-hi-ball-glass-by-arc-cardinal-case/552N0513.html"
+   ]
+  },
+  {
+   "name": "Urbane 10 oz. Stackable Rocks / Old Fashioned Glass",
+   "series": "Urbane",
+   "designer": null,
+   "model_code": "N0512",
+   "glass": "rocks",
+   "variant": null,
+   "capacity_ml": 296,
+   "capacity_as_stated": "10 oz.",
+   "height_mm": 104.8,
+   "rim_mm": null,
+   "material": "glass",
+   "product_url": "https://www.webstaurantstore.com/arcoroc-n0512-urbane-10-oz-stackable-rocks-glass-by-arc-cardinal-case/552N0512.html",
+   "source_urls": [
+    "https://www.webstaurantstore.com/arcoroc-n0512-urbane-10-oz-stackable-rocks-glass-by-arc-cardinal-case/552N0512.html"
+   ]
+  },
+  {
+   "name": "Urbane 12 oz. Stackable Rocks / Double Old Fashioned Glass",
+   "series": "Urbane",
+   "designer": null,
+   "model_code": "N0524",
+   "glass": "rocks",
+   "variant": null,
+   "capacity_ml": 355,
+   "capacity_as_stated": "12 oz.",
+   "height_mm": 107.9,
+   "rim_mm": null,
+   "material": "glass",
+   "product_url": "https://www.webstaurantstore.com/arcoroc-n0524-urbane-12-oz-stackable-double-old-fashioned-glass-by-arc-cardinal-case/552N0524.html",
+   "source_urls": [
+    "https://www.webstaurantstore.com/arcoroc-n0524-urbane-12-oz-stackable-double-old-fashioned-glass-by-arc-cardinal-case/552N0524.html"
+   ]
+  },
+  {
+   "name": "Urbane 14 oz. Stackable Rocks / Double Old Fashioned Glass",
+   "series": "Urbane",
+   "designer": null,
+   "model_code": "N0527",
+   "glass": "rocks",
+   "variant": null,
+   "capacity_ml": 414,
+   "capacity_as_stated": "14 oz.",
+   "height_mm": 111.1,
+   "rim_mm": null,
+   "material": "glass",
+   "product_url": "https://www.webstaurantstore.com/arcoroc-n0527-urbane-14-oz-stackable-double-old-fashioned-glass-by-arc-cardinal-case/552N0527.html",
+   "source_urls": [
+    "https://www.webstaurantstore.com/arcoroc-n0527-urbane-14-oz-stackable-double-old-fashioned-glass-by-arc-cardinal-case/552N0527.html"
+   ]
+  },
+  {
+   "name": "Urbane 3.5 oz. Shot Glass",
+   "series": "Urbane",
+   "designer": null,
+   "model_code": "N0529",
+   "glass": "rocks",
+   "variant": null,
+   "capacity_ml": 104,
+   "capacity_as_stated": "3.5 oz.",
+   "height_mm": 79.4,
+   "rim_mm": null,
+   "material": "glass",
+   "product_url": "https://www.webstaurantstore.com/arcoroc-n0529-urbane-3-5-oz-stackable-whiskey-shot-glass-by-arc-cardinal-case/552N0529.html",
+   "source_urls": [
+    "https://www.webstaurantstore.com/arcoroc-n0529-urbane-3-5-oz-stackable-whiskey-shot-glass-by-arc-cardinal-case/552N0529.html"
+   ]
+  },
+  {
+   "name": "Urbane 5 oz. Stackable Rocks / Old Fashioned Glass",
+   "series": "Urbane",
+   "designer": null,
+   "model_code": "N0523",
+   "glass": "rocks",
+   "variant": null,
+   "capacity_ml": 148,
+   "capacity_as_stated": "5 oz.",
+   "height_mm": 82.5,
+   "rim_mm": null,
+   "material": "glass",
+   "product_url": "https://www.webstaurantstore.com/arcoroc-n0523-urbane-5-oz-stackable-rocks-glass-by-arc-cardinal-case/552N0523.html",
+   "source_urls": [
+    "https://www.webstaurantstore.com/arcoroc-n0523-urbane-5-oz-stackable-rocks-glass-by-arc-cardinal-case/552N0523.html"
+   ]
+  },
+  {
+   "name": "Urbane 7 oz. Stackable Rocks / Old Fashioned Glass",
+   "series": "Urbane",
+   "designer": null,
+   "model_code": "N0530",
+   "glass": "rocks",
+   "variant": null,
+   "capacity_ml": 207,
+   "capacity_as_stated": "7 oz.",
+   "height_mm": 92.1,
+   "rim_mm": null,
+   "material": "glass",
+   "product_url": "https://www.webstaurantstore.com/arcoroc-n0530-urbane-7-oz-stackable-rocks-glass-by-arc-cardinal-case/552N0530.html",
+   "source_urls": [
+    "https://www.webstaurantstore.com/arcoroc-n0530-urbane-7-oz-stackable-rocks-glass-by-arc-cardinal-case/552N0530.html"
+   ]
+  },
+  {
+   "name": "Urbane 9 oz. Stackable Rocks / Old Fashioned Glass",
+   "series": "Urbane",
+   "designer": null,
+   "model_code": "N0531",
+   "glass": "rocks",
+   "variant": null,
+   "capacity_ml": 266,
+   "capacity_as_stated": "9 oz.",
+   "height_mm": 101.6,
+   "rim_mm": null,
+   "material": "glass",
+   "product_url": "https://www.webstaurantstore.com/arcoroc-n0531-urbane-9-oz-stackable-rocks-glass-by-arc-cardinal-case/552N0531.html",
+   "source_urls": [
+    "https://www.webstaurantstore.com/arcoroc-n0531-urbane-9-oz-stackable-rocks-glass-by-arc-cardinal-case/552N0531.html"
+   ]
+  },
+  {
+   "name": "V. Juliette 11.75 oz. Rocks / Double Old Fashioned Glass",
+   "series": "V. Juliette",
+   "designer": null,
+   "model_code": "N5995",
+   "glass": "rocks",
+   "variant": null,
+   "capacity_ml": 347,
+   "capacity_as_stated": "11.75 oz.",
+   "height_mm": 82.5,
+   "rim_mm": null,
+   "material": "lead-free crystal",
+   "product_url": "https://www.webstaurantstore.com/arcoroc-n5995-v-juliette-11-75-oz-double-old-fashioned-rocks-glass-by-arc-cardinal-case/552N5995.html",
+   "source_urls": [
+    "https://www.webstaurantstore.com/arcoroc-n5995-v-juliette-11-75-oz-double-old-fashioned-rocks-glass-by-arc-cardinal-case/552N5995.html",
+    "https://www.webstaurantstore.com/documents/pdf/brochure/arcoroc_v_juliette.pdf"
+   ]
+  },
+  {
+   "name": "V. Juliette 13.5 oz. Highball Glass",
+   "series": "V. Juliette",
+   "designer": null,
+   "model_code": "N5994",
+   "glass": "highball",
+   "variant": null,
+   "capacity_ml": 399,
+   "capacity_as_stated": "13.5 oz.",
+   "height_mm": 111.1,
+   "rim_mm": null,
+   "material": "lead-free crystal",
+   "product_url": "https://www.webstaurantstore.com/arcoroc-n5994-v-juliette-13-5-oz-hi-ball-glass-by-arc-cardinal-case/552N5994.html",
+   "source_urls": [
+    "https://www.webstaurantstore.com/arcoroc-n5994-v-juliette-13-5-oz-hi-ball-glass-by-arc-cardinal-case/552N5994.html",
+    "https://www.webstaurantstore.com/documents/pdf/brochure/arcoroc_v_juliette.pdf"
+   ]
+  },
+  {
+   "name": "V3469 Islande 10 oz. Rocks / Old Fashioned Glass",
+   "series": "Islande",
+   "designer": null,
+   "model_code": "V3469",
+   "glass": "rocks",
+   "variant": null,
+   "capacity_ml": 296,
+   "capacity_as_stated": "10 oz.",
+   "height_mm": 92.1,
+   "rim_mm": null,
+   "material": "glass",
+   "product_url": "https://www.webstaurantstore.com/arcoroc-v3469-islande-10-oz-customizable-rocks-old-fashioned-glass-by-arc-cardinal-case/552V3469.html",
+   "source_urls": [
+    "https://www.webstaurantstore.com/arcoroc-v3469-islande-10-oz-customizable-rocks-old-fashioned-glass-by-arc-cardinal-case/552V3469.html"
+   ]
+  },
+  {
+   "name": "V3470 Essentials 12.5 oz. Rocks / Old Fashioned Glass",
+   "series": "Essentials",
+   "designer": null,
+   "model_code": "V3470",
+   "glass": "rocks",
+   "variant": null,
+   "capacity_ml": 370,
+   "capacity_as_stated": "12.5 oz.",
+   "height_mm": 88.9,
+   "rim_mm": null,
+   "material": "glass",
+   "product_url": "https://www.webstaurantstore.com/arcoroc-v3470-essentials-12-5-oz-customizable-rocks-old-fashioned-glass-by-arc-cardinal-case/552V3470.html",
+   "source_urls": [
+    "https://www.webstaurantstore.com/arcoroc-v3470-essentials-12-5-oz-customizable-rocks-old-fashioned-glass-by-arc-cardinal-case/552V3470.html"
+   ]
+  },
+  {
+   "name": "V3476 Islande 12.75 oz. Rocks / Double Old Fashioned Glass",
+   "series": "Islande",
+   "designer": null,
+   "model_code": "V3476",
+   "glass": "rocks",
+   "variant": null,
+   "capacity_ml": 377,
+   "capacity_as_stated": "12.75 oz.",
+   "height_mm": 95.2,
+   "rim_mm": null,
+   "material": "glass",
+   "product_url": "https://www.webstaurantstore.com/arcoroc-v3476-islande-12-75-oz-customizable-rocks-double-old-fashioned-glass-by-arc-cardinal-case/552V3476.html",
+   "source_urls": [
+    "https://www.webstaurantstore.com/arcoroc-v3476-islande-12-75-oz-customizable-rocks-double-old-fashioned-glass-by-arc-cardinal-case/552V3476.html"
+   ]
+  },
+  {
+   "name": "V3874 Elegance 5.5 oz. Coupe Glass",
+   "series": "Elegance",
+   "designer": null,
+   "model_code": "V3874",
+   "glass": "coupe",
+   "variant": null,
+   "capacity_ml": 163,
+   "capacity_as_stated": "5.5 oz.",
+   "height_mm": 120.6,
+   "rim_mm": null,
+   "material": "glass",
+   "product_url": "https://www.webstaurantstore.com/arcoroc-v3874-elegance-55-oz-coupe-glass-by-arc-cardinal-case/552V3874.html",
+   "source_urls": [
+    "https://www.webstaurantstore.com/arcoroc-v3874-elegance-55-oz-coupe-glass-by-arc-cardinal-case/552V3874.html"
+   ]
+  },
+  {
+   "name": "V5927 Shetland 12 oz. Highball Glass",
+   "series": "Shetland",
+   "designer": null,
+   "model_code": "V5927",
+   "glass": "highball",
+   "variant": null,
+   "capacity_ml": 355,
+   "capacity_as_stated": "12 oz.",
+   "height_mm": 139.7,
+   "rim_mm": null,
+   "material": "glass",
+   "product_url": "https://www.webstaurantstore.com/arcoroc-g3612-shetland-12-oz-customizable-highball-glass-by-arc-cardinal-case/55279728.html",
+   "source_urls": [
+    "https://www.webstaurantstore.com/arcoroc-g3612-shetland-12-oz-customizable-highball-glass-by-arc-cardinal-case/55279728.html"
+   ]
+  }
+ ]
+}
