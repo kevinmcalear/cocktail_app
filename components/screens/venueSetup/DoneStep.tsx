@@ -60,7 +60,6 @@ interface DoneProps {
   claimState: ClaimState;
   /** Kept with the setup before a claim: who sees the page once it's checked. */
   held: HeldSetup | undefined;
-  waitingFiles: number;
   onOpen: () => void;
   /** Leaving for Bring in or a Venue settings page: setup is finished. */
   onLeave: () => void;
@@ -73,7 +72,7 @@ interface DoneProps {
  * read) and what's done. Kept private, the public page says so, with a way
  * to prove it's yours now (eddie-oct22-wave1).
  */
-function SetupSummary({ barId, profileId, name, claim, claimState, held, waitingFiles, onProve }: DoneProps) {
+function SetupSummary({ barId, profileId, name, claim, claimState, held, onProve }: DoneProps) {
   const invites = useBarInvites(barId).data ?? [];
   const resend = useSendInviteEmail(barId);
   const brand = useVenueBrand(barId).data;
@@ -83,7 +82,7 @@ function SetupSummary({ barId, profileId, name, claim, claimState, held, waiting
   // Approval starts the page at Menu unless setup kept a choice on the claim (or with the setup, before one).
   const shown = claimState === 'approved' ? (visibility ?? 'description') : (kept ?? 'description');
   const names = invites.map((i) => i.name?.trim().split(/\s+/)[0] || i.email);
-  const count = onItsWay({ claim: claimState, invites: invites.length, waitingFiles });
+  const count = onItsWay({ claim: claimState, invites: invites.length, waitingFiles: 0 });
   const tint = `${GROUND_TINTS.find((t) => normalizeHex(t.hex) === normalizeHex(brand?.ground_tint ?? ''))?.label ?? 'Standard'} ground`;
   const accent = brand?.primary_color ? normalizeHex(brand.primary_color) : null;
   // "Rust, Instrument Serif, Walnut ground": the colour by name, as the Look step showed it.
@@ -108,7 +107,6 @@ function SetupSummary({ barId, profileId, name, claim, claimState, held, waiting
                 end={<TextLink label={resend.isPending ? 'Sending…' : 'Resend'} onPress={() => invites.forEach((i) => resend.mutate(i.email))} />}
               />
             ) : null}
-            {waitingFiles ? <Line waiting icon="arrow.clockwise" title="Spec book waiting" line="We’ll tap you when it’s ready to check." /> : null}
           </View>
         </>
       ) : null}
@@ -140,7 +138,7 @@ function SetupSummary({ barId, profileId, name, claim, claimState, held, waiting
  * fix 15), with wave 1's summary shrunk to one line and See all.
  */
 export function DoneStep(props: DoneProps) {
-  const { barId, name, claimState, waitingFiles, onOpen, onLeave, onProve } = props;
+  const { barId, name, claimState, onOpen, onLeave, onProve } = props;
   const invites = useBarInvites(barId).data ?? [];
   const [all, setAll] = useState(false);
   const bar = name || 'your bar';
@@ -155,7 +153,7 @@ export function DoneStep(props: DoneProps) {
         summary={
           <View style={styles.oneLine}>
             <Caption tone="muted" style={styles.flex}>
-              {setupLine({ invites: invites.length, claim: claimState, waitingFiles })}
+              {setupLine({ invites: invites.length, claim: claimState, waitingFiles: 0 })}
             </Caption>
             <TextLink label="See all" onPress={() => setAll(true)} />
           </View>

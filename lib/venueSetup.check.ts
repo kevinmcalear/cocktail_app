@@ -1,40 +1,48 @@
 // Checks for lib/venueSetup.ts (venue setup, b03 and b19). Run: npm run test:unit
 import assert from 'node:assert/strict';
 
-import { afterClaim, inviteRowError, namesLine, nextScreen, normalizeWebsite, onItsWay, previousScreen, resumeScreen, sendInvitesLabel, startScreen, venueProgress } from './venueSetup';
+import { inviteRowError, namesLine, nextScreen, normalizeWebsite, onItsWay, openRun, previousScreen, resumeScreen, sendInvitesLabel, startedSetup, venueProgress } from './venueSetup';
 
-// Intro, eight steps, summary. Proving it's yours is the last step.
+// Intro, finding the bar, five steps, summary. No role step and no Bring in (owner-setup call 4); proving it's yours is last.
 assert.equal(nextScreen('intro'), 'find');
-assert.equal(nextScreen('find'), 'role');
+assert.equal(nextScreen('find'), 'place');
 assert.equal(nextScreen('team'), 'claim');
 assert.equal(nextScreen('claim'), 'done');
 assert.equal(previousScreen('find'), 'intro');
-assert.equal(previousScreen('role'), 'find');
+assert.equal(previousScreen('place'), 'find');
 assert.equal(previousScreen('claim'), 'team');
 assert.equal(previousScreen('done'), 'claim');
-assert.deepEqual(venueProgress('find'), { at: 1, of: 8, label: 'Step 1 of 8', name: 'Venue setup' });
-assert.deepEqual(venueProgress('place'), { at: 3, of: 8, label: 'Step 3 of 8', name: 'Venue setup' });
-assert.deepEqual(venueProgress('claim'), { at: 8, of: 8, label: 'Step 8 of 8', name: 'Venue setup' });
+assert.equal(venueProgress('find'), null);
+assert.deepEqual(venueProgress('place'), { at: 1, of: 5, label: 'Step 1 of 5', name: 'Venue setup' });
+assert.deepEqual(venueProgress('claim'), { at: 5, of: 5, label: 'Step 5 of 5', name: 'Venue setup' });
 assert.equal(venueProgress('intro'), null);
 assert.equal(venueProgress('done'), null);
 
-// Picking up from Tonight: the first step not done. Kept private, that's the claim.
+// Picking up: the first step not done. Kept private, that's the claim. Old runs' 'role' and 'bring' don't count.
 assert.equal(resumeScreen([]), 'find');
 assert.equal(resumeScreen(['find', 'role']), 'place');
-assert.equal(resumeScreen(['find', 'role', 'place', 'look', 'visibility', 'bring', 'team']), 'claim');
-assert.equal(resumeScreen(['find', 'role', 'place', 'look', 'visibility', 'bring', 'team', 'claim']), 'done');
-// Where setup opens: a claim first, then a venue's run, then a run left before its venue was made.
-assert.equal(startScreen({ claim: 'p1' }, {}), 'claim');
-assert.equal(startScreen({ bar: 'b1', step: 'claim' }, {}), 'claim');
-assert.equal(startScreen({ bar: 'b1' }, { b1: { done: ['find', 'role'] } }), 'place');
-assert.equal(startScreen({}, { new: { done: ['find'] } }), 'role');
-assert.equal(startScreen({}, { new: { done: [] } }), 'intro');
-assert.equal(startScreen({}, {}), 'intro');
+assert.equal(resumeScreen(['find', 'place', 'look', 'visibility', 'team']), 'claim');
+assert.equal(resumeScreen(['find', 'place', 'look', 'visibility', 'team', 'claim']), 'done');
 
-// After the claim: the summary, unless it was opened from a bar page before any setup.
-assert.equal(afterClaim(['find', 'role', 'place'], false), 'done');
-assert.equal(afterClaim([], true), 'role');
-assert.equal(afterClaim(['find', 'role', 'place', 'look', 'visibility', 'bring', 'team'], true), 'done');
+// Where setup opens. ?bar=: that venue's run, or its claim.
+assert.deepEqual(openRun({ bar: 'b1', step: 'claim' }, {}), { key: 'b1', screen: 'claim' });
+assert.deepEqual(openRun({ bar: 'b1' }, { b1: { done: ['find', 'place'] } }), { key: 'b1', screen: 'look' });
+// ?claim=: straight into Where and when, the claim last; a bar already started opens where it stopped.
+assert.deepEqual(openRun({ claim: 'p1' }, {}), { key: 'new', screen: 'place' });
+assert.deepEqual(openRun({ claim: 'p1' }, { new: { profileId: 'p2', done: ['find', 'place'] } }), { key: 'new', screen: 'place' });
+assert.deepEqual(openRun({ claim: 'p1' }, { b9: { profileId: 'p1', done: ['find', 'place', 'look'] } }), { key: 'b9', screen: 'visibility' });
+assert.deepEqual(openRun({ claim: 'p1' }, { b9: { profileId: 'p1', done: ['place'], finished: true } }), { key: 'new', screen: 'place' });
+// Neither: a setup left before its venue was made, else the intro.
+assert.deepEqual(openRun({}, { new: { done: ['find'] } }), { key: 'new', screen: 'place' });
+assert.deepEqual(openRun({}, { new: { done: [] } }), { key: 'new', screen: 'intro' });
+assert.deepEqual(openRun({}, {}), { key: 'new', screen: 'intro' });
+
+// Settings › Create a venue opens the setup already started (owner-setup call 5).
+assert.equal(startedSetup({}), null);
+assert.equal(startedSetup({ b1: { done: ['find'], finished: true } }), null);
+assert.equal(startedSetup({ b1: { done: ['find', 'place'] } }), '/venue-setup?bar=b1');
+assert.equal(startedSetup({ new: { done: ['find'] } }), '/venue-setup');
+assert.equal(startedSetup({ new: { done: [] } }), null);
 
 // Tonight's banner counts what's on its way.
 assert.equal(onItsWay({ claim: 'pending', invites: 3, waitingFiles: 1 }), 3);

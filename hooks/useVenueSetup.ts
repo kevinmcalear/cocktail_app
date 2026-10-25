@@ -31,7 +31,7 @@ type Row = Omit<ClaimableBar, 'claimed' | 'awards' | 'drinks'> & {
   drinks: { count: number }[] | null;
 };
 
-/** Bar pages by name for setup's search, claimed ones too (they show dimmed). */
+/** Bar pages by name or street for setup's search, claimed ones too (they show dimmed). */
 export function useClaimableBars(search: string) {
   const term = search.replace(/[%_\\,()]/g, '').trim();
   return useQuery({
@@ -45,7 +45,8 @@ export function useClaimableBars(search: string) {
         )
         .eq('kind', 'bar')
         .eq('is_public', true)
-        .ilike('display_name', `%${term}%`)
+        // The term is stripped of the filter syntax's commas and brackets above.
+        .or(`display_name.ilike.%${term}%,address_line.ilike.%${term}%`)
         .order('display_name')
         .limit(3, { referencedTable: 'sample' })
         .limit(6);

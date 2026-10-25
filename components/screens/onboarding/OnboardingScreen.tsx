@@ -15,6 +15,7 @@ import { BringStep } from './BringStep';
 import { PlaceStep } from './CareerSteps';
 import { FindStep } from './FindStep';
 import { InviteBrand, InviteWelcome } from './InviteWelcome';
+import { OwnerAddStep, OwnerFindStep } from './OwnerBarStep';
 import { NameStep, TasteStep, UnitsStep } from './ProfileSteps';
 import { SetupChromeProvider, SetupFooter, SetupPage } from './SetupPage';
 import { Answer } from './SetupParts';
@@ -32,9 +33,9 @@ const resumed = new Map<string, Resume>();
 export const forgetSetupProgress = () => resumed.clear();
 
 /**
- * After the age check, once, for a new account: name, work, taste and units. A
- * venue's invite comes first (InviteWelcome) and, once joined, shortens it to
- * name and units; their job at that venue is saved for them.
+ * After the age check, once, for a new account: name, then what brings them
+ * here (an owner's bar, work, or taste and units). A venue's invite comes first
+ * (InviteWelcome) and, once joined, shortens it to name and units; their job at that venue is saved for them.
  */
 export function OnboardingScreen() {
   const router = useRouter();
@@ -118,10 +119,11 @@ export function OnboardingScreen() {
     );
   };
 
-  // An owner, from a bar page's Claim (?run=) or "Add your bar" ('new'): their
+  // An owner, from a bar page's Claim (?run=), the owner's "Add your bar", or a bartender's ('new'): their
   // profile is saved, setup ends, and venue setup takes over (it can't open while
   // setup is unfinished). Kept until then, so a name to fix first doesn't lose it.
   const [ownerBar, setOwnerBar] = useState<string | null>(null);
+  const [ownerName, setOwnerName] = useState(''); // "Find your bar"'s search, to start "Add your bar" with.
   const setUpBar = (bar: string, named = draft) => {
     if (saveProfile.isPending || finish.isPending) return;
     setOwnerBar(bar);
@@ -210,7 +212,7 @@ export function OnboardingScreen() {
         eyebrow: step === 'bring' && !home ? 'Last step' : joined ? joined.bar_name : null,
         // The invited path wears the venue's brand, its name in the accent; "Last step" is quiet.
         eyebrowTone: joined && step !== 'bring' ? 'accent' : 'muted',
-        progress: stepProgress(step, !!joined, trail, step === 'find' && personClaim ? 'claim' : 'no'),
+        progress: stepProgress(step, !!joined, trail, step === 'find' && personClaim ? 'claim' : step === 'bar' ? 'new' : 'no'),
         onBack: first ? undefined : back,
       }}
     >
@@ -230,17 +232,19 @@ export function OnboardingScreen() {
       ) : null}
       {step === 'hospitality' ? (
         <SetupPage footer={<Button label="Not now" variant="ghost" onPress={() => createProfile(() => setStep('taste'))} />}>
+          {/* Owners, managers and head bartenders (owner-setup call 1). */}
+          <Answer label="I’m setting up a bar" detail="I own it, run it or manage it: its menus, drinks, kit and team." onPress={() => go('hospitality', 'owner')} />
           <Answer
-            label="Yes, I work in hospitality"
-            detail="Where you’ve worked, menus and drinks you made"
+            label="I make drinks at a bar"
+            detail="Find your bar, your drinks and the menus you worked on."
             onPress={() => {
               if (personId) setStep('work');
               else setStep('find');
             }}
           />
           <Answer
-            label="I make drinks at home"
-            detail="Straight to what you like to drink"
+            label="I love drinks"
+            detail="Rank them, keep them, make them at home."
             onPress={() => {
               setHome(true);
               createProfile(() => setStep('taste'));
@@ -249,6 +253,8 @@ export function OnboardingScreen() {
           {saveProfile.error && !handleTaken ? <Caption tone="accent">{saveProfile.error.message}</Caption> : null}
         </SetupPage>
       ) : null}
+      {step === 'bar' ? <OwnerFindStep onAdd={(typed) => (setOwnerName(typed), go('bar', 'new'))} onSkip={() => createProfile(() => finish.mutate())} /> : null}
+      {step === 'addbar' ? <OwnerAddStep initialName={ownerName} onAdded={(id) => setUpBar(id)} /> : null}
       {step === 'find' && draft ? (
         <FindStep
           name={draft.name}
