@@ -3,7 +3,7 @@ import { StyleSheet, View } from 'react-native';
 
 import { BackbarTheme, Body, Caption, DsText, Field, Headline, PressableScale, SketchTintPicker, Spec, Surface, Title, useDs } from '@/components/ds';
 import { SketchDrawing } from '@/components/ds/SketchDrawing';
-import { radius, space } from '@/constants/tokens';
+import { fontFamilies, radius, space } from '@/constants/tokens';
 import { withAlpha } from '@/lib/color';
 import { balanceOf, fixesFor, tasteWord } from '@/lib/balance';
 import { formatPct, margin } from '@/lib/costing';
@@ -42,6 +42,7 @@ export function DeskDrinkCard({ draft, look, seed, onTint }: { draft: WizardDraf
             {name}
           </Title>
           {what ? <Body color={ds.c.sketchInk}>{what.charAt(0).toUpperCase() + what.slice(1)}</Body> : <Caption color={ds.c.sketchInk}>Draws itself as you write the spec.</Caption>}
+          {what ? <Caption color={withAlpha(ds.c.sketchInk, 0.7)} style={styles.guests}>What guests see</Caption> : null}
         </View>
       </View>
       {/* On paper: the light scheme's ink, so the picked swatch's ring shows. */}
@@ -75,7 +76,8 @@ export function DeskTaste({ lines, ingredients, onAdd }: { lines: readonly Wizar
         <Caption tone="muted">{lines.length ? 'Not enough we know in it yet to say.' : 'Fills in as you add ingredients.'}</Caption>
       ) : (
         <>
-          {balance.hint ? <Headline>{balance.hint}</Headline> : null}
+          {/* What guests would taste (m07, 24 Oct 2026); the balance hint stays as the reason for the fixes. */}
+          <Headline style={styles.words}>{balance.words}</Headline>
           {DIMS.map(([dim, label]) => {
             const word = tasteWord(dim, balance[dim]);
             // Lit as the word reads: "none" is no segment, anything more at least one.
@@ -94,6 +96,7 @@ export function DeskTaste({ lines, ingredients, onAdd }: { lines: readonly Wizar
               </View>
             );
           })}
+          {balance.hint ? <Caption tone="muted">{balance.hint}</Caption> : null}
           {fixes.length ? (
             <View role="group" aria-label="To balance it" style={styles.chips}>
               {fixes.map((name) => (
@@ -220,6 +223,8 @@ const styles = StyleSheet.create({
   sketch: { width: 130, height: 160 },
   flex: { flex: 1 },
   card: { gap: space.sm },
+  words: { fontFamily: fontFamilies.instrument },
+  guests: { fontFamily: fontFamilies.mono, letterSpacing: 1, textTransform: 'uppercase' },
   meter: { flexDirection: 'row', alignItems: 'center', gap: space.md },
   meterLabel: { width: 64 },
   meterWord: { width: 72 },
