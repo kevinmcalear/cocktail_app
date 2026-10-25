@@ -15,6 +15,8 @@ export interface VenueSupplier {
   supplies: string[];
   order_by: string | null;
   delivers: string | null;
+  /** Cuts ice to order (Kit › Ice says so beside Bought). */
+  cuts_to_order: boolean;
   /** The supplier's public page, when the venue linked one. */
   page: { handle: string | null; id: string } | null;
   /** How many of the venue's ingredients come from them. */
@@ -43,7 +45,7 @@ export function useVenueSuppliers(barId: string | null | undefined) {
     queryFn: async (): Promise<VenueSupplier[]> => {
       const { data, error } = await supabase
         .from('suppliers')
-        .select('id, name, website, order_notes, supplies, order_by, delivers, page:profiles(id, handle), item_purchasing(count)')
+        .select('id, name, website, order_notes, supplies, order_by, delivers, cuts_to_order, page:profiles(id, handle), item_purchasing(count)')
         .eq('bar_id', barId!)
         .order('name');
       if (error) throw error;
