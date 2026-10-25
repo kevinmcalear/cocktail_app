@@ -1,10 +1,10 @@
 // https://docs.expo.dev/develop/unit-testing/
 module.exports = {
   preset: 'jest-expo',
-  // jest-expo's list plus Tamagui, which ships untranspiled ESM. The prefixes
+  // jest-expo's list plus Tamagui and double-metaphone, which ship untranspiled ESM. The prefixes
   // already cover expo-* and react-native-* packages.
   transformIgnorePatterns: [
-    '/node_modules/(?!(.pnpm|react-native|@react-native|@react-native-community|expo|@expo|@expo-google-fonts|react-navigation|@react-navigation|@sentry/react-native|native-base|standard-navigation|tamagui|@tamagui))',
+    '/node_modules/(?!(.pnpm|react-native|@react-native|@react-native-community|expo|@expo|@expo-google-fonts|react-navigation|@react-navigation|@sentry/react-native|native-base|standard-navigation|tamagui|@tamagui|double-metaphone))',
     '/node_modules/react-native-reanimated/plugin/',
     '/node_modules/@react-native/babel-preset/',
   ],

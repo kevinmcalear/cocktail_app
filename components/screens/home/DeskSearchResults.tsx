@@ -4,6 +4,7 @@ import { StyleSheet, View } from 'react-native';
 
 import { Button, Caption, DrinkImage, DsText, MatchText, RowScore, Surface } from '@/components/ds';
 import { ListNote } from '@/components/screens/rankings/RankingLists';
+import { NearResults } from '@/components/search/NearResults';
 import { radius, space } from '@/constants/tokens';
 import { useBestDrink, useDrinkRank, useRowScores } from '@/hooks/useBestDrink';
 import { useDiscoverList } from '@/hooks/useDiscoverDrinks';
@@ -17,6 +18,9 @@ import type { MapLayer } from './DiscoverControls';
 import { AddBarPrompt } from './AddBar';
 import { BarAway, DrinkAtBarList, type MoreDrinks } from './DrinksAtBars';
 import { ClassicLine, ResultsHead } from './ResultsHead';
+
+// Did you mean, in the area: drinks, bars and people (whole-app canvas, Search page).
+const NEAR_KINDS = ['drink', 'bar', 'person'] as const;
 
 interface DeskSearchResultsProps {
   filter: DrinkFilter;
@@ -73,12 +77,25 @@ export function DeskSearchResults({ filter, drink, results, layer, options, from
       {loading ? (
         <ListNote>Loading…</ListNote>
       ) : rest.length ? (
-        <DrinkAtBarList key={layer} drinks={rest} limit={20} scores={scores} more={more} query={filter.search} onOpen={(d) => setOpened({ drink: d, pin: picked?.id ?? null })} onShowBar={onShowBar} />
-      ) : (
         <>
-          <ListNote>{`Nothing ${where} matches. Try Everywhere.`}</ListNote>
-          {!top && onAddBar ? <AddBarPrompt onPress={onAddBar} /> : null}
+          <DrinkAtBarList key={layer} drinks={rest} limit={20} scores={scores} more={more} query={filter.search} onOpen={(d) => setOpened({ drink: d, pin: picked?.id ?? null })} onShowBar={onShowBar} />
+          <NearResults query={filter.search} found={rest.length} shown={drinks.map((d) => d.id)} server={{ area: filter.area, kinds: NEAR_KINDS }} title="" miss={null} matchLook="tint" />
         </>
+      ) : (
+        <NearResults
+          query={filter.search}
+          found={top ? 1 : 0}
+          shown={top ? [top.drink.id] : []}
+          server={{ area: filter.area, kinds: NEAR_KINDS }}
+          title={`Nothing ${where} called “${filter.search.trim()}”`}
+          matchLook="tint"
+          miss={
+            <>
+              <ListNote>{`Nothing ${where} matches. Try Everywhere.`}</ListNote>
+              {!top && onAddBar ? <AddBarPrompt onPress={onAddBar} /> : null}
+            </>
+          }
+        />
       )}
     </View>
   );
