@@ -3,7 +3,7 @@ import { StyleSheet, View } from 'react-native';
 
 import { Body, Button, Caption, Field, PressableScale, useDs } from '@/components/ds';
 import { layout, radius, space } from '@/constants/tokens';
-import { PREP_KINDS, recipeEyebrow, withFacts } from '@/lib/prepKinds';
+import { PREP_KINDS, recipeEyebrow, stepToFinish, withFacts } from '@/lib/prepKinds';
 import { techniqueById } from '@/lib/techniques';
 
 import { Trail, trailInto } from '../Trail';
@@ -29,14 +29,15 @@ export function PrepCard({ name: started, venueName, initial, combinedFrom, inDr
   const ds = useDs();
   const [name, setName] = useState(started);
   const combined = !!combinedFrom?.length;
-  const { draft, current, setDraft, view, setView, fromCatalog, pickKind, pickTechnique, version, phrase, named, slotsOpen } = usePrepDraft({ name: started, nameNow: name, initial, picked, technique, combined, bar });
+  const { draft, current, changed, setDraft, view, setView, fromCatalog, pickKind, pickTechnique, version, phrase, named, slotsOpen } = usePrepDraft({ name: started, nameNow: name, initial, picked, technique, combined, bar });
   const set = (c: Partial<typeof draft>) => setDraft({ ...draft, ...c });
   const shown = name.trim() || started;
   // A line of it made in-house too opens under that line, one level down (make-anything-steps-2, step 8).
   const inside = useInside(draft, setDraft, shown);
-  // Leaving keeps what's done, picked up where it stops: no name yet, what it is; a part to pick, what goes in; else how it's made.
-  const keep = onLater && !combined ? () => onLater({ ...withFacts(current()), at: !named ? 'kind' : slotsOpen ? 'recipe' : 'method' }, shown) : null;
-  const trail = trailInto(above ?? [{ label: drinkName || 'Your drink' }], keep ?? onClose, shown);
+  // Leaving keeps what's done, picked up where it stops.
+  const keep = onLater && !combined ? () => onLater({ ...withFacts(current()), at: stepToFinish(current()) }, shown) : null;
+  // A finished recipe opened again keeps a change made below it (a recipe inside it, picked up and left); otherwise it stays as it was.
+  const trail = trailInto(above ?? [{ label: drinkName || 'Your drink' }], keep ?? (() => (changed() ? onDone(withFacts(current()), shown) : onClose())), shown);
   const word = (draft.technique ? techniqueById(draft.technique)?.name : draft.kind !== 'other' ? PREP_KINDS.find((k) => k.id === draft.kind)?.name : null)?.toLowerCase();
   return (
     <View nativeID={nested ? undefined : PREP_CARD_ID} role="group" aria-label={`Made in-house: ${shown}`} style={[styles.card, { backgroundColor: ds.c.raised, borderColor: ds.c.line }]}>

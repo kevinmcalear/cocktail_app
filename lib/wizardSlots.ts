@@ -39,7 +39,10 @@ export function sectionSlots<K extends { updatedAt: number }>(kept: Record<strin
  * the menu section, drink and name it was started from.
  */
 export function slotStart(slot: string): SlotStart & { place: string } {
-  const [place, ...rest] = slot.split('|');
+  // The name comes last and is as typed ("gin | tonic"): everything after its key.
+  const at = slot.indexOf(NAME);
+  const name = at >= 0 ? slot.slice(at + NAME.length) : null;
+  const [place, ...rest] = (at >= 0 ? slot.slice(0, at) : slot).split('|');
   const part = (key: string) => rest.find((r) => r.startsWith(`${key}:`))?.slice(key.length + 1) ?? null;
-  return { place, menuSectionId: part('menu'), from: part('from'), name: part('name') };
+  return { place, menuSectionId: part('menu'), from: part('from'), name };
 }

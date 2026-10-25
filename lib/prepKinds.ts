@@ -255,10 +255,15 @@ export function prepPhrase(d: Pick<PrepDraft, 'kind' | 'way' | 'hot' | 'techniqu
   return `${/^[aeiou]/.test(words) ? 'an' : 'a'} ${words}`;
 }
 
-/** "Infusion · 2 of 3 done": a recipe to finish, under its line (make-anything-steps-3, step 9). */
+/** "Infusion · 1 of 3 done": a recipe to finish, under its line (make-anything-steps-3, step 9), counting the steps before the one it was left at. */
 export function toFinishSummary(d: PrepDraft): string {
   const kind = d.kind === 'other' ? null : PREP_KINDS.find((k) => k.id === d.kind)?.name;
-  return [kind, `${RECIPE_STEPS.indexOf(d.at ?? 'kind') + 1} of ${RECIPE_STEPS.length} done`].filter(Boolean).join(' · ');
+  return [kind, `${RECIPE_STEPS.indexOf(d.at ?? 'kind')} of ${RECIPE_STEPS.length} done`].filter(Boolean).join(' · ');
+}
+
+/** Where a recipe left on one page (the desktop card) picks up: no name yet, what it is; a part still to pick, what goes in; else how it's made. */
+export function stepToFinish(d: PrepDraft): RecipeStep {
+  return !d.lines.some((l) => l.name.trim()) ? 'kind' : openSlots(d).length ? 'recipe' : 'method';
 }
 
 /** "at what goes in": where a recipe to finish picks up. */

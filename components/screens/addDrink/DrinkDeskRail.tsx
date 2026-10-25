@@ -114,10 +114,9 @@ function tasteParts(lines: readonly WizardLine[], ingredients: readonly CatalogI
   return lines.map((l) => ({ name: l.name, genericName: (l.id && byId.get(byId.get(l.id)?.generic_id ?? '')?.name) || null, amount: amountOf(l.amount), unit: l.unit || null }));
 }
 
-/** While a recipe is written under its line (make-anything-steps-1, step 4, more to it): the kit its ways are checked against, and where to change it. */
 /** Recipes still to finish in the drink, down through the ones inside (make-anything-steps-1, step 4; steps-3, step 9), and the one open now. */
 export function DeskToFinish({ lines, making }: { lines: readonly WizardLine[]; making: string | null }) {
-  const left = recipesToFinish(lines).filter((t) => t.name !== making);
+  const left = recipesToFinish(lines).filter((t) => !(t.depth === 0 && t.name === making));
   if (!left.length && !making) return null;
   return (
     <View style={styles.kit}>
@@ -130,6 +129,7 @@ export function DeskToFinish({ lines, making }: { lines: readonly WizardLine[]; 
   );
 }
 
+/** While a recipe is written under its line (make-anything-steps-1, step 4, more to it): the kit its ways are checked against, and where to change it. */
 export function DeskKit({ bar }: { bar: { id: string; name: string } | null }) {
   const ds = useDs();
   const router = useRouter();

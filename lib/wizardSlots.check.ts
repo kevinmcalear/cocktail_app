@@ -36,3 +36,4 @@ for (const { slot, name } of sectionSlots(kept, 'home', 's1')) assert.equal(draf
   assert.deepEqual(slotStart(slot), { place: 'bar-1', menuSectionId: 'sec-9', from: null, name: 'salty boy' });
   assert.deepEqual(slotStart('home'), { place: 'home', menuSectionId: null, from: null, name: null });
 }
+assert.equal(slotStart(draftSlot('home', { name: 'Gin | Tonic' })).name, 'gin | tonic', 'a name as typed, bars and all');

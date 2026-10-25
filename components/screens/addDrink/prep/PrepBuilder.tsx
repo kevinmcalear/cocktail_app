@@ -1,10 +1,9 @@
 import { useEffect, useRef, useState, type RefObject } from 'react';
-import { Modal, StyleSheet, View } from 'react-native';
+import { Alert, Modal, StyleSheet, View, type AlertButton } from 'react-native';
 import { GestureHandlerRootView } from 'react-native-gesture-handler';
 
 import { Field, IngredientDrawing } from '@/components/ds';
 import { space } from '@/constants/tokens';
-import { confirmAsync } from '@/lib/dialogs';
 import { RECIPE_STEPS, recipeEyebrow, withFacts, type PrepDraft, type PrepPick, type RecipeStep } from '@/lib/prepKinds';
 import type { IngredientAlias } from '@/lib/ingredientNames';
 
@@ -86,7 +85,7 @@ function Builder({ name: started, drinkName, initial, first, combinedFrom, inDri
   const [direction, setDirection] = useState<1 | -1>(1);
   const [name, setName] = useState(started);
   const combined = !!combinedFrom?.length;
-  const { draft, current, setDraft, view, setView, fromCatalog, pickKind, pickTechnique, phrase, named, slotsOpen } = usePrepDraft({ name: started, nameNow: name, initial, picked, technique, combined, bar }, () => {
+  const { draft, current, changed, setDraft, view, setView, fromCatalog, pickKind, pickTechnique, phrase, named, slotsOpen } = usePrepDraft({ name: started, nameNow: name, initial, picked, technique, combined, bar }, () => {
     if (step === 'kind') setStep('recipe');
   });
   const at = STEPS.indexOf(step);
@@ -98,16 +97,18 @@ function Builder({ name: started, drinkName, initial, first, combinedFrom, inDri
   const drink = drinkName || 'your drink';
   // Leaving keeps what's done on the line, a recipe to finish; lines just combined go back to two, and a finished recipe stays as it was.
   const keep = onLater && !combined ? () => onLater({ ...withFacts(current()), at: step }, shown) : null;
-  const leave = keep ?? onClose;
-  const ask = () =>
-    keep
-      ? void confirmAsync({
-          title: 'Leave it for now?',
-          message: `What you’ve done is kept. ${drinkName || 'The drink'} shows it as Recipe to finish, and New lists it under Drafts, with the way back.`,
-          confirmText: 'Leave it for now',
-          cancelText: 'Keep going',
-        }).then((yes) => yes && keep())
-      : onClose();
+  // A finished recipe opened again keeps a change made below it (a recipe inside it, picked up and left); otherwise it stays as it was.
+  const leave = keep ?? (() => (changed() ? onDone(withFacts(current()), shown) : onClose()));
+  const ask = () => {
+    if (!keep) return leave();
+    // A new one opened by mistake can go; one picked up again can only be left or carried on with.
+    const drop: AlertButton[] = initial ? [] : [{ text: 'Don’t keep it', style: 'destructive', onPress: onClose }];
+    Alert.alert('Leave it for now?', `What you’ve done is kept. ${drinkName || 'The drink'} shows it as Recipe to finish, and New lists it under Drafts, with the way back.`, [
+      { text: 'Keep going', style: 'cancel' },
+      ...drop,
+      { text: 'Leave it for now', onPress: keep },
+    ]);
+  };
   const back = () => (at > 0 ? go(STEPS[at - 1]) : ask());
   const next = () => (step === 'method' ? onDone(withFacts(draft), shown) : go(STEPS[at + 1]));
   const ready = named && (step === 'kind' || !slotsOpen);

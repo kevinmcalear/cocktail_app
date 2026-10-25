@@ -115,7 +115,7 @@ describe('PrepBuilder', () => {
     await laidOut();
     await fireEvent.press(screen.getByRole('link', { name: 'Up to Penicillin batch' }));
     await laidOut();
-    expect(screen.getByText(/^Recipe to finish · Oleo saccharum · 1 of 3 done/)).toBeTruthy();
+    expect(screen.getByText(/^Recipe to finish · Oleo saccharum · 0 of 3 done/)).toBeTruthy();
     await fireEvent.press(screen.getByLabelText('Lemon oleo, a recipe to finish. Pick it up'));
     await laidOut();
     expect(screen.getByText('What are you making?')).toBeTruthy();
@@ -123,7 +123,7 @@ describe('PrepBuilder', () => {
 
   test('leaving asks first, and keeps what is done as a recipe to finish', async () => {
     const onLater = jest.fn();
-    const alert = jest.spyOn(Alert, 'alert').mockImplementation((_t, _m, buttons) => buttons?.[1]?.onPress?.());
+    const alert = jest.spyOn(Alert, 'alert').mockImplementation((_t, _m, buttons) => buttons?.find((b) => b.text === 'Leave it for now')?.onPress?.());
     await open('Pineapple chili shrub', jest.fn(), onLater);
     await fireEvent.press(screen.getByRole('button', { name: 'Next: what goes in' }));
     await fireEvent.press(screen.getByRole('link', { name: 'Up to Daiquiri' }));
@@ -131,9 +131,10 @@ describe('PrepBuilder', () => {
     onLater.mockClear();
     await fireEvent.press(screen.getByRole('button', { name: 'Back' }));
     await fireEvent.press(screen.getByRole('button', { name: 'Back to Daiquiri' }));
-    expect(alert).toHaveBeenCalledWith('Leave it for now?', expect.stringContaining('Daiquiri shows it as Recipe to finish'), expect.anything(), expect.anything());
-    await Promise.resolve();
+    expect(alert).toHaveBeenCalledWith('Leave it for now?', expect.stringContaining('Daiquiri shows it as Recipe to finish'), expect.anything());
     expect(onLater).toHaveBeenCalledWith(expect.objectContaining({ at: 'kind' }), 'Pineapple chili shrub');
+    // A new one can also go: Don't keep it.
+    expect(alert.mock.calls.at(-1)?.[2]?.map((b) => b.text)).toEqual(['Keep going', 'Don’t keep it', 'Leave it for now']);
     alert.mockRestore();
   });
 

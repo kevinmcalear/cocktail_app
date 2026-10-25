@@ -106,7 +106,8 @@ export function useMakePrep({ draft, set, ingredients, aliases, inlinePrep, add,
       put({ ...prep, at: undefined }, name, false);
     },
     // Left for now (make-anything-steps-3, step 9): what's done goes on the line, a recipe to finish. A finished recipe opened again stays as it was.
-    onLater: editingPrep && !editingPrep.at ? undefined : (prep: PrepDraft, name: string) => put(prep, name, true),
+    // Make it house on a bottle: leaving keeps the bottle, as it was.
+    onLater: replacing || (editingPrep && !editingPrep.at) ? undefined : (prep: PrepDraft, name: string) => put(prep, name, true),
   };
 
   return {
