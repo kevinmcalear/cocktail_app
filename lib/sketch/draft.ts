@@ -30,7 +30,7 @@ export interface DraftLook {
   variant?: string | null;
   /** The bar's own glasses' drawings, for when nothing is picked (bar_glassware). */
   barVariants?: readonly string[];
-  /** The venue's ice kinds ('cubes', 'large'), for when the ice is only guessed (bar_kit). */
+  /** The venue's ice kinds ('cubes', 'large'), for when the ice is only guessed (item_ice). */
   barIce?: readonly string[];
   /** How the ice sits, bottom first, by name (lib/iceBuild.ts); `ice` is its top layer. */
   build?: readonly ({ name: string; n?: number | null; to?: string | null } & IceLook)[] | null;

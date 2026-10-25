@@ -3,7 +3,7 @@
 // supabase/tests/near-names.test.mjs.
 import assert from 'node:assert/strict';
 
-import { nearest, nearFold, nearScore } from './nearName';
+import { nearest, nearFold, nearReason, nearScore } from './nearName';
 
 // Folded as the database folds: accents off, lower case, one space.
 assert.equal(nearFold('  Piña   Colada '), 'pina colada');
@@ -59,6 +59,14 @@ assert.equal(nearScore('ab🍸cdef', 'ax🍸cdeg'), null);
 assert.equal(nearScore('ab🍸cdef', 'ax🍸cdef'), 11);
 // Too long to compare letter by letter is simply not close.
 assert.equal(nearScore('x'.repeat(300), 'x'.repeat(299)), null);
+
+// Why it's close: the loosest part that matched.
+assert.equal(nearReason('salty boy', 'Salty Boy'), 'same');
+assert.equal(nearReason('salt', 'Salty Boy'), 'start');
+assert.equal(nearReason('salty boy', 'Salti Boi'), 'slip');
+assert.equal(nearReason('peeny colada', 'Pina Colada'), 'sound');
+assert.equal(nearReason('jungel bird', 'Jungle Bird'), 'whole');
+assert.equal(nearReason('salty boy', 'Smoke Signal'), null);
 
 // nearest: closest first, then the shorter name, and only close ones.
 // Salty Dog is two letters off the whole name: last, as the board's "Also close".

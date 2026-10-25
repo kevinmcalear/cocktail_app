@@ -39,6 +39,8 @@ type NullArgs = {
   // No cover is null; a null position falls back to 50.
   save_menu: 'p_cover_url' | 'p_cover_position';
   save_drink_spec: 'p_note';
+  // A fact the sheet doesn't say is null (no p_id adds a new ice).
+  save_venue_ice: 'p_id' | 'p_draw_as' | 'p_size_mm' | 'p_length_mm' | 'p_clear' | 'p_frozen_inside' | 'p_source' | 'p_supplier_id' | 'p_machine' | 'p_note';
   schedule_menu: 'p_starts_at';
   search_glass_models: 'p_glass';
   // Null clears the match.

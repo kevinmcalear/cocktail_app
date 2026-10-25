@@ -6,11 +6,13 @@ import { VenueBuyingLinks, VenueKitLinks } from './VenueSettingsLinks';
 
 let mockGlasses: unknown[] | undefined;
 let mockKit: unknown[] | undefined;
+let mockIce: unknown[] | undefined;
 let mockCaps: string[] = [];
 jest.mock('expo-router', () => ({ useRouter: () => ({ push: jest.fn() }) }));
 jest.mock('@/hooks/usePricing', () => ({ usePricingSettings: () => ({ data: undefined }) }));
 jest.mock('@/hooks/useBarGlassware', () => ({ useBarGlassware: () => ({ data: mockGlasses }) }));
 jest.mock('@/hooks/useBarKit', () => ({ useBarKit: () => ({ data: mockKit }) }));
+jest.mock('@/hooks/useVenueIce', () => ({ useVenueIce: () => ({ data: mockIce }) }));
 jest.mock('@/hooks/useCapabilities', () => ({ useCapabilities: () => ({ data: mockCaps }) }));
 jest.mock('@/hooks/useVenueSuppliers', () => ({ useVenueSuppliers: (barId: string | null) => ({ data: barId ? [{}, {}] : undefined }) }));
 
@@ -32,7 +34,8 @@ test('one glass is singular, and nothing shows until the glasses load', async ()
 
 test('Kit counts the ice and the tools', async () => {
   mockGlasses = [];
-  mockKit = [{ kind: 'ice' }, { kind: 'tool' }, { kind: 'tool' }];
+  mockIce = [{}];
+  mockKit = [{}, {}];
   await renderWithTamagui(<VenueKitLinks barId="b" />);
   expect(screen.getByText('1 kind')).toBeTruthy();
   expect(screen.getByText('2 tools')).toBeTruthy();

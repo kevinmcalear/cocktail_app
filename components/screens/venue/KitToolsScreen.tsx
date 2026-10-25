@@ -19,7 +19,7 @@ export function KitToolsScreen({ barId }: { barId: string }) {
   const set = useSetTools(barId);
   const home = useKit().owned;
   const [all, setAll] = useState(false);
-  const have = kit.filter((r) => r.kind === 'tool').map((r) => r.key);
+  const have = kit.flatMap((r) => (r.key ? [r.key] : []));
   const fromHome = home.filter((id) => !have.includes(id) && equipmentById(id));
 
   return (

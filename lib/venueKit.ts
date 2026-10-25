@@ -1,13 +1,27 @@
-// Kit and Buying in a venue's settings (supabase/migrations/20261019000000_venue_kit.sql):
-// the ice it pours, the tools it has, and what its suppliers bring.
+// Kit and Buying in a venue's settings (supabase/migrations/20261019000000_venue_kit.sql,
+// 20261110100000_kit_and_ice.sql): the ice it pours (item_ice), the tools it
+// has (bar_kit), and what its suppliers bring.
 
 import { andList } from './makers';
 import { SUPPLIES, type Supplies } from './suppliers';
 import { EQUIPMENT } from './techniques/equipment';
 
-/** The ice kinds a venue can list: the drawings' kinds less 'none' (the bar_kit_key_check list). */
+/** The ice kinds the drawings know, less 'none'. */
 export const ICE_KINDS = ['cubes', 'large', 'spear', 'crushed', 'pebble', 'shaved', 'sphere'] as const;
 export type IceKind = (typeof ICE_KINDS)[number];
+
+/** A venue ice's shape (item_ice.shape): the drawings' kinds, cut to size, something else, and the block and slab it's cut from. */
+export const ICE_SHAPES = [...ICE_KINDS, 'cut', 'other', 'block', 'slab'] as const;
+export type IceShape = (typeof ICE_SHAPES)[number];
+
+/** What the drawings draw a venue's ice as: its shape, or for cut to size and something else the kind it's drawn as. Null for a block or slab. */
+export function iceDrawKind(ice: { shape: string; draw_as: string | null }): IceKind | null {
+  const kind = ice.draw_as ?? ice.shape;
+  return (ICE_KINDS as readonly string[]).includes(kind) ? (kind as IceKind) : null;
+}
+
+/** An ice that goes in the glass, not a block or slab to cut from. */
+export const inTheGlass = (ice: { shape: string }) => ice.shape !== 'block' && ice.shape !== 'slab';
 
 /** In the add-drink wizard's words (lib/drinkWizard.ts COMMON_ICE). */
 export const ICE_LABEL: Record<IceKind, string> = {
@@ -43,17 +57,25 @@ export function houseIce(ice: string, kinds: readonly string[]): IceKind | null 
   return NEAR[ice as IceKind].find((k) => kinds.includes(k)) ?? null;
 }
 
-/** The venue's ice in the wizard's words, in its order ("Cubes", "Large cube"). */
-export function venueIceNames(rows: readonly { kind: string; key: string }[]): string[] {
-  return rows.filter((r) => r.kind === 'ice' && r.key in ICE_LABEL).map((r) => ICE_LABEL[r.key as IceKind]);
+/** The venue's ice in the glass by its names, in its order ("Cubes", "Large cube"). */
+export function venueIceNames(rows: readonly { name: string; shape: string }[]): string[] {
+  return rows.filter(inTheGlass).map((r) => r.name);
+}
+
+/** The kinds the venue's ice is drawn as, for drawing a drink whose ice was guessed (private.item_sketches_set_house_ice). */
+export function venueIceKinds(rows: readonly { shape: string; draw_as: string | null }[]): IceKind[] {
+  return rows.flatMap((r) => {
+    const kind = inTheGlass(r) ? iceDrawKind(r) : null;
+    return kind ? [kind] : [];
+  });
 }
 
 /** Whether a wizard pick is one of the venue's ice, by name ("large cube" is "Large cube"). */
 export const isVenueIce = (names: readonly string[], name: string) => names.some((n) => n.toLowerCase() === name.trim().toLowerCase());
 
-/** The venue's Kit row for an ice, by the wizard's name for it ("Spear"), or null. */
-export const kitIceRow = <T extends { kind: string; key: string }>(rows: readonly T[], name: string): T | null =>
-  rows.find((r) => r.kind === 'ice' && r.key in ICE_LABEL && isVenueIce([ICE_LABEL[r.key as IceKind]], name)) ?? null;
+/** The venue's ice in the glass by a wizard pick's name ("spear" is "Spear"), or null. */
+export const kitIceRow = <T extends { name: string; shape: string }>(rows: readonly T[], name: string): T | null =>
+  rows.find((r) => inTheGlass(r) && isVenueIce([r.name], name)) ?? null;
 
 /** The prep kitchen's tools shown before "All tools": the ones bars reach for first. */
 const PREP_FIRST = ['scale-fine', 'sous-vide', 'whipper', 'superbag', 'chamber-vac', 'centrifuge', 'rotovap'];
@@ -95,7 +117,10 @@ export function supplierLine(s: { supplies: readonly string[]; order_by: string 
     .join(' · ');
 }
 
-/** Where a kit row comes from: "Made here · Hoshizaki under the well", "Coldwater Ice Co. · 130 mm", or just its note. */
-export function kitSourceLine(row: { made_here: boolean; note: string | null; supplier_name: string | null; length_mm?: number | null }): string {
-  return [row.made_here ? 'Made here' : row.supplier_name, row.note, row.length_mm ? `${row.length_mm} mm` : null].filter(Boolean).join(' · ');
+const MADE: Record<string, string> = { made: 'Made here', machine: 'Our machine', ours: 'Already ours' };
+
+/** Where an ice, tool or glass comes from: "Made here · Hoshizaki under the well", "Coldwater Ice Co. · 130 mm", or just its note. */
+export function kitSourceLine(row: { source: string | null; supplier_name: string | null; machine?: string | null; note: string | null; length_mm?: number | null }): string {
+  const from = row.source === 'bought' ? (row.supplier_name ?? 'Bought') : row.source ? (MADE[row.source] ?? null) : null;
+  return [from, row.machine, row.note, row.length_mm ? `${row.length_mm} mm` : null].filter(Boolean).join(' · ');
 }
