@@ -26,6 +26,12 @@ concurrency:
 
 env:
   PROJECT_REF: uzrqriixgxbvhunwrwkn
+  # Same CLI CI tests the migrations with, so production never runs a release
+  # CI hasn't tried.
+  SUPABASE_CLI: 2.112.0
+
+permissions:
+  contents: read
 
 jobs:
   push:
@@ -38,7 +44,7 @@ jobs:
       - uses: actions/checkout@v7
       - uses: supabase/setup-cli@v3
         with:
-          version: latest
+          version: ${{ env.SUPABASE_CLI }}
       - name: Check the secret is set
         run: |
           if [ -z "$SUPABASE_DB_PASSWORD" ]; then
