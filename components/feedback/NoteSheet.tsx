@@ -49,6 +49,8 @@ interface NoteSheetProps {
    * it, Tell us.
    */
   report?: { onEmail: (kind: ReportKind, body: string) => Promise<string | null> };
+  /** Tell us's question and field, when it isn't "What do you do differently?" (Your bottles: a bottle missing or wrong). */
+  ask?: { title: string; field: string };
 }
 
 /**
@@ -66,7 +68,7 @@ export function NoteSheet(props: NoteSheetProps) {
   );
 }
 
-function Sheet({ visible, onClose, about, report }: NoteSheetProps) {
+function Sheet({ visible, onClose, about, report, ask }: NoteSheetProps) {
   const ds = useDs();
   const userId = useUserId();
   // Words typed for one drink at one bar stay with that draft and bar (not its name, which changes as it's typed).
@@ -169,14 +171,14 @@ function Sheet({ visible, onClose, about, report }: NoteSheetProps) {
   }
 
   return (
-    <MenuSheet visible={visible} onClose={close} eyebrow="Tell us" title="What do you do differently?" footer={footer}>
+    <MenuSheet visible={visible} onClose={close} eyebrow="Tell us" title={ask?.title ?? 'What do you do differently?'} footer={footer}>
       <View style={[styles.with, { backgroundColor: ds.c.raised }]}>
         <IconSymbol name="bubble.left" size={16} color={ds.c.muted} />
         <Caption tone="muted" style={styles.flex}>
           {sentWith(about)}
         </Caption>
       </View>
-      <Field label="What you do" value={body} onChangeText={(text) => update({ body: text })} editable={editable} multiline minLines={4} maxLength={2000} />
+      <Field label={ask?.field ?? 'What you do'} value={body} onChangeText={(text) => update({ body: text })} editable={editable} multiline minLines={4} maxLength={2000} />
       {photo ? (
         <View style={styles.photoRow}>
           <Image source={{ uri: photo.uri }} style={styles.thumb} contentFit="cover" accessibilityLabel="Your photo" />

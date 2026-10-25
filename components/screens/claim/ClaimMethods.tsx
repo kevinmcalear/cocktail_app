@@ -7,7 +7,7 @@ import { fontFamilies, radius, space } from '@/constants/tokens';
 import type { Profile } from '@/hooks/useProfiles';
 import {
   BAR_CLAIM_METHODS,
-  METHOD_COPY,
+  methodLabel,
   OUR_INSTAGRAM,
   REVIEW_REASON,
   claimPlace,
@@ -129,7 +129,7 @@ export function ClaimMethods({
           const d = details[m];
           const on = method === m;
           const pill = speed(m, d);
-          const label = m === 'phone' ? `A call to the ${claimPlace(profile.kind)}` : METHOD_COPY[m].label;
+          const label = methodLabel(m, profile.kind);
           return (
             <MethodCard key={m} icon={ICONS[m]} label={label} pill={pill} detail={d.detail} on={on} available={d.available || !!d.ask} disabled={disabled} onPress={() => onPick(m)}>
               {on && d.ask ? (
@@ -156,7 +156,7 @@ export function ClaimMethods({
                     m === 'phone'
                       ? 'Whoever answers reads us this code, so leave it with the team.'
                       : pageHandle
-                        ? `Send it from the bar’s own account, not a personal one. Whoever runs @${handle} can send it. Nothing to edit or take down after.`
+                        ? `Send it from the ${claimPlace(profile.kind)}’s own account, not a personal one. Whoever runs @${handle} can send it. Nothing to edit or take down after.`
                         : `Send it from @${handle}. Nothing to edit or take down after.`
                   }
                 />

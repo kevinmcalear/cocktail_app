@@ -2,7 +2,7 @@
 // The same cases run against the database in supabase/tests/bar-claims.test.mjs.
 import assert from 'node:assert/strict';
 
-import { claimPlace, claimProblem, emailCheck, isSharedHost, newClaimCode, pageInstagram, personClaimMethods, siteHost, siteIsRoot, spacedCode, typedHandle, typedPhone, typedWebsite } from './claimVerification';
+import { claimPlace, claimProblem, methodLabel, emailCheck, isSharedHost, newClaimCode, pageInstagram, personClaimMethods, siteHost, siteIsRoot, spacedCode, typedHandle, typedPhone, typedWebsite } from './claimVerification';
 
 // Hosts lose the scheme, www., port, path and case.
 assert.equal(siteHost('https://www.PaleMoth.com/en?x=1'), 'palemoth.com');
@@ -54,6 +54,9 @@ assert.equal(claimProblem({ code: '23505', message: 'duplicate key' }), 'You alr
 assert.equal(claimProblem({ code: '23505', message: 'You already have a claim waiting on this maker.' }), 'You already have a claim waiting on this maker.');
 assert.equal(claimPlace('maker'), 'company');
 assert.equal(claimPlace('supplier'), 'company');
+assert.equal(methodLabel('instagram', 'maker'), 'Send us a message from the company’s Instagram');
+assert.equal(methodLabel('phone', 'supplier'), 'A call to the company');
+assert.equal(methodLabel('instagram', 'bar'), 'Send us a message from the bar’s Instagram');
 assert.equal(claimPlace('bar'), 'bar');
 assert.match(claimProblem(null), /connection/);
 
