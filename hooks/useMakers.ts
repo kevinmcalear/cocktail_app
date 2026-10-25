@@ -111,14 +111,21 @@ export interface MakerRef {
 
 const MAKER_REF = 'id, handle, display_name, kind';
 
-/** Makers by name, for a picker: optionally only those that make `makes` ("ice", "glassware", "bottles"). */
+/**
+ * Makers by name, for a picker: optionally only those that make `makes` ("ice", "glassware", "bottles").
+ * A bar's page that makes glassware (a tiki bar's own mugs) is one too (20261116200000).
+ */
 export function useMakerSearch(term: string, makes?: string) {
   const q = term.trim();
   return useQuery({
     queryKey: ['maker-search', q, makes ?? null],
     enabled: q.length >= 2,
     queryFn: async (): Promise<MakerRef[]> => {
-      let query = supabase.from('profiles').select(MAKER_REF).eq('kind', 'maker').ilike('display_name', `%${q.replace(/[\\%_]/g, '\\$&')}%`);
+      let query = supabase
+        .from('profiles')
+        .select(MAKER_REF)
+        .in('kind', makes === 'glassware' ? ['maker', 'bar'] : ['maker'])
+        .ilike('display_name', `%${q.replace(/[\\%_]/g, '\\$&')}%`);
       if (makes) query = query.contains('makes', [makes]);
       const { data, error } = await query.order('display_name').limit(8);
       if (error) throw error;
