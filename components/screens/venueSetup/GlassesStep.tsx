@@ -155,7 +155,7 @@ export function GlassesStep({ barId, pageId, name }: { barId: string; pageId: st
       <Body style={styles.strong}>{`Which ${kindWord(target)} exactly? Optional`}</Body>
       <GlassModelPicker
         key={target.key}
-        initialGlass={target.glass}
+        // Search first, as drawn; glasses of its kind come first in what it finds.
         preferGlass={target.glass}
         venueModelIds={listed.flatMap((l) => (l.model_id ? [l.model_id] : []))}
         venueName={name}
