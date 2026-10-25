@@ -111,7 +111,7 @@ export function MenuScreen({ menuId }: { menuId: string }) {
         contentContainerStyle={{ paddingBottom: insets.bottom + space.xxxl }}
         renderItem={({ item }) => (
           <View style={[styles.body, column]}>
-            {home ? <HomeMenuRow row={item} /> : <MenuPageRowView row={item} newIds={fresh} firstGap={space.sm} />}
+            {home ? <HomeMenuRow row={item} newIds={fresh} /> : <MenuPageRowView row={item} newIds={fresh} firstGap={space.sm} />}
           </View>
         )}
         ListHeaderComponent={
@@ -165,9 +165,10 @@ export function MenuScreen({ menuId }: { menuId: string }) {
 }
 
 /** A home menu's row: its end says what your shelf makes, Ready or Need 1 (menus-one-look, BandMenu). */
-function HomeMenuRow({ row }: { row: MenuPageRow }) {
+// ponytail: each row reads useMyBar (shared queries, one memo per row) so a venue menu never loads a shelf; hoist it into a home-only list if long menus get slow.
+function HomeMenuRow({ row, newIds }: { row: MenuPageRow; newIds?: ReadonlySet<string> }) {
   const bar = useMyBar();
-  return <MenuPageRowView row={row} firstGap={space.sm} shelf={bar.isLoading ? null : bar} />;
+  return <MenuPageRowView row={row} newIds={newIds} firstGap={space.sm} shelf={bar.isLoading ? null : bar} />;
 }
 
 /** "4 drinks, 3 you can make · 8 guests": a home menu's count, what your shelf makes, who's coming, and whether a link is out. */
