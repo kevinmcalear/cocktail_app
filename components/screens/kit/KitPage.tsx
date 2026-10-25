@@ -18,6 +18,12 @@ export function useOpenKitItem(barId: string, kind: KitKind, openId: string | nu
   return (id: string) => (openId ? router.replace(kitItemHref(barId, kind, id)) : router.push(kitItemHref(barId, kind, id)));
 }
 
+/** After Remove: back to the list it was opened from, or to the list when it was opened by a link. */
+export function useCloseKitItem(barId: string, kind: KitKind) {
+  const router = useRouter();
+  return () => (router.canGoBack() ? router.back() : router.replace(`/settings/bar/${barId}/${kind}` as Href));
+}
+
 interface KitPageProps {
   barId: string;
   kind: KitKind;
@@ -32,6 +38,8 @@ interface KitPageProps {
   /** Its page (KitItemPage). */
   item?: ReactNode;
   loading?: boolean;
+  /** The list didn't load: the open thing isn't known to be gone. */
+  failed?: boolean;
 }
 
 /**
@@ -39,10 +47,10 @@ interface KitPageProps {
  * the thing opened from it. On a phone the opened thing is a page of its own
  * that goes back to the list; on a wide screen it sits beside the list.
  */
-export function KitPage({ barId, kind, title, intro, openId, openName, list, item, loading }: KitPageProps) {
+export function KitPage({ barId, kind, title, intro, openId, openName, list, item, loading, failed }: KitPageProps) {
   const wide = useIsWideWeb();
   const listHref = `/settings/bar/${barId}/${kind}` as Href;
-  const gone = !loading && !item ? <Body tone="muted">That’s not in the kit any more.</Body> : null;
+  const gone = loading || item ? null : <Body tone="muted">{failed ? 'Couldn’t load it. Check your connection and try again.' : 'That’s not in the kit any more.'}</Body>;
   if (openId && !wide) {
     return (
       <VenueSubPage barId={barId} title={openName ?? title} up={{ label: title, href: listHref }}>

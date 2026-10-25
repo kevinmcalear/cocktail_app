@@ -4,7 +4,7 @@ import { useSaveVenueIce, type VenueIce, type VenueIceChange } from '@/hooks/use
 import { useVenueSuppliers } from '@/hooks/useVenueSuppliers';
 import { iceDrawKind, iceName, type IceKind } from '@/lib/venueKit';
 
-import { KitAddSheet, type KitQuestion } from './KitAddSheet';
+import { KitAddSheet, useOpenKey, type KitQuestion } from './KitAddSheet';
 import { IceLooks, looksName, mmOk, type IceLooksValue } from './IceLooks';
 import { SourceQuestion, trimmed, type KitSource } from './SourceQuestion';
 
@@ -30,8 +30,8 @@ export interface IceSheetProps {
 }
 
 /** Add ice, or change one: what it looks like, where it comes from, and how you make it when you do. */
-export function IceSheet({ barId, visible, onClose, ice, initial, startAt = 0, onSaved, madeStep }: IceSheetProps) {
-  return visible ? <IceSheetBody key={ice?.id ?? 'new'} {...{ barId, visible, onClose, ice, initial, startAt, onSaved, madeStep }} /> : null;
+export function IceSheet({ startAt = 0, ...props }: IceSheetProps) {
+  return <IceSheetBody key={useOpenKey(props.visible)} startAt={startAt} {...props} />;
 }
 
 function startLooks(from: Partial<VenueIceChange> | null | undefined): IceLooksValue {
@@ -55,7 +55,9 @@ function IceSheetBody({ barId, visible, onClose, ice, initial, startAt, onSaved,
   const from = ice ?? initial;
   const [step, setStep] = useState<number>(startAt);
   const [looks, setLooks] = useState(() => startLooks(from));
-  const [src, setSrc] = useState<KitSource>({ source: from?.source ?? null, supplier_id: from?.supplier_id ?? null, machine: from?.machine ?? '', note: from?.note ?? '' });
+  // What it said before: Skip leaves it so.
+  const [saved] = useState<KitSource>(() => ({ source: from?.source ?? null, supplier_id: from?.supplier_id ?? null, machine: from?.machine ?? '', note: from?.note ?? '' }));
+  const [src, setSrc] = useState<KitSource>(saved);
 
   const change = (source: KitSource): VenueIceChange => ({
     id: ice?.id,
@@ -95,7 +97,7 @@ function IceSheetBody({ barId, visible, onClose, ice, initial, startAt, onSaved,
       title: 'Where does it come from?',
       body: <SourceQuestion kind="ice" value={src} onChange={setSrc} suppliers={suppliers} />,
       next: third ? 'Next' : ice ? 'Save' : 'Add ice',
-      onSkip: () => finish({ source: null, supplier_id: null, note: src.note }),
+      onSkip: () => finish(saved),
     },
     {
       title: 'How do you make it?',

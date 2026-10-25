@@ -1,4 +1,3 @@
-import { useRouter, type Href } from 'expo-router';
 import { useState } from 'react';
 
 import { Body, Caption } from '@/components/ds';
@@ -6,12 +5,15 @@ import { IceThumb } from '@/components/ds/IceThumb';
 import { IceSheet, iceThumbKind } from '@/components/screens/kit/IceSheet';
 import { KitItemPage, KitItemSection } from '@/components/screens/kit/KitItemPage';
 import { KitList, type KitEntry } from '@/components/screens/kit/KitList';
-import { KitPage, useOpenKitItem } from '@/components/screens/kit/KitPage';
+import { KitPage, useCloseKitItem, useOpenKitItem } from '@/components/screens/kit/KitPage';
 import { useActiveVenue } from '@/hooks/useActiveVenue';
 import { useCapabilities } from '@/hooks/useCapabilities';
 import { useIsWideWeb } from '@/hooks/useIsWideWeb';
 import { useRemoveVenueIce, useVenueIce, type VenueIce } from '@/hooks/useVenueIce';
 import { iceLooksLine, inTheGlass, kitSourceLine } from '@/lib/venueKit';
+
+// The name already says a Collins block's or block's length.
+const iceFrom = (i: VenueIce) => kitSourceLine({ ...i, length_mm: null });
 
 /**
  * Kit: Ice (Kit and ice, steps 1 to 5). The ice a venue pours, in the glass
@@ -27,7 +29,7 @@ export function KitIceScreen({ barId, openId }: { barId: string; openId?: string
   // The sheet: adding (no ice), changing one, and the question it opens on.
   const [sheet, setSheet] = useState<{ ice: VenueIce | null; startAt: 0 | 1 } | null>(null);
   const opened = openId ? (ices.find((i) => i.id === openId) ?? null) : null;
-  const entry = (i: VenueIce): KitEntry => ({ id: i.id, name: i.name, line: kitSourceLine(i), thumb: <IceThumb kind={iceThumbKind(i)} /> });
+  const entry = (i: VenueIce): KitEntry => ({ id: i.id, name: i.name, line: iceFrom(i), thumb: <IceThumb kind={iceThumbKind(i)} /> });
 
   const list = error ? (
     <Body tone="muted">Couldn’t load the ice. Check your connection and try again.</Body>
@@ -57,6 +59,7 @@ export function KitIceScreen({ barId, openId }: { barId: string; openId?: string
         openId={openId}
         openName={opened?.name}
         loading={isLoading}
+        failed={!!error}
         list={list}
         item={opened ? <IcePage barId={barId} ice={opened} canEdit={canEdit} onChange={(startAt) => setSheet({ ice: opened, startAt })} /> : null}
       />
@@ -67,10 +70,10 @@ export function KitIceScreen({ barId, openId }: { barId: string; openId?: string
 
 /** One ice, opened (step 2): what it looks like, where it comes from, and how it's made. */
 function IcePage({ barId, ice, canEdit, onChange }: { barId: string; ice: VenueIce; canEdit: boolean; onChange: (startAt: 0 | 1) => void }) {
-  const router = useRouter();
   const wide = useIsWideWeb();
+  const close = useCloseKitItem(barId, 'ice');
   const remove = useRemoveVenueIce(barId);
-  const from = kitSourceLine(ice);
+  const from = iceFrom(ice);
   return (
     <KitItemPage
       kind="Ice"
@@ -82,7 +85,7 @@ function IcePage({ barId, ice, canEdit, onChange }: { barId: string; ice: VenueI
         { label: 'Where it comes from', value: from || 'Not said yet', onChange: canEdit ? () => onChange(1) : undefined },
       ]}
       onEdit={canEdit ? () => onChange(0) : undefined}
-      onRemove={canEdit ? () => remove.mutate(ice.id, { onSuccess: () => router.replace(`/settings/bar/${barId}/ice` as Href) }) : undefined}
+      onRemove={canEdit ? () => remove.mutate(ice.id, { onSuccess: close }) : undefined}
       removing={remove.isPending}
       error={remove.error ? ((remove.error as { code?: string }).code === '23503' ? remove.error.message : 'Couldn’t remove it. Check your connection and try again.') : null}
     >

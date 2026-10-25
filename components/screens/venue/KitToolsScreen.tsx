@@ -1,11 +1,10 @@
-import { useRouter, type Href } from 'expo-router';
 import { useState } from 'react';
 import { StyleSheet, View } from 'react-native';
 
 import { Body, Caption, EquipmentThumb, useDs } from '@/components/ds';
 import { KitItemPage } from '@/components/screens/kit/KitItemPage';
 import { KitList } from '@/components/screens/kit/KitList';
-import { KitPage, useOpenKitItem } from '@/components/screens/kit/KitPage';
+import { KitPage, useCloseKitItem, useOpenKitItem } from '@/components/screens/kit/KitPage';
 import { ToolSheet } from '@/components/screens/kit/ToolSheet';
 import { IconSymbol } from '@/components/ui/icon-symbol';
 import { radius } from '@/constants/tokens';
@@ -13,16 +12,12 @@ import { useBarKit, useRemoveTool, type KitRow } from '@/hooks/useBarKit';
 import { useCapabilities } from '@/hooks/useCapabilities';
 import { useIsWideWeb } from '@/hooks/useIsWideWeb';
 import { equipmentById } from '@/lib/techniques/equipment';
-import { kitSourceLine, TOOL_LOCATION_LABEL, toolName } from '@/lib/venueKit';
+import { kitLine, kitSourceLine, TOOL_LOCATION_LABEL, toolName } from '@/lib/venueKit';
 
-const lowerFirst = (s: string) => (s ? s[0].toLowerCase() + s.slice(1) : s);
 const where = (t: KitRow) => (t.location === 'bar' || t.location === 'prep' ? TOOL_LOCATION_LABEL[t.location] : null);
 
 /** "Prep kitchen · bought from Harbour Supply", "Behind the bar · 6". */
-const toolLine = (t: KitRow) => {
-  const parts = [where(t), t.count ? String(t.count) : null, kitSourceLine(t) || null].filter((p): p is string => !!p);
-  return parts.map((p, i) => (i ? lowerFirst(p) : p)).join(' · ');
-};
+const toolLine = (t: KitRow) => kitLine([where(t), t.count ? String(t.count) : null, kitSourceLine(t)]);
 
 /**
  * Kit: Tools (Kit and ice, steps 1 to 3). What's behind the bar and in the
@@ -61,6 +56,7 @@ export function KitToolsScreen({ barId, openId }: { barId: string; openId?: stri
         openId={openId}
         openName={opened ? toolName(opened) : null}
         loading={isLoading}
+        failed={!!error}
         list={list}
         item={opened ? <ToolPage barId={barId} tool={opened} canEdit={canEdit} onChange={(startAt) => setSheet({ tool: opened, startAt })} /> : null}
       />
@@ -82,8 +78,8 @@ function ToolThumb({ tool, size = 48 }: { tool: KitRow; size?: number }) {
 
 /** One tool, opened (step 2): where it is and where it came from. */
 function ToolPage({ barId, tool, canEdit, onChange }: { barId: string; tool: KitRow; canEdit: boolean; onChange: (startAt: 0 | 1 | 2) => void }) {
-  const router = useRouter();
   const wide = useIsWideWeb();
+  const close = useCloseKitItem(barId, 'tools');
   const remove = useRemoveTool(barId);
   const ours = tool.key ? equipmentById(tool.key) : undefined;
   const change = (at: 0 | 1 | 2) => (canEdit ? () => onChange(at) : undefined);
@@ -99,7 +95,7 @@ function ToolPage({ barId, tool, canEdit, onChange }: { barId: string; tool: Kit
         { label: 'Where it comes from', value: kitSourceLine(tool) || 'Not said yet', onChange: change(1) },
       ]}
       onEdit={change(0)}
-      onRemove={canEdit ? () => remove.mutate(tool.id, { onSuccess: () => router.replace(`/settings/bar/${barId}/tools` as Href) }) : undefined}
+      onRemove={canEdit ? () => remove.mutate(tool.id, { onSuccess: close }) : undefined}
       removing={remove.isPending}
       error={remove.error ? 'Couldn’t remove it. Check your connection and try again.' : null}
     />

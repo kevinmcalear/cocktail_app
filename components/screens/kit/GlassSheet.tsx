@@ -4,10 +4,11 @@ import { Field } from '@/components/ds';
 import { useBarGlassware, useSaveBarGlass, type BarGlass, type BarGlassInput } from '@/hooks/useBarGlassware';
 import { useVenueSuppliers } from '@/hooks/useVenueSuppliers';
 import { GLASS_TYPE_LABEL } from '@/lib/glassware';
+import { kitCount } from '@/lib/venueKit';
 import { variantsOf } from '@/lib/sketch/geometry';
 
 import { GlassWhich, type GlassWhichValue } from './GlassWhich';
-import { KitAddSheet, type KitQuestion } from './KitAddSheet';
+import { KitAddSheet, useOpenKey, type KitQuestion } from './KitAddSheet';
 import { SourceQuestion, trimmed, type KitSource } from './SourceQuestion';
 
 const FAILED = 'Couldn’t save that. Check your connection and try again.';
@@ -32,12 +33,13 @@ export interface GlassSheetProps {
 
 /** Add a glass, or change one: which glass it is, where it comes from, how many. */
 export function GlassSheet(props: GlassSheetProps) {
-  return props.visible ? <GlassSheetBody key={props.glass?.id ?? 'new'} {...props} /> : null;
+  return <GlassSheetBody key={useOpenKey(props.visible)} {...props} />;
 }
 
 function GlassSheetBody({ barId, pageId, visible, onClose, glass, startAt = 0, describe, onSave, onSaved, venueName }: GlassSheetProps) {
   const suppliers = useVenueSuppliers(barId).data ?? [];
-  const glasses = useBarGlassware(barId).data ?? [];
+  const known = useBarGlassware(barId).data;
+  const glasses = known ?? [];
   const save = useSaveBarGlass(barId, pageId);
   const [step, setStep] = useState<number>(startAt);
   const [which, setWhich] = useState<GlassWhichValue>(() => ({
@@ -48,10 +50,11 @@ function GlassSheetBody({ barId, pageId, visible, onClose, glass, startAt = 0, d
     // A real glass's own name isn't the venue's: the list says it under the type.
     name: glass?.name && glass.name !== glass.model?.name ? glass.name : '',
   }));
-  const [src, setSrc] = useState<KitSource>({ source: glass?.source ?? null, supplier_id: glass?.supplier_id ?? null });
+  // What it said before: Skip leaves it so.
+  const [saved] = useState<KitSource>(() => ({ source: glass?.source ?? null, supplier_id: glass?.supplier_id ?? null }));
+  const [src, setSrc] = useState<KitSource>(saved);
   const [count, setCount] = useState(glass?.count ? String(glass.count) : '');
-  const n = count.trim() ? Number(count.trim()) : null;
-  const countOk = n == null || (Number.isInteger(n) && n >= 1 && n <= 9999);
+  const { n, ok: countOk } = kitCount(count);
 
   const finish = (source: KitSource, howMany: number | null) => {
     const shapes = variantsOf(which.glass);
@@ -69,8 +72,8 @@ function GlassSheetBody({ barId, pageId, visible, onClose, glass, startAt = 0, d
       series: kept?.series ?? null,
       shape_note: kept?.shape_note ?? null,
       model_id: model?.id ?? null,
-      // The first of its type is the one its drinks are drawn in.
-      is_default: glass ? glass.is_default : !glasses.some((g) => g.glass === which.glass && g.is_default),
+      // The first of its type is the one its drinks are drawn in; one moved to another type is only its main when that type has none.
+      is_default: glass?.glass === which.glass ? glass.is_default : !glasses.some((g) => g.id !== glass?.id && g.glass === which.glass && g.is_default),
       source: source.source === 'bought' || source.source === 'ours' ? source.source : null,
       supplier_id: source.source === 'bought' ? source.supplier_id : null,
       count: howMany,
@@ -99,7 +102,7 @@ function GlassSheetBody({ barId, pageId, visible, onClose, glass, startAt = 0, d
       body: <SourceQuestion kind="glass" value={src} onChange={setSrc} suppliers={suppliers} />,
       next: 'Next',
       onSkip: () => {
-        setSrc({ source: null, supplier_id: null });
+        setSrc(saved);
         setStep(2);
       },
     },
@@ -108,8 +111,9 @@ function GlassSheetBody({ barId, pageId, visible, onClose, glass, startAt = 0, d
       intro: 'If you know. Nothing to make, so that’s it.',
       body: <Field label="How many" value={count} onChangeText={setCount} placeholder="24" keyboardType="number-pad" maxLength={4} error={countOk ? undefined : 'A whole number, 1 to 9999.'} />,
       next: glass ? 'Save' : 'Add the glass',
-      canNext: countOk,
-      onSkip: () => finish(src, null),
+      // Whether it's the main glass of its type needs the venue's glasses (none to know before the page is checked).
+      canNext: countOk && (!!known || !pageId),
+      onSkip: () => finish(src, glass?.count ?? null),
     },
   ];
   const title = trimmed(which.name) ?? GLASS_TYPE_LABEL[which.glass];

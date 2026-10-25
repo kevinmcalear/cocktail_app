@@ -1,4 +1,3 @@
-import { useRouter, type Href } from 'expo-router';
 import { useState } from 'react';
 
 import { Body, Caption } from '@/components/ds';
@@ -6,7 +5,7 @@ import { GlassThumb } from '@/components/glass/GlassModelPicker';
 import { GlassSheet } from '@/components/screens/kit/GlassSheet';
 import { KitItemPage } from '@/components/screens/kit/KitItemPage';
 import { KitList } from '@/components/screens/kit/KitList';
-import { KitPage, useOpenKitItem } from '@/components/screens/kit/KitPage';
+import { KitPage, useCloseKitItem, useOpenKitItem } from '@/components/screens/kit/KitPage';
 import { useActiveVenue } from '@/hooks/useActiveVenue';
 import { useBarGlassware, useBarPageId, useDeleteBarGlass, useSaveBarGlass, type BarGlass } from '@/hooks/useBarGlassware';
 import { useCapabilities } from '@/hooks/useCapabilities';
@@ -14,7 +13,7 @@ import { useDropdowns } from '@/hooks/useDropdowns';
 import { glassModelSize } from '@/hooks/useGlassModels';
 import { useIsWideWeb } from '@/hooks/useIsWideWeb';
 import { GLASS_TYPE_LABEL, glassCapacity } from '@/lib/glassware';
-import { kitSourceLine } from '@/lib/venueKit';
+import { kitLine, kitSourceLine } from '@/lib/venueKit';
 
 const FAILED = 'Couldn’t save that. Check your connection and try again.';
 
@@ -22,7 +21,6 @@ const FAILED = 'Couldn’t save that. Check your connection and try again.';
 const glassName = (g: BarGlass) => (g.name && g.name !== g.model?.name ? g.name : GLASS_TYPE_LABEL[g.glass]);
 /** The real glass it is: "Urban Bar Retro Coupette 15cl". */
 const realGlass = (g: BarGlass) => (g.model ? [g.model.maker?.display_name, g.model.name].filter(Boolean).join(' ') : null);
-const lowerFirst = (s: string) => (s ? s[0].toLowerCase() + s.slice(1) : s);
 const source = (g: BarGlass) => kitSourceLine({ source: g.source, supplier_name: g.supplier_name, note: null });
 
 /**
@@ -50,10 +48,12 @@ export function GlasswareScreen({ barId, openId }: { barId: string; openId?: str
     <KitList
       sections={[
         {
-          entries: glasses.map((g) => {
-            const parts = [realGlass(g) ?? 'Not matched to a real glass yet', source(g)].filter(Boolean);
-            return { id: g.id, name: glassName(g), line: parts.map((p, i) => (i ? lowerFirst(p) : p)).join(' · '), thumb: <GlassThumb glass={g.glass} variant={g.variant} /> };
-          }),
+          entries: glasses.map((g) => ({
+            id: g.id,
+            name: glassName(g),
+            line: kitLine([realGlass(g) ?? 'Not matched to a real glass yet', source(g)]),
+            thumb: <GlassThumb glass={g.glass} variant={g.variant} />,
+          })),
         },
       ]}
       openId={openId}
@@ -73,7 +73,8 @@ export function GlasswareScreen({ barId, openId }: { barId: string; openId?: str
         intro={`The glasses ${venue?.name ?? 'the venue'} pours into. Drinks are drawn in them, and the wizard offers them first.`}
         openId={openId}
         openName={opened ? glassName(opened) : null}
-        loading={isLoading}
+        loading={isLoading || pageLoading}
+        failed={!!error}
         list={list}
         item={opened ? <GlassPage barId={barId} pageId={pageId ?? null} glass={opened} others={glasses} canEdit={canEdit} onChange={(startAt) => setSheet({ glass: opened, startAt })} /> : null}
       />
@@ -94,8 +95,8 @@ interface GlassPageProps {
 
 /** One glass, opened (step 2): which glass, where it comes from, how many. */
 function GlassPage({ barId, pageId, glass, others, canEdit, onChange }: GlassPageProps) {
-  const router = useRouter();
   const wide = useIsWideWeb();
+  const close = useCloseKitItem(barId, 'glassware');
   const items = useDropdowns().data?.glassware ?? [];
   const save = useSaveBarGlass(barId, pageId);
   const remove = useDeleteBarGlass(barId);
@@ -131,7 +132,7 @@ function GlassPage({ barId, pageId, glass, others, canEdit, onChange }: GlassPag
           : []),
       ]}
       onEdit={change(0)}
-      onRemove={canEdit ? () => remove.mutate(glass.id, { onSuccess: () => router.replace(`/settings/bar/${barId}/glassware` as Href) }) : undefined}
+      onRemove={canEdit ? () => remove.mutate(glass.id, { onSuccess: close }) : undefined}
       removing={remove.isPending}
       error={save.error || remove.error ? FAILED : null}
     />

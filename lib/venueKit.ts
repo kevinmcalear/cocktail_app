@@ -79,6 +79,20 @@ export function iceLooksLine(ice: IceLooks & { stamped?: boolean; frozen_inside?
     .join(' · ');
 }
 
+/** A count the database takes (bar_kit.count, bar_glassware.count): empty, or a whole number from 1 to 9999. */
+export function kitCount(text: string): { n: number | null; ok: boolean } {
+  const n = text.trim() ? Number(text.trim()) : null;
+  return { n, ok: n == null || (Number.isInteger(n) && n >= 1 && n <= 9999) };
+}
+
+/** A list row's one line: "Prep kitchen · 2 · already ours", the parts after the first starting small. */
+export function kitLine(parts: readonly (string | null | undefined)[]): string {
+  return parts
+    .filter((p): p is string => !!p)
+    .map((p, i) => (i ? p[0].toLowerCase() + p.slice(1) : p))
+    .join(' · ');
+}
+
 /** Where a tool is (bar_kit.location). */
 export const TOOL_LOCATION_LABEL: Record<'bar' | 'prep', string> = { bar: 'Behind the bar', prep: 'Prep kitchen' };
 

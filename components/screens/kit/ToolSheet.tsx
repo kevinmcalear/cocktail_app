@@ -6,9 +6,9 @@ import { space } from '@/constants/tokens';
 import { useBarKit, useSaveTool, type KitRow, type ToolChange } from '@/hooks/useBarKit';
 import { useVenueSuppliers } from '@/hooks/useVenueSuppliers';
 import { EQUIPMENT, equipmentById } from '@/lib/techniques/equipment';
-import { TOOL_LOCATION_LABEL } from '@/lib/venueKit';
+import { kitCount, TOOL_LOCATION_LABEL } from '@/lib/venueKit';
 
-import { KitAddSheet, KitChipGroup, type KitQuestion } from './KitAddSheet';
+import { KitAddSheet, KitChipGroup, useOpenKey, type KitQuestion } from './KitAddSheet';
 import { SourceQuestion, trimmed, type KitSource } from './SourceQuestion';
 
 const FAILED = 'Couldn’t save that. Check your connection and try again.';
@@ -29,7 +29,7 @@ export interface ToolSheetProps {
 
 /** Add a tool, or change one: which tool, where it comes from, where it is. */
 export function ToolSheet(props: ToolSheetProps) {
-  return props.visible ? <ToolSheetBody key={props.tool?.id ?? 'new'} {...props} /> : null;
+  return <ToolSheetBody key={useOpenKey(props.visible)} {...props} />;
 }
 
 function ToolSheetBody({ barId, visible, onClose, tool, initialKey, startAt = 0, onSaved }: ToolSheetProps) {
@@ -42,11 +42,12 @@ function ToolSheetBody({ barId, visible, onClose, tool, initialKey, startAt = 0,
   const [own, setOwn] = useState(!!tool && !tool.key);
   const [term, setTerm] = useState('');
   const search = useDeferredValue(term).trim().toLowerCase();
-  const [src, setSrc] = useState<KitSource>({ source: tool?.source ?? null, supplier_id: tool?.supplier_id ?? null, note: tool?.note ?? '' });
+  // What it said before: Skip leaves it so.
+  const [saved] = useState<KitSource>(() => ({ source: tool?.source ?? null, supplier_id: tool?.supplier_id ?? null, note: tool?.note ?? '' }));
+  const [src, setSrc] = useState<KitSource>(saved);
   const [location, setLocation] = useState<'bar' | 'prep' | null>((tool?.location as 'bar' | 'prep' | null) ?? (key ? (equipmentById(key)?.kind === 'bar' ? 'bar' : 'prep') : null));
   const [count, setCount] = useState(tool?.count ? String(tool.count) : '');
-  const n = count.trim() ? Number(count.trim()) : null;
-  const countOk = n == null || (Number.isInteger(n) && n >= 1 && n <= 9999);
+  const { n, ok: countOk } = kitCount(count);
 
   // Ours not on the venue's list yet, matching the search; every one with none typed.
   const ours = EQUIPMENT.filter((e) => e.id !== key && !have.includes(e.id) && (!search || e.name.toLowerCase().includes(search) || e.what.toLowerCase().includes(search)));
@@ -106,7 +107,7 @@ function ToolSheetBody({ barId, visible, onClose, tool, initialKey, startAt = 0,
       body: <SourceQuestion kind="tool" value={src} onChange={setSrc} suppliers={suppliers} />,
       next: 'Next',
       onSkip: () => {
-        setSrc({ source: null, supplier_id: null, note: src.note });
+        setSrc(saved);
         setStep(2);
       },
     },
@@ -125,7 +126,7 @@ function ToolSheetBody({ barId, visible, onClose, tool, initialKey, startAt = 0,
       ),
       next: tool ? 'Save' : 'Add the tool',
       canNext: countOk,
-      onSkip: () => finish(src, null, null),
+      onSkip: () => finish(src, (tool?.location as 'bar' | 'prep' | null) ?? null, tool?.count ?? null),
     },
   ];
 
@@ -139,7 +140,7 @@ function ToolSheetBody({ barId, visible, onClose, tool, initialKey, startAt = 0,
       question={questions[step]}
       onNext={() => (step < 2 ? setStep(step + 1) : finish(src, location, n))}
       saving={save.isPending}
-      error={save.error ? FAILED : null}
+      error={save.error ? ((save.error as { code?: string }).code === '23505' ? 'That tool is already in the kit. Open it there to change it.' : FAILED) : null}
     />
   );
 }

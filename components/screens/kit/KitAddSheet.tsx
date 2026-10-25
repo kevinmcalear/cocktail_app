@@ -1,10 +1,24 @@
-import type { ReactNode } from 'react';
+import { useState, type ReactNode } from 'react';
 import { StyleSheet, View } from 'react-native';
 
 import { Body, Button, Caption, Headline, PressableScale, Sheet, SheetScrollView, useDs, useSheetClose } from '@/components/ds';
 import { IconSymbol } from '@/components/ui/icon-symbol';
 import type { IconName } from '@/components/ds';
 import { radius, space } from '@/constants/tokens';
+
+/**
+ * A key for the sheet's questions that changes each time it opens: they
+ * start from what they're given, and stay mounted while the sheet animates out.
+ */
+export function useOpenKey(visible: boolean): number {
+  const [was, setWas] = useState(visible);
+  const [opened, setOpened] = useState(0);
+  if (visible !== was) {
+    setWas(visible);
+    if (visible) setOpened(opened + 1);
+  }
+  return opened;
+}
 
 /** One question of the Add sheet. */
 export interface KitQuestion {

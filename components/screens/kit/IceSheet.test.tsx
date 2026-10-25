@@ -42,7 +42,7 @@ test('Add ice: a clear 50 mm large cube, bought from a supplier, is saved with t
   });
 });
 
-test('Changing an ice keeps the bar’s own name and opens where it comes from; Skip saves it unsaid', async () => {
+test('Changing an ice keeps the bar’s own name and opens where it comes from; Skip leaves that as it was', async () => {
   const ice = {
     id: 'prism', name: 'Prism cube', shape: 'other' as const, draw_as: 'large', size_mm: 45, length_mm: null, clear: true, stamped: false,
     frozen_inside: 'A glass prism', source: 'made', supplier_id: null, supplier_name: null, machine: null, note: null,
@@ -50,5 +50,5 @@ test('Changing an ice keeps the bar’s own name and opens where it comes from; 
   await renderWithTamagui(<IceSheet barId="bar" visible ice={ice} startAt={1} onClose={() => {}} />);
   expect(screen.getByRole('radio', { name: /^We make it/, checked: true })).toBeTruthy();
   await fireEvent.press(screen.getByRole('button', { name: 'Skip' }));
-  expect(mockSave.mock.calls[0][0]).toMatchObject({ id: 'prism', name: 'Prism cube', shape: 'other', draw_as: 'large', frozen_inside: 'A glass prism', source: null });
+  expect(mockSave.mock.calls[0][0]).toMatchObject({ id: 'prism', name: 'Prism cube', shape: 'other', draw_as: 'large', frozen_inside: 'A glass prism', source: 'made' });
 });

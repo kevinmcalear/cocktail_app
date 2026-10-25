@@ -1,6 +1,6 @@
 import assert from 'node:assert/strict';
 
-import { houseIce, iceDrawKind, iceMm, ICE_KINDS, isVenueIce, kitIceRow, iceLooksLine, iceName, kitSourceLine, supplierLine, toolName, venueIceKinds, venueIceNames } from './venueKit';
+import { houseIce, iceDrawKind, iceMm, kitCount, kitLine, ICE_KINDS, isVenueIce, kitIceRow, iceLooksLine, iceName, kitSourceLine, supplierLine, toolName, venueIceKinds, venueIceNames } from './venueKit';
 
 // The drawings' kinds less 'none' (item_ice.draw_as, private.house_ice): keep them in step.
 assert.deepEqual([...ICE_KINDS], ['cubes', 'large', 'spear', 'crushed', 'pebble', 'shaved', 'sphere']);
@@ -63,3 +63,10 @@ assert.equal(iceLooksLine({ shape: 'cubes', clear: false, frozen_inside: 'A viol
 
 assert.equal(toolName({ name: null, key: 'jigger' }), 'Jigger');
 assert.equal(toolName({ name: 'Ice stamp', key: null }), 'Ice stamp');
+
+assert.equal(kitLine(['Prep kitchen', null, '2', 'Already ours']), 'Prep kitchen · 2 · already ours');
+assert.equal(kitLine([null, 'Bought from Harbour Supply']), 'Bought from Harbour Supply');
+assert.deepEqual(kitCount(' 24 '), { n: 24, ok: true });
+assert.deepEqual(kitCount(''), { n: null, ok: true });
+assert.equal(kitCount('0').ok, false);
+assert.equal(kitCount('2.5').ok, false);
