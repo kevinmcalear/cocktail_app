@@ -2486,6 +2486,42 @@ export type Database = {
           },
         ]
       }
+      item_spellings: {
+        Row: {
+          created_at: string
+          item_id: string
+          saved_by: string | null
+          spelling: string
+        }
+        Insert: {
+          created_at?: string
+          item_id: string
+          saved_by?: string | null
+          spelling: string
+        }
+        Update: {
+          created_at?: string
+          item_id?: string
+          saved_by?: string | null
+          spelling?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "item_spellings_item_id_fkey"
+            columns: ["item_id"]
+            isOneToOne: false
+            referencedRelation: "app_item_presentation"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "item_spellings_item_id_fkey"
+            columns: ["item_id"]
+            isOneToOne: false
+            referencedRelation: "items"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       item_steps: {
         Row: {
           body: string
@@ -6491,6 +6527,7 @@ export type Database = {
           ticket_url: string
         }[]
       }
+      near_score: { Args: { p_name: string; p_query: string }; Returns: number }
       next_pair_notes: {
         Args: { p_limit?: number }
         Returns: {
@@ -6728,6 +6765,10 @@ export type Database = {
         Returns: undefined
       }
       save_pair_notes: { Args: { p_notes: Json }; Returns: number }
+      save_spelling: {
+        Args: { p_item_id: string; p_typed: string }
+        Returns: boolean
+      }
       schedule_menu: {
         Args: {
           p_menu_id: string
