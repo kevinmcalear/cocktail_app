@@ -5,9 +5,10 @@ import { IceThumb } from '@/components/ds/IceThumb';
 import { GlassThumb } from '@/components/glass/GlassModelPicker';
 import { GlassSheet } from '@/components/screens/kit/GlassSheet';
 import { IceSheet, iceThumbKind } from '@/components/screens/kit/IceSheet';
+import { drawnLine, GlassPhoto, RedrawLinks, SavedNote, ShareGlass, tracedFacts } from '@/components/screens/kit/draw/TracedGlass';
 import { KitItemPage } from '@/components/screens/kit/KitItemPage';
 import { KitList } from '@/components/screens/kit/KitList';
-import { KitPage, useCloseKitItem, useOpenKitItem } from '@/components/screens/kit/KitPage';
+import { KitPage, useCloseKitItem, useJustDrawn, useOpenDrawnGlass, useOpenKitItem } from '@/components/screens/kit/KitPage';
 import type { BarGlass } from '@/hooks/useBarGlassware';
 import { useHomeGlassware, useHomeIce, useRemoveHomeGlass, useRemoveHomeIce, useSaveHomeGlass, useSaveHomeIce } from '@/hooks/useHomeKit';
 import { useIsWideWeb } from '@/hooks/useIsWideWeb';
@@ -18,7 +19,7 @@ import { iceLooksLine, inTheGlass, kitLine, kitSourceLine } from '@/lib/venueKit
 const FAILED = 'Couldn’t save that. Check your connection and try again.';
 
 const glassName = (g: BarGlass) => (g.name && g.name !== g.model?.name ? g.name : GLASS_TYPE_LABEL[g.glass]);
-const realGlass = (g: BarGlass) => (g.model ? [g.model.maker?.display_name, g.model.name].filter(Boolean).join(' ') : null);
+const realGlass = (g: BarGlass) => (g.model ? [g.model.maker?.display_name, g.model.name].filter(Boolean).join(' ') : g.outline ? drawnLine(g) : null);
 // At home "bought" has no supplier: from a shop.
 const glassFrom = (g: BarGlass) => (g.source === 'bought' ? 'Bought' : kitSourceLine({ source: g.source, supplier_name: null, note: null }));
 const iceFrom = (i: VenueIce) => kitSourceLine({ ...i, length_mm: null });
@@ -35,9 +36,11 @@ export function HomeGlasswareScreen({ openId }: { openId?: string | null }) {
   const wide = useIsWideWeb();
   const open = useOpenKitItem(null, 'glassware', openId);
   const close = useCloseKitItem(null, 'glassware');
-  const [sheet, setSheet] = useState<{ glass: BarGlass | null; startAt: 0 | 1 | 2 } | null>(null);
+  const [sheet, setSheet] = useState<{ glass: BarGlass | null; startAt: 0 | 1 | 2; draw?: 'photo' | 'size' } | null>(null);
+  const justDrawn = useJustDrawn();
+  const openDrawn = useOpenDrawnGlass(null, openId);
   const opened = openId ? (glasses.find((g) => g.id === openId) ?? null) : null;
-  const change = (at: 0 | 1 | 2) => () => setSheet({ glass: opened, startAt: at });
+  const change = (at: 0 | 1 | 2, draw?: 'photo' | 'size') => () => setSheet({ glass: opened, startAt: at, draw });
 
   return (
     <>
@@ -57,7 +60,7 @@ export function HomeGlasswareScreen({ openId }: { openId?: string | null }) {
             <Caption tone="muted">Loading…</Caption>
           ) : (
             <KitList
-              sections={[{ entries: glasses.map((g) => ({ id: g.id, name: glassName(g), line: kitLine([realGlass(g) ?? 'Not matched to a real glass yet', glassFrom(g)]), thumb: <GlassThumb glass={g.glass} variant={g.variant} /> })) }]}
+              sections={[{ entries: glasses.map((g) => ({ id: g.id, name: glassName(g), line: kitLine([realGlass(g) ?? 'Not matched to a real glass yet', glassFrom(g)]), thumb: <GlassThumb glass={g.glass} variant={g.variant} outline={g.outline} /> })) }]}
               openId={openId}
               onOpen={open}
               addLabel="Add a glass"
@@ -72,9 +75,11 @@ export function HomeGlasswareScreen({ openId }: { openId?: string | null }) {
               kind="Glassware"
               name={glassName(opened)}
               showTitle={wide}
-              thumb={<GlassThumb glass={opened.glass} variant={opened.variant} size={72} />}
+              notice={justDrawn ? <SavedNote where="your glassware" /> : null}
+              thumb={<GlassThumb glass={opened.glass} variant={opened.variant} outline={opened.outline} size={72} />}
               facts={[
                 { label: 'Which glass', value: realGlass(opened) ?? 'Not matched to a real glass yet', onChange: change(0) },
+                ...tracedFacts(opened, change(0, 'size')),
                 { label: 'Where it comes from', value: glassFrom(opened) || 'Not said yet', onChange: change(1) },
                 { label: 'How many', value: opened.count ? String(opened.count) : 'Not said yet', onChange: change(2) },
               ]}
@@ -82,7 +87,15 @@ export function HomeGlasswareScreen({ openId }: { openId?: string | null }) {
               onRemove={() => remove.mutate(opened.id, { onSuccess: close })}
               removing={remove.isPending}
               error={remove.error || save.error ? FAILED : null}
-            />
+            >
+              {opened.outline ? (
+                <>
+                  <ShareGlass glass={opened} home venueName="" canEdit />
+                  <GlassPhoto glass={opened} home venueName="" canEdit invalidate={['home-glassware']} />
+                  <RedrawLinks glass={opened} onRedraw={change(0, 'photo')} onFix={change(0, 'size')} />
+                </>
+              ) : null}
+            </KitItemPage>
           ) : null
         }
       />
@@ -93,8 +106,12 @@ export function HomeGlasswareScreen({ openId }: { openId?: string | null }) {
         visible={!!sheet}
         glass={sheet?.glass}
         startAt={sheet?.startAt}
+        draw={sheet?.draw}
         onClose={() => setSheet(null)}
         onSave={(row) => save.mutateAsync({ ...row, is_default: !glasses.some((g) => g.id !== row.id && g.glass === row.glass && g.is_default) })}
+        onSaved={(id, wasDrawn) => {
+          if (wasDrawn && id) openDrawn(id);
+        }}
       />
     </>
   );

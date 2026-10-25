@@ -1,4 +1,4 @@
-import { useRouter, type Href } from 'expo-router';
+import { useLocalSearchParams, useRouter, type Href } from 'expo-router';
 import type { ReactNode } from 'react';
 import { StyleSheet, View } from 'react-native';
 
@@ -20,6 +20,17 @@ export function useOpenKitItem(barId: string | null, kind: KitKind, openId: stri
   const router = useRouter();
   return (id: string) => (openId ? router.replace(kitItemHref(barId, kind, id)) : router.push(kitItemHref(barId, kind, id)));
 }
+
+/** A glass just drawn from a photo opens saying so (Draw my glass, step 6): `?drawn=1`, which useJustDrawn reads. */
+export function useOpenDrawnGlass(barId: string | null, openId: string | null | undefined) {
+  const router = useRouter();
+  return (id: string) => {
+    const href = `${kitItemHref(barId, 'glassware', id)}?drawn=1` as Href;
+    return openId ? router.replace(href) : router.push(href);
+  };
+}
+
+export const useJustDrawn = () => useLocalSearchParams<{ drawn?: string }>().drawn === '1';
 
 /** After Remove: back to the list it was opened from, or to the list when it was opened by a link. */
 export function useCloseKitItem(barId: string | null, kind: KitKind) {

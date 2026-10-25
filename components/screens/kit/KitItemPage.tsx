@@ -31,6 +31,8 @@ export interface KitItemPageProps {
   error?: string | null;
   /** On a phone the page head already says the name. */
   showTitle?: boolean;
+  /** Above it all: "Saved on Little Rye’s glassware." */
+  notice?: ReactNode;
 }
 
 /**
@@ -38,13 +40,14 @@ export interface KitItemPageProps {
  * glass, an ice or a tool. The drawing, a few facts you can change, how it
  * connects, and Remove from Kit.
  */
-export function KitItemPage({ kind, name, thumb, facts, children, onEdit, onRemove, removing, error, showTitle }: KitItemPageProps) {
+export function KitItemPage({ kind, name, thumb, facts, children, onEdit, onRemove, removing, error, showTitle, notice }: KitItemPageProps) {
   const ds = useDs();
   const remove = async () => {
     if (await confirmAsync({ title: `Remove ${name}?`, message: 'It comes off the venue’s kit.', confirmText: 'Remove', destructive: true })) onRemove?.();
   };
   return (
     <View style={styles.page}>
+      {notice}
       <View style={styles.head}>
         {thumb}
         <View style={styles.flex}>
