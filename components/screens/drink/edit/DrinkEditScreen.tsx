@@ -258,11 +258,11 @@ export function EditPage({ editor, id, onExit }: { editor: DrinkEditor; id: stri
             // A new line goes straight to its amount.
             if (picking.swap === null) setPad(at);
           }}
-          onNew={async (name) => {
+          onNew={async (name, role) => {
             setPicking(null);
             // A draft saves first, so coming back doesn't lose its spec and the new ingredient knows where to go.
             const parent = draft ? await draft.persistDraft(true) : id;
-            router.push({ pathname: '/add-ingredient', params: { name, barId: editor.barId || '', attachTo: parent || '' } });
+            router.push({ pathname: '/add-ingredient', params: { name, role: role ?? '', barId: editor.barId || '', attachTo: parent || '' } });
           }}
         />
       ) : null}

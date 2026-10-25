@@ -5,7 +5,7 @@
  * wizard (IngredientsStep) opens the house prep steps from these.
  */
 import { searchIngredients, type IngredientAlias, type IngredientRow } from '@/lib/ingredientNames';
-import { capitalize } from '@/lib/stringUtils';
+import { capitalize, capitalizeFirst } from '@/lib/stringUtils';
 import type { Technique } from '@/lib/techniques';
 import { FITS, looksMadeInHouse, startsFrom, waysToMake } from '@/lib/techniques/makeIt';
 import { nameParts, splitName } from '@/lib/techniques/template';
@@ -95,4 +95,22 @@ export function readHouse<T extends IngredientRow & { generic_id?: string | null
   const { before, word } = splitName(text);
   const phrase = [...before, technique.word ?? word ?? technique.name].join(' ').toLowerCase();
   return { technique, adjunct, base, bottles, phrase };
+}
+
+// "House", "homemade", "in-house", "house-made": the words a spec uses for one of its own.
+const HOUSE = /\b(?:in[- ]?house|house[- ]?made|home[- ]?made|house)\b/i;
+const LEADING_HOUSE = /^(?:(?:our|the)\s+)?(?:in[- ]?house|house[- ]?made|home[- ]?made|house)\s+/i;
+const TRAILING_HOUSE = /[\s,]*\(?(?:in[- ]?house|house[- ]?made|home[- ]?made)\)?$/i;
+
+/** The word that says a line is made here ("house" in "house miso banana liqueur"), lower case; null when none does. Make it in-house is then offered first (call 12). */
+export const houseWord = (name: string): string | null => name.match(HOUSE)?.[0].toLowerCase() ?? null;
+
+/**
+ * The recipe's name without the words that only say it's made here:
+ * "house miso banana liqueur" is "Miso banana liqueur", "Orgeat (house-made)"
+ * is "Orgeat". A name that is only those words stays as it was.
+ */
+export function houseName(name: string): string {
+  const bare = name.trim().replace(LEADING_HOUSE, '').replace(TRAILING_HOUSE, '').trim();
+  return capitalizeFirst(bare || name);
 }

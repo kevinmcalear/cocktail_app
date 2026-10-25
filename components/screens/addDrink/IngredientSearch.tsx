@@ -37,8 +37,8 @@ export interface IngredientSearchProps {
   coreIds?: ReadonlySet<string>;
   /** Holds off offering a new one until the list is in, so a known bottle isn't added twice. */
   loading?: boolean;
-  /** With `amounts`, the pour typed before the name ("30 pommeau"). */
-  onPick: (pick: WizardPick, pour?: TypedPour) => void;
+  /** With `amounts`, the pour typed before the name ("30 pommeau"). `named`: picked as "Just add the name", so its line doesn't ask what it is. */
+  onPick: (pick: WizardPick, pour?: TypedPour, named?: boolean) => void;
   label: string;
   /** The field's hint, when it says more than its label. */
   placeholder?: string;
@@ -142,7 +142,7 @@ export function IngredientSearch(props: IngredientSearchProps) {
       icon="new"
       onPress={() => {
         if (later) onLater?.(q, pour ?? undefined);
-        else onPick({ id: null, name: q }, pour ?? undefined);
+        else onPick({ id: null, name: q }, pour ?? undefined, true);
         done();
       }}
     />

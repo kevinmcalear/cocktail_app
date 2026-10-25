@@ -1,6 +1,7 @@
 import { useLocalSearchParams, useRouter } from 'expo-router';
 
 import { VenueBrandProvider } from '@/components/nav/VenueBrandProvider';
+import type { IngredientRole } from '@/lib/ingredientWizard';
 import { useAppStore } from '@/store/useAppStore';
 
 import { AddIngredientWizard } from './AddIngredientWizard';
@@ -19,13 +20,14 @@ interface Props {
  */
 export function AddIngredientRoute({ isInline, barIdProp, onClose, onSave }: Props) {
   const router = useRouter();
-  const params = useLocalSearchParams<{ barId?: string; name?: string; attachTo?: string }>();
+  const params = useLocalSearchParams<{ barId?: string; name?: string; attachTo?: string; role?: string }>();
   const setRecentlyCreatedItem = useAppStore((s) => s.setRecentlyCreatedItem);
   const goBack = () => (router.canGoBack() ? router.back() : router.replace('/(tabs)'));
   const wizard = (
     <AddIngredientWizard
       barId={(barIdProp !== undefined ? barIdProp : params.barId) || null}
       initialName={params.name}
+      initialRole={params.role === 'prep' || params.role === 'product' ? (params.role as IngredientRole) : null}
       embedded={!!isInline}
       onClose={onClose ?? goBack}
       onSaved={({ id, name }) => {

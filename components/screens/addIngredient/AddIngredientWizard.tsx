@@ -7,7 +7,7 @@ import { useDropdowns } from '@/hooks/useDropdowns';
 import { plainDbMessage } from '@/lib/dbError';
 import { amountLabel } from '@/lib/drinkWizard';
 import { sameIngredient } from '@/lib/ingredientNames';
-import { EMPTY_INGREDIENT, guessRole, hasIngredientContent, INGREDIENT_COPY, ingredientSteps, ROLE_COPY, type IngredientDraft, type IngredientStep } from '@/lib/ingredientWizard';
+import { EMPTY_INGREDIENT, guessRole, hasIngredientContent, INGREDIENT_COPY, ingredientSteps, ROLE_COPY, type IngredientDraft, type IngredientRole, type IngredientStep } from '@/lib/ingredientWizard';
 import { toastDone } from '@/lib/toast';
 import { useIngredientWizardStore, wizardPlace } from '@/store/useIngredientWizardStore';
 
@@ -23,6 +23,8 @@ export interface AddIngredientWizardProps {
   /** The venue it's added at; null or missing for a shared one. */
   barId?: string | null;
   initialName?: string | null;
+  /** What it is, when the spec it's for already said: made in-house, or a bottle you buy. */
+  initialRole?: IngredientRole | null;
   /** Inside the desktop workspace: no safe-area padding. */
   embedded?: boolean;
   onClose: () => void;
@@ -40,7 +42,7 @@ export function AddIngredientWizard(props: AddIngredientWizardProps) {
   return ready ? <Wizard {...props} /> : null;
 }
 
-function Wizard({ barId = null, initialName, embedded, onClose, onSaved }: AddIngredientWizardProps) {
+function Wizard({ barId = null, initialName, initialRole, embedded, onClose, onSaved }: AddIngredientWizardProps) {
   const place = wizardPlace(barId);
   const kept = useIngredientWizardStore((s) => s.kept[place]);
   const patch = useIngredientWizardStore((s) => s.patch);
@@ -74,8 +76,8 @@ function Wizard({ barId = null, initialName, embedded, onClose, onSaved }: AddIn
   // A name passed in ("Add 'Orgeat'" from a spec) starts a fresh draft.
   useEffect(() => {
     const kept = useIngredientWizardStore.getState().kept[place]?.draft;
-    if (initialName?.trim() && !(kept && hasIngredientContent(kept))) patch(place, { name: initialName.trim() });
-  }, [initialName, place, patch]);
+    if (initialName?.trim() && !(kept && hasIngredientContent(kept))) patch(place, { name: initialName.trim(), ...(initialRole ? { role: initialRole } : null) });
+  }, [initialName, initialRole, place, patch]);
 
   const save = () =>
     create.mutate(
