@@ -46,6 +46,9 @@ export interface ImportedEvent {
   kind: EventKind;
   starts_at: string;
   is_public: boolean;
+  description: string | null;
+  /** The guest's bar page, once linked (a guest shift or takeover). */
+  guest_profile_id: string | null;
   source_id: string;
   external_uid: string;
   duplicate_of: string | null;
@@ -63,7 +66,7 @@ export function useNewFromCalendars(barId: string | null | undefined) {
       const since = new Date(Date.now() - 86400000).toISOString();
       const { data, error } = await supabase
         .from('events')
-        .select('id, name, kind, starts_at, is_public, source_id, external_uid, duplicate_of, source:calendar_sources(url, starts_public, skipped_uids), original:duplicate_of(name)')
+        .select('id, name, kind, starts_at, is_public, description, guest_profile_id, source_id, external_uid, duplicate_of, source:calendar_sources(url, starts_public, skipped_uids), original:duplicate_of(name)')
         .eq('bar_id', barId!)
         .is('reviewed_at', null)
         .not('source_id', 'is', null)
@@ -91,6 +94,18 @@ export function useReviewImports() {
         const { error } = await supabase.from('events').update({ reviewed_at: now }).in('id', rest);
         if (error) throw error;
       }
+    },
+    onSettled: () => qc.invalidateQueries({ queryKey: ['week'] }),
+  });
+}
+
+/** "Link to <bar> so it's credited?": the imported guest shift links the guest's bar page, which credits its drinks. */
+export function useLinkImportGuest() {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: async ({ id, profileId }: { id: string; profileId: string }) => {
+      const { error } = await supabase.from('events').update({ guest_profile_id: profileId, guest_name: null }).eq('id', id);
+      if (error) throw error;
     },
     onSettled: () => qc.invalidateQueries({ queryKey: ['week'] }),
   });

@@ -15,8 +15,8 @@ export type Show =
  */
 export const LIST_FILTERS: { value: Show; label: string }[] = [
   { value: 'all', label: 'All' },
-  { value: 'staff', label: 'Classics' },
   { value: 'on-menu', label: 'On menu' },
+  { value: 'staff', label: 'Classics' },
   { value: 'past', label: 'Old drinks' },
   { value: 'rnd', label: 'R&D' },
 ];
@@ -48,7 +48,7 @@ export const DRINK_CATEGORIES: readonly ItemCategory[] = ['Cocktail', 'Beer', 'W
 const SHOWS = new Set<string>([...LIST_FILTERS, ...SHELF_FILTERS, ...TYPE_FILTERS, NEEDS_PRICE].map((f) => f.value));
 
 /**
- * The filters past All, Classics, On menu, Old drinks, Beer and Wine: a venue
+ * The filters past All, On menu, Classics, Old drinks, Beer and Wine: a venue
  * shows them once it switches on More library filters (the libraryExtras
  * feature, lib/venueFeatures.ts).
  */
@@ -170,7 +170,8 @@ export function venueShelves(
 
 /**
  * The groups of the chip row, in order (desktop draws a thin line between
- * them). A venue starts with All, Classics, On menu, Old drinks, then Beer and
+ * them). A venue starts with All, On menu, Classics, Old drinks (the phone's
+ * order, decided 24 Oct 2026), then Beer and
  * Wine; `extras` adds R&D, the shelves, Cocktails and Needs a price.
  */
 export function filterGroups(atVenue: boolean, canCost: boolean, extras = true): { value: Show; label: string }[][] {
