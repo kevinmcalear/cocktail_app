@@ -16,6 +16,9 @@ import { searchItemHref } from './openSearchItem';
 
 export type NearKind = 'drink' | 'bar' | 'person' | 'ingredient';
 
+/** What a picker can ask public.search_near for: the search's kinds, and makers (20261113600000). */
+export type PickKind = NearKind | 'maker';
+
 /** A close name. Plain JSON. */
 export interface NearHit {
   kind: NearKind;

@@ -128,7 +128,8 @@ export function useMakerSearch(term: string, makes?: string) {
         if (error) throw error;
         return (data ?? []) as MakerRef[];
       };
-      return close ? withNear(q, 'maker', read(), read, signal) : read();
+      // Narrowed to what they make, so ask for more close ones than are kept.
+      return close ? withNear(q, 'maker', read(), read, signal, makes ? 20 : 4) : read();
     },
   });
 }

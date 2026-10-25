@@ -72,6 +72,7 @@ before(async () => {
   ids.person = (await serviceInsert('profiles', { kind: 'person', is_public: true, handle: `snremi${run}`, display_name: `Remi Savage ${run}` })).id;
   ids.ingredient = (await serviceInsert('items', { name: `Chartreuse ${run}`, item_type: 'ingredient' })).id;
   ids.maker = (await serviceInsert('profiles', { kind: 'maker', is_public: true, handle: `snkimura${run}`, display_name: `Kimura Glass ${run}` })).id;
+  ids.hiddenMaker = (await serviceInsert('profiles', { kind: 'maker', is_public: false, handle: `snkimoro${run}`, display_name: `Kimoro Glass ${run}` })).id;
   await db.query('SELECT private.run_discover_dirty(100000)');
 });
 
@@ -119,6 +120,10 @@ describe('search_near', () => {
     assert.equal(without.some((r) => r.id === ids.maker), false, 'makers only when asked');
     const maker = (await rows(users.viewer.client, 'kimora glass', { p_kinds: ['maker'] })).find((r) => r.id === ids.maker);
     assert.deepEqual(maker && [maker.kind, maker.handle], ['maker', `snkimura${run}`]);
+    const asked = await rows(users.viewer.client, 'kimora glass', { p_kinds: ['maker'] });
+    assert.equal(asked.some((r) => r.id === ids.hiddenMaker), false, 'a maker page that isn’t public');
+    const plain = await rows(users.viewer.client, 'kimura glass', { p_kinds: ['maker'] });
+    assert.equal(plain.some((r) => r.id === ids.maker), false, 'what the plain search finds is left out');
   });
 
   test('a saved spelling comes back known, first', async () => {

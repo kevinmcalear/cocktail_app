@@ -3,7 +3,7 @@ import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { useSignedIn } from '@/ctx/AuthContext';
 import { useDebounced } from '@/hooks/useDiscover';
 import { areaParams, type Area } from '@/lib/nearMe';
-import { fromRow, type NearHit, type NearKind, type NearRow } from '@/lib/nearHits';
+import { fromRow, type NearHit, type NearKind, type NearRow, type PickKind } from '@/lib/nearHits';
 import { supabase } from '@/lib/supabase';
 
 const ANYWHERE: Area = { kind: 'anywhere' };
@@ -60,22 +60,24 @@ export type MaybeNear<T> = T & { near?: boolean };
  */
 export async function withNear<T extends { id: string }>(
   term: string,
-  kind: NearKind | 'maker',
+  kind: PickKind,
   plain: Promise<T[]>,
   read: (ids: string[]) => Promise<T[]>,
-  signal: AbortSignal
+  signal: AbortSignal,
+  /** How many close names to ask for: more when `read` narrows them further (makers of ice only). Four are kept. */
+  ask = 4
 ): Promise<MaybeNear<T>[]> {
-  const asked = term.trim().length >= 3 ? nearIds(term.trim(), kind, signal).catch(() => [] as string[]) : Promise.resolve([] as string[]);
+  const asked = term.trim().length >= 3 ? nearIds(term.trim(), kind, ask, signal).catch(() => [] as string[]) : Promise.resolve([] as string[]);
   const [rows, close] = await Promise.all([plain, asked]);
   const ids = close.filter((id) => !rows.some((r) => r.id === id));
   if (!ids.length) return rows;
   const found = await read(ids).catch(() => [] as T[]);
-  const near = ids.flatMap((id) => found.filter((r) => r.id === id)).map((r) => ({ ...r, near: true }));
+  const near = ids.flatMap((id) => found.filter((r) => r.id === id)).slice(0, 4).map((r) => ({ ...r, near: true }));
   return [...rows, ...near];
 }
 
-async function nearIds(term: string, kind: NearKind | 'maker', signal: AbortSignal): Promise<string[]> {
-  const { data, error } = await supabase.rpc('search_near', { p_query: term, p_kinds: [kind], p_limit: 4 }).abortSignal(signal);
+async function nearIds(term: string, kind: PickKind, limit: number, signal: AbortSignal): Promise<string[]> {
+  const { data, error } = await supabase.rpc('search_near', { p_query: term, p_kinds: [kind], p_limit: limit }).abortSignal(signal);
   if (error) throw error;
   return ((data ?? []) as NearRow[]).map((r) => r.id);
 }
