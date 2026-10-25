@@ -14,7 +14,7 @@ import { AddBarForm } from '@/components/screens/home/AddBar';
 import { suggestClassic } from '@/lib/classics';
 import { withArticle } from '@/lib/closestClassic';
 import { parseYear, searchByName, type StepProps } from '@/lib/drinkWizard';
-import { nearest } from '@/lib/nearName';
+import { nearAfter } from '@/lib/nearName';
 
 import type { CatalogIngredient } from './IngredientSearch';
 import { SameNameCard, useSameNamePicks } from './SameNameCard';
@@ -49,7 +49,7 @@ export function CreditsStep({ draft, set, venueName, ingredients, match, onRenam
   const suggested = close ?? (draft.name.trim() ? suggestClassic(draft.name, classics)?.classic : undefined);
   const riffResults = searchByName(riff, classics, 5);
   // "negorni": Negroni, under "Did you mean".
-  const riffNear = nearest(riff, classics.filter((c) => !riffResults.includes(c)), (c) => c.name, 3);
+  const riffNear = nearAfter(riff, classics, riffResults, (c) => c.name);
   const other = typeof draft.creator === 'object' ? draft.creator : null;
   const mine = !!me && (draft.creator === 'me' || draft.creator === null);
 
@@ -238,11 +238,6 @@ function PlacePick({ draft, set, label, match, onRename }: StepProps & Pick<Cred
           onCancel={() => setAdding(false)}
           onAdded={(v) => {
             set({ place: { id: v.id, name: v.display_name } });
-            setAdding(false);
-            setWhere('');
-          }}
-          onOpenExisting={(id) => {
-            set({ place: { id, name: typed } });
             setAdding(false);
             setWhere('');
           }}

@@ -368,8 +368,7 @@ export function usePartySearch(term: string, kind: 'guest' | 'brand') {
         type Row = { id: string; display_name: string; handle: string; locality: string | null; city: string | null; is_claimed: boolean; bar_id: string | null };
         return ((data ?? []) as Row[]).map((r) => ({ id: r.id, display_name: r.display_name, handle: r.handle, place: r.city ?? r.locality, claimed: r.is_claimed || !!r.bar_id }));
       };
-      const rows = await read();
-      return close ? withNear(q, 'bar', rows, read, signal) : rows;
+      return close ? withNear(q, 'bar', read(), read, signal) : read();
     },
   });
 }

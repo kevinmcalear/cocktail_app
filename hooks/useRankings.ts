@@ -377,8 +377,7 @@ export function usePublicBars(search: string, { near = false }: { near?: boolean
         if (error) throw error;
         return (data ?? []) as RankVenue[];
       };
-      const rows = await read();
-      return close ? withNear(term, 'bar', rows, read, signal) : rows;
+      return close ? withNear(term, 'bar', read(), read, signal) : read();
     },
   });
 }

@@ -6,7 +6,7 @@ import { NearPicks } from '@/components/search/NearPicks';
 import { IconSymbol } from '@/components/ui/icon-symbol';
 import { layout, space } from '@/constants/tokens';
 import { FAMILIES, rowMeta, searchTree, type TreeNode } from '@/lib/drinkTree';
-import { nearest } from '@/lib/nearName';
+import { nearAfter } from '@/lib/nearName';
 
 /**
  * Find a drink, bartender or bar in the history: a field with a search icon
@@ -19,7 +19,7 @@ export function HistorySearch({ nodes, onJump, autoFocus, compact }: { nodes: re
   const [query, setQuery] = useState('');
   const results = searchTree(nodes, query);
   // "jungel bird": Jungle Bird, after what matched (NearPicks).
-  const near = query.trim() ? nearest(query, nodes.filter((n) => !results.includes(n)), (n) => n.name, 3) : [];
+  const near = nearAfter(query, nodes, results, (n) => n.name);
   const row = (n: TreeNode) => (
     <PressableScale key={n.key} role="button" accessibilityLabel={`Show ${n.name}`} onPress={() => pick(n.key)} style={[styles.result, { borderBottomColor: ds.c.line }]}>
       <Body numberOfLines={1}>{n.name}</Body>

@@ -726,8 +726,7 @@ export function usePublicPeople(search: string, { near = false }: { near?: boole
           };
         });
       };
-      const rows = await read();
-      return close ? withNear(term, 'person', rows, read, signal) : rows;
+      return close ? withNear(term, 'person', read(), read, signal) : read();
     },
   });
 }

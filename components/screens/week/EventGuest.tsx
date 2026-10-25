@@ -60,12 +60,12 @@ export function EventGuest({ value, onChange, placeholder, bare }: { value: Gues
         autoCorrect={false}
         bare={bare}
       />
-      {found.length ? (
-        <View role="list" accessibilityLabel="Bars with a page here" style={styles.chips}>
-          {found.map(chip)}
+      {found.length || near.length ? (
+        <View role="list" accessibilityLabel="Bars with a page here" style={styles.wrap}>
+          {found.length ? <View style={styles.chips}>{found.map(chip)}</View> : null}
+          <NearPicks found={found.length > 0} near={near} render={chip} rowStyle={styles.chips} />
         </View>
       ) : null}
-      <NearPicks found={found.length > 0} near={near} render={chip} rowStyle={styles.chips} />
       {search.trim().length >= 2 ? <Caption tone="muted">Pick their bar to link its page and credit its drinks, or keep the name as typed.</Caption> : null}
     </View>
   );

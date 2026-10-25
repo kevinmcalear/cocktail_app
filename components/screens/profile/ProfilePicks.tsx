@@ -10,7 +10,7 @@ import { useMyMadeDrinks, useProfilePicks, useSetPick, useSetPicks } from '@/hoo
 import { useMyHadDrinks, useMyHadPicks, usePinDrink, useSetAllHadPicks, useSetHadPick } from '@/hooks/useRankings';
 import { sortHad, tallyBars, whereLine, type HadDrink } from '@/lib/hadDrinks';
 import { plural } from '@/lib/menus';
-import { nearest } from '@/lib/nearName';
+import { nearAfter } from '@/lib/nearName';
 import { pickedShown, SHARE_MODES, type ShareSection } from '@/lib/profiles';
 
 import { SafetyPage } from '../safety/SafetyPage';
@@ -78,7 +78,7 @@ function Picks({ profile, section }: { profile: MyProfile; section: ShareSection
   const filtered = rows?.filter((r) => filter === 'all' || (filter === 'shown') === shownOf(r));
   const visible = filtered?.filter((r) => !query || r.title.toLowerCase().includes(query));
   // "negorni": Negroni, after what matched (NearPicks).
-  const close = query && filtered && visible ? nearest(query, filtered.filter((r) => !visible.includes(r)), (r) => r.title, 3) : [];
+  const close = filtered && visible ? nearAfter(query, filtered, visible, (r) => r.title) : [];
   const shownCount = rows?.filter(shownOf).length ?? 0;
   const pinned = (rows ?? []).filter((r) => r.pin).sort((a, b) => (a.pin ?? 0) - (b.pin ?? 0));
 

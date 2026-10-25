@@ -59,8 +59,7 @@ export function useClaimableBars(search: string) {
           drinks: drinks?.[0]?.count ?? 0,
         }));
       };
-      const rows = await read();
-      return close ? withNear(term, 'bar', rows, read, signal) : rows;
+      return close ? withNear(term, 'bar', read(), read, signal) : read();
     },
   });
 }
