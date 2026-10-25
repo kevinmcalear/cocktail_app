@@ -241,7 +241,7 @@ function BatchBody({ name, lines, methodNames, lockedUntil, initialServes = 8, d
       {batch.method === 'stirred' && batch.abv !== null ? <FreezerCheck abv={batch.abv} freezerC={freezerC} onFreezerC={setFreezerC} /> : null}
       <Body tone="muted">{batch.note}</Body>
       {guessed ? (
-        <Caption tone="muted">{canEdit ? 'What stays out of the bottle is guessed from the names. Set it under Service on the drink page.' : 'What stays out of the bottle is guessed from the names.'}</Caption>
+        <Caption tone="muted">{canEdit ? 'What stays out of the bottle is guessed from the names. Set it in Edit, under Service.' : 'What stays out of the bottle is guessed from the names.'}</Caption>
       ) : null}
       <BatchActions
         name={name}

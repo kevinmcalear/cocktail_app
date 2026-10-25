@@ -3,11 +3,12 @@ import { StyleSheet, View } from 'react-native';
 
 import { Body, Caption, DsText, PressableScale, Spec, useBreakpoint, useDs } from '@/components/ds';
 import { fontFamilies, layout, radius, space } from '@/constants/tokens';
-import { useKit } from '@/hooks/useKit';
-import { guessKind, keepsText, KIND_TILES, KIND_WAYS, PREP_KINDS, prepAmounts, tileOf, wayOf, type PrepDraft, type PrepKindId } from '@/lib/prepKinds';
+import { useMakingKit } from '@/hooks/useBarKit';
+import { guessKind, keepsText, KIND_TILES, KIND_WAYS, PREP_KINDS, prepAmounts, tileOf, wayOf, waysByKit, type PrepDraft, type PrepKindId, type PrepWay } from '@/lib/prepKinds';
 import { formatQuantity, toQuantity } from '@/lib/quantity';
-import { equipmentById, missingKit, techniqueById } from '@/lib/techniques';
-import { waysToMake } from '@/lib/techniques/makeIt';
+import { techniqueById } from '@/lib/techniques';
+
+import { EveryTechnique, TechniqueRow } from './EveryTechnique';
 
 interface PrepKindStepProps {
   name: string;
@@ -18,28 +19,39 @@ interface PrepKindStepProps {
   onTechnique: (id: string) => void;
   /** "· change" on the amounts: the base's amount is set on the recipe step. */
   onChangeAmount: () => void;
+  /** The venue the drink is for, whose Kit the ways are checked against; null at home. */
+  bar?: { id: string; name: string } | null;
 }
 
 /**
  * New prep, first step (make-anything-steps-1, step 4): what kind it is
  * (each with what goes in it, the one the name suggests marked), then
- * "How?": the kind's ways (an infusion cold, sous vide or by nitrous; a
- * shrub cold, hot or as an oleo shrub) or, for a name a library technique
- * makes ("Clarified grapefruit"), those techniques, each with its time, kit
- * and how sure the sources are. A way that fills the method says so. Under
- * them, what the picked way takes and how it keeps.
+ * "How?". A syrup's or a shrub's ways are recipes (cold, hot, oleo); an
+ * infusion's, a wash's, a clarified juice's and a distillate's are the
+ * library's techniques, your kit first and the rest dimmed with I have this
+ * (step 4, more to it). Something else, or Every technique, opens the whole
+ * library. A way that fills the method says so. Under them, what the picked
+ * way takes and how it keeps.
  */
-export function PrepKindStep({ name, draft, combined, onKind, onTechnique, onChangeAmount }: PrepKindStepProps) {
+export function PrepKindStep({ name, draft, combined, onKind, onTechnique, onChangeAmount, bar = null }: PrepKindStepProps) {
   const ds = useDs();
-  const { kit } = useKit();
+  const { kit, where, add } = useMakingKit(bar);
   const columns = useBreakpoint() === 'phone' ? 2 : 3;
   const guess = guessKind(name);
   const named = guess ? tileOf(guess) : null;
-  // A technique the kinds don't list (a clarified juice) lights no kind.
-  const picked = draft.technique && !wayOf(draft) ? null : tileOf(draft.kind);
-  const kindWays = picked ? KIND_WAYS[picked] : undefined;
-  const techniques = kindWays ? [] : waysToMake(name);
+  // A technique the kinds don't list (a foam) is Something else.
+  const picked = tileOf(draft.kind);
+  const kindWays = KIND_WAYS[picked];
+  // An infusion's, a wash's, a clarified juice's ways are techniques: kit first.
+  const byKit = kindWays?.every((w) => w.fills) ? waysByKit(picked, kit) : null;
+  // Every technique, opened from under a kind's ways; Something else always shows it.
+  const [every, setEvery] = useState(false);
+  const all = picked === 'other' || every;
   const way = wayOf(draft);
+  const kitRow = (w: PrepWay) => {
+    const t = techniqueById(w.technique);
+    return t ? <TechniqueRow key={w.id} t={t} label={w.label} kit={kit} on={way?.id === w.id} onPress={() => onKind(picked, w.id)} onAdd={add} /> : null;
+  };
 
   return (
     <View style={styles.stack}>
@@ -53,7 +65,10 @@ export function PrepKindStep({ name, draft, combined, onKind, onTechnique, onCha
               role="radio"
               aria-checked={on}
               accessibilityLabel={`${k.name}, ${k.ratio}${k.id === named ? ', from the name' : ''}`}
-              onPress={() => onKind(k.id)}
+              onPress={() => {
+                setEvery(false);
+                onKind(k.id);
+              }}
               // A short last row widens to fill it: the board's eight kinds leave no gap.
               style={[styles.kind, { flexBasis: `${100 / columns - 4}%`, flexGrow: 1, backgroundColor: ds.c.surface, borderColor: on ? ds.accentText : 'transparent' }]}
             >
@@ -67,39 +82,39 @@ export function PrepKindStep({ name, draft, combined, onKind, onTechnique, onCha
         })}
       </View>
 
-      {kindWays || techniques.length ? (
+      {kindWays && picked !== 'other' ? (
         <View style={styles.stack}>
-          <Caption tone="muted">How?</Caption>
+          <Caption tone="muted">{byKit ? 'How? With your kit' : 'How?'}</Caption>
+          {byKit ? <Caption tone="muted">{`Your kit is on ${where}. Ways it covers come first; the rest stay here, dimmed, in case you have the kit and haven’t added it.`}</Caption> : null}
           <View role="radiogroup" accessibilityLabel="Way to make it" style={styles.stack}>
-            {kindWays?.map((w) => (
-              <WayRow
-                key={w.id}
-                name={w.name}
-                grade={techniqueById(w.technique)?.grade}
-                sub={[w.time, w.kit.join(', '), w.note].filter(Boolean).join(' · ')}
-                tip={w.tip}
-                on={way?.id === w.id}
-                onPress={() => onKind(picked!, w.id)}
-              />
-            ))}
-            {techniques.map((t) => {
-              const missing = kit.size ? missingKit(t, kit) : [];
-              const tools = t.equipment.map((id) => equipmentById(id)?.name ?? id);
-              return (
-                <WayRow
-                  key={t.id}
-                  name={t.name}
-                  grade={t.grade}
-                  sub={[t.time, tools.join(', ')].filter(Boolean).join(' · ')}
-                  tip={missing.length ? `Needs ${missing.join(', ')}` : undefined}
-                  label={`${t.name}. ${t.summary} ${t.time}`}
-                  on={draft.technique === t.id}
-                  onPress={() => onTechnique(t.id)}
-                />
-              );
-            })}
+            {byKit
+              ? byKit.have.map(kitRow)
+              : kindWays.map((w) => (
+                  <WayRow
+                    key={w.id}
+                    name={w.name}
+                    grade={techniqueById(w.technique)?.grade}
+                    sub={[w.time, w.kit.join(', '), w.note].filter(Boolean).join(' · ')}
+                    tip={w.tip}
+                    on={way?.id === w.id}
+                    onPress={() => onKind(picked, w.id)}
+                  />
+                ))}
+            {byKit?.need.length ? <Caption tone="muted">Needs kit you haven’t added</Caption> : null}
+            {byKit?.need.map(kitRow)}
           </View>
           {way?.fills ? <Caption tone="muted">{`${way.name} fills in the method: ${way.fills}.`}</Caption> : null}
+          {byKit && !every ? (
+            <PressableScale role="button" onPress={() => setEvery(true)} accessibilityLabel="Every technique" style={styles.all}>
+              <Body tone="accent">Every technique</Body>
+            </PressableScale>
+          ) : null}
+        </View>
+      ) : null}
+      {all ? (
+        <View style={styles.stack}>
+          <Caption tone="muted">{picked === 'other' ? 'Something else: every technique' : 'Every technique'}</Caption>
+          <EveryTechnique name={name} selected={draft.technique ?? null} kit={kit} onPick={onTechnique} onAdd={add} onWrite={() => onKind('other')} />
         </View>
       ) : null}
       {combined ? <Caption tone="muted">Dropping two lines together starts as Batch. Naming it changes the suggestion; you pick.</Caption> : null}

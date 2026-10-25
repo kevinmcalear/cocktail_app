@@ -13,7 +13,8 @@ export interface PrepFields {
   takes: string;
   takesNote: string;
   actions: string[];
-  steps: { key: string; body: string; timer: string }[];
+  /** `tools`: the equipment ids or a venue's own tool names the step needs (item_steps.equipment). */
+  steps: { key: string; body: string; timer: string; tools: string[] }[];
 }
 
 interface Card {
@@ -26,7 +27,7 @@ interface Card {
     storage: string | null;
     actions: string[];
   } | null;
-  steps: { body: string; timer_seconds: number | null }[];
+  steps: { body: string; timer_seconds: number | null; equipment?: string[] }[];
 }
 
 export const YIELD_UNITS = ['ml', 'L', 'g', 'kg'] as const;
@@ -40,16 +41,19 @@ export type KeepsUnit = (typeof KEEPS_UNITS)[number]['value'];
 export const STORAGE_PICKS = ['Fridge', 'Freezer', 'Shelf'] as const;
 
 let nextKey = 0;
-export const newStepField = (body = '', timer = '') => ({ key: `s${nextKey++}`, body, timer });
+export const newStepField = (body = '', timer = '', tools: string[] = []) => ({ key: `s${nextKey++}`, body, timer, tools });
 
-/** The card as the editor starts it: the largest whole unit for how long it keeps. */
-export function prepFields(card: Card | null | undefined): PrepFields {
+/** What a venue's ice makes: pieces, or a weight (crushed, shaved). */
+export const ICE_YIELD_UNITS = ['pieces', 'kg'] as const;
+
+/** The card as the editor starts it: the largest whole unit for how long it keeps. `units` are what Makes offers (ice: ICE_YIELD_UNITS). */
+export function prepFields(card: Card | null | undefined, units: readonly string[] = YIELD_UNITS): PrepFields {
   const p = card?.prep ?? null;
   const hours = p?.shelf_life_hours ?? null;
   const unit = [...KEEPS_UNITS].reverse().find((u) => !!hours && hours % u.hours === 0) ?? KEEPS_UNITS[1];
   return {
     yieldAmount: p?.yield_amount ? String(p.yield_amount) : '',
-    yieldUnit: p?.yield_unit && (YIELD_UNITS as readonly string[]).includes(p.yield_unit) ? p.yield_unit : 'ml',
+    yieldUnit: p?.yield_unit && units.includes(p.yield_unit) ? p.yield_unit : units[0],
     keeps: hours ? String(hours / unit.hours) : '',
     keepsUnit: unit.value,
     storage: p?.storage ?? '',
@@ -57,7 +61,7 @@ export function prepFields(card: Card | null | undefined): PrepFields {
     takesNote: p?.lead_time_note ?? '',
     actions: p?.actions ?? [],
     // Keys are left out of the compare (prepCardInput), so a fresh key never makes the page dirty.
-    steps: (card?.steps ?? []).map((s) => newStepField(s.body, s.timer_seconds ? String(Math.round(s.timer_seconds / 60)) : '')),
+    steps: (card?.steps ?? []).map((s) => newStepField(s.body, s.timer_seconds ? String(Math.round(s.timer_seconds / 60)) : '', s.equipment ?? [])),
   };
 }
 
@@ -89,7 +93,7 @@ export function prepCardInput(f: PrepFields) {
         storage: f.storage.trim() || null,
         actions: f.actions,
       },
-      steps: f.steps.filter((s) => s.body.trim()).map((s) => ({ body: s.body.trim(), timer_seconds: s.timer.trim() ? Number(s.timer) * 60 : null })),
+      steps: f.steps.filter((s) => s.body.trim()).map((s) => ({ body: s.body.trim(), timer_seconds: s.timer.trim() ? Number(s.timer) * 60 : null, equipment: s.tools })),
     },
   };
 }

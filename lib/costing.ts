@@ -98,8 +98,8 @@ export interface PackPrice {
  * drink_cost reads a bought bottle: volumes and weights meet through the
  * density, and any count (a wedge, a peel) is one of a pack counted in
  * each. Null when it can't be said: no amount, a top, a count against a
- * bottle. ponytail: a house prep's cost from its own recipe and yield is
- * left to drink_cost once the drink is saved.
+ * bottle. A house prep still in the draft costs from its parts on the
+ * desk (lib/prepCost.ts); once saved, drink_cost works it out.
  */
 export function lineCostMinor(amount: number | null, unit: string, pack: PackPrice, gPerMl: number): number | null {
   if (amount == null || !(pack.amount > 0)) return null;

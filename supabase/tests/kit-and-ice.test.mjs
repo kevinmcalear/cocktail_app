@@ -173,6 +173,31 @@ describe('a venue\'s ice', () => {
     assert.ok(blank, 'a blank tool refused');
   });
 
+  test('Prep saves an ice\'s whole recipe the way its editor does (PR 3), and nobody else changes it', async () => {
+    const prepper = users.prepper.client;
+    // Starts from: the line is replaced, not added to.
+    assert.ifError((await prepper.from('recipes').delete().eq('recipe_item_id', ids.clear)).error);
+    assert.ifError((await prepper.from('recipes').insert({ recipe_item_id: ids.clear, ingredient_item_id: ids.block, sort_order: 0 })).error);
+    assert.ifError((await prepper.from('recipes').update({ preparation_notes: 'the clear top only' }).eq('recipe_item_id', ids.clear)).error);
+    // Makes and Keeps, then the steps replaced with their tools.
+    assert.ifError((await prepper.from('item_prep').upsert({ item_id: ids.clear, yield_amount: 40, yield_unit: 'pieces', shelf_life_hours: 720, storage: 'Freezer', actions: [] }, { onConflict: 'item_id' })).error);
+    assert.ifError((await prepper.from('item_steps').delete().eq('item_id', ids.clear)).error);
+    assert.ifError((await prepper.from('item_steps').insert([
+      { item_id: ids.clear, position: 0, body: 'Temper the block.', equipment: [] },
+      { item_id: ids.clear, position: 1, body: 'Cut 50 mm cubes.', equipment: ['bandsaw', 'ice-stamp'] },
+    ])).error);
+    const { rows } = await db.query(
+      "SELECT (SELECT array_agg(ingredient_item_id) FROM public.recipes WHERE recipe_item_id = $1) AS lines, (SELECT yield_unit FROM public.item_prep WHERE item_id = $1) AS unit, (SELECT array_agg(array_to_string(equipment, ',') ORDER BY position) FROM public.item_steps WHERE item_id = $1) AS tools",
+      [ids.clear]
+    );
+    assert.deepEqual(rows[0], { lines: [ids.block], unit: 'pieces', tools: ['', 'bandsaw,ice-stamp'] });
+    // Without Prep: no deleting its line, no Makes.
+    await users.barback.client.from('recipes').delete().eq('recipe_item_id', ids.clear);
+    await users.barback.client.from('item_prep').update({ yield_amount: 1 }).eq('item_id', ids.clear);
+    const { rows: after } = await db.query('SELECT (SELECT count(*) FROM public.recipes WHERE recipe_item_id = $1)::int AS lines, (SELECT yield_amount FROM public.item_prep WHERE item_id = $1)::int AS makes', [ids.clear]);
+    assert.deepEqual(after[0], { lines: 1, makes: 40 });
+  });
+
   test('removing it is refused while a drink pours it or another ice starts from it', async () => {
     const { error: startsFrom } = await users.prepper.client.rpc('remove_venue_ice', { p_id: ids.block });
     assert.match(startsFrom?.message ?? '', /uses this ice/);

@@ -1,0 +1,24 @@
+{
+ "maker": "josephinenhutte",
+ "models": [
+  {
+   "name": "Josephine No. 2 Universal",
+   "series": "Josephine",
+   "designer": "Kurt Josef Zalto",
+   "model_code": null,
+   "glass": "wine",
+   "variant": null,
+   "capacity_ml": 550,
+   "capacity_as_stated": "550 ml",
+   "height_mm": 240,
+   "rim_mm": null,
+   "material": "crystal",
+   "product_url": "https://josephinen.com/products/josephine-2",
+   "source_urls": [
+    "https://josephinen.com/products/josephine-2",
+    "https://www.wineworldtasters.com/products/josephine-no-2-universal",
+    "https://vinumdesign.com/en/products/josephine-2-verre-universel-josephinen-hutte"
+   ]
+  }
+ ]
+}

@@ -1,0 +1,1423 @@
+{
+ "maker": "toyo.sasaki.glass",
+ "models": [
+  {
+   "name": "310 Line Cocktail 65 ml",
+   "series": "310 Line",
+   "designer": null,
+   "model_code": "31033",
+   "glass": "martini",
+   "variant": null,
+   "capacity_ml": 65,
+   "capacity_as_stated": "65 mL",
+   "height_mm": 105,
+   "rim_mm": null,
+   "material": "glass",
+   "product_url": "https://www.monotaro.com/g/06168538/",
+   "source_urls": [
+    "https://www.monotaro.com/g/06168538/",
+    "https://www.monotaro.com/p/4164/1820/"
+   ]
+  },
+  {
+   "name": "310 Line Liqueur 25 ml",
+   "series": "310 Line",
+   "designer": null,
+   "model_code": "31039",
+   "glass": "wine",
+   "variant": null,
+   "capacity_ml": 25,
+   "capacity_as_stated": "25 mL",
+   "height_mm": 92,
+   "rim_mm": null,
+   "material": "glass",
+   "product_url": "https://www.monotaro.com/g/06168540/",
+   "source_urls": [
+    "https://www.monotaro.com/g/06168540/",
+    "https://www.monotaro.com/p/4164/1838/"
+   ]
+  },
+  {
+   "name": "Chatelain On the Rocks 235 ml",
+   "series": "Chatelain",
+   "designer": null,
+   "model_code": "08309HS",
+   "glass": "rocks",
+   "variant": null,
+   "capacity_ml": 235,
+   "capacity_as_stated": "235 mL",
+   "height_mm": 82,
+   "rim_mm": null,
+   "material": "glass",
+   "product_url": "https://www.monotaro.com/g/00990778/",
+   "source_urls": [
+    "https://www.monotaro.com/g/00990778/",
+    "https://www.monotaro.com/p/0062/6176/"
+   ]
+  },
+  {
+   "name": "Hokuto 2 Whisky 60 ml",
+   "series": "Hokuto",
+   "designer": null,
+   "model_code": "P-01126-JAN",
+   "glass": "rocks",
+   "variant": null,
+   "capacity_ml": 60,
+   "capacity_as_stated": "60 mL",
+   "height_mm": 57,
+   "rim_mm": null,
+   "material": "glass",
+   "product_url": "https://www.monotaro.com/g/06168505/",
+   "source_urls": [
+    "https://www.monotaro.com/g/06168505/",
+    "https://www.monotaro.com/p/4164/1305/"
+   ]
+  },
+  {
+   "name": "HS Stack Tumbler 200 ml (00345HS)",
+   "series": "HS Stack",
+   "designer": null,
+   "model_code": "00345HS",
+   "glass": "rocks",
+   "variant": null,
+   "capacity_ml": 200.0,
+   "capacity_as_stated": "200 cc",
+   "height_mm": 80,
+   "rim_mm": null,
+   "material": "glass",
+   "product_url": "https://www.monotaro.com/g/00990785/",
+   "source_urls": [
+    "https://www.shonan-salan.com/view/item/000000004886",
+    "https://www.monotaro.com/g/00990785/",
+    "https://www.monotaro.com/p/0062/6273/"
+   ]
+  },
+  {
+   "name": "HS Stack Tumbler 200 ml (00366HS)",
+   "series": "HS Stack",
+   "designer": null,
+   "model_code": "00366HS",
+   "glass": "rocks",
+   "variant": null,
+   "capacity_ml": 200,
+   "capacity_as_stated": "200 mL",
+   "height_mm": 80,
+   "rim_mm": null,
+   "material": "glass",
+   "product_url": "https://www.monotaro.com/g/04354708/",
+   "source_urls": [
+    "https://www.monotaro.com/g/04354708/",
+    "https://www.monotaro.com/p/4414/4809/"
+   ]
+  },
+  {
+   "name": "HS Stack Tumbler 210 ml",
+   "series": "HS Stack",
+   "designer": null,
+   "model_code": "08004HS-SS",
+   "glass": "rocks",
+   "variant": null,
+   "capacity_ml": 210,
+   "capacity_as_stated": "210 mL",
+   "height_mm": 76,
+   "rim_mm": null,
+   "material": "glass",
+   "product_url": "https://www.monotaro.com/g/04354710/",
+   "source_urls": [
+    "https://www.monotaro.com/g/04354710/",
+    "https://www.monotaro.com/p/4414/4845/"
+   ]
+  },
+  {
+   "name": "HS Stack Tumbler 240 ml (00367HS)",
+   "series": "HS Stack",
+   "designer": null,
+   "model_code": "00367HS",
+   "glass": "rocks",
+   "variant": null,
+   "capacity_ml": 240,
+   "capacity_as_stated": "240 mL",
+   "height_mm": 95,
+   "rim_mm": null,
+   "material": "glass",
+   "product_url": "https://www.monotaro.com/g/04354708/",
+   "source_urls": [
+    "https://www.monotaro.com/g/04354708/",
+    "https://www.monotaro.com/p/4414/4818/"
+   ]
+  },
+  {
+   "name": "HS Stack Tumbler 240 ml (00368HS)",
+   "series": "HS Stack",
+   "designer": null,
+   "model_code": "00368HS",
+   "glass": "rocks",
+   "variant": null,
+   "capacity_ml": 240,
+   "capacity_as_stated": "240 mL",
+   "height_mm": 87,
+   "rim_mm": null,
+   "material": "glass",
+   "product_url": "https://www.monotaro.com/g/04354708/",
+   "source_urls": [
+    "https://www.monotaro.com/g/04354708/",
+    "https://www.monotaro.com/p/4414/4827/"
+   ]
+  },
+  {
+   "name": "HS Stack Tumbler 250 ml",
+   "series": "HS Stack",
+   "designer": null,
+   "model_code": "00346HS",
+   "glass": "rocks",
+   "variant": null,
+   "capacity_ml": 250.0,
+   "capacity_as_stated": "250 cc",
+   "height_mm": 95,
+   "rim_mm": null,
+   "material": "glass",
+   "product_url": "https://www.monotaro.com/g/00990785/",
+   "source_urls": [
+    "https://www.shonan-salan.com/view/item/000000010745",
+    "https://www.monotaro.com/g/00990785/",
+    "https://www.monotaro.com/p/0062/6282/"
+   ]
+  },
+  {
+   "name": "HS Tumbler 145 ml",
+   "series": "HS Tumbler",
+   "designer": null,
+   "model_code": "09105HS",
+   "glass": "rocks",
+   "variant": null,
+   "capacity_ml": 145,
+   "capacity_as_stated": "145 mL",
+   "height_mm": 73,
+   "rim_mm": null,
+   "material": "glass",
+   "product_url": "https://www.monotaro.com/g/04354720/",
+   "source_urls": [
+    "https://www.monotaro.com/g/04354720/",
+    "https://www.monotaro.com/p/4414/5003/"
+   ]
+  },
+  {
+   "name": "HS Tumbler 160 ml",
+   "series": "HS Tumbler",
+   "designer": null,
+   "model_code": "05105HS",
+   "glass": "rocks",
+   "variant": null,
+   "capacity_ml": 160,
+   "capacity_as_stated": "160 mL",
+   "height_mm": 104,
+   "rim_mm": null,
+   "material": "glass",
+   "product_url": "https://www.monotaro.com/g/04354718/",
+   "source_urls": [
+    "https://www.monotaro.com/g/04354718/",
+    "https://www.monotaro.com/p/4414/4976/"
+   ]
+  },
+  {
+   "name": "HS Tumbler 170 ml",
+   "series": "HS Tumbler",
+   "designer": null,
+   "model_code": "01106HS",
+   "glass": "rocks",
+   "variant": null,
+   "capacity_ml": 170,
+   "capacity_as_stated": "170 mL",
+   "height_mm": 93,
+   "rim_mm": null,
+   "material": "glass",
+   "product_url": "https://www.monotaro.com/g/04354717/",
+   "source_urls": [
+    "https://www.monotaro.com/g/04354717/",
+    "https://www.monotaro.com/p/4414/4949/"
+   ]
+  },
+  {
+   "name": "HS Tumbler 190 ml",
+   "series": "HS Tumbler",
+   "designer": null,
+   "model_code": "08906HS",
+   "glass": "rocks",
+   "variant": null,
+   "capacity_ml": 190,
+   "capacity_as_stated": "190 mL",
+   "height_mm": 94,
+   "rim_mm": null,
+   "material": "glass",
+   "product_url": "https://www.monotaro.com/g/04354720/",
+   "source_urls": [
+    "https://www.monotaro.com/g/04354720/",
+    "https://www.monotaro.com/p/4414/5019/"
+   ]
+  },
+  {
+   "name": "HS Tumbler 210 ml",
+   "series": "HS Tumbler",
+   "designer": null,
+   "model_code": "01108HS",
+   "glass": "rocks",
+   "variant": null,
+   "capacity_ml": 210,
+   "capacity_as_stated": "210 mL",
+   "height_mm": 100,
+   "rim_mm": null,
+   "material": "glass",
+   "product_url": "https://www.monotaro.com/g/04354717/",
+   "source_urls": [
+    "https://www.monotaro.com/g/04354717/",
+    "https://www.monotaro.com/p/4414/4958/"
+   ]
+  },
+  {
+   "name": "HS Tumbler 230 ml",
+   "series": "HS Tumbler",
+   "designer": null,
+   "model_code": "00348HS",
+   "glass": "rocks",
+   "variant": null,
+   "capacity_ml": 230,
+   "capacity_as_stated": "230 mL",
+   "height_mm": 106,
+   "rim_mm": null,
+   "material": "glass",
+   "product_url": "https://www.monotaro.com/g/04354720/",
+   "source_urls": [
+    "https://www.monotaro.com/g/04354720/",
+    "https://www.monotaro.com/p/4414/5028/"
+   ]
+  },
+  {
+   "name": "HS Tumbler 275 ml (01110HS)",
+   "series": "HS Tumbler",
+   "designer": null,
+   "model_code": "01110HS",
+   "glass": "highball",
+   "variant": null,
+   "capacity_ml": 275,
+   "capacity_as_stated": "275 mL",
+   "height_mm": 117,
+   "rim_mm": null,
+   "material": "glass",
+   "product_url": "https://www.monotaro.com/g/04354717/",
+   "source_urls": [
+    "https://www.monotaro.com/g/04354717/",
+    "https://www.monotaro.com/p/4414/4967/"
+   ]
+  },
+  {
+   "name": "HS Tumbler 275 ml (05100HS)",
+   "series": "HS Tumbler",
+   "designer": null,
+   "model_code": "05100HS",
+   "glass": "highball",
+   "variant": null,
+   "capacity_ml": 275,
+   "capacity_as_stated": "275 mL",
+   "height_mm": 119,
+   "rim_mm": null,
+   "material": "glass",
+   "product_url": "https://www.monotaro.com/g/04354718/",
+   "source_urls": [
+    "https://www.monotaro.com/g/04354718/",
+    "https://www.monotaro.com/p/4414/4985/"
+   ]
+  },
+  {
+   "name": "HS Tumbler 300 ml",
+   "series": "HS Tumbler",
+   "designer": null,
+   "model_code": "MSB-02HS",
+   "glass": "rocks",
+   "variant": null,
+   "capacity_ml": 300,
+   "capacity_as_stated": "300 mL",
+   "height_mm": 109,
+   "rim_mm": null,
+   "material": "glass",
+   "product_url": "https://www.monotaro.com/g/04354721/",
+   "source_urls": [
+    "https://www.monotaro.com/g/04354721/",
+    "https://www.monotaro.com/p/4414/5037/"
+   ]
+  },
+  {
+   "name": "HS Tumbler 475 ml",
+   "series": "HS Tumbler",
+   "designer": null,
+   "model_code": "MSB-01HS",
+   "glass": "highball",
+   "variant": null,
+   "capacity_ml": 475,
+   "capacity_as_stated": "475 mL",
+   "height_mm": 126,
+   "rim_mm": null,
+   "material": "glass",
+   "product_url": "https://www.monotaro.com/g/04354721/",
+   "source_urls": [
+    "https://www.monotaro.com/g/04354721/",
+    "https://www.monotaro.com/p/4414/5046/"
+   ]
+  },
+  {
+   "name": "HS Tumbler Long Tumbler 365 ml",
+   "series": "HS Tumbler",
+   "designer": null,
+   "model_code": "00549HS",
+   "glass": "highball",
+   "variant": null,
+   "capacity_ml": 365,
+   "capacity_as_stated": "365 mL",
+   "height_mm": 140,
+   "rim_mm": null,
+   "material": "glass",
+   "product_url": "https://www.monotaro.com/g/04354722/",
+   "source_urls": [
+    "https://www.monotaro.com/g/04354722/",
+    "https://www.monotaro.com/p/4414/5055/"
+   ]
+  },
+  {
+   "name": "HS Tumbler Long Tumbler 410 ml",
+   "series": "HS Tumbler",
+   "designer": null,
+   "model_code": "08006HS",
+   "glass": "collins",
+   "variant": null,
+   "capacity_ml": 410,
+   "capacity_as_stated": "410 mL",
+   "height_mm": 170,
+   "rim_mm": null,
+   "material": "glass",
+   "product_url": "https://www.monotaro.com/g/04354722/",
+   "source_urls": [
+    "https://www.monotaro.com/g/04354722/",
+    "https://www.monotaro.com/p/4414/5073/"
+   ]
+  },
+  {
+   "name": "HS Tumbler Long Tumbler 435 ml",
+   "series": "HS Tumbler",
+   "designer": null,
+   "model_code": "00535HS",
+   "glass": "collins",
+   "variant": null,
+   "capacity_ml": 435,
+   "capacity_as_stated": "435 mL",
+   "height_mm": 152,
+   "rim_mm": null,
+   "material": "glass",
+   "product_url": "https://www.monotaro.com/g/04354722/",
+   "source_urls": [
+    "https://www.monotaro.com/g/04354722/",
+    "https://www.monotaro.com/p/4414/5064/"
+   ]
+  },
+  {
+   "name": "HS Tumbler Zombie 300 ml",
+   "series": "HS Tumbler",
+   "designer": null,
+   "model_code": "05111HS",
+   "glass": "collins",
+   "variant": null,
+   "capacity_ml": 300,
+   "capacity_as_stated": "300 mL",
+   "height_mm": 150,
+   "rim_mm": null,
+   "material": "glass",
+   "product_url": "https://www.monotaro.com/g/04354724/",
+   "source_urls": [
+    "https://www.monotaro.com/g/04354724/",
+    "https://www.monotaro.com/p/4414/5098/"
+   ]
+  },
+  {
+   "name": "Lara Brandy 330 ml",
+   "series": "Lara",
+   "designer": null,
+   "model_code": "32825HS",
+   "glass": "snifter",
+   "variant": null,
+   "capacity_ml": 330.0,
+   "capacity_as_stated": "330 cc",
+   "height_mm": 126.0,
+   "rim_mm": null,
+   "material": "glass",
+   "product_url": "https://www.monotaro.com/g/04115200/",
+   "source_urls": [
+    "https://www.shonan-salan.com/view/item/000000011921",
+    "https://www.monotaro.com/g/04115200/",
+    "https://www.monotaro.com/p/2782/2455/"
+   ]
+  },
+  {
+   "name": "Lara Sherry 75 ml",
+   "series": "Lara",
+   "designer": null,
+   "model_code": "32838HS",
+   "glass": "wine",
+   "variant": null,
+   "capacity_ml": 75,
+   "capacity_as_stated": "75 mL",
+   "height_mm": 100,
+   "rim_mm": null,
+   "material": "glass",
+   "product_url": "https://www.monotaro.com/g/04115194/",
+   "source_urls": [
+    "https://www.monotaro.com/g/04115194/",
+    "https://www.monotaro.com/p/2782/2385/"
+   ]
+  },
+  {
+   "name": "Legato Brandy 310 ml",
+   "series": "Legato",
+   "designer": null,
+   "model_code": "30G25HS",
+   "glass": "snifter",
+   "variant": null,
+   "capacity_ml": 310,
+   "capacity_as_stated": "310 mL",
+   "height_mm": 120,
+   "rim_mm": null,
+   "material": "glass",
+   "product_url": "https://www.monotaro.com/g/04115191/",
+   "source_urls": [
+    "https://www.monotaro.com/g/04115191/",
+    "https://www.monotaro.com/p/2782/2358/"
+   ]
+  },
+  {
+   "name": "Legato Cocktail 82 ml",
+   "series": "Legato",
+   "designer": null,
+   "model_code": "30G33HS",
+   "glass": "martini",
+   "variant": null,
+   "capacity_ml": 82,
+   "capacity_as_stated": "82 mL",
+   "height_mm": 120,
+   "rim_mm": null,
+   "material": "glass",
+   "product_url": "https://www.monotaro.com/g/04115193/",
+   "source_urls": [
+    "https://www.monotaro.com/g/04115193/",
+    "https://www.monotaro.com/p/2782/2376/"
+   ]
+  },
+  {
+   "name": "Legato Cocktail 90 ml",
+   "series": "Legato",
+   "designer": null,
+   "model_code": "30G43HS",
+   "glass": "martini",
+   "variant": null,
+   "capacity_ml": 90,
+   "capacity_as_stated": "90 mL",
+   "height_mm": 160,
+   "rim_mm": null,
+   "material": "glass",
+   "product_url": "https://www.monotaro.com/g/04354803/",
+   "source_urls": [
+    "https://www.monotaro.com/g/04354803/",
+    "https://www.monotaro.com/p/4414/6035/"
+   ]
+  },
+  {
+   "name": "Lemon Sour Glass Tumbler 620 ml",
+   "series": null,
+   "designer": null,
+   "model_code": "B-00118-JAN-P",
+   "glass": "collins",
+   "variant": null,
+   "capacity_ml": 620,
+   "capacity_as_stated": "620 mL",
+   "height_mm": 167,
+   "rim_mm": null,
+   "material": "glass",
+   "product_url": "https://www.monotaro.com/g/06168559/",
+   "source_urls": [
+    "https://www.monotaro.com/g/06168559/",
+    "https://www.monotaro.com/p/4164/2136/"
+   ]
+  },
+  {
+   "name": "Montagne Martini 235 ml",
+   "series": "Montagne",
+   "designer": null,
+   "model_code": "RN-12233CS",
+   "glass": "martini",
+   "variant": null,
+   "capacity_ml": 235.0,
+   "capacity_as_stated": "235 cc",
+   "height_mm": 181.0,
+   "rim_mm": null,
+   "material": "lead-free crystal",
+   "product_url": "https://www.monotaro.com/g/01836202/",
+   "source_urls": [
+    "https://www.shonan-salan.com/view/item/000000009854",
+    "https://www.monotaro.com/g/01836202/",
+    "https://www.monotaro.com/p/2994/1914/"
+   ]
+  },
+  {
+   "name": "Nack 10 Old Fashioned 315 ml",
+   "series": "Nack",
+   "designer": null,
+   "model_code": "T-20113HS",
+   "glass": "rocks",
+   "variant": null,
+   "capacity_ml": 315,
+   "capacity_as_stated": "315 mL",
+   "height_mm": 94,
+   "rim_mm": null,
+   "material": "glass",
+   "product_url": "https://www.monotaro.com/g/00990762/",
+   "source_urls": [
+    "https://www.monotaro.com/g/00990762/",
+    "https://www.monotaro.com/p/0062/5975/"
+   ]
+  },
+  {
+   "name": "Nack 10 Tumbler 305 ml",
+   "series": "Nack",
+   "designer": null,
+   "model_code": "T-21102HS",
+   "glass": "highball",
+   "variant": null,
+   "capacity_ml": 305,
+   "capacity_as_stated": "305 mL",
+   "height_mm": 132,
+   "rim_mm": null,
+   "material": "glass",
+   "product_url": "https://www.monotaro.com/g/00990763/",
+   "source_urls": [
+    "https://www.monotaro.com/g/00990763/",
+    "https://www.monotaro.com/p/0062/5984/"
+   ]
+  },
+  {
+   "name": "Nack 10 Zombie 285 ml",
+   "series": "Nack",
+   "designer": null,
+   "model_code": "T-20101HS",
+   "glass": "collins",
+   "variant": null,
+   "capacity_ml": 285,
+   "capacity_as_stated": "285 mL",
+   "height_mm": 150,
+   "rim_mm": null,
+   "material": "glass",
+   "product_url": "https://www.monotaro.com/g/00990764/",
+   "source_urls": [
+    "https://www.monotaro.com/g/00990764/",
+    "https://www.monotaro.com/p/0062/5993/"
+   ]
+  },
+  {
+   "name": "Nack 37 Tumbler 185 ml",
+   "series": "Nack",
+   "designer": null,
+   "model_code": "T-20107HS",
+   "glass": "highball",
+   "variant": null,
+   "capacity_ml": 185,
+   "capacity_as_stated": "185 mL",
+   "height_mm": 114,
+   "rim_mm": null,
+   "material": "glass",
+   "product_url": "https://www.monotaro.com/g/00990766/",
+   "source_urls": [
+    "https://www.monotaro.com/g/00990766/",
+    "https://www.monotaro.com/p/0062/6018/"
+   ]
+  },
+  {
+   "name": "Nack 38 Tumbler 245 ml",
+   "series": "Nack",
+   "designer": null,
+   "model_code": "T-20106HS",
+   "glass": "highball",
+   "variant": null,
+   "capacity_ml": 245,
+   "capacity_as_stated": "245 mL",
+   "height_mm": 117,
+   "rim_mm": null,
+   "material": "glass",
+   "product_url": "https://www.monotaro.com/g/00990765/",
+   "source_urls": [
+    "https://www.monotaro.com/g/00990765/",
+    "https://www.monotaro.com/p/0062/6002/"
+   ]
+  },
+  {
+   "name": "Nack 7 Old Fashioned 220 ml",
+   "series": "Nack",
+   "designer": null,
+   "model_code": "T-20105HS",
+   "glass": "rocks",
+   "variant": null,
+   "capacity_ml": 220,
+   "capacity_as_stated": "220 mL",
+   "height_mm": 83,
+   "rim_mm": null,
+   "material": "glass",
+   "product_url": "https://www.monotaro.com/g/00990761/",
+   "source_urls": [
+    "https://www.monotaro.com/g/00990761/",
+    "https://www.monotaro.com/p/0062/5966/"
+   ]
+  },
+  {
+   "name": "Nack HS 12 Tumbler 360 ml",
+   "series": "Nack",
+   "designer": null,
+   "model_code": "T-20119HS",
+   "glass": "highball",
+   "variant": null,
+   "capacity_ml": 360.0,
+   "capacity_as_stated": "360 cc",
+   "height_mm": 138.0,
+   "rim_mm": null,
+   "material": "glass",
+   "product_url": "https://www.monotaro.com/g/06168479/",
+   "source_urls": [
+    "https://www.shonan-salan.com/view/item/000000012186",
+    "https://www.monotaro.com/g/06168479/",
+    "https://www.monotaro.com/p/4164/0824/"
+   ]
+  },
+  {
+   "name": "Nack Slim 5 Tumbler 120 ml",
+   "series": "Nack",
+   "designer": null,
+   "model_code": "T-20108HS",
+   "glass": "rocks",
+   "variant": null,
+   "capacity_ml": 120,
+   "capacity_as_stated": "120 mL",
+   "height_mm": 100,
+   "rim_mm": null,
+   "material": "glass",
+   "product_url": "https://www.monotaro.com/g/00990767/",
+   "source_urls": [
+    "https://www.monotaro.com/g/00990767/",
+    "https://www.monotaro.com/p/0062/6027/"
+   ]
+  },
+  {
+   "name": "New Doria On the Rocks 275 ml",
+   "series": "New Doria",
+   "designer": null,
+   "model_code": "07116HS",
+   "glass": "rocks",
+   "variant": null,
+   "capacity_ml": 275,
+   "capacity_as_stated": "275 mL",
+   "height_mm": 88,
+   "rim_mm": null,
+   "material": "glass",
+   "product_url": "https://www.monotaro.com/g/04115308/",
+   "source_urls": [
+    "https://www.monotaro.com/g/04115308/",
+    "https://www.monotaro.com/p/2782/4065/"
+   ]
+  },
+  {
+   "name": "New Doria Zombie 305 ml",
+   "series": "New Doria",
+   "designer": null,
+   "model_code": "07111HS",
+   "glass": "collins",
+   "variant": null,
+   "capacity_ml": 305,
+   "capacity_as_stated": "305 mL",
+   "height_mm": 150,
+   "rim_mm": null,
+   "material": "glass",
+   "product_url": "https://www.monotaro.com/g/04354776/",
+   "source_urls": [
+    "https://www.monotaro.com/g/04354776/",
+    "https://www.monotaro.com/p/4414/5719/"
+   ]
+  },
+  {
+   "name": "New Doria Zombie 360 ml",
+   "series": "New Doria",
+   "designer": null,
+   "model_code": "07113HS",
+   "glass": "collins",
+   "variant": null,
+   "capacity_ml": 360,
+   "capacity_as_stated": "360 mL",
+   "height_mm": 164,
+   "rim_mm": null,
+   "material": "glass",
+   "product_url": "https://www.monotaro.com/g/04354776/",
+   "source_urls": [
+    "https://www.monotaro.com/g/04354776/",
+    "https://www.monotaro.com/p/4414/5728/"
+   ]
+  },
+  {
+   "name": "New Matin On the Rocks 300 ml",
+   "series": "New Matin",
+   "designer": null,
+   "model_code": "BT-27909CC-C9",
+   "glass": "rocks",
+   "variant": null,
+   "capacity_ml": 300,
+   "capacity_as_stated": "300 mL",
+   "height_mm": 90,
+   "rim_mm": null,
+   "material": "glass",
+   "product_url": "https://www.monotaro.com/g/06168526/",
+   "source_urls": [
+    "https://www.monotaro.com/g/06168526/",
+    "https://www.monotaro.com/p/4164/1646/"
+   ]
+  },
+  {
+   "name": "New Spur Sherry 70 ml",
+   "series": "New Spur",
+   "designer": null,
+   "model_code": "32038",
+   "glass": "wine",
+   "variant": null,
+   "capacity_ml": 70,
+   "capacity_as_stated": "70 mL",
+   "height_mm": 120,
+   "rim_mm": null,
+   "material": "glass",
+   "product_url": "https://www.monotaro.com/g/06168530/",
+   "source_urls": [
+    "https://www.monotaro.com/g/06168530/",
+    "https://www.monotaro.com/p/4164/1725/"
+   ]
+  },
+  {
+   "name": "Petiole Cocktail 130 ml",
+   "series": "Petiole",
+   "designer": null,
+   "model_code": "30M33CS",
+   "glass": "martini",
+   "variant": null,
+   "capacity_ml": 130,
+   "capacity_as_stated": "130 mL",
+   "height_mm": 164,
+   "rim_mm": null,
+   "material": "glass",
+   "product_url": "https://www.monotaro.com/g/04354809/",
+   "source_urls": [
+    "https://www.monotaro.com/g/04354809/",
+    "https://www.monotaro.com/p/4414/6105/"
+   ]
+  },
+  {
+   "name": "Shochu Doraku Ekubo On the Rocks 310 ml",
+   "series": "Shochu Doraku",
+   "designer": null,
+   "model_code": "P-33103HS",
+   "glass": "rocks",
+   "variant": null,
+   "capacity_ml": 310,
+   "capacity_as_stated": "310 mL",
+   "height_mm": 95,
+   "rim_mm": null,
+   "material": "glass",
+   "product_url": "https://www.monotaro.com/g/04354745/",
+   "source_urls": [
+    "https://www.monotaro.com/g/04354745/",
+    "https://www.monotaro.com/p/4414/5326/"
+   ]
+  },
+  {
+   "name": "Shochu Doraku Kaori Rock Glass 325 ml",
+   "series": "Shochu Doraku",
+   "designer": null,
+   "model_code": "B-40102-JAN-P",
+   "glass": "rocks",
+   "variant": null,
+   "capacity_ml": 325,
+   "capacity_as_stated": "325 mL",
+   "height_mm": 88,
+   "rim_mm": null,
+   "material": "glass",
+   "product_url": "https://www.monotaro.com/g/04354901/",
+   "source_urls": [
+    "https://www.monotaro.com/g/04354901/",
+    "https://www.monotaro.com/p/4414/7365/"
+   ]
+  },
+  {
+   "name": "Shochu Doraku Rock Glass 300 ml",
+   "series": "Shochu Doraku",
+   "designer": null,
+   "model_code": "P-33133-JAN-P",
+   "glass": "rocks",
+   "variant": null,
+   "capacity_ml": 300,
+   "capacity_as_stated": "300 mL",
+   "height_mm": 87,
+   "rim_mm": null,
+   "material": "glass",
+   "product_url": "https://www.monotaro.com/g/04354897/",
+   "source_urls": [
+    "https://www.monotaro.com/g/04354897/",
+    "https://www.monotaro.com/p/4414/7329/"
+   ]
+  },
+  {
+   "name": "Shot Glass 100 ml",
+   "series": null,
+   "designer": null,
+   "model_code": "T-16108-C707",
+   "glass": "rocks",
+   "variant": null,
+   "capacity_ml": 100.0,
+   "capacity_as_stated": "100 cc",
+   "height_mm": 61.0,
+   "rim_mm": null,
+   "material": "glass",
+   "product_url": "https://www.monotaro.com/g/06168542/",
+   "source_urls": [
+    "https://www.shonan-salan.com/view/item/000000006649",
+    "https://www.monotaro.com/g/06168542/",
+    "https://www.monotaro.com/p/4164/1856/"
+   ]
+  },
+  {
+   "name": "Shot Glass 80 ml",
+   "series": null,
+   "designer": null,
+   "model_code": "B-20104",
+   "glass": "rocks",
+   "variant": null,
+   "capacity_ml": 80,
+   "capacity_as_stated": "80 mL",
+   "height_mm": 107,
+   "rim_mm": null,
+   "material": "glass",
+   "product_url": "https://www.monotaro.com/g/06831705/",
+   "source_urls": [
+    "https://www.monotaro.com/g/06831705/",
+    "https://www.monotaro.com/p/6883/9586/"
+   ]
+  },
+  {
+   "name": "Silk Line On the Rocks 310 ml",
+   "series": "Silk Line",
+   "designer": null,
+   "model_code": "B-21209CS",
+   "glass": "rocks",
+   "variant": null,
+   "capacity_ml": 310.0,
+   "capacity_as_stated": "310 cc",
+   "height_mm": 85,
+   "rim_mm": null,
+   "material": "glass",
+   "product_url": "https://www.monotaro.com/g/04354815/",
+   "source_urls": [
+    "https://www.shonan-salan.com/view/item/000000006555",
+    "https://www.monotaro.com/g/04354815/",
+    "https://www.monotaro.com/p/4414/6175/"
+   ]
+  },
+  {
+   "name": "Silk Line Tumbler 185 ml",
+   "series": "Silk Line",
+   "designer": null,
+   "model_code": "B-21206CS",
+   "glass": "rocks",
+   "variant": null,
+   "capacity_ml": 185,
+   "capacity_as_stated": "185 mL",
+   "height_mm": 96,
+   "rim_mm": null,
+   "material": "glass",
+   "product_url": "https://www.monotaro.com/g/04354816/",
+   "source_urls": [
+    "https://www.monotaro.com/g/04354816/",
+    "https://www.monotaro.com/p/4414/6184/"
+   ]
+  },
+  {
+   "name": "Silk Line Tumbler 255 ml",
+   "series": "Silk Line",
+   "designer": null,
+   "model_code": "B-21208CS",
+   "glass": "rocks",
+   "variant": null,
+   "capacity_ml": 255,
+   "capacity_as_stated": "255 mL",
+   "height_mm": 108,
+   "rim_mm": null,
+   "material": "glass",
+   "product_url": "https://www.monotaro.com/g/04354816/",
+   "source_urls": [
+    "https://www.monotaro.com/g/04354816/",
+    "https://www.monotaro.com/p/4414/6193/"
+   ]
+  },
+  {
+   "name": "Silk Line Tumbler 305 ml",
+   "series": "Silk Line",
+   "designer": null,
+   "model_code": "B-21210CS",
+   "glass": "highball",
+   "variant": null,
+   "capacity_ml": 305.0,
+   "capacity_as_stated": "305 cc",
+   "height_mm": 122.0,
+   "rim_mm": null,
+   "material": "glass",
+   "product_url": "https://www.monotaro.com/g/04354816/",
+   "source_urls": [
+    "https://www.shonan-salan.com/view/item/000000006556",
+    "https://www.monotaro.com/g/04354816/",
+    "https://www.monotaro.com/p/4414/6209/"
+   ]
+  },
+  {
+   "name": "Silk Line Tumbler 455 ml",
+   "series": "Silk Line",
+   "designer": null,
+   "model_code": "B-21215CS",
+   "glass": "collins",
+   "variant": null,
+   "capacity_ml": 455,
+   "capacity_as_stated": "455 mL",
+   "height_mm": 156,
+   "rim_mm": null,
+   "material": "glass",
+   "product_url": "https://www.monotaro.com/g/04354816/",
+   "source_urls": [
+    "https://www.monotaro.com/g/04354816/",
+    "https://www.monotaro.com/p/4414/6218/"
+   ]
+  },
+  {
+   "name": "Sirocco On the Rocks 300 ml",
+   "series": "Sirocco",
+   "designer": null,
+   "model_code": "BT-27909CS",
+   "glass": "rocks",
+   "variant": null,
+   "capacity_ml": 300,
+   "capacity_as_stated": "300 mL",
+   "height_mm": 90,
+   "rim_mm": null,
+   "material": "glass",
+   "product_url": "https://www.monotaro.com/g/06168483/",
+   "source_urls": [
+    "https://www.monotaro.com/g/06168483/",
+    "https://www.monotaro.com/p/4164/0964/"
+   ]
+  },
+  {
+   "name": "Sirocco Zombie 300 ml",
+   "series": "Sirocco",
+   "designer": null,
+   "model_code": "B-17111CS",
+   "glass": "collins",
+   "variant": null,
+   "capacity_ml": 300,
+   "capacity_as_stated": "300 mL",
+   "height_mm": 174,
+   "rim_mm": null,
+   "material": "glass",
+   "product_url": "https://www.monotaro.com/g/06168485/",
+   "source_urls": [
+    "https://www.monotaro.com/g/06168485/",
+    "https://www.monotaro.com/p/4164/0989/"
+   ]
+  },
+  {
+   "name": "Sun Ace On the Rocks 240 ml",
+   "series": "Sun Ace",
+   "designer": null,
+   "model_code": "08209HS",
+   "glass": "rocks",
+   "variant": null,
+   "capacity_ml": 240,
+   "capacity_as_stated": "240 mL",
+   "height_mm": 85,
+   "rim_mm": null,
+   "material": "glass",
+   "product_url": "https://www.monotaro.com/g/04354778/",
+   "source_urls": [
+    "https://www.monotaro.com/g/04354778/",
+    "https://www.monotaro.com/p/4414/5746/"
+   ]
+  },
+  {
+   "name": "Tasting Glass 190 ml",
+   "series": null,
+   "designer": null,
+   "model_code": "36320",
+   "glass": "snifter",
+   "variant": null,
+   "capacity_ml": 190.0,
+   "capacity_as_stated": "190 cc",
+   "height_mm": 115,
+   "rim_mm": null,
+   "material": "glass",
+   "product_url": "https://www.monotaro.com/g/06168541/",
+   "source_urls": [
+    "https://www.shonan-salan.com/view/item/000000011396",
+    "https://www.monotaro.com/g/06168541/",
+    "https://www.monotaro.com/p/4164/1847/"
+   ]
+  },
+  {
+   "name": "Torafu Shot Glass 60 ml",
+   "series": "Torafu",
+   "designer": null,
+   "model_code": "P-01105-E101",
+   "glass": "rocks",
+   "variant": null,
+   "capacity_ml": 60,
+   "capacity_as_stated": "60 mL",
+   "height_mm": 63,
+   "rim_mm": null,
+   "material": "glass",
+   "product_url": "https://www.monotaro.com/g/04354784/",
+   "source_urls": [
+    "https://www.monotaro.com/g/04354784/",
+    "https://www.monotaro.com/p/4414/5825/"
+   ]
+  },
+  {
+   "name": "Tumbler On the Rocks 235 ml",
+   "series": null,
+   "designer": null,
+   "model_code": "05109",
+   "glass": "rocks",
+   "variant": null,
+   "capacity_ml": 235,
+   "capacity_as_stated": "235 mL",
+   "height_mm": 80,
+   "rim_mm": null,
+   "material": "glass",
+   "product_url": "https://www.monotaro.com/g/06168497/",
+   "source_urls": [
+    "https://www.monotaro.com/g/06168497/",
+    "https://www.monotaro.com/p/4164/1174/"
+   ]
+  },
+  {
+   "name": "Tumbler On the Rocks 275 ml",
+   "series": null,
+   "designer": null,
+   "model_code": "05116",
+   "glass": "rocks",
+   "variant": null,
+   "capacity_ml": 275,
+   "capacity_as_stated": "275 mL",
+   "height_mm": 88,
+   "rim_mm": null,
+   "material": "glass",
+   "product_url": "https://www.monotaro.com/g/06168497/",
+   "source_urls": [
+    "https://www.monotaro.com/g/06168497/",
+    "https://www.monotaro.com/p/4164/1190/"
+   ]
+  },
+  {
+   "name": "Tumbler Rock Glass 340 ml",
+   "series": null,
+   "designer": null,
+   "model_code": "B-00111-JAN-P",
+   "glass": "rocks",
+   "variant": null,
+   "capacity_ml": 340.0,
+   "capacity_as_stated": "340 cc",
+   "height_mm": 90,
+   "rim_mm": null,
+   "material": "glass",
+   "product_url": "https://www.monotaro.com/g/06168517/",
+   "source_urls": [
+    "https://www.shonan-salan.com/view/item/000000011322",
+    "https://www.monotaro.com/g/06168517/",
+    "https://www.monotaro.com/p/4164/1479/"
+   ]
+  },
+  {
+   "name": "Tumbler Zombie 260 ml",
+   "series": null,
+   "designer": null,
+   "model_code": "01910",
+   "glass": "collins",
+   "variant": null,
+   "capacity_ml": 260,
+   "capacity_as_stated": "260 mL",
+   "height_mm": 144,
+   "rim_mm": null,
+   "material": "glass",
+   "product_url": "https://www.monotaro.com/g/06168495/",
+   "source_urls": [
+    "https://www.monotaro.com/g/06168495/",
+    "https://www.monotaro.com/p/4164/1138/"
+   ]
+  },
+  {
+   "name": "Tumbler Zombie 360 ml",
+   "series": null,
+   "designer": null,
+   "model_code": "05113",
+   "glass": "collins",
+   "variant": null,
+   "capacity_ml": 360,
+   "capacity_as_stated": "360 mL",
+   "height_mm": 164,
+   "rim_mm": null,
+   "material": "glass",
+   "product_url": "https://www.monotaro.com/g/06168501/",
+   "source_urls": [
+    "https://www.monotaro.com/g/06168501/",
+    "https://www.monotaro.com/p/4164/1260/"
+   ]
+  },
+  {
+   "name": "Usurai On the Rocks 305 ml",
+   "series": "Usurai",
+   "designer": null,
+   "model_code": "B-21109CS",
+   "glass": "rocks",
+   "variant": null,
+   "capacity_ml": 305.0,
+   "capacity_as_stated": "305 cc",
+   "height_mm": 89,
+   "rim_mm": null,
+   "material": "glass",
+   "product_url": "https://www.monotaro.com/g/04354818/",
+   "source_urls": [
+    "https://www.shonan-salan.com/view/item/000000007295",
+    "https://www.monotaro.com/g/04354818/",
+    "https://www.monotaro.com/p/4414/6245/"
+   ]
+  },
+  {
+   "name": "Usurai On the Rocks 355 ml",
+   "series": "Usurai",
+   "designer": null,
+   "model_code": "B-09127CS",
+   "glass": "rocks",
+   "variant": null,
+   "capacity_ml": 355,
+   "capacity_as_stated": "355 mL",
+   "height_mm": 80,
+   "rim_mm": null,
+   "material": "glass",
+   "product_url": "https://www.monotaro.com/g/04354824/",
+   "source_urls": [
+    "https://www.monotaro.com/g/04354824/",
+    "https://www.monotaro.com/p/4414/6394/"
+   ]
+  },
+  {
+   "name": "Usurai Tumbler 185 ml",
+   "series": "Usurai",
+   "designer": null,
+   "model_code": "B-21106CS",
+   "glass": "rocks",
+   "variant": null,
+   "capacity_ml": 185,
+   "capacity_as_stated": "185 mL",
+   "height_mm": 100,
+   "rim_mm": null,
+   "material": "glass",
+   "product_url": "https://www.monotaro.com/g/04354820/",
+   "source_urls": [
+    "https://www.monotaro.com/g/04354820/",
+    "https://www.monotaro.com/p/4164/1269/"
+   ]
+  },
+  {
+   "name": "Usurai Tumbler 265 ml",
+   "series": "Usurai",
+   "designer": null,
+   "model_code": "B-21108CS",
+   "glass": "rocks",
+   "variant": null,
+   "capacity_ml": 265.0,
+   "capacity_as_stated": "265 cc",
+   "height_mm": 107,
+   "rim_mm": null,
+   "material": "glass",
+   "product_url": "https://www.monotaro.com/g/04354820/",
+   "source_urls": [
+    "https://www.shonan-salan.com/view/item/000000007297",
+    "https://www.monotaro.com/g/04354820/",
+    "https://www.monotaro.com/p/4414/6263/"
+   ]
+  },
+  {
+   "name": "Usurai Tumbler 315 ml",
+   "series": "Usurai",
+   "designer": null,
+   "model_code": "B-21110CS",
+   "glass": "highball",
+   "variant": null,
+   "capacity_ml": 315.0,
+   "capacity_as_stated": "315 cc",
+   "height_mm": 120,
+   "rim_mm": null,
+   "material": "glass",
+   "product_url": "https://www.monotaro.com/g/04354820/",
+   "source_urls": [
+    "https://www.shonan-salan.com/view/item/000000007298",
+    "https://www.monotaro.com/g/04354820/",
+    "https://www.monotaro.com/p/4414/6279/"
+   ]
+  },
+  {
+   "name": "Usurai Tumbler 355 ml",
+   "series": "Usurai",
+   "designer": null,
+   "model_code": "B-09128CS",
+   "glass": "rocks",
+   "variant": null,
+   "capacity_ml": 355,
+   "capacity_as_stated": "355 mL",
+   "height_mm": 107,
+   "rim_mm": null,
+   "material": "glass",
+   "product_url": "https://www.monotaro.com/g/04354825/",
+   "source_urls": [
+    "https://www.monotaro.com/g/04354825/",
+    "https://www.monotaro.com/p/4414/6403/"
+   ]
+  },
+  {
+   "name": "Usurai Tumbler 370 ml",
+   "series": "Usurai",
+   "designer": null,
+   "model_code": "B-21112CS",
+   "glass": "highball",
+   "variant": null,
+   "capacity_ml": 370.0,
+   "capacity_as_stated": "370 cc",
+   "height_mm": 135,
+   "rim_mm": null,
+   "material": "glass",
+   "product_url": "https://www.monotaro.com/g/04354820/",
+   "source_urls": [
+    "https://www.shonan-salan.com/view/item/000000006267",
+    "https://www.monotaro.com/g/04354820/",
+    "https://www.monotaro.com/p/4414/6288/"
+   ]
+  },
+  {
+   "name": "Usurai Tumbler 420 ml",
+   "series": "Usurai",
+   "designer": null,
+   "model_code": "B-21114CS",
+   "glass": "highball",
+   "variant": null,
+   "capacity_ml": 420,
+   "capacity_as_stated": "420 mL",
+   "height_mm": 143,
+   "rim_mm": null,
+   "material": "glass",
+   "product_url": "https://www.monotaro.com/g/04354820/",
+   "source_urls": [
+    "https://www.monotaro.com/g/04354820/",
+    "https://www.monotaro.com/p/4414/6297/"
+   ]
+  },
+  {
+   "name": "Usurai Tumbler 560 ml",
+   "series": "Usurai",
+   "designer": null,
+   "model_code": "B-09129CS",
+   "glass": "highball",
+   "variant": null,
+   "capacity_ml": 560,
+   "capacity_as_stated": "560 mL",
+   "height_mm": 143,
+   "rim_mm": null,
+   "material": "glass",
+   "product_url": "https://www.monotaro.com/g/04354825/",
+   "source_urls": [
+    "https://www.monotaro.com/g/04354825/",
+    "https://www.monotaro.com/p/4414/6419/"
+   ]
+  },
+  {
+   "name": "Usurai Yarai Cut On the Rocks 305 ml",
+   "series": "Usurai",
+   "designer": null,
+   "model_code": "B-21109CS-C745",
+   "glass": "rocks",
+   "variant": null,
+   "capacity_ml": 305,
+   "capacity_as_stated": "305 mL",
+   "height_mm": 89,
+   "rim_mm": null,
+   "material": "glass",
+   "product_url": "https://www.monotaro.com/g/06168488/",
+   "source_urls": [
+    "https://www.monotaro.com/g/06168488/",
+    "https://www.monotaro.com/p/4164/1034/"
+   ]
+  },
+  {
+   "name": "Usurai Yarai Cut Tumbler 265 ml",
+   "series": "Usurai",
+   "designer": null,
+   "model_code": "B-21108CS-C745",
+   "glass": "rocks",
+   "variant": null,
+   "capacity_ml": 265,
+   "capacity_as_stated": "265 mL",
+   "height_mm": 107,
+   "rim_mm": null,
+   "material": "glass",
+   "product_url": "https://www.monotaro.com/g/06168490/",
+   "source_urls": [
+    "https://www.monotaro.com/g/06168490/",
+    "https://www.monotaro.com/p/4164/1059/"
+   ]
+  },
+  {
+   "name": "Usurai Yarai Cut Tumbler 315 ml",
+   "series": "Usurai",
+   "designer": null,
+   "model_code": "B-21110CS-C745",
+   "glass": "highball",
+   "variant": null,
+   "capacity_ml": 315,
+   "capacity_as_stated": "315 mL",
+   "height_mm": 120,
+   "rim_mm": null,
+   "material": "glass",
+   "product_url": "https://www.monotaro.com/g/06168490/",
+   "source_urls": [
+    "https://www.monotaro.com/g/06168490/",
+    "https://www.monotaro.com/p/4164/1068/"
+   ]
+  },
+  {
+   "name": "Usurai Yarai Cut Tumbler 370 ml",
+   "series": "Usurai",
+   "designer": null,
+   "model_code": "B-21112CS-C745",
+   "glass": "highball",
+   "variant": null,
+   "capacity_ml": 370,
+   "capacity_as_stated": "370 mL",
+   "height_mm": 135,
+   "rim_mm": null,
+   "material": "glass",
+   "product_url": "https://www.monotaro.com/g/06168490/",
+   "source_urls": [
+    "https://www.monotaro.com/g/06168490/",
+    "https://www.monotaro.com/p/4164/1077/"
+   ]
+  }
+ ]
+}

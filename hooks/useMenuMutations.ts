@@ -243,25 +243,18 @@ export interface MenuLayoutTemplate {
   sections: Omit<EditSection, 'key' | 'id'>[];
 }
 
-/**
- * Saved layouts (menu templates) to start a menu from: yours, and the ones
- * the venue's menus use. Templates are shared app-wide, so not every one.
- */
-export function useMenuLayouts(barId: string | null) {
+/** Your saved layouts (menu templates) to start a menu from. */
+export function useMenuLayouts() {
   const userId = useUserId();
   return useQuery({
-    queryKey: ['menu-layouts', barId, userId],
+    queryKey: ['menu-layouts', userId],
     enabled: !!userId,
     staleTime: 5 * 60_000,
     queryFn: async (): Promise<MenuLayoutTemplate[]> => {
-      const used = barId ? await supabase.from('menus').select('template_id').eq('bar_id', barId).not('template_id', 'is', null) : { data: [], error: null };
-      if (used.error) throw used.error;
-      const ids = [...new Set((used.data ?? []).map((m) => m.template_id as string))];
-      const scope = ids.length ? `created_by.eq.${userId},id.in.(${ids.join(',')})` : `created_by.eq.${userId}`;
       const { data, error } = await supabase
         .from('menu_templates')
         .select('id, name, template_sections(name, sort_order, min_items, max_items, allowed_types)')
-        .or(scope)
+        .eq('created_by', userId!)
         .order('name');
       if (error) throw error;
       return (data ?? []).map((t) => ({

@@ -3,6 +3,7 @@ import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { saveItemAllergens } from '@/hooks/useAllergens';
 import { ensureIngredient } from '@/hooks/useCreateIngredient';
 import { isGarnishUnit } from '@/lib/batch';
+import { plainDbMessage } from '@/lib/dbError';
 import type { NoteLine } from '@/lib/noteRecipe';
 import { prepAmounts, prepYield, type PrepDraft } from '@/lib/prepKinds';
 import { partsRatio, prepParts } from '@/lib/prepParts';
@@ -12,6 +13,8 @@ export interface PrepStep {
   position: number;
   body: string;
   timer_seconds: number | null;
+  /** The tools it needs: equipment ids or a venue's own tool names. */
+  equipment: string[];
 }
 
 export interface ItemPrep {
@@ -31,8 +34,9 @@ export interface PrepCardData {
 }
 
 const PREP_COLUMNS = 'yield_amount, yield_unit, shelf_life_hours, lead_time_minutes, lead_time_note, storage, actions';
+const STEP_COLUMNS = 'position, body, timer_seconds, equipment';
 
-/** A house-made ingredient's prep card: yield, shelf life, lead time, storage, actions and steps. */
+/** A house-made ingredient's or a venue ice's prep card: yield, shelf life, lead time, storage, actions and steps. */
 export function useItemPrep(itemId: string | null | undefined) {
   return useQuery({
     queryKey: ['item-prep', itemId],
@@ -40,7 +44,7 @@ export function useItemPrep(itemId: string | null | undefined) {
     queryFn: async (): Promise<PrepCardData> => {
       const [prep, steps] = await Promise.all([
         supabase.from('item_prep').select(PREP_COLUMNS).eq('item_id', itemId!).maybeSingle(),
-        supabase.from('item_steps').select('position, body, timer_seconds').eq('item_id', itemId!).order('position'),
+        supabase.from('item_steps').select(STEP_COLUMNS).eq('item_id', itemId!).order('position'),
       ]);
       if (prep.error) throw prep.error;
       if (steps.error) throw steps.error;
@@ -51,7 +55,7 @@ export function useItemPrep(itemId: string | null | undefined) {
 
 export interface PrepCardInput {
   prep: ItemPrep;
-  steps: { body: string; timer_seconds: number | null }[];
+  steps: { body: string; timer_seconds: number | null; equipment?: string[] }[];
 }
 
 /** Upsert an item's prep row and replace its steps. Also used when a new house prep is saved from the add-drink wizard. */
@@ -60,7 +64,7 @@ export async function savePrepCard(itemId: string, { prep, steps }: PrepCardInpu
   if (saved.error) throw saved.error;
   const gone = await supabase.from('item_steps').delete().eq('item_id', itemId);
   if (gone.error) throw gone.error;
-  const kept = steps.map((s) => s.body.trim()).map((body, i) => ({ body, timer_seconds: steps[i].timer_seconds })).filter((s) => s.body);
+  const kept = steps.map((s) => ({ body: s.body.trim(), timer_seconds: s.timer_seconds, equipment: s.equipment ?? [] })).filter((s) => s.body);
   if (kept.length) {
     const added = await supabase.from('item_steps').insert(kept.map((s, position) => ({ item_id: itemId, position, ...s })));
     if (added.error) throw added.error;
@@ -146,16 +150,27 @@ export async function savePrepRecipe(
   itemId: string,
   prep: PrepDraft,
   ensure: (pick: { id: string | null; name: string }, type: 'ingredient') => Promise<string>,
-  barId: string | null = null
+  barId: string | null = null,
+  /**
+   * A line made in-house too (make-anything-steps-2, step 8) becomes a prep
+   * row of its own: its id, and whether this save made it (an existing prep,
+   * "My Honey syrup", keeps its recipe). With `warn`, a recipe inside that
+   * fails is said, and the rest still saved.
+   */
+  inner?: { own: (pick: { id: string | null; name: string }) => Promise<{ id: string; isNew: boolean }>; warn: (message: string) => void }
 ) {
   const role = await supabase.from('items').update({ ingredient_role: 'prep' }).eq('id', itemId);
   if (role.error) throw role.error;
   const rows = [];
   let baseId: string | null = null;
+  // Lines made in-house too (make-anything-steps-2, step 8): each a prep row of its own, its recipe saved after this one's.
+  const inside: { id: string; name: string; prep: PrepDraft }[] = [];
   for (const [i, { line, amount }] of prepAmounts(prep).entries()) {
     // A stand-in nobody filled ("Spirit") is never an ingredient.
     if (!line.name.trim() || line.slot) continue;
-    const id = await ensure({ id: line.id, name: line.name }, 'ingredient');
+    const made = line.prep && inner ? await inner.own({ id: null, name: line.name }) : null;
+    const id = made ? made.id : await ensure({ id: line.id, name: line.name }, 'ingredient');
+    if (made?.isNew && id !== itemId && line.prep) inside.push({ id, name: line.name, prep: line.prep });
     if (line.key === prep.baseKey) baseId = id;
     rows.push({ recipe_item_id: itemId, ingredient_item_id: id, amount, unit: line.unit || null, preparation_notes: line.note?.trim() || null, sort_order: i });
   }
@@ -185,6 +200,13 @@ export async function savePrepRecipe(
   });
   // Allergens the maker set by hand are declared, and checked, for where it's made.
   if (prep.allergensSet) await saveItemAllergens(itemId, barId, prep.allergens ?? []);
+  for (const p of inside) {
+    try {
+      await savePrepRecipe(p.id, p.prep, ensure, barId, inner);
+    } catch (e) {
+      inner!.warn(plainDbMessage(e) ?? `${p.name}’s recipe wasn’t saved. Add it on its page.`);
+    }
+  }
 }
 
 /**
@@ -258,7 +280,7 @@ export function useCopyPrep() {
         if (source.card?.prep || source.card?.steps.length) {
           await savePrepCard(id, {
             prep: source.card.prep ?? { yield_amount: null, yield_unit: null, shelf_life_hours: null, lead_time_minutes: null, lead_time_note: null, storage: null, actions: [] },
-            steps: source.card.steps.map((s) => ({ body: s.body, timer_seconds: s.timer_seconds })),
+            steps: source.card.steps.map((s) => ({ body: s.body, timer_seconds: s.timer_seconds, equipment: s.equipment })),
           });
         }
       } catch (e) {
@@ -378,7 +400,7 @@ export function useCatalogRecipe(name: string | null | undefined) {
           .eq('recipe_item_id', id)
           .order('sort_order'),
         supabase.from('item_prep').select(PREP_COLUMNS).eq('item_id', id).maybeSingle(),
-        supabase.from('item_steps').select('position, body, timer_seconds').eq('item_id', id).order('position'),
+        supabase.from('item_steps').select(STEP_COLUMNS).eq('item_id', id).order('position'),
         supabase.from('item_sources').select('url').eq('item_id', id).eq('field', 'recipe').order('url'),
       ]);
       if (item.error) throw item.error;

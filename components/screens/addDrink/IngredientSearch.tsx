@@ -4,7 +4,9 @@ import { Platform, StyleSheet, TextInput, View } from 'react-native';
 import { Body, Caption, IngredientThumb, PressableScale, useDs } from '@/components/ds';
 import { IconSymbol } from '@/components/ui/icon-symbol';
 import { fontFamilies, layout, radius, space, type } from '@/constants/tokens';
+import { NearPicks } from '@/components/search/NearPicks';
 import { useIngredientUse } from '@/hooks/useIngredientUse';
+import { useNearIngredients } from '@/hooks/useNearIngredients';
 import { typedUnit, type WizardPick } from '@/lib/drinkWizard';
 import { bottlesOfKind, closestIngredients, nearIngredient, sameIngredient, searchIngredients, type IngredientAlias } from '@/lib/ingredientNames';
 import { readHouse, type HouseReading } from '@/lib/makeItHouse';
@@ -76,7 +78,7 @@ export interface IngredientSearchProps {
  * a likely misspelling asks "Did you mean…?" first, and a name nothing
  * matches shows the closest ones. Making it in house is always offered,
  * under the bottles that match (your own version when the name exists),
- * and steps into the house prep steps. Return takes the top hit.
+ * and steps into the house prep steps. Return takes the top hit; it adds nothing new while it asks.
  */
 export function IngredientSearch(props: IngredientSearchProps) {
   const { ingredients, aliases = [], coreIds, loading, onPick, label, placeholder, amounts, autoFocus, onCancel, onTyping, allowNew = true, onMake, onBottle, onLater, makeFirst, captions, shelf, backBar, brands, onHouse } = props;
@@ -94,10 +96,11 @@ export function IngredientSearch(props: IngredientSearchProps) {
   const q = query.trim();
   const results = searchIngredients(query, ingredients, { aliases, coreIds });
   const exact = !!sameIngredient(query, ingredients, aliases) || results.some((r) => (r.name ?? '').trim().toLowerCase() === q.toLowerCase());
-  const near = exact ? null : nearIngredient(query, ingredients, aliases);
-  const closest = results.length || near || exact || loading ? [] : closestIngredients(query, ingredients, { coreIds });
-  // A kind with bottles (mezcal): the plain one, then its brands; other names with the word in them come after both.
   const have = backBar ?? shelf;
+  // "chartruse": Green Chartreuse, the ones you have first; under "Did you mean", or last when something matched (NearPicks).
+  const near = useNearIngredients(query, ingredients, { skip: exact || !q, shown: results, first: exact ? null : nearIngredient(query, ingredients, aliases) }).sort((a, b) => Number(!!have?.has(b.id)) - Number(!!have?.has(a.id)));
+  const closest = results.length || near.length || exact || loading ? [] : closestIngredients(query, ingredients, { coreIds });
+  // A kind with bottles (mezcal): the plain one, then its brands; other names with the word in them come after both.
   const typed = brands && q ? sameIngredient(query, ingredients, aliases) : null;
   const bottles = typed ? bottlesOfKind(typed, ingredients, have) : [];
   const kindView = typed && bottles.length ? typed : null;
@@ -154,12 +157,12 @@ export function IngredientSearch(props: IngredientSearchProps) {
     onPick(p, pour ?? undefined);
     done();
   };
-  const found = (r: CatalogIngredient, text?: string) => (
+  const found = (r: CatalogIngredient, text?: string, tap = false) => (
     <ResultRow
       key={r.id}
       id={r.id}
       label={text ?? r.name ?? ''}
-      caption={captions ? <UseCaption id={r.id} have={have?.has(r.id) ? (backBar ? 'On your back bar' : 'On your shelf') : null} /> : null}
+      caption={captions || tap ? <UseCaption id={captions ? r.id : null} have={have?.has(r.id) ? (backBar ? 'On your back bar' : 'On your shelf') : null} tap={tap} /> : null}
       onPress={() => pick({ id: r.id, name: r.name ?? query })}
     />
   );
@@ -186,10 +189,10 @@ export function IngredientSearch(props: IngredientSearchProps) {
               onHouse?.({ id: reading.bottles[0].id, name: reading.bottles[0].name ?? reading.base }, reading, false, pour ?? undefined);
               done();
             } else if (results[0]) pick({ id: results[0].id, name: results[0].name ?? query });
-            else if (allowNew && q && !loading && onBottle && !prepLike) {
+            else if (allowNew && q && !loading && !near.length && onBottle && !prepLike) {
               onBottle(Name, pour ?? undefined);
               done();
-            } else if (allowNew && q && !loading) pick({ id: null, name: q });
+            } else if (allowNew && q && !loading && !near.length) pick({ id: null, name: q });
           }}
           style={[styles.input, type.body, { fontFamily: fontFamilies.body, color: ds.c.ink }, NO_OUTLINE]}
         />
@@ -223,14 +226,13 @@ export function IngredientSearch(props: IngredientSearchProps) {
             <Caption tone="muted" style={styles.label}>
               Nothing called that yet. Closest:
             </Caption>
-          ) : !results.length && !near && !exact && !loading && allowNew ? (
+          ) : !results.length && !near.length && !exact && !loading && allowNew ? (
             <Caption tone="muted" style={styles.label}>
               No bottle by that name.
             </Caption>
           ) : null}
           {closest.map((r) => found(r))}
           {lead ? makeRow : null}
-          {near && !results.includes(near) ? found(near, `Did you mean ${near.name}?`) : null}
           {listed.map((r) => found(r))}
           {loading ? (
             <Body tone="muted" style={styles.loading}>
@@ -238,13 +240,13 @@ export function IngredientSearch(props: IngredientSearchProps) {
             </Body>
           ) : exact ? (
             makeRow
-          ) : !allowNew ? null : (
-            <>
+          ) : (
+            <NearPicks found={listed.length > 0} near={near} render={(r) => found(r, undefined, true)} labelStyle={styles.label}>
               {/* Making it in house, under the bottles that match, then a bottle you buy, then the name alone (make-anything-steps-1, step 3). */}
-              {lead ? null : makeRow}
-              {bottleRow}
-              {newRow}
-            </>
+              {allowNew && !lead ? makeRow : null}
+              {allowNew ? bottleRow : null}
+              {allowNew ? newRow : null}
+            </NearPicks>
           )}
         </View>
       ) : null}
@@ -255,11 +257,11 @@ export function IngredientSearch(props: IngredientSearchProps) {
   );
 }
 
-/** "On your shelf" (or back bar), else how many drinks use it. */
-function UseCaption({ id, have }: { id: string; have: string | null }) {
+/** "On your shelf" (or back bar), else how many drinks use it; a close name adds "tap to use it" (canvas 2A). */
+function UseCaption({ id, have, tap }: { id: string | null; have: string | null; tap: boolean }) {
   const { data: n } = useIngredientUse(have ? null : id);
-  if (have) return <Caption tone="muted">{have}</Caption>;
-  return n ? <Caption tone="muted">{`In ${n} ${n === 1 ? 'drink' : 'drinks'}`}</Caption> : null;
+  const text = [have ?? (n ? `In ${n} ${n === 1 ? 'drink' : 'drinks'}` : null), tap ? 'tap to use it' : null].filter(Boolean).join(' · ');
+  return text ? <Caption tone="muted">{text.charAt(0).toUpperCase() + text.slice(1)}</Caption> : null;
 }
 
 /** A found ingredient with its drawing, or an action row with its tile: make it in house (+, and on to the builder), or just the name (lines). */

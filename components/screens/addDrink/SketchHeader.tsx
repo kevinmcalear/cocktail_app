@@ -11,6 +11,7 @@ import { COUNTED_STEPS, sketchLook, WIZARD_STEPS, type WizardDraft, type WizardS
 import { draftSketchInputs, type DraftLook } from '@/lib/sketch/draft';
 import type { SketchInputs } from '@/lib/sketch/types';
 
+import type { TrailItem } from './Trail';
 import { DraftColourSheet } from './DraftColourSheet';
 import { PaperBand } from './PaperBand';
 
@@ -47,6 +48,10 @@ interface SketchHeaderProps {
   size?: number;
   /** Picks the drawing's colour (Auto is null): a Colour button on the band, from the first step. */
   onTint?: (tint: string | null) => void;
+  /** Where the drink is, from the menu down (make-anything-steps-1, step 3): "Halloween party › Salty Boy". */
+  trail?: readonly TrailItem[];
+  /** The menu it's made for: the band says "For Halloween party". */
+  forMenu?: string | null;
 }
 
 /**
@@ -54,7 +59,7 @@ interface SketchHeaderProps {
  * added. Every step redraws it (glass, ice, method, colour, garnish) with the
  * rules the saved drink is drawn with.
  */
-export function SketchHeader({ draft, step, barVariants, barIce, onTint, ...band }: SketchHeaderProps) {
+export function SketchHeader({ draft, step, barVariants, barIce, onTint, forMenu, ...band }: SketchHeaderProps) {
   const look = sketchLook(draft, barVariants, barIce);
   // Nothing in it yet: a coupe waiting to be filled, as the canvas draws the first step.
   const empty = !look.glass && !look.lines.length && !look.methods?.length;
@@ -88,7 +93,8 @@ export function SketchHeader({ draft, step, barVariants, barIce, onTint, ...band
           )
         }
         artKey={`${reviewing ? 'review:' : ''}${JSON.stringify(inputs)}`}
-        note={reviewing ? 'Tap to draw it again' : 'Updates as you go'}
+        tag="Drink"
+        note={reviewing ? 'Tap to draw it again' : forMenu ? `For ${forMenu}` : 'Updates as you go'}
         artLabel="Sketch of the drink so far"
       />
       {onTint ? <DraftColourSheet visible={colouring} onClose={() => setColouring(false)} name={name} inputs={inputs} seed={seed} value={draft.tint ?? null} onChange={onTint} /> : null}

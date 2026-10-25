@@ -61,6 +61,29 @@ Built from the starting design above, with the changes noted (why in brackets).
 - **Drawings**: `private.item_sketches_set_house_ice` reads the venue's ice in the glass from `item_ice` (a `cut` or `other` ice by its `draw_as`; blocks and slabs never), and a change to `item_ice` redraws the venue's drinks. The wizard's spear length is `item_ice.length_mm`.
 - **Not yet**: drinks still name the shared ice (`useDropdowns` `iceTypes` and the wizard's lookup leave out venue ice items); PR 6 offers the venue's own. The ice picker and Kit › Ice screens stay as they were until PR 2.
 
+### PR 2: what the screens are now
+
+- **One pattern** in `components/screens/kit/`: `KitList` (drawing, name, where it comes from in one line, one Add button; Ice has "In the glass" and "Blocks and slabs, to cut from"), `KitItemPage` (drawing, facts with Change, how it connects, Remove from Kit), `KitAddSheet` (the three questions on `Sheet`, a centred dialog on the web) with `SourceQuestion` (question 2 for all three).
+- **The sheets**, each openable prefilled at any question: `IceSheet` (`ice` or `initial`, `startAt`, `madeStep` for question 3), `GlassSheet` (`glass`, `startAt`, `describe`, `onSave` to hold instead of save), `ToolSheet` (`tool` or `initialKey`, `startAt`). PR 6 opens these from the wizard and What next; PR 4 links to them from the kit check.
+- **Routes**: the lists stay at `/settings/bar/<id>/glassware|ice|tools`; one thing opens at `/settings/bar/<id>/kit/<kind>/<item id>` (its own page on a phone, beside the list on a wide screen).
+- **Gone**: `GlassForm` (Wide/Deep/Saucer, Who makes it, Designer, Series), the ice chips and the tool switches (`useSetTools`, `toolGroups`). A glass named by hand is its shape and its name; one picked from the catalog keeps its maker on the model.
+- **Left for later PRs**: ice question 3 and "How it's made" on the ice page (PR 3: `madeStep`, and the placeholder in `KitIceScreen`'s `IcePage`); "In N drinks", "Needed by" and "What it needs" (PR 4); "Glasses and ice from your drinks" (PR 6).
+
+### PR 3: what ice recipes are now
+
+- Ice made here is edited at `/settings/bar/<bar>/kit/ice/<ice>?recipe=1` (PR 2's item route; no new route, so no `vercel.json` rewrite) (`components/screens/ice/IceRecipeScreen.tsx`), built from the house-prep editor's parts (`MethodEdit` with tools per step, `KeepsSheet` with pieces or kg). Kit › Ice's item page shows `IceRecipeSection` (read view: starts from, steps, what it needs, Add to kit) in place of PR 2's placeholder; `IceSheet`'s `madeStep` asks question 3 with `IceWaysList`, and after the save `startIceRecipe` (`hooks/useIceRecipe.ts`) writes the starting recipe.
+- The twelve ways are `lib/iceRecipes.ts`, in our own words, checked on the web (sources at the end of the file). A stamped ice gets a stamp step, except for crushed, cracked and shaved ways.
+- Starts from is one `recipes` line, rewritten only when it changes (so its note stays). An ice that starts from this one is never offered, so a direct loop can't be saved; PR 4 should still keep a visited set when it follows a chain back.
+- Steps and recipe lines are readable by people with Prep (or house-made) at the venue, as for house preps. The kit check (PR 4) runs for the venue's team, so it may need an RPC to read the chain for a bartender without Prep.
+- New equipment: `ice-saw`, `ice-stamp`, `ice-ball-press` (bar), `bandsaw`, `block-shaver` (specialist). No migration.
+
+### PR 6: the same sheet everywhere
+
+- `KitPrompt` (components/screens/kit): "not in your kit, add it?" with Add, Not now and the list. `GlasswarePrompt` (glass picks) and `IcePrompt` (the wizard's ice step) build on it; Add opens `GlassSheet` / `IceSheet` filled in, with "From the <drink>" and Change above question 2.
+- What next › From your drinks (`FromDrinksStep`, `hooks/useKitFromDrinks.ts`, `lib/kitFromDrinks.ts`): glasses, ice and tools the venue's drinks name that aren't in its Kit. Glasses by their drawn shape (Add, or Match for one with no real glass), ice by drawing kind, tools from blended drinks and the venue's own ice recipes' steps.
+- Small cubes under a short Collins block: the wizard's ice tip from #702 already offers it (glass height from the venue's glass, block length from `item_ice.length_mm`).
+- Not yet: drinks still name the shared ice, so a drink can't name the venue's own "Clear cube · 50 mm" (see the PR 1 note), and "15 drinks over ice don't say which · Pick" needs a way to change many drinks at once.
+
 Notes for later PRs:
 
 - PR 3: the house-prep editor (`hooks/usePrepCard.ts`) assumes ingredients (`ingredient_role`, `made_from_id` are ingredient-only, by check constraint). Ice made here uses `item_steps`, `item_prep` and `recipes` lines, not `made_from_id`. Prep-only staff still can't write recipe lines of a house prep (an ingredient), only of the venue's ice.

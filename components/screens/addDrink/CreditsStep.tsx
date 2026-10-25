@@ -1,17 +1,20 @@
 import { useState } from 'react';
 import { StyleSheet, View } from 'react-native';
 
-import { Body, Caption, Field, PressableScale, useDs } from '@/components/ds';
-import { layout, radius, space } from '@/constants/tokens';
+import { Caption, Field } from '@/components/ds';
+import { space } from '@/constants/tokens';
 import { useClosestClassic } from '@/hooks/useClosestClassic';
 import { useDrinkLists } from '@/hooks/useDiscover';
 import { useMyProfile } from '@/hooks/useMyProfile';
 import { usePublicPeople } from '@/hooks/useProfiles';
 import { usePublicBars } from '@/hooks/useRankings';
 import type { SameNameDrink } from '@/hooks/useSameNameDrink';
+import { PickList } from '@/components/search/NearPicks';
+import { AddBarForm } from '@/components/screens/home/AddBar';
 import { suggestClassic } from '@/lib/classics';
 import { withArticle } from '@/lib/closestClassic';
 import { parseYear, searchByName, type StepProps } from '@/lib/drinkWizard';
+import { nearAfter } from '@/lib/nearName';
 
 import type { CatalogIngredient } from './IngredientSearch';
 import { SameNameCard, useSameNamePicks } from './SameNameCard';
@@ -36,15 +39,17 @@ interface CreditsStepProps extends StepProps {
 export function CreditsStep({ draft, set, venueName, ingredients, match, onRename }: CreditsStepProps) {
   const me = useMyProfile().data ?? null;
   const [who, setWho] = useState('');
-  const people = usePublicPeople(who).data ?? [];
+  const people = usePublicPeople(who, { near: true }).data ?? [];
   const classics = useDrinkLists().data ?? [];
   const [also, setAlso] = useState('');
-  const alsoPeople = usePublicPeople(also).data ?? [];
+  const alsoPeople = usePublicPeople(also, { near: true }).data ?? [];
   const [riff, setRiff] = useState('');
   const generic = (id: string) => ingredients.find((i) => i.id === id)?.generic_id ?? null;
   const close = useClosestClassic(draft.lines.flatMap((l) => (l.id ? [{ id: l.id, generic: generic(l.id) }] : []))).data ?? null;
   const suggested = close ?? (draft.name.trim() ? suggestClassic(draft.name, classics)?.classic : undefined);
   const riffResults = searchByName(riff, classics, 5);
+  // "negorni": Negroni, under "Did you mean".
+  const riffNear = nearAfter(riff, classics, riffResults, (c) => c.name);
   const other = typeof draft.creator === 'object' ? draft.creator : null;
   const mine = !!me && (draft.creator === 'me' || draft.creator === null);
 
@@ -79,9 +84,10 @@ export function CreditsStep({ draft, set, venueName, ingredients, match, onRenam
         {me ? null : <Caption tone="muted">Make a profile on the You tab to take credit for your drinks.</Caption>}
         <Field label="Someone else" value={who} onChangeText={setWho} placeholder="Search people" autoCorrect={false} maxLength={60} />
         {who.trim().length >= 2 ? (
-          <Results
-            rows={people.map((p) => ({ id: p.id, label: p.city ? `${p.display_name} · ${p.city}` : p.display_name }))}
+          <PickList
+            rows={people.map((p) => ({ id: p.id, label: p.city ? `${p.display_name} · ${p.city}` : p.display_name, near: p.near }))}
             empty="Nobody by that name has a public profile yet."
+            no="No, it’s someone else"
             onPick={(id) => {
               const p = people.find((x) => x.id === id);
               if (p) set({ creator: { id: p.id, name: p.display_name } });
@@ -103,9 +109,10 @@ export function CreditsStep({ draft, set, venueName, ingredients, match, onRenam
         ) : null}
         <Field label="Who else made it?" value={also} onChangeText={setAlso} placeholder="Search people" autoCorrect={false} maxLength={60} />
         {also.trim().length >= 2 ? (
-          <Results
-            rows={alsoPeople.filter((p) => !draft.coCreators.some((c) => c.id === p.id)).map((p) => ({ id: p.id, label: p.city ? `${p.display_name} · ${p.city}` : p.display_name }))}
+          <PickList
+            rows={alsoPeople.filter((p) => !draft.coCreators.some((c) => c.id === p.id)).map((p) => ({ id: p.id, label: p.city ? `${p.display_name} · ${p.city}` : p.display_name, near: p.near }))}
             empty="Nobody by that name has a public profile yet."
+            no="No, it’s someone else"
             onPick={(id) => {
               const p = alsoPeople.find((x) => x.id === id);
               if (p) set({ coCreators: [...draft.coCreators, { id: p.id, name: p.display_name }] });
@@ -128,8 +135,8 @@ export function CreditsStep({ draft, set, venueName, ingredients, match, onRenam
         </View>
         <Field label="Find a classic" value={riff} onChangeText={setRiff} placeholder="Negroni, Daiquiri…" autoCorrect={false} maxLength={60} />
         {riff.trim() ? (
-          <Results
-            rows={riffResults.map((c) => ({ id: c.id, label: c.name }))}
+          <PickList
+            rows={[...riffResults.map((c) => ({ id: c.id, label: c.name })), ...riffNear.map((c) => ({ id: c.id, label: c.name, near: true }))]}
             empty="No classic by that name."
             onPick={(id) => {
               const c = classics.find((x) => x.id === id);
@@ -200,7 +207,9 @@ function WhereWhen({ draft, set, venueName, asked, match, onRename }: StepProps 
 /** At home, or a bar with a page: where the drink was first made, and that bar's drink by the same name. */
 function PlacePick({ draft, set, label, match, onRename }: StepProps & Pick<CreditsStepProps, 'match' | 'onRename'> & { label: string }) {
   const [where, setWhere] = useState('');
-  const bars = usePublicBars(where).data ?? [];
+  const [adding, setAdding] = useState(false);
+  const bars = usePublicBars(where, { near: true }).data ?? [];
+  const typed = where.trim();
   const place = draft.place ?? null;
   return (
     <>
@@ -210,13 +219,26 @@ function PlacePick({ draft, set, label, match, onRename }: StepProps & Pick<Cred
       </View>
       {place && match && draft.sameAs?.id !== match.id ? <PlaceHasOne bar={place.name} drink={match} set={set} onRename={onRename} /> : null}
       <Field label={label} value={where} onChangeText={setWhere} placeholder="Search bars" autoCorrect={false} maxLength={60} />
-      {where.trim().length >= 2 ? (
-        <Results
-          rows={bars.map((b) => ({ id: b.id, label: [b.display_name, b.city].filter(Boolean).join(' · ') }))}
+      {typed.length >= 2 && !adding ? (
+        <PickList
+          rows={bars.map((b) => ({ id: b.id, label: [b.display_name, b.city].filter(Boolean).join(' · '), near: b.near }))}
           empty="No bar by that name has a page yet."
+          no="No, it’s somewhere else"
           onPick={(id) => {
             const b = bars.find((x) => x.id === id);
             if (b) set({ place: { id: b.id, name: b.display_name } });
+            setWhere('');
+          }}
+          add={{ label: `Add “${typed}” as a new bar`, sub: 'It gets its own page. The bar can claim it later.', onPress: () => setAdding(true) }}
+        />
+      ) : null}
+      {adding ? (
+        <AddBarForm
+          initialName={typed}
+          onCancel={() => setAdding(false)}
+          onAdded={(v) => {
+            set({ place: { id: v.id, name: v.display_name } });
+            setAdding(false);
             setWhere('');
           }}
         />
@@ -240,24 +262,8 @@ function PlaceHasOne({ bar, drink, set, onRename }: Pick<StepProps, 'set'> & { b
   );
 }
 
-function Results({ rows, empty, onPick }: { rows: { id: string; label: string }[]; empty: string; onPick: (id: string) => void }) {
-  const ds = useDs();
-  if (!rows.length) return <Caption tone="muted">{empty}</Caption>;
-  return (
-    <View role="list" style={[styles.results, { borderColor: ds.c.line }]}>
-      {rows.map((r) => (
-        <PressableScale key={r.id} role="button" accessibilityLabel={r.label} onPress={() => onPick(r.id)} style={[styles.row, { borderBottomColor: ds.c.line }]}>
-          <Body numberOfLines={1}>{r.label}</Body>
-        </PressableScale>
-      ))}
-    </View>
-  );
-}
-
 const styles = StyleSheet.create({
   stack: { gap: space.xxl },
   section: { gap: space.md },
   chips: { flexDirection: 'row', flexWrap: 'wrap', gap: space.sm },
-  results: { borderRadius: radius.control, borderWidth: 1, overflow: 'hidden' },
-  row: { minHeight: layout.minTapTarget + 4, justifyContent: 'center', paddingHorizontal: space.md, borderBottomWidth: StyleSheet.hairlineWidth },
 });

@@ -1,0 +1,636 @@
+{
+ "maker": "kimura.glass",
+ "models": [
+  {
+   "name": "Bathtub 5oz Cocktail",
+   "series": "Bathtub",
+   "designer": null,
+   "model_code": "18567",
+   "glass": "martini",
+   "variant": null,
+   "capacity_ml": 150,
+   "capacity_as_stated": "150 cc",
+   "height_mm": 110,
+   "rim_mm": null,
+   "material": "crystal",
+   "product_url": "https://zizi.kimuraglass.jp/products/18567",
+   "source_urls": [
+    "https://zizi.kimuraglass.jp/products/18567",
+    "https://zizi.kimuraglass.jp/products.json"
+   ]
+  },
+  {
+   "name": "Kikatsu 8257 3oz Shot",
+   "series": "Kikatsu",
+   "designer": null,
+   "model_code": "16622",
+   "glass": "rocks",
+   "variant": null,
+   "capacity_ml": 100,
+   "capacity_as_stated": "100 cc",
+   "height_mm": 85,
+   "rim_mm": null,
+   "material": "crystal",
+   "product_url": "https://zizi.kimuraglass.jp/products/16622",
+   "source_urls": [
+    "https://zizi.kimuraglass.jp/products/16622",
+    "https://zizi.kimuraglass.jp/products.json"
+   ]
+  },
+  {
+   "name": "Kasa 4Oz Martini",
+   "series": "SIP AND GUZZLE",
+   "designer": "Shingo Gokan, Yutaro Kimura",
+   "model_code": null,
+   "glass": "martini",
+   "variant": null,
+   "capacity_ml": 120,
+   "capacity_as_stated": "[120ml]",
+   "height_mm": null,
+   "rim_mm": null,
+   "material": "lead-free crystal",
+   "product_url": "https://bar-times-store.com/products/kasa-4oz-martini",
+   "source_urls": [
+    "https://bar-times-store.com/products/kasa-4oz-martini"
+   ]
+  },
+  {
+   "name": "Kasa 7Oz Martini",
+   "series": "SIP AND GUZZLE",
+   "designer": "Shingo Gokan, Yutaro Kimura",
+   "model_code": null,
+   "glass": "martini",
+   "variant": null,
+   "capacity_ml": 210,
+   "capacity_as_stated": "[210ml]",
+   "height_mm": null,
+   "rim_mm": null,
+   "material": "lead-free crystal",
+   "product_url": "https://bar-times-store.com/products/kasa-7ozmartini",
+   "source_urls": [
+    "https://bar-times-store.com/products/kasa-7ozmartini"
+   ]
+  },
+  {
+   "name": "Kasa 6Oz Martini",
+   "series": "SIP AND GUZZLE",
+   "designer": "Shingo Gokan, Yutaro Kimura",
+   "model_code": null,
+   "glass": "martini",
+   "variant": null,
+   "capacity_ml": 160,
+   "capacity_as_stated": "[160ml]",
+   "height_mm": null,
+   "rim_mm": null,
+   "material": "lead-free crystal",
+   "product_url": "https://bar-times-store.com/products/kasa6ozmartini",
+   "source_urls": [
+    "https://bar-times-store.com/products/kasa6ozmartini"
+   ]
+  },
+  {
+   "name": "Nautilus 12Oz Wine",
+   "series": "SIP AND GUZZLE",
+   "designer": "Shingo Gokan, Yutaro Kimura",
+   "model_code": null,
+   "glass": "wine",
+   "variant": null,
+   "capacity_ml": 350,
+   "capacity_as_stated": "[350ml]",
+   "height_mm": null,
+   "rim_mm": null,
+   "material": "lead-free crystal",
+   "product_url": "https://bar-times-store.com/products/nautilus12ozwine",
+   "source_urls": [
+    "https://bar-times-store.com/products/nautilus12ozwine"
+   ]
+  },
+  {
+   "name": "Nautilus 15Oz Wine",
+   "series": "SIP AND GUZZLE",
+   "designer": "Shingo Gokan, Yutaro Kimura",
+   "model_code": null,
+   "glass": "wine",
+   "variant": null,
+   "capacity_ml": 430,
+   "capacity_as_stated": "[430ml]",
+   "height_mm": null,
+   "rim_mm": null,
+   "material": "lead-free crystal",
+   "product_url": "https://bar-times-store.com/products/nautilus15ozwine",
+   "source_urls": [
+    "https://bar-times-store.com/products/nautilus15ozwine"
+   ]
+  },
+  {
+   "name": "Nautilus 9Oz Wine",
+   "series": "SIP AND GUZZLE",
+   "designer": "Shingo Gokan, Yutaro Kimura",
+   "model_code": null,
+   "glass": "wine",
+   "variant": null,
+   "capacity_ml": 250,
+   "capacity_as_stated": "[250ml]",
+   "height_mm": null,
+   "rim_mm": null,
+   "material": "lead-free crystal",
+   "product_url": "https://bar-times-store.com/products/nautilus9ozwine",
+   "source_urls": [
+    "https://bar-times-store.com/products/nautilus9ozwine"
+   ]
+  },
+  {
+   "name": "Nemo 5Oz Cocktail",
+   "series": "SIP AND GUZZLE",
+   "designer": "Shingo Gokan, Yutaro Kimura",
+   "model_code": null,
+   "glass": "coupe",
+   "variant": null,
+   "capacity_ml": 150,
+   "capacity_as_stated": "[150ml]",
+   "height_mm": null,
+   "rim_mm": null,
+   "material": "lead-free crystal",
+   "product_url": "https://bar-times-store.com/products/nemo5ozcocktail",
+   "source_urls": [
+    "https://bar-times-store.com/products/nemo5ozcocktail"
+   ]
+  },
+  {
+   "name": "Mustache 145 Mg",
+   "series": "SIP AND GUZZLE",
+   "designer": "Shingo Gokan, Yutaro Kimura",
+   "model_code": null,
+   "glass": "rocks",
+   "variant": null,
+   "capacity_ml": 145,
+   "capacity_as_stated": "[145ml]",
+   "height_mm": null,
+   "rim_mm": null,
+   "material": "lead-free crystal",
+   "product_url": "https://bar-times-store.com/products/sip-and-guzzle-mustache-145-mg-145ml",
+   "source_urls": [
+    "https://bar-times-store.com/products/sip-and-guzzle-mustache-145-mg-145ml"
+   ]
+  },
+  {
+   "name": "Mustache 145 Sq",
+   "series": "SIP AND GUZZLE",
+   "designer": "Shingo Gokan, Yutaro Kimura",
+   "model_code": null,
+   "glass": "rocks",
+   "variant": null,
+   "capacity_ml": 145,
+   "capacity_as_stated": "[145ml]",
+   "height_mm": null,
+   "rim_mm": null,
+   "material": "lead-free crystal",
+   "product_url": "https://bar-times-store.com/products/sip-and-guzzle-mustache-145-sq-145ml",
+   "source_urls": [
+    "https://bar-times-store.com/products/sip-and-guzzle-mustache-145-sq-145ml"
+   ]
+  },
+  {
+   "name": "Mustache 165 Sq",
+   "series": "SIP AND GUZZLE",
+   "designer": "Shingo Gokan, Yutaro Kimura",
+   "model_code": null,
+   "glass": "rocks",
+   "variant": null,
+   "capacity_ml": 165,
+   "capacity_as_stated": "[165ml]",
+   "height_mm": null,
+   "rim_mm": null,
+   "material": "lead-free crystal",
+   "product_url": "https://bar-times-store.com/products/sip-and-guzzle-mustache-165-sq-165ml",
+   "source_urls": [
+    "https://bar-times-store.com/products/sip-and-guzzle-mustache-165-sq-165ml"
+   ]
+  },
+  {
+   "name": "Mustache 180 Sp",
+   "series": "SIP AND GUZZLE",
+   "designer": "Shingo Gokan, Yutaro Kimura",
+   "model_code": null,
+   "glass": "rocks",
+   "variant": null,
+   "capacity_ml": 180,
+   "capacity_as_stated": "[180ml]",
+   "height_mm": null,
+   "rim_mm": null,
+   "material": "lead-free crystal",
+   "product_url": "https://bar-times-store.com/products/sip-and-guzzle-mustache-180-sp-180ml",
+   "source_urls": [
+    "https://bar-times-store.com/products/sip-and-guzzle-mustache-180-sp-180ml"
+   ]
+  },
+  {
+   "name": "Nautilus 18Oz Wine",
+   "series": "SIP AND GUZZLE",
+   "designer": "Shingo Gokan, Yutaro Kimura",
+   "model_code": null,
+   "glass": "wine",
+   "variant": null,
+   "capacity_ml": 530,
+   "capacity_as_stated": "[530ml]",
+   "height_mm": null,
+   "rim_mm": null,
+   "material": "lead-free crystal",
+   "product_url": "https://bar-times-store.com/products/sip-and-guzzle-nautilus-18oz-wine-530ml",
+   "source_urls": [
+    "https://bar-times-store.com/products/sip-and-guzzle-nautilus-18oz-wine-530ml"
+   ]
+  },
+  {
+   "name": "Nautilus 7Oz",
+   "series": "SIP AND GUZZLE",
+   "designer": "Shingo Gokan, Yutaro Kimura",
+   "model_code": null,
+   "glass": "wine",
+   "variant": null,
+   "capacity_ml": 205,
+   "capacity_as_stated": "[205ml]",
+   "height_mm": null,
+   "rim_mm": null,
+   "material": "lead-free crystal",
+   "product_url": "https://bar-times-store.com/products/sip-and-guzzle-nautilus-7oz-205ml",
+   "source_urls": [
+    "https://bar-times-store.com/products/sip-and-guzzle-nautilus-7oz-205ml"
+   ]
+  },
+  {
+   "name": "Nemo 7Oz Cocktail",
+   "series": "SIP AND GUZZLE",
+   "designer": "Shingo Gokan, Yutaro Kimura",
+   "model_code": null,
+   "glass": "coupe",
+   "variant": null,
+   "capacity_ml": 215,
+   "capacity_as_stated": "[215ml]",
+   "height_mm": null,
+   "rim_mm": null,
+   "material": "lead-free crystal",
+   "product_url": "https://bar-times-store.com/products/sip-and-guzzle-nemo-7oz-cocktail-215ml",
+   "source_urls": [
+    "https://bar-times-store.com/products/sip-and-guzzle-nemo-7oz-cocktail-215ml"
+   ]
+  },
+  {
+   "name": "Nemo 8Oz Cocktail",
+   "series": "SIP AND GUZZLE",
+   "designer": "Shingo Gokan, Yutaro Kimura",
+   "model_code": null,
+   "glass": "coupe",
+   "variant": null,
+   "capacity_ml": 240,
+   "capacity_as_stated": "[240ml]",
+   "height_mm": null,
+   "rim_mm": null,
+   "material": "lead-free crystal",
+   "product_url": "https://bar-times-store.com/products/sip-and-guzzle-nemo-8oz-cocktail-240ml",
+   "source_urls": [
+    "https://bar-times-store.com/products/sip-and-guzzle-nemo-8oz-cocktail-240ml"
+   ]
+  },
+  {
+   "name": "Spoon 2Oz Coupe",
+   "series": "SIP AND GUZZLE",
+   "designer": "Shingo Gokan, Yutaro Kimura",
+   "model_code": null,
+   "glass": "coupe",
+   "variant": null,
+   "capacity_ml": 55,
+   "capacity_as_stated": "[55ml]",
+   "height_mm": null,
+   "rim_mm": null,
+   "material": "lead-free crystal",
+   "product_url": "https://bar-times-store.com/products/sip-and-guzzle-spoon-2oz-coupe-55ml",
+   "source_urls": [
+    "https://bar-times-store.com/products/sip-and-guzzle-spoon-2oz-coupe-55ml"
+   ]
+  },
+  {
+   "name": "Spoon 2Oz Martini",
+   "series": "SIP AND GUZZLE",
+   "designer": "Shingo Gokan, Yutaro Kimura",
+   "model_code": null,
+   "glass": "martini",
+   "variant": null,
+   "capacity_ml": 55,
+   "capacity_as_stated": "[55ml]",
+   "height_mm": null,
+   "rim_mm": null,
+   "material": "lead-free crystal",
+   "product_url": "https://bar-times-store.com/products/sip-and-guzzle-spoon-2oz-martini-55ml",
+   "source_urls": [
+    "https://bar-times-store.com/products/sip-and-guzzle-spoon-2oz-martini-55ml"
+   ]
+  },
+  {
+   "name": "Spoon 2Oz N/N",
+   "series": "SIP AND GUZZLE",
+   "designer": "Shingo Gokan, Yutaro Kimura",
+   "model_code": null,
+   "glass": "nick",
+   "variant": null,
+   "capacity_ml": 60,
+   "capacity_as_stated": "[60ml]",
+   "height_mm": null,
+   "rim_mm": null,
+   "material": "lead-free crystal",
+   "product_url": "https://bar-times-store.com/products/sip-and-guzzle-spoon-2oz-n-n-60ml",
+   "source_urls": [
+    "https://bar-times-store.com/products/sip-and-guzzle-spoon-2oz-n-n-60ml"
+   ]
+  },
+  {
+   "name": "Sunao 11Oz Of",
+   "series": "SIP AND GUZZLE",
+   "designer": "Shingo Gokan, Yutaro Kimura",
+   "model_code": null,
+   "glass": "rocks",
+   "variant": null,
+   "capacity_ml": 330,
+   "capacity_as_stated": "[330ml]",
+   "height_mm": null,
+   "rim_mm": null,
+   "material": "lead-free crystal",
+   "product_url": "https://bar-times-store.com/products/sip-and-guzzle-sunao-11oz-of-330ml",
+   "source_urls": [
+    "https://bar-times-store.com/products/sip-and-guzzle-sunao-11oz-of-330ml"
+   ]
+  },
+  {
+   "name": "Sunao 12Oz Chd",
+   "series": "SIP AND GUZZLE",
+   "designer": "Shingo Gokan, Yutaro Kimura",
+   "model_code": null,
+   "glass": "wine",
+   "variant": null,
+   "capacity_ml": 365,
+   "capacity_as_stated": "[365ml]",
+   "height_mm": null,
+   "rim_mm": null,
+   "material": "lead-free crystal",
+   "product_url": "https://bar-times-store.com/products/sip-and-guzzle-sunao-12oz-chd-365ml",
+   "source_urls": [
+    "https://bar-times-store.com/products/sip-and-guzzle-sunao-12oz-chd-365ml"
+   ]
+  },
+  {
+   "name": "Sunao 12Oz Tb",
+   "series": "SIP AND GUZZLE",
+   "designer": "Shingo Gokan, Yutaro Kimura",
+   "model_code": null,
+   "glass": "highball",
+   "variant": null,
+   "capacity_ml": 335,
+   "capacity_as_stated": "[335ml]",
+   "height_mm": null,
+   "rim_mm": null,
+   "material": "lead-free crystal",
+   "product_url": "https://bar-times-store.com/products/sip-and-guzzle-sunao-12oz-tb-335ml",
+   "source_urls": [
+    "https://bar-times-store.com/products/sip-and-guzzle-sunao-12oz-tb-335ml"
+   ]
+  },
+  {
+   "name": "Sunao 14Oz Of",
+   "series": "SIP AND GUZZLE",
+   "designer": "Shingo Gokan, Yutaro Kimura",
+   "model_code": null,
+   "glass": "rocks",
+   "variant": null,
+   "capacity_ml": 400,
+   "capacity_as_stated": "[400ml]",
+   "height_mm": null,
+   "rim_mm": null,
+   "material": "lead-free crystal",
+   "product_url": "https://bar-times-store.com/products/sip-and-guzzle-sunao-14oz-of-400ml",
+   "source_urls": [
+    "https://bar-times-store.com/products/sip-and-guzzle-sunao-14oz-of-400ml"
+   ]
+  },
+  {
+   "name": "Sunao 14Oz Tb",
+   "series": "SIP AND GUZZLE",
+   "designer": "Shingo Gokan, Yutaro Kimura",
+   "model_code": null,
+   "glass": "highball",
+   "variant": null,
+   "capacity_ml": 420,
+   "capacity_as_stated": "[420ml]",
+   "height_mm": null,
+   "rim_mm": null,
+   "material": "lead-free crystal",
+   "product_url": "https://bar-times-store.com/products/sip-and-guzzle-sunao-14oz-tb-420ml",
+   "source_urls": [
+    "https://bar-times-store.com/products/sip-and-guzzle-sunao-14oz-tb-420ml"
+   ]
+  },
+  {
+   "name": "Sunao 15Oz Pi",
+   "series": "SIP AND GUZZLE",
+   "designer": "Shingo Gokan, Yutaro Kimura",
+   "model_code": null,
+   "glass": "wine",
+   "variant": null,
+   "capacity_ml": 455,
+   "capacity_as_stated": "[455ml]",
+   "height_mm": null,
+   "rim_mm": null,
+   "material": "lead-free crystal",
+   "product_url": "https://bar-times-store.com/products/sip-and-guzzle-sunao-15oz-pi-455ml",
+   "source_urls": [
+    "https://bar-times-store.com/products/sip-and-guzzle-sunao-15oz-pi-455ml"
+   ]
+  },
+  {
+   "name": "Sunao 10Oz Wh",
+   "series": "SIP AND GUZZLE",
+   "designer": "Shingo Gokan, Yutaro Kimura",
+   "model_code": null,
+   "glass": "wine",
+   "variant": null,
+   "capacity_ml": 300,
+   "capacity_as_stated": "[300ml]",
+   "height_mm": null,
+   "rim_mm": null,
+   "material": "lead-free crystal",
+   "product_url": "https://bar-times-store.com/products/sip-and-guzzle-sunao-wine-10oz-wh-300ml",
+   "source_urls": [
+    "https://bar-times-store.com/products/sip-and-guzzle-sunao-wine-10oz-wh-300ml"
+   ]
+  },
+  {
+   "name": "Sunao 15Oz Rd",
+   "series": "SIP AND GUZZLE",
+   "designer": "Shingo Gokan, Yutaro Kimura",
+   "model_code": null,
+   "glass": "wine",
+   "variant": null,
+   "capacity_ml": 455,
+   "capacity_as_stated": "[455ml]",
+   "height_mm": null,
+   "rim_mm": null,
+   "material": "lead-free crystal",
+   "product_url": "https://bar-times-store.com/products/sip-and-guzzle-sunao-wine-15oz-rd-455ml",
+   "source_urls": [
+    "https://bar-times-store.com/products/sip-and-guzzle-sunao-wine-15oz-rd-455ml"
+   ]
+  },
+  {
+   "name": "Tanto Bello M",
+   "series": "SIP AND GUZZLE",
+   "designer": "Shingo Gokan, Yutaro Kimura",
+   "model_code": null,
+   "glass": "rocks",
+   "variant": null,
+   "capacity_ml": 225,
+   "capacity_as_stated": "[225ml]",
+   "height_mm": null,
+   "rim_mm": null,
+   "material": "lead-free crystal",
+   "product_url": "https://bar-times-store.com/products/sip-and-guzzle-tanto-bello-m-225ml",
+   "source_urls": [
+    "https://bar-times-store.com/products/sip-and-guzzle-tanto-bello-m-225ml"
+   ]
+  },
+  {
+   "name": "Tanto Bello S",
+   "series": "SIP AND GUZZLE",
+   "designer": "Shingo Gokan, Yutaro Kimura",
+   "model_code": null,
+   "glass": "rocks",
+   "variant": null,
+   "capacity_ml": 145,
+   "capacity_as_stated": "[145ml]",
+   "height_mm": null,
+   "rim_mm": null,
+   "material": "lead-free crystal",
+   "product_url": "https://bar-times-store.com/products/sip-and-guzzle-tanto-bello-s-145ml",
+   "source_urls": [
+    "https://bar-times-store.com/products/sip-and-guzzle-tanto-bello-s-145ml"
+   ]
+  },
+  {
+   "name": "Tanto Bello Xs",
+   "series": "SIP AND GUZZLE",
+   "designer": "Shingo Gokan, Yutaro Kimura",
+   "model_code": null,
+   "glass": "rocks",
+   "variant": null,
+   "capacity_ml": 55,
+   "capacity_as_stated": "[55ml]",
+   "height_mm": null,
+   "rim_mm": null,
+   "material": "lead-free crystal",
+   "product_url": "https://bar-times-store.com/products/sip-and-guzzle-tanto-bello-xs-55ml",
+   "source_urls": [
+    "https://bar-times-store.com/products/sip-and-guzzle-tanto-bello-xs-55ml"
+   ]
+  },
+  {
+   "name": "Vandyke 5Oz N/N",
+   "series": "SIP AND GUZZLE",
+   "designer": "Shingo Gokan, Yutaro Kimura",
+   "model_code": null,
+   "glass": "nick",
+   "variant": null,
+   "capacity_ml": 150,
+   "capacity_as_stated": "[150ml]",
+   "height_mm": null,
+   "rim_mm": null,
+   "material": "lead-free crystal",
+   "product_url": "https://bar-times-store.com/products/sip-and-guzzle-vandyke-5oz-n-n-150ml",
+   "source_urls": [
+    "https://bar-times-store.com/products/sip-and-guzzle-vandyke-5oz-n-n-150ml"
+   ]
+  },
+  {
+   "name": "Sunao 6Oz Ch",
+   "series": "SIP AND GUZZLE",
+   "designer": "Shingo Gokan, Yutaro Kimura",
+   "model_code": null,
+   "glass": "wine",
+   "variant": null,
+   "capacity_ml": 170,
+   "capacity_as_stated": "[170ml]",
+   "height_mm": null,
+   "rim_mm": null,
+   "material": "lead-free crystal",
+   "product_url": "https://bar-times-store.com/products/sunao_6oz_ch",
+   "source_urls": [
+    "https://bar-times-store.com/products/sunao_6oz_ch"
+   ]
+  },
+  {
+   "name": "Tanto Bello D.O.F",
+   "series": "SIP AND GUZZLE",
+   "designer": "Shingo Gokan, Yutaro Kimura",
+   "model_code": null,
+   "glass": "rocks",
+   "variant": null,
+   "capacity_ml": 330,
+   "capacity_as_stated": "[330ml]",
+   "height_mm": null,
+   "rim_mm": null,
+   "material": "lead-free crystal",
+   "product_url": "https://bar-times-store.com/products/tantobellod-o-f",
+   "source_urls": [
+    "https://bar-times-store.com/products/tantobellod-o-f"
+   ]
+  },
+  {
+   "name": "Tanto Bello Tl",
+   "series": "SIP AND GUZZLE",
+   "designer": "Shingo Gokan, Yutaro Kimura",
+   "model_code": null,
+   "glass": "highball",
+   "variant": null,
+   "capacity_ml": 345,
+   "capacity_as_stated": "[345ml]",
+   "height_mm": null,
+   "rim_mm": null,
+   "material": "lead-free crystal",
+   "product_url": "https://bar-times-store.com/products/tantobellotl",
+   "source_urls": [
+    "https://bar-times-store.com/products/tantobellotl"
+   ]
+  },
+  {
+   "name": "Vandyke 5Oz Cocktail",
+   "series": "SIP AND GUZZLE",
+   "designer": "Shingo Gokan, Yutaro Kimura",
+   "model_code": null,
+   "glass": "coupe",
+   "variant": null,
+   "capacity_ml": 150,
+   "capacity_as_stated": "[150ml]",
+   "height_mm": null,
+   "rim_mm": null,
+   "material": "lead-free crystal",
+   "product_url": "https://bar-times-store.com/products/vandyke5ozcocktail",
+   "source_urls": [
+    "https://bar-times-store.com/products/vandyke5ozcocktail"
+   ]
+  },
+  {
+   "name": "Vandyke 5Oz Coupe",
+   "series": "SIP AND GUZZLE",
+   "designer": "Shingo Gokan, Yutaro Kimura",
+   "model_code": null,
+   "glass": "coupe",
+   "variant": null,
+   "capacity_ml": 150,
+   "capacity_as_stated": "[150ml]",
+   "height_mm": null,
+   "rim_mm": null,
+   "material": "lead-free crystal",
+   "product_url": "https://bar-times-store.com/products/vandyke5ozcoupe",
+   "source_urls": [
+    "https://bar-times-store.com/products/vandyke5ozcoupe"
+   ]
+  }
+ ]
+}
