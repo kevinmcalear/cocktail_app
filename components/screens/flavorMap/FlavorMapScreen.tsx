@@ -5,6 +5,7 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import { IconSymbol } from '@/components/ui/icon-symbol';
 
+import { usePageFrame } from '@/components/nav/PageFrame';
 import { BackbarTheme, Body, Button, Caption, dragDismissesKeyboard, GlassButton, PressableScale, Segmented, Title, useDs, useGutter } from '@/components/ds';
 import { fontFamilies, layout, radius, space, type } from '@/constants/tokens';
 import { useActiveVenue } from '@/hooks/useActiveVenue';
@@ -34,6 +35,7 @@ function FlavorMapPage() {
   const router = useRouter();
   const insets = useSafeAreaInsets();
   const gutter = useGutter();
+  const { column } = usePageFrame();
   const params = useLocalSearchParams<{ with?: string }>();
   const opened = (params.with ?? '').split(',').filter(Boolean).slice(0, 3);
   const [picked, setPicked] = useState<string[]>(opened);
@@ -76,6 +78,7 @@ function FlavorMapPage() {
         {...dragDismissesKeyboard}
         contentContainerStyle={[
           styles.page,
+          column,
           { paddingTop: insets.top + layout.minTapTarget + space.lg, paddingBottom: insets.bottom + space.xxxl + (picked.length ? layout.minTapTarget + space.xl : 0), paddingHorizontal: gutter },
         ]}
       >
@@ -204,7 +207,7 @@ function FlavorMapPage() {
       </ScrollView>
       {picked.length ? (
         <View style={[styles.pinned, { paddingBottom: insets.bottom + space.md, paddingHorizontal: gutter, backgroundColor: ds.c.ground, borderTopColor: ds.c.line }]}>
-          <Button label={venue ? `Start a ${venue.name} drink with these` : 'Start a drink with these'} icon="plus" size="lg" onPress={start} style={styles.pinnedButton} />
+          <Button label={venue ? `Start a ${venue.name} drink with these` : 'Start a drink with these'} icon="plus" size="lg" onPress={start} style={column} />
         </View>
       ) : null}
       <View style={[styles.back, { top: insets.top + space.sm, left: gutter, right: gutter }]}>
@@ -221,7 +224,7 @@ function FlavorMapPage() {
 
 const styles = StyleSheet.create({
   screen: { flex: 1 },
-  page: { width: '100%', maxWidth: 760, alignSelf: 'center', gap: space.lg },
+  page: { gap: space.lg },
   header: { gap: space.sm },
   field: { minHeight: 52, borderRadius: radius.control, borderWidth: StyleSheet.hairlineWidth, paddingHorizontal: space.lg, flexDirection: 'row', alignItems: 'center', gap: space.sm },
   input: { flex: 1, minHeight: layout.minTapTarget },
@@ -238,5 +241,4 @@ const styles = StyleSheet.create({
   count: { fontFamily: fontFamilies.monoMedium, fontVariant: ['tabular-nums'] },
   back: { position: 'absolute', flexDirection: 'row', justifyContent: 'space-between' },
   pinned: { position: 'absolute', left: 0, right: 0, bottom: 0, paddingTop: space.md, borderTopWidth: StyleSheet.hairlineWidth },
-  pinnedButton: { width: '100%', maxWidth: 760, alignSelf: 'center' },
 });

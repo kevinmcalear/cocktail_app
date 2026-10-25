@@ -1,0 +1,41 @@
+{
+ "maker": "gabriel.glas",
+ "models": [
+  {
+   "name": "Gabriel-Glas Gold Edition",
+   "series": "Gold Edition",
+   "designer": "René Gabriel",
+   "model_code": "EAN 0 793573 996800",
+   "glass": "wine",
+   "variant": null,
+   "capacity_ml": 510,
+   "capacity_as_stated": "Volume 510 ml",
+   "height_mm": 230,
+   "rim_mm": null,
+   "material": "lead-free crystal",
+   "product_url": "https://www.gabriel-glas.com/shop/all-products/the-gold-edition-glass-1-pcs-gift-box/?lang=en",
+   "source_urls": [
+    "https://www.gabriel-glas.com/shop/all-products/the-gold-edition-glass-1-pcs-gift-box/?lang=en",
+    "https://www.gabriel-glas.com/info/the-gabriel-glas/?lang=en"
+   ]
+  },
+  {
+   "name": "Gabriel-Glas StandArt",
+   "series": "StandArt",
+   "designer": "René Gabriel",
+   "model_code": "EAN 0 793573 996916",
+   "glass": "wine",
+   "variant": null,
+   "capacity_ml": 510,
+   "capacity_as_stated": "Volume 510 ml",
+   "height_mm": 230,
+   "rim_mm": null,
+   "material": "lead-free crystal",
+   "product_url": "https://www.gabriel-glas.com/shop/all-products/the-standart-glass-1-pcs-designer-box/?lang=en",
+   "source_urls": [
+    "https://www.gabriel-glas.com/shop/all-products/the-standart-glass-1-pcs-designer-box/?lang=en",
+    "https://www.gabriel-glas.com/info/the-gabriel-glas/?lang=en"
+   ]
+  }
+ ]
+}

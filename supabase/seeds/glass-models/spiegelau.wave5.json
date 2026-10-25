@@ -1,0 +1,514 @@
+{
+ "maker": "spiegelau",
+ "models": [
+  {
+   "name": "Authentis Pro Bordeaux Glass",
+   "series": "Authentis Pro",
+   "designer": null,
+   "model_code": "4408035",
+   "glass": "wine",
+   "variant": null,
+   "capacity_ml": 650,
+   "capacity_as_stated": "650 ml",
+   "height_mm": 232,
+   "rim_mm": null,
+   "material": "crystal",
+   "product_url": "https://www.spiegelau.com/en-de/spiegelau-authentis-pro-bordeaux-glass/4408035",
+   "source_urls": [
+    "https://www.spiegelau.com/en-de/spiegelau-authentis-pro-bordeaux-glass/4408035"
+   ]
+  },
+  {
+   "name": "Authentis Pro Burgundy Glass",
+   "series": "Authentis Pro",
+   "designer": null,
+   "model_code": "4408000",
+   "glass": "wine",
+   "variant": null,
+   "capacity_ml": 700,
+   "capacity_as_stated": "700 ml",
+   "height_mm": 226,
+   "rim_mm": null,
+   "material": "crystal",
+   "product_url": "https://www.spiegelau.com/en-de/spiegelau-authentis-pro-burgundy-glass/4408000",
+   "source_urls": [
+    "https://www.spiegelau.com/en-de/spiegelau-authentis-pro-burgundy-glass/4408000"
+   ]
+  },
+  {
+   "name": "Authentis Pro Champagne Glass",
+   "series": "Authentis Pro",
+   "designer": null,
+   "model_code": "4408029",
+   "glass": "flute",
+   "variant": null,
+   "capacity_ml": 274,
+   "capacity_as_stated": "9.25 oz. (WebstaurantStore)",
+   "height_mm": 220,
+   "rim_mm": null,
+   "material": "crystal",
+   "product_url": "https://www.spiegelau.com/en-de/spiegelau-authentis-pro-champagne-glass/4408029",
+   "source_urls": [
+    "https://www.spiegelau.com/en-de/spiegelau-authentis-pro-champagne-glass/4408029",
+    "https://www.webstaurantstore.com/spiegelau-4408029-authentis-9-25-oz-champagne-flute-glass-case/5514408029.html"
+   ]
+  },
+  {
+   "name": "Authentis Pro Red Wine / Water Glass",
+   "series": "Authentis Pro",
+   "designer": null,
+   "model_code": "4408001",
+   "glass": "wine",
+   "variant": null,
+   "capacity_ml": 481,
+   "capacity_as_stated": "16.25 oz. (WebstaurantStore)",
+   "height_mm": 218,
+   "rim_mm": null,
+   "material": "crystal",
+   "product_url": "https://www.spiegelau.com/en-de/spiegelau-authentis-pro-red-wine-water-glass/4408001",
+   "source_urls": [
+    "https://www.spiegelau.com/en-de/spiegelau-authentis-pro-red-wine-water-glass/4408001",
+    "https://www.webstaurantstore.com/spiegelau-4408001-authentis-16-25-oz-red-wine-water-goblet-glass-pack/5514408001.html"
+   ]
+  },
+  {
+   "name": "Authentis Pro White Wine Glass",
+   "series": "Authentis Pro",
+   "designer": null,
+   "model_code": "4408002",
+   "glass": "wine",
+   "variant": null,
+   "capacity_ml": 421,
+   "capacity_as_stated": "14.25 oz. (WebstaurantStore)",
+   "height_mm": 210,
+   "rim_mm": null,
+   "material": "crystal",
+   "product_url": "https://www.spiegelau.com/en-de/spiegelau-authentis-pro-white-wine-glass/4408002",
+   "source_urls": [
+    "https://www.spiegelau.com/en-de/spiegelau-authentis-pro-white-wine-glass/4408002",
+    "https://www.webstaurantstore.com/spiegelau-4408002-authentis-14-25-oz-white-wine-glass-pack/5514408002.html"
+   ]
+  },
+  {
+   "name": "Authentis Pro White Wine Glass Small",
+   "series": "Authentis Pro",
+   "designer": null,
+   "model_code": "4408003",
+   "glass": "wine",
+   "variant": null,
+   "capacity_ml": 360,
+   "capacity_as_stated": "360 ml",
+   "height_mm": 200,
+   "rim_mm": null,
+   "material": "crystal",
+   "product_url": "https://www.spiegelau.com/en-de/spiegelau-authentis-pro-white-wine-glass-small/4408003",
+   "source_urls": [
+    "https://www.spiegelau.com/en-de/spiegelau-authentis-pro-white-wine-glass-small/4408003"
+   ]
+  },
+  {
+   "name": "Beer Classics Barrel Aged Beer Glass",
+   "series": "Beer Classics",
+   "designer": null,
+   "model_code": "4992660",
+   "glass": "beer",
+   "variant": null,
+   "capacity_ml": null,
+   "capacity_as_stated": null,
+   "height_mm": 175,
+   "rim_mm": null,
+   "material": "crystal",
+   "product_url": "https://www.spiegelau.com/en-de/spiegelau-beer-classics-barrel-aged-beer-glass/4992660",
+   "source_urls": [
+    "https://www.spiegelau.com/en-de/spiegelau-beer-classics-barrel-aged-beer-glass/4992660"
+   ]
+  },
+  {
+   "name": "Beer Classics Beer Tulip",
+   "series": "Beer Classics",
+   "designer": null,
+   "model_code": "4991674",
+   "glass": "beer",
+   "variant": null,
+   "capacity_ml": 436,
+   "capacity_as_stated": "14.75 oz.",
+   "height_mm": 155,
+   "rim_mm": null,
+   "material": "crystal",
+   "product_url": "https://www.spiegelau.com/en-de/spiegelau-beer-classics-beer-tulip/4991674",
+   "source_urls": [
+    "https://www.spiegelau.com/en-de/spiegelau-beer-classics-beer-tulip/4991674",
+    "https://www.webstaurantstore.com/spiegelau-4998024-beer-classics-14-75-oz-stemmed-pilsner-glass-case/5514998024.html"
+   ]
+  },
+  {
+   "name": "Beer Classics IPA Glass",
+   "series": "Beer Classics",
+   "designer": null,
+   "model_code": "4992662",
+   "glass": "beer",
+   "variant": null,
+   "capacity_ml": 540,
+   "capacity_as_stated": "18.25 oz.",
+   "height_mm": 186,
+   "rim_mm": null,
+   "material": "crystal",
+   "product_url": "https://www.spiegelau.com/en-de/spiegelau-beer-classics-ipa-glass/4992662",
+   "source_urls": [
+    "https://www.spiegelau.com/en-de/spiegelau-beer-classics-ipa-glass/4992662",
+    "https://www.webstaurantstore.com/spiegelau-4998052-beer-classics-18-25-oz-ipa-glass-case/5514998052.html"
+   ]
+  },
+  {
+   "name": "Beer Classics Pilsner",
+   "series": "Beer Classics",
+   "designer": null,
+   "model_code": "4991680",
+   "glass": "beer",
+   "variant": null,
+   "capacity_ml": 421,
+   "capacity_as_stated": "14.25 oz.",
+   "height_mm": 220,
+   "rim_mm": null,
+   "material": "crystal",
+   "product_url": "https://www.spiegelau.com/en-de/spiegelau-beer-classics-pilsner/4991680",
+   "source_urls": [
+    "https://www.spiegelau.com/en-de/spiegelau-beer-classics-pilsner/4991680",
+    "https://www.webstaurantstore.com/spiegelau-4998050-beer-classics-14-25-oz-tall-pilsner-glass-case/5514998050.html"
+   ]
+  },
+  {
+   "name": "Beer Classics Wheat Beer Glass",
+   "series": "Beer Classics",
+   "designer": null,
+   "model_code": "4991685",
+   "glass": "beer",
+   "variant": null,
+   "capacity_ml": null,
+   "capacity_as_stated": null,
+   "height_mm": 238,
+   "rim_mm": null,
+   "material": "crystal",
+   "product_url": "https://www.spiegelau.com/en-de/spiegelau-beer-classics-wheat-beer-glass/4991685",
+   "source_urls": [
+    "https://www.spiegelau.com/en-de/spiegelau-beer-classics-wheat-beer-glass/4991685"
+   ]
+  },
+  {
+   "name": "Capri Beer Glass",
+   "series": "Capri",
+   "designer": null,
+   "model_code": "4333366",
+   "glass": "beer",
+   "variant": null,
+   "capacity_ml": null,
+   "capacity_as_stated": null,
+   "height_mm": 191,
+   "rim_mm": null,
+   "material": "crystal",
+   "product_url": "https://www.spiegelau.com/en-de/spiegelau-capri-beer-glass/4333366",
+   "source_urls": [
+    "https://www.spiegelau.com/en-de/spiegelau-capri-beer-glass/4333366"
+   ]
+  },
+  {
+   "name": "Definition Pro Bordeaux Glass",
+   "series": "Definition Pro",
+   "designer": null,
+   "model_code": "1350335",
+   "glass": "wine",
+   "variant": null,
+   "capacity_ml": 750,
+   "capacity_as_stated": "25.375 oz. (WebstaurantStore)",
+   "height_mm": 243,
+   "rim_mm": null,
+   "material": "crystal",
+   "product_url": "https://www.spiegelau.com/en-de/spiegelau-definition-pro-bordeaux-glass/1350335",
+   "source_urls": [
+    "https://www.spiegelau.com/en-de/spiegelau-definition-pro-bordeaux-glass/1350335",
+    "https://www.webstaurantstore.com/spiegelau-definition-25-375-oz-bordeaux-wine-glass-pack/5511350135.html"
+   ]
+  },
+  {
+   "name": "Definition Pro Burgundy Glass",
+   "series": "Definition Pro",
+   "designer": null,
+   "model_code": "1350300",
+   "glass": "wine",
+   "variant": null,
+   "capacity_ml": 991,
+   "capacity_as_stated": "33.5 oz. (WebstaurantStore)",
+   "height_mm": 235,
+   "rim_mm": null,
+   "material": "crystal",
+   "product_url": "https://www.spiegelau.com/en-de/spiegelau-definition-pro-burgundy-glass/1350300",
+   "source_urls": [
+    "https://www.spiegelau.com/en-de/spiegelau-definition-pro-burgundy-glass/1350300",
+    "https://www.webstaurantstore.com/spiegelau-definition-33-5-oz-burgundy-wine-glass-case/5511350100.html"
+   ]
+  },
+  {
+   "name": "Definition Pro Champagne Glass",
+   "series": "Definition Pro",
+   "designer": null,
+   "model_code": "1350329",
+   "glass": "flute",
+   "variant": null,
+   "capacity_ml": 251,
+   "capacity_as_stated": "8.5 oz. (WebstaurantStore)",
+   "height_mm": 242,
+   "rim_mm": null,
+   "material": "crystal",
+   "product_url": "https://www.spiegelau.com/en-de/spiegelau-definition-pro-champagne-glass/1350329",
+   "source_urls": [
+    "https://www.spiegelau.com/en-de/spiegelau-definition-pro-champagne-glass/1350329",
+    "https://www.webstaurantstore.com/spiegelau-definition-8-5-oz-flute-glass-case/5511350129.html"
+   ]
+  },
+  {
+   "name": "Definition Pro Universal Wine Glass",
+   "series": "Definition Pro",
+   "designer": null,
+   "model_code": "1350301",
+   "glass": "wine",
+   "variant": null,
+   "capacity_ml": 551,
+   "capacity_as_stated": "18.625 oz. (WebstaurantStore)",
+   "height_mm": 237,
+   "rim_mm": null,
+   "material": "crystal",
+   "product_url": "https://www.spiegelau.com/en-de/spiegelau-definition-pro-universal-wine-glass/1350301",
+   "source_urls": [
+    "https://www.spiegelau.com/en-de/spiegelau-definition-pro-universal-wine-glass/1350301",
+    "https://www.webstaurantstore.com/spiegelau-definition-18-625-oz-universal-wine-glass-case/5511350101.html"
+   ]
+  },
+  {
+   "name": "Definition Pro White Wine Glass",
+   "series": "Definition Pro",
+   "designer": null,
+   "model_code": "1350302",
+   "glass": "wine",
+   "variant": null,
+   "capacity_ml": 429,
+   "capacity_as_stated": "14.5 oz. (WebstaurantStore)",
+   "height_mm": 228,
+   "rim_mm": null,
+   "material": "crystal",
+   "product_url": "https://www.spiegelau.com/en-de/spiegelau-definition-pro-white-wine-glass/1350302",
+   "source_urls": [
+    "https://www.spiegelau.com/en-de/spiegelau-definition-pro-white-wine-glass/1350302",
+    "https://www.webstaurantstore.com/spiegelau-definition-145-oz-white-wine-glass-case/5511350102.html"
+   ]
+  },
+  {
+   "name": "Festival Pro Tulip Beer Glass",
+   "series": "Festival",
+   "designer": null,
+   "model_code": "4028024",
+   "glass": "beer",
+   "variant": null,
+   "capacity_ml": null,
+   "capacity_as_stated": null,
+   "height_mm": 162,
+   "rim_mm": null,
+   "material": "crystal",
+   "product_url": "https://www.spiegelau.com/en-de/spiegelau-festival-pro-tulip-beer-glass/4028024",
+   "source_urls": [
+    "https://www.spiegelau.com/en-de/spiegelau-festival-pro-tulip-beer-glass/4028024"
+   ]
+  },
+  {
+   "name": "Lifestyle Beer Glass",
+   "series": "Lifestyle",
+   "designer": null,
+   "model_code": "4450174",
+   "glass": "beer",
+   "variant": null,
+   "capacity_ml": null,
+   "capacity_as_stated": null,
+   "height_mm": 187,
+   "rim_mm": null,
+   "material": "crystal",
+   "product_url": "https://www.spiegelau.com/en-de/spiegelau-lifestyle-beer-glass/4450174",
+   "source_urls": [
+    "https://www.spiegelau.com/en-de/spiegelau-lifestyle-beer-glass/4450174"
+   ]
+  },
+  {
+   "name": "Vino Grande Pro Bordeaux Glass",
+   "series": "Vino Grande Pro",
+   "designer": null,
+   "model_code": "4518035",
+   "glass": "wine",
+   "variant": null,
+   "capacity_ml": 621,
+   "capacity_as_stated": "21 oz. (WebstaurantStore)",
+   "height_mm": 225,
+   "rim_mm": null,
+   "material": "crystal",
+   "product_url": "https://www.spiegelau.com/en-de/spiegelau-vino-grande-pro-bordeaux-glass/4518035",
+   "source_urls": [
+    "https://www.spiegelau.com/en-de/spiegelau-vino-grande-pro-bordeaux-glass/4518035",
+    "https://www.webstaurantstore.com/spiegelau-4518035-vino-grande-21-oz-bordeaux-wine-glass-case/5514518035.html"
+   ]
+  },
+  {
+   "name": "Vino Grande Pro Burgundy Glass",
+   "series": "Vino Grande Pro",
+   "designer": null,
+   "model_code": "4518000",
+   "glass": "wine",
+   "variant": null,
+   "capacity_ml": 710,
+   "capacity_as_stated": "24 oz. (WebstaurantStore)",
+   "height_mm": 216,
+   "rim_mm": null,
+   "material": "crystal",
+   "product_url": "https://www.spiegelau.com/en-de/spiegelau-vino-grande-pro-burgundy-glass/4518000",
+   "source_urls": [
+    "https://www.spiegelau.com/en-de/spiegelau-vino-grande-pro-burgundy-glass/4518000",
+    "https://www.webstaurantstore.com/spiegelau-4518000-vino-grande-24-oz-burgundy-wine-glass-case/5514518000.html"
+   ]
+  },
+  {
+   "name": "Vino Grande Pro Champagne Glass",
+   "series": "Vino Grande Pro",
+   "designer": null,
+   "model_code": "4518029",
+   "glass": "flute",
+   "variant": null,
+   "capacity_ml": 259,
+   "capacity_as_stated": "8.75 oz. (WebstaurantStore)",
+   "height_mm": 230,
+   "rim_mm": null,
+   "material": "crystal",
+   "product_url": "https://www.spiegelau.com/en-de/spiegelau-vino-grande-pro-champagne-glass/4518029",
+   "source_urls": [
+    "https://www.spiegelau.com/en-de/spiegelau-vino-grande-pro-champagne-glass/4518029",
+    "https://www.webstaurantstore.com/spiegelau-4518029-vino-grande-8-75-oz-champagne-flute-glass-case/5514518029.html"
+   ]
+  },
+  {
+   "name": "Vino Grande Pro Red Wine Glass / Water Glass",
+   "series": "Vino Grande Pro",
+   "designer": null,
+   "model_code": "4518001",
+   "glass": "wine",
+   "variant": null,
+   "capacity_ml": 421,
+   "capacity_as_stated": "14.25 oz. (WebstaurantStore)",
+   "height_mm": 225,
+   "rim_mm": null,
+   "material": "crystal",
+   "product_url": "https://www.spiegelau.com/en-de/spiegelau-vino-grande-pro-red-wine-glass-water-glass/4518001",
+   "source_urls": [
+    "https://www.spiegelau.com/en-de/spiegelau-vino-grande-pro-red-wine-glass-water-glass/4518001",
+    "https://www.webstaurantstore.com/spiegelau-4518001-vino-grande-14-25-oz-red-wine-water-goblet-glass-case/5514518001.html"
+   ]
+  },
+  {
+   "name": "Vino Grande Pro White Wine Glass",
+   "series": "Vino Grande Pro",
+   "designer": null,
+   "model_code": "4518002",
+   "glass": "wine",
+   "variant": null,
+   "capacity_ml": 340,
+   "capacity_as_stated": "11.5 oz. (WebstaurantStore)",
+   "height_mm": 211,
+   "rim_mm": null,
+   "material": "crystal",
+   "product_url": "https://www.spiegelau.com/en-de/spiegelau-vino-grande-pro-white-wine-glass/4518002",
+   "source_urls": [
+    "https://www.spiegelau.com/en-de/spiegelau-vino-grande-pro-white-wine-glass/4518002",
+    "https://www.webstaurantstore.com/spiegelau-4518002-vino-grande-11-5-oz-white-wine-glass-case/5514518002.html"
+   ]
+  },
+  {
+   "name": "Willsberger Anniversary Pro Bordeaux Glass",
+   "series": "Willsberger Anniversary Pro",
+   "designer": null,
+   "model_code": "1418035",
+   "glass": "wine",
+   "variant": null,
+   "capacity_ml": null,
+   "capacity_as_stated": null,
+   "height_mm": 238,
+   "rim_mm": null,
+   "material": "crystal",
+   "product_url": "https://www.spiegelau.com/en-de/spiegelau-willsberger-anniversary-pro-bordeaux-glass/1418035",
+   "source_urls": [
+    "https://www.spiegelau.com/en-de/spiegelau-willsberger-anniversary-pro-bordeaux-glass/1418035"
+   ]
+  },
+  {
+   "name": "Willsberger Anniversary Pro Burgundy Glass",
+   "series": "Willsberger Anniversary Pro",
+   "designer": null,
+   "model_code": "1418000",
+   "glass": "wine",
+   "variant": null,
+   "capacity_ml": null,
+   "capacity_as_stated": null,
+   "height_mm": 238,
+   "rim_mm": null,
+   "material": "crystal",
+   "product_url": "https://www.spiegelau.com/en-de/spiegelau-willsberger-anniversary-pro-burgundy-glass/1418000",
+   "source_urls": [
+    "https://www.spiegelau.com/en-de/spiegelau-willsberger-anniversary-pro-burgundy-glass/1418000"
+   ]
+  },
+  {
+   "name": "Willsberger Anniversary Pro Champagne Glass",
+   "series": "Willsberger Anniversary Pro",
+   "designer": null,
+   "model_code": "1418029",
+   "glass": "flute",
+   "variant": null,
+   "capacity_ml": null,
+   "capacity_as_stated": null,
+   "height_mm": 238,
+   "rim_mm": null,
+   "material": "crystal",
+   "product_url": "https://www.spiegelau.com/en-de/spiegelau-willsberger-anniversary-pro-champagne-glass/1418029",
+   "source_urls": [
+    "https://www.spiegelau.com/en-de/spiegelau-willsberger-anniversary-pro-champagne-glass/1418029"
+   ]
+  },
+  {
+   "name": "Willsberger Anniversary Pro Red Wine Glass",
+   "series": "Willsberger Anniversary Pro",
+   "designer": null,
+   "model_code": "1418001",
+   "glass": "wine",
+   "variant": null,
+   "capacity_ml": null,
+   "capacity_as_stated": null,
+   "height_mm": 238,
+   "rim_mm": null,
+   "material": "crystal",
+   "product_url": "https://www.spiegelau.com/en-de/spiegelau-willsberger-anniversary-pro-red-wine-glass/1418001",
+   "source_urls": [
+    "https://www.spiegelau.com/en-de/spiegelau-willsberger-anniversary-pro-red-wine-glass/1418001"
+   ]
+  },
+  {
+   "name": "Willsberger Anniversary Pro White Wine Glass",
+   "series": "Willsberger Anniversary Pro",
+   "designer": null,
+   "model_code": "1418002",
+   "glass": "wine",
+   "variant": null,
+   "capacity_ml": null,
+   "capacity_as_stated": null,
+   "height_mm": 238,
+   "rim_mm": null,
+   "material": "crystal",
+   "product_url": "https://www.spiegelau.com/en-de/spiegelau-willsberger-anniversary-pro-white-wine-glass/1418002",
+   "source_urls": [
+    "https://www.spiegelau.com/en-de/spiegelau-willsberger-anniversary-pro-white-wine-glass/1418002"
+   ]
+  }
+ ]
+}

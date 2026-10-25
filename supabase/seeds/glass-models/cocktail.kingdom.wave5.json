@@ -1,0 +1,39 @@
+{
+ "maker": "cocktail.kingdom",
+ "models": [
+  {
+   "name": "Beachbum Berry Zombie Glasses (sold in pairs)",
+   "series": null,
+   "designer": null,
+   "model_code": null,
+   "glass": "collins",
+   "variant": null,
+   "capacity_ml": null,
+   "capacity_as_stated": null,
+   "height_mm": 175.0,
+   "rim_mm": null,
+   "material": null,
+   "product_url": "https://www.diffordsguide.com/glassware/249/beachbum-berry-zombie-glasses",
+   "source_urls": [
+    "https://www.diffordsguide.com/glassware/249/beachbum-berry-zombie-glasses"
+   ]
+  },
+  {
+   "name": "Latitude 29 Coconut Mug",
+   "series": "Latitude 29",
+   "designer": null,
+   "model_code": null,
+   "glass": "tiki",
+   "variant": null,
+   "capacity_ml": 444,
+   "capacity_as_stated": "15 fl. oz.",
+   "height_mm": 108,
+   "rim_mm": null,
+   "material": "ceramic",
+   "product_url": "https://thesearchfortiki.com/tiki-mug/coconut-mug-latitude-29-1st-edition/",
+   "source_urls": [
+    "https://thesearchfortiki.com/tiki-mug/coconut-mug-latitude-29-1st-edition/"
+   ]
+  }
+ ]
+}

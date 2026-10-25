@@ -159,6 +159,21 @@ export function homeMenuLine(menu: { menuDate: string | null; guestCount: number
   return parts.filter(Boolean).join(' · ') || null;
 }
 
+/**
+ * A home menu page's tag (menus-one-look BandMenu): "Tonight", "Tomorrow",
+ * "Sat 31 Oct · in 7 days", "Sat 31 Oct" once past, or "No date yet".
+ */
+export function homeNightTag(menuDate: string | null, now: number, locale?: string): string {
+  if (!menuDate) return 'No date yet';
+  const [y, m, d] = menuDate.split('-').map(Number);
+  const today = new Date(now);
+  const days = Math.round((Date.UTC(y, m - 1, d) - Date.UTC(today.getFullYear(), today.getMonth(), today.getDate())) / 86_400_000);
+  if (days === 0) return 'Tonight';
+  if (days === 1) return 'Tomorrow';
+  const label = dayLabel(menuDate, now, locale);
+  return days > 1 ? `${label} · in ${days} days` : label;
+}
+
 export interface Readiness {
   /** Sections under their minimum, with how many more they need. */
   short: { name: string; needed: number }[];

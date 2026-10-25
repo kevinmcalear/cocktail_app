@@ -1,12 +1,13 @@
 /**
  * A stand-in for lib/supabase that records every table call (what it did, the
- * payload, the filters) and answers reads from `rows`. In a test:
+ * payload, the filters) and answers reads from `rows`. An RPC is recorded as
+ * a call with op 'rpc', the function as its table and its args as payload. In a test:
  *   const mockDb = { rows: {}, calls: [] } as MockDb;
  *   jest.mock('@/lib/supabase', () => jest.requireActual('@/jest.supabaseMock').mockSupabase(() => mockDb));
  */
 export interface MockCall {
   table: string;
-  op: 'select' | 'insert' | 'update' | 'upsert' | 'delete';
+  op: 'select' | 'insert' | 'update' | 'upsert' | 'delete' | 'rpc';
   payload?: unknown;
   filters: [string, unknown][];
 }
@@ -14,6 +15,8 @@ export interface MockDb {
   /** What a read of each table returns (a row for .single(), a list otherwise). */
   rows: Record<string, unknown>;
   calls: MockCall[];
+  /** An error an RPC answers with, by function name. */
+  rpcErrors?: Record<string, unknown>;
 }
 
 export function mockSupabase(db: () => MockDb) {
@@ -44,5 +47,9 @@ export function mockSupabase(db: () => MockDb) {
     };
     return q;
   };
-  return { supabase: { from } };
+  const rpc = async (fn: string, args?: unknown) => {
+    db().calls.push({ table: fn, op: 'rpc', payload: args, filters: [] });
+    return { data: null, error: db().rpcErrors?.[fn] ?? null };
+  };
+  return { supabase: { from, rpc } };
 }

@@ -1,6 +1,6 @@
 import assert from 'node:assert/strict';
 
-import { houseIce, iceDrawKind, iceMm, kitCount, kitLine, ICE_KINDS, isVenueIce, kitIceRow, iceLooksLine, iceName, kitSourceLine, supplierLine, toolName, venueIceKinds, venueIceNames } from './venueKit';
+import { houseIce, iceDrawKind, iceMm, kitCount, kitHasTool, kitLine, ICE_KINDS, isVenueIce, kitIceRow, iceLooksLine, iceName, kitSourceLine, supplierLine, toolLabel, toolName, venueIceKinds, venueIceNames } from './venueKit';
 
 // The drawings' kinds less 'none' (item_ice.draw_as, private.house_ice): keep them in step.
 assert.deepEqual([...ICE_KINDS], ['cubes', 'large', 'spear', 'crushed', 'pebble', 'shaved', 'sphere']);
@@ -70,3 +70,11 @@ assert.deepEqual(kitCount(' 24 '), { n: 24, ok: true });
 assert.deepEqual(kitCount(''), { n: null, ok: true });
 assert.equal(kitCount('0').ok, false);
 assert.equal(kitCount('2.5').ok, false);
+
+// A step's tools: ours by id, the venue's own by name, any case.
+const tools = [{ key: 'bandsaw', name: null }, { key: null, name: 'Our ice stamp' }];
+assert.ok(kitHasTool(tools, 'bandsaw'));
+assert.ok(kitHasTool(tools, 'our ice stamp '));
+assert.ok(!kitHasTool(tools, 'ice-ball-press'));
+assert.equal(toolLabel('ice-ball-press'), 'Ice ball press');
+assert.equal(toolLabel('Our ice stamp'), 'Our ice stamp');

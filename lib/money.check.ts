@@ -30,7 +30,7 @@ assert.equal(moneyFieldValue(null, 'GBP'), '');
 
 console.log('money: ok');
 
-// A drink's typed price: the first number, MP has none (as private.price_minor_of).
+// A drink's typed price: the first number, MP has none.
 assert.equal(priceMinor('19', 'GBP'), 1900);
 assert.equal(priceMinor('$19.50', 'USD'), 1950);
 assert.equal(priceMinor('14 / 60', 'GBP'), 1400);

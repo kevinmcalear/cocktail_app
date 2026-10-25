@@ -11,6 +11,7 @@ import { LineRow } from './LineRow';
 // Pairings come from the database; these tests are about the field.
 // The paper band's View as pill reads the signed-in person's prefs; off here.
 jest.mock('@/components/ViewAsBanner', () => ({ ViewAsPill: () => null }));
+jest.mock('@/hooks/useNearIngredients', () => ({ useNearIngredients: () => [] }));
 jest.mock('@/hooks/usePairings', () => ({ usePairings: () => ({ data: [] }) }));
 jest.mock('@/hooks/useClosestClassic', () => ({ useClosestClassic: () => ({ data: null }) }));
 jest.mock('@/hooks/useIngredientUse', () => ({ useIngredientUse: (id: string | null) => ({ data: id === 'campari' ? 14 : 0 }) }));
@@ -18,6 +19,7 @@ jest.mock('@/hooks/useDiscover', () => ({ useDrinkLists: () => ({ data: [] }) })
 jest.mock('@/hooks/useStartFromClassic', () => ({ useStartFromClassic: () => ({ mutate: jest.fn(), isPending: false }) }));
 jest.mock('@/hooks/useActiveVenue', () => ({ useActiveVenue: () => ({ venues: [] }) }));
 jest.mock('@/hooks/useKit', () => ({ useKit: () => ({ owned: [], kit: new Set(), toggle: jest.fn() }) }));
+jest.mock('@/hooks/useBarKit', () => ({ useMakingKit: () => ({ kit: new Set(), where: 'My Bar', add: jest.fn() }) }));
 jest.mock('@/hooks/usePrepCard', () => ({ ...jest.requireActual('@/hooks/usePrepCard'), useCatalogRecipe: () => ({ data: null }) }));
 
 // The prep builder draws after its first layout, as the wizard does on iOS.
@@ -230,7 +232,7 @@ describe('IngredientsStep', () => {
     await fireEvent.changeText(screen.getByLabelText('Name'), 'Miso banana liqueur');
     expect(screen.getByRole('radio', { name: 'Infusion, A spirit plus a flavour, from the name' })).toBeTruthy();
     await fireEvent.press(screen.getByRole('radio', { name: /^Infusion/ }));
-    await fireEvent.press(screen.getByRole('radio', { name: /^Sous vide\./ }));
+    await fireEvent.press(screen.getByRole('radio', { name: /^Sous vide infusion\. 1 to 3 hours\. Needs a sous vide circulator/ }));
     expect(screen.getByText('Sous vide fills in the method: seal, water bath, strain.')).toBeTruthy();
 
     // What goes in, as measured: the liqueur fills the bottle, the miso is typed in grams.

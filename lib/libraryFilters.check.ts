@@ -108,13 +108,13 @@ assert.equal(itemIdOf('0000-3'), '0000-3');
 
 {
   assert.deepEqual(filterGroups(true, false).map((g) => g.map((f) => f.label)), [
-    ['All', 'Classics', 'On menu', 'Old drinks', 'R&D'],
+    ['All', 'On menu', 'Classics', 'Old drinks', 'R&D'],
     ['Batched', 'Preps', 'Garnishes', 'Bottles'],
     ['Cocktails', 'Beer', 'Wine'],
   ]);
   assert.deepEqual(filterGroups(false, true).map((g) => g.map((f) => f.label)), [['Cocktails', 'Ingredients', 'Beer', 'Wine', 'Needs a price']]);
-  // The first release (13 Oct): All, Classics, On menu, Old drinks, Beer, Wine.
-  assert.deepEqual(filterGroups(true, true, false).map((g) => g.map((f) => f.label)), [['All', 'Classics', 'On menu', 'Old drinks'], ['Beer', 'Wine']]);
+  // Without the extras: All, On menu, Classics, Old drinks, Beer, Wine (phone order since 24 Oct).
+  assert.deepEqual(filterGroups(true, true, false).map((g) => g.map((f) => f.label)), [['All', 'On menu', 'Classics', 'Old drinks'], ['Beer', 'Wine']]);
   assert.deepEqual(filterGroups(false, true, false), filterGroups(false, true), 'no venue: extras do not apply');
   assert.equal(tileLine('Stirred', 'Coupe'), 'Stirred · Coupe');
   assert.equal(tileLine('Stirred', null, 'Martini flight'), 'Stirred · Martini flight');

@@ -20,13 +20,16 @@ export interface IceSheetProps {
   initial?: Partial<VenueIceChange>;
   /** The question it opens on: 0 what it looks like, 1 where it comes from. */
   startAt?: 0 | 1;
-  onSaved?: () => void;
+  /** After the save, with the ice's id (new or the same) and what was saved. */
+  onSaved?: (id: string, ice: VenueIceChange) => void;
   /**
    * Question 3 for ice made here, how do you make it (Kit and ice, step 6):
    * the ice recipes PR fills it. Without it, made-here ice is saved at
    * question 2 and its recipe is written on its page.
    */
   madeStep?: (ice: VenueIceChange) => ReactNode;
+  /** Where it was named: "From the Old Fashioned". */
+  from?: string;
 }
 
 /** Add ice, or change one: what it looks like, where it comes from, and how you make it when you do. */
@@ -49,7 +52,7 @@ function startLooks(from: Partial<VenueIceChange> | null | undefined): IceLooksV
   return from?.name && from.name !== iceName(v) ? { ...v, name: from.name } : v;
 }
 
-function IceSheetBody({ barId, visible, onClose, ice, initial, startAt, onSaved, madeStep }: IceSheetProps & { startAt: 0 | 1 }) {
+function IceSheetBody({ barId, visible, onClose, ice, initial, startAt, onSaved, madeStep, from: named }: IceSheetProps & { startAt: 0 | 1 }) {
   const suppliers = useVenueSuppliers(barId).data ?? [];
   const save = useSaveVenueIce(barId);
   const from = ice ?? initial;
@@ -76,8 +79,8 @@ function IceSheetBody({ barId, visible, onClose, ice, initial, startAt, onSaved,
   });
   const finish = (source: KitSource) =>
     save.mutate(change(source), {
-      onSuccess: () => {
-        onSaved?.();
+      onSuccess: (id, saved) => {
+        onSaved?.(id, saved);
         onClose();
       },
     });
@@ -118,6 +121,7 @@ function IceSheetBody({ barId, visible, onClose, ice, initial, startAt, onSaved,
       onNext={() => (step + 1 < total ? setStep(step + 1) : finish(src))}
       saving={save.isPending}
       error={save.error ? FAILED : null}
+      answered={ice ? undefined : { what: looksName(looks), from: named, onChange: () => setStep(0) }}
     />
   );
 }

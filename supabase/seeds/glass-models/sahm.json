@@ -1,0 +1,473 @@
+{
+ "maker": "sahm",
+ "models": [
+  {
+   "name": "Achensee 0,5l",
+   "series": "Achensee",
+   "designer": null,
+   "model_code": "1002366",
+   "glass": "beer",
+   "variant": null,
+   "capacity_ml": 500,
+   "capacity_as_stated": "0,5l",
+   "height_mm": 250,
+   "rim_mm": null,
+   "material": "glass",
+   "product_url": "https://sahm.de/glass/achensee/",
+   "source_urls": [
+    "https://sahm.de/glass/achensee/",
+    "https://sahm.de/wp-json/wp/v2/glass?slug=achensee"
+   ]
+  },
+  {
+   "name": "American Lager Becher 0,3l",
+   "series": "American",
+   "designer": null,
+   "model_code": "1006163",
+   "glass": "beer",
+   "variant": null,
+   "capacity_ml": 300,
+   "capacity_as_stated": "0,3l",
+   "height_mm": 144,
+   "rim_mm": null,
+   "material": "glass",
+   "product_url": "https://sahm.de/glass/american-lager-becher/",
+   "source_urls": [
+    "https://sahm.de/glass/american-lager-becher/",
+    "https://sahm.de/wp-json/wp/v2/glass?slug=american-lager-becher"
+   ]
+  },
+  {
+   "name": "Böhmisches Seidel 0,5l",
+   "series": "Böhmisches",
+   "designer": null,
+   "model_code": "1007462",
+   "glass": "mug",
+   "variant": null,
+   "capacity_ml": 500,
+   "capacity_as_stated": "0,5l",
+   "height_mm": 158,
+   "rim_mm": null,
+   "material": "glass",
+   "product_url": "https://sahm.de/glass/boehmisches-seidel/",
+   "source_urls": [
+    "https://sahm.de/glass/boehmisches-seidel/",
+    "https://sahm.de/wp-json/wp/v2/glass?slug=boehmisches-seidel"
+   ]
+  },
+  {
+   "name": "Brewhouse Becher 0,4l",
+   "series": "Brewhouse",
+   "designer": null,
+   "model_code": "1007012",
+   "glass": "beer",
+   "variant": null,
+   "capacity_ml": 400,
+   "capacity_as_stated": "0,4l",
+   "height_mm": 166.5,
+   "rim_mm": null,
+   "material": "glass",
+   "product_url": "https://sahm.de/glass/brewhouse-becher/",
+   "source_urls": [
+    "https://sahm.de/glass/brewhouse-becher/",
+    "https://sahm.de/wp-json/wp/v2/glass?slug=brewhouse-becher"
+   ]
+  },
+  {
+   "name": "Brüssel Pokal 0,4l",
+   "series": "Brüssel",
+   "designer": null,
+   "model_code": "1007603",
+   "glass": "beer",
+   "variant": null,
+   "capacity_ml": 400,
+   "capacity_as_stated": "0,4l",
+   "height_mm": 151,
+   "rim_mm": null,
+   "material": "glass",
+   "product_url": "https://sahm.de/glass/bruessel-pokal/",
+   "source_urls": [
+    "https://sahm.de/glass/bruessel-pokal/",
+    "https://sahm.de/wp-json/wp/v2/glass?slug=bruessel-pokal"
+   ]
+  },
+  {
+   "name": "Classic Pokal 0,3l",
+   "series": "Classic",
+   "designer": null,
+   "model_code": "1005743",
+   "glass": "beer",
+   "variant": null,
+   "capacity_ml": 300,
+   "capacity_as_stated": "0,3l",
+   "height_mm": 246,
+   "rim_mm": null,
+   "material": "glass",
+   "product_url": "https://sahm.de/glass/classic-pokal/",
+   "source_urls": [
+    "https://sahm.de/glass/classic-pokal/",
+    "https://sahm.de/wp-json/wp/v2/glass?slug=classic-pokal"
+   ]
+  },
+  {
+   "name": "Craftsman Becher 54cl",
+   "series": "Craftsman",
+   "designer": null,
+   "model_code": "1007813",
+   "glass": "beer",
+   "variant": null,
+   "capacity_ml": 540,
+   "capacity_as_stated": "54cl",
+   "height_mm": 170,
+   "rim_mm": null,
+   "material": "glass",
+   "product_url": "https://sahm.de/glass/craftsman-becher/",
+   "source_urls": [
+    "https://sahm.de/glass/craftsman-becher/",
+    "https://sahm.de/wp-json/wp/v2/glass?slug=craftsman-becher"
+   ]
+  },
+  {
+   "name": "Donau Seidel 0,5l",
+   "series": "Donau",
+   "designer": null,
+   "model_code": "1005953",
+   "glass": "mug",
+   "variant": null,
+   "capacity_ml": 500,
+   "capacity_as_stated": "0,5l",
+   "height_mm": 185,
+   "rim_mm": null,
+   "material": "glass",
+   "product_url": "https://sahm.de/glass/donau-seidel/",
+   "source_urls": [
+    "https://sahm.de/glass/donau-seidel/",
+    "https://sahm.de/wp-json/wp/v2/glass?slug=donau-seidel"
+   ]
+  },
+  {
+   "name": "Dosen Glas 47cl",
+   "series": "Dosen",
+   "designer": null,
+   "model_code": "1007545",
+   "glass": "beer",
+   "variant": null,
+   "capacity_ml": 470,
+   "capacity_as_stated": "47cl",
+   "height_mm": 132.4,
+   "rim_mm": null,
+   "material": "glass",
+   "product_url": "https://sahm.de/glass/dosen-glas/",
+   "source_urls": [
+    "https://sahm.de/glass/dosen-glas/",
+    "https://sahm.de/wp-json/wp/v2/glass?slug=dosen-glas"
+   ]
+  },
+  {
+   "name": "Draft Pokal Gehärtet 1 Pint",
+   "series": "Draft",
+   "designer": null,
+   "model_code": "1008320",
+   "glass": "beer",
+   "variant": null,
+   "capacity_ml": 568,
+   "capacity_as_stated": "1 Pint",
+   "height_mm": 208,
+   "rim_mm": null,
+   "material": "glass",
+   "product_url": "https://sahm.de/glass/draft-pokal-gehaertet/",
+   "source_urls": [
+    "https://sahm.de/glass/draft-pokal-gehaertet/",
+    "https://sahm.de/wp-json/wp/v2/glass?slug=draft-pokal-gehaertet"
+   ]
+  },
+  {
+   "name": "Elegante 0,5l",
+   "series": "Elegante",
+   "designer": null,
+   "model_code": "1002993",
+   "glass": "beer",
+   "variant": null,
+   "capacity_ml": 500,
+   "capacity_as_stated": "0,5l",
+   "height_mm": 250,
+   "rim_mm": null,
+   "material": "glass",
+   "product_url": "https://sahm.de/glass/elegante/",
+   "source_urls": [
+    "https://sahm.de/glass/elegante/",
+    "https://sahm.de/wp-json/wp/v2/glass?slug=elegante"
+   ]
+  },
+  {
+   "name": "Isar Seidel 0,5l",
+   "series": "Isar",
+   "designer": null,
+   "model_code": "1004285",
+   "glass": "mug",
+   "variant": null,
+   "capacity_ml": 500,
+   "capacity_as_stated": "0,5l",
+   "height_mm": 160,
+   "rim_mm": null,
+   "material": "glass",
+   "product_url": "https://sahm.de/glass/isar-seidel/",
+   "source_urls": [
+    "https://sahm.de/glass/isar-seidel/",
+    "https://sahm.de/wp-json/wp/v2/glass?slug=isar-seidel"
+   ]
+  },
+  {
+   "name": "Kölner-Stange 0,2l",
+   "series": "Kölner-Stange",
+   "designer": null,
+   "model_code": "1000947",
+   "glass": "beer",
+   "variant": null,
+   "capacity_ml": 200,
+   "capacity_as_stated": "0,2l",
+   "height_mm": 152,
+   "rim_mm": null,
+   "material": "glass",
+   "product_url": "https://sahm.de/glass/koelner-stange/",
+   "source_urls": [
+    "https://sahm.de/glass/koelner-stange/",
+    "https://sahm.de/wp-json/wp/v2/glass?slug=koelner-stange"
+   ]
+  },
+  {
+   "name": "Madison 0,5l",
+   "series": "Madison",
+   "designer": null,
+   "model_code": "1005517",
+   "glass": "beer",
+   "variant": null,
+   "capacity_ml": 500,
+   "capacity_as_stated": "0,5l",
+   "height_mm": 247,
+   "rim_mm": null,
+   "material": "glass",
+   "product_url": "https://sahm.de/glass/madison/",
+   "source_urls": [
+    "https://sahm.de/glass/madison/",
+    "https://sahm.de/wp-json/wp/v2/glass?slug=madison"
+   ]
+  },
+  {
+   "name": "Munique Pokal 0,4l",
+   "series": "Munique",
+   "designer": null,
+   "model_code": "1005241",
+   "glass": "beer",
+   "variant": null,
+   "capacity_ml": 400,
+   "capacity_as_stated": "0,4l",
+   "height_mm": 198.9,
+   "rim_mm": null,
+   "material": "glass",
+   "product_url": "https://sahm.de/glass/munique-pokal/",
+   "source_urls": [
+    "https://sahm.de/glass/munique-pokal/",
+    "https://sahm.de/wp-json/wp/v2/glass?slug=munique-pokal"
+   ]
+  },
+  {
+   "name": "Nonic Becher Gehärtet 56cl",
+   "series": "Nonic",
+   "designer": null,
+   "model_code": "1009019",
+   "glass": "beer",
+   "variant": null,
+   "capacity_ml": 560,
+   "capacity_as_stated": "56cl",
+   "height_mm": 154,
+   "rim_mm": null,
+   "material": "glass",
+   "product_url": "https://sahm.de/glass/nonic-becher-gehaertet/",
+   "source_urls": [
+    "https://sahm.de/glass/nonic-becher-gehaertet/",
+    "https://sahm.de/wp-json/wp/v2/glass?slug=nonic-becher-gehaertet"
+   ]
+  },
+  {
+   "name": "Oslo Stange 0,3l",
+   "series": "Oslo",
+   "designer": null,
+   "model_code": "1007723",
+   "glass": "beer",
+   "variant": null,
+   "capacity_ml": 300,
+   "capacity_as_stated": "0,3l",
+   "height_mm": 208,
+   "rim_mm": null,
+   "material": "glass",
+   "product_url": "https://sahm.de/glass/oslo-stange/",
+   "source_urls": [
+    "https://sahm.de/glass/oslo-stange/",
+    "https://sahm.de/wp-json/wp/v2/glass?slug=oslo-stange"
+   ]
+  },
+  {
+   "name": "Sensorik Becher 42cl",
+   "series": "Sensorik",
+   "designer": null,
+   "model_code": "1007598",
+   "glass": "beer",
+   "variant": null,
+   "capacity_ml": 420,
+   "capacity_as_stated": "42cl",
+   "height_mm": 112,
+   "rim_mm": null,
+   "material": "glass",
+   "product_url": "https://sahm.de/glass/sensorik-becher/",
+   "source_urls": [
+    "https://sahm.de/glass/sensorik-becher/",
+    "https://sahm.de/wp-json/wp/v2/glass?slug=sensorik-becher"
+   ]
+  },
+  {
+   "name": "Sensorik Pokal 42cl",
+   "series": "Sensorik",
+   "designer": null,
+   "model_code": "1005942",
+   "glass": "beer",
+   "variant": null,
+   "capacity_ml": 420,
+   "capacity_as_stated": "42cl",
+   "height_mm": 203,
+   "rim_mm": null,
+   "material": "glass",
+   "product_url": "https://sahm.de/glass/sensorik-pokal/",
+   "source_urls": [
+    "https://sahm.de/glass/sensorik-pokal/",
+    "https://sahm.de/wp-json/wp/v2/glass?slug=sensorik-pokal"
+   ]
+  },
+  {
+   "name": "Sommelier Kelch 42cl",
+   "series": "Sommelier",
+   "designer": null,
+   "model_code": "1007368",
+   "glass": "beer",
+   "variant": null,
+   "capacity_ml": 420,
+   "capacity_as_stated": "42cl",
+   "height_mm": 187,
+   "rim_mm": null,
+   "material": "glass",
+   "product_url": "https://sahm.de/glass/sommelier-kelch/",
+   "source_urls": [
+    "https://sahm.de/glass/sommelier-kelch/",
+    "https://sahm.de/wp-json/wp/v2/glass?slug=sommelier-kelch"
+   ]
+  },
+  {
+   "name": "Sydney 0,5l",
+   "series": "Sydney",
+   "designer": null,
+   "model_code": "1004771",
+   "glass": "beer",
+   "variant": null,
+   "capacity_ml": 500,
+   "capacity_as_stated": "0,5l",
+   "height_mm": 243,
+   "rim_mm": null,
+   "material": "glass",
+   "product_url": "https://sahm.de/glass/sydney/",
+   "source_urls": [
+    "https://sahm.de/glass/sydney/",
+    "https://sahm.de/wp-json/wp/v2/glass?slug=sydney"
+   ]
+  },
+  {
+   "name": "Toscana Pokal 0,25l",
+   "series": "Toscana",
+   "designer": null,
+   "model_code": "1007632",
+   "glass": "beer",
+   "variant": null,
+   "capacity_ml": 250,
+   "capacity_as_stated": "0,25l",
+   "height_mm": 155,
+   "rim_mm": null,
+   "material": "glass",
+   "product_url": "https://sahm.de/glass/toscana-pokal/",
+   "source_urls": [
+    "https://sahm.de/glass/toscana-pokal/",
+    "https://sahm.de/wp-json/wp/v2/glass?slug=toscana-pokal"
+   ]
+  },
+  {
+   "name": "Tradition Pokal 0,5l",
+   "series": "Tradition",
+   "designer": null,
+   "model_code": "1009065",
+   "glass": "beer",
+   "variant": null,
+   "capacity_ml": 500,
+   "capacity_as_stated": "0,5l",
+   "height_mm": 241.5,
+   "rim_mm": null,
+   "material": "glass",
+   "product_url": "https://sahm.de/glass/tradition-pokal/",
+   "source_urls": [
+    "https://sahm.de/glass/tradition-pokal/",
+    "https://sahm.de/wp-json/wp/v2/glass?slug=tradition-pokal"
+   ]
+  },
+  {
+   "name": "Tübinger Kugel Seidel 0,4l",
+   "series": "Tübinger",
+   "designer": null,
+   "model_code": "1006777",
+   "glass": "mug",
+   "variant": null,
+   "capacity_ml": 400,
+   "capacity_as_stated": "0,4l",
+   "height_mm": 114,
+   "rim_mm": null,
+   "material": "glass",
+   "product_url": "https://sahm.de/glass/tuebinger-kugel-seidel/",
+   "source_urls": [
+    "https://sahm.de/glass/tuebinger-kugel-seidel/",
+    "https://sahm.de/wp-json/wp/v2/glass?slug=tuebinger-kugel-seidel"
+   ]
+  },
+  {
+   "name": "Tulip Becher 57cl",
+   "series": "Tulip",
+   "designer": null,
+   "model_code": "1005235",
+   "glass": "beer",
+   "variant": null,
+   "capacity_ml": 570,
+   "capacity_as_stated": "57cl",
+   "height_mm": 159.5,
+   "rim_mm": null,
+   "material": "glass",
+   "product_url": "https://sahm.de/glass/tulip-becher/",
+   "source_urls": [
+    "https://sahm.de/glass/tulip-becher/",
+    "https://sahm.de/wp-json/wp/v2/glass?slug=tulip-becher"
+   ]
+  },
+  {
+   "name": "Willi Becher 0,5l",
+   "series": "Willi",
+   "designer": null,
+   "model_code": "1008183",
+   "glass": "beer",
+   "variant": null,
+   "capacity_ml": 500,
+   "capacity_as_stated": "0,5l",
+   "height_mm": 184,
+   "rim_mm": null,
+   "material": "glass",
+   "product_url": "https://sahm.de/glass/willi-becher/",
+   "source_urls": [
+    "https://sahm.de/glass/willi-becher/",
+    "https://sahm.de/wp-json/wp/v2/glass?slug=willi-becher"
+   ]
+  }
+ ]
+}

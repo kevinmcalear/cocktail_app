@@ -6,6 +6,7 @@ import { Body, Caption, Chip, Headline, Sheet, SheetScrollView, Surface, TextLin
 import { IngredientSearch } from '@/components/screens/addDrink/IngredientSearch';
 import { fontFamilies, space } from '@/constants/tokens';
 import type { IngredientForm } from '@/hooks/useIngredientEditor';
+import { useNearIngredients } from '@/hooks/useNearIngredients';
 import { nearIngredient, sameIngredient, type IngredientAlias, type IngredientRow } from '@/lib/ingredientNames';
 
 const SHEET_PAD = { paddingHorizontal: space.xl, paddingBottom: space.xxl };
@@ -108,7 +109,8 @@ export function SameNameNotice({ name, barId, rows, aliases, excludeId, generic,
   const router = useRouter();
   const same = sameIngredient(name, rows, aliases);
   const match = same && same.id !== excludeId ? same : null;
-  const near = match ? null : nearIngredient(name, rows, aliases);
+  // A new one also asks the database for names spelled close (useNearIngredients); a saved one only checks the list, so its own name never nags.
+  const near = useNearIngredients(name, rows, { skip: !!match || !name.trim() || !!excludeId, first: match ? null : nearIngredient(name, rows, aliases), limit: 1 })[0] ?? (excludeId && !match ? nearIngredient(name, rows, aliases) : null);
   const shown = match ?? (near && near.id !== excludeId ? near : null);
   if (!shown || generic?.id === shown.id) return null;
   const label = shown.name ?? '';
