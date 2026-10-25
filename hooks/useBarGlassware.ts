@@ -2,6 +2,7 @@ import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { useEffect, useRef } from 'react';
 
 import { useCapabilities } from '@/hooks/useCapabilities';
+import { removeGlassPhoto } from '@/hooks/useGlassDrawing';
 import { GLASS_MODEL_SELECT, type GlassModel } from '@/hooks/useGlassModels';
 import type { GlassOutline } from '@/lib/sketch/outline';
 import type { SketchGlass } from '@/lib/sketch/types';
@@ -166,8 +167,10 @@ export function useDeleteBarGlass(barId: string | null | undefined) {
   const client = useQueryClient();
   return useMutation({
     mutationFn: async (id: string) => {
-      const { error } = await supabase.from('bar_glassware').delete().eq('id', id);
+      const { data, error } = await supabase.from('bar_glassware').delete().eq('id', id).select('photo_path');
       if (error) throw error;
+      // A glass drawn from a photo takes its photo with it.
+      await removeGlassPhoto(data?.[0]?.photo_path);
     },
     onSettled: () => {
       client.invalidateQueries({ queryKey: ['bar-glassware', barId] });

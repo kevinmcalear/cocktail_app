@@ -2,6 +2,7 @@ import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 
 import { useAuth } from '@/ctx/AuthContext';
 import type { BarGlass, BarGlassInput } from '@/hooks/useBarGlassware';
+import { removeGlassPhoto } from '@/hooks/useGlassDrawing';
 import { GLASS_MODEL_SELECT } from '@/hooks/useGlassModels';
 import type { VenueIce, VenueIceChange } from '@/hooks/useVenueIce';
 import type { SketchGlass } from '@/lib/sketch/types';
@@ -74,8 +75,10 @@ export function useRemoveHomeGlass() {
   const client = useQueryClient();
   return useMutation({
     mutationFn: async (id: string) => {
-      const { error } = await supabase.from('home_glassware').delete().eq('id', id);
+      const { data, error } = await supabase.from('home_glassware').delete().eq('id', id).select('photo_path');
       if (error) throw error;
+      // A glass drawn from a photo takes its photo with it.
+      await removeGlassPhoto(data?.[0]?.photo_path);
     },
     onSettled: () => client.invalidateQueries({ queryKey: glassKey }),
   });

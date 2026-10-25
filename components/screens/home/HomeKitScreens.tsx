@@ -8,7 +8,7 @@ import { IceSheet, iceThumbKind } from '@/components/screens/kit/IceSheet';
 import { drawnLine, GlassPhoto, RedrawLinks, SavedNote, ShareGlass, tracedFacts } from '@/components/screens/kit/draw/TracedGlass';
 import { KitItemPage } from '@/components/screens/kit/KitItemPage';
 import { KitList } from '@/components/screens/kit/KitList';
-import { KitPage, useCloseKitItem, useOpenKitItem } from '@/components/screens/kit/KitPage';
+import { KitPage, useCloseKitItem, useJustDrawn, useOpenDrawnGlass, useOpenKitItem } from '@/components/screens/kit/KitPage';
 import type { BarGlass } from '@/hooks/useBarGlassware';
 import { useHomeGlassware, useHomeIce, useRemoveHomeGlass, useRemoveHomeIce, useSaveHomeGlass, useSaveHomeIce } from '@/hooks/useHomeKit';
 import { useIsWideWeb } from '@/hooks/useIsWideWeb';
@@ -37,7 +37,8 @@ export function HomeGlasswareScreen({ openId }: { openId?: string | null }) {
   const open = useOpenKitItem(null, 'glassware', openId);
   const close = useCloseKitItem(null, 'glassware');
   const [sheet, setSheet] = useState<{ glass: BarGlass | null; startAt: 0 | 1 | 2; draw?: 'photo' | 'size' } | null>(null);
-  const [drawn, setDrawn] = useState<string | null>(null);
+  const justDrawn = useJustDrawn();
+  const openDrawn = useOpenDrawnGlass(null, openId);
   const opened = openId ? (glasses.find((g) => g.id === openId) ?? null) : null;
   const change = (at: 0 | 1 | 2, draw?: 'photo' | 'size') => () => setSheet({ glass: opened, startAt: at, draw });
 
@@ -74,7 +75,7 @@ export function HomeGlasswareScreen({ openId }: { openId?: string | null }) {
               kind="Glassware"
               name={glassName(opened)}
               showTitle={wide}
-              notice={drawn === opened.id ? <SavedNote where="your glassware" /> : null}
+              notice={justDrawn ? <SavedNote where="your glassware" /> : null}
               thumb={<GlassThumb glass={opened.glass} variant={opened.variant} outline={opened.outline} size={72} />}
               facts={[
                 { label: 'Which glass', value: realGlass(opened) ?? 'Not matched to a real glass yet', onChange: change(0) },
@@ -109,9 +110,7 @@ export function HomeGlasswareScreen({ openId }: { openId?: string | null }) {
         onClose={() => setSheet(null)}
         onSave={(row) => save.mutateAsync({ ...row, is_default: !glasses.some((g) => g.id !== row.id && g.glass === row.glass && g.is_default) })}
         onSaved={(id, wasDrawn) => {
-          if (!wasDrawn || !id) return;
-          setDrawn(id);
-          if (id !== openId) open(id);
+          if (wasDrawn && id) openDrawn(id);
         }}
       />
     </>

@@ -96,6 +96,7 @@ export function ShareGlass({ glass, home, venueName, canEdit }: { glass: BarGlas
       <>
         <Body>Not added to the catalog</Body>
         {share.note ? <Caption tone="muted">{share.note}</Caption> : null}
+        {canEdit ? <Button label={set.isPending ? 'Sending…' : 'Share it again'} variant="secondary" disabled={set.isPending} onPress={() => set.mutate(true)} style={styles.start} /> : null}
       </>
     ) : (
       <>
