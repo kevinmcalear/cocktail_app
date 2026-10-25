@@ -75,6 +75,15 @@ export function useSameNameDrink({ barId, creditedTo, name }: { barId?: string |
   return { data: query.data, checking };
 }
 
+/** A drink in full by id, for a card: read where you may, else as everyone may (published_items). */
+export async function readSameNameDrink(id: string): Promise<SameNameDrink | null> {
+  const own = await readDrink(id);
+  if (own) return own;
+  const { data, error } = await supabase.from('published_items').select('id, name, bar_id, image_url, riff_of_id').eq('id', id).maybeSingle();
+  if (error) throw error;
+  return data?.id && data.name ? publishedDrink({ ...data, id: data.id, name: data.name }) : null;
+}
+
 async function readDrink(id: string): Promise<SameNameDrink | null> {
   const { data, error } = await supabase.from('items').select(COLUMNS).eq('id', id).maybeSingle();
   if (error) throw error;
@@ -109,7 +118,10 @@ async function readPublished(profileId: string, pattern: string, name: string): 
     .limit(CANDIDATES);
   if (error) throw error;
   const row = (data ?? []).find((r) => !!r.id && !!r.name && sameName(r.name, name));
-  if (!row?.id || !row.name) return null;
+  return row?.id && row.name ? publishedDrink({ ...row, id: row.id, name: row.name }) : null;
+}
+
+async function publishedDrink(row: { id: string; name: string; bar_id: string | null; image_url: string | null; riff_of_id: string | null }): Promise<SameNameDrink> {
   // The classic it's a version of is in the catalog, which everyone signed in can read.
   const riff = row.riff_of_id ? await supabase.from('items').select('id, name, is_catalog').eq('id', row.riff_of_id).maybeSingle() : null;
   if (riff?.error) throw riff.error;

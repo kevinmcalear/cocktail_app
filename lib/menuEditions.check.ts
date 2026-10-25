@@ -3,9 +3,9 @@ import assert from 'node:assert/strict';
 
 import {
   drinkRunTags,
-  drinkMenuCard,
+  editionCardLine,
+  editionPastLine,
   editionDates,
-  editionDrinkLine,
   editionMenuDrinks,
   editionSections,
   menuOrder,
@@ -82,23 +82,6 @@ assert.equal(timelineDates(run(2023, 7, 2023, 8)), 'Jul 2023 to Aug 2023 · 1 mo
 assert.equal(timelineDates(run(2019, null, 2021, null)), '2019 to 2021');
 assert.equal(timelineDates(run(2025, 9, null, null, true)), 'On now · since Sep 2025');
 assert.equal(timelineDates(run(2021, null, null, null)), '2021 · end date unknown');
-assert.equal(editionDrinkLine(['Plum Negroni', 'Lavender Static', 'Rye Garden', 'Cold Brew']), 'Plum Negroni, Lavender Static, Rye Garden and 1 more');
-assert.equal(editionDrinkLine(['Plum Negroni']), 'Plum Negroni');
-assert.equal(editionDrinkLine([]), 'Drinks not listed in our sources');
-
-// The drink page's card: past drinks say they're not on now; a name that says "menu" isn't doubled.
-assert.deepEqual(drinkMenuCard('Little Rye', 'Night Garden', run(2024, 3, 2025, 1)), {
-  title: 'On the menu Mar 2024 to Jan 2025',
-  detail: 'Night Garden menu · not on at Little Rye now',
-});
-assert.deepEqual(drinkMenuCard('Little Rye', 'September 2026 menu', run(2022, 2, null, null, true)), {
-  title: 'On the menu now, since Feb 2022',
-  detail: 'September 2026 menu · on at Little Rye now',
-});
-assert.deepEqual(drinkMenuCard('Little Rye', 'Opening Menu', run(2019, null, null, null)), {
-  title: 'On the menu from 2019',
-  detail: 'Opening Menu at Little Rye · end date unknown',
-});
 
 assert.deepEqual(runDates({ start_year: 2022, start_month: 2, end_year: null, end_month: null, is_current: true }), run(2022, 2, null, null, true));
 assert.deepEqual(withPastMenuTag(['Stirred'], [run(2024, 3, 2025, 1)]), ['Stirred', 'Past menu']);
@@ -121,5 +104,11 @@ assert.deepEqual(
   drinkRunTags([edition('old', 2022, 2023, false, ['a', 'b']), edition('mid', 2024, 2025, false, ['b']), edition('now', 2025, null, true, ['c', 'a']), edition('lost', 2019, null, false, ['d'])]),
   { c: 'on now', a: 'on now', b: 'Past · Jan 2024 to Jun 2025' }
 );
+
+// A bar's menus in the band/line look.
+assert.equal(editionCardLine(edition('now', 2025, null, true, ['a', 'b', 'a'])), '2 drinks · since Jan 2025');
+assert.equal(editionCardLine(edition('now', 2025, null, true, [])), 'since Jan 2025');
+assert.equal(editionPastLine(edition('old', 2024, 2025, false, ['a', 'b'])), 'Jan 2024 to Jun 2025 · 2');
+assert.equal(editionPastLine(edition('lost', 2019, null, false, [])), 'From Jan 2019, end date unknown');
 
 console.log('menu editions checks passed');

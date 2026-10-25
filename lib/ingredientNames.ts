@@ -43,6 +43,21 @@ export function sameIngredient<T extends IngredientRow>(name: string, rows: read
   return alias ? (rows.find((r) => r.id === alias.item_id) ?? null) : null;
 }
 
+// A kind said after a bottle's name: "Del Maguey Vida mezcal", "Old Forester bourbon".
+const TRAILING_KIND = /\s+(mezcal|tequila|gin|rum|rhum|vodka|whisky|whiskey|bourbon|rye|scotch|brandy|cognac|armagnac|calvados|pisco|cachaca|cachaça|vermouth|amaro|liqueur|aperitivo|aperitif|sherry|port|absinthe|bitters)$/i;
+
+/**
+ * The ingredient a typed name already is, said with or without its kind
+ * after it: "Del Maguey Vida mezcal" is Del Maguey Vida. Two words have to
+ * be left, so "Rye whiskey" is never Rye.
+ */
+export function sameBottle<T extends IngredientRow>(name: string, rows: readonly T[], aliases: readonly IngredientAlias[] = []): T | null {
+  const same = sameIngredient(name, rows, aliases);
+  if (same) return same;
+  const bare = name.trim().replace(TRAILING_KIND, '');
+  return bare !== name.trim() && bare.split(/\s+/).length >= 2 ? sameIngredient(bare, rows, aliases) : null;
+}
+
 /** Edit distance, stopping early once it's past `max`. Strings, or arrays of characters. */
 export function distance(a: ArrayLike<string>, b: ArrayLike<string>, max: number): number {
   if (Math.abs(a.length - b.length) > max) return max + 1;

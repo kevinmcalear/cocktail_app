@@ -1,6 +1,6 @@
 import assert from 'node:assert/strict';
 
-import { byDay, cleanTicketUrl, dayHeading, filterWeek, weekRange, detailLine, directionsUrl, dotShape, dotTone, itemDay, kindLabel, newDrinks, shortDay, thingsOn, ticketHost, weekLine, upcoming, weekDays, weekMonday, weekStart, withGuestColors, type WeekItem } from './week';
+import { byDay, cleanTicketUrl, guestBarGuess, sameBarName, dayHeading, filterWeek, weekRange, detailLine, directionsUrl, dotShape, dotTone, itemDay, kindLabel, newDrinks, shortDay, thingsOn, ticketHost, weekLine, upcoming, weekDays, weekMonday, weekStart, withGuestColors, type WeekItem } from './week';
 
 const local = (y: number, m: number, d: number, h = 0, min = 0) => new Date(y, m - 1, d, h, min).getTime();
 const item = (over: Partial<WeekItem>): WeekItem => ({
@@ -122,3 +122,15 @@ assert.equal(
   'Takeover tonight · staff tasting Tue',
 );
 assert.equal(weekLine([], from), 'Nothing on yet');
+
+// --- an imported guest shift names its bar ---
+assert.equal(guestBarGuess('Mara Q. from The Lantern Room'), 'The Lantern Room');
+assert.equal(guestBarGuess('Guest shift', 'Mara Q. at Pale Moth.\nWalk-ins only'), 'Pale Moth');
+assert.equal(guestBarGuess('Pale Moth × Little Rye'), null, 'x names the host as often as the guest');
+assert.equal(guestBarGuess('Mara Q. guest shift'), null);
+assert.equal(guestBarGuess('Mara from Pale Moth at Little Rye'), 'Pale Moth');
+assert.equal(guestBarGuess('Guest shift at 9pm'), null);
+assert.equal(guestBarGuess('Mara Q. (from Pale Moth)'), 'Pale Moth');
+assert.equal(guestBarGuess('Staff training'), null);
+assert.ok(sameBarName('The Lantern Room', 'lantern  room'));
+assert.ok(!sameBarName('Lantern Room', 'Lantern Rooms'));

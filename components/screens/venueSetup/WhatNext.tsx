@@ -10,7 +10,9 @@ import { useBackBarStock } from '@/hooks/useBackBar';
 import { useBarGlassware, useBarPageId, useFlushHeldGlasses, useHeldGlasses } from '@/hooks/useBarGlassware';
 import { useCapabilities } from '@/hooks/useCapabilities';
 import { useKitFromDrinks } from '@/hooks/useKitFromDrinks';
+import { useVenueMenus } from '@/hooks/useMenus';
 import { useBarClassics, useTopClassics } from '@/hooks/useWhatNext';
+import { groupMenus } from '@/lib/menus';
 import { glassMakers, heldNotOnPage } from '@/lib/whatNext';
 import { useAppMode } from '@/store/useAppMode';
 
@@ -57,6 +59,7 @@ export function WhatNext({
   const pageQuery = useBarPageId(barId);
   const glassQuery = useBarGlassware(barId);
   const stockQuery = useBackBarStock(barId);
+  const menusQuery = useVenueMenus(barId);
   const held = useHeldGlasses(barId);
   // Glasses picked before the page was checked go onto it once it is.
   useFlushHeldGlasses(barId);
@@ -71,17 +74,21 @@ export function WhatNext({
   const glasses = [...onPage, ...heldNotOnPage(held, onPage).map((h) => ({ ...h, id: h.key, maker_page: null }))];
   const stock = stockQuery.data ?? [];
   const inLibrary = (libraryQuery.data ?? []).length;
+  // A menu on now, coming up or a draft: a claimed bar's past menus (its history) aren't a first menu.
+  const [now] = useState(() => Date.now());
+  const menuGroups = groupMenus(menusQuery.data ?? [], now);
+  const menus = menuGroups.on.length + menuGroups.upcoming.length + menuGroups.draft.length;
   // What's there decides which steps show and whether it's filled in: wait for it, not a flash of the wrong one.
   // Once shown, it stays: a later key change (the rankings arriving) never puts Loading back.
   const [shown, setShown] = useState(false);
-  const loading = !shown && (capsQuery.isLoading || pageQuery.isLoading || glassQuery.isLoading || stockQuery.isLoading || top.isLoading || libraryQuery.isLoading);
+  const loading = !shown && (capsQuery.isLoading || pageQuery.isLoading || glassQuery.isLoading || stockQuery.isLoading || top.isLoading || libraryQuery.isLoading || menusQuery.isLoading);
   if (!loading && !shown) setShown(true);
   const [at, setAt] = useState<At | null>(null);
   const [skipped, setSkipped] = useState<Step[]>([]);
   // Glassware hangs off the venue's page: before it's checked, picks wait on this device (GlassesStep).
   const can: Record<Step, boolean> = { glasses: caps.includes('prep'), brands: caps.includes('edit_drinks') || caps.includes('prep'), menu: caps.includes('edit_drinks') };
   const steps = ORDER.filter((s) => can[s]);
-  const counts: Record<Step, number> = { glasses: glasses.length, brands: stock.length, menu: inLibrary };
+  const counts: Record<Step, number> = { glasses: glasses.length, brands: stock.length, menu: menus + inLibrary };
   const has = (s: Step) => counts[s] > 0;
   const left = steps.filter((s) => !has(s) && !skipped.includes(s));
   const filled = left.length === 0;
@@ -121,6 +128,11 @@ export function WhatNext({
           onLeave?.();
           enterVenue(barId);
           router.push('/bring-in' as Href);
+        }}
+        onMade={(menuId) => {
+          onLeave?.();
+          enterVenue(barId);
+          router.push(`/menus/${menuId}/edit` as Href);
         }}
       />
     );
@@ -165,8 +177,8 @@ export function WhatNext({
           <StepRow
             n={3}
             title="Your menu"
-            line={inLibrary ? 'In your Library' : can.menu ? 'What’s on now, or 20 classics' : 'Needs drink edits at this venue'}
-            count={inLibrary ? `${inLibrary} ${inLibrary === 1 ? 'classic' : 'classics'}` : null}
+            line={menus ? 'In Menus' : inLibrary ? 'In your Library' : can.menu ? 'Start your own, or bring one in' : 'Needs drink edits at this venue'}
+            count={menus ? `${menus} ${menus === 1 ? 'menu' : 'menus'}` : inLibrary ? `${inLibrary} ${inLibrary === 1 ? 'classic' : 'classics'}` : null}
             skipped={skipped.includes('menu')}
             onPress={can.menu ? () => setAt('menu') : undefined}
             onSkip={can.menu ? () => skip('menu') : undefined}

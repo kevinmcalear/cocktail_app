@@ -1,3 +1,4 @@
+import { nearest } from '@/lib/nearName';
 import type { SectionDrinkType } from '@/lib/sectionAllowedTypes';
 import type { MenuDetail, MenuDrink } from '@/types/menus';
 
@@ -247,9 +248,15 @@ export function nameToMake(library: Pick<MenuDrink, 'name'>[], query: string): s
   return typed === typed.toLowerCase() ? typed.replace(/(^|\s)(\S)/g, (_, gap: string, c: string) => gap + c.toUpperCase()) : typed;
 }
 
-/** Drinks that fit the section and share a word (four letters or more) with the search: "Close" when nothing matches. */
+/**
+ * Drinks that fit the section and are spelled close to the search
+ * (lib/nearName: "martni" for Martini), then those sharing a word of four
+ * letters or more with it: "Close" when nothing matches.
+ */
 export function nearLibrary(library: MenuDrink[], section: Pick<EditSection, 'allowedTypes'>, query: string, limit = 3): MenuDrink[] {
+  const fits = library.filter((d) => section.allowedTypes.includes(d.kind));
+  const spelled = nearest(query, fits, (d) => d.name, limit);
   const words = query.toLowerCase().split(/\W+/).filter((w) => w.length >= 4);
-  if (!words.length) return [];
-  return library.filter((d) => section.allowedTypes.includes(d.kind) && words.some((w) => d.name.toLowerCase().includes(w))).slice(0, limit);
+  const sharing = fits.filter((d) => !spelled.includes(d) && words.some((w) => d.name.toLowerCase().includes(w)));
+  return [...spelled, ...sharing].slice(0, limit);
 }

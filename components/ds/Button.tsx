@@ -31,10 +31,12 @@ export interface ButtonProps {
   /** When the label alone is ambiguous ("Cancel" in a list of invites). Defaults to the label. */
   accessibilityLabel?: string;
   accessibilityHint?: string;
+  /** A button that shows and hides something below it: whether that is showing. */
+  expanded?: boolean;
   style?: StyleProp<ViewStyle>;
 }
 
-export function Button({ label, onPress, variant = 'primary', size = 'md', dense, icon, disabled, accessibilityLabel, accessibilityHint, style }: ButtonProps) {
+export function Button({ label, onPress, variant = 'primary', size = 'md', dense, icon, disabled, accessibilityLabel, accessibilityHint, expanded, style }: ButtonProps) {
   const ds = useDs();
   const fill = variant === 'primary' ? ds.accentFill.fill : variant === 'ink' ? ds.c.ink : 'transparent';
   const danger = readableAccent(STATUS.danger, ds.c.ground);
@@ -47,6 +49,7 @@ export function Button({ label, onPress, variant = 'primary', size = 'md', dense
       accessibilityLabel={accessibilityLabel ?? label}
       accessibilityHint={accessibilityHint}
       aria-disabled={disabled}
+      aria-expanded={expanded}
       hitSlop={size === 'sm' ? (layout.minTapTarget - SMALL) / 2 : undefined}
       style={[
         styles.base,

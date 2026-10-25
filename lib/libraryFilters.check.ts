@@ -108,15 +108,14 @@ assert.equal(itemIdOf('0000-3'), '0000-3');
 
 {
   assert.deepEqual(filterGroups(true, false).map((g) => g.map((f) => f.label)), [
-    ['All', 'Classics', 'On menu', 'Old drinks', 'R&D'],
+    ['All', 'On menu', 'Classics', 'Old drinks', 'R&D'],
     ['Batched', 'Preps', 'Garnishes', 'Bottles'],
     ['Ready here', 'Needs something'],
     ['Cocktails', 'Beer', 'Wine'],
   ]);
   assert.deepEqual(filterGroups(false, true).map((g) => g.map((f) => f.label)), [['Cocktails', 'Ingredients', 'Beer', 'Wine', 'Needs a price']]);
-  // The first release (13 Oct): All, Classics, On menu, Old drinks, Beer, Wine.
-  // The kit check (Kit and ice, step 11) shows at every venue.
-  assert.deepEqual(filterGroups(true, true, false).map((g) => g.map((f) => f.label)), [['All', 'Classics', 'On menu', 'Old drinks'], ['Ready here', 'Needs something'], ['Beer', 'Wine']]);
+  // Without the extras: All, On menu, Classics, Old drinks, Beer, Wine (phone order since 24 Oct), and the kit check (Kit and ice, step 11) at every venue.
+  assert.deepEqual(filterGroups(true, true, false).map((g) => g.map((f) => f.label)), [['All', 'On menu', 'Classics', 'Old drinks'], ['Ready here', 'Needs something'], ['Beer', 'Wine']]);
   assert.equal(parseShow('needs', false), 'cocktails', 'no venue, no kit');
   assert.equal(parseShow('ready', true, false), 'ready');
   assert.deepEqual(filterGroups(false, true, false), filterGroups(false, true), 'no venue: extras do not apply');

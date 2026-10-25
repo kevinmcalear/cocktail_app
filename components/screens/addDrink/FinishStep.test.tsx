@@ -7,9 +7,9 @@ import { FinishStep } from './FinishStep';
 
 // The paper band's View as pill reads the signed-in person's prefs; off here.
 jest.mock('@/components/ViewAsBanner', () => ({ ViewAsPill: () => null }));
+jest.mock('@/hooks/useNearIngredients', () => ({ useNearIngredients: () => [] }));
 jest.mock('@/hooks/useKit', () => ({ useKit: () => ({ owned: [], kit: new Set(), toggle: jest.fn() }) }));
-// The prep step checks the kit where you are (hooks/useBarKit.ts useKitHere): at home here, the same empty kit.
-jest.mock('@/hooks/useBarKit', () => ({ ...jest.requireActual('@/hooks/useBarKit'), useKitHere: () => new Set() }));
+jest.mock('@/hooks/useBarKit', () => ({ useMakingKit: () => ({ kit: new Set(), where: 'My Bar', add: jest.fn() }) }));
 jest.mock('@/hooks/usePrepCard', () => ({ ...jest.requireActual('@/hooks/usePrepCard'), useCatalogRecipe: () => ({ data: null }) }));
 
 // The prep builder draws after its first layout, as the wizard does on iOS.

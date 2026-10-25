@@ -20,6 +20,8 @@ export interface FilterSet {
   show: Show;
   count: (value: Show) => number;
   onPick: (value: Show) => void;
+  /** Every view is empty (a new venue's Library): nothing to filter. */
+  nothing?: boolean;
 }
 
 /** The chips out front. A view picked from the menu goes first, with an × back to All. */
@@ -68,8 +70,11 @@ export function FilterButton({ set }: { set: FilterSet }) {
 export function FilterDock({ set }: { set: FilterSet }) {
   const ds = useDs();
   const gutter = useGutter();
+  const bottom = useTabBarTop();
+  // Nothing to filter: no dock over the empty Library's "Add a drink".
+  if (set.nothing) return null;
   return (
-    <View style={[styles.dock, { paddingBottom: useTabBarTop() + space.sm }]}>
+    <View style={[styles.dock, { paddingBottom: bottom + space.sm }]}>
       <DockFade />
       <ScrollView horizontal showsHorizontalScrollIndicator={false} style={styles.row} contentContainerStyle={[styles.rowChips, { paddingHorizontal: gutter }]}>
         <FilterButton set={set} />

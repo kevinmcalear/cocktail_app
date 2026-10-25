@@ -1,0 +1,56 @@
+{
+ "maker": "kinto",
+ "models": [
+  {
+   "name": "CAST Double Wall Rock Glass",
+   "series": "CAST",
+   "designer": null,
+   "model_code": "21430",
+   "glass": "rocks",
+   "variant": null,
+   "capacity_ml": 250,
+   "capacity_as_stated": "250 ml",
+   "height_mm": 80,
+   "rim_mm": null,
+   "material": "glass",
+   "product_url": "https://kinto-usa.com/products/21430",
+   "source_urls": [
+    "https://kinto-usa.com/products/21430"
+   ]
+  },
+  {
+   "name": "CAST Double Wall Cocktail Glass",
+   "series": "CAST",
+   "designer": null,
+   "model_code": "21431",
+   "glass": "highball",
+   "variant": null,
+   "capacity_ml": 290,
+   "capacity_as_stated": "290 ml",
+   "height_mm": 120,
+   "rim_mm": null,
+   "material": "glass",
+   "product_url": "https://kinto-usa.com/products/21431",
+   "source_urls": [
+    "https://kinto-usa.com/products/21431"
+   ]
+  },
+  {
+   "name": "CAST Water Glass",
+   "series": "CAST",
+   "designer": null,
+   "model_code": "8430",
+   "glass": "rocks",
+   "variant": null,
+   "capacity_ml": 250,
+   "capacity_as_stated": "250 ml",
+   "height_mm": 82,
+   "rim_mm": null,
+   "material": "glass",
+   "product_url": "https://kinto-usa.com/products/8430",
+   "source_urls": [
+    "https://kinto-usa.com/products/8430"
+   ]
+  }
+ ]
+}

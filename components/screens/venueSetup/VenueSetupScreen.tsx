@@ -1,5 +1,5 @@
 import { useLocalSearchParams, useRouter, type Href } from 'expo-router';
-import { useRef, useState } from 'react';
+import { useRef, useState, useSyncExternalStore } from 'react';
 
 import { BringStep } from '@/components/screens/onboarding/BringStep';
 import { Body, BrandProvider, Caption } from '@/components/ds';
@@ -11,7 +11,7 @@ import { useVenueBrand } from '@/hooks/useVenueBrand';
 import type { ProfileClaim } from '@/hooks/useProfiles';
 import { useCreateSetupVenue, usePushHeldSetup, useVenueClaim, useVenuePage } from '@/hooks/useVenueSetup';
 import { faceFromDb, normalizeHex, usableGroundTint } from '@/lib/brand';
-import { afterClaim, nextScreen, previousScreen, resumeScreen, venueProgress, type ClaimState, type VenueScreen, type VenueStep } from '@/lib/venueSetup';
+import { afterClaim, nextScreen, previousScreen, startScreen, venueProgress, type ClaimState, type VenueScreen, type VenueStep } from '@/lib/venueSetup';
 import type { ReadFile } from '@/lib/readAnything';
 import { useAppMode } from '@/store/useAppMode';
 import { useVenueSetup } from '@/store/useVenueSetup';
@@ -32,8 +32,8 @@ const VENUE_BRING = ['Spec book PDF', 'Printed menu', 'Google Doc', 'Airtable li
 
 /**
  * Venue setup as a guided flow (b03): intro, eight steps, a summary. Opened
- * from Settings › Venues, a bar page's Claim, or Tonight's banner (?bar=, to
- * pick it up; &step=claim to prove it's yours). Each step is one of the app's
+ * from Settings › Venues, a bar page's Claim, or the Setup banner on Tonight
+ * or Library (?bar=, to pick it up; &step=claim to prove it's yours). Each step is one of the app's
  * own pieces: the bar facts, the Brand editor, the Publishing choice, Bring
  * in, invites, the claim methods. Proving it's yours is last, and every step
  * before it works without a claim (Eddie call, 22 Oct).
@@ -47,9 +47,15 @@ export function VenueSetupScreen() {
   // The run's key moves from 'new' to the venue mid-step (ensureVenue); steps finishing then use the new one.
   const keyRef = useRef(key);
   const run = runs[key];
-  const [screen, setScreen] = useState<VenueScreen>(() =>
-    params.claim || (params.bar && params.step === 'claim') ? 'claim' : params.bar ? resumeScreen(runs[params.bar]?.done ?? []) : 'intro'
-  );
+  const [screen, setScreen] = useState<VenueScreen>(() => startScreen(params, runs));
+  // Opened cold, the saved runs load after the first render: pick up from them once they do, unless they've moved on.
+  const [first] = useState(screen);
+  const hydrated = useSyncExternalStore(useVenueSetup.persist.onFinishHydration, useVenueSetup.persist.hasHydrated, () => false);
+  const [picked, setPicked] = useState(hydrated);
+  if (!picked && hydrated) {
+    setPicked(true);
+    if (screen === first) setScreen(startScreen(params, runs));
+  }
   // Opened from a bar page's Claim: once the claim's sent (or kept), setup carries on from the start.
   const [fromPage, setFromPage] = useState(!!params.claim);
   // Opened straight onto the claim (a bar page, Venue settings, Tonight) or from the summary: Back goes there, not to step 7.

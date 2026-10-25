@@ -43,7 +43,7 @@ export function IceRecipeScreen({ barId, iceId }: { barId: string; iceId: string
   const [sheet, setSheet] = useState<'from' | 'makes' | 'keeps' | { tools: string } | null>(null);
   const title = ice?.name ?? 'Ice';
   // Never offer an ice that starts from this one: the chain would loop.
-  const after = useIcesStartingFrom(canEdit ? iceId : null).data ?? [];
+  const after = useIcesStartingFrom(canEdit ? iceId : null, ices.map((r) => r.id)).data ?? [];
   const others = ices.filter((r) => r.id !== iceId && !after.includes(r.id));
 
   if (!ice || !canEdit) {

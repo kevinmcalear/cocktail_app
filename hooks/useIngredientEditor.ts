@@ -80,6 +80,18 @@ const ingredientColumns = (f: IngredientForm) => ({
 });
 const NEW_LINE = () => ({ amount: "", unit: getPreferredUnit(), preparation_notes: "", is_optional: false });
 
+/** The editor's lines as replace_recipe_lines takes them. */
+const recipeLines = (items: SortableRecipeItem[]) =>
+    items.map((item) => ({
+        id: item.id ?? null,
+        ingredient_item_id: item.ingredient_id,
+        amount: parseFloat(item.amount) || null,
+        unit: item.unit || null,
+        // The spec pad edits these, so they're written back, not dropped.
+        preparation_notes: item.preparation_notes?.trim() || null,
+        is_optional: !!item.is_optional,
+    }));
+
 /** The form and its dirty state, shared by the saved and the draft editor. */
 function useForm(selfId: string | null) {
     const [form, setForm] = useState<IngredientForm>(EMPTY);
@@ -209,22 +221,11 @@ export function useIngredientEditor(id: string) {
 
             await saveItemTags(id, loaded.selectedCategories, f.selectedCategories);
 
-            const { error: deleteError } = await supabase.from("recipes").delete().eq("recipe_item_id", id);
-            if (deleteError) throw deleteError;
-            if (f.recipeItems.length > 0) {
-                const { error: insertError } = await supabase.from("recipes").insert(
-                    f.recipeItems.map((item, index) => ({
-                        recipe_item_id: id,
-                        ingredient_item_id: item.ingredient_id,
-                        amount: parseFloat(item.amount) || null,
-                        unit: item.unit || null,
-                        // The spec pad edits these, so they're written back, not dropped.
-                        preparation_notes: item.preparation_notes?.trim() || null,
-                        is_optional: !!item.is_optional,
-                        sort_order: index,
-                    }))
-                );
-                if (insertError) throw insertError;
+            // One transaction: a failed save keeps the recipe it had, and each line keeps its row. Skipped when the lines didn't change.
+            const lines = recipeLines(f.recipeItems);
+            if (JSON.stringify(lines) !== JSON.stringify(recipeLines(loaded.recipeItems))) {
+                const { error: recipeError } = await supabase.rpc("replace_recipe_lines", { p_item: id, p_lines: lines });
+                if (recipeError) throw recipeError;
             }
 
             await queryClient.invalidateQueries({ queryKey: ["ingredient", id] });

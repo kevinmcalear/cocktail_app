@@ -66,6 +66,7 @@ describe('useIngredientEditor', () => {
     const view = await renderHook(() => useIngredientEditor('i1'));
     await waitFor(() => expect(view.result.current.loading).toBe(false));
     mockDb.calls = [];
+    mockDb.rpcErrors = {};
     return view;
   }
   const tagWrites = () => mockDb.calls.filter((c) => c.table === 'item_categories' && c.op !== 'select');
@@ -106,5 +107,42 @@ describe('useIngredientEditor', () => {
       { table: 'item_categories', op: 'delete', payload: undefined, filters: [['item_id', 'i1'], ['category_id', ['juniper']]] },
       { table: 'item_categories', op: 'upsert', payload: [{ item_id: 'i1', category_id: 'citrus', is_primary: true }], filters: [] },
     ]);
+  });
+
+  it('saves the recipe lines in one call, never a delete then an insert', async () => {
+    const { result } = await openGin();
+    await act(() => result.current.setRecipeItems([{ id: 'r1', ingredient_id: 'juniper-berries', name: 'Juniper', amount: '5', unit: 'g', preparation_notes: ' crushed ', is_optional: false }]));
+    await act(async () => {
+      expect(await result.current.save()).toBe(true);
+    });
+    expect(mockDb.calls.filter((c) => c.table === 'recipes')).toEqual([]);
+    expect(mockDb.calls.filter((c) => c.op === 'rpc')).toEqual([
+      {
+        table: 'replace_recipe_lines',
+        op: 'rpc',
+        payload: { p_item: 'i1', p_lines: [{ id: 'r1', ingredient_item_id: 'juniper-berries', amount: 5, unit: 'g', preparation_notes: 'crushed', is_optional: false }] },
+        filters: [],
+      },
+    ]);
+  });
+
+  it('leaves the recipe alone when its lines did not change', async () => {
+    const { result } = await openGin();
+    await act(() => result.current.set({ brandMaker: 'tanqueray' }));
+    await act(async () => {
+      expect(await result.current.save()).toBe(true);
+    });
+    expect(mockDb.calls.filter((c) => c.op === 'rpc')).toEqual([]);
+  });
+
+  it('a refused recipe save fails the save and stays unsaved', async () => {
+    const { result } = await openGin();
+    mockDb.rpcErrors = { replace_recipe_lines: { message: 'You can’t edit this recipe.' } };
+    jest.spyOn(console, 'error').mockImplementation(() => {});
+    await act(() => result.current.setRecipeItems([{ ingredient_id: 'juniper-berries', name: 'Juniper', amount: '5', unit: 'g', preparation_notes: '', is_optional: false }]));
+    await act(async () => {
+      expect(await result.current.save()).toBe(false);
+    });
+    expect(result.current.isDirty).toBe(true);
   });
 });

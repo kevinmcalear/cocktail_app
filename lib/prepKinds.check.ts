@@ -16,7 +16,7 @@ assert.equal(guessKind('Lime super juice'), 'super');
 assert.equal(guessKind('Chamomile infused gin'), 'infusion');
 assert.equal(guessKind('Miso banana liqueur'), 'infusion', 'a house liqueur is a spirit with a flavour in it');
 assert.equal(guessKind('Salty Boy batch'), 'batch');
-assert.equal(guessKind('Clarified grapefruit'), null);
+assert.equal(guessKind('Clarified grapefruit'), 'clarified');
 assert.deepEqual(flavourWords('Pineapple chili shrub'), ['Pineapple', 'Chili']);
 assert.deepEqual(flavourWords('Rich simple syrup'), []);
 
@@ -55,7 +55,7 @@ assert.equal(wayOf({ kind: 'shrub', hot: true }), wayOf({ kind: 'shrub', way: 'h
 assert.equal(wayOf(startPrep('syrup', 'Simple syrup'))?.id, 'simple');
 assert.equal(wayOf(startPrep('rich', 'Rich syrup'))?.id, 'rich');
 assert.equal(tileOf('oleo'), 'syrup');
-assert.deepEqual(KIND_TILES, ['batch', 'infusion', 'syrup', 'cordial', 'shrub', 'wash', 'super', 'other'], 'as the board draws them');
+assert.deepEqual(KIND_TILES, ['batch', 'infusion', 'syrup', 'cordial', 'shrub', 'wash', 'clarified', 'distillate', 'super', 'other'], 'as the board draws them');
 assert.ok(KIND_TILES.every((k) => PREP_KINDS.some((p) => p.id === k)));
 assert.equal(prepPhrase(shrub), 'a cold shrub');
 assert.equal(prepPhrase(oleo), 'an oleo shrub');
@@ -115,6 +115,14 @@ assert.deepEqual(chamomile.lines.map((l) => l.name), ['Gin', 'Chamomile']);
 assert.equal(chamomile.keepsHours, 14 * 24);
 assert.equal(chamomile.storage, 'Fridge, sealed bottle');
 assert.deepEqual(openSlots(startPrep('infusion', 'Infusion')).map((l) => l.slot), ['spirit', 'flavour']);
+// A house liqueur from its name: its flavours, a line each, never the liqueur in its own recipe (owner walkthrough, 25 Oct).
+const miso = startPrep('infusion', 'Miso banana liqueur');
+assert.deepEqual(miso.lines.map((l) => l.name), ['Spirit', 'Miso', 'Banana']);
+assert.deepEqual(miso.allergens, ['soya']);
+// Taking the miso out takes its allergen with it.
+assert.deepEqual(withFacts({ ...miso, lines: miso.lines.filter((l) => l.name !== 'Miso') }).allergens, []);
+// A spirit named keeps the rest as one "with what".
+assert.deepEqual(startPrep('infusion', 'Brown butter infused bourbon').lines.map((l) => l.name), ['Bourbon', 'Brown butter']);
 
 // Fat wash from a typed name: White rum the base, coconut the flavour and Coconut Oil the fat, lifted off so it isn't in the yield.
 const t = (id: string) => techniqueById(id)!;
@@ -265,8 +273,9 @@ assert.equal(sourceSite('http://blog.khymos.org/x?y=1'), 'blog.khymos.org');
   assert.equal(sv.storage, 'Fridge, sealed bottle');
   assert.deepEqual(kindOfTechnique('sous-vide-infusion'), { kind: 'infusion', way: 'sous-vide' });
   assert.deepEqual(kindOfTechnique('fat-wash'), { kind: 'wash', way: 'fat' });
-  assert.equal(kindOfTechnique('agar-quick'), null);
-  assert.equal(prepSummary({ ...sv, steps: [...steps, ...steps] }), 'Infusion, sous vide · Miso banana liqueur · 4 steps', 'a stand-in spirit is not named');
+  assert.deepEqual(kindOfTechnique('agar-quick'), { kind: 'clarified', way: 'agar-quick' }, 'a clarified juice is a kind now');
+  assert.equal(kindOfTechnique('tepache'), null, 'a ferment is Something else');
+  assert.equal(prepSummary({ ...sv, steps: [...steps, ...steps] }), 'Infusion, sous vide · Miso, banana · 4 steps', 'a stand-in spirit is not named');
   // A kind picked for two lines combined keeps them, with the kind's own method.
   const syrup = keepLines(startPrep('syrup', 'X'), sv);
   assert.equal(syrup.kind, 'syrup');
@@ -274,3 +283,9 @@ assert.equal(sourceSite('http://blog.khymos.org/x?y=1'), 'blog.khymos.org');
   assert.match(syrup.steps[0].body, /sugar and water/);
 }
 console.log('prepKinds technique checks passed');
+
+// A batch named for its drink starts with one line to pick, not the name's words.
+{
+  const b = startPrep('batch', 'Penicillin batch');
+  assert.deepEqual(b.lines.map((l) => l.slot), ['main ingredient']);
+}
