@@ -30,7 +30,7 @@ const METHOD_ICONS: [RegExp, string][] = [
     [/muddl.*shak/, 'muddle and shake'],
     [/shak/, 'Shaken'],
     [/stir/, 'Stirred'],
-    [/throw|thrown/, 'Thrown'],
+    [/throw/, 'Thrown'],
     [/swizzl/, 'Swizzled'],
     [/blend|blitz/, 'Blended'],
     [/flask/, 'Flask Pour'],

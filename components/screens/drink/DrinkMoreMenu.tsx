@@ -135,7 +135,7 @@ function ViewAs({ realRole }: { realRole: number }) {
   const current = Math.min(viewAsRoleLevel ?? realRole, realRole);
   const choices = viewAsChoices(realRole);
   const picked = choices.find((c) => c.level === current);
-  const then = current < realRole ? `Every venue page shows what ${/^[AEIOU]/.test(roleLabel(current)) ? 'an' : 'a'} ${roleLabel(current)} sees until you change it back.` : 'Pick a role to see the page as they do.';
+  const note = current < realRole ? `Every venue page shows what ${/^[AEIOU]/.test(roleLabel(current)) ? 'an' : 'a'} ${roleLabel(current)} sees until you change it back.` : 'Pick a role to see the page as they do.';
   return (
     <View style={[styles.viewAs, { borderBottomColor: ds.c.line }]}>
       <Caption tone="muted" style={styles.eyebrow}>
@@ -146,7 +146,7 @@ function ViewAs({ realRole }: { realRole: number }) {
           <Chip key={c.level} quiet label={c.level === realRole ? `${c.label} (you)` : c.label} selected={c.level === current} disabled={isSaving} onPress={() => void setViewAsRoleLevel(c.level === realRole ? null : c.level)} />
         ))}
       </View>
-      <Caption tone="muted">{picked ? `${roleSees(picked.label, picked.adds)} ${then}` : then}</Caption>
+      <Caption tone="muted">{picked ? `${roleSees(picked.label, picked.adds)} ${note}` : note}</Caption>
     </View>
   );
 }

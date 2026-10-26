@@ -17,8 +17,9 @@ export interface SpecMark {
 }
 
 const SIZE = 32;
-// 32 drawn, 44 to tap.
+// 32 drawn, 44 to tap; no slop on the left, where the method icon sits.
 const SLOP = (layout.minTapTarget - SIZE) / 2;
+const HIT = { top: SLOP, bottom: SLOP, right: SLOP };
 
 /**
  * The method and the glass as small line icons right after "Spec", so the
@@ -34,11 +35,11 @@ export function SpecMarks({ marks }: { marks: SpecMark[] }) {
         const icon = <CustomIcon name={m.icon} size={18} color={ds.c.ink} />;
         const box = [styles.box, { borderColor: ds.c.lineStrong, backgroundColor: ds.c.raised }];
         return m.onPress ? (
-          <PressableScale key={m.key} role="button" accessibilityLabel={m.label} accessibilityHint={m.accessibilityHint} hitSlop={SLOP} onPress={m.onPress} style={box}>
+          <PressableScale key={m.key} role="button" accessibilityLabel={m.label} accessibilityHint={m.accessibilityHint} hitSlop={HIT} onPress={m.onPress} style={box}>
             {icon}
           </PressableScale>
         ) : (
-          <View key={m.key} role="img" aria-label={m.label} style={box}>
+          <View key={m.key} accessible role="img" aria-label={m.label} style={box}>
             {icon}
           </View>
         );
