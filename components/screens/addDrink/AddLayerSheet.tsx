@@ -6,7 +6,7 @@ import { IceThumb } from '@/components/ds/IceThumb';
 import { IconSymbol } from '@/components/ui/icon-symbol';
 import { layout, radius, space } from '@/constants/tokens';
 import { samePick, type WizardPick } from '@/lib/drinkWizard';
-import { iceKind, isLoose, singular, type IceLayer, type IceTo } from '@/lib/iceBuild';
+import { iceKind, isLoose, QUICK_BUILDS, QUICK_LABEL, singular, type IceLayer, type IceTo, type QuickBuild } from '@/lib/iceBuild';
 
 import { CountStepper, HeightPicker } from './IceLayers';
 import { OwnField } from './PickStep';
@@ -22,23 +22,28 @@ interface AddLayerSheetProps {
   venue?: { name: string; ice: { pick: WizardPick; source: string | null }[] } | null;
   /** What the new layer goes on: "4 cubes". */
   below?: string | null;
+  /** Or a whole build in place of the layers (the wizard's Ice step). */
+  onBuild?: (build: QuickBuild) => void;
+  /** Dump the tin needs the ice it's shaken with. */
+  canDump?: boolean;
 }
 
 /**
- * Add a layer of ice on top (canvas "Ice builds", row 2): the venue's own ice
- * first, as its Kit lists it, the rest behind More ice; then how many pieces,
- * or how high loose ice goes and whether it's packed.
+ * Add extra ice on top (canvas "Ice builds", row 2; Q21 + E24, 26 Oct): a
+ * whole build in its place, or the venue's own ice first, as its Kit lists
+ * it, the rest behind More ice; then how many pieces, or how high loose ice
+ * goes and whether it's packed.
  */
-export function AddLayerSheet({ visible, onClose, onAdd, options, venue, below }: AddLayerSheetProps) {
+export function AddLayerSheet({ visible, ...choices }: AddLayerSheetProps) {
   return (
-    <Sheet style={styles.sheet} visible={visible} onClose={onClose} accessibilityLabel="Add a layer" header={<Headline role="heading">Add a layer</Headline>} keyboard>
-      {visible ? <LayerChoices {...{ onClose, onAdd, options, venue, below }} /> : null}
+    <Sheet style={styles.sheet} visible={visible} onClose={choices.onClose} accessibilityLabel="Add extra ice" header={<Headline role="heading">Add extra ice</Headline>} keyboard>
+      {visible ? <LayerChoices {...choices} /> : null}
     </Sheet>
   );
 }
 
 /** The choices on their own, for a sheet that already is one (the drink editor's Ice). */
-export function LayerChoices({ onClose, onAdd, options, venue, below }: Omit<AddLayerSheetProps, 'visible'>) {
+export function LayerChoices({ onClose, onAdd, options, venue, below, onBuild, canDump }: Omit<AddLayerSheetProps, 'visible'>) {
   const ds = useDs();
   const own = venue?.ice ?? [];
   const rest = options.filter((o) => !own.some((v) => samePick(v.pick, o)) && iceKind(o.name) !== 'none');
@@ -60,6 +65,24 @@ export function LayerChoices({ onClose, onAdd, options, venue, below }: Omit<Add
   return (
     <SheetScrollView contentContainerStyle={styles.body}>
       {below ? <Caption tone="muted">{`Goes on top of: ${below}.`}</Caption> : null}
+      {onBuild ? (
+        <View style={styles.group}>
+          <Eyebrow>Or a whole build</Eyebrow>
+          <View role="group" aria-label="Or a whole build" style={styles.chips}>
+            {QUICK_BUILDS.filter((q) => canDump || q !== 'dump').map((q) => (
+              <WizardChip
+                key={q}
+                kind="button"
+                label={QUICK_LABEL[q]}
+                onPress={() => {
+                  onBuild(q);
+                  onClose();
+                }}
+              />
+            ))}
+          </View>
+        </View>
+      ) : null}
       {own.length ? (
         <View style={styles.group}>
           <Eyebrow>{`${venue?.name ?? 'Your'}’s ice`}</Eyebrow>
@@ -123,7 +146,14 @@ export function LayerChoices({ onClose, onAdd, options, venue, below }: Omit<Add
           <CountStepper value={n} noun={singular(picked.name)} onChange={setN} />
         </View>
       ) : null}
-      <Button label="Add on top" size="lg" disabled={!picked} onPress={add} />
+      {onBuild ? (
+        <View style={styles.buttons}>
+          <Button label="Cancel" size="lg" variant="secondary" onPress={onClose} style={styles.flex} />
+          <Button label="Add on top" size="lg" disabled={!picked} onPress={add} style={styles.flex} />
+        </View>
+      ) : (
+        <Button label="Add on top" size="lg" disabled={!picked} onPress={add} />
+      )}
     </SheetScrollView>
   );
 }
@@ -138,4 +168,5 @@ const styles = StyleSheet.create({
   chips: { flexDirection: 'row', flexWrap: 'wrap', gap: space.sm },
   more: { alignSelf: 'flex-start', flexDirection: 'row', alignItems: 'center', gap: space.xs, minHeight: layout.minTapTarget, paddingHorizontal: space.lg, borderRadius: radius.pill, borderWidth: 1 },
   between: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between' },
+  buttons: { flexDirection: 'row', gap: space.sm },
 });

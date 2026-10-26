@@ -1,14 +1,13 @@
 import { useMemo, useState } from 'react';
 import { StyleSheet, View } from 'react-native';
 
-import { Caption } from '@/components/ds';
 import { TellUs, type TellUsAbout } from '@/components/feedback/TellUs';
 import { IcePrompt } from '@/components/screens/kit/IcePrompt';
 import { space } from '@/constants/tokens';
 import type { BarGlass } from '@/hooks/useBarGlassware';
 import type { VenueIce } from '@/hooks/useVenueIce';
-import { methodIceLabel, samePick, sketchLook, type StepProps, type WizardPick } from '@/lib/drinkWizard';
-import { iceBuildLine, iceKind, iceTip, QUICK_BUILDS, QUICK_LABEL, quickBuild, saysMore, whichQuick, type IceLayer } from '@/lib/iceBuild';
+import { samePick, sketchLook, type StepProps, type WizardPick } from '@/lib/drinkWizard';
+import { iceBuildLine, iceKind, iceTip, quickBuild, type IceLayer } from '@/lib/iceBuild';
 import { draftSketchInputs } from '@/lib/sketch/draft';
 import { iceDrawKind, inTheGlass, isVenueIce, kitIceRow, kitSourceLine, venueIceKinds } from '@/lib/venueKit';
 
@@ -16,7 +15,7 @@ import { AddLayerSheet } from './AddLayerSheet';
 import { IceLayers } from './IceLayers';
 import { IceTipCard } from './IceTipCard';
 import { PickStep } from './PickStep';
-import { Eyebrow, WizardChip } from './WizardChrome';
+import { Eyebrow } from './WizardChrome';
 
 interface IceStepProps extends StepProps {
   ices: WizardPick[];
@@ -39,22 +38,27 @@ interface IceStepProps extends StepProps {
 
 
 /**
- * The ice it's made with, named for the method ("Blended with"; #697), then
- * In the glass (canvas "Ice builds", approved 20 Oct 2026): one kind, or a
- * build from the bottom up (cubes under pebble, a spear on a cube) with quick
- * builds, the venue's ice first, and one suggestion at a time.
+ * The ice in the glass (canvas "Ice builds", approved 20 Oct 2026; Q21 + E24,
+ * 26 Oct): an ice picked straight away, the venue's first, then Add extra ice
+ * to build it up (cubes under pebble, a spear on a cube) or pick a whole
+ * build, and one suggestion at a time. What it's shaken with is on the Method
+ * step (MethodIceLine).
  */
 export function IceStep({ draft, set, ices, barIce, suggested, why, compact, kit = [], barGlasses, barVariants = [], venueName, barId, tellUs }: IceStepProps) {
   const [adding, setAdding] = useState(false);
-  const made = methodIceLabel(draft.methods.map((m) => m.name));
-  const mine = barIce.length ? { has: (p: WizardPick) => isVenueIce(barIce, p.name), label: 'Your ice', restLabel: 'Other ice' } : undefined;
+  const mine = barIce.length ? { has: (p: WizardPick) => isVenueIce(barIce, p.name), label: venueName ? `${venueName}’s ice` : 'Your ice', restLabel: 'Other ice' } : undefined;
 
   const layers: IceLayer<WizardPick>[] = draft.iceBuild?.length ? draft.iceBuild : draft.ice && iceKind(draft.ice.name) !== 'none' ? [{ ice: draft.ice }] : [];
   // The top layer is the drink's one ice (items.ice_id), for everything that reads only one.
   const setLayers = (next: IceLayer<WizardPick>[]) => set({ iceBuild: next.length ? next : null, ice: next.length ? next[next.length - 1].ice : null });
   const pickOf = (name: string) => ices.find((o) => samePick(o, { id: null, name })) ?? { id: null, name };
   const named = layers.map((l) => ({ ...l, ice: l.ice.name }));
-  const quick = layers.length ? whichQuick(named) : null;
+  // The chips pick the bottom ice (cubes start at 3, like Add extra ice); extra ice stays on top. No ice is served up, with no build.
+  const base = layers[0] && !layers[0].tin ? layers[0].ice : null;
+  const pickBase = (ice: WizardPick | undefined) => {
+    if (ice && iceKind(ice.name) === 'none') return set({ ice, iceBuild: null });
+    setLayers(ice ? [{ ice, ...(iceKind(ice.name) === 'cubes' ? { n: 3 } : {}) }, ...layers.slice(1)] : []);
+  };
 
   // The venue's ice, where each comes from, and how long its spears are.
   const kitIce = kit.filter(inTheGlass);
@@ -86,26 +90,10 @@ export function IceStep({ draft, set, ices, barIce, suggested, why, compact, kit
   return (
     <>
       <View style={styles.stack}>
-        {made ? (
-          <View style={styles.group}>
-            <Eyebrow>{made}</Eyebrow>
-            <PickStep label={made} ownLabel="Other ice" compact={compact} options={ices} selected={draft.methodIce ? [draft.methodIce] : []} onChange={([ice]) => set({ methodIce: ice ?? null })} />
-            <Caption tone="muted">Follows the method: shaken with, stirred over, blended with.</Caption>
-          </View>
-        ) : null}
         <View style={styles.group}>
           <Eyebrow>In the glass</Eyebrow>
-          <View role="radiogroup" accessibilityLabel="Ways to build the ice" style={styles.chips}>
-            <WizardChip label="One kind" selected={!saysMore(layers)} onPress={() => setLayers(layers.length ? [{ ice: layers[layers.length - 1].ice }] : [])} />
-            {QUICK_BUILDS.map((q) => (
-              <WizardChip key={q} label={QUICK_LABEL[q]} selected={quick === q} onPress={() => setLayers(quickBuild(q, pickOf, draft.methodIce ?? null))} />
-            ))}
-          </View>
-          {layers.length ? (
-            <IceLayers layers={layers} onChange={setLayers} onAdd={() => setAdding(true)} sourceOf={sourceOf} />
-          ) : (
-            <PickStep label="In the glass" ownLabel="Other ice" compact={compact} options={ices} selected={draft.ice ? [draft.ice] : []} onChange={([ice]) => set({ ice: ice ?? null, iceBuild: null })} suggested={suggested} why={why} mine={mine} />
-          )}
+          <PickStep label="In the glass" ownLabel="Other ice" compact={compact} options={ices} selected={base ? [base] : !layers.length && draft.ice ? [draft.ice] : []} onChange={([ice]) => pickBase(ice)} suggested={suggested} why={why} mine={mine} />
+          {layers.length ? <IceLayers layers={layers} onChange={setLayers} onAdd={() => setAdding(true)} sourceOf={sourceOf} /> : null}
           {/* ponytail: the first layer from the bottom the venue may lack; a build of two missing asks one at a time. */}
           <IcePrompt barId={barId} ice={firstMissing(named, kit)} drink={draft.name} />
           {tip ? (
@@ -123,6 +111,8 @@ export function IceStep({ draft, set, ices, barIce, suggested, why, compact, kit
           visible={adding}
           onClose={() => setAdding(false)}
           onAdd={(l) => setLayers([...layers, l])}
+          onBuild={(q) => setLayers(quickBuild(q, pickOf, draft.methodIce ?? null))}
+          canDump={!!draft.methodIce}
           options={ices}
           venue={venueName && kitIce.length ? { name: venueName, ice: kitIce.map((r) => ({ pick: pickOf(r.name), source: kitSourceLine(r) || null })) } : null}
           below={top ? iceBuildLine([top]).replace(/^Over /, '') : null}
@@ -142,5 +132,4 @@ function firstMissing(layers: readonly { ice: string }[], kit: readonly VenueIce
 const styles = StyleSheet.create({
   stack: { gap: space.xl },
   group: { gap: space.sm },
-  chips: { flexDirection: 'row', flexWrap: 'wrap', gap: space.sm },
 });
