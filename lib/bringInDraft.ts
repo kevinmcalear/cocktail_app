@@ -7,7 +7,7 @@ import { prepRatio } from '@/lib/bringIn';
 import { ingredientState, plainKind, type MatchData } from '@/lib/bringInMatch';
 import { convertPour, EMPTY_DRAFT, newLine, type WizardDraft, type WizardLine, type WizardPick } from '@/lib/drinkWizard';
 import { normName } from '@/lib/paste';
-import { startPrep, type PrepDraft } from '@/lib/prepKinds';
+import { startPrep, withFacts, type PrepDraft } from '@/lib/prepKinds';
 import { batchAt, batchShownAt, bottleMl, drinkRecipe, perDrinkLines } from '@/lib/readBatch';
 import { sameName, versionName } from '@/lib/sameName';
 import type { RecipeReadLine, RecipeReading } from '@/supabase/functions/_shared/anythingRead';
@@ -184,4 +184,30 @@ export function menuDrinkDraft(name: string, ingredients: string[], data: Pick<M
     return newLine({ id: pick.id, name: pick.name }, '', '');
   });
   return { ...EMPTY_DRAFT, name, lines };
+}
+
+/**
+ * Something read as a drink that is really made in-house (House Sweet
+ * Vermouth, board w2-import-review E20 B): its lines as the house-made's
+ * recipe, each matched to your bar as the drink's would be, every amount as
+ * read (so 500 ml stays 500 ml), and the method as its one step.
+ */
+export function recipePrep(recipe: RecipeReading, choices: Pick<RecipeChoices, 'lines'>, data: Pick<MatchData, 'catalog' | 'aliases' | 'venueId'>): PrepDraft {
+  const lines = recipe.lines.map((line, i) => {
+    const pick = linePick(line, data, choices.lines[i]);
+    const measured = line.amount !== null && line.amount > 0 && line.unit !== 'top';
+    return { key: `l${i}`, id: pick.id, name: pick.name, parts: measured ? line.amount : null, unit: line.unit ?? '', amount: measured || line.amount === null ? '' : String(line.amount) };
+  });
+  const base = lines.find((l) => l.parts !== null) ?? lines[0];
+  return withFacts({
+    kind: 'other',
+    baseKey: base?.key ?? '',
+    baseAmount: base?.parts ?? 0,
+    lines,
+    steps: recipe.method ? [{ body: recipe.method.charAt(0).toUpperCase() + recipe.method.slice(1), timer_seconds: null }] : [],
+    keepsHours: null,
+    storage: '',
+    leadMinutes: null,
+    actions: [],
+  });
 }

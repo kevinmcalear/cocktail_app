@@ -1,7 +1,7 @@
 import assert from 'node:assert/strict';
 
 import { emptySummary } from '@/lib/bringInBatch';
-import { approved, canCheck, fileTitle, isFinished, keepFiles, nextOpen, setMark, settle, startReview, tally, tallyLine, waitingFor, whenWords, type ImportReview } from '@/lib/importReview';
+import { approved, canCheck, fileTitle, isFinished, keepFiles, nextOpen, putBack, rematch, setMark, settle, startReview, takeOut, tally, tallyLine, waitingFor, whenWords, type ImportReview } from '@/lib/importReview';
 import type { RecipeReading } from '@/supabase/functions/_shared/anythingRead';
 
 const recipe = (name: string): RecipeReading => ({ name, by: null, lines: [], method: null, glass: null, ice: null, garnish: null, notes: null });
@@ -75,5 +75,35 @@ assert.equal(waitingFor(reviews, null, 'bar'), null);
 assert.equal(fileTitle('Little Rye spec book.pdf'), 'Little Rye spec book');
 assert.equal(fileTitle('Pasted text'), 'Pasted text');
 assert.equal(whenWords('2026-10-21T20:00:00', new Date('2026-10-22T09:00:00').getTime()), 'Yesterday');
+
+// Taking out what isn't a drink (E20): gone from the list and the count, the screen on the drink after it; Undo puts it back.
+{
+  let t = fresh(4);
+  t = { ...setMark(t, 3, 'skipped', now), unsure: [3], at: 1 };
+  assert.equal(takeOut(setMark(t, 0, 'approved', now, 'd0'), 0, now), null);
+  const out = takeOut(t, 1, now)!;
+  assert.deepEqual(out.review.recipes.map((x) => x.name), ['Drink 1', 'Drink 3', 'Drink 4']);
+  assert.equal(tally(out.review).total, 3);
+  assert.equal(out.review.at, 1);
+  assert.deepEqual(out.review.unsure, [2]);
+  const back = putBack(out.review, out.gone, now);
+  assert.deepEqual(back.recipes, t.recipes);
+  assert.deepEqual(back.marks, t.marks);
+  assert.deepEqual(back.unsure, [3]);
+  assert.equal(back.at, 1);
+  // The last one out leaves the screen on the one before it.
+  assert.equal(takeOut({ ...t, at: 3 }, 3, now)!.review.at, 2);
+}
+
+// Kept as house-made: drinks still to check that set its line to "make it new" match again; saved ones and picks stay.
+{
+  const negroni: RecipeReading = { ...recipe('Negroni'), lines: [{ amount: 30, unit: 'ml', ingredient: 'House sweet vermouth', unsure: false }, { amount: 30, unit: 'ml', ingredient: 'Gin', unsure: false }] };
+  let t = fresh(2, { recipes: [negroni, negroni], choices: [] });
+  t = { ...t, choices: [0, 1].map(() => ({ name: 'Negroni', madeBy: '', source: '', notes: '', lines: { 0: { fresh: true as const }, 1: { pick: 'gin' } } })) };
+  t = setMark(t, 0, 'approved', now, 'd0');
+  const again = rematch(t, 'House Sweet Vermouth');
+  assert.deepEqual(again.choices[0].lines, t.choices[0].lines);
+  assert.deepEqual(again.choices[1].lines, { 1: { pick: 'gin' } });
+}
 
 console.log('importReview: ok');

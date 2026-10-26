@@ -10,6 +10,7 @@ import type { BatchSummary } from '@/lib/bringInBatch';
 import type { MadeBatches, RecipeChoices } from '@/lib/bringInDraft';
 import { dayWord } from '@/lib/featureNews';
 import type { ReadFile } from '@/lib/readAnything';
+import { sameName } from '@/lib/sameName';
 import type { RecipeReading } from '@/supabase/functions/_shared/anythingRead';
 
 /** Approved is saved; saving is on its way; skipped is left out (and can still be approved). */
@@ -157,4 +158,69 @@ export const fileTitle = (name: string) => name.replace(/\.[a-z0-9]{2,4}$/i, '')
 export function whenWords(iso: string, now: number): string {
   const word = dayWord(iso, now);
   return word.charAt(0).toUpperCase() + word.slice(1);
+}
+
+/** A drink taken out (it wasn't a drink, board w2-import-review E20), kept so Undo puts it back where it was. */
+export interface TakenOut {
+  i: number;
+  recipe: RecipeReading;
+  choices: RecipeChoices;
+  mark: DrinkMark;
+  unsure: boolean;
+}
+
+/**
+ * Takes drink `i` out of the review: gone from the list and the count. Only
+ * one not saved can go (a saved drink is in the Library). The screen stays
+ * on the drink that moves into its place. Null when it can't go.
+ */
+export function takeOut(review: ImportReview, i: number, now: string): { review: ImportReview; gone: TakenOut } | null {
+  if (!canCheck(review, i)) return null;
+  const drop = <T>(list: T[]) => list.filter((_, k) => k !== i);
+  const left = review.recipes.length - 1;
+  const at = review.at > i ? review.at - 1 : Math.min(review.at, Math.max(left - 1, 0));
+  return {
+    review: {
+      ...review,
+      updatedAt: now,
+      recipes: drop(review.recipes),
+      choices: drop(review.choices),
+      marks: drop(review.marks),
+      drinkIds: drop(review.drinkIds),
+      unsure: review.unsure.filter((u) => u !== i).map((u) => (u > i ? u - 1 : u)),
+      at,
+    },
+    gone: { i, recipe: review.recipes[i], choices: review.choices[i], mark: review.marks[i], unsure: review.unsure.includes(i) },
+  };
+}
+
+/** Undo: the drink back where it was, and on screen. */
+export function putBack(review: ImportReview, gone: TakenOut, now: string): ImportReview {
+  const i = Math.min(gone.i, review.recipes.length);
+  const add = <T>(list: T[], value: T) => [...list.slice(0, i), value, ...list.slice(i)];
+  const unsure = review.unsure.map((u) => (u >= i ? u + 1 : u));
+  return {
+    ...review,
+    updatedAt: now,
+    recipes: add(review.recipes, gone.recipe),
+    choices: add(review.choices, gone.choices),
+    marks: add(review.marks, gone.mark),
+    drinkIds: add(review.drinkIds, null),
+    unsure: gone.unsure ? [...unsure, i] : unsure,
+    at: i,
+  };
+}
+
+/**
+ * Kept as house-made: the drinks still to check that call for it match it
+ * again. A line someone set to "make it new" goes back to matching, so it
+ * finds the house-made once the catalog has it; picks stay as picked.
+ */
+export function rematch(review: ImportReview, name: string): ImportReview {
+  const choices = review.choices.map((c, k) => {
+    if (!canCheck(review, k)) return c;
+    const lines = Object.fromEntries(Object.entries(c.lines).filter(([at, choice]) => !('fresh' in choice && sameName(review.recipes[k]?.lines[Number(at)]?.ingredient ?? '', name))));
+    return Object.keys(lines).length === Object.keys(c.lines).length ? c : { ...c, lines };
+  });
+  return { ...review, choices };
 }

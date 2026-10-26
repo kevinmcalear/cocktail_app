@@ -15,7 +15,8 @@ import { AlreadyThereCard, useAlreadyThere } from './AlreadyThere';
 import { MonoLabel, PageLook } from './CheckParts';
 import { markNote } from './ImportReview';
 import { chooseLine, RecipeSpec } from './RecipeSpec';
-import { DrinkListRow, EditLink, FilePart, ProgressLine } from './ReviewParts';
+import { DrinkListRow, FilePart, ProgressLine, TakeOutLine } from './ReviewParts';
+import { TakeOutSheet } from './TakeOutSheet';
 import { useImportReview } from './useImportReview';
 import { useSteadySketch } from './useRecipeMaker';
 
@@ -35,8 +36,9 @@ const typing = (target: EventTarget | null) => {
  */
 export function ImportReviewDesk({ id, data, onFinishLater }: { id: string; data: MatchData; onFinishLater: () => void }) {
   const ds = useDs();
-  const { review, usual, toMake, error, go, approve, skip, setChoices, editDrink } = useImportReview(id, data);
+  const { review, usual, toMake, error, go, approve, skip, setChoices, editDrink, takeOutDrink, keepHouseMade } = useImportReview(id, data);
   const [look, setLook] = useState<{ at?: ReadPlace | null; title: string } | null>(null);
+  const [notDrink, setNotDrink] = useState<number | null>(null);
   const [all, setAll] = useState(false);
   const at = review?.at ?? 0;
   const recipe = review?.recipes[at];
@@ -119,16 +121,17 @@ export function ImportReviewDesk({ id, data, onFinishLater }: { id: string; data
               <Caption tone="muted" style={styles.mono}>{`Drink ${at + 1} of ${t.total}`}</Caption>
               <TextInput accessibilityLabel="Drink name" editable={open} value={choices.name} onChangeText={(name) => setChoices(at, (c) => ({ ...c, name }))} style={[styles.name, { color: ds.c.ink, fontFamily: fontFamilies.instrument }]} />
               <Caption tone="muted">{how}</Caption>
+              {open ? <TakeOutLine onPress={() => setNotDrink(at)} /> : null}
             </View>
           </View>
           {there && open ? <AlreadyThereCard there={there} pick={choices.same} onPick={(same) => setChoices(at, (c) => ({ ...c, same }))} onSkip={() => skip(at)} /> : null}
           <RecipeSpec recipe={recipe} choices={choices} data={data} files={files} usual={usual} label={false} made={review.batches} onChoose={(i, c) => setChoices(at, (prev) => chooseLine(prev, i, c))} onChoices={(change) => setChoices(at, change)} onLook={(where, title) => setLook({ at: where, title })} />
-          {open ? <EditLink onPress={() => editDrink(at)} /> : null}
           {pickNote ? <Caption tone="muted">{pickNote}</Caption> : null}
           {note ? <Caption tone="muted">{note}</Caption> : null}
           {error ? <Caption tone="accent">{error}</Caption> : null}
           <View style={styles.actions}>
             <Button label="Skip" size="lg" variant="secondary" disabled={!open} onPress={() => skip(at)} />
+            <Button label="Edit" icon="pencil" size="lg" variant="secondary" accessibilityLabel="Edit this drink" disabled={!open} onPress={() => editDrink(at)} />
             <Button label="Approve and next" size="lg" disabled={!open || !choices.name.trim() || waits} onPress={() => approve(at)} />
             <Caption tone="muted" style={styles.hint}>
               A approves · S skips · arrow keys move
@@ -142,6 +145,14 @@ export function ImportReviewDesk({ id, data, onFinishLater }: { id: string; data
         </ScrollView>
       </View>
       <PageLook file={file(look)} at={look?.at ?? null} title={look?.title ?? ''} onClose={() => setLook(null)} />
+      <TakeOutSheet
+        recipe={notDrink === null ? null : (review.recipes[notDrink] ?? null)}
+        name={notDrink === null ? '' : review.choices[notDrink]?.name.trim() || (review.recipes[notDrink]?.name ?? '')}
+        usual={usual}
+        onClose={() => setNotDrink(null)}
+        onKeep={() => keepHouseMade(notDrink!)}
+        onTakeOut={() => takeOutDrink(notDrink!)}
+      />
     </View>
   );
 }

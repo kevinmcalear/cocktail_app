@@ -9,17 +9,22 @@ import type { MatchData } from '@/lib/bringInMatch';
 import { startReview } from '@/lib/importReview';
 import type { RecipeReading } from '@/supabase/functions/_shared/anythingRead';
 import { useBringIn } from '@/store/useBringIn';
+import { useToastStore } from '@/store/useToastStore';
 
 import { ImportReview } from './ImportReview';
 import { ImportReviewDesk } from './ImportReviewDesk';
 
 const mockSave = jest.fn();
+const mockCreatePrep = jest.fn();
+const mockRefresh = jest.fn();
 jest.mock('expo-router', () => ({ useIsFocused: () => true, useRouter: () => ({ push: jest.fn(), replace: jest.fn(), back: jest.fn(), canGoBack: () => true }) }));
 jest.mock('@/hooks/useBringInSave', () => ({ useBringInSave: () => ({ mutateAsync: mockSave }) }));
 jest.mock('@/hooks/useBulk', () => ({ useSpecCatalog: () => ({ catalog: [], aliases: [], methods: [], glasses: [], isLoading: false }) }));
 jest.mock('@/hooks/useSameNameDrink', () => ({ useSameNameDrink: () => ({ data: null }) }));
 jest.mock('@/hooks/useActiveVenue', () => ({ useActiveVenue: () => ({ venues: [] }) }));
-jest.mock('@/hooks/useDropdowns', () => ({ useDropdowns: () => ({ data: { iceTypes: [] } }) }));
+jest.mock('@/hooks/useDropdowns', () => ({ useDropdowns: () => ({ data: { iceTypes: [] } }), refreshIngredients: (...args: unknown[]) => mockRefresh(...args) }));
+jest.mock('@tanstack/react-query', () => ({ ...jest.requireActual('@tanstack/react-query'), useQueryClient: () => ({}) }));
+jest.mock('@/hooks/usePrepCard', () => ({ useCreatePrep: () => ({ mutateAsync: mockCreatePrep }) }));
 jest.mock('@/hooks/useBarGlassware', () => ({ ...jest.requireActual('@/hooks/useBarGlassware'), useBarGlassware: () => ({ data: [] }) }));
 
 const data: MatchData = { catalog: [], aliases: [], venueId: 'bar', library: [], shelf: [] };
@@ -38,6 +43,8 @@ const saved = (id: string) => ({ batchId: 'b', kind: 'recipes', title: '', sourc
 
 beforeEach(async () => {
   mockSave.mockReset();
+  mockCreatePrep.mockReset();
+  useToastStore.getState().hide();
   await AsyncStorage.clear();
   useBringIn.setState({ reviews: {}, reviewing: null, later: [] });
   useBringIn.getState().openReview(
@@ -116,4 +123,62 @@ test('on a laptop the list shows what was approved and skipped, with the count b
   expect(screen.getByText('Approved. It’s in your Library.')).toBeTruthy();
   await fireEvent.press(screen.getByRole('button', { name: 'Approve and next' }));
   expect(mockSave).toHaveBeenCalledTimes(1);
+});
+
+test('Skip, Edit and Approve are the pinned buttons; the link under the spec is gone', async () => {
+  await ui(<ImportReview id="r1" data={data} onFinishLater={jest.fn()} />);
+  expect(screen.getByRole('button', { name: 'Skip' })).toBeTruthy();
+  expect(screen.getByRole('button', { name: 'Edit this drink' })).toBeTruthy();
+  expect(screen.getByRole('button', { name: 'Approve' })).toBeTruthy();
+  expect(screen.getAllByRole('button', { name: 'Edit this drink' })).toHaveLength(1);
+});
+
+test('something that is not a drink can be taken out, and Undo puts it back', async () => {
+  await ui(<ImportReview id="r1" data={data} onFinishLater={jest.fn()} />);
+  await fireEvent.press(screen.getByRole('button', { name: 'Not a drink? Take it out' }));
+  expect(screen.getByText('Orchard Fizz isn’t a drink?')).toBeTruthy();
+  await fireEvent.press(screen.getByRole('button', { name: 'Take it out' }));
+  expect(screen.getByText('Drink 1 of 2')).toBeTruthy();
+  expect(useBringIn.getState().reviews.r1.recipes.map((r) => r.name)).toEqual(['Smoke Signal', 'Low Tide']);
+  const toast = useToastStore.getState().toast!;
+  expect(toast.title).toBe('Orchard Fizz taken out');
+  await act(async () => toast.action!.onPress());
+  expect(useBringIn.getState().reviews.r1.recipes.map((r) => r.name)).toEqual(['Orchard Fizz', 'Smoke Signal', 'Low Tide']);
+  expect(screen.getByText('Drink 1 of 3')).toBeTruthy();
+});
+
+test('keeping it as house-made saves its recipe, takes it out and lists it as made', async () => {
+  mockCreatePrep.mockResolvedValueOnce({ id: 'hsv', warnings: [] });
+  await ui(<ImportReview id="r1" data={data} onFinishLater={jest.fn()} />);
+  await fireEvent.press(screen.getByRole('button', { name: 'Not a drink? Take it out' }));
+  await fireEvent.press(screen.getByRole('button', { name: 'Keep it as house-made' }));
+  await act(async () => {
+    await new Promise((r) => setTimeout(r, 0));
+  });
+  expect(mockCreatePrep.mock.calls[0][0]).toMatchObject({ name: 'Orchard Fizz', barId: 'bar', prep: { kind: 'other', lines: [{ name: 'Pink grapefruit juice', parts: 30, unit: 'ml' }] } });
+  expect(mockRefresh).toHaveBeenCalledWith(expect.anything(), ['hsv']);
+  const review = useBringIn.getState().reviews.r1;
+  expect(review.recipes.map((r) => r.name)).toEqual(['Smoke Signal', 'Low Tide']);
+  expect(review.summary.preps).toEqual(['Orchard Fizz']);
+  expect(useToastStore.getState().toast?.title).toBe('Orchard Fizz kept as house-made');
+});
+
+test('a save in flight still marks its own drink when an earlier one is taken out', async () => {
+  let finish: (v: unknown) => void = () => {};
+  mockSave.mockImplementationOnce(() => new Promise((done) => (finish = done)));
+  useBringIn.getState().editReview('r1', (r) => ({ ...r, at: 1 }));
+  await ui(<ImportReview id="r1" data={data} onFinishLater={jest.fn()} />);
+  await fireEvent.press(screen.getByRole('button', { name: 'Approve' }));
+  // Back to the first, which isn't a drink.
+  await act(async () => useBringIn.getState().editReview('r1', (r) => ({ ...r, at: 0 })));
+  await fireEvent.press(screen.getByRole('button', { name: 'Not a drink? Take it out' }));
+  await fireEvent.press(screen.getByRole('button', { name: 'Take it out' }));
+  await act(async () => finish(saved('d2')));
+  await act(async () => {
+    await new Promise((r) => setTimeout(r, 0));
+  });
+  const review = useBringIn.getState().reviews.r1;
+  expect(review.recipes.map((r) => r.name)).toEqual(['Smoke Signal', 'Low Tide']);
+  expect(review.marks).toEqual(['approved', null]);
+  expect(review.drinkIds[0]).toBe('d2');
 });

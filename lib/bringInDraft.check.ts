@@ -1,6 +1,7 @@
 import assert from 'node:assert/strict';
 
-import { livePick, openPickLine, prepFromRatio, recipeDraft, startChoices } from './bringInDraft';
+import { livePick, openPickLine, prepFromRatio, recipeDraft, recipePrep, startChoices } from './bringInDraft';
+import { prepAmounts } from './prepKinds';
 import type { CatalogItem } from './match';
 
 // A recipe read by Bring in saves through the add-drink wizard's own save.
@@ -66,4 +67,13 @@ assert.equal(livePick({ name: 'Orchard Sour', same: { ...keep, as: 'update' } })
 const renamed = recipeDraft(recipe, { ...choices, name: 'Orchard Sour', same: keep }, data, lists, 'ml');
 assert.equal(renamed.name, 'Orchard Sour');
 assert.equal(renamed.sameAs, undefined);
+// Read as a drink but made in-house (E20 B): its lines are the house-made's recipe, amounts as read, the method its step.
+const vermouth = { ...recipe, name: 'House Sweet Vermouth', method: 'stir and bottle', lines: [{ amount: 500, unit: 'ml', ingredient: 'Calvados', unsure: false }, { amount: 10, unit: 'g', ingredient: 'Cacao nibs', unsure: false }, { amount: null, unit: null, ingredient: 'Orange peel', unsure: false }] };
+const housePrep = recipePrep(vermouth, { lines: {} }, data);
+assert.deepEqual(prepAmounts(housePrep).map(({ line, amount }) => [line.id, line.name, amount, line.unit]), [
+  ['calv', 'Calvados', 500, 'ml'],
+  [null, 'Cacao nibs', 10, 'g'],
+  [null, 'Orange peel', null, ''],
+]);
+assert.deepEqual(housePrep.steps, [{ body: 'Stir and bottle', timer_seconds: null }]);
 console.log('bringInDraft checks passed');
