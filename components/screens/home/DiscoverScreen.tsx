@@ -11,7 +11,7 @@ import { ScreenHeaderSpacer } from '@/components/nav/ScreenHeader';
 import { useTabBarInset } from '@/components/nav/WebTabBar';
 import { AddBarSheet } from '@/components/screens/home/AddBar';
 import { ClosedBars } from '@/components/screens/home/ClosedBars';
-import { BackPill, FiltersChip, SearchPill, type MapLayer } from '@/components/screens/home/DiscoverControls';
+import { BackPill, FiltersChip, SearchPill, SheetSearch, type MapLayer } from '@/components/screens/home/DiscoverControls';
 import { OptionChips, sortOptions } from '@/components/screens/home/DiscoverOptions';
 import { mapAvailable } from '@/components/screens/home/DiscoverMap';
 import { DiscoverHeader, ScrollAwayHeader, useScrollAway } from '@/components/screens/home/DiscoverHeader';
@@ -20,11 +20,10 @@ import { DiscoverSearchHead } from '@/components/screens/home/DiscoverSearchHead
 import { PlaceToken } from '@/components/screens/home/DiscoverPlace';
 import { FiltersSheet } from '@/components/screens/home/DiscoverSheet';
 import { DeskSearchResults } from '@/components/screens/home/DeskSearchResults';
-import { AllowLocation } from '@/components/screens/home/DiscoverArea';
+import { FirstCards } from '@/components/screens/home/FirstCards';
 import { BarAway, BrowseShelves, DrinksHere } from '@/components/screens/home/DrinksAtBars';
 import { PickedBar } from '@/components/screens/home/SelectedBar';
 import { StyleChips } from '@/components/screens/home/StyleChips';
-import { FirstOpenSheet } from '@/components/screens/home/FirstOpenSheet';
 import { MatchingBars, TopBarsList } from '@/components/screens/home/TopBars';
 import { SearchBody, type SearchArea } from '@/components/search/SearchPanel';
 import { HomeWeekStrip } from '@/components/screens/week/HomeWeekStrip';
@@ -151,7 +150,9 @@ export function DiscoverScreen() {
   const where = { area, preferNear, onArea, onNearMe, onThisArea };
   const onFilters = () => setSheet('filters');
   const back = phoneMap && picked ? { name: picked.name, onBack: () => setPicked(null) } : phoneMap && showTopBars ? { name: 'Top bars', onBack: () => setTopBars(null) } : null;
-  const header = <DiscoverHeader query={pillQuery} onSearch={openSearch} onClear={onClear} place={<PlaceToken {...where} />} filters={filtersOn} onFilters={onFilters} bar={back} />;
+  // Phones on the map: search sits in the sheet, the place in a pill of its own at the top (Q29).
+  const header = <DiscoverHeader query={pillQuery} onSearch={openSearch} onClear={onClear} place={<PlaceToken pill={phoneMap} {...where} />} filters={filtersOn} onFilters={onFilters} bar={back} searchBelow={phoneMap} />;
+  const cards = (onGlass: boolean) => <FirstCards near={near} access={access} where={where} onNearMe={onNearMe} onGlass={onGlass} />;
   const order = { value: layer, options: sortOptions({ searching, best: !!drink, nearest: !!from }), onChange: (next: MapLayer) => setSort({ key: sortKey, layer: next }) };
   const options = (onGlass: boolean) => <OptionChips sort={order} notHad={unhad && { on: notHad, onChange: setNotHad }} past={{ on: showPast, onChange: setShowPast }} onGlass={onGlass} />;
   const chips = (onGlass: boolean) => (searching || kinds.length ? options(onGlass) : <StyleChips onGlass={onGlass} kinds={kinds} onChange={setKinds} drinks={results.drinks} />);
@@ -170,7 +171,7 @@ export function DiscoverScreen() {
   );
 
   const filterProps = { kinds, onChange: setKinds, bars: signedIn && results.totals ? results.totals.bars : null, closed, past, notHad: unhad, onClose: close };
-  const overlay = <>{sheet === 'filters' ? <FiltersSheet {...filterProps} /> : sheet === 'add' ? <AddBarSheet onClose={close} onAdded={(v) => openBar(v.handle)} onOpenExisting={openBar} /> : null}<FirstOpenSheet area={area} /></>;
+  const overlay = <>{sheet === 'filters' ? <FiltersSheet {...filterProps} /> : sheet === 'add' ? <AddBarSheet onClose={close} onAdded={(v) => openBar(v.handle)} onOpenExisting={openBar} /> : null}</>;
 
   // Phones: the map fills the screen, under the header as it is under the tab bar, with the results in a sheet over it.
   if (phoneMap) {
@@ -195,16 +196,13 @@ export function DiscoverScreen() {
           opened={openHover?.id}
           focus={openHover?.cam}
           onShowBar={showBar} pick={{ id: picked?.id ?? null, onPick: setPicked }} onFindMe={onNearMe}
+          search={<SheetSearch query={pillQuery} onOpen={openSearch} onClear={onClear} />}
           top={
             <>
               {picked || showTopBars ? null : chips(true)}
-              {note ? (
-                // On glass: bare text over the map is lost under the pins.
-                <GlassSurface style={styles.mapNote}>
-                  <Caption role="status">{note}</Caption>
-                  <AllowLocation near={near} access={access} onAsk={onNearMe} />
-                </GlassSurface>
-              ) : null}
+              {/* On glass: bare text over the map is lost under the pins. */}
+              {note ? <GlassSurface style={styles.mapNote}><Caption role="status">{note}</Caption></GlassSurface> : null}
+              {picked || showTopBars ? null : cards(true)}
             </>
           }
         />
@@ -233,12 +231,8 @@ export function DiscoverScreen() {
       {split ? <View style={[styles.sticky, { backgroundColor: ds.c.ground }]}>{controls}</View> : null}
       <View style={styles.body}>
         {split && picked && !deskSearch ? <PickedBar key={picked.id} pin={picked} filter={filter} best={layer === 'best' && kinds.length ? drink : null} me={me} onClose={() => setPicked(null)} /> : null}
-        {note ? (
-          <Caption tone="muted" role="status">
-            {note}
-          </Caption>
-        ) : null}
-        {note ? <AllowLocation near={near} access={access} onAsk={onNearMe} /> : null}
+        {note ? <Caption tone="muted" role="status">{note}</Caption> : null}
+        {picked || showTopBars ? null : cards(false)}
         {signedIn && home && !searching && !split ? <HomeWeekStrip /> : null}
         {deskSearch ? (
           <DeskSearchResults filter={filter} drink={drink} results={results} layer={layer} options={options(false)} from={from} picked={picked} onAddBar={signedIn ? () => setSheet('add') : undefined} onShowBar={showBar} />

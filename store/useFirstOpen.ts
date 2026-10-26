@@ -6,6 +6,9 @@ interface FirstOpenState {
   /** People on this device who have answered, or skipped, Discover's first-open question. */
   asked: string[];
   markAsked: (userId: string) => void;
+  /** A city was picked on Discover on this device: the location card stays away for good (Q2). */
+  cityPicked: boolean;
+  markCityPicked: () => void;
 }
 
 /**
@@ -17,8 +20,16 @@ interface FirstOpenState {
  * that ever annoys anyone.
  */
 export const useFirstOpen = create<FirstOpenState>()(
-  persist((set) => ({ asked: [], markAsked: (userId) => set((s) => (s.asked.includes(userId) ? s : { asked: [...s.asked, userId] })) }), {
-    name: 'discover-first-open',
-    storage: createJSONStorage(() => AsyncStorage),
-  })
+  persist(
+    (set) => ({
+      asked: [],
+      markAsked: (userId) => set((s) => (s.asked.includes(userId) ? s : { asked: [...s.asked, userId] })),
+      cityPicked: false,
+      markCityPicked: () => set({ cityPicked: true }),
+    }),
+    {
+      name: 'discover-first-open',
+      storage: createJSONStorage(() => AsyncStorage),
+    }
+  )
 );
