@@ -156,6 +156,8 @@ export interface WizardDraft {
    * if that bites.
    */
   photos?: Partial<Record<ImageAngle, string>>;
+  /** Keep it: with a hero photo the drawing stays on the drink's page, after the photos. Unset, the photo replaces it (E26, items.show_sketch). */
+  keepDrawing?: boolean;
   /** The drink's price at a venue, as typed (items.price: "19.50", "MP"), set on the desktop page beside the cost; blank leaves it for later. */
   price?: string;
 }
