@@ -3,6 +3,8 @@ import { useMemo } from 'react';
 
 import { useBarGlassware } from '@/hooks/useBarGlassware';
 import { useBarKit } from '@/hooks/useBarKit';
+import { useHomeGlassware, useHomeIce } from '@/hooks/useHomeKit';
+import { useKit } from '@/hooks/useKit';
 import { useVenueIce } from '@/hooks/useVenueIce';
 import { kitCheck, type CheckDrink, type CheckKit, type KitCheck } from '@/lib/kitCheck';
 import { supabase } from '@/lib/supabase';
@@ -68,14 +70,13 @@ export function useVenueDrinks(barId: string | null | undefined) {
 }
 
 /** One drink as the check reads it (a catalog drink seen at a venue too). */
-function useDrink(itemId: string | null) {
+function useDrink(itemId: string) {
   return useQuery({
     queryKey: ['drink-kit', itemId],
-    enabled: !!itemId,
     // Short: a drink changed on its own page should check again when it's opened.
     staleTime: 30_000,
     queryFn: async (): Promise<CheckedDrink | null> => {
-      const { data, error } = await supabase.from('items').select(DRINK_COLUMNS).eq('id', itemId!).maybeSingle();
+      const { data, error } = await supabase.from('items').select(DRINK_COLUMNS).eq('id', itemId).maybeSingle();
       if (error) throw error;
       return data ? ((await drinksOf([data as unknown as DrinkRow]))[0] ?? null) : null;
     },
@@ -123,10 +124,20 @@ export function useVenueKit(barId: string | null | undefined): CheckKit | null {
   }, [barId, glasses, ice, tools, recipes]);
 }
 
-/** Can the venue make this drink with its Kit; null with no venue or while it loads. */
-export function useDrinkKitCheck(itemId: string | null, barId: string | null | undefined): KitCheck | null {
-  const kit = useVenueKit(barId);
-  const drink = useDrink(barId ? itemId : null).data;
+const NO_RECIPES: CheckKit['recipes'] = new Map();
+
+/** My Bar's kit as the check reads it (Kit and ice, step 13); null while it loads. Ice at home has no recipe, so its tools aren't followed. */
+function useHomeCheckKit(): CheckKit | null {
+  const glasses = useHomeGlassware().data;
+  const ice = useHomeIce().data;
+  const tools = useKit().owned;
+  return useMemo(() => (glasses && ice ? { glasses, ice, tools, recipes: NO_RECIPES } : null), [glasses, ice, tools]);
+}
+
+/** Can you make this drink with My Bar's kit; null while it loads. */
+export function useHomeDrinkKitCheck(itemId: string): KitCheck | null {
+  const kit = useHomeCheckKit();
+  const drink = useDrink(itemId).data;
   return useMemo(() => (kit && drink ? kitCheck(drink, kit) : null), [kit, drink]);
 }
 
