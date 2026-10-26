@@ -10,6 +10,9 @@ interface StackState {
  * router puts the root layout's anchor, (tabs), under the page with the page's
  * own params copied onto it (expo-router getStateFromPath, createStateObject):
  * nobody came from there, so Back shouldn't go there either.
+ * ponytail: leans on expo-router copying those params (58.0.25); if an upgrade
+ * stops, a cold link's Back goes to the tabs again (screenBelow.check.ts can't
+ * see it). Upgrade path: a shared back helper that knows how the app opened.
  */
 export function screenBelow(state: StackState | undefined, own: Record<string, string>) {
   const below = state?.routes[state.index - 1];

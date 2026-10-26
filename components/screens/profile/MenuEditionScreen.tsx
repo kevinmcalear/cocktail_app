@@ -39,7 +39,7 @@ export function MenuEditionScreen({ profileRef, editionId }: { profileRef: strin
   // Opened from the bar's Menus tab, From goes back to that page rather than stacking a second copy.
   const toBar = () => {
     const under = below();
-    const id = (under?.params as { id?: unknown } | undefined)?.id;
+    const id = under?.params.id;
     if (under?.name === 'p/[id]/index' && typeof id === 'string' && [bar.id, bar.handle, profileRef].includes(id)) router.back();
     else router.push(barHref);
   };
