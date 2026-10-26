@@ -81,7 +81,9 @@ before(async () => {
   const drink = (name, mode) =>
     insert('items', { name: `${name} ${run}`, item_type: 'cocktail', bar_id: ids.bar, created_by: users.admin.id, publish_mode: mode });
   ids.publicDrink = (await drink('Moth sour', 'spec')).id;
-  await db.query('UPDATE public.items SET creator_profile_id = $1 WHERE id = $2', [ids.person, ids.publicDrink]);
+  // Credited to another bar's page: it still stays on this one.
+  ids.otherPage = (await insert('profiles', { kind: 'bar', handle: `rye${run}`, display_name: `Rye page ${run}`, is_public: true })).id;
+  await db.query('UPDATE public.items SET creator_profile_id = $1, origin_bar_profile_id = $2 WHERE id = $3', [ids.person, ids.otherPage, ids.publicDrink]);
   ids.privateDrink = (await drink('Staff fizz', 'private')).id;
   const ingredient = (name) =>
     insert('items', { name: `${name} ${run}`, item_type: 'ingredient', bar_id: ids.bar, created_by: users.admin.id });

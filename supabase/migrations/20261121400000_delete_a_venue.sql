@@ -224,7 +224,9 @@ BEGIN
         bar_id = NULL,
         created_by = NULL,
         override_visibility_level = NULL,
-        origin_bar_profile_id = CASE WHEN id = ANY (v_kept) THEN coalesce(origin_bar_profile_id, v_profile_id) ELSE origin_bar_profile_id END,
+        -- On this page, where the public saw it, even if it credited another bar
+        -- (that bar's page never listed the venue's copy).
+        origin_bar_profile_id = CASE WHEN id = ANY (v_kept) THEN v_profile_id ELSE origin_bar_profile_id END,
         publish_mode = CASE WHEN id = ANY (v_kept) THEN 'description'::public.item_publish_mode ELSE publish_mode END
     WHERE id = ANY (v_kept || v_shared);
 

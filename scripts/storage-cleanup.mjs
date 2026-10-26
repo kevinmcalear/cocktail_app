@@ -5,6 +5,9 @@
 // Local stack by default (reads `supabase status`):
 //   node scripts/storage-cleanup.mjs [--dry-run]
 //
+// --dry-run removes no files, but still lets the queue drop files that are
+// in use again (that is what storage_cleanup_batch does first).
+//
 // Production only on purpose, with Kevin's OK:
 //   SUPABASE_URL=... SUPABASE_SERVICE_ROLE_KEY=... node scripts/storage-cleanup.mjs --remote
 //
