@@ -168,7 +168,7 @@ describe('who can ask', () => {
     }
     const { error } = await anon.rpc('venue_can_make', { p_bar_id: ids.bar, p_drink_ids: [ids.martini] });
     assert.ok(error, 'signed out cannot ask');
-    assert.deepEqual(await canMake('guest'), await canMake('bartender'), 'every member gets the same answer');
+    assert.deepEqual(await canMake('guest'), await canMake('bartender'), "the same answer, though a Guest can't read the bar's own specs");
   });
 
   test('the back bar list itself is not readable by members', async () => {
@@ -176,7 +176,7 @@ describe('who can ask', () => {
     try {
       await db.query("SELECT set_config('request.jwt.claims', $1, true)", [JSON.stringify({ sub: users.bartender.id, role: 'authenticated' })]);
       await db.query('SET LOCAL ROLE authenticated');
-      await assert.rejects(db.query('SELECT private.venue_back_bar($1)', [ids.bar]), /permission denied/);
+      await assert.rejects(db.query('SELECT private.venue_back_bar($1)', [ids.bar]), /permission denied for function venue_back_bar/);
     } finally {
       await db.query('ROLLBACK');
     }

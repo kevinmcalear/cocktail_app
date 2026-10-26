@@ -6,6 +6,9 @@ import { byDrink, type VenueCanMake } from '@/lib/venueCanMake';
 /** venue_can_make answers at most this many drinks a call. */
 const PAGE = 100;
 
+/** Every page's answer for a venue: the back bar's edits refresh them (hooks/useBackBar.ts). */
+export const venueCanMakeKey = (venueId: string | null | undefined) => ['venue-can-make', venueId];
+
 /**
  * Whether the venue's back bar makes each drink on a page of results
  * (venue_can_make): can make, or what's missing. Staff of that venue only; no
@@ -15,9 +18,11 @@ const PAGE = 100;
 export function useVenueCanMake(venueId: string | null | undefined, drinkIds: readonly string[]) {
   const ids = [...new Set(drinkIds)].sort();
   return useQuery({
-    queryKey: ['venue-can-make', venueId, ids],
+    queryKey: [...venueCanMakeKey(venueId), ids],
     enabled: !!venueId && ids.length > 0,
     staleTime: 60 * 1000,
+    // Not the venue's staff (42501): asking again won't change that.
+    retry: (count, error) => (error as { code?: string }).code !== '42501' && count < 3,
     queryFn: async (): Promise<Record<string, VenueCanMake>> => {
       const pages = [];
       for (let i = 0; i < ids.length; i += PAGE) pages.push(ids.slice(i, i + PAGE));

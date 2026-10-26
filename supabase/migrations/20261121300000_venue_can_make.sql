@@ -31,15 +31,19 @@
 --      every recipe. A house-made kind two levels below a line is missed.
 --   2. An ingredient with no style of its own takes one from the lines read
 --      here, not from every line.
+--   3. The style tree is read from items, not app_item_presentation: a
+--      hidden style above a shelf bottle still counts as a kind of it.
 -- And one on purpose: the pantry staples (lib/pantry.ts) always count at a
 -- venue. At home you tick them (they are shelf rows); a bar keeps lemons and
 -- sugar whether or not anyone wrote them down.
 --
 -- Only the venue's staff can ask (any role, as back_bar_items reads). It runs
--- as the definer, so every member gets the same answer whatever their role
--- shows them of the map; the drinks' lines come through
--- app_recipe_presentation, which shows each caller what their role may see,
--- so a bar's hidden spec stays hidden. At most 100 drinks a call: a page of
+-- as the definer, so the map's spots count for every member, not only those
+-- who may see the map. Specs come through app_recipe_presentation, which
+-- shows each caller what their role may see: another bar's hidden spec gets
+-- no answer. The venue's own specs pour what they pour for every member, but
+-- a brand the caller may not see pours as its style, so asking can't reveal
+-- which bottle a hidden spec names. At most 100 drinks a call: a page of
 -- search results is 30. Indexes: the ones it needs already exist (recipes by
 -- drink, items by kind, the stock list and spots by bar).
 
@@ -58,7 +62,13 @@ RETURNS SETOF "uuid"
     UNION
     SELECT o.id FROM own o WHERE o.item_type = 'ingredient'
     UNION
-    SELECT r.ingredient_item_id FROM public.recipes r JOIN own o ON o.id = r.recipe_item_id WHERE r.ingredient_item_id IS NOT NULL
+    -- As the caller's role shows the specs: a brand they may not see pours as its style.
+    SELECT coalesce(v.display_ingredient_id, r.parent_ingredient_id, s.generic_id, r.ingredient_item_id)
+    FROM public.recipes r
+    JOIN own o ON o.id = r.recipe_item_id
+    LEFT JOIN public.items s ON s.id = r.ingredient_item_id
+    LEFT JOIN public.app_recipe_presentation v ON v.id = r.id
+    WHERE r.ingredient_item_id IS NOT NULL
     UNION
     -- The pantry staples, as lib/pantry.ts names them (PANTRY and PANTRY_WATER).
     SELECT s.id FROM public.items s
@@ -69,8 +79,7 @@ RETURNS SETOF "uuid"
   SELECT s.id FROM shelf s
 $$;
 
--- Only venue_can_make reads it: it lists what the bar's specs pour, brands a
--- member's role may not show them.
+-- Only venue_can_make reads it, once it has checked the caller is staff.
 REVOKE ALL ON FUNCTION "private"."venue_back_bar"("uuid") FROM PUBLIC, "anon", "authenticated";
 GRANT EXECUTE ON FUNCTION "private"."venue_back_bar"("uuid") TO "service_role";
 
