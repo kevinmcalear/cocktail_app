@@ -73,24 +73,30 @@ export function groupLabel(label: string, count: number): string {
   return count ? `${label} · ${count}` : label;
 }
 
-/** The type chips over the results: everything, or one kind. */
-export type SearchShow = 'all' | 'drinks' | 'bars' | 'people' | 'ingredients' | 'menus';
+/** A kind of result, and its type chip. */
+export type SearchKind = 'drinks' | 'bars' | 'people' | 'ingredients' | 'menus';
 
-/** How many of each kind the results found, for the type chips' counts. */
+/**
+ * The type chips over the results: everything, or one kind. `canmake`, at a
+ * venue on Everywhere: only drinks its back bar can make (QA Q37).
+ */
+export type SearchShow = 'all' | SearchKind | 'canmake';
+
+/** How many of each kind the results found, for the type chips' counts, and how many drinks the venue can make. */
 export type ShowCounts = Partial<Record<Exclude<SearchShow, 'all'>, number>>;
 
-const SHOW_LABEL: Record<Exclude<SearchShow, 'all'>, string> = { drinks: 'Drinks', bars: 'Bars', people: 'People', ingredients: 'Ingredients', menus: 'Menus' };
+const SHOW_LABEL: Record<SearchKind, string> = { drinks: 'Drinks', bars: 'Bars', people: 'People', ingredients: 'Ingredients', menus: 'Menus' };
 
 /** The chips: All, then each kind that found something, in this order. None when only one kind found anything. */
 export function showOptions(counts: ShowCounts): { value: SearchShow; label: string; count?: number }[] {
-  const kinds = (Object.keys(SHOW_LABEL) as Exclude<SearchShow, 'all'>[]).filter((k) => (counts[k] ?? 0) > 0);
+  const kinds = (Object.keys(SHOW_LABEL) as SearchKind[]).filter((k) => (counts[k] ?? 0) > 0);
   if (kinds.length < 2) return [];
   return [{ value: 'all', label: 'All' }, ...kinds.map((k) => ({ value: k, label: SHOW_LABEL[k], count: counts[k] }))];
 }
 
-/** Whether a group of this kind shows under the picked chip. */
-export function shows(show: SearchShow | undefined, kind: Exclude<SearchShow, 'all'>): boolean {
-  return !show || show === 'all' || show === kind;
+/** Whether a group of this kind shows under the picked chip. Can make keeps the drinks. */
+export function shows(show: SearchShow | undefined, kind: SearchKind): boolean {
+  return !show || show === 'all' || show === kind || (show === 'canmake' && kind === 'drinks');
 }
 
 /**
