@@ -26,6 +26,8 @@ jest.mock('@/hooks/useBarInvites', () => ({
   useAcceptInvite: () => ({ mutate: mockAccept, isPending: false, error: null }),
   useRemoveInvite: () => ({ mutate: mockDecline, isPending: false, error: null }),
 }));
+const mockSaveAnswer = jest.fn();
+jest.mock('@/hooks/useLikelyClaimer', () => ({ useSaveSetupAnswer: () => ({ mutate: mockSaveAnswer }) }));
 jest.mock('@/hooks/useMyProfile', () => ({ useMyProfile: () => ({ data: null, isPending: false, error: null, refetch: jest.fn() }) }));
 jest.mock('@/hooks/useOnboarding', () => ({
   useSaveOnboardingName: () => ({ mutate: mockSaveName, isPending: false, error: null }),

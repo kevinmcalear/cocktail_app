@@ -30,6 +30,9 @@ assert.deepEqual(openRun({ bar: 'b1' }, { b1: { done: ['find', 'place'] } }), { 
 // ?claim=: straight into Where and when, the claim last; a bar already started opens where it stopped.
 assert.deepEqual(openRun({ claim: 'p1' }, {}), { key: 'new', screen: 'place' });
 assert.deepEqual(openRun({ claim: 'p1' }, { new: { profileId: 'p2', done: ['find', 'place'] } }), { key: 'new', screen: 'place' });
+// The home menu's Run a bar? Set it up opens at Find your bar, unless a setup already started.
+assert.deepEqual(openRun({ step: 'find' }, {}), { key: 'new', screen: 'find' });
+assert.deepEqual(openRun({}, {}), { key: 'new', screen: 'intro' });
 assert.deepEqual(openRun({ claim: 'p1' }, { b9: { profileId: 'p1', done: ['find', 'place', 'look'] } }), { key: 'b9', screen: 'visibility' });
 assert.deepEqual(openRun({ claim: 'p1' }, { b9: { profileId: 'p1', done: ['place'], finished: true } }), { key: 'new', screen: 'place' });
 // Neither: a setup left before its venue was made, else the intro.
