@@ -20,7 +20,8 @@
 -- Signed-out visitors read no co-creators at all, as before.
 --
 -- Only the person named can change a credit's status: answer_credit(item,
--- accept). credits_to_check() lists the signed-in person's pending ones, for
+-- accept). A declined credit stays, so the drink's editors can't name them
+-- again. credits_to_check() lists the signed-in person's pending ones, for
 -- "Credits to check" on You.
 --
 -- items.credit_status stays a separate fact: it says how sure the drink's
@@ -76,10 +77,19 @@ CREATE POLICY "item_co_creators_select" ON "public"."item_co_creators" FOR SELEC
         )
     );
 
+-- A no stays a no: the drink's editors can take off any credit but a
+-- declined one, so they can't delete it and name the person again. The
+-- person and moderators still can.
+DROP POLICY "item_co_creators_delete" ON "public"."item_co_creators";
+CREATE POLICY "item_co_creators_delete" ON "public"."item_co_creators" FOR DELETE TO "authenticated"
+    USING (
+        "private"."is_app_admin"()
+        OR ("status" <> 'declined' AND "private"."can_edit_item"("item_id"))
+        OR "profile_id" IN (SELECT "id" FROM "public"."profiles" WHERE "user_id" = (SELECT "auth"."uid"()))
+    );
+
 -- No UPDATE policy: a status changes only here, by the person named. They can
 -- change their mind later (decline one they accepted, or the other way).
--- Declining keeps the row, so the drink's editors can't name them again; the
--- person can still take themselves off with a delete, as before.
 CREATE FUNCTION "public"."answer_credit"("p_item_id" "uuid", "p_accept" boolean) RETURNS "public"."co_creator_status"
     LANGUAGE "plpgsql" SECURITY DEFINER
     SET "search_path" TO ''
@@ -87,8 +97,11 @@ CREATE FUNCTION "public"."answer_credit"("p_item_id" "uuid", "p_accept" boolean)
 DECLARE
     v_status public.co_creator_status;
 BEGIN
-    IF auth.uid() IS NULL OR p_accept IS NULL THEN
+    IF auth.uid() IS NULL THEN
         RAISE EXCEPTION 'Sign in to answer a credit.';
+    END IF;
+    IF p_accept IS NULL THEN
+        RAISE EXCEPTION 'Say yes or no to the credit.';
     END IF;
 
     UPDATE public.item_co_creators c

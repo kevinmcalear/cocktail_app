@@ -40,13 +40,15 @@ export function useAnswerCredit() {
   return useMutation({
     mutationFn: async ({ itemId, accept }: { itemId: string; accept: boolean }): Promise<Enum<'co_creator_status'>> => {
       const { data, error } = await supabase.rpc('answer_credit', { p_item_id: itemId, p_accept: accept });
-      if (error) throw new Error("Couldn't save that. Check your connection and try again.");
+      // The database's own words when it refuses (no longer named on it); otherwise the connection.
+      if (error) throw new Error(error.code === 'P0001' ? error.message : "Couldn't save that. Check your connection and try again.");
       return data;
     },
-    onSuccess: (_status, { itemId }) => {
+    onSuccess: () => {
       qc.invalidateQueries({ queryKey: ['credits-to-check'] });
-      // Where co-creators show: the drink's credit and family, and people's pages.
-      qc.invalidateQueries({ queryKey: ['lineage', itemId] });
+      // Where co-creators show: drinks' credits and families (a riff shows in its classic's too), people's pages and find-yourself.
+      qc.invalidateQueries({ queryKey: ['lineage'] });
+      qc.invalidateQueries({ queryKey: ['waiting'] });
       qc.invalidateQueries({ queryKey: ['profile-originals'] });
       qc.invalidateQueries({ queryKey: ['my-made'] });
     },

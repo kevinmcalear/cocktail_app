@@ -155,6 +155,8 @@ describe('co-creator credits wait for a yes', () => {
 
     const again = await users.editor.client.from('item_co_creators').insert({ item_id: ids.drink, profile_id: ids.jo });
     assert.ok(again.error, 'and can’t name Jo a second time');
+    await users.editor.client.from('item_co_creators').delete().eq('item_id', ids.drink).eq('profile_id', ids.jo);
+    assert.equal(await statusOf(ids.drink, ids.jo), 'declined', 'nor delete the no to ask again');
     assert.equal(await statusOf(ids.drink, ids.jo), 'declined');
   });
 
