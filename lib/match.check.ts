@@ -1,6 +1,6 @@
 import assert from 'node:assert/strict';
 
-import { matchIngredient, matchKey, matchName, type CatalogItem, type Match } from './match';
+import { catalogIndex, matchIngredient, matchKey, matchName, type CatalogItem, type Match } from './match';
 
 const item = (id: string, name: string, genericId: string | null = null, barId: string | null = null): CatalogItem => ({ id, name, genericId, barId });
 const catalog: CatalogItem[] = [
@@ -84,5 +84,15 @@ for (const name of ['Campari', 'Beefeater Gin', 'Codigo 1530 Blanco Tequila', 'G
   }
 }
 
+// Leaving items out (a pick's choices, for its plain kind) is the same as matching a catalog without them.
+const without = new Set(['ldg', 'bee-ldg']);
+for (const r of ['London Dry Gin', { brand: 'Beefeater', name: 'Beefeater London Dry Gin', kind: 'London dry gin' }, 'Gin']) {
+  for (const venue of [null, 'bar-1']) {
+    assert.deepEqual(id(matchIngredient(r, catalog, venue, aliases, without)), id(matchIngredient(r, catalog.filter((i) => !without.has(i.id)), venue, aliases)));
+  }
+}
+// The catalog is keyed once, then reused for every match against it.
+assert.equal(catalogIndex(catalog), catalogIndex(catalog));
+assert.deepEqual(catalogIndex(catalog).byKind.get('gin')?.map((e) => e.item.id), ['ldg', 'bee', 'bee-pink', 'roku', 'tq-ten', 'venue-bee']);
 
 console.log('match: ok');

@@ -165,7 +165,7 @@ function useAllMenus(enabled: boolean) {
  * pickers put first. Either may be missing on a database without that
  * migration; pickers then work as before. Loaded with the ingredient list.
  */
-function useIngredientExtras(enabled: boolean) {
+export function useIngredientExtras(enabled: boolean) {
   return useQuery({
     queryKey: dropdownKeys.ingredientExtras,
     enabled,
