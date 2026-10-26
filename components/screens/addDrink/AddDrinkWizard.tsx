@@ -182,8 +182,8 @@ function Wizard({ barId = null, menuSectionId, initialName, startFrom, firstRoun
   // Until its spec is used, the sketch already draws that classic (a Negroni's red).
   const preview = useClassicPreview(classic?.classic.id ?? null).data;
   const drawn = preview ? { ...draft, ...preview, name: draft.name } : draft;
-  // The bar already has a drink by this name, or the bar it's credited to does (board dup-drink-warning): Next waits on a pick.
-  const onBar = useSameNameDrink({ barId, name: draft.name });
+  // The bar already has a drink by this name (at home, you do: Q14b), or the bar it's credited to does (board dup-drink-warning): Next waits on a pick.
+  const onBar = useSameNameDrink({ barId, mine: !barId, name: draft.name });
   const onPlace = useSameNameDrink({ creditedTo: !barId || draft.elsewhere ? draft.place?.id : null, name: draft.name });
   const atBar = onBar.data ?? null;
   const atPlace = onPlace.data ?? null;
