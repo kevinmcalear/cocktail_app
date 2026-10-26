@@ -3,22 +3,16 @@ import { StyleSheet, View } from 'react-native';
 
 import { Caption, Field } from '@/components/ds';
 import { space } from '@/constants/tokens';
-import { useClosestClassic } from '@/hooks/useClosestClassic';
-import { useDrinkLists } from '@/hooks/useDiscover';
-import { useMyProfile } from '@/hooks/useMyProfile';
-import { usePublicPeople, type PublicPerson } from '@/hooks/useProfiles';
-import type { MaybeNear } from '@/hooks/useSearchNear';
 import { usePublicBars } from '@/hooks/useRankings';
 import type { SameNameDrink } from '@/hooks/useSameNameDrink';
 import { PickList } from '@/components/search/NearPicks';
 import { AddBarForm } from '@/components/screens/home/AddBar';
-import { suggestClassic } from '@/lib/classics';
-import { withArticle } from '@/lib/closestClassic';
-import { parseYear, searchByName, type StepProps } from '@/lib/drinkWizard';
-import { nearAfter } from '@/lib/nearName';
+import { parseYear, type StepProps } from '@/lib/drinkWizard';
 
 import type { CatalogIngredient } from './IngredientSearch';
+import { RiffPick } from './RiffPick';
 import { SameNameCard, useSameNamePicks } from './SameNameCard';
+import { WhoMadeIt } from './WhoMadeIt';
 import { Eyebrow, WizardChip } from './WizardChrome';
 
 interface CreditsStepProps extends StepProps {
@@ -32,28 +26,11 @@ interface CreditsStepProps extends StepProps {
 }
 
 /**
- * Who made it (you by default, someone with a profile, or nobody yet), who
- * made it with them, where and when it was first made, and the classic it's
- * a riff on: the one the spec is closest to (as on the ingredients step),
- * else the one its name says. A venue's drink is credited to the venue too.
+ * Who made it (one list, you on it to start), where and when it was first
+ * made, and the classic it's a riff on: cards of the closest classics, a
+ * search, or It's an original. A venue's drink is credited to the venue too.
  */
 export function CreditsStep({ draft, set, venueName, ingredients, match, onRename }: CreditsStepProps) {
-  const me = useMyProfile().data ?? null;
-  const [who, setWho] = useState('');
-  const people = usePublicPeople(who, { near: true }).data ?? [];
-  const classics = useDrinkLists().data ?? [];
-  const [also, setAlso] = useState('');
-  const alsoPeople = usePublicPeople(also, { near: true }).data ?? [];
-  const [riff, setRiff] = useState('');
-  const generic = (id: string) => ingredients.find((i) => i.id === id)?.generic_id ?? null;
-  const close = useClosestClassic(draft.lines.flatMap((l) => (l.id ? [{ id: l.id, generic: generic(l.id) }] : []))).data ?? null;
-  const suggested = close ?? (draft.name.trim() ? suggestClassic(draft.name, classics)?.classic : undefined);
-  const riffResults = searchByName(riff, classics, 5);
-  // "negorni": Negroni, under "Did you mean".
-  const riffNear = nearAfter(riff, classics, riffResults, (c) => c.name);
-  const other = typeof draft.creator === 'object' ? draft.creator : null;
-  const mine = !!me && (draft.creator === 'me' || draft.creator === null);
-
   // Added at a venue: whether it's theirs, else where it's from (board create-eddie-oct16).
   const elsewhere = !!venueName && !!draft.elsewhere;
   return (
@@ -75,90 +52,13 @@ export function CreditsStep({ draft, set, venueName, ingredients, match, onRenam
           )}
         </View>
       ) : null}
-      <View style={styles.section}>
-        <Eyebrow>Made by</Eyebrow>
-        <View role="radiogroup" accessibilityLabel="Made by" style={styles.chips}>
-          {me ? <WizardChip label={`Me (${me.displayName})`} selected={mine} onPress={() => set({ creator: 'me' })} /> : null}
-          {other ? <WizardChip label={other.name} selected onPress={() => set({ creator: 'nobody' })} /> : null}
-          <WizardChip label="Not sure" selected={!mine && !other} onPress={() => set({ creator: 'nobody' })} />
-        </View>
-        {me ? null : <Caption tone="muted">Make a profile on the You tab to take credit for your drinks.</Caption>}
-        <Field label="Someone else" value={who} onChangeText={setWho} placeholder="Full name or @handle" autoCapitalize="words" autoCorrect={false} maxLength={60} />
-        {who.trim().length >= 2 ? (
-          <PickList
-            rows={people.map(personRow)}
-            empty="Nobody by that name or handle has a public profile yet."
-            no="No, it’s someone else"
-            onPick={(id) => {
-              const p = people.find((x) => x.id === id);
-              if (p) set({ creator: { id: p.id, name: p.display_name } });
-              setWho('');
-            }}
-          />
-        ) : null}
-        {venueName && !elsewhere ? <Caption tone="muted">{`It’s credited to ${venueName} too.`}</Caption> : null}
-      </View>
-
-      <View style={styles.section}>
-        <Eyebrow>Made with</Eyebrow>
-        {draft.coCreators.length ? (
-          <View role="group" accessibilityLabel="Made with" style={styles.chips}>
-            {draft.coCreators.map((c) => (
-              <WizardChip key={c.id ?? c.name} kind="checkbox" label={c.name} selected onPress={() => set({ coCreators: draft.coCreators.filter((x) => x !== c) })} />
-            ))}
-          </View>
-        ) : null}
-        <Field label="Who else made it?" value={also} onChangeText={setAlso} placeholder="Full name or @handle" autoCapitalize="words" autoCorrect={false} maxLength={60} />
-        {also.trim().length >= 2 ? (
-          <PickList
-            rows={alsoPeople.filter((p) => !draft.coCreators.some((c) => c.id === p.id)).map(personRow)}
-            empty="Nobody by that name or handle has a public profile yet."
-            no="No, it’s someone else"
-            onPick={(id) => {
-              const p = alsoPeople.find((x) => x.id === id);
-              if (p) set({ coCreators: [...draft.coCreators, { id: p.id, name: p.display_name }] });
-              setAlso('');
-            }}
-          />
-        ) : null}
-      </View>
+      <WhoMadeIt draft={draft} set={set} venueName={venueName && !elsewhere ? venueName : null} />
 
       <WhereWhen draft={draft} set={set} venueName={elsewhere ? null : venueName} asked={elsewhere} match={match} onRename={onRename} />
 
-      <View style={styles.section}>
-        <Eyebrow>Riff on a classic?</Eyebrow>
-        <View role="radiogroup" accessibilityLabel="Riff on" style={styles.chips}>
-          {draft.riffOf ? <WizardChip label={draft.riffOf.name} selected onPress={() => set({ riffOf: null })} /> : null}
-          {suggested && suggested.id !== draft.riffOf?.id ? (
-            <WizardChip label={`${suggested.name}?`} selected={false} onPress={() => set({ riffOf: { id: suggested.id, name: suggested.name } })} />
-          ) : null}
-          <WizardChip label="Its own thing" selected={!draft.riffOf} onPress={() => set({ riffOf: null })} />
-        </View>
-        <Field label="Find a classic" value={riff} onChangeText={setRiff} placeholder="Negroni, Daiquiri…" autoCorrect={false} maxLength={60} />
-        {riff.trim() ? (
-          <PickList
-            rows={[...riffResults.map((c) => ({ id: c.id, label: c.name })), ...riffNear.map((c) => ({ id: c.id, label: c.name, near: true }))]}
-            empty="No classic by that name."
-            onPick={(id) => {
-              const c = classics.find((x) => x.id === id);
-              if (c) set({ riffOf: { id: c.id, name: c.name } });
-              setRiff('');
-            }}
-          />
-        ) : null}
-        {close ? (
-          <Caption tone="muted">
-            {draft.riffOf?.id === close.id ? `Picked from the ingredients step: it’s close to ${withArticle(close.name)}.` : `From the ingredients step: it’s close to ${withArticle(close.name)}.`}
-          </Caption>
-        ) : null}
-      </View>
+      <RiffPick draft={draft} set={set} ingredients={ingredients} />
     </View>
   );
-}
-
-/** A person in a credit search: their full name, then @handle and where they work now (else their city), so two Sams can be told apart. */
-function personRow(p: MaybeNear<PublicPerson>) {
-  return { id: p.id, label: p.display_name, sub: [`@${p.handle}`, p.current_bar ?? p.city].filter(Boolean).join(' · '), near: p.near };
 }
 
 /**

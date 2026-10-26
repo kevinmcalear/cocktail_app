@@ -217,3 +217,13 @@ export function boxRect(box: ReadBox, size: { width: number; height: number }) {
   const [ymin, xmin, ymax, xmax] = box;
   return { left: (xmin / 1000) * size.width, top: (ymin / 1000) * size.height, width: ((xmax - xmin) / 1000) * size.width, height: ((ymax - ymin) / 1000) * size.height };
 }
+
+/** How many pages the reading strip shows before "+6" (board w2-import-review, E37). */
+const STRIP = 6;
+
+/** The pages in the reading strip: a window of six around the page shown, so it's always there. */
+export function stripWindow(count: number, page: number): { from: number; to: number } {
+  if (count <= STRIP) return { from: 0, to: count };
+  const from = Math.min(Math.max(page - 2, 0), count - STRIP);
+  return { from, to: from + STRIP };
+}

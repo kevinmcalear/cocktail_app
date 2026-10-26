@@ -240,7 +240,7 @@ test('"Just me" notes are kept apart as yours, never on the drink', async () => 
   expect(mockInserts[0].notes).toBeNull();
   expect(mockOtherInserts).toContainEqual(['item_private_notes', { item_id: 'd-private', body: 'Less agave next time.' }]);
 
-  await run({ draft: { ...EMPTY_DRAFT, name: 'Ash Garden', notes: 'Dry shake hard.' }, barId: null, myProfileId: null });
+  await run({ draft: { ...EMPTY_DRAFT, name: 'Ash Garden', notes: 'Dry shake hard.', notesPrivate: false }, barId: null, myProfileId: null });
   expect(mockInserts[1].notes).toBe('Dry shake hard.');
   expect(mockOtherInserts.filter(([t]) => t === 'item_private_notes')).toHaveLength(1);
 });

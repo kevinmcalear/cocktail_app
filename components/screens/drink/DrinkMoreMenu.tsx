@@ -2,17 +2,16 @@ import { useRouter, type Href } from 'expo-router';
 import { useRef, useState } from 'react';
 import { Platform, ScrollView, StyleSheet, View } from 'react-native';
 
-import { Body, Caption, GlassButton, PressableScale, Sheet, Title, useDs, useSheetClose, type IconName } from '@/components/ds';
+import { Body, Caption, Chip, GlassButton, PressableScale, Sheet, Title, useDs, useSheetClose, type IconName } from '@/components/ds';
 import { IconSymbol } from '@/components/ui/icon-symbol';
 import { STATUS } from '@/constants/palette';
 import { layout, space } from '@/constants/tokens';
 import { useSignedIn } from '@/ctx/AuthContext';
 import { useViewAs } from '@/hooks/useViewAs';
 import { readableAccent } from '@/lib/color';
-import { viewAsChoices } from '@/lib/roleLens';
+import { roleSees, viewAsChoices } from '@/lib/roleLens';
 import { roleLabel } from '@/lib/roles';
 
-import { Choice } from '../menus/MenuSheet';
 import { ReportSheet } from '../safety/ReportSheet';
 
 interface DrinkMoreMenuProps {
@@ -125,26 +124,29 @@ function Row({ icon, label, danger, onPick }: { icon: IconName; label: string; d
   );
 }
 
-/** See the page as a role below yours, with what each one adds. */
+/**
+ * See the page as a role below yours (Eddie E46): one wrapping row of role
+ * chips and one line on what the picked role sees, so Who sees what stays on
+ * the first screen of the sheet.
+ */
 function ViewAs({ realRole }: { realRole: number }) {
+  const ds = useDs();
   const { viewAsRoleLevel, setViewAsRoleLevel, isSaving } = useViewAs();
   const current = Math.min(viewAsRoleLevel ?? realRole, realRole);
+  const choices = viewAsChoices(realRole);
+  const picked = choices.find((c) => c.level === current);
+  const note = current < realRole ? `Every venue page shows what ${/^[AEIOU]/.test(roleLabel(current)) ? 'an' : 'a'} ${roleLabel(current)} sees until you change it back.` : 'Pick a role to see the page as they do.';
   return (
-    <View style={styles.viewAs} role="radiogroup" accessibilityLabel="View as">
+    <View style={[styles.viewAs, { borderBottomColor: ds.c.line }]}>
       <Caption tone="muted" style={styles.eyebrow}>
         VIEW AS
       </Caption>
-      {viewAsChoices(realRole).map((c) => (
-        <Choice
-          key={c.level}
-          label={c.level === realRole ? `${c.label} (you)` : c.label}
-          detail={c.adds}
-          selected={c.level === current}
-          disabled={isSaving}
-          onPress={() => void setViewAsRoleLevel(c.level === realRole ? null : c.level)}
-        />
-      ))}
-      {current < realRole ? <Caption tone="muted">{`Every venue page shows what ${/^[AEIOU]/.test(roleLabel(current)) ? 'an' : 'a'} ${roleLabel(current)} sees until you change it back.`}</Caption> : null}
+      <View style={styles.chips} role="radiogroup" aria-label="View as">
+        {choices.map((c) => (
+          <Chip key={c.level} quiet label={c.level === realRole ? `${c.label} (you)` : c.label} selected={c.level === current} disabled={isSaving} onPress={() => void setViewAsRoleLevel(c.level === realRole ? null : c.level)} />
+        ))}
+      </View>
+      <Caption tone="muted">{picked ? `${roleSees(picked.label, picked.adds)} ${note}` : note}</Caption>
     </View>
   );
 }
@@ -155,6 +157,7 @@ const styles = StyleSheet.create({
   close: { width: layout.minTapTarget, height: layout.minTapTarget, alignItems: 'center', justifyContent: 'center' },
   body: { paddingHorizontal: space.xl, paddingBottom: space.xxxl, gap: space.xs },
   row: { flexDirection: 'row', alignItems: 'center', gap: space.md, minHeight: layout.minTapTarget + space.sm, borderBottomWidth: StyleSheet.hairlineWidth },
-  viewAs: { gap: space.sm, paddingTop: space.lg },
+  viewAs: { gap: space.sm, paddingTop: space.lg, paddingBottom: space.md, borderBottomWidth: StyleSheet.hairlineWidth },
+  chips: { flexDirection: 'row', flexWrap: 'wrap', gap: space.sm },
   eyebrow: { letterSpacing: 1.2 },
 });

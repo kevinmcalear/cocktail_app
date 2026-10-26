@@ -3,7 +3,7 @@ import { Platform, StyleSheet, TextInput, View } from 'react-native';
 
 import { Button, Caption, Field, useDs } from '@/components/ds';
 import { displayFaces, space, type } from '@/constants/tokens';
-import type { StepProps } from '@/lib/drinkWizard';
+import { notesArePrivate, type StepProps } from '@/lib/drinkWizard';
 import { capitalizeAsYouType } from '@/lib/stringUtils';
 
 import { Eyebrow, WizardChip } from './WizardChrome';
@@ -52,33 +52,38 @@ export function BigName({ value, onChange, onDone, resumed, onStartOver, placeho
 
 /**
  * The menu line guests read, and notes: with the drink, for whoever can see
- * it (the next step says who), or just for you.
+ * it (the next step says who), or just for you. At home one box, the notes,
+ * just for you to start (Q27, board w2-wizard-finish); the menu line is on
+ * the drink's page.
  */
-export function NotesStep({ draft, set }: StepProps) {
-  const mine = !!draft.notesPrivate;
+export function NotesStep({ draft, set, barId = null }: StepProps & { barId?: string | null }) {
+  const mine = notesArePrivate(draft, barId);
+  const justMe = <WizardChip key="me" label="Just me" selected={mine} onPress={() => set({ notesPrivate: true })} />;
+  const withDrink = <WizardChip key="drink" label="With the drink" selected={!mine} onPress={() => set({ notesPrivate: false })} />;
   return (
     <View style={styles.stack}>
-      <NoteBox
-        label="On the menu"
-        hint="A line or two a guest reads."
-        value={draft.description}
-        onChangeText={(description) => set({ description })}
-        minLines={2}
-        maxLength={500}
-      />
+      {barId ? (
+        <NoteBox
+          label="On the menu"
+          hint="A line or two a guest reads."
+          value={draft.description}
+          onChangeText={(description) => set({ description })}
+          minLines={2}
+          maxLength={500}
+        />
+      ) : null}
       <NoteBox
         label="Notes"
-        hint="Anything the next person to make it should know."
+        hint={barId ? 'Anything the next person to make it should know.' : 'What to change next time, where it came from.'}
         value={draft.notes}
         onChangeText={(notes) => set({ notes })}
         minLines={3}
         maxLength={2000}
       />
       <View style={styles.section}>
-        <Eyebrow>Who reads the notes?</Eyebrow>
+        <Eyebrow>{barId ? 'Who reads the notes?' : 'Who reads them?'}</Eyebrow>
         <View role="radiogroup" accessibilityLabel="Who reads the notes" style={styles.chips}>
-          <WizardChip label="With the drink" selected={!mine} onPress={() => set({ notesPrivate: false })} />
-          <WizardChip label="Just me" selected={mine} onPress={() => set({ notesPrivate: true })} />
+          {barId ? [withDrink, justMe] : [justMe, withDrink]}
         </View>
         <Caption tone="muted">
           {mine ? 'Only you see them, on the drink’s page. Never shared or published.' : 'Shown on its page to whoever can see the drink. You choose who on the next step.'}

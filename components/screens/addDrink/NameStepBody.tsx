@@ -21,7 +21,7 @@ interface Props {
   barId: string | null;
   /** The venue's name ("Little Rye"). */
   venueName: string;
-  /** The venue's drink with this name (useSameNameDrink). */
+  /** The venue's drink with this name, or at home your own (useSameNameDrink). */
   match: SameNameDrink | null;
   classic: ClassicMatch | null;
   resumed: boolean;
@@ -32,9 +32,9 @@ interface Props {
 }
 
 /**
- * The add-drink wizard's first step: the name, photos, and the classic it
- * may be. When the bar already has a drink by that name (board
- * dup-drink-warning), its card instead, then a version's word in brackets
+ * The add-drink wizard's first step: the name, photos at a venue (at home
+ * they come on the review), and the classic it may be. When the bar already has a drink by that name (board
+ * dup-drink-warning), or at home you do (Q14b), its card instead, then a version's word in brackets
  * or a reminder to name a different drink apart.
  */
 export function NameStepBody({ draft, set, barId, venueName, match, classic, resumed, onStartOver, onDone, onStarted }: Props) {
@@ -43,6 +43,8 @@ export function NameStepBody({ draft, set, barId, venueName, match, classic, res
   if (same?.as === 'version') return <VersionWord draft={draft} taken={!!match && match.id !== same.id} onWord={(w) => picks.word(draft, w)} onUndo={() => picks.undo(draft)} />;
 
   const asking = !!match && same?.id !== match.id;
+  // At home the drink is your own: "You already have a Negroni".
+  const bar = barId ? venueName : '';
   const apart = same?.as === 'different' ? !sameName(draft.name, same.name) : null;
   return (
     <>
@@ -50,20 +52,33 @@ export function NameStepBody({ draft, set, barId, venueName, match, classic, res
       {same && apart !== null ? <ApartHint done={apart} words={`Give it a name that tells it apart from ${theirs(same.bar, same.name)}.`} /> : null}
       {match && asking ? (
         <SameNameCard
-          bar={venueName}
+          bar={bar}
           drink={match}
-          caption="A version is the same drink with a different spec."
+          caption={`A version is the same drink with a different spec${bar ? '' : `, like ${match.name} (less bitter)`}.`}
           busy={picks.busy}
           onOpen={() => picks.open(match)}
-          onVersion={() => picks.version(match, venueName, true)}
-          onDifferent={() => picks.different(match, venueName)}
+          onVersion={() => picks.version(match, bar, true)}
+          onDifferent={() => picks.different(match, bar)}
         />
       ) : null}
       <NearNameCard draft={draft} set={set} barId={barId} venueName={venueName} hidden={!!match || !!classic} onStarted={onStarted} />
-      <StartPhotos photos={draft.photos ?? {}} onChange={(photos) => set({ photos })} barId={barId} />
+      {/* At home nothing to fill in before the drink exists: its photo comes on the review (Q15). */}
+      {barId ? <StartPhotos photos={draft.photos ?? {}} onChange={(photos) => set({ photos })} barId={barId} /> : <PhotoLater />}
       {/* The bar's drink is already linked to the classic: its card comes back once the name is the bar's no more. */}
       {classic && !asking && apart !== false ? <StartFromClassic set={set} match={classic} onStarted={onStarted} /> : null}
     </>
+  );
+}
+
+function PhotoLater() {
+  const ds = useDs();
+  return (
+    <View style={styles.hint}>
+      <IconSymbol name="camera" size={14} color={ds.c.muted} />
+      <Caption tone="muted" style={styles.flex}>
+        Add a photo at the end, once it’s made.
+      </Caption>
+    </View>
   );
 }
 
@@ -92,7 +107,7 @@ function VersionWord({ draft, taken, onWord, onUndo }: { draft: WizardDraft; tak
         {taken ? <TakenWord bar={same.bar} name={draft.name} /> : null}
       </View>
       <Surface raised style={styles.card}>
-        {same.started ? <Body>{`It starts from ${same.bar}’s spec: ${same.started}. Change what’s different on the next steps.`}</Body> : null}
+        {same.started ? <Body>{`It starts from ${theirs(same.bar, 'spec')}: ${same.started}. Change what’s different on the next steps.`}</Body> : null}
         <Caption tone="muted">{`Saved as ${versionName(same.name, word.trim() || '…')}, next to ${theirs(same.bar, same.name)}.`}</Caption>
       </Surface>
       <View style={styles.undo}>
@@ -104,7 +119,7 @@ function VersionWord({ draft, taken, onWord, onUndo }: { draft: WizardDraft; tak
 
 /** The word makes a name the bar has too ("Negroni (summer)" is there already): Next waits for another. */
 export function TakenWord({ bar, name }: { bar: string; name: string }) {
-  return <Caption tone="accent">{`${bar} already has ${withArticle(name.trim())}. Try another word.`}</Caption>;
+  return <Caption tone="accent">{`${bar ? `${bar} already has` : 'You already have'} ${withArticle(name.trim())}. Try another word.`}</Caption>;
 }
 
 const styles = StyleSheet.create({

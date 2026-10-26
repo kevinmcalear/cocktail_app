@@ -15,7 +15,7 @@ jest.mock('expo-router', () => ({ useRouter: () => ({ push: mockPush }) }));
 jest.mock('@/hooks/useStartFromClassic', () => ({ useStartFromClassic: () => ({ mutate: mockStart, isPending: false }) }));
 jest.mock('@/hooks/useCapabilities', () => ({ useCapabilities: () => ({ data: [] }) }));
 jest.mock('@/components/ds/DrinkImage', () => ({ DrinkImage: () => null }));
-jest.mock('@/hooks/useClosestClassic', () => ({ useClosestClassic: () => ({ data: null }) }));
+jest.mock('@/hooks/useClosestClassic', () => ({ useClosestClassic: () => ({ data: null }), useCloseClassics: () => ({ data: [] }) }));
 jest.mock('@/hooks/useDiscover', () => ({ useDrinkLists: () => ({ data: [] }) }));
 jest.mock('@/hooks/useMyProfile', () => ({ useMyProfile: () => ({ data: { id: 'p-me', displayName: 'Jo' } }) }));
 jest.mock('@/hooks/useProfiles', () => ({ usePublicPeople: () => ({ data: [] }) }));
@@ -44,15 +44,29 @@ const update = (patch: Partial<WizardDraft>) => (d: WizardDraft) => {
   return next;
 };
 
-function Name({ match }: { match: SameNameDrink | null }) {
+function Name({ match, barId = 'bar-1' }: { match: SameNameDrink | null; barId?: string | null }) {
   const [draft, setDraft] = useState<WizardDraft>({ ...EMPTY_DRAFT, name: 'Negroni' });
   const set = (patch: Partial<WizardDraft>) => setDraft(update(patch));
   // The bar's drink only matches while the name is still its name.
   const shown = match && draft.name === match.name ? match : null;
-  return <NameStepBody draft={draft} set={set} barId="bar-1" venueName="Little Rye" match={shown} classic={null} resumed={false} onStartOver={() => {}} onDone={() => {}} onStarted={() => {}} />;
+  return <NameStepBody draft={draft} set={set} barId={barId} venueName={barId ? 'Little Rye' : 'the venue'} match={shown} classic={null} resumed={false} onStartOver={() => {}} onDone={() => {}} onStarted={() => {}} />;
 }
 
 beforeEach(() => jest.clearAllMocks());
+
+test('at home the card is your own drink (Q14b): what it is and when you saved it, and a version is of yours', async () => {
+  mockStart.mockImplementation((_id: string, { onSuccess }: { onSuccess: (c: Partial<WizardDraft>) => void }) => onSuccess({ lines: [] }));
+  const mine = { ...negroni, id: 'my-negroni', barId: null, menu: null, classic: null, glassName: 'Rocks', saved: '12 Oct' };
+  await renderWithTamagui(<Name match={mine} barId={null} />);
+  expect(screen.getByText('You already have a Negroni')).toBeTruthy();
+  expect(screen.getByText(/^Rocks · Gin, Campari, sweet vermouth · Saved 12 Oct$/)).toBeTruthy();
+  expect(screen.getByRole('button', { name: 'Open your Negroni. Your draft is kept' })).toBeTruthy();
+  await fireEvent.press(screen.getByRole('button', { name: 'Make this a version' }));
+  expect(latest().riffOf).toEqual({ id: 'my-negroni', name: 'Negroni' });
+  expect(screen.getByText(/^It starts from your spec: gin, Campari, sweet vermouth\./)).toBeTruthy();
+  await fireEvent.changeText(screen.getByLabelText('What’s different about this Negroni'), 'less bitter');
+  expect(screen.getByText('Saved as Negroni (less bitter), next to your Negroni.')).toBeTruthy();
+});
 
 test('the name step says the bar has one, and a version starts from its spec with a word in brackets', async () => {
   mockStart.mockImplementation((_id: string, { onSuccess }: { onSuccess: (c: Partial<WizardDraft>) => void }) => onSuccess({ lines: [], riffOf: { id: 'lr-negroni', name: 'Negroni' } }));

@@ -2,7 +2,8 @@
  * The first round (decided 15 Oct 2026, Eddie's ask): after setup a venue
  * opens with only the Library, and each step a new person does opens a bit
  * more of the app, like learning a game one thing at a time. Drink Creators
- * and Admins make the Old Fashioned theirs, put it on a menu (Menus opens),
+ * and Admins add their first cocktail (from the Old Fashioned, a Margarita,
+ * an Espresso Martini or from scratch, Eddie E30), put it on a menu (Menus opens),
  * then see who pours one near them (Discover opens). Bartenders and
  * Employees open the menu (Menus) and then Discover. Every step can be
  * skipped, Show me everything ends it, and it only ever hides Menus and
@@ -47,7 +48,7 @@ export interface FirstRound {
   done_seen?: boolean;
   /** Tabs whose "is open" card was seen or dismissed. */
   seen: RoundTab[];
-  /** The house spec saved in the first step: the menu step looks for it on a menu. */
+  /** The drink saved in the first step: the menu step looks for it on a menu. */
   drink_id?: string | null;
 }
 
@@ -58,7 +59,8 @@ export const roundKind = (roleLevel: number): RoundKind => (roleLevel >= MAKER_L
 
 const STEPS: Record<RoundKind, RoundStep[]> = {
   make: [
-    { key: 'house_spec', title: 'Make the Old Fashioned yours', detail: 'Change a line, save your house spec', opens: null, action: 'Start with the Old Fashioned' },
+    // Its choices are FIRST_COCKTAILS, as buttons under the step (E30 B): no button of its own.
+    { key: 'house_spec', title: 'Add your first cocktail', detail: 'Start from a classic, or from scratch', opens: null, action: 'Add your first cocktail' },
     { key: 'menu', title: 'Put it on a menu', detail: 'Opens Menus', opens: 'menus', action: 'Open Menus' },
     { key: 'discover', title: 'See who pours one near you', detail: 'Opens Discover', opens: 'discover', action: 'Open Discover' },
   ],
@@ -70,9 +72,12 @@ const STEPS: Record<RoundKind, RoundStep[]> = {
 
 export const roundSteps = (kind: RoundKind): RoundStep[] => STEPS[kind];
 
+/** The classics the first cocktail can start from, by their catalog names; From scratch comes after them. */
+export const FIRST_COCKTAILS = ['Old Fashioned', 'Margarita', 'Espresso Martini'] as const;
+
 /** What a tab's "is open" card says. */
 export const OPENED_COPY: Record<RoundTab, { title: string; body: string; action: string }> = {
-  menus: { title: 'Menus is open', body: 'What you’re pouring, and when. Put your Old Fashioned on one.', action: 'Open Menus' },
+  menus: { title: 'Menus is open', body: 'What you’re pouring, and when. Put your first cocktail on one.', action: 'Open Menus' },
   discover: { title: 'Discover is open', body: 'Bars and drinks near you, and who pours what.', action: 'Open Discover' },
 };
 
@@ -105,7 +110,7 @@ export const markDone = (round: FirstRound, key: StepKey, drinkId?: string): Fir
   round.done.includes(key) ? round : { ...round, done: [...round.done, key], ...(drinkId ? { drink_id: drinkId } : {}) };
 
 /**
- * Whether the menu step is done: the house spec from the first step is on one
+ * Whether the menu step is done: the drink from the first step is on one
  * of the venue's menus, or, when that step was skipped, any menu has a drink.
  */
 export function onAMenu(round: FirstRound | null, menus: { kind: string; itemIds: string[] }[]): boolean {

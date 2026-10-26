@@ -51,9 +51,10 @@ interface IceLayersProps {
 }
 
 /**
- * The ice in the glass, bottom to top (canvas "Ice builds", row 1): each
- * layer's ice, how many pieces or how high loose ice goes, and Add a layer on
- * top. Only cubes are counted (a spear, a large cube are one), and one layer alone needs no count.
+ * The ice in the glass, bottom to top (canvas "Ice builds", row 1; Q21 + E24):
+ * each layer's ice, how many pieces or how high loose ice goes, and Add extra
+ * ice on top. Only cubes are counted (a spear, a large cube are one); one
+ * layer alone shows its count once it has one (picked cubes start at 3).
  */
 export function IceLayers({ layers, onChange, onAdd, sourceOf }: IceLayersProps) {
   const ds = useDs();
@@ -96,7 +97,7 @@ export function IceLayers({ layers, onChange, onAdd, sourceOf }: IceLayersProps)
                 <View>
                   <HeightPicker value={l.to ?? 'rim'} onChange={(to) => put(i, { to })} />
                 </View>
-              ) : several && (kind === 'cubes' || (l.n ?? 1) > 1) ? (
+              ) : (several || l.n != null) && (kind === 'cubes' || (l.n ?? 1) > 1) ? (
                 <View style={[styles.control, styles.between]}>
                   <Caption tone="muted">How many</Caption>
                   <CountStepper value={l.n ?? 1} noun={singular(l.ice.name)} onChange={(n) => put(i, { n })} />
@@ -107,9 +108,9 @@ export function IceLayers({ layers, onChange, onAdd, sourceOf }: IceLayersProps)
         })}
       </View>
       {layers.length < MAX_LAYERS ? (
-        <PressableScale role="button" accessibilityLabel="Add a layer on top" onPress={onAdd} style={[styles.add, { borderColor: ds.c.lineStrong }]}>
+        <PressableScale role="button" accessibilityLabel="Add extra ice" onPress={onAdd} style={[styles.add, { borderColor: ds.c.lineStrong }]}>
           <IconSymbol name="plus" size={16} color={ds.accentText} />
-          <Body>Add a layer on top</Body>
+          <Body>Add extra ice</Body>
         </PressableScale>
       ) : null}
     </View>

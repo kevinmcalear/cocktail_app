@@ -1,5 +1,7 @@
 import { useMutation, useQueryClient } from '@tanstack/react-query';
+import { useEffect, useState } from 'react';
 
+import { readPhotoColours } from '@/lib/photoColours';
 import { withTint, type SketchInputs } from '@/lib/sketch/types';
 import { supabase } from '@/lib/supabase';
 
@@ -30,4 +32,24 @@ export function useSetSketchTint(itemId: string) {
     },
     onSettled: () => void queryClient.invalidateQueries({ queryKey: key }),
   });
+}
+
+/**
+ * The colours of a draft's photo, read on the device (lib/photoColours.ts)
+ * for the sketch colour's From your photo row. Empty when the photo can't be
+ * read: the row just doesn't show. Undefined while reading.
+ */
+export function usePhotoColours(uri: string | null | undefined): string[] | undefined {
+  const [read, setRead] = useState<{ uri: string; colours: string[] } | null>(null);
+  useEffect(() => {
+    if (!uri) return;
+    let live = true;
+    void readPhotoColours(uri)
+      .catch(() => [])
+      .then((colours) => live && setRead({ uri, colours }));
+    return () => {
+      live = false;
+    };
+  }, [uri]);
+  return uri && read?.uri === uri ? read.colours : undefined;
 }

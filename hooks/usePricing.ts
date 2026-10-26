@@ -66,6 +66,21 @@ export function useSetPricingSettings(barId: string) {
   });
 }
 
+/** Setup's Currency row: just the currency, onto the venue made as Where and when finishes (the same column Pricing edits). */
+export function useSetBarCurrency() {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: async ({ barId, currency }: { barId: string; currency: string }) => {
+      const { error } = await supabase.from('bars').update({ currency }).eq('id', barId);
+      if (error) throw error;
+    },
+    onSuccess: (_, { barId }) => {
+      void queryClient.invalidateQueries({ queryKey: ['pricing-settings', barId] });
+      void queryClient.invalidateQueries({ queryKey: ['drink-cost'] });
+    },
+  });
+}
+
 export interface Supplier {
   id: string;
   name: string;

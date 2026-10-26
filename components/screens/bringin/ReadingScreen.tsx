@@ -1,15 +1,16 @@
+import { Image } from 'expo-image';
 import { useEffect, useEffectEvent, useState } from 'react';
 import { ActivityIndicator, StyleSheet, useWindowDimensions, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
-import { Body, Button, Caption, GlassButton, PressableScale, sheetIsDialog, Title, useDs } from '@/components/ds';
+import { Body, Button, Caption, DsText, GlassButton, PressableScale, sheetIsDialog, Title, useDs } from '@/components/ds';
 import { IconSymbol } from '@/components/ui/icon-symbol';
-import { radius, space } from '@/constants/tokens';
+import { fontFamilies, radius, space } from '@/constants/tokens';
 import { bottleReadings, useBringInMatchData } from '@/hooks/useBringInMatchData';
 import { useMatchCatalog } from '@/hooks/useMatchCatalog';
-import { readingSteps, stepsDone, type ReadingStep } from '@/lib/bringIn';
+import { readingSteps, stepsDone, stripWindow, type ReadingStep } from '@/lib/bringIn';
 import { matchSummary, pageMarks } from '@/lib/bringInMatch';
-import { pickReadFiles } from '@/lib/readAnything';
+import { pickReadFiles, type ReadFile } from '@/lib/readAnything';
 import { useBringIn, type BringInJob } from '@/store/useBringIn';
 
 import { PagePicture } from './PagePicture';
@@ -27,6 +28,16 @@ function Step({ step }: { step: ReadingStep }) {
         {step.detail ? <Body tone="muted">{` ${step.detail}`}</Body> : null}
       </Body>
     </View>
+  );
+}
+
+/** A page in the strip: a photo shows small (board w2-import-review, E37); anything else is blank paper. */
+function Thumb({ file, i, on, onPress }: { file: ReadFile; i: number; on: boolean; onPress: () => void }) {
+  const ds = useDs();
+  return (
+    <PressableScale accessibilityLabel={`Page ${i + 1}`} aria-current={on || undefined} onPress={onPress} style={[styles.thumb, { backgroundColor: ds.c.paper, borderColor: on ? ds.accentText : 'transparent', opacity: on ? 1 : 0.6 }]}>
+      {file.mimeType.startsWith('image/') && file.uri ? <Image source={{ uri: file.uri }} contentFit="cover" style={styles.thumbPicture} /> : null}
+    </PressableScale>
   );
 }
 
@@ -75,6 +86,7 @@ export function ReadingScreen({ job, onClose, onBackground, onReady, onSearch }:
   const slow = waiting && (waited || catalog.failed);
 
   const marks = job.reading && data ? pageMarks(job.reading, data, page) : [];
+  const shown = stripWindow(files.length, page);
   const title = job.status === 'failed' ? 'Couldn’t read it' : files.length > 1 ? `Reading ${files.length} pages` : 'Reading';
 
   return (
@@ -83,9 +95,14 @@ export function ReadingScreen({ job, onClose, onBackground, onReady, onSearch }:
         <GlassButton icon="xmark" accessibilityLabel="Close" onPress={onClose} />
         {files.length ? (
           <View style={styles.strip} aria-label={`${files.length} ${files.length === 1 ? 'page' : 'pages'}`}>
-            {files.map((file, i) => (
-              <PressableScale key={file.uri} accessibilityLabel={`Page ${i + 1}`} onPress={() => setPage(i)} style={[styles.thumb, { backgroundColor: ds.c.paper, borderColor: i === page ? ds.accentText : 'transparent', opacity: i === page ? 1 : 0.6 }]} />
+            {files.slice(shown.from, shown.to).map((file, k) => (
+              <Thumb key={file.uri} file={file} i={shown.from + k} on={shown.from + k === page} onPress={() => setPage(shown.from + k)} />
             ))}
+            {files.length > shown.to ? (
+              <PressableScale accessibilityLabel={`${files.length - shown.to} more pages. Show page ${shown.to + 1}`} onPress={() => setPage(shown.to)} style={styles.more}>
+                <DsText variant="caption" color={ds.c.muted} style={styles.mono}>{`+${files.length - shown.to}`}</DsText>
+              </PressableScale>
+            ) : null}
             {!job.local ? (
               <PressableScale accessibilityLabel="Add a page" onPress={() => void pickReadFiles().then((more) => addPages(more.filter((f) => !f.mimeType.startsWith('text/'))))} style={[styles.thumb, styles.add, { borderColor: ds.c.lineStrong }]}>
                 <IconSymbol name="plus" size={14} color={ds.c.muted} />
@@ -134,8 +151,11 @@ export function ReadingScreen({ job, onClose, onBackground, onReady, onSearch }:
 const styles = StyleSheet.create({
   screen: { flex: 1 },
   top: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', paddingHorizontal: space.lg },
-  strip: { flexDirection: 'row', gap: space.xs + 2 },
-  thumb: { width: 32, height: 42, borderRadius: radius.mark, borderWidth: 2 },
+  strip: { flexDirection: 'row', alignItems: 'center', gap: space.xs + 2 },
+  thumb: { width: 32, height: 42, borderRadius: radius.mark, borderWidth: 2, overflow: 'hidden' },
+  thumbPicture: { flex: 1 },
+  more: { minHeight: 42, justifyContent: 'center', paddingHorizontal: space.xs },
+  mono: { fontFamily: fontFamilies.mono },
   add: { borderWidth: 1, borderStyle: 'dashed', alignItems: 'center', justifyContent: 'center' },
   paper: { flex: 1, alignItems: 'center', justifyContent: 'center', paddingHorizontal: space.xxl },
   tilt: { transform: [{ rotate: '-2deg' }], shadowOpacity: 0.5, shadowRadius: 30, shadowOffset: { width: 0, height: 24 }, elevation: 12 },

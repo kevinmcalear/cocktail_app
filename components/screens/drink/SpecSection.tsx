@@ -6,6 +6,7 @@ import { Body, Button, Caption, Headline, LockedSection, SpecRow, useDs } from '
 import { radius, space } from '@/constants/tokens';
 import { Choice } from '@/components/screens/batch/BatchParts';
 import { HouseMadeSheet } from './HouseMadeSheet';
+import { SpecMarks, type SpecMark } from './SpecMarks';
 import { ToolsSheet, type ToolsSheetProps } from '@/components/tools/ToolsSheet';
 import { useMode } from '@/hooks/useMode';
 import { useSpecAccess } from '@/hooks/useSpecAccess';
@@ -38,6 +39,8 @@ interface SpecSectionProps {
   listed?: readonly string[];
   /** Right under the lines: method, glass, ice and garnish (MakeLine). Shown even when the lines are locked. */
   make?: ReactNode;
+  /** Right after the heading: the method and glass icons (Eddie E43). */
+  marks?: SpecMark[];
   /** Someone else's drink: one Make a riff button under the spec, with what it does (Eddie, 16 Oct). */
   riff?: { onPress: () => void; note: string } | null;
   /** Under that, inside the section: the method's steps, what to do about a missing bottle. */
@@ -62,7 +65,7 @@ function RatioBar({ shares }: { shares: { key: string; share: number }[] }) {
  * line's strength is in the strength sheet (ABV, under More). Anything the server
  * withheld stays on the page as a locked section that says who can open it.
  */
-export function SpecSection({ itemId, barId, recipes, preview, heading = 'Spec', caption, missing = [], listed = [], make, riff, children }: SpecSectionProps) {
+export function SpecSection({ itemId, barId, recipes, preview, heading = 'Spec', caption, missing = [], listed = [], make, marks = [], riff, children }: SpecSectionProps) {
   const router = useRouter();
   // The same rule as the drink page's Batch and the server's view: levels, moved by the role's specs grant or revoke.
   const { access, levels } = useSpecAccess(itemId, barId, preview);
@@ -83,7 +86,10 @@ export function SpecSection({ itemId, barId, recipes, preview, heading = 'Spec',
   if (!lines.length) {
     return (
       <View style={styles.section}>
-        <Headline role="heading">{heading}</Headline>
+        <View style={styles.title}>
+          <Headline role="heading">{heading}</Headline>
+          <SpecMarks marks={marks} />
+        </View>
         <Body tone="muted">No spec yet.</Body>
         {make}
       </View>
@@ -108,6 +114,7 @@ export function SpecSection({ itemId, barId, recipes, preview, heading = 'Spec',
       <View style={styles.head}>
         <View style={styles.title}>
           <Headline role="heading">{heading}</Headline>
+          <SpecMarks marks={marks} />
           {caption ? <Caption tone="muted">{caption}</Caption> : null}
         </View>
         {measured ? <Choice label="Read the amounts in" options={UNITS} value={unit} onChange={setSpecUnit} /> : null}
@@ -155,8 +162,9 @@ export function SpecSection({ itemId, barId, recipes, preview, heading = 'Spec',
 
 const styles = StyleSheet.create({
   section: { gap: space.md },
-  head: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', gap: space.md, flexWrap: 'wrap' },
-  title: { flexDirection: 'row', alignItems: 'baseline', gap: space.sm, flexShrink: 1, flexWrap: 'wrap' },
+  // The unit switch stays on the heading's line; a long caption wraps under the heading instead.
+  head: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', gap: space.md },
+  title: { flexDirection: 'row', alignItems: 'center', gap: space.sm, flexShrink: 1, flexWrap: 'wrap' },
   ratio: { flexDirection: 'row', height: 6, borderRadius: radius.pill, overflow: 'hidden', gap: 2 },
   riff: { gap: space.sm },
 });

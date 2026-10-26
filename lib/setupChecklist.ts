@@ -12,7 +12,8 @@ export const CHECKLIST_ROWS = [
   { key: 'kit', title: 'Kit', line: 'Glasses, ice and tools' },
   { key: 'bottles', title: 'Bottles', line: 'What’s on your shelves' },
   { key: 'menu', title: 'First menu', line: 'Start your own, or bring one in' },
-  { key: 'drinks', title: 'First drinks', line: 'On that menu, with your house recipes' },
+  // Done once the Library has the bar's own drinks, however they came: an import counts (E31).
+  { key: 'drinks', title: 'First drinks', line: 'Your house recipes, in the Library' },
   { key: 'team', title: 'Your team', line: 'Invite who works here' },
 ] as const;
 
@@ -41,6 +42,12 @@ export function checklist(done: Readonly<Record<ChecklistKey, boolean>>, skipped
 export function kitNote(glasses: number, ice: number, tools: number): string | undefined {
   const parts = [glasses ? `${glasses} ${glasses === 1 ? 'glass' : 'glasses'}` : null, ice ? `${ice} ice` : null, tools ? `${tools} ${tools === 1 ? 'tool' : 'tools'}` : null].filter(Boolean);
   return parts.length ? `${parts.join(', ')} so far` : undefined;
+}
+
+/** "18 in your Library, 28 still to check": the bar's drinks, and what's left of an import it started. */
+export function drinksNote(inLibrary: number, toCheck: number): string | undefined {
+  const parts = [inLibrary ? `${inLibrary} in your Library` : null, toCheck ? `${toCheck} still to check` : null].filter(Boolean);
+  return parts.length ? parts.join(', ') : undefined;
 }
 
 const WORDS = ['None', 'One', 'Two', 'Three', 'Four', 'Five', 'Six'];

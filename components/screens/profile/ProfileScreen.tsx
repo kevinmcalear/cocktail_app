@@ -6,6 +6,7 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { BackbarTheme, Body, Caption, GlassButton, useBreakpoint, useDs, useGutter } from '@/components/ds';
 import { layout, space } from '@/constants/tokens';
 import { useSignedIn } from '@/ctx/AuthContext';
+import { useLikelyPerson } from '@/hooks/useLikelyClaimer';
 import { isUnclaimed, useProfile, type Profile } from '@/hooks/useProfiles';
 import { recentEntry, useTrackRecent } from '@/hooks/useTrackRecent';
 import { saveClaimReturn } from '@/lib/claimReturn';
@@ -59,12 +60,15 @@ function ProfilePage({ profileRef, checking }: { profileRef: string | string[] |
   const searched = typeof q === 'string' && q.trim() ? q.trim() : null;
   // A bar you open shows in Search's Recent.
   useTrackRecent(profile?.kind === 'bar', profile ? recentEntry('bar', profile.id, profile.display_name, { href: `/p/${profile.handle || profile.id}`, imageUrl: profile.avatar_url, barId: null }) : null);
+  // Someone's page nobody has claimed: This is me and Not me pinned to the bottom of a phone (find-yourself),
+  // for the likely person (Q33). Everyone else gets only its sheet, from More's "Is this you?".
+  const unclaimedPerson = !!profile && profile.kind === 'person' && isUnclaimed(profile) && !gated;
+  const likely = useLikelyPerson(unclaimedPerson ? profile : null);
   if (profile?.kind === 'bar' && !signedIn) return <PublicBarPage profile={profile} />; // signed out: the public web's one bar page (ppl-pub-bar-*)
   // Signed in on a tablet or desktop, a bar's page is the drawn desktop one (ppl-pub-bar-desktop): its actions sit under the name.
   const wideBar = profile?.kind === 'bar' && breakpoint !== 'phone';
-  // Someone's page nobody has claimed: This is me and Not me pinned to the bottom of a phone (find-yourself).
-  const unclaimedPerson = !!profile && profile.kind === 'person' && isUnclaimed(profile) && !gated;
-  const pinned = unclaimedPerson && breakpoint === 'phone';
+  const claimHere = unclaimedPerson && breakpoint === 'phone';
+  const pinned = claimHere && likely;
 
   const controls = (
     <View style={[styles.controls, { top: insets.top + space.sm, left: gutter, right: gutter }]}>
@@ -128,7 +132,7 @@ function ProfilePage({ profileRef, checking }: { profileRef: string | string[] |
         <View style={[styles.readable, wideBar ? styles.wide : null]}>{body}</View>
       </ScrollView>
       {controls}
-      {pinned && profile ? <ThisIsMe profile={profile} pinned /> : null}
+      {claimHere && profile ? <ThisIsMe profile={profile} pinned quiet={!likely} /> : null}
     </View>
   );
 }
