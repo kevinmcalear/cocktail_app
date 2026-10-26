@@ -18,6 +18,10 @@ import { fetchEditableRecipes } from "@/lib/editableRecipes";
 import { mapPresentationRecipeToEditItem } from "@/lib/recipeUtils";
 import { supabase, UPLOAD_CACHE_SECONDS } from "@/lib/supabase";
 import { saveDrinkSpec } from "@/hooks/useVersions";
+import { resolveEditItems } from "@/hooks/specLineSave";
+import { refreshIngredients } from "@/hooks/useDropdowns";
+import { showMessage } from "@/lib/dialogs";
+import { amountOf } from "@/lib/drinkWizard";
 import type { ImageItem } from "@/components/cocktail/SortableImageList";
 import { pickDrinkPhotos, setItemImages } from "@/components/drink/drinkImages";
 
@@ -349,14 +353,17 @@ export function useCocktailEditor(id: string, { enabled = true }: { enabled?: bo
             // Only when changed: notes for a role above yours never reach the editor, so an empty box isn't a clear (E29).
             if (notes.trim() !== loadedNotes.current.trim()) await saveItemNotes(id, notes);
 
+            // A line typed, combined or made in-house here is added the way New adds it.
+            const spec = await resolveEditItems(recipeItems, barId || null);
+            setRecipeItems(spec.items);
             // Lines and method go through save_drink_spec: one transaction, and a
             // version of the spec written with it (History on the drink page).
             await saveDrinkSpec(
                 id,
-                recipeItems.map((item) => ({
+                spec.items.map((item) => ({
                     id: item.id ?? null,
                     ingredient_item_id: item.ingredient_id,
-                    amount: parseFloat(item.amount) || null,
+                    amount: amountOf(item.amount) || null,
                     unit: item.unit || null,
                     preparation_notes: item.preparation_notes || null,
                     is_optional: item.is_optional || false,
@@ -364,6 +371,8 @@ export function useCocktailEditor(id: string, { enabled = true }: { enabled?: bo
                 methodIds,
                 null
             );
+            if (spec.created.length) void refreshIngredients(queryClient, spec.created);
+            if (spec.warnings.length) showMessage("Saved", spec.warnings.join("\n\n"));
 
             await queryClient.invalidateQueries({ queryKey: ["cocktail", id] });
             await queryClient.invalidateQueries({ queryKey: ["cocktails"] });

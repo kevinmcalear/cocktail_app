@@ -1,17 +1,22 @@
 /**
- * Venue setup (decision b03): an intro, finding the bar, five steps and a
- * summary. Someone finds their bar's page (or adds a new one), sets the venue
- * up, and proves it's theirs last (Eddie call, 22 Oct): every step before the
- * claim works without one. For an owner (owner-setup call 4) there's no role
+ * Venue setup (decision b03): an intro, finding the bar, four steps, then
+ * "Set up <bar>", the checklist. Someone finds their bar's page (or adds a new
+ * one) and sets the venue up; every step works without a claim. Proving it's
+ * yours is the card under the checklist (Eddie E32, 26 Oct; it was the last
+ * step from 22 Oct): its claim screen opens from there, from the Setup banner
+ * or from Venue settings (&step=claim), and comes back. For an owner (owner-setup call 4) there's no role
  * step (they're the Admin, said in one line) and no Bring in (it moved to the
  * first menu). Checked by lib/venueSetup.check.ts.
  */
 
-export const VENUE_STEPS = ['find', 'place', 'look', 'visibility', 'team', 'claim'] as const;
+export const VENUE_STEPS = ['find', 'place', 'look', 'visibility', 'team'] as const;
 export type VenueStep = (typeof VENUE_STEPS)[number];
-export type VenueScreen = 'intro' | VenueStep | 'done';
+/** The claim is a screen of its own, opened from the checklist's card: not a step. */
+export type VenueScreen = 'intro' | VenueStep | 'claim' | 'done';
+/** What a run on this device has done: its steps, and the claim once it's sent. */
+export type SetupDone = VenueStep | 'claim';
 
-/** The five steps the rail and the bar count. Finding the bar comes before them, often in Setup or on the bar's page. */
+/** The steps the rail and the bar count. Finding the bar comes before them, often in Setup or on the bar's page. */
 export const RAIL_STEPS: readonly VenueStep[] = VENUE_STEPS.filter((s) => s !== 'find');
 
 /** The rail's name for each step (owner-setup-path step 4). */
@@ -21,7 +26,6 @@ export const STEP_NAMES: Record<VenueStep, string> = {
   look: 'How it looks',
   visibility: 'Who sees what',
   team: 'Your team',
-  claim: 'Prove it’s yours',
 };
 
 /** The line under each step on the rail. */
@@ -31,21 +35,20 @@ export const STEP_LINES: Record<VenueStep, string> = {
   look: 'Logo, colours, font',
   visibility: 'Your page, menus, specs',
   team: 'Invite who works here',
-  claim: 'Last: Instagram, a call or your website',
 };
 
-/** The screen after this one: intro, the steps in order, then the summary. */
+/** The screen after this one: intro, the steps in order, then the checklist. The claim comes back to the checklist. */
 export function nextScreen(at: VenueScreen): VenueScreen {
   if (at === 'intro') return 'find';
-  if (at === 'done') return 'done';
+  if (at === 'done' || at === 'claim') return 'done';
   const i = VENUE_STEPS.indexOf(at);
   return VENUE_STEPS[i + 1] ?? 'done';
 }
 
-/** The screen before, for Back. The summary goes back to the last step. */
+/** The screen before, for Back. The checklist and the claim go back to the last step. */
 export function previousScreen(at: VenueScreen): VenueScreen {
   if (at === 'intro' || at === 'find') return 'intro';
-  if (at === 'done') return VENUE_STEPS[VENUE_STEPS.length - 1];
+  if (at === 'done' || at === 'claim') return VENUE_STEPS[VENUE_STEPS.length - 1];
   return VENUE_STEPS[VENUE_STEPS.indexOf(at) - 1];
 }
 
@@ -59,10 +62,7 @@ export function venueProgress(at: VenueScreen): { at: number; of: number; label:
 /** Where a claim stands, as setup sees it. */
 export type ClaimState = 'none' | 'pending' | 'approved';
 
-/**
- * The first step not done yet, to pick setup up where it stopped. Kept
- * private for now, everything but the claim is done, so it opens the claim.
- */
+/** The first step not done yet, to pick setup up where it stopped; with every step done, the checklist. */
 export function resumeScreen(done: readonly string[]): VenueScreen {
   return VENUE_STEPS.find((s) => !done.includes(s)) ?? 'done';
 }
@@ -73,8 +73,7 @@ type Runs = Record<string, { profileId?: string | null; done: readonly string[];
  * Which run setup works on and where it opens. ?bar= is that venue's run (at
  * the claim with &step=claim). ?claim= (a bar page's Claim, or Setup's owner
  * path) is that bar's run if one was started, else a fresh one with the bar
- * found: either way it opens at the first step not done, and the claim stays
- * last. With neither, a setup left before its venue was made picks up where
+ * found: either way it opens at the first step not done. With neither, a setup left before its venue was made picks up where
  * it stopped, else the intro.
  */
 export function openRun(p: { bar?: string; claim?: string; step?: string }, runs: Runs): { key: string; screen: VenueScreen } {
@@ -84,7 +83,8 @@ export function openRun(p: { bar?: string; claim?: string; step?: string }, runs
     const done = runs[key]?.profileId === p.claim ? (runs[key]?.done ?? []) : [];
     return { key, screen: resumeScreen(['find', ...done]) };
   }
-  return { key: 'new', screen: runs.new?.done.length ? resumeScreen(runs.new.done) : 'intro' };
+  // The home menu's "Run a bar? Set it up" (?step=find) skips the intro (Q35b).
+  return { key: 'new', screen: runs.new?.done.length ? resumeScreen(runs.new.done) : p.step === 'find' ? 'find' : 'intro' };
 }
 
 /**

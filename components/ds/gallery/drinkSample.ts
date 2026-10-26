@@ -62,6 +62,7 @@ export function sampleDrink(role: number): DatabaseItem {
     ice_build: null,
     picture: 'drawing',
     picture_url: null,
+    show_sketch: true,
     ice_per_serve_g: null,
     iced_capacity_ml: null,
     icon_key: null,

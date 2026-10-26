@@ -8,6 +8,8 @@ import { useDrinkCredit } from '@/hooks/useLineage';
 import { useSpecMatches } from '@/hooks/useSpecMatches';
 import { creditHint, creditLabel, nameCredit, type CreditStatus } from '@/lib/lineage';
 
+import { CoCreatorAnswers } from './CoCreatorAnswers';
+
 /** Credit status as a word, with what it means for screen readers. Colour is never the only signal. */
 export function CreditTag({ status }: { status: CreditStatus | null }) {
   const label = creditLabel(status);
@@ -37,40 +39,46 @@ export function DrinkCredit({ itemId }: { itemId: string }) {
   const drink = same && classic ? classic : own;
   if (!drink) return null;
   const parts = nameCredit(drink, drink.riff_of ?? drink.lineage_parent);
-  if (!parts.length) return null;
+  // Waiting and declined credits are this drink's own, even when it shows the classic's credit.
+  const answers = own ? <CoCreatorAnswers drink={own} /> : null;
+  if (!parts.length) return answers;
   const who = drink.creator ?? drink.origin_bar;
   const status = creditLabel(drink.credit_status);
 
   return (
-    <View style={styles.row}>
-      {who ? (
-        <View aria-hidden>
-          <UserAvatar uri={who.avatar_url} name={who.display_name} size={28} />
-        </View>
-      ) : null}
-      {/* The status rides at the end of the line as a word, so a long credit keeps the full width. */}
-      <Body tone="muted" style={styles.flex} accessibilityHint={creditHint(drink.credit_status) ?? undefined}>
-        {parts.map((p, i) =>
-          p.profileId || p.drinkId ? (
-            <DsText
-              key={i}
-              role="link"
-              style={styles.link}
-              onPress={() => router.push((p.profileId ? `/p/${p.profileId}` : `/cocktail/${p.drinkId}`) as Href)}
-            >
-              {p.text}
-            </DsText>
-          ) : (
-            p.text
-          )
-        )}
-        {status ? ` · ${status}` : ''}
-      </Body>
+    <View style={styles.stack}>
+      <View style={styles.row}>
+        {who ? (
+          <View aria-hidden>
+            <UserAvatar uri={who.avatar_url} name={who.display_name} size={28} />
+          </View>
+        ) : null}
+        {/* The status rides at the end of the line as a word, so a long credit keeps the full width. */}
+        <Body tone="muted" style={styles.flex} accessibilityHint={creditHint(drink.credit_status) ?? undefined}>
+          {parts.map((p, i) =>
+            p.profileId || p.drinkId ? (
+              <DsText
+                key={i}
+                role="link"
+                style={styles.link}
+                onPress={() => router.push((p.profileId ? `/p/${p.profileId}` : `/cocktail/${p.drinkId}`) as Href)}
+              >
+                {p.text}
+              </DsText>
+            ) : (
+              p.text
+            )
+          )}
+          {status ? ` · ${status}` : ''}
+        </Body>
+      </View>
+      {answers}
     </View>
   );
 }
 
 const styles = StyleSheet.create({
+  stack: { gap: space.md },
   row: { flexDirection: 'row', alignItems: 'center', gap: space.sm },
   flex: { flex: 1, minWidth: 0 },
   link: { textDecorationLine: 'underline' },

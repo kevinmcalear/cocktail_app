@@ -2965,6 +2965,7 @@ export type Database = {
           serve_abv: number | null
           serve_ml: number | null
           service_style: string | null
+          show_sketch: boolean
           sketch_liquid: string | null
           sketch_variant: string | null
           spec_from_id: string | null
@@ -3029,6 +3030,7 @@ export type Database = {
           serve_abv?: number | null
           serve_ml?: number | null
           service_style?: string | null
+          show_sketch?: boolean
           sketch_liquid?: string | null
           sketch_variant?: string | null
           spec_from_id?: string | null
@@ -3093,6 +3095,7 @@ export type Database = {
           serve_abv?: number | null
           serve_ml?: number | null
           service_style?: string | null
+          show_sketch?: boolean
           sketch_liquid?: string | null
           sketch_variant?: string | null
           spec_from_id?: string | null
@@ -5578,6 +5581,7 @@ export type Database = {
           serve_abv: number | null
           serve_ml: number | null
           service_style: string | null
+          show_sketch: boolean
           status: string | null
         }
         Relationships: [
@@ -5763,6 +5767,7 @@ export type Database = {
             serve_abv: number | null
             serve_ml: number | null
             service_style: string | null
+            show_sketch: boolean
             sketch_liquid: string | null
             sketch_variant: string | null
             spec_from_id: string | null
@@ -6605,6 +6610,7 @@ export type Database = {
           serve_abv: number | null
           serve_ml: number | null
           service_style: string | null
+          show_sketch: boolean
           sketch_liquid: string | null
           sketch_variant: string | null
           spec_from_id: string | null

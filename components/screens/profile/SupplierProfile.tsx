@@ -3,6 +3,7 @@ import { StyleSheet, View } from 'react-native';
 import { Body, Caption, Headline } from '@/components/ds';
 import { WebHead } from '@/components/WebHead';
 import { space } from '@/constants/tokens';
+import { useSignedIn } from '@/ctx/AuthContext';
 import { isUnclaimed, type Profile } from '@/hooks/useProfiles';
 import { useSupplierLines } from '@/hooks/useSuppliers';
 import { makesLine, servesLine } from '@/lib/makers';
@@ -23,6 +24,7 @@ export function SupplierProfile({ profile }: { profile: Profile }) {
   const unclaimed = isUnclaimed(profile);
   const place = [profile.locality, profile.city].filter(Boolean).join(', ');
   const serves = servesLine(profile.serves);
+  const signedIn = useSignedIn();
 
   return (
     <View style={styles.body}>
@@ -36,7 +38,8 @@ export function SupplierProfile({ profile }: { profile: Profile }) {
         <ProfileLinks profile={profile} align="start" />
       </View>
 
-      {unclaimed ? <ClaimProfile profile={profile} label="Your company? Claim this page" /> : null}
+      {/* Signed in, the claim is in More (Q33); signed out there's no More, so it stays here and asks to sign in. */}
+      {unclaimed && !signedIn ? <ClaimProfile profile={profile} label="Your company? Claim this page" /> : null}
 
       <View style={styles.section}>
         <View style={styles.title}>

@@ -11,6 +11,8 @@ import { foldName } from '@/lib/discover';
 import { STYLES } from '@/lib/drinkStyles';
 import { showOptions, type SearchScope, type SearchShow, type ShowCounts } from '@/lib/searchScope';
 
+import { CanMakeTag } from './CanMake';
+
 /**
  * "Little Rye ⌄": where the search looks, in glass at the head of the row over
  * the bottom field. A tap opens the places as a menu (search-starts-here):
@@ -121,6 +123,7 @@ export function TopHit({ name, itemId, imageUrl, glass, caption, line, score, qu
               {line}
             </Caption>
           ) : null}
+          <CanMakeTag itemId={itemId} />
         </View>
         <RowScore score={score} />
       </PressableScale>

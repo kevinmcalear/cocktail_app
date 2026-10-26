@@ -5,7 +5,7 @@ import { space } from '@/constants/tokens';
 import { parseTime, timeLabel, toTime, uses12Hour } from '@/lib/calendar';
 
 import { Chip } from './Chip';
-import { PickerCell, PickerField, pickerStyles } from './PickerField';
+import { PickerCell, PickerField, PickerPanel, pickerStyles } from './PickerField';
 import { Caption } from './Text';
 
 interface TimeFieldProps {
@@ -28,13 +28,9 @@ const HOURS = TWELVE ? [12, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11] : Array.from({ le
 const MINUTES = [0, 15, 30, 45];
 const rows = <T,>(list: T[], size: number) => Array.from({ length: Math.ceil(list.length / size) }, (_, i) => list.slice(i * size, i * size + size));
 
-/**
- * A labelled time, picked from hours and minutes that open under it, the
- * way the locale writes a clock (7 PM or 19:00). Pairs with DateField.
- */
-export function TimeField({ label, value, onChange, hint, error, bare, placeholder = 'Pick a time' }: TimeFieldProps) {
+/** The hours and minutes a time is picked from. Picking the minutes finishes (`onPicked`). */
+function TimeGrid({ value, onChange, onPicked }: { value: string; onChange: (time: string) => void; onPicked: () => void }) {
   const time = parseTime(value);
-  const [open, setOpen] = useState(!time);
   // The half of the day to show hours from, before an hour is picked.
   const [pmFallback, setPmFallback] = useState(true);
   const pm = time ? time.hour >= 12 : pmFallback;
@@ -47,11 +43,11 @@ export function TimeField({ label, value, onChange, hint, error, bare, placehold
   };
   const pickMinute = (m: number) => {
     onChange(toTime(time?.hour ?? hourOf(TWELVE ? 7 : 19), m));
-    setOpen(false);
+    onPicked();
   };
 
   return (
-    <PickerField label={label} text={time ? timeLabel(value) : null} placeholder={placeholder} open={open} onToggle={() => setOpen(!open)} hint={hint} error={error} bare={bare}>
+    <>
       {TWELVE ? (
         <View role="radiogroup" accessibilityLabel="AM or PM" style={styles.half}>
           <Chip label="AM" selected={!pm} onPress={() => setHalf(false)} quiet />
@@ -85,11 +81,61 @@ export function TimeField({ label, value, onChange, hint, error, bare, placehold
           <PickerCell key={m} label={`:${String(m).padStart(2, '0')}`} accessibilityLabel={`${m} minutes past`} selected={time?.minute === m} onPress={() => pickMinute(m)} />
         ))}
       </View>
+    </>
+  );
+}
+
+/**
+ * A labelled time, picked from hours and minutes that open under it, the
+ * way the locale writes a clock (7 PM or 19:00). Pairs with DateField.
+ */
+export function TimeField({ label, value, onChange, hint, error, bare, placeholder = 'Pick a time' }: TimeFieldProps) {
+  const time = parseTime(value);
+  const [open, setOpen] = useState(!time);
+  return (
+    <PickerField label={label} text={time ? timeLabel(value) : null} placeholder={placeholder} open={open} onToggle={() => setOpen(!open)} hint={hint} error={error} bare={bare}>
+      <TimeGrid value={value} onChange={onChange} onPicked={() => setOpen(false)} />
     </PickerField>
+  );
+}
+
+/**
+ * Opens and Closes side by side, with the picker under both at full width:
+ * under one half-width field, six hours a row didn't fit (E35, "looks broken").
+ */
+export function TimeRange({ value, onChange, labels = ['Opens', 'Closes'], name }: {
+  value: [string, string];
+  onChange: (value: [string, string]) => void;
+  labels?: [string, string];
+  /** Said with each field to a screen reader: "Weekdays opens". */
+  name?: string;
+}) {
+  const [open, setOpen] = useState<0 | 1 | null>(null);
+  const set = (i: 0 | 1) => (t: string) => onChange(i === 0 ? [t, value[1]] : [value[0], t]);
+  return (
+    <View style={styles.range}>
+      <View style={styles.pair}>
+        {([0, 1] as const).map((i) => (
+          <View key={i} style={styles.flex} aria-label={name ? `${name} ${labels[i].toLowerCase()}` : undefined}>
+            <PickerField detached label={labels[i]} text={parseTime(value[i]) ? timeLabel(value[i]) : null} placeholder="Pick a time" open={open === i} onToggle={() => setOpen(open === i ? null : i)}>
+              {null}
+            </PickerField>
+          </View>
+        ))}
+      </View>
+      {open !== null ? (
+        <PickerPanel>
+          <TimeGrid key={open} value={value[open]} onChange={set(open)} onPicked={() => setOpen(null)} />
+        </PickerPanel>
+      ) : null}
+    </View>
   );
 }
 
 const styles = StyleSheet.create({
   half: { flexDirection: 'row', gap: space.sm, padding: space.xs },
   heading: { paddingHorizontal: space.sm, paddingTop: space.sm },
+  range: { gap: space.sm },
+  pair: { flexDirection: 'row', gap: space.sm },
+  flex: { flex: 1, minWidth: 0 },
 });

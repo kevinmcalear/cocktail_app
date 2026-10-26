@@ -21,7 +21,7 @@ import { ProfileSafety } from '../safety/ProfileSafety';
  * it is, then claimed and how many have ranked; its score at the right (under
  * the name on a phone). The score shows once MIN_RANKERS people have ranked.
  */
-export function PublicBarHeader({ profile, place, claimed }: { profile: Profile; place: string; claimed: string }) {
+export function PublicBarHeader({ profile, place, claimed, numbers }: { profile: Profile; place: string; claimed: string; numbers?: string }) {
   const wide = useBreakpoint() !== 'phone';
   const { data } = useVenueScore(profile.id);
   const score = data?.score ?? null;
@@ -39,13 +39,15 @@ export function PublicBarHeader({ profile, place, claimed }: { profile: Profile;
     ) : null;
   return (
     <View style={styles.block}>
-      <View accessible accessibilityLabel={[profile.display_name, place, claimed, ranked, scoreLabel].filter(Boolean).join('. ')} style={styles.header}>
+      <View accessible accessibilityLabel={[profile.display_name, place, claimed, ranked, numbers, scoreLabel].filter(Boolean).join('. ')} style={styles.header}>
         {/* Its logo, else its venue's public Brand logo, else its initials in the venue's accent and face. */}
         <BarMark name={profile.display_name} logoUrl={profile.avatar_url} profileId={profile.id} size={size} />
         <View style={styles.name}>
           {wide ? <Display>{profile.display_name}</Display> : <Title>{profile.display_name}</Title>}
           {place ? <Body tone="muted" style={styles.place}>{place}</Body> : null}
           <Caption tone="muted">{[claimed, ranked].filter(Boolean).join(' · ')}</Caption>
+          {/* A phone's numbers, on one line (Q30 A). */}
+          {numbers ? <Caption tone="muted">{numbers}</Caption> : null}
         </View>
         {wide ? scoreBlock : null}
       </View>

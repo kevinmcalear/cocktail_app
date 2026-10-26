@@ -122,7 +122,8 @@ ON CONFLICT ("item_id") DO NOTHING;
 
 -- --- 4. Reading them back ---
 
--- As 20261113900000, with notes from item_notes.
+-- As 20261123200000_show_sketch, with notes from item_notes. Applied after it,
+-- so show_sketch stays.
 CREATE OR REPLACE VIEW "public"."app_item_presentation" WITH ("security_invoker" = true) AS
  SELECT c.id,
     c.name,
@@ -166,7 +167,8 @@ CREATE OR REPLACE VIEW "public"."app_item_presentation" WITH ("security_invoker"
       WHEN c.item_type = 'ingredient' AND c.picture = 'photo' AND private.item_picture_url(c.id) IS NOT NULL THEN 'photo'::public.item_picture
       ELSE 'drawing'::public.item_picture
     END AS picture,
-    CASE WHEN c.item_type = 'ingredient' THEN private.item_picture_url(c.id) END AS picture_url
+    CASE WHEN c.item_type = 'ingredient' THEN private.item_picture_url(c.id) END AS picture_url,
+    c.show_sketch
    FROM public.items c
      LEFT JOIN public.bars b ON c.bar_id = b.id
      LEFT JOIN public.user_bars ub ON ub.bar_id = c.bar_id AND ub.user_id = auth.uid()

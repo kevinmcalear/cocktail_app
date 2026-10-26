@@ -28,9 +28,16 @@ export function byDrink(rows: readonly Row[]): Record<string, VenueCanMake> {
   );
 }
 
-/** "Can make", "Missing 1: Cynar", else how many ("Missing 3"). */
+/**
+ * "Can make", or what's missing by name (board w3-can-make, A): "Missing 2:
+ * Suze, Lillet Blanc", and past the three the server names, "Missing 5:
+ * Cappelletti, Cynar, Prosecco and 2 more". With no names (hidden from the
+ * caller), just the count.
+ */
 export function canMakeLabel(v: VenueCanMake): string {
   if (v.canMake) return 'Can make';
-  const first = v.missing[0]?.name;
-  return v.missingCount === 1 && first ? `Missing 1: ${first}` : `Missing ${v.missingCount}`;
+  const names = v.missing.slice(0, 3).map((m) => m.name);
+  if (!names.length) return `Missing ${v.missingCount}`;
+  const rest = v.missingCount - names.length;
+  return `Missing ${v.missingCount}: ${names.join(', ')}${rest > 0 ? ` and ${rest} more` : ''}`;
 }

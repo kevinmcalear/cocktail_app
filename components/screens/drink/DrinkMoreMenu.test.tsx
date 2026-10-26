@@ -1,4 +1,4 @@
-import { screen } from '@testing-library/react-native';
+import { fireEvent, screen } from '@testing-library/react-native';
 import 'react-native-gesture-handler/jestSetup';
 
 import { BackbarTheme } from '@/components/ds';
@@ -31,4 +31,16 @@ test('a visitor gets Report only; the drink\'s own people get Edit on phones', a
 test('the drink\'s own people get Delete drink, at every width', async () => {
   expect(await moreLabel({ canEdit: true, wide: true, onDelete: () => {} })).toBe('More: delete');
   expect(await moreLabel({ canEdit: true, wide: false, onDelete: () => {} })).toBe('More: edit, delete');
+});
+
+test('View as is one row of role chips and one line on what the picked role sees', async () => {
+  await renderWithTamagui(
+    <BackbarTheme>
+      <DrinkMoreMenu itemId="pearl-diver" name="The Pearl Diver" canEdit onEdit={() => {}} wide teamRole={40} />
+    </BackbarTheme>
+  );
+  await fireEvent.press(screen.getByRole('button'));
+  expect(screen.getAllByRole('radio').map((r) => r.props.accessibilityLabel)).toEqual(['Guest', 'Employee', 'Bartender', 'Drink Creator', 'Admin (you)']);
+  expect(screen.getByText('Admin sees everything, including publishing. Pick a role to see the page as they do.')).toBeTruthy();
+  expect(screen.getByLabelText('Who sees what')).toBeTruthy();
 });

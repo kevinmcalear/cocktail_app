@@ -1,7 +1,7 @@
 // Checks for lib/setupChecklist.ts (owner-setup step 5). Run: npm run test:unit
 import assert from 'node:assert/strict';
 
-import { barSetUp, checklist, checklistIntro, kitNote } from './setupChecklist';
+import { barSetUp, checklist, checklistIntro, drinksNote, kitNote } from './setupChecklist';
 
 const none = { bar: false, kit: false, bottles: false, menu: false, drinks: false, team: false };
 
@@ -37,3 +37,9 @@ assert.equal(kitNote(0, 0, 0), undefined);
 assert.equal(kitNote(2, 0, 0), '2 glasses so far');
 assert.equal(kitNote(1, 2, 1), '1 glass, 2 ice, 1 tool so far');
 assert.equal(kitNote(0, 1, 3), '1 ice, 3 tools so far');
+
+// First drinks (E31): what's in the Library, and what an import still has to check.
+assert.equal(drinksNote(18, 28), '18 in your Library, 28 still to check');
+assert.equal(drinksNote(18, 0), '18 in your Library');
+assert.equal(drinksNote(0, 46), '46 still to check');
+assert.equal(drinksNote(0, 0), undefined);
