@@ -4,6 +4,7 @@ import { Body, Caption, Tag, Title, useBreakpoint } from '@/components/ds';
 import { UserAvatar } from '@/components/ui/UserAvatar';
 import { WebHead } from '@/components/WebHead';
 import { space } from '@/constants/tokens';
+import { useLikelyPerson } from '@/hooks/useLikelyClaimer';
 import type { Profile } from '@/hooks/useProfiles';
 
 import { MadeByList, useMadeBy, WorkedAt } from './MadeBy';
@@ -18,10 +19,12 @@ import { ThisIsMe } from './ThisIsMe';
  * when, then everything credited to them, grouped by bar and menu, and
  * their awards. Their bio and links stay, as on any profile. On a wide
  * screen "Are you Ash?" sits under the numbers and Made by beside them; on a
- * phone This is me and Not me are pinned to the bottom (ProfileScreen).
+ * phone This is me and Not me are pinned to the bottom (ProfileScreen). Both
+ * only for the likely person (Q33); everyone else has "Is this you?" in More.
  */
 export function UnclaimedPerson({ profile }: { profile: Profile }) {
   const wide = useBreakpoint() !== 'phone';
+  const likely = useLikelyPerson(profile);
   const made = useMadeBy(profile);
   const bar = made.positions.find((p) => p.is_current)?.bar.display_name;
   const place = [bar, profile.locality || profile.city].filter(Boolean).join(', ');
@@ -44,7 +47,7 @@ export function UnclaimedPerson({ profile }: { profile: Profile }) {
       {profile.bio ? <Body>{profile.bio}</Body> : null}
       <ProfileLinks profile={profile} align="start" />
       {wide ? <WorkedAt made={made} /> : null}
-      {wide ? <ThisIsMe profile={profile} /> : null}
+      {wide ? <ThisIsMe profile={profile} quiet={!likely} /> : null}
     </View>
   );
   return (

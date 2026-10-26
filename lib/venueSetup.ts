@@ -83,7 +83,8 @@ export function openRun(p: { bar?: string; claim?: string; step?: string }, runs
     const done = runs[key]?.profileId === p.claim ? (runs[key]?.done ?? []) : [];
     return { key, screen: resumeScreen(['find', ...done]) };
   }
-  return { key: 'new', screen: runs.new?.done.length ? resumeScreen(runs.new.done) : 'intro' };
+  // The home menu's "Run a bar? Set it up" (?step=find) skips the intro (Q35b).
+  return { key: 'new', screen: runs.new?.done.length ? resumeScreen(runs.new.done) : p.step === 'find' ? 'find' : 'intro' };
 }
 
 /**
