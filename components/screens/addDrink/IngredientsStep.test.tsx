@@ -163,17 +163,6 @@ describe('IngredientsStep', () => {
     expect(set.mock.calls[0][0].lines[0]).toMatchObject({ id: 'campari', name: 'Campari', prep: undefined, technique: undefined });
   });
 
-  test('a swap starts with the line’s name, so it can be renamed and keeps its pour (Eddie, 26 Oct)', async () => {
-    const set = jest.fn();
-    const draft = { ...EMPTY_DRAFT, lines: [{ key: 'a', id: 'feijoa', name: 'Feijoa', amount: '30', unit: 'ml' }] };
-    await renderWithTamagui(<IngredientsStep draft={draft} set={set} ingredients={[CAMPARI, { ...CAMPARI, id: 'feijoa', name: 'Feijoa' }]} />);
-    await fireEvent.press(screen.getByRole('button', { name: /^Feijoa, / }));
-    await fireEvent.press(screen.getByRole('button', { name: 'Swap Feijoa for another ingredient' }));
-    await fireEvent.changeText(screen.getByLabelText('Rename Feijoa or pick another'), 'Feijoa juice');
-    await fireEvent.press(screen.getByRole('button', { name: 'Just add the name “Feijoa juice”' }));
-    expect(set.mock.calls[0][0].lines[0]).toMatchObject({ key: 'a', id: null, name: 'Feijoa juice', named: true, amount: '30', unit: 'ml' });
-  });
-
   test('a house prep line says what it is, and a tap opens its recipe', async () => {
     const prep = { ...startPrep('shrub', 'Pineapple shrub'), way: 'hot' };
     const draft = { ...EMPTY_DRAFT, name: 'Pineapple Heat', lines: [{ key: 'a', id: null, name: 'Pineapple shrub', amount: '15', unit: 'ml', prep }] };

@@ -184,8 +184,9 @@ export function IngredientSearch(props: IngredientSearchProps) {
           returnKeyType="done"
           maxLength={80}
           onSubmitEditing={() => {
-            // Return does what the reading says it will (Looks right), not the catalog's top hit.
-            if (reading) {
+            // Return does what the reading says it will (Looks right), not the catalog's top hit. A swap left as it was keeps its line.
+            if (initial && text === initial) onCancel?.();
+            else if (reading) {
               onHouse?.({ id: reading.bottles[0].id, name: reading.bottles[0].name ?? reading.base }, reading, false, pour ?? undefined);
               done();
             } else if (results[0]) pick({ id: results[0].id, name: results[0].name ?? query });
@@ -202,7 +203,6 @@ export function IngredientSearch(props: IngredientSearchProps) {
           </PressableScale>
         ) : null}
       </View>
-
       {pour && q && !reading ? <Caption tone="muted">{`${pour.amount} ${typedUnit(q, pour.unit, getPreferredUnit())} of the one you pick`}</Caption> : null}
       {reading ? (
         <TypedLineCard
