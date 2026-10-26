@@ -13,7 +13,7 @@ import { photoCredit } from '@/lib/drinkPhotos';
 import { useAgeGate } from '../safety/AgeGate';
 import { ReportAction } from '../safety/ReportSheet';
 import { AddDrinkPhotoSheet } from './AddDrinkPhotoSheet';
-import { PhotoViewer } from './PhotoViewer';
+import { PictureViewer } from './PictureViewer';
 
 /**
  * People's photos of the drink, each credited ("Photo by Jo · ranked it
@@ -26,7 +26,8 @@ export function PeoplePhotos({ itemId, name, glass, wide }: { itemId: string; na
   const ageGate = useAgeGate();
   const remove = useDeleteDrinkPhoto(itemId);
   const [picked, setPicked] = useState<string | null>(null);
-  const [open, setOpen] = useState<DrinkPhoto | null>(null);
+  // The photo open full screen, by its place in the list: the viewer swipes to the others.
+  const [open, setOpen] = useState<number | null>(null);
   if (!signedIn) return null;
   // The native picker throws, killing the app, where there's no camera (simulators).
   const camera = Platform.OS !== 'web' && Device.isDevice;
@@ -51,12 +52,12 @@ export function PeoplePhotos({ itemId, name, glass, wide }: { itemId: string; na
       <Headline role="heading">Photos</Headline>
       {photos.length ? (
         <View style={styles.grid} role="list">
-          {photos.map((p) => (
+          {photos.map((p, i) => (
             <PressableScale
               key={p.id}
               role="button"
               accessibilityLabel={`${photoCredit(p)}. Open full screen`}
-              onPress={() => setOpen(p)}
+              onPress={() => setOpen(i)}
               style={[styles.tile, { width: wide ? '23%' : '48%' }]}
             >
               <DrinkImage source={p.imageUrl} glass={glass} accessibilityLabel={`${name}, ${photoCredit(p)}`} aspectRatio={4 / 5} radius="control" />
@@ -73,17 +74,22 @@ export function PeoplePhotos({ itemId, name, glass, wide }: { itemId: string; na
           {camera ? <Button label="Take one" icon="camera.fill" variant="ghost" onPress={() => choose(true)} /> : null}
         </View>
       )}
-      <PhotoViewer
-        photo={open ? { url: open.imageUrl, title: photoCredit(open) } : null}
+      <PictureViewer
+        pictures={photos.map((p) => ({ url: p.imageUrl, isSketch: false, isOutdated: false }))}
         name={name}
+        open={open !== null}
+        startIndex={open ?? 0}
         onClose={() => setOpen(null)}
-        actions={
-          open?.isMine ? (
-            <Button label="Delete photo" icon="trash" variant="secondary" disabled={remove.isPending} onPress={() => void deleteOpen(open)} />
-          ) : open ? (
-            <ReportAction subject={`this photo of ${name}`} targets={[{ label: 'this photo', target: { kind: 'photo', photoId: open.id, itemId } }]} onMedia />
-          ) : null
-        }
+        caption={(i) => (photos[i] ? photoCredit(photos[i]) : '')}
+        actions={(i) => {
+          const photo = photos[i];
+          if (!photo) return null;
+          return photo.isMine ? (
+            <Button label="Delete photo" icon="trash" variant="secondary" disabled={remove.isPending} onPress={() => void deleteOpen(photo)} />
+          ) : (
+            <ReportAction subject={`this photo of ${name}`} targets={[{ label: 'this photo', target: { kind: 'photo', photoId: photo.id, itemId } }]} onMedia />
+          );
+        }}
       />
       {picked ? <AddDrinkPhotoSheet itemId={itemId} name={name} uri={picked} onClose={() => setPicked(null)} /> : null}
       {ageGate.sheet}

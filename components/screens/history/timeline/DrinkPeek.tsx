@@ -1,5 +1,6 @@
 import { useRouter, type Href } from 'expo-router';
-import { StyleSheet, View } from 'react-native';
+import { useRef, useState } from 'react';
+import { Platform, StyleSheet, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import { BackbarTheme, Body, Button, Caption, DrinkImage, PressableScale, RowScore, Sheet, SheetScrollView, Title, useDs } from '@/components/ds';
@@ -25,6 +26,8 @@ interface PeekProps {
   threadOn: boolean;
   /** Show or hide its thread; left out in the desktop inspector, which always shows it. */
   onThread?: () => void;
+  /** Open a page: the peek closes first. Pushes straight away without. */
+  onGo?: (href: Href) => void;
 }
 
 /**
@@ -32,9 +35,10 @@ interface PeekProps {
  * person who made it, the bar it was first poured at, and its thread back to
  * the punch bowl.
  */
-export function DrinkDetail({ node, from, kids, byMaker, threadOn, onThread }: PeekProps) {
+export function DrinkDetail({ node, from, kids, byMaker, threadOn, onThread, onGo }: PeekProps) {
   const ds = useDs();
   const router = useRouter();
+  const go = onGo ?? ((href: Href) => router.push(href));
   const style = node.kind === 'style';
   const ids = style ? [] : [node.id];
   const city = useDrinkSources(ids).data?.[node.id]?.city;
@@ -65,11 +69,11 @@ export function DrinkDetail({ node, from, kids, byMaker, threadOn, onThread }: P
         </Caption>
         {onThread ? <Button label={threadOn ? 'Hide its thread' : 'Show its thread'} icon="arrow.uturn.backward" variant="secondary" onPress={onThread} /> : null}
       </View>
-      {style ? null : <Button label={`Open ${node.name}`} size="lg" onPress={() => router.push(drinkHref(node.id))} />}
+      {style ? null : <Button label={`Open ${node.name}`} size="lg" onPress={() => go(drinkHref(node.id))} />}
       {node.creatorId || node.barId ? (
         <View style={styles.dests}>
           {node.creatorId && node.creator ? (
-            <PressableScale role="link" accessibilityLabel={`${node.creator}'s profile`} onPress={() => router.push(profileHref(node.creatorId!))} style={[styles.dest, { backgroundColor: ds.c.raised }]}>
+            <PressableScale role="link" accessibilityLabel={`${node.creator}'s profile`} onPress={() => go(profileHref(node.creatorId!))} style={[styles.dest, { backgroundColor: ds.c.raised }]}>
               <UserAvatar name={node.creator} size={32} />
               <View style={styles.flex}>
                 <Caption numberOfLines={1} style={styles.destName}>
@@ -80,7 +84,7 @@ export function DrinkDetail({ node, from, kids, byMaker, threadOn, onThread }: P
             </PressableScale>
           ) : null}
           {node.barId && node.bar ? (
-            <PressableScale role="link" accessibilityLabel={`${node.bar}'s profile`} onPress={() => router.push(profileHref(node.barId!))} style={[styles.dest, { backgroundColor: ds.c.raised }]}>
+            <PressableScale role="link" accessibilityLabel={`${node.bar}'s profile`} onPress={() => go(profileHref(node.barId!))} style={[styles.dest, { backgroundColor: ds.c.raised }]}>
               <View style={[styles.barMark, { backgroundColor: ds.c.surface }]}>
                 <IconSymbol name="building.2" size={16} color={ds.c.muted} />
               </View>
@@ -98,14 +102,34 @@ export function DrinkDetail({ node, from, kids, byMaker, threadOn, onThread }: P
   );
 }
 
-/** The phone's peek: DrinkDetail in a sheet over the timeline. */
+/**
+ * The phone's peek: DrinkDetail in a sheet over the timeline. A page opens
+ * once the sheet has gone: pushed under the open Modal on iOS, the Modal
+ * stayed up unseen and the timeline took no taps after Back (E47, 26 Oct 2026).
+ */
 export function PeekSheet({ onClose, ...props }: PeekProps & { onClose: () => void }) {
   const insets = useSafeAreaInsets();
+  const router = useRouter();
+  const [open, setOpen] = useState(true);
+  // A ref: iOS calls onDismiss from the Modal, after the render that closed it.
+  const then = useRef<Href | null>(null);
+  const run = () => {
+    const href = then.current;
+    if (!href) return;
+    then.current = null;
+    onClose();
+    router.push(href);
+  };
+  const go = (href: Href) => {
+    then.current = href;
+    setOpen(false);
+    if (Platform.OS !== 'ios') run();
+  };
   return (
     <BackbarTheme>
-      <Sheet visible onClose={onClose} accessibilityLabel={props.node.name} style={[styles.sheet, { paddingBottom: insets.bottom + space.lg }]}>
+      <Sheet visible={open} onClose={onClose} onDismiss={run} accessibilityLabel={props.node.name} style={[styles.sheet, { paddingBottom: insets.bottom + space.lg }]}>
         <SheetScrollView contentContainerStyle={styles.body}>
-          <DrinkDetail {...props} />
+          <DrinkDetail {...props} onGo={go} />
         </SheetScrollView>
       </Sheet>
     </BackbarTheme>

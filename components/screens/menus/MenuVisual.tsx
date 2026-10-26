@@ -1,6 +1,6 @@
 import { Image } from 'expo-image';
 import { LinearGradient } from 'expo-linear-gradient';
-import { useState } from 'react';
+import { useEffect, useLayoutEffect, useRef, useState, type ComponentRef } from 'react';
 import { ScrollView, StyleSheet, View } from 'react-native';
 
 import { DrinkImage, useDs } from '@/components/ds';
@@ -19,27 +19,48 @@ interface MenuVisualProps {
   height: number;
   /** Fades into the page below (the menu page on phones). */
   fade?: boolean;
-  /** Every drink, scrolled sideways, when there are more than fit (the menu page; Eddie, 14 Oct). */
+  /** Every drink, scrolled sideways, when there are more than fit (the menu page; Eddie, 14 Oct). Past the last it comes round to the first (E40). */
   scroll?: boolean;
 }
+
+/** How long the band must be still before a scroll past either end jumps back into the middle. */
+const SETTLE_MS = 150;
 
 /**
  * A menu's picture: its own photo, or with none, its first drinks side by
  * side, each its own photo or sketch. Nothing when it has neither. With
- * `scroll` and more drinks than fit, all of them, three and a half across.
+ * `scroll` and more drinks than fit, all of them, three and a half across,
+ * coming round to the first again after the last.
  */
 export function MenuVisual({ name, coverUrl, coverPosition = 50, pictures, height, fade, scroll }: MenuVisualProps) {
   const ds = useDs();
   const [width, setWidth] = useState(0);
+  const band = useRef<ComponentRef<typeof ScrollView>>(null);
+  const settle = useRef<ReturnType<typeof setTimeout>>(undefined);
   const scrolls = scroll && !coverUrl && pictures.length > SHOWN;
   const shown = scrolls ? pictures : pictures.slice(0, SHOWN);
+  const tile = width / (SHOWN - 0.5);
+  // A loop: the last few drinks again before the first and the first few after the last. It opens on the first.
+  const looped = scrolls ? [...pictures.slice(-SHOWN), ...pictures, ...pictures.slice(0, SHOWN)] : shown;
+  useLayoutEffect(() => {
+    if (scrolls && tile) band.current?.scrollTo({ x: SHOWN * tile, animated: false });
+  }, [scrolls, tile]);
+  useEffect(() => () => clearTimeout(settle.current), []);
   if (!coverUrl && !shown.length) return null;
+  // Once it stops on a copy, the same drink in the middle, unseen.
+  const onScroll = (x: number) => {
+    clearTimeout(settle.current);
+    settle.current = setTimeout(() => {
+      const jump = x < SHOWN * tile - 1 ? pictures.length * tile : x > (SHOWN + pictures.length) * tile - 1 ? -pictures.length * tile : 0;
+      if (jump) band.current?.scrollTo({ x: x + jump, animated: false });
+    }, SETTLE_MS);
+  };
   const sketched = !coverUrl && shown.some((p) => !p.imageUrl || p.isSketch);
-  const tiles = shown.map((p, i) => (
+  const tiles = looped.map((p, i) => (
     // Faint ink dividers on the paper, and none under a fade (they ran on as dark lines through the title).
     <View
-      key={p.id}
-      style={[scrolls ? { width: width / (SHOWN - 0.5), height } : styles.tile, i > 0 && !fade && { borderLeftWidth: StyleSheet.hairlineWidth, borderColor: withAlpha(ds.c.sketchInk, 0.18) }]}
+      key={`${i}:${p.id}`}
+      style={[scrolls ? { width: tile, height } : styles.tile, i > 0 && !fade && { borderLeftWidth: StyleSheet.hairlineWidth, borderColor: withAlpha(ds.c.sketchInk, 0.18) }]}
     >
       <DrinkImage
         source={p.imageUrl}
@@ -64,7 +85,15 @@ export function MenuVisual({ name, coverUrl, coverPosition = 50, pictures, heigh
       ) : scrolls ? (
         // Measured first, so each drink is a share of the band.
         width ? (
-          <ScrollView horizontal showsHorizontalScrollIndicator={false} snapToInterval={width / (SHOWN - 0.5)} decelerationRate="fast">
+          <ScrollView
+            ref={band}
+            horizontal
+            showsHorizontalScrollIndicator={false}
+            snapToInterval={tile}
+            decelerationRate="fast"
+            scrollEventThrottle={32}
+            onScroll={(e) => onScroll(e.nativeEvent.contentOffset.x)}
+          >
             {tiles}
           </ScrollView>
         ) : null
