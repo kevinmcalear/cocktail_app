@@ -1,7 +1,7 @@
 import assert from 'node:assert/strict';
 
 import { EMPTY_DRAFT } from './drinkWizard';
-import { addMaker, askLines, asked, makers, removeMaker } from './whoMadeIt';
+import { addMaker, askLines, askShort, asked, makers, removeMaker } from './whoMadeIt';
 
 const ME = { id: 'p-jo', name: 'Jo Park' };
 const SAM = { id: 'p-sam', name: 'Sam Ortiz', sub: '@sam.ortiz · Little Rye', claimed: true };
@@ -46,3 +46,8 @@ assert.deepEqual(asked(d, ME), []);
 assert.deepEqual(askLines([{ ...SAM, me: false }, { id: 'p-a', name: 'Ash Lee', me: false }]), ['We’ll ask Sam and Ash first. Each name shows on the drink once they say yes.']);
 // No profile of your own: nobody is you.
 assert.deepEqual(makers({ creator: null, coCreators: [] }, null), []);
+
+// Review says it in one line.
+assert.equal(askShort([{ ...SAM, me: false }]), 'We’ll ask Sam first.');
+assert.equal(askShort([{ ...SAM, me: false }, { ...CW, me: false }]), 'We’ll ask Sam and Christine first.');
+assert.equal(askShort([]), null);

@@ -67,6 +67,11 @@ export function askLines(people: readonly Maker[]): string[] {
   return lines;
 }
 
+/** Review's Credits row (board w3-credits-to-check): "We'll ask Sam first." */
+export function askShort(people: readonly Maker[]): string | null {
+  return people.length ? `We’ll ask ${joinNames(people.map((p) => firstName(p.name)))} first.` : null;
+}
+
 function toPick(m: Maker): CreditPick {
   const { me: _me, ...pick } = m;
   return pick;
