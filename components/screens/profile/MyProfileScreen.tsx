@@ -173,7 +173,7 @@ function MakeProfile() {
   const handle = normalizeHandle(draft.handle);
   return (
     <View style={styles.page}>
-      <Field label="Name" value={draft.name} onChangeText={(name) => edit({ name })} error={errors.name} autoComplete="name" maxLength={80} />
+      <Field label="Name" value={draft.name} onChangeText={(name) => edit({ name })} error={errors.name} autoComplete="name" autoCapitalize="words" maxLength={80} />
       <Field
         label="Handle"
         value={draft.handle}

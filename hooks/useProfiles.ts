@@ -12,7 +12,7 @@ import { runDates, sortEditions, type MenuDates, type MenuEdition, type MenuEdit
 import type { ItemImageLink } from '@/lib/itemImages';
 import type { CreditProfile, CreditStatus, LineageDrink, ProfileKind } from '@/lib/lineage';
 import type { PageVisibility } from '@/lib/pageVisibility';
-import { groupMenuCredits, parseProfileRef, profileQueryShows, type MenuCredit, type MenuDrinkRow, type ProfileChange, type ShareMode, type ShareSection } from '@/lib/profiles';
+import { groupMenuCredits, parseProfileRef, personSearchFilter, profileQueryShows, type MenuCredit, type MenuDrinkRow, type ProfileChange, type ShareMode, type ShareSection } from '@/lib/profiles';
 import { jsonAs, supabase } from '@/lib/supabase';
 import type { MenuDrink } from '@/types/menus';
 
@@ -704,15 +704,17 @@ type PersonRow = Omit<PublicPerson, 'job' | 'current_bar' | 'worked'> & {
   jobs: { title: string | null; is_current: boolean; is_shown: boolean; is_hidden: boolean; person_accepted: boolean; bar_accepted: boolean; bar: { display_name: string } | null }[] | null;
 };
 
-/** Public people by name, so someone can find a profile we already have. */
+/** Public people by name or @handle, so someone can find a profile we already have. */
 export function usePublicPeople(search: string, { near = false }: { near?: boolean } = {}) {
-  const term = search.replace(/[%_\\]/g, '').trim();
+  const typed = search.trim().replace(/^@/, '');
+  // The close-names lookup gets plain words; the name and handle match takes what was typed.
+  const term = typed.replace(/[%_\\]/g, '').trim();
   // A picker asks for close names too ("dayle degrof": Dale DeGroff), marked `near`; they need an account.
   const userId = useUserId();
   const close = near && !!userId;
   return useQuery({
-    queryKey: ['public-people', term, close],
-    enabled: term.length >= 2,
+    queryKey: ['public-people', typed.toLowerCase(), close],
+    enabled: typed.length >= 2,
     queryFn: async ({ signal }): Promise<MaybeNear<PublicPerson>[]> => {
       const read = async (ids?: string[]): Promise<PublicPerson[]> => {
         const q = supabase
@@ -720,7 +722,7 @@ export function usePublicPeople(search: string, { near = false }: { near?: boole
           .select('id, handle, display_name, city, is_claimed, jobs:profile_positions!person_profile_id(title, is_current, is_shown, is_hidden, person_accepted, bar_accepted, bar:profiles!bar_profile_id(display_name))')
           .eq('kind', 'person')
           .eq('is_public', true);
-        const { data, error } = await (ids ? q.in('id', ids) : q.ilike('display_name', `%${term}%`).order('display_name').limit(8)).abortSignal(signal);
+        const { data, error } = await (ids ? q.in('id', ids) : q.or(personSearchFilter(typed)).order('display_name').limit(8)).abortSignal(signal);
         if (error) throw error;
         return ((data ?? []) as unknown as PersonRow[]).map(({ jobs, ...p }) => {
           // Jobs both sides confirmed, as the profile shows them.
