@@ -1,10 +1,11 @@
-import { useRouter } from 'expo-router';
+import { useNavigation, useRouter } from 'expo-router';
 import { Linking, StyleSheet, View } from 'react-native';
 
 import { Body, Button, Caption, Display, PressableScale, Tag } from '@/components/ds';
 import { useMenuEditionDrinks, useMenuEditions, useProfile } from '@/hooks/useProfiles';
 import { editionDates, editionMenuDrinks, editionSections, menuRange, menuState } from '@/lib/menuEditions';
 import { plural } from '@/lib/menus';
+import { screenBelow } from '@/lib/screenBelow';
 
 import { SaveMenuButton } from '../kept/SaveMenuButton';
 import { MenuSections } from '../menus/MenuSections';
@@ -18,6 +19,7 @@ import { loadFailure, PublicMissing, PublicShell } from '../published/PublicShel
  */
 export function MenuEditionScreen({ profileRef, editionId }: { profileRef: string; editionId: string }) {
   const router = useRouter();
+  const navigation = useNavigation();
   const profile = useProfile(profileRef);
   const editions = useMenuEditions(profile.data?.id);
   const edition = editions.data?.find((e) => e.id === editionId);
@@ -30,10 +32,21 @@ export function MenuEditionScreen({ profileRef, editionId }: { profileRef: strin
   const cover = drinks.find((d) => d.imageUrl && !d.isSketch)?.imageUrl ?? null;
   const source = edition.source_url;
   const dates = editionDates(edition);
+  const barHref = `/p/${bar.handle || bar.id}` as const;
+  const below = () => screenBelow(navigation.getState(), { id: profileRef, edition: editionId });
+  // Nothing under it (opened from a link): Back goes to the bar's page.
+  const back = () => (below() ? router.back() : router.replace(barHref));
+  // Opened from the bar's Menus tab, From goes back to that page rather than stacking a second copy.
+  const toBar = () => {
+    const under = below();
+    const id = (under?.params as { id?: unknown } | undefined)?.id;
+    if (under?.name === 'p/[id]/index' && typeof id === 'string' && [bar.id, bar.handle, profileRef].includes(id)) router.back();
+    else router.push(barHref);
+  };
 
   return (
-    <PublicShell title={edition.name} imageUrl={cover}>
-      <PressableScale role="link" accessibilityLabel={`From ${bar.display_name}, open their profile`} onPress={() => router.push(`/p/${bar.handle}`)} style={styles.start}>
+    <PublicShell title={edition.name} imageUrl={cover} onBack={back}>
+      <PressableScale role="link" accessibilityLabel={`From ${bar.display_name}, open their profile`} onPress={toBar} style={styles.start}>
         <Tag label={`From ${bar.display_name}`} tone="accent" />
       </PressableScale>
       {menuState(dates) === 'past' ? <Tag label="Past menu" style={styles.start} /> : null}
