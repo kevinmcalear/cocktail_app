@@ -11,9 +11,9 @@ jest.mock('expo-router', () => ({ useRouter: () => ({ push: jest.fn() }), usePre
 jest.mock('@/hooks/useNearIngredients', () => ({ useNearIngredients: () => [] }));
 jest.mock('@/hooks/useActiveVenue', () => ({ useActiveVenue: () => ({ active: null, venues: [] }) }));
 jest.mock('@/hooks/useMode', () => ({ useMode: () => ({ mode: 'home' }) }));
-jest.mock('../../drink/edit/EditSpecList', () => {
+jest.mock('../../drink/edit/EditLines', () => {
   const { Text } = jest.requireActual<typeof import('react-native')>('react-native');
-  return { EditSpecList: ({ title, aside }: { title: string; aside?: string }) => <Text>{[title, aside].filter(Boolean).join(' · ')}</Text> };
+  return { EditLines: ({ title, aside }: { title: string; aside?: string }) => <Text>{[title, aside].filter(Boolean).join(' · ')}</Text> };
 });
 // The venue rows read the venue's data: covered where they're used.
 jest.mock('./EditSections', () => ({ ...jest.requireActual('./EditSections'), WhereEdit: () => null, WhoSees: () => null }));
@@ -53,7 +53,7 @@ const TAGS = [
 function editWith(form: IngredientForm, set: jest.Mock, setPrep = jest.fn()) {
   const prep = prepFields({ prep: { yield_amount: 750, yield_unit: 'ml', shelf_life_hours: 672, lead_time_minutes: 20, lead_time_note: null, storage: 'Fridge', actions: [] }, steps: [{ body: 'Heat the honey', timer_seconds: null }] });
   return {
-    editor: { form, set, setRecipeItems: jest.fn(), role: null, selfId: 'i1', dropdowns: { ingredients: [] } },
+    editor: { form, set, setRecipeItems: jest.fn(), role: null, selfId: 'i1', dropdowns: { ingredients: [] }, catalog: [] },
     prep,
     setPrep,
     onPending: jest.fn(),
@@ -61,7 +61,7 @@ function editWith(form: IngredientForm, set: jest.Mock, setPrep = jest.fn()) {
 }
 
 const render = (edit: IngredientEdit, isPrep: boolean, onSheet = jest.fn()) =>
-  renderWithTamagui(<EditBody edit={edit} savedId="i1" isPrep={isPrep} wide={false} venueName={null} used={3} spiritTags={TAGS} onSheet={onSheet} onAmount={jest.fn()} onSwap={jest.fn()} />);
+  renderWithTamagui(<EditBody edit={edit} savedId="i1" isPrep={isPrep} wide={false} venueName={null} used={3} spiritTags={TAGS} onSheet={onSheet} selfId="i1" />);
 
 describe('EditBody', () => {
   test('a bottle edits what it is and its tags, no recipe', async () => {
