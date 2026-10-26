@@ -54,19 +54,7 @@ export function CreditRows({ credits }: { credits: CreditToCheck[] }) {
   return (
     <View role="list" aria-label="Credits to check">
       {credits.map((c, i) => (
-        <View
-          key={c.item_id}
-          role="listitem"
-          style={[
-            styles.row,
-            i
-              ? {
-                  borderTopColor: ds.c.line,
-                  borderTopWidth: StyleSheet.hairlineWidth,
-                }
-              : null,
-          ]}
-        >
+        <View key={c.item_id} role="listitem" style={[styles.row, i ? { borderTopColor: ds.c.line, borderTopWidth: StyleSheet.hairlineWidth } : null]}>
           <DrinkImage itemId={c.item_id} accessibilityLabel={c.name} thumb sketchDetail="thumb" radius="control" style={styles.thumb} />
           <View style={styles.flex}>
             <DsText variant="headline" role="link" numberOfLines={2} onPress={() => router.push(drinkHref(c) as Href)}>
@@ -76,14 +64,7 @@ export function CreditRows({ credits }: { credits: CreditToCheck[] }) {
             {c.bar_name ? <Caption tone="muted">{c.bar_name}</Caption> : null}
             <View style={styles.actions}>
               <Button label="Accept" size="sm" disabled={answer.isPending} accessibilityLabel={`Accept ${c.name}`} onPress={() => answer.mutate({ itemId: c.item_id, accept: true })} />
-              <Button
-                label="Not me"
-                size="sm"
-                variant="secondary"
-                disabled={answer.isPending}
-                accessibilityLabel={`Not me, ${c.name}`}
-                onPress={() => answer.mutate({ itemId: c.item_id, accept: false })}
-              />
+              <Button label="Not me" size="sm" variant="secondary" disabled={answer.isPending} accessibilityLabel={`Not me, ${c.name}`} onPress={() => answer.mutate({ itemId: c.item_id, accept: false })} />
             </View>
             {answer.error && answer.variables?.itemId === c.item_id ? (
               <Caption tone="accent" role="alert">
@@ -97,11 +78,7 @@ export function CreditRows({ credits }: { credits: CreditToCheck[] }) {
   );
 }
 
-const CATEGORY: Partial<Record<CreditToCheck['item_type'], ItemCategory>> = {
-  beer: 'Beer',
-  wine: 'Wine',
-  ingredient: 'Ingredient',
-};
+const CATEGORY: Partial<Record<CreditToCheck['item_type'], ItemCategory>> = { beer: 'Beer', wine: 'Wine', ingredient: 'Ingredient' };
 
 function drinkHref(c: CreditToCheck): string {
   return itemHref(CATEGORY[c.item_type], c.item_id);
@@ -111,25 +88,8 @@ const styles = StyleSheet.create({
   card: { gap: space.sm },
   head: { flexDirection: 'row', alignItems: 'center', gap: space.sm },
   flex: { flex: 1, minWidth: 0, gap: space.xs },
-  row: {
-    flexDirection: 'row',
-    alignItems: 'flex-start',
-    gap: space.md,
-    paddingVertical: space.md,
-  },
+  row: { flexDirection: 'row', alignItems: 'flex-start', gap: space.md, paddingVertical: space.md },
   thumb: { width: 52, height: 52 },
-  actions: {
-    flexDirection: 'row',
-    flexWrap: 'wrap',
-    gap: space.sm,
-    marginTop: space.sm,
-  },
-  all: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: space.xs,
-    paddingTop: space.md,
-    borderTopWidth: StyleSheet.hairlineWidth,
-    minHeight: 44,
-  },
+  actions: { flexDirection: 'row', flexWrap: 'wrap', gap: space.sm, marginTop: space.sm },
+  all: { flexDirection: 'row', alignItems: 'center', gap: space.xs, paddingTop: space.md, borderTopWidth: StyleSheet.hairlineWidth, minHeight: 44 },
 });

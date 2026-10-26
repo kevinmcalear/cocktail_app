@@ -33,16 +33,7 @@ function Credits() {
       <WebHead>
         <title>Credits to check</title>
       </WebHead>
-      <ScrollView
-        contentContainerStyle={[
-          styles.content,
-          {
-            paddingTop: insets.top + (sidebar ? space.xxl : space.sm),
-            paddingHorizontal: gutter,
-            paddingBottom: insets.bottom + space.xxxl,
-          },
-        ]}
-      >
+      <ScrollView contentContainerStyle={[styles.content, { paddingTop: insets.top + (sidebar ? space.xxl : space.sm), paddingHorizontal: gutter, paddingBottom: insets.bottom + space.xxxl }]}>
         {sidebar ? null : (
           <View style={styles.top}>
             <GlassButton icon="chevron.left" accessibilityLabel="Back" onPress={() => (router.canGoBack() ? router.back() : router.replace('/you'))} />
@@ -61,12 +52,7 @@ function Credits() {
 
 const styles = StyleSheet.create({
   screen: { flex: 1 },
-  content: {
-    gap: space.lg,
-    width: '100%',
-    maxWidth: layout.page.text,
-    alignSelf: 'center',
-  },
+  content: { gap: space.lg, width: '100%', maxWidth: layout.page.text, alignSelf: 'center' },
   top: { flexDirection: 'row' },
   title: { gap: space.sm },
 });
