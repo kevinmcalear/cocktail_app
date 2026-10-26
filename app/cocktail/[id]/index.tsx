@@ -42,6 +42,8 @@ export default function CocktailDetailsScreen() {
 
     const editAccess = useItemEditAccess(cocktail);
     const [isEditing, setIsEditing] = useState(false);
+    // Fit it to the glass opens the editor on its sheet.
+    const [fitOnOpen, setFitOnOpen] = useState(false);
 
     // Not yours to read (another bar's drink): signed in, the in-app page from what the bar published; else its public page.
     if ((error as { code?: string } | null)?.code === "PGRST116") return signedIn ? <VisitorDrink id={id as string} /> : <Redirect href={`/d/${id}`} />;
@@ -56,6 +58,7 @@ export default function CocktailDetailsScreen() {
                 canEdit={editAccess === "edit"}
                 adminFix={editAccess === "admin"}
                 onEdit={() => setIsEditing(true)}
+                onFit={() => (setFitOnOpen(true), setIsEditing(true))}
                 openBatch={batch === "1"}
                 sheet
             />
@@ -66,7 +69,7 @@ export default function CocktailDetailsScreen() {
 
     return (
         <Suspense fallback={null}>
-            <DrinkEditScreen id={id as string} onExit={() => setIsEditing(false)} />
+            <DrinkEditScreen id={id as string} onExit={() => (setFitOnOpen(false), setIsEditing(false))} openFit={fitOnOpen} />
         </Suspense>
     );
 }

@@ -44,6 +44,8 @@ export function useHomeGlassware() {
         source_urls: [],
         supplier_id: null,
         supplier_name: null,
+        // Fit it to the glass is a venue's: home glasses have no wash line.
+        wash_line_ml: null,
         bar_name: '',
       }));
     },

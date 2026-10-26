@@ -8,6 +8,7 @@ import { useActiveVenue } from '@/hooks/useActiveVenue';
 import { useClassicCopy } from '@/hooks/useClassicCopy';
 import { useDrinkOnMenu } from '@/hooks/useDrinkOnMenu';
 import { useLineage } from '@/hooks/useLineage';
+import { useItemGlassFill } from '@/hooks/useGlassFill';
 import { useDrinkMenuRuns } from '@/hooks/useProfiles';
 import { useEffectiveRole } from '@/hooks/useViewAs';
 import type { ItemImageLink } from '@/lib/itemImages';
@@ -26,6 +27,7 @@ import { Backstory } from './Backstory';
 import { CostSection } from './CostSection';
 import { DrinkCredit } from './DrinkCredit';
 import { DrinkFacts, DrinkTags, type Fact } from './DrinkFacts';
+import { FitGlassNote } from './FitGlass';
 import { FlavorSection } from './FlavorSection';
 import { ForTheFloor } from './ForTheFloor';
 import { HistorySection } from './HistorySection';
@@ -66,6 +68,8 @@ export interface DrinkBodyProps {
   toMake: { saved: boolean; toggle: () => void };
   actions: DrinkActions;
   onRiff: (() => void) | null;
+  /** The drink's editors: Fit it to the glass. */
+  onFit?: (() => void) | null;
   /** Under Make a riff: where the riff starts and what it's credited as. */
   riffNote: string;
   /** The drink's venue, when you're on its team: "Autumn menu at Little Rye". */
@@ -101,6 +105,8 @@ export function useDrinkSections(p: DrinkBodyProps) {
   // A catalog classic's notes are its story, not a method (board drink-phone-classic draws a short method line): Backstory keeps them.
   const catalog = !!useLineage(live ? item.id : null).data?.drink?.is_catalog;
   const method = item.notes && !lock && !catalog ? item.notes : null;
+  // How full the venue's glass comes, for its team (QA Q38).
+  const fill = useItemGlassFill(staff && live && !lock && access.amounts ? item : null, lines);
 
   // The spec, then method, glass, ice and garnish, then the steps: one recipe, read top to bottom.
   const make = <MakeLine facts={p.make} />;
@@ -117,6 +123,7 @@ export function useDrinkSections(p: DrinkBodyProps) {
     <AtHomeSpec item={item} lines={lines} recipes={recipes} method={method} make={make} onSwap={p.actions.made} />
   ) : (
     <SpecSection itemId={item.id} barId={item.bar_id} recipes={recipes} preview={preview} caption={copy?.barName ? `With ${copy.barName}'s bottles` : null} make={make} riff={p.onRiff ? { onPress: p.onRiff, note: p.riffNote } : null}>
+      <FitGlassNote result={fill} onFit={p.onFit ?? undefined} />
       {method ? <Body>{method}</Body> : null}
     </SpecSection>
   );

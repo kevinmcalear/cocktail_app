@@ -45,6 +45,8 @@ export interface BarGlass {
   /** Its own shape, traced from the venue's photo (Draw my glass, 20261118500000), and the capacity they typed to size it. */
   outline: GlassOutline | null;
   capacity_ml: number | null;
+  /** What its drinks fill it to (20261122400000); null reads from the capacity (lib/glassFill.ts washLine). */
+  wash_line_ml: number | null;
   /** The photo it was traced from, private (the glass-photos bucket). */
   photo_path: string | null;
   /** The bar's name, for "Little Rye uses this". */
@@ -65,7 +67,7 @@ async function fetchBarGlassware(barId: string): Promise<BarGlass[]> {
   const { data, error } = await supabase
     .from('bar_glassware')
     .select(
-      `id, glass, variant, name, maker, maker_profile_id, designer, series, shape_note, source_urls, is_default, source, supplier_id, count, outline, capacity_ml, photo_path, supplier:suppliers(name), model_id, model:glass_models!bar_glassware_model_id_fkey(${GLASS_MODEL_SELECT}), profiles:profiles!bar_glassware_profile_id_fkey!inner(bar_id, display_name), maker_page:profiles!bar_glassware_maker_profile_id_fkey(handle, display_name)`
+      `id, glass, variant, name, maker, maker_profile_id, designer, series, shape_note, source_urls, is_default, source, supplier_id, count, outline, capacity_ml, wash_line_ml, photo_path, supplier:suppliers(name), model_id, model:glass_models!bar_glassware_model_id_fkey(${GLASS_MODEL_SELECT}), profiles:profiles!bar_glassware_profile_id_fkey!inner(bar_id, display_name), maker_page:profiles!bar_glassware_maker_profile_id_fkey(handle, display_name)`
     )
     .eq('profiles.bar_id', barId)
     .order('sort_order')
@@ -130,6 +132,8 @@ export interface BarGlassInput {
   outline?: GlassOutline | null;
   capacity_ml?: number | null;
   photo_path?: string | null;
+  /** The wash line; left out, it stays. */
+  wash_line_ml?: number | null;
 }
 
 /**
@@ -169,6 +173,18 @@ export function useSaveBarGlass(barId: string | null | undefined, profileId: str
       return data.id;
     },
     onSettled: () => invalidateGlassware(client, barId),
+  });
+}
+
+/** What a venue glass's drinks fill it to (Fit it to the glass); null goes back to reading it from the capacity. */
+export function useSetWashLine(barId: string | null | undefined) {
+  const client = useQueryClient();
+  return useMutation({
+    mutationFn: async ({ id, ml }: { id: string; ml: number | null }) => {
+      const { error } = await supabase.from('bar_glassware').update({ wash_line_ml: ml }).eq('id', id).select('id').single();
+      if (error) throw error;
+    },
+    onSettled: () => client.invalidateQueries({ queryKey: ['bar-glassware', barId] }),
   });
 }
 
