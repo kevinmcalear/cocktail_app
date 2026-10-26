@@ -31,6 +31,7 @@ import { ForTheFloor } from './ForTheFloor';
 import { HistorySection } from './HistorySection';
 import { JourneyStrip } from './JourneyStrip';
 import { KitCheckSection } from './KitCheckSection';
+import { DrinkParts } from './DrinkParts';
 import { MakeLine } from './MakeLine';
 import { MenuRuns } from './MenuRuns';
 import { PeoplePhotos } from './PeoplePhotos';
@@ -102,8 +103,13 @@ export function useDrinkSections(p: DrinkBodyProps) {
   const catalog = !!useLineage(live ? item.id : null).data?.drink?.is_catalog;
   const method = item.notes && !lock && !catalog ? item.notes : null;
 
-  // The spec, then method, glass, ice and garnish, then the steps: one recipe, read top to bottom.
-  const make = <MakeLine facts={p.make} />;
+  // The spec, then method, glass, ice and garnish, a drink's parts (Q20b), then the steps: one recipe, read top to bottom.
+  const make = (
+    <>
+      <MakeLine facts={p.make} />
+      <DrinkParts item={item} />
+    </>
+  );
   const spec = lock ? (
     <View style={styles.make}>
       <SpecLockPanel

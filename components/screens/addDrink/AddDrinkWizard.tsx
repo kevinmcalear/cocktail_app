@@ -230,8 +230,7 @@ function Wizard({ barId = null, menuSectionId, initialName, startFrom, firstRoun
             {serveCard ? <ServeGuessCard guess={guess} onUse={takeGuess} /> : null}
             <MethodStep
               options={methods}
-              selected={draft.methods}
-              onChange={(methods) => set({ methods })}
+              draft={draft} set={set}
               suggested={guess.method}
               why={serveCard ? null : guess.why}
               hint={<><MethodIceLine methods={draft.methods} value={draft.methodIce ?? null} options={ices} barIce={barIce} venueName={barId ? venueName : null} onChange={(methodIce) => set({ methodIce })} /><FoamerHint draft={draft} set={set} ingredients={ingredients} /></>}

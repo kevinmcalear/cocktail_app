@@ -13,6 +13,7 @@ import { track } from '@/lib/analytics';
 import { linePrep } from '@/lib/batchLines';
 import { plainDbMessage } from '@/lib/dbError';
 import { orderedMethodIds } from '@/lib/drinkMethods';
+import { linePart, storedParts } from '@/lib/drinkParts';
 import { COMMON_METHODS, creatorProfileId, likeExactly, specLines, type WizardDraft, type WizardLine, type WizardPick } from '@/lib/drinkWizard';
 import { fetchEditableRecipes } from '@/lib/editableRecipes';
 import { saysMore, toStored, type IceLayer } from '@/lib/iceBuild';
@@ -192,6 +193,7 @@ export function useCreateDrink() {
       const later: string[] = [];
       // New bottles with what they are and how the venue buys them (the desktop page's card).
       const bottles: { itemId: string; name: string; bottle: NonNullable<WizardLine['bottle']>; isNew: boolean }[] = [];
+      const garnishes = new Set(draft.garnishes.map((g) => g.key));
       for (const { line, amount } of specLines(draft)) {
         const madeBefore = newIngredients.length;
         // Its recipe, or a batch read from a file as a house prep of the kind Batch: the bottle's recipe.
@@ -212,10 +214,18 @@ export function useCreateDrink() {
           unit: line.unit || null,
           preparation_notes: line.note?.trim() || null,
           is_optional: false,
+          ...(draft.parts?.length ? { part: linePart(draft.parts, line.key, garnishes.has(line.key)) } : {}),
         });
       }
+      // Made in parts: each part's methods in turn, with its number (Build can be in two parts).
       const methodIds: string[] = [];
-      for (const m of draft.methods) methodIds.push(await ensure(m, 'method'));
+      const methodParts: number[] = [];
+      const byPart = draft.parts?.length ? draft.parts.flatMap((p, i) => p.methods.map((m) => ({ m, part: i + 1 }))) : draft.methods.map((m) => ({ m, part: 1 }));
+      for (const { m, part } of byPart) {
+        methodIds.push(await ensure(m, 'method'));
+        methodParts.push(part);
+      }
+      const parts = draft.parts?.length ? { methodParts, parts: storedParts(draft.parts) } : undefined;
       // Recipes made in-house inside a prep (make-anything-steps-2, step 8): rows of their own, recipes saved only on rows this save made.
       const inner = {
         own: async (pick: WizardPick) => {
@@ -307,7 +317,7 @@ export function useCreateDrink() {
 
       try {
         // Every method, in order, in the same transaction as the spec.
-        await saveDrinkSpec(id, lines, methodIds, null);
+        await saveDrinkSpec(id, lines, methodIds, null, parts);
       } catch (e) {
         await supabase.from('items').delete().eq('id', id);
         throw e;
