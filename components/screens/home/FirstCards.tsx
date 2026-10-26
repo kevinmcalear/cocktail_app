@@ -57,7 +57,8 @@ function useLocationCard(near: NearMe, access: LocationAccess | null) {
   // A browser without the Permissions API says "ask" even after a no.
   const blocked = access === 'blocked' || (denied && Platform.OS === 'web');
   const state: LocationState | null = blocked ? (Platform.OS === 'web' ? 'web-blocked' : 'blocked') : access === 'ask' ? 'ask' : null;
-  if (!state || closed || (cityPicked && !denied)) return null;
+  // While it asks, the note says "Finding where you are" in its place.
+  if (!state || closed || near.status === 'locating' || (cityPicked && !denied)) return null;
   return { state, close: () => setClosed(true) };
 }
 
