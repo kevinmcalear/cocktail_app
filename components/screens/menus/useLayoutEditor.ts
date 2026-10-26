@@ -89,7 +89,11 @@ export function useLayoutEditor(menu: MenuDetail, { paste = false }: { paste?: b
   );
 
   const status = menuStatus(menu, now);
-  const changed = layoutChanged(layout, saved);
+  // Drinks deleted from a row while their toast is up: off the rows, but saved where they were
+  // until the delete goes, so closing the app or leaving first loses no menu place (useDeleteDrink).
+  const [pending, setPending] = useState<{ key: string; at: number; drink: MenuDrink }[]>([]);
+  const outgoing = pending.reduceRight((l, p) => addDrink(l, p.key, p.drink, p.at), layout);
+  const changed = layoutChanged(outgoing, saved);
   const groups = groupMenus(venueMenus.filter((m) => m.barId === menu.barId && m.id !== menu.id), now);
   // A venue's drinks already on (or going on) another of its menus. Home nights don't share drinks out like that.
   const others = menu.barId ? [...groups.on, ...groups.upcoming] : [];
@@ -117,7 +121,7 @@ export function useLayoutEditor(menu: MenuDetail, { paste = false }: { paste?: b
     }
     if (!changed) return true;
     // What this save writes: edits made while it's on the way save after it.
-    const snapshot = layout;
+    const snapshot = outgoing;
     try {
       await saveLayout(snapshot);
       // Prices are the drinks' own: written once the menu holds them.
@@ -130,7 +134,7 @@ export function useLayoutEditor(menu: MenuDetail, { paste = false }: { paste?: b
       setError(e instanceof Error ? e.message : 'Couldn’t save. Your changes are still here; try again.');
       return false;
     }
-  }, [layout, changed, saveLayout, savePrices]);
+  }, [layout, outgoing, changed, saveLayout, savePrices]);
 
   // Autosave: a moment after the last change, one save at a time. A layout that
   // can't be saved (a section with no name), or a save that failed (a price
@@ -169,14 +173,20 @@ export function useLayoutEditor(menu: MenuDetail, { paste = false }: { paste?: b
     },
     made,
     remove: (key: string, drinkId: string) => edit(removeDrink(layout, key, drinkId)),
-    /** Delete drink from a row's ...: off this menu now, deleted once its toast goes; Undo puts it back where it was. */
+    /** Delete drink from a row's ...: off the rows now, deleted (with its menu places) once its toast goes; Undo puts it back where it was. */
     deleteDrink: (drink: MenuDrink) => {
       const places = layout.sections.flatMap((s) => {
         const at = s.drinks.findIndex((d) => d.id === drink.id);
         return at < 0 ? [] : [{ key: s.key, at, drink: s.drinks[at] }];
       });
       edit(places.reduce((l, p) => removeDrink(l, p.key, drink.id), layout));
-      deleteForGood({ id: drink.id, name: drink.name, onUndo: () => setLayout((l) => places.reduce((m, p) => addDrink(m, p.key, p.drink, p.at), l)) });
+      setPending((p) => [...p, ...places]);
+      deleteForGood({
+        id: drink.id,
+        name: drink.name,
+        onUndo: () => setLayout((l) => places.reduce((m, p) => addDrink(m, p.key, p.drink, p.at), l)),
+        onGone: () => setPending((p) => p.filter((x) => !places.includes(x))),
+      });
     },
     // From the layout as it is when React applies them, so the phone's Done can set both prices at once.
     setPrice: (drinkId: string, price: string | null) => update((l) => setDrinkPrice(l, drinkId, price)),

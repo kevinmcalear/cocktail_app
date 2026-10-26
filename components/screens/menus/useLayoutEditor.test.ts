@@ -80,7 +80,31 @@ test('Delete drink takes it off every section now, and Undo puts each back where
   await act(async () => result.current.deleteDrink(drink('old')));
   expect(result.current.layout.sections.map((s) => s.drinks.map((d) => d.id))).toEqual([['a'], []]);
   expect(mockDeleteForGood).toHaveBeenCalledWith(expect.objectContaining({ id: 'old', name: 'old' }));
-  await act(async () => mockDeleteForGood.mock.calls[0][0].onUndo());
+  await act(async () => {
+    mockDeleteForGood.mock.calls[0][0].onUndo();
+    mockDeleteForGood.mock.calls[0][0].onGone();
+  });
   expect(result.current.layout.sections.map((s) => s.drinks.map((d) => d.id))).toEqual([['a', 'old'], ['old']]);
   expect(result.current.layout.sections[1].drinks[0].menuPrice).toBe('22');
+  expect(result.current.changed).toBe(false);
+});
+
+test('while its toast is up, a deleted drink is still saved on the menu; once the delete goes, the menu saves without it', async () => {
+  mockSaveMenu.mockClear();
+  mockDeleteForGood.mockClear();
+  const two = { ...menu, sections: [{ ...menu.sections[0], drinks: [drink('a'), drink('old')] }, menu.sections[1]] } as MenuDetail;
+  const { result } = await renderHook(() => useLayoutEditor(two));
+  await act(async () => result.current.deleteDrink(drink('old')));
+  expect(result.current.changed).toBe(false);
+  await act(async () => result.current.rename('Winter'));
+  await act(async () => {
+    await result.current.persist();
+  });
+  expect(mockSaveMenu.mock.calls.at(-1)![0].sections[0].drinks.map((d) => d.id)).toEqual(['a', 'old']);
+  await act(async () => mockDeleteForGood.mock.calls[0][0].onGone());
+  expect(result.current.changed).toBe(true);
+  await act(async () => {
+    await result.current.persist();
+  });
+  expect(mockSaveMenu.mock.calls.at(-1)![0].sections[0].drinks.map((d) => d.id)).toEqual(['a']);
 });

@@ -14,13 +14,13 @@ const LISTS: QueryKey[] = [['cocktails'], ['menu-library']];
  * Undo puts it back, and the delete goes when the toast does (timed out,
  * swiped, tapped or replaced). If the app closes first nothing was sent, so
  * the drink is still there; the hidden lists are marked stale so they read it
- * again on the next launch.
+ * again on the next launch. `onGone` runs when the toast goes, either way.
  */
 export function useDeleteDrink() {
   const qc = useQueryClient();
   const toast = useToast();
   const remove = useDeleteCocktail();
-  return ({ id, name, onUndo }: { id: string; name: string; onUndo?: () => void }) => {
+  return ({ id, name, onUndo, onGone }: { id: string; name: string; onUndo?: () => void; onGone?: () => void }) => {
     const before = LISTS.flatMap((queryKey) => {
       void qc.cancelQueries({ queryKey });
       const snapshots = qc.getQueriesData<{ id: string }[]>({ queryKey });
@@ -30,6 +30,7 @@ export function useDeleteDrink() {
     let undone = false;
     const shown = toast.show({
       title: `${name} deleted`,
+      detail: 'Its spec and photos go too, for everyone.',
       action: {
         label: 'Undo',
         onPress: () => {
@@ -44,6 +45,7 @@ export function useDeleteDrink() {
       if (s.toast?.id === shown) return;
       stop();
       if (!undone) remove.mutate(id);
+      onGone?.();
     });
   };
 }
