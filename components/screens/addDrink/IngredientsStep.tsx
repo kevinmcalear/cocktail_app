@@ -66,6 +66,9 @@ interface IngredientsStepProps extends StepProps {
   bar?: { id: string; name: string } | null;
   /** Where the drink is, from the menu down to it, for a recipe's trail. */
   trail?: readonly TrailItem[];
+  /** The editors (drink-edit-phone): the lines and the search only, no suggestions or paste. Bumping `focus` (their Line button) puts the cursor in the search. */
+  editing?: boolean;
+  focus?: number;
 }
 
 /**
@@ -77,7 +80,7 @@ interface IngredientsStepProps extends StepProps {
  * (make-anything-overview): from the search, or by holding one line over
  * another to combine them.
  */
-export function IngredientsStep({ draft, set, ingredients, loading, aliases = [], coreIds, forDrink = true, shelf, backBar, balance = true, lineDetail, lineBelow, stock, placeholder, onNewBottle, inlinePrep, bar, trail }: IngredientsStepProps) {
+export function IngredientsStep({ draft, set, ingredients, loading, aliases = [], coreIds, forDrink = true, shelf, backBar, balance = true, lineDetail, lineBelow, stock, placeholder, onNewBottle, inlinePrep, bar, trail, editing, focus }: IngredientsStepProps) {
   const ds = useDs();
   const [typing, setTyping] = useState(false);
   const [swapKey, setSwapKey] = useState<string | null>(null);
@@ -153,16 +156,7 @@ export function IngredientsStep({ draft, set, ingredients, loading, aliases = []
 
   // Pasting takes the step's place, right under its heading, so the box sits above the keyboard (canvas make-create-finish-oil, step 4).
   if (pasting) {
-    return (
-      <PasteSpecPanel
-        onClose={() => setPasting(false)}
-        drinkName={draft.name}
-        {...search}
-        have={backBar ?? shelf}
-        haveLabel={backBar ? 'On your back bar' : 'On your shelf'}
-        onAdd={(rows) => setToFinish(typed.paste(rows).join(', ') || null)}
-      />
-    );
+    return <PasteSpecPanel onClose={() => setPasting(false)} drinkName={draft.name} {...search} have={backBar ?? shelf} haveLabel={backBar ? 'On your back bar' : 'On your shelf'} onAdd={(rows) => setToFinish(typed.paste(rows).join(', ') || null)} />;
   }
 
   return (
@@ -266,6 +260,8 @@ export function IngredientsStep({ draft, set, ingredients, loading, aliases = []
 
       <IngredientSearch
         {...search}
+        key={focus}
+        autoFocus={!!focus}
         label={draft.lines.length ? 'Add another ingredient' : 'Add an ingredient'}
         placeholder={placeholder}
         amounts
@@ -277,13 +273,13 @@ export function IngredientsStep({ draft, set, ingredients, loading, aliases = []
         onHouse={forDrink ? typed.typed : undefined}
         captions={forDrink}
       />
-      {forDrink && !typing ? <Button label="Paste a whole spec" variant="ghost" size="sm" style={styles.paste} onPress={() => setPasting(true)} /> : null}
+      {forDrink && !typing && !editing ? <Button label="Paste a whole spec" variant="ghost" size="sm" style={styles.paste} onPress={() => setPasting(true)} /> : null}
       {toFinish ? <WizardNotice>{`${toFinish} went to the finish.`}</WizardNotice> : null}
       {prep.builder}
 
       {/* The balance sits right under the field, then what goes with it (Flavor Atlas order). */}
-      {forDrink && balance && !typing ? <BalanceCard lines={poured} ingredients={ingredients} onAdd={(name) => add(pickByName(name, ingredients))} /> : null}
-      {typing || !forDrink ? null : <IngredientSuggestions draft={draft} set={set} poured={poured} ingredients={ingredients} onAdd={add} />}
+      {forDrink && balance && !typing && !editing ? <BalanceCard lines={poured} ingredients={ingredients} onAdd={(name) => add(pickByName(name, ingredients))} /> : null}
+      {typing || !forDrink || editing ? null : <IngredientSuggestions draft={draft} set={set} poured={poured} ingredients={ingredients} onAdd={add} />}
     </View>
   );
 }
