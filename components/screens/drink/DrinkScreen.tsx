@@ -52,6 +52,8 @@ export interface DrinkScreenProps {
   /** A catalog admin on someone else's drink: a visitor's page with one Fix as admin in More. */
   adminFix?: boolean;
   onEdit: () => void;
+  /** Fit it to the glass (QA Q38): opens the editor with the spec fitted to the glass's wash line. */
+  onFit?: () => void;
   /** Shown as a modal. An iOS page sheet starts below the status bar, but the insets still count it. */
   sheet?: boolean;
   /** Beside a list (the tablet Library): the narrow layout, a short hero, no Back. */
@@ -82,7 +84,7 @@ export function DrinkScreen(props: DrinkScreenProps) {
 
 export { DrinkLoading } from './DrinkLoading';
 
-function DrinkPage({ item, inStudyPile, onToggleStudyPile, canEdit, adminFix = false, onEdit, sheet, pane, openBatch, visitorLock, preview }: DrinkScreenProps) {
+function DrinkPage({ item, inStudyPile, onToggleStudyPile, canEdit, adminFix = false, onEdit, onFit, sheet, pane, openBatch, visitorLock, preview }: DrinkScreenProps) {
   const ds = useDs();
   const router = useRouter();
   const insets = useSafeAreaInsets();
@@ -178,6 +180,7 @@ function DrinkPage({ item, inStudyPile, onToggleStudyPile, canEdit, adminFix = f
     actions,
     onRiff,
     riffNote,
+    onFit: canEdit ? (onFit ?? null) : null,
     venueName: teamRole !== null ? (venue?.name ?? null) : null,
   };
   const sections = useDrinkSections(bodyProps);
