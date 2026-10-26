@@ -10,8 +10,9 @@ import type { DiscoverDrink } from '@/lib/discoverDrinks';
 
 import { SheetLine, SheetSearchSlot, useMapSheetChrome, usePageFade } from './mapSheetChrome';
 
-/** Until the handle measures itself: the grabber and the title's row. */
+/** Until the handle measures itself: the grabber and the title's row, and the search field when there is one. */
 const HANDLE = 66;
+const SEARCH = 56;
 /** How far a tapped bar's card opens the sheet. */
 const BAR_STOP = '55%';
 
@@ -56,7 +57,7 @@ const drinkKey = (d: DiscoverDrink) => d.id;
  */
 export function MapSheet({ sheetRef, animated, findMe, topInset, onPeek, title, search, count, below, bar, browse, listTitle, drinks, renderItem, extraData, empty, footer, onEndReached }: MapSheetProps) {
   const chrome = useMapSheetChrome();
-  const [handle, setHandle] = useState(HANDLE);
+  const [handle, setHandle] = useState(HANDLE + (search ? SEARCH : 0));
   const peek = handle + chrome.foot;
   useEffect(() => onPeek(peek), [peek, onPeek]);
   const snapPoints = bar ? [peek, BAR_STOP, '100%'] : [peek, '100%'];

@@ -32,6 +32,8 @@ export function useDiscoverArea() {
   const [preferNear, setPreferNear] = useState(true);
   // Once the person picks a where, a late answer from the first ask doesn't move them.
   const touched = useRef(false);
+  // Location not allowed: the last place this device was found isn't where Discover opens.
+  const noLast = useRef(false);
   const { state: near, locate } = useNearMe();
   const clearPlace = useLastPlace((s) => s.clear);
   const place = useCallback(
@@ -84,7 +86,7 @@ export function useDiscoverArea() {
   useEffect(
     () =>
       useLastPlace.persist.onFinishHydration(({ place: last }) => {
-        if (!touched.current && last) setArea((a) => (a.kind === 'anywhere' ? nearMeArea(last) : a));
+        if (!touched.current && !noLast.current && last) setArea((a) => (a.kind === 'anywhere' ? nearMeArea(last) : a));
       }),
     []
   );
@@ -114,8 +116,15 @@ export function useDiscoverArea() {
       });
       return;
     }
-    // Turned off since: forget the last place, as a "no" does.
-    if (access === 'blocked') clearPlace();
+    // Not allowed: don't open near the last place once storage is in. Turned off since: forget it, as a
+    // "no" does (after storage is in, or the stored place would come back over the clear).
+    noLast.current = true;
+    if (access === 'blocked') {
+      if (useLastPlace.persist.hasHydrated()) clearPlace();
+      else {
+        const off = useLastPlace.persist.onFinishHydration(() => (clearPlace(), off()));
+      }
+    }
     if (touched.current) return;
     setPreferNear(false);
     setArea((a) => (a.kind === 'point' && a.source === 'me' ? ANYWHERE : a));

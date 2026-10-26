@@ -23,6 +23,8 @@ export function FirstCards({ near, access, where, onNearMe, onGlass }: { near: N
   const favourites = useFavouritesAsk(where.area);
   const markAsked = useFirstOpen((s) => s.markAsked);
   const [picking, setPicking] = useState(false);
+  // Gone (asked, or the area changed under it): a later card starts closed, never open by itself.
+  if (picking && !favourites) setPicking(false);
   if (location) return <LocationCard state={location.state} where={where} onNearMe={onNearMe} onClose={location.close} onGlass={onGlass} />;
   if (!favourites) return null;
   return (
@@ -57,8 +59,9 @@ function useLocationCard(near: NearMe, access: LocationAccess | null) {
   // A browser without the Permissions API says "ask" even after a no.
   const blocked = access === 'blocked' || (denied && Platform.OS === 'web');
   const state: LocationState | null = blocked ? (Platform.OS === 'web' ? 'web-blocked' : 'blocked') : access === 'ask' ? 'ask' : null;
-  // While it asks, the note says "Finding where you are" in its place.
-  if (!state || closed || near.status === 'locating' || (cityPicked && !denied)) return null;
+  // While it asks, the note says "Finding where you are" in its place. Found is found, whatever a
+  // browser's permission check says (Safari's allow-for-this-visit still answers "prompt").
+  if (!state || closed || near.status === 'locating' || near.status === 'ready' || (cityPicked && !denied)) return null;
   return { state, close: () => setClosed(true) };
 }
 
