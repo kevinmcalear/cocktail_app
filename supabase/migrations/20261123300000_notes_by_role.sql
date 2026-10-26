@@ -184,13 +184,12 @@ CREATE OR REPLACE VIEW "public"."app_item_presentation" WITH ("security_invoker"
                               CASE WHEN er.role = ub.role_level THEN COALESCE(vr.granted, lo.granted) END,
                               CASE WHEN er.role = ub.role_level THEN COALESCE(vr.revoked, lo.revoked) END));
 
--- As 20261010100000, with notes from item_notes.
-CREATE OR REPLACE FUNCTION private.drink_snapshot(p_item uuid)
- RETURNS jsonb
- LANGUAGE sql
- STABLE SECURITY DEFINER
- SET search_path TO ''
-AS $$
+-- As 20261123100000_drink_parts (applied before this), with notes from
+-- item_notes.
+CREATE OR REPLACE FUNCTION "private"."drink_snapshot"("p_item" "uuid") RETURNS "jsonb"
+    LANGUAGE "sql" STABLE SECURITY DEFINER
+    SET "search_path" TO ''
+    AS $$
   SELECT jsonb_build_object(
     'lines', COALESCE((
       SELECT jsonb_agg(jsonb_build_object(
@@ -200,7 +199,8 @@ AS $$
         'unit', r.unit,
         'note', r.preparation_notes,
         'optional', COALESCE(r.is_optional, false),
-        'at_service', r.at_service) ORDER BY r.sort_order, r.created_at)
+        'at_service', r.at_service,
+        'part', r.part) ORDER BY r.sort_order, r.created_at)
       FROM public.recipes r LEFT JOIN public.items ing ON ing.id = r.ingredient_item_id
       WHERE r.recipe_item_id = p_item), '[]'::jsonb),
     'methods', COALESCE((
@@ -210,6 +210,10 @@ AS $$
     'method_ids', COALESCE((
       SELECT jsonb_agg(im.method_item_id ORDER BY im.sort_order)
       FROM public.item_methods im WHERE im.item_id = p_item), '[]'::jsonb),
+    'method_parts', COALESCE((
+      SELECT jsonb_agg(im.part ORDER BY im.sort_order)
+      FROM public.item_methods im WHERE im.item_id = p_item), '[]'::jsonb),
+    'parts', (SELECT i.parts FROM public.items i WHERE i.id = p_item),
     'glass', (SELECT g.name FROM public.items i JOIN public.items g ON g.id = i.glassware_id WHERE i.id = p_item),
     'ice', (SELECT ic.name FROM public.items i JOIN public.items ic ON ic.id = i.ice_id WHERE i.id = p_item),
     -- Only notes for everyone who sees the drink: version history reaches
@@ -219,18 +223,16 @@ AS $$
     'service_style', (SELECT i.service_style FROM public.items i WHERE i.id = p_item));
 $$;
 
--- As 20261008050000, with notes in item_notes.
-CREATE OR REPLACE FUNCTION public.restore_drink_version(p_item uuid, p_version integer)
- RETURNS integer
- LANGUAGE plpgsql
- SECURITY DEFINER
- SET search_path TO ''
-AS $$
+-- As 20261123100000_drink_parts, with notes in item_notes.
+CREATE OR REPLACE FUNCTION "public"."restore_drink_version"("p_item" "uuid", "p_version" integer) RETURNS integer
+    LANGUAGE "plpgsql" SECURITY DEFINER
+    SET "search_path" TO ''
+    AS $$
 DECLARE
     v_snapshot jsonb;
     v_line jsonb;
     v_index integer := 0;
-    v_method uuid;
+    v_method record;
 BEGIN
     IF auth.uid() IS NULL OR NOT private.can_edit_item(p_item) THEN
         RAISE EXCEPTION 'You can''t edit this drink.' USING ERRCODE = '42501';
@@ -238,18 +240,22 @@ BEGIN
     SELECT snapshot INTO v_snapshot FROM public.item_versions WHERE item_id = p_item AND version = p_version;
     IF v_snapshot IS NULL THEN RAISE EXCEPTION 'No version % of this drink.', p_version; END IF;
 
+    UPDATE public.items SET parts = NULLIF(v_snapshot -> 'parts', 'null'::jsonb) WHERE id = p_item;
     DELETE FROM public.recipes WHERE recipe_item_id = p_item;
     FOR v_line IN SELECT * FROM jsonb_array_elements(v_snapshot -> 'lines') LOOP
-        INSERT INTO public.recipes (recipe_item_id, ingredient_item_id, amount, unit, preparation_notes, is_optional, at_service, sort_order)
+        INSERT INTO public.recipes (recipe_item_id, ingredient_item_id, amount, unit, preparation_notes, is_optional, at_service, part, sort_order)
         VALUES (p_item, (v_line ->> 'ingredient_item_id')::uuid, NULLIF(v_line ->> 'amount', '')::numeric, NULLIF(v_line ->> 'unit', ''),
-                NULLIF(v_line ->> 'note', ''), COALESCE((v_line ->> 'optional')::boolean, false), (v_line ->> 'at_service')::boolean, v_index);
+                NULLIF(v_line ->> 'note', ''), COALESCE((v_line ->> 'optional')::boolean, false), (v_line ->> 'at_service')::boolean,
+                COALESCE(NULLIF(v_line ->> 'part', '')::smallint, 1), v_index);
         v_index := v_index + 1;
     END LOOP;
     DELETE FROM public.item_methods WHERE item_id = p_item;
-    v_index := 0;
-    FOR v_method IN SELECT (value #>> '{}')::uuid FROM jsonb_array_elements(COALESCE(v_snapshot -> 'method_ids', '[]'::jsonb)) LOOP
-        INSERT INTO public.item_methods (item_id, method_item_id, sort_order) VALUES (p_item, v_method, v_index);
-        v_index := v_index + 1;
+    FOR v_method IN
+        SELECT (m.value #>> '{}')::uuid AS id, COALESCE((v_snapshot -> 'method_parts' ->> (m.ord - 1)::integer)::smallint, 1) AS part, m.ord
+          FROM jsonb_array_elements(COALESCE(v_snapshot -> 'method_ids', '[]'::jsonb)) WITH ORDINALITY AS m(value, ord)
+    LOOP
+        INSERT INTO public.item_methods (item_id, method_item_id, part, sort_order) VALUES (p_item, v_method.id, v_method.part, (v_method.ord - 1)::integer)
+        ON CONFLICT DO NOTHING;
     END LOOP;
     -- Versions only hold notes for everyone (drink_snapshot), so notes for a
     -- role and up stay as they are.
@@ -335,6 +341,9 @@ BEGIN
            AND NOT EXISTS (SELECT 1 FROM public.drink_photos p WHERE p.image_id = im.id)
            AND NOT EXISTS (SELECT 1 FROM public.made_drinks m WHERE m.image_id = im.id);
     ELSE
+        -- The copy's spec moves, with its parts (20261123100000): lines and
+        -- methods keep their part, so p_into takes the parts' names too.
+        UPDATE public.items SET parts = v_from.parts WHERE id = p_into AND parts IS NULL;
         -- The copy's spec moves; its steps and versions only when p_into has none.
         IF EXISTS (SELECT 1 FROM public.item_steps WHERE item_id = p_into) THEN
             DELETE FROM public.item_steps WHERE item_id = p_from;

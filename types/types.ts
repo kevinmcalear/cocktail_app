@@ -2,6 +2,7 @@
 // from types/database.ts); what's written here is what queries embed on top.
 import type { ItemImageLink } from '@/lib/itemImages';
 import type { Enum, Row } from '@/types/db';
+import type { StoredPart } from '@/lib/drinkParts';
 
 export type ItemDomain = Enum<'item_domain'>;
 export type EntityType = Enum<'entity_type'>;
@@ -53,6 +54,8 @@ export type DatabaseItem = Row<'app_item_presentation'> &
         glassware?: DatabaseItem | null;
         family?: DatabaseItem | null;
         ice?: DatabaseItem | null;
+        /** Made in parts: the parts' names and joins (lib/drinkParts.ts), read from items, not in app_item_presentation. */
+        madeInParts?: StoredPart[] | null;
     };
 
 /** A spec line as app_recipe_presentation shows it: amounts and ingredients the reader may not see are null. */
