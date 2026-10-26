@@ -189,6 +189,14 @@ export function GlassesStep({ barId, pageId, name }: { barId: string; pageId: st
 
   return (
     <>
+      {/* Why it's worth stopping here, before the first tap (board w2-venue-setup, E33). */}
+      <Surface style={styles.why}>
+        <GlassThumb glass="coupe" variant={null} size={36} />
+        <Body style={styles.flex}>
+          <Body style={styles.strong}>Why it’s worth it: </Body>
+          {`every ${name} drink is drawn in the glass you really pour it into, and when anyone adds a drink, your glasses come up first.`}
+        </Body>
+      </Surface>
       {wide ? (
         <View style={styles.columns}>
           <View style={styles.left}>
@@ -231,6 +239,7 @@ const styles = StyleSheet.create({
   card: { paddingVertical: space.xs },
   row: { flexDirection: 'row', alignItems: 'center', gap: space.md, minHeight: 68, paddingVertical: space.sm, paddingHorizontal: space.xs },
   model: { gap: space.md, padding: space.lg },
+  why: { flexDirection: 'row', alignItems: 'flex-start', gap: space.md, padding: space.md },
   strong: { fontFamily: fontFamilies.bodyMedium },
   start: { alignSelf: 'flex-start' },
   columns: { flexDirection: 'row', alignItems: 'flex-start', gap: space.xl },
