@@ -55,7 +55,7 @@ export interface IngredientSearchProps {
   allowNew?: boolean;
   /** Offers to make it in house, with its own recipe: a new name, or your own version of one that exists. */
   onMake?: (name: string, pour?: TypedPour) => void;
-  /** "Add “X”, a bottle you buy": the desktop page opens its card under its line (what it is, who brings it, its pack). */
+  /** "Add “X”, a bottle you buy": the desktop page opens its card under its line (what it is, how strong, its pack). */
   onBottle?: (name: string, pour?: TypedPour) => void;
   /** "Just add the name" for a prep: its recipe is written later, and the save reminds you. */
   onLater?: (name: string, pour?: TypedPour) => void;
