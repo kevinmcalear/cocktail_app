@@ -4,7 +4,7 @@
  * quick choices each step offers. The screens are in
  * components/screens/addDrink; saving is hooks/useCreateDrink.ts.
  */
-import { iceBuildLine, saysMore, type IceLayer } from '@/lib/iceBuild';
+import { iceBuildLine, iceKind, saysMore, type IceLayer } from '@/lib/iceBuild';
 import type { ImageAngle } from '@/lib/itemImages';
 import type { LineBatch } from '@/lib/batchLines';
 import type { BottleKind } from '@/lib/newBottle';
@@ -294,7 +294,7 @@ export const COMMON_INGREDIENTS = [
 /** The method step's chips, in its two groups, all shown. A float, mist or rinse is on the Finish step. */
 export const METHOD_GROUPS: readonly { label: string; methods: readonly string[] }[] = [
   { label: 'Mix', methods: ['Shake', 'Stir', 'Build', 'Throw', 'Swizzle', 'Blend', 'Muddle'] },
-  { label: 'Air and texture', methods: ['Dry shake', 'Reverse dry shake', 'Whip (iSi)', 'Top with foam'] },
+  { label: 'Air and texture', methods: ['Dry shake', 'Reverse dry shake', 'Whip (iSi)', 'Whip (whisk or frother)', 'Top with foam'] },
 ];
 export const COMMON_METHODS = METHOD_GROUPS.flatMap((g) => g.methods);
 /** What a picked method's step card says under its name. */
@@ -309,6 +309,7 @@ const METHOD_DETAIL: Record<string, string> = {
   'dry shake': '15 s, no ice',
   'reverse dry shake': 'with ice, then again without',
   'whip (isi)': 'in a charged siphon',
+  'whip (whisk or frother)': 'by hand, no ice',
   'top with foam': 'spooned on last',
   float: 'over the back of a spoon',
   mist: 'over the top',
@@ -325,7 +326,8 @@ export const COMMON_ICE = ['No ice', 'Cubes', 'Large cube', 'Crushed', 'Pebble',
  * is the one it's served over); no method yet is "Made with".
  */
 export function methodIceLabel(methods: readonly string[]): string | null {
-  const all = methods.join(' ').toLowerCase();
+  // A whisk or a milk frother takes no ice (Q20b), nor does a dry shake on its own.
+  const all = methods.filter((m) => !NO_ICE.test(m)).join(' ').toLowerCase();
   if (/blend/.test(all)) return 'Blended with';
   if (/shak|whip/.test(all)) return 'Shaken with';
   if (/stir/.test(all)) return 'Stirred over';
@@ -333,6 +335,21 @@ export function methodIceLabel(methods: readonly string[]): string | null {
   if (/throw/.test(all)) return 'Thrown over';
   if (/build|built/.test(all)) return null;
   return 'Made with';
+}
+
+const NO_ICE = /whisk|frother|^dry shake$/i;
+
+/**
+ * The draft with what it's mixed with (Q21, 26 Oct): the one picked, else the
+ * venue's first cubes in its Kit, else its first ice, else Cubes, shown under
+ * the method so it can be changed. A drink built in the glass has none, and a
+ * method that doesn't say it's mixed with ice starts on nothing.
+ */
+export function withMethodIce(d: WizardDraft, barIce: readonly string[]): WizardDraft {
+  const label = methodIceLabel(d.methods.map((m) => m.name));
+  if (!label) return d.methodIce ? { ...d, methodIce: null } : d;
+  if (d.methodIce || label === 'Made with') return d;
+  return { ...d, methodIce: { id: null, name: barIce.find((n) => iceKind(n) === 'cubes') ?? barIce[0] ?? 'Cubes' } };
 }
 
 /** The drink page's Ice: "Blended with pebble, over a large cube", or just the ice it's served over. */

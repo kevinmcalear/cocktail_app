@@ -28,7 +28,7 @@ interface IceBuildSheetProps {
 
 /**
  * The drink editor's Ice (canvas "Ice builds", row 6): the same layers as the
- * wizard, quick builds, and Add a layer on top with the venue's ice first.
+ * wizard, quick builds, and Add extra ice with the venue's ice first.
  * Adding shows its choices in this sheet, not a second one over it.
  */
 export function IceBuildSheet({ options, layers, onChange, addIce, barId, madeWithId, onClose }: IceBuildSheetProps) {
@@ -72,7 +72,7 @@ export function IceBuildSheet({ options, layers, onChange, addIce, barId, madeWi
       header={
         <View style={styles.head}>
           <Headline role="heading" style={styles.flex}>
-            {choosing && layers.length ? 'Add a layer' : 'Ice in the glass'}
+            {choosing && layers.length ? 'Add extra ice' : 'Ice in the glass'}
           </Headline>
           <Button label={adding ? 'Back' : 'Done'} size="sm" variant="ghost" onPress={adding ? () => setAdding(false) : onClose} />
         </View>

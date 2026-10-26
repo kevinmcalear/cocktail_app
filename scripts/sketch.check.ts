@@ -62,6 +62,8 @@ assert.equal(methodFromNames(['Stir']), 'stir');
 assert.equal(methodFromNames(['dry shake and shake']), 'shake');
 assert.equal(methodFromNames(['Build', 'Shake']), 'shake');
 assert.equal(methodFromNames(['Blitz']), 'blend');
+assert.equal(methodFromNames(['Build', 'Whip (whisk or frother)']), 'build', 'a whisked cream on top is not a shake');
+assert.equal(methodFromNames(['Whip (iSi)']), 'shake');
 assert.equal(methodFromNames(['Straight Pour']), 'pour');
 
 const data = drink('House Thing', [[50, 'ml', 'Gin']], { glass: 'Coupette', ice: 'Cubes', methods: ['Stir'] });

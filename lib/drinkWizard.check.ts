@@ -4,6 +4,7 @@ import {
   iceLine,
   notesArePrivate,
   methodIceLabel,
+  withMethodIce,
   amountLabel, amountOf, canSave, choiceList, convertPour, draftFromSpec, COMMON_ICE, creatorProfileId, EMPTY_DRAFT, GARNISH_CHIPS, guessUnit, hasContent, newLine, nextUnit, pickByName,
   likeExactly, QUICK_UNITS, searchByName, stepAmount, sketchLook, specLines, stepFilled, WIZARD_STEPS, type WizardDraft,
   newDraftId, FINISH_CHIPS, FINISH_UNITS, finishLabel, finishStart, STEP_COPY, parseYear, savedNotice,
@@ -201,6 +202,21 @@ assert.equal(methodIceLabel(['Dry shake', 'Shake']), 'Shaken with');
 assert.equal(methodIceLabel(['Stir']), 'Stirred over');
 assert.equal(methodIceLabel(['Build']), null, 'built in the glass: its ice is the one it is served over');
 assert.equal(methodIceLabel([]), 'Made with');
+assert.equal(methodIceLabel(['Build', 'Whip (whisk or frother)']), null, 'a whisk takes no ice (Q20b)');
+assert.equal(methodIceLabel(['Whip (whisk or frother)']), 'Made with');
+assert.equal(methodIceLabel(['Whip (iSi)']), 'Shaken with');
+assert.equal(withMethodIce({ ...EMPTY_DRAFT, methods: [{ id: null, name: 'Dry shake' }] }, []).methodIce ?? null, null, 'a dry shake alone takes no ice');
+assert.equal(methodIceLabel(['Reverse dry shake']), 'Shaken with');
+
+// --- what it's shaken with starts on cubes, or the venue's (Q21) ---
+const pick = (name: string) => ({ id: null, name });
+const shaken = { ...EMPTY_DRAFT, methods: [pick('Shake')] };
+assert.deepEqual(withMethodIce(shaken, []).methodIce, pick('Cubes'), 'cubes at home');
+assert.deepEqual(withMethodIce(shaken, ['Large cube', 'Hosh cubes']).methodIce, pick('Hosh cubes'), 'the venue’s cubes');
+assert.deepEqual(withMethodIce(shaken, ['Spear']).methodIce, pick('Spear'), 'else the venue’s first ice');
+assert.deepEqual(withMethodIce({ ...shaken, methodIce: pick('Pebble') }, []).methodIce, pick('Pebble'), 'a pick stays');
+assert.equal(withMethodIce({ ...shaken, methods: [pick('Build')], methodIce: pick('Pebble') }, []).methodIce, null, 'built in the glass: none');
+assert.equal(withMethodIce(EMPTY_DRAFT, []).methodIce ?? null, null, 'no method yet: nothing');
 assert.equal(iceLine('Large cube', 'Pebble', ['Blend']), 'Blended with pebble, over a large cube');
 assert.equal(iceLine('Large cube', null, ['Blend']), 'Large cube', 'one ice reads as before');
 assert.equal(iceLine(null, 'Cubes', ['Shake']), 'Shaken with cubes');

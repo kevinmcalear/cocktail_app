@@ -231,7 +231,7 @@ describe('AddDrinkWizard', () => {
     useDrinkWizardStore.getState().setStep('bar-1', 'ice');
     await renderWithTamagui(<AddDrinkWizard barId="bar-1" onClose={jest.fn()} onSaved={mockSaved} />);
     await laidOut();
-    expect(screen.getByText('YOUR ICE')).toBeTruthy();
+    expect(screen.getByText('LITTLE RYE’S ICE')).toBeTruthy();
     // Shaved isn't one of the common ones, but it's the venue's, so it's offered.
     await fireEvent.press(screen.getByRole('radio', { name: 'Shaved' }));
     expect(useDrinkWizardStore.getState().kept['bar-1'].draft.ice?.name).toBe('Shaved');

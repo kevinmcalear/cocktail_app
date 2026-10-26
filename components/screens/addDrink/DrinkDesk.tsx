@@ -28,6 +28,7 @@ import { IngredientsStep } from './IngredientsStep';
 import { ApartHint, TakenWord } from './NameStepBody';
 import type { CatalogIngredient } from './IngredientSearch';
 import { IceStep } from './IceStep';
+import { MethodIceLine } from './MethodStep';
 import { PickStep } from './PickStep';
 import { PREP_CARD_ID } from './prep/PrepCard';
 import { drinkTrail, Trail } from './Trail';
@@ -222,6 +223,7 @@ export function DrinkDesk(p: DrinkDeskProps) {
           />
           <Row label="Method">
             <PickStep label="Method" ownLabel="Your own method" multi compact options={p.methods} selected={draft.methods} onChange={(methods) => set({ methods })} suggested={p.guess.method} />
+            <MethodIceLine methods={draft.methods} value={draft.methodIce ?? null} options={p.ices} barIce={p.barIce} venueName={barId ? p.venueName : null} onChange={(methodIce) => set({ methodIce })} />
             <TellUs screen="Adding a drink › Method" line="We’ll add your method to the app." {...tellUsAbout} />
           </Row>
           <Row label="Glass">

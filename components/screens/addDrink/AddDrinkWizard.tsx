@@ -16,7 +16,7 @@ import { suggestClassic } from '@/lib/classics';
 import { stepWaits, versionHeading } from '@/lib/sameName';
 import { plainDbMessage } from '@/lib/dbError';
 import {
-  canSave, choiceList, COMMON_GLASSES, COMMON_ICE, COMMON_METHODS, EMPTY_DRAFT, hasContent, samePick, savedNotice, sketchLook, STEP_COPY, WIZARD_STEPS,
+  canSave, choiceList, COMMON_GLASSES, COMMON_ICE, COMMON_METHODS, EMPTY_DRAFT, hasContent, samePick, savedNotice, sketchLook, STEP_COPY, WIZARD_STEPS, withMethodIce,
   type WizardDraft, type WizardPick, type WizardStep,
 } from '@/lib/drinkWizard';
 import { draftSketchInputs } from '@/lib/sketch/draft';
@@ -31,7 +31,7 @@ import { GlassStep } from './GlassStep';
 import { IngredientsStep } from './IngredientsStep';
 import { FinishStep } from './FinishStep';
 import { FoamerHint } from './FoamerHint';
-import { MethodStep } from './MethodStep';
+import { MethodIceLine, MethodStep } from './MethodStep';
 import { PublishStep } from './PublishStep';
 import { useNextOnceChecked } from './useNextOnceChecked';
 import { ReviewStep } from './ReviewStep';
@@ -82,8 +82,10 @@ function Wizard({ barId = null, menuSectionId, initialName, startFrom, firstRoun
   const patch = useDrinkWizardStore((s) => s.patch);
   const setStoredStep = useDrinkWizardStore((s) => s.setStep);
   useHoldUpdates();
-  // Filled out with today's fields: a draft kept by an older version of the app may lack some.
-  const draft: WizardDraft = { ...EMPTY_DRAFT, ...kept?.draft };
+  const venueIce = useVenueIce(barId).data ?? [];
+  const barIce = venueIceNames(venueIce);
+  // Filled out with today's fields (a draft kept by an older version of the app may lack some), and what it's shaken with until picked.
+  const draft: WizardDraft = withMethodIce({ ...EMPTY_DRAFT, ...kept?.draft }, barIce);
   const step: WizardStep = kept?.step ?? 'name';
   // On the web the page can draw before the kept draft loads (AsyncStorage is async there): once it has, say it was picked up. Set while rendering, like any value derived from a change.
   const loaded = useSyncExternalStore(hydrated, isHydrated, () => false);
@@ -99,8 +101,6 @@ function Wizard({ barId = null, menuSectionId, initialName, startFrom, firstRoun
   const create = useCreateDrink();
   const roundDone = useFirstRound().done;
   const barGlasses = useBarGlassware(barId).data;
-  const venueIce = useVenueIce(barId).data ?? [];
-  const barIce = venueIceNames(venueIce);
   const barIceKinds = venueIceKinds(venueIce);
   const barVariants = (barGlasses ?? []).filter((g) => g.is_default && g.variant).map((g) => g.variant as string);
   const shelfIds = useShelf().data;
@@ -234,7 +234,7 @@ function Wizard({ barId = null, menuSectionId, initialName, startFrom, firstRoun
               onChange={(methods) => set({ methods })}
               suggested={guess.method}
               why={serveCard ? null : guess.why}
-              hint={<FoamerHint draft={draft} set={set} ingredients={ingredients} />}
+              hint={<><MethodIceLine methods={draft.methods} value={draft.methodIce ?? null} options={ices} barIce={barIce} venueName={barId ? venueName : null} onChange={(methodIce) => set({ methodIce })} /><FoamerHint draft={draft} set={set} ingredients={ingredients} /></>}
               tellUs={tellUsAbout}
             />
           </>
