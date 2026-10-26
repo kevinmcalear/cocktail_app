@@ -81,6 +81,9 @@ BEGIN
            AND NOT EXISTS (SELECT 1 FROM public.drink_photos p WHERE p.image_id = im.id)
            AND NOT EXISTS (SELECT 1 FROM public.made_drinks m WHERE m.image_id = im.id);
     ELSE
+        -- The copy's spec moves, with its parts (20261123100000): lines and
+        -- methods keep their part, so p_into takes the parts' names too.
+        UPDATE public.items SET parts = v_from.parts WHERE id = p_into AND parts IS NULL;
         -- The copy's spec moves; its steps and versions only when p_into has none.
         IF EXISTS (SELECT 1 FROM public.item_steps WHERE item_id = p_into) THEN
             DELETE FROM public.item_steps WHERE item_id = p_from;
