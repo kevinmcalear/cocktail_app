@@ -205,6 +205,12 @@ export function useDebounced<T>(value: T, ms: number): T {
   return settled;
 }
 
+/** The device's place for the address search, only where location is already allowed: never asks. */
+async function nearForAddresses(): Promise<{ latitude: number; longitude: number } | null> {
+  const at = await getKnownDeviceLocation();
+  return at.ok ? { latitude: snapNearMe(at.latitude), longitude: snapNearMe(at.longitude) } : null;
+}
+
 /**
  * Addresses and named places matching what's typed, from Photon
  * (OpenStreetMap). Keeps to Photon's fair use: nothing under three
@@ -215,26 +221,17 @@ export function useDebounced<T>(value: T, ms: number): T {
  */
 export function useAddressSearch(text: string) {
   const query = useDebounced(text.trim(), ADDRESS_DEBOUNCE_MS);
-  // Looked up once typing starts (not for a form that's only opened), and the search waits for it, so Photon gets one request, not an unbiased one and then another.
-  const near = useQuery({
-    queryKey: ['address-search-near'],
-    enabled: text.trim().length > 0,
-    staleTime: 10 * 60 * 1000,
-    meta: { persist: false },
-    queryFn: async () => {
-      const at = await getKnownDeviceLocation();
-      return at.ok ? { latitude: snapNearMe(at.latitude), longitude: snapNearMe(at.longitude) } : null;
-    },
-  });
-  const at = near.data;
+  const qc = useQueryClient();
   return useQuery({
-    queryKey: ['address-search', query, at?.latitude ?? null, at?.longitude ?? null],
-    enabled: query.length >= ADDRESS_MIN_CHARS && near.isFetched,
+    queryKey: ['address-search', query],
+    enabled: query.length >= ADDRESS_MIN_CHARS,
     staleTime: 60 * 60 * 1000,
     retry: 0,
     meta: { persist: false },
     queryFn: async ({ signal }): Promise<VenueAddress[]> => {
-      const res = await fetch(photonUrl(query, 6, at), { signal });
+      // Where the device is, looked up with the first search and kept ten minutes: one Photon request, already near.
+      const near = await qc.fetchQuery({ queryKey: ['address-search-near'], staleTime: 10 * 60 * 1000, meta: { persist: false }, queryFn: nearForAddresses });
+      const res = await fetch(photonUrl(query, 6, near), { signal });
       if (!res.ok) throw new Error(`Address search failed (${res.status}). Try again in a moment.`);
       return venueAddressesFrom(await res.json());
     },
