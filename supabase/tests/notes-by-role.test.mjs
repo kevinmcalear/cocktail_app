@@ -4,9 +4,9 @@
 // lowers what you read; an ended role reads nothing more than a guest; the
 // writer always reads their own; only the drink's editors write, and never a
 // note they can't read; a role level is for venue drinks only; versions keep
-// role notes out; an installed app's items.notes writes reach item_notes
-// until 20261123310000 drops the column; the view keeps its columns. Runs
-// through the real API against the local stack.
+// role notes out; the view keeps its columns; items.notes and
+// credited_drink_notes are gone (20261123310000). Runs through the real API
+// against the local stack.
 //
 //   supabase start && supabase db reset
 //   npm run test:security
@@ -214,52 +214,6 @@ describe('writing', () => {
   });
 });
 
-describe('installed apps, which still write items.notes', () => {
-  const kept = async (id) => (await db.query('SELECT body, read_level FROM public.item_notes WHERE item_id = $1', [id])).rows[0] ?? null;
-
-  test('their notes become the drink\'s, and an empty box clears them', async () => {
-    const cook = users.homeCook.client;
-    let { error } = await cook.from('items').update({ notes: 'Old app: stir 30 seconds.' }).eq('id', ids.home);
-    assert.ifError(error);
-    assert.deepEqual(await kept(ids.home), { body: 'Old app: stir 30 seconds.', read_level: null });
-    // An update that doesn't send notes leaves them.
-    ({ error } = await cook.from('items').update({ description: 'Short and cold.' }).eq('id', ids.home));
-    assert.ifError(error);
-    assert.equal((await kept(ids.home)).body, 'Old app: stir 30 seconds.');
-    ({ error } = await cook.from('items').update({ notes: '' }).eq('id', ids.home));
-    assert.ifError(error);
-    assert.equal(await kept(ids.home), null);
-  });
-
-  test('a changed note keeps its role level', async () => {
-    const drink = ids.drinks['35'];
-    const { error } = await users.admin.client.from('items').update({ notes: 'Old app edit.' }).eq('id', drink);
-    assert.ifError(error);
-    assert.deepEqual(await kept(drink), { body: 'Old app edit.', read_level: 35 });
-    await service.from('item_notes').update({ body: noteText(35) }).eq('item_id', drink);
-  });
-
-  test('an empty box over a note above you leaves it alone', async () => {
-    const drink = ids.drinks['40'];
-    const { error } = await users.creator.client.from('items').update({ notes: '' }).eq('id', drink);
-    assert.ifError(error);
-    assert.deepEqual(await kept(drink), { body: noteText(40), read_level: 40 });
-    await users.creator.client.from('items').update({ notes: 'Mine instead.' }).eq('id', drink);
-    assert.equal((await kept(drink)).body, noteText(40));
-  });
-
-  test('a new drink with notes gets them', async () => {
-    const { data, error } = await users.homeCook.client
-      .from('items')
-      .insert({ name: `Old app drink ${run}`, item_type: 'cocktail', notes: 'Built in the glass.' })
-      .select('id')
-      .single();
-    assert.ifError(error);
-    ids.drinks.oldApp = data.id;
-    assert.deepEqual(await kept(data.id), { body: 'Built in the glass.', read_level: null });
-  });
-});
-
 test("the view keeps every column it had, with notes from item_notes", async () => {
   // 20261113900000's columns. Wave 2 migrations that redefine the view
   // (Made in parts, show_sketch, this one) may add, never drop.
@@ -275,6 +229,13 @@ test("the view keeps every column it had, with notes from item_notes", async () 
   const { rows: def } = await db.query("SELECT pg_get_viewdef('public.app_item_presentation'::regclass) AS d");
   assert.match(def[0].d, /item_notes/);
   assert.doesNotMatch(def[0].d, /credited_drink_notes/);
+});
+
+test('one home: items.notes and credited_drink_notes are gone', async () => {
+  const { rows } = await db.query(
+    "SELECT to_regclass('public.credited_drink_notes') AS t, (SELECT count(*)::int FROM information_schema.columns WHERE table_schema = 'public' AND table_name = 'items' AND column_name = 'notes') AS c"
+  );
+  assert.deepEqual(rows[0], { t: null, c: 0 });
 });
 
 test('versions keep notes for everyone and leave role notes out', async () => {
