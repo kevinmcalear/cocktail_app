@@ -19,6 +19,8 @@ interface WhichKindProps {
   /** Listed: not on your bar, or picked since the sheet opened. */
   shown: (id: string) => boolean;
   onPick: (bottle: FoundItem, on: boolean) => void;
+  /** Snap the bottle instead: the camera in the search field. */
+  onSnap: () => void;
 }
 
 /**
@@ -26,7 +28,7 @@ interface WhichKindProps {
  * bottles in the catalog with their photos, and a search. A bottle ticked
  * here takes the style's place on your bar (AddToBarSheet does the swap).
  */
-export function WhichKind({ kind, swapped, has, shown, onPick }: WhichKindProps) {
+export function WhichKind({ kind, swapped, has, shown, onPick, onSnap }: WhichKindProps) {
   const [query, setQuery] = useState('');
   const bottles = useKindBottles(kind.id, query);
   const one = kindName(kind.name);
@@ -52,7 +54,12 @@ export function WhichKind({ kind, swapped, has, shown, onPick }: WhichKindProps)
         autoCorrect={false}
         autoCapitalize="none"
         returnKeyType="search"
-        trailing={query ? <FieldButton icon="xmark.circle.fill" label="Clear search" onPress={() => setQuery('')} /> : null}
+        trailing={
+          <>
+            {query ? <FieldButton icon="xmark.circle.fill" label="Clear search" onPress={() => setQuery('')} /> : null}
+            <FieldButton icon="camera.fill" label="Snap a bottle" onPress={onSnap} />
+          </>
+        }
       />
       <View style={styles.list}>
         <Eyebrow>{`${many.charAt(0).toUpperCase()}${many.slice(1)} in the catalog`}</Eyebrow>

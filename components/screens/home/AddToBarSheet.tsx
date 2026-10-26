@@ -176,7 +176,7 @@ export function AddToBarSheet({ visible, filter, onFilter, onShelf, covered, cou
       {/* Its own body for Which gin?, so it opens at its top. ponytail: Back starts the tiles at their top too; keep their offset if a long grid makes that a bother. */}
       <SheetScrollView key={which?.id ?? 'tiles'} contentContainerStyle={menuSheetBody} {...dragDismissesKeyboard}>
         {which ? (
-          <WhichKind kind={which} swapped={tileHas(which.id)} has={(id) => onShelf.has(id)} shown={shown} onPick={(b, on) => pickBottle(which, b, on)} />
+          <WhichKind kind={which} swapped={tileHas(which.id)} has={(id) => onShelf.has(id)} shown={shown} onPick={(b, on) => pickBottle(which, b, on)} onSnap={snap} />
         ) : (
           <>
             <Field
