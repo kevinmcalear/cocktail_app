@@ -45,7 +45,7 @@ export interface BarGlass {
   /** Its own shape, traced from the venue's photo (Draw my glass, 20261118500000), and the capacity they typed to size it. */
   outline: GlassOutline | null;
   capacity_ml: number | null;
-  /** What its drinks fill it to (20261122400000); null reads from the capacity (lib/glassFill.ts washLine). */
+  /** What its drinks fill it to (20261123400000); null reads from the capacity (lib/glassFill.ts washLine). */
   wash_line_ml: number | null;
   /** The photo it was traced from, private (the glass-photos bucket). */
   photo_path: string | null;

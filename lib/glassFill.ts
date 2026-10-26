@@ -2,7 +2,7 @@
  * Fit it to the glass (QA Q38; Kevin picked "Scale it" on the design calls
  * canvas, 26 Oct 2026): how full a venue's glass is with a drink's serve,
  * against the glass's wash line (bar_glassware.wash_line_ml,
- * 20261122400000), and the spec scaled to land on that line. Dilution by
+ * 20261123400000), and the spec scaled to land on that line. Dilution by
  * method is drinkMath's, so the serve here is the drink page's serve. Pure;
  * the drink page and the editor render it (components/screens/drink/FitGlass.tsx).
  */
