@@ -6888,6 +6888,22 @@ export type Database = {
           url: string
         }[]
       }
+      match_fold: { Args: { p_name: string }; Returns: string }
+      match_ingredients: {
+        Args: { p_readings: Json; p_venue_id?: string }
+        Returns: {
+          alias: string
+          bar_id: string
+          generic_id: string
+          id: string
+          kind_of: number
+          name: string
+          reading: number
+          score: number
+        }[]
+      }
+      match_key: { Args: { p_name: string }; Returns: string }
+      match_words: { Args: { p_name: string }; Returns: string[] }
       menu_name_key: { Args: { p_name: string }; Returns: string }
       merge_ingredients: {
         Args: { p_from: string; p_into: string }

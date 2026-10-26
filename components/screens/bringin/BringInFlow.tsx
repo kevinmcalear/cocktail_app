@@ -6,7 +6,7 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { GlassButton, useBreakpoint, useDs, useGutter } from '@/components/ds';
 import { useUserId } from '@/ctx/AuthContext';
 import { space } from '@/constants/tokens';
-import { useBringInMatchData } from '@/hooks/useBringInMatchData';
+import { bottleReadings, useBringInMatchData } from '@/hooks/useBringInMatchData';
 import { useBringInSave, type BringInSaveInput } from '@/hooks/useBringInSave';
 import { useBringInPlace } from '@/hooks/useBringInPlace';
 import { emptySummary, sourceLabel } from '@/lib/bringInBatch';
@@ -63,7 +63,7 @@ export function BringInFlow() {
   // The job whose reading has been seen through to its check (opened from the tray when ready, or Reading moved on).
   const [checkedId, setCheckedId] = useState<number | null>(() => (job?.status === 'ready' ? job.id : null));
   const checking = !!job && (job.local || checkedId === job.id);
-  const data = useBringInMatchData(job?.barId ?? reviewing?.barId ?? null, !!job || !!reviewing);
+  const data = useBringInMatchData(job?.barId ?? reviewing?.barId ?? null, !!job || !!reviewing, bottleReadings(job));
   const save = useBringInSave(job?.barId ?? null);
   // Several recipes read: a review, one drink at a time, kept on this device until it's done.
   const recipes = checking && job?.status === 'ready' && job.reading?.kind === 'recipes' && job.reading.recipes.length > 1 ? job.reading.recipes : null;

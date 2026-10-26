@@ -3,9 +3,9 @@
 // so the same bottle can't match in one place and not in another. Pure; the
 // review screens render the result.
 //
-// ponytail: matches on the phone against the whole catalog, keyed once
-// (catalogIndex). The upgrade is a trigram search in the database, or
-// handing the reader a shortlist.
+// The catalog is the whole one (keyed once, catalogIndex) or, for a snap, the
+// server's shortlist of it (match_ingredients, hooks/useServerMatch): the
+// rows this matcher can land on, with how many rows name each as their kind.
 
 import { ingredientKey, type IngredientAlias } from '@/lib/ingredientNames';
 
@@ -14,6 +14,8 @@ export interface CatalogItem {
   name: string;
   genericId: string | null;
   barId: string | null;
+  /** How many rows in the pool name this one as their kind, when the catalog is a shortlist that doesn't hold them. */
+  kindOf?: number;
 }
 
 /** What was read: a name, plus the brand and kind when a label showed them. */
@@ -107,6 +109,7 @@ function poolKinds(index: CatalogIndex, catalog: readonly CatalogItem[], venueId
   let kinds = index.kinds.get(venueId);
   if (!kinds) {
     kinds = new Set(catalog.filter((i) => i.genericId && inPool(i, venueId)).map((i) => i.genericId!));
+    for (const i of catalog) if (i.kindOf) kinds.add(i.id);
     index.kinds.set(venueId, kinds);
   }
   return kinds;
@@ -155,11 +158,16 @@ export function matchIngredient(
   const pooled = (e: Entry) => inPool(e.item, venueId) && there(e);
   let kinds = poolKinds(index, catalog, venueId);
   if (without?.size) {
-    // A kind only a left-out item named is no longer one.
+    // A kind only a left-out item named is no longer one (a shortlist counts the ones it doesn't hold).
     kinds = new Set(kinds);
     for (const id of without) {
       const kind = index.byId.get(id)?.genericId;
-      if (kind && !(index.byKind.get(kind) ?? []).some(pooled)) kinds.delete(kind);
+      if (!kind || (index.byKind.get(kind) ?? []).some(pooled)) continue;
+      const out = [...without].filter((w) => {
+        const item = index.byId.get(w);
+        return item?.genericId === kind && inPool(item, venueId);
+      }).length;
+      if ((index.byId.get(kind)?.kindOf ?? 0) - out <= 0) kinds.delete(kind);
     }
   }
   const key = matchKey(read.name);
