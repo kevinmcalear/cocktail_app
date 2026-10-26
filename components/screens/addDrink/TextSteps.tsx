@@ -6,6 +6,7 @@ import { displayFaces, space, type } from '@/constants/tokens';
 import type { StepProps } from '@/lib/drinkWizard';
 import { capitalizeAsYouType } from '@/lib/stringUtils';
 
+import { VenueNotesReaders } from './NotesReaders';
 import { Eyebrow, WizardChip } from './WizardChrome';
 
 // The underline shows focus. Chrome draws `outline-style: auto` at any width, so it's switched off (as SearchField does).
@@ -52,9 +53,10 @@ export function BigName({ value, onChange, onDone, resumed, onStartOver, placeho
 
 /**
  * The menu line guests read, and notes: with the drink, for whoever can see
- * it (the next step says who), or just for you.
+ * it (the next step says who), or just for you. At a venue the notes can
+ * also go to a role and everyone above it (E29).
  */
-export function NotesStep({ draft, set }: StepProps) {
+export function NotesStep({ draft, set, barId = null }: StepProps & { barId?: string | null }) {
   const mine = !!draft.notesPrivate;
   return (
     <View style={styles.stack}>
@@ -74,16 +76,20 @@ export function NotesStep({ draft, set }: StepProps) {
         minLines={3}
         maxLength={2000}
       />
-      <View style={styles.section}>
-        <Eyebrow>Who reads the notes?</Eyebrow>
-        <View role="radiogroup" accessibilityLabel="Who reads the notes" style={styles.chips}>
-          <WizardChip label="With the drink" selected={!mine} onPress={() => set({ notesPrivate: false })} />
-          <WizardChip label="Just me" selected={mine} onPress={() => set({ notesPrivate: true })} />
+      {barId ? (
+        <VenueNotesReaders barId={barId} draft={draft} set={set} />
+      ) : (
+        <View style={styles.section}>
+          <Eyebrow>Who reads the notes?</Eyebrow>
+          <View role="radiogroup" accessibilityLabel="Who reads the notes" style={styles.chips}>
+            <WizardChip label="With the drink" selected={!mine} onPress={() => set({ notesPrivate: false })} />
+            <WizardChip label="Just me" selected={mine} onPress={() => set({ notesPrivate: true })} />
+          </View>
+          <Caption tone="muted">
+            {mine ? 'Only you see them, on the drink’s page. Never shared or published.' : 'Shown on its page to whoever can see the drink. You choose who on the next step.'}
+          </Caption>
         </View>
-        <Caption tone="muted">
-          {mine ? 'Only you see them, on the drink’s page. Never shared or published.' : 'Shown on its page to whoever can see the drink. You choose who on the next step.'}
-        </Caption>
-      </View>
+      )}
     </View>
   );
 }

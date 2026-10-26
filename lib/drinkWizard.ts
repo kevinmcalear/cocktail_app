@@ -7,6 +7,7 @@
 import { iceBuildLine, saysMore, type IceLayer } from '@/lib/iceBuild';
 import type { ImageAngle } from '@/lib/itemImages';
 import type { LineBatch } from '@/lib/batchLines';
+import type { NotesLevel } from '@/lib/notesReaders';
 import type { BottleKind } from '@/lib/newBottle';
 import type { PrepDraft } from '@/lib/prepKinds';
 import type { DraftLook } from '@/lib/sketch/draft';
@@ -135,6 +136,8 @@ export interface WizardDraft {
   notes: string;
   /** "Just me": the notes are yours alone (item_private_notes), not the drink's. Unset is with the drink. */
   notesPrivate?: boolean;
+  /** At a venue, who reads the drink's notes: a role level and everyone above it (E29). Unset is everyone who sees the drink. */
+  notesLevel?: NotesLevel;
   /** null follows the venue (or is private, for a drink at home). */
   publish: PublishMode | null;
   /**

@@ -97,7 +97,7 @@ describe("the bar's Drink Creator", () => {
     const client = users.creator.client;
     const edit = await client
       .from('items')
-      .update({ name: `Cottage Martini, wet ${run}`, description: 'Two to one.', notes: 'Lemon oil, discard.' })
+      .update({ name: `Cottage Martini, wet ${run}`, description: 'Two to one.' })
       .eq('id', ids.drink)
       .select('id');
     assert.ifError(edit.error);
@@ -110,8 +110,10 @@ describe("the bar's Drink Creator", () => {
       is_catalog: false,
       origin_bar_profile_id: ids.profile,
     });
-    const notes = await db.query('SELECT notes FROM public.credited_drink_notes WHERE item_id = $1', [ids.drink]);
-    assert.deepEqual(notes.rows, [{ notes: 'Lemon oil, discard.' }]);
+    const written = await client.from('item_notes').insert({ item_id: ids.drink, body: 'Lemon oil, discard.' });
+    assert.ifError(written.error);
+    const notes = await db.query('SELECT body FROM public.item_notes WHERE item_id = $1', [ids.drink]);
+    assert.deepEqual(notes.rows, [{ body: 'Lemon oil, discard.' }]);
 
     const step = await client.from('item_steps').update({ body: 'Stir 30 seconds.' }).eq('item_id', ids.drink).select('body');
     assert.ifError(step.error);

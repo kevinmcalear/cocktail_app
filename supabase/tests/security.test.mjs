@@ -193,7 +193,7 @@ describe('a new account with no bars', () => {
     assert.ifError(error);
     assert.equal(data.created_by, users.outsider.id);
 
-    const { data: updated } = await client.from('items').update({ notes: 'ok' }).eq('id', ids.outsiderPersonal).select('id');
+    const { data: updated } = await client.from('items').update({ description: 'ok' }).eq('id', ids.outsiderPersonal).select('id');
     assert.equal(updated.length, 1);
   });
 
@@ -354,7 +354,7 @@ describe('members of a bar', () => {
 
   test('a drink creator (35) edits the bar\'s drinks and recipes', async () => {
     const client = users.creator.client;
-    const { data } = await client.from('items').update({ notes: 'tweaked' }).eq('id', ids.barCocktail).select('id');
+    const { data } = await client.from('items').update({ description: 'tweaked' }).eq('id', ids.barCocktail).select('id');
     assert.equal(data.length, 1);
 
     const { data: recipe, error } = await client
@@ -576,7 +576,7 @@ describe('a venue keeps an admin', () => {
 describe('catalog admins', () => {
   test('edit legacy shared items, menus, templates and categories', async () => {
     const client = users.catalogAdmin.client;
-    const { data: item } = await client.from('items').update({ notes: 'curated' }).eq('id', ids.legacyGlobal).select('id');
+    const { data: item } = await client.from('items').update({ description: 'curated' }).eq('id', ids.legacyGlobal).select('id');
     assert.equal(item.length, 1);
     const { data: menu } = await client.from('menus').update({ is_active: true }).eq('id', ids.legacyMenu).select('id');
     assert.equal(menu.length, 1);
