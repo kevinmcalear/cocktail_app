@@ -180,15 +180,25 @@ describe('the catalog', () => {
 });
 
 describe('a venue\'s glass names its model', () => {
-  test('picking one makes the row that glass; its maker, series and designer stay on the model', async () => {
+  test('picking one makes the row that glass, drawn its way; its maker, series and designer stay on the model', async () => {
     const { data, error } = await users.admin.client.from('bar_glassware')
-      .insert({ profile_id: ids.barProfile, glass: 'rocks', model_id: ids.coupe, maker: 'Typed maker', series: 'Typed series' })
-      .select('glass, variant, name, series, designer, maker, maker_profile_id').single();
+      .insert({ profile_id: ids.barProfile, glass: 'coupe', model_id: ids.coupe, maker: 'Typed maker', series: 'Typed series' })
+      .select('id, glass, variant, name, series, designer, maker, maker_profile_id').single();
     assert.ifError(error);
-    assert.deepEqual(data, {
+    const { id, ...row } = data;
+    assert.deepEqual(row, {
       glass: 'coupe', variant: 'coupe_saucer', name: `Coupe ${run}`, series: null, designer: null, maker: null, maker_profile_id: null,
     });
-    ids.barCoupe = (await service.from('bar_glassware').select('id').eq('profile_id', ids.barProfile).eq('glass', 'coupe').single()).data.id;
+    ids.barCoupe = id;
+  });
+
+  test('a glass keeps its job when its model is filed under another type (20261120100000)', async () => {
+    // A venue's Rocks matched to a coupe stays its Rocks: its rocks drinks are drawn in the coupe's outline.
+    const { data, error } = await users.admin.client.from('bar_glassware')
+      .insert({ profile_id: ids.barProfile, glass: 'rocks', variant: 'rocks_heavy', model_id: ids.coupe, is_default: false })
+      .select('glass, variant, name').single();
+    assert.ifError(error);
+    assert.deepEqual(data, { glass: 'rocks', variant: 'rocks_heavy', name: `Coupe ${run}` });
   });
 
   test('a row that names a model can\'t take its facts back (20261103230000)', async () => {
