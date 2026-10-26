@@ -1,7 +1,7 @@
 import { useRouter, type Href } from 'expo-router';
 import { StyleSheet, View } from 'react-native';
 
-import { Body, Button, Caption, Headline, IngredientThumb, PressableScale, Surface, TextLink, useDs } from '@/components/ds';
+import { Body, Button, Caption, Headline, IngredientThumb, PressableScale, TextLink, useDs } from '@/components/ds';
 import { WebHead } from '@/components/WebHead';
 import { space } from '@/constants/tokens';
 import { useSignedIn } from '@/ctx/AuthContext';
@@ -68,15 +68,8 @@ export function MakerProfile({ profile, columns }: { profile: Profile; columns: 
 
       <Awards profileId={profile.id} />
 
-      {unclaimed && signedIn && bottles.length ? (
-        <Surface style={styles.claim}>
-          <Headline role="heading">Make this? Claim this page</Headline>
-          <Body tone="muted">{`Add real photos of your ${bottles.length} ${bottles.length === 1 ? 'bottle' : 'bottles'}, and see the drinks and bars that use them.`}</Body>
-          <ClaimProfile profile={profile} label="Claim this page" />
-        </Surface>
-      ) : unclaimed ? (
-        <ClaimProfile profile={profile} label="Make this? Claim this page" />
-      ) : null}
+      {/* Signed in, the claim is in More (Q33); signed out there's no More, so it stays here and asks to sign in. */}
+      {unclaimed && !signedIn ? <ClaimProfile profile={profile} label="Make this? Claim this page" /> : null}
 
       {!signedIn ? (
         <View style={styles.section}>
@@ -148,7 +141,6 @@ const styles = StyleSheet.create({
   body: { gap: space.xl },
   head: { gap: space.sm },
   section: { gap: space.md },
-  claim: { gap: space.sm },
   titleRow: { flexDirection: 'row', alignItems: 'center', gap: space.md },
   flex: { flex: 1, minWidth: 0 },
   row: { flexDirection: 'row', alignItems: 'center', gap: space.md, minHeight: 56, paddingVertical: space.sm, borderBottomWidth: StyleSheet.hairlineWidth },

@@ -35,6 +35,23 @@ export function currencyFor({ set, country, device }: { set?: string | null; cou
   return isCurrencyCode(device) ? device : null;
 }
 
+// ponytail: names for the usual ones (Hermes has no Intl.DisplayNames); any other shows as its code.
+const CURRENCY_NAMES: Record<string, string> = {
+  GBP: 'British pound', EUR: 'Euro', USD: 'US dollar', AUD: 'Australian dollar', SGD: 'Singapore dollar', JPY: 'Japanese yen',
+  HKD: 'Hong Kong dollar', CAD: 'Canadian dollar', NZD: 'New Zealand dollar', CHF: 'Swiss franc', MXN: 'Mexican peso',
+};
+
+/** "Australian dollar, AUD"; a code with no name here is just the code. */
+export function currencyLabel(code: string): string {
+  const name = CURRENCY_NAMES[code];
+  return name ? `${name}, ${code}` : code;
+}
+
+/** The usual currencies to pick from, the country's own first (setup's Currency row). */
+export function currencyChoices(first: string | null): string[] {
+  return first && !COMMON_CURRENCIES.some((c) => c === first) ? [first, ...COMMON_CURRENCIES] : [...(first ? [first] : []), ...COMMON_CURRENCIES.filter((c) => c !== first)];
+}
+
 /** Minor units per major unit: 100 for most, 1 for yen. */
 export function minorPerMajor(currency: string): number {
   return ZERO_DECIMAL.has(currency) ? 1 : 100;

@@ -8,10 +8,11 @@ import { Caption, Headline } from '@/components/ds';
 import { space } from '@/constants/tokens';
 import type { DiscoverDrink } from '@/lib/discoverDrinks';
 
-import { SheetLine, useMapSheetChrome, usePageFade } from './mapSheetChrome';
+import { SheetLine, SheetSearchSlot, useMapSheetChrome, usePageFade } from './mapSheetChrome';
 
-/** Until the handle measures itself: the grabber and the title's row. */
+/** Until the handle measures itself: the grabber and the title's row, and the search field when there is one. */
 const HANDLE = 66;
+const SEARCH = 56;
 /** How far a tapped bar's card opens the sheet. */
 const BAR_STOP = '55%';
 
@@ -26,6 +27,8 @@ interface MapSheetProps {
   /** The sheet at rest is this tall, for the map's camera. */
   onPeek: (peek: number) => void;
   title: string;
+  /** Discover's search field, over the line (SheetSearch); not while a tapped bar's card leads. */
+  search?: ReactNode;
   /** "229 bars", "31 at 24 bars". */
   count: string;
   /** Under the page's title: the order, the classic line. */
@@ -52,9 +55,9 @@ const drinkKey = (d: DiscoverDrink) => d.id;
  * map (no Map button; swiping down is the way back) and the line gives way to
  * the page's display title. It stops partway only for a tapped bar.
  */
-export function MapSheet({ sheetRef, animated, findMe, topInset, onPeek, title, count, below, bar, browse, listTitle, drinks, renderItem, extraData, empty, footer, onEndReached }: MapSheetProps) {
+export function MapSheet({ sheetRef, animated, findMe, topInset, onPeek, title, search, count, below, bar, browse, listTitle, drinks, renderItem, extraData, empty, footer, onEndReached }: MapSheetProps) {
   const chrome = useMapSheetChrome();
-  const [handle, setHandle] = useState(HANDLE);
+  const [handle, setHandle] = useState(HANDLE + (search ? SEARCH : 0));
   const peek = handle + chrome.foot;
   useEffect(() => onPeek(peek), [peek, onPeek]);
   const snapPoints = bar ? [peek, BAR_STOP, '100%'] : [peek, '100%'];
@@ -76,6 +79,7 @@ export function MapSheet({ sheetRef, animated, findMe, topInset, onPeek, title, 
   return (
     <View pointerEvents="box-none" style={[chrome.box, { top: topInset }]}>
       {findMe(full)}
+      <SheetSearchSlot value={barId ? null : search}>
       <BottomSheet
         ref={sheetRef}
         snapPoints={snapPoints}
@@ -121,6 +125,7 @@ export function MapSheet({ sheetRef, animated, findMe, topInset, onPeek, title, 
           />
         </Animated.View>
       </BottomSheet>
+      </SheetSearchSlot>
     </View>
   );
 }

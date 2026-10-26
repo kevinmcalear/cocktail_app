@@ -44,7 +44,7 @@ export interface SpecRowProps {
 
 /**
  * One line of a spec, readable across the bar: the amount in its own aligned
- * column in the accent, then the ingredient.
+ * column in the accent, then the ingredient, then its drawing at the right edge.
  *
  * When the amount has its own action, the line splits into two sibling
  * controls (amount, then ingredient) so no button sits inside another.
@@ -74,10 +74,11 @@ export function SpecRow({ amount, ingredient, ingredientId, houseMade, optional,
     </>
   );
   const pictured = ingredientId !== undefined;
+  // The drawing ends the line, against the margin, so amounts and names line up on the left (Eddie E42).
   const name = pictured ? (
     <>
-      <IngredientThumb id={ingredientId} name={ingredient} size={36 * scale} />
       <View style={styles.text}>{text}</View>
+      <IngredientThumb id={ingredientId} name={ingredient} size={36 * scale} />
     </>
   ) : (
     text

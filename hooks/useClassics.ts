@@ -55,6 +55,8 @@ export function useLinkClassic() {
     onSettled: (_data, _error, links) => {
       void client.invalidateQueries({ queryKey: ['unlinked-drinks'] });
       void client.invalidateQueries({ queryKey: ['lineage'] });
+      // Library's Classics lists the bar's linked drinks.
+      void client.invalidateQueries({ queryKey: ['staff-list-riffs'] });
       for (const { itemId } of links) void client.invalidateQueries({ queryKey: ['rank-target', itemId] });
     },
   });

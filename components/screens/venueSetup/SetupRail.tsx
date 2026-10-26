@@ -5,17 +5,17 @@ import { IconSymbol } from '@/components/ui/icon-symbol';
 import { VenueMark } from '@/components/nav/VenueMarks';
 import { fontFamilies, radius, space } from '@/constants/tokens';
 import { withAlpha } from '@/lib/color';
-import { RAIL_STEPS, STEP_LINES, STEP_NAMES, type VenueScreen, type VenueStep } from '@/lib/venueSetup';
+import { RAIL_STEPS, STEP_LINES, STEP_NAMES, type SetupDone, type VenueScreen, type VenueStep } from '@/lib/venueSetup';
 
 const WIDTH = 300;
 
 /**
- * Wide web: the eight steps down the left (canvas make-venue-desktop, in
- * eddie-oct22-wave1's order: proving it's yours last), done
+ * Wide web: the steps down the left (canvas make-venue-desktop; proving
+ * it's yours is the checklist's card now, E32), done
  * ones ticked with what they settled, the current one marked. Any step can
  * be picked; nothing has to go in order.
  */
-export function SetupRail({ name, logoUrl, at, done, status, onPick, onLeave }: { name: string; logoUrl: string | null; at: VenueScreen; done: readonly VenueStep[]; status: Partial<Record<VenueStep, string>>; onPick: (s: VenueStep) => void; onLeave: () => void }) {
+export function SetupRail({ name, logoUrl, at, done, status, onPick, onLeave }: { name: string; logoUrl: string | null; at: VenueScreen; done: readonly SetupDone[]; status: Partial<Record<VenueStep, string>>; onPick: (s: VenueStep) => void; onLeave: () => void }) {
   const ds = useDs();
   return (
     <View role="navigation" accessibilityLabel="Venue setup steps" style={[styles.rail, { borderRightColor: ds.c.line }]}>

@@ -1,4 +1,4 @@
-import { useRouter, type Href } from 'expo-router';
+import { useLocalSearchParams, useRouter, type Href } from 'expo-router';
 import { useState } from 'react';
 import { ScrollView, StyleSheet, View } from 'react-native';
 
@@ -67,7 +67,9 @@ export function RolesScreen({ barId }: { barId: string }) {
   const remove = useDeleteVenueRole(barId);
   const toggle = useSetRoleCapability(barId);
   const reset = useResetBuiltInRole(barId);
-  const [editing, setEditing] = useState<Editing>(null);
+  // Setup's Add a role (?new=1) opens straight onto New role.
+  const opensNew = !!useLocalSearchParams<{ new?: string }>().new;
+  const [editing, setEditing] = useState<Editing>(opensNew ? { role: null } : null);
 
   const columns = matrix.data ?? [];
   const guests = (members.data ?? []).filter((m) => m.role_ends_at).sort((a, b) => (a.role_ends_at ?? '').localeCompare(b.role_ends_at ?? ''));
@@ -182,7 +184,8 @@ export function RolesScreen({ barId }: { barId: string }) {
           ) : null}
         </View>
       </ScrollView>
-      {editing ? (
+      {/* New role starts from the built-in roles' permissions, so it waits for the matrix. */}
+      {editing && matrix.data ? (
         <RoleSheet
           key={editing.role?.role_id ?? 'new'}
           visible

@@ -20,13 +20,15 @@ interface PickerFieldProps {
   children: ReactNode;
   /** A row of a grouped card: no box of its own (Field's `bare`). */
   bare?: boolean;
+  /** The caller draws the picker (in a PickerPanel) somewhere wider than the field: TimeRange. */
+  detached?: boolean;
 }
 
 /**
  * The shell DateField and TimeField share: a labelled box that looks like a
  * Field and opens its picker under it, inside the sheet, on every platform.
  */
-export function PickerField({ label, text, placeholder, open, onToggle, hint, error, children, bare }: PickerFieldProps) {
+export function PickerField({ label, text, placeholder, open, onToggle, hint, error, children, bare, detached }: PickerFieldProps) {
   const ds = useDs();
   const toggle = () => {
     // A keyboard left up from a field above would cover the picker.
@@ -48,10 +50,16 @@ export function PickerField({ label, text, placeholder, open, onToggle, hint, er
         </Body>
         {bare ? null : <IconSymbol name={open ? 'chevron.up' : 'chevron.down'} size={18} color={ds.c.muted} />}
       </Pressable>
-      {open ? <View style={[styles.panel, { backgroundColor: ds.c.raised, borderColor: ds.c.line }]}>{children}</View> : null}
+      {open && !detached ? <PickerPanel>{children}</PickerPanel> : null}
       {error ? <Caption tone="accent">{error}</Caption> : hint ? <Caption tone="muted">{hint}</Caption> : null}
     </View>
   );
+}
+
+/** The box a picker opens in, under its field. */
+export function PickerPanel({ children }: { children: ReactNode }) {
+  const ds = useDs();
+  return <View style={[styles.panel, { backgroundColor: ds.c.raised, borderColor: ds.c.line }]}>{children}</View>;
 }
 
 interface PickerCellProps {
