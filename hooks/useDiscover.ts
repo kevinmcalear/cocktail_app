@@ -28,6 +28,8 @@ export interface DrinkList {
   id: string;
   name: string;
   imageUrl: string | null;
+  /** Its other names, for matching a menu's name to it. Missing on a list cached before they were read. */
+  aliases?: string[];
 }
 
 /**
@@ -43,12 +45,24 @@ export function useDrinkLists(enabled = true) {
     queryFn: async (): Promise<DrinkList[]> => {
       const { data, error } = await supabase
         .from('items')
-        .select('id, name, item_images ( angle, sort_order, is_generated, images ( url ) )')
+        .select('id, name, classic_aliases ( alias ), item_images ( angle, sort_order, is_generated, images ( url ) )')
         .eq('is_catalog', true)
         .order('name');
       if (error) throw error;
-      const rows = (data ?? []) as unknown as { id: string; name: string; item_images: ItemImageLink[] | null }[];
-      return orderDrinks(rows.map((r) => ({ id: r.id, name: r.name, imageUrl: heroPicture(r.item_images)?.url ?? null })));
+      const rows = (data ?? []) as unknown as {
+        id: string;
+        name: string;
+        classic_aliases: { alias: string }[] | null;
+        item_images: ItemImageLink[] | null;
+      }[];
+      return orderDrinks(
+        rows.map((r) => ({
+          id: r.id,
+          name: r.name,
+          imageUrl: heroPicture(r.item_images)?.url ?? null,
+          aliases: (r.classic_aliases ?? []).map((a) => a.alias),
+        }))
+      );
     },
   });
 }
