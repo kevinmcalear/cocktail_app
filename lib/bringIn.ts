@@ -227,3 +227,19 @@ export function stripWindow(count: number, page: number): { from: number; to: nu
   const from = Math.min(Math.max(page - 2, 0), count - STRIP);
   return { from, to: from + STRIP };
 }
+
+/** A page Reading shows: a file you gave, or one page of a PDF drawn on the phone (`of`: the file it's from). */
+export interface ReadingPage {
+  file: MenuPhoto;
+  of: number;
+  /** A PDF's page: the reader says only which file a line is in, not which page, so it gets no boxes. */
+  drawn: boolean;
+}
+
+/** The files as pages: a PDF drawn on the phone becomes its pages, anything else is itself. */
+export function readingPages(files: readonly MenuPhoto[], drawn: Record<string, MenuPhoto[]> | undefined): ReadingPage[] {
+  return files.flatMap((file, of): ReadingPage[] => {
+    const pages = drawn?.[file.uri];
+    return pages?.length ? pages.map((page) => ({ file: page, of, drawn: true })) : [{ file, of, drawn: false }];
+  });
+}
