@@ -87,8 +87,8 @@ Built from the starting design above, with the changes noted (why in brackets).
 ### PR 4: the kit check
 
 - `lib/kitCheck.ts` (+ check): a drink's glass (by drawn shape), each ice it needs (its build's layers and what it's shaken with, by drawing kind) and the tools its methods name (`methodTools`: Shake is tins and a strainer, Stir a mixing glass and a strainer, Blend a blender), against the venue's Kit. An ice the venue makes is followed back through what it starts from (a visited set, so a loop ends) and its steps' tools are checked too. A part of the Kit with nothing listed isn't checked. "Needs a sphere and a block ice shaver"; the nearest ice the venue has (`houseIce`).
-- `hooks/useKitCheck.ts`: the venue's Kit with its ice recipes, a drink as the check reads it, `useDrinkKitCheck`, `useVenueKitChecks`, `useKitShelves`. Ice recipes are read as house preps are, so without Prep an ice's own tools aren't followed.
-- The drink page's "Can <venue> make it?" (`components/screens/drink/KitCheckSection.tsx`) in venue mode, for the venue's drinks and the catalog's; Add opens Kit's sheets filled in.
+- `hooks/useKitCheck.ts`: the venue's Kit with its ice recipes, a drink as the check reads it, `useHomeDrinkKitCheck` (My Bar's glassware, ice and tools), `useVenueKitChecks`, `useKitShelves`. Ice recipes are read as house preps are, so without Prep an ice's own tools aren't followed.
+- The drink page's "Can you make it?" (`components/screens/drink/KitCheckSection.tsx`) in home mode only, against My Bar's kit, with no Add buttons. Venue drink pages don't show it (26 Oct feedback); Library's Ready here covers the venue.
 - Library: Ready here and Needs something (`KIT_FILTERS`, in the filter menu's Kit section), each tile saying what it needs.
 - The technique library and the wizard's prep step read `useKitHere()` (hooks/useBarKit.ts): the venue's tools in venue mode, your home kit otherwise.
 

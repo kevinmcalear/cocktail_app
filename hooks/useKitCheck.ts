@@ -69,7 +69,7 @@ export function useVenueDrinks(barId: string | null | undefined) {
   });
 }
 
-/** One drink as the check reads it (a catalog drink seen at a venue too). */
+/** One drink as the check reads it (the home drink page's check). */
 function useDrink(itemId: string) {
   return useQuery({
     queryKey: ['drink-kit', itemId],
