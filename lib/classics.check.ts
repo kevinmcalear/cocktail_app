@@ -7,7 +7,7 @@ const CLASSICS = [
   'Martini', 'Negroni', 'Old Fashioned', 'Manhattan', 'Daiquiri', 'Margarita', 'Sazerac', 'Boulevardier', 'Aviation',
   'Corpse Reviver #2', 'Vieux Carré', "Tommy's Margarita", 'White Negroni', 'Espresso Martini', 'Americano', 'Brooklyn',
   'Whiskey Sour', 'Piña Colada', 'Japanese Cocktail', 'Greenpoint', "Corn 'n' Oil", 'Champs-Élysées', 'Caipiroska',
-  'De La Louisiane', 'Bronx',
+  'De La Louisiane', 'Bronx', 'Champagne Cocktail',
 ].map((name, i) => ({ id: String(i), name }));
 
 function suggest(name: string): string | null {
@@ -41,8 +41,9 @@ assert.equal(suggest('Boulvardier'), 'Boulevardier');
 assert.equal(suggestClassic('Pompiere', [{ id: 'p', name: 'Pompier' }])?.classic.name, 'Pompier');
 
 // --- Old menus' spellings of the same drink (a venue's import, E50, 26 Oct 2026) ---
-assert.equal(suggest('Japanese'), 'Japanese Cocktail', 'a trailing "Cocktail" is the same drink');
-assert.equal(suggest('Americano Cocktail'), 'Americano');
+assert.equal(suggest('Americano Cocktail'), 'Americano', 'a "Cocktail" the menu added is the same drink');
+assert.equal(suggest('Japanese'), 'Japanese Cocktail ?', 'the classic\'s own "Cocktail" left off: a guess');
+assert.equal(suggest('Champagne'), 'Champagne Cocktail ?', 'a bare "Champagne" may be the wine');
 assert.equal(suggest('Green Point'), 'Greenpoint', 'spacing');
 assert.equal(suggest('Corpse Reviver No. 2'), 'Corpse Reviver #2');
 assert.equal(suggest('Corn And Oil'), "Corn 'n' Oil");

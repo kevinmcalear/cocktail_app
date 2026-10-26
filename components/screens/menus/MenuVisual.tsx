@@ -5,6 +5,7 @@ import { ScrollView, StyleSheet, View } from 'react-native';
 
 import { DrinkImage, useDs } from '@/components/ds';
 import { withAlpha } from '@/lib/color';
+import { bandLoopJump } from '@/lib/menus';
 import type { MenuPicture } from '@/types/menus';
 
 /** Drinks side by side in the band; with more, the next one is cut at the edge so it's clear the band scrolls. */
@@ -37,6 +38,8 @@ export function MenuVisual({ name, coverUrl, coverPosition = 50, pictures, heigh
   const [width, setWidth] = useState(0);
   const band = useRef<ComponentRef<typeof ScrollView>>(null);
   const settle = useRef<ReturnType<typeof setTimeout>>(undefined);
+  // Never jumps under a finger: only once the band is let go and still.
+  const dragging = useRef(false);
   const scrolls = scroll && !coverUrl && pictures.length > SHOWN;
   const shown = scrolls ? pictures : pictures.slice(0, SHOWN);
   const tile = width / (SHOWN - 0.5);
@@ -50,8 +53,9 @@ export function MenuVisual({ name, coverUrl, coverPosition = 50, pictures, heigh
   // Once it stops on a copy, the same drink in the middle, unseen.
   const onScroll = (x: number) => {
     clearTimeout(settle.current);
+    if (dragging.current) return;
     settle.current = setTimeout(() => {
-      const jump = x < SHOWN * tile - 1 ? pictures.length * tile : x > (SHOWN + pictures.length) * tile - 1 ? -pictures.length * tile : 0;
+      const jump = bandLoopJump(x, tile, pictures.length, SHOWN);
       if (jump) band.current?.scrollTo({ x: x + jump, animated: false });
     }, SETTLE_MS);
   };
@@ -93,6 +97,11 @@ export function MenuVisual({ name, coverUrl, coverPosition = 50, pictures, heigh
             decelerationRate="fast"
             scrollEventThrottle={32}
             onScroll={(e) => onScroll(e.nativeEvent.contentOffset.x)}
+            onScrollBeginDrag={() => (dragging.current = true)}
+            onScrollEndDrag={(e) => {
+              dragging.current = false;
+              onScroll(e.nativeEvent.contentOffset.x);
+            }}
           >
             {tiles}
           </ScrollView>

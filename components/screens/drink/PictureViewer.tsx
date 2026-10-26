@@ -59,11 +59,12 @@ export function PictureViewer({ pictures, name, open, startIndex, onClose, capti
 function Viewer({ pictures, name, startIndex, onClose, caption, actions }: Omit<PictureViewerProps, 'open'>) {
   const ds = useDs();
   const insets = useSafeAreaInsets();
-  const [index, setIndex] = useState(startIndex);
+  const [shown, setIndex] = useState(startIndex);
   const [size, setSize] = useState({ width: 0, height: 0 });
   const [zoomed, setZoomed] = useState(false);
   // A picture deleted from under it (PeoplePhotos) leaves one fewer.
-  const picture = pictures[Math.min(index, pictures.length - 1)];
+  const index = Math.min(shown, pictures.length - 1);
+  const picture = pictures[index];
   const tag = pictureTag(picture);
   const total = pictures.length;
 
