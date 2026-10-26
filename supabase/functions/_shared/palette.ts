@@ -17,6 +17,7 @@ type Rgb = [number, number, number];
 /** A sampled pixel and how much it counts (more near the middle). */
 type Sample = [r: number, g: number, b: number, weight: number];
 type Hsl = { h: number; s: number; l: number };
+type Box = { rgb: Rgb; hsl: Hsl; share: number };
 
 /** Sample at most this many pixels; a palette doesn't need more. */
 const MAX_SAMPLES = 20_000;
@@ -51,37 +52,11 @@ const DARK_WINE = { maxL: 0.35, minS: 0.2, fromHue: 290, toHue: 10, minShare: 0.
  * to a row.
  */
 export function pickPalette(rgba: ArrayLike<number>, width: number): string[] {
-  const pixelCount = Math.floor(rgba.length / 4);
-  if (pixelCount === 0 || width <= 0) return [];
-  const height = Math.ceil(pixelCount / width);
-  const stride = Math.max(1, Math.floor(pixelCount / MAX_SAMPLES));
-  const opaque: Sample[] = [];
-  let opaqueWeight = 0;
-  for (let p = 0; p < pixelCount; p += stride) {
-    const i = p * 4;
-    if (rgba[i + 3] < 128) continue;
-    const dx = ((p % width) + 0.5) / width - 0.5;
-    const dy = (Math.floor(p / width) + 0.5) / height - 0.5;
-    const weight = Math.exp(-(dx * dx + dy * dy) / (2 * CENTRE_SPREAD ** 2));
-    opaque.push([rgba[i], rgba[i + 1], rgba[i + 2], weight]);
-    opaqueWeight += weight;
-  }
+  const boxes = colourBoxes(rgba, width);
+  return boxes ? paletteOf(boxes) : [];
+}
 
-  let colourful: Sample[] = [];
-  let colourWeight = 0;
-  for (const { minChroma, minShare } of PASSES) {
-    colourful = opaque.filter((pixel) => !isBackground(pixel, minChroma));
-    colourWeight = totalWeight(colourful);
-    if (colourful.length > 0 && colourWeight >= opaqueWeight * minShare) break;
-    colourful = [];
-  }
-  if (colourful.length === 0) return [];
-
-  const boxes = medianCut(colourful, MAX_BOXES).map((pixels) => {
-    const rgb = average(pixels);
-    return { rgb, hsl: toHsl(rgb), share: totalWeight(pixels) / colourWeight };
-  });
-
+function paletteOf(boxes: Box[]): string[] {
   let dominant = boxes[0];
   for (const box of boxes) {
     if (score(box.hsl, box.share) > score(dominant.hsl, dominant.share)) dominant = box;
@@ -106,8 +81,73 @@ export function pickPalette(rgba: ArrayLike<number>, width: number): string[] {
   return [toHex(fromHsl(d)), toHex(fromHsl(deep)), toHex(fromHsl(light))];
 }
 
+/** The picture's colour, split into boxes with their share of it; null when it is all background. */
+function colourBoxes(rgba: ArrayLike<number>, width: number): Box[] | null {
+  const pixelCount = Math.floor(rgba.length / 4);
+  if (pixelCount === 0 || width <= 0) return null;
+  const height = Math.ceil(pixelCount / width);
+  const stride = Math.max(1, Math.floor(pixelCount / MAX_SAMPLES));
+  const opaque: Sample[] = [];
+  let opaqueWeight = 0;
+  for (let p = 0; p < pixelCount; p += stride) {
+    const i = p * 4;
+    if (rgba[i + 3] < 128) continue;
+    const dx = ((p % width) + 0.5) / width - 0.5;
+    const dy = (Math.floor(p / width) + 0.5) / height - 0.5;
+    const weight = Math.exp(-(dx * dx + dy * dy) / (2 * CENTRE_SPREAD ** 2));
+    opaque.push([rgba[i], rgba[i + 1], rgba[i + 2], weight]);
+    opaqueWeight += weight;
+  }
+
+  let colourful: Sample[] = [];
+  let colourWeight = 0;
+  for (const { minChroma, minShare } of PASSES) {
+    colourful = opaque.filter((pixel) => !isBackground(pixel, minChroma));
+    colourWeight = totalWeight(colourful);
+    if (colourful.length > 0 && colourWeight >= opaqueWeight * minShare) break;
+    colourful = [];
+  }
+  if (colourful.length === 0) return null;
+
+  return medianCut(colourful, MAX_BOXES).map((pixels) => {
+    const rgb = average(pixels);
+    return { rgb, hsl: toHsl(rgb), share: totalWeight(pixels) / colourWeight };
+  });
+}
+
+/**
+ * The colours to offer as a sketch colour from a photo (the add wizard's From
+ * your photo row): the palette's drink colour and its deep, then the
+ * picture's other common colours, each clearly apart from those before it.
+ */
+export function photoColours(rgba: ArrayLike<number>, width: number, max = 5): string[] {
+  const boxes = colourBoxes(rgba, width);
+  if (!boxes) return [];
+  const [drink, deep] = paletteOf(boxes);
+  const out = [drink, deep].map(hexRgb);
+  for (const box of [...boxes].sort((a, b) => b.share - a.share)) {
+    if (out.length >= max) break;
+    if (box.share < MIN_PHOTO_SHARE) break;
+    if (out.every((c) => rgbDistance(c, box.rgb) >= MIN_PHOTO_DISTANCE)) out.push(box.rgb);
+  }
+  return out.map(toHex);
+}
+
+/** A photo colour has to be this much of the picture's colour to be offered. */
+const MIN_PHOTO_SHARE = 0.03;
+/** And this far (0 to 441) from every colour already offered. */
+const MIN_PHOTO_DISTANCE = 48;
+
+function hexRgb(hex: string): Rgb {
+  return [1, 3, 5].map((i) => parseInt(hex.slice(i, i + 2), 16)) as Rgb;
+}
+
+function rgbDistance(a: Rgb, b: Rgb): number {
+  return Math.hypot(a[0] - b[0], a[1] - b[1], a[2] - b[2]);
+}
+
 /** The plum of a dark wine (its dark boxes, averaged by share), or null. */
-function darkWine(boxes: { rgb: Rgb; hsl: Hsl; share: number }[]): Hsl | null {
+function darkWine(boxes: Box[]): Hsl | null {
   const wine = boxes.filter(
     ({ hsl }) =>
       hsl.l <= DARK_WINE.maxL && hsl.s >= DARK_WINE.minS && (hsl.h >= DARK_WINE.fromHue || hsl.h <= DARK_WINE.toHue)

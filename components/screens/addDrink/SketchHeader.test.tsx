@@ -52,15 +52,27 @@ describe('SketchHeader', () => {
   test('Colour on the band, from the first step, picks the drawing’s watercolour or Auto', async () => {
     const onTint = jest.fn();
     await renderWithTamagui(<SketchHeader draft={{ ...EMPTY_DRAFT, name: 'Fig Leaf Spritz' }} step="name" onBack={jest.fn()} top={0} side={0} rounded={false} onTint={onTint} />);
-    fireEvent.press(screen.getByLabelText('Sketch colour, Fig Leaf Spritz'));
-    fireEvent.press(await screen.findByLabelText('Blush'));
+    await fireEvent.press(screen.getByLabelText('Sketch colour, Fig Leaf Spritz'));
+    await fireEvent.press(await screen.findByLabelText('Blush'));
     expect(onTint).toHaveBeenLastCalledWith('#efb7ae');
-    fireEvent.press(screen.getByLabelText('Auto, from the spec'));
+    await fireEvent.press(screen.getByLabelText('Auto, from the spec'));
     expect(onTint).toHaveBeenLastCalledWith(null);
   });
 
   test('no Colour without a way to keep it', async () => {
     await renderWithTamagui(header({ ...EMPTY_DRAFT, name: 'Negroni' }));
     expect(screen.queryByLabelText('Sketch colour, Negroni')).toBeNull();
+  });
+
+  // Canvas Create, Q17 D: a phone's typing steps get a thumbnail beside the progress; the drawing steps keep it full.
+  test('compact on the steps where you type, with the drawing a tap away; full on glass', async () => {
+    const view = await renderWithTamagui(header({ ...EMPTY_DRAFT, name: 'Ash Garden' }, false, 'ingredients'));
+    expect(screen.queryByText('Updates as you go')).toBeNull();
+    await fireEvent.press(await screen.findByLabelText(/^Show the drawing full size/));
+    expect(await screen.findByText('Updates as you go')).toBeTruthy();
+
+    await view.rerender(header({ ...EMPTY_DRAFT, name: 'Ash Garden' }, false, 'glass'));
+    expect(screen.queryByLabelText(/^Show the drawing full size/)).toBeNull();
+    expect(screen.getByText('Updates as you go')).toBeTruthy();
   });
 });

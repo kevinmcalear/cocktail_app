@@ -4,6 +4,7 @@ import { StyleSheet, View } from 'react-native';
 
 import { Body, Caption, DrinkImage, Headline, MatchText, PressableScale, Tag, useDs, type MatchTextProps, type TagTone } from '@/components/ds';
 import { BarMark } from '@/components/screens/home/BarMark';
+import { CanMakeTag } from '@/components/search/CanMake';
 import { useSearchNavRow } from '@/components/search/searchNav';
 import { displayFaces, fontFamilies, radius, space } from '@/constants/tokens';
 import { usePrefetchCocktail } from '@/hooks/useCocktails';
@@ -117,6 +118,8 @@ export function DrinkRow({ name, href, onPress, imageUrl, glass, itemId, caption
           </Caption>
         ) : null}
         {below}
+        {/* At a venue's Everywhere: can it make this (QA Q37). */}
+        {itemId ? <CanMakeTag itemId={itemId} /> : null}
       </View>
       {trailing}
       {nav.active ? <Caption tone="muted">Open ↵</Caption> : null}

@@ -1,7 +1,8 @@
 import { useDropdowns } from '@/hooks/useDropdowns';
 import { glassModelSize, useDrinkGlassModel } from '@/hooks/useGlassModels';
 import { classifyMethod, isGarnishUnit, type BatchMethod } from '@/lib/batch';
-import { orderedMethodIds } from '@/lib/drinkMethods';
+import { methodIcon, orderedMethodIds } from '@/lib/drinkMethods';
+import { glassIcon } from '@/lib/glasswareIcons';
 import { iceLine } from '@/lib/drinkWizard';
 import { iceBuildLine, readIceBuild, saysMore } from '@/lib/iceBuild';
 import { drinkStrength, formatAbv, formatAmount, type DilutionDefaults, type Strength } from '@/lib/drinkMath';
@@ -10,6 +11,7 @@ import type { DatabaseItem } from '@/types/types';
 
 import type { Fact } from './DrinkFacts';
 import type { GlassSheetGlass } from './GlassSheet';
+import type { SpecMark } from './SpecMarks';
 
 interface Named {
   id: string;
@@ -107,6 +109,15 @@ export function useDrinkFacts(item: DatabaseItem, { lines, amounts, dilutionDefa
       garnish ? { label: 'Garnish', value: garnishLabel(garnish.ingredient!, garnish.unit) } : null,
     ] as (Fact | null | undefined)[]
   ).filter((f): f is Fact => !!f);
+  // Beside the Spec heading (Eddie E43): each method's icon, then the glass's, which opens the glass sheet like its make line cell.
+  const glassMark = glass ? glassIcon(glass) : null;
+  const marks: SpecMark[] = [
+    ...methods.flatMap((name) => {
+      const icon = methodIcon(name);
+      return icon ? [{ key: `method-${name}`, label: `Method: ${name}`, icon }] : [];
+    }),
+    ...(glass && glassMark ? [{ key: 'glass', label: `Glass: ${glass.name}`, icon: glassMark, onPress: measures ? openGlass : undefined, accessibilityHint: glassHint }] : []),
+  ];
   // Under More: strength and serve; family only where the serve isn't shown.
   const facts = (
     [
@@ -125,7 +136,7 @@ export function useDrinkFacts(item: DatabaseItem, { lines, amounts, dilutionDefa
   ).filter((f): f is Fact => !!f);
   // The method is in the make line now, so the tags are only where the drink comes from.
   const tags = item.origin ? [ORIGIN_LABEL[item.origin] ?? item.origin] : [];
-  return { make, facts, tags, glass, ice: ice ? { name: ice.name } : null, method, methods, strength };
+  return { make, marks, facts, tags, glass, ice: ice ? { name: ice.name } : null, method, methods, strength };
 }
 
 /** Under the glass's name: who made it, and a real glass's size. */

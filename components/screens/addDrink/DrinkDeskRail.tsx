@@ -1,7 +1,7 @@
 import { useRouter } from 'expo-router';
 import { StyleSheet, View } from 'react-native';
 
-import { BackbarTheme, Body, Caption, DsText, Field, Headline, PressableScale, SketchTintPicker, Spec, Surface, Title, useDs } from '@/components/ds';
+import { BackbarTheme, Body, Caption, DsText, Field, Headline, PressableScale, Spec, Surface, Title, useDs } from '@/components/ds';
 import { SketchDrawing } from '@/components/ds/SketchDrawing';
 import { fontFamilies, radius, space } from '@/constants/tokens';
 import { withAlpha } from '@/lib/color';
@@ -17,6 +17,7 @@ import { useMenuDrinkSpecs } from '@/hooks/useDrinkDesk';
 import { equipmentById } from '@/lib/techniques';
 import type { PricingSettings } from '@/hooks/usePricing';
 
+import { DraftTintPicker } from './DraftColourSheet';
 import { inputsFor } from './SketchHeader';
 import { Eyebrow, WizardChip } from './WizardChrome';
 import type { CatalogIngredient } from './IngredientSearch';
@@ -24,7 +25,8 @@ import type { CatalogIngredient } from './IngredientSearch';
 /**
  * The drink as it's written: its drawing, name and what's in it
  * (make-create-desktop, "The drink, as you go"), and the drawing's colour
- * under it: Auto, or a house watercolour that holds while the spec changes.
+ * under it: Auto, its photo's colours, or a house watercolour that holds
+ * while the spec changes.
  */
 export function DeskDrinkCard({ draft, look, seed, onTint }: { draft: WizardDraft; look: DraftLook; seed: string; onTint: (tint: string | null) => void }) {
   const ds = useDs();
@@ -50,7 +52,7 @@ export function DeskDrinkCard({ draft, look, seed, onTint }: { draft: WizardDraf
       <BackbarTheme scheme="light">
         <View style={[styles.colour, { borderTopColor: withAlpha(ds.c.sketchInk, 0.16) }]}>
           <Eyebrow>Colour</Eyebrow>
-          <SketchTintPicker inputs={inputs} seed={seed} value={draft.tint ?? null} onChange={onTint} frame={false} />
+          <DraftTintPicker inputs={inputs} seed={seed} value={draft.tint ?? null} onChange={onTint} frame={false} photo={draft.photos?.hero} />
         </View>
       </BackbarTheme>
     </View>

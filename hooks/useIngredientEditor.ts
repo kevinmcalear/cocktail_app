@@ -4,6 +4,9 @@ import { Alert } from "react-native";
 
 import type { SortableRecipeItem } from '@/lib/recipeItem';
 import { useDrafts } from "@/hooks/useDrafts";
+import { resolveEditItems } from "@/hooks/specLineSave";
+import { showMessage } from "@/lib/dialogs";
+import { amountOf } from "@/lib/drinkWizard";
 import { refreshIngredients, useDropdowns } from "@/hooks/useDropdowns";
 import { saveIngredientPicture } from "@/hooks/ingredientPicture";
 import { useIngredient } from "@/hooks/useIngredients";
@@ -85,9 +88,9 @@ const recipeLines = (items: SortableRecipeItem[]) =>
     items.map((item) => ({
         id: item.id ?? null,
         ingredient_item_id: item.ingredient_id,
-        amount: parseFloat(item.amount) || null,
+        amount: amountOf(item.amount) || null,
         unit: item.unit || null,
-        // The spec pad edits these, so they're written back, not dropped.
+        // A line's note and optional are written back, not dropped.
         preparation_notes: item.preparation_notes?.trim() || null,
         is_optional: !!item.is_optional,
     }));
@@ -222,11 +225,16 @@ export function useIngredientEditor(id: string) {
             await saveItemTags(id, loaded.selectedCategories, f.selectedCategories);
 
             // One transaction: a failed save keeps the recipe it had, and each line keeps its row. Skipped when the lines didn't change.
-            const lines = recipeLines(f.recipeItems);
+            // A name typed here that isn't an ingredient yet is found or added the way New does it.
+            const spec = await resolveEditItems(f.recipeItems, f.barId || null);
+            editor.setRecipeItems(spec.items);
+            const lines = recipeLines(spec.items);
             if (JSON.stringify(lines) !== JSON.stringify(recipeLines(loaded.recipeItems))) {
                 const { error: recipeError } = await supabase.rpc("replace_recipe_lines", { p_item: id, p_lines: lines });
                 if (recipeError) throw recipeError;
             }
+            if (spec.created.length) void refreshIngredients(queryClient, spec.created);
+            if (spec.warnings.length) showMessage("Saved", spec.warnings.join("\n\n"));
 
             await queryClient.invalidateQueries({ queryKey: ["ingredient", id] });
             await queryClient.invalidateQueries({ queryKey: ["ingredients"] });
@@ -316,8 +324,10 @@ export function useIngredientDraftEditor({ draftId, barId: initialBarId, initial
         setSaving(true);
         try {
             // A drafted ingredient in its recipe is published first.
+            const spec = await resolveEditItems(withoutSelfRecipeRefs(form.recipeItems, draftId), form.barId || null);
+            editor.setRecipeItems(spec.items);
             const lines = [];
-            for (const item of withoutSelfRecipeRefs(form.recipeItems, draftId)) {
+            for (const item of spec.items) {
                 const resolvedId = await resolveIngredientId(item.ingredient_id, drafts);
                 if (resolvedId !== item.ingredient_id) await updateParentDraftsWithPublishedId(item.ingredient_id, resolvedId, drafts, saveDraft);
                 lines.push({ ...item, ingredient_id: resolvedId });
@@ -337,7 +347,7 @@ export function useIngredientDraftEditor({ draftId, barId: initialBarId, initial
                     lines.map((item, index) => ({
                         recipe_item_id: newId,
                         ingredient_item_id: item.ingredient_id,
-                        amount: parseFloat(item.amount) || null,
+                        amount: amountOf(item.amount) || null,
                         unit: item.unit || null,
                         preparation_notes: item.preparation_notes?.trim() || null,
                         is_optional: !!item.is_optional,
@@ -348,7 +358,7 @@ export function useIngredientDraftEditor({ draftId, barId: initialBarId, initial
             }
 
             queryClient.invalidateQueries({ queryKey: ["ingredients"] });
-            await refreshIngredients(queryClient, [newId]);
+            await refreshIngredients(queryClient, [newId, ...spec.created]);
             await updateParentDraftsWithPublishedId(draftId, newId, drafts, saveDraft, capitalizeFirst(form.name));
             await deleteDraft(draftId);
             if (form.barId) queryClient.invalidateQueries({ queryKey: ["bar", form.barId] });

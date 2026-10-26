@@ -2,6 +2,7 @@ import assert from 'node:assert/strict';
 
 import {
   iceLine,
+  notesArePrivate,
   methodIceLabel,
   withMethodIce,
   amountLabel, amountOf, canSave, choiceList, convertPour, draftFromSpec, COMMON_ICE, creatorProfileId, EMPTY_DRAFT, GARNISH_CHIPS, guessUnit, hasContent, newLine, nextUnit, pickByName,
@@ -231,3 +232,11 @@ assert.deepEqual(savedNotice(['Check the glass.'], ['Shrub', 'Cordial']), {
   title: 'Saved, with one thing to fix',
   body: 'Check the glass.\n\nShrub, Cordial have recipes to finish. What you’ve done is kept: finish them on their pages when you’re ready.',
 });
+
+// Who reads the notes (Q27): just you to start at home, the drink's at a venue; a pick wins either way.
+{
+  assert.equal(notesArePrivate({}, null), true);
+  assert.equal(notesArePrivate({ notesPrivate: false }, null), false);
+  assert.equal(notesArePrivate({}, 'little-rye'), false);
+  assert.equal(notesArePrivate({ notesPrivate: true }, 'little-rye'), true);
+}

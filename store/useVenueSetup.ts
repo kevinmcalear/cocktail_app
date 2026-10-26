@@ -4,7 +4,7 @@ import { createJSONStorage, persist } from 'zustand/middleware';
 
 import type { BarGlassInput } from '@/hooks/useBarGlassware';
 import type { ClaimSetup } from '@/hooks/useProfiles';
-import type { VenueStep } from '@/lib/venueSetup';
+import type { SetupDone } from '@/lib/venueSetup';
 
 /**
  * Page details typed before there's a claim (hours, phone, website, Instagram,
@@ -28,7 +28,7 @@ export interface SetupRun {
   /** The venue made for it (create_new_bar), once there is one. */
   barId: string | null;
   name: string;
-  done: VenueStep[];
+  done: SetupDone[];
   /** Got to the end of venue setup ("Set up <bar>"). Tonight stops showing the banner. */
   finished: boolean;
   /** Typed before the claim, waiting for it (cleared once it's sent). */
@@ -52,7 +52,7 @@ interface VenueSetupState {
   holdGlass: (barId: string, glass: HeldGlass) => void;
   dropGlass: (barId: string, key: string) => void;
   save: (key: string, run: Partial<SetupRun>) => void;
-  markDone: (key: string, step: VenueStep) => void;
+  markDone: (key: string, step: SetupDone) => void;
   /** Keeps page details on the run until the claim is sent; null clears them. */
   hold: (key: string, change: HeldSetup | null) => void;
   /** Moves the 'new' run under its venue once it's made. */

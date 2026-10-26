@@ -217,7 +217,7 @@ export function MyBarScreen() {
 
   const sheets = (
     <>
-      <AddToBarSheet visible={adding !== null} filter={adding ?? 'all'} onFilter={setAdding} onShelf={bar.shelfIds} counts={counts} onToggle={(it, on) => (on ? addIds(it.id) : removeId(it.id))} onClose={() => setAdding(null)} onSnap={() => setSnapping(true)} />
+      <AddToBarSheet visible={adding !== null} filter={adding ?? 'all'} onFilter={setAdding} onShelf={bar.shelfIds} covered={new Set(bar.shelf.flatMap((b) => b.kindIds ?? []))} counts={counts} onAdd={addIds} onRemove={removeId} onClose={() => setAdding(null)} onSnap={() => setSnapping(true)} />
       <BottleSheet item={opened} shelf={bar.shelf} canMake={bar.canMake} oneAway={bar.oneAway} onAdd={addIds} onFinish={m.finishId} onClose={() => setOpened(null)} />
       <BottlePhotoSheet visible={snapping} target={{ kind: 'home' }} onClose={() => setSnapping(false)} />
     </>

@@ -10,7 +10,7 @@ export const LINEAGE_COLUMNS = `id, name, riff_of_id, origin_year, origin_year_a
   is_catalog, lineage_parent_id, lineage_style_id, lineage_note,
   creator:profiles!items_creator_profile_id_fkey(${PROFILE_COLUMNS}),
   origin_bar:profiles!items_origin_bar_profile_id_fkey(${PROFILE_COLUMNS}),
-  co_creators:item_co_creators(profile:profiles(${PROFILE_COLUMNS}))`;
+  co_creators:item_co_creators(status, profile:profiles(${PROFILE_COLUMNS}))`;
 const UUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
 export const STYLE_COLUMNS = 'id, key, name, family, parent_style_id, year, year_approx, summary';
 

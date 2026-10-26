@@ -1,21 +1,27 @@
+import { getLocales } from 'expo-localization';
 import { useRef, useState, type ComponentRef, type ReactNode } from 'react';
 import { StyleSheet, TextInput, View } from 'react-native';
 
-import { Body, Button, Caption, Chip, DsText, Field, PressableScale, TimeField, useDs, type IconName } from '@/components/ds';
+import { Body, Button, Caption, DsText, Field, PressableScale, useDs, type IconName } from '@/components/ds';
 import { SetupFooter, SetupPage } from '@/components/screens/onboarding/SetupPage';
 import { IconSymbol } from '@/components/ui/icon-symbol';
 import { fontFamilies, radius, space } from '@/constants/tokens';
 import { useSaveClaimSetup } from '@/hooks/useBarClaims';
 import { useBarFacts, useSaveBarFacts, type BarFactsChange } from '@/hooks/useBarFacts';
 import { useSaveProfileInstagram } from '@/hooks/useMyProfile';
+import { usePricingSettings } from '@/hooks/usePricing';
 import { useProfile, type ProfileClaim } from '@/hooks/useProfiles';
-import { WEEK_DAYS, weekRows, type WeekDay, type WeekHours } from '@/lib/barHours';
+import type { WeekHours } from '@/lib/barHours';
 import { pageInstagram, typedPhone, typedWebsite } from '@/lib/claimVerification';
+import { countryName } from '@/lib/countries';
+import { weekGroups } from '@/lib/hoursWeek';
+import { currencyFor, currencyLabel } from '@/lib/money';
 import { instagramProblem, normalizeInstagram } from '@/lib/profiles';
 import { normalizeWebsite } from '@/lib/venueSetup';
 import type { HeldSetup } from '@/store/useVenueSetup';
 
-const DAY: Record<WeekDay, string> = { mon: 'Mon', tue: 'Tue', wed: 'Wed', thu: 'Thu', fri: 'Fri', sat: 'Sat', sun: 'Sun' };
+import { CurrencyPicker } from './CurrencyPicker';
+import { HoursSheet } from './HoursSheet';
 
 /** The device's zone, saved with the hours so "Open now" runs on the bar's clock. */
 function deviceZone(): string | null {
@@ -26,9 +32,10 @@ function deviceZone(): string | null {
   }
 }
 
-/** One fact: an icon, its label and value, and Edit (which opens its editor in place). */
-function FactRow({ icon, label, children, editing, onEdit, canEdit, editor, last }: { icon: IconName; label: string; children: ReactNode; editing: boolean; onEdit: () => void; canEdit: boolean; editor: ReactNode; last?: boolean }) {
+/** One fact: an icon, its label and value, and Edit (which opens its editor in place; `done` closes it again). */
+function FactRow({ icon, label, children, editing, onEdit, canEdit, editor, last, action = 'Edit', done }: { icon: IconName; label: string; children: ReactNode; editing: boolean; onEdit: () => void; canEdit: boolean; editor: ReactNode; last?: boolean; action?: string; done?: () => void }) {
   const ds = useDs();
+  const button = editing ? (done ? 'Done' : null) : canEdit ? action : null;
   return (
     <View style={[styles.fact, !last && { borderBottomColor: ds.c.line, borderBottomWidth: StyleSheet.hairlineWidth }]}>
       <View style={styles.factTop}>
@@ -37,47 +44,14 @@ function FactRow({ icon, label, children, editing, onEdit, canEdit, editor, last
           <Caption tone="muted">{label}</Caption>
           {children}
         </View>
-        {canEdit && !editing ? (
-          <PressableScale role="button" accessibilityLabel={`Edit ${label.toLowerCase()}`} onPress={onEdit} hitSlop={space.sm} style={styles.edit}>
-            <IconSymbol name="pencil" size={14} color={ds.c.ink} />
-            <Caption style={styles.editLabel}>Edit</Caption>
+        {button ? (
+          <PressableScale role="button" accessibilityLabel={`${button} ${label.toLowerCase()}`} onPress={editing ? done : onEdit} hitSlop={space.sm} style={styles.edit}>
+            {button === 'Edit' ? <IconSymbol name="pencil" size={14} color={ds.c.ink} /> : null}
+            <Caption color={button === 'Edit' ? ds.c.ink : ds.accentText} style={styles.editLabel}>{button}</Caption>
           </PressableScale>
         ) : null}
       </View>
       {editing ? editor : null}
-    </View>
-  );
-}
-
-/** A week of hours, one range a day. ponytail: two ranges a day (lunch and dinner) live in Venue settings. */
-function HoursEditor({ initial, onSave, onCancel }: { initial: WeekHours; onSave: (h: WeekHours) => void; onCancel: () => void }) {
-  const [hours, setHours] = useState<WeekHours>(initial);
-  const set = (day: WeekDay, range: [string, string] | null) => setHours((h) => ({ ...h, [day]: range ? [range] : [] }));
-  return (
-    <View style={styles.editor}>
-      {WEEK_DAYS.map((day) => {
-        const range = hours[day]?.[0] ?? null;
-        return (
-          <View key={day} style={styles.day}>
-            <DsText variant="headline" style={styles.dayName}>{DAY[day]}</DsText>
-            <Chip multi label={range ? 'Open' : 'Closed'} accessibilityLabel={`Open on ${DAY[day]}`} selected={!!range} onPress={() => set(day, range ? null : ['17:00', '00:00'])} />
-            {range ? (
-              <View style={styles.times}>
-                <View style={styles.flex}>
-                  <TimeField label="Opens" value={range[0]} onChange={(t) => set(day, [t, range[1]])} />
-                </View>
-                <View style={styles.flex}>
-                  <TimeField label="Closes" value={range[1]} onChange={(t) => set(day, [range[0], t])} />
-                </View>
-              </View>
-            ) : null}
-          </View>
-        );
-      })}
-      <View style={styles.actions}>
-        <Button label="Cancel" variant="ghost" onPress={onCancel} />
-        <Button label="Save hours" onPress={() => onSave(hours)} />
-      </View>
     </View>
   );
 }
@@ -105,6 +79,8 @@ function heldProblem(change: BarFactsChange): string | null {
 
 interface Props {
   profileId: string | null;
+  /** The venue, once it's made: its currency may already be set in Pricing. */
+  barId: string | null;
   name: string;
   claim: ProfileClaim | null;
   writable: boolean;
@@ -114,7 +90,8 @@ interface Props {
   /** Making the venue as this step finishes failed. */
   venueError?: string | null;
   making?: boolean;
-  onDone: () => void;
+  /** `currency`: the one to save onto the venue as it's made, when it isn't its currency already. */
+  onDone: (currency: string | null) => void;
 }
 
 /**
@@ -122,20 +99,22 @@ interface Props {
  * (b22: no Google). Once the page is the venue's, edits go straight onto it;
  * while a claim waits they wait on the claim (save_claim_setup); before
  * there's a claim they're kept with the setup and go onto the claim when it's
- * sent (the last step).
+ * sent (the last step). The currency is asked here too (E28b) and saved onto
+ * the venue as this step makes it, the same bars.currency Pricing edits.
  */
-export function WhereWhenStep({ profileId, name, claim, writable, held: kept, onHold, venueError, making, onDone }: Props) {
+export function WhereWhenStep({ profileId, barId, name, claim, writable, held: kept, onHold, venueError, making, onDone }: Props) {
   const ds = useDs();
   const facts = useBarFacts(profileId).data;
   const profile = useProfile(profileId).data;
   const saveFacts = useSaveBarFacts(profileId ?? '');
   const saveSetup = useSaveClaimSetup();
   const saveInstagram = useSaveProfileInstagram();
-  const [editing, setEditing] = useState<'hours' | 'phone' | 'website' | null>(null);
+  const [editing, setEditing] = useState<'hours' | 'currency' | 'phone' | 'website' | null>(null);
+  // Each time the Hours sheet opens it starts from the saved hours.
+  const [hoursKey, setHoursKey] = useState(0);
   const [problem, setProblem] = useState<string | null>(null);
   const [ig, setIg] = useState<string | null>(null);
   const igField = useRef<ComponentRef<typeof TextInput>>(null);
-  const [now] = useState(() => new Date());
   const pending = !writable && claim?.status === 'pending';
   const holding = !writable && !pending;
   const held: HeldSetup = pending ? (claim?.setup ?? {}) : holding ? (kept ?? {}) : {};
@@ -147,6 +126,17 @@ export function WhereWhenStep({ profileId, name, claim, writable, held: kept, on
   // A waiting claim's Instagram (typed into it, else kept from setup) goes on only where the page has none.
   const instagram = ig ?? (pending ? (pageIg ?? claim?.evidence?.typed?.instagram ?? claim?.setup?.instagram) : holding ? (kept?.instagram ?? pageIg) : pageIg) ?? '';
   const igProblem = instagramProblem(instagram);
+  // The currency: the venue's own (Pricing), else its country's, else this phone's, which needs a look (E28b).
+  const setCurrency = usePricingSettings(barId).data?.currency ?? null;
+  const country = profile?.country_code ?? null;
+  const [picked, setPicked] = useState<string | null>(null);
+  const [checked, setChecked] = useState(false);
+  const fromCountry = currencyFor({ country });
+  const currency = picked ?? currencyFor({ set: setCurrency, country, device: getLocales()[0]?.currencyCode });
+  const place = [facts?.locality ?? facts?.city, country ? countryName(country) : null].filter(Boolean).join(', ');
+  const fromPhone = !picked && currency !== null && currency !== setCurrency && !fromCountry;
+  const currencySource = picked ? null : currency === setCurrency && setCurrency ? 'Set in Venue settings › Pricing' : fromCountry ? `From the address${place ? `: ${place}` : ''}` : fromPhone ? 'From this phone, as there’s no address. Check it’s right.' : null;
+  const finish = () => onDone(currency && currency !== setCurrency ? currency : null);
   const error = problem ?? (saveFacts.error ?? saveSetup.error ?? saveInstagram.error)?.message ?? venueError ?? null;
 
   // Saved: close the editor, or open the next field (Return: phone, then website, then Instagram).
@@ -168,29 +158,63 @@ export function WhereWhenStep({ profileId, name, claim, writable, held: kept, on
     }
   };
   const looksRight = () => {
-    if (ig === null || pending) return onDone();
+    // No address, so the currency is only the phone's guess: look at it first (E28b).
+    if (fromPhone && !checked) {
+      setChecked(true);
+      setEditing('currency');
+      return setProblem('Check the currency: it’s this phone’s, as there’s no address.');
+    }
+    if (ig === null || pending) return finish();
     // The field shows what's wrong.
     if (igProblem) return;
-    if (writable && profileId) return saveInstagram.mutate({ id: profileId, raw: ig }, { onSuccess: onDone });
+    if (writable && profileId) return saveInstagram.mutate({ id: profileId, raw: ig }, { onSuccess: finish });
     onHold({ instagram: normalizeInstagram(ig) || null });
-    onDone();
+    finish();
   };
   const address = facts ? [facts.address_line, facts.locality ?? facts.city].filter(Boolean).join(', ') : '';
 
   return (
-    <SetupPage footer={<SetupFooter label="Looks right" pending={saveInstagram.isPending || making} onPress={looksRight} skipLabel="Skip" onSkip={onDone} />}>
+    <SetupPage footer={<SetupFooter label="Looks right" pending={saveInstagram.isPending || making} onPress={looksRight} skipLabel="Skip" onSkip={() => onDone(null)} />}>
       {/* The facts in one card (canvas make-venue-place, and the Instagram row from eddie-oct22-wave1). */}
       <View style={[styles.card, { backgroundColor: ds.c.surface, borderColor: ds.c.line }]}>
       <FactRow icon="mappin.and.ellipse" label="Address" canEdit={false} editing={false} onEdit={() => {}} editor={null}>
         <Body>{address || 'No address yet'}</Body>
       </FactRow>
-      <FactRow icon="clock" label="Hours" canEdit editing={editing === 'hours'} onEdit={() => setEditing('hours')} editor={<HoursEditor initial={hours ?? {}} onSave={(h) => save({ hours: h })} onCancel={() => setEditing(null)} />}>
-        {hours ? (
-          <View role="list">
-            {weekRows(hours, now, facts?.timezone).map((r) => (
-              <View key={r.day} role="listitem" style={styles.hoursRow}>
-                <Body tone="muted" style={styles.dayName}>{r.day.slice(0, 3)}</Body>
-                <Body tone={r.closed ? 'muted' : 'ink'}>{r.text}</Body>
+      <FactRow
+        icon="dollarsign.circle.fill"
+        label="Currency"
+        canEdit
+        action="Change"
+        editing={editing === 'currency'}
+        onEdit={() => setEditing('currency')}
+        done={() => {
+          setChecked(true);
+          setProblem(null);
+          setEditing(null);
+        }}
+        editor={<CurrencyPicker value={currency} first={fromCountry} onPick={(c) => { setPicked(c); setChecked(true); setProblem(null); }} />}
+      >
+        <Body tone={currency ? 'ink' : 'muted'}>{currency ? currencyLabel(currency) : 'Not set yet'}</Body>
+        {currencySource ? <Caption tone="muted">{currencySource}</Caption> : null}
+      </FactRow>
+      <FactRow
+        icon="clock"
+        label="Hours"
+        canEdit
+        action="Change"
+        editing={false}
+        onEdit={() => {
+          setHoursKey((k) => k + 1);
+          setEditing('hours');
+        }}
+        editor={null}
+      >
+        {hours && weekGroups(hours).some((g) => !g.closed) ? (
+          <View role="list" style={styles.groups}>
+            {weekGroups(hours).map((g) => (
+              <View key={g.days} role="listitem">
+                <Body style={styles.editLabel}>{g.days}</Body>
+                <Caption tone="muted">{g.text}</Caption>
               </View>
             ))}
           </View>
@@ -238,6 +262,15 @@ export function WhereWhenStep({ profileId, name, claim, writable, held: kept, on
         <DsText variant="body" style={styles.editLabel}>You’re the Admin</DsText>
         <Caption tone="muted">The owner can do everything here, and can hand it over later in My team.</Caption>
       </View>
+      <HoursSheet
+        key={hoursKey}
+        visible={editing === 'hours'}
+        initial={hours}
+        saving={saveFacts.isPending || saveSetup.isPending}
+        error={(saveFacts.error ?? saveSetup.error)?.message ?? problem}
+        onSave={(h) => save({ hours: h })}
+        onClose={() => setEditing(null)}
+      />
     </SetupPage>
   );
 }
@@ -250,10 +283,7 @@ const styles = StyleSheet.create({
   factTop: { flexDirection: 'row', alignItems: 'flex-start', gap: space.md },
   flex: { flex: 1, minWidth: 0, gap: space.xs },
   editor: { gap: space.md },
-  day: { gap: space.sm },
-  dayName: { width: 48 },
-  times: { flexDirection: 'row', gap: space.md },
   actions: { flexDirection: 'row', justifyContent: 'flex-end', gap: space.sm },
-  hoursRow: { flexDirection: 'row', gap: space.md },
+  groups: { gap: space.sm },
   admin: { gap: space.xs, padding: space.lg, borderRadius: radius.card, borderCurve: 'continuous' },
 });

@@ -2,29 +2,23 @@ import { useMutation, useQueryClient } from '@tanstack/react-query';
 
 import { uploadDrinkPhoto } from '@/components/drink/drinkImages';
 import { useUserId } from '@/ctx/AuthContext';
-import { savePrepCard, savePrepRecipe } from '@/hooks/usePrepCard';
-import { saveNewBottles } from '@/hooks/useDrinkDesk';
 import { dropdownKeys, refreshIngredients } from '@/hooks/useDropdowns';
 import { savePrivateNote } from '@/hooks/usePrivateNote';
 import { recentEntry } from '@/hooks/useTrackRecent';
 import { useRefreshSpecs } from '@/hooks/useBulk';
+import { liveIds, specLineSaver } from '@/hooks/specLineSave';
 import { saveDrinkSpec, type SpecLineInput } from '@/hooks/useVersions';
 import { track } from '@/lib/analytics';
-import { linePrep } from '@/lib/batchLines';
 import { plainDbMessage } from '@/lib/dbError';
 import { orderedMethodIds } from '@/lib/drinkMethods';
 import { linePart, storedParts } from '@/lib/drinkParts';
-import { COMMON_METHODS, creatorProfileId, likeExactly, specLines, type WizardDraft, type WizardLine, type WizardPick } from '@/lib/drinkWizard';
+import { creatorProfileId, notesArePrivate, specLines, type WizardDraft } from '@/lib/drinkWizard';
 import { fetchEditableRecipes } from '@/lib/editableRecipes';
 import { saysMore, toStored, type IceLayer } from '@/lib/iceBuild';
-import { existingIngredientId } from '@/lib/ingredientNames';
 import type { ImageAngle } from '@/lib/itemImages';
 import { formatPrice } from '@/lib/menus';
 import { priceText } from '@/lib/money';
-import { recipesToFinish, type PrepDraft } from '@/lib/prepKinds';
-import { capitalize, capitalizeFirst } from '@/lib/stringUtils';
-import { techniqueById } from '@/lib/techniques';
-import { prepCardFor } from '@/lib/techniques/makeIt';
+import { capitalize } from '@/lib/stringUtils';
 import { ontoBarLines } from '@/lib/sameName';
 import type { SketchInputs } from '@/lib/sketch/types';
 import { supabase } from '@/lib/supabase';
@@ -60,8 +54,6 @@ export interface CreateDrinkResult {
   later: string[];
 }
 
-type ItemType = 'ingredient' | 'method' | 'glassware' | 'ice';
-
 /**
  * Saves the add-drink wizard's drink in one go, at the end: any ingredient,
  * method, glass or ice typed in that doesn't exist yet, then the drink with
@@ -93,127 +85,29 @@ export function useCreateDrink() {
   return useMutation({
     mutationFn: async ({ draft, barId, myProfileId, menuSectionId, sketch, updateId }: CreateDrinkInput): Promise<CreateDrinkResult> => {
       if (!userId) throw new Error('Sign in to save drinks.');
-      const warnings: string[] = [];
-      // New rows the pickers' lists don't have yet: ingredients by id, spec items (glass, method, ice) at all.
-      const newIngredients: string[] = [];
-      const created: { id: string; name: string }[] = [];
-      let newSpecs = false;
-
       // A picked row can be gone by now (merged into another ingredient since
       // the draft was made, 20261008100000): those go by name, like a typed one.
-      const pickedIds = [
+      const live = await liveIds([
         ...specLines(draft).map(({ line }) => line.id),
         ...draft.methods.map((m) => m.id),
         draft.glass?.id,
         draft.ice?.id,
         draft.methodIce?.id,
         ...(draft.iceBuild ?? []).map((l) => l.ice.id),
-      ].filter((v): v is string => !!v);
-      const live = new Set<string>();
-      if (pickedIds.length) {
-        const { data, error } = await supabase.from('items').select('id').in('id', [...new Set(pickedIds)]);
-        if (error) throw error;
-        for (const r of data ?? []) live.add(r.id);
-      }
-
-      // Typed-in names become rows once, even if two lines share one.
-      const made = new Map<string, string>();
-      const ensure = async (pick: WizardPick, type: ItemType): Promise<string> => {
-        if (pick.id && live.has(pick.id)) return pick.id;
-        const key = `${type}:${pick.name.trim().replace(/\s+/g, ' ').toLowerCase()}`;
-        const known = made.get(key);
-        if (known) return known;
-        // A name missing from the picker may still exist, under any spelling or
-        // another name ("1:1 sugar syrup" is Simple Syrup): use that, never a copy.
-        const resolved = type === 'ingredient' ? await supabase.rpc('resolve_ingredient', { p_name: pick.name }) : null;
-        const same = supabase.from('items').select('id').eq('item_type', type).ilike('name', likeExactly(pick.name));
-        // A venue's own ice (item_ice) is its Kit: drinks name the shared ice for now (kit and ice PR 6 offers the venue's).
-        const found =
-          resolved && !resolved.error && resolved.data
-            ? { id: resolved.data as string }
-            : (await (type === 'ice' ? same.is('bar_id', null) : same).limit(1).maybeSingle()).data;
-        if (found) {
-          made.set(key, found.id);
-          return found.id;
-        }
-        const { data, error } = await supabase
-          .from('items')
-          .insert({ name: newItemName(pick.name, type), item_type: type, bar_id: type === 'ingredient' ? barId : null })
-          .select('id')
-          .single();
-        // The database knows a name we didn't (an alias added since): it says which to use.
-        const existing = existingIngredientId(error);
-        if (existing) {
-          made.set(key, existing);
-          return existing;
-        }
-        if (error || !data) throw error ?? new Error(`Couldn’t add ${pick.name}.`);
-        made.set(key, data.id);
-        if (type === 'ingredient') {
-          newIngredients.push(data.id);
-          created.push({ id: data.id, name: capitalizeFirst(pick.name) });
-        }
-        else newSpecs = true;
-        return data.id;
-      };
-
-      // A house prep made in the wizard is always a row of its own, so its
-      // recipe is never dropped for a same-named one. A name that's taken
-      // becomes your version of it, the way a prep page copies one
-      // (useCopyPrep): the same name at a venue, "My …" at home.
-      const own = async (line: WizardPick): Promise<string> => {
-        const key = `own:${line.name.trim().replace(/\s+/g, ' ').toLowerCase()}`;
-        const known = made.get(key);
-        if (known) return known;
-        const name = capitalizeFirst(line.name);
-        const insert = (row: { name: string; generic_id?: string }) =>
-          supabase.from('items').insert({ ...row, item_type: 'ingredient', bar_id: barId, ingredient_role: 'prep' }).select('id').single();
-        let { data, error } = await insert({ name });
-        const taken = existingIngredientId(error);
-        if (taken) ({ data, error } = await insert({ name: barId ? name : `My ${name}`, generic_id: taken }));
-        // Your version from before: the drink uses it, and it keeps its recipe.
-        const yours = taken ? existingIngredientId(error) : null;
-        if (yours) {
-          warnings.push(`You already have “My ${name}”, so the drink uses it. Change its recipe on its page.`);
-          made.set(key, yours);
-          return yours;
-        }
-        if (error || !data) throw error ?? new Error(`Couldn’t add ${line.name}.`);
-        made.set(key, data.id);
-        newIngredients.push(data.id);
-        created.push({ id: data.id, name });
-        return data.id;
-      };
+      ]);
+      const saver = specLineSaver(barId, live);
+      const { ensure, warnings, created, later, newIngredients } = saver;
 
       const lines: SpecLineInput[] = [];
-      // New house preps made by a technique, to get their prep card once the drink is in.
-      const preps: { id: string; technique: string }[] = [];
-      // New house preps with their own recipe (made in the wizard), saved once the drink is in.
-      const ownPreps: { id: string; name: string; prep: PrepDraft }[] = [];
-      const later: string[] = [];
-      // New bottles with what they are and how the venue buys them (the desktop page's card).
-      const bottles: { itemId: string; name: string; bottle: NonNullable<WizardLine['bottle']>; isNew: boolean }[] = [];
       const garnishes = new Set(draft.garnishes.map((g) => g.key));
       for (const { line, amount } of specLines(draft)) {
-        const madeBefore = newIngredients.length;
-        // Its recipe, or a batch read from a file as a house prep of the kind Batch: the bottle's recipe.
-        const prep = linePrep(line);
-        // A prep added by name only is still a house prep of its own, its recipe to come.
-        const ownPrep = (!!prep || !!line.later) && !(line.id && live.has(line.id));
-        const ingredientId = ownPrep ? await own(line) : await ensure(line, 'ingredient');
-        const isNew = newIngredients.length > madeBefore;
-        // Recipes left to finish, in it and inside its recipes: what's done is saved, and the notice says what's left.
-        if (isNew) later.push(...recipesToFinish([line]).map((r) => capitalize(r.name)));
-        if (prep && isNew) ownPreps.push({ id: ingredientId, name: line.name, prep });
-        else if (line.technique && isNew) preps.push({ id: ingredientId, technique: line.technique });
-        if (line.bottle && barId && !ownPrep) bottles.push({ itemId: ingredientId, name: capitalizeFirst(line.name), bottle: line.bottle, isNew });
         lines.push({
           id: null,
-          ingredient_item_id: ingredientId,
+          ingredient_item_id: await saver.line(line),
           amount,
           unit: line.unit || null,
           preparation_notes: line.note?.trim() || null,
-          is_optional: false,
+          is_optional: !!line.optional,
           ...(draft.parts?.length ? { part: linePart(draft.parts, line.key, garnishes.has(line.key)) } : {}),
         });
       }
@@ -226,25 +120,6 @@ export function useCreateDrink() {
         methodParts.push(part);
       }
       const parts = draft.parts?.length ? { methodParts, parts: storedParts(draft.parts) } : undefined;
-      // Recipes made in-house inside a prep (make-anything-steps-2, step 8): rows of their own, recipes saved only on rows this save made.
-      const inner = {
-        own: async (pick: WizardPick) => {
-          const before = newIngredients.length;
-          const id = await own(pick);
-          return { id, isNew: newIngredients.length > before };
-        },
-        warn: (message: string) => warnings.push(message),
-      };
-      // A prep made here: its recipe, method and keeping, on the row this save made.
-      const saveOwnPreps = async () => {
-        for (const p of ownPreps) {
-          try {
-            await savePrepRecipe(p.id, p.prep, ensure, barId, inner);
-          } catch (e) {
-            warnings.push(plainDbMessage(e) ?? `${capitalize(p.name)}’s recipe wasn’t saved. Add it on its page.`);
-          }
-        }
-      };
       if (updateId) {
         // Its ranks, photos and menus stay; the spec it had is the version before, so it can be put back.
         const [had, hadMethods] = await Promise.all([fetchEditableRecipes(updateId), supabase.from('item_methods').select('method_item_id, sort_order').eq('item_id', updateId)]);
@@ -252,7 +127,7 @@ export function useCreateDrink() {
         // Its own rows keep their notes and service decisions, and a sheet that names no method we know (it went to notes) keeps the drink's.
         await saveDrinkSpec(updateId, ontoBarLines(lines, had), methodIds.length ? methodIds : orderedMethodIds(hadMethods.data), 'Updated from Bring in');
         // A batch read from the sheet keeps its bottle's recipe.
-        await saveOwnPreps();
+        await saver.saveOwnPreps();
         void qc.invalidateQueries({ queryKey: ['same-name-drink'] });
         void refreshSpecs({ drinkIds: [updateId], ingredientIds: newIngredients });
         return { id: updateId, warnings, created, later };
@@ -279,6 +154,8 @@ export function useCreateDrink() {
       // Another bar's name on it is a suggestion until the bar confirms it, as a drink added in setup is (useSaveCareerDrink).
       const otherBar = fromElsewhere && !!originBar;
 
+      // At home the notes are yours to start (Q27); at a venue, the drink's.
+      const privateNotes = notesArePrivate(draft, barId);
       const row: Insert<'items'> = {
         id: undefined,
         name: capitalize(draft.name),
@@ -286,7 +163,7 @@ export function useCreateDrink() {
         bar_id: barId,
         description: draft.description.trim() || null,
         // "Just me" notes are kept apart, as yours (below).
-        notes: draft.notesPrivate ? null : draft.notes.trim() || null,
+        notes: privateNotes ? null : draft.notes.trim() || null,
         glassware_id: glassId,
         sketch_variant: draft.glassVariant ?? null,
         // One of the venue's real glasses, when one was picked; the database sets glassware_id to its kind.
@@ -348,7 +225,7 @@ export function useCreateDrink() {
       }
 
       // "Just me": the notes are yours alone, never the drink's.
-      if (draft.notesPrivate && draft.notes.trim()) {
+      if (privateNotes && draft.notes.trim()) {
         try {
           await savePrivateNote(id, draft.notes);
         } catch {
@@ -367,26 +244,9 @@ export function useCreateDrink() {
       if (photosMissed) warnings.push(photosMissed === 1 ? 'One photo wasn’t added. Add it on the drink’s page.' : `${photosMissed} photos weren’t added. Add them on the drink’s page.`);
       if (Object.keys(draft.photos ?? {}).length) void qc.invalidateQueries({ queryKey: ['cocktail', id] });
 
-      await saveOwnPreps();
-
-      // Only rows this save made get a card: an existing prep keeps its own.
-      for (const p of preps) {
-        const t = techniqueById(p.technique);
-        if (!t) continue;
-        const card = prepCardFor(t);
-        try {
-          const role = await supabase.from('items').update({ ingredient_role: 'prep' }).eq('id', p.id);
-          if (role.error) throw role.error;
-          await savePrepCard(p.id, {
-            prep: { yield_amount: null, yield_unit: null, shelf_life_hours: null, lead_time_minutes: card.leadMinutes, lead_time_note: card.leadNote, storage: null, actions: card.actions },
-            steps: card.steps,
-          });
-        } catch (e) {
-          warnings.push(plainDbMessage(e) ?? `${t.name} steps weren’t added to the new house-made ingredient. Add them on its page.`);
-        }
-      }
-
-      if (barId) warnings.push(...(await saveNewBottles(barId, bottles)));
+      await saver.saveOwnPreps();
+      await saver.saveCards();
+      await saver.saveBottles();
 
       if (menuSectionId) useMenuDrinkHandoff.getState().deliver(menuSectionId, id);
 
@@ -398,21 +258,16 @@ export function useCreateDrink() {
       // The next drink by this name is told the bar has one now (useSameNameDrink).
       void qc.invalidateQueries({ queryKey: ['same-name-drink'] });
       if (barId) void qc.invalidateQueries({ queryKey: ['bar', barId] });
-      if (newSpecs) void qc.invalidateQueries({ queryKey: dropdownKeys.specs });
+      // A new drink linked to a classic joins Library's Classics.
+      if (barId && draft.riffOf) void qc.invalidateQueries({ queryKey: ['staff-list-riffs', barId] });
+      if (saver.newSpecs()) void qc.invalidateQueries({ queryKey: dropdownKeys.specs });
       void refreshIngredients(qc, newIngredients);
       if (creatorId) void qc.invalidateQueries({ queryKey: ['profile-originals'] });
-      if (draft.notesPrivate) void qc.invalidateQueries({ queryKey: ['private-note', id] });
+      if (privateNotes) void qc.invalidateQueries({ queryKey: ['private-note', id] });
       return { id, warnings, created, later };
     },
     onSuccess: (_, { barId, menuSectionId }) => track('drink_created', { at_bar: !!barId, on_menu: !!menuSectionId }),
     // The wizard says what went wrong itself, and keeps the draft.
     onError: () => {},
   });
-}
-
-/** A new row's name: an ingredient's first letter up, a method the wizard offers as the wizard spells it ("Whip (whisk or frother)"), anything else in title case. */
-function newItemName(name: string, type: ItemType): string {
-  if (type === 'ingredient') return capitalizeFirst(name);
-  const ours = type === 'method' ? COMMON_METHODS.find((m) => m.toLowerCase() === name.trim().toLowerCase()) : undefined;
-  return ours ?? capitalize(name);
 }

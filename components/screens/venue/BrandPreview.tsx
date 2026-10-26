@@ -27,7 +27,7 @@ export interface BrandLook {
   iconBackground?: IconBackground | null;
 }
 
-const SCHEMES = [
+export const SCHEMES = [
   { value: 'dark', label: 'Dark' },
   { value: 'light', label: 'Light' },
 ] as const;
@@ -38,8 +38,8 @@ const TABS: { label: string; icon: IconName }[] = [
   { label: 'Discover', icon: 'place.discover' },
 ];
 
-/** Tonight in one scheme, in the draft brand, drawn with the real components so it matches the app. */
-function MiniScreen({ look }: { look: BrandLook }) {
+/** Tonight in one scheme, in the draft brand, drawn with the real components so it matches the app. `compact`: its top, one drink and no tab bar (setup's pinned preview, E34). */
+export function MiniScreen({ look, compact }: { look: BrandLook; compact?: boolean }) {
   const ds = useDs();
   const venue = { ...look, roleLevel: 40 };
   return (
@@ -64,7 +64,7 @@ function MiniScreen({ look }: { look: BrandLook }) {
           <Caption color={ds.accentFill.text}>See them</Caption>
         </View>
       </View>
-      {SAMPLE.map((d) => (
+      {(compact ? SAMPLE.slice(0, 1) : SAMPLE).map((d) => (
         <View key={d.name} style={styles.drink}>
           <View style={styles.tile}>
             <DrinkImage thumb sketchDetail="thumb" sketch={d.sketch} itemId={d.name} accessibilityLabel={d.name} radius="control" />
@@ -82,21 +82,23 @@ function MiniScreen({ look }: { look: BrandLook }) {
         </View>
       ))}
       {/* The glass tab bar and its search circle. */}
-      <View style={styles.tabs}>
-        <View style={[styles.tabPill, { backgroundColor: ds.c.glass, borderColor: ds.c.glassBorder }]}>
-          {TABS.map((t, i) => (
-            <View key={t.label} style={[styles.tab, i === 0 && { backgroundColor: ds.c.raised }]}>
-              <IconSymbol name={t.icon} size={12} color={i === 0 ? ds.accentText : ds.c.muted} />
-              <Caption color={i === 0 ? ds.accentText : ds.c.muted} style={styles.tabLabel}>
-                {t.label}
-              </Caption>
-            </View>
-          ))}
+      {compact ? null : (
+        <View style={styles.tabs}>
+          <View style={[styles.tabPill, { backgroundColor: ds.c.glass, borderColor: ds.c.glassBorder }]}>
+            {TABS.map((t, i) => (
+              <View key={t.label} style={[styles.tab, i === 0 && { backgroundColor: ds.c.raised }]}>
+                <IconSymbol name={t.icon} size={12} color={i === 0 ? ds.accentText : ds.c.muted} />
+                <Caption color={i === 0 ? ds.accentText : ds.c.muted} style={styles.tabLabel}>
+                  {t.label}
+                </Caption>
+              </View>
+            ))}
+          </View>
+          <View style={[styles.search, { backgroundColor: ds.c.glass, borderColor: ds.c.glassBorder }]}>
+            <IconSymbol name="magnifyingglass" size={14} color={ds.c.ink} />
+          </View>
         </View>
-        <View style={[styles.search, { backgroundColor: ds.c.glass, borderColor: ds.c.glassBorder }]}>
-          <IconSymbol name="magnifyingglass" size={14} color={ds.c.ink} />
-        </View>
-      </View>
+      )}
     </View>
   );
 }
@@ -197,7 +199,7 @@ function SchemeSwitch({ value, onChange }: { value: 'dark' | 'light'; onChange: 
 
 /** A row of colour choices, each named, with the chosen one heavily ringed. */
 /** Dark or Light under the setup preview: the picked one ringed in the accent over a faint accent wash (canvas make-venue-look). */
-function SchemeChip({ label, selected, onPress }: { label: string; selected: boolean; onPress: () => void }) {
+export function SchemeChip({ label, selected, onPress }: { label: string; selected: boolean; onPress: () => void }) {
   const ds = useDs();
   return (
     <PressableScale
