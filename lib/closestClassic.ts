@@ -32,8 +32,12 @@ function closeness<C extends ClassicSpec>(have: readonly SpecIngredient[], spec:
     else continue;
     touching += 1;
   }
-  // Each of mine names one line: the same bottle, else the first of its kind.
-  const named = have.flatMap((m) => spec.ingredients.find((i) => i.id === m.id) ?? spec.ingredients.find((i) => (i.generic ?? i.id) === (m.generic ?? m.id)) ?? []);
+  // Each of mine names one line: the same bottle, else one of it or it of one (Gin and London dry gin), else a sibling.
+  const find = (ok: (i: SpecIngredient, m: SpecIngredient) => boolean) => (m: SpecIngredient) => spec.ingredients.find((i) => ok(i, m));
+  const same = find((i, m) => i.id === m.id);
+  const kin = find((i, m) => i.generic === m.id || m.generic === i.id);
+  const sibling = find((i, m) => (i.generic ?? i.id) === (m.generic ?? m.id));
+  const named = have.flatMap((m) => same(m) ?? kin(m) ?? sibling(m) ?? []);
   const lines = spec.ingredients.filter((i) => named.includes(i)) as C['ingredients'][number][];
   return { spec, score: touching ? shared / (have.length + ids.size - touching) : 0, shared, touching, size: ids.size, lines };
 }

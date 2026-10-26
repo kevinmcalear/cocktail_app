@@ -47,3 +47,8 @@ assert.deepEqual(
   closeClassics([MEZCAL, LIME], [{ id: 'x', name: 'Two Agaves', ingredients: [MEZCAL, TEQUILA, LIME] }])[0].lines.map((l) => l.id),
   ['mezcal', 'lime']
 );
+// Gin (a kind of spirit) names the classic's London dry gin, not its rum (another spirit).
+assert.deepEqual(
+  closeClassics([{ id: 'gin', generic: 'spirit' }, LIME], [{ id: 'f', name: 'Fairbanks', ingredients: [{ id: 'rum', generic: 'spirit' }, { id: 'ldg', generic: 'gin' }, LIME] }])[0].lines.map((l) => l.id),
+  ['ldg', 'lime']
+);
