@@ -6,6 +6,8 @@ interface Kept<D, S extends string> {
   draft: D;
   step: S;
   updatedAt: number;
+  /** The draft as it began when it came from something read (a spec sheet): Start over goes back to it. */
+  start?: D;
 }
 
 export interface WizardState<D, S extends string> {
@@ -14,6 +16,10 @@ export interface WizardState<D, S extends string> {
   patch: (place: string, change: Partial<D>) => void;
   setStep: (place: string, step: S) => void;
   clear: (place: string) => void;
+  /** A draft that starts filled in from something read (an import's Edit this drink), kept as its `start`. */
+  begin: (place: string, draft: D) => void;
+  /** Start over: back to the draft's `start` if it has one, else cleared. */
+  restart: (place: string) => void;
   /**
    * With `tombstones` (the drink wizard): places cleared here (saved, or
    * started over), and how new the draft was, still to take out of the
@@ -40,7 +46,7 @@ export function createWizardStore<D extends object, S extends string>(
   const current = (s: WizardState<D, S>, place: string): Kept<D, S> => s.kept[place] ?? { draft: empty, step: firstStep, updatedAt: 0 };
   return create<WizardState<D, S>>()(
     persist(
-      (set) => ({
+      (set, get) => ({
         kept: {},
         cleared: [],
         forgot: (places) => set((s) => ({ cleared: s.cleared.filter((c) => !places.includes(c.place)) })),
@@ -56,6 +62,16 @@ export function createWizardStore<D extends object, S extends string>(
             if (!tombstones || !gone) return { kept: rest };
             return { kept: rest, cleared: [...s.cleared.filter((c) => c.place !== place), { place, at: gone.updatedAt }] };
           }),
+        begin: (place, draft) =>
+          set((s) => {
+            const start = prepare(draft);
+            return { kept: { ...s.kept, [place]: { draft: start, start, step: firstStep, updatedAt: Date.now() } } };
+          }),
+        restart: (place) => {
+          const start = get().kept[place]?.start;
+          if (!start) return get().clear(place);
+          set((s) => ({ kept: { ...s.kept, [place]: { draft: start, start, step: firstStep, updatedAt: Date.now() } } }));
+        },
       }),
       { name, storage: createJSONStorage(() => AsyncStorage), version: 1 }
     )

@@ -177,7 +177,8 @@ export function IngredientsStep({ draft, set, ingredients, loading, aliases = []
                   <View style={[styles.swap, { borderBottomColor: ds.c.line }]}>
                     <IngredientSearch
                       {...search}
-                      label={`Swap ${l.name} for…`}
+                      label={`Rename ${l.name} or pick another`}
+                      initial={l.name}
                       autoFocus
                       onCancel={() => setSwapKey(null)}
                       onPick={(p, _pour, named) => {

@@ -207,14 +207,13 @@ export function BringInFlow() {
       onCancel={cancel}
       onSave={(drink) => run({ kind: 'recipes', source, drinks: [drink] })}
       onEditAll={({ draft }) => {
-        // The full editor: the add-drink wizard, filled in, at its review.
+        // The full editor: the add-drink wizard, filled in, from its first step (as Edit this drink opens it).
         const wizardAt = wizardPlace(job.barId);
         const wizard = useDrinkWizardStore.getState();
         wizard.clear(wizardAt);
-        wizard.patch(wizardAt, draft);
-        wizard.setStep(wizardAt, 'review');
+        wizard.begin(wizardAt, draft);
         useBringIn.getState().clear(true);
-        router.replace((job.barId ? `/add-cocktail?barId=${job.barId}` : '/add-cocktail') as Href);
+        router.replace((job.barId ? `/add-cocktail?barId=${job.barId}&imported=1` : '/add-cocktail?imported=1') as Href);
       }}
     />
   );

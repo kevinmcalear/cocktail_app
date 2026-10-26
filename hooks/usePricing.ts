@@ -1,5 +1,7 @@
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
+import { getLocales } from 'expo-localization';
 
+import { currencyFor } from '@/lib/money';
 import { supabase } from '@/lib/supabase';
 
 export interface PricingSettings {
@@ -25,6 +27,26 @@ export function usePricingSettings(barId: string | null | undefined) {
       return (data as PricingSettings | null) ?? null;
     },
   });
+}
+
+/**
+ * The currency a venue's money shows in (lib/money currencyFor): the one it
+ * picked in Pricing, else its country's; at home (no `barId`), the device's.
+ * Null: no symbol. `on: false` asks nothing (someone who can't see costs).
+ */
+export function useShownCurrency(barId: string | null | undefined, on = true): string | null {
+  const set = usePricingSettings(on ? barId : null).data?.currency ?? null;
+  const country = useQuery({
+    queryKey: ['bar-country', barId],
+    enabled: on && !!barId && !set,
+    staleTime: 60 * 60_000,
+    queryFn: async (): Promise<string | null> => {
+      const { data, error } = await supabase.from('profiles').select('country_code').eq('bar_id', barId!).eq('kind', 'bar').limit(1).maybeSingle();
+      if (error) throw error;
+      return data?.country_code ?? null;
+    },
+  }).data;
+  return currencyFor({ set, country, device: barId ? null : getLocales()[0]?.currencyCode });
 }
 
 /** Admins set the pricing settings. */
