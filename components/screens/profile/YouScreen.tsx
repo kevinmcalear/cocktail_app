@@ -6,6 +6,7 @@ import { BackbarTheme, Body, Button, Caption, GlassButton, Title, useDs, useGutt
 import { CurrentUserAvatar, useUserDisplayName } from '@/components/ui/UserAvatar';
 import { WebHead } from '@/components/WebHead';
 import { layout, space } from '@/constants/tokens';
+import { useCreditsToCheck } from '@/hooks/useCreditsToCheck';
 import { useMyProfile } from '@/hooks/useMyProfile';
 import { useMyMadeDrinks, useProfilePositions } from '@/hooks/useProfiles';
 import { useMyHadDrinks, useMyHadPicks } from '@/hooks/useRankings';
@@ -14,6 +15,7 @@ import { pickedShown, profileLine } from '@/lib/profiles';
 import { siteOrigin } from '@/lib/venueLink';
 
 import { TasteCard } from '../taste/TasteCard';
+import { CreditsToCheckCard } from './CreditsToCheck';
 import { MyJobRequests } from './JobRequests';
 import { MyAwards } from './PersonAwards';
 import { Stat, Stats } from './ProfileSections';
@@ -47,6 +49,7 @@ function You() {
   const had = useMyHadDrinks();
   const picks = useMyHadPicks().data ?? {};
   const made = useMyMadeDrinks(profile?.id);
+  const waitingCredits = useCreditsToCheck().data?.length ?? 0;
   const positions = useProfilePositions(profile ? { id: profile.id, kind: 'person' } : null).data ?? [];
   const name = profile?.displayName || authName || 'You';
   const share = useShareLink(`${siteOrigin()}/p/${profile?.handle ?? ''}`, name);
@@ -71,7 +74,7 @@ function You() {
       </WebHead>
       <ScrollView contentContainerStyle={padding}>
         <View style={[styles.body, { paddingHorizontal: gutter }]}>
-          {profile ? <ItsYou drinks={madeCount} /> : null}
+          {profile ? <ItsYou drinks={madeCount} waiting={waitingCredits} /> : null}
           <View style={styles.header}>
             <CurrentUserAvatar size={96} />
             <Title role="heading" align="center">
@@ -86,6 +89,8 @@ function You() {
               {profile && shown ? <Button label="Share" variant="secondary" icon="square.and.arrow.up" onPress={() => void share()} /> : null}
             </View>
           </View>
+
+          {profile ? <CreditsToCheckCard /> : null}
 
           {profile ? <MyJobRequests personId={profile.id} /> : null}
 
