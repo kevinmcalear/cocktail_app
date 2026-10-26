@@ -48,6 +48,8 @@ interface DiscoverMapPaneProps {
   top?: ReactNode;
   /** Room for the screen header over the top of the map: the controls and the risen sheet stay below it. */
   topInset?: number;
+  /** Phones: the search field at the top of the sheet (SheetSearch). */
+  search?: ReactNode;
   /** Phones: the order again, under the sheet's title once the map is covered. */
   order?: ReactNode;
   /** Phones, nothing picked: the shelves at the top of the risen sheet (BrowseShelves). */
@@ -81,7 +83,7 @@ const SHEET_PEEK = 96; // The sheet at rest, until it measures itself.
  * fits the results whenever the area, style or order changes, but never after
  * a search of the map, so the person's view stays put.
  */
-export function DiscoverMapPane({ area, onArea, drink, filter, results, layer, onViewport, mode, top, topInset = 0, order, browse, topBars = false, from = null, me = null, pick, opened = null, focus = null, onShowBar, onFindMe }: DiscoverMapPaneProps) {
+export function DiscoverMapPane({ area, onArea, drink, filter, results, layer, onViewport, mode, top, topInset = 0, search, order, browse, topBars = false, from = null, me = null, pick, opened = null, focus = null, onShowBar, onFindMe }: DiscoverMapPaneProps) {
   const ds = useDs();
   const findMe = useFindMe(onFindMe);
   const sheetRef = useRef<BottomSheet>(null);
@@ -210,6 +212,7 @@ export function DiscoverMapPane({ area, onArea, drink, filter, results, layer, o
         topInset={topInset}
         onPeek={setPeek}
         title={title}
+        search={search}
         count={count}
         below={
           topBars || selected ? null : (

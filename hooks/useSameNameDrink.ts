@@ -3,6 +3,7 @@ import { useQuery } from '@tanstack/react-query';
 import { useUserId } from '@/ctx/AuthContext';
 import { useDebounced } from '@/hooks/useDiscover';
 import { MENU_DRINK_COLUMNS, toMenuDrink, type MenuItemRow } from '@/hooks/useMenus';
+import { dayShort } from '@/lib/collectionStages';
 import { ingredientLine, readingName, sentenceLine } from '@/lib/menus';
 import { nameKey, nameLike, sameName } from '@/lib/sameName';
 import { supabase } from '@/lib/supabase';
@@ -19,6 +20,10 @@ export interface SameNameDrink {
   menu: string | null;
   imageUrl: string | null;
   glass: string | null;
+  /** The glass's name ("Rocks"), for the card at home. */
+  glassName?: string | null;
+  /** When it was saved (items.created_at), as the card says it: "12 Oct". */
+  saved?: string | null;
   /** The classic it's a version of (riff_of_id, when that's a catalog drink). */
   classic: { id: string; name: string } | null;
   /** Its spec lines, in order, as stored. */
@@ -27,12 +32,13 @@ export interface SameNameDrink {
 
 type Row = MenuItemRow & {
   bar_id: string | null;
+  created_at: string | null;
   riff_of: { id: string; name: string; is_catalog: boolean | null } | null;
   menu_drinks: { menu: { name: string; is_active: boolean | null } | null }[] | null;
   spec: { sort_order: number | null; amount: number | null; unit: string | null; ingredient: { id: string; name: string; ingredient_role: string | null } | null }[] | null;
 };
 
-const COLUMNS = `${MENU_DRINK_COLUMNS}, bar_id,
+const COLUMNS = `${MENU_DRINK_COLUMNS}, bar_id, created_at,
   riff_of:riff_of_id(id, name, is_catalog),
   menu_drinks(menu:menus(name, is_active)),
   spec:app_recipe_presentation!recipe_item_id(sort_order, amount, unit, ingredient:display_ingredient(id, name, ingredient_role))`;
@@ -45,25 +51,35 @@ const CANDIDATES = 500;
  * punctuation aside; brackets count) that a bar already has: kept at the
  * venue (`barId`), or credited to the bar's page (`creditedTo`, a bar
  * profile; a staffed bar's drinks are read where everyone may, in
- * published_items). Only drinks you can see. Asked once typing pauses: the
+ * published_items), or at home your own drinks kept at no venue (`mine`,
+ * board w2-wizard-finish-2, Q14b). Only drinks you can see. Asked once typing pauses: the
  * bar's own index finds its drinks (items_bar_id_idx,
  * items_origin_bar_profile_id_idx), a loose pattern narrows them to names
  * and ids, and only the one with this very name is read in full.
  * `checking` is true while that answer is still to come for the name as
  * typed (not once it fails or waits offline), so nothing goes past it.
  */
-export function useSameNameDrink({ barId, creditedTo, name }: { barId?: string | null; creditedTo?: string | null; name: string }) {
+export function useSameNameDrink({ barId, creditedTo, mine, name }: { barId?: string | null; creditedTo?: string | null; mine?: boolean; name: string }) {
   const userId = useUserId();
   const settled = useDebounced(name, 300);
   const key = nameKey(settled);
-  const scope = barId ? { column: 'bar_id' as const, id: barId } : creditedTo ? { column: 'origin_bar_profile_id' as const, id: creditedTo } : null;
+  const scope = barId
+    ? { column: 'bar_id' as const, id: barId }
+    : creditedTo
+      ? { column: 'origin_bar_profile_id' as const, id: creditedTo }
+      : mine && userId
+        ? { column: 'created_by' as const, id: userId }
+        : null;
   const query = useQuery({
     queryKey: ['same-name-drink', scope?.column, scope?.id, key, userId],
     enabled: !!scope && !!key && !!userId,
     staleTime: 30_000,
     queryFn: async (): Promise<SameNameDrink | null> => {
       const pattern = nameLike(settled)!;
-      const { data, error } = await supabase.from('items').select('id, name').eq(scope!.column, scope!.id).eq('item_type', 'cocktail').ilike('name', pattern).limit(CANDIDATES);
+      let ask = supabase.from('items').select('id, name').eq(scope!.column, scope!.id).eq('item_type', 'cocktail').ilike('name', pattern);
+      // Yours at home: a drink you added at a venue is the venue's, so a bar drink can share a name with one you made at home.
+      if (scope!.column === 'created_by') ask = ask.is('bar_id', null);
+      const { data, error } = await ask.limit(CANDIDATES);
       if (error) throw error;
       const found = (data ?? []).find((r) => sameName(r.name, settled));
       if (found) return readDrink(found.id);
@@ -101,6 +117,8 @@ async function readDrink(id: string): Promise<SameNameDrink | null> {
     menu: (menus.find((m) => m.is_active) ?? menus[0])?.name ?? null,
     imageUrl: drink.imageUrl,
     glass: drink.glass,
+    glassName: (Array.isArray(row.glass) ? row.glass[0] : row.glass)?.name ?? null,
+    saved: row.created_at ? dayShort(row.created_at, Date.now()) : null,
     classic: riff?.is_catalog ? { id: riff.id, name: riff.name } : null,
     spec: spec.flatMap((l) => (l.ingredient ? [{ id: l.ingredient.id, name: l.ingredient.name, amount: l.amount, unit: l.unit }] : [])),
   };
@@ -125,5 +143,5 @@ async function publishedDrink(row: { id: string; name: string; bar_id: string | 
   // The classic it's a version of is in the catalog, which everyone signed in can read.
   const riff = row.riff_of_id ? await supabase.from('items').select('id, name, is_catalog').eq('id', row.riff_of_id).maybeSingle() : null;
   if (riff?.error) throw riff.error;
-  return { id: row.id, name: row.name, barId: row.bar_id, line: '', menu: null, imageUrl: row.image_url, glass: null, classic: riff?.data?.is_catalog ? { id: riff.data.id, name: riff.data.name } : null, spec: [] };
+  return { id: row.id, name: row.name, barId: row.bar_id, line: '', menu: null, imageUrl: row.image_url, glass: null, glassName: null, saved: null, classic: riff?.data?.is_catalog ? { id: riff.data.id, name: riff.data.name } : null, spec: [] };
 }

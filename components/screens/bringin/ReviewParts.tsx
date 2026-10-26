@@ -28,15 +28,20 @@ export function ProgressLine({ t, words }: { t: Tally; words: string }) {
   );
 }
 
-/** "Edit this drink": a plain ink link, as the board sets it. */
-export function EditLink({ onPress }: { onPress: () => void }) {
+/** "Not a drink? Take it out" (board w2-import-review E20): a quiet line under the drink's name. */
+export function TakeOutLine({ onPress }: { onPress: () => void }) {
   const ds = useDs();
   return (
-    <PressableScale role="button" accessibilityLabel="Edit this drink" onPress={onPress} style={styles.edit}>
-      <DsText variant="label" color={ds.c.ink} style={styles.bold}>
-        Edit this drink
+    <View style={styles.takeOut}>
+      <DsText variant="label" color={ds.c.muted}>
+        Not a drink?
       </DsText>
-    </PressableScale>
+      <PressableScale role="button" accessibilityLabel="Not a drink? Take it out" onPress={onPress} style={styles.takeOutButton}>
+        <DsText variant="label" color={ds.c.ink} style={styles.bold}>
+          Take it out
+        </DsText>
+      </PressableScale>
+    </View>
   );
 }
 
@@ -103,7 +108,8 @@ const styles = StyleSheet.create({
   track: { flex: 1, height: 6, borderRadius: radius.mark, overflow: 'hidden' },
   fill: { height: 6, borderRadius: radius.mark },
   mono: { fontFamily: fontFamilies.mono },
-  edit: { minHeight: 44, justifyContent: 'center', alignSelf: 'flex-start' },
+  takeOut: { flexDirection: 'row', alignItems: 'center', gap: space.xs + 2, alignSelf: 'flex-start' },
+  takeOutButton: { minHeight: 44, justifyContent: 'center', paddingHorizontal: 2 },
   bold: { fontFamily: fontFamilies.bodySemiBold },
   listRow: { flexDirection: 'row', alignItems: 'center', gap: space.sm + 2, minHeight: 40, paddingHorizontal: space.sm + 2, borderRadius: radius.control - 2 },
   listMark: { width: 16, alignItems: 'center' },

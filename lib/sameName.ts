@@ -50,7 +50,8 @@ export function nameLike(name: string): string | null {
 export const versionName = (name: string, word = '') => (word.trim() ? `${name.trim()} (${word.trim()})` : name.trim());
 
 /** "Little Rye’s Negroni". */
-export const theirs = (bar: string, name: string) => `${bar}’s ${name}`;
+/** "Little Rye’s Negroni", or at home (no bar) "your Negroni". */
+export const theirs = (bar: string, name: string) => (bar ? `${bar}’s ${name}` : `your ${name}`);
 
 /**
  * Whether Next (or Save) waits on the name: the bar's drink shows and

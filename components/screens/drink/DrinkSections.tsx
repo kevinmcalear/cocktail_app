@@ -40,6 +40,7 @@ import { ScoreCaption, ScoreMark } from './ScoreCaption';
 import { ServedAt } from './ServedAt';
 import { ServiceSection } from './ServiceSection';
 import { SpecLockPanel } from './SpecLockPanel';
+import type { SpecMark } from './SpecMarks';
 import { SpecSection } from './SpecSection';
 import type { DrinkActions } from './useDrinkActions';
 import { VersionBanner } from './VersionBanner';
@@ -59,6 +60,8 @@ export interface DrinkBodyProps {
   lines: SpecLine[];
   /** Method, glass, ice, garnish: under the spec. */
   make: Fact[];
+  /** The method and glass icons beside the Spec heading. */
+  marks: SpecMark[];
   /** Strength, serve, family: under More. */
   facts: Fact[];
   tags: string[];
@@ -120,9 +123,9 @@ export function useDrinkSections(p: DrinkBodyProps) {
       {make}
     </View>
   ) : home && signedIn && live ? (
-    <AtHomeSpec item={item} lines={lines} recipes={recipes} method={method} make={make} onSwap={p.actions.made} />
+    <AtHomeSpec item={item} lines={lines} recipes={recipes} method={method} make={make} marks={p.marks} onSwap={p.actions.made} />
   ) : (
-    <SpecSection itemId={item.id} barId={item.bar_id} recipes={recipes} preview={preview} caption={copy?.barName ? `With ${copy.barName}'s bottles` : null} make={make} riff={p.onRiff ? { onPress: p.onRiff, note: p.riffNote } : null}>
+    <SpecSection itemId={item.id} barId={item.bar_id} recipes={recipes} preview={preview} caption={copy?.barName ? `With ${copy.barName}'s bottles` : null} make={make} marks={p.marks} riff={p.onRiff ? { onPress: p.onRiff, note: p.riffNote } : null}>
       <FitGlassNote result={fill} onFit={p.onFit ?? undefined} />
       {method ? <Body>{method}</Body> : null}
     </SpecSection>

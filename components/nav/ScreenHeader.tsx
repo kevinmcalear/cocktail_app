@@ -8,6 +8,8 @@ import { CurrentUserAvatar } from '@/components/ui/UserAvatar';
 import { layout, space } from '@/constants/tokens';
 import { useIsWideWeb } from '@/hooks/useIsWideWeb';
 
+import { VenueDeleteBanner } from '@/components/screens/venue/DeleteVenue';
+
 import { VenueSwitcher } from './VenueSwitcher';
 
 /**
@@ -32,45 +34,59 @@ export function ScreenHeader({ title, display, actions, center, you = true }: { 
   const insets = useSafeAreaInsets();
   const gutter = useGutter();
   const wide = useIsWideWeb();
+  // A venue's delete waiting its 7 days shows under every venue screen's header (E53).
+  const banner = <VenueDeleteBanner />;
   if (wide) {
     // insets.top: an iPad's status bar (0 on the web).
-    if (!title && !actions) return <View style={[styles.wide, { marginTop: insets.top }]} />;
+    if (!title && !actions)
+      return (
+        <>
+          <View style={[styles.wide, { marginTop: insets.top }]} />
+          {banner}
+        </>
+      );
     return (
-      <View style={[styles.row, styles.wideTitled, { paddingHorizontal: gutter, marginTop: insets.top }]}>
-        {!title ? <View /> : display ? <Display aria-level={1}>{title}</Display> : <Title aria-level={1}>{title}</Title>}
-        <View style={styles.end}>{actions}</View>
-      </View>
+      <>
+        <View style={[styles.row, styles.wideTitled, { paddingHorizontal: gutter, marginTop: insets.top }]}>
+          {!title ? <View /> : display ? <Display aria-level={1}>{title}</Display> : <Title aria-level={1}>{title}</Title>}
+          <View style={styles.end}>{actions}</View>
+        </View>
+        {banner}
+      </>
     );
   }
   return (
-    <View style={[styles.row, center ? styles.tight : null, { paddingTop: insets.top + space.sm, paddingHorizontal: gutter }]}>
-      <View style={styles.start}>
-        <VenueSwitcher />
-        {title && !center ? (
-          <Title aria-level={1} numberOfLines={1} style={styles.title}>
-            {title}
-          </Title>
-        ) : null}
-      </View>
-      {center ? (
-        <View style={styles.center}>
-          {title ? (
-            <Title aria-level={1} numberOfLines={1} style={styles.readerOnly}>
+    <>
+      <View style={[styles.row, center ? styles.tight : null, { paddingTop: insets.top + space.sm, paddingHorizontal: gutter }]}>
+        <View style={styles.start}>
+          <VenueSwitcher />
+          {title && !center ? (
+            <Title aria-level={1} numberOfLines={1} style={styles.title}>
               {title}
             </Title>
           ) : null}
-          {center}
         </View>
-      ) : null}
-      <View style={styles.end}>
-        {actions}
-        {you ? (
-          <PressableScale role="link" accessibilityLabel="You: your profile and settings" onPress={() => router.push('/you')} style={styles.avatar}>
-            <CurrentUserAvatar size={32} />
-          </PressableScale>
+        {center ? (
+          <View style={styles.center}>
+            {title ? (
+              <Title aria-level={1} numberOfLines={1} style={styles.readerOnly}>
+                {title}
+              </Title>
+            ) : null}
+            {center}
+          </View>
         ) : null}
+        <View style={styles.end}>
+          {actions}
+          {you ? (
+            <PressableScale role="link" accessibilityLabel="You: your profile and settings" onPress={() => router.push('/you')} style={styles.avatar}>
+              <CurrentUserAvatar size={32} />
+            </PressableScale>
+          ) : null}
+        </View>
       </View>
-    </View>
+      {banner}
+    </>
   );
 }
 

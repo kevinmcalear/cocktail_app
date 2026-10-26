@@ -8,6 +8,9 @@
 
 export type CreditStatus = 'suggested' | 'claimed' | 'verified';
 
+/** A co-creator's answer: named and waiting for their yes, said yes, or said Not me. */
+export type CoCreatorStatus = 'pending' | 'accepted' | 'declined';
+
 /** A person, a bar, or a maker (the house that makes a bottle, a bar's ice or its glass). */
 export type ProfileKind = 'person' | 'bar' | 'maker' | 'supplier';
 
@@ -33,8 +36,12 @@ export interface LineageDrink {
   origin: string | null;
   creator: CreditProfile | null;
   origin_bar: CreditProfile | null;
-  /** Everyone else who made it (item_co_creators), after the first-named creator. */
-  co_creators?: { profile: CreditProfile | null }[] | null;
+  /**
+   * Everyone else who made it (item_co_creators), after the first-named
+   * creator. Waiting and declined ones come back only to the person named,
+   * the drink's editors and moderators; only accepted ones are in the credit.
+   */
+  co_creators?: { status?: CoCreatorStatus; profile: CreditProfile | null }[] | null;
   /** Catalog classics: the classic it came from, or the style. */
   lineage_parent_id?: string | null;
   lineage_style_id?: string | null;
@@ -93,9 +100,10 @@ export function styleChain(styleId: string | null | undefined, styles: readonly 
   return chain.reverse();
 }
 
-/** Everyone credited with making the drink, first-named first. */
+/** Everyone credited with making the drink, first-named first: co-creators only once they said yes. */
 export function creators(drink: Pick<LineageDrink, 'creator' | 'co_creators'>): CreditProfile[] {
-  const all = [drink.creator, ...(drink.co_creators ?? []).map((c) => c.profile)].filter((p): p is CreditProfile => !!p);
+  const yes = (drink.co_creators ?? []).filter((c) => (c.status ?? 'accepted') === 'accepted');
+  const all = [drink.creator, ...yes.map((c) => c.profile)].filter((p): p is CreditProfile => !!p);
   return all.filter((p, i) => all.findIndex((q) => q.id === p.id) === i);
 }
 

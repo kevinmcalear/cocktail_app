@@ -4,7 +4,7 @@
  * quick choices each step offers. The screens are in
  * components/screens/addDrink; saving is hooks/useCreateDrink.ts.
  */
-import { iceBuildLine, saysMore, type IceLayer } from '@/lib/iceBuild';
+import { iceBuildLine, iceKind, saysMore, type IceLayer } from '@/lib/iceBuild';
 import type { ImageAngle } from '@/lib/itemImages';
 import type { LineBatch } from '@/lib/batchLines';
 import type { BottleKind } from '@/lib/newBottle';
@@ -40,6 +40,12 @@ export interface WizardPick {
   name: string;
 }
 
+/** A person credited: who they are on the list ("@sam.ortiz · Little Rye") and whether anyone has claimed their page, kept from the search. */
+export interface CreditPick extends WizardPick {
+  sub?: string | null;
+  claimed?: boolean;
+}
+
 export interface WizardLine extends WizardPick {
   /** Stable while editing, so rows keep their keys and focus. */
   key: string;
@@ -51,6 +57,8 @@ export interface WizardLine extends WizardPick {
   prep?: PrepDraft;
   /** A note on the spec line ("the bar uses Bacardí Heritage"). */
   note?: string;
+  /** Optional in the drink: a guest can leave it out. */
+  optional?: boolean;
   /** A house prep added by name only ("Just add the name", or Later in the prep builder): its recipe is to write, and the save reminds you. */
   later?: boolean;
   /** A batch read from a file (lib/bringInDraft): the drink's own lines and the bottle, saved as a Batch prep. */
@@ -111,9 +119,9 @@ export interface WizardDraft {
   /** The finish: garnishes and what goes on top (3 drops mint oil, an absinthe rinse), saved as spec lines after the ingredients. */
   garnishes: WizardLine[];
   /** Your own profile ('me'), someone else's, or 'nobody'. Not chosen yet (null) means you, when you have a profile. */
-  creator: 'me' | 'nobody' | WizardPick | null;
+  creator: 'me' | 'nobody' | CreditPick | null;
   /** Everyone else who made it with them (person profiles). */
-  coCreators: WizardPick[];
+  coCreators: CreditPick[];
   riffOf: WizardPick | null;
   /**
    * The bar (or the bar it's credited to) already has a drink by this name
@@ -133,7 +141,7 @@ export interface WizardDraft {
   elsewhere?: boolean;
   description: string;
   notes: string;
-  /** "Just me": the notes are yours alone (item_private_notes), not the drink's. Unset is with the drink. */
+  /** "Just me": the notes are yours alone (item_private_notes), not the drink's. Unset is with the drink at a venue, just you at home (notesArePrivate). */
   notesPrivate?: boolean;
   /** null follows the venue (or is private, for a drink at home). */
   publish: PublishMode | null;
@@ -148,6 +156,9 @@ export interface WizardDraft {
   /** The drink's price at a venue, as typed (items.price: "19.50", "MP"), set on the desktop page beside the cost; blank leaves it for later. */
   price?: string;
 }
+
+/** Whether the notes are yours alone: picked, or by default just you at home and with the drink at a venue (Q27). */
+export const notesArePrivate = (d: Pick<WizardDraft, 'notesPrivate'>, barId: string | null) => (barId ? !!d.notesPrivate : d.notesPrivate !== false);
 
 export const EMPTY_DRAFT: WizardDraft = {
   name: '',
@@ -283,7 +294,7 @@ export const COMMON_INGREDIENTS = [
 /** The method step's chips, in its two groups, all shown. A float, mist or rinse is on the Finish step. */
 export const METHOD_GROUPS: readonly { label: string; methods: readonly string[] }[] = [
   { label: 'Mix', methods: ['Shake', 'Stir', 'Build', 'Throw', 'Swizzle', 'Blend', 'Muddle'] },
-  { label: 'Air and texture', methods: ['Dry shake', 'Reverse dry shake', 'Whip (iSi)', 'Top with foam'] },
+  { label: 'Air and texture', methods: ['Dry shake', 'Reverse dry shake', 'Whip (iSi)', 'Whip (whisk or frother)', 'Top with foam'] },
 ];
 export const COMMON_METHODS = METHOD_GROUPS.flatMap((g) => g.methods);
 /** What a picked method's step card says under its name. */
@@ -298,6 +309,7 @@ const METHOD_DETAIL: Record<string, string> = {
   'dry shake': '15 s, no ice',
   'reverse dry shake': 'with ice, then again without',
   'whip (isi)': 'in a charged siphon',
+  'whip (whisk or frother)': 'by hand, no ice',
   'top with foam': 'spooned on last',
   float: 'over the back of a spoon',
   mist: 'over the top',
@@ -314,7 +326,8 @@ export const COMMON_ICE = ['No ice', 'Cubes', 'Large cube', 'Crushed', 'Pebble',
  * is the one it's served over); no method yet is "Made with".
  */
 export function methodIceLabel(methods: readonly string[]): string | null {
-  const all = methods.join(' ').toLowerCase();
+  // A whisk or a milk frother takes no ice (Q20b), nor does a dry shake on its own.
+  const all = methods.filter((m) => !NO_ICE.test(m)).join(' ').toLowerCase();
   if (/blend/.test(all)) return 'Blended with';
   if (/shak|whip/.test(all)) return 'Shaken with';
   if (/stir/.test(all)) return 'Stirred over';
@@ -322,6 +335,21 @@ export function methodIceLabel(methods: readonly string[]): string | null {
   if (/throw/.test(all)) return 'Thrown over';
   if (/build|built/.test(all)) return null;
   return 'Made with';
+}
+
+const NO_ICE = /whisk|frother|^dry shake$/i;
+
+/**
+ * The draft with what it's mixed with (Q21, 26 Oct): the one picked, else the
+ * venue's first cubes in its Kit, else its first ice, else Cubes, shown under
+ * the method so it can be changed. A drink built in the glass has none, and a
+ * method that doesn't say it's mixed with ice starts on nothing.
+ */
+export function withMethodIce(d: WizardDraft, barIce: readonly string[]): WizardDraft {
+  const label = methodIceLabel(d.methods.map((m) => m.name));
+  if (!label) return d.methodIce ? { ...d, methodIce: null } : d;
+  if (d.methodIce || label === 'Made with') return d;
+  return { ...d, methodIce: { id: null, name: barIce.find((n) => iceKind(n) === 'cubes') ?? barIce[0] ?? 'Cubes' } };
 }
 
 /** The drink page's Ice: "Blended with pebble, over a large cube", or just the ice it's served over. */

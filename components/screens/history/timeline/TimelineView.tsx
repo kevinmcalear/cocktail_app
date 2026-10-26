@@ -1,3 +1,4 @@
+import { useRouter } from 'expo-router';
 import { useCallback, useEffect, useRef, useState, type ReactNode } from 'react';
 import { ScrollView, SectionList, StyleSheet, useWindowDimensions, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
@@ -9,7 +10,7 @@ import { decadeCounts, eraOf, foldThread, locate, locateKey, thread, timelineSec
 
 import type { Jump } from '../tree/TimeTree';
 
-import { DrinkDetail, PeekSheet } from './DrinkPeek';
+import { DrinkDetail, drinkHref, PeekSheet } from './DrinkPeek';
 import { EraBar } from './EraBar';
 import { OverviewStrip } from './OverviewStrip';
 import { Riffs, ThreadCard, ThreadPick } from './ThreadBar';
@@ -27,8 +28,8 @@ const SETTLED_WINDOW = 9;
 
 /**
  * History's Timeline view: every dated classic and historic style in one
- * long scroll, oldest first, under sticky era headers. Phones travel with
- * the glass era bar and peek at a drink in a sheet; desktop gets an overview
+ * long scroll, oldest first, under sticky era headers. Phones travel with the
+ * glass era bar, open a drink's page on a tap and peek at a style; desktop gets an overview
  * of every era on top and the drink in an inspector. A thread lights one
  * drink's line back to the punch bowl.
  */
@@ -56,6 +57,7 @@ export function TimelineView({
   reveal: Jump;
 }) {
   const ds = useDs();
+  const router = useRouter();
   const insets = useSafeAreaInsets();
   const gutter = useGutter();
   const wide = useBreakpoint() !== 'phone'; // Wide from 768, like the drink pages (i05, 24 Oct 2026).
@@ -169,8 +171,10 @@ export function TimelineView({
 
   const press = (key: string) => {
     onSelect(key);
-    // Following a thread, a phone shows the pick at the bottom instead of a sheet.
-    if (!wide && !threadKey) setPeekKey(key);
+    // Following a thread, a phone shows the pick at the bottom instead. Otherwise a drink opens its page, and only a style peeks (E48).
+    if (wide || threadKey) return;
+    const node = byKey.get(key);
+    return node?.kind === 'drink' ? router.push(drinkHref(node.id)) : setPeekKey(key);
   };
   const toggleThread = (key: string) => {
     const on = threadKey !== key;
@@ -238,6 +242,7 @@ export function TimelineView({
                   wide={wide}
                   compact={!!threadKey && !wide}
                   onPress={() => press(item.node.key)}
+                  onThread={wide || threadKey ? undefined : () => (onSelect(item.node.key), toggleThread(item.node.key))}
                 />
               )}
             </View>
