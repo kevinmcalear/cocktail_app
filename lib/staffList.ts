@@ -17,6 +17,26 @@ export interface StaffListCandidate {
   classicName: string | null;
 }
 
+export interface ClassicRow {
+  itemId: string;
+  rank: number | null;
+  name: string;
+  classicName: string | null;
+  imageUrl: string | null;
+  /** On the staff list (bar_off_menu); false for a drink that is only linked to a classic. */
+  onList: boolean;
+}
+
+/**
+ * Library's Classics (E50, 26 Oct 2026): the staff list, then every other
+ * drink here linked to a classic, unranked. Its length is the Classics count.
+ */
+export function classicRows(picks: readonly Omit<ClassicRow, 'onList'>[], linked: readonly StaffListCandidate[]): ClassicRow[] {
+  const on = new Set(picks.map((p) => p.itemId));
+  const rest = linked.filter((c) => !on.has(c.id)).map((c) => ({ itemId: c.id, rank: null, name: c.name, classicName: c.classicName, imageUrl: null, onList: false }));
+  return [...picks.map((p) => ({ ...p, onList: true })), ...rest];
+}
+
 /** Ranked drinks in rank order, then the unranked ones A to Z. */
 export function staffOrder<T extends NamedPick>(rows: readonly T[]): { ranked: T[]; unranked: T[] } {
   const ranked = rows.filter((r) => r.rank != null).sort((a, b) => a.rank! - b.rank!);

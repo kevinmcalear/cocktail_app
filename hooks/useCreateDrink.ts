@@ -248,6 +248,8 @@ export function useCreateDrink() {
       // The next drink by this name is told the bar has one now (useSameNameDrink).
       void qc.invalidateQueries({ queryKey: ['same-name-drink'] });
       if (barId) void qc.invalidateQueries({ queryKey: ['bar', barId] });
+      // A new drink linked to a classic joins Library's Classics.
+      if (barId && draft.riffOf) void qc.invalidateQueries({ queryKey: ['staff-list-riffs', barId] });
       if (saver.newSpecs()) void qc.invalidateQueries({ queryKey: dropdownKeys.specs });
       void refreshIngredients(qc, newIngredients);
       if (creatorId) void qc.invalidateQueries({ queryKey: ['profile-originals'] });
