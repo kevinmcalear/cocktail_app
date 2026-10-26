@@ -7,9 +7,9 @@ export function draftMethodIds(data: { methodIds?: unknown; methodId?: unknown }
     return typeof data?.methodId === 'string' && data.methodId ? [data.methodId] : [];
 }
 
-/** A drink's item_methods rows as ids, in their saved order. */
+/** A drink's item_methods rows as ids, in their saved order, each once (a drink made in parts can have Build in two). */
 export function orderedMethodIds(rows: { method_item_id: string; sort_order?: number | null }[] | null | undefined): string[] {
-    return [...(rows ?? [])].sort((a, b) => (a.sort_order ?? 0) - (b.sort_order ?? 0)).map((r) => r.method_item_id);
+    return [...new Set([...(rows ?? [])].sort((a, b) => (a.sort_order ?? 0) - (b.sort_order ?? 0)).map((r) => r.method_item_id))];
 }
 
 /** Adds the id at the end, or takes it out if it's there. */

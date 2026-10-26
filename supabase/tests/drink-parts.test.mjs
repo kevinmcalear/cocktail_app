@@ -110,7 +110,7 @@ describe('save_drink_spec with parts', () => {
     const s = await spec();
     assert.deepEqual(s.parts, PARTS);
     assert.deepEqual(s.lines.map((l) => l.part), [1, 1, 2]);
-    assert.deepEqual(s.methods.map((m) => m.part), [1, 2]);
+    assert.deepEqual(s.methods.map((m) => [m.method_item_id, m.part]), [[ids.build, 1], [ids.build, 2], [ids.whisk, 2]], 'Build stays in both parts');
   });
 
   test('an outsider and a signed-out caller are refused', async () => {
@@ -150,6 +150,6 @@ describe('save_drink_spec with parts', () => {
     const s = await spec();
     assert.deepEqual(s.parts, PARTS);
     assert.deepEqual(s.lines.map((l) => l.part), [1, 1, 2]);
-    assert.deepEqual(s.methods.map((m) => m.part), [1, 2]);
+    assert.deepEqual(s.methods.map((m) => m.part), [1, 2, 2]);
   });
 });

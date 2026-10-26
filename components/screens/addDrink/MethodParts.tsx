@@ -3,7 +3,7 @@ import { StyleSheet, View } from 'react-native';
 import { Body, Caption, DsText, Field, PressableScale, Switch, useDs } from '@/components/ds';
 import { IconSymbol } from '@/components/ui/icon-symbol';
 import { radius, space } from '@/constants/tokens';
-import { addPart, MAX_PARTS, PART_JOINS, partsMethods, startParts, toggleLine, type DraftPart } from '@/lib/drinkParts';
+import { addPart, linePart, MAX_PARTS, PART_JOINS, partsMethods, startParts, toggleLine, type DraftPart } from '@/lib/drinkParts';
 import { samePick, type StepProps, type WizardPick } from '@/lib/drinkWizard';
 
 import { PickStep } from './PickStep';
@@ -37,6 +37,8 @@ export function MethodParts({ draft, set, options }: StepProps & { options: Wiza
   const put = (next: DraftPart[]) => set({ parts: next, methods: partsMethods(next) });
   const change = (at: number, patch: Partial<DraftPart>) => put(parts.map((p, i) => (i === at ? { ...p, ...patch } : p)));
   const lines = [...draft.lines, ...draft.garnishes];
+  // A line in no part saves into the first (a garnish into the last), so it shows there.
+  const garnishes = new Set(draft.garnishes.map((g) => g.key));
   return (
     <View style={styles.stack}>
       {parts.map((p, i) => (
@@ -61,7 +63,7 @@ export function MethodParts({ draft, set, options }: StepProps & { options: Wiza
               <Caption tone="muted">What goes in this part</Caption>
               <View role="group" accessibilityLabel={`What goes in part ${i + 1}`} style={styles.chips}>
                 {lines.map((l) => (
-                  <WizardChip key={l.key} kind="checkbox" label={l.name} selected={p.lines.includes(l.key)} onPress={() => put(toggleLine(parts, i, l.key))} />
+                  <WizardChip key={l.key} kind="checkbox" label={l.name} selected={linePart(parts, l.key, garnishes.has(l.key)) === i + 1} onPress={() => put(toggleLine(parts, i, l.key))} />
                 ))}
               </View>
             </View>

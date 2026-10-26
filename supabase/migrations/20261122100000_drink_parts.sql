@@ -128,14 +128,17 @@ BEGIN
     END LOOP;
     DELETE FROM public.recipes WHERE recipe_item_id = p_item AND NOT (id = ANY (v_kept));
 
-    -- Methods in the order given, each in its part (or the part it had). Unknown ids and repeats are skipped.
-    SELECT jsonb_object_agg(method_item_id::text, part) INTO v_old_methods
-      FROM (SELECT DISTINCT ON (method_item_id) method_item_id, part FROM public.item_methods WHERE item_id = p_item ORDER BY method_item_id, sort_order) o;
+    -- Methods in the order given, each in its part. Without parts, a method
+    -- keeps every part it was in (Build in two parts stays in both). Unknown
+    -- ids and repeats are skipped.
+    SELECT COALESCE(jsonb_agg(jsonb_build_object('id', method_item_id, 'part', part)), '[]'::jsonb) INTO v_old_methods
+      FROM public.item_methods WHERE item_id = p_item;
     DELETE FROM public.item_methods WHERE item_id = p_item;
     INSERT INTO public.item_methods (item_id, method_item_id, part, sort_order)
     SELECT p_item, m.id, u.part, (min(u.ord) - 1)::integer
-      FROM (SELECT x.id, x.ord, COALESCE(p_method_parts[x.ord], (v_old_methods ->> x.id::text)::smallint, 1) AS part
-              FROM unnest(COALESCE(p_method_ids, '{}')) WITH ORDINALITY AS x(id, ord)) u
+      FROM (SELECT x.id, x.ord, COALESCE(p_method_parts[x.ord], o.part, 1) AS part
+              FROM unnest(COALESCE(p_method_ids, '{}')) WITH ORDINALITY AS x(id, ord)
+              LEFT JOIN jsonb_to_recordset(v_old_methods) AS o(id uuid, part smallint) ON p_method_parts IS NULL AND o.id = x.id) u
       JOIN public.items m ON m.id = u.id AND m.item_type = 'method'
      GROUP BY m.id, u.part;
     IF EXISTS (SELECT 1 FROM public.item_methods WHERE item_id = p_item AND part > v_count) THEN

@@ -13,6 +13,7 @@ assert.deepEqual(
   ['stir', 'freezer']
 );
 assert.deepEqual(orderedMethodIds(undefined), []);
+assert.deepEqual(orderedMethodIds([{ method_item_id: 'build', sort_order: 0 }, { method_item_id: 'build', sort_order: 1 }, { method_item_id: 'whisk', sort_order: 2 }]), ['build', 'whisk'], 'a method in two parts, once');
 
 assert.deepEqual(toggleId(['stir'], 'freezer'), ['stir', 'freezer']);
 assert.deepEqual(toggleId(['stir', 'freezer'], 'stir'), ['freezer']);
