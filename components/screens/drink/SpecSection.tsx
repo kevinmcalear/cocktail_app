@@ -162,7 +162,8 @@ export function SpecSection({ itemId, barId, recipes, preview, heading = 'Spec',
 
 const styles = StyleSheet.create({
   section: { gap: space.md },
-  head: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', gap: space.md, flexWrap: 'wrap' },
+  // The unit switch stays on the heading's line; a long caption wraps under the heading instead.
+  head: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', gap: space.md },
   title: { flexDirection: 'row', alignItems: 'center', gap: space.sm, flexShrink: 1, flexWrap: 'wrap' },
   ratio: { flexDirection: 'row', height: 6, borderRadius: radius.pill, overflow: 'hidden', gap: 2 },
   riff: { gap: space.sm },
