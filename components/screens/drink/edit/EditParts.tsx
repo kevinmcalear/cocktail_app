@@ -186,20 +186,28 @@ const styles = StyleSheet.create({
 });
 
 /**
- * A multiline field that grows with its words (the web's textarea doesn't on
- * its own) up to about six lines, then scrolls inside, so the page under it
- * stays in reach on a phone.
+ * A multiline field that grows with its words up to about six lines, then
+ * scrolls inside, so the page under it stays in reach on a phone. A native box
+ * sizes to its words on its own; the web's textarea needs `field-sizing`.
+ * Its height isn't set from onContentSizeChange: on iOS that height fed back
+ * into the content size, and the boxes kept resizing as the page scrolled.
  */
-export function GrowingField(props: TextInputProps & { minHeight: number }) {
-  const [height, setHeight] = useState(props.minHeight);
+export function GrowingField({ minHeight, ...props }: TextInputProps & { minHeight: number }) {
+  const [full, setFull] = useState(false);
   return (
     <TextInput
       multiline
       // Off until it's full, so a swipe over a short box scrolls the page.
-      scrollEnabled={height >= MULTILINE_MAX}
+      scrollEnabled={full}
       {...props}
-      onContentSizeChange={(e) => setHeight(Math.min(MULTILINE_MAX, Math.max(props.minHeight, Math.ceil(e.nativeEvent.contentSize.height) + space.lg)))}
-      style={[props.style, { height }]}
+      onLayout={(e) => {
+        setFull(e.nativeEvent.layout.height >= MULTILINE_MAX - 1);
+        props.onLayout?.(e);
+      }}
+      style={[props.style, { minHeight, maxHeight: MULTILINE_MAX }, FIT_WORDS]}
     />
   );
 }
+
+// ponytail: browsers without field-sizing (Firefox) keep the box at minHeight and scroll inside it.
+const FIT_WORDS = Platform.OS === 'web' ? ({ fieldSizing: 'content' } as object) : null;
