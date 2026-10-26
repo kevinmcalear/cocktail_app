@@ -4,6 +4,7 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import { Button, Caption, DsText, Field, ReviewRow, TextLink, Title, useDs, useGutter } from '@/components/ds';
 import { radius, space } from '@/constants/tokens';
+import { useBringInMatchData } from '@/hooks/useBringInMatchData';
 import type { VenueBottle } from '@/hooks/useBulk';
 import { shelfOrder, type ShelfSpot } from '@/lib/bringIn';
 import { plainKind, type MatchData } from '@/lib/bringInMatch';
@@ -76,6 +77,11 @@ export function BottlesCheck({ reading, files, data, where, saving, error, onCan
       return next;
     });
 
+  // A name typed in is matched as the photo's bottles were (on the server, with them); its row stays unread until then.
+  const names = [...new Set(Object.values(decisions).flatMap((d) => ('typed' in d ? [d.typed] : [])))];
+  const withTyped = useBringInMatchData(data.venueId, names.length > 0, [reading.kind === 'bottles' ? reading.bottles : [], ...names.map((name) => [{ name }])]);
+  const typedData = names.length ? withTyped : data;
+
   // Matched once for the photo and again only when a pick changes: not as you type, and not while saving
   // (the save fills the shelf, which would turn its own bottles to "already there" under the button).
   const [sent, setSent] = useState<(BottleOutcome | null)[] | null>(null);
@@ -85,11 +91,11 @@ export function BottlesCheck({ reading, files, data, where, saving, error, onCan
         ? sent
         : spots.map((spot) => {
             const d = decisions[`${spot.kind}:${spot.index}`];
-            if (spot.kind === 'bottle') return bottleOutcome(spot.reading, data, d);
-            if (d && 'typed' in d) return bottleOutcome({ brand: null, name: d.typed, kind: null, abv: null }, data, d);
+            if (spot.kind === 'bottle') return bottleOutcome(spot.reading, typedData ?? data, d);
+            if (d && 'typed' in d) return typedData ? bottleOutcome({ brand: null, name: d.typed, kind: null, abv: null }, typedData, d) : null;
             return d ? ({ state: 'skip', why: 'Skipped' } as const) : null;
           }),
-    [saving, sent, spots, decisions, data]
+    [saving, sent, spots, decisions, data, typedData]
   );
   const count = (s: BottleOutcome['state']) => outcomes.filter((o) => o?.state === s).length;
   const adding = count('add') + count('make') + count('pick');
