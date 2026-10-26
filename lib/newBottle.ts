@@ -1,6 +1,6 @@
 /**
  * A bottle you buy, added on the desktop drink page under its own line
- * (board make-create-desktop, step 5): what it is, how strong, who brings it
+ * (board make-create-desktop, step 5): what it is, how strong
  * and its pack. What it is saves as the new row's kind (items.generic_id):
  * the kind its name says when the catalog has one ("Ki No Bi gin" is a Gin),
  * else the broad one picked ("Pommeau" is a Fortified wine).

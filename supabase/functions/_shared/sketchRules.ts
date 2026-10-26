@@ -204,7 +204,8 @@ const ICE_NAMES: readonly [RegExp, Ice][] = [
   [/spear|collins ice|column/, 'spear'],
   [/sphere|ball/, 'sphere'],
   [/large|big|king|block|single|clear cube|rock\b/, 'large'],
-  [/cube|ice/, 'cubes'],
+  // "Hosh": a bar's word for cubes from its Hoshizaki machine (Eddie, 26 Oct).
+  [/cube|ice|\bhosh/, 'cubes'],
   [/none/, 'none'],
 ];
 const METHOD_NAMES: readonly [RegExp, Method][] = [
