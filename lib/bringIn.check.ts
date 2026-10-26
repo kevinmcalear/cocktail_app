@@ -1,6 +1,6 @@
 import assert from 'node:assert/strict';
 
-import { boxRect, cropLayout, foundLine, isCleanText, isPrepName, localReading, looksLike, prepRatio, readingName, readingSteps, shelfOrder, stepsDone } from './bringIn';
+import { boxRect, cropLayout, foundLine, isCleanText, isPrepName, localReading, looksLike, prepRatio, readingName, readingSteps, shelfOrder, stepsDone, stripWindow } from './bringIn';
 
 // Bring in reads clean text on the phone, says what it's doing while the
 // reader works, and crops the printed line beside each row.
@@ -79,5 +79,11 @@ const crop = cropLayout([100, 200, 200, 600], { width: 1000, height: 2000 }, { w
 assert.equal(Math.round(crop.width), 220);
 assert.equal(Math.round(crop.left), -44 + Math.round((64 - 88) / 2));
 assert.deepEqual(boxRect([100, 200, 300, 600], { width: 300, height: 400 }), { left: 60, top: 40, width: 120, height: 80 });
+
+// The reading strip: six pages and "+6", always with the page shown.
+assert.deepEqual(stripWindow(4, 3), { from: 0, to: 4 });
+assert.deepEqual(stripWindow(12, 1), { from: 0, to: 6 });
+assert.deepEqual(stripWindow(12, 7), { from: 5, to: 11 });
+assert.deepEqual(stripWindow(12, 11), { from: 6, to: 12 });
 
 console.log('bringIn checks passed');
