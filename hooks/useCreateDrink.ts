@@ -283,7 +283,7 @@ export function useCreateDrink() {
         ...(draft.glassModelId ? { glass_model_id: draft.glassModelId } : {}),
         // The colour picked as it was made; the database copies it into the drawing (20261017100000_sketch_liquid).
         sketch_liquid: draft.tint ?? null,
-        // A hero photo replaces the drawing unless Keep it was picked (20261122200000_show_sketch). Only when it does, so other saves never send the column.
+        // A hero photo replaces the drawing unless Keep it was picked (20261123200000_show_sketch). Only when it does, so other saves never send the column.
         ...(draft.photos?.hero && !draft.keepDrawing ? { show_sketch: false } : {}),
         ice_id: iceId,
         // Only when there is one: a database without 20261029100000 refuses an unknown column, so every other save keeps working whichever lands first.
