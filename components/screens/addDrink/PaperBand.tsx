@@ -1,4 +1,5 @@
 import { useEffect, useState, type ReactNode } from 'react';
+import { Image } from 'expo-image';
 import { StatusBar } from 'expo-status-bar';
 import { Platform, StyleSheet, View } from 'react-native';
 import Animated, { useAnimatedStyle, useReducedMotion, useSharedValue, withSequence, withSpring, withTiming } from 'react-native-reanimated';
@@ -43,15 +44,18 @@ export interface PaperBandProps {
   note?: string;
   /** Under the drawing, before the tag: a control for it (the drink's Colour). */
   action?: ReactNode;
+  /** A photo of the drink, filling the band in place of the drawing (E26), with the controls on dark glass. */
+  photo?: string | null;
 }
 
 /**
  * The paper band at the top of every add wizard: back, progress, and a
  * drawing of the thing being added that redraws as it's filled in.
  */
-export function PaperBand({ progress, first, backTo, onBack, top, side, rounded, folded, size: sizeProp, art, artKey, artLabel, tag, note = 'Updates as you go', action, trail }: PaperBandProps) {
+export function PaperBand({ progress, first, backTo, onBack, top, side, rounded, folded, size: sizeProp, art, artKey, artLabel, tag, note = 'Updates as you go', action, trail, photo }: PaperBandProps) {
   const ds = useDs();
-  const ink = ds.c.sketchInk;
+  const ink = photo ? backbar.dark.ink : ds.c.sketchInk;
+  const glass = photo ? backbar.dark.glass : backbar.light.glass;
   const reduceMotion = useReducedMotion();
   // The drawing before this one, faded out under the new one. Plain opacity, not
   // Reanimated's exiting animations: an exiting view removed again mid-fade (each
@@ -69,13 +73,14 @@ export function PaperBand({ progress, first, backTo, onBack, top, side, rounded,
   const size = sizeProp ?? (rounded ? 200 : 152);
 
   return (
-    <View style={[styles.band, { backgroundColor: ds.c.paper, paddingTop: top, paddingHorizontal: side }, rounded && styles.rounded]}>
-      {/* Android draws the band under the status bar: dark icons, so they read on paper in both themes. */}
-      {Platform.OS === 'android' && !rounded ? <StatusBar style="dark" /> : null}
+    <View style={[styles.band, { backgroundColor: photo ? backbar.dark.ground : ds.c.paper, paddingTop: top, paddingHorizontal: side }, rounded && styles.rounded]}>
+      {photo ? <Image source={{ uri: photo }} style={StyleSheet.absoluteFill} contentFit="cover" accessibilityLabel="Photo of the drink, the hero" /> : null}
+      {/* Android draws the band under the status bar: dark icons, so they read on paper in both themes; light over a photo. */}
+      {Platform.OS === 'android' && !rounded ? <StatusBar style={photo ? 'light' : 'dark'} /> : null}
       <View style={styles.controls}>
         {first && backTo ? (
           <>
-            <PressableScale onPress={onBack} accessibilityLabel={`Back to ${backTo}`} style={[styles.backTo, { backgroundColor: backbar.light.glass }]}>
+            <PressableScale onPress={onBack} accessibilityLabel={`Back to ${backTo}`} style={[styles.backTo, { backgroundColor: glass }]}>
               <IconSymbol name="chevron.left" size={18} color={ink} />
               <Caption color={ink} numberOfLines={1} style={styles.backToLabel}>
                 {backTo}
@@ -85,7 +90,7 @@ export function PaperBand({ progress, first, backTo, onBack, top, side, rounded,
           </>
         ) : (
           <>
-            <PressableScale onPress={onBack} accessibilityLabel={first ? 'Close. Your draft is kept' : 'Back'} style={[styles.back, { backgroundColor: backbar.light.glass }]}>
+            <PressableScale onPress={onBack} accessibilityLabel={first ? 'Close. Your draft is kept' : 'Back'} style={[styles.back, { backgroundColor: glass }]}>
               <IconSymbol name={first ? 'xmark' : 'chevron.left'} size={18} color={ink} />
             </PressableScale>
             <View
@@ -111,7 +116,8 @@ export function PaperBand({ progress, first, backTo, onBack, top, side, rounded,
       ) : null}
       {folded ? null : (
         <>
-          <Animated.View style={[styles.drawing, { width: size, height: size }, bounce]} aria-label={artLabel}>
+          {/* The photo fills the band: the drawing's room stays, empty, so the band keeps its height. */}
+          <Animated.View style={[styles.drawing, { width: size, height: size }, bounce, photo ? styles.hidden : null]} aria-label={photo ? undefined : artLabel} aria-hidden={!!photo}>
             {shown.before ? (
               <Layer key={`out-${shown.n - 1}`} from={1} to={0}>
                 {shown.before}
@@ -160,5 +166,6 @@ const styles = StyleSheet.create({
   fill: { height: 4, borderRadius: radius.pill },
   mono: { fontFamily: fontFamilies.monoMedium },
   drawing: { marginTop: space.sm },
+  hidden: { opacity: 0 },
   foot: { alignSelf: 'stretch', flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between' },
 });

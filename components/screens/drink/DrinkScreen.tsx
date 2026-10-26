@@ -129,7 +129,7 @@ function DrinkPage({ item, inStudyPile, onToggleStudyPile, canEdit, adminFix = f
   });
   const links = item.item_images as ItemImageLink[] | undefined;
   // No photo of its own: the newest one someone posted leads, credited under the name.
-  const shown = heroPictures(orderedPictures(links), useDrinkPhotos(preview ? null : item.id).data);
+  const shown = heroPictures(orderedPictures(links, item.show_sketch !== false), useDrinkPhotos(preview ? null : item.id).data);
   const heroPic = shown.pictures[0] ?? null;
   const pictures: ShownPicture[] = preview ? (preview.heroSource ? [{ url: preview.heroSource, isSketch: false, isOutdated: false }] : []) : shown.pictures;
   const heroHeight = pane ? PANE_HERO : wide ? height - top : phoneHeroHeight(width, height, top);

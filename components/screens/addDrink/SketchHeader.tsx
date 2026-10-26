@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react';
-import { Pressable, StyleSheet } from 'react-native';
+import { Pressable, StyleSheet, View } from 'react-native';
 import Animated, { useAnimatedStyle, useSharedValue, withTiming } from 'react-native-reanimated';
 
 import { Caption, PressableScale, useDs } from '@/components/ds';
@@ -48,6 +48,8 @@ interface SketchHeaderProps {
   size?: number;
   /** Picks the drawing's colour (Auto is null): a Colour button on the band, from the first step. */
   onTint?: (tint: string | null) => void;
+  /** With a hero photo, the band shows it and offers to keep the drawing after the photos (E26, draft.keepDrawing). */
+  onKeepDrawing?: (keep: boolean) => void;
   /** Where the drink is, from the menu down (make-anything-steps-1, step 3): "Halloween party › Salty Boy". */
   trail?: readonly TrailItem[];
   /** The menu it's made for: the band says "For Halloween party". */
@@ -59,7 +61,7 @@ interface SketchHeaderProps {
  * added. Every step redraws it (glass, ice, method, colour, garnish) with the
  * rules the saved drink is drawn with.
  */
-export function SketchHeader({ draft, step, barVariants, barIce, onTint, forMenu, ...band }: SketchHeaderProps) {
+export function SketchHeader({ draft, step, barVariants, barIce, onTint, onKeepDrawing, forMenu, ...band }: SketchHeaderProps) {
   const look = sketchLook(draft, barVariants, barIce);
   // Nothing in it yet: a coupe waiting to be filled, as the canvas draws the first step.
   const empty = !look.glass && !look.lines.length && !look.methods?.length;
@@ -73,11 +75,25 @@ export function SketchHeader({ draft, step, barVariants, barIce, onTint, forMenu
   const name = draft.name.trim() || 'New drink';
   // The draft's id once it has one: the saved drink is drawn with its id, so it keeps this drawing.
   const seed = draft.id ?? SEED;
+  // A hero photo takes the band (board w2-wizard-finish, E26 B): the drawing goes unless kept, and its colour only matters then.
+  const photo = onKeepDrawing ? (draft.photos?.hero ?? null) : null;
+  const kept = !!draft.keepDrawing;
+  const colour = onTint && (!photo || kept) ? <ColourButton name={name} onPress={() => setColouring(true)} onPhoto={!!photo} /> : null;
   return (
     <>
       <PaperBand
         {...band}
-        action={onTint ? <ColourButton name={name} onPress={() => setColouring(true)} /> : null}
+        photo={photo}
+        action={
+          photo ? (
+            <View style={styles.photoActions}>
+              <DrawingPill kept={kept} onChange={onKeepDrawing!} />
+              {colour}
+            </View>
+          ) : (
+            colour
+          )
+        }
         first={at === 0}
         progress={{ now: counted, of: COUNTED_STEPS, label: step === 'review' ? 'Review' : `${counted} of ${COUNTED_STEPS}` }}
         art={
@@ -93,8 +109,8 @@ export function SketchHeader({ draft, step, barVariants, barIce, onTint, forMenu
           )
         }
         artKey={`${reviewing ? 'review:' : ''}${JSON.stringify(inputs)}`}
-        tag="Drink"
-        note={reviewing ? 'Tap to draw it again' : forMenu ? `For ${forMenu}` : 'Updates as you go'}
+        tag={photo ? undefined : 'Drink'}
+        note={photo ? '' : reviewing ? 'Tap to draw it again' : forMenu ? `For ${forMenu}` : 'Updates as you go'}
         artLabel="Sketch of the drink so far"
       />
       {onTint ? <DraftColourSheet visible={colouring} onClose={() => setColouring(false)} name={name} inputs={inputs} seed={seed} value={draft.tint ?? null} onChange={onTint} photo={draft.photos?.hero ?? null} /> : null}
@@ -107,15 +123,42 @@ export function SketchHeader({ draft, step, barVariants, barIce, onTint, forMenu
  * band folds while the keyboard is up, and removing a glass view mid-fold
  * tripped Reanimated's layout bookkeeping in iOS debug builds.
  */
-function ColourButton({ name, onPress }: { name: string; onPress: () => void }) {
+function ColourButton({ name, onPress, onPhoto }: { name: string; onPress: () => void; onPhoto?: boolean }) {
   const ds = useDs();
+  const ink = onPhoto ? backbar.dark.ink : ds.c.sketchInk;
   return (
-    <PressableScale onPress={onPress} accessibilityLabel={`Sketch colour, ${name}`} style={[styles.colour, { backgroundColor: backbar.light.glass }]}>
-      <IconSymbol name="paintpalette.fill" size={16} color={ds.c.sketchInk} />
-      <Caption color={ds.c.sketchInk} style={styles.colourLabel}>
+    <PressableScale onPress={onPress} accessibilityLabel={`Sketch colour, ${name}`} style={[styles.colour, { backgroundColor: onPhoto ? backbar.dark.glass : backbar.light.glass }]}>
+      <IconSymbol name="paintpalette.fill" size={16} color={ink} />
+      <Caption color={ink} style={styles.colourLabel}>
         Colour
       </Caption>
     </PressableScale>
+  );
+}
+
+/**
+ * Over a hero photo: whether the drawing stays on the drink's page after the
+ * photos. Removed to start (Kevin's call B, 26 Oct), Keep it in one tap.
+ */
+function DrawingPill({ kept, onChange }: { kept: boolean; onChange: (keep: boolean) => void }) {
+  const ink = backbar.dark.ink;
+  return (
+    <View style={[styles.pill, { backgroundColor: backbar.dark.glass }]}>
+      <IconSymbol name="pencil" size={16} color={ink} />
+      <Caption color={ink} style={styles.colourLabel}>
+        {kept ? 'Drawing: after the photos' : 'Drawing removed'}
+      </Caption>
+      <PressableScale
+        role="button"
+        onPress={() => onChange(!kept)}
+        accessibilityLabel={kept ? 'Remove the drawing: photos only on the drink’s page' : 'Keep the drawing, after the photos'}
+        style={[styles.pillButton, { backgroundColor: backbar.dark.glassBorder }]}
+      >
+        <Caption color={ink} style={styles.colourLabel}>
+          {kept ? 'Remove' : 'Keep it'}
+        </Caption>
+      </PressableScale>
+    </View>
   );
 }
 
@@ -137,4 +180,7 @@ const styles = StyleSheet.create({
   passThrough: { pointerEvents: 'none' },
   colour: { flexDirection: 'row', alignItems: 'center', gap: space.xs, minHeight: layout.minTapTarget, paddingHorizontal: space.md, borderRadius: radius.pill },
   colourLabel: { fontFamily: fontFamilies.bodySemiBold },
+  photoActions: { flexDirection: 'row', alignItems: 'center', gap: space.xs, flexShrink: 1 },
+  pill: { flexDirection: 'row', alignItems: 'center', gap: space.xs, minHeight: layout.minTapTarget, paddingLeft: space.md, paddingRight: space.xs, borderRadius: radius.pill, flexShrink: 1 },
+  pillButton: { minHeight: layout.minTapTarget - space.sm, justifyContent: 'center', paddingHorizontal: space.md, borderRadius: radius.pill },
 });
