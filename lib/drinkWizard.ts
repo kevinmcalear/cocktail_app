@@ -434,7 +434,8 @@ const LADDERS: Record<string, number[]> = {
   bsp: [0.5, 1, 1.5, 2, 3],
   tsp: [0.5, 1, 1.5, 2, 3],
   tbsp: [0.5, 1, 1.5, 2, 3],
-  g: [1, 2, 5, 10, 15, 20, 25, 30, 40, 50],
+  // A pinch of salt or acid is a fraction of a gram.
+  g: [0.25, 0.5, 1, 2, 5, 10, 15, 20, 25, 30, 40, 50],
   drop: [1, 2, 3, 4, 5, 6, 7, 8, 9, 10],
   spray: [1, 2, 3, 4, 5],
 };
@@ -512,21 +513,8 @@ export interface StepProps {
   set: (change: Partial<WizardDraft>) => void;
 }
 
-/** The unit a new line starts in: dashes of bitters, a top of soda, otherwise your usual. */
-export function guessUnit(name: string, usual: string): string {
-  const n = name.toLowerCase();
-  if (/bitters|tincture|saline/.test(n)) return 'dash';
-  if (/soda|tonic|ginger (beer|ale)|champagne|prosecco|cava|sparkling|cola|lemonade/.test(n) && !/syrup|cordial/.test(n)) return 'top';
-  if (/\begg\b|egg white|egg yolk/.test(n)) return 'each';
-  return usual;
-}
-
-/** The unit a typed pour ("30 pommeau") lands in: as typed, else the ingredient's own. A number typed means it isn't a top. */
-export function typedUnit(name: string, unit: string | null, usual: string): string {
-  if (unit) return unit;
-  const guess = guessUnit(name, usual);
-  return guess === 'top' ? usual : guess;
-}
+// The unit guess lives in lib/unitGuess.ts, shared with the house-made builder.
+export { guessUnit, typedUnit } from './unitGuess';
 
 // --- starting from a classic ---
 

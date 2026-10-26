@@ -27,6 +27,7 @@ import { IngredientSuggestions } from './IngredientSuggestions';
 import { LineChoices, unmatched } from './LineChoices';
 import { LineRow } from './LineRow';
 import { PasteSpecPanel } from './PasteSpecPanel';
+import { SalineHint } from './SalineHint';
 import type { LineStock } from './StockToggle';
 import { useCombineDrop } from './useCombineDrop';
 import { useMakePrep } from './useMakePrep';
@@ -208,6 +209,7 @@ export function IngredientsStep({ draft, set, ingredients, loading, aliases = []
                     below={
                       <>
                         {lineBelow?.(l)}
+                        {forDrink ? <SalineHint line={l} ingredients={ingredients} onChange={(c) => change(l.key, c)} /> : null}
                         {/* A line that matched nothing asks what it is, until its recipe opens under it (step 10). */}
                         {prep.card(l.key) ??
                           (forDrink && unmatched(l) ? (
