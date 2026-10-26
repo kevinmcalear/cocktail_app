@@ -1,4 +1,4 @@
-// A drink made in parts (20261122100000_drink_parts.sql): save_drink_spec
+// A drink made in parts (20261123100000_drink_parts.sql): save_drink_spec
 // saves each line's and method's part and the parts, only for someone who
 // can edit the drink; a save that leaves parts out keeps them; the parts'
 // shape is checked; versions put them back. Runs through the real API

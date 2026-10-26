@@ -1,5 +1,5 @@
 /**
- * A drink made in parts (QA Q20b; supabase/migrations/20261122100000_drink_parts.sql):
+ * A drink made in parts (QA Q20b; supabase/migrations/20261123100000_drink_parts.sql):
  * a Pelican or an Irish Coffee is a drink, then a cream whipped and floated
  * on it. Each part has a name, the spec lines it uses, its own methods and,
  * after the first, how it joins (Float on top, Pour in). Stored as
