@@ -22,7 +22,7 @@ export default function AddCocktailScreen() {
         /** "1" from an import (Edit this drink, Edit all): the draft is the import, not one left off. */
         imported?: string;
         from?: string;
-        /** "1" from the first round: the Old Fashioned, straight to Review, then back to the Library. */
+        /** "1" from the first round: its first cocktail (a classic at Review, or from scratch), then back to the Library. */
         round?: string;
         draftId?: string;
         name?: string;

@@ -10,6 +10,7 @@ import { useKitFromDrinks } from '@/hooks/useKitFromDrinks';
 import { useSetupChecklist } from '@/hooks/useSetupChecklist';
 import { checklistIntro, type ChecklistKey } from '@/lib/setupChecklist';
 import { useAppMode } from '@/store/useAppMode';
+import { useBringIn } from '@/store/useBringIn';
 
 import { BrandsStep } from './BrandsStep';
 import { FromDrinksStep, fromDrinksCount } from './FromDrinksStep';
@@ -33,7 +34,7 @@ export function SetupChecklist({ barId, name, footer }: { barId: string; name: s
   const pageId = useBarPageId(barId).data ?? null;
   // Glasses picked before the page was checked go onto it once it is.
   useFlushHeldGlasses(barId);
-  const { list, notes, menuId, loading, skip, run } = useSetupChecklist(barId);
+  const { list, notes, menuId, inLibrary, reviewId, loading, skip, run } = useSetupChecklist(barId);
   // Only Prep adds to the Kit: nobody else loads what the drinks name (Kit and ice, step 12).
   const prep = (useCapabilities(barId).data ?? []).includes('prep');
   const fromDrinks = fromDrinksCount(useKitFromDrinks(prep ? barId : null), pageId);
@@ -47,7 +48,7 @@ export function SetupChecklist({ barId, name, footer }: { barId: string; name: s
 
   // Done with nothing in the kit leaves it for later, like Skip.
   if (at === 'kit') return <KitStep barId={barId} pageId={pageId} name={name} step={step('kit')} onBack={back} onDone={() => (list.rows.some((r) => r.key === 'kit' && r.state === 'done') ? null : skip('kit'), back())} />;
-  if (at === 'bottles') return <BrandsStep barId={barId} step={step('bottles')} onBack={back} onNext={back} onSkip={() => (skip('bottles'), back())} />;
+  if (at === 'bottles') return <BrandsStep barId={barId} name={name} step={step('bottles')} onBack={back} onNext={back} onSkip={() => (skip('bottles'), back())} />;
   if (at === 'fromDrinks') return <FromDrinksStep barId={barId} pageId={pageId} name={name} onBack={back} />;
   if (at === 'menu') {
     return <MenuStep barId={barId} step={step('menu')} onBack={back} onDone={back} onSkip={() => (skip('menu'), back())} onBringIn={() => open('/bring-in')} onMade={(id) => open(`/menus/${id}/edit`)} />;
@@ -66,7 +67,17 @@ export function SetupChecklist({ barId, name, footer }: { barId: string; name: s
     kit: () => setAt('kit'),
     bottles: () => setAt('bottles'),
     menu: () => setAt('menu'),
-    drinks: () => (menuId ? open(`/menus/${menuId}/edit`) : setAt('menu')),
+    // The import still to check, carried on; else the drinks in the Library; else a menu to put some on.
+    drinks: () => {
+      if (reviewId) {
+        useBringIn.getState().setReviewing(reviewId);
+        open('/bring-in');
+      } else if (inLibrary) {
+        enterVenue(barId);
+        router.navigate('/library');
+      } else if (menuId) open(`/menus/${menuId}/edit`);
+      else setAt('menu');
+    },
     team: () => setAt('team'),
   };
   return (

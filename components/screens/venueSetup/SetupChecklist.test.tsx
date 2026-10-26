@@ -5,10 +5,12 @@ import { checklist } from '@/lib/setupChecklist';
 
 import { SetupChecklist } from './SetupChecklist';
 
-const [mockPush, mockSkip] = [jest.fn(), jest.fn()];
+const [mockPush, mockNavigate, mockSkip, mockSetReviewing] = [jest.fn(), jest.fn(), jest.fn(), jest.fn()];
 let mockRun: { finished: boolean } | undefined = { finished: true };
+let mockDrinks: { inLibrary: number; reviewId: string | null } = { inLibrary: 0, reviewId: null };
 
-jest.mock('expo-router', () => ({ useRouter: () => ({ push: mockPush }) }));
+jest.mock('expo-router', () => ({ useRouter: () => ({ push: mockPush, navigate: mockNavigate }) }));
+jest.mock('@/store/useBringIn', () => ({ useBringIn: { getState: () => ({ setReviewing: mockSetReviewing }) } }));
 jest.mock('@/hooks/useBarGlassware', () => ({ useBarPageId: () => ({ data: 'page' }), useFlushHeldGlasses: () => {} }));
 jest.mock('@/hooks/useSetupChecklist', () => ({
   useSetupChecklist: () => ({
@@ -16,6 +18,7 @@ jest.mock('@/hooks/useSetupChecklist', () => ({
     list: jest.requireActual('@/lib/setupChecklist').checklist({ bar: true, kit: false, bottles: false, menu: true, drinks: false, team: false }, ['team']),
     notes: { menu: 'Autumn menu' },
     menuId: 'm1',
+    ...mockDrinks,
     loading: false,
     skip: mockSkip,
   }),
@@ -54,7 +57,8 @@ jest.mock('./TeamStep', () => ({ TeamStep: () => null }));
 
 beforeEach(() => {
   mockRun = { finished: true };
-  for (const m of [mockPush, mockSkip]) m.mockReset();
+  mockDrinks = { inLibrary: 0, reviewId: null };
+  for (const m of [mockPush, mockNavigate, mockSkip, mockSetReviewing]) m.mockReset();
 });
 
 test('six rows, Kit next; Kit opens in place and comes back here', async () => {
@@ -88,4 +92,19 @@ test('setup not through yet: Basic information picks venue setup up', async () =
   await renderWithTamagui(<SetupChecklist barId="b1" name="Little Rye" />);
   await fireEvent.press(screen.getByRole('button', { name: 'Basic information, done' }));
   expect(mockPush).toHaveBeenLastCalledWith('/venue-setup?bar=b1');
+});
+
+test('First drinks (E31): an import left part way carries on', async () => {
+  mockDrinks = { inLibrary: 18, reviewId: 'r1' };
+  await renderWithTamagui(<SetupChecklist barId="b1" name="Little Rye" />);
+  await fireEvent.press(screen.getByRole('button', { name: 'First drinks, todo' }));
+  expect(mockSetReviewing).toHaveBeenCalledWith('r1');
+  expect(mockPush).toHaveBeenLastCalledWith('/bring-in');
+});
+
+test('First drinks (E31): with nothing left to check, the drinks in the Library', async () => {
+  mockDrinks = { inLibrary: 18, reviewId: null };
+  await renderWithTamagui(<SetupChecklist barId="b1" name="Little Rye" />);
+  await fireEvent.press(screen.getByRole('button', { name: 'First drinks, todo' }));
+  expect(mockNavigate).toHaveBeenLastCalledWith('/library');
 });
