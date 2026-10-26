@@ -135,7 +135,7 @@ export interface WizardDraft {
   elsewhere?: boolean;
   description: string;
   notes: string;
-  /** "Just me": the notes are yours alone (item_private_notes), not the drink's. Unset is with the drink. */
+  /** "Just me": the notes are yours alone (item_private_notes), not the drink's. Unset is with the drink at a venue, just you at home (notesArePrivate). */
   notesPrivate?: boolean;
   /** null follows the venue (or is private, for a drink at home). */
   publish: PublishMode | null;
@@ -150,6 +150,9 @@ export interface WizardDraft {
   /** The drink's price at a venue, as typed (items.price: "19.50", "MP"), set on the desktop page beside the cost; blank leaves it for later. */
   price?: string;
 }
+
+/** Whether the notes are yours alone: picked, or by default just you at home and with the drink at a venue (Q27). */
+export const notesArePrivate = (d: Pick<WizardDraft, 'notesPrivate'>, barId: string | null) => (barId ? !!d.notesPrivate : d.notesPrivate !== false);
 
 export const EMPTY_DRAFT: WizardDraft = {
   name: '',

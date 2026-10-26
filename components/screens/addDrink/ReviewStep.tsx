@@ -6,7 +6,7 @@ import { IconSymbol } from '@/components/ui/icon-symbol';
 import { layout, space } from '@/constants/tokens';
 import { useCapabilities } from '@/hooks/useCapabilities';
 import { useBarPublishing } from '@/hooks/usePublishing';
-import { amountLabel, draftIceLine, finishLabel, sketchLook, STEP_COPY, type StepProps, type WizardDraft, type WizardStep } from '@/lib/drinkWizard';
+import { amountLabel, draftIceLine, finishLabel, notesArePrivate, sketchLook, STEP_COPY, type StepProps, type WizardDraft, type WizardStep } from '@/lib/drinkWizard';
 import { recipesToFinish } from '@/lib/prepKinds';
 import { PUBLISH_COPY } from '@/lib/publishing';
 import { capitalizeFirst } from '@/lib/stringUtils';
@@ -68,7 +68,7 @@ export function ReviewStep({ draft, set, onJump, barId, venueName, hasProfile, b
     ['ice', draftIceLine(draft)],
     ['garnish', draft.garnishes.map(finishLabel).join(', ')],
     ['credits', credits(draft, hasProfile)],
-    ['notes', [draft.description.trim(), draft.notes.trim() && draft.notesPrivate ? `Just me: ${draft.notes.trim()}` : draft.notes.trim()].filter(Boolean).join('\n\n')],
+    ['notes', [draft.description.trim(), draft.notes.trim() && notesArePrivate(draft, barId) ? `Just me: ${draft.notes.trim()}` : draft.notes.trim()].filter(Boolean).join('\n\n')],
     ['publish', draft.publish ? PUBLISH_COPY[draft.publish].label : barId ? followed : 'Private'],
   ];
   return (

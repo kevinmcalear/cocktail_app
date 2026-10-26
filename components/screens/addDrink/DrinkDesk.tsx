@@ -241,7 +241,7 @@ export function DrinkDesk(p: DrinkDeskProps) {
           <Eyebrow>Credit</Eyebrow>
           <CreditsStep draft={draft} set={set} venueName={barId ? p.venueName : null} ingredients={p.ingredients} match={p.atPlace} onRename={rename} />
           <Eyebrow>Notes</Eyebrow>
-          <NotesStep draft={draft} set={set} />
+          <NotesStep draft={draft} set={set} barId={barId} />
           <Eyebrow>Who sees it</Eyebrow>
           <PublishStep draft={draft} set={set} barId={barId} />
           <Eyebrow>Photos</Eyebrow>

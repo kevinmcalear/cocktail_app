@@ -11,7 +11,7 @@ import { saveDrinkSpec, type SpecLineInput } from '@/hooks/useVersions';
 import { track } from '@/lib/analytics';
 import { plainDbMessage } from '@/lib/dbError';
 import { orderedMethodIds } from '@/lib/drinkMethods';
-import { creatorProfileId, specLines, type WizardDraft } from '@/lib/drinkWizard';
+import { creatorProfileId, notesArePrivate, specLines, type WizardDraft } from '@/lib/drinkWizard';
 import { fetchEditableRecipes } from '@/lib/editableRecipes';
 import { saysMore, toStored, type IceLayer } from '@/lib/iceBuild';
 import type { ImageAngle } from '@/lib/itemImages';
@@ -144,6 +144,8 @@ export function useCreateDrink() {
       // Another bar's name on it is a suggestion until the bar confirms it, as a drink added in setup is (useSaveCareerDrink).
       const otherBar = fromElsewhere && !!originBar;
 
+      // At home the notes are yours to start (Q27); at a venue, the drink's.
+      const privateNotes = notesArePrivate(draft, barId);
       const row: Insert<'items'> = {
         id: undefined,
         name: capitalize(draft.name),
@@ -151,7 +153,7 @@ export function useCreateDrink() {
         bar_id: barId,
         description: draft.description.trim() || null,
         // "Just me" notes are kept apart, as yours (below).
-        notes: draft.notesPrivate ? null : draft.notes.trim() || null,
+        notes: privateNotes ? null : draft.notes.trim() || null,
         glassware_id: glassId,
         sketch_variant: draft.glassVariant ?? null,
         // One of the venue's real glasses, when one was picked; the database sets glassware_id to its kind.
@@ -213,7 +215,7 @@ export function useCreateDrink() {
       }
 
       // "Just me": the notes are yours alone, never the drink's.
-      if (draft.notesPrivate && draft.notes.trim()) {
+      if (privateNotes && draft.notes.trim()) {
         try {
           await savePrivateNote(id, draft.notes);
         } catch {
@@ -249,7 +251,7 @@ export function useCreateDrink() {
       if (saver.newSpecs()) void qc.invalidateQueries({ queryKey: dropdownKeys.specs });
       void refreshIngredients(qc, newIngredients);
       if (creatorId) void qc.invalidateQueries({ queryKey: ['profile-originals'] });
-      if (draft.notesPrivate) void qc.invalidateQueries({ queryKey: ['private-note', id] });
+      if (privateNotes) void qc.invalidateQueries({ queryKey: ['private-note', id] });
       return { id, warnings, created, later };
     },
     onSuccess: (_, { barId, menuSectionId }) => track('drink_created', { at_bar: !!barId, on_menu: !!menuSectionId }),

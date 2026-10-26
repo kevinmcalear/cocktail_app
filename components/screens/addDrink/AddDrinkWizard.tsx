@@ -248,7 +248,7 @@ function Wizard({ barId = null, menuSectionId, initialName, startFrom, firstRoun
       case 'credits':
         return <CreditsStep draft={draft} set={set} venueName={barId ? venueName : null} ingredients={ingredients} match={atPlace} onRename={() => go('name')} />;
       case 'notes':
-        return <NotesStep draft={draft} set={set} />;
+        return <NotesStep draft={draft} set={set} barId={barId} />;
       case 'publish':
         return <PublishStep draft={draft} set={set} barId={barId} />;
       case 'review':
