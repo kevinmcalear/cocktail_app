@@ -1,6 +1,6 @@
 import { useLocalSearchParams, useRouter } from 'expo-router';
 import { useState } from 'react';
-import { Platform, ScrollView, Share, StyleSheet, TextInput, View } from 'react-native';
+import { Platform, ScrollView, StyleSheet, TextInput, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import { IconSymbol } from '@/components/ui/icon-symbol';
@@ -15,6 +15,7 @@ import { useTrackRecent } from '@/hooks/useTrackRecent';
 import { guessUnit, newLine } from '@/lib/drinkWizard';
 import { addPick, groupByRing, MAP_SIZE } from '@/lib/flavorMap';
 import { searchIngredients } from '@/lib/ingredientNames';
+import { shareOrCopy } from '@/lib/shareLink';
 import { siteOrigin } from '@/lib/venueLink';
 import { getPreferredUnit } from '@/store/useSettingsStore';
 import { useDrinkWizardStore, wizardPlace } from '@/store/useDrinkWizardStore';
@@ -61,7 +62,7 @@ function FlavorMapPage() {
   const allNamed = picked.length > 0 && pickedNames.every((n) => n !== '…');
   const title = `What goes with ${pickedNames.join(' and ')}`;
   useTrackRecent(allNamed, allNamed ? { kind: 'flavor', id: picked.join(','), title, subtitle: 'Flavor map', href } : null);
-  const share = () => void Share.share(Platform.OS === 'ios' ? { message: title, url: `${siteOrigin()}${href}` } : { message: `${title}: ${siteOrigin()}${href}` });
+  const share = () => void shareOrCopy(`${siteOrigin()}${href}`, title, title);
 
   const start = () => {
     const place = wizardPlace(venue?.id ?? null);
