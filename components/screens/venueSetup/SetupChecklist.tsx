@@ -1,9 +1,11 @@
 import { useRouter, type Href } from 'expo-router';
-import { useState, type ReactNode } from 'react';
-import { View } from 'react-native';
+import { Fragment, useState, type ReactNode } from 'react';
+import { StyleSheet, View } from 'react-native';
 
 import { Caption } from '@/components/ds';
+import { FirstCocktailChoices, useStartFirstCocktail } from '@/components/screens/firstRound/FirstCocktailChoices';
 import { SetupChromeProvider, SetupPage, useSetupChrome } from '@/components/screens/onboarding/SetupPage';
+import { space } from '@/constants/tokens';
 import { useBarPageId, useFlushHeldGlasses } from '@/hooks/useBarGlassware';
 import { useCapabilities } from '@/hooks/useCapabilities';
 import { useKitFromDrinks } from '@/hooks/useKitFromDrinks';
@@ -38,6 +40,7 @@ export function SetupChecklist({ barId, name, footer }: { barId: string; name: s
   // Only Prep adds to the Kit: nobody else loads what the drinks name (Kit and ice, step 12).
   const prep = (useCapabilities(barId).data ?? []).includes('prep');
   const fromDrinks = fromDrinksCount(useKitFromDrinks(prep ? barId : null), pageId);
+  const startCocktail = useStartFirstCocktail();
   const [at, setAt] = useState<ChecklistKey | 'fromDrinks' | null>(null);
   const back = () => setAt(null);
   const step = (key: ChecklistKey) => `Set up ${name} · ${list.rows.find((r) => r.key === key)?.title ?? ''}`;
@@ -88,7 +91,15 @@ export function SetupChecklist({ barId, name, footer }: { barId: string; name: s
         ) : (
           <View role="list" accessibilityLabel={`Set up ${name}`}>
             {list.rows.map((r, i) => (
-              <ChecklistRow key={r.key} n={i + 1} title={r.title} line={r.line} note={notes[r.key]} state={r.state} onPress={press[r.key]} />
+              <Fragment key={r.key}>
+                <ChecklistRow n={i + 1} title={r.title} line={r.line} note={notes[r.key]} state={r.state} onPress={press[r.key]} />
+                {/* Until there are drinks, the first round's four starts, coming back here once saved. */}
+                {r.key === 'drinks' && r.state !== 'done' ? (
+                  <View style={styles.starts}>
+                    <FirstCocktailChoices onPick={(start) => (enterVenue(barId), startCocktail(barId, start, true))} />
+                  </View>
+                ) : null}
+              </Fragment>
             ))}
           </View>
         )}
@@ -98,3 +109,8 @@ export function SetupChecklist({ barId, name, footer }: { barId: string; name: s
     </SetupChromeProvider>
   );
 }
+
+const styles = StyleSheet.create({
+  // Under the row's title: past its 32 px mark and the gap.
+  starts: { paddingLeft: 32 + space.md, paddingVertical: space.sm },
+});

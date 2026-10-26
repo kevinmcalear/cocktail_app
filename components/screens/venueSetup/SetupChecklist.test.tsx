@@ -5,11 +5,22 @@ import { checklist } from '@/lib/setupChecklist';
 
 import { SetupChecklist } from './SetupChecklist';
 
-const [mockPush, mockNavigate, mockSkip, mockSetReviewing] = [jest.fn(), jest.fn(), jest.fn(), jest.fn()];
+const [mockPush, mockNavigate, mockSkip, mockSetReviewing, mockStart] = [jest.fn(), jest.fn(), jest.fn(), jest.fn(), jest.fn()];
 let mockRun: { finished: boolean } | undefined = { finished: true };
 let mockDrinks: { inLibrary: number; reviewId: string | null } = { inLibrary: 0, reviewId: null };
 
 jest.mock('expo-router', () => ({ useRouter: () => ({ push: mockPush, navigate: mockNavigate }) }));
+jest.mock('@/components/screens/firstRound/FirstCocktailChoices', () => {
+  const { Pressable, Text } = jest.requireActual('react-native');
+  return {
+    useStartFirstCocktail: () => mockStart,
+    FirstCocktailChoices: ({ onPick }: { onPick: (start: string | null) => void }) => (
+      <Pressable role="button" onPress={() => onPick('Margarita')}>
+        <Text>Margarita</Text>
+      </Pressable>
+    ),
+  };
+});
 jest.mock('@/store/useBringIn', () => ({ useBringIn: { getState: () => ({ setReviewing: mockSetReviewing }) } }));
 jest.mock('@/hooks/useBarGlassware', () => ({ useBarPageId: () => ({ data: 'page' }), useFlushHeldGlasses: () => {} }));
 jest.mock('@/hooks/useSetupChecklist', () => ({
@@ -58,7 +69,7 @@ jest.mock('./TeamStep', () => ({ TeamStep: () => null }));
 beforeEach(() => {
   mockRun = { finished: true };
   mockDrinks = { inLibrary: 0, reviewId: null };
-  for (const m of [mockPush, mockNavigate, mockSkip, mockSetReviewing]) m.mockReset();
+  for (const m of [mockPush, mockNavigate, mockSkip, mockSetReviewing, mockStart]) m.mockReset();
 });
 
 test('six rows, Kit next; Kit opens in place and comes back here', async () => {
@@ -107,4 +118,10 @@ test('First drinks (E31): with nothing left to check, the drinks in the Library'
   await renderWithTamagui(<SetupChecklist barId="b1" name="Little Rye" />);
   await fireEvent.press(screen.getByRole('button', { name: 'First drinks, todo' }));
   expect(mockNavigate).toHaveBeenLastCalledWith('/library');
+});
+
+test('First drinks not done: the four starts under it, coming back to the checklist once saved', async () => {
+  await renderWithTamagui(<SetupChecklist barId="b1" name="Little Rye" />);
+  await fireEvent.press(screen.getByRole('button', { name: 'Margarita' }));
+  expect(mockStart).toHaveBeenCalledWith('b1', 'Margarita', true);
 });

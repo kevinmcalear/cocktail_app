@@ -5,9 +5,10 @@ import { StyleSheet, View } from 'react-native';
 import { Body, Caption, DsText, PressableScale, useDs } from '@/components/ds';
 import { IconSymbol } from '@/components/ui/icon-symbol';
 import { fontFamilies, radius, space } from '@/constants/tokens';
-import { useDrinkLists } from '@/hooks/useDiscover';
 import { useFirstRound } from '@/hooks/useFirstRound';
 import type { RoundStep } from '@/lib/firstRound';
+
+import { useStartFirstCocktail } from './FirstCocktailChoices';
 
 /** The round's progress as short bars, one per step: done ones lit. */
 export function RoundBars({ done, total, width = 60 }: { done: number; total: number; width?: number }) {
@@ -69,8 +70,6 @@ export function RoundStepList({ steps, currentKey, onSkip, choices }: { steps: (
   );
 }
 
-const sameName = (a: string, b: string) => a.trim().toLowerCase() === b.trim().toLowerCase();
-
 /**
  * Does the step that's up. The first cocktail opens the add-drink wizard:
  * from the catalog's classic named `start`, at Review, or from scratch when
@@ -80,13 +79,12 @@ const sameName = (a: string, b: string) => a.trim().toLowerCase() === b.trim().t
 export function useRoundGo() {
   const router = useRouter();
   const { venue, done } = useFirstRound();
-  const classics = useDrinkLists().data ?? [];
+  const startCocktail = useStartFirstCocktail();
   return (step: RoundStep | null, start?: string | null) => {
     if (!step || !venue) return;
     if (step.key === 'house_spec') {
       if (start === undefined) return router.navigate('/library');
-      const from = start ? classics.find((c) => sameName(c.name, start))?.id : undefined;
-      router.push({ pathname: '/add-cocktail', params: { barId: venue.id, round: '1', ...(start ? { name: start } : {}), ...(from ? { from } : {}) } });
+      startCocktail(venue.id, start);
     } else if (step.opens === 'menus') {
       // A staff member's step is opening Menus: done first, so its tab is there to open (a hidden native tab may not be).
       if (step.key === 'open_menu') done('open_menu');

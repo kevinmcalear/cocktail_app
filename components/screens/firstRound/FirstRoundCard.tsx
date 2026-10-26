@@ -11,10 +11,11 @@ import { useMyProfile } from '@/hooks/useMyProfile';
 import { useMyMadeDrinks } from '@/hooks/useProfiles';
 import { useEffectiveRole } from '@/hooks/useViewAs';
 import { useTabBarInset } from '@/components/nav/WebTabBar';
-import { FIRST_COCKTAILS, onAMenu, OPENED_COPY, yourMenuStep } from '@/lib/firstRound';
+import { onAMenu, OPENED_COPY, yourMenuStep } from '@/lib/firstRound';
 import { menuStatus } from '@/lib/menus';
 import { canSwitchFeatures } from '@/lib/venueFeatures';
 
+import { FirstCocktailChoices } from './FirstCocktailChoices';
 import { nextLine, progressLine, RoundBars, RoundStepList, useRoundGo } from './RoundParts';
 
 function CloseButton({ label, onPress }: { label: string; onPress: () => void }) {
@@ -101,16 +102,7 @@ export function FirstRoundCard() {
         steps={steps}
         currentKey={round.current.key}
         onSkip={() => round.current && round.done(round.current.key)}
-        choices={
-          firstCocktail ? (
-            <View role="group" aria-label="Start from" style={styles.choices}>
-              {FIRST_COCKTAILS.map((name) => (
-                <Button key={name} label={name} variant="secondary" dense onPress={() => go(round.current, name)} style={styles.choice} />
-              ))}
-              <Button label="From scratch" variant="secondary" dense onPress={() => go(round.current, null)} style={styles.choice} />
-            </View>
-          ) : null
-        }
+        choices={firstCocktail ? <FirstCocktailChoices onPick={(start) => go(round.current, start)} /> : null}
       />
       <View style={styles.actions}>
         {/* The first cocktail's choices are its buttons (E30 B); every other step has one. */}
@@ -167,8 +159,6 @@ const styles = StyleSheet.create({
   doneText: { gap: space.xs, paddingRight: space.xxl },
   actions: { gap: space.xs },
   row: { flexDirection: 'row', gap: space.sm },
-  choices: { flexDirection: 'row', flexWrap: 'wrap', gap: space.sm },
-  choice: { paddingHorizontal: space.lg },
   grow: { flex: 1, gap: 2 },
   strong: { fontFamily: fontFamilies.bodySemiBold },
   medium: { fontFamily: fontFamilies.bodyMedium },
