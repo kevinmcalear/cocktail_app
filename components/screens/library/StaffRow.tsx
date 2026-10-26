@@ -5,10 +5,10 @@ import { Body, Button, Caption, PressableScale, Spec, useDs } from '@/components
 import { dragGripStyle } from '@/components/recipe/FormScrollContainer';
 import { IconSymbol } from '@/components/ui/icon-symbol';
 import { layout, space } from '@/constants/tokens';
-import type { StaffPick } from '@/hooks/useStaffList';
+import type { ClassicRow } from '@/lib/staffList';
 
 export interface StaffRowProps {
-  pick: StaffPick;
+  pick: ClassicRow;
   /** Its place in the ranking, or null for a drink on the list but not ranked. */
   place: number | null;
   /** On menu, Off menu or Old drink. */
@@ -27,7 +27,8 @@ export interface StaffRowProps {
   last?: boolean;
   onUnrank?: () => void;
   onRank?: () => void;
-  onRemove: () => void;
+  /** Left out for a drink that is only linked to a classic. */
+  onRemove?: () => void;
 }
 
 /**
@@ -79,7 +80,7 @@ export function StaffRow({ pick, place, status, onOpen, onPressIn, canEdit, acti
           {onMove ? <Button label="Move down" icon="chevron.down" variant="secondary" disabled={last} onPress={() => onMove(1)} /> : null}
           {onUnrank ? <Button label="Take out of the ranking" variant="ghost" onPress={onUnrank} /> : null}
           {onRank ? <Button label="Rank it" icon="plus" variant="secondary" onPress={onRank} /> : null}
-          <Button label="Remove from the list" variant="ghost" onPress={onRemove} />
+          {onRemove ? <Button label="Remove from the list" variant="ghost" onPress={onRemove} /> : null}
         </View>
       ) : null}
     </View>

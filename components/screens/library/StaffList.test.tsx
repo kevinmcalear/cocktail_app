@@ -7,6 +7,8 @@ import { StaffList } from './StaffList';
 const show = (canEdit: boolean) => renderWithTamagui(<StaffList barId="bar" canEdit={canEdit} onNow={onNow} past={past} />);
 
 const mockMutate = jest.fn();
+// Drinks here linked to a classic; the staff list's own linked drink is among them.
+let mockLinked: { id: string; name: string; classicName: string }[] = [];
 const onNow = new Set(['d1']);
 const past = new Set(['paloma']);
 
@@ -24,13 +26,16 @@ jest.mock('@/hooks/useStaffList', () => ({
     isLoading: false,
     error: null,
   }),
-  useBarRiffs: () => ({ data: [] }),
+  useBarRiffs: () => ({ data: mockLinked }),
   useStaffListEdit: () => ({ mutate: mockMutate, isPending: false, error: null }),
 }));
 
 const ranked = [...Array.from({ length: 10 }, (_, i) => `d${i + 1}`), 'paloma'];
 
-beforeEach(() => mockMutate.mockClear());
+beforeEach(() => {
+  mockMutate.mockClear();
+  mockLinked = [];
+});
 
 test('reads in order with where each drink stands, and a cut line after the top 10', async () => {
   await show(false);
@@ -39,7 +44,7 @@ test('reads in order with where each drink stands, and a cut line after the top 
   expect(screen.getByLabelText('1. Drink 1 On menu, open')).toBeTruthy();
   expect(screen.getByLabelText('2. Drink 2 Off menu, open')).toBeTruthy();
   expect(screen.getByLabelText('11. Paloma Old drink, open')).toBeTruthy();
-  expect(screen.getByText('NOT RANKED')).toBeTruthy();
+  expect(screen.getByText('NOT RANKED YET · 1')).toBeTruthy();
   expect(screen.queryByLabelText('Move Paloma')).toBeNull();
   expect(screen.queryByText('Add a drink')).toBeNull();
 });
@@ -73,4 +78,22 @@ test('a Not ranked drink has the same grip, and every row drops chevrons', async
   await show(true);
   expect(screen.getByLabelText('Move House Daiquiri')).toBeTruthy();
   expect(screen.queryByLabelText('Move Paloma up')).toBeNull();
+});
+
+test('every other drink linked to a classic sits under Not ranked yet, and ranking one puts it on the list', async () => {
+  mockLinked = [
+    { id: 'daiquiri', name: 'House Daiquiri', classicName: 'Daiquiri' },
+    { id: 'americano', name: 'Americano', classicName: 'Americano' },
+  ];
+  await show(true);
+  expect(screen.getByText('NOT RANKED YET · 2')).toBeTruthy();
+  expect(screen.getByLabelText('Americano Off menu, open')).toBeTruthy();
+  await fireEvent.press(screen.getByLabelText('Move Americano'));
+  expect(screen.queryByRole('button', { name: 'Remove from the list' })).toBeNull();
+  await fireEvent.press(screen.getByRole('button', { name: 'Rank it' }));
+  expect(mockMutate).toHaveBeenLastCalledWith({
+    op: 'order',
+    itemIds: [...ranked, 'americano'],
+    join: [{ itemId: 'americano', rank: null, name: 'Americano', classicName: 'Americano', imageUrl: null }],
+  });
 });
