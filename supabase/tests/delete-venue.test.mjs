@@ -1,6 +1,7 @@
-// Deleting a venue (E53): only that venue's Admin, with its name typed back.
-// What the public could see stays on the bar's page, which goes back to
-// unclaimed; what only staff could see goes; picture files are queued
+// Deleting a venue (E53): only that venue's Admin, with its name typed back,
+// and it goes 7 days later unless an Admin of the venue undoes it. What the
+// public could see stays on the bar's page, which goes back to unclaimed;
+// what only staff could see goes; picture files are queued
 // (supabase/migrations/20261121400000_delete_a_venue.sql).
 // Runs against the local stack only: `npm run test:security`.
 import assert from 'node:assert/strict';
@@ -25,10 +26,12 @@ const service = createClient(status.API_URL, status.SERVICE_ROLE_KEY, clientOpti
 const anon = createClient(status.API_URL, status.ANON_KEY, clientOptions);
 const db = new pg.Client({ connectionString: status.DB_URL });
 const png = new Uint8Array([137, 80, 78, 71, 13, 10, 26, 10]);
+const DAY = 24 * 3600_000;
 
 const users = {};
 const ids = {};
 const NAME = `Pale Moth ${run}`;
+const OTHER_NAME = `Little Rye ${run}`;
 
 async function makeUser(label) {
   const email = `${label}-${run}@security-test.local`;
@@ -51,6 +54,11 @@ async function insert(table, fields) {
 const row = async (sql, params) => (await db.query(sql, params)).rows[0];
 const exists = async (table, id) => Boolean(await row(`SELECT 1 FROM public.${table} WHERE id = $1`, [id]));
 const deleteVenue = (who, barId, name) => users[who].client.rpc('delete_venue', { p_bar_id: barId, p_confirm_name: name });
+const cancel = (who, barId) => users[who].client.rpc('cancel_venue_delete', { p_bar_id: barId });
+const request = (barId) => row('SELECT requested_by, deletes_at FROM public.venue_delete_requests WHERE bar_id = $1', [barId]);
+const runDue = async () => (await row('SELECT private.run_due_venue_deletes() AS n')).n;
+/** The cron job's view of time: the 7 days are up. */
+const makeDue = (barId) => db.query(`UPDATE public.venue_delete_requests SET deletes_at = now() - interval '1 second' WHERE bar_id = $1`, [barId]);
 
 /** A venue with a claimed public page, as hand_over_claim leaves it. */
 async function claimedVenue(name, members) {
@@ -69,30 +77,34 @@ async function claimedVenue(name, members) {
 
 before(async () => {
   await db.connect();
-  for (const label of ['admin', 'bartender', 'otherAdmin', 'guest', 'soloOwner']) users[label] = await makeUser(label);
+  for (const label of ['admin', 'coAdmin', 'bartender', 'otherAdmin', 'otherCoAdmin', 'guest', 'soloOwner']) users[label] = await makeUser(label);
 
-  ({ bar: ids.bar, page: ids.page } = await claimedVenue(NAME, [['admin', 40], ['bartender', 30]]));
-  ids.otherBar = (await insert('bars', { name: `Little Rye ${run}` })).id;
+  ({ bar: ids.bar, page: ids.page } = await claimedVenue(NAME, [['admin', 40], ['coAdmin', 40], ['bartender', 30]]));
+  ids.otherBar = (await insert('bars', { name: OTHER_NAME })).id;
   await insert('user_bars', { user_id: users.otherAdmin.id, bar_id: ids.otherBar, role_level: 40 });
+  await insert('user_bars', { user_id: users.otherCoAdmin.id, bar_id: ids.otherBar, role_level: 40 });
 
-  // A person credited with the public drink.
+  // A person credited with the public drink, and another bar's page a second drink credits.
   ids.person = (await insert('profiles', { kind: 'person', handle: `maker${run}`, display_name: `Maker ${run}`, is_public: true })).id;
+  ids.otherPage = (await insert('profiles', { kind: 'bar', handle: `rye${run}`, display_name: `Rye page ${run}`, is_public: true })).id;
 
   const drink = (name, mode) =>
     insert('items', { name: `${name} ${run}`, item_type: 'cocktail', bar_id: ids.bar, created_by: users.admin.id, publish_mode: mode });
   ids.publicDrink = (await drink('Moth sour', 'spec')).id;
-  // Credited to another bar's page: it still stays on this one.
-  ids.otherPage = (await insert('profiles', { kind: 'bar', handle: `rye${run}`, display_name: `Rye page ${run}`, is_public: true })).id;
-  await db.query('UPDATE public.items SET creator_profile_id = $1, origin_bar_profile_id = $2 WHERE id = $3', [ids.person, ids.otherPage, ids.publicDrink]);
+  await db.query('UPDATE public.items SET creator_profile_id = $1 WHERE id = $2', [ids.person, ids.publicDrink]);
+  ids.creditedDrink = (await drink('Rye flip', 'description')).id;
+  await db.query('UPDATE public.items SET origin_bar_profile_id = $1 WHERE id = $2', [ids.otherPage, ids.creditedDrink]);
   ids.privateDrink = (await drink('Staff fizz', 'private')).id;
   const ingredient = (name) =>
     insert('items', { name: `${name} ${run}`, item_type: 'ingredient', bar_id: ids.bar, created_by: users.admin.id });
   ids.houseSyrup = (await ingredient('Moth syrup')).id;
+  ids.staffSyrup = (await ingredient('Staff cordial')).id;
   ids.sharedSyrup = (await ingredient('Moth oleo')).id;
-  ids.sharedSyrupPrep = (await insert('items', { name: `Lemon peel ${run}`, item_type: 'ingredient' })).id;
-  await insert('recipes', { recipe_item_id: ids.publicDrink, ingredient_item_id: ids.houseSyrup, sort_order: 0 });
-  await insert('recipes', { recipe_item_id: ids.privateDrink, ingredient_item_id: ids.houseSyrup, sort_order: 0 });
-  await insert('recipes', { recipe_item_id: ids.sharedSyrup, ingredient_item_id: ids.sharedSyrupPrep, sort_order: 0 });
+  ids.peel = (await insert('items', { name: `Lemon peel ${run}`, item_type: 'ingredient' })).id;
+  ids.publicLine = (await insert('recipes', { recipe_item_id: ids.publicDrink, ingredient_item_id: ids.houseSyrup, sort_order: 0 })).id;
+  await insert('recipes', { recipe_item_id: ids.privateDrink, ingredient_item_id: ids.staffSyrup, sort_order: 0 });
+  await insert('recipes', { recipe_item_id: ids.houseSyrup, ingredient_item_id: ids.peel, sort_order: 0 });
+  await insert('recipes', { recipe_item_id: ids.sharedSyrup, ingredient_item_id: ids.peel, sort_order: 0 });
 
   // Someone else's home drink that uses the venue's oleo.
   ids.guestDrink = (await insert('items', { name: `Guest punch ${run}`, item_type: 'cocktail', created_by: users.guest.id })).id;
@@ -119,6 +131,9 @@ before(async () => {
   ids.saved = (await insert('saved_menu_editions', { user_id: users.guest.id, menu_id: ids.menu })).id;
   ids.draftMenu = (await insert('menus', { name: `Winter ideas ${run}`, bar_id: ids.bar })).id;
   ids.draft = (await insert('drafts', { user_id: users.admin.id, bar_id: ids.bar, entity_type: 'cocktail', draft_data: {} })).id;
+
+  // The venue's glassware (it hangs off the page).
+  ids.glass = (await insert('bar_glassware', { profile_id: ids.page, glass: 'coupe' })).id;
 
   // The venue's logo file.
   ids.logoPath = `bars/${ids.bar}/logo-${run}.png`;
@@ -151,23 +166,23 @@ after(async () => {
   await db.end();
 });
 
-describe('delete_venue', () => {
-  test('signed out cannot delete a venue', async () => {
-    const { error } = await anon.rpc('delete_venue', { p_bar_id: ids.bar, p_confirm_name: NAME });
-    assert.ok(error);
-    assert.equal(await exists('bars', ids.bar), true);
+describe('who can delete a venue, or undo it', () => {
+  test('signed out can do neither', async () => {
+    assert.ok((await anon.rpc('delete_venue', { p_bar_id: ids.bar, p_confirm_name: NAME })).error);
+    assert.ok((await anon.rpc('cancel_venue_delete', { p_bar_id: ids.bar })).error);
+    assert.equal(await request(ids.bar), undefined);
   });
 
-  test('a Bartender of the venue cannot delete it', async () => {
-    const { error } = await deleteVenue('bartender', ids.bar, NAME);
-    assert.equal(error?.code, '42501');
-    assert.equal(await exists('bars', ids.bar), true);
+  test('a Bartender of the venue can do neither', async () => {
+    assert.equal((await deleteVenue('bartender', ids.bar, NAME)).error?.code, '42501');
+    assert.equal((await cancel('bartender', ids.bar)).error?.code, '42501');
+    assert.equal(await request(ids.bar), undefined);
   });
 
-  test('an Admin of another venue cannot delete it', async () => {
-    const { error } = await deleteVenue('otherAdmin', ids.bar, NAME);
-    assert.equal(error?.code, '42501');
-    assert.equal(await exists('bars', ids.bar), true);
+  test('an Admin of another venue can do neither', async () => {
+    assert.equal((await deleteVenue('otherAdmin', ids.bar, NAME)).error?.code, '42501');
+    assert.equal((await cancel('otherAdmin', ids.bar)).error?.code, '42501');
+    assert.equal(await request(ids.bar), undefined);
   });
 
   test('the Admin must type the venue name back', async () => {
@@ -175,28 +190,76 @@ describe('delete_venue', () => {
       const { error } = await deleteVenue('admin', ids.bar, name);
       assert.equal(error?.code, '22023', `"${name}" should not match`);
     }
-    assert.equal(await exists('bars', ids.bar), true);
+    assert.equal(await request(ids.bar), undefined);
   });
 
-  test('staff cannot reach the audit or the file queue', async () => {
-    for (const fn of ['storage_cleanup_batch', 'storage_cleanup_done']) {
-      const args = fn === 'storage_cleanup_done' ? { p_ids: [1] } : {};
-      const { error } = await users.admin.client.rpc(fn, args);
-      assert.ok(error, `${fn} should be refused`);
-    }
+  test('staff cannot reach the file queue', async () => {
+    assert.ok((await users.admin.client.rpc('storage_cleanup_batch', {})).error);
+    assert.ok((await users.admin.client.rpc('storage_cleanup_done', { p_ids: [1] })).error);
   });
+});
 
-  test('the Admin deletes the venue; what the public saw stays on an unclaimed page', async () => {
+describe('7 days to undo', () => {
+  test('asking schedules the delete 7 days out; the venue stays and its members see it', async () => {
     // Case and spaces don't matter.
     const { data, error } = await deleteVenue('admin', ids.bar, `  ${NAME.toUpperCase()} `);
     assert.ifError(error);
-    assert.equal(data.drinks_kept, 1);
-    assert.equal(data.profile_id, ids.page);
+    assert.equal(data.requested_by, users.admin.id);
+    const days = (new Date(data.deletes_at).getTime() - Date.now()) / DAY;
+    assert.ok(days > 6.99 && days <= 7, `deletes in ${days} days`);
+    assert.equal(await exists('bars', ids.bar), true);
+
+    const { data: seen } = await users.bartender.client.from('venue_delete_requests').select('bar_id').eq('bar_id', ids.bar);
+    assert.equal(seen.length, 1, 'a member of the venue sees it');
+    const { data: hidden } = await users.otherAdmin.client.from('venue_delete_requests').select('bar_id').eq('bar_id', ids.bar);
+    assert.equal(hidden.length, 0, 'nobody else does');
+    const { error: writeError } = await users.admin.client.from('venue_delete_requests').update({ deletes_at: new Date().toISOString() }).eq('bar_id', ids.bar);
+    assert.ok(writeError, 'nobody moves the date by hand');
+  });
+
+  test('nothing is deleted before the 7 days are up', async () => {
+    await runDue();
+    assert.equal(await exists('bars', ids.bar), true);
+    assert.ok(await request(ids.bar));
+  });
+
+  test('another Admin of the venue can undo it', async () => {
+    const { data, error } = await cancel('coAdmin', ids.bar);
+    assert.ifError(error);
+    assert.equal(data, true);
+    assert.equal(await request(ids.bar), undefined);
+    await runDue();
+    assert.equal(await exists('bars', ids.bar), true);
+  });
+
+  test('a request whose Admin stepped down is dropped, not run', async () => {
+    assert.ifError((await deleteVenue('otherAdmin', ids.otherBar, OTHER_NAME)).error);
+    await db.query('UPDATE public.user_bars SET role_level = 30 WHERE user_id = $1 AND bar_id = $2', [users.otherAdmin.id, ids.otherBar]);
+    await makeDue(ids.otherBar);
+    await runDue();
+    assert.equal(await exists('bars', ids.otherBar), true);
+    assert.equal(await request(ids.otherBar), undefined);
+  });
+});
+
+describe('when the 7 days are up', () => {
+  test('the venue goes; what the public saw stays on an unclaimed page', async () => {
+    assert.ifError((await deleteVenue('admin', ids.bar, NAME)).error);
+    await makeDue(ids.bar);
+    assert.ok((await runDue()) >= 1);
 
     // The venue and its staff-only things are gone.
     assert.equal(await exists('bars', ids.bar), false);
+    assert.equal(await request(ids.bar), undefined);
     assert.equal((await row('SELECT count(*)::int AS n FROM public.user_bars WHERE bar_id = $1', [ids.bar])).n, 0);
-    for (const [table, id] of [['menus', ids.menu], ['menus', ids.draftMenu], ['drafts', ids.draft], ['items', ids.privateDrink], ['items', ids.houseSyrup]]) {
+    for (const [table, id] of [
+      ['menus', ids.menu],
+      ['menus', ids.draftMenu],
+      ['drafts', ids.draft],
+      ['items', ids.privateDrink],
+      ['items', ids.staffSyrup],
+      ['bar_glassware', ids.glass],
+    ]) {
       assert.equal(await exists(table, id), false, `${table} ${id} should be gone`);
     }
 
@@ -204,11 +267,20 @@ describe('delete_venue', () => {
     const kept = await row('SELECT bar_id, created_by, origin_bar_profile_id, publish_mode, creator_profile_id FROM public.items WHERE id = $1', [ids.publicDrink]);
     assert.deepEqual(kept, { bar_id: null, created_by: null, origin_bar_profile_id: ids.page, publish_mode: 'description', creator_profile_id: ids.person });
     assert.equal(await exists('rank_entries', ids.rank), true);
+    // A drink credited to another bar keeps that link.
+    assert.deepEqual(await row('SELECT bar_id, origin_bar_profile_id FROM public.items WHERE id = $1', [ids.creditedDrink]), {
+      bar_id: null,
+      origin_bar_profile_id: ids.otherPage,
+    });
 
-    // The oleo in the guest's punch stays as a name; its own recipe goes.
-    assert.equal((await row('SELECT bar_id FROM public.items WHERE id = $1', [ids.sharedSyrup])).bar_id, null);
+    // House-made ingredients of kept drinks and of the guest's punch stay as names, so
+    // those specs stay whole; their own recipes go.
+    for (const id of [ids.houseSyrup, ids.sharedSyrup]) {
+      assert.equal((await row('SELECT bar_id FROM public.items WHERE id = $1', [id])).bar_id, null);
+      assert.equal((await row('SELECT count(*)::int AS n FROM public.recipes WHERE recipe_item_id = $1', [id])).n, 0);
+    }
+    assert.equal(await exists('recipes', ids.publicLine), true);
     assert.equal(await exists('recipes', ids.guestLine), true);
-    assert.equal((await row('SELECT count(*)::int AS n FROM public.recipes WHERE recipe_item_id = $1', [ids.sharedSyrup])).n, 0);
 
     // The page is unclaimed, and the started menu is its history again, saved copy included.
     assert.deepEqual(await row('SELECT bar_id, claimed_at, is_claimed FROM public.profiles WHERE id = $1', [ids.page]), {
@@ -226,8 +298,9 @@ describe('delete_venue', () => {
     });
 
     // An audit row.
-    const audit = await row('SELECT deleted_by, reason, profile_id FROM private.venue_deletions WHERE bar_id = $1', [ids.bar]);
-    assert.deepEqual(audit, { deleted_by: users.admin.id, reason: 'admin', profile_id: ids.page });
+    const audit = await row('SELECT deleted_by, reason, profile_id, summary FROM private.venue_deletions WHERE bar_id = $1', [ids.bar]);
+    assert.deepEqual({ ...audit, summary: undefined }, { deleted_by: users.admin.id, reason: 'admin', profile_id: ids.page, summary: undefined });
+    assert.deepEqual([audit.summary.drinks_kept, audit.summary.ingredients_kept, audit.summary.menus_to_page], [2, 2, 1]);
   });
 
   test('the venue logo file is queued and the cleanup removes it', async () => {
@@ -255,7 +328,7 @@ describe('delete_venue', () => {
   });
 });
 
-describe('account deletion removes a solo venue the same way', () => {
+describe('account deletion removes a solo venue the same way, at once', () => {
   test('the page goes back to unclaimed and its public drink stays', async () => {
     const { error } = await service.rpc('prepare_account_deletion', { p_user_id: users.soloOwner.id });
     assert.ifError(error);

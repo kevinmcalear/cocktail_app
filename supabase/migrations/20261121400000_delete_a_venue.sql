@@ -1,11 +1,14 @@
 -- A venue's Admin can delete their venue (E53): public.delete_venue(bar id,
--- the venue's name typed back). Account deletion now removes a bar its last
--- member leaves behind the same way (private.remove_venue), instead of
--- deleting every row by hand.
+-- the venue's name typed back) schedules the delete for 7 days later, and
+-- any Admin of the venue can undo it until then (cancel_venue_delete). The
+-- schedule (public.venue_delete_requests) is the notice: every member reads
+-- it. A cron job runs private.run_due_venue_deletes hourly. Account deletion
+-- removes a bar its last member leaves behind the same way, at once
+-- (private.remove_venue), instead of deleting every row by hand.
 --
 -- What goes: the venue (bars row) and everything only its staff could see:
 -- team, roles, invites, join requests, menus, run sheets, drafts, private
--- drinks and house-made recipes, kit, ice, glassware costs, suppliers, stock,
+-- drinks and house-made recipes, kit, ice, glassware, suppliers, stock,
 -- events, releases, calendar, allergen checks, comments and settings.
 --
 -- What stays, detached from the venue:
@@ -15,9 +18,11 @@
 -- * Drinks the public could already see on that page (an open or description
 --   page, not a private one or names only). They become research drinks of the
 --   page again (no venue, no owner, description only), so rankings, made
---   drinks and credits to people on them stay. Their specs stop being public.
--- * The venue's own ingredients that a drink outside the venue uses, as a
---   name only (their recipe and prep are removed).
+--   drinks and credits to people on them stay. A drink credited to another
+--   bar keeps that link. Their specs stop being public.
+-- * The venue's own ingredients that a kept drink or a drink outside the
+--   venue uses, as a name only (their recipe and prep are removed), so those
+--   specs stay whole.
 -- * Started menus, the page's public menu history: they move back to
 --   profile_menu_editions, and saved copies follow them.
 --
@@ -137,7 +142,7 @@ GRANT EXECUTE ON FUNCTION public.storage_cleanup_batch(integer) TO service_role;
 GRANT EXECUTE ON FUNCTION public.storage_cleanup_done(bigint[]) TO service_role;
 
 -- --- removing a venue ---
--- No permission checks: callers check first (delete_venue, prepare_account_deletion).
+-- No permission checks: callers check first (run_due_venue_deletes, prepare_account_deletion).
 CREATE FUNCTION private.remove_venue(p_bar_id uuid, p_by uuid, p_reason text) RETURNS jsonb
     LANGUAGE plpgsql SECURITY DEFINER
     SET search_path TO ''
@@ -177,12 +182,12 @@ BEGIN
     WHERE l.bar_id = p_bar_id AND NOT l.page_locked
       AND l.item_type IN ('cocktail', 'beer', 'wine');
 
-    -- The venue's ingredients that a drink outside the venue uses.
+    -- The venue's ingredients that a kept drink or a drink outside the venue uses.
     SELECT coalesce(array_agg(DISTINCT r.ingredient_item_id), '{}') INTO v_shared
     FROM public.recipes r
     JOIN public.items ing ON ing.id = r.ingredient_item_id AND ing.bar_id = p_bar_id
     JOIN public.items d ON d.id = r.recipe_item_id
-    WHERE d.bar_id IS DISTINCT FROM p_bar_id
+    WHERE (d.bar_id IS DISTINCT FROM p_bar_id OR d.id = ANY (v_kept))
       AND NOT (ing.id = ANY (v_kept));
 
     SELECT coalesce(array_agg(i.id), '{}') INTO v_gone
@@ -224,9 +229,8 @@ BEGIN
         bar_id = NULL,
         created_by = NULL,
         override_visibility_level = NULL,
-        -- On this page, where the public saw it, even if it credited another bar
-        -- (that bar's page never listed the venue's copy).
-        origin_bar_profile_id = CASE WHEN id = ANY (v_kept) THEN v_profile_id ELSE origin_bar_profile_id END,
+        -- A drink credited to another bar keeps that link.
+        origin_bar_profile_id = CASE WHEN id = ANY (v_kept) THEN coalesce(origin_bar_profile_id, v_profile_id) ELSE origin_bar_profile_id END,
         publish_mode = CASE WHEN id = ANY (v_kept) THEN 'description'::public.item_publish_mode ELSE publish_mode END
     WHERE id = ANY (v_kept || v_shared);
 
@@ -273,14 +277,13 @@ BEGIN
             v_menus := v_menus + 1;
         END LOOP;
 
-        -- The venue's glass photos are staff-only; the page's glasses stay without them.
+        -- The venue's glassware goes too (it hangs off the page), photos queued.
         INSERT INTO private.storage_cleanup (bucket_id, name, reason)
         SELECT 'glass-photos', g.photo_path, 'venue deleted'
         FROM public.bar_glassware g
         WHERE g.profile_id = v_profile_id AND g.photo_path IS NOT NULL
         ON CONFLICT (bucket_id, name) DO NOTHING;
-        UPDATE public.bar_glassware SET photo_path = NULL
-        WHERE profile_id = v_profile_id AND photo_path IS NOT NULL;
+        DELETE FROM public.bar_glassware WHERE profile_id = v_profile_id;
     END IF;
 
     DELETE FROM public.drafts WHERE bar_id = p_bar_id;
@@ -317,31 +320,114 @@ END;
 $$;
 REVOKE ALL ON FUNCTION private.remove_venue(uuid, uuid, text) FROM PUBLIC;
 
--- --- delete a venue (its Admin) ---
-CREATE FUNCTION public.delete_venue(p_bar_id uuid, p_confirm_name text) RETURNS jsonb
+-- --- delete a venue (its Admin), 7 days later ---
+CREATE TABLE public.venue_delete_requests (
+    bar_id uuid PRIMARY KEY REFERENCES public.bars(id) ON DELETE CASCADE,
+    requested_by uuid REFERENCES auth.users(id) ON DELETE SET NULL,
+    requested_at timestamptz NOT NULL DEFAULT now(),
+    deletes_at timestamptz NOT NULL
+);
+ALTER TABLE public.venue_delete_requests ENABLE ROW LEVEL SECURITY;
+COMMENT ON TABLE public.venue_delete_requests IS 'A venue an Admin asked to delete, and when it goes. Every member reads it; delete_venue and cancel_venue_delete write it.';
+REVOKE ALL ON TABLE public.venue_delete_requests FROM anon, authenticated;
+GRANT SELECT ON TABLE public.venue_delete_requests TO authenticated;
+CREATE POLICY venue_delete_requests_select ON public.venue_delete_requests FOR SELECT TO authenticated
+    USING (bar_id IN (SELECT private.my_bar_ids(0)));
+
+-- The Admin check delete_venue and cancel_venue_delete share. One message
+-- for "not an Admin" and "no such venue".
+CREATE FUNCTION private.require_venue_admin(p_bar_id uuid) RETURNS void
+    LANGUAGE plpgsql STABLE SECURITY DEFINER
+    SET search_path TO ''
+    AS $$
+BEGIN
+    IF auth.uid() IS NULL THEN
+        RAISE EXCEPTION 'Sign in first.' USING ERRCODE = '42501';
+    END IF;
+    IF p_bar_id IS NULL OR p_bar_id NOT IN (SELECT private.my_bar_ids(40)) THEN
+        RAISE EXCEPTION 'Only an Admin of this venue can do that.' USING ERRCODE = '42501';
+    END IF;
+END;
+$$;
+REVOKE ALL ON FUNCTION private.require_venue_admin(uuid) FROM PUBLIC;
+
+CREATE FUNCTION public.delete_venue(p_bar_id uuid, p_confirm_name text) RETURNS public.venue_delete_requests
     LANGUAGE plpgsql SECURITY DEFINER
     SET search_path TO ''
     AS $$
 DECLARE
     v_name text;
+    v_request public.venue_delete_requests;
 BEGIN
-    IF auth.uid() IS NULL THEN
-        RAISE EXCEPTION 'Sign in to delete a venue.' USING ERRCODE = '42501';
-    END IF;
-    -- One message for "not an Admin" and "no such venue".
-    IF p_bar_id IS NULL OR p_bar_id NOT IN (SELECT private.my_bar_ids(40)) THEN
-        RAISE EXCEPTION 'Only an Admin of this venue can delete it.' USING ERRCODE = '42501';
-    END IF;
+    PERFORM private.require_venue_admin(p_bar_id);
     SELECT name INTO v_name FROM public.bars WHERE id = p_bar_id FOR UPDATE;
     IF lower(btrim(coalesce(p_confirm_name, ''))) <> lower(btrim(v_name)) THEN
         RAISE EXCEPTION 'That isn''t this venue''s name. Type it as it''s shown to delete the venue.' USING ERRCODE = '22023';
     END IF;
-    RETURN private.remove_venue(p_bar_id, auth.uid(), 'admin');
+    -- Asking again keeps the first date.
+    INSERT INTO public.venue_delete_requests (bar_id, requested_by, deletes_at)
+    VALUES (p_bar_id, auth.uid(), now() + interval '7 days')
+    ON CONFLICT (bar_id) DO NOTHING;
+    SELECT * INTO v_request FROM public.venue_delete_requests WHERE bar_id = p_bar_id;
+    RETURN v_request;
 END;
 $$;
 REVOKE ALL ON FUNCTION public.delete_venue(uuid, text) FROM PUBLIC, anon;
 GRANT EXECUTE ON FUNCTION public.delete_venue(uuid, text) TO authenticated;
-COMMENT ON FUNCTION public.delete_venue(uuid, text) IS 'A venue''s Admin deletes the venue, typing its name back. See private.remove_venue for what goes and what stays.';
+COMMENT ON FUNCTION public.delete_venue(uuid, text) IS 'A venue''s Admin asks to delete the venue, typing its name back. It goes 7 days later unless an Admin undoes it. See private.remove_venue for what goes and what stays.';
+
+-- Undo: any Admin of the venue, until the delete runs. True when there was one.
+CREATE FUNCTION public.cancel_venue_delete(p_bar_id uuid) RETURNS boolean
+    LANGUAGE plpgsql SECURITY DEFINER
+    SET search_path TO ''
+    AS $$
+BEGIN
+    PERFORM private.require_venue_admin(p_bar_id);
+    DELETE FROM public.venue_delete_requests WHERE bar_id = p_bar_id;
+    RETURN FOUND;
+END;
+$$;
+REVOKE ALL ON FUNCTION public.cancel_venue_delete(uuid) FROM PUBLIC, anon;
+GRANT EXECUTE ON FUNCTION public.cancel_venue_delete(uuid) TO authenticated;
+
+-- Deletes the venues whose 7 days are up. A request whose Admin has since
+-- left, stepped down or deleted their account is dropped, not run. One
+-- venue failing doesn't stop the others; it's tried again next hour.
+CREATE FUNCTION private.run_due_venue_deletes() RETURNS integer
+    LANGUAGE plpgsql SECURITY DEFINER
+    SET search_path TO ''
+    AS $$
+DECLARE
+    r public.venue_delete_requests;
+    v_done integer := 0;
+BEGIN
+    FOR r IN
+        SELECT * FROM public.venue_delete_requests
+        WHERE deletes_at <= now()
+        ORDER BY deletes_at
+        FOR UPDATE SKIP LOCKED
+    LOOP
+        IF NOT EXISTS (
+            SELECT 1 FROM public.user_bars ub
+            WHERE ub.bar_id = r.bar_id AND ub.user_id = r.requested_by AND ub.role_level >= 40
+              AND NOT EXISTS (SELECT 1 FROM public.venue_roles vr WHERE vr.id = ub.venue_role_id AND vr.ends_at <= now())
+        ) THEN
+            DELETE FROM public.venue_delete_requests WHERE bar_id = r.bar_id;
+            CONTINUE;
+        END IF;
+        BEGIN
+            PERFORM private.remove_venue(r.bar_id, r.requested_by, 'admin');
+            v_done := v_done + 1;
+        EXCEPTION WHEN OTHERS THEN
+            RAISE WARNING 'Deleting venue % failed: %', r.bar_id, SQLERRM;
+        END;
+    END LOOP;
+    RETURN v_done;
+END;
+$$;
+REVOKE ALL ON FUNCTION private.run_due_venue_deletes() FROM PUBLIC;
+
+SELECT cron.schedule('venue-deletes', '29 * * * *', 'SELECT private.run_due_venue_deletes()');
 
 -- --- account deletion removes a solo bar the same way ---
 CREATE OR REPLACE FUNCTION public.prepare_account_deletion(p_user_id uuid) RETURNS void
