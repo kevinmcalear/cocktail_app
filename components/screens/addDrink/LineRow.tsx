@@ -55,9 +55,9 @@ interface LineRowProps {
 export function LineRow({ line, onChange, onRemove, onSwap, onEditPrep, units: unitList = QUICK_UNITS, detail, below, grip, onMove, lifted, dropTarget, stock }: LineRowProps) {
   const ds = useDs();
   // A phone stacks the name over the controls. Explicit, not flexWrap: Yoga on iOS shrank the name to "Rye wh…" beside them instead of wrapping (Eddie, 16 Oct).
-  // So does a narrow column (the desktop page's spec), where the bottle left the name a few letters.
+  // So does a narrow column (the desktop page's spec, an ingredient's recipe beside its method), where the controls left the name a few letters.
   const [narrow, setNarrow] = useState(false);
-  const stacked = useBreakpoint() === 'phone' || (stock !== undefined && narrow);
+  const stacked = useBreakpoint() === 'phone' || narrow;
   const [units, setUnits] = useState(false);
   const [noting, setNoting] = useState(!!line.note);
   const [open, setOpen] = useState(false);
@@ -123,6 +123,7 @@ export function LineRow({ line, onChange, onRemove, onSwap, onEditPrep, units: u
                   </>
                 ) : null}
                 {line.unit === 'discard' ? <Caption tone="accent">Expressed, then discarded</Caption> : null}
+                {line.optional ? <Caption tone="muted">Optional</Caption> : null}
               </View>
               {recipe ? <IconSymbol name="chevron.right" size={14} color={ds.c.muted} /> : null}
             </PressableScale>
@@ -181,6 +182,7 @@ export function LineRow({ line, onChange, onRemove, onSwap, onEditPrep, units: u
             <TextAction label="Swap" a11y={`Swap ${line.name} for another ingredient`} onPress={onSwap} />
             {from ? <TextAction label={`Back to ${from.name}`} a11y={`Back to plain ${from.name}`} onPress={() => onChange({ id: from.id, name: from.name, prep: undefined, technique: undefined })} /> : null}
             {noting ? null : <TextAction label="Note" a11y={`Add a note to ${line.name}`} onPress={() => { setNoting(true); setOpen(false); }} />}
+            <TextAction label={line.optional ? 'Not optional' : 'Optional'} a11y={line.optional ? `${line.name} is needed` : `${line.name} is optional`} onPress={() => onChange({ optional: !line.optional })} />
           </View>
         </View>
       ) : null}
@@ -198,7 +200,7 @@ export function LineRow({ line, onChange, onRemove, onSwap, onEditPrep, units: u
       ) : null}
       {units ? (
         <View role="radiogroup" accessibilityLabel={`Unit for ${line.name}`} style={[styles.units, grip ? styles.gripped : null]}>
-          {unitList.map((u) => (
+          {(unitList.includes(line.unit) || !line.unit ? unitList : [...unitList, line.unit]).map((u) => (
             <WizardChip
               key={u}
               label={u}

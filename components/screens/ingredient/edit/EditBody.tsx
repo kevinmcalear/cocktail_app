@@ -1,7 +1,7 @@
 import { Field } from '@/components/ds';
 import type { PrepFields } from '@/lib/prepCardForm';
 
-import { EditSpecList } from '../../drink/edit/EditSpecList';
+import { EditLines } from '../../drink/edit/EditLines';
 import { IngredientTags } from '../IngredientBits';
 import { SameNameNotice } from '../IngredientEditSheets';
 import { BottlePrice, SpiritTags, WhatItIs } from './BottleSections';
@@ -10,7 +10,7 @@ import { MethodEdit } from './MethodEdit';
 import { keepsValues, KeepsRows, PrepCost, type KeepsField } from './PrepSections';
 import type { IngredientEdit } from './useIngredientEdit';
 
-export type BodySheet = KeepsField | 'kind' | 'line' | 'tags';
+export type BodySheet = KeepsField | 'kind' | 'tags';
 
 interface EditBodyProps {
   edit: IngredientEdit;
@@ -23,8 +23,10 @@ interface EditBodyProps {
   used: number;
   spiritTags: { id: string; name: string }[];
   onSheet: (s: BodySheet) => void;
-  onAmount: (line: number) => void;
-  onSwap: (line: number) => void;
+  /** The saved ingredient's id, or the draft's: never a line of its own recipe. */
+  selfId: string;
+  /** Bumped by the bottom bar's Line: the cursor goes to the recipe's search. */
+  focus?: number;
 }
 
 /**
@@ -33,7 +35,7 @@ interface EditBodyProps {
  * on wide screens), Cost, Where it lives, Who sees it. A bottle: Name, About
  * it, What it is, Spirit tags, Where it lives, Cost, Who sees it.
  */
-export function EditBody({ edit, savedId, isPrep, wide, venueName, used, spiritTags, onSheet, onAmount, onSwap }: EditBodyProps) {
+export function EditBody({ edit, savedId, isPrep, wide, venueName, used, spiritTags, onSheet, selfId, focus }: EditBodyProps) {
   const { editor, setPrep } = edit;
   const prep = edit.prep as PrepFields;
   const { form, set } = editor;
@@ -72,16 +74,19 @@ export function EditBody({ edit, savedId, isPrep, wide, venueName, used, spiritT
       <KindOf name={form.generic?.name ?? null} onPick={() => onSheet('kind')} />
       {wide ? nameField : null}
       {about}
-      <EditSpecList
+      <EditLines
         title="Recipe"
         aside={values.makes ? `Makes about ${values.makes}` : null}
-        note={used ? `The ${used === 1 ? 'drink' : `${used} drinks`} that use it update when you press Done.` : null}
+        note={used === 1 ? 'The drink that uses it updates when you press Done.' : used ? `The ${used} drinks that use it update when you press Done.` : null}
         items={lines}
-        onReorder={editor.setRecipeItems}
-        onRemove={(i) => editor.setRecipeItems((prev) => prev.filter((_, j) => j !== i))}
-        onAmount={onAmount}
-        onSwap={onSwap}
-        onAdd={() => onSheet('line')}
+        onChange={editor.setRecipeItems}
+        name={name}
+        ingredients={editor.catalog.filter((i) => i.id !== selfId)}
+        aliases={editor.dropdowns?.ingredientAliases}
+        loading={!editor.dropdowns?.ingredients}
+        bar={form.barId ? { id: form.barId, name: venueName ?? '' } : null}
+        forDrink={false}
+        focus={focus}
       />
       {savedId ? <MethodEdit steps={prep.steps} onChange={(s) => setPrep({ steps: s })} summary={methodSummary} /> : null}
       {savedId && !wide ? <KeepsRows fields={prep} wide={false} onOpen={onSheet} /> : null}

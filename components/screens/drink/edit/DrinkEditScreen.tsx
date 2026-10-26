@@ -9,24 +9,21 @@ import { ToolsSheet } from '@/components/tools/ToolsSheet';
 import { displayFaces, fontFamilies, radius, space, type } from '@/constants/tokens';
 import { useActiveVenue } from '@/hooks/useActiveVenue';
 import { useCocktail, useDeleteCocktail } from '@/hooks/useCocktails';
+import { useBackBarIds } from '@/hooks/useBackBar';
 import { useCocktailEditor } from '@/hooks/useCocktailEditor';
 import { useHoldUpdates } from '@/hooks/useOtaUpdates';
 import { confirmAsync } from '@/lib/dialogs';
-import { applyIngredientHandoff } from '@/lib/ingredientHandoff';
 import type { ItemImageLink } from '@/lib/itemImages';
 import { capitalize } from '@/lib/stringUtils';
-import { useAppStore } from '@/store/useAppStore';
-import { getPreferredUnit } from '@/store/useSettingsStore';
 
+import type { CatalogIngredient } from '../../addDrink/IngredientSearch';
 import { DrinkHero } from '../DrinkHero';
 import { SketchColourSheet } from '../SketchColour';
 import { ShotList } from '../ShotList';
 import { AccessSheet, EditBottomBar, EditMoreMenu, GrowingField, PhotosSheet, type DrinkEditor, type MoreChoice } from './EditParts';
-import { EditSpecList } from './EditSpecList';
+import { EditLines } from './EditLines';
 import { EditToolbar } from './EditToolbar';
-import { IngredientPickSheet } from './IngredientPickSheet';
 import { MadeList } from './MadeList';
-import { SpecPad } from './SpecPad';
 import { useEditHistory } from './useEditHistory';
 import { VenueSections, type PendingEdits, type VenueSheet } from './VenueSections';
 
@@ -81,24 +78,17 @@ export function EditPage({ editor, id, onExit }: { editor: DrinkEditor; id: stri
   const deleteCocktail = useDeleteCocktail();
   // A drink credited to a bar stays shared (others rank and save it), so only SQL deletes it.
   const credited = !!cocktail && !cocktail.bar_id && !cocktail.created_by && !!cocktail.origin_bar_profile_id;
-  // Who a new ingredient made from here comes back to: this drink, or this draft.
-  const selfId = id ?? draft?.draftId ?? null;
+  const { venues } = useActiveVenue();
+  const venueName = venues.find((v) => v.id === editor.barId)?.name ?? null;
+  const ingredients = (editor.allIngredients ?? []) as CatalogIngredient[];
+  const backBar = useBackBarIds(editor.barId || null, ingredients);
+  // The bottom bar's Line puts the cursor in the search under the lines.
+  const [focus, setFocus] = useState(0);
 
-  const [pad, setPad] = useState<number | null>(null);
-  const [picking, setPicking] = useState<{ swap: number | null } | null>(null);
   const [sheet, setSheet] = useState<MoreChoice | VenueSheet | 'calc' | 'more' | 'colour' | null>(null);
   // For the floor, Service and Price: saved with Done, next to the editor's own changes.
   const venueEdits = useRef<PendingEdits | null>(null);
   const [venueDirty, setVenueDirty] = useState(false);
-
-  // A new ingredient made from here comes back onto this drink's spec.
-  const { recentlyCreatedItem, setRecentlyCreatedItem } = useAppStore();
-  useEffect(() => {
-    if (recentlyCreatedItem?.type !== 'ingredient' || !selfId || recentlyCreatedItem.targetId !== selfId) return;
-    const handoff = recentlyCreatedItem;
-    editor.setRecipeItems((prev) => applyIngredientHandoff(prev, handoff, selfId, { amount: '', unit: getPreferredUnit(), preparation_notes: '', is_optional: false }) ?? prev);
-    setRecentlyCreatedItem(null);
-  }, [editor, recentlyCreatedItem, setRecentlyCreatedItem, selfId]);
 
   const done = async () => {
     if (venueEdits.current?.dirty && !(await venueEdits.current.save())) return;
@@ -134,14 +124,12 @@ export function EditPage({ editor, id, onExit }: { editor: DrinkEditor; id: stri
       const cmd = e.metaKey || e.ctrlKey;
       if (cmd && e.key === 'Enter') return void (e.preventDefault(), done());
       if (cmd && !typing && e.key.toLowerCase() === 'z') return void (e.preventDefault(), e.shiftKey ? history.redo() : history.undo());
-      if (e.key === 'Escape' && !typing && pad === null && !picking && !sheet) void leave();
+      if (e.key === 'Escape' && !typing && !sheet) void leave();
     };
     window.addEventListener('keydown', onKey);
     return () => window.removeEventListener('keydown', onKey);
   });
 
-  const lines = editor.recipeItems;
-  const setLine = (i: number, updates: Partial<(typeof lines)[number]>) => editor.setRecipeItems((prev) => prev.map((l, j) => (j === i ? { ...l, ...updates } : l)));
   const pictures = editor.localImages.map((img) => ({ url: img.url, isSketch: false, isOutdated: false }));
 
   const hero = (height: number) => (
@@ -171,13 +159,17 @@ export function EditPage({ editor, id, onExit }: { editor: DrinkEditor; id: stri
   const servicePhotos = cocktail && id ? <ShotList itemId={id} barId={cocktail.bar_id ?? null} links={cocktail.item_images as ItemImageLink[] | undefined} /> : null;
   const body = (
     <>
-      <EditSpecList
-        items={lines}
-        onReorder={editor.setRecipeItems}
-        onRemove={(i) => editor.setRecipeItems((prev) => prev.filter((_, j) => j !== i))}
-        onAmount={setPad}
-        onSwap={(i) => setPicking({ swap: i })}
-        onAdd={() => setPicking({ swap: null })}
+      <EditLines
+        items={editor.recipeItems}
+        onChange={editor.setRecipeItems}
+        name={editor.name || cocktail?.name || 'This drink'}
+        ingredients={ingredients}
+        aliases={editor.dropdowns?.ingredientAliases}
+        coreIds={new Set(editor.dropdowns?.coreIngredientIds ?? [])}
+        loading={!editor.dropdowns?.ingredients}
+        bar={editor.barId ? { id: editor.barId, name: venueName ?? '' } : null}
+        backBar={editor.barId ? backBar : undefined}
+        focus={focus}
       />
       <MadeList editor={editor} itemId={id} />
       <View style={styles.section}>
@@ -222,51 +214,11 @@ export function EditPage({ editor, id, onExit }: { editor: DrinkEditor; id: stri
           </FormScrollContainer>
           <View style={[styles.top, { top: top + space.sm, left: gutter, right: gutter }]}>{toolbar}</View>
           <View style={[styles.bottom, { bottom: insets.bottom + space.md, left: gutter, right: gutter }]}>
-            <EditBottomBar onLine={() => setPicking({ swap: null })} onPhoto={() => void editor.pickImage()} onCalc={() => setSheet('calc')} onMore={() => setSheet('more')} />
+            <EditBottomBar onLine={() => setFocus(focus + 1)} onPhoto={() => void editor.pickImage()} onCalc={() => setSheet('calc')} onMore={() => setSheet('more')} />
           </View>
         </>
       )}
 
-      {pad !== null && lines[pad] ? (
-        <SpecPad
-          key={pad}
-          line={lines[pad]}
-          index={pad}
-          count={lines.length}
-          nextName={lines[pad + 1]?.name ?? null}
-          onChange={(u) => setLine(pad, u)}
-          onNext={() => setPad(pad + 1 < lines.length ? pad + 1 : null)}
-          onSwap={() => {
-            setPicking({ swap: pad });
-            setPad(null);
-          }}
-          onClose={() => setPad(null)}
-        />
-      ) : null}
-      {picking ? (
-        <IngredientPickSheet
-          editor={editor}
-          drink={editor.name || cocktail?.name || 'This drink'}
-          swapping={picking.swap !== null && lines[picking.swap] ? { id: lines[picking.swap].ingredient_id || null, name: lines[picking.swap].name } : null}
-          inSpec={lines.map((l) => l.ingredient_id).filter(Boolean)}
-          onClose={() => setPicking(null)}
-          onPick={(p) => {
-            if (picking.swap !== null) setLine(picking.swap, { ingredient_id: p.id!, name: p.name });
-            else editor.setRecipeItems((prev) => [...prev, { ingredient_id: p.id!, name: p.name, amount: '', unit: getPreferredUnit(), preparation_notes: '', is_optional: false }]);
-            const at = picking.swap ?? lines.length;
-            setPicking(null);
-            // A new line goes straight to its amount.
-            if (picking.swap === null) setPad(at);
-          }}
-          onNew={async (name, made) => {
-            setPicking(null);
-            // A draft saves first, so coming back doesn't lose its spec and the new ingredient knows where to go.
-            const parent = draft ? await draft.persistDraft(true) : id;
-            // Made in-house: the recipe steps; a bottle you buy, or just the name: the bottle form.
-            router.push({ pathname: made ? '/make-recipe' : '/add-ingredient', params: { name, barId: editor.barId || '', attachTo: parent || '' } });
-          }}
-        />
-      ) : null}
       <EditMoreMenu open={sheet === 'more'} onClose={() => setSheet(null)} canDelete={!credited} dirty={editor.isDirty || venueDirty} draft={!!draft} onPick={onMore} />
       {sheet === 'photos' ? <PhotosSheet editor={editor} onClose={() => setSheet(null)} /> : null}
       {sheet === 'access' ? <AccessSheet editor={editor} onClose={() => setSheet(null)} /> : null}

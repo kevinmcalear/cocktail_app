@@ -51,6 +51,8 @@ export interface WizardLine extends WizardPick {
   prep?: PrepDraft;
   /** A note on the spec line ("the bar uses Bacardí Heritage"). */
   note?: string;
+  /** Optional in the drink: a guest can leave it out. */
+  optional?: boolean;
   /** A house prep added by name only ("Just add the name", or Later in the prep builder): its recipe is to write, and the save reminds you. */
   later?: boolean;
   /** A batch read from a file (lib/bringInDraft): the drink's own lines and the bottle, saved as a Batch prep. */
