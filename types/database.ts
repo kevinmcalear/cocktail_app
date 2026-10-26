@@ -7613,6 +7613,15 @@ export type Database = {
           isSetofReturn: false
         }
       }
+      venue_can_make: {
+        Args: { p_bar_id: string; p_drink_ids: string[] }
+        Returns: {
+          can_make: boolean
+          drink_id: string
+          missing: Json
+          missing_count: number
+        }[]
+      }
       venue_ice: {
         Args: { p_bar_id: string }
         Returns: {

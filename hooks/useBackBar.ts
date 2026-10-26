@@ -3,6 +3,7 @@ import { useEffect, useMemo, useState } from 'react';
 
 import { useSwapSource } from '@/hooks/useBulk';
 import { useTonight } from '@/hooks/useTonight';
+import { venueCanMakeKey } from '@/hooks/useVenueCanMake';
 import { ingredientsUsed, waitingForSpot, type NamedItem, type UsedItem } from '@/lib/backBar';
 import { showMessage } from '@/lib/dialogs';
 import { supabase } from '@/lib/supabase';
@@ -187,7 +188,9 @@ export function useStockMutations(barId: string | null | undefined) {
   // pass the insert it undoes), and the list is read again after the last.
   const queue = { mutationKey: ['stock-write', barId], scope: { id: `stock-write-${barId}` } };
   const refresh = () => {
-    if (qc.isMutating({ mutationKey: queue.mutationKey }) <= 1) void qc.invalidateQueries({ queryKey: key });
+    if (qc.isMutating({ mutationKey: queue.mutationKey }) > 1) return;
+    void qc.invalidateQueries({ queryKey: key });
+    void qc.invalidateQueries({ queryKey: venueCanMakeKey(barId) });
   };
 
   const add = useMutation({
@@ -303,7 +306,10 @@ export interface LocationChanges {
 /** Place, move and remove items. Drink Creators and up, and roles with `prep`. */
 export function useLocationMutations(barId: string | null | undefined) {
   const qc = useQueryClient();
-  const refresh = () => qc.invalidateQueries({ queryKey: locationsKey(barId) });
+  const refresh = () => {
+    void qc.invalidateQueries({ queryKey: locationsKey(barId) });
+    void qc.invalidateQueries({ queryKey: venueCanMakeKey(barId) });
+  };
 
   const placeItem = useMutation({
     mutationFn: async ({ itemId, zoneId }: { itemId: string; zoneId: string }) => {
@@ -353,6 +359,7 @@ export function useBottleSpots(barId: string | null | undefined) {
   const refresh = () => {
     qc.invalidateQueries({ queryKey: locationsKey(barId) });
     qc.invalidateQueries({ queryKey: stockKey(barId) });
+    qc.invalidateQueries({ queryKey: venueCanMakeKey(barId) });
   };
   // The stock list follows the spots: a bottle replaced or taken off leaves it,
   // or it would come back under Waiting for a spot. The new bottle needs no row,
