@@ -1962,16 +1962,19 @@ export type Database = {
           created_at: string
           item_id: string
           profile_id: string
+          status: Database["public"]["Enums"]["co_creator_status"]
         }
         Insert: {
           created_at?: string
           item_id: string
           profile_id: string
+          status?: Database["public"]["Enums"]["co_creator_status"]
         }
         Update: {
           created_at?: string
           item_id?: string
           profile_id?: string
+          status?: Database["public"]["Enums"]["co_creator_status"]
         }
         Relationships: [
           {
@@ -6045,6 +6048,10 @@ export type Database = {
         }
       }
       am_i_moderator: { Args: never; Returns: boolean }
+      answer_credit: {
+        Args: { p_accept: boolean; p_item_id: string }
+        Returns: Database["public"]["Enums"]["co_creator_status"]
+      }
       answer_join_request: {
         Args: { p_accept: boolean; p_id: string }
         Returns: undefined
@@ -6312,6 +6319,17 @@ export type Database = {
           isOneToOne: true
           isSetofReturn: false
         }
+      }
+      credits_to_check: {
+        Args: never
+        Returns: {
+          bar_name: string
+          creator_name: string
+          item_id: string
+          item_type: Database["public"]["Enums"]["entity_type"]
+          name: string
+          named_at: string
+        }[]
       }
       decline_profile_position: { Args: { p_id: string }; Returns: undefined }
       decline_shared_glass: {
@@ -7614,6 +7632,13 @@ export type Database = {
           supplier_name: string
         }[]
       }
+      waiting_co_credits: {
+        Args: { p_profile_ids: string[] }
+        Returns: {
+          item_id: string
+          profile_id: string
+        }[]
+      }
       week_event: {
         Args: { p_event_id: string }
         Returns: {
@@ -7706,6 +7731,7 @@ export type Database = {
         | "other"
       claim_method: "note" | "email" | "instagram" | "phone"
       claim_status: "pending" | "approved" | "rejected"
+      co_creator_status: "pending" | "accepted" | "declined"
       credit_status: "suggested" | "claimed" | "verified"
       entity_type:
         | "cocktail"
@@ -7928,6 +7954,7 @@ export const Constants = {
       ],
       claim_method: ["note", "email", "instagram", "phone"],
       claim_status: ["pending", "approved", "rejected"],
+      co_creator_status: ["pending", "accepted", "declined"],
       credit_status: ["suggested", "claimed", "verified"],
       entity_type: [
         "cocktail",
