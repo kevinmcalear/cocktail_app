@@ -64,7 +64,8 @@ before(async () => {
   ids.gin = (await insert('items', { name: `Gin ${run}`, item_type: 'ingredient' })).id;
   ids.brandGin = (await insert('items', { name: `Brand Gin ${run}`, item_type: 'ingredient', generic_id: ids.gin })).id;
   ids.housePrep = (await insert('items', { name: `Secret cordial ${run}`, item_type: 'ingredient', bar_id: ids.bar, publish_mode: 'private' })).id;
-  ids.drink = (await insert('items', { name: `Changes Gimlet ${run}`, item_type: 'cocktail', bar_id: ids.bar, notes: 'Team only' })).id;
+  ids.drink = (await insert('items', { name: `Changes Gimlet ${run}`, item_type: 'cocktail', bar_id: ids.bar })).id;
+  await insert('item_notes', { item_id: ids.drink, body: 'Team only' });
   await insert('item_methods', { item_id: ids.drink, method_item_id: ids.stir, sort_order: 0 });
   await insert('recipes', { recipe_item_id: ids.drink, ingredient_item_id: ids.brandGin, amount: 60, unit: 'ml', sort_order: 0, preparation_notes: 'Freezer' });
   const line = (ingredient_item_id, amount, unit) => ({ id: null, ingredient_item_id, amount, unit, preparation_notes: 'Freezer', is_optional: false });

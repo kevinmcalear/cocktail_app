@@ -3,6 +3,7 @@ import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { uploadDrinkPhoto } from '@/components/drink/drinkImages';
 import { useUserId } from '@/ctx/AuthContext';
 import { dropdownKeys, refreshIngredients } from '@/hooks/useDropdowns';
+import { saveItemNotes } from '@/hooks/useItemNotes';
 import { savePrivateNote } from '@/hooks/usePrivateNote';
 import { recentEntry } from '@/hooks/useTrackRecent';
 import { useRefreshSpecs } from '@/hooks/useBulk';
@@ -162,8 +163,6 @@ export function useCreateDrink() {
         item_type: 'cocktail',
         bar_id: barId,
         description: draft.description.trim() || null,
-        // "Just me" notes are kept apart, as yours (below).
-        notes: privateNotes ? null : draft.notes.trim() || null,
         glassware_id: glassId,
         sketch_variant: draft.glassVariant ?? null,
         // One of the venue's real glasses, when one was picked; the database sets glassware_id to its kind.
@@ -226,12 +225,19 @@ export function useCreateDrink() {
         if (error) warnings.push(plainDbMessage(error) ?? 'The people who made it with you weren’t added. Add them on the drink’s page.');
       }
 
-      // "Just me": the notes are yours alone, never the drink's.
+      // "Just me": the notes are yours alone, never the drink's. Otherwise
+      // they're the drink's, for a role and up at a venue (E29).
       if (privateNotes && draft.notes.trim()) {
         try {
           await savePrivateNote(id, draft.notes);
         } catch {
           warnings.push(`Your note wasn’t saved: “${draft.notes.trim().slice(0, 80)}”. Add it again on the drink’s page.`);
+        }
+      } else if (draft.notes.trim()) {
+        try {
+          await saveItemNotes(id, draft.notes, barId ? (draft.notesLevel ?? null) : null);
+        } catch {
+          warnings.push(`The notes weren’t saved: “${draft.notes.trim().slice(0, 80)}”. Add them again on the drink’s page.`);
         }
       }
 

@@ -2486,6 +2486,45 @@ export type Database = {
           },
         ]
       }
+      item_notes: {
+        Row: {
+          body: string
+          item_id: string
+          read_level: number | null
+          updated_at: string
+          updated_by: string | null
+        }
+        Insert: {
+          body: string
+          item_id: string
+          read_level?: number | null
+          updated_at?: string
+          updated_by?: string | null
+        }
+        Update: {
+          body?: string
+          item_id?: string
+          read_level?: number | null
+          updated_at?: string
+          updated_by?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "item_notes_item_id_fkey"
+            columns: ["item_id"]
+            isOneToOne: true
+            referencedRelation: "app_item_presentation"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "item_notes_item_id_fkey"
+            columns: ["item_id"]
+            isOneToOne: true
+            referencedRelation: "items"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       item_prep: {
         Row: {
           actions: string[]

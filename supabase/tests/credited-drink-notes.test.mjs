@@ -1,6 +1,8 @@
 // Notes on a bar's credited drinks follow the bar's page, like the spec rows:
 // hidden from the public while the page isn't open, shown to catalog admins
 // and the bar's team (supabase/migrations/20261008050000_credited_drink_notes.sql).
+// Since 20261123300000_notes_by_role they live in item_notes with every other
+// drink's notes, and the page rule is part of its policy.
 // Runs against the local stack only: `npm run test:security`.
 import assert from 'node:assert/strict';
 import { execSync } from 'node:child_process';
@@ -47,19 +49,16 @@ async function serviceInsert(table, row) {
 /** What a client gets for a drink's notes from each place it could read them. */
 async function notesFor(client, key) {
   const id = ids.items[key];
-  const raw = await client.from('items').select('notes').eq('id', id);
   const view = await client.from('app_item_presentation').select('notes').eq('id', id);
-  const side = await client.from('credited_drink_notes').select('notes').eq('item_id', id);
+  const table = await client.from('item_notes').select('body').eq('item_id', id);
   return {
-    raw: raw.data?.[0]?.notes ?? null,
     view: view.data?.[0]?.notes ?? null,
-    side: side.data?.[0]?.notes ?? null,
+    table: table.data?.[0]?.body ?? null,
   };
 }
 
-const rawRow = async (key) => (await db.query('SELECT notes FROM public.items WHERE id = $1', [ids.items[key]])).rows[0].notes;
 const keptNotes = async (key) =>
-  (await db.query('SELECT notes FROM public.credited_drink_notes WHERE item_id = $1', [ids.items[key]])).rows[0]?.notes ?? null;
+  (await db.query('SELECT body FROM public.item_notes WHERE item_id = $1', [ids.items[key]])).rows[0]?.body ?? null;
 
 before(async () => {
   await db.connect();
@@ -75,13 +74,16 @@ before(async () => {
   ids.open = (await serviceInsert('profiles', { kind: 'bar', handle: `door${run}`, display_name: `Open Door ${run}`, bar_id: ids.openBar, is_public: true })).id;
   await serviceInsert('user_bars', { user_id: users.team.id, bar_id: ids.lockedBar, role_level: 10 });
 
-  // Seeded the way the 50 Best signatures are: shared, credited to the bar, notes on the insert.
-  const item = async (row) => (await serviceInsert('items', { item_type: 'cocktail', ...row })).id;
-  ids.items.locked = await item({ name: `Copper Sour ${run}`, description: 'Bright and tart.', notes: NOTE.locked, origin_bar_profile_id: ids.locked });
-  ids.items.unclaimed = await item({ name: `Owl Daiquiri ${run}`, notes: NOTE.unclaimed, origin_bar_profile_id: ids.unclaimed });
-  ids.items.open = await item({ name: `Door Highball ${run}`, notes: NOTE.open, origin_bar_profile_id: ids.open });
-  ids.items.classic = await item({ name: `Classic ${run}`, origin_bar_profile_id: ids.unclaimed });
-  await db.query('UPDATE public.items SET is_catalog = true, notes = $2 WHERE id = $1', [ids.items.classic, 'Spec from Punch.']);
+  // Seeded the way the 50 Best signatures are: shared, credited to the bar, with notes.
+  const item = async (row, notes) => {
+    const id = (await serviceInsert('items', { item_type: 'cocktail', ...row })).id;
+    if (notes) await serviceInsert('item_notes', { item_id: id, body: notes });
+    return id;
+  };
+  ids.items.locked = await item({ name: `Copper Sour ${run}`, description: 'Bright and tart.', origin_bar_profile_id: ids.locked }, NOTE.locked);
+  ids.items.unclaimed = await item({ name: `Owl Daiquiri ${run}`, origin_bar_profile_id: ids.unclaimed }, NOTE.unclaimed);
+  ids.items.open = await item({ name: `Door Highball ${run}`, origin_bar_profile_id: ids.open }, NOTE.open);
+  ids.items.classic = await item({ name: `Classic ${run}`, origin_bar_profile_id: ids.unclaimed, is_catalog: true }, 'Spec from Punch.');
 });
 
 after(async () => {
@@ -95,18 +97,9 @@ after(async () => {
 });
 
 describe("a credited drink's notes live behind the page", () => {
-  test('they leave the items row on insert; a classic keeps its own', async () => {
+  test('signed out: nothing from the view or the notes table', async () => {
     for (const key of ['locked', 'unclaimed', 'open']) {
-      assert.equal(await rawRow(key), null, key);
-      assert.equal(await keptNotes(key), NOTE[key], key);
-    }
-    assert.equal(await rawRow('classic'), 'Spec from Punch.');
-    assert.equal(await keptNotes('classic'), null);
-  });
-
-  test('signed out: nothing from items, the view or the notes table', async () => {
-    for (const key of ['locked', 'unclaimed', 'open']) {
-      assert.deepEqual(await notesFor(anon, key), { raw: null, view: null, side: null }, key);
+      assert.deepEqual(await notesFor(anon, key), { view: null, table: null }, key);
     }
     // The public projection has no notes column at all.
     assert.ok((await anon.from('published_items').select('notes').eq('id', ids.items.locked)).error);
@@ -114,7 +107,7 @@ describe("a credited drink's notes live behind the page", () => {
 
   test("a signed-in stranger can't read a locked drink's notes", async () => {
     for (const key of ['locked', 'unclaimed']) {
-      assert.deepEqual(await notesFor(users.stranger.client, key), { raw: null, view: null, side: null }, key);
+      assert.deepEqual(await notesFor(users.stranger.client, key), { view: null, table: null }, key);
     }
     // A Locked page's drink is its team's alone in items
     // (20261010100000_bar_page_direct_reads.sql); its card still reads: name and credit.
@@ -124,9 +117,7 @@ describe("a credited drink's notes live behind the page", () => {
   });
 
   test("the bar's team reads its own drink's notes", async () => {
-    const got = await notesFor(users.team.client, 'locked');
-    assert.equal(got.view, NOTE.locked);
-    assert.equal(got.side, NOTE.locked);
+    assert.deepEqual(await notesFor(users.team.client, 'locked'), { view: NOTE.locked, table: NOTE.locked });
     // Not another bar's.
     assert.equal((await notesFor(users.team.client, 'unclaimed')).view, null);
   });
@@ -137,46 +128,38 @@ describe("a credited drink's notes live behind the page", () => {
     }
   });
 
-  test("an open bar's drink shows its notes to anyone signed in", async () => {
-    const got = await notesFor(users.stranger.client, 'open');
-    assert.equal(got.view, NOTE.open);
-    assert.equal(got.side, NOTE.open);
+  test("an open bar's drink shows its notes to anyone signed in, and a classic's are everyone's", async () => {
+    assert.deepEqual(await notesFor(users.stranger.client, 'open'), { view: NOTE.open, table: NOTE.open });
+    assert.equal((await notesFor(users.stranger.client, 'classic')).view, 'Spec from Punch.');
   });
 
   test('locking the open bar hides them again', async () => {
     await db.query("UPDATE public.bars SET page_visibility = 'description' WHERE id = $1", [ids.openBar]);
-    assert.equal((await notesFor(users.stranger.client, 'open')).view, null);
+    assert.deepEqual(await notesFor(users.stranger.client, 'open'), { view: null, table: null });
     await db.query("UPDATE public.bars SET page_visibility = 'open' WHERE id = $1", [ids.openBar]);
   });
 });
 
 describe('editing a credited drink', () => {
-  test('notes written by a catalog admin are kept off the row; null keeps them, an empty string clears them', async () => {
-    const write = async (notes) => {
-      const { error } = await users.catalogAdmin.client.from('items').update({ notes }).eq('id', ids.items.unclaimed);
-      assert.ifError(error);
-    };
-    await write('Method: dry shake first.');
-    assert.equal(await rawRow('unclaimed'), null);
+  test('a catalog admin writes and clears the notes; they stay behind the page', async () => {
+    let { error } = await users.catalogAdmin.client.from('item_notes').update({ body: 'Method: dry shake first.' }).eq('item_id', ids.items.unclaimed);
+    assert.ifError(error);
     assert.equal(await keptNotes('unclaimed'), 'Method: dry shake first.');
     assert.equal((await notesFor(users.stranger.client, 'unclaimed')).view, null);
-
-    await write(null);
-    assert.equal(await keptNotes('unclaimed'), 'Method: dry shake first.');
-    // An update that doesn't touch notes keeps them too.
+    // An update to the drink doesn't touch them.
     await users.catalogAdmin.client.from('items').update({ description: 'Crisp.' }).eq('id', ids.items.unclaimed);
     assert.equal(await keptNotes('unclaimed'), 'Method: dry shake first.');
 
-    await write('');
+    ({ error } = await users.catalogAdmin.client.from('item_notes').delete().eq('item_id', ids.items.unclaimed));
+    assert.ifError(error);
     assert.equal(await keptNotes('unclaimed'), null);
-    assert.equal(await rawRow('unclaimed'), null);
-    await write(NOTE.unclaimed);
+    await serviceInsert('item_notes', { item_id: ids.items.unclaimed, body: NOTE.unclaimed });
   });
 
-  test('a stranger cannot write the notes table', async () => {
-    const insert = await users.stranger.client.from('credited_drink_notes').insert({ item_id: ids.items.classic, notes: 'x' });
+  test('a stranger cannot write the notes', async () => {
+    const insert = await users.stranger.client.from('item_notes').insert({ item_id: ids.items.classic, body: 'x' });
     assert.ok(insert.error);
-    await users.stranger.client.from('credited_drink_notes').update({ notes: 'x' }).eq('item_id', ids.items.open);
+    await users.stranger.client.from('item_notes').update({ body: 'x' }).eq('item_id', ids.items.open);
     assert.equal(await keptNotes('open'), NOTE.open);
   });
 
@@ -188,17 +171,13 @@ describe('editing a credited drink', () => {
     const { error } = await users.catalogAdmin.client.rpc('restore_drink_version', { p_item: ids.items.locked, p_version: 1 });
     assert.ifError(error);
     assert.equal(await keptNotes('locked'), null);
-    assert.equal(await rawRow('locked'), null);
-    await db.query('UPDATE public.items SET notes = $2 WHERE id = $1', [ids.items.locked, NOTE.locked]);
-    assert.equal(await keptNotes('locked'), NOTE.locked);
+    await serviceInsert('item_notes', { item_id: ids.items.locked, body: NOTE.locked });
   });
 
-  test('a drink that stops being credited (made a classic) gets its notes back on the row', async () => {
-    await db.query('UPDATE public.items SET is_catalog = true WHERE id = $1', [ids.items.open]);
-    assert.equal(await rawRow('open'), NOTE.open);
-    assert.equal(await keptNotes('open'), null);
-    await db.query('UPDATE public.items SET is_catalog = false WHERE id = $1', [ids.items.open]);
-    assert.equal(await rawRow('open'), null);
-    assert.equal(await keptNotes('open'), NOTE.open);
+  test('a drink that stops being credited (made a classic) keeps its notes, read like any classic', async () => {
+    await db.query('UPDATE public.items SET is_catalog = true WHERE id = $1', [ids.items.locked]);
+    assert.equal((await notesFor(users.stranger.client, 'locked')).view, NOTE.locked);
+    await db.query('UPDATE public.items SET is_catalog = false WHERE id = $1', [ids.items.locked]);
+    assert.equal((await notesFor(users.stranger.client, 'locked')).view, null);
   });
 });

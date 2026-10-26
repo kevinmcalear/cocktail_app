@@ -120,14 +120,18 @@ before(async () => {
   // Full spec, with a bartender note that must never reach the public.
   ids.items.penicillin = await item({
     name: `Penicillin ${run}`, item_type: 'cocktail', bar_id: ids.barOne, glassware_id: ids.items.rocks,
-    description: 'Scotch, honey, ginger, lemon.', notes: 'Bartender note: float the Islay last.', price: '22',
+    description: 'Scotch, honey, ginger, lemon.', price: '22',
     publish_mode: 'spec',
   });
   // Menu description only.
   ids.items.goldRush = await item({
     name: `Gold Rush ${run}`, item_type: 'cocktail', bar_id: ids.barOne, description: 'Bourbon, honey, lemon.',
-    notes: 'Bartender note: 30 ml honey.', publish_mode: 'description',
+    publish_mode: 'description',
   });
+  for (const [item_id, body] of [[ids.items.penicillin, 'Bartender note: float the Islay last.'], [ids.items.goldRush, 'Bartender note: 30 ml honey.']]) {
+    const { error } = await service.from('item_notes').insert({ item_id, body });
+    if (error) throw error;
+  }
   // Private, on the Guest menu (visibility 10).
   ids.items.houseSour = await item({ name: `House Sour ${run}`, item_type: 'cocktail', bar_id: ids.barOne });
   // Private, staff only.
@@ -232,6 +236,10 @@ describe('published drinks', () => {
     const seen = await publishedIds(client);
     assert.ok(seen.has(ids.items.penicillin) && seen.has(ids.items.goldRush));
     assert.ok(!seen.has(ids.items.houseSour) && !seen.has(ids.items.staffDrink));
+    for (const reader of [client, anon]) {
+      const { data } = await reader.from('item_notes').select('body').in('item_id', [ids.items.penicillin, ids.items.goldRush]);
+      assert.deepEqual(data ?? [], [], 'nor its notes');
+    }
   });
 
   test('a Guest sees their menu as before, and staff-only drinks stay hidden everywhere', async () => {
