@@ -7,10 +7,14 @@ import { space } from '@/constants/tokens';
 import { useAnswerCredit, useCreditsToCheck, type CreditToCheck } from '@/hooks/useCreditsToCheck';
 import { itemHref, type ItemCategory } from '@/lib/itemRoutes';
 
+import { useClaimNews } from './YourBarCard';
+
 /** On You: the first two inline, then All N for the rest (board w3-credits-to-check, A). */
 const INLINE = 2;
 
 export const CREDITS_LEAD = 'People say you made these with them. Nothing shows on your page until you say yes.';
+/** Just after your claim was approved, with credits named before it (board w3-credits-to-check, after the claim). */
+const WAITED_LEAD = 'It waited on your page for you. Nothing shows until you say yes.';
 
 /**
  * Credits to check, a card at the top of You where Jobs waiting sits: drinks
@@ -21,7 +25,9 @@ export function CreditsToCheckCard() {
   const ds = useDs();
   const router = useRouter();
   const credits = useCreditsToCheck().data ?? [];
+  const claim = useClaimNews();
   if (!credits.length) return null;
+  const waited = !!claim && credits.some((c) => Date.parse(c.named_at) <= Date.parse(claim.created_at));
 
   return (
     <Surface style={styles.card}>
@@ -33,10 +39,10 @@ export function CreditsToCheckCard() {
           {String(credits.length)}
         </DsText>
       </View>
-      <Caption tone="muted">{CREDITS_LEAD}</Caption>
+      <Caption tone="muted">{waited ? WAITED_LEAD : CREDITS_LEAD}</Caption>
       <CreditRows credits={credits.slice(0, INLINE)} />
       {credits.length > INLINE ? (
-        <Pressable role="link" onPress={() => router.push('/credits-to-check')} style={[styles.all, { borderTopColor: ds.c.line }]}>
+        <Pressable role="link" onPress={() => router.push('/credits-to-check' as Href)} style={[styles.all, { borderTopColor: ds.c.line }]}>
           <DsText variant="label">{`All ${credits.length}`}</DsText>
           <IconSymbol name="chevron.right" size={14} color={ds.c.muted} />
         </Pressable>

@@ -18,6 +18,13 @@ import { useShareLink } from './useShareLink';
 /** Long enough to open You after the approval; an old claim isn't news. */
 const NEWS_MS = 14 * 24 * 60 * 60 * 1000;
 
+/** A claim on your page approved in the last two weeks, while it's still news; else null. */
+export function useClaimNews() {
+  const claim = useMyPersonClaim().data;
+  const [now] = useState(() => Date.now());
+  return claim?.status === 'approved' && now - Date.parse(claim.created_at) < NEWS_MS ? claim : null;
+}
+
 /**
  * "It's you. 5 drinks are now credited to your account. 1 more waits for your
  * yes." at the top of You, once, the first time you open it after a claim on
@@ -25,9 +32,7 @@ const NEWS_MS = 14 * 24 * 60 * 60 * 1000;
  */
 export function ItsYou({ drinks, waiting = 0 }: { drinks: number; waiting?: number }) {
   const userId = useUserId();
-  const claim = useMyPersonClaim().data;
-  const [now] = useState(() => Date.now());
-  const approved = claim?.status === 'approved' && now - Date.parse(claim.created_at) < NEWS_MS ? claim.id : null;
+  const approved = useClaimNews()?.id ?? null;
   const seenKey = `its-you-seen-${userId}`;
   const [show, setShow] = useState(false);
   useEffect(() => {
@@ -49,7 +54,7 @@ export function ItsYou({ drinks, waiting = 0 }: { drinks: number; waiting?: numb
   return (
     <Body role="status" align="center" tone="accent">
       {drinks ? `It’s you. ${plural(drinks, 'drink')} ${drinks === 1 ? 'is' : 'are'} now credited to your account.` : 'It’s you. The page is yours now.'}
-      {waiting ? ` ${waiting} more ${waiting === 1 ? 'waits' : 'wait'} for your yes.` : ''}
+      {waiting ? ` ${drinks ? `${waiting} more` : plural(waiting, 'drink')} ${waiting === 1 ? 'waits' : 'wait'} for your yes.` : ''}
     </Body>
   );
 }
