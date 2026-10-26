@@ -42,3 +42,8 @@ assert.deepEqual(
   ['tequila', 'lime']
 );
 assert.equal(closeClassics([MEZCAL, LIME], SPECS, 2).length, 2);
+// Two lines of one kind: only the one shared is named.
+assert.deepEqual(
+  closeClassics([MEZCAL, LIME], [{ id: 'x', name: 'Two Agaves', ingredients: [MEZCAL, TEQUILA, LIME] }])[0].lines.map((l) => l.id),
+  ['mezcal', 'lime']
+);

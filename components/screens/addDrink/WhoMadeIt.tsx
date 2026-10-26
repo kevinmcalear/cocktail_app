@@ -22,7 +22,8 @@ import { Eyebrow } from './WizardChrome';
  */
 export function WhoMadeIt({ draft, set, venueName }: StepProps & { venueName: string | null }) {
   const ds = useDs();
-  const profile = useMyProfile().data ?? null;
+  const mine = useMyProfile();
+  const profile = mine.data ?? null;
   const me = profile ? { id: profile.id, name: profile.displayName } : null;
   const [who, setWho] = useState('');
   const people = usePublicPeople(who, { near: true }).data ?? [];
@@ -62,7 +63,8 @@ export function WhoMadeIt({ draft, set, venueName }: StepProps & { venueName: st
         </Caption>
       ))}
       <Field label="Add someone" value={who} onChangeText={setWho} placeholder="Full name or @handle" autoCapitalize="words" autoCorrect={false} maxLength={60} />
-      {who.trim().length >= 2 ? (
+      {/* Results wait for your profile, so the first person picked can't take your place on the list. */}
+      {who.trim().length >= 2 && !mine.isLoading ? (
         <PickList
           rows={people.filter((p) => !list.some((m) => m.id === p.id)).map(personRow)}
           empty="Nobody by that name or handle has a public profile yet."
