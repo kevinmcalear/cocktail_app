@@ -1,5 +1,5 @@
 import { useRouter } from 'expo-router';
-import { useRef, useState, type ComponentRef } from 'react';
+import { useRef, useState, type ComponentProps, type ComponentRef } from 'react';
 import { Platform, StyleSheet, View } from 'react-native';
 import { ScaleDecorator } from 'react-native-draggable-flatlist';
 
@@ -7,6 +7,7 @@ import { Caption, DrinkImage, DsText, PressableScale, Tag, useBreakpoint, useDs 
 import { dragGripStyle } from '@/components/recipe/FormScrollContainer';
 import { IconSymbol } from '@/components/ui/icon-symbol';
 import { displayFaces, layout, radius, space, type } from '@/constants/tokens';
+import { useCanDeleteDrink } from '@/hooks/useCocktails';
 import { itemHref, type ItemCategory } from '@/lib/itemRoutes';
 import { bothPrices } from '@/lib/menus';
 import type { MenuDrink } from '@/types/menus';
@@ -31,6 +32,8 @@ interface EditorRowProps {
   active: boolean;
   drag: () => void;
   onRemove: () => void;
+  /** Delete drink (with Undo), shown when the person may delete it. */
+  onDelete?: () => void;
   onMove: (from: number, to: number) => void;
   /** The other sections, for "Move to another section". */
   others: { key: string; name: string }[];
@@ -78,10 +81,11 @@ const CATEGORY: Record<MenuDrink['kind'], ItemCategory> = { cocktail: 'Cocktail'
  * paper, its name in the venue's display face, its line, for a venue its price
  * (the drink's own, changed right here: a field on desktop, a tap and an edit
  * under the row on a phone), then the grip on the right (b36). A ... button holds Move to
- * another section, Open the drink, Move to top (and on a phone, Remove). On a
+ * another section, Open the drink, Move to top (and on a phone, Remove), and
+ * Delete drink for the drink's own people. On a
  * desktop browser, Remove and ... show on hover or keyboard focus.
  */
-export function EditorRow({ drink, index: i, count, home, isNew, active, drag, onRemove, onMove, others, onMoveTo, web: dnd, pricing: rowPricing, alsoOn }: EditorRowProps) {
+export function EditorRow({ drink, index: i, count, home, isNew, active, drag, onRemove, onDelete, onMove, others, onMoveTo, web: dnd, pricing: rowPricing, alsoOn }: EditorRowProps) {
   const ds = useDs();
   const router = useRouter();
   const [menu, setMenu] = useState<'open' | 'sections'>('open');
@@ -108,6 +112,8 @@ export function EditorRow({ drink, index: i, count, home, isNew, active, drag, o
     if (to >= 0 && to < count) onMove(i, to);
   };
   const show = !quiet || hot || active || !!popover.anchor;
+  // Who may delete it is asked once the ... is first pressed (RowMenuWithDelete), not for every row.
+  const [asked, setAsked] = useState(false);
   const pick = (fn: () => void) => () => {
     popover.close();
     fn();
@@ -121,6 +127,8 @@ export function EditorRow({ drink, index: i, count, home, isNew, active, drag, o
           ...(i > 0 ? [{ label: 'Move to top', icon: 'arrow.up.to.line' as const, onPress: pick(() => onMove(i, 0)) }] : []),
           ...(quiet ? [] : [{ label: 'Remove', icon: 'xmark' as const, onPress: pick(onRemove) }]),
         ];
+  const deleteItem: RowMenuItem | null = onDelete ? { label: 'Delete drink', icon: 'trash', danger: true, onPress: pick(onDelete) } : null;
+  const rowMenuLabel = menu === 'sections' ? `Move ${drink.name} to` : `${drink.name} options`;
   // Wide: the menu's own size (b-desktop 26 on 30); a phone, a step down (22 on 26).
   const nameSize = quiet ? styles.nameWide : styles.namePhone;
   return (
@@ -166,6 +174,7 @@ export function EditorRow({ drink, index: i, count, home, isNew, active, drag, o
               aria-expanded={!!popover.anchor}
               onPress={() => {
                 setMenu('open');
+                setAsked(true);
                 popover.open(more.current);
               }}
               style={[styles.icon, !show && styles.hidden, popover.anchor ? { backgroundColor: ds.c.lineStrong } : null]}
@@ -194,11 +203,21 @@ export function EditorRow({ drink, index: i, count, home, isNew, active, drag, o
           </View>
         ) : null}
         {editing && pricing && !quiet ? <PriceEditor drink={drink} alsoOn={alsoOn} pricing={pricing} onClose={() => setEditing(false)} /> : null}
-        <RowMenu anchor={popover.anchor} label={menu === 'sections' ? `Move ${drink.name} to` : `${drink.name} options`} items={items} onClose={popover.close} />
+        {asked && deleteItem ? (
+          <RowMenuWithDelete drinkId={drink.id} deleteItem={menu === 'open' ? deleteItem : null} anchor={popover.anchor} label={rowMenuLabel} items={items} onClose={popover.close} />
+        ) : (
+          <RowMenu anchor={popover.anchor} label={rowMenuLabel} items={items} onClose={popover.close} />
+        )}
       </View>
       {dnd?.slot === 'after' ? <DropSlot /> : null}
     </ScaleDecorator>
   );
+}
+
+/** The row's menu with Delete drink at the end, for the drink's own people (useCanDeleteDrink reads the drink page's query). */
+function RowMenuWithDelete({ drinkId, deleteItem, items, ...menu }: { drinkId: string; deleteItem: RowMenuItem | null; items: RowMenuItem[] } & Omit<ComponentProps<typeof RowMenu>, 'items'>) {
+  const canDelete = useCanDeleteDrink(drinkId);
+  return <RowMenu {...menu} items={canDelete && deleteItem ? [...items, deleteItem] : items} />;
 }
 
 const styles = StyleSheet.create({

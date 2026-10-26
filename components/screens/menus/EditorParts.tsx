@@ -125,6 +125,7 @@ export function EditorSections({ editor, targetable, drag }: { editor: LayoutEdi
           home={home}
           made={editor.made}
           onRemove={(id) => editor.remove(s.key, id)}
+          onDelete={editor.deleteDrink}
           onReorder={(drinks) => editor.reorder(s.key, drinks)}
           onMove={(from, to) => editor.move(s.key, from, to)}
           onMoveTo={(id, toKey) => editor.moveTo(s.key, id, toKey)}
