@@ -1,6 +1,6 @@
 import assert from 'node:assert/strict';
 
-import { notesReaderOptions } from './notesReaders';
+import { notesLevelLabel, notesReaderOptions } from './notesReaders';
 
 // Little Rye on the E29 board: Apprentice with Employee, Takeover bartender
 // with Bartender, Head bartender with Drink Creator.
@@ -31,5 +31,7 @@ assert.equal(notesReaderOptions([], ['Rob', 'Ash', 'Rob', 'Jo', 'Sam', 'Kit', 'L
 // No team list yet: Admins by role name. No roles of its own: the built-in names.
 assert.equal(notesReaderOptions([], [], now)[4].detail, 'Admin');
 assert.equal(notesReaderOptions([], [], now)[1].detail, 'Employee, Bartender, Drink Creator, Admin');
+
+assert.equal(notesLevelLabel(30), 'Bartenders and up');
 
 console.log('notesReaders ok');

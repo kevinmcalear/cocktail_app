@@ -23,6 +23,7 @@ export async function saveItemNotes(itemId: string, text: string, level?: NotesL
   if (!data?.length) {
     // None yet, or one you can't read: then the insert fails rather than overwrite it.
     const { error: added } = await supabase.from('item_notes').insert({ item_id: itemId, ...change });
+    if (added?.code === '23505') throw new Error('This drink already has notes for a role above yours, so yours can’t replace them. Ask an Admin.');
     if (added) throw added;
   }
 }

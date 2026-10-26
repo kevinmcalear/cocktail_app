@@ -464,7 +464,7 @@ export function useCocktailDraftEditor({
                     methodIds,
                     null
                 );
-                await saveItemNotes(cocktailId, notes);
+                if (notes.trim()) await saveItemNotes(cocktailId, notes);
             } catch (e) {
                 await supabase.from("items").delete().eq("id", cocktailId);
                 throw e;

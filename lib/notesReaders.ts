@@ -28,6 +28,11 @@ const LABELS: Record<(typeof NOTES_LEVELS)[number], string> = {
   40: 'Admins',
 };
 
+/** A role level's row name, for saying the pick back ("Bartenders and up"). */
+export function notesLevelLabel(level: Exclude<NotesLevel, null>): string {
+  return LABELS[level];
+}
+
 /** Past this many names a row says its own level's and "and everyone above". */
 const MAX_NAMES = 5;
 
