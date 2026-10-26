@@ -6,7 +6,6 @@ import { useUpdateCocktail } from '@/hooks/useCocktails';
 
 jest.mock('@/ctx/AuthContext', () => ({ useAuth: () => ({ user: null }) }));
 jest.mock('@/hooks/useViewAs', () => ({ useViewAs: () => ({ viewAsRoleLevel: null }) }));
-jest.mock('@/store/useAppStore', () => ({ useAppStore: jest.fn() }));
 
 // The save hangs until the test settles it, so the optimistic state can be read first.
 let settle: (result: { data: unknown; error: unknown }) => void = () => {};
