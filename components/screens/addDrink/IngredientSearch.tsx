@@ -1,11 +1,10 @@
-import { useState, type ReactNode } from 'react';
+import { useState } from 'react';
 import { Platform, StyleSheet, TextInput, View } from 'react-native';
 
-import { Body, Caption, IngredientThumb, PressableScale, useDs } from '@/components/ds';
+import { Body, Button, Caption, PressableScale, useDs } from '@/components/ds';
 import { IconSymbol } from '@/components/ui/icon-symbol';
 import { fontFamilies, layout, radius, space, type } from '@/constants/tokens';
 import { NearPicks } from '@/components/search/NearPicks';
-import { useIngredientUse } from '@/hooks/useIngredientUse';
 import { useNearIngredients } from '@/hooks/useNearIngredients';
 import { typedUnit, type WizardPick } from '@/lib/drinkWizard';
 import { bottlesOfKind, closestIngredients, nearIngredient, sameIngredient, searchIngredients, type IngredientAlias } from '@/lib/ingredientNames';
@@ -16,7 +15,9 @@ import { looksMadeInHouse } from '@/lib/techniques/makeIt';
 import { getPreferredUnit } from '@/store/useSettingsStore';
 
 import { KindResults } from './KindResults';
+import { ResultRow, UseCaption } from './ResultRow';
 import { TypedLineCard } from './TypedLineCard';
+import type { WizardTakeover } from './WizardFrame';
 
 // The pill's accent border shows focus. Chrome draws `outline-style: auto` at any width, so it's switched off (as SearchField does).
 const NO_OUTLINE = Platform.OS === 'web' ? ({ outlineStyle: 'none' } as object) : null;
@@ -74,6 +75,12 @@ export interface IngredientSearchProps {
   brands?: boolean;
   /** "60 ml coconut fat-washed bacardi": says what it read, then adds the bottle to make house (check: ask how first). */
   onHouse?: (bottle: WizardPick, reading: HouseReading<CatalogIngredient>, check: boolean, pour?: TypedPour) => void;
+  /**
+   * A phone's wizard (Q16): a tap on the field takes the screen, with Cancel
+   * beside it and `caption` ("Adding to Ash Garden") under it; a pick or
+   * Cancel gives it back.
+   */
+  takeover?: (WizardTakeover & { caption: string }) | null;
 }
 
 /**
@@ -85,7 +92,7 @@ export interface IngredientSearchProps {
  * and steps into the house prep steps. Return takes the top hit; it adds nothing new while it asks.
  */
 export function IngredientSearch(props: IngredientSearchProps) {
-  const { ingredients, aliases = [], coreIds, loading, onPick, label, placeholder, amounts, autoFocus, initial = '', onCancel, onTyping, allowNew = true, onMake, onBottle, onLater, makeFirst, nameFirst, captions, shelf, backBar, brands, onHouse, ownVersion = true } = props;
+  const { ingredients, aliases = [], coreIds, loading, onPick, label, placeholder, amounts, autoFocus, initial = '', onCancel, onTyping, allowNew = true, onMake, onBottle, onLater, makeFirst, nameFirst, captions, shelf, backBar, brands, onHouse, ownVersion = true, takeover } = props;
   const ds = useDs();
   const [text, setQueryState] = useState(initial);
   // The whole pill rings in the accent while it has focus (no browser focus box inside it).
@@ -94,6 +101,13 @@ export function IngredientSearch(props: IngredientSearchProps) {
     setQueryState(q);
     onTyping?.(!!q.trim());
   };
+  // Closed from outside (Android's back) the search starts empty next time, as Cancel leaves it.
+  const over = !!takeover?.on;
+  const [wasOver, setWasOver] = useState(over);
+  if (wasOver !== over) {
+    setWasOver(over);
+    if (!over) setQueryState('');
+  }
   // "30 pommeau": the pour, then the name to look for. A name that is itself an ingredient ("7 Up") stays a name.
   const pour = amounts && !sameIngredient(text, ingredients, aliases) ? typedPour(text) : null;
   const query = pour ? pour.name : text;
@@ -115,7 +129,10 @@ export function IngredientSearch(props: IngredientSearchProps) {
   // Any new name can be made in house; one that sounds like a prep (a shrub, a cordial, a clarified juice), not a bought bottle, offers it first.
   const prepLike = looksMadeInHouse(query);
   const kind = PREP_KINDS.find((k) => k.id === guessKind(query) && k.id !== 'other')?.name.toLowerCase() ?? null;
-  const done = () => setQuery('');
+  const done = () => {
+    setQuery('');
+    takeover?.set(false);
+  };
   const makeRow = onMake && (ownVersion || !exact) ? (
     <ResultRow
       label={`Make “${q.charAt(0).toUpperCase()}${q.slice(1)}” in-house`}
@@ -171,40 +188,52 @@ export function IngredientSearch(props: IngredientSearchProps) {
 
   return (
     <View style={styles.stack}>
-      <View style={[styles.field, { backgroundColor: ds.c.surface, borderColor: focused ? ds.accentText : ds.c.line }]}>
-        <IconSymbol name={q || onCancel || !allowNew ? 'magnifyingglass' : 'plus'} size={18} color={ds.c.muted} />
-        <TextInput
-          onFocus={() => setFocused(true)}
-          onBlur={() => setFocused(false)}
-          value={text}
-          onChangeText={setQuery}
-          placeholder={placeholder ?? label}
-          placeholderTextColor={ds.c.muted}
-          aria-label={label}
-          autoFocus={autoFocus}
-          autoCorrect={false}
-          returnKeyType="done"
-          maxLength={80}
-          onSubmitEditing={() => {
-            // Return does what the reading says it will (Looks right), not the catalog's top hit. A swap left as it was keeps its line.
-            if (initial && text === initial) onCancel?.();
-            else if (reading) {
-              onHouse?.({ id: reading.bottles[0].id, name: reading.bottles[0].name ?? reading.base }, reading, false, pour ?? undefined);
-              done();
-            } else if (results[0]) pick({ id: results[0].id, name: results[0].name ?? query });
-            else if (allowNew && q && !loading && !near.length && onBottle && !prepLike) {
-              onBottle(Name, pour ?? undefined);
-              done();
-            } else if (allowNew && q && !loading && !near.length) pick({ id: null, name: q });
-          }}
-          style={[styles.input, type.body, { fontFamily: fontFamilies.body, color: ds.c.ink }, NO_OUTLINE]}
-        />
-        {onCancel ? (
-          <PressableScale onPress={onCancel} role="button" accessibilityLabel="Keep it as it was" style={styles.cancel}>
-            <IconSymbol name="xmark" size={16} color={ds.c.muted} />
-          </PressableScale>
-        ) : null}
+      {/* The same row with or without Cancel, so the field keeps its focus as the screen changes around it. */}
+      <View style={styles.fieldRow}>
+        <View style={[styles.field, styles.flex, { backgroundColor: ds.c.surface, borderColor: focused ? ds.accentText : ds.c.line }]}>
+          <IconSymbol name={q || onCancel || !allowNew ? 'magnifyingglass' : 'plus'} size={18} color={ds.c.muted} />
+          <TextInput
+            onFocus={() => {
+              setFocused(true);
+              takeover?.set(true);
+            }}
+            onBlur={() => setFocused(false)}
+            value={text}
+            onChangeText={setQuery}
+            placeholder={placeholder ?? label}
+            placeholderTextColor={ds.c.muted}
+            aria-label={label}
+            autoFocus={autoFocus}
+            autoCorrect={false}
+            returnKeyType="done"
+            maxLength={80}
+            onSubmitEditing={() => {
+              // Return does what the reading says it will (Looks right), not the catalog's top hit. A swap left as it was keeps its line.
+              if (initial && text === initial) onCancel?.();
+              else if (reading) {
+                onHouse?.({ id: reading.bottles[0].id, name: reading.bottles[0].name ?? reading.base }, reading, false, pour ?? undefined);
+                done();
+              } else if (results[0]) pick({ id: results[0].id, name: results[0].name ?? query });
+              else if (allowNew && q && !loading && !near.length && onBottle && !prepLike) {
+                onBottle(Name, pour ?? undefined);
+                done();
+              } else if (allowNew && q && !loading && !near.length) pick({ id: null, name: q });
+            }}
+            style={[styles.input, type.body, { fontFamily: fontFamilies.body, color: ds.c.ink }, NO_OUTLINE]}
+          />
+          {onCancel ? (
+            <PressableScale onPress={onCancel} role="button" accessibilityLabel="Keep it as it was" style={styles.cancel}>
+              <IconSymbol name="xmark" size={16} color={ds.c.muted} />
+            </PressableScale>
+          ) : null}
+        </View>
+        {over ? <Button label="Cancel" variant="ghost" onPress={done} accessibilityLabel="Cancel, add nothing" /> : null}
       </View>
+      {over && takeover ? (
+        <Caption tone="muted" style={styles.adding}>
+          {takeover.caption}
+        </Caption>
+      ) : null}
       {pour && q && !reading ? <Caption tone="muted">{`${pour.amount} ${typedUnit(q, pour.unit, getPreferredUnit())} of the one you pick`}</Caption> : null}
       {reading ? (
         <TypedLineCard
@@ -255,43 +284,15 @@ export function IngredientSearch(props: IngredientSearchProps) {
   );
 }
 
-/** "On your shelf" (or back bar), else how many drinks use it; a close name adds "tap to use it" (canvas 2A). */
-function UseCaption({ id, have, tap }: { id: string | null; have: string | null; tap: boolean }) {
-  const { data: n } = useIngredientUse(have ? null : id);
-  const text = [have ?? (n ? `In ${n} ${n === 1 ? 'drink' : 'drinks'}` : null), tap ? 'tap to use it' : null].filter(Boolean).join(' · ');
-  return text ? <Caption tone="muted">{text.charAt(0).toUpperCase() + text.slice(1)}</Caption> : null;
-}
-
-/** A found ingredient with its drawing, or an action row with its tile: make it in house (+, and on to the builder), or just the name (lines). */
-function ResultRow({ id, label, a11y, sub, caption, icon, onPress }: { id?: string; label: string; a11y?: string; sub?: string; caption?: ReactNode; icon?: 'make' | 'new'; onPress: () => void }) {
-  const ds = useDs();
-  return (
-    <PressableScale role="button" onPress={onPress} accessibilityLabel={a11y ?? label} accessibilityHint={sub} style={[styles.result, { borderBottomColor: ds.c.line }]}>
-      {icon ? (
-        <View style={[styles.tile, { backgroundColor: icon === 'make' ? ds.accentFill.fill : ds.c.raised }]}>
-          <IconSymbol name={icon === 'make' ? 'plus' : 'text.alignleft'} size={16} color={icon === 'make' ? ds.accentFill.text : ds.c.muted} />
-        </View>
-      ) : (
-        <IngredientThumb id={id} name={label} size={36} />
-      )}
-      <View style={styles.flex}>
-        <Body numberOfLines={icon ? 2 : 1}>{label}</Body>
-        {sub ? <Caption tone="muted">{sub}</Caption> : caption}
-      </View>
-      {icon === 'make' ? <IconSymbol name="chevron.right" size={14} color={ds.c.muted} /> : null}
-    </PressableScale>
-  );
-}
-
 const styles = StyleSheet.create({
   stack: { gap: space.md },
+  fieldRow: { flexDirection: 'row', alignItems: 'center', gap: space.sm },
+  adding: { paddingHorizontal: space.xs },
   field: { flexDirection: 'row', alignItems: 'center', gap: space.md, minHeight: 52, borderRadius: radius.pill, borderWidth: 1, paddingLeft: space.lg, paddingRight: space.xs },
   input: { flex: 1, minHeight: layout.minTapTarget },
   cancel: { width: layout.minTapTarget, height: layout.minTapTarget, alignItems: 'center', justifyContent: 'center' },
   results: { borderRadius: radius.control, borderWidth: 1, overflow: 'hidden' },
   label: { paddingHorizontal: space.md, paddingTop: space.md },
-  result: { flexDirection: 'row', alignItems: 'center', gap: space.md, minHeight: layout.minTapTarget + 4, paddingHorizontal: space.md, paddingVertical: space.xs, borderBottomWidth: StyleSheet.hairlineWidth },
-  tile: { width: 36, height: 36, borderRadius: radius.control, alignItems: 'center', justifyContent: 'center' },
   flex: { flex: 1 },
   loading: { padding: space.md },
 });

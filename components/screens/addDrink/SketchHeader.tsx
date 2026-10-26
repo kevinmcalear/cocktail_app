@@ -1,8 +1,8 @@
 import { useEffect, useState } from 'react';
-import { Pressable, StyleSheet } from 'react-native';
+import { Pressable, StyleSheet, View } from 'react-native';
 import Animated, { useAnimatedStyle, useSharedValue, withTiming } from 'react-native-reanimated';
 
-import { Caption, PressableScale, useDs } from '@/components/ds';
+import { Caption, Headline, PressableScale, Sheet, useDs } from '@/components/ds';
 import { AnimatedSketch } from '@/components/ds/AnimatedSketch';
 import { SketchDrawing } from '@/components/ds/SketchDrawing';
 import { IconSymbol } from '@/components/ui/icon-symbol';
@@ -19,6 +19,13 @@ import { PaperBand } from './PaperBand';
 const SEED = 'new-drink';
 /** On review, how long the finished drawing takes to fade before it's drawn again. */
 const FADE_FIRST_MS = 450;
+/**
+ * The steps where you type or pick from a list: on a phone the band is one
+ * row with the drawing as a thumbnail, so the step gets the room (canvas
+ * Create, Q17 D). Glass, ice, garnish and review, where the drawing is the
+ * point, keep it full.
+ */
+const COMPACT_STEPS: readonly WizardStep[] = ['name', 'ingredients', 'method', 'credits', 'notes', 'publish'];
 
 // The last drawing's inputs, so a keystroke that doesn't change the drink
 // hands SketchDrawing the same object (it caches the painted scene by it).
@@ -70,6 +77,8 @@ export function SketchHeader({ draft, step, barVariants, barIce, onTint, forMenu
   const reviewing = step === 'review';
   const [play, setPlay] = useState(0);
   const [colouring, setColouring] = useState(false);
+  const [showing, setShowing] = useState(false);
+  const compact = !band.rounded && COMPACT_STEPS.includes(step);
   const name = draft.name.trim() || 'New drink';
   // The draft's id once it has one: the saved drink is drawn with its id, so it keeps this drawing.
   const seed = draft.id ?? SEED;
@@ -77,7 +86,9 @@ export function SketchHeader({ draft, step, barVariants, barIce, onTint, forMenu
     <>
       <PaperBand
         {...band}
-        action={onTint ? <ColourButton name={name} onPress={() => setColouring(true)} /> : null}
+        compact={compact}
+        onShowArt={() => setShowing(true)}
+        action={onTint ? <ColourButton name={name} iconOnly={compact} onPress={() => setColouring(true)} /> : null}
         first={at === 0}
         progress={{ now: counted, of: COUNTED_STEPS, label: step === 'review' ? 'Review' : `${counted} of ${COUNTED_STEPS}` }}
         art={
@@ -97,6 +108,16 @@ export function SketchHeader({ draft, step, barVariants, barIce, onTint, forMenu
         note={reviewing ? 'Tap to draw it again' : forMenu ? `For ${forMenu}` : 'Updates as you go'}
         artLabel="Sketch of the drink so far"
       />
+      {compact ? (
+        <Sheet style={styles.sheet} visible={showing} onClose={() => setShowing(false)} accessibilityLabel={`Sketch of ${name} so far`} header={<Headline role="heading">{name}</Headline>}>
+          <View style={styles.full}>
+            <SketchDrawing inputs={inputs} seed={seed} detail="full" />
+          </View>
+          <Caption tone="muted" style={styles.fullNote}>
+            Updates as you go
+          </Caption>
+        </Sheet>
+      ) : null}
       {onTint ? <DraftColourSheet visible={colouring} onClose={() => setColouring(false)} name={name} inputs={inputs} seed={seed} value={draft.tint ?? null} onChange={onTint} /> : null}
     </>
   );
@@ -107,14 +128,16 @@ export function SketchHeader({ draft, step, barVariants, barIce, onTint, forMenu
  * band folds while the keyboard is up, and removing a glass view mid-fold
  * tripped Reanimated's layout bookkeeping in iOS debug builds.
  */
-function ColourButton({ name, onPress }: { name: string; onPress: () => void }) {
+function ColourButton({ name, iconOnly, onPress }: { name: string; iconOnly?: boolean; onPress: () => void }) {
   const ds = useDs();
   return (
-    <PressableScale onPress={onPress} accessibilityLabel={`Sketch colour, ${name}`} style={[styles.colour, { backgroundColor: backbar.light.glass }]}>
+    <PressableScale onPress={onPress} accessibilityLabel={`Sketch colour, ${name}`} style={[styles.colour, iconOnly && styles.colourIcon, { backgroundColor: backbar.light.glass }]}>
       <IconSymbol name="paintpalette.fill" size={16} color={ds.c.sketchInk} />
-      <Caption color={ds.c.sketchInk} style={styles.colourLabel}>
-        Colour
-      </Caption>
+      {iconOnly ? null : (
+        <Caption color={ds.c.sketchInk} style={styles.colourLabel}>
+          Colour
+        </Caption>
+      )}
     </PressableScale>
   );
 }
@@ -137,4 +160,9 @@ const styles = StyleSheet.create({
   passThrough: { pointerEvents: 'none' },
   colour: { flexDirection: 'row', alignItems: 'center', gap: space.xs, minHeight: layout.minTapTarget, paddingHorizontal: space.md, borderRadius: radius.pill },
   colourLabel: { fontFamily: fontFamilies.bodySemiBold },
+  // The compact band's Colour: a round button like Back.
+  colourIcon: { width: layout.minTapTarget, paddingHorizontal: 0, justifyContent: 'center' },
+  full: { width: '100%', maxWidth: 320, aspectRatio: 1, alignSelf: 'center', borderRadius: radius.card, borderCurve: 'continuous', overflow: 'hidden' },
+  sheet: { paddingHorizontal: space.xl, paddingBottom: space.xxl },
+  fullNote: { alignSelf: 'center', marginTop: space.md },
 });

@@ -21,6 +21,7 @@ import { getPreferredUnit } from '@/store/useSettingsStore';
 
 import type { TrailItem } from './Trail';
 import { DragRow } from './DragRow';
+import { NudgeCard } from './NudgeCard';
 import { BalanceCard } from './GoesWith';
 import { IngredientSearch, type CatalogIngredient } from './IngredientSearch';
 import { IngredientSuggestions } from './IngredientSuggestions';
@@ -33,6 +34,7 @@ import { useCombineDrop } from './useCombineDrop';
 import { useMakePrep } from './useMakePrep';
 import { useTypedHouse } from './useTypedHouse';
 import { WizardNotice } from './WizardChrome';
+import { useWizardTakeover } from './WizardFrame';
 
 /** How long "Removed … Undo" stays. */
 const UNDO_MS = 10000;
@@ -79,7 +81,11 @@ interface IngredientsStepProps extends StepProps {
  */
 export function IngredientsStep({ draft, set, ingredients, loading, aliases = [], coreIds, forDrink = true, shelf, backBar, balance = true, lineDetail, lineBelow, stock, placeholder, onNewBottle, inlinePrep, bar, trail }: IngredientsStepProps) {
   const ds = useDs();
+  // On a phone the add field takes the screen while it's in use (Q16): the rest goes to null in place, so the field keeps its focus. There's no typing outside it.
+  const takeover = useWizardTakeover();
   const [typing, setTyping] = useState(false);
+  const searching = takeover ? takeover.on : false;
+  const quiet = takeover ? takeover.on : typing;
   const [swapKey, setSwapKey] = useState<string | null>(null);
   const [removed, setRemoved] = useExpiring<{ line: WizardLine; at: number }>(UNDO_MS);
   const [nudgeOff, setNudgeOff] = useState(false);
@@ -127,6 +133,7 @@ export function IngredientsStep({ draft, set, ingredients, loading, aliases = []
   // Lines typed or pasted as made house ask first, then the drink's name does.
   const typed = useTypedHouse({ draft, set, lineFor, add: (pick, pour) => add(pick, undefined, false, pour), makeHouse });
   const nudge = typed.next ?? nameNudge;
+  const nudgeLine = nudge ? draft.lines.find((l) => l.key === nudge.key) : undefined;
   const make = prep.make;
   const undo = () => {
     if (!removed) return;
@@ -167,7 +174,7 @@ export function IngredientsStep({ draft, set, ingredients, loading, aliases = []
 
   return (
     <View style={styles.stack}>
-      {draft.lines.length ? (
+      {draft.lines.length && !searching ? (
         <View role="list" aria-label="In the drink">
           {draft.lines.map((l, i) => (
             <DragRow key={l.key} index={i} onDrop={drop} onMove={forDrink ? combine.onMove : undefined} onHeight={(h) => (heights.current[l.key] = h)}>
@@ -238,26 +245,14 @@ export function IngredientsStep({ draft, set, ingredients, loading, aliases = []
           ))}
         </View>
       ) : null}
-      {stock?.footer}
-      {draft.lines.length > 1 ? <Caption tone="muted">{forDrink ? 'Hold a line by its grip and move it over another. Let go to combine them; move away to just reorder.' : 'Hold a grip and move it to reorder.'}</Caption> : null}
+      {searching ? null : stock?.footer}
+      {draft.lines.length > 1 && !searching ? <Caption tone="muted">{forDrink ? 'Hold a line by its grip and move it over another. Let go to combine them; move away to just reorder.' : 'Hold a grip and move it to reorder.'}</Caption> : null}
 
-      {nudge ? (
-        <View style={[styles.nudge, { backgroundColor: ds.c.surface }]}>
-          <Body>{`${nudge.from === 'typed' ? 'You wrote' : 'The name says'} ${nudge.phrase}. Make the ${draft.lines.find((l) => l.key === nudge.key)?.name} that way?`}</Body>
-          <View style={styles.nudgeButtons}>
-            <Button
-              label="Make it in-house"
-              onPress={() => {
-                const line = draft.lines.find((l) => l.key === nudge.key);
-                if (line) makeHouse(line, nudge.technique, nudge.adjunct);
-              }}
-            />
-            <Button label="Not now" variant="secondary" onPress={() => (nudge.from === 'typed' ? typed.drop(nudge.key) : setNudgeOff(true))} />
-          </View>
-        </View>
+      {nudge && !searching ? (
+        <NudgeCard nudge={nudge} name={nudgeLine?.name} onMake={() => nudgeLine && makeHouse(nudgeLine, nudge.technique, nudge.adjunct)} onNotNow={() => (nudge.from === 'typed' ? typed.drop(nudge.key) : setNudgeOff(true))} />
       ) : null}
 
-      {removed ? (
+      {removed && !searching ? (
         <View role="alert" style={[styles.undo, { backgroundColor: ds.c.raised }]}>
           <Body style={styles.flex} numberOfLines={1}>{`Removed ${removed.line.name}`}</Body>
           <Button label="Undo" variant="ghost" onPress={undo} accessibilityLabel={`Undo removing ${removed.line.name}`} />
@@ -276,14 +271,15 @@ export function IngredientsStep({ draft, set, ingredients, loading, aliases = []
         onLater={forDrink ? (name, pour) => add({ id: null, name: capitalizeFirst(name) }, undefined, true, pour) : undefined}
         onHouse={forDrink ? typed.typed : undefined}
         captions={forDrink}
+        takeover={takeover ? { ...takeover, caption: `Adding to ${draft.name.trim() || 'your drink'}` } : null}
       />
-      {forDrink && !typing ? <Button label="Paste a whole spec" variant="ghost" size="sm" style={styles.paste} onPress={() => setPasting(true)} /> : null}
-      {toFinish ? <WizardNotice>{`${toFinish} went to the finish.`}</WizardNotice> : null}
+      {forDrink && !quiet ? <Button label="Paste a whole spec" variant="ghost" size="sm" style={styles.paste} onPress={() => setPasting(true)} /> : null}
+      {toFinish && !searching ? <WizardNotice>{`${toFinish} went to the finish.`}</WizardNotice> : null}
       {prep.builder}
 
       {/* The balance sits right under the field, then what goes with it (Flavor Atlas order). */}
-      {forDrink && balance && !typing ? <BalanceCard lines={poured} ingredients={ingredients} onAdd={(name) => add(pickByName(name, ingredients))} /> : null}
-      {typing || !forDrink ? null : <IngredientSuggestions draft={draft} set={set} poured={poured} ingredients={ingredients} onAdd={add} />}
+      {forDrink && balance && !quiet ? <BalanceCard lines={poured} ingredients={ingredients} onAdd={(name) => add(pickByName(name, ingredients))} /> : null}
+      {quiet || !forDrink ? null : <IngredientSuggestions draft={draft} set={set} poured={poured} ingredients={ingredients} onAdd={add} />}
     </View>
   );
 }
@@ -291,8 +287,6 @@ export function IngredientsStep({ draft, set, ingredients, loading, aliases = []
 const styles = StyleSheet.create({
   stack: { gap: space.md },
   swap: { paddingVertical: space.md, borderBottomWidth: StyleSheet.hairlineWidth },
-  nudge: { gap: space.md, borderRadius: radius.control, padding: space.lg },
-  nudgeButtons: { flexDirection: 'row', flexWrap: 'wrap', gap: space.sm },
   undo: { flexDirection: 'row', alignItems: 'center', gap: space.md, borderRadius: radius.control, paddingLeft: space.lg, paddingRight: space.xs },
   flex: { flex: 1 },
   paste: { alignSelf: 'flex-start' },
