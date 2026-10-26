@@ -28,7 +28,7 @@ export const STEP_NAMES: Record<VenueStep, string> = {
 export const STEP_LINES: Record<VenueStep, string> = {
   find: 'On Cocktail, or add it',
   place: 'Address, hours, contact',
-  look: 'Logo, colours, menu type',
+  look: 'Logo, colours, font',
   visibility: 'Your page, menus, specs',
   team: 'Invite who works here',
   claim: 'Last: Instagram, a call or your website',

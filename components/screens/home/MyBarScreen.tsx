@@ -1,4 +1,5 @@
-import { useState } from 'react';
+import { useLocalSearchParams, useRouter } from 'expo-router';
+import { useEffect, useState } from 'react';
 import { FlatList, StyleSheet, useWindowDimensions, View } from 'react-native';
 
 import { Body, Caption, dragDismissesKeyboard, Title, useBreakpoint, useDs, useGutter } from '@/components/ds';
@@ -51,6 +52,18 @@ export function MyBarScreen() {
   const tileCols = useTileCols();
   const cols = wide ? (window.width >= 1760 ? 4 : 3) : tileCols;
   const [adding, setAdding] = useState<AddFilter | null>(null);
+  // ?add=bottles opens the search on Bottles (Bring in's "Search by name instead").
+  const router = useRouter();
+  const { add } = useLocalSearchParams<{ add?: string }>();
+  const [seenAdd, setSeenAdd] = useState<string>();
+  if (add !== seenAdd) {
+    setSeenAdd(add);
+    if (add === 'bottles') setAdding('bottles');
+  }
+  // Taken off the address once seen, so the next one opens it again.
+  useEffect(() => {
+    if (add) router.setParams({ add: undefined });
+  }, [add, router]);
   const [snapping, setSnapping] = useState(false);
   const [opened, setOpened] = useState<ShelfItem | null>(null);
   const [sort, setSort] = useState<ShelfSort>('newest');

@@ -1,4 +1,5 @@
 import { fireEvent, screen } from '@testing-library/react-native';
+import { Share } from 'react-native';
 
 import { renderWithTamagui } from '@/jest.setup';
 
@@ -7,6 +8,7 @@ import { ShareMenuSheet } from './ShareMenuSheet';
 const mockPush = jest.fn();
 const mockShare = jest.fn();
 
+jest.mock('burnt', () => ({ toast: jest.fn() }));
 jest.mock('expo-router', () => ({ useRouter: () => ({ push: mockPush, replace: jest.fn(), back: jest.fn(), canGoBack: () => true }) }));
 jest.mock('@/hooks/useActiveVenue', () => ({ useActiveVenue: () => ({ venues: [] }) }));
 jest.mock('@/hooks/useMenuMutations', () => ({ useShareMenu: () => ({ mutateAsync: mockShare, isPending: false }) }));
@@ -43,5 +45,15 @@ describe('ShareMenuSheet', () => {
   test('a shared menu shows its readable link', async () => {
     await renderWithTamagui(<ShareMenuSheet menu={{ ...menu, sharedAt: '2026-10-12T00:00:00Z' }} onClose={() => {}} />);
     expect(screen.getByText(/\/m\/saturday-at-home$/)).toBeTruthy();
+  });
+
+  test('Share link sends the link once (Q31)', async () => {
+    const native = jest.spyOn(Share, 'share').mockResolvedValue({ action: 'sharedAction', activityType: undefined });
+    await renderWithTamagui(<ShareMenuSheet menu={{ ...menu, sharedAt: '2026-10-12T00:00:00Z' }} onClose={() => {}} />);
+    await fireEvent.press(screen.getByRole('button', { name: 'Share link' }));
+    expect(native).toHaveBeenCalledTimes(1);
+    const [content] = native.mock.calls[0];
+    expect(content).toEqual({ url: expect.stringMatching(/\/m\/saturday-at-home$/), title: 'Saturday at home' });
+    native.mockRestore();
   });
 });

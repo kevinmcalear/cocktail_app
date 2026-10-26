@@ -40,6 +40,8 @@ assert.deepEqual(localReading('- Campari\nLillet Blanc', 'bottles').bottles.map(
 const reading = { kind: 'menu' as const, menu: { title: 'Little Rye, Spring', sections: [{ name: 'A', lines: [{ name: 'Negroni', price: null, ingredients: [] }] }, { name: 'B', lines: [{ name: 'Daiquiri', price: null, ingredients: [] }] }] }, recipes: [], bottles: [] };
 assert.deepEqual(readingSteps({ pages: 2, reading: null, matched: null }).map((s) => [s.label, s.state]), [['Reading 2 pages', 'now'], ['Matching to your bar', 'next']]);
 const steps = readingSteps({ pages: 2, reading, matched: null });
+// The catalog still downloading: how far it's got, on the matching step.
+assert.equal(readingSteps({ pages: 1, reading, matched: null, catalog: 0.375 }).find((s) => s.state === 'now')?.detail, '· getting the catalog, 38%');
 assert.deepEqual(steps.map((s) => s.label), ['Found a menu: Little Rye, Spring', '2 drinks in 2 sections', 'Matching to your bar', 'Reading ingredients for new drinks']);
 const done = readingSteps({ pages: 2, reading, matched: { have: 1, total: 2, newDrinks: 1 } });
 assert.equal(done[2].detail, '· 1 of 2 already yours');

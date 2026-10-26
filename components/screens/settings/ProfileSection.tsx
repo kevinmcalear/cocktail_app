@@ -86,10 +86,10 @@ export function ProfileSection() {
 
       <View style={styles.names}>
         <View style={styles.name}>
-          <Field label="First name" value={firstName} onChangeText={setFirstName} autoComplete="given-name" />
+          <Field label="First name" value={firstName} onChangeText={setFirstName} autoComplete="given-name" autoCapitalize="words" />
         </View>
         <View style={styles.name}>
-          <Field label="Last name" value={lastName} onChangeText={setLastName} autoComplete="family-name" />
+          <Field label="Last name" value={lastName} onChangeText={setLastName} autoComplete="family-name" autoCapitalize="words" />
         </View>
       </View>
       {nameChanged ? (

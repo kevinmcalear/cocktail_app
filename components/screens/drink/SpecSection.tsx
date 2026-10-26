@@ -3,7 +3,6 @@ import { useState, type ReactNode } from 'react';
 import { StyleSheet, View } from 'react-native';
 
 import { Body, Button, Caption, Headline, LockedSection, SpecRow, useDs } from '@/components/ds';
-import { IconSymbol } from '@/components/ui/icon-symbol';
 import { radius, space } from '@/constants/tokens';
 import { Choice } from '@/components/screens/batch/BatchParts';
 import { HouseMadeSheet } from './HouseMadeSheet';
@@ -64,7 +63,6 @@ function RatioBar({ shares }: { shares: { key: string; share: number }[] }) {
  * withheld stays on the page as a locked section that says who can open it.
  */
 export function SpecSection({ itemId, barId, recipes, preview, heading = 'Spec', caption, missing = [], listed = [], make, riff, children }: SpecSectionProps) {
-  const ds = useDs();
   const router = useRouter();
   // The same rule as the drink page's Batch and the server's view: levels, moved by the role's specs grant or revoke.
   const { access, levels } = useSpecAccess(itemId, barId, preview);
@@ -115,12 +113,6 @@ export function SpecSection({ itemId, barId, recipes, preview, heading = 'Spec',
         {measured ? <Choice label="Read the amounts in" options={UNITS} value={unit} onChange={setSpecUnit} /> : null}
       </View>
       {shares ? <RatioBar shares={shares} /> : null}
-      {!access.amounts ? (
-        <View style={styles.lockNote}>
-          <IconSymbol name="lock.fill" size={13} color={ds.c.muted} />
-          <Caption tone="muted">Amounts open at {opensAt(levels?.measurement)}</Caption>
-        </View>
-      ) : null}
       <View>
         {lines.map((l) => (
           <SpecRow
@@ -166,6 +158,5 @@ const styles = StyleSheet.create({
   head: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', gap: space.md, flexWrap: 'wrap' },
   title: { flexDirection: 'row', alignItems: 'baseline', gap: space.sm, flexShrink: 1, flexWrap: 'wrap' },
   ratio: { flexDirection: 'row', height: 6, borderRadius: radius.pill, overflow: 'hidden', gap: 2 },
-  lockNote: { flexDirection: 'row', alignItems: 'center', gap: space.xs },
   riff: { gap: space.sm },
 });

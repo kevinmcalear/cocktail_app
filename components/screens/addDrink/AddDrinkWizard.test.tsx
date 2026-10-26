@@ -244,7 +244,7 @@ describe('AddDrinkWizard', () => {
     await laidOut();
     await fireEvent.press(screen.getByRole('button', { name: 'Gin, 45 ml' }));
     await fireEvent.press(screen.getByRole('button', { name: 'Swap Gin for another ingredient' }));
-    await fireEvent.changeText(screen.getByLabelText('Swap Gin for…'), 'verm');
+    await fireEvent.changeText(screen.getByLabelText('Rename Gin or pick another'), 'verm');
     await fireEvent.press(screen.getByRole('button', { name: 'Sweet Vermouth' }));
     expect(useDrinkWizardStore.getState().kept.home.draft.lines).toEqual([{ key: 'k1', id: 'vermouth', name: 'Sweet Vermouth', amount: '45', unit: 'ml' }]);
   });

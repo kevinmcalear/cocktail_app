@@ -1,13 +1,14 @@
-import { useState } from 'react';
+import { useMemo, useState } from 'react';
 import { ScrollView, StyleSheet, useWindowDimensions, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import { Button, Caption, DsText, Field, ReviewRow, TextLink, Title, useDs, useGutter } from '@/components/ds';
 import { radius, space } from '@/constants/tokens';
+import { useBringInMatchData } from '@/hooks/useBringInMatchData';
 import type { VenueBottle } from '@/hooks/useBulk';
 import { shelfOrder, type ShelfSpot } from '@/lib/bringIn';
 import { plainKind, type MatchData } from '@/lib/bringInMatch';
-import { matchIngredient, type CatalogItem } from '@/lib/match';
+import { catalogIndex, matchIngredient, type CatalogItem } from '@/lib/match';
 import type { AnythingReading, ReadFile } from '@/lib/readAnything';
 import type { BottleReading } from '@/supabase/functions/_shared/bottleRead';
 
@@ -28,7 +29,7 @@ export function bottleOutcome(reading: BottleReading, data: MatchData, decision:
   if (decision && 'skip' in decision) return { state: 'skip', why: 'Skipped' };
   const read = decision && 'typed' in decision ? { ...reading, name: decision.typed, brand: null } : reading;
   const match = matchIngredient(read, data.catalog, data.venueId, data.aliases);
-  const owned = (item: CatalogItem) => (data.venueId ? item.barId === data.venueId || data.catalog.some((c) => c.barId === data.venueId && c.genericId === item.id) : data.shelf.includes(item.id));
+  const owned = (item: CatalogItem) => (data.venueId ? item.barId === data.venueId || !!catalogIndex(data.catalog).byKind.get(item.id)?.some((e) => e.item.barId === data.venueId) : data.shelf.includes(item.id));
   if (match.kind === 'one') return owned(match.item) ? { state: 'have', item: match.item } : { state: 'add', item: match.item };
   if (match.kind === 'pick') {
     const chosen = match.items.find((i) => decision && 'pick' in decision && i.id === decision.pick);
@@ -66,7 +67,7 @@ export function BottlesCheck({ reading, files, data, where, saving, error, onCan
   const [decisions, setDecisions] = useState<Record<string, Decision>>({});
   const [typing, setTyping] = useState<string | null>(null);
   const [typed, setTyped] = useState('');
-  const spots = shelfOrder(reading);
+  const spots = useMemo(() => shelfOrder(reading), [reading]);
   const keyOf = (spot: ShelfSpot) => `${spot.kind}:${spot.index}`;
   const decide = (spot: ShelfSpot, d: Decision | null) =>
     setDecisions((prev) => {
@@ -76,12 +77,26 @@ export function BottlesCheck({ reading, files, data, where, saving, error, onCan
       return next;
     });
 
-  const outcomes = spots.map((spot) => {
-    const d = decisions[keyOf(spot)];
-    if (spot.kind === 'bottle') return bottleOutcome(spot.reading, data, d);
-    if (d && 'typed' in d) return bottleOutcome({ brand: null, name: d.typed, kind: null, abv: null }, data, d);
-    return d ? ({ state: 'skip', why: 'Skipped' } as const) : null;
-  });
+  // A name typed in is matched as the photo's bottles were (on the server, with them); its row stays unread until then.
+  const names = [...new Set(Object.values(decisions).flatMap((d) => ('typed' in d ? [d.typed] : [])))];
+  const withTyped = useBringInMatchData(data.venueId, names.length > 0, [reading.kind === 'bottles' ? reading.bottles : [], ...names.map((name) => [{ name }])]);
+  const typedData = names.length ? withTyped : data;
+
+  // Matched once for the photo and again only when a pick changes: not as you type, and not while saving
+  // (the save fills the shelf, which would turn its own bottles to "already there" under the button).
+  const [sent, setSent] = useState<(BottleOutcome | null)[] | null>(null);
+  const outcomes = useMemo(
+    () =>
+      saving && sent
+        ? sent
+        : spots.map((spot) => {
+            const d = decisions[`${spot.kind}:${spot.index}`];
+            if (spot.kind === 'bottle') return bottleOutcome(spot.reading, typedData ?? data, d);
+            if (d && 'typed' in d) return typedData ? bottleOutcome({ brand: null, name: d.typed, kind: null, abv: null }, typedData, d) : null;
+            return d ? ({ state: 'skip', why: 'Skipped' } as const) : null;
+          }),
+    [saving, sent, spots, decisions, data, typedData]
+  );
   const count = (s: BottleOutcome['state']) => outcomes.filter((o) => o?.state === s).length;
   const adding = count('add') + count('make') + count('pick');
   const unread = outcomes.filter((o) => o === null).length;
@@ -107,6 +122,7 @@ export function BottlesCheck({ reading, files, data, where, saving, error, onCan
       if (o?.state === 'make') venue.push(o.bottle);
       if (o?.state === 'pick' && o.plain) put(o.plain);
     }
+    setSent(outcomes);
     onSave({ shelf: [...new Set(shelf)], venue, had: count('have') });
   };
 

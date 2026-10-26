@@ -48,8 +48,6 @@ export async function pickPhotoFolder({ folder }: { folder: boolean }): Promise<
       input.click();
     });
   }
-  const { status } = await ImagePicker.requestMediaLibraryPermissionsAsync();
-  if (status !== 'granted') throw new Error('Allow access to your photos to add them.');
   const result = await ImagePicker.launchImageLibraryAsync({ mediaTypes: ['images'], allowsMultipleSelection: true, selectionLimit: MAX_FOLDER_PHOTOS, quality: 0.8 });
   if (result.canceled) return { name: null, photos: [] };
   return {

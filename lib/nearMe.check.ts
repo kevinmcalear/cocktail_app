@@ -63,6 +63,8 @@ assert.deepEqual(early.map((r) => r.venue_profile_id), ['b']);
 
 // --- Photon results as bar addresses ---
 assert.equal(photonUrl('  dead rabbit & co '), 'https://photon.komoot.io/api/?q=dead%20rabbit%20%26%20co&limit=6');
+// Near the device: snapped to about 1 km, nothing finer.
+assert.equal(photonUrl('water st', 6, { latitude: 40.70331, longitude: -74.01072 }), 'https://photon.komoot.io/api/?q=water%20st&limit=6&lat=40.7&lon=-74.01');
 const bar = venueAddressFrom({
   geometry: { type: 'Point', coordinates: [-74.0107, 40.7033] },
   properties: {

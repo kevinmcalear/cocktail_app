@@ -7,6 +7,7 @@ import type { RankVenue } from '@/hooks/useRankings';
 import { allRowsById } from '@/lib/allRows';
 import { viewerScoped } from '@/lib/authCache';
 import type { PublicBrand } from '@/lib/brand';
+import { getKnownDeviceLocation } from '@/lib/deviceLocation';
 import { citiesFrom, findDrinks, orderDrinks, type City } from '@/lib/discover';
 import { heroPicture, type ItemImageLink } from '@/lib/itemImages';
 import {
@@ -14,6 +15,7 @@ import {
   ADDRESS_MIN_CHARS,
   areaParams,
   photonUrl,
+  snapNearMe,
   splitEarly,
   venueAddressesFrom,
   type Area,
@@ -26,6 +28,8 @@ export interface DrinkList {
   id: string;
   name: string;
   imageUrl: string | null;
+  /** Its other names, for matching a menu's name to it. Missing on a list cached before they were read. */
+  aliases?: string[];
 }
 
 /**
@@ -41,12 +45,24 @@ export function useDrinkLists(enabled = true) {
     queryFn: async (): Promise<DrinkList[]> => {
       const { data, error } = await supabase
         .from('items')
-        .select('id, name, item_images ( angle, sort_order, is_generated, images ( url ) )')
+        .select('id, name, classic_aliases ( alias ), item_images ( angle, sort_order, is_generated, images ( url ) )')
         .eq('is_catalog', true)
         .order('name');
       if (error) throw error;
-      const rows = (data ?? []) as unknown as { id: string; name: string; item_images: ItemImageLink[] | null }[];
-      return orderDrinks(rows.map((r) => ({ id: r.id, name: r.name, imageUrl: heroPicture(r.item_images)?.url ?? null })));
+      const rows = (data ?? []) as unknown as {
+        id: string;
+        name: string;
+        classic_aliases: { alias: string }[] | null;
+        item_images: ItemImageLink[] | null;
+      }[];
+      return orderDrinks(
+        rows.map((r) => ({
+          id: r.id,
+          name: r.name,
+          imageUrl: heroPicture(r.item_images)?.url ?? null,
+          aliases: (r.classic_aliases ?? []).map((a) => a.alias),
+        }))
+      );
     },
   });
 }
@@ -203,15 +219,23 @@ export function useDebounced<T>(value: T, ms: number): T {
   return settled;
 }
 
+/** The device's place for the address search, only where location is already allowed: never asks. */
+async function nearForAddresses(): Promise<{ latitude: number; longitude: number } | null> {
+  const at = await getKnownDeviceLocation();
+  return at.ok ? { latitude: snapNearMe(at.latitude), longitude: snapNearMe(at.longitude) } : null;
+}
+
 /**
  * Addresses and named places matching what's typed, from Photon
  * (OpenStreetMap). Keeps to Photon's fair use: nothing under three
  * characters, only once typing pauses, a superseded request is cancelled,
- * and answers are cached. Sends only the typed text, never the person's
- * location.
+ * and answers are cached. Sends the typed text and, only where location is
+ * already allowed (never asked for here), the device's place snapped to
+ * about 1 km, so nearby addresses come first (Eddie, 26 Oct).
  */
 export function useAddressSearch(text: string) {
   const query = useDebounced(text.trim(), ADDRESS_DEBOUNCE_MS);
+  const qc = useQueryClient();
   return useQuery({
     queryKey: ['address-search', query],
     enabled: query.length >= ADDRESS_MIN_CHARS,
@@ -219,7 +243,9 @@ export function useAddressSearch(text: string) {
     retry: 0,
     meta: { persist: false },
     queryFn: async ({ signal }): Promise<VenueAddress[]> => {
-      const res = await fetch(photonUrl(query), { signal });
+      // Where the device is, looked up with the first search and kept ten minutes: one Photon request, already near.
+      const near = await qc.fetchQuery({ queryKey: ['address-search-near'], staleTime: 10 * 60 * 1000, meta: { persist: false }, queryFn: nearForAddresses });
+      const res = await fetch(photonUrl(query, 6, near), { signal });
       if (!res.ok) throw new Error(`Address search failed (${res.status}). Try again in a moment.`);
       return venueAddressesFrom(await res.json());
     },

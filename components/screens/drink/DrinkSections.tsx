@@ -8,7 +8,6 @@ import { useActiveVenue } from '@/hooks/useActiveVenue';
 import { useClassicCopy } from '@/hooks/useClassicCopy';
 import { useDrinkOnMenu } from '@/hooks/useDrinkOnMenu';
 import { useLineage } from '@/hooks/useLineage';
-import { useMode } from '@/hooks/useMode';
 import { useDrinkMenuRuns } from '@/hooks/useProfiles';
 import { useEffectiveRole } from '@/hooks/useViewAs';
 import type { ItemImageLink } from '@/lib/itemImages';
@@ -86,10 +85,8 @@ export function useDrinkSections(p: DrinkBodyProps) {
   const router = useRouter();
   const signedIn = useSignedIn();
   const live = !preview;
-  const { venues, active } = useActiveVenue();
+  const { venues } = useActiveVenue();
   const barName = venues.find((v) => v.id === item.bar_id)?.name ?? null;
-  // The kit check is the venue you're working at, for its drinks and the catalog's alike.
-  const kitBar = useMode().mode === 'venue' && active && (!item.bar_id || item.bar_id === active.id) ? active.id : null;
   const effective = useEffectiveRole(item.bar_id);
   const role = preview ? preview.role : effective;
   const { data: menuRuns = [] } = useDrinkMenuRuns(live ? item.id : null);
@@ -156,7 +153,8 @@ export function useDrinkSections(p: DrinkBodyProps) {
         </View>
       ) : null,
     myNote: live && signedIn ? <MyNote itemId={item.id} name={item.name} /> : null,
-    kit: live && kitBar ? <KitCheckSection itemId={item.id} barId={kitBar} drink={item.name} /> : null,
+    // Can you make it with My Bar's kit: home only, a venue's team has Library's Ready here.
+    kit: home && signedIn && live ? <KitCheckSection itemId={item.id} drink={item.name} /> : null,
     journey:
       home && signedIn && live ? (
         <JourneyStrip itemId={item.id} name={item.name} saved={p.toMake.saved} onToggleSaved={p.toMake.toggle} onRank={p.actions.rank} onMade={p.actions.made} madeTimes={p.actions.madeTimes} lines={lines} />

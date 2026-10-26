@@ -4,7 +4,7 @@ import { StyleSheet, View } from 'react-native';
 import { Caption, useDs } from '@/components/ds';
 import { space } from '@/constants/tokens';
 import {
-  FINISH_CHIPS, FINISH_UNITS, finishStart, GARNISH_CHIPS, newLine, pickByName, type FinishChip, type StepProps, type WizardLine, type WizardPick,
+  FINISH_CHIPS, FINISH_UNITS, finishStart, GARNISH_CHIPS, newLine, pickByName, shownGarnishes, type FinishChip, type StepProps, type WizardLine, type WizardPick,
 } from '@/lib/drinkWizard';
 import type { IngredientAlias } from '@/lib/ingredientNames';
 import type { PrepDraft } from '@/lib/prepKinds';
@@ -14,9 +14,6 @@ import { IngredientSearch, type CatalogIngredient } from './IngredientSearch';
 import { LineRow } from './LineRow';
 import { PrepBuilder } from './prep/PrepBuilder';
 import { WizardChip } from './WizardChrome';
-
-/** Garnish chips shown before More. */
-const SHOWN = 7;
 
 interface FinishStepProps extends StepProps {
   ingredients: readonly CatalogIngredient[];
@@ -31,8 +28,9 @@ const same = (l: WizardLine, name: string, unit: string) => l.name.toLowerCase()
  * How the drink is finished: what goes on top (3 drops of mint oil, a mist,
  * an absinthe rinse, a float) and on the glass (a peel, a sprig). Each is a
  * spec line after the ingredients with its own amount and unit, the way
- * Service and the batch read a garnish; anything the shelf lacks can be made
- * in house right here.
+ * Service and the batch read a garnish. A garnish the catalog lacks (a lime
+ * leaf, a salt, a flower) is added by its name; making it in house is there
+ * too, and leads only for a name that sounds made (an oil, a cordial).
  */
 export function FinishStep({ draft, set, ingredients, loading, aliases = [], coreIds }: FinishStepProps) {
   const ds = useDs();
@@ -51,7 +49,9 @@ export function FinishStep({ draft, set, ingredients, loading, aliases = [], cor
 
   const add = (pick: WizardPick, prep?: PrepDraft) => {
     const start = asking ?? finishStart(pick.name);
-    set({ garnishes: [...lines, { ...newLine(pick, start.unit, start.amount), ...(prep ? { prep, technique: prep.technique } : null) }] });
+    // A new name starts with a capital ("Lime leaf"), as the save writes it.
+    const named = pick.id ? pick : { ...pick, name: capitalizeFirst(pick.name.trim()) };
+    set({ garnishes: [...lines, { ...newLine(named, start.unit, start.amount), ...(prep ? { prep, technique: prep.technique } : null) }] });
     setAsking(null);
   };
   const change = (key: string, c: Partial<WizardLine>) => set({ garnishes: lines.map((l) => (l.key === key ? { ...l, ...c } : l)) });
@@ -60,7 +60,7 @@ export function FinishStep({ draft, set, ingredients, loading, aliases = [], cor
     set({ garnishes: on ? lines.filter((l) => l !== on) : [...lines, newLine(pickByName(name, ingredients), unit, amount)] });
   };
   const has = (name: string, unit: string) => lines.some((l) => same(l, name, unit));
-  const garnishes = all ? GARNISH_CHIPS : GARNISH_CHIPS.filter((c, i) => i < SHOWN || has(c.name, c.unit));
+  const garnishes = all ? GARNISH_CHIPS : shownGarnishes(draft.lines.map((l) => l.name), (c) => has(c.name, c.unit));
 
   return (
     <View style={styles.stack}>
@@ -73,6 +73,7 @@ export function FinishStep({ draft, set, ingredients, loading, aliases = [], cor
                   {...search}
                   label={`Swap ${l.name} for…`}
                   autoFocus
+                  nameFirst
                   onCancel={() => setSwapKey(null)}
                   onPick={(p) => {
                     change(l.key, { id: p.id, name: p.name, prep: undefined, technique: undefined });
@@ -100,8 +101,9 @@ export function FinishStep({ draft, set, ingredients, loading, aliases = [], cor
         // A new key focuses the field when a chip asks "of what?".
         key={asking?.label ?? 'finish'}
         autoFocus={!!asking}
-        label={asking?.ask ?? 'Add to the finish'}
+        label={asking?.ask ?? 'Search for a garnish'}
         makeFirst
+        nameFirst
         onPick={(pick) => add(pick)}
         onTyping={setTyping}
         onMake={(name) => setMaking({ name: capitalizeFirst(name) })}
@@ -123,8 +125,17 @@ export function FinishStep({ draft, set, ingredients, loading, aliases = [], cor
       {typing ? null : (
         <>
           <View style={styles.group}>
+            <Caption tone="muted">Garnish</Caption>
+            <View role="group" aria-label="Garnish" style={styles.chips}>
+              {garnishes.map((c) => (
+                <WizardChip key={c.label} kind="checkbox" label={c.label} selected={has(c.name, c.unit)} onPress={() => toggle(c.name, c.unit, c.amount)} />
+              ))}
+              {garnishes.length < GARNISH_CHIPS.length ? <WizardChip label="More" kind="button" dashed onPress={() => setAll(true)} /> : null}
+            </View>
+          </View>
+          <View style={styles.group}>
             <Caption tone="muted">Drops, mist, rinse</Caption>
-            <View role="group" accessibilityLabel="Drops, mist, rinse" style={styles.chips}>
+            <View role="group" aria-label="Drops, mist, rinse" style={styles.chips}>
               {FINISH_CHIPS.map((c) => (
                 <WizardChip
                   key={c.label}
@@ -134,15 +145,6 @@ export function FinishStep({ draft, set, ingredients, loading, aliases = [], cor
                   onPress={() => (c.name ? toggle(c.name, c.unit, c.amount) : setAsking(asking?.label === c.label ? null : c))}
                 />
               ))}
-            </View>
-          </View>
-          <View style={styles.group}>
-            <Caption tone="muted">Garnish</Caption>
-            <View role="group" accessibilityLabel="Garnish" style={styles.chips}>
-              {garnishes.map((c) => (
-                <WizardChip key={c.label} kind="checkbox" label={c.label} selected={has(c.name, c.unit)} onPress={() => toggle(c.name, c.unit, c.amount)} />
-              ))}
-              {garnishes.length < GARNISH_CHIPS.length ? <WizardChip label="More" kind="button" dashed onPress={() => setAll(true)} /> : null}
             </View>
           </View>
           <Caption tone="muted">A discard is a peel expressed over the drink and thrown away: the oils stay, the peel doesn’t, so the drawing shows none.</Caption>

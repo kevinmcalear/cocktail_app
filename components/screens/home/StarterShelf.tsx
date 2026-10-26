@@ -1,4 +1,4 @@
-import { useEffect, useRef } from 'react';
+import { useState } from 'react';
 import { ScrollView, StyleSheet, View } from 'react-native';
 
 import { Body, Button, Caption, Chip, FieldButton, Headline, IngredientDrawing, PressableScale, Surface, useDs, useGutter } from '@/components/ds';
@@ -12,7 +12,7 @@ import { IDEAS } from './AddToBarSheet';
 import { AddTile, BarTile, TileGrid, useTileCols } from './BarTile';
 import type { AwayGroup } from './MakeRows';
 
-/** The kitchen staples the starter offers, ticked to begin with: most drinks need one. */
+/** The kitchen staples the starter offers: most drinks need one. Nothing starts ticked. */
 const KITCHEN = ['Lemons', 'Limes', 'Oranges', 'Sugar', 'Eggs', 'Soda water'];
 
 interface StarterShelfProps {
@@ -35,8 +35,9 @@ interface StarterShelfProps {
 /**
  * My Bar before there's a bottle on it (board home-mybar-empty): tap the
  * bottles you have from the usual suspects, each saying how many drinks it
- * opens, untick what your kitchen doesn't keep, and a bar pinned at the
- * bottom counts the drinks as you go. Show me opens the whole of My Bar.
+ * opens, tick what your kitchen keeps, and a bar pinned at the bottom counts
+ * the drinks as you go. Nothing is saved until you tick it. Show me opens the
+ * whole of My Bar.
  */
 export function StarterShelf({ pantry, onShelf, oneAway, ready, bottles, bottom, onToggle, onAdd, onSearch, onSnap, onShowMe }: StarterShelfProps) {
   const ds = useDs();
@@ -44,18 +45,21 @@ export function StarterShelf({ pantry, onShelf, oneAway, ready, bottles, bottom,
   const cols = useTileCols();
   const ideas = useBarIdeas(IDEAS.bottles).data ?? [];
   const opens = new Map(oneAway.filter((g) => g.bottles.length === 1).map((g) => [g.bottles[0].id, g.drinks.length]));
-  const picks = [...ideas].sort((a, b) => Number(onShelf.has(b.id)) - Number(onShelf.has(a.id)) || (opens.get(b.id) ?? 0) - (opens.get(a.id) ?? 0));
+  // The order is set once, when the bottles load, so a tile stays where it was tapped.
+  const [order, setOrder] = useState<{ ids: string[]; ranked: boolean } | null>(null);
+  if (!order && ideas.length) {
+    const sorted = [...ideas].sort((a, b) => Number(onShelf.has(b.id)) - Number(onShelf.has(a.id)) || (opens.get(b.id) ?? 0) - (opens.get(a.id) ?? 0));
+    setOrder({ ids: sorted.map((p) => p.id), ranked: sorted.some((p) => opens.has(p.id)) });
+  }
+  const rank = new Map(order?.ids.map((id, i) => [id, i]));
+  const picks = order ? [...ideas].sort((a, b) => (rank.get(a.id) ?? Infinity) - (rank.get(b.id) ?? Infinity)) : [];
   const ids = new Map(pantry.map((p) => [p.name, p.id]));
   const kitchen = PANTRY.filter((p) => KITCHEN.includes(p.label)).flatMap((p) => (ids.has(p.name) ? [{ label: p.label, id: ids.get(p.name)! }] : []));
   const water = ids.get(PANTRY_WATER);
-
-  // A new bar starts with the kitchen ticked; untick what you don't keep.
-  const ticked = useRef(false);
-  useEffect(() => {
-    if (ticked.current || onShelf.size || !kitchen.length) return;
-    ticked.current = true;
-    onAdd([...kitchen.map((k) => k.id), ...(water ? [water] : [])]);
-  }, [onShelf.size, kitchen, water, onAdd]);
+  const fromKitchen = kitchen.some((k) => onShelf.has(k.id));
+  // Water comes with a staple, never shown: every house syrup is sugar or honey and water.
+  const tickKitchen = (id: string) => (onShelf.has(id) ? onToggle(id, false) : onAdd(water && !onShelf.has(water) ? [id, water] : [id]));
+  const from = [bottles ? `${bottles} ${bottles === 1 ? 'bottle' : 'bottles'}` : null, fromKitchen ? 'your kitchen' : null].filter(Boolean).join(' and ');
 
   return (
     <View style={styles.screen}>
@@ -74,7 +78,7 @@ export function StarterShelf({ pantry, onShelf, oneAway, ready, bottles, bottom,
         <View style={styles.section}>
           <View>
             <Headline role="heading">The usual suspects</Headline>
-            <Caption tone="muted">Sorted by how many drinks each one opens</Caption>
+            {order?.ranked ? <Caption tone="muted">Sorted by how many drinks each one opens</Caption> : null}
           </View>
           <TileGrid cols={cols}>
             {[
@@ -85,7 +89,7 @@ export function StarterShelf({ pantry, onShelf, oneAway, ready, bottles, bottom,
                   <BarTile
                     key={p.id}
                     name={p.name}
-                    meta={has ? 'On shelf' : n ? `+${n} ${n === 1 ? 'drink' : 'drinks'}` : null}
+                    meta={!has && n ? `+${n} ${n === 1 ? 'drink' : 'drinks'}` : null}
                     picture={<IngredientDrawing id={p.id} name={p.name} lazy />}
                     role="checkbox"
                     checked={has}
@@ -103,11 +107,11 @@ export function StarterShelf({ pantry, onShelf, oneAway, ready, bottles, bottom,
         <View style={styles.section}>
           <View>
             <Headline role="heading">In your kitchen</Headline>
-            <Caption tone="muted">Most drinks need one of these. Untick what you don’t keep.</Caption>
+            <Caption tone="muted">Most drinks need one of these. Tick what you keep.</Caption>
           </View>
           <View role="group" accessibilityLabel="In your kitchen" style={styles.chips}>
             {kitchen.map((k) => (
-              <Chip key={k.id} label={k.label} multi selected={onShelf.has(k.id)} onPress={() => onToggle(k.id, !onShelf.has(k.id))} />
+              <Chip key={k.id} label={k.label} multi selected={onShelf.has(k.id)} onPress={() => tickKitchen(k.id)} />
             ))}
           </View>
         </View>
@@ -115,7 +119,7 @@ export function StarterShelf({ pantry, onShelf, oneAway, ready, bottles, bottom,
       <View style={[styles.pinned, { bottom, paddingHorizontal: gutter }]} pointerEvents="box-none">
         <Surface style={styles.bar}>
           <Body style={styles.flex} aria-live="polite">
-            {`${ready} ${ready === 1 ? 'drink' : 'drinks'} from ${bottles ? `${bottles} ${bottles === 1 ? 'bottle' : 'bottles'} and ` : ''}your kitchen`}
+            {`${ready} ${ready === 1 ? 'drink' : 'drinks'}${from ? ` from ${from}` : ''}`}
           </Body>
           <Button label="Show me" variant="primary" onPress={onShowMe} />
         </Surface>

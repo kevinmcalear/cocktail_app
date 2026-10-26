@@ -9,7 +9,7 @@ import type { BarGlass } from '@/hooks/useBarGlassware';
 import type { VenueIce } from '@/hooks/useVenueIce';
 import { useCapabilities } from '@/hooks/useCapabilities';
 import { useMenuSectionPlace } from '@/hooks/useDrinkDesk';
-import { usePricingSettings } from '@/hooks/usePricing';
+import { usePricingSettings, useShownCurrency } from '@/hooks/usePricing';
 import type { SameNameDrink } from '@/hooks/useSameNameDrink';
 import { perDrinkLines } from '@/lib/batchLines';
 import type { ClassicMatch } from '@/lib/classics';
@@ -93,6 +93,7 @@ export function DrinkDesk(p: DrinkDeskProps) {
   const canCost = !!barId && !!caps?.includes('costs');
   const canBuy = canCost || (!!barId && !!caps?.includes('prep'));
   const pricing = usePricingSettings(canCost ? barId : null).data ?? null;
+  const currency = useShownCurrency(barId, canCost);
   const { costLines, lineDetail, lineBelow, onNewBottle } = useDeskLines({
     draft,
     set,
@@ -102,7 +103,7 @@ export function DrinkDesk(p: DrinkDeskProps) {
     coreIds: p.coreIds,
     canBuy,
     canCost,
-    currency: pricing?.currency ?? 'GBP',
+    currency,
   });
   const [finishOpen, setFinishOpen] = useState(false);
   // A recipe being written under its line: the rail shows the kit its ways are checked against.
@@ -252,7 +253,7 @@ export function DrinkDesk(p: DrinkDeskProps) {
           <DeskToFinish lines={draft.lines} making={prepOpen} />
           {prepOpen ? <DeskKit bar={barId ? { id: barId, name: p.venueName } : null} /> : null}
           <DeskTaste lines={perDrinkLines(draft.lines)} ingredients={p.ingredients} onAdd={addByName} />
-          {canCost ? <DeskCost lines={costLines} pricing={pricing} price={draft.price ?? ''} onPrice={(price) => set({ price })} /> : null}
+          {canCost ? <DeskCost lines={costLines} pricing={pricing} currency={currency} price={draft.price ?? ''} onPrice={(price) => set({ price })} /> : null}
           <DeskMenuNote sectionId={p.menuSectionId} menu={menu} lines={perDrinkLines(draft.lines)} ingredients={p.ingredients} />
         </ScrollView>
       </View>

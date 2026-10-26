@@ -1,11 +1,12 @@
 import * as Burnt from 'burnt';
-import { Platform, Share, StyleSheet, View } from 'react-native';
+import { Platform, StyleSheet, View } from 'react-native';
 
 import { Body, Button, useDs } from '@/components/ds';
 import { SettingsSection } from '@/components/screens/settings/SettingsParts';
 import { IconSymbol } from '@/components/ui/icon-symbol';
 import { radius, space } from '@/constants/tokens';
 import { showMessage } from '@/lib/dialogs';
+import { shareLink } from '@/lib/shareLink';
 import { venueStaffUrl } from '@/lib/venueLink';
 
 /**
@@ -19,12 +20,7 @@ export function StaffLinkCard({ slug, venueName }: { slug: string; venueName: st
 
   const share = async () => {
     try {
-      if (!web) {
-        await Share.share({ message: url, url, title: `${venueName} staff app` });
-        return;
-      }
-      await navigator.clipboard.writeText(url);
-      Burnt.toast({ title: 'Link copied', preset: 'done', duration: 2 });
+      if ((await shareLink(url, `${venueName} staff app`, { copy: true })) === 'copied') Burnt.toast({ title: 'Link copied', preset: 'done', duration: 2 });
     } catch {
       // The browser can refuse clipboard access; show the link to copy by hand.
       showMessage("Couldn't copy the link", url);

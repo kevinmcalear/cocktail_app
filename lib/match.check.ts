@@ -1,6 +1,6 @@
 import assert from 'node:assert/strict';
 
-import { matchIngredient, matchKey, matchName, type CatalogItem, type Match } from './match';
+import { catalogIndex, matchIngredient, matchKey, matchName, type CatalogItem, type Match } from './match';
 
 const item = (id: string, name: string, genericId: string | null = null, barId: string | null = null): CatalogItem => ({ id, name, genericId, barId });
 const catalog: CatalogItem[] = [
@@ -84,5 +84,38 @@ for (const name of ['Campari', 'Beefeater Gin', 'Codigo 1530 Blanco Tequila', 'G
   }
 }
 
+// Leaving items out (a pick's choices, for its plain kind) is the same as matching a catalog without them.
+const without = new Set(['ldg', 'bee-ldg']);
+for (const r of ['London Dry Gin', { brand: 'Beefeater', name: 'Beefeater London Dry Gin', kind: 'London dry gin' }, 'Gin']) {
+  for (const venue of [null, 'bar-1']) {
+    assert.deepEqual(id(matchIngredient(r, catalog, venue, aliases, without)), id(matchIngredient(r, catalog.filter((i) => !without.has(i.id)), venue, aliases)));
+  }
+}
+// The catalog is keyed once, then reused for every match against it.
+assert.equal(catalogIndex(catalog), catalogIndex(catalog));
+assert.deepEqual(catalogIndex(catalog).byKind.get('gin')?.map((e) => e.item.id), ['ldg', 'bee', 'bee-pink', 'roku', 'tq-ten', 'venue-bee']);
+
+// A shortlist (match_ingredients) matches as the whole catalog does: the rows a reading's words reach,
+// their kinds and the venue's bottles of them, each counting the rows that name it as their kind.
+const wordsOf = (name: string) => matchKey(name).split(' ');
+function shortlist(readings: (string | { name: string; brand?: string | null; kind?: string | null })[], venue: string | null): CatalogItem[] {
+  const want = new Set(readings.flatMap((r) => (typeof r === 'string' ? wordsOf(r) : [r.name, r.brand ?? '', r.kind ?? ''].flatMap(wordsOf))));
+  const pool = catalog.filter((i) => !i.barId || i.barId === venue);
+  const hit = pool.filter((i) => wordsOf(i.name).some((w) => want.has(w)));
+  const ids = new Set([...hit.map((i) => i.id), ...hit.flatMap((i) => (i.genericId ? [i.genericId] : [])), ...pool.filter((i) => venue && i.barId === venue && hit.some((h) => h.id === i.genericId)).map((i) => i.id)]);
+  return catalog.filter((i) => ids.has(i.id)).map((i) => ({ ...i, kindOf: pool.filter((c) => c.genericId === i.id).length }));
+}
+const someReadings = ['London Dry Gin', 'Campari', '1:1 sugar syrup', { brand: 'Beefeater', name: 'Beefeater London Dry Gin', kind: 'London dry gin' }, { brand: 'Carpano', name: 'Carpano Antica', kind: 'Sweet vermouth' }, { brand: 'Sipsmith', name: 'Sipsmith VJOP', kind: 'Navy strength gin' }];
+for (const venue of [null, 'bar-1']) {
+  const short = shortlist(someReadings, venue);
+  assert.ok(short.length < catalog.length, 'a shortlist leaves rows out');
+  for (const r of someReadings) {
+    assert.deepEqual(id(matchIngredient(r, short, venue, aliases)), id(matchIngredient(r, catalog, venue, aliases)), `${JSON.stringify(r)} at ${venue}`);
+    const name = typeof r === 'string' ? r : r.name;
+    for (const out of [new Set(['ldg', 'bee-ldg']), new Set(['bee', 'bee-pink']), new Set(['cpa', 'cpa-2'])]) {
+      assert.deepEqual(id(matchIngredient({ name, kind: name }, short, venue, aliases, out)), id(matchIngredient({ name, kind: name }, catalog, venue, aliases, out)), `${name} without ${[...out]} at ${venue}`);
+    }
+  }
+}
 
 console.log('match: ok');

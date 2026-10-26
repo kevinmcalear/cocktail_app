@@ -45,6 +45,7 @@ export function InviteSheet({ visible, onClose, barId, barName, ceiling, onDone 
   const role = Math.min(picked, ceiling);
   const [problem, setProblem] = useState<string | null>(null);
   const nameRef = useRef<ComponentRef<typeof TextInput>>(null);
+  const emailRef = useRef<ComponentRef<typeof TextInput>>(null);
   const busy = add.isPending || send.isPending;
   const roles = INVITE_ROLES.filter((r) => r.level <= ceiling);
 
@@ -93,15 +94,34 @@ export function InviteSheet({ visible, onClose, barId, barName, ceiling, onDone 
       onShow={MODAL_AUTOFOCUS ? undefined : () => focusInModal(nameRef)}
       footer={<Button label={busy ? 'Sending…' : inviteButtonLabel(name)} size="lg" onPress={submit} disabled={busy} />}
     >
-      <Field ref={nameRef} label="Name" value={name} onChangeText={setName} placeholder="Sam Okafor" autoComplete="off" maxLength={80} autoFocus={MODAL_AUTOFOCUS} />
+      {/* iOS offers a contact's name and email (textContentType); autoComplete stays off so a browser doesn't fill in your own. */}
       <Field
+        ref={nameRef}
+        label="Name"
+        value={name}
+        onChangeText={setName}
+        placeholder="Sam Okafor"
+        autoComplete="off"
+        textContentType="name"
+        autoCapitalize="words"
+        returnKeyType="next"
+        submitBehavior="submit"
+        onSubmitEditing={() => emailRef.current?.focus()}
+        maxLength={80}
+        autoFocus={MODAL_AUTOFOCUS}
+      />
+      <Field
+        ref={emailRef}
         label="Email"
         value={email}
         onChangeText={setEmail}
         placeholder="sam@example.com"
+        autoComplete="off"
+        textContentType="emailAddress"
         autoCapitalize="none"
         autoCorrect={false}
         keyboardType="email-address"
+        returnKeyType="done"
       />
       <Caption tone="muted">What they can do</Caption>
       <View role="radiogroup" accessibilityLabel="What they can do" style={styles.list}>

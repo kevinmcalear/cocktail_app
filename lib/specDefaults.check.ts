@@ -42,7 +42,20 @@ const sour = serveGuess({ name: 'House special', lines: [{ name: 'Gin', amount: 
 assert.equal(sour.method, 'Shake');
 assert.equal(sour.glass, 'Coupe');
 assert.equal(sour.ice, 'No ice');
-assert.match(sour.why ?? '', /shaken/);
+assert.equal(sour.why, 'It has lemon juice, so it’s shaken', 'the reason names what made it shaken');
+// Cream and egg are named as themselves, not called citrus (Q20).
+const cream = serveGuess({ name: 'House flip', lines: [{ name: 'Brandy', amount: 45, unit: 'ml' }, { name: 'Heavy Cream', amount: 30, unit: 'ml' }] });
+assert.equal(cream.why, 'It has heavy cream, so it’s shaken');
+assert.equal(serveGuess({ name: 'House', lines: [{ name: 'Rum', amount: 60, unit: 'ml' }, { name: 'Egg white', amount: 1, unit: 'each' }] }).why, 'It has egg white, so it’s shaken');
+// A float, a rinse or a twist sits on top or on the glass: a stirred drink stays stirred.
+const finished = serveGuess({
+  name: 'House',
+  lines: [{ name: 'Rye Whiskey', amount: 60, unit: 'ml' }, { name: 'Sweet Vermouth', amount: 30, unit: 'ml' }, { name: 'Cream', amount: 1, unit: 'float' }, { name: 'Lemon', amount: 1, unit: 'twist' }, { name: 'Lime Cordial', amount: 1, unit: 'rinse' }],
+});
+assert.equal(finished.method, 'Stir');
+assert.equal(finished.why, 'It’s all spirit, so it’s stirred');
+// A juice topped up is a topped drink, built, not stirred.
+assert.equal(serveGuess({ name: 'House', lines: [{ name: 'Rum', amount: 60, unit: 'ml' }, { name: 'Pineapple juice', amount: null, unit: 'top' }] }).method, 'Build');
 const stirred = serveGuess({ name: 'House drink', lines: [{ name: 'Rye Whiskey', amount: 60, unit: 'ml' }, { name: 'Sweet Vermouth', amount: 30, unit: 'ml' }] });
 assert.equal(stirred.method, 'Stir');
 const picked = serveGuess({ name: 'House sour', methods: ['Stir'], glass: 'Rocks', lines: [{ name: 'Gin', amount: 60, unit: 'ml' }] });

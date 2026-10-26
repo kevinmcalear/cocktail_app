@@ -48,6 +48,11 @@ assert.equal(iceFromName('Up, no ice'), 'none');
 assert.equal(iceFromName('None'), 'none');
 assert.equal(iceFromName('Pebble ice'), 'pebble');
 assert.equal(iceFromName('Ice'), 'cubes');
+// A Hoshizaki machine's cubes, by the bar's word for them.
+assert.equal(iceFromName('Hosh'), 'cubes');
+assert.equal(iceFromName('Hoshizaki'), 'cubes');
+assert.equal(iceFromName('hoshizaki cubes'), 'cubes');
+assert.equal(iceFromName('Hoshizaki nugget'), 'pebble');
 assert.equal(iceFromName('Cubes, topped up'), 'cubes', '"up" only as a serve');
 assert.equal(iceFromName('Neat'), 'none');
 // Typed in the ice field (Eddie, 22 Oct): every way of saying none draws none.

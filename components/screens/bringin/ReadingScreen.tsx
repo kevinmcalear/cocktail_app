@@ -5,7 +5,8 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { Body, Button, Caption, GlassButton, PressableScale, sheetIsDialog, Title, useDs } from '@/components/ds';
 import { IconSymbol } from '@/components/ui/icon-symbol';
 import { radius, space } from '@/constants/tokens';
-import { useBringInMatchData } from '@/hooks/useBringInMatchData';
+import { bottleReadings, useBringInMatchData } from '@/hooks/useBringInMatchData';
+import { useMatchCatalog } from '@/hooks/useMatchCatalog';
 import { readingSteps, stepsDone, type ReadingStep } from '@/lib/bringIn';
 import { matchSummary, pageMarks } from '@/lib/bringInMatch';
 import { pickReadFiles } from '@/lib/readAnything';
@@ -35,17 +36,23 @@ function Step({ step }: { step: ReadingStep }) {
  * reading's real steps. Done, it moves on to the check by itself; "Keep
  * using the app" leaves it reading behind the tray.
  */
-export function ReadingScreen({ job, onClose, onBackground, onReady }: { job: BringInJob; onClose: () => void; onBackground: () => void; onReady: () => void }) {
+/** How long a finished reading waits on the catalog before offering to search by name instead. */
+const MATCH_WAIT_MS = 20_000;
+
+export function ReadingScreen({ job, onClose, onBackground, onReady, onSearch }: { job: BringInJob; onClose: () => void; onBackground: () => void; onReady: () => void; onSearch?: () => void }) {
   const ds = useDs();
   const insets = useSafeAreaInsets();
   const { width, height } = useWindowDimensions();
   const [page, setPage] = useState(0);
   const addPages = useBringIn((s) => s.addPages);
   const retry = useBringIn((s) => s.retry);
-  const data = useBringInMatchData(job.barId);
+  const bottles = bottleReadings(job);
+  const data = useBringInMatchData(job.barId, true, bottles);
   const files = job.source.files;
   const matched = job.reading && data ? matchSummary(job.reading, data) : null;
-  const steps = readingSteps({ pages: files.length, reading: job.reading, matched });
+  // A snap matches on the server: the catalog only downloads if that fails (useBringInMatchData).
+  const catalog = useMatchCatalog(!bottles);
+  const steps = readingSteps({ pages: files.length, reading: job.reading, matched, catalog: catalog.progress });
   const progress = job.status === 'ready' && matched ? 100 : stepsDone(steps);
   const ready = job.status === 'ready' && !!matched;
 
@@ -56,6 +63,16 @@ export function ReadingScreen({ job, onClose, onBackground, onReady }: { job: Br
     const t = setTimeout(() => moveOn(), 700);
     return () => clearTimeout(t);
   }, [ready]);
+
+  // Read, but the catalog hasn't come (a slow or no connection): don't leave them waiting on it.
+  const [waited, setWaited] = useState(false);
+  const waiting = job.status === 'ready' && !data;
+  useEffect(() => {
+    if (!waiting) return;
+    const t = setTimeout(() => setWaited(true), MATCH_WAIT_MS);
+    return () => clearTimeout(t);
+  }, [waiting]);
+  const slow = waiting && (waited || catalog.failed);
 
   const marks = job.reading && data ? pageMarks(job.reading, data, page) : [];
   const title = job.status === 'failed' ? 'Couldn’t read it' : files.length > 1 ? `Reading ${files.length} pages` : 'Reading';
@@ -104,6 +121,8 @@ export function ReadingScreen({ job, onClose, onBackground, onReady }: { job: Br
             <View role="progressbar" aria-label="Reading" aria-valuemin={0} aria-valuemax={100} aria-valuenow={progress} style={[styles.bar, { backgroundColor: ds.c.raised }]}>
               <View style={[styles.fill, { width: `${progress}%`, backgroundColor: ds.accentText }]} />
             </View>
+            {slow ? <Caption tone="muted">{catalog.failed ? 'Couldn’t get the catalog to match against. Check your connection.' : 'Matching is taking longer than it should.'}</Caption> : null}
+            {slow && onSearch ? <Button label="Search by name instead" size="lg" onPress={onSearch} /> : null}
             <Button label="Keep using the app, we’ll tell you" size="lg" variant="secondary" onPress={onBackground} />
           </>
         )}

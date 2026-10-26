@@ -18,7 +18,7 @@ export function GlassSnap({ onPick }: { onPick: (model: GlassModel) => void }) {
   const ds = useDs();
   const snap = useSnapGlass();
   const read = snap.data;
-  // The camera's own refusal (no permission); the read's errors are the mutation's.
+  // The camera couldn't open; the read's errors are the mutation's.
   const [cameraError, setCameraError] = useState<string | null>(null);
   // The camera (a file picker on the web) is open: one at a time, so one paid read.
   const [picking, setPicking] = useState(false);

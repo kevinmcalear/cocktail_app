@@ -6,7 +6,7 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { GlassButton, useBreakpoint, useDs, useGutter } from '@/components/ds';
 import { useUserId } from '@/ctx/AuthContext';
 import { space } from '@/constants/tokens';
-import { useBringInMatchData } from '@/hooks/useBringInMatchData';
+import { bottleReadings, useBringInMatchData } from '@/hooks/useBringInMatchData';
 import { useBringInSave, type BringInSaveInput } from '@/hooks/useBringInSave';
 import { useBringInPlace } from '@/hooks/useBringInPlace';
 import { emptySummary, sourceLabel } from '@/lib/bringInBatch';
@@ -15,6 +15,7 @@ import { startReview } from '@/lib/importReview';
 import { listenBringIn, takeBringIn } from '@/lib/bringInHandoff';
 import { snapReadFiles, sourcesFromFiles } from '@/lib/readAnything';
 import { askToNudge } from '@/lib/readyNudge';
+import { useAppMode } from '@/store/useAppMode';
 import { useBringIn, type BringInJob } from '@/store/useBringIn';
 import { useDrinkWizardStore, wizardPlace } from '@/store/useDrinkWizardStore';
 
@@ -62,7 +63,7 @@ export function BringInFlow() {
   // The job whose reading has been seen through to its check (opened from the tray when ready, or Reading moved on).
   const [checkedId, setCheckedId] = useState<number | null>(() => (job?.status === 'ready' ? job.id : null));
   const checking = !!job && (job.local || checkedId === job.id);
-  const data = useBringInMatchData(job?.barId ?? reviewing?.barId ?? null, !!job || !!reviewing);
+  const data = useBringInMatchData(job?.barId ?? reviewing?.barId ?? null, !!job || !!reviewing, bottleReadings(job));
   const save = useBringInSave(job?.barId ?? null);
   // Several recipes read: a review, one drink at a time, kept on this device until it's done.
   const recipes = checking && job?.status === 'ready' && job.reading?.kind === 'recipes' && job.reading.recipes.length > 1 ? job.reading.recipes : null;
@@ -139,14 +140,27 @@ export function BringInFlow() {
       </ScrollView>
     );
   }
-  if (job.status !== 'ready' || (!checking && !job.local)) {
+  // Still reading, or read but the catalog it's matched against hasn't come yet (Reading shows how far it's got).
+  if (job.status !== 'ready' || (!checking && !job.local) || !data) {
     const background = () => {
       void askToNudge();
       leave();
     };
-    return <ReadingScreen job={job} onClose={cancel} onBackground={background} onReady={() => setCheckedId(job.id)} />;
+    // Bottles can be searched for by name instead, where they're added by hand: My Bar's search, or the venue's new bottle.
+    const bottles = job.reading?.kind === 'bottles' ? job.reading.bottles : null;
+    const searchInstead = () => {
+      useBringIn.getState().clear();
+      const name = bottles?.[0]?.name;
+      if (job.barId) router.replace({ pathname: '/add-ingredient', params: { barId: job.barId, ...(name ? { name } : {}) } });
+      else {
+        // Your own shelf: My Bar is a home-mode tab, so a staffer snapping from a venue goes home for it.
+        useAppMode.getState().setMode('home');
+        router.replace({ pathname: '/bar', params: { add: 'bottles' } });
+      }
+    };
+    return <ReadingScreen job={job} onClose={cancel} onBackground={background} onReady={() => setCheckedId(job.id)} onSearch={bottles ? searchInstead : undefined} />;
   }
-  if (!data || !job.reading || recipes) {
+  if (!job.reading || recipes) {
     return (
       <View style={[styles.center, { backgroundColor: ds.c.ground }]}>
         <ActivityIndicator color={ds.accentText} />
@@ -207,14 +221,13 @@ export function BringInFlow() {
       onCancel={cancel}
       onSave={(drink) => run({ kind: 'recipes', source, drinks: [drink] })}
       onEditAll={({ draft }) => {
-        // The full editor: the add-drink wizard, filled in, at its review.
+        // The full editor: the add-drink wizard, filled in, from its first step (as Edit this drink opens it).
         const wizardAt = wizardPlace(job.barId);
         const wizard = useDrinkWizardStore.getState();
         wizard.clear(wizardAt);
-        wizard.patch(wizardAt, draft);
-        wizard.setStep(wizardAt, 'review');
+        wizard.begin(wizardAt, draft);
         useBringIn.getState().clear(true);
-        router.replace((job.barId ? `/add-cocktail?barId=${job.barId}` : '/add-cocktail') as Href);
+        router.replace((job.barId ? `/add-cocktail?barId=${job.barId}&imported=1` : '/add-cocktail?imported=1') as Href);
       }}
     />
   );

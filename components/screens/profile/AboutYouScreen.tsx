@@ -85,7 +85,7 @@ function AboutForm({ profile }: { profile: MyProfile }) {
           />
           <Caption tone="muted">{PHOTO_HINT[draft.showsPhoto ? 'members' : 'me']}</Caption>
         </View>
-        <Field label="Name" value={draft.name} onChangeText={(name) => edit({ name })} error={errors.name} autoComplete="name" maxLength={80} />
+        <Field label="Name" value={draft.name} onChangeText={(name) => edit({ name })} error={errors.name} autoComplete="name" autoCapitalize="words" maxLength={80} />
         <ProfileIdentity draft={draft} edit={edit} error={errors.tagline} />
         <Field label="Bio (optional)" value={draft.bio} onChangeText={(bio) => edit({ bio })} error={errors.bio} hint={`${draft.bio.trim().length}/500`} multiline maxLength={500} />
         <Field

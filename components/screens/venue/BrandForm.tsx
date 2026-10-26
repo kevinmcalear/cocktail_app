@@ -47,7 +47,7 @@ function accentOptions(row: VenueBrandRow, suggested: string[], withDefault: boo
 /**
  * The brand settings as the canvas draws them (tools-brand-desktop): Logo,
  * Colours from your logo with Text on accent, Ground tint with the contrast
- * check, Display face, and the home-screen name and icon.
+ * check, Font, and the home-screen name and icon.
  */
 export function BrandForm({ row, draft, set, suggested, busy, problems, effectiveInk, onUpload, onRemoveBackground, setup }: {
   row: VenueBrandRow;
@@ -132,13 +132,13 @@ export function BrandForm({ row, draft, set, suggested, busy, problems, effectiv
       {setup ? (
         // Setup draws the faces straight on the page, no card around them (canvas make-venue-look).
         <View style={styles.section}>
-          <SectionHeading>Display face</SectionHeading>
+          <SectionHeading>Font</SectionHeading>
           <FaceChoices setup name={row.name} value={draft.face} onChange={set('face')} />
           <Caption tone="muted" style={styles.note}>For drink names, menu names and big titles like Tonight. Body text, specs and numbers stay fixed.</Caption>
         </View>
       ) : (
         <SettingsSection
-          title="Display face"
+          title="Font"
           note="For drink names, menu names and big titles like Tonight. Body text, specs and numbers stay fixed so they stay readable."
         >
           <FaceChoices name={row.name} value={draft.face} onChange={set('face')} />

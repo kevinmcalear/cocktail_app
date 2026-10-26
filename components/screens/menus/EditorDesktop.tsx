@@ -1,6 +1,6 @@
 import { useRouter, type Href } from 'expo-router';
 import { useState } from 'react';
-import { FlatList, ScrollView, StyleSheet, TextInput, useWindowDimensions, View, type ViewStyle } from 'react-native';
+import { ScrollView, SectionList, StyleSheet, TextInput, useWindowDimensions, View, type ViewStyle } from 'react-native';
 
 import { Body, Button, Caption, GlassButton, useDs } from '@/components/ds';
 import { DRAWN_LIST_WINDOW } from '@/components/ds/SketchDrawing';
@@ -10,9 +10,9 @@ import { radius, space, type } from '@/constants/tokens';
 import { useActiveVenue } from '@/hooks/useActiveVenue';
 import { useCreateMenu, useSaveLayout } from '@/hooks/useMenuMutations';
 import { itemHref, type ItemCategory } from '@/lib/itemRoutes';
-import { cannotAdd, copySections, filterLibrary, libraryNote, nameToMake, nearLibrary } from '@/lib/menuLayout';
+import { cannotAdd, copySections, filterLibrary, groupLibrary, libraryNote, nameToMake, nearLibrary } from '@/lib/menuLayout';
 
-import { LibraryRow } from './AddDrinkSheet';
+import { LibraryGroupHead, LibraryRow } from './AddDrinkSheet';
 import { MakeFromSearch, useMakeDrink } from './MakeFromSearch';
 import { EDITOR_STATUS, EditorSections, MenuCoverEdit, MenuNameInput, NextStep, SaveLine, useHomeMenu } from './EditorParts';
 import { GuestPreview } from './GuestPreview';
@@ -72,7 +72,9 @@ function LibraryPanel({ editor, drag }: { editor: LayoutEditor; drag: MenuDrag }
   const [freeOnly, setFreeOnly] = useState(false);
   const target = editor.section(editor.targetKey) ?? editor.layout.sections[0] ?? null;
   const router = useRouter();
-  const found = target ? filterLibrary(editor.library, target, query, freeOnly, editor.elsewhere) : [];
+  // The filter only means something when another menu has drinks on it (Q13, 26 Oct 2026).
+  const shared = Object.keys(editor.elsewhere).length > 0;
+  const found = target ? filterLibrary(editor.library, target, query, freeOnly && shared, editor.elsewhere) : [];
   const venueName = venues.find((v) => v.id === editor.menu.barId)?.name ?? null;
   const where = venueName ?? 'your drinks';
   // Not there? The same search makes it, and close names follow (dm-decided).
@@ -95,14 +97,18 @@ function LibraryPanel({ editor, drag }: { editor: LayoutEditor; drag: MenuDrag }
           style={[type.body, styles.searchInput, { color: ds.c.ink }]}
         />
       </View>
-      <View role="radiogroup" accessibilityLabel="Show" style={styles.wrap}>
-        <Choice label="All" pill="accent" selected={!freeOnly} onPress={() => setFreeOnly(false)} />
-        <Choice label="Not on a menu" pill="accent" selected={freeOnly} onPress={() => setFreeOnly(true)} />
-      </View>
-      {/* Only the rows in view are drawn: a venue's library can be hundreds of sketched drinks. */}
-      <FlatList
+      {shared ? (
+        <View role="radiogroup" accessibilityLabel="Show" style={styles.wrap}>
+          <Choice label="All" pill="accent" selected={!freeOnly} onPress={() => setFreeOnly(false)} />
+          <Choice label="Not on another menu" pill="accent" selected={freeOnly} onPress={() => setFreeOnly(true)} />
+        </View>
+      ) : null}
+      {/* Only the rows in view are drawn: a library can be hundreds of sketched drinks. */}
+      <SectionList
         style={styles.flex}
-        data={drinks}
+        sections={groupLibrary(drinks, editor.canMake, query)}
+        stickySectionHeadersEnabled={false}
+        renderSectionHeader={({ section: g }) => <LibraryGroupHead title={g.title} />}
         keyExtractor={(d) => d.id}
         extraData={target}
         initialNumToRender={12}

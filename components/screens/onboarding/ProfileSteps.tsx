@@ -49,7 +49,7 @@ export function NameStep({
 
   return (
     <SetupPage footer={<SetupFooter onPress={submit} disabled={pendingFinish} onSkip={invited ? undefined : onSkip} />}>
-      <Field label="Name" value={name} onChangeText={setName} error={problem ?? undefined} autoComplete="name" maxLength={80} />
+      <Field label="Name" value={name} onChangeText={setName} error={problem ?? undefined} autoComplete="name" autoCapitalize="words" maxLength={80} />
       {handle === null && name.trim() && !invited ? <Caption tone="muted" style={styles.strong}>{`Your handle is @${chosen}. You can change it on You.`}</Caption> : null}
       {handle !== null ? (
         <Field

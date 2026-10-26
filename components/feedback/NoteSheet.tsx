@@ -107,8 +107,6 @@ function Sheet({ visible, onClose, about, report, ask }: NoteSheetProps) {
   const pick = async () => {
     setProblem(null);
     try {
-      const { status } = await ImagePicker.requestMediaLibraryPermissionsAsync();
-      if (status !== 'granted') return setProblem('Allow access to your photos to add one.');
       const result = await ImagePicker.launchImageLibraryAsync({ mediaTypes: ['images'], quality: 0.8 });
       const asset = result.canceled ? null : result.assets?.[0];
       if (asset) setPhoto({ uri: asset.uri, id: newDraftId(), type: asset.mimeType ?? null });

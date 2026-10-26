@@ -26,7 +26,7 @@ interface LineRowProps {
   onEditPrep?: () => void;
   /** The units to pick from; the finish offers drops, sprays, rinses and the garnish counts. */
   units?: readonly string[];
-  /** Under the name on the desktop page: who brings it and what this pour costs ("Bluestone Trade · $1.28"). */
+  /** Under the name on the desktop page: what this pour costs ("$1.28"), or a new bottle's chip. */
   detail?: ReactNode;
   /** Under the whole line: what opens in place on the desktop page (the supplier pick). */
   below?: ReactNode;

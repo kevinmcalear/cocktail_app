@@ -8,6 +8,7 @@ import { BackbarTheme, BrandProvider, GlassButton, useBreakpoint, useDs, useGutt
 import { space } from '@/constants/tokens';
 import { useSignedIn } from '@/ctx/AuthContext';
 import { useActiveVenue } from '@/hooks/useActiveVenue';
+import { creditedToBar } from '@/hooks/useCocktails';
 import { useCapabilities } from '@/hooks/useCapabilities';
 import { useDilutionDefaults } from '@/hooks/useDrinkMath';
 import { useDrinkPhotos } from '@/hooks/useDrinkPhotos';
@@ -38,6 +39,7 @@ import { DrinkMoreMenu } from './DrinkMoreMenu';
 import { GlassSheet } from './GlassSheet';
 import type { ShownPicture } from './PictureViewer';
 import { StrengthSheet } from './StrengthSheet';
+import { useDeleteDrink } from './useDeleteDrink';
 import { useDrinkActions } from './useDrinkActions';
 import { useDrinkFacts } from './useDrinkFacts';
 
@@ -179,7 +181,15 @@ function DrinkPage({ item, inStudyPile, onToggleStudyPile, canEdit, adminFix = f
   };
   const sections = useDrinkSections(bodyProps);
   const hero = (h: number) => <DrinkHero name={item.name} pictures={pictures} glass={glassKey} itemId={item.id} palette={pictures[0]?.palette} height={h} fade={!wide} />;
-  const more = preview ? null : <DrinkMoreMenu itemId={item.id} name={item.name} canEdit={canEdit} adminFix={adminFix && !preview} onEdit={onEdit} wide={wide} onShare={viewingAs ? share : undefined} teamRole={teamRole} />;
+  const deleteDrink = useDeleteDrink();
+  // The editor's rule: the drink's own people, unless it's credited to a bar. Beside a list (pane), the list drops it.
+  const onDelete = canEdit && !creditedToBar(item) ? () => {
+    deleteDrink({ id: item.id, name: item.name });
+    if (pane) return;
+    if (router.canGoBack()) router.back();
+    else router.replace('/(tabs)');
+  } : undefined;
+  const more = preview ? null : <DrinkMoreMenu itemId={item.id} name={item.name} canEdit={canEdit} adminFix={adminFix && !preview} onEdit={onEdit} wide={wide} onShare={viewingAs ? share : undefined} onDelete={onDelete} teamRole={teamRole} />;
   const heroScheme = glassOver(pictures[0]);
 
   return (

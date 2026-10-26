@@ -62,7 +62,7 @@ test('six rows, Kit next; Kit opens in place and comes back here', async () => {
   await renderWithTamagui(<SetupChecklist barId="b1" name="Little Rye" />);
   expect(screen.getByText('Set up Little Rye')).toBeTruthy();
   expect(screen.getByText('Two of six done. Each one brings you back here.')).toBeTruthy();
-  for (const row of ['Your bar, done', 'Kit, now', 'Bottles, todo', 'First menu, done', 'First drinks, todo', 'Your team, skipped']) expect(screen.getByRole('button', { name: row })).toBeTruthy();
+  for (const row of ['Basic information, done', 'Kit, now', 'Bottles, todo', 'First menu, done', 'First drinks, todo', 'Your team, skipped']) expect(screen.getByRole('button', { name: row })).toBeTruthy();
   await fireEvent.press(screen.getByRole('button', { name: 'Kit, now' }));
   expect(screen.getByText('Set up Little Rye · Kit')).toBeTruthy();
   await fireEvent.press(screen.getByRole('button', { name: 'Back' }));
@@ -75,17 +75,17 @@ test('six rows, Kit next; Kit opens in place and comes back here', async () => {
   expect(screen.getByRole('button', { name: 'Kit, now' })).toBeTruthy();
 });
 
-test('pages it opens: Your bar (Venue settings once setup is through, else setup where it stopped) and the menu for First drinks', async () => {
+test('pages it opens: Basic information (Venue settings once setup is through, else setup where it stopped) and the menu for First drinks', async () => {
   await renderWithTamagui(<SetupChecklist barId="b1" name="Little Rye" />);
-  await fireEvent.press(screen.getByRole('button', { name: 'Your bar, done' }));
+  await fireEvent.press(screen.getByRole('button', { name: 'Basic information, done' }));
   expect(mockPush).toHaveBeenLastCalledWith('/settings/bar/b1');
   await fireEvent.press(screen.getByRole('button', { name: 'First drinks, todo' }));
   expect(mockPush).toHaveBeenLastCalledWith('/menus/m1/edit');
 });
 
-test('setup not through yet: Your bar picks venue setup up', async () => {
+test('setup not through yet: Basic information picks venue setup up', async () => {
   mockRun = { finished: false };
   await renderWithTamagui(<SetupChecklist barId="b1" name="Little Rye" />);
-  await fireEvent.press(screen.getByRole('button', { name: 'Your bar, done' }));
+  await fireEvent.press(screen.getByRole('button', { name: 'Basic information, done' }));
   expect(mockPush).toHaveBeenLastCalledWith('/venue-setup?bar=b1');
 });
