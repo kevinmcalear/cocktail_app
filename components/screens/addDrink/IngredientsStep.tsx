@@ -99,7 +99,9 @@ export function IngredientsStep({ draft, set, ingredients, loading, aliases = []
 
   // A pour typed with the name ("30 pommeau") is the line's; otherwise it starts at a likely one.
   const lineFor = (pick: WizardPick, pour?: TypedPour): WizardLine => {
-    const unit = pour ? typedUnit(pick.name, pour.unit, getPreferredUnit()) : guessUnit(pick.name, getPreferredUnit());
+    const guess = pour ? typedUnit(pick.name, pour.unit, getPreferredUnit()) : guessUnit(pick.name, getPreferredUnit());
+    // A house recipe is never topped (lib/unitGuess.ts prepUnit).
+    const unit = !forDrink && guess === 'top' ? getPreferredUnit() : guess;
     const amount = pour ? tidyAmount(pour.amount) : !forDrink ? '' : suggestAmount({ name: pick.name, genericName: generic(pick.id) }, unit, draft.lines.map((l) => ({ name: l.name, genericName: generic(l.id) })));
     return newLine(pick, unit, amount);
   };

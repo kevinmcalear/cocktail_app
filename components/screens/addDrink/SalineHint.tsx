@@ -28,10 +28,16 @@ export function SalineHint({ line, ingredients, onChange }: Props) {
         variant="ghost"
         size="sm"
         accessibilityLabel={`Use 2 drops of saline instead of ${line.name}`}
-        onPress={() => onChange({ ...pickByName('Saline solution', ingredients), unit: 'drop', amount: '2', prep: undefined, technique: undefined, bottle: undefined, named: undefined, later: undefined })}
+        onPress={() => onChange({ ...saline(ingredients), unit: 'drop', amount: '2', prep: undefined, technique: undefined, bottle: undefined, named: undefined, later: undefined })}
       />
     </View>
   );
+}
+
+// The catalog's saline, under whichever name it has; a new name otherwise.
+function saline(ingredients: readonly CatalogIngredient[]) {
+  const named = ['Saline solution', 'Saline'].map((n) => pickByName(n, ingredients)).find((p) => p.id);
+  return named ?? pickByName('Saline solution', ingredients);
 }
 
 const styles = StyleSheet.create({

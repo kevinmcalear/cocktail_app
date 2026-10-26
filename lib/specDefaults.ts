@@ -119,7 +119,10 @@ export interface ServeGuess {
 // The line that made it shaken, by name (Q20): "It has egg white, so it’s shaken".
 function shakenWhy(lines: Parameters<typeof draftSketchInputs>[0]['lines']): string | null {
   const line = shakenBy(lines);
-  return line ? `It has ${line.name.trim().toLowerCase()}, so it’s shaken` : null;
+  if (!line) return null;
+  // The name when it says so ("Lime juice"); a brand matched by its generic is called by the generic.
+  const said = shakenBy([{ ...line, genericName: null }]) ? line.name : line.genericName ?? line.name;
+  return `It has ${said.trim().toLowerCase()}, so it’s shaken`;
 }
 
 /**

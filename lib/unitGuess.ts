@@ -5,15 +5,15 @@
  */
 
 // Weighed, never poured: sugar, salt, powders and acids.
-const DRY = /\b(sugar|salt|msg|powder(ed)?|(citric|malic|tartaric|lactic|ascorbic|succinic) acid|gelatine?|agar|xanthan|pectin|cocoa|matcha|peppercorns?|coffee grounds|ground coffee|tea leaves)\b/;
+const DRY = /\b(sugar|salt|cream of tartar|msg|powder(ed)?|(citric|malic|tartaric|lactic|ascorbic|succinic) acid|gelatine?|agar|xanthan|pectin|cocoa|matcha|peppercorns?|coffee grounds|ground coffee|tea leaves)\b/;
 // A dry word in something poured: sugar syrup, salt solution, cocoa liqueur.
-const POURED = /syrup|cordial|solution|saline|juice|water|liqueur|tincture|bitters|soda|cream|milk|liquid|\boil\b|extract|brine|shrub|honey|wine|vinegar|\brim\b/;
+const POURED = /syrup|cordial|solution|saline|juice|water|liqueur|tincture|bitters|soda|cream(?! of tartar)|milk|liquid|\boil\b|extract|brine|shrub|honey|wine|vinegar|\brim\b/;
 const SOFT = /soda|tonic|ginger (beer|ale)|champagne|prosecco|cava|sparkling|cola|lemonade/;
 
-/** Loose salt in a drink, the kind saline measures better. Not saline, a salted syrup or a salt rim. */
+/** Loose plain salt in a drink, the kind saline measures better. Not saline, a salted syrup, a salt rim or a flavoured salt. */
 export function isLooseSalt(name: string): boolean {
-  const n = name.toLowerCase();
-  return /\bsalt\b/.test(n) && !POURED.test(n);
+  // Plain salt only: celery, smoked or chili salt is there for its flavour, which saline doesn't have.
+  return /^((sea|kosher|table|fine|flaky|maldon|rock|pink|himalayan)\s+)*salt(\s+flakes)?$/.test(name.trim().toLowerCase());
 }
 
 /**

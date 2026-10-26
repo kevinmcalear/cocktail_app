@@ -5,7 +5,7 @@ import { guessUnit, isLooseSalt, prepUnit, typedUnit } from './unitGuess';
 import { RECIPE_UNITS } from './units';
 
 // Dry things are weighed, in a drink and in a house recipe alike (Q18, Q19).
-for (const name of ['Sugar', 'Demerara sugar', 'Caster Sugar', 'Sea salt', 'Kosher Salt', 'Citric acid', 'Malic Acid', 'MSG', 'Matcha powder', 'Cocoa powder', 'Xanthan gum', 'Agar', 'Gelatine']) {
+for (const name of ['Sugar', 'Demerara sugar', 'Caster Sugar', 'Sea salt', 'Kosher Salt', 'Citric acid', 'Malic Acid', 'MSG', 'Matcha powder', 'Cocoa powder', 'Xanthan gum', 'Agar', 'Gelatine', 'Cream of tartar']) {
   assert.equal(guessUnit(name, 'oz'), 'g', `${name} is weighed`);
   assert.equal(prepUnit(name), 'g', `${name} is weighed in a recipe`);
 }
@@ -48,7 +48,7 @@ for (const name of ['Sugar', 'Soda', 'Bitters', 'Saline', 'Egg', 'Sugar cube']) 
 }
 
 // Loose salt gets the saline hint; saline, salted syrups and a salt rim don't.
-for (const name of ['Salt', 'Sea salt', 'Maldon sea salt flakes', 'Smoked salt']) assert.ok(isLooseSalt(name), name);
-for (const name of ['Saline', 'Salt solution', 'Salted caramel syrup', 'Salt rim', 'Celery salt water', 'Sugar']) assert.ok(!isLooseSalt(name), name);
+for (const name of ['Salt', 'Sea salt', 'Maldon sea salt flakes', 'Kosher salt']) assert.ok(isLooseSalt(name), name);
+for (const name of ['Saline', 'Salt solution', 'Salted caramel syrup', 'Salt rim', 'Celery salt', 'Smoked salt', 'Chili lime salt', 'Sugar']) assert.ok(!isLooseSalt(name), name);
 
 console.log('unitGuess.check.ts: ok');

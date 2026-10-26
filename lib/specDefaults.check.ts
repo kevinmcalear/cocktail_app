@@ -54,6 +54,8 @@ const finished = serveGuess({
 });
 assert.equal(finished.method, 'Stir');
 assert.equal(finished.why, 'It’s all spirit, so it’s stirred');
+// A juice topped up is a topped drink, built, not stirred.
+assert.equal(serveGuess({ name: 'House', lines: [{ name: 'Rum', amount: 60, unit: 'ml' }, { name: 'Pineapple juice', amount: null, unit: 'top' }] }).method, 'Build');
 const stirred = serveGuess({ name: 'House drink', lines: [{ name: 'Rye Whiskey', amount: 60, unit: 'ml' }, { name: 'Sweet Vermouth', amount: 30, unit: 'ml' }] });
 assert.equal(stirred.method, 'Stir');
 const picked = serveGuess({ name: 'House sour', methods: ['Stir'], glass: 'Rocks', lines: [{ name: 'Gin', amount: 60, unit: 'ml' }] });

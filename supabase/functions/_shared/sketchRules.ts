@@ -572,7 +572,7 @@ const SHAKEN_FOR = /lime|lemon|grapefruit|yuzu|citrus|juice|egg|cream|pineapple|
 // On top or on the glass, not in the tin: a float of cream or a lemon twist doesn't make a drink shaken (Q20).
 const NOT_SHAKEN = new Set(['float', 'top', 'rinse', 'spray', 'discard', 'peel', 'twist', 'wheel', 'slice', 'sprig', 'leaf', 'leaves', 'wedge', 'zest', 'rim', 'garnish']);
 
-/** The first line that makes a drink shaken (lime juice, egg white, cream), or null. */
+/** The first line that makes a drink shaken (lime juice, egg white, cream), or null. A line topped up counts as topped, not shaken. */
 export function shakenBy<L extends Pick<SketchLine, 'name' | 'genericName' | 'unit'>>(lines: readonly L[]): L | null {
   return lines.find((l) => !NOT_SHAKEN.has((l.unit ?? '').trim().toLowerCase()) && SHAKEN_FOR.test(`${l.name} ${l.genericName ?? ''}`.toLowerCase())) ?? null;
 }
@@ -672,7 +672,7 @@ export function sketchFromDrink(drink: SketchDrink): SketchResult {
   // --- method, glass, ice ---
   const has = (re: RegExp) => drink.lines.some((l) => re.test(`${l.name} ${l.genericName ?? ''}`.toLowerCase()));
   const shaken = shakenBy(drink.lines) !== null;
-  const topped = fizz || has(/top|soda|tonic|ginger beer|ginger ale|sparkling|champagne|prosecco|cola|beer/);
+  const topped = fizz || drink.lines.some((l) => (l.unit ?? '').trim().toLowerCase() === 'top') || has(/top|soda|tonic|ginger beer|ginger ale|sparkling|champagne|prosecco|cola|beer/);
   const total = drink.lines.reduce((s, l) => s + l.volume, 0);
 
   let method: Method | null = methodFromNames(drink.methods);
