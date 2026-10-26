@@ -173,13 +173,13 @@ function HomePlaces({ onGo }: { onGo: (p: Place) => void }) {
 /**
  * The venue menu, opened from the logo on phones, the tablet rail and the
  * desktop sidebar. Titled with where you are (the venue and your role, or
- * Home bar) with Switch beside the X, then that place's pages: at a venue
+ * Home bar) with Switch beside the X for anyone with a venue, then that place's pages: at a venue
  * its working pages, Venue and You; at home My Bar, Collection, You and
  * Settings (venue-menu proposal A, approved 24 Oct 2026).
  */
 export function VenueMenuSheet({ onClose }: { onClose: () => void }) {
   const router = useRouter();
-  const { active } = useActiveVenue();
+  const { active, venues, isLoading } = useActiveVenue();
   const home = useMode().mode === 'home';
   const switchTo = useSwitchTo();
   const choose = (next: 'home' | Venue) => {
@@ -201,7 +201,8 @@ export function VenueMenuSheet({ onClose }: { onClose: () => void }) {
       title={venue ? venue.name : 'Home bar'}
       subtitle={venue ? roleLabel(venue.roleLevel) : 'Your shelf and collection'}
       leading={venue ? <VenueMark venue={venue} size={40} /> : <HomeMark size={40} />}
-      aside={<SwitchButton home={home} active={active} onPick={choose} />}
+      // No venues, nowhere to switch to: no Switch (Q35a, 26 Oct 2026). Kept while they load, so it doesn't pop in.
+      aside={isLoading || venues.length ? <SwitchButton home={home} active={active} onPick={choose} /> : undefined}
       plain
     >
       {venue ? (

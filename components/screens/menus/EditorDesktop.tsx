@@ -72,7 +72,9 @@ function LibraryPanel({ editor, drag }: { editor: LayoutEditor; drag: MenuDrag }
   const [freeOnly, setFreeOnly] = useState(false);
   const target = editor.section(editor.targetKey) ?? editor.layout.sections[0] ?? null;
   const router = useRouter();
-  const found = target ? filterLibrary(editor.library, target, query, freeOnly, editor.elsewhere) : [];
+  // The filter only means something when another menu has drinks on it (Q13, 26 Oct 2026).
+  const shared = Object.keys(editor.elsewhere).length > 0;
+  const found = target ? filterLibrary(editor.library, target, query, freeOnly && shared, editor.elsewhere) : [];
   const venueName = venues.find((v) => v.id === editor.menu.barId)?.name ?? null;
   const where = venueName ?? 'your drinks';
   // Not there? The same search makes it, and close names follow (dm-decided).
@@ -95,10 +97,12 @@ function LibraryPanel({ editor, drag }: { editor: LayoutEditor; drag: MenuDrag }
           style={[type.body, styles.searchInput, { color: ds.c.ink }]}
         />
       </View>
-      <View role="radiogroup" accessibilityLabel="Show" style={styles.wrap}>
-        <Choice label="All" pill="accent" selected={!freeOnly} onPress={() => setFreeOnly(false)} />
-        <Choice label="Not on a menu" pill="accent" selected={freeOnly} onPress={() => setFreeOnly(true)} />
-      </View>
+      {shared ? (
+        <View role="radiogroup" accessibilityLabel="Show" style={styles.wrap}>
+          <Choice label="All" pill="accent" selected={!freeOnly} onPress={() => setFreeOnly(false)} />
+          <Choice label="Not on another menu" pill="accent" selected={freeOnly} onPress={() => setFreeOnly(true)} />
+        </View>
+      ) : null}
       {/* Only the rows in view are drawn: a venue's library can be hundreds of sketched drinks. */}
       <FlatList
         style={styles.flex}

@@ -30,3 +30,14 @@ test('a drink that is there offers no Make', async () => {
   await fireEvent.changeText(screen.getByLabelText('Search'), 'dusk spritz');
   expect(screen.queryByText(/^Make/)).toBeNull();
 });
+
+test('Not on another menu shows only when another menu has drinks, and leaves those out', async () => {
+  const library = [drink('Dusk Spritz'), drink('Bolo Tie')];
+  const { unmount } = await renderWithTamagui(<AddDrinkSheet section={section} barId="bar" onClose={jest.fn()} library={library} elsewhere={{}} onAdd={jest.fn()} />);
+  expect(screen.queryByRole('radio', { name: 'Not on another menu' })).toBeNull();
+  await unmount();
+  await renderWithTamagui(<AddDrinkSheet section={section} barId="bar" onClose={jest.fn()} library={library} elsewhere={{ 'Dusk Spritz': 'Summer' }} onAdd={jest.fn()} />);
+  await fireEvent.press(screen.getByRole('radio', { name: 'Not on another menu' }));
+  expect(screen.queryByText('Dusk Spritz')).toBeNull();
+  expect(screen.getByText('Bolo Tie')).toBeTruthy();
+});
