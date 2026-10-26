@@ -12,8 +12,9 @@ import type { ReadFile } from '@/lib/readAnything';
 export async function pdfPages(file: ReadFile): Promise<ReadFile[]> {
   if (file.mimeType !== 'application/pdf' || !file.uri) return [];
   try {
-    // About A4 at 150 dpi: sharp enough to read a spec, small enough for a 40-page book.
-    const pages = await PdfThumbnail.generateAllPages(file.uri, { maxWidth: 1240, maxHeight: 1754, quality: 80 });
+    // Three times the large page's width on a phone: sharp enough to read a spec, small enough for a long book.
+    // ponytail: every page is drawn at once (the library has no page count to draw them as they're shown); fine for spec books of tens of pages.
+    const pages = await PdfThumbnail.generateAllPages(file.uri, { maxWidth: 1000, maxHeight: 1400, quality: 80 });
     return pages.map((p, i) => ({ uri: p.uri, mimeType: 'image/jpeg', name: `${file.name ?? 'PDF'}, page ${i + 1}` }));
   } catch {
     return [];
