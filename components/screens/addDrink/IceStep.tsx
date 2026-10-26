@@ -92,8 +92,9 @@ export function IceStep({ draft, set, ices, barIce, suggested, why, compact, kit
       <View style={styles.stack}>
         <View style={styles.group}>
           <Eyebrow>In the glass</Eyebrow>
-          <PickStep label="In the glass" ownLabel="Other ice" compact={compact} options={ices} selected={base ? [base] : !layers.length && draft.ice ? [draft.ice] : []} onChange={([ice]) => pickBase(ice)} suggested={suggested} why={why} mine={mine} />
-          {layers.length ? <IceLayers layers={layers} onChange={setLayers} onAdd={() => setAdding(true)} sourceOf={sourceOf} /> : null}
+          <PickStep label="In the glass" ownLabel="Other ice" compact={compact} options={ices} selected={base ? [base] : !layers.length && draft.ice ? [draft.ice] : []} onChange={([ice]) => pickBase(ice)} suggested={suggested} why={why} mine={mine}>
+            {layers.length ? <IceLayers layers={layers} onChange={setLayers} onAdd={() => setAdding(true)} sourceOf={sourceOf} /> : null}
+          </PickStep>
           {/* ponytail: the first layer from the bottom the venue may lack; a build of two missing asks one at a time. */}
           <IcePrompt barId={barId} ice={firstMissing(named, kit)} drink={draft.name} />
           {tip ? (
