@@ -58,7 +58,7 @@ ALTER TABLE "public"."item_methods"
 
 -- As 20261007200000_drink_methods.sql, with the parts. A line's "part", the
 -- methods' p_method_parts (one per method, in the same order) and p_parts
--- (the parts, or JSON null for one part) are each optional: left out, a line
+-- (the parts, or an empty list for one part) are each optional: left out, a line
 -- kept by id keeps its part, a method keeps the part it had, and the drink
 -- keeps its parts. A line or method in a part the drink doesn't have is
 -- refused.
@@ -93,7 +93,7 @@ BEGIN
     END IF;
 
     IF p_parts IS NOT NULL THEN
-        UPDATE public.items SET parts = CASE WHEN jsonb_typeof(p_parts) = 'null' THEN NULL ELSE p_parts END WHERE id = p_item;
+        UPDATE public.items SET parts = CASE WHEN p_parts IN ('[]'::jsonb, 'null'::jsonb) THEN NULL ELSE p_parts END WHERE id = p_item;
     END IF;
     SELECT COALESCE(jsonb_array_length(parts), 1) INTO v_count FROM public.items WHERE id = p_item;
 

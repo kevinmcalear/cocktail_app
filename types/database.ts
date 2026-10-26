@@ -2440,16 +2440,19 @@ export type Database = {
         Row: {
           item_id: string
           method_item_id: string
+          part: number
           sort_order: number | null
         }
         Insert: {
           item_id: string
           method_item_id: string
+          part?: number
           sort_order?: number | null
         }
         Update: {
           item_id?: string
           method_item_id?: string
+          part?: number
           sort_order?: number | null
         }
         Relationships: [
@@ -2949,6 +2952,7 @@ export type Database = {
           override_prep_level: number | null
           override_specific_brand_level: number | null
           override_visibility_level: number | null
+          parts: Json | null
           picture: Database["public"]["Enums"]["item_picture"]
           price: string | null
           publish_mode: Database["public"]["Enums"]["item_publish_mode"] | null
@@ -3014,6 +3018,7 @@ export type Database = {
           override_prep_level?: number | null
           override_specific_brand_level?: number | null
           override_visibility_level?: number | null
+          parts?: Json | null
           picture?: Database["public"]["Enums"]["item_picture"]
           price?: string | null
           publish_mode?: Database["public"]["Enums"]["item_publish_mode"] | null
@@ -3079,6 +3084,7 @@ export type Database = {
           override_prep_level?: number | null
           override_specific_brand_level?: number | null
           override_visibility_level?: number | null
+          parts?: Json | null
           picture?: Database["public"]["Enums"]["item_picture"]
           price?: string | null
           publish_mode?: Database["public"]["Enums"]["item_publish_mode"] | null
@@ -4478,6 +4484,7 @@ export type Database = {
           ingredient_item_id: string | null
           is_optional: boolean | null
           parent_ingredient_id: string | null
+          part: number
           preparation_notes: string | null
           recipe_item_id: string | null
           sort_order: number
@@ -4491,6 +4498,7 @@ export type Database = {
           ingredient_item_id?: string | null
           is_optional?: boolean | null
           parent_ingredient_id?: string | null
+          part?: number
           preparation_notes?: string | null
           recipe_item_id?: string | null
           sort_order?: number
@@ -4504,6 +4512,7 @@ export type Database = {
           ingredient_item_id?: string | null
           is_optional?: boolean | null
           parent_ingredient_id?: string | null
+          part?: number
           preparation_notes?: string | null
           recipe_item_id?: string | null
           sort_order?: number
@@ -5692,6 +5701,7 @@ export type Database = {
           ingredient_item_id: string | null
           is_optional: boolean | null
           parent_ingredient_id: string | null
+          part: number | null
           preparation_notes: string | null
           recipe_item_id: string | null
           sort_order: number | null
@@ -5747,6 +5757,7 @@ export type Database = {
             override_prep_level: number | null
             override_specific_brand_level: number | null
             override_visibility_level: number | null
+            parts: Json | null
             picture: Database["public"]["Enums"]["item_picture"]
             price: string | null
             publish_mode:
@@ -6591,6 +6602,7 @@ export type Database = {
           override_prep_level: number | null
           override_specific_brand_level: number | null
           override_visibility_level: number | null
+          parts: Json | null
           picture: Database["public"]["Enums"]["item_picture"]
           price: string | null
           publish_mode: Database["public"]["Enums"]["item_publish_mode"] | null
@@ -7317,7 +7329,9 @@ export type Database = {
               p_item: string
               p_lines: Json
               p_method_ids: string[]
+              p_method_parts?: number[]
               p_note: string
+              p_parts?: Json
             }
             Returns: number
           }
