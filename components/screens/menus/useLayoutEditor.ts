@@ -49,6 +49,8 @@ export function useLayoutEditor(menu: MenuDetail, { paste = false }: { paste?: b
   const [sheet, setSheet] = useState<EditorSheet>(paste ? { kind: 'paste', key: null } : null);
   const [targetKey, setTargetKey] = useState<string | null>(layout.sections[0]?.key ?? null);
   const [error, setError] = useState<string | null>(null);
+  // The cover's own problem, shown on the cover: it never holds up saving the rest.
+  const [coverError, setCoverError] = useState<string | null>(null);
   const [savedAt, setSavedAt] = useState<number | null>(null);
   const [now] = useState(() => Date.now());
   const save = useSaveMenu(menu.id);
@@ -157,6 +159,7 @@ export function useLayoutEditor(menu: MenuDetail, { paste = false }: { paste?: b
     setTargetKey,
     section,
     coverBusy: cover.isPending,
+    coverError,
     rename: (name: string) => edit({ ...layout, name }),
     add: (key: string, drink: MenuDrink) => edit(addDrink(layout, key, drink)),
     /** Added from the library: says so, with Undo (which takes back only that drink). */
@@ -185,14 +188,18 @@ export function useLayoutEditor(menu: MenuDetail, { paste = false }: { paste?: b
     moveSection: (key: string, by: -1 | 1) => edit(moveSection(layout, key, by)),
     removeSection: (key: string) => edit(removeSection(layout, key)),
     pickCover: async () => {
+      setCoverError(null);
       try {
         const url = await cover.mutateAsync();
-        if (url) edit({ ...layout, coverUrl: url, coverPosition: 50 });
-      } catch (e) {
-        setError(e instanceof Error ? e.message : 'Couldn’t upload the cover.');
+        if (url) update((l) => ({ ...l, coverUrl: url, coverPosition: 50 }));
+      } catch {
+        setCoverError('Didn’t upload. Try again.');
       }
     },
-    removeCover: () => edit({ ...layout, coverUrl: null }),
+    removeCover: () => {
+      setCoverError(null);
+      edit({ ...layout, coverUrl: null });
+    },
     persist,
     goLive: async () => {
       if (await persist()) setSheet({ kind: 'golive' });

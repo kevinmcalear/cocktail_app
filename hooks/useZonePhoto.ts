@@ -15,8 +15,6 @@ export function useZonePhoto(barId: string | null | undefined) {
   const qc = useQueryClient();
   return useMutation({
     mutationFn: async (zoneId: string): Promise<boolean> => {
-      const { status } = await ImagePicker.requestMediaLibraryPermissionsAsync();
-      if (status !== 'granted') throw new Error('Allow access to your photos to add one.');
       const result = await ImagePicker.launchImageLibraryAsync({ mediaTypes: ['images'], allowsEditing: true, aspect: [16, 9], quality: 0.85 });
       if (result.canceled || !result.assets?.length) return false;
       const uri = result.assets[0].uri;

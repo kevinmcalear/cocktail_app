@@ -1,6 +1,6 @@
 import { StyleSheet, TextInput, View } from 'react-native';
 
-import { Button, Caption, DsText, GlassButton, PressableScale, useDs } from '@/components/ds';
+import { Button, Caption, DsText, GlassButton, GlassSurface, PressableScale, useDs } from '@/components/ds';
 import { IconSymbol } from '@/components/ui/icon-symbol';
 import { displayFaces, radius, space, type } from '@/constants/tokens';
 
@@ -36,6 +36,11 @@ export function MenuCoverEdit({ editor, height }: { editor: LayoutEditor; height
   return (
     <View style={[styles.cover, { height, backgroundColor: ds.c.surface }]}>
       <MenuVisual name={name || 'Menu'} coverUrl={coverUrl} coverPosition={editor.layout.coverPosition} pictures={pictures} height={height} />
+      {editor.coverError ? (
+        <GlassSurface style={styles.coverError}>
+          <Caption role="alert" numberOfLines={1}>{editor.coverError}</Caption>
+        </GlassSurface>
+      ) : null}
       <View style={styles.coverButtons}>
         <GlassButton label={editor.coverBusy ? 'Uploading…' : coverUrl ? 'Change cover' : 'Add a cover'} accessibilityLabel={coverUrl ? 'Change cover' : 'Add a cover'} onPress={editor.pickCover} onMedia={onMedia} />
         {coverUrl ? <GlassButton icon="xmark" accessibilityLabel="Remove cover" onPress={editor.removeCover} onMedia /> : null}
@@ -143,6 +148,7 @@ export function EditorSections({ editor, targetable, drag }: { editor: LayoutEdi
 const styles = StyleSheet.create({
   cover: { borderRadius: radius.card, overflow: 'hidden', borderCurve: 'continuous', justifyContent: 'flex-end' },
   coverButtons: { position: 'absolute', right: space.sm, bottom: space.sm, flexDirection: 'row', gap: space.sm },
+  coverError: { position: 'absolute', left: space.sm, top: space.sm, maxWidth: '80%', paddingHorizontal: space.md, paddingVertical: space.xs },
   name: { paddingVertical: space.xs },
   sections: { gap: space.lg },
   addSection: { alignSelf: 'flex-start' },
