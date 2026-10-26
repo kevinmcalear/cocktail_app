@@ -13,7 +13,7 @@ import { track } from '@/lib/analytics';
 import { linePrep } from '@/lib/batchLines';
 import { plainDbMessage } from '@/lib/dbError';
 import { orderedMethodIds } from '@/lib/drinkMethods';
-import { creatorProfileId, likeExactly, specLines, type WizardDraft, type WizardLine, type WizardPick } from '@/lib/drinkWizard';
+import { COMMON_METHODS, creatorProfileId, likeExactly, specLines, type WizardDraft, type WizardLine, type WizardPick } from '@/lib/drinkWizard';
 import { fetchEditableRecipes } from '@/lib/editableRecipes';
 import { saysMore, toStored, type IceLayer } from '@/lib/iceBuild';
 import { existingIngredientId } from '@/lib/ingredientNames';
@@ -137,7 +137,7 @@ export function useCreateDrink() {
         }
         const { data, error } = await supabase
           .from('items')
-          .insert({ name: type === 'ingredient' ? capitalizeFirst(pick.name) : capitalize(pick.name), item_type: type, bar_id: type === 'ingredient' ? barId : null })
+          .insert({ name: newItemName(pick.name, type), item_type: type, bar_id: type === 'ingredient' ? barId : null })
           .select('id')
           .single();
         // The database knows a name we didn't (an alias added since): it says which to use.
@@ -398,4 +398,11 @@ export function useCreateDrink() {
     // The wizard says what went wrong itself, and keeps the draft.
     onError: () => {},
   });
+}
+
+/** A new row's name: an ingredient's first letter up, a method the wizard offers as the wizard spells it ("Whip (whisk or frother)"), anything else in title case. */
+function newItemName(name: string, type: ItemType): string {
+  if (type === 'ingredient') return capitalizeFirst(name);
+  const ours = type === 'method' ? COMMON_METHODS.find((m) => m.toLowerCase() === name.trim().toLowerCase()) : undefined;
+  return ours ?? capitalize(name);
 }
