@@ -98,6 +98,12 @@ export function defaultColumns(): MatrixColumn[] {
 }
 
 /** The roles someone can look at a drink as: theirs and every one below it. */
+/** View as's line under its chips (Eddie E46): "Admin sees everything, including publishing." */
+export function roleSees(label: string, adds: string): string {
+  const rest = adds.charAt(0).toLowerCase() + adds.slice(1);
+  return /^Adds /.test(adds) ? `${label} ${rest}` : `${label} sees ${rest}`;
+}
+
 export function viewAsChoices(realRole: number): { level: number; label: string; adds: string }[] {
   return ROLE_LEVELS.filter((r) => r.level <= realRole).map((r) => ({ level: r.level, label: r.label, adds: ROLE_ADDS[r.level] ?? '' }));
 }

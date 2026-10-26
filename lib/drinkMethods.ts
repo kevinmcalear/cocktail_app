@@ -23,3 +23,23 @@ const key = (name: string) => name.trim().replace(/\s+/g, ' ').toLowerCase();
 export function findByName<T extends { name: string | null }>(options: T[], name: string): T | undefined {
     return options.find((o) => o.name != null && key(o.name) === key(name));
 }
+
+// Method rows are named many ways ("Shake", "Shaken", "Dry shake"): the first word that fits picks the drawing.
+const METHOD_ICONS: [RegExp, string][] = [
+    [/dry.*shak/, 'dry shake and shake'],
+    [/muddl.*shak/, 'muddle and shake'],
+    [/shak/, 'Shaken'],
+    [/stir/, 'Stirred'],
+    [/throw|thrown/, 'Thrown'],
+    [/swizzl/, 'Swizzled'],
+    [/blend|blitz/, 'Blended'],
+    [/flask/, 'Flask Pour'],
+    [/float|layer/, 'Float'],
+    [/buil/, 'Built'],
+];
+
+/** The CustomIcons drawing for a method (the spec heading), or null when none fits. */
+export function methodIcon(name: string): string | null {
+    const n = name.toLowerCase();
+    return METHOD_ICONS.find(([re]) => re.test(n))?.[1] ?? null;
+}
