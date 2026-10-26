@@ -98,6 +98,12 @@ describe('keep the drawing after the photos', () => {
     assert.equal(await shown(ids.home), true);
   });
 
+  test('the drink page reads it through app_item_presentation', async () => {
+    const { data, error } = await users.creator.client.from('app_item_presentation').select('show_sketch').eq('id', ids.venue).single();
+    assert.ifError(error);
+    assert.equal(data.show_sketch, false);
+  });
+
   test('it is never null', async () => {
     const { error } = await setShown('creator', ids.venue, null);
     assert.ok(error);
