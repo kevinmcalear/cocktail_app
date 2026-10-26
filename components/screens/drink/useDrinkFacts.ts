@@ -98,7 +98,8 @@ export function useDrinkFacts(item: DatabaseItem, { lines, amounts, dilutionDefa
   // How full the glass is and the ice per serve wait behind a tap (the glass sheet); the garnish's note is on its spec line.
   const make = (
     [
-      methods.length ? { label: 'Method', value: methods.join(', ') } : null,
+      // A drink made in parts lists its methods part by part under the spec (DrinkParts).
+      methods.length && !item.madeInParts?.length ? { label: 'Method', value: methods.join(', ') } : null,
       glass && { label: 'Glass', value: glass.name, sub: glassSub(glass, glassBy),  onPress: measures ? openGlass : undefined, accessibilityHint: glassHint },
       saysMore(build)
         ? { label: 'Ice', value: iceBuildLine(build), sub: [methodIce ? iceLine(null, methodIce.name, methods) : null, iceBy ? `cut by ${iceBy}` : null].filter(Boolean).join(' · ') || undefined, onPress: measures ? openGlass : undefined, accessibilityHint: glassHint }

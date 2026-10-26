@@ -4,7 +4,7 @@ import { Body, Caption, DsText, Field, PressableScale, Switch, useDs } from '@/c
 import { IconSymbol } from '@/components/ui/icon-symbol';
 import { radius, space } from '@/constants/tokens';
 import { addPart, MAX_PARTS, PART_JOINS, partsMethods, startParts, toggleLine, type DraftPart } from '@/lib/drinkParts';
-import type { StepProps, WizardPick } from '@/lib/drinkWizard';
+import { samePick, type StepProps, type WizardPick } from '@/lib/drinkWizard';
 
 import { PickStep } from './PickStep';
 import { WizardChip } from './WizardChrome';
@@ -68,7 +68,8 @@ export function MethodParts({ draft, set, options }: StepProps & { options: Wiza
           ) : null}
           <View style={styles.group}>
             <Caption tone="muted">How it’s made</Caption>
-            <PickStep label={`How part ${i + 1} is made`} ownLabel="Your own method" multi compact options={options} selected={p.methods} onChange={(methods) => change(i, { methods })} />
+            {/* The part's own picks first, so the four chips before More show them. */}
+            <PickStep label={`How part ${i + 1} is made`} ownLabel="Your own method" multi compact options={[...p.methods, ...options.filter((o) => !p.methods.some((m) => samePick(m, o)))]} selected={p.methods} onChange={(methods) => change(i, { methods })} />
           </View>
           {i > 0 ? (
             <View style={styles.group}>
