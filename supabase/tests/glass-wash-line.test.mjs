@@ -1,4 +1,4 @@
-// Fit it to the glass (20261122400000_glass_wash_line.sql): a venue's glass
+// Fit it to the glass (20261123400000_glass_wash_line.sql): a venue's glass
 // carries the wash line its drinks fill it to. Its Prep sets it; its other
 // staff, other venues and anyone signed out can't; anyone signed in reads it,
 // as the rest of a venue's glassware. A wash line is never over the brim.
