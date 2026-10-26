@@ -4,7 +4,7 @@
 
 import { isPrepName } from '@/lib/bringIn';
 import type { IngredientAlias } from '@/lib/ingredientNames';
-import { matchIngredient, type CatalogItem, type Match } from '@/lib/match';
+import { catalogIndex, matchIngredient, type CatalogItem, type Match } from '@/lib/match';
 import { pasteRows, type PasteRow } from '@/lib/paste';
 import type { AnythingReading, ReadPlace } from '@/supabase/functions/_shared/anythingRead';
 import type { MenuDrink } from '@/types/menus';
@@ -51,8 +51,8 @@ export function ingredientState(name: string, data: Pick<MatchData, 'catalog' | 
  */
 export function plainKind(name: string, items: CatalogItem[], data: Pick<MatchData, 'catalog' | 'aliases' | 'venueId'>): CatalogItem | null {
   const generic = items[0]?.genericId;
-  if (generic && items.every((i) => i.genericId === generic)) return data.catalog.find((c) => c.id === generic) ?? null;
-  const none = matchIngredient({ name, kind: name }, data.catalog.filter((c) => !items.some((i) => i.id === c.id)), data.venueId, data.aliases);
+  if (generic && items.every((i) => i.genericId === generic)) return catalogIndex(data.catalog).byId.get(generic) ?? null;
+  const none = matchIngredient({ name, kind: name }, data.catalog, data.venueId, data.aliases, new Set(items.map((i) => i.id)));
   return none.kind === 'one' ? none.item : none.kind === 'none' ? none.kindItem : null;
 }
 

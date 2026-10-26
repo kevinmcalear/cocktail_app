@@ -15,6 +15,7 @@ import { startReview } from '@/lib/importReview';
 import { listenBringIn, takeBringIn } from '@/lib/bringInHandoff';
 import { snapReadFiles, sourcesFromFiles } from '@/lib/readAnything';
 import { askToNudge } from '@/lib/readyNudge';
+import { useAppMode } from '@/store/useAppMode';
 import { useBringIn, type BringInJob } from '@/store/useBringIn';
 import { useDrinkWizardStore, wizardPlace } from '@/store/useDrinkWizardStore';
 
@@ -139,14 +140,27 @@ export function BringInFlow() {
       </ScrollView>
     );
   }
-  if (job.status !== 'ready' || (!checking && !job.local)) {
+  // Still reading, or read but the catalog it's matched against hasn't come yet (Reading shows how far it's got).
+  if (job.status !== 'ready' || (!checking && !job.local) || !data) {
     const background = () => {
       void askToNudge();
       leave();
     };
-    return <ReadingScreen job={job} onClose={cancel} onBackground={background} onReady={() => setCheckedId(job.id)} />;
+    // Bottles can be searched for by name instead, where they're added by hand: My Bar's search, or the venue's new bottle.
+    const bottles = job.reading?.kind === 'bottles' ? job.reading.bottles : null;
+    const searchInstead = () => {
+      useBringIn.getState().clear();
+      const name = bottles?.[0]?.name;
+      if (job.barId) router.replace({ pathname: '/add-ingredient', params: { barId: job.barId, ...(name ? { name } : {}) } });
+      else {
+        // Your own shelf: My Bar is a home-mode tab, so a staffer snapping from a venue goes home for it.
+        useAppMode.getState().setMode('home');
+        router.replace({ pathname: '/bar', params: { add: 'bottles' } });
+      }
+    };
+    return <ReadingScreen job={job} onClose={cancel} onBackground={background} onReady={() => setCheckedId(job.id)} onSearch={bottles ? searchInstead : undefined} />;
   }
-  if (!data || !job.reading || recipes) {
+  if (!job.reading || recipes) {
     return (
       <View style={[styles.center, { backgroundColor: ds.c.ground }]}>
         <ActivityIndicator color={ds.accentText} />
