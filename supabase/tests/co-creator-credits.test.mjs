@@ -187,4 +187,18 @@ describe('co-creator credits wait for a yes', () => {
     assert.equal(jo.error, null);
     assert.equal(await statusOf(ids.seeded, ids.jo), 'pending');
   });
+
+  test('find-yourself counts pending and accepted credits, never declined, on drinks the reader could open', async () => {
+    const waiting = async (client) => {
+      const { data, error } = await client.rpc('waiting_co_credits', { p_profile_ids: [ids.jo, ids.sam, ids.legend] });
+      if (error) throw error;
+      return data.map((r) => `${r.item_id}:${r.profile_id}`).sort();
+    };
+    // Jo said no on the drink and waits on the seeded one; Sam and the legend are accepted.
+    assert.equal(await statusOf(ids.seeded, ids.jo), 'pending');
+    const expected = [`${ids.drink}:${ids.sam}`, `${ids.drink}:${ids.legend}`, `${ids.seeded}:${ids.jo}`, `${ids.seeded}:${ids.legend}`].sort();
+    assert.deepEqual(await waiting(users.bartender.client), expected, 'staff who see the drinks count the pending one too');
+    assert.deepEqual(await waiting(users.stranger.client), [], 'a stranger can’t open these venue drinks, so nothing counts');
+    assert.deepEqual(await waiting(anon), [], 'nor signed out, with no published card');
+  });
 });

@@ -774,7 +774,8 @@ export function useWaiting(barIds: readonly string[], personIds: readonly string
       const [barCounts, mine, co, jobs, pages] = await Promise.all([
         Promise.all(counted.map((id) => drinksOf('id', true).eq('origin_bar_profile_id', id))),
         personIds.length ? drinksOf('id, creator_profile_id').in('creator_profile_id', [...personIds]).limit(WAITING_ROWS) : none,
-        userId && personIds.length ? supabase.from('item_co_creators').select('item_id, profile_id').in('profile_id', [...personIds]).limit(WAITING_ROWS) : none,
+        // Made with others, waiting for their yes or accepted (20261121200000), on drinks the reader could open.
+        personIds.length ? supabase.rpc('waiting_co_credits', { p_profile_ids: [...personIds] }).limit(WAITING_ROWS) : none,
         barIds.length ? supabase.from('profile_positions').select('bar_profile_id, person_profile_id, is_current, is_shown, is_hidden').in('bar_profile_id', [...barIds]).limit(WAITING_ROWS) : none,
         // Discover's bar rows don't say whether the page is claimed (people's rows do).
         barIds.length ? supabase.from('profiles').select('id, is_claimed').in('id', [...barIds]) : none,

@@ -7616,6 +7616,13 @@ export type Database = {
           supplier_name: string
         }[]
       }
+      waiting_co_credits: {
+        Args: { p_profile_ids: string[] }
+        Returns: {
+          item_id: string
+          profile_id: string
+        }[]
+      }
       week_event: {
         Args: { p_event_id: string }
         Returns: {

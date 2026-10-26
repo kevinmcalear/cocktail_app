@@ -16,8 +16,10 @@
 -- profile). Pending and declined ones are seen only by the person named, the
 -- drink's editors (so they can see it's waiting and don't name them twice)
 -- and moderators. Every reader of item_co_creators goes through this policy:
--- the drink page's credits, a person's page and find-yourself's counts.
--- Signed-out visitors read no co-creators at all, as before.
+-- the drink page's credits and a person's page. Signed-out visitors read no
+-- co-creators at all, as before. Find-yourself's counts are the exception:
+-- waiting_co_credits() counts pending credits too (ids only), because a page's
+-- waiting drinks are the reason to claim it.
 --
 -- Only the person named can change a credit's status: answer_credit(item,
 -- accept). A declined credit stays, so the drink's editors can't name them
@@ -144,7 +146,34 @@ CREATE FUNCTION "public"."credits_to_check"() RETURNS TABLE (
      LIMIT 200;
 $$;
 
+-- Find-yourself's "waiting on your page": the drinks people made with
+-- others, pending or accepted (not declined), so a bartender a bar named
+-- before they joined sees those drinks waiting and claims the page. Only ids
+-- come back, and only for drinks the caller could open: signed in,
+-- private.can_view_item; signed out, a published card (not a reference row),
+-- as the person's own drinks are counted.
+-- ponytail: 100 profiles and 1000 rows a call; find-yourself asks about ten.
+CREATE FUNCTION "public"."waiting_co_credits"("p_profile_ids" "uuid"[]) RETURNS TABLE (
+    "item_id" "uuid",
+    "profile_id" "uuid"
+)
+    LANGUAGE "sql" STABLE SECURITY DEFINER
+    SET "search_path" TO ''
+    AS $$
+    SELECT c.item_id, c.profile_id
+      FROM public.item_co_creators c
+     WHERE c.profile_id = ANY (p_profile_ids[1:100])
+       AND c.status <> 'declined'
+       AND CASE WHEN auth.uid() IS NULL
+                THEN EXISTS (SELECT 1 FROM public.published_items pi WHERE pi.id = c.item_id AND NOT pi.is_reference)
+                ELSE private.can_view_item(c.item_id)
+           END
+     LIMIT 1000;
+$$;
+
 REVOKE EXECUTE ON FUNCTION "public"."answer_credit"("uuid", boolean) FROM PUBLIC, "anon";
 REVOKE EXECUTE ON FUNCTION "public"."credits_to_check"() FROM PUBLIC, "anon";
+REVOKE EXECUTE ON FUNCTION "public"."waiting_co_credits"("uuid"[]) FROM PUBLIC;
 GRANT EXECUTE ON FUNCTION "public"."answer_credit"("uuid", boolean) TO "authenticated";
 GRANT EXECUTE ON FUNCTION "public"."credits_to_check"() TO "authenticated";
+GRANT EXECUTE ON FUNCTION "public"."waiting_co_credits"("uuid"[]) TO "anon", "authenticated";
