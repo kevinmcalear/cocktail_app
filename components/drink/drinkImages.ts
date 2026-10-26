@@ -7,14 +7,17 @@ import { canUseCamera } from '@/lib/photoAccess';
 import { supabase, UPLOAD_CACHE_SECONDS } from '@/lib/supabase';
 import { offerCutout } from '@/store/useCutoutOffer';
 
-/** `cutout`: a venue's drink photo, so offer to lift the drink off its background (store/useCutoutOffer). `square`: crop 1:1 (an ingredient's photo), not 4:5. */
-type PickOptions = { cutout?: boolean; square?: boolean };
+/**
+ * `cutout`: a venue's drink photo, so offer to lift the drink off its background (store/useCutoutOffer). `square`: crop 1:1 (an ingredient's photo), not 4:5.
+ * `several`: pick up to this many at once (no crop then, and the cut-out is only offered for one).
+ */
+type PickOptions = { cutout?: boolean; square?: boolean; several?: number };
 
 /** Lets the user pick photos; returns their local URIs. */
-export async function pickDrinkPhotos({ cutout = false, square = false }: PickOptions = {}): Promise<string[]> {
+export async function pickDrinkPhotos({ cutout = false, square = false, several = 1 }: PickOptions = {}): Promise<string[]> {
   const result = await ImagePicker.launchImageLibraryAsync({
     mediaTypes: ImagePicker.MediaTypeOptions.Images,
-    allowsEditing: true,
+    ...(several > 1 ? { allowsMultipleSelection: true, selectionLimit: several } : { allowsEditing: true }),
     aspect: square ? [1, 1] : [4, 5],
     quality: 0.8,
   });

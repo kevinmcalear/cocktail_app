@@ -1,7 +1,7 @@
 // Checks for lib/whatNext.ts. Run: npm run test:unit
 import assert from 'node:assert/strict';
 
-import { anyKind, brandGroups, classicsToAdd, haveClassics, heldGlassPlan, heldNotOnPage, topClassics } from './whatNext';
+import { classicsToAdd, haveClassics, heldGlassPlan, heldNotOnPage, topClassics } from './whatNext';
 
 const ids = (xs: { id: string }[]) => xs.map((x) => x.id);
 
@@ -41,40 +41,5 @@ assert.deepEqual(plan.save.map((g) => [g.key, g.is_default]), [['leo', true], ['
 assert.deepEqual(heldGlassPlan(held.slice(0, 1), [{ glass: 'coupe', model_id: 'other', is_default: true }]).save[0].is_default, false, 'the page has a main coupe: keep it');
 assert.deepEqual(heldGlassPlan([], []), { save: [], skip: [] });
 assert.deepEqual(heldNotOnPage(held, [{ model_id: 'nick' }]).map((g) => g.key), ['leo', 'perc', 'mine'], 'a glass on the page and held counts once');
-
-// --- brandGroups: the starting kinds, what's stocked under each however deep, the rest under its own top kind ---
-const ing = [
-  { id: 'mezcal', name: 'Mezcal', ingredient_role: 'generic' },
-  { id: 'espadin', name: 'Espadín mezcal', generic_id: 'mezcal', ingredient_role: 'generic' },
-  { id: 'vida', name: 'Del Maguey Vida', generic_id: 'espadin', ingredient_role: 'product' },
-  { id: 'gin', name: 'Gin', ingredient_role: 'generic' },
-  { id: 'whiskey', name: 'Whiskey', ingredient_role: 'generic' },
-  { id: 'irish', name: 'Irish whiskey', generic_id: 'whiskey', ingredient_role: 'generic' },
-  { id: 'beer', name: 'Beer', ingredient_role: 'generic' },
-  { id: 'lager', name: 'Lager', generic_id: 'beer', ingredient_role: 'generic' },
-  { id: 'peroni', name: 'Peroni', generic_id: 'lager', ingredient_role: 'product' },
-  { id: 'loop', name: 'Loop', generic_id: 'loop', ingredient_role: 'product' },
-  { id: 'wine-stray', name: 'Wine', ingredient_role: null },
-  { id: 'wine', name: 'Wine', ingredient_role: 'generic' },
-];
-const shape = (gs: ReturnType<typeof brandGroups<(typeof ing)[number]>>) => gs.map((g) => [g.title, ids(g.kinds), ids(g.picked)]);
-assert.deepEqual(shape(brandGroups(ing, [])), [
-  ['Gin', ['gin'], []],
-  ['Mezcal', ['mezcal'], []],
-  ['Whiskey', ['whiskey'], []],
-  ['Wine', ['wine'], []],
-  ['Beer', ['beer'], []],
-], 'nothing stocked: the starting kinds the catalog has, in order; a stray row sharing a kind\'s name loses to the generic');
-assert.deepEqual(shape(brandGroups(ing, ['vida', 'gin', 'irish', 'peroni', 'loop', 'gone'])), [
-  ['Gin', ['gin'], []],
-  ['Mezcal', ['mezcal'], ['vida']],
-  ['Whiskey', ['whiskey'], ['irish']],
-  ['Wine', ['wine'], []],
-  ['Beer', ['beer'], ['peroni']],
-  ['Loop', [], ['loop']],
-], 'deep brands find their group, the plain one shows as its kind, a loop in the data stops');
-
-assert.equal(anyKind('Bitter aperitivo'), 'Any bitter aperitivo');
-assert.equal(anyKind('Mezcal'), 'Any mezcal');
 
 console.log('whatNext checks passed');

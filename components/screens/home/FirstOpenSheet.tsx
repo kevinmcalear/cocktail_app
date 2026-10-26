@@ -21,45 +21,34 @@ const FIRST = 8;
 const MORE = 12;
 /** Fewer bars than this near you and there is nothing worth asking about. */
 const AT_LEAST = 3;
-/**
- * iOS drops a modal presented while another is still closing, which is how
- * people often arrive (Home bar, picked in the venue sheet, then Discover).
- * ponytail: a short settle after mount; present on the sheet's onDismiss if
- * it ever proves too short.
- */
-const SETTLE_MS = 700;
 
 const plural = (n: number, word: string) => `${n} ${word}`;
 
 /**
- * Discover's first open (disc-first-open, jam 13 Oct: "are any of these your
- * favourites? Any you don't want to see?"). Once per person on a device, at
- * home, signed in, before they've loved or hidden any bar: the top bars in
- * their area, each with a heart and a hide. Done saves the picks; Skip asks
- * nothing again.
+ * Whether to ask "Any favourites near you?" (disc-first-open, jam 13 Oct:
+ * "are any of these your favourites? Any you don't want to see?"). Once per
+ * person on a device, at home, signed in, before they've loved or hidden any
+ * bar, with an area to list (Q3, 26 Oct: near you or a city, not anywhere).
+ * Null when not; else what the card and its sheet need.
  */
-export function FirstOpenSheet({ area }: { area: Area }) {
+export function useFavouritesAsk(area: Area) {
   const userId = useUserId();
   const home = useMode().mode === 'home';
-  const [settled, setSettled] = useState(false);
-  useEffect(() => {
-    const t = setTimeout(() => setSettled(true), SETTLE_MS);
-    return () => clearTimeout(t);
-  }, []);
   // Who has been asked is read from storage: wait for it, or someone who answered sees it flash.
   const [hydrated, setHydrated] = useState(() => useFirstOpen.persist.hasHydrated());
   useEffect(() => useFirstOpen.persist.onFinishHydration(() => setHydrated(true)), []);
   const asked = useFirstOpen((s) => (userId ? s.asked.includes(userId) : true));
   const loved = useLovedBars().data;
   const hidden = useHiddenBars().data;
-  const fresh = !!userId && home && !asked && loved?.length === 0 && hidden?.length === 0;
+  const fresh = !!userId && home && hydrated && !asked && area.kind !== 'anywhere' && loved?.length === 0 && hidden?.length === 0;
   const { data } = useTopBars(area, fresh);
   const rows = data ? [...data.ranked, ...data.early] : [];
-  if (!fresh || !settled || !hydrated || rows.length < AT_LEAST) return null;
-  return <Ask userId={userId} rows={rows} where={areaLabel(area)} />;
+  if (!fresh || !userId || rows.length < AT_LEAST) return null;
+  return { userId, rows, where: areaLabel(area) };
 }
 
-function Ask({ userId, rows, where }: { userId: string; rows: DiscoverRow[]; where: string }) {
+/** The favourites sheet, opened from its card (FirstCards.tsx): the top bars, each with a heart and a hide. Done saves the picks; Skip asks nothing again. */
+export function FavouritesSheet({ userId, rows, where }: NonNullable<ReturnType<typeof useFavouritesAsk>>) {
   const markAsked = useFirstOpen((s) => s.markAsked);
   const [picks, setPicks] = useState<Record<string, Pick | undefined>>({});
   const [shown, setShown] = useState(FIRST);
@@ -110,7 +99,7 @@ function Ask({ userId, rows, where }: { userId: string; rows: DiscoverRow[]; whe
         visible
         onClose={close}
         eyebrow={google ? 'From Google Maps' : 'Make Discover yours'}
-        title={google ? GOOGLE_IMPORT_TITLE : where === 'anywhere' ? 'Any favourites?' : `Any favourites ${where}?`}
+        title={google ? GOOGLE_IMPORT_TITLE : `Any favourites ${where}?`}
         footer={footer}
       >
         {google ? (

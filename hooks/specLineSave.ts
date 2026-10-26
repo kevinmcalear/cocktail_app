@@ -2,7 +2,7 @@ import { savePrepCard, savePrepRecipe } from '@/hooks/usePrepCard';
 import { saveNewBottles } from '@/hooks/useDrinkDesk';
 import { linePrep } from '@/lib/batchLines';
 import { plainDbMessage } from '@/lib/dbError';
-import { likeExactly, type WizardLine, type WizardPick } from '@/lib/drinkWizard';
+import { COMMON_METHODS, likeExactly, type WizardLine, type WizardPick } from '@/lib/drinkWizard';
 import { existingIngredientId } from '@/lib/ingredientNames';
 import { recipesToFinish, type PrepDraft } from '@/lib/prepKinds';
 import { toLine, type SortableRecipeItem } from '@/lib/recipeItem';
@@ -62,7 +62,7 @@ export function specLineSaver(barId: string | null, live: ReadonlySet<string>) {
     }
     const { data, error } = await supabase
       .from('items')
-      .insert({ name: type === 'ingredient' ? capitalizeFirst(pick.name) : capitalize(pick.name), item_type: type, bar_id: type === 'ingredient' ? barId : null })
+      .insert({ name: newItemName(pick.name, type), item_type: type, bar_id: type === 'ingredient' ? barId : null })
       .select('id')
       .single();
     // The database knows a name we didn't (an alias added since): it says which to use.
@@ -201,4 +201,11 @@ export async function resolveEditItems(items: readonly SortableRecipeItem[], bar
   await saver.saveCards();
   await saver.saveBottles();
   return { items: out, warnings: saver.warnings, created: saver.newIngredients };
+}
+
+/** A new row's name: an ingredient's first letter up, a method the wizard offers as the wizard spells it ("Whip (whisk or frother)"), anything else in title case. */
+function newItemName(name: string, type: ItemType): string {
+  if (type === 'ingredient') return capitalizeFirst(name);
+  const ours = type === 'method' ? COMMON_METHODS.find((m) => m.toLowerCase() === name.trim().toLowerCase()) : undefined;
+  return ours ?? capitalize(name);
 }

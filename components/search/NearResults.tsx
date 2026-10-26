@@ -11,13 +11,13 @@ import { useItemScores } from '@/hooks/useFlavor';
 import { useSaveSpelling, useSearchNear } from '@/hooks/useSearchNear';
 import { classicHit, mergeNear, nearIn, nearView, nearWhy, searchItemHit, type NearHit, type NearKind } from '@/lib/nearHits';
 import type { Area } from '@/lib/nearMe';
-import { shows, type SearchShow } from '@/lib/searchScope';
+import { shows, type SearchKind, type SearchShow } from '@/lib/searchScope';
 import type { SearchItem } from '@/types/search';
 
 import { ResultGroup, ResultRow } from './ResultRows';
 
 const NONE: readonly never[] = [];
-const SHOW: Record<NearKind, Exclude<SearchShow, 'all'>> = { drink: 'drinks', bar: 'bars', person: 'people', ingredient: 'ingredients' };
+const SHOW: Record<NearKind, SearchKind> = { drink: 'drinks', bar: 'bars', person: 'people', ingredient: 'ingredients' };
 
 interface NearResultsProps {
   query: string;

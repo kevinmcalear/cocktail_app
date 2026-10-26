@@ -102,5 +102,28 @@ export const SKETCH_TINTS = [
   { key: 'olive', label: 'Olive', hex: '#8a8b3c' },
   { key: 'smoke', label: 'Smoky grey', hex: '#77726e' },
   { key: 'water', label: 'Clear', hex: SKETCH_CLEAR_TINT },
+  // Eddie's E27 (26 Oct): blue, green, orange and milky drinks. Board w2-wizard-finish draws them painted; these are before the graphite's mute.
+  { key: 'coral', label: 'Coral', hex: '#eb7154' },
+  { key: 'orange', label: 'Orange', hex: '#e27125' },
+  { key: 'apricot', label: 'Apricot', hex: '#f4ac67' },
+  { key: 'coffee', label: 'Coffee', hex: '#33170b' },
+  { key: 'lemon', label: 'Lemon', hex: '#f8e662' },
+  { key: 'chartreuse', label: 'Chartreuse', hex: '#bdce39' },
+  { key: 'green', label: 'Green', hex: '#639d47' },
+  { key: 'paleblue', label: 'Pale blue', hex: '#9fd1ed' },
+  { key: 'blue', label: 'Blue', hex: '#3a83c2' },
+  { key: 'violet', label: 'Violet', hex: '#725fb2' },
+  { key: 'lavender', label: 'Lavender', hex: '#bbace4' },
+  { key: 'cream', label: 'Cream', hex: '#fff9db' },
+  { key: 'black', label: 'Black', hex: '#0e0d0d' },
 ] as const;
 export type SketchTint = (typeof SKETCH_TINTS)[number];
+
+/** The picker's rows, each a family in the order the board draws it (w2-wizard-finish, E27). */
+export const SKETCH_TINT_FAMILIES: readonly { label: string; keys: readonly SketchTint['key'][] }[] = [
+  { label: 'Reds and pinks', keys: ['garnet', 'red', 'rose', 'blush', 'coral'] },
+  { label: 'Oranges and browns', keys: ['orange', 'apricot', 'amber', 'mahogany', 'coffee'] },
+  { label: 'Yellows and greens', keys: ['straw', 'gold', 'lemon', 'olive', 'chartreuse', 'green'] },
+  { label: 'Blues and violets', keys: ['paleblue', 'blue', 'violet', 'lavender'] },
+  { label: 'Clear and cloudy', keys: ['water', 'cream', 'smoke', 'black'] },
+];

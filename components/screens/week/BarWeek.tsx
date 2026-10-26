@@ -1,10 +1,12 @@
 import { useRouter, type Href } from 'expo-router';
+import { useState } from 'react';
 import { Linking, StyleSheet, View } from 'react-native';
 
-import { Caption, DsText, PressableScale, TextLink, Title, useDs } from '@/components/ds';
+import { Body, Caption, DsText, PressableScale, TextLink, Title, useDs } from '@/components/ds';
 import { IconSymbol } from '@/components/ui/icon-symbol';
-import { layout, radius, space } from '@/constants/tokens';
+import { fontFamilies, layout, radius, space } from '@/constants/tokens';
 import { useBarWeek, useWeekStart } from '@/hooks/useWeek';
+import { withAlpha } from '@/lib/color';
 import { toDay } from '@/lib/collection';
 import { siteOrigin } from '@/lib/venueLink';
 import { detailLine, itemDay, kindLabel, shortDay, timeLine, upcoming, type WeekItem } from '@/lib/week';
@@ -18,12 +20,7 @@ import { useDotColor, WeekLine } from './WeekParts';
  */
 export function BarWeek({ barId, profileId, barName }: { barId: string | null; profileId: string; barName: string }) {
   const ds = useDs();
-  const from = useWeekStart();
-  const { data = [] } = useBarWeek(barId);
-  const on = upcoming(
-    data.filter((i) => i.isPublic),
-    from
-  );
+  const { on, from } = usePublicWeek(barId);
   if (!on.length) return null;
   const [first, ...rest] = on;
   const tonight = first.kind === 'event' && itemDay(first) === toDay(from) ? first : null;
@@ -52,6 +49,49 @@ export function BarWeek({ barId, profileId, barName }: { barId: string | null; p
         <DsText color={ds.accentText}>{`Put ${barName}'s week in your calendar`}</DsText>
       </PressableScale>
     </View>
+  );
+}
+
+/** What's on at a bar from today, as its guests see it. */
+function usePublicWeek(barId: string | null) {
+  const from = useWeekStart();
+  const { data = [] } = useBarWeek(barId);
+  return { on: upcoming(data.filter((i) => i.isPublic), from), from };
+}
+
+/**
+ * This week as one line on a phone's bar page (Q30 A, approved 26 Oct 2026),
+ * so the drinks come sooner: "Tonight · This week, 3 things on" over the
+ * first thing's name. It opens to the whole week in place.
+ */
+export function BarWeekLine(props: { barId: string | null; profileId: string; barName: string }) {
+  const ds = useDs();
+  const color = useDotColor();
+  const [open, setOpen] = useState(false);
+  const { on, from } = usePublicWeek(props.barId);
+  if (!on.length) return null;
+  if (open) return <BarWeek {...props} />;
+  const first = on[0];
+  const count = on.length === 1 ? 'This week, 1 thing on' : `This week, ${on.length} things on`;
+  return (
+    <PressableScale
+      role="button"
+      aria-expanded={false}
+      accessibilityLabel={`This week at ${props.barName}: ${shortDay(itemDay(first), from)}, ${first.name}${on.length > 1 ? `, and ${on.length - 1} more` : ''}. Open the week`}
+      onPress={() => setOpen(true)}
+      style={[styles.line1, { backgroundColor: ds.c.surface, borderColor: withAlpha(color(first), 0.4) }]}
+    >
+      <View style={styles.flex}>
+        <Caption tone="muted">
+          <Caption color={ds.accentText} style={styles.when}>
+            {shortDay(itemDay(first), from)}
+          </Caption>
+          {` · ${count}`}
+        </Caption>
+        <Body numberOfLines={1}>{first.name}</Body>
+      </View>
+      <IconSymbol name="chevron.down" size={16} color={ds.c.muted} />
+    </PressableScale>
   );
 }
 
@@ -91,5 +131,7 @@ const styles = StyleSheet.create({
   line: { flexDirection: 'row', alignItems: 'center', gap: space.sm },
   flex: { flex: 1, minWidth: 0 },
   cardHead: { flexDirection: 'row', alignItems: 'center', gap: space.sm },
+  line1: { flexDirection: 'row', alignItems: 'center', gap: space.md, minHeight: 56, paddingHorizontal: space.md + 2, borderRadius: radius.control, borderCurve: 'continuous', borderWidth: 1 },
+  when: { fontFamily: fontFamilies.bodySemiBold },
   feed: { flexDirection: 'row', alignItems: 'center', gap: space.sm, minHeight: layout.minTapTarget, alignSelf: 'flex-start' },
 });

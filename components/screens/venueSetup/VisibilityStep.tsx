@@ -1,12 +1,18 @@
 import { useState } from 'react';
+import { StyleSheet, View } from 'react-native';
 
+import { Caption } from '@/components/ds';
 import { SetupFooter, SetupPage } from '@/components/screens/onboarding/SetupPage';
-import { PageVisibilityChoice } from '@/components/screens/publishing/PageVisibilityChoice';
+import { RadioCard } from '@/components/screens/publishing/RadioCard';
+import { SectionHeading } from '@/components/screens/settings/SettingsParts';
+import { space } from '@/constants/tokens';
 import { useSaveClaimSetup } from '@/hooks/useBarClaims';
 import { useBarPublishing, useSetPublish } from '@/hooks/usePublishing';
 import type { ProfileClaim } from '@/hooks/useProfiles';
-import type { PageVisibility } from '@/lib/pageVisibility';
+import { PAGE_COPY, PAGE_VISIBILITIES, type PageVisibility } from '@/lib/pageVisibility';
 import type { HeldSetup } from '@/store/useVenueSetup';
+
+import { SetupRoles } from './SetupRoles';
 
 interface Props {
   barId: string | null;
@@ -20,7 +26,8 @@ interface Props {
 }
 
 /**
- * Step 5: who outside the venue sees its page (the Publishing choice). Picked
+ * Who sees what: outside the venue, its page (the Publishing choice, made
+ * compact); inside, what each role can do (E29, SetupRoles). The page choice is picked
  * before there's a claim it's kept with the setup and goes onto the claim
  * when it's sent; while the claim waits it waits on the claim and takes over
  * when it's approved (b19); once the page is the venue's it saves straight away.
@@ -58,6 +65,7 @@ function Choose({ barId, name, claim, writable, onHold, onDone, current, private
     if (!value || value === current) return onDone();
     setPublish.mutate({ level: 'page', visibility: value }, { onSuccess: onDone });
   };
+  const error = (setPublish.error ?? saveSetup.error)?.message ?? null;
   const note = pending
     ? `Today ${name}’s page is unclaimed, so it shows its menu: photos, descriptions and ingredients without amounts. This takes over once your claim is approved. Any single drink can still be kept private from its own page, and you can change this in Publishing once every 30 days.`
     : writable
@@ -65,8 +73,24 @@ function Choose({ barId, name, claim, writable, onHold, onDone, current, private
       : `Kept with your setup. It takes over once we’ve checked ${name} is yours (the last step); until then its page stays as it is. Any single drink can still be kept private from its own page.`;
 
   return (
-    <SetupPage footer={<SetupFooter pending={busy} onPress={save} onSkip={onDone} />}>
-      <PageVisibilityChoice radios heading={false} venueName={name} value={shown} privateAllowed={privateAllowed} onChange={setValue} disabled={busy} error={(setPublish.error ?? saveSetup.error)?.message ?? null} note={note} />
+    <SetupPage footer={<SetupFooter pending={busy} onPress={save} />}>
+      <View style={styles.group}>
+        <SectionHeading>{`Outside ${name} · your page`}</SectionHeading>
+        <View role="radiogroup" accessibilityLabel="Who sees your page" style={styles.group}>
+          {PAGE_VISIBILITIES.map((v) => {
+            const closed = v === 'private' && !privateAllowed;
+            return <RadioCard key={v} label={PAGE_COPY[v].label} selected={shown === v} disabled={busy || closed} onPress={() => setValue(v)} />;
+          })}
+        </View>
+        <Caption tone="muted">{`${PAGE_COPY[shown].label}: ${PAGE_COPY[shown].detail}${privateAllowed ? '' : ' Private opens once your claim is verified.'}`}</Caption>
+        {error ? <Caption tone="accent" role="alert">{error}</Caption> : null}
+        <Caption tone="muted">{note}</Caption>
+      </View>
+      {barId ? <SetupRoles barId={barId} name={name} /> : null}
     </SetupPage>
   );
 }
+
+const styles = StyleSheet.create({
+  group: { gap: space.sm },
+});

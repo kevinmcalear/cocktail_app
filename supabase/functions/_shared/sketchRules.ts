@@ -212,6 +212,8 @@ const METHOD_NAMES: readonly [RegExp, Method][] = [
   [/blend|blitz|frozen|whizz?/, 'blend'],
   [/swizzl/, 'swizzle'],
   [/throw|roll/, 'throw'],
+  // A whisk or a milk frother is cream whipped by hand, not a shake (Q20b).
+  [/whisk|frother/, 'build'],
   [/shak|whip|dry/, 'shake'],
   [/stir/, 'stir'],
   [/straight|pour|neat/, 'pour'],
