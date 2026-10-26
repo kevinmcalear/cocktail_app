@@ -10,6 +10,7 @@ import { DatabaseItem } from '@/types/types';
 import { QueryClientContext, queryOptions, useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { useContext } from 'react';
 import { drinkSeed, seedDrink, type DrinkSeed } from '@/lib/drinkSeeds';
+import { readParts } from '@/lib/drinkParts';
 
 /**
  * Columns for a drink list or search card (app_item_presentation). The lines
@@ -117,6 +118,8 @@ export function cocktailQuery(id: string | string[] | undefined, viewAsRoleLevel
             if (!id) return null;
             
             const cocktailId = Array.isArray(id) ? id[0] : id;
+            // ponytail: made in parts reads items itself, beside the page's view; someone who can't read the items row sees one list. Into app_item_presentation once its other changes land.
+            const partsRead = supabase.from('items').select('parts').eq('id', cocktailId).maybeSingle();
 
             const { data, error } = await supabase
                 .from('app_item_presentation')
@@ -139,6 +142,7 @@ export function cocktailQuery(id: string | string[] | undefined, viewAsRoleLevel
                     recipes:app_recipe_presentation!recipe_item_id (
                         id,
                         sort_order,
+                        part,
                         created_at,
                         amount,
                         unit,
@@ -163,6 +167,7 @@ export function cocktailQuery(id: string | string[] | undefined, viewAsRoleLevel
                     item_methods!item_methods_item_id_fkey (
                         method_item_id,
                         sort_order,
+                        part,
                         method:items!item_methods_method_item_id_fkey (
                             name
                         )
@@ -194,6 +199,7 @@ export function cocktailQuery(id: string | string[] | undefined, viewAsRoleLevel
                 glassware: named(specs?.glassware, data.glassware_id),
                 family: named(specs?.families, data.family_id),
                 ice: named(specs?.iceTypes, data.ice_id),
+                madeInParts: readParts((await partsRead).data?.parts),
             } as DatabaseItem;
         },
         enabled: !!id,
