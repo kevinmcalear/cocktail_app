@@ -23,6 +23,8 @@ interface DiscoverHeaderProps {
   onFilters: () => void;
   /** A bar open on the phone map: the pill becomes its back arrow and name. */
   bar?: { name: string; onBack: () => void } | null;
+  /** Phones on the map: search is in the sheet (Q29), so the top keeps only the place (a pill of its own) and Filters. */
+  searchBelow?: boolean;
 }
 
 /**
@@ -31,17 +33,17 @@ interface DiscoverHeaderProps {
  * row (discover-options-proposal, approved 24 Oct). The pill is the page's
  * identity, so "Discover" is a heading only screen readers hear.
  */
-export function DiscoverHeader({ query, onSearch, onClear, place, filters, onFilters, bar }: DiscoverHeaderProps) {
+export function DiscoverHeader({ query, onSearch, onClear, place, filters, onFilters, bar, searchBelow }: DiscoverHeaderProps) {
   const pill = (
     <View style={styles.middle}>
-      <View style={styles.flex}>
-        {bar ? <BackPill name={bar.name} onBack={bar.onBack} onOpen={onSearch} /> : <SearchPill compact query={query} placeholder="Search" label="Search bars and drinks" onOpen={onSearch} onClear={onClear} place={place} />}
+      <View style={[styles.flex, searchBelow && !bar ? styles.start : null]}>
+        {bar ? <BackPill name={bar.name} onBack={bar.onBack} onOpen={onSearch} /> : searchBelow ? place : <SearchPill compact query={query} placeholder="Search" label="Search bars and drinks" onOpen={onSearch} onClear={onClear} place={place} />}
       </View>
       <FiltersButton filters={filters} onPress={onFilters} />
     </View>
   );
   // A search (or a picked style) needs the room: you step aside, as the board draws it.
-  return <ScreenHeader title="Discover" center={pill} you={!query.trim() || !!bar} />;
+  return <ScreenHeader title="Discover" center={pill} you={searchBelow || !query.trim() || !!bar} />;
 }
 
 /** Scrolled this far past the top before the header may go, and the travel either way that hides or brings it back. */
@@ -122,6 +124,7 @@ export function ScrollAwayHeader({ away, onHeight, children }: { away: ReturnTyp
 const styles = StyleSheet.create({
   flex: { flex: 1, minWidth: 0 },
   middle: { flexDirection: 'row', alignItems: 'center', gap: space.sm },
+  start: { flexDirection: 'row' },
   header: { position: 'absolute', top: 0, left: 0, right: 0, paddingBottom: space.sm },
   fade: { position: 'absolute', left: 0, right: 0, bottom: -space.lg, height: space.lg },
   status: { position: 'absolute', top: 0, left: 0, right: 0 },

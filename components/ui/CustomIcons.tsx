@@ -184,13 +184,6 @@ const ICON_MAP: Record<string, (color: ColorValue) => React.ReactNode> = {
       <Path d="M8 14 L16 14 M9 18 L15 18" />
     </G>
   ),
-  Build: (c) => (
-    <G stroke={c} strokeWidth={ICON_STROKE} strokeLinecap="round" strokeLinejoin="round" fill="none">
-      <Path d="M5 10 L6 20 C6 21 7 22 8 22 L16 22 C17 22 18 21 18 20 L19 10 Z" />
-      <Path d="M12 2 L12 8 M9 5 L15 5" /> 
-      <Path d="M8 14 L16 14 M9 18 L15 18" /> 
-    </G>
-  ),
   "muddle and shake": (c) => (
     <G stroke={c} strokeWidth={ICON_STROKE} strokeLinecap="round" strokeLinejoin="round" fill="none">
        <Path d="M6 2 L6 16 M4 16 L8 16 L8 18 L4 18 Z" />
@@ -200,12 +193,6 @@ const ICON_MAP: Record<string, (color: ColorValue) => React.ReactNode> = {
        </G>
     </G>
   ),
-  Shake: (c) => (
-    <G stroke={c} strokeWidth={ICON_STROKE} strokeLinecap="round" strokeLinejoin="round" fill="none" transform="rotate(45 12 12)">
-        <Path d="M8 22 L16 22 L18 8 L6 8 Z" />
-        <Path d="M7 8 L9 2 L15 2 L17 8" />
-    </G>
-  ),
   "shake and top": (c) => (
     <G stroke={c} strokeWidth={ICON_STROKE} strokeLinecap="round" strokeLinejoin="round" fill="none">
         <G transform="translate(-3, 0) rotate(45 12 12) scale(0.8)">
@@ -213,13 +200,6 @@ const ICON_MAP: Record<string, (color: ColorValue) => React.ReactNode> = {
             <Path d="M7 8 L9 2 L15 2 L17 8" />
         </G>
         <Path d="M19 4 L19 12 M16 7 L22 7" />
-    </G>
-  ),
-  Stir: (c) => (
-    <G stroke={c} strokeWidth={ICON_STROKE} strokeLinecap="round" strokeLinejoin="round" fill="none">
-        <Path d="M6 6 L7 20 C7 21 8 22 9 22 L15 22 C16 22 17 21 17 20 L18 6 Z" />
-        <Path d="M14 2 L12 20" />
-        <Circle cx="12" cy="12" r="2" />
     </G>
   ),
   "dry shake and shake": (c) => (
@@ -259,6 +239,21 @@ const ICON_MAP: Record<string, (color: ColorValue) => React.ReactNode> = {
       <Path d="M5 6 L6 20 C6 21 7 22 8 22 L16 22 C17 22 18 21 18 20 L19 6 Z" />
       <Path d="M12 2 L12 20" />
       <Path d="M10 18 L14 18 M11 16 L13 16 M9 20 L15 20" />
+    </G>
+  ),
+
+  "Flask Pour": (c) => (
+    <G stroke={c} strokeWidth={ICON_STROKE} strokeLinecap="round" strokeLinejoin="round" fill="none">
+      <Path d="M7 13 L8 21 C8 21.5 8.5 22 9 22 L15 22 C15.5 22 16 21.5 16 21 L17 13 Z" />
+      <Path d="M9 3 L16 7 L13.5 11.5 L6.5 7.5 Z M16 7 L18.5 5.5" />
+      <Path d="M12 11 L12 15" />
+    </G>
+  ),
+  Float: (c) => (
+    <G stroke={c} strokeWidth={ICON_STROKE} strokeLinecap="round" strokeLinejoin="round" fill="none">
+      <Path d="M5 8 L6 20 C6 21 7 22 8 22 L16 22 C17 22 18 21 18 20 L19 8 Z" />
+      <Path d="M6 12 L18 12" />
+      <Path d="M17 2 L11 10 M9.5 10.5 L13 10.5" />
     </G>
   ),
 
@@ -461,6 +456,11 @@ const ICON_MAP: Record<string, (color: ColorValue) => React.ReactNode> = {
     </G>
   ),
 };
+
+// The same drawings under the names some method rows use.
+ICON_MAP.Build = ICON_MAP.Built;
+ICON_MAP.Shake = ICON_MAP.Shaken;
+ICON_MAP.Stir = ICON_MAP.Stirred;
 
 export function CustomIcon({ name, size = 24, color = '#000' }: CustomIconProps) {
   // Try to find the icon, or fall back to an elegant "sparkle/star"

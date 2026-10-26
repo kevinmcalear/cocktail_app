@@ -111,6 +111,8 @@ interface BodyProps {
   palette?: boolean;
   /** The type chips' pick, and where the results say how many of each they found. */
   show?: SearchShow;
+  /** Sets the type chips' pick: Can make's Show all, at a venue's Everywhere. */
+  onShow?: (show: SearchShow) => void;
   onCounts?: (counts: ShowCounts) => void;
   /** The search tab: suggestions finish the typed word, a Top hit leads, and Browse by style waits before typing. */
   typeAhead?: (query: string) => void;
@@ -123,7 +125,7 @@ interface BodyProps {
 }
 
 /** What the search finds in its scope, or what was opened lately while nothing is typed. */
-export function SearchBody({ query, scope, onScope, mine, area, onJump, commands, palette, show, onCounts, typeAhead, onAddBar, onShowBar, onShowOnMap }: BodyProps) {
+export function SearchBody({ query, scope, onScope, mine, area, onJump, commands, palette, show, onShow, onCounts, typeAhead, onAddBar, onShowBar, onShowOnMap }: BodyProps) {
   if (!query.trim()) return <Recent scope={scope} mine={mine} onJump={onJump} commands={commands} browse={!!typeAhead} />;
   if (scope === 'mine') return <MineResults query={query} mine={mine} onEverywhere={() => onScope('everywhere')} commands={commands} palette={palette} show={show} onCounts={onCounts} typeAhead={typeAhead} />;
   return (
@@ -137,6 +139,8 @@ export function SearchBody({ query, scope, onScope, mine, area, onJump, commands
         onEverywhere={() => onScope('everywhere')}
         mine={mine}
         show={show}
+        canMake={scope === 'everywhere'}
+        onShow={onShow}
         onCounts={onCounts}
         typeAhead={typeAhead}
         onAddBar={onAddBar}

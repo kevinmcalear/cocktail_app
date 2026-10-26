@@ -28,6 +28,7 @@ import { IngredientsStep } from './IngredientsStep';
 import { ApartHint, TakenWord } from './NameStepBody';
 import type { CatalogIngredient } from './IngredientSearch';
 import { IceStep } from './IceStep';
+import { MethodIceLine } from './MethodStep';
 import { PickStep } from './PickStep';
 import { PREP_CARD_ID } from './prep/PrepCard';
 import { drinkTrail, Trail } from './Trail';
@@ -142,6 +143,7 @@ export function DrinkDesk(p: DrinkDeskProps) {
   const nameRef = useRef<ComponentRef<typeof TextInput>>(null);
   const same = draft.sameAs ?? null;
   const asking = !!p.atBar && same?.id !== p.atBar.id;
+  const bar = barId ? p.venueName : ''; // At home, your own drink (Q14b).
   // It's a different drink: the cursor at the end of the name.
   const rename = () => {
     const el = nameRef.current as unknown as { focus: () => void; setSelectionRange?: (a: number, b: number) => void } | null;
@@ -188,13 +190,13 @@ export function DrinkDesk(p: DrinkDeskProps) {
           {p.atBar && asking ? (
             <SameNameCard
               wide
-              bar={p.venueName}
+              bar={bar}
               drink={p.atBar}
               caption="A version is the same drink with a different spec."
               busy={picks.busy}
               onOpen={() => picks.open(p.atBar!)}
-              onVersion={() => picks.version(p.atBar!, p.venueName, true)}
-              onDifferent={() => picks.different(p.atBar!, p.venueName, rename)}
+              onVersion={() => picks.version(p.atBar!, bar, true)}
+              onDifferent={() => picks.different(p.atBar!, bar, rename)}
             />
           ) : null}
           <NearNameCard wide draft={draft} set={set} barId={p.barId} venueName={p.venueName} hidden={!!p.atBar || !!p.classic} />
@@ -221,6 +223,7 @@ export function DrinkDesk(p: DrinkDeskProps) {
           />
           <Row label="Method">
             <PickStep label="Method" ownLabel="Your own method" multi compact options={p.methods} selected={draft.methods} onChange={(methods) => set({ methods })} suggested={p.guess.method} />
+            <MethodIceLine methods={draft.methods} value={draft.methodIce ?? null} options={p.ices} barIce={p.barIce} venueName={barId ? p.venueName : null} onChange={(methodIce) => set({ methodIce })} />
             <TellUs screen="Adding a drink › Method" line="We’ll add your method to the app." {...tellUsAbout} />
           </Row>
           <Row label="Glass">
@@ -241,7 +244,7 @@ export function DrinkDesk(p: DrinkDeskProps) {
           <Eyebrow>Credit</Eyebrow>
           <CreditsStep draft={draft} set={set} venueName={barId ? p.venueName : null} ingredients={p.ingredients} match={p.atPlace} onRename={rename} />
           <Eyebrow>Notes</Eyebrow>
-          <NotesStep draft={draft} set={set} />
+          <NotesStep draft={draft} set={set} barId={barId} />
           <Eyebrow>Who sees it</Eyebrow>
           <PublishStep draft={draft} set={set} barId={barId} />
           <Eyebrow>Photos</Eyebrow>

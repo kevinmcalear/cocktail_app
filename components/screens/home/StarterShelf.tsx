@@ -6,9 +6,9 @@ import { ScreenHeaderSpacer } from '@/components/nav/ScreenHeader';
 import { IconSymbol } from '@/components/ui/icon-symbol';
 import { layout, radius, space } from '@/constants/tokens';
 import { useBarIdeas } from '@/hooks/useHomeBar';
+import { IDEAS } from '@/lib/myBarAdd';
 import { PANTRY, PANTRY_WATER } from '@/lib/pantry';
 
-import { IDEAS } from './AddToBarSheet';
 import { AddTile, BarTile, TileGrid, useTileCols } from './BarTile';
 import type { AwayGroup } from './MakeRows';
 

@@ -5,12 +5,14 @@ import { Body, Caption, PressableScale, useDs } from '@/components/ds';
 import { IconSymbol } from '@/components/ui/icon-symbol';
 import { layout, space } from '@/constants/tokens';
 import { useCapabilities } from '@/hooks/useCapabilities';
+import { useMyProfile } from '@/hooks/useMyProfile';
 import { useBarPublishing } from '@/hooks/usePublishing';
-import { amountLabel, draftIceLine, finishLabel, sketchLook, STEP_COPY, type StepProps, type WizardDraft, type WizardStep } from '@/lib/drinkWizard';
+import { amountLabel, draftIceLine, finishLabel, notesArePrivate, sketchLook, STEP_COPY, type StepProps, type WizardDraft, type WizardStep } from '@/lib/drinkWizard';
 import { recipesToFinish } from '@/lib/prepKinds';
 import { PUBLISH_COPY } from '@/lib/publishing';
 import { capitalizeFirst } from '@/lib/stringUtils';
 import { draftSketchInputs } from '@/lib/sketch/draft';
+import { askShort, asked } from '@/lib/whoMadeIt';
 
 import { HomePhoto, ReviewPhotos } from './ReviewPhotos';
 
@@ -55,6 +57,9 @@ interface ReviewStepProps extends StepProps {
  */
 export function ReviewStep({ draft, set, onJump, barId, venueName, hasProfile, barVariants, barIce, cost }: ReviewStepProps) {
   const venue = useBarPublishing(barId).data;
+  const profile = useMyProfile().data;
+  // Made with waits for a yes (#899): Review says so, so Save isn't a surprise.
+  const ask = askShort(asked(draft, profile ? { id: profile.id, name: profile.displayName } : null));
   const caps = useCapabilities(barId).data;
   // A venue's drink takes photos from those who may add them.
   const canPhoto = !!caps?.includes('photos');
@@ -68,7 +73,7 @@ export function ReviewStep({ draft, set, onJump, barId, venueName, hasProfile, b
     ['ice', draftIceLine(draft)],
     ['garnish', draft.garnishes.map(finishLabel).join(', ')],
     ['credits', credits(draft, hasProfile)],
-    ['notes', [draft.description.trim(), draft.notes.trim() && draft.notesPrivate ? `Just me: ${draft.notes.trim()}` : draft.notes.trim()].filter(Boolean).join('\n\n')],
+    ['notes', [draft.description.trim(), draft.notes.trim() && notesArePrivate(draft, barId) ? `Just me: ${draft.notes.trim()}` : draft.notes.trim()].filter(Boolean).join('\n\n')],
     ['publish', draft.publish ? PUBLISH_COPY[draft.publish].label : barId ? followed : 'Private'],
   ];
   return (
@@ -79,7 +84,7 @@ export function ReviewStep({ draft, set, onJump, barId, venueName, hasProfile, b
         <ReviewPhotos photos={draft.photos ?? {}} onChange={(photos) => set({ photos })} sketch={draftSketchInputs(sketchLook(draft, barVariants, barIce))} seed={draft.id ?? 'new-drink'} />
       ) : null}
       <View>
-        <ReviewList rows={rows.map(([step, value]) => ({ key: step, label: STEP_COPY[step].short, value }))} onJump={(s) => onJump(s as WizardStep)} after={cost ? undefined : CHANGE_LATER} />
+        <ReviewList rows={rows.map(([step, value]) => ({ key: step, label: STEP_COPY[step].short, value, note: step === 'credits' ? ask : null }))} onJump={(s) => onJump(s as WizardStep)} after={cost ? undefined : CHANGE_LATER} />
         {cost ? (
           <View style={styles.cost}>
             {cost}
@@ -92,11 +97,11 @@ export function ReviewStep({ draft, set, onJump, barId, venueName, hasProfile, b
 }
 
 /** Every answer on one screen; tap a row to go back and change it. */
-export function ReviewList({ rows, onJump, after }: { rows: { key: string; label: string; value: string }[]; onJump: (key: string) => void; after?: string }) {
+export function ReviewList({ rows, onJump, after }: { rows: { key: string; label: string; value: string; note?: string | null }[]; onJump: (key: string) => void; after?: string }) {
   return (
     <View role="list">
       {rows.map((r) => (
-        <AnswerRow key={r.key} label={r.label} value={r.value} onPress={() => onJump(r.key)} />
+        <AnswerRow key={r.key} label={r.label} value={r.value} note={r.note} onPress={() => onJump(r.key)} />
       ))}
       {after ? (
         <Caption tone="muted" style={styles.after}>
@@ -114,12 +119,15 @@ export function ReviewList({ rows, onJump, after }: { rows: { key: string; label
 export function AnswerRow({
   label,
   value,
+  note,
   onPress,
   hint = 'Goes back to change it',
   opens = false,
 }: {
   label: string;
   value: string;
+  /** Under the value with a clock: something still to happen ("We'll ask Sam first."). */
+  note?: string | null;
   onPress?: () => void;
   hint?: string;
   /** It goes somewhere rather than changing the answer: a chevron, not a pencil. */
@@ -139,7 +147,7 @@ export function AnswerRow({
   return (
     <PressableScale
       role="button"
-      accessibilityLabel={`${label}: ${value || 'not added'}`}
+      accessibilityLabel={`${label}: ${value || 'not added'}${note ? `. ${note}` : ''}`}
       accessibilityHint={hint}
       onPress={onPress}
       style={[styles.row, { borderBottomColor: ds.c.line }]}
@@ -147,6 +155,12 @@ export function AnswerRow({
       <View style={styles.text}>
         <Caption tone="muted">{label}</Caption>
         <Body tone={value ? 'ink' : 'muted'}>{value || 'Not added'}</Body>
+        {note ? (
+          <View style={styles.note}>
+            <IconSymbol name="clock" size={14} color={ds.c.muted} />
+            <Caption tone="muted">{note}</Caption>
+          </View>
+        ) : null}
       </View>
       <IconSymbol name={opens ? 'chevron.right' : 'pencil'} size={16} color={ds.c.muted} />
     </PressableScale>
@@ -157,6 +171,7 @@ const styles = StyleSheet.create({
   review: { gap: space.xl },
   row: { flexDirection: 'row', alignItems: 'center', gap: space.md, minHeight: layout.minTapTarget, paddingVertical: space.md, borderBottomWidth: StyleSheet.hairlineWidth },
   text: { flex: 1, gap: 2 },
+  note: { flexDirection: 'row', alignItems: 'center', gap: space.xs },
   after: { marginTop: space.lg },
   cost: { marginTop: space.xl, gap: space.lg },
 });

@@ -9,6 +9,7 @@ import { useVenueScore } from '@/hooks/useDiscover';
 import { useItemScores } from '@/hooks/useFlavor';
 import { useProfileAwards, useProfilePositions, type MenuCreditWithProfile, type Original, type Profile, type WorkedMenu } from '@/hooks/useProfiles';
 import { heroPicture } from '@/lib/itemImages';
+import { plural } from '@/lib/menus';
 import { peopleCount } from '@/lib/nearMe';
 import { formatScore, MIN_RANKERS } from '@/lib/ranking';
 import { versionLabel } from '@/lib/servedAt';
@@ -182,7 +183,7 @@ export function MenuCredits({ credits, names, worked = [] }: { credits: MenuCred
  * The tag (Claimed) sits under the name, or with `tagInline` after the place
  * line, with how many ranked under it (Not claimed yet, ppl-bar-unclaimed).
  */
-export function BarHeader({ profile, detail, tag, tagInline, neutral, size = 64 }: { profile: { id: string; display_name: string; avatar_url: string | null }; detail: string; tag?: ReactNode; tagInline?: boolean; neutral?: boolean; size?: number }) {
+export function BarHeader({ profile, detail, numbers, tag, tagInline, neutral, size = 64 }: { profile: { id: string; display_name: string; avatar_url: string | null }; detail: string; numbers?: string; tag?: ReactNode; tagInline?: boolean; neutral?: boolean; size?: number }) {
   const { data } = useVenueScore(profile.id);
   const score = data?.score ?? null;
   const ranked = data?.rankers ? `${peopleCount(data.rankers)} ranked` : null;
@@ -192,7 +193,7 @@ export function BarHeader({ profile, detail, tag, tagInline, neutral, size = 64 
   const line = tagInline || score !== null ? detail : [detail, ranked].filter(Boolean).join(' · ');
   // The mark, then the name, its tag and the place line; the score over "bar score" and "212 people ranked" (ppl-bar-top).
   return (
-    <View accessible accessibilityLabel={[profile.display_name, detail, ranked, scoreLabel].filter(Boolean).join('. ')} style={styles.barHeader}>
+    <View accessible accessibilityLabel={[profile.display_name, detail, numbers, ranked, scoreLabel].filter(Boolean).join('. ')} style={styles.barHeader}>
       <BarMark name={profile.display_name} logoUrl={profile.avatar_url} profileId={profile.id} size={size} neutral={neutral} />
       <View style={[styles.flex, tagInline ? styles.barNameLoose : styles.barName]}>
         <Title>{profile.display_name}</Title>
@@ -208,6 +209,7 @@ export function BarHeader({ profile, detail, tag, tagInline, neutral, size = 64 
           </>
         )}
         {tagInline && ranked ? <Caption tone="muted">{ranked}</Caption> : null}
+        {numbers ? <Caption tone="muted">{numbers}</Caption> : null}
       </View>
       {score !== null ? (
         <View style={styles.barScore}>
@@ -222,26 +224,15 @@ export function BarHeader({ profile, detail, tag, tagInline, neutral, size = 64 
   );
 }
 
-/** The numbers under a bar's name (its score sits in BarHeader): awards, people and originals, ruled above and below (ppl-bar-top). */
-export function BarStats({ profile, originals, onAwards }: { profile: Pick<Profile, 'id' | 'kind'>; originals: number | null; onAwards?: () => void }) {
+/**
+ * A bar's numbers as one line under its name on a phone (Q30 A, approved 26
+ * Oct 2026): "2 awards · 9 people · 12 originals". A Private page doesn't
+ * count its drinks (ppl-bar-private), so `originals` is null there.
+ */
+export function useBarNumbers(profile: Pick<Profile, 'id' | 'kind'>, originals: number | null): string {
   const { data: awards = [] } = useProfileAwards(profile.id);
   const people = (useProfilePositions(profile).data ?? []).filter(isShownPosition).length;
-  const label = awards.length === 1 ? 'award' : 'awards';
-  return (
-    <Stats ruled>
-      {/* Only the count shows on the page (ppl-bar-top); tapping it lists them, so its label is underlined. */}
-      {onAwards && awards.length ? (
-        <PressableScale role="button" accessibilityLabel={`${awards.length} ${label}. Open the list`} onPress={onAwards} style={styles.statCell}>
-          <Stat value={awards.length} label={label} link />
-        </PressableScale>
-      ) : (
-        <Stat value={awards.length} label={label} ruled />
-      )}
-      <Stat value={people} label={people === 1 ? 'person' : 'people'} ruled />
-      {/* A Private page doesn't count its drinks (ppl-bar-private). */}
-      {originals === null ? null : <Stat value={originals} label={originals === 1 ? 'original' : 'originals'} ruled />}
-    </Stats>
-  );
+  return [plural(awards.length, 'award'), plural(people, 'person', 'people'), originals === null ? null : plural(originals, 'original')].filter(Boolean).join(' · ');
 }
 
 /** The numbers under a profile's name. `ruled`: three equal columns between two hairlines (a bar's page). */
@@ -254,11 +245,11 @@ export function Stats({ children, ruled }: { children: ReactNode; ruled?: boolea
   );
 }
 
-export function Stat({ value, label, link, ruled }: { value: number | string; label: string; link?: boolean; ruled?: boolean }) {
+export function Stat({ value, label, ruled }: { value: number | string; label: string; ruled?: boolean }) {
   return (
     <View role="listitem" accessible accessibilityLabel={`${value} ${label}`} style={[styles.stat, ruled ? styles.statCell : null]}>
       <Spec align="center">{value}</Spec>
-      <Caption tone="muted" align="center" style={link ? styles.link : null}>
+      <Caption tone="muted" align="center">
         {label}
       </Caption>
     </View>
@@ -282,5 +273,4 @@ const styles = StyleSheet.create({
   stat: { alignItems: 'center', minWidth: 72 },
   ruled: { flexDirection: 'row', paddingVertical: space.md + 2, borderTopWidth: StyleSheet.hairlineWidth, borderBottomWidth: StyleSheet.hairlineWidth },
   statCell: { flex: 1, minWidth: 0, justifyContent: 'center' },
-  link: { textDecorationLine: 'underline' },
 });

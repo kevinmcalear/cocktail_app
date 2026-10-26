@@ -440,22 +440,22 @@ export function useCatalogRecipe(name: string | null | undefined) {
 export function useCreatePrep() {
   const qc = useQueryClient();
   return useMutation({
-    mutationFn: async ({ name, prep, barId }: { name: string; prep: PrepDraft; barId: string | null }): Promise<{ id: string; warnings: string[] }> => {
+    mutationFn: async ({ name, prep, barId }: { name: string; prep: PrepDraft; barId: string | null }): Promise<{ id: string; name: string; warnings: string[] }> => {
       const made = new Map<string, string>();
       const warnings: string[] = [];
       const rows: string[] = [];
       const insert = (row: { name: string; generic_id?: string }) => supabase.from('items').insert({ ...row, item_type: 'ingredient', bar_id: barId, ingredient_role: 'prep' }).select('id').single();
       // A new prep row, or the one that already has the name (`isNew` false: it keeps its own recipe).
-      const prepRow = async (raw: string): Promise<{ id: string; isNew: boolean }> => {
+      const prepRow = async (raw: string): Promise<{ id: string; isNew: boolean; name: string }> => {
         const n = capitalizeFirst(raw.trim());
         let { data, error } = await insert({ name: n });
         const taken = existingIngredientId(error);
         if (taken && !barId) ({ data, error } = await insert({ name: `My ${n}`, generic_id: taken }));
         const yours = taken ? (barId ? taken : existingIngredientId(error)) : null;
-        if (yours) return { id: yours, isNew: false };
+        if (yours) return { id: yours, isNew: false, name: n };
         if (error || !data) throw error ?? new Error(`Couldn’t add ${n}.`);
         rows.push(data.id as string);
-        return { id: data.id as string, isNew: true };
+        return { id: data.id as string, isNew: true, name: taken ? `My ${n}` : n };
       };
       const top = await prepRow(name);
       if (!top.isNew) throw new Error(`${capitalizeFirst(name.trim())} is already ${barId ? 'here' : 'yours'}. Search for it instead.`);
@@ -471,11 +471,11 @@ export function useCreatePrep() {
         await supabase.from('items').delete().in('id', rows);
         throw e;
       }
-      useRecentActivityStore.getState().push(recentEntry('ingredient', top.id, capitalizeFirst(name.trim()), { barId }));
+      useRecentActivityStore.getState().push(recentEntry('ingredient', top.id, top.name, { barId }));
       void qc.invalidateQueries({ queryKey: ['ingredients'] });
       void qc.invalidateQueries({ queryKey: DROPDOWNS_QUERY_KEY });
       if (barId) void qc.invalidateQueries({ queryKey: ['bar', barId] });
-      return { id: top.id, warnings };
+      return { id: top.id, name: top.name, warnings };
     },
   });
 }

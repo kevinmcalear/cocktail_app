@@ -15,16 +15,20 @@ import { PersonClaimSheet } from './PersonClaimSheet';
  * 3): a card beside the page on a wide screen ("Are you Ash?"), pinned to the
  * bottom on a phone. This is me opens the claim sheet; Not me puts it away.
  * Once a claim is sent it says so instead. Opened from "Claim it on your
- * phone" (/p/<handle>?claim=1), the sheet is already open.
+ * phone" (/p/<handle>?claim=1), the sheet is already open; More's "Is this
+ * you?" opens it the same way. `quiet`: not the likely person (Q33, approved
+ * 26 Oct 2026), so no card or buttons, only the sheet when they ask.
  */
-export function ThisIsMe({ profile, pinned = false }: { profile: Profile; pinned?: boolean }) {
+export function ThisIsMe({ profile, pinned = false, quiet = false }: { profile: Profile; pinned?: boolean; quiet?: boolean }) {
   const ds = useDs();
   const insets = useSafeAreaInsets();
   const gutter = useGutter();
   const made = useMadeBy(profile);
   const { data: claims, isLoading } = useMyClaims(profile.id);
   const router = useRouter();
-  const [open, setOpen] = useState(useLocalSearchParams<{ claim?: string }>().claim === '1');
+  const linked = useLocalSearchParams<{ claim?: string }>().claim === '1';
+  const [open, setOpen] = useState(linked);
+  if (linked && !open) setOpen(true);
   // The link opens it once: Back, a reload or a resize doesn't open it again.
   useEffect(() => {
     if (open) router.setParams({ claim: undefined });
@@ -52,6 +56,7 @@ export function ThisIsMe({ profile, pinned = false }: { profile: Profile; pinned
       <Button label="Not me" variant="ghost" onPress={() => setNotMe(true)} />
     </>
   );
+  if (quiet) return sheet;
   if (pinned) {
     return (
       <View style={[styles.pinned, { paddingHorizontal: gutter, paddingBottom: insets.bottom + space.md, backgroundColor: ds.c.ground, borderTopColor: ds.c.line }]}>

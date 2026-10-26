@@ -102,6 +102,10 @@ async function main() {
   assert.deepEqual(creators(team).map((p) => p.id), ['p1', 'p2', 'p3']);
   assert.equal(creditText(creditSentence(team, null)), 'By Sam Ross, Kitty Gardner and Tom McHugh at Milk & Honey');
   assert.equal(creditSentence(team, null).filter((p) => p.profileId).length, 4);
+  // Waiting and declined co-creators (back to editors only) stay out of the credit until they say yes (Q34).
+  const asked = drink('ag', null, { creator: person, co_creators: [{ status: 'pending', profile: kitty }, { status: 'declined', profile: tom }] });
+  assert.deepEqual(creators(asked).map((p) => p.id), ['p1']);
+  assert.deepEqual(creators({ ...asked, co_creators: [{ status: 'accepted', profile: kitty }] }).map((p) => p.id), ['p1', 'p2']);
   assert.equal(joinNames(['Kitty']), 'Kitty');
   assert.equal(joinNames(['Kitty', 'Tom']), 'Kitty and Tom');
   assert.equal(joinNames([]), '');

@@ -14,7 +14,8 @@ import { AlreadyThereCard, useAlreadyThere } from './AlreadyThere';
 import { CheckFooter, PageLook } from './CheckParts';
 import { DrawnFromSpec, FromYourFile } from './RecipeSource';
 import { amountShown, chooseLine, RecipeSpec } from './RecipeSpec';
-import { EditLink, ProgressLine } from './ReviewParts';
+import { ProgressLine, TakeOutLine } from './ReviewParts';
+import { TakeOutSheet } from './TakeOutSheet';
 import { useImportReview } from './useImportReview';
 import { useSteadySketch } from './useRecipeMaker';
 
@@ -29,14 +30,17 @@ export function markNote(mark: string | null, unsure: boolean): string | null {
 /**
  * A big import on a phone (board eddie-oct22-wave2, Fix 11, "Phone · still
  * quick"): one drink at a time, Finish later, the count and the bar, the
- * drink drawn from its spec, Edit this drink, then Skip or Approve.
+ * drink drawn from its spec, and Skip, Edit and Approve pinned at the bottom
+ * (board w2-import-review, E20). Something read as a drink that isn't one
+ * can be taken out, or kept as house-made.
  */
 export function ImportReview({ id, data, onFinishLater }: { id: string; data: MatchData; onFinishLater: () => void }) {
   const ds = useDs();
   const gutter = useGutter();
   const insets = useSafeAreaInsets();
-  const { review, usual, toMake, error, approve, skip, setChoices, editDrink } = useImportReview(id, data);
+  const { review, usual, toMake, error, approve, skip, setChoices, editDrink, takeOutDrink, keepHouseMade } = useImportReview(id, data);
   const [look, setLook] = useState<{ at?: ReadPlace | null; title: string } | null>(null);
+  const [notDrink, setNotDrink] = useState<number | null>(null);
   // On a phone you only ever see a drink still to check.
   const at = review ? (canCheck(review, review.at) ? review.at : (nextOpen(review.marks, review.at) ?? review.at)) : 0;
   const recipe = review?.recipes[at];
@@ -53,6 +57,9 @@ export function ImportReview({ id, data, onFinishLater }: { id: string; data: Ma
   const file = (x: { at?: ReadPlace | null } | null) => (x?.at ? (files[x.at.page] ?? null) : null);
   const page = file(recipe);
   const note = markNote(review.marks[at], review.unsure.includes(at));
+  const pickNote = open ? (there?.note ?? openPickLine(recipe, choices, data)) : null;
+  // The Undo toast sits above the pinned buttons, and the line over them when there is one.
+  const footerLift = TOAST_LIFT + (pickNote ? NOTE_LIFT : 0);
 
   return (
     <View style={[styles.screen, { backgroundColor: ds.c.ground }]}>
@@ -68,6 +75,7 @@ export function ImportReview({ id, data, onFinishLater }: { id: string; data: Ma
         <ProgressLine t={t} words={`${t.checked} of ${t.total}`} />
         <DrawnFromSpec inputs={sketch} seed={recipe.name} name={choices.name} />
         <TextInput accessibilityLabel="Drink name" editable={open} value={choices.name} onChangeText={(name) => setChoices(at, (c) => ({ ...c, name }))} style={[styles.name, { color: ds.c.ink, fontFamily: fontFamilies.instrument }]} />
+        {open ? <TakeOutLine onPress={() => setNotDrink(at)} /> : null}
         {there && open ? <AlreadyThereCard there={there} pick={choices.same} onPick={(same) => setChoices(at, (c) => ({ ...c, same }))} onSkip={() => skip(at)} /> : null}
         {page?.uri && recipe.at ? (
           <FromYourFile
@@ -79,20 +87,33 @@ export function ImportReview({ id, data, onFinishLater }: { id: string; data: Ma
           />
         ) : null}
         <RecipeSpec recipe={recipe} choices={choices} data={data} files={files} usual={usual} label={false} made={review.batches} onChoose={(i, c) => setChoices(at, (prev) => chooseLine(prev, i, c))} onChoices={(change) => setChoices(at, change)} onLook={(where, title) => setLook({ at: where, title })} />
-        {open ? <EditLink onPress={() => editDrink(at)} /> : null}
         {note ? <Caption tone="muted">{note}</Caption> : null}
         {error ? <Caption tone="accent">{error}</Caption> : null}
       </ScrollView>
-      <CheckFooter note={open ? (there?.note ?? openPickLine(recipe, choices, data)) : null}>
+      <CheckFooter note={pickNote}>
         <View style={styles.row}>
           <Button label="Skip" size="lg" variant="secondary" disabled={!open} onPress={() => skip(at)} />
+          <Button label="Edit" icon="pencil" size="lg" variant="secondary" accessibilityLabel="Edit this drink" disabled={!open} onPress={() => editDrink(at)} />
           <Button label="Approve" size="lg" disabled={!open || !choices.name.trim() || !!there?.waits || checking} onPress={() => approve(at)} style={styles.flex} />
         </View>
       </CheckFooter>
       <PageLook file={file(look)} at={look?.at ?? null} title={look?.title ?? ''} onClose={() => setLook(null)} />
+      <TakeOutSheet
+        recipe={notDrink === null ? null : (review.recipes[notDrink] ?? null)}
+        name={notDrink === null ? '' : review.choices[notDrink]?.name.trim() || (review.recipes[notDrink]?.name ?? '')}
+        usual={usual}
+        onClose={() => setNotDrink(null)}
+        onKeep={() => keepHouseMade(notDrink!, footerLift)}
+        onTakeOut={() => takeOutDrink(notDrink!, footerLift)}
+      />
     </View>
   );
 }
+
+/** The pinned footer's buttons and padding, above the bottom inset. */
+const TOAST_LIFT = 52 + space.md + 2 + space.sm + 4;
+/** The footer's line above its buttons (Caption) and the gap under it. */
+const NOTE_LIFT = 18 + space.sm;
 
 const styles = StyleSheet.create({
   screen: { flex: 1 },

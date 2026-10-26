@@ -19,6 +19,7 @@ import { confirmDiscardChanges } from '@/lib/dialogs';
 
 import { BrandForm, type BrandDraftState } from './BrandForm';
 import { BrandPreview } from './BrandPreview';
+import { SetupLook, type LookPage } from './BrandSetupPager';
 
 const PREVIEW_WIDTH = 300;
 /** Venue setup's preview column on wide web: one phone (canvas make-venue-desktop). */
@@ -42,9 +43,9 @@ function draftFrom(row: VenueBrandRow): BrandDraftState {
   };
 }
 
-/** Venue setup's Look step (canvas make-venue-look): this editor, saved by the step's Continue. */
+/** Venue setup's Look step (canvas make-venue-look): this editor, saved by the step's Continue. On a phone, `page` walks its parts (E34). */
 export interface BrandSetupMode {
-  footer: (s: { save: (then: () => void) => void; saving: boolean; ok: boolean }) => ReactNode;
+  footer: (s: { save: (then: () => void) => void; saving: boolean; ok: boolean; page?: LookPage }) => ReactNode;
 }
 
 function BrandEditor({ row, canEdit, header, setup }: { row: VenueBrandRow; canEdit: boolean; header: (dirty: boolean) => ReactNode; setup?: BrandSetupMode }) {
@@ -176,19 +177,22 @@ function BrandEditor({ row, canEdit, header, setup }: { row: VenueBrandRow; canE
   if (setup) {
     const ok = Object.keys(problems).length === 0 && !busy;
     const saveThen = (then: () => void) => (changed ? save.mutate(patch, { onSuccess: saved('', then), onError: (e) => setMessage(e.message) }) : then());
+    if (!wide) {
+      return (
+        <SetupLook
+          {...{ row, look, draft, set, suggested, busy, problems, message }}
+          onUpload={() => void upload('logo')}
+          onRemoveBackground={() => void removeBackground()}
+          footer={(page) => setup.footer({ save: saveThen, saving: save.isPending, ok, page })}
+        />
+      );
+    }
     return (
       <SetupPage footer={setup.footer({ save: saveThen, saving: save.isPending, ok })}>
-        {wide ? (
-          <View style={[styles.columns, styles.columnsWide]}>
-            {settings}
-            {preview}
-          </View>
-        ) : (
-          <>
-            {preview}
-            {settings}
-          </>
-        )}
+        <View style={[styles.columns, styles.columnsWide]}>
+          {settings}
+          {preview}
+        </View>
       </SetupPage>
     );
   }

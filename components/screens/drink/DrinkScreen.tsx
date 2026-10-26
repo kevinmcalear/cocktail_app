@@ -117,7 +117,7 @@ function DrinkPage({ item, inStudyPile, onToggleStudyPile, canEdit, adminFix = f
   const version = useItemVersions(item.id, caps.includes('specs')).data?.[0]?.version;
   const venue = useActiveVenue().venues.find((v) => v.id === item.bar_id);
 
-  const { make, facts, tags, glass, ice, method, methods, strength } = useDrinkFacts(item, {
+  const { make, marks, facts, tags, glass, ice, method, methods, strength } = useDrinkFacts(item, {
     lines,
     amounts: access.amounts && !preview,
     dilutionDefaults,
@@ -169,6 +169,7 @@ function DrinkPage({ item, inStudyPile, onToggleStudyPile, canEdit, adminFix = f
     amountsOpenAt,
     lines,
     make,
+    marks,
     facts,
     tags,
     glass: glassKey,

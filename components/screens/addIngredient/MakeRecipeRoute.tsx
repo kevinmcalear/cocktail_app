@@ -5,6 +5,7 @@ import { Alert } from 'react-native';
 import { VenueBrandProvider } from '@/components/nav/VenueBrandProvider';
 import { useActiveVenue } from '@/hooks/useActiveVenue';
 import { useDropdowns } from '@/hooks/useDropdowns';
+import { useShelfEdit } from '@/hooks/useHomeBar';
 import { useCreatePrep } from '@/hooks/usePrepCard';
 import { plainDbMessage } from '@/lib/dbError';
 import { toastDone } from '@/lib/toast';
@@ -17,14 +18,16 @@ import { PrepBuilder } from '../addDrink/prep/PrepBuilder';
  * steps-3, step 11). The same recipe steps as inside a drink, on their own
  * page: "Your recipes" where the drink would be, and Save it, which opens
  * the new recipe's page (or hands it back to the editor that asked for it,
- * `attachTo`).
+ * `attachTo`). `shelf` (Add to your bar's Make it in house) puts it on
+ * your bar and goes back there, to House-made.
  */
 export function MakeRecipeRoute() {
   const router = useRouter();
-  const { barId, name, attachTo } = useLocalSearchParams<{ barId?: string; name?: string; attachTo?: string }>();
+  const { barId, name, attachTo, shelf } = useLocalSearchParams<{ barId?: string; name?: string; attachTo?: string; shelf?: string }>();
   const venue = useActiveVenue().venues.find((v) => v.id === barId) ?? null;
   const dropdowns = useDropdowns({ ingredients: true }).data;
   const create = useCreatePrep();
+  const { add } = useShelfEdit();
   const setRecentlyCreatedItem = useAppStore((s) => s.setRecentlyCreatedItem);
   // One save at a time: a quick second tap lands before the screen knows it's saving.
   const saving = useRef(false);
@@ -49,6 +52,10 @@ export function MakeRecipeRoute() {
               onSuccess: ({ id, warnings }) => {
                 toastDone('Recipe saved', n);
                 if (warnings.length) Alert.alert('Saved, with one thing to fix', warnings.join('\n\n'));
+                if (shelf) {
+                  add.mutate(id);
+                  return goBack();
+                }
                 if (attachTo) {
                   setRecentlyCreatedItem({ type: 'ingredient', id, name: n, targetId: attachTo });
                   return goBack();

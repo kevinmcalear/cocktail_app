@@ -72,3 +72,7 @@ assert.deepEqual(
 assert.equal(shows(undefined, 'menus'), true);
 assert.equal(shows('all', 'menus'), true);
 assert.equal(shows('drinks', 'menus'), false);
+// Can make keeps the drinks only: bars and people leave until it's off (Q37).
+assert.equal(shows('canmake', 'drinks'), true);
+assert.equal(shows('canmake', 'bars'), false);
+assert.equal(shows('canmake', 'people'), false);

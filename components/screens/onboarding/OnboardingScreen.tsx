@@ -5,6 +5,7 @@ import { Body, Button, Caption } from '@/components/ds';
 import { SafetyPage } from '@/components/screens/safety/SafetyPage';
 import { useAuth } from '@/ctx/AuthContext';
 import { useMyInvites, type MyInvite } from '@/hooks/useBarInvites';
+import { useSaveSetupAnswer } from '@/hooks/useLikelyClaimer';
 import { useFinishOnboarding, useSaveOnboardingName, useSaveWorkplace } from '@/hooks/useOnboarding';
 import { useMyProfile } from '@/hooks/useMyProfile';
 import { useMyPersonClaim } from '@/hooks/useProfiles';
@@ -49,6 +50,7 @@ export function OnboardingScreen() {
   const finish = useFinishOnboarding();
   const saveProfile = useSaveOnboardingName();
   const saveJob = useSaveWorkplace();
+  const answer = useSaveSetupAnswer().mutate; // Kept for bar pages' claim prompts (Q33): who works in bars.
   const enterVenue = useAppMode((s) => s.enterVenue);
   const saved = user ? resumed.get(user.id) : undefined;
   const [chosen, setChosen] = useState<OnboardingStep | null>(saved?.chosen ?? null);
@@ -233,19 +235,13 @@ export function OnboardingScreen() {
       {step === 'hospitality' ? (
         <SetupPage footer={<Button label="Not now" variant="ghost" onPress={() => createProfile(() => setStep('taste'))} />}>
           {/* Owners, managers and head bartenders (owner-setup call 1). */}
-          <Answer label="I’m setting up a bar" detail="I own it, run it or manage it: its menus, drinks, kit and team." onPress={() => go('hospitality', 'owner')} />
-          <Answer
-            label="I make drinks at a bar"
-            detail="Find your bar, your drinks and the menus you worked on."
-            onPress={() => {
-              if (personId) setStep('work');
-              else setStep('find');
-            }}
-          />
+          <Answer label="I’m setting up a bar" detail="I own it, run it or manage it: its menus, drinks, kit and team." onPress={() => (answer('owner'), go('hospitality', 'owner'))} />
+          <Answer label="I make drinks at a bar" detail="Find your bar, your drinks and the menus you worked on." onPress={() => (answer('bartender'), setStep(personId ? 'work' : 'find'))} />
           <Answer
             label="I love drinks"
             detail="Rank them, keep them, make them at home."
             onPress={() => {
+              answer('drinks');
               setHome(true);
               createProfile(() => setStep('taste'));
             }}

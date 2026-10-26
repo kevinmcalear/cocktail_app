@@ -7,7 +7,7 @@ import type { SameNameDrink } from '@/hooks/useSameNameDrink';
 import { useStartFromClassic } from '@/hooks/useStartFromClassic';
 import type { WizardDraft } from '@/lib/drinkWizard';
 import { withArticle } from '@/lib/closestClassic';
-import { versionName } from '@/lib/sameName';
+import { theirs, versionName } from '@/lib/sameName';
 
 // The box is the field: no browser focus ring on the word (as BigName).
 const NO_OUTLINE = Platform.OS === 'web' ? ({ outlineStyle: 'none' } as object) : null;
@@ -22,7 +22,7 @@ export interface CardWords {
 }
 
 interface CardProps {
-  /** Whose drink it is ("Little Rye"). */
+  /** Whose drink it is ("Little Rye"); empty for your own at home (board w2-wizard-finish-2, Q14b). */
   bar: string;
   drink: SameNameDrink;
   /** Under the choices: what a version is, or what Open it is for. */
@@ -45,8 +45,9 @@ interface CardProps {
 export function SameNameCard({ bar, drink, caption, wide, busy, words, onOpen, onVersion, onDifferent }: CardProps) {
   const ds = useDs();
   const said = words ?? {
-    title: `${bar} already has ${withArticle(drink.name)}`,
-    line: [drink.line, drink.menu].filter(Boolean).join(' · '),
+    title: bar ? `${bar} already has ${withArticle(drink.name)}` : `You already have ${withArticle(drink.name)}`,
+    // Yours: "Rocks · Gin, Campari, sweet vermouth · Saved 12 Oct".
+    line: (bar ? [drink.line, drink.menu] : [drink.glassName, drink.line, drink.saved ? `Saved ${drink.saved}` : null]).filter(Boolean).join(' · '),
     open: 'Open it',
     version: 'Make this a version',
     different: 'It’s a different drink',
@@ -83,7 +84,7 @@ export function SameNameCard({ bar, drink, caption, wide, busy, words, onOpen, o
           </>
         )}
         <View style={styles.choices}>
-          <Button label={said.open} size="sm" onPress={onOpen} disabled={busy} accessibilityLabel={`Open ${bar ? `${bar}’s ` : ''}${drink.name}. Your draft is kept`} />
+          <Button label={said.open} size="sm" onPress={onOpen} disabled={busy} accessibilityLabel={`Open ${theirs(bar, drink.name)}. Your draft is kept`} />
           <Button label={busy ? 'Loading…' : said.version} size="sm" variant="secondary" onPress={onVersion} disabled={busy} />
           <Button label={said.different} size="sm" variant="secondary" onPress={onDifferent} disabled={busy} />
         </View>
