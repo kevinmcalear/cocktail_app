@@ -193,7 +193,7 @@ export function useLayoutEditor(menu: MenuDetail, { paste = false }: { paste?: b
         const url = await cover.mutateAsync();
         if (url) update((l) => ({ ...l, coverUrl: url, coverPosition: 50 }));
       } catch {
-        setCoverError('The cover didn’t upload. Try again.');
+        setCoverError('Didn’t upload. Try again.');
       }
     },
     removeCover: () => {

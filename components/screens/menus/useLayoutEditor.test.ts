@@ -81,7 +81,7 @@ test('a cover that fails to upload says so on the cover and keeps the rest savin
   await act(async () => {
     await result.current.pickCover();
   });
-  expect(result.current.coverError).toBe('The cover didn’t upload. Try again.');
+  expect(result.current.coverError).toBe('Didn’t upload. Try again.');
   expect(result.current.error).toBeNull();
   expect(saveStatus(result.current).text).toBe('Saving…');
   mockPickCover.mockResolvedValueOnce('https://example.test/cover.jpg');
