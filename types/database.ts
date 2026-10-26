@@ -6318,6 +6318,10 @@ export type Database = {
         Args: { p_note: string; p_share_id: string }
         Returns: undefined
       }
+      delete_venue: {
+        Args: { p_bar_id: string; p_confirm_name: string }
+        Returns: Json
+      }
       discover_bars: {
         Args: {
           p_city?: string
@@ -7514,6 +7518,15 @@ export type Database = {
           unit: string
         }[]
       }
+      storage_cleanup_batch: {
+        Args: { p_limit?: number }
+        Returns: {
+          bucket_id: string
+          id: number
+          name: string
+        }[]
+      }
+      storage_cleanup_done: { Args: { p_ids: number[] }; Returns: undefined }
       take_invite_email_slot: {
         Args: { p_bar_id: string; p_email: string; p_sender: string }
         Returns: string
