@@ -49,6 +49,14 @@ assert.equal(suggest('Corpse Reviver No. 2'), 'Corpse Reviver #2');
 assert.equal(suggest('Corn And Oil'), "Corn 'n' Oil");
 assert.equal(suggest('A La Louisiane'), 'De La Louisiane', 'its other name');
 
+// --- The same venue's pre-war classics, seeded in 20261121500000 ---
+const OLD = ['Astoria', 'Astor Hotel Special', 'Coo-ee Special', 'Pan American Clipper', 'Turf'].map((name, i) => ({ id: String(i), name }));
+const old = (name: string) => suggestClassic(name, OLD)?.classic.name;
+assert.equal(old('Astoria Hotel Special'), 'Astor Hotel Special', 'a misspelling, not the Astoria');
+assert.equal(old('Coo-wee!'), 'Coo-ee Special');
+assert.equal(old('Pan Am Clipper'), 'Pan American Clipper');
+assert.equal(old('Turf Club'), 'Turf', 'the name McElhone printed it under');
+
 // --- A letter or two off: a guess, never exact ---
 assert.equal(suggest('Champs Elysses'), 'Champs-Élysées ?');
 assert.equal(suggest('Caiprioska'), 'Caipiroska ?');

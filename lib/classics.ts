@@ -19,10 +19,14 @@ export interface ClassicMatch<C extends Classic = Classic> {
 // Spellings and other names seen on real menus, folded, to the catalog name, folded.
 const ALIASES: Record<string, string> = {
   'a la louisiane': 'de la louisiane',
+  'astoria hotel special': 'astor hotel special',
   boulvardier: 'boulevardier',
+  'coo wee': 'coo ee special',
   'old fashion': 'old fashioned',
+  'pan am clipper': 'pan american clipper',
   pompiere: 'pompier',
   'tommy margarita': 'tommys margarita',
+  'turf club': 'turf',
   'whisky sour': 'whiskey sour',
 };
 
