@@ -9,7 +9,7 @@ import type { RunParty } from '@/lib/runSheet';
 export type Step = 'serves' | 'specs' | 'who' | 'sheet';
 
 export const STEPS: { value: Step; label: string; next: string }[] = [
-  { value: 'serves', label: '1 Serves', next: 'Next: specs' },
+  { value: 'serves', label: '1 How many', next: 'Next: specs' },
   { value: 'specs', label: '2 Specs', next: 'Next: who brings what' },
   { value: 'who', label: '3 Who', next: 'Next: the sheet' },
   { value: 'sheet', label: '4 Sheet', next: '' },

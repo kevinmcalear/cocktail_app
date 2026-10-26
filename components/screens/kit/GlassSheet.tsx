@@ -29,7 +29,7 @@ export interface GlassSheetProps {
   onClose: () => void;
   /** The glass to change; null adds one. */
   glass?: BarGlass | null;
-  /** The question it opens on: 0 which glass, 1 where it comes from, 2 how many. */
+  /** The question it opens on: 0 which glass, 1 where it comes from, 2 how many (changing a glass only). */
   startAt?: 0 | 1 | 2;
   /** Opens on naming your own instead of the catalog search. */
   describe?: boolean;
@@ -48,7 +48,7 @@ export interface GlassSheetProps {
   from?: string;
 }
 
-/** Add a glass, or change one: which glass it is, where it comes from, how many. */
+/** Add a glass (which glass it is, where it comes from), or change one (and how many). */
 export function GlassSheet(props: GlassSheetProps) {
   return <GlassSheetBody key={useOpenKey(props.visible)} {...props} />;
 }
@@ -180,21 +180,29 @@ function GlassSheetBody({ barId, pageId, visible, onClose, glass, startAt = 0, d
     {
       title: 'Where does it come from?',
       body: <SourceQuestion kind="glass" value={src} onChange={setSrc} suppliers={suppliers} home={home} />,
-      next: 'Next',
-      onSkip: () => {
-        setSrc(saved);
-        setStep(2);
-      },
-    },
-    {
-      title: 'How many?',
-      intro: 'If you know. Nothing to make, so that’s it.',
-      body: <Field label="How many" value={count} onChangeText={setCount} placeholder="24" keyboardType="number-pad" maxLength={4} error={countOk ? undefined : 'A whole number, 1 to 9999.'} />,
-      next: glass ? 'Save' : 'Add the glass',
+      // Adding a glass ends here; changing one goes on to How many (its page's How many row opens there).
+      next: glass ? 'Next' : 'Add the glass',
       // Whether it's the main glass of its type needs the venue's glasses (none to know before the page is checked).
-      canNext: countOk && (!!known || !pageId),
-      onSkip: () => finish(src, glass?.count ?? null),
+      canNext: glass ? true : !!known || !pageId,
+      onSkip: glass
+        ? () => {
+            setSrc(saved);
+            setStep(2);
+          }
+        : () => finish(saved, null),
     },
+    ...(glass
+      ? [
+          {
+            title: 'How many?',
+            intro: 'If you know.',
+            body: <Field label="How many" value={count} onChangeText={setCount} placeholder="24" keyboardType="number-pad" maxLength={4} error={countOk ? undefined : 'A whole number, 1 to 9999.'} />,
+            next: 'Save',
+            canNext: countOk && (!!known || !pageId),
+            onSkip: () => finish(src, glass.count ?? null),
+          },
+        ]
+      : []),
   ];
   const title = trimmed(which.name) ?? GLASS_TYPE_LABEL[which.glass];
 
@@ -204,9 +212,9 @@ function GlassSheetBody({ barId, pageId, visible, onClose, glass, startAt = 0, d
       onClose={onClose}
       label={glass ? `Change ${title}` : 'Add a glass'}
       step={step}
-      total={3}
+      total={questions.length}
       question={drawing && step === 0 ? drawQ.question : questions[step]}
-      onNext={() => (step < 2 ? setStep(step + 1) : finish(src, n))}
+      onNext={() => (step < questions.length - 1 ? setStep(step + 1) : finish(src, n))}
       saving={save.isPending || own === 'saving'}
       error={save.error || own === 'failed' ? FAILED : null}
       answered={glass ? undefined : { what: (which.mode === 'picked' && which.model?.name) || title, from, onChange: () => setStep(0) }}

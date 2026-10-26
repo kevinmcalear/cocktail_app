@@ -7,6 +7,7 @@ import type { RankVenue } from '@/hooks/useRankings';
 import { allRowsById } from '@/lib/allRows';
 import { viewerScoped } from '@/lib/authCache';
 import type { PublicBrand } from '@/lib/brand';
+import { getKnownDeviceLocation } from '@/lib/deviceLocation';
 import { citiesFrom, findDrinks, orderDrinks, type City } from '@/lib/discover';
 import { heroPicture, type ItemImageLink } from '@/lib/itemImages';
 import {
@@ -14,6 +15,7 @@ import {
   ADDRESS_MIN_CHARS,
   areaParams,
   photonUrl,
+  snapNearMe,
   splitEarly,
   venueAddressesFrom,
   type Area,
@@ -207,19 +209,29 @@ export function useDebounced<T>(value: T, ms: number): T {
  * Addresses and named places matching what's typed, from Photon
  * (OpenStreetMap). Keeps to Photon's fair use: nothing under three
  * characters, only once typing pauses, a superseded request is cancelled,
- * and answers are cached. Sends only the typed text, never the person's
- * location.
+ * and answers are cached. Sends the typed text and, only where location is
+ * already allowed (never asked for here), the device's place snapped to
+ * about 1 km, so nearby addresses come first (Eddie, 26 Oct).
  */
 export function useAddressSearch(text: string) {
   const query = useDebounced(text.trim(), ADDRESS_DEBOUNCE_MS);
+  const near = useQuery({
+    queryKey: ['address-search-near'],
+    staleTime: 10 * 60 * 1000,
+    meta: { persist: false },
+    queryFn: async () => {
+      const at = await getKnownDeviceLocation();
+      return at.ok ? { latitude: snapNearMe(at.latitude), longitude: snapNearMe(at.longitude) } : null;
+    },
+  }).data;
   return useQuery({
-    queryKey: ['address-search', query],
+    queryKey: ['address-search', query, near?.latitude ?? null, near?.longitude ?? null],
     enabled: query.length >= ADDRESS_MIN_CHARS,
     staleTime: 60 * 60 * 1000,
     retry: 0,
     meta: { persist: false },
     queryFn: async ({ signal }): Promise<VenueAddress[]> => {
-      const res = await fetch(photonUrl(query), { signal });
+      const res = await fetch(photonUrl(query, 6, near), { signal });
       if (!res.ok) throw new Error(`Address search failed (${res.status}). Try again in a moment.`);
       return venueAddressesFrom(await res.json());
     },

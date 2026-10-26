@@ -117,7 +117,7 @@ export function FaceChoices({ name, value, onChange, setup }: { name: string; va
   // The picker shows every face, so it fetches the ones that load on demand.
   const family = useDisplayFaces(FACES);
   return (
-    <View role="radiogroup" accessibilityLabel="Display face" style={[styles.faces, setup && styles.bare]}>
+    <View role="radiogroup" accessibilityLabel="Font" style={[styles.faces, setup && styles.bare]}>
       {FACES.map((face) => {
         const selected = face === value;
         const look = FACE_SAMPLE[face];

@@ -34,7 +34,7 @@ export function PageVisibilityChoice({ venueName, value, onChange, disabled, err
   return (
     <View style={styles.group}>
       {heading ? <Headline role="heading">Who sees your page</Headline> : null}
-      {heading ? <Caption tone="muted">{`For people outside ${venueName}. Your team always sees everything.`}</Caption> : null}
+      {heading ? <Caption tone="muted">{`Choose what people who don’t work at ${venueName} can see. Your team can always see everything.`}</Caption> : null}
       <View role="radiogroup" accessibilityLabel="Who sees your page" style={styles.rows}>
         {PAGE_VISIBILITIES.map((v) => {
           const closed = v === 'private' && !privateAllowed;

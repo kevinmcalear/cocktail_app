@@ -72,7 +72,7 @@ export function BrandsStep({ barId, step, onBack, onNext, onSkip }: { barId: str
   const count = stock.length;
   return (
     <SetupChromeProvider
-      value={{ ...chrome, title: 'What’s on your shelves?', intro: 'Tap what you stock. The plain thing is fine: “just rum”.', mark: undefined, eyebrow: null, progress: null, topLabel: step, noBack: false, onBack }}
+      value={{ ...chrome, title: 'What’s on your shelves?', intro: 'Search for the bottles on your backbar. You can always add, remove and edit these at any time.', mark: undefined, eyebrow: null, progress: null, topLabel: step, noBack: false, onBack }}
     >
       <SetupPage footer={<StepFooter skip="Skip" onSkip={onSkip} label={count ? `${count} on your back bar · Next` : 'Next'} onPress={onNext} />}>
         <IngredientSearch
