@@ -1,18 +1,18 @@
-import { useQuery } from '@tanstack/react-query';
+import { useQuery, useQueryClient, type QueryClient } from '@tanstack/react-query';
 import { useMemo } from 'react';
 import { create } from 'zustand';
 
-import { INGREDIENTS_KEY } from '@/hooks/useDropdowns';
-import { allRowsById, byName } from '@/lib/allRows';
+import { allRowsById, byName, withRow } from '@/lib/allRows';
 import { readSavedCatalog, saveCatalog } from '@/lib/catalogFile';
 import type { CatalogItem } from '@/lib/match';
 import { CATALOG_FRESH_MS, CATALOG_RANGES, packCatalog, unpackCatalog } from '@/lib/matchCatalog';
+import { DROPDOWNS_QUERY_KEY } from '@/lib/queryDefaults';
 import { supabase } from '@/lib/supabase';
 
 const SAVED_KEY = ['match-catalog', 'saved'] as const;
 const SHARED_KEY = ['match-catalog', 'shared'] as const;
 /** Under the ingredient list's key, so a save that adds a venue's bottle (refreshIngredients) reads these again. */
-const OWN_KEY = [...INGREDIENTS_KEY, 'match-own'] as const;
+const OWN_KEY = [...DROPDOWNS_QUERY_KEY, 'ingredients', 'match-own'] as const;
 
 /** How many of the shared catalog's ranges have arrived, for the Reading screen's progress. */
 const useDownloaded = create<{ ranges: number }>(() => ({ ranges: 0 }));
@@ -46,6 +46,26 @@ async function downloadShared(signal: AbortSignal): Promise<CatalogItem[]> {
 }
 
 /**
+ * After shared ingredients are saved or made here (refreshIngredients):
+ * those rows put into the loaded and saved catalog, so the next snap
+ * matches them without waiting a day for a new download.
+ */
+export const hasMatchCatalog = (client: QueryClient) => [SAVED_KEY, SHARED_KEY].some((key) => !!client.getQueryData(key));
+
+export function patchMatchCatalog(client: QueryClient, ids: string[], rows: Row[]) {
+  for (const key of [SAVED_KEY, SHARED_KEY]) {
+    const items = client.getQueryData<CatalogItem[] | null>(key);
+    if (!items) continue;
+    const next = ids.reduce((list, id) => {
+      const row = rows.find((r) => r.id === id);
+      return withRow(list, id, row && !row.bar_id ? (toItems([row])[0] ?? null) : null);
+    }, items);
+    client.setQueryData(key, next);
+    void saveCatalog(packCatalog(next, Date.now()));
+  }
+}
+
+/**
  * What Bring in, the bottle photo and the swap match names against: the
  * shared catalog (~20,000 ingredients) plus the venues' own you can see. The
  * shared part is saved on the phone for a day (lib/catalogFile.ts), so a
@@ -54,6 +74,7 @@ async function downloadShared(signal: AbortSignal): Promise<CatalogItem[]> {
  * downloads, else null.
  */
 export function useMatchCatalog(enabled = true) {
+  const client = useQueryClient();
   const saved = useQuery({
     queryKey: SAVED_KEY,
     enabled,
@@ -73,6 +94,8 @@ export function useMatchCatalog(enabled = true) {
     queryFn: async ({ signal }) => {
       const items = await downloadShared(signal);
       void saveCatalog(packCatalog(items, Date.now()));
+      // The file is fresh now: the next visit reads it rather than downloading again.
+      client.setQueryData(SAVED_KEY, items);
       return items;
     },
   });
