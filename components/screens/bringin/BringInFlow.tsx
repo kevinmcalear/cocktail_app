@@ -211,9 +211,9 @@ export function BringInFlow() {
         const wizardAt = wizardPlace(job.barId);
         const wizard = useDrinkWizardStore.getState();
         wizard.clear(wizardAt);
-        wizard.patch(wizardAt, draft);
+        wizard.begin(wizardAt, draft);
         useBringIn.getState().clear(true);
-        router.replace((job.barId ? `/add-cocktail?barId=${job.barId}` : '/add-cocktail') as Href);
+        router.replace((job.barId ? `/add-cocktail?barId=${job.barId}&imported=1` : '/add-cocktail?imported=1') as Href);
       }}
     />
   );

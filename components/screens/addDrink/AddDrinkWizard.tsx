@@ -2,7 +2,6 @@ import { useEffect, useState, useSyncExternalStore } from 'react';
 import { Alert, Platform } from 'react-native';
 
 import { useBreakpoint } from '@/components/ds';
-
 import { useBarGlassware } from '@/hooks/useBarGlassware';
 import { useActiveVenue } from '@/hooks/useActiveVenue';
 import { useCreateDrink } from '@/hooks/useCreateDrink';
@@ -59,6 +58,8 @@ export interface AddDrinkWizardProps {
   startFrom?: string | null;
   /** The first round's "Make the Old Fashioned yours": straight to Review, with the round's strip. */
   firstRound?: boolean;
+  /** Opened from an import's Edit this drink: the draft is the import, not one left off, so no "Picked up where you left off". */
+  imported?: boolean;
   /** Inside the desktop workspace: no safe-area padding. */
   embedded?: boolean;
   onClose: () => void;
@@ -75,12 +76,11 @@ export function AddDrinkWizard(props: AddDrinkWizardProps) {
   return ready ? <Wizard {...props} /> : null;
 }
 
-function Wizard({ barId = null, menuSectionId, initialName, startFrom, firstRound, embedded, onClose, onSaved }: AddDrinkWizardProps) {
+function Wizard({ barId = null, menuSectionId, initialName, startFrom, firstRound, imported, embedded, onClose, onSaved }: AddDrinkWizardProps) {
   const place = draftSlot(wizardPlace(barId), { menuSectionId, name: initialName, from: startFrom });
   const kept = useDrinkWizardStore((s) => s.kept[place]);
   const patch = useDrinkWizardStore((s) => s.patch);
   const setStoredStep = useDrinkWizardStore((s) => s.setStep);
-  const clear = useDrinkWizardStore((s) => s.clear);
   useHoldUpdates();
   // Filled out with today's fields: a draft kept by an older version of the app may lack some.
   const draft: WizardDraft = { ...EMPTY_DRAFT, ...kept?.draft };
@@ -88,10 +88,10 @@ function Wizard({ barId = null, menuSectionId, initialName, startFrom, firstRoun
   // On the web the page can draw before the kept draft loads (AsyncStorage is async there): once it has, say it was picked up. Set while rendering, like any value derived from a change.
   const loaded = useSyncExternalStore(hydrated, isHydrated, () => false);
   const [seenLoad, setSeenLoad] = useState(loaded);
-  const [resumed, setResumed] = useState(() => loaded && hasContent(draft));
+  const [resumed, setResumed] = useState(() => loaded && hasContent(draft) && !imported);
   if (loaded && !seenLoad) {
     setSeenLoad(true);
-    setResumed(hasContent(draft));
+    setResumed(hasContent(draft) && !imported);
   }
   const [direction, setDirection] = useState<1 | -1>(1);
   const dropdowns = useDropdowns({ ingredients: true }).data;
@@ -142,7 +142,7 @@ function Wizard({ barId = null, menuSectionId, initialName, startFrom, firstRoun
       { draft, barId, myProfileId: me?.id ?? null, menuSectionId, sketch: draftSketchInputs(sketchLook(draft, barVariants)) },
       {
         onSuccess: ({ id, warnings, later = [] }) => {
-          clear(place);
+          useDrinkWizardStore.getState().clear(place);
           if (firstRound) roundDone('house_spec', id);
           toastDone('Drink saved', draft.name.trim());
           const notice = savedNotice(warnings, later);
@@ -154,7 +154,7 @@ function Wizard({ barId = null, menuSectionId, initialName, startFrom, firstRoun
     );
   const next = () => (step === 'review' ? save() : go(WIZARD_STEPS[at + 1]));
   const startOver = () => {
-    clear(place);
+    useDrinkWizardStore.getState().restart(place);
     setResumed(false);
   };
 
