@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState, type ComponentRef, type ReactNode } from 'react';
+import { createContext, useContext, useEffect, useRef, useState, type ComponentRef, type ReactNode } from 'react';
 import { BackHandler, Keyboard, KeyboardAvoidingView, Platform, ScrollView, StyleSheet, useWindowDimensions, View } from 'react-native';
 import Animated, { useAnimatedStyle, useReducedMotion, useSharedValue, withSpring } from 'react-native-reanimated';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
@@ -17,6 +17,23 @@ export interface BandPlace {
   rounded: boolean;
   folded: boolean;
   size?: number;
+}
+
+/**
+ * A step's search over the whole screen while it's in use (canvas Create,
+ * Q16): the band, heading and footer go, so the field sits at the top and its
+ * results run down to the keyboard. Phones only; null elsewhere.
+ */
+export interface WizardTakeover {
+  on: boolean;
+  set: (on: boolean) => void;
+}
+
+const Takeover = createContext<WizardTakeover | null>(null);
+
+/** The frame's takeover, for a step's search; null outside a phone's wizard (the desktop page, tests). */
+export function useWizardTakeover() {
+  return useContext(Takeover);
 }
 
 export interface WizardFrameProps {
@@ -46,7 +63,8 @@ export interface WizardFrameProps {
  * The screen every add wizard shares: the paper band with its drawing on
  * top, one step at a time sliding in, and the footer pinned above the
  * keyboard. On a phone the band folds to its controls while typing, so the
- * field and the keyboard both fit. A desktop browser has one 760 column
+ * field and the keyboard both fit, and a step's search can take the whole
+ * screen (useWizardTakeover). A desktop browser has one 760 column
  * that scrolls as a page: the band as a rounded card, the step, then Skip
  * and Next at its end.
  */
@@ -63,8 +81,25 @@ export function WizardFrame({ testID, pageTitle, embedded, overNav, band, stepKe
   const scroller = useRef<ComponentRef<typeof ScrollView>>(null);
   useEffect(() => scroller.current?.scrollTo({ y: 0, animated: false }), [stepKey]);
 
+  // A search taking over opens at the top; closed, the step is back where it was, the new line above the field.
+  const [takeover, setTakeover] = useState(false);
+  const scrolled = useRef(0);
+  const keptAt = useRef(0);
+  useEffect(() => scroller.current?.scrollTo({ y: takeover ? 0 : keptAt.current, animated: false }), [takeover]);
+  const startTakeover = (on: boolean) => {
+    if (on === takeover) return;
+    if (on) keptAt.current = scrolled.current;
+    else Keyboard.dismiss();
+    setTakeover(on);
+  };
+
   useEffect(() => {
-    const sub = BackHandler.addEventListener('hardwareBackPress', onHardwareBack);
+    // Android's back closes a search first, then steps back.
+    const sub = BackHandler.addEventListener('hardwareBackPress', () => {
+      if (!(takeover && breakpoint === 'phone' && !embedded)) return onHardwareBack();
+      startTakeover(false);
+      return true;
+    });
     return () => sub.remove();
   });
 
@@ -89,46 +124,58 @@ export function WizardFrame({ testID, pageTitle, embedded, overNav, band, stepKe
   const statusBar = sheetGap > 0 ? 0 : insets.top;
   const side = column ? 0 : gutter;
   const bottom = embedded ? space.lg : Math.max(insets.bottom, space.lg);
+  // Only a phone's step needs the room: wider screens show the field and its results with the keyboard up.
+  const over = !column && takeover;
 
   return (
-    <KeyboardAvoidingView
-      // Android draws edge to edge, so the window doesn't shrink for the keyboard: the screen does.
-      behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
-      keyboardVerticalOffset={sheetGap}
-      testID={testID}
-      onLayout={(e) => setHeight(e.nativeEvent.layout.height)}
-      style={[styles.screen, { backgroundColor: ds.c.ground }]}
-    >
-      <WebHead>
-        <title>{pageTitle}</title>
-      </WebHead>
-      {/* iOS: after the first layout, so a first field's autofocus meets the right keyboard offset. */}
-      {Platform.OS === 'ios' && !height ? null : (
-        <View style={[styles.column, page && styles.pageColumn, besideNav && styles.left, column && !page && { paddingTop: embedded ? space.lg : statusBar + space.lg, paddingHorizontal: gutter }, { paddingBottom: page ? 0 : bottom }]}>
-          {page ? (
-            <ScrollView ref={scroller} keyboardShouldPersistTaps="handled" style={styles.flex} contentContainerStyle={[styles.page, { paddingHorizontal: gutter }]}>
-              {band({ top: space.lg, side: space.lg, rounded: true, folded: false })}
-              <SlideIn key={stepKey} direction={direction}>
-                <Heading eyebrow={eyebrow} title={title} intro={intro} aside={aside} />
-                {children}
-                <FooterInline.Provider value>{footer}</FooterInline.Provider>
-              </SlideIn>
-            </ScrollView>
-          ) : (
-            <>
-              {band({ top: column ? space.lg : statusBar + space.sm, side: column ? space.lg : gutter, rounded: column, folded: typing && !column })}
-              <ScrollView ref={scroller} keyboardShouldPersistTaps="handled" style={styles.flex} contentContainerStyle={[styles.scroll, { paddingHorizontal: side }]}>
+    <Takeover.Provider value={column ? null : { on: takeover, set: startTakeover }}>
+      <KeyboardAvoidingView
+        // Android draws edge to edge, so the window doesn't shrink for the keyboard: the screen does.
+        behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
+        keyboardVerticalOffset={sheetGap}
+        testID={testID}
+        onLayout={(e) => setHeight(e.nativeEvent.layout.height)}
+        style={[styles.screen, { backgroundColor: ds.c.ground }]}
+      >
+        <WebHead>
+          <title>{pageTitle}</title>
+        </WebHead>
+        {/* iOS: after the first layout, so a first field's autofocus meets the right keyboard offset. */}
+        {Platform.OS === 'ios' && !height ? null : (
+          <View style={[styles.column, page && styles.pageColumn, besideNav && styles.left, column && !page && { paddingTop: embedded ? space.lg : statusBar + space.lg, paddingHorizontal: gutter }, over && { paddingTop: statusBar + space.sm }, { paddingBottom: page ? 0 : bottom }]}>
+            {page ? (
+              <ScrollView ref={scroller} keyboardShouldPersistTaps="handled" style={styles.flex} contentContainerStyle={[styles.page, { paddingHorizontal: gutter }]}>
+                {band({ top: space.lg, side: space.lg, rounded: true, folded: false })}
                 <SlideIn key={stepKey} direction={direction}>
                   <Heading eyebrow={eyebrow} title={title} intro={intro} aside={aside} />
                   {children}
+                  <FooterInline.Provider value>{footer}</FooterInline.Provider>
                 </SlideIn>
               </ScrollView>
-              <View style={{ paddingHorizontal: side }}>{footer}</View>
-            </>
-          )}
-        </View>
-      )}
-    </KeyboardAvoidingView>
+            ) : (
+              <>
+                {/* Each piece goes to null in place while a search takes over, so the step (and its focused field) stays mounted. */}
+                {over ? null : band({ top: column ? space.lg : statusBar + space.sm, side: column ? space.lg : gutter, rounded: column, folded: typing && !column })}
+                <ScrollView
+                  ref={scroller}
+                  keyboardShouldPersistTaps="handled"
+                  onScroll={(e) => (scrolled.current = e.nativeEvent.contentOffset.y)}
+                  scrollEventThrottle={32}
+                  style={styles.flex}
+                  contentContainerStyle={[styles.scroll, over && styles.over, { paddingHorizontal: side }]}
+                >
+                  <SlideIn key={stepKey} direction={direction}>
+                    {over ? null : <Heading eyebrow={eyebrow} title={title} intro={intro} aside={aside} />}
+                    {children}
+                  </SlideIn>
+                </ScrollView>
+                {over ? null : <View style={{ paddingHorizontal: side }}>{footer}</View>}
+              </>
+            )}
+          </View>
+        )}
+      </KeyboardAvoidingView>
+    </Takeover.Provider>
   );
 }
 
@@ -171,6 +218,7 @@ const styles = StyleSheet.create({
   pageColumn: { maxWidth: 760 + 2 * space.xxl },
   flex: { flex: 1 },
   scroll: { paddingTop: space.lg, paddingBottom: space.xl },
+  over: { paddingTop: 0 },
   page: { gap: space.lg, paddingTop: space.xxl, paddingBottom: space.xxxl },
   body: { gap: space.lg },
   // The canvas spaces the kicker, title and intro like the step's own rows.

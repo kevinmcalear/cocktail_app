@@ -25,8 +25,11 @@ export interface PublicClassic {
   openId: string | null;
 }
 
-/** add: at the end of the ranking. order: the ranked ids, top first; the rest go unranked. */
-export type StaffListChange = { op: 'add'; itemId: string } | { op: 'order'; itemIds: string[] } | { op: 'remove'; itemId: string };
+/**
+ * add: at the end of the ranking. order: the ranked ids, top first; the rest go unranked.
+ * Its join: linked drinks ranked from under Not ranked yet, put on the list first.
+ */
+export type StaffListChange = { op: 'add'; itemId: string } | { op: 'order'; itemIds: string[]; join?: StaffPick[] } | { op: 'remove'; itemId: string };
 
 interface ItemName {
   id: string;
@@ -72,7 +75,7 @@ export function useStaffList(barId: string | null | undefined) {
   });
 }
 
-/** The venue's own cocktails that are already linked to a classic, to add from. */
+/** The venue's own cocktails that are already linked to a classic: Library's Classics beyond the staff list, and the add search. */
 export function useBarRiffs(barId: string | null | undefined) {
   return useQuery({
     queryKey: ['staff-list-riffs', barId],
@@ -113,6 +116,10 @@ export function useStaffListEdit(barId: string | null | undefined) {
     mutationFn: async (change: StaffListChange) => {
       if (!barId) throw new Error('No venue');
       if (change.op === 'order') {
+        if (change.join?.length) {
+          const joined = await supabase.from('bar_off_menu').insert(change.join.map((p) => ({ bar_id: barId, item_id: p.itemId, sort_rank: null })));
+          if (joined.error) throw joined.error;
+        }
         const { error } = await supabase.rpc('set_staff_list_order', { p_bar_id: barId, p_item_ids: change.itemIds });
         if (error) throw error;
         return;
@@ -128,7 +135,7 @@ export function useStaffListEdit(barId: string | null | undefined) {
       if (change.op !== 'order') return;
       await client.cancelQueries({ queryKey: key });
       const rank = new Map(change.itemIds.map((id, i) => [id, i + 1]));
-      client.setQueryData<StaffPick[]>(key, (rows) => rows?.map((p) => ({ ...p, rank: rank.get(p.itemId) ?? null })));
+      client.setQueryData<StaffPick[]>(key, (rows) => rows && [...rows, ...(change.join ?? [])].map((p) => ({ ...p, rank: rank.get(p.itemId) ?? null })));
     },
     onSettled: () => {
       // Refetching while a later change is queued would flash the older order.

@@ -13,7 +13,12 @@ const got = byDrink([
 ]);
 assert.equal(canMakeLabel(got.martini), 'Can make');
 assert.equal(canMakeLabel(got.boulevardier), 'Missing 1: Cynar');
-assert.equal(canMakeLabel(got.far), 'Missing 4');
+assert.equal(canMakeLabel(got.far), 'Missing 4: Amaro, Bitters, Falernum and 1 more');
+assert.equal(canMakeLabel({ canMake: false, missingCount: 2, missing: [{ id: 's', name: 'Suze' }, { id: 'l', name: 'Lillet Blanc' }] }), 'Missing 2: Suze, Lillet Blanc');
+assert.equal(
+  canMakeLabel({ canMake: false, missingCount: 5, missing: [{ id: 'a', name: 'Cappelletti' }, { id: 'c', name: 'Cynar' }, { id: 'p', name: 'Prosecco' }] }),
+  'Missing 5: Cappelletti, Cynar, Prosecco and 2 more'
+);
 assert.deepEqual(got.odd.missing, []);
 assert.equal(canMakeLabel(got.odd), 'Missing 1', 'one short but not named (hidden from the caller): just the count');
 assert.equal(got.unknown, undefined);

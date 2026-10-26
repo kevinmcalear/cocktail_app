@@ -36,6 +36,7 @@ export function TimelineRowView({
   wide,
   compact,
   onPress,
+  onThread,
   threadSpine = null,
 }: {
   row: Row;
@@ -46,6 +47,8 @@ export function TimelineRowView({
   /** Following a thread on a phone: the name and who made it, nothing more (board prep-hist-timeline-thread). */
   compact?: boolean;
   onPress: () => void;
+  /** A phone's round thread button at the row's end (E48, 26 Oct 2026): lights this row's thread in place. */
+  onThread?: () => void;
   /** Where the thread's accent line runs through this row's spine: from its dot down, up to it, or right through. */
   threadSpine?: 'down' | 'up' | 'through' | null;
 }) {
@@ -56,16 +59,16 @@ export function TimelineRowView({
   const maker = makerLine(n);
   const from = fromLine(row);
   const year = shortYear(n);
-  const label = [n.year == null ? null : yearPhrase(n.year, n.approx, n.guess), n.name, style ? 'historic style' : null, maker, from, selected ? 'selected' : null]
+  const label = [n.year == null ? null : yearPhrase(n.year, n.approx, n.guess), n.name, style ? 'historic style' : null, maker, from, selected ? 'selected' : null, onThread ? (style ? 'opens its card' : 'opens the drink') : null]
     .filter(Boolean)
     .join(', ');
-  return (
+  const body = (
     <PressableScale
       role="button"
       accessibilityLabel={label}
       aria-selected={selected}
       onPress={onPress}
-      style={[styles.row, { opacity: dimmed ? 0.38 : 1 }, selected ? { backgroundColor: ds.c.raised } : null]}
+      style={[styles.row, onThread ? styles.flex : null, { opacity: dimmed ? 0.38 : 1 }, selected ? { backgroundColor: ds.c.raised } : null]}
     >
       <View style={styles.year}>
         {row.newYear ? (
@@ -129,6 +132,16 @@ export function TimelineRowView({
       )}
     </PressableScale>
   );
+  if (!onThread) return body;
+  // A sibling, not inside the row: a button can't hold a button on the web.
+  return (
+    <View style={styles.withThread}>
+      {body}
+      <PressableScale role="button" accessibilityLabel={`Show ${n.name}'s thread`} onPress={onThread} style={[styles.threadButton, { borderColor: ds.c.lineStrong }]}>
+        <IconSymbol name="arrow.uturn.backward" size={18} color={ds.c.ink} />
+      </PressableScale>
+    </View>
+  );
 }
 
 /**
@@ -188,6 +201,8 @@ const styles = StyleSheet.create({
   from: { flexDirection: 'row', alignItems: 'center', gap: space.xs + 2 },
   flex: { flex: 1, minWidth: 0 },
   tile: { marginTop: space.sm + 2, marginLeft: space.sm },
+  withThread: { flexDirection: 'row', alignItems: 'flex-start', columnGap: space.sm },
+  threadButton: { width: layout.minTapTarget, height: layout.minTapTarget, marginTop: space.sm + 2, borderRadius: radius.pill, borderWidth: 1, alignItems: 'center', justifyContent: 'center' },
   dot: { width: 12, height: 12, borderRadius: radius.pill, marginTop: space.md + 3 },
   text: { flex: 1, minWidth: 0, gap: 2, paddingVertical: space.sm + 2 },
   nameLine: { flexDirection: 'row', alignItems: 'center', gap: space.sm, flexWrap: 'wrap' },

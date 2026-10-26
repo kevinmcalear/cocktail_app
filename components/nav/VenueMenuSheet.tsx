@@ -13,6 +13,8 @@ import { useBarDrinks, useShelf } from '@/hooks/useHomeBar';
 import { useVenueMenus } from '@/hooks/useMenus';
 import { useMode } from '@/hooks/useMode';
 import { useVenueFeatures } from '@/hooks/useVenueFeatures';
+import { useVenueSetup } from '@/store/useVenueSetup';
+import { startedSetup } from '@/lib/venueSetup';
 import { useBarWeek, useWeekStart } from '@/hooks/useWeek';
 import { groupMenus } from '@/lib/menus';
 import { roleLabel } from '@/lib/roles';
@@ -154,7 +156,16 @@ function VenuePlaces({ venue, onGo, onTeam }: { venue: Venue; onGo: (p: Place) =
   );
 }
 
-function HomePlaces({ onGo }: { onGo: (p: Place) => void }) {
+/**
+ * "Run a bar? Set it up" at the end of the home menu, for anyone not on a
+ * venue's team (Q35b and Q36 A, approved 26 Oct 2026): venue setup at Find
+ * your bar, where they claim theirs or add a new one, or where a setup
+ * already started stopped. Once they're on a team, Switch takes its place.
+ */
+const SET_UP: Place = { key: 'set-up', label: 'Run a bar? Set it up', icon: 'building.2', path: '/venue-setup?step=find' };
+
+function HomePlaces({ onGo, setUp }: { onGo: (p: Place) => void; setUp: boolean }) {
+  const started = startedSetup(useVenueSetup((s) => s.runs));
   // My Bar, Collection and You, as decided on the canvas (10 Oct): the home tabs past Discover.
   const { tabs: all } = useNavPlaces();
   const tabs = all.filter((t) => t.key !== 'discover');
@@ -166,6 +177,12 @@ function HomePlaces({ onGo }: { onGo: (p: Place) => void }) {
       </View>
       <Heading>You</Heading>
       <Places places={[SETTINGS]} lines={lines} onGo={onGo} />
+      {setUp ? (
+        <>
+          <Heading>A bar of your own</Heading>
+          <Places places={[started ? { ...SET_UP, path: started } : SET_UP]} lines={{ 'set-up': 'Find yours and claim it, or add a new one' }} onGo={onGo} />
+        </>
+      ) : null}
     </>
   );
 }
@@ -175,7 +192,8 @@ function HomePlaces({ onGo }: { onGo: (p: Place) => void }) {
  * desktop sidebar. Titled with where you are (the venue and your role, or
  * Home bar) with Switch beside the X for anyone with a venue, then that place's pages: at a venue
  * its working pages, Venue and You; at home My Bar, Collection, You and
- * Settings (venue-menu proposal A, approved 24 Oct 2026).
+ * Settings (venue-menu proposal A, approved 24 Oct 2026), and with no venue,
+ * Run a bar? Set it up (Q35b).
  */
 export function VenueMenuSheet({ onClose }: { onClose: () => void }) {
   const router = useRouter();
@@ -212,7 +230,7 @@ export function VenueMenuSheet({ onClose }: { onClose: () => void }) {
           <RoundPlacesNote />
         </>
       ) : (
-        <HomePlaces onGo={go} />
+        <HomePlaces onGo={go} setUp={!isLoading && !venues.length} />
       )}
     </MenuSheet>
   );

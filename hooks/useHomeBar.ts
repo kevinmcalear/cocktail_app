@@ -2,14 +2,17 @@ import { keepPreviousData, useMutation, useQuery, useQueryClient } from '@tansta
 import { useMemo } from 'react';
 
 import { useDebounced } from '@/hooks/useDiscover';
+import { ensureIngredient } from '@/hooks/useCreateIngredient';
 import { useDropdowns } from '@/hooks/useDropdowns';
 import { withNear, type MaybeNear } from '@/hooks/useSearchNear';
 import { chunk } from '@/lib/commandSearchGrid';
 import { likeExactly, searchByName } from '@/lib/drinkWizard';
 import { barSection, type BarSection } from '@/lib/barSections';
+import { kindsCovered } from '@/lib/myBarAdd';
 import { heroPicture, type ItemImageLink } from '@/lib/itemImages';
 import { sortMatches, type MatchRow } from '@/lib/barMatches';
 import { specNoteText, type ServedBar } from '@/lib/servedAt';
+import { capitalizeFirst } from '@/lib/stringUtils';
 import { PANTRY, PANTRY_WATER } from '@/lib/pantry';
 import { TECHNICAL_INGREDIENTS } from '@/lib/techniques/ingredients';
 import { supabase } from '@/lib/supabase';
@@ -84,6 +87,8 @@ export interface ShelfItem extends BarItem {
   addedAt?: string | null;
   /** Where My Bar lists it. */
   section: BarSection;
+  /** A bottle (`product`): the kinds it's a bottle of, its own and that one's ("London dry gin", "Gin"), as ids. */
+  kindIds?: string[];
 }
 
 /** A search result for the add sheet, with the section it goes in and what it is ("Liqueur", "Italy"). */
@@ -91,6 +96,10 @@ export interface FoundItem extends BarItem {
   section: BarSection;
   kind: string | null;
   origin: string | null;
+  /** `product` for a bottle you buy; a style (Gin) is `generic`. */
+  role: string | null;
+  /** A search for a kind ("gin"): the kind this bottle was found under, though "gin" isn't in its name. */
+  of?: string;
 }
 
 export const SHELF_KEY = ['home-bar'];
@@ -112,6 +121,7 @@ async function foundItems(rows: ItemRow[]): Promise<FoundItem[]> {
     section: barSection({ name: r.name, role: r.ingredient_role, abv: r.abv, hasRecipe: !!r.recipes?.length }),
     kind: (r.generic_id && kinds.get(r.generic_id)) || null,
     origin: r.origin ?? null,
+    role: r.ingredient_role ?? null,
   }));
 }
 
@@ -165,7 +175,71 @@ async function searchBar(query: string): Promise<FoundItem[]> {
     const rows = [...byId.values()] as unknown as ItemRow[];
     // Alias matches first: their names don't contain what was typed, so searchByName would drop them.
     const named = (also.data ?? []) as unknown as ItemRow[];
-return foundItems([...named, ...searchByName(query, rows, 40).filter((r) => !named.some((n) => n.id === r.id))]);
+    const best = [...named, ...searchByName(query, rows, 40).filter((r) => !named.some((n) => n.id === r.id))];
+    // A kind typed ("gin"): its bottles too, whatever their names (Tanqueray). The one named exactly, else the first that starts with it.
+    const key = query.trim().toLowerCase();
+    const styles = best.filter((r) => r.ingredient_role !== 'product');
+    const kind = styles.find((r) => r.name.toLowerCase() === key) ?? styles.find((r) => r.name.toLowerCase().startsWith(key));
+    const bottles = kind ? (await kindBottles(kind.id, '', 3)).filter((b) => !best.some((r) => r.id === b.id)) : [];
+    const out = await foundItems([...best, ...bottles]);
+    return out.map((r, i) => (i < best.length ? r : { ...r, of: kind!.id }));
+}
+
+/**
+ * The bottles of a kind, through its styles (Gin's London dry gins): those
+ * with a photo first, then by name, `text` narrowing them by name.
+ * ponytail: two levels (a kind, its styles), which is as deep as the
+ * catalog's spirits go under a kind someone ticks; walk further if it grows.
+ */
+async function kindBottles(kindId: string, text: string, limit: number): Promise<ItemRow[]> {
+  const under = await supabase.from('items').select('id').eq('generic_id', kindId).or('ingredient_role.is.null,ingredient_role.eq.generic').limit(200);
+  if (under.error) throw under.error;
+  let read = supabase
+    .from('app_item_presentation')
+    .select(FOUND_SELECT)
+    .eq('ingredient_role', 'product')
+    .is('bar_id', null)
+    .eq('hide_from_search', false)
+    .in('generic_id', [kindId, ...(under.data ?? []).map((r) => r.id)]);
+  if (text.trim()) read = read.ilike('name', `%${likeExactly(text.trim())}%`);
+  const { data, error } = await read.order('picture_url', { nullsFirst: false }).order('name').limit(limit);
+  if (error) throw error;
+  return (data ?? []) as unknown as ItemRow[];
+}
+
+/** How many bottles Which gin? lists before a search narrows them. */
+export const KIND_PAGE = 60;
+
+/** "Which gin?": the kind's bottles in the catalog, searched by name. None means the kind gets no Which link. */
+export function useKindBottles(kindId: string | null, text = '') {
+  const query = useDebounced(text.trim(), 200);
+  return useQuery({
+    queryKey: ['kind-bottles', kindId, query],
+    enabled: !!kindId,
+    placeholderData: keepPreviousData,
+    staleTime: 60 * 60 * 1000,
+    meta: { persist: false },
+    queryFn: async (): Promise<FoundItem[]> => foundItems(await kindBottles(kindId!, query, KIND_PAGE)),
+  });
+}
+
+/**
+ * Add “X” in Add to your bar: an ingredient by name alone (the existing one
+ * if any spelling or alias matches, as the ingredient wizard saves a typed
+ * line), put on your bar. Gives back its id and name.
+ */
+export function useAddByName() {
+  const client = useQueryClient();
+  const { add } = useShelfEdit();
+  return useMutation({
+    mutationFn: async (name: string): Promise<{ id: string; name: string }> => {
+      const id = await ensureIngredient({ id: null, name: name.trim() }, null, new Map());
+      await add.mutateAsync(id);
+      return { id, name: capitalizeFirst(name.trim()) };
+    },
+    // A search for it now finds it, ticked.
+    onSuccess: () => client.invalidateQueries({ queryKey: ['bar-search'] }),
+  });
 }
 
 /** Rows by id, as searchBar has them: the close names. */
@@ -472,11 +546,17 @@ async function readShelf(ids: string[]): Promise<Omit<ShelfItem, 'uses' | 'secti
   if (added.error) throw added.error;
   const addedAt = new Map((added.data ?? []).map((r: { item_id: string; added_at: string }) => [r.item_id, r.added_at]));
   const kindIds = [...new Set(rows.map((r) => r.generic_id).filter((id): id is string => !!id))];
-  const kinds = new Map((kindIds.length ? await readItems(kindIds, 'id, name') : []).map((k) => [k.id, k.name]));
+  const kindRows = kindIds.length ? await readItems(kindIds, 'id, name, generic_id') : [];
+  const kinds = new Map(kindRows.map((k) => [k.id, k.name]));
+  // The kinds' own kinds, so a Tanqueray (a London dry gin) also counts as a Gin in Add to your bar.
+  const parentIds = [...new Set(kindRows.map((k) => k.generic_id).filter((id): id is string => !!id && !kinds.has(id)))];
+  const parents = parentIds.length ? await readItems(parentIds, 'id, name') : [];
+  const tree = new Map([...kindRows, ...parents].map((k) => [k.id, { name: k.name, parent: k.generic_id ?? null }]));
   return rows.map((r) => ({
     id: r.id,
     name: r.name,
     type: r.item_type,
+    kindIds: r.ingredient_role === 'product' && r.generic_id ? kindsCovered(r.generic_id, tree) : undefined,
     imageUrl: heroPicture(r.item_images)?.url ?? null,
     glass: null,
     maker: r.brand_maker ?? null,

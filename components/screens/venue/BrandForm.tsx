@@ -28,7 +28,7 @@ export interface BrandDraftState {
 }
 
 /** The accent cards: the current accent, colours from the logo, and the app's default, each once. */
-function accentOptions(row: VenueBrandRow, suggested: string[], withDefault: boolean): AccentOption[] {
+export function accentOptions(row: VenueBrandRow, suggested: string[], withDefault: boolean): AccentOption[] {
   const named = [
     { hex: row.primary_color, source: 'Accent' },
     ...suggested.map((hex) => ({ hex, source: 'From your logo' })),

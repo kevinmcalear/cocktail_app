@@ -3,6 +3,7 @@
 import assert from 'node:assert/strict';
 
 import {
+  roleLine,
   cell, columnCaption, dayOfEnd, endOfDay, endsLabel, isChangedBuiltIn, isLocked, limitTo, overridesFor, reachCeiling, ROLE_PRESETS, roleSummary,
   isCapability, today, toCapability, toggleLine, withinReach, withToggle, type MatrixColumn,
 } from './roleMatrix';
@@ -106,6 +107,25 @@ assert.equal(agoLabel('2026-09-20T08:00:00Z', now), '3 weeks ago');
   assert.deepEqual(limitTo(['menu', 'specs', 'staff'], ['menu', 'staff']), ['menu', 'staff']);
   assert.equal(reachCeiling(m, ['menu', 'specs', 'staff'], 30), 20, 'Bartender adds photos they lack');
   assert.equal(reachCeiling(m, null, 40), 40);
+}
+
+// Setup's role lines: the first sees, the rest add, an Admin does everything.
+{
+  const col = (l: number, capabilities: string[]) => ({ role_id: null, name: null, base_level: l, ends_at: null, granted: [], revoked: [], capabilities });
+  const all = ['menu', 'talking_points', 'specs', 'house_made', 'locations', 'costs', 'edit_drinks', 'prep', 'photos', 'menus', 'publish', 'staff', 'brand'];
+  const m = [
+    col(10, ['menu']),
+    col(20, ['locations', 'menu', 'talking_points']),
+    col(30, ['menu', 'talking_points', 'locations', 'specs', 'photos']),
+    col(35, ['menu', 'talking_points', 'locations', 'specs', 'photos', 'house_made', 'costs', 'edit_drinks', 'prep', 'menus']),
+    col(40, all),
+    { ...col(30, ['menu']), role_id: 'r1', name: 'Barback' },
+  ];
+  assert.equal(roleLine(m, 20), 'The menu, talking points and where things live. No specs.');
+  assert.equal(roleLine(m, 30), 'Adds specs and photos.');
+  assert.equal(roleLine(m, 35), 'Adds house-made recipes, costs, drink edits, prep and menus.');
+  assert.equal(roleLine(m, 40), 'Everything.');
+  assert.equal(roleLine(m, 99), '');
 }
 
 console.log('roleMatrix checks passed');

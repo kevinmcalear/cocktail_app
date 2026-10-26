@@ -1,6 +1,6 @@
 import assert from 'node:assert/strict';
 
-import { appendRank, candidatesFor, moved, NOT_RANKED, patronGroups, ranked, rankedAbove, staffOrder, unranked } from './staffList';
+import { appendRank, candidatesFor, classicRows, moved, NOT_RANKED, patronGroups, ranked, rankedAbove, staffOrder, unranked } from './staffList';
 
 
 const rows = [
@@ -63,3 +63,10 @@ assert.equal(candidatesFor(
   assert.deepEqual(rankedAbove(['a', 'b']), ['a', 'b'], 'no line: every row is ranked');
   assert.equal(rankedAbove([...Array.from({ length: 52 }, (_, i) => `d${i}`), NOT_RANKED]).length, 50, 'never past the cap');
 }
+
+// Classics: the list, then linked drinks not on it, unranked; each drink once.
+const both = classicRows(
+  [{ itemId: 'm', rank: 1, name: 'House Martini', classicName: 'Martini', imageUrl: null }],
+  [{ id: 'm', name: 'House Martini', classicName: 'Martini' }, { id: 'a', name: 'Americano', classicName: 'Americano' }],
+);
+assert.deepEqual(both.map((r) => [r.itemId, r.rank, r.onList]), [['m', 1, true], ['a', null, false]]);

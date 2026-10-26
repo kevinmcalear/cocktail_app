@@ -12,6 +12,8 @@ const rye = { id: 'lr', handle: 'little-rye', display_name: 'Little Rye', addres
 jest.mock('expo-router', () => ({ useRouter: () => ({ replace: mockReplace, push: mockPush, back: jest.fn(), canGoBack: () => false }), useLocalSearchParams: () => ({}) }));
 jest.mock('@/ctx/AuthContext', () => ({ useAuth: () => ({ user: { id: 'me', user_metadata: mockMeta }, loading: false }) }));
 jest.mock('@/hooks/useBarInvites', () => ({ useMyInvites: () => ({ data: [], isLoading: false }) }));
+const mockSaveAnswer = jest.fn();
+jest.mock('@/hooks/useLikelyClaimer', () => ({ useSaveSetupAnswer: () => ({ mutate: mockSaveAnswer }) }));
 jest.mock('@/hooks/useMyProfile', () => ({ useMyProfile: () => ({ data: null, isPending: false, error: null, refetch: jest.fn() }) }));
 jest.mock('@/hooks/useOnboarding', () => ({
   useSaveOnboardingName: () => ({ mutate: mockSaveName, isPending: false, error: null }),
@@ -47,6 +49,8 @@ test('setting up a bar: find it and open its page, or add it, and venue setup ta
   expect(screen.getByText('What brings you here?')).toBeTruthy();
   expect(screen.getByText('Step 2 of 5')).toBeTruthy();
   await fireEvent.press(screen.getByRole('button', { name: /I’m setting up a bar/ }));
+  // Kept so bar pages know who works in bars (Q33).
+  expect(mockSaveAnswer).toHaveBeenCalledWith('owner');
   expect(screen.getByText('Find your bar')).toBeTruthy();
   expect(screen.getByText('Step 3 of 4')).toBeTruthy();
 

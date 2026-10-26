@@ -13,7 +13,7 @@ import type { TreeNode } from '@/lib/drinkTree';
 import { yearLabel } from '@/lib/lineage';
 import { fromLine } from '@/lib/timeline';
 
-const drinkHref = (id: string) => `/cocktail/${id}` as Href;
+export const drinkHref = (id: string) => `/cocktail/${id}` as Href;
 const profileHref = (id: string) => `/p/${id}` as Href;
 
 interface PeekProps {

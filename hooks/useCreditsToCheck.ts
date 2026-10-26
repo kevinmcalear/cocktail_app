@@ -48,6 +48,7 @@ export function useAnswerCredit() {
       qc.invalidateQueries({ queryKey: ['credits-to-check'] });
       // Where co-creators show: drinks' credits and families (a riff shows in its classic's too), people's pages and find-yourself.
       qc.invalidateQueries({ queryKey: ['lineage'] });
+      qc.invalidateQueries({ queryKey: ['drink-credit'] });
       qc.invalidateQueries({ queryKey: ['waiting'] });
       qc.invalidateQueries({ queryKey: ['profile-originals'] });
       qc.invalidateQueries({ queryKey: ['my-made'] });

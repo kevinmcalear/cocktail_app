@@ -21,6 +21,7 @@ import { usePublicBars } from '@/hooks/useRankings';
 import { useSearchCatalog } from '@/hooks/useSearchCatalog';
 import type { SearchMine } from '@/hooks/useSearchMine';
 import { useSpecMatches } from '@/hooks/useSpecMatches';
+import { useVenueCanMake } from '@/hooks/useVenueCanMake';
 import { countryName } from '@/lib/countries';
 import { findCities, findDrinks, foldName, type City } from '@/lib/discover';
 import { barInArea, distanceKm, findBars, type DiscoverBar } from '@/lib/discoverDrinks';
@@ -35,6 +36,7 @@ import { foldIntoClassics, gatherVariations } from '@/lib/servedAt';
 import { capitalize } from '@/lib/stringUtils';
 import type { SearchItem } from '@/types/search';
 
+import { CanMakeContext, CanMakeEmpty } from './CanMake';
 import { BrowseChips, ClassicRow, StyleCard } from './ClassicRow';
 import { NearResults } from './NearResults';
 import { BarResultRow, PersonResultRow, ResultGroup, ResultRow } from './ResultRows';
@@ -59,6 +61,10 @@ interface PublicResultsProps {
   mine?: SearchMine;
   /** The type chips' pick. */
   show?: SearchShow;
+  /** Everywhere, at a venue: each drink says if its back bar makes it (QA Q37). */
+  canMake?: boolean;
+  /** Sets the pick: Can make's Show all. */
+  onShow?: (show: SearchShow) => void;
   /** Hears how many of each kind were found, for the type chips. */
   onCounts?: (counts: ShowCounts) => void;
   /** The search tab: finishes the typed word, and puts a classic named that first as a Top hit. */
@@ -81,7 +87,7 @@ interface PublicResultsProps {
  * ends with its score (b02) and lights the searched word. Bars' drinks need
  * an account; the rest is public.
  */
-export function PublicResults({ query, area, kinds = [], onKind, onEverywhere, mine, show, onCounts, typeAhead, onAddBar, onShowBar, onPlace, head }: PublicResultsProps) {
+export function PublicResults({ query, area, kinds = [], onKind, onEverywhere, mine, show, canMake: atVenue, onShow, onCounts, typeAhead, onAddBar, onShowBar, onPlace, head }: PublicResultsProps) {
   const router = useRouter();
   const signedIn = useSignedIn();
   const q = query.trim();
@@ -111,20 +117,7 @@ export function PublicResults({ query, area, kinds = [], onKind, onEverywhere, m
   const bars = useMemo((): DiscoverBar[] => {
     const all = searchedBars ?? results.bars;
     if (signedIn) return findBars(area ? all.filter((b) => barInArea(b, area)) : all, q);
-    return (publicBars ?? []).map((b) => ({
-      id: b.id,
-      handle: '',
-      name: b.display_name,
-      logo: null,
-      locality: b.locality,
-      city: b.city,
-      countryCode: b.country_code,
-      latitude: null,
-      longitude: null,
-      closed: !!b.is_closed,
-      closedYear: b.closed_year ?? null,
-      drinks: 0,
-    }));
+    return (publicBars ?? []).map((b) => ({ id: b.id, handle: '', name: b.display_name, logo: null, locality: b.locality, city: b.city, countryCode: b.country_code, latitude: null, longitude: null, closed: !!b.is_closed, closedYear: b.closed_year ?? null, drinks: 0 }));
   }, [signedIn, area, searchedBars, results.bars, publicBars, q]);
   // ponytail: past 100 bars (four pages of rows) the tags stop; a longer list would page these too.
   const { data: waiting } = useWaiting(
@@ -140,22 +133,26 @@ export function PublicResults({ query, area, kinds = [], onKind, onEverywhere, m
     const folded = foldIntoClassics(results.drinks, ids, (id) => matches?.[id]);
     return { servedBy: folded.servedBy, ...gatherVariations(folded.drinks, ids, (id) => matches?.[id]) };
   }, [results.drinks, classics, matches]);
+  // A venue's Everywhere: can its back bar make each drink. Can make keeps only those, in the same groups.
+  const { data: canMake } = useVenueCanMake(atVenue && signedIn && !onKind ? mine?.venueId : null, [...results.drinks, ...classics].map((d) => d.id));
+  const only = <T extends { id: string }>(list: T[]) => (show === 'canmake' ? list.filter((d) => canMake?.[d.id]?.canMake) : list);
   const shownClassics = classics.slice(0, 10).map((c) => c.id);
   const { data: lines } = useDrinkLines(shownClassics);
   const { data: ownScores } = useItemScores([...shownClassics, ...yours.slice(0, 20).map((i) => i.id)]);
 
   const found = (shows(show, 'bars') ? places.length : 0) + drinks.length + bars.length + (people?.length ?? 0) + classics.length + ingredients.length + yours.length;
-  const countKey = JSON.stringify({ drinks: drinks.length + classics.length + yours.length, bars: bars.length, people: people?.length ?? 0, ingredients: ingredients.length });
+  const canMakeCount = canMake ? [...drinks, ...classics].filter((d) => canMake[d.id]?.canMake).length : undefined;
+  const countKey = JSON.stringify({ drinks: drinks.length + classics.length + yours.length, bars: bars.length, people: people?.length ?? 0, ingredients: ingredients.length, canmake: canMakeCount });
   useEffect(() => {
     onCounts?.(JSON.parse(countKey) as ShowCounts);
   }, [countKey, onCounts]);
   // The search tab: a classic whose name starts with what's typed leads, bigger (search-typing).
-  const top = typeAhead && !onKind && shows(show, 'drinks') ? classics.find((c) => foldName(c.name).startsWith(foldName(q))) : undefined;
+  const top = typeAhead && !onKind && shows(show, 'drinks') ? only(classics).find((c) => foldName(c.name).startsWith(foldName(q))) : undefined;
   const finish = typeAhead && !onKind ? completions([...classics, ...drinks, ...bars, ...ingredients].map((d) => d.name), q) : [];
   const named = findKinds(q);
   const style = named.find((k) => STYLES.some((s) => s.id === k.id));
-  const strong = drinks.filter((d) => isStrong(d.match));
-  const weak = drinks.filter((d) => !isStrong(d.match));
+  const strong = only(drinks.filter((d) => isStrong(d.match)));
+  const weak = only(drinks.filter((d) => !isStrong(d.match)));
   const miles = usesMiles(getLocales()[0]);
   const away = (b: DiscoverBar) => (area?.kind === 'point' && b.latitude !== null && b.longitude !== null ? formatDistance(distanceKm(area, { latitude: b.latitude, longitude: b.longitude }), miles) : null);
 
@@ -200,7 +197,7 @@ export function PublicResults({ query, area, kinds = [], onKind, onEverywhere, m
     <ResultGroup
       key="classics"
       label="Classics"
-      items={top ? classics.filter((c) => c !== top) : classics}
+      items={only(top ? classics.filter((c) => c !== top) : classics)}
       render={(d) => <ClassicRow key={d.id} classic={d} line={lines?.[d.id]} served={servedBy[d.id]} variations={variations[d.id]} matches={matches} score={ownScores?.[d.id]} scores={scores} query={q} matchLook={look} onShowBar={onShowBar} />}
     />
   );
@@ -258,38 +255,41 @@ export function PublicResults({ query, area, kinds = [], onKind, onEverywhere, m
   const shown = groups.filter((g) => shows(show, (isValidElement(g) && g.key ? kindOf[g.key] : undefined) ?? 'drinks'));
 
   return (
-    <View style={styles.results}>
-      {typeAhead ? <Completions query={q} names={finish} onPick={typeAhead} /> : null}
-      {head && (found || results.isLoading) ? head.card : null}
-      {/* A place the search names leads everything, as a map search reads it. */}
-      {shows(show, 'bars') ? placeGroup : null}
-      {top ? (
-        <TopHit
-          name={top.name}
-          itemId={top.id}
-          imageUrl={top.imageUrl}
-          glass={null}
-          caption={['Classic', servedBy[top.id]?.length ? `served at ${servedBy[top.id].length} ${servedBy[top.id].length === 1 ? 'bar' : 'bars'}` : null].filter(Boolean).join(' · ')}
-          line={lines?.[top.id]}
-          score={ownScores?.[top.id]}
-          query={q}
-          onPress={() => router.push(itemHref('Cocktail', top.id) as never)}
-        />
-      ) : null}
-      {/* "martini" offers the Martinis style first on Discover; elsewhere a Browse line with the style and the ingredient. */}
-      {onKind && style ? (
-        <StyleCard label={style.label} count={strong.length} where={where} takesIn={styleTakesIn(style.id)} drawingId={pick?.id} onPress={() => onKind(style.id)} />
-      ) : everywhere ? (
-        <BrowseChips style={style} ingredient={ingredients.find((i) => foldName(i.name).startsWith(foldName(q)))} />
-      ) : null}
-      {/* A spirit or a tasting note the search names becomes a filter on Discover. */}
-      <ResultGroup label="Filter by" items={onKind ? named.filter((k) => k !== style) : []} render={(k) => <ResultRow key={k.id} title={k.label} caption={kindCaption(k.id)} icon="line.3.horizontal.decrease" onPress={() => onKind?.(k.id)} />} />
-      {!signedIn ? <ListNote>Sign in to search the drinks bars pour.</ListNote> : null}
-      {shown}
-      {/* Did you mean (1B), or the close names last (1C). While the search is out, nothing is asked yet. */}
-      {results.isLoading && !found ? miss : <NearResults query={q} found={found} shown={[...drinks, ...bars, ...(people ?? []), ...classics, ...ingredients, ...yours].map((d) => d.id)} yours={head?.yours ?? (everywhere && atHome ? catalog.items : undefined)} yoursCaption={head?.yoursCaption} classics={everywhere ? classicList : undefined} server={{ area: area ?? ANYWHERE, kinds: everywhere ? NEAR_ALL : NEAR_AREA }} title={head?.title ?? `Nothing ${where} called “${q}”`} add={head?.add} matchLook={look} show={show} miss={<>{head?.card}{miss}</>} lead={head?.card} />}
-      {area && onEverywhere ? <Button label={`Search everywhere for “${q}”`} variant="secondary" onPress={onEverywhere} /> : null}
-    </View>
+    <CanMakeContext value={canMake ?? null}>
+      <View style={styles.results}>
+        {typeAhead ? <Completions query={q} names={finish} onPick={typeAhead} /> : null}
+        {head && (found || results.isLoading) ? head.card : null}
+        {/* A place the search names leads everything, as a map search reads it. */}
+        {shows(show, 'bars') ? placeGroup : null}
+        {top ? (
+          <TopHit
+            name={top.name}
+            itemId={top.id}
+            imageUrl={top.imageUrl}
+            glass={null}
+            caption={['Classic', servedBy[top.id]?.length ? `served at ${servedBy[top.id].length} ${servedBy[top.id].length === 1 ? 'bar' : 'bars'}` : null].filter(Boolean).join(' · ')}
+            line={lines?.[top.id]}
+            score={ownScores?.[top.id]}
+            query={q}
+            onPress={() => router.push(itemHref('Cocktail', top.id) as never)}
+          />
+        ) : null}
+        {/* "martini" offers the Martinis style first on Discover; elsewhere a Browse line with the style and the ingredient. */}
+        {onKind && style ? (
+          <StyleCard label={style.label} count={strong.length} where={where} takesIn={styleTakesIn(style.id)} drawingId={pick?.id} onPress={() => onKind(style.id)} />
+        ) : everywhere && show !== 'canmake' ? (
+          <BrowseChips style={style} ingredient={ingredients.find((i) => foldName(i.name).startsWith(foldName(q)))} />
+        ) : null}
+        {/* A spirit or a tasting note the search names becomes a filter on Discover. */}
+        <ResultGroup label="Filter by" items={onKind ? named.filter((k) => k !== style) : []} render={(k) => <ResultRow key={k.id} title={k.label} caption={kindCaption(k.id)} icon="line.3.horizontal.decrease" onPress={() => onKind?.(k.id)} />} />
+        {!signedIn ? <ListNote>Sign in to search the drinks bars pour.</ListNote> : null}
+        {show === 'canmake' && canMakeCount === 0 ? <CanMakeEmpty venue={mine?.label ?? 'This bar'} drinks={drinks.length + classics.length} query={q} onShowAll={() => onShow?.('all')} /> : null}
+        {shown}
+        {/* Did you mean (1B), or the close names last (1C). While the search is out, nothing is asked yet. */}
+        {results.isLoading && !found ? miss : <NearResults query={q} found={found} shown={[...drinks, ...bars, ...(people ?? []), ...classics, ...ingredients, ...yours].map((d) => d.id)} yours={head?.yours ?? (everywhere && atHome ? catalog.items : undefined)} yoursCaption={head?.yoursCaption} classics={everywhere ? classicList : undefined} server={{ area: area ?? ANYWHERE, kinds: everywhere ? NEAR_ALL : NEAR_AREA }} title={head?.title ?? `Nothing ${where} called “${q}”`} add={head?.add} matchLook={look} show={show} miss={<>{head?.card}{miss}</>} lead={head?.card} />}
+        {area && onEverywhere ? <Button label={`Search everywhere for “${q}”`} variant="secondary" onPress={onEverywhere} /> : null}
+      </View>
+    </CanMakeContext>
   );
 }
 

@@ -1,10 +1,14 @@
+import { useQueryClient } from '@tanstack/react-query';
 import { useRouter, type Href } from 'expo-router';
 import { useEffect, useState } from 'react';
 
+import { useToast } from '@/components/ds';
 import { useBringInSave } from '@/hooks/useBringInSave';
-import type { RecipeChoices } from '@/lib/bringInDraft';
+import { refreshIngredients } from '@/hooks/useDropdowns';
+import { useCreatePrep } from '@/hooks/usePrepCard';
+import { recipePrep, type RecipeChoices } from '@/lib/bringInDraft';
 import type { MatchData } from '@/lib/bringInMatch';
-import { approved, canCheck, isFinished, nextOpen, setMark, tally } from '@/lib/importReview';
+import { approved, canCheck, isFinished, nextOpen, putBack, rematch, setMark, takeOut, tally, type ImportReview } from '@/lib/importReview';
 import { useBringIn } from '@/store/useBringIn';
 import { useDrinkWizardStore, wizardPlace } from '@/store/useDrinkWizardStore';
 
@@ -16,6 +20,9 @@ let line: Promise<unknown> = Promise.resolve();
 
 const stamp = () => new Date().toISOString();
 
+/** Where a drink is now: taking one out moves the ones after it up, so a save in flight finds its drink by its recipe. */
+const placeOf = (review: ImportReview | undefined, recipe: ImportReview['recipes'][number]) => review?.recipes.indexOf(recipe) ?? -1;
+
 /**
  * A big import being reviewed (lib/importReview.ts): Approve saves the drink
  * through Bring in's own save at once, then moves on; Skip moves on; what's
@@ -24,6 +31,9 @@ const stamp = () => new Date().toISOString();
  */
 export function useImportReview(id: string, data: MatchData) {
   const router = useRouter();
+  const client = useQueryClient();
+  const toast = useToast();
+  const createPrep = useCreatePrep();
   const review = useBringIn((s) => s.reviews[id]);
   const save = useBringInSave(review?.barId ?? null);
   const { usual, toMake } = useRecipeMaker(data);
@@ -42,6 +52,7 @@ export function useImportReview(id: string, data: MatchData) {
     const r = current();
     if (!r || !canCheck(r, i) || !r.choices[i]?.name.trim()) return;
     const name = r.choices[i].name.trim();
+    const which = r.recipes[i];
     // Marked (and kept) before it's sent: a review read back after the app
     // stopped mid-save keeps it approved and never sends it again.
     edit((x) => setMark(x, i, 'saving', stamp()));
@@ -51,11 +62,12 @@ export function useImportReview(id: string, data: MatchData) {
       try {
         // Made when its turn comes, so a batch an earlier drink just saved is used, not made again.
         const x = current() ?? r;
-        const drink = toMake(x.recipes[i], x.choices[i], x.batches);
+        const k = placeOf(x, which);
+        const drink = toMake(which, x.choices[k] ?? r.choices[i], x.batches);
         const done = await save.mutateAsync({ kind: 'recipes', source: r.source, drinks: [drink] });
-        edit((y) => approved(y, i, { drinkId: done.drinkIds[0] ?? null, summary: done.summary, warnings: done.warnings, batches: done.batches }, stamp()));
+        edit((y) => approved(y, placeOf(y, which), { drinkId: done.drinkIds[0] ?? null, summary: done.summary, warnings: done.warnings, batches: done.batches }, stamp()));
       } catch (e) {
-        edit((x) => setMark(x, i, null, stamp()));
+        edit((x) => setMark(x, placeOf(x, which), null, stamp()));
         setError(`${name} didn’t save, so it’s still to check. ${e instanceof Error ? e.message : ''}`.trim());
       }
     });
@@ -66,6 +78,55 @@ export function useImportReview(id: string, data: MatchData) {
     if (!r || !canCheck(r, i)) return;
     edit((x) => setMark(x, i, 'skipped', stamp()));
     moveOn(i);
+  };
+
+  /**
+   * Not a drink (board w2-import-review E20): gone from the list and the
+   * count, with Undo. `lift`: the toast sits above the screen's pinned
+   * buttons. The last drink to check taken out ends the review, so there's
+   * nothing to undo into.
+   */
+  const takeOutDrink = (i: number, lift = 0) => {
+    const r = current();
+    const out = r ? takeOut(r, i, stamp()) : null;
+    if (!out) return;
+    edit(() => out.review);
+    const title = `${r!.choices[i]?.name.trim() || out.gone.recipe.name} taken out`;
+    if (isFinished(out.review)) return void toast.show({ title, lift });
+    let used = false;
+    toast.show({
+      title,
+      lift,
+      action: {
+        label: 'Undo',
+        onPress: () => {
+          if (used) return;
+          used = true;
+          edit((x) => putBack(x, out.gone, stamp()));
+        },
+      },
+    });
+  };
+
+  /**
+   * Not a drink, but worth keeping (E20 B): its recipe saved as a house-made
+   * ingredient, then it's taken out, and the drinks still to check that call
+   * for it match it once the catalog has it. Throws when the save fails, so
+   * the sheet can say why and nothing is taken out.
+   */
+  const keepHouseMade = async (i: number, lift = 0) => {
+    const r = current();
+    if (!r || !canCheck(r, i)) return;
+    const which = r.recipes[i];
+    const name = r.choices[i]?.name.trim() || which.name;
+    const made = await createPrep.mutateAsync({ name, prep: recipePrep(which, r.choices[i], data), barId: r.barId });
+    // Saved, so it leaves the review whatever happens next: a catalog that can't be read again now still is on the next visit.
+    // ponytail: at home a taken name saves as "My House Sweet Vermouth", which lines naming "House sweet vermouth" don't match by name; an alias for the read name would.
+    await refreshIngredients(client, [made.id]).catch(() => {});
+    const x = current();
+    const out = x ? takeOut(x, placeOf(x, which), stamp()) : null;
+    if (out) edit(() => rematch({ ...out.review, summary: { ...out.review.summary, preps: [...out.review.summary.preps, made.name] } }, name));
+    toast.show({ title: `${made.name} kept as house-made`, detail: made.warnings[0] ?? 'Drinks still to check that use it now find it.', lift });
   };
 
   const setChoices = (i: number, change: (c: RecipeChoices) => RecipeChoices) => edit((r) => ({ ...r, choices: r.choices.map((c, k) => (k === i ? change(c) : c)) }));
@@ -112,5 +173,5 @@ export function useImportReview(id: string, data: MatchData) {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [finished]);
 
-  return { review, usual, toMake, error, go, approve, skip, setChoices, editDrink };
+  return { review, usual, toMake, error, go, approve, skip, setChoices, editDrink, takeOutDrink, keepHouseMade };
 }

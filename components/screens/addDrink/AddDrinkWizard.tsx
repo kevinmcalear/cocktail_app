@@ -16,7 +16,7 @@ import { suggestClassic } from '@/lib/classics';
 import { stepWaits, versionHeading } from '@/lib/sameName';
 import { plainDbMessage } from '@/lib/dbError';
 import {
-  canSave, choiceList, COMMON_GLASSES, COMMON_ICE, COMMON_METHODS, EMPTY_DRAFT, hasContent, samePick, savedNotice, sketchLook, STEP_COPY, WIZARD_STEPS,
+  canSave, choiceList, COMMON_GLASSES, COMMON_ICE, COMMON_METHODS, EMPTY_DRAFT, hasContent, samePick, savedNotice, sketchLook, STEP_COPY, WIZARD_STEPS, withMethodIce,
   type WizardDraft, type WizardPick, type WizardStep,
 } from '@/lib/drinkWizard';
 import { draftSketchInputs } from '@/lib/sketch/draft';
@@ -31,7 +31,7 @@ import { GlassStep } from './GlassStep';
 import { IngredientsStep } from './IngredientsStep';
 import { FinishStep } from './FinishStep';
 import { FoamerHint } from './FoamerHint';
-import { MethodStep } from './MethodStep';
+import { MethodIceLine, MethodStep } from './MethodStep';
 import { PublishStep } from './PublishStep';
 import { useNextOnceChecked } from './useNextOnceChecked';
 import { ReviewStep } from './ReviewStep';
@@ -56,7 +56,7 @@ export interface AddDrinkWizardProps {
   initialName?: string | null;
   /** "Riff on this" on a drink page: a fresh draft starts from that drink's spec, credited as a version of it. */
   startFrom?: string | null;
-  /** The first round's "Make the Old Fashioned yours": straight to Review, with the round's strip. */
+  /** The first round's "Add your first cocktail": from a classic straight to Review, or from scratch at the name, with the round's strip. */
   firstRound?: boolean;
   /** Opened from an import's Edit this drink: the draft is the import, not one left off, so no "Picked up where you left off". */
   imported?: boolean;
@@ -82,8 +82,10 @@ function Wizard({ barId = null, menuSectionId, initialName, startFrom, firstRoun
   const patch = useDrinkWizardStore((s) => s.patch);
   const setStoredStep = useDrinkWizardStore((s) => s.setStep);
   useHoldUpdates();
-  // Filled out with today's fields: a draft kept by an older version of the app may lack some.
-  const draft: WizardDraft = { ...EMPTY_DRAFT, ...kept?.draft };
+  const venueIce = useVenueIce(barId).data ?? [];
+  const barIce = venueIceNames(venueIce);
+  // Filled out with today's fields (a draft kept by an older version of the app may lack some), and what it's shaken with until picked.
+  const draft: WizardDraft = withMethodIce({ ...EMPTY_DRAFT, ...kept?.draft }, barIce);
   const step: WizardStep = kept?.step ?? 'name';
   // On the web the page can draw before the kept draft loads (AsyncStorage is async there): once it has, say it was picked up. Set while rendering, like any value derived from a change.
   const loaded = useSyncExternalStore(hydrated, isHydrated, () => false);
@@ -99,8 +101,6 @@ function Wizard({ barId = null, menuSectionId, initialName, startFrom, firstRoun
   const create = useCreateDrink();
   const roundDone = useFirstRound().done;
   const barGlasses = useBarGlassware(barId).data;
-  const venueIce = useVenueIce(barId).data ?? [];
-  const barIce = venueIceNames(venueIce);
   const barIceKinds = venueIceKinds(venueIce);
   const barVariants = (barGlasses ?? []).filter((g) => g.is_default && g.variant).map((g) => g.variant as string);
   const shelfIds = useShelf().data;
@@ -182,8 +182,8 @@ function Wizard({ barId = null, menuSectionId, initialName, startFrom, firstRoun
   // Until its spec is used, the sketch already draws that classic (a Negroni's red).
   const preview = useClassicPreview(classic?.classic.id ?? null).data;
   const drawn = preview ? { ...draft, ...preview, name: draft.name } : draft;
-  // The bar already has a drink by this name, or the bar it's credited to does (board dup-drink-warning): Next waits on a pick.
-  const onBar = useSameNameDrink({ barId, name: draft.name });
+  // The bar already has a drink by this name (at home, you do: Q14b), or the bar it's credited to does (board dup-drink-warning): Next waits on a pick.
+  const onBar = useSameNameDrink({ barId, mine: !barId, name: draft.name });
   const onPlace = useSameNameDrink({ creditedTo: !barId || draft.elsewhere ? draft.place?.id : null, name: draft.name });
   const atBar = onBar.data ?? null;
   const atPlace = onPlace.data ?? null;
@@ -212,7 +212,7 @@ function Wizard({ barId = null, menuSectionId, initialName, startFrom, firstRoun
   const body = (() => {
     switch (step) {
       case 'name':
-        return <NameStepBody {...{ draft, set, barId, venueName, classic, resumed }} match={atBar} onStartOver={startOver} onDone={() => canSave(draft) && tryNext()} onStarted={() => go('ingredients')} />;
+        return <>{firstRound && !startFrom ? <RoundStrip scratch onSkip={onClose} /> : null}<NameStepBody {...{ draft, set, barId, venueName, classic, resumed }} match={atBar} onStartOver={startOver} onDone={() => canSave(draft) && tryNext()} onStarted={() => go('ingredients')} /></>;
       case 'ingredients':
         return (
           <IngredientsStep
@@ -234,7 +234,7 @@ function Wizard({ barId = null, menuSectionId, initialName, startFrom, firstRoun
               onChange={(methods) => set({ methods })}
               suggested={guess.method}
               why={serveCard ? null : guess.why}
-              hint={<FoamerHint draft={draft} set={set} ingredients={ingredients} />}
+              hint={<><MethodIceLine methods={draft.methods} value={draft.methodIce ?? null} options={ices} barIce={barIce} venueName={barId ? venueName : null} onChange={(methodIce) => set({ methodIce })} /><FoamerHint draft={draft} set={set} ingredients={ingredients} /></>}
               tellUs={tellUsAbout}
             />
           </>
@@ -248,13 +248,13 @@ function Wizard({ barId = null, menuSectionId, initialName, startFrom, firstRoun
       case 'credits':
         return <CreditsStep draft={draft} set={set} venueName={barId ? venueName : null} ingredients={ingredients} match={atPlace} onRename={() => go('name')} />;
       case 'notes':
-        return <NotesStep draft={draft} set={set} />;
+        return <NotesStep draft={draft} set={set} barId={barId} />;
       case 'publish':
         return <PublishStep draft={draft} set={set} barId={barId} />;
       case 'review':
         return (
           <>
-            {firstRound ? <RoundStrip onSkip={onClose} /> : null}
+            {firstRound ? <RoundStrip scratch={!startFrom} onSkip={onClose} /> : null}
             <ReviewStep draft={draft} set={set} onJump={go} barId={barId} venueName={venueName} hasProfile={!!me} barVariants={barVariants} barIce={barIceKinds} cost={venueLines.cost} />
           </>
         );
@@ -273,7 +273,7 @@ function Wizard({ barId = null, menuSectionId, initialName, startFrom, firstRoun
       direction={direction}
       // Naming a new drink it's "New drink"; a kept draft picked up again goes by its name.
       eyebrow={heading?.eyebrow ?? ((step !== 'name' || resumed ? draft.name.trim() : '') || 'New drink')}
-      title={heading?.title ?? (firstRound && step === 'review' ? 'Make it yours' : copy.title)}
+      title={heading?.title ?? (firstRound && startFrom && step === 'review' ? 'Make it yours' : copy.title)}
       intro={copy.intro}
       // Android's back button steps back through the wizard before leaving it.
       onHardwareBack={() => {
