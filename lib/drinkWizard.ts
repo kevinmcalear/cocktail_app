@@ -315,7 +315,7 @@ export const COMMON_ICE = ['No ice', 'Cubes', 'Large cube', 'Crushed', 'Pebble',
  * is the one it's served over); no method yet is "Made with".
  */
 export function methodIceLabel(methods: readonly string[]): string | null {
-  // A whisk or a milk frother takes no ice (Q20b).
+  // A whisk or a milk frother takes no ice (Q20b), nor does a dry shake on its own.
   const all = methods.filter((m) => !NO_ICE.test(m)).join(' ').toLowerCase();
   if (/blend/.test(all)) return 'Blended with';
   if (/shak|whip/.test(all)) return 'Shaken with';
@@ -326,7 +326,7 @@ export function methodIceLabel(methods: readonly string[]): string | null {
   return 'Made with';
 }
 
-const NO_ICE = /whisk|frother/i;
+const NO_ICE = /whisk|frother|^dry shake$/i;
 
 /**
  * The draft with what it's mixed with (Q21, 26 Oct): the one picked, else the

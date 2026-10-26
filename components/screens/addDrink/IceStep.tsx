@@ -53,11 +53,11 @@ export function IceStep({ draft, set, ices, barIce, suggested, why, compact, kit
   const setLayers = (next: IceLayer<WizardPick>[]) => set({ iceBuild: next.length ? next : null, ice: next.length ? next[next.length - 1].ice : null });
   const pickOf = (name: string) => ices.find((o) => samePick(o, { id: null, name })) ?? { id: null, name };
   const named = layers.map((l) => ({ ...l, ice: l.ice.name }));
-  // The chips pick the bottom ice (cubes start at 3, like Add extra ice); extra ice stays on top. No ice is served up, with no build.
+  // The chips pick the bottom ice (cubes start at 3, like Add extra ice); extra ice stays on top, also when the bottom is cleared. No ice is served up, with no build.
   const base = layers[0] && !layers[0].tin ? layers[0].ice : null;
   const pickBase = (ice: WizardPick | undefined) => {
     if (ice && iceKind(ice.name) === 'none') return set({ ice, iceBuild: null });
-    setLayers(ice ? [{ ice, ...(iceKind(ice.name) === 'cubes' ? { n: 3 } : {}) }, ...layers.slice(1)] : []);
+    setLayers(ice ? [{ ice, ...(iceKind(ice.name) === 'cubes' ? { n: 3 } : {}) }, ...layers.slice(1)] : layers.slice(1));
   };
 
   // The venue's ice, where each comes from, and how long its spears are.

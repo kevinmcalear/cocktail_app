@@ -204,6 +204,8 @@ assert.equal(methodIceLabel([]), 'Made with');
 assert.equal(methodIceLabel(['Build', 'Whip (whisk or frother)']), null, 'a whisk takes no ice (Q20b)');
 assert.equal(methodIceLabel(['Whip (whisk or frother)']), 'Made with');
 assert.equal(methodIceLabel(['Whip (iSi)']), 'Shaken with');
+assert.equal(withMethodIce({ ...EMPTY_DRAFT, methods: [{ id: null, name: 'Dry shake' }] }, []).methodIce ?? null, null, 'a dry shake alone takes no ice');
+assert.equal(methodIceLabel(['Reverse dry shake']), 'Shaken with');
 
 // --- what it's shaken with starts on cubes, or the venue's (Q21) ---
 const pick = (name: string) => ({ id: null, name });
