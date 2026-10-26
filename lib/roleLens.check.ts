@@ -1,13 +1,16 @@
 // Checks for lib/roleLens.ts. Run: npm run test:unit
 import assert from 'node:assert/strict';
 
-import { defaultColumns, LENS_GROUPS, lensValue, ROLE_ADDS, viewAsChoices } from './roleLens';
+import { defaultColumns, LENS_GROUPS, lensValue, ROLE_ADDS, roleSees, viewAsChoices } from './roleLens';
 import type { MatrixColumn } from './roleMatrix';
 
 // A Bartender looks as themselves or any role below; an Admin as all five.
 assert.deepEqual(viewAsChoices(30).map((c) => c.label), ['Guest', 'Employee', 'Bartender']);
 assert.equal(viewAsChoices(40).length, 5);
 assert.ok(viewAsChoices(40).every((c) => c.adds), 'every role says what it adds');
+// View as's one line: what the picked role sees.
+assert.equal(roleSees('Admin', ROLE_ADDS[40]), 'Admin sees everything, including publishing.');
+assert.equal(roleSees('Bartender', ROLE_ADDS[30]), 'Bartender adds the spec, method, batch and spec changes.');
 
 const rows = LENS_GROUPS.flatMap((g) => g.rows);
 const row = (id: string) => rows.find((r) => r.id === id)!;
