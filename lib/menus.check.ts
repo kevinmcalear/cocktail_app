@@ -3,7 +3,7 @@ import assert from 'node:assert/strict';
 import { toDay } from '@/lib/collection';
 import type { MenuSectionDetail, MenuSummary } from '@/types/menus';
 
-import { bothPrices, printedPrice, cardWhen, EMPTY_PLAN, previewSections, isSouthern, menuNameIdeas, nextMondays, savedLine, seasonOf, nightLine, venuePlan, comingUpLine, sectionLine, draftLine, dotLine, editedWhen, isOneNightMenu, isOneNightRun, previousLine, groupMenus, homeMenuLine, homeNight, homeNightTag, ingredientLine, menuAsText, readingName, sentenceLine, menuDateLine, menuReadiness, menuStatus, newDrinkCount, newDrinkIds, sectionRule, tonightLine } from './menus';
+import { bandLoopJump, bothPrices, printedPrice, cardWhen, EMPTY_PLAN, previewSections, isSouthern, menuNameIdeas, nextMondays, savedLine, seasonOf, nightLine, venuePlan, comingUpLine, sectionLine, draftLine, dotLine, editedWhen, isOneNightMenu, isOneNightRun, previousLine, groupMenus, homeMenuLine, homeNight, homeNightTag, ingredientLine, menuAsText, readingName, sentenceLine, menuDateLine, menuReadiness, menuStatus, newDrinkCount, newDrinkIds, sectionRule, tonightLine } from './menus';
 
 const now = Date.parse('2026-09-25T18:00:00Z');
 const d = (iso: string) => new Date(iso).toISOString();
@@ -271,3 +271,12 @@ assert.equal(savedLine(['Test', 'Test', 'Autumn menu']), 'Test and Autumn', 'a n
   assert.equal(homeNightTag('2026-10-31', at, 'en-GB'), 'Sat 31 Oct · in 7 days');
   assert.equal(homeNightTag('2026-10-01', at, 'en-GB'), 'Thu 1 Oct');
 }
+
+// --- the menu page's picture band loops: 4 copies each side of 7 drinks, 100 wide ---
+assert.equal(bandLoopJump(400, 100, 7, 4), 0, 'the first drink, where it opens');
+assert.equal(bandLoopJump(1000, 100, 7, 4), 0, 'the last drink');
+assert.equal(bandLoopJump(1100, 100, 7, 4), -700, 'past the last: the first again');
+assert.equal(bandLoopJump(1450, 100, 7, 4), -700, 'the far end');
+assert.equal(bandLoopJump(300, 100, 7, 4), 700, 'before the first: the last again');
+assert.equal(bandLoopJump(0, 100, 7, 4), 700);
+assert.equal(bandLoopJump(399.5, 100, 7, 4), 0, 'a fraction off a snap point is still the first');

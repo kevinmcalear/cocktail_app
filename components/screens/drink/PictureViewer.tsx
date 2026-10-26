@@ -1,5 +1,5 @@
 import { StatusBar } from 'expo-status-bar';
-import { useEffect, useState } from 'react';
+import { useEffect, useState, type ReactNode } from 'react';
 import { Modal, Platform, StyleSheet, View } from 'react-native';
 import { useReducedMotion } from '@/hooks/useReducedMotion';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
@@ -25,15 +25,20 @@ interface PictureViewerProps {
   /** The picture it opens on. Closing returns to the hero as it was, where focus goes back to. */
   startIndex: number;
   onClose: () => void;
+  /** Under the count: who took the picture showing ("Photo by Jo · ranked it 8.4"). */
+  caption?: (index: number) => string;
+  /** Under the picture showing: what can be done with it (delete, report). */
+  actions?: (index: number) => ReactNode;
 }
 
 /**
  * The drink's pictures full screen, on the dark service ground so they read
  * the same in either theme. Swipe (or the arrows on web) between them; pinch,
  * double tap or the zoom button to look closer. On web, react-native-web's
- * Modal keeps focus inside and closes on Escape.
+ * Modal keeps focus inside and closes on Escape. The hero's pictures and
+ * people's photos (PeoplePhotos, with a caption and actions) both open here.
  */
-export function PictureViewer({ pictures, name, open, startIndex, onClose }: PictureViewerProps) {
+export function PictureViewer({ pictures, name, open, startIndex, onClose, caption, actions }: PictureViewerProps) {
   const reduceMotion = useReducedMotion();
   return (
     <Modal
@@ -44,19 +49,21 @@ export function PictureViewer({ pictures, name, open, startIndex, onClose }: Pic
     >
       <GestureRoot style={styles.flex}>
         <BackbarTheme scheme="dark">
-          {open ? <Viewer pictures={pictures} name={name} startIndex={Math.min(startIndex, pictures.length - 1)} onClose={onClose} /> : null}
+          {open ? <Viewer pictures={pictures} name={name} startIndex={Math.min(startIndex, pictures.length - 1)} onClose={onClose} caption={caption} actions={actions} /> : null}
         </BackbarTheme>
       </GestureRoot>
     </Modal>
   );
 }
 
-function Viewer({ pictures, name, startIndex, onClose }: Omit<PictureViewerProps, 'open'>) {
+function Viewer({ pictures, name, startIndex, onClose, caption, actions }: Omit<PictureViewerProps, 'open'>) {
   const ds = useDs();
   const insets = useSafeAreaInsets();
-  const [index, setIndex] = useState(startIndex);
+  const [shown, setIndex] = useState(startIndex);
   const [size, setSize] = useState({ width: 0, height: 0 });
   const [zoomed, setZoomed] = useState(false);
+  // A picture deleted from under it (PeoplePhotos) leaves one fewer.
+  const index = Math.min(shown, pictures.length - 1);
   const picture = pictures[index];
   const tag = pictureTag(picture);
   const total = pictures.length;
@@ -90,6 +97,7 @@ function Viewer({ pictures, name, startIndex, onClose }: Omit<PictureViewerProps
           </Title>
           <View style={styles.meta}>
             {total > 1 ? <Caption tone="muted">{`${index + 1} of ${total}`}</Caption> : null}
+            {caption ? <Caption tone="muted">{caption(index)}</Caption> : null}
             {tag ? <Tag label={tag} tone="warning" /> : null}
           </View>
         </View>
@@ -120,6 +128,7 @@ function Viewer({ pictures, name, startIndex, onClose }: Omit<PictureViewerProps
           />
         ) : null}
       </View>
+      {actions ? <View style={styles.actions}>{actions(index)}</View> : null}
     </View>
   );
 }
@@ -129,4 +138,5 @@ const styles = StyleSheet.create({
   header: { flexDirection: 'row', alignItems: 'center', gap: space.sm, paddingHorizontal: space.lg, paddingBottom: space.sm },
   titles: { flex: 1, gap: space.xs },
   meta: { flexDirection: 'row', flexWrap: 'wrap', alignItems: 'center', gap: space.sm },
+  actions: { flexDirection: 'row', justifyContent: 'center', gap: space.sm, paddingHorizontal: space.lg, paddingTop: space.md },
 });
