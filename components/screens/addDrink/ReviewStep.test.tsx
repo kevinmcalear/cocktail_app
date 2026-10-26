@@ -5,7 +5,7 @@ import { EMPTY_DRAFT } from '@/lib/drinkWizard';
 
 import { ReviewStep } from './ReviewStep';
 
-jest.mock('./ReviewPhotos', () => ({ ReviewPhotos: () => null }));
+jest.mock('./ReviewPhotos', () => ({ ReviewPhotos: () => null, HomePhoto: () => null }));
 jest.mock('@/hooks/usePublishing', () => ({ useBarPublishing: () => ({ data: null }) }));
 jest.mock('@/hooks/useCapabilities', () => ({ useCapabilities: () => ({ data: [] }) }));
 jest.mock('@/hooks/useMyProfile', () => ({ useMyProfile: () => ({ data: { id: 'p-jo', displayName: 'Jo Park' } }) }));
