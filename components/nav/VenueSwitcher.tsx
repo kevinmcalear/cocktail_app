@@ -10,9 +10,9 @@ import { useMode } from '@/hooks/useMode';
 import { VenueMenuSheet } from './VenueMenuSheet';
 import { HomeMark, VenueMark } from './VenueMarks';
 
-/** What the switcher says to screen readers: the mark carries no name. */
-export function switcherLabel(home: boolean, venue: Venue | null): string {
-  return home ? 'Home bar. Switch' : `Venue: ${venue?.name ?? 'none yet'}. Switch`;
+/** What the switcher says to screen readers: the mark carries no name. With no venues there's nowhere to switch to, so it opens the menu. */
+export function switcherLabel(home: boolean, venue: Venue | null, canSwitch = true): string {
+  return `${home ? 'Home bar' : `Venue: ${venue?.name ?? 'none yet'}`}. ${canSwitch ? 'Switch' : 'Menu'}`;
 }
 
 /**
@@ -23,12 +23,12 @@ export function switcherLabel(home: boolean, venue: Venue | null): string {
  */
 export function VenueSwitcher({ size = 32 }: { size?: number }) {
   const ds = useDs();
-  const { active } = useActiveVenue();
+  const { active, venues } = useActiveVenue();
   const home = useMode().mode === 'home';
   const [open, setOpen] = useState(false);
   return (
     <>
-      <PressableScale role="button" onPress={() => setOpen(true)} accessibilityLabel={switcherLabel(home, active)} style={styles.chip}>
+      <PressableScale role="button" onPress={() => setOpen(true)} accessibilityLabel={switcherLabel(home, active, venues.length > 0)} style={styles.chip}>
         {home ? <HomeMark size={size} /> : <VenueMark venue={active} size={size} />}
         <IconSymbol name="chevron.down" size={12} color={ds.c.muted} />
       </PressableScale>

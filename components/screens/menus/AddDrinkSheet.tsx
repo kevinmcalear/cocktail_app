@@ -60,7 +60,9 @@ export function AddDrinkSheet({ section, barId, onClose, library, elsewhere, onA
   const make = useMakeDrink(section, barId);
   const where = useActiveVenue().venues.find((v) => v.id === barId)?.name ?? null;
   if (!section) return null;
-  const found = filterLibrary(library, section, query, freeOnly, elsewhere);
+  // The filter only means something when another menu has drinks on it (Q13, 26 Oct 2026).
+  const shared = Object.keys(elsewhere).length > 0;
+  const found = filterLibrary(library, section, query, freeOnly && shared, elsewhere);
   // Not there? Make it from the same search, close names under it (dm-decided).
   const missing = nameToMake(library, query);
   const drinks = found.length ? found : nearLibrary(library, section, query);
@@ -108,10 +110,12 @@ export function AddDrinkSheet({ section, barId, onClose, library, elsewhere, onA
         ListHeaderComponent={
           <View style={styles.head}>
             <Field label="Search" value={query} onChangeText={setQuery} placeholder="Search drinks, or type a new name" autoCapitalize="none" onSubmitEditing={() => (missing ? makeIt(missing) : undefined)} />
-            <View role="radiogroup" accessibilityLabel="Show" style={styles.filters}>
-              <Choice label="All" selected={!freeOnly} onPress={() => setFreeOnly(false)} />
-              <Choice label="Not on a menu" selected={freeOnly} onPress={() => setFreeOnly(true)} />
-            </View>
+            {shared ? (
+              <View role="radiogroup" accessibilityLabel="Show" style={styles.filters}>
+                <Choice label="All" selected={!freeOnly} onPress={() => setFreeOnly(false)} />
+                <Choice label="Not on another menu" selected={freeOnly} onPress={() => setFreeOnly(true)} />
+              </View>
+            ) : null}
             {missing ? (
               <MakeFromSearch
                 phone
