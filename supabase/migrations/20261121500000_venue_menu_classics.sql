@@ -22,8 +22,9 @@
 --    Blanc). Every ingredient is one production has; a name a stack lacks
 --    is added as a plain ingredient.
 -- 4. True other names (Allies Martini, Betty Ross, Bermudiana Rose, Sputnek,
---    Fairbanks No. 2...) go in classic_aliases with a source, and Turf Club
---    becomes another name for the Turf.
+--    Fairbanks No. 2, Pan Am Clipper...) go in classic_aliases with a source,
+--    and Turf Club becomes another name for the Turf. Match to classics reads
+--    them, so a menu that uses one matches the classic exactly.
 -- 5. One web source per drink as its first record in "From the books".
 --
 -- No venue's drinks are linked here: Match to classics suggests them and the
@@ -480,6 +481,7 @@ INSERT INTO "vc_aliases" VALUES
     ('fairbank', 'Fairbanks No. 2', 'https://www.diffordsguide.com/cocktails/recipe/4678/fairbanks-no2'),
     ('betsy-ross', 'Betty Ross', 'https://www.diffordsguide.com/cocktails/recipe/3245/betsy-ross'),
     ('bermuda-rose', 'Bermudiana Rose', 'https://www.diffordsguide.com/cocktails/recipe/543/bermuda-rose-cocktail'),
+    ('pan-american-clipper', 'Pan Am Clipper', 'https://wulfcocktailden.com/2023/12/flying-old-school-the-pan-am-clipper'),
     ('flame-of-love', 'Flame of Love Martini', 'https://www.spiritsanddistilling.com/dictionary/acref-9780199311132-e-314'),
     ('sputnik', 'Sputnek', 'https://www.diffordsguide.com/cocktails/recipe/33497/sputnek'),
     ('coo-ee-special', 'Cooee Special', 'https://www.diffordsguide.com/cocktails/recipe/24545/coo-ee-special');

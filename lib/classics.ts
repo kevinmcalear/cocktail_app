@@ -8,6 +8,8 @@ import { distance } from './ingredientNames';
 export interface Classic {
   id: string;
   name: string;
+  /** Its other names (public.classic_aliases): the same drink, so a menu that uses one matches exactly. */
+  aliases?: readonly string[];
 }
 
 export interface ClassicMatch<C extends Classic = Classic> {
@@ -16,18 +18,15 @@ export interface ClassicMatch<C extends Classic = Classic> {
   exact: boolean;
 }
 
-// Spellings and other names seen on real menus, folded, to the catalog name, folded.
+// Misspellings seen on real menus, folded, to the catalog name, folded. A
+// drink's true other names live in public.classic_aliases (Classic.aliases).
 const ALIASES: Record<string, string> = {
-  'a la louisiane': 'de la louisiane',
   'astoria hotel special': 'astor hotel special',
   boulvardier: 'boulevardier',
   'coo wee': 'coo ee special',
   'old fashion': 'old fashioned',
-  'pan am clipper': 'pan american clipper',
   pompiere: 'pompier',
   'tommy margarita': 'tommys margarita',
-  'turf club': 'turf',
-  'whisky sour': 'whiskey sour',
 };
 
 /** Lowercase words with no accents, punctuation or "(house notes)": "Vieux Carré (Ours)" → "vieux carre". */
@@ -72,6 +71,13 @@ function indexOf<C extends Classic>(classics: readonly C[]): Index<C> {
   const known = indexes.get(classics) as Index<C> | undefined;
   if (known) return known;
   const byKey = new Map(classics.map((c) => [matchKey(c.name), c]));
+  // Other names after every name, so an alias never shadows a classic called that.
+  for (const c of classics) {
+    for (const alias of c.aliases ?? []) {
+      const k = matchKey(alias);
+      if (k && !byKey.has(k)) byKey.set(k, c);
+    }
+  }
   const bySquash = new Map<string, C>();
   const byShort = new Map<string, C>();
   for (const [k, c] of byKey) {
@@ -85,13 +91,13 @@ function indexOf<C extends Classic>(classics: readonly C[]): Index<C> {
 }
 
 /**
- * The classic a drink name most likely is: the same name (ignoring house
- * notes, numbering, spacing, a "Cocktail" the menu added and a few common
- * misspellings), or else a guess: the classic with "Cocktail" on the end
- * ("Japanese" → Japanese Cocktail, but a bare "Champagne" may be the wine),
- * the longest classic whose words appear in the name ("Mega Negroni" →
- * Negroni), or one a letter or two off ("Caiprioska" → Caipiroska). Null when
- * nothing fits.
+ * The classic a drink name most likely is: the same name or one of its other
+ * names (ignoring house notes, numbering, spacing, a "Cocktail" the menu
+ * added and a few common misspellings), or else a guess: the classic with
+ * "Cocktail" on the end ("Japanese" → Japanese Cocktail, but a bare
+ * "Champagne" may be the wine), the longest classic of six letters or more
+ * whose words appear in the name ("Mega Negroni" → Negroni), or one a letter
+ * or two off ("Caiprioska" → Caipiroska). Null when nothing fits.
  */
 export function suggestClassic<C extends Classic>(name: string, classics: readonly C[]): ClassicMatch<C> | null {
   const key = matchKey(name);
@@ -110,6 +116,8 @@ export function suggestClassic<C extends Classic>(name: string, classics: readon
   let best: C | null = null;
   let bestLength = 0;
   for (const [k, c] of byKey) {
+    // A short name (Ford, Swan, Kir) inside a longer one is too often a word in another drink's name: "Francis Ford Coppola".
+    if (k.replace(/ /g, '').length < 6) continue;
     if (k.length > bestLength && padded.includes(` ${k} `)) {
       best = c;
       bestLength = k.length;

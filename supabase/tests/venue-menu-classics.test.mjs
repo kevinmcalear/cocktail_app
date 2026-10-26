@@ -69,13 +69,14 @@ describe('venue menu classics', () => {
   test('other names point at their classic, and Turf Club is the Turf', async () => {
     const { rows } = await db.query(
       `SELECT a.alias, i.name FROM public.classic_aliases a JOIN public.items i ON i.id = a.classic_id
-       WHERE a.alias IN ('Allies Martini', 'Betty Ross', 'Bermudiana Rose', 'Fairbanks No. 2', 'Turf Club') ORDER BY a.alias`
+       WHERE a.alias IN ('Allies Martini', 'Betty Ross', 'Bermudiana Rose', 'Fairbanks No. 2', 'Pan Am Clipper', 'Turf Club') ORDER BY a.alias`
     );
     assert.deepEqual(rows, [
       { alias: 'Allies Martini', name: 'Allies Cocktail' },
       { alias: 'Bermudiana Rose', name: 'Bermuda Rose' },
       { alias: 'Betty Ross', name: 'Betsy Ross' },
       { alias: 'Fairbanks No. 2', name: 'Fairbank' },
+      { alias: 'Pan Am Clipper', name: 'Pan American Clipper' },
       { alias: 'Turf Club', name: 'Turf' },
     ]);
   });
