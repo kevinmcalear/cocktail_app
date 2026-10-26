@@ -289,7 +289,8 @@ const styles = StyleSheet.create({
   fieldRow: { flexDirection: 'row', alignItems: 'center', gap: space.sm },
   adding: { paddingHorizontal: space.xs },
   field: { flexDirection: 'row', alignItems: 'center', gap: space.md, minHeight: 52, borderRadius: radius.pill, borderWidth: 1, paddingLeft: space.lg, paddingRight: space.xs },
-  input: { flex: 1, minHeight: layout.minTapTarget },
+  // No intrinsic width: on the web an input's default size squeezed the icon once Cancel sat beside the field.
+  input: { flex: 1, minWidth: 0, minHeight: layout.minTapTarget },
   cancel: { width: layout.minTapTarget, height: layout.minTapTarget, alignItems: 'center', justifyContent: 'center' },
   results: { borderRadius: radius.control, borderWidth: 1, overflow: 'hidden' },
   label: { paddingHorizontal: space.md, paddingTop: space.md },
