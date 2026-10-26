@@ -76,4 +76,6 @@ assert.deepEqual(prepAmounts(housePrep).map(({ line, amount }) => [line.id, line
   [null, 'Orange peel', null, ''],
 ]);
 assert.deepEqual(housePrep.steps, [{ body: 'Stir and bottle', timer_seconds: null }]);
+// A pour of a batch isn't one of its ingredients.
+assert.deepEqual(recipePrep({ ...vermouth, lines: [{ amount: 60, unit: 'ml', ingredient: 'Vermouth batch', unsure: false, batch: true }, ...vermouth.lines] }, { lines: {} }, data).lines.map((l) => l.name), ['Calvados', 'Cacao nibs', 'Orange peel']);
 console.log('bringInDraft checks passed');

@@ -29,7 +29,7 @@ const placeOf = (review: ImportReview | undefined, recipe: ImportReview['recipes
  * left waits on this device. When the last drink is checked, Brought in shows
  * what the approved ones made.
  */
-export function useImportReview(id: string, data: MatchData, { toastLift = 0 }: { toastLift?: number } = {}) {
+export function useImportReview(id: string, data: MatchData) {
   const router = useRouter();
   const client = useQueryClient();
   const toast = useToast();
@@ -80,16 +80,23 @@ export function useImportReview(id: string, data: MatchData, { toastLift = 0 }: 
     moveOn(i);
   };
 
-  /** Not a drink (board w2-import-review E20): gone from the list and the count, with Undo. */
-  const takeOutDrink = (i: number, title?: string) => {
+  /**
+   * Not a drink (board w2-import-review E20): gone from the list and the
+   * count, with Undo. `lift`: the toast sits above the screen's pinned
+   * buttons. The last drink to check taken out ends the review, so there's
+   * nothing to undo into.
+   */
+  const takeOutDrink = (i: number, lift = 0) => {
     const r = current();
     const out = r ? takeOut(r, i, stamp()) : null;
     if (!out) return;
     edit(() => out.review);
+    const title = `${r!.choices[i]?.name.trim() || out.gone.recipe.name} taken out`;
+    if (isFinished(out.review)) return void toast.show({ title, lift });
     let used = false;
     toast.show({
-      title: title ?? `${r!.choices[i]?.name.trim() || out.gone.recipe.name} taken out`,
-      lift: toastLift,
+      title,
+      lift,
       action: {
         label: 'Undo',
         onPress: () => {
@@ -107,17 +114,19 @@ export function useImportReview(id: string, data: MatchData, { toastLift = 0 }: 
    * for it match it once the catalog has it. Throws when the save fails, so
    * the sheet can say why and nothing is taken out.
    */
-  const keepHouseMade = async (i: number) => {
+  const keepHouseMade = async (i: number, lift = 0) => {
     const r = current();
     if (!r || !canCheck(r, i)) return;
     const which = r.recipes[i];
     const name = r.choices[i]?.name.trim() || which.name;
     const made = await createPrep.mutateAsync({ name, prep: recipePrep(which, r.choices[i], data), barId: r.barId });
-    await refreshIngredients(client, [made.id]);
+    // Saved, so it leaves the review whatever happens next: a catalog that can't be read again now still is on the next visit.
+    // ponytail: at home a taken name saves as "My House Sweet Vermouth", which lines naming "House sweet vermouth" don't match by name; an alias for the read name would.
+    await refreshIngredients(client, [made.id]).catch(() => {});
     const x = current();
     const out = x ? takeOut(x, placeOf(x, which), stamp()) : null;
-    if (out) edit(() => rematch({ ...out.review, summary: { ...out.review.summary, preps: [...out.review.summary.preps, name] } }, name));
-    toast.show({ title: `${name} kept as house-made`, detail: made.warnings[0] ?? 'Drinks still to check that use it now find it.', lift: toastLift });
+    if (out) edit(() => rematch({ ...out.review, summary: { ...out.review.summary, preps: [...out.review.summary.preps, made.name] } }, name));
+    toast.show({ title: `${made.name} kept as house-made`, detail: made.warnings[0] ?? 'Drinks still to check that use it now find it.', lift });
   };
 
   const setChoices = (i: number, change: (c: RecipeChoices) => RecipeChoices) => edit((r) => ({ ...r, choices: r.choices.map((c, k) => (k === i ? change(c) : c)) }));

@@ -38,8 +38,7 @@ export function ImportReview({ id, data, onFinishLater }: { id: string; data: Ma
   const ds = useDs();
   const gutter = useGutter();
   const insets = useSafeAreaInsets();
-  // The Undo toast sits above the pinned buttons.
-  const { review, usual, toMake, error, approve, skip, setChoices, editDrink, takeOutDrink, keepHouseMade } = useImportReview(id, data, { toastLift: TOAST_LIFT });
+  const { review, usual, toMake, error, approve, skip, setChoices, editDrink, takeOutDrink, keepHouseMade } = useImportReview(id, data);
   const [look, setLook] = useState<{ at?: ReadPlace | null; title: string } | null>(null);
   const [notDrink, setNotDrink] = useState<number | null>(null);
   // On a phone you only ever see a drink still to check.
@@ -58,6 +57,9 @@ export function ImportReview({ id, data, onFinishLater }: { id: string; data: Ma
   const file = (x: { at?: ReadPlace | null } | null) => (x?.at ? (files[x.at.page] ?? null) : null);
   const page = file(recipe);
   const note = markNote(review.marks[at], review.unsure.includes(at));
+  const pickNote = open ? (there?.note ?? openPickLine(recipe, choices, data)) : null;
+  // The Undo toast sits above the pinned buttons, and the line over them when there is one.
+  const footerLift = TOAST_LIFT + (pickNote ? NOTE_LIFT : 0);
 
   return (
     <View style={[styles.screen, { backgroundColor: ds.c.ground }]}>
@@ -88,7 +90,7 @@ export function ImportReview({ id, data, onFinishLater }: { id: string; data: Ma
         {note ? <Caption tone="muted">{note}</Caption> : null}
         {error ? <Caption tone="accent">{error}</Caption> : null}
       </ScrollView>
-      <CheckFooter note={open ? (there?.note ?? openPickLine(recipe, choices, data)) : null}>
+      <CheckFooter note={pickNote}>
         <View style={styles.row}>
           <Button label="Skip" size="lg" variant="secondary" disabled={!open} onPress={() => skip(at)} />
           <Button label="Edit" icon="pencil" size="lg" variant="secondary" accessibilityLabel="Edit this drink" disabled={!open} onPress={() => editDrink(at)} />
@@ -101,8 +103,8 @@ export function ImportReview({ id, data, onFinishLater }: { id: string; data: Ma
         name={notDrink === null ? '' : review.choices[notDrink]?.name.trim() || (review.recipes[notDrink]?.name ?? '')}
         usual={usual}
         onClose={() => setNotDrink(null)}
-        onKeep={() => keepHouseMade(notDrink!)}
-        onTakeOut={() => takeOutDrink(notDrink!)}
+        onKeep={() => keepHouseMade(notDrink!, footerLift)}
+        onTakeOut={() => takeOutDrink(notDrink!, footerLift)}
       />
     </View>
   );
@@ -110,6 +112,8 @@ export function ImportReview({ id, data, onFinishLater }: { id: string; data: Ma
 
 /** The pinned footer's buttons and padding, above the bottom inset. */
 const TOAST_LIFT = 52 + space.md + 2 + space.sm + 4;
+/** The footer's line above its buttons (Caption) and the gap under it. */
+const NOTE_LIFT = 18 + space.sm;
 
 const styles = StyleSheet.create({
   screen: { flex: 1 },

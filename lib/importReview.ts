@@ -10,6 +10,7 @@ import type { BatchSummary } from '@/lib/bringInBatch';
 import type { MadeBatches, RecipeChoices } from '@/lib/bringInDraft';
 import { dayWord } from '@/lib/featureNews';
 import type { ReadFile } from '@/lib/readAnything';
+import { drinkRecipe } from '@/lib/readBatch';
 import { sameName } from '@/lib/sameName';
 import type { RecipeReading } from '@/supabase/functions/_shared/anythingRead';
 
@@ -219,7 +220,9 @@ export function putBack(review: ImportReview, gone: TakenOut, now: string): Impo
 export function rematch(review: ImportReview, name: string): ImportReview {
   const choices = review.choices.map((c, k) => {
     if (!canCheck(review, k)) return c;
-    const lines = Object.fromEntries(Object.entries(c.lines).filter(([at, choice]) => !('fresh' in choice && sameName(review.recipes[k]?.lines[Number(at)]?.ingredient ?? '', name))));
+    // Choices follow the lines as shown (a batch kept as separate lines included).
+    const shown = review.recipes[k] ? drinkRecipe(review.recipes[k], c).lines : [];
+    const lines = Object.fromEntries(Object.entries(c.lines).filter(([at, choice]) => !('fresh' in choice && sameName(shown[Number(at)]?.ingredient ?? '', name))));
     return Object.keys(lines).length === Object.keys(c.lines).length ? c : { ...c, lines };
   });
   return { ...review, choices };

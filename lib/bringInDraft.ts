@@ -192,8 +192,10 @@ export function menuDrinkDraft(name: string, ingredients: string[], data: Pick<M
  * recipe, each matched to your bar as the drink's would be, every amount as
  * read (so 500 ml stays 500 ml), and the method as its one step.
  */
-export function recipePrep(recipe: RecipeReading, choices: Pick<RecipeChoices, 'lines'>, data: Pick<MatchData, 'catalog' | 'aliases' | 'venueId'>): PrepDraft {
-  const lines = recipe.lines.map((line, i) => {
+export function recipePrep(recipe: RecipeReading, choices: Pick<RecipeChoices, 'lines' | 'batch'>, data: Pick<MatchData, 'catalog' | 'aliases' | 'venueId'>): PrepDraft {
+  // The lines as shown, so each choice meets its own line; a pour of a batch isn't one of its ingredients.
+  const shown = drinkRecipe(recipe, choices).lines.map((line, i) => ({ line, i })).filter(({ line }) => !line.batch);
+  const lines = shown.map(({ line, i }) => {
     const pick = linePick(line, data, choices.lines[i]);
     const measured = line.amount !== null && line.amount > 0 && line.unit !== 'top';
     return { key: `l${i}`, id: pick.id, name: pick.name, parts: measured ? line.amount : null, unit: line.unit ?? '', amount: measured || line.amount === null ? '' : String(line.amount) };

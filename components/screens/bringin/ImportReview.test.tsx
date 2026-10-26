@@ -16,7 +16,7 @@ import { ImportReviewDesk } from './ImportReviewDesk';
 
 const mockSave = jest.fn();
 const mockCreatePrep = jest.fn();
-const mockRefresh = jest.fn();
+const mockRefresh = jest.fn((..._args: unknown[]) => Promise.resolve());
 jest.mock('expo-router', () => ({ useIsFocused: () => true, useRouter: () => ({ push: jest.fn(), replace: jest.fn(), back: jest.fn(), canGoBack: () => true }) }));
 jest.mock('@/hooks/useBringInSave', () => ({ useBringInSave: () => ({ mutateAsync: mockSave }) }));
 jest.mock('@/hooks/useBulk', () => ({ useSpecCatalog: () => ({ catalog: [], aliases: [], methods: [], glasses: [], isLoading: false }) }));
@@ -147,8 +147,16 @@ test('something that is not a drink can be taken out, and Undo puts it back', as
   expect(screen.getByText('Drink 1 of 3')).toBeTruthy();
 });
 
+test('taking out the last drink to check ends the review, with no Undo to offer', async () => {
+  useBringIn.getState().editReview('r1', (r) => ({ ...r, marks: ['skipped', 'skipped', null], at: 2 }));
+  await ui(<ImportReview id="r1" data={data} onFinishLater={jest.fn()} />);
+  await fireEvent.press(screen.getByRole('button', { name: 'Not a drink? Take it out' }));
+  await fireEvent.press(screen.getByRole('button', { name: 'Take it out' }));
+  expect(useToastStore.getState().toast?.action).toBeUndefined();
+});
+
 test('keeping it as house-made saves its recipe, takes it out and lists it as made', async () => {
-  mockCreatePrep.mockResolvedValueOnce({ id: 'hsv', warnings: [] });
+  mockCreatePrep.mockResolvedValueOnce({ id: 'hsv', name: 'Orchard Fizz', warnings: [] });
   await ui(<ImportReview id="r1" data={data} onFinishLater={jest.fn()} />);
   await fireEvent.press(screen.getByRole('button', { name: 'Not a drink? Take it out' }));
   await fireEvent.press(screen.getByRole('button', { name: 'Keep it as house-made' }));
