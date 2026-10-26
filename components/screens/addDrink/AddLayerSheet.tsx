@@ -148,7 +148,7 @@ export function LayerChoices({ onClose, onAdd, options, venue, below, onBuild, c
       ) : null}
       {onBuild ? (
         <View style={styles.buttons}>
-          <Button label="Cancel" size="lg" variant="secondary" onPress={onClose} style={styles.flex} />
+          <Button label="Cancel" size="lg" variant="secondary" onPress={onClose} />
           <Button label="Add on top" size="lg" disabled={!picked} onPress={add} style={styles.flex} />
         </View>
       ) : (
