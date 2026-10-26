@@ -1,4 +1,4 @@
-// Keep the drawing (20261122200000_show_sketch.sql): whether a drink's page
+// Keep the drawing (20261123200000_show_sketch.sql): whether a drink's page
 // still shows its drawing once it has a photo (E26). Only the drink's editors
 // change it, like any other field on the drink. Runs against the local stack.
 //
