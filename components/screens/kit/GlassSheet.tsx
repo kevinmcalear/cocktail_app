@@ -183,7 +183,7 @@ function GlassSheetBody({ barId, pageId, visible, onClose, glass, startAt = 0, d
       // Adding a glass ends here; changing one goes on to How many (its page's How many row opens there).
       next: glass ? 'Next' : 'Add the glass',
       // Whether it's the main glass of its type needs the venue's glasses (none to know before the page is checked).
-      canNext: glass ? true : !!known || !pageId,
+      canNext: !!glass || !!known || !pageId,
       onSkip: glass
         ? () => {
             setSrc(saved);

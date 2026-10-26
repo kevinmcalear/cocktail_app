@@ -215,23 +215,26 @@ export function useDebounced<T>(value: T, ms: number): T {
  */
 export function useAddressSearch(text: string) {
   const query = useDebounced(text.trim(), ADDRESS_DEBOUNCE_MS);
+  // Looked up once typing starts (not for a form that's only opened), and the search waits for it, so Photon gets one request, not an unbiased one and then another.
   const near = useQuery({
     queryKey: ['address-search-near'],
+    enabled: text.trim().length > 0,
     staleTime: 10 * 60 * 1000,
     meta: { persist: false },
     queryFn: async () => {
       const at = await getKnownDeviceLocation();
       return at.ok ? { latitude: snapNearMe(at.latitude), longitude: snapNearMe(at.longitude) } : null;
     },
-  }).data;
+  });
+  const at = near.data;
   return useQuery({
-    queryKey: ['address-search', query, near?.latitude ?? null, near?.longitude ?? null],
-    enabled: query.length >= ADDRESS_MIN_CHARS,
+    queryKey: ['address-search', query, at?.latitude ?? null, at?.longitude ?? null],
+    enabled: query.length >= ADDRESS_MIN_CHARS && near.isFetched,
     staleTime: 60 * 60 * 1000,
     retry: 0,
     meta: { persist: false },
     queryFn: async ({ signal }): Promise<VenueAddress[]> => {
-      const res = await fetch(photonUrl(query, 6, near), { signal });
+      const res = await fetch(photonUrl(query, 6, at), { signal });
       if (!res.ok) throw new Error(`Address search failed (${res.status}). Try again in a moment.`);
       return venueAddressesFrom(await res.json());
     },
