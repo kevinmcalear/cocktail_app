@@ -38,7 +38,7 @@ export function MenuCoverEdit({ editor, height }: { editor: LayoutEditor; height
       <MenuVisual name={name || 'Menu'} coverUrl={coverUrl} coverPosition={editor.layout.coverPosition} pictures={pictures} height={height} />
       {editor.coverError ? (
         <GlassSurface style={styles.coverError}>
-          <Caption role="alert">{editor.coverError}</Caption>
+          <Caption role="alert" numberOfLines={1}>{editor.coverError}</Caption>
         </GlassSurface>
       ) : null}
       <View style={styles.coverButtons}>
