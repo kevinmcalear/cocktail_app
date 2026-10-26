@@ -40,6 +40,12 @@ export interface WizardPick {
   name: string;
 }
 
+/** A person credited: who they are on the list ("@sam.ortiz · Little Rye") and whether anyone has claimed their page, kept from the search. */
+export interface CreditPick extends WizardPick {
+  sub?: string | null;
+  claimed?: boolean;
+}
+
 export interface WizardLine extends WizardPick {
   /** Stable while editing, so rows keep their keys and focus. */
   key: string;
@@ -113,9 +119,9 @@ export interface WizardDraft {
   /** The finish: garnishes and what goes on top (3 drops mint oil, an absinthe rinse), saved as spec lines after the ingredients. */
   garnishes: WizardLine[];
   /** Your own profile ('me'), someone else's, or 'nobody'. Not chosen yet (null) means you, when you have a profile. */
-  creator: 'me' | 'nobody' | WizardPick | null;
+  creator: 'me' | 'nobody' | CreditPick | null;
   /** Everyone else who made it with them (person profiles). */
-  coCreators: WizardPick[];
+  coCreators: CreditPick[];
   riffOf: WizardPick | null;
   /**
    * The bar (or the bar it's credited to) already has a drink by this name

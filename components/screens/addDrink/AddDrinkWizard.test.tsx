@@ -16,7 +16,7 @@ jest.mock('@/hooks/useNearIngredients', () => ({ useNearIngredients: () => [] })
 jest.mock('./NearNameCard', () => ({ NearNameCard: () => null }));
 jest.mock('@/ctx/AuthContext', () => ({ useAuth: () => ({ user: { id: 'me' }, loading: false }), useUserId: () => 'me' }));
 let mockClosest: { id: string; name: string } | null = null;
-jest.mock('@/hooks/useClosestClassic', () => ({ useClosestClassic: () => ({ data: mockClosest }) }));
+jest.mock('@/hooks/useClosestClassic', () => ({ useClosestClassic: () => ({ data: mockClosest }), useCloseClassics: () => ({ data: mockClosest ? [{ ...mockClosest, shares: ['gin', 'Campari'] }] : [] }) }));
 jest.mock('@/hooks/useHomeBar', () => ({ useShelf: () => ({ data: [] }), useShelfEdit: () => ({ add: { mutate: jest.fn() }, remove: { mutate: jest.fn() } }) }));
 jest.mock('@/hooks/useIngredientUse', () => ({ useIngredientUse: () => ({ data: 0 }) }));
 jest.mock('@/hooks/usePublishing', () => ({ useBarPublishing: () => ({ data: undefined }) }));
@@ -266,7 +266,7 @@ describe('AddDrinkWizard', () => {
     expect(useDrinkWizardStore.getState().kept['bar-1'].draft.riffOf).toEqual({ id: 'c-negroni', name: 'Negroni' });
 
     useDrinkWizardStore.getState().setStep('bar-1', 'credits');
-    expect(await screen.findByText('Picked from the ingredients step: it’s close to a Negroni.')).toBeTruthy();
+    expect(await screen.findByRole('radio', { name: 'Negroni, shares gin, campari', checked: true })).toBeTruthy();
     expect(screen.getByText('It’s credited to Little Rye too.')).toBeTruthy();
     expect(screen.getByText('First made at Little Rye.')).toBeTruthy();
   });
