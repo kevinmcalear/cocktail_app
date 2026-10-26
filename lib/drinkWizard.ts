@@ -4,6 +4,7 @@
  * quick choices each step offers. The screens are in
  * components/screens/addDrink; saving is hooks/useCreateDrink.ts.
  */
+import type { DraftPart } from '@/lib/drinkParts';
 import { iceBuildLine, iceKind, saysMore, type IceLayer } from '@/lib/iceBuild';
 import type { ImageAngle } from '@/lib/itemImages';
 import type { LineBatch } from '@/lib/batchLines';
@@ -97,8 +98,10 @@ export interface WizardDraft {
   id?: string;
   name: string;
   lines: WizardLine[];
-  /** In order: "Dry shake" then "Shake". */
+  /** In order: "Dry shake" then "Shake". Made in parts, every part's, each once (lib/drinkParts.ts partsMethods). */
   methods: WizardPick[];
+  /** Made in parts (Q20b): each part's name, lines, methods and how it joins. Unset is one part. */
+  parts?: DraftPart[] | null;
   glass: WizardPick | null;
   /** How the glass is drawn ('martini_pony', lib/sketch/geometry.ts); null is the bar's glass or the default. Saved as items.sketch_variant. */
   glassVariant?: string | null;
