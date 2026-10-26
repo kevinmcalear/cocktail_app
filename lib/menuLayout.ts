@@ -234,7 +234,7 @@ export function filterLibrary(library: MenuDrink[], section: Pick<EditSection, '
 /** What a library row says about a drink: in this section, on another menu, or free. */
 export function libraryNote(drink: Pick<MenuDrink, 'id'>, section: Pick<EditSection, 'name' | 'drinks'>, elsewhere: Record<string, string>): string {
   if (section.drinks.some((d) => d.id === drink.id)) return `Already in ${section.name}`;
-  return elsewhere[drink.id] ? `On ${elsewhere[drink.id]}` : 'Not on a menu';
+  return elsewhere[drink.id] ? `On ${elsewhere[drink.id]}` : 'Not on another menu';
 }
 
 /**
