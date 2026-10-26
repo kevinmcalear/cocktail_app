@@ -108,6 +108,7 @@ function EditorSheets({ editor }: { editor: LayoutEditor }) {
           barId={editor.menu.barId}
           onClose={() => editor.setSheet(null)}
           library={editor.library}
+          canMake={editor.canMake}
           elsewhere={editor.elsewhere}
           onAdd={(d) => editor.add(sheet.key, d)}
         />

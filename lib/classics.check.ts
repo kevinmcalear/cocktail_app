@@ -3,12 +3,18 @@ import assert from 'node:assert/strict';
 
 import { matchKey, suggestClassic } from './classics';
 
+// Other names as public.classic_aliases has them.
+const OTHER_NAMES: Record<string, string[]> = {
+  'De La Louisiane': ['A La Louisiane', 'La Louisiane'],
+  'Whiskey Sour': ['Whisky Sour'],
+};
+
 const CLASSICS = [
   'Martini', 'Negroni', 'Old Fashioned', 'Manhattan', 'Daiquiri', 'Margarita', 'Sazerac', 'Boulevardier', 'Aviation',
   'Corpse Reviver #2', 'Vieux Carré', "Tommy's Margarita", 'White Negroni', 'Espresso Martini', 'Americano', 'Brooklyn',
   'Whiskey Sour', 'Piña Colada', 'Japanese Cocktail', 'Greenpoint', "Corn 'n' Oil", 'Champs-Élysées', 'Caipiroska',
   'De La Louisiane', 'Bronx', 'Champagne Cocktail',
-].map((name, i) => ({ id: String(i), name }));
+].map((name, i) => ({ id: String(i), name, aliases: OTHER_NAMES[name] }));
 
 function suggest(name: string): string | null {
   const m = suggestClassic(name, CLASSICS);
@@ -48,6 +54,39 @@ assert.equal(suggest('Green Point'), 'Greenpoint', 'spacing');
 assert.equal(suggest('Corpse Reviver No. 2'), 'Corpse Reviver #2');
 assert.equal(suggest('Corn And Oil'), "Corn 'n' Oil");
 assert.equal(suggest('A La Louisiane'), 'De La Louisiane', 'its other name');
+
+// --- The same venue's pre-war classics, seeded in 20261121500000 ---
+const OLD = [
+  { id: '0', name: 'Astoria' },
+  { id: '1', name: 'Astor Hotel Special' },
+  { id: '2', name: 'Coo-ee Special' },
+  { id: '3', name: 'Pan American Clipper', aliases: ['Pan Am Clipper'] },
+  { id: '4', name: 'Turf', aliases: ['Turf Club'] },
+  { id: '5', name: 'Betsy Ross', aliases: ['Betty Ross', 'Betty'] },
+  { id: '6', name: 'Ford' },
+  { id: '7', name: 'Swan' },
+  { id: '8', name: 'Betty' },
+];
+const old = (name: string) => {
+  const m = suggestClassic(name, OLD);
+  return m ? `${m.classic.name}${m.exact ? '' : ' ?'}` : null;
+};
+assert.equal(old('Astoria Hotel Special'), 'Astor Hotel Special', 'a misspelling, not the Astoria');
+assert.equal(old('Coo-wee!'), 'Coo-ee Special');
+assert.equal(old('Pan Am Clipper'), 'Pan American Clipper', 'an other name from classic_aliases is the same drink');
+assert.equal(old('Turf Club'), 'Turf');
+assert.equal(old('Betty Ross (House)'), 'Betsy Ross');
+assert.equal(old('Betty'), 'Betty', "an other name never shadows a classic with that name");
+assert.equal(old('Bennett'), null);
+
+// --- A short name (under six letters) is only ever a whole-name match ---
+assert.equal(old('Ford'), 'Ford');
+assert.equal(old('Ford Cocktail'), 'Ford');
+assert.equal(old('Francis Ford Coppola'), null, 'a short name inside another drink is just a word');
+assert.equal(old('Swan Lake'), null);
+assert.equal(old('Coole Swan'), null);
+assert.equal(suggest('Bronx Terrace'), null, 'not a guess at the Bronx');
+assert.equal(suggest('Frozen Negroni'), 'Negroni ?', 'six letters or more still guess');
 
 // --- A letter or two off: a guess, never exact ---
 assert.equal(suggest('Champs Elysses'), 'Champs-Élysées ?');

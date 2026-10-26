@@ -173,40 +173,16 @@ const CHECKS = {
     where coalesce(updated_at, created_at) < now() - interval '60 days'
     group by 1 order by 2 desc limit ${LIST_CAP}`,
 
-  // Files in storage that no column points at: every column that holds a
-  // storage URL (found with information_schema on 22 Oct 2026), the JSON that
-  // can carry one (drafts, drink versions, profile merges), and the list-size
-  // thumbnail each drink picture has at thumbs/<path>.jpg. A new column that
-  // stores pictures belongs here. The report says "check before deleting":
-  // code can also point at a file by its path.
+  // Files in storage that no column points at. The columns that hold a file
+  // are listed once, in private.storage_paths_in_use() (migration
+  // 20261121400000), which the venue deletion cleanup also uses. The report
+  // says "check before deleting": code can also point at a file by its path.
   // ponytail: looks at the newest FILE_SCAN_CAP files so it stays quick; the
   // report says "capped" when storage holds more. Past that, page through by
   // created_at.
   unreferenced_files: String.raw`
-    with urls as (
-      select url as u from public.images
-      union all select source_url from public.images
-      union all select avatar_url from public.profiles
-      union all select logo_url from public.bars
-      union all select icon_url from public.bars
-      union all select icon_url from public.items
-      union all select photo_url from public.bar_zones
-      union all select photo_url from public.item_locations
-      union all select image_url from public.collected_items
-      union all select cover_url from public.collected_releases
-      union all select cover_url from public.releases
-      union all select cover_url from public.menus
-      union all select (regexp_matches(draft_data::text, '/storage/v1/[^"\s]+', 'g'))[1] from public.drafts
-      union all select (regexp_matches(snapshot::text, '/storage/v1/[^"\s]+', 'g'))[1] from public.item_versions
-      union all select (regexp_matches(snapshot::text, '/storage/v1/[^"\s]+', 'g'))[1] from private.profile_merges
-    ), paths as (
-      select substring(u from '/storage/v1/(?:object|render/image)/(?:public|sign|authenticated)/([^?#]+)') as path
-      from urls where u is not null
-    ), refs as (
-      select path from paths
-      union all
-      select 'drinks/thumbs/' || regexp_replace(substr(path, 8), '\.[^./]+$', '') || '.jpg'
-      from paths where path like 'drinks/%'
+    with refs as (
+      select path from private.storage_paths_in_use() as path
     ), objs as (
       select bucket_id, name, (metadata->>'size')::bigint as size
       from storage.objects order by created_at desc limit ${FILE_SCAN_CAP}

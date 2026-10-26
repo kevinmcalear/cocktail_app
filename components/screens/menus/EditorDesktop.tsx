@@ -1,6 +1,6 @@
 import { useRouter, type Href } from 'expo-router';
 import { useState } from 'react';
-import { FlatList, ScrollView, StyleSheet, TextInput, useWindowDimensions, View, type ViewStyle } from 'react-native';
+import { ScrollView, SectionList, StyleSheet, TextInput, useWindowDimensions, View, type ViewStyle } from 'react-native';
 
 import { Body, Button, Caption, GlassButton, useDs } from '@/components/ds';
 import { DRAWN_LIST_WINDOW } from '@/components/ds/SketchDrawing';
@@ -10,9 +10,9 @@ import { radius, space, type } from '@/constants/tokens';
 import { useActiveVenue } from '@/hooks/useActiveVenue';
 import { useCreateMenu, useSaveLayout } from '@/hooks/useMenuMutations';
 import { itemHref, type ItemCategory } from '@/lib/itemRoutes';
-import { cannotAdd, copySections, filterLibrary, libraryNote, nameToMake, nearLibrary } from '@/lib/menuLayout';
+import { cannotAdd, copySections, filterLibrary, groupLibrary, libraryNote, nameToMake, nearLibrary } from '@/lib/menuLayout';
 
-import { LibraryRow } from './AddDrinkSheet';
+import { LibraryGroupHead, LibraryRow } from './AddDrinkSheet';
 import { MakeFromSearch, useMakeDrink } from './MakeFromSearch';
 import { EDITOR_STATUS, EditorSections, MenuCoverEdit, MenuNameInput, NextStep, SaveLine, useHomeMenu } from './EditorParts';
 import { GuestPreview } from './GuestPreview';
@@ -103,10 +103,12 @@ function LibraryPanel({ editor, drag }: { editor: LayoutEditor; drag: MenuDrag }
           <Choice label="Not on another menu" pill="accent" selected={freeOnly} onPress={() => setFreeOnly(true)} />
         </View>
       ) : null}
-      {/* Only the rows in view are drawn: a venue's library can be hundreds of sketched drinks. */}
-      <FlatList
+      {/* Only the rows in view are drawn: a library can be hundreds of sketched drinks. */}
+      <SectionList
         style={styles.flex}
-        data={drinks}
+        sections={groupLibrary(drinks, editor.canMake, query)}
+        stickySectionHeadersEnabled={false}
+        renderSectionHeader={({ section: g }) => <LibraryGroupHead title={g.title} />}
         keyExtractor={(d) => d.id}
         extraData={target}
         initialNumToRender={12}

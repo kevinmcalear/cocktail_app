@@ -43,12 +43,12 @@ export function useReadAnything() {
   return useMutation({ mutationFn: readAnything, onError: () => {} });
 }
 
-/** Ingredients (with their other names), methods and glassware the paste, the bottle photo and the swap match against. */
-export function useSpecCatalog() {
+/** Ingredients (with their other names), methods and glassware the paste, the bottle photo and the swap match against. `withCatalog`: false leaves the ingredients unloaded. */
+export function useSpecCatalog(withCatalog = true) {
   const { data, isLoading: specsLoading } = useDropdowns();
   // Just what matching reads, not the editors' whole ingredient list (pictures, categories): a third of the download, saved on the phone.
-  const { catalog, isLoading: catalogLoading, failed, progress } = useMatchCatalog();
-  const extras = useIngredientExtras(true);
+  const { catalog, isLoading: catalogLoading, failed, progress } = useMatchCatalog(withCatalog);
+  const extras = useIngredientExtras(withCatalog);
   const methods = useMemo(() => toNamed(data?.methods), [data?.methods]);
   const glasses = useMemo(() => toNamed(data?.glassware), [data?.glassware]);
   const aliases = useMemo(() => extras.data?.ingredientAliases ?? [], [extras.data?.ingredientAliases]);

@@ -5,7 +5,7 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { Body, Button, Caption, GlassButton, PressableScale, sheetIsDialog, Title, useDs } from '@/components/ds';
 import { IconSymbol } from '@/components/ui/icon-symbol';
 import { radius, space } from '@/constants/tokens';
-import { useBringInMatchData } from '@/hooks/useBringInMatchData';
+import { bottleReadings, useBringInMatchData } from '@/hooks/useBringInMatchData';
 import { useMatchCatalog } from '@/hooks/useMatchCatalog';
 import { readingSteps, stepsDone, type ReadingStep } from '@/lib/bringIn';
 import { matchSummary, pageMarks } from '@/lib/bringInMatch';
@@ -46,10 +46,12 @@ export function ReadingScreen({ job, onClose, onBackground, onReady, onSearch }:
   const [page, setPage] = useState(0);
   const addPages = useBringIn((s) => s.addPages);
   const retry = useBringIn((s) => s.retry);
-  const data = useBringInMatchData(job.barId);
+  const bottles = bottleReadings(job);
+  const data = useBringInMatchData(job.barId, true, bottles);
   const files = job.source.files;
   const matched = job.reading && data ? matchSummary(job.reading, data) : null;
-  const catalog = useMatchCatalog();
+  // A snap matches on the server: the catalog only downloads if that fails (useBringInMatchData).
+  const catalog = useMatchCatalog(!bottles);
   const steps = readingSteps({ pages: files.length, reading: job.reading, matched, catalog: catalog.progress });
   const progress = job.status === 'ready' && matched ? 100 : stepsDone(steps);
   const ready = job.status === 'ready' && !!matched;
