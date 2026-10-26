@@ -1962,16 +1962,19 @@ export type Database = {
           created_at: string
           item_id: string
           profile_id: string
+          status: Database["public"]["Enums"]["co_creator_status"]
         }
         Insert: {
           created_at?: string
           item_id: string
           profile_id: string
+          status?: Database["public"]["Enums"]["co_creator_status"]
         }
         Update: {
           created_at?: string
           item_id?: string
           profile_id?: string
+          status?: Database["public"]["Enums"]["co_creator_status"]
         }
         Relationships: [
           {
@@ -5353,6 +5356,35 @@ export type Database = {
           },
         ]
       }
+      venue_delete_requests: {
+        Row: {
+          bar_id: string
+          deletes_at: string
+          requested_at: string
+          requested_by: string | null
+        }
+        Insert: {
+          bar_id: string
+          deletes_at: string
+          requested_at?: string
+          requested_by?: string | null
+        }
+        Update: {
+          bar_id?: string
+          deletes_at?: string
+          requested_at?: string
+          requested_by?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "venue_delete_requests_bar_id_fkey"
+            columns: ["bar_id"]
+            isOneToOne: true
+            referencedRelation: "bars"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       venue_feature_events: {
         Row: {
           at: string
@@ -6045,6 +6077,10 @@ export type Database = {
         }
       }
       am_i_moderator: { Args: never; Returns: boolean }
+      answer_credit: {
+        Args: { p_accept: boolean; p_item_id: string }
+        Returns: Database["public"]["Enums"]["co_creator_status"]
+      }
       answer_join_request: {
         Args: { p_accept: boolean; p_id: string }
         Returns: undefined
@@ -6160,6 +6196,7 @@ export type Database = {
         }[]
       }
       can_edit_item: { Args: { p_item_id: string }; Returns: boolean }
+      cancel_venue_delete: { Args: { p_bar_id: string }; Returns: boolean }
       check_maker_photo: {
         Args: { p_item_id: string; p_keep: boolean }
         Returns: undefined
@@ -6313,10 +6350,36 @@ export type Database = {
           isSetofReturn: false
         }
       }
+      credits_to_check: {
+        Args: never
+        Returns: {
+          bar_name: string
+          creator_name: string
+          item_id: string
+          item_type: Database["public"]["Enums"]["entity_type"]
+          name: string
+          named_at: string
+        }[]
+      }
       decline_profile_position: { Args: { p_id: string }; Returns: undefined }
       decline_shared_glass: {
         Args: { p_note: string; p_share_id: string }
         Returns: undefined
+      }
+      delete_venue: {
+        Args: { p_bar_id: string; p_confirm_name: string }
+        Returns: {
+          bar_id: string
+          deletes_at: string
+          requested_at: string
+          requested_by: string | null
+        }
+        SetofOptions: {
+          from: "*"
+          to: "venue_delete_requests"
+          isOneToOne: true
+          isSetofReturn: false
+        }
       }
       discover_bars: {
         Args: {
@@ -6888,6 +6951,22 @@ export type Database = {
           url: string
         }[]
       }
+      match_fold: { Args: { p_name: string }; Returns: string }
+      match_ingredients: {
+        Args: { p_readings: Json; p_venue_id?: string }
+        Returns: {
+          alias: string
+          bar_id: string
+          generic_id: string
+          id: string
+          kind_of: number
+          name: string
+          reading: number
+          score: number
+        }[]
+      }
+      match_key: { Args: { p_name: string }; Returns: string }
+      match_words: { Args: { p_name: string }; Returns: string[] }
       menu_name_key: { Args: { p_name: string }; Returns: string }
       merge_ingredients: {
         Args: { p_from: string; p_into: string }
@@ -7514,6 +7593,15 @@ export type Database = {
           unit: string
         }[]
       }
+      storage_cleanup_batch: {
+        Args: { p_limit?: number }
+        Returns: {
+          bucket_id: string
+          id: number
+          name: string
+        }[]
+      }
+      storage_cleanup_done: { Args: { p_ids: number[] }; Returns: undefined }
       take_invite_email_slot: {
         Args: { p_bar_id: string; p_email: string; p_sender: string }
         Returns: string
@@ -7579,6 +7667,15 @@ export type Database = {
           isSetofReturn: false
         }
       }
+      venue_can_make: {
+        Args: { p_bar_id: string; p_drink_ids: string[] }
+        Returns: {
+          can_make: boolean
+          drink_id: string
+          missing: Json
+          missing_count: number
+        }[]
+      }
       venue_ice: {
         Args: { p_bar_id: string }
         Returns: {
@@ -7596,6 +7693,13 @@ export type Database = {
           stamped: boolean
           supplier_id: string
           supplier_name: string
+        }[]
+      }
+      waiting_co_credits: {
+        Args: { p_profile_ids: string[] }
+        Returns: {
+          item_id: string
+          profile_id: string
         }[]
       }
       week_event: {
@@ -7690,6 +7794,7 @@ export type Database = {
         | "other"
       claim_method: "note" | "email" | "instagram" | "phone"
       claim_status: "pending" | "approved" | "rejected"
+      co_creator_status: "pending" | "accepted" | "declined"
       credit_status: "suggested" | "claimed" | "verified"
       entity_type:
         | "cocktail"
@@ -7912,6 +8017,7 @@ export const Constants = {
       ],
       claim_method: ["note", "email", "instagram", "phone"],
       claim_status: ["pending", "approved", "rejected"],
+      co_creator_status: ["pending", "accepted", "declined"],
       credit_status: ["suggested", "claimed", "verified"],
       entity_type: [
         "cocktail",

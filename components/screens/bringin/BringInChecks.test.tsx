@@ -15,6 +15,9 @@ jest.mock('@/hooks/useSameNameDrink', () => ({ useSameNameDrink: () => ({ data: 
 jest.mock('@/hooks/useActiveVenue', () => ({ useActiveVenue: () => ({ venues: [] }) }));
 jest.mock('@/hooks/useDropdowns', () => ({ useDropdowns: () => ({ data: { iceTypes: [] } }) }));
 jest.mock('@/hooks/useBarGlassware', () => ({ ...jest.requireActual('@/hooks/useBarGlassware'), useBarGlassware: () => ({ data: [] }) }));
+// A name typed into the bottles check is matched on the server first: null while it's asked.
+const mockTypedMatch = jest.fn((..._args: unknown[]): MatchData | null => null);
+jest.mock('@/hooks/useBringInMatchData', () => ({ useBringInMatchData: (...args: unknown[]) => mockTypedMatch(...args) }));
 
 const item = (id: string, name: string, genericId: string | null = null, barId: string | null = null): CatalogItem => ({ id, name, genericId, barId });
 const data = (over: Partial<MatchData> = {}): MatchData => ({
@@ -161,6 +164,25 @@ test('the bottles check counts what it found, and an open pick still lands as th
   const [[saved]] = onSave.mock.calls;
   expect(saved.shelf).toContain('calv');
   expect(saved.had).toBe(1);
+});
+
+test('a bottle typed in stays unread until its match is back, then matches', async () => {
+  const reading = { kind: 'bottles' as const, menu: null, recipes: [], bottles: [{ brand: null, name: 'Calvados', kind: 'Apple brandy', abv: 40 }], unreadable: [{ at: null }] };
+  const props = { reading, files: [], where: 'My Bar', saving: false, error: null, onCancel: jest.fn(), onRetake: jest.fn(), onSave: jest.fn() };
+  const view = await ui(<BottlesCheck {...props} data={data({ catalog: [item('calv', 'Calvados')] })} />);
+  await fireEvent.press(screen.getByRole('button', { name: 'Type it' }));
+  await fireEvent.changeText(screen.getByLabelText('What is it?'), 'Campari');
+  await fireEvent.press(screen.getByRole('button', { name: 'Use it' }));
+  expect(screen.getByText('Couldn’t read this one')).toBeTruthy();
+  expect(mockTypedMatch).toHaveBeenLastCalledWith(null, true, [reading.bottles, [{ name: 'Campari' }]]);
+  mockTypedMatch.mockReturnValue(data());
+  await view.rerender(
+    <BackbarTheme>
+      <BottlesCheck {...props} data={data({ catalog: [item('calv', 'Calvados')] })} />
+    </BackbarTheme>
+  );
+  expect(screen.queryByText('Couldn’t read this one')).toBeNull();
+  expect(screen.getByText('Already on your shelf')).toBeTruthy();
 });
 
 test('a batch read from the file is one line, saved as the batch; Keep as separate lines undoes it', async () => {
