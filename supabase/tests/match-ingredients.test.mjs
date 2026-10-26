@@ -142,9 +142,15 @@ describe('match_ingredients', () => {
     assert.deepEqual(rows.find((r) => r.x === 'Crème de Cassis & Co').words, ['creme', 'cassis', 'co']);
   });
 
+  test('the service role still writes ingredients (the indexes run the key functions as the writer)', async () => {
+    const { data, error } = await service.from('items').insert({ name: `Zephyrine Service Row ${run}`, item_type: 'ingredient' }).select('id').single();
+    assert.ifError(error);
+    await service.from('items').delete().eq('id', data.id);
+  });
+
   test('app roles can run the key functions, so they inline and the indexes are used whoever plans first', async () => {
     for (const fn of ['match_fold', 'match_key', 'match_words']) {
-      for (const role of ['anon', 'authenticated']) {
+      for (const role of ['anon', 'authenticated', 'service_role']) {
         const { rows } = await db.query(`SELECT has_function_privilege($1, $2, 'execute') AS ok`, [role, `private.${fn}(text)`]);
         assert.ok(rows[0].ok, `${role} on ${fn}`);
       }

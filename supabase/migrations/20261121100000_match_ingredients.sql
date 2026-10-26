@@ -63,6 +63,11 @@ CREATE FUNCTION "private"."match_words"("p_name" "text") RETURNS "text"[]
         ' +', ' ', 'g')), ' ');
 $$;
 
+-- Said out loud: every role that writes items computes these indexes.
+GRANT EXECUTE ON FUNCTION "private"."match_fold"("text") TO PUBLIC, "anon", "authenticated", "service_role";
+GRANT EXECUTE ON FUNCTION "private"."match_key"("text") TO PUBLIC, "anon", "authenticated", "service_role";
+GRANT EXECUTE ON FUNCTION "private"."match_words"("text") TO PUBLIC, "anon", "authenticated", "service_role";
+
 CREATE INDEX "items_ingredient_match_key_idx" ON "public"."items" ("private"."match_key"("name"))
     WHERE "item_type" = 'ingredient';
 CREATE INDEX "items_ingredient_match_words_idx" ON "public"."items" USING "gin" ("private"."match_words"("name"))
