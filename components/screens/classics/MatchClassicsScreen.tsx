@@ -1,8 +1,10 @@
-import { useRouter } from 'expo-router';
+import { useRouter, type Href } from 'expo-router';
 import { FlatList, Platform, StyleSheet, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
-import { BackbarTheme, Body, Button, Caption, GlassButton, Headline, Tag, Title, useDs, useGutter } from '@/components/ds';
+import { BackbarTheme, Body, Button, Caption, GlassButton, Headline, PressableScale, Tag, Title, useDs, useGutter } from '@/components/ds';
+import { DrinkThumb } from '@/components/screens/menus/MenuRows';
+import { IconSymbol } from '@/components/ui/icon-symbol';
 import { layout, space } from '@/constants/tokens';
 import { useActiveVenue } from '@/hooks/useActiveVenue';
 import { useCapabilities } from '@/hooks/useCapabilities';
@@ -17,17 +19,22 @@ export function MatchClassicsScreen() {
   );
 }
 
-function SuggestionRow({ s, onLink, busy }: { s: ClassicSuggestion; onLink: () => void; busy: boolean }) {
+/** The row opens the drink, to check a Guess against its spec; Link is its own button (E49). */
+function SuggestionRow({ s, onOpen, onLink, busy }: { s: ClassicSuggestion; onOpen: () => void; onLink: () => void; busy: boolean }) {
   const ds = useDs();
   return (
     <View style={[styles.row, { borderBottomColor: ds.c.line }]}>
-      <View style={styles.flex}>
-        <Headline numberOfLines={1}>{s.drink.name}</Headline>
-        <View style={styles.match}>
-          <Caption tone="muted">{`Version of the ${s.match.classic.name}`}</Caption>
-          <Tag label={s.match.exact ? 'Same name' : 'Guess'} tone={s.match.exact ? 'success' : 'default'} />
+      <PressableScale role="link" accessibilityLabel={`Open ${s.drink.name}`} onPress={onOpen} style={styles.open}>
+        <DrinkThumb itemId={s.drink.id} name={s.drink.name} />
+        <View style={styles.flex}>
+          <Headline numberOfLines={1}>{s.drink.name}</Headline>
+          <View style={styles.match}>
+            <Caption tone="muted">{`Version of the ${s.match.classic.name}`}</Caption>
+            <Tag label={s.match.exact ? 'Same name' : 'Guess'} tone={s.match.exact ? 'success' : 'default'} />
+          </View>
         </View>
-      </View>
+        <IconSymbol name="chevron.right" size={16} color={ds.c.muted} />
+      </PressableScale>
       <Button label="Link" variant="secondary" disabled={busy} onPress={onLink} />
     </View>
   );
@@ -79,6 +86,7 @@ function MatchClassicsPage() {
           <SuggestionRow
             s={s}
             busy={link.isPending}
+            onOpen={() => router.push(`/cocktail/${s.drink.id}` as Href)}
             onLink={() => link.mutate([{ itemId: s.drink.id, classicId: s.match.classic.id }], { onError: () => {} })}
           />
         )}
@@ -105,7 +113,8 @@ const styles = StyleSheet.create({
   screen: { flex: 1 },
   page: { width: '100%', maxWidth: 760, alignSelf: 'center' },
   header: { gap: space.sm, paddingBottom: space.lg },
-  row: { flexDirection: 'row', alignItems: 'center', gap: space.md, paddingVertical: space.md, borderBottomWidth: StyleSheet.hairlineWidth },
+  row: { flexDirection: 'row', alignItems: 'center', gap: space.md, paddingVertical: space.sm, borderBottomWidth: StyleSheet.hairlineWidth },
+  open: { flex: 1, minWidth: 0, flexDirection: 'row', alignItems: 'center', gap: space.md, minHeight: layout.minTapTarget },
   flex: { flex: 1, minWidth: 0, gap: space.xs },
   match: { flexDirection: 'row', flexWrap: 'wrap', alignItems: 'center', gap: space.sm },
   footer: { paddingTop: space.lg },
