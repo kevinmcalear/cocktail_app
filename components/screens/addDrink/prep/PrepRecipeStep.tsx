@@ -10,6 +10,7 @@ import { ALLERGENS, listAllergens, type Allergen } from '@/lib/allergens';
 import { MEASURE_UNITS, partsText, prepAmounts, prepSummary, prepYield, slotMessage, toFinishSummary, type PrepDraft, type PrepDraftLine } from '@/lib/prepKinds';
 import { formatQuantity, toQuantity } from '@/lib/quantity';
 import { capitalizeFirst } from '@/lib/stringUtils';
+import { prepUnit } from '@/lib/unitGuess';
 
 import { IngredientSearch, type CatalogIngredient } from '../IngredientSearch';
 import { WizardChip } from '../WizardChrome';
@@ -76,7 +77,7 @@ export function PrepRecipeStep({ draft, view, set, ingredients, aliases, inDrink
   const makeNew = onMake
     ? (name: string) => {
         const key = `n${Date.now().toString(36)}`;
-        set({ lines: [...draft.lines, { key, id: null, name: capitalizeFirst(name), parts: null, unit: 'g', amount: '' }] });
+        set({ lines: [...draft.lines, { key, id: null, name: capitalizeFirst(name), parts: null, unit: prepUnit(name), amount: '' }] });
         onMake(key, draft.lines);
       }
     : undefined;
@@ -216,7 +217,7 @@ export function PrepRecipeStep({ draft, view, set, ingredients, aliases, inDrink
         })}
       </View>
       {waiting ? <Caption tone="accent">{waiting}</Caption> : null}
-      <IngredientSearch {...search} label="Add an ingredient" onPick={(p) => set({ lines: [...draft.lines, { key: `n${Date.now().toString(36)}`, id: p.id, name: p.name, parts: null, unit: 'g', amount: '' }] })} onMake={makeNew} />
+      <IngredientSearch {...search} label="Add an ingredient" onPick={(p) => set({ lines: [...draft.lines, { key: `n${Date.now().toString(36)}`, id: p.id, name: p.name, parts: null, unit: prepUnit(p.name), amount: '' }] })} onMake={makeNew} />
       {onMake ? <Caption tone="muted">Any line here can be made in-house too: it steps in one more level.</Caption> : null}
       <View style={styles.facts}>
         <View style={[styles.fact, { backgroundColor: ds.c.raised }]}>

@@ -1,4 +1,4 @@
-import { useEffect, useState, type ReactNode } from 'react';
+import { useEffect, useRef, useState, type ComponentRef, type ReactNode } from 'react';
 import { BackHandler, Keyboard, KeyboardAvoidingView, Platform, ScrollView, StyleSheet, useWindowDimensions, View } from 'react-native';
 import Animated, { useAnimatedStyle, useReducedMotion, useSharedValue, withSpring } from 'react-native-reanimated';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
@@ -59,6 +59,9 @@ export function WizardFrame({ testID, pageTitle, embedded, overNav, band, stepKe
   const besideNav = useIsWideWeb() && !embedded && !overNav;
   const windowHeight = useWindowDimensions().height;
   const [height, setHeight] = useState(0);
+  // One scroll view for every step, so a new step (forward or back) opens at its top, not where the last one was left.
+  const scroller = useRef<ComponentRef<typeof ScrollView>>(null);
+  useEffect(() => scroller.current?.scrollTo({ y: 0, animated: false }), [stepKey]);
 
   useEffect(() => {
     const sub = BackHandler.addEventListener('hardwareBackPress', onHardwareBack);
@@ -103,7 +106,7 @@ export function WizardFrame({ testID, pageTitle, embedded, overNav, band, stepKe
       {Platform.OS === 'ios' && !height ? null : (
         <View style={[styles.column, page && styles.pageColumn, besideNav && styles.left, column && !page && { paddingTop: embedded ? space.lg : statusBar + space.lg, paddingHorizontal: gutter }, { paddingBottom: page ? 0 : bottom }]}>
           {page ? (
-            <ScrollView keyboardShouldPersistTaps="handled" style={styles.flex} contentContainerStyle={[styles.page, { paddingHorizontal: gutter }]}>
+            <ScrollView ref={scroller} keyboardShouldPersistTaps="handled" style={styles.flex} contentContainerStyle={[styles.page, { paddingHorizontal: gutter }]}>
               {band({ top: space.lg, side: space.lg, rounded: true, folded: false })}
               <SlideIn key={stepKey} direction={direction}>
                 <Heading eyebrow={eyebrow} title={title} intro={intro} aside={aside} />
@@ -114,7 +117,7 @@ export function WizardFrame({ testID, pageTitle, embedded, overNav, band, stepKe
           ) : (
             <>
               {band({ top: column ? space.lg : statusBar + space.sm, side: column ? space.lg : gutter, rounded: column, folded: typing && !column })}
-              <ScrollView keyboardShouldPersistTaps="handled" style={styles.flex} contentContainerStyle={[styles.scroll, { paddingHorizontal: side }]}>
+              <ScrollView ref={scroller} keyboardShouldPersistTaps="handled" style={styles.flex} contentContainerStyle={[styles.scroll, { paddingHorizontal: side }]}>
                 <SlideIn key={stepKey} direction={direction}>
                   <Heading eyebrow={eyebrow} title={title} intro={intro} aside={aside} />
                   {children}
