@@ -3,7 +3,7 @@ import { useState, type ReactNode } from 'react';
 import { StyleSheet, View } from 'react-native';
 
 import { Body, Button, Caption, Headline, Segmented, useBreakpoint } from '@/components/ds';
-import { BarWeek } from '@/components/screens/week/BarWeek';
+import { BarWeek, BarWeekLine } from '@/components/screens/week/BarWeek';
 import { WebHead } from '@/components/WebHead';
 import { space } from '@/constants/tokens';
 import { useBarFacts } from '@/hooks/useBarFacts';
@@ -21,11 +21,10 @@ import { OnTheMenu } from '../bar/OnTheMenu';
 import { SpecLockPanel } from '../drink/SpecLockPanel';
 import { Kicker, PublicPage, SignInBand } from '../published/PublicChrome';
 import { BarMatches } from './BarMatches';
-import { BAR_TABS, PEOPLE_ONLY, type BarTab } from './BarProfile';
-import { BarRankings } from './BarRankings';
+import { BAR_TABS, FIRST_ON_NOW, PEOPLE_ONLY, type BarTab } from './BarProfile';
+import { BarRankings, BestHere } from './BarRankings';
 import { BarYours, useYouHere } from './BarYours';
-import { BarClaimCard } from './BarClaimCard';
-import { ClaimProfile } from './ClaimProfile';
+import { BarClaimCard, ClaimLine } from './BarClaimCard';
 import { ClassicsTheyPour, usePouredSplit } from './ClassicsTheyPour';
 import { LockedOriginals } from './LockedOriginals';
 import { Positions } from './Positions';
@@ -34,7 +33,7 @@ import { PublicBarFacts } from './PublicBarFacts';
 import { MenuNow } from './MenuNow';
 import { SeeYourName } from './SeeYourName';
 import { PublicMenus } from './PublicMenus';
-import { BarStats, MenuCredits, OriginalsGrid } from './ProfileSections';
+import { MenuCredits, OriginalsGrid, useBarNumbers } from './ProfileSections';
 
 /** Their drinks shown before "All 12 originals": two on the wide page, four in a phone's Originals tab (as signed in). */
 const FIRST_ORIGINALS = 2;
@@ -65,7 +64,7 @@ export function PublicBarPage({ profile, signedIn = false }: { profile: Profile;
   const runs = drinkRunTags(useMenuEditions(profile.id).data ?? []);
   const { data: credits = [] } = useMenuCredits(signedIn ? originals.map((d) => d.id) : []);
   const [allOriginals, setAllOriginals] = useState(false);
-  const [tab, setTab] = useState<BarTab>('menus');
+  const [tab, setTab] = useState<BarTab>('drinks');
   const unclaimed = isUnclaimed(profile);
   const specsLocked = pageLocksSpecs(profile.page_visibility, false);
   // Private: facts, hours, people and awards; no drinks, menus or scores (ppl-bar-private).
@@ -82,6 +81,7 @@ export function PublicBarPage({ profile, signedIn = false }: { profile: Profile;
   const shown = allOriginals ? originals : originals.slice(0, wide ? FIRST_ORIGINALS : FIRST_ORIGINALS_TAB);
   // Copies poured as a classic aren't originals: the phone's count is the bar's own, as signed in.
   const { own } = usePouredSplit(profile.id, originals);
+  const numbers = useBarNumbers(profile, drinksShown ? own.length : null);
   const shownTab: BarTab = drinksShown ? tab : 'people';
   const drinksSection = section(
     'Their drinks',
@@ -106,7 +106,7 @@ export function PublicBarPage({ profile, signedIn = false }: { profile: Profile;
   const week = <BarWeek barId={profile.bar_id} profileId={profile.id} barName={profile.display_name} />;
   const menus = drinksShown ? section('Menus', <PublicMenus profileId={profile.id} name={profile.display_name} />, wide, true) : null;
   // "See your name? Tap it." sits under the menus, or on its own where a private page has none (owner-setup step 3).
-  const seeName = signedIn ? <SeeYourName /> : null;
+  const seeName = signedIn ? <SeeYourName bar={profile} originals={originals} /> : null;
   const people = section('People', <Positions profile={profile} currentUntitled emptyText={`Nobody is listed at ${profile.display_name} yet.`} />, true, true);
   const awards = <PublicAwards profileId={profile.id} />;
   const topSection = section(
@@ -123,12 +123,12 @@ export function PublicBarPage({ profile, signedIn = false }: { profile: Profile;
   const lock = !drinksShown ? (
     <SpecLockPanel title="Drinks stay with the bar" note={privatePageNote(profile.display_name, signedIn)} />
   ) : specsLocked ? (
-    <SpecLockPanel note={specLockNote(profile.display_name, unclaimed, false)} action={unclaimed ? <ClaimProfile profile={profile} label="Work here? Claim this page" /> : null} />
+    <SpecLockPanel note={specLockNote(profile.display_name, unclaimed, false)} />
   ) : null;
   const body = (
     <>
       <View style={styles.head}>
-        <PublicBarHeader profile={profile} place={place} claimed={unclaimed ? 'Not claimed yet' : 'Claimed'} />
+        <PublicBarHeader profile={profile} place={place} claimed={unclaimed ? 'Not claimed yet' : 'Claimed'} numbers={wide ? undefined : numbers} />
         {wide ? null : facts_}
         <PublicBarActions profile={profile} signedIn={signedIn} />
       </View>
@@ -159,8 +159,7 @@ export function PublicBarPage({ profile, signedIn = false }: { profile: Profile;
         </View>
       ) : (
         <View style={styles.stack}>
-          <BarStats profile={profile} originals={drinksShown ? own.length : null} />
-          {week}
+          <BarWeekLine barId={profile.bar_id} profileId={profile.id} barName={profile.display_name} />
           <Segmented accessibilityLabel="Bar sections" stretch accent options={drinksShown ? BAR_TABS : PEOPLE_ONLY} value={shownTab} onChange={setTab} />
           {shownTab === 'people' ? (
             <>
@@ -169,8 +168,11 @@ export function PublicBarPage({ profile, signedIn = false }: { profile: Profile;
             </>
           ) : shownTab === 'menus' ? (
             menus
-          ) : shownTab === 'originals' ? (
+          ) : shownTab === 'drinks' ? (
             <>
+              {/* Drinks first (Q30 A): on the menu now, best here, then its own and the classics it pours. */}
+              <MenuNow profileId={profile.id} originals={originals} details={pageShowsDescriptions(profile.page_visibility)} first={FIRST_ON_NOW} locked={false} />
+              <BestHere barId={profile.id} />
               {theirDrinks}
               {classics}
             </>
@@ -178,9 +180,11 @@ export function PublicBarPage({ profile, signedIn = false }: { profile: Profile;
             top
           )}
           {/* Why the drinks are kept back, under the drinks it explains (or under People on a private page). */}
-          {shownTab === 'originals' || shownTab === 'rankings' || !drinksShown ? lock : null}
+          {shownTab === 'drinks' || shownTab === 'rankings' || !drinksShown ? lock : null}
         </View>
       )}
+      {/* The claim prompts, quietly, at the very end (Q33 B); signed in, also in More. People sit beside the drinks here, so no Find your name. */}
+      <ClaimLine profile={profile} />
     </>
   );
   if (signedIn)

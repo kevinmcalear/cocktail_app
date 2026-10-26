@@ -241,7 +241,7 @@ test('"Just me" notes are kept apart as yours, never on the drink', async () => 
   expect(mockOtherInserts).toContainEqual(['item_private_notes', { item_id: 'd-private', body: 'Less agave next time.' }]);
   expect(mockOtherInserts.filter(([t]) => t === 'item_notes')).toHaveLength(0);
 
-  await run({ draft: { ...EMPTY_DRAFT, name: 'Ash Garden', notes: 'Dry shake hard.' }, barId: null, myProfileId: null });
+  await run({ draft: { ...EMPTY_DRAFT, name: 'Ash Garden', notes: 'Dry shake hard.', notesPrivate: false }, barId: null, myProfileId: null });
   expect(mockOtherInserts).toContainEqual(['item_notes', { item_id: 'db-made', body: 'Dry shake hard.', read_level: null }]);
   expect(mockOtherInserts.filter(([t]) => t === 'item_private_notes')).toHaveLength(1);
 });
@@ -254,6 +254,6 @@ test('at a venue the notes go to the picked role and up; at home always to every
   expect(mockOtherInserts).toContainEqual(['item_notes', { item_id: 'db-made', body: 'Aquafaba: full 15 seconds.', read_level: 35 }]);
 
   mockOtherInserts.length = 0;
-  await run({ draft: { ...EMPTY_DRAFT, name: 'Ash Garden', notes: 'Stir longer.', notesLevel: 35 }, barId: null, myProfileId: null });
+  await run({ draft: { ...EMPTY_DRAFT, name: 'Ash Garden', notes: 'Stir longer.', notesLevel: 35, notesPrivate: false }, barId: null, myProfileId: null });
   expect(mockOtherInserts).toContainEqual(['item_notes', { item_id: 'db-made', body: 'Stir longer.', read_level: null }]);
 });

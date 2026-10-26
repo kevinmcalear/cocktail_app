@@ -12,6 +12,7 @@ import { useBottomSearchFocus } from '@/hooks/useBottomBar';
 import type { SearchMine } from '@/hooks/useSearchMine';
 import { scopeOptions, type SearchScope, type SearchShow, type ShowCounts } from '@/lib/searchScope';
 
+import { CanMakeChip } from './CanMake';
 import { SearchField } from './SearchField';
 import { SearchBody, searchPlaceholder, type SearchArea } from './SearchPanel';
 import { ScopeToken, ShowChips } from './SearchParts';
@@ -47,10 +48,13 @@ export interface SearchTabState {
  */
 function PlaceRow({ query, scope, setScope, mine, area, show, setShow, counts }: Pick<SearchTabState, 'query' | 'scope' | 'setScope' | 'mine' | 'area' | 'show' | 'setShow' | 'counts'>) {
   const gutter = useGutter();
+  // At a venue on Everywhere: Can make, between the place and the type chips; on, the type chips leave (QA Q37).
+  const canMake = query && scope === 'everywhere' && !!mine.venueId;
   return (
     <ScrollView horizontal showsHorizontalScrollIndicator={false} keyboardShouldPersistTaps="handled" style={styles.placeRow} contentContainerStyle={[styles.placeChips, { paddingHorizontal: gutter }]}>
       <ScopeToken options={scopeOptions(mine.label, area?.label ?? null)} scope={scope} onScope={setScope} />
-      {query ? <ShowChips show={show} onShow={setShow} counts={counts} /> : null}
+      {canMake ? <CanMakeChip show={show} onShow={setShow} count={counts.canmake} /> : null}
+      {query && show !== 'canmake' ? <ShowChips show={show} onShow={setShow} counts={counts} /> : null}
     </ScrollView>
   );
 }
@@ -125,6 +129,7 @@ export function SystemBottomSearch({ query, setQuery, scope, setScope, mine, are
           area={area}
           onShowOnMap={onShowOnMap}
           show={show}
+          onShow={setShow}
           onCounts={setCounts}
           typeAhead={(next) => {
             bar.current?.setText(next);
@@ -195,7 +200,7 @@ export function BottomSearch({ query, setQuery, scope, setScope, mine, area, onS
         >
           {/* The tab's title row, as every tab has it. */}
           <ScreenHeaderSpacer title="Search" />
-          <SearchBody query={query} scope={scope} onScope={setScope} mine={mine} area={area} onShowOnMap={onShowOnMap} show={show} onCounts={setCounts} typeAhead={setQuery} />
+          <SearchBody query={query} scope={scope} onScope={setScope} mine={mine} area={area} onShowOnMap={onShowOnMap} show={show} onShow={setShow} onCounts={setCounts} typeAhead={setQuery} />
         </ScrollView>
         <View
           ref={dock}

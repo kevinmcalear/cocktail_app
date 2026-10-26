@@ -5,6 +5,7 @@ import { Body, BrandProvider, Caption } from '@/components/ds';
 import { SetupChromeProvider, SetupFooter, SetupPage } from '@/components/screens/onboarding/SetupPage';
 import { BrandSetup } from '@/components/screens/venue/BrandScreen';
 import { useIsWideWeb } from '@/hooks/useIsWideWeb';
+import { useSetBarCurrency } from '@/hooks/usePricing';
 import { useProfile } from '@/hooks/useProfiles';
 import { useVenueBrand } from '@/hooks/useVenueBrand';
 import type { ProfileClaim } from '@/hooks/useProfiles';
@@ -16,6 +17,7 @@ import { useVenueSetup } from '@/store/useVenueSetup';
 
 import { DoneMark, DoneStep } from './DoneStep';
 import { FindBarStep } from './FindBarStep';
+import { StepFooter } from './GlassesStep';
 import { SetupClaimStep } from './SetupClaimStep';
 import { SetupIntro } from './SetupIntro';
 import { SetupRail } from './SetupRail';
@@ -27,14 +29,15 @@ import { WhereWhenStep } from './WhereWhenStep';
 const BRANDED: VenueScreen[] = ['look', 'visibility', 'team', 'done'];
 
 /**
- * Venue setup as a guided flow (b03): intro, finding the bar, five steps, a
- * summary. Opened from Settings › Venues (the setup already started, if
+ * Venue setup as a guided flow (b03): intro, finding the bar, four steps,
+ * then "Set up <bar>", the checklist. Opened from Settings › Venues (the setup already started, if
  * there is one), a bar page's Claim or Setup's owner path (?claim=, straight
  * to Where and when), or the Setup banner on Tonight or Library (?bar=, to
  * pick it up; &step=claim to prove it's yours). Each step is one of the app's
  * own pieces: the bar facts, the Brand editor, the Publishing choice,
- * invites, the claim methods. Proving it's yours is last, and every step
- * before it works without a claim (Eddie call, 22 Oct).
+ * invites. Every step works without a claim; proving it's yours is the card
+ * under the checklist (Eddie E32), which opens the claim methods here with
+ * &step=claim, and they come back to it.
  */
 export function VenueSetupScreen() {
   const params = useLocalSearchParams<{ bar?: string; claim?: string; step?: string }>();
@@ -67,7 +70,7 @@ export function VenueSetupScreen() {
     seeded.current = true;
     if (params.claim && useVenueSetup.getState().runs[key]?.profileId !== params.claim) save(key, { profileId: params.claim, barId: null, name: '', done: ['find'], finished: false, held: undefined });
   }, [picked, params.claim, key, save]);
-  // Opened straight onto the claim (Venue settings, Tonight, the checklist): Back leaves, not to the team step.
+  // Opened straight onto the claim (Venue settings, Tonight, the checklist's card): Back leaves, not to the team step.
   const [claimBack, setClaimBack] = useState(screen === 'claim');
   // At the end, setup is through: "Set up <bar>" takes over (lib/setupChecklist.ts).
   useEffect(() => {
@@ -86,6 +89,7 @@ export function VenueSetupScreen() {
   const brand = useVenueBrand(barId ?? '').data ?? null;
   const logo = brand?.logo_url ?? null;
   const createVenue = useCreateSetupVenue();
+  const saveCurrency = useSetBarCurrency();
   const pushHeld = usePushHeldSetup();
   const enterVenue = useAppMode((s) => s.enterVenue);
   const name = profile?.display_name ?? run?.name ?? '';
@@ -108,9 +112,10 @@ export function VenueSetupScreen() {
     return id;
   };
 
-  // After the claim, the last step: the summary.
+  // After the claim, back where it was opened (the checklist's card, the banner); with nowhere to go back to, the checklist.
   const leaveClaim = (sent: boolean) => {
     if (sent) markDone(keyRef.current, 'claim');
+    if (claimBack && router.canGoBack()) return router.back();
     setScreen('done');
     setClaimBack(false);
   };
@@ -123,16 +128,13 @@ export function VenueSetupScreen() {
   };
 
   const copy = setupCopy(screen, name || 'your bar', claimState);
-  const status: Partial<Record<VenueStep, string>> = {
-    find: name,
-    claim: claimState === 'pending' ? 'Being checked, usually within a day' : claimState === 'approved' ? 'Approved' : undefined,
-    place: 'Typed by you',
-  };
+  const status: Partial<Record<VenueStep, string>> = { find: name, place: 'Typed by you' };
   // From the Look step on, setup wears the venue's own brand (canvas make-venue-look to make-venue-done).
   const branded = !!brand && BRANDED.includes(screen);
   const chrome = {
     title: copy.title,
-    intro: copy.intro,
+    // On a phone How it looks goes straight to its pinned preview (E34).
+    intro: screen === 'look' && !wide ? undefined : copy.intro,
     eyebrow: screen === 'intro' ? 'For bars and venues' : screen === 'find' || screen === 'done' ? null : name || null,
     eyebrowTone: branded ? ('accent' as const) : ('muted' as const),
     topLabel: screen === 'intro' ? 'Venue setup' : undefined,
@@ -193,23 +195,38 @@ export function VenueSetupScreen() {
         // The venue is made here, with them as its Admin (the role step's one line), so the steps after it have one.
         <WhereWhenStep
           profileId={page?.id ?? profileId}
+          barId={barId}
           name={name || 'your bar'}
           claim={claim}
           writable={writable}
           held={run?.held}
           onHold={(c) => hold(keyRef.current, c)}
-          venueError={createVenue.error?.message ?? null}
-          making={createVenue.isPending}
-          onDone={needVenue(() => finish('place'))}
+          venueError={(createVenue.error ?? saveCurrency.error)?.message ?? null}
+          making={createVenue.isPending || saveCurrency.isPending}
+          onDone={(currency) =>
+            void ensureVenue()
+              .then((id) => (currency ? saveCurrency.mutateAsync({ barId: id, currency }) : undefined))
+              .then(() => finish('place'), () => {})
+          }
         />
       ) : null}
       {screen === 'look' && barId ? (
         <BrandSetup
           barId={barId}
           setup={{
-            footer: ({ save: saveBrand, saving, ok }) => (
-              <SetupFooter pending={saving} disabled={!ok} onPress={() => saveBrand(() => finish('look'))} onSkip={() => setScreen('visibility')} />
-            ),
+            // A phone walks Logo, Colour, Font and Ground tint (E34): Next until the last, Back after the first.
+            footer: ({ save: saveBrand, saving, ok, page }) =>
+              page ? (
+                <StepFooter
+                  skip={page.at === 0 ? 'Not now' : 'Back'}
+                  onSkip={page.at === 0 ? () => setScreen('visibility') : page.onBack}
+                  label={page.next ? `Next: ${page.next}` : saving ? 'Saving…' : 'Continue'}
+                  onPress={page.next ? page.onNext : () => saveBrand(() => finish('look'))}
+                  disabled={!page.next && (!ok || saving)}
+                />
+              ) : (
+                <SetupFooter pending={saving} disabled={!ok} onPress={() => saveBrand(() => finish('look'))} onSkip={() => setScreen('visibility')} />
+              ),
           }}
         />
       ) : null}

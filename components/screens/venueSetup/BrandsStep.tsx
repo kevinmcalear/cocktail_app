@@ -1,33 +1,33 @@
 import { useMemo, useState } from 'react';
 import { StyleSheet, View } from 'react-native';
 
-import { Caption, Chip, useDs } from '@/components/ds';
+import { Caption, useToast } from '@/components/ds';
 import { SetupChromeProvider, SetupPage, useSetupChrome } from '@/components/screens/onboarding/SetupPage';
 import { IngredientSearch } from '@/components/screens/addDrink/IngredientSearch';
-import { IconSymbol } from '@/components/ui/icon-symbol';
 import { space } from '@/constants/tokens';
 import { useBackBarStock, useStockMutations } from '@/hooks/useBackBar';
 import { useDropdowns } from '@/hooks/useDropdowns';
+import { useIsWideWeb } from '@/hooks/useIsWideWeb';
 import { isStockable } from '@/lib/backBar';
 import { useRecipeIds } from '@/hooks/useWhatNext';
-import { anyKind, BRAND_GROUPS, brandGroups } from '@/lib/whatNext';
 
+import { BackBarShelves, type ShelfBottle } from './BackBarShelves';
 import { StepFooter } from './GlassesStep';
 
-const STARTERS = new Set(BRAND_GROUPS.map((g) => g.title));
-
 /**
- * Step 2, your brands: tap what the venue stocks, a brand or the plain thing
- * ("just rum"). One chip per kind of bottle starts it (a whole back bar, call
- * 10); search finds a brand or a kind (a kind lists its bottles), and what's
- * picked sits below under its kind. Search holds bottles only: a recipe like
- * a banana-infused rum is made in-house, not stocked. Saved on the back bar's
+ * Step 2, your bottles: search finds a brand or a kind (a kind typed in full
+ * offers the plain thing first, "Rum, any"), and each pick goes onto a drawn
+ * back bar on top that fills as you go (Eddie E39; it replaced the kind chips
+ * of call 10). Tap a bottle there to take it off, with Undo. On a laptop the
+ * back bar sits beside the search. Search holds bottles only: a recipe like a
+ * banana-infused rum is made in-house, not stocked. Saved on the back bar's
  * stock list (fix 12), so the back bar and every "On your back bar" read it
  * straight away.
  */
-export function BrandsStep({ barId, step, onBack, onNext, onSkip }: { barId: string; step: string; onBack: () => void; onNext: () => void; onSkip: () => void }) {
+export function BrandsStep({ barId, name, step, onBack, onNext, onSkip }: { barId: string; name: string; step: string; onBack: () => void; onNext: () => void; onSkip: () => void }) {
   const chrome = useSetupChrome();
-  const ds = useDs();
+  const toast = useToast();
+  const wide = useIsWideWeb();
   const dropdowns = useDropdowns({ ingredients: true }).data;
   const stockRows = useBackBarStock(barId).data;
   const stock = useMemo(() => stockRows ?? [], [stockRows]);
@@ -47,27 +47,17 @@ export function BrandsStep({ barId, step, onBack, onNext, onSkip }: { barId: str
   }, [all, barId, recipeRows]);
   const coreIds = useMemo(() => new Set(dropdowns?.coreIngredientIds ?? []), [dropdowns?.coreIngredientIds]);
   const stocked = new Set(stock.map((r) => r.item_id));
-  // Oldest first, so a chip stays where it was as more go on.
-  const groups = useMemo(() => brandGroups(all ?? [], stock.map((r) => r.item_id).reverse()), [all, stock]);
+  // Oldest first, so a bottle keeps its place on the shelf and the newest goes on the end.
+  const shelf = useMemo(() => stock.filter((r) => r.item).map((r) => ({ id: r.item_id, name: r.item?.name ?? '' })).reverse(), [stock]);
 
-  const toggle = (item: { id: string; name: string | null }) => {
-    if (stocked.has(item.id)) remove.mutate(item.id);
-    else add.mutate({ item: { id: item.id, name: item.name ?? '' }, source: 'setup' });
+  const takeOff = (bottle: ShelfBottle) => {
+    const row = stock.find((r) => r.item_id === bottle.id);
+    if (!row) return;
+    remove.mutate(bottle.id);
+    // Undo puts it back in its place: the same time it went on.
+    toast.show({ title: `${bottle.name} is off your back bar`, action: { label: 'Undo', onPress: () => add.mutate({ item: bottle, source: row.source, fromName: row.from_name, addedAt: row.added_at }) } });
   };
-  const chip = (item: { id: string; name: string | null }, label: string, a11y = label) => {
-    const on = stocked.has(item.id);
-    return (
-      <Chip
-        key={item.id}
-        multi
-        label={label}
-        selected={on}
-        accessibilityLabel={on ? `${a11y}, on your back bar` : a11y}
-        leading={on ? <IconSymbol name="checkmark" size={14} color={ds.c.ground} /> : undefined}
-        onPress={() => toggle(item)}
-      />
-    );
-  };
+  const backBar = <BackBarShelves name={name} bottles={shelf} rows={wide ? 3 : 2} onTakeOff={takeOff} />;
 
   const count = stock.length;
   return (
@@ -75,51 +65,37 @@ export function BrandsStep({ barId, step, onBack, onNext, onSkip }: { barId: str
       value={{ ...chrome, title: 'What’s on your shelves?', intro: 'Search for the bottles on your backbar. You can always add, remove and edit these at any time.', mark: undefined, eyebrow: null, progress: null, topLabel: step, noBack: false, onBack }}
     >
       <SetupPage footer={<StepFooter skip="Skip" onSkip={onSkip} label={count ? `${count} on your back bar · Next` : 'Next'} onPress={onNext} />}>
-        <IngredientSearch
-          ingredients={bottles}
-          aliases={dropdowns?.ingredientAliases}
-          coreIds={coreIds}
-          loading={!all}
-          label="Search a brand or a kind of bottle"
-          allowNew={false}
-          brands
-          backBar={stocked}
-          onTyping={setTyping}
-          onPick={(pick) => {
-            // A pick adds it; taking one off is its chip below.
-            if (pick.id && !stocked.has(pick.id)) add.mutate({ item: { id: pick.id, name: pick.name }, source: 'setup' });
-          }}
-        />
-        {typing ? null : !all ? (
-          <Caption tone="muted">Loading…</Caption>
-        ) : (
-          <>
-            <View role="group" aria-label="Kinds of bottle" style={styles.wrap}>
-              {groups.filter((g) => STARTERS.has(g.title)).flatMap((g) => g.kinds.map((k) => chip(k, g.title, anyKind(k.name ?? ''))))}
-            </View>
-            {/* What's picked, under its kind; a kind that isn't a starter (a sake) comes with its own Any. */}
-            {groups
-              .filter((g) => g.picked.length || !STARTERS.has(g.title))
-              .map((g, i) => (
-                <View key={`${g.title}-${i}`} style={styles.group}>
-                  <Caption tone="muted" role="heading">
-                    {g.title}
-                  </Caption>
-                  <View role="group" aria-label={g.title} style={styles.wrap}>
-                    {STARTERS.has(g.title) ? null : g.kinds.map((k) => chip(k, anyKind(k.name ?? '')))}
-                    {g.picked.map((p) => chip(p, p.name ?? ''))}
-                  </View>
-                </View>
-              ))}
-            <Caption tone="muted">Infusions, washes and syrups you make aren’t bottles: they’re recipes, made in-house with your drinks.</Caption>
-          </>
-        )}
+        {wide ? null : backBar}
+        <View style={wide ? styles.columns : styles.stack}>
+          <View style={styles.search}>
+            <IngredientSearch
+              ingredients={bottles}
+              aliases={dropdowns?.ingredientAliases}
+              coreIds={coreIds}
+              loading={!all}
+              label="Search a brand or a kind of bottle"
+              allowNew={false}
+              brands
+              backBar={stocked}
+              onTyping={setTyping}
+              onPick={(pick) => {
+                // A pick adds it; taking one off is a tap on the shelf.
+                if (pick.id && !stocked.has(pick.id)) add.mutate({ item: { id: pick.id, name: pick.name }, source: 'setup' });
+              }}
+            />
+            {typing ? null : <Caption tone="muted">Infusions, washes and syrups you make aren’t bottles: they’re recipes, made in-house with your drinks.</Caption>}
+          </View>
+          {wide ? <View style={styles.side}>{backBar}</View> : null}
+        </View>
       </SetupPage>
     </SetupChromeProvider>
   );
 }
 
 const styles = StyleSheet.create({
-  group: { gap: space.sm },
-  wrap: { flexDirection: 'row', flexWrap: 'wrap', gap: space.xs },
+  stack: { gap: space.md },
+  columns: { flexDirection: 'row', alignItems: 'flex-start', gap: space.xl },
+  search: { flex: 1, minWidth: 0, gap: space.md },
+  // Room for six bottles a shelf beside the results.
+  side: { width: 360 },
 });

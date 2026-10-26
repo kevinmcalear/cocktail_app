@@ -147,6 +147,27 @@ function list(ids: string[]): string {
   return `${words.slice(0, -1).join(', ')} and ${words[words.length - 1]}`;
 }
 
+/**
+ * Setup's Who sees what (board w2-venue-setup, E29): each built-in role in a
+ * line, from what this venue's roles can do. The first says what it sees,
+ * each after it what it adds: "The menu, talking points and where things
+ * live. No specs.", "Adds specs and photos.", "Everything."
+ */
+export function roleLine(matrix: MatrixColumn[], level: number): string {
+  const builtIn = matrix.filter((c) => c.role_id === null && c.base_level >= 20).sort((a, b) => a.base_level - b.base_level);
+  const at = builtIn.findIndex((c) => c.base_level === level);
+  if (at < 0) return '';
+  const caps = builtIn[at].capabilities;
+  if (CAPABILITIES.every((c) => caps.includes(c))) return 'Everything.';
+  const ordered = (ids: string[]) => CAPABILITIES.filter((c) => ids.includes(c));
+  if (at === 0) {
+    const sees = list(ordered(caps));
+    return `${sees.charAt(0).toUpperCase()}${sees.slice(1)}.${caps.includes('specs') ? '' : ' No specs.'}`;
+  }
+  const added = ordered(caps.filter((c) => !builtIn[at - 1].capabilities.includes(c)));
+  return added.length ? `Adds ${list(added)}.` : `The same as ${roleLabel(builtIn[at - 1].base_level)}.`;
+}
+
 /** "From Employee, plus house-made recipes and prep", "From Bartender, no photos". */
 export function roleSummary(role: Pick<MatrixColumn, 'base_level' | 'granted' | 'revoked'>): string {
   const parts = [`From ${roleLabel(role.base_level)}`];

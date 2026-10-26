@@ -13,6 +13,8 @@ let mockHad: HadDrink[] = [];
 let mockTaste: { taste: Record<string, number>; entries: []; baseline: null; answers: null; rankedDrinks: number } | null = null;
 
 jest.mock('./JobRequests', () => ({ JobRequests: () => null, MyJobRequests: () => null }));
+jest.mock('./CreditsToCheck', () => ({ CreditsToCheckCard: () => null }));
+jest.mock('@/hooks/useCreditsToCheck', () => ({ useCreditsToCheck: () => ({ data: [] }) }));
 jest.mock('./YourBarCard', () => ({ ItsYou: () => null, YourBarCard: () => null }));
 jest.mock('expo-router', () => ({ useRouter: () => ({ push: mockPush, navigate: mockNavigate, replace: jest.fn(), back: jest.fn(), canGoBack: () => true }) }));
 jest.mock('@/ctx/AuthContext', () => ({ useAuth: () => ({ user: { id: 'me', user_metadata: { full_name: 'Jo Juniper' } }, loading: false }) }));

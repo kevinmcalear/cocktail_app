@@ -10,7 +10,7 @@ import { IngredientsStep } from './IngredientsStep';
 jest.mock('@/components/ViewAsBanner', () => ({ ViewAsPill: () => null }));
 jest.mock('@/hooks/useNearIngredients', () => ({ useNearIngredients: () => [] }));
 jest.mock('@/hooks/usePairings', () => ({ usePairings: () => ({ data: [] }) }));
-jest.mock('@/hooks/useClosestClassic', () => ({ useClosestClassic: () => ({ data: null }) }));
+jest.mock('@/hooks/useClosestClassic', () => ({ useClosestClassic: () => ({ data: null }), useCloseClassics: () => ({ data: [] }) }));
 jest.mock('@/hooks/useIngredientUse', () => ({ useIngredientUse: () => ({ data: 0 }) }));
 jest.mock('@/hooks/useDiscover', () => ({ useDrinkLists: () => ({ data: [] }) }));
 jest.mock('@/hooks/useStartFromClassic', () => ({ useStartFromClassic: () => ({ mutate: jest.fn(), isPending: false }) }));

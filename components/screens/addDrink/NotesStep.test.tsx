@@ -18,7 +18,7 @@ jest.mock('@/hooks/useVenueRoles', () => ({
 jest.mock('@/hooks/useBarDetail', () => ({ useBarMembers: () => ({ data: [{ role_level: 40, display_name: 'Rob' }, { role_level: 30, display_name: 'Sam' }] }) }));
 
 const changed = jest.fn<void, [WizardDraft]>();
-function Harness({ barId = null }: { barId?: string | null }) {
+function Harness({ barId = 'little-rye' }: { barId?: string | null }) {
   const [draft, setDraft] = useState<WizardDraft>({ ...EMPTY_DRAFT, name: 'Ash Garden' });
   const set = (patch: Partial<WizardDraft>) => {
     const next = { ...draft, ...patch };
@@ -28,13 +28,13 @@ function Harness({ barId = null }: { barId?: string | null }) {
   return <NotesStep draft={draft} set={set} barId={barId} />;
 }
 
-test('notes go with the drink unless you keep them to yourself', async () => {
-  await renderWithTamagui(<Harness />);
-  expect(screen.getByRole('radio', { name: 'With the drink', checked: true })).toBeTruthy();
-  expect(screen.getByText('Shown on its page to whoever can see the drink. You choose who on the next step.')).toBeTruthy();
-
-  await fireEvent.press(screen.getByRole('radio', { name: 'Just me' }));
-  expect(changed).toHaveBeenLastCalledWith(expect.objectContaining({ notesPrivate: true }));
+test('at home, one box and just you to start (Q27)', async () => {
+  await renderWithTamagui(<Harness barId={null} />);
+  expect(screen.queryByText('On the menu')).toBeNull();
+  expect(screen.getByText('What to change next time, where it came from.')).toBeTruthy();
+  const chips = screen.getAllByRole('radio');
+  expect(chips.map((c) => c.props.accessibilityLabel)).toEqual(['Just me', 'With the drink']);
+  expect(screen.getByRole('radio', { name: 'Just me', checked: true })).toBeTruthy();
   expect(screen.getByText('Only you see them, on the drink’s page. Never shared or published.')).toBeTruthy();
 
   await fireEvent.press(screen.getByRole('radio', { name: 'With the drink' }));

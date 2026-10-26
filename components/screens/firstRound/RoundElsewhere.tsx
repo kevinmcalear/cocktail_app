@@ -6,8 +6,8 @@ import { useFirstRound } from '@/hooks/useFirstRound';
 
 import { nextLine, progressLine, RoundBars, useRoundGo } from './RoundParts';
 
-/** Over the wizard's Review while making the Old Fashioned yours: where you are, and Skip. */
-export function RoundStrip({ onSkip }: { onSkip: () => void }) {
+/** In the wizard while adding the first cocktail (over Review from a classic, over the name from scratch): where you are, and Skip. */
+export function RoundStrip({ scratch, onSkip }: { scratch?: boolean; onSkip: () => void }) {
   const ds = useDs();
   const round = useFirstRound();
   if (!round.active || round.current?.key !== 'house_spec') return null;
@@ -15,7 +15,7 @@ export function RoundStrip({ onSkip }: { onSkip: () => void }) {
   return (
     <Surface raised style={[styles.strip, { borderColor: ds.c.line }]}>
       <RoundBars done={at} total={round.total} width={48} />
-      <Body role="status" style={styles.grow}>{`First round, ${at} of ${round.total}. Change any line, then save.`}</Body>
+      <Body role="status" style={styles.grow}>{`First round, ${at} of ${round.total}. ${scratch ? 'Name it, add its lines, save.' : 'Change any line, then save.'}`}</Body>
       <Button
         label="Skip"
         variant="ghost"

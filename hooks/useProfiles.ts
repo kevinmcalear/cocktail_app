@@ -116,9 +116,9 @@ export interface Original extends LineageDrink {
 
 const ORIGINAL_COLUMNS = `${LINEAGE_COLUMNS}, item_type, description, glass:glassware_id(icon_key), item_images(angle, sort_order, is_generated, outdated_since, images(url)), versions:items!riff_of_id(count)`;
 
-/** The `or` filters for drinks credited to a profile: its creator, its first bar, or one of several creators. */
+/** The `or` filters for drinks credited to a profile: its creator, its first bar, or one of several creators who said yes. */
 async function creditedTo(profileId: string): Promise<string[]> {
-  const co = await supabase.from('item_co_creators').select('item_id').eq('profile_id', profileId).limit(100);
+  const co = await supabase.from('item_co_creators').select('item_id').eq('profile_id', profileId).eq('status', 'accepted').limit(100);
   if (co.error) throw co.error;
   const coIds = (co.data ?? []).map((r) => r.item_id as string);
   return [`creator_profile_id.eq.${profileId}`, `origin_bar_profile_id.eq.${profileId}`, ...(coIds.length ? [`id.in.(${coIds.join(',')})`] : [])];

@@ -77,8 +77,8 @@ function Page({ edit, savedId, onExit }: { edit: IngredientEdit; savedId: string
   useHoldUpdates();
 
   const [sheet, setSheet] = useState<Sheet>(null);
-  const [pad, setPad] = useState<number | null>(null);
-  const [swap, setSwap] = useState<number | null>(null);
+  // The bottom bar's Line puts the cursor in the search under the recipe.
+  const [focus, setFocus] = useState(0);
   const lines = form.recipeItems;
   const name = form.name || data?.ingredient?.name || 'Ingredient';
   const calc = usePrepCalc({ name: form.name, catalog: editor.catalog, recipe: lines, barId: form.barId, saveDraft: editor.saveDraft, onApply: editor.setRecipeItems });
@@ -124,7 +124,7 @@ function Page({ edit, savedId, onExit }: { edit: IngredientEdit; savedId: string
       const cmd = e.metaKey || e.ctrlKey;
       if (cmd && e.key === 'Enter') return void (e.preventDefault(), done());
       if (cmd && !typing && e.key.toLowerCase() === 'z') return void (e.preventDefault(), e.shiftKey ? history.redo() : history.undo());
-      if (e.key === 'Escape' && !typing && pad === null && !sheet && swap === null) void leave();
+      if (e.key === 'Escape' && !typing && !sheet) void leave();
     };
     window.addEventListener('keydown', onKey);
     return () => window.removeEventListener('keydown', onKey);
@@ -154,7 +154,7 @@ function Page({ edit, savedId, onExit }: { edit: IngredientEdit; savedId: string
       ) : null}
     </View>
   );
-  const body = <EditBody edit={edit} savedId={savedId} isPrep={isPrep} wide={wide} venueName={venues.find((v) => v.id === form.barId)?.name ?? null} used={data?.usedIn?.length ?? 0} spiritTags={spiritTags} onSheet={setSheet} onAmount={setPad} onSwap={setSwap} />;
+  const body = <EditBody edit={edit} savedId={savedId} isPrep={isPrep} wide={wide} venueName={venues.find((v) => v.id === form.barId)?.name ?? null} used={data?.usedIn?.length ?? 0} spiritTags={spiritTags} onSheet={setSheet} selfId={selfId} focus={focus} />;
   const toolbar = <EditToolbar canUndo={history.canUndo} canRedo={history.canRedo} onUndo={history.undo} onRedo={history.redo} changes={history.changes} onDone={done} saving={edit.saving} wide={wide} media={pictures?.length ? 'photo' : 'paper'} more={wide ? <GlassButton accessibilityLabel="More" icon="ellipsis" onPress={() => setSheet('more')} /> : undefined} />;
   const trail: Crumb[] = home ? [{ label: 'My Bar', href: '/bar' }] : [{ label: 'Library', href: '/library' }, { label: isPrep ? 'House-made' : 'Ingredients', href: '/library' }];
   const canSpot = !!savedId && !home;
@@ -184,7 +184,7 @@ function Page({ edit, savedId, onExit }: { edit: IngredientEdit; savedId: string
           <View style={[styles.float, { top: top + space.sm, left: gutter, right: gutter }]}>{toolbar}</View>
           <View style={[styles.float, { bottom: insets.bottom + space.md, left: gutter, right: gutter }]}>
             {isPrep ? (
-              <EditBottomBar onLine={() => setSheet('line')} lineHint="Add a line to the recipe" onStep={savedId ? addStep : undefined} onCalc={calc.open} onMore={() => setSheet('more')} moreHint="More: its picture, who can see it, discard" />
+              <EditBottomBar onLine={() => setFocus(focus + 1)} lineHint="Add a line to the recipe" onStep={savedId ? addStep : undefined} onCalc={calc.open} onMore={() => setSheet('more')} moreHint="More: its picture, who can see it, discard" />
             ) : (
               <EditBottomBar onPhoto={editor.canChoosePicture ? () => setSheet('photos') : undefined} onSpot={canSpot ? giveItASpot : undefined} onMore={() => setSheet('more')} moreHint="More: its picture, who can see it, discard" />
             )}
@@ -192,7 +192,7 @@ function Page({ edit, savedId, onExit }: { edit: IngredientEdit; savedId: string
         </>
       )}
 
-      <EditSheets edit={edit} selfId={selfId} name={name} sheet={sheet} onSheet={setSheet} pad={pad} onPad={setPad} swap={swap} onSwap={setSwap} spiritTags={spiritTags} />
+      <EditSheets edit={edit} selfId={selfId} name={name} sheet={sheet} onSheet={setSheet} spiritTags={spiritTags} />
       <EditMoreMenu open={sheet === 'more'} onClose={() => setSheet(null)} canDelete={!!draft} dirty={edit.dirty} draft={!!draft} onPick={onMore} noun="ingredient" photosLabel="Its picture" />
       {calc.sheet}
       {askAtSave.sheet}

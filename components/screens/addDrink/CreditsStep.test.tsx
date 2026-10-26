@@ -6,10 +6,15 @@ import { EMPTY_DRAFT, type WizardDraft } from '@/lib/drinkWizard';
 
 import { CreditsStep } from './CreditsStep';
 
-jest.mock('@/hooks/useClosestClassic', () => ({ useClosestClassic: () => ({ data: null }) }));
-jest.mock('@/hooks/useDiscover', () => ({ useDrinkLists: () => ({ data: [] }) }));
-jest.mock('@/hooks/useMyProfile', () => ({ useMyProfile: () => ({ data: { id: 'p-me', displayName: 'Jo' } }) }));
-jest.mock('@/hooks/useProfiles', () => ({ usePublicPeople: () => ({ data: [] }) }));
+let mockCards: { id: string; name: string; imageUrl: null; glass: null; shares: string[] }[] = [];
+jest.mock('@/hooks/useClosestClassic', () => ({ useClosestClassic: () => ({ data: null }), useCloseClassics: () => ({ data: mockCards }) }));
+jest.mock('@/hooks/useDiscover', () => ({ useDrinkLists: () => ({ data: [{ id: 'c-daiquiri', name: 'Daiquiri', imageUrl: null, aliases: [] }] }) }));
+jest.mock('@/hooks/useMyProfile', () => ({ useMyProfile: () => ({ data: { id: 'p-me', displayName: 'Jo Park' } }) }));
+jest.mock('@/hooks/useProfiles', () => ({
+  usePublicPeople: (q: string) => ({
+    data: q.toLowerCase().startsWith('sam') ? [{ id: 'p-sam', handle: 'sam.ortiz', display_name: 'Sam Ortiz', city: null, is_claimed: true, current_bar: 'Little Rye', job: null, worked: null }] : [],
+  }),
+}));
 // "atabboy" matches nothing as typed; the database says it's close to Attaboy (marked near).
 jest.mock('@/hooks/useRankings', () => ({
   usePublicBars: (q: string) => ({ data: q.length >= 2 ? [{ id: 'bar-p-attaboy', display_name: 'Attaboy', city: 'New York', near: q === 'atabboy' }] : [] }),
@@ -27,6 +32,56 @@ function Harness({ venueName = null }: { venueName?: string | null }) {
   };
   return <CreditsStep draft={draft} set={set} venueName={venueName} ingredients={[]} />;
 }
+
+beforeEach(() => {
+  mockCards = [];
+  changed.mockClear();
+});
+
+describe('CreditsStep, who made it', () => {
+  test('one list: you to start, Sam added and asked first, everyone off saves as Not sure', async () => {
+    await renderWithTamagui(<Harness venueName="Little Rye" />);
+    expect(screen.getByText('Jo Park')).toBeTruthy();
+    expect(screen.getByText('You · Little Rye')).toBeTruthy();
+    expect(screen.queryByText('Made with')).toBeNull();
+
+    await fireEvent.changeText(screen.getByLabelText('Add someone'), 'Sam');
+    await fireEvent.press(screen.getByRole('button', { name: 'Sam Ortiz, @sam.ortiz · Little Rye' }));
+    expect(latest().coCreators).toEqual([{ id: 'p-sam', name: 'Sam Ortiz', sub: '@sam.ortiz · Little Rye', claimed: true }]);
+    expect(screen.getByText('We’ll ask Sam first. Sam’s name shows on the drink once Sam says yes.')).toBeTruthy();
+    expect(screen.getByLabelText('Waiting for Sam Ortiz to say yes')).toBeTruthy();
+
+    // Off goes Jo: Sam is the maker now, so nobody is asked.
+    await fireEvent.press(screen.getByRole('button', { name: 'Take yourself off' }));
+    expect(latest()).toMatchObject({ creator: { id: 'p-sam', name: 'Sam Ortiz' }, coCreators: [] });
+    expect(screen.queryByText(/^We’ll ask/)).toBeNull();
+    await fireEvent.press(screen.getByRole('button', { name: 'Take Sam Ortiz off' }));
+    expect(latest()).toMatchObject({ creator: 'nobody', coCreators: [] });
+    expect(screen.getByText('Take everyone off and it saves as Not sure.')).toBeTruthy();
+  });
+});
+
+describe('CreditsStep, riff or original', () => {
+  test('up to four cards, a searched classic joins them picked, and It’s an original clears it', async () => {
+    mockCards = [
+      { id: 'c-mm', name: 'Mezcal Margarita', imageUrl: null, glass: null, shares: ['mezcal', 'lime', 'agave'] },
+      { id: 'c-tm', name: 'Tommy’s Margarita', imageUrl: null, glass: null, shares: ['lime', 'agave'] },
+    ];
+    await renderWithTamagui(<Harness />);
+    expect(screen.getByText('Is it a riff on one of these?'.toUpperCase())).toBeTruthy();
+    expect(screen.getByText('Shares mezcal, lime, agave')).toBeTruthy();
+    await fireEvent.press(screen.getByRole('radio', { name: 'Mezcal Margarita, shares mezcal, lime, agave' }));
+    expect(latest().riffOf).toEqual({ id: 'c-mm', name: 'Mezcal Margarita' });
+
+    await fireEvent.changeText(screen.getByLabelText('Find another classic'), 'Daiq');
+    await fireEvent.press(screen.getByRole('button', { name: 'Daiquiri' }));
+    expect(latest().riffOf).toEqual({ id: 'c-daiquiri', name: 'Daiquiri' });
+    expect(screen.getByRole('radio', { name: 'Daiquiri', checked: true })).toBeTruthy();
+
+    await fireEvent.press(screen.getByRole('button', { name: 'It’s an original' }));
+    expect(latest().riffOf).toBeNull();
+  });
+});
 
 describe('CreditsStep, where and when', () => {
   test('at home: at home until a bar is picked, and a typed year only once it is one', async () => {

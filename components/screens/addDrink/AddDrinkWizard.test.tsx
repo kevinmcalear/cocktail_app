@@ -16,7 +16,7 @@ jest.mock('@/hooks/useNearIngredients', () => ({ useNearIngredients: () => [] })
 jest.mock('./NearNameCard', () => ({ NearNameCard: () => null }));
 jest.mock('@/ctx/AuthContext', () => ({ useAuth: () => ({ user: { id: 'me' }, loading: false }), useUserId: () => 'me' }));
 let mockClosest: { id: string; name: string } | null = null;
-jest.mock('@/hooks/useClosestClassic', () => ({ useClosestClassic: () => ({ data: mockClosest }) }));
+jest.mock('@/hooks/useClosestClassic', () => ({ useClosestClassic: () => ({ data: mockClosest }), useCloseClassics: () => ({ data: mockClosest ? [{ ...mockClosest, shares: ['gin', 'Campari'] }] : [] }) }));
 jest.mock('@/hooks/useHomeBar', () => ({ useShelf: () => ({ data: [] }), useShelfEdit: () => ({ add: { mutate: jest.fn() }, remove: { mutate: jest.fn() } }) }));
 jest.mock('@/hooks/useIngredientUse', () => ({ useIngredientUse: () => ({ data: 0 }) }));
 jest.mock('@/hooks/usePublishing', () => ({ useBarPublishing: () => ({ data: undefined }) }));
@@ -167,7 +167,7 @@ describe('AddDrinkWizard', () => {
     // On to the review and save.
     for (let i = 0; i < 5; i++) await fireEvent.press(screen.getByRole('button', { name: 'Skip' }));
     expect(screen.getByText('30 ml Gin\nCampari')).toBeTruthy();
-    expect(screen.getByRole('button', { name: 'Hero photo: a sketch for now. Add a photo' })).toBeTruthy();
+    expect(screen.getByRole('button', { name: 'Add a photo: it leads the drink page' })).toBeTruthy(); // At home one photo (Q15)
     expect(screen.getByText('You can change any of it on the drink’s page.')).toBeTruthy();
     expect(mockCreate).not.toHaveBeenCalled();
     await fireEvent.press(screen.getByRole('button', { name: 'Save drink' }));
@@ -231,7 +231,7 @@ describe('AddDrinkWizard', () => {
     useDrinkWizardStore.getState().setStep('bar-1', 'ice');
     await renderWithTamagui(<AddDrinkWizard barId="bar-1" onClose={jest.fn()} onSaved={mockSaved} />);
     await laidOut();
-    expect(screen.getByText('YOUR ICE')).toBeTruthy();
+    expect(screen.getByText('LITTLE RYE’S ICE')).toBeTruthy();
     // Shaved isn't one of the common ones, but it's the venue's, so it's offered.
     await fireEvent.press(screen.getByRole('radio', { name: 'Shaved' }));
     expect(useDrinkWizardStore.getState().kept['bar-1'].draft.ice?.name).toBe('Shaved');
@@ -266,7 +266,7 @@ describe('AddDrinkWizard', () => {
     expect(useDrinkWizardStore.getState().kept['bar-1'].draft.riffOf).toEqual({ id: 'c-negroni', name: 'Negroni' });
 
     useDrinkWizardStore.getState().setStep('bar-1', 'credits');
-    expect(await screen.findByText('Picked from the ingredients step: it’s close to a Negroni.')).toBeTruthy();
+    expect(await screen.findByRole('radio', { name: 'Negroni, shares gin, campari', checked: true })).toBeTruthy();
     expect(screen.getByText('It’s credited to Little Rye too.')).toBeTruthy();
     expect(screen.getByText('First made at Little Rye.')).toBeTruthy();
   });

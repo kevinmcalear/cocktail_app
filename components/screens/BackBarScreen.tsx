@@ -12,6 +12,7 @@ import { ZoneInspector } from '@/components/backbar/ZoneInspector';
 import { Body, Button, Caption, LockedSection, Surface, useBreakpoint, useDs } from '@/components/ds';
 import { usePageColumn } from '@/components/nav/Page';
 import { SubPageHead, usePageFrame } from '@/components/nav/PageFrame';
+import { VenueDeleteBanner } from '@/components/screens/venue/DeleteVenue';
 import { space } from '@/constants/tokens';
 import { useActiveVenue } from '@/hooks/useActiveVenue';
 import { useBarZones, useItemLocations, useLocationMutations, useWaitingForSpot, useZoneMutations } from '@/hooks/useBackBar';
@@ -202,6 +203,7 @@ export function BackBarScreen({ placeItem }: { placeItem?: NamedItem }) {
             ) : undefined
           }
         />
+        <VenueDeleteBanner inline />
         {body}
       </ScrollView>
     </View>

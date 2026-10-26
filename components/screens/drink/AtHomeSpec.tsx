@@ -11,6 +11,7 @@ import type { DatabaseItem } from '@/types/types';
 
 import { AddToShopping } from '../shopping/AddToShopping';
 
+import type { SpecMark } from './SpecMarks';
 import { SpecSection } from './SpecSection';
 
 interface AtHomeSpecProps {
@@ -20,6 +21,8 @@ interface AtHomeSpecProps {
   method: string | null;
   /** Method, glass, ice and garnish, under the lines. */
   make: ReactNode;
+  /** The method and glass icons beside the heading. */
+  marks: SpecMark[];
   /** "Swap it for…": log your version with the change (the I made it sheet). */
   onSwap: () => void;
 }
@@ -30,12 +33,12 @@ interface AtHomeSpecProps {
  * closest to the one you're missing, and "Add Cynar to shopping" (AddToShopping).
  * A line whose bottle is on your shopping list says "On your list" (shopping In 2).
  */
-export function AtHomeSpec({ item, lines, recipes, method, make, onSwap }: AtHomeSpecProps) {
+export function AtHomeSpec({ item, lines, recipes, method, make, marks, onSwap }: AtHomeSpecProps) {
   const { check, missingName, closest, buy } = useShelfCheck(item.id, lines);
   const list = useShoppingList().data;
   const listed = buy.flatMap((b) => (check?.lineFor[b.id] && list?.some((r) => r.itemId === b.id && !r.gotAt) ? [check.lineFor[b.id]] : []));
   return (
-    <SpecSection itemId={item.id} barId={item.bar_id} recipes={recipes} heading="At home" caption={check ? shelfCaption(check) : null} missing={check?.missing ?? []} listed={listed} make={make}>
+    <SpecSection itemId={item.id} barId={item.bar_id} recipes={recipes} heading="At home" caption={check ? shelfCaption(check) : null} missing={check?.missing ?? []} listed={listed} make={make} marks={marks}>
       {method ? <Body>{method}</Body> : null}
       {check?.missing.length ? (
         <View style={styles.swap}>

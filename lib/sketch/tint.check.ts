@@ -1,11 +1,12 @@
 import assert from 'node:assert/strict';
 
-import { SKETCH, SKETCH_CLEAR_TINT, SKETCH_TINTS } from '../../constants/sketch';
+import { SKETCH, SKETCH_CLEAR_TINT, SKETCH_TINT_FAMILIES, SKETCH_TINTS } from '../../constants/sketch';
 import { DRINK_COLORS } from '../../supabase/functions/_shared/sketchRules';
 import { paintSketch } from './paint';
 import { mixHex } from './random';
 import type { SceneEl } from './scene';
 import { sceneToSvg } from './svg';
+import { nearestTint, tintName } from './tintName';
 import { liquidOf, readSketchInputs, withTint, type SketchInputs } from './types';
 
 // The sketch colour a drink's editor picks (items.sketch_liquid, copied into
@@ -19,12 +20,15 @@ const base: SketchInputs = {
 const garnet = SKETCH_TINTS.find((t) => t.key === 'garnet')!.hex;
 
 // The swatches: lowercase hex (what the database's check takes), each its own, the clear one the rules' clear.
-assert.ok(SKETCH_TINTS.length >= 10 && SKETCH_TINTS.length <= 12);
+assert.equal(SKETCH_TINTS.length, 24, 'eleven house colours and E27\'s thirteen');
 for (const t of SKETCH_TINTS) assert.match(t.hex, /^#[0-9a-f]{6}$/, t.key);
 assert.equal(new Set(SKETCH_TINTS.map((t) => t.hex)).size, SKETCH_TINTS.length);
 assert.equal(new Set(SKETCH_TINTS.map((t) => t.key)).size, SKETCH_TINTS.length);
 assert.equal(SKETCH_CLEAR_TINT, DRINK_COLORS.clear.toLowerCase());
 assert.ok(SKETCH_TINTS.some((t) => t.hex === SKETCH_CLEAR_TINT));
+// The picker's family rows hold every colour once.
+const inRows = SKETCH_TINT_FAMILIES.flatMap((f) => f.keys);
+assert.deepEqual([...inRows].sort(), SKETCH_TINTS.map((t) => t.key).sort());
 
 // Reading a stored row: a tint is kept (lowercased), anything else is Auto.
 assert.equal(readSketchInputs({ ...base, tint: '#6F1426' })?.tint, garnet);
@@ -66,3 +70,11 @@ assert.equal(shapes(withTint(base, garnet)), shapes(base));
 assert.ok(sceneToSvg(paintSketch({ ...base, tint: garnet }, { seed: 'og' })).includes(muted(garnet)));
 
 console.log('sketch tint: ok');
+
+// Naming a colour (the picker's label): Auto, a house name, or the nearest one's "from your photo".
+assert.equal(tintName(null), 'Auto');
+assert.equal(tintName(garnet), 'Garnet');
+assert.equal(tintName('#b5793a'), 'Amber, from your photo');
+assert.equal(nearestTint('#3b80c0').key, 'blue');
+assert.equal(nearestTint('#100f0f').key, 'black');
+console.log('sketch tint names: ok');

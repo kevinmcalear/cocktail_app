@@ -12,6 +12,9 @@ import { saveItemNotes } from "@/hooks/useItemNotes";
 import { dropdownKeys, useDropdowns } from "@/hooks/useDropdowns";
 import { recentEntry, useTrackRecent } from "@/hooks/useTrackRecent";
 import { saveDrinkSpec } from "@/hooks/useVersions";
+import { resolveEditItems } from "@/hooks/specLineSave";
+import { showMessage } from "@/lib/dialogs";
+import { amountOf } from "@/lib/drinkWizard";
 import {
     resolveIngredientId,
     updateMenuDraftsWithPublishedId,
@@ -406,8 +409,11 @@ export function useCocktailDraftEditor({
     const performPublish = async (): Promise<boolean> => {
         setSaving(true);
         try {
+            // A line typed, combined or made in-house here is added the way New adds it.
+            const spec = await resolveEditItems(recipeItems, barId || null);
+            setRecipeItems(spec.items);
             const resolvedRecipeItems = [];
-            for (const item of recipeItems) {
+            for (const item of spec.items) {
                 const resolvedId = await resolveIngredientId(item.ingredient_id, drafts, item.name);
                 if (resolvedId !== item.ingredient_id) {
                     await updateParentDraftsWithPublishedId(item.ingredient_id, resolvedId, drafts, saveDraft);
@@ -456,7 +462,7 @@ export function useCocktailDraftEditor({
                     cocktailId,
                     resolvedRecipeItems.map((item) => ({
                         ingredient_item_id: item.ingredient_id,
-                        amount: parseFloat(item.amount) || null,
+                        amount: amountOf(item.amount) || null,
                         unit: item.unit || null,
                         preparation_notes: item.preparation_notes || null,
                         is_optional: item.is_optional || false,
@@ -469,6 +475,7 @@ export function useCocktailDraftEditor({
                 await supabase.from("items").delete().eq("id", cocktailId);
                 throw e;
             }
+            if (spec.warnings.length) showMessage("Saved", spec.warnings.join("\n\n"));
 
             queryClient.invalidateQueries({ queryKey: ["cocktails"] });
             await queryClient.invalidateQueries({ queryKey: dropdownKeys.currentMenuDrinks });

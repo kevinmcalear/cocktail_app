@@ -15,6 +15,7 @@ import { onAMenu, OPENED_COPY, yourMenuStep } from '@/lib/firstRound';
 import { menuStatus } from '@/lib/menus';
 import { canSwitchFeatures } from '@/lib/venueFeatures';
 
+import { FirstCocktailChoices } from './FirstCocktailChoices';
 import { nextLine, progressLine, RoundBars, RoundStepList, useRoundGo } from './RoundParts';
 
 function CloseButton({ label, onPress }: { label: string; onPress: () => void }) {
@@ -88,6 +89,7 @@ export function FirstRoundCard() {
   }
 
   const make = round.kind === 'make';
+  const firstCocktail = round.current.key === 'house_spec';
   return (
     <Surface raised style={frame}>
       <CloseButton label="Hide the first round for now" onPress={() => setOpen(false)} />
@@ -96,9 +98,15 @@ export function FirstRoundCard() {
         <Headline role="heading">{make ? 'Three things, about two minutes' : 'Two things, about a minute'}</Headline>
         <Caption tone="muted">{make ? 'Each one opens a bit more of the app. Skip any time.' : `Every spec ${venue.name} pours is here. Skip any time.`}</Caption>
       </View>
-      <RoundStepList steps={steps} currentKey={round.current.key} onSkip={() => round.current && round.done(round.current.key)} />
+      <RoundStepList
+        steps={steps}
+        currentKey={round.current.key}
+        onSkip={() => round.current && round.done(round.current.key)}
+        choices={firstCocktail ? <FirstCocktailChoices onPick={(start) => go(round.current, start)} /> : null}
+      />
       <View style={styles.actions}>
-        <Button label={round.current.action} onPress={() => go(round.current)} />
+        {/* The first cocktail's choices are its buttons (E30 B); every other step has one. */}
+        {firstCocktail ? null : <Button label={round.current.action} onPress={() => go(round.current)} />}
         <Button label="Show me everything" variant="ghost" onPress={round.showEverything} />
       </View>
     </Surface>
