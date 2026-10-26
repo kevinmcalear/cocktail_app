@@ -96,7 +96,7 @@ export function WizardFrame({ testID, pageTitle, embedded, overNav, band, stepKe
   useEffect(() => {
     // Android's back closes a search first, then steps back.
     const sub = BackHandler.addEventListener('hardwareBackPress', () => {
-      if (!takeover) return onHardwareBack();
+      if (!(takeover && breakpoint === 'phone' && !embedded)) return onHardwareBack();
       startTakeover(false);
       return true;
     });
