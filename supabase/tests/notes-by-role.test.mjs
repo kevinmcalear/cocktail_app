@@ -261,12 +261,13 @@ describe('installed apps, which still write items.notes', () => {
 });
 
 test("the view keeps every column it had, with notes from item_notes", async () => {
-  // 20261113900000's columns. Wave 2 migrations that redefine the view
-  // (Made in parts, show_sketch, this one) may add, never drop.
+  // 20261113900000's columns and show_sketch (20261123200000). Wave 2
+  // migrations that redefine the view (Made in parts, show_sketch, this one)
+  // may add, never drop.
   const before = ['id', 'name', 'item_type', 'description', 'created_at', 'glassware_id', 'family_id', 'ice_id', 'notes', 'origin', 'price', 'status',
     'brand_maker', 'abv', 'bar_id', 'icon_key', 'icon_url', 'hide_from_search', 'origin_bar_profile_id', 'created_by', 'creator_profile_id', 'generic_id',
     'service_style', 'density_g_ml', 'dilution_pct', 'serve_ml', 'serve_abv', 'abv_source', 'capacity_ml', 'iced_capacity_ml', 'ice_per_serve_g', 'is_core',
-    'ingredient_role', 'made_from_id', 'method_ice_id', 'ice_build', 'picture', 'picture_url'];
+    'ingredient_role', 'made_from_id', 'method_ice_id', 'ice_build', 'picture', 'picture_url', 'show_sketch'];
   const { rows } = await db.query(
     "SELECT column_name FROM information_schema.columns WHERE table_schema = 'public' AND table_name = 'app_item_presentation'"
   );
