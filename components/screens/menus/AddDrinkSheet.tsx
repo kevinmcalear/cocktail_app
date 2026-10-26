@@ -1,6 +1,6 @@
 import { useRouter, type Href } from 'expo-router';
 import { useState } from 'react';
-import { FlatList, StyleSheet, View } from 'react-native';
+import { SectionList, StyleSheet, View } from 'react-native';
 
 import { Body, Button, Caption, dragDismissesKeyboard, DrinkImage, Field, Headline, PressableScale, SheetScrollView, useDs } from '@/components/ds';
 import { DRAWN_LIST_WINDOW } from '@/components/ds/SketchDrawing';
@@ -8,12 +8,13 @@ import { IconSymbol } from '@/components/ui/icon-symbol';
 import { layout, radius, space } from '@/constants/tokens';
 import { useActiveVenue } from '@/hooks/useActiveVenue';
 import { withAlpha } from '@/lib/color';
-import { cannotAdd, filterLibrary, libraryNote, nameToMake, nearLibrary, type EditSection } from '@/lib/menuLayout';
+import { cannotAdd, filterLibrary, groupLibrary, libraryNote, nameToMake, nearLibrary, type EditSection } from '@/lib/menuLayout';
 import { sectionRule } from '@/lib/menus';
 import type { MenuDrink } from '@/types/menus';
 
 import { MakeFromSearch, useMakeDrink } from './MakeFromSearch';
 import { Choice, MenuSheet, menuSheetBody } from './MenuSheet';
+import { MonoLabel } from './ReviewParts';
 
 interface AddDrinkSheetProps {
   section: EditSection | null;
@@ -21,6 +22,8 @@ interface AddDrinkSheetProps {
   barId: string | null;
   onClose: () => void;
   library: MenuDrink[];
+  /** What your shelf makes, by drink id: "You can make these" (none at a venue). */
+  canMake: readonly string[];
   /** Which other menu each drink is on (on now or coming up), by drink id. */
   elsewhere: Record<string, string>;
   onAdd: (drink: MenuDrink) => void;
@@ -53,7 +56,16 @@ export function LibraryRow({ drink, note, added, onAdd }: { drink: MenuDrink; no
   );
 }
 
-export function AddDrinkSheet({ section, barId, onClose, library, elsewhere, onAdd }: AddDrinkSheetProps) {
+/** A group's name over its drinks in the library. */
+export function LibraryGroupHead({ title }: { title: string }) {
+  return title ? (
+    <View role="heading" style={styles.groupHead}>
+      <MonoLabel>{title}</MonoLabel>
+    </View>
+  ) : null;
+}
+
+export function AddDrinkSheet({ section, barId, onClose, library, canMake, elsewhere, onAdd }: AddDrinkSheetProps) {
   const router = useRouter();
   const [query, setQuery] = useState('');
   const [freeOnly, setFreeOnly] = useState(false);
@@ -97,9 +109,11 @@ export function AddDrinkSheet({ section, barId, onClose, library, elsewhere, onA
         )
       }
     >
-      {/* Only the rows in view are drawn: a venue's library can be hundreds of sketched drinks. */}
-      <FlatList
-        data={drinks}
+      {/* Only the rows in view are drawn: a library can be hundreds of sketched drinks. */}
+      <SectionList
+        sections={groupLibrary(drinks, canMake, query)}
+        stickySectionHeadersEnabled={false}
+        renderSectionHeader={({ section: g }) => <LibraryGroupHead title={g.title} />}
         keyExtractor={(d) => d.id}
         extraData={section}
         renderScrollComponent={(p) => <SheetScrollView {...p} />}
@@ -141,6 +155,7 @@ export function AddDrinkSheet({ section, barId, onClose, library, elsewhere, onA
 
 const styles = StyleSheet.create({
   head: { gap: space.md },
+  groupHead: { paddingTop: space.lg, paddingBottom: space.xs },
   filters: { flexDirection: 'row', flexWrap: 'wrap', gap: space.sm },
   row: { flexDirection: 'row', alignItems: 'center', gap: space.md, paddingVertical: space.sm, borderBottomWidth: StyleSheet.hairlineWidth },
   thumb: { width: 48 },

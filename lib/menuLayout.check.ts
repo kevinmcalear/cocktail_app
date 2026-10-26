@@ -14,6 +14,7 @@ import {
   cannotAdd,
   copySections,
   filterLibrary,
+  groupLibrary,
   libraryNote,
   layoutChanged,
   layoutFromMenu,
@@ -109,6 +110,27 @@ const section = { name: 'Stirred', drinks: [drink('Martini')] };
 assert.equal(libraryNote({ id: 'Martini' }, section, elsewhere), 'Already in Stirred');
 assert.equal(libraryNote({ id: 'Champ Stamp' }, section, elsewhere), 'On Autumn menu');
 assert.equal(libraryNote({ id: 'Bolo Tie' }, section, elsewhere), 'Not on another menu');
+
+// Before a search, yours, then what the shelf makes, then Popular in list order, then A to Z (Q12).
+{
+  const d = (name: string, mine?: boolean): MenuDrink => ({ ...drink(name), mine });
+  const groups = groupLibrary(
+    [d('Twelve Mile Limit'), d('Illegal'), d('Negroni'), d('Margarita'), d('Bolo Tie', true), d('Abbey'), d('Gimlet'), d('Martini', true)],
+    ['Gimlet', 'Abbey']
+  );
+  assert.deepEqual(
+    groups.map((g) => [g.title, names(g.data)]),
+    [
+      ['From your collection', ['Bolo Tie', 'Martini']],
+      ['You can make these', ['Abbey', 'Gimlet']],
+      ['Popular', ['Margarita', 'Negroni']],
+      ['A to Z', ['Illegal', 'Twelve Mile Limit']],
+    ]
+  );
+  assert.deepEqual(groupLibrary([d('Illegal')], []).map((g) => g.title), ['A to Z'], 'empty groups are left out');
+  assert.deepEqual(groupLibrary([d('Negroni'), d('Abbey')], [], 'n').map((g) => [g.title, names(g.data)]), [['', ['Negroni', 'Abbey']]], 'a search keeps its order, untitled');
+  assert.deepEqual(groupLibrary([], [], 'zzz'), [], 'no matches, no sections');
+}
 
 console.log('menuLayout: ok');
 

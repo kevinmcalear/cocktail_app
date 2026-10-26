@@ -1,4 +1,6 @@
+import { byName } from '@/lib/allRows';
 import { nearest } from '@/lib/nearName';
+import { POPULAR_DRINKS } from '@/lib/popularDrinks';
 import type { SectionDrinkType } from '@/lib/sectionAllowedTypes';
 import type { MenuDetail, MenuDrink } from '@/types/menus';
 
@@ -229,6 +231,43 @@ export function filterLibrary(library: MenuDrink[], section: Pick<EditSection, '
   return library.filter(
     (d) => section.allowedTypes.includes(d.kind) && (!q || d.name.toLowerCase().includes(q)) && (!freeOnly || !elsewhere[d.id])
   );
+}
+
+export interface LibraryGroup {
+  title: string;
+  data: MenuDrink[];
+}
+
+const POPULAR_RANK = new Map(POPULAR_DRINKS.map((name, i) => [name.toLowerCase(), i]));
+
+/**
+ * The add-drink list before anything is typed (Q12, 26 Oct 2026): yours (made
+ * or collected; a venue's library marks none), then what your shelf makes,
+ * then the popular classics in lib/popularDrinks order, then the rest A to Z.
+ * Each drink shows once, in the first group it fits; empty groups are left
+ * out (a SectionList shows its empty text only with no sections). A search
+ * lists every match in one untitled group.
+ */
+export function groupLibrary(drinks: MenuDrink[], canMake: readonly string[], query = ''): LibraryGroup[] {
+  if (query.trim()) return drinks.length ? [{ title: '', data: drinks }] : [];
+  const makes = new Set(canMake);
+  const mine: MenuDrink[] = [];
+  const make: MenuDrink[] = [];
+  const popular: MenuDrink[] = [];
+  const rest: MenuDrink[] = [];
+  for (const d of drinks) {
+    if (d.mine) mine.push(d);
+    else if (makes.has(d.id)) make.push(d);
+    else if (POPULAR_RANK.has(d.name.trim().toLowerCase())) popular.push(d);
+    else rest.push(d);
+  }
+  const rank = (d: MenuDrink) => POPULAR_RANK.get(d.name.trim().toLowerCase()) ?? 0;
+  return [
+    { title: 'From your collection', data: mine },
+    { title: 'You can make these', data: make.sort(byName) },
+    { title: 'Popular', data: popular.sort((a, b) => rank(a) - rank(b) || byName(a, b)) },
+    { title: 'A to Z', data: rest.sort(byName) },
+  ].filter((g) => g.data.length);
 }
 
 /** What a library row says about a drink: in this section, on another menu, or free. */

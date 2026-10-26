@@ -19,6 +19,7 @@ jest.mock('@/hooks/useMenuMutations', () => ({
   usePickMenuCover: () => ({ isPending: false, mutateAsync: mockPickCover }),
 }));
 jest.mock('@/hooks/useMenus', () => ({ useVenueMenus: () => ({ data: [] }) }));
+jest.mock('@/hooks/useHomeBar', () => ({ useBarDrinks: () => ({ canMake: [] }) }));
 const mockSavePrices = jest.fn(async (_prices: Record<string, string | null>) => {});
 jest.mock('@/hooks/useDrinkCost', () => ({ useSetDrinkPrices: () => ({ isPending: false, mutateAsync: mockSavePrices }) }));
 jest.mock('expo-router', () => ({ useRouter: () => ({ back: jest.fn(), replace: jest.fn(), canGoBack: () => true }) }));

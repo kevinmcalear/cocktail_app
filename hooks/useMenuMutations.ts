@@ -7,6 +7,7 @@ import { dropdownKeys } from '@/hooks/useDropdowns';
 import { MENU_DRINK_COLUMNS, menuKeys, publishedMenuDrink, toMenuDrink, type MenuItemRow } from '@/hooks/useMenus';
 import { fetchPublished } from '@/hooks/usePublished';
 import { fetchShareSlug, shareSlugKey } from '@/hooks/useShareSlug';
+import { allRows } from '@/lib/allRows';
 import { savePayload, type EditSection, type MenuLayout } from '@/lib/menuLayout';
 import { normalizeAllowedTypes } from '@/lib/sectionAllowedTypes';
 import { uriToBase64 } from '@/lib/imageBase64';
@@ -275,9 +276,10 @@ export function useMenuLayouts() {
 }
 
 /**
- * The drinks a menu can use: the venue's cocktails, beer and wine (or, for a
- * menu with no venue, the drinks you collected from bars, then yours and the
- * shared classics), newest first.
+ * The drinks a menu can use: the venue's cocktails, beer and wine, newest
+ * first (or, for a menu with no venue, the drinks you collected from bars and
+ * yours, marked `mine`, then the shared classics A to Z). Every page of each,
+ * so no cap drops the classics (Q12, 26 Oct 2026).
  */
 export function useMenuLibrary(barId: string | null | undefined, enabled = true) {
   const userId = useUserId();
@@ -286,26 +288,28 @@ export function useMenuLibrary(barId: string | null | undefined, enabled = true)
     enabled: enabled && !!userId,
     staleTime: 60_000,
     queryFn: async (): Promise<MenuDrink[]> => {
-      // ponytail: one page of up to 500 drinks. A venue's list is a few
-      // hundred at most; move to search-as-you-type if one outgrows it.
-      const query = supabase
-        .from('items')
-        .select(MENU_DRINK_COLUMNS)
-        .in('item_type', ['cocktail', 'beer', 'wine'])
-        .order('created_at', { ascending: false })
-        .limit(500);
-      const { data, error } = barId
-        ? await query.eq('bar_id', barId)
-        : await query.is('bar_id', null).or(`created_by.eq.${userId},is_catalog.eq.true`);
-      if (error) throw error;
-      const own = ((data ?? []) as unknown as MenuItemRow[]).map((row) => toMenuDrink(row)).filter((d): d is MenuDrink => !!d);
-      if (barId) return own;
-      // At home, the drinks you collected from bars too, while they're published.
-      const collected = await supabase.from('collected_items').select('item_id').not('item_id', 'is', null).order('collected_at', { ascending: false });
+      const drinks = () => supabase.from('items').select(MENU_DRINK_COLUMNS).in('item_type', ['cocktail', 'beer', 'wine']);
+      const toDrinks = (rows: unknown[]) => (rows as MenuItemRow[]).map((row) => toMenuDrink(row)).filter((d): d is MenuDrink => !!d);
+      if (barId) {
+        return toDrinks(await allRows((from, to) => drinks().eq('bar_id', barId).order('created_at', { ascending: false }).order('id').range(from, to)));
+      }
+      const [ownRows, catalogRows, collected] = await Promise.all([
+        allRows((from, to) => drinks().is('bar_id', null).eq('created_by', userId!).order('created_at', { ascending: false }).order('id').range(from, to)),
+        allRows((from, to) => drinks().is('bar_id', null).eq('is_catalog', true).order('name').order('id').range(from, to)),
+        supabase.from('collected_items').select('item_id').not('item_id', 'is', null).order('collected_at', { ascending: false }),
+      ]);
       if (collected.error) throw collected.error;
-      const ids = collected.data.map((c) => c.item_id as string).filter((id) => !own.some((d) => d.id === id));
-      const fromBars = (await fetchPublished(ids)).map(publishedMenuDrink).filter((d): d is MenuDrink => !!d);
-      return [...fromBars, ...own];
+      const collectedIds = new Set(collected.data.map((c) => c.item_id as string));
+      const own = toDrinks(ownRows).map((d) => ({ ...d, mine: true }));
+      const have = new Set(own.map((d) => d.id));
+      const catalog = toDrinks(catalogRows)
+        .filter((d) => !have.has(d.id))
+        .map((d) => (collectedIds.has(d.id) ? { ...d, mine: true } : d));
+      for (const d of catalog) have.add(d.id);
+      // At home, the drinks you collected from bars too, while they're published.
+      const ids = [...collectedIds].filter((id) => !have.has(id));
+      const fromBars = (await fetchPublished(ids)).map(publishedMenuDrink).filter((d): d is MenuDrink => !!d).map((d) => ({ ...d, mine: true }));
+      return [...fromBars, ...own, ...catalog];
     },
   });
 }

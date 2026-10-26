@@ -275,9 +275,10 @@ async function readItems(ids: string[], select = ITEM_SELECT): Promise<ItemRow[]
 }
 
 /** What the shelf makes, and what one or two more bottles would unlock, worked out on the server (my_bar_drinks). */
-function useMatches() {
+function useMatches(enabled = true) {
   return useQuery({
     queryKey: [...SHELF_KEY, 'matches', 2],
+    enabled,
     queryFn: async (): Promise<MatchRow[]> => {
       const rows: MatchRow[] = [];
       for (;;) {
@@ -429,9 +430,10 @@ export function useFinishBottle() {
 /**
  * What the shelf makes and what one or two more bottles would unlock,
  * without the shelf's own names: all the eight ball needs, so it never waits on them.
+ * `enabled` false skips the fetch (a venue's menu has no home shelf).
  */
-export function useBarDrinks() {
-  const matches = useMatches();
+export function useBarDrinks(enabled = true) {
+  const matches = useMatches(enabled);
   const glass = useGlassIcons();
   return useMemo(() => {
     const drink = (r: MatchRow): BarItem => ({
