@@ -63,9 +63,10 @@ export function DeleteVenueSection({ barId, name }: { barId: string; name: strin
  * At the top of every venue screen for the 7 days, for the whole team, and
  * it can't be dismissed (E53): who asked and the day. Admins get Undo and
  * What goes; everyone else is told to ask an Admin. In ScreenHeader, so every
- * venue tab has it.
+ * venue tab has it, and on venue tools with their own head (Back bar), `inline`
+ * inside their column.
  */
-export function VenueDeleteBanner() {
+export function VenueDeleteBanner({ inline }: { inline?: boolean }) {
   const gutter = useGutter();
   const meId = useUserId();
   const { mode } = useMode();
@@ -82,7 +83,7 @@ export function VenueDeleteBanner() {
   const day = deleteDay(request.deletes_at);
 
   return (
-    <View style={{ paddingHorizontal: gutter, paddingTop: space.md }}>
+    <View style={inline ? null : { paddingHorizontal: gutter, paddingTop: space.md }}>
       <View role="alert" style={[styles.banner, { backgroundColor: withAlpha(STATUS.danger, 0.1), borderColor: withAlpha(STATUS.danger, 0.45) }]}>
         <View style={styles.line}>
           <IconSymbol name="exclamationmark.triangle" size={18} color={STATUS.danger} style={styles.icon} />
