@@ -19,7 +19,8 @@
 --    has no maker; its story says the credit is for print only.
 -- 3. House specs (proportions are facts), from the earliest printing; gone
 --    products take today's nearest (Kina Lillet and Caperitif as Lillet
---    Blanc). Every ingredient is one we have.
+--    Blanc). Every ingredient is one production has; a name a stack lacks
+--    is added as a plain ingredient.
 -- 4. True other names (Allies Martini, Betty Ross, Bermudiana Rose, Sputnek,
 --    Fairbanks No. 2...) go in classic_aliases with a source, and Turf Club
 --    becomes another name for the Turf.
@@ -129,7 +130,7 @@ Method: Shake hard with ice and strain into a chilled coupe.', 'Coupe', NULL, 'S
     ('vanilla-punch', 'Vanilla Punch', 1862, false, 'sour', 'style', 'punch', 'A single brandy punch scented with vanilla', NULL, NULL, 'https://archive.org/details/bub_gb_iBoZAAAAYAAJ', 'A single-serve brandy punch of sugar and lemon over shaved ice, scented with vanilla.', 'Jerry Thomas included it among the punches in his 1862 bar guide, How to Mix Drinks. It is a brandy, sugar and lemon punch shaken over shaved ice and finished with a few drops of vanilla extract, and Thomas advised sipping it through a straw. The credit is for print only.
 
 Method: Shake the brandy, syrup and lemon with ice, pour into a rocks glass filled with crushed ice, add the vanilla and a lemon slice and serve with a straw.', 'Rocks', 'Crushed', 'Shake', 'Classic'),
-    ('kitty-highball', 'Kitty Highball', 1941, false, 'highball', 'style', 'highball', 'Red wine and ginger ale', NULL, NULL, 'https://punchdrink.com/articles/throw-some-ice-in-your-red-wine-cocktail-recipe/', 'A light highball of red wine and ginger ale over ice.', 'W. C. Whitfield printed this two-ingredient highball in his 1941 book Here''s How, next to a gin and orange juice Bull Dog Highball. It is simply red wine stretched with ginger ale over ice, which keeps it low in alcohol. The credit is for print only.
+    ('kitty-highball', 'Kitty Highball', 1941, false, 'highball', 'style', 'highball', 'Red wine and ginger ale', NULL, NULL, 'https://punchdrink.com/articles/throw-some-ice-in-your-red-wine-cocktail-recipe/', 'A light highball of red wine and ginger ale over ice.', 'A two-ingredient highball from W. C. Whitfield''s 1941 book Here''s How, as later accounts of the book describe it. It is simply red wine stretched with ginger ale over ice, which keeps it low in alcohol. The credit is for print only.
 
 Method: Build the wine over ice in a highball glass, top with ginger ale and stir gently.', 'Highball', 'Cubes', 'Build', 'Classic'),
     ('archangel', 'Archangel', 2006, false, 'martini', 'tree', 'Martini', 'Aperol and muddled cucumber', NULL, NULL, 'https://umamimart.com/blogs/main/the-pdt-project-archangel', 'A stirred, pink, spirit-forward gin drink with Aperol and muddled cucumber.', 'Two Milk & Honey bartenders, Michael McIlroy and Richard Boccato, came up with it in 2006. The name grew out of a bar-side chat about the footballer Gabriel Batistuta, which led them to the Archangel Gabriel. It is often described as a take on Pink Gin and later appeared in the PDT cocktail book.
