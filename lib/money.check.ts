@@ -1,7 +1,7 @@
 // Checks for lib/money.ts. Run: npm run test:unit
 import assert from 'node:assert/strict';
 
-import { currencyFor, formatAmount, formatMoney, isCurrencyCode, minorPerMajor, moneyFieldValue, parseMoney, priceMinor, priceText } from './money';
+import { currencyChoices, currencyFor, currencyLabel, formatAmount, formatMoney, isCurrencyCode, minorPerMajor, moneyFieldValue, parseMoney, priceMinor, priceText } from './money';
 
 assert.ok(isCurrencyCode('GBP') && !isCurrencyCode('gbp') && !isCurrencyCode('') && !isCurrencyCode(null));
 assert.equal(minorPerMajor('GBP'), 100);
@@ -54,6 +54,13 @@ assert.equal(currencyFor({ set: null, country: null }), null);
 assert.equal(currencyFor({ device: 'NZD' }), 'NZD');
 assert.equal(currencyFor({ set: null, country: 'US', device: 'EUR' }), 'USD');
 assert.equal(currencyFor({ device: 'nzd' }), null);
+
+assert.equal(currencyLabel('AUD'), 'Australian dollar, AUD');
+assert.equal(currencyLabel('THB'), 'THB');
+assert.deepEqual(currencyChoices('AUD').slice(0, 3), ['AUD', 'GBP', 'EUR']);
+assert.equal(currencyChoices('AUD').length, 8);
+assert.deepEqual(currencyChoices('NZD').slice(0, 2), ['NZD', 'GBP']);
+assert.equal(currencyChoices(null)[0], 'GBP');
 assert.equal(formatAmount(1250, null), '12.50');
 assert.match(formatAmount(1250, 'AUD'), /12\.50/);
 

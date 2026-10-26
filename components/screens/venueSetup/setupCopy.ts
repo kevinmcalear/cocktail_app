@@ -15,7 +15,7 @@ export function setupCopy(screen: VenueScreen, bar: string, claim: ClaimState = 
     case 'look':
       return { title: `Make it look like ${bar}`, intro: 'Your logo, colour and font on every phone and screen at the bar. Change any of it later in Brand.' };
     case 'visibility':
-      return { title: 'Who sees your page', intro: `Choose what people who don’t work at ${bar} can see. Your team can always see everything.` };
+      return { title: 'Who sees what', intro: `Outside ${bar}, your page. Inside, what each role can do.` };
     case 'team':
       return { title: 'Invite your team', intro: `Each person gets an email from ${bar} and lands in the app with your menus and specs already there.` };
     case 'done':

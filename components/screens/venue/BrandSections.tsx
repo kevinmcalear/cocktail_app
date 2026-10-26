@@ -111,8 +111,8 @@ const FACE_SAMPLE: Record<DisplayFace, { italic?: boolean; scale?: number }> = {
 };
 
 /** The display faces side by side, each a card with the venue's name set large in it; the picked one is ringed in ink with a tick. */
-/** `setup`: venue setup's Look step (canvas make-venue-look), which draws the same cards. */
-export function FaceChoices({ name, value, onChange, setup }: { name: string; value: DisplayFace; onChange: (face: DisplayFace) => void; setup?: boolean }) {
+/** `setup`: venue setup's Look step (canvas make-venue-look), which draws the same cards; `list`: one a row, its phone pager (E34). */
+export function FaceChoices({ name, value, onChange, setup, list }: { name: string; value: DisplayFace; onChange: (face: DisplayFace) => void; setup?: boolean; list?: boolean }) {
   const ds = useDs();
   // The picker shows every face, so it fetches the ones that load on demand.
   const family = useDisplayFaces(FACES);
@@ -128,7 +128,7 @@ export function FaceChoices({ name, value, onChange, setup }: { name: string; va
             aria-checked={selected}
             accessibilityLabel={displayFaces[face].label}
             onPress={() => onChange(face)}
-            style={[styles.face, { borderColor: selected ? ds.c.ink : ds.c.line, borderWidth: selected ? 2 : 1, backgroundColor: ds.c.ground }]}
+            style={[styles.face, list && styles.faceRow, { borderColor: selected ? ds.c.ink : ds.c.line, borderWidth: selected ? 2 : 1, backgroundColor: ds.c.ground }]}
           >
             {selected ? (
               <View style={styles.tick}>
@@ -163,6 +163,7 @@ const styles = StyleSheet.create({
   compareLogo: { width: COMPARE - space.lg, height: COMPARE - space.lg },
   faces: { flexDirection: 'row', flexWrap: 'wrap', gap: space.sm, paddingVertical: space.md },
   face: { flexGrow: 1, flexShrink: 1, flexBasis: 160, minWidth: 0, gap: space.sm, padding: space.lg, borderRadius: radius.control + 4, borderCurve: 'continuous' },
+  faceRow: { flexBasis: '100%' },
   tick: { position: 'absolute', top: space.md, right: space.md },
   sample: { fontSize: type.headline.fontSize * 1.6, lineHeight: 36, paddingRight: space.lg },
   bare: { paddingVertical: 0 },

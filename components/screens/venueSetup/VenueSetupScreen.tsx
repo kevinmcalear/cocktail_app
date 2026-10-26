@@ -5,6 +5,7 @@ import { Body, BrandProvider, Caption } from '@/components/ds';
 import { SetupChromeProvider, SetupFooter, SetupPage } from '@/components/screens/onboarding/SetupPage';
 import { BrandSetup } from '@/components/screens/venue/BrandScreen';
 import { useIsWideWeb } from '@/hooks/useIsWideWeb';
+import { useSetBarCurrency } from '@/hooks/usePricing';
 import { useProfile } from '@/hooks/useProfiles';
 import { useVenueBrand } from '@/hooks/useVenueBrand';
 import type { ProfileClaim } from '@/hooks/useProfiles';
@@ -16,6 +17,7 @@ import { useVenueSetup } from '@/store/useVenueSetup';
 
 import { DoneMark, DoneStep } from './DoneStep';
 import { FindBarStep } from './FindBarStep';
+import { StepFooter } from './GlassesStep';
 import { SetupClaimStep } from './SetupClaimStep';
 import { SetupIntro } from './SetupIntro';
 import { SetupRail } from './SetupRail';
@@ -86,6 +88,7 @@ export function VenueSetupScreen() {
   const brand = useVenueBrand(barId ?? '').data ?? null;
   const logo = brand?.logo_url ?? null;
   const createVenue = useCreateSetupVenue();
+  const saveCurrency = useSetBarCurrency();
   const pushHeld = usePushHeldSetup();
   const enterVenue = useAppMode((s) => s.enterVenue);
   const name = profile?.display_name ?? run?.name ?? '';
@@ -132,7 +135,8 @@ export function VenueSetupScreen() {
   const branded = !!brand && BRANDED.includes(screen);
   const chrome = {
     title: copy.title,
-    intro: copy.intro,
+    // On a phone How it looks goes straight to its pinned preview (E34).
+    intro: screen === 'look' && !wide ? undefined : copy.intro,
     eyebrow: screen === 'intro' ? 'For bars and venues' : screen === 'find' || screen === 'done' ? null : name || null,
     eyebrowTone: branded ? ('accent' as const) : ('muted' as const),
     topLabel: screen === 'intro' ? 'Venue setup' : undefined,
@@ -193,23 +197,38 @@ export function VenueSetupScreen() {
         // The venue is made here, with them as its Admin (the role step's one line), so the steps after it have one.
         <WhereWhenStep
           profileId={page?.id ?? profileId}
+          barId={barId}
           name={name || 'your bar'}
           claim={claim}
           writable={writable}
           held={run?.held}
           onHold={(c) => hold(keyRef.current, c)}
-          venueError={createVenue.error?.message ?? null}
-          making={createVenue.isPending}
-          onDone={needVenue(() => finish('place'))}
+          venueError={(createVenue.error ?? saveCurrency.error)?.message ?? null}
+          making={createVenue.isPending || saveCurrency.isPending}
+          onDone={(currency) =>
+            void ensureVenue()
+              .then((id) => (currency ? saveCurrency.mutateAsync({ barId: id, currency }) : undefined))
+              .then(() => finish('place'), () => {})
+          }
         />
       ) : null}
       {screen === 'look' && barId ? (
         <BrandSetup
           barId={barId}
           setup={{
-            footer: ({ save: saveBrand, saving, ok }) => (
-              <SetupFooter pending={saving} disabled={!ok} onPress={() => saveBrand(() => finish('look'))} onSkip={() => setScreen('visibility')} />
-            ),
+            // A phone walks Logo, Colour, Font and Ground tint (E34): Next until the last, Back after the first.
+            footer: ({ save: saveBrand, saving, ok, page }) =>
+              page ? (
+                <StepFooter
+                  skip={page.at === 0 ? 'Not now' : 'Back'}
+                  onSkip={page.at === 0 ? () => setScreen('visibility') : page.onBack}
+                  label={page.next ? `Next: ${page.next}` : saving ? 'Saving…' : 'Continue'}
+                  onPress={page.next ? page.onNext : () => saveBrand(() => finish('look'))}
+                  disabled={!page.next && (!ok || saving)}
+                />
+              ) : (
+                <SetupFooter pending={saving} disabled={!ok} onPress={() => saveBrand(() => finish('look'))} onSkip={() => setScreen('visibility')} />
+              ),
           }}
         />
       ) : null}
