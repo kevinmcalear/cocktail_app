@@ -58,11 +58,12 @@ before(async () => {
   ids.secret = (await insert('items', { name: `Owner Zephyrine Bitters ${run}`, item_type: 'ingredient', bar_id: ids.bar, generic_id: ids.kind, override_visibility_level: 40 })).id;
   ids.otherOwn = (await insert('items', { name: `Other Zephyrine Bitters ${run}`, item_type: 'ingredient', bar_id: ids.otherBar, generic_id: ids.kind })).id;
   await insert('ingredient_aliases', { key: `zephyr bitters ${run}`, item_id: ids.shared });
+  ids.drink = (await insert('items', { name: `Zephyrine Sour ${run}`, item_type: 'cocktail' })).id;
 });
 
 after(async () => {
   await service.from('ingredient_aliases').delete().eq('item_id', ids.shared);
-  for (const id of [ids.otherOwn, ids.secret, ids.own, ids.shared, ids.kind]) if (id) await service.from('items').delete().eq('id', id);
+  for (const id of [ids.drink, ids.otherOwn, ids.secret, ids.own, ids.shared, ids.kind]) if (id) await service.from('items').delete().eq('id', id);
   for (const id of [ids.bar, ids.otherBar]) if (id) await service.from('bars').delete().eq('id', id);
   for (const u of Object.values(users)) await service.auth.admin.deleteUser(u.id);
   await db.end();
@@ -137,9 +138,19 @@ describe('match_ingredients', () => {
       'n° 3 gin': 'no 3 gin',
       'Yellow Chartreuse 12-year-old': 'yellow chartreuse 12yo',
     };
-    const { rows } = await db.query('SELECT x, private.match_key(x) AS key, private.match_words(x) AS words FROM unnest($1::text[]) x', [Object.keys(want)]);
+    const { rows } = await db.query('SELECT x, public.match_key(x) AS key, public.match_words(x) AS words FROM unnest($1::text[]) x', [Object.keys(want)]);
     for (const r of rows) assert.equal(r.key, want[r.x], r.x);
     assert.deepEqual(rows.find((r) => r.x === 'Crème de Cassis & Co').words, ['creme', 'cassis', 'co']);
+  });
+
+  test('signed out, drink pages still read (planning on items inlines the key functions as anon)', async () => {
+    // A planner error, not a row count: anon sees no items of its own, and every read below plans on items.
+    for (const [view, columns] of [['published_items', 'id, name'], ['app_recipe_presentation', 'id, recipe_item_id']]) {
+      const { error } = await anon.from(view).select(columns).limit(5);
+      assert.ifError(error);
+    }
+    const { error } = await anon.from('published_items').select('id').eq('id', ids.drink);
+    assert.ifError(error);
   });
 
   test('the service role still writes ingredients (the indexes run the key functions as the writer)', async () => {
@@ -151,7 +162,7 @@ describe('match_ingredients', () => {
   test('app roles can run the key functions, so they inline and the indexes are used whoever plans first', async () => {
     for (const fn of ['match_fold', 'match_key', 'match_words']) {
       for (const role of ['anon', 'authenticated', 'service_role']) {
-        const { rows } = await db.query(`SELECT has_function_privilege($1, $2, 'execute') AS ok`, [role, `private.${fn}(text)`]);
+        const { rows } = await db.query(`SELECT has_function_privilege($1, $2, 'execute') AS ok`, [role, `public.${fn}(text)`]);
         assert.ok(rows[0].ok, `${role} on ${fn}`);
       }
     }
