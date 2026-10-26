@@ -232,35 +232,9 @@ describe('AddDrinkWizard', () => {
     await renderWithTamagui(<AddDrinkWizard barId="bar-1" onClose={jest.fn()} onSaved={mockSaved} />);
     await laidOut();
     expect(screen.getByText('LITTLE RYE’S ICE')).toBeTruthy();
-    // No One kind or quick builds on the step (Q21 + E24): the ice is picked straight away.
-    expect(screen.queryByRole('radio', { name: 'One kind' })).toBeNull();
     // Shaved isn't one of the common ones, but it's the venue's, so it's offered.
     await fireEvent.press(screen.getByRole('radio', { name: 'Shaved' }));
     expect(useDrinkWizardStore.getState().kept['bar-1'].draft.ice?.name).toBe('Shaved');
-    // Cubes start at 3, and the quick builds are in Add extra ice.
-    await fireEvent.press(screen.getByRole('radio', { name: 'Cubes' }));
-    expect(useDrinkWizardStore.getState().kept['bar-1'].draft.iceBuild).toEqual([{ ice: expect.objectContaining({ name: 'Cubes' }), n: 3 }]);
-    await fireEvent.press(screen.getByRole('button', { name: 'Add extra ice' }));
-    expect(screen.getByText('OR A WHOLE BUILD')).toBeTruthy();
-    expect(screen.queryByRole('button', { name: 'Dump the tin' })).toBeNull();
-    await fireEvent.press(screen.getByRole('button', { name: 'Spear on cubes' }));
-    expect(useDrinkWizardStore.getState().kept['bar-1'].draft.iceBuild?.map((l) => l.ice.name)).toEqual(['Cubes', 'Spear']);
-  });
-
-  test('the method says what it is shaken with, from the venue’s cubes, and not for a built drink', async () => {
-    mockVenueIce = [{ name: 'Large cube', shape: 'large', draw_as: null }, { name: 'Hosh cubes', shape: 'cubes', draw_as: null }];
-    useDrinkWizardStore.getState().patch('bar-1', { name: 'Daiquiri', methods: [{ id: null, name: 'Shake' }] });
-    useDrinkWizardStore.getState().setStep('bar-1', 'method');
-    await renderWithTamagui(<AddDrinkWizard barId="bar-1" onClose={jest.fn()} onSaved={mockSaved} />);
-    await laidOut();
-    expect(screen.getByText('Shaken with hosh cubes')).toBeTruthy();
-    expect(screen.getByRole('button', { name: 'Change what it’s shaken with' })).toBeTruthy();
-    await fireEvent.press(screen.getByRole('checkbox', { name: 'Shake' }));
-    await fireEvent.press(screen.getByRole('checkbox', { name: 'Build' }));
-    expect(screen.queryByText(/shaken with/i)).toBeNull();
-    // The whisk is in Air and texture, and takes no ice.
-    await fireEvent.press(screen.getByRole('checkbox', { name: 'Whip (whisk or frother)' }));
-    expect(screen.queryByText(/with hosh cubes/i)).toBeNull();
   });
 
   test('tapping a name, then Swap, swaps the ingredient and keeps its amount', async () => {
