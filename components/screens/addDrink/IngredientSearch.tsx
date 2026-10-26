@@ -61,6 +61,8 @@ export interface IngredientSearchProps {
   onLater?: (name: string, pour?: TypedPour) => void;
   /** A name that sounds made (an oil, a cordial) offers making it before any bottle. `ownVersion` off: Make only for a new name (make-recipe can't save a second one by a name). */
   makeFirst?: boolean;
+  /** A new name is added as it's typed, over making it in house: a garnish ("Lime leaf") is picked or bought, not made. A name that sounds made still leads with Make (makeFirst). */
+  nameFirst?: boolean;
   ownVersion?: boolean;
   /** Under each found ingredient: "On your shelf" (these ids), else "In 14 drinks". Off by default (it asks the server). */
   captions?: boolean;
@@ -82,7 +84,7 @@ export interface IngredientSearchProps {
  * and steps into the house prep steps. Return takes the top hit; it adds nothing new while it asks.
  */
 export function IngredientSearch(props: IngredientSearchProps) {
-  const { ingredients, aliases = [], coreIds, loading, onPick, label, placeholder, amounts, autoFocus, onCancel, onTyping, allowNew = true, onMake, onBottle, onLater, makeFirst, captions, shelf, backBar, brands, onHouse, ownVersion = true } = props;
+  const { ingredients, aliases = [], coreIds, loading, onPick, label, placeholder, amounts, autoFocus, onCancel, onTyping, allowNew = true, onMake, onBottle, onLater, makeFirst, nameFirst, captions, shelf, backBar, brands, onHouse, ownVersion = true } = props;
   const ds = useDs();
   const [text, setQueryState] = useState('');
   // The whole pill rings in the accent while it has focus (no browser focus box inside it).
@@ -140,8 +142,8 @@ export function IngredientSearch(props: IngredientSearchProps) {
   const later = !!onLater && prepLike;
   const newRow = (
     <ResultRow
-      label="Just add the name"
-      a11y={`Just add the name “${q}”`}
+      label={nameFirst ? `Add “${Name}”` : 'Just add the name'}
+      a11y={nameFirst ? `Add “${Name}”` : `Just add the name “${q}”`}
       sub={later ? 'Write the recipe later. We’ll remind you.' : 'Added as new when you save.'}
       icon="new"
       onPress={() => {
@@ -227,9 +229,7 @@ export function IngredientSearch(props: IngredientSearchProps) {
               Nothing called that yet. Closest:
             </Caption>
           ) : !results.length && !near.length && !exact && !loading && allowNew ? (
-            <Caption tone="muted" style={styles.label}>
-              No bottle by that name.
-            </Caption>
+            <Caption tone="muted" style={styles.label}>{nameFirst ? 'Nothing by that name yet.' : 'No bottle by that name.'}</Caption>
           ) : null}
           {closest.map((r) => found(r))}
           {lead ? makeRow : null}
@@ -242,10 +242,8 @@ export function IngredientSearch(props: IngredientSearchProps) {
             makeRow
           ) : (
             <NearPicks found={listed.length > 0} near={near} render={(r) => found(r, undefined, true)} labelStyle={styles.label}>
-              {/* Making it in house, under the bottles that match, then a bottle you buy, then the name alone (make-anything-steps-1, step 3). */}
-              {allowNew && !lead ? makeRow : null}
-              {allowNew ? bottleRow : null}
-              {allowNew ? newRow : null}
+              {/* Making it in house, under the bottles that match, then a bottle you buy, then the name alone (make-anything-steps-1, step 3); nameFirst puts the name on top. */}
+              {allowNew ? <>{nameFirst ? newRow : null}{lead ? null : makeRow}{bottleRow}{nameFirst ? null : newRow}</> : null}
             </NearPicks>
           )}
         </View>
