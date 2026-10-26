@@ -30,14 +30,16 @@ CREATE FUNCTION "private"."ice_look"("p_ice" "public"."item_ice") RETURNS "jsonb
 $$;
 
 -- The look of the ice a drink is drawn with: the ice item itself when it's
--- one of the venue's, else the venue's first ice in the glass of that kind
--- (by the order Kit lists them). Null when the venue has none or it says nothing.
+-- one of this venue's and drawn as that kind (never a block or slab, which
+-- aren't drawn), else the venue's first ice in the glass of that kind (by the
+-- order Kit lists them). Null when the venue has none or it says nothing.
 CREATE FUNCTION "private"."drawn_ice_look"("p_ice_item" "uuid", "p_bar" "uuid", "p_kind" "text") RETURNS "jsonb"
     LANGUAGE "sql" STABLE SECURITY DEFINER
     SET "search_path" TO ''
     AS $$
   SELECT coalesce(
-    (SELECT private.ice_look(x) FROM public.item_ice x WHERE x.item_id = p_ice_item),
+    (SELECT private.ice_look(x) FROM public.item_ice x
+      WHERE x.item_id = p_ice_item AND x.bar_id = p_bar AND coalesce(x.draw_as, x.shape) = p_kind),
     (SELECT private.ice_look(x)
        FROM public.item_ice x
        JOIN public.items i ON i.id = x.item_id
@@ -58,8 +60,8 @@ CREATE FUNCTION "private"."valid_ice_look"("p" "jsonb", "p_also" "text"[]) RETUR
   SELECT jsonb_typeof(p) = 'object'
     AND NOT EXISTS (SELECT 1 FROM jsonb_object_keys(p) k
                     WHERE k <> ALL (p_also || ARRAY['mm', 'lengthMm', 'clear', 'stamp', 'inside']))
-    AND (NOT p ? 'mm' OR (jsonb_typeof(p -> 'mm') = 'number' AND (p ->> 'mm')::numeric BETWEEN 5 AND 120))
-    AND (NOT p ? 'lengthMm' OR (jsonb_typeof(p -> 'lengthMm') = 'number' AND (p ->> 'lengthMm')::numeric BETWEEN 20 AND 300))
+    AND (NOT p ? 'mm' OR CASE WHEN jsonb_typeof(p -> 'mm') = 'number' THEN (p ->> 'mm')::numeric BETWEEN 5 AND 120 ELSE false END)
+    AND (NOT p ? 'lengthMm' OR CASE WHEN jsonb_typeof(p -> 'lengthMm') = 'number' THEN (p ->> 'lengthMm')::numeric BETWEEN 20 AND 300 ELSE false END)
     AND (NOT p ? 'clear' OR jsonb_typeof(p -> 'clear') = 'boolean')
     AND (NOT p ? 'stamp' OR p -> 'stamp' = 'true'::jsonb)
     AND (NOT p ? 'inside' OR p -> 'inside' = 'true'::jsonb);
@@ -197,6 +199,11 @@ $$;
 CREATE TRIGGER "set_ice_look" BEFORE INSERT OR UPDATE OF "inputs" ON "public"."item_sketches"
     FOR EACH ROW EXECUTE FUNCTION "private"."item_sketches_set_ice_look"();
 
+-- A drink switching to another ice redraws it (refresh_ice_build does the work).
+CREATE TRIGGER "refresh_ice_look" AFTER UPDATE OF "ice_id" ON "public"."items"
+    FOR EACH ROW WHEN (OLD."ice_id" IS DISTINCT FROM NEW."ice_id")
+    EXECUTE FUNCTION "private"."refresh_ice_build"();
+
 -- --- A venue changing its ice's look redraws its drinks ---
 
 DROP TRIGGER "refresh_house_ice" ON "public"."item_ice";
@@ -228,8 +235,9 @@ REVOKE EXECUTE ON FUNCTION "private"."item_sketches_set_ice_look"() FROM PUBLIC,
 
 -- --- Redraw the drinks of venues that already list their ice ---
 
+WITH looks AS (SELECT DISTINCT x.bar_id FROM public.item_ice x WHERE private.ice_look(x) IS NOT NULL)
 UPDATE public.item_sketches s SET inputs = s.inputs
 FROM public.items i
 WHERE i.id = s.item_id
-  AND EXISTS (SELECT 1 FROM public.item_ice x
-              WHERE x.bar_id = private.item_kit_bar(i.id) AND private.ice_look(x) IS NOT NULL);
+  AND (i.bar_id IN (SELECT bar_id FROM looks)
+       OR i.origin_bar_profile_id IN (SELECT p.id FROM public.profiles p JOIN looks l ON l.bar_id = p.bar_id));

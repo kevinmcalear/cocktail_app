@@ -84,10 +84,9 @@ describe('the venue\'s ice look in its drawings', () => {
     assert.deepEqual((await sketch('rocks')).iceLook, { mm: 45, clear: true, stamp: true, inside: true });
   });
 
-  test('a drink naming one of the venue\'s ice gets that one, not the first of its kind', async () => {
+  test('a drink naming one of the venue\'s ice gets that one, redrawn when it switches', async () => {
     await ice('cloudy-large', 'large', { size: 60, clear: false });
     await db.query('UPDATE public.items SET ice_id = $1 WHERE id = $2', [ids['cloudy-large'], ids.rocks]);
-    await redraw('rocks');
     assert.deepEqual((await sketch('rocks')).iceLook, { mm: 60, clear: false });
     assert.deepEqual((await sketch('spec')).iceLook, { mm: 45, clear: true, stamp: true, inside: true }, 'the first large still draws the rest');
   });
