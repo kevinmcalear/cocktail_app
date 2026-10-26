@@ -85,6 +85,7 @@ export type Database = {
           supplier_id: string | null
           updated_at: string
           variant: string | null
+          wash_line_ml: number | null
         }
         Insert: {
           capacity_ml?: number | null
@@ -109,6 +110,7 @@ export type Database = {
           supplier_id?: string | null
           updated_at?: string
           variant?: string | null
+          wash_line_ml?: number | null
         }
         Update: {
           capacity_ml?: number | null
@@ -133,6 +135,7 @@ export type Database = {
           supplier_id?: string | null
           updated_at?: string
           variant?: string | null
+          wash_line_ml?: number | null
         }
         Relationships: [
           {
