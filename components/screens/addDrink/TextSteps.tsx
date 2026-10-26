@@ -1,4 +1,4 @@
-import { useState, type ComponentRef, type Ref } from 'react';
+import { useState, type ComponentProps, type ComponentRef, type Ref } from 'react';
 import { Platform, StyleSheet, TextInput, View } from 'react-native';
 
 import { Button, Caption, Field, useDs } from '@/components/ds';
@@ -58,7 +58,7 @@ export function NotesStep({ draft, set }: StepProps) {
   const mine = !!draft.notesPrivate;
   return (
     <View style={styles.stack}>
-      <Field
+      <NoteBox
         label="On the menu"
         hint="A line or two a guest reads."
         value={draft.description}
@@ -66,7 +66,7 @@ export function NotesStep({ draft, set }: StepProps) {
         minLines={2}
         maxLength={500}
       />
-      <Field
+      <NoteBox
         label="Notes"
         hint="Anything the next person to make it should know."
         value={draft.notes}
@@ -88,7 +88,21 @@ export function NotesStep({ draft, set }: StepProps) {
   );
 }
 
+/** A box with what it's for under its title, above the box (Eddie, 26 Oct: under the box it read as part of the next one). */
+function NoteBox({ label, hint, ...field }: ComponentProps<typeof Field> & { hint: string }) {
+  return (
+    <View style={styles.box}>
+      <View>
+        <Caption>{label}</Caption>
+        <Caption tone="muted">{hint}</Caption>
+      </View>
+      <Field label={label} hideLabel {...field} />
+    </View>
+  );
+}
+
 const styles = StyleSheet.create({
+  box: { gap: space.sm },
   stack: { gap: space.lg },
   section: { gap: space.md },
   chips: { flexDirection: 'row', flexWrap: 'wrap', gap: space.sm },

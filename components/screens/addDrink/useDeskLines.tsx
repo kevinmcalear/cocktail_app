@@ -33,6 +33,8 @@ interface DeskLinesArgs {
   currency: string;
   /** "Pommeau, adding" in the cost lines while its card is open (the desktop rail sits beside it). */
   adding?: boolean;
+  /** Who brings each line: off in the phone wizard (Eddie, 26 Oct: it's the run sheet's question, not the making's). */
+  whoBrings?: boolean;
 }
 
 /**
@@ -40,7 +42,7 @@ interface DeskLinesArgs {
  * chip that opens the pick under the line, board make-create-desktop step 7)
  * and what the pour costs; and the cost lines for the rail.
  */
-export function useDeskLines({ draft, set, barId, venueName, ingredients, coreIds, canBuy, canCost, currency, adding = true }: DeskLinesArgs) {
+export function useDeskLines({ draft, set, barId, venueName, ingredients, coreIds, canBuy, canCost, currency, adding = true, whoBrings = true }: DeskLinesArgs) {
   // A batch costs what one drink's own pours do.
   const costed = [...perDrinkLines(draft.lines), ...draft.garnishes];
   // A house prep being written costs from its parts, so their packs are read too (m08).
@@ -76,11 +78,12 @@ export function useDeskLines({ draft, set, barId, venueName, ingredients, coreId
   // What the pick ranks from: the venue's suppliers, what they bring, and the pages that list the bottle's maker here.
   const open = draft.lines.find((l) => l.key === openKey && (l.id || l.bottle)) ?? null;
   const openId = open?.id ?? null;
-  const suppliers = useVenueSuppliers(canBuy ? barId : null).data ?? [];
-  const bought = useVenueIngredients(open && canBuy ? barId : null).data ?? [];
-  const makers = useLineMakers(openId ? [openId] : [], !!openId).data;
+  const picks = canBuy && whoBrings;
+  const suppliers = useVenueSuppliers(picks ? barId : null).data ?? [];
+  const bought = useVenueIngredients(open && picks ? barId : null).data ?? [];
+  const makers = useLineMakers(openId && picks ? [openId] : [], !!openId && picks).data;
   const makerId = (openId && makers?.[openId]) || null;
-  const carrying = useSupplierSuggestionData(openId ? barId : null, makerId ? [makerId] : undefined).data;
+  const carrying = useSupplierSuggestionData(openId && picks ? barId : null, makerId ? [makerId] : undefined).data;
   const save = useSetLineSupplier(barId);
 
   const pickFor = (l: WizardLine) => {
@@ -100,7 +103,9 @@ export function useDeskLines({ draft, set, barId, venueName, ingredients, coreId
     if (l.prep || l.later || l.technique || row(l.id)?.ingredient_role === 'prep') return <LineSupplier line={l.name} tag={l.id ? undefined : 'House'} supplier="Made here" price={price(l)} />;
     const on = openKey === l.key;
     const toggle = () => setOpenKey(on ? null : l.key);
-    if (!l.id) return l.bottle ? <LineSupplier line={l.name} tag="New" supplier={l.bottle.supplier?.name ?? null} price={price(l)} open={on} onPress={toggle} hint="Opens the new bottle under the line" /> : null;
+    // Without who brings it, a new bottle's chip still opens its card; a bottle here shows only its pour's cost.
+    if (!l.id) return l.bottle ? <LineSupplier line={l.name} tag="New" supplier={l.bottle.supplier?.name ?? null} price={price(l)} open={on} onPress={toggle} hint="Opens the new bottle under the line" chip={whoBrings ? undefined : 'Bottle details'} /> : null;
+    if (!whoBrings) return <LineSupplier line={l.name} supplier={null} price={price(l)} />;
     return <LineSupplier line={l.name} supplier={pack(l)?.supplier ?? null} price={price(l)} open={on} onPress={toggle} />;
   };
   const core = ingredients.filter((i) => coreIds.has(i.id));
@@ -111,7 +116,7 @@ export function useDeskLines({ draft, set, barId, venueName, ingredients, coreId
         name={l.name}
         bottle={l.bottle}
         venueName={venueName}
-        suppliers={pickFor(l)}
+        suppliers={whoBrings ? pickFor(l) : null}
         kindId={(kind) => bottleKindRow(l.name, kind, core, ingredients)?.id ?? null}
         canCost={canCost}
         onChange={(bottle) => setBottle(l.key, bottle)}
@@ -139,16 +144,17 @@ export function useDeskLines({ draft, set, barId, venueName, ingredients, coreId
 }
 
 /**
- * The same venue parts on a phone (m01, decided 24 Oct 2026): who brings
- * each line and a new bottle's card under it on the ingredients step, and
- * what it costs on review. Prep or Costs see suppliers; Costs see prices.
+ * The same venue parts on a phone (m01, decided 24 Oct 2026): a new bottle's
+ * card under its line on the ingredients step, and what it costs on review.
+ * Not who brings each line: that's set on the run sheet (Eddie, 26 Oct).
+ * Prep or Costs see the new bottle's card; Costs see prices.
  * Null `barId` (at home, or the desktop page, which has its own) turns it off.
  */
 export function useVenueLines(args: Omit<DeskLinesArgs, 'canBuy' | 'canCost' | 'currency'>) {
   const { canBuy, canCost } = venueParts(args.barId, useCapabilities(args.barId).data);
   const pricing = usePricingSettings(canCost ? args.barId : null).data ?? null;
   // On review the card isn't on screen, so nothing reads "adding".
-  const { costLines, lineDetail, lineBelow, onNewBottle } = useDeskLines({ ...args, canBuy, canCost, currency: pricing?.currency ?? 'GBP', adding: false });
+  const { costLines, lineDetail, lineBelow, onNewBottle } = useDeskLines({ ...args, canBuy, canCost, currency: pricing?.currency ?? 'GBP', adding: false, whoBrings: false });
   return {
     /** For IngredientsStep. */
     lines: { lineDetail, lineBelow, onNewBottle },

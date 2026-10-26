@@ -14,8 +14,9 @@ const NO_OUTLINE = Platform.OS === 'web' ? ({ outlineStyle: 'none' } as object) 
  * Under a line on the desktop page (board make-create-desktop, step 7): who
  * brings it, as a chip that opens the pick under the line, and what this pour
  * costs. Without a chip (no Prep or Costs, or not a bottle), the words alone.
+ * `chip` names the chip instead (the phone wizard's new bottle: "Bottle details").
  */
-export function LineSupplier({ line, supplier, price, tag, open, onPress, hint }: { line: string; supplier: string | null; price: string | null; tag?: string; open?: boolean; onPress?: () => void; hint?: string }) {
+export function LineSupplier({ line, supplier, price, tag, open, onPress, hint, chip }: { line: string; supplier: string | null; price: string | null; tag?: string; open?: boolean; onPress?: () => void; hint?: string; chip?: string }) {
   const ds = useDs();
   if (!onPress && !tag) return supplier || price ? <Caption tone="muted" numberOfLines={1}>{[supplier, price].filter(Boolean).join(' · ')}</Caption> : null;
   return (
@@ -29,11 +30,11 @@ export function LineSupplier({ line, supplier, price, tag, open, onPress, hint }
         haptic={false}
         role="button"
         aria-expanded={!!open}
-        accessibilityLabel={supplier ? `Who brings ${line}: ${supplier}. Change` : `Who brings ${line}? Pick a supplier`}
+        accessibilityLabel={chip ? `${chip}: ${line}` : supplier ? `Who brings ${line}: ${supplier}. Change` : `Who brings ${line}? Pick a supplier`}
         accessibilityHint={hint}
         style={[styles.chip, { borderColor: open ? ds.c.ink : ds.c.lineStrong }]}
       >
-        <Caption tone={supplier ? 'ink' : 'muted'} numberOfLines={1}>{supplier ?? 'Who brings it?'}</Caption>
+        <Caption tone={supplier || chip ? 'ink' : 'muted'} numberOfLines={1}>{chip ?? supplier ?? 'Who brings it?'}</Caption>
         <IconSymbol name={open ? 'chevron.up' : 'chevron.down'} size={12} color={ds.c.muted} />
       </PressableScale>
       )}

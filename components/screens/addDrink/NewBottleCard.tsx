@@ -13,8 +13,8 @@ interface NewBottleCardProps {
   name: string;
   bottle: NewBottle;
   venueName: string;
-  /** The venue's suppliers, the suggested one first (lib/suppliers pickSuppliers). */
-  suppliers: SupplierPick;
+  /** The venue's suppliers, the suggested one first (lib/suppliers pickSuppliers); null leaves who brings it off the card (the phone wizard). */
+  suppliers: SupplierPick | null;
   /** The kind row each choice of what it is saves as (lib/newBottle bottleKindRow). */
   kindId: (kind: BottleKind | null) => string | null;
   /** Shown with Costs: the pack price. */
@@ -60,23 +60,27 @@ export function NewBottleCard({ name, bottle, venueName, suppliers, kindId, canC
       </View>
       {bottle.kind && bottle.kind === guess ? <Caption tone="muted">From the name. Change it if it’s something else.</Caption> : null}
 
-      <Eyebrow>Who brings it</Eyebrow>
-      <View role="radiogroup" accessibilityLabel={`Who brings ${name}`} style={styles.chips}>
-        {suppliers.choices.map((s) => (
-          <WizardChip
-            key={s.id}
-            label={s.id === suppliers.suggested ? `${s.name}, suggested` : s.name}
-            selected={bottle.supplier?.id === s.id}
-            suggested={s.id === suppliers.suggested}
-            onPress={() => set({ supplier: bottle.supplier?.id === s.id ? null : { id: s.id, name: s.name } })}
-          />
-        ))}
-        {adding || typed ? null : <WizardChip label="New supplier" add kind="button" onPress={() => setAdding(true)} />}
-      </View>
-      {adding || typed ? (
-        <Field label="A new supplier’s name" value={typed} onChangeText={(t) => set({ supplier: t ? { name: t } : null })} autoFocus={adding && !typed} maxLength={80} placeholder="Northside Liquor" />
+      {suppliers ? (
+        <>
+          <Eyebrow>Who brings it</Eyebrow>
+          <View role="radiogroup" accessibilityLabel={`Who brings ${name}`} style={styles.chips}>
+            {suppliers.choices.map((s) => (
+              <WizardChip
+                key={s.id}
+                label={s.id === suppliers.suggested ? `${s.name}, suggested` : s.name}
+                selected={bottle.supplier?.id === s.id}
+                suggested={s.id === suppliers.suggested}
+                onPress={() => set({ supplier: bottle.supplier?.id === s.id ? null : { id: s.id, name: s.name } })}
+              />
+            ))}
+            {adding || typed ? null : <WizardChip label="New supplier" add kind="button" onPress={() => setAdding(true)} />}
+          </View>
+          {adding || typed ? (
+            <Field label="A new supplier’s name" value={typed} onChangeText={(t) => set({ supplier: t ? { name: t } : null })} autoFocus={adding && !typed} maxLength={80} placeholder="Northside Liquor" />
+          ) : null}
+          {suppliers.why ? <Caption tone="muted">{`Suggested because ${suppliers.why}.`}</Caption> : null}
+        </>
       ) : null}
-      {suppliers.why ? <Caption tone="muted">{`Suggested because ${suppliers.why}.`}</Caption> : null}
 
       <View style={styles.fields}>
         <View style={styles.field}>

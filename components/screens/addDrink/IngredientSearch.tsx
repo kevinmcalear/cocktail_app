@@ -129,7 +129,7 @@ export function IngredientSearch(props: IngredientSearchProps) {
     <ResultRow
       label="A bottle you buy"
       a11y={`Add “${Name}”, a bottle you buy`}
-      sub={`Add “${Name}” as a bottle: what it is, who brings it`}
+      sub={`Add “${Name}” as a bottle: what it is, its pack`}
       icon="make"
       onPress={() => {
         onBottle(Name, pour ?? undefined);
