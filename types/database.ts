@@ -5575,6 +5575,7 @@ export type Database = {
           serve_abv: number | null
           serve_ml: number | null
           service_style: string | null
+          show_sketch: boolean
           status: string | null
         }
         Relationships: [
