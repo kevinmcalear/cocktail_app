@@ -16,9 +16,11 @@ import { confirmDiscardChanges } from '@/lib/dialogs';
 import type { EditorChromeState } from '@/lib/editorChrome';
 import { roleLabel } from '@/lib/roles';
 
+import { DeleteVenueSection } from './DeleteVenue';
+
 const LOGO = 44;
 
-/** A venue's settings on a page of their own: name and brand, staff link, who sees what, team and roles, more settings. */
+/** A venue's settings on a page of their own: name and brand, staff link, who sees what, team and roles, more settings, and for Admins, Delete this bar. */
 export function VenueSettingsScreen({ barId }: { barId: string }) {
   return (
     <BackbarTheme>
@@ -66,6 +68,7 @@ function VenuePage({ barId }: { barId: string }) {
             leading={venue?.logoUrl ? <LogoImage uri={venue.logoUrl} size={LOGO} radius={radius.mark} fill={logoFill(venue)} style={[styles.logo, { borderColor: ds.c.line }]} /> : null}
           />
           <BarInlineEditor barId={barId} embedded onChromeState={setChrome} />
+          <DeleteVenueSection barId={barId} name={name} />
         </View>
       </ScrollView>
       {dirty && chrome ? <UnsavedBar saving={chrome.saving} onDiscard={chrome.cancel} onSave={() => void chrome.save()} /> : null}
