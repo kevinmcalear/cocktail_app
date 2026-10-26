@@ -25,7 +25,7 @@ function list(names: string[]): string {
 }
 
 /**
- * The Dietary line For the floor: "Contains honey, so not vegan." Null when
+ * The Dietary notes line: "Contains honey, so not vegan." Null when
  * the names are hidden from this role (nothing to read it from).
  */
 export function dietaryLine(names: readonly (string | null)[], allergens: readonly Allergen[] = []): string | null {
