@@ -137,8 +137,10 @@ function Page({ title, intro, kicker, eyebrow, eyebrowTone = 'muted', topLabel, 
       <WebHead>
         <title>{title}</title>
       </WebHead>
+      {/* iOS: the keyboard insets the page, so the field you're typing in (or Return moved you to) scrolls above it (E13). */}
       <ScrollView
         keyboardShouldPersistTaps="handled"
+        automaticallyAdjustKeyboardInsets
         contentContainerStyle={{
           paddingTop: sidebar && !setupBar ? frame.top : insets.top + layout.minTapTarget + space.xl + (setupBar ? space.sm : 0),
           paddingBottom: (pinned ? footerHeight : insets.bottom) + space.xxxl,

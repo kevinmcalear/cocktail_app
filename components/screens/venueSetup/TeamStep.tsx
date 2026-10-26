@@ -1,5 +1,5 @@
-import { useState } from 'react';
-import { StyleSheet, View } from 'react-native';
+import { useRef, useState, type ComponentRef } from 'react';
+import { StyleSheet, View, type TextInput } from 'react-native';
 
 import { Button, Caption, DsText, Field, PressableScale, useDs } from '@/components/ds';
 import { Choice, MenuSheet } from '@/components/screens/menus/MenuSheet';
@@ -55,6 +55,12 @@ export function TeamStep({ barId, name, pending, onDone }: { barId: string; name
   const [problem, setProblem] = useState<string | null>(null);
   const filled = people.filter((p) => p.email.trim() || p.name.trim());
   const set = (key: number, change: Partial<Person>) => setPeople((list) => list.map((p) => (p.key === key ? { ...p, ...change } : p)));
+  // Return moves on: name to email, email to the next person's name (E13).
+  const inputs = useRef(new Map<string, ComponentRef<typeof TextInput>>());
+  const hold = (id: string) => (el: ComponentRef<typeof TextInput> | null) => {
+    if (el) inputs.current.set(id, el);
+    else inputs.current.delete(id);
+  };
 
   const sendAll = async () => {
     setTried(true);
@@ -97,15 +103,35 @@ export function TeamStep({ barId, name, pending, onDone }: { barId: string; name
               <IconSymbol name="xmark" size={16} color={ds.c.muted} />
             </PressableScale>
           </View>
-          <Field label="Name" value={p.name} onChangeText={(t) => set(p.key, { name: t })} placeholder="Sam Okafor" autoComplete="off" maxLength={80} />
+          {/* iOS offers a contact's name and email (textContentType); autoComplete stays off so a browser doesn't fill in your own. */}
           <Field
+            ref={hold(`${p.key}-name`)}
+            label="Name"
+            value={p.name}
+            onChangeText={(t) => set(p.key, { name: t })}
+            placeholder="Sam Okafor"
+            autoComplete="off"
+            textContentType="name"
+            autoCapitalize="words"
+            returnKeyType="next"
+            submitBehavior="submit"
+            onSubmitEditing={() => inputs.current.get(`${p.key}-email`)?.focus()}
+            maxLength={80}
+          />
+          <Field
+            ref={hold(`${p.key}-email`)}
             label="Email"
             value={p.email}
             onChangeText={(t) => set(p.key, { email: t })}
             placeholder="sam@example.com"
+            autoComplete="off"
+            textContentType="emailAddress"
             autoCapitalize="none"
             autoCorrect={false}
             keyboardType="email-address"
+            returnKeyType={people[i + 1] ? 'next' : 'done'}
+            submitBehavior={people[i + 1] ? 'submit' : 'blurAndSubmit'}
+            onSubmitEditing={() => (people[i + 1] ? inputs.current.get(`${people[i + 1].key}-name`)?.focus() : undefined)}
             error={tried && (p.email.trim() || p.name.trim()) ? (inviteRowError(p) ?? undefined) : undefined}
           />
           <Caption tone="muted">Role</Caption>
