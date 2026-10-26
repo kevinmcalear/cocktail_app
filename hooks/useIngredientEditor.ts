@@ -15,14 +15,12 @@ import { useCanEditItem } from "@/hooks/useViewAs";
 import { resolveIngredientId, syncIngredientRefsInParentDrafts, updateParentDraftsWithPublishedId } from "@/lib/drafts";
 import { fetchEditableRecipes } from "@/lib/editableRecipes";
 import { changedColumns, levelColumns, levelFields, OVERRIDE_LEVELS, saveItemTags } from "@/lib/itemSave";
-import { applyIngredientHandoff, withoutSelfRecipeRefs } from "@/lib/ingredientHandoff";
+import { withoutSelfRecipeRefs } from "@/lib/ingredientHandoff";
 import { canChoosePicture, shownIngredientPicture, type IngredientPicture } from "@/lib/ingredientPicture";
 import { mapPresentationRecipeToEditItem } from "@/lib/recipeUtils";
 import { capitalize, capitalizeFirst } from "@/lib/stringUtils";
 import { supabase } from "@/lib/supabase";
 import { toastDone } from "@/lib/toast";
-import { useAppStore } from "@/store/useAppStore";
-import { getPreferredUnit } from "@/store/useSettingsStore";
 
 /**
  * Everything the ingredient editor changes. A draft (the `drafts` table)
@@ -81,7 +79,6 @@ const ingredientColumns = (f: IngredientForm) => ({
     ...levelColumns(f),
     hide_from_search: f.hideFromSearch,
 });
-const NEW_LINE = () => ({ amount: "", unit: getPreferredUnit(), preparation_notes: "", is_optional: false });
 
 /** The editor's lines as replace_recipe_lines takes them. */
 const recipeLines = (items: SortableRecipeItem[]) =>
@@ -109,18 +106,6 @@ function useForm(selfId: string | null) {
         setSaved(values);
     }, []);
     const markClean = () => setSaved(form);
-
-    // A new ingredient made from this recipe comes back onto it (only to the editor that asked).
-    useEffect(() => {
-        if (!selfId) return;
-        const take = ({ recentlyCreatedItem: handoff, setRecentlyCreatedItem }: ReturnType<typeof useAppStore.getState>) => {
-            if (handoff?.type !== "ingredient" || handoff.targetId !== selfId) return;
-            setForm((f) => ({ ...f, recipeItems: applyIngredientHandoff(f.recipeItems, handoff, selfId, NEW_LINE()) ?? f.recipeItems }));
-            setRecentlyCreatedItem(null);
-        };
-        take(useAppStore.getState());
-        return useAppStore.subscribe(take);
-    }, [selfId]);
 
     const { data: dropdowns } = useDropdowns({ ingredients: true });
     const { drafts, saveDraft, deleteDraft, isFetching, loaded: draftsLoaded, failed: draftsFailed } = useDrafts();
@@ -263,12 +248,11 @@ export function useIngredientEditor(id: string) {
  * it a draft; publish makes it an ingredient, publishing any drafted
  * ingredients its recipe uses first.
  */
-export function useIngredientDraftEditor({ draftId, barId: initialBarId, initialName, attachTo }: { draftId: string; barId?: string | null; initialName?: string | null; attachTo?: string | null }) {
+export function useIngredientDraftEditor({ draftId, barId: initialBarId, initialName }: { draftId: string; barId?: string | null; initialName?: string | null }) {
     const queryClient = useQueryClient();
     const editor = useForm(draftId);
     const { drafts, saveDraft, deleteDraft, draftsFetching, draftsLoaded, load, form } = editor;
     const [saving, setSaving] = useState(false);
-    const setRecentlyCreatedItem = useAppStore((s) => s.setRecentlyCreatedItem);
     const loadedFor = useRef<string | null>(null);
 
     const tracked = drafts.find((d) => d.id === draftId) ?? null;
@@ -299,8 +283,6 @@ export function useIngredientDraftEditor({ draftId, barId: initialBarId, initial
             const draftData = { ...form, recipeItems: withoutSelfRecipeRefs(form.recipeItems, draftId) };
             await saveDraft({ id: draftId, entityType: "ingredient", draftData });
             const displayName = capitalizeFirst(form.name) || "Untitled Ingredient Draft";
-            // Only the editor that opened this one gets it back, never every mounted editor.
-            if (attachTo) setRecentlyCreatedItem({ type: "ingredient", id: draftId, name: displayName, targetId: attachTo });
             // Keep the recipes that use this draft in step with its name.
             await syncIngredientRefsInParentDrafts(draftId, { name: displayName }, drafts, saveDraft);
             editor.load(draftData);
@@ -362,7 +344,6 @@ export function useIngredientDraftEditor({ draftId, barId: initialBarId, initial
             await updateParentDraftsWithPublishedId(draftId, newId, drafts, saveDraft, capitalizeFirst(form.name));
             await deleteDraft(draftId);
             if (form.barId) queryClient.invalidateQueries({ queryKey: ["bar", form.barId] });
-            if (attachTo) setRecentlyCreatedItem({ type: "ingredient", id: newId, name: form.name.trim(), targetId: attachTo, replacedId: draftId });
             editor.load(form);
             return newId;
         } catch (error) {

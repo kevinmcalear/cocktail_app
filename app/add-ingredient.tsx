@@ -9,10 +9,10 @@ export default function AddIngredientScreen() {
     return draftId ? <IngredientDraft draftId={draftId} /> : <AddIngredientRoute />;
 }
 
-/** Done keeps it a draft; More > Publish ingredient makes it one, and hands it back to whoever asked for it (`attachTo`). */
+/** Done keeps it a draft; More > Publish ingredient makes it one. */
 function IngredientDraft({ draftId }: { draftId: string }) {
     const router = useRouter();
-    const { barId, name, attachTo } = useLocalSearchParams<{ barId?: string; name?: string; attachTo?: string }>();
+    const { barId, name } = useLocalSearchParams<{ barId?: string; name?: string }>();
     const close = () => (router.canGoBack() ? router.back() : router.replace("/drafts"));
-    return <IngredientDraftEditScreen draft={{ draftId, barId, initialName: name, attachTo: attachTo || null }} onExit={close} />;
+    return <IngredientDraftEditScreen draft={{ draftId, barId, initialName: name }} onExit={close} />;
 }

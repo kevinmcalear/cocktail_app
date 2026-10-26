@@ -8,7 +8,6 @@ import { useDropdowns } from '@/hooks/useDropdowns';
 import { useCreatePrep } from '@/hooks/usePrepCard';
 import { plainDbMessage } from '@/lib/dbError';
 import { toastDone } from '@/lib/toast';
-import { useAppStore } from '@/store/useAppStore';
 
 import { PrepBuilder } from '../addDrink/prep/PrepBuilder';
 
@@ -16,16 +15,14 @@ import { PrepBuilder } from '../addDrink/prep/PrepBuilder';
  * /make-recipe: New › Something you make (make-anything-steps-1, step 1;
  * steps-3, step 11). The same recipe steps as inside a drink, on their own
  * page: "Your recipes" where the drink would be, and Save it, which opens
- * the new recipe's page (or hands it back to the editor that asked for it,
- * `attachTo`).
+ * the new recipe's page.
  */
 export function MakeRecipeRoute() {
   const router = useRouter();
-  const { barId, name, attachTo } = useLocalSearchParams<{ barId?: string; name?: string; attachTo?: string }>();
+  const { barId, name } = useLocalSearchParams<{ barId?: string; name?: string }>();
   const venue = useActiveVenue().venues.find((v) => v.id === barId) ?? null;
   const dropdowns = useDropdowns({ ingredients: true }).data;
   const create = useCreatePrep();
-  const setRecentlyCreatedItem = useAppStore((s) => s.setRecentlyCreatedItem);
   // One save at a time: a quick second tap lands before the screen knows it's saving.
   const saving = useRef(false);
   const goBack = () => (router.canGoBack() ? router.back() : router.replace('/(tabs)'));
@@ -49,10 +46,6 @@ export function MakeRecipeRoute() {
               onSuccess: ({ id, warnings }) => {
                 toastDone('Recipe saved', n);
                 if (warnings.length) Alert.alert('Saved, with one thing to fix', warnings.join('\n\n'));
-                if (attachTo) {
-                  setRecentlyCreatedItem({ type: 'ingredient', id, name: n, targetId: attachTo });
-                  return goBack();
-                }
                 router.replace(`/ingredient/${id}`);
               },
               onError: (e) => {
