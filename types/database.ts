@@ -5356,6 +5356,35 @@ export type Database = {
           },
         ]
       }
+      venue_delete_requests: {
+        Row: {
+          bar_id: string
+          deletes_at: string
+          requested_at: string
+          requested_by: string | null
+        }
+        Insert: {
+          bar_id: string
+          deletes_at: string
+          requested_at?: string
+          requested_by?: string | null
+        }
+        Update: {
+          bar_id?: string
+          deletes_at?: string
+          requested_at?: string
+          requested_by?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "venue_delete_requests_bar_id_fkey"
+            columns: ["bar_id"]
+            isOneToOne: true
+            referencedRelation: "bars"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       venue_feature_events: {
         Row: {
           at: string
@@ -6167,6 +6196,7 @@ export type Database = {
         }[]
       }
       can_edit_item: { Args: { p_item_id: string }; Returns: boolean }
+      cancel_venue_delete: { Args: { p_bar_id: string }; Returns: boolean }
       check_maker_photo: {
         Args: { p_item_id: string; p_keep: boolean }
         Returns: undefined
@@ -6335,6 +6365,21 @@ export type Database = {
       decline_shared_glass: {
         Args: { p_note: string; p_share_id: string }
         Returns: undefined
+      }
+      delete_venue: {
+        Args: { p_bar_id: string; p_confirm_name: string }
+        Returns: {
+          bar_id: string
+          deletes_at: string
+          requested_at: string
+          requested_by: string | null
+        }
+        SetofOptions: {
+          from: "*"
+          to: "venue_delete_requests"
+          isOneToOne: true
+          isSetofReturn: false
+        }
       }
       discover_bars: {
         Args: {
@@ -7548,6 +7593,15 @@ export type Database = {
           unit: string
         }[]
       }
+      storage_cleanup_batch: {
+        Args: { p_limit?: number }
+        Returns: {
+          bucket_id: string
+          id: number
+          name: string
+        }[]
+      }
+      storage_cleanup_done: { Args: { p_ids: number[] }; Returns: undefined }
       take_invite_email_slot: {
         Args: { p_bar_id: string; p_email: string; p_sender: string }
         Returns: string
