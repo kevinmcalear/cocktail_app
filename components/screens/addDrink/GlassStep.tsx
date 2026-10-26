@@ -28,6 +28,10 @@ interface GlassStepProps extends StepProps {
   compact?: boolean;
 }
 
+// A venue glass's real glass goes on the drink only when the catalog files it under the same type: a drink
+// naming a model takes the model's type (items_glass_model), so the Coupe's Savage Pony would make it a Nick & Nora.
+const ownModel = (g: Pick<BarGlass, 'glass' | 'model_id' | 'model'>) => (g.model?.glass === g.glass ? g.model_id : null);
+
 /**
  * The glass, then "Which shape?": the drink sketched in each of the bar's own
  * glasses of that type, by their names; a bar with none of that type gets
@@ -46,7 +50,7 @@ export function GlassStep({ draft, set, options, barId, barGlasses, barVariants,
   const own = (barGlasses ?? [])
     .filter((g) => g.glass === inputs.glass)
     .sort((a, b) => Number(b.is_default) - Number(a.is_default))
-    .map((g) => ({ key: g.variant ?? list[0].key, label: glassTitle(g), modelId: g.model_id }))
+    .map((g) => ({ key: g.variant ?? list[0].key, label: glassTitle(g), modelId: ownModel(g) }))
     .filter((g, i, all) => all.findIndex((x) => x.key === g.key) === i);
   // A shape that is one of the bar's real glasses saves that glass too.
   const modelOf = (key: string) => own.find((g) => g.key === key)?.modelId ?? null;
@@ -66,7 +70,7 @@ export function GlassStep({ draft, set, options, barId, barGlasses, barVariants,
       // A shape belongs to its glass: one of the bar's own glasses by name is that glass; else the bar's main one (or the default).
       onChange={([glass]) => {
         const mine = barGlasses?.find((g) => g.name && g.name.trim().toLowerCase() === glass?.name.trim().toLowerCase());
-        set({ glass: glass ?? null, glassVariant: mine?.variant ?? null, glassModelId: mine?.model_id ?? null });
+        set({ glass: glass ?? null, glassVariant: mine?.variant ?? null, glassModelId: mine ? ownModel(mine) : null });
       }}
       mine={venueGlasses ? { has: (p) => isVenueGlassName(venueGlasses, p.name), label: 'Your glasses', restLabel: 'Other glasses' } : undefined}
     >
