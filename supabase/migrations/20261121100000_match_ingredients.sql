@@ -91,6 +91,10 @@ CREATE INDEX "items_ingredient_match_words_idx" ON "public"."items" USING "gin" 
 -- stands in for the rest of the catalog: the phone tells a kind from a
 -- bottle by it, and whether a kind stays one when a pick leaves some of
 -- its bottles out (plainKind).
+-- ponytail: the count is the definer's, so it includes rows the caller's
+-- role can't see (a venue row above a bartender's level, someone's own
+-- shared ingredient); the phone's whole catalog wouldn't count those. It
+-- only decides ties and plain kinds. Counting through RLS is the upgrade.
 CREATE FUNCTION "private"."match_candidates"("p_readings" "jsonb", "p_venue_id" "uuid")
     RETURNS TABLE("reading" integer, "id" "uuid", "kind_of" integer, "score" real, "alias" "text")
     LANGUAGE "plpgsql" STABLE SECURITY DEFINER
@@ -180,8 +184,11 @@ BEGIN
     IF jsonb_typeof(p_readings) IS DISTINCT FROM 'array' THEN
         RAISE EXCEPTION 'Readings must be a list.' USING ERRCODE = 'invalid_parameter_value';
     END IF;
-    IF jsonb_array_length(p_readings) > 40 OR length(p_readings::text) > 20000 THEN
+    IF jsonb_array_length(p_readings) > 40 THEN
         RAISE EXCEPTION 'At most 40 readings at a time.' USING ERRCODE = 'program_limit_exceeded';
+    END IF;
+    IF length(p_readings::text) > 20000 THEN
+        RAISE EXCEPTION 'Readings are too long.' USING ERRCODE = 'program_limit_exceeded';
     END IF;
     -- The rows by id (an index scan on a list), not a join the planner may
     -- turn into checking RLS on every ingredient.

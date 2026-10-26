@@ -1,14 +1,21 @@
-import { useQueries } from '@tanstack/react-query';
+import { useQueries, type UseQueryResult } from '@tanstack/react-query';
 
 import { PAGE_ROWS } from '@/lib/allRows';
 import type { Reading } from '@/lib/match';
 import { shortlistCatalog, type ShortlistRow } from '@/lib/matchCatalog';
+import { DROPDOWNS_QUERY_KEY } from '@/lib/queryDefaults';
 import { supabase } from '@/lib/supabase';
 
 /** Readings per request: a few rows each, well under the server's 1,000 rows a request. */
 const PER_REQUEST = 10;
 
 const plain = (r: Reading) => ({ name: r.name, brand: r.brand ?? null, kind: r.kind ?? null });
+
+const combine = (results: UseQueryResult<ShortlistRow[]>[]) => ({
+  ...shortlistCatalog(results.flatMap((r) => r.data ?? [])),
+  pending: results.some((r) => r.status === 'pending' && r.fetchStatus !== 'paused'),
+  failed: results.some((r) => r.status === 'error' || (r.status === 'pending' && r.fetchStatus === 'paused')),
+});
 
 /**
  * Snap a bottle matched on the server (match_ingredients): the catalog rows
@@ -21,7 +28,8 @@ export function useServerMatch(groups: readonly (readonly Reading[])[], venueId:
   const asks = enabled ? groups.flatMap((g) => Array.from({ length: Math.ceil(g.length / PER_REQUEST) }, (_, i) => g.slice(i * PER_REQUEST, (i + 1) * PER_REQUEST).map(plain))) : [];
   return useQueries({
     queries: asks.map((sent) => ({
-      queryKey: ['match-ingredients', venueId, sent],
+      // Under the ingredient list's key, so a save that adds a venue's bottle (refreshIngredients) asks again.
+      queryKey: [...DROPDOWNS_QUERY_KEY, 'ingredients', 'match-server', venueId, sent],
       meta: { persist: false },
       staleTime: 5 * 60_000,
       retry: 1,
@@ -33,10 +41,6 @@ export function useServerMatch(groups: readonly (readonly Reading[])[], venueId:
         return data;
       },
     })),
-    combine: (results) => ({
-      ...shortlistCatalog(results.flatMap((r) => r.data ?? [])),
-      pending: results.some((r) => r.status === 'pending' && r.fetchStatus !== 'paused'),
-      failed: results.some((r) => r.status === 'error' || (r.status === 'pending' && r.fetchStatus === 'paused')),
-    }),
+    combine,
   });
 }
