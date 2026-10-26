@@ -21,7 +21,8 @@ jest.mock('@/hooks/useVenueFeatures', () => {
 });
 
 const mockOther = { ...mockVenue, id: 'pale', name: 'Pale Moth', roleLevel: 30 };
-jest.mock('@/hooks/useActiveVenue', () => ({ useActiveVenue: () => ({ active: mockVenue, venues: [mockVenue, mockOther], enterVenue: mockEnterVenue }) }));
+let mockVenues = [mockVenue, mockOther];
+jest.mock('@/hooks/useActiveVenue', () => ({ useActiveVenue: () => ({ active: mockVenues[0] ?? null, venues: mockVenues, enterVenue: mockEnterVenue }) }));
 let mockRole = 40;
 jest.mock('@/hooks/useViewAs', () => ({ useEffectiveRole: () => mockRole, useCanManageStaff: () => mockRole >= 40 }));
 const ON = { id: 'm1', name: 'Autumn menu', barId: 'rye', startsAt: '2026-01-01T00:00:00Z', endsAt: null, kind: 'menu' };
@@ -50,6 +51,7 @@ jest.mock('@/hooks/useCollection', () => ({ useCollection: () => ({ data: { drin
 
 beforeEach(() => {
   mockMode = 'venue';
+  mockVenues = [mockVenue, mockOther];
   mockFeatures = ['tonight', 'backBar'];
   mockMembers = Array.from({ length: 9 }, (_, i) => ({ user_id: `u${i}` }));
   mockInvites = [{}, {}];
@@ -138,4 +140,12 @@ test('at home: titled Home bar, My Bar, Collection and You, then Settings', asyn
   ]);
   await fireEvent.press(screen.getByRole('link', { name: /^My Bar\./ }));
   expect(mockNavigate).toHaveBeenLastCalledWith('/bar');
+});
+
+test('with no venues there is no Switch: nowhere to switch to', async () => {
+  mockMode = 'home';
+  mockVenues = [];
+  await renderWithTamagui(<VenueMenuSheet onClose={jest.fn()} />);
+  expect(screen.getByRole('heading', { name: 'Home bar' })).toBeTruthy();
+  expect(screen.queryByRole('button', { name: 'Switch to Home bar or another venue' })).toBeNull();
 });

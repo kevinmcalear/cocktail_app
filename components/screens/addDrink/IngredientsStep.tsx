@@ -27,6 +27,7 @@ import { IngredientSuggestions } from './IngredientSuggestions';
 import { LineChoices, unmatched } from './LineChoices';
 import { LineRow } from './LineRow';
 import { PasteSpecPanel } from './PasteSpecPanel';
+import { SalineHint } from './SalineHint';
 import type { LineStock } from './StockToggle';
 import { useCombineDrop } from './useCombineDrop';
 import { useMakePrep } from './useMakePrep';
@@ -98,7 +99,9 @@ export function IngredientsStep({ draft, set, ingredients, loading, aliases = []
 
   // A pour typed with the name ("30 pommeau") is the line's; otherwise it starts at a likely one.
   const lineFor = (pick: WizardPick, pour?: TypedPour): WizardLine => {
-    const unit = pour ? typedUnit(pick.name, pour.unit, getPreferredUnit()) : guessUnit(pick.name, getPreferredUnit());
+    const guess = pour ? typedUnit(pick.name, pour.unit, getPreferredUnit()) : guessUnit(pick.name, getPreferredUnit());
+    // A house recipe is never topped (lib/unitGuess.ts prepUnit).
+    const unit = !forDrink && guess === 'top' ? getPreferredUnit() : guess;
     const amount = pour ? tidyAmount(pour.amount) : !forDrink ? '' : suggestAmount({ name: pick.name, genericName: generic(pick.id) }, unit, draft.lines.map((l) => ({ name: l.name, genericName: generic(l.id) })));
     return newLine(pick, unit, amount);
   };
@@ -174,7 +177,8 @@ export function IngredientsStep({ draft, set, ingredients, loading, aliases = []
                   <View style={[styles.swap, { borderBottomColor: ds.c.line }]}>
                     <IngredientSearch
                       {...search}
-                      label={`Swap ${l.name} for…`}
+                      label={`Rename ${l.name} or pick another`}
+                      initial={l.name}
                       autoFocus
                       onCancel={() => setSwapKey(null)}
                       onPick={(p, _pour, named) => {
@@ -208,6 +212,7 @@ export function IngredientsStep({ draft, set, ingredients, loading, aliases = []
                     below={
                       <>
                         {lineBelow?.(l)}
+                        {forDrink ? <SalineHint line={l} ingredients={ingredients} onChange={(c) => change(l.key, c)} /> : null}
                         {/* A line that matched nothing asks what it is, until its recipe opens under it (step 10). */}
                         {prep.card(l.key) ??
                           (forDrink && unmatched(l) ? (

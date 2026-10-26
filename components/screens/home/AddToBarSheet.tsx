@@ -94,7 +94,7 @@ export function AddToBarSheet({ visible, filter, onFilter, onShelf, counts, onTo
     <Result
       key={item.id}
       name={item.name}
-      sub={item.section === 'preps' && onShelf.has(item.id) ? 'In your fridge' : foundLine(item)}
+      sub={foundLine(item)}
       query={typed}
       thumb={<IngredientThumb id={item.id} name={item.name} size={48} />}
       has={onShelf.has(item.id)}

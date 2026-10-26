@@ -156,7 +156,8 @@ describe('IngredientsStep', () => {
     // Making in house starts from the search, not the line.
     expect(screen.queryByRole('button', { name: /house/ })).toBeNull();
     await fireEvent.press(screen.getByRole('button', { name: 'Swap Lime juice for another ingredient' }));
-    await fireEvent.changeText(screen.getByLabelText('Swap Lime juice for…'), 'Campari');
+    expect(screen.getByLabelText('Rename Lime juice or pick another').props.value).toBe('Lime juice');
+    await fireEvent.changeText(screen.getByLabelText('Rename Lime juice or pick another'), 'Campari');
     expect(screen.getByRole('button', { name: 'Make “Campari” in-house' })).toBeTruthy();
     await fireEvent.press(screen.getByRole('button', { name: 'Campari' }));
     expect(set.mock.calls[0][0].lines[0]).toMatchObject({ id: 'campari', name: 'Campari', prep: undefined, technique: undefined });

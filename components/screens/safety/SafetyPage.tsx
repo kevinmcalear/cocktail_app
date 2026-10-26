@@ -139,6 +139,8 @@ function Page({ title, intro, kicker, eyebrow, eyebrowTone = 'muted', topLabel, 
       </WebHead>
       <ScrollView
         keyboardShouldPersistTaps="handled"
+        // iOS: room for the keyboard, so the field being typed in stays above it and a list of results scrolls clear of it (E13, E38).
+        automaticallyAdjustKeyboardInsets
         contentContainerStyle={{
           paddingTop: sidebar && !setupBar ? frame.top : insets.top + layout.minTapTarget + space.xl + (setupBar ? space.sm : 0),
           paddingBottom: (pinned ? footerHeight : insets.bottom) + space.xxxl,

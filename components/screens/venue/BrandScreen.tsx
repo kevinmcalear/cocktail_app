@@ -161,7 +161,8 @@ function BrandEditor({ row, canEdit, header, setup }: { row: VenueBrandRow; canE
 
   const preview = setup ? (
     <View style={[styles.preview, wide && styles.setupSide, wide && sticky]}>
-      {wide ? <SectionHeading>Live preview</SectionHeading> : null}
+      {/* Said on phones too, where it sits above the settings and changes as they do (E7). */}
+      <SectionHeading>Preview</SectionHeading>
       <BrandPreview look={look} setup />
     </View>
   ) : (

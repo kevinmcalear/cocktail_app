@@ -81,9 +81,9 @@ export function useImportReview(id: string, data: MatchData) {
     const wizardAt = wizardPlace(r.barId);
     const wizard = useDrinkWizardStore.getState();
     wizard.clear(wizardAt);
-    wizard.patch(wizardAt, toMake(r.recipes[i], r.choices[i], r.batches).draft);
-    wizard.setStep(wizardAt, 'review');
-    const query = `review=${encodeURIComponent(id)}&drink=${i}`;
+    // Begun afresh, it opens at the first step: the person asked to edit it, not to check it again (Eddie, 26 Oct). Start over comes back to it.
+    wizard.begin(wizardAt, toMake(r.recipes[i], r.choices[i], r.batches).draft);
+    const query = `review=${encodeURIComponent(id)}&drink=${i}&imported=1`;
     router.push((r.barId ? `/add-cocktail?barId=${r.barId}&${query}` : `/add-cocktail?${query}`) as Href);
   };
 

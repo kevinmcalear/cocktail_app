@@ -7,7 +7,7 @@
  */
 
 export const CHECKLIST_ROWS = [
-  { key: 'bar', title: 'Your bar', line: 'Where, how it looks, who sees it' },
+  { key: 'bar', title: 'Basic information', line: 'Where, how it looks, who sees it' },
   // Kit is one row: glassware, ice and tools (call 8).
   { key: 'kit', title: 'Kit', line: 'Glasses, ice and tools' },
   { key: 'bottles', title: 'Bottles', line: 'What’s on your shelves' },

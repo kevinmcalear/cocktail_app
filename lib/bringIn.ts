@@ -133,6 +133,8 @@ export function readingSteps(input: {
   reading: AnythingReading | null;
   /** Matched against your bar: null while the catalog loads. */
   matched: { have: number; total: number; newDrinks: number } | null;
+  /** How much of the catalog has downloaded (0 to 1) while it does, else null. */
+  catalog?: number | null;
 }): ReadingStep[] {
   const { reading, matched } = input;
   const what = input.pages ? `Reading ${input.pages === 1 ? 'the page' : `${input.pages} pages`}` : 'Reading it';
@@ -142,7 +144,7 @@ export function readingSteps(input: {
     { label: foundLine(reading), state: 'done' },
     matched
       ? { label: 'Matched to your bar', detail: `· ${matched.have} of ${matched.total} already yours`, state: 'done' }
-      : { label: 'Matching to your bar', state: 'now' },
+      : { label: 'Matching to your bar', detail: input.catalog != null ? `· getting the catalog, ${Math.round(input.catalog * 100)}%` : undefined, state: 'now' },
   ];
   if (reading.kind === 'menu') steps.push({ label: 'Reading ingredients for new drinks', detail: matched ? `· ${matched.newDrinks} new` : undefined, state: matched ? 'done' : 'next' });
   return steps;

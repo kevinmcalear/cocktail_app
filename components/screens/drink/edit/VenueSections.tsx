@@ -5,12 +5,14 @@ import { Body, Caption, Field, Headline, PressableScale, Sheet, useDs } from '@/
 import { IconSymbol } from '@/components/ui/icon-symbol';
 import { radius, space } from '@/constants/tokens';
 import { useUserId } from '@/ctx/AuthContext';
+import { useDrinkAllergens } from '@/hooks/useAllergens';
 import { useCapabilities } from '@/hooks/useCapabilities';
 import { useSetDrinkPrice } from '@/hooks/useDrinkCost';
 import { useItemPublishing } from '@/hooks/usePublishing';
 import { useRankTarget } from '@/hooks/useRankings';
 import { useSaveServiceNotes, useServiceNotes } from '@/hooks/useServiceNotes';
 import { useSetLineService, useSetServiceStyle } from '@/hooks/useServiceSpec';
+import { dietaryLine } from '@/lib/dietary';
 import { PUBLISH_COPY } from '@/lib/publishing';
 import { isServiceStyle } from '@/lib/service';
 import { EMPTY_SERVICE_NOTES, handoffSteps, handoffText, MAX_HANDOFF_STEPS, type ServiceNotes } from '@/lib/serviceNotes';
@@ -46,7 +48,7 @@ interface VenueSectionsProps {
 
 /**
  * What used to change from the drink page, now only here (board
- * drink-read-and-edit, Kevin 23 Oct): For the floor, Service, Price and what
+ * drink-read-and-edit, Kevin 23 Oct): For the floor, Dietary notes, Service, Price and what
  * the drink is linked to. Typed text saves with Done; a pick (how it goes
  * out, a line at the station, the classic, who can see it) saves as it's made,
  * as the photos do.
@@ -100,6 +102,8 @@ function Sections({ item, onPending, sheet: open, onSheet: setOpen, servicePhoto
   });
 
   const lines = specLines(item.recipes as PresentationRecipe[] | undefined);
+  const allergens = useDrinkAllergens(barId ? item.id : null).data?.allergens.map((a) => a.allergen) ?? [];
+  const dietary = barId ? dietaryLine(lines.map((l) => l.ingredient), allergens) : null;
   const linked = <LinkedTo item={item} onOpen={setOpen} />;
   const { glass, ice } = useDrinkGlass(item);
 
@@ -113,7 +117,14 @@ function Sections({ item, onPending, sheet: open, onSheet: setOpen, servicePhoto
           </View>
           <Field label="Talking point" value={talkingPoint} onChangeText={setTalkingPoint} placeholder="Where it comes from, in a line or two the floor can say." minLines={3} maxLength={1000} />
           <Field label="Sell it as" value={sellItAs} onChangeText={setSellItAs} placeholder="Smoky, spicy, bright. For anyone who likes a whisky sour." multiline maxLength={300} />
-          <Caption tone="muted">Employees and up see these. Dietary is worked out from the spec.</Caption>
+          <Caption tone="muted">Employees and up see these.</Caption>
+        </View>
+      ) : null}
+      {dietary ? (
+        <View style={styles.section}>
+          <Headline role="heading">Dietary notes</Headline>
+          <Body>{dietary}</Body>
+          <Caption tone="muted">Worked out from the spec, so it changes when the spec does.</Caption>
         </View>
       ) : null}
       {barId ? (

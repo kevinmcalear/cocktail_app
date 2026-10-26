@@ -356,26 +356,45 @@ export interface GarnishChip {
 }
 const g = (label: string, name: string, unit: string, amount = '1'): GarnishChip => ({ label, name, unit, amount });
 export const GARNISH_CHIPS: readonly GarnishChip[] = [
-  g('Orange peel', 'Orange', 'peel'),
+  // The basics lead (QA 25 Oct, Q22): what most drinks are finished with.
+  g('Lime wedge', 'Lime', 'wedge'),
   g('Lemon twist', 'Lemon', 'twist'),
+  g('Orange peel', 'Orange', 'peel'),
+  g('Cherry', 'Cocktail cherry', 'each'),
+  g('Olive', 'Olive', 'each'),
+  g('Mint sprig', 'Mint', 'sprig'),
+  g('Lime wheel', 'Lime', 'wheel'),
+  g('Grapefruit peel', 'Grapefruit', 'peel'),
+  g('Lemon wheel', 'Lemon', 'wheel'),
+  g('Orange wheel', 'Orange', 'wheel'),
   // A discard: the peel is expressed over the drink and thrown away (Ian at Bar Snack, 16 Oct).
   g('Lemon discard', 'Lemon', 'discard'),
   g('Orange discard', 'Orange', 'discard'),
   g('Grapefruit discard', 'Grapefruit', 'discard'),
-  g('Lime wheel', 'Lime', 'wheel'),
-  g('Cherry', 'Cocktail cherry', 'each'),
-  g('Grapefruit peel', 'Grapefruit', 'peel'),
-  g('Lime wedge', 'Lime', 'wedge'),
-  g('Lemon wheel', 'Lemon', 'wheel'),
-  g('Orange wheel', 'Orange', 'wheel'),
-  g('Olive', 'Olive', 'each'),
-  g('Mint sprig', 'Mint', 'sprig'),
   g('Grated nutmeg', 'Nutmeg', 'pinch'),
   g('Salt rim', 'Salt', 'rim'),
   g('Coffee beans', 'Coffee beans', 'each', '3'),
   g('Cucumber', 'Cucumber', 'slice'),
   g('Edible flower', 'Edible flower', 'each'),
 ];
+
+/** The basics shown before More. */
+const BASIC_GARNISHES = 7;
+
+/**
+ * The garnish chips to show before More: the basics, then up to three the
+ * drink's own lines point to (grapefruit juice: a grapefruit peel; coffee
+ * liqueur: coffee beans), then any already on.
+ * ponytail: matches a chip's first word in the line names; a classic's own garnish would need its spec.
+ */
+export function shownGarnishes(lineNames: readonly string[], on: (c: GarnishChip) => boolean): GarnishChip[] {
+  const likely = GARNISH_CHIPS.slice(BASIC_GARNISHES).filter((c) => {
+    const said = new RegExp(`\\b${c.name.split(' ')[0]}\\b`, 'i');
+    return lineNames.some((n) => said.test(n));
+  }).slice(0, 3);
+  const shown = [...GARNISH_CHIPS.slice(0, BASIC_GARNISHES), ...likely];
+  return [...shown, ...GARNISH_CHIPS.filter((c) => !shown.includes(c) && on(c))];
+}
 
 /**
  * A finish chip: drops, a mist, a rinse, a float. With a name it's a whole
@@ -434,7 +453,8 @@ const LADDERS: Record<string, number[]> = {
   bsp: [0.5, 1, 1.5, 2, 3],
   tsp: [0.5, 1, 1.5, 2, 3],
   tbsp: [0.5, 1, 1.5, 2, 3],
-  g: [1, 2, 5, 10, 15, 20, 25, 30, 40, 50],
+  // A pinch of salt or acid is a fraction of a gram.
+  g: [0.25, 0.5, 1, 2, 5, 10, 15, 20, 25, 30, 40, 50],
   drop: [1, 2, 3, 4, 5, 6, 7, 8, 9, 10],
   spray: [1, 2, 3, 4, 5],
 };
@@ -512,21 +532,8 @@ export interface StepProps {
   set: (change: Partial<WizardDraft>) => void;
 }
 
-/** The unit a new line starts in: dashes of bitters, a top of soda, otherwise your usual. */
-export function guessUnit(name: string, usual: string): string {
-  const n = name.toLowerCase();
-  if (/bitters|tincture|saline/.test(n)) return 'dash';
-  if (/soda|tonic|ginger (beer|ale)|champagne|prosecco|cava|sparkling|cola|lemonade/.test(n) && !/syrup|cordial/.test(n)) return 'top';
-  if (/\begg\b|egg white|egg yolk/.test(n)) return 'each';
-  return usual;
-}
-
-/** The unit a typed pour ("30 pommeau") lands in: as typed, else the ingredient's own. A number typed means it isn't a top. */
-export function typedUnit(name: string, unit: string | null, usual: string): string {
-  if (unit) return unit;
-  const guess = guessUnit(name, usual);
-  return guess === 'top' ? usual : guess;
-}
+// The unit guess lives in lib/unitGuess.ts, shared with the house-made builder.
+export { guessUnit, typedUnit } from './unitGuess';
 
 // --- starting from a classic ---
 

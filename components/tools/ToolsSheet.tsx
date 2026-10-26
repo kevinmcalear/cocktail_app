@@ -6,10 +6,10 @@ import { PrepCalc } from '@/components/tools/PrepCalc';
 import { radius, space } from '@/constants/tokens';
 import { useColorScheme } from '@/hooks/use-color-scheme';
 import { useHereVenue } from '@/hooks/useMode';
-import { usePricingSettings } from '@/hooks/usePricing';
+import { usePricingSettings, useShownCurrency } from '@/hooks/usePricing';
 import { ethanolIn, formatMl, readings, spiritToProof, waterToDilute } from '@/lib/calculators';
 import { priceForTarget } from '@/lib/costing';
-import { formatMoney, parseMoney } from '@/lib/money';
+import { formatAmount, parseMoney } from '@/lib/money';
 import { matchPrepLines, mergePrepRecipe, type PrepLine, type PrepRecipeLine } from '@/lib/prepCalcs';
 
 export type Tool = 'dilute' | 'proof' | 'convert' | 'price' | 'prep';
@@ -76,7 +76,7 @@ function ToolsBody({ tool: initial = 'dilute', volumeMl, abv, amount, prepName, 
   const [gp, setGp] = useState(pricing?.target_gp != null ? String(pricing.target_gp) : '80');
   const [tax, setTax] = useState(pricing ? String(pricing.tax_rate) : '20');
   const [included, setIncluded] = useState(pricing?.prices_include_tax ?? true);
-  const currency = pricing?.currency ?? 'GBP';
+  const currency = useShownCurrency(here?.id);
 
   let result: string | null = null;
   let note = '';
@@ -93,9 +93,9 @@ function ToolsBody({ tool: initial = 'dilute', volumeMl, abv, amount, prepName, 
     result = list.length ? list.map((r) => r.label).join(' · ') : null;
     note = list.length ? (amount?.name ? `${amount.name}${amount.density ? ', at its own density' : ', density guessed from the name and ABV'}.` : 'Weights at the density of water unless the amount came from a spec line.') : 'Enter an amount in ml, cl, oz, g, kg, a barspoon or a dash.';
   } else if (tool === 'price') {
-    const minor = parseMoney(cost, currency);
+    const minor = parseMoney(cost, currency ?? '');
     const price = minor === null ? null : priceForTarget(minor, num(gp), { taxRate: num(tax) || 0, pricesIncludeTax: included });
-    result = price === null ? null : (formatMoney(price, currency) ?? String(price));
+    result = price === null ? null : formatAmount(price, currency);
     note = price === null ? 'Enter a cost above zero and a GP under 100.' : `Rounded up to the nearest 10. ${included ? `Includes ${num(tax) || 0}% tax; GP is taken on the price without it.` : 'Tax is added at the till, so GP is taken on this price.'}`;
   }
 
@@ -126,7 +126,7 @@ function ToolsBody({ tool: initial = 'dilute', volumeMl, abv, amount, prepName, 
         </View>
       ) : (
         <>
-          <Field label={`Cost per serve (${currency}, without tax)`} value={cost} onChangeText={setCost} placeholder="1.90" keyboardType="decimal-pad" />
+          <Field label={currency ? `Cost per serve (${currency}, without tax)` : 'Cost per serve (without tax)'} value={cost} onChangeText={setCost} placeholder="1.90" keyboardType="decimal-pad" />
           <Field label="Target GP (%)" value={gp} onChangeText={setGp} placeholder="80" keyboardType="decimal-pad" />
           <Field label="Tax in the menu price (%, 0 for US menus)" value={tax} onChangeText={setTax} placeholder="20" keyboardType="decimal-pad" />
           <Pressable role="checkbox" aria-checked={included} accessibilityLabel="Menu prices include the tax" onPress={() => setIncluded((v) => !v)} style={styles.check}>

@@ -4,6 +4,7 @@ import type { GlassModel } from "@/hooks/useGlassModels";
 import { ensureAiConsent } from "@/lib/aiConsent";
 import { uriToBase64 } from "@/lib/imageBase64";
 import { invokeFunction } from "@/lib/invokeFunction";
+import { canUseCamera } from "@/lib/photoAccess";
 import { AI_DECLINED } from "@/lib/readMenu";
 import type { SketchGlass } from "@/lib/sketch/types";
 
@@ -43,8 +44,7 @@ export interface GlassSuggestions {
 
 /** A photo of the glass from the camera (a file on the web). Null when cancelled. */
 export async function takeGlassPhoto(): Promise<{ uri: string; mimeType: string } | null> {
-    const { status } = await ImagePicker.requestCameraPermissionsAsync();
-    if (status !== "granted") throw new Error("Allow camera access in Settings to photograph a glass.");
+    if (!(await canUseCamera())) return null;
     const result = await ImagePicker.launchCameraAsync({ mediaTypes: ["images"], quality: 0.6 });
     return result.canceled || !result.assets[0] ? null : { uri: result.assets[0].uri, mimeType: result.assets[0].mimeType ?? "image/jpeg" };
 }

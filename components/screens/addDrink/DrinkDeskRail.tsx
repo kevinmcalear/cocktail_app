@@ -10,7 +10,7 @@ import { formatPct, margin } from '@/lib/costing';
 import { amountOf, type WizardDraft, type WizardLine } from '@/lib/drinkWizard';
 import { menuNote } from '@/lib/menuNote';
 import { recipesToFinish } from '@/lib/prepKinds';
-import { formatMoney, priceMinor } from '@/lib/money';
+import { formatAmount, priceMinor } from '@/lib/money';
 import type { DraftLook } from '@/lib/sketch/draft';
 import { useMakingKit } from '@/hooks/useBarKit';
 import { useMenuDrinkSpecs } from '@/hooks/useDrinkDesk';
@@ -174,9 +174,8 @@ export interface DeskCostLine {
 }
 
 /** What it costs to make from the bar's pack prices, then the price and GP against the bar's target. */
-export function DeskCost({ lines, pricing, price, onPrice }: { lines: DeskCostLine[]; pricing: PricingSettings | null; price: string; onPrice: (price: string) => void }) {
-  const currency = pricing?.currency ?? 'GBP';
-  const money = (minor: number) => formatMoney(minor, currency) ?? '';
+export function DeskCost({ lines, pricing, currency, price, onPrice }: { lines: DeskCostLine[]; pricing: PricingSettings | null; currency: string | null; price: string; onPrice: (price: string) => void }) {
+  const money = (minor: number) => formatAmount(minor, currency);
   // The drink's price as typed ("19.50", "MP"); the margin reads the number in it.
   const minor = priceMinor(price, currency);
   const total = lines.reduce((n, l) => n + (l.minor ?? 0), 0);

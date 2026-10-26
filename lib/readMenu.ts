@@ -1,5 +1,6 @@
 import * as ImagePicker from 'expo-image-picker';
 
+import { canUseCamera } from '@/lib/photoAccess';
 
 /** A page of a printed menu, picked or taken. */
 export interface MenuPhoto {
@@ -22,15 +23,12 @@ const toPhotos = (result: ImagePicker.ImagePickerResult): MenuPhoto[] =>
 
 /** Pages from the photo library, up to `limit`. Empty when cancelled. */
 export async function pickMenuPhotos(limit: number): Promise<MenuPhoto[]> {
-  const { status } = await ImagePicker.requestMediaLibraryPermissionsAsync();
-  if (status !== 'granted') throw new Error('Allow access to your photos to read a menu from them.');
   const result = await ImagePicker.launchImageLibraryAsync({ mediaTypes: ['images'], allowsMultipleSelection: true, selectionLimit: limit, quality: QUALITY });
   return toPhotos(result).slice(0, limit);
 }
 
 /** One page from the camera. Empty when cancelled. */
 export async function takeMenuPhoto(): Promise<MenuPhoto[]> {
-  const { status } = await ImagePicker.requestCameraPermissionsAsync();
-  if (status !== 'granted') throw new Error('Allow camera access in Settings to photograph a menu.');
+  if (!(await canUseCamera())) return [];
   return toPhotos(await ImagePicker.launchCameraAsync({ quality: QUALITY }));
 }

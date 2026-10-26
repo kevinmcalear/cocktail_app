@@ -33,6 +33,8 @@ interface EditorSectionProps {
   /** Drinks made from this menu just now, marked New. */
   made?: string[];
   onRemove: (drinkId: string) => void;
+  /** Delete drink, for one the person may delete (the row asks). */
+  onDelete?: (drink: MenuDrink) => void;
   onReorder: (drinks: MenuDrink[]) => void;
   onMove: (from: number, to: number) => void;
   /** Desktop web: the browser's drag and drop (useMenuDrag) instead of the grip drag. */
@@ -52,7 +54,7 @@ const ListComponent = supportsNestableDrag ? NestableDraggableFlatList : Draggab
  * reorder), and adding more. No box of its own: on desktop the section the
  * library adds to sits on a raised ground, tagged "Adding here".
  */
-export function EditorSection({ section, barId, sections, targeted, onTarget, onAdd, onSettings, home, made, onRemove, onReorder, onMove, onMoveTo, drag: web, pricing, elsewhere }: EditorSectionProps) {
+export function EditorSection({ section, barId, sections, targeted, onTarget, onAdd, onSettings, home, made, onRemove, onDelete, onReorder, onMove, onMoveTo, drag: web, pricing, elsewhere }: EditorSectionProps) {
   const ds = useDs();
   const breakpoint = useBreakpoint();
   // A desktop browser: the rows have price fields, with heads over them.
@@ -72,6 +74,7 @@ export function EditorSection({ section, barId, sections, targeted, onTarget, on
       drag={web ? noDrag : drag}
       web={web ? { from: section.key, slot: web.at === getIndex() ? 'before' : web.at === count && getIndex() === count - 1 ? 'after' : null, dragging: web.dragging === item.id } : undefined}
       onRemove={() => onRemove(item.id)}
+      onDelete={onDelete ? () => onDelete(item) : undefined}
       onMove={onMove}
       others={others}
       onMoveTo={(toKey) => onMoveTo(item.id, toKey)}
