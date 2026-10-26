@@ -47,7 +47,8 @@ export interface IngredientSearchProps {
   /** Reads a pour typed before the name ("30 pommeau", "1/2 oz lemon"): it searches the name and hands on the pour. */
   amounts?: boolean;
   autoFocus?: boolean;
-  /** Shows a close button: leaving a swap without changing anything. */
+  /** A swap: `initial` starts it typed with the line's name, so a rename is a word away ("Feijoa juice"); `onCancel` shows a close button that leaves it as it was. */
+  initial?: string;
   onCancel?: () => void;
   /** Called with whether something is typed, so the step can hide its suggestions meanwhile. */
   onTyping?: (typing: boolean) => void;
@@ -82,9 +83,9 @@ export interface IngredientSearchProps {
  * and steps into the house prep steps. Return takes the top hit; it adds nothing new while it asks.
  */
 export function IngredientSearch(props: IngredientSearchProps) {
-  const { ingredients, aliases = [], coreIds, loading, onPick, label, placeholder, amounts, autoFocus, onCancel, onTyping, allowNew = true, onMake, onBottle, onLater, makeFirst, captions, shelf, backBar, brands, onHouse, ownVersion = true } = props;
+  const { ingredients, aliases = [], coreIds, loading, onPick, label, placeholder, amounts, autoFocus, initial = '', onCancel, onTyping, allowNew = true, onMake, onBottle, onLater, makeFirst, captions, shelf, backBar, brands, onHouse, ownVersion = true } = props;
   const ds = useDs();
-  const [text, setQueryState] = useState('');
+  const [text, setQueryState] = useState(initial);
   // The whole pill rings in the accent while it has focus (no browser focus box inside it).
   const [focused, setFocused] = useState(false);
   const setQuery = (q: string) => {
@@ -152,7 +153,6 @@ export function IngredientSearch(props: IngredientSearchProps) {
     />
   );
   const lead = makeFirst && prepLike && !exact && !loading;
-
   const pick = (p: WizardPick) => {
     onPick(p, pour ?? undefined);
     done();

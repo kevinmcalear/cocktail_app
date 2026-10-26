@@ -1,7 +1,7 @@
 // Checks for lib/money.ts. Run: npm run test:unit
 import assert from 'node:assert/strict';
 
-import { formatMoney, isCurrencyCode, minorPerMajor, moneyFieldValue, parseMoney, priceMinor, priceText } from './money';
+import { currencyFor, formatAmount, formatMoney, isCurrencyCode, minorPerMajor, moneyFieldValue, parseMoney, priceMinor, priceText } from './money';
 
 assert.ok(isCurrencyCode('GBP') && !isCurrencyCode('gbp') && !isCurrencyCode('') && !isCurrencyCode(null));
 assert.equal(minorPerMajor('GBP'), 100);
@@ -43,3 +43,17 @@ assert.equal(priceText(2300, 'GBP'), '23');
 assert.equal(priceText(2350, 'GBP'), '23.50');
 assert.equal(priceText(1200, 'JPY'), '1200');
 assert.equal(priceMinor(priceText(1995, 'EUR'), 'EUR'), 1995);
+
+// The currency shown: the bar's own, else its country's, else the device's; never pounds by default.
+assert.equal(currencyFor({ set: 'USD', country: 'GB' }), 'USD');
+assert.equal(currencyFor({ set: null, country: 'AU' }), 'AUD');
+assert.equal(currencyFor({ set: '', country: 'fr' }), 'EUR');
+assert.equal(currencyFor({ set: null, country: 'GB' }), 'GBP');
+assert.equal(currencyFor({ set: null, country: 'ZZ' }), null);
+assert.equal(currencyFor({ set: null, country: null }), null);
+assert.equal(currencyFor({ device: 'NZD' }), 'NZD');
+assert.equal(currencyFor({ set: null, country: 'US', device: 'EUR' }), 'USD');
+assert.equal(currencyFor({ device: 'nzd' }), null);
+assert.equal(formatAmount(1250, null), '12.50');
+assert.match(formatAmount(1250, 'AUD'), /12\.50/);
+

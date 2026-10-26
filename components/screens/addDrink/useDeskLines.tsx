@@ -2,14 +2,14 @@ import { useState } from 'react';
 
 import { useCapabilities } from '@/hooks/useCapabilities';
 import { useDraftPacks, useLineMakers, useSetLineSupplier } from '@/hooks/useDrinkDesk';
-import { usePricingSettings } from '@/hooks/usePricing';
+import { usePricingSettings, useShownCurrency } from '@/hooks/usePricing';
 import { useVenueIngredients } from '@/hooks/useVenueIngredients';
 import { useSupplierSuggestionData, useVenueSuppliers } from '@/hooks/useVenueSuppliers';
 import { perDrinkLines } from '@/lib/batchLines';
 import { lineCostMinor } from '@/lib/costing';
 import { density } from '@/lib/drinkMath';
 import { amountOf, type WizardDraft, type WizardLine } from '@/lib/drinkWizard';
-import { formatMoney, parseMoney } from '@/lib/money';
+import { formatAmount, parseMoney } from '@/lib/money';
 import { prepCostMinor } from '@/lib/prepCost';
 import { bottleKindRow } from '@/lib/newBottle';
 import { pickSuppliers, regionHeading, venueParts } from '@/lib/suppliers';
@@ -30,7 +30,8 @@ interface DeskLinesArgs {
   canBuy: boolean;
   /** Costs: pack prices. */
   canCost: boolean;
-  currency: string;
+  /** Null: none known yet, so no symbol (useShownCurrency). */
+  currency: string | null;
   /** "Pommeau, adding" in the cost lines while its card is open (the desktop rail sits beside it). */
   adding?: boolean;
 }
@@ -58,7 +59,7 @@ export function useDeskLines({ draft, set, barId, venueName, ingredients, coreId
   const cost = (l: WizardLine) => {
     // A new bottle counts from the pack typed on its card.
     const b = !l.id ? l.bottle : null;
-    const typed = b && Number(b.packAmount.replace(',', '.')) > 0 && b.packPrice.trim() ? parseMoney(b.packPrice, currency) : null;
+    const typed = b && Number(b.packAmount.replace(',', '.')) > 0 && b.packPrice.trim() ? parseMoney(b.packPrice, currency ?? '') : null;
     if (b) return canCost && typed != null ? lineCostMinor(amountOf(l.amount), l.unit, { amount: Number(b.packAmount.replace(',', '.')), unit: b.packUnit, costMinor: typed }, density(l.name, null)) : null;
     if (!l.id && l.prep) return canCost ? (prepCostMinor(l.prep, { amount: amountOf(l.amount), unit: l.unit }, packOf)?.pourMinor ?? null) : null;
     const k = pack(l);
@@ -69,7 +70,7 @@ export function useDeskLines({ draft, set, barId, venueName, ingredients, coreId
   const costLines: DeskCostLine[] = costed.map((l) => ({ key: l.key, name: adding && l.bottle && l.key === openKey ? `${l.name}, adding` : l.name, minor: cost(l) }));
   const price = (l: WizardLine) => {
     const minor = cost(l);
-    return minor != null ? formatMoney(minor, currency) : null;
+    return minor != null ? formatAmount(minor, currency) : null;
   };
   const row = (id: string | null) => (id ? ingredients.find((i) => i.id === id) ?? null : null);
 
@@ -147,12 +148,13 @@ export function useDeskLines({ draft, set, barId, venueName, ingredients, coreId
 export function useVenueLines(args: Omit<DeskLinesArgs, 'canBuy' | 'canCost' | 'currency'>) {
   const { canBuy, canCost } = venueParts(args.barId, useCapabilities(args.barId).data);
   const pricing = usePricingSettings(canCost ? args.barId : null).data ?? null;
+  const currency = useShownCurrency(args.barId, canCost);
   // On review the card isn't on screen, so nothing reads "adding".
-  const { costLines, lineDetail, lineBelow, onNewBottle } = useDeskLines({ ...args, canBuy, canCost, currency: pricing?.currency ?? 'GBP', adding: false });
+  const { costLines, lineDetail, lineBelow, onNewBottle } = useDeskLines({ ...args, canBuy, canCost, currency, adding: false });
   return {
     /** For IngredientsStep. */
     lines: { lineDetail, lineBelow, onNewBottle },
     /** For review: the cost card, with the price and GP. */
-    cost: canCost ? <DeskCost lines={costLines} pricing={pricing} price={args.draft.price ?? ''} onPrice={(price) => args.set({ price })} /> : null,
+    cost: canCost ? <DeskCost lines={costLines} pricing={pricing} currency={currency} price={args.draft.price ?? ''} onPrice={(price) => args.set({ price })} /> : null,
   };
 }

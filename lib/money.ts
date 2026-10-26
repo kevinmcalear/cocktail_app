@@ -13,6 +13,28 @@ export function isCurrencyCode(value: unknown): value is string {
   return typeof value === 'string' && /^[A-Z]{3}$/.test(value);
 }
 
+const EURO = 'AD AT BE BG CY DE EE ES FI FR GR HR IE IT LT LU LV MC ME MT NL PT SI SK SM VA XK'.split(' ');
+// ponytail: the countries bars here are likely in; any other shows money with no symbol until the bar picks its currency (Pricing).
+const COUNTRY_CURRENCY: Record<string, string> = {
+  ...Object.fromEntries(EURO.map((c) => [c, 'EUR'])),
+  GB: 'GBP', IM: 'GBP', JE: 'GBP', GG: 'GBP', US: 'USD', PR: 'USD', CA: 'CAD', MX: 'MXN', AU: 'AUD', NZ: 'NZD',
+  SG: 'SGD', HK: 'HKD', JP: 'JPY', KR: 'KRW', CN: 'CNY', TW: 'TWD', TH: 'THB', MY: 'MYR', ID: 'IDR', PH: 'PHP', VN: 'VND', IN: 'INR',
+  CH: 'CHF', LI: 'CHF', SE: 'SEK', NO: 'NOK', DK: 'DKK', IS: 'ISK', PL: 'PLN', CZ: 'CZK', HU: 'HUF', RO: 'RON', TR: 'TRY',
+  AE: 'AED', IL: 'ILS', ZA: 'ZAR', BR: 'BRL', AR: 'ARS', CL: 'CLP', CO: 'COP', PE: 'PEN',
+};
+
+/**
+ * The currency money shows in: the bar's own (Pricing), else its country's,
+ * else the device's (at home only). Null when none is known: no symbol, never
+ * a guessed one (a bar in Sydney was shown pounds, Eddie 26 Oct).
+ */
+export function currencyFor({ set, country, device }: { set?: string | null; country?: string | null; device?: string | null }): string | null {
+  if (isCurrencyCode(set)) return set;
+  const fromCountry = country ? COUNTRY_CURRENCY[country.toUpperCase()] : undefined;
+  if (fromCountry) return fromCountry;
+  return isCurrencyCode(device) ? device : null;
+}
+
 /** Minor units per major unit: 100 for most, 1 for yen. */
 export function minorPerMajor(currency: string): number {
   return ZERO_DECIMAL.has(currency) ? 1 : 100;
@@ -27,6 +49,11 @@ export function formatMoney(minor: number | null | undefined, currency: string |
   } catch {
     return `${major.toFixed(minorPerMajor(currency) === 1 ? 0 : 2)} ${currency}`;
   }
+}
+
+/** As formatMoney, but with no currency known, the number alone ("12.00"). */
+export function formatAmount(minor: number, currency: string | null): string {
+  return formatMoney(minor, currency) ?? (minor / minorPerMajor(currency ?? '')).toFixed(2);
 }
 
 /** "12", "12.5", "£12.50", "1,200" typed by a person, as minor units; null when it isn't a price. */
