@@ -4,6 +4,7 @@ import { useCallback, useEffect, useRef, useState } from 'react';
 import { useToast } from '@/components/ds';
 import { itemHref } from '@/lib/itemRoutes';
 import { useSetDrinkPrices } from '@/hooks/useDrinkCost';
+import { useBarDrinks } from '@/hooks/useHomeBar';
 import { useMenuLibrary, usePickMenuCover, useSaveMenu } from '@/hooks/useMenuMutations';
 import { useVenueMenus } from '@/hooks/useMenus';
 import { confirmDiscardChanges } from '@/lib/dialogs';
@@ -59,6 +60,9 @@ export function useLayoutEditor(menu: MenuDetail, { paste = false }: { paste?: b
   const cover = usePickMenuCover(menu.id);
   const libraryQuery = useMenuLibrary(menu.barId);
   const library = libraryQuery.data ?? [];
+  // A home menu's "You can make these" (Q12): what the shelf makes. A venue skips it for now.
+  const shelf = useBarDrinks(!menu.barId);
+  const canMake = menu.barId ? [] : shelf.canMake.map((d) => d.id);
   const refetchLibrary = libraryQuery.refetch;
   const { data: venueMenus = [] } = useVenueMenus(menu.barId);
   const toast = useToast();
@@ -157,6 +161,7 @@ export function useLayoutEditor(menu: MenuDetail, { paste = false }: { paste?: b
     savedAt,
     error,
     library,
+    canMake,
     elsewhere,
     others,
     sheet,

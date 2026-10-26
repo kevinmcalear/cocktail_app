@@ -61,6 +61,8 @@ export interface MenuDrink {
   imageUrl: string | null;
   isSketch: boolean;
   glass: string | null;
+  /** In a home menu's library: you made it or collected it (the add-drink list's first group). */
+  mine?: boolean;
 }
 
 export interface MenuSectionDetail {
