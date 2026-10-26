@@ -16,6 +16,8 @@ const mockPush = jest.fn();
 jest.mock('expo-router', () => ({ useRouter: () => ({ push: mockPush }) }));
 jest.mock('@/components/ds/DrawnSketch', () => ({ DrawnSketch: () => null }));
 // The plain drag list: the nested one (native, inside the editor's scroll container) loops under Jest's gesture mocks.
+// Only Americano is the person's own to delete.
+jest.mock('@/hooks/useCocktails', () => ({ useCanDeleteDrink: (id?: string) => id === 'a' }));
 jest.mock('@/components/recipe/FormScrollContainer', () => ({ ...jest.requireActual('@/components/recipe/FormScrollContainer'), supportsNestableDrag: false }));
 
 const drink = (id: string, name: string): MenuDrink => ({ id, name, kind: 'cocktail', line: '', price: '12', imageUrl: 'https://x.test/a.jpg', isSketch: false, glass: null });
@@ -63,6 +65,18 @@ test('a row’s ... menu, a popover, moves a drink to another section, or to the
   await fireEvent.press(screen.getByRole('menuitem', { name: 'Move to another section' }));
   await fireEvent.press(screen.getByRole('menuitem', { name: 'Sours' }));
   expect(onMoveTo).toHaveBeenLastCalledWith('b', 's2');
+});
+
+test('a row’s ... menu has Delete drink only for a drink the person may delete', async () => {
+  const onDelete = jest.fn();
+  await renderWithTamagui(
+    <EditorSection barId={null} section={section} sections={[section]} onSettings={jest.fn()} onRemove={jest.fn()} onDelete={onDelete} onReorder={jest.fn()} onMove={jest.fn()} onMoveTo={jest.fn()} />
+  );
+  await fireEvent.press(screen.getByRole('button', { name: 'Pellican options' }));
+  expect(screen.queryByRole('menuitem', { name: 'Delete drink' })).toBeNull();
+  await fireEvent.press(screen.getByRole('button', { name: 'Americano options' }));
+  await fireEvent.press(screen.getByRole('menuitem', { name: 'Delete drink' }));
+  expect(onDelete).toHaveBeenCalledWith(section.drinks[0]);
 });
 
 test('one amber line says what the section needs, and no Add a drink without onAdd', async () => {

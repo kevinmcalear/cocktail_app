@@ -7,6 +7,7 @@ import { useSetDrinkPrices } from '@/hooks/useDrinkCost';
 import { useMenuLibrary, usePickMenuCover, useSaveMenu } from '@/hooks/useMenuMutations';
 import { useVenueMenus } from '@/hooks/useMenus';
 import { confirmDiscardChanges } from '@/lib/dialogs';
+import { useDeleteDrink } from '@/components/screens/drink/useDeleteDrink';
 import {
   addDrink,
   addSection,
@@ -59,6 +60,7 @@ export function useLayoutEditor(menu: MenuDetail, { paste = false }: { paste?: b
   const refetchLibrary = libraryQuery.refetch;
   const { data: venueMenus = [] } = useVenueMenus(menu.barId);
   const toast = useToast();
+  const deleteForGood = useDeleteDrink();
   // The handoff below subscribes once; it reads these as they are now.
   const latest = useRef({ toast, router, name: menu.name });
   useEffect(() => {
@@ -167,6 +169,15 @@ export function useLayoutEditor(menu: MenuDetail, { paste = false }: { paste?: b
     },
     made,
     remove: (key: string, drinkId: string) => edit(removeDrink(layout, key, drinkId)),
+    /** Delete drink from a row's ...: off this menu now, deleted once its toast goes; Undo puts it back where it was. */
+    deleteDrink: (drink: MenuDrink) => {
+      const places = layout.sections.flatMap((s) => {
+        const at = s.drinks.findIndex((d) => d.id === drink.id);
+        return at < 0 ? [] : [{ key: s.key, at, drink: s.drinks[at] }];
+      });
+      edit(places.reduce((l, p) => removeDrink(l, p.key, drink.id), layout));
+      deleteForGood({ id: drink.id, name: drink.name, onUndo: () => setLayout((l) => places.reduce((m, p) => addDrink(m, p.key, p.drink, p.at), l)) });
+    },
     // From the layout as it is when React applies them, so the phone's Done can set both prices at once.
     setPrice: (drinkId: string, price: string | null) => update((l) => setDrinkPrice(l, drinkId, price)),
     /** This menu's own price for the drink; null goes back to the drink's. */

@@ -8,7 +8,7 @@ import { FormScrollContainer } from '@/components/recipe/FormScrollContainer';
 import { ToolsSheet } from '@/components/tools/ToolsSheet';
 import { displayFaces, fontFamilies, radius, space, type } from '@/constants/tokens';
 import { useActiveVenue } from '@/hooks/useActiveVenue';
-import { useCocktail, useDeleteCocktail } from '@/hooks/useCocktails';
+import { creditedToBar, useCocktail } from '@/hooks/useCocktails';
 import { useCocktailEditor } from '@/hooks/useCocktailEditor';
 import { useHoldUpdates } from '@/hooks/useOtaUpdates';
 import { confirmAsync } from '@/lib/dialogs';
@@ -20,6 +20,7 @@ import { getPreferredUnit } from '@/store/useSettingsStore';
 
 import { DrinkHero } from '../DrinkHero';
 import { SketchColourSheet } from '../SketchColour';
+import { useDeleteDrink } from '../useDeleteDrink';
 import { ShotList } from '../ShotList';
 import { AccessSheet, EditBottomBar, EditMoreMenu, GrowingField, PhotosSheet, type DrinkEditor, type MoreChoice } from './EditParts';
 import { EditSpecList } from './EditSpecList';
@@ -78,9 +79,8 @@ export function EditPage({ editor, id, onExit }: { editor: DrinkEditor; id: stri
   const draft = 'draftId' in editor ? editor : null;
   const history = useEditHistory(editor);
   useHoldUpdates();
-  const deleteCocktail = useDeleteCocktail();
-  // A drink credited to a bar stays shared (others rank and save it), so only SQL deletes it.
-  const credited = !!cocktail && !cocktail.bar_id && !cocktail.created_by && !!cocktail.origin_bar_profile_id;
+  const deleteDrink = useDeleteDrink();
+  const credited = !!cocktail && creditedToBar(cocktail);
   // Who a new ingredient made from here comes back to: this drink, or this draft.
   const selfId = id ?? draft?.draftId ?? null;
 
@@ -113,13 +113,8 @@ export function EditPage({ editor, id, onExit }: { editor: DrinkEditor; id: stri
   const remove = async () => {
     if (draft) return void ((await draft.handleDelete()) && onExit());
     if (!cocktail) return;
-    const ok = await confirmAsync({ title: `Delete ${cocktail.name}?`, message: "This removes the drink, its spec and its photos for everyone at the venue. It can't be undone.", confirmText: 'Delete', destructive: true });
-    if (!ok) return;
-    try {
-      await deleteCocktail.mutateAsync(cocktail.id);
-    } catch {
-      return; // the global mutation handler shows the error
-    }
+    // No question first: the toast's Undo brings it back (useDeleteDrink).
+    deleteDrink({ id: cocktail.id, name: cocktail.name });
     if (router.canGoBack()) router.back();
     else router.replace('/(tabs)');
   };
