@@ -179,7 +179,7 @@ function HomePlaces({ onGo }: { onGo: (p: Place) => void }) {
  */
 export function VenueMenuSheet({ onClose }: { onClose: () => void }) {
   const router = useRouter();
-  const { active, venues } = useActiveVenue();
+  const { active, venues, isLoading } = useActiveVenue();
   const home = useMode().mode === 'home';
   const switchTo = useSwitchTo();
   const choose = (next: 'home' | Venue) => {
@@ -201,8 +201,8 @@ export function VenueMenuSheet({ onClose }: { onClose: () => void }) {
       title={venue ? venue.name : 'Home bar'}
       subtitle={venue ? roleLabel(venue.roleLevel) : 'Your shelf and collection'}
       leading={venue ? <VenueMark venue={venue} size={40} /> : <HomeMark size={40} />}
-      // No venues, nowhere to switch to: no Switch (Q35a, 26 Oct 2026).
-      aside={venues.length ? <SwitchButton home={home} active={active} onPick={choose} /> : undefined}
+      // No venues, nowhere to switch to: no Switch (Q35a, 26 Oct 2026). Kept while they load, so it doesn't pop in.
+      aside={isLoading || venues.length ? <SwitchButton home={home} active={active} onPick={choose} /> : undefined}
       plain
     >
       {venue ? (
