@@ -24,6 +24,7 @@ export function FitGlassEdit({ editor, item, open, onOpen, onClose }: FitGlassEd
   const result = useGlassFill({
     barId: editor.barId,
     glasswareId: editor.glasswareId,
+    glassModelId: 'glassModel' in editor ? editor.glassModel?.id : null,
     methodIds: editor.methodIds,
     iceId: editor.iceId,
     iceBuild: 'iceBuild' in editor ? editor.iceBuild : null,

@@ -91,5 +91,9 @@ assert.equal(factorWords(down.factor), 'Every amount down by 11%.');
 // Nothing that scales, or nothing to fit: null.
 assert.equal(fitToWashLine([{ amount: '3', unit: 'dash', ingredient: 'Bitters' }], up), null);
 assert.equal(fitToWashLine(smoke, { ...up, iceG: null }), null);
+// Past doubling or halving it says so but offers no fit: the glass or the spec is more likely wrong.
+assert.equal(fitToWashLine([{ amount: '30', unit: 'ml', ingredient: 'Rye' }], { method: 'built', washLineMl: 300, iceG: 0 }), null);
+assert.equal((glassFill([{ amount: '30', unit: 'ml', ingredient: 'Rye' }], { method: 'built', washLineMl: 300, iceG: 0 }) as Fill).state, 'short');
+assert.equal(fitToWashLine(smoke, { ...up, washLineMl: 50 }), null);
 
 console.log('glassFill checks passed');

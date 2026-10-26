@@ -12,6 +12,8 @@ import { density, dilutionFor, isWaterLine, toMl, type DilutionDefaults } from '
 
 /** A glass's wash line, when the venue hasn't said: this much of what it holds to the brim. */
 export const WASH_LINE_SHARE = 0.9;
+/** Fit it scales by at most this much either way: past it the glass or the spec is more likely wrong than short. */
+export const MAX_FIT = 2;
 /** Ice is about 0.92 g per ml (lib/glass.ts): the room a serve's ice takes. */
 const ICE_G_PER_ML = 0.92;
 
@@ -142,7 +144,8 @@ export interface Fitted {
  * The spec scaled so the serve lands on the wash line: every ml, cl, oz and
  * gram line by the same factor, so the ratio stays the bar's, each rounded to
  * a bar measure in its own unit. Dashes and spoons stay as written. Null when
- * there's nothing to fit (see glassFill) or nothing that scales.
+ * there's nothing to fit (see glassFill), nothing that scales, or it would
+ * take more than doubling or halving (MAX_FIT).
  */
 export function fitToWashLine(lines: readonly FillLine[], o: FillOptions): Fitted | null {
   const before = glassFill(lines, o);
@@ -152,7 +155,7 @@ export function fitToWashLine(lines: readonly FillLine[], o: FillOptions): Fitte
   const fixedMl = lines.reduce((s, l) => s + (scales(l) ? 0 : (lineMl(l) ?? 0)), 0);
   const targetTotal = (o.washLineMl - (before.levelMl - before.serveMl)) / (1 + before.dilutionPct / 100);
   const factor = (targetTotal - fixedMl) / scaledMl;
-  if (!(scaledMl > 0) || !(factor > 0)) return null;
+  if (!(scaledMl > 0) || !(factor >= 1 / MAX_FIT && factor <= MAX_FIT)) return null;
   const fitted = lines.map((l): FittedLine => {
     const was = String(l.amount ?? '');
     if (!scales(l)) return { amount: was, unit: l.unit, changed: false };

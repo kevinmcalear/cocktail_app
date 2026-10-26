@@ -23,7 +23,7 @@ export function WashLineSheet({ barId, glass, name, onClose }: { barId: string; 
   const line = washLine(glass);
   const [text, setText] = useState(glass.wash_line_ml ? String(glass.wash_line_ml) : '');
   const ml = text.trim() ? Number(text.trim()) : null;
-  const brim = glass.capacity_ml;
+  const brim = glass.capacity_ml ?? glass.model?.capacity_ml ?? null;
   const problem = ml === null ? null : !(ml >= 10 && ml < 5000) ? 'Somewhere from 10 ml up.' : brim && ml > brim ? `At most its ${Math.round(brim)} ml to the brim.` : null;
   const save = (value: number | null) => set.mutate({ id: glass.id, ml: value }, { onSuccess: onClose });
   return (
