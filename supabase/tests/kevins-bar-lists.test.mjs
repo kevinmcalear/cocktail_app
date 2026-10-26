@@ -15,8 +15,6 @@ import { after, before, describe, test } from "node:test";
 import { createClient } from "@supabase/supabase-js";
 import pg from "pg";
 
-import { notesBackOnRows } from "./fixtures/credited-notes.mjs";
-
 const status = JSON.parse(
   execSync("supabase status -o json", {
     encoding: "utf8",
@@ -155,7 +153,6 @@ describe("Kevin's bar lists", () => {
         try {
           await admin.query("SET LOCAL deadlock_timeout = '100ms'");
           await admin.query("SET LOCAL lock_timeout = '30s'");
-          await notesBackOnRows(admin);
           const before = await count();
           await admin.query(SQL);
           assert.deepEqual(await count(), before);

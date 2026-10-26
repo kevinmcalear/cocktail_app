@@ -1,7 +1,7 @@
 // Notes on a bar's credited drinks follow the bar's page, like the spec rows:
 // hidden from the public while the page isn't open, shown to catalog admins
 // and the bar's team (supabase/migrations/20261008050000_credited_drink_notes.sql).
-// Since 20261122300000_notes_by_role they live in item_notes with every other
+// Since 20261123300000_notes_by_role they live in item_notes with every other
 // drink's notes, and the page rule is part of its policy.
 // Runs against the local stack only: `npm run test:security`.
 import assert from 'node:assert/strict';

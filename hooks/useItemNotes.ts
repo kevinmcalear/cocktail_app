@@ -3,7 +3,7 @@ import { supabase } from '@/lib/supabase';
 
 /**
  * Readers get a drink's notes through app_item_presentation.notes, which the
- * database fills only for those allowed (20261122300000_notes_by_role).
+ * database fills only for those allowed (20261123300000_notes_by_role).
  *
  * Write a drink's notes: new, changed, or (empty) taken away. Leaving `level`
  * out keeps whoever reads them now. Only the drink's editors can write, and

@@ -20,7 +20,10 @@
 --   * Versions keep only notes for everyone: item_versions reaches everyone
 --     with the spec. Restoring a version leaves role notes alone.
 --   * merge_item moves the copy's notes the way it did before.
---   * items.notes, credited_drink_notes and their two triggers go.
+--   * items.notes and credited_drink_notes stay until 20261123310000 drops
+--     them, because installed apps write items.notes until the OTA reaches
+--     them. Two triggers copy those writes into item_notes (section 5); the
+--     new app writes item_notes and reads it alone.
 --
 -- "Just me" notes stay in item_private_notes (20261025100000), one per person.
 
@@ -300,6 +303,7 @@ BEGIN
     VALUES (p_from, p_into, jsonb_build_object(
         'item', to_jsonb(v_from),
         'recipes', (SELECT jsonb_agg(to_jsonb(r)) FROM public.recipes r WHERE r.recipe_item_id = p_from),
+        'credited_drink_notes', (SELECT to_jsonb(n) FROM public.credited_drink_notes n WHERE n.item_id = p_from),
         'item_notes', (SELECT to_jsonb(n) FROM public.item_notes n WHERE n.item_id = p_from),
         'credited_drink_details', (SELECT to_jsonb(d) FROM public.credited_drink_details d WHERE d.item_id = p_from)))
     ON CONFLICT (from_id) DO NOTHING;
@@ -337,12 +341,14 @@ BEGIN
             DELETE FROM public.item_versions WHERE item_id = p_from;
         END IF;
     END IF;
-    -- Figures kept aside for a bar-credited drink (20261008050000) only
-    -- follow onto another bar-credited drink, and so do its notes: any other
-    -- copy's notes went with its row, as they did on items.notes.
+    -- Notes and figures kept aside for a bar-credited drink (20261008050000)
+    -- only follow onto another bar-credited drink.
     IF NOT private.is_bar_credited_drink(v_into.bar_id, v_into.is_catalog, v_into.created_by, v_into.origin_bar_profile_id) THEN
+        DELETE FROM public.credited_drink_notes WHERE item_id = p_from;
         DELETE FROM public.credited_drink_details WHERE item_id = p_from;
     END IF;
+    -- item_notes the same way: any other copy's notes went with its row, as
+    -- they did on items.notes.
     IF NOT (private.is_bar_credited_drink(v_into.bar_id, v_into.is_catalog, v_into.created_by, v_into.origin_bar_profile_id)
             AND private.is_bar_credited_drink(v_from.bar_id, v_from.is_catalog, v_from.created_by, v_from.origin_bar_profile_id)) THEN
         DELETE FROM public.item_notes WHERE item_id = p_from;
@@ -463,11 +469,57 @@ END;
 $$;
 REVOKE EXECUTE ON FUNCTION "private"."merge_item"("uuid", "uuid") FROM PUBLIC, "anon", "authenticated";
 
--- --- 5. The old homes go ---
+-- --- 5. Installed apps, until 20261123310000 ---
 
-DROP TRIGGER "move_new_credited_drink_notes" ON "public"."items";
-DROP TRIGGER "keep_credited_drink_notes" ON "public"."items";
-DROP FUNCTION "private"."move_new_credited_drink_notes"();
-DROP FUNCTION "private"."keep_credited_drink_notes"();
-DROP TABLE "public"."credited_drink_notes";
-ALTER TABLE "public"."items" DROP COLUMN "notes";
+-- An app from before this writes items.notes. Its text becomes the drink's
+-- notes, as it would have: a role level stays as it is, and a note the
+-- writer can't read is left alone (that app shows the box empty, so saving
+-- it sends an empty one). An update that doesn't change notes is no write
+-- (the new app never sends them, so items.notes goes stale). On a
+-- bar-credited drink NULL keeps the notes and '' clears them
+-- (20261008050000). Runs before keep_credited_drink_notes takes them off the
+-- row: trigger names sort alphabetically.
+CREATE FUNCTION "private"."items_notes_to_item_notes"() RETURNS "trigger"
+    LANGUAGE "plpgsql" SECURITY DEFINER
+    SET "search_path" TO ''
+    AS $$
+DECLARE
+    v_body text := NULLIF(btrim(COALESCE(NEW.notes, '')), '');
+    v_note public.item_notes;
+BEGIN
+    IF TG_OP = 'UPDATE' THEN
+        IF NEW.notes IS NOT DISTINCT FROM OLD.notes THEN
+            RETURN NEW;
+        END IF;
+        IF NEW.notes IS NULL
+           AND (private.is_bar_credited_drink(NEW.bar_id, NEW.is_catalog, NEW.created_by, NEW.origin_bar_profile_id)
+                OR private.is_bar_credited_drink(OLD.bar_id, OLD.is_catalog, OLD.created_by, OLD.origin_bar_profile_id)) THEN
+            RETURN NEW;
+        END IF;
+    ELSIF v_body IS NULL THEN
+        RETURN NEW;
+    END IF;
+    SELECT * INTO v_note FROM public.item_notes WHERE item_id = NEW.id;
+    IF FOUND AND v_note.read_level IS NOT NULL
+       AND (auth.uid() IS NULL OR NOT private.item_note_readable(NEW.id, v_note.read_level, v_note.updated_by)) THEN
+        RETURN NEW;
+    END IF;
+    IF v_body IS NULL THEN
+        DELETE FROM public.item_notes WHERE item_id = NEW.id;
+    ELSE
+        INSERT INTO public.item_notes (item_id, body) VALUES (NEW.id, left(v_body, 20000))
+        ON CONFLICT (item_id) DO UPDATE SET body = EXCLUDED.body;
+    END IF;
+    RETURN NEW;
+END;
+$$;
+
+CREATE TRIGGER "items_notes_to_item_notes" BEFORE UPDATE ON "public"."items"
+    FOR EACH ROW EXECUTE FUNCTION "private"."items_notes_to_item_notes"();
+-- A new drink's notes once its row exists.
+CREATE TRIGGER "items_new_notes_to_item_notes" AFTER INSERT ON "public"."items"
+    FOR EACH ROW
+    WHEN ("new"."notes" IS NOT NULL)
+    EXECUTE FUNCTION "private"."items_notes_to_item_notes"();
+
+REVOKE ALL ON FUNCTION "private"."items_notes_to_item_notes"() FROM PUBLIC, "anon", "authenticated";

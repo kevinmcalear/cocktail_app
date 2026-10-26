@@ -22,7 +22,7 @@ CREATE TEMP VIEW old_published_items WITH (security_invoker='false') AS
             i.glassware_id,
             i.family_id,
             i.ice_id,
-            NULL::text AS notes,
+            i.notes,
             i.origin,
             i.price,
             i.status,

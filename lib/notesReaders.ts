@@ -1,7 +1,7 @@
 import { roleLabel } from '@/lib/roles';
 
 /**
- * Who reads a drink's notes (20261122300000_notes_by_role): null is everyone
+ * Who reads a drink's notes (20261123300000_notes_by_role): null is everyone
  * who sees the drink; a venue role level is that role and everyone above it.
  */
 export type NotesLevel = 20 | 30 | 35 | 40 | null;
