@@ -1,6 +1,6 @@
 import { useUserId } from '@/ctx/AuthContext';
 import { dropdownKeys } from '@/hooks/useDropdowns';
-import { useViewAs } from '@/hooks/useViewAs';
+import { useItemEditAccess, useViewAs } from '@/hooks/useViewAs';
 import { allRowsById, byName } from '@/lib/allRows';
 import { venueListOptions } from '@/lib/queryDefaults';
 import { supabase } from '@/lib/supabase';
@@ -254,7 +254,19 @@ export const deleteCocktailFn = async (id: string) => {
     if (!data?.length) throw new Error("You don't have permission to delete this drink.");
 };
 
-// Additional mutations (add, update, delete) can be added here
+/** A shared drink credited to a bar stays shared (others rank and save it), so only SQL deletes it. */
+export const creditedToBar = (item: Pick<DatabaseItem, 'bar_id' | 'created_by' | 'origin_bar_profile_id'>) => !item.bar_id && !item.created_by && !!item.origin_bar_profile_id;
+
+/**
+ * Whether to offer Delete drink for a drink known by id (a menu row): its own
+ * people, as Edit, unless it's credited to a bar. Reads the drink page's query,
+ * so pass `undefined` until it's asked.
+ */
+export function useCanDeleteDrink(id: string | undefined): boolean {
+    const item = useCocktail(id).data;
+    return useItemEditAccess(item) === 'edit' && !!item && !creditedToBar(item);
+}
+
 export function useUpdateCocktail() {
     const queryClient = useQueryClient();
     

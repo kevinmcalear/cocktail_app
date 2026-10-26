@@ -64,7 +64,7 @@ function WayCard({ title, line, on, onPress, children }: { title: string; line: 
 
 /**
  * Step 3, your first menu (owner setup step 9): start our own (a named,
- * empty draft that opens in the builder), bring in what's on now (Bring in),
+ * empty draft that opens in the builder), upload what's on now (Upload a menu, which opens Bring in),
  * or start from the 20 most ranked classics as the bar's own copies, each
  * one untickable. A classic the bar already has is shown as in, and never
  * added twice.
@@ -121,7 +121,7 @@ export function MenuStep({
         ? 'Starting…'
         : 'Start our own menu'
       : way === 'bring'
-        ? 'Bring in a menu'
+        ? 'Upload a menu'
         : add.isPending
           ? `Adding… ${add.done} of ${add.variables?.length ?? 0}`
           : adding.length
@@ -146,7 +146,7 @@ export function MenuStep({
               ))}
             </View>
           </WayCard>
-          <WayCard title="Bring in a menu" line="A photo, a PDF or a link. We read it, you check it." on={way === 'bring'} onPress={() => setWay('bring')} />
+          <WayCard title="Upload a menu" line="A photo, a PDF or a link. We read it, you check it." on={way === 'bring'} onPress={() => setWay('bring')} />
           <WayCard title="Start from classics" line={`The ${CLASSIC_COUNT} most ranked, your own copies, ready to change.`} on={way === 'classics'} onPress={() => setWay('classics')}>
             <Caption tone="muted">Untick any you don’t make.</Caption>
             {isLoading ? <Caption tone="muted">Loading…</Caption> : null}

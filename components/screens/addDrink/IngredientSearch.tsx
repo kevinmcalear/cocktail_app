@@ -47,7 +47,8 @@ export interface IngredientSearchProps {
   /** Reads a pour typed before the name ("30 pommeau", "1/2 oz lemon"): it searches the name and hands on the pour. */
   amounts?: boolean;
   autoFocus?: boolean;
-  /** Shows a close button: leaving a swap without changing anything. */
+  /** A swap: `initial` starts it typed with the line's name, so a rename is a word away ("Feijoa juice"); `onCancel` shows a close button that leaves it as it was. */
+  initial?: string;
   onCancel?: () => void;
   /** Called with whether something is typed, so the step can hide its suggestions meanwhile. */
   onTyping?: (typing: boolean) => void;
@@ -55,12 +56,14 @@ export interface IngredientSearchProps {
   allowNew?: boolean;
   /** Offers to make it in house, with its own recipe: a new name, or your own version of one that exists. */
   onMake?: (name: string, pour?: TypedPour) => void;
-  /** "Add “X”, a bottle you buy": the desktop page opens its card under its line (what it is, who brings it, its pack). */
+  /** "Add “X”, a bottle you buy": the desktop page opens its card under its line (what it is, how strong, its pack). */
   onBottle?: (name: string, pour?: TypedPour) => void;
   /** "Just add the name" for a prep: its recipe is written later, and the save reminds you. */
   onLater?: (name: string, pour?: TypedPour) => void;
   /** A name that sounds made (an oil, a cordial) offers making it before any bottle. `ownVersion` off: Make only for a new name (make-recipe can't save a second one by a name). */
   makeFirst?: boolean;
+  /** A new name is added as it's typed, over making it in house: a garnish ("Lime leaf") is picked or bought, not made. A name that sounds made still leads with Make (makeFirst). */
+  nameFirst?: boolean;
   ownVersion?: boolean;
   /** Under each found ingredient: "On your shelf" (these ids), else "In 14 drinks". Off by default (it asks the server). */
   captions?: boolean;
@@ -82,9 +85,9 @@ export interface IngredientSearchProps {
  * and steps into the house prep steps. Return takes the top hit; it adds nothing new while it asks.
  */
 export function IngredientSearch(props: IngredientSearchProps) {
-  const { ingredients, aliases = [], coreIds, loading, onPick, label, placeholder, amounts, autoFocus, onCancel, onTyping, allowNew = true, onMake, onBottle, onLater, makeFirst, captions, shelf, backBar, brands, onHouse, ownVersion = true } = props;
+  const { ingredients, aliases = [], coreIds, loading, onPick, label, placeholder, amounts, autoFocus, initial = '', onCancel, onTyping, allowNew = true, onMake, onBottle, onLater, makeFirst, nameFirst, captions, shelf, backBar, brands, onHouse, ownVersion = true } = props;
   const ds = useDs();
-  const [text, setQueryState] = useState('');
+  const [text, setQueryState] = useState(initial);
   // The whole pill rings in the accent while it has focus (no browser focus box inside it).
   const [focused, setFocused] = useState(false);
   const setQuery = (q: string) => {
@@ -129,7 +132,7 @@ export function IngredientSearch(props: IngredientSearchProps) {
     <ResultRow
       label="A bottle you buy"
       a11y={`Add “${Name}”, a bottle you buy`}
-      sub={`Add “${Name}” as a bottle: what it is, who brings it`}
+      sub={`Add “${Name}” as a bottle: what it is, its pack`}
       icon="make"
       onPress={() => {
         onBottle(Name, pour ?? undefined);
@@ -140,8 +143,8 @@ export function IngredientSearch(props: IngredientSearchProps) {
   const later = !!onLater && prepLike;
   const newRow = (
     <ResultRow
-      label="Just add the name"
-      a11y={`Just add the name “${q}”`}
+      label={nameFirst ? `Add “${Name}”` : 'Just add the name'}
+      a11y={nameFirst ? `Add “${Name}”` : `Just add the name “${q}”`}
       sub={later ? 'Write the recipe later. We’ll remind you.' : 'Added as new when you save.'}
       icon="new"
       onPress={() => {
@@ -152,7 +155,6 @@ export function IngredientSearch(props: IngredientSearchProps) {
     />
   );
   const lead = makeFirst && prepLike && !exact && !loading;
-
   const pick = (p: WizardPick) => {
     onPick(p, pour ?? undefined);
     done();
@@ -184,8 +186,9 @@ export function IngredientSearch(props: IngredientSearchProps) {
           returnKeyType="done"
           maxLength={80}
           onSubmitEditing={() => {
-            // Return does what the reading says it will (Looks right), not the catalog's top hit.
-            if (reading) {
+            // Return does what the reading says it will (Looks right), not the catalog's top hit. A swap left as it was keeps its line.
+            if (initial && text === initial) onCancel?.();
+            else if (reading) {
               onHouse?.({ id: reading.bottles[0].id, name: reading.bottles[0].name ?? reading.base }, reading, false, pour ?? undefined);
               done();
             } else if (results[0]) pick({ id: results[0].id, name: results[0].name ?? query });
@@ -202,7 +205,6 @@ export function IngredientSearch(props: IngredientSearchProps) {
           </PressableScale>
         ) : null}
       </View>
-
       {pour && q && !reading ? <Caption tone="muted">{`${pour.amount} ${typedUnit(q, pour.unit, getPreferredUnit())} of the one you pick`}</Caption> : null}
       {reading ? (
         <TypedLineCard
@@ -227,9 +229,7 @@ export function IngredientSearch(props: IngredientSearchProps) {
               Nothing called that yet. Closest:
             </Caption>
           ) : !results.length && !near.length && !exact && !loading && allowNew ? (
-            <Caption tone="muted" style={styles.label}>
-              No bottle by that name.
-            </Caption>
+            <Caption tone="muted" style={styles.label}>{nameFirst ? 'Nothing by that name yet.' : 'No bottle by that name.'}</Caption>
           ) : null}
           {closest.map((r) => found(r))}
           {lead ? makeRow : null}
@@ -242,10 +242,8 @@ export function IngredientSearch(props: IngredientSearchProps) {
             makeRow
           ) : (
             <NearPicks found={listed.length > 0} near={near} render={(r) => found(r, undefined, true)} labelStyle={styles.label}>
-              {/* Making it in house, under the bottles that match, then a bottle you buy, then the name alone (make-anything-steps-1, step 3). */}
-              {allowNew && !lead ? makeRow : null}
-              {allowNew ? bottleRow : null}
-              {allowNew ? newRow : null}
+              {/* Making it in house, under the bottles that match, then a bottle you buy, then the name alone (make-anything-steps-1, step 3); nameFirst puts the name on top. */}
+              {allowNew ? <>{nameFirst ? newRow : null}{lead ? null : makeRow}{bottleRow}{nameFirst ? null : newRow}</> : null}
             </NearPicks>
           )}
         </View>

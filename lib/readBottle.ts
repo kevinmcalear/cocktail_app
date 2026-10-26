@@ -3,6 +3,7 @@ import * as ImagePicker from 'expo-image-picker';
 import { ensureAiConsent } from '@/lib/aiConsent';
 import { uriToBase64 } from '@/lib/imageBase64';
 import { invokeFunction } from '@/lib/invokeFunction';
+import { canUseCamera } from '@/lib/photoAccess';
 import { AI_DECLINED } from '@/lib/readMenu';
 import type { BottleReading } from '@/supabase/functions/_shared/bottleRead';
 
@@ -22,15 +23,12 @@ const toPhoto = (result: ImagePicker.ImagePickerResult): BottlePhoto | null =>
 
 /** A photo from the library. Null when cancelled. */
 export async function pickBottlePhoto(): Promise<BottlePhoto | null> {
-  const { status } = await ImagePicker.requestMediaLibraryPermissionsAsync();
-  if (status !== 'granted') throw new Error('Allow access to your photos to read a bottle from one.');
   return toPhoto(await ImagePicker.launchImageLibraryAsync({ mediaTypes: ['images'], quality: QUALITY }));
 }
 
 /** A photo from the camera. Null when cancelled. */
 export async function takeBottlePhoto(): Promise<BottlePhoto | null> {
-  const { status } = await ImagePicker.requestCameraPermissionsAsync();
-  if (status !== 'granted') throw new Error('Allow camera access in Settings to photograph a bottle.');
+  if (!(await canUseCamera())) return null;
   return toPhoto(await ImagePicker.launchCameraAsync({ quality: QUALITY }));
 }
 

@@ -14,11 +14,13 @@ import { useBringIn } from "@/store/useBringIn";
  */
 export default function AddCocktailScreen() {
     const router = useRouter();
-    const { barId, draftId, name, menuSectionId, from, round, review, drink } = useLocalSearchParams<{
+    const { barId, draftId, name, menuSectionId, from, round, review, drink, imported } = useLocalSearchParams<{
         barId?: string;
         /** "Edit this drink" in a big import's review: saving here approves that drink there. */
         review?: string;
         drink?: string;
+        /** "1" from an import (Edit this drink, Edit all): the draft is the import, not one left off. */
+        imported?: string;
         from?: string;
         /** "1" from the first round: the Old Fashioned, straight to Review, then back to the Library. */
         round?: string;
@@ -41,6 +43,7 @@ export default function AddCocktailScreen() {
                     initialName={name}
                     startFrom={from || null}
                     firstRound={round === "1"}
+                    imported={imported === "1"}
                     embedded={false}
                     onClose={goBack}
                     onSaved={(id) => {

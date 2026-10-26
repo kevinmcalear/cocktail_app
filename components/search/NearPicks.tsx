@@ -55,7 +55,13 @@ export function NearLabel({ found, style }: { found: boolean; style?: StyleProp<
   );
 }
 
-type PickRow = { id: string; label: string; near?: boolean };
+type PickRow = {
+  id: string;
+  label: string;
+  /** A muted line under the name: a person's "@jo.park · Little Rye". */
+  sub?: string;
+  near?: boolean;
+};
 
 interface PickListProps {
   rows: readonly PickRow[];
@@ -73,8 +79,13 @@ export function PickList({ rows, empty, no, onPick, add }: PickListProps) {
   const ds = useDs();
   const [plain, near] = splitNear(rows);
   const row = (r: PickRow) => (
-    <PressableScale key={r.id} role="button" accessibilityLabel={r.label} onPress={() => onPick(r.id)} style={[styles.row, { borderBottomColor: ds.c.line }]}>
+    <PressableScale key={r.id} role="button" accessibilityLabel={r.sub ? `${r.label}, ${r.sub}` : r.label} onPress={() => onPick(r.id)} style={[styles.row, { borderBottomColor: ds.c.line }]}>
       <Body numberOfLines={1}>{r.label}</Body>
+      {r.sub ? (
+        <Caption tone="muted" numberOfLines={1}>
+          {r.sub}
+        </Caption>
+      ) : null}
     </PressableScale>
   );
   if (!rows.length && !add) return <Caption tone="muted">{empty}</Caption>;

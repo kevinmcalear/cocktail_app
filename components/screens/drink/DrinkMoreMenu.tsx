@@ -4,9 +4,11 @@ import { Platform, ScrollView, StyleSheet, View } from 'react-native';
 
 import { Body, Caption, GlassButton, PressableScale, Sheet, Title, useDs, useSheetClose, type IconName } from '@/components/ds';
 import { IconSymbol } from '@/components/ui/icon-symbol';
+import { STATUS } from '@/constants/palette';
 import { layout, space } from '@/constants/tokens';
 import { useSignedIn } from '@/ctx/AuthContext';
 import { useViewAs } from '@/hooks/useViewAs';
+import { readableAccent } from '@/lib/color';
 import { viewAsChoices } from '@/lib/roleLens';
 import { roleLabel } from '@/lib/roles';
 
@@ -24,6 +26,8 @@ interface DrinkMoreMenuProps {
   wide: boolean;
   /** Share lives here instead of its own button (while viewing as another role). */
   onShare?: () => void;
+  /** Delete drink, for the drink's own people (useDeleteDrink, with Undo). */
+  onDelete?: () => void;
   /** Your real role at the drink's venue, or null off its team. */
   teamRole: number | null;
   /** Glass ink over the hero (light on sketch paper). */
@@ -33,9 +37,10 @@ interface DrinkMoreMenuProps {
 /**
  * The More button and its sheet (boards drink-phone-venue/-home/-floor): Edit
  * on phones, View as for staff, Report for everyone else, Fix as admin for a
- * catalog admin on someone else's drink, and Share when it isn't its own button. Nothing when there's nothing to put in it.
+ * catalog admin on someone else's drink, Share when it isn't its own button,
+ * and Delete drink for the drink's own people. Nothing when there's nothing to put in it.
  */
-export function DrinkMoreMenu({ itemId, name, canEdit, adminFix = false, onEdit, wide, onShare, teamRole, scheme }: DrinkMoreMenuProps) {
+export function DrinkMoreMenu({ itemId, name, canEdit, adminFix = false, onEdit, wide, onShare, onDelete, teamRole, scheme }: DrinkMoreMenuProps) {
   const router = useRouter();
   const signedIn = useSignedIn();
   const [open, setOpen] = useState(false);
@@ -45,8 +50,8 @@ export function DrinkMoreMenu({ itemId, name, canEdit, adminFix = false, onEdit,
   const edit = canEdit && !wide;
   const viewAs = !!teamRole && teamRole > 10;
   const report = signedIn && !canEdit;
-  if (!edit && !viewAs && !report && !adminFix && !onShare) return null;
-  const parts = [onShare ? 'share' : null, edit ? 'edit' : null, viewAs ? 'view as' : null, report ? 'report' : null, adminFix ? 'fix as admin' : null].filter(Boolean).join(', ');
+  if (!edit && !viewAs && !report && !adminFix && !onShare && !onDelete) return null;
+  const parts = [onShare ? 'share' : null, edit ? 'edit' : null, onDelete ? 'delete' : null, viewAs ? 'view as' : null, report ? 'report' : null, adminFix ? 'fix as admin' : null].filter(Boolean).join(', ');
   const run = () => {
     const next = then.current;
     then.current = null;
@@ -69,6 +74,8 @@ export function DrinkMoreMenu({ itemId, name, canEdit, adminFix = false, onEdit,
         <ScrollView contentContainerStyle={styles.body}>
           {onShare ? <Row icon="square.and.arrow.up" label="Share" onPick={() => (then.current = onShare)} /> : null}
           {edit ? <Row icon="pencil" label="Edit drink" onPick={() => (then.current = onEdit)} /> : null}
+          {/* Beside Edit, above View as, where it's found without scrolling. */}
+          {onDelete ? <Row icon="trash" label="Delete drink" danger onPick={() => (then.current = onDelete)} /> : null}
           {viewAs ? <ViewAs realRole={teamRole!} /> : null}
           {viewAs ? (
             <Row icon="info.circle" label="Who sees what" onPick={() => (then.current = () => router.push({ pathname: '/cocktail/[id]/roles', params: { id: itemId } } as unknown as Href))} />
@@ -96,9 +103,10 @@ function Header() {
 }
 
 /** A row that closes the menu first, then does its thing. */
-function Row({ icon, label, onPick }: { icon: IconName; label: string; onPick: () => void }) {
+function Row({ icon, label, danger, onPick }: { icon: IconName; label: string; danger?: boolean; onPick: () => void }) {
   const ds = useDs();
   const close = useSheetClose();
+  const tint = danger ? readableAccent(STATUS.danger, ds.c.ground) : undefined;
   return (
     <PressableScale
       role="button"
@@ -109,8 +117,10 @@ function Row({ icon, label, onPick }: { icon: IconName; label: string; onPick: (
       }}
       style={[styles.row, { borderBottomColor: ds.c.line }]}
     >
-      <IconSymbol name={icon} size={20} color={ds.c.ink} />
-      <Body style={styles.flex}>{label}</Body>
+      <IconSymbol name={icon} size={20} color={tint ?? ds.c.ink} />
+      <Body color={tint} style={styles.flex}>
+        {label}
+      </Body>
     </PressableScale>
   );
 }

@@ -36,7 +36,7 @@ describe('FinishStep', () => {
   test('mint oil made in house from the finish: the herb oil, kept 4 days cold, on as 3 drops', async () => {
     const set = jest.fn();
     await renderWithTamagui(<FinishStep draft={daiquiri} set={set} ingredients={SHELF} />);
-    await fireEvent.changeText(screen.getByLabelText('Add to the finish'), 'mint oil');
+    await fireEvent.changeText(screen.getByLabelText('Search for a garnish'), 'mint oil');
     // Made first, before the bottle that only shares the words.
     const rows = screen.getAllByRole('button').map((b) => b.props.accessibilityLabel ?? b.props['aria-label']);
     expect(rows.indexOf('Make “Mint oil” in-house')).toBeLessThan(rows.indexOf('Agrumato Mint Oil'));
@@ -53,6 +53,28 @@ describe('FinishStep', () => {
     expect(line).toMatchObject({ id: null, name: 'Mint oil', unit: 'drop', amount: '3', technique: 'infused-oil' });
     expect(line.prep.technique).toBe('infused-oil');
     expect(line.prep.keepsHours).toBe(96);
+  });
+
+  test('a garnish the catalog lacks is added by its name, with making it in house under it', async () => {
+    const set = jest.fn();
+    await renderWithTamagui(<FinishStep draft={daiquiri} set={set} ingredients={SHELF} />);
+    await fireEvent.changeText(screen.getByLabelText('Search for a garnish'), 'apricot leaves');
+    const rows = screen.getAllByRole('button').map((b) => b.props.accessibilityLabel ?? b.props['aria-label']);
+    expect(rows.indexOf('Add “Apricot leaves”')).toBeLessThan(rows.indexOf('Make “Apricot leaves” in-house'));
+    expect(rows.indexOf('Add “Apricot leaves”')).toBeGreaterThan(-1);
+
+    await fireEvent.press(screen.getByRole('button', { name: 'Add “Apricot leaves”' }));
+    expect(finish(set)).toEqual([expect.objectContaining({ id: null, name: 'Apricot leaves', unit: 'each', amount: '1' })]);
+    expect(finish(set)[0].prep).toBeUndefined();
+    expect(screen.queryByTestId('add-prep')).toBeNull();
+  });
+
+  test('Garnish leads with the basics, then what the drink points to, over Drops, mist, rinse', async () => {
+    const paloma: WizardDraft = { ...daiquiri, lines: [{ key: 'g', id: null, name: 'Grapefruit soda', amount: '90', unit: 'ml' }] };
+    await renderWithTamagui(<FinishStep draft={paloma} set={jest.fn()} ingredients={SHELF} />);
+    const chips = screen.getAllByRole('checkbox').map((c) => c.props.accessibilityLabel ?? c.props['aria-label']);
+    expect(chips.slice(0, 10)).toEqual(['Lime wedge', 'Lemon twist', 'Orange peel', 'Cherry', 'Olive', 'Mint sprig', 'Lime wheel', 'Grapefruit peel', 'Grapefruit discard', 'Drops of oil']);
+    expect(chips).not.toContain('Grated nutmeg');
   });
 
   test('a whole chip adds its line; a garnish toggles; a finish line offers finish units', async () => {

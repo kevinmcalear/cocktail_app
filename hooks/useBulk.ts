@@ -1,11 +1,11 @@
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { useMemo } from 'react';
 
-import { refreshIngredients, useDropdowns } from '@/hooks/useDropdowns';
+import { refreshIngredients, useDropdowns, useIngredientExtras } from '@/hooks/useDropdowns';
+import { useMatchCatalog } from '@/hooks/useMatchCatalog';
 import { saveDrinkSpec } from '@/hooks/useVersions';
 import { plainDbMessage } from '@/lib/dbError';
 import { orderedMethodIds } from '@/lib/drinkMethods';
-import type { CatalogItem } from '@/lib/match';
 import type { NamedItem } from '@/lib/paste';
 import { swappedLines, type SwapDrink, type SwapLine, type SwapMode } from '@/lib/swapBottle';
 import { readAnything } from '@/lib/readAnything';
@@ -29,16 +29,6 @@ export function useRefreshSpecs() {
     ]);
 }
 
-function toCatalog(rows: unknown): CatalogItem[] {
-  if (!Array.isArray(rows)) return [];
-  return rows.flatMap((row) => {
-    if (!row || typeof row !== 'object') return [];
-    const item = row as Record<string, unknown>;
-    if (typeof item.id !== 'string' || typeof item.name !== 'string') return [];
-    return [{ id: item.id, name: item.name, genericId: typeof item.generic_id === 'string' ? item.generic_id : null, barId: typeof item.bar_id === 'string' ? item.bar_id : null }];
-  });
-}
-
 function toNamed(rows: unknown): NamedItem[] {
   if (!Array.isArray(rows)) return [];
   return rows.flatMap((row) => {
@@ -55,12 +45,14 @@ export function useReadAnything() {
 
 /** Ingredients (with their other names), methods and glassware the paste, the bottle photo and the swap match against. */
 export function useSpecCatalog() {
-  const { data, isLoading } = useDropdowns({ ingredients: true });
-  const catalog = useMemo(() => toCatalog(data?.ingredients), [data?.ingredients]);
+  const { data, isLoading: specsLoading } = useDropdowns();
+  // Just what matching reads, not the editors' whole ingredient list (pictures, categories): a third of the download, saved on the phone.
+  const { catalog, isLoading: catalogLoading, failed, progress } = useMatchCatalog();
+  const extras = useIngredientExtras(true);
   const methods = useMemo(() => toNamed(data?.methods), [data?.methods]);
   const glasses = useMemo(() => toNamed(data?.glassware), [data?.glassware]);
-  const aliases = useMemo(() => data?.ingredientAliases ?? [], [data?.ingredientAliases]);
-  return { catalog, aliases, methods, glasses, isLoading };
+  const aliases = useMemo(() => extras.data?.ingredientAliases ?? [], [extras.data?.ingredientAliases]);
+  return { catalog, aliases, methods, glasses, isLoading: specsLoading || catalogLoading || extras.isLoading, failed, progress };
 }
 
 async function inChunks<T>(ids: string[], load: (chunk: string[]) => Promise<T[]>): Promise<T[]> {

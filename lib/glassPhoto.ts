@@ -9,6 +9,7 @@ import * as ImagePicker from 'expo-image-picker';
 import { decode as decodeJpeg } from 'jpeg-js';
 
 import type { TracePixels } from './glassTrace';
+import { canUseCamera } from './photoAccess';
 
 /** A photo ready to trace, and to keep (the JPEG, at the size it was traced). */
 export interface GlassPhoto {
@@ -33,10 +34,7 @@ export function canDrawGlass(): boolean {
 
 /** A photo from the camera or the library, shrunk and read. Null when cancelled. */
 export async function pickGlassPhoto(from: 'camera' | 'library'): Promise<GlassPhoto | null> {
-  if (from === 'camera') {
-    const { status } = await ImagePicker.requestCameraPermissionsAsync();
-    if (status !== 'granted') throw new Error('Allow camera access in Settings to photograph your glass.');
-  }
+  if (from === 'camera' && !(await canUseCamera())) return null;
   const options: ImagePicker.ImagePickerOptions = { mediaTypes: ['images'], quality: 0.9 };
   const result = from === 'camera' ? await ImagePicker.launchCameraAsync(options) : await ImagePicker.launchImageLibraryAsync(options);
   const asset = result.canceled ? null : result.assets[0];

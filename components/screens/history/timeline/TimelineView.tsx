@@ -274,7 +274,8 @@ export function TimelineView({
       {pick ? <ThreadPick node={pick} bottom={insets.bottom + space.sm} /> : null}
       {!wide && !pick ? <EraBar counts={counts} year={year} bottom={insets.bottom + space.lg} onTravel={(y) => scrollTo(locate(sections, y), false)} /> : null}
       {!wide && peek ? (
-        <PeekSheet node={peek} from={peek.parentKey ? (byKey.get(peek.parentKey) ?? null) : null} kids={kidsOf(peek.key)} byMaker={byMaker(peek.key)} threadOn={threadKey === peek.key} onThread={() => toggleThread(peek.key)} onClose={() => setPeekKey(null)} />
+        // Keyed: each drink's peek starts open, whatever the last one did.
+        <PeekSheet key={peek.key} node={peek} from={peek.parentKey ? (byKey.get(peek.parentKey) ?? null) : null} kids={kidsOf(peek.key)} byMaker={byMaker(peek.key)} threadOn={threadKey === peek.key} onThread={() => toggleThread(peek.key)} onClose={() => setPeekKey(null)} />
       ) : null}
     </View>
   );

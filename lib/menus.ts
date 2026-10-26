@@ -433,3 +433,14 @@ export function previewSections<S extends { drinks: unknown[] }>(sections: S[], 
   const total = sections.reduce((n, s) => n + s.drinks.length, 0);
   return { sections: shown.filter((s) => s.drinks.length), more: total - Math.min(total, max) };
 }
+
+/**
+ * The menu page's picture band loops (MenuVisual, E40): `lead` drinks again
+ * before the first and after the last. Where a band settled at `x` jumps to
+ * show the same drink among the real ones, or 0 when it's already there.
+ */
+export function bandLoopJump(x: number, tile: number, count: number, lead: number): number {
+  if (x < lead * tile - 1) return count * tile;
+  if (x > (lead + count) * tile - 1) return -count * tile;
+  return 0;
+}

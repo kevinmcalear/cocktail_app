@@ -20,9 +20,9 @@ import { TeamStep } from './TeamStep';
 
 /**
  * "Set up Little Rye" (owner-setup step 5, calls 6 to 8): one checklist that
- * replaces What next. Your bar, Kit, Bottles, First menu, First drinks and
+ * replaces What next. Basic information, Kit, Bottles, First menu, First drinks and
  * Your team; each row opens its screen, here in place (Kit, Bottles, First
- * menu, the team) or as a page (Your bar, a menu's drinks), and comes back
+ * menu, the team) or as a page (Basic information, a menu's drinks), and comes back
  * here with a tick. The end of venue setup, the top of Library on a phone,
  * the first row of the sidebar on a desktop, and Venue settings' Setup.
  */

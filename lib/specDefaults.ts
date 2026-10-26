@@ -6,6 +6,7 @@
  * one shows on screen and can be changed.
  */
 import { ruleFor } from '../supabase/functions/_shared/flavor';
+import { shakenBy } from '../supabase/functions/_shared/sketchRules';
 
 import { draftSketchInputs } from './sketch/draft';
 
@@ -111,14 +112,23 @@ export interface ServeGuess {
   method: string | null;
   glass: string | null;
   ice: string | null;
-  /** Why, in a few words: "It has citrus". */
+  /** Why, in a few words: "It has lime juice, so it’s shaken". */
   why: string | null;
+}
+
+// The line that made it shaken, by name (Q20): "It has egg white, so it’s shaken".
+function shakenWhy(lines: Parameters<typeof draftSketchInputs>[0]['lines']): string | null {
+  const line = shakenBy(lines);
+  if (!line) return null;
+  // The name when it says so ("Lime juice"); a brand matched by its generic is called by the generic.
+  const said = shakenBy([{ ...line, genericName: null }]) ? line.name : line.genericName ?? line.name;
+  return `It has ${said.trim().toLowerCase()}, so it’s shaken`;
 }
 
 /**
  * How a drink is probably made and served, from its spec and name, by the
- * same rules that draw its sketch: citrus or egg is shaken, all spirit is
- * stirred, a topped drink is built. Only what isn't picked yet is guessed.
+ * same rules that draw its sketch: citrus, egg or cream is shaken, all spirit
+ * is stirred, a topped drink is built. Only what isn't picked yet is guessed.
  */
 export function serveGuess(look: Parameters<typeof draftSketchInputs>[0]): ServeGuess {
   if (!look.lines.length) return { method: null, glass: null, ice: null, why: null };
@@ -130,7 +140,7 @@ export function serveGuess(look: Parameters<typeof draftSketchInputs>[0]): Serve
   const why = !fromSpec
     ? null
     : inputs.method === 'shake'
-      ? 'It has citrus or egg, so it’s shaken'
+      ? shakenWhy(look.lines)
       : inputs.method === 'build'
         ? 'It’s topped, so it’s built in the glass'
         : inputs.method === 'stir'

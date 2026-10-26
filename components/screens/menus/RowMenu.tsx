@@ -2,8 +2,10 @@ import { useState, type ComponentRef } from 'react';
 import { Modal, Platform, Pressable, StyleSheet, useWindowDimensions, View } from 'react-native';
 
 import { Body, PressableScale, useDs, type IconName } from '@/components/ds';
+import { STATUS } from '@/constants/palette';
 import { IconSymbol } from '@/components/ui/icon-symbol';
 import { layout, radius, space } from '@/constants/tokens';
+import { readableAccent } from '@/lib/color';
 
 import { MenuSheet } from './MenuSheet';
 
@@ -13,6 +15,8 @@ export interface RowMenuItem {
   onPress: () => void;
   /** It opens more choices in place (a chevron says so). */
   more?: boolean;
+  /** Can't be taken back without the toast's Undo, like Delete drink: drawn in red. */
+  danger?: boolean;
 }
 
 /** Where the ... button sits in the window, to hang the menu under it. */
@@ -80,10 +84,13 @@ function RowMenuSheet({ open, label, items, onClose }: { open: boolean; label: s
 
 function Item({ item, inSheet }: { item: RowMenuItem; inSheet?: boolean }) {
   const ds = useDs();
+  const tint = item.danger ? readableAccent(STATUS.danger, ds.c.raised) : undefined;
   return (
     <PressableScale role="menuitem" accessibilityLabel={item.label} onPress={item.onPress} style={[styles.item, inSheet && [styles.sheetItem, { borderBottomColor: ds.c.line }]]}>
-      <IconSymbol name={item.icon} size={inSheet ? 20 : 16} color={ds.c.muted} />
-      <Body style={styles.flex}>{item.label}</Body>
+      <IconSymbol name={item.icon} size={inSheet ? 20 : 16} color={tint ?? ds.c.muted} />
+      <Body color={tint} style={styles.flex}>
+        {item.label}
+      </Body>
       {item.more ? <IconSymbol name="chevron.right" size={14} color={ds.c.muted} /> : null}
     </PressableScale>
   );

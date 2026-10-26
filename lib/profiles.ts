@@ -218,6 +218,19 @@ export function profileLinks(p: { instagram: string | null; website: string | nu
 /** "@Juniper.Jo " → "juniper.jo": what gets saved, and what the HANDLE rule checks. */
 export const normalizeHandle = (raw: string): string => raw.trim().replace(/^@/, '').toLowerCase();
 
+/**
+ * A people search's PostgREST filter: the name or the handle has what was
+ * typed in it ("jo.park" and "@jo.park" find @jo.park, "Jo Park" finds the name). LIKE's
+ * wildcards are matched as typed, and the pattern is quoted so commas and
+ * brackets in a name can't break the filter.
+ */
+export function personSearchFilter(search: string): string {
+  const typed = search.trim().replace(/^@/, '').replace(/\s+/g, ' ');
+  const like = `%${typed.replace(/[\\%_]/g, (c) => `\\${c}`)}%`;
+  const quoted = `"${like.replace(/[\\"]/g, (c) => `\\${c}`)}"`;
+  return `display_name.ilike.${quoted},handle.ilike.${quoted}`;
+}
+
 /** A starting handle from a name: "Jo Juniper" → "jo.juniper". Empty when nothing usable is left. */
 export function handleFromName(name: string): string {
   const handle = name

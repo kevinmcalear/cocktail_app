@@ -1,6 +1,7 @@
 import { useQuery, type QueryClient } from '@tanstack/react-query';
 import { useMemo } from 'react';
 
+import { hasMatchCatalog, patchMatchCatalog } from '@/hooks/useMatchCatalog';
 import { allRows, allRowsById, byName, withRow } from '@/lib/allRows';
 import { DROPDOWNS_QUERY_KEY, venueListOptions } from '@/lib/queryDefaults';
 import { supabase } from '@/lib/supabase';
@@ -131,8 +132,12 @@ export async function refreshIngredients(client: QueryClient, ids: string[]) {
   if (!ids.length) return;
   // A venue's own list (the Library) is small: read it again.
   void client.invalidateQueries({ queryKey: INGREDIENTS_KEY, predicate: (q) => q.queryKey.length > INGREDIENTS_KEY.length });
-  if (!client.getQueryData(INGREDIENTS_KEY)) return;
+  const lists = !!client.getQueryData(INGREDIENTS_KEY);
+  if (!lists && !hasMatchCatalog(client)) return;
   const { data, error } = await supabase.from('app_item_presentation').select(INGREDIENT_COLUMNS).in('id', ids);
+  // Shared ones into what bottles match against too (the venues' own were just read again above).
+  if (!error) patchMatchCatalog(client, ids, data ?? []);
+  if (!lists) return;
   if (error) {
     await client.invalidateQueries({ queryKey: INGREDIENTS_KEY });
     return;
@@ -165,7 +170,7 @@ function useAllMenus(enabled: boolean) {
  * pickers put first. Either may be missing on a database without that
  * migration; pickers then work as before. Loaded with the ingredient list.
  */
-function useIngredientExtras(enabled: boolean) {
+export function useIngredientExtras(enabled: boolean) {
   return useQuery({
     queryKey: dropdownKeys.ingredientExtras,
     enabled,

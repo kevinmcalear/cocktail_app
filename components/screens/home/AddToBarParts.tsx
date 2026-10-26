@@ -24,14 +24,12 @@ export function RecipeLink({ name, onPress }: { name: string; onPress: () => voi
   );
 }
 
-/** An idea to tick: on your bar shows a ring and a check. */
+/** An idea to tick: on your bar shows a ring and a check, which says it without a caption. */
 export function IdeaTile({ item, has, onToggle }: { item: FoundItem; has: boolean; onToggle: (item: FoundItem, add: boolean) => void }) {
-  const onLine = item.section === 'preps' ? 'In your fridge' : 'On your bar';
   return (
     <BarTile
       name={item.name}
-      meta={has ? onLine : foundLine(item)}
-      metaTone={has ? 'accent' : 'muted'}
+      meta={foundLine(item)}
       picture={<IngredientDrawing id={item.id} name={item.name} lazy />}
       role="checkbox"
       checked={has}

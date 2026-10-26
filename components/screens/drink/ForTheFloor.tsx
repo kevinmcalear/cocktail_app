@@ -17,11 +17,12 @@ interface ForTheFloorProps {
 }
 
 /**
- * Talking points for the floor (board drink-phone-floor): Talking point, Sell
- * it as, and Dietary read from the spec (decision b52). Opens at Employee
- * (talking_points), so a server can sell it without the spec. Nothing until
- * there's something to say: Dietary alone still shows. Read only: the drink's
- * editors write them in the editor (board drink-read-and-edit).
+ * Talking points for the floor (board drink-phone-floor): Talking point and
+ * Sell it as in "For the floor", and Dietary in its own "Dietary notes" card,
+ * read from the spec (decision b52; Kevin split them 26 Oct). Opens at
+ * Employee (talking_points), so a server can sell it without the spec. Each
+ * card shows only when there's something in it. Read only: the drink's
+ * editors write the talking points in the editor (board drink-read-and-edit).
  */
 export function ForTheFloor({ itemId, barId, ingredients }: ForTheFloorProps) {
   const ds = useDs();
@@ -34,13 +35,6 @@ export function ForTheFloor({ itemId, barId, ingredients }: ForTheFloorProps) {
   const dietary = dietaryLine(ingredients, allergens);
   if (unlocked && (isPending || (!written && !dietary))) return null;
 
-  const body = (
-    <>
-      {notes.talkingPoint ? <Point label="Talking point." text={notes.talkingPoint} /> : null}
-      {notes.sellItAs ? <Point label="Sell it as." text={notes.sellItAs} /> : null}
-      {dietary ? <Point label="Dietary." text={dietary} /> : null}
-    </>
-  );
   if (!unlocked) {
     return (
       <LockedSection title="For the floor" unlocked={false} opensAt={opensAtLevel ? roleLabel(opensAtLevel) : 'Employee'}>
@@ -48,12 +42,23 @@ export function ForTheFloor({ itemId, barId, ingredients }: ForTheFloorProps) {
       </LockedSection>
     );
   }
-  // Open, it's a raised card with run-in labels (board drink-phone-floor).
+  // Open, each is a raised card with run-in labels (board drink-phone-floor).
   return (
-    <View role="region" aria-label="For the floor" style={[styles.card, { backgroundColor: ds.c.raised }]}>
-      <Headline role="heading">For the floor</Headline>
-      {body}
-    </View>
+    <>
+      {written ? (
+        <View role="region" aria-label="For the floor" style={[styles.card, { backgroundColor: ds.c.raised }]}>
+          <Headline role="heading">For the floor</Headline>
+          {notes.talkingPoint ? <Point label="Talking point." text={notes.talkingPoint} /> : null}
+          {notes.sellItAs ? <Point label="Sell it as." text={notes.sellItAs} /> : null}
+        </View>
+      ) : null}
+      {dietary ? (
+        <View role="region" aria-label="Dietary notes" style={[styles.card, { backgroundColor: ds.c.raised }]}>
+          <Headline role="heading">Dietary notes</Headline>
+          <Body>{dietary}</Body>
+        </View>
+      ) : null}
+    </>
   );
 }
 

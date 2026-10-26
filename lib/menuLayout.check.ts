@@ -108,7 +108,7 @@ assert.deepEqual(names(filterLibrary(library, { allowedTypes: ['beer'] }, '', fa
 const section = { name: 'Stirred', drinks: [drink('Martini')] };
 assert.equal(libraryNote({ id: 'Martini' }, section, elsewhere), 'Already in Stirred');
 assert.equal(libraryNote({ id: 'Champ Stamp' }, section, elsewhere), 'On Autumn menu');
-assert.equal(libraryNote({ id: 'Bolo Tie' }, section, elsewhere), 'Not on a menu');
+assert.equal(libraryNote({ id: 'Bolo Tie' }, section, elsewhere), 'Not on another menu');
 
 console.log('menuLayout: ok');
 

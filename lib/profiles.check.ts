@@ -1,6 +1,6 @@
 import assert from 'node:assert/strict';
 
-import { barsCrediting, DEFAULT_IDENTITY, jobYears, modeSummary, pickedShown, profileLine, taglineProblem, personTabs, type ShareMode, groupMenuCredits, handleFromName, instagramProblem, normalizeHandle, normalizeInstagram, parseProfileRef, profileDraftErrors, profileLinks, profileQueryShows, type MenuDrinkRow } from './profiles';
+import { barsCrediting, DEFAULT_IDENTITY, jobYears, modeSummary, pickedShown, profileLine, taglineProblem, personTabs, type ShareMode, groupMenuCredits, handleFromName, personSearchFilter, instagramProblem, normalizeHandle, normalizeInstagram, parseProfileRef, profileDraftErrors, profileLinks, profileQueryShows, type MenuDrinkRow } from './profiles';
 
 // Ids and handles, with or without the @; junk never reaches a query.
 assert.deepEqual(parseProfileRef('3F2504E0-4F89-41D3-9A0C-0305E82C3301'), { id: '3f2504e0-4f89-41d3-9a0c-0305e82c3301' });
@@ -12,6 +12,11 @@ assert.equal(parseProfileRef('a'), null);
 assert.equal(parseProfileRef('bad handle'), null);
 assert.equal(parseProfileRef('.dot'), null);
 assert.equal(parseProfileRef('x,id.eq.1'), null);
+
+// People search: name or handle, the @ dropped, wildcards and filter syntax matched as typed.
+assert.equal(personSearchFilter(' @jo.park '), 'display_name.ilike."%jo.park%",handle.ilike."%jo.park%"');
+assert.equal(personSearchFilter('jo_park'), 'display_name.ilike."%jo\\\\_park%",handle.ilike."%jo\\\\_park%"');
+assert.equal(personSearchFilter('a,b "c"'), 'display_name.ilike."%a,b \\"c\\"%",handle.ilike."%a,b \\"c\\"%"');
 
 const menu = (id: string, name: string, active: boolean, barId: string | null, barName: string | null) => ({
   id,

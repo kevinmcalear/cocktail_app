@@ -1,6 +1,6 @@
 import { useRouter } from 'expo-router';
 import { useState } from 'react';
-import { Platform, Share, StyleSheet, View } from 'react-native';
+import { StyleSheet, View } from 'react-native';
 
 import { Body, Button } from '@/components/ds';
 import { space } from '@/constants/tokens';
@@ -8,6 +8,7 @@ import { useActiveVenue } from '@/hooks/useActiveVenue';
 import { useShareMenu } from '@/hooks/useMenuMutations';
 import { useShareSlug } from '@/hooks/useShareSlug';
 import { cardWhen, homeMenuLine, nightLine } from '@/lib/menus';
+import { shareLink } from '@/lib/shareLink';
 import { siteOrigin } from '@/lib/venueLink';
 import type { MenuDetail } from '@/types/menus';
 
@@ -48,7 +49,6 @@ export function ShareMenuSheet({ menu, onClose }: { menu: SharedMenu; onClose: (
   const slug = useShareSlug('m', menu.id, !!menu.sharedAt).data;
   const menuUrl = (key: string) => `${siteOrigin()}/m/${key}`;
   const url = menuUrl(slug ?? menu.id);
-  const web = Platform.OS === 'web';
   const drinks = (menu.sections ?? []).flatMap((s) => s.drinks);
   const venue = venues.find((v) => v.id === menu.barId) ?? null;
   const dated = { startsAt: menu.startsAt ?? null, endsAt: menu.endsAt ?? null, menuDate: menu.menuDate ?? null, plannedStartsAt: menu.plannedStartsAt ?? null, plannedEndsAt: menu.plannedEndsAt ?? null };
@@ -77,12 +77,7 @@ export function ShareMenuSheet({ menu, onClose }: { menu: SharedMenu; onClose: (
     }
     setError(null);
     try {
-      if (!web) {
-        await Share.share({ message: link, url: link, title: menu.name });
-        return;
-      }
-      await navigator.clipboard.writeText(link);
-      setCopied(true);
+      setCopied((await shareLink(link, menu.name, { copy: true })) === 'copied');
     } catch {
       // The browser can refuse clipboard access; the link is on screen to copy by hand.
       setError('Couldn’t copy the link. Select it above and copy it yourself.');

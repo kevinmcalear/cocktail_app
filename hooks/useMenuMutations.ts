@@ -317,8 +317,6 @@ export function useMenuLibrary(barId: string | null | undefined, enabled = true)
 export function usePickMenuCover(menuId: string) {
   return useMutation({
     mutationFn: async (): Promise<string | null> => {
-      const { status } = await ImagePicker.requestMediaLibraryPermissionsAsync();
-      if (status !== 'granted') throw new Error('Allow access to your photos to choose a cover.');
       const result = await ImagePicker.launchImageLibraryAsync({ mediaTypes: ['images'], allowsEditing: true, aspect: [5, 2], quality: 0.85 });
       if (result.canceled || !result.assets?.length) return null;
       return uploadMenuCover(result.assets[0].uri, menuId);

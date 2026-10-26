@@ -126,8 +126,10 @@ export function earlyNote(early: readonly DiscoverRow[], minRankers: number): st
 export const ADDRESS_MIN_CHARS = 3;
 export const ADDRESS_DEBOUNCE_MS = 450;
 
-export function photonUrl(query: string, limit = 6): string {
-  return `https://photon.komoot.io/api/?q=${encodeURIComponent(query.trim())}&limit=${limit}`;
+/** Photon's search; `near` ranks addresses close to it first (snapped to about 1 km before it leaves the device). */
+export function photonUrl(query: string, limit = 6, near?: { latitude: number; longitude: number } | null): string {
+  const bias = near ? `&lat=${snapNearMe(near.latitude)}&lon=${snapNearMe(near.longitude)}` : '';
+  return `https://photon.komoot.io/api/?q=${encodeURIComponent(query.trim())}&limit=${limit}${bias}`;
 }
 
 /** The parts of a Photon (GeoJSON) feature we use. */

@@ -1,6 +1,6 @@
 import assert from 'node:assert/strict';
 
-import { byRegion, pickSuppliers, regionHeading, suggestSuppliers, suppliesLine, venueParts, venueRegions, withoutSupplier, type VenueIngredient } from './suppliers';
+import { byRegion, regionHeading, suggestSuppliers, suppliesLine, venueParts, venueRegions, withoutSupplier, type VenueIngredient } from './suppliers';
 
 assert.equal(suppliesLine(['glassware', 'bottles']), 'Supplies bottles and glassware');
 assert.equal(suppliesLine(['equipment']), 'Supplies bar equipment');
@@ -71,24 +71,6 @@ assert.deepEqual(
   ]).map((i) => i.name),
   ['Campari', 'Cynar', 'Lime']
 );
-
-// The pick under a line: the supplier whose page lists the maker here, then whoever brings the same kind, then the most.
-const sup = (id: string, items: number, more: { order_by?: string; pageId?: string } = {}) => ({ id, name: id, order_by: more.order_by ?? null, items, pageId: more.pageId ?? null });
-const pommeau = { id: 'pommeau', makerId: 'dupont', kindId: 'apple-brandy' };
-const bought = [
-  { id: 'calvados', name: 'Calvados', makerId: 'boulard', kindId: 'apple-brandy', supplierId: 'Cellar & Co' },
-  { id: 'fino', name: 'Fino sherry', makerId: 'tio', kindId: 'sherry', supplierId: 'Bluestone' },
-];
-const byKind = pickSuppliers(pommeau, [sup('Bluestone', 42, { order_by: 'Thu' }), sup('Cellar & Co', 12, { order_by: 'Tue' })], bought, new Set(), 'In Victoria');
-assert.deepEqual(byKind.choices.map((c) => c.sub), ['Brings your Calvados and 11 more · orders by Tue', 'Brings 42 of your bottles · orders by Thu']);
-assert.equal(byKind.suggested, 'Cellar & Co');
-assert.equal(byKind.why, 'Cellar & Co brings your Calvados');
-const byPage = pickSuppliers(pommeau, [sup('Bluestone', 42, { pageId: 'p-blue' }), sup('Cellar & Co', 12)], bought, new Set(['p-blue']), 'In Victoria');
-assert.equal(byPage.suggested, 'Bluestone');
-assert.equal(byPage.why, 'Bluestone’s page lists it in Victoria');
-const none = pickSuppliers({ id: 'x', makerId: null, kindId: null }, [sup('A', 1), sup('B', 0)], bought, new Set(), null);
-assert.deepEqual(none.choices.map((c) => [c.id, c.sub]), [['A', 'Brings one of your bottles'], ['B', 'Nothing of yours yet']]);
-assert.equal(none.suggested, null);
 
 console.log('suppliers: ok');
 

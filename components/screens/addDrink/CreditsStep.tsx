@@ -6,7 +6,8 @@ import { space } from '@/constants/tokens';
 import { useClosestClassic } from '@/hooks/useClosestClassic';
 import { useDrinkLists } from '@/hooks/useDiscover';
 import { useMyProfile } from '@/hooks/useMyProfile';
-import { usePublicPeople } from '@/hooks/useProfiles';
+import { usePublicPeople, type PublicPerson } from '@/hooks/useProfiles';
+import type { MaybeNear } from '@/hooks/useSearchNear';
 import { usePublicBars } from '@/hooks/useRankings';
 import type { SameNameDrink } from '@/hooks/useSameNameDrink';
 import { PickList } from '@/components/search/NearPicks';
@@ -82,11 +83,11 @@ export function CreditsStep({ draft, set, venueName, ingredients, match, onRenam
           <WizardChip label="Not sure" selected={!mine && !other} onPress={() => set({ creator: 'nobody' })} />
         </View>
         {me ? null : <Caption tone="muted">Make a profile on the You tab to take credit for your drinks.</Caption>}
-        <Field label="Someone else" value={who} onChangeText={setWho} placeholder="Search people" autoCorrect={false} maxLength={60} />
+        <Field label="Someone else" value={who} onChangeText={setWho} placeholder="Full name or @handle" autoCapitalize="words" autoCorrect={false} maxLength={60} />
         {who.trim().length >= 2 ? (
           <PickList
-            rows={people.map((p) => ({ id: p.id, label: p.city ? `${p.display_name} · ${p.city}` : p.display_name, near: p.near }))}
-            empty="Nobody by that name has a public profile yet."
+            rows={people.map(personRow)}
+            empty="Nobody by that name or handle has a public profile yet."
             no="No, it’s someone else"
             onPick={(id) => {
               const p = people.find((x) => x.id === id);
@@ -107,11 +108,11 @@ export function CreditsStep({ draft, set, venueName, ingredients, match, onRenam
             ))}
           </View>
         ) : null}
-        <Field label="Who else made it?" value={also} onChangeText={setAlso} placeholder="Search people" autoCorrect={false} maxLength={60} />
+        <Field label="Who else made it?" value={also} onChangeText={setAlso} placeholder="Full name or @handle" autoCapitalize="words" autoCorrect={false} maxLength={60} />
         {also.trim().length >= 2 ? (
           <PickList
-            rows={alsoPeople.filter((p) => !draft.coCreators.some((c) => c.id === p.id)).map((p) => ({ id: p.id, label: p.city ? `${p.display_name} · ${p.city}` : p.display_name, near: p.near }))}
-            empty="Nobody by that name has a public profile yet."
+            rows={alsoPeople.filter((p) => !draft.coCreators.some((c) => c.id === p.id)).map(personRow)}
+            empty="Nobody by that name or handle has a public profile yet."
             no="No, it’s someone else"
             onPick={(id) => {
               const p = alsoPeople.find((x) => x.id === id);
@@ -153,6 +154,11 @@ export function CreditsStep({ draft, set, venueName, ingredients, match, onRenam
       </View>
     </View>
   );
+}
+
+/** A person in a credit search: their full name, then @handle and where they work now (else their city), so two Sams can be told apart. */
+function personRow(p: MaybeNear<PublicPerson>) {
+  return { id: p.id, label: p.display_name, sub: [`@${p.handle}`, p.current_bar ?? p.city].filter(Boolean).join(' · '), near: p.near };
 }
 
 /**

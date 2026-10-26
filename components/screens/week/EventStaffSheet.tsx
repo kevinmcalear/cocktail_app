@@ -99,6 +99,7 @@ export function EventStaffSheet({ event, rows, onClose }: { event: WeekItem; row
             if (linked && !t.trim()) setLinked(null);
           }}
           placeholder="Jun A."
+          autoCapitalize="words"
           autoCorrect={false}
         />
         {linked ? (
