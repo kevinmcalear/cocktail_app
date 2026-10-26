@@ -8,9 +8,11 @@ import { withNear, type MaybeNear } from '@/hooks/useSearchNear';
 import { chunk } from '@/lib/commandSearchGrid';
 import { likeExactly, searchByName } from '@/lib/drinkWizard';
 import { barSection, type BarSection } from '@/lib/barSections';
+import { kindsCovered } from '@/lib/myBarAdd';
 import { heroPicture, type ItemImageLink } from '@/lib/itemImages';
 import { sortMatches, type MatchRow } from '@/lib/barMatches';
 import { specNoteText, type ServedBar } from '@/lib/servedAt';
+import { capitalizeFirst } from '@/lib/stringUtils';
 import { PANTRY, PANTRY_WATER } from '@/lib/pantry';
 import { TECHNICAL_INGREDIENTS } from '@/lib/techniques/ingredients';
 import { supabase } from '@/lib/supabase';
@@ -179,7 +181,8 @@ async function searchBar(query: string): Promise<FoundItem[]> {
     const styles = best.filter((r) => r.ingredient_role !== 'product');
     const kind = styles.find((r) => r.name.toLowerCase() === key) ?? styles.find((r) => r.name.toLowerCase().startsWith(key));
     const bottles = kind ? (await kindBottles(kind.id, '', 3)).filter((b) => !best.some((r) => r.id === b.id)) : [];
-    return [...(await foundItems(best)), ...(await foundItems(bottles)).map((b) => ({ ...b, of: kind!.id }))];
+    const out = await foundItems([...best, ...bottles]);
+    return out.map((r, i) => (i < best.length ? r : { ...r, of: kind!.id }));
 }
 
 /**
@@ -232,7 +235,7 @@ export function useAddByName() {
     mutationFn: async (name: string): Promise<{ id: string; name: string }> => {
       const id = await ensureIngredient({ id: null, name: name.trim() }, null, new Map());
       await add.mutateAsync(id);
-      return { id, name: name.trim().charAt(0).toUpperCase() + name.trim().slice(1) };
+      return { id, name: capitalizeFirst(name.trim()) };
     },
     // A search for it now finds it, ticked.
     onSuccess: () => client.invalidateQueries({ queryKey: ['bar-search'] }),
@@ -545,12 +548,15 @@ async function readShelf(ids: string[]): Promise<Omit<ShelfItem, 'uses' | 'secti
   const kindIds = [...new Set(rows.map((r) => r.generic_id).filter((id): id is string => !!id))];
   const kindRows = kindIds.length ? await readItems(kindIds, 'id, name, generic_id') : [];
   const kinds = new Map(kindRows.map((k) => [k.id, k.name]));
-  const up = new Map(kindRows.map((k) => [k.id, k.generic_id ?? null]));
+  // The kinds' own kinds, so a Tanqueray (a London dry gin) also counts as a Gin in Add to your bar.
+  const parentIds = [...new Set(kindRows.map((k) => k.generic_id).filter((id): id is string => !!id && !kinds.has(id)))];
+  const parents = parentIds.length ? await readItems(parentIds, 'id, name') : [];
+  const tree = new Map([...kindRows, ...parents].map((k) => [k.id, { name: k.name, parent: k.generic_id ?? null }]));
   return rows.map((r) => ({
     id: r.id,
     name: r.name,
     type: r.item_type,
-    kindIds: r.ingredient_role === 'product' && r.generic_id ? [r.generic_id, up.get(r.generic_id)].filter((id): id is string => !!id) : undefined,
+    kindIds: r.ingredient_role === 'product' && r.generic_id ? kindsCovered(r.generic_id, tree) : undefined,
     imageUrl: heroPicture(r.item_images)?.url ?? null,
     glass: null,
     maker: r.brand_maker ?? null,

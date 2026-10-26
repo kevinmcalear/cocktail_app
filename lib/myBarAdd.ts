@@ -1,3 +1,4 @@
+import { kindWords } from './ingredientNames';
 import { TECHNICAL_INGREDIENTS } from './techniques/ingredients';
 
 /**
@@ -94,12 +95,22 @@ export function leftOutLine(names: readonly string[], most = 4): string | null {
   return `Already on your bar: ${names.slice(0, most).join(', ')}${more > 0 ? ` and ${more} more` : ''}`;
 }
 
+/**
+ * The styles a bottle of this kind covers, so Add to your bar doesn't offer
+ * them: the kind, and its own kind when the name says it is one ("London
+ * dry gin" is a Gin), never a broad one (Gin is a Spirit).
+ */
+export function kindsCovered(kindId: string, tree: ReadonlyMap<string, { name: string; parent: string | null }>): string[] {
+  const kind = tree.get(kindId);
+  const parent = kind?.parent ? tree.get(kind.parent) : undefined;
+  const words = (s: string) => ` ${s.toLowerCase().replace(/[^a-z0-9]+/g, ' ').trim()} `;
+  return kind?.parent && parent && words(kind.name).includes(words(parent.name)) ? [kindId, kind.parent] : [kindId];
+}
+
 // Kinds whose first word is a place or a people's name keep its capital.
 const PROPER = /^(american|australian|canadian|cuban|dutch|english|french|irish|italian|jamaican|japanese|kentucky|london|mexican|old tom|plymouth|scotch|scottish|spanish|tennessee|welsh)\b/i;
 
-/** A kind as Which asks for it: "gin", "rye whiskey", "Irish whiskey"; `many` gives "gins". */
+/** A kind as Which asks for it: "gin", "rye whiskey", "Irish whiskey"; `many` gives "gins" (kindWords). */
 export function kindName(name: string, many = false): string {
-  const n = PROPER.test(name) ? name : name.charAt(0).toLowerCase() + name.slice(1);
-  if (!many || /s$/i.test(n)) return n;
-  return /[^aeiou]y$/i.test(n) ? `${n.slice(0, -1)}ies` : `${n}s`;
+  return kindWords(PROPER.test(name) ? name : name.charAt(0).toLowerCase() + name.slice(1), many);
 }

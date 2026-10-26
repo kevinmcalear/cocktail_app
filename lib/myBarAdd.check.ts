@@ -1,6 +1,6 @@
 import assert from 'node:assert/strict';
 
-import { addedLine, becomesLine, dropKind, kindName, leftOutLine, NEW_SESSION, pick, shownHere, tick } from './myBarAdd';
+import { addedLine, becomesLine, dropKind, kindName, kindsCovered, leftOutLine, NEW_SESSION, pick, shownHere, tick } from './myBarAdd';
 
 const bar = new Set(['limes', 'gin']);
 const has = (id: string) => bar.has(id);
@@ -50,6 +50,20 @@ assert.equal(shownHere('gin', () => false, dropped.session), true, 'still in pla
 assert.equal(leftOutLine(['Limes', 'Lime cordial']), 'Already on your bar: Limes, Lime cordial');
 assert.equal(leftOutLine(['a', 'b', 'c', 'd', 'e', 'f']), 'Already on your bar: a, b, c, d and 2 more');
 assert.equal(leftOutLine([]), null);
+
+const tree = new Map([
+  ['spirit', { name: 'Spirit', parent: null }],
+  ['gin', { name: 'Gin', parent: 'spirit' }],
+  ['ldg', { name: 'London dry gin', parent: 'gin' }],
+  ['ofg', { name: 'Orange-Flavoured Gin', parent: 'gin' }],
+  ['bourbon', { name: 'Bourbon', parent: 'amw' }],
+  ['amw', { name: 'American whiskey', parent: null }],
+]);
+assert.deepEqual(kindsCovered('ldg', tree), ['ldg', 'gin'], 'a London dry gin is a Gin');
+assert.deepEqual(kindsCovered('ofg', tree), ['ofg', 'gin']);
+assert.deepEqual(kindsCovered('gin', tree), ['gin'], 'a gin is not every Spirit');
+assert.deepEqual(kindsCovered('bourbon', tree), ['bourbon']);
+assert.deepEqual(kindsCovered('unknown', tree), ['unknown']);
 
 assert.equal(kindName('Gin'), 'gin');
 assert.equal(kindName('Gin', true), 'gins');

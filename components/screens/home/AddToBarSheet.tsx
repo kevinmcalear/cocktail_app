@@ -82,12 +82,17 @@ export function AddToBarSheet({ visible, filter, onFilter, onShelf, covered, cou
       setHad(counts);
     }
   }
-  const has = (id: string) => onShelf.has(id) || covered.has(id);
-  const shown = (id: string) => shownHere(id, has, session);
-  const byName = useAddByName();
-  // On your bar now, kit included: what the footer counts.
+  // On your bar now, kit included; `has` adds the styles you have a bottle of.
   const kit = useKit().owned;
   const isOn = (id: string) => onShelf.has(id) || kit.includes(id);
+  const has = (id: string) => isOn(id) || covered.has(id);
+  const shown = (id: string) => shownHere(id, has, session);
+  const byName = useAddByName();
+  const search = (text: string) => {
+    setQuery(text);
+    // A failed Add “X” is about the name it was for.
+    if (byName.error) byName.reset();
+  };
   const typed = query.trim();
   const Name = typed.charAt(0).toUpperCase() + typed.slice(1);
   const found = useBarSearch(filter === 'kit' ? '' : query);
@@ -178,7 +183,7 @@ export function AddToBarSheet({ visible, filter, onFilter, onShelf, covered, cou
               ref={searchRef}
               label="Search everything"
               value={query}
-              onChangeText={setQuery}
+              onChangeText={search}
               placeholder="Gin, lemons, malic acid, a shaker…"
               icon="magnifyingglass"
               autoCorrect={false}
@@ -187,7 +192,7 @@ export function AddToBarSheet({ visible, filter, onFilter, onShelf, covered, cou
               returnKeyType="search"
               trailing={
                 <>
-                  {query ? <FieldButton icon="xmark.circle.fill" label="Clear search" onPress={() => setQuery('')} /> : null}
+                  {query ? <FieldButton icon="xmark.circle.fill" label="Clear search" onPress={() => search('')} /> : null}
                   <FieldButton icon="camera.fill" label="Snap a bottle" onPress={snap} />
                 </>
               }
@@ -246,7 +251,7 @@ export function AddToBarSheet({ visible, filter, onFilter, onShelf, covered, cou
                       ) : null}
                       {g.section === 'bottles' && kind ? (
                         <>
-                          {shown(kind.id) ? result(kind) : null}
+                          {shown(kind.id) && inTab.includes(kind) ? result(kind) : null}
                           {rows.filter((r) => r.of).map(result)}
                           <TileLink label={`All ${kindName(kind.name, true)}`} a11y={`All ${kindName(kind.name, true)}: which ${kindName(kind.name)} you have`} onPress={() => setWhich(kind)} />
                         </>
