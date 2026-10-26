@@ -97,7 +97,7 @@ export function SketchHeader({ draft, step, barVariants, barIce, onTint, forMenu
         note={reviewing ? 'Tap to draw it again' : forMenu ? `For ${forMenu}` : 'Updates as you go'}
         artLabel="Sketch of the drink so far"
       />
-      {onTint ? <DraftColourSheet visible={colouring} onClose={() => setColouring(false)} name={name} inputs={inputs} seed={seed} value={draft.tint ?? null} onChange={onTint} /> : null}
+      {onTint ? <DraftColourSheet visible={colouring} onClose={() => setColouring(false)} name={name} inputs={inputs} seed={seed} value={draft.tint ?? null} onChange={onTint} photo={draft.photos?.hero ?? null} /> : null}
     </>
   );
 }

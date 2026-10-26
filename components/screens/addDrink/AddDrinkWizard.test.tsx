@@ -167,7 +167,7 @@ describe('AddDrinkWizard', () => {
     // On to the review and save.
     for (let i = 0; i < 5; i++) await fireEvent.press(screen.getByRole('button', { name: 'Skip' }));
     expect(screen.getByText('30 ml Gin\nCampari')).toBeTruthy();
-    expect(screen.getByRole('button', { name: 'Hero photo: a sketch for now. Add a photo' })).toBeTruthy();
+    expect(screen.getByRole('button', { name: 'Add a photo: it leads the drink page' })).toBeTruthy(); // At home one photo (Q15)
     expect(screen.getByText('You can change any of it on the drink’s page.')).toBeTruthy();
     expect(mockCreate).not.toHaveBeenCalled();
     await fireEvent.press(screen.getByRole('button', { name: 'Save drink' }));

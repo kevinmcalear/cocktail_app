@@ -1,6 +1,6 @@
 import assert from 'node:assert/strict';
 
-import { pickPalette, toHsl } from '../supabase/functions/_shared/palette';
+import { photoColours, pickPalette, toHsl } from '../supabase/functions/_shared/palette';
 
 // The drink-field palette (supabase/functions/_shared/palette.ts) must find the
 // drink, not the bar or the paper behind it.
@@ -101,5 +101,17 @@ near(hue(wash[0]), 350, 15, 'wash dominant');
 assert.deepEqual(palette(picture([[[244, 242, 240], 0.9], [[80, 80, 80], 0.1]])), []);
 assert.deepEqual(palette(picture([[[245, 245, 245], 0.7], [[90, 90, 90], 0.3]])), []);
 assert.deepEqual(palette(new Uint8Array(0)), []);
+
+// From your photo (add wizard, E27): the drink and its deep first, then the
+// picture's other colours (the wood, a green garnish), none a near copy, at most five.
+const withGarnish = picture([[[176, 40, 40], 0.25], [[60, 140, 40], 0.1], [[120, 80, 40], 0.5], [[20, 18, 16], 0.15]]);
+const fromPhoto = photoColours(withGarnish, 100);
+assert.deepEqual(fromPhoto.slice(0, 2), palette(withGarnish).slice(0, 2));
+assert.ok(fromPhoto.length >= 3 && fromPhoto.length <= 5, fromPhoto.join(' '));
+assert.ok(fromPhoto.some((hex) => Math.abs(hue(hex) - 105) < 20), `the garnish green is offered: ${fromPhoto.join(' ')}`);
+assert.ok(fromPhoto.some((hex) => Math.abs(hue(hex) - 30) < 10), `the wood is offered: ${fromPhoto.join(' ')}`);
+assert.equal(new Set(fromPhoto).size, fromPhoto.length);
+assert.equal(photoColours(withGarnish, 100, 3).length, 3);
+assert.deepEqual(photoColours(picture([[[244, 242, 240], 0.9], [[80, 80, 80], 0.1]]), 100), []);
 
 console.log('palette.check: ok');
