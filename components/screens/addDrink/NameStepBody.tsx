@@ -32,8 +32,8 @@ interface Props {
 }
 
 /**
- * The add-drink wizard's first step: the name, photos, and the classic it
- * may be. When the bar already has a drink by that name (board
+ * The add-drink wizard's first step: the name, photos at a venue (at home
+ * they come on the review), and the classic it may be. When the bar already has a drink by that name (board
  * dup-drink-warning), its card instead, then a version's word in brackets
  * or a reminder to name a different drink apart.
  */
@@ -60,10 +60,23 @@ export function NameStepBody({ draft, set, barId, venueName, match, classic, res
         />
       ) : null}
       <NearNameCard draft={draft} set={set} barId={barId} venueName={venueName} hidden={!!match || !!classic} onStarted={onStarted} />
-      <StartPhotos photos={draft.photos ?? {}} onChange={(photos) => set({ photos })} barId={barId} />
+      {/* At home nothing to fill in before the drink exists: its photo comes on the review (Q15). */}
+      {barId ? <StartPhotos photos={draft.photos ?? {}} onChange={(photos) => set({ photos })} barId={barId} /> : <PhotoLater />}
       {/* The bar's drink is already linked to the classic: its card comes back once the name is the bar's no more. */}
       {classic && !asking && apart !== false ? <StartFromClassic set={set} match={classic} onStarted={onStarted} /> : null}
     </>
+  );
+}
+
+function PhotoLater() {
+  const ds = useDs();
+  return (
+    <View style={styles.hint}>
+      <IconSymbol name="camera" size={14} color={ds.c.muted} />
+      <Caption tone="muted" style={styles.flex}>
+        Add a photo at the end, once it’s made.
+      </Caption>
+    </View>
   );
 }
 

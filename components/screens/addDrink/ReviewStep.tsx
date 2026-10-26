@@ -12,7 +12,9 @@ import { PUBLISH_COPY } from '@/lib/publishing';
 import { capitalizeFirst } from '@/lib/stringUtils';
 import { draftSketchInputs } from '@/lib/sketch/draft';
 
-import { ReviewPhotos } from './ReviewPhotos';
+import { HomePhoto, ReviewPhotos } from './ReviewPhotos';
+
+const CHANGE_LATER = 'You can change any of it on the drink’s page.';
 
 function credits(d: WizardDraft, hasProfile: boolean): string {
   const by = d.creator === 'nobody' ? '' : typeof d.creator === 'object' && d.creator ? `By ${d.creator.name}` : hasProfile ? 'By you' : '';
@@ -42,16 +44,20 @@ interface ReviewStepProps extends StepProps {
   hasProfile: boolean;
   barVariants: readonly string[];
   barIce?: readonly string[];
-  /** A venue's cost card, price and GP (m01): first on review, as the board draws it. */
+  /** A venue's cost card, price and GP (m01): last, just above Save (E25, board w2-wizard-finish). */
   cost?: ReactNode;
 }
 
-/** The photo slots, then every answer on one screen; tap a row to go back and change it. */
+/**
+ * The photo slots, every answer on one screen (tap a row to go back and
+ * change it), then a venue's cost. At home one photo, the one that leads the
+ * drink's page (Q15); more angles go on the page.
+ */
 export function ReviewStep({ draft, set, onJump, barId, venueName, hasProfile, barVariants, barIce, cost }: ReviewStepProps) {
   const venue = useBarPublishing(barId).data;
   const caps = useCapabilities(barId).data;
-  // A venue's drink takes photos from those who may add them; at home it's yours.
-  const canPhoto = !barId || !!caps?.includes('photos');
+  // A venue's drink takes photos from those who may add them.
+  const canPhoto = !!caps?.includes('photos');
   // Not chosen: it follows the venue's default, once the venue has a public page.
   const followed = !venue ? 'Same as the venue' : venue.profile ? `${PUBLISH_COPY[venue.barDefault].label}, ${venueName}’s default` : 'Private for now';
   const rows: [WizardStep, string][] = [
@@ -67,15 +73,20 @@ export function ReviewStep({ draft, set, onJump, barId, venueName, hasProfile, b
   ];
   return (
     <View style={styles.review}>
-      {cost}
-      {canPhoto ? (
+      {!barId ? (
+        <HomePhoto photos={draft.photos ?? {}} onChange={(photos) => set({ photos })} />
+      ) : canPhoto ? (
         <ReviewPhotos photos={draft.photos ?? {}} onChange={(photos) => set({ photos })} sketch={draftSketchInputs(sketchLook(draft, barVariants, barIce))} seed={draft.id ?? 'new-drink'} />
       ) : null}
-      <ReviewList
-        rows={rows.map(([step, value]) => ({ key: step, label: STEP_COPY[step].short, value }))}
-        onJump={(s) => onJump(s as WizardStep)}
-        after="You can change any of it on the drink’s page."
-      />
+      <View>
+        <ReviewList rows={rows.map(([step, value]) => ({ key: step, label: STEP_COPY[step].short, value }))} onJump={(s) => onJump(s as WizardStep)} after={cost ? undefined : CHANGE_LATER} />
+        {cost ? (
+          <View style={styles.cost}>
+            {cost}
+            <Caption tone="muted">{CHANGE_LATER}</Caption>
+          </View>
+        ) : null}
+      </View>
     </View>
   );
 }
@@ -147,4 +158,5 @@ const styles = StyleSheet.create({
   row: { flexDirection: 'row', alignItems: 'center', gap: space.md, minHeight: layout.minTapTarget, paddingVertical: space.md, borderBottomWidth: StyleSheet.hairlineWidth },
   text: { flex: 1, gap: 2 },
   after: { marginTop: space.lg },
+  cost: { marginTop: space.xl, gap: space.lg },
 });
