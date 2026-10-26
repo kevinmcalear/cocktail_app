@@ -7,7 +7,7 @@ import { IconSymbol } from '@/components/ui/icon-symbol';
 
 import type { IconName } from './Button';
 import { PressableScale } from './PressableScale';
-import { Caption } from './Text';
+import { Body, Caption } from './Text';
 import { useDs } from './theme';
 
 interface FieldProps extends Omit<TextInputProps, 'style' | 'ref'> {
@@ -24,6 +24,8 @@ interface FieldProps extends Omit<TextInputProps, 'style' | 'ref'> {
   trailing?: ReactNode;
   /** An icon inside the box at its left: the magnifier on a search box. */
   icon?: IconName;
+  /** Fixed text inside the box at its left, not part of the value: the "@" before an Instagram name. ponytail: one character's room; measure it if a longer one comes. */
+  prefix?: string;
   /** A row of a grouped card (the New event sheet): no box of its own, the card is the box. */
   bare?: boolean;
 }
@@ -36,7 +38,7 @@ interface FieldProps extends Omit<TextInputProps, 'style' | 'ref'> {
 export const MULTILINE_MAX = 6 * type.body.lineHeight + 2 * space.md;
 
 /** A labelled text input in the Back Bar style. */
-export function Field({ label, hideLabel, hint, error, minLines, trailing, icon, bare, ...input }: FieldProps) {
+export function Field({ label, hideLabel, hint, error, minLines, trailing, icon, prefix, bare, ...input }: FieldProps) {
   const ds = useDs();
   const box = (
     <TextInput
@@ -52,6 +54,7 @@ export function Field({ label, hideLabel, hint, error, minLines, trailing, icon,
         { fontFamily: fontFamilies.body, color: ds.c.ink, backgroundColor: ds.c.raised, borderColor: error ? ds.accentText : ds.c.line },
         trailing ? styles.withTrailing : null,
         icon ? styles.withIcon : null,
+        prefix ? styles.withPrefix : null,
         bare ? styles.bare : null,
       ]}
     />
@@ -59,6 +62,10 @@ export function Field({ label, hideLabel, hint, error, minLines, trailing, icon,
   const lead = icon ? (
     <View pointerEvents="none" style={styles.icon}>
       <IconSymbol name={icon} size={18} color={ds.c.muted} />
+    </View>
+  ) : prefix ? (
+    <View pointerEvents="none" aria-hidden style={styles.prefix}>
+      <Body tone="muted">{prefix}</Body>
     </View>
   ) : null;
   return (
@@ -97,5 +104,7 @@ const styles = StyleSheet.create({
   bare: { backgroundColor: 'transparent', borderWidth: 0, paddingHorizontal: 0, minHeight: 28 },
   withIcon: { paddingLeft: space.md + 18 + space.sm + 2 },
   icon: { position: 'absolute', top: 0, bottom: 0, left: space.md + 2, justifyContent: 'center' },
+  withPrefix: { paddingLeft: space.md + type.body.fontSize },
+  prefix: { position: 'absolute', top: 0, bottom: 0, left: space.md, justifyContent: 'center' },
   trailing: { position: 'absolute', top: 0, bottom: 0, right: 0, flexDirection: 'row', alignItems: 'center' },
 });

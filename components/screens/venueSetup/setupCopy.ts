@@ -13,9 +13,9 @@ export function setupCopy(screen: VenueScreen, bar: string, claim: ClaimState = 
     case 'place':
       return { title: 'Where and when', intro: `We filled this in from ${bar}’s page. Change anything. It shows on your bar page, in Discover and on the map.` };
     case 'look':
-      return { title: `Make it look like ${bar}`, intro: 'Your logo, colour and type on every phone and screen at the bar. Change any of it later in Brand.' };
+      return { title: `Make it look like ${bar}`, intro: 'Your logo, colour and font on every phone and screen at the bar. Change any of it later in Brand.' };
     case 'visibility':
-      return { title: 'Who sees your page', intro: `For people outside ${bar}. Your team always sees everything.` };
+      return { title: 'Who sees your page', intro: `Choose what people who don’t work at ${bar} can see. Your team can always see everything.` };
     case 'team':
       return { title: 'Invite your team', intro: `Each person gets an email from ${bar} and lands in the app with your menus and specs already there.` };
     case 'done':

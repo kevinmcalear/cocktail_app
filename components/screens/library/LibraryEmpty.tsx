@@ -20,11 +20,11 @@ export function LibraryEmpty({ barId, noDrinks, canAdd }: { barId: string | null
     <View style={styles.wrap}>
       <View style={styles.block}>
         <Headline role="heading">No drinks yet</Headline>
-        <Body tone="muted">{canAdd ? 'Add your drinks one at a time, or bring in a menu and we build them for you.' : 'The venue’s drinks show here once someone adds them.'}</Body>
+        <Body tone="muted">{canAdd ? 'Add your drinks one at a time, or upload a menu and we build them for you.' : 'The venue’s drinks show here once someone adds them.'}</Body>
         {canAdd ? (
           <View style={styles.actions}>
             <Button label="Add a drink" icon="plus" onPress={() => router.push(`/add-cocktail?barId=${barId}` as Href)} />
-            <Button label="Bring in a menu" variant="secondary" onPress={() => useBringIn.getState().openSheet()} />
+            <Button label="Upload a menu" variant="secondary" onPress={() => useBringIn.getState().openSheet()} />
           </View>
         ) : null}
       </View>

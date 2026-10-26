@@ -1,5 +1,5 @@
-import { useState, type ReactNode } from 'react';
-import { StyleSheet, View } from 'react-native';
+import { useRef, useState, type ComponentRef, type ReactNode } from 'react';
+import { StyleSheet, TextInput, View } from 'react-native';
 
 import { Body, Button, Caption, Chip, DsText, Field, PressableScale, TimeField, useDs, type IconName } from '@/components/ds';
 import { SetupFooter, SetupPage } from '@/components/screens/onboarding/SetupPage';
@@ -82,11 +82,12 @@ function HoursEditor({ initial, onSave, onCancel }: { initial: WeekHours; onSave
   );
 }
 
+/** One fact's field, focused as it opens; Return saves it and moves on to the next one (E13). */
 function TextEditor({ label, initial, keyboard, onSave, onCancel }: { label: string; initial: string; keyboard: 'phone-pad' | 'url'; onSave: (v: string) => void; onCancel: () => void }) {
   const [value, setValue] = useState(initial);
   return (
     <View style={styles.editor}>
-      <Field label={label} value={value} onChangeText={setValue} keyboardType={keyboard} autoCapitalize="none" autoCorrect={false} />
+      <Field label={label} value={value} onChangeText={setValue} keyboardType={keyboard} autoCapitalize="none" autoCorrect={false} autoFocus returnKeyType="next" submitBehavior="submit" onSubmitEditing={() => onSave(value)} />
       <View style={styles.actions}>
         <Button label="Cancel" variant="ghost" onPress={onCancel} />
         <Button label="Save" onPress={() => onSave(value)} />
@@ -133,6 +134,7 @@ export function WhereWhenStep({ profileId, name, claim, writable, held: kept, on
   const [editing, setEditing] = useState<'hours' | 'phone' | 'website' | null>(null);
   const [problem, setProblem] = useState<string | null>(null);
   const [ig, setIg] = useState<string | null>(null);
+  const igField = useRef<ComponentRef<typeof TextInput>>(null);
   const [now] = useState(() => new Date());
   const pending = !writable && claim?.status === 'pending';
   const holding = !writable && !pending;
@@ -147,9 +149,14 @@ export function WhereWhenStep({ profileId, name, claim, writable, held: kept, on
   const igProblem = instagramProblem(instagram);
   const error = problem ?? (saveFacts.error ?? saveSetup.error ?? saveInstagram.error)?.message ?? venueError ?? null;
 
-  const save = (change: BarFactsChange) => {
+  // Saved: close the editor, or open the next field (Return: phone, then website, then Instagram).
+  const advance = (next?: 'website' | 'instagram') => {
+    setEditing(next === 'website' ? 'website' : null);
+    if (next === 'instagram') igField.current?.focus();
+  };
+  const save = (change: BarFactsChange, next?: 'website' | 'instagram') => {
     const withZone = change.hours && !facts?.timezone ? { ...change, timezone: deviceZone() } : change;
-    const done = { onSuccess: () => setEditing(null) };
+    const done = { onSuccess: () => advance(next) };
     setProblem(null);
     if (writable) saveFacts.mutate(withZone, done);
     else if (pending && claim) saveSetup.mutate({ claimId: claim.id, setup: withZone as Parameters<typeof saveSetup.mutate>[0]['setup'] }, done);
@@ -157,7 +164,7 @@ export function WhereWhenStep({ profileId, name, claim, writable, held: kept, on
       const wrong = heldProblem(withZone);
       if (wrong) return setProblem(wrong);
       onHold(withZone as HeldSetup);
-      setEditing(null);
+      advance(next);
     }
   };
   const looksRight = () => {
@@ -191,10 +198,10 @@ export function WhereWhenStep({ profileId, name, claim, writable, held: kept, on
           <Body tone="muted">Not added yet</Body>
         )}
       </FactRow>
-      <FactRow icon="phone" label="Phone" canEdit editing={editing === 'phone'} onEdit={() => setEditing('phone')} editor={<TextEditor label="Phone" initial={phone ?? ''} keyboard="phone-pad" onSave={(v) => save({ phone: v.trim() || null })} onCancel={() => setEditing(null)} />}>
+      <FactRow icon="phone" label="Phone" canEdit editing={editing === 'phone'} onEdit={() => setEditing('phone')} editor={<TextEditor label="Phone" initial={phone ?? ''} keyboard="phone-pad" onSave={(v) => save({ phone: v.trim() || null }, 'website')} onCancel={() => setEditing(null)} />}>
         <Body tone={phone ? 'ink' : 'muted'}>{phone ?? 'Not added yet'}</Body>
       </FactRow>
-      <FactRow icon="globe" label="Website" canEdit editing={editing === 'website'} onEdit={() => setEditing('website')} editor={<TextEditor label="Website" initial={website ?? ''} keyboard="url" onSave={(v) => save({ website: normalizeWebsite(v) })} onCancel={() => setEditing(null)} />}>
+      <FactRow icon="globe" label="Website" canEdit editing={editing === 'website'} onEdit={() => setEditing('website')} editor={<TextEditor label="Website" initial={website ?? ''} keyboard="url" onSave={(v) => save({ website: normalizeWebsite(v) }, 'instagram')} onCancel={() => setEditing(null)} />}>
         <Body tone={website ? 'ink' : 'muted'}>{website ?? 'Not added yet'}</Body>
       </FactRow>
       <View style={styles.fact}>
@@ -207,7 +214,8 @@ export function WhereWhenStep({ profileId, name, claim, writable, held: kept, on
                 <Body tone={instagram ? 'ink' : 'muted'}>{instagram ? `@${instagram}` : 'Not added yet'}</Body>
               </>
             ) : (
-              <Field label="Instagram" value={instagram} onChangeText={(t) => { setIg(t); setProblem(null); }} placeholder="@littlerye" autoCapitalize="none" autoCorrect={false} autoComplete="off" maxLength={60} error={ig !== null ? igProblem : undefined} />
+              // The @ sits in the box (E10), so a typed or pasted one is dropped: the handle is kept without it.
+              <Field ref={igField} label="Instagram" prefix="@" value={instagram.replace(/^@+/, '')} onChangeText={(t) => { setIg(t.replace(/^@+/, '')); setProblem(null); }} placeholder="littlerye" autoCapitalize="none" autoCorrect={false} autoComplete="off" maxLength={60} returnKeyType="done" error={ig !== null ? igProblem : undefined} />
             )}
           </View>
         </View>
