@@ -88,7 +88,7 @@ before(async () => {
 });
 
 after(async () => {
-  for (const id of [...Object.values(ids.drinks ?? {}), ids.home]) if (id) await service.from('items').delete().eq('id', id);
+  for (const id of [...Object.values(ids.drinks ?? {}), ids.home, ...(ids.extra ?? [])]) if (id) await service.from('items').delete().eq('id', id);
   if (ids.bar) await service.from('bars').delete().eq('id', ids.bar);
   for (const u of Object.values(users)) await service.auth.admin.deleteUser(u.id);
   await db.end();
@@ -282,6 +282,64 @@ test('versions keep notes for everyone and leave role notes out', async () => {
   const snap = async (key) => (await db.query("SELECT private.drink_snapshot($1) ->> 'notes' AS notes", [ids.drinks[key]])).rows[0].notes;
   assert.equal(await snap('null'), noteText(null));
   assert.equal(await snap('35'), null);
+});
+
+test('a version round-trips a drink in parts and leaves role notes alone (with 20261123100000)', async () => {
+  const add = async (row) => {
+    const id = (await insert('items', row)).id;
+    (ids.extra ??= []).push(id);
+    return id;
+  };
+  const build = await add({ name: `Build ${run}`, item_type: 'method' });
+  const whisk = await add({ name: `Whisk ${run}`, item_type: 'method' });
+  const coffee = await add({ name: `Hot coffee ${run}`, item_type: 'ingredient' });
+  const cream = await add({ name: `Cream ${run}`, item_type: 'ingredient' });
+  const drink = await add({ name: `Parts drink ${run}`, item_type: 'cocktail', bar_id: ids.bar });
+  const admin = users.admin.client;
+  const PARTS = [{ name: 'The coffee' }, { name: 'The cream', join: 'float' }];
+  const line = (ingredient_item_id, amount, part) => ({ ingredient_item_id, amount, unit: 'ml', preparation_notes: null, is_optional: false, part });
+  const save = async (args) => {
+    const { error } = await admin.rpc('save_drink_spec', { p_item: drink, p_note: null, ...args });
+    assert.ifError(error);
+  };
+  const restore = async (version) => {
+    const { error } = await admin.rpc('restore_drink_version', { p_item: drink, p_version: version });
+    assert.ifError(error);
+  };
+  const state = async () => {
+    const [{ data: item }, { data: lines }, { data: methods }, { data: note }] = await Promise.all([
+      service.from('items').select('parts').eq('id', drink).single(),
+      service.from('recipes').select('part').eq('recipe_item_id', drink).order('sort_order'),
+      service.from('item_methods').select('method_item_id, part').eq('item_id', drink).order('sort_order'),
+      service.from('item_notes').select('body, read_level').eq('item_id', drink).maybeSingle(),
+    ]);
+    return { parts: item.parts, lines: lines.map((l) => l.part), methods: methods.map((m) => m.part), note };
+  };
+  const latest = async () => (await db.query('SELECT max(version) AS v FROM public.item_versions WHERE item_id = $1', [drink])).rows[0].v;
+
+  // Version A: two parts, Build in both, a note for everyone.
+  assert.ifError((await admin.from('item_notes').insert({ item_id: drink, body: 'Float it over a spoon.' })).error);
+  await save({ p_lines: [line(coffee, 120, 1), line(cream, 30, 2)], p_method_ids: [build, build, whisk], p_method_parts: [1, 2, 2], p_parts: PARTS });
+  const twoParts = await latest();
+
+  // Then one part, and the note goes to Drink Creators and up.
+  await save({ p_lines: [line(coffee, 120, 1)], p_method_ids: [build], p_method_parts: [1], p_parts: [] });
+  assert.ifError((await admin.from('item_notes').update({ body: 'Creators: 32 ml cream.', read_level: 35 }).eq('item_id', drink)).error);
+  await save({ p_lines: [line(coffee, 100, 1)], p_method_ids: [build], p_method_parts: [1], p_parts: [] });
+  const { rows } = await db.query("SELECT snapshot -> 'notes' AS notes FROM public.item_versions WHERE item_id = $1 AND version = $2", [drink, await latest()]);
+  assert.equal(rows[0].notes, null, 'a version holds no role note');
+
+  // Back to A: the parts come back, the role note stays.
+  await restore(twoParts);
+  assert.deepEqual(await state(), {
+    parts: PARTS, lines: [1, 2], methods: [1, 2, 2], note: { body: 'Creators: 32 ml cream.', read_level: 35 },
+  });
+
+  // With the note for everyone again, A brings its note back too.
+  await service.from('item_notes').update({ body: 'Changed since.', read_level: null }).eq('item_id', drink);
+  await restore(twoParts);
+  assert.deepEqual((await state()).note, { body: 'Float it over a spoon.', read_level: null });
+  assert.deepEqual((await state()).methods, [1, 2, 2]);
 });
 
 test('notes go with their drink', async () => {
