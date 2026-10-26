@@ -9,7 +9,7 @@ export function setupCopy(screen: VenueScreen, bar: string, claim: ClaimState = 
     case 'find':
       return { title: 'Find your bar', intro: 'Most bars are already here. Claim yours and keep its awards, drinks and rankings.' };
     case 'claim':
-      return { title: 'Last step: prove it’s yours', intro: `${bar} is set up for your team. To put your hours, drinks and look on its public page, we check you work there.` };
+      return { title: 'Prove it’s yours', intro: `${bar} is set up for your team. To put your hours, drinks and look on its public page, we check you work there.` };
     case 'place':
       return { title: 'Where and when', intro: `We filled this in from ${bar}’s page. Change anything. It shows on your bar page, in Discover and on the map.` };
     case 'look':

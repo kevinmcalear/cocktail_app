@@ -13,7 +13,6 @@ import { ResumeCard } from '@/components/screens/bringin/ResumeCard';
 import { LibrarySetup } from '@/components/screens/venueSetup/SetupBanner';
 import { FeatureNewsLine } from '@/components/screens/library/FeatureNewsLine';
 import { FirstRoundCard, RoundOpened } from '@/components/screens/firstRound/FirstRoundCard';
-import { useFirstRound } from '@/hooks/useFirstRound';
 import { FilterRow } from '@/components/screens/library/LibraryChips';
 import { useTileLines } from '@/components/screens/library/useTileLines';
 import { FILTER_DOCK, FilterDock, PinnedTitle, type FilterSet } from '@/components/screens/library/LibraryFilters';
@@ -103,8 +102,6 @@ export function LibraryScreen() {
   const { data: menus } = useVenueMenus(activeId);
   const staff = useStaffList(activeId);
   const [now] = useState(() => Date.now());
-  // The first round's first step points at the Old Fashioned.
-  const startHere = useFirstRound().current?.key === 'house_spec';
 
   const published = useMemo(() => items.filter((i) => !i.isDraft), [items]);
   const shelves = useVenueShelves(activeId, published);
@@ -266,7 +263,6 @@ export function LibraryScreen() {
                 line={lineOf(item)}
                 glassName={glassName(item)}
                 width={`${100 / columns}%`}
-                mark={startHere && item.name.trim().toLowerCase() === 'old fashioned' ? 'Start here' : null}
                 onPressIn={category === 'Cocktail' ? () => prefetch(item.id, { name: item.name, item_images: item.item_images }) : undefined}
                 onPress={() => router.push(itemHref(category, item.id) as never)}
               />

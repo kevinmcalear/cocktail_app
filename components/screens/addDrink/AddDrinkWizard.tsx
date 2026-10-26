@@ -56,7 +56,7 @@ export interface AddDrinkWizardProps {
   initialName?: string | null;
   /** "Riff on this" on a drink page: a fresh draft starts from that drink's spec, credited as a version of it. */
   startFrom?: string | null;
-  /** The first round's "Make the Old Fashioned yours": straight to Review, with the round's strip. */
+  /** The first round's "Add your first cocktail": from a classic straight to Review, or from scratch at the name, with the round's strip. */
   firstRound?: boolean;
   /** Opened from an import's Edit this drink: the draft is the import, not one left off, so no "Picked up where you left off". */
   imported?: boolean;
@@ -212,7 +212,7 @@ function Wizard({ barId = null, menuSectionId, initialName, startFrom, firstRoun
   const body = (() => {
     switch (step) {
       case 'name':
-        return <NameStepBody {...{ draft, set, barId, venueName, classic, resumed }} match={atBar} onStartOver={startOver} onDone={() => canSave(draft) && tryNext()} onStarted={() => go('ingredients')} />;
+        return <>{firstRound && !startFrom ? <RoundStrip scratch onSkip={onClose} /> : null}<NameStepBody {...{ draft, set, barId, venueName, classic, resumed }} match={atBar} onStartOver={startOver} onDone={() => canSave(draft) && tryNext()} onStarted={() => go('ingredients')} /></>;
       case 'ingredients':
         return (
           <IngredientsStep
@@ -254,7 +254,7 @@ function Wizard({ barId = null, menuSectionId, initialName, startFrom, firstRoun
       case 'review':
         return (
           <>
-            {firstRound ? <RoundStrip onSkip={onClose} /> : null}
+            {firstRound ? <RoundStrip scratch={!startFrom} onSkip={onClose} /> : null}
             <ReviewStep draft={draft} set={set} onJump={go} barId={barId} venueName={venueName} hasProfile={!!me} barVariants={barVariants} barIce={barIceKinds} cost={venueLines.cost} />
           </>
         );
@@ -273,7 +273,7 @@ function Wizard({ barId = null, menuSectionId, initialName, startFrom, firstRoun
       direction={direction}
       // Naming a new drink it's "New drink"; a kept draft picked up again goes by its name.
       eyebrow={heading?.eyebrow ?? ((step !== 'name' || resumed ? draft.name.trim() : '') || 'New drink')}
-      title={heading?.title ?? (firstRound && step === 'review' ? 'Make it yours' : copy.title)}
+      title={heading?.title ?? (firstRound && startFrom && step === 'review' ? 'Make it yours' : copy.title)}
       intro={copy.intro}
       // Android's back button steps back through the wizard before leaving it.
       onHardwareBack={() => {

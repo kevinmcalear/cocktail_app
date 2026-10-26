@@ -1,15 +1,18 @@
 import { useRouter, type Href } from 'expo-router';
-import { useState, type ReactNode } from 'react';
-import { View } from 'react-native';
+import { Fragment, useState, type ReactNode } from 'react';
+import { StyleSheet, View } from 'react-native';
 
 import { Caption } from '@/components/ds';
+import { FirstCocktailChoices, useStartFirstCocktail } from '@/components/screens/firstRound/FirstCocktailChoices';
 import { SetupChromeProvider, SetupPage, useSetupChrome } from '@/components/screens/onboarding/SetupPage';
+import { space } from '@/constants/tokens';
 import { useBarPageId, useFlushHeldGlasses } from '@/hooks/useBarGlassware';
 import { useCapabilities } from '@/hooks/useCapabilities';
 import { useKitFromDrinks } from '@/hooks/useKitFromDrinks';
 import { useSetupChecklist } from '@/hooks/useSetupChecklist';
 import { checklistIntro, type ChecklistKey } from '@/lib/setupChecklist';
 import { useAppMode } from '@/store/useAppMode';
+import { useBringIn } from '@/store/useBringIn';
 
 import { BrandsStep } from './BrandsStep';
 import { FromDrinksStep, fromDrinksCount } from './FromDrinksStep';
@@ -33,10 +36,11 @@ export function SetupChecklist({ barId, name, footer }: { barId: string; name: s
   const pageId = useBarPageId(barId).data ?? null;
   // Glasses picked before the page was checked go onto it once it is.
   useFlushHeldGlasses(barId);
-  const { list, notes, menuId, loading, skip, run } = useSetupChecklist(barId);
+  const { list, notes, menuId, inLibrary, reviewId, loading, skip, run } = useSetupChecklist(barId);
   // Only Prep adds to the Kit: nobody else loads what the drinks name (Kit and ice, step 12).
   const prep = (useCapabilities(barId).data ?? []).includes('prep');
   const fromDrinks = fromDrinksCount(useKitFromDrinks(prep ? barId : null), pageId);
+  const startCocktail = useStartFirstCocktail();
   const [at, setAt] = useState<ChecklistKey | 'fromDrinks' | null>(null);
   const back = () => setAt(null);
   const step = (key: ChecklistKey) => `Set up ${name} · ${list.rows.find((r) => r.key === key)?.title ?? ''}`;
@@ -47,7 +51,7 @@ export function SetupChecklist({ barId, name, footer }: { barId: string; name: s
 
   // Done with nothing in the kit leaves it for later, like Skip.
   if (at === 'kit') return <KitStep barId={barId} pageId={pageId} name={name} step={step('kit')} onBack={back} onDone={() => (list.rows.some((r) => r.key === 'kit' && r.state === 'done') ? null : skip('kit'), back())} />;
-  if (at === 'bottles') return <BrandsStep barId={barId} step={step('bottles')} onBack={back} onNext={back} onSkip={() => (skip('bottles'), back())} />;
+  if (at === 'bottles') return <BrandsStep barId={barId} name={name} step={step('bottles')} onBack={back} onNext={back} onSkip={() => (skip('bottles'), back())} />;
   if (at === 'fromDrinks') return <FromDrinksStep barId={barId} pageId={pageId} name={name} onBack={back} />;
   if (at === 'menu') {
     return <MenuStep barId={barId} step={step('menu')} onBack={back} onDone={back} onSkip={() => (skip('menu'), back())} onBringIn={() => open('/bring-in')} onMade={(id) => open(`/menus/${id}/edit`)} />;
@@ -66,7 +70,17 @@ export function SetupChecklist({ barId, name, footer }: { barId: string; name: s
     kit: () => setAt('kit'),
     bottles: () => setAt('bottles'),
     menu: () => setAt('menu'),
-    drinks: () => (menuId ? open(`/menus/${menuId}/edit`) : setAt('menu')),
+    // The import still to check, carried on; else the drinks in the Library; else a menu to put some on.
+    drinks: () => {
+      if (reviewId) {
+        useBringIn.getState().setReviewing(reviewId);
+        open('/bring-in');
+      } else if (inLibrary) {
+        enterVenue(barId);
+        router.navigate('/library');
+      } else if (menuId) open(`/menus/${menuId}/edit`);
+      else setAt('menu');
+    },
     team: () => setAt('team'),
   };
   return (
@@ -77,7 +91,15 @@ export function SetupChecklist({ barId, name, footer }: { barId: string; name: s
         ) : (
           <View role="list" accessibilityLabel={`Set up ${name}`}>
             {list.rows.map((r, i) => (
-              <ChecklistRow key={r.key} n={i + 1} title={r.title} line={r.line} note={notes[r.key]} state={r.state} onPress={press[r.key]} />
+              <Fragment key={r.key}>
+                <ChecklistRow n={i + 1} title={r.title} line={r.line} note={notes[r.key]} state={r.state} onPress={press[r.key]} />
+                {/* Until there are drinks, the first round's four starts, coming back here once saved. */}
+                {r.key === 'drinks' && r.state !== 'done' ? (
+                  <View style={styles.starts}>
+                    <FirstCocktailChoices onPick={(start) => (enterVenue(barId), startCocktail(barId, start, true))} />
+                  </View>
+                ) : null}
+              </Fragment>
             ))}
           </View>
         )}
@@ -87,3 +109,8 @@ export function SetupChecklist({ barId, name, footer }: { barId: string; name: s
     </SetupChromeProvider>
   );
 }
+
+const styles = StyleSheet.create({
+  // Under the row's title: past its 32 px mark and the gap.
+  starts: { paddingLeft: 32 + space.md, paddingVertical: space.sm },
+});

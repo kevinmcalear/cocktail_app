@@ -14,7 +14,7 @@ import { useBringIn } from "@/store/useBringIn";
  */
 export default function AddCocktailScreen() {
     const router = useRouter();
-    const { barId, draftId, name, menuSectionId, from, round, review, drink, imported } = useLocalSearchParams<{
+    const { barId, draftId, name, menuSectionId, from, round, back, review, drink, imported } = useLocalSearchParams<{
         barId?: string;
         /** "Edit this drink" in a big import's review: saving here approves that drink there. */
         review?: string;
@@ -22,8 +22,10 @@ export default function AddCocktailScreen() {
         /** "1" from an import (Edit this drink, Edit all): the draft is the import, not one left off. */
         imported?: string;
         from?: string;
-        /** "1" from the first round: the Old Fashioned, straight to Review, then back to the Library. */
+        /** "1" from the first round: its first cocktail (a classic at Review, or from scratch), then back to the Library. */
         round?: string;
+        /** "1" from the setup checklist's First drinks: the same first cocktail, then back to the checklist. */
+        back?: string;
         draftId?: string;
         name?: string;
         menuSectionId?: string;
@@ -53,7 +55,7 @@ export default function AddCocktailScreen() {
                             const made = { drinkId: id, summary: { ...emptySummary("recipes"), drinksNew: 1 }, warnings: [] };
                             // Only if it's still to check there: a drink is never counted twice.
                             useBringIn.getState().editReview(review, (r) => (canCheck(r, Number(drink)) ? approved(r, Number(drink), made, new Date().toISOString()) : r));
-                        } else if (menuSectionId) goBack();
+                        } else if (menuSectionId || back === "1") goBack();
                         else if (round === "1") router.replace("/library");
                         else router.replace(`/cocktail/${id}`);
                     }}
