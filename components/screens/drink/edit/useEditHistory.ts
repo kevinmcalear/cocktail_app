@@ -21,6 +21,8 @@ interface EditSnapshot {
   iceBuild: unknown;
   methodIceId: string | null;
   recipeItems: SortableRecipeItem[];
+  /** Made in parts, where the editor has them (a draft doesn't): removing a part says Undo is in the toolbar. */
+  parts: unknown;
 }
 
 /** A pause this long ends a burst of typing, so the next change is a new step. */
@@ -39,6 +41,7 @@ const snapshotOf = (e: Editor): EditSnapshot => ({
   iceBuild: 'iceBuild' in e ? e.iceBuild : null,
   methodIceId: 'methodIceId' in e ? e.methodIceId : null,
   recipeItems: e.recipeItems,
+  parts: 'parts' in e ? e.parts : null,
 });
 
 /**
@@ -52,6 +55,8 @@ export function useEditHistory(editor: Editor) {
     editor.setOrigin(s.origin);
     editor.setDescription(s.description);
     editor.setNotes(s.notes);
+    // The parts before the methods and lines: they set both, and the snapshot's own win.
+    if ('setParts' in editor) editor.setParts(s.parts as typeof editor.parts);
     editor.setMethodIds(s.methodIds);
     editor.setSpecId('glassware', s.glasswareId);
     if ('setGlassModel' in editor) editor.setGlassModel(s.glassModel as typeof editor.glassModel);
