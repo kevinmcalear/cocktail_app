@@ -26,6 +26,7 @@ Tests are not enough on their own. Drive the change on every surface it can brea
 Recipes:
 
 - **Local Supabase:** Docker running, then `supabase start -x studio,imgproxy,logflare,vector,realtime,supavisor,mailpit,postgres-meta`, `supabase db reset`, `npm run test:security`. Seed data with only the `public.*` inserts from a dump (never auth tables), loaded with `session_replication_role=replica`.
+- **Supabase CLI version:** use the CLI pinned in `.github/workflows/ci.yml` (`SUPABASE_CLI`), not `npx supabase@latest`. A newer CLI's storage service migrates the shared stack's storage schema past what the pinned one understands, and every upload then fails with 42P10. `npm run db:check` (the first step of `test:security`) spots this and prints the one-line repair.
 - **Auth emails (venue invites, sign-in codes):** leave `mailpit` out of `-x` and keep the edge runtime. Auth's emails land in Mailpit at `http://127.0.0.1:54324` (its API is `/api/v1/messages`); the templates are in `supabase/templates`. The Team screen's Invite calls `send-bar-invite`.
 - **Web against local Supabase:** `EXPO_NO_DOTENV=1` plus the env values from `supabase status`, then `expo start --web --no-dev --port 8090`. Dev mode bundles `.env` as a module and would point at production. `--no-dev` doesn't rebuild on edits, so restart after changes. Port 8081 is often taken.
 - **Demo data:** `docker exec -i supabase_db_cocktail_app psql -U postgres < supabase/seed_demo.sql` loads two made-up venues (Little Rye and Pale Moth), glassware, drinks and a current menu at each.
