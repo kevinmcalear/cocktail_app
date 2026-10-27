@@ -70,9 +70,56 @@ jobs:
   # its own stack (scripts/security-shard.mjs splits the files by measured
   # time). Every shard rebuilds the database from every migration, so a
   # migration that cannot rebuild the schema fails in each.
+  # Pulls Supabase's images once and saves them to the Actions cache, so the
+  # three shards load them instead of pulling together (27 Oct: ghcr.io refused
+  # that burst with "toomanyrequests" and failed every database job). Saved on
+  # main, the copy serves every PR; a PR's own copy serves only that PR. A
+  # failure here doesn't stop the shards, which still pull with retries.
+  supabase-images:
+    name: Supabase images
+    needs: changes
+    if: ${{ !cancelled() && (needs.changes.result != 'success' || needs.changes.outputs.database != 'false') }}
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    permissions:
+      contents: read
+      packages: read
+    env:
+      SUPABASE_INTERNAL_IMAGE_REGISTRY: ghcr.io
+      SUPABASE_CLI: 2.112.0
+      SUPABASE_EXCLUDE: studio,imgproxy,logflare,vector,realtime,supavisor,mailpit,postgres-meta
+    steps:
+      - uses: actions/checkout@v7
+      - id: images
+        uses: actions/cache/restore@v6
+        with:
+          path: ${{ runner.temp }}/supabase-images
+          key: supabase-images-v2-${{ runner.arch }}-${{ env.SUPABASE_CLI }}-${{ hashFiles('supabase/config.toml') }}
+          lookup-only: true
+      - if: steps.images.outputs.cache-hit != 'true'
+        uses: supabase/setup-cli@v3
+        with:
+          version: ${{ env.SUPABASE_CLI }}
+      - if: steps.images.outputs.cache-hit != 'true'
+        uses: docker/login-action@v3
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+      - if: steps.images.outputs.cache-hit != 'true'
+        run: |
+          bash scripts/ci-supabase-start.sh
+          mkdir -p "$RUNNER_TEMP/supabase-images"
+          docker save -o "$RUNNER_TEMP/supabase-images/images.tar" $(docker images --format '{{.Repository}}:{{.Tag}}' | grep 'supabase/' | sort -u)
+      - if: steps.images.outputs.cache-hit != 'true'
+        uses: actions/cache/save@v6
+        with:
+          path: ${{ runner.temp }}/supabase-images
+          key: supabase-images-v2-${{ runner.arch }}-${{ env.SUPABASE_CLI }}-${{ hashFiles('supabase/config.toml') }}
+
   security-shard:
     name: Security tests (${{ matrix.shard }}/3)
-    needs: changes
+    needs: [changes, supabase-images]
     # Skip only on an explicit "no": if the changes job fails, this still runs.
     # Pushes to main always run it.
     if: ${{ !cancelled() && (needs.changes.result != 'success' || needs.changes.outputs.database != 'false') }}
@@ -141,8 +188,7 @@ jobs:
       # Supabase's images (about ten) come from the Actions cache when a run
       # has saved them for this CLI and config, so shards don't all pull them
       # from ghcr.io at once (27 Oct: "toomanyrequests" failed every database
-      # job). Shard 3 saves them after the types check, so postgres-meta
-      # (which gen types starts on its own) is in the copy too.
+      # job).
       - id: images
         uses: actions/cache/restore@v6
         with:
@@ -163,8 +209,8 @@ jobs:
       # Once is enough: shard 3 holds the quick files, off the critical path.
       - name: Generated database types match the migrations
         if: matrix.shard == 3
-        # Starts postgres-meta, which isn't in the image cache until shard 3
-        # saves it. On 27 Oct ghcr.io kept refusing it ("toomanyrequests") and
+        # Starts postgres-meta, which the image cache doesn't hold (start
+        # doesn't run it). On 27 Oct ghcr.io kept refusing it ("toomanyrequests") and
         # public.ecr.aws hit its anonymous data limit, so this tries docker.io
         # first, then the other two, six tries over about five minutes.
         run: |
@@ -179,15 +225,6 @@ jobs:
             echo "::error file=types/database.ts::Out of date with supabase/migrations. Run npm run gen:types against a local stack built from this branch's migrations and commit the result."
             exit 1
           }
-      - if: steps.images.outputs.cache-hit != 'true' && matrix.shard == 3
-        run: |
-          mkdir -p "$RUNNER_TEMP/supabase-images"
-          docker save -o "$RUNNER_TEMP/supabase-images/images.tar" $(docker images --format '{{.Repository}}:{{.Tag}}' | grep '/supabase/' | sort -u)
-      - if: steps.images.outputs.cache-hit != 'true' && matrix.shard == 3
-        uses: actions/cache/save@v6
-        with:
-          path: ${{ runner.temp }}/supabase-images
-          key: supabase-images-v2-${{ runner.arch }}-${{ env.SUPABASE_CLI }}-${{ hashFiles('supabase/config.toml') }}
       - run: supabase db lint --level warning --fail-on error
       - run: npm run test:security
         timeout-minutes: 20
