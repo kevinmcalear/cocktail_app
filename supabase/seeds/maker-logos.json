@@ -44,6 +44,18 @@
    "page": "https://bormioliluigi.com/glassware/en/"
   },
   {
+   "handle": "chef.sommelier",
+   "file": "chef.sommelier.effffff.png",
+   "source": "supplied by hand: the company mark, its site blocks our region",
+   "page": "https://www.latabledarc.com/"
+  },
+  {
+   "handle": "cliftons.pacific.seas",
+   "file": "cliftons.pacific.seas.e182828.png",
+   "source": "supplied by hand: the bar mural used as its mark",
+   "page": "https://www.sanctuarydtla.com/"
+  },
+  {
    "handle": "coast.to.coast.imports",
    "file": "coast.to.coast.imports.effffff.png",
    "source": "https://d1mv2b9v99cq0i.cloudfront.net/eyJidWNrZXQiOiJ3ZWItbmluamEtaW1hZ2VzIiwia2V5IjoiY29hc3QyY29hc3RcL2NvbnRlbnQtaW1hZ2VcL0NvYXN0dG9Db2FzdEltcG9ydHNfTG9nb18yMDI1X1N0YWNrZWQucG5nIiwiZWRpdHMiOnsicmVzaXplIjp7IndpZHRoIjo1MDAsImhlaWdodCI6MzMwLCJmaXQiOiJpbnNpZGUifX0sInZlcnNpb24iOiIifQ==",
@@ -128,6 +140,12 @@
    "page": "https://www.kilnerjar.co.uk/"
   },
   {
+   "handle": "kimura.glass",
+   "file": "kimura.glass.effffff.png",
+   "source": "supplied by hand: the Kimura glass Global wordmark",
+   "page": "https://www.kimuraglass.co.jp/"
+  },
+  {
    "handle": "kinto",
    "file": "kinto.effffff.png",
    "source": "https://kinto.co.jp/cdn/shop/t/470/assets/sprite.svg",
@@ -176,6 +194,12 @@
    "page": "https://mamo.nyc/"
   },
   {
+   "handle": "maxs.south.seas.hideaway",
+   "file": "maxs.south.seas.hideaway.effffff.png",
+   "source": "supplied by hand: the bar logo",
+   "page": "https://www.maxstiki.com/"
+  },
+  {
    "handle": "maxwell.williams",
    "file": "maxwell.williams.effffff.png",
    "source": "inline SVG in the page header",
@@ -199,6 +223,12 @@
    "file": "nadir.e00144b.png",
    "source": "https://nadir.com.br/wp-content/uploads/elementor/thumbs/Logo_2026_br-rpvpifb043s9vyet0ahb0nyrnp5plci81bod0ogns2.png",
    "page": "https://nadir.com.br/"
+  },
+  {
+   "handle": "nude",
+   "file": "nude.effffff.png",
+   "source": "https://cdn.shopify.com/s/files/1/0070/6759/8911/files/NUDE_Logo_transparent_2.png",
+   "page": "https://eu.nudeglass.com/"
   },
   {
    "handle": "obakki",
