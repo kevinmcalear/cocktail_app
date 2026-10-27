@@ -249,13 +249,8 @@ otp_expiry = 3600
 subject = "{{ .Token }} is your Cocktail code"
 content_path = "./supabase/templates/confirmation.html"
 
-# Venue invites (supabase/functions/send-bar-invite): a new account gets the
-# invite email, an existing one a sign-in link. The app sends no other magic
-# links. Hosted projects need these pasted into the dashboard too.
-[auth.email.template.invite]
-subject = "You're invited to the team"
-content_path = "./supabase/templates/invite.html"
-
+# Sign-in codes. Venue invites don't use Auth's mailer: send-bar-invite
+# makes the link with generateLink and sends its own email through Resend.
 [auth.email.template.magic_link]
 subject = "{{ .Token }} is your Cocktail code"
 content_path = "./supabase/templates/magic_link.html"
