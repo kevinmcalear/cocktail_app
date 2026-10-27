@@ -23,6 +23,7 @@ import { DeskSearchResults } from '@/components/screens/home/DeskSearchResults';
 import { FirstCards } from '@/components/screens/home/FirstCards';
 import { BarAway, BrowseShelves, DrinksHere } from '@/components/screens/home/DrinksAtBars';
 import { PickedBar } from '@/components/screens/home/SelectedBar';
+import { SheetSearchPanel } from '@/components/screens/home/SheetSearchPanel';
 import { StyleChips } from '@/components/screens/home/StyleChips';
 import { MatchingBars, TopBarsList } from '@/components/screens/home/TopBars';
 import { SearchBody, type SearchArea } from '@/components/search/SearchPanel';
@@ -39,7 +40,7 @@ import { kindsTitle, pinOf } from '@/lib/discoverDrinks';
 import { areaFromViewport, armBarHover, cameraOn, type MapPin, type Viewport } from '@/lib/discoverMap';
 import { awayFrom } from '@/lib/directions';
 import { STYLES } from '@/lib/drinkStyles';
-import { areaLabel, usesMiles, type Area } from '@/lib/nearMe';
+import { areaLabel, searchHere, usesMiles, type Area } from '@/lib/nearMe';
 import type { SearchScope } from '@/lib/searchScope';
 import { withAlpha } from '@/lib/color';
 
@@ -114,7 +115,9 @@ export function DiscoverScreen() {
   const deskSearch = split && searching && scope !== 'mine';
   const toSearch = useOpenSearch();
   const openSearch = () => {
-    // On the map, "this area" is what the map shows: search it, in the search tab on phones (q02, decided 24 Oct 2026).
+    // On the map, "this area" is what the map shows: search it (q02, decided 24 Oct 2026), in the sheet on phones (q29-2 B, 27 Oct).
+    // Phones search the map's view once the search is kept (Return, Show on the map), so Cancel changes nothing.
+    if (phoneMap) return setSheet('search');
     if (onMap && viewport.current) onArea(areaFromViewport(viewport.current));
     const here = onMap || area.kind !== 'anywhere' ? 'area' : 'everywhere';
     if (!split) return toSearch({ query: search, scope: here });
@@ -196,7 +199,7 @@ export function DiscoverScreen() {
           opened={openHover?.id}
           focus={openHover?.cam}
           onShowBar={showBar} pick={{ id: picked?.id ?? null, onPick: setPicked }} onFindMe={onNearMe}
-          search={<SheetSearch query={pillQuery} onOpen={openSearch} onClear={onClear} />}
+          search={<SheetSearch query={pillQuery} placeholder={searchHere(area, preferNear)} onOpen={openSearch} onClear={onClear} />}
           top={
             <>
               {picked || showTopBars ? null : chips(true)}
@@ -211,6 +214,7 @@ export function DiscoverScreen() {
           <LinearGradient pointerEvents="none" colors={[withAlpha(ds.c.ground, 0.9), withAlpha(ds.c.ground, 0)]} style={styles.mapFade} />
           {header}
         </View>
+        {sheet === 'search' ? <SheetSearchPanel query={search} placeholder={searchHere(area, preferNear)} top={headerHeight + layout.minTapTarget + space.md} scope={searchScope} onScope={setScope} mine={mine} area={searchArea} onApply={(q) => (viewport.current && onArea(areaFromViewport(viewport.current)), setScope('area'), setSearch(q), close())} onClose={close} onAddBar={signedIn ? () => setSheet('add') : undefined} /> : null}
         {overlay}
       </View>
       </BarAway.Provider>

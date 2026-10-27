@@ -56,18 +56,19 @@ export function SearchPill({ query, placeholder, label = placeholder, onOpen, on
 
 /**
  * Phones: Discover's search in the docked sheet, as Google Maps has it (Q29,
- * Kevin's OK 26 Oct): where the Search tab's field will be, so a tap doesn't
- * move it. It shows the search or picked style once there is one, with a clear.
+ * Kevin's OK 26 Oct). A tap opens the search in the sheet itself (SheetSearchPanel,
+ * q29-2 B, 27 Oct). It names the place ("Search near you"), then shows the search
+ * or picked style once there is one, with a clear.
  */
-export function SheetSearch({ query, onOpen, onClear }: { query: string; onOpen: () => void; onClear: () => void }) {
+export function SheetSearch({ query, placeholder, onOpen, onClear }: { query: string; placeholder: string; onOpen: () => void; onClear: () => void }) {
   const ds = useDs();
   const q = query.trim();
   return (
     <View style={[styles.sheetSearch, { backgroundColor: ds.c.raised, borderColor: ds.c.line }]}>
-      <PressableScale role="button" accessibilityLabel={q ? `Search: ${q}. Change the search` : 'Search this area'} onPress={onOpen} style={styles.pillOpen}>
+      <PressableScale role="button" accessibilityLabel={q ? `Search: ${q}. Change the search` : placeholder} onPress={onOpen} style={styles.pillOpen}>
         <IconSymbol name="magnifyingglass" size={18} color={ds.c.muted} />
         <Body numberOfLines={1} tone={q ? 'ink' : 'muted'} style={styles.flex}>
-          {q || 'Search this area'}
+          {q || placeholder}
         </Body>
       </PressableScale>
       {q ? (
