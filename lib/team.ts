@@ -129,3 +129,15 @@ export function inviteButtonLabel(name: string): string {
   const first = name.trim().split(/\s+/)[0];
   return first ? `Email ${first} an invite` : 'Email an invite';
 }
+
+/**
+ * The welcome message a bar starts with (invite-team-last, call 3): filled
+ * in, the Admin's to change. Sent in every invite, signed by the sender.
+ */
+export function welcomeSuggestion(barName: string): string {
+  return `Welcome to ${barName.trim()}. Our specs, menus and prep notes all live in here, so have a look before your first shift. Ask me anything, and see you behind the bar.`;
+}
+
+/** The longest welcome message and per-person note the database takes (bars_welcome_message_check, bar_invites_note_check). */
+export const WELCOME_MAX = 600;
+export const NOTE_MAX = 500;

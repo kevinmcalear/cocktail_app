@@ -1,55 +1,44 @@
 import { useRef, useState, type ComponentRef } from 'react';
 import { StyleSheet, View, type TextInput } from 'react-native';
 
-import { Button, Caption, DsText, Field, PressableScale, useDs } from '@/components/ds';
+import { Button, Caption, Field, Segmented } from '@/components/ds';
 import { Choice, MenuSheet } from '@/components/screens/menus/MenuSheet';
 import { SetupFooter, SetupPage } from '@/components/screens/onboarding/SetupPage';
-import { IconSymbol } from '@/components/ui/icon-symbol';
-import { radius, space } from '@/constants/tokens';
+import { InvitePreview } from '@/components/screens/team/InvitePreview';
+import { space } from '@/constants/tokens';
 import { useSetMemberRole } from '@/hooks/useBarDetail';
-import { useSendInviteEmail } from '@/hooks/useBarInvites';
+import { useSaveWelcomeMessage, useSendInviteEmail, useWelcomeMessage } from '@/hooks/useBarInvites';
+import { useIsWideWeb } from '@/hooks/useIsWideWeb';
+import { useMyProfile } from '@/hooks/useMyProfile';
 import { plainDbMessage } from '@/lib/dbError';
 import { roleLabel } from '@/lib/roles';
-import { INVITE_ROLES } from '@/lib/team';
+import { INVITE_ROLES, WELCOME_MAX, welcomeSuggestion } from '@/lib/team';
 import { inviteRowError, sendInvitesLabel } from '@/lib/venueSetup';
 
-interface Person {
-  key: number;
-  name: string;
-  email: string;
-  role: number;
-}
-
-const BARTENDER = 30;
-const blank = (key: number): Person => ({ key, name: '', email: '', role: BARTENDER });
-
-/** The role button on a person: the role and its line; opens the roles to pick from. */
-function RoleButton({ role, onPress }: { role: number; onPress: () => void }) {
-  const ds = useDs();
-  const line = INVITE_ROLES.find((r) => r.level === role)?.detail ?? '';
-  return (
-    <PressableScale role="button" aria-haspopup="listbox" accessibilityLabel={`Role: ${roleLabel(role)}. ${line}. Change`} onPress={onPress} style={[styles.role, { backgroundColor: ds.c.raised, borderColor: ds.c.line }]}>
-      <View style={styles.flex}>
-        <DsText variant="body">{roleLabel(role)}</DsText>
-        <Caption tone="muted">{line}</Caption>
-      </View>
-      <IconSymbol name="chevron.down" size={16} color={ds.c.muted} />
-    </PressableScale>
-  );
-}
+import { blankPerson, firstName, TeamPerson, type Person } from './TeamPerson';
 
 /**
- * Step 7: invite several people at once (name, email, role each). Each one is
- * saved (add_user_to_bar_by_email) and emailed (send-bar-invite), like the
- * invite sheet on My team. While the claim waits they're held: they join once
- * it's approved.
+ * Your team, the last row of the checklist (invite-team-last, step 3): one
+ * welcome message for everyone, kept on the venue for later invites and
+ * filled in with a suggestion until it's first saved (call 3), then each
+ * person with an optional note. Each one is saved (add_user_to_bar_by_email)
+ * and emailed (send-bar-invite), like the invite sheet on My team. On wide
+ * web the email shows beside the form as you type; on a phone, behind
+ * Preview. While the claim waits they're held: they join once it's approved.
  */
 export function TeamStep({ barId, name, pending, onDone }: { barId: string; name: string; pending: boolean; onDone: (sent: string[]) => void }) {
-  const ds = useDs();
+  const wide = useIsWideWeb();
   const add = useSetMemberRole(barId);
   const send = useSendInviteEmail(barId);
-  const [people, setPeople] = useState<Person[]>([blank(1)]);
+  const saved = useWelcomeMessage(barId);
+  const saveWelcome = useSaveWelcomeMessage(barId);
+  const sender = useMyProfile().data?.displayName?.trim() || null;
+  const [people, setPeople] = useState<Person[]>([blankPerson(1)]);
+  // Null until they type: the saved message, else the suggestion.
+  const [edited, setEdited] = useState<string | null>(null);
+  const welcome = edited ?? saved.data ?? welcomeSuggestion(name);
   const [picking, setPicking] = useState<number | null>(null);
+  const [previewing, setPreviewing] = useState<number | null>(null);
   const [tried, setTried] = useState(false);
   const [busy, setBusy] = useState(false);
   const [problem, setProblem] = useState<string | null>(null);
@@ -61,18 +50,29 @@ export function TeamStep({ barId, name, pending, onDone }: { barId: string; name
     if (el) inputs.current.set(id, el);
     else inputs.current.delete(id);
   };
+  // Wide web shows one person's email beside the form: the one picked, else the first.
+  const shown = people.find((p) => p.key === previewing) ?? people[0];
 
   const sendAll = async () => {
     setTried(true);
     if (!filled.length || filled.some((p) => inviteRowError(p))) return;
     setBusy(true);
     setProblem(null);
+    // The welcome goes on the venue first, so every email (and the next invite) carries it.
+    if (saved.data !== welcome.trim()) {
+      try {
+        await saveWelcome.mutateAsync(welcome);
+      } catch (e) {
+        setBusy(false);
+        return setProblem(`Welcome message: ${plainDbMessage(e) ?? 'Couldn’t save it.'}`);
+      }
+    }
     const sent: string[] = [];
     const sentKeys: number[] = [];
     for (const p of filled) {
       const email = p.email.trim().toLowerCase();
       try {
-        const invited = await add.mutateAsync({ email, roleLevel: p.role, name: p.name });
+        const invited = await add.mutateAsync({ email, roleLevel: p.role, name: p.name, note: p.note });
         if (invited) await send.mutateAsync(email).catch(() => undefined);
         sent.push(p.name.trim().split(/\s+/)[0] || email);
         sentKeys.push(p.key);
@@ -87,58 +87,38 @@ export function TeamStep({ barId, name, pending, onDone }: { barId: string; name
     else setPeople((list) => list.filter((p) => !sentKeys.includes(p.key)));
   };
 
-  return (
-    <SetupPage footer={<SetupFooter label={busy ? 'Sending…' : sendInvitesLabel(filled.length)} disabled={busy || !filled.length} onPress={() => void sendAll()} skipLabel="Skip for now" onSkip={() => onDone([])} />}>
+  const preview = (p: Person) => <InvitePreview barId={barId} barName={name} roleLevel={p.role} sender={sender} welcome={welcome} note={p.noting ? p.note : undefined} />;
+  const form = (
+    <View style={styles.form}>
+      {saved.isLoading ? null : (
+        <Field
+          label="Welcome message, to everyone"
+          value={welcome}
+          onChangeText={setEdited}
+          minLines={4}
+          maxLength={WELCOME_MAX}
+          hint={`${sender ? `Signed ${sender}. ` : ''}Kept for later invites; change it any time in My team.`}
+        />
+      )}
       {people.map((p, i) => (
-        <View key={p.key} role="group" accessibilityLabel={`Person ${i + 1}`} style={[styles.person, { borderColor: ds.c.line }]}>
-          <View style={styles.head}>
-            <Caption tone="muted">{`Person ${i + 1}`}</Caption>
-            {/* Remove: the last card left is cleared instead (canvas make-venue-team). */}
-            <PressableScale
-              role="button"
-              accessibilityLabel={`Remove ${p.name.trim() || `person ${i + 1}`}`}
-              onPress={() => setPeople((list) => (list.length > 1 ? list.filter((x) => x.key !== p.key) : [blank(p.key + 1)]))}
-              style={styles.remove}
-            >
-              <IconSymbol name="xmark" size={16} color={ds.c.muted} />
-            </PressableScale>
-          </View>
-          {/* iOS offers a contact's name and email (textContentType); autoComplete stays off so a browser doesn't fill in your own. */}
-          <Field
-            ref={hold(`${p.key}-name`)}
-            label="Name"
-            value={p.name}
-            onChangeText={(t) => set(p.key, { name: t })}
-            placeholder="Sam Okafor"
-            autoComplete="off"
-            textContentType="name"
-            autoCapitalize="words"
-            returnKeyType="next"
-            submitBehavior="submit"
-            onSubmitEditing={() => inputs.current.get(`${p.key}-email`)?.focus()}
-            maxLength={80}
-          />
-          <Field
-            ref={hold(`${p.key}-email`)}
-            label="Email"
-            value={p.email}
-            onChangeText={(t) => set(p.key, { email: t })}
-            placeholder="sam@example.com"
-            autoComplete="off"
-            textContentType="emailAddress"
-            autoCapitalize="none"
-            autoCorrect={false}
-            keyboardType="email-address"
-            returnKeyType={people[i + 1] ? 'next' : 'done'}
-            submitBehavior={people[i + 1] ? 'submit' : 'blurAndSubmit'}
-            onSubmitEditing={() => (people[i + 1] ? inputs.current.get(`${people[i + 1].key}-name`)?.focus() : undefined)}
-            error={tried && (p.email.trim() || p.name.trim()) ? (inviteRowError(p) ?? undefined) : undefined}
-          />
-          <Caption tone="muted">Role</Caption>
-          <RoleButton role={p.role} onPress={() => setPicking(p.key)} />
-        </View>
+        <TeamPerson
+          key={p.key}
+          person={p}
+          n={i + 1}
+          hold={hold}
+          nextName={!!people[i + 1]}
+          error={tried && (p.email.trim() || p.name.trim()) ? (inviteRowError(p) ?? undefined) : undefined}
+          onChange={(change) => set(p.key, change)}
+          onRemove={() => setPeople((list) => (list.length > 1 ? list.filter((x) => x.key !== p.key) : [blankPerson(p.key + 1)]))}
+          onPickRole={() => setPicking(p.key)}
+          onSubmitName={() => inputs.current.get(`${p.key}-email`)?.focus()}
+          onSubmitEmail={() => (people[i + 1] ? inputs.current.get(`${people[i + 1].key}-name`)?.focus() : undefined)}
+        />
       ))}
-      <Button label="Add another" icon="plus" variant="secondary" style={styles.add} onPress={() => setPeople((list) => [...list, blank(Math.max(...list.map((x) => x.key)) + 1)])} />
+      <View style={styles.buttons}>
+        <Button label="Add another" icon="plus" variant="secondary" onPress={() => setPeople((list) => [...list, blankPerson(Math.max(...list.map((x) => x.key)) + 1)])} />
+        {wide ? null : <Button label={`Preview ${firstName(shown)}’s email`} icon="envelope" variant="ghost" onPress={() => setPreviewing(shown.key)} />}
+      </View>
       {problem ? (
         <Caption tone="accent" role="alert">
           {problem}
@@ -147,6 +127,35 @@ export function TeamStep({ barId, name, pending, onDone }: { barId: string; name
       <Caption tone="muted">
         {`Admin is everything, including the team. Change anyone’s role later in My team.${pending ? ` Invites go out now; they join ${name} once your claim is approved.` : ''}`}
       </Caption>
+    </View>
+  );
+
+  return (
+    <SetupPage footer={<SetupFooter label={busy ? 'Sending…' : sendInvitesLabel(filled.length)} disabled={busy || !filled.length} onPress={() => void sendAll()} skipLabel="Skip for now" onSkip={() => onDone([])} />}>
+      {wide ? (
+        <View style={styles.split}>
+          {form}
+          <View style={styles.aside}>
+            {people.length > 1 ? (
+              <Segmented
+                variant="pill"
+                choice
+                accessibilityLabel="Whose email"
+                options={people.map((p, i) => ({ value: String(p.key), label: `${p.name.trim() ? firstName(p) : `Person ${i + 1}`}’s email` }))}
+                value={String(shown.key)}
+                onChange={(v) => setPreviewing(Number(v))}
+              />
+            ) : null}
+            {preview(shown)}
+            {shown.noting && shown.note.trim() ? null : <Caption tone="muted">{`No note for ${firstName(shown)}, so the note box isn’t there.`}</Caption>}
+          </View>
+        </View>
+      ) : (
+        form
+      )}
+      <MenuSheet visible={!wide && previewing !== null} onClose={() => setPreviewing(null)} title={`${firstName(shown)}’s email`}>
+        {preview(shown)}
+      </MenuSheet>
       <MenuSheet visible={picking !== null} onClose={() => setPicking(null)} title="Their role">
         <View role="radiogroup" accessibilityLabel="Their role" style={styles.choices}>
           {INVITE_ROLES.map((r) => (
@@ -168,11 +177,9 @@ export function TeamStep({ barId, name, pending, onDone }: { barId: string; name
 }
 
 const styles = StyleSheet.create({
-  person: { gap: space.sm, padding: space.lg, borderWidth: 1, borderRadius: radius.card, borderCurve: 'continuous' },
-  head: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', minHeight: 44 },
-  remove: { width: 44, height: 44, alignItems: 'center', justifyContent: 'center', marginRight: -space.md },
-  add: { alignSelf: 'flex-start' },
-  role: { flexDirection: 'row', alignItems: 'center', gap: space.md, padding: space.md, borderWidth: 1, borderRadius: radius.control },
-  flex: { flex: 1, minWidth: 0 },
+  form: { flex: 1, minWidth: 0, maxWidth: 560, gap: space.lg },
+  buttons: { flexDirection: 'row', flexWrap: 'wrap', gap: space.sm },
+  split: { flexDirection: 'row', alignItems: 'flex-start', gap: space.xxl },
+  aside: { flex: 1, minWidth: 0, maxWidth: 520, gap: space.md },
   choices: { gap: space.sm },
 });

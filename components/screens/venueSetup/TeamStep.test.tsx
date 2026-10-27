@@ -6,12 +6,21 @@ import { TeamStep } from './TeamStep';
 
 const mockAdd = jest.fn();
 const mockSend = jest.fn();
+const mockSaveWelcome = jest.fn();
 jest.mock('@/hooks/useBarDetail', () => ({ useSetMemberRole: () => ({ mutateAsync: mockAdd, isPending: false }) }));
-jest.mock('@/hooks/useBarInvites', () => ({ useSendInviteEmail: () => ({ mutateAsync: mockSend, isPending: false }) }));
+jest.mock('@/hooks/useBarInvites', () => ({
+  useSendInviteEmail: () => ({ mutateAsync: mockSend, isPending: false }),
+  useWelcomeMessage: () => ({ data: null, isLoading: false }),
+  useSaveWelcomeMessage: () => ({ mutateAsync: mockSaveWelcome, isPending: false }),
+}));
+jest.mock('@/hooks/useMyProfile', () => ({ useMyProfile: () => ({ data: { displayName: 'Rob Hale' } }) }));
+jest.mock('@/hooks/useVenueBrand', () => ({ useVenueBrand: () => ({ data: undefined }) }));
+jest.mock('@/hooks/useIsWideWeb', () => ({ useIsWideWeb: () => false }));
 
 beforeEach(() => {
   mockAdd.mockReset();
   mockSend.mockReset();
+  mockSaveWelcome.mockReset();
   mockAdd.mockResolvedValue(true);
   mockSend.mockResolvedValue({ sent: true });
 });
@@ -27,9 +36,16 @@ test('several people are invited at once, each saved and emailed, and held while
   await fireEvent.changeText(screen.getAllByLabelText('Email')[1], 'mia@example.com');
   await fireEvent.press(screen.getAllByRole('button', { name: /^Role: Bartender/ })[1]);
   await fireEvent.press(screen.getByRole('radio', { name: /^Drink Creator/ }));
+  // A note only Sam's email carries.
+  await fireEvent.press(screen.getByRole('button', { name: 'Add a note for Sam' }));
+  await fireEvent.changeText(screen.getByLabelText('A note just for Sam (optional)'), 'You’re on Thursday’s opening shift.');
+  expect(screen.getByRole('button', { name: 'Add a note for Mia' })).toBeTruthy();
   await fireEvent.press(screen.getByRole('button', { name: 'Send 2 invites' }));
-  expect(mockAdd).toHaveBeenCalledWith({ email: 'sam@example.com', roleLevel: 30, name: 'Sam Okafor' });
-  expect(mockAdd).toHaveBeenCalledWith({ email: 'mia@example.com', roleLevel: 35, name: 'Mia Chen' });
+  // The welcome starts filled in, signed with your name, and is kept on the venue before anyone is emailed.
+  expect(screen.getByText('Signed Rob Hale. Kept for later invites; change it any time in My team.')).toBeTruthy();
+  expect(mockSaveWelcome).toHaveBeenCalledWith(expect.stringMatching(/^Welcome to Little Rye\. Our specs, menus and prep notes/));
+  expect(mockAdd).toHaveBeenCalledWith({ email: 'sam@example.com', roleLevel: 30, name: 'Sam Okafor', note: 'You’re on Thursday’s opening shift.' });
+  expect(mockAdd).toHaveBeenCalledWith({ email: 'mia@example.com', roleLevel: 35, name: 'Mia Chen', note: '' });
   expect(mockSend).toHaveBeenCalledTimes(2);
   expect(onDone).toHaveBeenCalledWith(['Sam', 'Mia']);
 });

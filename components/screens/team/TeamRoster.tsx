@@ -25,6 +25,7 @@ import { useTeamSort } from '@/store/useTeamSort';
 import { InviteSheet, type InviteNote } from './InviteSheet';
 import { ClaimsToConfirm, JoinRequests } from './JoinRequests';
 import { MemberSheet } from './MemberSheet';
+import { WelcomeMessageRow } from './WelcomeMessage';
 
 const AVATAR = 44;
 const CHEVRON = 16;
@@ -123,6 +124,7 @@ export function TeamRoster({ barId, barName, role, inviting, onCloseInvite }: {
 
   return (
     <View style={styles.roster}>
+      {admin ? <WelcomeMessageRow barId={barId} barName={barName} /> : null}
       <View style={styles.section}>
         {manage ? (
           <Field label="Search the team" hideLabel value={query} onChangeText={setQuery} placeholder="Search by name or email" autoCapitalize="none" autoCorrect={false} />
@@ -196,7 +198,7 @@ export function TeamRoster({ barId, barName, role, inviting, onCloseInvite }: {
 
       {manage ? (
         <>
-          <InviteSheet visible={inviting} onClose={onCloseInvite} barId={barId} barName={barName} ceiling={ceiling} onDone={setNote} />
+          <InviteSheet visible={inviting} onClose={onCloseInvite} barId={barId} barName={barName} ceiling={ceiling} admin={admin} onDone={setNote} />
           <MemberSheet member={open} barName={barName} ceiling={ceiling} venueRoles={venueRoles} busy={busy} onClose={() => setOpenId(null)} onRole={setRole} onRemove={removeMember} />
         </>
       ) : null}
