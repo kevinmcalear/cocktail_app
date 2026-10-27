@@ -22,24 +22,33 @@ export function useShelfLives(itemIds: readonly string[]) {
   });
 }
 
+/** One house-made item a batch saves: its name, recipe for this many serves, yield and how long it keeps. */
+export type BatchPrep = { name: string; lines: PrepLine[]; yieldMl: number; shelfHours: number | null };
+
 /**
- * "Save as house-made" on a venue batch: a house prep named "<drink> batch"
- * with the bottle's recipe for this many serves, its yield and how long it
- * keeps. lib/itemImages matches "<drink> batch" back to the drink by name.
+ * "Save as house-made" on a venue batch: a house prep for each container,
+ * with its recipe for this many serves, its yield and how long it keeps. A
+ * one-part drink's bottle is "<drink> batch", which lib/itemImages matches
+ * back to the drink by name. Resolves to the new items' ids, in order.
  */
 export function useSaveBatchAsPrep(barId: string | null) {
   const create = useCreateIngredient();
   return useMutation({
-    mutationFn: async ({ name, lines, yieldMl, shelfHours }: { name: string; lines: PrepLine[]; yieldMl: number; shelfHours: number | null }) => {
-      const { id } = await create.mutateAsync({
-        draft: { ...EMPTY_INGREDIENT, name: `${name} batch`, role: 'prep', lines: lines.map((l) => newLine({ id: l.id, name: l.name }, l.unit, l.amount)) },
-        barId,
-      });
-      await savePrepCard(id, {
-        prep: { yield_amount: Math.round(yieldMl), yield_unit: 'ml', shelf_life_hours: shelfHours, lead_time_minutes: null, lead_time_note: null, storage: null, actions: [] },
-        steps: [],
-      });
-      return id;
+    mutationFn: async (preps: BatchPrep[]) => {
+      const ids: string[] = [];
+      // One at a time, in order: a failure stops there, and the ones before it stay saved.
+      for (const { name, lines, yieldMl, shelfHours } of preps) {
+        const { id } = await create.mutateAsync({
+          draft: { ...EMPTY_INGREDIENT, name, role: 'prep', lines: lines.map((l) => newLine({ id: l.id, name: l.name }, l.unit, l.amount)) },
+          barId,
+        });
+        await savePrepCard(id, {
+          prep: { yield_amount: Math.round(yieldMl), yield_unit: 'ml', shelf_life_hours: shelfHours, lead_time_minutes: null, lead_time_note: null, storage: null, actions: [] },
+          steps: [],
+        });
+        ids.push(id);
+      }
+      return ids;
     },
     onError: () => {},
   });
