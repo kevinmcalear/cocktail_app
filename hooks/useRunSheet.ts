@@ -5,7 +5,7 @@ import { houseMadeUnder, purchasingFor, recipesFor, toLines } from '@/hooks/useP
 import { withNear, type MaybeNear } from '@/hooks/useSearchNear';
 import { readParts } from '@/lib/drinkParts';
 import type { HouseMade, Purchasing } from '@/lib/prep';
-import type { BrandBottle, ItemFacts, RunDrink, RunParty, RunSwap } from '@/lib/runSheet';
+import { sortMenuDrinks, type BrandBottle, type ItemFacts, type RunDrink, type RunParty, type RunSwap } from '@/lib/runSheet';
 import { supabase } from '@/lib/supabase';
 
 /**
@@ -52,6 +52,8 @@ interface DrinkRow {
   id: string;
   serves: number | null;
   party_id: string | null;
+  sort_order: number | null;
+  section: { sort_order: number | null } | null;
   item: { id: string; name: string; item_type: string; glassware_id: string | null; ice_id: string | null; ice_per_serve_g: number | null; origin_bar_profile_id: string | null; parts: unknown } | null;
 }
 interface FactRow {
@@ -84,16 +86,16 @@ async function fetchRunSheet(menuId: string): Promise<RunSheetData> {
     supabase.from('menus').select('id, name, bar_id, created_by, starts_at, ends_at, planned_starts_at, planned_ends_at, menu_date, bar:bars(name)').eq('id', menuId).single(),
     supabase
       .from('menu_drinks')
-      .select('id, serves, party_id, item:items!item_id(id, name, item_type, glassware_id, ice_id, ice_per_serve_g, origin_bar_profile_id, parts)')
-      .eq('menu_id', menuId)
-      .order('sort_order'),
+      .select('id, serves, party_id, sort_order, section:menu_sections!menu_section_id(sort_order), item:items!item_id(id, name, item_type, glassware_id, ice_id, ice_per_serve_g, origin_bar_profile_id, parts)')
+      .eq('menu_id', menuId),
     supabase.from('menu_run_parties').select('id, kind, name, profile_id, sort_order, is_venue, profile:profiles!profile_id(handle, is_claimed, bar_id)').eq('menu_id', menuId).order('sort_order'),
     supabase.from('menu_run_owners').select('item_id, party_id').eq('menu_id', menuId),
   ]);
   for (const res of [menuRes, drinkRes, partyRes, ownerRes]) if (res.error) throw res.error;
   const menu = menuRes.data as unknown as MenuRow;
   // A home menu's collected drinks come through published_items, not items: they have no spec to total here.
-  const rows = ((drinkRes.data ?? []) as unknown as DrinkRow[]).filter((r) => r.item);
+  // In the menu's order: a drink's sort_order counts within its section, so the section's comes first (as the menu shows them).
+  const rows = sortMenuDrinks(((drinkRes.data ?? []) as unknown as DrinkRow[]).filter((r) => r.item));
   type PartyRow = {
     id: string;
     kind: 'guest' | 'brand';
