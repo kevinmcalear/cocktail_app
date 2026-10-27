@@ -105,7 +105,6 @@ function Page({ edit, savedId, onExit }: { edit: IngredientEdit; savedId: string
     if (!id) return;
     toastDone('Ingredient saved', form.name.trim());
     allowExit();
-    // Back to whoever opened it: an editor waiting for it (attachTo) picks it up there.
     onExit();
   };
   const removeDraft = async () => {
