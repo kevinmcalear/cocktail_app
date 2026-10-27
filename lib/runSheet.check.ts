@@ -5,7 +5,7 @@ import assert from 'node:assert/strict';
 
 import { MAX_SERVES } from './batch';
 import type { HouseMade, SpecLine } from './prep';
-import { buildRunSheet, clampServes, pourSuggestions, sortMenuDrinks, type ItemFacts, type RunDrink, type RunSheetInput, type RunSwap } from './runSheet';
+import { buildRunSheet, clampServes, pourSuggestions, type ItemFacts, type RunDrink, type RunSheetInput, type RunSwap } from './runSheet';
 
 const line = (ingredientId: string, name: string, amount: number, unit = 'ml'): SpecLine => ({ ingredientId, name, amount, unit });
 const rocks = { id: 'rocks', name: 'Rocks glass' };
@@ -164,10 +164,3 @@ assert.equal(clampServes(''), null);
 assert.equal(clampServes(2.7), 2);
 
 console.log('runSheet checks passed');
-
-// The menu's order, not the rows' (27 Oct): sort_order counts within a section, so Cocktails' second drink comes before Zero proof's first.
-{
-  const row = (id: string, section: number | null, at: number | null) => ({ id, sort_order: at, section: section === null ? null : { sort_order: section } });
-  const order = sortMenuDrinks([row('mule', 1, 0), row('coffee', 0, 1), row('penicillin', 0, 0), row('loose', null, 0), row('b-tie', 0, 1)]).map((r) => r.id);
-  assert.deepEqual(order, ['penicillin', 'b-tie', 'coffee', 'mule', 'loose'], 'section, then place, then id; a drink with no section last');
-}

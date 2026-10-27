@@ -29,7 +29,7 @@ export function visitorDrink(page: PublishedDrinkPage): { item: DatabaseItem; lo
     notes: null,
     item_images: drink.imageUrl ? [{ angle: 'hero', is_generated: drink.imageIsGenerated, images: { url: drink.imageUrl } }] : [],
     recipes: page.recipes,
-  } as unknown as DatabaseItem;
+  } as DatabaseItem;
   const lock: SpecLock | null =
     drink.publishMode === 'spec' || !bar
       ? null

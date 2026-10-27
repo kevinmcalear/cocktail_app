@@ -79,7 +79,7 @@ export function useAddClassics(barId: string | null | undefined) {
           try {
             const spec = await client.fetchQuery({ ...cocktailQuery(c.id, viewAsRoleLevel), staleTime: 60_000 });
             if (!spec) throw new Error(`Couldn’t load the ${c.name}.`);
-            const draft = { ...EMPTY_DRAFT, ...draftFromSpec(spec as unknown as SourceSpec, ''), id: newDraftId(), name: c.name, creator: 'nobody' as const, elsewhere: true, place: null };
+            const draft = { ...EMPTY_DRAFT, ...draftFromSpec(spec as SourceSpec, ''), id: newDraftId(), name: c.name, creator: 'nobody' as const, elsewhere: true, place: null };
             await create.mutateAsync({ draft, barId: barId!, myProfileId: null });
             setDone((n) => n + 1);
           } catch (e) {

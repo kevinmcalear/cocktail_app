@@ -36,6 +36,7 @@ export function useMakerBottles(profileId: string | null | undefined) {
         .order('name')
         .limit(200);
       if (error) throw error;
+      // ponytail: supabase-js can't type an embed on items' own foreign keys ("more than one relationship"), so the row is cast; hint it as items!<fk> to drop this.
       return ((data ?? []) as unknown as BottleRow[]).map((r) => ({ id: r.id, name: r.name, abv: r.abv, kind: r.generic?.name ?? null }));
     },
   });
@@ -90,7 +91,7 @@ export function useMakerGlassBars(profileId: string | null | undefined) {
       if (models.error) throw models.error;
       type Row = { id: string; name: string | null; glass: string; bar: { id: string; handle: string; display_name: string } | null };
       const rows = new Map<string, Row>();
-      for (const r of [...(named.data ?? []), ...(models.data ?? [])] as unknown as Row[]) rows.set(r.id, r);
+      for (const r of [...(named.data ?? []), ...(models.data ?? [])] as Row[]) rows.set(r.id, r);
       const bars = new Map<string, MakerGlassBar>();
       for (const r of rows.values()) {
         if (!r.bar) continue;
@@ -189,7 +190,7 @@ export function useDrinkMakerCredits(itemId: string | null | undefined) {
         .select(`profile_id, makes, confirmed_at, maker:profiles(${MAKER_REF})`)
         .eq('item_id', itemId!);
       if (error) throw error;
-      return (data ?? []) as unknown as MakerCredit[];
+      return (data ?? []) as MakerCredit[];
     },
   });
 }

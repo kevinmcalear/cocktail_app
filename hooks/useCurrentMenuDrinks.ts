@@ -31,7 +31,7 @@ export function useCurrentMenuDrinks(menuIds: string[]) {
         .in('menu_id', key)
         .order('sort_order', { ascending: true });
       if (error) throw error;
-      return (data ?? []) as unknown as CurrentSectionRow[];
+      return (data ?? []) as CurrentSectionRow[];
     },
     staleTime: 1000 * 60 * 5,
   });

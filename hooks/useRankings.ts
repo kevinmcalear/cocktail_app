@@ -95,7 +95,7 @@ export function useMyRankList(rankedAsItemId: string | null | undefined) {
         .order('rank_key', { ascending: true })
         .order('created_at', { ascending: true });
       if (error) throw error;
-      const rows = await withPublishedItems((data ?? []) as unknown as RankEntry[]);
+      const rows = await withPublishedItems((data ?? []) as RankEntry[]);
       return rows.map((r) => ({ ...r, score: Number(r.score) })).sort((a, b) => SENTIMENTS.indexOf(a.sentiment) - SENTIMENTS.indexOf(b.sentiment));
     },
   });
@@ -123,7 +123,7 @@ export function useMyHadDrinks() {
     queryFn: async (): Promise<HadDrink[]> => {
       const { data, error } = await supabase.from('rank_entry_scores').select(HAD_COLUMNS).eq('user_id', userId!);
       if (error) throw error;
-      return (await withPublishedItems((data ?? []) as unknown as HadRow[])).map(toHadDrink);
+      return (await withPublishedItems((data ?? []) as HadRow[])).map(toHadDrink);
     },
   });
 }
@@ -321,6 +321,7 @@ export function useRankTarget(itemId: string | null | undefined) {
         .eq('id', itemId!)
         .maybeSingle();
       if (error) throw error;
+      // ponytail: supabase-js can't type an embed on items' own foreign keys ("more than one relationship"), so the row is cast; hint it as items!<fk> to drop this.
       if (data) return data as unknown as RankTarget;
 
       const { data: pub, error: pubError } = await supabase

@@ -66,6 +66,7 @@ export function useVenueDrinks(barId: string | null | undefined) {
       // ponytail: one page of a venue's drinks; past 1000 the rest aren't checked. A paged read if a venue gets there.
       const { data, error } = await supabase.from('items').select(DRINK_COLUMNS).eq('bar_id', barId!).eq('item_type', 'cocktail').limit(1000);
       if (error) throw error;
+      // ponytail: supabase-js can't type an embed on items' own foreign keys ("more than one relationship"), so the row is cast; hint it as items!<fk> to drop this.
       return drinksOf((data ?? []) as unknown as DrinkRow[]);
     },
   });
@@ -80,6 +81,7 @@ function useDrink(itemId: string) {
     queryFn: async (): Promise<CheckedDrink | null> => {
       const { data, error } = await supabase.from('items').select(DRINK_COLUMNS).eq('id', itemId).maybeSingle();
       if (error) throw error;
+      // ponytail: supabase-js can't type an embed on items' own foreign keys ("more than one relationship"), so the row is cast; hint it as items!<fk> to drop this.
       return data ? ((await drinksOf([data as unknown as DrinkRow]))[0] ?? null) : null;
     },
   });

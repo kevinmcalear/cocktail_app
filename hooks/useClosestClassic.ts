@@ -68,7 +68,7 @@ function useClose<T>(ingredients: readonly SpecIngredient[], select: (c: Close) 
       if (touch.error) throw touch.error;
       // How many of mine each drink uses (a line, or its generic's own row, counts once).
       const shared = (d: Touch) => new Set(d.recipes.map((r) => mine.find((m) => m.id === r.ingredient_item_id || m.generic === r.ingredient_item_id)?.id).filter(Boolean)).size;
-      const candidates = ((touch.data ?? []) as unknown as Touch[])
+      const candidates = ((touch.data ?? []) as Touch[])
         .map((d) => ({ id: d.id, n: shared(d) }))
         .sort((a, b) => b.n - a.n)
         .slice(0, CANDIDATES)
@@ -82,6 +82,7 @@ function useClose<T>(ingredients: readonly SpecIngredient[], select: (c: Close) 
         )
         .in('id', candidates);
       if (specs.error) throw specs.error;
+      // ponytail: supabase-js can't type an embed on items' own foreign keys ("more than one relationship"), so the row is cast; hint it as items!<fk> to drop this.
       const rows = ((specs.data ?? []) as unknown as Spec[]).map((s) => ({
         ...s,
         ingredients: s.recipes.map((r) => ({ id: r.ingredient_item_id, generic: r.ingredient?.generic_id ?? null, name: readingName(r.ingredient) })),

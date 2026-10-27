@@ -29,8 +29,9 @@ export function PressableScale({ haptic: _haptic, style, onPress, onKeyDown, ...
       }
       onKeyDown={(e) => {
         onKeyDown?.(e);
-        const native = e.nativeEvent as unknown as { key: string; defaultPrevented?: boolean };
-        if (onPress && !rest.disabled && !native.defaultPrevented && isLinkEnter(rest.role ?? undefined, native.key, e.currentTarget as unknown as { tagName?: string })) {
+        const native = e.nativeEvent as { key: string; defaultPrevented?: boolean };
+        if (onPress && !rest.disabled && !native.defaultPrevented && isLinkEnter(rest.role ?? undefined, native.key, e.currentTarget as { tagName?: string })) {
+          // ponytail: a keyboard event stands in for the press event here; RN's press type has no keyboard form.
           onPress(e as unknown as Parameters<typeof onPress>[0]);
         }
       }}

@@ -17,14 +17,14 @@ export const STYLE_COLUMNS = 'id, key, name, family, parent_style_id, year, year
 async function fetchDrink(id: string): Promise<LineageDrink | null> {
   const { data, error } = await supabase.from('items').select(LINEAGE_COLUMNS).eq('id', id).maybeSingle();
   if (error) throw error;
-  return (data as unknown as LineageDrink | null) ?? null;
+  return data ?? null;
 }
 
 /** Every historic style (about 25 rows), for family trees. */
 export async function fetchStyles(): Promise<DrinkStyle[]> {
   const { data, error } = await supabase.from('drink_styles').select(STYLE_COLUMNS);
   if (error) throw error;
-  return (data ?? []) as unknown as DrinkStyle[];
+  return data ?? [];
 }
 
 export interface Lineage {
@@ -75,8 +75,8 @@ export function useLineage(itemId: string | null | undefined) {
         drink,
         ancestors,
         styles,
-        classics: ((kids.data ?? []) as unknown as LineageDrink[]).sort((a, b) => (a.origin_year ?? 9999) - (b.origin_year ?? 9999)),
-        riffs: sortRiffs((versions.data ?? []) as unknown as LineageDrink[]),
+        classics: (kids.data ?? []).sort((a, b) => (a.origin_year ?? 9999) - (b.origin_year ?? 9999)),
+        riffs: sortRiffs(versions.data ?? []),
       };
     },
   });
@@ -103,7 +103,7 @@ export function useDrinkCredit(itemId: string | null | undefined) {
         .eq('id', itemId!)
         .maybeSingle();
       if (error) throw error;
-      return (data as unknown as CreditDrink | null) ?? null;
+      return (data as CreditDrink | null) ?? null;
     },
   });
 }

@@ -27,6 +27,7 @@ const SETUP_PREVIEW_WIDTH = 260;
 /** Preview as staff shows the app as a Bartender sees it. */
 const STAFF_PREVIEW = 30;
 // The preview column stays in view while the settings beside it scroll (web).
+// ponytail: position sticky is web-only CSS that RN's ViewStyle doesn't list.
 const sticky = Platform.OS === 'web' ? ({ position: 'sticky', top: space.lg } as unknown as ViewStyle) : null;
 
 function draftFrom(row: VenueBrandRow): BrandDraftState {

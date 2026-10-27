@@ -376,9 +376,3 @@ export function pourSuggestions(drinks: RunDrink[], swaps: RunSwap[], items: Rec
   }
   return out.sort((a, b) => b.drinkCount - a.drinkCount);
 }
-
-/** A menu's drinks in the menu's order: section by section, then each drink's place in its section (sort_order counts within a section); the id settles a tie, so the order never changes between loads. */
-export function sortMenuDrinks<T extends { id: string; sort_order: number | null; section: { sort_order: number | null } | null }>(rows: T[]): T[] {
-  const at = (n: number | null | undefined) => n ?? Number.MAX_SAFE_INTEGER;
-  return [...rows].sort((a, b) => at(a.section?.sort_order) - at(b.section?.sort_order) || at(a.sort_order) - at(b.sort_order) || a.id.localeCompare(b.id));
-}

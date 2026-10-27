@@ -17,7 +17,7 @@ export function useStartFromClassic() {
     mutationFn: async (classicId: string): Promise<Partial<WizardDraft>> => {
       const item = await client.fetchQuery({ ...cocktailQuery(classicId, viewAsRoleLevel), staleTime: 60 * 1000 });
       if (!item) throw new Error('Couldn’t load that spec.');
-      return draftFromSpec(item as unknown as SourceSpec, getPreferredUnit());
+      return draftFromSpec(item as SourceSpec, getPreferredUnit());
     },
   });
 }
@@ -33,6 +33,6 @@ export function useClassicPreview(classicId: string | null) {
     ...cocktailQuery(classicId ?? undefined, viewAsRoleLevel),
     enabled: !!classicId,
     staleTime: 60 * 1000,
-    select: (item) => (item ? draftFromSpec(item as unknown as SourceSpec, getPreferredUnit()) : null),
+    select: (item) => (item ? draftFromSpec(item as SourceSpec, getPreferredUnit()) : null),
   });
 }

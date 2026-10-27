@@ -26,9 +26,8 @@ export function useVenueIngredients(barId: string | null) {
       ]);
       if (drinksRes.error) throw drinksRes.error;
       if (boughtRes.error) throw boughtRes.error;
-      type Drink = { recipes: { ingredient_item_id: string | null }[] | null };
       const used = new Set<string>();
-      for (const d of (drinksRes.data ?? []) as unknown as Drink[]) for (const r of d.recipes ?? []) if (r.ingredient_item_id) used.add(r.ingredient_item_id);
+      for (const d of drinksRes.data ?? []) for (const r of d.recipes ?? []) if (r.ingredient_item_id) used.add(r.ingredient_item_id);
       const supplier = new Map((boughtRes.data ?? []).map((r: { item_id: string; supplier_id: string | null }) => [r.item_id, r.supplier_id]));
       const out: VenueIngredient[] = [];
       for (const part of chunks([...new Set([...used, ...supplier.keys()])])) {

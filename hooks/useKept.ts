@@ -66,10 +66,6 @@ interface LovedRow {
 }
 
 type EditionCols = Pick<MenuEdition, 'id' | 'name' | 'year' | 'month' | 'end_year' | 'end_month' | 'is_current'>;
-interface SavedRow {
-  saved_at: string;
-  edition: (EditionCols & { profile: { id: string; handle: string | null; display_name: string } | null }) | null;
-}
 
 const lovedKey = (userId: string | null) => ['loved-bars', userId] as const;
 const savedKey = (userId: string | null) => ['saved-menus', userId] as const;
@@ -88,7 +84,7 @@ export function useLovedBars() {
         .order('loved_at', { ascending: false });
       if (error) throw error;
       // A bar whose page went private drops out (its profile embed comes back empty).
-      const bars = ((data ?? []) as unknown as LovedRow[]).flatMap((r) => (r.profile ? [{ ...r.profile, alerts: r.alerts ?? 'everything' }] : []));
+      const bars = ((data ?? []) as LovedRow[]).flatMap((r) => (r.profile ? [{ ...r.profile, alerts: r.alerts ?? 'everything' }] : []));
       const ids = bars.map((b) => b.id);
       const venueIds = bars.flatMap((b) => (b.bar_id ? [b.bar_id] : []));
       const [current, releases] = await Promise.all([
@@ -179,7 +175,7 @@ export function useSavedMenus() {
       ]);
       if (error) throw error;
       if (venue.error) throw venue.error;
-      const saved = ((data ?? []) as unknown as SavedRow[]).flatMap((r) => (r.edition?.profile ? [{ at: r.saved_at, e: r.edition }] : []));
+      const saved = (data ?? []).flatMap((r) => (r.edition?.profile ? [{ at: r.saved_at, e: r.edition }] : []));
       const editions = saved.map((r) => r.e);
       const drinks = editions.length
         ? await supabase.from('profile_menu_edition_drinks').select('edition_id, item_id').in('edition_id', editions.map((e) => e.id)).order('sort_order')

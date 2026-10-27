@@ -101,6 +101,7 @@ export function useProfileOriginals(profileId: string | null | undefined, { lock
         locked ? publicOriginals(profileId!) : Promise.resolve([]),
       ]);
       if (error) throw error;
+      // ponytail: supabase-js can't type an embed on items' own foreign keys ("more than one relationship"), so the row is cast; hint it as items!<fk> to drop this.
       const rows = (data ?? []) as unknown as Original[];
       const seen = new Set(rows.map((r) => r.id));
       const missing = cards.filter((c) => !seen.has(c.id));
@@ -113,6 +114,7 @@ export function useProfileOriginals(profileId: string | null | undefined, { lock
 export async function originalsByIds(ids: string[]): Promise<Original[]> {
   const { data, error } = await supabase.from('items').select(ORIGINAL_COLUMNS).in('id', ids).order('name').limit(100);
   if (error) throw error;
+  // ponytail: supabase-js can't type an embed on items' own foreign keys ("more than one relationship"), so the row is cast; hint it as items!<fk> to drop this.
   return (data ?? []) as unknown as Original[];
 }
 
@@ -135,6 +137,7 @@ export function useMyMadeDrinks(profileId: string | null | undefined, enabled = 
         .order('name')
         .limit(200);
       if (error) throw error;
+      // ponytail: supabase-js can't type an embed on items' own foreign keys ("more than one relationship"), so the row is cast; hint it as items!<fk> to drop this.
       return (data ?? []) as unknown as Original[];
     },
   });

@@ -35,14 +35,6 @@ export interface Deck {
   cardIds: string[];
 }
 
-interface CocktailRow {
-  id: string;
-  name: string;
-  bar_id: string | null;
-  glassware_id: string | null;
-  item_images?: ItemImageLink[] | null;
-  recipes?: PresentationRecipe[] | null;
-}
 
 interface PourRow {
   id: string;
@@ -95,7 +87,7 @@ export function useStudyDecks() {
     const glassOf = (id: string | null) => glasses.find((g) => g.id === id) ?? null;
     const categories = new Map(((dropdowns?.categories ?? []) as CategoryRow[]).map((c) => [c.id, c]));
     const cards: Record<string, StudyCardData> = {};
-    for (const c of (cocktails ?? []) as unknown as CocktailRow[]) {
+    for (const c of cocktails ?? []) {
       cards[c.id] = {
         id: c.id,
         kind: 'cocktail',

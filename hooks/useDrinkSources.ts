@@ -50,7 +50,7 @@ export function useDrinkSources(itemIds: readonly string[]) {
             .in('id', batch)
             .eq('versions.is_catalog', false);
           if (error) throw error;
-          return (data ?? []) as unknown as SourceRow[];
+          return (data ?? []) as SourceRow[];
         })
       );
       return Object.fromEntries(
@@ -63,8 +63,6 @@ export function useDrinkSources(itemIds: readonly string[]) {
   });
 }
 
-type LineIngredient = { name: string; ingredient_role: string | null };
-type LineRow = { id: string; recipes: { sort_order: number | null; created_at?: string; display_ingredient: LineIngredient | LineIngredient[] | null }[] | null };
 const one = <T,>(v: T | T[] | null | undefined): T | null => (Array.isArray(v) ? (v[0] ?? null) : (v ?? null));
 
 /** How many ingredients a classic's search caption names, as the search boards draw it. */
@@ -88,7 +86,7 @@ export function useDrinkLines(itemIds: readonly string[]) {
         .in('id', ids.slice(0, 100));
       if (error) throw error;
       return Object.fromEntries(
-        ((data ?? []) as unknown as LineRow[]).map((r) => {
+        (data ?? []).map((r) => {
           const names = sortRecipesByOrder(r.recipes ?? []).map((x) => readingName(one(x.display_ingredient)));
           return [r.id, ingredientLine(names).split(', ').slice(0, LINE_MAX).join(', ')];
         })

@@ -38,12 +38,10 @@ export function useHistoryStory(itemId: string | null) {
       if (aliases.error) throw aliases.error;
       if (versions.error) throw versions.error;
       if (printed.error) throw printed.error;
-      type Version = { id: string; name: string; origin_bar: { display_name: string } | null };
-      type Printed = { source: HistoryStory['books'][number] | null };
-      const books = ((printed.data ?? []) as unknown as Printed[]).flatMap((p) => (p.source ? [p.source] : []));
+      const books = (printed.data ?? []).flatMap((p) => (p.source ? [p.source] : []));
       return {
         aliases: (aliases.data ?? []) as HistoryStory['aliases'],
-        versions: ((versions.data ?? []) as unknown as Version[]).map((v) => ({ id: v.id, name: v.name, bar: v.origin_bar?.display_name ?? null })),
+        versions: (versions.data ?? []).map((v) => ({ id: v.id, name: v.name, bar: v.origin_bar?.display_name ?? null })),
         books: [...new Map(books.map((b) => [b.key, b])).values()].sort((a, b) => (a.year ?? 9999) - (b.year ?? 9999)),
       };
     },

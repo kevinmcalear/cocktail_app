@@ -49,8 +49,7 @@ export function useVenueSuppliers(barId: string | null | undefined) {
         .eq('bar_id', barId!)
         .order('name');
       if (error) throw error;
-      type Row = Omit<VenueSupplier, 'items'> & { item_purchasing: { count: number }[] | null };
-      return ((data ?? []) as unknown as Row[]).map(({ item_purchasing, ...row }) => ({ ...row, items: item_purchasing?.[0]?.count ?? 0 }));
+      return (data ?? []).map(({ item_purchasing, ...row }) => ({ ...row, items: item_purchasing?.[0]?.count ?? 0 }));
     },
   });
 }
@@ -67,8 +66,7 @@ export function useSupplierItems(barId: string, supplierId: string | null) {
         .eq('bar_id', barId)
         .eq('supplier_id', supplierId!);
       if (error) throw error;
-      type Row = { item_id: string; pack_size_amount: number | null; pack_size_unit: string | null; item: { name: string } | null };
-      return ((data ?? []) as unknown as Row[])
+      return (data ?? [])
         .map((r) => ({ item_id: r.item_id, name: r.item?.name ?? 'An ingredient', pack: r.pack_size_amount ? `${r.pack_size_amount} ${r.pack_size_unit ?? ''}`.trim() : null }))
         .sort((a, b) => a.name.localeCompare(b.name));
     },
@@ -161,8 +159,7 @@ export function useSupplierSuggestionData(barId: string | null, makerIds: readon
           .in('region', regions)
           .limit(1000);
         if (error) throw error;
-        type Line = { maker_profile_id: string; region: string; page: SupplierPage | null };
-        for (const l of (data ?? []) as unknown as Line[]) if (l.page) lines.push({ makerId: l.maker_profile_id, region: l.region, page: l.page });
+        for (const l of data ?? []) if (l.page) lines.push({ makerId: l.maker_profile_id, region: l.region, page: l.page });
       }
       return { regions, lines };
     },

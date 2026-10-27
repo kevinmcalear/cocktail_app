@@ -31,7 +31,7 @@ export function useHomeGlassware() {
         .order('created_at');
       if (error) throw error;
       type Row = Pick<BarGlass, 'id' | 'variant' | 'name' | 'model_id' | 'source' | 'count' | 'is_default' | 'model' | 'outline' | 'capacity_ml' | 'photo_path'> & { glass: string };
-      return ((data ?? []) as unknown as Row[]).map((r) => ({
+      return ((data ?? []) as Row[]).map((r) => ({
         ...r,
         glass: r.glass as SketchGlass,
         // A real glass's maker and series are on its model; nothing else is kept at home.

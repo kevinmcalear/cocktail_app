@@ -25,12 +25,6 @@ export interface ClaimableBar {
   sample: { id: string; name: string }[];
 }
 
-type Row = Omit<ClaimableBar, 'claimed' | 'awards' | 'drinks'> & {
-  is_claimed: boolean;
-  bar_id: string | null;
-  awards: { count: number }[] | null;
-  drinks: { count: number }[] | null;
-};
 
 /** Bar pages by name or street for setup's search, claimed ones too (they show dimmed). */
 export function useClaimableBars(search: string) {
@@ -54,7 +48,7 @@ export function useClaimableBars(search: string) {
         const byTerm = () => q.or(`display_name.ilike.%${term}%,address_line.ilike.%${term}%`).order('display_name').limit(6);
         const { data, error } = await (ids ? q.in('id', ids) : byTerm()).abortSignal(signal);
         if (error) throw error;
-        return ((data ?? []) as unknown as Row[]).map(({ is_claimed, bar_id, awards, drinks, ...b }) => ({
+        return (data ?? []).map(({ is_claimed, bar_id, awards, drinks, ...b }) => ({
           ...b,
           claimed: is_claimed || !!bar_id,
           awards: awards?.[0]?.count ?? 0,

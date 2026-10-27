@@ -49,7 +49,7 @@ export function useDrinkLists(enabled = true) {
         .eq('is_catalog', true)
         .order('name');
       if (error) throw error;
-      const rows = (data ?? []) as unknown as {
+      const rows = (data ?? []) as {
         id: string;
         name: string;
         classic_aliases: { alias: string }[] | null;

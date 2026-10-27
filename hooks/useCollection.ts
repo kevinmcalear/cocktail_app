@@ -125,7 +125,7 @@ export function useCollection() {
           // The embed is null once the release isn't live (RLS) or is gone.
           live: !!r.release,
           // One release per row, though the embed is typed as a list.
-          itemIds: [...((r.release as unknown as { release_items: { item_id: string; sort_order: number | null }[] } | null)?.release_items ?? [])].sort((a, b) => (a.sort_order ?? 0) - (b.sort_order ?? 0)).map((i) => i.item_id),
+          itemIds: [...((r.release as { release_items: { item_id: string; sort_order: number | null }[] } | null)?.release_items ?? [])].sort((a, b) => (a.sort_order ?? 0) - (b.sort_order ?? 0)).map((i) => i.item_id),
         })),
       };
     },

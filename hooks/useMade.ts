@@ -55,7 +55,7 @@ export function useMadeDrinks() {
         .order('created_at', { ascending: false });
       if (error) throw error;
       // A bar's drink a guest can't read in items still has its published name.
-      const rows = await withPublishedItems((data ?? []) as unknown as MadeRow[]);
+      const rows = await withPublishedItems((data ?? []) as MadeRow[]);
       return rows.map((r) => ({
         id: r.id,
         itemId: r.item_id,
