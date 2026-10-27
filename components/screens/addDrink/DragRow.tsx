@@ -1,3 +1,4 @@
+import * as Haptics from 'expo-haptics';
 import { useState, type ReactNode } from 'react';
 import { Platform, StyleSheet, View } from 'react-native';
 import { Gesture, GestureDetector } from 'react-native-gesture-handler';
@@ -10,6 +11,8 @@ import { layout, radius, space } from '@/constants/tokens';
 
 /** On a touch screen a drag starts after a short hold, so a swipe over the grip still scrolls. */
 const HOLD_MS = Platform.OS === 'web' ? 0 : 200;
+/** Half a folded row's height: the card sits with its middle under the finger. */
+const HALF_CARD = 28;
 
 /**
  * A row that can be dragged by its grip: it follows the finger, lifted
@@ -18,42 +21,73 @@ const HOLD_MS = Platform.OS === 'web' ? 0 : 200;
  * builder closes (as in #298). No list of its own, so it works inside any
  * ScrollView and inside a native Modal (the prep builder). `onMove` follows
  * the drag, for holding a row over another to batch them.
+ *
+ * `fold`: the row folds to a short card while it's dragged (a spec line to
+ * its name), so the rows under it show. Its place keeps its height, the card
+ * sits under the finger, and the drag is measured from the card's middle. On
+ * a phone a hold anywhere on the row picks it up, not just the grip (Kevin, 27 Oct).
  */
-export function DragRow({ index, onDrop, onMove, onHeight, children }: { index: number; onDrop: (from: number, dy: number) => void; onMove?: (from: number, dy: number) => void; onHeight: (h: number) => void; children: (grip: (node: ReactNode) => ReactNode, active: boolean) => ReactNode }) {
+export function DragRow({ index, onDrop, onMove, onHeight, fold, children }: { index: number; onDrop: (from: number, dy: number) => void; onMove?: (from: number, dy: number) => void; onHeight: (h: number) => void; fold?: boolean; children: (grip: (node: ReactNode) => ReactNode, active: boolean) => ReactNode }) {
   const y = useSharedValue(0);
   const lifted = useSharedValue(0);
   // Where the finger or mouse went down: on the web the pan counts from when it activates, after it has already moved (memory: cocktail-local-testing).
   const from = useSharedValue(0);
+  // Where on the row it was held, and the row's height, for where the folded card sits.
+  const grab = useSharedValue(0);
+  const rowHeight = useSharedValue(0);
   const [active, setActive] = useState(false);
+  const [height, setHeight] = useState(0);
+  const whole = !!fold && Platform.OS !== 'web';
+  const lift = () => {
+    'worklet';
+    return fold ? Math.min(Math.max(0, grab.get() - HALF_CARD), Math.max(0, rowHeight.get() - 2 * HALF_CARD)) : 0;
+  };
+  // The card's middle, not the whole row's: it lands, and combines, where the card is.
+  const moved = (absoluteY: number) => {
+    'worklet';
+    return absoluteY - from.get() + (fold ? lift() + HALF_CARD - rowHeight.get() / 2 : 0);
+  };
   const pan = Gesture.Pan()
     .activateAfterLongPress(HOLD_MS)
     .onBegin((e) => {
       from.set(e.absoluteY);
+      grab.set(e.y);
     })
     .onStart(() => {
       lifted.set(1);
       scheduleOnRN(setActive, true);
+      if (whole) scheduleOnRN(Haptics.selectionAsync);
     })
     .onUpdate((e) => {
-      const dy = e.absoluteY - from.get();
-      y.set(dy);
-      if (onMove) scheduleOnRN(onMove, index, dy);
+      y.set(e.absoluteY - from.get());
+      if (onMove) scheduleOnRN(onMove, index, moved(e.absoluteY));
     })
     .onEnd((e) => {
-      scheduleOnRN(onDrop, index, e.absoluteY - from.get());
+      scheduleOnRN(onDrop, index, moved(e.absoluteY));
     })
     .onFinalize(() => {
       y.set(0);
       lifted.set(0);
       scheduleOnRN(setActive, false);
     });
-  const follow = useAnimatedStyle(() => ({ zIndex: lifted.get() ? 1 : 0, transform: [{ translateY: y.get() }] }));
-  return (
-    <Animated.View style={follow} onLayout={(e) => onHeight(e.nativeEvent.layout.height)}>
+  const follow = useAnimatedStyle(() => ({ zIndex: lifted.get() ? 1 : 0, transform: [{ translateY: y.get() + (lifted.get() ? lift() : 0) }] }));
+  const row = (
+    <Animated.View
+      style={[follow, fold && active && height ? { height } : null]}
+      onLayout={(e) => {
+        // Folded, the place keeps the row's height: the other rows stay put and the drop sums stay right.
+        if (fold && active) return;
+        const h = e.nativeEvent.layout.height;
+        setHeight(h);
+        rowHeight.set(h);
+        onHeight(h);
+      }}
+    >
       {/* The detector holds a plain View, not the grip itself: on the web Gesture Handler won't capture the pointer for a role="button" view, so a mouse drag stopped once it left the grip. */}
-      {children((node) => <GestureDetector gesture={pan}><View>{node}</View></GestureDetector>, active)}
+      {children((node) => (whole ? node : <GestureDetector gesture={pan}><View>{node}</View></GestureDetector>), active)}
     </Animated.View>
   );
+  return whole ? <GestureDetector gesture={pan}>{row}</GestureDetector> : row;
 }
 
 /** A line's grip: hold it and drag to move the line; the arrow keys and a screen reader's actions move it one place. */

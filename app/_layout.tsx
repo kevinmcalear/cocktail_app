@@ -127,20 +127,11 @@ function RootLayoutNav() {
             <Stack.Screen name="e/[id]" options={{ headerShown: false }} />
             <Stack.Screen name="week/index" options={{ headerShown: false }} />
             <Stack.Screen name="week/review" options={{ headerShown: false }} />
-            <Stack.Screen
-              name="add-cocktail"
-              options={{ presentation: "modal", headerShown: false }}
-            />
+            <Stack.Screen name="add-cocktail" options={{ presentation: "modal", headerShown: false }} />
             <Stack.Screen name="add-ingredient" options={{ presentation: "modal", headerShown: false }} />
             <Stack.Screen name="make-recipe" options={{ presentation: "modal", headerShown: false }} />
-            <Stack.Screen
-              name="add-beer"
-              options={{ presentation: "modal", headerShown: false }}
-            />
-            <Stack.Screen
-              name="add-wine"
-              options={{ presentation: "modal", headerShown: false }}
-            />
+            <Stack.Screen name="add-beer" options={{ presentation: "modal", headerShown: false }} />
+            <Stack.Screen name="add-wine" options={{ presentation: "modal", headerShown: false }} />
             <Stack.Screen
               name="cocktail/[id]/index"
               options={{ presentation: "modal", headerShown: false }}
@@ -209,6 +200,8 @@ function RootLayoutNav() {
             <Stack.Screen name="credits-to-check" options={{ headerShown: false }} />
             <Stack.Screen name="taste" options={{ headerShown: false }} />
             <Stack.Screen name="support" options={{ headerShown: false, title: "Support" }} />
+            <Stack.Screen name="history" options={{ headerShown: false, title: "Cocktail history" }} />
+            <Stack.Screen name="settings/index" options={{ headerShown: false, title: "Settings" }} />
             <Stack.Screen name="settings/bar/[id]/index" options={{ headerShown: false }} />
             <Stack.Screen name="settings/bar/[id]/brand" options={{ headerShown: false }} />
             <Stack.Screen name="p/review-claims" options={{ headerShown: false }} />

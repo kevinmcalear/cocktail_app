@@ -199,16 +199,20 @@ describe('IngredientsStep', () => {
     const lines = [newLine({ id: 'mezcal', name: 'Mezcal' }, 'ml', '45'), newLine({ id: 'lime', name: 'Lime juice' }, 'ml', '22.5'), newLine({ id: 'agave', name: 'Agave syrup' }, 'ml', '15')];
     await renderWithTamagui(<IngredientsStep draft={{ ...EMPTY_DRAFT, lines }} set={set} ingredients={[]} />);
 
-    expect(screen.getByText('Hold a line by its grip and move it over another. Let go to combine them; move away to just reorder.')).toBeTruthy();
+    expect(screen.getByText('Hold a line and move it over another. Let go to combine them; move away to just reorder.')).toBeTruthy();
     await fireEvent(screen.getByRole('button', { name: 'Reorder Agave syrup' }), 'accessibilityAction', { nativeEvent: { actionName: 'up' } });
     expect(set.mock.calls[0][0].lines.map((l: { name: string }) => l.name)).toEqual(['Mezcal', 'Agave syrup', 'Lime juice']);
   });
 
   test('held over another, a line offers to combine them into a house prep', async () => {
-    await renderWithTamagui(<LineRow line={newLine({ id: 'tf', name: 'Tempus Fugit Crème de Banane' }, 'ml', '22.5')} dropTarget="Red miso" onChange={jest.fn()} onRemove={jest.fn()} onSwap={jest.fn()} />);
-    expect(screen.getByText('Combine and make it in-house')).toBeTruthy();
-    expect(screen.getByText('Red miso + Tempus Fugit Crème de Banane')).toBeTruthy();
+    // The line under it lights up; the lifted line's own card says what letting go does, where nothing covers it.
+    await renderWithTamagui(<LineRow line={newLine({ id: 'miso', name: 'Red miso' }, 'g', '5')} dropTarget="Tempus Fugit Crème de Banane" onChange={jest.fn()} onRemove={jest.fn()} onSwap={jest.fn()} />);
     expect(screen.getByText('Let go to combine')).toBeTruthy();
+    await renderWithTamagui(<LineRow line={newLine({ id: 'tf', name: 'Tempus Fugit Crème de Banane' }, 'ml', '22.5')} lifted combineWith="Red miso" onChange={jest.fn()} onRemove={jest.fn()} onSwap={jest.fn()} />);
+    expect(screen.getByText('Combine and make it in-house')).toBeTruthy();
+    expect(screen.getByText('Tempus Fugit Crème de Banane + Red miso')).toBeTruthy();
+    // Folded while it's held: no stepper or unit.
+    expect(screen.queryByRole('button', { name: 'Less Tempus Fugit Crème de Banane' })).toBeNull();
   });
 
   // Kevin's Salty Boy (24 Oct): red miso dropped on Tempus Fugit, made a sous vide infusion, amounts as they go in.
