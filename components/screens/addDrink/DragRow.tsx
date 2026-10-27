@@ -8,6 +8,7 @@ import { scheduleOnRN } from 'react-native-worklets';
 import { PressableScale, useDs } from '@/components/ds';
 import { dragGripStyle } from '@/components/recipe/FormScrollContainer';
 import { layout, radius, space } from '@/constants/tokens';
+import type { PartEntry } from '@/lib/drinkParts';
 
 /** On a touch screen a drag starts after a short hold, so a swipe over the grip still scrolls. */
 const HOLD_MS = Platform.OS === 'web' ? 0 : 200;
@@ -124,6 +125,28 @@ export function DragRow({ index, onDrop, onMove, onHeight, fold, shift = null, f
   return whole ? <GestureDetector gesture={pan}>{row}</GestureDetector> : row;
 }
 
+/**
+ * A spec's rows (useCombineDrop entries): each line, from `children` with its
+ * index and its row, and in a drink made in parts each later part's `head`
+ * (drink-edit-parts). A heading slides aside like a line while one is held,
+ * but is never held itself.
+ */
+export function SpecRows({ entries, shift, onHeight, head, children }: { entries: readonly PartEntry[]; shift: (row: number) => number | null; onHeight: (e: PartEntry, h: number) => void; head: (part: number) => ReactNode; children: (line: number, row: number) => ReactNode }) {
+  return (
+    <View role="list" aria-label="In the drink">
+      {entries.map((e, row) =>
+        'part' in e ? (
+          <DragRow key={`part:${e.part}`} index={row} onDrop={() => {}} shift={shift(row)} onHeight={(h) => onHeight(e, h)}>
+            {() => <View style={styles.head}>{head(e.part)}</View>}
+          </DragRow>
+        ) : (
+          children(e.line, row)
+        )
+      )}
+    </View>
+  );
+}
+
 /** A line's grip: hold it and drag to move the line; the arrow keys and a screen reader's actions move it one place. */
 export function LineGrip({ name, onMove }: { name: string; onMove?: (by: -1 | 1) => void }) {
   return (
@@ -165,6 +188,7 @@ export function GripDots() {
 const styles = StyleSheet.create({
   // Narrow, so the name keeps its room on a phone; the hold, not its size, keeps a swipe over it scrolling.
   grip: { width: space.xl, height: layout.minTapTarget, alignItems: 'center', justifyContent: 'center', marginRight: -space.xs },
+  head: { gap: space.xs, paddingTop: space.sm },
   dots: { width: 7, flexDirection: 'row', flexWrap: 'wrap', gap: 2 },
   dot: { width: 2.5, height: 2.5, borderRadius: radius.pill },
 });

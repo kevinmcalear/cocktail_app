@@ -84,3 +84,42 @@ test('types up to the 6,969 cap', async () => {
   expect(screen.getByLabelText('Number of serves').props['aria-valuenow']).toBe(6969);
   expect(screen.getByLabelText('523 L, London Dry Gin')).toBeTruthy();
 });
+
+// An Irish Coffee made in parts (board made-parts-making): the bottle holds part 1 only.
+const irish = specLines([
+  { ...line('w', 'Irish whiskey', 40, 'ml', 40), part: 1 },
+  { ...line('c', 'Hot coffee', 120, 'ml', null, true), part: 1 },
+  { ...line('d', 'Demerara syrup', 15, 'ml'), part: 1 },
+  { ...line('k', 'Cream', 30, 'ml'), part: 2, preparation_notes: 'whip it until it just holds' },
+]);
+const irishParts = [
+  { n: 1, name: 'The coffee', methods: ['Build'], how: 'Build in the glass', join: null },
+  { n: 2, name: 'The cream', methods: ['Whip (whisk or frother)'], how: 'Whip with a whisk or frother', join: 'float' as const },
+];
+const openIrish = (barId: string | null = 'bar') =>
+  renderWithTamagui(<BatchSheet visible onClose={jest.fn()} name="Irish Coffee" lines={irish} methodNames={['Build', 'Whip (whisk or frother)']} lockedUntil={null} initialServes={12} barId={barId} parts={irishParts} specLabel="House spec" />);
+
+test('a drink in parts bottles part 1 and makes the rest fresh for each serve', async () => {
+  await openIrish();
+  expect(screen.getByText('House spec · made in 2 parts')).toBeTruthy();
+  expect(screen.getByText('IN THE BOTTLE · PART 1, THE COFFEE')).toBeTruthy();
+  expect(screen.getByLabelText('480 ml, Irish whiskey')).toBeTruthy();
+  expect(screen.queryByLabelText('360 ml, Cream')).toBeNull();
+  expect(screen.getByLabelText('55 ml, Irish Coffee, from the bottle')).toBeTruthy();
+  expect(screen.getByText('Made fresh for each serve: whip with a whisk or frother')).toBeTruthy();
+  expect(screen.getByLabelText('30 ml, Cream')).toBeTruthy();
+  expect(screen.getByLabelText('Then float it on top')).toBeTruthy();
+});
+
+test('at home, tick as I go makes every line part by part, the float last', async () => {
+  await openIrish(null);
+  await fireEvent.press(screen.getByRole('button', { name: 'Make it, tick as I go' }));
+  expect(screen.getByText('At home · 12 serves')).toBeTruthy();
+  expect(screen.getByText('PART 2 OF 2')).toBeTruthy();
+  expect(screen.getByText('0 of 5 done')).toBeTruthy();
+  await fireEvent.press(screen.getByRole('checkbox', { name: '1.44 L, Hot coffee' }));
+  await fireEvent.press(screen.getByRole('checkbox', { name: 'Float it on top' }));
+  expect(screen.getByText('2 of 5 done')).toBeTruthy();
+  await fireEvent.press(screen.getByRole('button', { name: 'Done making' }));
+  expect(screen.getByText('IN THE BOTTLE · PART 1, THE COFFEE')).toBeTruthy();
+});
