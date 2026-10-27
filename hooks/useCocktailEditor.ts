@@ -22,13 +22,19 @@ import { saveDrinkSpec } from "@/hooks/useVersions";
 import { resolveEditItems } from "@/hooks/specLineSave";
 import { refreshIngredients } from "@/hooks/useDropdowns";
 import { showMessage } from "@/lib/dialogs";
-import { amountOf } from "@/lib/drinkWizard";
+import { amountOf, type WizardPick } from "@/lib/drinkWizard";
+import { orderByPart, linePart, partsMethods, readParts, startParts, storedParts, type DraftPart } from "@/lib/drinkParts";
 import type { ImageItem } from "@/components/cocktail/SortableImageList";
 import { pickDrinkPhotos, setItemImages } from "@/components/drink/drinkImages";
 
 export type SpecCategory = "method" | "glassware" | "family" | "ice";
 
-import type { SortableRecipeItem } from '@/lib/recipeItem';
+import { toLine, type SortableRecipeItem } from '@/lib/recipeItem';
+
+/** A method list's ids (a method picked in the editor always has one). */
+const idsOf = (picks: readonly WizardPick[]) => picks.flatMap((m) => (m.id ? [m.id] : []));
+/** A line's key, as the spec list knows it. */
+const keyOf = (item: SortableRecipeItem, i: number) => toLine(item, i).key;
 
 export function useCocktailEditor(id: string, { enabled = true }: { enabled?: boolean } = {}) {
     const queryClient = useQueryClient();
@@ -67,6 +73,12 @@ export function useCocktailEditor(id: string, { enabled = true }: { enabled?: bo
     const [overridePrep, setOverridePrep] = useState<string | null>(null);
 
     const [recipeItems, setRecipeItems] = useState<SortableRecipeItem[]>([]);
+    // Made in parts (20261123100000_drink_parts.sql): each part's name, join, lines (by key) and methods; null is one part. The lines stay in part order.
+    const [parts, setPartsState] = useState<DraftPart[] | null>(null);
+    // It had parts when it loaded: turned off, the save says so (one part again).
+    const hadParts = useRef(false);
+    // Each method's name as loaded with the drink, for part 1 when parts are turned on (the shared list may not have it yet).
+    const methodNames = useRef<Record<string, string>>({});
     const [localImages, setLocalImages] = useState<ImageItem[]>([]);
 
     const markDirty = useCallback(() => setIsDirty(true), []);
@@ -137,18 +149,37 @@ export function useCocktailEditor(id: string, { enabled = true }: { enabled?: bo
                 .from("items")
                 .select(
                     // Every column: method_ice_id and ice_build only exist once their migrations are in.
-                    `*, glass_model:glass_models!items_glass_model_id_fkey(${GLASS_MODEL_SELECT})`
+                    // The methods too, each with its part: the cached drink can be older than the parts it saves back.
+                    `*, glass_model:glass_models!items_glass_model_id_fkey(${GLASS_MODEL_SELECT}), item_methods!item_methods_item_id_fkey(method_item_id, sort_order, part, method:items!item_methods_method_item_id_fkey(name))`
                 )
                 .eq("id", id)
                 .single(),
         ])
             .then(([recipes, { data, error }]) => {
                 if (error || !data) throw error ?? new Error("Cocktail not found");
-                setRecipeItems(
-                    recipes.map((r: any) =>
-                        mapPresentationRecipeToEditItem(r, { includeCocktailFields: true })
-                    ) as SortableRecipeItem[]
-                );
+                // Keyed by row, so each part can name its lines.
+                const items = recipes.map((r: any) => ({
+                    ...mapPresentationRecipeToEditItem(r, { includeCocktailFields: true }),
+                    key: r.id,
+                })) as SortableRecipeItem[];
+                const stored = readParts((data as { parts?: unknown }).parts);
+                const methodRows = [...(data.item_methods ?? [])].sort((a, b) => (a.sort_order ?? 0) - (b.sort_order ?? 0));
+                methodNames.current = Object.fromEntries(methodRows.map((m) => [m.method_item_id, m.method?.name ?? ""]));
+                const loaded: DraftPart[] | null = stored
+                    ? stored.map((p, i) => ({
+                          name: p.name,
+                          join: p.join ?? null,
+                          // Made fresh for each serve (20261126200000): kept, or a save here would make it ahead again.
+                          ...(p.fresh ? { fresh: true } : {}),
+                          lines: recipes.filter((r) => (r.part ?? 1) === i + 1).map((r) => r.id),
+                          methods: methodRows.filter((m) => m.part === i + 1).map((m) => ({ id: m.method_item_id, name: m.method?.name ?? "" })),
+                      }))
+                    : null;
+                hadParts.current = !!loaded;
+                // In parts, the drink's one list of methods is read from them (methodIds below); a method changed while this loaded isn't overwritten in one part.
+                if (loaded) setMethodIds(orderedMethodIds(methodRows));
+                setPartsState(loaded);
+                setRecipeItems(orderByPart(loaded, items));
                 setBarId(data.bar_id);
                 setSketchVariant(data.sketch_variant ?? null);
                 setGlassModelState((data as unknown as { glass_model: GlassModel | null }).glass_model ?? null);
@@ -306,6 +337,45 @@ export function useCocktailEditor(id: string, { enabled = true }: { enabled?: bo
     /** Adds a method to this drink, or takes it off. Never touches the method itself. */
     const toggleMethod = (methodItemId: string) => setMethodIdsDirty((prev) => toggleId(prev, methodItemId));
 
+    /**
+     * Made in parts changed: a name, a join, which lines or methods a part
+     * has, a part added, moved or removed. The drink's one list of methods
+     * is read from the parts while they're on (methodIds below), and the
+     * lines stay in part order. Under two parts it's one part again, with
+     * the first's methods.
+     */
+    const setParts = (next: DraftPart[] | null) => {
+        const kept = next && next.length > 1 ? next : null;
+        setPartsState(kept);
+        if (next?.length && !kept) setMethodIds(idsOf(next[0].methods));
+        // The same array when nothing moved, so renaming a part doesn't redraw every line.
+        if (kept) setRecipeItems((prev) => {
+            const sorted = orderByPart(kept, prev);
+            return sorted.every((item, i) => item === prev[i]) ? prev : sorted;
+        });
+        markDirty();
+    };
+
+    /** A method on or off in one part (its sheet). From the latest parts, so one added by name after a wait doesn't undo a tap made meanwhile. */
+    const togglePartMethod = (at: number, id: string, name: string) => {
+        const named = (dropdowns?.methods ?? []).find((m) => m.id === id)?.name ?? capitalize(name);
+        setPartsState((prev) =>
+            prev?.map((p, i) => (i === at ? { ...p, methods: p.methods.some((m) => m.id === id) ? p.methods.filter((m) => m.id !== id) : [...p.methods, { id, name: named }] } : p)) ?? prev
+        );
+        markDirty();
+    };
+
+    /** The Made in parts switch: on, the drink so far is part 1 and part 2 floats on it; off joins the lines and the methods in order. */
+    const setMadeInParts = (on: boolean) => {
+        if (on) {
+            const named = (id: string) => (dropdowns?.methods ?? []).find((m) => m.id === id)?.name ?? methodNames.current[id] ?? "";
+            return setParts(startParts({ lines: recipeItems.map(toLine), methods: methodIds.map((mid) => ({ id: mid, name: named(mid) })) }));
+        }
+        if (parts) setMethodIds(idsOf(partsMethods(parts)));
+        setPartsState(null);
+        markDirty();
+    };
+
     const handleSave = async (): Promise<boolean> => {
         if (!rawLoaded) {
             Alert.alert("Still loading", "Wait for the recipe to finish loading, then save again.");
@@ -358,20 +428,32 @@ export function useCocktailEditor(id: string, { enabled = true }: { enabled?: bo
             // A line typed, combined or made in-house here is added the way New adds it.
             const spec = await resolveEditItems(recipeItems, barId || null);
             setRecipeItems(spec.items);
+            // Made in parts: each line's part, each part's methods with its number (Build can be in two), and the parts.
+            // Turned off here, everything goes back to one part; a drink that never had parts sends none, as before.
+            const parted = parts && parts.length > 1 ? parts : null;
+            const ordered = orderByPart(parted, spec.items);
+            const partOf = (item: SortableRecipeItem, i: number) => (parted ? linePart(parted, keyOf(item, i), false) : 1);
+            const byPartMethods = parted ? parted.flatMap((p, i) => idsOf(p.methods).map((mid) => ({ id: mid, part: i + 1 }))) : null;
             // Lines and method go through save_drink_spec: one transaction, and a
             // version of the spec written with it (History on the drink page).
             await saveDrinkSpec(
                 id,
-                spec.items.map((item) => ({
+                ordered.map((item, i) => ({
                     id: item.id ?? null,
                     ingredient_item_id: item.ingredient_id,
                     amount: amountOf(item.amount) || null,
                     unit: item.unit || null,
                     preparation_notes: item.preparation_notes || null,
                     is_optional: item.is_optional || false,
+                    ...(parted || hadParts.current ? { part: partOf(item, i) } : {}),
                 })),
-                methodIds,
-                null
+                byPartMethods ? byPartMethods.map((m) => m.id) : methodIds,
+                null,
+                parted && byPartMethods
+                    ? { methodParts: byPartMethods.map((m) => m.part), parts: storedParts(parted) }
+                    : hadParts.current
+                      ? { methodParts: methodIds.map(() => 1), parts: [] }
+                      : undefined
             );
             if (spec.created.length) void refreshIngredients(queryClient, spec.created);
             if (spec.warnings.length) showMessage("Saved", spec.warnings.join("\n\n"));
@@ -412,7 +494,8 @@ export function useCocktailEditor(id: string, { enabled = true }: { enabled?: bo
         setOrigin: setOriginDirty,
         notes,
         setNotes: setNotesDirty,
-        methodIds,
+        // In parts, every part's, each once (lib/drinkParts partsMethods): the ice line and anything else that reads one list.
+        methodIds: parts ? idsOf(partsMethods(parts)) : methodIds,
         setMethodIds: setMethodIdsDirty,
         toggleMethod,
         glasswareId,
@@ -442,6 +525,10 @@ export function useCocktailEditor(id: string, { enabled = true }: { enabled?: bo
         setOverridePrep: setOverridePrepDirty,
         recipeItems,
         setRecipeItems: setRecipeItemsDirty,
+        parts,
+        setParts,
+        setMadeInParts,
+        togglePartMethod,
         localImages,
         setLocalImages: setLocalImagesDirty,
         addImages,

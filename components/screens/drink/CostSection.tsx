@@ -2,6 +2,7 @@ import { useRouter, type Href } from 'expo-router';
 import { StyleSheet, View } from 'react-native';
 
 import { Body, Button, Caption, Headline, LockedSection, Spec, Tag, useDs } from '@/components/ds';
+import { SetCurrency } from '@/components/screens/venue/SetCurrency';
 import { IconSymbol } from '@/components/ui/icon-symbol';
 import { radius, space } from '@/constants/tokens';
 import { useActiveVenue } from '@/hooks/useActiveVenue';
@@ -76,16 +77,7 @@ function Costed({ barId, cost, price, onMenu, currency, taxRate, pricesIncludeTa
   const target = known ? targetStatus(cost.total_minor, priceMinorValue, targets, tax) : null;
   const venueName = useActiveVenue().venues.find((v) => v.id === barId)?.name ?? 'The venue';
 
-  if (!currency) {
-    return (
-      <Body tone="muted">
-        Set the venue’s currency in Pricing first.{' '}
-        <Body tone="accent" role="link" onPress={() => router.push(`/settings/bar/${barId}/pricing` as Href)}>
-          Open Pricing
-        </Body>
-      </Body>
-    );
-  }
+  if (!currency) return <SetCurrency barId={barId} what="Cost and margin" />;
 
   return (
     <View style={styles.block}>

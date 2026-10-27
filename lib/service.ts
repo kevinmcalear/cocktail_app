@@ -10,6 +10,7 @@
 
 import { formatVolume, isGarnishUnit, leaveOutFor } from '@/lib/batch';
 import { barMl, lineAmount } from '@/lib/drinkMath';
+import { byPart, type MakingPart } from '@/lib/drinkParts';
 import { BATCHED_STYLES } from '@/lib/libraryFilters';
 import { toQuantity } from '@/lib/quantity';
 import type { SpecLine } from '@/lib/spec';
@@ -110,4 +111,25 @@ export function serviceSpec(lines: SpecLine[]): ServiceSpec {
 export function bottleLine(spec: ServiceSpec): string | null {
   if (!spec.servesPerBottle || !spec.pourMl) return null;
   return `A 1 L bottle holds ${spec.servesPerBottle.l1}`;
+}
+
+/** One part of the station list: what's poured from the bottle (part 1 of a batched drink) and the lines added. */
+export interface ServicePart extends MakingPart {
+  pour: string | null;
+  lines: ServiceLine[];
+}
+
+/**
+ * The station list of a drink made in parts, part by part (board made-parts-making).
+ * A batch holds part 1 only (Kevin, 27 Oct 2026): a batched drink's first part is
+ * the pour from the bottle and what's added to it; every later part is made fresh
+ * for each serve, all its lines.
+ */
+export function serviceParts(lines: SpecLine[], parts: readonly MakingPart[], batched: boolean): ServicePart[] {
+  const grouped = byPart(lines, parts.length);
+  return parts.map((p, i) => {
+    if (i > 0 || !batched) return { ...p, pour: null, lines: grouped[i].map(toServiceLine) };
+    const first = serviceSpec(grouped[0]);
+    return { ...p, pour: first.pour, lines: first.station };
+  });
 }

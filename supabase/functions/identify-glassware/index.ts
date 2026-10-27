@@ -1,6 +1,7 @@
 import { consumeAiQuota, refundAiQuota, requireUser } from "../_shared/auth.ts";
 import { describeImageAsJson, describeImagesAsJson, generateImage, mockGlassReads } from "../_shared/gemini.ts";
 import { HttpError, serveJson } from "../_shared/http.ts";
+import { GLASSES } from "../_shared/sketchRules.ts";
 
 const GLASSWARE_ICON_KEYS = [
     "Coupette", "Coupe", "Martini", "Rocks", "Highball", "Fizz", "Ceramic",
@@ -32,8 +33,8 @@ Rules:
 - suggestedName should be the common bar-industry name, title case.
 - Prefer matching an existing icon over inventing a new shape name.`;
 
-// The glass types glass_models knows (lib/sketch/types.ts SKETCH_GLASSES).
-const GLASS_TYPES = ["coupe", "nick", "martini", "rocks", "highball", "collins", "fizz", "flute", "wine", "spritz", "snifter", "julep", "tiki", "mug", "ceramic", "beer"];
+// The glass types glass_models knows (private.is_glass_type), from the drawing rules.
+const GLASS_TYPES: string[] = [...GLASSES];
 
 const MODEL_SCHEMA = {
     type: "object",

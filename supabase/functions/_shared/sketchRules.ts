@@ -20,7 +20,7 @@ export const SKETCH_VERSION = 2;
 
 export const GLASSES = [
   'coupe', 'nick', 'martini', 'rocks', 'highball', 'collins', 'fizz', 'flute',
-  'wine', 'spritz', 'snifter', 'julep', 'tiki', 'mug', 'ceramic', 'beer',
+  'wine', 'spritz', 'snifter', 'julep', 'tiki', 'mug', 'ceramic', 'beer', 'shot', 'cordial',
 ] as const;
 export const ICES = ['none', 'cubes', 'large', 'spear', 'crushed', 'pebble', 'shaved', 'sphere'] as const;
 export const METHODS = ['shake', 'stir', 'build', 'blend', 'swizzle', 'throw', 'pour'] as const;
@@ -181,7 +181,11 @@ export interface SketchResult {
 
 // Specific before general. Matched against lowercased glassware names.
 const GLASS_NAMES: readonly [RegExp, Glass][] = [
-  [/nick|nora|pony|chartreuse glass|liqueur glass/, 'nick'],
+  // A small stemmed glass for liqueurs, and a shot glass (d66, 27 Oct): before
+  // the shapes their names share a word with ("Pony shot", "Shot tumbler").
+  [/cordial|liqueur|chartreuse glass|pousse/, 'cordial'],
+  [/\bshots?\b|shooter|caballito|veladora/, 'shot'],
+  [/nick|nora|pony/, 'nick'],
   [/coupetini|martini|cocktail glass|v[- ]?glass/, 'martini'],
   [/coupe|coupette|saucer/, 'coupe'],
   [/julep/, 'julep'],
@@ -503,6 +507,8 @@ const COLOR_WORDS: readonly [RegExp, string][] = [
 
 interface NameHint {
   match: RegExp;
+  /** Read from the drink's name only, not its description ("an espresso shot"). */
+  nameOnly?: boolean;
   glass?: Glass;
   ice?: Ice;
   method?: Method;
@@ -516,6 +522,10 @@ const NAME_HINTS: readonly NameHint[] = [
   { match: /large cube|big cube|block of ice|clear ice|king cube/, ice: 'large' },
   { match: /ice spear|collins spear|\bspear\b/, ice: 'spear' },
   { match: /on the rocks|over ice|\biced\b/, ice: 'cubes' },
+  // Drunk in one: a name ending in "shot", a shooter, a layered shot; a description that says so.
+  { match: /(?:^|\s)shots?$|\bshooters?\b|pickleback|\bb-?52\b/, glass: 'shot', ice: 'none', nameOnly: true },
+  { match: /\b(?:served|taken|drunk) as a shot\b/, glass: 'shot', ice: 'none' },
+  { match: /pousse[- ]?caf[eé]/, glass: 'cordial', ice: 'none', method: 'build' },
   { match: /espresso martini|coffee martini/, glass: 'martini', ice: 'none', method: 'shake', garnish: 'coffee_beans' },
   { match: /dirty martini|gibson/, glass: 'martini', ice: 'none', method: 'stir', garnish: 'olive' },
   { match: /\bmartini\b|vesper/, glass: 'martini', ice: 'none', method: 'stir', garnish: 'lemon_peel' },
@@ -606,8 +616,8 @@ export function sketchFromDrink(drink: SketchDrink): SketchResult {
   const text = `${drink.name} ${drink.description ?? ''}`.toLowerCase();
   // The name first: a description can mention other drinks and bottles ("Martini Bitter").
   const hint = <K extends keyof NameHint>(k: K): NameHint[K] | undefined => {
-    for (const t of [drink.name.toLowerCase(), (drink.description ?? '').toLowerCase()]) {
-      const found = NAME_HINTS.find((h) => h.match.test(t) && h[k] !== undefined);
+    for (const [i, t] of [drink.name.toLowerCase(), (drink.description ?? '').toLowerCase()].entries()) {
+      const found = NAME_HINTS.find((h) => !(i && h.nameOnly) && h.match.test(t) && h[k] !== undefined);
       if (found) return found[k];
     }
     return undefined;
@@ -723,7 +733,7 @@ export function sketchFromDrink(drink: SketchDrink): SketchResult {
   if (!ice) ice = hint('ice') ?? null;
   if (!ice && ai?.ice && glassFrom !== 'data') { ice = ai.ice; iceFrom = 'ai'; usedAi = true; }
   if (!ice) {
-    const up: Glass[] = ['coupe', 'nick', 'martini', 'flute', 'snifter', 'beer', 'wine'];
+    const up: Glass[] = ['coupe', 'nick', 'martini', 'flute', 'snifter', 'beer', 'wine', 'shot', 'cordial'];
     if (up.includes(glass)) ice = 'none';
     else if (glass === 'julep' || glass === 'tiki' || glass === 'ceramic' || method === 'swizzle') ice = 'crushed';
     else if (glass === 'rocks') ice = method === 'stir' ? 'large' : 'cubes';

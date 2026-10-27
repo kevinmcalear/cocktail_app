@@ -5,7 +5,7 @@ import { Body, Caption, Chip, Field, PressableScale, Spec, useDs } from '@/compo
 import { IconSymbol } from '@/components/ui/icon-symbol';
 import { displayFaces, fontFamilies, layout, radius, space, type } from '@/constants/tokens';
 import { withAlpha } from '@/lib/color';
-import { clampServes, freezingPointC } from '@/lib/batch';
+import { clampServes, freezingPointC, type Batch, type BatchLine, type VolumeUnit } from '@/lib/batch';
 import type { SpecLine } from '@/lib/spec';
 
 /**
@@ -45,6 +45,30 @@ export function BatchRow({ ingredient, amount, sub, tag, note, tone = 'ink', che
     <View accessible accessibilityLabel={spoken} style={[styles.row, { borderBottomColor: ds.c.line }]}>
       {content}
     </View>
+  );
+}
+
+/**
+ * What goes in the bottle: each line (a house-made one says how long it keeps)
+ * and the water, or a shaken drink's "0 ml, the shake dilutes it". Making it,
+ * each is a tick.
+ */
+export function BottleRows({ batch, bottled, unit, houseNote, ticked, onTick }: { batch: Batch; bottled: BatchLine[]; unit: VolumeUnit; houseNote: (key: string) => string | null; ticked: string[] | null; onTick: (key: string) => void }) {
+  const water = batch.water;
+  const pct = water ? `${Number(water.pct.toFixed(1))}%` : '';
+  const waterNote = batch.method === 'stirred' ? `${pct}, stands in for stirring` : `${pct} of the mix before water`;
+  return (
+    <>
+      {bottled.map((l) => {
+        const note = [l.sub, houseNote(l.key)].filter(Boolean).join(' · ') || null;
+        return <BatchRow key={l.key} ingredient={l.ingredient} amount={l.amount} note={note} sub={note} checked={ticked?.includes(l.key)} onToggle={ticked ? () => onTick(l.key) : undefined} />;
+      })}
+      {water ? (
+        <BatchRow ingredient="Filtered water" amount={water.amount} tone="accent" note={waterNote} sub={waterNote} checked={ticked?.includes('water')} onToggle={ticked ? () => onTick('water') : undefined} />
+      ) : batch.method === 'shaken' ? (
+        <BatchRow ingredient="Water" amount={unit === 'oz' ? '0 oz' : '0 ml'} tone="muted" note="the shake dilutes it" sub="the shake dilutes it" />
+      ) : null}
+    </>
   );
 }
 

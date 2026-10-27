@@ -5,6 +5,7 @@ import { Body, Button, Caption, useDs } from '@/components/ds';
 import { radius, space } from '@/constants/tokens';
 import { useExpiring } from '@/hooks/useExpiring';
 import { linePrep, perDrinkLines } from '@/lib/batchLines';
+import { toggleLine } from '@/lib/drinkParts';
 import { guessUnit, newLine, pickByName, typedUnit, type StepProps, type WizardLine, type WizardPick } from '@/lib/drinkWizard';
 import { houseNudge, houseWord } from '@/lib/makeItHouse';
 import type { IngredientAlias } from '@/lib/ingredientNames';
@@ -19,7 +20,7 @@ import { nameFor } from '@/lib/techniques/template';
 import { getPreferredUnit } from '@/store/useSettingsStore';
 
 import type { TrailItem } from './Trail';
-import { DragRow } from './DragRow';
+import { DragRow, SpecRows } from './DragRow';
 import { NudgeCard } from './NudgeCard';
 import { BalanceCard } from './GoesWith';
 import { IngredientSearch, type CatalogIngredient } from './IngredientSearch';
@@ -70,6 +71,8 @@ interface IngredientsStepProps extends StepProps {
   /** The editors (drink-edit-phone): the lines and the search only, no suggestions or paste. Bumping `focus` (their Line button) puts the cursor in the search. */
   editing?: boolean;
   focus?: number;
+  /** The drink editor made in parts (drink-edit-parts): a part's heading. Each part's lines sit under it, with its own Add field (draft.parts). */
+  partHead?: (part: number) => ReactNode;
 }
 
 /**
@@ -81,8 +84,12 @@ interface IngredientsStepProps extends StepProps {
  * (make-anything-overview): from the search, or by holding one line over
  * another to combine them.
  */
-export function IngredientsStep({ draft, set, ingredients, loading, aliases = [], coreIds, forDrink = true, shelf, backBar, balance = true, lineDetail, lineBelow, stock, placeholder, onNewBottle, inlinePrep, bar, trail, editing, focus }: IngredientsStepProps) {
+export function IngredientsStep({ draft, set, ingredients, loading, aliases = [], coreIds, forDrink = true, shelf, backBar, balance = true, lineDetail, lineBelow, stock, placeholder, onNewBottle, inlinePrep, bar, trail, editing, focus, partHead }: IngredientsStepProps) {
   const ds = useDs();
+  // Made in parts: the part whose Add field was used last, which a new line goes into.
+  const parts = partHead && draft.parts?.length ? draft.parts : null;
+  const into = useRef(1);
+  const partName = (p: number) => parts?.[p - 1]?.name.trim() || `part ${p}`;
   // On a phone the add field takes the screen while it's in use (Q16): the rest goes to null in place, so the field keeps its focus. There's no typing outside it.
   const takeover = useWizardTakeover();
   const [typing, setTyping] = useState(false);
@@ -115,7 +122,7 @@ export function IngredientsStep({ draft, set, ingredients, loading, aliases = []
   };
   const add = (pick: WizardPick, prep?: PrepDraft, later?: boolean, pour?: TypedPour, more?: Partial<WizardLine>): WizardLine => {
     const line = { ...lineFor(pick, pour), ...(prep ? { prep, technique: prep.technique } : null), ...(later ? { later: true } : null), ...more };
-    set({ lines: [...draft.lines, line] });
+    set({ lines: [...draft.lines, line], ...(parts ? { parts: toggleLine(parts, Math.min(into.current, parts.length) - 1, line.key) } : null) });
     setRemoved(null);
     return line;
   };
@@ -144,21 +151,8 @@ export function IngredientsStep({ draft, set, ingredients, loading, aliases = []
     set({ lines });
     setRemoved(null);
   };
-  // The order is the spec's: what saves and what the drawing pours. Each line's height says where a dragged one lands.
-  const heights = useRef<Record<string, number>>({});
-  const move = (from: number, to: number) => {
-    if (to < 0 || to >= draft.lines.length || to === from) return;
-    const lines = [...draft.lines];
-    lines.splice(to, 0, ...lines.splice(from, 1));
-    set({ lines });
-  };
-  const rowHeights = () => draft.lines.map((l) => heights.current[l.key] ?? 0);
-  // The others slide aside to show where a held line lands; held over another for the dwell, the two combine into a house prep and its steps open.
-  const combine = useCombineDrop({ draft, set, enabled: forDrink, heights: rowHeights, onCombined: prep.edit });
-  const drop = (from: number, dy: number) => {
-    const to = combine.onDrop(from, dy);
-    if (to !== null) move(from, to);
-  };
+  // The others slide aside to show where a held line lands; held over another for the dwell, the two combine into a house prep and its steps open. In parts, past a heading it moves to that part.
+  const combine = useCombineDrop({ draft, set, enabled: forDrink, onCombined: prep.edit, parted: !!parts });
   // The taste and what goes with it read one drink's own lines, not the batch.
   const poured = perDrinkLines(draft.lines);
   const search = { ingredients, aliases, coreIds, loading, shelf, backBar, brands: true };
@@ -168,82 +162,108 @@ export function IngredientsStep({ draft, set, ingredients, loading, aliases = []
     return <PasteSpecPanel onClose={() => setPasting(false)} drinkName={draft.name} {...search} have={backBar ?? shelf} haveLabel={backBar ? 'On your back bar' : 'On your shelf'} onAdd={(rows) => setToFinish(typed.paste(rows).join(', ') || null)} />;
   }
 
+  // A field to add a line: in parts each part has its own, and a new line goes in the part it's under.
+  const addField = (part?: number) => (
+    <IngredientSearch
+      {...search}
+      key={part && part < (parts?.length ?? 0) ? `add:${part}` : focus}
+      autoFocus={!!focus && !(part && part < (parts?.length ?? 0))}
+      label={part ? `Add to ${partName(part)}` : draft.lines.length ? 'Add another ingredient' : 'Add an ingredient'}
+      placeholder={placeholder}
+      amounts
+      onPick={(pick, pour, named) => add(pick, undefined, false, pour, named ? { named } : undefined)}
+      onTyping={(on) => ((into.current = on && part ? part : into.current), setTyping(on))}
+      onMake={forDrink ? (name, pour) => make(name, undefined, pour) : undefined}
+      onBottle={forDrink && onNewBottle ? newBottle : undefined}
+      onLater={forDrink ? (name, pour) => add({ id: null, name: capitalizeFirst(name) }, undefined, true, pour) : undefined}
+      onHouse={forDrink ? typed.typed : undefined}
+      captions={forDrink}
+      takeover={takeover ? { ...takeover, caption: `Adding to ${draft.name.trim() || 'your drink'}` } : null}
+    />
+  );
+
   return (
     <View style={styles.stack}>
-      {draft.lines.length && !searching ? (
-        <View role="list" aria-label="In the drink">
-          {draft.lines.map((l, i) => (
-            <DragRow key={l.key} index={i} fold onDrop={drop} onMove={combine.onMove} shift={combine.shift(i)} flat={combine.combineWith(i) !== null} onHeight={(h) => (heights.current[l.key] = h)}>
-              {(grip, lifted) =>
-                // The lines keep their size while the next one is searched: folding them read as squeezed (Eddie, 16 Oct).
-                l.key === swapKey ? (
-                  <View style={[styles.swap, { borderBottomColor: ds.c.line }]}>
-                    <IngredientSearch
-                      {...search}
-                      label={`Rename ${l.name} or pick another`}
-                      initial={l.name}
-                      autoFocus
-                      onCancel={() => setSwapKey(null)}
-                      onPick={(p, _pour, named) => {
-                        // A different ingredient isn't the house prep that was here.
-                        change(l.key, { id: p.id, name: p.name, prep: undefined, technique: undefined, bottle: undefined, named: named || undefined });
-                        setSwapKey(null);
-                      }}
-                      onMake={
-                        forDrink
-                          ? (name) => {
-                              make(name, l.key);
-                              setSwapKey(null);
-                            }
-                          : undefined
+      {parts && partHead && !searching ? partHead(1) : null}
+      {(draft.lines.length || parts) && !searching ? (
+        <SpecRows entries={combine.entries} shift={combine.shift} onHeight={combine.height} head={(p) => (<>{addField(p - 1)}{partHead?.(p)}</>)}>
+          {(i, row) => {
+            const l = draft.lines[i];
+            return (
+              <DragRow key={l.key} index={row} fold onDrop={combine.onDrop} onMove={combine.onMove} shift={combine.shift(row)} flat={combine.combineWith(i) !== null} onHeight={(h) => combine.height({ line: i }, h)}>
+                {(grip, lifted) =>
+                  // The lines keep their size while the next one is searched: folding them read as squeezed (Eddie, 16 Oct).
+                  l.key === swapKey ? (
+                    <View style={[styles.swap, { borderBottomColor: ds.c.line }]}>
+                      <IngredientSearch
+                        {...search}
+                        label={`Rename ${l.name} or pick another`}
+                        initial={l.name}
+                        autoFocus
+                        onCancel={() => setSwapKey(null)}
+                        onPick={(p, _pour, named) => {
+                          // A different ingredient isn't the house prep that was here.
+                          change(l.key, { id: p.id, name: p.name, prep: undefined, technique: undefined, bottle: undefined, named: named || undefined });
+                          setSwapKey(null);
+                        }}
+                        onMake={
+                          forDrink
+                            ? (name) => {
+                                make(name, l.key);
+                                setSwapKey(null);
+                              }
+                            : undefined
+                        }
+                      />
+                    </View>
+                  ) : (
+                    <LineRow
+                      // A batch read from a file shows, and opens, as the house prep it saves as.
+                      line={l.batch ? { ...l, prep: linePrep(l) } : l}
+                      grip={grip}
+                      lifted={lifted}
+                      dropTarget={combine.target === i ? combine.holding : null}
+                      combineWith={combine.combineWith(i)}
+                      moveTo={combine.moveTo ? partName(combine.moveTo) : null}
+                      onMove={(by) => combine.step(row, by)}
+                      onChange={(c) => change(l.key, c)}
+                      onRemove={() => remove(l)}
+                      onSwap={() => setSwapKey(l.key)}
+                      onEditPrep={() => prep.edit(l)}
+                      detail={lineDetail?.(l)}
+                      below={
+                        <>
+                          {lineBelow?.(l)}
+                          {forDrink ? <SalineHint line={l} ingredients={ingredients} onChange={(c) => change(l.key, c)} /> : null}
+                          {/* A line that matched nothing asks what it is, until its recipe opens under it (step 10). */}
+                          {prep.card(l.key) ??
+                            (forDrink && unmatched(l) ? (
+                              <LineChoices
+                                line={l}
+                                venueName={bar?.name ?? null}
+                                onMake={(name) => make(name, l.key)}
+                                onBottle={() => {
+                                  change(l.key, { bottle: bottleFor(l.name) });
+                                  onNewBottle?.(l.key);
+                                }}
+                                // As the search's "Just add the name": one that sounds made here is a recipe to write later.
+                                onName={() => change(l.key, houseWord(l.name) || looksMadeInHouse(l.name) ? { later: true } : { named: true })}
+                              />
+                            ) : null)}
+                        </>
                       }
+                      stock={stock?.toggle(l)}
                     />
-                  </View>
-                ) : (
-                  <LineRow
-                    // A batch read from a file shows, and opens, as the house prep it saves as.
-                    line={l.batch ? { ...l, prep: linePrep(l) } : l}
-                    grip={grip}
-                    lifted={lifted}
-                    dropTarget={combine.target === i ? combine.holding : null}
-                    combineWith={combine.combineWith(i)}
-                    onMove={(by) => move(i, i + by)}
-                    onChange={(c) => change(l.key, c)}
-                    onRemove={() => remove(l)}
-                    onSwap={() => setSwapKey(l.key)}
-                    onEditPrep={() => prep.edit(l)}
-                    detail={lineDetail?.(l)}
-                    below={
-                      <>
-                        {lineBelow?.(l)}
-                        {forDrink ? <SalineHint line={l} ingredients={ingredients} onChange={(c) => change(l.key, c)} /> : null}
-                        {/* A line that matched nothing asks what it is, until its recipe opens under it (step 10). */}
-                        {prep.card(l.key) ??
-                          (forDrink && unmatched(l) ? (
-                            <LineChoices
-                              line={l}
-                              venueName={bar?.name ?? null}
-                              onMake={(name) => make(name, l.key)}
-                              onBottle={() => {
-                                change(l.key, { bottle: bottleFor(l.name) });
-                                onNewBottle?.(l.key);
-                              }}
-                              // As the search's "Just add the name": one that sounds made here is a recipe to write later.
-                              onName={() => change(l.key, houseWord(l.name) || looksMadeInHouse(l.name) ? { later: true } : { named: true })}
-                            />
-                          ) : null)}
-                      </>
-                    }
-                    stock={stock?.toggle(l)}
-                  />
-                )
-              }
-            </DragRow>
-          ))}
-        </View>
+                  )
+                }
+              </DragRow>
+            );
+          }}
+        </SpecRows>
       ) : null}
       {searching ? null : stock?.footer}
-      {draft.lines.length > 1 && !searching ? <Caption tone="muted">{`Hold a line${Platform.OS === 'web' ? ' by its grip' : ''} and move it ${forDrink ? 'over another. Let go to combine them; move away to just reorder.' : 'to reorder.'}`}</Caption> : null}
+      {/* In parts the editor says it under Add a part (drink-edit-parts). */}
+      {draft.lines.length > 1 && !parts && !searching ? <Caption tone="muted">{`Hold a line${Platform.OS === 'web' ? ' by its grip' : ''} and move it ${forDrink ? 'over another. Let go to combine them; move away to just reorder.' : 'to reorder.'}`}</Caption> : null}
 
       {nudge && !searching ? (
         <NudgeCard nudge={nudge} name={nudgeLine?.name} onMake={() => nudgeLine && makeHouse(nudgeLine, nudge.technique, nudge.adjunct)} onNotNow={() => (nudge.from === 'typed' ? typed.drop(nudge.key) : setNudgeOff(true))} />
@@ -256,22 +276,7 @@ export function IngredientsStep({ draft, set, ingredients, loading, aliases = []
         </View>
       ) : null}
 
-      <IngredientSearch
-        {...search}
-        key={focus}
-        autoFocus={!!focus}
-        label={draft.lines.length ? 'Add another ingredient' : 'Add an ingredient'}
-        placeholder={placeholder}
-        amounts
-        onPick={(pick, pour, named) => add(pick, undefined, false, pour, named ? { named } : undefined)}
-        onTyping={setTyping}
-        onMake={forDrink ? (name, pour) => make(name, undefined, pour) : undefined}
-        onBottle={forDrink && onNewBottle ? newBottle : undefined}
-        onLater={forDrink ? (name, pour) => add({ id: null, name: capitalizeFirst(name) }, undefined, true, pour) : undefined}
-        onHouse={forDrink ? typed.typed : undefined}
-        captions={forDrink}
-        takeover={takeover ? { ...takeover, caption: `Adding to ${draft.name.trim() || 'your drink'}` } : null}
-      />
+      {addField(parts?.length)}
       {forDrink && !quiet && !editing ? <Button label="Paste a whole spec" variant="ghost" size="sm" style={styles.paste} onPress={() => setPasting(true)} /> : null}
       {toFinish && !searching ? <WizardNotice>{`${toFinish} went to the finish.`}</WizardNotice> : null}
       {prep.builder}

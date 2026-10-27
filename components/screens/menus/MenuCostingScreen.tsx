@@ -4,6 +4,7 @@ import { Platform, ScrollView, StyleSheet, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import { BackbarTheme, Body, BrandProvider, Button, Caption, Field, GlassButton, LockedSection, PressableScale, Spec, Tag, Title, useBreakpoint, useDs, useGutter } from '@/components/ds';
+import { SetCurrency } from '@/components/screens/venue/SetCurrency';
 import { WebHead } from '@/components/WebHead';
 import { layout, space } from '@/constants/tokens';
 import { useActiveVenue } from '@/hooks/useActiveVenue';
@@ -66,7 +67,7 @@ function Page({ menuId }: { menuId: string }) {
     return !p ? [`${r.name} (no price)`] : priceMinor(p, currency) == null ? [`${r.name} (${p})`] : [];
   });
   const wants = targetsLine(targets, (m) => money(m));
-  const meta = [venue?.name, settings ? (settings.prices_include_tax ? `prices include ${settings.tax_rate}% tax` : `${settings.tax_rate}% tax at the till`) : null, wants ? `target ${wants}` : null]
+  const meta = [venue?.name, settings && currency ? (settings.prices_include_tax ? `prices include ${settings.tax_rate}% tax` : `${settings.tax_rate}% tax at the till`) : null, wants ? `target ${wants}` : null]
     .filter(Boolean)
     .join(' · ');
 
@@ -89,7 +90,7 @@ function Page({ menuId }: { menuId: string }) {
                 {null}
               </LockedSection>
             ) : null}
-            {unlocked && !currency && settings ? <Body tone="muted">Set the venue’s currency in Pricing first.</Body> : null}
+            {unlocked && !currency && settings && barId ? <SetCurrency barId={barId} what="Costing" /> : null}
             {unlocked && error ? <Body tone="muted">Couldn’t work out the costs. Check your connection and try again.</Body> : null}
             {unlocked && isPending && !error ? <Caption tone="muted">Adding it up…</Caption> : null}
             {unlocked && rows && currency ? (
