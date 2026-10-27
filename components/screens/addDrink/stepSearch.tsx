@@ -1,4 +1,4 @@
-import { useState, type ComponentProps } from 'react';
+import { useEffect, useRef, useState, type ComponentProps } from 'react';
 import { StyleSheet, View } from 'react-native';
 
 import { Button, Field } from '@/components/ds';
@@ -37,22 +37,32 @@ export function useStepSearch(): StepSearch {
   };
 }
 
-/** The step's Field, with Cancel beside it while it has the screen. Cancel empties it. */
+/** The step's Field, with Cancel beside it while it has the screen. Cancel empties it, and so does closing it from outside (Android's back), so no results are left under the footer. */
 export function StepSearchField({ search, id, ...field }: ComponentProps<typeof Field> & { search: StepSearch; id: string }) {
+  const over = search.over(id);
+  const wasOver = useRef(over);
+  const clear = field.onChangeText;
+  useEffect(() => {
+    if (wasOver.current && !over) clear?.('');
+    wasOver.current = over;
+  }, [over, clear]);
   return (
     <View style={styles.row}>
       <View style={styles.flex}>
-        <Field {...field} onFocus={() => search.focus(id)} />
+        <Field
+          {...field}
+          onFocus={(e) => {
+            field.onFocus?.(e);
+            search.focus(id);
+          }}
+        />
       </View>
-      {search.over(id) ? (
+      {over ? (
         <Button
           label="Cancel"
           variant="ghost"
           accessibilityLabel="Cancel the search"
-          onPress={() => {
-            field.onChangeText?.('');
-            search.done();
-          }}
+          onPress={search.done}
         />
       ) : null}
     </View>
