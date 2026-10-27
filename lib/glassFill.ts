@@ -169,6 +169,34 @@ export function fitToWashLine(lines: readonly FillLine[], o: FillOptions): Fitte
   return { lines: fitted, factor, fill };
 }
 
+/** A drink's cost as Fit it reads it (drink_cost): the total, and each line's cost by ingredient. */
+export interface CostToFit {
+  total_minor: number;
+  missing: number;
+  lines: readonly { ingredient: string; minor: number | null }[];
+}
+
+/**
+ * What a serve costs with the fitted spec: the saved cost, with each changed
+ * line's cost scaled as its amount is. The cost's lines are the spec's, in
+ * order (drink_cost), so the spec passed in must be the saved one. Null when
+ * a line has no price, or the lines don't line up (the cost would be a guess).
+ */
+export function fittedCostMinor(cost: CostToFit, names: readonly string[], amounts: readonly string[], fitted: Fitted): number | null {
+  if (cost.missing > 0 || cost.lines.length !== fitted.lines.length) return null;
+  let delta = 0;
+  for (let i = 0; i < fitted.lines.length; i++) {
+    const line = cost.lines[i];
+    if (line.ingredient.trim().toLowerCase() !== names[i]?.trim().toLowerCase()) return null;
+    const l = fitted.lines[i];
+    if (!l.changed) continue;
+    const was = Number(amounts[i]);
+    if (line.minor == null || !(was > 0)) return null;
+    delta += line.minor * (Number(l.amount) / was - 1);
+  }
+  return Math.round(cost.total_minor + delta);
+}
+
 const ml = (n: number) => `${Math.round(n)} ml`;
 
 /** "24 ml short of the 150 ml wash line", "12 ml over the 150 ml wash line", "Fills to the 150 ml wash line". */

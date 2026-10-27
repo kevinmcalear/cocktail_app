@@ -87,12 +87,14 @@ export function IceStep({ draft, set, ices, barIce, suggested, why, compact, kit
     : null;
 
   const top = named[named.length - 1];
+  // The board's chip says what no ice means for staff (Kevin, 26 Oct); the drink keeps the ice's own name.
+  const chipLabel = (p: WizardPick) => (iceKind(p.name) === 'none' ? 'No ice (served up)' : p.name);
   return (
     <>
       <View style={styles.stack}>
         <View style={styles.group}>
           <Eyebrow>In the glass</Eyebrow>
-          <PickStep label="In the glass" ownLabel="Other ice" compact={compact} options={ices} selected={base ? [base] : !layers.length && draft.ice ? [draft.ice] : []} onChange={([ice]) => pickBase(ice)} suggested={suggested} why={why} mine={mine}>
+          <PickStep label="In the glass" ownLabel="Other ice" compact={compact} options={ices} selected={base ? [base] : !layers.length && draft.ice ? [draft.ice] : []} onChange={([ice]) => pickBase(ice)} suggested={suggested} why={why} mine={mine} chipLabel={chipLabel}>
             {layers.length ? <IceLayers layers={layers} onChange={setLayers} onAdd={() => setAdding(true)} sourceOf={sourceOf} /> : null}
           </PickStep>
           {/* ponytail: the first layer from the bottom the venue may lack; a build of two missing asks one at a time. */}
