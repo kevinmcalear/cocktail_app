@@ -77,7 +77,7 @@ before(async () => {
 
 after(async () => {
   await service.from('items').delete().in('id', [ids.drink, ids.seeded].filter(Boolean));
-  await service.from('profiles').delete().in('id', [ids.editor, ids.jo, ids.sam, ids.legend].filter(Boolean));
+  await service.from('profiles').delete().in('id', [ids.editor, ids.jo, ids.sam, ids.legend, ids.venuePage].filter(Boolean));
   if (ids.venue) await service.from('bars').delete().eq('id', ids.venue);
   if (users.moderator) await db.query('DELETE FROM private.app_admins WHERE user_id = $1', [users.moderator.id]);
   await db.end();
@@ -122,6 +122,9 @@ describe('co-creator credits wait for a yes', () => {
     assert.equal(jo[0].name, `Credit Riff ${run}`);
     assert.equal(jo[0].creator_name, 'Ed');
     assert.equal(jo[0].bar_name, `Credit Bar ${run}`, 'Jo can’t read this venue’s drinks, but sees what they were named on');
+    assert.equal(jo[0].bar_place, null, 'a venue with no page has no place');
+    ids.venuePage = (await serviceInsert('profiles', { kind: 'bar', handle: `creditbar${run}`, display_name: `Credit Bar ${run}`, bar_id: ids.venue, locality: 'Fitzroy', city: 'Melbourne' })).id;
+    assert.equal((await toCheck('jo'))[0].bar_place, 'Fitzroy', 'its page’s suburb, to tell two of one name apart');
     assert.deepEqual(await toCheck('editor'), [], 'an accepted credit isn’t waiting');
     assert.deepEqual(await toCheck('stranger'), []);
     const signedOut = await anon.rpc('credits_to_check');

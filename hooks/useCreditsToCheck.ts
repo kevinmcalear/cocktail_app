@@ -13,6 +13,8 @@ export interface CreditToCheck {
   creator_name: string | null;
   /** The bar it comes from, or the venue it's poured at. */
   bar_name: string | null;
+  /** That bar's suburb or city, when its page shows one. */
+  bar_place: string | null;
   named_at: string;
 }
 

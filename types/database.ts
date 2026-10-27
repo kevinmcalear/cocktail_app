@@ -5813,6 +5813,7 @@ export type Database = {
             origin: string | null
             origin_bar_profile_id: string | null
             origin_year: number | null
+            parts: Json | null
             publish_mode:
               | Database["public"]["Enums"]["item_publish_mode"]
               | null
@@ -5896,6 +5897,7 @@ export type Database = {
           origin: string | null
           origin_bar_profile_id: string | null
           origin_year: number | null
+          parts: Json | null
           publish_mode: Database["public"]["Enums"]["item_publish_mode"] | null
           published_at: string | null
           riff_of_id: string | null
@@ -6383,6 +6385,7 @@ export type Database = {
         Args: never
         Returns: {
           bar_name: string
+          bar_place: string
           creator_name: string
           item_id: string
           item_type: Database["public"]["Enums"]["entity_type"]
@@ -7214,6 +7217,7 @@ export type Database = {
           origin: string | null
           origin_bar_profile_id: string | null
           origin_year: number | null
+          parts: Json | null
           publish_mode: Database["public"]["Enums"]["item_publish_mode"] | null
           published_at: string | null
           riff_of_id: string | null
