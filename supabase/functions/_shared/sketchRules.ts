@@ -507,6 +507,8 @@ const COLOR_WORDS: readonly [RegExp, string][] = [
 
 interface NameHint {
   match: RegExp;
+  /** Read from the drink's name only, not its description ("an espresso shot"). */
+  nameOnly?: boolean;
   glass?: Glass;
   ice?: Ice;
   method?: Method;
@@ -520,8 +522,9 @@ const NAME_HINTS: readonly NameHint[] = [
   { match: /large cube|big cube|block of ice|clear ice|king cube/, ice: 'large' },
   { match: /ice spear|collins spear|\bspear\b/, ice: 'spear' },
   { match: /on the rocks|over ice|\biced\b/, ice: 'cubes' },
-  // Drunk in one: a name ending in "shot", a shooter, a layered shot. Not "a shot of espresso".
-  { match: /(?:^|\s)shots?$|\bshooters?\b|as a shot\b|pickleback|\bb-?52\b/, glass: 'shot', ice: 'none' },
+  // Drunk in one: a name ending in "shot", a shooter, a layered shot; a description that says so.
+  { match: /(?:^|\s)shots?$|\bshooters?\b|pickleback|\bb-?52\b/, glass: 'shot', ice: 'none', nameOnly: true },
+  { match: /\b(?:served|taken|drunk) as a shot\b/, glass: 'shot', ice: 'none' },
   { match: /pousse[- ]?caf[eé]/, glass: 'cordial', ice: 'none', method: 'build' },
   { match: /espresso martini|coffee martini/, glass: 'martini', ice: 'none', method: 'shake', garnish: 'coffee_beans' },
   { match: /dirty martini|gibson/, glass: 'martini', ice: 'none', method: 'stir', garnish: 'olive' },
@@ -613,8 +616,8 @@ export function sketchFromDrink(drink: SketchDrink): SketchResult {
   const text = `${drink.name} ${drink.description ?? ''}`.toLowerCase();
   // The name first: a description can mention other drinks and bottles ("Martini Bitter").
   const hint = <K extends keyof NameHint>(k: K): NameHint[K] | undefined => {
-    for (const t of [drink.name.toLowerCase(), (drink.description ?? '').toLowerCase()]) {
-      const found = NAME_HINTS.find((h) => h.match.test(t) && h[k] !== undefined);
+    for (const [i, t] of [drink.name.toLowerCase(), (drink.description ?? '').toLowerCase()].entries()) {
+      const found = NAME_HINTS.find((h) => !(i && h.nameOnly) && h.match.test(t) && h[k] !== undefined);
       if (found) return found[k];
     }
     return undefined;

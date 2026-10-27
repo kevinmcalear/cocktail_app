@@ -41,7 +41,7 @@ const BY_NAME: [RegExp, GlasswareIconKey][] = [
     [/spritz/i, "Spritz"],
     [/wine/i, "Wine"],
     [/beer|pint|pilsner/i, "Beer"],
-    [/small rocks|single rocks/i, "Small Rocks"],
+    [/small rocks|single rocks|\bshots?\b|shooter/i, "Small Rocks"],
     [/rocks|old fashioned|lowball|tumbler/i, "Rocks"],
 ];
 

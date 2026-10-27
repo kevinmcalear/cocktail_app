@@ -78,6 +78,8 @@ assert.equal(look({ glassKind: 'shot', ice: 'Cubes' }).ice, 'cubes');
 assert.equal(look({ name: 'Lemon Drop Shot' }).glass, 'shot');
 assert.equal(look({ name: 'Pousse Café' }).glass, 'cordial');
 assert.notEqual(look({ name: 'Morning', description: 'Rum and a shot of espresso' }).glass, 'shot', 'a shot of something is not a shot glass');
+assert.notEqual(look({ name: 'Morning', description: 'Rum, coffee liqueur and an espresso shot' }).glass, 'shot', 'nor a description that ends in one');
+assert.equal(look({ name: 'Morning', description: 'Served as a shot.' }).glass, 'shot');
 assert.deepEqual(listed('is_ice_kind'), [...SKETCH_ICES]);
 
 console.log('glassware: ok');
