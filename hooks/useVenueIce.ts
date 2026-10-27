@@ -14,6 +14,8 @@ export type VenueIce = Omit<Row<'item_ice'>, 'item_id' | 'bar_id' | 'shape'> & {
   id: string;
   name: string;
   shape: IceShape;
+  /** How a cut-to-size or odd ice is drawn: the item's ice_kind, as venue_ice returns it (20261124100000_glass_ice_kinds.sql). */
+  draw_as: string | null;
   /** Null when the supplier isn't said, or this person can't see the venue's suppliers. */
   supplier_name: string | null;
 };

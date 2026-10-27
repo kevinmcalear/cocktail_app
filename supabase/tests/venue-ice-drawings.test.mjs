@@ -45,7 +45,9 @@ const houseIce = async (key) =>
 // One of the venue's ice (20261110100000_kit_and_ice.sql), drawn as `kind`.
 async function kit(kind, shape = kind) {
   const { rows } = await db.query("INSERT INTO public.items (name, item_type, bar_id) VALUES ($1, 'ice', $2) RETURNING id", [`${kind} ice ${run}`, ids.bar]);
-  await db.query('INSERT INTO public.item_ice (item_id, bar_id, shape, draw_as) VALUES ($1, $2, $3, $4)', [rows[0].id, ids.bar, shape, shape === kind ? null : kind]);
+  await db.query('INSERT INTO public.item_ice (item_id, bar_id, shape) VALUES ($1, $2, $3)', [rows[0].id, ids.bar, shape]);
+  // A cut-to-size or odd ice is drawn as the kind picked for it (20261124100000_glass_ice_kinds.sql).
+  if (shape !== kind) await db.query('UPDATE public.items SET ice_kind = $2 WHERE id = $1', [rows[0].id, kind]);
   ids[`ice-${kind}`] = rows[0].id;
 }
 

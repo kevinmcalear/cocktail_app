@@ -129,6 +129,19 @@ describe('a venue\'s ice', () => {
     assert.deepEqual(rows, [{ name: 'Clear cube', size_mm: 45, clear: null, stamped: false, source: 'machine', supplier_id: null, machine: 'Klaris' }]);
   });
 
+  test('a cut ice is drawn as its pick, kept on the item (20261124100000_glass_ice_kinds.sql)', async () => {
+    const { data: id, error } = await save('prepper', { p_name: 'Cut cube', p_shape: 'cut', p_draw_as: 'large' });
+    assert.ifError(error);
+    const kindOf = async () => (await db.query('SELECT ice_kind FROM public.items WHERE id = $1', [id])).rows[0].ice_kind;
+    assert.equal(await kindOf(), 'large');
+    const { data } = await users.prepper.client.rpc('venue_ice', { p_bar_id: ids.bar });
+    assert.equal(data.find((x) => x.id === id).draw_as, 'large');
+    assert.ifError((await save('prepper', { p_id: id, p_name: 'Cut cube', p_shape: 'sphere' })).error);
+    assert.equal(await kindOf(), 'sphere');
+    assert.equal((await users.prepper.client.rpc('venue_ice', { p_bar_id: ids.bar })).data.find((x) => x.id === id).draw_as, null);
+    assert.ifError((await users.prepper.client.rpc('remove_venue_ice', { p_id: id })).error);
+  });
+
   test('only the venue\'s own ice, suppliers and known shapes', async () => {
     const outsiderIce = (await db.query("INSERT INTO public.items (name, item_type, bar_id) VALUES ('Theirs', 'ice', $1) RETURNING id", [ids.other])).rows[0].id;
     await db.query("INSERT INTO public.item_ice (item_id, bar_id, shape) VALUES ($1, $2, 'cubes')", [outsiderIce, ids.other]);
