@@ -112,6 +112,18 @@ describe('glass and ice kinds', () => {
     assert.deepEqual([s.glass, s.ice], ['nick', 'pebble']);
   });
 
+  test('a maker\'s glass is the type of its shape', async () => {
+    const maker = (await db.query('SELECT maker_profile_id AS id FROM public.glass_models LIMIT 1')).rows[0]?.id;
+    if (maker) {
+      await assert.rejects(
+        db.query("INSERT INTO public.glass_models (maker_profile_id, shape_item_id, glass, name) VALUES ($1, $2, 'rocks', $3)", [maker, ids.coupe, `Odd ${run}`]),
+        /type of its shape/
+      );
+    }
+    const { rows } = await db.query("SELECT private.valid_sketch_inputs($1) AS ok", [JSON.stringify({ ...inputs(), houseIce: 'none' })]);
+    assert.equal(rows[0].ok, false, 'houseIce is never none');
+  });
+
   test('a venue\'s ice is drawn as its shape, a cut one as its pick, a block not at all', async () => {
     await item('venue ice', 'ice', { bar_id: ids.bar });
     await db.query("INSERT INTO public.item_ice (item_id, bar_id, shape) VALUES ($1, $2, 'cubes')", [ids['venue ice'], ids.bar]);

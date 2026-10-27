@@ -2,8 +2,10 @@
 -- a shared glass or ice item says what kind it is, so nothing works out an
 -- item's kind from its name.
 --
--- 1. private.is_glass_type: the 16 glass types in one place. glass_models,
---    bar_glassware, home_glassware and valid_glass_variant check against it.
+-- 1. private.is_glass_type and private.is_ice_kind: the 16 glass types and 8
+--    ice kinds in one place. glass_models, bar_glassware, home_glassware,
+--    valid_glass_variant and valid_sketch_inputs check against them, and a
+--    maker's glass must be the type of the shape item it's a kind of.
 -- 2. items.glass (a glassware item's type) and items.ice_kind (how an ice item
 --    is drawn in the glass, 'none' for "served without ice"). Null is not sure.
 -- 3. A venue's ice keeps its shape in item_ice; how it's drawn moves from
@@ -64,6 +66,85 @@ CREATE OR REPLACE FUNCTION "private"."valid_glass_variant"("p_glass" "text", "p_
   SELECT p_variant ~ '^[a-z]+_[a-z]+$' AND char_length(p_variant) <= 40
      AND split_part(p_variant, '_', 1) = p_glass
      AND private.is_glass_type(p_glass);
+$$;
+
+-- As 20261122100000_ice_look_drawings.sql, with the glass types and ice kinds
+-- from is_glass_type and is_ice_kind (houseIce and a build layer are never 'none').
+CREATE OR REPLACE FUNCTION "private"."valid_sketch_inputs"("p" "jsonb") RETURNS boolean
+    LANGUAGE "plpgsql" IMMUTABLE
+    SET "search_path" TO ''
+    AS $$
+DECLARE
+    v_hex constant text := '^#[0-9a-f]{6}$';
+BEGIN
+    IF jsonb_typeof(p) IS DISTINCT FROM 'object' THEN RETURN false; END IF;
+    IF EXISTS (SELECT 1 FROM jsonb_object_keys(p) k
+               WHERE k NOT IN ('v', 'glass', 'ice', 'method', 'liquid', 'foam', 'float', 'bleed', 'fizz', 'garnish', 'from', 'coverage', 'variant', 'tint', 'houseIce', 'build', 'outline', 'iceLook')) THEN
+        RETURN false;
+    END IF;
+    IF jsonb_typeof(p -> 'v') IS DISTINCT FROM 'number' OR jsonb_typeof(p -> 'coverage') IS DISTINCT FROM 'number'
+       OR jsonb_typeof(p -> 'fizz') IS DISTINCT FROM 'boolean' THEN
+        RETURN false;
+    END IF;
+    IF p ->> 'glass' IS NULL OR NOT private.is_glass_type(p ->> 'glass')
+       OR p ->> 'ice' IS NULL OR NOT private.is_ice_kind(p ->> 'ice')
+       OR p ->> 'method' IS NULL OR p ->> 'method' NOT IN ('shake', 'stir', 'build', 'blend', 'swizzle', 'throw', 'pour') THEN
+        RETURN false;
+    END IF;
+    IF jsonb_typeof(p -> 'liquid') IS DISTINCT FROM 'object'
+       OR EXISTS (SELECT 1 FROM jsonb_object_keys(p -> 'liquid') k WHERE k NOT IN ('hex', 'alpha'))
+       OR coalesce(p -> 'liquid' ->> 'hex', '') !~ v_hex
+       OR jsonb_typeof(p -> 'liquid' -> 'alpha') IS DISTINCT FROM 'number' THEN
+        RETURN false;
+    END IF;
+    IF coalesce(jsonb_typeof(p -> 'foam'), 'null') <> 'null'
+       AND p ->> 'foam' NOT IN ('cap', 'crema', 'froth', 'silk', 'sheen') THEN
+        RETURN false;
+    END IF;
+    IF (coalesce(jsonb_typeof(p -> 'float'), 'null') <> 'null' AND p ->> 'float' !~ v_hex)
+       OR (coalesce(jsonb_typeof(p -> 'bleed'), 'null') <> 'null' AND p ->> 'bleed' !~ v_hex) THEN
+        RETURN false;
+    END IF;
+    IF coalesce(jsonb_typeof(p -> 'garnish'), 'null') <> 'null' AND p ->> 'garnish' NOT IN (
+        'orange_peel', 'lemon_peel', 'grapefruit_peel', 'lime_wheel', 'lemon_wheel', 'orange_wheel', 'lime_wedge',
+        'cherry', 'olive', 'onion', 'mint', 'herb', 'berries', 'strawberry', 'pineapple', 'coffee_beans',
+        'grated_spice', 'flower', 'cucumber', 'salt_rim', 'sugar_rim', 'ginger', 'chili', 'apple') THEN
+        RETURN false;
+    END IF;
+    IF jsonb_typeof(p -> 'from') IS DISTINCT FROM 'object'
+       OR EXISTS (SELECT 1 FROM jsonb_each_text(p -> 'from') e
+                  WHERE e.key NOT IN ('glass', 'ice', 'method', 'liquid', 'garnish')
+                     OR e.value NOT IN ('data', 'rules', 'ai', 'default')) THEN
+        RETURN false;
+    END IF;
+    IF p ? 'variant' AND (jsonb_typeof(p -> 'variant') IS DISTINCT FROM 'string'
+                          OR NOT private.valid_glass_variant(p ->> 'glass', p ->> 'variant')) THEN
+        RETURN false;
+    END IF;
+    IF p ? 'tint' AND (jsonb_typeof(p -> 'tint') IS DISTINCT FROM 'string' OR p ->> 'tint' !~ v_hex) THEN
+        RETURN false;
+    END IF;
+    IF p ? 'houseIce' AND (jsonb_typeof(p -> 'houseIce') IS DISTINCT FROM 'string'
+                           OR NOT private.is_ice_kind(p ->> 'houseIce') OR p ->> 'houseIce' = 'none') THEN
+        RETURN false;
+    END IF;
+    IF p ? 'build' AND (jsonb_typeof(p -> 'build') IS DISTINCT FROM 'array'
+                        OR jsonb_array_length(p -> 'build') NOT BETWEEN 1 AND 6
+                        OR EXISTS (SELECT 1 FROM jsonb_array_elements(p -> 'build') l
+                                   WHERE NOT private.valid_ice_look(l, ARRAY['kind', 'n', 'to'])
+                                      OR NOT coalesce(private.is_ice_kind(l ->> 'kind'), false) OR l ->> 'kind' = 'none'
+                                      OR (l ? 'n' AND (jsonb_typeof(l -> 'n') IS DISTINCT FROM 'number' OR (l ->> 'n')::numeric NOT BETWEEN 1 AND 12))
+                                      OR (l ? 'to' AND coalesce(l ->> 'to', '') NOT IN ('half', 'rim', 'mound')))) THEN
+        RETURN false;
+    END IF;
+    IF p ? 'outline' AND NOT private.valid_glass_outline(p -> 'outline') THEN
+        RETURN false;
+    END IF;
+    IF p ? 'iceLook' AND NOT private.valid_ice_look(p -> 'iceLook', ARRAY[]::text[]) THEN
+        RETURN false;
+    END IF;
+    RETURN true;
+END;
 $$;
 
 -- --- 2. The kinds on items ---
@@ -243,6 +324,8 @@ BEGIN
     LEFT JOIN public.items g ON g.id = d.glassware_id
     LEFT JOIN public.items x ON x.id = d.ice_id
     WHERE d.id = NEW.item_id;
+    -- An item with no kind leaves the drawing as its writer said it (the app's
+    -- rules, a spec that names its ice in words).
     IF v_glass IS NOT NULL THEN
         NEW.inputs := jsonb_set(jsonb_set(NEW.inputs, '{glass}', to_jsonb(v_glass)), '{from,glass}', '"data"');
     END IF;
@@ -297,9 +380,29 @@ BEGIN
                WHERE x.item_id = NEW.id AND private.venue_ice_kind(x.shape, NEW.ice_kind) IS DISTINCT FROM NEW.ice_kind) THEN
         RAISE EXCEPTION 'A venue''s ice is drawn as its shape: change it in Kit.' USING ERRCODE = 'check_violation';
     END IF;
+    IF NEW.glass IS DISTINCT FROM OLD.glass
+       AND EXISTS (SELECT 1 FROM public.glass_models m WHERE m.shape_item_id = NEW.id AND m.glass IS DISTINCT FROM NEW.glass) THEN
+        RAISE EXCEPTION 'Makers'' glasses of this shape are another type: move them first.' USING ERRCODE = 'check_violation';
+    END IF;
     RETURN NEW;
 END;
 $$;
+
+-- A maker's glass is the type of the shape it's a kind of (all 2,089 agree on 26 Oct).
+CREATE FUNCTION "private"."glass_models_match_shape"() RETURNS "trigger"
+    LANGUAGE "plpgsql" SECURITY DEFINER
+    SET "search_path" TO ''
+    AS $$
+BEGIN
+    IF EXISTS (SELECT 1 FROM public.items i WHERE i.id = NEW.shape_item_id AND i.glass IS DISTINCT FROM NEW.glass AND i.glass IS NOT NULL) THEN
+        RAISE EXCEPTION 'A glass is the type of its shape.' USING ERRCODE = 'check_violation';
+    END IF;
+    RETURN NEW;
+END;
+$$;
+
+CREATE TRIGGER "match_shape" BEFORE INSERT OR UPDATE OF "shape_item_id", "glass" ON "public"."glass_models"
+    FOR EACH ROW EXECUTE FUNCTION "private"."glass_models_match_shape"();
 
 CREATE TRIGGER "guard_kind" BEFORE UPDATE OF "glass", "ice_kind" ON "public"."items"
     FOR EACH ROW WHEN (OLD."glass" IS DISTINCT FROM NEW."glass" OR OLD."ice_kind" IS DISTINCT FROM NEW."ice_kind")
@@ -332,6 +435,7 @@ REVOKE EXECUTE ON FUNCTION "private"."item_ice_set_kind"() FROM PUBLIC, "anon", 
 REVOKE EXECUTE ON FUNCTION "private"."item_sketches_set_glass_and_ice"() FROM PUBLIC, "anon", "authenticated";
 REVOKE EXECUTE ON FUNCTION "private"."items_guard_kind"() FROM PUBLIC, "anon", "authenticated";
 REVOKE EXECUTE ON FUNCTION "private"."refresh_item_kind"() FROM PUBLIC, "anon", "authenticated";
+REVOKE EXECUTE ON FUNCTION "private"."glass_models_match_shape"() FROM PUBLIC, "anon", "authenticated";
 
 -- --- 6. Backfill ---
 
