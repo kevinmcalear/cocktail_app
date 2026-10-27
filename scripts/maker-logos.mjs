@@ -2,7 +2,8 @@
 // each file goes to the avatars bucket (makers/, or venues/ for a bar page, as
 // bar logos do) and becomes the page's avatar_url where it has none. The
 // files aren't in the repo, like bar logos: pass the folder of rendered PNGs.
-// Each is the company's own mark from its own site (the manifest cites it),
+// Each is the company's own mark, from its own site or supplied by hand when the
+// site blocks us (the manifest cites which),
 // scaled onto a square of its own background, never redrawn; the name carries
 // that background as the edge tag LogoImage reads (logoEdgeFromUrl).
 //
