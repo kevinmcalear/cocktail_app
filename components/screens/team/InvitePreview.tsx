@@ -3,7 +3,7 @@ import { StyleSheet, View } from 'react-native';
 import { BackbarTheme, Body, BrandProvider, Caption, DsText, Title, useDs } from '@/components/ds';
 import { VenueMark } from '@/components/nav/VenueMarks';
 import { Monogram } from '@/components/screens/onboarding/SetupParts';
-import { radius, space } from '@/constants/tokens';
+import { radius, space, type } from '@/constants/tokens';
 import { useVenueBrand } from '@/hooks/useVenueBrand';
 import { faceFromDb } from '@/lib/brand';
 import { isHexColor } from '@/lib/color';
@@ -30,8 +30,8 @@ export function InvitePreview({ barId, barName, roleLevel, sender, welcome, note
   const brand = useVenueBrand(barId).data;
   const accent = isHexColor(brand?.primary_color) ? brand.primary_color : undefined;
   return (
-    // Email is read on paper: the light scheme, whatever the app is in.
-    <BackbarTheme scheme="light">
+    // The email is dark, whatever the app is in (invite-team-last, step 4).
+    <BackbarTheme scheme="dark">
       <BrandProvider accent={accent} displayFace={faceFromDb(brand?.display_face)}>
         <Paper
           barId={barId}
@@ -58,17 +58,15 @@ function Paper({ barId, barName, logoUrl, accent, displayFace, roleLevel, sender
   const ds = useDs();
   const venue = { id: barId, name: barName, logoUrl, accent, displayFace, groundTint: null, roleLevel };
   return (
-    <View role="group" accessibilityLabel="The invite email" style={[styles.paper, { backgroundColor: ds.c.ground, borderColor: ds.c.line }]}>
-      <View style={styles.head}>
-        {logoUrl ? <VenueMark venue={venue} size={48} /> : <Monogram name={barName} size={48} accent italic />}
-        <Caption tone="muted">{barName}</Caption>
-      </View>
+    <View role="group" accessibilityLabel="The invite email" style={[styles.paper, { backgroundColor: ds.c.surface, borderColor: ds.c.line }]}>
+      {logoUrl ? <VenueMark venue={venue} size={48} /> : <Monogram name={barName} size={48} accent italic />}
+      <Caption tone="accent" style={styles.kicker}>{barName.toUpperCase()}</Caption>
       <Title>{`Join ${barName} as ${withArticle(roleLabel(roleLevel))}`}</Title>
       <Body tone="muted">{`${sender ?? barName} added you to the team.`}</Body>
       {welcome ? (
         <View style={styles.welcome}>
           <Body>{welcome}</Body>
-          {sender ? <Body tone="muted">{sender}</Body> : null}
+          {sender ? <DsText variant="title" italic tone="muted" style={styles.signed}>{sender}</DsText> : null}
         </View>
       ) : null}
       {note ? (
@@ -90,7 +88,8 @@ function Paper({ barId, barName, logoUrl, accent, displayFace, roleLevel, sender
 
 const styles = StyleSheet.create({
   paper: { gap: space.md, padding: space.xl, borderWidth: 1, borderRadius: radius.card, borderCurve: 'continuous' },
-  head: { flexDirection: 'row', alignItems: 'center', gap: space.md },
+  kicker: { letterSpacing: 1, marginTop: space.sm },
+  signed: { fontSize: type.headline.fontSize, lineHeight: type.headline.lineHeight },
   welcome: { gap: space.sm },
   note: { gap: space.xs, padding: space.lg, borderRadius: radius.control },
   join: { alignSelf: 'flex-start', paddingHorizontal: space.xl, paddingVertical: space.md, borderRadius: radius.pill },
