@@ -23,7 +23,7 @@ import { resolveEditItems } from "@/hooks/specLineSave";
 import { refreshIngredients } from "@/hooks/useDropdowns";
 import { showMessage } from "@/lib/dialogs";
 import { amountOf, type WizardPick } from "@/lib/drinkWizard";
-import { byPart, linePart, partsMethods, readParts, startParts, storedParts, type DraftPart } from "@/lib/drinkParts";
+import { orderByPart, linePart, partsMethods, readParts, startParts, storedParts, type DraftPart } from "@/lib/drinkParts";
 import type { ImageItem } from "@/components/cocktail/SortableImageList";
 import { pickDrinkPhotos, setItemImages } from "@/components/drink/drinkImages";
 
@@ -177,7 +177,7 @@ export function useCocktailEditor(id: string, { enabled = true }: { enabled?: bo
                 // In parts, the drink's one list of methods is read from them (methodIds below); a method changed while this loaded isn't overwritten in one part.
                 if (loaded) setMethodIds(orderedMethodIds(methodRows));
                 setPartsState(loaded);
-                setRecipeItems(byPart(loaded, items));
+                setRecipeItems(orderByPart(loaded, items));
                 setBarId(data.bar_id);
                 setSketchVariant(data.sketch_variant ?? null);
                 setGlassModelState((data as unknown as { glass_model: GlassModel | null }).glass_model ?? null);
@@ -348,7 +348,7 @@ export function useCocktailEditor(id: string, { enabled = true }: { enabled?: bo
         if (next?.length && !kept) setMethodIds(idsOf(next[0].methods));
         // The same array when nothing moved, so renaming a part doesn't redraw every line.
         if (kept) setRecipeItems((prev) => {
-            const sorted = byPart(kept, prev);
+            const sorted = orderByPart(kept, prev);
             return sorted.every((item, i) => item === prev[i]) ? prev : sorted;
         });
         markDirty();
@@ -429,7 +429,7 @@ export function useCocktailEditor(id: string, { enabled = true }: { enabled?: bo
             // Made in parts: each line's part, each part's methods with its number (Build can be in two), and the parts.
             // Turned off here, everything goes back to one part; a drink that never had parts sends none, as before.
             const parted = parts && parts.length > 1 ? parts : null;
-            const ordered = byPart(parted, spec.items);
+            const ordered = orderByPart(parted, spec.items);
             const partOf = (item: SortableRecipeItem, i: number) => (parted ? linePart(parted, keyOf(item, i), false) : 1);
             const byPartMethods = parted ? parted.flatMap((p, i) => idsOf(p.methods).map((mid) => ({ id: mid, part: i + 1 }))) : null;
             // Lines and method go through save_drink_spec: one transaction, and a

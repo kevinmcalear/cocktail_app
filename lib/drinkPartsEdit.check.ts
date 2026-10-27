@@ -2,7 +2,7 @@
 // editor lists, where a held line lands, and moving or removing a part.
 import assert from 'node:assert/strict';
 
-import { byPart, dropEntry, movePart, partEntries, partMethodsSaid, removePart, slotPart, startParts, toggleLine, type DraftPart } from './drinkParts';
+import { orderByPart, dropEntry, movePart, partEntries, partMethodsSaid, removePart, slotPart, startParts, toggleLine, type DraftPart } from './drinkParts';
 import { dragSlot } from './dropIndex';
 
 const pick = (name: string) => ({ id: name, name });
@@ -48,8 +48,8 @@ assert.equal(slotPart(rows, 2, past.slot), 2);
 assert.equal(dragSlot(2, 180, heights, 2).over, 4);
 
 // The lines in part order, each part's in the order they were.
-assert.deepEqual(byPart(parts, ['cream', 'whiskey', 'coffee'].map(line)).map((l) => l.key), ['whiskey', 'coffee', 'cream']);
-assert.deepEqual(byPart(null, ['cream', 'whiskey'].map(line)).map((l) => l.key), ['cream', 'whiskey'], 'one part keeps its order');
+assert.deepEqual(orderByPart(parts, ['cream', 'whiskey', 'coffee'].map(line)).map((l) => l.key), ['whiskey', 'coffee', 'cream']);
+assert.deepEqual(orderByPart(null, ['cream', 'whiskey'].map(line)).map((l) => l.key), ['cream', 'whiskey'], 'one part keeps its order');
 
 // Moving a part: the first never joins, and one that was first floats once it's later.
 const swapped = movePart(parts, 1, -1);

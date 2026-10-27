@@ -10,15 +10,19 @@ import { useActiveVenue } from '@/hooks/useActiveVenue';
 import { useServiceNotes } from '@/hooks/useServiceNotes';
 import { useSpecAccess } from '@/hooks/useSpecAccess';
 import { useEffectiveRole } from '@/hooks/useViewAs';
+import { makingParts } from '@/lib/drinkParts';
 import { glassOver, type ItemImageLink } from '@/lib/itemImages';
 import { roleLabel } from '@/lib/roles';
-import { isBatchedStyle, serviceSpec, serviceStyleLabel } from '@/lib/service';
+import { isBatchedStyle, serviceParts, serviceSpec, serviceStyleLabel } from '@/lib/service';
 import { EMPTY_SERVICE_NOTES } from '@/lib/serviceNotes';
 import { photoShots, photosTaken, SERVICE_OPENS_AT, type ServiceAngle } from '@/lib/servicePhotos';
 import { specLines, type PresentationRecipe } from '@/lib/spec';
 import type { DatabaseItem } from '@/types/types';
 
+import { JoinLine, PartHead } from './DrinkParts';
+
 const ANGLES: ServiceAngle[] = ['side', 'top', 'garnish', 'handoff'];
+const AMOUNT_W = 96;
 
 /**
  * The full-screen service view (board drink-phone-service): the drink from
@@ -57,6 +61,8 @@ function Service({ item, start, venueName }: { item: DatabaseItem; start: Servic
   const style = serviceStyleLabel(item.service_style);
   // Only a drink the bar batches has a pour from the bottle and a station split.
   const batched = isBatchedStyle(item.service_style);
+  // A drink made in parts lists its lines part by part, made to order or not (board made-parts-making).
+  const parts = makingParts(item.madeInParts, item.item_methods);
   // Glass takes the picture's colours: dark on a photo, light on the drawing's paper.
   const glass = glassOver(shot.picture);
   const heroHeight = Math.min(Math.max(width * 0.9, 320), height * 0.5);
@@ -112,7 +118,20 @@ function Service({ item, start, venueName }: { item: DatabaseItem; start: Servic
               </Group>
             ) : null}
             {!notes.garnish && !notes.handoff.length ? <Body tone="muted">No garnish or hand-off notes yet. Editors add them in Edit, under Service.</Body> : null}
-            {!batched ? (style ? <Tag label={style} /> : null) : access.amounts && lines.length ? (
+            {parts && access.amounts && lines.length ? (
+              <Group title="AT THE STATION" tag={[batched ? style : null, `Made in ${parts.length} parts`]}>
+                {serviceParts(lines, parts, batched).map((p) => (
+                  <View key={p.n}>
+                    <PartHead n={p.n} name={p.name} how={p.how} />
+                    {p.pour ? <Line amount={p.pour} name={`${item.name} base, from the bottle`} /> : null}
+                    {p.lines.map((l) => (
+                      <Line key={l.key} amount={l.amount} name={l.ingredient} />
+                    ))}
+                    <JoinLine join={p.join} inset={AMOUNT_W} />
+                  </View>
+                ))}
+              </Group>
+            ) : !batched ? (style ? <Tag label={style} /> : null) : access.amounts && lines.length ? (
               <Group title="AT THE STATION" tag={style}>
                 {spec.pour ? <Line amount={spec.pour} name={`${item.name} base, from the bottle`} /> : null}
                 {spec.station.map((l) => (
@@ -143,14 +162,22 @@ function Service({ item, start, venueName }: { item: DatabaseItem; start: Servic
   );
 }
 
-function Group({ title, tag, children }: { title: string; tag?: string | null; children: ReactNode }) {
+/** A section with its eyebrow and tags: a batched drink in parts shows both "Batched" and "Made in 2 parts" (Kevin, 27 Oct). */
+function Group({ title, tag, children }: { title: string; tag?: string | (string | null)[] | null; children: ReactNode }) {
+  const tags = (Array.isArray(tag) ? tag : [tag]).filter((t): t is string => !!t);
   return (
     <View style={styles.group}>
       <View style={styles.groupHead}>
         <Caption tone="muted" style={styles.eyebrow}>
           {title}
         </Caption>
-        {tag ? <Tag label={tag} /> : null}
+        {tags.length ? (
+          <View style={styles.tags}>
+            {tags.map((t) => (
+              <Tag key={t} label={t} />
+            ))}
+          </View>
+        ) : null}
       </View>
       {children}
     </View>
@@ -176,11 +203,12 @@ const styles = StyleSheet.create({
   body: { gap: space.lg, paddingTop: space.xl },
   group: { gap: space.xs },
   groupHead: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between' },
+  tags: { flexDirection: 'row', flexWrap: 'wrap', justifyContent: 'flex-end', gap: space.xs },
   eyebrow: { fontFamily: fontFamilies.mono, letterSpacing: 1.2 },
   step: { flexDirection: 'row', alignItems: 'center', gap: space.md, minHeight: layout.minTapTarget, borderBottomWidth: StyleSheet.hairlineWidth },
   bullet: { width: 6, height: 6, borderRadius: radius.pill },
   line: { flexDirection: 'row', alignItems: 'center', gap: space.md, minHeight: layout.minTapTarget, borderBottomWidth: StyleSheet.hairlineWidth },
-  amount: { width: 96 },
+  amount: { width: AMOUNT_W },
   lock: { flexDirection: 'row', alignItems: 'center', gap: space.xs },
   controls: { position: 'absolute', flexDirection: 'row', justifyContent: 'space-between' },
 });

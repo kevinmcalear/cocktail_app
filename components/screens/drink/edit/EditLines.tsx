@@ -3,7 +3,7 @@ import { Platform, StyleSheet, View } from 'react-native';
 
 import { Caption, Headline, useDs } from '@/components/ds';
 import { radius, space } from '@/constants/tokens';
-import { byPart, type DraftPart } from '@/lib/drinkParts';
+import { orderByPart, type DraftPart } from '@/lib/drinkParts';
 import { EMPTY_DRAFT, type WizardDraft } from '@/lib/drinkWizard';
 import type { IngredientAlias } from '@/lib/ingredientNames';
 import { fromLine, toLine, type EditLine, type SortableRecipeItem } from '@/lib/recipeItem';
@@ -54,7 +54,7 @@ export function EditLines({ items, onChange, name, ingredients, aliases, coreIds
   // The step changes only its lines here, and in parts which part a line is in; anything else it could set (a classic to start from) is New's. The lines stay in part order.
   const set = (change: Partial<WizardDraft>) => {
     if (change.parts && onParts) onParts(change.parts);
-    if (change.lines) onChange(byPart(change.parts ?? parted, (change.lines as EditLine[]).map(fromLine)));
+    if (change.lines) onChange(orderByPart(change.parts ?? parted, (change.lines as EditLine[]).map(fromLine)));
   };
   return (
     <View style={styles.section}>

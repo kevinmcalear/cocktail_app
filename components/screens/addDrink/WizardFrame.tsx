@@ -119,8 +119,11 @@ export function WizardFrame({ testID, pageTitle, embedded, overNav, band, stepKe
   const page = breakpoint === 'desktop' && !embedded;
   // On iOS the screen is a page sheet that starts below the status bar. Its gap
   // to the window's top is both the inset it doesn't need and what
-  // KeyboardAvoidingView (which assumes it starts at the top) must add.
-  const sheetGap = Platform.OS === 'ios' && !embedded && height ? Math.max(0, windowHeight - height) : 0;
+  // KeyboardAvoidingView (which assumes it starts at the top) must add. A full-screen
+  // Modal (House-made over a drink) measures a hair short of the window (873.99994 of
+  // 874), so under a point is no gap: that screen still has the status bar to clear.
+  const gap = windowHeight - height;
+  const sheetGap = Platform.OS === 'ios' && !embedded && height && gap >= 1 ? gap : 0;
   const statusBar = sheetGap > 0 ? 0 : insets.top;
   const side = column ? 0 : gutter;
   const bottom = embedded ? space.lg : Math.max(insets.bottom, space.lg);

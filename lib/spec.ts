@@ -63,6 +63,8 @@ export interface SpecLine {
   density: number | null;
   /** Made in house from its own recipe. */
   houseMade?: boolean;
+  /** A drink made in parts: which part the line is in (recipes.part, from 1). */
+  part?: number | null;
 }
 
 // Grams convert to ml through the ingredient's density (lib/drinkMath.ts).
@@ -87,6 +89,7 @@ export function specLines(recipes: PresentationRecipe[] | null | undefined): Spe
       abv: typeof resolved?.abv === 'number' ? resolved.abv : null,
       density: typeof resolved?.density_g_ml === 'number' ? resolved.density_g_ml : null,
       houseMade: resolved?.ingredient_role === 'prep',
+      part: r.part ?? null,
     };
   });
 }
