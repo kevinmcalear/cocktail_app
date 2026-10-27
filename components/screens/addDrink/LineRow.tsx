@@ -41,6 +41,8 @@ interface LineRowProps {
   dropTarget?: string | null;
   /** Lifted and held over a line it can combine with (that line's name): a tag above the card says so, clear of the thumb. */
   combineWith?: string | null;
+  /** Made in parts, lifted over another part: the tag says "Move to The cream" instead. */
+  moveTo?: string | null;
   /** Just before remove: the bottle that puts it on the back bar or your shelf (StockToggle); null for a line without one. */
   stock?: ReactNode;
 }
@@ -55,7 +57,7 @@ interface LineRowProps {
  * On a phone the controls sit under the name, and the bottle and remove
  * beside it; on a wider screen they all share its line, on the right.
  */
-export function LineRow({ line, onChange, onRemove, onSwap, onEditPrep, units: unitList = QUICK_UNITS, detail, below, grip, onMove, lifted, dropTarget, combineWith, stock }: LineRowProps) {
+export function LineRow({ line, onChange, onRemove, onSwap, onEditPrep, units: unitList = QUICK_UNITS, detail, below, grip, onMove, lifted, dropTarget, combineWith, moveTo, stock }: LineRowProps) {
   const ds = useDs();
   // A phone stacks the name over the controls. Explicit, not flexWrap: Yoga on iOS shrank the name to "Rye wh…" beside them instead of wrapping (Eddie, 16 Oct).
   // So does a narrow column (the desktop page's spec, an ingredient's recipe beside its method), where the controls left the name a few letters.
@@ -92,7 +94,7 @@ export function LineRow({ line, onChange, onRemove, onSwap, onEditPrep, units: u
       onLayout={(e) => !lifted && setNarrow(e.nativeEvent.layout.width < NARROW)}
       style={[styles.wrap, { borderBottomColor: ds.c.line }, lifted ? [styles.lifted, { backgroundColor: ds.c.raised, borderColor: combineWith ? ds.accentText : ds.c.lineStrong }] : null, dropTarget ? [styles.target, { borderColor: ds.accentText, backgroundColor: withAlpha(ds.accentText, 0.1) }] : null]}
     >
-      {lifted && combineWith ? <CombineTag pair={`${line.name} + ${combineWith}`} /> : null}
+      {lifted && combineWith ? <CombineTag pair={`${line.name} + ${combineWith}`} /> : lifted && moveTo ? <CombineTag title={`Move to ${moveTo}`} /> : null}
       <View style={styles.row}>
         {grip?.(<LineGrip name={line.name} onMove={onMove} />)}
         <IngredientThumb id={line.id} name={line.name} size={lifted ? 32 : 40} />

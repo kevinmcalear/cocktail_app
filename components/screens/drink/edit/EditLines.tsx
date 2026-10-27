@@ -1,7 +1,9 @@
-import { StyleSheet, View } from 'react-native';
+import type { ReactNode } from 'react';
+import { Platform, StyleSheet, View } from 'react-native';
 
-import { Caption, Headline } from '@/components/ds';
-import { space } from '@/constants/tokens';
+import { Caption, Headline, useDs } from '@/components/ds';
+import { radius, space } from '@/constants/tokens';
+import { orderByPart, type DraftPart } from '@/lib/drinkParts';
 import { EMPTY_DRAFT, type WizardDraft } from '@/lib/drinkWizard';
 import type { IngredientAlias } from '@/lib/ingredientNames';
 import { fromLine, toLine, type EditLine, type SortableRecipeItem } from '@/lib/recipeItem';
@@ -31,6 +33,11 @@ interface EditLinesProps {
   note?: string | null;
   /** Bumped by the bottom bar's Line: the cursor goes to the search. */
   focus?: number;
+  /** A drink made in parts (drink-edit-parts): its parts, a part's heading, and Add a part under the last. Null is one part. */
+  parts?: DraftPart[] | null;
+  onParts?: (parts: DraftPart[]) => void;
+  partHead?: (part: number) => ReactNode;
+  footer?: ReactNode;
 }
 
 /**
@@ -40,15 +47,26 @@ interface EditLinesProps {
  * opens the House-made steps; a line made here saves the way New saves it
  * (hooks/specLineSave).
  */
-export function EditLines({ items, onChange, name, ingredients, aliases, coreIds, loading, backBar, bar, forDrink = true, title = 'Spec', aside, note, focus }: EditLinesProps) {
-  const draft: WizardDraft = { ...EMPTY_DRAFT, name, lines: items.map(toLine) };
-  // The step changes only its lines here; anything else it could set (a classic to start from) is New's.
-  const set = (change: Partial<WizardDraft>) => change.lines && onChange((change.lines as EditLine[]).map(fromLine));
+export function EditLines({ items, onChange, name, ingredients, aliases, coreIds, loading, backBar, bar, forDrink = true, title = 'Spec', aside, note, focus, parts, onParts, partHead, footer }: EditLinesProps) {
+  const ds = useDs();
+  const parted = parts && parts.length > 1 && partHead ? parts : null;
+  const draft: WizardDraft = { ...EMPTY_DRAFT, name, lines: items.map(toLine), parts: parted };
+  // The step changes only its lines here, and in parts which part a line is in; anything else it could set (a classic to start from) is New's. The lines stay in part order.
+  const set = (change: Partial<WizardDraft>) => {
+    if (change.parts && onParts) onParts(change.parts);
+    if (change.lines) onChange(orderByPart(change.parts ?? parted, (change.lines as EditLine[]).map(fromLine)));
+  };
   return (
     <View style={styles.section}>
       <View style={styles.head}>
         <Headline role="heading">{title}</Headline>
-        {aside ? <Caption tone="muted">{aside}</Caption> : null}
+        {parted ? (
+          <View style={[styles.pill, { backgroundColor: ds.c.raised }]}>
+            <Caption>{`${parted.length} parts`}</Caption>
+          </View>
+        ) : aside ? (
+          <Caption tone="muted">{aside}</Caption>
+        ) : null}
       </View>
       <IngredientsStep
         draft={draft}
@@ -64,7 +82,10 @@ export function EditLines({ items, onChange, name, ingredients, aliases, coreIds
         bar={bar}
         trail={[{ label: name }]}
         focus={focus}
+        partHead={parted ? partHead : undefined}
       />
+      {parted ? footer : null}
+      {parted ? <Caption tone="muted">{`Hold a line${Platform.OS === 'web' ? ' by its grip' : ''} and move it into another part. Over a line, it combines.`}</Caption> : null}
       {note ? <Caption tone="muted">{note}</Caption> : null}
     </View>
   );
@@ -73,4 +94,5 @@ export function EditLines({ items, onChange, name, ingredients, aliases, coreIds
 const styles = StyleSheet.create({
   section: { gap: space.sm },
   head: { flexDirection: 'row', alignItems: 'baseline', justifyContent: 'space-between', gap: space.md },
+  pill: { borderRadius: radius.pill, paddingHorizontal: space.sm + 2, paddingVertical: 3, alignSelf: 'center' },
 });

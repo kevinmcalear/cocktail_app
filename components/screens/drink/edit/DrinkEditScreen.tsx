@@ -22,7 +22,7 @@ import { SketchColourSheet } from '../SketchColour';
 import { useDeleteDrink } from '../useDeleteDrink';
 import { ShotList } from '../ShotList';
 import { AccessSheet, EditBottomBar, EditMoreMenu, GrowingField, PhotosSheet, type DrinkEditor, type MoreChoice } from './EditParts';
-import { EditLines } from './EditLines';
+import { DrinkSpec } from './DrinkSpec';
 import { EditToolbar } from './EditToolbar';
 import { FitGlassEdit, useDraftGlassFill } from './FitGlassEdit';
 import { MadeList } from './MadeList';
@@ -156,9 +156,8 @@ export function EditPage({ editor, id, onExit, openFit }: { editor: DrinkEditor;
   const servicePhotos = cocktail && id ? <ShotList itemId={id} barId={cocktail.bar_id ?? null} links={cocktail.item_images as ItemImageLink[] | undefined} /> : null;
   const body = (
     <>
-      <EditLines
-        items={editor.recipeItems}
-        onChange={editor.setRecipeItems}
+      <DrinkSpec
+        editor={editor}
         name={editor.name || cocktail?.name || 'This drink'}
         ingredients={ingredients}
         aliases={editor.dropdowns?.ingredientAliases}
