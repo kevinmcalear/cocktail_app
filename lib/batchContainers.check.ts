@@ -53,12 +53,17 @@ assert.equal(cream.total, '360 ml');
 assert.equal(cream.pour, '30 ml');
 assert.equal(cream.whipped, true);
 assert.deepEqual(aheadParts(lines, makingParts(fresh, methods)!, 12, 'ml'), [], 'a fresh part has no container');
-// A count (a twist) stays per serve, out of the container.
-const twist = specLines([ing('w', 'Gin', 50, 1), { ...ing('t', 'Lemon twist', 1, 2), unit: 'twist' }, ing('s', 'Soda water', 60, 2)] as never);
-const [top] = aheadParts(twist, makingParts([{ name: 'Base' }, { name: 'Top', join: 'pour' }], [])!, 4, 'ml');
-assert.deepEqual(top.rows.map((r) => r.ingredient), ['Soda water']);
-assert.deepEqual(top.perServe.map((r) => r.ingredient), ['Lemon twist']);
+// A count (a twist), the bubbles and a line the bar keeps at the station stay per serve, out of the container.
+const twist = specLines([ing('w', 'Gin', 50, 1), { ...ing('t', 'Lemon twist', 1, 2), unit: 'twist' }, ing('s', 'Soda water', 60, 2), ing('h', 'Honey syrup', 15, 2), ing('c', 'Hot water', 30, 2, { at_service: true })] as never);
+const topParts = makingParts([{ name: 'Base' }, { name: 'Top', join: 'pour' }], [])!;
+const [top] = aheadParts(twist, topParts, 4, 'ml');
+assert.deepEqual(top.rows.map((r) => r.ingredient), ['Honey syrup']);
+assert.deepEqual(top.perServe.map((r) => r.ingredient), ['Lemon twist', 'Soda water', 'Hot water']);
 assert.equal(top.whipped, false);
+// A part with nothing to keep (a garnish, the bubbles) gets no container.
+assert.deepEqual(aheadParts(specLines([ing('w', 'Gin', 50, 1), { ...ing('t', 'Lemon twist', 1, 2), unit: 'twist' }] as never), topParts, 4, 'ml'), []);
+// The pour is for the serves as scaled (held to 1 to 6,969).
+assert.equal(aheadParts(lines, parts, 0, 'ml')[0].pour, '30 ml');
 
 // Containers: ours, the smallest that holds it; whipped goes in a tub; too big takes several.
 assert.equal(containerText(pickContainer(360, [], true).count, pickContainer(360, [], true).container), '1 × 500 ml deli container');
@@ -73,6 +78,8 @@ assert.deepEqual(ownContainer('Quart deli'), { ml: 946, name: 'Quart deli' });
 assert.deepEqual(ownContainer('250ml jar'), { ml: 250, name: '250ml jar' });
 assert.equal(ownContainer('Jigger'), null);
 assert.equal(ownContainer('Deli container'), null, 'no size, no use');
+assert.equal(ownContainer('Boston shaker pint'), null, 'a shaker is not where a part is kept');
+assert.equal(ownContainer('Pint glass'), null);
 const own = [ownContainer('Quart deli')!, ownContainer('250ml jar')!];
 assert.equal(pickContainer(200, own, false).container.name, '250ml jar');
 assert.equal(pickContainer(360, own, true).container.name, 'Quart deli');

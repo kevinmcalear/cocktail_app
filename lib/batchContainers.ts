@@ -6,7 +6,7 @@
  * serves, with its own size and use-by. At the station each serve pours
  * from each in order. Pure; components/screens/batch renders it.
  */
-import { buildBatch, formatVolume, guessLeaveOut, type BatchLine, type VolumeUnit } from './batch';
+import { buildBatch, clampServes, formatVolume, guessLeaveOut, type BatchLine, type LeaveOut, type VolumeUnit } from './batch';
 import { expiryLine } from './batchPrep';
 import { byPart, joinStep, type MakingPart } from './drinkParts';
 import type { SpecLine } from './spec';
@@ -24,7 +24,9 @@ export const CONTAINERS: readonly Container[] = [
   { ml: 750, name: '750 ml bottle' },
 ];
 
-const CONTAINER_WORD = /bottle|deli|container|jar|tub|cambro|carafe|jug|squeeze|quart|pint/i;
+const CONTAINER_WORD = /bottle|deli|container|jar|tub|cambro|carafe|jug|squeeze/i;
+// Bar tools that hold liquid but aren't where a part is kept.
+const NOT_STORAGE = /shaker|tin|mixing|jigger|glass|pitcher|dasher|dropper|atomi[sz]er/i;
 const VOLUME = /(\d+(?:[.,]\d+)?)\s*(ml|millilit(?:re|er)s?|l|lit(?:re|er)s?|oz|fl\.? ?oz|qt|quarts?|pints?|pt)\b/i;
 const UNIT_ML: [RegExp, number][] = [[/^m/i, 1], [/^(l|lit)/i, 1000], [/oz$/i, 29.5735], [/^(qt|quart)/i, 946], [/^(pt|pint)/i, 473]];
 
@@ -36,7 +38,7 @@ const UNIT_ML: [RegExp, number][] = [[/^m/i, 1], [/^(l|lit)/i, 1000], [/oz$/i, 2
  */
 export function ownContainer(name: string): Container | null {
   const said = name.trim();
-  if (!CONTAINER_WORD.test(said)) return null;
+  if (!CONTAINER_WORD.test(said) || NOT_STORAGE.test(said)) return null;
   const m = VOLUME.exec(said);
   const word = /\b(quart|pint)\b/i.exec(said)?.[1];
   const per = m ? UNIT_ML.find(([re]) => re.test(m[2]))?.[1] : word ? (word.toLowerCase() === 'quart' ? 946 : 473) : undefined;
@@ -106,7 +108,7 @@ export interface AheadPart {
   part: MakingPart;
   /** In the container, scaled to the serves. */
   rows: BatchLine[];
-  /** Counted or unmeasured lines (a twist, a pinch), added at the station for each serve. */
+  /** Added at the station for each serve: a count (a twist), bubbles, or a line the bar keeps at the station. */
   perServe: BatchLine[];
   /** The part's own lines, for its use-by. */
   lines: SpecLine[];
@@ -119,24 +121,35 @@ export interface AheadPart {
 /** Made ahead, it has its own container; made fresh, it's made for each serve as before (#964). The first part is the bottle. */
 export const madeAhead = (p: MakingPart) => p.n > 1 && !p.fresh;
 
-/** Each later part made ahead, scaled to `serves`. Every measured line goes in its container: the cream is whipped ahead too. */
+/** What never goes in a part's container: a garnish, the bubbles, and what the bar keeps at the station. Cream and juice do: they're made ahead too. */
+const AT_STATION: readonly (LeaveOut | null)[] = ['garnish', 'bubbles', 'station'];
+
+/**
+ * Each later part made ahead, scaled to `serves`: every measured line goes in
+ * its container (the cream is whipped ahead), but bubbles, garnishes and lines
+ * the bar set to the station stay per serve. A part with nothing to keep has
+ * no container and reads as made fresh.
+ */
 export function aheadParts(lines: readonly SpecLine[], parts: readonly MakingPart[], serves: number, unit: VolumeUnit): AheadPart[] {
   const grouped = byPart(lines, parts.length);
-  return parts.filter(madeAhead).map((part) => {
+  const n = clampServes(serves);
+  return parts.filter(madeAhead).flatMap((part) => {
     const own = grouped[part.n - 1];
-    const scaled = buildBatch(own, [], serves, { unit }).lines;
-    const rows = scaled.filter((l) => l.ml !== null && l.leaveOut !== 'garnish');
+    const station = new Set(own.filter((l) => l.atService === true).map((l) => l.key));
+    const scaled = buildBatch(own, [], n, { unit }).lines;
+    const rows = scaled.filter((l) => l.ml !== null && !AT_STATION.includes(l.leaveOut) && !station.has(l.key));
+    if (!rows.length) return [];
     const totalMl = rows.reduce((sum, l) => sum + l.ml!, 0);
-    return {
+    return [{
       part,
       rows,
       perServe: scaled.filter((l) => !rows.includes(l)),
       lines: own,
       totalMl,
       total: formatVolume(totalMl, unit),
-      pour: formatVolume(totalMl / Math.max(1, serves), unit),
+      pour: formatVolume(totalMl / n, unit),
       whipped: part.methods.some((m) => /whip/i.test(m)),
-    };
+    }];
   });
 }
 

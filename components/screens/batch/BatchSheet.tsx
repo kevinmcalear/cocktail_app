@@ -172,7 +172,7 @@ function BatchBody({ name, lines: all, methodNames: allMethods, lockedUntil, ini
   const notes = new Map(all.map((l) => [l.key, l.note]));
   const onFresh = canEdit && itemId ? (part: number, fresh: boolean) => setFresh.mutate({ n: part, fresh }) : undefined;
   const aheadText = ahead.map((a) => `${a.part.name}, made ahead for ${n}: ${a.rows.map((r) => `${r.amount} ${r.ingredient}`).join(', ')}.`);
-  const text = [`${name}, ${n} serves`, ...bottled.map((l) => `${l.amount} ${l.ingredient}`), ...(batch.water ? [`${batch.water.amount} water`] : []), `Pour ${batch.pour} each.`, ...aheadText, ...(parts ? freshPartsText(all, parts, unit) : [])].join('\n');
+  const text = [`${name}, ${n} serves`, ...bottled.map((l) => `${l.amount} ${l.ingredient}`), ...(batch.water ? [`${batch.water.amount} water`] : []), `Pour ${batch.pour} each.`, ...aheadText, ...(parts ? freshPartsText(all, parts, unit, ahead) : [])].join('\n');
   const preps = [
     { name: `${name} batch`, lines: batchPrepLines(lines, bottled.map((l) => l.key), n), yieldMl: batch.totalMl, shelfHours: keepsOne },
     ...ahead.map((a) => ({ name: `${name}, ${a.part.name.toLowerCase()}`, lines: batchPrepLines(a.lines, a.rows.map((r) => r.key), n), yieldMl: a.totalMl, shelfHours: keepsOf(a) })),

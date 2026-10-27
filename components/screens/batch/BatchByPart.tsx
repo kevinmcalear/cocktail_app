@@ -3,7 +3,7 @@ import { StyleSheet, View } from 'react-native';
 
 import { Body, Button, Caption } from '@/components/ds';
 import { buildBatch, type Batch, type BatchLine, type VolumeUnit } from '@/lib/batch';
-import { fromContainer, inOrderSteps, madeAhead, partWord, type AheadPart, type OrderPart } from '@/lib/batchContainers';
+import { fromContainer, inOrderSteps, partWord, type AheadPart, type OrderPart } from '@/lib/batchContainers';
 import { byPart, joinStep, type MakingPart } from '@/lib/drinkParts';
 import type { SpecLine } from '@/lib/spec';
 
@@ -14,15 +14,15 @@ import { BatchRow } from './BatchParts';
 const AMOUNT_W = 88;
 const lowerFirst = (s: string) => s.charAt(0).toLowerCase() + s.slice(1);
 
-/** Each part after the first made fresh for each serve: its lines for one serve. A part made ahead has its own container instead (lib/batchContainers.ts). */
-export function freshParts(lines: SpecLine[], parts: readonly MakingPart[], unit: VolumeUnit): { part: MakingPart; rows: BatchLine[] }[] {
+/** Each part after the first made fresh for each serve: its lines for one serve. A part with a container (`ahead`, lib/batchContainers.ts) isn't. */
+export function freshParts(lines: SpecLine[], parts: readonly MakingPart[], unit: VolumeUnit, ahead: readonly AheadPart[] = []): { part: MakingPart; rows: BatchLine[] }[] {
   const grouped = byPart(lines, parts.length);
-  return parts.slice(1).filter((p) => !madeAhead(p)).map((part) => ({ part, rows: buildBatch(grouped[part.n - 1], [], 1, { unit }).lines }));
+  return parts.slice(1).filter((p) => !ahead.some((a) => a.part.n === p.n)).map((part) => ({ part, rows: buildBatch(grouped[part.n - 1], [], 1, { unit }).lines }));
 }
 
 /** The later parts for the batch's share text: "The cream, fresh for each serve: 30 ml Cream, then float it on top." */
-export function freshPartsText(lines: SpecLine[], parts: readonly MakingPart[], unit: VolumeUnit): string[] {
-  return freshParts(lines, parts, unit).map(({ part, rows }) => {
+export function freshPartsText(lines: SpecLine[], parts: readonly MakingPart[], unit: VolumeUnit, ahead: readonly AheadPart[] = []): string[] {
+  return freshParts(lines, parts, unit, ahead).map(({ part, rows }) => {
     const join = joinStep(part.join);
     const what = rows.map((r) => `${r.amount} ${r.ingredient}`.trim()).join(', ');
     return `${part.name}, fresh for each serve${what ? `: ${what}` : ''}${join ? `, then ${lowerFirst(join)}` : ''}.`;
@@ -54,7 +54,7 @@ export function StationParts({ name, pour, first, added, parts, ahead, lines, un
   /** Someone who can edit the drink sets a part made fresh or ahead. */
   onFresh?: (n: number, fresh: boolean) => void;
 }) {
-  const fresh = freshParts(lines, parts, unit);
+  const fresh = freshParts(lines, parts, unit, ahead);
   const order: OrderPart[] = [{ part: parts[0], pour, lines: added }];
   const later = parts.slice(1).map((part) => {
     const a = ahead.find((x) => x.part.n === part.n);
@@ -77,7 +77,7 @@ export function StationParts({ name, pour, first, added, parts, ahead, lines, un
     return (
       <View key={part.n}>
         <PartHead n={part.n} name={part.name} how={part.how ? `Made fresh for each serve: ${lowerFirst(part.how)}` : 'Made fresh for each serve'} />
-        {onFresh ? <FreshChoice name={part.name} fresh onChange={(v) => onFresh(part.n, v)} /> : null}
+        {onFresh && part.fresh ? <FreshChoice name={part.name} fresh onChange={(v) => onFresh(part.n, v)} /> : null}
         {rows.map((l) => (
           <BatchRow key={l.key} ingredient={l.ingredient} amount={l.perServe} />
         ))}

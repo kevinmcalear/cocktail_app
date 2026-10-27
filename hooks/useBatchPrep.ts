@@ -36,17 +36,24 @@ export function useSaveBatchAsPrep(barId: string | null) {
   return useMutation({
     mutationFn: async (preps: BatchPrep[]) => {
       const ids: string[] = [];
-      // One at a time, in order: a failure stops there, and the ones before it stay saved.
+      // One at a time, in order. A failure stops there; the ones before it stay
+      // saved, and the message names them, so trying again doesn't make them twice.
       for (const { name, lines, yieldMl, shelfHours } of preps) {
-        const { id } = await create.mutateAsync({
-          draft: { ...EMPTY_INGREDIENT, name, role: 'prep', lines: lines.map((l) => newLine({ id: l.id, name: l.name }, l.unit, l.amount)) },
-          barId,
-        });
-        await savePrepCard(id, {
-          prep: { yield_amount: Math.round(yieldMl), yield_unit: 'ml', shelf_life_hours: shelfHours, lead_time_minutes: null, lead_time_note: null, storage: null, actions: [] },
-          steps: [],
-        });
-        ids.push(id);
+        try {
+          const { id } = await create.mutateAsync({
+            draft: { ...EMPTY_INGREDIENT, name, role: 'prep', lines: lines.map((l) => newLine({ id: l.id, name: l.name }, l.unit, l.amount)) },
+            barId,
+          });
+          await savePrepCard(id, {
+            prep: { yield_amount: Math.round(yieldMl), yield_unit: 'ml', shelf_life_hours: shelfHours, lead_time_minutes: null, lead_time_note: null, storage: null, actions: [] },
+            steps: [],
+          });
+          ids.push(id);
+        } catch (e) {
+          if (!ids.length) throw e;
+          const saved = preps.slice(0, ids.length).map((p) => p.name).join(', ');
+          throw new Error(`Saved ${saved}, but not ${name}. Check your connection, then add ${name} as house-made.`);
+        }
       }
       return ids;
     },

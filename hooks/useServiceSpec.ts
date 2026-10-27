@@ -50,7 +50,9 @@ export function useSetPartFresh(itemId: string) {
       if (saveError) throw saveError;
       if (!saved?.length) throw new Error("You can't change how this drink is made.");
     },
-    onMutate: ({ n, fresh }) => {
+    onMutate: async ({ n, fresh }) => {
+      // A fetch already on its way would land after this and flip the part back.
+      await queryClient.cancelQueries({ queryKey: ['cocktail', itemId] });
       queryClient.setQueriesData<CachedDrink | null>({ queryKey: ['cocktail', itemId] }, (old) =>
         old?.madeInParts ? { ...old, madeInParts: setPartFresh(old.madeInParts, n, fresh) } : old
       );

@@ -32,8 +32,10 @@ export function useContainers(barId: string | null) {
   });
   const [picked, setPicked] = useState<Record<number, Container>>({});
   const [kept, setKept] = useState<Record<number, number | null>>({});
+  // One chip a name: the venue's own first, then ours it hasn't named the same.
+  const options = [...own, ...CONTAINERS].filter((c, i, all) => all.findIndex((o) => o.name.toLowerCase() === c.name.toLowerCase()) === i);
   return {
-    options: [...own, ...CONTAINERS],
+    options,
     containerOf: (a: AheadPart) => {
       const c = picked[a.part.n];
       return c ? { count: Math.max(1, Math.ceil(a.totalMl / c.ml)), container: c } : pickContainer(a.totalMl, own, a.whipped);
@@ -100,7 +102,8 @@ function Changeable<T>({ text, label, options, value, onChange, show }: { text: 
 
 /** A part's use-by, changeable: close tonight, 1 day, ... 4 weeks. */
 export function UseBy({ hours, onChange }: { hours: number | null; onChange: (h: number) => void }) {
-  const choices = hours && !USE_BY_HOURS.includes(hours) ? [...USE_BY_HOURS, hours].sort((a, b) => a - b) : USE_BY_HOURS;
+  // A shelf life that reads as one of ours ("1 day" for 30 hours) takes its place, so no two chips say the same.
+  const choices = hours ? [...USE_BY_HOURS.filter((h) => keepsLabel(h) !== keepsLabel(hours)), hours].sort((a, b) => a - b) : USE_BY_HOURS;
   return <Changeable text={expiresText(hours, new Date()) ?? 'no use-by'} label="Use by" options={choices} value={hours} onChange={onChange} show={keepsLabel} />;
 }
 
