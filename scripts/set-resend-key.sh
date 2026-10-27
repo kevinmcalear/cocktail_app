@@ -25,7 +25,9 @@ ref=$(<"$ref_file")
 
 open "https://resend.com/api-keys"
 echo "Resend's API keys page is open. Create a key with Sending access for babyvom.it, copy it,"
-read -r -p "then press Return here. " _
+# Silent, so a key pasted here by mistake isn't shown on screen or kept in the scrollback.
+read -rs -p "then press Return here (don't paste it, it's read from the clipboard). " _
+echo
 
 key=$(pbpaste | tr -d '[:space:]')
 if [[ ! $key =~ ^re_[A-Za-z0-9_]+$ ]]; then
