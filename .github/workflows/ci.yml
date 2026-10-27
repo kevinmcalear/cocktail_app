@@ -5,9 +5,12 @@ on:
   push:
     branches: [main]
 
+# A PR's newer push replaces its older run. Runs on main always finish: on
+# 27 Oct three merges in half an hour cancelled every main run before its
+# Supabase images job could save the cache that PRs restore.
 concurrency:
   group: ci-${{ github.ref }}
-  cancel-in-progress: true
+  cancel-in-progress: ${{ github.ref != 'refs/heads/main' }}
 
 permissions:
   contents: read
