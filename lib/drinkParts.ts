@@ -83,3 +83,35 @@ export function partSentence(methods: readonly string[], lines: readonly string[
   const then = join === 'float' ? ', then float it on top' : join === 'pour' ? ', then pour it in' : '';
   return `${what}${lines.length ? `: ${lines.join(', ')}` : ''}${then}.`;
 }
+
+// --- Making it, part by part (board made-parts-making): the service view, the batch sheet, tick as I go ---
+
+/** A part as the screens a drink is made from head it: its number, name, method names, how it's made in a phrase, and its join. */
+export type MakingPart = { n: number; name: string; methods: string[]; how: string | null; join: PartJoin | null };
+
+/** Which part a line or method is in, 1 to `count`: none is the first, and one past the last (never saved) is the last. */
+export const partOf = (part: number | null | undefined, count: number): number => Math.min(Math.max(part ?? 1, 1), count);
+
+/** The drink's parts with each one's methods ("Build in the glass"), or null for a drink in one part. */
+export function makingParts(
+  parts: readonly StoredPart[] | null | undefined,
+  methods: readonly { part?: number | null; sort_order?: number | null; method?: { name?: string | null } | null }[] | null | undefined
+): MakingPart[] | null {
+  if (!parts || parts.length < 2) return null;
+  const sorted = [...(methods ?? [])].sort((a, b) => (a.sort_order ?? 0) - (b.sort_order ?? 0));
+  return parts.map((p, i) => {
+    const names = sorted.flatMap((m) => (partOf(m.part, parts.length) === i + 1 && m.method?.name ? [m.method.name] : []));
+    // With no lines and no join, a part's sentence is just the phrase and its full stop.
+    return { n: i + 1, name: p.name, methods: names, how: names.length ? partSentence(names, [], null).slice(0, -1) : null, join: i > 0 ? (p.join ?? null) : null };
+  });
+}
+
+/** Lines in the part they're made in: one list per part, in order. */
+export function byPart<T extends { part?: number | null }>(lines: readonly T[], count: number): T[][] {
+  return Array.from({ length: count }, (_, i) => lines.filter((l) => partOf(l.part, count) === i + 1));
+}
+
+/** The join as the last step of its part: "Float it on top", "Pour it in". */
+export function joinStep(join: PartJoin | null | undefined): string | null {
+  return join === 'float' ? 'Float it on top' : join === 'pour' ? 'Pour it in' : null;
+}

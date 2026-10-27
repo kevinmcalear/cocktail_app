@@ -22,6 +22,7 @@ import { useSpecLock, type SpecLock } from '@/hooks/useSpecLock';
 import { useTeamRole } from '@/hooks/useTeamRole';
 import { useItemVersions } from '@/hooks/useVersions';
 import { useEffectiveRole } from '@/hooks/useViewAs';
+import { makingParts } from '@/lib/drinkParts';
 import { heroPictures } from '@/lib/drinkPhotos';
 import { glassOver, orderedPictures, type ItemImageLink } from '@/lib/itemImages';
 import { drinkUrl, shareOrCopy } from '@/lib/shareLink';
@@ -264,6 +265,7 @@ function DrinkPage({ item, inStudyPile, onToggleStudyPile, canEdit, adminFix = f
           specLabel={item.bar_id ? `House spec${version ? ` · version ${version}` : ''}` : method === 'stirred' ? 'For the freezer' : item.name}
           barId={staff ? item.bar_id : null}
           canPrep={caps.includes('house_made')}
+          parts={makingParts(item.madeInParts, item.item_methods)}
         />
       ) : null}
       {strength ? (
