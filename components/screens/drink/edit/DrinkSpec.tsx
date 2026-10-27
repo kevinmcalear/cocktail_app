@@ -37,7 +37,8 @@ export function DrinkSpec({ editor, ...lines }: LinesProps & { editor: DrinkEdit
   const names = useRef<(Field | null)[]>([]);
   const ed = 'setParts' in editor ? editor : null;
   const parts = ed?.parts && ed.parts.length > 1 ? ed.parts : null;
-  if (!ed || !parts) return <EditLines {...lines} items={editor.recipeItems} onChange={editor.setRecipeItems} />;
+  // The same tree either way, so turning parts on or off keeps the list (and what's open in it) as it is.
+  if (!ed || !parts) return <><EditLines {...lines} items={editor.recipeItems} onChange={editor.setRecipeItems} /></>;
 
   const label = (at: number) => parts[at]?.name.trim() || `Part ${at + 1}`;
   const change = (at: number, patch: Partial<DraftPart>) => ed.setParts(parts.map((p, i) => (i === at ? { ...p, ...patch } : p)));
@@ -79,7 +80,7 @@ export function DrinkSpec({ editor, ...lines }: LinesProps & { editor: DrinkEdit
           part={{
             title: `How ${label(sheet.at)} is made`,
             ids: open.methods.flatMap((m) => (m.id ? [m.id] : [])),
-            toggle: (id, name) => change(sheet.at, { methods: open.methods.some((m) => m.id === id) ? open.methods.filter((m) => m.id !== id) : [...open.methods, { id, name }] }),
+            toggle: (id, name) => ed.togglePartMethod(sheet.at, id, name),
           }}
         />
       ) : null}
@@ -91,6 +92,7 @@ export function DrinkSpec({ editor, ...lines }: LinesProps & { editor: DrinkEdit
           label={label}
           lines={linesIn(sheet.at)}
           onClose={() => setSheet({ ...sheet, shown: false })}
+          onGone={() => setSheet(null)}
           onRename={() => names.current[sheet.at]?.focus()}
           onMove={(by) => ed.setParts(movePart(parts, sheet.at, by))}
           onRemove={() => ed.setParts(removePart(parts, sheet.at))}
@@ -173,12 +175,13 @@ function PartHead({ n, part, inputRef, onChange, onMethod, onOptions }: { n: num
  * go to the part before, and Undo is in the toolbar), and the Made in parts
  * switch. Each runs once the sheet has gone, so it never changes under it.
  */
-function PartSheet({ visible, n, count, label, lines, onClose, onRename, onMove, onRemove, onOff }: { visible: boolean; n: number; count: number; label: (at: number) => string; lines: string[]; onClose: () => void; onRename: () => void; onMove: (by: -1 | 1) => void; onRemove: () => void; onOff: () => void }) {
+function PartSheet({ visible, n, count, label, lines, onClose, onGone, onRename, onMove, onRemove, onOff }: { visible: boolean; n: number; count: number; label: (at: number) => string; lines: string[]; onClose: () => void; onGone: () => void; onRename: () => void; onMove: (by: -1 | 1) => void; onRemove: () => void; onOff: () => void }) {
   const then = useRef<(() => void) | null>(null);
   const run = () => {
     const next = then.current;
     then.current = null;
     next?.();
+    onGone();
   };
   const one = lines.length === 1;
   const moves = lines.length ? `${one ? 'Its line' : 'Its lines'}, ${lines.join(', ')}, ${one ? 'moves' : 'move'} to ${label(n > 1 ? n - 2 : 1)}. ` : '';

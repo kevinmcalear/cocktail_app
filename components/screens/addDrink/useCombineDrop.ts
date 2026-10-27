@@ -86,8 +86,6 @@ export function useCombineDrop({ draft, set, enabled, onCombined, parted }: Step
     entries,
     onMove,
     onDrop,
-    /** The row a line is in. */
-    rowOf: (line: number) => entries.findIndex((e) => 'line' in e && e.line === line),
     /** The arrow keys and a screen reader's actions: a line one row up or down, into the next part past its heading. */
     step: (row: number, by: -1 | 1) => place(row, row + by),
     height: (e: PartEntry, h: number) => void (heights.current[idOf(e)] = h),
