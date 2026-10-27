@@ -8,6 +8,7 @@ import { Alert, Platform } from "react-native";
 import type { ImageItem } from "@/components/cocktail/SortableImageList";
 import type { SortableRecipeItem } from '@/lib/recipeItem';
 import { useDrafts } from "@/hooks/useDrafts";
+import { saveItemNotes } from "@/hooks/useItemNotes";
 import { dropdownKeys, useDropdowns } from "@/hooks/useDropdowns";
 import { recentEntry, useTrackRecent } from "@/hooks/useTrackRecent";
 import { saveDrinkSpec } from "@/hooks/useVersions";
@@ -426,7 +427,6 @@ export function useCocktailDraftEditor({
                     name: capitalize(name),
                     description,
                     origin: capitalize(origin) || null,
-                    notes: notes || null,
                     glassware_id: glasswareId,
                     family_id: familyId,
                     ice_id: iceId,
@@ -470,6 +470,7 @@ export function useCocktailDraftEditor({
                     methodIds,
                     null
                 );
+                if (notes.trim()) await saveItemNotes(cocktailId, notes);
             } catch (e) {
                 await supabase.from("items").delete().eq("id", cocktailId);
                 throw e;

@@ -12,6 +12,9 @@ assert.deepEqual(
   ['a.jpg', 'b.jpg', 'sketch.png']
 );
 assert.equal(heroPicture([sketch, photoB])?.url, 'b.jpg');
+// The photo replaces the drawing (items.show_sketch false, E26); with no photo the drawing comes back.
+assert.deepEqual(orderedPictures([sketch, photoB, photoA], false).map((p) => p.url), ['a.jpg', 'b.jpg']);
+assert.deepEqual(orderedPictures([sketch], false).map((p) => p.url), ['sketch.png']);
 assert.equal(heroPicture([sketch])?.isSketch, true);
 assert.equal(heroPicture([]), null);
 assert.equal(heroPicture(undefined), null);

@@ -377,7 +377,7 @@ describe('the raw items table', () => {
   test('an editor can still update an item above their own visibility level', async () => {
     const { data, error } = await users.creator.client
       .from('items')
-      .update({ notes: `edited ${run}` })
+      .update({ description: `edited ${run}` })
       .eq('id', ids.adminOnly)
       .select('id');
     assert.ifError(error);

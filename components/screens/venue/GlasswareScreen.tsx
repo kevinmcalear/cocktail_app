@@ -6,6 +6,7 @@ import { GlassSheet } from '@/components/screens/kit/GlassSheet';
 import { DrinksDrawnIn, drawnLine, GlassPhoto, RedrawLinks, SavedNote, ShareGlass, tracedFacts } from '@/components/screens/kit/draw/TracedGlass';
 import { KitItemPage } from '@/components/screens/kit/KitItemPage';
 import { KitList } from '@/components/screens/kit/KitList';
+import { washLineValue, WashLineSheet } from '@/components/screens/kit/WashLineSheet';
 import { KitPage, useCloseKitItem, useJustDrawn, useOpenDrawnGlass, useOpenKitItem } from '@/components/screens/kit/KitPage';
 import { useActiveVenue } from '@/hooks/useActiveVenue';
 import { useBarGlassware, useBarPageId, useDeleteBarGlass, useSaveBarGlass, type BarGlass } from '@/hooks/useBarGlassware';
@@ -133,6 +134,7 @@ function GlassPage({ barId, pageId, glass, others, canEdit, venueName, justDrawn
   const save = useSaveBarGlass(barId, pageId);
   const remove = useDeleteBarGlass(barId);
   const change = (at: 0 | 1 | 2) => (canEdit ? () => onChange(at) : undefined);
+  const [washOpen, setWashOpen] = useState(false);
   const size = (glass.model && glassModelSize(glass.model)) ?? glassCapacity(glass, items, barId);
   const sameType = others.filter((g) => g.glass === glass.glass);
   const type = GLASS_TYPE_LABEL[glass.glass];
@@ -155,6 +157,7 @@ function GlassPage({ barId, pageId, glass, others, canEdit, venueName, justDrawn
         ...tracedFacts(glass, canEdit ? () => onChange(0, 'size') : undefined),
         { label: 'Where it comes from', value: source(glass) || 'Not said yet', onChange: change(1) },
         { label: 'How many', value: glass.count ? String(glass.count) : 'Not said yet', onChange: change(2) },
+        { label: 'Wash line', value: washLineValue(glass), onChange: canEdit ? () => setWashOpen(true) : undefined },
         ...(sameType.length > 1
           ? [
               {
@@ -178,6 +181,7 @@ function GlassPage({ barId, pageId, glass, others, canEdit, venueName, justDrawn
           {canEdit ? <RedrawLinks glass={glass} onRedraw={() => onChange(0, 'photo')} onFix={() => onChange(0, 'size')} /> : null}
         </>
       ) : null}
+      {washOpen ? <WashLineSheet barId={barId} glass={glass} name={glassName(glass)} onClose={() => setWashOpen(false)} /> : null}
     </KitItemPage>
   );
 }

@@ -230,8 +230,7 @@ function Wizard({ barId = null, menuSectionId, initialName, startFrom, firstRoun
             {serveCard ? <ServeGuessCard guess={guess} onUse={takeGuess} /> : null}
             <MethodStep
               options={methods}
-              selected={draft.methods}
-              onChange={(methods) => set({ methods })}
+              draft={draft} set={set}
               suggested={guess.method}
               why={serveCard ? null : guess.why}
               hint={<><MethodIceLine methods={draft.methods} value={draft.methodIce ?? null} options={ices} barIce={barIce} venueName={barId ? venueName : null} onChange={(methodIce) => set({ methodIce })} /><FoamerHint draft={draft} set={set} ingredients={ingredients} /></>}
@@ -268,7 +267,7 @@ function Wizard({ barId = null, menuSectionId, initialName, startFrom, firstRoun
       testID="add-drink"
       pageTitle="Add a drink"
       embedded={embedded}
-      band={(place) => <SketchHeader draft={drawn} step={step} onBack={back} barVariants={barVariants} barIce={barIceKinds} onTint={(tint) => set({ tint })} trail={trail} forMenu={menu} {...place} />}
+      band={(place) => <SketchHeader draft={drawn} step={step} onBack={back} barVariants={barVariants} barIce={barIceKinds} onTint={(tint) => set({ tint })} onKeepDrawing={(keepDrawing) => set({ keepDrawing })} trail={trail} forMenu={menu} {...place} />}
       stepKey={step}
       direction={direction}
       // Naming a new drink it's "New drink"; a kept draft picked up again goes by its name.

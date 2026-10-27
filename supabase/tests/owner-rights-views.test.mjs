@@ -40,7 +40,7 @@ const COLUMNS = {
   ],
   app_recipe_presentation: [
     'id', 'created_at', 'recipe_item_id', 'display_ingredient_id', 'amount', 'unit', 'preparation_notes', 'is_optional',
-    'parent_ingredient_id', 'ingredient_item_id', 'sort_order', 'at_service',
+    'parent_ingredient_id', 'ingredient_item_id', 'sort_order', 'at_service', 'part',
   ],
 };
 const OWNER_RIGHTS = Object.keys(COLUMNS);
