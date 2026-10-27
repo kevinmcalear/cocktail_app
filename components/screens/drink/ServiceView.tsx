@@ -119,7 +119,7 @@ function Service({ item, start, venueName }: { item: DatabaseItem; start: Servic
             ) : null}
             {!notes.garnish && !notes.handoff.length ? <Body tone="muted">No garnish or hand-off notes yet. Editors add them in Edit, under Service.</Body> : null}
             {parts && access.amounts && lines.length ? (
-              <Group title="AT THE STATION" tag={`Made in ${parts.length} parts`}>
+              <Group title="AT THE STATION" tag={[batched ? style : null, `Made in ${parts.length} parts`]}>
                 {serviceParts(lines, parts, batched).map((p) => (
                   <View key={p.n}>
                     <PartHead n={p.n} name={p.name} how={p.how} />
@@ -162,14 +162,22 @@ function Service({ item, start, venueName }: { item: DatabaseItem; start: Servic
   );
 }
 
-function Group({ title, tag, children }: { title: string; tag?: string | null; children: ReactNode }) {
+/** A section with its eyebrow and tags: a batched drink in parts shows both "Batched" and "Made in 2 parts" (Kevin, 27 Oct). */
+function Group({ title, tag, children }: { title: string; tag?: string | (string | null)[] | null; children: ReactNode }) {
+  const tags = (Array.isArray(tag) ? tag : [tag]).filter((t): t is string => !!t);
   return (
     <View style={styles.group}>
       <View style={styles.groupHead}>
         <Caption tone="muted" style={styles.eyebrow}>
           {title}
         </Caption>
-        {tag ? <Tag label={tag} /> : null}
+        {tags.length ? (
+          <View style={styles.tags}>
+            {tags.map((t) => (
+              <Tag key={t} label={t} />
+            ))}
+          </View>
+        ) : null}
       </View>
       {children}
     </View>
@@ -195,6 +203,7 @@ const styles = StyleSheet.create({
   body: { gap: space.lg, paddingTop: space.xl },
   group: { gap: space.xs },
   groupHead: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between' },
+  tags: { flexDirection: 'row', flexWrap: 'wrap', justifyContent: 'flex-end', gap: space.xs },
   eyebrow: { fontFamily: fontFamilies.mono, letterSpacing: 1.2 },
   step: { flexDirection: 'row', alignItems: 'center', gap: space.md, minHeight: layout.minTapTarget, borderBottomWidth: StyleSheet.hairlineWidth },
   bullet: { width: 6, height: 6, borderRadius: radius.pill },
