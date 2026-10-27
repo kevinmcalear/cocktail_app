@@ -9,6 +9,8 @@
 // the stack then runs with this project's pinned CLI, every upload fails with
 // a 500 from Postgres (42P10, "no unique or exclusion constraint matching the
 // ON CONFLICT specification") and the upload security tests fail.
+import pg from 'pg';
+
 import { supabaseJson } from './supabase-cli.mjs';
 
 /** True when a storage-api of this version ("1.61.10") needs bucketid_objname. */
@@ -25,11 +27,14 @@ export async function localStorageProblem(workdir = []) {
   if (!res.ok) return `The local storage service did not answer (${res.status}). Is it running?`;
   const version = (await res.text()).trim();
   if (!uploadNeedsObjnameIndex(version)) return null;
-  const rows = supabaseJson([
-    'db', 'query', '--db-url', status.DB_URL, '--output-format', 'json',
-    "select 1 from pg_indexes where schemaname = 'storage' and indexname = 'bucketid_objname'",
-  ]).rows;
-  if (rows.length) return null;
+  const db = new pg.Client({ connectionString: status.DB_URL });
+  await db.connect();
+  try {
+    const { rowCount } = await db.query("select 1 from pg_indexes where schemaname = 'storage' and indexname = 'bucketid_objname'");
+    if (rowCount) return null;
+  } finally {
+    await db.end();
+  }
   return [
     `The local storage service (${version}) needs the storage.bucketid_objname index, which a newer`,
     'Supabase CLI\'s storage migrations dropped. Every upload fails with 42P10 until it is back.',
