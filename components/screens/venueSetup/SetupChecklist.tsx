@@ -19,6 +19,7 @@ import { useVenueSetup } from '@/store/useVenueSetup';
 
 import { BrandsStep } from './BrandsStep';
 import { FromDrinksStep, fromDrinksCount } from './FromDrinksStep';
+import { StepFooter } from './GlassesStep';
 import { KitStep } from './KitStep';
 import { MenuStep } from './MenuStep';
 import { ChecklistRow, ClaimNote, FromDrinksRow, LookFirstNote } from './SetupChecklistParts';
@@ -76,7 +77,18 @@ export function SetupChecklist({ barId, name, footer }: { barId: string; name: s
   if (at === 'look') {
     return (
       <SetupChromeProvider value={{ ...chrome, ...setupCopy('look', name), title: `How ${name} looks`, mark: <LookFirstNote />, onBack: back }}>
-        <BrandSetup barId={barId} setup={{ footer: ({ save, saving, ok }) => <SetupFooter label="Done, on to your team" pending={saving} disabled={!ok} onPress={() => save(lookedAt)} /> }} />
+        <BrandSetup
+          barId={barId}
+          setup={{
+            // A phone walks the look one part at a time, as venue setup does (E34); Done comes on the last.
+            footer: ({ save, saving, ok, page }) =>
+              page?.next ? (
+                <StepFooter skip="Back" onSkip={page.at === 0 ? back : page.onBack} label={`Next: ${page.next}`} onPress={page.onNext} />
+              ) : (
+                <SetupFooter label="Done, on to your team" pending={saving} disabled={!ok} onPress={() => save(lookedAt)} />
+              ),
+          }}
+        />
       </SetupChromeProvider>
     );
   }
