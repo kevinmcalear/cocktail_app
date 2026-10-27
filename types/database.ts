@@ -7395,6 +7395,10 @@ export type Database = {
         Returns: undefined
       }
       save_pair_notes: { Args: { p_notes: Json }; Returns: number }
+      save_prep_spec: {
+        Args: { p_item: string; p_lines?: Json; p_prep: Json; p_steps: Json }
+        Returns: undefined
+      }
       save_spelling: {
         Args: { p_item_id: string; p_typed: string }
         Returns: boolean

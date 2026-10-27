@@ -22,6 +22,7 @@ jest.mock('@/lib/supabase', () => {
   };
   return {
     supabase: {
+      rpc: async () => ({ data: null, error: null }),
       from: (table: string) => ({
         ...chain(table, () => ({ data: null, error: null })),
         insert: () => chain(table, () => ({ data: null, error: null })),

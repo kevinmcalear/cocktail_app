@@ -66,23 +66,10 @@ export interface IceRecipeInput {
   card: PrepCardInput;
 }
 
-/**
- * Replace what an ice starts from (only when it changed), then its card and steps.
- * ponytail: separate writes like a house prep's savePrepCard, so a dropped
- * connection mid-save can leave part of it; one RPC (a migration) if that bites.
- */
+/** Replace what an ice starts from (only when it changed), its card and its steps, in one transaction. */
 export async function saveIceRecipe(iceId: string, { startsFrom, card }: IceRecipeInput) {
-  if (startsFrom !== undefined) await replaceStartsFrom(iceId, startsFrom);
-  await savePrepCard(iceId, card);
-}
-
-async function replaceStartsFrom(iceId: string, startsFrom: string | null) {
-  const gone = await supabase.from('recipes').delete().eq('recipe_item_id', iceId);
-  if (gone.error) throw gone.error;
-  if (startsFrom) {
-    const added = await supabase.from('recipes').insert({ recipe_item_id: iceId, ingredient_item_id: startsFrom, sort_order: 0 });
-    if (added.error) throw added.error;
-  }
+  const lines = startsFrom === undefined ? undefined : startsFrom ? [{ ingredient_item_id: startsFrom }] : [];
+  await savePrepCard(iceId, card, lines);
 }
 
 const EMPTY_PREP: PrepCardInput['prep'] = { yield_amount: null, yield_unit: null, shelf_life_hours: null, lead_time_minutes: null, lead_time_note: null, storage: null, actions: [] };
