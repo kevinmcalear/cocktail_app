@@ -1,8 +1,8 @@
 import * as Haptics from 'expo-haptics';
-import { useState, type ReactNode } from 'react';
+import { useEffect, useState, type ReactNode } from 'react';
 import { Platform, StyleSheet, View } from 'react-native';
 import { Gesture, GestureDetector } from 'react-native-gesture-handler';
-import Animated, { useAnimatedStyle, useSharedValue } from 'react-native-reanimated';
+import Animated, { useAnimatedStyle, useReducedMotion, useSharedValue, withSequence, withSpring, withTiming } from 'react-native-reanimated';
 import { scheduleOnRN } from 'react-native-worklets';
 
 import { PressableScale, useDs } from '@/components/ds';
@@ -13,6 +13,10 @@ import { layout, radius, space } from '@/constants/tokens';
 const HOLD_MS = Platform.OS === 'web' ? 0 : 200;
 /** Half a folded row's height: the card sits with its middle under the finger. */
 const HALF_CARD = 28;
+/** The held card's lean: a little at rest, up to MAX_LEAN degrees the way it moves (degrees per point a second). */
+const REST_LEAN = 1.2;
+const MAX_LEAN = 7;
+const LEAN_PER_SPEED = 0.03;
 
 /**
  * A row that can be dragged by its grip: it follows the finger, lifted
@@ -26,10 +30,20 @@ const HALF_CARD = 28;
  * its name), so the rows under it show. Its place keeps its height, the card
  * sits under the finger, and the drag is measured from the card's middle. On
  * a phone a hold anywhere on the row picks it up, not just the grip (Kevin, 27 Oct).
+ * The card leans the way it moves and settles when it stops, and lies `flat`
+ * once letting go would combine; no lean with Reduce Motion (drag options 2C).
+ *
+ * `shift`: while another row is held, how far this one slides aside to show
+ * where that one lands (drag options 3B); null when nothing is held, so it
+ * settles at once into its new place.
  */
-export function DragRow({ index, onDrop, onMove, onHeight, fold, children }: { index: number; onDrop: (from: number, dy: number) => void; onMove?: (from: number, dy: number) => void; onHeight: (h: number) => void; fold?: boolean; children: (grip: (node: ReactNode) => ReactNode, active: boolean) => ReactNode }) {
+export function DragRow({ index, onDrop, onMove, onHeight, fold, shift = null, flat, children }: { index: number; onDrop: (from: number, dy: number) => void; onMove?: (from: number, dy: number) => void; onHeight: (h: number) => void; fold?: boolean; shift?: number | null; flat?: boolean; children: (grip: (node: ReactNode) => ReactNode, active: boolean) => ReactNode }) {
   const y = useSharedValue(0);
   const lifted = useSharedValue(0);
+  const lean = useSharedValue(0);
+  const level = useSharedValue(false);
+  const reduce = useReducedMotion();
+  const sway = !!fold && !reduce;
   // Where the finger or mouse went down: on the web the pan counts from when it activates, after it has already moved (memory: cocktail-local-testing).
   const from = useSharedValue(0);
   // Where on the row it was held, and the row's height, for where the folded card sits.
@@ -38,6 +52,10 @@ export function DragRow({ index, onDrop, onMove, onHeight, fold, children }: { i
   const [active, setActive] = useState(false);
   const [height, setHeight] = useState(0);
   const whole = !!fold && Platform.OS !== 'web';
+  useEffect(() => {
+    level.set(!!flat);
+    if (flat) lean.set(withSpring(0));
+  }, [flat, level, lean]);
   const lift = () => {
     'worklet';
     return fold ? Math.min(Math.max(0, grab.get() - HALF_CARD), Math.max(0, rowHeight.get() - 2 * HALF_CARD)) : 0;
@@ -54,12 +72,15 @@ export function DragRow({ index, onDrop, onMove, onHeight, fold, children }: { i
       grab.set(e.y);
     })
     .onStart(() => {
-      lifted.set(1);
+      lifted.set(withTiming(1, { duration: 120 }));
+      if (sway) lean.set(withSpring(REST_LEAN));
       scheduleOnRN(setActive, true);
       if (whole) scheduleOnRN(Haptics.selectionAsync);
     })
     .onUpdate((e) => {
       y.set(e.absoluteY - from.get());
+      // Leans into the move, then back to its rest when the finger stops (no more updates come).
+      if (sway && !level.get()) lean.set(withSequence(withSpring(Math.max(-MAX_LEAN, Math.min(MAX_LEAN, REST_LEAN + e.velocityY * LEAN_PER_SPEED))), withSpring(REST_LEAN)));
       if (onMove) scheduleOnRN(onMove, index, moved(e.absoluteY));
     })
     .onEnd((e) => {
@@ -68,9 +89,18 @@ export function DragRow({ index, onDrop, onMove, onHeight, fold, children }: { i
     .onFinalize(() => {
       y.set(0);
       lifted.set(0);
+      lean.set(0);
       scheduleOnRN(setActive, false);
     });
-  const follow = useAnimatedStyle(() => ({ zIndex: lifted.get() ? 1 : 0, transform: [{ translateY: y.get() + (lifted.get() ? lift() : 0) }] }));
+  const follow = useAnimatedStyle(() => ({
+    zIndex: lifted.get() ? 1 : 0,
+    transform: [
+      { translateY: y.get() + (lifted.get() ? lift() : 0) },
+      { translateY: shift === null ? 0 : withTiming(shift, { duration: 200 }) },
+      { rotate: `${lean.get()}deg` },
+      { scale: fold ? 1 + 0.03 * lifted.get() : 1 },
+    ],
+  }));
   const row = (
     <Animated.View
       style={[follow, fold && active && height ? { height } : null]}

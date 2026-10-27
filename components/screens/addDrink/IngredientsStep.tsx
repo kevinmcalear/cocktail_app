@@ -6,7 +6,6 @@ import { radius, space } from '@/constants/tokens';
 import { useExpiring } from '@/hooks/useExpiring';
 import { linePrep, perDrinkLines } from '@/lib/batchLines';
 import { guessUnit, newLine, pickByName, typedUnit, type StepProps, type WizardLine, type WizardPick } from '@/lib/drinkWizard';
-import { dropIndex } from '@/lib/dropIndex';
 import { houseNudge, houseWord } from '@/lib/makeItHouse';
 import type { IngredientAlias } from '@/lib/ingredientNames';
 import type { TypedPour } from '@/lib/paste';
@@ -154,9 +153,12 @@ export function IngredientsStep({ draft, set, ingredients, loading, aliases = []
     set({ lines });
   };
   const rowHeights = () => draft.lines.map((l) => heights.current[l.key] ?? 0);
-  // Held over another line for the dwell, the two combine into a house prep and its steps open; otherwise it lands where it's let go.
+  // The others slide aside to show where a held line lands; held over another for the dwell, the two combine into a house prep and its steps open.
   const combine = useCombineDrop({ draft, set, enabled: forDrink, heights: rowHeights, onCombined: prep.edit });
-  const drop = (from: number, dy: number) => combine.onDrop(from) || move(from, dropIndex(from, dy, rowHeights()));
+  const drop = (from: number, dy: number) => {
+    const to = combine.onDrop(from, dy);
+    if (to !== null) move(from, to);
+  };
   // The taste and what goes with it read one drink's own lines, not the batch.
   const poured = perDrinkLines(draft.lines);
   const search = { ingredients, aliases, coreIds, loading, shelf, backBar, brands: true };
@@ -171,7 +173,7 @@ export function IngredientsStep({ draft, set, ingredients, loading, aliases = []
       {draft.lines.length && !searching ? (
         <View role="list" aria-label="In the drink">
           {draft.lines.map((l, i) => (
-            <DragRow key={l.key} index={i} fold onDrop={drop} onMove={forDrink ? combine.onMove : undefined} onHeight={(h) => (heights.current[l.key] = h)}>
+            <DragRow key={l.key} index={i} fold onDrop={drop} onMove={combine.onMove} shift={combine.shift(i)} flat={combine.combineWith(i) !== null} onHeight={(h) => (heights.current[l.key] = h)}>
               {(grip, lifted) =>
                 // The lines keep their size while the next one is searched: folding them read as squeezed (Eddie, 16 Oct).
                 l.key === swapKey ? (

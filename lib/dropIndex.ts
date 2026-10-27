@@ -18,14 +18,39 @@ export function dropIndex(from: number, dy: number, heights: readonly number[]):
 }
 
 /**
- * The row a dragged row is held over, to drop it on (a batch): the one whose
- * middle half its centre is in. Null over its own place or between rows, so
- * passing over a row on the way to reorder never counts.
+ * Where a dragged row would land while the others make room for it (Kevin,
+ * 27 Oct: drag options 3B). The rows it passes slide over its gap, so the gap
+ * is where it lands: past three quarters of a row, that row slides. A row's
+ * middle half is for dropping on it (a batch): `over` is that row, else null,
+ * and its own place never counts. `slot` is where the gap was before this
+ * move, so a row that just slid doesn't slide back under a still finger.
  */
-export function overIndex(from: number, dy: number, heights: readonly number[]): number | null {
-  let top = 0;
-  const tops = heights.map((h) => (top += h) - h);
-  const centre = (tops[from] ?? 0) + (heights[from] ?? 0) / 2 + dy;
-  const at = heights.findIndex((h, i) => i !== from && centre >= tops[i] + h / 4 && centre <= tops[i] + (3 * h) / 4);
-  return at < 0 ? null : at;
+export function dragSlot(from: number, dy: number, heights: readonly number[], slot: number): { slot: number; over: number | null } {
+  const gap = heights[from] ?? 0;
+  const rest = heights.map((_, i) => i).filter((i) => i !== from);
+  const centre = heights.slice(0, from).reduce((a, h) => a + h, 0) + gap / 2 + dy;
+  // The rows' tops with the gap before rest[at].
+  const tops = (at: number) => {
+    let top = 0;
+    return rest.map((i, k) => {
+      if (k === at) top += gap;
+      return (top += heights[i] ?? 0) - (heights[i] ?? 0);
+    });
+  };
+  let at = Math.max(0, Math.min(slot, rest.length));
+  for (let pass = 0; pass <= rest.length * 2; pass++) {
+    const t = tops(at);
+    const k = rest.findIndex((i, k) => (k >= at ? centre > t[k] + ((heights[i] ?? 0) * 3) / 4 : centre < t[k] + (heights[i] ?? 0) / 4));
+    if (k < 0) break;
+    at = k >= at ? k + 1 : k;
+  }
+  const t = tops(at);
+  const k = rest.findIndex((i, k) => centre >= t[k] + (heights[i] ?? 0) / 4 && centre <= t[k] + ((heights[i] ?? 0) * 3) / 4);
+  return { slot: at, over: k < 0 ? null : rest[k] };
+}
+
+/** How far row `i` slides to make room while row `from` (`gap` tall) is held with its gap at `slot` (dragSlot). */
+export function gapShift(i: number, from: number, slot: number, gap: number): number {
+  if (i === from) return 0;
+  return (i > from ? -gap : 0) + ((i < from ? i : i - 1) >= slot ? gap : 0);
 }
