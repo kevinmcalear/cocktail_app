@@ -19,6 +19,7 @@ const ALWAYS = new Set([
   '.nvmrc',
   '.github/workflows/ci.yml',
   'scripts/check-local-migrations.mjs',
+  'scripts/local-storage.mjs',
   'scripts/database-ci.mjs',
   'scripts/security-shard.mjs',
   'scripts/db-snapshot.mjs',
