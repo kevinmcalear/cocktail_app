@@ -4,6 +4,8 @@ import { readdirSync, readFileSync } from 'node:fs';
 import {
   drawingKey, GLASS_TYPE_LABEL, kindColumns, typedKind, GLASS_TYPES, glassCapacity, glassPromptKey, glassTitle, hasGlass, isVenueGlassName,
 } from './glassware';
+import { draftSketchInputs } from './sketch/draft';
+import { GLASS_SHAPES, glassShape } from './sketch/geometry';
 import { SKETCH_GLASSES, SKETCH_ICES } from './sketch/types';
 
 assert.equal(glassTitle({ name: '  ', glass: 'nick' }), 'Nick & Nora');
@@ -59,6 +61,25 @@ const listed = (fn: string) => {
   return body.match(/'([^']+)'/g)!.map((v) => v.slice(1, -1));
 };
 assert.deepEqual(listed('is_glass_type'), [...SKETCH_GLASSES]);
+
+// Shot and Cordial (d66, 20261126100000_shot_and_cordial_glasses.sql): named, read from names, drawn, served neat.
+assert.deepEqual([GLASS_TYPE_LABEL.shot, GLASS_TYPE_LABEL.cordial], ['Shot', 'Cordial']);
+assert.deepEqual(kindColumns('glassware', 'cordial'), { glass: 'cordial' });
+for (const [name, glass] of [
+  ['Shot glass', 'shot'], ['Tequila shooter', 'shot'], ['Shot tumbler', 'shot'], ['Caballito', 'shot'],
+  ['Cordial glass', 'cordial'], ['Chartreuse glass', 'cordial'], ['Liqueur glass', 'cordial'], ['Pony', 'nick'], ['Rocks', 'rocks'],
+] as const) assert.equal(typedKind('glass', name), glass, name);
+assert.ok(!GLASS_SHAPES.shot.stemmed && GLASS_SHAPES.cordial.stemmed, 'a shot stands on its base, a cordial on a stem');
+assert.ok(GLASS_SHAPES.shot.rim > GLASS_SHAPES.rocks.rim, 'a shot is drawn lower than a rocks glass');
+assert.equal(glassShape('rocks', 'rocks_shot'), GLASS_SHAPES.shot, "a rocks glass drawn as a shot is the Shot's drawing");
+const look = (d: Partial<Parameters<typeof draftSketchInputs>[0]>) => draftSketchInputs({ name: 'Test', lines: [{ name: 'Tequila', amount: 30, unit: 'ml' }], ...d });
+assert.deepEqual([look({ glassKind: 'shot', methods: ['Shake'] }).ice, look({ glass: 'Cordial glass' }).ice], ['none', 'none'], 'neat unless it says');
+assert.equal(look({ glassKind: 'shot', ice: 'Cubes' }).ice, 'cubes');
+assert.equal(look({ name: 'Lemon Drop Shot' }).glass, 'shot');
+assert.equal(look({ name: 'Pousse Café' }).glass, 'cordial');
+assert.notEqual(look({ name: 'Morning', description: 'Rum and a shot of espresso' }).glass, 'shot', 'a shot of something is not a shot glass');
+assert.notEqual(look({ name: 'Morning', description: 'Rum, coffee liqueur and an espresso shot' }).glass, 'shot', 'nor a description that ends in one');
+assert.equal(look({ name: 'Morning', description: 'Served as a shot.' }).glass, 'shot');
 assert.deepEqual(listed('is_ice_kind'), [...SKETCH_ICES]);
 
 console.log('glassware: ok');

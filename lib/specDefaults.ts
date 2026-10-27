@@ -104,6 +104,7 @@ const METHOD_NAMES: Record<string, string> = { shake: 'Shake', stir: 'Stir', bui
 const GLASS_NAMES: Record<string, string> = {
   coupe: 'Coupe', nick: 'Nick & Nora', martini: 'Martini', rocks: 'Rocks', highball: 'Highball', collins: 'Collins', fizz: 'Highball',
   flute: 'Flute', wine: 'Wine', spritz: 'Wine', julep: 'Julep cup', tiki: 'Tiki', mug: 'Mug', ceramic: 'Tiki', beer: 'Highball', snifter: 'Rocks',
+  shot: 'Shot', cordial: 'Cordial',
 };
 const ICE_NAMES: Record<string, string> = { none: 'No ice', cubes: 'Cubes', large: 'Large cube', spear: 'Spear', crushed: 'Crushed', pebble: 'Pebble', shaved: 'Crushed', sphere: 'Sphere' };
 

@@ -13,7 +13,7 @@ import type { SketchGlass } from '@/lib/sketch/types';
 
 // The types a bar mostly looks for first; the rest wait behind More.
 export const FIRST_TYPES: SketchGlass[] = ['coupe', 'nick', 'martini', 'rocks', 'highball', 'collins', 'flute'];
-export const MORE_TYPES: SketchGlass[] = ['fizz', 'spritz', 'snifter', 'julep', 'tiki', 'mug'];
+export const MORE_TYPES: SketchGlass[] = ['fizz', 'spritz', 'snifter', 'shot', 'cordial', 'julep', 'tiki', 'mug'];
 
 // An empty glass, sketched (as the glass form draws it).
 const EMPTY = draftSketchInputs({ name: '', lines: [] });

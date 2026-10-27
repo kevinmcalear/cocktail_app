@@ -57,6 +57,10 @@ export const GLASS_SHAPES: Record<SketchGlass, GlassShape> = {
   tiki: { rim: 20, prof: [[20, 15], [32, 17.5], [50, 17.8], [70, 16.5], [85, 15]], top: 23, base: 82, stemmed: false, opaque: SKETCH.tikiClay, face: true },
   mug: { rim: 34, prof: [[34, 18.5], [84, 18]], top: 38, base: 81, stemmed: false, opaque: SKETCH.copper, handle: true },
   ceramic: { rim: 38, prof: [[38, 20], [60, 21], [84, 17]], top: 41, base: 82, stemmed: false, opaque: SKETCH.ceramicGlaze },
+  // Small and straight-sided on a heavy base, low in the drawing beside the others.
+  shot: { rim: 57, prof: [[57, 12.6], [86, 10.4]], top: 62, base: 80.5, stemmed: false },
+  // A little tulip of a bowl on a fine stem: liqueurs, Chartreuse, a pousse-café.
+  cordial: { rim: 42, prof: [[42, 10.4], [46, 9.8], [50, 8.8], [54, 7.2], [57.5, 5], [60, 2.4], [61.4, 0]], top: 45.5, stem: [61.4, 86], foot: [87, 10.5], stemmed: true, stemW: 0.7, flare: 2.2 },
 };
 
 /**
@@ -65,7 +69,7 @@ export const GLASS_SHAPES: Record<SketchGlass, GlassShape> = {
  */
 export const GLASS_MM: Record<SketchGlass, number> = {
   coupe: 150, nick: 155, martini: 175, rocks: 85, highball: 150, collins: 165, fizz: 115, flute: 225,
-  wine: 210, spritz: 200, snifter: 130, julep: 110, tiki: 160, mug: 100, ceramic: 95, beer: 165,
+  wine: 210, spritz: 200, snifter: 130, julep: 110, tiki: 160, mug: 100, ceramic: 95, beer: 165, shot: 65, cordial: 130,
 };
 
 /** Drawing units per mm in this glass: its drawn height over its real one. */
@@ -116,8 +120,8 @@ export const GLASS_VARIANTS: Partial<Record<SketchGlass, GlassVariant[]>> = {
     v('rocks', 'tapered', 'Tapered', { rim: 44, prof: [[44, 27.5], [86, 19]], top: 56, base: 80, stemmed: false }),
     // The wide double old fashioned.
     v('rocks', 'double', 'Double', { rim: 40, prof: [[40, 30], [86, 28.4]], top: 52, base: 80, stemmed: false }),
-    // A shot or a chaser.
-    v('rocks', 'shot', 'Shot', { rim: 57, prof: [[57, 12.6], [86, 10.4]], top: 62, base: 80.5, stemmed: false }),
+    // A shot glass a venue uses as a rocks (a glass's type is its job, #876). The drawing is the Shot type's.
+    v('rocks', 'shot', 'Shot', GLASS_SHAPES.shot),
   ],
   wine: [
     v('wine', 'universal', 'Universal'),
