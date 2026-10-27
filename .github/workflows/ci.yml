@@ -138,7 +138,27 @@ jobs:
       # With main's database in place, start skips the migrations and the seed.
       # The edge runtime serves image-worker, the generators and image-palette
       # for the image tests; on a local stack the image model is always mocked.
+      # Supabase's images (about ten) come from the Actions cache when a run
+      # has saved them for this CLI and config, so shards don't all pull them
+      # from ghcr.io at once (27 Oct: "toomanyrequests" failed every database
+      # job). Shard 1 saves them after a start that had to pull.
+      - id: images
+        uses: actions/cache/restore@v6
+        with:
+          path: ${{ runner.temp }}/supabase-images
+          key: supabase-images-${{ runner.arch }}-${{ env.SUPABASE_CLI }}-${{ hashFiles('supabase/config.toml') }}
+      - if: steps.images.outputs.cache-hit == 'true'
+        run: docker load -i "$RUNNER_TEMP/supabase-images/images.tar"
       - run: bash scripts/ci-supabase-start.sh
+      - if: steps.images.outputs.cache-hit != 'true' && matrix.shard == 1
+        run: |
+          mkdir -p "$RUNNER_TEMP/supabase-images"
+          docker save -o "$RUNNER_TEMP/supabase-images/images.tar" $(docker ps --format '{{.Image}}' | sort -u)
+      - if: steps.images.outputs.cache-hit != 'true' && matrix.shard == 1
+        uses: actions/cache/save@v6
+        with:
+          path: ${{ runner.temp }}/supabase-images
+          key: supabase-images-${{ runner.arch }}-${{ env.SUPABASE_CLI }}-${{ hashFiles('supabase/config.toml') }}
       - if: steps.reuse.outputs.ok == 'true'
         run: supabase migration up --local
       # types/database.ts is generated from the schema: regenerate it from the
