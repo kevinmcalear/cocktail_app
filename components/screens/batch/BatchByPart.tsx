@@ -2,7 +2,7 @@ import type { ReactNode } from 'react';
 import { StyleSheet, View } from 'react-native';
 
 import { Body, Button, Caption } from '@/components/ds';
-import { buildBatch, type BatchLine, type VolumeUnit } from '@/lib/batch';
+import { buildBatch, type Batch, type BatchLine, type VolumeUnit } from '@/lib/batch';
 import { byPart, joinStep, type MakingPart } from '@/lib/drinkParts';
 import type { SpecLine } from '@/lib/spec';
 
@@ -22,8 +22,15 @@ export function freshParts(lines: SpecLine[], parts: readonly MakingPart[], unit
 export function freshPartsText(lines: SpecLine[], parts: readonly MakingPart[], unit: VolumeUnit): string[] {
   return freshParts(lines, parts, unit).map(({ part, rows }) => {
     const join = joinStep(part.join);
-    return `${part.name}, fresh for each serve: ${rows.map((r) => `${r.amount} ${r.ingredient}`.trim()).join(', ')}${join ? `, then ${lowerFirst(join)}` : ''}.`;
+    const what = rows.map((r) => `${r.amount} ${r.ingredient}`.trim()).join(', ');
+    return `${part.name}, fresh for each serve${what ? `: ${what}` : ''}${join ? `, then ${lowerFirst(join)}` : ''}.`;
   });
+}
+
+/** The bottle's strength before its water, for the dilution calculator: part 1 alone, not the finished drink. */
+export function partOneAbv(batch: Batch): number | null {
+  const mix = batch.totalMl - (batch.water?.ml ?? 0);
+  return batch.abv !== null && mix > 0 ? (batch.abv * batch.totalMl) / mix : null;
 }
 
 /**
@@ -79,7 +86,7 @@ export function MakeByPart({ serves, parts, lines, unit, ticked, onTick, onDone 
           <View key={part.n} role="group" aria-label={`Part ${part.n} of ${parts.length}, ${part.name}`}>
             <PartHead n={part.n} name={part.name} how={part.how} eyebrow={`PART ${part.n} OF ${parts.length}`} />
             {rows.map((l) => (
-              <BatchRow key={l.key} ingredient={l.ingredient} amount={l.amount} note={notes.get(l.key)} checked={ticked.includes(l.key)} onToggle={() => onTick(l.key)} />
+              <BatchRow key={l.key} ingredient={l.ingredient} amount={l.amount} sub={l.sub} note={[l.sub, notes.get(l.key)].filter(Boolean).join(' · ') || null} checked={ticked.includes(l.key)} onToggle={() => onTick(l.key)} />
             ))}
             {join ? <BatchRow ingredient={join} amount="" checked={ticked.includes(`join-${part.n}`)} onToggle={() => onTick(`join-${part.n}`)} /> : null}
           </View>

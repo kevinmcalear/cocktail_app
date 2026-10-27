@@ -3,7 +3,7 @@ import { StyleSheet, View } from 'react-native';
 import { Body, Caption, DsText, useDs } from '@/components/ds';
 import { IconSymbol } from '@/components/ui/icon-symbol';
 import { fontFamilies, layout, radius, space } from '@/constants/tokens';
-import { joinStep, partSentence, type PartJoin } from '@/lib/drinkParts';
+import { joinStep, partOf, partSentence, type PartJoin } from '@/lib/drinkParts';
 import type { DatabaseItem } from '@/types/types';
 
 /**
@@ -18,8 +18,8 @@ export function DrinkParts({ item }: { item: DatabaseItem }) {
   return (
     <PartsList
       parts={parts.map((p, i) => {
-        const lines = (item.recipes ?? []).filter((r) => r.part === i + 1).flatMap((r) => (r.ingredient?.name ? [r.ingredient.name] : []));
-        const how = methods.filter((m) => m.part === i + 1).flatMap((m) => (m.method?.name ? [m.method.name] : []));
+        const lines = (item.recipes ?? []).filter((r) => partOf(r.part, parts.length) === i + 1).flatMap((r) => (r.ingredient?.name ? [r.ingredient.name] : []));
+        const how = methods.filter((m) => partOf(m.part, parts.length) === i + 1).flatMap((m) => (m.method?.name ? [m.method.name] : []));
         return { name: p.name, text: partSentence(how, lines, i > 0 ? p.join : null) };
       })}
     />

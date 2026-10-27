@@ -26,7 +26,7 @@ import type { SpecLine } from '@/lib/spec';
 import { useSettingsStore } from '@/store/useSettingsStore';
 
 import { BatchActions } from './BatchActions';
-import { freshPartsText, MakeByPart, StationParts } from './BatchByPart';
+import { freshPartsText, MakeByPart, partOneAbv, StationParts } from './BatchByPart';
 import { BatchRow, BottleTiles, Choice, FreezerCheck, ServesField, StockField } from './BatchParts';
 import { ServesRuler } from './ServesRuler';
 
@@ -143,7 +143,7 @@ function BatchBody({ name, lines: all, methodNames: allMethods, lockedUntil, ini
         ? servesFromStock(stockLine, haveAmount, haveUnit)
         : serves;
   const batch = buildBatch(lines, methodNames, n, opts);
-  const hasAmounts = lines.some((l) => l.value !== null);
+  const hasAmounts = all.some((l) => l.value !== null);
   const bottled = batch.lines.filter((l) => !l.leaveOut);
   const station = batch.lines.filter((l) => l.leaveOut);
   const bottles = `${batch.bottles} × ${bottleLabel(bottleSize)} ${batch.bottles === 1 ? 'bottle' : 'bottles'}`;
@@ -266,7 +266,7 @@ function BatchBody({ name, lines: all, methodNames: allMethods, lockedUntil, ini
         text={text}
         onSaved={close}
       />
-      {tools ? <ToolsSheet visible onClose={() => setTools(false)} tool="dilute" volumeMl={batch.totalMl - (batch.water?.ml ?? 0)} abv={abv} scheme={ds.scheme} /> : null}
+      {tools ? <ToolsSheet visible onClose={() => setTools(false)} tool="dilute" volumeMl={batch.totalMl - (batch.water?.ml ?? 0)} abv={parts ? partOneAbv(batch) : abv} scheme={ds.scheme} /> : null}
     </>
   );
 
