@@ -27,7 +27,8 @@ describe('IngredientSearch, Did you mean', () => {
     await renderWithTamagui(<IngredientsStep draft={EMPTY_DRAFT} set={set} ingredients={[CAMPARI, GREEN]} />);
     await fireEvent.changeText(screen.getByLabelText('Add an ingredient'), 'chartruse');
     expect(screen.getByText('Did you mean')).toBeTruthy();
-    expect(screen.getByText('Tap to use it')).toBeTruthy();
+    // Where it's from, then how to take it (board q16-2, canvas 2A).
+    expect(screen.getByText('In the catalog · tap to use it')).toBeTruthy();
     expect(screen.queryByText('No bottle by that name.')).toBeNull();
     const rows = screen.getAllByRole('button').map((b) => b.props.accessibilityLabel ?? b.props['aria-label']);
     expect(rows.indexOf('Green Chartreuse')).toBeLessThan(rows.indexOf('Make “Chartruse” in-house'));
