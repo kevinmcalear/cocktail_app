@@ -2,13 +2,14 @@ import { useRouter, type Href } from 'expo-router';
 import { Fragment, useState, type ReactNode } from 'react';
 import { StyleSheet, View } from 'react-native';
 
-import { Caption } from '@/components/ds';
+import { Caption, useDs } from '@/components/ds';
 import { FirstCocktailChoices, useStartFirstCocktail } from '@/components/screens/firstRound/FirstCocktailChoices';
 import { SetupChromeProvider, SetupFooter, SetupPage, useSetupChrome } from '@/components/screens/onboarding/SetupPage';
 import { BrandSetup } from '@/components/screens/venue/BrandScreen';
-import { space } from '@/constants/tokens';
+import { radius, space } from '@/constants/tokens';
 import { useBarPageId, useFlushHeldGlasses } from '@/hooks/useBarGlassware';
 import { useCapabilities } from '@/hooks/useCapabilities';
+import { useIsWideWeb } from '@/hooks/useIsWideWeb';
 import { useKitFromDrinks } from '@/hooks/useKitFromDrinks';
 import { useSetupChecklist } from '@/hooks/useSetupChecklist';
 import { useVenueBrand } from '@/hooks/useVenueBrand';
@@ -22,7 +23,7 @@ import { FromDrinksStep, fromDrinksCount } from './FromDrinksStep';
 import { StepFooter } from './GlassesStep';
 import { KitStep } from './KitStep';
 import { MenuStep } from './MenuStep';
-import { ChecklistRow, ClaimNote, FromDrinksRow, LookFirstNote } from './SetupChecklistParts';
+import { ChecklistRow, ClaimNote, FromDrinksRow, LookFirstNote, NextCard } from './SetupChecklistParts';
 import { setupCopy } from './setupCopy';
 import { TeamStep } from './TeamStep';
 
@@ -39,6 +40,8 @@ import { TeamStep } from './TeamStep';
  */
 export function SetupChecklist({ barId, name, footer }: { barId: string; name: string; footer?: ReactNode }) {
   const chrome = useSetupChrome();
+  const ds = useDs();
+  const wide = useIsWideWeb();
   const router = useRouter();
   const enterVenue = useAppMode((s) => s.enterVenue);
   const markDone = useVenueSetup((s) => s.markDone);
@@ -124,34 +127,51 @@ export function SetupChecklist({ barId, name, footer }: { barId: string; name: s
   // While the look isn't set, the first row says so too (invite-team-last, step 2).
   const barLine = looks ? undefined : 'Where, who sees it · How it looks not set';
   const teamLine = looks ? `Invite who works here, in ${name}’s look` : `After how ${name} looks: the invite wears it`;
+  const next = list.rows.find((r) => r.key === list.next);
+  // The rows in one card, the claim under it; on wide web the Next card sits beside them (owner-setup step 5).
+  const column = (
+    <View style={styles.column}>
+      {busy ? (
+        <Caption tone="muted">Loading…</Caption>
+      ) : (
+        <View role="list" accessibilityLabel={`Set up ${name}`} style={[styles.card, { backgroundColor: ds.c.surface }]}>
+          {list.rows.map((r, i) => (
+            <Fragment key={r.key}>
+              <ChecklistRow n={i + 1} first={i === 0} title={r.title} line={r.key === 'team' && r.state !== 'done' ? teamLine : r.key === 'bar' ? (barLine ?? r.line) : r.line} note={notes[r.key]} state={r.state} action={r.key === 'team' ? 'Invite' : undefined} onPress={press[r.key]} />
+              {/* Until there are drinks, the first round's four starts, coming back here once saved. */}
+              {r.key === 'drinks' && r.state !== 'done' ? (
+                <View style={styles.starts}>
+                  <FirstCocktailChoices onPick={(start) => (enterVenue(barId), startCocktail(barId, start, true))} />
+                </View>
+              ) : null}
+            </Fragment>
+          ))}
+        </View>
+      )}
+      {fromDrinks ? <FromDrinksRow count={fromDrinks} onPress={() => setAt('fromDrinks')} /> : null}
+      <ClaimNote barId={barId} />
+    </View>
+  );
   return (
-    <SetupChromeProvider value={{ ...chrome, title: `Set up ${name}`, intro: busy ? undefined : checklistIntro(list) }}>
+    <SetupChromeProvider value={{ ...chrome, title: `Set up ${name}`, intro: busy ? undefined : checklistIntro(list), frameWidth: 'wide' }}>
       <SetupPage footer={footer}>
-        {busy ? (
-          <Caption tone="muted">Loading…</Caption>
-        ) : (
-          <View role="list" accessibilityLabel={`Set up ${name}`}>
-            {list.rows.map((r, i) => (
-              <Fragment key={r.key}>
-                <ChecklistRow n={i + 1} title={r.title} line={r.key === 'team' && r.state !== 'done' ? teamLine : r.key === 'bar' ? (barLine ?? r.line) : r.line} note={notes[r.key]} state={r.state} action={r.key === 'team' ? 'Invite' : undefined} onPress={press[r.key]} />
-                {/* Until there are drinks, the first round's four starts, coming back here once saved. */}
-                {r.key === 'drinks' && r.state !== 'done' ? (
-                  <View style={styles.starts}>
-                    <FirstCocktailChoices onPick={(start) => (enterVenue(barId), startCocktail(barId, start, true))} />
-                  </View>
-                ) : null}
-              </Fragment>
-            ))}
+        {wide && next && !busy ? (
+          <View style={styles.split}>
+            {column}
+            <NextCard title={next.title} line={next.next} />
           </View>
+        ) : (
+          column
         )}
-        {fromDrinks ? <FromDrinksRow count={fromDrinks} onPress={() => setAt('fromDrinks')} /> : null}
-        <ClaimNote barId={barId} />
       </SetupPage>
     </SetupChromeProvider>
   );
 }
 
 const styles = StyleSheet.create({
+  column: { flex: 1, minWidth: 0, maxWidth: 608, gap: space.lg },
+  card: { paddingHorizontal: space.md, paddingVertical: space.xs, borderRadius: radius.card, borderCurve: 'continuous' },
+  split: { flexDirection: 'row', alignItems: 'flex-start', gap: space.xxl },
   // Under the row's title: past its 32 px mark and the gap.
   starts: { paddingLeft: 32 + space.md, paddingVertical: space.sm },
 });
