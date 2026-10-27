@@ -14,6 +14,8 @@ import { after, before, describe, test } from 'node:test';
 import { createClient } from '@supabase/supabase-js';
 import pg from 'pg';
 
+import { notesBackOnRows } from './fixtures/credited-notes.mjs';
+
 const status = JSON.parse(
   execSync('supabase status -o json', { encoding: 'utf8', stdio: ['ignore', 'pipe', 'ignore'] })
 );
@@ -131,6 +133,7 @@ describe('Cocktail Omakase and Bar 7', () => {
           `LOCK TABLE public.profiles, public.profile_positions, public.items, public.recipes,
                       public.profile_menu_editions, public.profile_menu_edition_drinks IN SHARE MODE`
         );
+        await notesBackOnRows(db);
         const before = await count();
         await db.query(readFileSync(MIGRATION, 'utf8'));
         assert.deepEqual(await count(), before);

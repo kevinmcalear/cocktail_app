@@ -786,36 +786,6 @@ export type Database = {
           },
         ]
       }
-      credited_drink_notes: {
-        Row: {
-          item_id: string
-          notes: string
-        }
-        Insert: {
-          item_id: string
-          notes: string
-        }
-        Update: {
-          item_id?: string
-          notes?: string
-        }
-        Relationships: [
-          {
-            foreignKeyName: "credited_drink_notes_item_id_fkey"
-            columns: ["item_id"]
-            isOneToOne: true
-            referencedRelation: "app_item_presentation"
-            referencedColumns: ["id"]
-          },
-          {
-            foreignKeyName: "credited_drink_notes_item_id_fkey"
-            columns: ["item_id"]
-            isOneToOne: true
-            referencedRelation: "items"
-            referencedColumns: ["id"]
-          },
-        ]
-      }
       discover_drink_facts: {
         Row: {
           bar_profile_id: string
@@ -2981,7 +2951,6 @@ export type Database = {
           method_ice_id: string | null
           moderated_at: string | null
           name: string
-          notes: string | null
           origin: string | null
           origin_bar_profile_id: string | null
           origin_country: string | null
@@ -3050,7 +3019,6 @@ export type Database = {
           method_ice_id?: string | null
           moderated_at?: string | null
           name: string
-          notes?: string | null
           origin?: string | null
           origin_bar_profile_id?: string | null
           origin_country?: string | null
@@ -3119,7 +3087,6 @@ export type Database = {
           method_ice_id?: string | null
           moderated_at?: string | null
           name?: string
-          notes?: string | null
           origin?: string | null
           origin_bar_profile_id?: string | null
           origin_country?: string | null
@@ -5796,7 +5763,6 @@ export type Database = {
             method_ice_id: string | null
             moderated_at: string | null
             name: string
-            notes: string | null
             origin: string | null
             origin_bar_profile_id: string | null
             origin_country: string | null
@@ -6644,7 +6610,6 @@ export type Database = {
           method_ice_id: string | null
           moderated_at: string | null
           name: string
-          notes: string | null
           origin: string | null
           origin_bar_profile_id: string | null
           origin_country: string | null

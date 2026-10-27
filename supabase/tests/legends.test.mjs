@@ -16,6 +16,8 @@ import { after, before, describe, test } from "node:test";
 import { createClient } from "@supabase/supabase-js";
 import pg from "pg";
 
+import { notesBackOnRows } from "./fixtures/credited-notes.mjs";
+
 const status = JSON.parse(
   execSync("supabase status -o json", {
     encoding: "utf8",
@@ -143,6 +145,10 @@ describe("cocktail legends", () => {
         try {
           await admin.query("SET LOCAL deadlock_timeout = '100ms'");
           await admin.query("SET LOCAL lock_timeout = '30s'");
+          // The seed was written when drinks kept their notes on the row, and bar-credited drinks' in
+          // credited_drink_notes (both gone since 20261124200000); it re-runs against that shape, rolled back.
+          await notesBackOnRows(admin);
+          await admin.query("CREATE TABLE public.credited_drink_notes (item_id uuid PRIMARY KEY, notes text)");
           const before = await count();
           await admin.query(SQL);
           assert.deepEqual(await count(), before);

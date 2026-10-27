@@ -8,7 +8,8 @@ import { IconSymbol } from '@/components/ui/icon-symbol';
 import { fontFamilies, radius, space } from '@/constants/tokens';
 import { bottleReadings, useBringInMatchData } from '@/hooks/useBringInMatchData';
 import { useMatchCatalog } from '@/hooks/useMatchCatalog';
-import { readingSteps, stepsDone, stripWindow, type ReadingStep } from '@/lib/bringIn';
+import { usePdfPages } from '@/hooks/usePdfPages';
+import { readingPages, readingSteps, stepsDone, stripWindow, type ReadingStep } from '@/lib/bringIn';
 import { matchSummary, pageMarks } from '@/lib/bringInMatch';
 import { pickReadFiles, type ReadFile } from '@/lib/readAnything';
 import { useBringIn, type BringInJob } from '@/store/useBringIn';
@@ -60,10 +61,12 @@ export function ReadingScreen({ job, onClose, onBackground, onReady, onSearch }:
   const bottles = bottleReadings(job);
   const data = useBringInMatchData(job.barId, true, bottles);
   const files = job.source.files;
+  // A PDF's pages, drawn on the phone (board w2-import-review, E37 A); until they're drawn, or on the web, the PDF's card.
+  const pages = readingPages(files, usePdfPages(files).data);
   const matched = job.reading && data ? matchSummary(job.reading, data) : null;
   // A snap matches on the server: the catalog only downloads if that fails (useBringInMatchData).
   const catalog = useMatchCatalog(!bottles);
-  const steps = readingSteps({ pages: files.length, reading: job.reading, matched, catalog: catalog.progress });
+  const steps = readingSteps({ pages: pages.length, reading: job.reading, matched, catalog: catalog.progress });
   const progress = job.status === 'ready' && matched ? 100 : stepsDone(steps);
   const ready = job.status === 'ready' && !!matched;
 
@@ -85,22 +88,23 @@ export function ReadingScreen({ job, onClose, onBackground, onReady, onSearch }:
   }, [waiting]);
   const slow = waiting && (waited || catalog.failed);
 
-  const marks = job.reading && data ? pageMarks(job.reading, data, page) : [];
-  const shown = stripWindow(files.length, page);
-  const title = job.status === 'failed' ? 'Couldn’t read it' : files.length > 1 ? `Reading ${files.length} pages` : 'Reading';
+  const on = pages[page] ?? pages[0];
+  const marks = job.reading && data && on && !on.drawn ? pageMarks(job.reading, data, on.of) : [];
+  const shown = stripWindow(pages.length, page);
+  const title = job.status === 'failed' ? 'Couldn’t read it' : pages.length > 1 ? `Reading ${pages.length} pages` : 'Reading';
 
   return (
     <View style={[styles.screen, { backgroundColor: ds.c.ground }]}>
       <View style={[styles.top, { paddingTop: insets.top + space.sm }]}>
         <GlassButton icon="xmark" accessibilityLabel="Close" onPress={onClose} />
-        {files.length ? (
-          <View style={styles.strip} aria-label={`${files.length} ${files.length === 1 ? 'page' : 'pages'}`}>
-            {files.slice(shown.from, shown.to).map((file, k) => (
+        {pages.length ? (
+          <View style={styles.strip} aria-label={`${pages.length} ${pages.length === 1 ? 'page' : 'pages'}`}>
+            {pages.slice(shown.from, shown.to).map(({ file }, k) => (
               <Thumb key={file.uri} file={file} i={shown.from + k} on={shown.from + k === page} onPress={() => setPage(shown.from + k)} />
             ))}
-            {files.length > shown.to ? (
-              <PressableScale accessibilityLabel={`${files.length - shown.to} more pages. Show page ${shown.to + 1}`} onPress={() => setPage(shown.to)} style={styles.more}>
-                <DsText variant="caption" color={ds.c.muted} style={styles.mono}>{`+${files.length - shown.to}`}</DsText>
+            {pages.length > shown.to ? (
+              <PressableScale accessibilityLabel={`${pages.length - shown.to} more pages. Show page ${shown.to + 1}`} onPress={() => setPage(shown.to)} style={styles.more}>
+                <DsText variant="caption" color={ds.c.muted} style={styles.mono}>{`+${pages.length - shown.to}`}</DsText>
               </PressableScale>
             ) : null}
             {!job.local ? (
@@ -112,7 +116,7 @@ export function ReadingScreen({ job, onClose, onBackground, onReady, onSearch }:
         ) : null}
       </View>
       <View style={styles.paper}>
-        <PagePicture file={files[page] ?? null} text={job.source.url ?? job.source.text} width={width - space.xxl * 2} maxHeight={height * 0.48} marks={marks} style={styles.tilt} />
+        <PagePicture file={on?.file ?? null} text={job.source.url ?? job.source.text} width={width - space.xxl * 2} maxHeight={height * 0.48} marks={marks} style={styles.tilt} />
       </View>
       {/* A sheet-like panel on phones; on the web a card that doesn't dock to the window's edge (no bottom sheets on the web). */}
       <View style={[styles.panel, sheetIsDialog ? styles.card : styles.docked, { backgroundColor: ds.c.surface, borderColor: ds.c.glassBorder, paddingBottom: sheetIsDialog ? space.xl : insets.bottom + space.xl }]}>
