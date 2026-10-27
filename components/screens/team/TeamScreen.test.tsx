@@ -16,7 +16,13 @@ jest.mock('./JoinRequests', () => ({ JoinRequests: () => null, ClaimsToConfirm: 
 jest.mock('@/components/screens/venue/DeleteVenue', () => ({ VenueDeleteBanner: () => null }));
 jest.mock('@/components/maker/MakerCreditRequests', () => ({ MakerCreditRequests: () => null }));
 let mockParams: { invite?: string } = {};
-jest.mock('expo-router', () => ({ useRouter: () => ({ navigate: jest.fn(), back: jest.fn(), canGoBack: () => false }), useLocalSearchParams: () => mockParams }));
+const mockPush = jest.fn();
+jest.mock('expo-router', () => ({ useRouter: () => ({ navigate: jest.fn(), push: mockPush, back: jest.fn(), canGoBack: () => false }), useLocalSearchParams: () => mockParams }));
+// A logo set: the look is done, so Invite isn't held back.
+let mockBrand: { logo_url: string | null; primary_color: string | null; display_face: string } = { logo_url: 'https://example.test/logo.png', primary_color: null, display_face: 'instrument' };
+jest.mock('@/hooks/useVenueBrand', () => ({ useVenueBrand: () => ({ data: mockBrand }) }));
+const mockSaveWelcome = jest.fn();
+let mockWelcome: string | null = null;
 jest.mock('@/hooks/useMode', () => ({ useMode: () => ({ mode: 'venue' }) }));
 jest.mock('@/hooks/useIsWideWeb', () => ({ useIsWideWeb: () => true, useWebNavWidth: () => 240 }));
 jest.mock('@/hooks/useActiveVenue', () => ({
@@ -55,6 +61,9 @@ jest.mock('@/hooks/useBarInvites', () => ({
   }),
   useRemoveInvite: () => ({ mutate: mockMutate, isPending: false, error: null }),
   useSendInviteEmail: () => ({ mutate: mockSend, mutateAsync: mockSendAsync, isPending: false, error: null }),
+  useWelcomeMessage: () => ({ data: mockWelcome, isLoading: false, isSuccess: true, error: null }),
+  useSenderName: () => 'Ada Lovelace',
+  useSaveWelcomeMessage: () => ({ mutate: mockSaveWelcome, mutateAsync: mockSaveWelcome, isPending: false, error: null }),
 }));
 
 beforeEach(() => {
@@ -66,6 +75,10 @@ beforeEach(() => {
   mockAdd.mockReset();
   mockSend.mockReset();
   mockSendAsync.mockReset();
+  mockSaveWelcome.mockReset();
+  mockPush.mockReset();
+  mockWelcome = null;
+  mockBrand = { logo_url: 'https://example.test/logo.png', primary_color: null, display_face: 'instrument' };
 });
 
 test('an admin can look someone up, then change their role and remove them from their sheet', async () => {
@@ -108,13 +121,38 @@ test('an admin invites by name, email and role from the sheet, and the invite is
   await fireEvent.changeText(screen.getByLabelText('Name'), 'Sam Okafor');
   await fireEvent.changeText(screen.getByLabelText('Email'), ' Sam@Example.test ');
   await fireEvent.press(screen.getByRole('radio', { name: 'Drink Creator. Adds and edits drinks and menus' }));
+  await fireEvent.changeText(screen.getByLabelText('A note just for Sam (optional)'), 'Read the Autumn menu first.');
+  // The preview is the email: the suggested welcome, signed, then the note.
+  await fireEvent.press(screen.getByRole('button', { name: 'Preview the email' }));
+  expect(screen.getByText('Join Caretakers as a Drink Creator')).toBeTruthy();
+  expect(screen.getByText('A note for you')).toBeTruthy();
   await fireEvent.press(screen.getByRole('button', { name: 'Email Sam an invite' }));
-  expect(mockAdd).toHaveBeenCalledWith({ email: 'sam@example.test', roleLevel: 35, name: 'Sam Okafor' });
+  // The first invite keeps the suggested welcome on the venue, as Your team would.
+  expect(mockSaveWelcome).toHaveBeenCalledWith(expect.stringMatching(/^Welcome to Caretakers\. /));
+  expect(mockAdd).toHaveBeenCalledWith({ email: 'sam@example.test', roleLevel: 35, name: 'Sam Okafor', note: 'Read the Autumn menu first.' });
   expect(mockSendAsync).toHaveBeenCalledWith('sam@example.test');
   expect(await screen.findByText('Invite emailed to Sam Okafor.')).toBeTruthy();
 
   await fireEvent.press(screen.getByRole('button', { name: 'Email the invite to new@example.test again' }));
   expect(mockSend).toHaveBeenLastCalledWith('new@example.test', expect.anything());
+});
+
+test('an admin changes the welcome message once, from its row', async () => {
+  mockWelcome = 'Welcome in.';
+  await renderWithTamagui(<TeamScreen />);
+  await fireEvent.press(screen.getByRole('button', { name: 'Welcome message. Change' }));
+  await fireEvent.changeText(screen.getByLabelText('The message'), 'Welcome to the team.');
+  await fireEvent.press(screen.getByRole('button', { name: 'Save' }));
+  expect(mockSaveWelcome).toHaveBeenCalledWith('Welcome to the team.', expect.anything());
+});
+
+test('Invite waits for how the venue looks: until then it opens Brand', async () => {
+  mockBrand = { logo_url: null, primary_color: null, display_face: 'instrument' };
+  await renderWithTamagui(<TeamScreen />);
+  expect(screen.getByText('Set how Caretakers looks first: the invite wears its logo, colour and font.')).toBeTruthy();
+  await fireEvent.press(screen.getByRole('button', { name: 'Invite someone' }));
+  expect(mockPush).toHaveBeenCalledWith('/settings/bar/bar/brand');
+  expect(screen.queryByText('Invite to Caretakers')).toBeNull();
 });
 
 test('/team?invite=1 opens on the invite sheet (Invite your team, from the venue sheet or an empty Library)', async () => {

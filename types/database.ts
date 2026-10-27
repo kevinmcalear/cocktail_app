@@ -178,6 +178,7 @@ export type Database = {
           id: string
           invited_by: string | null
           name: string | null
+          note: string | null
           role_level: number
         }
         Insert: {
@@ -189,6 +190,7 @@ export type Database = {
           id?: string
           invited_by?: string | null
           name?: string | null
+          note?: string | null
           role_level: number
         }
         Update: {
@@ -200,6 +202,7 @@ export type Database = {
           id?: string
           invited_by?: string | null
           name?: string | null
+          note?: string | null
           role_level?: number
         }
         Relationships: [
@@ -403,6 +406,7 @@ export type Database = {
           slug: string
           target_gp: number | null
           tax_rate: number
+          welcome_message: string | null
         }
         Insert: {
           accent_light_color?: string | null
@@ -435,6 +439,7 @@ export type Database = {
           slug: string
           target_gp?: number | null
           tax_rate?: number
+          welcome_message?: string | null
         }
         Update: {
           accent_light_color?: string | null
@@ -467,6 +472,7 @@ export type Database = {
           slug?: string
           target_gp?: number | null
           tax_rate?: number
+          welcome_message?: string | null
         }
         Relationships: []
       }
@@ -6014,6 +6020,7 @@ export type Database = {
           p_bar_id: string
           p_email: string
           p_name?: string
+          p_note?: string
           p_role_level: number
         }
         Returns: {
@@ -6371,6 +6378,7 @@ export type Database = {
           slug: string
           target_gp: number | null
           tax_rate: number
+          welcome_message: string | null
         }
         SetofOptions: {
           from: "*"
@@ -7047,6 +7055,7 @@ export type Database = {
           invited_by_name: string
           name: string
           role_level: number
+          welcome_message: string
         }[]
       }
       my_bar_preps: {
@@ -7693,6 +7702,7 @@ export type Database = {
           slug: string
           target_gp: number | null
           tax_rate: number
+          welcome_message: string | null
         }
         SetofOptions: {
           from: "*"
