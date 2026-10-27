@@ -164,12 +164,12 @@ jobs:
       - name: Generated database types match the migrations
         if: matrix.shard == 3
         # Starts postgres-meta, which isn't in the image cache until shard 3
-        # saves it. On 27 Oct ghcr.io refused bursts ("toomanyrequests") and
-        # public.ecr.aws hit its anonymous data limit, so this tries six times
-        # over about five minutes, alternating the two (as start does).
+        # saves it. On 27 Oct ghcr.io kept refusing it ("toomanyrequests") and
+        # public.ecr.aws hit its anonymous data limit, so this tries docker.io
+        # first, then the other two, six tries over about five minutes.
         run: |
           for try in 1 2 3 4 5 6; do
-            if [ $((try % 2)) = 1 ]; then registry=ghcr.io; else registry=public.ecr.aws; fi
+            case $((try % 3)) in 1) registry=docker.io ;; 2) registry=ghcr.io ;; *) registry=public.ecr.aws ;; esac
             SUPABASE_INTERNAL_IMAGE_REGISTRY=$registry supabase gen types typescript --local --schema public > types/database.ts && break
             [ "$try" = 6 ] && exit 1
             echo "gen types failed on $registry (try $try of 6), trying again in $((try * 20))s"
