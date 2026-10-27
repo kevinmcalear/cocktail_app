@@ -31,12 +31,31 @@ interface DrinkHeroProps {
 }
 
 /**
- * The phone hero's height: 22% of the screen below the status bar
- * (186 on a 390 x 844 phone), so the name, credit and a four to six line spec
- * fit on the first screen under it (13 Oct). The page and its loading state share it.
+ * The phone hero's height: 30% of the screen below the status bar
+ * (239 on a 390 x 844 phone). It was 22% so more of the spec fit on the first
+ * screen (13 Oct), but the name kept covering the foot of the drink (27 Oct).
+ * The page and its loading state share it.
  */
 export function phoneHeroHeight(width: number, height: number, top: number) {
-  return top + Math.min(width, (height - top) * 0.22);
+  return top + Math.min(width, (height - top) * 0.3);
+}
+
+/** How far the page body rides up over the hero on phones (DrinkScreen, BeerWineScreen, DrinkLoading). */
+const OVERLAP = space.xxl;
+/** The fade into the page: a short band at the foot of the picture, not a third of it. */
+const FADE = OVERLAP + space.xxxl;
+/** Ground's alpha along the fade, eased so it melts in rather than starting as a hard shelf. */
+const EASE = [0, 0.08, 0.3, 0.65, 1];
+
+/** The fade's colours and stops for a hero this tall: a light dim behind the top controls, then clear until the foot. */
+function fadeStops(height: number, ground: string, glow: string | null) {
+  const start = Math.max(0.5, 1 - FADE / height);
+  const step = (1 - start) / (EASE.length - 1);
+  const clear = withAlpha(ground, 0);
+  return {
+    colors: [withAlpha(ground, 0.35), clear, glow ?? clear, ...EASE.slice(1).map((a) => withAlpha(ground, a))] as const,
+    locations: [0, 0.2, start, ...EASE.slice(1).map((_, i) => start + step * (i + 1))] as const,
+  };
 }
 
 /**
@@ -50,18 +69,20 @@ export function DrinkHero({ name, pictures, glass, itemId, palette, height, fade
   const [index, setIndex] = useState(0);
   const [viewing, setViewing] = useState(false);
   const glow = palette?.[0] ? withAlpha(palette[0], ds.scheme === 'dark' ? 0.35 : 0.22) : null;
-  // Not 'transparent': that is transparent black, and iOS blends through it as a grey band.
-  const clear = withAlpha(ds.c.ground, 0);
+  // Not 'transparent' (fadeStops): that is transparent black, and iOS blends through it as a grey band.
+  const fadeTo = fadeStops(height, ds.c.ground, glow);
   const total = pictures.length;
   const shown = pictures[Math.min(index, total - 1)];
   const tag = pictureTag(shown);
   // Clear of the fade (the page body overlaps the bottom of the hero on phones).
-  const bottom = fade ? space.xxl + space.md : space.lg;
+  const bottom = fade ? OVERLAP + space.md : space.lg;
+  // A drawing is square and scales to the hero's height: on phones, stop it above the name so its foot shows.
+  const drawn = fade ? height - OVERLAP : height;
 
   return (
     <View style={{ height, backgroundColor: ds.c.paper }}>
       {total === 0 ? (
-        <DrinkImage source={null} glass={glass} itemId={itemId} sketch={sketch} accessibilityLabel={name} radius={0} animate style={StyleSheet.flatten([styles.fill, { aspectRatio: undefined, height }])} />
+        <DrinkImage source={null} glass={glass} itemId={itemId} sketch={sketch} accessibilityLabel={name} radius={0} animate style={StyleSheet.flatten([styles.fill, { aspectRatio: undefined, height: drawn }])} />
       ) : (
         <PicturePager
           count={total}
@@ -92,11 +113,7 @@ export function DrinkHero({ name, pictures, glass, itemId, palette, height, fade
         />
       )}
       {fade ? (
-        <LinearGradient
-          colors={[withAlpha(ds.c.ground, 0.35), clear, glow ?? clear, ds.c.ground]}
-          locations={[0, 0.25, 0.7, 1]}
-          style={styles.overlay}
-        />
+        <LinearGradient colors={fadeTo.colors} locations={fadeTo.locations} style={styles.overlay} />
       ) : null}
       {total > 1 || tag ? (
         // Each page's label already says where it is and what it is; this is the visible copy.
