@@ -205,12 +205,13 @@ describe('IngredientsStep', () => {
   });
 
   test('held over another, a line offers to combine them into a house prep', async () => {
-    // The line under it lights up; the lifted line's own card says what letting go does, where nothing covers it.
+    // The line under it lights up; a tag above the lifted card says what letting go does, clear of the thumb, and the card keeps its name.
     await renderWithTamagui(<LineRow line={newLine({ id: 'miso', name: 'Red miso' }, 'g', '5')} dropTarget="Tempus Fugit Crème de Banane" onChange={jest.fn()} onRemove={jest.fn()} onSwap={jest.fn()} />);
     expect(screen.getByText('Let go to combine')).toBeTruthy();
     await renderWithTamagui(<LineRow line={newLine({ id: 'tf', name: 'Tempus Fugit Crème de Banane' }, 'ml', '22.5')} lifted combineWith="Red miso" onChange={jest.fn()} onRemove={jest.fn()} onSwap={jest.fn()} />);
-    expect(screen.getByText('Combine and make it in-house')).toBeTruthy();
+    expect(screen.getByText('Let go to make it in-house')).toBeTruthy();
     expect(screen.getByText('Tempus Fugit Crème de Banane + Red miso')).toBeTruthy();
+    expect(screen.getByText('Tempus Fugit Crème de Banane')).toBeTruthy();
     // Folded while it's held: no stepper or unit.
     expect(screen.queryByRole('button', { name: 'Less Tempus Fugit Crème de Banane' })).toBeNull();
   });
