@@ -241,6 +241,8 @@ export const LOADS: Load[] = [
 
 // The catalog shape each type of glass is a kind of (a shared glassware item).
 // Prod has all but Snifter, Mug and Tiki Mug; a load adds those it needs.
+// Shot and Cordial came with 20261126100000 (d66), which moved the loads' shot
+// and cordial glasses to them; the seeds keep the type each was loaded as.
 export const SHAPE_NAME: Partial<Record<SketchGlass, string>> = {
   coupe: 'Coupe',
   nick: 'Nick & Nora',
@@ -257,6 +259,8 @@ export const SHAPE_NAME: Partial<Record<SketchGlass, string>> = {
   tiki: 'Tiki Mug',
   mug: 'Mug',
   beer: 'Beer',
+  shot: 'Shot',
+  cordial: 'Cordial',
 };
 
 export const MATERIALS = ['glass', 'crystal', 'lead-free crystal', 'ceramic', 'metal', 'plastic'];

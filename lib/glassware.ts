@@ -24,6 +24,8 @@ export const GLASS_TYPE_LABEL: Record<SketchGlass, string> = {
   mug: 'Mug',
   ceramic: 'Ceramic vessel',
   beer: 'Beer glass',
+  shot: 'Shot',
+  cordial: 'Cordial',
 };
 
 export const GLASS_TYPES: readonly SketchGlass[] = SKETCH_GLASSES;
