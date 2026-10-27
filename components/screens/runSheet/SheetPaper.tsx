@@ -1,4 +1,4 @@
-import { Fragment } from 'react';
+import { Fragment, useState } from 'react';
 import { StyleSheet, View } from 'react-native';
 
 import { DsText, type DsTextProps } from '@/components/ds';
@@ -12,6 +12,8 @@ const mono = { fontFamily: fontFamilies.mono };
 const semi = { fontFamily: fontFamilies.bodySemiBold };
 // Print keeps a party's box or a drink's table on one page.
 const keep = { dataSet: { printBlock: 'true' } } as object;
+/** Below this the paper is a phone's: A4's margin and 96 pt columns left an ingredient about 55 pt ("Ingredie nt"). */
+const NARROW = 520;
 
 /** A drink made in parts: the part's number and name over its lines, as the drink page has them. */
 function PartHead({ part }: { part: SheetPart }) {
@@ -41,8 +43,11 @@ export function SheetPaper({ sheet, menu, variant = 'full', printedOn }: {
   const parties = sheet.parties.filter((p) => p.needs.length);
   const drinks = sheet.drinks.filter((d) => d.serves > 0);
   const full = variant === 'full';
+  // On a phone the full sheet keeps A4's look with less margin and narrower amount columns, so names wrap between words, not inside them.
+  const [narrow, setNarrow] = useState(false);
+  const num = narrow ? styles.numNarrow : styles.num;
   return (
-    <View style={[styles.paper, full ? styles.fullPad : styles.smallPad]}>
+    <View onLayout={(e) => setNarrow(e.nativeEvent.layout.width < NARROW)} style={[styles.paper, full ? (narrow ? styles.narrowPad : styles.fullPad) : styles.smallPad]}>
       <View style={[styles.header, { borderBottomColor: P.ink }]}>
         <Muted style={[semi, styles.eyebrow]}>RUN SHEET</Muted>
         <T variant={full ? 'title' : 'headline'} style={{ fontFamily: fontFamilies.instrument }}>{head.name}</T>
@@ -93,8 +98,8 @@ export function SheetPaper({ sheet, menu, variant = 'full', printedOn }: {
                 {d.serve ? <Muted>{d.serve}</Muted> : null}
                 <View style={[styles.tr, { borderBottomColor: P.ink }]}>
                   <Muted style={[semi, { flex: 1 }]}>Ingredient</Muted>
-                  <Muted style={[semi, styles.num]}>Per drink</Muted>
-                  <Muted style={[semi, styles.num]}>For {d.serves.toLocaleString('en-GB')}</Muted>
+                  <Muted style={[semi, num]}>Per drink</Muted>
+                  <Muted style={[semi, num]}>For {d.serves.toLocaleString('en-GB')}</Muted>
                 </View>
                 {(d.parts ?? [null]).map((part) => (
                   <Fragment key={part?.n ?? 0}>
@@ -102,8 +107,8 @@ export function SheetPaper({ sheet, menu, variant = 'full', printedOn }: {
                     {(part?.lines ?? d.lines).filter((l) => !l.garnish).map((l, i) => (
                       <View key={`${l.ingredientId}-${i}`} style={[styles.tr, { borderBottomColor: P.hairline }]}>
                         <T variant="label" style={{ flex: 1 }}>{l.name}</T>
-                        <T variant="label" style={[mono, styles.num]}>{l.per}</T>
-                        <T variant="label" style={[mono, styles.num]}>{l.total ?? ''}</T>
+                        <T variant="label" style={[mono, num]}>{l.per}</T>
+                        <T variant="label" style={[mono, num]}>{l.total ?? ''}</T>
                       </View>
                     ))}
                   </Fragment>
@@ -130,6 +135,7 @@ export function SheetPaper({ sheet, menu, variant = 'full', printedOn }: {
 const styles = StyleSheet.create({
   paper: { backgroundColor: P.paper, gap: space.xl },
   fullPad: { padding: space.xxxl },
+  narrowPad: { padding: space.lg },
   smallPad: { padding: space.xl, gap: space.md, borderRadius: radius.mark },
   header: { gap: space.xs + 2, borderBottomWidth: 2, paddingBottom: space.lg },
   eyebrow: { letterSpacing: 1 },
@@ -137,6 +143,7 @@ const styles = StyleSheet.create({
   boxHead: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'baseline', paddingBottom: space.xs + 2, borderBottomWidth: 1, marginBottom: space.xs },
   tr: { flexDirection: 'row', gap: space.md, paddingVertical: space.xs + 1, borderBottomWidth: 1 },
   num: { width: 96, textAlign: 'right' },
+  numNarrow: { width: 72, textAlign: 'right' },
   cell: { flex: 1, minWidth: 0 },
   amount: { flexShrink: 0, maxWidth: '62%', textAlign: 'right' },
   drink: { gap: space.xs + 2, paddingBottom: space.md, borderBottomWidth: 1 },
