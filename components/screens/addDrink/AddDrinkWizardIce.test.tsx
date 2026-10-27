@@ -102,4 +102,27 @@ describe('AddDrinkWizard ice and method', () => {
     await fireEvent.press(screen.getByRole('checkbox', { name: 'Whip (whisk or frother)' }));
     expect(screen.queryByText(/with hosh cubes/i)).toBeNull();
   });
+
+  test('made in parts: the switch splits the drink, and a line moves to the part it is tapped in', async () => {
+    useDrinkWizardStore.getState().patch('home', {
+      name: 'Irish Coffee',
+      lines: [{ key: 'w', id: null, name: 'Irish whiskey', amount: '40', unit: 'ml' }, { key: 'c', id: null, name: 'Cream', amount: '30', unit: 'ml' }],
+      methods: [{ id: 'm-build', name: 'Build' }],
+    });
+    useDrinkWizardStore.getState().setStep('home', 'method');
+    await renderWithTamagui(<AddDrinkWizard onClose={jest.fn()} onSaved={mockSaved} />);
+    await laidOut();
+    await fireEvent(screen.getByRole('switch', { name: 'Made in parts' }), 'valueChange', true);
+    const parts = () => useDrinkWizardStore.getState().kept.home.draft.parts ?? [];
+    expect(parts().map((p) => p.lines)).toEqual([['w', 'c'], []]);
+    expect(screen.queryByRole('list', { name: 'In order' })).toBeNull();
+    // Part 2's chips come second.
+    await fireEvent.press(screen.getAllByRole('checkbox', { name: 'Cream' })[1]);
+    expect(parts().map((p) => p.lines)).toEqual([['w'], ['c']]);
+    await fireEvent.press(screen.getAllByRole('checkbox', { name: 'Stir' })[1]);
+    expect(useDrinkWizardStore.getState().kept.home.draft.methods.map((m) => m.name)).toEqual(['Build', 'Stir']);
+    await fireEvent(screen.getByRole('switch', { name: 'Made in parts' }), 'valueChange', false);
+    expect(useDrinkWizardStore.getState().kept.home.draft.parts).toBeNull();
+    expect(useDrinkWizardStore.getState().kept.home.draft.methods.map((m) => m.name)).toEqual(['Build', 'Stir']);
+  });
 });

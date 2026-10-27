@@ -237,10 +237,23 @@ test('"Just me" notes are kept apart as yours, never on the drink', async () => 
   mockInserts.length = 0;
   mockOtherInserts.length = 0;
   await run({ draft: { ...EMPTY_DRAFT, id: 'd-private', name: 'Ash Garden', notes: ' Less agave next time. ', notesPrivate: true }, barId: null, myProfileId: null });
-  expect(mockInserts[0].notes).toBeNull();
+  expect('notes' in mockInserts[0]).toBe(false);
   expect(mockOtherInserts).toContainEqual(['item_private_notes', { item_id: 'd-private', body: 'Less agave next time.' }]);
+  expect(mockOtherInserts.filter(([t]) => t === 'item_notes')).toHaveLength(0);
 
   await run({ draft: { ...EMPTY_DRAFT, name: 'Ash Garden', notes: 'Dry shake hard.', notesPrivate: false }, barId: null, myProfileId: null });
-  expect(mockInserts[1].notes).toBe('Dry shake hard.');
+  expect(mockOtherInserts).toContainEqual(['item_notes', { item_id: 'db-made', body: 'Dry shake hard.', read_level: null }]);
   expect(mockOtherInserts.filter(([t]) => t === 'item_private_notes')).toHaveLength(1);
+});
+
+test('at a venue the notes go to the picked role and up; at home always to everyone (E29)', async () => {
+  const { result } = await renderHook(() => useCreateDrink() as unknown as { mutationFn: Fn });
+  const run = result.current.mutationFn;
+  mockOtherInserts.length = 0;
+  await run({ draft: { ...EMPTY_DRAFT, name: 'Ash Garden', notes: 'Aquafaba: full 15 seconds.', notesLevel: 35 }, barId: 'bar-1', myProfileId: null });
+  expect(mockOtherInserts).toContainEqual(['item_notes', { item_id: 'db-made', body: 'Aquafaba: full 15 seconds.', read_level: 35 }]);
+
+  mockOtherInserts.length = 0;
+  await run({ draft: { ...EMPTY_DRAFT, name: 'Ash Garden', notes: 'Stir longer.', notesLevel: 35, notesPrivate: false }, barId: null, myProfileId: null });
+  expect(mockOtherInserts).toContainEqual(['item_notes', { item_id: 'db-made', body: 'Stir longer.', read_level: null }]);
 });

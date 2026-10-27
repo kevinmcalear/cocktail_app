@@ -5,18 +5,17 @@ import { Body, Button, Caption, DsText, Headline, Sheet, SheetScrollView, useDs 
 import { IceThumb } from '@/components/ds/IceThumb';
 import { TellUs, type TellUsAbout } from '@/components/feedback/TellUs';
 import { radius, space } from '@/constants/tokens';
-import { METHOD_GROUPS, methodDetail, methodIceLabel, samePick, type WizardPick } from '@/lib/drinkWizard';
+import { METHOD_GROUPS, methodDetail, methodIceLabel, samePick, type StepProps, type WizardPick } from '@/lib/drinkWizard';
 import { iceKind } from '@/lib/iceBuild';
 import { isVenueIce } from '@/lib/venueKit';
 
+import { MethodParts, PartsSwitch } from './MethodParts';
 import { OwnField, PickStep } from './PickStep';
 import { Eyebrow, WizardChip } from './WizardChrome';
 
-interface MethodStepProps {
+interface MethodStepProps extends StepProps {
   /** Every method we know (choiceList): the groups use the existing rows. */
   options: WizardPick[];
-  selected: WizardPick[];
-  onChange: (next: WizardPick[]) => void;
   /** Our guess from the spec ("Shake"), marked while nothing is picked. */
   suggested?: string | null;
   why?: string | null;
@@ -29,10 +28,13 @@ interface MethodStepProps {
 /**
  * How it's made: the picks first, as numbered steps in the order tapped
  * ("1 Dry shake ... 15 s, no ice"), then every method in two groups (Mix,
- * Air and texture), and a field for your own.
+ * Air and texture), and a field for your own. Made in parts (Q20b), each
+ * part has its own instead (MethodParts).
  */
-export function MethodStep({ options, selected, onChange, suggested, why, hint, tellUs }: MethodStepProps) {
+export function MethodStep({ options, draft, set, suggested, why, hint, tellUs }: MethodStepProps) {
   const ds = useDs();
+  const selected = draft.methods;
+  const onChange = (methods: WizardPick[]) => set({ methods });
   const find = (name: string) => options.find((o) => samePick(o, { id: null, name })) ?? { id: null, name };
   const order = (p: WizardPick) => selected.findIndex((s) => samePick(s, p));
   const toggle = (p: WizardPick) => {
@@ -45,9 +47,10 @@ export function MethodStep({ options, selected, onChange, suggested, why, hint, 
   const own = selected.filter((s) => !grouped.some((g) => g.picks.some((p) => samePick(p, s))));
   if (own.length) grouped.push({ label: 'Your own', picks: own });
 
+  const inParts = !!draft.parts?.length;
   return (
     <View style={styles.stack}>
-      {selected.length ? (
+      {!inParts && selected.length ? (
         <View role="list" aria-label="In order" style={styles.steps}>
           {selected.map((m, i) => {
             const detail = methodDetail(m.name);
@@ -66,7 +69,9 @@ export function MethodStep({ options, selected, onChange, suggested, why, hint, 
         </View>
       ) : null}
       {hint}
-      {grouped.map((g) => (
+      <PartsSwitch draft={draft} set={set} />
+      {inParts ? <MethodParts draft={draft} set={set} options={options} /> : null}
+      {inParts ? null : grouped.map((g) => (
         <View key={g.label} style={styles.group}>
           <Eyebrow>{g.label}</Eyebrow>
           <View role="group" accessibilityLabel={g.label} style={styles.chips}>
@@ -83,15 +88,17 @@ export function MethodStep({ options, selected, onChange, suggested, why, hint, 
           </View>
         </View>
       ))}
-      {guess && why ? <Caption tone="muted">{`Suggested: ${why}.`}</Caption> : null}
-      {selected.length > 1 ? <Caption tone="muted">{selected.map((s, i) => (i ? s.name.toLowerCase() : s.name)).join(', then ')}</Caption> : null}
-      <OwnField
-        label="Your own method"
-        onAdd={(name) => {
-          const pick = [...options, ...own].find((o) => samePick(o, { id: null, name })) ?? { id: null, name };
-          if (order(pick) < 0) onChange([...selected, pick]);
-        }}
-      />
+      {!inParts && guess && why ? <Caption tone="muted">{`Suggested: ${why}.`}</Caption> : null}
+      {!inParts && selected.length > 1 ? <Caption tone="muted">{selected.map((s, i) => (i ? s.name.toLowerCase() : s.name)).join(', then ')}</Caption> : null}
+      {inParts ? null : (
+        <OwnField
+          label="Your own method"
+          onAdd={(name) => {
+            const pick = [...options, ...own].find((o) => samePick(o, { id: null, name })) ?? { id: null, name };
+            if (order(pick) < 0) onChange([...selected, pick]);
+          }}
+        />
+      )}
       {tellUs ? <TellUs screen="Adding a drink › Method" line="We’ll add your method to the app." {...tellUs} /> : null}
     </View>
   );

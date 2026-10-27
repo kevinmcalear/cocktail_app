@@ -34,9 +34,9 @@ test('every seeded classic has a spec', async () => {
 
 test("no classic cites Punch or Difford's", async () => {
   const { rows } = await db.query(`
-    SELECT i.name FROM public.items i
+    SELECT i.name FROM public.items i JOIN public.item_notes n ON n.item_id = i.id
     WHERE i.is_catalog AND ${NOT_FIXTURE}
-      AND (i.notes ~* '(punchdrink|diffordsguide|difford|spec (as )?adapted from)'
-           OR i.notes ~ 'Punch''s|Punch (notes|calls|says|counts|describes|stresses|reports|suggests|recommends|prefers|favors|places|dismisses|credits|points|treats|pitches|sums|dates|has|lists)')`);
+      AND (n.body ~* '(punchdrink|diffordsguide|difford|spec (as )?adapted from)'
+           OR n.body ~ 'Punch''s|Punch (notes|calls|says|counts|describes|stresses|reports|suggests|recommends|prefers|favors|places|dismisses|credits|points|treats|pitches|sums|dates|has|lists)')`);
   assert.deepEqual(rows.map((r) => r.name), []);
 });
