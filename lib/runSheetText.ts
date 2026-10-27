@@ -131,7 +131,10 @@ export function runSheetText(sheet: RunSheet, menu: MenuWords): string {
     if (!d.serves) continue;
     out.push('', `${d.name} × ${d.serves.toLocaleString('en-GB')}`);
     if (d.serve) out.push(d.serve);
-    for (const l of d.lines.filter((x) => !x.garnish)) out.push(`- ${l.name}: ${[l.per, l.total ? `${l.total} for ${d.serves}` : null].filter(Boolean).join(', ')}`);
+    for (const p of d.parts ?? [null]) {
+      if (p) out.push(`${p.n} ${p.name}${p.joins ? ` (${p.joins})` : ''}`);
+      for (const l of (p?.lines ?? d.lines).filter((x) => !x.garnish)) out.push(`- ${l.name}: ${[l.per, l.total ? `${l.total} for ${d.serves}` : null].filter(Boolean).join(', ')}`);
+    }
   }
   return out.join('\n');
 }

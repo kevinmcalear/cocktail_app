@@ -2,6 +2,7 @@
  * Pure helpers for public profiles (people and bars). Queries are in
  * hooks/useProfiles.ts; checked by lib/profiles.check.ts.
  */
+import type { Query } from '@tanstack/react-query';
 
 const UUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
 // Same rule as the profiles.handle CHECK in the migration.
@@ -287,6 +288,12 @@ export function profileQueryShows(key: readonly unknown[], data: unknown, change
   if (!row) return false;
   return (!!change.id && row.id === change.id) || (!!change.barId && row.bar_id === change.barId) || (!!change.unclaimed && row.is_claimed === false);
 }
+
+/** Filters for invalidateQueries: the cached profile pages a write changed, not every one opened. */
+export const changedProfiles = (change: ProfileChange) => ({
+  queryKey: ['profile'],
+  predicate: (query: Query) => profileQueryShows(query.queryKey, query.state.data, change),
+});
 
 /**
  * A job's years (b09): "2023 to now", "2019 to 2023", "2021" for a past job

@@ -143,6 +143,19 @@ const quiet = buildRunSheet({ ...input, drinks: [drink('m2', 'Martini', null, dr
 assert.equal(quiet.totalServes, 48);
 assert.deepEqual(quiet.groups.map((g) => [g.title, g.needs.map((n) => [n.name, n.amount])]), [['Beer and wine', [['Pale ale', '48']]]]);
 
+// A drink made in parts (an Irish Coffee): its lines under numbered parts, a swap keeping its line's part.
+const partLine = (ingredientId: string, name: string, amount: number, part: number): SpecLine => ({ ...line(ingredientId, name, amount), part });
+const irish = drink('irish', 'Irish Coffee', 40, [partLine('whiskey', 'Irish whiskey', 40, 1), partLine('coffee', 'Hot coffee', 120, 1), partLine('cream', 'Cream', 30, 2)], {
+  parts: [{ name: 'The coffee' }, { name: 'The cream', join: 'float' }],
+});
+const inParts = buildRunSheet({ ...input, drinks: [irish], swaps: [{ menuDrinkId: 'irish', fromItemId: 'cream', toItemId: 'jersey', toName: 'Jersey cream' }] }).drinks[0];
+assert.deepEqual(inParts.parts?.map((p) => [p.n, p.name, p.joins, p.lines.map((l) => [l.name, l.total])]), [
+  [1, 'The coffee', null, [['Irish whiskey', '1.6 L'], ['Hot coffee', '4.8 L']]],
+  [2, 'The cream', 'Float on top', [['Jersey cream', '1.2 L']]],
+]);
+assert.equal(inParts.lines.length, 3, 'every line still totals');
+assert.equal(sheet.drinks[0].parts, null, 'a drink in one part reads as it always has');
+
 // Serves: whole numbers from 1 to 6,969.
 assert.equal(clampServes('120'), 120);
 assert.equal(clampServes('7,000'), MAX_SERVES);

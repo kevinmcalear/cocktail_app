@@ -24,8 +24,9 @@ interface InviteWelcomeProps {
 
 /**
  * The welcome for someone a venue invited, in the venue's own brand: who
- * invited them and as what, the three short steps, then accept (the short
- * setup follows) or decline. Onboarding opens with it; the staff link shows
+ * invited them and as what, the venue's welcome message signed by whoever
+ * sent it (in place of "added you", invite-team-last call 4), the three
+ * short steps, then accept (the short setup follows) or decline. Onboarding opens with it; the staff link shows
  * it, without the steps, to an account that's already set up.
  */
 export function InviteWelcome(props: InviteWelcomeProps) {
@@ -98,9 +99,16 @@ function Welcome({ invite, setUp, onJoined, onDeclined }: InviteWelcomeProps) {
               YOU’RE INVITED
             </Caption>
             <Display>{`Join ${invite.bar_name} as ${withArticle(roleLabel(invite.role_level))}`}</Display>
-            <Body tone="muted">
-              {`${who} added you. ${setUp ? 'Accept to see' : 'Three quick steps and you’ll see'} tonight’s menu and every spec.`}
-            </Body>
+            {invite.welcome_message ? (
+              <View style={styles.welcome}>
+                <Body>{invite.welcome_message}</Body>
+                {invite.invited_by_name ? <Body tone="muted">{invite.invited_by_name}</Body> : null}
+              </View>
+            ) : (
+              <Body tone="muted">
+                {`${who} added you. ${setUp ? 'Accept to see' : 'Three quick steps and you’ll see'} tonight’s menu and every spec.`}
+              </Body>
+            )}
             {setUp ? null : (
               <View accessibilityLabel="Three steps" style={styles.steps}>
                 {INVITE_STEP_NAMES.map((name, i) => (
@@ -167,6 +175,7 @@ const styles = StyleSheet.create({
   },
   monogram: { marginBottom: space.lg },
   kicker: { letterSpacing: 0.6, fontFamily: fontFamilies.bodyMedium },
+  welcome: { gap: space.sm },
   steps: { gap: space.xs, marginTop: space.md },
   step: { flexDirection: 'row', alignItems: 'center', gap: space.md, minHeight: layout.minTapTarget },
   number: { width: 28, height: 28, borderRadius: radius.pill, borderWidth: 1.5, alignItems: 'center', justifyContent: 'center' },

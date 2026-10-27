@@ -1,7 +1,7 @@
 import { useState } from 'react';
 import { StyleSheet, View } from 'react-native';
 
-import { Caption, DsText, Field, PressableScale, useDs } from '@/components/ds';
+import { Caption, DsText, PressableScale, useDs } from '@/components/ds';
 import { PickList } from '@/components/search/NearPicks';
 import { IconSymbol } from '@/components/ui/icon-symbol';
 import { UserAvatar } from '@/components/ui/UserAvatar';
@@ -12,6 +12,7 @@ import type { MaybeNear } from '@/hooks/useSearchNear';
 import type { StepProps } from '@/lib/drinkWizard';
 import { addMaker, askLines, asked, makers, removeMaker } from '@/lib/whoMadeIt';
 
+import { StepSearchField, type StepSearch } from './stepSearch';
 import { Eyebrow } from './WizardChrome';
 
 /**
@@ -20,7 +21,7 @@ import { Eyebrow } from './WizardChrome';
  * else saved as made with is asked first (#899), and the line under the
  * list says so (board w3-credits-to-check).
  */
-export function WhoMadeIt({ draft, set, venueName }: StepProps & { venueName: string | null }) {
+export function WhoMadeIt({ draft, set, venueName, search }: StepProps & { venueName: string | null; search: StepSearch }) {
   const ds = useDs();
   const mine = useMyProfile();
   const profile = mine.data ?? null;
@@ -29,10 +30,12 @@ export function WhoMadeIt({ draft, set, venueName }: StepProps & { venueName: st
   const people = usePublicPeople(who, { near: true }).data ?? [];
   const list = makers(draft, me);
   const waiting = asked(draft, me);
+  // Searching on a phone: only the field and its results, up top.
+  const over = search.over('who');
   return (
     <View style={styles.section}>
-      <Eyebrow>Who made it</Eyebrow>
-      {list.length ? (
+      {over ? null : <Eyebrow>Who made it</Eyebrow>}
+      {list.length && !over ? (
         <View role="list" accessibilityLabel="Who made it" style={[styles.list, { borderColor: ds.c.line }]}>
           {list.map((m, i) => (
             <View key={m.id ?? m.name} role="listitem" style={[styles.row, i > 0 && { borderTopWidth: StyleSheet.hairlineWidth, borderTopColor: ds.c.line }]}>
@@ -57,12 +60,12 @@ export function WhoMadeIt({ draft, set, venueName }: StepProps & { venueName: st
           ))}
         </View>
       ) : null}
-      {askLines(waiting).map((line) => (
+      {(over ? [] : askLines(waiting)).map((line) => (
         <Caption key={line} tone="muted">
           {line}
         </Caption>
       ))}
-      <Field label="Add someone" value={who} onChangeText={setWho} placeholder="Full name or @handle" autoCapitalize="words" autoCorrect={false} maxLength={60} />
+      <StepSearchField search={search} id="who" label="Add someone" value={who} onChangeText={setWho} placeholder="Full name or @handle" autoCapitalize="words" autoCorrect={false} maxLength={60} />
       {/* Results wait for your profile, so the first person picked can't take your place on the list. */}
       {who.trim().length >= 2 && !mine.isLoading ? (
         <PickList
@@ -73,11 +76,12 @@ export function WhoMadeIt({ draft, set, venueName }: StepProps & { venueName: st
             const p = people.find((x) => x.id === id);
             if (p) set(addMaker(draft, me, { id: p.id, name: p.display_name, sub: personSub(p), claimed: p.is_claimed }));
             setWho('');
+            search.done();
           }}
         />
       ) : null}
-      <Caption tone="muted">{me ? 'Take everyone off and it saves as Not sure.' : 'Make a profile on the You tab to take credit for your drinks.'}</Caption>
-      {venueName ? <Caption tone="muted">{`It’s credited to ${venueName} too.`}</Caption> : null}
+      {over ? null : <Caption tone="muted">{me ? 'Take everyone off and it saves as Not sure.' : 'Make a profile on the You tab to take credit for your drinks.'}</Caption>}
+      {venueName && !over ? <Caption tone="muted">{`It’s credited to ${venueName} too.`}</Caption> : null}
     </View>
   );
 }

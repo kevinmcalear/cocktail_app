@@ -23,6 +23,8 @@ export interface PresentationRecipe {
   parent_ingredient_id?: string | null;
   /** In the batch (false) or added at the station (true); null when undecided or masked with the amounts. */
   at_service?: boolean | null;
+  /** A drink made in parts: which part the line is in (recipes.part, from 1). */
+  part?: number | null;
   /** The ingredient this role may see (brand or generic), embedded by the query; masked to null otherwise. */
   display_ingredient?: PresentationIngredient | null;
 }

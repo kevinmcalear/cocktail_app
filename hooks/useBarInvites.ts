@@ -1,6 +1,7 @@
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 
-import { useUserId } from '@/ctx/AuthContext';
+import { useAuth, useUserId } from '@/ctx/AuthContext';
+import { useMyProfile } from '@/hooks/useMyProfile';
 import { track } from '@/lib/analytics';
 import { getAuthSite } from '@/lib/authRedirect';
 import { invokeFunction } from '@/lib/invokeFunction';
@@ -14,10 +15,12 @@ export interface BarInvite {
   role_level: number;
   /** What the admin called them, if anything. */
   name: string | null;
+  /** A line just for them, under the welcome message in their email. */
+  note: string | null;
   created_at: string;
 }
 
-const COLUMNS = 'id, bar_id, email, role_level, name, created_at';
+const COLUMNS = 'id, bar_id, email, role_level, name, note, created_at';
 
 /** One of the signed-in person's own invites, with the venue it's for (my_bar_invites). */
 export interface MyInvite {
@@ -37,6 +40,8 @@ export interface MyInvite {
   invited_by_name: string | null;
   /** They said yes; they join once the venue's claim is approved. */
   held?: boolean;
+  /** The venue's welcome message, signed by whoever invited them (invite-team-last, call 4). */
+  welcome_message?: string | null;
 }
 
 /** A venue's open invites. RLS shows them to the venue's admins only. */
@@ -106,8 +111,47 @@ export function useMyInvites(enabled = true) {
 }
 
 /**
- * Emails an invite that already exists (send-bar-invite): a new account gets
- * the invite email, an existing one a sign-in link to the staff link.
+ * A venue's welcome message: null until an Admin first saves it, when the
+ * app offers welcomeSuggestion (lib/team). Every invite email carries it.
+ */
+export function useWelcomeMessage(barId: string | null | undefined) {
+  return useQuery({
+    queryKey: ['welcome-message', barId],
+    enabled: !!barId,
+    queryFn: async (): Promise<string | null> => {
+      const { data, error } = await supabase.from('bars').select('welcome_message').eq('id', barId!).single();
+      if (error) throw error;
+      return data.welcome_message;
+    },
+  });
+}
+
+/**
+ * The name an invite is signed with: your profile's name, else the name you
+ * signed up with, as send-bar-invite and my_bar_invites read it.
+ */
+export function useSenderName(): string | null {
+  const profile = useMyProfile().data;
+  const meta = useAuth().user?.user_metadata?.full_name;
+  return profile?.displayName?.trim() || (typeof meta === 'string' ? meta.trim() : '') || null;
+}
+
+/** Saves the welcome message. Admins only (bars_update); an empty box saves as no message. */
+export function useSaveWelcomeMessage(barId: string) {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: async (message: string) => {
+      const { error } = await supabase.from('bars').update({ welcome_message: message.trim() }).eq('id', barId);
+      if (error) throw error;
+    },
+    onSuccess: () => queryClient.invalidateQueries({ queryKey: ['welcome-message', barId] }),
+    onError: () => {},
+  });
+}
+
+/**
+ * Emails an invite that already exists (send-bar-invite): one email in the
+ * venue's look with its welcome message and the person's note, account or not.
  */
 export function useSendInviteEmail(barId: string) {
   return useMutation({

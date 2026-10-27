@@ -1,7 +1,7 @@
 import { useState } from 'react';
 import { StyleSheet, View } from 'react-native';
 
-import { Body, Button, Caption, DrinkImage, Field, PressableScale, useDs } from '@/components/ds';
+import { Body, Button, Caption, DrinkImage, PressableScale, useDs } from '@/components/ds';
 import { PickList } from '@/components/search/NearPicks';
 import { radius, space } from '@/constants/tokens';
 import { useCloseClassics, type CloseClassic } from '@/hooks/useClosestClassic';
@@ -11,6 +11,7 @@ import { searchByName, type StepProps } from '@/lib/drinkWizard';
 import { nearAfter } from '@/lib/nearName';
 
 import type { CatalogIngredient } from './IngredientSearch';
+import { StepSearchField, type StepSearch } from './stepSearch';
 import { Eyebrow } from './WizardChrome';
 
 /**
@@ -19,7 +20,7 @@ import { Eyebrow } from './WizardChrome';
  * shares, then Find another classic, then It's an original. Before there's a
  * spec, the classic its name says. Skip leaves it an original.
  */
-export function RiffPick({ draft, set, ingredients }: StepProps & { ingredients: readonly CatalogIngredient[] }) {
+export function RiffPick({ draft, set, ingredients, search }: StepProps & { ingredients: readonly CatalogIngredient[]; search: StepSearch }) {
   const classics = useDrinkLists().data ?? [];
   const [riff, setRiff] = useState('');
   // Pressed It's an original: ticked, so the tap shows (nothing to save, no riff is an original).
@@ -40,17 +41,18 @@ export function RiffPick({ draft, set, ingredients }: StepProps & { ingredients:
     set({ riffOf: c ? { id: c.id, name: c.name } : null });
   };
   const title = cards.length ? 'Is it a riff on one of these?' : 'Riff on a classic?';
+  const over = search.over('riff');
   return (
     <View style={styles.section}>
-      <Eyebrow>{title}</Eyebrow>
-      {cards.length ? (
+      {over ? null : <Eyebrow>{title}</Eyebrow>}
+      {cards.length && !over ? (
         <View role="radiogroup" accessibilityLabel={title} style={styles.grid}>
           {cards.map((c) => (
             <RiffCard key={c.id} classic={c} on={draft.riffOf?.id === c.id} onPress={() => pick(c)} />
           ))}
         </View>
       ) : null}
-      <Field label={cards.length ? 'Find another classic' : 'Find a classic'} value={riff} onChangeText={setRiff} placeholder="Negroni, Daiquiri…" autoCorrect={false} maxLength={60} />
+      <StepSearchField search={search} id="riff" label={cards.length ? 'Find another classic' : 'Find a classic'} value={riff} onChangeText={setRiff} placeholder="Negroni, Daiquiri…" autoCorrect={false} maxLength={60} />
       {riff.trim() ? (
         <PickList
           rows={[...results.map((c) => ({ id: c.id, label: c.name })), ...near.map((c) => ({ id: c.id, label: c.name, near: true }))]}
@@ -59,10 +61,11 @@ export function RiffPick({ draft, set, ingredients }: StepProps & { ingredients:
             const c = classics.find((x) => x.id === id);
             if (c) pick(c);
             setRiff('');
+            search.done();
           }}
         />
       ) : null}
-      <Button label="It’s an original" variant="secondary" icon={original && !draft.riffOf ? 'checkmark' : undefined} onPress={() => pick(null)} />
+      {over ? null : <Button label="It’s an original" variant="secondary" icon={original && !draft.riffOf ? 'checkmark' : undefined} onPress={() => pick(null)} />}
     </View>
   );
 }

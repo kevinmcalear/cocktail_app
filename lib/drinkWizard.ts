@@ -339,7 +339,7 @@ export const COMMON_ICE = ['No ice', 'Cubes', 'Large cube', 'Crushed', 'Pebble',
 
 /**
  * What the ice it's made with is called, from the method: "Blended with",
- * "Shaken with", "Stirred over". A drink built in the glass has none (its ice
+ * "Shaken with", "Stirred down with". A drink built in the glass has none (its ice
  * is the one it's served over); no method yet is "Made with".
  */
 export function methodIceLabel(methods: readonly string[]): string | null {
@@ -347,7 +347,7 @@ export function methodIceLabel(methods: readonly string[]): string | null {
   const all = methods.filter((m) => !NO_ICE.test(m)).join(' ').toLowerCase();
   if (/blend/.test(all)) return 'Blended with';
   if (/shak|whip/.test(all)) return 'Shaken with';
-  if (/stir/.test(all)) return 'Stirred over';
+  if (/stir/.test(all)) return 'Stirred down with';
   if (/swizzl/.test(all)) return 'Swizzled with';
   if (/throw/.test(all)) return 'Thrown over';
   if (/build|built/.test(all)) return null;

@@ -67,7 +67,7 @@ export function CreditRows({ credits }: { credits: CreditToCheck[] }) {
               {c.name}
             </DsText>
             <Caption>{`${c.creator_name ?? 'Someone'} named you as a co-creator`}</Caption>
-            {c.bar_name ? <Caption tone="muted">{c.bar_name}</Caption> : null}
+            <Caption tone="muted">{creditPlace(c)}</Caption>
             <View style={styles.actions}>
               <Button label="Accept" size="sm" disabled={answer.isPending} accessibilityLabel={`Accept ${c.name}`} onPress={() => answer.mutate({ itemId: c.item_id, accept: true })} />
               <Button label="Not me" size="sm" variant="secondary" disabled={answer.isPending} accessibilityLabel={`Not me, ${c.name}`} onPress={() => answer.mutate({ itemId: c.item_id, accept: false })} />
@@ -85,6 +85,11 @@ export function CreditRows({ credits }: { credits: CreditToCheck[] }) {
 }
 
 const CATEGORY: Partial<Record<CreditToCheck['item_type'], ItemCategory>> = { beer: 'Beer', wine: 'Wine', ingredient: 'Ingredient' };
+
+/** "Little Rye · Fitzroy · 2025": the bar, where it is and the year you were named, to tell two of one name apart. */
+export function creditPlace(c: Pick<CreditToCheck, 'bar_name' | 'bar_place' | 'named_at'>): string {
+  return [c.bar_name, c.bar_place, String(new Date(c.named_at).getFullYear())].filter(Boolean).join(' · ');
+}
 
 function drinkHref(c: CreditToCheck): string {
   return itemHref(CATEGORY[c.item_type], c.item_id);

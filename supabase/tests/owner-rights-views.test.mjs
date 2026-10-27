@@ -11,8 +11,9 @@
 //     for that, and adds it to the list
 //   * signed-out and signed-in callers can only read them
 //   * for a signed-out visitor and for someone signed in who isn't on the
-//     team: a drink published with its spec shows with its lines, one
-//     published as a menu drink shows without them, a private one not at all
+//     team: a drink published with its spec shows with its lines and its
+//     parts, one published as a menu drink shows without them, a private one
+//     not at all
 //
 // Runs against the local stack only: `npm run test:security`.
 import assert from 'node:assert/strict';
@@ -36,7 +37,7 @@ const COLUMNS = {
   published_items: [
     'id', 'name', 'item_type', 'description', 'bar_id', 'glassware_id', 'ice_id', 'family_id', 'origin', 'abv',
     'icon_key', 'icon_url', 'publish_mode', 'published_at', 'riff_of_id', 'creator_profile_id', 'origin_bar_profile_id',
-    'origin_year', 'credit_status', 'is_reference', 'image_url', 'image_is_generated', 'is_shared',
+    'origin_year', 'credit_status', 'is_reference', 'image_url', 'image_is_generated', 'is_shared', 'parts',
   ],
   app_recipe_presentation: [
     'id', 'created_at', 'recipe_item_id', 'display_ingredient_id', 'amount', 'unit', 'preparation_notes', 'is_optional',
@@ -91,7 +92,7 @@ describe('views that run with owner rights', () => {
     });
   }
 
-  test('outsiders see a published drink, the spec only when it is published with it, and nothing of a private one', async () => {
+  test('outsiders see a published drink, the spec and its parts only when it is published with it, and nothing of a private one', async () => {
     const run = randomUUID().slice(0, 8);
     const outsider = randomUUID();
     const seen = await rolledBack(async () => {
@@ -101,15 +102,17 @@ describe('views that run with owner rights', () => {
       const gin = await one("INSERT INTO public.items (name, item_type) VALUES ($1, 'ingredient') RETURNING id", [`Owner Rights Gin ${run}`]);
       const drinks = {};
       for (const mode of ['spec', 'description', 'private']) {
-        drinks[mode] = await one("INSERT INTO public.items (name, item_type, bar_id, publish_mode) VALUES ($1, 'cocktail', $2, $3) RETURNING id", [`Owner Rights ${mode} ${run}`, bar, mode]);
+        drinks[mode] = await one("INSERT INTO public.items (name, item_type, bar_id, publish_mode, parts) VALUES ($1, 'cocktail', $2, $3, $4) RETURNING id", [
+          `Owner Rights ${mode} ${run}`, bar, mode, JSON.stringify([{ name: 'The coffee' }, { name: 'The cream', join: 'float' }]),
+        ]);
         await db.query("INSERT INTO public.recipes (recipe_item_id, ingredient_item_id, amount, unit) VALUES ($1, $2, 45, 'ml')", [drinks[mode], gin]);
       }
       const look = async () => {
         const out = {};
         for (const [mode, id] of Object.entries(drinks)) {
-          const listed = (await db.query('SELECT publish_mode FROM public.published_items WHERE id = $1', [id])).rows[0]?.publish_mode ?? null;
+          const row = (await db.query('SELECT publish_mode, parts FROM public.published_items WHERE id = $1', [id])).rows[0];
           const lines = (await db.query('SELECT amount, unit FROM public.app_recipe_presentation WHERE recipe_item_id = $1', [id])).rows;
-          out[mode] = { listed, lines: lines.map((l) => `${Number(l.amount)} ${l.unit}`) };
+          out[mode] = { listed: row?.publish_mode ?? null, parts: row?.parts?.map((p) => p.name) ?? null, lines: lines.map((l) => `${Number(l.amount)} ${l.unit}`) };
         }
         return out;
       };
@@ -122,9 +125,9 @@ describe('views that run with owner rights', () => {
       return { anon, signedIn };
     });
     const expected = {
-      spec: { listed: 'spec', lines: ['45 ml'] },
-      description: { listed: 'description', lines: [] },
-      private: { listed: null, lines: [] },
+      spec: { listed: 'spec', parts: ['The coffee', 'The cream'], lines: ['45 ml'] },
+      description: { listed: 'description', parts: null, lines: [] },
+      private: { listed: null, parts: null, lines: [] },
     };
     assert.deepEqual(seen, { anon: expected, signedIn: expected });
   });

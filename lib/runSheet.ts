@@ -12,6 +12,7 @@
 import { barSection, isMixer } from './barSections';
 import { isGarnishUnit, MAX_SERVES } from './batch';
 import { keepsFor } from './batchPrep';
+import { PART_JOINS, type StoredPart } from './drinkParts';
 import { formatIce, iceForEvent } from './glass';
 import { buildPrepList, type HouseMade, type Purchasing, type SpecLine } from './prep';
 import { formatQuantity, scale, toQuantity, type Quantity } from './quantity';
@@ -54,6 +55,8 @@ export interface RunDrink {
   partyId: string | null;
   /** The bar page the drink is credited to (items.origin_bar_profile_id), when the app knows it. */
   originProfileId?: string | null;
+  /** A drink made in parts (items.parts): each part's name and how it joins. Null or missing is one part. */
+  parts?: StoredPart[] | null;
 }
 
 export interface RunSwap {
@@ -117,6 +120,18 @@ export interface SheetDrink {
   serve: string;
   /** The guest bar's own drink; null is ours. */
   partyId: string | null;
+  /** A drink made in parts: its lines under each part, in order. Null for a drink in one part, which reads as `lines`. */
+  parts: SheetPart[] | null;
+}
+
+/** One part of a drink made in parts, as the drink page numbers them: "2 The cream · Float on top". */
+export interface SheetPart {
+  /** From 1. */
+  n: number;
+  name: string;
+  /** "Float on top", "Pour in"; null for the first part. */
+  joins: string | null;
+  lines: SheetLine[];
 }
 
 export interface Need {
@@ -228,7 +243,16 @@ export function buildRunSheet(input: RunSheetInput): RunSheet {
       return { ...line, per: perServe(line), total: q && serves ? amountOf([scale(q, serves)]) : null, garnish: isGarnishLine(line) };
     });
     const garnishes = lines.filter((l) => l.garnish).map((l) => l.name);
-    return { id: d.id, itemId: d.itemId, name: d.name, serves, lines, serve: [d.glass?.name, d.ice?.name, ...garnishes].filter(Boolean).join(' · '), partyId: guest && d.partyId === guest.id ? guest.id : null };
+    // A line keeps its part through a swap; one past the last part (never saved) goes in the last.
+    const parts = d.parts && d.parts.length > 1
+      ? d.parts.map((p, i, all) => ({
+          n: i + 1,
+          name: p.name,
+          joins: i ? (PART_JOINS.find((j) => j.value === p.join)?.label ?? null) : null,
+          lines: lines.filter((l) => Math.min(Math.max(l.part ?? 1, 1), all.length) === i + 1),
+        }))
+      : null;
+    return { id: d.id, itemId: d.itemId, name: d.name, serves, lines, serve: [d.glass?.name, d.ice?.name, ...garnishes].filter(Boolean).join(' · '), partyId: guest && d.partyId === guest.id ? guest.id : null, parts };
   });
 
   const prep = buildPrepList({
