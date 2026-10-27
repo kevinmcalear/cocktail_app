@@ -30,7 +30,7 @@ describe('EditLines', () => {
     await render(jest.fn());
     expect(screen.getByText('Spec')).toBeTruthy();
     expect(screen.getByLabelText('Amount of Blended Scotch')).toBeTruthy();
-    expect(screen.getByText('Hold a line by its grip and move it over another. Let go to combine them; move away to just reorder.')).toBeTruthy();
+    expect(screen.getByText('Hold a line and move it over another. Let go to combine them; move away to just reorder.')).toBeTruthy();
     expect(screen.queryByText('Paste a whole spec')).toBeNull();
     // A saved note shows as the line's note.
     expect(screen.getByDisplayValue('floated on top')).toBeTruthy();
@@ -58,6 +58,6 @@ describe('EditLines', () => {
 
   test("an ingredient's recipe reorders only, as in New", async () => {
     await render(jest.fn(), false);
-    expect(screen.getByText('Hold a grip and move it to reorder.')).toBeTruthy();
+    expect(screen.getByText('Hold a line and move it to reorder.')).toBeTruthy();
   });
 });

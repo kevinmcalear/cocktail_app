@@ -36,5 +36,12 @@ export function useCombineDrop({ draft, set, enabled, heights, onCombined }: Ste
     return true;
   };
   const target = dwell.mergeTargetIndex;
-  return { onMove, onDrop, target, holding: target !== null && held !== null ? (lines[held]?.name ?? null) : null };
+  return {
+    onMove,
+    onDrop,
+    target,
+    holding: target !== null && held !== null ? (lines[held]?.name ?? null) : null,
+    // For the held line's own card: the name of the line letting go would combine it with.
+    combineWith: (i: number) => (target !== null && held === i ? (lines[target]?.name ?? null) : null),
+  };
 }

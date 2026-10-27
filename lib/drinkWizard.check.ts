@@ -209,7 +209,7 @@ assert.deepEqual(convertPour(22, 'ml', 'oz'), { amount: '0.75', unit: 'oz' });
 // --- two ices: the one it's made with is named for the method; the drink page reads both ---
 assert.equal(methodIceLabel(['Blend']), 'Blended with');
 assert.equal(methodIceLabel(['Dry shake', 'Shake']), 'Shaken with');
-assert.equal(methodIceLabel(['Stir']), 'Stirred over');
+assert.equal(methodIceLabel(['Stir']), 'Stirred down with');
 assert.equal(methodIceLabel(['Build']), null, 'built in the glass: its ice is the one it is served over');
 assert.equal(methodIceLabel([]), 'Made with');
 assert.equal(methodIceLabel(['Build', 'Whip (whisk or frother)']), null, 'a whisk takes no ice (Q20b)');
