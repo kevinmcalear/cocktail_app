@@ -24,7 +24,7 @@ import { ShotList } from '../ShotList';
 import { AccessSheet, EditBottomBar, EditMoreMenu, GrowingField, PhotosSheet, type DrinkEditor, type MoreChoice } from './EditParts';
 import { EditLines } from './EditLines';
 import { EditToolbar } from './EditToolbar';
-import { FitGlassEdit } from './FitGlassEdit';
+import { FitGlassEdit, useDraftGlassFill } from './FitGlassEdit';
 import { MadeList } from './MadeList';
 import { useEditHistory } from './useEditHistory';
 import { VenueSections, type PendingEdits, type VenueSheet } from './VenueSections';
@@ -74,6 +74,7 @@ export function EditPage({ editor, id, onExit, openFit }: { editor: DrinkEditor;
   // The drink page opens as a page sheet on iOS, which starts below the status bar (as DrinkScreen).
   const top = Platform.OS === 'ios' ? space.sm : insets.top;
   const cocktail = useCocktail(id ?? undefined).data;
+  const fill = useDraftGlassFill(editor, cocktail);
   const draft = 'draftId' in editor ? editor : null;
   const history = useEditHistory(editor);
   useHoldUpdates();
@@ -167,7 +168,7 @@ export function EditPage({ editor, id, onExit, openFit }: { editor: DrinkEditor;
         backBar={editor.barId ? backBar : undefined}
         focus={focus}
       />
-      {cocktail ? <FitGlassEdit editor={editor} item={cocktail} open={sheet === 'fit'} onOpen={() => setSheet('fit')} onClose={() => setSheet(null)} /> : null}
+      {cocktail ? <FitGlassEdit editor={editor} item={cocktail} result={fill} open={sheet === 'fit'} onOpen={() => setSheet('fit')} onClose={() => setSheet(null)} /> : null}
       <MadeList editor={editor} itemId={id} />
       <View style={styles.section}>
         <Headline role="heading">Story</Headline>
@@ -180,7 +181,7 @@ export function EditPage({ editor, id, onExit, openFit }: { editor: DrinkEditor;
         </View>
         <GrowingField minHeight={96} value={editor.notes} onChangeText={editor.setNotes} placeholder="Tricks, swaps, what guests ask" placeholderTextColor={ds.c.muted} accessibilityLabel="Notes for the team" style={fieldBox} />
       </View>
-      {cocktail && id ? <VenueSections item={cocktail} onPending={(p) => ((venueEdits.current = p), setVenueDirty(p.dirty))} sheet={sheet === 'classic' || sheet === 'publish' || sheet === 'glass' ? sheet : null} onSheet={setSheet} servicePhotos={wide ? undefined : servicePhotos} /> : null}
+      {cocktail && id ? <VenueSections item={cocktail} glassFill={fill} onPending={(p) => ((venueEdits.current = p), setVenueDirty(p.dirty))} sheet={sheet === 'classic' || sheet === 'publish' || sheet === 'glass' ? sheet : null} onSheet={setSheet} servicePhotos={wide ? undefined : servicePhotos} /> : null}
     </>
   );
   const toolbar = <EditToolbar canUndo={history.canUndo} canRedo={history.canRedo} onUndo={history.undo} onRedo={history.redo} changes={history.changes} onDone={() => void done()} saving={editor.saving} wide={wide} media={pictures.length ? 'photo' : 'paper'} more={wide ? <GlassButton accessibilityLabel="More" icon="ellipsis" onPress={() => setSheet('more')} /> : undefined} />;

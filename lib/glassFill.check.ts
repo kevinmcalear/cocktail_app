@@ -96,11 +96,15 @@ assert.equal(fitToWashLine([{ amount: '30', unit: 'ml', ingredient: 'Rye' }], { 
 assert.equal((glassFill([{ amount: '30', unit: 'ml', ingredient: 'Rye' }], { method: 'built', washLineMl: 300, iceG: 0 }) as Fill).state, 'short');
 assert.equal(fitToWashLine(smoke, { ...up, washLineMl: 50 }), null);
 
-// The fitted cost: each changed line's cost scales with its amount; a line with no price, or none to match, says nothing.
+// The fitted cost: each changed line's cost scales with its amount; a line with no price, or lines that don't line up, say nothing.
 const fittedUp: Fitted = { factor: 1.2, fill: { serveMl: 0, levelMl: 0, washLineMl: 0, diffMl: 0, state: 'fits', dilutionPct: 0 }, lines: [{ amount: '60', unit: 'ml', changed: true }, { amount: '2', unit: 'dash', changed: false }] };
 const costed = { total_minor: 400, missing: 0, lines: [{ ingredient: 'Rye', minor: 300 }, { ingredient: 'Bitters', minor: 20 }] };
 assert.equal(fittedCostMinor(costed, ['Rye', 'Bitters'], ['50', '2'], fittedUp), 460);
 assert.equal(fittedCostMinor({ ...costed, missing: 1 }, ['Rye', 'Bitters'], ['50', '2'], fittedUp), null);
 assert.equal(fittedCostMinor(costed, ['Gin', 'Bitters'], ['50', '2'], fittedUp), null);
+assert.equal(fittedCostMinor({ ...costed, lines: [costed.lines[0]] }, ['Rye', 'Bitters'], ['50', '2'], fittedUp), null);
+// The same ingredient twice (made in parts): each line scales its own cost.
+const twice: Fitted = { ...fittedUp, lines: [{ amount: '60', unit: 'ml', changed: true }, { amount: '20', unit: 'ml', changed: true }] };
+assert.equal(fittedCostMinor({ total_minor: 400, missing: 0, lines: [{ ingredient: 'Rye', minor: 300 }, { ingredient: 'Rye', minor: 100 }] }, ['Rye', 'Rye'], ['50', '10'], twice), 560);
 
 console.log('glassFill checks passed');

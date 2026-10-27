@@ -40,10 +40,10 @@ interface GlassSheetProps {
 
 const num = (s: string) => (s.trim() ? Number(s) : null);
 
-/** "Serve fills it to 119 ml, 31 ml short of its 150 ml wash line.", after the glass's size when it has one. */
-function serveWords({ fill }: GlassFillResult, glass: GlassSize): string {
+/** "Serve fills it to 119 ml, 31 ml short of its 150 ml wash line." */
+function serveWords({ fill }: GlassFillResult): string {
   const line = fill.state === 'fits' ? `at its ${Math.round(fill.washLineMl)} ml wash line` : fillWords(fill).replace(/ the (\d+ ml wash line)$/, ' its $1');
-  return `${glass.capacity_ml ? ' ' : ''}Serve fills it to ${Math.round(fill.levelMl)} ml, ${line}.`;
+  return `Serve fills it to ${Math.round(fill.levelMl)} ml, ${line}.`;
 }
 
 /** Ice in the glass, unless the drink says none. */
@@ -93,10 +93,11 @@ function GlassBody({ itemId, name, glass, iceName, serveMl, icePerServeG, editin
       <Title>{name}</Title>
       {glass ? (
         <View style={styles.group}>
-          <Headline>{glass.name}</Headline>
+          {/* With a wash line, it's the venue's own glass the drink is poured in (useGlassFill), and its line, not this glass's size. */}
+          <Headline>{washFill?.glassName ?? glass.name}</Headline>
           <Body tone="muted">
-            {glassSizeLabel(glass) ?? (washFill ? '' : 'No capacity on file yet.')}
-            {washFill ? serveWords(washFill, glass) : fit ? ` Serve of ${Math.round(serveMl!)} ml: ${fit.fits ? 'fits' : `over by ${Math.round(fit.overMl)} ml`}${withIce && glass.iced_capacity_ml ? ' with the ice in' : ''}.` : ''}
+            {washFill ? serveWords(washFill) : (glassSizeLabel(glass) ?? 'No capacity on file yet.')}
+            {washFill ? '' : fit ? ` Serve of ${Math.round(serveMl!)} ml: ${fit.fits ? 'fits' : `over by ${Math.round(fit.overMl)} ml`}${withIce && glass.iced_capacity_ml ? ' with the ice in' : ''}.` : ''}
           </Body>
           {glass.model ? (
             <Caption tone="muted">{[glassModelFacts(glass.model), glass.model.maker ? `From ${glass.model.maker.display_name}’s catalog.` : null].filter(Boolean).join('. ')}</Caption>

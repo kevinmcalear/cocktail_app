@@ -11,10 +11,10 @@ type FoundRow = { id: string; bar_id?: string | null; ingredient_role?: string |
 /** Where a found ingredient is from: what you have, a venue's house-made, else the catalog (board q16-2). */
 export function whereFrom(r: FoundRow, have: string | null, venues: readonly { id: string; name: string | null }[]): string | null {
   if (have) return have;
-  if (!r.bar_id) return 'In the catalog';
-  const bar = venues.find((v) => v.id === r.bar_id)?.name;
+  const bar = r.bar_id ? venues.find((v) => v.id === r.bar_id)?.name : null;
+  // A house-made one is the venue's, or your own at home; a venue's own bottle says nothing (the board draws no line for it).
   if (r.ingredient_role === 'prep') return bar ? `House-made at ${bar}` : 'House-made';
-  return bar ? `Added at ${bar}` : null;
+  return r.bar_id ? null : 'In the catalog';
 }
 
 /** Under a found ingredient: where it's from ("On your back bar", "House-made at Little Rye", "In the catalog"); a close name adds "tap to use it" (canvas 2A). */

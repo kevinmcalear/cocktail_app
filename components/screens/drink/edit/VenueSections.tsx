@@ -6,7 +6,7 @@ import { IconSymbol } from '@/components/ui/icon-symbol';
 import { radius, space } from '@/constants/tokens';
 import { useUserId } from '@/ctx/AuthContext';
 import { useDrinkAllergens } from '@/hooks/useAllergens';
-import { useItemGlassFill } from '@/hooks/useGlassFill';
+import type { GlassFillResult } from '@/hooks/useGlassFill';
 import { useCapabilities } from '@/hooks/useCapabilities';
 import { useSetDrinkPrice } from '@/hooks/useDrinkCost';
 import { useItemPublishing } from '@/hooks/usePublishing';
@@ -45,6 +45,8 @@ interface VenueSectionsProps {
   onSheet: (sheet: VenueSheet | null) => void;
   /** Phone: the service photos sit in Service. Wide keeps them under the hero. */
   servicePhotos?: ReactNode;
+  /** The draft spec against the venue's glass (useDraftGlassFill), for the Glass sheet: the same answer as the note under the spec. */
+  glassFill?: GlassFillResult | null;
 }
 
 /**
@@ -70,14 +72,12 @@ export function VenueSections(props: VenueSectionsProps) {
   return <Sections {...props} notes={notes ?? EMPTY_SERVICE_NOTES} />;
 }
 
-function Sections({ item, onPending, sheet: open, onSheet: setOpen, servicePhotos, notes }: VenueSectionsProps & { notes: ServiceNotes }) {
+function Sections({ item, onPending, sheet: open, onSheet: setOpen, servicePhotos, glassFill, notes }: VenueSectionsProps & { notes: ServiceNotes }) {
   const barId = item.bar_id;
   const saveNotes = useSaveServiceNotes(item.id, barId);
   const setPrice = useSetDrinkPrice(item.id);
   const setLine = useSetLineService(item.id);
   const setStyle = useSetServiceStyle(item.id);
-  // The saved spec against the venue glass's wash line, for the Glass sheet (QA Q38).
-  const glassFill = useItemGlassFill(open === 'glass' ? item : null, specLines(item.recipes as PresentationRecipe[] | undefined));
   const [talkingPoint, setTalkingPoint] = useState(notes.talkingPoint ?? '');
   const [sellItAs, setSellItAs] = useState(notes.sellItAs ?? '');
   const [garnish, setGarnish] = useState(notes.garnish ?? '');

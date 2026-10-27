@@ -178,21 +178,20 @@ export interface CostToFit {
 
 /**
  * What a serve costs with the fitted spec: the saved cost, with each changed
- * line's cost scaled as its amount is. Null when a line has no price, or a
- * changed line has no cost line of its name to scale (the cost would be a guess).
- * ponytail: matches lines by ingredient name, and the cost is the saved
- * spec's, so a draft that changed a line since its last save comes out near,
- * not exact. Per-line costs keyed by recipe id would make it exact.
+ * line's cost scaled as its amount is. The cost's lines are the spec's, in
+ * order (drink_cost), so the spec passed in must be the saved one. Null when
+ * a line has no price, or the lines don't line up (the cost would be a guess).
  */
 export function fittedCostMinor(cost: CostToFit, names: readonly string[], amounts: readonly string[], fitted: Fitted): number | null {
-  if (cost.missing > 0) return null;
+  if (cost.missing > 0 || cost.lines.length !== fitted.lines.length) return null;
   let delta = 0;
   for (let i = 0; i < fitted.lines.length; i++) {
+    const line = cost.lines[i];
+    if (line.ingredient.trim().toLowerCase() !== names[i]?.trim().toLowerCase()) return null;
     const l = fitted.lines[i];
     if (!l.changed) continue;
     const was = Number(amounts[i]);
-    const line = cost.lines.find((c) => c.ingredient.trim().toLowerCase() === names[i]?.trim().toLowerCase());
-    if (!line || line.minor == null || !(was > 0)) return null;
+    if (line.minor == null || !(was > 0)) return null;
     delta += line.minor * (Number(l.amount) / was - 1);
   }
   return Math.round(cost.total_minor + delta);
