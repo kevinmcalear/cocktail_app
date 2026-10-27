@@ -9,6 +9,7 @@
 //   npm run db:check
 //
 // Honours SUPABASE_WORKDIR, like the rest of the Supabase CLI.
+import { localStorageProblem } from './local-storage.mjs';
 import { listMigrations } from './supabase-cli.mjs';
 
 let listed;
@@ -34,3 +35,14 @@ if (notInCheckout.length || notApplied.length) {
 }
 
 console.log(`Local database matches this checkout's ${listed.length} migrations.`);
+
+let storageProblem;
+try {
+  storageProblem = await localStorageProblem();
+} catch (error) {
+  storageProblem = `Could not check the local storage service: ${error.message}`;
+}
+if (storageProblem) {
+  console.error(storageProblem);
+  process.exit(1);
+}
