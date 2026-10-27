@@ -12,9 +12,6 @@ export interface HiddenBar {
   place: string | null;
 }
 
-interface HiddenRow {
-  profile: { id: string; handle: string | null; display_name: string; avatar_url: string | null; locality: string | null; city: string | null } | null;
-}
 
 /** Discover's reads that leave hidden bars out (the map, drinks list, Top bars, rankings). */
 const DISCOVER_KEYS = [['discover-top-bars'], ['discover-rankings'], ['discover-list'], ['discover-bars']];
@@ -33,7 +30,7 @@ export function useHiddenBars() {
         .order('hidden_at', { ascending: false });
       if (error) throw error;
       // A page that went private drops out (its embed comes back empty).
-      return ((data ?? []) as unknown as HiddenRow[]).flatMap((r) =>
+      return (data ?? []).flatMap((r) =>
         r.profile
           ? [{ id: r.profile.id, name: r.profile.display_name, handle: r.profile.handle, avatarUrl: r.profile.avatar_url, place: [r.profile.locality, r.profile.city].filter(Boolean).join(', ') || null }]
           : []

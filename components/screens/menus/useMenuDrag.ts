@@ -46,7 +46,7 @@ export function useMenuDrag(editor: LayoutEditor): [root: React.RefObject<React.
   });
 
   useEffect(() => {
-    const el = root.current as unknown as HTMLElement | null;
+    const el = root.current as HTMLElement | null;
     if (Platform.OS !== 'web' || !el) return;
     let held: { drink: MenuDrink; from: string | null } | null = null;
     let shown: DropAt | null = null;

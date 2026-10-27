@@ -4,7 +4,7 @@ import { useEffect } from 'react';
 import { useAuth } from '@/ctx/AuthContext';
 import { hasContent } from '@/lib/drinkWizard';
 import { forAccount, mergeDrafts, type KeptDraft } from '@/lib/draftSync';
-import { supabase } from '@/lib/supabase';
+import { jsonAs, supabase } from '@/lib/supabase';
 import type { Json } from '@/types/db';
 import { useDraftSyncStore } from '@/store/useDraftSyncStore';
 import { useDrinkWizardStore } from '@/store/useDrinkWizardStore';
@@ -38,6 +38,7 @@ async function push(userId: string, slot: string, k: KeptDraft) {
   sentAt.set(slot, Date.now());
   const place = slot.split('|')[0];
   const { error } = await supabase.from('drafts').upsert(
+    // ponytail: KeptDraft is plain JSON (it is persisted as is) but has no index signature, so TS won't see it as Json; a toJson helper if more writes need it.
     { user_id: userId, entity_type: KIND, slot, bar_id: place === 'home' ? null : place, draft_data: forAccount(k) as unknown as Json },
     { onConflict: 'user_id,entity_type,slot' }
   );
@@ -86,7 +87,7 @@ export function useDraftSync() {
       const at = Date.now();
       const { data, error } = await supabase.from('drafts').select('slot, draft_data').eq('user_id', userId!).eq('entity_type', KIND);
       if (error) throw error;
-      return { at, drafts: Object.fromEntries((data ?? []).flatMap((r) => (r.slot ? [[r.slot, r.draft_data as unknown as KeptDraft]] : []))) };
+      return { at, drafts: Object.fromEntries((data ?? []).flatMap((r) => (r.slot ? [[r.slot, jsonAs<KeptDraft>(r.draft_data)]] : []))) };
     },
   });
 

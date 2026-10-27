@@ -21,7 +21,7 @@ export function useDrinkHistory(itemIds: readonly string[]) {
     queryFn: async (): Promise<PrintedRecipe[]> => {
       const { data, error } = await supabase.from('source_recipes').select(RECIPE_COLUMNS).in('item_id', ids);
       if (error) throw error;
-      return ((data ?? []) as unknown as PrintedRecipe[]).map((r) => ({
+      return ((data ?? []) as PrintedRecipe[]).map((r) => ({
         ...r,
         lines: [...(r.lines ?? [])].sort((a, b) => a.sort_order - b.sort_order),
       }));
@@ -54,7 +54,7 @@ export function useBook(key: string | null | undefined) {
         .maybeSingle();
       if (error) throw error;
       if (!data) return null;
-      const { recipes, ...source } = data as unknown as Source & {
+      const { recipes, ...source } = data as Source & {
         recipes: BookDrink[];
       };
       const drinks = [...(recipes ?? [])].sort((a, b) => (a.item?.name ?? '').localeCompare(b.item?.name ?? ''));

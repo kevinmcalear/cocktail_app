@@ -118,7 +118,7 @@ export function useItemEditAccess(item: { id: string; bar_id: string | null } | 
         .eq('id', item!.id)
         .maybeSingle();
       if (rowError) throw rowError;
-      const origin = row?.origin_bar as unknown as { bar_id: string | null } | null;
+      const origin = row?.origin_bar as { bar_id: string | null } | null;
       return { creator: !!row && row.created_by === userId, creditedBarId: origin?.bar_id ?? null };
     },
   });

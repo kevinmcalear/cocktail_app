@@ -79,7 +79,7 @@ export function usePublicPeople(search: string, { near = false }: { near?: boole
           .eq('is_public', true);
         const { data, error } = await (ids ? q.in('id', ids) : q.or(personSearchFilter(typed)).order('display_name').limit(8)).abortSignal(signal);
         if (error) throw error;
-        return ((data ?? []) as unknown as PersonRow[]).map(({ jobs, ...p }) => {
+        return ((data ?? []) as PersonRow[]).map(({ jobs, ...p }) => {
           // Jobs both sides confirmed, as the profile shows them.
           const confirmed = (jobs ?? []).filter((j) => j.person_accepted && j.bar_accepted && j.bar);
           const now = confirmed.find((j) => j.is_current);
@@ -138,6 +138,7 @@ export function useWaiting(barIds: readonly string[], personIds: readonly string
       for (const r of [...barCounts, mine, co, jobs, pages]) if (r.error) throw r.error;
       const claimed = new Set(((pages.data ?? []) as { id: string; is_claimed: boolean }[]).filter((r) => r.is_claimed).map((r) => r.id));
       const barDrinks = Object.fromEntries(counted.map((id, i) => [id, barCounts[i].count ?? 0]));
+      // ponytail: the table and select are chosen at run time, so supabase-js can't type the row; split into literal queries to drop this cast.
       const waiting = countWaiting(ids, (mine.data ?? []) as unknown as CreditRow[], (co.data ?? []) as { item_id: string; profile_id: string }[], (jobs.data ?? []) as JobRow[], claimed, barDrinks);
       // Bars past the counted ones keep their claimed tag but say no numbers, rather than a wrong one.
       for (const id of barIds.slice(WAITING_BARS)) waiting[id] = { ...waiting[id], drinks: 0, people: 0 };
@@ -169,7 +170,7 @@ export function useWorkedMenus(profileId: string | null | undefined) {
         .eq('person_profile_id', profileId!)
         .limit(50);
       if (error) throw error;
-      return ((data ?? []) as unknown as WorkedMenu[]).sort(
+      return (data ?? []).sort(
         (a, b) => (b.year ?? 0) - (a.year ?? 0) || a.name.localeCompare(b.name)
       );
     },
@@ -194,7 +195,7 @@ export function useProfilePositions(profile: Pick<Profile, 'id' | 'kind'> | null
       // a job that isn't confirmed yet can read it even when the other
       // profile is private, without that profile: leave those out here.
       const other = (p: Position) => (profile!.kind === 'person' ? p.bar : p.person).display_name;
-      return ((data ?? []) as unknown as Position[]).filter((p) => p.person && p.bar).sort((a, b) => Number(b.is_current) - Number(a.is_current) || other(a).localeCompare(other(b)));
+      return (data ?? []).filter((p) => p.person && p.bar).sort((a, b) => Number(b.is_current) - Number(a.is_current) || other(a).localeCompare(other(b)));
     },
   });
 }

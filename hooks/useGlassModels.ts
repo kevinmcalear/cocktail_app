@@ -67,7 +67,7 @@ export function useGlassModelSearch(term: string, glass: SketchGlass | null, { e
         })
         .select(GLASS_MODEL_SELECT);
       if (error) throw error;
-      return (data ?? []) as unknown as GlassModel[];
+      return (data ?? []) as GlassModel[];
     },
   });
 }
@@ -88,7 +88,7 @@ export function useDrinkGlassModel(itemId: string | null | undefined) {
         .eq('id', itemId!)
         .maybeSingle();
       if (error) throw error;
-      return (data as unknown as { glass_model: GlassModel | null } | null)?.glass_model ?? null;
+      return (data as { glass_model: GlassModel | null } | null)?.glass_model ?? null;
     },
   });
 }

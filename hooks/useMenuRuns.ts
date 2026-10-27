@@ -97,6 +97,7 @@ export function useMenuEditionDrinks(drinks: MenuEditionDrink[]) {
     queryFn: async (): Promise<MenuDrink[]> => {
       const { data, error } = await supabase.from('items').select(MENU_DRINK_COLUMNS).in('id', ids);
       if (error) throw error;
+      // ponytail: supabase-js can't type an embed on items' own foreign keys ("more than one relationship"), so the row is cast; hint it as items!<fk> to drop this.
       return ((data ?? []) as unknown as MenuItemRow[]).map((row) => toMenuDrink(row)).filter((d): d is MenuDrink => !!d);
     },
   });
@@ -125,7 +126,7 @@ export function useMenuCredits(itemIds: string[]) {
         .select('item_id, menu:menus(id, name, is_active, bar_id, bar:bars(name))')
         .in('item_id', itemIds);
       if (error) throw error;
-      const credits = groupMenuCredits((data ?? []) as unknown as MenuDrinkRow[]);
+      const credits = groupMenuCredits((data ?? []) as MenuDrinkRow[]);
       const barIds = [...new Set(credits.map((c) => c.barId).filter((id): id is string => !!id))];
       const profiles = barIds.length ? await supabase.from('profiles').select('id, bar_id').in('bar_id', barIds) : { data: [], error: null };
       if (profiles.error) throw profiles.error;

@@ -25,7 +25,7 @@ export function useItemVersions(itemId: string | null | undefined, enabled = tru
         .eq('item_id', itemId!)
         .order('version', { ascending: false });
       if (error) throw error;
-      return (data ?? []) as unknown as ItemVersion[];
+      return (data ?? []).map((v) => ({ ...v, snapshot: jsonAs<ItemVersion['snapshot']>(v.snapshot) }));
     },
   });
 }

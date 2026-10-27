@@ -54,7 +54,7 @@ export function SearchBar({
     <View style={[styles.bar, style]}>
       <Field
         // ponytail: callers hold a Tamagui ref (TamaguiElement types the RN View, not the input); both focus() and blur().
-        ref={ref as unknown as Ref<ComponentRef<typeof TextInput>>}
+        ref={ref as Ref<ComponentRef<typeof TextInput>>}
         label={placeholder}
         hideLabel
         icon="magnifyingglass"

@@ -149,7 +149,7 @@ export function DiscoverMap({ pins, selectedId, onSelect, onViewportChange, came
     const all = markers.current;
     const shown = areas.current;
     void Promise.all([import('maplibre-gl'), loadMapStyles()]).then(([ml]) => {
-      const container = host.current as unknown as HTMLElement | null;
+      const container = host.current as HTMLElement | null;
       if (cancelled || !container) return;
       lib.current = ml;
       const start = latest.current.camera;

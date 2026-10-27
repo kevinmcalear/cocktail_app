@@ -58,8 +58,6 @@ function toSummaryBase(row: MenuRow) {
 /** How many drinks a cover-less menu shows as its visual. */
 export const MENU_PICTURES = 4;
 
-type PictureItem = { id: string; name: string; item_images: ItemImageLink[] | ItemImageLink | null };
-
 /** Query keys, for invalidating after a write. */
 export const menuKeys = {
   all: ['menus-v2'] as const,
@@ -98,8 +96,7 @@ export function useVenueMenus(barId: string | null | undefined) {
       if (error) throw error;
       return (data ?? []).map((row) => {
         const event = one(row.events as { id: string; name: string; starts_at: string }[] | null);
-        type Drink = { item: PictureItem | PictureItem[] | null };
-        const drinks = (row.pictured ?? []) as unknown as Drink[];
+        const drinks = row.pictured ?? [];
         return {
           ...toSummaryBase(row as MenuRow),
           itemIds: (row.menu_drinks ?? []).map((d) => d.item_id).filter((id): id is string => !!id),

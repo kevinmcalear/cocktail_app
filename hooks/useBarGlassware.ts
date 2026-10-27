@@ -74,7 +74,7 @@ async function fetchBarGlassware(barId: string): Promise<BarGlass[]> {
     .order('created_at');
   if (error) throw error;
   type Row = Omit<BarGlass, 'bar_name' | 'supplier_name'> & { profiles: { display_name: string } | null; supplier: { name: string } | null };
-  return ((data ?? []) as unknown as Row[]).map(({ profiles, supplier, ...row }) => ({ ...withModel(row), supplier_name: supplier?.name ?? null, bar_name: profiles?.display_name ?? '' }));
+  return ((data ?? []) as Row[]).map(({ profiles, supplier, ...row }) => ({ ...withModel(row), supplier_name: supplier?.name ?? null, bar_name: profiles?.display_name ?? '' }));
 }
 
 /** A real glass's maker, series and designer, which live on its model. */

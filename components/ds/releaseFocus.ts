@@ -9,7 +9,8 @@ import type { GestureResponderEvent } from 'react-native';
  */
 export function releaseFocusAfterPointer(e: GestureResponderEvent) {
   // A key's press arrives as the bare DOM event, with no nativeEvent.
-  const native = (e.nativeEvent ?? e) as unknown as { detail?: number };
+  const native = (e.nativeEvent ?? e) as { detail?: number };
+  // ponytail: on web a React Native view is a DOM element, which RN's types don't describe.
   const el = e.currentTarget as unknown as HTMLElement | null;
   if ((native.detail ?? 0) > 0 && typeof document !== 'undefined' && el && document.activeElement === el) el.blur();
 }
