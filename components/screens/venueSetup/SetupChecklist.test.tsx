@@ -6,7 +6,9 @@ import { checklist } from '@/lib/setupChecklist';
 import { SetupChecklist } from './SetupChecklist';
 
 const [mockPush, mockNavigate, mockSkip, mockSetReviewing, mockStart] = [jest.fn(), jest.fn(), jest.fn(), jest.fn(), jest.fn()];
-let mockRun: { finished: boolean } | undefined = { finished: true };
+let mockRun: { finished: boolean; done: string[] } | undefined = { finished: true, done: [] };
+const BARE = { logo_url: null, primary_color: null, display_face: 'instrument_serif' };
+let mockBrand: typeof BARE | { logo_url: null; primary_color: string; display_face: string } = BARE;
 let mockDrinks: { inLibrary: number; reviewId: string | null } = { inLibrary: 0, reviewId: null };
 
 jest.mock('expo-router', () => ({ useRouter: () => ({ push: mockPush, navigate: mockNavigate }) }));
@@ -22,6 +24,17 @@ jest.mock('@/components/screens/firstRound/FirstCocktailChoices', () => {
   };
 });
 jest.mock('@/store/useBringIn', () => ({ useBringIn: { getState: () => ({ setReviewing: mockSetReviewing }) } }));
+let mockBrandLoading = false;
+jest.mock('@/hooks/useVenueBrand', () => ({ useVenueBrand: () => (mockBrandLoading ? { data: undefined, isLoading: true } : { data: mockBrand }) }));
+// How it looks, opened from Your team: a setup page whose footer saves and goes on.
+jest.mock('@/components/screens/venue/BrandScreen', () => {
+  const { SetupPage } = jest.requireActual('@/components/screens/onboarding/SetupPage');
+  return {
+    BrandSetup: ({ setup }: { setup: { footer: (s: { save: (then: () => void) => void; saving: boolean; ok: boolean }) => unknown } }) => (
+      <SetupPage footer={setup.footer({ save: (then) => then(), saving: false, ok: true })}>{null}</SetupPage>
+    ),
+  };
+});
 jest.mock('@/hooks/useBarGlassware', () => ({ useBarPageId: () => ({ data: 'page' }), useFlushHeldGlasses: () => {} }));
 jest.mock('@/hooks/useSetupChecklist', () => ({
   useSetupChecklist: () => ({
@@ -44,6 +57,7 @@ jest.mock('./SetupChecklistParts', () => {
       </Pressable>
     ),
     ClaimNote: () => null,
+    LookFirstNote: () => <Text>Your team’s invite wears this</Text>,
   };
 });
 // The steps it opens in place: each hands back with Next, Done or Back.
@@ -64,10 +78,15 @@ jest.mock('./MenuStep', () => ({ MenuStep: () => null }));
 jest.mock('@/hooks/useCapabilities', () => ({ useCapabilities: () => ({ data: [] }) }));
 jest.mock('@/hooks/useKitFromDrinks', () => ({ useKitFromDrinks: () => null }));
 jest.mock('./FromDrinksStep', () => ({ FromDrinksStep: () => null, fromDrinksCount: () => null }));
-jest.mock('./TeamStep', () => ({ TeamStep: () => null }));
+jest.mock('./TeamStep', () => {
+  const { Text } = jest.requireActual('react-native');
+  return { TeamStep: () => <Text>Team step</Text> };
+});
 
 beforeEach(() => {
-  mockRun = { finished: true };
+  mockRun = { finished: true, done: [] };
+  mockBrand = BARE;
+  mockBrandLoading = false;
   mockDrinks = { inLibrary: 0, reviewId: null };
   for (const m of [mockPush, mockNavigate, mockSkip, mockSetReviewing, mockStart]) m.mockReset();
 });
@@ -99,7 +118,7 @@ test('pages it opens: Basic information (Venue settings once setup is through, e
 });
 
 test('setup not through yet: Basic information picks venue setup up', async () => {
-  mockRun = { finished: false };
+  mockRun = { finished: false, done: ['find', 'place'] };
   await renderWithTamagui(<SetupChecklist barId="b1" name="Little Rye" />);
   await fireEvent.press(screen.getByRole('button', { name: 'Basic information, done' }));
   expect(mockPush).toHaveBeenLastCalledWith('/venue-setup?bar=b1');
@@ -124,4 +143,29 @@ test('First drinks not done: the four starts under it, coming back to the checkl
   await renderWithTamagui(<SetupChecklist barId="b1" name="Little Rye" />);
   await fireEvent.press(screen.getByRole('button', { name: 'Margarita' }));
   expect(mockStart).toHaveBeenCalledWith('b1', 'Margarita', true);
+});
+
+test('Your team waits for How it looks: it opens the look first, then the team', async () => {
+  await renderWithTamagui(<SetupChecklist barId="b1" name="Little Rye" />);
+  expect(screen.getByText('After how Little Rye looks: the invite wears it')).toBeTruthy();
+  await fireEvent.press(screen.getByRole('button', { name: 'Your team, skipped' }));
+  expect(screen.getByText('Your team’s invite wears this')).toBeTruthy();
+  expect(screen.getByText('How Little Rye looks')).toBeTruthy();
+  await fireEvent.press(screen.getByText('Done, on to your team'));
+  expect(screen.getByText('Team step')).toBeTruthy();
+});
+
+test('with a look set, Your team goes straight to the invites', async () => {
+  mockBrand = { logo_url: null, primary_color: '#D0643B', display_face: 'instrument_serif' };
+  await renderWithTamagui(<SetupChecklist barId="b1" name="Little Rye" />);
+  expect(screen.getByText('Invite who works here, in Little Rye’s look')).toBeTruthy();
+  await fireEvent.press(screen.getByRole('button', { name: 'Your team, skipped' }));
+  expect(screen.getByText('Team step')).toBeTruthy();
+});
+
+test('the rows wait for the look to load, so Your team can\'t skip the gate', async () => {
+  mockBrandLoading = true;
+  await renderWithTamagui(<SetupChecklist barId="b1" name="Little Rye" />);
+  expect(screen.getByText('Loading…')).toBeTruthy();
+  expect(screen.queryByRole('button', { name: 'Your team, skipped' })).toBeNull();
 });

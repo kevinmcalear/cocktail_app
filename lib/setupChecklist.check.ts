@@ -1,7 +1,7 @@
 // Checks for lib/setupChecklist.ts (owner-setup step 5). Run: npm run test:unit
 import assert from 'node:assert/strict';
 
-import { barSetUp, checklist, checklistIntro, drinksNote, kitNote } from './setupChecklist';
+import { barSetUp, checklist, checklistIntro, drinksNote, kitNote, lookSet } from './setupChecklist';
 
 const none = { bar: false, kit: false, bottles: false, menu: false, drinks: false, team: false };
 
@@ -43,3 +43,11 @@ assert.equal(drinksNote(18, 28), '18 in your Library, 28 still to check');
 assert.equal(drinksNote(18, 0), '18 in your Library');
 assert.equal(drinksNote(0, 46), '46 still to check');
 assert.equal(drinksNote(0, 0), undefined);
+
+// Your team waits for the look: a logo, a colour, a changed font, or How it looks done in venue setup.
+const bare = { logo_url: null, primary_color: null, display_face: 'instrument_serif' };
+assert.equal(lookSet(bare), false);
+assert.equal(lookSet({ ...bare, primary_color: '#D0643B' }), true);
+assert.equal(lookSet({ ...bare, logo_url: 'https://x/logo.png' }), true);
+assert.equal(lookSet({ ...bare, display_face: 'fraunces' }), true);
+assert.equal(lookSet(bare, { done: ['find', 'place', 'look'] }), true);

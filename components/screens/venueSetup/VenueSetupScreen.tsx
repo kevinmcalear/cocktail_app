@@ -22,11 +22,10 @@ import { SetupClaimStep } from './SetupClaimStep';
 import { SetupIntro } from './SetupIntro';
 import { SetupRail } from './SetupRail';
 import { setupCopy } from './setupCopy';
-import { TeamStep } from './TeamStep';
 import { VisibilityStep } from './VisibilityStep';
 import { WhereWhenStep } from './WhereWhenStep';
 
-const BRANDED: VenueScreen[] = ['look', 'visibility', 'team', 'done'];
+const BRANDED: VenueScreen[] = ['look', 'visibility', 'done'];
 
 /**
  * Venue setup as a guided flow (b03): intro, finding the bar, four steps,
@@ -70,7 +69,7 @@ export function VenueSetupScreen() {
     seeded.current = true;
     if (params.claim && useVenueSetup.getState().runs[key]?.profileId !== params.claim) save(key, { profileId: params.claim, barId: null, name: '', done: ['find'], finished: false, held: undefined });
   }, [picked, params.claim, key, save]);
-  // Opened straight onto the claim (Venue settings, Tonight, the checklist's card): Back leaves, not to the team step.
+  // Opened straight onto the claim (Venue settings, Tonight, the checklist's card): Back leaves, not to a step.
   const [claimBack, setClaimBack] = useState(screen === 'claim');
   // At the end, setup is through: "Set up <bar>" takes over (lib/setupChecklist.ts).
   useEffect(() => {
@@ -233,7 +232,6 @@ export function VenueSetupScreen() {
       {screen === 'visibility' && settled ? (
         <VisibilityStep barId={barId} name={name} claim={claim} writable={writable} held={run?.held} onHold={(c) => hold(keyRef.current, c)} onDone={() => finish('visibility')} />
       ) : null}
-      {screen === 'team' && barId ? <TeamStep barId={barId} name={name} pending={claimState === 'pending'} onDone={() => finish('team')} /> : null}
       {screen === 'done' && barId ? (
         <DoneStep
           barId={barId}
@@ -244,7 +242,7 @@ export function VenueSetupScreen() {
           }}
         />
       ) : null}
-      {(screen === 'look' || screen === 'team' || screen === 'done') && !barId ? (
+      {(screen === 'look' || screen === 'done') && !barId ? (
         // Picked from the rail before the venue exists: make it first.
         <SetupPage footer={<SetupFooter label={createVenue.isPending ? 'Making it…' : `Make ${name || 'the venue'}`} pending={createVenue.isPending} onPress={needVenue(() => undefined)} />}>
           <Body tone="muted">{`This step works on your venue. We’ll make ${name || 'it'} with you as its Admin.`}</Body>

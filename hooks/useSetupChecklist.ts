@@ -55,8 +55,8 @@ export function useSetupChecklist(barId: string) {
   const team = (invites.data?.length ?? 0) + Math.max(0, (members.data?.length ?? 1) - 1);
   const list: Checklist = checklist(
     { bar: run ? barSetUp(run) : true, kit: glasses + ice + tools > 0, bottles: bottles > 0, menu: current.length > 0, drinks: inLibrary > 0 || !!withDrinks, team: team > 0 },
-    // Venue setup's team step passed with nobody invited counts as skipped here.
-    [...(run?.skipped ?? []), ...(run?.done.includes('team') ? ['team'] : [])]
+    // A run from before 26 Oct that passed venue setup's old team step with nobody invited: still skipped, so a finished checklist stays finished.
+    [...(run?.skipped ?? []), ...((run?.done as readonly string[] | undefined)?.includes('team') ? ['team'] : [])]
   );
   const notes: Partial<Record<ChecklistKey, string>> = {
     kit: kitNote(glasses, ice, tools),
