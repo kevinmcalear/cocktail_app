@@ -97,6 +97,8 @@ export function DrinkSpec({ editor, ...lines }: LinesProps & { editor: DrinkEdit
           onMove={(by) => ed.setParts(movePart(parts, sheet.at, by))}
           onRemove={() => ed.setParts(removePart(parts, sheet.at))}
           onOff={() => ed.setMadeInParts(false)}
+          fresh={!!open.fresh}
+          onFresh={(fresh) => ed.setParts(parts.map((p, i) => (i === sheet.at ? { ...p, fresh } : p)))}
         />
       ) : null}
     </>
@@ -175,7 +177,7 @@ function PartHead({ n, part, inputRef, onChange, onMethod, onOptions }: { n: num
  * go to the part before, and Undo is in the toolbar), and the Made in parts
  * switch. Each runs once the sheet has gone, so it never changes under it.
  */
-function PartSheet({ visible, n, count, label, lines, onClose, onGone, onRename, onMove, onRemove, onOff }: { visible: boolean; n: number; count: number; label: (at: number) => string; lines: string[]; onClose: () => void; onGone: () => void; onRename: () => void; onMove: (by: -1 | 1) => void; onRemove: () => void; onOff: () => void }) {
+function PartSheet({ visible, n, count, label, lines, onClose, onGone, onRename, onMove, onRemove, onOff, fresh, onFresh }: { visible: boolean; n: number; count: number; label: (at: number) => string; lines: string[]; onClose: () => void; onGone: () => void; onRename: () => void; onMove: (by: -1 | 1) => void; onRemove: () => void; onOff: () => void; fresh: boolean; onFresh: (fresh: boolean) => void }) {
   const then = useRef<(() => void) | null>(null);
   const run = () => {
     const next = then.current;
@@ -208,8 +210,23 @@ function PartSheet({ visible, n, count, label, lines, onClose, onGone, onRename,
       {n > 1 ? <MoreRow icon="arrow.up" label="Move up" onPick={() => (then.current = () => onMove(-1))} /> : null}
       {n < count ? <MoreRow icon="arrow.down" label="Move down" onPick={() => (then.current = () => onMove(1))} /> : null}
       <MoreRow icon="trash" label="Remove this part" danger note={`${moves}Undo is in the toolbar.`} onPick={() => (then.current = onRemove)} />
+      {n > 1 ? <MadeFresh fresh={fresh} onFresh={onFresh} /> : null}
       <PartsOff onOff={() => (then.current = onOff)} />
     </Sheet>
+  );
+}
+
+/** A later part made fresh for each serve, or ahead in its own container when the drink is batched (the default; board made-parts-making). */
+function MadeFresh({ fresh, onFresh }: { fresh: boolean; onFresh: (fresh: boolean) => void }) {
+  const ds = useDs();
+  return (
+    <View style={[styles.switch, { backgroundColor: ds.c.raised }]}>
+      <View style={styles.flex}>
+        <Body>Made fresh for each serve</Body>
+        <Caption tone="muted">Off, a batch makes it ahead in its own container</Caption>
+      </View>
+      <Switch value={fresh} onValueChange={onFresh} label="Made fresh for each serve" />
+    </View>
   );
 }
 

@@ -20,10 +20,12 @@ export interface DraftPart {
   join?: PartJoin | null;
   lines: string[];
   methods: WizardPick[];
+  /** Made fresh for each serve, not ahead in the batch (items.parts "fresh"; a later part only). */
+  fresh?: boolean;
 }
 
-/** A part as items.parts keeps it. A type, not an interface, so it passes as Json. */
-export type StoredPart = { name: string; join?: PartJoin };
+/** A part as items.parts keeps it. A type, not an interface, so it passes as Json. `fresh`: made fresh for each serve, not ahead in a batch (20261126200000). */
+export type StoredPart = { name: string; join?: PartJoin; fresh?: boolean };
 
 /** Made in parts turned on: the drink so far is part 1, and part 2 floats on it. */
 export function startParts(d: Pick<WizardDraft, 'lines' | 'methods'>): DraftPart[] {
@@ -58,7 +60,7 @@ export function linePart(parts: readonly DraftPart[] | null | undefined, key: st
 
 /** items.parts: a blank name becomes "Part 2", and the first part has no join. */
 export const storedParts = (parts: readonly DraftPart[]): StoredPart[] =>
-  parts.map((p, i) => ({ name: p.name.trim() || `Part ${i + 1}`, ...(i > 0 && p.join ? { join: p.join } : {}) }));
+  parts.map((p, i) => ({ name: p.name.trim() || `Part ${i + 1}`, ...(i > 0 && p.join ? { join: p.join } : {}), ...(i > 0 && p.fresh ? { fresh: true } : {}) }));
 
 /** items.parts as read back, or null when it isn't a list of named parts. */
 export function readParts(json: unknown): StoredPart[] | null {
@@ -148,7 +150,7 @@ export function removePart(parts: readonly DraftPart[], at: number): DraftPart[]
 // --- Making it, part by part (board made-parts-making): the service view, the batch sheet, tick as I go ---
 
 /** A part as the screens a drink is made from head it: its number, name, method names, how it's made in a phrase, and its join. */
-export type MakingPart = { n: number; name: string; methods: string[]; how: string | null; join: PartJoin | null };
+export type MakingPart = { n: number; name: string; methods: string[]; how: string | null; join: PartJoin | null; fresh?: boolean };
 
 /** Which part a line or method is in, 1 to `count`: none is the first, and one past the last (never saved) is the last. */
 export const partOf = (part: number | null | undefined, count: number): number => Math.min(Math.max(part ?? 1, 1), count);
@@ -163,7 +165,7 @@ export function makingParts(
   return parts.map((p, i) => {
     const names = sorted.flatMap((m) => (partOf(m.part, parts.length) === i + 1 && m.method?.name ? [m.method.name] : []));
     // With no lines and no join, a part's sentence is just the phrase and its full stop.
-    return { n: i + 1, name: p.name, methods: names, how: names.length ? partSentence(names, [], null).slice(0, -1) : null, join: i > 0 ? (p.join ?? null) : null };
+    return { n: i + 1, name: p.name, methods: names, how: names.length ? partSentence(names, [], null).slice(0, -1) : null, join: i > 0 ? (p.join ?? null) : null, ...(i > 0 && p.fresh ? { fresh: true } : {}) };
   });
 }
 
@@ -175,4 +177,15 @@ export function byPart<T extends { part?: number | null }>(lines: readonly T[], 
 /** The join as the last step of its part: "Float it on top", "Pour it in". */
 export function joinStep(join: PartJoin | null | undefined): string | null {
   return join === 'float' ? 'Float it on top' : join === 'pour' ? 'Pour it in' : null;
+}
+
+// --- Made ahead or made fresh (batch, every part made ahead; approved 27 Oct 2026) ---
+
+/** items.parts with part `n` made fresh for each serve, or ahead (the default, so the key goes). The first part is always the bottle. */
+export function setPartFresh(parts: readonly StoredPart[], n: number, fresh: boolean): StoredPart[] {
+  return parts.map((p, i) => {
+    if (i !== n - 1 || i === 0) return p;
+    const { fresh: _, ...rest } = p;
+    return fresh ? { ...rest, fresh: true } : rest;
+  });
 }

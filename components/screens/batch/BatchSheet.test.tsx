@@ -11,6 +11,11 @@ jest.mock('@/components/tools/ToolsSheet', () => ({ ToolsSheet: () => null }));
 jest.mock('@/lib/shareLink', () => ({ shareText: jest.fn() }));
 jest.mock('@/hooks/useBatchPrep', () => ({ useShelfLives: () => ({ data: {} }), useSaveBatchAsPrep: () => ({ mutateAsync: jest.fn(), isPending: false, error: null }) }));
 jest.mock('expo-router', () => ({ useRouter: () => ({ push: jest.fn() }) }));
+jest.mock('@/hooks/useBarKit', () => ({ useBarKit: () => ({ data: [] }) }));
+jest.mock('@/hooks/useMyProfile', () => ({ useMyProfile: () => ({ data: { displayName: 'Eddie Kim' } }) }));
+const mockSetFresh = jest.fn();
+jest.mock('@/hooks/useServiceSpec', () => ({ useSetPartFresh: () => ({ mutate: mockSetFresh, error: null }) }));
+jest.mock('react-native-svg', () => ({ __esModule: true, default: () => null, Path: () => null }));
 
 const line = (id: string, name: string, amount: number, unit: string, abv: number | null = null, atService?: boolean) => ({
   id,
@@ -96,10 +101,11 @@ const irishParts = [
   { n: 1, name: 'The coffee', methods: ['Build'], how: 'Build in the glass', join: null },
   { n: 2, name: 'The cream', methods: ['Whip (whisk or frother)'], how: 'Whip with a whisk or frother', join: 'float' as const },
 ];
-const openIrish = (barId: string | null = 'bar') =>
-  renderWithTamagui(<BatchSheet visible onClose={jest.fn()} name="Irish Coffee" lines={irish} methodNames={['Build', 'Whip (whisk or frother)']} lockedUntil={null} initialServes={12} barId={barId} parts={irishParts} specLabel="House spec" />);
+const creamFresh = [irishParts[0], { ...irishParts[1], fresh: true }];
+const openIrish = (barId: string | null = 'bar', parts = creamFresh) =>
+  renderWithTamagui(<BatchSheet visible onClose={jest.fn()} name="Irish Coffee" lines={irish} methodNames={['Build', 'Whip (whisk or frother)']} lockedUntil={null} initialServes={12} barId={barId} parts={parts} specLabel="House spec" itemId="irish" canEdit />);
 
-test('a drink in parts bottles part 1 and makes the rest fresh for each serve', async () => {
+test('a part made fresh: the bottle holds part 1 and the cream is made for each serve, as before', async () => {
   await openIrish();
   expect(screen.getByText('House spec · made in 2 parts')).toBeTruthy();
   expect(screen.getByText('IN THE BOTTLE · PART 1, THE COFFEE')).toBeTruthy();
@@ -109,6 +115,49 @@ test('a drink in parts bottles part 1 and makes the rest fresh for each serve', 
   expect(screen.getByText('Made fresh for each serve: whip with a whisk or frother')).toBeTruthy();
   expect(screen.getByLabelText('30 ml, Cream')).toBeTruthy();
   expect(screen.getByLabelText('Then float it on top')).toBeTruthy();
+  expect(screen.queryByText('IN ORDER')).toBeNull();
+  // Whoever can edit the drink sets it back to made ahead, on the part's head.
+  await fireEvent.press(screen.getByRole('radio', { name: 'Made ahead' }));
+  expect(mockSetFresh).toHaveBeenCalledWith({ n: 2, fresh: false });
+});
+
+// Every part made ahead (board made-parts-making, approved 27 Oct 2026): the cream in its own container.
+test('every part made ahead: the cream in its own container, poured from it at the station', async () => {
+  await openIrish('bar', irishParts);
+  expect(screen.getByText('House spec · made in 2 parts, both made ahead')).toBeTruthy();
+  expect(screen.getByText('serves · every part scales')).toBeTruthy();
+  expect(screen.getByLabelText('Number of serves')).toBeTruthy();
+  expect(screen.getByText('IN ITS OWN CONTAINER · PART 2, THE CREAM')).toBeTruthy();
+  expect(screen.getByLabelText('360 ml, Cream')).toBeTruthy();
+  expect(screen.getByText('use by close tonight')).toBeTruthy();
+  expect(screen.getByRole('button', { name: 'Container: 1 × 500 ml deli container, change' })).toBeTruthy();
+  expect(screen.getByLabelText('55 ml, Irish Coffee, the coffee bottle')).toBeTruthy();
+  expect(screen.getByText('From its container, already whipped')).toBeTruthy();
+  expect(screen.getByLabelText('30 ml, Cream, the cream container')).toBeTruthy();
+  for (const step of ['Pour 55 ml from the coffee bottle', 'Add 120 ml Hot coffee', 'Spoon 30 ml from the cream container', 'Float it on top']) expect(screen.getByText(step)).toBeTruthy();
+  // One serves count scales every part.
+  await fireEvent.changeText(screen.getByDisplayValue('12'), '24');
+  expect(screen.getByLabelText('720 ml, Cream')).toBeTruthy();
+  expect(screen.getByRole('button', { name: 'Container: 1 × 1 L deli container, change' })).toBeTruthy();
+  // The container and use-by change on a tap.
+  await fireEvent.press(screen.getByRole('button', { name: 'Container: 1 × 1 L deli container, change' }));
+  await fireEvent.press(screen.getByRole('radio', { name: '500 ml deli container' }));
+  expect(screen.getByRole('button', { name: 'Container: 2 × 500 ml deli container, change' })).toBeTruthy();
+  await fireEvent.press(screen.getByRole('button', { name: 'Use by: use by close tonight, change' }));
+  await fireEvent.press(screen.getByRole('radio', { name: '1 day' }));
+  expect(screen.queryByText('use by close tonight')).toBeNull();
+  // Made fresh, on the part's head.
+  await fireEvent.press(screen.getAllByRole('radio', { name: 'Made fresh' })[0]);
+  expect(mockSetFresh).toHaveBeenCalledWith({ n: 2, fresh: true });
+});
+
+test('make now: a tick list and a label for each container', async () => {
+  await openIrish('bar', irishParts);
+  await fireEvent.press(screen.getByRole('button', { name: 'Make now' }));
+  await fireEvent.press(screen.getByRole('checkbox', { name: '360 ml, Cream' }));
+  expect(screen.getByRole('checkbox', { name: '360 ml, Cream', checked: true })).toBeTruthy();
+  expect(screen.getByRole('checkbox', { name: '480 ml, Irish whiskey' })).toBeTruthy();
+  expect(screen.getAllByText(/^Irish Coffee · The (coffee|cream)$/)).toHaveLength(2);
 });
 
 test('at home, tick as I go makes every line part by part, the float last', async () => {

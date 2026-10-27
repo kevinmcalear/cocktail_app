@@ -3,24 +3,26 @@ import { StyleSheet, View } from 'react-native';
 
 import { Body, Button, Caption } from '@/components/ds';
 import { buildBatch, type Batch, type BatchLine, type VolumeUnit } from '@/lib/batch';
+import { fromContainer, inOrderSteps, partWord, type AheadPart, type OrderPart } from '@/lib/batchContainers';
 import { byPart, joinStep, type MakingPart } from '@/lib/drinkParts';
 import type { SpecLine } from '@/lib/spec';
 
 import { JoinLine, PartHead } from '../drink/DrinkParts';
+import { FreshChoice, InOrder } from './BatchContainers';
 import { BatchRow } from './BatchParts';
 
 const AMOUNT_W = 88;
 const lowerFirst = (s: string) => s.charAt(0).toLowerCase() + s.slice(1);
 
-/** Each part after the first, made fresh for each serve: its lines for one serve. A batch holds part 1 only (Kevin, 27 Oct 2026). */
-export function freshParts(lines: SpecLine[], parts: readonly MakingPart[], unit: VolumeUnit): { part: MakingPart; rows: BatchLine[] }[] {
+/** Each part after the first made fresh for each serve: its lines for one serve. A part with a container (`ahead`, lib/batchContainers.ts) isn't. */
+export function freshParts(lines: SpecLine[], parts: readonly MakingPart[], unit: VolumeUnit, ahead: readonly AheadPart[] = []): { part: MakingPart; rows: BatchLine[] }[] {
   const grouped = byPart(lines, parts.length);
-  return parts.slice(1).map((part) => ({ part, rows: buildBatch(grouped[part.n - 1], [], 1, { unit }).lines }));
+  return parts.slice(1).filter((p) => !ahead.some((a) => a.part.n === p.n)).map((part) => ({ part, rows: buildBatch(grouped[part.n - 1], [], 1, { unit }).lines }));
 }
 
 /** The later parts for the batch's share text: "The cream, fresh for each serve: 30 ml Cream, then float it on top." */
-export function freshPartsText(lines: SpecLine[], parts: readonly MakingPart[], unit: VolumeUnit): string[] {
-  return freshParts(lines, parts, unit).map(({ part, rows }) => {
+export function freshPartsText(lines: SpecLine[], parts: readonly MakingPart[], unit: VolumeUnit, ahead: readonly AheadPart[] = []): string[] {
+  return freshParts(lines, parts, unit, ahead).map(({ part, rows }) => {
     const join = joinStep(part.join);
     const what = rows.map((r) => `${r.amount} ${r.ingredient}`.trim()).join(', ');
     return `${part.name}, fresh for each serve${what ? `: ${what}` : ''}${join ? `, then ${lowerFirst(join)}` : ''}.`;
@@ -36,27 +38,67 @@ export function partOneAbv(batch: Batch): number | null {
 /**
  * The batch sheet's station list for a drink made in parts (board made-parts-making):
  * part 1 is the pour from the bottle and what's added to it (`first`, the rows as a
- * one-part drink shows them); every later part is made fresh, ending on its join.
+ * one-part drink shows them, `added` the same as words); then each later part in
+ * order, poured from its own container when made ahead (`ahead`) or made fresh,
+ * each ending on its join. With a container, the numbered "In order" list follows.
  */
-export function StationParts({ name, pour, first, parts, lines, unit }: { name: string; pour: string | null; first: ReactNode; parts: readonly MakingPart[]; lines: SpecLine[]; unit: VolumeUnit }) {
-  return (
-    <View>
-      <Caption tone="muted" style={styles.eyebrow}>
-        AT THE STATION, EACH SERVE
-      </Caption>
-      <PartHead n={1} name={parts[0].name} how={parts[0].how} />
-      {pour ? <BatchRow ingredient={`${name}, from the bottle`} amount={pour} tone="accent" /> : null}
-      {first}
-      {freshParts(lines, parts, unit).map(({ part, rows }) => (
+export function StationParts({ name, pour, first, added, parts, ahead, lines, unit, onFresh }: {
+  name: string;
+  pour: string | null;
+  first: ReactNode;
+  added: readonly { amount: string; ingredient: string }[];
+  parts: readonly MakingPart[];
+  ahead: readonly AheadPart[];
+  lines: SpecLine[];
+  unit: VolumeUnit;
+  /** Someone who can edit the drink sets a part made fresh or ahead. */
+  onFresh?: (n: number, fresh: boolean) => void;
+}) {
+  const fresh = freshParts(lines, parts, unit, ahead);
+  const order: OrderPart[] = [{ part: parts[0], pour, lines: added }];
+  const later = parts.slice(1).map((part) => {
+    const a = ahead.find((x) => x.part.n === part.n);
+    if (a) {
+      order.push({ part, pour: a.pour, lines: a.perServe.map((l) => ({ amount: l.perServe, ingredient: l.ingredient })), whipped: a.whipped });
+      const word = partWord(part.name);
+      return (
         <View key={part.n}>
-          <PartHead n={part.n} name={part.name} how={part.how ? `Made fresh for each serve: ${lowerFirst(part.how)}` : 'Made fresh for each serve'} />
-          {rows.map((l) => (
+          <PartHead n={part.n} name={part.name} how={fromContainer(part.methods)} />
+          <BatchRow ingredient={a.rows.length === 1 ? `${a.rows[0].ingredient}, the ${word} container` : `From the ${word} container`} amount={a.pour} tone="accent" />
+          {a.perServe.map((l) => (
             <BatchRow key={l.key} ingredient={l.ingredient} amount={l.perServe} />
           ))}
           <JoinLine join={part.join} inset={AMOUNT_W} />
         </View>
-      ))}
-    </View>
+      );
+    }
+    const rows = fresh.find((f) => f.part.n === part.n)?.rows ?? [];
+    order.push({ part, pour: null, lines: rows.map((l) => ({ amount: l.perServe, ingredient: l.ingredient })) });
+    return (
+      <View key={part.n}>
+        <PartHead n={part.n} name={part.name} how={part.how ? `Made fresh for each serve: ${lowerFirst(part.how)}` : 'Made fresh for each serve'} />
+        {onFresh && part.fresh ? <FreshChoice name={part.name} fresh onChange={(v) => onFresh(part.n, v)} /> : null}
+        {rows.map((l) => (
+          <BatchRow key={l.key} ingredient={l.ingredient} amount={l.perServe} />
+        ))}
+        <JoinLine join={part.join} inset={AMOUNT_W} />
+      </View>
+    );
+  });
+  const bottle = ahead.length ? `${name}, the ${partWord(parts[0].name)} bottle` : `${name}, from the bottle`;
+  return (
+    <>
+      <View>
+        <Caption tone="muted" style={styles.eyebrow}>
+          AT THE STATION, EACH SERVE
+        </Caption>
+        <PartHead n={1} name={parts[0].name} how={parts[0].how} />
+        {pour ? <BatchRow ingredient={bottle} amount={pour} tone="accent" /> : null}
+        {first}
+        {later}
+      </View>
+      {ahead.length ? <InOrder steps={inOrderSteps(order)} /> : null}
+    </>
   );
 }
 

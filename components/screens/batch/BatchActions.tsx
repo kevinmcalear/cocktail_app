@@ -3,8 +3,7 @@ import { StyleSheet, View } from 'react-native';
 
 import { Button, Caption, TextLink } from '@/components/ds';
 import { space } from '@/constants/tokens';
-import { useSaveBatchAsPrep } from '@/hooks/useBatchPrep';
-import type { PrepLine } from '@/lib/batchPrep';
+import { useSaveBatchAsPrep, type BatchPrep } from '@/hooks/useBatchPrep';
 import { shareText } from '@/lib/shareLink';
 
 interface BatchActionsProps {
@@ -16,8 +15,8 @@ interface BatchActionsProps {
   making: boolean;
   onMake: () => void;
   onDilution: () => void;
-  /** For the prep card: the bottle's recipe, its yield and how long it keeps. */
-  prep: { lines: PrepLine[]; yieldMl: number; shelfHours: number | null };
+  /** For the prep cards: each container's name, recipe, yield and how long it keeps (one for a drink in one part). */
+  preps: BatchPrep[];
   /** The batch as text, to share. */
   text: string;
   onSaved: () => void;
@@ -28,7 +27,7 @@ interface BatchActionsProps {
  * venue saves the bottle as a prep card or makes it now; at home you share it
  * or make it, ticking each line off. Making turns the lines into a checklist.
  */
-export function BatchActions({ name, barId, canPrep, making, onMake, onDilution, prep, text, onSaved }: BatchActionsProps) {
+export function BatchActions({ name, barId, canPrep, making, onMake, onDilution, preps, text, onSaved }: BatchActionsProps) {
   const router = useRouter();
   const save = useSaveBatchAsPrep(barId);
   const make = making ? 'Done making' : barId ? 'Make now' : 'Make it, tick as I go';
@@ -44,9 +43,9 @@ export function BatchActions({ name, barId, canPrep, making, onMake, onDilution,
               variant="secondary"
               disabled={save.isPending}
               onPress={() =>
-                save.mutateAsync({ name, ...prep }).then((id) => {
+                save.mutateAsync(preps).then(([id]) => {
                   onSaved();
-                  router.push(`/ingredient/${id}` as Href);
+                  if (id) router.push(`/ingredient/${id}` as Href);
                 }, () => {})
               }
               style={styles.flex}

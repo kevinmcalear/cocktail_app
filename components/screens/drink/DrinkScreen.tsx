@@ -266,6 +266,7 @@ function DrinkPage({ item, inStudyPile, onToggleStudyPile, canEdit, adminFix = f
           barId={staff ? item.bar_id : null}
           canPrep={caps.includes('house_made')}
           parts={makingParts(item.madeInParts, item.item_methods)}
+          itemId={item.id}
         />
       ) : null}
       {strength ? (
