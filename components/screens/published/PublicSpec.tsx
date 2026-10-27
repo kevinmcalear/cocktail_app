@@ -1,12 +1,15 @@
 import { useRouter } from 'expo-router';
+import type { ReactNode } from 'react';
 import { StyleSheet, View } from 'react-native';
 
 import { Body, Button, Caption, Headline, SpecRow, Surface, useBreakpoint, useDs } from '@/components/ds';
 import { DrinkFacts, type Fact } from '@/components/screens/drink/DrinkFacts';
+import { PartsList } from '@/components/screens/drink/DrinkParts';
 import { IconSymbol } from '@/components/ui/icon-symbol';
 import { radius, space } from '@/constants/tokens';
 import { useSignedIn } from '@/ctx/AuthContext';
 import type { PublishedDrinkPage } from '@/hooks/usePublished';
+import { partSentence } from '@/lib/drinkParts';
 import { ingredientsLine } from '@/lib/publicDrink';
 import { specLines } from '@/lib/spec';
 
@@ -64,7 +67,7 @@ export function PublicSpec({
     );
   }
 
-  if (!signedIn) return <Teaser names={lines.map((l) => l.ingredient ?? 'House ingredient')} />;
+  if (!signedIn) return <Teaser names={lines.map((l) => l.ingredient ?? 'House ingredient')} parts={<PublicParts page={page} />} />;
 
   const measured = lines.some((l) => l.amount);
   return (
@@ -84,8 +87,23 @@ export function PublicSpec({
           />
         ))}
       </View>
+      <PublicParts page={page} />
       <PublicSpecChanges itemId={drink.id} who={who} />
     </View>
+  );
+}
+
+/** A drink made in parts, as the drink page lists it: each part's name and its lines. Only with the spec shared. */
+function PublicParts({ page }: { page: PublishedDrinkPage }) {
+  const parts = page.drink.parts;
+  if (!parts) return null;
+  return (
+    <PartsList
+      parts={parts.map((p, i) => {
+        const lines = specLines(page.recipes.filter((r) => (r.part ?? 1) === i + 1)).map((l) => l.ingredient ?? 'House ingredient');
+        return { name: p.name, text: partSentence([], lines, i > 0 ? p.join : null) };
+      })}
+    />
   );
 }
 
@@ -114,7 +132,7 @@ function LockedHeading() {
  * is a heading on a phone and the small capitals kicker beside the page on
  * wide screens (ppl-pub-drink-phone-teaser, -desktop).
  */
-function Teaser({ names }: { names: string[] }) {
+function Teaser({ names, parts }: { names: string[]; parts?: ReactNode }) {
   const ds = useDs();
   const router = useRouter();
   const wide = useBreakpoint() !== 'phone';
@@ -131,6 +149,7 @@ function Teaser({ names }: { names: string[] }) {
           ))}
         </View>
       ) : null}
+      {parts}
       <Surface style={styles.lock}>
         <View style={styles.lockText}>
           <IconSymbol name="lock.fill" size={18} color={ds.c.muted} />
