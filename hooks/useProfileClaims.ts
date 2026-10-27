@@ -99,7 +99,7 @@ export function useMyPersonClaim() {
         .order('created_at', { ascending: false })
         .limit(1);
       if (error) throw error;
-      const row = (data ?? [])[0] as unknown as { id: string; status: 'pending' | 'approved'; created_at: string; evidence: { confirm_bar?: string } | null; profile: { id: string; handle: string; display_name: string } } | undefined;
+      const row = (data ?? [])[0] as { id: string; status: 'pending' | 'approved'; created_at: string; evidence: { confirm_bar?: string } | null; profile: { id: string; handle: string; display_name: string } } | undefined;
       return row ? { id: row.id, status: row.status, created_at: row.created_at, confirm_bar: row.evidence?.confirm_bar ?? null, profile: { id: row.profile.id, handle: row.profile.handle, display_name: row.profile.display_name } } : null;
     },
   });
@@ -173,7 +173,7 @@ export function usePendingClaims() {
         .order('created_at')
         .limit(100);
       if (error) throw error;
-      const claims = (data ?? []) as unknown as Omit<ClaimForReview, 'claimant'>[];
+      const claims = (data ?? []) as Omit<ClaimForReview, 'claimant'>[];
       const userIds = [...new Set(claims.map((c) => c.user_id))];
       const people = userIds.length
         ? await supabase.from('profiles').select('user_id, display_name, handle').in('user_id', userIds)

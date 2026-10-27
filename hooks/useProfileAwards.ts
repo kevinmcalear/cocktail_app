@@ -20,7 +20,7 @@ export function useProfileAwards(profileId: string | null | undefined) {
         .select('id, award, year, position, title, source_url, status, is_finalist, on_profile, added_by, bar:profiles!bar_profile_id(id, handle, display_name)')
         .eq('profile_id', profileId!);
       if (error) throw error;
-      return sortAwards((data ?? []) as unknown as Award[]);
+      return sortAwards((data ?? []) as Award[]);
     },
   });
 }

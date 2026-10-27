@@ -21,7 +21,7 @@ export function useMenuPhotoDrop(target: RefObject<ComponentRef<typeof View> | n
   });
   useEffect(() => {
     // On web a View's ref is its DOM element.
-    const node = Platform.OS === 'web' ? (target.current as unknown as HTMLElement | null) : null;
+    const node = Platform.OS === 'web' ? (target.current as HTMLElement | null) : null;
     if (!node) return;
     const enter = (e: DragEvent) => {
       if (!e.dataTransfer?.types.includes('Files')) return;

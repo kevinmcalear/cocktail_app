@@ -40,7 +40,7 @@ function useRatedBarDrinks(barIds: string[]) {
         .limit(1, { referencedTable: 'spec' })
         .limit(1000);
       if (error) throw error;
-      const rows = (data ?? []) as unknown as { id: string; name: string; origin_bar_profile_id: string; item_images: ItemImageLink[] | null }[];
+      const rows = (data ?? []) as { id: string; name: string; origin_bar_profile_id: string; item_images: ItemImageLink[] | null }[];
       return rows.map((r) => ({ id: r.id, name: r.name, imageUrl: heroPicture(r.item_images)?.url ?? null, glass: null, barId: r.origin_bar_profile_id }));
     },
   });

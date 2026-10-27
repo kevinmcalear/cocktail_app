@@ -121,7 +121,7 @@ export function usePrepUsedIn(itemId: string | null | undefined) {
       const seen = new Map<string, UsedInPrep>();
       let garnish = false;
       const pours: PrepUsedIn['pours'] = {};
-      for (const row of (data ?? []) as unknown as { amount: number | string | null; unit: string | null; parent: { id: string; name: string; item_type: string } | null }[]) {
+      for (const row of (data ?? []) as { amount: number | string | null; unit: string | null; parent: { id: string; name: string; item_type: string } | null }[]) {
         if (row.parent?.item_type === 'ingredient') seen.set(row.parent.id, { id: row.parent.id, name: row.parent.name, amount: row.amount, unit: row.unit });
         else if (row.parent) pours[row.parent.id] = { amount: row.amount, unit: row.unit };
         if (isGarnishUnit(row.unit)) garnish = true;
@@ -414,8 +414,7 @@ export function useCatalogRecipe(name: string | null | undefined) {
       if (lines.error) throw lines.error;
       const row = item.data as { id: string; name: string; bar_id: string | null; ingredient_role: string | null } | null;
       if (!row || row.bar_id || row.ingredient_role !== 'prep') return null;
-      type Line = { amount: number | null; unit: string | null; preparation_notes: string | null; is_optional: boolean | null; display_ingredient: { id: string; name: string } | null };
-      const recipe = ((lines.data ?? []) as unknown as Line[])
+      const recipe = (lines.data ?? [])
         .filter((l) => l.display_ingredient)
         .map((l) => ({ id: l.display_ingredient!.id, name: l.display_ingredient!.name, amount: l.amount, unit: l.unit, note: l.preparation_notes, optional: !!l.is_optional }));
       if (!recipe.some((l) => l.amount != null)) return null;

@@ -102,8 +102,7 @@ export function useCatalogBottles(kind: DrinkKind, name: string) {
         .order('name')
         .limit(4);
       if (error) throw error;
-      type Row = Omit<CatalogBottle, 'categories'> & { item_categories: { categories: { name: string } | null }[] | null };
-      return ((data ?? []) as unknown as Row[]).map(({ item_categories, ...r }) => ({
+      return (data ?? []).map(({ item_categories, ...r }) => ({
         ...r,
         abv: r.abv === null ? null : Number(r.abv),
         categories: (item_categories ?? []).map((c) => c.categories?.name).filter((n): n is string => !!n),

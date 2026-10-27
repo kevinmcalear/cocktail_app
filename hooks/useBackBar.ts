@@ -38,7 +38,7 @@ export function useItemLocations(barId: string | null | undefined) {
     queryFn: async (): Promise<ItemLocation[]> => {
       const { data, error } = await supabase.from('item_locations').select(LOCATION_COLUMNS).eq('bar_id', barId!).order('sort_order').order('created_at');
       if (error) throw error;
-      return (data ?? []) as unknown as ItemLocation[];
+      return data ?? [];
     },
   });
 }
@@ -128,7 +128,7 @@ function useMenuIngredients(barId: string | null | undefined) {
         if (error) throw error;
         frontier.forEach((id) => fetched.add(id));
         const next: string[] = [];
-        for (const row of (data ?? []) as unknown as RecipeRow[]) {
+        for (const row of (data ?? []) as RecipeRow[]) {
           if (!row.display_ingredient) continue;
           (recipeOf[row.recipe_item_id] ??= []).push({ id: row.display_ingredient.id, name: row.display_ingredient.name });
           if (!fetched.has(row.display_ingredient.id)) next.push(row.display_ingredient.id);

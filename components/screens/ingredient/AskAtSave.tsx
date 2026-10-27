@@ -46,7 +46,7 @@ export function useAskAtSave(id: string, form: PrepForm, save: () => void): { as
   const isPrep = form.lines.length > 0 || item?.ingredient_role === 'prep';
   const needed = !!item && isPrep && (drinks > 1 || !canEdit);
 
-  const before: ChangeLine[] = ((data?.recipe ?? []) as unknown as OldRow[])
+  const before: ChangeLine[] = ((data?.recipe ?? []) as OldRow[])
     .filter((r) => r.ingredient?.id)
     .map((r) => ({ ingredientId: r.ingredient!.id!, name: r.ingredient!.name, amount: num(r.amount), unit: r.unit || null }));
   const after: ChangeLine[] = form.lines.map((l) => ({ ingredientId: l.ingredient_id, name: l.name, amount: num(l.amount), unit: l.unit || null }));

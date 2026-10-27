@@ -3,8 +3,7 @@ import { useMemo } from 'react';
 
 import { useAllIngredients, useIngredientsById } from '@/hooks/useDropdowns';
 import { byName } from '@/lib/allRows';
-import { type ItemImageLink } from '@/lib/itemImages';
-import { prepGroup, tileLine, venueShelves, yieldText, type PrepGroup, type ShelfIngredient } from '@/lib/libraryFilters';
+import { prepGroup, tileLine, venueShelves, yieldText, type PrepGroup } from '@/lib/libraryFilters';
 import { shelfLifeLabel } from '@/lib/scale';
 import { supabase } from '@/lib/supabase';
 import type { SearchItem } from '@/types/search';
@@ -27,8 +26,7 @@ export function useVenueShelves(venueId: string | null, items: SearchItem[]): Sh
   const { data: used } = useIngredientsById(usedIds);
   return useMemo(() => {
     if (!venueId || !venueRows || (usedIds.length && !used)) return EMPTY;
-    type Row = ShelfIngredient & { name: string; item_images?: ItemImageLink[] | null };
-    const rows = [...new Map([...venueRows, ...(used ?? [])].map((r) => [r.id, r])).values()].sort(byName) as unknown as Row[];
+    const rows = [...new Map([...venueRows, ...(used ?? [])].map((r) => [r.id, r])).values()].sort(byName);
     const byId = new Map(rows.map((r) => [r.id, r]));
     const own = new Map(items.filter((i) => i.category === 'Ingredient').map((i) => [i.id, i]));
     const tile = (id: string): SearchItem | null => {

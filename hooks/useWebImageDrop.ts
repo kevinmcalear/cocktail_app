@@ -15,7 +15,7 @@ export function useWebImageDrop(onUris: ((uris: string[], files: File[]) => void
     const active = useEffectEvent((value: boolean) => onActive?.(value));
 
     useEffect(() => {
-        const node = ref.current as unknown as HTMLElement | null;
+        const node = ref.current as HTMLElement | null;
         if (!enabled || !node?.addEventListener) return;
         let depth = 0;
         const hasFiles = (e: DragEvent) => !!e.dataTransfer?.types?.includes('Files');
