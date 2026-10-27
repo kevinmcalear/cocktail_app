@@ -1,4 +1,4 @@
-import { requireUser, type Caller } from "../_shared/auth.ts";
+import { callerName, requireUser, type Caller } from "../_shared/auth.ts";
 import { barSender, inviteEmail } from "../_shared/barEmail.ts";
 import { HttpError, requireUuid, serveJson } from "../_shared/http.ts";
 import { isLocalStack } from "../_shared/localStack.ts";
@@ -63,7 +63,7 @@ serveJson("send-bar-invite", async (req) => {
 
   const role = ROLE_LABELS[invite.role_level] ?? "a member";
   const joinUrl = await joinLink(caller, email, site, bar, { invite_bar: bar.name, invite_role: role, invite_name: invite.name ?? "" });
-  const sender = await senderName(caller);
+  const sender = await callerName(caller);
   const content = inviteEmail({
     bar: { name: bar.name, logoUrl: bar.logo_url, color: bar.primary_color, face: bar.display_face },
     role,
@@ -97,9 +97,3 @@ async function joinLink(caller: Caller, email: string, site: string, bar: { slug
   return `${staff}?token_hash=${encodeURIComponent(link.properties.hashed_token)}&type=email`;
 }
 
-/** The sender as the invitee will know them: their profile's name, else the name they signed up with. */
-async function senderName(caller: Caller): Promise<string | null> {
-  const { data } = await caller.admin.from("profiles").select("display_name").eq("user_id", caller.user.id).eq("kind", "person").maybeSingle();
-  const meta = caller.user.user_metadata?.full_name;
-  return data?.display_name?.trim() || (typeof meta === "string" ? meta.trim() : "") || null;
-}
