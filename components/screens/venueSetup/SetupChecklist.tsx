@@ -99,7 +99,15 @@ export function SetupChecklist({ barId, name, footer }: { barId: string; name: s
   }
   if (at === 'team') {
     return (
-      <SetupChromeProvider value={{ ...chrome, title: 'Invite your team', intro: `Each person gets an email from ${name} and lands in the app with your menus and specs already there.`, onBack: back }}>
+      <SetupChromeProvider
+        value={{
+          ...chrome,
+          title: 'Invite your team',
+          intro: wide ? 'Write on the left, see each person’s email on the right.' : `Each person gets one email from ${name}, in your look, with your welcome and their own note.`,
+          frameWidth: 'wide',
+          onBack: back,
+        }}
+      >
         <TeamStep barId={barId} name={name} pending={false} onDone={(sent) => (sent.length ? null : skip('team'), back())} />
       </SetupChromeProvider>
     );

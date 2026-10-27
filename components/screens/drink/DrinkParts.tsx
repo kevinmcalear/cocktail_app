@@ -11,33 +11,42 @@ import type { DatabaseItem } from '@/types/types';
  * Build in the glass: Irish whiskey, Hot coffee." Nothing for a drink in one part.
  */
 export function DrinkParts({ item }: { item: DatabaseItem }) {
-  const ds = useDs();
   const parts = item.madeInParts;
   if (!parts?.length) return null;
   const methods = [...(item.item_methods ?? [])].sort((a, b) => (a.sort_order ?? 0) - (b.sort_order ?? 0));
+  return (
+    <PartsList
+      parts={parts.map((p, i) => {
+        const lines = (item.recipes ?? []).filter((r) => r.part === i + 1).flatMap((r) => (r.ingredient?.name ? [r.ingredient.name] : []));
+        const how = methods.filter((m) => m.part === i + 1).flatMap((m) => (m.method?.name ? [m.method.name] : []));
+        return { name: p.name, text: partSentence(how, lines, i > 0 ? p.join : null) };
+      })}
+    />
+  );
+}
+
+/** The parts as numbered rows, each its name and its sentence: the drink page's look, the public page's too. */
+export function PartsList({ parts }: { parts: { name: string; text: string }[] }) {
+  const ds = useDs();
   return (
     <View style={styles.stack}>
       <Caption tone="muted" style={styles.label}>
         Method
       </Caption>
       <View role="list" aria-label="Made in parts" style={styles.stack}>
-        {parts.map((p, i) => {
-          const lines = (item.recipes ?? []).filter((r) => r.part === i + 1).flatMap((r) => (r.ingredient?.name ? [r.ingredient.name] : []));
-          const how = methods.filter((m) => m.part === i + 1).flatMap((m) => (m.method?.name ? [m.method.name] : []));
-          return (
-            <View key={i} role="listitem" style={styles.row}>
-              <View style={[styles.number, { backgroundColor: ds.accentFill.fill }]}>
-                <DsText variant="caption" color={ds.accentFill.text}>
-                  {String(i + 1)}
-                </DsText>
-              </View>
-              <Body style={styles.flex}>
-                <Body style={styles.name}>{`${p.name}. `}</Body>
-                {partSentence(how, lines, i > 0 ? p.join : null)}
-              </Body>
+        {parts.map((p, i) => (
+          <View key={i} role="listitem" style={styles.row}>
+            <View style={[styles.number, { backgroundColor: ds.accentFill.fill }]}>
+              <DsText variant="caption" color={ds.accentFill.text}>
+                {String(i + 1)}
+              </DsText>
             </View>
-          );
-        })}
+            <Body style={styles.flex}>
+              <Body style={styles.name}>{`${p.name}. `}</Body>
+              {p.text}
+            </Body>
+          </View>
+        ))}
       </View>
     </View>
   );

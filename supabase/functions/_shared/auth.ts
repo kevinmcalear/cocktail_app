@@ -58,3 +58,10 @@ export async function refundAiQuota(caller: Caller, fn: string): Promise<void> {
   const { error } = await caller.admin.rpc("refund_ai_quota", { p_user_id: caller.user.id, p_bar_id: null, p_fn: fn });
   if (error) console.error(`${fn}: quota refund failed:`, error);
 }
+
+/** The caller as other people know them: their profile's name, else the name they signed up with. */
+export async function callerName(caller: Caller): Promise<string | null> {
+  const { data } = await caller.admin.from("profiles").select("display_name").eq("user_id", caller.user.id).eq("kind", "person").maybeSingle();
+  const meta = caller.user.user_metadata?.full_name;
+  return data?.display_name?.trim() || (typeof meta === "string" ? meta.trim() : "") || null;
+}

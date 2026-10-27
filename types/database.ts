@@ -178,6 +178,7 @@ export type Database = {
           id: string
           invited_by: string | null
           name: string | null
+          note: string | null
           role_level: number
         }
         Insert: {
@@ -189,6 +190,7 @@ export type Database = {
           id?: string
           invited_by?: string | null
           name?: string | null
+          note?: string | null
           role_level: number
         }
         Update: {
@@ -200,6 +202,7 @@ export type Database = {
           id?: string
           invited_by?: string | null
           name?: string | null
+          note?: string | null
           role_level?: number
         }
         Relationships: [
@@ -403,6 +406,7 @@ export type Database = {
           slug: string
           target_gp: number | null
           tax_rate: number
+          welcome_message: string | null
         }
         Insert: {
           accent_light_color?: string | null
@@ -435,6 +439,7 @@ export type Database = {
           slug: string
           target_gp?: number | null
           tax_rate?: number
+          welcome_message?: string | null
         }
         Update: {
           accent_light_color?: string | null
@@ -467,6 +472,7 @@ export type Database = {
           slug?: string
           target_gp?: number | null
           tax_rate?: number
+          welcome_message?: string | null
         }
         Relationships: []
       }
@@ -5384,18 +5390,21 @@ export type Database = {
         Row: {
           bar_id: string
           deletes_at: string
+          emailed_at: string | null
           requested_at: string
           requested_by: string | null
         }
         Insert: {
           bar_id: string
           deletes_at: string
+          emailed_at?: string | null
           requested_at?: string
           requested_by?: string | null
         }
         Update: {
           bar_id?: string
           deletes_at?: string
+          emailed_at?: string | null
           requested_at?: string
           requested_by?: string | null
         }
@@ -5813,6 +5822,7 @@ export type Database = {
             origin: string | null
             origin_bar_profile_id: string | null
             origin_year: number | null
+            parts: Json | null
             publish_mode:
               | Database["public"]["Enums"]["item_publish_mode"]
               | null
@@ -5896,6 +5906,7 @@ export type Database = {
           origin: string | null
           origin_bar_profile_id: string | null
           origin_year: number | null
+          parts: Json | null
           publish_mode: Database["public"]["Enums"]["item_publish_mode"] | null
           published_at: string | null
           riff_of_id: string | null
@@ -6014,6 +6025,7 @@ export type Database = {
           p_bar_id: string
           p_email: string
           p_name?: string
+          p_note?: string
           p_role_level: number
         }
         Returns: {
@@ -6371,6 +6383,7 @@ export type Database = {
           slug: string
           target_gp: number | null
           tax_rate: number
+          welcome_message: string | null
         }
         SetofOptions: {
           from: "*"
@@ -6383,6 +6396,7 @@ export type Database = {
         Args: never
         Returns: {
           bar_name: string
+          bar_place: string
           creator_name: string
           item_id: string
           item_type: Database["public"]["Enums"]["entity_type"]
@@ -6400,6 +6414,7 @@ export type Database = {
         Returns: {
           bar_id: string
           deletes_at: string
+          emailed_at: string | null
           requested_at: string
           requested_by: string | null
         }
@@ -7047,6 +7062,7 @@ export type Database = {
           invited_by_name: string
           name: string
           role_level: number
+          welcome_message: string
         }[]
       }
       my_bar_preps: {
@@ -7214,6 +7230,7 @@ export type Database = {
           origin: string | null
           origin_bar_profile_id: string | null
           origin_year: number | null
+          parts: Json | null
           publish_mode: Database["public"]["Enums"]["item_publish_mode"] | null
           published_at: string | null
           riff_of_id: string | null
@@ -7395,6 +7412,10 @@ export type Database = {
         Returns: undefined
       }
       save_pair_notes: { Args: { p_notes: Json }; Returns: number }
+      save_prep_spec: {
+        Args: { p_item: string; p_lines?: Json; p_prep: Json; p_steps: Json }
+        Returns: undefined
+      }
       save_spelling: {
         Args: { p_item_id: string; p_typed: string }
         Returns: boolean
@@ -7693,6 +7714,7 @@ export type Database = {
           slug: string
           target_gp: number | null
           tax_rate: number
+          welcome_message: string | null
         }
         SetofOptions: {
           from: "*"

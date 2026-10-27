@@ -2,6 +2,7 @@ import { useQuery } from '@tanstack/react-query';
 
 import type { CreditStatus } from '@/lib/lineage';
 import { resolveShareKey } from '@/hooks/useShareSlug';
+import { readParts, type StoredPart } from '@/lib/drinkParts';
 import { isUuid } from '@/lib/menuPreview';
 import type { IngredientName } from '@/lib/publicDrink';
 import type { PresentationRecipe } from '@/lib/spec';
@@ -40,6 +41,8 @@ export interface PublishedDrink {
   /** The drink it's a riff or version of. */
   riffOfId: string | null;
   creditStatus: CreditStatus | null;
+  /** Made in parts, when its spec is shared: each part's name and join (published_items.parts). Null for one part. */
+  parts?: StoredPart[] | null;
 }
 
 /** The bar a drink or release is credited to, from its public profile. */
@@ -64,7 +67,7 @@ export interface LiveRelease {
 }
 
 export const PUBLISHED_COLUMNS =
-  'id, name, item_type, description, bar_id, glassware_id, ice_id, family_id, origin, abv, publish_mode, published_at, image_url, image_is_generated, creator_profile_id, origin_bar_profile_id, origin_year, riff_of_id, credit_status';
+  'id, name, item_type, description, bar_id, glassware_id, ice_id, family_id, origin, abv, publish_mode, published_at, image_url, image_is_generated, creator_profile_id, origin_bar_profile_id, origin_year, riff_of_id, credit_status, parts';
 
 interface PublishedRow {
   id: string;
@@ -86,6 +89,7 @@ interface PublishedRow {
   origin_year: number | null;
   riff_of_id?: string | null;
   credit_status?: CreditStatus | null;
+  parts?: unknown;
 }
 
 export function toPublishedDrink(r: PublishedRow): PublishedDrink {
@@ -109,6 +113,7 @@ export function toPublishedDrink(r: PublishedRow): PublishedDrink {
     originYear: r.origin_year,
     riffOfId: r.riff_of_id ?? null,
     creditStatus: r.credit_status ?? null,
+    parts: readParts(r.parts),
   };
 }
 
@@ -236,7 +241,7 @@ export function usePublishedDrink(id: string | null | undefined) {
         drink.publishMode === 'spec'
           ? supabase
               .from('app_recipe_presentation')
-              .select('id, sort_order, created_at, amount, unit, is_optional, display_ingredient_id, display_ingredient:published_ingredient(id, name, abv, image_url)')
+              .select('id, sort_order, created_at, amount, unit, is_optional, part, display_ingredient_id, display_ingredient:published_ingredient(id, name, abv, image_url)')
               .eq('recipe_item_id', drink.id)
           : Promise.resolve({ data: [], error: null }),
         drink.publishMode === 'spec' ? Promise.resolve({ data: [], error: null }) : supabase.rpc('public_drink_ingredients', { p_item_ids: [drink.id] }),
