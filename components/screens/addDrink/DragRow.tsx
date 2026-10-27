@@ -40,6 +40,8 @@ const LEAN_PER_SPEED = 0.03;
 export function DragRow({ index, onDrop, onMove, onHeight, fold, shift = null, flat, children }: { index: number; onDrop: (from: number, dy: number) => void; onMove?: (from: number, dy: number) => void; onHeight: (h: number) => void; fold?: boolean; shift?: number | null; flat?: boolean; children: (grip: (node: ReactNode) => ReactNode, active: boolean) => ReactNode }) {
   const y = useSharedValue(0);
   const lifted = useSharedValue(0);
+  // The card grows a little as it's picked up; `lifted` itself switches at once, for its place and its layer.
+  const pop = useSharedValue(0);
   const lean = useSharedValue(0);
   const level = useSharedValue(false);
   const reduce = useReducedMotion();
@@ -72,7 +74,8 @@ export function DragRow({ index, onDrop, onMove, onHeight, fold, shift = null, f
       grab.set(e.y);
     })
     .onStart(() => {
-      lifted.set(withTiming(1, { duration: 120 }));
+      lifted.set(1);
+      pop.set(withTiming(1, { duration: 120 }));
       if (sway) lean.set(withSpring(REST_LEAN));
       scheduleOnRN(setActive, true);
       if (whole) scheduleOnRN(Haptics.selectionAsync);
@@ -89,6 +92,7 @@ export function DragRow({ index, onDrop, onMove, onHeight, fold, shift = null, f
     .onFinalize(() => {
       y.set(0);
       lifted.set(0);
+      pop.set(0);
       lean.set(0);
       scheduleOnRN(setActive, false);
     });
@@ -98,7 +102,7 @@ export function DragRow({ index, onDrop, onMove, onHeight, fold, shift = null, f
       { translateY: y.get() + (lifted.get() ? lift() : 0) },
       { translateY: shift === null ? 0 : withTiming(shift, { duration: 200 }) },
       { rotate: `${lean.get()}deg` },
-      { scale: fold ? 1 + 0.03 * lifted.get() : 1 },
+      { scale: fold ? 1 + 0.03 * pop.get() : 1 },
     ],
   }));
   const row = (
