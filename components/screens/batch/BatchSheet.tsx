@@ -21,10 +21,12 @@ import {
   type BottleSize,
   type VolumeUnit,
 } from '@/lib/batch';
+import { byPart, type MakingPart } from '@/lib/drinkParts';
 import type { SpecLine } from '@/lib/spec';
 import { useSettingsStore } from '@/store/useSettingsStore';
 
 import { BatchActions } from './BatchActions';
+import { freshPartsText, MakeByPart, partOneAbv, StationParts } from './BatchByPart';
 import { BatchRow, BottleTiles, Choice, FreezerCheck, ServesField, StockField } from './BatchParts';
 import { ServesRuler } from './ServesRuler';
 
@@ -53,6 +55,8 @@ export interface BatchSheetProps {
   barId?: string | null;
   /** May make a house prep at the venue. */
   canPrep?: boolean;
+  /** A drink made in parts (lib/drinkParts.ts): the bottle holds part 1, and each later part is made fresh per serve. */
+  parts?: MakingPart[] | null;
 }
 
 type Mode = 'serves' | 'bottle' | 'stock';
@@ -108,7 +112,10 @@ export function BatchSheet(props: BatchSheetProps) {
   );
 }
 
-function BatchBody({ name, lines, methodNames, lockedUntil, initialServes = 8, dilutionPct, serviceStyle, abv, canEdit, specLabel, barId = null, canPrep = false }: BatchSheetProps) {
+function BatchBody({ name, lines: all, methodNames: allMethods, lockedUntil, initialServes = 8, dilutionPct, serviceStyle, abv, canEdit, specLabel, barId = null, canPrep = false, parts = null }: BatchSheetProps) {
+  // Made in parts, only part 1 goes in the bottle (board made-parts-making).
+  const lines = parts ? byPart(all, parts.length)[0] : all;
+  const methodNames = parts ? parts[0].methods : allMethods;
   const ds = useDs();
   const close = useSheetClose();
   const [mode, setMode] = useState<Mode>('serves');
@@ -136,7 +143,7 @@ function BatchBody({ name, lines, methodNames, lockedUntil, initialServes = 8, d
         ? servesFromStock(stockLine, haveAmount, haveUnit)
         : serves;
   const batch = buildBatch(lines, methodNames, n, opts);
-  const hasAmounts = lines.some((l) => l.value !== null);
+  const hasAmounts = all.some((l) => l.value !== null);
   const bottled = batch.lines.filter((l) => !l.leaveOut);
   const station = batch.lines.filter((l) => l.leaveOut);
   const bottles = `${batch.bottles} × ${bottleLabel(bottleSize)} ${batch.bottles === 1 ? 'bottle' : 'bottles'}`;
@@ -151,7 +158,12 @@ function BatchBody({ name, lines, methodNames, lockedUntil, initialServes = 8, d
   const shelfHours = bottled.map((l) => lifeOf(l.key));
   const useBy = expiryLine(bottleExpiry(shelfHours, new Date()));
   const shortest = shelfHours.filter((h): h is number => !!h).sort((a, b) => a - b)[0] ?? null;
-  const text = [`${name}, ${n} serves`, ...bottled.map((l) => `${l.amount} ${l.ingredient}`), ...(batch.water ? [`${batch.water.amount} water`] : []), `Pour ${batch.pour} each.`].join('\n');
+  const text = [`${name}, ${n} serves`, ...bottled.map((l) => `${l.amount} ${l.ingredient}`), ...(batch.water ? [`${batch.water.amount} water`] : []), `Pour ${batch.pour} each.`, ...(parts ? freshPartsText(all, parts, unit) : [])].join('\n');
+  const stationRows = station.map((l) => (
+    <BatchRow key={l.key} ingredient={l.ingredient} amount={l.perServe} sub={l.amount && l.perServe !== l.amount ? `${l.amount} for ${n}` : null} tag={LEAVE_OUT_LABEL[l.leaveOut!]} note={STATION_NOTE[l.leaveOut!]} />
+  ));
+  // At home, a drink in parts is made part by part with every line ticked; a venue's Make now ticks the bottle.
+  const byParts = !!ticked && !!parts && !barId;
   const pickServes = (v: number) => {
     setMode('serves');
     setServes(v);
@@ -185,7 +197,7 @@ function BatchBody({ name, lines, methodNames, lockedUntil, initialServes = 8, d
 
       <View>
         <Caption tone="muted" style={styles.eyebrow}>
-          IN THE BOTTLE
+          {parts ? `IN THE BOTTLE · PART 1, ${parts[0].name.toUpperCase()}` : 'IN THE BOTTLE'}
         </Caption>
         {bottled.map((l) => {
           const keeps = keepsFor(lifeOf(l.key));
@@ -217,15 +229,15 @@ function BatchBody({ name, lines, methodNames, lockedUntil, initialServes = 8, d
         ) : null}
       </View>
 
-      {batch.pourMl > 0 ? (
+      {parts ? (
+        <StationParts name={name} pour={batch.pourMl > 0 ? batch.pour : null} first={stationRows} parts={parts} lines={all} unit={unit} />
+      ) : batch.pourMl > 0 ? (
         <View>
           <Caption tone="muted" style={styles.eyebrow}>
             AT THE STATION, EACH SERVE
           </Caption>
           <BatchRow ingredient={`${name}, from the bottle`} amount={batch.pour} tone="accent" />
-          {station.map((l) => (
-            <BatchRow key={l.key} ingredient={l.ingredient} amount={l.perServe} sub={l.amount && l.perServe !== l.amount ? `${l.amount} for ${n}` : null} tag={LEAVE_OUT_LABEL[l.leaveOut!]} note={STATION_NOTE[l.leaveOut!]} />
-          ))}
+          {stationRows}
         </View>
       ) : null}
 
@@ -254,7 +266,7 @@ function BatchBody({ name, lines, methodNames, lockedUntil, initialServes = 8, d
         text={text}
         onSaved={close}
       />
-      {tools ? <ToolsSheet visible onClose={() => setTools(false)} tool="dilute" volumeMl={batch.totalMl - (batch.water?.ml ?? 0)} abv={abv} scheme={ds.scheme} /> : null}
+      {tools ? <ToolsSheet visible onClose={() => setTools(false)} tool="dilute" volumeMl={batch.totalMl - (batch.water?.ml ?? 0)} abv={parts ? partOneAbv(batch) : abv} scheme={ds.scheme} /> : null}
     </>
   );
 
@@ -262,14 +274,15 @@ function BatchBody({ name, lines, methodNames, lockedUntil, initialServes = 8, d
     <SheetScrollView contentContainerStyle={styles.body} keyboardShouldPersistTaps="handled">
       <View style={styles.head}>
         <View style={styles.flex}>
-          <Title>Batch</Title>
-          <Caption tone="muted">{[specLabel ?? name, methodLine(batch.method, batch.water)].join(' · ')}</Caption>
+          {byParts ? <Caption tone="muted">{`At home · ${n} ${n === 1 ? 'serve' : 'serves'}`}</Caption> : null}
+          <Title>{byParts ? name : 'Batch'}</Title>
+          {byParts ? null : <Caption tone="muted">{[specLabel ?? name, parts ? `made in ${parts.length} parts` : methodLine(batch.method, batch.water)].join(' · ')}</Caption>}
         </View>
         <PressableScale accessibilityLabel="Close" onPress={close} style={styles.close}>
           <IconSymbol name="xmark" size={18} color={ds.c.muted} />
         </PressableScale>
       </View>
-      {body}
+      {byParts ? <MakeByPart serves={n} parts={parts} lines={all} unit={unit} ticked={ticked} onTick={tick} onDone={() => setTicked(null)} /> : body}
     </SheetScrollView>
   );
 }
