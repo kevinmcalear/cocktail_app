@@ -11,6 +11,7 @@ export interface RecipeRow {
   unit: string | null;
   display_ingredient_id: string | null;
   display_ingredient: { id: string; name: string } | null;
+  part: number | null;
 }
 
 interface MenuItem {
@@ -35,15 +36,16 @@ const MAX_LEVELS = 3;
 export function toLines(rows: RecipeRow[], recipeId: string): SpecLine[] {
   return rows
     .filter((r) => r.recipe_item_id === recipeId && r.display_ingredient_id && r.display_ingredient)
-    .map((r) => ({ ingredientId: r.display_ingredient!.id, name: r.display_ingredient!.name, amount: r.amount, unit: r.unit }));
+    .map((r) => ({ ingredientId: r.display_ingredient!.id, name: r.display_ingredient!.name, amount: r.amount, unit: r.unit, part: r.part ?? 1 }));
 }
 
 export async function recipesFor(ids: string[]): Promise<RecipeRow[]> {
   if (!ids.length) return [];
   const { data, error } = await supabase
     .from('app_recipe_presentation')
-    .select('recipe_item_id, amount, unit, display_ingredient_id, display_ingredient(id, name)')
-    .in('recipe_item_id', ids);
+    .select('recipe_item_id, amount, unit, part, display_ingredient_id, display_ingredient(id, name)')
+    .in('recipe_item_id', ids)
+    .order('sort_order');
   if (error) throw error;
   return (data ?? []) as unknown as RecipeRow[];
 }

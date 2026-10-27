@@ -34,10 +34,12 @@ interface LineRowProps {
   grip?: (node: ReactNode) => ReactNode;
   /** Moves the line one place up or down: the arrow keys on the web, a screen reader's actions. */
   onMove?: (by: -1 | 1) => void;
-  /** Being dragged: lifted over the lines under it. */
+  /** Being dragged: lifted over the lines under it, folded to its name so they show. */
   lifted?: boolean;
   /** Another line is held over this one (its name): let go to combine them into a house prep (lib/batchLines). */
   dropTarget?: string | null;
+  /** Lifted and held over a line it can combine with (that line's name): the lifted card says so, where nothing covers it. */
+  combineWith?: string | null;
   /** Just before remove: the bottle that puts it on the back bar or your shelf (StockToggle); null for a line without one. */
   stock?: ReactNode;
 }
@@ -52,7 +54,7 @@ interface LineRowProps {
  * On a phone the controls sit under the name, and the bottle and remove
  * beside it; on a wider screen they all share its line, on the right.
  */
-export function LineRow({ line, onChange, onRemove, onSwap, onEditPrep, units: unitList = QUICK_UNITS, detail, below, grip, onMove, lifted, dropTarget, stock }: LineRowProps) {
+export function LineRow({ line, onChange, onRemove, onSwap, onEditPrep, units: unitList = QUICK_UNITS, detail, below, grip, onMove, lifted, dropTarget, combineWith, stock }: LineRowProps) {
   const ds = useDs();
   // A phone stacks the name over the controls. Explicit, not flexWrap: Yoga on iOS shrank the name to "Rye wh…" beside them instead of wrapping (Eddie, 16 Oct).
   // So does a narrow column (the desktop page's spec, an ingredient's recipe beside its method), where the controls left the name a few letters.
@@ -84,96 +86,103 @@ export function LineRow({ line, onChange, onRemove, onSwap, onEditPrep, units: u
     </>
   );
   return (
-    <View role="listitem" onLayout={(e) => setNarrow(e.nativeEvent.layout.width < NARROW)} style={[styles.wrap, { borderBottomColor: ds.c.line, backgroundColor: lifted ? ds.c.raised : undefined }, dropTarget ? [styles.target, { borderColor: ds.accentText, backgroundColor: withAlpha(ds.accentText, 0.1) }] : null]}>
-      {/* Over the line, not in it, so the rows under the finger keep their place (make-anything-steps-1, step 3). */}
-      {dropTarget ? (
-        <View role="alert" style={[styles.popup, { backgroundColor: ds.c.ink }]}>
-          <Caption color={ds.c.ground} style={styles.strong}>
-            Combine and make it in-house
-          </Caption>
-          <Caption color={ds.c.ground} numberOfLines={1}>{`${dropTarget} + ${line.name}`}</Caption>
-        </View>
-      ) : null}
+    <View
+      role="listitem"
+      onLayout={(e) => !lifted && setNarrow(e.nativeEvent.layout.width < NARROW)}
+      style={[styles.wrap, { borderBottomColor: ds.c.line }, lifted ? [styles.lifted, { backgroundColor: ds.c.raised, borderColor: combineWith ? ds.accentText : ds.c.lineStrong }] : null, dropTarget ? [styles.target, { borderColor: ds.accentText, backgroundColor: withAlpha(ds.accentText, 0.1) }] : null]}
+    >
       <View style={styles.row}>
         {grip?.(<LineGrip name={line.name} onMove={onMove} />)}
-        <IngredientThumb id={line.id} name={line.name} size={40} />
-        <View style={stacked ? styles.mainStacked : styles.main}>
-          <View style={stacked ? styles.headStacked : styles.head}>
-            {/* The name opens what else the line can do; closed, the row is the ingredient and its pour (board make-create-ingredients). */}
-            <PressableScale
-              onPress={recipe ?? (() => setOpen(!open))}
-              haptic={false}
-              role="button"
-              aria-expanded={recipe ? undefined : open}
-              accessibilityLabel={`${line.name}, ${amountLabel}${line.prep ? (line.prep.at ? `. Recipe to finish: ${toFinishSummary(line.prep)}` : `. House-made: ${prepSummary(line.prep, techniqueById(line.prep.technique)?.name)}`) : ''}`}
-              accessibilityHint={recipe ? 'Opens its recipe' : 'Shows swap, note and more'}
-              style={[stacked ? styles.nameStacked : styles.name, line.prep ? styles.prepName : null]}
-            >
-              <View style={styles.flex}>
-                <Body numberOfLines={2}>{line.name}</Body>
-                {dropTarget ? (
-                  <Caption tone="accent">Let go to combine</Caption>
-                ) : line.prep ? (
-                  <>
-                    {/* Left for later (make-anything-steps-3, step 9): a tap picks up where it was left. */}
-                    <Caption tone="accent">{line.prep.at ? 'Recipe to finish' : 'House-made'}</Caption>
-                    <Caption tone="muted" numberOfLines={2}>
-                      {line.prep.at ? toFinishSummary(line.prep) : prepSummary(line.prep, techniqueById(line.prep.technique)?.name)}
-                    </Caption>
-                  </>
-                ) : null}
-                {line.unit === 'discard' ? <Caption tone="accent">Expressed, then discarded</Caption> : null}
-                {line.optional ? <Caption tone="muted">Optional</Caption> : null}
-              </View>
-              {recipe ? <IconSymbol name="chevron.right" size={14} color={ds.c.muted} /> : null}
-            </PressableScale>
-            {/* Beside the name's button, not in it: the detail can be a button of its own (the supplier chip). */}
-            {stacked ? ends : detail}
+        <IngredientThumb id={line.id} name={line.name} size={lifted ? 32 : 40} />
+        {/* Lifted, the line folds to its name and pour (or what letting go does), so the lines under it show (Kevin, 27 Oct). The grip keeps its place in the tree, so the drag holding it carries on. */}
+        {lifted ? (
+          <View role={combineWith ? 'alert' : undefined} style={styles.flex}>
+            <Body numberOfLines={1} style={combineWith ? styles.strong : null}>
+              {combineWith ? 'Combine and make it in-house' : line.name}
+            </Body>
+            <Caption tone={combineWith ? 'accent' : 'muted'} numberOfLines={1}>
+              {combineWith ? `${line.name} + ${combineWith}` : amountLabel}
+            </Caption>
           </View>
-          {stacked ? detail : null}
-          <View style={styles.controls}>
-            <View style={[styles.stepper, { backgroundColor: ds.c.raised }]}>
-              {top ? (
-                <DsText variant="spec" style={[styles.mono, styles.topLabel]}>Top</DsText>
-              ) : (
-                <>
-                  <Round icon="minus" label={`Less ${line.name}`} onPress={() => onChange({ amount: stepAmount(tidyAmount(line.amount), line.unit, -1) })} />
-                  <TextInput
-                    value={line.amount}
-                    onChangeText={(amount) => onChange({ amount: amount.replace(/[^0-9.,/ ¼½¾⅓⅔⅛]/g, '') })}
-                    onBlur={() => onChange({ amount: tidyAmount(line.amount) })}
-                    // iOS's keyboard has "/" for 3/4; Android has no such type, so its number pad.
-                    keyboardType={Platform.OS === 'ios' ? 'numbers-and-punctuation' : 'decimal-pad'}
-                    returnKeyType="done"
-                    selectTextOnFocus
-                    placeholder="–"
-                    placeholderTextColor={ds.c.faint}
-                    aria-label={`Amount of ${line.name}`}
-                    maxLength={8}
-                    style={[styles.amount, type.spec, { fontFamily: fontFamilies.monoMedium, color: ds.c.ink }]}
-                  />
-                  <Round icon="plus" label={`More ${line.name}`} onPress={() => onChange({ amount: stepAmount(tidyAmount(line.amount), line.unit, 1) })} />
-                </>
-              )}
+        ) : (
+          <View style={stacked ? styles.mainStacked : styles.main}>
+            <View style={stacked ? styles.headStacked : styles.head}>
+              {/* The name opens what else the line can do; closed, the row is the ingredient and its pour (board make-create-ingredients). */}
+              <PressableScale
+                onPress={recipe ?? (() => setOpen(!open))}
+                haptic={false}
+                role="button"
+                aria-expanded={recipe ? undefined : open}
+                accessibilityLabel={`${line.name}, ${amountLabel}${line.prep ? (line.prep.at ? `. Recipe to finish: ${toFinishSummary(line.prep)}` : `. House-made: ${prepSummary(line.prep, techniqueById(line.prep.technique)?.name)}`) : ''}`}
+                accessibilityHint={recipe ? 'Opens its recipe' : 'Shows swap, note and more'}
+                style={[stacked ? styles.nameStacked : styles.name, line.prep ? styles.prepName : null]}
+              >
+                <View style={styles.flex}>
+                  <Body numberOfLines={2}>{line.name}</Body>
+                  {dropTarget ? (
+                    <Caption tone="accent">Let go to combine</Caption>
+                  ) : line.prep ? (
+                    <>
+                      {/* Left for later (make-anything-steps-3, step 9): a tap picks up where it was left. */}
+                      <Caption tone="accent">{line.prep.at ? 'Recipe to finish' : 'House-made'}</Caption>
+                      <Caption tone="muted" numberOfLines={2}>
+                        {line.prep.at ? toFinishSummary(line.prep) : prepSummary(line.prep, techniqueById(line.prep.technique)?.name)}
+                      </Caption>
+                    </>
+                  ) : null}
+                  {line.unit === 'discard' ? <Caption tone="accent">Expressed, then discarded</Caption> : null}
+                  {line.optional ? <Caption tone="muted">Optional</Caption> : null}
+                </View>
+                {recipe ? <IconSymbol name="chevron.right" size={14} color={ds.c.muted} /> : null}
+              </PressableScale>
+              {/* Beside the name's button, not in it: the detail can be a button of its own (the supplier chip). */}
+              {stacked ? ends : detail}
             </View>
-            <PressableScale
-              onPress={() => setUnits(!units)}
-              haptic={false}
-              role="button"
-              aria-expanded={units}
-              accessibilityLabel={`Unit: ${line.unit}`}
-              accessibilityHint="Shows the units to pick from"
-              style={[styles.unit, { borderColor: units ? ds.c.ink : ds.c.lineStrong }]}
-            >
-              <DsText variant="spec" style={styles.mono}>{line.unit}</DsText>
-              <IconSymbol name={units ? 'chevron.up' : 'chevron.down'} size={12} color={ds.c.muted} />
-            </PressableScale>
+            {stacked ? detail : null}
+            <View style={styles.controls}>
+              <View style={[styles.stepper, { backgroundColor: ds.c.raised }]}>
+                {top ? (
+                  <DsText variant="spec" style={[styles.mono, styles.topLabel]}>Top</DsText>
+                ) : (
+                  <>
+                    <Round icon="minus" label={`Less ${line.name}`} onPress={() => onChange({ amount: stepAmount(tidyAmount(line.amount), line.unit, -1) })} />
+                    <TextInput
+                      value={line.amount}
+                      onChangeText={(amount) => onChange({ amount: amount.replace(/[^0-9.,/ ¼½¾⅓⅔⅛]/g, '') })}
+                      onBlur={() => onChange({ amount: tidyAmount(line.amount) })}
+                      // iOS's keyboard has "/" for 3/4; Android has no such type, so its number pad.
+                      keyboardType={Platform.OS === 'ios' ? 'numbers-and-punctuation' : 'decimal-pad'}
+                      returnKeyType="done"
+                      selectTextOnFocus
+                      placeholder="–"
+                      placeholderTextColor={ds.c.faint}
+                      aria-label={`Amount of ${line.name}`}
+                      maxLength={8}
+                      style={[styles.amount, type.spec, { fontFamily: fontFamilies.monoMedium, color: ds.c.ink }]}
+                    />
+                    <Round icon="plus" label={`More ${line.name}`} onPress={() => onChange({ amount: stepAmount(tidyAmount(line.amount), line.unit, 1) })} />
+                  </>
+                )}
+              </View>
+              <PressableScale
+                onPress={() => setUnits(!units)}
+                haptic={false}
+                role="button"
+                aria-expanded={units}
+                accessibilityLabel={`Unit: ${line.unit}`}
+                accessibilityHint="Shows the units to pick from"
+                style={[styles.unit, { borderColor: units ? ds.c.ink : ds.c.lineStrong }]}
+              >
+                <DsText variant="spec" style={styles.mono}>{line.unit}</DsText>
+                <IconSymbol name={units ? 'chevron.up' : 'chevron.down'} size={12} color={ds.c.muted} />
+              </PressableScale>
+            </View>
           </View>
-        </View>
-        {stacked ? null : ends}
+        )}
+        {stacked || lifted ? null : ends}
       </View>
-      {below}
-      {open ? (
+      {lifted ? null : below}
+      {open && !lifted ? (
         <View style={[styles.more, grip ? styles.gripped : null]}>
           {status ? <Caption tone={status.accent ? 'accent' : 'muted'}>{status.text}</Caption> : null}
           {/* The recipe links lead in the accent; the rest stay quiet (the accent is for the one primary action). */}
@@ -186,7 +195,7 @@ export function LineRow({ line, onChange, onRemove, onSwap, onEditPrep, units: u
           </View>
         </View>
       ) : null}
-      {noting ? (
+      {noting && !lifted ? (
         <TextInput
           value={line.note ?? ''}
           onChangeText={(note) => onChange({ note })}
@@ -198,7 +207,7 @@ export function LineRow({ line, onChange, onRemove, onSwap, onEditPrep, units: u
           style={[styles.note, grip ? styles.notedGripped : null, type.body, { fontFamily: fontFamilies.body, color: ds.c.ink, borderColor: ds.c.lineStrong }]}
         />
       ) : null}
-      {units ? (
+      {units && !lifted ? (
         <View role="radiogroup" accessibilityLabel={`Unit for ${line.name}`} style={[styles.units, grip ? styles.gripped : null]}>
           {(unitList.includes(line.unit) || !line.unit ? unitList : [...unitList, line.unit]).map((u) => (
             <WizardChip
@@ -259,8 +268,8 @@ const styles = StyleSheet.create({
   prepName: { flexDirection: 'row', alignItems: 'center', gap: space.sm },
   flex: { flex: 1, minWidth: 0 },
   strong: { fontFamily: fontFamilies.bodySemiBold },
-  // Above the row it would combine with, as the board draws it.
-  popup: { position: 'absolute', bottom: '100%', left: space.lg, right: space.lg, zIndex: 2, marginBottom: -space.xs, gap: 2, paddingHorizontal: space.md, paddingVertical: space.sm, borderRadius: radius.control },
+  // Being dragged: a card of its own, a little in from the edges, with a line round it (the accent when letting go combines).
+  lifted: { borderWidth: 1.5, borderBottomWidth: 1.5, borderRadius: radius.control, marginHorizontal: space.sm, paddingVertical: space.sm, paddingHorizontal: space.sm, alignSelf: 'stretch' },
   nameStacked: { flex: 1, minHeight: layout.minTapTarget, justifyContent: 'center' },
   controls: { flexDirection: 'row', alignItems: 'center', gap: space.sm },
   stepper: { flexDirection: 'row', alignItems: 'center', borderRadius: radius.pill, height: layout.minTapTarget },

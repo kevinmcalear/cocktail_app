@@ -1,8 +1,9 @@
+import { Fragment } from 'react';
 import { StyleSheet, View } from 'react-native';
 
 import { DsText, type DsTextProps } from '@/components/ds';
 import { fontFamilies, printPaper as P, radius, space } from '@/constants/tokens';
-import type { RunSheet } from '@/lib/runSheet';
+import type { RunSheet, SheetPart } from '@/lib/runSheet';
 import { needAmount, sheetHead, thingCount } from '@/lib/runSheetText';
 
 const T = ({ style, ...props }: DsTextProps) => <DsText color={P.ink} {...props} style={style} />;
@@ -11,6 +12,19 @@ const mono = { fontFamily: fontFamilies.mono };
 const semi = { fontFamily: fontFamilies.bodySemiBold };
 // Print keeps a party's box or a drink's table on one page.
 const keep = { dataSet: { printBlock: 'true' } } as object;
+
+/** A drink made in parts: the part's number and name over its lines, as the drink page has them. */
+function PartHead({ part }: { part: SheetPart }) {
+  return (
+    <View style={styles.partHead}>
+      <View style={[styles.partNo, { backgroundColor: P.ink }]}>
+        <T variant="caption" color={P.paper} style={semi}>{String(part.n)}</T>
+      </View>
+      <T variant="label" style={[semi, styles.cell]}>{part.name}</T>
+      {part.joins ? <Muted>{part.joins}</Muted> : null}
+    </View>
+  );
+}
 
 /**
  * The run sheet on paper, black on white in both themes (board "Sheet", A4):
@@ -82,12 +96,17 @@ export function SheetPaper({ sheet, menu, variant = 'full', printedOn }: {
                   <Muted style={[semi, styles.num]}>Per drink</Muted>
                   <Muted style={[semi, styles.num]}>For {d.serves.toLocaleString('en-GB')}</Muted>
                 </View>
-                {d.lines.filter((l) => !l.garnish).map((l, i) => (
-                  <View key={`${l.ingredientId}-${i}`} style={[styles.tr, { borderBottomColor: P.hairline }]}>
-                    <T variant="label" style={{ flex: 1 }}>{l.name}</T>
-                    <T variant="label" style={[mono, styles.num]}>{l.per}</T>
-                    <T variant="label" style={[mono, styles.num]}>{l.total ?? ''}</T>
-                  </View>
+                {(d.parts ?? [null]).map((part) => (
+                  <Fragment key={part?.n ?? 0}>
+                    {part ? <PartHead part={part} /> : null}
+                    {(part?.lines ?? d.lines).filter((l) => !l.garnish).map((l, i) => (
+                      <View key={`${l.ingredientId}-${i}`} style={[styles.tr, { borderBottomColor: P.hairline }]}>
+                        <T variant="label" style={{ flex: 1 }}>{l.name}</T>
+                        <T variant="label" style={[mono, styles.num]}>{l.per}</T>
+                        <T variant="label" style={[mono, styles.num]}>{l.total ?? ''}</T>
+                      </View>
+                    ))}
+                  </Fragment>
                 ))}
               </View>
             ) : (
@@ -122,5 +141,7 @@ const styles = StyleSheet.create({
   amount: { flexShrink: 0, maxWidth: '62%', textAlign: 'right' },
   drink: { gap: space.xs + 2, paddingBottom: space.md, borderBottomWidth: 1 },
   drinkHead: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'baseline' },
+  partHead: { flexDirection: 'row', alignItems: 'center', gap: space.sm, paddingTop: space.sm, paddingBottom: space.xs },
+  partNo: { width: 20, height: 20, borderRadius: radius.pill, alignItems: 'center', justifyContent: 'center' },
   miniRow: { flexDirection: 'row', justifyContent: 'space-between', gap: space.md },
 });

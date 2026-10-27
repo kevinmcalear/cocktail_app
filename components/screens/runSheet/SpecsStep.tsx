@@ -11,6 +11,27 @@ import { RunSwapSheet } from './RunSwapSheet';
 
 function DrinkSpec({ drink, onLine }: { drink: SheetDrink; onLine: (line: SheetLine) => void }) {
   const ds = useDs();
+  const row = (l: SheetLine, i: number) => (
+    <PressableScale
+      key={`${l.ingredientId}-${i}`}
+      role="button"
+      accessibilityLabel={`${l.per} ${l.name}${l.was ? `, swapped from ${l.was.name} for this menu` : ''}. Swap`}
+      onPress={() => onLine(l)}
+      style={[styles.line, { borderTopColor: ds.c.line }]}
+    >
+      <DsText variant="label" style={styles.amount}>{l.per}</DsText>
+      <View style={{ flex: 1, minWidth: 0 }}>
+        <DsText variant="label">{l.name}</DsText>
+        {l.was ? (
+          <Caption tone="muted">
+            <Caption tone="muted" style={styles.struck}>{l.was.name}</Caption> · for this menu
+          </Caption>
+        ) : null}
+      </View>
+      {l.was ? <Tag label="Swapped" tone="accent" /> : null}
+      <IconSymbol name="arrow.up.and.down" size={16} color={ds.c.muted} />
+    </PressableScale>
+  );
   return (
     <View role="group" aria-label={drink.name} style={[styles.card, { backgroundColor: ds.c.surface }]}>
       <View style={styles.head}>
@@ -18,27 +39,20 @@ function DrinkSpec({ drink, onLine }: { drink: SheetDrink; onLine: (line: SheetL
         <Caption tone="muted" style={{ fontFamily: fontFamilies.mono }}>× {drink.serves.toLocaleString('en-GB')}</Caption>
       </View>
       {drink.lines.length ? null : <Body tone="muted">No spec to swap in.</Body>}
-      {drink.lines.map((l, i) => (
-        <PressableScale
-          key={`${l.ingredientId}-${i}`}
-          role="button"
-          accessibilityLabel={`${l.per} ${l.name}${l.was ? `, swapped from ${l.was.name} for this menu` : ''}. Swap`}
-          onPress={() => onLine(l)}
-          style={[styles.line, { borderTopColor: ds.c.line }]}
-        >
-          <DsText variant="label" style={styles.amount}>{l.per}</DsText>
-          <View style={{ flex: 1, minWidth: 0 }}>
-            <DsText variant="label">{l.name}</DsText>
-            {l.was ? (
-              <Caption tone="muted">
-                <Caption tone="muted" style={styles.struck}>{l.was.name}</Caption> · for this menu
-              </Caption>
-            ) : null}
-          </View>
-          {l.was ? <Tag label="Swapped" tone="accent" /> : null}
-          <IconSymbol name="arrow.up.and.down" size={16} color={ds.c.muted} />
-        </PressableScale>
-      ))}
+      {drink.parts
+        ? drink.parts.map((p) => (
+            <View key={p.n} role="group" aria-label={`Part ${p.n}: ${p.name}`}>
+              <View style={styles.partHead}>
+                <View style={[styles.partNo, { backgroundColor: ds.accentFill.fill }]}>
+                  <DsText variant="caption" color={ds.accentFill.text}>{String(p.n)}</DsText>
+                </View>
+                <DsText variant="label" style={styles.partName}>{p.name}</DsText>
+                {p.joins ? <Caption tone="muted">{p.joins}</Caption> : null}
+              </View>
+              {p.lines.map(row)}
+            </View>
+          ))
+        : drink.lines.map(row)}
     </View>
   );
 }
@@ -98,6 +112,9 @@ const styles = StyleSheet.create({
   name: { fontFamily: fontFamilies.instrument },
   line: { flexDirection: 'row', alignItems: 'center', gap: space.md, minHeight: layout.minTapTarget, paddingVertical: space.xs, borderTopWidth: StyleSheet.hairlineWidth },
   amount: { width: 80, fontFamily: fontFamilies.monoMedium },
+  partHead: { flexDirection: 'row', alignItems: 'center', gap: space.sm, paddingTop: space.md, paddingBottom: space.xs },
+  partNo: { width: 24, height: 24, borderRadius: radius.pill, alignItems: 'center', justifyContent: 'center' },
+  partName: { flex: 1, fontFamily: fontFamilies.bodyMedium },
   struck: { textDecorationLine: 'line-through' },
   suggest: { flexDirection: 'row', alignItems: 'center', gap: space.md, borderRadius: radius.card, padding: space.md, paddingLeft: space.lg },
   collapsed: { flexDirection: 'row', alignItems: 'center', gap: space.md },

@@ -10,6 +10,7 @@ import {
   photonUrl,
   rankedCount,
   roundCoord,
+  searchHere,
   splitEarly,
   usesMiles,
   venueAddressesFrom,
@@ -23,6 +24,12 @@ assert.equal(areaLabel(me), 'near you');
 assert.equal(areaLabel({ ...me, source: 'map' }), 'in this area');
 assert.equal(areaLabel({ kind: 'city', city: 'New York', country_code: 'US', label: 'New York' }), 'in New York');
 assert.equal(areaLabel({ kind: 'anywhere' }), 'anywhere');
+// Discover's search field says the same place as the place pill (Q29 follow-up, 27 Oct).
+assert.equal(searchHere(me), 'Search near you');
+assert.equal(searchHere({ ...me, source: 'map' }), 'Search this area');
+assert.equal(searchHere({ kind: 'city', city: 'Melbourne', country_code: 'AU', label: 'Melbourne' }), 'Search Melbourne');
+assert.equal(searchHere({ kind: 'anywhere' }), 'Search anywhere');
+assert.equal(searchHere({ kind: 'anywhere' }, true), 'Search near you');
 assert.deepEqual(areaParams(me), { p_latitude: 40.713, p_longitude: -74.006, p_radius_km: 10 });
 assert.deepEqual(areaParams({ kind: 'city', city: 'Melbourne', country_code: 'AU', label: 'Melbourne' }), { p_city: 'Melbourne', p_country_code: 'AU' });
 assert.deepEqual(areaParams({ kind: 'anywhere' }), {});

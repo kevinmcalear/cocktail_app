@@ -1,5 +1,5 @@
 import { useRef, useState, type ReactNode } from 'react';
-import { StyleSheet, View } from 'react-native';
+import { Platform, StyleSheet, View } from 'react-native';
 
 import { Body, Button, Caption, useDs } from '@/components/ds';
 import { radius, space } from '@/constants/tokens';
@@ -171,7 +171,7 @@ export function IngredientsStep({ draft, set, ingredients, loading, aliases = []
       {draft.lines.length && !searching ? (
         <View role="list" aria-label="In the drink">
           {draft.lines.map((l, i) => (
-            <DragRow key={l.key} index={i} onDrop={drop} onMove={forDrink ? combine.onMove : undefined} onHeight={(h) => (heights.current[l.key] = h)}>
+            <DragRow key={l.key} index={i} fold onDrop={drop} onMove={forDrink ? combine.onMove : undefined} onHeight={(h) => (heights.current[l.key] = h)}>
               {(grip, lifted) =>
                 // The lines keep their size while the next one is searched: folding them read as squeezed (Eddie, 16 Oct).
                 l.key === swapKey ? (
@@ -204,6 +204,7 @@ export function IngredientsStep({ draft, set, ingredients, loading, aliases = []
                     grip={grip}
                     lifted={lifted}
                     dropTarget={combine.target === i ? combine.holding : null}
+                    combineWith={combine.combineWith(i)}
                     onMove={(by) => move(i, i + by)}
                     onChange={(c) => change(l.key, c)}
                     onRemove={() => remove(l)}
@@ -240,7 +241,7 @@ export function IngredientsStep({ draft, set, ingredients, loading, aliases = []
         </View>
       ) : null}
       {searching ? null : stock?.footer}
-      {draft.lines.length > 1 && !searching ? <Caption tone="muted">{forDrink ? 'Hold a line by its grip and move it over another. Let go to combine them; move away to just reorder.' : 'Hold a grip and move it to reorder.'}</Caption> : null}
+      {draft.lines.length > 1 && !searching ? <Caption tone="muted">{`Hold a line${Platform.OS === 'web' ? ' by its grip' : ''} and move it ${forDrink ? 'over another. Let go to combine them; move away to just reorder.' : 'to reorder.'}`}</Caption> : null}
 
       {nudge && !searching ? (
         <NudgeCard nudge={nudge} name={nudgeLine?.name} onMake={() => nudgeLine && makeHouse(nudgeLine, nudge.technique, nudge.adjunct)} onNotNow={() => (nudge.from === 'typed' ? typed.drop(nudge.key) : setNudgeOff(true))} />
