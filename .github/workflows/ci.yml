@@ -163,8 +163,12 @@ jobs:
       # Once is enough: shard 3 holds the quick files, off the critical path.
       - name: Generated database types match the migrations
         if: matrix.shard == 3
+        # Starts postgres-meta, which isn't in the image cache until shard 3
+        # saves it. ghcr.io refused it every time on 27 Oct, so this one pull
+        # comes from Supabase's other registry: a single image, tried three times.
+        env:
+          SUPABASE_INTERNAL_IMAGE_REGISTRY: public.ecr.aws
         run: |
-          # Starts postgres-meta, pulled unless the image cache has it: tried three times.
           for try in 1 2 3; do supabase gen types typescript --local --schema public > types/database.ts && break; [ "$try" = 3 ] && exit 1; sleep $((try * 20)); done
           git diff --exit-code -- types/database.ts || {
             echo "::error file=types/database.ts::Out of date with supabase/migrations. Run npm run gen:types against a local stack built from this branch's migrations and commit the result."
