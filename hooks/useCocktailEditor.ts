@@ -169,6 +169,8 @@ export function useCocktailEditor(id: string, { enabled = true }: { enabled?: bo
                     ? stored.map((p, i) => ({
                           name: p.name,
                           join: p.join ?? null,
+                          // Made fresh for each serve (20261126200000): kept, or a save here would make it ahead again.
+                          ...(p.fresh ? { fresh: true } : {}),
                           lines: recipes.filter((r) => (r.part ?? 1) === i + 1).map((r) => r.id),
                           methods: methodRows.filter((m) => m.part === i + 1).map((m) => ({ id: m.method_item_id, name: m.method?.name ?? "" })),
                       }))
