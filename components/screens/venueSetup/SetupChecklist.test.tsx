@@ -24,7 +24,8 @@ jest.mock('@/components/screens/firstRound/FirstCocktailChoices', () => {
   };
 });
 jest.mock('@/store/useBringIn', () => ({ useBringIn: { getState: () => ({ setReviewing: mockSetReviewing }) } }));
-jest.mock('@/hooks/useVenueBrand', () => ({ useVenueBrand: () => ({ data: mockBrand }) }));
+let mockBrandLoading = false;
+jest.mock('@/hooks/useVenueBrand', () => ({ useVenueBrand: () => (mockBrandLoading ? { data: undefined, isLoading: true } : { data: mockBrand }) }));
 // How it looks, opened from Your team: a setup page whose footer saves and goes on.
 jest.mock('@/components/screens/venue/BrandScreen', () => {
   const { SetupPage } = jest.requireActual('@/components/screens/onboarding/SetupPage');
@@ -85,6 +86,7 @@ jest.mock('./TeamStep', () => {
 beforeEach(() => {
   mockRun = { finished: true, done: [] };
   mockBrand = BARE;
+  mockBrandLoading = false;
   mockDrinks = { inLibrary: 0, reviewId: null };
   for (const m of [mockPush, mockNavigate, mockSkip, mockSetReviewing, mockStart]) m.mockReset();
 });
@@ -159,4 +161,11 @@ test('with a look set, Your team goes straight to the invites', async () => {
   expect(screen.getByText('Invite who works here, in Little Rye’s look')).toBeTruthy();
   await fireEvent.press(screen.getByRole('button', { name: 'Your team, skipped' }));
   expect(screen.getByText('Team step')).toBeTruthy();
+});
+
+test('the rows wait for the look to load, so Your team can\'t skip the gate', async () => {
+  mockBrandLoading = true;
+  await renderWithTamagui(<SetupChecklist barId="b1" name="Little Rye" />);
+  expect(screen.getByText('Loading…')).toBeTruthy();
+  expect(screen.queryByRole('button', { name: 'Your team, skipped' })).toBeNull();
 });

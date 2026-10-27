@@ -50,9 +50,11 @@ export function SetupChecklist({ barId, name, footer }: { barId: string; name: s
   const prep = (useCapabilities(barId).data ?? []).includes('prep');
   const fromDrinks = fromDrinksCount(useKitFromDrinks(prep ? barId : null), pageId);
   const startCocktail = useStartFirstCocktail();
-  const brand = useVenueBrand(barId).data;
-  // Until the brand loads, the row reads as it always did.
-  const looks = !brand || lookSet(brand, run);
+  const brandQuery = useVenueBrand(barId);
+  const brand = brandQuery.data;
+  // The list waits for the brand too, so Your team can't be tapped past the gate before it loads; if it fails, the gate steps aside.
+  const looks = brand ? lookSet(brand, run) : !!brandQuery.error;
+  const busy = loading || brandQuery.isLoading;
   const [at, setAt] = useState<ChecklistKey | 'look' | 'fromDrinks' | null>(null);
   const back = () => setAt(null);
   const step = (key: ChecklistKey) => `Set up ${name} · ${list.rows.find((r) => r.key === key)?.title ?? ''}`;
@@ -123,9 +125,9 @@ export function SetupChecklist({ barId, name, footer }: { barId: string; name: s
   const barLine = looks ? undefined : 'Where, who sees it · How it looks not set';
   const teamLine = looks ? `Invite who works here, in ${name}’s look` : `After how ${name} looks: the invite wears it`;
   return (
-    <SetupChromeProvider value={{ ...chrome, title: `Set up ${name}`, intro: loading ? undefined : checklistIntro(list) }}>
+    <SetupChromeProvider value={{ ...chrome, title: `Set up ${name}`, intro: busy ? undefined : checklistIntro(list) }}>
       <SetupPage footer={footer}>
-        {loading ? (
+        {busy ? (
           <Caption tone="muted">Loading…</Caption>
         ) : (
           <View role="list" accessibilityLabel={`Set up ${name}`}>
