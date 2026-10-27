@@ -3,13 +3,14 @@ import { Platform, StyleSheet, TextInput, View } from 'react-native';
 
 import { Body, Caption, DsText, IngredientThumb, PressableScale, useBreakpoint, useDs } from '@/components/ds';
 import { IconSymbol } from '@/components/ui/icon-symbol';
-import { fontFamilies, layout, radius, space, type } from '@/constants/tokens';
+import { backbar, fontFamilies, layout, radius, space, type } from '@/constants/tokens';
 import { withAlpha } from '@/lib/color';
 import { convertPour, QUICK_UNITS, stepAmount, type WizardLine } from '@/lib/drinkWizard';
 import { prepSummary, toFinishSummary } from '@/lib/prepKinds';
 import { tidyAmount } from '@/lib/specDefaults';
 import { techniqueById } from '@/lib/techniques';
 
+import { CombineTag } from './CombineTag';
 import { LineGrip } from './DragRow';
 import { WizardChip } from './WizardChrome';
 
@@ -38,7 +39,7 @@ interface LineRowProps {
   lifted?: boolean;
   /** Another line is held over this one (its name): let go to combine them into a house prep (lib/batchLines). */
   dropTarget?: string | null;
-  /** Lifted and held over a line it can combine with (that line's name): the lifted card says so, where nothing covers it. */
+  /** Lifted and held over a line it can combine with (that line's name): a tag above the card says so, clear of the thumb. */
   combineWith?: string | null;
   /** Just before remove: the bottle that puts it on the back bar or your shelf (StockToggle); null for a line without one. */
   stock?: ReactNode;
@@ -91,17 +92,16 @@ export function LineRow({ line, onChange, onRemove, onSwap, onEditPrep, units: u
       onLayout={(e) => !lifted && setNarrow(e.nativeEvent.layout.width < NARROW)}
       style={[styles.wrap, { borderBottomColor: ds.c.line }, lifted ? [styles.lifted, { backgroundColor: ds.c.raised, borderColor: combineWith ? ds.accentText : ds.c.lineStrong }] : null, dropTarget ? [styles.target, { borderColor: ds.accentText, backgroundColor: withAlpha(ds.accentText, 0.1) }] : null]}
     >
+      {lifted && combineWith ? <CombineTag pair={`${line.name} + ${combineWith}`} /> : null}
       <View style={styles.row}>
         {grip?.(<LineGrip name={line.name} onMove={onMove} />)}
         <IngredientThumb id={line.id} name={line.name} size={lifted ? 32 : 40} />
-        {/* Lifted, the line folds to its name and pour (or what letting go does), so the lines under it show (Kevin, 27 Oct). The grip keeps its place in the tree, so the drag holding it carries on. */}
+        {/* Lifted, the line folds to its name and pour, so the lines under it show (Kevin, 27 Oct); what letting go does is the tag above it. The grip keeps its place in the tree, so the drag holding it carries on. */}
         {lifted ? (
-          <View role={combineWith ? 'alert' : undefined} style={styles.flex}>
-            <Body numberOfLines={1} style={combineWith ? styles.strong : null}>
-              {combineWith ? 'Combine and make it in-house' : line.name}
-            </Body>
-            <Caption tone={combineWith ? 'accent' : 'muted'} numberOfLines={1}>
-              {combineWith ? `${line.name} + ${combineWith}` : amountLabel}
+          <View style={styles.flex}>
+            <Body numberOfLines={1}>{line.name}</Body>
+            <Caption tone="muted" numberOfLines={1}>
+              {amountLabel}
             </Caption>
           </View>
         ) : (
@@ -267,9 +267,8 @@ const styles = StyleSheet.create({
   name: { minHeight: layout.minTapTarget, justifyContent: 'center' },
   prepName: { flexDirection: 'row', alignItems: 'center', gap: space.sm },
   flex: { flex: 1, minWidth: 0 },
-  strong: { fontFamily: fontFamilies.bodySemiBold },
   // Being dragged: a card of its own, a little in from the edges, with a line round it (the accent when letting go combines).
-  lifted: { borderWidth: 1.5, borderBottomWidth: 1.5, borderRadius: radius.control, marginHorizontal: space.sm, paddingVertical: space.sm, paddingHorizontal: space.sm, alignSelf: 'stretch' },
+  lifted: { borderWidth: 1.5, borderBottomWidth: 1.5, borderRadius: radius.control, marginHorizontal: space.sm, paddingVertical: space.sm, paddingHorizontal: space.sm, alignSelf: 'stretch', shadowColor: backbar.dark.ground, shadowOffset: { width: 0, height: 14 }, shadowOpacity: 0.45, shadowRadius: 22, elevation: 8 },
   nameStacked: { flex: 1, minHeight: layout.minTapTarget, justifyContent: 'center' },
   controls: { flexDirection: 'row', alignItems: 'center', gap: space.sm },
   stepper: { flexDirection: 'row', alignItems: 'center', borderRadius: radius.pill, height: layout.minTapTarget },
