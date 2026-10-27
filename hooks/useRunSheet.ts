@@ -3,6 +3,7 @@ import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { useUserId } from '@/ctx/AuthContext';
 import { houseMadeUnder, purchasingFor, recipesFor, toLines } from '@/hooks/usePrepList';
 import { withNear, type MaybeNear } from '@/hooks/useSearchNear';
+import { readParts } from '@/lib/drinkParts';
 import type { HouseMade, Purchasing } from '@/lib/prep';
 import type { BrandBottle, ItemFacts, RunDrink, RunParty, RunSwap } from '@/lib/runSheet';
 import { supabase } from '@/lib/supabase';
@@ -51,7 +52,7 @@ interface DrinkRow {
   id: string;
   serves: number | null;
   party_id: string | null;
-  item: { id: string; name: string; item_type: string; glassware_id: string | null; ice_id: string | null; ice_per_serve_g: number | null; origin_bar_profile_id: string | null } | null;
+  item: { id: string; name: string; item_type: string; glassware_id: string | null; ice_id: string | null; ice_per_serve_g: number | null; origin_bar_profile_id: string | null; parts: unknown } | null;
 }
 interface FactRow {
   id: string;
@@ -83,7 +84,7 @@ async function fetchRunSheet(menuId: string): Promise<RunSheetData> {
     supabase.from('menus').select('id, name, bar_id, created_by, starts_at, ends_at, planned_starts_at, planned_ends_at, menu_date, bar:bars(name)').eq('id', menuId).single(),
     supabase
       .from('menu_drinks')
-      .select('id, serves, party_id, item:items!item_id(id, name, item_type, glassware_id, ice_id, ice_per_serve_g, origin_bar_profile_id)')
+      .select('id, serves, party_id, item:items!item_id(id, name, item_type, glassware_id, ice_id, ice_per_serve_g, origin_bar_profile_id, parts)')
       .eq('menu_id', menuId)
       .order('sort_order'),
     supabase.from('menu_run_parties').select('id, kind, name, profile_id, sort_order, is_venue, profile:profiles!profile_id(handle, is_claimed, bar_id)').eq('menu_id', menuId).order('sort_order'),
@@ -141,6 +142,7 @@ async function fetchRunSheet(menuId: string): Promise<RunSheetData> {
       icePerServeG: item.ice_per_serve_g,
       partyId: r.party_id,
       originProfileId: item.origin_bar_profile_id,
+      parts: readParts(item.parts),
     };
   });
   type BottleRow = { id: string; name: string; maker_profile_id: string; generic_id: string | null; generic: { name: string } | null };

@@ -34,6 +34,7 @@ th.num { font-family: inherit; }
 .drink-box { break-inside: avoid; border-bottom: 1px solid ${P.rule}; padding-bottom: 10px; margin-bottom: 12px; }
 .drink-head { display: flex; justify-content: space-between; align-items: baseline; }
 h3.drink { font-size: 24px; margin: 0; }
+td.part { padding-top: 10px; }
 footer { margin-top: 18px; }
 `;
 
@@ -54,9 +55,11 @@ export function runSheetHtml(sheet: RunSheet, menu: { name: string; startsAt: st
     .map(
       (d) => `<div class="drink-box"><div class="drink-head"><h3 class="drink">${esc(d.name)}</h3><span class="num">× ${n(d.serves)}</span></div>${
         d.serve ? `<div class="muted">${esc(d.serve)}</div>` : ''
-      }<table><tr><th>Ingredient</th><th class="num">Per drink</th><th class="num">For ${n(d.serves)}</th></tr>${d.lines
-        .filter((l) => !l.garnish)
-        .map((l) => `<tr><td>${esc(l.name)}</td><td class="num">${esc(l.per)}</td><td class="num">${esc(l.total ?? '')}</td></tr>`)
+      }<table><tr><th>Ingredient</th><th class="num">Per drink</th><th class="num">For ${n(d.serves)}</th></tr>${(d.parts ?? [null])
+        .map((p) => `${p ? `<tr><td colspan="3" class="part"><strong>${p.n} ${esc(p.name)}</strong>${p.joins ? ` <span class="muted">${esc(p.joins)}</span>` : ''}</td></tr>` : ''}${(p?.lines ?? d.lines)
+          .filter((l) => !l.garnish)
+          .map((l) => `<tr><td>${esc(l.name)}</td><td class="num">${esc(l.per)}</td><td class="num">${esc(l.total ?? '')}</td></tr>`)
+          .join('')}`)
         .join('')}</table></div>`,
     )
     .join('');

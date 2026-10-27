@@ -15,6 +15,8 @@ export interface SpecLine {
   name: string;
   amount: number | string | null;
   unit: string | null;
+  /** A drink made in parts: which part the line is in (recipes.part, from 1). */
+  part?: number;
 }
 
 export interface HouseMade {
