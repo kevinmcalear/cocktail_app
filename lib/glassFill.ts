@@ -169,6 +169,35 @@ export function fitToWashLine(lines: readonly FillLine[], o: FillOptions): Fitte
   return { lines: fitted, factor, fill };
 }
 
+/** A drink's cost as Fit it reads it (drink_cost): the total, and each line's cost by ingredient. */
+export interface CostToFit {
+  total_minor: number;
+  missing: number;
+  lines: readonly { ingredient: string; minor: number | null }[];
+}
+
+/**
+ * What a serve costs with the fitted spec: the saved cost, with each changed
+ * line's cost scaled as its amount is. Null when a line has no price, or a
+ * changed line has no cost line of its name to scale (the cost would be a guess).
+ * ponytail: matches lines by ingredient name, and the cost is the saved
+ * spec's, so a draft that changed a line since its last save comes out near,
+ * not exact. Per-line costs keyed by recipe id would make it exact.
+ */
+export function fittedCostMinor(cost: CostToFit, names: readonly string[], amounts: readonly string[], fitted: Fitted): number | null {
+  if (cost.missing > 0) return null;
+  let delta = 0;
+  for (let i = 0; i < fitted.lines.length; i++) {
+    const l = fitted.lines[i];
+    if (!l.changed) continue;
+    const was = Number(amounts[i]);
+    const line = cost.lines.find((c) => c.ingredient.trim().toLowerCase() === names[i]?.trim().toLowerCase());
+    if (!line || line.minor == null || !(was > 0)) return null;
+    delta += line.minor * (Number(l.amount) / was - 1);
+  }
+  return Math.round(cost.total_minor + delta);
+}
+
 const ml = (n: number) => `${Math.round(n)} ml`;
 
 /** "24 ml short of the 150 ml wash line", "12 ml over the 150 ml wash line", "Fills to the 150 ml wash line". */

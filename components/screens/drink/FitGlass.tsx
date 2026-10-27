@@ -42,6 +42,8 @@ interface FitGlassSheetProps {
   amounts: readonly string[];
   onUse: () => void;
   onClose: () => void;
+  /** The cost per drink before and after, for people who can see costs ("$4.10"). */
+  cost?: { was: string; now: string } | null;
   accent?: string;
 }
 
@@ -62,7 +64,7 @@ export function FitGlassSheet(props: FitGlassSheetProps) {
   );
 }
 
-function FitBody({ result, names, amounts, onUse, onClose }: FitGlassSheetProps) {
+function FitBody({ result, names, amounts, onUse, onClose, cost }: FitGlassSheetProps) {
   const ds = useDs();
   const { fill, fitted, line } = result;
   if (!fitted) return null;
@@ -95,7 +97,7 @@ function FitBody({ result, names, amounts, onUse, onClose }: FitGlassSheetProps)
         ))}
       </View>
       <Body tone="muted">
-        {[factorWords(fitted.factor), example, `It fills to ${ml(fitted.fill.levelMl)}.`, kept ? 'Dashes and spoons stay as they are.' : null, `The cost per drink goes ${fitted.factor > 1 ? 'up' : 'down'} with it.`].filter(Boolean).join(' ')}
+        {[factorWords(fitted.factor), example, `It fills to ${ml(fitted.fill.levelMl)}.`, kept ? 'Dashes and spoons stay as they are.' : null, `The cost per drink goes ${fitted.factor > 1 ? 'up' : 'down'} ${cost ? `to ${cost.now}, from ${cost.was}` : 'with it'}.`].filter(Boolean).join(' ')}
       </Body>
       <Button label="Use this spec" onPress={onUse} />
       <Button label="Not now" variant="ghost" onPress={onClose} />

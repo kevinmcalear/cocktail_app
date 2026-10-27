@@ -18,7 +18,6 @@ jest.mock('@/ctx/AuthContext', () => ({ useAuth: () => ({ user: { id: 'me' }, lo
 let mockClosest: { id: string; name: string } | null = null;
 jest.mock('@/hooks/useClosestClassic', () => ({ useClosestClassic: () => ({ data: mockClosest }) }));
 jest.mock('@/hooks/useHomeBar', () => ({ useShelf: () => ({ data: [] }), useShelfEdit: () => ({ add: { mutate: jest.fn() }, remove: { mutate: jest.fn() } }) }));
-jest.mock('@/hooks/useIngredientUse', () => ({ useIngredientUse: () => ({ data: 0 }) }));
 jest.mock('@/hooks/usePublishing', () => ({ useBarPublishing: () => ({ data: undefined }) }));
 jest.mock('@/hooks/useCapabilities', () => ({ useCapabilities: () => ({ data: [], isPending: false }) }));
 jest.mock('@/hooks/useActiveVenue', () => ({ useActiveVenue: () => ({ venues: [{ id: 'bar-1', name: 'Little Rye' }], active: null }) }));
@@ -85,6 +84,15 @@ describe('AddDrinkWizard ice and method', () => {
     expect(screen.queryByRole('button', { name: 'Dump the tin' })).toBeNull();
     await fireEvent.press(screen.getByRole('button', { name: 'Spear on cubes' }));
     expect(useDrinkWizardStore.getState().kept['bar-1'].draft.iceBuild?.map((l) => l.ice.name)).toEqual(['Cubes', 'Spear']);
+  });
+
+  test('No ice says it is served up, and the drink keeps the plain name (Kevin, 26 Oct)', async () => {
+    useDrinkWizardStore.getState().patch('bar-1', { name: 'Martini' });
+    useDrinkWizardStore.getState().setStep('bar-1', 'ice');
+    await renderWithTamagui(<AddDrinkWizard barId="bar-1" onClose={jest.fn()} onSaved={mockSaved} />);
+    await laidOut();
+    await fireEvent.press(screen.getByRole('radio', { name: 'No ice (served up)' }));
+    expect(useDrinkWizardStore.getState().kept['bar-1'].draft.ice).toEqual(expect.objectContaining({ name: 'No ice' }));
   });
 
   test('the method says what it is shaken with, from the venue’s cubes, and not for a built drink', async () => {

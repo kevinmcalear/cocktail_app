@@ -3,10 +3,12 @@ import { StyleSheet, View } from 'react-native';
 
 import { BackbarTheme, Body, BrandProvider, Button, Caption, Field, Headline, Sheet, SheetScrollView, Title } from '@/components/ds';
 import { space } from '@/constants/tokens';
+import type { GlassFillResult } from '@/hooks/useGlassFill';
 import { useSetGlassSize, useSetIcePerServe } from '@/hooks/useGlassIce';
 import { glassModelFacts, type GlassModel } from '@/hooks/useGlassModels';
 import { useCanEditItem } from '@/hooks/useViewAs';
 import { defaultIcePerServe, formatIce, glassFit, glassSizeLabel, type GlassSize } from '@/lib/glass';
+import { fillWords } from '@/lib/glassFill';
 
 import { DrinkMakerCredits } from './DrinkMakerCredits';
 
@@ -31,10 +33,18 @@ interface GlassSheetProps {
   icePerServeG: number | null;
   /** The drink's editor: the glass size, the ice per serve and the makers can change. The read view only reads. */
   editing: boolean;
+  /** How full the venue's glass comes (useItemGlassFill): when known, the serve is checked against its wash line, as the drink page's note is. */
+  fill?: GlassFillResult | null;
   accent?: string;
 }
 
 const num = (s: string) => (s.trim() ? Number(s) : null);
+
+/** "Serve fills it to 119 ml, 31 ml short of its 150 ml wash line.", after the glass's size when it has one. */
+function serveWords({ fill }: GlassFillResult, glass: GlassSize): string {
+  const line = fill.state === 'fits' ? `at its ${Math.round(fill.washLineMl)} ml wash line` : fillWords(fill).replace(/ the (\d+ ml wash line)$/, ' its $1');
+  return `${glass.capacity_ml ? ' ' : ''}Serve fills it to ${Math.round(fill.levelMl)} ml, ${line}.`;
+}
 
 /** Ice in the glass, unless the drink says none. */
 export function hasIce(iceName: string | null | undefined): boolean {
@@ -42,7 +52,8 @@ export function hasIce(iceName: string | null | undefined): boolean {
 }
 
 /**
- * The glass and the ice: whether the serve fits, the glass's capacity with
+ * The glass and the ice: whether the serve fits (the venue glass's wash line
+ * when there is one, else the capacity), the glass's capacity with
  * and without ice, the ice a serve takes (the event prep list adds it up)
  * and who cut the ice and made the glass. They change from the editor
  * (`editing`, board drink-read-and-edit): the glass's size by whoever can
@@ -60,7 +71,7 @@ export function GlassSheet(props: GlassSheetProps) {
   );
 }
 
-function GlassBody({ itemId, name, glass, iceName, serveMl, icePerServeG, editing }: GlassSheetProps) {
+function GlassBody({ itemId, name, glass, iceName, serveMl, icePerServeG, editing, fill: washFill }: GlassSheetProps) {
   const canEditGlass = useCanEditItem(glass) && editing;
   const setSize = useSetGlassSize(glass?.id ?? '');
   const setIce = useSetIcePerServe(itemId);
@@ -84,8 +95,8 @@ function GlassBody({ itemId, name, glass, iceName, serveMl, icePerServeG, editin
         <View style={styles.group}>
           <Headline>{glass.name}</Headline>
           <Body tone="muted">
-            {glassSizeLabel(glass) ?? 'No capacity on file yet.'}
-            {fit ? ` Serve of ${Math.round(serveMl!)} ml: ${fit.fits ? 'fits' : `over by ${Math.round(fit.overMl)} ml`}${withIce && glass.iced_capacity_ml ? ' with the ice in' : ''}.` : ''}
+            {glassSizeLabel(glass) ?? (washFill ? '' : 'No capacity on file yet.')}
+            {washFill ? serveWords(washFill, glass) : fit ? ` Serve of ${Math.round(serveMl!)} ml: ${fit.fits ? 'fits' : `over by ${Math.round(fit.overMl)} ml`}${withIce && glass.iced_capacity_ml ? ' with the ice in' : ''}.` : ''}
           </Body>
           {glass.model ? (
             <Caption tone="muted">{[glassModelFacts(glass.model), glass.model.maker ? `From ${glass.model.maker.display_name}’s catalog.` : null].filter(Boolean).join('. ')}</Caption>

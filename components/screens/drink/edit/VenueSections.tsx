@@ -6,6 +6,7 @@ import { IconSymbol } from '@/components/ui/icon-symbol';
 import { radius, space } from '@/constants/tokens';
 import { useUserId } from '@/ctx/AuthContext';
 import { useDrinkAllergens } from '@/hooks/useAllergens';
+import { useItemGlassFill } from '@/hooks/useGlassFill';
 import { useCapabilities } from '@/hooks/useCapabilities';
 import { useSetDrinkPrice } from '@/hooks/useDrinkCost';
 import { useItemPublishing } from '@/hooks/usePublishing';
@@ -75,6 +76,8 @@ function Sections({ item, onPending, sheet: open, onSheet: setOpen, servicePhoto
   const setPrice = useSetDrinkPrice(item.id);
   const setLine = useSetLineService(item.id);
   const setStyle = useSetServiceStyle(item.id);
+  // The saved spec against the venue glass's wash line, for the Glass sheet (QA Q38).
+  const glassFill = useItemGlassFill(open === 'glass' ? item : null, specLines(item.recipes as PresentationRecipe[] | undefined));
   const [talkingPoint, setTalkingPoint] = useState(notes.talkingPoint ?? '');
   const [sellItAs, setSellItAs] = useState(notes.sellItAs ?? '');
   const [garnish, setGarnish] = useState(notes.garnish ?? '');
@@ -160,7 +163,7 @@ function Sections({ item, onPending, sheet: open, onSheet: setOpen, servicePhoto
         </Sheet>
       ) : null}
       {open === 'glass' ? (
-        <GlassSheet visible onClose={() => setOpen(null)} itemId={item.id} name={item.name} glass={glass} iceName={ice?.name ?? null} serveMl={item.serve_ml ?? null} icePerServeG={item.ice_per_serve_g ?? null} editing />
+        <GlassSheet visible onClose={() => setOpen(null)} itemId={item.id} name={item.name} glass={glass} iceName={ice?.name ?? null} serveMl={item.serve_ml ?? null} icePerServeG={item.ice_per_serve_g ?? null} editing fill={glassFill} />
       ) : null}
     </>
   );

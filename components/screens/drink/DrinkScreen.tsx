@@ -12,6 +12,7 @@ import { creditedToBar } from '@/hooks/useCocktails';
 import { useCapabilities } from '@/hooks/useCapabilities';
 import { useDilutionDefaults } from '@/hooks/useDrinkMath';
 import { useDrinkPhotos } from '@/hooks/useDrinkPhotos';
+import { useItemGlassFill } from '@/hooks/useGlassFill';
 import { useDrinkMakerCredits } from '@/hooks/useMakers';
 import { useMode } from '@/hooks/useMode';
 import { useSearchMine } from '@/hooks/useSearchMine';
@@ -118,6 +119,8 @@ function DrinkPage({ item, inStudyPile, onToggleStudyPile, canEdit, adminFix = f
   const caps = useCapabilities(staff && !preview ? item.bar_id : null).data ?? [];
   const version = useItemVersions(item.id, caps.includes('specs')).data?.[0]?.version;
   const venue = useActiveVenue().venues.find((v) => v.id === item.bar_id);
+  // The Glass sheet checks the serve against the venue glass's wash line, as the spec's note does (QA Q38).
+  const glassFill = useItemGlassFill(glassOpen && staff && !lock && access.amounts ? item : null, lines);
 
   const { make, marks, facts, tags, glass, ice, method, methods, strength } = useDrinkFacts(item, {
     lines,
@@ -243,7 +246,7 @@ function DrinkPage({ item, inStudyPile, onToggleStudyPile, canEdit, adminFix = f
       {toMake.sheet}
       {actions.sheets}
       {glassOpen ? (
-        <GlassSheet visible onClose={() => setGlassOpen(false)} itemId={item.id} name={item.name} glass={glass} iceName={ice?.name ?? null} serveMl={item.serve_ml ?? null} icePerServeG={item.ice_per_serve_g ?? null} editing={false} accent={venue?.accent ?? undefined} />
+        <GlassSheet visible onClose={() => setGlassOpen(false)} itemId={item.id} name={item.name} glass={glass} iceName={ice?.name ?? null} serveMl={item.serve_ml ?? null} icePerServeG={item.ice_per_serve_g ?? null} editing={false} fill={glassFill} accent={venue?.accent ?? undefined} />
       ) : null}
       {canBatch && batchOpen ? (
         <BatchSheet
