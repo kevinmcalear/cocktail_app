@@ -141,8 +141,7 @@ jobs:
       # Supabase's images (about ten) come from the Actions cache when a run
       # has saved them for this CLI and config, so shards don't all pull them
       # from ghcr.io at once (27 Oct: "toomanyrequests" failed every database
-      # job). Shard 3 saves them after the types check, so postgres-meta
-      # (which gen types starts on its own) is in the copy too.
+      # job).
       - id: images
         uses: actions/cache/restore@v6
         with:
@@ -154,7 +153,24 @@ jobs:
             supabase-images-${{ runner.arch }}-${{ env.SUPABASE_CLI }}-
       - if: steps.images.outputs.cache-matched-key != ''
         run: docker load -i "$RUNNER_TEMP/supabase-images/images.tar"
+      # With no cached images the three shards would pull the same ten images
+      # at once, which ghcr.io refuses: start them two minutes apart.
+      - if: steps.images.outputs.cache-hit != 'true'
+        run: sleep $(( (${{ matrix.shard }} - 1) * 120 ))
       - run: bash scripts/ci-supabase-start.sh
+      # The first shard whose start had to pull saves the images (a second save
+      # of the same key is refused and only warns). Saved on main, every PR can
+      # restore it; a PR's own save serves only that PR.
+      - if: steps.images.outputs.cache-hit != 'true'
+        run: |
+          mkdir -p "$RUNNER_TEMP/supabase-images"
+          docker save -o "$RUNNER_TEMP/supabase-images/images.tar" $(docker images --format '{{.Repository}}:{{.Tag}}' | grep 'supabase/' | sort -u)
+      - if: steps.images.outputs.cache-hit != 'true'
+        uses: actions/cache/save@v6
+        continue-on-error: true
+        with:
+          path: ${{ runner.temp }}/supabase-images
+          key: supabase-images-v2-${{ runner.arch }}-${{ env.SUPABASE_CLI }}-${{ hashFiles('supabase/config.toml') }}
       - if: steps.reuse.outputs.ok == 'true'
         run: supabase migration up --local
       # types/database.ts is generated from the schema: regenerate it from the
@@ -163,8 +179,8 @@ jobs:
       # Once is enough: shard 3 holds the quick files, off the critical path.
       - name: Generated database types match the migrations
         if: matrix.shard == 3
-        # Starts postgres-meta, which isn't in the image cache until shard 3
-        # saves it. On 27 Oct ghcr.io kept refusing it ("toomanyrequests") and
+        # Starts postgres-meta, which the image cache doesn't hold (start
+        # doesn't run it). On 27 Oct ghcr.io kept refusing it ("toomanyrequests") and
         # public.ecr.aws hit its anonymous data limit, so this tries docker.io
         # first, then the other two, six tries over about five minutes.
         run: |
@@ -179,15 +195,6 @@ jobs:
             echo "::error file=types/database.ts::Out of date with supabase/migrations. Run npm run gen:types against a local stack built from this branch's migrations and commit the result."
             exit 1
           }
-      - if: steps.images.outputs.cache-hit != 'true' && matrix.shard == 3
-        run: |
-          mkdir -p "$RUNNER_TEMP/supabase-images"
-          docker save -o "$RUNNER_TEMP/supabase-images/images.tar" $(docker images --format '{{.Repository}}:{{.Tag}}' | grep '/supabase/' | sort -u)
-      - if: steps.images.outputs.cache-hit != 'true' && matrix.shard == 3
-        uses: actions/cache/save@v6
-        with:
-          path: ${{ runner.temp }}/supabase-images
-          key: supabase-images-v2-${{ runner.arch }}-${{ env.SUPABASE_CLI }}-${{ hashFiles('supabase/config.toml') }}
       - run: supabase db lint --level warning --fail-on error
       - run: npm run test:security
         timeout-minutes: 20
