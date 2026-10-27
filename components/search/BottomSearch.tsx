@@ -227,7 +227,7 @@ export function BottomSearch({ query, setQuery, scope, setScope, mine, area, onS
  */
 function useKeepFieldFocus(dock: RefObject<ComponentRef<typeof View> | null>) {
   useEffect(() => {
-    const el = dock.current as unknown as HTMLElement | null;
+    const el = dock.current as HTMLElement | null;
     if (Platform.OS !== 'web' || !el?.addEventListener) return;
     const keep = (e: MouseEvent) => {
       if (!(e.target instanceof HTMLInputElement)) e.preventDefault();

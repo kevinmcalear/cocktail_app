@@ -64,7 +64,7 @@ export function useDrinkTree() {
         spirits: [],
         versions: 0,
       }));
-      const drinkNodes: TreeNode[] = ((drinks.data ?? []) as unknown as TreeDrinkRow[]).map((d) => ({
+      const drinkNodes: TreeNode[] = ((drinks.data ?? []) as TreeDrinkRow[]).map((d) => ({
         key: `d:${d.id}`,
         id: d.id,
         kind: 'drink',

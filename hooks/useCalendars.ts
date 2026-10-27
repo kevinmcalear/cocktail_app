@@ -74,7 +74,7 @@ export function useNewFromCalendars(barId: string | null | undefined) {
         .order('starts_at')
         .limit(200);
       if (error) throw error;
-      return (data ?? []) as unknown as ImportedEvent[];
+      return (data ?? []) as ImportedEvent[];
     },
   });
 }

@@ -167,6 +167,7 @@ export function useItemFlavors(itemIds: readonly string[], enabled = true, keep 
         chunk(ids, 150).map(async (batch) => {
           const { data, error } = await supabase.from('item_flavors').select(`item_id, ${DIM_COLUMNS}`).in('item_id', batch).gte('coverage', MIN_COVERAGE);
           if (error) throw error;
+          // ponytail: the select is built from DIM_COLUMNS at run time, so supabase-js can't type the row; a literal select would drop this cast.
           return (data ?? []) as unknown as (FlavorRow & { item_id: string })[];
         })
       );

@@ -172,9 +172,9 @@ async function searchBar(query: string): Promise<FoundItem[]> {
     if (has.error) throw has.error;
     if (also.error) throw also.error;
     const byId = new Map([...(starts.data ?? []), ...(has.data ?? [])].map((r) => [r.id, r]));
-    const rows = [...byId.values()] as unknown as ItemRow[];
+    const rows = [...byId.values()] as ItemRow[];
     // Alias matches first: their names don't contain what was typed, so searchByName would drop them.
-    const named = (also.data ?? []) as unknown as ItemRow[];
+    const named = (also.data ?? []) as ItemRow[];
     const best = [...named, ...searchByName(query, rows, 40).filter((r) => !named.some((n) => n.id === r.id))];
     // A kind typed ("gin"): its bottles too, whatever their names (Tanqueray). The one named exactly, else the first that starts with it.
     const key = query.trim().toLowerCase();
@@ -204,7 +204,7 @@ async function kindBottles(kindId: string, text: string, limit: number): Promise
   if (text.trim()) read = read.ilike('name', `%${likeExactly(text.trim())}%`);
   const { data, error } = await read.order('picture_url', { nullsFirst: false }).order('name').limit(limit);
   if (error) throw error;
-  return (data ?? []) as unknown as ItemRow[];
+  return (data ?? []) as ItemRow[];
 }
 
 /** How many bottles Which gin? lists before a search narrows them. */
@@ -246,7 +246,7 @@ export function useAddByName() {
 export async function readFound(ids: string[]): Promise<FoundItem[]> {
   const { data, error } = await supabase.from('app_item_presentation').select(FOUND_SELECT).in('id', ids);
   if (error) throw error;
-  return foundItems((data ?? []) as unknown as ItemRow[]);
+  return foundItems((data ?? []) as ItemRow[]);
 }
 
 /**
@@ -287,7 +287,7 @@ export function useBarIdeas(names: readonly string[]) {
       if (error) throw error;
       // One per name, the first by id, as the pantry staples are picked.
       const byName = new Map<string, ItemRow>();
-      for (const r of (data ?? []) as unknown as ItemRow[]) if (!byName.has(r.name.toLowerCase())) byName.set(r.name.toLowerCase(), r);
+      for (const r of (data ?? []) as ItemRow[]) if (!byName.has(r.name.toLowerCase())) byName.set(r.name.toLowerCase(), r);
       return foundItems(names.flatMap((n) => byName.get(n.toLowerCase()) ?? []));
     },
   });
@@ -342,6 +342,7 @@ async function readItems(ids: string[], select = ITEM_SELECT): Promise<ItemRow[]
     chunk(ids, 150).map(async (batch) => {
       const { data, error } = await supabase.from('app_item_presentation').select(select).in('id', batch);
       if (error) throw error;
+      // ponytail: the select string is chosen at run time, so supabase-js can't type the row; split into literal selects to drop this cast.
       return (data ?? []) as unknown as ItemRow[];
     })
   );
@@ -435,7 +436,7 @@ export function usePrepDetails(prepIds: readonly string[]) {
             out[c.item_id] = { ...out[c.item_id], keepsHours: c.shelf_life_hours, lead: c.lead_time_note };
           }
           type Line = { recipe_item_id: string; display_ingredient_id: string | null; is_optional: boolean | null; display_ingredient: { name: string; ingredient_role: string | null } | null };
-          for (const l of (lines.data ?? []) as unknown as Line[]) {
+          for (const l of (lines.data ?? []) as Line[]) {
             if (!l.display_ingredient_id || !l.display_ingredient || l.is_optional) continue;
             out[l.recipe_item_id].lines.push({ id: l.display_ingredient_id, name: l.display_ingredient.name, generic: l.display_ingredient.ingredient_role === 'generic' });
           }

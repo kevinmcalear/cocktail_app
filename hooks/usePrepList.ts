@@ -47,7 +47,7 @@ export async function recipesFor(ids: string[]): Promise<RecipeRow[]> {
     .in('recipe_item_id', ids)
     .order('sort_order');
   if (error) throw error;
-  return (data ?? []) as unknown as RecipeRow[];
+  return (data ?? []) as RecipeRow[];
 }
 
 /**
@@ -133,7 +133,7 @@ export function usePrepData(barId: string | null | undefined, menuIds: string[])
         .in('menu_id', key);
       if (menuError) throw menuError;
       const drinkItems = new Map<string, MenuItem>();
-      for (const row of (menuRows ?? []) as unknown as { item: MenuItem | null }[]) {
+      for (const row of (menuRows ?? []) as { item: MenuItem | null }[]) {
         if (row.item?.item_type === 'cocktail') drinkItems.set(row.item.id, row.item);
       }
       const drinkIds = [...drinkItems.keys()];
@@ -159,7 +159,7 @@ export function usePrepData(barId: string | null | undefined, menuIds: string[])
         supabase.from('item_locations').select('item_id, par_amount, par_unit, item:items!item_id(name)').eq('bar_id', barId!),
       ]);
       const onHand = onHandByItem((stockRes.data ?? []) as OnHandRow[]);
-      const par = parByItem((parRes.data ?? []) as unknown as { item_id: string; par_amount: number | null; par_unit: string | null; item: { name: string } | null }[]);
+      const par = parByItem((parRes.data ?? []) as { item_id: string; par_amount: number | null; par_unit: string | null; item: { name: string } | null }[]);
       return { drinks, houseMade, purchasing, onHand, par };
     },
   });

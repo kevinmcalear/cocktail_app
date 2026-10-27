@@ -2,7 +2,7 @@ import { useQuery } from '@tanstack/react-query';
 
 import { useUserId } from '@/ctx/AuthContext';
 import { fetchPublished } from '@/hooks/usePublished';
-import { editionDates, type MenuEdition } from '@/lib/menuEditions';
+import { editionDates } from '@/lib/menuEditions';
 import type { ForYouEdition, ListPlace } from '@/lib/collectionMenus';
 import { supabase } from '@/lib/supabase';
 
@@ -14,12 +14,6 @@ export interface BarMenuForYou extends ForYouEdition {
   barPlace: string | null;
   /** Its drinks in menu order, with a line for each: what's in it, as the bar describes it. */
   drinks: { id: string; name: string; line: string | null }[];
-}
-
-type EditionCols = Pick<MenuEdition, 'id' | 'name' | 'year' | 'month' | 'end_year' | 'end_month' | 'is_current' | 'theme'>;
-interface EditionRow extends EditionCols {
-  profile: { id: string; handle: string | null; display_name: string; avatar_url: string | null; locality: string | null; city: string | null } | null;
-  drinks: { item_id: string; sort_order: number | null }[] | null;
 }
 
 /**
@@ -47,7 +41,7 @@ export function useBarMenusForYou(barIds: readonly string[], { currentOnly = fal
         .order('year', { ascending: false })
         .order('month', { ascending: false, nullsFirst: false });
       if (error) throw error;
-      const rows = ((data ?? []) as unknown as EditionRow[]).filter((r) => r.profile);
+      const rows = (data ?? []).filter((r) => r.profile);
       const itemIds = [...new Set(rows.flatMap((r) => (r.drinks ?? []).map((d) => d.item_id)))];
       const published = await fetchPublished(itemIds);
       return rows.map((r) => {

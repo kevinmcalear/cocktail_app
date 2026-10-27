@@ -38,7 +38,7 @@ export function useItemPublishing(itemId: string, barId: string | null) {
       if (bar.error) throw bar.error;
       const { publish_mode: own, created_by: createdBy } = item.data as { publish_mode: PublishMode | null; created_by: string | null };
       // Only the drink's own bar's menus publish it.
-      const menuModes = ((links.data ?? []) as unknown as MenuLink[])
+      const menuModes = (links.data ?? [])
         .map((l) => l.menus)
         .filter((m): m is NonNullable<MenuLink['menus']> => !!m && m.bar_id === barId)
         .map((m) => m.publish_mode);

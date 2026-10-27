@@ -63,6 +63,7 @@ export function Sheet({ visible, onClose, accessibilityLabel, children, style, g
     latest.current = { dismiss, reduceMotion };
   });
   const dragRef = (el: React.ComponentRef<typeof View> | null) =>
+    // ponytail: on web a React Native view is a DOM element, which RN's types don't describe.
     el ? attachSheetDrag(el as unknown as HTMLElement, (ms) => latest.current.dismiss(ms), () => latest.current.reduceMotion) : undefined;
 
   useEffect(() => {

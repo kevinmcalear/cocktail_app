@@ -75,7 +75,7 @@ export function withListRecipes(data: { recipes?: ListRecipe[] | null }[] | null
             }))
         ),
     }));
-    return (processed ?? []) as unknown as DatabaseItem[];
+    return (processed ?? []) as DatabaseItem[];
 }
 
 /** Every drink the person can see, at home and every venue; screens filter by place, so switching doesn't download it again. */

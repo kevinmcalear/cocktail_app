@@ -43,6 +43,7 @@ async function itemNames(ids: string[], images = false): Promise<Map<string, Ite
   const columns = images ? 'id, name, riff_of_id, item_images(angle, sort_order, is_generated, images(url))' : 'id, name, riff_of_id';
   const { data, error } = await supabase.from('items').select(columns).in('id', ids);
   if (error) throw error;
+  // ponytail: the select string is chosen at run time, so supabase-js can't type the row; split into literal selects to drop this cast.
   const rows = (data ?? []) as unknown as ItemName[];
   return new Map(rows.map((row) => [row.id, row]));
 }

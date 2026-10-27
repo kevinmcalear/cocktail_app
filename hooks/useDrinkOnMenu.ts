@@ -29,7 +29,7 @@ export function useDrinkOnMenu(itemId: string | null | undefined, barId: string 
         .eq('menu.is_active', true)
         .limit(5);
       if (error) throw error;
-      const rows = (data ?? []) as unknown as { price: string | null; menu: { id: string; name: string; kind: string } }[];
+      const rows = (data ?? []) as { price: string | null; menu: { id: string; name: string; kind: string } }[];
       // ponytail: one menu on now, as the card shows one; a drink on two live menus notes the first's price. List them all if bars run several at once.
       const row = rows.find((r) => r.menu.kind === 'menu') ?? rows[0];
       return row ? { menuId: row.menu.id, name: row.menu.name, price: row.price?.trim() || null } : null;

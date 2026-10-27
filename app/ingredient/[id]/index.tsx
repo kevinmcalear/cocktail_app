@@ -54,7 +54,7 @@ export default function IngredientDetailScreen() {
         );
     }
 
-    const lines: PrepLine[] = ((data?.recipe ?? []) as unknown as RecipeRow[]).map((r) => ({
+    const lines: PrepLine[] = ((data?.recipe ?? []) as RecipeRow[]).map((r) => ({
         id: r.id,
         name: r.ingredient?.name || "Hidden ingredient",
         ingredientId: r.ingredient?.id ?? null,

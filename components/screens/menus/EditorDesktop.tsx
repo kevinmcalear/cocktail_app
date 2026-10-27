@@ -236,6 +236,6 @@ const styles = StyleSheet.create({
   flex: { flex: 1, minWidth: 0 },
 });
 
-// Web only: React Native's cursor type stops at pointer. Kept out of StyleSheet.create, whose
+// ponytail: web only. React Native's cursor type stops at pointer. Kept out of StyleSheet.create, whose
 // narrower type rejects the cast once expo-env.d.ts (expo/types) is present.
 const grab = { cursor: 'grab' } as unknown as ViewStyle;

@@ -115,7 +115,7 @@ export function useMyReports() {
         .order('created_at', { ascending: false })
         .limit(100);
       if (error) throw error;
-      const reports = (data ?? []) as unknown as MyReport[];
+      const reports = data ?? [];
       // A bar's published drink isn't readable through items outside the
       // bar, so its name comes from the public projection.
       const missing = [...new Set(reports.filter((r) => !r.item && r.target_kind !== 'profile').map((r) => r.item_id).filter((id): id is string => !!id))];

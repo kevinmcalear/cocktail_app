@@ -103,7 +103,7 @@ export async function readSameNameDrink(id: string): Promise<SameNameDrink | nul
 async function readDrink(id: string): Promise<SameNameDrink | null> {
   const { data, error } = await supabase.from('items').select(COLUMNS).eq('id', id).maybeSingle();
   if (error) throw error;
-  const row = data as unknown as Row | null;
+  const row = data as Row | null;
   const drink = row ? toMenuDrink(row) : null;
   if (!row || !drink) return null;
   const menus = (row.menu_drinks ?? []).flatMap((m) => (m.menu ? [m.menu] : []));

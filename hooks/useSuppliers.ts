@@ -43,7 +43,7 @@ export function useSupplierLines(supplierId: string | null | undefined) {
         .eq('supplier_profile_id', supplierId!)
         .limit(1000);
       if (error) throw error;
-      return toLines((data ?? []) as unknown as Row[]);
+      return toLines(data ?? []);
     },
   });
 }
@@ -60,7 +60,7 @@ export function useMakerSuppliers(makerId: string | null | undefined) {
         .eq('maker_profile_id', makerId!)
         .limit(200);
       if (error) throw error;
-      return toLines((data ?? []) as unknown as Row[]);
+      return toLines(data ?? []);
     },
   });
 }
