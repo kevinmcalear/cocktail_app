@@ -14,12 +14,12 @@ import type { RowState } from '@/lib/setupChecklist';
  * accent for the one that's next, with Continue), what it is, and a note of
  * what's there. Each step has its own Skip; a skipped row says so.
  */
-export function ChecklistRow({ n, title, line, note, state, action = 'Continue', onPress }: { n: number; title: string; line: string; note?: string; state: RowState; action?: string; onPress: () => void }) {
+export function ChecklistRow({ n, title, line, note, state, first, action = 'Continue', onPress }: { n: number; title: string; line: string; note?: string; state: RowState; first?: boolean; action?: string; onPress: () => void }) {
   const ds = useDs();
   const now = state === 'now';
   const sub = [line, state === 'skipped' ? 'Skipped for now' : note].filter(Boolean).join(' · ');
   return (
-    <View style={[styles.row, { borderBottomColor: ds.c.line }]}>
+    <View style={[styles.row, first ? null : { borderTopColor: ds.c.line, borderTopWidth: StyleSheet.hairlineWidth }]}>
       <PressableScale role="button" accessibilityLabel={[`${n}. ${title}`, sub, state === 'done' ? 'Done' : null].filter(Boolean).join(', ')} onPress={onPress} style={styles.main}>
         <View style={[styles.mark, state === 'done' ? { backgroundColor: withAlpha(STATUS.success, 0.18) } : { backgroundColor: now ? ds.accentFill.fill : ds.c.raised }]}>
           {state === 'done' ? <IconSymbol name="checkmark" size={16} color={STATUS.success} /> : <Caption color={now ? ds.accentFill.text : ds.c.muted} style={styles.strong}>{String(n)}</Caption>}
@@ -30,7 +30,8 @@ export function ChecklistRow({ n, title, line, note, state, action = 'Continue',
         </View>
         {now ? null : <IconSymbol name="chevron.right" size={16} color={ds.c.muted} />}
       </PressableScale>
-      {now ? <Button label={action} dense onPress={onPress} accessibilityLabel={`${action}: ${title.toLowerCase()}`} /> : null}
+      {/* Under the row, in line with its number (owner-setup step 5). */}
+      {now ? <Button label={action} dense onPress={onPress} accessibilityLabel={`${action}: ${title.toLowerCase()}`} style={styles.go} /> : null}
     </View>
   );
 }
@@ -83,8 +84,19 @@ export function LookFirstNote() {
   );
 }
 
+/** Wide web, beside the checklist: what the next row is about (owner-setup step 5). */
+export function NextCard({ title, line }: { title: string; line: string }) {
+  const ds = useDs();
+  return (
+    <View style={[styles.next, { backgroundColor: ds.c.surface }]}>
+      <Caption tone="muted" style={styles.eyebrow}>{`Next: ${title}`.toUpperCase()}</Caption>
+      <Body tone="muted">{line}</Body>
+    </View>
+  );
+}
+
 const styles = StyleSheet.create({
-  row: { flexDirection: 'row', alignItems: 'center', gap: space.xs, borderBottomWidth: StyleSheet.hairlineWidth },
+  row: { gap: space.xs },
   main: { flex: 1, flexDirection: 'row', alignItems: 'center', gap: space.md, minHeight: layout.minTapTarget + space.lg },
   mark: { width: 32, height: 32, borderRadius: radius.pill, alignItems: 'center', justifyContent: 'center' },
   strong: { fontFamily: fontFamilies.bodySemiBold },
@@ -93,5 +105,8 @@ const styles = StyleSheet.create({
   claim: { gap: space.xs, padding: space.lg, borderRadius: radius.card, borderCurve: 'continuous' },
   claimHead: { flexDirection: 'row', alignItems: 'center', gap: space.sm },
   start: { alignSelf: 'flex-start', marginTop: space.xs },
+  go: { alignSelf: 'flex-start', marginBottom: space.md },
+  next: { width: 320, gap: space.sm, padding: space.xl, borderRadius: radius.card, borderCurve: 'continuous' },
+  eyebrow: { fontFamily: fontFamilies.bodySemiBold, letterSpacing: 1.2 },
   lookFirst: { padding: space.md, borderRadius: radius.control, borderCurve: 'continuous' },
 });
