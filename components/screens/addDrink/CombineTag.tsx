@@ -12,9 +12,10 @@ const TAIL = 7;
  * Over a line it can combine with, the held card's tag: just above the card,
  * where the thumb holding it doesn't cover it, pointing down at it (drag
  * options 1B, Kevin 27 Oct; make-anything-steps-1, step 3). Fades up in; no
- * layout animation (#298).
+ * layout animation (#298). In a drink made in parts, a line held over
+ * another part says "Move to The cream" (`title`, no `pair`).
  */
-export function CombineTag({ pair }: { pair: string }) {
+export function CombineTag({ pair, title = 'Let go to make it in-house' }: { pair?: string; title?: string }) {
   const ds = useDs();
   const shown = useSharedValue(0);
   useEffect(() => {
@@ -25,11 +26,13 @@ export function CombineTag({ pair }: { pair: string }) {
     <Animated.View role="alert" style={[styles.wrap, rise]}>
       <View style={[styles.tag, { backgroundColor: ds.accentFill.fill }]}>
         <Body tone="onAccent" numberOfLines={1} style={styles.strong}>
-          Let go to make it in-house
+          {title}
         </Body>
-        <Caption tone="onAccent" numberOfLines={1}>
-          {pair}
-        </Caption>
+        {pair ? (
+          <Caption tone="onAccent" numberOfLines={1}>
+            {pair}
+          </Caption>
+        ) : null}
       </View>
       <View style={[styles.tail, { borderTopColor: ds.accentFill.fill }]} />
     </Animated.View>

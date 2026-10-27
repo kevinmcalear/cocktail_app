@@ -105,13 +105,15 @@ export function EditMoreMenu({ open, onClose, canDelete, dirty, draft, onPick, n
   );
 }
 
-function MoreRow({ icon, label, danger, onPick }: { icon: IconName; label: string; danger?: boolean; onPick: () => void }) {
+/** A row in an editor's sheet of choices: picking it closes the sheet. `note` says what it will do, under it. */
+export function MoreRow({ icon, label, danger, note, onPick }: { icon: IconName; label: string; danger?: boolean; note?: string; onPick: () => void }) {
   const ds = useDs();
   const close = useSheetClose();
   return (
     <PressableScale
       role="button"
       accessibilityLabel={label}
+      accessibilityHint={note}
       onPress={() => {
         onPick();
         close();
@@ -119,9 +121,12 @@ function MoreRow({ icon, label, danger, onPick }: { icon: IconName; label: strin
       style={[styles.row, { borderBottomColor: ds.c.line }]}
     >
       <IconSymbol name={icon} size={20} color={danger ? readableAccent(STATUS.danger, ds.c.ground) : ds.c.ink} />
-      <DsText variant="body" color={danger ? readableAccent(STATUS.danger, ds.c.ground) : undefined} style={styles.flex}>
-        {label}
-      </DsText>
+      <View style={styles.flex}>
+        <DsText variant="body" color={danger ? readableAccent(STATUS.danger, ds.c.ground) : undefined}>
+          {label}
+        </DsText>
+        {note ? <Caption tone="muted">{note}</Caption> : null}
+      </View>
     </PressableScale>
   );
 }

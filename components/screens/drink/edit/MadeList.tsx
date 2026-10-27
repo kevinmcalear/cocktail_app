@@ -1,7 +1,7 @@
-import { useState } from 'react';
+import { Fragment, useState } from 'react';
 import { Platform, ScrollView, StyleSheet, TextInput, View } from 'react-native';
 
-import { Body, Button, Caption, Headline, PressableScale, Sheet, useDs } from '@/components/ds';
+import { Body, Button, Caption, Headline, PressableScale, Sheet, Switch, useDs } from '@/components/ds';
 import { IconSymbol } from '@/components/ui/icon-symbol';
 import { fontFamilies, layout, radius, space, type } from '@/constants/tokens';
 import type { SpecCategory } from '@/hooks/useCocktailEditor';
@@ -47,13 +47,16 @@ const valueOf = (editor: Editor, category: Category, options: Option[]) => {
 /**
  * How it's made, while editing (drink-edit-phone): glass, ice, method and
  * family as one grouped list, each value with a chevron that opens a small
- * sheet to pick it. Replaces the old strip of plus signs.
+ * sheet to pick it. Replaces the old strip of plus signs. A saved drink
+ * has the Made in parts switch too; while it's on it takes the Method
+ * row's place, and each part has its own method (drink-edit-parts).
  */
 export function MadeList({ editor, itemId }: { editor: Editor; itemId: string | null }) {
   const ds = useDs();
   const [open, setOpen] = useState<Category | null>(null);
   const ice = iceEditor(editor);
-  const rows = ROWS.filter((r) => r.category !== 'methodIce' || ice);
+  const parted = 'setMadeInParts' in editor ? editor : null;
+  const rows = ROWS.filter((r) => (r.category !== 'methodIce' || ice) && (r.category !== 'method' || !parted?.parts));
   return (
     <View style={styles.section}>
       <Headline role="heading">How it’s made</Headline>
@@ -61,21 +64,30 @@ export function MadeList({ editor, itemId }: { editor: Editor; itemId: string | 
         {rows.map((r, i) => {
           const value = valueOf(editor, r.category, optionsOf(editor, r.category));
           return (
-            <PressableScale
-              key={r.category}
-              role="button"
-              accessibilityLabel={`${r.label}: ${value || 'not set'}. Change it`}
-              onPress={() => setOpen(r.category)}
-              style={[styles.row, i < rows.length - 1 && { borderBottomColor: ds.c.line, borderBottomWidth: StyleSheet.hairlineWidth }]}
-            >
-              <Body tone="muted" style={styles.label}>
-                {r.label}
-              </Body>
-              <Body numberOfLines={1} tone={value ? undefined : 'muted'} style={styles.value}>
-                {value || r.empty}
-              </Body>
-              <IconSymbol name="chevron.right" size={16} color={ds.c.muted} />
-            </PressableScale>
+            <Fragment key={r.category}>
+              {r.category === 'family' && parted ? (
+                <View style={[styles.row, { borderBottomColor: ds.c.line, borderBottomWidth: StyleSheet.hairlineWidth }]}>
+                  <Body tone="muted" style={styles.flex}>
+                    Made in parts
+                  </Body>
+                  <Switch value={!!parted.parts} onValueChange={parted.setMadeInParts} label="Made in parts" />
+                </View>
+              ) : null}
+              <PressableScale
+                role="button"
+                accessibilityLabel={`${r.label}: ${value || 'not set'}. Change it`}
+                onPress={() => setOpen(r.category)}
+                style={[styles.row, i < rows.length - 1 && { borderBottomColor: ds.c.line, borderBottomWidth: StyleSheet.hairlineWidth }]}
+              >
+                <Body tone="muted" style={styles.label}>
+                  {r.label}
+                </Body>
+                <Body numberOfLines={1} tone={value ? undefined : 'muted'} style={styles.value}>
+                  {value || r.empty}
+                </Body>
+                <IconSymbol name="chevron.right" size={16} color={ds.c.muted} />
+              </PressableScale>
+            </Fragment>
           );
         })}
       </View>
@@ -98,19 +110,25 @@ export function MadeList({ editor, itemId }: { editor: Editor; itemId: string | 
   );
 }
 
-/** Ice, method and family's sheets (the glass has its own): tap to pick (methods take several), or add a new one by name. */
-function PickSheet({ editor, category, label, onClose }: { editor: Editor; category: Category; label: string; onClose: () => void }) {
+/**
+ * Ice, method and family's sheets (the glass has its own): tap to pick
+ * (methods take several), or add a new one by name. `part`: one part's
+ * methods in a drink made in parts, with its own title (drink-edit-parts).
+ */
+export function PickSheet({ editor, category, label, onClose, part }: { editor: Editor; category: Category; label: string; onClose: () => void; part?: { title: string; ids: string[]; toggle: (id: string, name: string) => void } }) {
   const ds = useDs();
   const [adding, setAdding] = useState('');
   const options = optionsOf(editor, category);
   const multi = category === 'method';
+  const methodIds = part?.ids ?? editor.methodIds;
+  const toggleMethod = part?.toggle ?? editor.toggleMethod;
   const ice = category === 'methodIce' ? iceEditor(editor) : null;
   const spec: SpecCategory = category === 'methodIce' ? 'ice' : category;
   const current = ice ? ice.methodIceId : editor.getSpecId(spec);
   const setOne = (id: string | null) => (ice ? ice.setMethodIceId(id) : editor.setSpecId(spec, id));
-  const picked = (id: string) => (multi ? editor.methodIds.includes(id) : current === id);
-  const choose = (id: string) => {
-    if (multi) return editor.toggleMethod(id);
+  const picked = (id: string) => (multi ? methodIds.includes(id) : current === id);
+  const choose = (id: string, name: string) => {
+    if (multi) return toggleMethod(id, name);
     setOne(picked(id) ? null : id);
     onClose();
   };
@@ -119,7 +137,7 @@ function PickSheet({ editor, category, label, onClose }: { editor: Editor; categ
     if (!name) return;
     const id = await editor.handleAddPill(spec, name);
     if (multi) {
-      if (!editor.methodIds.includes(id)) editor.toggleMethod(id);
+      if (!methodIds.includes(id)) toggleMethod(id, name);
     } else setOne(id);
     setAdding('');
   };
@@ -127,26 +145,26 @@ function PickSheet({ editor, category, label, onClose }: { editor: Editor; categ
     <Sheet style={SHEET_PAD}
       visible
       onClose={onClose}
-      accessibilityLabel={label}
+      accessibilityLabel={part?.title ?? label}
       keyboard
       header={
         <View style={styles.sheetHead}>
           <Headline role="heading" style={styles.flex}>
-            {label}
+            {part?.title ?? label}
           </Headline>
           <Button label="Done" size="sm" variant="ghost" onPress={onClose} />
         </View>
       }
     >
       <ScrollView style={styles.list} keyboardShouldPersistTaps="handled">
-        <View role={multi ? 'group' : 'radiogroup'} accessibilityLabel={label}>
+        <View role={multi ? 'group' : 'radiogroup'} accessibilityLabel={part?.title ?? label}>
           {options.map((o) => (
             <PressableScale
               key={o.id}
               role={multi ? 'checkbox' : 'radio'}
               aria-checked={picked(o.id)}
               accessibilityLabel={o.name}
-              onPress={() => choose(o.id)}
+              onPress={() => choose(o.id, o.name)}
               style={[styles.option, { borderBottomColor: ds.c.line }]}
             >
               <Body style={styles.flex}>{o.name}</Body>
