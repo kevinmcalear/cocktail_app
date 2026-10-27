@@ -5,7 +5,7 @@
 // writer always reads their own; only the drink's editors write, and never a
 // note they can't read; a role level is for venue drinks only; versions keep
 // role notes out; the view keeps its columns; items.notes and
-// credited_drink_notes are gone (20261123310000). Runs through the real API
+// credited_drink_notes are gone (20261124200000). Runs through the real API
 // against the local stack.
 //
 //   supabase start && supabase db reset

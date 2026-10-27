@@ -1,4 +1,4 @@
-// Since 20261123310000 a drink's notes live only in item_notes and items has
+// Since 20261124200000 a drink's notes live only in item_notes and items has
 // no notes column (20261008050000 had already moved bar-credited drinks'
 // notes to a side table). The older seed migrations write and read
 // items.notes (a "Spec adapted from ..." note means the spec was left out on
