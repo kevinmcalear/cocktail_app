@@ -145,8 +145,10 @@ describe("cocktail legends", () => {
         try {
           await admin.query("SET LOCAL deadlock_timeout = '100ms'");
           await admin.query("SET LOCAL lock_timeout = '30s'");
-          // The seed was written when drinks kept their notes on the row; it re-runs against that shape, rolled back.
+          // The seed was written when drinks kept their notes on the row, and bar-credited drinks' in
+          // credited_drink_notes (both gone since 20261124200000); it re-runs against that shape, rolled back.
           await notesBackOnRows(admin);
+          await admin.query("CREATE TABLE public.credited_drink_notes (item_id uuid PRIMARY KEY, notes text)");
           const before = await count();
           await admin.query(SQL);
           assert.deepEqual(await count(), before);
