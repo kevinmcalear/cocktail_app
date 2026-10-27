@@ -39,12 +39,19 @@ serveJson("venue-delete-email", async (req) => {
   if (claimError) throw claimError;
   if (!claimed?.length) return { sent: 0 };
 
-  const [{ data: bar, error: barError }, { data: admins, error: adminsError }] = await Promise.all([
+  const [{ data: bar, error: barError }, { data: members, error: membersError }] = await Promise.all([
     caller.admin.from("bars").select("name, logo_url, primary_color, display_face").eq("id", barId).single(),
-    caller.admin.from("user_bars").select("user_id").eq("bar_id", barId).gte("role_level", 40).neq("user_id", caller.user.id),
+    caller.admin.from("user_bars").select("user_id, venue_roles(ends_at)").eq("bar_id", barId).gte("role_level", 40).neq("user_id", caller.user.id),
   ]);
   if (barError) throw barError;
-  if (adminsError) throw adminsError;
+  if (membersError) throw membersError;
+  // A takeover Admin whose role has ended can't undo it, so isn't told.
+  const now = Date.now();
+  const admins = members.filter((m) => {
+    // A many-to-one embed: one row or null, though the untyped client calls it an array.
+    const role = m.venue_roles as unknown as { ends_at: string | null } | null;
+    return !role?.ends_at || Date.parse(role.ends_at) > now;
+  });
   if (!admins.length) return { sent: 0 };
 
   const content = venueDeleteEmail({
@@ -54,18 +61,19 @@ serveJson("venue-delete-email", async (req) => {
     undoUrl: `${site}/settings/bar/${barId}`,
   });
   const from = barSender(bar.name, fromAddress());
-  let sent = 0;
-  for (const { user_id } of admins) {
-    const { data } = await caller.admin.auth.admin.getUserById(user_id);
-    const to = data.user?.email;
-    if (!to) continue;
-    // One Admin's bad address doesn't stop the rest.
-    try {
-      await sendEmail({ from, to, ...content });
-      sent += 1;
-    } catch (err) {
-      console.error("venue-delete-email: one Admin's email failed:", err);
-    }
+  // One Admin's bad address doesn't stop the rest.
+  const results = await Promise.allSettled(
+    admins.map(async ({ user_id }) => {
+      const { data } = await caller.admin.auth.admin.getUserById(user_id);
+      if (!data.user?.email) throw new Error("no email");
+      await sendEmail({ from, to: data.user.email, ...content });
+    }),
+  );
+  const sent = results.filter((r) => r.status === "fulfilled").length;
+  for (const r of results) if (r.status === "rejected") console.error("venue-delete-email: one Admin's email failed:", r.reason);
+  // Nobody reached (Resend down, no key yet): hand the claim back so the next call tries again.
+  if (!sent) {
+    await caller.admin.from("venue_delete_requests").update({ emailed_at: null }).eq("bar_id", barId).eq("requested_by", caller.user.id);
   }
   return { sent };
 });
