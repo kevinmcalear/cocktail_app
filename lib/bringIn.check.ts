@@ -1,6 +1,6 @@
 import assert from 'node:assert/strict';
 
-import { boxRect, cropLayout, foundLine, isCleanText, isPrepName, localReading, looksLike, prepRatio, readingName, readingSteps, shelfOrder, stepsDone, stripWindow } from './bringIn';
+import { boxRect, cropLayout, foundLine, isCleanText, isPrepName, localReading, looksLike, prepRatio, readingName, readingSteps, readingPages, shelfOrder, stepsDone, stripWindow } from './bringIn';
 
 // Bring in reads clean text on the phone, says what it's doing while the
 // reader works, and crops the printed line beside each row.
@@ -85,5 +85,12 @@ assert.deepEqual(stripWindow(4, 3), { from: 0, to: 4 });
 assert.deepEqual(stripWindow(12, 1), { from: 0, to: 6 });
 assert.deepEqual(stripWindow(12, 7), { from: 5, to: 11 });
 assert.deepEqual(stripWindow(12, 11), { from: 6, to: 12 });
+
+// A PDF drawn on the phone becomes its pages, each still from file 1; a photo is itself.
+const pdf = { uri: 'file:///book.pdf', mimeType: 'application/pdf' };
+const photo = { uri: 'file:///p.jpg', mimeType: 'image/jpeg' };
+const drawn = { 'file:///book.pdf': [{ uri: 'a.jpg', mimeType: 'image/jpeg' }, { uri: 'b.jpg', mimeType: 'image/jpeg' }] };
+assert.deepEqual(readingPages([photo, pdf], drawn).map((p) => [p.file.uri, p.of, p.drawn]), [['file:///p.jpg', 0, false], ['a.jpg', 1, true], ['b.jpg', 1, true]]);
+assert.deepEqual(readingPages([pdf], undefined).map((p) => [p.file.uri, p.drawn]), [['file:///book.pdf', false]]);
 
 console.log('bringIn checks passed');
