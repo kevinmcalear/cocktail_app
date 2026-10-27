@@ -63,17 +63,19 @@ export interface PrepCardInput {
   steps: { body: string; timer_seconds: number | null; equipment?: string[] }[];
 }
 
-/** Upsert an item's prep row and replace its steps. Also used when a new house prep is saved from the add-drink wizard. */
-export async function savePrepCard(itemId: string, { prep, steps }: PrepCardInput) {
-  const saved = await supabase.from('item_prep').upsert({ item_id: itemId, ...prep }, { onConflict: 'item_id' });
-  if (saved.error) throw saved.error;
-  const gone = await supabase.from('item_steps').delete().eq('item_id', itemId);
-  if (gone.error) throw gone.error;
-  const kept = steps.map((s) => ({ body: s.body.trim(), timer_seconds: s.timer_seconds, equipment: s.equipment ?? [] })).filter((s) => s.body);
-  if (kept.length) {
-    const added = await supabase.from('item_steps').insert(kept.map((s, position) => ({ item_id: itemId, position, ...s })));
-    if (added.error) throw added.error;
-  }
+/**
+ * Save an item's prep row and replace its steps in one transaction
+ * (save_prep_spec). With `lines`, its recipe lines are replaced in the same
+ * transaction too. Also used when a new house prep is saved from the add-drink wizard.
+ */
+export async function savePrepCard(itemId: string, { prep, steps }: PrepCardInput, lines?: { ingredient_item_id: string }[]) {
+  const { error } = await supabase.rpc('save_prep_spec', {
+    p_item: itemId,
+    p_prep: { ...prep },
+    p_steps: steps.map((s) => ({ body: s.body.trim(), timer_seconds: s.timer_seconds, equipment: s.equipment ?? [] })),
+    p_lines: lines,
+  });
+  if (error) throw error;
 }
 
 /** Save the card: upsert the prep row and replace the steps. */
