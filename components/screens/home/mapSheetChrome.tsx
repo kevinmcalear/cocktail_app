@@ -10,7 +10,7 @@ import { fontFamilies, radius, space, type } from '@/constants/tokens';
 export const CROSSFADE = 0.35;
 
 /** The sheet's ground: the surface, edge to edge, its top corners rounded, lifted off the map. */
-function SheetGround({ style }: Pick<ViewProps, 'style'>) {
+export function SheetGround({ style }: Pick<ViewProps, 'style'>) {
   const ds = useDs();
   return <View pointerEvents="none" style={[style, styles.ground, { backgroundColor: ds.c.surface, shadowColor: ds.c.ground }]} />;
 }
@@ -60,15 +60,12 @@ interface SheetLineProps {
  * the handle, the title stays put as the list under it scrolls.
  */
 export function SheetLine({ animatedIndex, title, count, onOpen, onMeasure }: SheetLineProps) {
-  const ds = useDs();
   const search = use(SheetSearchSlot);
   const line = useAnimatedStyle(() => ({ opacity: interpolate(animatedIndex.value, [0, CROSSFADE], [1, 0], Extrapolation.CLAMP) }));
   const big = useAnimatedStyle(() => ({ opacity: interpolate(animatedIndex.value, [0, CROSSFADE], [0, 1], Extrapolation.CLAMP) }));
   return (
     <View onLayout={(e) => onMeasure(Math.ceil(e.nativeEvent.layout.height))}>
-      <View style={styles.grabber}>
-        <View style={[styles.indicator, { backgroundColor: ds.c.lineStrong }]} />
-      </View>
+      <Grabber />
       {search ? <View style={styles.search}>{search}</View> : null}
       {title ? (
         <View style={styles.row}>
@@ -92,6 +89,16 @@ export function SheetLine({ animatedIndex, title, count, onOpen, onMeasure }: Sh
           </Animated.View>
         </View>
       ) : null}
+    </View>
+  );
+}
+
+/** The sheet's grabber, the bar at its top. */
+export function Grabber() {
+  const ds = useDs();
+  return (
+    <View style={styles.grabber}>
+      <View style={[styles.indicator, { backgroundColor: ds.c.lineStrong }]} />
     </View>
   );
 }

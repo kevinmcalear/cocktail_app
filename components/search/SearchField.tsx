@@ -14,6 +14,8 @@ interface SearchFieldProps {
   onSubmit?: () => void;
   /** Shows Done beside the field (sheets), or the esc key cap inside it (the ⌘K palette, with `keys`). */
   onDone?: () => void;
+  /** In place of Done, a small text button (Discover's sheet says Cancel: only Return or Show on the map keeps the search). */
+  doneLabel?: string;
   /** The ⌘K palette: an esc key cap at the field's end in place of Done. */
   keys?: boolean;
   /** The search tab: a round close button beside the field while it's in use, which empties it and puts the keyboard away. */
@@ -41,7 +43,7 @@ export function KeyCap({ label }: { label: string }) {
  * something's typed. With `keys` (the ⌘K palette) it's the card's borderless
  * header instead, with the esc key at its end (nav-search-desk-palette).
  */
-export function SearchField({ query, onQuery, placeholder, autoFocus, onSubmit, onDone, keys, cancel, onFocusChange, glass, place }: SearchFieldProps) {
+export function SearchField({ query, onQuery, placeholder, autoFocus, onSubmit, onDone, doneLabel, keys, cancel, onFocusChange, glass, place }: SearchFieldProps) {
   const ds = useDs();
   const input = useRef<ComponentRef<typeof TextInput>>(null);
   const [focused, setFocused] = useState(false);
@@ -106,7 +108,7 @@ export function SearchField({ query, onQuery, placeholder, autoFocus, onSubmit, 
           </PressableScale>
         ) : null}
       </FieldShell>
-      {onDone && !keys ? <Button label="Done" variant="ghost" onPress={onDone} /> : null}
+      {onDone && !keys ? <Button label={doneLabel ?? 'Done'} variant="ghost" size={doneLabel ? 'sm' : 'md'} onPress={onDone} /> : null}
       {/* On the web the field blurs before the press lands: with nothing typed that's all Cancel would do anyway. */}
       {cancel && (focused || query) ? (
         <PressableScale role="button" accessibilityLabel="Cancel the search" onPress={cancelSearch} style={glass ? null : [styles.cancel, styles.cancelRing, { backgroundColor: ds.c.raised, borderColor: ds.c.lineStrong }]}>
