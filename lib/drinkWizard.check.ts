@@ -30,6 +30,10 @@ assert.deepEqual(ice.slice(0, 4), [
 assert.equal(ice.at(-1)?.name, 'Shaved', 'other rows follow the common ones');
 assert.equal(new Set(ice.map((p) => p.name.toLowerCase())).size, ice.length, 'no duplicates');
 assert.deepEqual(pickByName(' large cube ', rows), { id: 'i1', name: 'Large Cube' });
+// A glass or ice row that says its kind passes it on with the pick.
+const kinded = [{ id: 'g1', name: 'Custom', glass: 'tiki' }, { id: 'g2', name: 'Coupe', glass: null }, { id: 'i5', name: 'Hosh', ice_kind: 'sphere' }];
+assert.deepEqual(choiceList(['Coupe'], kinded), [{ id: 'g2', name: 'Coupe' }, { id: 'g1', name: 'Custom', kind: 'tiki' }, { id: 'i5', name: 'Hosh', kind: 'sphere' }]);
+assert.deepEqual(pickByName('hosh', kinded), { id: 'i5', name: 'Hosh', kind: 'sphere' });
 
 // A typed name is looked up as itself: no wildcards, spaces tidied.
 assert.equal(likeExactly('  Freezer   pour '), 'Freezer pour');
@@ -145,6 +149,12 @@ const unpicked = { ...negroni, ice: null };
 assert.equal(draftSketchInputs(sketchLook(unpicked)).ice, 'large', 'the rules guess a large cube for a Negroni');
 assert.equal(draftSketchInputs(sketchLook(unpicked, [], ['cubes', 'crushed'])).ice, 'cubes', 'the venue has cubes, not large');
 assert.equal(draftSketchInputs(sketchLook(negroni, [], ['cubes'])).ice, 'large', 'picked, so it stays');
+
+// A pick's kind draws before its name: "Custom" as a tiki mug, "Hosh" as a sphere.
+const custom = draftSketchInputs(sketchLook({ ...negroni, glass: { id: 'g1', name: 'Custom', kind: 'tiki' }, ice: { id: 'i5', name: 'Hosh', kind: 'sphere' } }));
+assert.deepEqual([custom.glass, custom.ice, custom.from.glass], ['tiki', 'sphere', 'data']);
+const built = sketchLook({ ...negroni, iceBuild: [{ ice: { id: 'i5', name: 'Hosh', kind: 'sphere' } }, { ice: { id: null, name: 'Snow', kind: 'crushed' }, to: 'rim' }] });
+assert.deepEqual(draftSketchInputs(built).build, [{ kind: 'sphere' }, { kind: 'crushed', to: 'rim' }]);
 
 // The kept draft is plain JSON (it lives in storage until the drink is saved).
 assert.deepEqual(JSON.parse(JSON.stringify(negroni)), negroni);

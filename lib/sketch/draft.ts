@@ -24,6 +24,9 @@ export interface DraftLook {
   /** Item names, as picked: "Coupe", "Large cube", ["Shake", "Top"]. */
   glass?: string | null;
   ice?: string | null;
+  /** Their kinds when the items say (items.glass, items.ice_kind), or as picked for a new one: used before the names. */
+  glassKind?: string | null;
+  iceKind?: string | null;
   methods?: readonly string[];
   lines: readonly DraftLine[];
   /** The glass drawing picked ('martini_pony', lib/sketch/geometry.ts); counts only for the glass it's drawn in. */
@@ -32,8 +35,8 @@ export interface DraftLook {
   barVariants?: readonly string[];
   /** The venue's ice kinds ('cubes', 'large'), for when the ice is only guessed (item_ice). */
   barIce?: readonly string[];
-  /** How the ice sits, bottom first, by name (lib/iceBuild.ts); `ice` is its top layer. */
-  build?: readonly ({ name: string; n?: number | null; to?: string | null } & IceLook)[] | null;
+  /** How the ice sits, bottom first, by name and kind (lib/iceBuild.ts); `ice` is its top layer. */
+  build?: readonly ({ name: string; kind?: string | null; n?: number | null; to?: string | null } & IceLook)[] | null;
   /** The one ice's look and the glass's height, mm, when the venue's ice and glass say (types.ts SketchInputs). */
   iceLook?: IceLook | null;
   glassMm?: number | null;
@@ -47,6 +50,8 @@ export function draftSketchInputs(draft: DraftLook): SketchInputs {
     description: draft.description ?? null,
     glass: draft.glass ?? null,
     ice: draft.ice ?? null,
+    glassKind: draft.glassKind ?? null,
+    iceKind: draft.iceKind ?? null,
     methods: draft.methods ?? [],
     lines: draft.lines.map((l) => ({
       id: null,

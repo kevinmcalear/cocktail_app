@@ -40,6 +40,8 @@ export const STEP_COPY: Record<WizardStep, { title: string; short: string; intro
 export interface WizardPick {
   id: string | null;
   name: string;
+  /** A glass or ice: its kind (items.glass, items.ice_kind), as the row says or as picked for a new name. Null or unset is not sure. */
+  kind?: string | null;
 }
 
 /** A person credited: who they are on the list ("@sam.ortiz · Little Rye") and whether anyone has claimed their page, kept from the search. */
@@ -251,17 +253,24 @@ const norm = (s: string) => s.trim().toLowerCase();
 /** A name as an ILIKE pattern that matches only itself (any case, spaces tidied). */
 export const likeExactly = (name: string) => name.trim().replace(/\s+/g, ' ').replace(/[\\%_]/g, (c) => `\\${c}`);
 
+type PickRow = { id: string; name: string | null; glass?: string | null; ice_kind?: string | null };
+/** A row as a pick, with its kind when it's a glass or ice that says. */
+const rowPick = (r: PickRow, name = r.name ?? ''): WizardPick => {
+  const kind = r.glass ?? r.ice_kind;
+  return kind ? { id: r.id, name, kind } : { id: r.id, name };
+};
+
 /** The existing row with this name (any case), or a new one to create. */
-export function pickByName<T extends { id: string; name: string | null }>(name: string, rows: readonly T[]): WizardPick {
+export function pickByName<T extends PickRow>(name: string, rows: readonly T[]): WizardPick {
   const hit = rows.find((r) => r.name && norm(r.name) === norm(name));
-  return hit ? { id: hit.id, name: hit.name ?? name } : { id: null, name: name.trim() };
+  return hit ? rowPick(hit, hit.name ?? name) : { id: null, name: name.trim() };
 }
 
 /**
  * The chips for a step: the common choices first (existing rows where we have
  * them, so nothing is duplicated), then every other row A to Z.
  */
-export function choiceList<T extends { id: string; name: string | null }>(common: readonly string[], rows: readonly T[]): WizardPick[] {
+export function choiceList<T extends PickRow>(common: readonly string[], rows: readonly T[]): WizardPick[] {
   const seen = new Set<string>();
   const out: WizardPick[] = [];
   const add = (p: WizardPick) => {
@@ -271,7 +280,7 @@ export function choiceList<T extends { id: string; name: string | null }>(common
   };
   // Our spelling of a common one ("Large cube"), with the row's id when there is one ("Large Cube").
   for (const name of common) add({ ...pickByName(name, rows), name });
-  for (const r of [...rows].sort((a, b) => (a.name ?? '').localeCompare(b.name ?? ''))) if (r.name) add({ id: r.id, name: r.name });
+  for (const r of [...rows].sort((a, b) => (a.name ?? '').localeCompare(b.name ?? ''))) if (r.name) add(rowPick(r));
   return out;
 }
 
@@ -374,7 +383,7 @@ export function draftIceLine(d: WizardDraft): string {
   const methods = d.methods.map((m) => m.name);
   if (!saysMore(d.iceBuild)) return iceLine(d.ice?.name ?? null, d.methodIce?.name ?? null, methods) ?? '';
   const made = d.methodIce ? `${methodIceLabel(methods) ?? 'Made with'} ${d.methodIce.name.toLowerCase()}. ` : '';
-  return made + iceBuildLine(d.iceBuild.map((l) => ({ ...l, ice: l.ice.name })));
+  return made + iceBuildLine(d.iceBuild);
 }
 
 /** "a large cube", "a spear", but "cubes" and "crushed": a lone piece takes "a", plurals and loose ice don't. */
@@ -539,13 +548,15 @@ export function sketchLook(d: WizardDraft, barVariants: readonly string[] = [], 
     description: d.description,
     glass: d.glass?.name ?? null,
     ice: d.ice?.name ?? null,
+    ...(d.glass?.kind ? { glassKind: d.glass.kind } : {}),
+    ...(d.ice?.kind ? { iceKind: d.ice.kind } : {}),
     methods: d.methods.map((m) => m.name),
     // A batch is drawn as what's in it, one drink's worth.
     lines: [...d.lines.flatMap((l) => l.batch?.lines ?? [l]), ...d.garnishes].map((l) => ({ name: l.name, amount: amountOf(l.amount), unit: l.unit || null })),
     variant: d.glassVariant ?? null,
     barVariants,
     barIce,
-    build: d.iceBuild?.length ? d.iceBuild.map((l) => ({ name: l.ice.name, n: l.n, to: l.to })) : null,
+    build: d.iceBuild?.length ? d.iceBuild.map((l) => ({ name: l.ice.name, ...(l.ice.kind ? { kind: l.ice.kind } : {}), n: l.n, to: l.to })) : null,
     tint: d.tint ?? null,
   };
 }

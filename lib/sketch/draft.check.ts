@@ -30,6 +30,15 @@ assert.equal(picked.ice, 'none');
 assert.equal(picked.method, 'shake');
 assert.equal(picked.from.glass, 'data');
 
+// An item's stored kind beats its name: "Custom" kept as a tiki mug, "Hosh" as a sphere.
+const kinded = draftSketchInputs({ ...negroni, glass: 'Custom', glassKind: 'tiki', ice: 'Hosh', iceKind: 'sphere' });
+assert.equal(kinded.glass, 'tiki');
+assert.equal(kinded.from.glass, 'data');
+assert.equal(kinded.ice, 'sphere', 'not the cubes the name reads as');
+assert.equal(draftSketchInputs({ ...negroni, glass: 'Custom' }).from.glass, 'rules', 'a name the rules miss, with no kind, is guessed');
+assert.equal(draftSketchInputs({ ...negroni, glass: 'Coupe', glassKind: null }).glass, 'coupe', 'not sure reads the name');
+assert.deepEqual(draftSketchInputs({ ...negroni, build: [{ name: 'Hosh', kind: 'pebble', to: 'mound' }] }).build, [{ kind: 'pebble', to: 'mound' }]);
+
 // A garnish line (a count unit) draws as the garnish, not as liquid.
 const garnished = draftSketchInputs({ name: 'Sour', lines: [...negroni.lines, { name: 'Lime', amount: 1, unit: 'wheel' }] });
 assert.equal(garnished.garnish, 'lime_wheel');

@@ -3,6 +3,7 @@ import { saveNewBottles } from '@/hooks/useDrinkDesk';
 import { linePrep } from '@/lib/batchLines';
 import { plainDbMessage } from '@/lib/dbError';
 import { COMMON_METHODS, likeExactly, type WizardLine, type WizardPick } from '@/lib/drinkWizard';
+import { kindColumns } from '@/lib/glassware';
 import { existingIngredientId } from '@/lib/ingredientNames';
 import { recipesToFinish, type PrepDraft } from '@/lib/prepKinds';
 import { toLine, type SortableRecipeItem } from '@/lib/recipeItem';
@@ -56,13 +57,15 @@ export function specLineSaver(barId: string | null, live: ReadonlySet<string>) {
       resolved && !resolved.error && resolved.data
         ? { id: resolved.data as string }
         : (await (type === 'ice' ? same.is('bar_id', null) : same).limit(1).maybeSingle()).data;
+    // One that exists keeps its kind: only an admin may change it (20261124100000_glass_ice_kinds.sql).
     if (found) {
       made.set(key, found.id);
       return found.id;
     }
+    // A new glass or ice saves the kind picked for it; Not sure saves none.
     const { data, error } = await supabase
       .from('items')
-      .insert({ name: newItemName(pick.name, type), item_type: type, bar_id: type === 'ingredient' ? barId : null })
+      .insert({ name: newItemName(pick.name, type), item_type: type, bar_id: type === 'ingredient' ? barId : null, ...kindColumns(type, pick.kind) })
       .select('id')
       .single();
     // The database knows a name we didn't (an alias added since): it says which to use.

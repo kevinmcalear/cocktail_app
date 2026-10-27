@@ -1,6 +1,6 @@
 import assert from 'node:assert/strict';
 
-import { iceBuildLine, iceTip, quickBuild, readIceBuild, saysMore, toStored, whichQuick, type IceLayer } from './iceBuild';
+import { iceBuildLine, iceKind, iceTip, isLoose, quickBuild, readIceBuild, saysMore, toStored, whichQuick, type IceLayer } from './iceBuild';
 
 // --- the drink page's line, bottom to top ---
 assert.equal(iceBuildLine([{ ice: 'Cubes', n: 4 }, { ice: 'Pebble', to: 'mound' }]), 'Over 4 cubes, pebble on top, mounded');
@@ -11,6 +11,14 @@ assert.equal(iceBuildLine([{ ice: 'Crushed', to: 'rim' }, { ice: 'Crushed', to: 
 assert.equal(iceBuildLine([{ ice: 'Cubes', tin: true }, { ice: 'Crushed', to: 'mound' }]), 'The shaking ice, dumped in, crushed on top, mounded');
 assert.equal(iceBuildLine([{ ice: 'Crushed', to: 'mound', packed: true }]), 'Over packed crushed, mounded');
 assert.equal(iceBuildLine([{ ice: 'Pebble', to: 'half' }, { ice: 'Cubes', n: 3 }]), 'Over pebble to half, 3 cubes on top');
+
+// --- a stored kind beats the name ---
+assert.equal(iceKind({ name: 'Hosh', kind: 'sphere' }), 'sphere', 'a pick says what it is');
+assert.equal(iceKind({ name: 'Hosh', ice_kind: 'sphere' }), 'sphere', 'and so does its row');
+assert.equal(iceKind({ name: 'Hosh', ice_kind: null }), 'cubes', 'not sure reads the name');
+assert.equal(iceKind('Hosh'), 'cubes');
+assert.equal(isLoose({ name: 'House ice', kind: 'pebble' }), true);
+assert.equal(iceBuildLine([{ ice: { name: 'Hosh', kind: 'sphere' } }, { ice: { name: 'Snow', kind: 'crushed' }, to: 'rim', packed: true }]), 'Over a hosh, packed snow around it');
 
 // --- what's worth saving ---
 assert.equal(saysMore(null), false);

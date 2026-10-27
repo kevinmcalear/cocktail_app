@@ -8,8 +8,9 @@ import { fontFamilies, layout, radius, space, type } from '@/constants/tokens';
 import { useActiveVenue } from '@/hooks/useActiveVenue';
 import { useBarGlassware } from '@/hooks/useBarGlassware';
 import { useGlassModelSearch, type GlassModel } from '@/hooks/useGlassModels';
+import { KindQuestion, pickedKind } from '@/components/screens/addDrink/KindQuestion';
 import { GLASS_TYPE_LABEL } from '@/lib/glassware';
-import { glassFromName } from '@/supabase/functions/_shared/sketch';
+import { itemGlass } from '@/supabase/functions/_shared/sketch';
 
 import type { DrinkEditor as Editor } from './EditParts';
 
@@ -27,14 +28,16 @@ export function GlassPickSheet({ editor, itemId, onClose }: { editor: Editor; it
   const ds = useDs();
   const [term, setTerm] = useState('');
   const [adding, setAdding] = useState('');
+  // A new glass's kind: unset follows the guess from its name.
+  const [kind, setKind] = useState<string | null | undefined>(undefined);
   const [all, setAll] = useState(false);
   const search = useDeferredValue(term.trim());
   const searching = search.length >= 2;
   // Only a published drink names a real glass; a draft picks a shape.
   const model = 'glassModel' in editor ? editor.glassModel : null;
   const canModel = 'setGlassModel' in editor;
-  const shapeName = editor.glassware.find((g) => g.id === editor.glasswareId)?.name ?? null;
-  const glassType = model?.glass ?? (shapeName ? glassFromName(shapeName) : null);
+  const shape = editor.glassware.find((g) => g.id === editor.glasswareId) ?? null;
+  const glassType = model?.glass ?? itemGlass(shape);
   const venue = useActiveVenue().venues.find((v) => v.id === editor.barId);
   const { data: barGlasses = [] } = useBarGlassware(canModel ? editor.barId : null);
   const ours = barGlasses.flatMap((g) => (g.model ? [g.model] : []));
@@ -60,11 +63,14 @@ export function GlassPickSheet({ editor, itemId, onClose }: { editor: Editor; it
     editor.setSpecId('glassware', editor.glasswareId === id && !model ? null : id);
     onClose();
   };
+  const name = adding.trim();
+  // Naming a glass that isn't one of the shapes asks what kind it is.
+  const asking = !!name && !editor.glassware.some((g) => g.name?.trim().toLowerCase() === name.toLowerCase());
   const add = async () => {
-    const name = adding.trim();
     if (!name) return;
-    editor.setSpecId('glassware', await editor.handleAddPill('glassware', name));
+    editor.setSpecId('glassware', await editor.handleAddPill('glassware', name, asking ? pickedKind('glass', name, kind) : undefined));
     setAdding('');
+    setKind(undefined);
   };
 
   return (
@@ -142,11 +148,12 @@ export function GlassPickSheet({ editor, itemId, onClose }: { editor: Editor; it
             accessibilityLabel="Add a glass"
             style={[styles.input, NO_OUTLINE, { color: ds.c.ink, backgroundColor: ds.c.surface }]}
           />
-          <Button label="Add" size="sm" variant="secondary" disabled={!adding.trim()} onPress={() => void add()} />
+          <Button label="Add" size="sm" variant="secondary" disabled={!name} onPress={() => void add()} />
         </View>
+        {asking ? <KindQuestion of="glass" name={name} value={kind} onChange={setKind} /> : null}
         {/* A draft has no drawing yet, so its glass shape is picked once it's published. */}
         {itemId && 'sketchVariant' in editor ? (
-          <SketchGlassPicker itemId={itemId} barId={editor.barId} glasswareName={shapeName} value={editor.sketchVariant} onChange={editor.setSketchVariant} />
+          <SketchGlassPicker itemId={itemId} barId={editor.barId} glassware={shape} value={editor.sketchVariant} onChange={editor.setSketchVariant} />
         ) : null}
         {canModel ? <Caption tone="muted">A real glass brings its size, so the drink page can say how full it pours.</Caption> : null}
       </SheetScrollView>

@@ -2,7 +2,7 @@ import assert from 'node:assert/strict';
 import { readdirSync, readFileSync } from 'node:fs';
 
 import {
-  drawingKey, GLASS_TYPE_LABEL, GLASS_TYPES, glassCapacity, glassPromptKey, glassTitle, hasGlass, isVenueGlassName,
+  drawingKey, GLASS_TYPE_LABEL, kindColumns, typedKind, GLASS_TYPES, glassCapacity, glassPromptKey, glassTitle, hasGlass, isVenueGlassName,
 } from './glassware';
 import { SKETCH_GLASSES, SKETCH_ICES } from './sketch/types';
 
@@ -22,6 +22,21 @@ assert.ok(!hasGlass(venue, 'rocks', null));
 assert.ok(isVenueGlassName(venue, 'Champagne coupe'), 'picked by type, whatever the name');
 assert.ok(!isVenueGlassName(venue, 'Rocks'));
 assert.ok(!isVenueGlassName(venue, 'Something odd'));
+assert.ok(isVenueGlassName(venue, { name: 'Something odd', kind: 'coupe' }), 'its kind before its name');
+assert.ok(!isVenueGlassName(venue, { name: 'Coupe', glass: 'rocks' }), 'a row that says rocks is rocks');
+
+// A new item saves only a kind the database takes.
+assert.deepEqual(kindColumns('glassware', 'tiki'), { glass: 'tiki' });
+assert.deepEqual(kindColumns('ice', 'sphere'), { ice_kind: 'sphere' });
+assert.deepEqual(kindColumns('glassware', null), {}, 'not sure saves nothing');
+assert.deepEqual(kindColumns('glassware', 'sphere'), {}, 'an ice kind is no glass');
+assert.deepEqual(kindColumns('method', 'tiki'), {});
+
+// The guess the question starts on: from the name being typed, never no ice.
+assert.equal(typedKind('glass', 'Tiki bowl'), 'tiki');
+assert.equal(typedKind('glass', 'Grandma'), null);
+assert.equal(typedKind('ice', 'Hosh'), 'cubes');
+assert.equal(typedKind('ice', 'No ice please'), null);
 assert.equal(glassPromptKey('bar', 'coupe', 'coupe_wide'), 'bar:coupe:');
 assert.equal(glassPromptKey('bar', 'coupe', 'coupe_deep'), 'bar:coupe:coupe_deep');
 // Its size comes from the glassware item of the same name, the venue's own first.

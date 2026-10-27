@@ -5,6 +5,7 @@ import { Button, Caption, Field } from '@/components/ds';
 import { space } from '@/constants/tokens';
 import { samePick, type WizardPick } from '@/lib/drinkWizard';
 
+import { KindQuestion, pickedKind, type KindOf } from './KindQuestion';
 import { Eyebrow, WizardChip } from './WizardChrome';
 
 /** How many chips show before "More": the canvas draws seven glasses, then More. */
@@ -33,13 +34,15 @@ interface PickStepProps {
   compact?: boolean;
   /** What a chip says, when it says more than the pick's name ("No ice (served up)"). */
   chipLabel?: (p: WizardPick) => string;
+  /** A glass or ice: a new name typed in asks what kind it is. */
+  kindOf?: KindOf;
 }
 
 /**
  * Big chips for a step's common choices (existing rows first, so nothing is
  * duplicated) and a field for your own, made when the drink is saved.
  */
-export function PickStep({ label, options, selected, multi, onChange, ownLabel, suggested, why, children, mine, compact, chipLabel }: PickStepProps) {
+export function PickStep({ label, options, selected, multi, onChange, ownLabel, suggested, why, children, mine, compact, chipLabel, kindOf }: PickStepProps) {
   const [all, setAll] = useState(false);
   // Your own choices stay on the list once added.
   const extra = selected.filter((s) => !options.some((o) => samePick(o, s)));
@@ -100,9 +103,10 @@ export function PickStep({ label, options, selected, multi, onChange, ownLabel, 
       {compact && !all ? null : (
         <OwnField
           label={ownLabel}
-          onAdd={(name) => {
+          ask={kindOf ? { of: kindOf, known: (name) => list.some((o) => samePick(o, { id: null, name })) } : undefined}
+          onAdd={(name, kind) => {
             const hit = list.find((o) => samePick(o, { id: null, name }));
-            const pick = hit ?? { id: null, name };
+            const pick = hit ?? { id: null, name, ...(kind !== undefined ? { kind } : {}) };
             if (order(pick) < 0) onChange(multi ? [...selected, pick] : [pick]);
           }}
         />
@@ -111,21 +115,38 @@ export function PickStep({ label, options, selected, multi, onChange, ownLabel, 
   );
 }
 
+interface OwnFieldProps {
+  label: string;
+  /** With `ask`, a new name's kind (null for Not sure); unset for a name that's known. */
+  onAdd: (name: string, kind?: string | null) => void;
+  placeholder?: string;
+  autoFocus?: boolean;
+  /** A glass or ice: a name that isn't `known` asks what kind it is before it's added. */
+  ask?: { of: KindOf; known: (name: string) => boolean };
+}
+
 /** A one-line field with Add; Return adds too. */
-export function OwnField({ label, onAdd, placeholder, autoFocus }: { label: string; onAdd: (name: string) => void; placeholder?: string; autoFocus?: boolean }) {
+export function OwnField({ label, onAdd, placeholder, autoFocus, ask }: OwnFieldProps) {
   const [text, setText] = useState('');
+  // Unset follows the guess from the name until a kind is tapped.
+  const [kind, setKind] = useState<string | null | undefined>(undefined);
+  const name = text.trim();
+  const asking = !!ask && !!name && !ask.known(name);
   const add = () => {
-    const name = text.trim();
     if (!name) return;
-    onAdd(name);
+    onAdd(name, asking ? pickedKind(ask.of, name, kind) : undefined);
     setText('');
+    setKind(undefined);
   };
   return (
-    <View style={styles.own}>
-      <View style={styles.flex}>
-        <Field label={label} value={text} onChangeText={setText} onSubmitEditing={add} returnKeyType="done" placeholder={placeholder} maxLength={60} autoFocus={autoFocus} />
+    <View style={styles.field}>
+      <View style={styles.own}>
+        <View style={styles.flex}>
+          <Field label={label} value={text} onChangeText={setText} onSubmitEditing={add} returnKeyType="done" placeholder={placeholder} maxLength={60} autoFocus={autoFocus} />
+        </View>
+        <Button label="Add" variant="secondary" onPress={add} disabled={!name} />
       </View>
-      <Button label="Add" variant="secondary" onPress={add} disabled={!text.trim()} />
+      {asking ? <KindQuestion of={ask.of} name={name} value={kind} onChange={setKind} /> : null}
     </View>
   );
 }
@@ -135,5 +156,6 @@ const styles = StyleSheet.create({
   chips: { flexDirection: 'row', flexWrap: 'wrap', gap: space.sm },
   groups: { gap: space.sm },
   own: { flexDirection: 'row', alignItems: 'flex-end', gap: space.sm },
+  field: { gap: space.md },
   flex: { flex: 1 },
 });

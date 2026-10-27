@@ -68,8 +68,11 @@ export function useDrinkFacts(item: DatabaseItem, { lines, amounts, dilutionDefa
   const find = (list: Named[] | undefined, id: string | null | undefined) => (id ? list?.find((x) => x.id === id) : undefined);
   const { glass, ice, model } = useDrinkGlass(item);
   const methodIce = find(dropdowns?.iceTypes as Named[], item.method_ice_id) ?? null;
-  // How the ice sits (20261029500000), by each layer's name; a layer whose ice is gone drops out.
-  const build = (readIceBuild(item.ice_build) ?? []).map((l) => ({ ...l, ice: find(dropdowns?.iceTypes as Named[], l.ice)?.name ?? '' })).filter((l) => l.ice);
+  // How the ice sits (20261029500000), by each layer's ice (its name, and its kind when it says); a layer whose ice is gone drops out.
+  const build = (readIceBuild(item.ice_build) ?? []).flatMap((l) => {
+    const row = dropdowns?.iceTypes.find((x) => x.id === l.ice);
+    return row?.name ? [{ ...l, ice: { name: row.name, kind: row.ice_kind } }] : [];
+  });
   const family = find(dropdowns?.families as Named[], item.family_id);
   const methods = orderedMethodIds(item.item_methods).map((id) => find(dropdowns?.methods as Named[], id)?.name).filter((n): n is string => !!n);
   const method: BatchMethod = classifyMethod(methods);

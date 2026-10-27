@@ -103,15 +103,15 @@ export function readIceLook(raw: unknown): IceLook | null {
 }
 
 /**
- * A drink's ice build in the drawing's words, from each layer's ice name; a
- * layer it can't name is left out. Null when nothing's left. The database
+ * A drink's ice build in the drawing's words, from each layer's ice (its kind,
+ * else its name); a layer it can't name is left out. Null when nothing's left. The database
  * does the same for saved drinks (private.ice_build_kinds,
  * 20261029500000_ice_builds.sql).
  */
-export function sketchBuild(layers: readonly ({ name: string; n?: number | null; to?: string | null } & IceLook)[] | null | undefined): SketchLayer[] | null {
+export function sketchBuild(layers: readonly ({ name: string; kind?: string | null; n?: number | null; to?: string | null } & IceLook)[] | null | undefined): SketchLayer[] | null {
   const out: SketchLayer[] = [];
   for (const l of layers ?? []) {
-    const kind = iceFromName(l.name);
+    const kind = itemIce(l);
     if (!kind || kind === 'none') continue;
     // The ice's look rides along when the layer has one (venue ice, lib/sketch/types.ts IceLook).
     out.push({ kind, ...(l.n ? { n: Math.min(12, Math.max(1, Math.round(l.n))) } : {}), ...(l.to === 'half' || l.to === 'rim' || l.to === 'mound' ? { to: l.to } : {}), ...readIceLook(l) });
@@ -157,6 +157,9 @@ export interface SketchDrink {
   /** The drink's own glassware, ice and method item names, when set. */
   glass?: string | null;
   ice?: string | null;
+  /** The glass and ice items' kinds when they say (items.glass, items.ice_kind): used before their names. */
+  glassKind?: string | null;
+  iceKind?: string | null;
   methods?: readonly string[];
   lines: readonly SketchLine[];
   /** A cached AI answer for the whole drink. */
@@ -231,6 +234,17 @@ const first = <T>(table: readonly [RegExp, T][], text: string | null | undefined
 
 export const glassFromName = (name: string | null | undefined) => first(GLASS_NAMES, name);
 export const iceFromName = (name: string | null | undefined) => first(ICE_NAMES, name);
+
+/**
+ * A glass or ice item, or free text. An item's kind (items.glass,
+ * items.ice_kind, or a wizard pick's `kind`) beats its name: the name rules
+ * only read text, and an item that doesn't say (null is not sure).
+ */
+export type Kinded = string | { name?: string | null; kind?: string | null; glass?: string | null; ice_kind?: string | null } | null | undefined;
+const listed = <T extends string>(list: readonly T[], v: string | null | undefined): T | null => ((list as readonly string[]).includes(v ?? '') ? (v as T) : null);
+const textOf = (x: Kinded) => (typeof x === 'object' ? x?.name : x);
+export const itemGlass = (x: Kinded): Glass | null => (typeof x === 'object' && x ? listed(GLASSES, x.kind ?? x.glass) : null) ?? glassFromName(textOf(x));
+export const itemIce = (x: Kinded): Ice | null => (typeof x === 'object' && x ? listed(ICES, x.kind ?? x.ice_kind) : null) ?? iceFromName(textOf(x));
 export function methodFromNames(names: readonly string[] | undefined): Method | null {
   const found = (names ?? []).map((n) => first(METHOD_NAMES, n)).filter((m): m is Method => !!m);
   if (!found.length) return null;
@@ -685,7 +699,7 @@ export function sketchFromDrink(drink: SketchDrink): SketchResult {
   if (!method && ai?.method) { method = ai.method; methodFrom = 'ai'; usedAi = true; }
   if (!method) { method = 'stir'; methodFrom = 'default'; }
 
-  let glass: Glass | null = glassFromName(drink.glass);
+  let glass: Glass | null = itemGlass({ name: drink.glass, kind: drink.glassKind });
   let glassFrom: Source = glass ? 'data' : 'rules';
   if (!glass) {
     const said = /(?:served |poured )?in an? ([a-z&' -]{3,30}?)(?: glass)?(?:[,.;]|$| with| over| on)/.exec((drink.description ?? '').toLowerCase());
@@ -704,7 +718,7 @@ export function sketchFromDrink(drink: SketchDrink): SketchResult {
   }
   if (!glass) { glass = 'rocks'; glassFrom = 'default'; }
 
-  let ice: Ice | null = iceFromName(drink.ice);
+  let ice: Ice | null = itemIce({ name: drink.ice, kind: drink.iceKind });
   let iceFrom: Source = ice ? 'data' : 'rules';
   if (!ice) ice = hint('ice') ?? null;
   if (!ice && ai?.ice && glassFrom !== 'data') { ice = ai.ice; iceFrom = 'ai'; usedAi = true; }
@@ -738,7 +752,7 @@ export function sketchFromDrink(drink: SketchDrink): SketchResult {
   if (!garnish && !discarded) garnish = hint('garnish') ?? null;
   if (!garnish && !discarded && ai?.garnish) { garnish = ai.garnish; garnishFrom = 'ai'; usedAi = true; }
 
-  const askDrink = !glassFromName(drink.glass) && (!drink.lines.length || coverage < 0.5 || !hint('glass'));
+  const askDrink = glassFrom !== 'data' && (!drink.lines.length || coverage < 0.5 || !hint('glass'));
 
   return {
     inputs: {

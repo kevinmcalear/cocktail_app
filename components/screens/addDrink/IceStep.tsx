@@ -7,7 +7,7 @@ import { space } from '@/constants/tokens';
 import type { BarGlass } from '@/hooks/useBarGlassware';
 import type { VenueIce } from '@/hooks/useVenueIce';
 import { samePick, sketchLook, type StepProps, type WizardPick } from '@/lib/drinkWizard';
-import { iceBuildLine, iceKind, iceTip, quickBuild, type IceLayer } from '@/lib/iceBuild';
+import { iceBuildLine, iceKind, iceTip, quickBuild, type IceLayer, type IceName } from '@/lib/iceBuild';
 import { draftSketchInputs } from '@/lib/sketch/draft';
 import { iceDrawKind, inTheGlass, isVenueIce, kitIceRow, kitSourceLine, venueIceKinds } from '@/lib/venueKit';
 
@@ -48,16 +48,15 @@ export function IceStep({ draft, set, ices, barIce, suggested, why, compact, kit
   const [adding, setAdding] = useState(false);
   const mine = barIce.length ? { has: (p: WizardPick) => isVenueIce(barIce, p.name), label: venueName ? `${venueName}’s ice` : 'Your ice', restLabel: 'Other ice' } : undefined;
 
-  const layers: IceLayer<WizardPick>[] = draft.iceBuild?.length ? draft.iceBuild : draft.ice && iceKind(draft.ice.name) !== 'none' ? [{ ice: draft.ice }] : [];
+  const layers: IceLayer<WizardPick>[] = draft.iceBuild?.length ? draft.iceBuild : draft.ice && iceKind(draft.ice) !== 'none' ? [{ ice: draft.ice }] : [];
   // The top layer is the drink's one ice (items.ice_id), for everything that reads only one.
   const setLayers = (next: IceLayer<WizardPick>[]) => set({ iceBuild: next.length ? next : null, ice: next.length ? next[next.length - 1].ice : null });
   const pickOf = (name: string) => ices.find((o) => samePick(o, { id: null, name })) ?? { id: null, name };
-  const named = layers.map((l) => ({ ...l, ice: l.ice.name }));
   // The chips pick the bottom ice (cubes start at 3, like Add extra ice); extra ice stays on top, also when the bottom is cleared. No ice is served up, with no build.
   const base = layers[0] && !layers[0].tin ? layers[0].ice : null;
   const pickBase = (ice: WizardPick | undefined) => {
-    if (ice && iceKind(ice.name) === 'none') return set({ ice, iceBuild: null });
-    setLayers(ice ? [{ ice, ...(iceKind(ice.name) === 'cubes' ? { n: 3 } : {}) }, ...layers.slice(1)] : layers.slice(1));
+    if (ice && iceKind(ice) === 'none') return set({ ice, iceBuild: null });
+    setLayers(ice ? [{ ice, ...(iceKind(ice) === 'cubes' ? { n: 3 } : {}) }, ...layers.slice(1)] : layers.slice(1));
   };
 
   // The venue's ice, where each comes from, and how long its spears are.
@@ -75,20 +74,20 @@ export function IceStep({ draft, set, ices, barIce, suggested, why, compact, kit
   const glass = barGlasses?.find((g) => !!g.name && !!draft.glass && isVenueIce([g.name], draft.glass.name)) ?? barGlasses?.find((g) => g.glass === glassKind && g.is_default);
   const tip = layers.length
     ? iceTip({
-        layers: named,
+        layers,
         glass: glassKind,
         glassName: glass?.name ? `the ${glass.name}` : null,
         glassHeightMm: glass?.model?.height_mm ?? null,
         spearMm,
         methods: draft.methods.map((m) => m.name),
-        madeWith: draft.methodIce?.name ?? null,
+        madeWith: draft.methodIce ?? null,
         off: draft.iceTipsOff,
       })
     : null;
 
-  const top = named[named.length - 1];
+  const top = layers[layers.length - 1];
   // The board's chip says what no ice means for staff (Kevin, 26 Oct); the drink keeps the ice's own name.
-  const chipLabel = (p: WizardPick) => (iceKind(p.name) === 'none' ? 'No ice (served up)' : p.name);
+  const chipLabel = (p: WizardPick) => (iceKind(p) === 'none' ? 'No ice (served up)' : p.name);
   return (
     <>
       <View style={styles.stack}>
@@ -98,14 +97,14 @@ export function IceStep({ draft, set, ices, barIce, suggested, why, compact, kit
             {layers.length ? <IceLayers layers={layers} onChange={setLayers} onAdd={() => setAdding(true)} sourceOf={sourceOf} /> : null}
           </PickStep>
           {/* ponytail: the first layer from the bottom the venue may lack; a build of two missing asks one at a time. */}
-          <IcePrompt barId={barId} ice={firstMissing(named, kit)} drink={draft.name} />
+          <IcePrompt barId={barId} ice={firstMissing(layers, kit)} drink={draft.name} />
           {tip ? (
             <IceTipCard
               tip={tip}
-              now={named}
+              now={layers}
               look={look}
               seed={draft.id ?? 'new-drink'}
-              onUse={() => setLayers(tip.layers.map((l) => ({ ...l, ice: pickOf(l.ice) })))}
+              onUse={() => setLayers(tip.layers.map((l) => ({ ...l, ice: typeof l.ice === 'string' ? pickOf(l.ice) : l.ice })))}
               onNo={() => set({ iceTipsOff: [...(draft.iceTipsOff ?? []), tip.id] })}
             />
           ) : null}
@@ -127,7 +126,7 @@ export function IceStep({ draft, set, ices, barIce, suggested, why, compact, kit
 }
 
 /** The lowest ice in the build the venue pours nothing drawn like, else the top (IcePrompt then stays quiet). */
-function firstMissing(layers: readonly { ice: string }[], kit: readonly VenueIce[]): string | undefined {
+function firstMissing<T extends IceName>(layers: readonly { ice: T }[], kit: readonly VenueIce[]): T | undefined {
   const kinds = venueIceKinds(kit);
   return layers.find((l) => !kinds.includes(iceKind(l.ice) as never))?.ice ?? layers[layers.length - 1]?.ice;
 }

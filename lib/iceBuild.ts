@@ -10,7 +10,7 @@
  * ponytail: public pages, published snapshots and the run sheet read their own
  * SQL and still show only the top ice; give them ice_build when a guest asks.
  */
-import { iceFromName } from '@/supabase/functions/_shared/sketchRules';
+import { itemIce, type Kinded } from '@/supabase/functions/_shared/sketchRules';
 
 /** How high a loose layer (crushed, pebble, shaved) goes. */
 export const ICE_TO = ['half', 'rim', 'mound'] as const;
@@ -32,13 +32,18 @@ export type IceLayer<T = string> = {
   tin?: boolean;
 };
 
-/** As the drawings name it ('cubes', 'pebble'), from the ice's name. */
-export const iceKind = (name: string | null | undefined) => iceFromName(name);
+/** An ice by name, or its item or pick: the kind it stores (items.ice_kind, a pick's `kind`) beats its name. */
+export type IceName = string | { name: string; kind?: string | null; ice_kind?: string | null };
+/** An ice's name, however it's given. */
+export const iceNameOf = (ice: IceName) => (typeof ice === 'string' ? ice : ice.name);
+
+/** As the drawings name it ('cubes', 'pebble'): the item's kind when it says, else read from its name. */
+export const iceKind = (ice: Kinded) => itemIce(ice);
 const LOOSE = ['crushed', 'pebble', 'shaved'];
 /** Crushed, pebble, shaved: poured to a height, not counted. */
-export const isLoose = (name: string | null | undefined) => LOOSE.includes(iceKind(name) ?? '');
+export const isLoose = (ice: Kinded) => LOOSE.includes(iceKind(ice) ?? '');
 /** One big piece other ice packs around: a large cube, a sphere. */
-const isBlock = (name: string) => ['large', 'sphere'].includes(iceKind(name) ?? '');
+const isBlock = (ice: IceName) => ['large', 'sphere'].includes(iceKind(ice) ?? '');
 
 export const MAX_LAYERS = 6;
 export const MAX_PIECES = 12;
@@ -59,25 +64,27 @@ const plural = (name: string) => {
   return n.endsWith('s') ? n : `${n}s`;
 };
 
-function phrase(l: IceLayer<string>): string {
+const lower = (ice: IceName) => iceNameOf(ice).trim().toLowerCase();
+
+function phrase(l: IceLayer<IceName>): string {
   if (l.tin) return 'the shaking ice';
-  if (isLoose(l.ice)) return `${l.packed ? 'packed ' : ''}${l.ice.trim().toLowerCase()}${l.to === 'half' ? ' to half' : ''}`;
+  if (isLoose(l.ice)) return `${l.packed ? 'packed ' : ''}${lower(l.ice)}${l.to === 'half' ? ' to half' : ''}`;
   const n = l.n ?? 1;
-  return n > 1 ? `${n} ${plural(l.ice)}` : `a ${singular(l.ice)}`;
+  return n > 1 ? `${n} ${plural(iceNameOf(l.ice))}` : `a ${singular(iceNameOf(l.ice))}`;
 }
 
 /**
  * The drink page's Ice for a build, bottom to top: "Over 4 cubes, pebble on
  * top, mounded"; "Over a large cube, packed crushed around it"; "The shaking
- * ice, dumped in, crushed on top, mounded". `ice` is each layer's name.
+ * ice, dumped in, crushed on top, mounded". `ice` is each layer's name, or its item.
  */
-export function iceBuildLine(layers: readonly IceLayer<string>[]): string {
+export function iceBuildLine(layers: readonly IceLayer<IceName>[]): string {
   const parts = layers.map((l, i) => {
     const mound = l.to === 'mound' ? ', mounded' : '';
     if (i === 0) return (l.tin ? 'The shaking ice, dumped in' : `Over ${phrase(l)}`) + mound;
     const prev = layers[i - 1];
     if (isLoose(l.ice) && !prev.tin && isBlock(prev.ice) && (prev.n ?? 1) === 1) return `${phrase(l)} around it${mound}`;
-    if (isLoose(l.ice) && iceKind(prev.ice) === iceKind(l.ice)) return `topped with more ${l.ice.trim().toLowerCase()}${mound}`;
+    if (isLoose(l.ice) && iceKind(prev.ice) === iceKind(l.ice)) return `topped with more ${lower(l.ice)}${mound}`;
     return `${phrase(l)} on top${mound}`;
   });
   return parts.join(', ');
@@ -116,8 +123,8 @@ export function quickBuild<T>(q: QuickBuild, pick: (name: string) => T, madeWith
 }
 
 /** Which quick build these layers are, by shape (kinds, counts, heights), or null. */
-export function whichQuick(layers: readonly IceLayer<string>[]): QuickBuild | null {
-  const shape = (ls: readonly IceLayer<string>[]) => JSON.stringify(ls.map((l) => [l.tin ? 'tin' : iceKind(l.ice), l.tin ? 0 : l.n ?? 1, l.to ?? null, !!l.packed]));
+export function whichQuick(layers: readonly IceLayer<IceName>[]): QuickBuild | null {
+  const shape = (ls: readonly IceLayer<IceName>[]) => JSON.stringify(ls.map((l) => [l.tin ? 'tin' : iceKind(l.ice), l.tin ? 0 : l.n ?? 1, l.to ?? null, !!l.packed]));
   const mine = shape(layers);
   return QUICK_BUILDS.find((q) => shape(quickBuild(q, (n) => n, 'Cubes')) === mine) ?? null;
 }
@@ -130,18 +137,18 @@ export const STANDARD_SPEAR_MM = 133;
 const CUBE_MM = 32;
 const TALL = ['highball', 'collins', 'tiki', 'beer'];
 
-export interface IceTip {
+export interface IceTip<T extends IceName = IceName> {
   id: 'spear' | 'pebble' | 'swizzle' | 'julep' | 'dump';
   title: string;
   body: string;
-  /** The button: "Put 2 cubes under it". */
+  /** The button: "Put 2 cubes under it". Its layers keep the drink's own ice, and name any other ("Cubes"). */
   yes: string;
-  layers: IceLayer<string>[];
+  layers: IceLayer<T | string>[];
 }
 
-export interface TipFacts {
-  /** The layers as they are, by ice name. */
-  layers: readonly IceLayer<string>[];
+export interface TipFacts<T extends IceName = IceName> {
+  /** The layers as they are, by ice name or item. */
+  layers: readonly IceLayer<T>[];
   /** The drawing's glass ('collins'), the glass's own name and its height when the venue's glass says. */
   glass: string | null;
   glassName?: string | null;
@@ -149,8 +156,8 @@ export interface TipFacts {
   /** The venue's spear (item_ice.length_mm). */
   spearMm?: number | null;
   methods: readonly string[];
-  /** The ice it's made with, by name. */
-  madeWith?: string | null;
+  /** The ice it's made with, by name or item. */
+  madeWith?: T | null;
   /** Tips the maker said No thanks to, for this drink. */
   off?: readonly string[];
 }
@@ -159,13 +166,13 @@ export interface TipFacts {
  * The one suggestion worth making for how the ice sits, or null: plain words
  * the bartender can take or leave. Never for a drink served up.
  */
-export function iceTip(f: TipFacts): IceTip | null {
+export function iceTip<T extends IceName>(f: TipFacts<T>): IceTip<T> | null {
   const tips = allTips(f).filter((t) => !f.off?.includes(t.id));
   return tips[0] ?? null;
 }
 
-function allTips(f: TipFacts): IceTip[] {
-  const out: IceTip[] = [];
+function allTips<T extends IceName>(f: TipFacts<T>): IceTip<T>[] {
+  const out: IceTip<T>[] = [];
   const [only] = f.layers.length === 1 ? f.layers : [];
   const kind = only ? iceKind(only.ice) : null;
   const methods = f.methods.join(' ').toLowerCase();
@@ -193,7 +200,7 @@ function allTips(f: TipFacts): IceTip[] {
   }
   // A julep is filled up and over the rim.
   if (loose && f.glass === 'julep' && only.to !== 'mound') {
-    out.push({ id: 'julep', title: `Mound the ${only.ice.trim().toLowerCase()}?`, body: 'A julep cup is packed with crushed ice, up and over the rim.', yes: 'Mound it', layers: [{ ice: only.ice, to: 'mound', packed: true }] });
+    out.push({ id: 'julep', title: `Mound the ${lower(only.ice)}?`, body: 'A julep cup is packed with crushed ice, up and over the rim.', yes: 'Mound it', layers: [{ ice: only.ice, to: 'mound', packed: true }] });
   }
   // Shaken with crushed and served over it: pour it all in, then top it.
   if (loose && f.madeWith && isLoose(f.madeWith) && /shak/.test(methods)) {
@@ -203,8 +210,8 @@ function allTips(f: TipFacts): IceTip[] {
   if (loose && TALL.includes(f.glass ?? '')) {
     out.push({
       id: 'pebble',
-      title: `Cubes under the ${only.ice.trim().toLowerCase()}?`,
-      body: `Cubes at the bottom and ${only.ice.trim().toLowerCase()} on top looks the same in a tall glass, uses less ${only.ice.trim().toLowerCase()} and melts slower.`,
+      title: `Cubes under the ${lower(only.ice)}?`,
+      body: `Cubes at the bottom and ${lower(only.ice)} on top looks the same in a tall glass, uses less ${lower(only.ice)} and melts slower.`,
       yes: 'Put cubes under it',
       layers: [{ ice: 'Cubes', n: 4 }, { ice: only.ice, to: only.to ?? 'mound', packed: only.packed }],
     });

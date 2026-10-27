@@ -23,6 +23,7 @@ import {
 import { draftMethodIds, findByName, toggleId } from "@/lib/drinkMethods";
 import { identifyGlasswareFromPhoto } from "@/lib/identifyGlassware";
 import { imageExtFromUri, uriToBase64 } from "@/lib/imageBase64";
+import { kindColumns } from "@/lib/glassware";
 import { capitalize } from "@/lib/stringUtils";
 import { supabase, UPLOAD_CACHE_SECONDS } from "@/lib/supabase";
 import { useRecentActivityStore } from "@/store/useRecentActivityStore";
@@ -341,8 +342,8 @@ export function useCocktailDraftEditor({
         return imgData.id;
     };
 
-    /** Finds or creates a shared method, glass, family or ice by name. The picker selects the id it returns. */
-    const handleAddPill = async (type: SpecCategory, newItemName: string): Promise<string> => {
+    /** Finds or creates a shared method, glass, family or ice by name, a new glass or ice with its kind. The picker selects the id it returns. */
+    const handleAddPill = async (type: SpecCategory, newItemName: string, kind?: string | null): Promise<string> => {
         if (!newItemName.trim()) throw new Error("Name is required");
         const lists = { method: methods, glassware, family: families, ice: iceTypes };
         const existing = findByName(lists[type], newItemName);
@@ -352,6 +353,7 @@ export function useCocktailDraftEditor({
             .insert({
                 name: capitalize(newItemName.trim()),
                 item_type: type,
+                ...kindColumns(type, kind),
             })
             .select("id")
             .single();
