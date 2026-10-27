@@ -141,24 +141,20 @@ jobs:
       # Supabase's images (about ten) come from the Actions cache when a run
       # has saved them for this CLI and config, so shards don't all pull them
       # from ghcr.io at once (27 Oct: "toomanyrequests" failed every database
-      # job). Shard 1 saves them after a start that had to pull.
+      # job). Shard 3 saves them after the types check, so postgres-meta
+      # (which gen types starts on its own) is in the copy too.
       - id: images
         uses: actions/cache/restore@v6
         with:
           path: ${{ runner.temp }}/supabase-images
-          key: supabase-images-${{ runner.arch }}-${{ env.SUPABASE_CLI }}-${{ hashFiles('supabase/config.toml') }}
-      - if: steps.images.outputs.cache-hit == 'true'
+          key: supabase-images-v2-${{ runner.arch }}-${{ env.SUPABASE_CLI }}-${{ hashFiles('supabase/config.toml') }}
+          # An older or partial copy still saves most of the pulls.
+          restore-keys: |
+            supabase-images-v2-${{ runner.arch }}-${{ env.SUPABASE_CLI }}-
+            supabase-images-${{ runner.arch }}-${{ env.SUPABASE_CLI }}-
+      - if: steps.images.outputs.cache-matched-key != ''
         run: docker load -i "$RUNNER_TEMP/supabase-images/images.tar"
       - run: bash scripts/ci-supabase-start.sh
-      - if: steps.images.outputs.cache-hit != 'true' && matrix.shard == 1
-        run: |
-          mkdir -p "$RUNNER_TEMP/supabase-images"
-          docker save -o "$RUNNER_TEMP/supabase-images/images.tar" $(docker ps --format '{{.Image}}' | sort -u)
-      - if: steps.images.outputs.cache-hit != 'true' && matrix.shard == 1
-        uses: actions/cache/save@v6
-        with:
-          path: ${{ runner.temp }}/supabase-images
-          key: supabase-images-${{ runner.arch }}-${{ env.SUPABASE_CLI }}-${{ hashFiles('supabase/config.toml') }}
       - if: steps.reuse.outputs.ok == 'true'
         run: supabase migration up --local
       # types/database.ts is generated from the schema: regenerate it from the
@@ -168,11 +164,21 @@ jobs:
       - name: Generated database types match the migrations
         if: matrix.shard == 3
         run: |
-          supabase gen types typescript --local --schema public > types/database.ts
+          # Starts postgres-meta, pulled unless the image cache has it: tried three times.
+          for try in 1 2 3; do supabase gen types typescript --local --schema public > types/database.ts && break; [ "$try" = 3 ] && exit 1; sleep $((try * 20)); done
           git diff --exit-code -- types/database.ts || {
             echo "::error file=types/database.ts::Out of date with supabase/migrations. Run npm run gen:types against a local stack built from this branch's migrations and commit the result."
             exit 1
           }
+      - if: steps.images.outputs.cache-hit != 'true' && matrix.shard == 3
+        run: |
+          mkdir -p "$RUNNER_TEMP/supabase-images"
+          docker save -o "$RUNNER_TEMP/supabase-images/images.tar" $(docker images --format '{{.Repository}}:{{.Tag}}' | grep '/supabase/' | sort -u)
+      - if: steps.images.outputs.cache-hit != 'true' && matrix.shard == 3
+        uses: actions/cache/save@v6
+        with:
+          path: ${{ runner.temp }}/supabase-images
+          key: supabase-images-v2-${{ runner.arch }}-${{ env.SUPABASE_CLI }}-${{ hashFiles('supabase/config.toml') }}
       - run: supabase db lint --level warning --fail-on error
       - run: npm run test:security
         timeout-minutes: 20
