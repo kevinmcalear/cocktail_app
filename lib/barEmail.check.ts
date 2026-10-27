@@ -1,6 +1,6 @@
 import assert from 'node:assert/strict';
 
-import { accentOf, barSender, initials, inviteEmail, textOn } from '../supabase/functions/_shared/barEmail';
+import { accentOf, barSender, deleteDay, initials, inviteEmail, textOn, venueDeleteEmail } from '../supabase/functions/_shared/barEmail';
 
 const bar = { name: 'Little Rye', logoUrl: null, color: '#D0643B', face: 'fraunces' };
 
@@ -35,3 +35,12 @@ assert.equal(initials('The Little Rye'), 'TL');
 assert.equal(accentOf(null), '#E4B062');
 assert.equal(textOn('#FFFFFF'), '#0E0D0C');
 assert.equal(textOn('#1A1A1A'), '#F3EEE6');
+
+// The other Admins hear who asked to delete the venue, the day it goes, and where Undo is.
+const gone = venueDeleteEmail({ bar, askedBy: 'Rob Hale', deletesAt: '2026-11-03T12:00:00Z', undoUrl: 'https://babyvom.it/settings/bar/b1' });
+assert.equal(deleteDay('2026-11-03T12:00:00Z'), 'Tue 3 Nov');
+assert.equal(gone.subject, 'Rob asked to delete Little Rye');
+assert.match(gone.html, /Little Rye goes on Tue 3 Nov/);
+assert.match(gone.html, /Undo, keep Little Rye/);
+assert.match(gone.text, /https:\/\/babyvom\.it\/settings\/bar\/b1/);
+assert.equal(venueDeleteEmail({ bar, askedBy: null, deletesAt: '2026-11-03T12:00:00Z', undoUrl: 'https://babyvom.it/x' }).subject, 'An Admin asked to delete Little Rye');

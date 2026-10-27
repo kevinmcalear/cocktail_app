@@ -14,7 +14,7 @@ set -euo pipefail
 cd "$(dirname "$0")/.."
 
 # The functions that email people through _shared/resend.ts.
-FUNCTIONS=(send-bar-invite)
+FUNCTIONS=(send-bar-invite venue-delete-email)
 
 ref_file=supabase/.temp/project-ref
 if [[ ! -s $ref_file ]]; then

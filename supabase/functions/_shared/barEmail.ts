@@ -205,3 +205,34 @@ export function inviteEmail(input: {
     foot: `Sent with Cocktail for ${bar.name}. Not you? Ignore it: nobody joins without your email.`,
   });
 }
+
+/** "Tue 3 Nov", as the app's banner says it (lib/venueDelete deleteDay), in UTC. */
+export function deleteDay(iso: string): string {
+  // From the parts: Deno's ICU puts a comma after the weekday, Node's doesn't.
+  const parts = new Intl.DateTimeFormat("en-GB", { weekday: "short", day: "numeric", month: "short", timeZone: "UTC" }).formatToParts(new Date(iso));
+  const part = (type: string) => parts.find((p) => p.type === type)?.value ?? "";
+  return `${part("weekday")} ${part("day")} ${part("month")}`;
+}
+
+/**
+ * To a venue's other Admins when one asks to delete it (7 days, with Undo):
+ * who asked, the day it goes, what stays and goes, and where to undo it.
+ * Same sender and look as the invite.
+ */
+export function venueDeleteEmail(input: { bar: BarLook; askedBy: string | null; deletesAt: string; undoUrl: string }): EmailContent {
+  const { bar } = input;
+  const who = input.askedBy ?? "An Admin";
+  const day = deleteDay(input.deletesAt);
+  return barEmail(bar, `${input.askedBy ? firstWord(input.askedBy) : who} asked to delete ${bar.name}`, {
+    preheader: `It goes on ${day} unless an Admin undoes it.`,
+    title: `${bar.name} goes on ${day}`,
+    lead: `${who} asked to delete ${bar.name}. Until ${day} everything works as normal, and any Admin can undo it.`,
+    message: {
+      text: `Drinks the public could see stay on ${bar.name}'s page, which goes back to unclaimed. Everything else goes: the team, menus, recipes, kit and settings.`,
+      signedBy: null,
+    },
+    button: { label: `Undo, keep ${bar.name}`, url: input.undoUrl },
+    small: "The button opens the venue's settings, where Undo is.",
+    foot: `Sent with Cocktail to ${bar.name}'s Admins. If you meant this, there's nothing to do.`,
+  });
+}

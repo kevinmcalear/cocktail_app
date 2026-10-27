@@ -5390,18 +5390,21 @@ export type Database = {
         Row: {
           bar_id: string
           deletes_at: string
+          emailed_at: string | null
           requested_at: string
           requested_by: string | null
         }
         Insert: {
           bar_id: string
           deletes_at: string
+          emailed_at?: string | null
           requested_at?: string
           requested_by?: string | null
         }
         Update: {
           bar_id?: string
           deletes_at?: string
+          emailed_at?: string | null
           requested_at?: string
           requested_by?: string | null
         }
@@ -6408,6 +6411,7 @@ export type Database = {
         Returns: {
           bar_id: string
           deletes_at: string
+          emailed_at: string | null
           requested_at: string
           requested_by: string | null
         }

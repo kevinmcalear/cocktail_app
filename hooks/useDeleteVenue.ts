@@ -1,5 +1,7 @@
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 
+import { getAuthSite } from '@/lib/authRedirect';
+import { invokeFunction } from '@/lib/invokeFunction';
 import { supabase } from '@/lib/supabase';
 import type { Row } from '@/types/db';
 
@@ -30,6 +32,8 @@ export function useVenueDeleteRequest(barId: string | null) {
  * public could see stay on the bar's page, which goes back to unclaimed, and
  * everything else the venue held goes. The server refuses anyone but that
  * venue's Admin, and a name that doesn't match. Asking again keeps the date.
+ * The other Admins are emailed (venue-delete-email, once per request); the
+ * banner in the app tells them either way, so a failed email doesn't fail this.
  */
 export function useDeleteVenue() {
   const qc = useQueryClient();
@@ -37,6 +41,7 @@ export function useDeleteVenue() {
     mutationFn: async ({ barId, confirmName }: { barId: string; confirmName: string }): Promise<VenueDeleteRequest> => {
       const { data, error } = await supabase.rpc('delete_venue', { p_bar_id: barId, p_confirm_name: confirmName });
       if (error) throw error;
+      void invokeFunction('venue-delete-email', { bar_id: barId, site: getAuthSite() }).catch(() => undefined);
       return data;
     },
     onSuccess: (data, { barId }) => qc.setQueryData(requestKey(barId), data),
