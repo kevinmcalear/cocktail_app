@@ -67,18 +67,20 @@ before(async () => {
   const name = `Merge Plane ${run}`;
   ids.keep = (
     await one(
-      `INSERT INTO public.items (name, item_type, is_catalog, origin_bar_profile_id, notes)
-       VALUES ($1, 'cocktail', true, $2, 'The classic''s history.') RETURNING id`,
+      `INSERT INTO public.items (name, item_type, is_catalog, origin_bar_profile_id)
+       VALUES ($1, 'cocktail', true, $2) RETURNING id`,
       [name, ids.page],
     )
   ).id;
+  await db.query("INSERT INTO public.item_notes (item_id, body) VALUES ($1, 'The classic''s history.')", [ids.keep]);
   ids.copy = (
     await one(
-      `INSERT INTO public.items (name, item_type, origin_bar_profile_id, riff_of_id, notes)
-       VALUES ($1, 'cocktail', $2, $3, 'The bar''s own note.') RETURNING id`,
+      `INSERT INTO public.items (name, item_type, origin_bar_profile_id, riff_of_id)
+       VALUES ($1, 'cocktail', $2, $3) RETURNING id`,
       [name, ids.page, ids.keep],
     )
   ).id;
+  await db.query("INSERT INTO public.item_notes (item_id, body) VALUES ($1, 'The bar''s own note.')", [ids.copy]);
   ids.riff = (
     await one(
       `INSERT INTO public.items (name, item_type, riff_of_id) VALUES ($1, 'cocktail', $2) RETURNING id`,
@@ -204,10 +206,11 @@ before(async () => {
   ).id;
   ids.copy2 = (
     await one(
-      `INSERT INTO public.items (name, item_type, origin_bar_profile_id, notes) VALUES ($1, 'cocktail', $2, 'The copy''s bar note.') RETURNING id`,
+      `INSERT INTO public.items (name, item_type, origin_bar_profile_id) VALUES ($1, 'cocktail', $2) RETURNING id`,
       [`Merge Two ${run}`, ids.page],
     )
   ).id;
+  await db.query("INSERT INTO public.item_notes (item_id, body) VALUES ($1, 'The copy''s bar note.')", [ids.copy2]);
   await db.query("UPDATE public.items SET riff_of_id = $2 WHERE id = $1", [
     ids.keep2,
     ids.copy2,
@@ -298,18 +301,12 @@ describe("merge_item", () => {
       2,
     );
     const keep = await one(
-      "SELECT riff_of_id, notes FROM public.items WHERE id = $1",
+      "SELECT i.riff_of_id, n.body AS notes FROM public.items i LEFT JOIN public.item_notes n ON n.item_id = i.id WHERE i.id = $1",
       [ids.keep],
     );
     assert.equal(keep.riff_of_id, null);
+    // Its own notes stay; the copy's bar note doesn't follow onto a classic.
     assert.equal(keep.notes, "The classic's history.");
-    assert.equal(
-      await count(
-        "SELECT count(*) n FROM public.credited_drink_notes WHERE item_id = $1",
-        [ids.keep],
-      ),
-      0,
-    );
   });
 
   test("riffs, menus and menu history move to the kept drink", async () => {
@@ -451,10 +448,10 @@ describe("merge_item", () => {
 
   test("a bar-credited copy's notes follow onto a bar-credited drink", async () => {
     const note = await one(
-      "SELECT notes FROM public.credited_drink_notes WHERE item_id = $1",
+      "SELECT body FROM public.item_notes WHERE item_id = $1",
       [ids.keep2],
     );
-    assert.equal(note?.notes, "The copy's bar note.");
+    assert.equal(note?.body, "The copy's bar note.");
   });
 
   test("the merge record outlives the kept drink", async () => {

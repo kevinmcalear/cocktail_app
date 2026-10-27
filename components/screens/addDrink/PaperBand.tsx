@@ -1,4 +1,5 @@
 import { useEffect, useState, type ReactNode } from 'react';
+import { Image } from 'expo-image';
 import { StatusBar } from 'expo-status-bar';
 import { Platform, StyleSheet, View } from 'react-native';
 import Animated, { useAnimatedStyle, useReducedMotion, useSharedValue, withSequence, withSpring, withTiming } from 'react-native-reanimated';
@@ -53,15 +54,23 @@ export interface PaperBandProps {
   note?: string;
   /** Under the drawing, before the tag: a control for it (the drink's Colour). */
   action?: ReactNode;
+  /**
+   * A photo of the drink (E26). The full band shows it in place of the
+   * drawing, with the controls on dark glass; the compact band stays on paper
+   * with the photo as its thumbnail.
+   */
+  photo?: string | null;
 }
 
 /**
  * The paper band at the top of every add wizard: back, progress, and a
  * drawing of the thing being added that redraws as it's filled in.
  */
-export function PaperBand({ progress, first, backTo, onBack, top, side, rounded, folded, compact, onShowArt, size: sizeProp, art, artKey, artLabel, tag, note = 'Updates as you go', action, trail }: PaperBandProps) {
+export function PaperBand({ progress, first, backTo, onBack, top, side, rounded, folded, compact, onShowArt, size: sizeProp, art, artKey, artLabel, tag, note = 'Updates as you go', action, trail, photo }: PaperBandProps) {
   const ds = useDs();
-  const ink = ds.c.sketchInk;
+  const onPhoto = !!photo && !compact;
+  const ink = onPhoto ? backbar.dark.ink : ds.c.sketchInk;
+  const glass = onPhoto ? backbar.dark.glass : backbar.light.glass;
   const reduceMotion = useReducedMotion();
   // The drawing before this one, faded out under the new one. Plain opacity, not
   // Reanimated's exiting animations: an exiting view removed again mid-fade (each
@@ -80,14 +89,14 @@ export function PaperBand({ progress, first, backTo, onBack, top, side, rounded,
   const backTitled = first && backTo;
 
   const back = backTitled ? (
-    <PressableScale onPress={onBack} accessibilityLabel={`Back to ${backTo}`} style={[styles.backTo, { backgroundColor: backbar.light.glass }]}>
+    <PressableScale onPress={onBack} accessibilityLabel={`Back to ${backTo}`} style={[styles.backTo, { backgroundColor: glass }]}>
       <IconSymbol name="chevron.left" size={18} color={ink} />
       <Caption color={ink} numberOfLines={1} style={styles.backToLabel}>
         {backTo}
       </Caption>
     </PressableScale>
   ) : (
-    <PressableScale onPress={onBack} accessibilityLabel={first ? 'Close. Your draft is kept' : 'Back'} style={[styles.back, { backgroundColor: backbar.light.glass }]}>
+    <PressableScale onPress={onBack} accessibilityLabel={first ? 'Close. Your draft is kept' : 'Back'} style={[styles.back, { backgroundColor: glass }]}>
       <IconSymbol name={first ? 'xmark' : 'chevron.left'} size={18} color={ink} />
     </PressableScale>
   );
@@ -109,7 +118,8 @@ export function PaperBand({ progress, first, backTo, onBack, top, side, rounded,
     </Caption>
   );
   const drawing = (
-    <Animated.View style={[compact ? null : styles.drawing, { width: size, height: size }, bounce]} aria-label={compact ? undefined : artLabel}>
+    // Over a photo the drawing's room stays, empty, so the band keeps its height.
+    <Animated.View style={[compact ? null : styles.drawing, { width: size, height: size }, bounce, onPhoto ? styles.hidden : null]} aria-label={compact || onPhoto ? undefined : artLabel} aria-hidden={onPhoto}>
       {shown.before ? (
         <Layer key={`out-${shown.n - 1}`} from={1} to={0}>
           {shown.before}
@@ -127,15 +137,16 @@ export function PaperBand({ progress, first, backTo, onBack, top, side, rounded,
   ) : null;
 
   return (
-    <View style={[styles.band, { backgroundColor: ds.c.paper, paddingTop: top, paddingHorizontal: side }, rounded && styles.rounded]}>
-      {/* Android draws the band under the status bar: dark icons, so they read on paper in both themes. */}
-      {Platform.OS === 'android' && !rounded ? <StatusBar style="dark" /> : null}
+    <View style={[styles.band, { backgroundColor: onPhoto ? backbar.dark.ground : ds.c.paper, paddingTop: top, paddingHorizontal: side }, rounded && styles.rounded]}>
+      {onPhoto ? <Image source={{ uri: photo }} style={StyleSheet.absoluteFill} contentFit="cover" accessibilityLabel="Photo of the drink, the hero" /> : null}
+      {/* Android draws the band under the status bar: dark icons, so they read on paper in both themes; light over a photo. */}
+      {Platform.OS === 'android' && !rounded ? <StatusBar style={onPhoto ? 'light' : 'dark'} /> : null}
       {compact ? (
         <>
           <View style={styles.controls}>
             {back}
-            <PressableScale onPress={onShowArt} accessibilityLabel={`Show the drawing full size: ${artLabel}`} style={[styles.thumb, { backgroundColor: backbar.light.glass }]}>
-              {drawing}
+            <PressableScale onPress={onShowArt} accessibilityLabel={photo ? 'Show the photo full size' : `Show the drawing full size: ${artLabel}`} style={[styles.thumb, { backgroundColor: backbar.light.glass }]}>
+              {photo ? <Image source={{ uri: photo }} style={StyleSheet.absoluteFill} contentFit="cover" /> : drawing}
             </PressableScale>
             <View style={styles.progress}>
               {track}
@@ -202,5 +213,6 @@ const styles = StyleSheet.create({
   fill: { height: 4, borderRadius: radius.pill },
   mono: { fontFamily: fontFamilies.monoMedium },
   drawing: { marginTop: space.sm },
+  hidden: { opacity: 0 },
   foot: { alignSelf: 'stretch', flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between' },
 });

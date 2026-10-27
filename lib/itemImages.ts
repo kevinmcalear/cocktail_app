@@ -54,10 +54,11 @@ export function isHeroLink(link: ItemImageLink): boolean {
 /**
  * The hero pictures: photos first, then sketches, each in their saved order.
  * The first is the hero. Service angles (side, top, ...) are left out, so a
- * top-down shot never becomes a drink's thumbnail.
+ * top-down shot never becomes a drink's thumbnail. `showSketch` false
+ * (items.show_sketch, E26) leaves the drawing out while there's a photo.
  */
-export function orderedPictures(links: ItemImageLink[] | null | undefined): ItemPicture[] {
-  return (links ?? [])
+export function orderedPictures(links: ItemImageLink[] | null | undefined, showSketch = true): ItemPicture[] {
+  const pictures = (links ?? [])
     .filter((link) => !!link.images?.url && isHeroLink(link))
     .sort(
       (a, b) =>
@@ -65,6 +66,7 @@ export function orderedPictures(links: ItemImageLink[] | null | undefined): Item
         Number(a.sort_order ?? 0) - Number(b.sort_order ?? 0)
     )
     .map(toPicture);
+  return showSketch || pictures.every((p) => p.isSketch) ? pictures : pictures.filter((p) => !p.isSketch);
 }
 
 /** A link with a file, as the app shows it. */

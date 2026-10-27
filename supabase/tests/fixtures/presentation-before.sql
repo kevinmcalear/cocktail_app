@@ -244,7 +244,9 @@ CREATE TEMP VIEW old_app_recipe_presentation WITH (security_invoker='false') AS
             WHEN ((ub.user_id IS NOT NULL) AND (public.effective_bar_role(ub.role_level) >= COALESCE(c.override_measurement_level, b.default_measurement_level))) THEN r.at_service
             WHEN (ps.id IS NOT NULL) THEN r.at_service
             ELSE NULL::boolean
-        END AS at_service
+        END AS at_service,
+    -- 20261123100000_drink_parts added each line's part, passed through as it is.
+    r.part
    FROM (((((((public.recipes r
      JOIN public.items c ON ((r.recipe_item_id = c.id)))
      LEFT JOIN public.items s ON ((s.id = r.ingredient_item_id)))

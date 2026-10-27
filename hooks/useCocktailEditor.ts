@@ -4,6 +4,7 @@ import { useCallback, useEffect, useRef, useState } from "react";
 import { Alert } from "react-native";
 
 import { useCocktail } from "@/hooks/useCocktails";
+import { saveItemNotes } from "@/hooks/useItemNotes";
 import { dropdownKeys, useDropdowns } from "@/hooks/useDropdowns";
 import { GLASS_MODEL_SELECT, type GlassModel } from "@/hooks/useGlassModels";
 import { identifyGlasswareFromPhoto } from "@/lib/identifyGlassware";
@@ -34,6 +35,7 @@ export function useCocktailEditor(id: string, { enabled = true }: { enabled?: bo
     const { data: cocktail, isLoading: loadingCocktail } = useCocktail(enabled ? id : undefined);
 
     const isLoaded = useRef(false);
+    const loadedNotes = useRef("");
     const [rawLoaded, setRawLoaded] = useState(false);
     const [isDirty, setIsDirty] = useState(false);
     const [saving, setSaving] = useState(false);
@@ -108,6 +110,7 @@ export function useCocktailEditor(id: string, { enabled = true }: { enabled?: bo
         setDescription(c.description || "");
         setOrigin(c.origin || "");
         setNotes(c.notes || "");
+        loadedNotes.current = c.notes || "";
         setMethodIds(orderedMethodIds(c.item_methods));
         setGlasswareId(c.glassware_id);
         setFamilyId(c.family_id);
@@ -332,8 +335,6 @@ export function useCocktailEditor(id: string, { enabled = true }: { enabled?: bo
                     name: capitalize(name),
                     description,
                     origin: capitalize(origin) || null,
-                    // '' clears; null would keep a bar-credited drink's notes (credited_drink_notes).
-                    notes: notes.trim() ? notes : '',
                     glassware_id: glasswareId,
                     family_id: familyId,
                     ice_id: iceId,
@@ -349,6 +350,8 @@ export function useCocktailEditor(id: string, { enabled = true }: { enabled?: bo
                 })
                 .eq("id", id);
             if (error) throw error;
+            // Only when changed: notes for a role above yours never reach the editor, so an empty box isn't a clear (E29).
+            if (notes.trim() !== loadedNotes.current.trim()) await saveItemNotes(id, notes);
 
             // A line typed, combined or made in-house here is added the way New adds it.
             const spec = await resolveEditItems(recipeItems, barId || null);

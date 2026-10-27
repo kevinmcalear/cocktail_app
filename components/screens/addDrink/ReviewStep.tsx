@@ -9,6 +9,7 @@ import { useMyProfile } from '@/hooks/useMyProfile';
 import { useBarPublishing } from '@/hooks/usePublishing';
 import { amountLabel, draftIceLine, finishLabel, notesArePrivate, sketchLook, STEP_COPY, type StepProps, type WizardDraft, type WizardStep } from '@/lib/drinkWizard';
 import { recipesToFinish } from '@/lib/prepKinds';
+import { notesLevelLabel } from '@/lib/notesReaders';
 import { PUBLISH_COPY } from '@/lib/publishing';
 import { capitalizeFirst } from '@/lib/stringUtils';
 import { draftSketchInputs } from '@/lib/sketch/draft';
@@ -50,6 +51,14 @@ interface ReviewStepProps extends StepProps {
   cost?: ReactNode;
 }
 
+/** The notes as Review says them, with who reads them when that isn't everyone (E29). */
+function notesLine(draft: WizardDraft, barId: string | null): string {
+  const notes = draft.notes.trim();
+  if (!notes) return '';
+  if (notesArePrivate(draft, barId)) return `Just me: ${notes}`;
+  return barId && draft.notesLevel ? `${notesLevelLabel(draft.notesLevel)}: ${notes}` : notes;
+}
+
 /**
  * The photo slots, every answer on one screen (tap a row to go back and
  * change it), then a venue's cost. At home one photo, the one that leads the
@@ -73,7 +82,7 @@ export function ReviewStep({ draft, set, onJump, barId, venueName, hasProfile, b
     ['ice', draftIceLine(draft)],
     ['garnish', draft.garnishes.map(finishLabel).join(', ')],
     ['credits', credits(draft, hasProfile)],
-    ['notes', [draft.description.trim(), draft.notes.trim() && notesArePrivate(draft, barId) ? `Just me: ${draft.notes.trim()}` : draft.notes.trim()].filter(Boolean).join('\n\n')],
+    ['notes', [draft.description.trim(), notesLine(draft, barId)].filter(Boolean).join('\n\n')],
     ['publish', draft.publish ? PUBLISH_COPY[draft.publish].label : barId ? followed : 'Private'],
   ];
   return (

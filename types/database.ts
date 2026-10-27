@@ -85,6 +85,7 @@ export type Database = {
           supplier_id: string | null
           updated_at: string
           variant: string | null
+          wash_line_ml: number | null
         }
         Insert: {
           capacity_ml?: number | null
@@ -109,6 +110,7 @@ export type Database = {
           supplier_id?: string | null
           updated_at?: string
           variant?: string | null
+          wash_line_ml?: number | null
         }
         Update: {
           capacity_ml?: number | null
@@ -133,6 +135,7 @@ export type Database = {
           supplier_id?: string | null
           updated_at?: string
           variant?: string | null
+          wash_line_ml?: number | null
         }
         Relationships: [
           {
@@ -2437,16 +2440,19 @@ export type Database = {
         Row: {
           item_id: string
           method_item_id: string
+          part: number
           sort_order: number | null
         }
         Insert: {
           item_id: string
           method_item_id: string
+          part?: number
           sort_order?: number | null
         }
         Update: {
           item_id?: string
           method_item_id?: string
+          part?: number
           sort_order?: number | null
         }
         Relationships: [
@@ -2475,6 +2481,45 @@ export type Database = {
             foreignKeyName: "item_methods_method_item_id_fkey"
             columns: ["method_item_id"]
             isOneToOne: false
+            referencedRelation: "items"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      item_notes: {
+        Row: {
+          body: string
+          item_id: string
+          read_level: number | null
+          updated_at: string
+          updated_by: string | null
+        }
+        Insert: {
+          body: string
+          item_id: string
+          read_level?: number | null
+          updated_at?: string
+          updated_by?: string | null
+        }
+        Update: {
+          body?: string
+          item_id?: string
+          read_level?: number | null
+          updated_at?: string
+          updated_by?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "item_notes_item_id_fkey"
+            columns: ["item_id"]
+            isOneToOne: true
+            referencedRelation: "app_item_presentation"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "item_notes_item_id_fkey"
+            columns: ["item_id"]
+            isOneToOne: true
             referencedRelation: "items"
             referencedColumns: ["id"]
           },
@@ -2948,6 +2993,7 @@ export type Database = {
           override_prep_level: number | null
           override_specific_brand_level: number | null
           override_visibility_level: number | null
+          parts: Json | null
           picture: Database["public"]["Enums"]["item_picture"]
           price: string | null
           publish_mode: Database["public"]["Enums"]["item_publish_mode"] | null
@@ -2956,6 +3002,7 @@ export type Database = {
           serve_abv: number | null
           serve_ml: number | null
           service_style: string | null
+          show_sketch: boolean
           sketch_liquid: string | null
           sketch_variant: string | null
           spec_from_id: string | null
@@ -3015,6 +3062,7 @@ export type Database = {
           override_prep_level?: number | null
           override_specific_brand_level?: number | null
           override_visibility_level?: number | null
+          parts?: Json | null
           picture?: Database["public"]["Enums"]["item_picture"]
           price?: string | null
           publish_mode?: Database["public"]["Enums"]["item_publish_mode"] | null
@@ -3023,6 +3071,7 @@ export type Database = {
           serve_abv?: number | null
           serve_ml?: number | null
           service_style?: string | null
+          show_sketch?: boolean
           sketch_liquid?: string | null
           sketch_variant?: string | null
           spec_from_id?: string | null
@@ -3082,6 +3131,7 @@ export type Database = {
           override_prep_level?: number | null
           override_specific_brand_level?: number | null
           override_visibility_level?: number | null
+          parts?: Json | null
           picture?: Database["public"]["Enums"]["item_picture"]
           price?: string | null
           publish_mode?: Database["public"]["Enums"]["item_publish_mode"] | null
@@ -3090,6 +3140,7 @@ export type Database = {
           serve_abv?: number | null
           serve_ml?: number | null
           service_style?: string | null
+          show_sketch?: boolean
           sketch_liquid?: string | null
           sketch_variant?: string | null
           spec_from_id?: string | null
@@ -4481,6 +4532,7 @@ export type Database = {
           ingredient_item_id: string | null
           is_optional: boolean | null
           parent_ingredient_id: string | null
+          part: number
           preparation_notes: string | null
           recipe_item_id: string | null
           sort_order: number
@@ -4494,6 +4546,7 @@ export type Database = {
           ingredient_item_id?: string | null
           is_optional?: boolean | null
           parent_ingredient_id?: string | null
+          part?: number
           preparation_notes?: string | null
           recipe_item_id?: string | null
           sort_order?: number
@@ -4507,6 +4560,7 @@ export type Database = {
           ingredient_item_id?: string | null
           is_optional?: boolean | null
           parent_ingredient_id?: string | null
+          part?: number
           preparation_notes?: string | null
           recipe_item_id?: string | null
           sort_order?: number
@@ -5575,6 +5629,7 @@ export type Database = {
           serve_abv: number | null
           serve_ml: number | null
           service_style: string | null
+          show_sketch: boolean | null
           status: string | null
         }
         Relationships: [
@@ -5695,6 +5750,7 @@ export type Database = {
           ingredient_item_id: string | null
           is_optional: boolean | null
           parent_ingredient_id: string | null
+          part: number | null
           preparation_notes: string | null
           recipe_item_id: string | null
           sort_order: number | null
@@ -5752,6 +5808,7 @@ export type Database = {
             override_prep_level: number | null
             override_specific_brand_level: number | null
             override_visibility_level: number | null
+            parts: Json | null
             picture: Database["public"]["Enums"]["item_picture"]
             price: string | null
             publish_mode:
@@ -5762,6 +5819,7 @@ export type Database = {
             serve_abv: number | null
             serve_ml: number | null
             service_style: string | null
+            show_sketch: boolean
             sketch_liquid: string | null
             sketch_variant: string | null
             spec_from_id: string | null
@@ -6598,6 +6656,7 @@ export type Database = {
           override_prep_level: number | null
           override_specific_brand_level: number | null
           override_visibility_level: number | null
+          parts: Json | null
           picture: Database["public"]["Enums"]["item_picture"]
           price: string | null
           publish_mode: Database["public"]["Enums"]["item_publish_mode"] | null
@@ -6606,6 +6665,7 @@ export type Database = {
           serve_abv: number | null
           serve_ml: number | null
           service_style: string | null
+          show_sketch: boolean
           sketch_liquid: string | null
           sketch_variant: string | null
           spec_from_id: string | null
@@ -7324,7 +7384,9 @@ export type Database = {
               p_item: string
               p_lines: Json
               p_method_ids: string[]
+              p_method_parts?: number[]
               p_note: string
+              p_parts?: Json
             }
             Returns: number
           }

@@ -84,10 +84,10 @@ describe('recipe ingredient embeds', () => {
   });
 });
 
-describe('credited drink notes', () => {
+describe('drink notes', () => {
   test('the policy checks the note\'s own item', async () => {
     const { rows } = await db.query(
-      `SELECT qual FROM pg_policies WHERE schemaname = 'public' AND tablename = 'credited_drink_notes' AND policyname = 'credited_drink_notes_select'`
+      `SELECT qual FROM pg_policies WHERE schemaname = 'public' AND tablename = 'item_notes' AND policyname = 'item_notes_select'`
     );
     assert.match(rows[0].qual, /EXISTS/);
     assert.doesNotMatch(rows[0].qual, /item_id IN/);
