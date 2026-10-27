@@ -11,9 +11,9 @@ jest.mock('@/hooks/useBarDetail', () => ({ useSetMemberRole: () => ({ mutateAsyn
 jest.mock('@/hooks/useBarInvites', () => ({
   useSendInviteEmail: () => ({ mutateAsync: mockSend, isPending: false }),
   useWelcomeMessage: () => ({ data: null, isLoading: false }),
+  useSenderName: () => 'Rob Hale',
   useSaveWelcomeMessage: () => ({ mutateAsync: mockSaveWelcome, isPending: false }),
 }));
-jest.mock('@/hooks/useMyProfile', () => ({ useMyProfile: () => ({ data: { displayName: 'Rob Hale' } }) }));
 jest.mock('@/hooks/useVenueBrand', () => ({ useVenueBrand: () => ({ data: undefined }) }));
 jest.mock('@/hooks/useIsWideWeb', () => ({ useIsWideWeb: () => false }));
 

@@ -7,9 +7,8 @@ import { SetupFooter, SetupPage } from '@/components/screens/onboarding/SetupPag
 import { InvitePreview } from '@/components/screens/team/InvitePreview';
 import { space } from '@/constants/tokens';
 import { useSetMemberRole } from '@/hooks/useBarDetail';
-import { useSaveWelcomeMessage, useSendInviteEmail, useWelcomeMessage } from '@/hooks/useBarInvites';
+import { useSaveWelcomeMessage, useSenderName, useSendInviteEmail, useWelcomeMessage } from '@/hooks/useBarInvites';
 import { useIsWideWeb } from '@/hooks/useIsWideWeb';
-import { useMyProfile } from '@/hooks/useMyProfile';
 import { plainDbMessage } from '@/lib/dbError';
 import { roleLabel } from '@/lib/roles';
 import { INVITE_ROLES, WELCOME_MAX, welcomeSuggestion } from '@/lib/team';
@@ -32,7 +31,7 @@ export function TeamStep({ barId, name, pending, onDone }: { barId: string; name
   const send = useSendInviteEmail(barId);
   const saved = useWelcomeMessage(barId);
   const saveWelcome = useSaveWelcomeMessage(barId);
-  const sender = useMyProfile().data?.displayName?.trim() || null;
+  const sender = useSenderName();
   const [people, setPeople] = useState<Person[]>([blankPerson(1)]);
   // Null until they type: the saved message, else the suggestion.
   const [edited, setEdited] = useState<string | null>(null);

@@ -1,6 +1,6 @@
 import { StyleSheet, View } from 'react-native';
 
-import { BackbarTheme, Body, BrandProvider, Caption, Display, DsText, useDs } from '@/components/ds';
+import { BackbarTheme, Body, BrandProvider, Caption, DsText, Title, useDs } from '@/components/ds';
 import { VenueMark } from '@/components/nav/VenueMarks';
 import { Monogram } from '@/components/screens/onboarding/SetupParts';
 import { radius, space } from '@/constants/tokens';
@@ -63,7 +63,7 @@ function Paper({ barId, barName, logoUrl, accent, displayFace, roleLevel, sender
         {logoUrl ? <VenueMark venue={venue} size={48} /> : <Monogram name={barName} size={48} accent italic />}
         <Caption tone="muted">{barName}</Caption>
       </View>
-      <Display>{`Join ${barName} as ${withArticle(roleLabel(roleLevel))}`}</Display>
+      <Title>{`Join ${barName} as ${withArticle(roleLabel(roleLevel))}`}</Title>
       <Body tone="muted">{`${sender ?? barName} added you to the team.`}</Body>
       {welcome ? (
         <View style={styles.welcome}>

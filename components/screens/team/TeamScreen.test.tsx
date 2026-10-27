@@ -21,7 +21,6 @@ jest.mock('expo-router', () => ({ useRouter: () => ({ navigate: jest.fn(), push:
 // A logo set: the look is done, so Invite isn't held back.
 let mockBrand: { logo_url: string | null; primary_color: string | null; display_face: string } = { logo_url: 'https://example.test/logo.png', primary_color: null, display_face: 'instrument' };
 jest.mock('@/hooks/useVenueBrand', () => ({ useVenueBrand: () => ({ data: mockBrand }) }));
-jest.mock('@/hooks/useMyProfile', () => ({ useMyProfile: () => ({ data: { displayName: 'Ada Lovelace' } }) }));
 const mockSaveWelcome = jest.fn();
 let mockWelcome: string | null = null;
 jest.mock('@/hooks/useMode', () => ({ useMode: () => ({ mode: 'venue' }) }));
@@ -63,6 +62,7 @@ jest.mock('@/hooks/useBarInvites', () => ({
   useRemoveInvite: () => ({ mutate: mockMutate, isPending: false, error: null }),
   useSendInviteEmail: () => ({ mutate: mockSend, mutateAsync: mockSendAsync, isPending: false, error: null }),
   useWelcomeMessage: () => ({ data: mockWelcome, isLoading: false, error: null }),
+  useSenderName: () => 'Ada Lovelace',
   useSaveWelcomeMessage: () => ({ mutate: mockSaveWelcome, mutateAsync: mockSaveWelcome, isPending: false, error: null }),
 }));
 

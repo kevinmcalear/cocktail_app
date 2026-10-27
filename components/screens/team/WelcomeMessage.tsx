@@ -5,8 +5,7 @@ import { Body, Button, Caption, Field, PressableScale, Surface, useDs } from '@/
 import { MenuSheet } from '@/components/screens/menus/MenuSheet';
 import { IconSymbol } from '@/components/ui/icon-symbol';
 import { space } from '@/constants/tokens';
-import { useSaveWelcomeMessage, useWelcomeMessage } from '@/hooks/useBarInvites';
-import { useMyProfile } from '@/hooks/useMyProfile';
+import { useSaveWelcomeMessage, useSenderName, useWelcomeMessage } from '@/hooks/useBarInvites';
 import { plainDbMessage } from '@/lib/dbError';
 import { WELCOME_MAX, welcomeSuggestion } from '@/lib/team';
 
@@ -44,7 +43,7 @@ export function WelcomeMessageRow({ barId, barName }: { barId: string; barName: 
 
 function WelcomeSheet({ barId, barName, message, onClose }: { barId: string; barName: string; message: string; onClose: () => void }) {
   const save = useSaveWelcomeMessage(barId);
-  const sender = useMyProfile().data?.displayName?.trim() || null;
+  const sender = useSenderName();
   const [text, setText] = useState(message);
   const [previewing, setPreviewing] = useState(false);
   return (

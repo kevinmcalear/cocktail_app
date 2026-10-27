@@ -5,8 +5,7 @@ import { Body, Button, Caption, Field } from '@/components/ds';
 import { Choice, MenuSheet } from '@/components/screens/menus/MenuSheet';
 import { space } from '@/constants/tokens';
 import { useSetMemberRole } from '@/hooks/useBarDetail';
-import { useSaveWelcomeMessage, useSendInviteEmail, useWelcomeMessage } from '@/hooks/useBarInvites';
-import { useMyProfile } from '@/hooks/useMyProfile';
+import { useSaveWelcomeMessage, useSenderName, useSendInviteEmail, useWelcomeMessage } from '@/hooks/useBarInvites';
 import { plainDbMessage } from '@/lib/dbError';
 import { confirmAsync } from '@/lib/dialogs';
 import { focusInModal, MODAL_AUTOFOCUS } from '@/lib/modalAutoFocus';
@@ -48,7 +47,7 @@ export function InviteSheet({ visible, onClose, barId, barName, ceiling, admin, 
   const send = useSendInviteEmail(barId);
   const saved = useWelcomeMessage(barId);
   const saveWelcome = useSaveWelcomeMessage(barId);
-  const sender = useMyProfile().data?.displayName?.trim() || null;
+  const sender = useSenderName();
   const welcome = saved.data ?? (admin ? welcomeSuggestion(barName) : '');
   const [name, setName] = useState('');
   const [email, setEmail] = useState('');

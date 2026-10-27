@@ -1,6 +1,7 @@
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 
-import { useUserId } from '@/ctx/AuthContext';
+import { useAuth, useUserId } from '@/ctx/AuthContext';
+import { useMyProfile } from '@/hooks/useMyProfile';
 import { track } from '@/lib/analytics';
 import { getAuthSite } from '@/lib/authRedirect';
 import { invokeFunction } from '@/lib/invokeFunction';
@@ -123,6 +124,16 @@ export function useWelcomeMessage(barId: string | null | undefined) {
       return data.welcome_message;
     },
   });
+}
+
+/**
+ * The name an invite is signed with: your profile's name, else the name you
+ * signed up with, as send-bar-invite and my_bar_invites read it.
+ */
+export function useSenderName(): string | null {
+  const profile = useMyProfile().data;
+  const meta = useAuth().user?.user_metadata?.full_name;
+  return profile?.displayName?.trim() || (typeof meta === 'string' ? meta.trim() : '') || null;
 }
 
 /** Saves the welcome message. Admins only (bars_update); an empty box saves as no message. */
