@@ -153,3 +153,42 @@ describe('save_drink_spec with parts', () => {
     assert.deepEqual(s.methods.map((m) => m.part), [1, 2, 2]);
   });
 });
+
+// A later part made fresh for each serve (20261126200000_part_made_fresh.sql):
+// the batch sheet sets it straight on items.parts, for whoever can edit the drink.
+describe('a part made fresh', () => {
+  const FRESH = [{ name: 'The coffee' }, { name: 'The cream', join: 'float', fresh: true }];
+
+  test('the venue marks the cream made fresh, and back to made ahead', async () => {
+    const { error } = await users.admin.client.from('items').update({ parts: FRESH }).eq('id', ids.drink).select('id').single();
+    assert.ifError(error);
+    assert.deepEqual((await spec()).parts, FRESH);
+    const { error: backError } = await users.admin.client.from('items').update({ parts: PARTS }).eq('id', ids.drink).select('id').single();
+    assert.ifError(backError);
+    assert.deepEqual((await spec()).parts, PARTS);
+  });
+
+  test('a save_drink_spec with fresh keeps it, and its version does too', async () => {
+    const before = await spec();
+    const { error } = await users.admin.client.rpc('save_drink_spec', {
+      p_item: ids.drink,
+      p_lines: before.lines.map((l) => ({ ...line(l.ingredient_item_id, 40), id: l.id })),
+      p_method_ids: [ids.build, ids.whisk],
+      p_method_parts: [1, 2],
+      p_note: 'Cream to order',
+      p_parts: FRESH,
+    });
+    assert.ifError(error);
+    assert.deepEqual((await spec()).parts, FRESH);
+    const { data: version } = await service.from('item_versions').select('snapshot').eq('item_id', ids.drink).eq('note', 'Cream to order').single();
+    assert.deepEqual(version.snapshot.parts, FRESH, 'the version keeps it');
+  });
+
+  test('fresh must be true or false, and an outsider cannot set it', async () => {
+    const { error } = await users.admin.client.from('items').update({ parts: [{ name: 'A' }, { name: 'B', fresh: 'yes' }] }).eq('id', ids.drink);
+    assert.ok(error, 'a string is refused');
+    const { data } = await users.outsider.client.from('items').update({ parts: PARTS }).eq('id', ids.drink).select('id');
+    assert.equal(data?.length ?? 0, 0, 'the outsider changed nothing');
+    assert.deepEqual((await spec()).parts, FRESH);
+  });
+});

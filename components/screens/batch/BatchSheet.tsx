@@ -4,8 +4,10 @@ import { Platform, StyleSheet, View } from 'react-native';
 import { BackbarTheme, Body, BrandProvider, Caption, LockedSection, PressableScale, Segmented, Sheet, SheetScrollView, Title, useDs, useSheetClose } from '@/components/ds';
 import { IconSymbol } from '@/components/ui/icon-symbol';
 import { ToolsSheet } from '@/components/tools/ToolsSheet';
-import { fontFamilies, layout, radius, space } from '@/constants/tokens';
+import { layout, space } from '@/constants/tokens';
 import { useShelfLives } from '@/hooks/useBatchPrep';
+import { useSetPartFresh } from '@/hooks/useServiceSpec';
+import { aheadParts, partKeeps } from '@/lib/batchContainers';
 import { batchPrepLines, keepsFor, bottleExpiry, expiryLine } from '@/lib/batchPrep';
 import {
   BOTTLE_SIZES,
@@ -27,7 +29,8 @@ import { useSettingsStore } from '@/store/useSettingsStore';
 
 import { BatchActions } from './BatchActions';
 import { freshPartsText, MakeByPart, partOneAbv, StationParts } from './BatchByPart';
-import { BatchRow, BottleTiles, Choice, FreezerCheck, ServesField, StockField } from './BatchParts';
+import { AheadBlock, BottleChips, LabelBlock, PartEyebrow, UseBy, useContainers, useLabel } from './BatchContainers';
+import { BatchRow, BottleRows, BottleTiles, Choice, FreezerCheck, ServesField, StockField } from './BatchParts';
 import { ServesRuler } from './ServesRuler';
 
 export interface BatchSheetProps {
@@ -55,8 +58,10 @@ export interface BatchSheetProps {
   barId?: string | null;
   /** May make a house prep at the venue. */
   canPrep?: boolean;
-  /** A drink made in parts (lib/drinkParts.ts): the bottle holds part 1, and each later part is made fresh per serve. */
+  /** A drink made in parts (lib/drinkParts.ts): the bottle holds part 1, and each later part has its own container, or is made fresh per serve. */
   parts?: MakingPart[] | null;
+  /** The drink, for its labels' code and setting a part made fresh. */
+  itemId?: string | null;
 }
 
 type Mode = 'serves' | 'bottle' | 'stock';
@@ -112,7 +117,7 @@ export function BatchSheet(props: BatchSheetProps) {
   );
 }
 
-function BatchBody({ name, lines: all, methodNames: allMethods, lockedUntil, initialServes = 8, dilutionPct, serviceStyle, abv, canEdit, specLabel, barId = null, canPrep = false, parts = null }: BatchSheetProps) {
+function BatchBody({ name, lines: all, methodNames: allMethods, lockedUntil, initialServes = 8, dilutionPct, serviceStyle, abv, canEdit, specLabel, barId = null, canPrep = false, parts = null, itemId = null }: BatchSheetProps) {
   // Made in parts, only part 1 goes in the bottle (board made-parts-making).
   const lines = parts ? byPart(all, parts.length)[0] : all;
   const methodNames = parts ? parts[0].methods : allMethods;
@@ -128,6 +133,9 @@ function BatchBody({ name, lines: all, methodNames: allMethods, lockedUntil, ini
   // Making it: the keys ticked off so far; null when not making.
   const [ticked, setTicked] = useState<string[] | null>(null);
   const tick = (key: string) => setTicked((t) => (t ? (t.includes(key) ? t.filter((k) => k !== key) : [...t, key]) : t));
+  const boxes = useContainers(barId);
+  const labelFor = useLabel(itemId);
+  const setFresh = useSetPartFresh(itemId ?? '');
   const freezerC = useSettingsStore((s) => s.freezerC);
   const setFreezerC = useSettingsStore((s) => s.setFreezerC);
 
@@ -149,7 +157,7 @@ function BatchBody({ name, lines: all, methodNames: allMethods, lockedUntil, ini
   const bottles = `${batch.bottles} × ${bottleLabel(bottleSize)} ${batch.bottles === 1 ? 'bottle' : 'bottles'}`;
   const guessed = lines.every((l) => l.atService === null) && station.some((l) => l.leaveOut !== 'garnish');
   // House-made lines keep for so long; the bottle is used by the shortest of them.
-  const houseIds = lines.flatMap((l) => (l.houseMade && l.ingredientId ? [l.ingredientId] : []));
+  const houseIds = all.flatMap((l) => (l.houseMade && l.ingredientId ? [l.ingredientId] : []));
   const { data: lives = {} } = useShelfLives(houseIds);
   const lifeOf = (key: string) => {
     const id = lines.find((l) => l.key === key && l.houseMade)?.ingredientId;
@@ -157,8 +165,18 @@ function BatchBody({ name, lines: all, methodNames: allMethods, lockedUntil, ini
   };
   const shelfHours = bottled.map((l) => lifeOf(l.key));
   const useBy = expiryLine(bottleExpiry(shelfHours, new Date()));
-  const shortest = shelfHours.filter((h): h is number => !!h).sort((a, b) => a - b)[0] ?? null;
-  const text = [`${name}, ${n} serves`, ...bottled.map((l) => `${l.amount} ${l.ingredient}`), ...(batch.water ? [`${batch.water.amount} water`] : []), `Pour ${batch.pour} each.`, ...(parts ? freshPartsText(all, parts, unit) : [])].join('\n');
+  // Every later part not made fresh goes in its own container (board made-parts-making, approved 27 Oct 2026).
+  const ahead = parts ? aheadParts(all, parts, n, unit) : [];
+  const keepsOne = boxes.keepsOf(1, shelfHours.filter((h): h is number => !!h).sort((a, b) => a - b)[0] ?? null);
+  const keepsOf = (a: (typeof ahead)[number]) => boxes.keepsOf(a.part.n, partKeeps(a.lines, lives));
+  const notes = new Map(all.map((l) => [l.key, l.note]));
+  const onFresh = canEdit && itemId ? (part: number, fresh: boolean) => setFresh.mutate({ n: part, fresh }) : undefined;
+  const aheadText = ahead.map((a) => `${a.part.name}, made ahead for ${n}: ${a.rows.map((r) => `${r.amount} ${r.ingredient}`).join(', ')}.`);
+  const text = [`${name}, ${n} serves`, ...bottled.map((l) => `${l.amount} ${l.ingredient}`), ...(batch.water ? [`${batch.water.amount} water`] : []), `Pour ${batch.pour} each.`, ...aheadText, ...(parts ? freshPartsText(all, parts, unit, ahead) : [])].join('\n');
+  const preps = [
+    { name: `${name} batch`, lines: batchPrepLines(lines, bottled.map((l) => l.key), n), yieldMl: batch.totalMl, shelfHours: keepsOne },
+    ...ahead.map((a) => ({ name: `${name}, ${a.part.name.toLowerCase()}`, lines: batchPrepLines(a.lines, a.rows.map((r) => r.key), n), yieldMl: a.totalMl, shelfHours: keepsOf(a) })),
+  ];
   const stationRows = station.map((l) => (
     <BatchRow key={l.key} ingredient={l.ingredient} amount={l.perServe} sub={l.amount && l.perServe !== l.amount ? `${l.amount} for ${n}` : null} tag={LEAVE_OUT_LABEL[l.leaveOut!]} note={STATION_NOTE[l.leaveOut!]} />
   ));
@@ -185,7 +203,7 @@ function BatchBody({ name, lines: all, methodNames: allMethods, lockedUntil, ini
       <ServesField
         value={n}
         onChange={pickServes}
-        detail={mode === 'bottle' ? `${batch.total} · pour ${batch.pour} each` : `fills ${batch.bottles} × ${bottleLabel(bottleSize)}`}
+        detail={mode === 'bottle' ? `${batch.total} · pour ${batch.pour} each` : ahead.length ? 'every part scales' : `fills ${batch.bottles} × ${bottleLabel(bottleSize)}`}
         trailing={<Choice label="Units" options={UNITS} value={unit} onChange={setUnit} />}
       />
       {mode === 'serves' ? (
@@ -196,41 +214,25 @@ function BatchBody({ name, lines: all, methodNames: allMethods, lockedUntil, ini
       ) : null}
 
       <View>
-        <Caption tone="muted" style={styles.eyebrow}>
-          {parts ? `IN THE BOTTLE · PART 1, ${parts[0].name.toUpperCase()}` : 'IN THE BOTTLE'}
-        </Caption>
-        {bottled.map((l) => {
-          const keeps = keepsFor(lifeOf(l.key));
-          const house = lines.some((s) => s.key === l.key && s.houseMade);
-          return (
-            <BatchRow
-              key={l.key}
-              ingredient={l.ingredient}
-              amount={l.amount}
-              note={[l.sub, house ? ['house', keeps].filter(Boolean).join(' · ') : null].filter(Boolean).join(' · ') || null}
-              sub={[l.sub, house ? ['house', keeps].filter(Boolean).join(' · ') : null].filter(Boolean).join(' · ') || null}
-              checked={ticked?.includes(l.key)}
-              onToggle={ticked ? () => tick(l.key) : undefined}
-            />
-          );
-        })}
-        {batch.water ? (
-          <BatchRow
-            ingredient="Filtered water"
-            amount={batch.water.amount}
-            tone="accent"
-            note={batch.method === 'stirred' ? `${Number(batch.water.pct.toFixed(1))}%, stands in for stirring` : `${Number(batch.water.pct.toFixed(1))}% of the mix before water`}
-            sub={batch.method === 'stirred' ? `${Number(batch.water.pct.toFixed(1))}%, stands in for stirring` : `${Number(batch.water.pct.toFixed(1))}% of the mix before water`}
-            checked={ticked?.includes('water')}
-            onToggle={ticked ? () => tick('water') : undefined}
-          />
-        ) : batch.method === 'shaken' ? (
-          <BatchRow ingredient="Water" amount={unit === 'oz' ? '0 oz' : '0 ml'} tone="muted" note="the shake dilutes it" sub="the shake dilutes it" />
-        ) : null}
+        {ahead.length ? (
+          <PartEyebrow n={1} text={`IN THE BOTTLE · PART 1, ${parts![0].name.toUpperCase()}`} />
+        ) : (
+          <Caption tone="muted" style={styles.eyebrow}>
+            {parts ? `IN THE BOTTLE · PART 1, ${parts[0].name.toUpperCase()}` : 'IN THE BOTTLE'}
+          </Caption>
+        )}
+        <BottleRows batch={batch} bottled={bottled} unit={unit} houseNote={(key) => (lines.some((s) => s.key === key && s.houseMade) ? ['house', keepsFor(lifeOf(key))].filter(Boolean).join(' · ') : null)} ticked={ticked} onTick={tick} />
+        {ahead.length ? <BottleChips chips={[`${batch.total} in ${bottles}`, batch.abv !== null ? `${Math.round(batch.abv)}% ABV` : null]} trailing={<UseBy hours={keepsOne} onChange={(h) => boxes.setKeeps(1, h)} />} /> : null}
+        {ahead.length && ticked ? <LabelBlock label={labelFor(`${name} · ${parts![0].name}`, keepsOne, `${batch.total} in ${bottles}`)} /> : null}
       </View>
 
+      {ahead.map((a) => (
+        <AheadBlock key={a.part.n} a={a} boxes={boxes} keeps={keepsOf(a)} notes={notes} ticked={ticked} onTick={tick} labelFor={(amount) => labelFor(`${name} · ${a.part.name}`, keepsOf(a), amount)} onFresh={onFresh && ((fresh) => onFresh(a.part.n, fresh))} />
+      ))}
+      {setFresh.error ? <Caption tone="accent">{setFresh.error.message || "Couldn't change how that part is made. Try again."}</Caption> : null}
+
       {parts ? (
-        <StationParts name={name} pour={batch.pourMl > 0 ? batch.pour : null} first={stationRows} parts={parts} lines={all} unit={unit} />
+        <StationParts name={name} pour={batch.pourMl > 0 ? batch.pour : null} first={stationRows} added={station.map((l) => ({ amount: l.perServe, ingredient: l.ingredient }))} parts={parts} ahead={ahead} lines={all} unit={unit} onFresh={onFresh} />
       ) : batch.pourMl > 0 ? (
         <View>
           <Caption tone="muted" style={styles.eyebrow}>
@@ -241,14 +243,13 @@ function BatchBody({ name, lines: all, methodNames: allMethods, lockedUntil, ini
         </View>
       ) : null}
 
-      {/* The bottle's total, strength and use-by as chips (board drink-sheet-batch-venue). */}
-      <View accessible accessibilityLabel={[`In the bottle: ${batch.total}`, bottles, batch.abv !== null ? `${Math.round(batch.abv)}% ABV` : null, useBy].filter(Boolean).join(', ')} style={styles.chips}>
-        {[batch.total, batch.abv !== null ? `bottle ${Math.round(batch.abv)}% ABV` : null, useBy].filter((c): c is string => !!c).map((c) => (
-          <Caption key={c} style={[styles.chip, { backgroundColor: ds.c.raised }]}>
-            {c}
-          </Caption>
-        ))}
-      </View>
+      {/* The bottle's total, strength and use-by as chips (board drink-sheet-batch-venue); with containers they sit under the bottle. */}
+      {ahead.length ? null : (
+        <BottleChips
+          chips={[batch.total, batch.abv !== null ? `bottle ${Math.round(batch.abv)}% ABV` : null, useBy]}
+          spoken={[`In the bottle: ${batch.total}`, bottles, batch.abv !== null ? `${Math.round(batch.abv)}% ABV` : null, useBy].filter(Boolean).join(', ')}
+        />
+      )}
 
       {batch.method === 'stirred' && batch.abv !== null ? <FreezerCheck abv={batch.abv} freezerC={freezerC} onFreezerC={setFreezerC} /> : null}
       <Body tone="muted">{batch.note}</Body>
@@ -262,7 +263,7 @@ function BatchBody({ name, lines: all, methodNames: allMethods, lockedUntil, ini
         making={!!ticked}
         onMake={() => setTicked((t) => (t ? null : []))}
         onDilution={() => setTools(true)}
-        prep={{ lines: batchPrepLines(lines, bottled.map((l) => l.key), n), yieldMl: batch.totalMl, shelfHours: shortest }}
+        preps={preps}
         text={text}
         onSaved={close}
       />
@@ -276,7 +277,7 @@ function BatchBody({ name, lines: all, methodNames: allMethods, lockedUntil, ini
         <View style={styles.flex}>
           {byParts ? <Caption tone="muted">{`At home · ${n} ${n === 1 ? 'serve' : 'serves'}`}</Caption> : null}
           <Title>{byParts ? name : 'Batch'}</Title>
-          {byParts ? null : <Caption tone="muted">{[specLabel ?? name, parts ? `made in ${parts.length} parts` : methodLine(batch.method, batch.water)].join(' · ')}</Caption>}
+          {byParts ? null : <Caption tone="muted">{[specLabel ?? name, parts ? `made in ${parts.length} parts${ahead.length === parts.length - 1 ? `, ${parts.length === 2 ? 'both' : 'all'} made ahead` : ''}` : methodLine(batch.method, batch.water)].join(' · ')}</Caption>}
         </View>
         <PressableScale accessibilityLabel="Close" onPress={close} style={styles.close}>
           <IconSymbol name="xmark" size={18} color={ds.c.muted} />
@@ -292,7 +293,5 @@ const styles = StyleSheet.create({
   head: { flexDirection: 'row', alignItems: 'flex-start', gap: space.md },
   flex: { flex: 1, minWidth: 0 },
   eyebrow: { letterSpacing: 1.2 },
-  chips: { flexDirection: 'row', flexWrap: 'wrap', gap: space.sm },
-  chip: { fontFamily: fontFamilies.mono, paddingHorizontal: space.sm + 2, paddingVertical: space.xs, borderRadius: radius.pill, overflow: 'hidden' },
   close: { width: layout.minTapTarget, height: layout.minTapTarget, alignItems: 'center', justifyContent: 'center' },
 });
