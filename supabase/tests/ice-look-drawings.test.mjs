@@ -110,7 +110,8 @@ describe('the venue\'s ice look in its drawings', () => {
 
   test('a writer can\'t set it, and the check refuses a bad look', async () => {
     await db.query('UPDATE public.items SET ice_build = NULL, ice_id = NULL WHERE id = $1', [ids.rocks]);
-    await db.query("UPDATE public.item_sketches SET inputs = inputs || '{\"iceLook\": {\"mm\": 99}}' WHERE item_id = $1", [ids.rocks]);
+    // The drawing took the spear from the build (set_glass_and_ice), so it says its ice again.
+    await db.query("UPDATE public.item_sketches SET inputs = inputs || '{\"ice\": \"large\", \"iceLook\": {\"mm\": 99}}' WHERE item_id = $1", [ids.rocks]);
     assert.deepEqual((await sketch('rocks')).iceLook, { mm: 45, clear: true, stamp: true, inside: true });
     const check = async (extra) =>
       (await db.query('SELECT private.valid_sketch_inputs($1) AS ok', [JSON.stringify({ ...inputs('large'), ...extra })])).rows[0].ok;

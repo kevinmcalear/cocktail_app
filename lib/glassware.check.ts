@@ -1,8 +1,10 @@
 import assert from 'node:assert/strict';
+import { readdirSync, readFileSync } from 'node:fs';
 
 import {
   drawingKey, GLASS_TYPE_LABEL, GLASS_TYPES, glassCapacity, glassPromptKey, glassTitle, hasGlass, isVenueGlassName,
 } from './glassware';
+import { SKETCH_GLASSES, SKETCH_ICES } from './sketch/types';
 
 assert.equal(glassTitle({ name: '  ', glass: 'nick' }), 'Nick & Nora');
 assert.equal(glassTitle({ name: 'Leopold coupe', glass: 'coupe' }), 'Leopold coupe');
@@ -30,5 +32,18 @@ const items = [
 assert.equal(glassCapacity({ glass: 'coupe', variant: null, name: null }, items, 'bar'), '210 ml');
 assert.equal(glassCapacity({ glass: 'coupe', variant: null, name: null }, items, 'other'), '180 ml');
 assert.equal(glassCapacity({ glass: 'rocks', variant: null, name: null }, items, 'bar'), null);
+
+// The database's glass types and ice kinds are the drawing's, word for word
+// (private.is_glass_type and private.is_ice_kind, 20261124100000_glass_ice_kinds.sql).
+const dir = new URL('../supabase/migrations/', import.meta.url);
+const migrations = readdirSync(dir).sort().map((f) => readFileSync(new URL(f, dir), 'utf8'));
+const listed = (fn: string) => {
+  const sql = migrations.filter((s) => s.includes(`FUNCTION "private"."${fn}"`)).pop();
+  assert.ok(sql, `a migration makes private.${fn}`);
+  const body = sql.slice(sql.indexOf(`FUNCTION "private"."${fn}"`)).match(/SELECT p IN \(([^)]+)\)/)![1];
+  return body.match(/'([^']+)'/g)!.map((v) => v.slice(1, -1));
+};
+assert.deepEqual(listed('is_glass_type'), [...SKETCH_GLASSES]);
+assert.deepEqual(listed('is_ice_kind'), [...SKETCH_ICES]);
 
 console.log('glassware: ok');
