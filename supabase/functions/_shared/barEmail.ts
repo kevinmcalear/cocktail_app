@@ -20,13 +20,14 @@ export interface EmailContent {
 
 // Cocktail's own accent, for a bar that hasn't picked one.
 const DEFAULT_ACCENT = "#E4B062";
-// The paper an email is read on, whatever the app's scheme (InvitePreview draws the same).
-const PAPER = "#F6F1E8";
-const INK = "#1C1A17";
-const MUTED = "#6F675C";
-const LINE = "#E2DACC";
-const NOTE = "#EDE6D9";
-const CREAM = "#FFFBF5";
+// The app's dark Back Bar colours, as the board draws the email (InvitePreview draws the same).
+const PAGE = "#0E0D0C";
+const CARD = "#1A1816";
+const INK = "#F3EEE6";
+const MUTED = "#A59C90";
+const LINE = "#2F2D2B";
+const NOTE = "#2A2623";
+const DARK = "#0E0D0C";
 const BODY_FONT = "-apple-system,BlinkMacSystemFont,'Segoe UI',Helvetica,Arial,sans-serif";
 
 // venue_display_face values and their Google font families, as the app loads them
@@ -53,14 +54,14 @@ export function accentOf(color: string | null): string {
   return color && /^#[0-9a-f]{6}$/i.test(color) ? color : DEFAULT_ACCENT;
 }
 
-/** Ink or cream, whichever reads on the accent (WCAG relative luminance). */
+/** Dark or cream text, whichever reads on the accent (WCAG relative luminance). */
 export function textOn(accent: string): string {
   const [r, g, b] = [1, 3, 5].map((i) => {
     const c = parseInt(accent.slice(i, i + 2), 16) / 255;
     return c <= 0.03928 ? c / 12.92 : ((c + 0.055) / 1.055) ** 2.4;
   });
   const l = 0.2126 * r + 0.7152 * g + 0.0722 * b;
-  return (l + 0.05) / 0.05 > 1.05 / (l + 0.05) ? INK : CREAM;
+  return (l + 0.05) / 0.05 > 1.05 / (l + 0.05) ? DARK : INK;
 }
 
 /** "Little Rye via Cocktail <invites@babyvom.it>": the bar's name, safe for a header. */
@@ -107,12 +108,13 @@ export function barEmail(bar: BarLook, subject: string, body: BarEmailBody): Ema
     : `<div style="width:46px;height:46px;border:1px solid ${accent};border-radius:999px;text-align:center;line-height:46px;font-family:${display};font-style:italic;font-size:20px;color:${accent};">${escapeHtml(initials(bar.name))}</div>`;
   const p = (text: string, style: string) => `<p style="margin:0 0 16px;font-family:${BODY_FONT};font-size:16px;line-height:24px;${style}">${text}</p>`;
   const rows = [
-    `<tr><td style="padding-bottom:20px;"><table role="presentation" cellpadding="0" cellspacing="0"><tr><td style="padding-right:12px;">${mark}</td><td style="font-family:${BODY_FONT};font-size:14px;color:${MUTED};">${name}</td></tr></table></td></tr>`,
+    `<tr><td style="padding-bottom:20px;">${mark}</td></tr>`,
+    `<tr><td style="padding-bottom:8px;font-family:${BODY_FONT};font-size:13px;line-height:18px;font-weight:600;letter-spacing:1px;text-transform:uppercase;color:${accent};">${name}</td></tr>`,
     `<tr><td style="padding-bottom:8px;font-family:${display};font-size:32px;line-height:38px;color:${INK};">${html(body.title)}</td></tr>`,
     `<tr><td>${p(html(body.lead), `color:${MUTED};`)}</td></tr>`,
   ];
   if (body.message?.text.trim()) {
-    rows.push(`<tr><td>${p(html(body.message.text.trim()), `color:${INK};`)}${body.message.signedBy ? p(html(body.message.signedBy), `color:${MUTED};`) : ""}</td></tr>`);
+    rows.push(`<tr><td>${p(html(body.message.text.trim()), `color:${INK};`)}${body.message.signedBy ? `<p style="margin:0 0 20px;font-family:${display};font-style:italic;font-size:18px;line-height:24px;color:${MUTED};">${html(body.message.signedBy)}</p>` : ""}</td></tr>`);
   }
   if (body.note?.text.trim()) {
     rows.push(
@@ -135,17 +137,21 @@ export function barEmail(bar: BarLook, subject: string, body: BarEmailBody): Ema
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<meta name="color-scheme" content="light">
-<meta name="supported-color-schemes" content="light">
+<meta name="color-scheme" content="dark">
+<meta name="supported-color-schemes" content="dark">
 <title>${escapeHtml(subject)}</title>
 <link href="${fontHref}" rel="stylesheet">
 </head>
-<body style="margin:0;padding:0;background-color:${PAPER};">
+<body style="margin:0;padding:0;background-color:${PAGE};">
 <div style="display:none;max-height:0;overflow:hidden;mso-hide:all;">${escapeHtml(body.preheader)}</div>
-<table role="presentation" width="100%" cellpadding="0" cellspacing="0" bgcolor="${PAPER}" style="background-color:${PAPER};">
-<tr><td align="center" style="padding:40px 16px;">
+<table role="presentation" width="100%" cellpadding="0" cellspacing="0" bgcolor="${PAGE}" style="background-color:${PAGE};">
+<tr><td align="center" style="padding:32px 12px;">
 <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="max-width:520px;">
+<tr><td bgcolor="${CARD}" style="background-color:${CARD};border-radius:22px;padding:32px 28px;">
+<table role="presentation" width="100%" cellpadding="0" cellspacing="0">
 ${rows.join("\n")}
+</table>
+</td></tr>
 </table>
 </td></tr>
 </table>

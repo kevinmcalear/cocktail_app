@@ -33,5 +33,5 @@ assert.equal(barSender('Little Rye', 'invites@babyvom.it'), '"Little Rye via Coc
 assert.equal(barSender('Bad "Bar" <x>\r\nBcc: y', 'invites@babyvom.it'), '"Bad Bar x Bcc: y via Cocktail" <invites@babyvom.it>');
 assert.equal(initials('The Little Rye'), 'TL');
 assert.equal(accentOf(null), '#E4B062');
-assert.equal(textOn('#FFFFFF'), '#1C1A17');
-assert.equal(textOn('#1A1A1A'), '#FFFBF5');
+assert.equal(textOn('#FFFFFF'), '#0E0D0C');
+assert.equal(textOn('#1A1A1A'), '#F3EEE6');
