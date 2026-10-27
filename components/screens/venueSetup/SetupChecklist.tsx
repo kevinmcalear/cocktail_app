@@ -4,21 +4,25 @@ import { StyleSheet, View } from 'react-native';
 
 import { Caption } from '@/components/ds';
 import { FirstCocktailChoices, useStartFirstCocktail } from '@/components/screens/firstRound/FirstCocktailChoices';
-import { SetupChromeProvider, SetupPage, useSetupChrome } from '@/components/screens/onboarding/SetupPage';
+import { SetupChromeProvider, SetupFooter, SetupPage, useSetupChrome } from '@/components/screens/onboarding/SetupPage';
+import { BrandSetup } from '@/components/screens/venue/BrandScreen';
 import { space } from '@/constants/tokens';
 import { useBarPageId, useFlushHeldGlasses } from '@/hooks/useBarGlassware';
 import { useCapabilities } from '@/hooks/useCapabilities';
 import { useKitFromDrinks } from '@/hooks/useKitFromDrinks';
 import { useSetupChecklist } from '@/hooks/useSetupChecklist';
-import { checklistIntro, type ChecklistKey } from '@/lib/setupChecklist';
+import { useVenueBrand } from '@/hooks/useVenueBrand';
+import { checklistIntro, lookSet, type ChecklistKey } from '@/lib/setupChecklist';
 import { useAppMode } from '@/store/useAppMode';
 import { useBringIn } from '@/store/useBringIn';
+import { useVenueSetup } from '@/store/useVenueSetup';
 
 import { BrandsStep } from './BrandsStep';
 import { FromDrinksStep, fromDrinksCount } from './FromDrinksStep';
 import { KitStep } from './KitStep';
 import { MenuStep } from './MenuStep';
-import { ChecklistRow, ClaimNote, FromDrinksRow } from './SetupChecklistParts';
+import { ChecklistRow, ClaimNote, FromDrinksRow, LookFirstNote } from './SetupChecklistParts';
+import { setupCopy } from './setupCopy';
 import { TeamStep } from './TeamStep';
 
 /**
@@ -26,13 +30,17 @@ import { TeamStep } from './TeamStep';
  * replaces What next. Basic information, Kit, Bottles, First menu, First drinks and
  * Your team; each row opens its screen, here in place (Kit, Bottles, First
  * menu, the team) or as a page (Basic information, a menu's drinks), and comes back
- * here with a tick. The end of venue setup, the top of Library on a phone,
+ * here with a tick. Your team waits for How it looks, so the invite email
+ * wears the bar's logo, colour and font (invite-team-last, call 2): until
+ * the look is set it opens How it looks first, then goes on to the team.
+ * The end of venue setup, the top of Library on a phone,
  * the first row of the sidebar on a desktop, and Venue settings' Setup.
  */
 export function SetupChecklist({ barId, name, footer }: { barId: string; name: string; footer?: ReactNode }) {
   const chrome = useSetupChrome();
   const router = useRouter();
   const enterVenue = useAppMode((s) => s.enterVenue);
+  const markDone = useVenueSetup((s) => s.markDone);
   const pageId = useBarPageId(barId).data ?? null;
   // Glasses picked before the page was checked go onto it once it is.
   useFlushHeldGlasses(barId);
@@ -41,7 +49,10 @@ export function SetupChecklist({ barId, name, footer }: { barId: string; name: s
   const prep = (useCapabilities(barId).data ?? []).includes('prep');
   const fromDrinks = fromDrinksCount(useKitFromDrinks(prep ? barId : null), pageId);
   const startCocktail = useStartFirstCocktail();
-  const [at, setAt] = useState<ChecklistKey | 'fromDrinks' | null>(null);
+  const brand = useVenueBrand(barId).data;
+  // Until the brand loads, the row reads as it always did.
+  const looks = !brand || lookSet(brand, run);
+  const [at, setAt] = useState<ChecklistKey | 'look' | 'fromDrinks' | null>(null);
   const back = () => setAt(null);
   const step = (key: ChecklistKey) => `Set up ${name} · ${list.rows.find((r) => r.key === key)?.title ?? ''}`;
   const open = (page: string) => {
@@ -55,6 +66,19 @@ export function SetupChecklist({ barId, name, footer }: { barId: string; name: s
   if (at === 'fromDrinks') return <FromDrinksStep barId={barId} pageId={pageId} name={name} onBack={back} />;
   if (at === 'menu') {
     return <MenuStep barId={barId} step={step('menu')} onBack={back} onDone={back} onSkip={() => (skip('menu'), back())} onBringIn={() => open('/bring-in')} onMade={(id) => open(`/menus/${id}/edit`)} />;
+  }
+  // Done on How it looks counts as set even when they kept the app's look, so Your team stops asking.
+  // Only on this device's run: making one here would put the checklist back on a venue set up elsewhere.
+  const lookedAt = () => {
+    if (run) markDone(barId, 'look');
+    setAt('team');
+  };
+  if (at === 'look') {
+    return (
+      <SetupChromeProvider value={{ ...chrome, ...setupCopy('look', name), title: `How ${name} looks`, mark: <LookFirstNote />, onBack: back }}>
+        <BrandSetup barId={barId} setup={{ footer: ({ save, saving, ok }) => <SetupFooter label="Done, on to your team" pending={saving} disabled={!ok} onPress={() => save(lookedAt)} /> }} />
+      </SetupChromeProvider>
+    );
   }
   if (at === 'team') {
     return (
@@ -81,8 +105,11 @@ export function SetupChecklist({ barId, name, footer }: { barId: string; name: s
       } else if (menuId) open(`/menus/${menuId}/edit`);
       else setAt('menu');
     },
-    team: () => setAt('team'),
+    team: () => setAt(looks ? 'team' : 'look'),
   };
+  // While the look isn't set, the first row says so too (invite-team-last, step 2).
+  const barLine = looks ? undefined : 'Where, who sees it · How it looks not set';
+  const teamLine = looks ? `Invite who works here, in ${name}’s look` : `After how ${name} looks: the invite wears it`;
   return (
     <SetupChromeProvider value={{ ...chrome, title: `Set up ${name}`, intro: loading ? undefined : checklistIntro(list) }}>
       <SetupPage footer={footer}>
@@ -92,7 +119,7 @@ export function SetupChecklist({ barId, name, footer }: { barId: string; name: s
           <View role="list" accessibilityLabel={`Set up ${name}`}>
             {list.rows.map((r, i) => (
               <Fragment key={r.key}>
-                <ChecklistRow n={i + 1} title={r.title} line={r.line} note={notes[r.key]} state={r.state} onPress={press[r.key]} />
+                <ChecklistRow n={i + 1} title={r.title} line={r.key === 'team' && r.state !== 'done' ? teamLine : r.key === 'bar' ? (barLine ?? r.line) : r.line} note={notes[r.key]} state={r.state} action={r.key === 'team' ? 'Invite' : undefined} onPress={press[r.key]} />
                 {/* Until there are drinks, the first round's four starts, coming back here once saved. */}
                 {r.key === 'drinks' && r.state !== 'done' ? (
                   <View style={styles.starts}>

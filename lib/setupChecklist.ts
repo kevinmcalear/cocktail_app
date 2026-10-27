@@ -6,6 +6,8 @@
  * Checked by lib/setupChecklist.check.ts.
  */
 
+import { faceFromDb } from './brand';
+
 export const CHECKLIST_ROWS = [
   { key: 'bar', title: 'Basic information', line: 'Where, how it looks, who sees it' },
   // Kit is one row: glassware, ice and tools (call 8).
@@ -62,4 +64,14 @@ export function checklistIntro(list: Pick<Checklist, 'done' | 'total'>): string 
 /** Your bar is done once venue setup got past who sees what (the summary, or those three steps). */
 export function barSetUp(run: { done: readonly string[]; finished: boolean } | undefined): boolean {
   return !!run && (run.finished || ['place', 'look', 'visibility'].every((s) => run.done.includes(s)));
+}
+
+/**
+ * Whether the bar has a look for Your team's invite to wear (invite-team-last,
+ * call 2): How it looks finished in venue setup, or a logo, a colour or a
+ * font other than the app's. Every bar has a font (Instrument Serif unless
+ * picked), so the font alone only counts once it's changed.
+ */
+export function lookSet(brand: { logo_url: string | null; primary_color: string | null; display_face: string | null }, run?: { done: readonly string[] }): boolean {
+  return !!run?.done.includes('look') || !!brand.logo_url || !!brand.primary_color || faceFromDb(brand.display_face) !== 'instrument';
 }

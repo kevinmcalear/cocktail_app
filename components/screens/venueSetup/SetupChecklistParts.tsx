@@ -14,7 +14,7 @@ import type { RowState } from '@/lib/setupChecklist';
  * accent for the one that's next, with Continue), what it is, and a note of
  * what's there. Each step has its own Skip; a skipped row says so.
  */
-export function ChecklistRow({ n, title, line, note, state, onPress }: { n: number; title: string; line: string; note?: string; state: RowState; onPress: () => void }) {
+export function ChecklistRow({ n, title, line, note, state, action = 'Continue', onPress }: { n: number; title: string; line: string; note?: string; state: RowState; action?: string; onPress: () => void }) {
   const ds = useDs();
   const now = state === 'now';
   const sub = [line, state === 'skipped' ? 'Skipped for now' : note].filter(Boolean).join(' · ');
@@ -30,7 +30,7 @@ export function ChecklistRow({ n, title, line, note, state, onPress }: { n: numb
         </View>
         {now ? null : <IconSymbol name="chevron.right" size={16} color={ds.c.muted} />}
       </PressableScale>
-      {now ? <Button label="Continue" dense onPress={onPress} accessibilityLabel={`Continue: ${title.toLowerCase()}`} /> : null}
+      {now ? <Button label={action} dense onPress={onPress} accessibilityLabel={`${action}: ${title.toLowerCase()}`} /> : null}
     </View>
   );
 }
@@ -73,6 +73,16 @@ export function ClaimNote({ barId }: { barId: string }) {
   );
 }
 
+/** Over How it looks when Your team opens it first (invite-team-last, step 2): why the look comes before the invites. */
+export function LookFirstNote() {
+  const ds = useDs();
+  return (
+    <View style={[styles.lookFirst, { backgroundColor: withAlpha(ds.accentFill.fill, 0.14) }]}>
+      <Body>Your team’s invite wears this: the logo, colour and font go into every email.</Body>
+    </View>
+  );
+}
+
 const styles = StyleSheet.create({
   row: { flexDirection: 'row', alignItems: 'center', gap: space.xs, borderBottomWidth: StyleSheet.hairlineWidth },
   main: { flex: 1, flexDirection: 'row', alignItems: 'center', gap: space.md, minHeight: layout.minTapTarget + space.lg },
@@ -83,4 +93,5 @@ const styles = StyleSheet.create({
   claim: { gap: space.xs, padding: space.lg, borderRadius: radius.card, borderCurve: 'continuous' },
   claimHead: { flexDirection: 'row', alignItems: 'center', gap: space.sm },
   start: { alignSelf: 'flex-start', marginTop: space.xs },
+  lookFirst: { padding: space.md, borderRadius: radius.control, borderCurve: 'continuous' },
 });
