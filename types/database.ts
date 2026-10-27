@@ -2189,7 +2189,6 @@ export type Database = {
         Row: {
           bar_id: string
           clear: boolean | null
-          draw_as: string | null
           frozen_inside: string | null
           item_id: string
           length_mm: number | null
@@ -2204,7 +2203,6 @@ export type Database = {
         Insert: {
           bar_id: string
           clear?: boolean | null
-          draw_as?: string | null
           frozen_inside?: string | null
           item_id: string
           length_mm?: number | null
@@ -2219,7 +2217,6 @@ export type Database = {
         Update: {
           bar_id?: string
           clear?: boolean | null
-          draw_as?: string | null
           frozen_inside?: string | null
           item_id?: string
           length_mm?: number | null
@@ -2959,11 +2956,13 @@ export type Database = {
           family_id: string | null
           generic_id: string | null
           gi: string | null
+          glass: string | null
           glass_model_id: string | null
           glassware_id: string | null
           hide_from_search: boolean
           ice_build: Json | null
           ice_id: string | null
+          ice_kind: string | null
           ice_per_serve_g: number | null
           iced_capacity_ml: number | null
           icon_key: string | null
@@ -3026,11 +3025,13 @@ export type Database = {
           family_id?: string | null
           generic_id?: string | null
           gi?: string | null
+          glass?: string | null
           glass_model_id?: string | null
           glassware_id?: string | null
           hide_from_search?: boolean
           ice_build?: Json | null
           ice_id?: string | null
+          ice_kind?: string | null
           ice_per_serve_g?: number | null
           iced_capacity_ml?: number | null
           icon_key?: string | null
@@ -3093,11 +3094,13 @@ export type Database = {
           family_id?: string | null
           generic_id?: string | null
           gi?: string | null
+          glass?: string | null
           glass_model_id?: string | null
           glassware_id?: string | null
           hide_from_search?: boolean
           ice_build?: Json | null
           ice_id?: string | null
+          ice_kind?: string | null
           ice_per_serve_g?: number | null
           iced_capacity_ml?: number | null
           icon_key?: string | null
@@ -5768,11 +5771,13 @@ export type Database = {
             family_id: string | null
             generic_id: string | null
             gi: string | null
+            glass: string | null
             glass_model_id: string | null
             glassware_id: string | null
             hide_from_search: boolean
             ice_build: Json | null
             ice_id: string | null
+            ice_kind: string | null
             ice_per_serve_g: number | null
             iced_capacity_ml: number | null
             icon_key: string | null
@@ -6614,11 +6619,13 @@ export type Database = {
           family_id: string | null
           generic_id: string | null
           gi: string | null
+          glass: string | null
           glass_model_id: string | null
           glassware_id: string | null
           hide_from_search: boolean
           ice_build: Json | null
           ice_id: string | null
+          ice_kind: string | null
           ice_per_serve_g: number | null
           iced_capacity_ml: number | null
           icon_key: string | null

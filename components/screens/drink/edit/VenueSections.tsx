@@ -6,6 +6,7 @@ import { IconSymbol } from '@/components/ui/icon-symbol';
 import { radius, space } from '@/constants/tokens';
 import { useUserId } from '@/ctx/AuthContext';
 import { useDrinkAllergens } from '@/hooks/useAllergens';
+import type { GlassFillResult } from '@/hooks/useGlassFill';
 import { useCapabilities } from '@/hooks/useCapabilities';
 import { useSetDrinkPrice } from '@/hooks/useDrinkCost';
 import { useItemPublishing } from '@/hooks/usePublishing';
@@ -44,6 +45,8 @@ interface VenueSectionsProps {
   onSheet: (sheet: VenueSheet | null) => void;
   /** Phone: the service photos sit in Service. Wide keeps them under the hero. */
   servicePhotos?: ReactNode;
+  /** The draft spec against the venue's glass (useDraftGlassFill), for the Glass sheet: the same answer as the note under the spec. */
+  glassFill?: GlassFillResult | null;
 }
 
 /**
@@ -69,7 +72,7 @@ export function VenueSections(props: VenueSectionsProps) {
   return <Sections {...props} notes={notes ?? EMPTY_SERVICE_NOTES} />;
 }
 
-function Sections({ item, onPending, sheet: open, onSheet: setOpen, servicePhotos, notes }: VenueSectionsProps & { notes: ServiceNotes }) {
+function Sections({ item, onPending, sheet: open, onSheet: setOpen, servicePhotos, glassFill, notes }: VenueSectionsProps & { notes: ServiceNotes }) {
   const barId = item.bar_id;
   const saveNotes = useSaveServiceNotes(item.id, barId);
   const setPrice = useSetDrinkPrice(item.id);
@@ -160,7 +163,7 @@ function Sections({ item, onPending, sheet: open, onSheet: setOpen, servicePhoto
         </Sheet>
       ) : null}
       {open === 'glass' ? (
-        <GlassSheet visible onClose={() => setOpen(null)} itemId={item.id} name={item.name} glass={glass} iceName={ice?.name ?? null} serveMl={item.serve_ml ?? null} icePerServeG={item.ice_per_serve_g ?? null} editing />
+        <GlassSheet visible onClose={() => setOpen(null)} itemId={item.id} name={item.name} glass={glass} iceName={ice?.name ?? null} serveMl={item.serve_ml ?? null} icePerServeG={item.ice_per_serve_g ?? null} editing fill={glassFill} />
       ) : null}
     </>
   );

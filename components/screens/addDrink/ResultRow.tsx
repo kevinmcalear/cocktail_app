@@ -4,12 +4,23 @@ import { StyleSheet, View } from 'react-native';
 import { Body, Caption, IngredientThumb, PressableScale, useDs } from '@/components/ds';
 import { IconSymbol } from '@/components/ui/icon-symbol';
 import { layout, radius, space } from '@/constants/tokens';
-import { useIngredientUse } from '@/hooks/useIngredientUse';
+import { useActiveVenue } from '@/hooks/useActiveVenue';
 
-/** "On your shelf" (or back bar), else how many drinks use it; a close name adds "tap to use it" (canvas 2A). */
-export function UseCaption({ id, have, tap }: { id: string | null; have: string | null; tap: boolean }) {
-  const { data: n } = useIngredientUse(have ? null : id);
-  const text = [have ?? (n ? `In ${n} ${n === 1 ? 'drink' : 'drinks'}` : null), tap ? 'tap to use it' : null].filter(Boolean).join(' · ');
+type FoundRow = { id: string; bar_id?: string | null; ingredient_role?: string | null };
+
+/** Where a found ingredient is from: what you have, a venue's house-made, else the catalog (board q16-2). */
+export function whereFrom(r: FoundRow, have: string | null, venues: readonly { id: string; name: string | null }[]): string | null {
+  if (have) return have;
+  const bar = r.bar_id ? venues.find((v) => v.id === r.bar_id)?.name : null;
+  // A house-made one is the venue's, or your own at home; a venue's own bottle says nothing (the board draws no line for it).
+  if (r.ingredient_role === 'prep') return bar ? `House-made at ${bar}` : 'House-made';
+  return r.bar_id ? null : 'In the catalog';
+}
+
+/** Under a found ingredient: where it's from ("On your back bar", "House-made at Little Rye", "In the catalog"); a close name adds "tap to use it" (canvas 2A). */
+export function UseCaption({ row, have, tap }: { row: FoundRow | null; have: string | null; tap: boolean }) {
+  const { venues } = useActiveVenue();
+  const text = [row ? whereFrom(row, have, venues) : have, tap ? 'tap to use it' : null].filter(Boolean).join(' · ');
   return text ? <Caption tone="muted">{text.charAt(0).toUpperCase() + text.slice(1)}</Caption> : null;
 }
 

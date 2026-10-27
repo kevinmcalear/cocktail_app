@@ -12,7 +12,6 @@ jest.mock('@/components/ViewAsBanner', () => ({ ViewAsPill: () => null }));
 jest.mock('@/hooks/useSearchNear', () => ({ useSearchNear: (q: string) => ({ data: q.trim().toLowerCase() === 'chartruse' ? [{ id: 'gc', kind: 'ingredient' }] : [] }) }));
 jest.mock('@/hooks/usePairings', () => ({ usePairings: () => ({ data: [] }) }));
 jest.mock('@/hooks/useClosestClassic', () => ({ useClosestClassic: () => ({ data: null }), useCloseClassics: () => ({ data: [] }) }));
-jest.mock('@/hooks/useIngredientUse', () => ({ useIngredientUse: (id: string | null) => ({ data: id === 'campari' ? 14 : 0 }) }));
 jest.mock('@/hooks/useDiscover', () => ({ useDrinkLists: () => ({ data: [] }) }));
 jest.mock('@/hooks/useStartFromClassic', () => ({ useStartFromClassic: () => ({ mutate: jest.fn(), isPending: false }) }));
 jest.mock('@/hooks/useActiveVenue', () => ({ useActiveVenue: () => ({ venues: [] }) }));
@@ -28,7 +27,8 @@ describe('IngredientSearch, Did you mean', () => {
     await renderWithTamagui(<IngredientsStep draft={EMPTY_DRAFT} set={set} ingredients={[CAMPARI, GREEN]} />);
     await fireEvent.changeText(screen.getByLabelText('Add an ingredient'), 'chartruse');
     expect(screen.getByText('Did you mean')).toBeTruthy();
-    expect(screen.getByText('Tap to use it')).toBeTruthy();
+    // Where it's from, then how to take it (board q16-2, canvas 2A).
+    expect(screen.getByText('In the catalog · tap to use it')).toBeTruthy();
     expect(screen.queryByText('No bottle by that name.')).toBeNull();
     const rows = screen.getAllByRole('button').map((b) => b.props.accessibilityLabel ?? b.props['aria-label']);
     expect(rows.indexOf('Green Chartreuse')).toBeLessThan(rows.indexOf('Make “Chartruse” in-house'));

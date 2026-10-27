@@ -66,7 +66,7 @@ export interface IngredientSearchProps {
   /** A new name is added as it's typed, over making it in house: a garnish ("Lime leaf") is picked or bought, not made. A name that sounds made still leads with Make (makeFirst). */
   nameFirst?: boolean;
   ownVersion?: boolean;
-  /** Under each found ingredient: "On your shelf" (these ids), else "In 14 drinks". Off by default (it asks the server). */
+  /** Under each found ingredient, where it's from: "On your shelf" (these ids) or back bar, "House-made at Little Rye", else "In the catalog" (board q16-2). */
   captions?: boolean;
   shelf?: ReadonlySet<string>;
   /** At a venue: what's on its back bar (hooks/useBackBar useBackBarIds). Its bottles lead "Pick a brand" and say so. */
@@ -181,7 +181,7 @@ export function IngredientSearch(props: IngredientSearchProps) {
       key={r.id}
       id={r.id}
       label={text ?? r.name ?? ''}
-      caption={captions || tap ? <UseCaption id={captions ? r.id : null} have={have?.has(r.id) ? (backBar ? 'On your back bar' : 'On your shelf') : null} tap={tap} /> : null}
+      caption={captions || tap ? <UseCaption row={captions ? r : null} have={have?.has(r.id) ? (backBar ? 'On your back bar' : 'On your shelf') : null} tap={tap} /> : null}
       onPress={() => pick({ id: r.id, name: r.name ?? query })}
     />
   );

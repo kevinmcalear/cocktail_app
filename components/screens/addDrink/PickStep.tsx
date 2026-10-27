@@ -31,13 +31,15 @@ interface PickStepProps {
   mine?: { has: (p: WizardPick) => boolean; label: string; restLabel: string };
   /** One row on the desktop page: four chips, then More shows the rest and the field for your own. */
   compact?: boolean;
+  /** What a chip says, when it says more than the pick's name ("No ice (served up)"). */
+  chipLabel?: (p: WizardPick) => string;
 }
 
 /**
  * Big chips for a step's common choices (existing rows first, so nothing is
  * duplicated) and a field for your own, made when the drink is saved.
  */
-export function PickStep({ label, options, selected, multi, onChange, ownLabel, suggested, why, children, mine, compact }: PickStepProps) {
+export function PickStep({ label, options, selected, multi, onChange, ownLabel, suggested, why, children, mine, compact, chipLabel }: PickStepProps) {
   const [all, setAll] = useState(false);
   // Your own choices stay on the list once added.
   const extra = selected.filter((s) => !options.some((o) => samePick(o, s)));
@@ -61,7 +63,7 @@ export function PickStep({ label, options, selected, multi, onChange, ownLabel, 
     <WizardChip
       key={p.id ?? `new:${p.name}`}
       kind={multi ? 'checkbox' : 'radio'}
-      label={p.name}
+      label={chipLabel?.(p) ?? p.name}
       selected={order(p) >= 0}
       suggested={!!guess && samePick(p, guess)}
       onPress={() => toggle(p)}
