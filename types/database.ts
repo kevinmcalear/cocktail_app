@@ -5763,7 +5763,6 @@ export type Database = {
             method_ice_id: string | null
             moderated_at: string | null
             name: string
-            notes: string | null
             origin: string | null
             origin_bar_profile_id: string | null
             origin_country: string | null
@@ -6611,7 +6610,6 @@ export type Database = {
           method_ice_id: string | null
           moderated_at: string | null
           name: string
-          notes: string | null
           origin: string | null
           origin_bar_profile_id: string | null
           origin_country: string | null
