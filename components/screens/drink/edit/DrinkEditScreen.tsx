@@ -24,6 +24,7 @@ import { ShotList } from '../ShotList';
 import { AccessSheet, EditBottomBar, EditMoreMenu, GrowingField, PhotosSheet, type DrinkEditor, type MoreChoice } from './EditParts';
 import { EditLines } from './EditLines';
 import { EditToolbar } from './EditToolbar';
+import { FitGlassEdit } from './FitGlassEdit';
 import { MadeList } from './MadeList';
 import { useEditHistory } from './useEditHistory';
 import { VenueSections, type PendingEdits, type VenueSheet } from './VenueSections';
@@ -38,10 +39,10 @@ const PHONE_HERO = 300;
  * how it's made in small sheets; photos, story and team notes. Replaces the
  * old editor form (decided 15 Oct 2026). Drafts open the same page (DraftEditScreen).
  */
-export function DrinkEditScreen({ id, onExit }: { id: string; onExit: () => void }) {
+export function DrinkEditScreen({ id, onExit, openFit }: { id: string; onExit: () => void; openFit?: boolean }) {
   return (
     <EditBrand barId={useCocktail(id).data?.bar_id}>
-      <SavedDrinkEdit id={id} onExit={onExit} />
+      <SavedDrinkEdit id={id} onExit={onExit} openFit={openFit} />
     </EditBrand>
   );
 }
@@ -59,12 +60,12 @@ export function EditBrand({ barId, children }: { barId: string | null | undefine
   );
 }
 
-function SavedDrinkEdit({ id, onExit }: { id: string; onExit: () => void }) {
-  return <EditPage editor={useCocktailEditor(id)} id={id} onExit={onExit} />;
+function SavedDrinkEdit({ id, onExit, openFit }: { id: string; onExit: () => void; openFit?: boolean }) {
+  return <EditPage editor={useCocktailEditor(id)} id={id} onExit={onExit} openFit={openFit} />;
 }
 
-/** The page for a saved drink (`id`) or a draft (`id` null): a draft's Done keeps it a draft, and More publishes it. */
-export function EditPage({ editor, id, onExit }: { editor: DrinkEditor; id: string | null; onExit: () => void }) {
+/** The page for a saved drink (`id`) or a draft (`id` null): a draft's Done keeps it a draft, and More publishes it. `openFit` opens on Fit it to the glass. */
+export function EditPage({ editor, id, onExit, openFit }: { editor: DrinkEditor; id: string | null; onExit: () => void; openFit?: boolean }) {
   const ds = useDs();
   const router = useRouter();
   const insets = useSafeAreaInsets();
@@ -85,7 +86,7 @@ export function EditPage({ editor, id, onExit }: { editor: DrinkEditor; id: stri
   // The bottom bar's Line puts the cursor in the search under the lines.
   const [focus, setFocus] = useState(0);
 
-  const [sheet, setSheet] = useState<MoreChoice | VenueSheet | 'calc' | 'more' | 'colour' | null>(null);
+  const [sheet, setSheet] = useState<MoreChoice | VenueSheet | 'calc' | 'more' | 'colour' | 'fit' | null>(openFit ? 'fit' : null);
   // For the floor, Service and Price: saved with Done, next to the editor's own changes.
   const venueEdits = useRef<PendingEdits | null>(null);
   const [venueDirty, setVenueDirty] = useState(false);
@@ -166,6 +167,7 @@ export function EditPage({ editor, id, onExit }: { editor: DrinkEditor; id: stri
         backBar={editor.barId ? backBar : undefined}
         focus={focus}
       />
+      {cocktail ? <FitGlassEdit editor={editor} item={cocktail} open={sheet === 'fit'} onOpen={() => setSheet('fit')} onClose={() => setSheet(null)} /> : null}
       <MadeList editor={editor} itemId={id} />
       <View style={styles.section}>
         <Headline role="heading">Story</Headline>

@@ -4,9 +4,11 @@
  * quick choices each step offers. The screens are in
  * components/screens/addDrink; saving is hooks/useCreateDrink.ts.
  */
+import type { DraftPart } from '@/lib/drinkParts';
 import { iceBuildLine, iceKind, saysMore, type IceLayer } from '@/lib/iceBuild';
 import type { ImageAngle } from '@/lib/itemImages';
 import type { LineBatch } from '@/lib/batchLines';
+import type { NotesLevel } from '@/lib/notesReaders';
 import type { BottleKind } from '@/lib/newBottle';
 import type { PrepDraft } from '@/lib/prepKinds';
 import type { DraftLook } from '@/lib/sketch/draft';
@@ -96,8 +98,10 @@ export interface WizardDraft {
   id?: string;
   name: string;
   lines: WizardLine[];
-  /** In order: "Dry shake" then "Shake". */
+  /** In order: "Dry shake" then "Shake". Made in parts, every part's, each once (lib/drinkParts.ts partsMethods). */
   methods: WizardPick[];
+  /** Made in parts (Q20b): each part's name, lines, methods and how it joins. Unset is one part. */
+  parts?: DraftPart[] | null;
   glass: WizardPick | null;
   /** How the glass is drawn ('martini_pony', lib/sketch/geometry.ts); null is the bar's glass or the default. Saved as items.sketch_variant. */
   glassVariant?: string | null;
@@ -143,6 +147,8 @@ export interface WizardDraft {
   notes: string;
   /** "Just me": the notes are yours alone (item_private_notes), not the drink's. Unset is with the drink at a venue, just you at home (notesArePrivate). */
   notesPrivate?: boolean;
+  /** At a venue, who reads the drink's notes: a role level and everyone above it (E29). Unset is everyone who sees the drink. */
+  notesLevel?: NotesLevel;
   /** null follows the venue (or is private, for a drink at home). */
   publish: PublishMode | null;
   /**
@@ -153,6 +159,8 @@ export interface WizardDraft {
    * if that bites.
    */
   photos?: Partial<Record<ImageAngle, string>>;
+  /** Keep it: with a hero photo the drawing stays on the drink's page, after the photos. Unset, the photo replaces it (E26, items.show_sketch). */
+  keepDrawing?: boolean;
   /** The drink's price at a venue, as typed (items.price: "19.50", "MP"), set on the desktop page beside the cost; blank leaves it for later. */
   price?: string;
 }

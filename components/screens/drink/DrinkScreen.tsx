@@ -52,6 +52,8 @@ export interface DrinkScreenProps {
   /** A catalog admin on someone else's drink: a visitor's page with one Fix as admin in More. */
   adminFix?: boolean;
   onEdit: () => void;
+  /** Fit it to the glass (QA Q38): opens the editor with the spec fitted to the glass's wash line. */
+  onFit?: () => void;
   /** Shown as a modal. An iOS page sheet starts below the status bar, but the insets still count it. */
   sheet?: boolean;
   /** Beside a list (the tablet Library): the narrow layout, a short hero, no Back. */
@@ -82,7 +84,7 @@ export function DrinkScreen(props: DrinkScreenProps) {
 
 export { DrinkLoading } from './DrinkLoading';
 
-function DrinkPage({ item, inStudyPile, onToggleStudyPile, canEdit, adminFix = false, onEdit, sheet, pane, openBatch, visitorLock, preview }: DrinkScreenProps) {
+function DrinkPage({ item, inStudyPile, onToggleStudyPile, canEdit, adminFix = false, onEdit, onFit, sheet, pane, openBatch, visitorLock, preview }: DrinkScreenProps) {
   const ds = useDs();
   const router = useRouter();
   const insets = useSafeAreaInsets();
@@ -129,7 +131,7 @@ function DrinkPage({ item, inStudyPile, onToggleStudyPile, canEdit, adminFix = f
   });
   const links = item.item_images as ItemImageLink[] | undefined;
   // No photo of its own: the newest one someone posted leads, credited under the name.
-  const shown = heroPictures(orderedPictures(links), useDrinkPhotos(preview ? null : item.id).data);
+  const shown = heroPictures(orderedPictures(links, item.show_sketch !== false), useDrinkPhotos(preview ? null : item.id).data);
   const heroPic = shown.pictures[0] ?? null;
   const pictures: ShownPicture[] = preview ? (preview.heroSource ? [{ url: preview.heroSource, isSketch: false, isOutdated: false }] : []) : shown.pictures;
   const heroHeight = pane ? PANE_HERO : wide ? height - top : phoneHeroHeight(width, height, top);
@@ -178,6 +180,7 @@ function DrinkPage({ item, inStudyPile, onToggleStudyPile, canEdit, adminFix = f
     actions,
     onRiff,
     riffNote,
+    onFit: canEdit ? (onFit ?? null) : null,
     venueName: teamRole !== null ? (venue?.name ?? null) : null,
   };
   const sections = useDrinkSections(bodyProps);

@@ -3,6 +3,7 @@ import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { uploadDrinkPhoto } from '@/components/drink/drinkImages';
 import { useUserId } from '@/ctx/AuthContext';
 import { dropdownKeys, refreshIngredients } from '@/hooks/useDropdowns';
+import { saveItemNotes } from '@/hooks/useItemNotes';
 import { savePrivateNote } from '@/hooks/usePrivateNote';
 import { recentEntry } from '@/hooks/useTrackRecent';
 import { useRefreshSpecs } from '@/hooks/useBulk';
@@ -11,6 +12,7 @@ import { saveDrinkSpec, type SpecLineInput } from '@/hooks/useVersions';
 import { track } from '@/lib/analytics';
 import { plainDbMessage } from '@/lib/dbError';
 import { orderedMethodIds } from '@/lib/drinkMethods';
+import { linePart, storedParts } from '@/lib/drinkParts';
 import { creatorProfileId, notesArePrivate, specLines, type WizardDraft } from '@/lib/drinkWizard';
 import { fetchEditableRecipes } from '@/lib/editableRecipes';
 import { saysMore, toStored, type IceLayer } from '@/lib/iceBuild';
@@ -98,6 +100,7 @@ export function useCreateDrink() {
       const { ensure, warnings, created, later, newIngredients } = saver;
 
       const lines: SpecLineInput[] = [];
+      const garnishes = new Set(draft.garnishes.map((g) => g.key));
       for (const { line, amount } of specLines(draft)) {
         lines.push({
           id: null,
@@ -106,10 +109,18 @@ export function useCreateDrink() {
           unit: line.unit || null,
           preparation_notes: line.note?.trim() || null,
           is_optional: !!line.optional,
+          ...(draft.parts?.length ? { part: linePart(draft.parts, line.key, garnishes.has(line.key)) } : {}),
         });
       }
+      // Made in parts: each part's methods in turn, with its number (Build can be in two parts).
       const methodIds: string[] = [];
-      for (const m of draft.methods) methodIds.push(await ensure(m, 'method'));
+      const methodParts: number[] = [];
+      const byPart = draft.parts?.length ? draft.parts.flatMap((p, i) => p.methods.map((m) => ({ m, part: i + 1 }))) : draft.methods.map((m) => ({ m, part: 1 }));
+      for (const { m, part } of byPart) {
+        methodIds.push(await ensure(m, 'method'));
+        methodParts.push(part);
+      }
+      const parts = draft.parts?.length ? { methodParts, parts: storedParts(draft.parts) } : undefined;
       if (updateId) {
         // Its ranks, photos and menus stay; the spec it had is the version before, so it can be put back.
         const [had, hadMethods] = await Promise.all([fetchEditableRecipes(updateId), supabase.from('item_methods').select('method_item_id, sort_order').eq('item_id', updateId)]);
@@ -152,14 +163,14 @@ export function useCreateDrink() {
         item_type: 'cocktail',
         bar_id: barId,
         description: draft.description.trim() || null,
-        // "Just me" notes are kept apart, as yours (below).
-        notes: privateNotes ? null : draft.notes.trim() || null,
         glassware_id: glassId,
         sketch_variant: draft.glassVariant ?? null,
         // One of the venue's real glasses, when one was picked; the database sets glassware_id to its kind.
         ...(draft.glassModelId ? { glass_model_id: draft.glassModelId } : {}),
         // The colour picked as it was made; the database copies it into the drawing (20261017100000_sketch_liquid).
         sketch_liquid: draft.tint ?? null,
+        // A hero photo replaces the drawing unless Keep it was picked (20261123200000_show_sketch). Only when it does, so other saves never send the column.
+        ...(draft.photos?.hero && !draft.keepDrawing ? { show_sketch: false } : {}),
         ice_id: iceId,
         // Only when there is one: a database without 20261029100000 refuses an unknown column, so every other save keeps working whichever lands first.
         ...(methodIceId ? { method_ice_id: methodIceId } : {}),
@@ -184,7 +195,7 @@ export function useCreateDrink() {
 
       try {
         // Every method, in order, in the same transaction as the spec.
-        await saveDrinkSpec(id, lines, methodIds, null);
+        await saveDrinkSpec(id, lines, methodIds, null, parts);
       } catch (e) {
         await supabase.from('items').delete().eq('id', id);
         throw e;
@@ -214,12 +225,19 @@ export function useCreateDrink() {
         if (error) warnings.push(plainDbMessage(error) ?? 'The people who made it with you weren’t added. Add them on the drink’s page.');
       }
 
-      // "Just me": the notes are yours alone, never the drink's.
+      // "Just me": the notes are yours alone, never the drink's. Otherwise
+      // they're the drink's, for a role and up at a venue (E29).
       if (privateNotes && draft.notes.trim()) {
         try {
           await savePrivateNote(id, draft.notes);
         } catch {
           warnings.push(`Your note wasn’t saved: “${draft.notes.trim().slice(0, 80)}”. Add it again on the drink’s page.`);
+        }
+      } else if (draft.notes.trim()) {
+        try {
+          await saveItemNotes(id, draft.notes, barId ? (draft.notesLevel ?? null) : null);
+        } catch {
+          warnings.push(`The notes weren’t saved: “${draft.notes.trim().slice(0, 80)}”. Add them again on the drink’s page.`);
         }
       }
 

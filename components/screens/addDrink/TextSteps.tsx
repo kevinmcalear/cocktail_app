@@ -6,6 +6,7 @@ import { displayFaces, space, type } from '@/constants/tokens';
 import { notesArePrivate, type StepProps } from '@/lib/drinkWizard';
 import { capitalizeAsYouType } from '@/lib/stringUtils';
 
+import { VenueNotesReaders } from './NotesReaders';
 import { Eyebrow, WizardChip } from './WizardChrome';
 
 // The underline shows focus. Chrome draws `outline-style: auto` at any width, so it's switched off (as SearchField does).
@@ -54,12 +55,11 @@ export function BigName({ value, onChange, onDone, resumed, onStartOver, placeho
  * The menu line guests read, and notes: with the drink, for whoever can see
  * it (the next step says who), or just for you. At home one box, the notes,
  * just for you to start (Q27, board w2-wizard-finish); the menu line is on
- * the drink's page.
+ * the drink's page. At a venue the notes can also go to a role and everyone
+ * above it (E29).
  */
 export function NotesStep({ draft, set, barId = null }: StepProps & { barId?: string | null }) {
   const mine = notesArePrivate(draft, barId);
-  const justMe = <WizardChip key="me" label="Just me" selected={mine} onPress={() => set({ notesPrivate: true })} />;
-  const withDrink = <WizardChip key="drink" label="With the drink" selected={!mine} onPress={() => set({ notesPrivate: false })} />;
   return (
     <View style={styles.stack}>
       {barId ? (
@@ -80,15 +80,20 @@ export function NotesStep({ draft, set, barId = null }: StepProps & { barId?: st
         minLines={3}
         maxLength={2000}
       />
-      <View style={styles.section}>
-        <Eyebrow>{barId ? 'Who reads the notes?' : 'Who reads them?'}</Eyebrow>
-        <View role="radiogroup" accessibilityLabel="Who reads the notes" style={styles.chips}>
-          {barId ? [withDrink, justMe] : [justMe, withDrink]}
+      {barId ? (
+        <VenueNotesReaders barId={barId} draft={draft} set={set} />
+      ) : (
+        <View style={styles.section}>
+          <Eyebrow>Who reads them?</Eyebrow>
+          <View role="radiogroup" accessibilityLabel="Who reads the notes" style={styles.chips}>
+            <WizardChip label="Just me" selected={mine} onPress={() => set({ notesPrivate: true })} />
+            <WizardChip label="With the drink" selected={!mine} onPress={() => set({ notesPrivate: false })} />
+          </View>
+          <Caption tone="muted">
+            {mine ? 'Only you see them, on the drink’s page. Never shared or published.' : 'Shown on its page to whoever can see the drink. You choose who on the next step.'}
+          </Caption>
         </View>
-        <Caption tone="muted">
-          {mine ? 'Only you see them, on the drink’s page. Never shared or published.' : 'Shown on its page to whoever can see the drink. You choose who on the next step.'}
-        </Caption>
-      </View>
+      )}
     </View>
   );
 }

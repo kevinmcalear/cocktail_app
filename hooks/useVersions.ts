@@ -1,5 +1,6 @@
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 
+import type { StoredPart } from '@/lib/drinkParts';
 import type { Snapshot } from '@/lib/specDiff';
 import { jsonAs, supabase } from '@/lib/supabase';
 
@@ -71,11 +72,16 @@ export type SpecLineInput = {
   unit: string | null;
   preparation_notes: string | null;
   is_optional: boolean;
+  /** Made in parts: which part (1 is the first). Left out, a kept line keeps its part. */
+  part?: number;
 };
 
-/** The editor's save: lines and methods (in order) in one transaction, versioned. Returns the version number. */
-export async function saveDrinkSpec(itemId: string, lines: SpecLineInput[], methodIds: string[], note: string | null): Promise<number> {
-  const { data, error } = await supabase.rpc('save_drink_spec', { p_item: itemId, p_lines: lines, p_method_ids: methodIds, p_note: note });
+/**
+ * The editor's save: lines and methods (in order) in one transaction, versioned. Returns the version number.
+ * `parts` (a drink made in parts, 20261123100000) gives each method its part and the parts' names; left out, the drink keeps its parts.
+ */
+export async function saveDrinkSpec(itemId: string, lines: SpecLineInput[], methodIds: string[], note: string | null, parts?: { methodParts: number[]; parts: StoredPart[] }): Promise<number> {
+  const { data, error } = await supabase.rpc('save_drink_spec', { p_item: itemId, p_lines: lines, p_method_ids: methodIds, p_note: note, ...(parts ? { p_method_parts: parts.methodParts, p_parts: parts.parts } : {}) });
   if (error) throw error;
   return data as number;
 }
