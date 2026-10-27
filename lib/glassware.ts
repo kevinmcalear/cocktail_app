@@ -5,7 +5,7 @@ import { glassSizeLabel } from './glass';
 import { variantsOf } from './sketch/geometry';
 import { SKETCH_GLASSES, type SketchGlass } from '@/lib/sketch/types';
 
-import { glassFromName } from '../supabase/functions/_shared/sketchRules';
+import { GLASSES, glassFromName, iceFromName, ICES, itemGlass, type Kinded } from '../supabase/functions/_shared/sketchRules';
 
 export const GLASS_TYPE_LABEL: Record<SketchGlass, string> = {
   coupe: 'Coupe',
@@ -55,10 +55,28 @@ export function drawingKey(glass: SketchGlass, variant: string | null | undefine
 export const hasGlass = (rows: readonly OwnedGlass[], glass: SketchGlass, variant: string | null | undefined) =>
   rows.some((r) => r.glass === glass && drawingKey(glass, r.variant) === drawingKey(glass, variant));
 
-/** A glass picked by name ("Coupe", "Champagne saucer") is one of the venue's when it lists a glass of that type. */
-export function isVenueGlassName(rows: readonly OwnedGlass[], name: string | null | undefined): boolean {
-  const glass = glassFromName(name);
+/** A glass picked ("Coupe", "Champagne saucer", its kind before its name) is one of the venue's when it lists a glass of that type. */
+export function isVenueGlassName(rows: readonly OwnedGlass[], picked: Kinded): boolean {
+  const glass = itemGlass(picked);
   return !!glass && rows.some((r) => r.glass === glass);
+}
+
+/**
+ * A new glass or ice item's kind as it saves (items.glass, items.ice_kind):
+ * only a kind the database takes, nothing for Not sure (null) or another type.
+ * Set once, when the item is made: after that only an admin may change it.
+ */
+export function kindColumns(type: string, kind: string | null | undefined): { glass?: SketchGlass; ice_kind?: string } {
+  if (type === 'glassware' && (GLASSES as readonly string[]).includes(kind ?? '')) return { glass: kind as SketchGlass };
+  if (type === 'ice' && (ICES as readonly string[]).includes(kind ?? '')) return { ice_kind: kind! };
+  return {};
+}
+
+/** A new glass or ice, guessed from the name being typed ("Tiki bowl" is a tiki mug), for the question under the field. Never no ice: that's picked, not typed. */
+export function typedKind(of: 'glass' | 'ice', name: string): string | null {
+  if (of === 'glass') return glassFromName(name);
+  const ice = iceFromName(name);
+  return ice === 'none' ? null : ice;
 }
 
 /** Where "Not now" is kept on this device: one answer per venue, glass and drawing. */

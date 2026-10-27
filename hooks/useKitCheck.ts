@@ -9,18 +9,19 @@ import { useVenueIce } from '@/hooks/useVenueIce';
 import { kitCheck, type CheckDrink, type CheckKit, type KitCheck } from '@/lib/kitCheck';
 import { supabase } from '@/lib/supabase';
 
-// The kit check's data (lib/kitCheck.ts): a drink's glass, ice and methods by
-// name, and the venue's Kit with the recipes of the ice it makes. Recipes are
+// The kit check's data (lib/kitCheck.ts): a drink's glass and ice by name and
+// kind (items.glass, items.ice_kind), its methods by name, and the venue's Kit with the recipes of the ice it makes. Recipes are
 // read as house preps are, so without Prep at the venue an ice's own tools
 // aren't followed.
 
-const DRINK_COLUMNS = 'id, glass:glassware_id(name), ice:ice_id(name), method_ice:method_ice_id(name), ice_build, item_methods!item_methods_item_id_fkey(method:method_item_id(name))';
+const DRINK_COLUMNS = 'id, glass:glassware_id(name, glass), ice:ice_id(name, ice_kind), method_ice:method_ice_id(name, ice_kind), ice_build, item_methods!item_methods_item_id_fkey(method:method_item_id(name))';
 
+type Ice = { name: string; ice_kind: string | null };
 type DrinkRow = {
   id: string;
-  glass: { name: string } | null;
-  ice: { name: string } | null;
-  method_ice: { name: string } | null;
+  glass: { name: string; glass: string | null } | null;
+  ice: Ice | null;
+  method_ice: Ice | null;
   ice_build: { ice?: unknown }[] | null;
   item_methods: { method: { name: string } | null }[];
 };
@@ -30,25 +31,26 @@ export type CheckedDrink = CheckDrink & { id: string };
 /** A build's layers are ice item ids (lib/iceBuild.ts toStored). */
 const layerIds = (r: DrinkRow) => (Array.isArray(r.ice_build) ? r.ice_build : []).flatMap((l) => (typeof l.ice === 'string' ? [l.ice] : []));
 
-/** The drinks as the check reads them, their builds' ice by name (one read for every layer). */
+/** The drinks as the check reads them, their builds' ice by name and kind (one read for every layer). */
 async function drinksOf(rows: DrinkRow[]): Promise<CheckedDrink[]> {
   const ids = [...new Set(rows.flatMap(layerIds))];
-  const names = new Map<string, string>();
+  const names = new Map<string, Ice>();
   if (ids.length) {
-    const { data, error } = await supabase.from('items').select('id, name').in('id', ids);
+    const { data, error } = await supabase.from('items').select('id, name, ice_kind').in('id', ids);
     if (error) throw error;
-    for (const i of data ?? []) names.set(i.id, i.name);
+    for (const i of data ?? []) names.set(i.id, i);
   }
   return rows.map((r) => drinkOf(r, names));
 }
 
 /** A drink row as the check reads it: every ice layer (else its one ice) and what it's shaken or stirred with. */
-function drinkOf(r: DrinkRow, names: ReadonlyMap<string, string>): CheckedDrink {
+function drinkOf(r: DrinkRow, names: ReadonlyMap<string, Ice>): CheckedDrink {
   const layers = layerIds(r).flatMap((id) => (names.has(id) ? [names.get(id)!] : []));
   return {
     id: r.id,
     glass: r.glass?.name ?? null,
-    ice: [...(layers.length ? layers : r.ice ? [r.ice.name] : []), ...(r.method_ice ? [r.method_ice.name] : [])],
+    glassKind: r.glass?.glass ?? null,
+    ice: [...(layers.length ? layers : r.ice ? [r.ice] : []), ...(r.method_ice ? [r.method_ice] : [])],
     methods: r.item_methods.flatMap((m) => (m.method ? [m.method.name] : [])),
   };
 }

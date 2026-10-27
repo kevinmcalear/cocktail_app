@@ -5,7 +5,7 @@
 // Kit with nothing listed isn't checked, so an empty Kit doesn't mark every
 // drink as missing something.
 
-import { iceKind } from './iceBuild';
+import { iceKind, iceNameOf, type IceName } from './iceBuild';
 import { glassOf } from './kitFromDrinks';
 import { andList } from './makers';
 import type { SketchGlass } from './sketch/types';
@@ -31,8 +31,10 @@ export function methodTools(methods: readonly string[]): string[] {
 
 export interface CheckDrink {
   glass: string | null;
-  /** Every ice it needs: the build's layers and what it's shaken or stirred with. */
-  ice: readonly string[];
+  /** Its glass item's type, when it says (items.glass): read before the name. */
+  glassKind?: string | null;
+  /** Every ice it needs: the build's layers and what it's shaken or stirred with, each with its kind when the item says. */
+  ice: readonly IceName[];
   methods: readonly string[];
 }
 
@@ -98,14 +100,15 @@ function recipeMissing(id: string, kit: CheckKit): string[] {
 
 /** Can the venue make it: each part, and what it needs. */
 export function kitCheck(drink: CheckDrink, kit: CheckKit): KitCheck {
-  const shape = drink.glass ? glassOf(drink.glass) : null;
+  const shape = drink.glass ? glassOf(drink.glass, drink.glassKind) : null;
   const mine = shape ? kit.glasses.find((g) => g.glass === shape) : undefined;
   const glass = shape && kit.glasses.length ? { name: drink.glass!, glass: shape, ok: !!mine, yours: mine ? (mine.name ?? GLASS_TYPE_LABEL[mine.glass]) : null } : null;
 
   const kinds = venueIceKinds(kit.ice);
   const ice: IceCheck[] = [];
-  for (const name of drink.ice) {
-    const kind = iceKind(name);
+  for (const one of drink.ice) {
+    const name = iceNameOf(one);
+    const kind = iceKind(one);
     if (!kind || kind === 'none' || !kit.ice.length || ice.some((i) => i.kind === kind)) continue;
     const row = kit.ice.find((r) => inTheGlass(r) && iceDrawKind(r) === kind);
     const near = row ? null : houseIce(kind, kinds);

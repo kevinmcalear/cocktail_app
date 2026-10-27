@@ -3,7 +3,7 @@
 // ice by its drawing kind, tools from blended drinks and the venue's own ice
 // recipes' steps.
 
-import { iceKind } from './iceBuild';
+import { iceKind, iceNameOf, type IceName } from './iceBuild';
 import { draftSketchInputs } from './sketch/draft';
 import type { SketchGlass } from './sketch/types';
 import { equipmentById } from './techniques/equipment';
@@ -11,8 +11,10 @@ import { venueIceKinds, type IceKind } from './venueKit';
 
 export interface DrinkKit {
   glass: string | null;
-  /** Its ice layers and what it's shaken with (lib/kitCheck.ts CheckDrink). */
-  ice: readonly string[];
+  /** Its glass item's type, when it says (items.glass): read before the name. */
+  glassKind?: string | null;
+  /** Its ice layers and what it's shaken with, each with its kind when the item says (lib/kitCheck.ts CheckDrink). */
+  ice: readonly IceName[];
   methods: readonly string[];
 }
 
@@ -33,9 +35,9 @@ export interface FromDrinks {
   tools: { key: string; why: string }[];
 }
 
-/** The shape a glass name is drawn as; null for a name the drawings don't know ("Custom"). */
-export function glassOf(name: string): SketchGlass | null {
-  const inputs = draftSketchInputs({ name: '', lines: [], glass: name });
+/** The shape a glass is drawn as, its kind before its name; null for a name the drawings don't know ("Custom") and no kind. */
+export function glassOf(name: string, kind?: string | null): SketchGlass | null {
+  const inputs = draftSketchInputs({ name: '', lines: [], glass: name, glassKind: kind });
   return inputs.from.glass === 'data' ? inputs.glass : null;
 }
 const plural = (n: number, one: string, many = `${one}s`) => `${n} ${n === 1 ? one : many}`;
@@ -48,9 +50,11 @@ export function kitFromDrinks(drinks: readonly DrinkKit[], have: KitHave): FromD
     return [...by].sort((a, b) => b[1] - a[1]);
   };
 
+  // Each name's kind, from the drinks that name it.
+  const glassKinds = new Map(drinks.map((d) => [d.glass?.trim(), d.glassKind]));
   const glasses: FromDrinks['glasses'] = [];
   for (const [name, n] of count(drinks.map((d) => d.glass))) {
-    const glass = glassOf(name);
+    const glass = glassOf(name, glassKinds.get(name));
     if (!glass) continue;
     // One row a shape, its drinks added up: "Rocks" and "Small Rocks" are both the rocks glass to add.
     const same = glasses.find((g) => g.glass === glass);
@@ -64,9 +68,10 @@ export function kitFromDrinks(drinks: readonly DrinkKit[], have: KitHave): FromD
   }
 
   const kinds = new Set(venueIceKinds(have.ice));
+  const iceByName = new Map(drinks.flatMap((d) => d.ice.map((i) => [iceNameOf(i).trim(), i] as const)));
   const ice: FromDrinks['ice'] = [];
-  for (const [name, n] of count(drinks.flatMap((d) => [...new Set(d.ice)]))) {
-    const kind = iceKind(name);
+  for (const [name, n] of count(drinks.flatMap((d) => [...new Set(d.ice.map(iceNameOf))]))) {
+    const kind = iceKind(iceByName.get(name) ?? name);
     if (!kind || kind === 'none' || kinds.has(kind) || ice.some((i) => i.kind === kind)) continue;
     ice.push({ name, kind, drinks: n });
   }

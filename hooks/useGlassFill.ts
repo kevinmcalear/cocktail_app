@@ -6,7 +6,7 @@ import { useDropdowns } from '@/hooks/useDropdowns';
 import { classifyMethod } from '@/lib/batch';
 import { orderedMethodIds } from '@/lib/drinkMethods';
 import { fitToWashLine, glassFill, washLine, type Fill, type FillLine, type Fitted, type WashLine } from '@/lib/glassFill';
-import { readIceBuild } from '@/lib/iceBuild';
+import { iceKind, readIceBuild } from '@/lib/iceBuild';
 import { glassOf } from '@/lib/kitFromDrinks';
 import type { SpecLine } from '@/lib/spec';
 import type { DatabaseItem } from '@/types/types';
@@ -36,8 +36,6 @@ export interface GlassFillResult {
   fitted: Fitted | null;
 }
 
-const NO_ICE = /^(none|no ice)$/i;
-
 /**
  * How full the venue's glass is with this drink (Fit it to the glass, QA
  * Q38): the venue's main glass of the drink's glass type, its wash line, the
@@ -53,14 +51,15 @@ export function useGlassFill(drink: FillDrink | null): GlassFillResult | null {
   return useMemo(() => {
     // Wait for the venue's dilution too, or the house rule shows first and the note flickers.
     if (!drink || !glasses || !dropdowns || (barId && !defaults)) return null;
-    const name = dropdowns.glassware.find((g) => g.id === drink.glasswareId)?.name;
-    const shape = name ? glassOf(name) : null;
+    const row = dropdowns.glassware.find((g) => g.id === drink.glasswareId);
+    const name = row?.name;
+    const shape = name ? glassOf(name, row.glass) : null;
     const glass = shape ? (glasses.find((g) => g.glass === shape && !!drink.glassModelId && g.model_id === drink.glassModelId) ?? barGlassFor(glasses, shape)) : null;
     const line = glass ? washLine(glass) : null;
     if (!shape || !glass || !line) return null;
     const methods = drink.methodIds.map((id) => dropdowns.methods.find((m) => m.id === id)?.name).filter((n): n is string => !!n);
-    const ice = dropdowns.iceTypes.find((i) => i.id === drink.iceId)?.name;
-    const iced = (!!ice && !NO_ICE.test(ice.trim())) || !!readIceBuild(drink.iceBuild)?.length;
+    const ice = dropdowns.iceTypes.find((i) => i.id === drink.iceId);
+    const iced = (!!ice?.name?.trim() && iceKind(ice) !== 'none') || !!readIceBuild(drink.iceBuild)?.length;
     const options = { method: classifyMethod(methods), dilutionPct: drink.dilutionPct, defaults, washLineMl: line.ml, iceG: iced ? (drink.icePerServeG ?? null) : 0 };
     const fill = glassFill(drink.lines, options);
     if (typeof fill === 'string') return null;

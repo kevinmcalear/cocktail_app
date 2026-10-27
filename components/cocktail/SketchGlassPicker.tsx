@@ -5,14 +5,14 @@ import { space } from '@/constants/tokens';
 import { barGlassFor, useBarGlassware } from '@/hooks/useBarGlassware';
 import { useItemSketch } from '@/hooks/useItemSketch';
 import { variantsOf } from '@/lib/sketch/geometry';
-import { glassFromName } from '@/supabase/functions/_shared/sketch';
+import { itemGlass } from '@/supabase/functions/_shared/sketch';
 
 interface SketchGlassPickerProps {
   itemId: string;
   /** The drink's bar: its glass of this type is marked. */
   barId: string | null;
-  /** The glassware chosen in the editor, which may not be saved (or drawn) yet. */
-  glasswareName: string | null;
+  /** The glassware chosen in the editor, which may not be saved (or drawn) yet: its kind (items.glass), else its name. */
+  glassware: { name: string | null; glass?: string | null } | null;
   /** The drink's own pick; null follows its bar's glassware. */
   value: string | null;
   onChange: (variant: string | null) => void;
@@ -23,10 +23,10 @@ interface SketchGlassPickerProps {
  * uses when the drink has no photo. Shown once the drink has been drawn, for
  * glasses with more than one drawing.
  */
-export function SketchGlassPicker({ itemId, barId, glasswareName, value, onChange }: SketchGlassPickerProps) {
+export function SketchGlassPicker({ itemId, barId, glassware, value, onChange }: SketchGlassPickerProps) {
   const sketch = useItemSketch(itemId).data ?? null;
   const barGlasses = useBarGlassware(barId).data;
-  const glass = glassFromName(glasswareName) ?? sketch?.glass ?? null;
+  const glass = itemGlass(glassware) ?? sketch?.glass ?? null;
   if (!sketch || !glass || variantsOf(glass).length < 2) return null;
   // The drink's own pick for this glass, else what it's drawn in now (its bar's glass).
   const own = value?.startsWith(`${glass}_`) ? value : null;

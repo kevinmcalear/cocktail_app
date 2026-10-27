@@ -11,7 +11,7 @@ import { iceBuildLine, saysMore } from '@/lib/iceBuild';
 import type { DrinkEditor as Editor } from './EditParts';
 import { GlassPickSheet } from './GlassPickSheet';
 import { IceBuildSheet } from './IceBuildSheet';
-type Option = { id: string; name: string };
+type Option = { id: string; name: string; ice_kind?: string | null };
 
 const SHEET_PAD = { paddingHorizontal: space.xl, paddingBottom: space.xxl };
 const NO_OUTLINE = Platform.OS === 'web' ? ({ outlineStyle: 'none' } as object) : null;
@@ -39,7 +39,7 @@ const valueOf = (editor: Editor, category: Category, options: Option[]) => {
   const ice = iceEditor(editor);
   const nameOf = (id: string) => options.find((o) => o.id === id)?.name ?? '';
   if (category === 'methodIce') return ice?.methodIceId ? (iceLine(null, nameOf(ice.methodIceId), methodNames(editor)) ?? '') : '';
-  if (category === 'ice' && ice && saysMore(ice.iceBuild)) return iceBuildLine(ice.iceBuild.map((l) => ({ ...l, ice: nameOf(l.ice) })));
+  if (category === 'ice' && ice && saysMore(ice.iceBuild)) return iceBuildLine(ice.iceBuild.map((l) => ({ ...l, ice: options.find((o) => o.id === l.ice) ?? '' })));
   const ids = category === 'method' ? editor.methodIds : [editor.getSpecId(category)].filter(Boolean);
   return ids.map((id) => options.find((o) => o.id === id)?.name).filter(Boolean).join(', ');
 };
@@ -86,7 +86,7 @@ export function MadeList({ editor, itemId }: { editor: Editor; itemId: string | 
           options={ice.iceTypes as Option[]}
           layers={ice.iceBuild ?? (ice.iceId ? [{ ice: ice.iceId }] : [])}
           onChange={ice.setIceBuild}
-          addIce={(name) => ice.handleAddPill('ice', name)}
+          addIce={(name, kind) => ice.handleAddPill('ice', name, kind)}
           barId={ice.barId}
           madeWithId={ice.methodIceId}
           onClose={() => setOpen(null)}

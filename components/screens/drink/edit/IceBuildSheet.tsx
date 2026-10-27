@@ -12,15 +12,16 @@ import { samePick, type WizardPick } from '@/lib/drinkWizard';
 import { iceBuildLine, QUICK_BUILDS, QUICK_LABEL, quickBuild, saysMore, whichQuick, type IceLayer } from '@/lib/iceBuild';
 import { inTheGlass, kitIceRow, kitSourceLine } from '@/lib/venueKit';
 
-type Option = { id: string; name: string };
+/** An ice row, with its kind when it says (items.ice_kind): it passes as a pick. */
+type Option = { id: string; name: string; ice_kind?: string | null };
 
 interface IceBuildSheetProps {
   options: Option[];
   /** The layers by ice id, bottom first; one plain ice is one layer. */
   layers: IceLayer<string>[];
   onChange: (layers: IceLayer<string>[]) => void;
-  /** Makes a new ice by name (the editor's handleAddPill) and gives its id. */
-  addIce: (name: string) => Promise<string>;
+  /** Makes a new ice by name, with its kind when asked (the editor's handleAddPill), and gives its id. */
+  addIce: (name: string, kind?: string | null) => Promise<string>;
   barId: string | null;
   madeWithId: string | null;
   onClose: () => void;
@@ -47,16 +48,15 @@ export function IceBuildSheet({ options, layers, onChange, addIce, barId, madeWi
   const save = async (next: IceLayer<WizardPick>[]) => {
     try {
       const ids: string[] = [];
-      for (const l of next) ids.push(l.ice.id ?? (await addIce(l.ice.name)));
+      for (const l of next) ids.push(l.ice.id ?? (await addIce(l.ice.name, l.ice.kind)));
       setFailed(false);
       onChange(next.map((l, i) => ({ ...l, ice: ids[i] })));
     } catch {
       setFailed(true);
     }
   };
-  const named = picks.map((l) => ({ ...l, ice: l.ice.name }));
-  const quick = layers.length ? whichQuick(named) : null;
-  const top = named[named.length - 1];
+  const quick = layers.length ? whichQuick(picks) : null;
+  const top = picks[picks.length - 1];
   const sourceOf = (name: string) => {
     const r = kitIceRow(kitIce, name);
     return r ? kitSourceLine(r) || null : null;

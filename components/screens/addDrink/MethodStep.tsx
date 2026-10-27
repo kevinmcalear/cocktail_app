@@ -124,7 +124,7 @@ export function MethodIceLine({ methods, value, options, barIce = [], venueName,
   const [open, setOpen] = useState(false);
   const label = methodIceLabel(methods.map((m) => m.name));
   if (!label || !value) return null;
-  const kind = iceKind(value.name);
+  const kind = iceKind(value);
   const mine = barIce.length ? { has: (p: WizardPick) => isVenueIce(barIce, p.name), label: venueName ? `${venueName}’s ice` : 'Your ice', restLabel: 'Other ice' } : undefined;
   return (
     <View style={[styles.made, { backgroundColor: ds.c.surface }]}>

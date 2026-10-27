@@ -34,7 +34,7 @@ function useSpecLists() {
     meta: { persist: true },
     queryFn: async () => {
       // A request stops at 1,000 rows, so page (a new "Freezer pour" method once sorted past it).
-      const [specs, categoriesRes] = await Promise.all([
+      const [rows, categoriesRes, kindsRes] = await Promise.all([
         allRows((from, to) =>
           supabase
             .from('app_item_presentation')
@@ -45,7 +45,12 @@ function useSpecLists() {
             .range(from, to)
         ),
         supabase.from('categories').select('*').order('name'),
+        // A glass's or an ice's kind (items.glass, items.ice_kind): the view doesn't carry it, and without it the name is read.
+        // ponytail: one read more, a few dozen rows; add the two columns to app_item_presentation with the next migration and drop it.
+        supabase.from('items').select('id, glass, ice_kind').in('item_type', ['glassware', 'ice']).or('glass.not.is.null,ice_kind.not.is.null'),
       ]);
+      const kinds = new Map((kindsRes.data ?? []).map((k) => [k.id, k]));
+      const specs = rows.map((r) => ({ ...r, glass: kinds.get(r.id)?.glass ?? null, ice_kind: kinds.get(r.id)?.ice_kind ?? null }));
       return {
         methods: specs.filter((item) => item.item_type === 'method'),
         glassware: specs.filter((item) => item.item_type === 'glassware'),

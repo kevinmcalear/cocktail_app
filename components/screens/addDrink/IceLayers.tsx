@@ -71,8 +71,8 @@ export function IceLayers({ layers, onChange, onAdd, sourceOf }: IceLayersProps)
       {several ? <Caption tone="muted">Bottom to top.</Caption> : null}
       <View role="list" aria-label="In the glass, bottom to top" style={[styles.card, { backgroundColor: ds.c.surface }]}>
         {layers.map((l, i) => {
-          const kind = iceKind(l.ice.name);
-          const loose = isLoose(l.ice.name);
+          const kind = iceKind(l.ice);
+          const loose = isLoose(l.ice);
           const sub = l.tin ? 'The shaking ice, dumped in' : sourceOf?.(l.ice.name) ?? null;
           const name = l.tin ? `${l.ice.name}, from the tin` : l.ice.name;
           return (

@@ -13,6 +13,7 @@ import { readIceBuild, saysMore, type IceLayer } from "@/lib/iceBuild";
 import { isHeroLink } from "@/lib/itemImages";
 import { plainDbMessage } from "@/lib/dbError";
 import { findByName, orderedMethodIds, toggleId } from "@/lib/drinkMethods";
+import { kindColumns } from "@/lib/glassware";
 import { capitalize } from "@/lib/stringUtils";
 import { fetchEditableRecipes } from "@/lib/editableRecipes";
 import { mapPresentationRecipeToEditItem } from "@/lib/recipeUtils";
@@ -214,8 +215,8 @@ export function useCocktailEditor(id: string, { enabled = true }: { enabled?: bo
         }
     };
 
-    /** Finds or creates a shared method, glass, family or ice by name. The picker selects the id it returns. */
-    const handleAddPill = async (type: SpecCategory, newItemName: string): Promise<string> => {
+    /** Finds or creates a shared method, glass, family or ice by name, a new glass or ice with its kind. The picker selects the id it returns. */
+    const handleAddPill = async (type: SpecCategory, newItemName: string, kind?: string | null): Promise<string> => {
         if (!newItemName.trim()) throw new Error("Name is required");
         const lists = { method: "methods", glassware: "glassware", family: "families", ice: "iceTypes" } as const;
         let newId = findByName(dropdowns?.[lists[type]] ?? [], newItemName)?.id;
@@ -225,6 +226,7 @@ export function useCocktailEditor(id: string, { enabled = true }: { enabled?: bo
                 .insert({
                     name: capitalize(newItemName.trim()),
                     item_type: type,
+                    ...kindColumns(type, kind),
                 })
                 .select("id")
                 .single();

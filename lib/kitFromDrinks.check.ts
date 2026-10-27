@@ -1,6 +1,6 @@
 import assert from 'node:assert/strict';
 
-import { kitFromDrinks } from './kitFromDrinks';
+import { glassOf, kitFromDrinks } from './kitFromDrinks';
 
 const drinks = [
   { glass: 'Small Rocks', ice: ['Sphere'], methods: ['Stirred'] },
@@ -39,3 +39,11 @@ assert.deepEqual(out.tools, [
   { key: 'blender', why: '1 drink is blended' },
   { key: 'atomizer', why: 'Your Clear cube · 50 mm recipe uses it' },
 ]);
+
+// A stored kind beats the name: "Custom" kept as a tiki mug is a tiki mug to add; "Hosh" kept as a sphere is a sphere, not cubes.
+const kinded = kitFromDrinks([{ glass: 'Custom', glassKind: 'tiki', ice: [{ name: 'Hosh', kind: 'sphere' }], methods: [] }], { glasses: [], ice: [{ name: 'Cubes', shape: 'cubes', draw_as: null }], tools: [], iceSteps: [] });
+assert.deepEqual(kinded.glasses, [{ name: 'Custom', glass: 'tiki', drinks: 1, match: null }]);
+assert.deepEqual(kinded.ice, [{ name: 'Hosh', kind: 'sphere', drinks: 1 }]);
+assert.equal(glassOf('Custom'), null);
+assert.equal(glassOf('Custom', 'tiki'), 'tiki');
+assert.equal(glassOf('Coupe', null), 'coupe', 'not sure reads the name');

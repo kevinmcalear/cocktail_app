@@ -47,3 +47,9 @@ assert.deepEqual(kitCheck({ glass: 'Rocks', ice: ['Large cube'], methods: [] }, 
 const empty = kitCheck({ glass: 'Coupe', ice: ['Sphere'], methods: ['Shake'] }, { glasses: [], ice: [], tools: [], recipes: new Map() });
 assert.deepEqual([empty.glass, empty.ice, empty.tools, empty.ready], [null, [], null, true]);
 assert.equal(kitCheck({ glass: 'Custom', ice: [], methods: [] }, kit).glass, null);
+
+// A stored kind beats the name: "Custom" kept as a rocks glass is the venue's rocks; "Hosh" kept as a sphere needs a sphere.
+const kinded = kitCheck({ glass: 'Custom', glassKind: 'rocks', ice: [{ name: 'Hosh', kind: 'sphere' }], methods: [] }, kit);
+assert.deepEqual(kinded.glass, { name: 'Custom', glass: 'rocks', ok: true, yours: 'Rocks 300 ml' });
+assert.deepEqual(kinded.ice.map((i) => [i.name, i.kind, i.ok]), [['Hosh', 'sphere', false]]);
+assert.equal(kitCheck({ glass: 'Custom', ice: ['Hosh'], methods: [] }, kit).ice[0].kind, 'cubes', 'not sure reads the name');

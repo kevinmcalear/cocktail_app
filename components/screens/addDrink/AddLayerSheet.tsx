@@ -46,7 +46,7 @@ export function AddLayerSheet({ visible, ...choices }: AddLayerSheetProps) {
 export function LayerChoices({ onClose, onAdd, options, venue, below, onBuild, canDump }: Omit<AddLayerSheetProps, 'visible'>) {
   const ds = useDs();
   const own = venue?.ice ?? [];
-  const rest = options.filter((o) => !own.some((v) => samePick(v.pick, o)) && iceKind(o.name) !== 'none');
+  const rest = options.filter((o) => !own.some((v) => samePick(v.pick, o)) && iceKind(o) !== 'none');
   const [picked, setPicked] = useState<WizardPick | null>(null);
   const [more, setMore] = useState(!own.length);
   const [n, setN] = useState(1);
@@ -54,9 +54,10 @@ export function LayerChoices({ onClose, onAdd, options, venue, below, onBuild, c
   const [packed, setPacked] = useState(false);
   const pick = (p: WizardPick) => {
     setPicked(p);
-    setN(iceKind(p.name) === 'cubes' ? 3 : 1);
+    setN(iceKind(p) === 'cubes' ? 3 : 1);
   };
-  const loose = picked ? isLoose(picked.name) : false;
+  const loose = picked ? isLoose(picked) : false;
+  const known = (name: string) => [...options, ...own.map((v) => v.pick)].some((o) => samePick(o, { id: null, name }));
   const add = () => {
     if (!picked) return;
     onAdd(loose ? { ice: picked, to, ...(packed ? { packed } : {}) } : { ice: picked, n });
@@ -88,7 +89,7 @@ export function LayerChoices({ onClose, onAdd, options, venue, below, onBuild, c
           <Eyebrow>{`${venue?.name ?? 'Your'}’s ice`}</Eyebrow>
           <View role="radiogroup" aria-label={`${venue?.name ?? 'Your'}’s ice`} style={[styles.card, { backgroundColor: ds.c.surface }]}>
             {own.map(({ pick: p, source }, i) => {
-              const kind = iceKind(p.name);
+              const kind = iceKind(p);
               const on = samePick(p, picked);
               return (
                 <PressableScale
@@ -123,7 +124,11 @@ export function LayerChoices({ onClose, onAdd, options, venue, below, onBuild, c
               <WizardChip key={o.id ?? `new:${o.name}`} label={o.name} selected={samePick(o, picked)} onPress={() => pick(o)} />
             ))}
           </View>
-          <OwnField label="Other ice" onAdd={(name) => pick(rest.find((o) => samePick(o, { id: null, name })) ?? { id: null, name })} />
+          <OwnField
+            label="Other ice"
+            ask={{ of: 'ice', known }}
+            onAdd={(name, kind) => pick(rest.find((o) => samePick(o, { id: null, name })) ?? { id: null, name, ...(kind !== undefined ? { kind } : {}) })}
+          />
         </View>
       ) : (
         <PressableScale role="button" aria-expanded={false} accessibilityLabel="More ice" onPress={() => setMore(true)} style={[styles.more, { borderColor: ds.c.lineStrong }]}>

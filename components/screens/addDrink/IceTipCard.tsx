@@ -5,21 +5,26 @@ import { Body, Button, Headline, useDs } from '@/components/ds';
 import { SketchDrawing } from '@/components/ds/SketchDrawing';
 import { IconSymbol } from '@/components/ui/icon-symbol';
 import { radius, space } from '@/constants/tokens';
-import type { IceLayer, IceTip } from '@/lib/iceBuild';
+import { iceNameOf, type IceLayer, type IceName, type IceTip } from '@/lib/iceBuild';
 import { draftSketchInputs, type DraftLook } from '@/lib/sketch/draft';
 
-const asBuild = (layers: readonly IceLayer<string>[]) => ({ ice: layers[layers.length - 1]?.ice ?? null, build: layers.map((l) => ({ name: l.ice, n: l.n, to: l.to })) });
+// Each ice by name, with its kind when its item or pick says.
+const named = (ice: IceName) => (typeof ice === 'string' ? { name: ice } : { name: ice.name, kind: ice.kind ?? ice.ice_kind ?? null });
+const asBuild = (layers: readonly IceLayer<IceName>[]) => {
+  const top = layers[layers.length - 1]?.ice;
+  return { ice: top ? iceNameOf(top) : null, iceKind: top ? (named(top).kind ?? null) : null, build: layers.map((l) => ({ ...named(l.ice), n: l.n, to: l.to })) };
+};
 
 /**
  * A suggestion for how the ice sits (canvas "Ice builds", row 3): what it
  * says, the drink as it is beside the drink as suggested, and Use it or No
  * thanks. One at a time; the bartender can take it or leave it.
  */
-export function IceTipCard({ tip, now, look, seed, onUse, onNo }: { tip: IceTip; now: readonly IceLayer<string>[]; look: DraftLook; seed: string; onUse: () => void; onNo: () => void }) {
+export function IceTipCard({ tip, now, look, seed, onUse, onNo }: { tip: IceTip; now: readonly IceLayer<IceName>[]; look: DraftLook; seed: string; onUse: () => void; onNo: () => void }) {
   const ds = useDs();
   const key = JSON.stringify([look, now, tip.layers]);
   const [before, after] = useMemo(() => {
-    const [l, a, b] = JSON.parse(key) as [DraftLook, IceLayer<string>[], IceLayer<string>[]];
+    const [l, a, b] = JSON.parse(key) as [DraftLook, IceLayer<IceName>[], IceLayer<IceName>[]];
     return [draftSketchInputs({ ...l, ...asBuild(a) }), draftSketchInputs({ ...l, ...asBuild(b) })];
   }, [key]);
   return (

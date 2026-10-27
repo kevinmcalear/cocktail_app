@@ -4,7 +4,7 @@ import { useState } from 'react';
 import { useActiveVenue } from '@/hooks/useActiveVenue';
 import { useCapabilities } from '@/hooks/useCapabilities';
 import { useVenueIce } from '@/hooks/useVenueIce';
-import { iceKind } from '@/lib/iceBuild';
+import { iceKind, iceNameOf, type IceName } from '@/lib/iceBuild';
 import { venueIceKinds } from '@/lib/venueKit';
 import { useSettingsStore } from '@/store/useSettingsStore';
 
@@ -18,7 +18,7 @@ import { KitPrompt } from './KitPrompt';
  * like answered; Not now isn't asked again for that kind on this device.
  * Only for people with Prep.
  */
-export function IcePrompt({ barId, ice, drink }: { barId: string | null | undefined; ice: string | null | undefined; drink?: string | null }) {
+export function IcePrompt({ barId, ice, drink }: { barId: string | null | undefined; ice: IceName | null | undefined; drink?: string | null }) {
   const router = useRouter();
   const { data: caps = [] } = useCapabilities(barId);
   const { data: kit } = useVenueIce(barId);
@@ -29,12 +29,12 @@ export function IcePrompt({ barId, ice, drink }: { barId: string | null | undefi
   const [open, setOpen] = useState(false);
   const [added, setAdded] = useState<string | null>(null);
   const kind = iceKind(ice);
-  if (!barId || !ice?.trim() || !kit || !caps.includes('prep') || !kind || kind === 'none') return null;
+  const name = ice ? iceNameOf(ice).trim() : '';
+  if (!barId || !name || !kit || !caps.includes('prep') || !kind || kind === 'none') return null;
   const key = `ice:${barId}:${kind}`;
   // As What next › From your drinks counts it (lib/kitFromDrinks.ts): by how it's drawn.
   const has = venueIceKinds(kit).includes(kind);
   if (added !== key && (has || notNow.includes(key))) return null;
-  const name = ice.trim();
   return (
     <>
       <KitPrompt

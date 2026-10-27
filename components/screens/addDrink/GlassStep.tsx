@@ -9,7 +9,7 @@ import { sketchLook, type StepProps, type WizardPick } from '@/lib/drinkWizard';
 import { glassTitle, isVenueGlassName } from '@/lib/glassware';
 import { draftSketchInputs } from '@/lib/sketch/draft';
 import { variantsOf } from '@/lib/sketch/geometry';
-import { glassFromName } from '@/supabase/functions/_shared/sketch';
+import { itemGlass } from '@/supabase/functions/_shared/sketch';
 
 import { PickStep } from './PickStep';
 import { ShapeTiles } from './ShapeTiles';
@@ -56,8 +56,8 @@ export function GlassStep({ draft, set, options, barId, barGlasses, barVariants,
   const modelOf = (key: string) => own.find((g) => g.key === key)?.modelId ?? null;
   const shapes = own.length ? own : list;
   const shown = inputs.variant ?? list[0].key;
-  // Only a glass we can name is asked about: an unknown one is drawn as a guess.
-  const picked = glassFromName(draft.glass?.name) === inputs.glass ? inputs.glass : null;
+  // Only a glass we know the kind of is asked about: an unknown one is drawn as a guess.
+  const picked = itemGlass(draft.glass) === inputs.glass ? inputs.glass : null;
   const venueGlasses = barId && barGlasses?.length ? barGlasses : null;
   return (
     <PickStep
@@ -67,12 +67,13 @@ export function GlassStep({ draft, set, options, barId, barGlasses, barVariants,
       selected={draft.glass ? [draft.glass] : []}
       suggested={suggested}
       compact={compact}
+      kindOf="glass"
       // A shape belongs to its glass: one of the bar's own glasses by name is that glass; else the bar's main one (or the default).
       onChange={([glass]) => {
         const mine = barGlasses?.find((g) => g.name && g.name.trim().toLowerCase() === glass?.name.trim().toLowerCase());
         set({ glass: glass ?? null, glassVariant: mine?.variant ?? null, glassModelId: mine ? ownModel(mine) : null });
       }}
-      mine={venueGlasses ? { has: (p) => isVenueGlassName(venueGlasses, p.name), label: 'Your glasses', restLabel: 'Other glasses' } : undefined}
+      mine={venueGlasses ? { has: (p) => isVenueGlassName(venueGlasses, p), label: 'Your glasses', restLabel: 'Other glasses' } : undefined}
     >
       {draft.glass && (own.length || list.length > 1) ? (
         <View style={styles.shapes}>
