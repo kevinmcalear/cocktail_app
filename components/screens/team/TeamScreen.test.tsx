@@ -61,7 +61,7 @@ jest.mock('@/hooks/useBarInvites', () => ({
   }),
   useRemoveInvite: () => ({ mutate: mockMutate, isPending: false, error: null }),
   useSendInviteEmail: () => ({ mutate: mockSend, mutateAsync: mockSendAsync, isPending: false, error: null }),
-  useWelcomeMessage: () => ({ data: mockWelcome, isLoading: false, error: null }),
+  useWelcomeMessage: () => ({ data: mockWelcome, isLoading: false, isSuccess: true, error: null }),
   useSenderName: () => 'Ada Lovelace',
   useSaveWelcomeMessage: () => ({ mutate: mockSaveWelcome, mutateAsync: mockSaveWelcome, isPending: false, error: null }),
 }));

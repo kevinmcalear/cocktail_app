@@ -39,11 +39,14 @@ export function TeamScreen() {
   const { invite } = useLocalSearchParams<{ invite?: string }>();
   const brand = useVenueBrand(visible && manage ? active?.id : null);
   const run = useVenueSetup((s) => (active ? s.runs[active.id] : undefined));
-  // Only a loaded brand holds Invite back; if it fails to load, the gate steps aside.
-  const looks = !brand.data || lookSet(brand.data, run);
+  // Invite waits for the brand; if it fails to load, the gate steps aside.
+  const looks = brand.data ? lookSet(brand.data, run) : !!brand.error || !(visible && manage);
   const [asked, setInviting] = useState(invite === '1');
   const inviting = asked && looks;
-  const startInvite = () => (looks ? setInviting(true) : router.push(`/settings/bar/${active!.id}/brand` as Href));
+  const startInvite = () => {
+    if (looks) setInviting(true);
+    else if (brand.data) router.push(`/settings/bar/${active!.id}/brand` as Href);
+  };
 
   let body: ReactNode;
   if (home || !active) body = <Body tone="muted">My team is part of a venue. Switch to your bar to see it.</Body>;
@@ -61,7 +64,7 @@ export function TeamScreen() {
           onBack={() => (router.canGoBack() ? router.back() : router.navigate('/'))}
           action={visible && manage ? <Button label={wide ? 'Invite someone' : 'Invite'} accessibilityLabel="Invite someone" icon="person.badge.plus" onPress={startInvite} /> : null}
         />
-        {visible && manage && !looks ? <Caption tone="muted">{`Set how ${active?.name} looks first: the invite wears its logo, colour and font.`}</Caption> : null}
+        {visible && manage && brand.data && !looks ? <Caption tone="muted">{`Set how ${active?.name} looks first: the invite wears its logo, colour and font.`}</Caption> : null}
         {body}
       </ScrollView>
     </View>

@@ -7,10 +7,11 @@ import { TeamStep } from './TeamStep';
 const mockAdd = jest.fn();
 const mockSend = jest.fn();
 const mockSaveWelcome = jest.fn();
+let mockWelcomeQuery: { data: string | null | undefined; isLoading: boolean; isSuccess: boolean } = { data: null, isLoading: false, isSuccess: true };
 jest.mock('@/hooks/useBarDetail', () => ({ useSetMemberRole: () => ({ mutateAsync: mockAdd, isPending: false }) }));
 jest.mock('@/hooks/useBarInvites', () => ({
   useSendInviteEmail: () => ({ mutateAsync: mockSend, isPending: false }),
-  useWelcomeMessage: () => ({ data: null, isLoading: false }),
+  useWelcomeMessage: () => mockWelcomeQuery,
   useSenderName: () => 'Rob Hale',
   useSaveWelcomeMessage: () => ({ mutateAsync: mockSaveWelcome, isPending: false }),
 }));
@@ -21,6 +22,7 @@ beforeEach(() => {
   mockAdd.mockReset();
   mockSend.mockReset();
   mockSaveWelcome.mockReset();
+  mockWelcomeQuery = { data: null, isLoading: false, isSuccess: true };
   mockAdd.mockResolvedValue(true);
   mockSend.mockResolvedValue({ sent: true });
 });
@@ -59,4 +61,13 @@ test('a bad email stops the send and says why', async () => {
   expect(mockAdd).not.toHaveBeenCalled();
   await fireEvent.press(screen.getByRole('button', { name: 'Skip for now' }));
   expect(onDone).toHaveBeenCalledWith([]);
+});
+
+test('a welcome message that could not be read is never overwritten with the suggestion', async () => {
+  mockWelcomeQuery = { data: undefined, isLoading: false, isSuccess: false };
+  await renderWithTamagui(<TeamStep barId="v1" name="Little Rye" pending={false} onDone={jest.fn()} />);
+  await fireEvent.changeText(screen.getByLabelText('Email'), 'sam@example.com');
+  await fireEvent.press(screen.getByRole('button', { name: 'Send the invite' }));
+  expect(mockAdd).toHaveBeenCalled();
+  expect(mockSaveWelcome).not.toHaveBeenCalled();
 });

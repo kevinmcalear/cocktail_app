@@ -48,7 +48,8 @@ export function InviteSheet({ visible, onClose, barId, barName, ceiling, admin, 
   const saved = useWelcomeMessage(barId);
   const saveWelcome = useSaveWelcomeMessage(barId);
   const sender = useSenderName();
-  const welcome = saved.data ?? (admin ? welcomeSuggestion(barName) : '');
+  // Until it's read, nothing: the preview never promises a welcome the email won't carry.
+  const welcome = saved.isSuccess ? (saved.data ?? (admin ? welcomeSuggestion(barName) : '')) : '';
   const [name, setName] = useState('');
   const [email, setEmail] = useState('');
   const [note, setNote] = useState('');
@@ -87,7 +88,7 @@ export function InviteSheet({ visible, onClose, barId, barName, ceiling, admin, 
     setProblem(null);
     let invited: boolean;
     try {
-      if (saved.data === null && admin) await saveWelcome.mutateAsync(welcome);
+      if (saved.isSuccess && saved.data === null && admin) await saveWelcome.mutateAsync(welcome);
       invited = await add.mutateAsync({ email: to, roleLevel: role, name, note });
     } catch (e) {
       return setProblem(plainDbMessage(e) ?? 'Couldn’t save that. Check your connection and try again.');

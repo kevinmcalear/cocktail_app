@@ -58,7 +58,8 @@ export function TeamStep({ barId, name, pending, onDone }: { barId: string; name
     setBusy(true);
     setProblem(null);
     // The welcome goes on the venue first, so every email (and the next invite) carries it.
-    if (saved.data !== welcome.trim()) {
+    // Untouched and not loaded, it's left alone: never the suggestion over a message we couldn't read.
+    if ((edited !== null || saved.isSuccess) && saved.data !== welcome.trim()) {
       try {
         await saveWelcome.mutateAsync(welcome);
       } catch (e) {
