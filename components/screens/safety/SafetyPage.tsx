@@ -51,6 +51,8 @@ export interface SafetyPageProps {
   aside?: ReactNode;
   /** Top right, beside Back: Save, Preview, a count. */
   action?: ReactNode;
+  /** Wide web: how wide the column grows; the setup checklist's Next card needs 'wide'. */
+  frameWidth?: 'text' | 'wide';
 }
 
 /** The plain page the safety screens (and Not available) share: a title, a line of intro, a readable column. */
@@ -91,14 +93,14 @@ function SetupBack({ onPress, label }: { onPress: () => void; label?: string }) 
   );
 }
 
-function Page({ title, intro, kicker, eyebrow, eyebrowTone = 'muted', topLabel, mark, children, noBack, backTo = '/settings', action, onBack, progress, topRight, footer, aside }: SafetyPageProps) {
+function Page({ title, intro, kicker, eyebrow, eyebrowTone = 'muted', topLabel, mark, children, noBack, backTo = '/settings', action, onBack, progress, topRight, footer, aside, frameWidth = 'text' }: SafetyPageProps) {
   const ds = useDs();
   const router = useRouter();
   const insets = useSafeAreaInsets();
   const gutter = useGutter();
   // Wide web: the page sits left beside the sidebar, which is the way around, so no Back.
   // Signed out (Support, a link opened cold) there is no sidebar, so Back stays.
-  const frame = usePageFrame('text');
+  const frame = usePageFrame(frameWidth);
   const signedIn = !!useAuth().user;
   const sidebar = frame.wide && signedIn && !onBack;
   const [footerHeight, setFooterHeight] = useState(0);

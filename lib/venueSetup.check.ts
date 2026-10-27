@@ -6,15 +6,15 @@ import { inviteRowError, namesLine, nextScreen, normalizeWebsite, onItsWay, open
 // Intro, finding the bar, four steps, the checklist. No role step and no Bring in (owner-setup call 4); proving it's yours is the checklist's card (E32), and its screen comes back there.
 assert.equal(nextScreen('intro'), 'find');
 assert.equal(nextScreen('find'), 'place');
-assert.equal(nextScreen('team'), 'done');
+assert.equal(nextScreen('visibility'), 'done');
 assert.equal(nextScreen('claim'), 'done');
 assert.equal(previousScreen('find'), 'intro');
 assert.equal(previousScreen('place'), 'find');
-assert.equal(previousScreen('claim'), 'team');
-assert.equal(previousScreen('done'), 'team');
+assert.equal(previousScreen('claim'), 'visibility');
+assert.equal(previousScreen('done'), 'visibility');
 assert.equal(venueProgress('find'), null);
-assert.deepEqual(venueProgress('place'), { at: 1, of: 4, label: 'Step 1 of 4', name: 'Venue setup' });
-assert.deepEqual(venueProgress('team'), { at: 4, of: 4, label: 'Step 4 of 4', name: 'Venue setup' });
+assert.deepEqual(venueProgress('place'), { at: 1, of: 3, label: 'Step 1 of 3', name: 'Venue setup' });
+assert.deepEqual(venueProgress('visibility'), { at: 3, of: 3, label: 'Step 3 of 3', name: 'Venue setup' });
 assert.equal(venueProgress('claim'), null, 'the claim is not a step');
 assert.equal(venueProgress('intro'), null);
 assert.equal(venueProgress('done'), null);
@@ -22,6 +22,8 @@ assert.equal(venueProgress('done'), null);
 // Picking up: the first step not done; with all of them done, the checklist (never the claim). Old runs' 'role' and 'bring' don't count.
 assert.equal(resumeScreen([]), 'find');
 assert.equal(resumeScreen(['find', 'role']), 'place');
+assert.equal(resumeScreen(['find', 'place', 'look', 'visibility']), 'done');
+// Runs from before 26 Oct may have done the team step: it isn't one any more.
 assert.equal(resumeScreen(['find', 'place', 'look', 'visibility', 'team']), 'done');
 assert.equal(resumeScreen(['find', 'place', 'look', 'visibility', 'team', 'claim']), 'done');
 

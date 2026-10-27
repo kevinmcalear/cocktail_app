@@ -1,15 +1,17 @@
 /**
- * Venue setup (decision b03): an intro, finding the bar, four steps, then
+ * Venue setup (decision b03): an intro, finding the bar, three steps, then
  * "Set up <bar>", the checklist. Someone finds their bar's page (or adds a new
  * one) and sets the venue up; every step works without a claim. Proving it's
  * yours is the card under the checklist (Eddie E32, 26 Oct; it was the last
  * step from 22 Oct): its claim screen opens from there, from the Setup banner
  * or from Venue settings (&step=claim), and comes back. For an owner (owner-setup call 4) there's no role
  * step (they're the Admin, said in one line) and no Bring in (it moved to the
- * first menu). Checked by lib/venueSetup.check.ts.
+ * first menu), and no team step: inviting the team is the checklist's last
+ * row, after How it looks, so the invite wears the bar's look (invite-team-last,
+ * approved 26 Oct). Checked by lib/venueSetup.check.ts.
  */
 
-export const VENUE_STEPS = ['find', 'place', 'look', 'visibility', 'team'] as const;
+export const VENUE_STEPS = ['find', 'place', 'look', 'visibility'] as const;
 export type VenueStep = (typeof VENUE_STEPS)[number];
 /** The claim is a screen of its own, opened from the checklist's card: not a step. */
 export type VenueScreen = 'intro' | VenueStep | 'claim' | 'done';
@@ -25,7 +27,6 @@ export const STEP_NAMES: Record<VenueStep, string> = {
   place: 'Where and when',
   look: 'How it looks',
   visibility: 'Who sees what',
-  team: 'Your team',
 };
 
 /** The line under each step on the rail. */
@@ -34,7 +35,6 @@ export const STEP_LINES: Record<VenueStep, string> = {
   place: 'Address, hours, contact',
   look: 'Logo, colours, font',
   visibility: 'Your page, menus, specs',
-  team: 'Invite who works here',
 };
 
 /** The screen after this one: intro, the steps in order, then the checklist. The claim comes back to the checklist. */
