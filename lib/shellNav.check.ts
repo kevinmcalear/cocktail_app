@@ -37,23 +37,21 @@ assert.equal(footerLine(null, 1), 'Home bar · 1 bottle');
 assert.equal(footerLine(null, null), 'Home bar');
 assert.equal(footerLine(null, 0), 'Home bar');
 
-assert.equal(menusLine([{ name: 'Autumn menu' }], 2), 'Autumn menu on · 2 drafts');
-assert.equal(menusLine([{ name: 'A' }, { name: 'B' }], 0), '2 menus on');
-assert.equal(menusLine([], 1), '1 draft');
-assert.equal(menusLine([], 0), 'Build, schedule and print');
+assert.equal(menusLine(1, 2), '1 on');
+assert.equal(menusLine(0, 1), '1 draft');
+assert.equal(menusLine(0, 0), '');
 assert.equal(featuresLine(2, 8), '2 of 8 on');
-assert.equal(featuresLine(0, 8), 'History, Prep, Study and more');
-assert.equal(backBarLine(84, 3), '84 placed · 3 waiting');
+assert.equal(featuresLine(0, 8), '');
+assert.equal(backBarLine(84, 3), '3 waiting');
 assert.equal(backBarLine(84, 0), '84 placed');
-assert.equal(backBarLine(0, 0), 'Where every bottle lives');
+assert.equal(backBarLine(0, 0), '');
 assert.equal(teamLine(9, 2), '9 people · 2 invited');
 assert.equal(teamLine(1, 0), '1 person');
 assert.equal(shelfLine(4), '4 bottles');
-assert.equal(shelfLine(4, 7), '4 bottles · 7 drinks ready');
-assert.equal(shelfLine(1, 1), '1 bottle · 1 drink ready');
-assert.equal(shelfLine(0, 3), 'Add what’s on your shelf');
-assert.equal(collectionLine(12, 3), '12 to make · 3 menus');
-assert.equal(collectionLine(0, 0), 'Drinks to make and your menus');
+assert.equal(shelfLine(1), '1 bottle');
+assert.equal(shelfLine(0), '');
+assert.equal(collectionLine(12), '12 to make');
+assert.equal(collectionLine(0), '');
 
 // Phones and native get the tab bar; 768 to 1199 the rail; 1200 and up the sidebar.
 assert.equal(webNavFor('ios', 1400), 'tabs');
