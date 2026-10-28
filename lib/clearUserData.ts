@@ -19,7 +19,7 @@ import { useVenueSetup } from '@/store/useVenueSetup';
  * Forgets everything the signed-out user left on this device: cached query
  * data (in memory and persisted), edits made offline and not yet sent, recent
  * activity, favorites and the study pile, AI consent, the last near-me place, the
- * venue they were working in, drinks and bottles half added, big imports
+ * venue they were working in and its setup progress, drinks and bottles half added, big imports
  * waiting to be reviewed, and notes to us not yet sent. Bar iPads are shared,
  * so the next person must not see any of it, or send it as themselves.
  */
@@ -35,7 +35,9 @@ export async function clearUserData(): Promise<void> {
   useDrinkWizardStore.setState({ kept: {}, cleared: [] });
   useDraftSyncStore.setState({ seen: [] });
   useBeerWineWizardStore.setState({ kept: {} });
-  useVenueSetup.setState({ runs: {}, glasses: {} });
+  // Glasses held for a venue's page stay: they're the venue's list, not the person's, and only someone with
+  // Prep there puts them on the page. Signing out used to lose them for good.
+  useVenueSetup.setState({ runs: {} });
   useNoteDrafts.setState({ drafts: {} });
   useBringIn.setState({ reviews: {}, reviewing: null, later: [] });
   await Promise.all([

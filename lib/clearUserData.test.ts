@@ -4,6 +4,7 @@ import { persistQueryClientRestore, persistQueryClientSave, type PersistedClient
 import { clearUserData } from '@/lib/clearUserData';
 import { persistOptions, queryClient } from '@/lib/react-query';
 import { useBringIn } from '@/store/useBringIn';
+import { useVenueSetup } from '@/store/useVenueSetup';
 
 // Who the Supabase client would send a write as, and whose writes went out.
 let signedIn: string | null = null;
@@ -109,4 +110,12 @@ test('a big import waiting to be reviewed is forgotten at sign-out', async () =>
   await clearUserData();
   expect(useBringIn.getState().reviews).toEqual({});
   expect(useBringIn.getState().reviewing).toBeNull();
+});
+
+test("a venue's held glasses outlast sign-out; its setup progress doesn't", async () => {
+  const glass = { key: 'kind-coupe', glass: 'coupe', variant: null, name: null, maker: null, maker_profile_id: null, designer: null, series: null, shape_note: null, model_id: null, is_default: true } as const;
+  useVenueSetup.setState({ runs: { bar: { profileId: null, barId: 'bar', name: 'Bar', done: [], finished: false } }, glasses: { bar: [glass] } });
+  await clearUserData();
+  expect(useVenueSetup.getState().runs).toEqual({});
+  expect(useVenueSetup.getState().glasses).toEqual({ bar: [glass] });
 });

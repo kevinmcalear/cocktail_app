@@ -43,9 +43,9 @@ interface VenueSetupState {
   /**
    * Glasses waiting for the venue's page, by venue. Apart from the runs, so a
    * venue with no setup here (Venue settings' What next) doesn't get one.
-   * ponytail: device only, so glasses picked here are lost on another
-   * device or after signing out; carrying them on the claim (like the held
-   * page details) is the upgrade.
+   * They outlast signing out (lib/clearUserData.ts). ponytail: device only,
+   * so glasses picked here don't reach another device or survive deleting
+   * the app; carrying them on the claim (like the held page details) is the upgrade.
    */
   glasses: Record<string, HeldGlass[]>;
   /** Puts a glass on the venue's waiting list, or takes it off (by key). */
