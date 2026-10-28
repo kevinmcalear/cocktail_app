@@ -1,5 +1,5 @@
 import { useRouter } from 'expo-router';
-import { useState, type ReactNode } from 'react';
+import { useDeferredValue, useState, type ReactNode } from 'react';
 import { StyleSheet, View } from 'react-native';
 
 import { Body, Button, Caption, Chip, useDs, useGutter } from '@/components/ds';
@@ -125,8 +125,10 @@ interface BodyProps {
 }
 
 /** What the search finds in its scope, or what was opened lately while nothing is typed. */
-export function SearchBody({ query, scope, onScope, mine, area, onJump, commands, palette, show, onShow, onCounts, typeAhead, onAddBar, onShowBar, onShowOnMap }: BodyProps) {
-  if (!query.trim()) return <Recent scope={scope} mine={mine} onJump={onJump} commands={commands} browse={!!typeAhead} />;
+export function SearchBody({ query: typed, scope, onScope, mine, area, onJump, commands, palette, show, onShow, onCounts, typeAhead, onAddBar, onShowBar, onShowOnMap }: BodyProps) {
+  // The field never waits on the results: they catch up with the typing when there's time (a letter typed meanwhile starts them again).
+  const query = useDeferredValue(typed);
+  if (!typed.trim() || !query.trim()) return <Recent scope={scope} mine={mine} onJump={onJump} commands={commands} browse={!!typeAhead} />;
   if (scope === 'mine') return <MineResults query={query} mine={mine} onEverywhere={() => onScope('everywhere')} commands={commands} palette={palette} show={show} onCounts={onCounts} typeAhead={typeAhead} />;
   return (
     <>

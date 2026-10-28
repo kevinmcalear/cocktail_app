@@ -65,7 +65,7 @@ function draftDisplayName(d: { entity_type: string; draft_data?: any }) {
  * active venue, or personal at home; see venueContextIds and useSearchMine).
  * Pass a stable array, since it's a memo dependency.
  */
-export function useSearchCatalog(selectedContextIds: string[]) {
+export function useSearchCatalog(selectedContextIds: string[], { ingredients = true }: { ingredients?: boolean } = {}) {
   // At venues, only their rows: a venue's few hundred instead of the whole
   // ~30,000-row catalog (saved between launches, so the Library paints at
   // once). No venues yet (still loading) asks for nothing. Your own drinks at
@@ -77,8 +77,9 @@ export function useSearchCatalog(selectedContextIds: string[]) {
   const { data: cocktailsData, isLoading: cocktailsLoading, error: cocktailsError } = useCocktails(barIds);
   const { data: beersData, isLoading: beersLoading, error: beersError } = useBeers(barIds);
   const { data: winesData, isLoading: winesLoading, error: winesError } = useWines(barIds);
+  // Off for a search that shows only drinks: at home the list is every ingredient (~20,000 rows).
   const { data: ingredientsData, isLoading: ingredientsLoading, error: ingredientsError } =
-    useAllIngredients({ barIds });
+    useAllIngredients({ barIds, enabled: ingredients });
   const { data: dropdowns, isLoading: menusLoading } = useDropdowns({ menus: true });
   const { drafts, isLoading: draftsLoading } = useDrafts();
 

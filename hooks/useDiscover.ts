@@ -1,5 +1,5 @@
 import { useMutation, useQueries, useQuery, useQueryClient } from '@tanstack/react-query';
-import { useEffect, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 
 import { useAuth } from '@/ctx/AuthContext';
 import { readBarBrands } from '@/hooks/useBarBrands';
@@ -217,6 +217,15 @@ export function useDebounced<T>(value: T, ms: number): T {
     return () => clearTimeout(t);
   }, [value, ms]);
   return settled;
+}
+
+/**
+ * Ids that change at most once a pause: for the lookups a search's rows need
+ * (lines, scores, verdicts), so typing a word asks once, not once a letter.
+ */
+export function useSettledIds(ids: readonly string[], ms = 250): string[] {
+  const settled = useDebounced(ids.join(' '), ms);
+  return useMemo(() => (settled ? settled.split(' ') : []), [settled]);
 }
 
 /** The device's place for the address search, only where location is already allowed: never asks. */
