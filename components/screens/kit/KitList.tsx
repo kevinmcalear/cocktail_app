@@ -69,7 +69,7 @@ function KitRow({ entry, first, open, onPress }: { entry: KitEntry; first: boole
       <PressableScale
         role="button"
         aria-current={open ? 'page' : undefined}
-        accessibilityLabel={entry.line ? `${entry.name}. ${entry.line}` : entry.name}
+        accessibilityLabel={[entry.name, entry.line, entry.action].filter(Boolean).join('. ')}
         onPress={onPress}
         style={[styles.row, open ? { backgroundColor: ds.c.raised } : null]}
       >
