@@ -1,28 +1,10 @@
 import React from 'react';
-import { Platform, ScrollView, ScrollViewProps, ViewStyle } from 'react-native';
+import { ScrollViewProps } from 'react-native';
 import { NestableScrollContainer } from 'react-native-draggable-flatlist';
 
-type FormScrollContainerProps = ScrollViewProps;
+export { dragGripStyle, gripOnly, supportsNestableDrag } from './dragGrip';
 
-export function FormScrollContainer(props: FormScrollContainerProps) {
-    if (Platform.OS === 'web') {
-        return <ScrollView {...props} />;
-    }
+/** A page that may hold a nested drag list: on a phone the list needs this container. Web: FormScrollContainer.web.tsx. */
+export function FormScrollContainer(props: ScrollViewProps) {
     return <NestableScrollContainer {...props} />;
 }
-
-export const supportsNestableDrag = Platform.OS !== 'web';
-
-/**
- * On a drag handle: on web, a touch here drags instead of scrolling the page.
- * Drag lists let the browser scroll everywhere else (our draggable-flatlist patch).
- */
-export const dragGripStyle = Platform.OS === 'web' ? ({ touchAction: 'none' } as ViewStyle) : null;
-
-/**
- * A drag list's `dragHitSlop` when its grip is the first (or, with 'right', the
- * last) `width` points of a row: only a touch there can start the drag pan. Over
- * the whole row the pan took every vertical swipe on Android, so the page
- * wouldn't scroll over the list.
- */
-export const gripOnly = (width: number, side: 'left' | 'right' = 'left') => (side === 'left' ? { left: 0, width } : { right: 0, width });
