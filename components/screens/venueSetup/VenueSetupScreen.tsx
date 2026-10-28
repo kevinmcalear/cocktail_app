@@ -213,7 +213,7 @@ export function VenueSetupScreen() {
         <BrandSetup
           barId={barId}
           setup={{
-            // A phone walks Logo, Colour, Font and Ground tint (E34): Next until the last, Back after the first.
+            // A phone walks Logo, Colour and Font (E34): Next until the last, Back after the first.
             footer: ({ save: saveBrand, saving, ok, page }) =>
               page ? (
                 <StepFooter

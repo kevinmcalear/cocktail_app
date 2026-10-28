@@ -5,6 +5,7 @@
  */
 import { backbar, type DisplayFace } from '@/constants/tokens';
 import { contrast, isHexColor } from '@/lib/color';
+import { neutralsFrom } from '@/lib/palette';
 
 /** The app's display faces and their venue_display_face values in the database. */
 const FACE_TO_DB = {
@@ -54,12 +55,15 @@ export function normalizeHex(value: string): string | null {
 const MIN_TINT_CONTRAST = 7;
 
 /**
- * A ground tint is only used when dark-mode text still reads on it; a tint
- * too light for that is ignored rather than making the app unreadable.
+ * A ground tint is only used when dark-mode text still reads on it, quiet
+ * text included; a tint too light for that is ignored rather than making the
+ * app unreadable.
  */
 export function usableGroundTint(tint: string | null | undefined): string | null {
   if (!tint || !isHexColor(tint)) return null;
-  return contrast(backbar.dark.ink, tint) >= MIN_TINT_CONTRAST ? tint : null;
+  if (contrast(backbar.dark.ink, tint) < MIN_TINT_CONTRAST) return null;
+  const dark = neutralsFrom(tint).dark;
+  return contrast(dark.muted, dark.ground) >= 4.5 ? tint : null;
 }
 
 export interface BrandDraft {

@@ -78,7 +78,8 @@ export function groundTintFor(accent: string, ground: Ground): string | null {
 export function groundOf(accent: string, tint: string | null): Ground | null {
   if (!tint) return 'neutral';
   const t = tint.toUpperCase();
-  return (['hint', 'rich'] as const).find((g) => groundTintFor(accent, g) === t) ?? null;
+  // A dark colour can make the same tint for both; then it reads as Rich, the one just picked.
+  return (['rich', 'hint'] as const).find((g) => groundTintFor(accent, g) === t) ?? null;
 }
 
 /**
@@ -87,7 +88,12 @@ export function groundOf(accent: string, tint: string | null): Ground | null {
  * tint's hue at a share of its strength (light mode a little less).
  */
 export function neutralsFrom(tint: string): Record<BackbarScheme, BackbarColors> {
-  const { l, c, h } = toLch(tint);
+  const raw = toLch(tint);
+  // Cards and text start from at most Back Bar's own lightness and a Rich tint's
+  // strength, so a ground saved some other way (SQL, a seed) can't wash them out.
+  const l = Math.min(raw.l, GROUND_L);
+  const c = Math.min(raw.c, STRENGTH.rich);
+  const h = raw.h;
   const n = (L: number, share: number) => fromLch(L, c * share, h);
   const darkInk = n(0.95, 0.25);
   const lightInk = n(0.21, 0.6);

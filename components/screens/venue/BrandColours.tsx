@@ -33,6 +33,8 @@ export function ColourPicker({ accent, tint, palettes, onChange }: { accent: str
   const ground = groundOf(current, tint);
   const picked = palettes.find((p) => p.accent === current);
   const name = picked?.name ?? colourName(current);
+  // A grey can't tint anything, so it only gets Neutral.
+  const grounds = groundTintFor(current, 'hint') ? GROUNDS : GROUNDS.slice(0, 1);
   const [sheet, setSheet] = useState(false);
 
   return (
@@ -82,7 +84,7 @@ export function ColourPicker({ accent, tint, palettes, onChange }: { accent: str
 
       <Caption tone="muted" role="heading" style={styles.kicker}>BACKGROUND</Caption>
       <View role="radiogroup" aria-label="Background" style={styles.grounds}>
-        {GROUNDS.map((g) => {
+        {grounds.map((g) => {
           const look = neutralsFor(ds.scheme, groundTintFor(current, g.id));
           const selected = ground === g.id;
           return (
@@ -92,7 +94,7 @@ export function ColourPicker({ accent, tint, palettes, onChange }: { accent: str
               aria-checked={selected}
               accessibilityLabel={`${g.label}, ${g.note}`}
               onPress={() => onChange({ accent: current, tint: groundTintFor(current, g.id) })}
-              style={styles.groundChoice}
+              style={[styles.groundChoice, grounds.length === 1 && styles.oneGround]}
             >
               <View style={[styles.groundSwatch, { backgroundColor: look.ground, borderColor: selected ? ds.c.ink : ds.c.line, borderWidth: selected ? 2 : 1 }]}>
                 <View style={[styles.groundCard, { backgroundColor: look.surface }]} />
@@ -104,6 +106,7 @@ export function ColourPicker({ accent, tint, palettes, onChange }: { accent: str
           );
         })}
       </View>
+      {grounds.length === 1 ? <Caption tone="muted">Greys keep a neutral background. Pick a colour to tint it.</Caption> : null}
       {ground ? null : <Caption tone="muted">Your background is an older tint. Pick one of these to change it.</Caption>}
       {shadeNotes(current, tint, name).map((n) => (
         <Caption key={n} tone="muted">{n}</Caption>
@@ -127,7 +130,7 @@ function OwnColourSheet({ visible, start, onClose, onUse }: { visible: boolean; 
   const [text, setText] = useState(start);
   const hex = normalizeHex(text);
   return (
-    <Sheet visible={visible} onClose={onClose} onShow={() => setText(start)} accessibilityLabel="Your own colour">
+    <Sheet visible={visible} onClose={onClose} onShow={() => setText(start)} accessibilityLabel="Your own colour" keyboard>
       <View style={styles.sheet}>
         <DsText variant="title">Your own colour</DsText>
         <ColourWheel value={hex} onChange={setText} />
@@ -160,6 +163,7 @@ const styles = StyleSheet.create({
   kicker: { letterSpacing: 0.8, marginTop: space.sm },
   grounds: { flexDirection: 'row', gap: space.sm },
   groundChoice: { flex: 1, minWidth: 0, gap: 2 },
+  oneGround: { flex: 0, width: '32%' },
   groundSwatch: { height: 64, borderRadius: radius.control + 2, borderCurve: 'continuous', padding: space.sm, justifyContent: 'space-between', marginBottom: space.xs },
   groundCard: { height: 18, borderRadius: radius.mark + 2 },
   groundPill: { width: '55%', height: 12, borderRadius: radius.pill },

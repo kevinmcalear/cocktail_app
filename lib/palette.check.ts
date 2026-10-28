@@ -43,6 +43,23 @@ for (const tint of tints) {
     }
   }
 }
+
+// Any tint the app accepts, however it was saved (SQL, a seed), keeps text readable on its cards.
+let swept = 0;
+for (let r = 0; r < 256; r += 12) for (let g = 0; g < 256; g += 12) for (let b = 0; b < 256; b += 12) {
+  const tint = '#' + [r, g, b].map((v) => v.toString(16).padStart(2, '0')).join('').toUpperCase();
+  if (!usableGroundTint(tint)) continue;
+  swept++;
+  for (const scheme of ['dark', 'light'] as const) {
+    const c = neutralsFor(scheme, tint);
+    for (const bg of [c.ground, c.surface, c.raised]) {
+      assert.ok(contrast(c.ink, bg) >= 7, `${scheme} ink on ${bg} (${tint})`);
+      assert.ok(contrast(c.muted, bg) >= 4.5, `${scheme} muted on ${bg} (${tint}): ${contrast(c.muted, bg).toFixed(2)}`);
+    }
+  }
+}
+assert.ok(swept > 500, `swept ${swept} usable tints`);
+
 // The dark ground is the saved tint itself.
 assert.equal(neutralsFor('dark', '#181019').ground, '#181019');
 

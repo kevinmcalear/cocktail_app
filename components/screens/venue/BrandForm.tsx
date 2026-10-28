@@ -26,7 +26,8 @@ export interface BrandDraftState {
 
 /** The palettes on offer: the logo's colours first (fresh from an upload, else the one saved from it), then the standard ones. */
 export function brandPalettes(row: VenueBrandRow, logoUrl: string | null, suggested: string[]): Palette[] {
-  const fromLogo = logoUrl ? [...suggested, row.secondary_color].flatMap((hex) => normalizeHex(hex ?? '') ?? []) : [];
+  // A fresh upload's colours replace the saved logo colour, which came from the old logo.
+  const fromLogo = logoUrl ? (suggested.length ? suggested : [row.secondary_color]).flatMap((hex) => normalizeHex(hex ?? '') ?? []) : [];
   return palettesFor(fromLogo, colourName);
 }
 
