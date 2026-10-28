@@ -7,6 +7,7 @@ import type { Profile } from '@/hooks/useProfiles';
 import { withNear, type MaybeNear } from '@/hooks/useSearchNear';
 import { viewerScoped } from '@/lib/authCache';
 import { countWaiting, workedBars, type CreditRow, type JobRow, type Waiting } from '@/lib/findYourself';
+import { unclaimedNamesakes } from '@/lib/likelyClaimer';
 import { personSearchFilter } from '@/lib/profiles';
 import { supabase } from '@/lib/supabase';
 
@@ -61,16 +62,34 @@ type PersonRow = Omit<PublicPerson, 'job' | 'current_bar' | 'worked'> & {
 
 /** Public people by name or @handle, so someone can find a profile we already have. */
 export function usePublicPeople(search: string, { near = false }: { near?: boolean } = {}) {
+  // A picker asks for close names too ("dayle degrof": Dale DeGroff), marked `near`; they need an account.
+  const userId = useUserId();
+  return useQuery(publicPeople(search, near && !!userId));
+}
+
+/**
+ * Unclaimed person pages that could be the name someone typed in Setup (the
+ * "Is this you?" step): the same name, a letter off, or a short first name
+ * (namesMatch). Signed in, so close names are asked for too.
+ */
+export function useNamesakes(name: string) {
+  return useQuery({ ...publicPeople(name, true), select: (rows: MaybeNear<PublicPerson>[]) => unclaimedNamesakes(rows, name) });
+}
+
+/** useNamesakes, asked once: Setup's Continue after the name, to decide whether "Is this you?" comes next. */
+export function useFindNamesakes() {
+  const qc = useQueryClient();
+  return (name: string) => qc.fetchQuery(publicPeople(name, true)).then((rows) => unclaimedNamesakes(rows, name));
+}
+
+function publicPeople(search: string, close: boolean) {
   const typed = search.trim().replace(/^@/, '');
   // The close-names lookup gets plain words; the name and handle match takes what was typed.
   const term = typed.replace(/[%_\\]/g, '').trim();
-  // A picker asks for close names too ("dayle degrof": Dale DeGroff), marked `near`; they need an account.
-  const userId = useUserId();
-  const close = near && !!userId;
-  return useQuery({
+  return {
     queryKey: ['public-people', typed.toLowerCase(), close],
     enabled: typed.length >= 2,
-    queryFn: async ({ signal }): Promise<MaybeNear<PublicPerson>[]> => {
+    queryFn: async ({ signal }: { signal: AbortSignal }): Promise<MaybeNear<PublicPerson>[]> => {
       const read = async (ids?: string[]): Promise<PublicPerson[]> => {
         const q = supabase
           .from('profiles')
@@ -93,7 +112,7 @@ export function usePublicPeople(search: string, { near = false }: { near?: boole
       };
       return close ? withNear(term, 'person', read(), read, signal) : read();
     },
-  });
+  };
 }
 
 /** Bars counted per search: the first ones each shows (a count each). */

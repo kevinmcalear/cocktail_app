@@ -1,4 +1,4 @@
-import { fireEvent, screen } from '@testing-library/react-native';
+import { act, fireEvent, screen } from '@testing-library/react-native';
 
 import { renderWithTamagui } from '@/jest.setup';
 import { useAppMode } from '@/store/useAppMode';
@@ -18,9 +18,7 @@ let mockPeople: { id: string; handle: string; display_name: string; city: string
 let mockBars: { id: string; display_name: string; locality: string | null; postcode: null; city: string; country_code: string; is_closed?: boolean; is_claimed?: boolean }[] = [];
 
 jest.mock('expo-router', () => ({ useRouter: () => ({ replace: mockReplace, push: jest.fn(), back: jest.fn(), canGoBack: () => false }), useLocalSearchParams: () => mockParams }));
-jest.mock('@/ctx/AuthContext', () => ({
-  useAuth: () => ({ user: { id: 'me', user_metadata: mockMeta, invited_at: mockInvitedAt }, loading: false, updateProfile: async () => ({ error: null }) }),
-}));
+jest.mock('@/ctx/AuthContext', () => ({ useAuth: () => ({ user: { id: 'me', user_metadata: mockMeta, invited_at: mockInvitedAt }, loading: false, updateProfile: async () => ({ error: null }) }) }));
 jest.mock('@/hooks/useBarInvites', () => ({
   useMyInvites: () => ({ data: mockInvites, isLoading: false }),
   useAcceptInvite: () => ({ mutate: mockAccept, isPending: false, error: null }),
@@ -45,6 +43,7 @@ jest.mock('@/hooks/useProfiles', () => ({
   usePublicPeople: (term: string) => ({ data: term.trim().length >= 2 ? mockPeople : [] }),
   useWaiting: () => ({ data: {} }),
   useMyPersonClaim: () => ({ data: mockPersonClaim }),
+  useFindNamesakes: () => async () => [],
   useProfile: () => ({ data: null }),
   useWorkedMenus: () => ({ data: [] }),
 }));
@@ -77,6 +76,7 @@ async function named() {
   await renderWithTamagui(<OnboardingScreen />);
   await fireEvent.changeText(screen.getByLabelText('Name'), 'Jo Juniper');
   await fireEvent.press(screen.getByRole('button', { name: 'Continue' }));
+  await act(async () => {}); // The look for a page that could be theirs.
 }
 
 async function newCareer() {

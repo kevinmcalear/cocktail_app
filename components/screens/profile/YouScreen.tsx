@@ -8,7 +8,7 @@ import { WebHead } from '@/components/WebHead';
 import { layout, space } from '@/constants/tokens';
 import { useCreditsToCheck } from '@/hooks/useCreditsToCheck';
 import { useMyProfile } from '@/hooks/useMyProfile';
-import { useMyMadeDrinks, useProfilePositions } from '@/hooks/useProfiles';
+import { useMyMadeDrinks, useMyPersonClaim, useProfile, useProfilePositions } from '@/hooks/useProfiles';
 import { useMyHadDrinks, useMyHadPicks } from '@/hooks/useRankings';
 import { hadStats } from '@/lib/hadDrinks';
 import { pickedShown, profileLine } from '@/lib/profiles';
@@ -52,6 +52,10 @@ function You() {
   const waitingCredits = useCreditsToCheck().data?.length ?? 0;
   const positions = useProfilePositions(profile ? { id: profile.id, kind: 'person' } : null).data ?? [];
   const name = profile?.displayName || authName || 'You';
+  // A claim on a page waiting, with no profile yet: that page becomes theirs, so no "Make a public profile" (a second one).
+  const claim = useMyPersonClaim().data;
+  const waiting = !profile && claim?.status === 'pending' ? claim : null;
+  const confirmer = useProfile(waiting?.confirm_bar ?? null).data?.display_name;
   const share = useShareLink(`${siteOrigin()}/p/${profile?.handle ?? ''}`, name);
 
   const drinks = had.data ?? [];
@@ -81,11 +85,19 @@ function You() {
               {name}
             </Title>
             <Caption tone="muted" align="center">
-              {profile ? [`@${profile.handle}`, city, shown ? 'Public profile' : 'Private profile'].filter(Boolean).join(' · ') : 'No public profile yet'}
+              {profile
+                ? [`@${profile.handle}`, city, shown ? 'Public profile' : 'Private profile'].filter(Boolean).join(' · ')
+                : waiting
+                  ? `Claim sent for ${waiting.profile.display_name} · ${waiting.confirm_bar ? `${confirmer ?? 'The bar'}’s Admin confirms it` : 'A person checks it, usually within a day'}`
+                  : 'No public profile yet'}
             </Caption>
             {line ? <Body align="center">{line}</Body> : null}
             <View style={styles.actions}>
-              <Button label={profile ? 'Edit profile' : 'Make a public profile'} variant="secondary" onPress={() => router.push('/settings/profile')} />
+              {waiting ? (
+                <Button label="See the page" variant="secondary" onPress={() => router.push(`/p/${waiting.profile.handle}`)} />
+              ) : (
+                <Button label={profile ? 'Edit profile' : 'Make a public profile'} variant="secondary" onPress={() => router.push('/settings/profile')} />
+              )}
               {profile && shown ? <Button label="Share" variant="secondary" icon="square.and.arrow.up" onPress={() => void share()} /> : null}
             </View>
           </View>

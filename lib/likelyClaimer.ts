@@ -71,3 +71,8 @@ export function lastName(name: string): string | null {
   const words = name.trim().split(/\s+/);
   return words.length > 1 ? words[words.length - 1] : null;
 }
+
+/** Unclaimed person pages whose name could be the one typed (Setup's "Is this you?"), from a people search. */
+export function unclaimedNamesakes<T extends { display_name: string; is_claimed: boolean }>(rows: readonly T[], typed: string): T[] {
+  return rows.filter((p) => !p.is_claimed && namesMatch([nameKey(typed)], [p.display_name]));
+}

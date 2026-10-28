@@ -20,7 +20,7 @@ jest.mock('@/hooks/useOnboarding', () => ({
   useSaveWorkplace: () => ({ mutate: jest.fn(), isPending: false, error: null }),
   useFinishOnboarding: () => ({ mutate: mockFinish, isPending: false, error: null }),
 }));
-jest.mock('@/hooks/useProfiles', () => ({ useMyPersonClaim: () => ({ data: null }) }));
+jest.mock('@/hooks/useProfiles', () => ({ useMyPersonClaim: () => ({ data: null }), useFindNamesakes: () => async () => [] }));
 jest.mock('@/hooks/useVenueSetup', () => ({ useClaimableBars: (term: string) => ({ data: term.trim().length >= 2 ? [rye] : [] }) }));
 jest.mock('@/components/screens/home/BarMark', () => ({ BarMark: () => null }));
 jest.mock('@/components/screens/home/AddBar', () => {
