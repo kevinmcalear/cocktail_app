@@ -3,7 +3,7 @@
 import assert from 'node:assert/strict';
 
 import { backbar, DEFAULT_ACCENT, SAMPLE_BRANDS } from '../constants/tokens';
-import { accentFill, contrast, isHexColor, parseHex, readableAccent, withAlpha } from './color';
+import { accentFill, contrast, hexToHsv, hsvToHex, isHexColor, parseHex, readableAccent, withAlpha } from './color';
 
 assert.deepEqual(parseHex('#fff'), [255, 255, 255]);
 assert.equal(Math.round(contrast('#000000', '#FFFFFF')), 21);
@@ -54,4 +54,15 @@ console.log('color: ok');
   assert.ok(contrast(deep.fill, cream) >= 4.5);
   // Ink on a dark accent can't read: the fallback picks cream.
   assert.equal(accentFill('#241C17', ink, cream, 'dark').text, cream);
+}
+
+// HSV round trips, for the custom colour wheel.
+assert.equal(hsvToHex(0, 1, 1), '#FF0000');
+assert.equal(hsvToHex(120, 1, 1), '#00FF00');
+assert.equal(hsvToHex(240, 1, 0.5), '#000080');
+assert.equal(hsvToHex(200, 0, 1), '#FFFFFF', 'no saturation is grey whatever the hue');
+assert.deepEqual(hexToHsv('#000000'), { h: 0, s: 0, v: 0 });
+for (const hex of ['#D0643B', '#1A1410', '#7FD4E8', '#E8B04B', '#FFFFFF']) {
+  const { h, s, v } = hexToHsv(hex);
+  assert.equal(hsvToHex(h, s, v), hex, `${hex} round trips`);
 }

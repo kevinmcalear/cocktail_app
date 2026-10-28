@@ -82,3 +82,22 @@ export function withAlpha(hex: string, alpha: number): string {
 export function isHexColor(value: unknown): value is string {
   return typeof value === 'string' && /^#(?:[0-9a-fA-F]{3}|[0-9a-fA-F]{6})$/.test(value);
 }
+
+/** Hue 0 to 360, saturation and value 0 to 1, as '#RRGGBB'. */
+export function hsvToHex(h: number, s: number, v: number): string {
+  const f = (n: number) => {
+    const k = (n + h / 60) % 6;
+    return (v - v * s * Math.max(0, Math.min(k, 4 - k, 1))) * 255;
+  };
+  return toHex([f(5), f(3), f(1)]);
+}
+
+/** '#RRGGBB' as hue (0 to 360), saturation and value (0 to 1). A grey's hue is 0. */
+export function hexToHsv(hex: string): { h: number; s: number; v: number } {
+  const [r, g, b] = parseHex(hex).map((c) => c / 255);
+  const max = Math.max(r, g, b);
+  const d = max - Math.min(r, g, b);
+  let h = 0;
+  if (d) h = max === r ? ((g - b) / d) % 6 : max === g ? (b - r) / d + 2 : (r - g) / d + 4;
+  return { h: (h * 60 + 360) % 360, s: max ? d / max : 0, v: max };
+}
