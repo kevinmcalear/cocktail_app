@@ -109,3 +109,12 @@ assert.equal(kindWords('Brandy', true), 'brandies');
 assert.equal(kindWords('Rye whiskey', true), 'Rye whiskeys');
 assert.equal(kindWords('Bitters', true), 'bitters');
 assert.equal(kindWords('London Dry Gin', true), 'London Dry Gins');
+
+// Each list keeps its own index: a saved row comes back as a new list (withRow), and that list finds it.
+const before = [{ id: 'a', name: 'Feijoa juice' }];
+assert.equal(sameIngredient('Feijoa cordial', before), null);
+assert.equal(searchIngredients('feijoa', before).length, 1);
+const after = [...before, { id: 'b', name: 'Feijoa cordial' }];
+assert.equal(sameIngredient('Feijoa cordial', after)?.id, 'b');
+assert.deepEqual(searchIngredients('feijoa', after).map((r) => r.id), ['a', 'b']);
+assert.equal(sameIngredient('Feijoa cordial', before), null, 'the old list is unchanged');
