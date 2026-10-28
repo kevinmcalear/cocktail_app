@@ -1,7 +1,7 @@
 import { useQuery, type QueryClient } from '@tanstack/react-query';
 import { useMemo } from 'react';
 
-import { hasSharedCatalog, patchSharedCatalog, useIngredientCatalog } from '@/hooks/useIngredientCatalog';
+import { patchSharedCatalog, useIngredientCatalog } from '@/hooks/useIngredientCatalog';
 import { allRows, allRowsById, byName } from '@/lib/allRows';
 import { CATALOG_COLUMNS } from '@/lib/matchCatalog';
 import { DROPDOWNS_QUERY_KEY, venueListOptions } from '@/lib/queryDefaults';
@@ -138,10 +138,11 @@ export function useIngredientsById(ids: readonly string[]) {
 export async function refreshIngredients(client: QueryClient, ids: string[]) {
   if (!ids.length) return;
   void client.invalidateQueries({ queryKey: INGREDIENTS_KEY });
-  if (!hasSharedCatalog(client)) return;
-  const { data, error } = await supabase.from('app_item_presentation').select(`${CATALOG_COLUMNS}, created_by`).in('id', ids);
-  // ponytail: a failed read leaves the shared catalog as it was until its day is up; only admins change shared rows.
-  if (!error) patchSharedCatalog(client, ids, (data ?? []).flatMap((r) => (r.id ? [{ ...r, id: r.id }] : [])));
+  await patchSharedCatalog(client, ids, async () => {
+    const { data, error } = await supabase.from('app_item_presentation').select(`${CATALOG_COLUMNS}, created_by, origin_bar_profile_id`).in('id', ids);
+    // ponytail: a failed read leaves the shared catalog as it was until its day is up; only admins change shared rows.
+    return error ? null : (data ?? []).flatMap((r) => (r.id ? [{ ...r, id: r.id }] : []));
+  });
 }
 
 /** Every menu the person can read, for search and Prep. Tonight uses useVenueMenus. */

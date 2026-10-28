@@ -23,24 +23,33 @@ type Shared = { savedAt: number; rows: CatalogRow[] };
 const useDownloading = create<{ ranges: number | null }>(() => ({ ranges: null }));
 
 /**
- * Every shared ingredient (no venue's, nobody's own: those depend on who's
- * looking, so one copy suits everyone): the id ranges side by side, each a
- * page at a time. Stops when nobody waits on it any more (`signal`).
+ * Every shared ingredient (no venue's, nobody's own, none from a bar's page:
+ * who sees those depends on who's looking, so one copy suits everyone): the
+ * id ranges side by side, each a page at a time. Stops when nobody waits on
+ * it any more (`signal`), and all of it stops when one range fails.
  */
 async function downloadShared(signal: AbortSignal): Promise<CatalogRow[]> {
   useDownloading.setState({ ranges: 0 });
+  const stop = new AbortController();
+  signal.addEventListener('abort', () => stop.abort());
   try {
     const parts = await Promise.all(
       CATALOG_RANGES.map(({ lo, hi }) =>
         allRowsById<CatalogRow>((after, size) => {
-          let page = supabase.from('app_item_presentation').select(CATALOG_COLUMNS).eq('item_type', 'ingredient').is('bar_id', null).is('created_by', null).gte('id', lo);
+          let page = supabase.from('app_item_presentation').select(CATALOG_COLUMNS).eq('item_type', 'ingredient').is('bar_id', null).is('created_by', null).is('origin_bar_profile_id', null).gte('id', lo);
           if (hi) page = page.lt('id', hi);
           if (after) page = page.gt('id', after);
-          return page.order('id').limit(size).abortSignal(signal);
-        }).then((rows) => {
-          useDownloading.setState((s) => ({ ranges: (s.ranges ?? 0) + 1 }));
-          return rows;
-        })
+          return page.order('id').limit(size).abortSignal(stop.signal);
+        }).then(
+          (rows) => {
+            useDownloading.setState((s) => ({ ranges: (s.ranges ?? 0) + 1 }));
+            return rows;
+          },
+          (error: unknown) => {
+            stop.abort();
+            throw error;
+          }
+        )
       )
     );
     return parts.flat().sort(byName);
@@ -87,7 +96,7 @@ export function useIngredientCatalog(enabled = true) {
     queryFn: async ({ signal }) =>
       (
         await allRowsById<CatalogRow>((after, size) => {
-          const page = supabase.from('app_item_presentation').select(CATALOG_COLUMNS).eq('item_type', 'ingredient').or('bar_id.not.is.null,created_by.not.is.null');
+          const page = supabase.from('app_item_presentation').select(CATALOG_COLUMNS).eq('item_type', 'ingredient').or('bar_id.not.is.null,created_by.not.is.null,origin_bar_profile_id.not.is.null');
           return (after ? page.gt('id', after) : page).order('id').limit(size).abortSignal(signal);
         })
       ).sort(byName),
@@ -96,24 +105,29 @@ export function useIngredientCatalog(enabled = true) {
   return { rows, shared: shared.data?.rows, own: own.data, error: shared.error ?? own.error };
 }
 
-export const hasSharedCatalog = (client: QueryClient) => !!client.getQueryData(SHARED_KEY);
+type ReadRow = CatalogRow & { created_by: string | null; origin_bar_profile_id: string | null };
 
 /**
  * After ingredients are saved or made here (refreshIngredients): those rows
- * (just read) put into the loaded and saved shared catalog, or taken out when
- * they're gone or no longer shared, without downloading it again.
+ * (`read` when there's a catalog to put them in) go into the loaded and
+ * saved shared catalog, or come out when they're gone or no longer shared,
+ * without downloading it again. The saved file too when nothing has it
+ * loaded, so the next picker doesn't open on the old rows.
  */
-export function patchSharedCatalog(client: QueryClient, ids: string[], rows: (CatalogRow & { created_by: string | null })[]) {
-  const data = client.getQueryData<Shared>(SHARED_KEY);
+export async function patchSharedCatalog(client: QueryClient, ids: string[], read: () => Promise<ReadRow[] | null>) {
+  const loaded = client.getQueryData<Shared>(SHARED_KEY);
+  const data = loaded ?? unpackCatalog(await readSavedCatalog());
   if (!data) return;
+  const rows = await read();
+  if (!rows) return;
   const next = ids.reduce((list, id) => {
     const found = rows.find((r) => r.id === id);
     if (!found) return withRow(list, id, null);
-    const { created_by, ...row } = found;
-    return withRow(list, id, row.bar_id || created_by ? null : row);
+    const { created_by, origin_bar_profile_id, ...row } = found;
+    return withRow(list, id, row.bar_id || created_by || origin_bar_profile_id ? null : row);
   }, data.rows);
-  client.setQueryData<Shared>(SHARED_KEY, { ...data, rows: next });
-  void saveCatalog(packCatalog(next, data.savedAt));
+  if (client.getQueryData(SHARED_KEY)) client.setQueryData<Shared>(SHARED_KEY, { ...data, rows: next });
+  await saveCatalog(packCatalog(next, data.savedAt));
 }
 
 /**
@@ -124,8 +138,13 @@ export function patchSharedCatalog(client: QueryClient, ids: string[], rows: (Ca
 export function useMatchCatalog(enabled = true) {
   const { shared, own, error } = useIngredientCatalog(enabled);
   const ranges = useDownloading((s) => s.ranges);
-  // Shared first, then the venues' own: matching ranks a venue's copy over a shared one of the same name.
-  const catalog = useMemo(() => (shared && own ? toItems(own.length ? [...shared, ...own] : shared) : []), [shared, own]);
+  // Every bar-less row by name, then the venues' own: matching ranks a venue's copy over a shared one of
+  // the same name, and this is the order the server's shortlist comes in (lib/matchCatalog.ts shortlistCatalog).
+  const catalog = useMemo(() => {
+    if (!shared || !own) return [];
+    if (!own.length) return toItems(shared);
+    return toItems([...mergeByName(shared, own.filter((r) => !r.bar_id)), ...own.filter((r) => r.bar_id)]);
+  }, [shared, own]);
   return {
     catalog,
     isLoading: enabled && (!shared || !own),
