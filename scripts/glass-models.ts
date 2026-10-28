@@ -237,6 +237,21 @@ export const LOADS: Load[] = [
 --   * Audit: every row checked against its cited page (all 9): names, bars,
 --     designers, capacities and heights all match.`,
   },
+  {
+    file: 'supabase/migrations/20261127100000_glass_models_fog_glass.sql',
+    makers: ['studio.henry.wilson'],
+    pages: [{ handle: 'studio.henry.wilson', name: 'studio HENRY WILSON', website: 'https://www.studiohenrywilson.com', country: 'AU' }],
+    header: `
+-- Glass models: studio HENRY WILSON's Fog Glass, after 20261126300000.
+-- Kevin, 27 Oct 2026: add it to the glass list.
+--
+--   * A new maker page for studio HENRY WILSON (Sydney), as for any
+--     glassware maker.
+--   * Both sizes its page sells, as rocks glasses in etched glass: Medium
+--     (200 ml, 62 mm tall) and Large (350 ml, 87 mm tall). The page gives a
+--     diameter (80 and 85 mm), not the rim, so rim_mm stays empty.
+--   * Facts from the maker's own product page; no copied text or photos.`,
+  },
 ];
 
 // The catalog shape each type of glass is a kind of (a shared glassware item).
