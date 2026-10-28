@@ -41,7 +41,8 @@ describe('Cocktail Omakase and Bar 7', () => {
     const { rows } = await db.query(
       `SELECT b.handle, pp.is_current FROM public.profile_positions pp
        JOIN public.profiles a ON a.id = pp.person_profile_id JOIN public.profiles b ON b.id = pp.bar_profile_id
-       WHERE a.handle = 'mathew.resler' ORDER BY b.handle`
+       WHERE a.handle = 'mathew.resler' AND b.handle = ANY($1) ORDER BY b.handle`,
+      [[...BARS, 'bargoto_nyc']]
     );
     assert.deepEqual(
       rows.map((r) => `${r.handle} ${r.is_current}`),
