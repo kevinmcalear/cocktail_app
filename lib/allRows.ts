@@ -54,3 +54,12 @@ export function withRow<T extends { id: string; name?: string | null }>(rows: T[
     const at = rest.findIndex((r) => byName(row, r) < 0);
     return at < 0 ? [...rest, row] : [...rest.slice(0, at), row, ...rest.slice(at)];
 }
+
+/** Two name-sorted lists as one, still in name order, in one pass (a sort compares every row again). */
+export function mergeByName<T extends { id: string; name?: string | null }>(a: readonly T[], b: readonly T[]): T[] {
+    const rows: T[] = [];
+    let i = 0;
+    let j = 0;
+    while (i < a.length && j < b.length) rows.push(byName(a[i], b[j]) <= 0 ? a[i++] : b[j++]);
+    return rows.concat(a.slice(i), b.slice(j));
+}

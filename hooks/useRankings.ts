@@ -1,6 +1,7 @@
-import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
+import { keepPreviousData, useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 
 import { useUserId } from '@/ctx/AuthContext';
+import { pickerResult, usePickerTerm } from '@/hooks/useDiscover';
 import { fetchPublished } from '@/hooks/usePublished';
 import { withNear, type MaybeNear } from '@/hooks/useSearchNear';
 import { track } from '@/lib/analytics';
@@ -364,13 +365,14 @@ export function useBarProfile(barId: string | null | undefined, profileId?: stri
 
 /** Public bars by name, for "Where did you have it?". */
 export function usePublicBars(search: string, { near = false }: { near?: boolean } = {}) {
-  const term = search.replace(/[%_\\]/g, '').trim();
+  const { term, waiting } = usePickerTerm(search.replace(/[%_\\]/g, '').trim());
   // A picker asks for close names too ("lanturn room": The Lantern Room), marked `near`; they need an account.
   const userId = useUserId();
   const close = near && !!userId;
-  return useQuery({
+  const query = useQuery({
     queryKey: ['public-bars', term, close],
-    enabled: term.length >= 2,
+    enabled: !!term,
+    placeholderData: term ? keepPreviousData : undefined,
     queryFn: async ({ signal }): Promise<MaybeNear<RankVenue>[]> => {
       const read = async (ids?: string[]): Promise<RankVenue[]> => {
         const q = supabase.from('profiles').select(VENUE_COLUMNS).eq('kind', 'bar').eq('is_public', true);
@@ -381,6 +383,7 @@ export function usePublicBars(search: string, { near = false }: { near?: boolean
       return close ? withNear(term, 'bar', read(), read, signal) : read();
     },
   });
+  return pickerResult(query, waiting);
 }
 
 export interface NewRankEntry {

@@ -2,7 +2,7 @@ import type { SearchItem } from '@/types/search';
 import { useBeers } from '@/hooks/useBeers';
 import { useCocktails } from '@/hooks/useCocktails';
 import { useDrafts } from '@/hooks/useDrafts';
-import { useAllIngredients, useDropdowns } from '@/hooks/useDropdowns';
+import { useAllIngredients, useDropdowns, useVenueIngredients } from '@/hooks/useDropdowns';
 import { useWines } from '@/hooks/useWines';
 import { inSelectedContext, PERSONAL_CONTEXT } from '@/lib/barContextFilter';
 import { draftMethodIds } from '@/lib/drinkMethods';
@@ -65,7 +65,7 @@ function draftDisplayName(d: { entity_type: string; draft_data?: any }) {
  * active venue, or personal at home; see venueContextIds and useSearchMine).
  * Pass a stable array, since it's a memo dependency.
  */
-export function useSearchCatalog(selectedContextIds: string[]) {
+export function useSearchCatalog(selectedContextIds: string[], { ingredients = true }: { ingredients?: boolean } = {}) {
   // At venues, only their rows: a venue's few hundred instead of the whole
   // ~30,000-row catalog (saved between launches, so the Library paints at
   // once). No venues yet (still loading) asks for nothing. Your own drinks at
@@ -77,8 +77,11 @@ export function useSearchCatalog(selectedContextIds: string[]) {
   const { data: cocktailsData, isLoading: cocktailsLoading, error: cocktailsError } = useCocktails(barIds);
   const { data: beersData, isLoading: beersLoading, error: beersError } = useBeers(barIds);
   const { data: winesData, isLoading: winesLoading, error: winesError } = useWines(barIds);
-  const { data: ingredientsData, isLoading: ingredientsLoading, error: ingredientsError } =
-    useAllIngredients({ barIds });
+  // At home, the slim catalog the pickers share (saved on the device); at a venue, its rows with their pictures.
+  // Both off for a search that shows only drinks.
+  const homeIngredients = useAllIngredients(ingredients && !barIds);
+  const venueIngredients = useVenueIngredients(barIds ?? [], ingredients && !!barIds);
+  const { data: ingredientsData, isLoading: ingredientsLoading, error: ingredientsError } = barIds ? venueIngredients : homeIngredients;
   const { data: dropdowns, isLoading: menusLoading } = useDropdowns({ menus: true });
   const { drafts, isLoading: draftsLoading } = useDrafts();
 

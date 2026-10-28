@@ -11,7 +11,7 @@ import { ListNote } from '@/components/screens/rankings/RankingLists';
 import { space } from '@/constants/tokens';
 import { useSignedIn } from '@/ctx/AuthContext';
 import { useRowScores } from '@/hooks/useBestDrink';
-import { useBarCities, useDrinkLists, useDrinkPick } from '@/hooks/useDiscover';
+import { useBarCities, useDrinkLists, useDrinkPick, useSettledIds } from '@/hooks/useDiscover';
 import { useDiscoverBars, useDiscoverResults } from '@/hooks/useDiscoverDrinks';
 import { useDrinkLines } from '@/hooks/useDrinkSources';
 import { useItemScores } from '@/hooks/useFlavor';
@@ -111,7 +111,7 @@ export function PublicResults({ query, area, kinds = [], onKind, onEverywhere, m
   const openPlace = (c: City) => (onPlace ? onPlace(c) : router.push({ pathname: '/discover', params: { city: c.city, cc: c.country_code } }));
   const scores = useRowScores(results.drinks, area ?? ANYWHERE, signedIn);
   // At home, Everywhere also finds your own drinks.
-  const catalog = useSearchCatalog(everywhere && atHome && signedIn && mine ? mine.contextIds : NO_IDS);
+  const catalog = useSearchCatalog(everywhere && atHome && signedIn && mine ? mine.contextIds : NO_IDS, { ingredients: false });
   const yours = useMemo(() => (everywhere && atHome ? groupCatalog(catalog.items, q).drinks : []), [everywhere, atHome, catalog.items, q]);
 
   const bars = useMemo((): DiscoverBar[] => {
@@ -121,24 +121,25 @@ export function PublicResults({ query, area, kinds = [], onKind, onEverywhere, m
   }, [signedIn, area, searchedBars, results.bars, publicBars, q]);
   // ponytail: past 100 bars (four pages of rows) the tags stop; a longer list would page these too.
   const { data: waiting } = useWaiting(
-    bars.slice(0, 100).map((b) => b.id),
-    (people ?? []).map((p) => p.id)
+    useSettledIds(bars.slice(0, 100).map((b) => b.id)),
+    useSettledIds((people ?? []).map((p) => p.id))
   );
   const classics = useMemo(() => (everywhere && classicList ? findDrinks(classicList, q) : []), [everywhere, classicList, q]);
   const ingredients = useMemo(() => (everywhere && ingredientHits ? findDrinks(ingredientHits, q) : []), [everywhere, ingredientHits, q]);
   // A bar's copy of a classic in these results folds into it ("served at 7 bars"); its variations gather under it.
-  const { data: matches } = useSpecMatches(signedIn && q ? `search:${q}` : undefined, results.drinks.map((d) => d.id));
+  // Keyed by the drinks, not the letters: the same drinks aren't asked about again as the word grows.
+  const { data: matches } = useSpecMatches(signedIn && q ? 'search' : undefined, results.drinks.map((d) => d.id));
   const { drinks, servedBy, variations } = useMemo(() => {
     const ids = new Set(classics.map((c) => c.id));
     const folded = foldIntoClassics(results.drinks, ids, (id) => matches?.[id]);
     return { servedBy: folded.servedBy, ...gatherVariations(folded.drinks, ids, (id) => matches?.[id]) };
   }, [results.drinks, classics, matches]);
   // A venue's Everywhere: can its back bar make each drink. Can make keeps only those, in the same groups.
-  const { data: canMake } = useVenueCanMake(atVenue && signedIn && !onKind ? mine?.venueId : null, [...results.drinks, ...classics].map((d) => d.id));
+  const { data: canMake } = useVenueCanMake(atVenue && signedIn && !onKind ? mine?.venueId : null, useSettledIds([...results.drinks, ...classics].map((d) => d.id)));
   const only = <T extends { id: string }>(list: T[]) => (show === 'canmake' ? list.filter((d) => canMake?.[d.id]?.canMake) : list);
   const shownClassics = classics.slice(0, 10).map((c) => c.id);
-  const { data: lines } = useDrinkLines(shownClassics);
-  const { data: ownScores } = useItemScores([...shownClassics, ...yours.slice(0, 20).map((i) => i.id)]);
+  const { data: lines } = useDrinkLines(useSettledIds(shownClassics));
+  const { data: ownScores } = useItemScores(useSettledIds([...shownClassics, ...yours.slice(0, 20).map((i) => i.id)]));
 
   const found = (shows(show, 'bars') ? places.length : 0) + drinks.length + bars.length + (people?.length ?? 0) + classics.length + ingredients.length + yours.length;
   const canMakeCount = canMake ? [...drinks, ...classics].filter((d) => canMake[d.id]?.canMake).length : undefined;
