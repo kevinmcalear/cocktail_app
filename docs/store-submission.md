@@ -36,11 +36,11 @@ Apple rejects template apps submitted on a client's behalf. Supported model:
 |---|---|
 | Dev build on the iOS simulator | `eas build --profile development-simulator --platform ios` |
 | Internal test build for phones | `eas build --profile preview --platform all` (iOS devices must be registered first: `eas device:create`) |
-| Store build | `eas build --profile production --platform ios --auto-submit --what-to-test "$(cat <notes file>)"` / `--platform android` |
-| Upload to App Store Connect / TestFlight | `eas submit --profile production --platform ios --what-to-test "$(cat <notes file>)"` |
+| Store build | `eas build --profile production --platform ios --auto-submit` / `--platform android` |
+| Upload to App Store Connect / TestFlight | `eas submit --profile production --platform ios --id <build id>` (when the build ran without `--auto-submit`) |
 | Ship a JS-only fix to installed apps | `eas update --channel production --environment production --message "…"`, then `eas env:exec production "npm run sentry:sourcemaps"` (see below) |
 
-**Every iOS build says what's new.** Testers (Eddie and his staff) read TestFlight's "What to Test", so every iOS store build passes `--what-to-test`. Write it from the PRs merged since the last TestFlight build (`git log --first-parent <last build's commit>..HEAD`, and the PRs inside each merge train), in plain words for bar staff: a "Please try first" list with anything that only works in this build, then what changed by area, then fixes. No PR numbers or code names, under 4,000 characters (Apple's limit). Keep the file outside the repo. A build already uploaded without notes can't be resubmitted (Apple refuses the same build number), so its notes go in by hand: App Store Connect, TestFlight, the build, Test Details.
+**Every iOS build says what's new.** Testers (Eddie and his staff) read TestFlight's "What to Test", so every iOS store build gets notes. Write them from the PRs merged since the last TestFlight build (`git log --first-parent <last build's commit>..HEAD`, and the PRs inside each merge train), in plain words for bar staff: a "Please try first" list with anything that only works in this build, then what changed by area, then fixes. No PR numbers or code names, under 4,000 characters (Apple's limit). Keep the file outside the repo. EAS's `--what-to-test` flag only works on its Enterprise plan (on ours the submission is refused and never scheduled, while the build itself still runs), so build and submit without it. Once Apple has processed the build, paste the notes by hand: App Store Connect, TestFlight, the build, Test Details.
 
 **Owner-only steps the first time:**
 
