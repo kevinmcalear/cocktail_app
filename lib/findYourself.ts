@@ -135,8 +135,13 @@ export function madeByGroups(drinks: readonly MadeDrink[], runs: readonly DrinkR
   return built.map((b) => b.group);
 }
 
-/** "5 drinks credited", "2 bars", "2 menus": the numbers on an unclaimed person's page. */
-export function madeByStats(groups: readonly MadeGroup[], runs: readonly DrinkRun[]): { drinks: number; bars: number; menus: number } {
+/**
+ * "5 drinks credited", "2 bars", "2 menus": the numbers on an unclaimed
+ * person's page. Bars count where they made drinks and where they worked
+ * (`jobBars`), so "Worked at" two bars never sits under "0 bars".
+ */
+export function madeByStats(groups: readonly MadeGroup[], runs: readonly DrinkRun[], jobBars: readonly string[] = []): { drinks: number; bars: number; menus: number } {
   const ids = new Set(groups.flatMap((g) => g.rows.map((r) => r.id)));
-  return { drinks: ids.size, bars: groups.filter((g) => g.barId).length, menus: new Set(runs.filter((r) => ids.has(r.itemId)).map((r) => r.editionId)).size };
+  const bars = new Set([...groups.flatMap((g) => (g.barId ? [g.barId] : [])), ...jobBars]);
+  return { drinks: ids.size, bars: bars.size, menus: new Set(runs.filter((r) => ids.has(r.itemId)).map((r) => r.editionId)).size };
 }
