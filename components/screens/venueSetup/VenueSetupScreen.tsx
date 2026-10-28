@@ -257,7 +257,6 @@ export function VenueSetupScreen() {
       accent={normalizeHex(brand.primary_color ?? '') ?? undefined}
       displayFace={faceFromDb(brand.display_face)}
       groundTint={usableGroundTint(normalizeHex(brand.ground_tint ?? '')) ?? undefined}
-      accentText={brand.accent_text ?? undefined}
     >
       {steps}
     </BrandProvider>

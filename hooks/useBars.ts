@@ -25,7 +25,6 @@ export function useBars() {
                         secondary_color,
                         display_face,
                         ground_tint,
-                        accent_text,
                         icon_background
                     )
                 `)

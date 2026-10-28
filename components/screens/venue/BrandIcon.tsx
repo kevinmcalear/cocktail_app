@@ -2,8 +2,8 @@ import { Image } from 'expo-image';
 import { StyleSheet, View } from 'react-native';
 
 import { Caption, DsText, PressableScale, useDisplayFaces, useDs } from '@/components/ds';
-import { DEFAULT_ACCENT, GROUND_TINTS, radius, space, type DisplayFace } from '@/constants/tokens';
-import { ACCENT_INK, colourName, iconFill, type IconBackground } from '@/lib/brandColours';
+import { DEFAULT_ACCENT, radius, space, type DisplayFace } from '@/constants/tokens';
+import { colourName, ICON_CREAM, iconFill, type IconBackground } from '@/lib/brandColours';
 
 export type { IconBackground };
 
@@ -18,10 +18,10 @@ interface IconLook {
   displayFace: DisplayFace;
 }
 
-/** The pick's name under its tile: the accent's colour name, the ground's tint name, or Cream. */
+/** The pick's name under its tile: the accent's colour name, Background, or Cream. */
 function labelFor(bg: IconBackground, look: IconLook): string {
   if (bg === 'accent') return colourName(look.accent ?? DEFAULT_ACCENT);
-  if (bg === 'ground') return GROUND_TINTS.find((t) => t.hex === look.groundTint)?.label ?? 'Dark';
+  if (bg === 'ground') return 'Background';
   return 'Cream';
 }
 
@@ -29,7 +29,7 @@ function labelFor(bg: IconBackground, look: IconLook): string {
 export function IconTile({ bg, look, size = TILE }: { bg: IconBackground; look: IconLook; size?: number }) {
   const fill = iconFill(bg, look);
   // The initial in the accent, except on the accent itself, where it's cream.
-  const ink = bg === 'accent' ? ACCENT_INK.cream : (look.accent ?? DEFAULT_ACCENT);
+  const ink = bg === 'accent' ? ICON_CREAM : (look.accent ?? DEFAULT_ACCENT);
   const family = useDisplayFaces([look.logoUrl ? null : look.displayFace]);
   return (
     <View style={[styles.tile, { width: size, height: size, borderRadius: size / 4, backgroundColor: fill }]} aria-hidden>

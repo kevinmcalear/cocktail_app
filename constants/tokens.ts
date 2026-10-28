@@ -113,12 +113,14 @@ export const printPaper = { paper: '#FFFFFF', ink: '#1A1714', muted: '#555049', 
 /** The accent when there's no venue brand: bar-light amber. */
 export const DEFAULT_ACCENT = '#E4B062';
 
-/** Dark grounds a venue can pick from for its brand (all keep body text above 7:1). */
-export const GROUND_TINTS = [
-  { label: 'Walnut', hex: '#1A1410' },
-  { label: 'Forest', hex: '#0F1812' },
-  { label: 'Ink', hex: '#0F131C' },
-  { label: 'Plum', hex: '#181019' },
+/** The six palettes a venue starts from on Brand when it has no logo: a colour and a background (lib/palette). */
+export const BRAND_PALETTES = [
+  { name: 'Amber', accent: DEFAULT_ACCENT, ground: 'hint' },
+  { name: 'Rust', accent: '#D0643B', ground: 'hint' },
+  { name: 'Rose', accent: '#E07A8E', ground: 'rich' },
+  { name: 'Violet', accent: '#9C86F0', ground: 'hint' },
+  { name: 'Blue', accent: '#4F8FE0', ground: 'hint' },
+  { name: 'Teal', accent: '#3FB0A2', ground: 'rich' },
 ] as const;
 
 /** Two made-up venues, for the gallery and tests. Real venues come from `bars`. */

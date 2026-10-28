@@ -2,14 +2,14 @@ import { StyleSheet, View } from 'react-native';
 
 import { Button, Caption, Field, useDs } from '@/components/ds';
 import { SectionHeading, SettingsSection } from '@/components/screens/settings/SettingsParts';
-import { DEFAULT_ACCENT, GROUND_TINTS, space, type DisplayFace } from '@/constants/tokens';
+import { space, type DisplayFace } from '@/constants/tokens';
 import type { VenueBrandRow } from '@/hooks/useVenueBrand';
 import { normalizeHex, usableGroundTint } from '@/lib/brand';
-import { colourName, contrastLines, type AccentInk } from '@/lib/brandColours';
+import { colourName } from '@/lib/brandColours';
+import { palettesFor, type Palette } from '@/lib/palette';
 
-import { AccentCards, AccentInkChoice, ContrastCheck, type AccentOption } from './BrandColours';
+import { ColourPicker } from './BrandColours';
 import { IconChoices, type IconBackground } from './BrandIcon';
-import { Swatches } from './BrandPreview';
 import { FaceChoices, LogoRow } from './BrandSections';
 
 export const SHORT_NAME_MAX = 12;
@@ -18,76 +18,59 @@ export interface BrandDraftState {
   logoUrl: string | null;
   iconUrl: string | null;
   accent: string;
-  /** The person tapped Custom: the hex field shows even when the accent matches a card. */
-  custom: boolean;
-  ink: AccentInk | null;
   face: DisplayFace;
   tint: string;
   shortName: string;
   iconBackground: IconBackground | null;
 }
 
-/** The accent cards: the current accent, colours from the logo, and the app's default, each once. */
-export function accentOptions(row: VenueBrandRow, suggested: string[], withDefault: boolean): AccentOption[] {
-  const named = [
-    { hex: row.primary_color, source: 'Accent' },
-    ...suggested.map((hex) => ({ hex, source: 'From your logo' })),
-    { hex: row.secondary_color, source: 'From your logo' },
-    ...(withDefault ? [{ hex: DEFAULT_ACCENT, source: 'App default' }] : []),
-  ];
-  const seen = new Set<string>();
-  return named.flatMap((o) => {
-    const hex = o.hex ? normalizeHex(o.hex) : null;
-    if (!hex || seen.has(hex)) return [];
-    seen.add(hex);
-    return [{ name: colourName(hex), hex, source: o.source }];
-  });
+/** The palettes on offer: the logo's colours first (fresh from an upload, else the one saved from it), then the standard ones. */
+export function brandPalettes(row: VenueBrandRow, logoUrl: string | null, suggested: string[]): Palette[] {
+  const fromLogo = logoUrl ? [...suggested, row.secondary_color].flatMap((hex) => normalizeHex(hex ?? '') ?? []) : [];
+  return palettesFor(fromLogo, colourName);
 }
 
-/**
- * The brand settings as the canvas draws them (tools-brand-desktop): Logo,
- * Colours from your logo with Text on accent, Ground tint with the contrast
- * check, Font, and the home-screen name and icon.
- */
-export function BrandForm({ row, draft, set, suggested, busy, problems, effectiveInk, onUpload, onRemoveBackground, setup }: {
+/** Colours (Kevin, 28 Oct, option B) with any problem saving them. */
+export function ColoursPart({ row, draft, set, suggested, problems }: Pick<FormProps, 'row' | 'draft' | 'set' | 'suggested' | 'problems'>) {
+  return (
+    <>
+      <ColourPicker
+        accent={normalizeHex(draft.accent)}
+        tint={normalizeHex(draft.tint)}
+        palettes={brandPalettes(row, draft.logoUrl, suggested)}
+        onChange={(c) => {
+          set('accent')(c.accent);
+          set('tint')(c.tint ?? '');
+        }}
+      />
+      {problems.accent || problems.groundTint ? <Caption tone="accent" role="alert">{problems.accent ?? problems.groundTint}</Caption> : null}
+    </>
+  );
+}
+
+interface FormProps {
   row: VenueBrandRow;
   draft: BrandDraftState;
   set: <K extends keyof BrandDraftState>(key: K) => (value: BrandDraftState[K]) => void;
   suggested: string[];
   busy: 'logo' | 'icon' | 'background' | null;
   problems: Partial<Record<'accent' | 'groundTint' | 'shortName', string>>;
-  /** What buttons use now: the pick, or the app's own choice. */
-  effectiveInk: AccentInk;
   onUpload: (kind: 'logo' | 'icon') => void;
   onRemoveBackground: () => void;
-  /**
-   * Venue setup's Look step (canvas make-venue-look): Logo, Colours, Display
-   * face, then Ground tint; the app default, Text on accent and the
-   * home-screen icon stay on Brand.
-   */
+  /** Venue setup's Look step (canvas make-venue-look): Logo, Colours, Font; the home-screen icon stays on Brand. */
   setup?: boolean;
-}) {
+}
+
+/**
+ * The brand settings as the canvas draws them (tools-brand-desktop): Logo,
+ * Colours (palettes, your own colour, background), Font, and the home-screen
+ * name and icon.
+ */
+export function BrandForm({ row, draft, set, suggested, busy, problems, onUpload, onRemoveBackground, setup }: FormProps) {
   const ds = useDs();
-  const options = accentOptions(row, suggested, !setup);
   const accent = normalizeHex(draft.accent);
-  const custom = draft.custom || (!!draft.accent.trim() && !options.some((o) => o.hex === accent));
   const tint = usableGroundTint(normalizeHex(draft.tint));
   const shortCount = draft.shortName.trim().length;
-
-  const tintSection = (
-    <SettingsSection title="Ground tint" note={setup ? 'A tint behind everything in dark mode.' : 'A tint behind everything in dark mode. Tints too light for text are refused.'}>
-      <View style={styles.fields}>
-        <Swatches
-          label="Ground tint"
-          options={[{ label: 'Standard', hex: null }, ...GROUND_TINTS.map((t) => ({ label: t.label, hex: t.hex }))]}
-          value={normalizeHex(draft.tint)}
-          onChange={(hex) => set('tint')(hex ?? '')}
-        />
-        {problems.groundTint ? <Caption tone="accent" role="alert">{problems.groundTint}</Caption> : null}
-        {accent && !setup ? <ContrastCheck lines={contrastLines(accent, tint, draft.ink)} /> : null}
-      </View>
-    </SettingsSection>
-  );
 
   return (
     <>
@@ -103,31 +86,9 @@ export function BrandForm({ row, draft, set, suggested, busy, problems, effectiv
         />
       </SettingsSection>
 
-      <SettingsSection
-        title="Colours from your logo"
-        note={
-          setup
-            ? 'The accent goes on the one main button, the active tab and what’s selected, nowhere else. Colours too light for text are refused.'
-            : 'The accent goes on the one main button, the active tab and what’s selected, nowhere else. Light mode uses a deeper shade when it needs one.'
-        }
-      >
-        <AccentCards
-          options={options}
-          value={accent}
-          custom={custom}
-          hexDraft={draft.accent}
-          hexError={problems.accent}
-          onPick={(hex) => {
-            set('custom')(false);
-            set('accent')(hex);
-          }}
-          onCustom={() => set('custom')(true)}
-          onHex={set('accent')}
-        />
-        {setup ? null : <AccentInkChoice value={draft.ink ?? effectiveInk} accent={accent} onChange={set('ink')} />}
+      <SettingsSection title="Colours" note="Your colour goes on the one main button, the active tab and what’s selected. The background tints everything else, in dark and light mode.">
+        <ColoursPart {...{ row, draft, set, suggested, problems }} />
       </SettingsSection>
-
-      {setup ? null : tintSection}
 
       {setup ? (
         // Setup draws the faces straight on the page, no card around them (canvas make-venue-look).
@@ -145,7 +106,7 @@ export function BrandForm({ row, draft, set, suggested, busy, problems, effectiv
         </SettingsSection>
       )}
 
-      {setup ? tintSection : (
+      {setup ? null : (
         <SettingsSection title="Home-screen icon" note="What staff see when they add your staff link to their home screen.">
           <View style={styles.fields}>
             {draft.iconUrl ? null : (

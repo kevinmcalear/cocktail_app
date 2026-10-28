@@ -29,7 +29,7 @@ export function TellUs({ line, ...about }: TellUsProps) {
   return (
     <>
       {/* The sheet brands itself; the row needs it here. */}
-      <BrandProvider accent={DEFAULT_ACCENT} accentText="ink">
+      <BrandProvider accent={DEFAULT_ACCENT}>
         <Row
           line={line}
           onPress={() => {

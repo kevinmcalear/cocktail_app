@@ -8,13 +8,11 @@ import { SubPageHead, usePageFrame } from '@/components/nav/PageFrame';
 import { SetupPage } from '@/components/screens/onboarding/SetupPage';
 import { SectionHeading, UnsavedBar } from '@/components/screens/settings/SettingsParts';
 import { WebHead } from '@/components/WebHead';
-import { DEFAULT_ACCENT, displayFaces, space } from '@/constants/tokens';
+import { displayFaces, space } from '@/constants/tokens';
 import { useCapabilities } from '@/hooks/useCapabilities';
 import { useViewAs } from '@/hooks/useViewAs';
 import { pickBrandImage, removeLogoBackground, useSaveVenueBrand, useVenueBrand, type VenueBrandRow } from '@/hooks/useVenueBrand';
 import { brandProblems, faceFromDb, faceToSave, normalizeHex, usableGroundTint } from '@/lib/brand';
-import { ACCENT_INK, type AccentInk } from '@/lib/brandColours';
-import { accentFill } from '@/lib/color';
 import { confirmDiscardChanges } from '@/lib/dialogs';
 
 import { BrandForm, type BrandDraftState } from './BrandForm';
@@ -35,8 +33,6 @@ function draftFrom(row: VenueBrandRow): BrandDraftState {
     logoUrl: row.logo_url,
     iconUrl: row.icon_url,
     accent: row.primary_color ?? '',
-    custom: false,
-    ink: row.accent_text,
     face: faceFromDb(row.display_face),
     tint: row.ground_tint ?? '',
     shortName: row.short_name ?? '',
@@ -72,7 +68,6 @@ function BrandEditor({ row, canEdit, header, setup }: { row: VenueBrandRow; canE
     display_face: faceToSave(draft.face, row.display_face),
     ground_tint: normalizeHex(draft.tint),
     short_name: draft.shortName.trim() || null,
-    accent_text: draft.ink,
     icon_background: draft.iconBackground,
   };
   const changed = canEdit && (Object.keys(patch) as (keyof typeof patch)[]).some((k) => (patch[k] ?? null) !== (row[k] ?? null));
@@ -134,14 +129,11 @@ function BrandEditor({ row, canEdit, header, setup }: { row: VenueBrandRow; canE
     iconUrl: draft.iconUrl,
     shortName: draft.shortName,
     accent,
-    accentText: draft.ink,
     // A face that loads on demand previews in Instrument Serif until its file is in.
     displayFace: shownFace,
     groundTint: usableGroundTint(normalizeHex(draft.tint)),
     iconBackground: draft.iconBackground,
   };
-  // What buttons use when the venue hasn't picked: whichever ink reads better.
-  const autoInk: AccentInk = accentFill(accent ?? DEFAULT_ACCENT, ACCENT_INK.ink, ACCENT_INK.cream).text === ACCENT_INK.ink ? 'ink' : 'cream';
 
   const settings = (
     <View style={styles.form} pointerEvents={canEdit ? 'auto' : 'none'} aria-disabled={!canEdit}>
@@ -152,7 +144,6 @@ function BrandEditor({ row, canEdit, header, setup }: { row: VenueBrandRow; canE
         suggested={suggested}
         busy={busy}
         problems={problems}
-        effectiveInk={autoInk}
         onUpload={(kind) => void upload(kind)}
         onRemoveBackground={() => void removeBackground()}
         setup={!!setup}

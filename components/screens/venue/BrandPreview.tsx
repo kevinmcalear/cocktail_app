@@ -21,8 +21,6 @@ export interface BrandLook {
   displayFace: DisplayFace;
   /** Only a readable tint (lib/brand usableGroundTint), or null. */
   groundTint: string | null;
-  /** Text on accent buttons, or null for the automatic pick. */
-  accentText?: 'cream' | 'ink' | null;
   /** The home-screen icon's background, or null for the logo's own. */
   iconBackground?: IconBackground | null;
 }
@@ -139,7 +137,7 @@ export function BrandPreview({ look, stacked = false, setup = false }: { look: B
   const wide = notPhone && !setup;
   // Phones show one scheme at a time, so the controls stay close to the preview.
   const [only, setOnly] = useState<'light' | 'dark'>('dark');
-  const brand = { accent: look.accent ?? undefined, displayFace: look.displayFace, groundTint: look.groundTint ?? undefined, accentText: look.accentText ?? undefined };
+  const brand = { accent: look.accent ?? undefined, displayFace: look.displayFace, groundTint: look.groundTint ?? undefined };
   const schemes = wide ? (['dark', 'light'] as const) : [only];
   return (
     <View aria-label="Live preview" style={styles.wrap}>
@@ -197,7 +195,6 @@ function SchemeSwitch({ value, onChange }: { value: 'dark' | 'light'; onChange: 
   );
 }
 
-/** A row of colour choices, each named, with the chosen one heavily ringed. */
 /** Dark or Light under the setup preview: the picked one ringed in the accent over a faint accent wash (canvas make-venue-look). */
 export function SchemeChip({ label, selected, onPress }: { label: string; selected: boolean; onPress: () => void }) {
   const ds = useDs();
@@ -214,45 +211,6 @@ export function SchemeChip({ label, selected, onPress }: { label: string; select
     >
       <Caption style={selected ? styles.picked : null}>{label}</Caption>
     </PressableScale>
-  );
-}
-
-export function Swatches({
-  label,
-  options,
-  value,
-  onChange,
-}: {
-  label: string;
-  options: { label: string; hex: string | null }[];
-  value: string | null;
-  onChange: (hex: string | null) => void;
-}) {
-  const ds = useDs();
-  return (
-    <View role="radiogroup" accessibilityLabel={label} style={styles.swatches}>
-      {options.map((o) => {
-        const selected = (o.hex ?? null) === (value ?? null);
-        return (
-          <PressableScale
-            key={o.label}
-            role="radio"
-            aria-checked={selected}
-            accessibilityLabel={o.hex ? `${o.label}, ${o.hex}` : o.label}
-            onPress={() => onChange(o.hex)}
-            style={styles.swatch}
-          >
-            {/* The ring sits outside the dot, with a gap, so it shows on dark swatches too. */}
-            <View style={[styles.ring, { borderColor: selected ? ds.c.ink : 'transparent' }]}>
-              <View style={[styles.dot, { backgroundColor: o.hex ?? ds.c.raised, borderColor: ds.c.line }]} />
-            </View>
-            <DsText variant="caption" numberOfLines={1}>
-              {o.label}
-            </DsText>
-          </PressableScale>
-        );
-      })}
-    </View>
   );
 }
 
@@ -282,8 +240,4 @@ const styles = StyleSheet.create({
   iconCard: { flexDirection: 'row', alignItems: 'center', gap: space.md, padding: space.md, borderRadius: radius.card, borderWidth: 1 },
   icon: { alignItems: 'center', gap: space.xs, width: 64 },
   iconTile: { width: 44, height: 44, borderRadius: radius.control },
-  swatches: { flexDirection: 'row', flexWrap: 'wrap', gap: space.md },
-  swatch: { alignItems: 'center', gap: space.xs, minWidth: 56 },
-  ring: { padding: 3, borderRadius: radius.pill, borderWidth: 2 },
-  dot: { width: 40, height: 40, borderRadius: radius.pill, borderWidth: 1 },
 });
