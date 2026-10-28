@@ -208,10 +208,10 @@ export interface Claimant {
   works_here: WorksHere[];
 }
 
-/** "Matt Resler (@mathew.resler)", or "Matt Resler, no profile yet". */
+/** "Matt Resler (@mathew.resler)", or "Matt Resler (no profile yet)". */
 export function claimantWho(c: Claimant | null): string {
   if (!c) return 'Someone';
-  return c.handle ? `${c.name} (@${c.handle})` : `${c.name}, no profile yet`;
+  return c.handle ? `${c.name} (@${c.handle})` : `${c.name} (no profile yet)`;
 }
 
 /** "Mathew Resler, Head bartender, since Mar 2026 (their page)": a moderator weighing a bar claim sees the job behind it. */

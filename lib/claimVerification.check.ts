@@ -81,7 +81,7 @@ assert.equal(typedPhone('12345'), null);
 
 // Who is claiming, for moderators.
 assert.equal(claimantWho({ name: 'Matt Resler', email: null, handle: 'mathew.resler', works_here: [] }), 'Matt Resler (@mathew.resler)');
-assert.equal(claimantWho({ name: 'Matt Resler', email: null, handle: null, works_here: [] }), 'Matt Resler, no profile yet');
+assert.equal(claimantWho({ name: 'Matt Resler', email: null, handle: null, works_here: [] }), 'Matt Resler (no profile yet)');
 assert.equal(claimantWho(null), 'Someone');
 assert.equal(
   worksHereLine({ person: 'Mathew Resler', title: 'Head bartender', is_current: true, start_year: 2026, start_month: 3, claimed: true }),
