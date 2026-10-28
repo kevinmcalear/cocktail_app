@@ -1,7 +1,7 @@
 // Mathew Resler's career (20261128100000_mathew_resler_career.sql): his eight
 // jobs, past jobs at closed bars shown signed out and the rest kept for him,
 // his two credited drinks, the new one queued to be drawn, and running the seed
-// again adds nothing.
+// again adds nothing. 20261128210000 adds his Instagram and headline job.
 //
 //   supabase start && supabase db reset
 //   npm run test:security

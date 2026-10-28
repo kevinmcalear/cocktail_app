@@ -13,9 +13,7 @@
 --    Past jobs at closed bars are public record and shown; the rest wait
 --    for him to switch them on.
 -- 3. His bio, rewritten to cover all of it, only while nobody has claimed or
---    edited it. His Instagram, @drink_smith (from Kevin, 28 Oct), so he can
---    claim the page with a code sent from it, and Cocktail Omakase as his
---    headline job, so the claim offers it rather than Bar 7.
+--    edited it.
 -- 4. Drinks the press credits to him: the Hojicha Espresso Martini at Bar 7
 --    (Forbes, July 2026) gets him as creator, and his pork-fat mezcal drink
 --    at Empellón Cocina (Food Republic) is added with its published spec.
@@ -120,14 +118,6 @@ WHERE a.kind = 'person' AND a.handle = 'mathew.resler' AND pp.person_profile_id 
 UPDATE "public"."profiles" SET "bio" = 'New York bartender, known as Mat, who runs the bar at Cocktail Omakase and Bar 7 on the Lower East Side, opened in 2026 with Tokyo''s Bar Libre, where he trained first. He came from Los Angeles in 2011 as bar manager of Alex Stupak''s first Empellón (now Empellón Taqueria), then was beverage director at Empellón Cocina. He worked at Golden Cadillac and Bar Sardine, helped Kenta Goto open Bar Goto in 2015 and became its head bartender, and later tended bar at Bar Goto Niban.'
 WHERE "kind" = 'person' AND "handle" = 'mathew.resler' AND "user_id" IS NULL AND "claimed_at" IS NULL
   AND "bio" = 'New York bartender, also known as Mat, who leads the bar at Cocktail Omakase and Bar 7 on the Lower East Side. He helped open Bar Goto, worked at Bar Goto Niban in Brooklyn and ran the bar at Empellón Taqueria, and spent time at Bar Libre in Tokyo before Cocktail Omakase opened in 2026.';
-
--- His Instagram and headline job, while the page is unclaimed and has none.
-UPDATE "public"."profiles" SET "instagram" = 'drink_smith'
-WHERE "kind" = 'person' AND "handle" = 'mathew.resler' AND "user_id" IS NULL AND coalesce("instagram", '') = '';
-UPDATE "public"."profiles" p SET "headline_position_id" = j.id
-FROM "public"."profile_positions" j JOIN "public"."profiles" b ON b.id = j.bar_profile_id AND b.handle = 'cocktail_omakase_nyc'
-WHERE p.kind = 'person' AND p.handle = 'mathew.resler' AND p.user_id IS NULL AND p.headline_position_id IS NULL
-  AND j.person_profile_id = p.id AND j.is_current;
 
 -- --- 4. Drinks ---
 

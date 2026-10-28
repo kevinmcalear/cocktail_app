@@ -1,8 +1,8 @@
 // Cocktail Omakase and Bar 7 (20261008000000_cocktail_omakase.sql): both bars,
 // Mathew Resler and his jobs, the drinks with their ingredients on the right
 // menus, no paid flavour jobs queued, and signed-out visitors see the bar.
-// 20261128100000 corrects his jobs (see mathew-resler.test.mjs), so the
-// checks here read the result, and the seed no longer re-runs on top.
+// 20261128200000 corrects some of it (see omakase-every-menu.test.mjs), so
+// the checks here read the result, and the seed no longer re-runs on top.
 //
 //   supabase start && supabase db reset
 //   npm run test:security
@@ -58,7 +58,7 @@ describe('Cocktail Omakase and Bar 7', () => {
        JOIN public.profiles p ON p.id = e.profile_id
        JOIN public.profile_menu_edition_drinks d ON d.edition_id = e.id
        JOIN public.items i ON i.id = d.item_id
-       WHERE p.handle = 'cocktail_omakase_nyc' GROUP BY e.name ORDER BY e.name`
+       WHERE p.handle = 'cocktail_omakase_nyc' AND e.name LIKE 'Opening menu:%' GROUP BY e.name ORDER BY e.name`
     );
     assert.deepEqual(rows, [
       {
@@ -73,7 +73,7 @@ describe('Cocktail Omakase and Bar 7', () => {
       },
       {
         name: 'Opening menu: Spirited',
-        drinks: ['Yōkoso', 'Ember Highball', 'Tomatillo Shiso', 'Sushi Sazerac', 'Mizunara Negroni'],
+        drinks: ['Yōkoso', 'Ember Highball', 'Tomatillo Shiso Sour', 'Sushi Sazerac', 'Mizunara Negroni'],
         all_have_lines: true,
       },
     ]);
@@ -88,8 +88,8 @@ describe('Cocktail Omakase and Bar 7', () => {
       [BARS]
     );
     assert.deepEqual(rows, [
-      { handle: 'bar7.cocktailomakase', drinks: 4, jobs: 0 },
-      { handle: 'cocktail_omakase_nyc', drinks: 11, jobs: 0 },
+      { handle: 'bar7.cocktailomakase', drinks: 7, jobs: 0 },
+      { handle: 'cocktail_omakase_nyc', drinks: 25, jobs: 0 },
     ]);
   });
 
