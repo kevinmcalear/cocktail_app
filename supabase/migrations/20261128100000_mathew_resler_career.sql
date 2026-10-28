@@ -17,6 +17,7 @@
 -- 4. Drinks the press credits to him: the Hojicha Espresso Martini at Bar 7
 --    (Forbes, July 2026) gets him as creator, and his pork-fat mezcal drink
 --    at Empellón Cocina (Food Republic) is added with its published spec.
+--    Its flavour job stays queued, so it gets drawn.
 --    The Cocktail Omakase menus stay credited to the bar: the press says
 --    they were built with Bar Libre and names no one drink as his.
 --
@@ -120,14 +121,6 @@ WHERE "kind" = 'person' AND "handle" = 'mathew.resler' AND "user_id" IS NULL AND
 
 -- --- 4. Drinks ---
 
--- Nor flavour jobs: each is a paid AI fill for a drink with no venue. Note
--- these drinks' queue now and put it back at the end.
-CREATE TEMP TABLE "mr_flavor_jobs" AS
-SELECT j.* FROM "private"."item_flavor_jobs" j
-JOIN "public"."items" i ON i.id = j.item_id
-WHERE i.item_type = 'cocktail' AND i.bar_id IS NULL
-  AND i.origin_bar_profile_id IN (SELECT id FROM "mr_bars" UNION SELECT id FROM "public"."profiles" WHERE handle = 'bar7.cocktailomakase');
-
 -- Forbes (28 Jul 2026): he built it around layers of roast.
 UPDATE "public"."items" i SET "creator_profile_id" = a.id
 FROM "public"."profiles" a, "public"."profiles" b
@@ -196,18 +189,5 @@ FROM "mr_lines" l
 CROSS JOIN "mr_drink" d
 JOIN "public"."items" i ON i.id = l.id;
 
--- --- Put these drinks' flavour jobs back ---
-
-DELETE FROM "private"."item_flavor_jobs" j
-USING "public"."items" i
-WHERE j.item_id = i.id AND i.item_type = 'cocktail' AND i.bar_id IS NULL
-  AND i.origin_bar_profile_id IN (SELECT id FROM "mr_bars" UNION SELECT id FROM "public"."profiles" WHERE handle = 'bar7.cocktailomakase')
-  AND NOT EXISTS (SELECT 1 FROM "mr_flavor_jobs" o WHERE o.item_id = j.item_id);
-UPDATE "private"."item_flavor_jobs" j SET
-    "status" = o.status, "revision" = o.revision, "attempts" = o.attempts, "run_after" = o.run_after,
-    "lease_until" = o.lease_until, "last_error" = o.last_error, "updated_at" = o.updated_at
-FROM "mr_flavor_jobs" o
-WHERE j.item_id = o.item_id AND j.revision <> o.revision;
-
-DROP TABLE "mr_flavor_jobs", "mr_lines", "mr_drink", "mr_jobs", "mr_bars";
+DROP TABLE "mr_lines", "mr_drink", "mr_jobs", "mr_bars";
 RESET "app.image_worker";

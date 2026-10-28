@@ -1,6 +1,6 @@
 // Mathew Resler's career (20261128100000_mathew_resler_career.sql): his eight
 // jobs, past jobs at closed bars shown signed out and the rest kept for him,
-// his two credited drinks with no paid flavour jobs, and running the seed
+// his two credited drinks, the new one queued to be drawn, and running the seed
 // again adds nothing.
 //
 //   supabase start && supabase db reset
@@ -67,17 +67,18 @@ describe('Mathew Resler', () => {
     ]);
   });
 
-  test('his two drinks are credited to him, with no paid flavour jobs', async () => {
+  test('his two drinks are credited to him, and the new one will be drawn', async () => {
     const { rows } = await db.query(
       `SELECT i.name, b.handle, i.credit_status,
               (SELECT count(*)::int FROM public.recipes r WHERE r.recipe_item_id = i.id) AS lines,
-              EXISTS (SELECT 1 FROM private.item_flavor_jobs j WHERE j.item_id = i.id) AS job
+              (EXISTS (SELECT 1 FROM private.item_flavor_jobs j WHERE j.item_id = i.id)
+               OR EXISTS (SELECT 1 FROM public.item_sketches s WHERE s.item_id = i.id)) AS drawn
        FROM public.items i JOIN public.profiles b ON b.id = i.origin_bar_profile_id
        WHERE i.creator_profile_id = (SELECT id FROM public.profiles WHERE handle = 'mathew.resler') ORDER BY i.name`
     );
     assert.deepEqual(rows, [
-      { name: 'Hojicha Espresso Martini', handle: 'bar7.cocktailomakase', credit_status: 'suggested', lines: 4, job: false },
-      { name: 'Pork Fat Mezcal', handle: 'empellon.cocina.nyc', credit_status: 'suggested', lines: 5, job: false },
+      { name: 'Hojicha Espresso Martini', handle: 'bar7.cocktailomakase', credit_status: 'suggested', lines: 4, drawn: false },
+      { name: 'Pork Fat Mezcal', handle: 'empellon.cocina.nyc', credit_status: 'suggested', lines: 5, drawn: true },
     ]);
   });
 
