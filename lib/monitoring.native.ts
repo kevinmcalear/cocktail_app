@@ -33,3 +33,23 @@ export function setMonitoringUser(userId: string | null): void {
   if (!dsn) return;
   Sentry.setUser(userId ? { id: userId } : null);
 }
+
+/**
+ * A crumb per screen (the route pattern, /cocktail/[id], never what's in it),
+ * so a report shows the way someone came. The web SDK records page changes
+ * itself.
+ */
+export function noteScreen(screen: string): void {
+  if (!dsn) return;
+  Sentry.addBreadcrumb({ category: 'navigation', type: 'navigation', message: screen, data: { to: screen } });
+}
+
+/**
+ * Ties a note sent from the app (feedback_notes) to this session in Sentry:
+ * the steps and errors before it, the device and the update. The note's words
+ * and photo stay in feedback_notes; Sentry gets its id, kind and screen.
+ */
+export function reportFeedback(noteId: string, about: { kind: string; screen: string }): void {
+  if (!dsn) return;
+  Sentry.captureFeedback({ message: `${about.kind} note from ${about.screen}`, source: 'app_note', tags: { note_id: noteId, note_kind: about.kind } });
+}
