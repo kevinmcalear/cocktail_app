@@ -77,6 +77,8 @@ export function BarClaimCard({ claim, busy, onOpen, onReview }: { claim: ClaimFo
   const pageHandle = (page && pageInstagram(page)) ?? (typed?.instagram ? null : handle);
   const host = siteHost(page?.website);
   const place = [page?.locality, page?.city, page?.country_code].filter(Boolean).join(', ');
+  // A person's Instagram claim comes here too: no venue, no bar phone.
+  const person = page?.kind === 'person';
   const name = page?.display_name ?? 'this bar';
   const mapSearch = `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent([name, page?.city].filter(Boolean).join(' '))}`;
   const codeReady = method !== 'phone' || code.replace(/\D/g, '').length === 6;
@@ -94,7 +96,7 @@ export function BarClaimCard({ claim, busy, onOpen, onReview }: { claim: ClaimFo
           {page?.is_closed ? <Tag label="Closed" /> : null}
         </View>
         <Caption tone="muted">
-          {`${new Date(claim.created_at).toLocaleDateString()} · ${claim.bar ? `links their venue ${claim.bar.name}` : 'makes a new venue'}`}
+          {`${new Date(claim.created_at).toLocaleDateString()} · ${person ? 'a person’s page' : claim.bar ? `links their venue ${claim.bar.name}` : 'makes a new venue'}`}
         </Caption>
 
         <View style={[styles.columns, wide && styles.columnsWide]}>
@@ -102,9 +104,11 @@ export function BarClaimCard({ claim, busy, onOpen, onReview }: { claim: ClaimFo
             <Fact label="Website">{host ? <Link label={host} href={page!.website!} /> : 'None'}</Fact>
             <Fact label="Instagram">{pageHandle ? <Link label={`@${pageHandle}`} href={instagramUrl(pageHandle)} /> : 'None'}</Fact>
             {place ? <Fact label="Where">{place}</Fact> : null}
-            <Fact label="Phone">
-              <Link label="Find its number" href={mapSearch} />
-            </Fact>
+            {person ? null : (
+              <Fact label="Phone">
+                <Link label="Find its number" href={mapSearch} />
+              </Fact>
+            )}
           </Column>
           <Column title="From them" wide={wide}>
             <Fact label="Who">{claimantWho(claim.claimant)}</Fact>
@@ -145,7 +149,7 @@ export function BarClaimCard({ claim, busy, onOpen, onReview }: { claim: ClaimFo
           <Button
             label="Approve"
             disabled={busy || !codeReady}
-            accessibilityHint={`Hands ${name} over, at Menu`}
+            accessibilityHint={person ? `Hands ${name}’s page over` : `Hands ${name} over, at Menu`}
             onPress={() => onReview({ claimId: claim.id, approve: true, code: method === 'phone' ? code : undefined })}
           />
           <Button label="Turn down" variant="secondary" disabled={busy} onPress={() => onReview({ claimId: claim.id, approve: false, reason })} />
