@@ -22,7 +22,8 @@ const NEWS_MS = 14 * 24 * 60 * 60 * 1000;
 export function useClaimNews() {
   const claim = useMyPersonClaim().data;
   const [now] = useState(() => Date.now());
-  return claim?.status === 'approved' && now - Date.parse(claim.created_at) < NEWS_MS ? claim : null;
+  // From the approval: a claim that waited a while is still news when it lands.
+  return claim?.status === 'approved' && now - Date.parse(claim.reviewed_at ?? claim.created_at) < NEWS_MS ? claim : null;
 }
 
 /**

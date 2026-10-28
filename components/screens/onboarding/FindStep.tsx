@@ -12,6 +12,7 @@ import { usePublicBars } from '@/hooks/useRankings';
 import { useClaimReturn } from '@/lib/claimReturn';
 import { closedLabel } from '@/lib/discoverDrinks';
 import { waitingLine } from '@/lib/findYourself';
+import { lastName, nameKey, sameName } from '@/lib/likelyClaimer';
 
 import { barPlace } from '../bar/BarFactLines';
 import { ClaimSent } from './ClaimSent';
@@ -46,7 +47,11 @@ export function FindStep({
   // Not while a claim they sent waits: Setup claims one page.
   useClaimReturn(checked && !claim);
   const [bars, nearBars] = splitNear(usePublicBars(search, { near: true }).data ?? []);
-  const [people, nearPeople] = splitNear(usePublicPeople(search, { near: true }).data ?? []);
+  const [people, near] = splitNear(usePublicPeople(search, { near: true }).data ?? []);
+  // "Matt Resler" finds Mathew Resler: with nobody by the name as typed, their last name, kept to names that could be them.
+  const surname = people.length || near.length ? '' : (lastName(search) ?? '');
+  const sameSurname = (usePublicPeople(surname).data ?? []).filter((p) => sameName(nameKey(search), nameKey(p.display_name)));
+  const nearPeople = near.length ? near : sameSurname;
   const { data: waiting } = useWaiting(
     [...bars, ...nearBars].map((b) => b.id),
     [...people, ...nearPeople].map((p) => p.id)

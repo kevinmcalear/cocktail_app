@@ -9,7 +9,7 @@ import { useSaveSetupAnswer } from '@/hooks/useLikelyClaimer';
 import { useFinishOnboarding, useSaveOnboardingName, useSaveWorkplace } from '@/hooks/useOnboarding';
 import { useMyProfile } from '@/hooks/useMyProfile';
 import { useMyPersonClaim } from '@/hooks/useProfiles';
-import { inviteJobTitle, needsOnboarding, nextStep, stepProgress, type OnboardingStep, type StepChoice } from '@/lib/onboarding';
+import { inviteJobTitle, needsOnboarding, nextStep, splitName, stepProgress, type OnboardingStep, type StepChoice } from '@/lib/onboarding';
 import { useAppMode } from '@/store/useAppMode';
 
 import { BringStep } from './BringStep';
@@ -42,7 +42,7 @@ export function OnboardingScreen() {
   const router = useRouter();
   // "Claim this page" on a bar page opened from here comes back with the bar (ClaimProfile).
   const { run } = useLocalSearchParams<{ run?: string }>();
-  const { user, loading } = useAuth();
+  const { user, loading, updateProfile } = useAuth();
   const profile = useMyProfile();
   const invites = useMyInvites();
   // A claim sent from "Find your bar or your name" skips the career steps, so the bar counts the shorter way.
@@ -153,6 +153,9 @@ export function OnboardingScreen() {
       return;
     }
     if (!joined) {
+      // The name on their account now: a claim makes no profile until it's approved, and
+      // whoever checks it (and You meanwhile) should see who sent it. Saved again with the profile.
+      void updateProfile({ ...splitName(name), fullName: name.trim() });
       go('name');
       return;
     }

@@ -19,7 +19,7 @@ let mockBars: { id: string; display_name: string; locality: string | null; postc
 
 jest.mock('expo-router', () => ({ useRouter: () => ({ replace: mockReplace, push: jest.fn(), back: jest.fn(), canGoBack: () => false }), useLocalSearchParams: () => mockParams }));
 jest.mock('@/ctx/AuthContext', () => ({
-  useAuth: () => ({ user: { id: 'me', user_metadata: mockMeta, invited_at: mockInvitedAt }, loading: false }),
+  useAuth: () => ({ user: { id: 'me', user_metadata: mockMeta, invited_at: mockInvitedAt }, loading: false, updateProfile: async () => ({ error: null }) }),
 }));
 jest.mock('@/hooks/useBarInvites', () => ({
   useMyInvites: () => ({ data: mockInvites, isLoading: false }),

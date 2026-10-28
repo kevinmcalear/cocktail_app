@@ -10,7 +10,7 @@ let mockMeta: { onboarded?: boolean } = { onboarded: false };
 const rye = { id: 'lr', handle: 'little-rye', display_name: 'Little Rye', address_line: '214 Smith St', locality: 'Fitzroy', city: 'Melbourne', bar_type: null, avatar_url: null, is_closed: false, claimed: false, awards: 0, drinks: 12, sample: [] };
 
 jest.mock('expo-router', () => ({ useRouter: () => ({ replace: mockReplace, push: mockPush, back: jest.fn(), canGoBack: () => false }), useLocalSearchParams: () => ({}) }));
-jest.mock('@/ctx/AuthContext', () => ({ useAuth: () => ({ user: { id: 'me', user_metadata: mockMeta }, loading: false }) }));
+jest.mock('@/ctx/AuthContext', () => ({ useAuth: () => ({ user: { id: 'me', user_metadata: mockMeta }, loading: false, updateProfile: async () => ({ error: null }) }) }));
 jest.mock('@/hooks/useBarInvites', () => ({ useMyInvites: () => ({ data: [], isLoading: false }) }));
 const mockSaveAnswer = jest.fn();
 jest.mock('@/hooks/useLikelyClaimer', () => ({ useSaveSetupAnswer: () => ({ mutate: mockSaveAnswer }) }));
