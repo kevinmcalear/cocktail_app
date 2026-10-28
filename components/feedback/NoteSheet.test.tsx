@@ -11,7 +11,14 @@ import { NoteSheet } from './NoteSheet';
 jest.mock('@/ctx/AuthContext', () => ({ useUserId: () => 'me' }));
 jest.mock('expo-image-picker', () => ({}));
 const mockInsert = jest.fn();
-jest.mock('@/lib/supabase', () => ({ supabase: { from: () => ({ insert: (row: object) => ({ select: () => ({ single: () => mockInsert(row) }) }) }) } }));
+const mockUpload = jest.fn(async (_path: string, _body: unknown, _opts: object) => ({ error: null }));
+jest.mock('@/lib/supabase', () => ({
+  supabase: {
+    from: () => ({ insert: (row: object) => ({ select: () => ({ single: () => mockInsert(row) }) }) }),
+    storage: { from: () => ({ upload: (path: string, body: unknown, opts: object) => mockUpload(path, body, opts) }) },
+  },
+}));
+jest.mock('@/lib/imageBase64', () => ({ imageExtFromUri: () => 'jpg', uriToBase64: async () => 'AAAA' }));
 const mockReportFeedback = jest.fn();
 jest.mock('@/lib/monitoring', () => ({ reportFeedback: (...args: unknown[]) => mockReportFeedback(...args) }));
 
@@ -28,6 +35,7 @@ beforeEach(() => {
   useNoteDrafts.setState({ drafts: {} });
   mockInsert.mockReset();
   mockReportFeedback.mockReset();
+  mockUpload.mockClear();
 });
 
 test('Tell us shows what it is sent with, keeps the words when sending fails, and thanks them once it goes', async () => {
@@ -134,4 +142,41 @@ test('the thanks stays while the sheet closes; opened again, it is a fresh sheet
   await rerender(view(true));
   expect(screen.getByText('What do you do differently?')).toBeTruthy();
   expect(screen.getByLabelText('What you do').props.value).toBe('');
+});
+
+test('a report from a screenshot opens with it attached and sends it; Remove sends the words alone', async () => {
+  const shot = { uri: 'file:///tmp/shot.jpg', id: 'shot1', type: 'image/jpeg' };
+  const about = { screen: '/cocktail/abc', label: 'your screenshot' };
+  const view = (
+    <QueryClientProvider client={new QueryClient()}>
+      <NoteSheet visible onClose={() => {}} about={about} report={{}} photo={shot} />
+    </QueryClientProvider>
+  );
+  await renderWithTamagui(view);
+  expect(screen.getByText('Screenshot added')).toBeTruthy();
+  expect(screen.getByText('Sent with: your screenshot · app version and device')).toBeTruthy();
+  // No email app can carry the screenshot, so there's no Email us instead here.
+  expect(screen.queryByText('Email us instead')).toBeNull();
+
+  mockInsert.mockResolvedValueOnce({ data: { id: 'n2' }, error: null });
+  await fireEvent.press(screen.getByRole('button', { name: 'Send' }));
+  expect(await screen.findByText('Thanks for telling us.')).toBeTruthy();
+  expect(mockUpload).toHaveBeenCalledWith('me/shot1.jpg', expect.anything(), { contentType: 'image/jpeg', upsert: false });
+  expect(mockInsert).toHaveBeenLastCalledWith(expect.objectContaining({ kind: 'broken', screen: '/cocktail/abc', photo_path: 'me/shot1.jpg' }));
+});
+
+test('Remove takes the screenshot off a report before it goes', async () => {
+  const shot = { uri: 'file:///tmp/shot.jpg', id: 'shot2', type: 'image/jpeg' };
+  await renderWithTamagui(
+    <QueryClientProvider client={new QueryClient()}>
+      <NoteSheet visible onClose={() => {}} about={{ screen: '/menus' }} report={{}} photo={shot} />
+    </QueryClientProvider>
+  );
+  await fireEvent.press(screen.getByText('Remove'));
+  expect(screen.getByRole('button', { name: 'Add a photo (optional)' })).toBeTruthy();
+  mockInsert.mockResolvedValueOnce({ data: { id: 'n3' }, error: null });
+  await fireEvent.press(screen.getByRole('button', { name: 'Send' }));
+  expect(await screen.findByText('Thanks for telling us.')).toBeTruthy();
+  expect(mockUpload).not.toHaveBeenCalled();
+  expect(mockInsert).toHaveBeenLastCalledWith(expect.objectContaining({ photo_path: null }));
 });
