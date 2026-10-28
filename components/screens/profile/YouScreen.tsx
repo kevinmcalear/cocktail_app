@@ -112,7 +112,7 @@ function You() {
             <Stat value={madeCount} label={madeCount === 1 ? 'original' : 'originals'} />
           </Stats>
 
-          {profile ? <YourBarCard positions={positions} /> : null}
+          {profile ? <YourBarCard positions={positions} headlineId={profile.headlinePositionId} /> : null}
 
           <TasteCard />
 

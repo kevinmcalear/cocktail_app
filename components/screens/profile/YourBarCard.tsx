@@ -66,10 +66,12 @@ export function ItsYou({ drinks, waiting = 0 }: { drinks: number; waiting?: numb
  * (its claim link); once it's claimed, "Ask to join Pale Moth's team", which
  * its Admin accepts. Nothing once you're on the team, or with no current job.
  */
-export function YourBarCard({ positions }: { positions: Position[] }) {
+export function YourBarCard({ positions, headlineId = null }: { positions: Position[]; headlineId?: string | null }) {
   const ds = useDs();
   const router = useRouter();
-  const job = positions.find((p) => p.is_current && p.person_accepted);
+  // Their headline job's bar when it's current (Cocktail Omakase, not Bar 7), else the first current one.
+  const now = positions.filter((p) => p.is_current && p.person_accepted);
+  const job = now.find((p) => p.id === headlineId) ?? now[0];
   const { data: bar } = useProfile(job?.bar.id ?? null);
   const venueId = bar?.kind === 'bar' ? bar.bar_id : null;
   const myVenues = useBars().data ?? [];
