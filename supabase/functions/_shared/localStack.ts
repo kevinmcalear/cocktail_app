@@ -22,6 +22,9 @@ export const LOCAL_FLAVOR_WORKER_SECRET = "local-flavor-worker-secret";
 /** The sync-calendar secret on a local stack (supabase/seed.sql puts the same value in Vault). */
 export const LOCAL_CALENDAR_SYNC_SECRET = "local-calendar-sync-secret";
 
+/** The claim-email secret on a local stack (supabase/seed.sql puts the same value in Vault). */
+export const LOCAL_CLAIM_EMAIL_SECRET = "local-claim-email-secret";
+
 /** The pair-notes secret on a local stack. */
 export const LOCAL_PAIR_NOTES_SECRET = "local-pair-notes-secret";
 
