@@ -45,4 +45,7 @@ assert.ok(!bare.text.includes('Photo'));
 assert.ok(!bare.text.includes('Bar:'));
 assert.ok(!bare.html.includes('<img'));
 
+// A line break in a drink name stays out of the subject (Resend refuses multi-line subjects).
+assert.equal(noteEmail({ ...note, drinkName: 'Ash\nGarden' }).subject, 'Something’s broken: Settings › Report a problem · Ash Garden · Little Rye');
+
 console.log('noteEmail.check: ok');

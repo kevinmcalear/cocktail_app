@@ -43,7 +43,8 @@ export function sentAt(iso: string): string {
 export function noteEmail(note: NoteForEmail): EmailContent {
   const kind = KIND_LABELS[note.kind] ?? note.kind;
   const where = [note.screen, note.drinkName?.trim(), note.barName].filter(Boolean).join(" · ");
-  const subject = `${kind}: ${where}`.slice(0, 200);
+  // One line: a pasted line break in a drink name would make Resend refuse the email.
+  const subject = `${kind}: ${where}`.replace(/\s+/g, " ").slice(0, 200);
   const words = note.body.trim() || "(No words)";
   const from = note.senderName ? `${note.senderName} (${note.senderId})` : note.senderId;
   const rows: [string, string][] = [
