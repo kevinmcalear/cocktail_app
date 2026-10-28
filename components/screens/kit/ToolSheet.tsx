@@ -5,7 +5,7 @@ import { Chip, EquipmentThumb, Field } from '@/components/ds';
 import { space } from '@/constants/tokens';
 import { useBarKit, useSaveTool, type KitRow, type ToolChange } from '@/hooks/useBarKit';
 import { useVenueSuppliers } from '@/hooks/useVenueSuppliers';
-import { EQUIPMENT, equipmentById } from '@/lib/techniques/equipment';
+import { EQUIPMENT, equipmentById, equipmentMatches } from '@/lib/techniques/equipment';
 import { kitCount, TOOL_LOCATION_LABEL } from '@/lib/venueKit';
 
 import { KitAddSheet, KitChipGroup, useOpenKey, type KitQuestion } from './KitAddSheet';
@@ -60,7 +60,7 @@ function ToolSheetBody({ barId, visible, onClose, tool, initialKey, startAt = 0,
 
   // Ours not on the venue's list yet, matching the search; every one with none typed.
   // ponytail: the first dozen until a search narrows it; a browse by kind if a dozen isn't enough.
-  const ours = EQUIPMENT.filter((e) => !have.includes(e.id) && (!search || e.name.toLowerCase().includes(search) || e.what.toLowerCase().includes(search))).slice(0, search ? 30 : 12);
+  const ours = EQUIPMENT.filter((e) => !have.includes(e.id) && (!search || equipmentMatches(e, search))).slice(0, search ? 30 : 12);
   const picked = keys.flatMap((id) => equipmentById(id) ?? []);
   // Picked ones stay where they are; any the list doesn't show lead it.
   const shown = [...picked.filter((e) => !ours.includes(e)), ...ours];
@@ -99,7 +99,7 @@ function ToolSheetBody({ barId, visible, onClose, tool, initialKey, startAt = 0,
         </View>
       ) : (
         <View style={styles.stack}>
-          <Field label="Search tools" hideLabel icon="magnifyingglass" value={term} onChangeText={setTerm} placeholder="Jigger, sous vide, Lewis bag" autoCorrect={false} maxLength={60} />
+          <Field label="Search tools" hideLabel icon="magnifyingglass" value={term} onChangeText={setTerm} placeholder="Jigger, sous vide, ice machine" autoCorrect={false} maxLength={60} />
           <View role={tool ? 'radiogroup' : 'group'} aria-label="Our tools" style={styles.chips}>
             {shown.map((e) => (
               <Chip key={e.id} label={e.name} multi={!tool} selected={keys.includes(e.id)} onPress={() => pick(e.id)} leading={<EquipmentThumb id={e.id} name={e.name} size={32} />} />
