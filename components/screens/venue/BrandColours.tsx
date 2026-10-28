@@ -1,6 +1,7 @@
 import { StyleSheet, View } from 'react-native';
 
-import { Body, Caption, ColourWheel, DsText, Field, PressableScale, Tag, useDs } from '@/components/ds';
+import { Body, Caption, DsText, Field, PressableScale, Tag, useDs } from '@/components/ds';
+import { ColourWheel } from '@/components/ds/ColourWheelLazy';
 import { IconSymbol } from '@/components/ui/icon-symbol';
 import { fontFamilies, layout, radius, space } from '@/constants/tokens';
 import { ACCENT_INK, type AccentInk, type ContrastLine } from '@/lib/brandColours';

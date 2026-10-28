@@ -28,7 +28,7 @@ const wedges = Array.from({ length: WEDGES }, (_, i) => {
 
 const clamp = (n: number, lo: number, hi: number) => Math.min(hi, Math.max(lo, n));
 
-interface ColourWheelProps {
+export interface ColourWheelProps {
   /** '#RRGGBB', or null while the hex field holds something that isn't one. */
   value: string | null;
   onChange: (hex: string) => void;
