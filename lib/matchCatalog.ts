@@ -1,11 +1,24 @@
-// The shared catalog the phone matches bottles against (hooks/useMatchCatalog):
-// how it's split for downloading in parallel, and how it's saved between
-// launches; and the server's shortlist of it for a snap (hooks/useServerMatch).
-// Pure.
+// The ingredient catalog the pickers and the bottle matcher share
+// (hooks/useIngredientCatalog): its columns, how it's split for downloading
+// in parallel, and how it's saved between launches; and the server's
+// shortlist of it for a snap (hooks/useServerMatch). Pure.
 
 import { byName } from '@/lib/allRows';
 import type { IngredientAlias } from '@/lib/ingredientNames';
 import type { CatalogItem } from '@/lib/match';
+import type { Row } from '@/types/db';
+
+/** What a picker reads from an ingredient. Description too: home search matches it. */
+export const CATALOG_COLUMNS = 'id, name, generic_id, bar_id, hide_from_search, ingredient_role, brand_maker, description';
+
+/** An ingredient as the pickers and the matcher read it (CATALOG_COLUMNS). */
+export type CatalogRow = Pick<Row<'app_item_presentation'>, 'name' | 'generic_id' | 'bar_id' | 'hide_from_search' | 'ingredient_role' | 'brand_maker' | 'description'> & {
+  id: string;
+};
+
+/** As the matcher reads them: rows with a name, in the same order. */
+export const toItems = (rows: readonly CatalogRow[]): CatalogItem[] =>
+  rows.flatMap((r) => (r.name ? [{ id: r.id, name: r.name, genericId: r.generic_id, barId: r.bar_id }] : []));
 
 /**
  * The id ranges the catalog downloads in, side by side: ids are random, so
@@ -22,38 +35,61 @@ export const CATALOG_FRESH_MS = 24 * 60 * 60 * 1000;
 
 /**
  * The shared catalog as saved: columns instead of objects, kinds as places in
- * the list (or the id, for a kind outside it), about half the size.
+ * the list (or the id, for a kind outside it), the hidden ones as places,
+ * about half the size. Shared rows only, so no `bar_id`. v1 held names and
+ * kinds only.
  */
 export interface SavedCatalog {
-  v: 1;
+  v: 2;
   savedAt: number;
   ids: string[];
   names: string[];
   kinds: (number | string | null)[];
+  roles: (string | null)[];
+  makers: (string | null)[];
+  descriptions: (string | null)[];
+  /** Places of the rows hidden from search. */
+  hidden: number[];
 }
 
-export function packCatalog(items: readonly CatalogItem[], savedAt: number): SavedCatalog {
-  const at = new Map(items.map((item, i) => [item.id, i]));
+export function packCatalog(rows: readonly CatalogRow[], savedAt: number): SavedCatalog {
+  const at = new Map(rows.map((r, i) => [r.id, i]));
   return {
-    v: 1,
+    v: 2,
     savedAt,
-    ids: items.map((i) => i.id),
-    names: items.map((i) => i.name),
-    kinds: items.map((i) => (i.genericId ? (at.get(i.genericId) ?? i.genericId) : null)),
+    ids: rows.map((r) => r.id),
+    names: rows.map((r) => r.name),
+    kinds: rows.map((r) => (r.generic_id ? (at.get(r.generic_id) ?? r.generic_id) : null)),
+    roles: rows.map((r) => r.ingredient_role),
+    makers: rows.map((r) => r.brand_maker),
+    descriptions: rows.map((r) => r.description),
+    hidden: rows.flatMap((r, i) => (r.hide_from_search ? [i] : [])),
   };
 }
 
-/** The saved catalog's items (all shared), or null when it's missing, from another version, or broken. */
-export function unpackCatalog(saved: unknown): { savedAt: number; items: CatalogItem[] } | null {
+const COLUMNS = ['names', 'kinds', 'roles', 'makers', 'descriptions'] as const;
+
+/** The saved catalog's rows (all shared), or null when it's missing, from another version, or broken. */
+export function unpackCatalog(saved: unknown): { savedAt: number; rows: CatalogRow[] } | null {
   const s = saved as Partial<SavedCatalog> | null;
-  if (!s || s.v !== 1 || typeof s.savedAt !== 'number' || !Array.isArray(s.ids) || !Array.isArray(s.names) || !Array.isArray(s.kinds)) return null;
-  const { ids, names, kinds } = s;
-  if (names.length !== ids.length || kinds.length !== ids.length) return null;
-  const items = ids.map((id, i): CatalogItem => {
+  if (!s || s.v !== 2 || typeof s.savedAt !== 'number' || !Array.isArray(s.ids) || !Array.isArray(s.hidden)) return null;
+  if (COLUMNS.some((c) => !Array.isArray(s[c]) || s[c].length !== s.ids!.length)) return null;
+  const { ids, names, kinds, roles, makers, descriptions } = s as SavedCatalog;
+  const hidden = new Set(s.hidden);
+  const rows = ids.map((id, i): CatalogRow => {
     const kind = kinds[i];
-    return { id, name: names[i], genericId: typeof kind === 'number' ? (ids[kind] ?? null) : kind, barId: null };
+    return {
+      id,
+      name: names[i],
+      generic_id: typeof kind === 'number' ? (ids[kind] ?? null) : kind,
+      bar_id: null,
+      hide_from_search: hidden.has(i),
+      ingredient_role: roles[i],
+      brand_maker: makers[i],
+      description: descriptions[i],
+    };
   });
-  return { savedAt: s.savedAt, items };
+  return { savedAt: s.savedAt, rows };
 }
 
 /** A row of match_ingredients: a catalog row the matcher lands on for a reading, how many rows name it as their kind, and the alias that led to it. */

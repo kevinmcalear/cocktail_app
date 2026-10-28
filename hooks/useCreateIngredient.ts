@@ -1,6 +1,6 @@
 import { useMutation, useQueryClient } from '@tanstack/react-query';
 
-import { DROPDOWNS_QUERY_KEY } from '@/hooks/useDropdowns';
+import { refreshIngredients } from '@/hooks/useDropdowns';
 import { recentEntry } from '@/hooks/useTrackRecent';
 import { likeExactly, type WizardPick } from '@/lib/drinkWizard';
 import { existingIngredientId } from '@/lib/ingredientNames';
@@ -54,9 +54,9 @@ export function useCreateIngredient() {
       const id = data.id as string;
 
       const lines = draft.role === 'prep' ? draft.lines : [];
+      const made = new Map<string, string>();
       if (lines.length) {
         try {
-          const made = new Map<string, string>();
           const rows = [];
           for (const [i, l] of lines.entries()) {
             rows.push({ recipe_item_id: id, ingredient_item_id: await ensureIngredient(l, barId, made), amount: number(l.amount), unit: l.unit || null, sort_order: i });
@@ -71,7 +71,8 @@ export function useCreateIngredient() {
 
       useRecentActivityStore.getState().push(recentEntry('ingredient', id, ingredientName(draft), { barId }));
       void qc.invalidateQueries({ queryKey: ['ingredients'] });
-      void qc.invalidateQueries({ queryKey: DROPDOWNS_QUERY_KEY });
+      // Just the new rows into the pickers' lists, not the whole catalog again.
+      void refreshIngredients(qc, [id, ...made.values()]).catch(() => {});
       if (barId) void qc.invalidateQueries({ queryKey: ['bar', barId] });
       return { id };
     },

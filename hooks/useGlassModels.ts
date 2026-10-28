@@ -1,5 +1,6 @@
-import { useMutation, useQuery } from '@tanstack/react-query';
+import { keepPreviousData, useMutation, useQuery } from '@tanstack/react-query';
 
+import { pickerResult, usePickerTerm } from '@/hooks/useDiscover';
 import { glassSizeLabel } from '@/lib/glass';
 import { suggestGlassModels } from '@/lib/identifyGlassware';
 import type { SketchGlass } from '@/lib/sketch/types';
@@ -52,10 +53,13 @@ export function glassModelFacts(m: Pick<GlassModel, 'capacity_ml' | 'height_mm' 
  * empty search lists the type's glasses, maker by maker.
  */
 export function useGlassModelSearch(term: string, glass: SketchGlass | null, { enabled = true, limit = GLASS_SEARCH_LIMIT } = {}) {
-  const q = term.trim();
-  return useQuery({
+  // One letter searches a type's glasses; with no type it waits for two.
+  const { term: q, waiting } = usePickerTerm(term.trim(), 1);
+  const on = enabled && (q.length >= 2 || !!glass);
+  const query = useQuery({
     queryKey: ['glass-models', q, glass, limit],
-    enabled: enabled && (q.length >= 2 || !!glass),
+    enabled: on,
+    placeholderData: on ? keepPreviousData : undefined,
     staleTime: 60 * 60_000,
     meta: { public: true },
     queryFn: async (): Promise<GlassModel[]> => {
@@ -70,6 +74,7 @@ export function useGlassModelSearch(term: string, glass: SketchGlass | null, { e
       return (data ?? []) as GlassModel[];
     },
   });
+  return pickerResult(query, waiting);
 }
 
 /** Real glasses by id: held glasses only keep the id (Kit › Glassware before the page is checked). */
