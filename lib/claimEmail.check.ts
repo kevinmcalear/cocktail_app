@@ -37,6 +37,7 @@ const look = { name: 'Little Rye', logoUrl: null, color: '#D0643B', face: 'fraun
 const confirm = claimToConfirmEmail({ ...person, confirmBar: 'Little Rye' }, look, site);
 assert.equal(confirm.subject, "Robert Hale says they're Rob Hale");
 assert.match(confirm.text, /Is this Rob Hale\?/);
+assert.match(confirm.text, /the page and its drinks become theirs, and if they still work here they join the team as a Bartender\./, 'as the Team screen says it');
 assert.match(confirm.text, /Open My team: https:\/\/babyvom\.it\/team/);
 assert.match(confirm.html, /#D0643B/);
 

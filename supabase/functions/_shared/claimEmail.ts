@@ -68,7 +68,7 @@ export function claimToConfirmEmail(c: ClaimFacts, bar: BarLook, site: string): 
   return barEmail(bar, `${who} says they're ${c.page.name}`, {
     preheader: `They asked ${bar.name} to confirm it.`,
     title: `Is this ${c.page.name}?`,
-    lead: `${who} says they're ${c.page.name}, whose page lists ${bar.name}, and asked you to confirm it. Confirm only if you know it's them: the page and its drinks become theirs.`,
+    lead: `${who} says they're ${c.page.name}, whose page lists ${bar.name}, and asked you to confirm it. Confirm only if you know it's them: the page and its drinks become theirs, and if they still work here they join the team as a Bartender.`,
     note: c.note ? { label: "Their note", text: c.note } : null,
     button: { label: "Open My team", url: `${site}/team` },
     small: `Confirm is on My team, under Confirm who they are. If it opens on another venue, switch to ${bar.name} first. Not sure? Leave it and a person checks.`,
