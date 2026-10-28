@@ -88,7 +88,7 @@ describe('near_score', () => {
     );
   });
 
-  test('person_near_score agrees with personNearScore: short first names and slips (20261128300000)', async () => {
+  test('person_near_score agrees with personNearScore: short first names and slips (20261128700000)', async () => {
     const pairs = [
       ['Matt Reisler', 'Mathew Resler'],
       ['Matt Resler', 'Mathew Resler'],

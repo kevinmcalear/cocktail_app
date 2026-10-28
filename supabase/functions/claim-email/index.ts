@@ -18,7 +18,7 @@ import { DEFAULT_SITE } from "../_shared/site.ts";
 
 /**
  * Emails people about a claim on a person's or a bar's page
- * (20261128400000_claim_emails). Called by the database (a trigger on
+ * (20261128800000_claim_emails). Called by the database (a trigger on
  * profile_claims, through pg_net) with a shared secret, never by the app:
  *   arrived   a claim is waiting: the moderators, or the Admins of the bar a
  *             person asked to confirm them

@@ -1,7 +1,7 @@
 // Claim emails: a trigger on profile_claims asks the claim-email function to
 // email the moderators (or the bar asked to confirm) when a claim arrives,
 // and the claimant when it's decided
-// (supabase/migrations/20261128400000_claim_emails.sql).
+// (supabase/migrations/20261128800000_claim_emails.sql).
 // Everything runs in one transaction that is rolled back, so the requests
 // pg_net queues are read here and never sent.
 // Runs against the local stack only: `npm run test:security`.

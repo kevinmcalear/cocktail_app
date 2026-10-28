@@ -82,7 +82,7 @@ describe('Mathew Resler', () => {
     ]);
   });
 
-  test('his Instagram is on the page, and Cocktail Omakase is his headline job (20261128210000)', async () => {
+  test('his Instagram is on the page, and Cocktail Omakase is his headline job (20261128600000)', async () => {
     const row = (
       await db.query(
         `SELECT a.instagram, b.handle AS headline FROM public.profiles a

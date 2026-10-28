@@ -1,7 +1,7 @@
 // The bar confirms you (find yourself, step 4): a person claim can ask a bar
 // the page lists them at, and that bar's Admin approves it in one tap
 // (supabase/migrations/20261113310000_bar_confirms_person.sql), and with a
-// current job there, puts them on its team (20261128300000_claim_fixes.sql).
+// current job there, puts them on its team (20261128700000_claim_fixes.sql).
 // Runs against the local stack only: `npm run test:security`.
 import assert from 'node:assert/strict';
 import { execSync } from 'node:child_process';
@@ -168,7 +168,7 @@ describe('the bar confirms', () => {
     assert.equal(row.status, 'approved');
     assert.equal(row.evidence.confirmed_by_bar, users.admin.id);
     assert.equal((await one('SELECT user_id FROM public.profiles WHERE id = $1', [ids.Ash])).user_id, users.ash.id);
-    // Their job there is current, so the confirm puts them on the team too (20261128300000).
+    // Their job there is current, so the confirm puts them on the team too (20261128700000).
     assert.equal((await one('SELECT role_level FROM public.user_bars WHERE user_id = $1 AND bar_id = $2', [users.ash.id, ids.venue]))?.role_level, 30);
     const again = await users.admin.client.rpc('confirm_person_claim', { p_claim_id: ids.ashClaim });
     assert.ok(again.error, 'a settled claim cannot be confirmed again');

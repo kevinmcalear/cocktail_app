@@ -53,7 +53,7 @@ export function JoinRequests({ barId, barName }: { barId: string; barName: strin
  * People claiming a page that lists them at this bar, who asked the bar to
  * confirm it's them (find-yourself step 4, "<bar> confirms you"). For the
  * venue's Admins: Confirm hands them the page, and a current job here puts
- * them on the team (20261128300000). Anything else is a
+ * them on the team (20261128700000). Anything else is a
  * moderator's to check. Nothing when none wait.
  */
 export function ClaimsToConfirm({ barId, barName, admin }: { barId: string; barName: string; admin: boolean }) {

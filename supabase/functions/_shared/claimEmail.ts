@@ -1,5 +1,5 @@
 // Emails about claims on a person's or a bar's page (claim-email function,
-// 20261128400000_claim_emails). Pure (no Deno or Node APIs), so the app's
+// 20261128800000_claim_emails). Pure (no Deno or Node APIs), so the app's
 // unit checks can run it (lib/claimEmail.check.ts). Sending is resend.ts.
 import { barEmail, type BarLook, type EmailContent } from "./barEmail.ts";
 
