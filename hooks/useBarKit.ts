@@ -42,12 +42,15 @@ export function useBarKit(barId: string | null | undefined) {
 /** A tool as the Add sheet saves it. No id adds it; ours has a key, the venue's own only a name. */
 export type ToolChange = Pick<KitRow, 'key' | 'name' | 'location' | 'count' | 'source' | 'supplier_id' | 'note'> & { id?: string };
 
-/** Add one of the venue's tools, or change one (by id). */
+/** Add the venue's tools (several in one insert), or change one (by id). */
 export function useSaveTool(barId: string) {
   const client = useQueryClient();
   return useMutation({
-    mutationFn: async ({ id, ...tool }: ToolChange) => {
-      const { error } = id ? await supabase.from('bar_kit').update(tool).eq('id', id) : await supabase.from('bar_kit').insert({ ...tool, bar_id: barId, kind: 'tool' });
+    mutationFn: async (changes: ToolChange[]) => {
+      const [{ id, ...tool }] = changes;
+      const { error } = id
+        ? await supabase.from('bar_kit').update(tool).eq('id', id)
+        : await supabase.from('bar_kit').insert(changes.map((t) => ({ ...t, bar_id: barId, kind: 'tool' })));
       if (error) throw error;
     },
     onSettled: () => client.invalidateQueries({ queryKey: barKitKey(barId) }),
