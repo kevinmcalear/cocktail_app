@@ -15,7 +15,9 @@ const ids = TECHNIQUES.map((t) => t.id);
 assert.equal(new Set(ids).size, ids.length, 'technique ids are unique');
 assert.equal(new Set(EQUIPMENT.map((e) => e.id)).size, EQUIPMENT.length, 'equipment ids are unique');
 // The kit search finds an ice machine by what it is and by a maker it names.
-for (const q of ['ice machine', 'klaris', 'hoshizaki']) assert.ok(EQUIPMENT.some((e) => e.id === 'ice-machine' && equipmentMatches(e, q)), `kit search finds ${q}`);
+for (const q of ['ice machine', 'Klaris', 'hoshizaki']) assert.ok(EQUIPMENT.some((e) => e.id === 'ice-machine' && equipmentMatches(e, q)), `kit search finds ${q}`);
+// A shop isn't a match: "pan" finds hotel pans, not all of Modernist Pantry.
+assert.deepEqual(EQUIPMENT.filter((e) => equipmentMatches(e, 'pantry')).map((e) => e.id), [], 'kit search skips shop names');
 const kit = new Set(EQUIPMENT.map((e) => e.id));
 for (const t of TECHNIQUES) {
   for (const e of [...t.equipment, ...(t.helpful ?? [])]) assert.ok(kit.has(e), `${t.id} uses unknown equipment ${e}`);
