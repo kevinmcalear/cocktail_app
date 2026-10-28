@@ -1,9 +1,10 @@
+import { useSegments } from 'expo-router';
 import { lazy, type ReactNode, Suspense, useEffect, useSyncExternalStore } from 'react';
 
 import { useAuth } from '@/ctx/AuthContext';
 import { analyticsAvailable, analyticsOptedOut, subscribeAnalytics } from '@/lib/analytics';
 import { loadAnalyticsChoice } from '@/lib/analyticsChoice';
-import { setMonitoringUser } from '@/lib/monitoring';
+import { noteScreen, setMonitoringUser } from '@/lib/monitoring';
 
 const POSTHOG_KEY = process.env.EXPO_PUBLIC_POSTHOG_KEY;
 const POSTHOG_HOST = process.env.EXPO_PUBLIC_POSTHOG_HOST || 'https://us.i.posthog.com';
@@ -22,6 +23,15 @@ function MonitoringIdentity() {
   return null;
 }
 
+/** The screens someone passed through, for the trail a report or note carries (by route pattern, as ScreenTracker). */
+function MonitoringScreens() {
+  const screen = `/${useSegments().join('/')}`;
+  useEffect(() => {
+    noteScreen(screen);
+  }, [screen]);
+  return null;
+}
+
 /**
  * Error monitoring identity plus PostHog product analytics. PostHog runs only
  * when EXPO_PUBLIC_POSTHOG_KEY is set, never during static web rendering, and
@@ -36,6 +46,7 @@ export function ObservabilityProvider({ children }: { children: ReactNode }) {
   return (
     <>
       <MonitoringIdentity />
+      <MonitoringScreens />
       {POSTHOG_KEY && optedOut === false ? (
         <Suspense fallback={null}>
           <Analytics apiKey={POSTHOG_KEY} host={POSTHOG_HOST} />

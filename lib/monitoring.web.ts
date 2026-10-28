@@ -72,3 +72,11 @@ export function setMonitoringUser(userId: string | null): void {
   }
   sentry.setUser(userId ? { id: userId } : null);
 }
+
+/** Native only: the browser SDK records page changes itself. */
+export function noteScreen(_screen: string): void {}
+
+/** As monitoring.native.ts. A note sent before the SDK has loaded (it loads once the page is idle) isn't tied. */
+export function reportFeedback(noteId: string, about: { kind: string; screen: string }): void {
+  sentry?.captureFeedback({ message: `${about.kind} note from ${about.screen}`, source: 'app_note', tags: { note_id: noteId, note_kind: about.kind } });
+}

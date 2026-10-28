@@ -11,7 +11,9 @@ import { NoteSheet } from './NoteSheet';
 jest.mock('@/ctx/AuthContext', () => ({ useUserId: () => 'me' }));
 jest.mock('expo-image-picker', () => ({}));
 const mockInsert = jest.fn();
-jest.mock('@/lib/supabase', () => ({ supabase: { from: () => ({ insert: (row: object) => mockInsert(row) }) } }));
+jest.mock('@/lib/supabase', () => ({ supabase: { from: () => ({ insert: (row: object) => ({ select: () => ({ single: () => mockInsert(row) }) }) }) } }));
+const mockReportFeedback = jest.fn();
+jest.mock('@/lib/monitoring', () => ({ reportFeedback: (...args: unknown[]) => mockReportFeedback(...args) }));
 
 const about = { screen: 'Adding a drink › Ice', drinkName: 'Ash Garden', draftId: 'd1', barId: 'rye', barName: 'Little Rye' };
 const KEY = 'me:Adding a drink › Ice:rye:d1';
@@ -25,6 +27,7 @@ const sheet = (report?: { onEmail: (kind: string, body: string) => Promise<strin
 beforeEach(() => {
   useNoteDrafts.setState({ drafts: {} });
   mockInsert.mockReset();
+  mockReportFeedback.mockReset();
 });
 
 test('Tell us shows what it is sent with, keeps the words when sending fails, and thanks them once it goes', async () => {
@@ -39,12 +42,15 @@ test('Tell us shows what it is sent with, keeps the words when sending fails, an
   expect(screen.getByLabelText('What you do').props.value).toBe('We cut graduated blocks that stack in a column.');
   expect(useNoteDrafts.getState().drafts[KEY]?.body).toBe('We cut graduated blocks that stack in a column.');
 
-  mockInsert.mockResolvedValueOnce({ error: null });
+  mockInsert.mockResolvedValueOnce({ data: { id: 'n1' }, error: null });
   await fireEvent.press(screen.getByRole('button', { name: 'Send' }));
   expect(await screen.findByText('Thanks. It’s with us.')).toBeTruthy();
   expect(mockInsert).toHaveBeenLastCalledWith(
     expect.objectContaining({ user_id: 'me', kind: 'tell_us', screen: 'Adding a drink › Ice', drink_name: 'Ash Garden', bar_id: 'rye', body: 'We cut graduated blocks that stack in a column.', photo_path: null })
   );
+  // Sentry gets the note's id, kind and screen (not its words), once, for the send that landed.
+  expect(mockReportFeedback).toHaveBeenCalledTimes(1);
+  expect(mockReportFeedback).toHaveBeenCalledWith('n1', { kind: 'tell_us', screen: 'Adding a drink › Ice' });
   expect(useNoteDrafts.getState().drafts[KEY]).toBeUndefined();
 });
 
@@ -56,11 +62,11 @@ test('Report a problem sends the kind picked, words optional; Email us instead s
 
   await fireEvent.press(screen.getByRole('radio', { name: 'It’s slow' }));
   // While a report is sending, it can't also be emailed.
-  let land: (v: { error: null }) => void = () => {};
+  let land: (v: { data: { id: 'n1' }, error: null }) => void = () => {};
   mockInsert.mockReturnValueOnce(new Promise((resolve) => (land = resolve)));
   await fireEvent.press(screen.getByRole('button', { name: 'Send' }));
   expect(screen.getByRole('button', { name: 'Email us instead' })).toBeDisabled();
-  await act(async () => land({ error: null }));
+  await act(async () => land({ data: { id: 'n1' }, error: null }));
   expect(await screen.findByText('Thanks for telling us.')).toBeTruthy();
   await fireEvent.press(screen.getByRole('button', { name: 'Done' }));
   expect(onEmail).not.toHaveBeenCalled();
@@ -75,21 +81,21 @@ test('Email us instead writes the email with what is picked, and says so when no
   // No email app: it says so, and the report is still here to send.
   expect(await screen.findByText('No email app opened.')).toBeTruthy();
 
-  mockInsert.mockResolvedValueOnce({ error: null });
+  mockInsert.mockResolvedValueOnce({ data: { id: 'n1' }, error: null });
   await fireEvent.press(screen.getByRole('button', { name: 'Send' }));
   expect(await screen.findByText('Thanks for telling us.')).toBeTruthy();
   expect(mockInsert).toHaveBeenCalledWith(expect.objectContaining({ kind: 'slow', screen: 'Settings › Report a problem', body: '', bar_id: null }));
 });
 
 test('a note that lands after the sheet has gone still clears the kept words', async () => {
-  let land: (v: { error: null }) => void = () => {};
+  let land: (v: { data: { id: 'n1' }, error: null }) => void = () => {};
   mockInsert.mockReturnValueOnce(new Promise((resolve) => (land = resolve)));
   const { unmount } = await sheet();
   await fireEvent.changeText(screen.getByLabelText('What you do'), 'Graduated blocks.');
   await fireEvent.press(screen.getByRole('button', { name: 'Send' }));
   expect(screen.getByRole('button', { name: 'Sending…' })).toBeDisabled();
   await unmount();
-  await act(async () => land({ error: null }));
+  await act(async () => land({ data: { id: 'n1' }, error: null }));
   expect(useNoteDrafts.getState().drafts[KEY]).toBeUndefined();
 });
 
@@ -118,7 +124,7 @@ test('the thanks stays while the sheet closes; opened again, it is a fresh sheet
   const client = new QueryClient();
   const { rerender } = await renderWithTamagui(view(true));
   await fireEvent.changeText(screen.getByLabelText('What you do'), 'Graduated blocks.');
-  mockInsert.mockResolvedValueOnce({ error: null });
+  mockInsert.mockResolvedValueOnce({ data: { id: 'n1' }, error: null });
   await fireEvent.press(screen.getByRole('button', { name: 'Send' }));
   await fireEvent.press(await screen.findByRole('button', { name: 'Done' }));
   expect(onClose).toHaveBeenCalled();
