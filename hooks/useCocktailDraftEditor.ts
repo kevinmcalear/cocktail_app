@@ -99,21 +99,10 @@ export function useCocktailDraftEditor({
     const iceTypes = dropdowns?.iceTypes || [];
 
     const allIngredients = useMemo(() => {
-        const published = (dropdowns?.ingredients || []).map((i: any) => ({
-            id: i.id,
-            name: i.name,
-            item_images: i.item_images,
-        }));
+        const published = (dropdowns?.ingredients || []).map((i) => ({ id: i.id, name: i.name }));
         const draftIngredients = drafts
             .filter((d: any) => d.entity_type === "ingredient")
-            .map((d: any) => {
-                const url = d.draft_data?.localImages?.[0]?.url;
-                return {
-                    id: d.id,
-                    name: d.draft_data?.name || "Untitled Ingredient Draft",
-                    item_images: url ? [{ images: { url } }] : undefined,
-                };
-            });
+            .map((d: any) => ({ id: d.id as string, name: (d.draft_data?.name || "Untitled Ingredient Draft") as string }));
         const combined = [...draftIngredients, ...published];
         const seen = new Set<string>();
         return combined.filter((i) => {

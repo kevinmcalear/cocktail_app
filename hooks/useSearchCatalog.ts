@@ -2,7 +2,7 @@ import type { SearchItem } from '@/types/search';
 import { useBeers } from '@/hooks/useBeers';
 import { useCocktails } from '@/hooks/useCocktails';
 import { useDrafts } from '@/hooks/useDrafts';
-import { useAllIngredients, useDropdowns } from '@/hooks/useDropdowns';
+import { useAllIngredients, useDropdowns, useVenueIngredients } from '@/hooks/useDropdowns';
 import { useWines } from '@/hooks/useWines';
 import { inSelectedContext, PERSONAL_CONTEXT } from '@/lib/barContextFilter';
 import { draftMethodIds } from '@/lib/drinkMethods';
@@ -77,9 +77,11 @@ export function useSearchCatalog(selectedContextIds: string[], { ingredients = t
   const { data: cocktailsData, isLoading: cocktailsLoading, error: cocktailsError } = useCocktails(barIds);
   const { data: beersData, isLoading: beersLoading, error: beersError } = useBeers(barIds);
   const { data: winesData, isLoading: winesLoading, error: winesError } = useWines(barIds);
-  // Off for a search that shows only drinks: at home the list is every ingredient (~20,000 rows).
-  const { data: ingredientsData, isLoading: ingredientsLoading, error: ingredientsError } =
-    useAllIngredients({ barIds, enabled: ingredients });
+  // At home, the slim catalog the pickers share (saved on the device); at a venue, its rows with their pictures.
+  // Both off for a search that shows only drinks.
+  const homeIngredients = useAllIngredients(ingredients && !barIds);
+  const venueIngredients = useVenueIngredients(barIds ?? [], ingredients && !!barIds);
+  const { data: ingredientsData, isLoading: ingredientsLoading, error: ingredientsError } = barIds ? venueIngredients : homeIngredients;
   const { data: dropdowns, isLoading: menusLoading } = useDropdowns({ menus: true });
   const { drafts, isLoading: draftsLoading } = useDrafts();
 
