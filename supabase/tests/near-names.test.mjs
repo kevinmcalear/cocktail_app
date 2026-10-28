@@ -20,7 +20,7 @@ if (!/^http:\/\/(127\.0\.0\.1|localhost)/.test(status.API_URL)) {
   throw new Error(`Refusing to run near name tests against a non-local API: ${status.API_URL}`);
 }
 
-const { nearScore } = await tsImport('../../lib/nearName.ts', import.meta.url);
+const { nearScore, personNearScore } = await tsImport('../../lib/nearName.ts', import.meta.url);
 
 const run = randomUUID().slice(0, 8);
 const PASSWORD = `pw-${randomUUID()}`;
@@ -86,6 +86,26 @@ describe('near_score', () => {
       [],
       `${differ.length} of ${rows.length} pairs differ`
     );
+  });
+
+  test('person_near_score agrees with personNearScore: short first names and slips (20261128300000)', async () => {
+    const pairs = [
+      ['Matt Reisler', 'Mathew Resler'],
+      ['Matt Resler', 'Mathew Resler'],
+      ['Mark Resler', 'Mathew Resler'],
+      ['Mat Resler', 'Mathew Resler'],
+      ['matt', 'Mathew Resler'],
+      ['  Samm   Ortiz ', 'Samantha Ortiz'],
+      ['Jo Marsh', 'Joe Marsh'],
+      ['José Ortiz', 'Jose Ortiz'],
+    ];
+    const { rows } = await db.query('SELECT public.person_near_score(q, n) AS score FROM unnest($1::text[], $2::text[]) AS p(q, n)', [
+      pairs.map((p) => p[0]),
+      pairs.map((p) => p[1]),
+    ]);
+    assert.deepEqual(rows.map((r) => r.score), pairs.map(([q, n]) => personNearScore(q, n)));
+    assert.notEqual(rows[0].score, null, 'Matt Reisler finds Mathew Resler');
+    assert.equal(rows[2].score, null, 'Mark Resler does not');
   });
 
   test('counts characters as the app does', async () => {

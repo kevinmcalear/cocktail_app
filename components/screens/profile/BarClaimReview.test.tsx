@@ -34,7 +34,7 @@ const claim = (fields: Partial<ClaimForReview>): ClaimForReview => ({
     is_closed: false,
   },
   bar: null,
-  claimant: { display_name: 'Sam', handle: 'sam.okafor' },
+  claimant: { name: 'Sam Okafor', email: null, handle: 'sam.okafor', works_here: [] },
   ...fields,
 });
 
@@ -55,6 +55,26 @@ test('an Instagram claim from venue setup is checked in our messages, not the bi
   await renderWithTamagui(<BarClaimCard claim={claim({ evidence: { instagram: 'palemoth', instagram_dm: true } })} busy={false} onOpen={jest.fn()} onReview={onReview} />);
   expect(screen.getByText(/messages for one from @palemoth with 482 913/)).toBeTruthy();
   expect(screen.queryByText(/in the bio/)).toBeNull();
+});
+
+test('a person’s Instagram claim: who, their email, no venue and no bar phone', async () => {
+  const mat = claim({
+    evidence: { instagram: 'drink_smith', instagram_dm: true },
+    profile: { id: 'mr', kind: 'person', handle: 'mathew.resler', display_name: 'Mathew Resler', website: null, instagram: 'drink_smith', social_links: null, locality: null, city: 'New York', country_code: null, is_closed: false },
+    claimant: { name: 'Matt Reisler', email: 'matt@example.test', handle: null, works_here: [] },
+  });
+  await renderWithTamagui(<BarClaimCard claim={mat} busy={false} onOpen={jest.fn()} onReview={onReview} />);
+  expect(screen.getByText(/a person’s page$/)).toBeTruthy();
+  expect(screen.queryByText(/makes a new venue/)).toBeNull();
+  expect(screen.queryByText('Find its number')).toBeNull();
+  expect(screen.getByText('Matt Reisler (no profile yet)')).toBeTruthy();
+  expect(screen.getByText('matt@example.test')).toBeTruthy();
+});
+
+test('a bar claim shows the claimant’s job there', async () => {
+  const works = { person: 'Mathew Resler', title: 'Head bartender', is_current: true, start_year: 2026, start_month: 3, claimed: true };
+  await renderWithTamagui(<BarClaimCard claim={claim({ claimant: { name: 'Matt Reisler', email: null, handle: 'mathew.resler', works_here: [works] } })} busy={false} onOpen={jest.fn()} onReview={onReview} />);
+  expect(screen.getByText('Mathew Resler, Head bartender, since Mar 2026 (their page)')).toBeTruthy();
 });
 
 test('a phone claim hides the code and only approves once the moderator types what they heard', async () => {

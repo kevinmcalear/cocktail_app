@@ -52,7 +52,8 @@ export function JoinRequests({ barId, barName }: { barId: string; barName: strin
 /**
  * People claiming a page that lists them at this bar, who asked the bar to
  * confirm it's them (find-yourself step 4, "<bar> confirms you"). For the
- * venue's Admins: Confirm hands them the page. Anything else is a
+ * venue's Admins: Confirm hands them the page, and a current job here puts
+ * them on the team (20261128300000). Anything else is a
  * moderator's to check. Nothing when none wait.
  */
 export function ClaimsToConfirm({ barId, barName, admin }: { barId: string; barName: string; admin: boolean }) {
@@ -65,7 +66,7 @@ export function ClaimsToConfirm({ barId, barName, admin }: { barId: string; barN
   return (
     <View style={styles.section}>
       <Headline role="heading">Confirm who they are</Headline>
-      <Caption tone="muted">{`They say they’re someone ${barName}’s page lists. Confirm only people you know worked here: their page and its drinks become theirs. Not sure? Leave it and a person checks.`}</Caption>
+      <Caption tone="muted">{`They say they’re someone ${barName}’s page lists. Confirm only people you know worked here: their page and its drinks become theirs, and if they still work here they join the team as a Bartender. Not sure? Leave it and a person checks.`}</Caption>
       <View role="list" aria-label="Confirm who they are">
         {claims.map((c) => (
           <View key={c.id} role="listitem" style={[styles.row, { borderBottomColor: ds.c.line }]}>

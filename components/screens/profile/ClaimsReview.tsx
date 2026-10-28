@@ -6,6 +6,7 @@ import { BackbarTheme, Body, Button, Caption, DsText, GlassButton, Surface, Titl
 import { WebHead } from '@/components/WebHead';
 import { layout, space } from '@/constants/tokens';
 import { usePendingClaims, useReviewClaim, type ClaimForReview, type ClaimReview } from '@/hooks/useProfiles';
+import { claimantWho } from '@/lib/claimVerification';
 
 import { BarClaimCard } from './BarClaimReview';
 
@@ -91,7 +92,7 @@ function ClaimsPage() {
 }
 
 function ClaimCard({ claim, busy, onOpen, onReview }: { claim: ClaimForReview; busy: boolean; onOpen: () => void; onReview: (review: ClaimReview) => void }) {
-  const who = claim.claimant ? `${claim.claimant.display_name} (@${claim.claimant.handle})` : 'Someone without a profile yet';
+  const who = claimantWho(claim.claimant);
   const target = claim.profile ? `${claim.profile.display_name} (@${claim.profile.handle})` : 'a profile';
   const onBehalf = claim.bar_id ? ` for ${claim.bar?.name ?? 'their venue'}` : '';
   return (
@@ -105,6 +106,7 @@ function ClaimCard({ claim, busy, onOpen, onReview }: { claim: ClaimForReview; b
           </DsText>
           {`${onBehalf}.`}
         </Body>
+        {claim.claimant?.email ? <Caption tone="muted">{`Signed in as ${claim.claimant.email}`}</Caption> : null}
         <Body tone="muted">{claim.message ? `"${claim.message}"` : 'No note.'}</Body>
         <View style={styles.actions}>
           <Button label="Approve" disabled={busy} accessibilityHint={`Hands ${target} over`} onPress={() => onReview({ claimId: claim.id, approve: true })} />

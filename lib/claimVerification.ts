@@ -5,6 +5,8 @@
 // these mirror its rules so the claim screen can say up front which ways
 // will work, and hold the words for each.
 
+import { monthLabel } from './onboarding';
+
 export type ClaimMethod = 'note' | 'email' | 'instagram' | 'phone';
 export type BarClaimMethod = Exclude<ClaimMethod, 'note'>;
 /** In the order they're offered: a message from the bar's Instagram first (b19), then a work email, then a call. */
@@ -185,4 +187,36 @@ export function claimProblem(error: unknown): string {
   if (e?.code === '23505') return e.message?.startsWith('You already have a claim') ? e.message : 'You already have a claim waiting on this bar.';
   if ((e?.code === 'P0001' || e?.code === '42501' || e?.code === '22023' || e instanceof Error) && e?.message) return e.message;
   return "Couldn't send that. Check your connection and try again.";
+}
+
+/** A job at the claimed bar, on the claimant's own page or a person page they're claiming (public.claimants). */
+export interface WorksHere {
+  person: string;
+  title: string;
+  is_current: boolean;
+  start_year: number | null;
+  start_month: number | null;
+  /** On their own page (claimed), or on one they're claiming. */
+  claimed: boolean;
+}
+
+/** Who sent a claim, for moderators (public.claimants): the account's name and email, and their own page. */
+export interface Claimant {
+  name: string;
+  email: string | null;
+  handle: string | null;
+  works_here: WorksHere[];
+}
+
+/** "Matt Resler (@mathew.resler)", or "Matt Resler (no profile yet)". */
+export function claimantWho(c: Claimant | null): string {
+  if (!c) return 'Someone';
+  return c.handle ? `${c.name} (@${c.handle})` : `${c.name} (no profile yet)`;
+}
+
+/** "Mathew Resler, Head bartender, since Mar 2026 (their page)": a moderator weighing a bar claim sees the job behind it. */
+export function worksHereLine(w: WorksHere): string {
+  const from = w.start_year ? (w.start_month ? monthLabel({ year: w.start_year, month: w.start_month }) : String(w.start_year)) : null;
+  const when = w.is_current ? (from ? `since ${from}` : 'now') : from ? `from ${from}, not now` : 'before';
+  return `${w.person}, ${w.title}, ${when} (${w.claimed ? 'their page' : 'a page they’re claiming'})`;
 }

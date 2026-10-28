@@ -1,7 +1,8 @@
 import type { ReactNode } from 'react';
 import { StyleSheet, View } from 'react-native';
 
-import { Caption, DsText, PressableScale, useDs } from '@/components/ds';
+import { Body, Button, Caption, DsText, PressableScale, useDs } from '@/components/ds';
+import { SafetyPage } from '@/components/screens/safety/SafetyPage';
 import { IconSymbol } from '@/components/ui/icon-symbol';
 import { fontFamilies, layout, radius, space } from '@/constants/tokens';
 
@@ -97,3 +98,15 @@ const styles = StyleSheet.create({
   answer: { minHeight: layout.minTapTarget + space.xxl, borderRadius: radius.card, borderCurve: 'continuous', paddingHorizontal: space.xl, paddingVertical: space.md, flexDirection: 'row', alignItems: 'center', gap: space.md },
   answerText: { flex: 1, minWidth: 0 },
 });
+
+/** Setup's first moment: loading the account, or it couldn't (Try again, or Not now to skip setup). */
+export function SetupWelcome({ failed, onRetry, onSkip, skipping, error }: { failed: boolean; onRetry: () => void; onSkip: () => void; skipping: boolean; error?: string }) {
+  return (
+    <SafetyPage title="Welcome" noBack>
+      <Body tone="muted">{failed ? 'Couldn’t load your account. Check your connection and try again.' : 'One moment…'}</Body>
+      {failed ? <Button label="Try again" onPress={onRetry} /> : null}
+      {failed ? <Button label="Not now" variant="ghost" onPress={onSkip} disabled={skipping} /> : null}
+      {failed && error ? <Caption tone="accent">{error}</Caption> : null}
+    </SafetyPage>
+  );
+}

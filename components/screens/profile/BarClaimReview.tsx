@@ -4,7 +4,7 @@ import { Linking, StyleSheet, View } from 'react-native';
 import { Body, Button, Caption, DsText, Field, Headline, Spec, Surface, Tag, useBreakpoint, useDs } from '@/components/ds';
 import { radius, space } from '@/constants/tokens';
 import type { ClaimForReview, ClaimReview } from '@/hooks/useProfiles';
-import { METHOD_COPY, REVIEW_REASON, pageInstagram, siteHost, spacedCode, type BarClaimMethod } from '@/lib/claimVerification';
+import { METHOD_COPY, REVIEW_REASON, claimantWho, pageInstagram, siteHost, spacedCode, worksHereLine, type BarClaimMethod } from '@/lib/claimVerification';
 import { instagramUrl } from '@/lib/profiles';
 
 /** One fact, label over value. */
@@ -77,6 +77,8 @@ export function BarClaimCard({ claim, busy, onOpen, onReview }: { claim: ClaimFo
   const pageHandle = (page && pageInstagram(page)) ?? (typed?.instagram ? null : handle);
   const host = siteHost(page?.website);
   const place = [page?.locality, page?.city, page?.country_code].filter(Boolean).join(', ');
+  // A person's Instagram claim comes here too: no venue, no bar phone.
+  const person = page?.kind === 'person';
   const name = page?.display_name ?? 'this bar';
   const mapSearch = `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent([name, page?.city].filter(Boolean).join(' '))}`;
   const codeReady = method !== 'phone' || code.replace(/\D/g, '').length === 6;
@@ -94,7 +96,7 @@ export function BarClaimCard({ claim, busy, onOpen, onReview }: { claim: ClaimFo
           {page?.is_closed ? <Tag label="Closed" /> : null}
         </View>
         <Caption tone="muted">
-          {`${new Date(claim.created_at).toLocaleDateString()} · ${claim.bar ? `links their venue ${claim.bar.name}` : 'makes a new venue'}`}
+          {`${new Date(claim.created_at).toLocaleDateString()} · ${person ? 'a person’s page' : claim.bar ? `links their venue ${claim.bar.name}` : 'makes a new venue'}`}
         </Caption>
 
         <View style={[styles.columns, wide && styles.columnsWide]}>
@@ -102,12 +104,17 @@ export function BarClaimCard({ claim, busy, onOpen, onReview }: { claim: ClaimFo
             <Fact label="Website">{host ? <Link label={host} href={page!.website!} /> : 'None'}</Fact>
             <Fact label="Instagram">{pageHandle ? <Link label={`@${pageHandle}`} href={instagramUrl(pageHandle)} /> : 'None'}</Fact>
             {place ? <Fact label="Where">{place}</Fact> : null}
-            <Fact label="Phone">
-              <Link label="Find its number" href={mapSearch} />
-            </Fact>
+            {person ? null : (
+              <Fact label="Phone">
+                <Link label="Find its number" href={mapSearch} />
+              </Fact>
+            )}
           </Column>
           <Column title="From them" wide={wide}>
-            <Fact label="Who">{claim.claimant ? `${claim.claimant.display_name} (@${claim.claimant.handle})` : 'No profile of their own yet'}</Fact>
+            <Fact label="Who">{claimantWho(claim.claimant)}</Fact>
+            {claim.claimant?.email ? <Fact label="Signed in as">{claim.claimant.email}</Fact> : null}
+            {/* A verified bartender here makes a strong case; it's still a person's call. */}
+            {claim.claimant?.works_here.length ? <Fact label="Works here">{claim.claimant.works_here.map(worksHereLine).join('\n')}</Fact> : null}
             <Fact label="Note">{claim.message ? `“${claim.message}”` : 'No note'}</Fact>
             {typed?.instagram ? (
               <Fact label="Instagram they typed">
@@ -142,7 +149,7 @@ export function BarClaimCard({ claim, busy, onOpen, onReview }: { claim: ClaimFo
           <Button
             label="Approve"
             disabled={busy || !codeReady}
-            accessibilityHint={`Hands ${name} over, at Menu`}
+            accessibilityHint={person ? `Hands ${name}’s page over` : `Hands ${name} over, at Menu`}
             onPress={() => onReview({ claimId: claim.id, approve: true, code: method === 'phone' ? code : undefined })}
           />
           <Button label="Turn down" variant="secondary" disabled={busy} onPress={() => onReview({ claimId: claim.id, approve: false, reason })} />

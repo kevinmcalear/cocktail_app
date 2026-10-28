@@ -36,7 +36,7 @@ export function useMadeBy(profile: Profile) {
   const jobs = Object.fromEntries(positions.map((p) => [p.bar.id, jobYears(p)]));
   const groups = madeByGroups(drinks, runs, jobs);
   const { data: scores } = useItemScores(drinks.map((d) => d.id));
-  return { groups, stats: madeByStats(groups, runs), scores: scores ?? {}, positions, pictures: new Map(originals.map((d) => [d.id, d])) };
+  return { groups, stats: madeByStats(groups, runs, positions.map((p) => p.bar.id)), scores: scores ?? {}, positions, pictures: new Map(originals.map((d) => [d.id, d])) };
 }
 
 type MadeBy = ReturnType<typeof useMadeBy>;

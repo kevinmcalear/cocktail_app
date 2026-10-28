@@ -3,7 +3,7 @@
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 
 import { useUserId } from '@/ctx/AuthContext';
-import type { ClaimEvidence, ClaimMethod, PersonClaimMethod } from '@/lib/claimVerification';
+import type { ClaimEvidence, Claimant, ClaimMethod, PersonClaimMethod, WorksHere } from '@/lib/claimVerification';
 import type { ProfileKind } from '@/lib/lineage';
 import type { PageVisibility } from '@/lib/pageVisibility';
 import { changedProfiles } from '@/lib/profiles';
@@ -78,6 +78,8 @@ export interface MyPersonClaim {
   id: string;
   status: 'pending' | 'approved';
   created_at: string;
+  /** When it was approved; null while it waits. */
+  reviewed_at: string | null;
   /** The bar page asked to confirm it ("<bar> confirms you"), if any. */
   confirm_bar: string | null;
   profile: { id: string; handle: string; display_name: string };
@@ -92,15 +94,15 @@ export function useMyPersonClaim() {
     queryFn: async (): Promise<MyPersonClaim | null> => {
       const { data, error } = await supabase
         .from('profile_claims')
-        .select('id, status, created_at, evidence, profile:profiles!inner(id, handle, display_name, kind)')
+        .select('id, status, created_at, reviewed_at, evidence, profile:profiles!inner(id, handle, display_name, kind)')
         .eq('user_id', userId!)
         .eq('profile.kind', 'person')
         .in('status', ['pending', 'approved'])
         .order('created_at', { ascending: false })
         .limit(1);
       if (error) throw error;
-      const row = (data ?? [])[0] as { id: string; status: 'pending' | 'approved'; created_at: string; evidence: { confirm_bar?: string } | null; profile: { id: string; handle: string; display_name: string } } | undefined;
-      return row ? { id: row.id, status: row.status, created_at: row.created_at, confirm_bar: row.evidence?.confirm_bar ?? null, profile: { id: row.profile.id, handle: row.profile.handle, display_name: row.profile.display_name } } : null;
+      const row = (data ?? [])[0] as { id: string; status: 'pending' | 'approved'; created_at: string; reviewed_at: string | null; evidence: { confirm_bar?: string } | null; profile: { id: string; handle: string; display_name: string } } | undefined;
+      return row ? { id: row.id, status: row.status, created_at: row.created_at, reviewed_at: row.reviewed_at, confirm_bar: row.evidence?.confirm_bar ?? null, profile: { id: row.profile.id, handle: row.profile.handle, display_name: row.profile.display_name } } : null;
     },
   });
 }
@@ -149,8 +151,8 @@ export interface ClaimPage {
 export interface ClaimForReview extends ProfileClaim {
   profile: ClaimPage | null;
   bar: { name: string } | null;
-  /** The claimant's own person profile, if they have one. */
-  claimant: { display_name: string; handle: string } | null;
+  /** Who sent it: their account's name and email, their own page, and any job at the claimed bar (public.claimants). */
+  claimant: Claimant | null;
 }
 
 /**
@@ -174,13 +176,10 @@ export function usePendingClaims() {
         .limit(100);
       if (error) throw error;
       const claims = (data ?? []) as Omit<ClaimForReview, 'claimant'>[];
-      const userIds = [...new Set(claims.map((c) => c.user_id))];
-      const people = userIds.length
-        ? await supabase.from('profiles').select('user_id, display_name, handle').in('user_id', userIds)
-        : { data: [], error: null };
-      if (people.error) throw people.error;
-      const byUser = new Map((people.data ?? []).map((p) => [p.user_id as string, { display_name: p.display_name as string, handle: p.handle as string }]));
-      return claims.map((c) => ({ ...c, claimant: byUser.get(c.user_id) ?? null }));
+      const who = claims.length ? await supabase.rpc('claimants', { p_claim_ids: claims.map((c) => c.id) }) : { data: [], error: null };
+      if (who.error) throw who.error;
+      const byClaim = new Map((who.data ?? []).map((r) => [r.claim_id, { name: r.name, email: r.email, handle: r.profile_handle, works_here: (r.works_here ?? []) as unknown as WorksHere[] }]));
+      return claims.map((c) => ({ ...c, claimant: byClaim.get(c.id) ?? null }));
     },
   });
 }

@@ -35,8 +35,10 @@ export function ThisIsMe({ profile, pinned = false, quiet = false }: { profile: 
   }, [open, router]);
   const [notMe, setNotMe] = useState(false);
   const first = profile.display_name.split(' ')[0];
-  const jobs = [...made.positions].sort((a, b) => Number(b.is_current) - Number(a.is_current) || (b.start_year ?? 0) - (a.start_year ?? 0));
-  // "<bar> confirms you" from a bar on the page that's claimed (it has a venue), current first.
+  // The headline job first (Cocktail Omakase, not Bar 7), then current ones, newest first.
+  const lead = (p: { id: string }) => Number(p.id === profile.headline_position_id);
+  const jobs = [...made.positions].sort((a, b) => lead(b) - lead(a) || Number(b.is_current) - Number(a.is_current) || (b.start_year ?? 0) - (a.start_year ?? 0));
+  // "<bar> confirms you" from a bar on the page that's claimed (it has a venue), in that order.
   const confirming = jobs.find((p) => p.bar.bar_id);
   const bar = (confirming ?? jobs[0])?.bar.display_name ?? made.groups.find((g) => g.barName)?.barName ?? null;
   const confirmBar = confirming?.bar.id ?? null;
