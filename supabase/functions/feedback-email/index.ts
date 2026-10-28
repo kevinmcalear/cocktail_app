@@ -3,7 +3,7 @@
 // that session in Sentry (supabase/functions/_shared/noteEmail.ts).
 //
 // Called by the database (a trigger on feedback_notes insert, through pg_net;
-// 20261128300000_feedback_note_email.sql), never by the app. It sends the
+// 20261128500000_feedback_note_email.sql), never by the app. It sends the
 // shared FEEDBACK_EMAIL_SECRET instead of a user session; a local stack falls
 // back to a fixed local secret. FEEDBACK_EMAIL_TO is who gets them (one
 // address, or several split by commas). Without it, nothing is sent.
