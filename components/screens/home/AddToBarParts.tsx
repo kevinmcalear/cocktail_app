@@ -9,7 +9,7 @@ import type { FoundItem } from '@/hooks/useHomeBar';
 import { useKit } from '@/hooks/useKit';
 import { leftOutLine } from '@/lib/myBarAdd';
 import { foundLine } from '@/lib/myBarText';
-import { EQUIPMENT, EQUIPMENT_KINDS } from '@/lib/techniques';
+import { EQUIPMENT, EQUIPMENT_KINDS, matchesEquipment } from '@/lib/techniques';
 
 import { BarTile, TileGrid } from './BarTile';
 
@@ -132,7 +132,7 @@ export function DoneFooter({ line }: { line: string }) {
 export function KitResults({ query, cols, shown, onToggled }: { query: string; cols: number; shown: (id: string) => boolean; onToggled: (id: string, name: string, on: boolean) => void }) {
   const { owned, toggle } = useKit();
   const q = query.toLowerCase();
-  const matched = q ? EQUIPMENT.filter((e) => `${e.name} ${e.what}`.toLowerCase().includes(q)) : EQUIPMENT;
+  const matched = q ? EQUIPMENT.filter((e) => matchesEquipment(e, q)) : EQUIPMENT;
   const list = matched.filter((e) => shown(e.id));
   const mine = matched.filter((e) => !shown(e.id)).map((e) => e.name);
   const left = q ? leftOutLine(mine) : null;
