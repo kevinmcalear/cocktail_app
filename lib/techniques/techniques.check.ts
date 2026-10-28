@@ -4,7 +4,7 @@ import assert from 'node:assert/strict';
 import { PREP_ACTIONS } from '../scale';
 import { baseHasFat, pickFoam } from './foamPicker';
 import {
-  canMake, EQUIPMENT, formatDose, groupForAction, GROUPS, scaleParts, searchTechniques, technicalIngredientFor,
+  canMake, EQUIPMENT, equipmentMatches, formatDose, groupForAction, GROUPS, scaleParts, searchTechniques, technicalIngredientFor,
   TECHNICAL_INGREDIENTS, techniqueById, TECHNIQUES, unlocks,
 } from './index';
 
@@ -14,6 +14,8 @@ const near = (a: number, b: number) => assert.ok(Math.abs(a - b) < 0.02, `expect
 const ids = TECHNIQUES.map((t) => t.id);
 assert.equal(new Set(ids).size, ids.length, 'technique ids are unique');
 assert.equal(new Set(EQUIPMENT.map((e) => e.id)).size, EQUIPMENT.length, 'equipment ids are unique');
+// The kit search finds an ice machine by what it is and by a maker it names.
+for (const q of ['ice machine', 'klaris', 'hoshizaki']) assert.ok(EQUIPMENT.some((e) => e.id === 'ice-machine' && equipmentMatches(e, q)), `kit search finds ${q}`);
 const kit = new Set(EQUIPMENT.map((e) => e.id));
 for (const t of TECHNIQUES) {
   for (const e of [...t.equipment, ...(t.helpful ?? [])]) assert.ok(kit.has(e), `${t.id} uses unknown equipment ${e}`);
