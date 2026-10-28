@@ -1,5 +1,5 @@
 import { useMutation, useQueries, useQuery, useQueryClient } from '@tanstack/react-query';
-import { useEffect, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 
 import { useAuth } from '@/ctx/AuthContext';
 import { readBarBrands } from '@/hooks/useBarBrands';
@@ -217,6 +217,35 @@ export function useDebounced<T>(value: T, ms: number): T {
     return () => clearTimeout(t);
   }, [value, ms]);
   return settled;
+}
+
+/**
+ * Ids that change at most once a pause: for the lookups a search's rows need
+ * (lines, scores, verdicts), so typing a word asks once, not once a letter.
+ */
+export function useSettledIds(ids: readonly string[], ms = 250): string[] {
+  const settled = useDebounced(ids.join(' '), ms);
+  return useMemo(() => (settled ? settled.split(' ') : []), [settled]);
+}
+
+/** How long typing pauses before a name picker searches: longer than the 200 ms between letters at five a second. */
+export const PICKER_PAUSE_MS = 300;
+
+/**
+ * What a name picker searches for: what's typed once typing pauses, so a
+ * word is one search rather than one a letter, or '' at once when it's
+ * shorter than `min` (a cleared or picked field empties its list).
+ * `waiting` is true while a search waits for the pause (see `pickerResult`).
+ */
+export function usePickerTerm(typed: string, min = 2): { term: string; waiting: boolean } {
+  const settled = useDebounced(typed, PICKER_PAUSE_MS);
+  const long = typed.length >= min;
+  return { term: long && settled.length >= min ? settled : '', waiting: long && settled !== typed };
+}
+
+/** A picker's query reads as fetching while it waits for the pause, so "no match" waits for the search too. */
+export function pickerResult<Q extends { isFetching: boolean }>(query: Q, waiting: boolean): Q {
+  return waiting ? { ...query, isFetching: true } : query;
 }
 
 /** The device's place for the address search, only where location is already allowed: never asks. */

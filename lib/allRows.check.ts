@@ -1,5 +1,5 @@
 import assert from 'node:assert/strict';
-import { allRows, allRowsById, byName, PAGE_ROWS, withRow } from './allRows';
+import { allRows, allRowsById, byName, mergeByName, PAGE_ROWS, withRow } from './allRows';
 
 // A fake PostgREST: 2,500 rows, at most PAGE_ROWS per request.
 const table = Array.from({ length: 2500 }, (_, i) => i);
@@ -36,6 +36,12 @@ const fake = async (from: number, to: number) => {
   // Device order: by name, then id for equal names.
   const named = [{ id: 'b', name: 'Gin' }, { id: 'a', name: 'Gin' }, { id: 'c', name: 'Amaro' }, { id: 'd', name: null }];
   assert.deepEqual([...named].sort(byName).map((r) => r.id), ['d', 'c', 'a', 'b']);
+
+  // mergeByName: two sorted lists, one sorted list, nothing lost.
+  const left = [{ id: 'a', name: 'Amaro' }, { id: 'b', name: 'Gin' }, { id: 'z', name: 'Rum' }];
+  const right = [{ id: 'c', name: 'Gin' }, { id: 'd', name: 'Mezcal' }, { id: 'e', name: 'Vodka' }];
+  assert.deepEqual(mergeByName(left, right), [...left, ...right].sort(byName));
+  assert.deepEqual(mergeByName(left, []), left);
 
   // withRow: a new row lands in name order, a renamed one moves, null removes.
   const list = [{ id: '1', name: 'Amaro' }, { id: '2', name: 'Gin' }, { id: '3', name: 'Rum' }];

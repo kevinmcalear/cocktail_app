@@ -2,7 +2,7 @@ import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { useMemo } from 'react';
 
 import { refreshIngredients, useDropdowns, useIngredientExtras } from '@/hooks/useDropdowns';
-import { useMatchCatalog } from '@/hooks/useMatchCatalog';
+import { useMatchCatalog } from '@/hooks/useIngredientCatalog';
 import { saveDrinkSpec } from '@/hooks/useVersions';
 import { plainDbMessage } from '@/lib/dbError';
 import { orderedMethodIds } from '@/lib/drinkMethods';
