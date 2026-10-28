@@ -64,7 +64,7 @@ export function HadOut({ rows, sort, onSort, onMemory }: { rows: HadOutRow[]; so
   const desk = useBreakpoint() === 'desktop';
   const [now] = useState(() => Date.now());
   const when = (r: HadOutRow) => (r.day ? dayShort(r.day, now) : null);
-  const open = (r: HadOutRow) => (r.memoryId ? onMemory(r.memoryId) : r.itemId ? router.push(itemHref('Cocktail', r.itemId)) : undefined);
+  const open = (r: HadOutRow) => (r.memoryId ? onMemory(r.memoryId) : r.itemId ? router.push(itemHref('Cocktail', r.itemId) as never) : undefined);
   const label = (r: HadOutRow) => [r.name, [r.bar, when(r)].filter(Boolean).join(', '), r.score !== null ? `your ${scoreWords(r.score)}` : null, statusText(r.status)].filter(Boolean).join('. ');
 
   if (!rows.length) return <Body tone="muted">Score a drink you have at a bar and it lands here, with where you had it.</Body>;
