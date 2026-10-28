@@ -1,0 +1,39 @@
+{
+ "maker": "studio.henry.wilson",
+ "models": [
+  {
+   "name": "Fog Glass Medium",
+   "series": "Fog",
+   "designer": null,
+   "model_code": null,
+   "glass": "rocks",
+   "variant": null,
+   "capacity_ml": 200,
+   "capacity_as_stated": "7oz-200ml",
+   "height_mm": 62,
+   "rim_mm": null,
+   "material": "glass",
+   "product_url": "https://www.studiohenrywilson.com/en-us/products/fog-glass",
+   "source_urls": [
+    "https://www.studiohenrywilson.com/en-us/products/fog-glass"
+   ]
+  },
+  {
+   "name": "Fog Glass Large",
+   "series": "Fog",
+   "designer": null,
+   "model_code": null,
+   "glass": "rocks",
+   "variant": null,
+   "capacity_ml": 350,
+   "capacity_as_stated": "12oz-350ml",
+   "height_mm": 87,
+   "rim_mm": null,
+   "material": "glass",
+   "product_url": "https://www.studiohenrywilson.com/en-us/products/fog-glass",
+   "source_urls": [
+    "https://www.studiohenrywilson.com/en-us/products/fog-glass"
+   ]
+  }
+ ]
+}

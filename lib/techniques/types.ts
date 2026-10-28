@@ -128,6 +128,8 @@ export type EquipmentKind = 'bar' | 'kitchen' | 'measure' | 'mix' | 'pressure' |
 export interface Equipment {
   id: string;
   name: string;
+  /** Other names search finds it by: a brand, a bar word, another spelling. Never shown. */
+  aka?: string[];
   kind: EquipmentKind;
   /** What it's for, one line. */
   what: string;

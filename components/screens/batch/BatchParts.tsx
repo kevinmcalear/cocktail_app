@@ -1,5 +1,5 @@
 import { useState, type ReactNode } from 'react';
-import { StyleSheet, TextInput, View } from 'react-native';
+import { StyleSheet, Text, TextInput, View } from 'react-native';
 
 import { Body, Caption, Chip, Field, PressableScale, Spec, useDs } from '@/components/ds';
 import { IconSymbol } from '@/components/ui/icon-symbol';
@@ -131,26 +131,33 @@ export function ServesField({ value, onChange, detail, trailing }: { value: numb
   const shown = draft ?? String(value);
   // Two digits at full size; three and four shrink to the display size so the row keeps its room.
   const size = BIG * Math.min(1, 2.5 / Math.max(2, shown.length));
+  const font = { fontFamily: face, fontSize: size, lineHeight: size * 1.15 };
   return (
     <View style={styles.big}>
-      <TextInput
-        value={shown}
-        onChangeText={(t) => {
-          const digits = t.replace(/\D/g, '').slice(0, 4);
-          setDraft(digits);
-          if (digits) onChange(clampServes(Number(digits)));
-        }}
-        onFocus={() => setDraft(String(value))}
-        onBlur={() => setDraft(null)}
-        onSubmitEditing={() => setDraft(null)}
-        keyboardType="number-pad"
-        returnKeyType="done"
-        selectTextOnFocus
-        maxLength={4}
-        accessibilityLabel="Serves"
-        accessibilityHint="Type a number of serves"
-        style={[styles.bigInput, { fontFamily: face, color: ds.c.ink, fontSize: size, lineHeight: size * 1.15, width: (size * Math.max(2, shown.length)) / 2 }]}
-      />
+      {/* The hidden copy sizes the box to the face's real digits (some faces run wider than half an em); the field fills it. */}
+      <View style={{ minWidth: size }}>
+        <Text aria-hidden style={[styles.bigInput, styles.ghost, font]}>
+          {shown}
+        </Text>
+        <TextInput
+          value={shown}
+          onChangeText={(t) => {
+            const digits = t.replace(/\D/g, '').slice(0, 4);
+            setDraft(digits);
+            if (digits) onChange(clampServes(Number(digits)));
+          }}
+          onFocus={() => setDraft(String(value))}
+          onBlur={() => setDraft(null)}
+          onSubmitEditing={() => setDraft(null)}
+          keyboardType="number-pad"
+          returnKeyType="done"
+          selectTextOnFocus
+          maxLength={4}
+          accessibilityLabel="Serves"
+          accessibilityHint="Type a number of serves"
+          style={[styles.bigInput, StyleSheet.absoluteFill, font, { color: ds.c.ink }]}
+        />
+      </View>
       {/* "serves · fills 1 × 1 L" beside the count, the units at the end of the row (board drink-sheet-batch-venue). */}
       <Body tone="muted" style={[styles.unit, styles.detail]}>
         {[value === 1 ? 'serve' : 'serves', detail].filter(Boolean).join(' · ')}
@@ -230,6 +237,8 @@ const styles = StyleSheet.create({
   big: { flexDirection: 'row', alignItems: 'flex-end', gap: space.sm },
   // Room above the glyphs: a serif this size overshoots a lineHeight of 1.
   bigInput: { letterSpacing: -2, padding: 0 },
+  // A little room past the last digit for the cursor.
+  ghost: { opacity: 0, paddingRight: space.xs },
   unit: { flex: 1, paddingBottom: space.xl },
   trailing: { paddingBottom: space.lg },
   detail: { fontSize: type.body.fontSize - 2, lineHeight: type.body.lineHeight - 2 },

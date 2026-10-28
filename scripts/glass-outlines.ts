@@ -29,6 +29,8 @@ export interface OutlineLoad {
   replaces?: { maker: string; name: string; capacity_ml: number | null }[];
   /** Glasses whose outline is taken away: the trace disagrees with the maker's own sizes. */
   clear?: { maker: string; name: string; capacity_ml: number | null }[];
+  /** Catalog heights the retrace was scaled to: the maker's own figure, where the catalog had another. */
+  heights?: { maker: string; name: string; capacity_ml: number | null; height_mm: number }[];
 }
 
 export const LOADS: OutlineLoad[] = [
@@ -109,6 +111,24 @@ export const LOADS: OutlineLoad[] = [
 --     family glass until a trace fits.
 --   * A second run changes nothing.`,
   },
+  {
+    file: 'supabase/migrations/20261127200000_glass_outline_drajja.sql',
+    dir: join(DIR, 'load4'),
+    replaces: [{ maker: 'bobo', name: 'Drajja', capacity_ml: 120 }],
+    heights: [{ maker: 'bobo', name: 'Drajja', capacity_ml: 120, height_mm: 170 }],
+    header: (count) => `-- Glass outlines, load 4: Bobo's Drajja retraced, after loads 1 to 3.
+-- Kevin, 27 Oct 2026: its drawing didn't look like the glass.
+--
+--   * ${count} outline. Load 2's trace drew the cone too wide and too deep,
+--     ran it into the stem like a funnel, and gave the stem 3.2 mm. The
+--     retrace, from the maker's product photo: a straight cone 66 mm across
+--     that comes to its point 78 mm down, a short teardrop into a 4.6 mm
+--     stem, and a thin 60 mm foot.
+--   * Its height is the maker's 17 cm (the catalog had 175 mm), and the
+--     outline is scaled to it.
+--   * No bar or drink uses the glass yet, so no drawing changes. A second
+--     run changes nothing.`,
+  },
 ];
 
 export interface OutlineSeed {
@@ -140,6 +160,7 @@ const q = (s: string | null | undefined) => (s == null ? 'NULL' : `$q$${s}$q$`);
 export function render(load: OutlineLoad, seeds = readSeeds(load.dir)): string {
   const who = makerPages(load.bars);
   const cleared = (load.clear ?? []).map((c) => `(${[q(c.maker), q(c.name), c.capacity_ml ?? 'NULL'].join(', ')})`);
+  const heights = (load.heights ?? []).map((h) => `(${[q(h.maker), q(h.name), h.capacity_ml ?? 'NULL', `${h.height_mm}::numeric`].join(', ')})`);
   const rows = seeds.flatMap((s) =>
     s.outlines.map((o) => {
       const problem = outlineProblem(o.outline);
@@ -174,6 +195,21 @@ ${cleared.join(',\n')}
    AND public.ingredient_key(m.name) = public.ingredient_key(c.name)
    AND coalesce(m.capacity_ml, 0) = coalesce(c.capacity_ml::numeric, 0)
    AND m.outline IS NOT NULL;
+`
+    : ''
+}${
+  heights.length
+    ? `
+UPDATE public.glass_models m
+   SET height_mm = h.height_mm
+  FROM (VALUES
+${heights.join(',\n')}
+  ) h(maker, name, capacity_ml, height_mm)
+  JOIN public.profiles p ON ${who} AND p.handle = h.maker
+ WHERE m.maker_profile_id = p.id
+   AND public.ingredient_key(m.name) = public.ingredient_key(h.name)
+   AND coalesce(m.capacity_ml, 0) = coalesce(h.capacity_ml::numeric, 0)
+   AND m.height_mm IS DISTINCT FROM h.height_mm;
 `
     : ''
 }`;

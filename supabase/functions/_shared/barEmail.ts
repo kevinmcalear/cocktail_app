@@ -10,6 +10,8 @@ export interface BarLook {
   color: string | null;
   /** A venue_display_face value. */
   face: string | null;
+  /** The dark ground tint, "#RRGGBB"; one text wouldn't read on is ignored, as in the app. */
+  groundTint?: string | null;
 }
 
 export interface EmailContent {
@@ -33,13 +35,14 @@ const BODY_FONT = "-apple-system,BlinkMacSystemFont,'Segoe UI',Helvetica,Arial,s
 // venue_display_face values and their Google font families, as the app loads them
 // (constants/tokens displayFaces; functions can't import app code, so keep in step).
 // Apple Mail and iOS Mail load the Google font; Gmail and Outlook show the fallback.
-const FACES: Record<string, { family: string; fallback: string }> = {
-  instrument_serif: { family: "Instrument Serif", fallback: "Georgia,'Times New Roman',serif" },
-  fraunces: { family: "Fraunces", fallback: "Georgia,'Times New Roman',serif" },
-  playfair_display: { family: "Playfair Display", fallback: "Georgia,'Times New Roman',serif" },
-  bricolage_grotesque: { family: "Bricolage Grotesque", fallback: "Helvetica,Arial,sans-serif" },
-  josefin_sans: { family: "Josefin Sans", fallback: "Helvetica,Arial,sans-serif" },
-  tenor_sans: { family: "Tenor Sans", fallback: "Helvetica,Arial,sans-serif" },
+// `italic`: the app has an italic for it; the others stay upright, as the app draws them.
+const FACES: Record<string, { family: string; fallback: string; italic: boolean }> = {
+  instrument_serif: { family: "Instrument Serif", fallback: "Georgia,'Times New Roman',serif", italic: true },
+  fraunces: { family: "Fraunces", fallback: "Georgia,'Times New Roman',serif", italic: true },
+  playfair_display: { family: "Playfair Display", fallback: "Georgia,'Times New Roman',serif", italic: true },
+  bricolage_grotesque: { family: "Bricolage Grotesque", fallback: "Helvetica,Arial,sans-serif", italic: false },
+  josefin_sans: { family: "Josefin Sans", fallback: "Helvetica,Arial,sans-serif", italic: false },
+  tenor_sans: { family: "Tenor Sans", fallback: "Helvetica,Arial,sans-serif", italic: false },
 };
 
 export function escapeHtml(value: string): string {
@@ -51,17 +54,34 @@ const html = (value: string) => escapeHtml(value).replace(/\r?\n/g, "<br>");
 
 /** The accent when it's a real colour, else Cocktail's. */
 export function accentOf(color: string | null): string {
-  return color && /^#[0-9a-f]{6}$/i.test(color) ? color : DEFAULT_ACCENT;
+  return isHex(color) ? color : DEFAULT_ACCENT;
 }
 
-/** Dark or cream text, whichever reads on the accent (WCAG relative luminance). */
-export function textOn(accent: string): string {
+const isHex = (color: string | null | undefined): color is string => !!color && /^#[0-9a-f]{6}$/i.test(color);
+
+/** WCAG relative luminance of "#RRGGBB". */
+function luminance(hex: string): number {
   const [r, g, b] = [1, 3, 5].map((i) => {
-    const c = parseInt(accent.slice(i, i + 2), 16) / 255;
+    const c = parseInt(hex.slice(i, i + 2), 16) / 255;
     return c <= 0.03928 ? c / 12.92 : ((c + 0.055) / 1.055) ** 2.4;
   });
-  const l = 0.2126 * r + 0.7152 * g + 0.0722 * b;
+  return 0.2126 * r + 0.7152 * g + 0.0722 * b;
+}
+
+/** Dark or cream text, whichever reads on the accent. */
+export function textOn(accent: string): string {
+  const l = luminance(accent);
   return (l + 0.05) / 0.05 > 1.05 / (l + 0.05) ? DARK : INK;
+}
+
+/** The ground tint when the app would use it (lib/brand usableGroundTint: ink reads at 7:1), else null. */
+export function groundOf(tint: string | null | undefined): string | null {
+  return isHex(tint) && (luminance(INK) + 0.05) / (luminance(tint) + 0.05) >= 7 ? tint : null;
+}
+
+/** "#RRGGBB" toward black by `amount` (0 to 1). */
+function darken(hex: string, amount: number): string {
+  return "#" + [1, 3, 5].map((i) => Math.round(parseInt(hex.slice(i, i + 2), 16) * (1 - amount)).toString(16).padStart(2, "0")).join("").toUpperCase();
 }
 
 /** "Little Rye via Cocktail <invites@babyvom.it>": the bar's name, safe for a header. */
@@ -70,10 +90,9 @@ export function barSender(barName: string, address: string): string {
   return `"${name} via Cocktail" <${address}>`;
 }
 
-/** "LR" for Little Rye: the mark when the bar has no logo. */
-export function initials(name: string): string {
-  const words = name.trim().split(/\s+/).filter((w) => /\w/.test(w));
-  return ((words[0]?.[0] ?? "") + (words[1]?.[0] ?? "")).toUpperCase() || "?";
+/** "L" for Little Rye: the mark when the bar has no logo, as the app's VenueMark draws it. */
+export function initial(name: string): string {
+  return name.trim().charAt(0).toUpperCase() || "?";
 }
 
 export interface BarEmailBody {
@@ -101,11 +120,16 @@ export function barEmail(bar: BarLook, subject: string, body: BarEmailBody): Ema
   const accent = accentOf(bar.color);
   const face = FACES[bar.face ?? ""] ?? FACES.instrument_serif;
   const display = `'${face.family}',${face.fallback}`;
+  const slant = face.italic ? "font-style:italic;" : "";
+  // A tinted bar: the card is its ground, as the app's screens are, on a deeper shade of it.
+  const ground = groundOf(bar.groundTint);
+  const card = ground ?? CARD;
+  const page = ground ? darken(ground, 0.4) : PAGE;
   const fontHref = `https://fonts.googleapis.com/css2?family=${encodeURIComponent(face.family).replace(/%20/g, "+")}&amp;display=swap`;
   const name = escapeHtml(bar.name);
   const mark = bar.logoUrl && /^https:\/\//.test(bar.logoUrl)
     ? `<img src="${escapeHtml(bar.logoUrl)}" width="48" height="48" alt="${name}" style="display:block;border:0;border-radius:14px;width:48px;height:48px;">`
-    : `<div style="width:46px;height:46px;border:1px solid ${accent};border-radius:999px;text-align:center;line-height:46px;font-family:${display};font-style:italic;font-size:20px;color:${accent};">${escapeHtml(initials(bar.name))}</div>`;
+    : `<div style="width:48px;height:48px;border-radius:13px;background-color:${accent};text-align:center;line-height:48px;font-family:${display};${slant}font-size:29px;color:${textOn(accent)};">${escapeHtml(initial(bar.name))}</div>`;
   const p = (text: string, style: string) => `<p style="margin:0 0 16px;font-family:${BODY_FONT};font-size:16px;line-height:24px;${style}">${text}</p>`;
   const rows = [
     `<tr><td style="padding-bottom:20px;">${mark}</td></tr>`,
@@ -114,7 +138,7 @@ export function barEmail(bar: BarLook, subject: string, body: BarEmailBody): Ema
     `<tr><td>${p(html(body.lead), `color:${MUTED};`)}</td></tr>`,
   ];
   if (body.message?.text.trim()) {
-    rows.push(`<tr><td>${p(html(body.message.text.trim()), `color:${INK};`)}${body.message.signedBy ? `<p style="margin:0 0 20px;font-family:${display};font-style:italic;font-size:18px;line-height:24px;color:${MUTED};">${html(body.message.signedBy)}</p>` : ""}</td></tr>`);
+    rows.push(`<tr><td>${p(html(body.message.text.trim()), `color:${INK};`)}${body.message.signedBy ? `<p style="margin:0 0 20px;font-family:${display};${slant}font-size:18px;line-height:24px;color:${MUTED};">${html(body.message.signedBy)}</p>` : ""}</td></tr>`);
   }
   if (body.note?.text.trim()) {
     rows.push(
@@ -132,7 +156,7 @@ export function barEmail(bar: BarLook, subject: string, body: BarEmailBody): Ema
   if (body.small) rows.push(`<tr><td style="font-family:${BODY_FONT};font-size:13px;line-height:19px;color:${MUTED};padding-bottom:20px;">${html(body.small)}</td></tr>`);
   rows.push(`<tr><td style="border-top:1px solid ${LINE};padding-top:16px;font-family:${BODY_FONT};font-size:13px;line-height:19px;color:${MUTED};">${html(body.foot)}</td></tr>`);
 
-  const page = `<!DOCTYPE html>
+  const doc = `<!DOCTYPE html>
 <html lang="en">
 <head>
 <meta charset="utf-8">
@@ -142,12 +166,12 @@ export function barEmail(bar: BarLook, subject: string, body: BarEmailBody): Ema
 <title>${escapeHtml(subject)}</title>
 <link href="${fontHref}" rel="stylesheet">
 </head>
-<body style="margin:0;padding:0;background-color:${PAGE};">
+<body style="margin:0;padding:0;background-color:${page};">
 <div style="display:none;max-height:0;overflow:hidden;mso-hide:all;">${escapeHtml(body.preheader)}</div>
-<table role="presentation" width="100%" cellpadding="0" cellspacing="0" bgcolor="${PAGE}" style="background-color:${PAGE};">
+<table role="presentation" width="100%" cellpadding="0" cellspacing="0" bgcolor="${page}" style="background-color:${page};">
 <tr><td align="center" style="padding:32px 12px;">
 <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="max-width:520px;">
-<tr><td bgcolor="${CARD}" style="background-color:${CARD};border-radius:22px;padding:32px 28px;">
+<tr><td bgcolor="${card}" style="background-color:${card};border-radius:22px;padding:32px 28px;">
 <table role="presentation" width="100%" cellpadding="0" cellspacing="0">
 ${rows.join("\n")}
 </table>
@@ -170,7 +194,7 @@ ${rows.join("\n")}
     "",
     body.foot,
   ].join("\n");
-  return { subject, html: page, text };
+  return { subject, html: doc, text };
 }
 
 /** "Rob" from "Rob Hale". */

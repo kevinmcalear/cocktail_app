@@ -65,7 +65,7 @@ export function MadeAtHome({ rows }: { rows: MadeRow[] }) {
   const beat = (r: MadeRow) => r.you !== null && r.bar !== null && r.you > r.bar;
   const label = (r: MadeRow) =>
     [r.tally.name, specOf(r), timesOf(r.tally.times), r.you !== null ? `yours ${formatScore(r.you)}` : null, r.bar !== null ? `the bar’s ${formatScore(r.bar)}, ${gapOf(r)}` : r.classic ? 'a classic' : null].filter(Boolean).join('. ');
-  const open = (r: MadeRow) => router.push(itemHref('Cocktail', r.tally.itemId));
+  const open = (r: MadeRow) => router.push(itemHref('Cocktail', r.tally.itemId) as never);
   return (
     <View style={stageStyles.section}>
       <StageHead title="Made at home">
