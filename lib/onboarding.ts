@@ -19,7 +19,7 @@ export const MEASURE_UNITS: { id: MeasureUnit; label: string }[] = [
  * 'hospitality' is "What brings you here?" (owner-setup step 1). An owner goes
  * on to 'bar' ("Find your bar") and, for a bar not on Cocktail yet, 'addbar'.
  */
-export type OnboardingStep = 'invite' | 'name' | 'hospitality' | 'bar' | 'addbar' | 'find' | 'work' | 'past' | 'menus' | 'drinks' | 'taste' | 'units' | 'bring';
+export type OnboardingStep = 'invite' | 'name' | 'you' | 'hospitality' | 'bar' | 'addbar' | 'find' | 'work' | 'past' | 'menus' | 'drinks' | 'taste' | 'units' | 'bring';
 
 /** What the person picked on a step that branches: 'owner' is "I'm setting up a bar". */
 export type StepChoice = 'yes' | 'no' | 'claim' | 'new' | 'owner';
@@ -57,6 +57,8 @@ export function nextStep(step: OnboardingStep, choice: StepChoice = 'no', joined
   }
   if (step === 'invite') return 'name';
   if (step === 'name') return 'hospitality';
+  // "Is this you?", shown after the name only when a page could be theirs.
+  if (step === 'you') return 'hospitality';
   if (step === 'hospitality') return choice === 'owner' ? 'bar' : choice === 'yes' ? 'find' : 'taste';
   if (step === 'bar') return choice === 'new' ? 'addbar' : 'done';
   if (step === 'addbar') return 'done';

@@ -55,6 +55,9 @@ assert.deepEqual(groups[0].rows.map((r) => [r.name, r.caption]), [['Moth Light M
 assert.deepEqual(groups[1].rows.map((r) => r.caption), ['with Sam Ortiz · Autumn menu · 2022', 'Field Notes menu · 2023']);
 assert.equal(groups[2].rows[0].caption, null);
 assert.deepEqual(madeByStats(groups, runs), { drinks: 5, bars: 2, menus: 3 });
+// Bars they worked at count too, once each: no drinks yet still isn't "0 bars".
+assert.deepEqual(madeByStats(groups, runs, ['lr', 'bar7']), { drinks: 5, bars: 3, menus: 3 });
+assert.deepEqual(madeByStats([], [], ['bar7', 'omakase']), { drinks: 0, bars: 2, menus: 0 });
 // With no job, a bar's label is the years its menus ran.
 assert.equal(madeByGroups([{ id: 'smoke', name: 'Smoke Signal', barId: 'lr', barName: 'Little Rye', others: [] }, { id: 'honey', name: 'Burnt Honey Sour', barId: 'lr', barName: 'Little Rye', others: [] }], runs)[0].label, 'Little Rye · 2022 to 2023');
 

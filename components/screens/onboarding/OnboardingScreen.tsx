@@ -1,26 +1,27 @@
 import { useLocalSearchParams, useRouter, type Href } from 'expo-router';
 import { useEffect, useRef, useState } from 'react';
 
-import { Body, Button, Caption } from '@/components/ds';
-import { SafetyPage } from '@/components/screens/safety/SafetyPage';
+import { Caption } from '@/components/ds';
 import { useAuth } from '@/ctx/AuthContext';
 import { useMyInvites, type MyInvite } from '@/hooks/useBarInvites';
 import { useSaveSetupAnswer } from '@/hooks/useLikelyClaimer';
 import { useFinishOnboarding, useSaveOnboardingName, useSaveWorkplace } from '@/hooks/useOnboarding';
 import { useMyProfile } from '@/hooks/useMyProfile';
-import { useMyPersonClaim } from '@/hooks/useProfiles';
-import { inviteJobTitle, needsOnboarding, nextStep, stepProgress, type OnboardingStep, type StepChoice } from '@/lib/onboarding';
+import { useFindNamesakes, useMyPersonClaim } from '@/hooks/useProfiles';
+import { inviteJobTitle, needsOnboarding, nextStep, splitName, stepProgress, type OnboardingStep, type StepChoice } from '@/lib/onboarding';
 import { useAppMode } from '@/store/useAppMode';
 
 import { BringStep } from './BringStep';
+import { BringsYouStep } from './BringsYouStep';
 import { PlaceStep } from './CareerSteps';
 import { FindStep } from './FindStep';
 import { InviteBrand, InviteWelcome } from './InviteWelcome';
 import { OwnerAddStep, OwnerFindStep } from './OwnerBarStep';
 import { NameStep, TasteStep, UnitsStep } from './ProfileSteps';
-import { SetupChromeProvider, SetupFooter, SetupPage } from './SetupPage';
-import { Answer } from './SetupParts';
+import { SetupChromeProvider, SetupFooter } from './SetupPage';
+import { SetupWelcome } from './SetupParts';
 import { DrinkStep, MenuStep } from './WorkedSteps';
+import { YouStep } from './YouStep';
 import { COPY, HOME_BRING } from './onboardingCopy';
 
 type Resume = { chosen: OnboardingStep | null; trail: OnboardingStep[]; draft: { name: string; handle: string } | null; createdId: string | null; home: boolean };
@@ -42,7 +43,7 @@ export function OnboardingScreen() {
   const router = useRouter();
   // "Claim this page" on a bar page opened from here comes back with the bar (ClaimProfile).
   const { run } = useLocalSearchParams<{ run?: string }>();
-  const { user, loading } = useAuth();
+  const { user, loading, updateProfile } = useAuth();
   const profile = useMyProfile();
   const invites = useMyInvites();
   // A claim sent from "Find your bar or your name" skips the career steps, so the bar counts the shorter way.
@@ -62,6 +63,9 @@ export function OnboardingScreen() {
   const [createdId, setCreatedId] = useState<string | null>(saved?.createdId ?? null);
   const [draft, setDraft] = useState<{ name: string; handle: string } | null>(saved?.draft ?? null);
   const [handleTaken, setHandleTaken] = useState(false);
+  // Looking for a page that could be theirs after the name (the "Is this you?" step).
+  const [looking, setLooking] = useState(false);
+  const findNamesakes = useFindNamesakes();
   const [home, setHome] = useState(saved?.home ?? false);
   // The bar from "Where do you work?", for "Bring Little Rye in".
   const [barName, setBarName] = useState<string | null>(null);
@@ -98,9 +102,14 @@ export function OnboardingScreen() {
 
   // A claim needs them to have no profile yet, so the profile is created only
   // once they aren't taking an existing one.
-  const createProfile = (then: (id: string) => void, named = draft) => {
+  const createProfile = (then: (id: string | null) => void, named = draft) => {
     if (personId) {
       then(personId);
+      return;
+    }
+    // A page they've claimed becomes their profile once it's approved: no second one meanwhile.
+    if (personClaim) {
+      then(null);
       return;
     }
     if (!named) return;
@@ -153,14 +162,22 @@ export function OnboardingScreen() {
       return;
     }
     if (!joined) {
-      go('name');
+      // The name on their account now: a claim makes no profile until it's approved, and
+      // whoever checks it (and You meanwhile) should see who sent it. Saved again with the profile.
+      void updateProfile({ ...splitName(name), fullName: name.trim() });
+      // A page that could be theirs comes first, before any path can make a second profile.
+      setLooking(true);
+      findNamesakes(name)
+        .catch(() => [])
+        .then((pages) => (pages.length ? setStep('you') : go('name')))
+        .finally(() => setLooking(false));
       return;
     }
     // Their job at the venue, when it has a public bar profile. A failure here
     // isn't worth stopping setup for: they can add it on their profile.
     const bar = joined.bar_profile_id;
     createProfile((id) => {
-      if (!bar) go('name');
+      if (!bar || !id) go('name');
       else saveJob.mutate({ personId: id, barId: bar, title: inviteJobTitle(joined.role_level) }, { onSettled: () => go('name') });
     }, { name, handle });
   };
@@ -172,22 +189,8 @@ export function OnboardingScreen() {
   };
 
   const copy = step === 'bring' && home ? HOME_BRING : step === 'bring' && barName ? { ...COPY.bring, title: `Bring ${barName} in` } : COPY[step];
-  if (profile.isPending || (invites.isLoading && !chosen)) {
-    return (
-      <SafetyPage title="Welcome" noBack>
-        <Body tone="muted">One moment…</Body>
-      </SafetyPage>
-    );
-  }
-  if (profile.error) {
-    return (
-      <SafetyPage title="Welcome" noBack>
-        <Body tone="muted">Couldn’t load your account. Check your connection and try again.</Body>
-        <Button label="Try again" onPress={() => profile.refetch()} />
-        <Button label="Not now" variant="ghost" onPress={() => finish.mutate()} disabled={finish.isPending} />
-        {finish.error ? <Caption tone="accent">{finish.error.message}</Caption> : null}
-      </SafetyPage>
-    );
+  if (profile.isPending || (invites.isLoading && !chosen) || profile.error) {
+    return <SetupWelcome failed={!!profile.error} onRetry={() => profile.refetch()} onSkip={() => finish.mutate()} skipping={finish.isPending} error={finish.error?.message} />;
   }
 
   if (step === 'invite' && invite) {
@@ -227,28 +230,22 @@ export function OnboardingScreen() {
           forceHandle={handleTaken}
           invited={!!joined}
           job={joined?.bar_profile_id ? { bar: joined.bar_name, title: inviteJobTitle(joined.role_level) } : null}
-          pendingFinish={finish.isPending || saveProfile.isPending}
+          pendingFinish={finish.isPending || saveProfile.isPending || looking}
           onSaved={saveName}
           onSkip={() => finish.mutate()}
         />
       ) : null}
       {step === 'hospitality' ? (
-        <SetupPage footer={<Button label="Not now" variant="ghost" onPress={() => createProfile(() => setStep('taste'))} />}>
-          {/* Owners, managers and head bartenders (owner-setup call 1). */}
-          <Answer label="I’m setting up a bar" detail="I own it, run it or manage it: its menus, drinks, kit and team." onPress={() => (answer('owner'), go('hospitality', 'owner'))} />
-          <Answer label="I make drinks at a bar" detail="Find your bar, your drinks and the menus you worked on." onPress={() => (answer('bartender'), setStep(personId ? 'work' : 'find'))} />
-          <Answer
-            label="I love drinks"
-            detail="Rank them, keep them, make them at home."
-            onPress={() => {
-              answer('drinks');
-              setHome(true);
-              createProfile(() => setStep('taste'));
-            }}
-          />
-          {saveProfile.error && !handleTaken ? <Caption tone="accent">{saveProfile.error.message}</Caption> : null}
-        </SetupPage>
+        <BringsYouStep
+          onOwner={() => (answer('owner'), go('hospitality', 'owner'))}
+          // A claim sent from "Is this you?" already showed Claim sent: the career steps are skipped.
+          onBartender={() => (answer('bartender'), setStep(personClaim && trail.includes('you') ? 'taste' : personId ? 'work' : 'find'))}
+          onDrinks={() => (answer('drinks'), setHome(true), createProfile(() => setStep('taste')))}
+          onSkip={() => createProfile(() => setStep('taste'))}
+          error={saveProfile.error && !handleTaken ? saveProfile.error.message : null}
+        />
       ) : null}
+      {step === 'you' && draft ? <YouStep name={draft.name} onNext={() => go('you')} /> : null}
       {step === 'bar' ? <OwnerFindStep onAdd={(typed) => (setOwnerName(typed), go('bar', 'new'))} onSkip={() => createProfile(() => finish.mutate())} /> : null}
       {step === 'addbar' ? <OwnerAddStep initialName={ownerName} onAdded={(id) => setUpBar(id)} /> : null}
       {step === 'find' && draft ? (

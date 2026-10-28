@@ -9,6 +9,7 @@ import { YouScreen } from './YouScreen';
 const mockPush = jest.fn();
 const mockNavigate = jest.fn();
 let mockProfile: MyProfile | null = null;
+let mockClaim: { status: 'pending'; confirm_bar: string | null; profile: { id: string; handle: string; display_name: string } } | null = null;
 let mockHad: HadDrink[] = [];
 let mockTaste: { taste: Record<string, number>; entries: []; baseline: null; answers: null; rankedDrinks: number } | null = null;
 
@@ -27,6 +28,8 @@ jest.mock('./useShareLink', () => ({ useShareLink: () => jest.fn() }));
 jest.mock('@/hooks/useProfiles', () => ({
   useMyMadeDrinks: () => ({ data: [{ id: 'm1', name: 'Garden Gimlet', origin_year: 2025, item_images: [], glass: null }], isLoading: false }),
   useProfilePositions: () => ({ data: [] }),
+  useMyPersonClaim: () => ({ data: mockClaim }),
+  useProfile: () => ({ data: { display_name: 'Cocktail Omakase' } }),
   useProfilePicks: () => ({ data: {} }),
   useSetPick: () => ({ mutate: jest.fn(), isPending: false, error: null }),
 }));
@@ -89,6 +92,23 @@ describe('YouScreen', () => {
     expect(mockNavigate).toHaveBeenCalledWith('/search');
     await fireEvent.press(screen.getByRole('button', { name: 'Make a public profile' }));
     expect(mockPush).toHaveBeenCalledWith('/settings/profile');
+  });
+
+  test('a claim waiting on a page: says so, and offers the page, not a second profile', async () => {
+    mockClaim = { status: 'pending', confirm_bar: null, profile: { id: 'mr', handle: 'mathew.resler', display_name: 'Mathew Resler' } };
+    try {
+      await renderWithTamagui(<YouScreen />);
+      expect(screen.getByText('Claim sent for Mathew Resler · A person checks it, usually within a day')).toBeTruthy();
+      expect(screen.queryByRole('button', { name: 'Make a public profile' })).toBeNull();
+      await fireEvent.press(screen.getByRole('button', { name: 'See the page' }));
+      expect(mockPush).toHaveBeenCalledWith('/p/mathew.resler');
+
+      mockClaim = { ...mockClaim, confirm_bar: 'omakase' };
+      await renderWithTamagui(<YouScreen />);
+      expect(screen.getByText('Claim sent for Mathew Resler · Cocktail Omakase’s Admin confirms it')).toBeTruthy();
+    } finally {
+      mockClaim = null;
+    }
   });
 
   test('its own preview: city and line, top four from your pins, an eye on every row', async () => {
