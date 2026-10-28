@@ -3,7 +3,7 @@
 // supabase/tests/near-names.test.mjs.
 import assert from 'node:assert/strict';
 
-import { nearAfter, nearest, nearFold, nearReason, nearScore } from './nearName';
+import { personNearScore, nearAfter, nearest, nearFold, nearReason, nearScore } from './nearName';
 
 // Folded as the database folds: accents off, lower case, one space.
 assert.equal(nearFold('  Piña   Colada '), 'pina colada');
@@ -59,6 +59,14 @@ assert.equal(nearScore('ab🍸cdef', 'ax🍸cdeg'), null);
 assert.equal(nearScore('ab🍸cdef', 'ax🍸cdef'), 11);
 // Too long to compare letter by letter is simply not close.
 assert.equal(nearScore('x'.repeat(300), 'x'.repeat(299)), null);
+
+// A person's short first name, with their last name: Matt and Mat find Mathew Resler, a slip in the last name too; Mark doesn't.
+assert.equal(nearScore('matt resler', 'Mathew Resler'), null);
+assert.equal(personNearScore('matt resler', 'Mathew Resler'), 1);
+assert.equal(personNearScore('Matt Reisler', 'Mathew Resler'), 2);
+assert.equal(personNearScore('mat resler', 'Mathew Resler'), 1);
+assert.equal(personNearScore('mark resler', 'Mathew Resler'), null);
+assert.equal(personNearScore('matt', 'Mathew Resler'), null);
 
 // Why it's close: the loosest part that matched.
 assert.equal(nearReason('salty boy', 'Salty Boy'), 'same');

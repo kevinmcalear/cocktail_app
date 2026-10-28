@@ -455,5 +455,9 @@ verify_jwt = false
 [functions.sync-calendar]
 verify_jwt = false
 
+# Called by the database (pg_net) with a shared secret, not a user session.
+[functions.claim-email]
+verify_jwt = false
+
 [functions.pair-notes]
 verify_jwt = false

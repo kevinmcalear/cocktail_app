@@ -108,7 +108,7 @@ export function useClaimsToConfirm(barId: string, enabled: boolean) {
   });
 }
 
-/** One tap: the page is theirs (confirm_person_claim). */
+/** One tap: the page is theirs, and with a current job here they're on the team (confirm_person_claim). */
 export function useConfirmPersonClaim(barId: string) {
   const qc = useQueryClient();
   return useMutation({
@@ -118,6 +118,8 @@ export function useConfirmPersonClaim(barId: string) {
     },
     onSuccess: async () => {
       await qc.invalidateQueries({ queryKey: ['claims-to-confirm', barId] });
+      await qc.invalidateQueries({ queryKey: ['join-requests', barId] });
+      await qc.invalidateQueries({ queryKey: ['bar-members', barId] });
       // The page is theirs now, or merged into theirs and gone.
       await qc.invalidateQueries({ queryKey: ['profile'] });
       await qc.invalidateQueries({ queryKey: ['profile-positions'] });

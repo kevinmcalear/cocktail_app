@@ -63,19 +63,22 @@ export function PersonClaimSheet({
   const method = chosen === 'bar' && !confirmBar ? (handle ? 'instagram' : 'note') : chosen;
   // Made before sending, so the sheet can show it first (as a bar's claim does).
   const [code] = useState(newClaimCode);
+  // "Something else" with nothing in it gives the person checking nothing to check.
+  const blank = method === 'note' && !note.trim();
   const moves = [stats.drinks ? plural(stats.drinks, 'drink') : null, stats.menus ? plural(stats.menus, 'menu') : null, 'where you have worked'].filter(Boolean).join(', ').replace(/, ([^,]*)$/, ' and $1');
+  // The promise, not mutate's onSuccess: a sent claim remounts this sheet (the page's card appears), which drops mutate's callbacks.
   const send = () =>
-    claim.mutate(
-      method === 'bar' && confirmBar
-        ? { profile_id: profile.id, message: '', method: 'note', confirm_bar: confirmBar }
-        : { profile_id: profile.id, message: note, method: method === 'bar' ? 'note' : method, code: method === 'instagram' ? code : null },
-      {
-        onSuccess: () => {
-          onClose();
-          if (needsOnboarding(user?.user_metadata)) router.dismissTo('/onboarding');
-        },
-      }
-    );
+    claim
+      .mutateAsync(
+        method === 'bar' && confirmBar
+          ? { profile_id: profile.id, message: '', method: 'note', confirm_bar: confirmBar }
+          : { profile_id: profile.id, message: note, method: method === 'bar' ? 'note' : method, code: method === 'instagram' ? code : null }
+      )
+      .then(() => {
+        onClose();
+        if (needsOnboarding(user?.user_metadata)) router.dismissTo('/onboarding');
+      })
+      .catch(() => {}); // Shown under the methods (claim.error).
   return (
     <Sheet visible={visible} onClose={onClose} accessibilityLabel={`Claim ${profile.display_name}`} keyboard style={wide ? styles.wide : null}>
       <SheetScrollView contentContainerStyle={[styles.body, wide ? styles.row : null]} keyboardShouldPersistTaps="handled">
@@ -122,12 +125,12 @@ export function PersonClaimSheet({
           ) : null}
           {wide ? (
             <View style={styles.actions}>
-              <Button label={claim.isPending ? 'Sending…' : 'Send claim'} size="lg" disabled={claim.isPending} onPress={send} />
+              <Button label={claim.isPending ? 'Sending…' : 'Send claim'} size="lg" disabled={claim.isPending || blank} onPress={send} />
               <Button label="Cancel" variant="ghost" onPress={onClose} />
             </View>
           ) : (
             <View style={styles.stacked}>
-              <Button label={claim.isPending ? 'Sending…' : 'Send claim'} size="lg" disabled={claim.isPending} onPress={send} />
+              <Button label={claim.isPending ? 'Sending…' : 'Send claim'} size="lg" disabled={claim.isPending || blank} onPress={send} />
               <Button label="Not your phone? Claim it on yours" variant="ghost" icon="phone" expanded={elsewhere} onPress={() => setElsewhere((on) => !on)} />
               {elsewhere ? <ClaimOnYourPhone profileRef={profile.handle || profile.id} name={profile.display_name} /> : null}
             </View>

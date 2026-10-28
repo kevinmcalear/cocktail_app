@@ -32,8 +32,8 @@ export function ClaimSent({ claim, onNext }: { claim: MyPersonClaim; onNext: () 
         ...chrome,
         title: 'Claim sent',
         intro: claim.confirm_bar
-          ? `${bar ?? 'The bar'}’s Admin confirms it, usually the same day. We tell you here once it’s yours.`
-          : 'A person checks it, usually within a day. We tell you here once it’s yours.',
+          ? `${bar ?? 'The bar'}’s Admin confirms it, usually the same day. You’ll see it on You once it’s yours.`
+          : 'A person checks it, usually within a day. You’ll see it on You once it’s yours.',
         mark: <Clock />,
       }}
     >
