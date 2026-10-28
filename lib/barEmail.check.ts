@@ -1,6 +1,6 @@
 import assert from 'node:assert/strict';
 
-import { accentOf, barSender, deleteDay, initials, inviteEmail, textOn, venueDeleteEmail } from '../supabase/functions/_shared/barEmail';
+import { accentOf, barSender, deleteDay, groundOf, initial, inviteEmail, textOn, venueDeleteEmail } from '../supabase/functions/_shared/barEmail';
 
 const bar = { name: 'Little Rye', logoUrl: null, color: '#D0643B', face: 'fraunces' };
 
@@ -13,7 +13,8 @@ assert.match(email.html, /Welcome to Little Rye\.<br>Ask me anything\./);
 assert.match(email.html, /A note for you/);
 assert.match(email.html, /family=Fraunces/);
 assert.match(email.html, /href="https:\/\/babyvom\.it\/auth\/callback\?token_hash=abc&amp;type=invite"/);
-assert.match(email.html, />LR</, 'no logo: the initials');
+assert.match(email.html, />L</, 'no logo: the initial on the accent, as the app draws it');
+assert.match(email.html, /#1A1816/, 'no tint: the app’s dark surface');
 assert.match(email.text, /Join Little Rye: https:\/\/babyvom\.it\/auth\/callback\?token_hash=abc&type=invite/);
 
 // No welcome and no note: straight from "added you" to Join; no sender, the bar's name.
@@ -31,7 +32,16 @@ assert.match(sly.html, /&lt;script&gt;/);
 
 assert.equal(barSender('Little Rye', 'invites@babyvom.it'), '"Little Rye via Cocktail" <invites@babyvom.it>');
 assert.equal(barSender('Bad "Bar" <x>\r\nBcc: y', 'invites@babyvom.it'), '"Bad Bar x Bcc: y via Cocktail" <invites@babyvom.it>');
-assert.equal(initials('The Little Rye'), 'TL');
+assert.equal(initial(' little Rye'), 'L');
+
+// A tinted bar: the card is its ground, as the app draws it; a face with no italic stays upright.
+const plum = inviteEmail({ bar: { name: 'Kevin’s Bar', logoUrl: null, color: null, face: 'tenor_sans', groundTint: '#181019' }, role: 'Bartender', sender: 'Kevin', welcome: 'Hi.', note: null, joinUrl: 'https://babyvom.it/x' });
+assert.match(plum.html, /background-color:#181019;border-radius:22px/);
+assert.doesNotMatch(plum.html, /#1A1816|font-style:italic/);
+assert.match(plum.html, /family=Tenor\+Sans/);
+assert.equal(groundOf('#181019'), '#181019');
+assert.equal(groundOf('#8A8A8A'), null, 'too light for the ink: ignored, as in the app');
+assert.equal(groundOf('plum'), null);
 assert.equal(accentOf(null), '#E4B062');
 assert.equal(textOn('#FFFFFF'), '#0E0D0C');
 assert.equal(textOn('#1A1A1A'), '#F3EEE6');

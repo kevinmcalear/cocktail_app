@@ -56,7 +56,7 @@ serveJson("send-bar-invite", async (req) => {
 
   const { data: bar, error: barError } = await caller.admin
     .from("bars")
-    .select("name, slug, logo_url, primary_color, display_face, welcome_message")
+    .select("name, slug, logo_url, primary_color, display_face, ground_tint, welcome_message")
     .eq("id", barId)
     .single();
   if (barError) throw barError;
@@ -65,7 +65,7 @@ serveJson("send-bar-invite", async (req) => {
   const joinUrl = await joinLink(caller, email, site, bar, { invite_bar: bar.name, invite_role: role, invite_name: invite.name ?? "" });
   const sender = await callerName(caller);
   const content = inviteEmail({
-    bar: { name: bar.name, logoUrl: bar.logo_url, color: bar.primary_color, face: bar.display_face },
+    bar: { name: bar.name, logoUrl: bar.logo_url, color: bar.primary_color, face: bar.display_face, groundTint: bar.ground_tint },
     role,
     sender,
     welcome: bar.welcome_message?.trim() || null,
