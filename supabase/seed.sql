@@ -16,3 +16,8 @@ SELECT vault.create_secret('local-flavor-worker-secret', 'flavor_worker_secret')
 -- Lets the cron tick reach the local sync-calendar (LOCAL_CALENDAR_SYNC_SECRET).
 SELECT vault.create_secret('http://kong:8000/functions/v1/sync-calendar', 'calendar_sync_url');
 SELECT vault.create_secret('local-calendar-sync-secret', 'calendar_sync_secret');
+
+-- Lets the claims trigger reach the local claim-email (LOCAL_CLAIM_EMAIL_SECRET).
+-- Without RESEND_API_KEY it sends nothing; RESEND_API_URL can point it at a mock.
+SELECT vault.create_secret('http://kong:8000/functions/v1/claim-email', 'claim_email_url');
+SELECT vault.create_secret('local-claim-email-secret', 'claim_email_secret');
