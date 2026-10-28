@@ -1,6 +1,7 @@
-import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
+import { keepPreviousData, useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 
 import { useUserId } from '@/ctx/AuthContext';
+import { pickerResult, usePickerTerm } from '@/hooks/useDiscover';
 import { originalsByIds, type Original } from '@/hooks/useProfiles';
 import { withNear, type MaybeNear } from '@/hooks/useSearchNear';
 import { supabase } from '@/lib/supabase';
@@ -118,12 +119,13 @@ const MAKER_REF = 'id, handle, display_name, kind';
  * A bar's page that makes glassware (a tiki bar's own mugs) is one too (20261116200000).
  */
 export function useMakerSearch(term: string, makes?: string) {
-  const q = term.trim();
+  const { term: q, waiting } = usePickerTerm(term.trim());
   // Makers spelled close too ("steelite utpia": Steelite-Utopia), marked `near`; they need an account.
   const close = !!useUserId();
-  return useQuery({
+  const query = useQuery({
     queryKey: ['maker-search', q, makes ?? null, close],
-    enabled: q.length >= 2,
+    enabled: !!q,
+    placeholderData: q ? keepPreviousData : undefined,
     queryFn: async ({ signal }): Promise<MaybeNear<MakerRef>[]> => {
       const read = async (ids?: string[]): Promise<MakerRef[]> => {
         let query = supabase.from('profiles').select(MAKER_REF).in('kind', makes === 'glassware' ? ['maker', 'bar'] : ['maker']);
@@ -136,6 +138,7 @@ export function useMakerSearch(term: string, makes?: string) {
       return close ? withNear(q, 'maker', read(), read, signal, makes ? 20 : 4) : read();
     },
   });
+  return pickerResult(query, waiting);
 }
 
 /** Who makes a bottle (its maker page), or null. */

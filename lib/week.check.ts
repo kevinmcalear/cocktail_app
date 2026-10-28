@@ -1,6 +1,6 @@
 import assert from 'node:assert/strict';
 
-import { byDay, cleanTicketUrl, guestBarGuess, sameBarName, dayHeading, filterWeek, weekRange, detailLine, directionsUrl, dotShape, dotTone, itemDay, kindLabel, newDrinks, shortDay, thingsOn, ticketHost, weekLine, upcoming, weekDays, weekMonday, weekStart, withGuestColors, type WeekItem } from './week';
+import { byDay, cleanTicketUrl, guestBarGuess, sameBarName, dayHeading, filterWeek, weekRange, detailLine, directionsUrl, dotShape, dotTone, itemDay, kindLabel, newDrinks, shortDay, thingsOn, ticketHost, weekCount, upcoming, weekDays, weekMonday, weekStart, withGuestColors, type WeekItem } from './week';
 
 const local = (y: number, m: number, d: number, h = 0, min = 0) => new Date(y, m - 1, d, h, min).getTime();
 const item = (over: Partial<WeekItem>): WeekItem => ({
@@ -116,12 +116,9 @@ assert.equal(directionsUrl({ ...place, address_line: null, postcode: null, city:
 assert.equal(directionsUrl({ ...place, address_line: null, postcode: null, city: null, latitude: null, longitude: null }, false), null);
 assert.equal(directionsUrl(null, false), null);
 
-// --- The venue menu's This week line ---
-assert.equal(
-  weekLine([item({ eventKind: 'tasting', isPublic: false, startsAt: new Date(local(2026, 10, 13, 16)).toISOString() }), item({ startsAt: new Date(local(2026, 10, 10, 19)).toISOString() })], from, 'en-GB'),
-  'Takeover tonight · staff tasting Tue',
-);
-assert.equal(weekLine([], from), 'Nothing on yet');
+// --- The venue menu's This week count ---
+assert.equal(weekCount([item({ eventKind: 'tasting', isPublic: false, startsAt: new Date(local(2026, 10, 13, 16)).toISOString() }), item({ startsAt: new Date(local(2026, 10, 10, 19)).toISOString() })], from), '2 coming');
+assert.equal(weekCount([], from), '');
 
 // --- an imported guest shift names its bar ---
 assert.equal(guestBarGuess('Mara Q. from The Lantern Room'), 'The Lantern Room');

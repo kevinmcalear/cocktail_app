@@ -1,6 +1,7 @@
-import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
+import { keepPreviousData, useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 
 import { useUserId } from '@/ctx/AuthContext';
+import { pickerResult, usePickerTerm } from '@/hooks/useDiscover';
 import { CLAIM_COLUMNS, changedProfiles, type ProfileClaim } from '@/hooks/useProfiles';
 import { withNear, type MaybeNear } from '@/hooks/useSearchNear';
 import { supabase } from '@/lib/supabase';
@@ -28,12 +29,13 @@ export interface ClaimableBar {
 
 /** Bar pages by name or street for setup's search, claimed ones too (they show dimmed). */
 export function useClaimableBars(search: string) {
-  const term = search.replace(/[%_\\,()]/g, '').trim();
+  const { term, waiting } = usePickerTerm(search.replace(/[%_\\,()]/g, '').trim());
   // Close names too ("lanturn room": The Lantern Room), marked `near`.
   const close = !!useUserId();
-  return useQuery({
+  const query = useQuery({
     queryKey: ['claimable-bars', term, close],
-    enabled: term.length >= 2,
+    enabled: !!term,
+    placeholderData: term ? keepPreviousData : undefined,
     queryFn: async ({ signal }): Promise<MaybeNear<ClaimableBar>[]> => {
       const read = async (ids?: string[]): Promise<ClaimableBar[]> => {
         const q = supabase
@@ -58,6 +60,7 @@ export function useClaimableBars(search: string) {
       return close ? withNear(term, 'bar', read(), read, signal) : read();
     },
   });
+  return pickerResult(query, waiting);
 }
 
 /** How many bar pages there are: "2 of 1,375 bar pages". */

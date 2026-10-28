@@ -2,14 +2,14 @@ import { useRouter, type Href } from 'expo-router';
 import { useRef, useState, type ComponentRef } from 'react';
 import { StyleSheet, View } from 'react-native';
 
-import { Body, Caption, DsText, PopoverMenu, PressableScale, useDs, usePopover, type IconName } from '@/components/ds';
+import { Body, DsText, PopoverMenu, PressableScale, useDs, usePopover, type IconName } from '@/components/ds';
 import { MenuSheet } from '@/components/screens/menus/MenuSheet';
 import { IconSymbol } from '@/components/ui/icon-symbol';
 import { fontFamilies, layout, radius, space } from '@/constants/tokens';
 import { useActiveVenue, type Venue } from '@/hooks/useActiveVenue';
 import { useItemLocations, useWaitingForSpot } from '@/hooks/useBackBar';
 import { useCollection } from '@/hooks/useCollection';
-import { useBarDrinks, useShelf } from '@/hooks/useHomeBar';
+import { useShelf } from '@/hooks/useHomeBar';
 import { useVenueMenus } from '@/hooks/useMenus';
 import { useMode } from '@/hooks/useMode';
 import { useVenueFeatures } from '@/hooks/useVenueFeatures';
@@ -18,29 +18,35 @@ import { startedSetup } from '@/lib/venueSetup';
 import { useBarWeek, useWeekStart } from '@/hooks/useWeek';
 import { groupMenus } from '@/lib/menus';
 import { roleLabel } from '@/lib/roles';
-import { backBarLine, collectionLine, featuresLine, menusLine, shelfLine } from '@/lib/shellNav';
+import { backBarLine, collectionLine, featuresLine, menusLine, shelfLine, teamLine } from '@/lib/shellNav';
 import { VENUE_FEATURES } from '@/lib/venueFeatures';
-import { weekLine } from '@/lib/week';
+import { weekCount } from '@/lib/week';
 
 import { RoundPlacesNote, RoundSheetBlock } from '@/components/screens/firstRound/RoundElsewhere';
 import { useFirstRound } from '@/hooks/useFirstRound';
 
 import { MENUS_PLACE, useNavPlaces, type Place } from './navPlaces';
-import { TeamCard, useOpenTeam } from './TeamCard';
+import { useTeamCard } from './TeamCard';
 import { HomeMark, useSwitchTo, VenueMark } from './VenueMarks';
 
-function PlaceRow({ icon, label, detail, last, onPress }: { icon: IconName; label: string; detail: string; last: boolean; onPress: () => void }) {
+/** One row of a group: the icon in the venue's accent, the name, a short live count, a chevron. */
+function PlaceRow({ icon, label, value, first, onPress }: { icon: IconName; label: string; value: string; first: boolean; onPress: () => void }) {
   const ds = useDs();
   return (
-    <PressableScale role="link" accessibilityLabel={`${label}. ${detail}`} onPress={onPress} style={[styles.placeRow, { borderBottomColor: ds.c.line }, last && styles.last]}>
-      <View style={[styles.tile, { backgroundColor: ds.c.raised }]}>
-        <IconSymbol name={icon} size={18} color={ds.c.ink} />
+    <PressableScale role="link" accessibilityLabel={value ? `${label}. ${value}` : label} onPress={onPress} style={styles.row}>
+      <IconSymbol name={icon} size={20} color={ds.accentText} />
+      {/* The hairline starts after the icon, as grouped lists draw it. */}
+      <View style={[styles.rowBody, !first && { borderTopColor: ds.c.line, borderTopWidth: StyleSheet.hairlineWidth }]}>
+        <Body numberOfLines={1} style={styles.label}>
+          {label}
+        </Body>
+        {value ? (
+          <Body tone="muted" numberOfLines={1}>
+            {value}
+          </Body>
+        ) : null}
+        <IconSymbol name="chevron.right" size={16} color={ds.c.muted} />
       </View>
-      <View style={styles.rowText}>
-        <Body style={styles.strong}>{label}</Body>
-        <Caption tone="muted">{detail}</Caption>
-      </View>
-      <IconSymbol name="chevron.right" size={18} color={ds.c.muted} />
     </PressableScale>
   );
 }
@@ -78,8 +84,8 @@ const SLOP = (layout.minTapTarget - 32) / 2;
 // Settings is the sliders and Menus the menu card, as everywhere else (nav-icons).
 const SETTINGS: Place = { key: 'settings', label: 'Settings', icon: 'place.settings', path: '/settings' };
 
-/** The venue's own lines under each place: live counts where the app already has them. */
-function useVenueLines(venue: Venue): Record<string, string> {
+/** The short live count on the right of each place at a venue; places with nothing to count show none. */
+function useVenueValues(venue: Venue): Record<string, string> {
   const [now] = useState(() => Date.now());
   const menus = groupMenus((useVenueMenus(venue.id).data ?? []).filter((m) => m.barId === venue.id), now);
   const placed = useItemLocations(venue.id).data?.length ?? 0;
@@ -87,71 +93,61 @@ function useVenueLines(venue: Venue): Record<string, string> {
   const week = useBarWeek(venue.id).data;
   const from = useWeekStart();
   const on = useVenueFeatures().on.length;
+  const team = useTeamCard(venue.id);
   return {
-    menus: menusLine(menus.on, menus.draft.length),
+    menus: menusLine(menus.on.length, menus.draft.length),
     'back-bar': backBarLine(placed, waiting.length),
+    week: weekCount(week ?? [], from),
+    team: team.alone ? 'Invite' : team.members ? teamLine(team.members.length, 0) : '',
     features: featuresLine(on, VENUE_FEATURES.length),
-    brand: 'Logo, colours and type',
-    roles: 'Who sees what, by role',
-    'venue-settings': 'Hours, address, units, staff link',
-    week: week ? weekLine(week, from) : 'Events, menus going on, new drinks',
-    settings: 'Your account and the app',
   };
 }
 
-function useHomeLines(): Record<string, string> {
+function useHomeValues(): Record<string, string> {
   const bottles = useShelf().data?.length ?? 0;
-  const ready = useBarDrinks().canMake.length;
   const toMake = useCollection().data?.drinks.length ?? 0;
-  const menus = (useVenueMenus(null).data ?? []).filter((m) => !m.barId).length;
-  return {
-    bar: shelfLine(bottles, ready),
-    collection: collectionLine(toMake, menus),
-    profile: 'Your profile, ranks and taste',
-    settings: 'Your account and the app',
-  };
+  return { bar: shelfLine(bottles), collection: collectionLine(toMake) };
 }
 
-function Places({ places, lines, onGo }: { places: Place[]; lines: Record<string, string>; onGo: (p: Place) => void }) {
-  return places.map((p, i) => <PlaceRow key={p.key} icon={p.icon} label={p.label} detail={lines[p.key] ?? ''} last={i === places.length - 1} onPress={() => onGo(p)} />);
-}
-
-function Heading({ children }: { children: string }) {
+/** One rounded group of places under its heading, as iOS Settings and Material lists draw a section. */
+function Group({ heading, places, values, onGo, label }: { heading?: string; places: Place[]; values: Record<string, string>; onGo: (p: Place) => void; label: string }) {
+  const ds = useDs();
+  if (!places.length) return null;
   return (
-    <DsText variant="caption" tone="muted" role="heading" style={styles.heading}>
-      {children}
-    </DsText>
+    <View style={heading ? styles.section : undefined}>
+      {heading ? (
+        <DsText variant="caption" tone="muted" role="heading" style={styles.heading}>
+          {heading}
+        </DsText>
+      ) : null}
+      <View role="navigation" accessibilityLabel={label} style={[styles.group, { backgroundColor: ds.c.raised }]}>
+        {places.map((p, i) => (
+          <PlaceRow key={p.key} icon={p.icon} label={p.label} value={values[p.key] ?? ''} first={i === 0} onPress={() => onGo(p)} />
+        ))}
+      </View>
+    </View>
   );
 }
 
 /**
  * At a venue: its working pages (Menus, Back bar, This week), then Venue,
  * in the desktop sidebar's order (My team, Features, Brand, Roles and
- * access, Venue settings), then You (Settings).
+ * access, Venue settings), then You (Settings). An Admin alone on the team
+ * gets Invite on My team, which opens its invite sheet.
  */
-function VenuePlaces({ venue, onGo, onTeam }: { venue: Venue; onGo: (p: Place) => void; onTeam: (invite: boolean) => void }) {
+function VenuePlaces({ venue, onGo }: { venue: Venue; onGo: (p: Place) => void }) {
   const { work, venuePlaces, week } = useNavPlaces();
   const round = useFirstRound();
-  const lines = useVenueLines(venue);
+  const values = useVenueValues(venue);
   // Menus waits for its step in the first round, like its tab.
   const menus = round.hidden.includes('menus') ? [] : [MENUS_PLACE];
   const working = [...menus, ...work, ...(week ? [week] : [])];
-  // My team leads Venue as its own card (TeamCard), so it isn't listed again.
-  const setup = venuePlaces.filter((p) => p.key !== 'team');
+  const setup = venuePlaces.map((p) => (p.key === 'team' && values.team === 'Invite' ? { ...p, path: '/team?invite=1' } : p));
   return (
     <>
-      <View role="navigation" accessibilityLabel={`At ${venue.name}`}>
-        <Places places={working} lines={lines} onGo={onGo} />
-      </View>
-      <Heading>Venue</Heading>
-      <View role="navigation" accessibilityLabel="Venue" style={styles.venue}>
-        {round.active ? null : <TeamCard barId={venue.id} onGo={onTeam} />}
-        <View>
-          <Places places={setup} lines={lines} onGo={onGo} />
-        </View>
-      </View>
-      <Heading>You</Heading>
-      <Places places={[SETTINGS]} lines={lines} onGo={onGo} />
+      <Group places={working} values={values} onGo={onGo} label={`At ${venue.name}`} />
+      <Group heading="Venue" places={setup} values={values} onGo={onGo} label="Venue" />
+      <Group heading="You" places={[SETTINGS]} values={values} onGo={onGo} label="You" />
     </>
   );
 }
@@ -169,20 +165,12 @@ function HomePlaces({ onGo, setUp }: { onGo: (p: Place) => void; setUp: boolean 
   // My Bar, Collection and You, as decided on the canvas (10 Oct): the home tabs past Discover.
   const { tabs: all } = useNavPlaces();
   const tabs = all.filter((t) => t.key !== 'discover');
-  const lines = useHomeLines();
+  const values = useHomeValues();
   return (
     <>
-      <View role="navigation" accessibilityLabel="At home">
-        <Places places={tabs} lines={lines} onGo={onGo} />
-      </View>
-      <Heading>You</Heading>
-      <Places places={[SETTINGS]} lines={lines} onGo={onGo} />
-      {setUp ? (
-        <>
-          <Heading>A bar of your own</Heading>
-          <Places places={[started ? { ...SET_UP, path: started } : SET_UP]} lines={{ 'set-up': 'Find yours and claim it, or add a new one' }} onGo={onGo} />
-        </>
-      ) : null}
+      <Group places={tabs} values={values} onGo={onGo} label="At home" />
+      <Group heading="You" places={[SETTINGS]} values={values} onGo={onGo} label="You" />
+      {setUp ? <Group heading="A bar of your own" places={[started ? { ...SET_UP, path: started } : SET_UP]} values={values} onGo={onGo} label="A bar of your own" /> : null}
     </>
   );
 }
@@ -210,7 +198,6 @@ export function VenueMenuSheet({ onClose }: { onClose: () => void }) {
     else router.push(p.path as Href);
   };
   const venue = home ? null : active;
-  const openTeam = useOpenTeam(onClose);
   const inRound = useFirstRound().active;
   return (
     <MenuSheet
@@ -226,7 +213,7 @@ export function VenueMenuSheet({ onClose }: { onClose: () => void }) {
       {venue ? (
         <>
           {inRound ? <RoundSheetBlock onClose={onClose} /> : null}
-          <VenuePlaces venue={venue} onGo={go} onTeam={openTeam} />
+          <VenuePlaces venue={venue} onGo={go} />
           <RoundPlacesNote />
         </>
       ) : (
@@ -237,15 +224,13 @@ export function VenueMenuSheet({ onClose }: { onClose: () => void }) {
 }
 
 const styles = StyleSheet.create({
-  // Hairlines between rows and a chevron on each place, as the board draws them.
-  placeRow: { flexDirection: 'row', alignItems: 'center', gap: space.md, minHeight: 56, borderBottomWidth: StyleSheet.hairlineWidth },
-  // The last place of a group ends it: no hairline under it.
-  last: { borderBottomWidth: 0 },
-  tile: { width: 36, height: 36, borderRadius: radius.control, alignItems: 'center', justifyContent: 'center' },
-  rowText: { flex: 1, gap: 2 },
-  strong: { fontFamily: fontFamilies.bodySemiBold },
+  group: { borderRadius: radius.card, overflow: 'hidden' },
+  row: { flexDirection: 'row', alignItems: 'center', gap: space.md, paddingLeft: space.lg },
+  rowBody: { flex: 1, flexDirection: 'row', alignItems: 'center', gap: space.sm, minHeight: 52, paddingRight: space.md },
+  label: { flex: 1 },
   medium: { fontFamily: fontFamilies.bodyMedium },
-  heading: { fontFamily: fontFamilies.mono, textTransform: 'uppercase', marginTop: space.lg, marginBottom: space.xs },
-  venue: { gap: space.xs },
+  // The body's own gap plus this sets each section apart; its heading sits close to its group.
+  section: { gap: space.sm, marginTop: space.sm },
+  heading: { fontFamily: fontFamilies.bodyMedium, marginLeft: space.xs },
   switch: { flexDirection: 'row', alignItems: 'center', gap: space.xs, height: 32, paddingHorizontal: space.md, borderRadius: radius.pill, borderWidth: StyleSheet.hairlineWidth },
 });

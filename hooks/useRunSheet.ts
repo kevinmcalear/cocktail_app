@@ -1,6 +1,7 @@
-import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
+import { keepPreviousData, useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 
 import { useUserId } from '@/ctx/AuthContext';
+import { pickerResult, usePickerTerm } from '@/hooks/useDiscover';
 import { houseMadeUnder, purchasingFor, recipesFor, toLines } from '@/hooks/usePrepList';
 import { withNear, type MaybeNear } from '@/hooks/useSearchNear';
 import { readParts } from '@/lib/drinkParts';
@@ -352,12 +353,13 @@ export interface PartyPage {
 
 /** Pages to link a party to: bars for the guest venue, makers for a brand. Never makes one. */
 export function usePartySearch(term: string, kind: 'guest' | 'brand') {
-  const q = term.trim();
+  const { term: q, waiting } = usePickerTerm(term.trim());
   // Pages it may have meant too ("lanturn room": The Lantern Room), marked `near`.
   const close = !!useUserId();
-  return useQuery({
+  const query = useQuery({
     queryKey: ['run-sheet-party-search', kind, q, close],
-    enabled: q.length >= 2,
+    enabled: !!q,
+    placeholderData: q ? keepPreviousData : undefined,
     queryFn: async ({ signal }): Promise<MaybeNear<PartyPage>[]> => {
       const read = async (ids?: string[]): Promise<PartyPage[]> => {
         const base = supabase
@@ -372,4 +374,5 @@ export function usePartySearch(term: string, kind: 'guest' | 'brand') {
       return close ? withNear(q, kind === 'guest' ? 'bar' : 'maker', read(), read, signal) : read();
     },
   });
+  return pickerResult(query, waiting);
 }
