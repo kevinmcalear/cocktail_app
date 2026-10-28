@@ -45,7 +45,7 @@ const PICKERS: [string, (q: string) => unknown][] = [
 async function typeWord(use: (q: string) => unknown, word: string) {
   const client = new QueryClient({ defaultOptions: { queries: { retry: false } } });
   const wrapper = ({ children }: { children: ReactNode }) => <QueryClientProvider client={client}>{children}</QueryClientProvider>;
-  const { rerender, result } = await renderHook(({ q }: { q: string }) => use(q) as { data?: unknown[] }, { wrapper, initialProps: { q: '' } });
+  const { rerender, result } = await renderHook(({ q }: { q: string }) => use(q) as { data?: unknown[]; isFetching: boolean }, { wrapper, initialProps: { q: '' } });
   for (let i = 1; i <= word.length; i++) {
     await rerender({ q: word.slice(0, i) });
     await act(async () => {
