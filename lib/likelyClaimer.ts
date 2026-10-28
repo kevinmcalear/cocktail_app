@@ -1,3 +1,5 @@
+import { personNearScore } from './nearName';
+
 /**
  * Who gets a page's claim prompts up front (Q33, approved 26 Oct 2026): "See
  * your name?" on a bar's page and This is me on a person's show only to the
@@ -42,9 +44,17 @@ export function viewerNameKeys(metadata: unknown, profileName: string | null | u
   return [...new Set(names.map(nameKey).filter((k) => k.includes(' ')))];
 }
 
-/** One of the viewer's names is one of these (a page's name, or the people credited at a bar). */
+/**
+ * One of the viewer's names is one of these (a page's name, or the people
+ * credited at a bar): as typed, a letter off, or a short first name ("Matt
+ * Reisler" for Mathew Resler, personNearScore). Loose on purpose: it only
+ * makes a claim prompt louder.
+ */
 export function namesMatch(viewer: readonly string[], names: readonly string[]): boolean {
-  if (!viewer.length) return false;
-  const keys = new Set(viewer);
-  return names.some((n) => keys.has(nameKey(n)));
+  return names.some((n) => viewer.some((v) => personNearScore(v, n) !== null));
+}
+
+/** Unclaimed person pages whose name could be the one typed (Setup's "Is this you?"), from a people search. */
+export function unclaimedNamesakes<T extends { display_name: string; is_claimed: boolean }>(rows: readonly T[], typed: string): T[] {
+  return rows.filter((p) => !p.is_claimed && namesMatch([nameKey(typed)], [p.display_name]));
 }

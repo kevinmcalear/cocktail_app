@@ -82,6 +82,17 @@ describe('Mathew Resler', () => {
     ]);
   });
 
+  test('his Instagram is on the page, and Cocktail Omakase is his headline job (20261128600000)', async () => {
+    const row = (
+      await db.query(
+        `SELECT a.instagram, b.handle AS headline FROM public.profiles a
+         LEFT JOIN public.profile_positions pp ON pp.id = a.headline_position_id LEFT JOIN public.profiles b ON b.id = pp.bar_profile_id
+         WHERE a.handle = 'mathew.resler'`
+      )
+    ).rows[0];
+    assert.deepEqual(row, { instagram: 'drink_smith', headline: 'cocktail_omakase_nyc' });
+  });
+
   test('running it again adds nothing', async () => {
     const count = async () =>
       (

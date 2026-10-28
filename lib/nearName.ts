@@ -122,6 +122,20 @@ export function nearScore(query: string, name: string): number | null {
   return nearMatcher(query)(name);
 }
 
+/**
+ * nearScore for a person's name: also tries the first typed word cut to three
+ * letters, so a short form finds the full name ("matt reisler" finds Mathew
+ * Resler) while "mark resler" doesn't. Only with two or more words: the last
+ * name does the narrowing. The same rule as public.person_near_score.
+ */
+export function personNearScore(query: string, name: string): number | null {
+  const typed = words(nearFold(query));
+  const plain = nearScore(query, name);
+  if (typed.length < 2 || typed[0].length <= 3) return plain;
+  const short = nearScore([typed[0].slice(0, 3), ...typed.slice(1)].join(' '), name);
+  return plain === null ? short : short === null ? plain : Math.min(plain, short);
+}
+
 /** The closest names first (then the shortest), leaving out those that aren't close. */
 export function nearest<T>(query: string, rows: readonly T[], nameOf: (row: T) => string, limit = 5): T[] {
   const score = nearMatcher(query);
