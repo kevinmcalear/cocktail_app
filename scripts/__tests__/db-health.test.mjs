@@ -52,7 +52,7 @@ test('the CLI\'s JSON is read past log lines, and its JSON error is what a failu
 });
 
 test('the report counts each check and names migration mismatches', () => {
-  const empty = { test_named_drinks: [], test_named_bars: [], demo_bars: [], duplicate_drinks: [], unlinked_workspaces: [], rls_off: [], anon_write_grants: [], anon_default_privileges: [], empty_tables: [], old_drafts: [], unreferenced_files: [] };
+  const empty = { test_named_drinks: [], test_named_bars: [], demo_bars: [], duplicate_drinks: [], unlinked_workspaces: [], rls_off: [], anon_write_grants: [], anon_default_privileges: [], empty_tables: [], undrawn_cocktails: [], old_drafts: [], unreferenced_files: [] };
   const report = buildReport(
     { ...empty, rls_off: [{ table: 'private.x' }], old_drafts: [{ entity_type: 'menu', drafts: '3' }], anon_default_privileges: [{ owner: 'postgres', schema: 'public', privileges: 'INSERT' }] },
     ['2', '3'],
@@ -65,6 +65,8 @@ test('the report counts each check and names migration mismatches', () => {
   assert.equal(report.unreferenced_files.capped, false);
   const big = buildReport({ ...empty, unreferenced_files: [{ bucket: 'drinks', files: '3', bytes: '9', bucket_files: '20001' }] }, [], []);
   assert.deepEqual([big.unreferenced_files.count, big.unreferenced_files.capped], [3, true]);
+  const undrawn = buildReport({ ...empty, undrawn_cocktails: [{ name: 'Trinity', queued: false }, { name: 'Star', queued: true }] }, [], []);
+  assert.deepEqual([undrawn.summary.undrawn_cocktails, undrawn.undrawn_cocktails.not_queued], [2, 1]);
   assert.equal(report.summary.rls_off, 1);
   assert.equal(report.summary.drafts_older_than_60_days, 3);
   assert.deepEqual(report.migrations, { applied: 2, on_disk: 2, not_applied: ['3'], not_on_disk: ['1'] });

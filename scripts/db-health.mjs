@@ -1,7 +1,7 @@
 // Database health check: read-only SELECTs that look for the drift the
 // 22 Oct 2026 audit found (test rows, duplicates, unlinked venues, open
-// grants, RLS off, empty tables, stale drafts, migration mismatch, unused
-// picture files). Prints one JSON report to stdout. Run weekly; it reports to
+// grants, RLS off, empty tables, undrawn cocktails, stale drafts, migration
+// mismatch, unused picture files). Prints one JSON report to stdout. Run weekly; it reports to
 // HQ and changes nothing.
 //
 //   npm run db:health                       production (the linked project)
@@ -167,6 +167,17 @@ const CHECKS = {
             false, true, '')))[1]::text = '0'
     order by 1 limit ${LIST_CAP}`,
 
+  // Cocktails with no drawing show a plain glass icon. A seed that deletes the
+  // flavour jobs its inserts queue leaves them that way (86 on 28 Oct 2026);
+  // `queued` says the worker will still draw it.
+  undrawn_cocktails: String.raw`
+    select i.name, i.created_at::date as created,
+           exists (select 1 from private.item_flavor_jobs j where j.item_id = i.id) as queued
+    from public.items i
+    where i.item_type::text = 'cocktail'
+      and not exists (select 1 from public.item_sketches s where s.item_id = i.id)
+    order by 2 desc, 1 limit ${LIST_CAP}`,
+
   old_drafts: String.raw`
     select entity_type, count(*) as drafts, min(coalesce(updated_at, created_at))::date as oldest
     from public.drafts
@@ -247,6 +258,10 @@ export function buildReport(results, diskVersions, appliedVersions) {
       default_privileges: results.anon_default_privileges,
     },
     empty_tables: list(results.empty_tables.map((r) => r.table)),
+    undrawn_cocktails: {
+      ...list(results.undrawn_cocktails),
+      not_queued: results.undrawn_cocktails.filter((r) => !r.queued).length,
+    },
     drafts_older_than_60_days: {
       count: results.old_drafts.reduce((n, r) => n + Number(r.drafts), 0),
       capped: results.old_drafts.length === LIST_CAP,
@@ -276,6 +291,7 @@ export function buildReport(results, diskVersions, appliedVersions) {
     anon_write_grant_tables: report.anon_write_grants.count,
     anon_default_write_privileges_on: report.anon_write_grants.default_privileges_on,
     empty_tables: report.empty_tables.count,
+    undrawn_cocktails: report.undrawn_cocktails.count,
     drafts_older_than_60_days: report.drafts_older_than_60_days.count,
     migrations_applied: report.migrations.applied,
     migrations_on_disk: report.migrations.on_disk,
