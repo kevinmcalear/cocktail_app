@@ -63,13 +63,13 @@ test('a venue with nothing switched on: Menus, then Venue with Features, then Se
   mockFeatures = [];
   await renderWithTamagui(<VenueMenuSheet onClose={jest.fn()} />);
   expect(screen.getAllByRole('link').map((el) => el.props.accessibilityLabel)).toEqual([
-    'Menus. Autumn menu on · 2 drafts',
-    'My team: 9 people · 2 invited',
-    'Features. History, Prep, Study and more',
-    'Brand. Logo, colours and type',
-    'Roles and access. Who sees what, by role',
-    'Venue settings. Hours, address, units, staff link',
-    'Settings. Your account and the app',
+    'Menus. 1 on',
+    'My team. 9 people',
+    'Features',
+    'Brand',
+    'Roles and access',
+    'Venue settings',
+    'Settings',
   ]);
 });
 
@@ -84,22 +84,22 @@ test('at a venue: titled with it, its working pages first, then Venue and You', 
   expect(screen.queryByRole('radio')).toBeNull();
   const places = screen.getAllByRole('link').map((el) => el.props.accessibilityLabel);
   expect(places).toEqual([
-    'Menus. Autumn menu on · 2 drafts',
-    'Back bar. 84 placed · 3 waiting',
-    'This week. Nothing on yet',
-    'My team: 9 people · 2 invited',
+    'Menus. 1 on',
+    'Back bar. 3 waiting',
+    'This week',
+    'My team. 9 people',
     'Features. 2 of 8 on',
-    'Brand. Logo, colours and type',
-    'Roles and access. Who sees what, by role',
-    'Venue settings. Hours, address, units, staff link',
-    'Settings. Your account and the app',
+    'Brand',
+    'Roles and access',
+    'Venue settings',
+    'Settings',
   ]);
-  await fireEvent.press(screen.getByRole('link', { name: /^Back bar\./ }));
+  await fireEvent.press(screen.getByRole('link', { name: /^Back bar/ }));
   expect(onClose).toHaveBeenCalled();
   expect(mockPush).toHaveBeenLastCalledWith('/back-bar');
-  await fireEvent.press(screen.getByRole('link', { name: /^Features\./ }));
+  await fireEvent.press(screen.getByRole('link', { name: /^Features/ }));
   expect(mockPush).toHaveBeenLastCalledWith('/settings/bar/rye/features');
-  await fireEvent.press(screen.getByRole('link', { name: /^My team:/ }));
+  await fireEvent.press(screen.getByRole('link', { name: /^My team/ }));
   expect(mockPush).toHaveBeenLastCalledWith('/team');
 });
 
@@ -117,14 +117,14 @@ test('Switch opens a menu of Home bar and the venues; a pick switches', async ()
 test('a Bartender sees no Features: only Admins switch them', async () => {
   mockRole = 30;
   await renderWithTamagui(<VenueMenuSheet onClose={jest.fn()} />);
-  expect(screen.queryByRole('link', { name: /^Features\./ })).toBeNull();
+  expect(screen.queryByRole('link', { name: /^Features/ })).toBeNull();
 });
 
-test('an Admin alone on the team is asked to invite people', async () => {
+test('an Admin alone on the team gets Invite on My team', async () => {
   mockMembers = [{ user_id: 'me' }];
   mockInvites = [];
   await renderWithTamagui(<VenueMenuSheet onClose={jest.fn()} />);
-  await fireEvent.press(screen.getByRole('button', { name: 'Invite your team' }));
+  await fireEvent.press(screen.getByRole('link', { name: 'My team. Invite' }));
   expect(mockPush).toHaveBeenLastCalledWith('/team?invite=1');
 });
 
@@ -133,12 +133,12 @@ test('at home: titled Home bar, My Bar, Collection and You, then Settings', asyn
   await renderWithTamagui(<VenueMenuSheet onClose={jest.fn()} />);
   expect(screen.getByRole('heading', { name: 'Home bar' })).toBeTruthy();
   expect(screen.getAllByRole('link').map((el) => el.props.accessibilityLabel)).toEqual([
-    'My Bar. 4 bottles · 7 drinks ready',
-    'Collection. 12 to make · 1 menu',
-    'You. Your profile, ranks and taste',
-    'Settings. Your account and the app',
+    'My Bar. 4 bottles',
+    'Collection. 12 to make',
+    'You',
+    'Settings',
   ]);
-  await fireEvent.press(screen.getByRole('link', { name: /^My Bar\./ }));
+  await fireEvent.press(screen.getByRole('link', { name: /^My Bar/ }));
   expect(mockNavigate).toHaveBeenLastCalledWith('/bar');
 });
 
