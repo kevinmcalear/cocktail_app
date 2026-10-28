@@ -10,14 +10,18 @@ export function withPublicDrinks(library: SearchItem[], publicDrinks: SearchItem
   return library.concat(publicDrinks.filter((d) => !own.has(d.id)));
 }
 
-/** Does a search card match the typed query (name, description, ingredient or credit)? */
+// Each card's searchable text in lower case, made once: a search reads every card again on every letter.
+const HAYSTACKS = new WeakMap<SearchItem, string>();
+
+/** Does a search card match the typed query (name, description, ingredient or credit)? `q` in lower case. */
 export function matchesQuery(item: SearchItem, q: string): boolean {
-  return (
-    item.name.toLowerCase().includes(q) ||
-    !!item.description?.toLowerCase().includes(q) ||
-    !!item.recipes?.some((r) => r.ingredient?.name?.toLowerCase().includes(q)) ||
-    !!item.fromBar?.toLowerCase().includes(q)
-  );
+  let text = HAYSTACKS.get(item);
+  if (text === undefined) {
+    // One field to a line, so a match never runs across two of them.
+    text = [item.name, item.description ?? '', ...(item.recipes ?? []).map((r) => r.ingredient?.name ?? ''), item.fromBar ?? ''].join('\n').toLowerCase();
+    HAYSTACKS.set(item, text);
+  }
+  return text.includes(q);
 }
 
 /** The small line under a search card: who a bar's drink is credited to, and when it was on the menu. */

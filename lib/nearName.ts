@@ -27,8 +27,39 @@ export function nearFold(text: string | null | undefined): string {
 
 const words = (folded: string) => folded.split(/[^a-z0-9]+/).filter(Boolean);
 
+// A search scores the same thousands of names again on every letter, so each
+// name's fold and each word's sound are worked out once and kept.
+// ponytail: each cache starts over past 100,000 entries; an LRU if lists outgrow that.
+const LIMIT = 100_000;
+interface Prepared {
+  n: string;
+  named: string[];
+  letters?: string[];
+}
+const NAMES = new Map<string, Prepared>();
+const SOUNDS = new Map<string, string>();
+
+function prepared(name: string): Prepared {
+  let p = NAMES.get(name);
+  if (!p) {
+    if (NAMES.size >= LIMIT) NAMES.clear();
+    const n = nearFold(name);
+    p = { n, named: words(n) };
+    NAMES.set(name, p);
+  }
+  return p;
+}
+
 // dmetaphone keeps four letters.
-const sound = (word: string) => doubleMetaphone(word)[0].slice(0, 4);
+function sound(word: string): string {
+  let s = SOUNDS.get(word);
+  if (s === undefined) {
+    if (SOUNDS.size >= LIMIT) SOUNDS.clear();
+    s = doubleMetaphone(word)[0].slice(0, 4);
+    SOUNDS.set(word, s);
+  }
+  return s;
+}
 
 interface Typed {
   word: string;
@@ -74,19 +105,30 @@ function matcher(query: string): (name: string) => Near | null {
     sound: word.length >= 3 && word.length <= 64 ? sound(word) : '',
   }));
   const slips = Math.max(1, Math.floor(q.length / 4));
+  // Names share words ("gin", "sour"): each typed word against each word once for this query.
+  const scored = typed.map(() => new Map<string, Near | null>());
+  const scoreOf = (i: number, w: string): Near | null => {
+    const memo = scored[i];
+    let s = memo.get(w);
+    if (s === undefined) {
+      s = wordScore(typed[i], w);
+      memo.set(w, s);
+    }
+    return s;
+  };
   return (name) => {
     if (!typed.length) return null;
-    const n = nearFold(name);
-    const named = words(n);
+    const p = prepared(name);
+    const named = p.named;
     let total = 0;
     let how: NearHow = 'same';
-    for (const t of typed) {
+    for (let i = 0; i < typed.length; i++) {
       let best: Near | null = null;
       for (const w of named) {
-        const s = wordScore(t, w);
+        const s = scoreOf(i, w);
         if (s !== null && (best === null || s.score < best.score)) best = s;
       }
-      if (best === null) return whole(q, [...n], slips);
+      if (best === null) return whole(q, (p.letters ??= [...p.n]), slips);
       total += best.score;
       if (LOOSENESS[best.how] > LOOSENESS[how]) how = best.how;
     }
@@ -120,6 +162,20 @@ function whole(q: string[], n: string[], slips: number): Near | null {
 /** nearMatcher for one name. */
 export function nearScore(query: string, name: string): number | null {
   return nearMatcher(query)(name);
+}
+
+/**
+ * nearScore for a person's name: also tries the first typed word cut to three
+ * letters, so a short form finds the full name ("matt reisler" finds Mathew
+ * Resler) while "mark resler" doesn't. Only with two or more words: the last
+ * name does the narrowing. The same rule as public.person_near_score.
+ */
+export function personNearScore(query: string, name: string): number | null {
+  const typed = words(nearFold(query));
+  const plain = nearScore(query, name);
+  if (typed.length < 2 || typed[0].length <= 3) return plain;
+  const short = nearScore([typed[0].slice(0, 3), ...typed.slice(1)].join(' '), name);
+  return plain === null ? short : short === null ? plain : Math.min(plain, short);
 }
 
 /** The closest names first (then the shortest), leaving out those that aren't close. */

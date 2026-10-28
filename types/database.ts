@@ -6258,6 +6258,17 @@ export type Database = {
           spec_fingerprint: string
         }[]
       }
+      claimants: {
+        Args: { p_claim_ids: string[] }
+        Returns: {
+          claim_id: string
+          email: string
+          name: string
+          profile_handle: string
+          profile_name: string
+          works_here: Json
+        }[]
+      }
       confirm_age: {
         Args: { p_birth_date: string; p_country_code: string }
         Returns: number
@@ -7161,6 +7172,10 @@ export type Database = {
           page_id: string
           page_name: string
         }[]
+      }
+      person_near_score: {
+        Args: { p_name: string; p_query: string }
+        Returns: number
       }
       pin_profile_drink: {
         Args: { p_entry_id: string; p_pin: boolean }
