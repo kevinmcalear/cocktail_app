@@ -5,6 +5,7 @@ import { Platform } from 'react-native';
 
 import { useUserId } from '@/ctx/AuthContext';
 import { imageExtFromUri, uriToBase64 } from '@/lib/imageBase64';
+import { reportFeedback } from '@/lib/monitoring';
 import { supabase } from '@/lib/supabase';
 import { useNoteDrafts } from '@/store/useNoteDrafts';
 
@@ -73,7 +74,7 @@ export function appAndDevice(): { app_version: string; device: string } {
 /**
  * Sends a note to the Cocktail team (feedback_notes, readable only by the
  * sender and the team): the photo first, into the private feedback bucket
- * under the sender's folder, then the row. Fails straight away when offline
+ * under the sender's folder, then the row, then its id to Sentry. Fails straight away when offline
  * (networkMode always) so the sheet can keep what was typed and say so,
  * instead of a write that waits unseen.
  */
@@ -102,7 +103,7 @@ export function useSendNote() {
           throw (error as { status?: number }).status ? Object.assign(new Error(error.message), { code: 'photo_refused' }) : error;
         }
       }
-      const { error } = await supabase.from('feedback_notes').insert({
+      const { data, error } = await supabase.from('feedback_notes').insert({
         user_id: userId,
         kind: note.kind,
         screen: note.screen,
@@ -111,7 +112,7 @@ export function useSendNote() {
         body: note.body.trim(),
         photo_path: photoPath,
         ...appAndDevice(),
-      });
+      }).select('id').single();
       if (error) {
         // Refused (a code: the daily limit, a bar they've left): take the photo back out rather than
         // leave it with no note. Offline or timed out, keep it: a retry reuses it (same path). The
@@ -120,6 +121,8 @@ export function useSendNote() {
         if (photoPath && error.code) await supabase.storage.from('feedback').remove([photoPath]).catch(() => {});
         throw error;
       }
+      // Sentry gets the note's id, so the steps and errors before it can be found from the note.
+      reportFeedback(data.id, { kind: note.kind, screen: note.screen });
     },
   });
 }

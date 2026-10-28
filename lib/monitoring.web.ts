@@ -16,9 +16,10 @@ const dsn = process.env.EXPO_PUBLIC_SENTRY_DSN;
 const enabled = !!dsn && typeof window !== 'undefined';
 
 let sentry: SentryModule | null = null;
-// Errors and the user from before the SDK finishes loading, replayed once it has.
+// Errors, notes and the user from before the SDK finishes loading, replayed once it has.
 const pendingErrors: { error: unknown; context?: Record<string, unknown> }[] = [];
 let pendingUserId: string | null | undefined;
+const pendingFeedback: ((Sentry: SentryModule) => void)[] = [];
 
 /** Runs once the browser is idle (or after a few seconds at most). */
 function whenIdle(run: () => void): void {
@@ -48,6 +49,7 @@ function loadSentry() {
       for (const { error, context } of pendingErrors.splice(0)) {
         Sentry.captureException(error, context ? { extra: context } : undefined);
       }
+      for (const send of pendingFeedback.splice(0)) send(Sentry);
     })
     .catch((e) => console.warn('Error monitoring failed to load', e));
 }
@@ -71,4 +73,16 @@ export function setMonitoringUser(userId: string | null): void {
     return;
   }
   sentry.setUser(userId ? { id: userId } : null);
+}
+
+/** Native only: the browser SDK records page changes itself. */
+export function noteScreen(_screen: string): void {}
+
+/** As monitoring.native.ts. A note sent before the SDK has loaded is queued, as errors are. */
+export function reportFeedback(noteId: string, about: { kind: string; screen: string }): void {
+  if (!enabled) return;
+  const send = (Sentry: SentryModule) =>
+    Sentry.captureFeedback({ message: `${about.kind} note from ${about.screen}`, source: 'app_note', tags: { note_id: noteId, note_kind: about.kind } });
+  if (sentry) send(sentry);
+  else pendingFeedback.push(send);
 }

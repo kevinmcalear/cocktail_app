@@ -225,7 +225,7 @@ function RootLayoutNav() {
           {/* Over the page, beside the sidebar: Bring in's sheet, drop dialog and reading tray. */}
           {session ? <BringIn /> : null}
         </View>
-        <RootExtras palette={showWebSidebar} eightBall={!!session} />
+        <RootExtras palette={showWebSidebar} signedIn={!!session} />
       </View>
       <StatusBar style={colorScheme === 'dark' ? 'light' : 'dark'} />
     </ThemeProvider>
