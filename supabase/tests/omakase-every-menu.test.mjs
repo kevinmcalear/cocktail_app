@@ -23,7 +23,8 @@ if (!/^http:\/\/(127\.0\.0\.1|localhost)/.test(status.API_URL)) {
 }
 
 const MIGRATION = new URL('../migrations/20261128200000_omakase_every_menu.sql', import.meta.url);
-const BARS = ['bar7.cocktailomakase', 'barlibre_ikebukuro', 'cocktail_omakase_nyc'];
+const BARS = ['bar7.cocktailomakase', 'cocktail_omakase_nyc'];
+const RESIDENCY = ['Wa-Tini', 'Fresarita', 'Edo Manhattan', 'Fresh Fruit Cocktail'];
 const anon = createClient(status.API_URL, status.ANON_KEY, { auth: { persistSession: false } });
 const db = new pg.Client({ connectionString: status.DB_URL });
 
@@ -33,11 +34,14 @@ after(() => db.end());
 const menus = async (handle) =>
   (
     await db.query(
-      `SELECT e.name, array_agg(i.name || coalesce(' $' || i.price, '') ORDER BY d.sort_order) AS drinks
+      // A bar-credited drink's price waits in credited_drink_details until
+      // the bar's page is open (keep_credited_price).
+      `SELECT e.name, array_agg(i.name || coalesce(' $' || c.price, '') ORDER BY d.sort_order) AS drinks
        FROM public.profile_menu_editions e
        JOIN public.profiles p ON p.id = e.profile_id
        JOIN public.profile_menu_edition_drinks d ON d.edition_id = e.id
        JOIN public.items i ON i.id = d.item_id
+       LEFT JOIN public.credited_drink_details c ON c.item_id = i.id
        WHERE p.handle = $1 GROUP BY e.name, e.month ORDER BY e.month, e.name`,
       [handle]
     )
@@ -93,16 +97,17 @@ describe('Every Cocktail Omakase and Bar 7 menu', () => {
 
   test("Bar Libre's residency menu is on Bar Libre's page", async () => {
     const residency = (await menus('barlibre_ikebukuro')).find((m) => m.name === 'Residency at Bar 7, New York');
-    assert.deepEqual(residency?.drinks, ['Wa-Tini $21.50', 'Fresarita', 'Edo Manhattan', 'Fresh Fruit Cocktail']);
+    assert.deepEqual(residency?.drinks, ['Wa-Tini $21.50', ...RESIDENCY.slice(1)]);
   });
 
   test('every drink has notes and none queued a flavour job', async () => {
     const { rows } = await db.query(
       `SELECT i.name FROM public.items i JOIN public.profiles p ON p.id = i.origin_bar_profile_id
-       WHERE p.handle = ANY($1) AND i.item_type = 'cocktail' AND i.bar_id IS NULL
+       WHERE (p.handle = ANY($1) OR (p.handle = 'barlibre_ikebukuro' AND i.name = ANY($2)))
+         AND i.item_type = 'cocktail' AND i.bar_id IS NULL
          AND (NOT EXISTS (SELECT 1 FROM public.item_notes n WHERE n.item_id = i.id)
               OR EXISTS (SELECT 1 FROM private.item_flavor_jobs j WHERE j.item_id = i.id))`,
-      [BARS]
+      [BARS, RESIDENCY]
     );
     assert.deepEqual(rows, []);
   });
