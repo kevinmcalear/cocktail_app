@@ -5,18 +5,17 @@ import { BackbarTheme, BrandProvider, Caption, useDs } from '@/components/ds';
 import { SetupPage } from '@/components/screens/onboarding/SetupPage';
 import { SectionHeading } from '@/components/screens/settings/SettingsParts';
 import { IconSymbol } from '@/components/ui/icon-symbol';
-import { GROUND_TINTS, radius, space } from '@/constants/tokens';
+import { radius, space } from '@/constants/tokens';
 import { useReducedMotion } from '@/hooks/useReducedMotion';
 import type { VenueBrandRow } from '@/hooks/useVenueBrand';
 import { normalizeHex } from '@/lib/brand';
 
-import { AccentCards } from './BrandColours';
-import { accentOptions, type BrandDraftState } from './BrandForm';
-import { MiniScreen, SCHEMES, SchemeChip, Swatches, type BrandLook } from './BrandPreview';
+import { ColoursPart, type BrandDraftState } from './BrandForm';
+import { MiniScreen, SCHEMES, SchemeChip, type BrandLook } from './BrandPreview';
 import { FaceChoices, LogoRow } from './BrandSections';
 
-/** The four parts, in order: Logo first, since colours are suggested from it. */
-const PARTS = ['Logo', 'Colour', 'Font', 'Ground tint'] as const;
+/** The three parts, in order: Logo first, since palettes come from it; Colour holds the background too (Kevin, 28 Oct). */
+const PARTS = ['Logo', 'Colour', 'Font'] as const;
 
 /** Where the look pager is, for the step's buttons: Next names the part after this one; null on the last. */
 export interface LookPage {
@@ -43,7 +42,7 @@ interface Props {
 /**
  * Venue setup's How it looks on a phone (board w2-venue-setup, E34, call A):
  * the top of Tonight pinned as a preview, and under it one part at a time,
- * Logo, Colour, Font, Ground tint, walked with Next and Back or a swipe.
+ * Logo, Colour, Font, walked with Next and Back or a swipe.
  * The same parts and save as the brand editor; wide screens keep the
  * preview beside every part (BrandScreen).
  */
@@ -86,9 +85,7 @@ export function SetupLook({ row, look, draft, set, suggested, busy, problems, me
   };
 
   const accent = normalizeHex(draft.accent);
-  const options = accentOptions(row, suggested, false);
-  const custom = draft.custom || (!!draft.accent.trim() && !options.some((o) => o.hex === accent));
-  const brand = { accent: look.accent ?? undefined, displayFace: look.displayFace, groundTint: look.groundTint ?? undefined, accentText: look.accentText ?? undefined };
+  const brand = { accent: look.accent ?? undefined, displayFace: look.displayFace, groundTint: look.groundTint ?? undefined };
 
   const parts: ReactNode[] = [
     <View key="logo" style={styles.part}>
@@ -104,34 +101,11 @@ export function SetupLook({ row, look, draft, set, suggested, busy, problems, me
       <Caption tone="muted">A photo, a PNG or an SVG. We suggest colours from it.</Caption>
     </View>,
     <View key="colour" style={styles.part}>
-      <AccentCards
-        options={options}
-        value={accent}
-        custom={custom}
-        hexDraft={draft.accent}
-        hexError={problems.accent}
-        onPick={(hex) => {
-          set('custom')(false);
-          set('accent')(hex);
-        }}
-        onCustom={() => set('custom')(true)}
-        onHex={set('accent')}
-      />
-      <Caption tone="muted">The accent goes on the one main button, the active tab and what’s selected, nowhere else. Colours too light for text are refused.</Caption>
+      <ColoursPart {...{ row, draft, set, suggested, problems }} />
     </View>,
     <View key="font" style={styles.part}>
       <FaceChoices setup list name={row.name} value={draft.face} onChange={set('face')} />
       <Caption tone="muted">For drink names, menu names and big titles like Tonight. Body text, specs and numbers stay fixed.</Caption>
-    </View>,
-    <View key="tint" style={styles.part}>
-      <Swatches
-        label="Ground tint"
-        options={[{ label: 'Standard', hex: null }, ...GROUND_TINTS.map((t) => ({ label: t.label, hex: t.hex }))]}
-        value={normalizeHex(draft.tint)}
-        onChange={(hex) => set('tint')(hex ?? '')}
-      />
-      {problems.groundTint ? <Caption tone="accent" role="alert">{problems.groundTint}</Caption> : null}
-      <Caption tone="muted">A tint behind everything in dark mode.</Caption>
     </View>,
   ];
   const hint = [at < PARTS.length - 1 ? `Swipe for ${PARTS[at + 1]}` : null, at > 0 ? `${at < PARTS.length - 1 ? 'or back' : 'Swipe back'} to ${PARTS[at - 1]}` : null].filter(Boolean).join(', ');

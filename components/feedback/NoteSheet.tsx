@@ -67,7 +67,7 @@ interface NoteSheetProps {
  */
 export function NoteSheet(props: NoteSheetProps) {
   return (
-    <BrandProvider accent={DEFAULT_ACCENT} accentText="ink">
+    <BrandProvider accent={DEFAULT_ACCENT}>
       <Sheet {...props} />
     </BrandProvider>
   );

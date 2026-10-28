@@ -1,6 +1,6 @@
 import assert from 'node:assert/strict';
 
-import { displayFaces, GROUND_TINTS, type DisplayFace } from '../constants/tokens';
+import { displayFaces, type DisplayFace } from '../constants/tokens';
 
 import { brandProblems, faceFromDb, faceToDb, faceToSave, isUnknownFaceError, markBrand, normalizeHex, toPublicBrand, usableGroundTint } from './brand';
 
@@ -30,8 +30,7 @@ assert.equal(usableGroundTint('#1A1410'), '#1A1410');
 assert.equal(usableGroundTint('#D0643B'), null);
 assert.equal(usableGroundTint('nope'), null);
 assert.equal(usableGroundTint(null), null);
-// Every preset on the brand screen must pass its own rule.
-for (const t of GROUND_TINTS) assert.equal(usableGroundTint(t.hex), t.hex, t.label);
+// Every background the brand screen makes passes this rule: lib/palette.check.ts.
 
 assert.deepEqual(brandProblems({ accent: '#D0643B', groundTint: '', shortName: 'Little Rye' }), {});
 const bad = brandProblems({ accent: 'red', groundTint: '#FFFFFF', shortName: 'Little Rye Wine Bar' });

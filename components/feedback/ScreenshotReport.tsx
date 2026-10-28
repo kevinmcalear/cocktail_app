@@ -22,7 +22,7 @@ const TOAST_GONE_MS = 350;
  */
 export function ScreenshotReportHost() {
   return (
-    <BrandProvider accent={DEFAULT_ACCENT} accentText="ink">
+    <BrandProvider accent={DEFAULT_ACCENT}>
       <Host />
     </BrandProvider>
   );
