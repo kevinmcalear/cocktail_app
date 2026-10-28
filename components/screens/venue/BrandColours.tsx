@@ -1,7 +1,7 @@
 import { useState } from 'react';
 import { StyleSheet, View } from 'react-native';
 
-import { Body, Button, Caption, DsText, Field, PressableScale, Sheet, useDs } from '@/components/ds';
+import { Body, BrandProvider, Button, Caption, DsText, Field, PressableScale, Sheet, SheetScrollView, useDs } from '@/components/ds';
 import { ColourWheel } from '@/components/ds/ColourWheelLazy';
 import { DEFAULT_ACCENT, fontFamilies, radius, space } from '@/constants/tokens';
 import { normalizeHex } from '@/lib/brand';
@@ -125,13 +125,17 @@ export function ColourPicker({ accent, tint, palettes, onChange }: { accent: str
   );
 }
 
-/** Make your own colour: the wheel, brightness and hex (from option A), then Use this colour. */
+/**
+ * Make your own colour: the wheel, brightness and hex (from option A), then
+ * Use this colour, drawn in the colour being picked. It scrolls, so the
+ * button can be reached above the keyboard.
+ */
 function OwnColourSheet({ visible, start, onClose, onUse }: { visible: boolean; start: string; onClose: () => void; onUse: (hex: string) => void }) {
   const [text, setText] = useState(start);
   const hex = normalizeHex(text);
   return (
     <Sheet visible={visible} onClose={onClose} onShow={() => setText(start)} accessibilityLabel="Your own colour" keyboard>
-      <View style={styles.sheet}>
+      <SheetScrollView contentContainerStyle={styles.sheet} keyboardShouldPersistTaps="handled">
         <DsText variant="title">Your own colour</DsText>
         <ColourWheel value={hex} onChange={setText} />
         <Field
@@ -143,8 +147,10 @@ function OwnColourSheet({ visible, start, onClose, onUse }: { visible: boolean; 
           autoCorrect={false}
           error={text.trim() && !hex ? 'Use a hex colour like #D0643B.' : undefined}
         />
-        <Button label="Use this colour" disabled={!hex} onPress={() => hex && onUse(hex)} />
-      </View>
+        <BrandProvider accent={hex ?? start}>
+          <Button label="Use this colour" disabled={!hex} onPress={() => hex && onUse(hex)} />
+        </BrandProvider>
+      </SheetScrollView>
     </Sheet>
   );
 }
