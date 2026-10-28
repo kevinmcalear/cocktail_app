@@ -9,6 +9,7 @@ import { WEB_SIDEBAR_WIDTH } from '@/hooks/useIsWideWeb';
 const WebSideNav = lazy(() => import('@/components/nav/WebSideNav').then((m) => ({ default: m.WebSideNav })));
 const SearchPalette = lazy(() => import('@/components/search/SearchPalette').then((m) => ({ default: m.SearchPalette })));
 const EightBallHost = lazy(() => import('@/components/screens/eightball/EightBallHost').then((m) => ({ default: m.EightBallHost })));
+const ScreenshotReportHost = lazy(() => import('@/components/feedback/ScreenshotReport').then((m) => ({ default: m.ScreenshotReportHost })));
 const BringInHost = lazy(() => import('@/components/screens/bringin/BringInHost').then((m) => ({ default: m.BringInHost })));
 
 /** The wide web's side nav; its width is held while it loads, so nothing shifts. */
@@ -29,12 +30,13 @@ export function BringIn() {
   );
 }
 
-/** The ⌘K palette (wide web) and the eight ball (signed in). */
-export function RootExtras({ palette, eightBall }: { palette: boolean; eightBall: boolean }) {
+/** The ⌘K palette (wide web), and signed in, the eight ball and Report a problem from a screenshot. */
+export function RootExtras({ palette, signedIn }: { palette: boolean; signedIn: boolean }) {
   return (
     <Suspense fallback={null}>
       {palette ? <SearchPalette /> : null}
-      {eightBall ? <EightBallHost /> : null}
+      {signedIn ? <EightBallHost /> : null}
+      {signedIn ? <ScreenshotReportHost /> : null}
     </Suspense>
   );
 }
