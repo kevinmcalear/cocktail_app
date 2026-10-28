@@ -2,10 +2,9 @@ import { StyleSheet, View } from 'react-native';
 
 import { BackbarTheme, Body, BrandProvider, Caption, DsText, Title, useDs } from '@/components/ds';
 import { VenueMark } from '@/components/nav/VenueMarks';
-import { Monogram } from '@/components/screens/onboarding/SetupParts';
 import { radius, space, type } from '@/constants/tokens';
 import { useVenueBrand } from '@/hooks/useVenueBrand';
-import { faceFromDb } from '@/lib/brand';
+import { faceFromDb, usableGroundTint } from '@/lib/brand';
 import { isHexColor } from '@/lib/color';
 import { withArticle } from '@/lib/onboarding';
 import { roleLabel } from '@/lib/roles';
@@ -22,23 +21,25 @@ interface InvitePreviewProps {
 
 /**
  * The invite email as it arrives (invite-team-last, step 4), in the venue's
- * logo, colour and font: who invited them, the welcome message, their own
+ * logo, colour, font and ground tint: who invited them, the welcome message, their own
  * note when there is one, and Join. A likeness of what send-bar-invite
  * builds; keep the two in step.
  */
 export function InvitePreview({ barId, barName, roleLevel, sender, welcome, note }: InvitePreviewProps) {
   const brand = useVenueBrand(barId).data;
   const accent = isHexColor(brand?.primary_color) ? brand.primary_color : undefined;
+  const groundTint = usableGroundTint(brand?.ground_tint);
   return (
     // The email is dark, whatever the app is in (invite-team-last, step 4).
     <BackbarTheme scheme="dark">
-      <BrandProvider accent={accent} displayFace={faceFromDb(brand?.display_face)}>
+      <BrandProvider accent={accent} displayFace={faceFromDb(brand?.display_face)} groundTint={groundTint ?? undefined}>
         <Paper
           barId={barId}
           barName={barName}
           logoUrl={brand?.logo_url ?? null}
           accent={accent ?? null}
           displayFace={faceFromDb(brand?.display_face)}
+          groundTint={groundTint}
           roleLevel={roleLevel}
           sender={sender}
           welcome={welcome.trim()}
@@ -49,17 +50,19 @@ export function InvitePreview({ barId, barName, roleLevel, sender, welcome, note
   );
 }
 
-function Paper({ barId, barName, logoUrl, accent, displayFace, roleLevel, sender, welcome, note }: Omit<InvitePreviewProps, 'welcome'> & {
+function Paper({ barId, barName, logoUrl, accent, displayFace, groundTint, roleLevel, sender, welcome, note }: Omit<InvitePreviewProps, 'welcome'> & {
   welcome: string;
   logoUrl: string | null;
   accent: string | null;
+  groundTint: string | null;
   displayFace: ReturnType<typeof faceFromDb>;
 }) {
   const ds = useDs();
-  const venue = { id: barId, name: barName, logoUrl, accent, displayFace, groundTint: null, roleLevel };
+  const venue = { id: barId, name: barName, logoUrl, accent, displayFace, groundTint, roleLevel };
   return (
-    <View role="group" accessibilityLabel="The invite email" style={[styles.paper, { backgroundColor: ds.c.surface, borderColor: ds.c.line }]}>
-      {logoUrl ? <VenueMark venue={venue} size={48} /> : <Monogram name={barName} size={48} accent italic />}
+    <View role="group" accessibilityLabel="The invite email" style={[styles.paper, { backgroundColor: groundTint ? ds.c.ground : ds.c.surface, borderColor: ds.c.line }]}>
+      {/* The venue's mark as the app draws it: its logo, or its initial on its colour. */}
+      <VenueMark venue={venue} size={48} />
       <Caption tone="accent" style={styles.kicker}>{barName.toUpperCase()}</Caption>
       <Title>{`Join ${barName} as ${withArticle(roleLabel(roleLevel))}`}</Title>
       <Body tone="muted">{`${sender ?? barName} added you to the team.`}</Body>

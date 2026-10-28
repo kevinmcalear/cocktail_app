@@ -40,7 +40,7 @@ serveJson("venue-delete-email", async (req) => {
   if (!claimed?.length) return { sent: 0 };
 
   const [{ data: bar, error: barError }, { data: members, error: membersError }] = await Promise.all([
-    caller.admin.from("bars").select("name, logo_url, primary_color, display_face").eq("id", barId).single(),
+    caller.admin.from("bars").select("name, logo_url, primary_color, display_face, ground_tint").eq("id", barId).single(),
     caller.admin.from("user_bars").select("user_id, venue_roles(ends_at)").eq("bar_id", barId).gte("role_level", 40).neq("user_id", caller.user.id),
   ]);
   if (barError) throw barError;
@@ -55,7 +55,7 @@ serveJson("venue-delete-email", async (req) => {
   if (!admins.length) return { sent: 0 };
 
   const content = venueDeleteEmail({
-    bar: { name: bar.name, logoUrl: bar.logo_url, color: bar.primary_color, face: bar.display_face },
+    bar: { name: bar.name, logoUrl: bar.logo_url, color: bar.primary_color, face: bar.display_face, groundTint: bar.ground_tint },
     askedBy: await callerName(caller),
     deletesAt: request.deletes_at,
     undoUrl: `${site}/settings/bar/${barId}`,
