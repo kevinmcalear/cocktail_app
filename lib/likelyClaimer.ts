@@ -1,3 +1,5 @@
+import { personNearScore } from './nearName';
+
 /**
  * Who gets a page's claim prompts up front (Q33, approved 26 Oct 2026): "See
  * your name?" on a bar's page and This is me on a person's show only to the
@@ -43,33 +45,13 @@ export function viewerNameKeys(metadata: unknown, profileName: string | null | u
 }
 
 /**
- * Two name keys could be the same person: the same last name, and first
- * names where one starts the other or both start with the same three letters
- * ("matt resler" and "mathew resler", "sam ortiz" and "samantha ortiz").
- * Loose on purpose: it only makes a claim prompt louder.
+ * One of the viewer's names is one of these (a page's name, or the people
+ * credited at a bar): as typed, a letter off, or a short first name ("Matt
+ * Reisler" for Mathew Resler, personNearScore). Loose on purpose: it only
+ * makes a claim prompt louder.
  */
-export function sameName(a: string, b: string): boolean {
-  if (a === b) return true;
-  const x = a.split(' ');
-  const y = b.split(' ');
-  if (x.length < 2 || y.length < 2 || x[x.length - 1] !== y[y.length - 1]) return false;
-  const [p, q] = [x[0], y[0]].sort((m, n) => m.length - n.length);
-  return q.startsWith(p) || (p.length >= 3 && q.startsWith(p.slice(0, 3)));
-}
-
-/** One of the viewer's names is one of these (a page's name, or the people credited at a bar), nicknames too (sameName). */
 export function namesMatch(viewer: readonly string[], names: readonly string[]): boolean {
-  if (!viewer.length) return false;
-  return names.some((n) => {
-    const key = nameKey(n);
-    return viewer.some((v) => sameName(v, key));
-  });
-}
-
-/** The last word of a full name ("Resler"), to look someone up who goes by a short first name; null for one word. */
-export function lastName(name: string): string | null {
-  const words = name.trim().split(/\s+/);
-  return words.length > 1 ? words[words.length - 1] : null;
+  return names.some((n) => viewer.some((v) => personNearScore(v, n) !== null));
 }
 
 /** Unclaimed person pages whose name could be the one typed (Setup's "Is this you?"), from a people search. */

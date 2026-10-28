@@ -34,7 +34,7 @@ const claim = (fields: Partial<ClaimForReview>): ClaimForReview => ({
     is_closed: false,
   },
   bar: null,
-  claimant: { display_name: 'Sam', handle: 'sam.okafor' },
+  claimant: { name: 'Sam Okafor', email: null, handle: 'sam.okafor', works_here: [] },
   ...fields,
 });
 

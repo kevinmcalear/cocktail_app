@@ -2,7 +2,7 @@
 // The same cases run against the database in supabase/tests/bar-claims.test.mjs.
 import assert from 'node:assert/strict';
 
-import { claimPlace, claimProblem, methodLabel, emailCheck, isSharedHost, newClaimCode, pageInstagram, personClaimMethods, siteHost, siteIsRoot, spacedCode, typedHandle, typedPhone, typedWebsite } from './claimVerification';
+import { claimantWho, claimPlace, claimProblem, methodLabel, emailCheck, isSharedHost, newClaimCode, pageInstagram, personClaimMethods, siteHost, siteIsRoot, spacedCode, typedHandle, typedPhone, typedWebsite, worksHereLine } from './claimVerification';
 
 // Hosts lose the scheme, www., port, path and case.
 assert.equal(siteHost('https://www.PaleMoth.com/en?x=1'), 'palemoth.com');
@@ -78,3 +78,14 @@ assert.equal(typedPhone('(555) 010-8823'), '(555) 010-8823');
 assert.equal(typedPhone('+61 3 9000 0000'), '+61 3 9000 0000');
 assert.equal(typedPhone('call me'), null);
 assert.equal(typedPhone('12345'), null);
+
+// Who is claiming, for moderators.
+assert.equal(claimantWho({ name: 'Matt Resler', email: null, handle: 'mathew.resler', works_here: [] }), 'Matt Resler (@mathew.resler)');
+assert.equal(claimantWho({ name: 'Matt Resler', email: null, handle: null, works_here: [] }), 'Matt Resler, no profile yet');
+assert.equal(claimantWho(null), 'Someone');
+assert.equal(
+  worksHereLine({ person: 'Mathew Resler', title: 'Head bartender', is_current: true, start_year: 2026, start_month: 3, claimed: true }),
+  'Mathew Resler, Head bartender, since Mar 2026 (their page)'
+);
+assert.equal(worksHereLine({ person: 'Mathew Resler', title: 'Bartender', is_current: false, start_year: 2015, start_month: null, claimed: false }), 'Mathew Resler, Bartender, from 2015, not now (a page they’re claiming)');
+assert.equal(worksHereLine({ person: 'Ash', title: 'Bartender', is_current: true, start_year: null, start_month: null, claimed: true }), 'Ash, Bartender, now (their page)');

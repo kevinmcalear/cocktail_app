@@ -4,7 +4,7 @@ import { Linking, StyleSheet, View } from 'react-native';
 import { Body, Button, Caption, DsText, Field, Headline, Spec, Surface, Tag, useBreakpoint, useDs } from '@/components/ds';
 import { radius, space } from '@/constants/tokens';
 import type { ClaimForReview, ClaimReview } from '@/hooks/useProfiles';
-import { METHOD_COPY, REVIEW_REASON, pageInstagram, siteHost, spacedCode, type BarClaimMethod } from '@/lib/claimVerification';
+import { METHOD_COPY, REVIEW_REASON, claimantWho, pageInstagram, siteHost, spacedCode, worksHereLine, type BarClaimMethod } from '@/lib/claimVerification';
 import { instagramUrl } from '@/lib/profiles';
 
 /** One fact, label over value. */
@@ -107,7 +107,10 @@ export function BarClaimCard({ claim, busy, onOpen, onReview }: { claim: ClaimFo
             </Fact>
           </Column>
           <Column title="From them" wide={wide}>
-            <Fact label="Who">{claim.claimant ? `${claim.claimant.display_name} (@${claim.claimant.handle})` : 'No profile of their own yet'}</Fact>
+            <Fact label="Who">{claimantWho(claim.claimant)}</Fact>
+            {claim.claimant?.email ? <Fact label="Signed in as">{claim.claimant.email}</Fact> : null}
+            {/* A verified bartender here makes a strong case; it's still a person's call. */}
+            {claim.claimant?.works_here.length ? <Fact label="Works here">{claim.claimant.works_here.map(worksHereLine).join('\n')}</Fact> : null}
             <Fact label="Note">{claim.message ? `“${claim.message}”` : 'No note'}</Fact>
             {typed?.instagram ? (
               <Fact label="Instagram they typed">
