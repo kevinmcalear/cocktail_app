@@ -1,5 +1,6 @@
 import { useState, type ReactNode } from 'react';
 import { StyleSheet, View } from 'react-native';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import { Body, Button, Caption, Headline, PressableScale, Sheet, SheetScrollView, TextLink, useDs, useSheetClose } from '@/components/ds';
 import { IconSymbol } from '@/components/ui/icon-symbol';
@@ -62,6 +63,7 @@ export interface KitAddSheetProps {
  */
 export function KitAddSheet({ visible, onClose, label, step, total, question, onNext, saving, error, answered }: KitAddSheetProps) {
   const ds = useDs();
+  const insets = useSafeAreaInsets();
   return (
     <Sheet visible={visible} onClose={onClose} accessibilityLabel={label} keyboard>
       {/* A new question starts at its top. */}
@@ -89,12 +91,15 @@ export function KitAddSheet({ visible, onClose, label, step, total, question, on
           {question.intro ? <Body tone="muted">{question.intro}</Body> : null}
         </View>
         {question.body}
+      </SheetScrollView>
+      {/* Pinned under the questions: a long answer scrolls, the buttons stay on screen. */}
+      <View style={[styles.footer, { paddingBottom: Math.max(space.lg, insets.bottom) }]}>
         {error ? (
           <Caption tone="accent" role="alert">
             {error}
           </Caption>
         ) : null}
-        <View style={styles.footer}>
+        <View style={styles.buttons}>
           {question.secondary ? (
             <Button label={question.secondary.label} variant="secondary" disabled={saving} onPress={question.secondary.onPress} />
           ) : question.onSkip ? (
@@ -102,7 +107,7 @@ export function KitAddSheet({ visible, onClose, label, step, total, question, on
           ) : null}
           <Button label={saving ? 'Saving…' : question.next} disabled={saving || question.canNext === false} onPress={question.onNext ?? onNext} style={styles.flex} />
         </View>
-      </SheetScrollView>
+      </View>
     </Sheet>
   );
 }
@@ -159,7 +164,8 @@ const styles = StyleSheet.create({
   dot: { width: 24, height: 4, borderRadius: radius.pill },
   stack: { gap: space.sm },
   chips: { flexDirection: 'row', flexWrap: 'wrap', gap: space.sm },
-  footer: { flexDirection: 'row', gap: space.sm, paddingTop: space.sm },
+  footer: { gap: space.sm, paddingHorizontal: space.lg, paddingTop: space.sm },
+  buttons: { flexDirection: 'row', gap: space.sm },
   flex: { flex: 1, minWidth: 0 },
   choice: { flexDirection: 'row', alignItems: 'center', gap: space.md, padding: space.md, borderWidth: 1, borderRadius: radius.card, borderCurve: 'continuous' },
   answered: { flexDirection: 'row', alignItems: 'center', gap: space.md, padding: space.md, borderRadius: radius.card, borderCurve: 'continuous' },
