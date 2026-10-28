@@ -95,11 +95,25 @@ export function nearIngredient<T extends IngredientRow>(name: string, rows: read
   return best?.row ?? null;
 }
 
+// "4" and "four" are one word: "4 gin" finds Four Pillars, "four pines" finds 4 Pines.
+const NUMBER_WORDS = ['zero', 'one', 'two', 'three', 'four', 'five', 'six', 'seven', 'eight', 'nine', 'ten', 'eleven', 'twelve'];
+const numberTwin = (w: string): string | null => {
+  const n = NUMBER_WORDS.indexOf(w);
+  return n >= 0 ? String(n) : (NUMBER_WORDS[Number(w)] ?? null);
+};
+
+/** Every typed word starts a word of the name, in any order ("fords gin", "gin four"). */
+function hasEveryWord(key: string, words: readonly { w: string; twin: string | null }[]): boolean {
+  const own = key.split(' ');
+  return words.every(({ w, twin }) => own.some((o) => o.startsWith(w) || (twin !== null && o === twin) || numberTwin(o)?.startsWith(w)));
+}
+
 /**
  * Ingredients for what's typed: the one it already is (by name or alias)
  * first, then core ingredients, then the rest; names that start with it
- * before ones that contain it. One-off bottles and preps hidden from search
- * only show when typed in full.
+ * before ones that contain it, then ones with every typed word in any order
+ * ("4 gin" finds Four Pillars Navy Strength Gin). One-off bottles and preps
+ * hidden from search only show when typed in full.
  */
 export function searchIngredients<T extends IngredientRow>(
   query: string,
@@ -111,16 +125,20 @@ export function searchIngredients<T extends IngredientRow>(
   const { aliases = [], coreIds = new Set<string>(), limit = 6 } = opts;
   const same = sameIngredient(query, rows, aliases);
   const aliasHits = new Set(aliases.filter((a) => a.key.startsWith(q)).map((a) => a.item_id));
+  const words = q.split(' ').map((w) => ({ w, twin: numberTwin(w) }));
+  // One plain word is already found by "contains"; more words, or a number, need the word check.
+  const byWord = words.length > 1 || words.some((x) => x.twin !== null);
   const scored: { r: T; s: number }[] = [];
   for (const r of rows) {
     if (r === same) continue;
     const k = ingredientKey(r.name);
     const starts = k.startsWith(q) || aliasHits.has(r.id);
     const contains = !starts && k.includes(q);
-    if (!starts && !contains) continue;
+    const every = !starts && !contains && byWord && hasEveryWord(k, words);
+    if (!starts && !contains && !every) continue;
     if (r.hide_from_search && k !== q) continue;
-    // Lower is better: start before contain, core before the rest, then shorter.
-    scored.push({ r, s: (starts ? 0 : 2) + (coreIds.has(r.id) ? 0 : 1) });
+    // Lower is better: start before contain before every word, core before the rest, then shorter.
+    scored.push({ r, s: (starts ? 0 : contains ? 2 : 4) + (coreIds.has(r.id) ? 0 : 1) });
   }
   scored.sort((a, b) => a.s - b.s || (a.r.name ?? '').length - (b.r.name ?? '').length);
   return [...(same ? [same] : []), ...scored.map((x) => x.r)].slice(0, limit);

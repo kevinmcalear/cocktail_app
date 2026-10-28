@@ -49,6 +49,23 @@ assert.deepEqual(searchIngredients('sugar', rows, { aliases, coreIds: core }).ma
 assert.ok(!searchIngredients('syrup', rows, { aliases, coreIds: core }).some((r) => r.id === 'oneoff'), 'one-offs stay out of partial search');
 assert.equal(searchIngredients('coconut oolong demerara syrup', rows, { aliases })[0]?.id, 'oneoff');
 
+// Every typed word, in any order, and a number as a digit or a word.
+const gins = [
+  { id: 'navy', name: 'Four Pillars Navy Strength Gin' },
+  { id: 'officers', name: 'Fords Officers’ Reserve Gin' },
+  { id: 'pines', name: '4 Pines Pale Ale' },
+  { id: 'roses', name: 'Four Roses Bourbon' },
+  { id: 'hidden', name: 'Four Pillars Gin', hide_from_search: true },
+];
+const ids = (q: string) => searchIngredients(q, gins).map((r) => r.id);
+assert.deepEqual(ids('4 gin'), ['navy']);
+assert.deepEqual(ids('fords gin'), ['officers']);
+assert.deepEqual(ids('gin four pil'), ['navy']);
+assert.deepEqual(ids('four pines'), ['pines']);
+assert.deepEqual(ids('fou'), ['roses', 'navy'], 'a word half typed still finds the number name');
+assert.deepEqual(ids('4'), ['pines', 'roses', 'navy']);
+assert.deepEqual(searchIngredients('simple syrup', [{ id: 'a', name: 'Syrup, Simple' }, { id: 'b', name: 'Simple Syrup Rich' }]).map((r) => r.id), ['b', 'a'], 'the phrase in order before the words out of order');
+
 // The refusal's hint is the ingredient to use.
 assert.equal(existingIngredientId({ code: 'P0001', hint: '3f2b1c4e-1111-4222-8333-944455556666' }), '3f2b1c4e-1111-4222-8333-944455556666');
 assert.equal(existingIngredientId({ code: '23505', hint: null }), null);
