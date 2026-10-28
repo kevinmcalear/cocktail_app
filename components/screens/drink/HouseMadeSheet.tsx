@@ -6,13 +6,16 @@ import { fontFamilies, radius, space, type } from '@/constants/tokens';
 import { useIngredient } from '@/hooks/useIngredients';
 import { useItemPrep } from '@/hooks/usePrepCard';
 import { keepsFor } from '@/lib/batchPrep';
-import { inParts, leadLine, servesPerBatch } from '@/lib/houseMade';
-import type { SpecLine } from '@/lib/spec';
+import { lineAmount } from '@/lib/drinkMath';
+import { leadLine, servesPerBatch } from '@/lib/houseMade';
+import { specLines, type PresentationRecipe, type SpecLine } from '@/lib/spec';
+import { useSettingsStore } from '@/store/useSettingsStore';
 
 /**
  * A house-made spec line, opened in place (board drink-sheet-housemade): what
  * it is, how much this drink takes, how many a batch makes, how long it keeps,
- * its recipe in parts and when to start it, then its page or Make it.
+ * its recipe in the unit the spec reads in (Eddie, 27 Oct) and when to start
+ * it, then its page or Make it.
  */
 export function HouseMadeSheet({ line, onClose }: { line: SpecLine; onClose: () => void }) {
   return (
@@ -31,7 +34,11 @@ function HouseMadeBody({ line }: { line: SpecLine }) {
   const { data: card } = useItemPrep(id);
   const ingredient = data?.ingredient as { name?: string; brand_maker?: string | null; generic?: { name: string } | null } | undefined;
   const prep = card?.prep ?? null;
-  const parts = inParts((data?.recipe ?? []).map((r: { ingredient?: { name?: string } | null; amount?: number | string | null; unit?: string | null }) => ({ name: r.ingredient?.name ?? '', amount: r.amount == null ? null : Number(r.amount), unit: r.unit ?? null })));
+  // The spec's own unit switch: read in ml on the drink, read in ml here. Weighed
+  // lines stay in grams: 900 g of sugar is not 900 ml.
+  const unit = useSettingsStore((s) => s.specUnit);
+  const recipe = specLines(data?.recipe as PresentationRecipe[] | undefined);
+  const recipeAmount = (r: SpecLine) => (/^k?g$/i.test(r.unit ?? '') ? r.amount : lineAmount(r, unit));
   const batch = servesPerBatch(prep?.yield_amount ?? null, prep?.yield_unit ?? null, line.ml);
   const keeps = keepsFor(prep?.shelf_life_hours);
   const lead = leadLine(prep?.lead_time_minutes);
@@ -41,7 +48,7 @@ function HouseMadeBody({ line }: { line: SpecLine }) {
     router.push(href);
   };
   const facts = [
-    line.amount ? { label: 'This drink', value: line.amount } : null,
+    line.amount ? { label: 'This drink', value: lineAmount(line, unit) ?? line.amount } : null,
     batch ? { label: 'A batch is', value: `About ${batch}` } : null,
     keeps ? { label: 'Keeps', value: keeps.replace(/^keeps /, '') } : null,
   ].filter((f): f is { label: string; value: string } => !!f);
@@ -70,14 +77,14 @@ function HouseMadeBody({ line }: { line: SpecLine }) {
           ))}
         </View>
       ) : null}
-      {parts.length ? (
-        <View role="list" accessibilityLabel="Recipe in parts">
-          {parts.map((p, i) => (
-            <View key={`${p.name}-${i}`} role="listitem" style={[styles.part, { borderBottomColor: ds.c.line }]}>
+      {recipe.length ? (
+        <View role="list" accessibilityLabel="Recipe">
+          {recipe.map((r) => (
+            <View key={r.key} role="listitem" style={[styles.part, { borderBottomColor: ds.c.line }]}>
               <Spec tone="accent" style={styles.amount}>
-                {p.label}
+                {recipeAmount(r) ?? ''}
               </Spec>
-              <Body style={styles.flex}>{p.name}</Body>
+              <Body style={styles.flex}>{r.ingredient}</Body>
             </View>
           ))}
         </View>
@@ -88,7 +95,7 @@ function HouseMadeBody({ line }: { line: SpecLine }) {
       {id ? (
         <View style={styles.actions}>
           <Button label="Open its page" variant="secondary" onPress={() => go(`/ingredient/${id}` as Href)} style={styles.flex} />
-          {parts.length ? <Button label="Make it" onPress={() => go(`/ingredient/${id}/make` as Href)} style={styles.flex} /> : null}
+          {recipe.length ? <Button label="Make it" onPress={() => go(`/ingredient/${id}/make` as Href)} style={styles.flex} /> : null}
         </View>
       ) : null}
     </ScrollView>
