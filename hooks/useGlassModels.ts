@@ -72,6 +72,21 @@ export function useGlassModelSearch(term: string, glass: SketchGlass | null, { e
   });
 }
 
+/** Real glasses by id: held glasses only keep the id (Kit › Glassware before the page is checked). */
+export function useGlassModelsById(ids: readonly string[]) {
+  return useQuery({
+    queryKey: ['glass-models-by-id', [...ids].sort()],
+    enabled: ids.length > 0,
+    staleTime: 60 * 60_000,
+    meta: { public: true },
+    queryFn: async (): Promise<GlassModel[]> => {
+      const { data, error } = await supabase.from('glass_models').select(GLASS_MODEL_SELECT).in('id', ids);
+      if (error) throw error;
+      return (data ?? []) as GlassModel[];
+    },
+  });
+}
+
 /**
  * The real glass a drink is served in (items.glass_model_id), or null.
  * ponytail: its own small read; move it into app_item_presentation the next time that view is redefined.

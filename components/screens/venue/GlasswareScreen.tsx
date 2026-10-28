@@ -9,13 +9,16 @@ import { KitList } from '@/components/screens/kit/KitList';
 import { washLineValue, WashLineSheet } from '@/components/screens/kit/WashLineSheet';
 import { KitPage, useCloseKitItem, useJustDrawn, useOpenDrawnGlass, useOpenKitItem } from '@/components/screens/kit/KitPage';
 import { useActiveVenue } from '@/hooks/useActiveVenue';
-import { useBarGlassware, useBarPageId, useDeleteBarGlass, useSaveBarGlass, type BarGlass } from '@/hooks/useBarGlassware';
+import { useBarGlassware, useBarPageId, useDeleteBarGlass, useFlushHeldGlasses, useSaveBarGlass, type BarGlass } from '@/hooks/useBarGlassware';
 import { useCapabilities } from '@/hooks/useCapabilities';
 import { useDropdowns } from '@/hooks/useDropdowns';
 import { glassModelSize } from '@/hooks/useGlassModels';
 import { useIsWideWeb } from '@/hooks/useIsWideWeb';
 import { GLASS_TYPE_LABEL, glassCapacity } from '@/lib/glassware';
 import { kitLine, kitSourceLine } from '@/lib/venueKit';
+import { useVenueSetup } from '@/store/useVenueSetup';
+
+import { HeldGlassware } from './HeldGlassware';
 
 const FAILED = 'Couldn’t save that. Check your connection and try again.';
 
@@ -36,6 +39,9 @@ export function GlasswareScreen({ barId, openId }: { barId: string; openId?: str
   const canEdit = (useCapabilities(barId).data ?? []).includes('prep');
   const { data: pageId, isLoading: pageLoading } = useBarPageId(barId);
   const { data: glasses = [], isLoading, error } = useBarGlassware(barId);
+  const holdGlass = useVenueSetup((s) => s.holdGlass);
+  // Glasses held before the page was checked go onto it here too, not only on What next.
+  useFlushHeldGlasses(barId);
   const open = useOpenKitItem(barId, 'glassware', openId);
   const [sheet, setSheet] = useState<{ glass: BarGlass | null; startAt: 0 | 1 | 2; draw?: 'photo' | 'size' } | null>(null);
   // A glass just drawn from a photo: its page opens saying so (Draw my glass, step 6).
@@ -48,7 +54,7 @@ export function GlasswareScreen({ barId, openId }: { barId: string; openId?: str
   ) : isLoading || pageLoading ? (
     <Caption tone="muted">Loading…</Caption>
   ) : !pageId ? (
-    <Body tone="muted">Glassware sits on the venue’s public page, and this venue doesn’t have one yet. Find it on the map and claim it, then come back.</Body>
+    <HeldGlassware barId={barId} name={venue?.name ?? 'the venue'} onAdd={canEdit ? () => setSheet({ glass: null, startAt: 0 }) : undefined} />
   ) : (
     <KitList
       sections={[
@@ -105,6 +111,8 @@ export function GlasswareScreen({ barId, openId }: { barId: string; openId?: str
         draw={sheet?.draw}
         venueName={venue?.name}
         onClose={() => setSheet(null)}
+        // Before the page is checked, held on the device like setup's (a real glass under its id, so it goes on once).
+        onSave={pageId ? undefined : (row) => holdGlass(barId, { ...row, key: row.model_id ?? `own-${Date.now()}` })}
         onSaved={(id, wasDrawn) => {
           if (wasDrawn && id) openDrawn(id);
         }}
