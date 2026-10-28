@@ -1,6 +1,7 @@
-import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
+import { keepPreviousData, useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 
 import { imageIdFor, setItemImages } from '@/components/drink/drinkImages';
+import { pickerResult, usePickerTerm } from '@/hooks/useDiscover';
 import { recentEntry } from '@/hooks/useTrackRecent';
 import { track } from '@/lib/analytics';
 import { beerWineSketch, fullDescription, type BeerWineDraft, type CatalogBottle } from '@/lib/beerWineWizard';
@@ -87,10 +88,11 @@ export function useCreateBeerWine() {
  * "Punk" finds BrewDog Punk IPA with its brewery, strength and style.
  */
 export function useCatalogBottles(kind: DrinkKind, name: string) {
-  const q = name.trim();
-  return useQuery({
+  const { term: q, waiting } = usePickerTerm(name.trim(), 3);
+  const query = useQuery({
     queryKey: ['catalog-bottles', kind, q.toLowerCase()],
-    enabled: q.length >= 3,
+    enabled: !!q,
+    placeholderData: q ? keepPreviousData : undefined,
     staleTime: 1000 * 60 * 10,
     queryFn: async (): Promise<CatalogBottle[]> => {
       const { data, error } = await supabase
@@ -109,4 +111,5 @@ export function useCatalogBottles(kind: DrinkKind, name: string) {
       }));
     },
   });
+  return pickerResult(query, waiting);
 }

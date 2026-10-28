@@ -1,8 +1,9 @@
 // Jobs and people: positions, the public people search, find-yourself counts and worked menus.
 // Split out of hooks/useProfiles.ts, which still re-exports it.
-import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
+import { keepPreviousData, useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 
 import { useUserId } from '@/ctx/AuthContext';
+import { pickerResult, usePickerTerm } from '@/hooks/useDiscover';
 import type { Profile } from '@/hooks/useProfiles';
 import { withNear, type MaybeNear } from '@/hooks/useSearchNear';
 import { viewerScoped } from '@/lib/authCache';
@@ -61,15 +62,17 @@ type PersonRow = Omit<PublicPerson, 'job' | 'current_bar' | 'worked'> & {
 
 /** Public people by name or @handle, so someone can find a profile we already have. */
 export function usePublicPeople(search: string, { near = false }: { near?: boolean } = {}) {
-  const typed = search.trim().replace(/^@/, '');
+  const { term: typed, waiting } = usePickerTerm(search.trim().replace(/^@/, ''));
   // The close-names lookup gets plain words; the name and handle match takes what was typed.
   const term = typed.replace(/[%_\\]/g, '').trim();
   // A picker asks for close names too ("dayle degrof": Dale DeGroff), marked `near`; they need an account.
   const userId = useUserId();
   const close = near && !!userId;
-  return useQuery({
+  const query = useQuery({
     queryKey: ['public-people', typed.toLowerCase(), close],
-    enabled: typed.length >= 2,
+    enabled: !!typed,
+    // The last word's people stay up while the next word's load.
+    placeholderData: typed ? keepPreviousData : undefined,
     queryFn: async ({ signal }): Promise<MaybeNear<PublicPerson>[]> => {
       const read = async (ids?: string[]): Promise<PublicPerson[]> => {
         const q = supabase
@@ -94,6 +97,7 @@ export function usePublicPeople(search: string, { near = false }: { near?: boole
       return close ? withNear(term, 'person', read(), read, signal) : read();
     },
   });
+  return pickerResult(query, waiting);
 }
 
 /** Bars counted per search: the first ones each shows (a count each). */
