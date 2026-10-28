@@ -5,7 +5,7 @@ import { Chip, EquipmentThumb, Field } from '@/components/ds';
 import { space } from '@/constants/tokens';
 import { useBarKit, useSaveTool, type KitRow, type ToolChange } from '@/hooks/useBarKit';
 import { useVenueSuppliers } from '@/hooks/useVenueSuppliers';
-import { EQUIPMENT, equipmentById, matchesEquipment } from '@/lib/techniques/equipment';
+import { EQUIPMENT, equipmentById, equipmentMatches } from '@/lib/techniques/equipment';
 import { kitCount, TOOL_LOCATION_LABEL } from '@/lib/venueKit';
 
 import { KitAddSheet, KitChipGroup, useOpenKey, type KitQuestion } from './KitAddSheet';
@@ -52,7 +52,7 @@ function ToolSheetBody({ barId, visible, onClose, tool, initialKey, startAt = 0,
   const { n, ok: countOk } = kitCount(count);
 
   // Ours not on the venue's list yet, matching the search; every one with none typed.
-  const ours = EQUIPMENT.filter((e) => e.id !== key && !have.includes(e.id) && matchesEquipment(e, search));
+  const ours = EQUIPMENT.filter((e) => e.id !== key && !have.includes(e.id) && (!search || equipmentMatches(e, search)));
   const picked = key ? equipmentById(key) : undefined;
   // ponytail: the first dozen until a search narrows it; a browse by kind if a dozen isn't enough.
   const shown = [...(picked ? [picked] : []), ...ours].slice(0, search ? 30 : 12);
@@ -91,7 +91,7 @@ function ToolSheetBody({ barId, visible, onClose, tool, initialKey, startAt = 0,
         </View>
       ) : (
         <View style={styles.stack}>
-          <Field label="Search tools" hideLabel icon="magnifyingglass" value={term} onChangeText={setTerm} placeholder="Jigger, sous vide, Lewis bag" autoCorrect={false} maxLength={60} />
+          <Field label="Search tools" hideLabel icon="magnifyingglass" value={term} onChangeText={setTerm} placeholder="Jigger, sous vide, ice machine" autoCorrect={false} maxLength={60} />
           <View role="radiogroup" aria-label="Our tools" style={styles.chips}>
             {shown.map((e) => (
               <Chip key={e.id} label={e.name} selected={key === e.id} onPress={() => pick(e.id)} leading={<EquipmentThumb id={e.id} name={e.name} size={32} />} />

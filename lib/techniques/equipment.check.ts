@@ -1,7 +1,7 @@
 import assert from 'node:assert/strict';
-import { EQUIPMENT, equipmentById, matchesEquipment } from './equipment';
+import { EQUIPMENT, equipmentById, equipmentMatches } from './equipment';
 
-const found = (search: string) => EQUIPMENT.filter((e) => matchesEquipment(e, search)).map((e) => e.id);
+const found = (search: string) => EQUIPMENT.filter((e) => equipmentMatches(e, search)).map((e) => e.id);
 
 // Kevin searched "hydrosonic homogenizer" and the Add sheets found nothing (27 Oct).
 assert.deepEqual(found('hydrosonic homogenizer'), ['ultrasonic']);

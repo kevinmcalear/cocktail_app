@@ -57,6 +57,7 @@ export const EQUIPMENT: Equipment[] = [
   { id: 'sous-vide', name: 'Sous vide circulator', aka: ['immersion circulator', 'Anova', 'water bath'], kind: 'temperature', tier: '$$', what: 'Infusions and syrups at an exact temperature.', swap: 'A pot and a thermometer, watched.', note: 'Zip bags up to about 70 °C. Ethanol boils near 78 °C, so stay well below. Weigh spirit bags down: they float.', buy: [{ name: 'Anova Precision Cooker, Anova', url: 'https://anovaculinary.com/products/anova-precision-cooker', audience: 'home' }, { name: 'Joule, Breville', url: 'https://www.breville.com/en-us/product/cs10001', audience: 'home' }, { name: 'HydroPro (PolyScience), Breville', url: 'https://www.breville.com/en-us/product/csv700', audience: 'bar' }] },
   { id: 'dehydrator', name: 'Dehydrator', aka: ['food dryer'], kind: 'temperature', tier: '$$', what: 'Dried citrus wheels, fruit and powders.', swap: 'The oven on its lowest setting, door ajar.', buy: [{ name: 'Excalibur 10-tray Performance Digital, Excalibur', url: 'https://excaliburdehydrator.com/products/excalibur-performance-digital-dehydrator-10-tray', audience: 'bar' }, { name: 'Cosori 6-tray stainless, Cosori', url: 'https://cosori.com/products/premium-stainless-steel-food-dehydrator-cp267-fd', audience: 'home' }] },
   { id: 'ice-cooler', name: 'Small hard-sided cooler', kind: 'temperature', tier: '$', price: 'Under $50 for a plain cooler; about $100 for one made for clear ice', what: 'Clear ice by freezing from the top down; freeze-concentrating juice.', note: '18 hours for a tray build, about 50 for a full block.', buy: [{ name: 'Ice Chest clear-ice mold, Wintersmiths', url: 'https://www.wintersmiths.com/products/ice-chest', audience: 'home' }, { name: 'Phantom clear-ice maker, Wintersmiths', url: 'https://www.wintersmiths.com/products/phantom-ice-maker', audience: 'home' }, { name: 'CI-4 clear block maker (call for a quote), Clinebell', url: 'https://clinebellequipment.com/pages/ci-4', audience: 'bar' }] },
+  { id: 'ice-machine', name: 'Ice machine', kind: 'temperature', tier: '$$$', what: 'Ice on tap: a countertop clear ice maker at home, a full-cube machine behind a bar.', swap: 'A small hard-sided cooler, for clear ice.', note: 'A home clear ice maker like a Klaris makes four 2 in cubes in 8 to 12 hours.', buy: [{ name: 'Klaris clear ice maker, Costco', url: 'https://www.costco.com/klaris-clear-ice-maker---2-crystal-clear-cubes-for-cocktails--spirits.product.4000373714.html', audience: 'home' }, { name: 'Hoshizaki crescent cubers, Hoshizaki', url: 'https://www.hoshizakiamerica.com/ice-machines/crescent-cuber-series/built-in-bin/', audience: 'bar' }, { name: 'Kold-Draft KD-70 full cube, GoFoodservice', url: 'https://www.gofoodservice.com/p/kold-draft-kd-70e', audience: 'bar' }] },
   { id: 'freezer-thermo', name: 'Freezer thermometer', kind: 'temperature', tier: '$', what: 'Knowing your freezer runs -12 °C, not -18 °C, before you batch for it.', note: 'Leave it 12 hours to read true.', buy: [{ name: 'Fridge and freezer thermometer, ThermoWorks', url: 'https://www.thermoworks.com/products/rt8100' }] },
   { id: 'smoke-gun', name: 'Smoke gun and cloche', kind: 'temperature', tier: '$', what: 'Smoke over a drink, a glass or a garnish.', swap: 'A smoker, for syrups and ice.', note: 'Ventilate.', buy: [{ name: 'Smoking Gun Pro, Breville', url: 'https://www.breville.com/en-us/product/csm700', audience: 'bar' }, { name: 'Smoking Gun Pro cloche, Breville', url: 'https://www.breville.com/en-us/product/csm018clr0nxx1', audience: 'bar' }, { name: 'Smoking Gun and cloche set, Breville', url: 'https://www.breville.com/en-us/product/bsm620', audience: 'home' }] },
   { id: 'freeze-dryer', name: 'Freeze dryer', aka: ['lyophilizer', 'Harvest Right'], kind: 'temperature', tier: '$$$', price: 'From about $1,900', what: 'Shelf-stable fruit garnishes and powders that keep their colour.', swap: 'The dehydrator: chewier, darker.', note: 'A batch takes a day or more.', buy: [{ name: 'Home Pro freeze dryer, Harvest Right', url: 'https://harvestright.com/products/home-pro-freeze-dryer-bundle' }] },
@@ -91,9 +92,15 @@ export function equipmentById(id: string): Equipment | undefined {
   return BY_ID.get(id);
 }
 
-/** Every word of a search in its name, what it's for or its other names: "hydrosonic homogenizer" finds the ultrasonic probe. */
-export function matchesEquipment(e: Equipment, search: string): boolean {
+/**
+ * A search of the kit list: every word in its name, what it's for, its other
+ * names or a product it names ("hydrosonic homogenizer" finds the ultrasonic
+ * probe; "Klaris", "Hoshizaki"). A buy link's shop, after its last comma, is
+ * left out, or "pan" would find everything Modernist Pantry sells.
+ */
+export function equipmentMatches(e: Equipment, search: string): boolean {
   const words = search.toLowerCase().split(/\s+/).filter(Boolean);
-  const text = [e.name, e.what, ...(e.aka ?? [])].join(' ').toLowerCase();
+  const products = (e.buy ?? []).map((b) => (b.name.includes(', ') ? b.name.slice(0, b.name.lastIndexOf(', ')) : b.name));
+  const text = [e.name, e.what, ...(e.aka ?? []), ...products].join(' ').toLowerCase();
   return words.every((w) => text.includes(w));
 }
