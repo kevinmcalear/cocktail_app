@@ -6,8 +6,12 @@ import { DEFAULT_ACCENT } from '@/constants/tokens';
 import type { NotePhoto } from '@/hooks/useSendNote';
 import { newDraftId } from '@/lib/drinkWizard';
 import { captureAppScreen, listenForScreenshots } from '@/lib/screenshots';
+import { useToastStore } from '@/store/useToastStore';
 
 import { NoteSheet, type NoteAbout } from './NoteSheet';
+
+/** About how long the toast's spring takes to slide it away. */
+const TOAST_GONE_MS = 350;
 
 /**
  * Report a problem from a screenshot (board Screenshot report): take a phone
@@ -41,7 +45,10 @@ function Host() {
       // A screenshot of the report sheet itself isn't a new report.
       if (latest.current.open) return;
       const screen = latest.current.pathname.slice(0, 120);
-      void captureAppScreen().then((uri) => {
+      // A toast showing (the last screenshot's) shouldn't be in this picture: take it down and let it slide away first.
+      const toastUp = !!useToastStore.getState().toast;
+      if (toastUp) latest.current.toast.hide();
+      void new Promise((resolve) => setTimeout(resolve, toastUp ? TOAST_GONE_MS : 0)).then(captureAppScreen).then((uri) => {
         if (!uri) return;
         latest.current.toast.show({
           title: 'Send this to the Cocktail team?',
