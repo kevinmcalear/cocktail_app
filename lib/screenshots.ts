@@ -4,7 +4,7 @@ import { Platform } from 'react-native';
 /**
  * Calls `onScreenshot` each time someone takes a phone screenshot while the
  * app is in front. Returns the unsubscribe, or null where we can't tell:
- * web, Android before 14 (it would have to read the photo library, which we
+ * web (screenshots.web.ts), Android before 14 (it would have to read the photo library, which we
  * don't ask for; app.json blocks READ_MEDIA_IMAGES), and binaries built
  * before expo-screen-capture.
  *
