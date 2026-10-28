@@ -2,7 +2,7 @@ import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 
 import { saveItemAllergens } from '@/hooks/useAllergens';
 import { ensureIngredient } from '@/hooks/useCreateIngredient';
-import { DROPDOWNS_QUERY_KEY } from '@/hooks/useDropdowns';
+import { refreshIngredients } from '@/hooks/useDropdowns';
 import { recentEntry } from '@/hooks/useTrackRecent';
 import { isGarnishUnit } from '@/lib/batch';
 import { plainDbMessage } from '@/lib/dbError';
@@ -474,7 +474,8 @@ export function useCreatePrep() {
       }
       useRecentActivityStore.getState().push(recentEntry('ingredient', top.id, top.name, { barId }));
       void qc.invalidateQueries({ queryKey: ['ingredients'] });
-      void qc.invalidateQueries({ queryKey: DROPDOWNS_QUERY_KEY });
+      // Just the new rows into the pickers' lists, not the whole catalog again.
+      void refreshIngredients(qc, [...rows, ...made.values()]).catch(() => {});
       if (barId) void qc.invalidateQueries({ queryKey: ['bar', barId] });
       return { id: top.id, name: top.name, warnings };
     },

@@ -1,8 +1,9 @@
 import { useQuery, type QueryClient } from '@tanstack/react-query';
 import { useMemo } from 'react';
 
-import { hasMatchCatalog, patchMatchCatalog } from '@/hooks/useMatchCatalog';
-import { allRows, allRowsById, byName, withRow } from '@/lib/allRows';
+import { hasSharedCatalog, patchSharedCatalog, useIngredientCatalog } from '@/hooks/useIngredientCatalog';
+import { allRows, allRowsById, byName } from '@/lib/allRows';
+import { CATALOG_COLUMNS } from '@/lib/matchCatalog';
 import { DROPDOWNS_QUERY_KEY, venueListOptions } from '@/lib/queryDefaults';
 import { supabase } from '@/lib/supabase';
 
@@ -11,7 +12,7 @@ export { DROPDOWNS_QUERY_KEY };
 
 /**
  * Each list's own key. A write invalidates only the one it changed: the
- * whole prefix also refetches the ingredient list (~14,000 rows).
+ * whole prefix also reads the aliases and every venue's ingredients again.
  */
 export const dropdownKeys = {
   /** Methods, glassware, families, ice, categories and menu templates. */
@@ -64,42 +65,42 @@ function useSpecLists() {
   });
 }
 
-/** The ingredient list's key (useAllIngredients), for optimistic updates. */
+/** The prefix of the ingredient lists: a venue's (useVenueIngredients), by id, and the catalog's own rows (hooks/useIngredientCatalog). */
 export const INGREDIENTS_KEY = [...DROPDOWNS_QUERY_KEY, 'ingredients'] as const;
 
-/** The columns an ingredient picker and the Library's ingredient list read. */
+/** The columns the Library's venue ingredient lists read. */
 const INGREDIENT_COLUMNS = `id, name, item_type, generic_id, description, brand_maker, bar_id, hide_from_search, created_at, ingredient_role,
   item_images ( sort_order, is_generated, images ( url ) ),
   item_categories ( category_id )`;
 
 /**
- * Every ingredient anyone can pick (~14,000 rows, several requests), for the
- * editors' pickers, the Library and the Creator Hub, which share this one
- * download. Only screens that need the whole list ask for it; searches go
- * to the server. Too big to save between launches; the Library asks for its
- * venue's rows only (`barIds`), which are saved.
+ * Every ingredient anyone can pick (~20,000 rows), for the editors' pickers
+ * and home search: the slim catalog (hooks/useIngredientCatalog), saved on
+ * the device, in name order. Undefined until it's here.
+ */
+export function useAllIngredients(enabled = true) {
+  const { rows, error } = useIngredientCatalog(enabled);
+  return { data: rows, isLoading: enabled && !rows && !error, error };
+}
+
+/**
+ * A venue's own ingredients with their pictures and tags, for the Library at
+ * that venue: a few hundred rows, saved between launches.
  * Paged by id (each page starts after the last), then sorted by name here:
  * a name-ordered offset page made the server build and sort every
  * ingredient again, so each page was as slow as the whole list.
- * ponytail: the legacy editors build trees from the whole list; move them to
- * a server search (like Search's ingredients) when the catalog passes ~20,000.
  */
-export function useAllIngredients({ enabled = true, barIds }: { enabled?: boolean; barIds?: readonly string[] } = {}) {
+export function useVenueIngredients(barIds: readonly string[], enabled = true) {
   const scoped = venueListOptions(barIds);
   return useQuery({
-    queryKey: barIds ? [...INGREDIENTS_KEY, 'bars', barIds] : INGREDIENTS_KEY,
-    meta: { persist: false },
+    queryKey: [...INGREDIENTS_KEY, 'bars', barIds],
     ...scoped,
     enabled: enabled && scoped.enabled !== false,
-    // By id, a page after the last id (an offset page re-sorts every row
-    // before it), then into name order here.
     queryFn: async () =>
       (
         await allRowsById((after, size) => {
-          let page = supabase.from('app_item_presentation').select(INGREDIENT_COLUMNS).eq('item_type', 'ingredient');
-          if (barIds) page = page.in('bar_id', barIds);
-          if (after) page = page.gt('id', after);
-          return page.order('id').limit(size);
+          const page = supabase.from('app_item_presentation').select(INGREDIENT_COLUMNS).eq('item_type', 'ingredient').in('bar_id', barIds);
+          return (after ? page.gt('id', after) : page).order('id').limit(size);
         })
       ).sort(byName),
   });
@@ -129,28 +130,18 @@ export function useIngredientsById(ids: readonly string[]) {
 }
 
 /**
- * After ingredients are saved, created or deleted: re-reads just those rows
- * into the loaded ingredient list (dropping any that are gone) in one
- * request, instead of downloading the whole list again.
+ * After ingredients are saved, created or deleted: the venues' own lists and
+ * yours read again (small), and just those rows re-read into the shared
+ * catalog (dropping any that are gone) in one request, instead of
+ * downloading it again.
  */
 export async function refreshIngredients(client: QueryClient, ids: string[]) {
   if (!ids.length) return;
-  // A venue's own list (the Library) is small: read it again.
-  void client.invalidateQueries({ queryKey: INGREDIENTS_KEY, predicate: (q) => q.queryKey.length > INGREDIENTS_KEY.length });
-  const lists = !!client.getQueryData(INGREDIENTS_KEY);
-  if (!lists && !hasMatchCatalog(client)) return;
-  const { data, error } = await supabase.from('app_item_presentation').select(INGREDIENT_COLUMNS).in('id', ids);
-  // Shared ones into what bottles match against too (the venues' own were just read again above).
-  if (!error) patchMatchCatalog(client, ids, data ?? []);
-  if (!lists) return;
-  if (error) {
-    await client.invalidateQueries({ queryKey: INGREDIENTS_KEY });
-    return;
-  }
-  type Row = NonNullable<typeof data>[number];
-  client.setQueryData<Row[]>(INGREDIENTS_KEY, (old) =>
-    old && ids.reduce((rows, id) => withRow(rows, id, data.find((r) => r.id === id) ?? null), old)
-  );
+  void client.invalidateQueries({ queryKey: INGREDIENTS_KEY });
+  if (!hasSharedCatalog(client)) return;
+  const { data, error } = await supabase.from('app_item_presentation').select(`${CATALOG_COLUMNS}, created_by`).in('id', ids);
+  // ponytail: a failed read leaves the shared catalog as it was until its day is up; only admins change shared rows.
+  if (!error) patchSharedCatalog(client, ids, (data ?? []).flatMap((r) => (r.id ? [{ ...r, id: r.id }] : [])));
 }
 
 /** Every menu the person can read, for search and Prep. Tonight uses useVenueMenus. */
@@ -206,7 +197,7 @@ export function useIngredientExtras(enabled: boolean) {
  */
 export function useDropdowns({ ingredients: withIngredients = false, menus: withMenus = false }: { ingredients?: boolean; menus?: boolean } = {}) {
   const specs = useSpecLists();
-  const ingredients = useAllIngredients({ enabled: withIngredients });
+  const ingredients = useAllIngredients(withIngredients);
   const extras = useIngredientExtras(withIngredients);
   const menus = useAllMenus(withMenus);
   // Spec badges and pickers don't wait on the ingredient download: `ingredients`
