@@ -23,7 +23,7 @@ import { equipmentById } from './equipment';
 import type { Part, Technique, TechniqueGroup } from './types';
 
 export type { BuyAudience, BuyLink, Equipment, EquipmentKind, Grade, Part, Source, Step, Technique, TechniqueGroup } from './types';
-export { EQUIPMENT, EQUIPMENT_KINDS, equipmentById, TIER_LABEL } from './equipment';
+export { EQUIPMENT, EQUIPMENT_KINDS, equipmentById, equipmentMatches, TIER_LABEL } from './equipment';
 export { technicalIngredientFor, TECHNICAL_INGREDIENTS, type TechnicalIngredient } from './ingredients';
 
 export const GROUPS: { id: TechniqueGroup; name: string; blurb: string; icon: IconName }[] = [
