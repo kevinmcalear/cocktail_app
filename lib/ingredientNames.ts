@@ -32,15 +32,60 @@ export interface IngredientAlias {
   item_id: string;
 }
 
+/** A list's names, keyed once: what every search below reads instead of cleaning 20,000 names on every letter. */
+interface NameIndex<T> {
+  /** ingredientKey of each row's name, in the list's order. */
+  keys: string[];
+  /** Each key's words, made the first time a search asks. */
+  words?: string[][];
+  /** The first shared row with each key. */
+  shared: Map<string, T>;
+  byId: Map<string, T>;
+  /** The rows under each kind (generic_id), made the first time bottlesOfKind asks. */
+  under?: Map<string, T[]>;
+}
+
+// One index per list, kept while the list is: a picker's list stays the same array while you type.
+const INDEXES = new WeakMap<readonly IngredientRow[], NameIndex<IngredientRow>>();
+const ALIASES = new WeakMap<readonly IngredientAlias[], Map<string, string>>();
+
+function indexOf<T extends IngredientRow>(rows: readonly T[]): NameIndex<T> {
+  let index = INDEXES.get(rows) as NameIndex<T> | undefined;
+  if (!index) {
+    const keys = rows.map((r) => ingredientKey(r.name));
+    const shared = new Map<string, T>();
+    const byId = new Map<string, T>();
+    rows.forEach((r, i) => {
+      if (!byId.has(r.id)) byId.set(r.id, r);
+      if (!r.bar_id && !shared.has(keys[i])) shared.set(keys[i], r);
+    });
+    index = { keys, shared, byId };
+    INDEXES.set(rows, index as NameIndex<IngredientRow>);
+  }
+  return index;
+}
+
+const wordsOf = <T extends IngredientRow>(index: NameIndex<T>) => (index.words ??= index.keys.map((k) => k.split(' ')));
+
+function aliasOf(aliases: readonly IngredientAlias[], key: string): string | undefined {
+  let byKey = ALIASES.get(aliases);
+  if (!byKey) {
+    byKey = new Map();
+    for (const a of aliases) if (!byKey.has(a.key)) byKey.set(a.key, a.item_id);
+    ALIASES.set(aliases, byKey);
+  }
+  return byKey.get(key);
+}
+
 /** The ingredient a typed name already is: a shared one with that key, else an alias's. */
 export function sameIngredient<T extends IngredientRow>(name: string, rows: readonly T[], aliases: readonly IngredientAlias[] = []): T | null {
   const key = ingredientKey(name);
   if (!key) return null;
-  const shared = rows.filter((r) => !r.bar_id);
-  const byName = shared.find((r) => ingredientKey(r.name) === key);
+  const index = indexOf(rows);
+  const byName = index.shared.get(key);
   if (byName) return byName;
-  const alias = aliases.find((a) => a.key === key);
-  return alias ? (rows.find((r) => r.id === alias.item_id) ?? null) : null;
+  const alias = aliasOf(aliases, key);
+  return alias ? (index.byId.get(alias) ?? null) : null;
 }
 
 // A kind said after a bottle's name: "Del Maguey Vida mezcal", "Old Forester bourbon".
@@ -85,10 +130,12 @@ export function nearIngredient<T extends IngredientRow>(name: string, rows: read
   if (key.length < 5 || sameIngredient(name, rows, aliases)) return null;
   const max = key.length < 9 ? 1 : 2;
   const singular = (k: string) => k.replace(/(ies)$/, 'y').replace(/(?<![s])s$/, '');
+  const { keys } = indexOf(rows);
   let best: { row: T; d: number } | null = null;
-  for (const r of rows) {
+  for (let i = 0; i < rows.length; i++) {
+    const r = rows[i];
     if (r.bar_id || r.hide_from_search) continue;
-    const k = ingredientKey(r.name);
+    const k = keys[i];
     const d = singular(k) === singular(key) ? 0 : distance(k, key, max);
     if (d <= max && (!best || d < best.d)) best = { row: r, d };
   }
@@ -102,9 +149,8 @@ const numberTwin = (w: string): string | null => {
   return n >= 0 ? String(n) : (NUMBER_WORDS[Number(w)] ?? null);
 };
 
-/** Every typed word starts a word of the name, in any order ("fords gin", "gin four"). */
-function hasEveryWord(key: string, words: readonly { w: string; twin: string | null }[]): boolean {
-  const own = key.split(' ');
+/** Every typed word starts a word of the name (`own`), in any order ("fords gin", "gin four"). */
+function hasEveryWord(own: readonly string[], words: readonly { w: string; twin: string | null }[]): boolean {
   return words.every(({ w, twin }) => own.some((o) => o.startsWith(w) || (twin !== null && o === twin) || numberTwin(o)?.startsWith(w)));
 }
 
@@ -128,13 +174,16 @@ export function searchIngredients<T extends IngredientRow>(
   const words = q.split(' ').map((w) => ({ w, twin: numberTwin(w) }));
   // One plain word is already found by "contains"; more words, or a number, need the word check.
   const byWord = words.length > 1 || words.some((x) => x.twin !== null);
+  const index = indexOf(rows);
+  const own = byWord ? wordsOf(index) : [];
   const scored: { r: T; s: number }[] = [];
-  for (const r of rows) {
+  for (let i = 0; i < rows.length; i++) {
+    const r = rows[i];
     if (r === same) continue;
-    const k = ingredientKey(r.name);
+    const k = index.keys[i];
     const starts = k.startsWith(q) || aliasHits.has(r.id);
     const contains = !starts && k.includes(q);
-    const every = !starts && !contains && byWord && hasEveryWord(k, words);
+    const every = !starts && !contains && byWord && hasEveryWord(own[i], words);
     if (!starts && !contains && !every) continue;
     if (r.hide_from_search && k !== q) continue;
     // Lower is better: start before contain before every word, core before the rest, then shorter.
@@ -162,13 +211,8 @@ const isBottle = (r: KindRow) => r.ingredient_role === 'product' || (!r.ingredie
  */
 export function bottlesOfKind<T extends KindRow>(kind: T, rows: readonly T[], have: ReadonlySet<string> = new Set()): T[] {
   if (isBottle(kind)) return [];
-  const under = new Map<string, T[]>();
-  for (const r of rows) {
-    if (!r.generic_id) continue;
-    const list = under.get(r.generic_id);
-    if (list) list.push(r);
-    else under.set(r.generic_id, [r]);
-  }
+  const index = indexOf(rows);
+  const under = (index.under ??= kindsOf(rows));
   const seen = new Set([kind.id]);
   const queue = [kind.id];
   const out: T[] = [];
@@ -181,6 +225,18 @@ export function bottlesOfKind<T extends KindRow>(kind: T, rows: readonly T[], ha
     }
   }
   return out.sort((a, b) => Number(have.has(b.id)) - Number(have.has(a.id)) || (a.name ?? '').localeCompare(b.name ?? ''));
+}
+
+/** Each kind's rows (generic_id), in the list's order. */
+function kindsOf<T extends KindRow>(rows: readonly T[]): Map<string, T[]> {
+  const under = new Map<string, T[]>();
+  for (const r of rows) {
+    if (!r.generic_id) continue;
+    const list = under.get(r.generic_id);
+    if (list) list.push(r);
+    else under.set(r.generic_id, [r]);
+  }
+  return under;
 }
 
 /** A kind as a sentence says it: "mezcal", "mezcals". Longer names stay as they are ("Irish whiskey", "London Dry Gin"). */
@@ -206,12 +262,14 @@ export function closestIngredients<T extends IngredientRow>(
   const { coreIds = new Set<string>(), skip = [], limit = 3 } = opts;
   const words = ingredientKey(query).split(' ').filter((w) => w.length >= 3 && !KIND_WORD.test(w));
   if (!words.length) return [];
+  const all = wordsOf(indexOf(rows));
   const scored: { r: T; shared: number }[] = [];
-  for (const r of rows) {
+  for (let i = 0; i < rows.length; i++) {
+    const r = rows[i];
     if (r.hide_from_search || skip.includes(r)) continue;
-    const own = new Set(ingredientKey(r.name).split(' '));
+    const own = all[i];
     // The first word is usually the base ("pineapple" in a pineapple chili shrub): it weighs most.
-    const shared = words.reduce((n, w, i) => (own.has(w) ? n + words.length - i : n), 0);
+    const shared = words.reduce((n, w, at) => (own.includes(w) ? n + words.length - at : n), 0);
     if (shared) scored.push({ r, shared });
   }
   scored.sort(
