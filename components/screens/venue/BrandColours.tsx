@@ -1,6 +1,6 @@
 import { StyleSheet, View } from 'react-native';
 
-import { Body, Caption, DsText, Field, PressableScale, Tag, useDs } from '@/components/ds';
+import { Body, Caption, ColourWheel, DsText, Field, PressableScale, Tag, useDs } from '@/components/ds';
 import { IconSymbol } from '@/components/ui/icon-symbol';
 import { fontFamilies, layout, radius, space } from '@/constants/tokens';
 import { ACCENT_INK, type AccentInk, type ContrastLine } from '@/lib/brandColours';
@@ -36,8 +36,8 @@ function Card({ selected, label, onPress, children }: { selected: boolean; label
 
 /**
  * Colours from your logo: a card per colour with its name, hex and where it
- * came from, then Custom, which opens a hex field. `custom` is true while the
- * accent isn't one of the cards.
+ * came from, then Custom, which opens a colour wheel and a hex field.
+ * `custom` is true while the accent isn't one of the cards.
  */
 export function AccentCards({ options, value, custom, hexDraft, hexError, onPick, onCustom, onHex }: {
   options: AccentOption[];
@@ -62,16 +62,23 @@ export function AccentCards({ options, value, custom, hexDraft, hexError, onPick
           </Card>
         ))}
         <Card selected={custom} label="Custom, Any hex" onPress={onCustom}>
-          <View style={[styles.swatch, styles.customSwatch, { borderColor: ds.c.lineStrong }]}>
-            <IconSymbol name="plus" size={16} color={ds.c.muted} />
-          </View>
+          {custom && value ? (
+            <View style={[styles.swatch, { backgroundColor: value, borderColor: ds.c.line }]} />
+          ) : (
+            <View style={[styles.swatch, styles.customSwatch, { borderColor: ds.c.lineStrong }]}>
+              <IconSymbol name="plus" size={16} color={ds.c.muted} />
+            </View>
+          )}
           <Body numberOfLines={1} style={styles.name}>Custom</Body>
-          <Caption tone="muted" numberOfLines={1} style={styles.mono}>Pick a colour</Caption>
+          <Caption tone="muted" numberOfLines={1} style={styles.mono}>{custom && value ? value : 'Pick a colour'}</Caption>
           <Caption tone="muted" numberOfLines={1}>Any hex</Caption>
         </Card>
       </View>
       {custom ? (
-        <Field label="Hex" value={hexDraft} onChangeText={onHex} placeholder="e.g. #D0643B" autoCapitalize="characters" autoCorrect={false} error={hexError} />
+        <>
+          <ColourWheel value={value} onChange={onHex} />
+          <Field label="Hex" value={hexDraft} onChangeText={onHex} placeholder="e.g. #D0643B" autoCapitalize="characters" autoCorrect={false} error={hexError} />
+        </>
       ) : null}
     </View>
   );

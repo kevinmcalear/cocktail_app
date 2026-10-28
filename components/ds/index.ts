@@ -2,6 +2,7 @@
 // docs/design_system.md and the gallery at /dev/gallery.
 export { Button, type ButtonProps, type IconName } from './Button';
 export { Chip } from './Chip';
+export { ColourWheel } from './ColourWheel';
 export { DrinkImage, type DrinkImageProps } from './DrinkImage';
 export { DateField } from './DateField';
 export { Field, FieldButton, MULTILINE_MAX } from './Field';
