@@ -7,7 +7,7 @@ import { forAccount, mergeDrafts, type KeptDraft } from '@/lib/draftSync';
 import { jsonAs, supabase } from '@/lib/supabase';
 import type { Json } from '@/types/db';
 import { useDraftSyncStore } from '@/store/useDraftSyncStore';
-import { useDrinkWizardStore } from '@/store/useDrinkWizardStore';
+import { isReviewSlot, moveImportsOut, useDrinkWizardStore } from '@/store/useDrinkWizardStore';
 
 const KIND = 'drink_wizard';
 /** Typing in the wizard changes the draft on every key: the account gets it once things settle. */
@@ -35,6 +35,8 @@ const sentAt = new Map<string, number>();
 let applying = false;
 
 async function push(userId: string, slot: string, k: KeptDraft) {
+  // An import's drink being checked waits in its review, which is on this device only.
+  if (isReviewSlot(slot)) return;
   sentAt.set(slot, Date.now());
   const place = slot.split('|')[0];
   const { error } = await supabase.from('drafts').upsert(
@@ -102,6 +104,8 @@ export function useDraftSync() {
       applying = true;
       useDrinkWizardStore.setState({ kept: merged.kept });
       applying = false;
+      // Another device's import left in a plain slot comes back here as its own draft too.
+      moveImportsOut();
       useDraftSyncStore.setState((s) => ({ seen: [...new Set([...merged.seen, ...sentSince.filter((x) => s.seen.includes(x))])] }));
       void forget(userId).then(() => Promise.all(merged.push.map((slot) => push(userId, slot, merged.kept[slot]).catch(() => {}))));
     });

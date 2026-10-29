@@ -10,7 +10,7 @@ import { recipePrep, type RecipeChoices } from '@/lib/bringInDraft';
 import type { MatchData } from '@/lib/bringInMatch';
 import { approved, canCheck, isFinished, nextOpen, putBack, rematch, setMark, takeOut, tally, type ImportReview } from '@/lib/importReview';
 import { useBringIn } from '@/store/useBringIn';
-import { useDrinkWizardStore, wizardPlace } from '@/store/useDrinkWizardStore';
+import { draftSlot, useDrinkWizardStore, wizardPlace } from '@/store/useDrinkWizardStore';
 
 import { useRecipeMaker } from './useRecipeMaker';
 
@@ -139,7 +139,8 @@ export function useImportReview(id: string, data: MatchData) {
   const editDrink = (i: number) => {
     const r = current();
     if (!r || !canCheck(r, i)) return;
-    const wizardAt = wizardPlace(r.barId);
+    // Its own slot: a plain New drink at this place never opens it (Eddie, 29 Oct).
+    const wizardAt = draftSlot(wizardPlace(r.barId), { review: `${id}#${i}` });
     const wizard = useDrinkWizardStore.getState();
     wizard.clear(wizardAt);
     // Begun afresh, it opens at the first step: the person asked to edit it, not to check it again (Eddie, 26 Oct). Start over comes back to it.

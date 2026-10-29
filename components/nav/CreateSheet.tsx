@@ -102,6 +102,7 @@ export function CreateSheet({ visible, onClose }: { visible: boolean; onClose: (
             onClose();
             router.push({ pathname: '/add-cocktail', params });
           }}
+          onImport={() => go('/bring-in')}
         />
         {locked && venueId ? <LockedRow barId={venueId} /> : null}
         {made.map((c) => (

@@ -2,6 +2,11 @@ import { fireEvent, screen } from '@testing-library/react-native';
 
 import { renderWithTamagui } from '@/jest.setup';
 
+import { EMPTY_DRAFT } from '@/lib/drinkWizard';
+import { startReview } from '@/lib/importReview';
+import { useBringIn } from '@/store/useBringIn';
+import { useDrinkWizardStore } from '@/store/useDrinkWizardStore';
+
 import { CreateSheet } from './CreateSheet';
 
 const mockPush = jest.fn();
@@ -12,6 +17,8 @@ jest.mock('@/hooks/useMode', () => ({ useMode: () => ({ mode: 'venue', setMode: 
 jest.mock('@/hooks/useCapabilities', () => ({ useCapabilities: () => ({ data: [] }), useCapabilityOpensAt: () => ({ data: 35 }) }));
 let mockMine = { venueId: null as string | null, canAdd: true, label: 'Your drinks' };
 jest.mock('@/hooks/useSearchMine', () => ({ useSearchMine: () => mockMine }));
+jest.mock('@/ctx/AuthContext', () => ({ useAuth: () => ({ session: null }), useUserId: () => 'me' }));
+jest.mock('@/hooks/useDrinkDesk', () => ({ useMenuSectionPlace: () => ({ data: undefined }) }));
 
 async function open(label: string) {
   await renderWithTamagui(<CreateSheet visible onClose={jest.fn()} />);
@@ -48,4 +55,22 @@ test('without the right to add at the venue, drinks lock with the role that open
   await fireEvent.press(screen.getByRole('link', { name: 'Make your own drink in your home bar' }));
   expect(mockSetMode).toHaveBeenLastCalledWith('home');
   expect(mockPush).toHaveBeenLastCalledWith('/add-cocktail');
+});
+
+// Eddie, 29 Oct: New drink kept taking him back to a PDF import he hadn't finished.
+test('an unfinished import is its own entry under Drafts; Drink starts a new one', async () => {
+  mockMine = { venueId: 'bar', canAdd: true, label: 'Pale Moth' };
+  const recipe = { name: 'Feijoa Smash', lines: [] } as never;
+  const review = startReview({ id: 'r1', userId: 'me', barId: 'bar', name: 'Spec book.pdf', source: 'From a PDF', recipes: [recipe, recipe], files: [], choices: [{ name: 'Feijoa Smash' }, { name: 'Feijoa Smash' }] as never, summary: {} as never, now: '2026-10-29T12:00:00Z' });
+  useBringIn.setState({ reviews: { r1: review }, reviewing: null });
+  // Its drink, left half edited, waits in the review, not in Drafts.
+  useDrinkWizardStore.getState().begin('bar|review:r1#0', { ...EMPTY_DRAFT, name: 'Feijoa Smash' });
+  await renderWithTamagui(<CreateSheet visible onClose={jest.fn()} />);
+  expect(screen.queryByText('Feijoa Smash')).toBeNull();
+  await fireEvent.press(screen.getByRole('link', { name: 'Spec book. Finish your import · 0 of 2 checked' }));
+  expect(useBringIn.getState().reviewing).toBe('r1');
+  expect(mockPush).toHaveBeenLastCalledWith('/bring-in');
+  expect(await open('Drink')).toBe('/add-cocktail?barId=bar');
+  useBringIn.setState({ reviews: {}, reviewing: null });
+  useDrinkWizardStore.setState({ kept: {} });
 });

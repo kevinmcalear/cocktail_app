@@ -46,6 +46,7 @@ export default function AddCocktailScreen() {
                     startFrom={from || null}
                     firstRound={round === "1"}
                     imported={imported === "1"}
+                    review={review && drink ? `${review}#${drink}` : null}
                     embedded={false}
                     onClose={goBack}
                     onSaved={(id) => {

@@ -17,7 +17,7 @@ import { snapReadFiles, sourcesFromFiles } from '@/lib/readAnything';
 import { askToNudge } from '@/lib/readyNudge';
 import { useAppMode } from '@/store/useAppMode';
 import { useBringIn, type BringInJob } from '@/store/useBringIn';
-import { useDrinkWizardStore, wizardPlace } from '@/store/useDrinkWizardStore';
+import { draftSlot, useDrinkWizardStore, wizardPlace } from '@/store/useDrinkWizardStore';
 
 import { BottlesCheck } from './BottlesCheck';
 import { BringInChooser } from './BringInChooser';
@@ -222,12 +222,14 @@ export function BringInFlow() {
       onSave={(drink) => run({ kind: 'recipes', source, drinks: [drink] })}
       onEditAll={({ draft }) => {
         // The full editor: the add-drink wizard, filled in, from its first step (as Edit this drink opens it).
-        const wizardAt = wizardPlace(job.barId);
+        // A draft of its own by name, in New's Drafts if left: a plain New drink never opens it (Eddie, 29 Oct).
+        const name = draft.name.trim() || 'Imported drink';
+        const wizardAt = draftSlot(wizardPlace(job.barId), { name });
         const wizard = useDrinkWizardStore.getState();
         wizard.clear(wizardAt);
         wizard.begin(wizardAt, draft);
         useBringIn.getState().clear(true);
-        router.replace((job.barId ? `/add-cocktail?barId=${job.barId}&imported=1` : '/add-cocktail?imported=1') as Href);
+        router.replace({ pathname: '/add-cocktail', params: { ...(job.barId ? { barId: job.barId } : {}), name, imported: '1' } });
       }}
     />
   );

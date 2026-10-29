@@ -10,14 +10,37 @@ export interface SlotStart {
   name?: string | null;
   /** A drink to start from: a riff, the first round's Old Fashioned. */
   from?: string | null;
+  /** An import review's drink in the full editor ("<review id>#<drink>"): its own slot, so New drink never opens it (Eddie, 29 Oct). */
+  review?: string | null;
 }
 
 const MENU = '|menu:';
 const NAME = '|name:';
+const REVIEW = '|review:';
 
-export function draftSlot(place: string, { menuSectionId, name, from }: SlotStart): string {
+export function draftSlot(place: string, { menuSectionId, name, from, review }: SlotStart): string {
   const named = name?.trim().toLowerCase();
-  return [place, menuSectionId ? `${MENU}${menuSectionId}` : '', from ? `|from:${from}` : '', named ? `${NAME}${named}` : ''].join('');
+  return [place, menuSectionId ? `${MENU}${menuSectionId}` : '', from ? `|from:${from}` : '', review ? `${REVIEW}${review}` : '', named ? `${NAME}${named}` : ''].join('');
+}
+
+/** An import review's drink: it waits in the review, not in New's Drafts or the account. */
+export const isReviewSlot = (slot: string) => slot.includes(REVIEW);
+
+/**
+ * Drafts an import put in a place's plain New drink slot (before 29 Oct an
+ * import's Edit opened there, so New drink kept opening the import), moved
+ * to a draft of their own by name. Only an import's draft has a `start`.
+ */
+export function importsInPlainSlots<K extends { draft: { name: string }; start?: unknown }>(kept: Record<string, K>): { from: string; to: string }[] {
+  return Object.entries(kept)
+    .filter(([slot, k]) => !slot.includes('|') && k.start)
+    .map(([slot, k]) => {
+      const name = k.draft.name.trim() || 'Imported drink';
+      // A draft by that name already: this one is told apart as the import's.
+      const to = [name, `${name} (imported)`].map((n) => draftSlot(slot, { name: n })).find((s) => !kept[s]);
+      return { from: slot, to };
+    })
+    .filter((m): m is { from: string; to: string } => !!m.to);
 }
 
 /**
@@ -44,5 +67,5 @@ export function slotStart(slot: string): SlotStart & { place: string } {
   const name = at >= 0 ? slot.slice(at + NAME.length) : null;
   const [place, ...rest] = (at >= 0 ? slot.slice(0, at) : slot).split('|');
   const part = (key: string) => rest.find((r) => r.startsWith(`${key}:`))?.slice(key.length + 1) ?? null;
-  return { place, menuSectionId: part('menu'), from: part('from'), name };
+  return { place, menuSectionId: part('menu'), from: part('from'), review: part('review'), name };
 }
