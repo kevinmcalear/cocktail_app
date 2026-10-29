@@ -10,7 +10,7 @@
     "components/ui/PictureTag.tsx": 4,
     "components/ui/UserAvatar.tsx": 6,
     "hooks/useBarEditor.ts": 4,
-    "hooks/useCocktailDraftEditor.ts": 7,
+    "hooks/useCocktailDraftEditor.ts": 6,
     "hooks/useCocktailEditor.ts": 5,
     "hooks/useCocktails.ts": 1,
     "hooks/useDrafts.ts": 1,

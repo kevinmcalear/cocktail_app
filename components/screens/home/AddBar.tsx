@@ -5,7 +5,7 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { Body, Button, Caption, DsText, Field, GlassButton, Headline, PressableScale, Sheet, SheetScrollView, Title, useDs, useSheetClose } from '@/components/ds';
 import { layout, radius, space } from '@/constants/tokens';
 import { PickList, splitNear } from '@/components/search/NearPicks';
-import { DuplicateVenueError, useAddressSearch, useAddVenue, useDebounced, type AddedVenue } from '@/hooks/useDiscover';
+import { DuplicateVenueError, useAddressSearch, useAddVenue, type AddedVenue } from '@/hooks/useDiscover';
 import { usePublicBars } from '@/hooks/useRankings';
 import { ADDRESS_MIN_CHARS, type VenueAddress } from '@/lib/nearMe';
 import { sameName } from '@/lib/sameName';
@@ -34,9 +34,9 @@ export function AddBarForm({ initialName = '', onAdded, onCancel, onOpenExisting
   const found = useAddressSearch(address ? '' : search);
   const add = useAddVenue();
   // Already here by that name, or one spelled close ("lanturn room": The Lantern Room): use its page instead.
-  const settled = useDebounced(name.trim(), 300);
-  const [named, close] = splitNear(usePublicBars(onOpenExisting && !address ? settled : '', { near: true }).data ?? []);
-  const here = [...named.filter((b) => sameName(b.display_name, settled)), ...close].map((b) => ({ id: b.id, label: [b.display_name, b.locality || b.city].filter(Boolean).join(' · '), near: b.near }));
+  // usePublicBars waits for typing to pause.
+  const [named, close] = splitNear(usePublicBars(onOpenExisting && !address ? name.trim() : '', { near: true }).data ?? []);
+  const here = [...named.filter((b) => sameName(b.display_name, name.trim())), ...close].map((b) => ({ id: b.id, label: [b.display_name, b.locality || b.city].filter(Boolean).join(' · '), near: b.near }));
   const dupe = add.error instanceof DuplicateVenueError ? add.error : null;
 
   const pick = (a: VenueAddress) => {

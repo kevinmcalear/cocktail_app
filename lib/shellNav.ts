@@ -60,19 +60,18 @@ export function footerLine(venue: { name: string; role: string } | null, bottles
   return bottles ? `Home bar · ${plural(bottles, 'bottle')}` : 'Home bar';
 }
 
-/** Menus in the venue menu: "Autumn menu on · 2 drafts". `on` is what's on now, newest first. */
-export function menusLine(on: readonly { name: string }[], drafts: number): string {
-  const parts: string[] = [];
-  if (on.length === 1) parts.push(`${on[0].name} on`);
-  else if (on.length > 1) parts.push(`${on.length} menus on`);
-  if (drafts) parts.push(plural(drafts, 'draft'));
-  return parts.join(' · ') || 'Build, schedule and print';
+// The venue menu's live counts, on the right of each row: short, and empty when there's nothing to count.
+
+/** Menus: "1 on", or "2 drafts" when none is on. */
+export function menusLine(on: number, drafts: number): string {
+  if (on) return `${on} on`;
+  return drafts ? plural(drafts, 'draft') : '';
 }
 
-/** Back bar: "84 placed · 3 waiting". */
+/** Back bar: what waits for a spot first, else how many are placed. */
 export function backBarLine(placed: number, waiting: number): string {
-  if (!placed && !waiting) return 'Where every bottle lives';
-  return [`${placed} placed`, waiting ? `${waiting} waiting` : null].filter(Boolean).join(' · ');
+  if (waiting) return `${waiting} waiting`;
+  return placed ? `${placed} placed` : '';
 }
 
 /** My team: "9 people · 2 invited". */
@@ -80,19 +79,17 @@ export function teamLine(people: number, invited: number): string {
   return [plural(people, 'person', 'people'), invited ? `${invited} invited` : null].filter(Boolean).join(' · ');
 }
 
-/** My Bar: "4 bottles · 7 drinks ready". */
-export function shelfLine(bottles: number, ready = 0): string {
-  if (!bottles) return 'Add what’s on your shelf';
-  return [plural(bottles, 'bottle'), ready ? `${plural(ready, 'drink')} ready` : null].filter(Boolean).join(' · ');
+/** My Bar: "4 bottles". */
+export function shelfLine(bottles: number): string {
+  return bottles ? plural(bottles, 'bottle') : '';
 }
 
-/** Collection: "12 to make · 3 menus". */
-export function collectionLine(toMake: number, menus: number): string {
-  if (!toMake && !menus) return 'Drinks to make and your menus';
-  return [`${toMake} to make`, menus ? plural(menus, 'menu') : null].filter(Boolean).join(' · ');
+/** Collection: "12 to make". */
+export function collectionLine(toMake: number): string {
+  return toMake ? `${toMake} to make` : '';
 }
 
-/** Features: "2 of 8 on", or what to switch on first when none are. */
+/** Features: "2 of 8 on". */
 export function featuresLine(on: number, of: number): string {
-  return on ? `${on} of ${of} on` : 'History, Prep, Study and more';
+  return on ? `${on} of ${of} on` : '';
 }

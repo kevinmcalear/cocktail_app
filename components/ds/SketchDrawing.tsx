@@ -116,12 +116,13 @@ export const SketchDrawing = memo(function SketchDrawing({ inputs, seed, detail 
 
 // One picture per scene and paper colour: the scene written as an SVG document
 // (lib/sketch/svg.ts) in a data URL, built once and kept while the scene is.
+// No paper ('') leaves the ground out: iOS paints fill="transparent" black.
 const pictures = new WeakMap<Scene, Map<string, string>>();
 function sceneUri(scene: Scene, paper: string): string {
   let byPaper = pictures.get(scene);
   if (!byPaper) pictures.set(scene, (byPaper = new Map()));
   let uri = byPaper.get(paper);
-  if (!uri) byPaper.set(paper, (uri = `data:image/svg+xml;base64,${btoa(sceneToSvg(scene, { paper }))}`));
+  if (!uri) byPaper.set(paper, (uri = `data:image/svg+xml;base64,${btoa(sceneToSvg(scene, { paper: paper || undefined }))}`));
   return uri;
 }
 
@@ -141,7 +142,7 @@ export const SceneSvg = memo(function SceneSvg({ scene, bare }: { scene: Scene; 
     // enforceEarlyResizing: iOS draws the SVG into a bitmap the frame's size, off
     // the main thread. Without it the picture stays a vector, redrawn on the main
     // thread each time a tile shows: Library's scroll froze 0.5-1.2 s at a time.
-    return <Image source={{ uri: sceneUri(scene, paper) }} style={[styles.fill, { backgroundColor: paper }]} contentFit="contain" cachePolicy="memory" enforceEarlyResizing accessible={false} />;
+    return <Image source={{ uri: sceneUri(scene, bare ? '' : paper) }} style={[styles.fill, { backgroundColor: paper }]} contentFit="contain" cachePolicy="memory" enforceEarlyResizing accessible={false} />;
   }
   return (
     // The paper runs past the square when the frame is wider (a phone hero).

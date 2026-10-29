@@ -1,8 +1,9 @@
 // Jobs and people: positions, the public people search, find-yourself counts and worked menus.
 // Split out of hooks/useProfiles.ts, which still re-exports it.
-import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
+import { keepPreviousData, useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 
 import { useUserId } from '@/ctx/AuthContext';
+import { pickerResult, usePickerTerm } from '@/hooks/useDiscover';
 import type { Profile } from '@/hooks/useProfiles';
 import { withNear, type MaybeNear } from '@/hooks/useSearchNear';
 import { viewerScoped } from '@/lib/authCache';
@@ -62,9 +63,12 @@ type PersonRow = Omit<PublicPerson, 'job' | 'current_bar' | 'worked'> & {
 
 /** Public people by name or @handle, so someone can find a profile we already have. */
 export function usePublicPeople(search: string, { near = false }: { near?: boolean } = {}) {
+  // Searches once typing pauses (usePickerTerm), keeping the last word's people up while the next word's load.
+  const { term, waiting } = usePickerTerm(search.trim().replace(/^@/, ''));
   // A picker asks for close names too ("dayle degrof": Dale DeGroff), marked `near`; they need an account.
   const userId = useUserId();
-  return useQuery(publicPeople(search, near && !!userId));
+  const query = useQuery({ ...publicPeople(term, near && !!userId), placeholderData: term ? keepPreviousData : undefined });
+  return pickerResult(query, waiting);
 }
 
 /**

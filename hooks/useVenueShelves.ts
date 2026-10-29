@@ -1,7 +1,7 @@
 import { useQuery } from '@tanstack/react-query';
 import { useMemo } from 'react';
 
-import { useAllIngredients, useIngredientsById } from '@/hooks/useDropdowns';
+import { useIngredientsById, useVenueIngredients } from '@/hooks/useDropdowns';
 import { byName } from '@/lib/allRows';
 import { prepGroup, tileLine, venueShelves, yieldText, type PrepGroup } from '@/lib/libraryFilters';
 import { shelfLifeLabel } from '@/lib/scale';
@@ -22,7 +22,7 @@ export function useVenueShelves(venueId: string | null, items: SearchItem[]): Sh
     [items]
   );
   const barIds = useMemo(() => (venueId ? [venueId] : []), [venueId]);
-  const { data: venueRows } = useAllIngredients({ barIds, enabled: !!venueId });
+  const { data: venueRows } = useVenueIngredients(barIds, !!venueId);
   const { data: used } = useIngredientsById(usedIds);
   return useMemo(() => {
     if (!venueId || !venueRows || (usedIds.length && !used)) return EMPTY;

@@ -7,7 +7,7 @@ import { Body, Button, Caption, DsText, GlassButton, PressableScale, sheetIsDial
 import { IconSymbol } from '@/components/ui/icon-symbol';
 import { fontFamilies, radius, space } from '@/constants/tokens';
 import { bottleReadings, useBringInMatchData } from '@/hooks/useBringInMatchData';
-import { useMatchCatalog } from '@/hooks/useMatchCatalog';
+import { useMatchCatalog } from '@/hooks/useIngredientCatalog';
 import { usePdfPages } from '@/hooks/usePdfPages';
 import { readingPages, readingSteps, stepsDone, stripWindow, type ReadingStep } from '@/lib/bringIn';
 import { matchSummary, pageMarks } from '@/lib/bringInMatch';

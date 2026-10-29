@@ -22,7 +22,6 @@ import type { WizardTakeover } from './WizardFrame';
 // The pill's accent border shows focus. Chrome draws `outline-style: auto` at any width, so it's switched off (as SearchField does).
 const NO_OUTLINE = Platform.OS === 'web' ? ({ outlineStyle: 'none' } as object) : null;
 
-// The generated view types call `images` a list; it's one row per link.
 export type CatalogIngredient = {
   id: string;
   name: string | null;
@@ -31,7 +30,6 @@ export type CatalogIngredient = {
   generic_id?: string | null;
   ingredient_role?: string | null;
   brand_maker?: string | null;
-  item_images?: unknown;
 };
 
 export interface IngredientSearchProps {
