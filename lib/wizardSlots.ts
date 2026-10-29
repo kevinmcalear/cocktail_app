@@ -24,7 +24,19 @@ export function draftSlot(place: string, { menuSectionId, name, from, review }: 
 }
 
 /** An import review's drink: it waits in the review, not in New's Drafts or the account. */
-export const isReviewSlot = (slot: string) => slot.includes(REVIEW);
+export const isReviewSlot = (slot: string) => {
+  // Before the name, which is free text and could hold anything.
+  const at = slot.indexOf(NAME);
+  return (at >= 0 ? slot.slice(0, at) : slot).includes(REVIEW);
+};
+
+/** A review's drink slots at a place, to let go once the review is done. */
+export const reviewSlots = (kept: Record<string, unknown>, place: string, review: string) => Object.keys(kept).filter((slot) => slot.startsWith(`${place}${REVIEW}${review}#`));
+
+/** A slot for a drink by name that doesn't take over a draft already kept by that name. */
+export function freeNameSlot(kept: Record<string, unknown>, place: string, name: string): string | undefined {
+  return [name, `${name} (imported)`].map((n) => draftSlot(place, { name: n })).find((s) => !kept[s]);
+}
 
 /**
  * Drafts an import put in a place's plain New drink slot (before 29 Oct an
@@ -34,12 +46,8 @@ export const isReviewSlot = (slot: string) => slot.includes(REVIEW);
 export function importsInPlainSlots<K extends { draft: { name: string }; start?: unknown }>(kept: Record<string, K>): { from: string; to: string }[] {
   return Object.entries(kept)
     .filter(([slot, k]) => !slot.includes('|') && k.start)
-    .map(([slot, k]) => {
-      const name = k.draft.name.trim() || 'Imported drink';
-      // A draft by that name already: this one is told apart as the import's.
-      const to = [name, `${name} (imported)`].map((n) => draftSlot(slot, { name: n })).find((s) => !kept[s]);
-      return { from: slot, to };
-    })
+    // A draft by that name already: this one is told apart as the import's.
+    .map(([slot, k]) => ({ from: slot, to: freeNameSlot(kept, slot, k.draft.name.trim() || 'Imported drink') }))
     .filter((m): m is { from: string; to: string } => !!m.to);
 }
 

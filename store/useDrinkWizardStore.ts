@@ -5,7 +5,7 @@ import { createWizardStore } from './createWizardStore';
 
 export { wizardPlace } from './createWizardStore';
 /** The kept draft a wizard opens: the place's one, or a drink started from a menu, by name or from another drink. */
-export { draftSlot, isReviewSlot, sectionSlots } from '@/lib/wizardSlots';
+export { draftSlot, freeNameSlot, isReviewSlot, reviewSlots, sectionSlots } from '@/lib/wizardSlots';
 
 /**
  * The drink being added (components/screens/addDrink), kept on the device
@@ -21,12 +21,18 @@ export const useDrinkWizardStore = createWizardStore<WizardDraft, WizardStep>('d
  * cleared, so the account's copy goes too.
  */
 export function moveImportsOut() {
-  const { kept, clear } = useDrinkWizardStore.getState();
-  for (const { from, to } of importsInPlainSlots(kept)) {
-    const k = useDrinkWizardStore.getState().kept[from];
-    clear(from);
-    useDrinkWizardStore.setState((s) => ({ kept: { ...s.kept, [to]: { ...k, updatedAt: Date.now() } } }));
-  }
+  // One write: the draft is never in neither slot.
+  useDrinkWizardStore.setState((s) => {
+    const moves = importsInPlainSlots(s.kept);
+    if (!moves.length) return s;
+    const kept = { ...s.kept };
+    for (const { from, to } of moves) {
+      kept[to] = { ...kept[from], updatedAt: Date.now() };
+      delete kept[from];
+    }
+    const gone = moves.map((m) => ({ place: m.from, at: s.kept[m.from].updatedAt }));
+    return { kept, cleared: [...s.cleared.filter((c) => !moves.some((m) => m.from === c.place)), ...gone] };
+  });
 }
 if (useDrinkWizardStore.persist.hasHydrated()) moveImportsOut();
 else useDrinkWizardStore.persist.onFinishHydration(moveImportsOut);

@@ -17,7 +17,8 @@ import { snapReadFiles, sourcesFromFiles } from '@/lib/readAnything';
 import { askToNudge } from '@/lib/readyNudge';
 import { useAppMode } from '@/store/useAppMode';
 import { useBringIn, type BringInJob } from '@/store/useBringIn';
-import { draftSlot, useDrinkWizardStore, wizardPlace } from '@/store/useDrinkWizardStore';
+import { slotStart } from '@/lib/wizardSlots';
+import { draftSlot, freeNameSlot, useDrinkWizardStore, wizardPlace } from '@/store/useDrinkWizardStore';
 
 import { BottlesCheck } from './BottlesCheck';
 import { BringInChooser } from './BringInChooser';
@@ -223,9 +224,11 @@ export function BringInFlow() {
       onEditAll={({ draft }) => {
         // The full editor: the add-drink wizard, filled in, from its first step (as Edit this drink opens it).
         // A draft of its own by name, in New's Drafts if left: a plain New drink never opens it (Eddie, 29 Oct).
-        const name = draft.name.trim() || 'Imported drink';
-        const wizardAt = draftSlot(wizardPlace(job.barId), { name });
+        // One already kept by that name stays: this one is "(imported)".
+        const read = draft.name.trim() || 'Imported drink';
         const wizard = useDrinkWizardStore.getState();
+        const wizardAt = freeNameSlot(wizard.kept, wizardPlace(job.barId), read) ?? draftSlot(wizardPlace(job.barId), { name: read });
+        const name = slotStart(wizardAt).name ?? read;
         wizard.clear(wizardAt);
         wizard.begin(wizardAt, draft);
         useBringIn.getState().clear(true);

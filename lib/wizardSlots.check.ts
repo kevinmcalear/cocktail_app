@@ -1,6 +1,6 @@
 import assert from 'node:assert/strict';
 
-import { draftSlot, importsInPlainSlots, isReviewSlot, sectionSlots, slotStart } from './wizardSlots';
+import { draftSlot, importsInPlainSlots, isReviewSlot, reviewSlots, sectionSlots, slotStart } from './wizardSlots';
 
 // A plain New drink keeps the place's one draft, as before.
 assert.equal(draftSlot('home', {}), 'home');
@@ -43,7 +43,8 @@ assert.equal(slotStart(draftSlot('home', { name: 'Gin | Tonic' })).name, 'gin | 
   const slot = draftSlot('bar-1', { review: 'u1-17#3' });
   assert.equal(slot, 'bar-1|review:u1-17#3');
   assert.ok(isReviewSlot(slot));
-  assert.ok(!isReviewSlot('bar-1') && !isReviewSlot(draftSlot('bar-1', { name: 'Review' })));
+  assert.ok(!isReviewSlot('bar-1') && !isReviewSlot(draftSlot('bar-1', { name: 'x |review: y' })));
+  assert.deepEqual(reviewSlots({ [slot]: 1, 'bar-1|review:u1-170#0': 1, 'bar-1': 1 }, 'bar-1', 'u1-17'), [slot]);
   assert.equal(slotStart(slot).review, 'u1-17#3');
 }
 

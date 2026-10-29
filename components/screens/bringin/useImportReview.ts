@@ -10,7 +10,7 @@ import { recipePrep, type RecipeChoices } from '@/lib/bringInDraft';
 import type { MatchData } from '@/lib/bringInMatch';
 import { approved, canCheck, isFinished, nextOpen, putBack, rematch, setMark, takeOut, tally, type ImportReview } from '@/lib/importReview';
 import { useBringIn } from '@/store/useBringIn';
-import { draftSlot, useDrinkWizardStore, wizardPlace } from '@/store/useDrinkWizardStore';
+import { draftSlot, reviewSlots, useDrinkWizardStore, wizardPlace } from '@/store/useDrinkWizardStore';
 
 import { useRecipeMaker } from './useRecipeMaker';
 
@@ -140,6 +140,7 @@ export function useImportReview(id: string, data: MatchData) {
     const r = current();
     if (!r || !canCheck(r, i)) return;
     // Its own slot: a plain New drink at this place never opens it (Eddie, 29 Oct).
+    // ponytail: left without saving, it stays until this drink is edited again or the review is done; a review taken out another way keeps it. Clear on dropReview if that piles up.
     const wizardAt = draftSlot(wizardPlace(r.barId), { review: `${id}#${i}` });
     const wizard = useDrinkWizardStore.getState();
     wizard.clear(wizardAt);
@@ -158,6 +159,8 @@ export function useImportReview(id: string, data: MatchData) {
     const count = tally(r).approved;
     const store = useBringIn.getState();
     store.dropReview(id);
+    const wizard = useDrinkWizardStore.getState();
+    for (const slot of reviewSlots(wizard.kept, wizardPlace(r.barId), id)) wizard.clear(slot);
     if (!count) return void (router.canGoBack() ? router.back() : router.replace('/(tabs)' as Href));
     store.setDone({
       batchId: null,
