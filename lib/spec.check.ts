@@ -68,3 +68,9 @@ console.log('spec: ok');
 // A grated garnish with no amount reads "Grated" in the amount column (Eddie tf-062).
 assert.equal(specLines([{ id: 'n', sort_order: 1, amount: null, unit: 'grated', display_ingredient_id: 'nutmeg', display_ingredient: { id: 'nutmeg', name: 'Nutmeg' } }])[0].amount, 'Grated');
 assert.equal(specLines([{ id: 'm', sort_order: 1, amount: null, unit: 'ml', display_ingredient_id: 'gin', display_ingredient: { id: 'gin', name: 'Gin' } }])[0].amount, null);
+
+// A measured float keeps its amount and is tagged (Eddie tf-060): "15 ml", Float, Red wine.
+const float = specLines([{ id: 'w', sort_order: 1, amount: 15, unit: 'ml', is_float: true, display_ingredient_id: 'wine', display_ingredient: { id: 'wine', name: 'Red wine' } }])[0];
+assert.equal(float.amount, '15 ml');
+assert.equal(float.float, true);
+assert.equal(float.ml, 15, 'a float still counts in the drink');

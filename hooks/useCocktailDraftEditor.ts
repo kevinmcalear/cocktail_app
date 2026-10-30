@@ -457,6 +457,7 @@ export function useCocktailDraftEditor({
                         unit: item.unit || null,
                         preparation_notes: item.preparation_notes || null,
                         is_optional: item.is_optional || false,
+                        is_float: item.is_float || false,
                     })),
                     methodIds,
                     null

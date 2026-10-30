@@ -4503,6 +4503,7 @@ export type Database = {
           created_at: string
           id: string
           ingredient_item_id: string | null
+          is_float: boolean
           is_optional: boolean | null
           parent_ingredient_id: string | null
           part: number
@@ -4517,6 +4518,7 @@ export type Database = {
           created_at?: string
           id?: string
           ingredient_item_id?: string | null
+          is_float?: boolean
           is_optional?: boolean | null
           parent_ingredient_id?: string | null
           part?: number
@@ -4531,6 +4533,7 @@ export type Database = {
           created_at?: string
           id?: string
           ingredient_item_id?: string | null
+          is_float?: boolean
           is_optional?: boolean | null
           parent_ingredient_id?: string | null
           part?: number
@@ -5724,6 +5727,7 @@ export type Database = {
           display_ingredient_id: string | null
           id: string | null
           ingredient_item_id: string | null
+          is_float: boolean | null
           is_optional: boolean | null
           parent_ingredient_id: string | null
           part: number | null

@@ -6,7 +6,7 @@ export const PENICILLIN: SpecRowProps[] = [
   { amount: '60 ml', ingredient: 'Blended Scotch' },
   { amount: '22.5 ml', ingredient: 'Lemon juice' },
   { amount: '22.5 ml', ingredient: 'Honey-ginger syrup', houseMade: true },
-  { amount: '7.5 ml', ingredient: 'Islay Scotch', note: 'Floated off a bar spoon' },
+  { amount: '7.5 ml', ingredient: 'Islay Scotch', note: 'Off a bar spoon', floated: true },
   { amount: '1', ingredient: 'Candied ginger', optional: true },
 ];
 

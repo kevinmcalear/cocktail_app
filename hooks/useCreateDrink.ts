@@ -109,6 +109,7 @@ export function useCreateDrink() {
           unit: line.unit || null,
           preparation_notes: line.note?.trim() || null,
           is_optional: !!line.optional,
+          is_float: !!line.float,
           ...(draft.parts?.length ? { part: linePart(draft.parts, line.key, garnishes.has(line.key)) } : {}),
         });
       }

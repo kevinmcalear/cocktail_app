@@ -72,6 +72,8 @@ export type SpecLineInput = {
   unit: string | null;
   preparation_notes: string | null;
   is_optional: boolean;
+  /** Floated on top ("15 ml float", Eddie tf-060). Left out, a kept line keeps what it had. */
+  is_float?: boolean;
   /** Made in parts: which part (1 is the first). Left out, a kept line keeps its part. */
   part?: number;
 };
