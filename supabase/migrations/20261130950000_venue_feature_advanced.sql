@@ -6,16 +6,50 @@
 -- on in Features (lib/venueFeatures.ts). Off to start, except for venues
 -- that already keep those details (the backfill at the end).
 --
---   * bars_enabled_features_known now allows 'advanced' too. Nothing else
---     changes: the column, its default, bars_update (Admins only) and the
---     venue_feature_events trigger are as 20261016800000 and 20261027100000
---     left them.
+--   * bars_enabled_features_known now allows 'advanced' too. The column,
+--     its default, bars_update (Admins only) and the venue_feature_events
+--     trigger are as 20261016800000 and 20261027100000 left them.
+--   * set_venue_feature switches one key, so no build drops a key it
+--     doesn't know.
 
 ALTER TABLE "public"."bars" DROP CONSTRAINT "bars_enabled_features_known";
 
 ALTER TABLE "public"."bars" ADD CONSTRAINT "bars_enabled_features_known" CHECK (
     "enabled_features" <@ ARRAY['tonight', 'prep', 'study', 'backBar', 'history', 'flavorMap', 'techniques', 'libraryExtras', 'advanced']::"text"[]
 );
+
+-- --- Switching one feature, server-side ---
+--
+-- The app used to write the whole list, rebuilt from the keys it knows, so a
+-- build that didn't know a key dropped it whenever an Admin flipped any
+-- switch. set_venue_feature adds or removes the one key and leaves the rest.
+-- SECURITY INVOKER: bars_update still decides who may (the venue's Admins);
+-- a refused or missing venue changes no row and says so. The CHECK above
+-- still refuses keys it doesn't list.
+
+CREATE FUNCTION "public"."set_venue_feature"("p_bar_id" "uuid", "p_feature" "text", "p_enabled" boolean) RETURNS "text"[]
+    LANGUAGE "plpgsql" SECURITY INVOKER
+    SET "search_path" TO ''
+    AS $$
+DECLARE
+    v_features text[];
+BEGIN
+    UPDATE public.bars
+    SET enabled_features = CASE
+        WHEN p_enabled THEN (CASE WHEN p_feature = ANY (enabled_features) THEN enabled_features ELSE enabled_features || p_feature END)
+        ELSE array_remove(enabled_features, p_feature)
+    END
+    WHERE id = p_bar_id
+    RETURNING enabled_features INTO v_features;
+    IF NOT FOUND THEN
+        RAISE EXCEPTION 'Only the venue''s Admins can switch its features' USING ERRCODE = '42501';
+    END IF;
+    RETURN v_features;
+END;
+$$;
+
+REVOKE EXECUTE ON FUNCTION "public"."set_venue_feature"("uuid", "text", boolean) FROM PUBLIC, "anon";
+GRANT EXECUTE ON FUNCTION "public"."set_venue_feature"("uuid", "text", boolean) TO "authenticated", "service_role";
 
 -- --- Venues that already keep these details keep seeing them ---
 --

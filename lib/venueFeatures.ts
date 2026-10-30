@@ -29,9 +29,16 @@ export type VenueFeatureKey = (typeof VENUE_FEATURES)[number]['key'];
 
 const KEYS = new Set<string>(VENUE_FEATURES.map((f) => f.key));
 
-/** The stored switches, keeping only keys this build knows (a newer app may have added some). */
-export function parseFeatures(raw: unknown): VenueFeatureKey[] {
-  return Array.isArray(raw) ? raw.filter((k): k is VenueFeatureKey => typeof k === 'string' && KEYS.has(k)) : [];
+/** A key this build knows. */
+export const isFeatureKey = (k: string): k is VenueFeatureKey => KEYS.has(k);
+
+/**
+ * The stored switches, as stored: keys this build doesn't know are kept (a
+ * newer app may have added some), so a write from here never drops them.
+ * Read a switch with `.includes(key)`; count the known ones with isFeatureKey.
+ */
+export function parseFeatures(raw: unknown): string[] {
+  return Array.isArray(raw) ? raw.filter((k): k is string => typeof k === 'string') : [];
 }
 
 type DbError = { code?: string | null } | null | undefined;
@@ -50,7 +57,7 @@ export function isMissingColumn(error: DbError): boolean {
  * timeout) keeps what was saved, or none. So a read never throws, never
  * retries, and the tabs never wait on it twice.
  */
-export function readFeatures(row: { enabled_features?: unknown } | null | undefined, error: DbError, saved?: VenueFeatureKey[]): VenueFeatureKey[] {
+export function readFeatures(row: { enabled_features?: unknown } | null | undefined, error: DbError, saved?: string[]): string[] {
   if (isMissingColumn(error)) return [];
   if (error) return saved ?? [];
   return parseFeatures(row?.enabled_features);
@@ -63,9 +70,10 @@ export function featureSaveMessage(error: DbError): string {
     : 'Couldn’t save that. Check your connection and try again.';
 }
 
-/** Switch one feature on or off, keeping the rest and the catalog's order. */
-export function withFeature(on: readonly VenueFeatureKey[], key: VenueFeatureKey, enabled: boolean): VenueFeatureKey[] {
-  return VENUE_FEATURES.map((f) => f.key).filter((k) => (k === key ? enabled : on.includes(k)));
+/** Switch one feature on or off: the known ones in the catalog's order, then any this build doesn't know, kept. */
+export function withFeature(on: readonly string[], key: VenueFeatureKey, enabled: boolean): string[] {
+  const known = VENUE_FEATURES.map((f) => f.key).filter((k) => (k === key ? enabled : on.includes(k)));
+  return [...known, ...on.filter((k) => !isFeatureKey(k))];
 }
 
 /** Who may switch features: Admins (level 40, lib/roles.ts), the only role bars_update lets write them. */

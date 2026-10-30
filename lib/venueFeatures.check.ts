@@ -7,7 +7,9 @@ const on = (...keys: VenueFeatureKey[]) => (k: VenueFeatureKey) => keys.includes
 
 // --- parsing and switching ---
 assert.deepEqual(parseFeatures(null), []);
-assert.deepEqual(parseFeatures(['prep', 'nightclub', 3, 'tonight']), ['prep', 'tonight'], 'unknown keys are dropped');
+assert.deepEqual(parseFeatures(['prep', 'nightclub', 3, 'tonight']), ['prep', 'nightclub', 'tonight'], 'unknown keys are kept, so a write never drops them');
+assert.deepEqual(withFeature(['nightclub', 'study'], 'tonight', true), ['tonight', 'study', 'nightclub'], 'a key a newer app added stays');
+assert.deepEqual(withFeature(['nightclub', 'study'], 'study', false), ['nightclub']);
 assert.deepEqual(withFeature(['study'], 'tonight', true), ['tonight', 'study'], 'catalog order');
 assert.deepEqual(withFeature(['tonight', 'study'], 'tonight', false), ['study']);
 assert.equal(featureAtHome('prep'), false, 'home never had Prep');
@@ -20,7 +22,7 @@ assert.deepEqual(readFeatures(null, { code: 'PGRST301' }, ['tonight']), ['tonigh
 assert.deepEqual(readFeatures(null, { code: '08006' }), [], 'and none when nothing was saved');
 assert.deepEqual(readFeatures(null, null), [], 'no row: none');
 assert.deepEqual(readFeatures({ enabled_features: null }, null), [], 'a null value: none');
-assert.deepEqual(readFeatures({ enabled_features: ['tonight', 'disco'] }, null), ['tonight']);
+assert.deepEqual(readFeatures({ enabled_features: ['tonight', 'disco'] }, null), ['tonight', 'disco']);
 assert.ok(isMissingColumn({ code: '42703' }) && !isMissingColumn(null) && !isMissingColumn({ code: '42501' }));
 assert.match(featureSaveMessage({ code: 'PGRST204' }), /after the next update/);
 assert.match(featureSaveMessage({ code: '42501' }), /Check your connection/);
