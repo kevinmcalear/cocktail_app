@@ -7591,6 +7591,10 @@ export type Database = {
         Args: { p_bar_id: string; p_item_ids: string[] }
         Returns: undefined
       }
+      set_venue_feature: {
+        Args: { p_bar_id: string; p_enabled: boolean; p_feature: string }
+        Returns: string[]
+      }
       share_slug: { Args: { p_id: string; p_kind: string }; Returns: string }
       share_target: {
         Args: { p_kind: string; p_slug: string }

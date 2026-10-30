@@ -7,7 +7,9 @@ const on = (...keys: VenueFeatureKey[]) => (k: VenueFeatureKey) => keys.includes
 
 // --- parsing and switching ---
 assert.deepEqual(parseFeatures(null), []);
-assert.deepEqual(parseFeatures(['prep', 'nightclub', 3, 'tonight']), ['prep', 'tonight'], 'unknown keys are dropped');
+assert.deepEqual(parseFeatures(['prep', 'nightclub', 3, 'tonight']), ['prep', 'nightclub', 'tonight'], 'unknown keys are kept, so a write never drops them');
+assert.deepEqual(withFeature(['nightclub', 'study'], 'tonight', true), ['tonight', 'study', 'nightclub'], 'a key a newer app added stays');
+assert.deepEqual(withFeature(['nightclub', 'study'], 'study', false), ['nightclub']);
 assert.deepEqual(withFeature(['study'], 'tonight', true), ['tonight', 'study'], 'catalog order');
 assert.deepEqual(withFeature(['tonight', 'study'], 'tonight', false), ['study']);
 assert.equal(featureAtHome('prep'), false, 'home never had Prep');
@@ -20,7 +22,7 @@ assert.deepEqual(readFeatures(null, { code: 'PGRST301' }, ['tonight']), ['tonigh
 assert.deepEqual(readFeatures(null, { code: '08006' }), [], 'and none when nothing was saved');
 assert.deepEqual(readFeatures(null, null), [], 'no row: none');
 assert.deepEqual(readFeatures({ enabled_features: null }, null), [], 'a null value: none');
-assert.deepEqual(readFeatures({ enabled_features: ['tonight', 'disco'] }, null), ['tonight']);
+assert.deepEqual(readFeatures({ enabled_features: ['tonight', 'disco'] }, null), ['tonight', 'disco']);
 assert.ok(isMissingColumn({ code: '42703' }) && !isMissingColumn(null) && !isMissingColumn({ code: '42501' }));
 assert.match(featureSaveMessage({ code: 'PGRST204' }), /after the next update/);
 assert.match(featureSaveMessage({ code: '42501' }), /Check your connection/);
@@ -55,8 +57,9 @@ assert.deepEqual(phoneTabs(false, on('tonight', 'prep', 'study')), ['index', 'li
 
 // --- the database allows exactly these keys (plus any a later PR adds there first) ---
 const dir = new URL('../supabase/migrations/', import.meta.url);
-const sql = readdirSync(dir).filter((f) => f.endsWith('venue_feature_switches.sql')).map((f) => readFileSync(new URL(f, dir), 'utf8'))[0];
-assert.ok(sql, 'the switches migration exists');
+// The last migration that sets bars_enabled_features_known has the list.
+const sql = readdirSync(dir).sort().map((f) => readFileSync(new URL(f, dir), 'utf8')).filter((s) => /ADD CONSTRAINT "bars_enabled_features_known"/.test(s)).at(-1);
+assert.ok(sql, 'a migration sets the switches constraint');
 const allowed = sql.match(/ARRAY\[([^\]]+)\]/)![1].match(/'([^']+)'/g)!.map((s) => s.slice(1, -1));
 for (const f of VENUE_FEATURES) assert.ok(allowed.includes(f.key), `${f.key} is allowed by bars_enabled_features_known`);
 

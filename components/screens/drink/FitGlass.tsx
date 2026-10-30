@@ -33,7 +33,7 @@ export function FitGlassNote({ result, onFit }: { result: GlassFillResult | null
     <View style={[styles.note, { borderColor: ds.c.lineStrong, backgroundColor: ds.c.surface }]}>
       <View style={styles.flex}>
         <Body>{noteWords(result)}</Body>
-        <Caption tone="muted">{result.line.said ? 'The venue’s wash line for this glass.' : `About ${Math.round((result.line.ml / result.line.brimMl!) * 100)}% of its ${ml(result.line.brimMl!)} to the brim, until the venue sets its wash line in Kit › Glassware.`}</Caption>
+        <Caption tone="muted">The venue’s wash line for this glass.</Caption>
       </View>
       {onFit && result.fitted ? <Button label="Fit it" size="sm" variant="secondary" onPress={onFit} accessibilityHint="Shows the spec scaled to fill the glass to its wash line" /> : null}
     </View>

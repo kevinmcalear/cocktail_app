@@ -14,6 +14,7 @@ import { useCapabilities } from '@/hooks/useCapabilities';
 import { useDropdowns } from '@/hooks/useDropdowns';
 import { glassModelSize } from '@/hooks/useGlassModels';
 import { useIsWideWeb } from '@/hooks/useIsWideWeb';
+import { useBarFeature } from '@/hooks/useVenueFeatures';
 import { GLASS_TYPE_LABEL, glassCapacity } from '@/lib/glassware';
 import { kitLine, kitSourceLine } from '@/lib/venueKit';
 import { useVenueSetup } from '@/store/useVenueSetup';
@@ -143,6 +144,7 @@ function GlassPage({ barId, pageId, glass, others, canEdit, venueName, justDrawn
   const remove = useDeleteBarGlass(barId);
   const change = (at: 0 | 1 | 2) => (canEdit ? () => onChange(at) : undefined);
   const [washOpen, setWashOpen] = useState(false);
+  const advanced = useBarFeature(barId, 'advanced');
   const size = (glass.model && glassModelSize(glass.model)) ?? glassCapacity(glass, items, barId);
   const sameType = others.filter((g) => g.glass === glass.glass);
   const type = GLASS_TYPE_LABEL[glass.glass];
@@ -165,7 +167,8 @@ function GlassPage({ barId, pageId, glass, others, canEdit, venueName, justDrawn
         ...tracedFacts(glass, canEdit ? () => onChange(0, 'size') : undefined),
         { label: 'Where it comes from', value: source(glass) || 'Not said yet', onChange: change(1) },
         { label: 'How many', value: glass.count ? String(glass.count) : 'Not said yet', onChange: change(2) },
-        { label: 'Wash line', value: washLineValue(glass), onChange: canEdit ? () => setWashOpen(true) : undefined },
+        // Optional, for venues with Advanced options on (jam dec-24).
+        ...(advanced ? [{ label: 'Wash line', value: washLineValue(glass), onChange: canEdit ? () => setWashOpen(true) : undefined }] : []),
         ...(sameType.length > 1
           ? [
               {

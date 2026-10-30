@@ -43,6 +43,7 @@ const ICONS: Record<VenueFeatureKey, IconName> = {
   flavorMap: 'target',
   techniques: 'flask',
   libraryExtras: 'line.3.horizontal.decrease',
+  advanced: 'switch.2',
 };
 
 /** The icon of the tab or place a feature adds (components/ui/glyphs.ts place.*). */
