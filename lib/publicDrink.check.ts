@@ -14,6 +14,8 @@ assert.equal(drinkKicker({ origin: 'Classic', originYear: null, riffOfId: null }
 assert.equal(drinkKicker({ origin: 'Original', originYear: 2025, riffOfId: null }, 'Pale Moth'), 'Pale Moth original · 2025');
 assert.equal(drinkKicker({ origin: 'Varient', originYear: null, riffOfId: 'm' }, 'Little Rye'), 'Little Rye riff');
 assert.equal(drinkKicker({ origin: null, originYear: null, riffOfId: null }, null), 'Original');
+assert.equal(drinkKicker({ origin: 'Varient', originYear: null, riffOfId: 'a', name: 'Americano', riffOfName: 'Americano' }, 'Little Rye'), 'Little Rye version', 'the bar\'s own Americano is not a riff (dec-21)');
+assert.equal(drinkKicker({ origin: null, originYear: null, riffOfId: 'a', name: 'Smoky Americano', riffOfName: 'Americano' }, null), 'Riff');
 
 const sam = { display_name: 'Sam Ross' };
 assert.equal(createdByLine(sam, { name: 'Milk & Honey', place: 'New York' }, 'verified'), 'Created by Sam Ross at Milk & Honey, New York · Verified');

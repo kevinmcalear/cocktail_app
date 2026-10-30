@@ -13,6 +13,7 @@ import { notesLevelLabel } from '@/lib/notesReaders';
 import { PUBLISH_COPY } from '@/lib/publishing';
 import { capitalizeFirst } from '@/lib/stringUtils';
 import { draftSketchInputs } from '@/lib/sketch/draft';
+import { isRiff } from '@/lib/lineage';
 import { askShort, asked } from '@/lib/whoMadeIt';
 
 import { HomePhoto, ReviewPhotos } from './ReviewPhotos';
@@ -22,7 +23,8 @@ const CHANGE_LATER = 'You can change any of it on the drink’s page.';
 function credits(d: WizardDraft, hasProfile: boolean): string {
   const by = d.creator === 'nobody' ? '' : typeof d.creator === 'object' && d.creator ? `By ${d.creator.name}` : hasProfile ? 'By you' : '';
   const withThem = d.coCreators.length ? `with ${d.coCreators.map((c) => c.name).join(', ')}` : '';
-  const riff = d.riffOf ? `riff on ${d.riffOf.name}` : '';
+  // The bar's own Americano is a version of it, not a riff (dec-21).
+  const riff = d.riffOf ? (isRiff(d, d.riffOf) ? `riff on ${d.riffOf.name}` : `your version of the ${d.riffOf.name}`) : '';
   const where = [d.place ? `first made at ${d.place.name}` : '', d.originYear ? `in ${d.originYear}` : ''].filter(Boolean).join(' ');
   return capitalizeFirst([[by, withThem].filter(Boolean).join(' '), where, riff].filter(Boolean).join(', '));
 }

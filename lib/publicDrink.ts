@@ -2,7 +2,7 @@
 // credit under it, and the captions in its family tree and Where to drink it.
 // Pure, so lib/publicDrink.check.ts can pin them down.
 
-import { creditLabel, type CreditStatus } from './lineage';
+import { creditLabel, isRiff, type CreditStatus } from './lineage';
 import { plural, rankCaption } from './ranking';
 
 /** A public profile as the page names it. */
@@ -18,7 +18,8 @@ export interface PublicProfile {
 
 /**
  * What kind of drink it is and when, over its name: "Modern classic · 2005",
- * "Pale Moth original · 2025", "Little Rye riff". `origin` is the legacy
+ * "Pale Moth original · 2025", "Little Rye riff", "Little Rye version" (its
+ * Americano). `origin` is the legacy
  * label (Classic, Modern Classic, Original, Varient).
  */
 export function drinkKicker(
@@ -26,11 +27,15 @@ export function drinkKicker(
     origin: string | null;
     originYear: number | null;
     riffOfId: string | null;
+    /** The drink's name and its parent's, when known: the bar's own Americano is its version, not a riff (dec-21). */
+    name?: string;
+    riffOfName?: string | null;
   },
   barName: string | null,
 ): string {
   const label = d.origin?.trim().toLowerCase();
-  const kind = label === 'classic' ? 'Classic' : label === 'modern classic' ? 'Modern classic' : d.riffOfId ? (barName ? `${barName} riff` : 'Riff') : barName ? `${barName} original` : 'Original';
+  const version = !!d.name && !!d.riffOfName && !isRiff({ name: d.name }, { name: d.riffOfName });
+  const kind = label === 'classic' ? 'Classic' : label === 'modern classic' ? 'Modern classic' : d.riffOfId ? (barName ? `${barName} ${version ? 'version' : 'riff'}` : version ? 'Version' : 'Riff') : barName ? `${barName} original` : 'Original';
   return d.originYear ? `${kind} · ${d.originYear}` : kind;
 }
 
