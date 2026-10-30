@@ -4,7 +4,7 @@
  * Notes). Pure; lib/runSheet.ts builds the sheet.
  */
 
-import type { Need, PartySheet, RunSheet } from './runSheet';
+import { needGroups, type Need, type PartySheet, type RunSheet } from './runSheet';
 
 export interface SheetHead {
   name: string;
@@ -12,6 +12,8 @@ export interface SheetHead {
   when: string;
   /** "Little Rye visiting · with Mill & Ash Gin and Harbour Scotch · 610 serves across 5 drinks". */
   who: string;
+  /** "Amounts to make and buy include 10% extra for testing and tasting.", or null with none. */
+  extra: string | null;
 }
 
 const time = (d: Date) => {
@@ -52,16 +54,30 @@ export function sheetHead(sheet: RunSheet, menu: MenuWords): SheetHead {
     ]
       .filter(Boolean)
       .join(' · '),
+    extra: sheet.marginPct > 0 ? `Amounts to make and buy include ${sheet.marginPct}% extra for testing and tasting.` : null,
   };
 }
 
 /** "16 things". */
 export const thingCount = (n: number) => plural(n, 'thing');
 
-/** "13.2 L · 19 × 700 ml". */
+/** "13.2 L · buy 19 × 700 ml". */
 export const needAmount = (n: Pick<Need, 'amount' | 'detail' | 'group'>) => (n.detail && n.group !== 'glassware' ? `${n.amount} · ${n.detail}` : n.amount);
 
+const KIND: Partial<Record<Need['group'], string>> = { glassware: 'glass', garnish: 'garnish', ice: 'ice' };
+
+/** A need's name, saying what it is when the name alone doesn't: "Nude pony (glass)", "Cherry (garnish)". */
+export function needName(n: Pick<Need, 'name' | 'group'>): string {
+  const kind = KIND[n.group];
+  return kind && !n.name.toLowerCase().includes(kind) ? `${n.name} (${kind})` : n.name;
+}
+
+/** "Nude pony (glass): 120", "Gin: 2.3 L · buy 4 × 700 ml". */
+export const needLine = (n: Pick<Need, 'name' | 'group' | 'amount' | 'detail'>) => `${needName(n)}: ${needAmount(n)}`;
+
 export interface PartyList {
+  /** Whose list it is. */
+  party: Pick<PartySheet, 'name' | 'role' | 'logoUrl'>;
   /** "FOR BAR LEONE". */
   eyebrow: string;
   /** "Your list for October at Leone". */
@@ -74,8 +90,10 @@ export interface PartyList {
   /** The bar it's at has things ready; everyone else brings theirs. */
   ask: 'Please have ready' | 'Please bring';
   needs: Need[];
-  /** "Caretaker's Cottage: Lemon Drop Batch 37.5 L, Ceramic cup 500". */
-  others: string[];
+  /** What everyone else brings, each thing in full. */
+  others: Pick<PartySheet, 'name' | 'role' | 'logoUrl' | 'needs'>[];
+  /** "Amounts to make and buy include 10% extra…" (SheetHead.extra). */
+  extra: string | null;
   /** "Penicillin is on Cocktail, credited to Bar Leone. Claim your page to see it: <link>", while their page is unclaimed. */
   claim: string | null;
 }
@@ -93,14 +111,16 @@ export function partyList(sheet: RunSheet, menu: MenuWords, party: PartySheet, c
     .map((d) => ({ name: d.name, serves: d.serves, makes: party.needs.filter((n) => n.group === 'preps' && n.forDrinks.includes(d.name)).map((n) => n.name) }));
   const names = drinks.map((d) => d.name);
   return {
+    party: { name: party.name, role: party.role, logoUrl: party.logoUrl },
     drinks,
     eyebrow: `For ${party.name}`.toUpperCase(),
     title: `Your list for ${menu.name}`,
     when: sheetHead(sheet, menu).when,
+    extra: sheetHead(sheet, menu).extra,
     from: `From ${us?.name ?? 'us'}`,
     ask: party.role === 'Venue' ? 'Please have ready' : 'Please bring',
     needs: party.needs,
-    others: sheet.parties.filter((p) => p !== party && p.needs.length).map((p) => `${p.name}: ${p.needs.map((n) => `${n.name} ${n.amount}`).join(', ')}`),
+    others: sheet.parties.filter((p) => p !== party && p.needs.length),
     claim: claimUrl && names.length ? `${andList(names)} ${names.length === 1 ? 'is' : 'are'} on Cocktail, credited to ${party.name}. Claim your page to see ${names.length === 1 ? 'it' : 'them'}: ${claimUrl}` : null,
   };
 }
@@ -112,8 +132,10 @@ export const drinkLine = (d: PartyList['drinks'][number]) => `- ${d.name} × ${d
 export function partyListText(list: PartyList): string {
   const out = [list.eyebrow, list.title, list.when, list.from];
   if (list.drinks.length) out.push('', 'YOUR DRINKS', ...list.drinks.map(drinkLine));
-  if (list.needs.length) out.push('', list.ask.toUpperCase(), ...list.needs.map((n) => `- ${n.name}: ${needAmount(n)}`));
-  if (list.others.length) out.push('', 'EVERYONE ELSE', ...list.others.map((o) => `- ${o}`));
+  if (list.extra) out.push(list.extra);
+  if (list.needs.length) out.push('', list.ask.toUpperCase(), ...list.needs.map((n) => `- ${needLine(n)}`));
+  if (list.others.length) out.push('', 'EVERYONE ELSE');
+  for (const o of list.others) out.push(`${o.name} (${o.role})`, ...o.needs.map((n) => `- ${needLine(n)}`));
   if (list.claim) out.push('', list.claim);
   return out.join('\n');
 }
@@ -121,10 +143,11 @@ export function partyListText(list: PartyList): string {
 /** The whole sheet as plain text, for Share on a phone. */
 export function runSheetText(sheet: RunSheet, menu: MenuWords): string {
   const head = sheetHead(sheet, menu);
-  const out = ['RUN SHEET', head.name, head.when, head.who, '', 'WHO BRINGS WHAT'];
+  const out = ['RUN SHEET', head.name, head.when, head.who, ...(head.extra ? [head.extra] : []), '', 'WHO BRINGS WHAT'];
   for (const party of sheet.parties) {
     if (!party.needs.length) continue;
-    out.push('', `${party.name} (${party.role})`, ...party.needs.map((n) => `- ${n.name}: ${needAmount(n)}`));
+    out.push('', `${party.name.toUpperCase()} (${party.role})`);
+    for (const g of needGroups(party.needs)) out.push(`${g.title}:`, ...g.needs.map((n) => `- ${needLine(n)}`));
   }
   out.push('', 'THE DRINKS');
   for (const d of sheet.drinks) {
