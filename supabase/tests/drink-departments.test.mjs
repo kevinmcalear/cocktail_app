@@ -1,4 +1,4 @@
-// Drink departments and approval (supabase/migrations/20261130500000_drink_departments.sql,
+// Drink departments and approval (supabase/migrations/20261201100000_drink_departments.sql,
 // Eddie's tf-059 and tf-087, jam dec-25). A venue role limited to beer and
 // wine adds only those, edits and deletes only those, doesn't see drinks above
 // its level just because it edits drinks, and what it adds waits for approval:
@@ -73,7 +73,10 @@ before(async () => {
   ids.secret = (await insert('items', { name: `Secret ${run}`, item_type: 'cocktail', bar_id: ids.bar, override_visibility_level: 40 })).id;
   ids.secretBeer = (await insert('items', { name: `Secret lager ${run}`, item_type: 'beer', bar_id: ids.bar, override_visibility_level: 40 })).id;
   ids.wine = (await insert('items', { name: `House red ${run}`, item_type: 'wine', bar_id: ids.bar })).id;
-  ids.batch = (await insert('items', { name: `Oleo ${run}`, item_type: 'ingredient', bar_id: ids.bar, override_prep_level: 35 })).id;
+  // Prep staff see the batch itself (it opens at Employee); its method opens at Drink Creator.
+  ids.batch = (await insert('items', {
+    name: `Oleo ${run}`, item_type: 'ingredient', bar_id: ids.bar, override_visibility_level: 20, override_prep_level: 35,
+  })).id;
   await db.query("INSERT INTO public.item_steps (item_id, position, body) VALUES ($1, 0, 'Muddle the peels.')", [ids.batch]);
   // Drinks credited to the venue: no bar_id, edited through the venue's page.
   ids.profile = (await insert('profiles', { kind: 'bar', handle: `departments${run}`, display_name: `Departments ${run}`, bar_id: ids.bar, is_public: true })).id;
@@ -240,9 +243,11 @@ describe('approval', () => {
 
 test("a batch's method follows its prep level (tf-087)", async () => {
   const steps = async (who) => (await users[who].client.from('item_steps').select('body').eq('item_id', ids.batch)).data ?? [];
-  // Prep at Employee, but the method opens at Drink Creator.
+  // Prep at Employee sees the batch, but the method opens at Drink Creator.
+  assert.equal(await sees('prep', ids.batch), true);
   assert.equal((await steps('prep')).length, 0);
   assert.equal((await steps('creator')).length, 1);
-  await service.from('items').update({ override_prep_level: null }).eq('id', ids.batch);
+  const { error } = await service.from('items').update({ override_prep_level: null }).eq('id', ids.batch);
+  assert.ifError(error);
   assert.equal((await steps('prep')).length, 1);
 });
