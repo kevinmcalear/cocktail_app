@@ -10,7 +10,7 @@ import { useUserId } from '@/ctx/AuthContext';
 import { useCapabilities } from '@/hooks/useCapabilities';
 import { useIsWideWeb } from '@/hooks/useIsWideWeb';
 import { useRunSheet } from '@/hooks/useRunSheet';
-import { buildRunSheet, swappedRecipe } from '@/lib/runSheet';
+import { buildRunSheet, DEFAULT_MARGIN_PCT, swappedRecipe } from '@/lib/runSheet';
 import { siteOrigin } from '@/lib/venueLink';
 
 import { STEPS, StepNav, usePartyLooks, type PartyLook, type Step } from './parts';
@@ -38,7 +38,11 @@ export function RunSheetScreen({ menuId }: { menuId: string }) {
   const caps = useCapabilities(data?.menu.barId);
   const [step, setStep] = useState<Step>('serves');
   const [breakDown, setBreakDown] = useState(false);
-  const sheet = useMemo(() => (data ? buildRunSheet({ ...data, hostName: data.menu.hostName, breakDownPreps: breakDown }) : null), [data, breakDown]);
+  const [margin, setMargin] = useState(DEFAULT_MARGIN_PCT);
+  const sheet = useMemo(
+    () => (data ? buildRunSheet({ ...data, hostName: data.menu.hostName, hostLogoUrl: data.menu.hostLogoUrl, breakDownPreps: breakDown, marginPct: margin }) : null),
+    [data, breakDown, margin],
+  );
   const looks = usePartyLooks(data?.menu.hostName ?? '', data?.parties ?? []);
   // A linked bar page nobody has claimed yet: their list says where to claim the drinks credited to them.
   const claimUrls = Object.fromEntries((data?.parties ?? []).flatMap((p) => (p.page && !p.page.claimed ? [[p.id, `${siteOrigin()}/p/${p.page.handle}`]] : [])));
@@ -63,7 +67,7 @@ export function RunSheetScreen({ menuId }: { menuId: string }) {
   ) : shownStep === 'specs' ? (
     <SpecsStep data={data} sheet={sheet} />
   ) : shownStep === 'who' ? (
-    <WhoStep menuId={menuId} sheet={sheet} looks={looks} breakDown={breakDown} onBreakDown={setBreakDown} wide={desktop} />
+    <WhoStep menuId={menuId} sheet={sheet} looks={looks} breakDown={breakDown} onBreakDown={setBreakDown} margin={margin} onMargin={setMargin} wide={desktop} />
   ) : (
     <SheetStep sheet={sheet} menu={data.menu} breakDown={breakDown} looks={looks} claimUrls={claimUrls} />
   );

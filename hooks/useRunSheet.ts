@@ -1,6 +1,7 @@
 import { keepPreviousData, useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 
 import { useUserId } from '@/ctx/AuthContext';
+import { readBarBrands } from '@/hooks/useBarBrands';
 import { pickerResult, usePickerTerm } from '@/hooks/useDiscover';
 import { houseMadeUnder, purchasingFor, recipesFor, toLines } from '@/hooks/usePrepList';
 import { withNear, type MaybeNear } from '@/hooks/useSearchNear';
@@ -18,7 +19,7 @@ import { supabase } from '@/lib/supabase';
  * the "pour it everywhere" suggestion. Plain JSON, for the persisted cache.
  */
 export interface RunSheetData {
-  menu: { id: string; name: string; barId: string | null; createdBy: string | null; hostName: string; startsAt: string | null; endsAt: string | null };
+  menu: { id: string; name: string; barId: string | null; createdBy: string | null; hostName: string; hostLogoUrl: string | null; startsAt: string | null; endsAt: string | null };
   drinks: RunDrink[];
   swaps: RunSwap[];
   parties: (RunParty & { sortOrder: number; page: PartyPageLink | null })[];
@@ -47,7 +48,7 @@ interface MenuRow {
   planned_starts_at: string | null;
   planned_ends_at: string | null;
   menu_date: string | null;
-  bar: { name: string } | null;
+  bar: { name: string; logo_url: string | null } | null;
 }
 interface DrinkRow {
   id: string;
@@ -82,13 +83,13 @@ async function factsFor(ids: string[]): Promise<Record<string, ItemFacts & { nam
 
 async function fetchRunSheet(menuId: string): Promise<RunSheetData> {
   const [menuRes, drinkRes, partyRes, ownerRes] = await Promise.all([
-    supabase.from('menus').select('id, name, bar_id, created_by, starts_at, ends_at, planned_starts_at, planned_ends_at, menu_date, bar:bars(name)').eq('id', menuId).single(),
+    supabase.from('menus').select('id, name, bar_id, created_by, starts_at, ends_at, planned_starts_at, planned_ends_at, menu_date, bar:bars(name, logo_url)').eq('id', menuId).single(),
     supabase
       .from('menu_drinks')
       .select('id, serves, party_id, item:items!item_id(id, name, item_type, glassware_id, ice_id, ice_per_serve_g, origin_bar_profile_id, parts)')
       .eq('menu_id', menuId)
       .order('sort_order'),
-    supabase.from('menu_run_parties').select('id, kind, name, profile_id, sort_order, is_venue, profile:profiles!profile_id(handle, is_claimed, bar_id)').eq('menu_id', menuId).order('sort_order'),
+    supabase.from('menu_run_parties').select('id, kind, name, profile_id, sort_order, is_venue, profile:profiles!profile_id(handle, is_claimed, bar_id, avatar_url)').eq('menu_id', menuId).order('sort_order'),
     supabase.from('menu_run_owners').select('item_id, party_id').eq('menu_id', menuId),
   ]);
   for (const res of [menuRes, drinkRes, partyRes, ownerRes]) if (res.error) throw res.error;
@@ -102,7 +103,7 @@ async function fetchRunSheet(menuId: string): Promise<RunSheetData> {
     profile_id: string | null;
     sort_order: number;
     is_venue: boolean;
-    profile: { handle: string; is_claimed: boolean; bar_id: string | null } | null;
+    profile: { handle: string; is_claimed: boolean; bar_id: string | null; avatar_url: string | null } | null;
   };
   const partyRows = (partyRes.data ?? []) as unknown as PartyRow[];
 
@@ -119,12 +120,15 @@ async function fetchRunSheet(menuId: string): Promise<RunSheetData> {
   const { houseMade, leaves } = await houseMadeUnder(ingredientIds, new Set(cocktailIds));
   const kitIds = rows.flatMap((r) => [r.item!.glassware_id, r.item!.ice_id]).filter((id): id is string => !!id);
   const brandProfiles = partyRows.filter((p) => p.kind === 'brand' && p.profile_id).map((p) => p.profile_id!);
-  const [purchasing, items, bottleRes] = await Promise.all([
+  const linked = partyRows.flatMap((p) => (p.profile_id ? [p.profile_id] : []));
+  const [purchasing, items, bottleRes, brands] = await Promise.all([
     menu.bar_id ? purchasingFor(menu.bar_id, leaves) : Promise.resolve({}),
     factsFor([...new Set([...ingredientIds, ...kitIds, ...Object.keys(houseMade), ...leaves])]),
     brandProfiles.length
       ? supabase.from('items').select('id, name, maker_profile_id, generic_id, generic:generic_id(name)').eq('item_type', 'ingredient').in('maker_profile_id', brandProfiles).order('name').limit(200)
       : Promise.resolve({ data: [], error: null }),
+    // A linked bar's logo from its venue, for the printed sheet; a missing logo never stops the sheet.
+    readBarBrands(linked).catch(() => ({}) as Awaited<ReturnType<typeof readBarBrands>>),
   ]);
   if (bottleRes.error) throw bottleRes.error;
 
@@ -159,6 +163,7 @@ async function fetchRunSheet(menuId: string): Promise<RunSheetData> {
       barId: menu.bar_id,
       createdBy: menu.created_by,
       hostName: menu.bar?.name ?? 'You',
+      hostLogoUrl: menu.bar?.logo_url ?? null,
       startsAt: menu.planned_starts_at ?? menu.starts_at ?? menu.menu_date,
       endsAt: menu.planned_ends_at ?? menu.ends_at,
     },
@@ -171,6 +176,7 @@ async function fetchRunSheet(menuId: string): Promise<RunSheetData> {
       profileId: p.profile_id,
       sortOrder: p.sort_order,
       isVenue: p.is_venue,
+      logoUrl: p.profile?.avatar_url ?? (p.profile_id ? brands[p.profile_id]?.logo : null) ?? null,
       page: p.profile ? { handle: p.profile.handle, claimed: p.profile.is_claimed || !!p.profile.bar_id } : null,
     })),
     owners: Object.fromEntries(((ownerRes.data ?? []) as { item_id: string; party_id: string | null }[]).map((o) => [o.item_id, o.party_id])),

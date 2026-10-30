@@ -11,6 +11,7 @@
 
 import { barSection, isMixer } from './barSections';
 import { isGarnishUnit, MAX_SERVES } from './batch';
+import { bottlesFor, bottlesText } from './bottles';
 import { keepsFor } from './batchPrep';
 import { PART_JOINS, type StoredPart } from './drinkParts';
 import { formatIce, iceForEvent } from './glass';
@@ -24,6 +25,9 @@ export function clampServes(value: number | string | null | undefined): number |
   if (n == null || !Number.isFinite(n) || n < 1) return null;
   return Math.min(MAX_SERVES, Math.floor(n));
 }
+
+/** The extra on things to make or buy a run sheet starts with, for testing and tasting during prep (Eddie, tf-083). */
+export const DEFAULT_MARGIN_PCT = 10;
 
 export type GroupKey = 'spirits' | 'fresh' | 'preps' | 'mixers' | 'garnish' | 'beerWine' | 'glassware' | 'ice';
 
@@ -73,6 +77,8 @@ export interface RunParty {
   profileId: string | null;
   /** The guest bar is where the night is, and we're visiting it. */
   isVenue?: boolean;
+  /** Its page's logo, for the printed sheet. */
+  logoUrl?: string | null;
 }
 
 /** What an ingredient (or glass, or ice) is, for grouping and default owners. */
@@ -98,6 +104,10 @@ export interface RunSheetInput {
   items: Record<string, ItemFacts>;
   /** List what house preps are made from, as well as the preps. */
   breakDownPreps: boolean;
+  /** Extra on everything to make or buy, for testing and tasting during prep: 10 is 10%. Serves, glasses and ice stay as counted. */
+  marginPct?: number;
+  /** Our bar's logo, for the printed sheet. */
+  hostLogoUrl?: string | null;
 }
 
 export interface SheetLine extends SpecLine {
@@ -142,7 +152,7 @@ export interface Need {
   group: GroupKey;
   /** "13.2 L", "200", "about 150 kg". */
   amount: string;
-  /** "19 × 700 ml", "about 110 lemons", "keeps 14 days", "Penicillin, Negroni". */
+  /** "buy 19 × 700 ml", "about 110 lemons", "keeps 14 days", "Penicillin, Negroni". */
   detail: string | null;
   /** The party that brings it; null is the menu's own bar (us). */
   ownerId: string | null;
@@ -159,11 +169,15 @@ export interface PartySheet {
   name: string;
   /** As the paper says it, for whoever reads it: the bar it's at, the bar visiting it, or a brand. */
   role: SheetRole;
+  /** Its logo, when its page has one. */
+  logoUrl: string | null;
   needs: Need[];
 }
 
 export interface RunSheet {
   totalServes: number;
+  /** The extra on things to make or buy, in percent (RunSheetInput.marginPct). */
+  marginPct: number;
   drinks: SheetDrink[];
   groups: { key: GroupKey; title: string; needs: Need[] }[];
   parties: PartySheet[];
@@ -199,11 +213,21 @@ function perServe(line: SpecLine): string {
   return unit && unit.toLowerCase() !== 'each' ? `${line.amount} ${unit}` : String(line.amount);
 }
 
-function amountOf(quantities: Quantity[]): string {
+/** `whole`: counts to get or make round up (7.7 cherries is 8). */
+function amountOf(quantities: Quantity[], whole = false): string {
   const parts = quantities
     .filter((q) => q.value > 0)
-    .map((q) => (q.kind === 'count' && q.unit === 'each' ? String(Math.round(q.value * 10) / 10) : formatQuantity(q)));
+    .map((q) => {
+      if (q.kind !== 'count') return formatQuantity(q);
+      const n = whole ? Math.ceil(Math.round(q.value * 1000) / 1000) : Math.round(q.value * 10) / 10;
+      return q.unit === 'each' ? String(n) : `${n} ${q.unit}`;
+    });
   return parts.join(' + ') || 'Amount not set';
+}
+
+/** A need's group, as GROUPS orders them: a bar's or brand's part of the sheet reads like the list in step 3. */
+export function needGroups(needs: Need[]): { key: GroupKey; title: string; needs: Need[] }[] {
+  return GROUPS.map((g) => ({ ...g, needs: needs.filter((n) => n.group === g.key) })).filter((g) => g.needs.length);
 }
 
 function fruitFor(name: string, quantities: Quantity[]): string | null {
@@ -255,8 +279,9 @@ export function buildRunSheet(input: RunSheetInput): RunSheet {
     return { id: d.id, itemId: d.itemId, name: d.name, serves, lines, serve: [d.glass?.name, d.ice?.name, ...garnishes].filter(Boolean).join(' · '), partyId: guest && d.partyId === guest.id ? guest.id : null, parts };
   });
 
+  const margin = Math.max(0, input.marginPct ?? 0);
   const prep = buildPrepList({
-    drinks: counted.filter((d) => d.itemType === 'cocktail').map((d) => ({ id: d.id, name: d.name, recipe: swapped.get(d.id)!, serves: d.serves })),
+    drinks: counted.filter((d) => d.itemType === 'cocktail').map((d) => ({ id: d.id, name: d.name, recipe: swapped.get(d.id)!, serves: d.serves! * (1 + margin / 100) })),
     servesPerDrink: 0,
     houseMade: input.breakDownPreps ? input.houseMade : {},
     purchasing: input.purchasing,
@@ -291,9 +316,16 @@ export function buildRunSheet(input: RunSheetInput): RunSheet {
     const group = groupFor(t.id, t.name, t.quantities, input);
     const viaPrep = t.forDrinks.length > 0 && t.forDrinks.every((n) => madeFor.has(n));
     const forDrinks = drinksOf(t.forDrinks);
-    const keeps = input.houseMade[t.id] ? keepsFor(input.houseMade[t.id].shelfLifeHours) : null;
-    const detail = [t.packs, fruitFor(t.name, t.quantities), keeps].filter(Boolean).join(' · ') || null;
-    needs.push({ key: t.id, itemId: t.id, name: t.name, group, amount: amountOf(t.quantities), detail, forDrinks, ...ownerOf(t.id, !!input.houseMade[t.id] || viaPrep, forDrinks) });
+    const made = !!input.houseMade[t.id];
+    const keeps = made ? keepsFor(input.houseMade[t.id].shelfLifeHours) : null;
+    // Spirits in whole bottles: the bar's own bottle size, else the usual one, said as assumed.
+    const p = input.purchasing[t.id];
+    const pack = p ? toQuantity(p.packAmount, p.packUnit) : null;
+    const ml = t.quantities.find((q) => q.kind === 'ml')?.value ?? 0;
+    const bottles = !made && group === 'spirits' ? bottlesFor(ml, pack?.kind === 'ml' ? pack.value : null) : null;
+    const buy = made ? t.packs : bottles ? bottlesText(bottles) : t.packs ? `buy ${t.packs}` : null;
+    const detail = [buy, fruitFor(t.name, t.quantities), keeps].filter(Boolean).join(' · ') || null;
+    needs.push({ key: t.id, itemId: t.id, name: t.name, group, amount: amountOf(t.quantities, true), detail, forDrinks, ...ownerOf(t.id, made || viaPrep, forDrinks) });
   }
 
   // Beer and wine on the menu: one of each a serve.
@@ -337,11 +369,11 @@ export function buildRunSheet(input: RunSheetInput): RunSheet {
   const ordered = groups.flatMap((g) => g.needs);
   const roleOf = (id: string | null): SheetRole => (id === venueId ? 'Venue' : id === null || id === guest?.id ? 'Visiting team' : 'Brand');
   // The bar it's at first, then the visiting bar, then the brands.
-  const parties: PartySheet[] = [{ id: null, name: input.hostName }, ...input.parties]
-    .map((p) => ({ id: p.id, name: p.name, role: roleOf(p.id), needs: ordered.filter((n) => n.ownerId === p.id) }))
+  const parties: PartySheet[] = [{ id: null, name: input.hostName, logoUrl: input.hostLogoUrl }, ...input.parties]
+    .map((p) => ({ id: p.id, name: p.name, role: roleOf(p.id), logoUrl: p.logoUrl ?? null, needs: ordered.filter((n) => n.ownerId === p.id) }))
     .sort((a, b) => ROLE_ORDER.indexOf(a.role) - ROLE_ORDER.indexOf(b.role));
 
-  return { totalServes: input.drinks.reduce((sum, d) => sum + (d.serves ?? 0), 0), drinks, groups, parties };
+  return { totalServes: input.drinks.reduce((sum, d) => sum + (d.serves ?? 0), 0), marginPct: margin, drinks, groups, parties };
 }
 
 export interface BrandBottle {
