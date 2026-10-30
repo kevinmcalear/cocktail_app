@@ -224,7 +224,7 @@ export function LineRow({ line, onChange, onRemove, onSwap, onEditPrep, units: u
                 // ml, cl and oz convert ("22.5" ml is "0.75" oz); other units keep the number.
                 const n = parseFloat(tidyAmount(line.amount));
                 const pour = Number.isFinite(n) ? convertPour(n, line.unit, u) : null;
-                onChange(u === 'top' || u === 'grated' ? { unit: u, amount: '' } : pour?.unit === u ? pour : { unit: u });
+                onChange({ ...(u === 'top' || u === 'grated' ? { unit: u, amount: '' } : pour?.unit === u ? pour : { unit: u }), ...(u === 'float' ? { float: false } : null) });
                 setUnits(false);
               }}
             />
