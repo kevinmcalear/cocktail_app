@@ -16,7 +16,10 @@
 --   * They don't see every drink just because they edit drinks: they see the
 --     venue's drinks by its Who sees what level, as their built-in role
 --     would, plus every drink of their own kinds (items_select and
---     private.visible_items). Costs, house-made recipes and specs follow the
+--     private.visible_items; events and This week through
+--     private.can_view_bar_item, by level only). A drink credited to the
+--     venue (edited through its page) follows the same kinds. Costs,
+--     house-made recipes and specs follow the
 --     role's own permissions, which a venue switches as before.
 --   * items.awaiting_approval: what a department adds waits for approval. A
 --     trigger sets it on their inserts, whatever the client sends; only
@@ -125,6 +128,22 @@ GRANT EXECUTE ON FUNCTION "public"."my_drink_types"("uuid") TO "authenticated", 
 
 -- --- 3. Writes: only their own kinds ---
 
+-- A drink credited to a venue (no bar_id; its origin is the venue's page) is
+-- edited through that venue: its department's kinds hold there too.
+CREATE FUNCTION "private"."credited_kind_open"("p_origin_bar_profile_id" "uuid", "p_type" "public"."entity_type") RETURNS boolean
+    LANGUAGE "sql" STABLE SECURITY DEFINER
+    SET "search_path" TO ''
+    AS $$
+  SELECT COALESCE((
+    SELECT private.kind_open(p.bar_id, p_type)
+    FROM public.profiles p
+    WHERE p.id = p_origin_bar_profile_id AND p.kind = 'bar'
+  ), true);
+$$;
+
+REVOKE ALL ON FUNCTION "private"."credited_kind_open"("uuid", "public"."entity_type") FROM PUBLIC;
+GRANT EXECUTE ON FUNCTION "private"."credited_kind_open"("uuid", "public"."entity_type") TO "authenticated", "service_role";
+
 ALTER POLICY "items_insert" ON "public"."items"
     WITH CHECK ("created_by" = (SELECT "auth"."uid"()) AND "private"."can_write"("bar_id", "created_by")
                 AND "private"."kind_open"("bar_id", "item_type"));
@@ -135,11 +154,13 @@ ALTER POLICY "items_insert" ON "public"."items"
 ALTER POLICY "items_update" ON "public"."items"
     USING (
         ("private"."can_write"("bar_id", "created_by") AND "private"."kind_open"("bar_id", "item_type"))
-        OR "private"."can_edit_credited"("bar_id", "is_catalog", "created_by", "origin_bar_profile_id")
+        OR ("private"."can_edit_credited"("bar_id", "is_catalog", "created_by", "origin_bar_profile_id")
+            AND "private"."credited_kind_open"("origin_bar_profile_id", "item_type"))
     )
     WITH CHECK (
         ("private"."can_write"("bar_id", "created_by") AND "private"."kind_open"("bar_id", "item_type"))
-        OR "private"."can_edit_credited"("bar_id", "is_catalog", "created_by", "origin_bar_profile_id")
+        OR ("private"."can_edit_credited"("bar_id", "is_catalog", "created_by", "origin_bar_profile_id")
+            AND "private"."credited_kind_open"("origin_bar_profile_id", "item_type"))
     );
 
 ALTER POLICY "items_delete" ON "public"."items"
@@ -152,7 +173,8 @@ CREATE OR REPLACE FUNCTION "private"."can_edit_item"("p_item_id" "uuid") RETURNS
     AS $$
   SELECT COALESCE(
     (SELECT (private.can_write(bar_id, created_by) AND private.kind_open(bar_id, item_type))
-         OR private.can_edit_credited(bar_id, is_catalog, created_by, origin_bar_profile_id)
+         OR (private.can_edit_credited(bar_id, is_catalog, created_by, origin_bar_profile_id)
+             AND private.credited_kind_open(origin_bar_profile_id, item_type))
        FROM public.items WHERE id = p_item_id),
     false
   );
@@ -319,6 +341,32 @@ CREATE OR REPLACE FUNCTION "private"."visible_items"("p_item_ids" "uuid"[]) RETU
                  OR c.item_type = ANY (private.department_kinds(vr.drink_types))))
         OR EXISTS (SELECT 1 FROM public.published_items pi WHERE pi.id = c.id)
       );
+$$;
+
+-- As 20261101200000 (events and This week ask it, with no item to hand): a
+-- department doesn't see every venue drink through edit_drinks here either,
+-- only by the Who sees what level.
+CREATE OR REPLACE FUNCTION "private"."can_view_bar_item"("p_bar_id" "uuid", "p_override_visibility_level" integer) RETURNS boolean
+    LANGUAGE "sql" STABLE SECURITY DEFINER
+    SET "search_path" TO ''
+    AS $$
+  SELECT EXISTS (
+    SELECT 1
+    FROM public.user_bars ub
+    JOIN public.bars b ON b.id = ub.bar_id
+    LEFT JOIN public.venue_roles vr ON vr.id = ub.venue_role_id
+    LEFT JOIN public.venue_level_overrides lo ON ub.venue_role_id IS NULL AND lo.bar_id = ub.bar_id AND lo.base_level = ub.role_level
+    WHERE ub.bar_id = p_bar_id
+      AND ub.user_id = auth.uid()
+      AND (vr.ends_at IS NULL OR vr.ends_at > now())
+      AND (
+        (vr.drink_types IS NULL
+         AND private.cap_open('edit_drinks', 'edit_drinks' = ANY (private.base_capabilities(ub.role_level)),
+                              COALESCE(vr.granted, lo.granted), COALESCE(vr.revoked, lo.revoked)))
+        OR private.cap_open('menu', ub.role_level >= COALESCE(p_override_visibility_level, b.default_visibility_level),
+                            COALESCE(vr.granted, lo.granted), COALESCE(vr.revoked, lo.revoked))
+      )
+  );
 $$;
 
 -- --- 6. A batch's method follows its own level (tf-087) ---

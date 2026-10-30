@@ -74,10 +74,29 @@ before(async () => {
   ids.wine = (await insert('items', { name: `House red ${run}`, item_type: 'wine', bar_id: ids.bar })).id;
   ids.batch = (await insert('items', { name: `Oleo ${run}`, item_type: 'ingredient', bar_id: ids.bar, override_prep_level: 35 })).id;
   await db.query("INSERT INTO public.item_steps (item_id, position, body) VALUES ($1, 0, 'Muddle the peels.')", [ids.batch]);
+  // Drinks credited to the venue: no bar_id, edited through the venue's page.
+  ids.profile = (await insert('profiles', { kind: 'bar', handle: `departments${run}`, display_name: `Departments ${run}`, bar_id: ids.bar, is_public: true })).id;
+  ids.creditedCocktail = (await insert('items', { name: `Credited Sour ${run}`, item_type: 'cocktail', origin_bar_profile_id: ids.profile })).id;
+  ids.creditedBeer = (await insert('items', { name: `Credited Lager ${run}`, item_type: 'beer', origin_bar_profile_id: ids.profile })).id;
 });
+
+/** private.can_view_bar_item as someone (events and This week ask it). */
+async function viewsBarItem(who, level) {
+  await db.query('BEGIN');
+  try {
+    await db.query('SET LOCAL ROLE authenticated');
+    await db.query("SELECT set_config('request.jwt.claims', $1, true)", [JSON.stringify({ sub: users[who].id, role: 'authenticated' })]);
+    const { rows } = await db.query('SELECT private.can_view_bar_item($1, $2) AS ok', [ids.bar, level]);
+    return rows[0].ok;
+  } finally {
+    await db.query('ROLLBACK');
+  }
+}
 
 after(async () => {
   if (ids.bar) await db.query('DELETE FROM public.items WHERE bar_id = $1', [ids.bar]);
+  if (ids.profile) await db.query('DELETE FROM public.items WHERE origin_bar_profile_id = $1', [ids.profile]);
+  if (ids.profile) await service.from('profiles').delete().eq('id', ids.profile);
   if (ids.bar) await service.from('bars').delete().eq('id', ids.bar);
   for (const u of Object.values(users)) await service.auth.admin.deleteUser(u.id);
   await db.end();
@@ -122,6 +141,26 @@ describe('a beer and wine role', () => {
     assert.equal(await sees('beer', ids.secret), false);
     assert.equal(await sees('beer', ids.secretBeer), true);
     assert.equal(await sees('creator', ids.secret), true);
+  });
+
+  test("events and This week don't show it drinks above its level (can_view_bar_item)", async () => {
+    assert.equal(await viewsBarItem('beer', 40), false);
+    assert.equal(await viewsBarItem('beer', 30), true);
+    assert.equal(await viewsBarItem('creator', 40), true);
+  });
+
+  test("edits a beer credited to the venue, not a credited cocktail; a Drink Creator edits both", async () => {
+    const beer = await users.beer.client.from('items').update({ description: 'Crisp.' }).eq('id', ids.creditedBeer).select('id');
+    assert.ifError(beer.error);
+    assert.equal(beer.data?.length, 1);
+    const cocktail = await users.beer.client.from('items').update({ description: 'Mine now.' }).eq('id', ids.creditedCocktail).select('id');
+    assert.equal(cocktail.data?.length ?? 0, 0);
+    const { data: canEdit } = await users.beer.client.rpc('can_edit_item', { p_item_id: ids.creditedCocktail });
+    assert.equal(canEdit, false);
+    const { rows } = await db.query('SELECT description FROM public.items WHERE id = $1', [ids.creditedCocktail]);
+    assert.notEqual(rows[0].description, 'Mine now.');
+    const creator = await users.creator.client.from('items').update({ description: 'Shaken hard.' }).eq('id', ids.creditedCocktail).select('id');
+    assert.equal(creator.data?.length, 1);
   });
 
   test("can't approve its own drink or lift its own limit", async () => {
