@@ -1,5 +1,6 @@
 import type { ConfigContext, ExpoConfig } from 'expo/config';
 
+import appIcons from './constants/appIcons.json';
 import brand from './constants/brand.json';
 
 /**
@@ -87,7 +88,21 @@ export default ({ config }: ConfigContext): ExpoConfig => {
     // environment). Build-time only: the native SDK is already linked, so
     // crash capture itself doesn't depend on this. Not in dev or preview
     // builds, which have nothing to upload to.
-    plugins: [...(config.plugins ?? []), ...(variant === 'production' ? ['@sentry/react-native'] : [])],
+    plugins: [
+      ...(config.plugins ?? []),
+      ...(variant === 'production' ? ['@sentry/react-native'] : []),
+      // The app icons people can pick in Settings (dec-28). iOS and Android
+      // only switch between icons bundled into the build, so a bar's icon
+      // ships in a store build, never from an uploaded logo at runtime.
+      [
+        'expo-alternate-app-icons',
+        appIcons.icons.map((icon) => ({
+          name: icon.name,
+          ios: icon.ios,
+          android: { foregroundImage: icon.androidForeground, backgroundColor: icon.androidBackground },
+        })),
+      ],
+    ],
     updates: { url: `https://u.expo.dev/${config.extra?.eas?.projectId}` },
     extra: {
       ...config.extra,
