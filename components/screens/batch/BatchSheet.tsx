@@ -1,7 +1,7 @@
 import { useState } from 'react';
 import { Platform, StyleSheet, View } from 'react-native';
 
-import { BackbarTheme, Body, BrandProvider, Caption, LockedSection, PressableScale, Segmented, Sheet, SheetScrollView, Title, useDs, useSheetClose } from '@/components/ds';
+import { BackbarTheme, Body, BrandProvider, Caption, LockedSection, PressableScale, Segmented, Sheet, SheetScrollView, TextLink, Title, useDs, useSheetClose } from '@/components/ds';
 import { IconSymbol } from '@/components/ui/icon-symbol';
 import { ToolsSheet } from '@/components/tools/ToolsSheet';
 import { layout, space } from '@/constants/tokens';
@@ -12,6 +12,7 @@ import { batchPrepLines, keepsFor, bottleExpiry, expiryLine } from '@/lib/batchP
 import {
   BOTTLE_SIZES,
   buildBatch,
+  chillLine,
   LEAVE_OUT_LABEL,
   MAX_SERVES,
   MIN_SERVES,
@@ -70,10 +71,7 @@ const MODES = [
   { value: 'bottle', label: 'Fill a bottle' },
   { value: 'stock', label: 'What I have' },
 ] as const;
-const UNITS = [
-  { value: 'ml', label: 'ml' },
-  { value: 'oz', label: 'oz' },
-] as const;
+const UNITS = [{ value: 'ml', label: 'ml' }, { value: 'oz', label: 'oz' }] as const;
 /** What each station line is, beside its name ("citrus stays out"). */
 const STATION_NOTE: Record<keyof typeof LEAVE_OUT_LABEL, string> = {
   citrus: 'citrus stays out',
@@ -124,6 +122,7 @@ function BatchBody({ name, lines: all, methodNames: allMethods, lockedUntil, ini
   const ds = useDs();
   const close = useSheetClose();
   const [mode, setMode] = useState<Mode>('serves');
+  const [more, setMore] = useState(false); // Fill a bottle, the shelf, units and dilution wait behind More (i-batch-prompt).
   const [serves, setServes] = useState(initialServes);
   const [unit, setUnit] = useState<VolumeUnit>('ml');
   const [bottleSize, setBottleSize] = useState<BottleSize>(750);
@@ -195,7 +194,7 @@ function BatchBody({ name, lines: all, methodNames: allMethods, lockedUntil, ini
     <Body tone="muted">This drink has no measured spec to batch yet.</Body>
   ) : (
     <>
-      <Segmented options={MODES} value={mode} onChange={setMode} accessibilityLabel="Scale by" variant="pill" stretch />
+      {more ? <Segmented options={MODES} value={mode} onChange={setMode} accessibilityLabel="Scale by" variant="pill" stretch /> : null}
       {mode === 'bottle' ? <BottleTiles options={BOTTLES} value={bottleSize} onChange={setBottleSize} /> : null}
       {mode === 'stock' && stockLine ? (
         <StockField lines={stock} line={stockLine} onLine={setStockKey} have={have} onHave={setHave} unit={haveUnit} />
@@ -204,8 +203,9 @@ function BatchBody({ name, lines: all, methodNames: allMethods, lockedUntil, ini
         value={n}
         onChange={pickServes}
         detail={mode === 'bottle' ? `${batch.total} · pour ${batch.pour} each` : ahead.length ? 'every part scales' : `fills ${batch.bottles} × ${bottleLabel(bottleSize)}`}
-        trailing={<Choice label="Units" options={UNITS} value={unit} onChange={setUnit} />}
+        trailing={more ? <Choice label="Units" options={UNITS} value={unit} onChange={setUnit} /> : undefined}
       />
+      <TextLink label={more ? 'Fewer options' : 'More ways to batch: fill a bottle, what I have, units'} onPress={() => { setMore(!more); setMode('serves'); }} />
       {mode === 'serves' ? (
         <>
           <ServesRuler value={serves} min={MIN_SERVES} max={MAX_SERVES} onChange={setServes} />
@@ -252,7 +252,7 @@ function BatchBody({ name, lines: all, methodNames: allMethods, lockedUntil, ini
       )}
 
       {batch.method === 'stirred' && batch.abv !== null ? <FreezerCheck abv={batch.abv} freezerC={freezerC} onFreezerC={setFreezerC} /> : null}
-      <Body tone="muted">{batch.note}</Body>
+      <Body tone="muted">{`${batch.note} ${chillLine(batch.method, !!batch.water, freezerC)}`}</Body>
       {guessed ? (
         <Caption tone="muted">{canEdit ? 'What stays out of the bottle is guessed from the names. Set it in Edit, under Service.' : 'What stays out of the bottle is guessed from the names.'}</Caption>
       ) : null}
@@ -262,7 +262,7 @@ function BatchBody({ name, lines: all, methodNames: allMethods, lockedUntil, ini
         canPrep={canPrep}
         making={!!ticked}
         onMake={() => setTicked((t) => (t ? null : []))}
-        onDilution={() => setTools(true)}
+        onDilution={more ? () => setTools(true) : undefined}
         preps={preps}
         text={text}
         onSaved={close}

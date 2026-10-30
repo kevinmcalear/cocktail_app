@@ -7,7 +7,7 @@ export const SERVICE_ANGLES: readonly { angle: ServiceAngle; label: string; brie
   { angle: 'side', label: 'Side', brief: 'On the bar top, eye level' },
   { angle: 'top', label: 'Top', brief: 'Straight down, glass centred' },
   { angle: 'garnish', label: 'Garnish', brief: 'Close up' },
-  { angle: 'handoff', label: 'Hand-off', brief: "From the guest's side" },
+  { angle: 'handoff', label: 'Guest view', brief: "From the guest's side" },
 ];
 
 /**

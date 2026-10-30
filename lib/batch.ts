@@ -283,6 +283,21 @@ export function freezingPointC(abv: number): number {
   return t0 + ((a - a0) / (a1 - a0)) * (t1 - t0);
 }
 
+/**
+ * How to keep the bottle before service, in one line (Kevin, 29 Oct jam: "say
+ * how to batch, chill at X for Y"). A freezer pour gets the freezer's
+ * temperature and a time: a 750 ml bottle takes most of a working day to get
+ * that cold, so at least 8 hours, overnight to be safe. A bottle poured straight
+ * otherwise goes in the fridge; a shaken or built batch is mixed to order, so it
+ * keeps cold in the fridge with no time to wait.
+ */
+export function chillLine(method: BatchMethod, poured: boolean, freezerC: number): string {
+  const c = `${freezerC < 0 ? '\u2212' : ''}${Math.abs(Math.round(freezerC))}\u00a0°C`;
+  if (method === 'stirred') return `Chill it in the freezer at ${c} for at least 8 hours before service, overnight to be safe.`;
+  if (poured) return 'Chill the bottle in the fridge, at about 4\u00a0°C, for at least 4 hours before service.';
+  return 'Keep the bottle in the fridge, at about 4\u00a0°C, until service.';
+}
+
 /** Whole serves between MIN_SERVES and MAX_SERVES; anything unreadable is 1. */
 export function clampServes(value: number): number {
   if (!Number.isFinite(value)) return MIN_SERVES;

@@ -1,7 +1,7 @@
 // Checks for lib/batch.ts. Run: npm run test:unit
 import assert from 'node:assert/strict';
 
-import { buildBatch, clampServes, classifyMethod, formatVolume, formatWeight, freezingPointC, isGarnishUnit, leaveOutFor, MAX_SERVES, servesFromStock, servesStops, servesToFill, stepStops, stockLines, stockUnit, stopPosition } from './batch';
+import { buildBatch, chillLine, clampServes, classifyMethod, formatVolume, formatWeight, freezingPointC, isGarnishUnit, leaveOutFor, MAX_SERVES, servesFromStock, servesStops, servesToFill, stepStops, stockLines, stockUnit, stopPosition } from './batch';
 import { specLines } from './spec';
 
 const row = (id: string, name: string, amount: number | null, unit: string | null) => ({
@@ -217,5 +217,9 @@ const honey = specLines([grow('h', 'Honey', 20, 'g'), row('t', 'Lemon', 1, 'twis
 assert.equal(stockUnit(honey[0], 'ml'), 'g');
 assert.equal(servesFromStock(honey[0], 450, 'g'), 22);
 assert.deepEqual(stockLines(honey).map((l) => l.key), ['h'], 'a twist is not something you run out of by the ml');
+
+assert.equal(chillLine('stirred', true, -18), 'Chill it in the freezer at \u221218\u00a0°C for at least 8 hours before service, overnight to be safe.');
+assert.match(chillLine('built', true, -18), /fridge.*at least 4 hours/, 'a bottled highball chills in the fridge');
+assert.match(chillLine('shaken', false, -18), /until service/, 'a shaken batch only keeps cold');
 
 console.log('batch: ok');

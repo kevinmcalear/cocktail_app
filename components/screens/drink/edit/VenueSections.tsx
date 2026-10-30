@@ -141,7 +141,7 @@ function Sections({ item, onPending, sheet: open, onSheet: setOpen, servicePhoto
           ) : null}
           {setLine.error || setStyle.error ? <Caption tone="accent">{"Couldn't save. Check your connection and try again."}</Caption> : null}
           <Field label="Garnish" value={garnish} onChangeText={setGarnish} placeholder="Candied ginger on a pick, laid across the rim." minLines={2} maxLength={500} />
-          <Field label="Hand-off" value={handoff} onChangeText={setHandoff} placeholder={'Coaster down first, logo facing the guest\nSay "smoky on top" as it lands'} minLines={3} maxLength={1200} hint={tooMany ? `Up to ${MAX_HANDOFF_STEPS} steps.` : 'One step per line.'} />
+          <Field label="Guest view" value={handoff} onChangeText={setHandoff} placeholder={'Coaster down first, logo facing the guest\nSay "smoky on top" as it lands'} minLines={3} maxLength={1200} hint={tooMany ? `Up to ${MAX_HANDOFF_STEPS} steps.` : 'One step per line.'} />
           {saveNotes.error ? <Caption tone="accent">{saveNotes.error.message}</Caption> : null}
           <Rows rows={[{ label: 'Glass and ice', value: glass?.name ?? 'No glass yet', hint: 'Its size, the ice per serve and who made them', onPress: () => setOpen('glass') }]} />
           {servicePhotos}

@@ -12,7 +12,7 @@ import { GuestCredit, GuestPageNote, possessive, WhoseTag } from './GuestCredit'
 import { usePartyLooks } from './parts';
 import { PartySheet } from './PartySheet';
 
-/** A serves box: type a number (1 to 6,969) or step it with − and +. */
+/** A serves box: type a number or step it with − and +. The most it takes (MAX_SERVES) isn't shown (tf-081). */
 function ServesInput({ label, value, onCommit, wide }: { label: string; value: number | null; onCommit: (n: number | null) => void; wide?: boolean }) {
   const ds = useDs();
   const [draft, setDraft] = useState<string | null>(null);
@@ -186,7 +186,6 @@ export function ServesStep({ data, total, summaries }: { data: RunSheetData; tot
             <Stepper drink={d} onSet={(serves) => setServes.mutate({ menuDrinkIds: [d.id], serves })} />
           </View>
         ))}
-        <Caption tone="muted">Up to 6,969 a drink. Type a number or use − and +.</Caption>
       </View>
       {editing ? <PartySheet menuId={data.menu.id} kind={editing.kind} party={editing.party} venue={editing.venue} sortOrder={data.parties.length} onClose={() => setEditing(null)} /> : null}
     </View>

@@ -68,16 +68,19 @@ export function LibraryGroupHead({ title }: { title: string }) {
 export function AddDrinkSheet({ section, barId, onClose, library, canMake, elsewhere, onAdd }: AddDrinkSheetProps) {
   const router = useRouter();
   const [query, setQuery] = useState('');
-  const [freeOnly, setFreeOnly] = useState(false);
+  // All, only what's already in this section (to look back over what's picked), or only drinks on no other menu.
+  const [show, setShow] = useState<'all' | 'in' | 'free'>('all');
   const make = useMakeDrink(section, barId);
   const where = useActiveVenue().venues.find((v) => v.id === barId)?.name ?? null;
   if (!section) return null;
   // The filter only means something when another menu has drinks on it (Q13, 26 Oct 2026).
   const shared = Object.keys(elsewhere).length > 0;
-  const found = filterLibrary(library, section, query, freeOnly && shared, elsewhere);
+  const picked = section.drinks.length;
+  const inOnly = show === 'in' && picked > 0;
+  const found = filterLibrary(inOnly ? section.drinks : library, section, query, show === 'free' && shared, elsewhere);
   // Not there? Make it from the same search, close names under it (dm-decided).
-  const missing = nameToMake(library, query);
-  const drinks = found.length ? found : nearLibrary(library, section, query);
+  const missing = inOnly ? null : nameToMake(library, query);
+  const drinks = found.length || inOnly ? found : nearLibrary(library, section, query);
   const makeIt = (name: string | null) => {
     onClose();
     make(name);
@@ -90,24 +93,9 @@ export function AddDrinkSheet({ section, barId, onClose, library, canMake, elsew
       list
       onClose={onClose}
       title={`Add to ${section.name}`}
-      subtitle={`${sectionRule(section)} · ${section.drinks.length} in`}
-      footer={
-        // A typed name has its own Make in the list.
-        missing ? undefined : (
-          <>
-            <Button
-              label={`Create a new ${kind === 'cocktail' ? 'drink' : kind}`}
-              icon="plus"
-              variant="secondary"
-              // The editor puts it in this section once it's saved (useLayoutEditor).
-              onPress={() => makeIt(null)}
-            />
-            <Caption tone="muted" align="center">
-              Once it’s saved, it goes in {section.name}.
-            </Caption>
-          </>
-        )
-      }
+      subtitle={sectionRule(section)}
+      // Picks land as they're tapped, so closing keeps them: a tick, not an X (tf-075).
+      done
     >
       {/* Only the rows in view are drawn: a library can be hundreds of sketched drinks. */}
       <SectionList
@@ -123,11 +111,13 @@ export function AddDrinkSheet({ section, barId, onClose, library, canMake, elsew
         windowSize={DRAWN_LIST_WINDOW}
         ListHeaderComponent={
           <View style={styles.head}>
-            <Field label="Search" value={query} onChangeText={setQuery} placeholder="Search drinks, or type a new name" autoCapitalize="none" onSubmitEditing={() => (missing ? makeIt(missing) : undefined)} />
-            {shared ? (
+            <Field label="Search" hideLabel value={query} onChangeText={setQuery} placeholder="Search drinks, or type a new name" autoCapitalize="none" onSubmitEditing={() => (missing ? makeIt(missing) : undefined)} />
+            {/* How many are picked, and a tap to see just those again (tf-073). */}
+            {shared || picked ? (
               <View role="radiogroup" accessibilityLabel="Show" style={styles.filters}>
-                <Choice label="All" selected={!freeOnly} onPress={() => setFreeOnly(false)} />
-                <Choice label="Not on another menu" selected={freeOnly} onPress={() => setFreeOnly(true)} />
+                <Choice label="All" pill="accent" selected={show === 'all' || (show === 'in' && !picked)} onPress={() => setShow('all')} />
+                {picked ? <Choice label={`In ${section.name} · ${picked}`} pill="accent" selected={inOnly} onPress={() => setShow('in')} /> : null}
+                {shared ? <Choice label="Not on another menu" pill="accent" selected={show === 'free'} onPress={() => setShow('free')} /> : null}
               </View>
             ) : null}
             {missing ? (
@@ -146,7 +136,19 @@ export function AddDrinkSheet({ section, barId, onClose, library, canMake, elsew
             {missing && drinks.length ? <Caption tone="muted">CLOSE</Caption> : null}
           </View>
         }
-        ListEmptyComponent={missing ? undefined : <Body tone="muted">{query ? `Nothing called “${query}” that fits ${section.name}.` : `No drinks that fit ${section.name} yet.`}</Body>}
+        ListEmptyComponent={missing ? undefined : <Body tone="muted">{query ? `Nothing called “${query}” ${inOnly ? `in ${section.name}` : `that fits ${section.name}`}.` : `No drinks that fit ${section.name} yet.`}</Body>}
+        // At the end of the list, not pinned under it, so the results get the room (tf-072). A typed name has its own Make above.
+        ListFooterComponent={
+          missing ? undefined : (
+            <View style={styles.make}>
+              {/* The editor puts it in this section once it's saved (useLayoutEditor). */}
+              <Button label={`Create a new ${kind === 'cocktail' ? 'drink' : kind}`} icon="plus" variant="secondary" onPress={() => makeIt(null)} />
+              <Caption tone="muted" align="center">
+                Once it’s saved, it goes in {section.name}.
+              </Caption>
+            </View>
+          )
+        }
         renderItem={({ item: d }) => <LibraryRow drink={d} note={libraryNote(d, section, elsewhere)} added={!!cannotAdd(section, d)} onAdd={() => onAdd(d)} />}
       />
     </MenuSheet>
@@ -157,6 +159,7 @@ const styles = StyleSheet.create({
   head: { gap: space.md },
   groupHead: { paddingTop: space.lg, paddingBottom: space.xs },
   filters: { flexDirection: 'row', flexWrap: 'wrap', gap: space.sm },
+  make: { gap: space.sm, paddingTop: space.lg },
   row: { flexDirection: 'row', alignItems: 'center', gap: space.md, paddingVertical: space.sm, borderBottomWidth: StyleSheet.hairlineWidth },
   thumb: { width: 48 },
   flex: { flex: 1, gap: 2 },
