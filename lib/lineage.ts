@@ -169,6 +169,35 @@ export function creditHint(status: CreditStatus | null): string | null {
   return null;
 }
 
+/** What a bar's drink is to the classic it names (public.spec_matches). */
+export type SpecVerdict = 'same' | 'unlisted' | 'variation' | 'riff';
+
+/** A drink's name as the database compares it (private.drink_name_key): "The Americano" and "americano" are one name. */
+// No import, so the share-image function (api/drink-og.ts, via lib/publicDrink) stays free of the '@/' alias.
+export const drinkNameKey = (name: string) =>
+  name
+    .normalize('NFD')
+    .replace(/[\u0300-\u036f]/g, '')
+    .toLowerCase()
+    .replace(/[^a-z0-9]+/g, ' ')
+    .trim()
+    .replace(/^(the|classic|house|le|el|la) /, '');
+
+/**
+ * Is this drink a riff on its parent, or a bar's own version of it (jam
+ * dec-21, dec-22, Eddie tf-086)? A bar pouring its Americano at 35/35 instead
+ * of 40/40 is still the Americano. It's a riff only when the spec really
+ * changes into another drink: the spec verdict says riff, or, with no
+ * verdict (a parent outside the catalog, or before it loads), the name is
+ * neither the parent's nor one of its other names (public.classic_aliases:
+ * "Gin and Tonic" is the Gin & Tonic), as the verdict itself reads it.
+ */
+export function isRiff(drink: Pick<LineageDrink, 'name'>, parent: { name: string; aliases?: readonly string[] | null }, verdict?: SpecVerdict | null): boolean {
+  if (verdict) return verdict === 'riff';
+  const key = drinkNameKey(drink.name);
+  return ![parent.name, ...(parent.aliases ?? [])].some((n) => drinkNameKey(n) === key);
+}
+
 /** One piece of a credit sentence; profile and drink pieces become links. */
 export type CreditPart = { text: string; profileId?: string; drinkId?: string };
 
@@ -198,10 +227,11 @@ export function creditSentence(drink: LineageDrink, parent: Pick<LineageDrink, '
  * drink-phone-venue, -home, -classic): "Created by Sam Ross at Milk & Honey,
  * New York, 2005", "Riff of Naked and Famous at Little Rye, Brunswick", or for
  * a classic nobody is credited with, "Classic, about 1916 · at Detroit
- * Athletic Club". The bar's place always follows its name. The status word
+ * Athletic Club". A bar's own version of a classic reads "Americano by Little
+ * Rye, Brunswick" (isRiff). The bar's place always follows its name. The status word
  * ("· Verified") is the caller's.
  */
-export function nameCredit(drink: LineageDrink, parent: Pick<LineageDrink, 'id' | 'name'> | null): CreditPart[] {
+export function nameCredit(drink: LineageDrink, parent: Pick<LineageDrink, 'id' | 'name'> | null, verdict?: SpecVerdict | null): CreditPart[] {
   const bar = drink.origin_bar;
   const withPlace = (parts: CreditPart[]) =>
     parts.flatMap((p) => (bar?.locality && p.profileId === bar.id && !bar.is_closed ? [p, { text: `, ${bar.locality}` }] : [p]));
@@ -210,6 +240,13 @@ export function nameCredit(drink: LineageDrink, parent: Pick<LineageDrink, 'id' 
     const parts: CreditPart[] = [{ text: `Classic${year}` }];
     if (bar) parts.push({ text: ' · at ' }, { text: bar.display_name, profileId: bar.id }, ...(bar.is_closed ? [{ text: ' (now closed)' }] : []));
     return withPlace(parts);
+  }
+  // A bar's own version of a classic (dec-21): "Americano by Little Rye", the classic's name a link to it and its history.
+  if (parent && !drink.is_catalog && !isRiff(drink, parent, verdict)) {
+    const by = withPlace(creditSentence(drink, null));
+    const link = { text: parent.name, drinkId: parent.id };
+    if (!by.length) return [{ text: 'A version of the ' }, link];
+    return [link, { text: ' by ' }, ...by.slice(1)];
   }
   // A classic's parent is in its family row; the line under the name is who made it.
   const parts = creditSentence(drink, drink.is_catalog ? null : parent);

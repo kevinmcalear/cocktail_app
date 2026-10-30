@@ -5,6 +5,7 @@ import { Body, Caption, PressableScale, useDs } from '@/components/ds';
 import { IconSymbol } from '@/components/ui/icon-symbol';
 import { layout, space } from '@/constants/tokens';
 import { useCapabilities } from '@/hooks/useCapabilities';
+import { useDrinkLists } from '@/hooks/useDiscover';
 import { useMyProfile } from '@/hooks/useMyProfile';
 import { useBarPublishing } from '@/hooks/usePublishing';
 import { amountLabel, draftIceLine, finishLabel, notesArePrivate, sketchLook, STEP_COPY, type StepProps, type WizardDraft, type WizardStep } from '@/lib/drinkWizard';
@@ -13,16 +14,19 @@ import { notesLevelLabel } from '@/lib/notesReaders';
 import { PUBLISH_COPY } from '@/lib/publishing';
 import { capitalizeFirst } from '@/lib/stringUtils';
 import { draftSketchInputs } from '@/lib/sketch/draft';
+import { isRiff } from '@/lib/lineage';
 import { askShort, asked } from '@/lib/whoMadeIt';
 
 import { HomePhoto, ReviewPhotos } from './ReviewPhotos';
 
 const CHANGE_LATER = 'You can change any of it on the drink’s page.';
 
-function credits(d: WizardDraft, hasProfile: boolean): string {
+function credits(d: WizardDraft, hasProfile: boolean, aliases: readonly string[] | undefined): string {
   const by = d.creator === 'nobody' ? '' : typeof d.creator === 'object' && d.creator ? `By ${d.creator.name}` : hasProfile ? 'By you' : '';
   const withThem = d.coCreators.length ? `with ${d.coCreators.map((c) => c.name).join(', ')}` : '';
-  const riff = d.riffOf ? `riff on ${d.riffOf.name}` : '';
+  // The bar's own Americano is a version of it, not a riff (dec-21). Yours when you're the one credited.
+  const version = by === 'By you' && !withThem ? 'your version' : 'a version';
+  const riff = d.riffOf ? (isRiff(d, { name: d.riffOf.name, aliases }) ? `riff on ${d.riffOf.name}` : `${version} of the ${d.riffOf.name}`) : '';
   const where = [d.place ? `first made at ${d.place.name}` : '', d.originYear ? `in ${d.originYear}` : ''].filter(Boolean).join(' ');
   return capitalizeFirst([[by, withThem].filter(Boolean).join(' '), where, riff].filter(Boolean).join(', '));
 }
@@ -70,6 +74,8 @@ export function ReviewStep({ draft, set, onJump, barId, venueName, hasProfile, b
   // Made with waits for a yes (#899): Review says so, so Save isn't a surprise.
   const ask = askShort(asked(draft, profile ? { id: profile.id, name: profile.displayName } : null));
   const caps = useCapabilities(barId).data;
+  // The classic's other names: "Gin and Tonic" is a version of the Gin & Tonic.
+  const aliases = useDrinkLists(!!draft.riffOf).data?.find((c) => c.id === draft.riffOf?.id)?.aliases;
   // A venue's drink takes photos from those who may add them.
   const canPhoto = !!caps?.includes('photos');
   // Not chosen: it follows the venue's default, once the venue has a public page.
@@ -81,7 +87,7 @@ export function ReviewStep({ draft, set, onJump, barId, venueName, hasProfile, b
     ['glass', draft.glass?.name ?? ''],
     ['ice', draftIceLine(draft)],
     ['garnish', draft.garnishes.map(finishLabel).join(', ')],
-    ['credits', credits(draft, hasProfile)],
+    ['credits', credits(draft, hasProfile, aliases)],
     ['notes', [draft.description.trim(), notesLine(draft, barId)].filter(Boolean).join('\n\n')],
     ['publish', draft.publish ? PUBLISH_COPY[draft.publish].label : barId ? followed : 'Private'],
   ];

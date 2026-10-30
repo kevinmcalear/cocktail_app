@@ -2,7 +2,7 @@
 // credit under it, and the captions in its family tree and Where to drink it.
 // Pure, so lib/publicDrink.check.ts can pin them down.
 
-import { creditLabel, type CreditStatus } from './lineage';
+import { creditLabel, isRiff, type CreditStatus } from './lineage';
 import { plural, rankCaption } from './ranking';
 
 /** A public profile as the page names it. */
@@ -18,7 +18,8 @@ export interface PublicProfile {
 
 /**
  * What kind of drink it is and when, over its name: "Modern classic · 2005",
- * "Pale Moth original · 2025", "Little Rye riff". `origin` is the legacy
+ * "Pale Moth original · 2025", "Little Rye riff", "Little Rye version" (its
+ * Americano). `origin` is the legacy
  * label (Classic, Modern Classic, Original, Varient).
  */
 export function drinkKicker(
@@ -26,11 +27,20 @@ export function drinkKicker(
     origin: string | null;
     originYear: number | null;
     riffOfId: string | null;
+    name: string;
+    /**
+     * The drink it names, with its other names: the bar's own Americano is
+     * its version, not a riff (dec-21). Undefined while it loads, so the
+     * word doesn't change under the reader; null when it can't be read (a riff).
+     */
+    riffOf?: { name: string; aliases?: readonly string[] | null } | null;
   },
   barName: string | null,
 ): string {
   const label = d.origin?.trim().toLowerCase();
-  const kind = label === 'classic' ? 'Classic' : label === 'modern classic' ? 'Modern classic' : d.riffOfId ? (barName ? `${barName} riff` : 'Riff') : barName ? `${barName} original` : 'Original';
+  if (d.riffOfId && d.riffOf === undefined && label !== 'classic' && label !== 'modern classic') return d.originYear ? String(d.originYear) : '';
+  const version = !!d.riffOf && !isRiff(d, d.riffOf);
+  const kind = label === 'classic' ? 'Classic' : label === 'modern classic' ? 'Modern classic' : d.riffOfId ? (barName ? `${barName} ${version ? 'version' : 'riff'}` : version ? 'Version' : 'Riff') : barName ? `${barName} original` : 'Original';
   return d.originYear ? `${kind} · ${d.originYear}` : kind;
 }
 
