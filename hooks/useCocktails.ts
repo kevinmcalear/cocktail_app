@@ -2,6 +2,7 @@ import { useUserId } from '@/ctx/AuthContext';
 import { dropdownKeys } from '@/hooks/useDropdowns';
 import { useItemEditAccess, useViewAs } from '@/hooks/useViewAs';
 import { allRowsById, byName } from '@/lib/allRows';
+import { CATALOG_RANGES } from '@/lib/matchCatalog';
 import { venueListOptions } from '@/lib/queryDefaults';
 import { supabase } from '@/lib/supabase';
 import { resolvePresentationIngredient, sortRecipesByOrder } from '@/lib/recipeUtils';
@@ -78,32 +79,46 @@ export function withListRecipes(data: { recipes?: ListRecipe[] | null }[] | null
     return (processed ?? []) as DatabaseItem[];
 }
 
-/** Every drink the person can see, at home and every venue; screens filter by place, so switching doesn't download it again. */
-export function useCocktails(barIds?: readonly string[]) {
+/**
+ * Every drink the person can see, at home and every venue (Study's decks), or
+ * one place's: `barIds` for venues, `'home'` for the rows home shows (no
+ * venue's), so home's Library and search don't download every bar's drinks
+ * only to leave them out.
+ */
+export function useCocktails(barIds?: readonly string[] | 'home') {
     const { viewAsRoleLevel } = useViewAs();
     const userId = useUserId();
+    const venues = barIds === 'home' ? undefined : barIds;
+    const mine = userId ? `,created_by.eq.${userId}` : '';
 
     return useQuery({
-        queryKey: barIds ? ['cocktails', viewAsRoleLevel, userId, 'bars', barIds] : ['cocktails', viewAsRoleLevel, userId],
-        ...venueListOptions(barIds),
+        queryKey: venues ? ['cocktails', viewAsRoleLevel, userId, 'bars', venues] : barIds === 'home' ? ['cocktails', viewAsRoleLevel, userId, 'home'] : ['cocktails', viewAsRoleLevel, userId],
+        ...venueListOptions(venues),
         queryFn: async () => {
             // By id, a page after the last id (an offset page re-sorts every row before it), then into name order here.
-            const data = await allRowsById((after, size) => {
-                let query = supabase
-                    .from('app_item_presentation')
-                    .select(COCKTAIL_LIST_COLUMNS)
-                    .eq('item_type', 'cocktail');
-                // Drinks credited to another bar or person with no venue behind them (a
-                // bar's signatures, a bartender's originals) stay on that public profile,
-                // out of the Library. Search lists them apart, under "From bars".
-                query = barIds
-                    ? query.in('bar_id', barIds)
-                    : query.or(`bar_id.not.is.null,and(origin_bar_profile_id.is.null,creator_profile_id.is.null)${userId ? `,created_by.eq.${userId}` : ''}`);
+            const page = (lo: string | null, hi: string | null) =>
+                allRowsById((after, size) => {
+                    let query = supabase
+                        .from('app_item_presentation')
+                        .select(COCKTAIL_LIST_COLUMNS)
+                        .eq('item_type', 'cocktail');
+                    // Drinks credited to another bar or person with no venue behind them (a
+                    // bar's signatures, a bartender's originals) stay on that public profile,
+                    // out of the Library. Search lists them apart, under "From bars".
+                    query = venues
+                        ? query.in('bar_id', venues)
+                        : barIds === 'home'
+                          ? query.is('bar_id', null).or(`and(origin_bar_profile_id.is.null,creator_profile_id.is.null)${mine}`)
+                          : query.or(`bar_id.not.is.null,and(origin_bar_profile_id.is.null,creator_profile_id.is.null)${mine}`);
+                    if (lo) query = query.gte('id', lo);
+                    if (hi) query = query.lt('id', hi);
+                    if (after) query = query.gt('id', after);
 
-                if (after) query = query.gt('id', after);
-
-                return query.order('id').limit(size);
-            });
+                    return query.order('id').limit(size);
+                });
+            // A venue's few hundred in one go; the big lists (~15,000 rows) in id ranges side by side, a page or two
+            // each, not fifteen pages one after another.
+            const data = venues ? await page(null, null) : (await Promise.all(CATALOG_RANGES.map((r) => page(r.lo, r.hi)))).flat();
 
             return withListRecipes(data.sort(byName));
         }

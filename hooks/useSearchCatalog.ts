@@ -68,15 +68,15 @@ function draftDisplayName(d: { entity_type: string; draft_data?: any }) {
 export function useSearchCatalog(selectedContextIds: string[], { ingredients = true }: { ingredients?: boolean } = {}) {
   // At venues, only their rows: a venue's few hundred instead of the whole
   // ~30,000-row catalog (saved between launches, so the Library paints at
-  // once). No venues yet (still loading) asks for nothing. Your own drinks at
-  // home are the catalog's bar-less rows, so home still reads the whole lists.
+  // once). No venues yet (still loading) asks for nothing. Home asks for the
+  // bar-less rows only, which are all it shows, not every bar's drinks too.
   const barIds = useMemo(
     () => (selectedContextIds.includes(PERSONAL_CONTEXT) ? undefined : selectedContextIds),
     [selectedContextIds]
   );
-  const { data: cocktailsData, isLoading: cocktailsLoading, error: cocktailsError } = useCocktails(barIds);
-  const { data: beersData, isLoading: beersLoading, error: beersError } = useBeers(barIds);
-  const { data: winesData, isLoading: winesLoading, error: winesError } = useWines(barIds);
+  const { data: cocktailsData, isLoading: cocktailsLoading, error: cocktailsError } = useCocktails(barIds ?? 'home');
+  const { data: beersData, isLoading: beersLoading, error: beersError } = useBeers(barIds ?? 'home');
+  const { data: winesData, isLoading: winesLoading, error: winesError } = useWines(barIds ?? 'home');
   // At home, the slim catalog the pickers share (saved on the device); at a venue, its rows with their pictures.
   // Both off for a search that shows only drinks.
   const homeIngredients = useAllIngredients(ingredients && !barIds);
