@@ -5746,6 +5746,7 @@ export type Database = {
             capacity_ml: number | null
             created_at: string
             created_by: string | null
+            creator_names: string[] | null
             creator_profile_id: string | null
             credit_status: Database["public"]["Enums"]["credit_status"] | null
             density_g_ml: number | null
@@ -5811,6 +5812,7 @@ export type Database = {
           published_ingredient: {
             abv: number | null
             bar_id: string | null
+            creator_names: string[] | null
             creator_profile_id: string | null
             credit_status: Database["public"]["Enums"]["credit_status"] | null
             description: string | null
@@ -6611,6 +6613,7 @@ export type Database = {
           capacity_ml: number | null
           created_at: string
           created_by: string | null
+          creator_names: string[] | null
           creator_profile_id: string | null
           credit_status: Database["public"]["Enums"]["credit_status"] | null
           density_g_ml: number | null
@@ -7235,6 +7238,7 @@ export type Database = {
         Returns: {
           abv: number | null
           bar_id: string | null
+          creator_names: string[] | null
           creator_profile_id: string | null
           credit_status: Database["public"]["Enums"]["credit_status"] | null
           description: string | null
