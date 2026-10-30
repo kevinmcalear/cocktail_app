@@ -24,7 +24,10 @@
 --   * items.awaiting_approval: what a department adds waits for approval. A
 --     trigger sets it on their inserts, whatever the client sends; only
 --     someone who edits drinks at the venue with no department limit clears
---     it (approves). Until then only its maker and those approvers see it.
+--     it (approves). Until then only its maker and those approvers see it,
+--     and it is never listed publicly (private.published_listing), whatever
+--     its publish mode, menu or the venue's default. Only drinks wait: a
+--     house-made ingredient or venue ice does not.
 --   * get_venue_role_matrix returns each role's drink_types, and
 --     public.my_drink_types tells the app the caller's own limit.
 --
@@ -180,9 +183,9 @@ CREATE OR REPLACE FUNCTION "private"."can_edit_item"("p_item_id" "uuid") RETURNS
   );
 $$;
 
--- Someone in a department can't lift one: they don't change a role's drink
--- types, delete a limited role, or move anyone off one (staff permission or
--- not). Admins and everyone else go by the role guards as before.
+-- Someone in a department can't lift one: they don't change a limited role's
+-- drink types, permissions or level, delete one, or move anyone off one
+-- (staff permission or not). Admins and everyone else go by the role guards as before.
 CREATE FUNCTION "private"."guard_department_change"() RETURNS "trigger"
     LANGUAGE "plpgsql" SECURITY DEFINER
     SET "search_path" TO ''
@@ -194,7 +197,12 @@ BEGIN
         RETURN COALESCE(NEW, OLD);
     END IF;
     IF TG_TABLE_NAME = 'venue_roles' THEN
+        -- Nor widen a limited role another way: its permissions (menu would
+        -- open every drink) or its built-in level.
         IF (TG_OP = 'UPDATE' AND NEW.drink_types IS DISTINCT FROM OLD.drink_types)
+           OR (TG_OP = 'UPDATE' AND OLD.drink_types IS NOT NULL
+               AND (NEW.granted IS DISTINCT FROM OLD.granted OR NEW.revoked IS DISTINCT FROM OLD.revoked
+                    OR NEW.base_level IS DISTINCT FROM OLD.base_level))
            OR (TG_OP = 'DELETE' AND OLD.drink_types IS NOT NULL) THEN
             RAISE EXCEPTION 'Only someone who edits every kind of drink here changes what a role adds.' USING ERRCODE = '42501';
         END IF;
@@ -225,11 +233,15 @@ BEGIN
         RETURN NEW;
     END IF;
     IF TG_OP = 'INSERT' THEN
-        NEW.awaiting_approval := NEW.bar_id IS NOT NULL AND private.my_drink_kinds(NEW.bar_id) IS NOT NULL;
+        -- Drinks only: a house-made ingredient, or the ice save_venue_ice
+        -- makes, never waits.
+        NEW.awaiting_approval := NEW.bar_id IS NOT NULL AND NEW.item_type IN ('cocktail', 'beer', 'wine')
+            AND private.my_drink_kinds(NEW.bar_id) IS NOT NULL;
     ELSIF NEW.awaiting_approval IS DISTINCT FROM OLD.awaiting_approval
           AND (NEW.bar_id IS NULL OR NEW.bar_id NOT IN (SELECT private.my_approver_bar_ids())) THEN
         RAISE EXCEPTION 'Only someone who edits every kind of drink here can approve it.' USING ERRCODE = '42501';
-    ELSIF NEW.bar_id IS DISTINCT FROM OLD.bar_id AND private.my_drink_kinds(NEW.bar_id) IS NOT NULL THEN
+    ELSIF NEW.bar_id IS DISTINCT FROM OLD.bar_id AND NEW.item_type IN ('cocktail', 'beer', 'wine')
+          AND private.my_drink_kinds(NEW.bar_id) IS NOT NULL THEN
         -- Moving a drink into a venue where you're limited: it waits there too.
         NEW.awaiting_approval := true;
     END IF;
@@ -277,10 +289,7 @@ ALTER POLICY "items_select" ON "public"."items" USING (
           WHERE "a"."bar_id" = "items"."bar_id" AND "a"."sees_by_level"
             AND "a"."role_level" >= COALESCE("items"."override_visibility_level", "a"."default_level")
         )
-        OR EXISTS (
-          SELECT 1 FROM "private"."my_departments"() "d"
-          WHERE "d"."bar_id" = "items"."bar_id" AND "items"."item_type" = ANY ("d"."kinds")
-        )
+        OR ("bar_id", "item_type") IN (SELECT "d"."bar_id", unnest("d"."kinds") FROM "private"."my_departments"() "d")
       )
       AND (
         NOT "awaiting_approval"
@@ -307,12 +316,15 @@ ALTER POLICY "items_select" ON "public"."items" USING (
   END
 );
 
--- As 20261126400000_spec_verdicts_index.sql (child rows ask this through
+-- As 20261129200000_spec_matches_plan_cache.sql (PL/pgSQL with RETURN QUERY,
+-- so the plan stays cached per connection; child rows ask this through
 -- can_view_item), with the same two changes.
 CREATE OR REPLACE FUNCTION "private"."visible_items"("p_item_ids" "uuid"[]) RETURNS SETOF "uuid"
-    LANGUAGE "sql" STABLE SECURITY DEFINER
+    LANGUAGE "plpgsql" STABLE SECURITY DEFINER
     SET "search_path" TO ''
     AS $$
+BEGIN
+  RETURN QUERY
   SELECT c.id
     FROM public.items c
     LEFT JOIN public.bars b ON b.id = c.bar_id
@@ -341,7 +353,79 @@ CREATE OR REPLACE FUNCTION "private"."visible_items"("p_item_ids" "uuid"[]) RETU
                  OR c.item_type = ANY (private.department_kinds(vr.drink_types))))
         OR EXISTS (SELECT 1 FROM public.published_items pi WHERE pi.id = c.id)
       );
+END;
 $$;
+
+-- As 20261024200000_page_visibility_ladder.sql, with a drink waiting for
+-- approval never listed: not by its own publish mode, a published menu or
+-- the venue's default. Nothing waiting reaches published_items, signed out
+-- or in.
+CREATE OR REPLACE VIEW "private"."published_listing" WITH ("security_invoker" = false) AS
+SELECT i.id,
+    i.name,
+    i.item_type,
+    i.description,
+    i.bar_id,
+    i.glassware_id,
+    i.ice_id,
+    i.family_id,
+    i.origin,
+    i.abv,
+    i.icon_key,
+    i.icon_url,
+    i.published_at,
+    i.riff_of_id,
+    i.creator_profile_id,
+    i.origin_bar_profile_id,
+    i.origin_year,
+    i.credit_status,
+        CASE
+            WHEN eff.mode = 'spec'::public.item_publish_mode AND pg.page <> 'open'::public.bar_page_visibility THEN 'description'::public.item_publish_mode
+            ELSE eff.mode
+        END AS effective_mode,
+    (pg.page = ANY (ARRAY['private'::public.bar_page_visibility, 'locked'::public.bar_page_visibility])) AS page_locked,
+    i.created_by
+   FROM public.items i
+     LEFT JOIN public.bars bar ON bar.id = i.bar_id
+     CROSS JOIN LATERAL ( SELECT COALESCE(i.publish_mode,
+                CASE
+                    WHEN i.bar_id IS NOT NULL THEN ( SELECT max(m.publish_mode) AS max
+                       FROM public.menu_drinks md
+                         JOIN public.menus m ON m.id = md.menu_id
+                      WHERE md.item_id = i.id AND m.bar_id = i.bar_id AND m.publish_mode IS NOT NULL)
+                    ELSE NULL::public.item_publish_mode
+                END, bar.default_publish_mode,
+                CASE
+                    WHEN i.bar_id IS NULL AND i.created_by IS NULL AND (i.item_type = ANY (ARRAY['cocktail'::public.entity_type, 'beer'::public.entity_type, 'wine'::public.entity_type])) THEN 'description'::public.item_publish_mode
+                    ELSE NULL::public.item_publish_mode
+                END, 'private'::public.item_publish_mode) AS mode) eff
+     CROSS JOIN LATERAL ( SELECT
+                CASE
+                    WHEN i.is_catalog THEN 'open'::public.bar_page_visibility
+                    WHEN i.bar_id IS NOT NULL THEN bar.page_visibility
+                    WHEN i.origin_bar_profile_id IS NOT NULL AND i.created_by IS NULL THEN COALESCE(( SELECT ob.page_visibility
+                       FROM public.profiles op
+                         JOIN public.bars ob ON ob.id = op.bar_id
+                      WHERE op.id = i.origin_bar_profile_id), 'description'::public.bar_page_visibility)
+                    ELSE 'open'::public.bar_page_visibility
+                END AS page) pg
+  WHERE eff.mode <> 'private'::public.item_publish_mode AND i.moderated_at IS NULL AND pg.page <> 'private'::public.bar_page_visibility
+    AND NOT i.awaiting_approval AND
+        CASE
+            WHEN i.bar_id IS NOT NULL THEN (EXISTS ( SELECT 1
+               FROM public.profiles p
+              WHERE p.bar_id = i.bar_id AND p.is_public AND p.moderated_at IS NULL))
+            WHEN i.created_by IS NOT NULL THEN (EXISTS ( SELECT 1
+               FROM public.profiles p
+              WHERE p.user_id = i.created_by AND p.is_public AND p.moderated_at IS NULL)) AND NOT (i.created_by IN ( SELECT b.blocked_id
+               FROM public.user_blocks b
+              WHERE b.blocker_id = auth.uid()
+            UNION
+             SELECT b.blocker_id
+               FROM public.user_blocks b
+              WHERE b.blocked_id = auth.uid()))
+            ELSE true
+        END;
 
 -- As 20261101200000 (events and This week ask it, with no item to hand): a
 -- department doesn't see every venue drink through edit_drinks here either,

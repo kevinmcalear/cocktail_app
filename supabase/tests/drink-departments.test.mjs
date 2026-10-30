@@ -28,6 +28,7 @@ const run = randomUUID().slice(0, 8);
 const PASSWORD = `pw-${randomUUID()}`;
 const clientOptions = { auth: { persistSession: false, autoRefreshToken: false } };
 const service = createClient(status.API_URL, status.SERVICE_ROLE_KEY, clientOptions);
+const anon = createClient(status.API_URL, status.ANON_KEY, clientOptions);
 const db = new pg.Client({ connectionString: status.DB_URL });
 const users = {};
 const ids = {};
@@ -171,6 +172,20 @@ describe('a beer and wine role', () => {
     const { data } = await users.beer.client.rpc('my_drink_types', { p_bar_id: ids.bar });
     assert.deepEqual(data, ['beer', 'wine']);
   });
+
+  test("with staff, still can't widen its own role (permissions or level)", async () => {
+    await db.query("UPDATE public.venue_roles SET granted = '{edit_drinks,staff}' WHERE id = $1", [ids.beerRole]);
+    try {
+      const menu = await users.beer.client.from('venue_roles').update({ granted: ['edit_drinks', 'staff', 'menu'] }).eq('id', ids.beerRole).select('id');
+      assert.ok(menu.error, 'granting menu refused');
+      const level = await users.beer.client.from('venue_roles').update({ base_level: 35 }).eq('id', ids.beerRole).select('id');
+      assert.ok(level.error, 'raising the level refused');
+      const { rows } = await db.query('SELECT granted::text[] AS granted, base_level FROM public.venue_roles WHERE id = $1', [ids.beerRole]);
+      assert.deepEqual(rows[0], { granted: ['edit_drinks', 'staff'], base_level: 30 });
+    } finally {
+      await db.query("UPDATE public.venue_roles SET granted = '{edit_drinks}' WHERE id = $1", [ids.beerRole]);
+    }
+  });
 });
 
 describe('approval', () => {
@@ -181,6 +196,21 @@ describe('approval', () => {
     assert.equal(await sees('bartender', ids.pils), false);
   });
 
+  test('a waiting drink is never public, even when the venue publishes by default', async () => {
+    await db.query("UPDATE public.bars SET default_publish_mode = 'description' WHERE id = $1", [ids.bar]);
+    const listed = async () => {
+      const { data, error } = await anon.from('published_items').select('id').in('id', [ids.pils, ids.wine]);
+      assert.ifError(error);
+      return data.map((r) => r.id);
+    };
+    const now = await listed();
+    assert.ok(now.includes(ids.wine), 'an approved drink is listed');
+    assert.ok(!now.includes(ids.pils), 'the waiting one is not');
+    // Nor its child rows: can_view_item's published_items branch says no for a bartender.
+    const { rows } = await db.query('SELECT count(*)::int AS n FROM public.published_items WHERE id = $1', [ids.pils]);
+    assert.equal(rows[0].n, 0);
+  });
+
   test('a bartender (no edit_drinks) cannot approve; a Drink Creator can', async () => {
     const no = await users.bartender.client.from('items').update({ awaiting_approval: false }).eq('id', ids.pils).select('id');
     assert.equal(no.data?.length ?? 0, 0);
@@ -188,6 +218,8 @@ describe('approval', () => {
     assert.ifError(yes.error);
     assert.equal(yes.data.awaiting_approval, false);
     assert.equal(await sees('bartender', ids.pils), true);
+    const { data } = await anon.from('published_items').select('id').eq('id', ids.pils);
+    assert.equal(data?.length, 1, 'approved, it lists like any other');
   });
 
   test("an unlimited member's drinks never wait", async () => {
