@@ -84,6 +84,7 @@ export function PublicSpec({
             ingredient={l.ingredient ?? 'House ingredient'}
             ingredientId={l.ingredient ? l.ingredientId : undefined}
             optional={l.optional}
+            floated={l.float}
           />
         ))}
       </View>

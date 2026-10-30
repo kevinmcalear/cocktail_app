@@ -445,6 +445,7 @@ export function useCocktailEditor(id: string, { enabled = true }: { enabled?: bo
                     unit: item.unit || null,
                     preparation_notes: item.preparation_notes || null,
                     is_optional: item.is_optional || false,
+                    is_float: item.is_float || false,
                     ...(parted || hadParts.current ? { part: partOf(item, i) } : {}),
                 })),
                 byPartMethods ? byPartMethods.map((m) => m.id) : methodIds,

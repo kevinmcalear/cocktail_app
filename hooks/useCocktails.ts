@@ -147,6 +147,7 @@ export function cocktailQuery(id: string | string[] | undefined, viewAsRoleLevel
                         amount,
                         unit,
                         preparation_notes,
+                        is_float,
                         at_service,
                         display_ingredient_id,
                         display_ingredient (

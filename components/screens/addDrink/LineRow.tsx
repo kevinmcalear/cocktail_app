@@ -136,7 +136,7 @@ export function LineRow({ line, onChange, onRemove, onSwap, onEditPrep, units: u
                     </>
                   ) : null}
                   {line.unit === 'discard' ? <Caption tone="accent">Expressed, then discarded</Caption> : null}
-                  {line.optional ? <Caption tone="muted">Optional</Caption> : null}
+                  {line.float || line.optional ? <Caption tone="muted">{[line.float && 'Float', line.optional && 'Optional'].filter(Boolean).join(' · ')}</Caption> : null}
                 </View>
                 {recipe ? <IconSymbol name="chevron.right" size={14} color={ds.c.muted} /> : null}
               </PressableScale>
@@ -196,6 +196,8 @@ export function LineRow({ line, onChange, onRemove, onSwap, onEditPrep, units: u
             <TextAction label="Swap" a11y={`Swap ${line.name} for another ingredient`} onPress={onSwap} />
             {from ? <TextAction label={`Back to ${from.name}`} a11y={`Back to plain ${from.name}`} onPress={() => onChange({ id: from.id, name: from.name, prep: undefined, technique: undefined })} /> : null}
             {noting ? null : <TextAction label="Note" a11y={`Add a note to ${line.name}`} onPress={() => { setNoting(true); setOpen(false); }} />}
+            {/* A measured float ("15 ml float", Eddie tf-060): its own amount and unit, floated on top. */}
+            {line.unit !== 'float' ? <TextAction label={line.float ? 'Not a float' : 'Float'} a11y={line.float ? `${line.name} is mixed in` : `Float ${line.name} on top`} onPress={() => onChange({ float: !line.float })} /> : null}
             <TextAction label={line.optional ? 'Not optional' : 'Optional'} a11y={line.optional ? `${line.name} is needed` : `${line.name} is optional`} onPress={() => onChange({ optional: !line.optional })} />
           </View>
         </View>

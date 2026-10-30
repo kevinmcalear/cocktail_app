@@ -18,6 +18,8 @@ export interface PresentationRecipe {
   unit?: string | null;
   preparation_notes?: string | null;
   is_optional?: boolean | null;
+  /** Floated on top (recipes.is_float). */
+  is_float?: boolean | null;
   display_ingredient_id?: string | null;
   ingredient_item_id?: string | null;
   parent_ingredient_id?: string | null;
@@ -50,6 +52,8 @@ export interface SpecLine {
   ingredientId: string | null;
   note: string | null;
   optional: boolean;
+  /** Floated on top: the drink page tags it "Float" (Eddie tf-060). */
+  float: boolean;
   /** Amount in ml, for the ratio bar and batch bottle; weights convert by density. Null when it can't be converted. */
   ml: number | null;
   /** The raw number and unit (for scaling a batch); null when locked or missing. */
@@ -82,6 +86,7 @@ export function specLines(recipes: PresentationRecipe[] | null | undefined): Spe
       ingredientId: resolved?.id ?? r.display_ingredient_id ?? null,
       note: r.preparation_notes?.trim() || null,
       optional: !!r.is_optional,
+      float: !!r.is_float,
       ml: n === null || Number.isNaN(n) ? null : toMl(n, r.unit, density(resolved?.name, resolved?.abv, resolved?.density_g_ml)),
       value: n === null || Number.isNaN(n) ? null : n,
       unit: r.unit?.trim() || null,

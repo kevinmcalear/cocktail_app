@@ -241,7 +241,7 @@ export function usePublishedDrink(id: string | null | undefined) {
         drink.publishMode === 'spec'
           ? supabase
               .from('app_recipe_presentation')
-              .select('id, sort_order, created_at, amount, unit, is_optional, part, display_ingredient_id, display_ingredient:published_ingredient(id, name, abv, image_url)')
+              .select('id, sort_order, created_at, amount, unit, is_optional, is_float, part, display_ingredient_id, display_ingredient:published_ingredient(id, name, abv, image_url)')
               .eq('recipe_item_id', drink.id)
           : Promise.resolve({ data: [], error: null }),
         drink.publishMode === 'spec' ? Promise.resolve({ data: [], error: null }) : supabase.rpc('public_drink_ingredients', { p_item_ids: [drink.id] }),
