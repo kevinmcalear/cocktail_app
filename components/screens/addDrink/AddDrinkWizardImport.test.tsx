@@ -2,7 +2,7 @@ import { fireEvent, screen } from '@testing-library/react-native';
 
 import { renderWithTamagui } from '@/jest.setup';
 import { EMPTY_DRAFT } from '@/lib/drinkWizard';
-import { useDrinkWizardStore } from '@/store/useDrinkWizardStore';
+import { moveImportsOut, useDrinkWizardStore } from '@/store/useDrinkWizardStore';
 import { useSettingsStore } from '@/store/useSettingsStore';
 
 import { AddDrinkWizard } from './AddDrinkWizard';
@@ -72,8 +72,8 @@ const imported = { ...EMPTY_DRAFT, name: 'Feijoa Smash', lines: [{ key: 'k1', id
 
 describe('AddDrinkWizard from an import', () => {
   test('opens at the first step with no "Picked up where you left off"', async () => {
-    useDrinkWizardStore.getState().begin('bar-1', imported);
-    await renderWithTamagui(<AddDrinkWizard barId="bar-1" imported onClose={jest.fn()} onSaved={mockSaved} />);
+    useDrinkWizardStore.getState().begin('bar-1|review:r1#0', imported);
+    await renderWithTamagui(<AddDrinkWizard barId="bar-1" imported review="r1#0" onClose={jest.fn()} onSaved={mockSaved} />);
     await laidOut();
     expect(screen.getByLabelText('Name').props.value).toBe('Feijoa Smash');
     expect(screen.queryByText('Picked up where you left off.')).toBeNull();
@@ -81,17 +81,40 @@ describe('AddDrinkWizard from an import', () => {
   });
 
   test('picked up again later, Start over goes back to the spec as read, not to nothing', async () => {
-    useDrinkWizardStore.getState().begin('bar-1', imported);
-    useDrinkWizardStore.getState().patch('bar-1', { name: 'Feijoa Fizz', lines: [] });
-    await renderWithTamagui(<AddDrinkWizard barId="bar-1" onClose={jest.fn()} onSaved={mockSaved} />);
+    // Edit all keeps it as a draft by name, opened again from New's Drafts.
+    const slot = 'bar-1|name:feijoa smash';
+    useDrinkWizardStore.getState().begin(slot, imported);
+    useDrinkWizardStore.getState().patch(slot, { name: 'Feijoa Fizz', lines: [] });
+    await renderWithTamagui(<AddDrinkWizard barId="bar-1" initialName="feijoa smash" onClose={jest.fn()} onSaved={mockSaved} />);
     await laidOut();
     expect(screen.getByLabelText('Name').props.value).toBe('Feijoa Fizz');
     await fireEvent.press(screen.getByRole('button', { name: 'Start over' }));
     expect(screen.getByLabelText('Name').props.value).toBe('Feijoa Smash');
-    const kept = useDrinkWizardStore.getState().kept['bar-1'];
+    const kept = useDrinkWizardStore.getState().kept[slot];
     expect(kept.draft.lines).toEqual(imported.lines);
     expect(kept.step).toBe('name');
     expect(kept.start?.name).toBe('Feijoa Smash');
+  });
+
+  // Eddie, 29 Oct: New drink kept opening a drink from an import he hadn't finished.
+  test('a plain New drink opens empty while an import’s drink waits in its own slot', async () => {
+    useDrinkWizardStore.getState().begin('bar-1|review:r1#0', imported);
+    await renderWithTamagui(<AddDrinkWizard barId="bar-1" onClose={jest.fn()} onSaved={mockSaved} />);
+    await laidOut();
+    expect(screen.getByLabelText('Name').props.value).toBe('');
+    expect(screen.queryByText('Picked up where you left off.')).toBeNull();
+  });
+
+  test('an import an older version left in the plain slot moves to a draft by name', async () => {
+    useDrinkWizardStore.getState().begin('bar-1', imported);
+    moveImportsOut();
+    const { kept, cleared } = useDrinkWizardStore.getState();
+    expect(kept['bar-1']).toBeUndefined();
+    expect(kept['bar-1|name:feijoa smash'].draft.name).toBe('Feijoa Smash');
+    expect(cleared.map((c) => c.place)).toContain('bar-1');
+    await renderWithTamagui(<AddDrinkWizard barId="bar-1" onClose={jest.fn()} onSaved={mockSaved} />);
+    await laidOut();
+    expect(screen.getByLabelText('Name').props.value).toBe('');
   });
 
   test('a draft that began empty still clears on Start over', async () => {

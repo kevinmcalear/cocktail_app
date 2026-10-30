@@ -2,44 +2,71 @@ import { StyleSheet, View } from 'react-native';
 
 import { Body, Caption, PressableScale, useDs } from '@/components/ds';
 import { fontFamilies, space } from '@/constants/tokens';
-import { useAuth } from '@/ctx/AuthContext';
+import { useAuth, useUserId } from '@/ctx/AuthContext';
 import { useMenuSectionPlace } from '@/hooks/useDrinkDesk';
 import { COUNTED_STEPS, hasContent, WIZARD_STEPS, type WizardDraft, type WizardStep } from '@/lib/drinkWizard';
+import { fileTitle, tally, waitingFor, type ImportReview } from '@/lib/importReview';
 import { recipesToFinish } from '@/lib/prepKinds';
 import { slotStart } from '@/lib/wizardSlots';
+import { useBringIn } from '@/store/useBringIn';
 import { useDraftSyncStore } from '@/store/useDraftSyncStore';
-import { useDrinkWizardStore, wizardPlace } from '@/store/useDrinkWizardStore';
+import { isReviewSlot, useDrinkWizardStore, wizardPlace } from '@/store/useDrinkWizardStore';
 
 /**
- * Drafts, at the top of New (make-anything-steps-1, step 1): one entry per
- * drink started here and not saved, newest first, with where it's going and
+ * Drafts, at the top of New (make-anything-steps-1, step 1): an import
+ * left to finish here, then one entry per drink started here and not saved, newest first, with where it's going and
  * the step it was left at, and the recipes still to finish inside it under
  * it. A tap goes straight back to it. Signed in, they're kept in the
  * account too (hooks/useDraftSync), so another phone or the web lists them.
  */
-export function NewDrafts({ barId, onOpen }: { barId: string | null; onOpen: (params: Record<string, string>) => void }) {
+export function NewDrafts({ barId, onOpen, onImport }: { barId: string | null; onOpen: (params: Record<string, string>) => void; onImport: () => void }) {
   const kept = useDrinkWizardStore((s) => s.kept);
   const signedIn = !!useAuth().session;
+  const userId = useUserId();
   const seen = useDraftSyncStore((s) => s.seen);
+  // A big import left to finish here is its own entry, never what New drink opens (Eddie, 29 Oct).
+  const review = useBringIn((s) => waitingFor(s.reviews, userId, barId));
   const place = wizardPlace(barId);
+  // An import's drink being checked waits in its review, not here.
   const drafts = Object.entries(kept)
-    .filter(([slot, k]) => slotStart(slot).place === place && hasContent(k.draft))
+    .filter(([slot, k]) => slotStart(slot).place === place && !isReviewSlot(slot) && hasContent(k.draft))
     .sort(([, a], [, b]) => b.updatedAt - a.updatedAt);
-  if (!drafts.length) return null;
+  if (!drafts.length && !review) return null;
   return (
     <View style={styles.list}>
       <Caption tone="muted" style={styles.head}>
         DRAFTS
       </Caption>
+      {review ? <ImportRow review={review} onOpen={onImport} /> : null}
       {drafts.map(([slot, k]) => (
         <DraftRow key={slot} slot={slot} draft={k.draft} step={k.step} barId={barId} onOpen={onOpen} />
       ))}
       {/* Said only once each has reached the account. */}
-      {signedIn && drafts.every(([slot]) => seen.includes(slot)) ? <Caption tone="muted">Kept in your account, so your other phone and the web see them too.</Caption> : null}
+      {signedIn && drafts.length > 0 && drafts.every(([slot]) => seen.includes(slot)) ? <Caption tone="muted">Kept in your account, so your other phone and the web see them too.</Caption> : null}
       <Caption tone="muted" style={[styles.head, styles.start]}>
         START SOMETHING
       </Caption>
     </View>
+  );
+}
+
+/** The import still to check: its file, how far it got, and a tap back into its review. */
+function ImportRow({ review, onOpen }: { review: ImportReview; onOpen: () => void }) {
+  const ds = useDs();
+  const t = tally(review);
+  const title = fileTitle(review.name);
+  const where = `Finish your import · ${t.checked} of ${t.total} checked`;
+  const open = () => {
+    useBringIn.getState().setReviewing(review.id);
+    onOpen();
+  };
+  return (
+    <PressableScale role="link" accessibilityLabel={`${title}. ${where}`} onPress={open} style={[styles.row, { borderBottomColor: ds.c.line }]}>
+      <Body style={{ fontFamily: fontFamilies.bodySemiBold }} numberOfLines={1}>
+        {title}
+      </Body>
+      <Caption tone="muted">{where}</Caption>
+    </PressableScale>
   );
 }
 
