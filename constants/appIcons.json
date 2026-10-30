@@ -1,0 +1,21 @@
+{
+  "note": "Alternate app icons bundled into the store build (expo-alternate-app-icons, app.config.ts). Art: iOS 1024x1024 PNG with no transparency; Android adaptive foreground 1024x1024 PNG (logo inside the centre 66%) plus a background colour. ready=false: the paths still point at the default icon as a placeholder, so Settings offers it only in dev builds until the real art lands.",
+  "icons": [
+    {
+      "name": "CaretakersCottage",
+      "label": "Caretaker's Cottage",
+      "ios": "./assets/images/icon.png",
+      "androidForeground": "./assets/images/android-icon-foreground.png",
+      "androidBackground": "#18181B",
+      "ready": false
+    },
+    {
+      "name": "ThreeHorses",
+      "label": "Three Horses",
+      "ios": "./assets/images/icon.png",
+      "androidForeground": "./assets/images/android-icon-foreground.png",
+      "androidBackground": "#18181B",
+      "ready": false
+    }
+  ]
+}
