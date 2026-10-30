@@ -7,7 +7,7 @@
  * equally, so the order never shows.
  */
 import { joinNames, type LineageDrink } from './lineage';
-import { creatorProfileId, type CreditPick, type WizardDraft } from './drinkWizard';
+import type { CreditPick, WizardDraft } from './drinkWizard';
 
 export type Credits = Pick<WizardDraft, 'creator' | 'coCreators'>;
 type Me = { id: string; name: string } | null;
@@ -97,22 +97,56 @@ export function savedCredits(d: Pick<LineageDrink, 'creator' | 'co_creators' | '
 /** Under a name with no page, on the list. */
 export const BY_NAME = 'By name, no page';
 
-/**
- * What saving a change to Who made it writes (drink editor): the creator's
- * profile, the names with no page, and which made-with rows to add and take
- * away. A declined row stays (only the person named can change it), so it's
- * never taken away or added again.
- */
-export function creditWrites(saved: Pick<LineageDrink, 'co_creators'>, next: Credits, myProfileId: string | null) {
-  const creatorId = creatorProfileId(next, myProfileId);
-  const names = namedOnly(next);
-  const rows = (saved.co_creators ?? []).flatMap((c) => (c.profile ? [{ id: c.profile.id, status: c.status ?? 'accepted' }] : []));
-  const want = [...new Set(makers(next, myProfileId ? { id: myProfileId, name: '' } : null).flatMap((m) => (m.id ? [m.id] : [])))].filter((id) => id !== creatorId);
+/** A saved drink's credit as it is in the database: the creator's page, the names with no page, and each made-with row. */
+export interface SavedCredit {
+  creator: string | null;
+  names: string[];
+  rows: { id: string; status: 'pending' | 'accepted' | 'declined' }[];
+}
+
+/** What one change in the editor's Who made it writes (public.set_drink_credits). */
+export interface CreditEdit {
+  creator: string | null;
+  names: string[];
+  add: string[];
+  remove: string[];
+}
+
+export function savedCredit(d: Pick<LineageDrink, 'creator' | 'co_creators' | 'creator_names'>): SavedCredit {
   return {
-    item: { creator_profile_id: creatorId, creator_names: names.length ? names : null },
-    add: want.filter((id) => !rows.some((r) => r.id === id)),
-    remove: rows.filter((r) => r.status !== 'declined' && !want.includes(r.id)).map((r) => r.id),
+    creator: d.creator?.id ?? null,
+    names: d.creator_names ?? [],
+    rows: (d.co_creators ?? []).flatMap((c) => (c.profile ? [{ id: c.profile.id, status: c.status ?? 'accepted' }] : [])),
   };
+}
+
+const keep = (s: SavedCredit, change: Partial<CreditEdit>): CreditEdit => ({ creator: s.creator, names: s.names, add: [], remove: [], ...change });
+
+/**
+ * Adding someone in the drink editor (tf-063): never in the creator's place.
+ * Someone with a page is made with, asked first like any credit; a name with
+ * no page joins the names. Nothing when they're on it already (a declined
+ * row included: only that person can change it) or the names are full.
+ */
+export function editorAdd(s: SavedCredit, person: CreditPick): CreditEdit | null {
+  if (person.id) return person.id === s.creator || s.rows.some((r) => r.id === person.id) ? null : keep(s, { add: [person.id] });
+  const name = person.name.trim();
+  if (!name || s.names.includes(name) || s.names.length >= MAX_NAMED) return null;
+  return keep(s, { names: [...s.names, name] });
+}
+
+/**
+ * Taking someone off in the drink editor. The creator's place goes to the
+ * first person made with it who said yes, else to nobody; never to someone
+ * still waiting or who said Not me. A declined row is never taken off.
+ */
+export function editorRemove(s: SavedCredit, person: CreditPick): CreditEdit | null {
+  if (!person.id) return s.names.includes(person.name) ? keep(s, { names: s.names.filter((n) => n !== person.name) }) : null;
+  if (person.id === s.creator) {
+    const next = s.rows.find((r) => r.status === 'accepted');
+    return keep(s, { creator: next?.id ?? null, remove: next ? [next.id] : [] });
+  }
+  return s.rows.some((r) => r.id === person.id && r.status !== 'declined') ? keep(s, { remove: [person.id] }) : null;
 }
 
 function toPick(m: Maker): CreditPick {

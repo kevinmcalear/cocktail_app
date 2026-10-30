@@ -7543,6 +7543,16 @@ export type Database = {
         }
         Returns: undefined
       }
+      set_drink_credits: {
+        Args: {
+          p_add: string[]
+          p_creator_names: string[]
+          p_creator_profile_id: string
+          p_item_id: string
+          p_remove: string[]
+        }
+        Returns: undefined
+      }
       set_item_picture: {
         Args: {
           p_image_id?: string

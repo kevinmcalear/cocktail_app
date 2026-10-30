@@ -1,7 +1,7 @@
 import assert from 'node:assert/strict';
 
 import { EMPTY_DRAFT } from './drinkWizard';
-import { addMaker, askLines, askShort, asked, BY_NAME, creditWrites, makers, namedOnly, removeMaker, savedCredits } from './whoMadeIt';
+import { addMaker, askLines, askShort, asked, BY_NAME, editorAdd, editorRemove, makers, namedOnly, removeMaker, savedCredit, savedCredits } from './whoMadeIt';
 
 const ME = { id: 'p-jo', name: 'Jo Park' };
 const SAM = { id: 'p-sam', name: 'Sam Ortiz', sub: '@sam.ortiz · Little Rye', claimed: true };
@@ -66,21 +66,32 @@ assert.equal(askShort([]), null);
   assert.deepEqual(namedOnly({ creator: 'nobody', coCreators: [] }), []);
 }
 
-// The drink editor (tf-063): a saved credit reads as the list, and a change writes only what changed.
+// The drink editor (tf-063): adding never takes the creator's place; taking the creator off promotes only a yes.
 {
-  const sam = { id: 'p-sam', kind: 'person' as const, handle: 'sam', display_name: 'Sam Ortiz', avatar_url: null, locality: null };
-  const kit = { ...sam, id: 'p-kit', display_name: 'Kit Lee' };
-  const gone = { ...sam, id: 'p-no', display_name: 'No Body' };
-  const saved = { creator: sam, co_creators: [{ status: 'accepted' as const, profile: kit }, { status: 'declined' as const, profile: gone }], creator_names: ['Harry Craddock'] };
-  const c = savedCredits(saved);
-  assert.deepEqual(makers(c, null).map((m) => m.name), ['Sam Ortiz', 'Kit Lee', 'Harry Craddock'], 'declined ones are left off');
+  const p = (id: string, display_name: string) => ({ id, kind: 'person' as const, handle: id, display_name, avatar_url: null, locality: null });
+  const drink = {
+    creator: p('p-harry', 'Harry Craddock'),
+    co_creators: [
+      { status: 'pending' as const, profile: p('p-wait', 'Wait Ing') },
+      { status: 'declined' as const, profile: p('p-no', 'No Body') },
+      { status: 'accepted' as const, profile: p('p-kit', 'Kit Lee') },
+    ],
+    creator_names: ['Ada Coleman'],
+  };
+  const s = savedCredit(drink);
+  assert.deepEqual(makers(savedCredits(drink), null).map((m) => m.name), ['Harry Craddock', 'Wait Ing', 'Kit Lee', 'Ada Coleman'], 'declined ones are left off the list');
   assert.deepEqual(savedCredits({ creator: null, co_creators: [], creator_names: null }), { creator: 'nobody', coCreators: [] });
   assert.deepEqual(savedCredits({ creator: null, co_creators: [], creator_names: ['Harry Craddock'] }).creator, { id: null, name: 'Harry Craddock', sub: BY_NAME });
-  // Take Sam off: Kit is the creator, his made-with row goes, Harry stays by name; the declined row is never touched.
-  const next = { ...c, ...removeMaker(c, null, { id: 'p-sam', name: 'Sam Ortiz' }) };
-  assert.deepEqual(creditWrites(saved, next, null), { item: { creator_profile_id: 'p-kit', creator_names: ['Harry Craddock'] }, add: [], remove: ['p-kit'] });
-  // Add someone with a page: a made-with row for them only.
-  const more = { ...c, ...addMaker(c, null, { id: 'p-jo', name: 'Jo Park' }) };
-  assert.deepEqual(creditWrites(saved, more, null), { item: { creator_profile_id: 'p-sam', creator_names: ['Harry Craddock'] }, add: ['p-jo'], remove: [] });
-  assert.deepEqual(creditWrites({ co_creators: [] }, { creator: 'nobody', coCreators: [] }, 'p-jo'), { item: { creator_profile_id: null, creator_names: null }, add: [], remove: [] });
+  // An editor adding themselves is made with; Harry stays the creator.
+  assert.deepEqual(editorAdd(s, { id: 'p-me', name: 'Me' }), { creator: 'p-harry', names: ['Ada Coleman'], add: ['p-me'], remove: [] });
+  assert.equal(editorAdd(s, { id: 'p-harry', name: 'Harry Craddock' }), null, 'already the creator');
+  assert.equal(editorAdd(s, { id: 'p-no', name: 'No Body' }), null, 'a no stays a no');
+  assert.deepEqual(editorAdd(s, { id: null, name: ' Joe Gilmore ' })?.names, ['Ada Coleman', 'Joe Gilmore']);
+  assert.equal(editorAdd({ ...s, names: ['a', 'b', 'c', 'd', 'e'] }, { id: null, name: 'f' }), null, 'five names at most');
+  // Taking Harry off: Kit (a yes) takes his place, never the one waiting or the one who said no.
+  assert.deepEqual(editorRemove(s, { id: 'p-harry', name: 'Harry Craddock' }), { creator: 'p-kit', names: ['Ada Coleman'], add: [], remove: ['p-kit'] });
+  assert.deepEqual(editorRemove({ ...s, rows: s.rows.filter((r) => r.status !== 'accepted') }, { id: 'p-harry', name: 'Harry Craddock' }), { creator: null, names: ['Ada Coleman'], add: [], remove: [] });
+  assert.deepEqual(editorRemove(s, { id: 'p-wait', name: 'Wait Ing' })?.remove, ['p-wait']);
+  assert.equal(editorRemove(s, { id: 'p-no', name: 'No Body' }), null);
+  assert.deepEqual(editorRemove(s, { id: null, name: 'Ada Coleman' })?.names, []);
 }

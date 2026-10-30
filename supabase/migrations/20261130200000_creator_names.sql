@@ -11,6 +11,16 @@
 -- drink page (app/d/[id].tsx) credits them too; null on a locked page, as
 -- creator_profile_id is. Otherwise the view is 20261125300000's, unchanged.
 --
+-- set_drink_credits(item, creator, names, add, remove) makes one change to a
+-- saved drink's credit from the drink editor, all or nothing: the creator
+-- and the names on the drink, then the made-with rows to take off and add.
+-- SECURITY INVOKER, so the items and item_co_creators policies and the
+-- guard triggers apply as if each were written directly: an added person is
+-- asked first (guard_item_co_creator), a declined row can't be taken off by
+-- an editor, and the credit's status is checked (guard_item_credit). A new
+-- creator starts as suggested: the old status (claimed, verified) belonged
+-- to the old creator, so it's never carried over.
+--
 -- Up to five names, each 1 to 80 characters. Null when there are none. The
 -- items RLS policies cover the column like every other: whoever can write
 -- the drink can write its names, and whoever can read the drink can read them.
@@ -33,6 +43,33 @@ ALTER TABLE public.items ADD CONSTRAINT items_creator_names_check CHECK (
       AND array_position(creator_names, NULL) IS NULL
       AND private.names_fit(creator_names))
 );
+
+-- --- One change to a drink's credit ---
+
+CREATE FUNCTION public.set_drink_credits(p_item_id uuid, p_creator_profile_id uuid, p_creator_names text[], p_add uuid[], p_remove uuid[])
+RETURNS void
+    LANGUAGE plpgsql SECURITY INVOKER
+    SET search_path TO ''
+    AS $$
+BEGIN
+  UPDATE public.items
+     SET creator_profile_id = p_creator_profile_id,
+         creator_names = nullif(p_creator_names, '{}'),
+         credit_status = CASE WHEN creator_profile_id IS DISTINCT FROM p_creator_profile_id THEN NULL ELSE credit_status END
+   WHERE id = p_item_id;
+  IF NOT FOUND THEN
+    RAISE EXCEPTION 'You can''t change who made this drink.' USING ERRCODE = '42501';
+  END IF;
+  IF cardinality(p_remove) > 0 THEN
+    DELETE FROM public.item_co_creators WHERE item_id = p_item_id AND profile_id = ANY (p_remove);
+  END IF;
+  IF cardinality(p_add) > 0 THEN
+    INSERT INTO public.item_co_creators (item_id, profile_id) SELECT p_item_id, unnest(p_add);
+  END IF;
+END;
+$$;
+REVOKE EXECUTE ON FUNCTION public.set_drink_credits(uuid, uuid, text[], uuid[], uuid[]) FROM PUBLIC, anon;
+GRANT EXECUTE ON FUNCTION public.set_drink_credits(uuid, uuid, text[], uuid[], uuid[]) TO authenticated, service_role;
 
 -- --- published_items ---
 
