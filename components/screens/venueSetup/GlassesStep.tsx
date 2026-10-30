@@ -8,7 +8,7 @@ import { GlassSheet } from '@/components/screens/kit/GlassSheet';
 import { SectionHeading } from '@/components/screens/settings/SettingsParts';
 import { fontFamilies, space } from '@/constants/tokens';
 import { useBarGlassware, useDeleteBarGlass, useHeldGlasses, useSaveBarGlass } from '@/hooks/useBarGlassware';
-import type { GlassModel } from '@/hooks/useGlassModels';
+import { useGlassModelsById, type GlassModel } from '@/hooks/useGlassModels';
 import { useIsWideWeb } from '@/hooks/useIsWideWeb';
 import { anyLine, kindOf, kindRow, type GlassKind } from '@/lib/glassKinds';
 import { GLASS_TYPE_LABEL } from '@/lib/glassware';
@@ -75,10 +75,13 @@ export function GlassesStep({ barId, pageId, name }: { barId: string; pageId: st
   const [modelFor, setModelFor] = useState<string | null>(null);
   const [dismissed, setDismissed] = useState(false);
 
+  const heldOnly = heldNotOnPage(held, glasses);
+  // A held real glass keeps only its id: its traced shape comes from the catalog.
+  const heldModels = useGlassModelsById(heldOnly.flatMap((h) => (h.model_id ? [h.model_id] : []))).data ?? [];
   const listed: Listed[] = [
     ...glasses.map((g) => ({ key: g.id, id: g.id, glass: g.glass, variant: g.variant, name: g.name && g.name !== g.model?.name ? g.name : null, model_id: g.model_id, real: g.model ? [g.model.maker?.display_name, g.model.name].filter(Boolean).join(' ') : null, is_default: g.is_default, outline: g.outline ?? g.model?.outline })),
     // A held catalog glass keeps its maker and name to show meanwhile.
-    ...heldNotOnPage(held, glasses).map((h) => ({ ...h, id: null, name: h.model_id ? null : h.name, real: h.model_id ? [h.maker, h.name].filter(Boolean).join(' ') : null })),
+    ...heldOnly.map((h) => ({ ...h, id: null, name: h.model_id ? null : h.name, real: h.model_id ? [h.maker, h.name].filter(Boolean).join(' ') : null, outline: h.outline ?? heldModels.find((m) => m.id === h.model_id)?.outline })),
   ];
   const mine = (k: GlassKind) => listed.filter((l) => !l.model_id && kindOf(l)?.key === k.key);
   const on = (k: GlassKind) => pending[k.key] ?? listed.some((l) => kindOf(l)?.key === k.key);

@@ -159,7 +159,7 @@ export function paintSketch(inputs: SketchInputs, { seed, style = DEFAULT_SKETCH
   // No liquid at all (alpha 0): the bare glass, drawn while a drink has no drawing of its own yet.
   const empty = liquid.alpha === 0;
   if (empty) {
-    paintBody(P, g);
+    if (!paintBody(P, g) && g.opaque) P.wash(P.silhouette, g.opaque, 0.75, { spill: 0.4, fadeTo: 0.55 });
     stage('liquid', (g.top + floor) / 2);
   } else if (g.opaque) {
     if (!paintBody(P, g)) P.wash(P.silhouette, g.opaque, 0.75, { spill: 0.4, fadeTo: 0.55 });
