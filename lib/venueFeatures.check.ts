@@ -55,8 +55,9 @@ assert.deepEqual(phoneTabs(false, on('tonight', 'prep', 'study')), ['index', 'li
 
 // --- the database allows exactly these keys (plus any a later PR adds there first) ---
 const dir = new URL('../supabase/migrations/', import.meta.url);
-const sql = readdirSync(dir).filter((f) => f.endsWith('venue_feature_switches.sql')).map((f) => readFileSync(new URL(f, dir), 'utf8'))[0];
-assert.ok(sql, 'the switches migration exists');
+// The last migration that sets bars_enabled_features_known has the list.
+const sql = readdirSync(dir).sort().map((f) => readFileSync(new URL(f, dir), 'utf8')).filter((s) => /ADD CONSTRAINT "bars_enabled_features_known"/.test(s)).at(-1);
+assert.ok(sql, 'a migration sets the switches constraint');
 const allowed = sql.match(/ARRAY\[([^\]]+)\]/)![1].match(/'([^']+)'/g)!.map((s) => s.slice(1, -1));
 for (const f of VENUE_FEATURES) assert.ok(allowed.includes(f.key), `${f.key} is allowed by bars_enabled_features_known`);
 

@@ -21,6 +21,8 @@ export const VENUE_FEATURES = [
   { key: 'flavorMap', label: 'Flavor map', detail: 'What goes with what, from search', atHome: true },
   { key: 'techniques', label: 'Techniques', detail: 'Foams, clarifying, infusions and their kit, from search', atHome: true },
   { key: 'libraryExtras', label: 'More library filters', detail: 'R&D, Batched, House-made, Garnishes, Bottles, Cocktails and Needs a price in Library', atHome: true },
+  // Simple by default (jam dec-24, 29 Oct 2026): the details most bars don't keep, for the ones that do.
+  { key: 'advanced', label: 'Advanced options', detail: 'Wash lines on glasses, with Fit it in the drink editor, and Ice and Tools in setup', atHome: false },
 ] as const satisfies readonly { key: string; label: string; detail: string; atHome: boolean; tryIt?: string }[];
 
 export type VenueFeatureKey = (typeof VENUE_FEATURES)[number]['key'];

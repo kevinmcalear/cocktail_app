@@ -53,6 +53,14 @@ export function useVenueFeature(key: VenueFeatureKey): boolean {
 }
 
 /**
+ * One switch at a given venue, whichever mode you're in: for a drink or a
+ * page that belongs to that venue (Fit it, Kit). Off until it loads.
+ */
+export function useBarFeature(barId: string | null | undefined, key: VenueFeatureKey): boolean {
+  return (useFeatureRow(barId ?? null).data ?? []).includes(key);
+}
+
+/**
  * A venue's switches, and turning one on or off. Saves straight away and
  * updates the cached switches first, so the tabs change as the switch moves.
  * The database lets only the venue's Admins write it (bars_update).
