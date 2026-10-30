@@ -64,8 +64,8 @@ export interface DrinkScreenProps {
   openBatch?: boolean;
   /** A bar's published drink read from its public page (VisitorDrink): the spec it keeps back. */
   visitorLock?: SpecLock | null;
-  /** /dev/drink only: a bundled hero image and a simulated role. */
-  preview?: { heroSource?: number | null; role: number; levels: SpecLevels };
+  /** /dev/drink and the desktop editor's phone preview: a hero picture (bundled, or the photo being added) and a simulated role. */
+  preview?: { heroSource?: number | string | null; role: number; levels: SpecLevels };
 }
 
 /**
