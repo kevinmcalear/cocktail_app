@@ -6,10 +6,10 @@
  * added; everyone else is saved as made with. The drink page names them all
  * equally, so the order never shows.
  */
-import { joinNames } from './lineage';
-import type { CreditPick, WizardDraft } from './drinkWizard';
+import { joinNames, type LineageDrink } from './lineage';
+import { creatorProfileId, type CreditPick, type WizardDraft } from './drinkWizard';
 
-type Credits = Pick<WizardDraft, 'creator' | 'coCreators'>;
+export type Credits = Pick<WizardDraft, 'creator' | 'coCreators'>;
 type Me = { id: string; name: string } | null;
 
 export interface Maker extends CreditPick {
@@ -79,6 +79,41 @@ export function namedOnly(d: Credits): string[] {
 
 /** items.creator_names holds up to five. */
 export const MAX_NAMED = 5;
+
+/**
+ * A saved drink's credit as Who made it reads it, for the drink editor: its
+ * creator, then everyone made with it who hasn't said Not me, then the names
+ * with no page. Nobody credited is Not sure.
+ */
+export function savedCredits(d: Pick<LineageDrink, 'creator' | 'co_creators' | 'creator_names'>): Credits {
+  const profiles: CreditPick[] = (d.co_creators ?? [])
+    .filter((c) => c.profile && c.status !== 'declined')
+    .map((c) => ({ id: c.profile!.id, name: c.profile!.display_name }));
+  const names: CreditPick[] = (d.creator_names ?? []).map((name) => ({ id: null, name, sub: BY_NAME }));
+  const [first, ...rest] = [...(d.creator ? [{ id: d.creator.id, name: d.creator.display_name }] : []), ...profiles, ...names];
+  return first ? { creator: first, coCreators: rest } : { creator: 'nobody', coCreators: [] };
+}
+
+/** Under a name with no page, on the list. */
+export const BY_NAME = 'By name, no page';
+
+/**
+ * What saving a change to Who made it writes (drink editor): the creator's
+ * profile, the names with no page, and which made-with rows to add and take
+ * away. A declined row stays (only the person named can change it), so it's
+ * never taken away or added again.
+ */
+export function creditWrites(saved: Pick<LineageDrink, 'co_creators'>, next: Credits, myProfileId: string | null) {
+  const creatorId = creatorProfileId(next, myProfileId);
+  const names = namedOnly(next);
+  const rows = (saved.co_creators ?? []).flatMap((c) => (c.profile ? [{ id: c.profile.id, status: c.status ?? 'accepted' }] : []));
+  const want = [...new Set(makers(next, myProfileId ? { id: myProfileId, name: '' } : null).flatMap((m) => (m.id ? [m.id] : [])))].filter((id) => id !== creatorId);
+  return {
+    item: { creator_profile_id: creatorId, creator_names: names.length ? names : null },
+    add: want.filter((id) => !rows.some((r) => r.id === id)),
+    remove: rows.filter((r) => r.status !== 'declined' && !want.includes(r.id)).map((r) => r.id),
+  };
+}
 
 function toPick(m: Maker): CreditPick {
   const { me: _me, ...pick } = m;

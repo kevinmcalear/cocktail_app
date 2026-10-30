@@ -20,6 +20,8 @@ assert.equal(createdByLine(sam, { name: 'Milk & Honey', place: 'New York' }, 've
 assert.equal(createdByLine(null, { name: 'Pale Moth', place: 'Collingwood' }, 'suggested'), 'Created at Pale Moth, Collingwood · Suggested');
 assert.equal(createdByLine(sam, null, null), 'Created by Sam Ross');
 assert.equal(createdByLine(null, null, 'verified'), null);
+assert.equal(createdByLine(null, { name: 'The Savoy', place: 'London' }, null, ['Harry Craddock']), 'Created by Harry Craddock at The Savoy, London', 'a maker with no page, by name (tf-063)');
+assert.equal(createdByLine(sam, null, null, ['Jo Bloggs']), 'Created by Sam Ross and Jo Bloggs');
 
 assert.equal(makerLabel({ kind: 'person', handle: 'juniper.jo', display_name: 'Jo' }), '@juniper.jo');
 assert.equal(makerLabel({ kind: 'bar', handle: 'littlerye', display_name: 'Little Rye' }), 'Little Rye');

@@ -1,7 +1,7 @@
 import { useState } from 'react';
 import { StyleSheet, View } from 'react-native';
 
-import { Caption, DsText, PressableScale, useDs } from '@/components/ds';
+import { Caption, DsText, Headline, PressableScale, useDs } from '@/components/ds';
 import { PickList } from '@/components/search/NearPicks';
 import { IconSymbol } from '@/components/ui/icon-symbol';
 import { UserAvatar } from '@/components/ui/UserAvatar';
@@ -9,8 +9,8 @@ import { fontFamilies, radius, space } from '@/constants/tokens';
 import { useMyProfile } from '@/hooks/useMyProfile';
 import { usePublicPeople, type PublicPerson } from '@/hooks/useProfiles';
 import type { MaybeNear } from '@/hooks/useSearchNear';
-import type { StepProps } from '@/lib/drinkWizard';
-import { addMaker, askLines, asked, makers, MAX_NAMED, namedOnly, removeMaker } from '@/lib/whoMadeIt';
+import type { WizardDraft } from '@/lib/drinkWizard';
+import { addMaker, askLines, asked, BY_NAME, makers, MAX_NAMED, namedOnly, removeMaker, type Credits } from '@/lib/whoMadeIt';
 
 import { StepSearchField, type StepSearch } from './stepSearch';
 import { Eyebrow } from './WizardChrome';
@@ -19,9 +19,11 @@ import { Eyebrow } from './WizardChrome';
  * Who made it (board w2-wizard-steps, Q24): one list, you on it to start,
  * Add someone searching names and @handles, an x to take each off. Anyone
  * else saved as made with is asked first (#899), and the line under the
- * list says so (board w3-credits-to-check).
+ * list says so (board w3-credits-to-check). The drink editor shows it too,
+ * for a saved drink (tf-063): `answered` are the people who already said yes,
+ * and `headline` makes its title a section heading.
  */
-export function WhoMadeIt({ draft, set, venueName, search }: StepProps & { venueName: string | null; search: StepSearch }) {
+export function WhoMadeIt({ draft, set, venueName, search, answered = [], headline = false }: WhoMadeItProps) {
   const ds = useDs();
   const mine = useMyProfile();
   const profile = mine.data ?? null;
@@ -29,12 +31,12 @@ export function WhoMadeIt({ draft, set, venueName, search }: StepProps & { venue
   const [who, setWho] = useState('');
   const people = usePublicPeople(who, { near: true }).data ?? [];
   const list = makers(draft, me);
-  const waiting = asked(draft, me);
+  const waiting = asked(draft, me).filter((m) => !answered.includes(m.id ?? ''));
   // Searching on a phone: only the field and its results, up top.
   const over = search.over('who');
   return (
     <View style={styles.section}>
-      {over ? null : <Eyebrow>Who made it</Eyebrow>}
+      {over ? null : headline ? <Headline role="heading">Who made it</Headline> : <Eyebrow>Who made it</Eyebrow>}
       {list.length && !over ? (
         <View role="list" accessibilityLabel="Who made it" style={[styles.list, { borderColor: ds.c.line }]}>
           {list.map((m, i) => (
@@ -85,7 +87,7 @@ export function WhoMadeIt({ draft, set, venueName, search }: StepProps & { venue
                   label: `Credit “${who.trim()}” by name`,
                   sub: 'For someone without a page. Their name shows on the drink.',
                   onPress: () => {
-                    set(addMaker(draft, me, { id: null, name: who.trim(), sub: 'By name, no page' }));
+                    set(addMaker(draft, me, { id: null, name: who.trim(), sub: BY_NAME }));
                     setWho('');
                     search.done();
                   },
@@ -98,6 +100,15 @@ export function WhoMadeIt({ draft, set, venueName, search }: StepProps & { venue
       {venueName && !over ? <Caption tone="muted">{`It’s credited to ${venueName} too.`}</Caption> : null}
     </View>
   );
+}
+
+interface WhoMadeItProps {
+  draft: Credits;
+  set: (change: Partial<WizardDraft>) => void;
+  venueName: string | null;
+  search: StepSearch;
+  answered?: readonly string[];
+  headline?: boolean;
 }
 
 /** "@sam.ortiz · Little Rye": their handle, then where they work now (else their city), so two Sams can be told apart. */

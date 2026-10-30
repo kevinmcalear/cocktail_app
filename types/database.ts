@@ -5891,6 +5891,7 @@ export type Database = {
         Row: {
           abv: number | null
           bar_id: string | null
+          creator_names: string[] | null
           creator_profile_id: string | null
           credit_status: Database["public"]["Enums"]["credit_status"] | null
           description: string | null

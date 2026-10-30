@@ -226,7 +226,7 @@ export function stepFilled(step: WizardStep, d: WizardDraft): boolean {
 }
 
 /** The profile credited: yours unless you picked someone else or nobody. */
-export function creatorProfileId(d: WizardDraft, myProfileId: string | null): string | null {
+export function creatorProfileId(d: Pick<WizardDraft, 'creator'>, myProfileId: string | null): string | null {
   if (d.creator === 'nobody') return null;
   if (d.creator === null || d.creator === 'me') return myProfileId;
   return d.creator.id;

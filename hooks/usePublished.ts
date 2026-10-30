@@ -41,6 +41,8 @@ export interface PublishedDrink {
   /** The drink it's a riff or version of. */
   riffOfId: string | null;
   creditStatus: CreditStatus | null;
+  /** Makers with no page, by name (published_items.creator_names). */
+  creatorNames?: string[] | null;
   /** Made in parts, when its spec is shared: each part's name and join (published_items.parts). Null for one part. */
   parts?: StoredPart[] | null;
 }
@@ -67,7 +69,7 @@ export interface LiveRelease {
 }
 
 export const PUBLISHED_COLUMNS =
-  'id, name, item_type, description, bar_id, glassware_id, ice_id, family_id, origin, abv, publish_mode, published_at, image_url, image_is_generated, creator_profile_id, origin_bar_profile_id, origin_year, riff_of_id, credit_status, parts';
+  'id, name, item_type, description, bar_id, glassware_id, ice_id, family_id, origin, abv, publish_mode, published_at, image_url, image_is_generated, creator_profile_id, origin_bar_profile_id, origin_year, riff_of_id, credit_status, parts, creator_names';
 
 interface PublishedRow {
   id: string;
@@ -90,6 +92,7 @@ interface PublishedRow {
   riff_of_id?: string | null;
   credit_status?: CreditStatus | null;
   parts?: unknown;
+  creator_names?: string[] | null;
 }
 
 export function toPublishedDrink(r: PublishedRow): PublishedDrink {
@@ -114,6 +117,7 @@ export function toPublishedDrink(r: PublishedRow): PublishedDrink {
     riffOfId: r.riff_of_id ?? null,
     creditStatus: r.credit_status ?? null,
     parts: readParts(r.parts),
+    creatorNames: r.creator_names ?? null,
   };
 }
 

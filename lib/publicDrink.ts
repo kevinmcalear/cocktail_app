@@ -2,7 +2,7 @@
 // credit under it, and the captions in its family tree and Where to drink it.
 // Pure, so lib/publicDrink.check.ts can pin them down.
 
-import { creditLabel, type CreditStatus } from './lineage';
+import { creditLabel, joinNames, type CreditStatus } from './lineage';
 import { plural, rankCaption } from './ranking';
 
 /** A public profile as the page names it. */
@@ -37,12 +37,13 @@ export function drinkKicker(
 /**
  * "Created by Sam Ross at Milk & Honey, New York · Verified". The bar's
  * neighbourhood (or else city) follows its name. Null with neither a maker
- * nor a bar.
+ * nor a bar. Makers with no page follow by name ("Created by Harry Craddock").
  */
-export function createdByLine(creator: Pick<PublicProfile, 'display_name'> | null, bar: { name: string; place?: string | null } | null, status: CreditStatus | null): string | null {
-  if (!creator && !bar) return null;
+export function createdByLine(creator: Pick<PublicProfile, 'display_name'> | null, bar: { name: string; place?: string | null } | null, status: CreditStatus | null, names: readonly string[] = []): string | null {
+  const who = joinNames([...(creator ? [creator.display_name] : []), ...names]);
+  if (!who && !bar) return null;
   const where = bar ? `${bar.name}${bar.place ? `, ${bar.place}` : ''}` : null;
-  const line = creator ? `Created by ${creator.display_name}${where ? ` at ${where}` : ''}` : `Created at ${where}`;
+  const line = who ? `Created by ${who}${where ? ` at ${where}` : ''}` : `Created at ${where}`;
   const word = creditLabel(status);
   return word ? `${line} · ${word}` : line;
 }

@@ -1,7 +1,8 @@
-import { useQuery } from '@tanstack/react-query';
+import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 
 import { parentId, sortRiffs, styleChain, walkAncestors, type DrinkStyle, type LineageDrink } from '@/lib/lineage';
 import { supabase } from '@/lib/supabase';
+import type { creditWrites } from '@/lib/whoMadeIt';
 
 // The credit columns aren't in app_item_presentation, so these read items
 // directly; the items RLS policy applies the same visibility rules.
@@ -105,5 +106,30 @@ export function useDrinkCredit(itemId: string | null | undefined) {
       if (error) throw error;
       return (data as CreditDrink | null) ?? null;
     },
+  });
+}
+
+/**
+ * Saves a change to a saved drink's Who made it (drink editor, tf-063): the
+ * creator and the names with no page on the drink, then the made-with rows
+ * to add (each asked first, as from the wizard) and take away.
+ */
+export function useSetDrinkCredits(itemId: string) {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: async (w: ReturnType<typeof creditWrites>) => {
+      const { error } = await supabase.from('items').update(w.item).eq('id', itemId);
+      if (error) throw error;
+      if (w.remove.length) {
+        const { error: e } = await supabase.from('item_co_creators').delete().eq('item_id', itemId).in('profile_id', w.remove);
+        if (e) throw e;
+      }
+      if (w.add.length) {
+        const { error: e } = await supabase.from('item_co_creators').insert(w.add.map((profile_id) => ({ item_id: itemId, profile_id })));
+        if (e) throw e;
+      }
+    },
+    // Pending until the credit is read again, so the next change starts from what was saved.
+    onSettled: () => Promise.all([qc.invalidateQueries({ queryKey: ['drink-credit', itemId] }), qc.invalidateQueries({ queryKey: ['lineage', itemId] })]),
   });
 }
