@@ -83,7 +83,7 @@ function FitBody({ result, names, amounts, onUse, onClose, cost }: FitGlassSheet
         {result.glassName}
       </Caption>
       <View style={[styles.glass, { backgroundColor: ds.c.paper }]}>
-        <GlassThumb glass={result.venueGlass.glass} variant={result.venueGlass.variant} outline={result.venueGlass.outline} size={96} />
+        <GlassThumb glass={result.venueGlass.glass} variant={result.venueGlass.variant} outline={result.venueGlass.outline ?? result.venueGlass.model?.outline} size={96} />
         <View style={styles.flex}>
           <DsText variant="label" color={ds.c.sketchInk}>{`Wash line ${ml(line.ml)}`}</DsText>
           <DsText variant="body" color={ds.c.sketchInk}>{`Fills to ${ml(fill.levelMl)}: ${ml(Math.abs(fill.diffMl))} ${fill.state === 'short' ? 'short' : 'over'}`}</DsText>
