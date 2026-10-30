@@ -42,6 +42,8 @@ export interface LineageDrink {
    * the drink's editors and moderators; only accepted ones are in the credit.
    */
   co_creators?: { status?: CoCreatorStatus; profile: CreditProfile | null }[] | null;
+  /** Makers with no page, by name ("Harry Craddock"): items.creator_names. Credited after the makers with a page, with no link. */
+  creator_names?: string[] | null;
   /** Catalog classics: the classic it came from, or the style. */
   lineage_parent_id?: string | null;
   lineage_style_id?: string | null;
@@ -208,10 +210,10 @@ export type CreditPart = { text: string; profileId?: string; drinkId?: string };
 export function creditSentence(drink: LineageDrink, parent: Pick<LineageDrink, 'id' | 'name'> | null): CreditPart[] {
   const parts: CreditPart[] = [];
   if (parent) parts.push({ text: 'Riff of ' }, { text: parent.name, drinkId: parent.id });
-  const makers = creators(drink);
+  const makers: CreditPart[] = [...creators(drink).map((m) => ({ text: m.display_name, profileId: m.id })), ...(drink.creator_names ?? []).map((text) => ({ text }))];
   makers.forEach((m, i) => {
     const joiner = i === 0 ? (parts.length ? ' by ' : 'By ') : i === makers.length - 1 ? ' and ' : ', ';
-    parts.push({ text: joiner }, { text: m.display_name, profileId: m.id });
+    parts.push({ text: joiner }, m);
   });
   if (drink.origin_bar) {
     parts.push({ text: parts.length ? ' at ' : 'At ' }, { text: drink.origin_bar.display_name, profileId: drink.origin_bar.id });
@@ -235,7 +237,7 @@ export function nameCredit(drink: LineageDrink, parent: Pick<LineageDrink, 'id' 
   const bar = drink.origin_bar;
   const withPlace = (parts: CreditPart[]) =>
     parts.flatMap((p) => (bar?.locality && p.profileId === bar.id && !bar.is_closed ? [p, { text: `, ${bar.locality}` }] : [p]));
-  if (drink.is_catalog && !creators(drink).length) {
+  if (drink.is_catalog && !creators(drink).length && !drink.creator_names?.length) {
     const year = drink.origin_year ? `, ${yearPhrase(drink.origin_year, drink.origin_year_approx, drink.origin_year_guess)}` : '';
     const parts: CreditPart[] = [{ text: `Classic${year}` }];
     if (bar) parts.push({ text: ' · at ' }, { text: bar.display_name, profileId: bar.id }, ...(bar.is_closed ? [{ text: ' (now closed)' }] : []));

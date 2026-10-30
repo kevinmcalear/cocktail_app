@@ -23,6 +23,7 @@ import { useDeleteDrink } from '../useDeleteDrink';
 import { ShotList } from '../ShotList';
 import { AccessSheet, EditBottomBar, EditMoreMenu, GrowingField, PhotosSheet, type DrinkEditor, type MoreChoice } from './EditParts';
 import { DrinkSpec } from './DrinkSpec';
+import { EditCredits } from './EditCredits';
 import { EditToolbar } from './EditToolbar';
 import { FitGlassEdit, useDraftGlassFill } from './FitGlassEdit';
 import { MadeList } from './MadeList';
@@ -169,6 +170,7 @@ export function EditPage({ editor, id, onExit, openFit }: { editor: DrinkEditor;
       />
       {cocktail ? <FitGlassEdit editor={editor} item={cocktail} result={fill} open={sheet === 'fit'} onOpen={() => setSheet('fit')} onClose={() => setSheet(null)} /> : null}
       <MadeList editor={editor} itemId={id} />
+      {id ? <EditCredits itemId={id} /> : null}
       <View style={styles.section}>
         <Headline role="heading">Story</Headline>
         <GrowingField minHeight={96} value={editor.description} onChangeText={editor.setDescription} placeholder="Where it comes from, what it tastes like" placeholderTextColor={ds.c.muted} accessibilityLabel="Story" style={fieldBox} />

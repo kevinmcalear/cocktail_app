@@ -2924,6 +2924,7 @@ export type Database = {
           capacity_ml: number | null
           created_at: string
           created_by: string | null
+          creator_names: string[] | null
           creator_profile_id: string | null
           credit_status: Database["public"]["Enums"]["credit_status"] | null
           density_g_ml: number | null
@@ -2992,6 +2993,7 @@ export type Database = {
           capacity_ml?: number | null
           created_at?: string
           created_by?: string | null
+          creator_names?: string[] | null
           creator_profile_id?: string | null
           credit_status?: Database["public"]["Enums"]["credit_status"] | null
           density_g_ml?: number | null
@@ -3060,6 +3062,7 @@ export type Database = {
           capacity_ml?: number | null
           created_at?: string
           created_by?: string | null
+          creator_names?: string[] | null
           creator_profile_id?: string | null
           credit_status?: Database["public"]["Enums"]["credit_status"] | null
           density_g_ml?: number | null
@@ -5892,6 +5895,7 @@ export type Database = {
         Row: {
           abv: number | null
           bar_id: string | null
+          creator_names: string[] | null
           creator_profile_id: string | null
           credit_status: Database["public"]["Enums"]["credit_status"] | null
           description: string | null
@@ -7540,6 +7544,16 @@ export type Database = {
           p_hidden: boolean
           p_id: string
           p_kind: Database["public"]["Enums"]["report_target"]
+        }
+        Returns: undefined
+      }
+      set_drink_credits: {
+        Args: {
+          p_add: string[]
+          p_creator_names: string[]
+          p_creator_profile_id: string
+          p_item_id: string
+          p_remove: string[]
         }
         Returns: undefined
       }
