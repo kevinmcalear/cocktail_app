@@ -59,13 +59,13 @@ function Tool({ icon, label, hint, onPress }: { icon: IconName; label: string; h
  * A beer or wine has no spec, so no Line or Calculator. A house prep has Line, Step, Calculator and More;
  * a bottle Photo, Spot and More (ingredient-edit-proposal).
  */
-export function EditBottomBar({ onLine, lineHint = 'Add a line to the spec', onStep, onPhoto, onSpot, onCalc, onMore, moreHint = 'More: photos, who can see the spec, discard, delete' }: { onLine?: () => void; lineHint?: string; onStep?: () => void; onPhoto?: () => void; onSpot?: () => void; onCalc?: () => void; onMore: () => void; moreHint?: string }) {
+export function EditBottomBar({ onLine, lineHint = 'Add a line to the spec', onStep, onPhoto, photoHint = 'Add a photo', onSpot, onCalc, onMore, moreHint = 'More: photos, who can see the spec, discard, delete' }: { onLine?: () => void; lineHint?: string; onStep?: () => void; onPhoto?: () => void; photoHint?: string; onSpot?: () => void; onCalc?: () => void; onMore: () => void; moreHint?: string }) {
   return (
     <GlassSurface style={styles.bar}>
       <View role="toolbar" accessibilityLabel="Edit tools" style={styles.barRow}>
         {onLine ? <Tool icon="plus" label="Line" hint={lineHint} onPress={onLine} /> : null}
         {onStep ? <Tool icon="list.number" label="Step" hint="Add a step to the method" onPress={onStep} /> : null}
-        {onPhoto ? <Tool icon="camera" label="Photo" hint="Add a photo" onPress={onPhoto} /> : null}
+        {onPhoto ? <Tool icon="camera" label="Photo" hint={photoHint} onPress={onPhoto} /> : null}
         {onSpot ? <Tool icon="map.fill" label="Spot" hint="Give it a spot on the back bar" onPress={onSpot} /> : null}
         {onCalc ? <Tool icon="percent" label="Calculator" hint="Ingredient calculator: amounts for a syrup, foam, juice or soda" onPress={onCalc} /> : null}
         <Tool icon="ellipsis" label="More" hint={moreHint} onPress={onMore} />
@@ -146,7 +146,7 @@ export function PhotosSheet({ editor, onClose, generate }: { editor: PhotosEdito
         onAddUris={editor.addImages}
         generateComponent={generate}
       />
-      <Caption tone="muted">The first one leads the page. Saved with Done.</Caption>
+      <Caption tone="muted">The main photo leads the page and the cards. Saved with Done.</Caption>
     </Sheet>
   );
 }

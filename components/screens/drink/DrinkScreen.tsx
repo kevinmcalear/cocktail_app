@@ -56,6 +56,8 @@ export interface DrinkScreenProps {
   onEdit: () => void;
   /** Fit it to the glass (QA Q38): opens the editor with the spec fitted to the glass's wash line. */
   onFit?: () => void;
+  /** The hero's Photos button, for people who can edit: editing, on its photos. */
+  onPhotos?: () => void;
   /** Shown as a modal. An iOS page sheet starts below the status bar, but the insets still count it. */
   sheet?: boolean;
   /** Beside a list (the tablet Library): the narrow layout, a short hero, no Back. */
@@ -86,7 +88,7 @@ export function DrinkScreen(props: DrinkScreenProps) {
 
 export { DrinkLoading } from './DrinkLoading';
 
-function DrinkPage({ item, inStudyPile, onToggleStudyPile, canEdit, adminFix = false, onEdit, onFit, sheet, pane, openBatch, visitorLock, preview }: DrinkScreenProps) {
+function DrinkPage({ item, inStudyPile, onToggleStudyPile, canEdit, adminFix = false, onEdit, onFit, onPhotos, sheet, pane, openBatch, visitorLock, preview }: DrinkScreenProps) {
   const ds = useDs();
   const router = useRouter();
   const insets = useSafeAreaInsets();
@@ -188,7 +190,7 @@ function DrinkPage({ item, inStudyPile, onToggleStudyPile, canEdit, adminFix = f
     venueName: teamRole !== null ? (venue?.name ?? null) : null,
   };
   const sections = useDrinkSections(bodyProps);
-  const hero = (h: number) => <DrinkHero name={item.name} pictures={pictures} glass={glassKey} itemId={item.id} palette={pictures[0]?.palette} height={h} fade={!wide} />;
+  const hero = (h: number) => <DrinkHero name={item.name} pictures={pictures} glass={glassKey} itemId={item.id} palette={pictures[0]?.palette} height={h} fade={!wide} onPhotos={canEdit && !preview ? onPhotos : undefined} />;
   const deleteDrink = useDeleteDrink();
   // The editor's rule: the drink's own people, unless it's credited to a bar. Beside a list (pane), the list drops it.
   const onDelete = canEdit && !creditedToBar(item) ? () => {

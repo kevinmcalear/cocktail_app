@@ -134,7 +134,7 @@ export function useCocktailEditor(id: string, { enabled = true }: { enabled?: bo
             const sorted = c.item_images.filter(isHeroLink).sort((a: any, b: any) => (a.sort_order || 0) - (b.sort_order || 0));
             setLocalImages(
                 sorted
-                    .map((ci: any) => ({ id: ci.images?.id, url: ci.images?.url, isNew: false }))
+                    .map((ci: any) => ({ id: ci.images?.id, url: ci.images?.url, isNew: false, credit: ci.images?.credit ?? null }))
                     .filter((img: ImageItem) => img.url)
             );
         }

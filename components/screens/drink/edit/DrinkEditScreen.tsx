@@ -39,10 +39,10 @@ const PHONE_HERO = 300;
  * how it's made in small sheets; photos, story and team notes. Replaces the
  * old editor form (decided 15 Oct 2026). Drafts open the same page (DraftEditScreen).
  */
-export function DrinkEditScreen({ id, onExit, openFit }: { id: string; onExit: () => void; openFit?: boolean }) {
+export function DrinkEditScreen({ id, onExit, openOn }: { id: string; onExit: () => void; openOn?: OpenOn }) {
   return (
     <EditBrand barId={useCocktail(id).data?.bar_id}>
-      <SavedDrinkEdit id={id} onExit={onExit} openFit={openFit} />
+      <SavedDrinkEdit id={id} onExit={onExit} openOn={openOn} />
     </EditBrand>
   );
 }
@@ -60,12 +60,15 @@ export function EditBrand({ barId, children }: { barId: string | null | undefine
   );
 }
 
-function SavedDrinkEdit({ id, onExit, openFit }: { id: string; onExit: () => void; openFit?: boolean }) {
-  return <EditPage editor={useCocktailEditor(id)} id={id} onExit={onExit} openFit={openFit} />;
+/** The sheet editing opens on: Fit it to the glass, or the photos (the drink page's Photos button). */
+export type OpenOn = 'fit' | 'photos';
+
+function SavedDrinkEdit({ id, onExit, openOn }: { id: string; onExit: () => void; openOn?: OpenOn }) {
+  return <EditPage editor={useCocktailEditor(id)} id={id} onExit={onExit} openOn={openOn} />;
 }
 
-/** The page for a saved drink (`id`) or a draft (`id` null): a draft's Done keeps it a draft, and More publishes it. `openFit` opens on Fit it to the glass. */
-export function EditPage({ editor, id, onExit, openFit }: { editor: DrinkEditor; id: string | null; onExit: () => void; openFit?: boolean }) {
+/** The page for a saved drink (`id`) or a draft (`id` null): a draft's Done keeps it a draft, and More publishes it. `openOn` opens on one of its sheets. */
+export function EditPage({ editor, id, onExit, openOn }: { editor: DrinkEditor; id: string | null; onExit: () => void; openOn?: OpenOn }) {
   const ds = useDs();
   const router = useRouter();
   const insets = useSafeAreaInsets();
@@ -87,7 +90,7 @@ export function EditPage({ editor, id, onExit, openFit }: { editor: DrinkEditor;
   // The bottom bar's Line puts the cursor in the search under the lines.
   const [focus, setFocus] = useState(0);
 
-  const [sheet, setSheet] = useState<MoreChoice | VenueSheet | 'calc' | 'more' | 'colour' | 'fit' | null>(openFit ? 'fit' : null);
+  const [sheet, setSheet] = useState<MoreChoice | VenueSheet | 'calc' | 'more' | 'colour' | 'fit' | null>(openOn ?? null);
   // For the floor, Service and Price: saved with Done, next to the editor's own changes.
   const venueEdits = useRef<PendingEdits | null>(null);
   const [venueDirty, setVenueDirty] = useState(false);
@@ -129,15 +132,9 @@ export function EditPage({ editor, id, onExit, openFit }: { editor: DrinkEditor;
 
   const pictures = editor.localImages.map((img) => ({ url: img.url, isSketch: false, isOutdated: false }));
 
-  const hero = (height: number) => (
-    <View>
-      <DrinkHero name={editor.name || cocktail?.name || ''} pictures={pictures} glass={null} itemId={id} height={height} fade={!wide} onColour={() => setSheet('colour')} />
-      {/* Level with Colour on the drawing (DrinkHero's buttons sit clear of the fade). */}
-      <View style={[styles.photoButton, { bottom: wide ? space.lg : space.xxl + space.md }]}>
-        <GlassButton accessibilityLabel="Add a photo" icon="camera" label={pictures.length ? 'Photos' : 'Add a photo'} onMedia onPress={() => (pictures.length ? setSheet('photos') : void editor.pickImage())} />
-      </View>
-    </View>
-  );
+  // One place for photos: the hero's button and the bottom bar's both open the sheet (adding, cropping, the main one).
+  const openPhotos = () => setSheet('photos');
+  const hero = (height: number) => <DrinkHero name={editor.name || cocktail?.name || ''} pictures={pictures} glass={null} itemId={id} height={height} fade={!wide} onColour={() => setSheet('colour')} onPhotos={pictures.length ? openPhotos : () => void editor.pickImage()} />;
   const fieldBox = [styles.box, NO_OUTLINE, { color: ds.c.ink, backgroundColor: ds.c.surface }];
   const words = (
     <>
@@ -211,7 +208,7 @@ export function EditPage({ editor, id, onExit, openFit }: { editor: DrinkEditor;
           </FormScrollContainer>
           <View style={[styles.top, { top: top + space.sm, left: gutter, right: gutter }]}>{toolbar}</View>
           <View style={[styles.bottom, { bottom: insets.bottom + space.md, left: gutter, right: gutter }]}>
-            <EditBottomBar onLine={() => setFocus(focus + 1)} onPhoto={() => void editor.pickImage()} onCalc={() => setSheet('calc')} onMore={() => setSheet('more')} />
+            <EditBottomBar onLine={() => setFocus(focus + 1)} onPhoto={openPhotos} photoHint="Photos: add, crop, choose the main one" onCalc={() => setSheet('calc')} onMore={() => setSheet('more')} />
           </View>
         </>
       )}
@@ -227,7 +224,6 @@ export function EditPage({ editor, id, onExit, openFit }: { editor: DrinkEditor;
 
 const styles = StyleSheet.create({
   screen: { flex: 1 },
-  photoButton: { position: 'absolute', right: space.lg },
   phoneBody: { gap: space.xl, marginTop: -space.lg },
   name: { ...type.display, borderBottomWidth: StyleSheet.hairlineWidth, paddingBottom: space.xs },
   origin: { ...type.body, fontFamily: fontFamilies.body, marginTop: -space.md },

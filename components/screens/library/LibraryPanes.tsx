@@ -44,6 +44,7 @@ function DrinkPane({ id }: { id: string }) {
         adminFix={editAccess === 'admin'}
         onEdit={() => router.push(`/cocktail/${drink.id}/edit` as Href)}
         onFit={() => router.push(`/cocktail/${drink.id}/edit?fit=1` as Href)}
+        onPhotos={() => router.push(`/cocktail/${drink.id}/edit?photos=1` as Href)}
       />
     </Suspense>
   );
