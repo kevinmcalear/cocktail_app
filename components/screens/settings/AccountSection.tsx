@@ -78,7 +78,8 @@ export function SignOutSection({ onLogOut }: { onLogOut: () => void }) {
       // delete-account function are what this describes.
       message: [
         'We remove your sign-in, email, profile, rankings, drafts and saved drinks. They’re deleted, not hidden.',
-        'Drinks and menus you made for a bar belong to that bar, so they stay there, without your name. A bar where you’re the only one on the team goes back to an unclaimed public page that whoever runs it can claim again.',
+        'Drinks and menus you made for a bar with a team belong to that bar, so they stay there, without your name.',
+        'A bar where you’re the only one on the team goes with you: its private side (specs, back bar, drafts, run sheets) is deleted. Only its public page stays, unclaimed, so whoever runs it can claim it again.',
         'You’re welcome back any time: sign up with the same email and start fresh.',
       ].join('\n\n'),
       confirmText: 'Delete account',

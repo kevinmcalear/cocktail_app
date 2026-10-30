@@ -25,15 +25,15 @@ export default function DeleteAccountInfo() {
           items={[
             'Your sign-in, email address, name and profile photo.',
             'Your profile, rankings, drafts, saved drinks, personal menus and team memberships.',
+            'For a bar where you are the only one on the team, its private side: specs, private drinks, house-made recipes, drafts, back bar, stock, kit, menus that never started, run sheets and their pictures. Only its public page stays, unclaimed.',
           ]}
         />
       </LegalSection>
 
       <LegalSection heading="What stays">
         <P>
-          Drinks, ingredients and menus you created for a bar belong to that bar, so they stay there, without your name. A
-          bar where you are the only one on the team goes back to an unclaimed public page, which whoever runs it can claim
-          again. If you are the only admin of a bar with other people on its team, make someone else an admin first.
+          Drinks, ingredients and menus you created for a bar with a team belong to that bar, so they stay there, without
+          your name. A bar you ran alone keeps its public page, unclaimed, which whoever runs it can claim again. If you are the only admin of a bar with other people on its team, make someone else an admin first.
           Copies can remain in our providers&apos; backups for a limited time before they are overwritten.
         </P>
       </LegalSection>
