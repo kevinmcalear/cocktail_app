@@ -8,7 +8,8 @@ import { STATUS } from '@/constants/palette';
 import { space } from '@/constants/tokens';
 import type { RoleMatrixRow, VenueRoleDraft } from '@/hooks/useVenueRoles';
 import {
-  baseCapabilities, CAPABILITY_GROUPS, dayOfEnd, endOfDay, isLocked, limitTo, overridesFor, ROLE_PRESETS, today, withinReach, type RolePreset,
+  baseCapabilities, CAPABILITY_GROUPS, dayOfEnd, DRINK_TYPES, drinkTypesToSave, endOfDay, isLocked, limitTo, overridesFor, ROLE_PRESETS, today, withinReach,
+  type DrinkType, type RolePreset,
 } from '@/lib/roleMatrix';
 import { ROLE_LEVELS, roleLabel } from '@/lib/roles';
 
@@ -47,6 +48,10 @@ export function RoleSheet({ role, matrix, allowAdmin = true, canGive = null, vis
   const reach = (caps: string[]) => limitTo(caps, canGive, had);
   const [on, setOn] = useState<string[]>(role?.capabilities ?? reach(first.on(baseCapabilities(matrix, first.base_level))));
   const [lastDay, setLastDay] = useState(dayOfEnd(role?.ends_at));
+  // What it adds (tf-059): every kind, or some. Only asked when it edits drinks.
+  const allKinds = DRINK_TYPES.map((t) => t.id);
+  const [kinds, setKinds] = useState<DrinkType[]>((role ? (role.drink_types as DrinkType[] | null | undefined) : first.drinkTypes) ?? allKinds);
+  const toggleKind = (k: DrinkType) => setKinds((list) => (list.includes(k) ? (list.length > 1 ? list.filter((x) => x !== k) : list) : [...list, k]));
   const baseCaps = baseCapabilities(matrix, level);
   const missingName = !name.trim();
   const presetNames = ROLE_PRESETS.map((p) => p.name);
@@ -59,6 +64,7 @@ export function RoleSheet({ role, matrix, allowAdmin = true, canGive = null, vis
     setLevel(p.base_level);
     setOn(reach(p.on(baseCapabilities(matrix, p.base_level))));
     setLastDay(p.ends ? today(now) : '');
+    setKinds(p.drinkTypes ?? allKinds);
   };
 
   const pickBuiltIn = () => {
@@ -66,6 +72,7 @@ export function RoleSheet({ role, matrix, allowAdmin = true, canGive = null, vis
     if (presetNames.includes(name.trim())) setName('');
     setOn(reach(baseCapabilities(matrix, level)));
     setLastDay('');
+    setKinds(allKinds);
   };
 
   const pickLevel = (next: number) => {
@@ -85,6 +92,7 @@ export function RoleSheet({ role, matrix, allowAdmin = true, canGive = null, vis
       base_level: level,
       ...overridesFor(baseCaps, on),
       ends_at: lastDay && level < ADMIN ? endOfDay(lastDay) : null,
+      drink_types: on.includes('edit_drinks') && level < ADMIN ? drinkTypesToSave(kinds) : null,
     });
   };
 
@@ -156,6 +164,21 @@ export function RoleSheet({ role, matrix, allowAdmin = true, canGive = null, vis
           })}
         </View>
       ))}
+      {on.includes('edit_drinks') && level < ADMIN ? (
+        <View style={styles.list}>
+          <Caption tone="muted" role="heading">DRINKS THEY ADD</Caption>
+          <View role="group" accessibilityLabel="Drinks they add" style={styles.pills}>
+            {DRINK_TYPES.map((t) => (
+              <Choice key={t.id} kind="checkbox" label={t.label} pill="outline" selected={kinds.includes(t.id)} disabled={busy} onPress={() => toggleKind(t.id)} />
+            ))}
+          </View>
+          <Caption tone="muted">
+            {drinkTypesToSave(kinds)
+              ? 'They only edit or delete these. Cocktails include house-made ingredients. What they add waits for approval from someone who edits every kind.'
+              : 'Every kind of drink.'}
+          </Caption>
+        </View>
+      ) : null}
     </MenuSheet>
   );
 }

@@ -25,6 +25,7 @@ import { AllergensSection } from './AllergensSection';
 import { AtHomeSpec } from './AtHomeSpec';
 import { Backstory } from './Backstory';
 import { CostSection } from './CostSection';
+import { ApprovalNotice } from './ApprovalNotice';
 import { DrinkCredit } from './DrinkCredit';
 import { DrinkFacts, DrinkTags, type Fact } from './DrinkFacts';
 import { FitGlassNote } from './FitGlass';
@@ -154,6 +155,7 @@ export function useDrinkSections(p: DrinkBodyProps) {
           {p.photoCredit.text}
         </Caption>
       ) : null}
+      {live && item.bar_id ? <ApprovalNotice itemId={item.id} /> : null}
     </View>
   );
   return {

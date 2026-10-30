@@ -1,0 +1,177 @@
+// Drink departments and approval (supabase/migrations/20261130500000_drink_departments.sql,
+// Eddie's tf-059 and tf-087, jam dec-25). A venue role limited to beer and
+// wine adds only those, edits and deletes only those, doesn't see drinks above
+// its level just because it edits drinks, and what it adds waits for approval:
+// only its maker and someone who edits every kind see it until that person
+// approves. A department can't lift its own limit. A batch's method (steps)
+// follows its own prep level. Runs through the real API against the local stack.
+//
+//   supabase start && supabase db reset
+//   npm run test:security
+
+import assert from 'node:assert/strict';
+import { execSync } from 'node:child_process';
+import { randomUUID } from 'node:crypto';
+import { after, before, describe, test } from 'node:test';
+
+import { createClient } from '@supabase/supabase-js';
+import pg from 'pg';
+
+const status = JSON.parse(
+  execSync('supabase status -o json', { encoding: 'utf8', stdio: ['ignore', 'pipe', 'ignore'] })
+);
+if (!/^http:\/\/(127\.0\.0\.1|localhost)/.test(status.API_URL)) {
+  throw new Error(`Refusing to run drink department tests against a non-local API: ${status.API_URL}`);
+}
+
+const run = randomUUID().slice(0, 8);
+const PASSWORD = `pw-${randomUUID()}`;
+const clientOptions = { auth: { persistSession: false, autoRefreshToken: false } };
+const service = createClient(status.API_URL, status.SERVICE_ROLE_KEY, clientOptions);
+const db = new pg.Client({ connectionString: status.DB_URL });
+const users = {};
+const ids = {};
+
+async function makeUser(label) {
+  const email = `${label}-${run}@drink-departments-test.local`;
+  const { data, error } = await service.auth.admin.createUser({ email, password: PASSWORD, email_confirm: true });
+  if (error) throw error;
+  const client = createClient(status.API_URL, status.ANON_KEY, clientOptions);
+  const { error: signInError } = await client.auth.signInWithPassword({ email, password: PASSWORD });
+  if (signInError) throw signInError;
+  return { id: data.user.id, client };
+}
+
+async function insert(table, row) {
+  const { data, error } = await service.from(table).insert(row).select().single();
+  if (error) throw new Error(`fixture insert into ${table} failed: ${error.message}`);
+  return data;
+}
+
+const sees = async (who, id) => {
+  const { data, error } = await users[who].client.from('items').select('id').eq('id', id);
+  assert.ifError(error);
+  return data.length === 1;
+};
+
+before(async () => {
+  await db.connect();
+  for (const label of ['admin', 'creator', 'bartender', 'beer', 'prep']) users[label] = await makeUser(label);
+  // The menu opens at Bartender; one secret drink opens only at Admin.
+  ids.bar = (await insert('bars', { name: `Departments bar ${run}`, default_visibility_level: 30 })).id;
+  ids.beerRole = (await insert('venue_roles', {
+    bar_id: ids.bar, name: `Beer and wine ${run}`, base_level: 30, granted: ['edit_drinks'], drink_types: ['beer', 'wine'],
+  })).id;
+  await insert('user_bars', { user_id: users.admin.id, bar_id: ids.bar, role_level: 40 });
+  await insert('user_bars', { user_id: users.creator.id, bar_id: ids.bar, role_level: 35 });
+  await insert('user_bars', { user_id: users.bartender.id, bar_id: ids.bar, role_level: 30 });
+  await insert('user_bars', { user_id: users.beer.id, bar_id: ids.bar, role_level: 30, venue_role_id: ids.beerRole });
+  await insert('user_bars', { user_id: users.prep.id, bar_id: ids.bar, role_level: 20 });
+  await db.query("INSERT INTO public.venue_level_overrides (bar_id, base_level, granted) VALUES ($1, 20, '{prep}')", [ids.bar]);
+  ids.cocktail = (await insert('items', { name: `House Martini ${run}`, item_type: 'cocktail', bar_id: ids.bar })).id;
+  ids.secret = (await insert('items', { name: `Secret ${run}`, item_type: 'cocktail', bar_id: ids.bar, override_visibility_level: 40 })).id;
+  ids.secretBeer = (await insert('items', { name: `Secret lager ${run}`, item_type: 'beer', bar_id: ids.bar, override_visibility_level: 40 })).id;
+  ids.wine = (await insert('items', { name: `House red ${run}`, item_type: 'wine', bar_id: ids.bar })).id;
+  ids.batch = (await insert('items', { name: `Oleo ${run}`, item_type: 'ingredient', bar_id: ids.bar, override_prep_level: 35 })).id;
+  await db.query("INSERT INTO public.item_steps (item_id, position, body) VALUES ($1, 0, 'Muddle the peels.')", [ids.batch]);
+});
+
+after(async () => {
+  if (ids.bar) await db.query('DELETE FROM public.items WHERE bar_id = $1', [ids.bar]);
+  if (ids.bar) await service.from('bars').delete().eq('id', ids.bar);
+  for (const u of Object.values(users)) await service.auth.admin.deleteUser(u.id);
+  await db.end();
+});
+
+describe('a beer and wine role', () => {
+  test('adds a beer, which waits for approval whatever it sends', async () => {
+    const { data, error } = await users.beer.client.from('items')
+      .insert({ name: `Pilsner ${run}`, item_type: 'beer', bar_id: ids.bar, created_by: users.beer.id, awaiting_approval: false })
+      .select('id, awaiting_approval').single();
+    assert.ifError(error);
+    assert.equal(data.awaiting_approval, true);
+    ids.pils = data.id;
+  });
+
+  test("can't add a cocktail or a house-made ingredient", async () => {
+    for (const item_type of ['cocktail', 'ingredient']) {
+      const { error } = await users.beer.client.from('items').insert({ name: `Nope ${run}`, item_type, bar_id: ids.bar, created_by: users.beer.id });
+      assert.ok(error, `${item_type} refused`);
+    }
+  });
+
+  test('edits a wine, not a cocktail, and never turns one into the other', async () => {
+    const wine = await users.beer.client.from('items').update({ description: 'Juicy.' }).eq('id', ids.wine).select('id');
+    assert.equal(wine.data?.length, 1);
+    const cocktail = await users.beer.client.from('items').update({ description: 'Mine now.' }).eq('id', ids.cocktail).select('id');
+    assert.equal(cocktail.data?.length ?? 0, 0);
+    const moved = await users.beer.client.from('items').update({ item_type: 'cocktail' }).eq('id', ids.wine).select('id');
+    assert.ok(moved.error);
+    const { data } = await users.beer.client.rpc('can_edit_item', { p_item_id: ids.cocktail });
+    assert.equal(data, false);
+  });
+
+  test("can't delete a cocktail", async () => {
+    await users.beer.client.from('items').delete().eq('id', ids.cocktail);
+    const { rows } = await db.query('SELECT 1 FROM public.items WHERE id = $1', [ids.cocktail]);
+    assert.equal(rows.length, 1);
+  });
+
+  test('sees by its level, plus its own kinds; a Drink Creator still sees everything', async () => {
+    assert.equal(await sees('beer', ids.cocktail), true);
+    assert.equal(await sees('beer', ids.secret), false);
+    assert.equal(await sees('beer', ids.secretBeer), true);
+    assert.equal(await sees('creator', ids.secret), true);
+  });
+
+  test("can't approve its own drink or lift its own limit", async () => {
+    const approve = await users.beer.client.from('items').update({ awaiting_approval: false }).eq('id', ids.pils);
+    assert.ok(approve.error);
+    const lift = await users.beer.client.from('venue_roles').update({ drink_types: null }).eq('id', ids.beerRole);
+    assert.ok(lift.error || !(await db.query('SELECT 1 FROM public.venue_roles WHERE id = $1 AND drink_types IS NULL', [ids.beerRole])).rows.length);
+    const { data } = await users.beer.client.rpc('my_drink_types', { p_bar_id: ids.bar });
+    assert.deepEqual(data, ['beer', 'wine']);
+  });
+});
+
+describe('approval', () => {
+  test('a waiting drink is for its maker and approvers only', async () => {
+    assert.equal(await sees('beer', ids.pils), true);
+    assert.equal(await sees('creator', ids.pils), true);
+    assert.equal(await sees('admin', ids.pils), true);
+    assert.equal(await sees('bartender', ids.pils), false);
+  });
+
+  test('a bartender (no edit_drinks) cannot approve; a Drink Creator can', async () => {
+    const no = await users.bartender.client.from('items').update({ awaiting_approval: false }).eq('id', ids.pils).select('id');
+    assert.equal(no.data?.length ?? 0, 0);
+    const yes = await users.creator.client.from('items').update({ awaiting_approval: false }).eq('id', ids.pils).select('awaiting_approval').single();
+    assert.ifError(yes.error);
+    assert.equal(yes.data.awaiting_approval, false);
+    assert.equal(await sees('bartender', ids.pils), true);
+  });
+
+  test("an unlimited member's drinks never wait", async () => {
+    const { data, error } = await users.creator.client.from('items')
+      .insert({ name: `Gimlet ${run}`, item_type: 'cocktail', bar_id: ids.bar, created_by: users.creator.id })
+      .select('awaiting_approval').single();
+    assert.ifError(error);
+    assert.equal(data.awaiting_approval, false);
+  });
+
+  test('the Roles screen reads drink types', async () => {
+    const { data, error } = await users.admin.client.rpc('get_venue_role_matrix', { p_bar_id: ids.bar });
+    assert.ifError(error);
+    assert.deepEqual(data.find((r) => r.role_id === ids.beerRole).drink_types, ['beer', 'wine']);
+    assert.equal(data.find((r) => r.role_id === null && r.base_level === 35).drink_types, null);
+  });
+});
+
+test("a batch's method follows its prep level (tf-087)", async () => {
+  const steps = async (who) => (await users[who].client.from('item_steps').select('body').eq('item_id', ids.batch)).data ?? [];
+  // Prep at Employee, but the method opens at Drink Creator.
+  assert.equal((await steps('prep')).length, 0);
+  assert.equal((await steps('creator')).length, 1);
+  await service.from('items').update({ override_prep_level: null }).eq('id', ids.batch);
+  assert.equal((await steps('prep')).length, 1);
+});

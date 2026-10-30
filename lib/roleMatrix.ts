@@ -133,13 +133,45 @@ export interface RolePreset {
   /** Its permissions, given the built-in role's at this venue. */
   on: (base: string[]) => string[];
   ends?: boolean;
+  /** A department: the drink kinds it adds and edits (tf-059, dec-25). */
+  drinkTypes?: DrinkType[];
 }
 
 export const ROLE_PRESETS: RolePreset[] = [
   { id: 'apprentice', name: 'Apprentice', base_level: 20, on: (base) => [...new Set([...base, 'specs', 'prep'])] },
   { id: 'head', name: 'Head bartender', base_level: 35, on: (base) => [...new Set([...base, 'staff', 'publish'])] },
   { id: 'takeover', name: 'Takeover bartender', base_level: 30, on: () => ['menu', 'specs', 'locations'], ends: true },
+  // Adds beers and wines: no costs or house-made recipes, and only their own kinds (tf-059).
+  {
+    id: 'beer-wine',
+    name: 'Beer and wine',
+    base_level: 30,
+    on: (base) => [...new Set([...base.filter((c) => c !== 'costs' && c !== 'house_made'), 'edit_drinks'])],
+    drinkTypes: ['beer', 'wine'],
+  },
 ];
+
+/** The drink kinds a venue role can be limited to (venue_roles.drink_types). */
+export const DRINK_TYPES = [
+  { id: 'cocktail', label: 'Cocktails' },
+  { id: 'beer', label: 'Beer' },
+  { id: 'wine', label: 'Wine' },
+] as const;
+export type DrinkType = (typeof DRINK_TYPES)[number]['id'];
+
+/** Every kind picked is no limit, so it saves as null (as every role had before). */
+export function drinkTypesToSave(picked: readonly DrinkType[] | null): DrinkType[] | null {
+  if (!picked || picked.length === 0 || picked.length === DRINK_TYPES.length) return null;
+  return DRINK_TYPES.map((t) => t.id).filter((t) => picked.includes(t));
+}
+
+/** "Beer and wine only", or null for every kind. */
+export function drinkTypesLine(types: readonly string[] | null | undefined): string | null {
+  if (!types?.length) return null;
+  const words = DRINK_TYPES.filter((t) => types.includes(t.id)).map((t) => t.label.toLowerCase());
+  const joined = words.length < 2 ? words.join('') : `${words.slice(0, -1).join(', ')} and ${words[words.length - 1]}`;
+  return `${joined.charAt(0).toUpperCase()}${joined.slice(1)} only`;
+}
 
 function list(ids: string[]): string {
   const words = ids.map((id) => ROWS.find((r) => r.id === id)?.short ?? id);

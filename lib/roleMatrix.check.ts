@@ -4,7 +4,7 @@ import assert from 'node:assert/strict';
 
 import {
   roleLine,
-  cell, columnCaption, dayOfEnd, endOfDay, endsLabel, isChangedBuiltIn, isLocked, limitTo, overridesFor, reachCeiling, ROLE_PRESETS, roleSummary,
+  cell, columnCaption, dayOfEnd, endOfDay, endsLabel, isChangedBuiltIn, isLocked, limitTo, overridesFor, reachCeiling, ROLE_PRESETS, roleSummary, drinkTypesToSave, drinkTypesLine,
   isCapability, today, toCapability, toggleLine, withinReach, withToggle, type MatrixColumn,
 } from './roleMatrix';
 import { agoLabel, memberRoleName, memberSinceLine } from './team';
@@ -61,6 +61,15 @@ assert.deepEqual(preset('apprentice').on(employee.capabilities).sort(), ['locati
 assert.ok(preset('head').on(['menu', 'edit_drinks']).includes('staff'));
 assert.deepEqual(preset('takeover').on(['menu', 'talking_points', 'photos']), ['menu', 'specs', 'locations']);
 assert.ok(preset('takeover').ends && !preset('apprentice').ends);
+// Beer and wine (tf-059): edits drinks, no costs or house-made recipes, its own kinds only.
+assert.deepEqual(preset('beer-wine').on(['menu', 'costs', 'house_made', 'specs']).sort(), ['edit_drinks', 'menu', 'specs']);
+assert.deepEqual(preset('beer-wine').drinkTypes, ['beer', 'wine']);
+assert.deepEqual(drinkTypesToSave(['wine', 'beer']), ['beer', 'wine']);
+assert.equal(drinkTypesToSave(['cocktail', 'beer', 'wine']), null);
+assert.equal(drinkTypesToSave([]), null);
+assert.equal(drinkTypesLine(['beer', 'wine']), 'Beer and wine only');
+assert.equal(drinkTypesLine(['cocktail']), 'Cocktails only');
+assert.equal(drinkTypesLine(null), null);
 assert.match(today(Date.parse('2026-10-12T12:00:00')), /^2026-10-12$/);
 
 // An end date covers the whole picked day, and reads back as that day.
