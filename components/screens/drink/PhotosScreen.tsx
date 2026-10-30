@@ -23,7 +23,7 @@ import type { DatabaseItem } from '@/types/types';
 /** What the selected slot says about itself, in words. */
 function slotNote(shot: PhotoShot): { lead: string; rest: string } {
   const what = shot.label.toLowerCase();
-  if (shot.status === 'photo') return { lead: 'Photographed.', rest: 'A new photo replaces it.' };
+  if (shot.status === 'photo') return shot.angle === 'hero' ? { lead: 'Photographed.', rest: 'A new photo becomes the main one; the others stay.' } : { lead: 'Photographed.', rest: 'A new photo replaces it.' };
   if (shot.status === 'outdated') return { lead: 'May be out of date.', rest: 'The spec changed after it was taken. An editor confirms it; photos are never swapped silently.' };
   return { lead: `No ${what} photo yet.`, rest: 'The drawing is made from the spec. It stands in until someone photographs the real thing.' };
 }
@@ -65,7 +65,8 @@ function Photos({ item, start }: { item: DatabaseItem; start?: string }) {
   const choose = async (shoot: boolean) => {
     try {
       const uri = shoot ? await takeDrinkPhoto({ cutout: true }) : (await pickDrinkPhotos({ cutout: true }))[0];
-      if (uri) add.mutate({ angle: shot.angle as 'hero', uri, replaces: shot.photoLinkIds });
+      // The hero keeps its other photos (Eddie's set): the new one leads them.
+      if (uri) add.mutate({ angle: shot.angle as 'hero', uri, replaces: shot.angle === 'hero' ? [] : shot.photoLinkIds });
     } catch {
       showMessage(shoot ? "Couldn't open the camera" : "Couldn't open your photos", 'Try again, or choose a photo from your library.');
     }

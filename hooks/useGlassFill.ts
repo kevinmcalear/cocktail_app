@@ -3,6 +3,7 @@ import { useMemo } from 'react';
 import { barGlassFor, useBarGlassware, type BarGlass } from '@/hooks/useBarGlassware';
 import { useDilutionDefaults } from '@/hooks/useDrinkMath';
 import { useDropdowns } from '@/hooks/useDropdowns';
+import { useBarFeature } from '@/hooks/useVenueFeatures';
 import { classifyMethod } from '@/lib/batch';
 import { orderedMethodIds } from '@/lib/drinkMethods';
 import { fitToWashLine, glassFill, washLine, type Fill, type FillLine, type Fitted, type WashLine } from '@/lib/glassFill';
@@ -40,17 +41,19 @@ export interface GlassFillResult {
  * How full the venue's glass is with this drink (Fit it to the glass, QA
  * Q38): the venue's main glass of the drink's glass type, its wash line, the
  * serve with the method's dilution and any ice, and the spec fitted to the
- * line. Null for a drink with no venue, no glass the venue lists, no wash
- * line or capacity, or nothing the fill can say (lib/glassFill.ts).
+ * line. Null for a drink with no venue, a venue without Advanced options
+ * (jam dec-24: the wash line is optional), no glass the venue lists, no
+ * wash line the venue set, or nothing the fill can say (lib/glassFill.ts).
  */
 export function useGlassFill(drink: FillDrink | null): GlassFillResult | null {
   const { data: dropdowns } = useDropdowns();
   const barId = drink?.barId ?? null;
   const { data: glasses } = useBarGlassware(barId);
   const { data: defaults } = useDilutionDefaults(barId);
+  const advanced = useBarFeature(barId, 'advanced');
   return useMemo(() => {
     // Wait for the venue's dilution too, or the house rule shows first and the note flickers.
-    if (!drink || !glasses || !dropdowns || (barId && !defaults)) return null;
+    if (!advanced || !drink || !glasses || !dropdowns || (barId && !defaults)) return null;
     const row = dropdowns.glassware.find((g) => g.id === drink.glasswareId);
     const name = row?.name;
     const shape = name ? glassOf(name, row.glass) : null;
@@ -64,7 +67,7 @@ export function useGlassFill(drink: FillDrink | null): GlassFillResult | null {
     const fill = glassFill(drink.lines, options);
     if (typeof fill === 'string') return null;
     return { glassName: glass.name ?? name!, venueGlass: glass, line, fill, fitted: fitToWashLine(drink.lines, options) };
-  }, [drink, glasses, dropdowns, defaults, barId]);
+  }, [advanced, drink, glasses, dropdowns, defaults, barId]);
 }
 
 type FillItem = Pick<DatabaseItem, 'bar_id' | 'glassware_id' | 'item_methods' | 'ice_id' | 'ice_build' | 'ice_per_serve_g' | 'dilution_pct'> & { glass_model_id?: string | null };

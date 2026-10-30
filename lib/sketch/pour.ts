@@ -20,11 +20,13 @@ export function pourSketch(kind: 'Beer' | 'Wine', name: string, glass?: string |
   const beer = kind === 'Beer';
   const line = beer ? (/\b(beer|ale|ipa|lager|stout|porter|pilsner|cider)\b/i.test(name) ? name : `${name} beer`) : wineStyle(name);
   const sparkling = !beer && SPARKLING.test(name);
-  return draftSketchInputs({
+  const inputs = draftSketchInputs({
     name,
     glass: glass ?? (beer ? 'Pint' : sparkling ? 'Flute' : 'Wine glass'),
     ice: null,
     methods: ['Build'],
     lines: [{ name: line, amount: beer ? 425 : 150, unit: 'ml' }],
   });
+  // Every beer pours with a head, as on its page (lib/beerWineWizard.ts beerWineSketch): a stout's is tan.
+  return beer ? { ...inputs, foam: /\b(stout|porter)\b/i.test(name) ? 'crema' : 'cap' } : inputs;
 }

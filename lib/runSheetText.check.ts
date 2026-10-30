@@ -2,7 +2,7 @@
 import assert from 'node:assert/strict';
 
 import { buildRunSheet } from './runSheet';
-import { nightLine, partyList, partyListText, runSheetText, sheetHead } from './runSheetText';
+import { needName, nightLine, partyList, partyListText, runSheetText, sheetHead } from './runSheetText';
 
 process.env.TZ = 'UTC';
 assert.equal(nightLine('2026-10-22T19:00:00Z', '2026-10-23T02:00:00Z'), 'Thu 22 Oct · 7 pm to 2 am');
@@ -34,11 +34,18 @@ assert.deepEqual(sheetHead(sheet, menu), {
   name: 'Halloween takeover',
   when: "Thu 22 Oct · 7 pm · Caretaker's Cottage",
   who: 'Little Rye visiting · with Mill & Ash Gin · 200 serves across 1 drink',
+  extra: null,
 });
+assert.equal(sheetHead(buildRunSheet({ ...input, marginPct: 10 }), menu).extra, 'Amounts to make and buy include 10% extra for testing and tasting.');
+// Who brings what says what each thing is: a glass, a garnish (i-runsheet-vague).
+assert.equal(needName({ name: 'Nude pony', group: 'glassware' }), 'Nude pony (glass)');
+assert.equal(needName({ name: 'Cherry', group: 'garnish' }), 'Cherry (garnish)');
+assert.equal(needName({ name: 'Rocks glass', group: 'glassware' }), 'Rocks glass');
+assert.equal(needName({ name: 'Gin', group: 'spirits' }), 'Gin');
 const text = runSheetText(sheet, menu);
 assert.match(text, /^RUN SHEET\nHalloween takeover\n/);
-assert.match(text, /Mill & Ash Gin \(Brand\)\n- Gin: 6 L · 9 × 700 ml/);
-assert.match(text, /Caretaker's Cottage \(Venue\)\n- Orange twist: 200\n- Rocks glass: 200/);
+assert.match(text, /MILL & ASH GIN \(Brand\)\nSpirits and liqueurs:\n- Gin: 6 L · buy 9 × 700 ml/);
+assert.match(text, /CARETAKER'S COTTAGE \(Venue\)\nGarnish:\n- Orange twist \(garnish\): 200\nGlassware:\n- Rocks glass: 200/);
 assert.match(text, /Negroni × 200\nRocks glass · Orange twist\n- Gin: 30 ml, 6 L for 200/);
 assert.doesNotMatch(text, /Martini|Little Rye \(Visiting/, 'no serves, nothing to bring: left out');
 
@@ -46,10 +53,10 @@ assert.doesNotMatch(text, /Martini|Little Rye \(Visiting/, 'no serves, nothing t
 const mill = sheet.parties.find((p) => p.id === 'mill')!;
 const list = partyList(sheet, menu, mill);
 assert.deepEqual([list.eyebrow, list.title, list.when, list.from, list.ask], ['FOR MILL & ASH GIN', 'Your list for Halloween takeover', "Thu 22 Oct · 7 pm · Caretaker's Cottage", "From Caretaker's Cottage", 'Please bring']);
-assert.deepEqual(list.others, ["Caretaker's Cottage: Orange twist 200, Rocks glass 200"]);
+assert.deepEqual(list.others.map((o) => [o.name, o.needs.map((n) => n.name)]), [["Caretaker's Cottage", ['Orange twist', 'Rocks glass']]]);
 assert.equal(partyListText(list), [
   'FOR MILL & ASH GIN', 'Your list for Halloween takeover', "Thu 22 Oct · 7 pm · Caretaker's Cottage", "From Caretaker's Cottage", '',
-  'PLEASE BRING', '- Gin: 6 L · 9 × 700 ml', '', 'EVERYONE ELSE', "- Caretaker's Cottage: Orange twist 200, Rocks glass 200",
+  'PLEASE BRING', '- Gin: 6 L · buy 9 × 700 ml', '', 'EVERYONE ELSE', "Caretaker's Cottage (Venue)", '- Orange twist (garnish): 200', '- Rocks glass: 200',
 ].join('\n'));
 assert.equal(partyList(sheet, menu, sheet.parties[0]).ask, 'Please have ready', 'the bar it is at has things ready');
 
@@ -62,7 +69,7 @@ assert.equal(ryeList.claim, 'Negroni is on Cocktail, credited to Little Rye. Cla
 assert.equal(partyListText(ryeList), [
   'FOR LITTLE RYE', 'Your list for Halloween takeover', "Thu 22 Oct · 7 pm · Caretaker's Cottage", "From Caretaker's Cottage", '',
   'YOUR DRINKS', '- Negroni × 200', '',
-  'EVERYONE ELSE', "- Caretaker's Cottage: Orange twist 200, Rocks glass 200", '- Mill & Ash Gin: Gin 6 L', '',
+  'EVERYONE ELSE', "Caretaker's Cottage (Venue)", '- Orange twist (garnish): 200', '- Rocks glass: 200', 'Mill & Ash Gin (Brand)', '- Gin: 6 L · buy 9 × 700 ml', '',
   'Negroni is on Cocktail, credited to Little Rye. Claim your page to see it: https://cocktail.test/p/littlerye',
 ].join('\n'), 'nothing to bring: no Please bring');
 assert.equal(partyList(theirs, menu, rye).claim, null, 'no page to claim: no claim line');

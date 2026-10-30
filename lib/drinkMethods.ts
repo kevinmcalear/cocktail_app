@@ -31,7 +31,8 @@ const METHOD_ICONS: [RegExp, string][] = [
     [/shak/, 'Shaken'],
     [/stir/, 'Stirred'],
     [/throw/, 'Thrown'],
-    [/swizzl/, 'Swizzled'],
+    // A churn is a swizzle's cousin (crushed ice, in the glass): it shares the drawing.
+    [/swizzl|churn/, 'Swizzled'],
     [/blend|blitz/, 'Blended'],
     [/flask/, 'Flask Pour'],
     [/float|layer/, 'Float'],

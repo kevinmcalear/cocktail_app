@@ -7,7 +7,7 @@ export const SERVICE_ANGLES: readonly { angle: ServiceAngle; label: string; brie
   { angle: 'side', label: 'Side', brief: 'On the bar top, eye level' },
   { angle: 'top', label: 'Top', brief: 'Straight down, glass centred' },
   { angle: 'garnish', label: 'Garnish', brief: 'Close up' },
-  { angle: 'handoff', label: 'Hand-off', brief: "From the guest's side" },
+  { angle: 'handoff', label: 'Guest view', brief: "From the guest's side" },
 ];
 
 /**
@@ -35,10 +35,15 @@ export interface ServiceShot {
 
 const rank = (link: ItemImageLink) => (link.is_generated ? 2 : link.outdated_since ? 1 : 0);
 
-/** One angle's best picture: a current photo, then an outdated one, then a sketch. */
+/**
+ * One angle's best picture: a current photo, then an outdated one, then a
+ * sketch. A service angle shows its newest; the hero shows the main photo
+ * (the lowest sort_order, as the drink page leads with it).
+ */
 function shotFor<A extends ImageAngle>(usable: ItemImageLink[], angle: A, label: string, brief: string, mine: (link: ItemImageLink) => boolean) {
   const links = usable.filter(mine);
-  const best = [...links].sort((a, b) => rank(a) - rank(b) || Number(b.sort_order ?? 0) - Number(a.sort_order ?? 0))[0];
+  const order = angle === 'hero' ? 1 : -1;
+  const best = [...links].sort((a, b) => rank(a) - rank(b) || order * (Number(a.sort_order ?? 0) - Number(b.sort_order ?? 0)))[0];
   const picture: ItemPicture | null = best ? toPicture(best) : null;
   const status: ShotStatus = !picture ? 'missing' : picture.isSketch ? 'sketch' : picture.isOutdated ? 'outdated' : 'photo';
   const photoLinkIds = links.filter((link) => !link.is_generated && link.id).map((link) => link.id!);

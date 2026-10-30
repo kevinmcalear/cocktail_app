@@ -1,6 +1,7 @@
 import { keepPreviousData, useQuery } from '@tanstack/react-query';
 
 import { chunk } from '@/lib/commandSearchGrid';
+import { isRiff } from '@/lib/lineage';
 import { ingredientLine, readingName } from '@/lib/menus';
 import { sortRecipesByOrder } from '@/lib/recipeUtils';
 import { supabase } from '@/lib/supabase';
@@ -14,7 +15,7 @@ export interface DrinkSource {
   classic: boolean;
   /** Who made it even when it's a classic ("Fosco Scarselli"), for a pairing row's maker line. */
   maker: string | null;
-  /** Names a classic it riffs on. */
+  /** Riffs on the drink it names: another name, not a bar's own version of it (lib/lineage isRiff). */
   riff: boolean;
   /** Bars' versions of it (drinks naming it as their classic): "3 bar versions". */
   versions: number;
@@ -22,9 +23,11 @@ export interface DrinkSource {
 
 interface SourceRow {
   id: string;
+  name: string;
   is_catalog: boolean | null;
   origin: string | null;
   riff_of_id: string | null;
+  riff_of: { name: string; classic_aliases: { alias: string }[] | null } | null;
   creator: { display_name: string } | null;
   origin_bar: { display_name: string; city: string | null } | null;
   versions: { count: number }[] | null;
@@ -46,17 +49,18 @@ export function useDrinkSources(itemIds: readonly string[]) {
         chunk(ids, 150).map(async (batch) => {
           const { data, error } = await supabase
             .from('items')
-            .select('id, is_catalog, origin, riff_of_id, creator:profiles!items_creator_profile_id_fkey(display_name), origin_bar:profiles!items_origin_bar_profile_id_fkey(display_name, city), versions:items!riff_of_id(count)')
+            .select('id, name, is_catalog, origin, riff_of_id, riff_of:riff_of_id(name, classic_aliases(alias)), creator:profiles!items_creator_profile_id_fkey(display_name), origin_bar:profiles!items_origin_bar_profile_id_fkey(display_name, city), versions:items!riff_of_id(count)')
             .in('id', batch)
             .eq('versions.is_catalog', false);
           if (error) throw error;
-          return (data ?? []) as SourceRow[];
+          // riff_of_id(name) is the parent (as useLineage reads it); the generated types can't tell the two items links apart.
+          return (data ?? []) as unknown as SourceRow[];
         })
       );
       return Object.fromEntries(
         batches.flat().map((r) => {
           const classic = !!r.is_catalog || r.origin === 'Classic';
-          return [r.id, { by: classic ? 'Classic' : (r.creator?.display_name ?? r.origin_bar?.display_name ?? null), city: r.origin_bar?.city ?? null, classic, maker: r.creator?.display_name ?? r.origin_bar?.display_name ?? null, riff: !classic && !!r.riff_of_id, versions: r.versions?.[0]?.count ?? 0 }];
+          return [r.id, { by: classic ? 'Classic' : (r.creator?.display_name ?? r.origin_bar?.display_name ?? null), city: r.origin_bar?.city ?? null, classic, maker: r.creator?.display_name ?? r.origin_bar?.display_name ?? null, riff: !classic && !!r.riff_of_id && (!r.riff_of || isRiff(r, { name: r.riff_of.name, aliases: r.riff_of.classic_aliases?.map((a) => a.alias) })), versions: r.versions?.[0]?.count ?? 0 }];
         })
       );
     },

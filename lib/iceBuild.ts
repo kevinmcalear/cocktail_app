@@ -195,7 +195,7 @@ function allTips<T extends IceName>(f: TipFacts<T>): IceTip<T>[] {
   }
   const loose = only && isLoose(only.ice) && !only.tin;
   // Swizzled over crushed: top it up and mound it (Queen's Park, Red Swizzle).
-  if (loose && kind !== 'pebble' && /swizzl/.test(methods) && only.to !== 'mound') {
+  if (loose && kind !== 'pebble' && /swizzl|churn/.test(methods) && only.to !== 'mound') {
     out.push({ id: 'swizzle', title: 'Top it with more crushed?', body: 'Swizzle over crushed, then top with fresh crushed and mound it over the rim.', yes: 'Top it up', layers: [{ ice: only.ice, to: 'rim', packed: only.packed }, { ice: only.ice, to: 'mound' }] });
   }
   // A julep is filled up and over the rim.

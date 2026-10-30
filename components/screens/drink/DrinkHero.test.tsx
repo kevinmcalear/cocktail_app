@@ -73,3 +73,15 @@ test('one picture: no count, and no picture shows the glass', async () => {
   expect(screen.getByLabelText('Daiquiri, no photo yet')).toBeTruthy();
   expect(screen.queryAllByRole('button')).toHaveLength(0);
 });
+
+test('people who can edit it get a Photos button beside the count (Eddie, 29 Oct)', async () => {
+  const onPhotos = jest.fn();
+  await renderWithTamagui(
+    <BackbarTheme>
+      <DrinkHero name="Martinez" pictures={pictures} glass={null} height={320} fade onPhotos={onPhotos} />
+    </BackbarTheme>
+  );
+  await layOut();
+  await fireEvent.press(screen.getByRole('button', { name: 'Photos, 3: add, crop or choose the main one' }));
+  expect(onPhotos).toHaveBeenCalled();
+});

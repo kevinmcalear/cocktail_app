@@ -1,5 +1,8 @@
-import * as ImagePicker from 'expo-image-picker';
 import { decode } from 'base64-arraybuffer';
+import { requireOptionalNativeModule } from 'expo';
+import * as FileSystem from 'expo-file-system/legacy';
+import * as ImagePicker from 'expo-image-picker';
+import { Platform } from 'react-native';
 
 import { imageExtFromUri, uriToBase64 } from '@/lib/imageBase64';
 import { isHeroLink } from '@/lib/itemImages';
@@ -32,6 +35,28 @@ export async function takeDrinkPhoto({ cutout = false, square = false }: PickOpt
   const result = await ImagePicker.launchCameraAsync({ allowsEditing: true, aspect: square ? [1, 1] : [4, 5], quality: 0.8 });
   const uri = result.canceled ? null : (result.assets[0]?.uri ?? null);
   return uri && cutout ? offerCutout(uri) : uri;
+}
+
+/** Whether this build can crop a photo it already has. Builds from before Draw my glass lack the native module. */
+export function canCropPhotos(): boolean {
+  return Platform.OS === 'web' || !!requireOptionalNativeModule('ExpoImageManipulator');
+}
+
+/**
+ * A new local copy of a photo cut to `rect` (lib/photoCrop.ts). A PNG (a
+ * cut-out) stays a PNG, so its background stays clear. The photo can be saved
+ * already (a URL) or just picked.
+ */
+export async function cropPhoto(uri: string, rect: { originX: number; originY: number; width: number; height: number }, png: boolean): Promise<string> {
+  // Loaded only here: importing it on a build without the module throws.
+  const { ImageManipulator, SaveFormat } = await import('expo-image-manipulator');
+  const web = Platform.OS === 'web';
+  // Native crops local files: a saved photo is fetched to the cache first.
+  const local = !web && /^https?:/.test(uri) ? (await FileSystem.downloadAsync(uri, `${FileSystem.cacheDirectory}crop_${Date.now()}.${png ? 'png' : 'jpg'}`)).uri : uri;
+  const image = await ImageManipulator.manipulate(local).crop(rect).renderAsync();
+  const saved = await image.saveAsync({ compress: 0.85, format: png ? SaveFormat.PNG : SaveFormat.JPEG, base64: web });
+  // The web hands back a blob: URL, which has no file type; a data: URL keeps it for the upload (imageExtFromUri).
+  return web && saved.base64 ? `data:image/${png ? 'png' : 'jpeg'};base64,${saved.base64}` : saved.uri;
 }
 
 /** Uploads a local photo to the drinks bucket at `folder/`; returns its new `images` row id. */

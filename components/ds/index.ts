@@ -19,7 +19,7 @@ export { PressableScale } from './PressableScale';
 export { ReviewMark, ReviewRow, TextLink, type ReviewChoice, type ReviewState } from './ReviewRow';
 export { Segmented } from './Segmented';
 export { SpecRow, type SpecRowProps } from './SpecRow';
-export { Surface, useBreakpoint, useGutter, type Breakpoint } from './Surface';
+export { BreakpointOverride, Surface, useBreakpoint, useGutter, type Breakpoint } from './Surface';
 export { Switch } from './Switch';
 export { Tag, type TagTone } from './Tag';
 export { ToastHost, useToast } from './Toast';

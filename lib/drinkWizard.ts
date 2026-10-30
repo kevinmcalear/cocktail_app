@@ -63,6 +63,8 @@ export interface WizardLine extends WizardPick {
   note?: string;
   /** Optional in the drink: a guest can leave it out. */
   optional?: boolean;
+  /** Floated on top, in its own amount and unit: "15 ml float" of red wine (Eddie tf-060). Saved as recipes.is_float. */
+  float?: boolean;
   /** A house prep added by name only ("Just add the name", or Later in the prep builder): its recipe is to write, and the save reminds you. */
   later?: boolean;
   /** A batch read from a file (lib/bringInDraft): the drink's own lines and the bottle, saved as a Batch prep. */
@@ -310,7 +312,7 @@ export const COMMON_INGREDIENTS = [
 ] as const;
 /** The method step's chips, in its two groups, all shown. A float, mist or rinse is on the Finish step. */
 export const METHOD_GROUPS: readonly { label: string; methods: readonly string[] }[] = [
-  { label: 'Mix', methods: ['Shake', 'Stir', 'Build', 'Throw', 'Swizzle', 'Blend', 'Muddle'] },
+  { label: 'Mix', methods: ['Shake', 'Stir', 'Build', 'Throw', 'Swizzle', 'Churn', 'Blend', 'Muddle'] },
   { label: 'Air and texture', methods: ['Dry shake', 'Reverse dry shake', 'Whip (iSi)', 'Whip (whisk or frother)', 'Top with foam'] },
 ];
 export const COMMON_METHODS = METHOD_GROUPS.flatMap((g) => g.methods);
@@ -321,6 +323,8 @@ const METHOD_DETAIL: Record<string, string> = {
   build: 'in the glass',
   throw: 'between two tins',
   swizzle: 'on crushed ice',
+  // Eddie tf-061: churned in the glass on crushed ice with a spoon, like a swizzle.
+  churn: 'in the glass, on crushed ice',
   blend: 'with ice',
   muddle: 'in the tin first',
   'dry shake': '15 s, no ice',
@@ -350,7 +354,8 @@ export function methodIceLabel(methods: readonly string[]): string | null {
   if (/stir/.test(all)) return 'Stirred down with';
   if (/swizzl/.test(all)) return 'Swizzled with';
   if (/throw/.test(all)) return 'Thrown over';
-  if (/build|built/.test(all)) return null;
+  // Churned in the glass, on the ice it's served on (tf-061).
+  if (/build|built|churn/.test(all)) return null;
   return 'Made with';
 }
 
@@ -416,7 +421,8 @@ export const GARNISH_CHIPS: readonly GarnishChip[] = [
   g('Lemon discard', 'Lemon', 'discard'),
   g('Orange discard', 'Orange', 'discard'),
   g('Grapefruit discard', 'Grapefruit', 'discard'),
-  g('Grated nutmeg', 'Nutmeg', 'pinch'),
+  // Grated, with no amount to set (Eddie tf-062): "Grated nutmeg".
+  g('Grated nutmeg', 'Nutmeg', 'grated', ''),
   g('Salt rim', 'Salt', 'rim'),
   g('Coffee beans', 'Coffee beans', 'each', '3'),
   g('Cucumber', 'Cucumber', 'slice'),
@@ -464,7 +470,7 @@ export const FINISH_CHIPS: readonly FinishChip[] = [
 ];
 
 /** The units a finish line offers: on top first, then on the glass. */
-export const FINISH_UNITS = ['drop', 'dash', 'spray', 'rinse', 'float', 'each', 'peel', 'twist', 'discard', 'wheel', 'sprig', 'leaf', 'slice', 'wedge', 'rim', 'pinch'] as const;
+export const FINISH_UNITS = ['drop', 'dash', 'spray', 'rinse', 'float', 'each', 'peel', 'twist', 'discard', 'wheel', 'sprig', 'leaf', 'slice', 'wedge', 'rim', 'pinch', 'grated'] as const;
 
 /**
  * How a finish line starts, from its name: oils in drops (three), saline and
@@ -485,10 +491,14 @@ const ON_GLASS = /^(peel|twist|wheel|slice|sprig|leaf|wedge|rim|pinch|rinse|floa
 /** A finish line in words: "Orange peel", "Absinthe rinse", "3 drops Mint oil", "3 Coffee beans". */
 export function finishLabel(l: Pick<WizardLine, 'name' | 'amount' | 'unit'>): string {
   const a = tidyAmount(l.amount);
+  if (l.unit === 'grated') return grated(l.name);
   if (ON_GLASS.test(l.unit)) return `${l.name} ${l.unit}`;
   if (l.unit === 'each' || !l.unit) return a && a !== '1' ? `${a} ${l.name}` : l.name;
   return a ? `${amountText(a, l.unit)} ${l.name}` : `${l.name}, ${l.unit}`;
 }
+
+/** "Grated nutmeg": the garnish grated over the top, its name kept lower case after. */
+export const grated = (name: string) => `Grated ${name.charAt(0).toLowerCase()}${name.slice(1)}`;
 
 // The amounts a stepper walks through, by unit: the measures bartenders pour.
 const LADDERS: Record<string, number[]> = {
@@ -594,7 +604,7 @@ export interface SourceSpec {
   ice?: { id: string; name: string } | null;
 }
 
-const GARNISH_UNIT = /^(peel|twist|wheel|slice|sprig|leaf|leaves|wedge|zest|garnish|spray|rinse|float|rim|pinch)s?$/;
+const GARNISH_UNIT = /^(peel|twist|wheel|slice|sprig|leaf|leaves|wedge|zest|garnish|spray|rinse|float|rim|pinch|grated)s?$/;
 const GARNISH_EACH = /cherr|olive|coffee bean|flower|petal|nutmeg|onion|mint|berry|berries/;
 const POUR_ML: Record<string, number> = { ml: 1, cl: 10, oz: 30 };
 const OZ_STEPS = [0.25, 0.5, 0.75, 1, 1.25, 1.5, 1.75, 2, 2.5, 3, 4];
@@ -623,7 +633,8 @@ export function draftFromSpec(spec: SourceSpec, usual: string): Partial<WizardDr
     const unit = (r.unit ?? '').trim().toLowerCase();
     const pick = { id: r.ingredient.id, name: r.ingredient.name };
     const garnish = GARNISH_UNIT.test(unit) || (unit === 'each' && GARNISH_EACH.test(pick.name.toLowerCase()));
-    if (garnish) garnishes.push(newLine(pick, unit, r.amount === null ? '1' : fmt(r.amount)));
+    // Grated has no amount to set (tf-062): it stays empty.
+    if (garnish) garnishes.push(newLine(pick, unit, r.amount === null ? (unit === 'grated' ? '' : '1') : fmt(r.amount)));
     else {
       const pour = convertPour(r.amount, unit || usual, usual);
       lines.push(newLine(pick, pour.unit, pour.amount));

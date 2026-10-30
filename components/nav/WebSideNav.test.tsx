@@ -65,7 +65,7 @@ test('a venue with nothing switched on has Library, Menus and Discover, and its 
   mockFeatures = [];
   mockPathname = '/library';
   await renderWithTamagui(<WebSideNav />);
-  expect(links()).toEqual(['Library', 'Menus', 'Discover', 'My team', 'Features', 'Brand', 'Roles and access', 'Venue settings', 'You: Kevin M., Admin at Caretakers']);
+  expect(links()).toEqual(['Library', 'Menus', 'Discover', 'Glassware', 'My team', 'Features', 'Brand', 'Roles and access', 'Venue settings', 'You: Kevin M., Admin at Caretakers']);
   expect(screen.queryByText('this week list')).toBeNull();
   await fireEvent.press(screen.getByRole('link', { name: 'Menus' }));
   expect(mockNavigate).toHaveBeenLastCalledWith('/menus');
@@ -77,7 +77,7 @@ test('venue mode lists search and the venue tabs, marking the current one', asyn
   await renderWithTamagui(<WebSideNav />);
 
   // The canvas order: the tabs and History, Back bar, then the Venue section and you at the foot.
-  expect(links()).toEqual(['Tonight', 'Library', 'Menus', 'Discover', 'History', 'Back bar', 'My team', 'Features', 'Brand', 'Roles and access', 'Venue settings', 'You: Kevin M., Admin at Caretakers']);
+  expect(links()).toEqual(['Tonight', 'Library', 'Menus', 'Discover', 'History', 'Back bar', 'Glassware', 'My team', 'Features', 'Brand', 'Roles and access', 'Venue settings', 'You: Kevin M., Admin at Caretakers']);
   expect(screen.getByText('this week list')).toBeTruthy();
   expect(screen.getByRole('link', { name: 'Library', selected: true })).toBeTruthy();
   expect(screen.getByRole('link', { name: 'Tonight', selected: false })).toBeTruthy();

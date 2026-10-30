@@ -40,11 +40,12 @@ interface MadeRow {
 const madeKey = (userId: string | null) => ['made', userId] as const;
 
 /** Everything you've made at home, latest first. Private to you (made_drinks). */
-export function useMadeDrinks() {
+/** `live` false: none (a preview of a drink page). */
+export function useMadeDrinks(live = true) {
   const userId = useUserId();
   return useQuery({
     queryKey: madeKey(userId),
-    enabled: !!userId,
+    enabled: live && !!userId,
     staleTime: 60_000,
     queryFn: async (): Promise<MadeDrink[]> => {
       // ponytail: one page. People log dozens of nights in, not thousands; page by made_on past that.
