@@ -64,6 +64,7 @@ test('a venue with nothing switched on: Menus, then Venue with Features, then Se
   await renderWithTamagui(<VenueMenuSheet onClose={jest.fn()} />);
   expect(screen.getAllByRole('link').map((el) => el.props.accessibilityLabel)).toEqual([
     'Menus. 1 on',
+    'Glassware',
     'My team. 9 people',
     'Features',
     'Brand',
@@ -86,6 +87,7 @@ test('at a venue: titled with it, its working pages first, then Venue and You', 
   expect(places).toEqual([
     'Menus. 1 on',
     'Back bar. 3 waiting',
+    'Glassware',
     'This week',
     'My team. 9 people',
     'Features. 2 of 8 on',
