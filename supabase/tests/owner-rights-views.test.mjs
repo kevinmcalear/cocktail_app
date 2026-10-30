@@ -41,7 +41,7 @@ const COLUMNS = {
   ],
   app_recipe_presentation: [
     'id', 'created_at', 'recipe_item_id', 'display_ingredient_id', 'amount', 'unit', 'preparation_notes', 'is_optional',
-    'parent_ingredient_id', 'ingredient_item_id', 'sort_order', 'at_service', 'part',
+    'parent_ingredient_id', 'ingredient_item_id', 'sort_order', 'at_service', 'part', 'is_float',
   ],
 };
 const OWNER_RIGHTS = Object.keys(COLUMNS);
@@ -105,14 +105,15 @@ describe('views that run with owner rights', () => {
         drinks[mode] = await one("INSERT INTO public.items (name, item_type, bar_id, publish_mode, parts) VALUES ($1, 'cocktail', $2, $3, $4) RETURNING id", [
           `Owner Rights ${mode} ${run}`, bar, mode, JSON.stringify([{ name: 'The coffee' }, { name: 'The cream', join: 'float' }]),
         ]);
-        await db.query("INSERT INTO public.recipes (recipe_item_id, ingredient_item_id, amount, unit) VALUES ($1, $2, 45, 'ml')", [drinks[mode], gin]);
+        // A floated line (20261130100000): is_float is only a yes or no on a line the reader can already see.
+        await db.query("INSERT INTO public.recipes (recipe_item_id, ingredient_item_id, amount, unit, is_float) VALUES ($1, $2, 45, 'ml', true)", [drinks[mode], gin]);
       }
       const look = async () => {
         const out = {};
         for (const [mode, id] of Object.entries(drinks)) {
           const row = (await db.query('SELECT publish_mode, parts FROM public.published_items WHERE id = $1', [id])).rows[0];
-          const lines = (await db.query('SELECT amount, unit FROM public.app_recipe_presentation WHERE recipe_item_id = $1', [id])).rows;
-          out[mode] = { listed: row?.publish_mode ?? null, parts: row?.parts?.map((p) => p.name) ?? null, lines: lines.map((l) => `${Number(l.amount)} ${l.unit}`) };
+          const lines = (await db.query('SELECT amount, unit, is_float FROM public.app_recipe_presentation WHERE recipe_item_id = $1', [id])).rows;
+          out[mode] = { listed: row?.publish_mode ?? null, parts: row?.parts?.map((p) => p.name) ?? null, lines: lines.map((l) => `${Number(l.amount)} ${l.unit}${l.is_float ? ' float' : ''}`) };
         }
         return out;
       };
@@ -125,7 +126,7 @@ describe('views that run with owner rights', () => {
       return { anon, signedIn };
     });
     const expected = {
-      spec: { listed: 'spec', parts: ['The coffee', 'The cream'], lines: ['45 ml'] },
+      spec: { listed: 'spec', parts: ['The coffee', 'The cream'], lines: ['45 ml float'] },
       description: { listed: 'description', parts: null, lines: [] },
       private: { listed: null, parts: null, lines: [] },
     };
