@@ -1,6 +1,7 @@
 import { StyleSheet, TextInput, View } from 'react-native';
 
 import { Button, Caption, DsText, GlassButton, GlassSurface, PressableScale, useDs } from '@/components/ds';
+import { RunSheetLink } from '@/components/screens/runSheet/parts';
 import { IconSymbol } from '@/components/ui/icon-symbol';
 import { displayFaces, radius, space, type } from '@/constants/tokens';
 
@@ -142,6 +143,8 @@ export function EditorSections({ editor, targetable, drag }: { editor: LayoutEdi
           <DsText variant="caption">Add a drink</DsText>
         </PressableScale>
       ) : null}
+      {/* Serves while the menu is being made, not only from the menu page after (tf-077). */}
+      {!home && editor.layout.sections.some((s) => s.drinks.length) ? <RunSheetLink menuId={editor.menu.id} before={editor.persist} /> : null}
     </View>
   );
 }

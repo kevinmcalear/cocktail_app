@@ -14,7 +14,8 @@ interface BatchActionsProps {
   canPrep: boolean;
   making: boolean;
   onMake: () => void;
-  onDilution: () => void;
+  /** Left out while the sheet shows only the simple batch. */
+  onDilution?: () => void;
   /** For the prep cards: each container's name, recipe, yield and how long it keeps (one for a drink in one part). */
   preps: BatchPrep[];
   /** The batch as text, to share. */
@@ -33,7 +34,7 @@ export function BatchActions({ name, barId, canPrep, making, onMake, onDilution,
   const make = making ? 'Done making' : barId ? 'Make now' : 'Make it, tick as I go';
   return (
     <View style={styles.block}>
-      <TextLink label="Dilution calculator ›" onPress={onDilution} />
+      {onDilution ? <TextLink label="Dilution calculator ›" onPress={onDilution} /> : null}
       {save.error ? <Caption tone="accent">{save.error.message || "Couldn't save it as house-made. Check your connection and try again."}</Caption> : null}
       <View style={styles.row}>
         {barId ? (

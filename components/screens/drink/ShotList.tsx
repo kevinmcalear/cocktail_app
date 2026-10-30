@@ -47,14 +47,14 @@ function AddPhotos({ itemId, shots, open, onToggle }: { itemId: string; shots: S
     <View style={styles.list}>
       <PressableScale
         accessibilityLabel={open ? 'Hide service photos' : 'Add service photos'}
-        accessibilityHint="Side, top, garnish, and the hand-off"
+        accessibilityHint="Side, top, garnish, and the guest view"
         aria-expanded={open}
         onPress={onToggle}
         style={styles.toggle}
       >
         <View style={styles.toggleCopy}>
           <Body>Add service photos</Body>
-          <Caption tone="muted">Side, top, garnish, and the hand-off</Caption>
+          <Caption tone="muted">Side, top, garnish, and the guest view</Caption>
         </View>
         <IconSymbol name={open ? 'chevron.up' : 'chevron.down'} size={16} color={ds.c.muted} />
       </PressableScale>

@@ -15,10 +15,10 @@ export type CollectTarget = { kind: 'drink'; itemId: string; releaseId?: string 
  * you to sign in; without a confirmed age, it asks for that first and then
  * collects (the database refuses the save otherwise). Render `sheet`.
  */
-export function useCollectToggle(target: CollectTarget, name: string) {
+export function useCollectToggle(target: CollectTarget, name: string, live = true) {
   const router = useRouter();
   const signedIn = useSignedIn();
-  const { data: collection } = useCollection();
+  const { data: collection } = useCollection(live);
   const age = useAgeGate();
   const collect = useCollect();
   const [error, setError] = useState<string | null>(null);

@@ -5,7 +5,7 @@ import { Body, Caption, DsText, IngredientThumb, PressableScale, useBreakpoint, 
 import { IconSymbol } from '@/components/ui/icon-symbol';
 import { backbar, fontFamilies, layout, radius, space, type } from '@/constants/tokens';
 import { withAlpha } from '@/lib/color';
-import { convertPour, QUICK_UNITS, stepAmount, type WizardLine } from '@/lib/drinkWizard';
+import { convertPour, FINISH_UNITS, QUICK_UNITS, stepAmount, type WizardLine } from '@/lib/drinkWizard';
 import { prepSummary, toFinishSummary } from '@/lib/prepKinds';
 import { tidyAmount } from '@/lib/specDefaults';
 import { techniqueById } from '@/lib/techniques';
@@ -13,6 +13,9 @@ import { techniqueById } from '@/lib/techniques';
 import { CombineTag } from './CombineTag';
 import { LineGrip } from './DragRow';
 import { WizardChip } from './WizardChrome';
+
+/** A spec line's units: the pours, then the finishes (a sprig, grated), so the editor's spec can garnish too (Eddie tf-062). */
+const LINE_UNITS = [...QUICK_UNITS, ...FINISH_UNITS.filter((u) => !(QUICK_UNITS as readonly string[]).includes(u))];
 
 /** Below this a row with the bottle stacks: grip, thumb, amount, unit, bottle and remove leave the name too little. */
 const NARROW = 580;
@@ -57,7 +60,7 @@ interface LineRowProps {
  * On a phone the controls sit under the name, and the bottle and remove
  * beside it; on a wider screen they all share its line, on the right.
  */
-export function LineRow({ line, onChange, onRemove, onSwap, onEditPrep, units: unitList = QUICK_UNITS, detail, below, grip, onMove, lifted, dropTarget, combineWith, moveTo, stock }: LineRowProps) {
+export function LineRow({ line, onChange, onRemove, onSwap, onEditPrep, units: unitList = LINE_UNITS, detail, below, grip, onMove, lifted, dropTarget, combineWith, moveTo, stock }: LineRowProps) {
   const ds = useDs();
   // A phone stacks the name over the controls. Explicit, not flexWrap: Yoga on iOS shrank the name to "Rye wh…" beside them instead of wrapping (Eddie, 16 Oct).
   // So does a narrow column (the desktop page's spec, an ingredient's recipe beside its method), where the controls left the name a few letters.
@@ -133,7 +136,7 @@ export function LineRow({ line, onChange, onRemove, onSwap, onEditPrep, units: u
                     </>
                   ) : null}
                   {line.unit === 'discard' ? <Caption tone="accent">Expressed, then discarded</Caption> : null}
-                  {line.optional ? <Caption tone="muted">Optional</Caption> : null}
+                  {line.float || line.optional ? <Caption tone="muted">{[line.float && 'Float', line.optional && 'Optional'].filter(Boolean).join(' · ')}</Caption> : null}
                 </View>
                 {recipe ? <IconSymbol name="chevron.right" size={14} color={ds.c.muted} /> : null}
               </PressableScale>
@@ -193,6 +196,7 @@ export function LineRow({ line, onChange, onRemove, onSwap, onEditPrep, units: u
             <TextAction label="Swap" a11y={`Swap ${line.name} for another ingredient`} onPress={onSwap} />
             {from ? <TextAction label={`Back to ${from.name}`} a11y={`Back to plain ${from.name}`} onPress={() => onChange({ id: from.id, name: from.name, prep: undefined, technique: undefined })} /> : null}
             {noting ? null : <TextAction label="Note" a11y={`Add a note to ${line.name}`} onPress={() => { setNoting(true); setOpen(false); }} />}
+            {line.unit !== 'float' ? <TextAction label={line.float ? 'Not a float' : 'Float'} a11y={line.float ? `${line.name} is mixed in` : `Float ${line.name} on top`} onPress={() => onChange({ float: !line.float })} /> : null}
             <TextAction label={line.optional ? 'Not optional' : 'Optional'} a11y={line.optional ? `${line.name} is needed` : `${line.name} is optional`} onPress={() => onChange({ optional: !line.optional })} />
           </View>
         </View>
@@ -220,7 +224,7 @@ export function LineRow({ line, onChange, onRemove, onSwap, onEditPrep, units: u
                 // ml, cl and oz convert ("22.5" ml is "0.75" oz); other units keep the number.
                 const n = parseFloat(tidyAmount(line.amount));
                 const pour = Number.isFinite(n) ? convertPour(n, line.unit, u) : null;
-                onChange(u === 'top' ? { unit: u, amount: '' } : pour?.unit === u ? pour : { unit: u });
+                onChange({ ...(u === 'top' || u === 'grated' ? { unit: u, amount: '' } : pour?.unit === u ? pour : { unit: u }), ...(u === 'float' ? { float: false } : null) });
                 setUnits(false);
               }}
             />

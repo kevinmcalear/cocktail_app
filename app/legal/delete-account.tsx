@@ -20,21 +20,26 @@ export default function DeleteAccountInfo() {
       </LegalSection>
 
       <LegalSection heading="What is deleted">
+        <P>Everything that is yours. It is deleted, not hidden.</P>
         <Bullets
           items={[
-            'Your account, email address, name and profile photo.',
-            'Your drafts, personal menus, favourites and venue memberships.',
-            'Any venue where you are the only member, with everything in it.',
+            'Your sign-in, email address, name and profile photo.',
+            'Your profile, rankings, drafts, saved drinks, personal menus and team memberships.',
+            'For a bar where you are the only one on the team, its private side: specs, private drinks, house-made recipes, drafts, back bar, stock, kit, menus that never started, run sheets and their pictures. Only its public page stays, unclaimed.',
           ]}
         />
       </LegalSection>
 
       <LegalSection heading="What stays">
         <P>
-          Drinks, ingredients and menus you created in a shared venue stay with that venue, without your name. If you are
-          the only admin of a venue with other members, make someone else an admin first. Copies can remain in our
-          providers&apos; backups for a limited time before they are overwritten.
+          Drinks, ingredients and menus you created for a bar with a team belong to that bar, so they stay there, without
+          your name. A bar you ran alone keeps its public page, unclaimed, which whoever runs it can claim again. If you are the only admin of a bar with other people on its team, make someone else an admin first.
+          Copies can remain in our providers&apos; backups for a limited time before they are overwritten.
         </P>
+      </LegalSection>
+
+      <LegalSection heading="Coming back">
+        <P>You are welcome back any time. Sign up again with the same email address and you start fresh.</P>
       </LegalSection>
     </LegalPage>
   );

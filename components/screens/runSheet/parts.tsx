@@ -68,15 +68,17 @@ export function OwnerChip({ look, need, onPress }: { look: PartyLook; need: stri
   );
 }
 
-/** The menu page's way in, for people who can edit the menu (board 0). */
-export function RunSheetLink({ menuId }: { menuId: string }) {
+/** The menu page's way in, for people who can edit the menu (board 0), and the editor's. `before`: the editor saves first, so every drink is on it. */
+export function RunSheetLink({ menuId, before }: { menuId: string; before?: () => Promise<boolean> }) {
   const ds = useDs();
   const router = useRouter();
   return (
     <PressableScale
       role="link"
       accessibilityLabel="Run sheet: serves, swaps, who brings what, PDF"
-      onPress={() => router.push(`/menus/${menuId}/run-sheet` as Href)}
+      onPress={async () => {
+        if (!before || (await before())) router.push(`/menus/${menuId}/run-sheet` as Href);
+      }}
       style={[styles.link, { backgroundColor: ds.c.surface, borderColor: ds.accentText }]}
     >
       <View style={[styles.linkIcon, { backgroundColor: ds.c.raised }]}>

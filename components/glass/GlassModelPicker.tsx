@@ -60,7 +60,7 @@ export function GlassModelRow({ model, note, first, selected, onPress }: RowProp
             },
       ]}
     >
-      <GlassThumb glass={model.glass} variant={model.variant} />
+      <GlassThumb glass={model.glass} variant={model.variant} outline={model.outline} />
       <View style={styles.flex}>
         <Body numberOfLines={1}>{model.name}</Body>
         <Caption tone="muted" numberOfLines={1}>

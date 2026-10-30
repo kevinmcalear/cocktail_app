@@ -1,10 +1,10 @@
 import { useState } from 'react';
 import { Platform, StyleSheet, View } from 'react-native';
 
-import { Body, Button, Caption, PressableScale, Spec, useDs } from '@/components/ds';
+import { Button, Caption, DrinkImage, Headline, PressableScale, Spec, useDs } from '@/components/ds';
 import { dragGripStyle } from '@/components/recipe/FormScrollContainer';
 import { IconSymbol } from '@/components/ui/icon-symbol';
-import { layout, space } from '@/constants/tokens';
+import { displayFaces, layout, space } from '@/constants/tokens';
 import type { ClassicRow } from '@/lib/staffList';
 
 export interface StaffRowProps {
@@ -32,8 +32,9 @@ export interface StaffRowProps {
 }
 
 /**
- * One drink on the staff list: its place, its name, where it stands with the
- * menus, and for editors a grip on the right (no up and down chevrons: drag
+ * One drink on the staff list: its place, its picture (a photo, else its
+ * drawing) and its name in the venue's display face, as All and On the menu
+ * show them (tf-071), where it stands with the menus, and for editors a grip on the right (no up and down chevrons: drag
  * works on the web too). Hold the grip and drag to move it; tap it for buttons
  * that do the same, and screen readers get Move up and Move down as actions.
  */
@@ -50,8 +51,11 @@ export function StaffRow({ pick, place, status, onOpen, onPressIn, canEdit, acti
           <Spec color={place === 1 ? ds.accentText : ds.c.muted} style={styles.place}>
             {place ?? ''}
           </Spec>
+          <View style={styles.thumb}>
+            <DrinkImage thumb sketchDetail="thumb" itemId={pick.itemId} source={pick.imageUrl} glass="Coupe" accessibilityLabel={pick.name} radius="control" />
+          </View>
           <View style={styles.name}>
-            <Body numberOfLines={2}>{pick.name}</Body>
+            <Headline numberOfLines={2} style={{ fontFamily: displayFaces[ds.displayFace].regular }}>{pick.name}</Headline>
             {caption ? <Caption tone="muted">{caption}</Caption> : null}
           </View>
           <Caption tone="muted">{status}</Caption>
@@ -92,7 +96,8 @@ const styles = StyleSheet.create({
   row: { flexDirection: 'row', alignItems: 'center', minHeight: 56 },
   main: { flex: 1, flexDirection: 'row', alignItems: 'center', gap: space.md, paddingVertical: space.sm },
   place: { width: 22 },
+  thumb: { width: 48 },
   name: { flex: 1, gap: 2 },
   grip: { width: layout.minTapTarget, height: layout.minTapTarget, alignItems: 'center', justifyContent: 'center' },
-  controls: { flexDirection: 'row', flexWrap: 'wrap', gap: space.sm, paddingBottom: space.md, paddingLeft: 22 + space.md },
+  controls: { flexDirection: 'row', flexWrap: 'wrap', gap: space.sm, paddingBottom: space.md, paddingLeft: 22 + 48 + space.md * 2 },
 });

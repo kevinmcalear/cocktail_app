@@ -22,7 +22,8 @@ export function CreditTag({ status }: { status: CreditStatus | null }) {
 }
 
 /**
- * Under the drink's name: what it's a riff of, who made it, where and when,
+ * Under the drink's name: what it's a riff of (or the classic it's the bar's
+ * version of, linked), who made it, where and when,
  * with the maker's picture and how sure the credit is ("· Suggested"). Names
  * link to drinks and profiles. A bar's copy of a classic poured to the same
  * spec keeps the classic's credit (board drink-phone-barcopy): Little Rye's
@@ -34,11 +35,13 @@ export function DrinkCredit({ itemId }: { itemId: string }) {
   const classicId = own?.riff_of?.is_catalog ? own.riff_of.id : null;
   // The same key and ids as ClassicNote, so the page asks once.
   const { data: matches } = useSpecMatches(classicId ? itemId : undefined, classicId ? [itemId] : []);
-  const same = !!classicId && matches?.[itemId]?.spec_match === 'same';
+  const verdict = classicId ? matches?.[itemId]?.spec_match : undefined;
+  const same = verdict === 'same';
   const { data: classic } = useDrinkCredit(same ? classicId : null);
   const drink = same && classic ? classic : own;
   if (!drink) return null;
-  const parts = nameCredit(drink, drink.riff_of ?? drink.lineage_parent);
+  // The bar's own version reads "Americano by Little Rye"; only a real change of spec is a riff (dec-21).
+  const parts = nameCredit(drink, drink.riff_of ?? drink.lineage_parent, same ? null : verdict);
   // Waiting and declined credits are this drink's own, even when it shows the classic's credit.
   const answers = own ? <CoCreatorAnswers drink={own} /> : null;
   if (!parts.length) return answers;

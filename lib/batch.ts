@@ -75,7 +75,7 @@ const BAR_ML_PER_OZ = 30;
 const GRAMS: Record<string, number> = { g: 1, kg: 1000 };
 const DASH_UNITS = new Set(['dash', 'dashes', 'drop', 'drops']);
 // A finish (a spray, a rinse, a float) is counted and done at the station too, never bottled.
-const GARNISH_UNITS = new Set(['each', 'pinch', 'sprig', 'leaf', 'peel', 'twist', 'discard', 'wheel', 'slice', 'cube', 'wedge', 'rim', 'spray', 'rinse', 'float']);
+const GARNISH_UNITS = new Set(['each', 'pinch', 'sprig', 'leaf', 'peel', 'twist', 'discard', 'wheel', 'slice', 'cube', 'wedge', 'rim', 'spray', 'rinse', 'float', 'grated']);
 // Drops of an oil go on top of each serve; saline and tincture drops go in the bottle.
 const OIL = /\boil\b/i;
 // A count with no unit ("1 Lemon twist"): the name says it's a garnish.
@@ -281,6 +281,26 @@ export function freezingPointC(abv: number): number {
   const [a0, t0] = FREEZES[i];
   const [a1, t1] = FREEZES[i + 1];
   return t0 + ((a - a0) / (a1 - a0)) * (t1 - t0);
+}
+
+/**
+ * How to keep the bottle before service, in one line (Kevin, 29 Oct jam: "say
+ * how to batch, chill at X for Y"). A freezer pour gets the freezer's
+ * temperature and a time: a 750 ml bottle takes most of a working day to get
+ * that cold, so at least 8 hours, ideally 24 (Eddie, 29 Oct jam). A batch that would
+ * slush in this freezer is told a warmer one, or the fridge. A bottle poured straight
+ * otherwise goes in the fridge; a shaken or built batch is mixed to order, so it
+ * keeps cold in the fridge with no time to wait.
+ */
+export function chillLine(method: BatchMethod, poured: boolean, freezerC: number, abv: number | null = null): string {
+  const c = (t: number) => `${t < 0 ? '\u2212' : ''}${Math.abs(Math.round(t))}\u00a0°C`;
+  // Too weak for this freezer (the same test as the sheet's freezer check): a warmer freezer, or the fridge.
+  if (method === 'stirred' && abv !== null && freezingPointC(abv) >= freezerC - 1) {
+    return `It would slush at ${c(freezerC)}: chill it in a freezer at about ${c(-12)} for at least 8 hours, ideally 24, or in the fridge at about 4\u00a0°C for at least 4 hours.`;
+  }
+  if (method === 'stirred') return `Chill it in the freezer at ${c(freezerC)} for at least 8 hours before service, ideally 24.`;
+  if (poured) return 'Chill the bottle in the fridge, at about 4\u00a0°C, for at least 4 hours before service.';
+  return 'Keep the bottle in the fridge, at about 4\u00a0°C, until service.';
 }
 
 /** Whole serves between MIN_SERVES and MAX_SERVES; anything unreadable is 1. */

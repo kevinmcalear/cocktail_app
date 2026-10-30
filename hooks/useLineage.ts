@@ -1,13 +1,14 @@
-import { useQuery } from '@tanstack/react-query';
+import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 
 import { parentId, sortRiffs, styleChain, walkAncestors, type DrinkStyle, type LineageDrink } from '@/lib/lineage';
 import { supabase } from '@/lib/supabase';
+import type { CreditEdit } from '@/lib/whoMadeIt';
 
 // The credit columns aren't in app_item_presentation, so these read items
 // directly; the items RLS policy applies the same visibility rules.
 export const PROFILE_COLUMNS = 'id, kind, handle, display_name, avatar_url, locality, is_closed, closed_year';
 export const LINEAGE_COLUMNS = `id, name, riff_of_id, origin_year, origin_year_approx, origin_year_guess, credit_status, origin,
-  is_catalog, lineage_parent_id, lineage_style_id, lineage_note,
+  is_catalog, lineage_parent_id, lineage_style_id, lineage_note, creator_names,
   creator:profiles!items_creator_profile_id_fkey(${PROFILE_COLUMNS}),
   origin_bar:profiles!items_origin_bar_profile_id_fkey(${PROFILE_COLUMNS}),
   co_creators:item_co_creators(status, profile:profiles(${PROFILE_COLUMNS}))`;
@@ -105,5 +106,38 @@ export function useDrinkCredit(itemId: string | null | undefined) {
       if (error) throw error;
       return (data as CreditDrink | null) ?? null;
     },
+  });
+}
+
+/**
+ * Saves one change to a saved drink's Who made it (drink editor, tf-063) in
+ * one call, all or nothing (public.set_drink_credits): the creator and the
+ * names with no page, then the made-with rows to take off and add (each
+ * asked first, as from the wizard).
+ */
+export function useSetDrinkCredits(itemId: string) {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: async (w: CreditEdit) => {
+      const { error } = await supabase.rpc('set_drink_credits', {
+        p_item_id: itemId,
+        // Null is nobody; the generated types don't say a uuid argument can be null.
+        p_creator_profile_id: w.creator as string,
+        p_creator_names: w.names,
+        p_add: w.add,
+        p_remove: w.remove,
+      });
+      if (error) throw error;
+    },
+    // Pending until the credit is read again, so the next change starts from what was saved.
+    // Everywhere the credit shows: a person's drinks and the signed-out page too.
+    onSettled: () =>
+      Promise.all([
+        qc.invalidateQueries({ queryKey: ['drink-credit', itemId] }),
+        qc.invalidateQueries({ queryKey: ['lineage', itemId] }),
+        qc.invalidateQueries({ queryKey: ['profile-originals'] }),
+        qc.invalidateQueries({ queryKey: ['published', 'drink', itemId] }),
+        qc.invalidateQueries({ queryKey: ['published', 'drink-more', itemId] }),
+      ]),
   });
 }
