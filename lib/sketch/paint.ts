@@ -127,6 +127,9 @@ export function paintSketch(inputs: SketchInputs, { seed, style = DEFAULT_SKETCH
   const surface0 = build?.[build.length - 1].to === 'half' ? 'none' : ice;
   if (surface0 === 'crushed' || surface0 === 'shaved') g.top = g.rim + 3;
   if (surface0 === 'pebble') g.top = g.rim + 5;
+  // A beer is poured to the brim under a finger of head (Eddie, tf-089): the head meets the rim.
+  const head = inputs.glass === 'beer' && (inputs.foam === 'cap' || inputs.foam === 'crema') && (!ice || ice === 'none') ? FOAM[inputs.foam] : null;
+  if (head) g.top = g.rim + head.rise + 0.8;
   // A hot drink in the copper mug's place is a home mug; the glass mugs stay glass.
   if (inputs.glass === 'mug' && g.opaque && ice !== 'cubes') g.opaque = SKETCH.homeMug;
 
@@ -153,7 +156,12 @@ export function paintSketch(inputs: SketchInputs, { seed, style = DEFAULT_SKETCH
   if (S.mute) tone = mixHex(tone, SKETCH.mute, S.mute);
   const strength = clear ? 0.55 : Math.min(1.15, 0.55 + liquid.alpha * 0.6);
   const floor = g.stemmed ? bot : g.base!;
-  if (g.opaque) {
+  // No liquid at all (alpha 0): the bare glass, drawn while a drink has no drawing of its own yet.
+  const empty = liquid.alpha === 0;
+  if (empty) {
+    if (!paintBody(P, g) && g.opaque) P.wash(P.silhouette, g.opaque, 0.75, { spill: 0.4, fadeTo: 0.55 });
+    stage('liquid', (g.top + floor) / 2);
+  } else if (g.opaque) {
     if (!paintBody(P, g)) P.wash(P.silhouette, g.opaque, 0.75, { spill: 0.4, fadeTo: 0.55 });
     // Anchored mid-drink: AnimatedSketch spreads the liquid out from there.
     stage('liquid', g.top + 1.6);
@@ -172,8 +180,10 @@ export function paintSketch(inputs: SketchInputs, { seed, style = DEFAULT_SKETCH
   if (foam) {
     stage('foam', g.top);
     const F = FOAM[foam];
+    // A beer's head is about a seventh of the glass, however tall the glass.
+    const depth = head ? Math.max(F.depth, (floor - g.rim) * 0.14) : F.depth;
     const y0 = g.top - F.rise;
-    const y1 = g.top + F.depth;
+    const y1 = g.top + depth;
     surface = y0;
     const col = foam === 'cap' ? SKETCH.capFoam : foam === 'crema' ? SKETCH.crema : foam === 'froth' ? mixHex(tone, SKETCH.froth, 0.72) : mixHex(tone, SKETCH.white, foam === 'silk' ? 0.6 : 0.62);
     P.glaze(band(g, y0, y1, 0.4), col, foam === 'sheen' ? 0.8 : 0.97, 3, 0.05);
@@ -184,9 +194,9 @@ export function paintSketch(inputs: SketchInputs, { seed, style = DEFAULT_SKETCH
         P.wash(ell(xx, yy, 3 + r() * 5, 0.9 + r() * 0.8, 0, Math.PI * 2, 10, gauss(r) * 0.15).slice(0, 10), SKETCH.cremaStreak, 0.5, { layers: 0.25, spill: 0.1, n: 10, blooms: 0, misreg: 0.1, fadeTo: 0.4 });
       }
     }
-    if (foam !== 'sheen') P.wash(band(g, g.top + F.depth * 0.45, y1, 0.4), foam === 'crema' ? SKETCH.cremaShadow : mixHex(col, SKETCH.foamShadow, 0.5), foam === 'crema' ? 0.7 : 0.35, { layers: 0.45, spill: 0.15, n: 12, blooms: 0, fadeAngle: -Math.PI / 2, fadeTo: 0.2, misreg: 0.2 });
+    if (foam !== 'sheen') P.wash(band(g, g.top + depth * 0.45, y1, 0.4), foam === 'crema' ? SKETCH.cremaShadow : mixHex(col, SKETCH.foamShadow, 0.5), foam === 'crema' ? 0.7 : 0.35, { layers: 0.45, spill: 0.15, n: 12, blooms: 0, fadeAngle: -Math.PI / 2, fadeTo: 0.2, misreg: 0.2 });
     const n = P.clipInner();
-    for (let i = 0; i < F.bubbles; i++) {
+    for (let i = 0; i < Math.round((F.bubbles * depth) / F.depth); i++) {
       const y = y0 + Math.pow(r(), 1.6) * (y1 - y0);
       const rad = 0.22 + r() * (foam === 'cap' ? 0.55 : 0.4);
       P.line(ell(50 + (r() * 2 - 1) * (hw(g, y) - 1.5), y, rad, rad * 0.8, r(), r() + 5.8, 6), { weight: 0.42, alpha: 0.85, passes: 1, over: 0, gaps: 0.15, wob: 0.15 });
@@ -275,7 +285,7 @@ export function paintSketch(inputs: SketchInputs, { seed, style = DEFAULT_SKETCH
     const yy = g.rim + 4;
     P.line(ell(50, yy, hw(g, yy), hw(g, yy) * e, 0.1, Math.PI - 0.1, 24), { weight: 0.45, alpha: 0.6 });
   }
-  if (ice !== 'crushed' && ice !== 'pebble' && ice !== 'shaved') {
+  if (!empty && ice !== 'crushed' && ice !== 'pebble' && ice !== 'shaved') {
     const Rf = hw(g, surface);
     P.line(ell(50, surface, Rf, Rf * e, 0.1, Math.PI - 0.1, 30), { weight: foam ? 0.85 : 0.7, alpha: ice !== 'none' ? 0.4 : 0.9, wob: foam ? 2.4 : 1 });
   }

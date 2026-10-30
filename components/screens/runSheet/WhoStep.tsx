@@ -1,7 +1,7 @@
 import { useState } from 'react';
 import { StyleSheet, View } from 'react-native';
 
-import { Body, Button, Caption, DsText, Headline, Switch, useDs } from '@/components/ds';
+import { Body, Button, Caption, DsText, Headline, Segmented, Switch, useDs } from '@/components/ds';
 import { fontFamilies, layout, radius, space } from '@/constants/tokens';
 import type { Need, RunSheet } from '@/lib/runSheet';
 import { thingCount } from '@/lib/runSheetText';
@@ -9,13 +9,19 @@ import { thingCount } from '@/lib/runSheetText';
 import { OwnerSheet } from './OwnerSheet';
 import { Dot, OwnerChip, type PartyLook } from './parts';
 
+// The extra for testing and tasting, as a choice of a few steps.
+const MARGINS = ['0', '5', '10', '15', '20', '25'] as const;
+
 /** Step 3: everything the drinks need, and who brings each thing (board "3. Who brings what"). */
-export function WhoStep({ menuId, sheet, looks, breakDown, onBreakDown, wide }: {
+export function WhoStep({ menuId, sheet, looks, breakDown, onBreakDown, margin, onMargin, wide }: {
   menuId: string;
   sheet: RunSheet;
   looks: PartyLook[];
   breakDown: boolean;
   onBreakDown: (on: boolean) => void;
+  /** Percent extra on everything to make or buy, for testing and tasting during prep. */
+  margin: number;
+  onMargin: (pct: number) => void;
   /** Desktop: the amount sits in its own column. */
   wide?: boolean;
 }) {
@@ -62,6 +68,19 @@ export function WhoStep({ menuId, sheet, looks, breakDown, onBreakDown, wide }: 
       <View style={styles.toggle}>
         <Body style={{ flex: 1 }}>Break what’s made in-house into what it’s made from</Body>
         <Switch value={breakDown} onValueChange={onBreakDown} label="Break what’s made in-house into what it’s made from" />
+      </View>
+      <View style={{ gap: space.sm }}>
+        <Body>Extra for testing and tasting</Body>
+        <Segmented
+          options={MARGINS.map((m) => ({ value: m, label: m === '0' ? 'None' : `${m}%` }))}
+          value={(MARGINS as readonly string[]).includes(String(margin)) ? (String(margin) as (typeof MARGINS)[number]) : '10'}
+          onChange={(m) => onMargin(Number(m))}
+          accessibilityLabel="Extra for testing and tasting"
+          variant="pill"
+          choice
+          stretch
+        />
+        <Caption tone="muted">Added to everything to make or buy, and to the bottles to get. Serves, glasses and ice stay as counted.</Caption>
       </View>
       {!sheet.groups.length ? <Body tone="muted">Set some serves first: the list fills in from them.</Body> : null}
       {sheet.groups.map((g) => {

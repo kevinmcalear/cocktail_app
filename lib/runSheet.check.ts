@@ -5,7 +5,7 @@ import assert from 'node:assert/strict';
 
 import { MAX_SERVES } from './batch';
 import type { HouseMade, SpecLine } from './prep';
-import { buildRunSheet, clampServes, pourSuggestions, type ItemFacts, type RunDrink, type RunSheetInput, type RunSwap } from './runSheet';
+import { buildRunSheet, clampServes, needGroups, pourSuggestions, type ItemFacts, type RunDrink, type RunSheetInput, type RunSwap } from './runSheet';
 
 const line = (ingredientId: string, name: string, amount: number, unit = 'ml'): SpecLine => ({ ingredientId, name, amount, unit });
 const rocks = { id: 'rocks', name: 'Rocks glass' };
@@ -80,12 +80,12 @@ const need = (name: string) => {
 const row = (name: string) => [need(name).amount, need(name).detail, need(name).group];
 
 assert.equal(sheet.totalServes, 610);
-assert.deepEqual(row('Mill & Ash Gin'), ['13.2 L', '19 × 700 ml', 'spirits']);
-assert.deepEqual(row('Harbour Blended Scotch'), ['7.2 L', '11 × 700 ml', 'spirits']);
-assert.deepEqual(row('Harbour Islay'), ['900 ml', '2 × 700 ml', 'spirits']);
-assert.deepEqual(row('Campari'), ['10.5 L', '15 × 700 ml', 'spirits']);
-assert.deepEqual(row('Sweet vermouth'), ['10.5 L', '11 × 1 L', 'spirits']);
-assert.deepEqual(row('Dry vermouth'), ['900 ml', '1 × 1 L', 'spirits']);
+assert.deepEqual(row('Mill & Ash Gin'), ['13.2 L', 'buy 19 × 700 ml', 'spirits']);
+assert.deepEqual(row('Harbour Blended Scotch'), ['7.2 L', 'buy 11 × 700 ml', 'spirits']);
+assert.deepEqual(row('Harbour Islay'), ['900 ml', 'buy 2 × 700 ml', 'spirits']);
+assert.deepEqual(row('Campari'), ['10.5 L', 'buy 15 × 700 ml', 'spirits']);
+assert.deepEqual(row('Sweet vermouth'), ['10.5 L', 'buy 11 × 1 L', 'spirits']);
+assert.deepEqual(row('Dry vermouth'), ['900 ml', 'buy 1 × 1 L', 'spirits']);
 assert.deepEqual(row('Lemon juice'), ['4.5 L', 'about 110 lemons', 'fresh']);
 assert.deepEqual(row('Grapefruit juice'), ['2.4 L', 'about 16 grapefruit', 'fresh']);
 assert.deepEqual(row('Honey-ginger syrup'), ['2.7 L', 'keeps 14 days', 'preps']);
@@ -99,6 +99,28 @@ assert.deepEqual(row('Cubes'), ['about 150 kg', null, 'ice']);
 assert.deepEqual(row('Large cube'), ['320', null, 'ice']);
 assert.equal(sheet.groups.flatMap((g) => g.needs).some((n) => n.name === 'London dry gin'), false, 'swapped out everywhere');
 assert.deepEqual(sheet.groups.map((g) => g.title), ['Spirits and liqueurs', 'Juices and fresh', 'House-made', 'Mixers', 'Garnish', 'Glassware', 'Ice']);
+
+// Extra for testing and tasting scales what's made and bought, rounded up to whole bottles and garnish; serves, glasses and ice stay.
+const extra = buildRunSheet({ ...input, marginPct: 10 });
+const extraNeed = (name: string) => extra.groups.flatMap((g) => g.needs).find((n) => n.name === name)!;
+assert.equal(extra.marginPct, 10);
+assert.deepEqual([extraNeed('Mill & Ash Gin').amount, extraNeed('Mill & Ash Gin').detail], ['14.5 L', 'buy 21 × 700 ml']);
+assert.deepEqual([extraNeed('Candied ginger').amount, extraNeed('Rocks glass').amount, extraNeed('Large cube').amount], ['132', '320', '320']);
+assert.equal(extra.totalServes, 610);
+assert.equal(extra.drinks[0].lines[0].total, '7.2 L', 'the drink specs stay per serve as counted');
+assert.equal(sheet.marginPct, 0, 'no margin unless asked');
+// A spirit with no bottle size set: the usual 700 ml, said as assumed.
+const noSize = buildRunSheet({ ...input, purchasing: {} });
+assert.equal(noSize.groups.flatMap((g) => g.needs).find((n) => n.name === 'Sweet vermouth')!.detail, 'buy 15 × 700 ml (700 ml assumed)');
+assert.equal(noSize.groups.flatMap((g) => g.needs).find((n) => n.name === 'Soda water')!.detail, null, 'only spirits count in bottles');
+// A pack set as a count keeps the bar's own pack, not an assumed 700 ml.
+const caseOf = buildRunSheet({ ...input, purchasing: { campari: { supplierName: null, packAmount: 6, packUnit: 'btl' } } });
+assert.equal(caseOf.groups.flatMap((g) => g.needs).find((n) => n.name === 'Campari')!.detail, null, 'no 700 ml guess over a pack the bar set');
+
+// Each party's part keeps the step 3 groups, and its logo.
+const withLogos = buildRunSheet({ ...input, hostLogoUrl: 'https://x/cottage.png', parties: input.parties.map((p) => (p.id === 'rye' ? { ...p, logoUrl: 'https://x/rye.png' } : p)) });
+assert.deepEqual(withLogos.parties.map((p) => p.logoUrl), ['https://x/cottage.png', 'https://x/rye.png', null, null]);
+assert.deepEqual(needGroups(sheet.parties[0].needs).map((g) => g.title), ['Spirits and liqueurs', 'Juices and fresh', 'House-made', 'Mixers', 'Garnish', 'Glassware', 'Ice']);
 
 // Default owners: the brand that makes the bottle, the visiting bar for their drink's house preps, the bar it's at for the rest.
 const counts = sheet.parties.map((p) => [p.name, p.role, p.needs.length]);

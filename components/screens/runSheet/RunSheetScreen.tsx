@@ -1,6 +1,6 @@
 import { useRouter, type Href } from 'expo-router';
 import { useMemo, useState } from 'react';
-import { ScrollView, StyleSheet, View } from 'react-native';
+import { KeyboardAvoidingView, Platform, ScrollView, StyleSheet, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import { Body, Button, Caption, GlassButton, Title, useBreakpoint, useDs, useGutter } from '@/components/ds';
@@ -10,7 +10,7 @@ import { useUserId } from '@/ctx/AuthContext';
 import { useCapabilities } from '@/hooks/useCapabilities';
 import { useIsWideWeb } from '@/hooks/useIsWideWeb';
 import { useRunSheet } from '@/hooks/useRunSheet';
-import { buildRunSheet, swappedRecipe } from '@/lib/runSheet';
+import { buildRunSheet, DEFAULT_MARGIN_PCT, swappedRecipe } from '@/lib/runSheet';
 import { siteOrigin } from '@/lib/venueLink';
 
 import { STEPS, StepNav, usePartyLooks, type PartyLook, type Step } from './parts';
@@ -38,7 +38,11 @@ export function RunSheetScreen({ menuId }: { menuId: string }) {
   const caps = useCapabilities(data?.menu.barId);
   const [step, setStep] = useState<Step>('serves');
   const [breakDown, setBreakDown] = useState(false);
-  const sheet = useMemo(() => (data ? buildRunSheet({ ...data, hostName: data.menu.hostName, breakDownPreps: breakDown }) : null), [data, breakDown]);
+  const [margin, setMargin] = useState(DEFAULT_MARGIN_PCT);
+  const sheet = useMemo(
+    () => (data ? buildRunSheet({ ...data, hostName: data.menu.hostName, hostLogoUrl: data.menu.hostLogoUrl, breakDownPreps: breakDown, marginPct: margin }) : null),
+    [data, breakDown, margin],
+  );
   const looks = usePartyLooks(data?.menu.hostName ?? '', data?.parties ?? []);
   // A linked bar page nobody has claimed yet: their list says where to claim the drinks credited to them.
   const claimUrls = Object.fromEntries((data?.parties ?? []).flatMap((p) => (p.page && !p.page.claimed ? [[p.id, `${siteOrigin()}/p/${p.page.handle}`]] : [])));
@@ -63,13 +67,14 @@ export function RunSheetScreen({ menuId }: { menuId: string }) {
   ) : shownStep === 'specs' ? (
     <SpecsStep data={data} sheet={sheet} />
   ) : shownStep === 'who' ? (
-    <WhoStep menuId={menuId} sheet={sheet} looks={looks} breakDown={breakDown} onBreakDown={setBreakDown} wide={desktop} />
+    <WhoStep menuId={menuId} sheet={sheet} looks={looks} breakDown={breakDown} onBreakDown={setBreakDown} margin={margin} onMargin={setMargin} wide={desktop} />
   ) : (
     <SheetStep sheet={sheet} menu={data.menu} breakDown={breakDown} looks={looks} claimUrls={claimUrls} />
   );
 
   return (
-    <View style={[styles.screen, { backgroundColor: ds.c.ground }]}>
+    // The page shrinks above the keyboard, so the last drink's serves scroll clear of it (tf-080).
+    <KeyboardAvoidingView behavior={Platform.select({ ios: 'padding', android: 'height' })} style={[styles.screen, { backgroundColor: ds.c.ground }]}>
       {/* Before the scroll view, so a step's sheet (a dialog on the web) draws over it. */}
       {nextStep && showNext && canEdit && !desktop && data ? (
         <View style={[styles.next, { paddingHorizontal: gutter, bottom: insets.bottom + space.xl }]}>
@@ -92,7 +97,7 @@ export function RunSheetScreen({ menuId }: { menuId: string }) {
             )}
             <View style={{ gap: space.xs }}>
               <Title>Run sheet</Title>
-              {shownStep === 'serves' ? <Body tone="muted">How many of each, and who brings what.</Body> : null}
+              {canEdit ? <Body tone="muted">{stepLine(shownStep, desktop)}</Body> : null}
             </View>
             {canEdit ? <StepNav step={shownStep} onChange={setStep} desktop={desktop} /> : null}
             {body}
@@ -101,8 +106,21 @@ export function RunSheetScreen({ menuId }: { menuId: string }) {
           {desktop && data && sheet && canEdit ? <LivePreview sheet={sheet} menu={data.menu} breakDown={breakDown} looks={looks} claimUrls={claimUrls} /> : null}
         </View>
       </ScrollView>
-    </View>
+    </KeyboardAvoidingView>
   );
+}
+
+/** What each step asks, and whether it can be left (tf-079): only the serves are needed. */
+function stepLine(step: Step, desktop: boolean): string {
+  const of = desktop ? 3 : 4;
+  const n = STEPS.findIndex((s) => s.value === step) + 1;
+  const what: Record<Step, string> = {
+    serves: 'How many of each drink. That’s all it needs; the rest is optional.',
+    specs: 'Optional. Swap a bottle or a garnish for this night.',
+    who: 'Optional. Who brings what: it all starts with your bar.',
+    sheet: 'Done. Print it or send it.',
+  };
+  return `Step ${n} of ${of}. ${what[step]}`;
 }
 
 /** Desktop: the sheet beside the editor, updating as you go, and each bar's or brand's own list to send (boards "Desktop", R1). */

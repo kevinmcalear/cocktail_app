@@ -50,3 +50,12 @@ test('before a search, the list is grouped: yours, what you can make, Popular, t
   expect(screen.queryByText('POPULAR')).toBeNull();
   expect(screen.getByText('Negroni')).toBeTruthy();
 });
+
+test('says how many are picked, shows just those again, and closes with a tick', async () => {
+  const picked = { ...section, drinks: [drink('Bolo Tie')] };
+  await renderWithTamagui(<AddDrinkSheet section={picked} barId="bar" onClose={jest.fn()} library={[drink('Dusk Spritz'), drink('Bolo Tie')]} canMake={[]} elsewhere={{}} onAdd={jest.fn()} />);
+  await fireEvent.press(screen.getByRole('radio', { name: 'In Long & bright · 1' }));
+  expect(screen.queryByText('Dusk Spritz')).toBeNull();
+  expect(screen.getByText('Bolo Tie')).toBeTruthy();
+  expect(screen.getByLabelText('Done')).toBeTruthy();
+});

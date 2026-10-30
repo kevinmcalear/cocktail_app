@@ -40,7 +40,7 @@ export function isCleanText(text: string): boolean {
 }
 
 const NOTE_KEYS: [RegExp, 'method' | 'glass' | 'ice' | 'garnish'][] = [
-  [/^(shaken|shake|stirred|stir|built|build|blended|blend|thrown|swizzled|whip(?:ped)?)\.?$/i, 'method'],
+  [/^(shaken|shake|stirred|stir|built|build|blended|blend|thrown|swizzled|churned|churn|whip(?:ped)?)\.?$/i, 'method'],
   [/^ice:\s*/i, 'ice'],
   [/^garnish:\s*/i, 'garnish'],
   [/^glass:\s*/i, 'glass'],

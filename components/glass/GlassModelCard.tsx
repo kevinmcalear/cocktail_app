@@ -25,7 +25,7 @@ export function GlassModelCard({ model, variant }: { model: GlassModel; variant:
   return (
     <Surface style={styles.card}>
       <View style={styles.head}>
-        <GlassThumb glass={model.glass} variant={variant} size={72} />
+        <GlassThumb glass={model.glass} variant={variant} outline={model.outline} size={72} />
         <View style={styles.flex}>
           <Body>{model.name}</Body>
           <Caption tone="muted">{glassModelFacts(model)}</Caption>

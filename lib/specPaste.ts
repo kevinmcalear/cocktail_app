@@ -34,7 +34,7 @@ const FINISH_WORDS = /[,\s]+(on top|to finish|as a garnish|to garnish|on the gla
 const GARNISH = /^garnish(?:ed)?(?: with)?:?\s+(.+)$/i;
 const TOP = /^top(?:\s+(?:up\s+)?with)?\s+(.+)$/i;
 // The method, the glass and the ice have their own steps: a method word, or a "Glass:" style heading.
-const NOT_A_LINE = /^(shake|shaken|stir|stirred|build|built|blend|blended|throw|thrown|swizzle|swizzled|double strain|fine strain|strain|dry shake)\b|^(glass|ice|serve|method)\s*:/i;
+const NOT_A_LINE = /^(shake|shaken|stir|stirred|build|built|blend|blended|throw|thrown|swizzle|swizzled|churn|churned|double strain|fine strain|strain|dry shake)\b|^(glass|ice|serve|method)\s*:/i;
 
 /** Each pasted line, read. `drinkName` is skipped where it heads the paste. */
 export function readSpec<T extends IngredientRow>(

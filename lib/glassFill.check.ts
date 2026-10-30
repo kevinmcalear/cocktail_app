@@ -1,12 +1,15 @@
 // Checks for lib/glassFill.ts. Run: npm run test:unit
 import assert from 'node:assert/strict';
 
-import { barMeasure, factorWords, fillWords, fittedCostMinor, fitToWashLine, glassFill, washLine, type Fill, type FillLine, type Fitted } from './glassFill';
+import { barMeasure, brimOf, factorWords, fillWords, fittedCostMinor, fitToWashLine, glassFill, presetMl, WASH_LINE_PRESETS, washLine, type Fill, type FillLine, type Fitted } from './glassFill';
 
-// The wash line: the venue's own, else 90% of the brim to the nearest 5 ml (its typed capacity before its real glass's).
-assert.deepEqual(washLine({ wash_line_ml: 150, capacity_ml: null, model: { capacity_ml: 170 } }), { ml: 150, said: true, brimMl: 170 });
-assert.deepEqual(washLine({ wash_line_ml: null, capacity_ml: null, model: { capacity_ml: 170 } }), { ml: 155, said: false, brimMl: 170 });
-assert.equal(washLine({ wash_line_ml: null, capacity_ml: 200, model: { capacity_ml: 170 } })?.ml, 180);
+// The wash line: the venue's own; to the brim, its typed capacity before its real glass's.
+assert.deepEqual(washLine({ wash_line_ml: 150, capacity_ml: null, model: { capacity_ml: 170 } }), { ml: 150, brimMl: 170 });
+// The wash line is optional (jam dec-24): never guessed from the capacity.
+assert.equal(washLine({ wash_line_ml: null, capacity_ml: null, model: { capacity_ml: 170 } }), null);
+assert.equal(washLine({ wash_line_ml: null, capacity_ml: 200, model: { capacity_ml: 170 } }), null);
+assert.equal(brimOf({ wash_line_ml: null, capacity_ml: 200, model: { capacity_ml: 170 } }), 200);
+assert.deepEqual(WASH_LINE_PRESETS.map((p) => presetMl(170, p.share)), [170, 160, 155, 135]);
 assert.equal(washLine({ wash_line_ml: null, capacity_ml: null, model: null }), null);
 
 // The board's Smoke Signal in Little Rye's Nick and Nora: 45 + 22.5 + 17.5 + 10 = 95 ml, shaken (25%) is 118.75 ml.

@@ -28,7 +28,7 @@ export function HeldGlassware({ barId, name, onAdd }: { barId: string; name: str
       id: h.key,
       name: (h.model_id ? null : h.name) ?? kindOf(h)?.label ?? GLASS_TYPE_LABEL[h.glass],
       line: real || anyLine(h),
-      thumb: <GlassThumb glass={h.glass} variant={h.variant} outline={h.outline} />,
+      thumb: <GlassThumb glass={h.glass} variant={h.variant} outline={h.outline ?? model?.outline} />,
       action: 'Remove',
     };
   });

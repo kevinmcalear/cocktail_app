@@ -21,6 +21,8 @@ export interface SpecRowProps {
   /** Made in house from its own recipe (a syrup, a wash, a batch). */
   houseMade?: boolean;
   optional?: boolean;
+  /** Floated on top ("15 ml", tagged Float). */
+  floated?: boolean;
   note?: string;
   /** A word about this line for this person, as a tag: "Not on your shelf". */
   flag?: string;
@@ -49,13 +51,13 @@ export interface SpecRowProps {
  * When the amount has its own action, the line splits into two sibling
  * controls (amount, then ingredient) so no button sits inside another.
  */
-export function SpecRow({ amount, ingredient, ingredientId, houseMade, optional, note, flag: flagged, listed, detail, scale = 1, dense, onPress, onPressAmount, alignAmount }: SpecRowProps) {
+export function SpecRow({ amount, ingredient, ingredientId, houseMade, optional, floated, note, flag: flagged, listed, detail, scale = 1, dense, onPress, onPressAmount, alignAmount }: SpecRowProps) {
   const ds = useDs();
   const flag = listed ? 'On your list' : flagged;
   const big = (t: (typeof type)['spec']) => (scale === 1 ? undefined : { fontSize: t.fontSize * scale, lineHeight: t.lineHeight * scale });
   const showAmount = amount.length > 0 || !!alignAmount;
   const split = !!onPressAmount && amount.length > 0;
-  const rest = [ingredient, detail, houseMade && 'house-made', optional && 'optional', note, flag].filter(Boolean).join(', ');
+  const rest = [ingredient, detail, houseMade && 'house-made', floated && 'float', optional && 'optional', note, flag].filter(Boolean).join(', ');
   const amountWidth = { width: 96 * scale };
   const cell = dense ? styles.dense : styles.cell;
 
@@ -64,9 +66,10 @@ export function SpecRow({ amount, ingredient, ingredientId, houseMade, optional,
       <Body style={big(type.body)}>{ingredient}</Body>
       {detail ? <Caption tone="muted">{detail}</Caption> : null}
       {note ? <Caption tone="muted">{note}</Caption> : null}
-      {houseMade || optional || flag ? (
+      {houseMade || floated || optional || flag ? (
         <View style={styles.tags}>
           {houseMade ? <Tag label="House-made" tone="accent" /> : null}
+          {floated ? <Tag label="Float" /> : null}
           {optional ? <Tag label="Optional" /> : null}
           {flag ? <Tag label={flag} tone={listed ? 'accent' : undefined} icon={listed ? 'checkmark' : undefined} /> : null}
         </View>

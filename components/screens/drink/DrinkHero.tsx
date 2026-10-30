@@ -28,6 +28,8 @@ interface DrinkHeroProps {
   onColour?: () => void;
   /** With no pictures: draw from these instead of the stored drawing (a beer or wine, lib/beerWineWizard.ts). */
   sketch?: SketchInputs | null;
+  /** People who can edit it: a Photos button beside the count, to add, crop and choose the main photo (Eddie, 29 Oct). */
+  onPhotos?: () => void;
 }
 
 /**
@@ -64,7 +66,7 @@ function fadeStops(height: number, ground: string, glow: string | null) {
  * ground; with one, the drink's own colour glows through (docs/design_system.md,
  * "Drink field").
  */
-export function DrinkHero({ name, pictures, glass, itemId, palette, height, fade, onColour, sketch }: DrinkHeroProps) {
+export function DrinkHero({ name, pictures, glass, itemId, palette, height, fade, onColour, sketch, onPhotos }: DrinkHeroProps) {
   const ds = useDs();
   const [index, setIndex] = useState(0);
   const [viewing, setViewing] = useState(false);
@@ -115,16 +117,19 @@ export function DrinkHero({ name, pictures, glass, itemId, palette, height, fade
       {fade ? (
         <LinearGradient colors={fadeTo.colors} locations={fadeTo.locations} style={styles.overlay} />
       ) : null}
-      {total > 1 || tag ? (
-        // Each page's label already says where it is and what it is; this is the visible copy.
-        <View style={[styles.badges, { bottom }]} aria-hidden>
-          {/* A solid ground behind the warning: the photo under it can be light or dark. */}
-          {tag ? <Tag label={tag} tone="warning" style={{ backgroundColor: ds.c.ground }} /> : null}
-          {total > 1 ? (
-            <GlassSurface scheme="dark" style={styles.count}>
-              <Caption color={backbar.dark.ink}>{`${index + 1} of ${total}`}</Caption>
-            </GlassSurface>
-          ) : null}
+      {total > 1 || tag || onPhotos ? (
+        <View style={[styles.badges, { bottom }]}>
+          {/* Each page's label already says where it is and what it is; this is the visible copy. */}
+          <View style={styles.marks} aria-hidden>
+            {/* A solid ground behind the warning: the photo under it can be light or dark. */}
+            {tag ? <Tag label={tag} tone="warning" style={{ backgroundColor: ds.c.ground }} /> : null}
+            {total > 1 ? (
+              <GlassSurface scheme="dark" style={styles.count}>
+                <Caption color={backbar.dark.ink}>{`${index + 1} of ${total}`}</Caption>
+              </GlassSurface>
+            ) : null}
+          </View>
+          {onPhotos ? <GlassButton accessibilityLabel={total ? `Photos, ${total}: add, crop or choose the main one` : 'Add a photo'} icon="camera" label={total ? 'Photos' : 'Add a photo'} onMedia onPress={onPhotos} /> : null}
         </View>
       ) : null}
       {onColour && total === 0 && itemId ? <ColourButton itemId={itemId} name={name} bottom={bottom} onPress={onColour} /> : null}
@@ -147,7 +152,8 @@ const styles = StyleSheet.create({
   fill: { width: '100%' },
   page: { flex: 1 },
   overlay: { position: 'absolute', top: 0, left: 0, right: 0, bottom: 0, pointerEvents: 'none' },
-  badges: { position: 'absolute', right: space.lg, flexDirection: 'row', alignItems: 'center', gap: space.sm, pointerEvents: 'none' },
+  badges: { position: 'absolute', right: space.lg, flexDirection: 'row', alignItems: 'center', gap: space.sm, pointerEvents: 'box-none' },
+  marks: { flexDirection: 'row', alignItems: 'center', gap: space.sm, pointerEvents: 'none' },
   colour: { position: 'absolute', left: space.lg },
   count: { paddingHorizontal: space.md, paddingVertical: space.xs },
 });

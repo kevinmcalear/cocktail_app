@@ -204,6 +204,8 @@ export const layout = {
   breakpoints: { tablet: 768, desktop: 1200 },
   gutter: { phone: 16, tablet: 24, desktop: 32 },
   minTapTarget: 44,
+  /** Desktop's phone previews of a drink page: about an iPhone's width, in points. */
+  phoneFrame: 390,
   /**
    * How wide a page's column grows. Pages sit left, next to the sidebar
    * (components/nav/Page.tsx): text for lists and forms, wide for plans and grids.
