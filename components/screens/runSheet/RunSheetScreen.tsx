@@ -1,6 +1,6 @@
 import { useRouter, type Href } from 'expo-router';
 import { useMemo, useState } from 'react';
-import { ScrollView, StyleSheet, View } from 'react-native';
+import { KeyboardAvoidingView, Platform, ScrollView, StyleSheet, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import { Body, Button, Caption, GlassButton, Title, useBreakpoint, useDs, useGutter } from '@/components/ds';
@@ -69,7 +69,8 @@ export function RunSheetScreen({ menuId }: { menuId: string }) {
   );
 
   return (
-    <View style={[styles.screen, { backgroundColor: ds.c.ground }]}>
+    // The page shrinks above the keyboard, so the last drink's serves scroll clear of it (tf-080).
+    <KeyboardAvoidingView behavior={Platform.select({ ios: 'padding', android: 'height' })} style={[styles.screen, { backgroundColor: ds.c.ground }]}>
       {/* Before the scroll view, so a step's sheet (a dialog on the web) draws over it. */}
       {nextStep && showNext && canEdit && !desktop && data ? (
         <View style={[styles.next, { paddingHorizontal: gutter, bottom: insets.bottom + space.xl }]}>
@@ -92,7 +93,7 @@ export function RunSheetScreen({ menuId }: { menuId: string }) {
             )}
             <View style={{ gap: space.xs }}>
               <Title>Run sheet</Title>
-              {shownStep === 'serves' ? <Body tone="muted">How many of each, and who brings what.</Body> : null}
+              {canEdit ? <Body tone="muted">{stepLine(shownStep, desktop)}</Body> : null}
             </View>
             {canEdit ? <StepNav step={shownStep} onChange={setStep} desktop={desktop} /> : null}
             {body}
@@ -101,8 +102,21 @@ export function RunSheetScreen({ menuId }: { menuId: string }) {
           {desktop && data && sheet && canEdit ? <LivePreview sheet={sheet} menu={data.menu} breakDown={breakDown} looks={looks} claimUrls={claimUrls} /> : null}
         </View>
       </ScrollView>
-    </View>
+    </KeyboardAvoidingView>
   );
+}
+
+/** What each step asks, and whether it can be left (tf-079): only the serves are needed. */
+function stepLine(step: Step, desktop: boolean): string {
+  const of = desktop ? 3 : 4;
+  const n = STEPS.findIndex((s) => s.value === step) + 1;
+  const what: Record<Step, string> = {
+    serves: 'How many of each drink. That’s all it needs; the rest is optional.',
+    specs: 'Optional. Swap a bottle or a garnish for this night.',
+    who: 'Optional. Who brings what: it all starts with your bar.',
+    sheet: 'Done. Print it or send it.',
+  };
+  return `Step ${n} of ${of}. ${what[step]}`;
 }
 
 /** Desktop: the sheet beside the editor, updating as you go, and each bar's or brand's own list to send (boards "Desktop", R1). */

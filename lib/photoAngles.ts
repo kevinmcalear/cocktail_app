@@ -9,7 +9,7 @@ export const PHOTO_ANGLES: readonly { angle: ImageAngle; label: string }[] = [
   { angle: 'side', label: 'Side' },
   { angle: 'top', label: 'Top' },
   { angle: 'garnish', label: 'Close up' },
-  { angle: 'handoff', label: 'Hand-off' },
+  { angle: 'handoff', label: 'Guest view' },
 ];
 
 /** How many more photos fit: one per angle. */

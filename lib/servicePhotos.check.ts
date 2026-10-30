@@ -28,7 +28,7 @@ assert.equal(top.picture?.url, 'top-new.jpg');
 assert.equal(top.status, 'photo');
 
 // Labels are words, not colours.
-assert.deepEqual(shots.map(shotCaption), ['Side', 'Top: may be out of date', 'Garnish: sketch, no photo yet', 'Hand-off: no photo yet']);
+assert.deepEqual(shots.map(shotCaption), ['Side', 'Top: may be out of date', 'Garnish: sketch, no photo yet', 'Guest view: no photo yet']);
 
 // No links at all: four empty tiles, all on the shot list.
 assert.equal(shotList(serviceShots(undefined)).length, 4);
