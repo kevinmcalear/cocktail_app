@@ -218,7 +218,8 @@ assert.equal(stockUnit(honey[0], 'ml'), 'g');
 assert.equal(servesFromStock(honey[0], 450, 'g'), 22);
 assert.deepEqual(stockLines(honey).map((l) => l.key), ['h'], 'a twist is not something you run out of by the ml');
 
-assert.equal(chillLine('stirred', true, -18), 'Chill it in the freezer at \u221218\u00a0°C for at least 8 hours before service, overnight to be safe.');
+assert.equal(chillLine('stirred', true, -18, 40), 'Chill it in the freezer at \u221218\u00a0°C for at least 8 hours before service, ideally 24.');
+assert.match(chillLine('stirred', true, -18, 20), /would slush.*\u221212/, 'a weak stirred batch is not sent to a -18 freezer');
 assert.match(chillLine('built', true, -18), /fridge.*at least 4 hours/, 'a bottled highball chills in the fridge');
 assert.match(chillLine('shaken', false, -18), /until service/, 'a shaken batch only keeps cold');
 

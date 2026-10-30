@@ -139,7 +139,7 @@ export function AddDrinkSheet({ section, barId, onClose, library, canMake, elsew
         ListEmptyComponent={missing ? undefined : <Body tone="muted">{query ? `Nothing called “${query}” ${inOnly ? `in ${section.name}` : `that fits ${section.name}`}.` : `No drinks that fit ${section.name} yet.`}</Body>}
         // At the end of the list, not pinned under it, so the results get the room (tf-072). A typed name has its own Make above.
         ListFooterComponent={
-          missing ? undefined : (
+          missing || inOnly ? undefined : (
             <View style={styles.make}>
               {/* The editor puts it in this section once it's saved (useLayoutEditor). */}
               <Button label={`Create a new ${kind === 'cocktail' ? 'drink' : kind}`} icon="plus" variant="secondary" onPress={() => makeIt(null)} />

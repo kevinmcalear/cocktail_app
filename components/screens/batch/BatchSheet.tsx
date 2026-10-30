@@ -205,7 +205,7 @@ function BatchBody({ name, lines: all, methodNames: allMethods, lockedUntil, ini
         detail={mode === 'bottle' ? `${batch.total} · pour ${batch.pour} each` : ahead.length ? 'every part scales' : `fills ${batch.bottles} × ${bottleLabel(bottleSize)}`}
         trailing={more ? <Choice label="Units" options={UNITS} value={unit} onChange={setUnit} /> : undefined}
       />
-      <TextLink label={more ? 'Fewer options' : 'More ways to batch: fill a bottle, what I have, units'} onPress={() => { setMore(!more); setMode('serves'); }} />
+      <TextLink label={more ? 'Fewer options' : 'More ways to batch: fill a bottle, what I have, units'} onPress={() => { setMore(!more); setMode('serves'); setUnit('ml'); }} />
       {mode === 'serves' ? (
         <>
           <ServesRuler value={serves} min={MIN_SERVES} max={MAX_SERVES} onChange={setServes} />
@@ -252,7 +252,7 @@ function BatchBody({ name, lines: all, methodNames: allMethods, lockedUntil, ini
       )}
 
       {batch.method === 'stirred' && batch.abv !== null ? <FreezerCheck abv={batch.abv} freezerC={freezerC} onFreezerC={setFreezerC} /> : null}
-      <Body tone="muted">{`${batch.note} ${chillLine(batch.method, !!batch.water, freezerC)}`}</Body>
+      <Body tone="muted">{`${batch.note} ${chillLine(batch.method, !!batch.water, freezerC, batch.abv)}`}</Body>
       {guessed ? (
         <Caption tone="muted">{canEdit ? 'What stays out of the bottle is guessed from the names. Set it in Edit, under Service.' : 'What stays out of the bottle is guessed from the names.'}</Caption>
       ) : null}

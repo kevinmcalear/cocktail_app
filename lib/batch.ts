@@ -287,13 +287,18 @@ export function freezingPointC(abv: number): number {
  * How to keep the bottle before service, in one line (Kevin, 29 Oct jam: "say
  * how to batch, chill at X for Y"). A freezer pour gets the freezer's
  * temperature and a time: a 750 ml bottle takes most of a working day to get
- * that cold, so at least 8 hours, overnight to be safe. A bottle poured straight
+ * that cold, so at least 8 hours, ideally 24 (Eddie, 29 Oct jam). A batch that would
+ * slush in this freezer is told a warmer one, or the fridge. A bottle poured straight
  * otherwise goes in the fridge; a shaken or built batch is mixed to order, so it
  * keeps cold in the fridge with no time to wait.
  */
-export function chillLine(method: BatchMethod, poured: boolean, freezerC: number): string {
-  const c = `${freezerC < 0 ? '\u2212' : ''}${Math.abs(Math.round(freezerC))}\u00a0°C`;
-  if (method === 'stirred') return `Chill it in the freezer at ${c} for at least 8 hours before service, overnight to be safe.`;
+export function chillLine(method: BatchMethod, poured: boolean, freezerC: number, abv: number | null = null): string {
+  const c = (t: number) => `${t < 0 ? '\u2212' : ''}${Math.abs(Math.round(t))}\u00a0°C`;
+  // Too weak for this freezer (the same test as the sheet's freezer check): a warmer freezer, or the fridge.
+  if (method === 'stirred' && abv !== null && freezingPointC(abv) >= freezerC - 1) {
+    return `It would slush at ${c(freezerC)}: chill it in a freezer at about ${c(-12)} for at least 8 hours, ideally 24, or in the fridge at about 4\u00a0°C for at least 4 hours.`;
+  }
+  if (method === 'stirred') return `Chill it in the freezer at ${c(freezerC)} for at least 8 hours before service, ideally 24.`;
   if (poured) return 'Chill the bottle in the fridge, at about 4\u00a0°C, for at least 4 hours before service.';
   return 'Keep the bottle in the fridge, at about 4\u00a0°C, until service.';
 }
