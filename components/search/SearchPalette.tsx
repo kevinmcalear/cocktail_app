@@ -13,7 +13,11 @@ const SearchPaletteCard = lazy(loadCard);
 export function SearchPalette() {
   const open = useSearchPalette((s) => s.open);
   useEffect(() => {
-    if (typeof requestIdleCallback !== 'function') return;
+    // Safari has no requestIdleCallback: a moment after the page is up instead.
+    if (typeof requestIdleCallback !== 'function') {
+      const t = setTimeout(() => void loadCard(), 1500);
+      return () => clearTimeout(t);
+    }
     const id = requestIdleCallback(() => void loadCard());
     return () => cancelIdleCallback(id);
   }, []);
