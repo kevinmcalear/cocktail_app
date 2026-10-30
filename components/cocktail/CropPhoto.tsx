@@ -24,7 +24,7 @@ const STEP = 0.5;
  * (or the zoom buttons) to zoom. Use this crop makes a new copy; the editor
  * saves it with Done, so Cancel or Discard changes loses nothing.
  */
-export function CropPhoto({ uri, onClose, onCropped }: { uri: string | null; onClose: () => void; onCropped: (uri: string) => void }) {
+export function CropPhoto({ uri, onClose, onCropped }: { uri: string | null; onClose: () => void; onCropped: (uri: string) => Promise<void> }) {
   const reduceMotion = useReducedMotion();
   return (
     <Modal visible={!!uri} animationType={reduceMotion ? 'none' : 'fade'} onRequestClose={onClose} supportedOrientations={['portrait', 'landscape']}>
@@ -35,7 +35,7 @@ export function CropPhoto({ uri, onClose, onCropped }: { uri: string | null; onC
   );
 }
 
-function Cropper({ uri, onClose, onCropped }: { uri: string; onClose: () => void; onCropped: (uri: string) => void }) {
+function Cropper({ uri, onClose, onCropped }: { uri: string; onClose: () => void; onCropped: (uri: string) => Promise<void> }) {
   const ds = useDs();
   const insets = useSafeAreaInsets();
   const [room, setRoom] = useState<Size | null>(null);
@@ -92,10 +92,10 @@ function Cropper({ uri, onClose, onCropped }: { uri: string; onClose: () => void
     if (!photo || !frame) return;
     setBusy(true);
     try {
-      onCropped(await cropPhoto(uri, cropRect(photo, frame, { zoom: zoom.get(), x: x.get(), y: y.get() }), isPng(uri)));
+      await onCropped(await cropPhoto(uri, cropRect(photo, frame, { zoom: zoom.get(), x: x.get(), y: y.get() }), isPng(uri)));
     } catch {
       setBusy(false);
-      showMessage("Couldn't crop this photo", 'Try again, or remove it and add it again.');
+      showMessage("Couldn't crop this photo", 'Check your connection and try again, or remove it and add it again.');
     }
   };
 

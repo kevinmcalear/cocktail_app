@@ -134,7 +134,7 @@ export function useCocktailEditor(id: string, { enabled = true }: { enabled?: bo
             const sorted = c.item_images.filter(isHeroLink).sort((a: any, b: any) => (a.sort_order || 0) - (b.sort_order || 0));
             setLocalImages(
                 sorted
-                    .map((ci: any) => ({ id: ci.images?.id, url: ci.images?.url, isNew: false, credit: ci.images?.credit ?? null }))
+                    .map((ci: any) => ({ id: ci.images?.id, url: ci.images?.url, isNew: false, credit: ci.images?.credit ?? null, outdatedSince: ci.outdated_since ?? null }))
                     .filter((img: ImageItem) => img.url)
             );
         }
@@ -400,6 +400,12 @@ export function useCocktailEditor(id: string, { enabled = true }: { enabled?: bo
             }
 
             await setItemImages(id, finalImageIds, { replace: true });
+            // A crop is a new link, which the server starts fresh: a crop of an out-of-date photo gets its flag back until an editor confirms it.
+            for (const img of localImages) {
+                if (!img.id || !img.outdatedSince) continue;
+                const { error: flagError } = await supabase.from("item_images").update({ outdated_since: img.outdatedSince }).eq("item_id", id).eq("image_id", img.id).is("outdated_since", null);
+                if (flagError) throw flagError;
+            }
 
             const { error } = await supabase
                 .from("items")

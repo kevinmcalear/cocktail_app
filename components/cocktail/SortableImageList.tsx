@@ -5,7 +5,7 @@ import DraggableFlatList, { ScaleDecorator, type RenderItemParams } from 'react-
 
 import { Caption, DsText, GlassButton, PressableScale, Tag, useDs } from '@/components/ds';
 import { CutoutOfferHost } from '@/components/drink/CutoutOfferHost';
-import { canCropPhotos } from '@/components/drink/drinkImages';
+import { canCropPhotos, uploadDrinkPhoto } from '@/components/drink/drinkImages';
 import { IconSymbol } from '@/components/ui/icon-symbol';
 import { radius, space } from '@/constants/tokens';
 import { useWebImageDrop } from '@/hooks/useWebImageDrop';
@@ -19,6 +19,8 @@ export interface ImageItem {
   isNew?: boolean;
   /** Who a borrowed photo belongs to (images.credit). A crop would be a new, uncredited copy, so it has none. */
   credit?: string | null;
+  /** When the spec changed after it was taken (item_images.outdated_since). A crop keeps it. */
+  outdatedSince?: string | null;
 }
 
 interface SortableImageListProps {
@@ -128,8 +130,11 @@ export function SortableImageList({ images, onReorder, onRemove, onAdd, onAddUri
       <CropPhoto
         uri={cropping === null ? null : (images[cropping]?.url ?? null)}
         onClose={() => setCropping(null)}
-        onCropped={(url) => {
-          onReorder(images.map((image, i) => (i === cropping ? { url, isNew: true } : image)));
+        onCropped={async (uri) => {
+          // Uploaded now, so editors (and a draft's autosave) only ever keep a storage URL, never the web's data: URL.
+          const uploaded = await uploadDrinkPhoto(uri, 'cocktails/crops').catch(() => null);
+          if (!uploaded) throw new Error("Couldn't upload the crop.");
+          onReorder(images.map((image, i) => (i === cropping ? { id: uploaded.id, url: uploaded.url, outdatedSince: image.outdatedSince } : image)));
           setCropping(null);
         }}
       />
