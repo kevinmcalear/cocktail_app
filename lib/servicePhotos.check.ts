@@ -34,6 +34,11 @@ assert.deepEqual(shots.map(shotCaption), ['Side', 'Top: may be out of date', 'Ga
 assert.equal(shotList(serviceShots(undefined)).length, 4);
 
 // The whole shot list: the hero first (a link with no angle counts), then the four angles; two real photos of five.
+// The hero slot shows the main photo (lowest sort_order), not the newest.
+const twoHeroes = photoShots([{ ...hero, sort_order: 1, images: { url: 'second.jpg' } }, { ...hero, id: 'h0', sort_order: -1, images: { url: 'main.jpg' } }]);
+assert.equal(twoHeroes[0].picture?.url, 'main.jpg');
+assert.deepEqual(twoHeroes[0].photoLinkIds, ['h', 'h0']);
+
 const all = photoShots([{ ...hero, angle: null, outdated_since: '2026-10-02' }, side, garnishSketch]);
 assert.deepEqual(all.map((s) => s.angle), ['hero', 'side', 'top', 'garnish', 'handoff']);
 assert.equal(all[0].status, 'outdated');
