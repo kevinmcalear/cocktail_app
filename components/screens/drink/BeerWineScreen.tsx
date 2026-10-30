@@ -17,6 +17,7 @@ import { formatAbv } from '@/lib/drinkMath';
 import { bareItemId, DRINK_KINDS, type DrinkKind } from '@/lib/drinkKinds';
 import { glassOver, heroPicture, orderedPictures, type ItemImageLink } from '@/lib/itemImages';
 
+import { ApprovalNotice } from './ApprovalNotice';
 import { DrinkControls } from './DrinkControls';
 import { DrinkDesktop } from './DrinkDesktop';
 import { DrinkTags, type Fact } from './DrinkFacts';
@@ -141,6 +142,7 @@ function BeerWinePage({ kind, item, favorite, onToggleFavorite, inStudyPile, onT
         </View>
         <MakeLine facts={facts} />
       </View>
+      {item.bar_id ? <ApprovalNotice itemId={item.id} /> : null}
       {item.description ? <Body tone="muted">{item.description}</Body> : null}
       {item.notes ? (
         <View style={styles.notes}>
