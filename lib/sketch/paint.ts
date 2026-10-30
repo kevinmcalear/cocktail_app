@@ -156,7 +156,12 @@ export function paintSketch(inputs: SketchInputs, { seed, style = DEFAULT_SKETCH
   if (S.mute) tone = mixHex(tone, SKETCH.mute, S.mute);
   const strength = clear ? 0.55 : Math.min(1.15, 0.55 + liquid.alpha * 0.6);
   const floor = g.stemmed ? bot : g.base!;
-  if (g.opaque) {
+  // No liquid at all (alpha 0): the bare glass, drawn while a drink has no drawing of its own yet.
+  const empty = liquid.alpha === 0;
+  if (empty) {
+    paintBody(P, g);
+    stage('liquid', (g.top + floor) / 2);
+  } else if (g.opaque) {
     if (!paintBody(P, g)) P.wash(P.silhouette, g.opaque, 0.75, { spill: 0.4, fadeTo: 0.55 });
     // Anchored mid-drink: AnimatedSketch spreads the liquid out from there.
     stage('liquid', g.top + 1.6);
@@ -280,7 +285,7 @@ export function paintSketch(inputs: SketchInputs, { seed, style = DEFAULT_SKETCH
     const yy = g.rim + 4;
     P.line(ell(50, yy, hw(g, yy), hw(g, yy) * e, 0.1, Math.PI - 0.1, 24), { weight: 0.45, alpha: 0.6 });
   }
-  if (ice !== 'crushed' && ice !== 'pebble' && ice !== 'shaved') {
+  if (!empty && ice !== 'crushed' && ice !== 'pebble' && ice !== 'shaved') {
     const Rf = hw(g, surface);
     P.line(ell(50, surface, Rf, Rf * e, 0.1, Math.PI - 0.1, 30), { weight: foam ? 0.85 : 0.7, alpha: ice !== 'none' ? 0.4 : 0.9, wob: foam ? 2.4 : 1 });
   }
