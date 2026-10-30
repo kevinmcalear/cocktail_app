@@ -6,6 +6,7 @@ import { BackbarTheme } from '@/components/ds';
 import { MountOnFocus } from '@/components/nav/MountOnFocus';
 import { BottomSearch, SystemBottomSearch, type SearchTabState } from '@/components/search/BottomSearch';
 import { SYSTEM_BOTTOM_SEARCH, useBottomSearch } from '@/hooks/useBottomBar';
+import { useIsHydrated } from '@/hooks/useIsHydrated';
 import { useSearchMine } from '@/hooks/useSearchMine';
 import { useSearchFrom } from '@/hooks/useSearchFrom';
 import { useVenueFeatures } from '@/hooks/useVenueFeatures';
@@ -64,13 +65,17 @@ function ToPalette() {
 function useSearchTabState(): SearchTabState {
   const mine = useSearchMine();
   const router = useRouter();
-  // ?q= carries a search in from a link, and ?scope=everywhere where it starts.
-  const { q, scope: carriedScope } = useLocalSearchParams<{ q?: string; scope?: string }>();
+  // ?q= carries a search in from a link, and ?scope=everywhere where it starts. The static page has neither,
+  // so they're read once React has hydrated it: typed results in the first render threw the page away (#418).
+  const params = useLocalSearchParams<{ q?: string; scope?: string }>();
+  const hydrated = useIsHydrated();
+  const q = hydrated ? params.q : undefined;
+  const carriedScope = hydrated ? params.scope : undefined;
   const everywhere = carriedScope === 'everywhere' ? 'everywhere' : null;
   // A door's search (Discover's pill, My Bar's "Search every drink for “rye”", hooks/useSearchFrom.ts), taken once.
   const { from, area, showOnMap, start: opened } = useSearchFrom();
   const [query, setQuery] = useState(opened?.query ?? q ?? '');
-  const [carried, setCarried] = useState(q);
+  const [carried, setCarried] = useState(`${q}|${carriedScope}`);
   const [picked, pickScope] = useState<SearchScope | null>(opened ? opened.scope : everywhere);
   // The native field holds its own text: what's carried in is written into it.
   const [written, setWritten] = useState<{ query: string } | undefined>(() => (opened?.query || q ? { query: opened?.query ?? q ?? '' } : undefined));
@@ -85,8 +90,8 @@ function useSearchTabState(): SearchTabState {
     setShow('all');
   }
   // A search carried in by a link starts where it says.
-  if (q !== carried) {
-    setCarried(q);
+  if (`${q}|${carriedScope}` !== carried) {
+    setCarried(`${q}|${carriedScope}`);
     if (q) {
       setQuery(q);
       setWritten({ query: q });
