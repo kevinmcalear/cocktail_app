@@ -8,7 +8,7 @@
 import { density, toMl } from '@/lib/drinkMath';
 import { type ItemImageLink } from '@/lib/itemImages';
 import { resolvePresentationIngredient, sortRecipesByOrder } from '@/lib/recipeUtils';
-import { amountText } from '@/lib/units';
+import { amountText, unitOnlyText } from '@/lib/units';
 
 export interface PresentationRecipe {
   id?: string;
@@ -74,7 +74,7 @@ export function specLines(recipes: PresentationRecipe[] | null | undefined): Spe
   return sortRecipesByOrder([...(recipes ?? [])]).map((r, i) => {
     const resolved = resolvePresentationIngredient(r) as PresentationIngredient | null;
     const n = r.amount === null || r.amount === undefined || r.amount === '' ? null : Number(r.amount);
-    const amount = n === null || Number.isNaN(n) ? null : amountText(String(r.amount), r.unit);
+    const amount = n === null || Number.isNaN(n) ? unitOnlyText(r.unit) : amountText(String(r.amount), r.unit);
     return {
       key: r.id ?? `${i}`,
       amount,

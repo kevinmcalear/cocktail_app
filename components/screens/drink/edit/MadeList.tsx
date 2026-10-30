@@ -5,7 +5,8 @@ import { Body, Button, Caption, Headline, PressableScale, Sheet, Switch, useDs }
 import { IconSymbol } from '@/components/ui/icon-symbol';
 import { fontFamilies, layout, radius, space, type } from '@/constants/tokens';
 import type { SpecCategory } from '@/hooks/useCocktailEditor';
-import { iceLine } from '@/lib/drinkWizard';
+import { COMMON_METHODS, iceLine } from '@/lib/drinkWizard';
+import { findByName } from '@/lib/drinkMethods';
 import { iceBuildLine, saysMore } from '@/lib/iceBuild';
 
 import type { DrinkEditor as Editor } from './EditParts';
@@ -23,14 +24,19 @@ const iceEditor = (editor: Editor): IceEditor | null => ('setIceBuild' in editor
 const ROWS: { category: Category; label: string; empty: string }[] = [
   { category: 'glassware', label: 'Glass', empty: 'Pick a glass' },
   // The ice it's made with (#697): this editor only.
-  { category: 'methodIce', label: 'Made with', empty: 'Shaken with, stirred over…' },
-  { category: 'ice', label: 'Ice', empty: 'No ice set' },
+  { category: 'methodIce', label: 'Ice (made with)', empty: 'Shaken with, stirred over…' },
+  { category: 'ice', label: 'Ice (served on)', empty: 'No ice set' },
   { category: 'method', label: 'Method', empty: 'Shake, stir, build…' },
   { category: 'family', label: 'Family', empty: 'Sour, highball…' },
 ];
 
 const optionsOf = (editor: Editor, category: Category): Option[] =>
   ({ glassware: editor.glassware, ice: editor.iceTypes, methodIce: editor.iceTypes, method: editor.methods, family: editor.families })[category] as Option[];
+
+/** New's methods with no row yet (Churn, Eddie tf-061), made when picked. A one-word one is there already when a row starts like it ("Shaken" for Shake). */
+const NEW = 'new:';
+const unmadeMethods = (rows: Option[]): Option[] =>
+  COMMON_METHODS.filter((m) => !findByName(rows, m) && (m.includes(' ') || !rows.some((r) => r.name.toLowerCase().startsWith(m.slice(0, 4).toLowerCase())))).map((m) => ({ id: NEW + m, name: m }));
 
 const methodNames = (editor: Editor) => editor.methodIds.map((id) => (editor.methods as Option[]).find((m) => m.id === id)?.name).filter((n): n is string => !!n);
 
@@ -118,8 +124,9 @@ export function MadeList({ editor, itemId }: { editor: Editor; itemId: string | 
 export function PickSheet({ editor, category, label, onClose, part }: { editor: Editor; category: Category; label: string; onClose: () => void; part?: { title: string; ids: string[]; toggle: (id: string, name: string) => void } }) {
   const ds = useDs();
   const [adding, setAdding] = useState('');
-  const options = optionsOf(editor, category);
   const multi = category === 'method';
+  const rows = optionsOf(editor, category);
+  const options = multi ? [...rows, ...unmadeMethods(rows)] : rows;
   const methodIds = part?.ids ?? editor.methodIds;
   const toggleMethod = part?.toggle ?? editor.toggleMethod;
   const ice = category === 'methodIce' ? iceEditor(editor) : null;
@@ -127,8 +134,8 @@ export function PickSheet({ editor, category, label, onClose, part }: { editor: 
   const current = ice ? ice.methodIceId : editor.getSpecId(spec);
   const setOne = (id: string | null) => (ice ? ice.setMethodIceId(id) : editor.setSpecId(spec, id));
   const picked = (id: string) => (multi ? methodIds.includes(id) : current === id);
-  const choose = (id: string, name: string) => {
-    if (multi) return toggleMethod(id, name);
+  const choose = async (id: string, name: string) => {
+    if (multi) return toggleMethod(id.startsWith(NEW) ? await editor.handleAddPill('method', name) : id, name);
     setOne(picked(id) ? null : id);
     onClose();
   };
@@ -164,7 +171,7 @@ export function PickSheet({ editor, category, label, onClose, part }: { editor: 
               role={multi ? 'checkbox' : 'radio'}
               aria-checked={picked(o.id)}
               accessibilityLabel={o.name}
-              onPress={() => choose(o.id, o.name)}
+              onPress={() => void choose(o.id, o.name)}
               style={[styles.option, { borderBottomColor: ds.c.line }]}
             >
               <Body style={styles.flex}>{o.name}</Body>
@@ -178,9 +185,9 @@ export function PickSheet({ editor, category, label, onClose, part }: { editor: 
           value={adding}
           onChangeText={setAdding}
           onSubmitEditing={() => void add()}
-          placeholder={`Add ${ice ? 'an ice' : `a ${label.toLowerCase()}`}`}
+          placeholder={`Add ${spec === 'ice' ? 'an ice' : `a ${label.toLowerCase()}`}`}
           placeholderTextColor={ds.c.muted}
-          accessibilityLabel={`Add ${ice ? 'an ice' : `a ${label.toLowerCase()}`}`}
+          accessibilityLabel={`Add ${spec === 'ice' ? 'an ice' : `a ${label.toLowerCase()}`}`}
           style={[styles.input, NO_OUTLINE, { color: ds.c.ink, backgroundColor: ds.c.surface }]}
         />
         <Button label="Add" size="sm" variant="secondary" disabled={!adding.trim()} onPress={() => void add()} />
@@ -194,7 +201,7 @@ const styles = StyleSheet.create({
   section: { gap: space.sm },
   group: { borderRadius: radius.card, borderCurve: 'continuous', paddingHorizontal: space.lg },
   row: { flexDirection: 'row', alignItems: 'center', gap: space.sm, minHeight: 52 },
-  label: { width: 72 },
+  label: { minWidth: 72 },
   value: { flex: 1, textAlign: 'right' },
   flex: { flex: 1, minWidth: 0 },
   sheetHead: { flexDirection: 'row', alignItems: 'center' },

@@ -3,7 +3,7 @@ import { glassModelSize, useDrinkGlassModel } from '@/hooks/useGlassModels';
 import { classifyMethod, isGarnishUnit, type BatchMethod } from '@/lib/batch';
 import { methodIcon, orderedMethodIds } from '@/lib/drinkMethods';
 import { glassIcon } from '@/lib/glasswareIcons';
-import { iceLine } from '@/lib/drinkWizard';
+import { grated, iceLine } from '@/lib/drinkWizard';
 import { iceBuildLine, readIceBuild, saysMore } from '@/lib/iceBuild';
 import { drinkStrength, formatAbv, formatAmount, type DilutionDefaults, type Strength } from '@/lib/drinkMath';
 import type { SpecLine } from '@/lib/spec';
@@ -85,8 +85,8 @@ export function useDrinkFacts(item: DatabaseItem, { lines, amounts, dilutionDefa
   const iceBy = madeBy('ice');
   const glassBy = madeBy('glassware') ?? model?.maker?.display_name;
 
-  // The finish: the last count-unit line (a twist, a pick, a pinch).
-  const garnish = [...lines].reverse().find((l) => l.ingredient && isGarnishUnit(l.unit) && !/\begg/i.test(l.ingredient));
+  // The finish: every count-unit line (a twist, a sprig, grated nutmeg), in spec order. Eddie tf-064: a mint sprig went missing beside the nutmeg.
+  const garnishes = lines.filter((l) => l.ingredient && isGarnishUnit(l.unit) && !/\begg/i.test(l.ingredient)).map((l) => garnishLabel(l.ingredient!, l.unit));
   const serveAbv = item.serve_abv != null && !specLocked ? formatAbv(item.serve_abv) : null;
   const serve =
     item.serve_ml != null && measures
@@ -109,7 +109,7 @@ export function useDrinkFacts(item: DatabaseItem, { lines, amounts, dilutionDefa
       saysMore(build)
         ? { label: 'Ice', value: iceBuildLine(build), sub: [methodIce ? iceLine(null, methodIce.name, methods) : null, iceBy ? `cut by ${iceBy}` : null].filter(Boolean).join(' · ') || undefined, onPress: measures ? openGlass : undefined, accessibilityHint: glassHint }
         : (ice || methodIce) && { label: 'Ice', value: iceLine(ice?.name ?? null, methodIce?.name ?? null, methods)!, sub: iceBy ? `cut by ${iceBy}` : undefined, onPress: measures ? openGlass : undefined, accessibilityHint: glassHint },
-      garnish ? { label: 'Garnish', value: garnishLabel(garnish.ingredient!, garnish.unit) } : null,
+      garnishes.length ? { label: 'Garnish', value: garnishes.join(', ') } : null,
     ] as (Fact | null | undefined)[]
   ).filter((f): f is Fact => !!f);
   // Beside the Spec heading (Eddie E43): each method's icon, then the glass's, which opens the glass sheet like its make line cell.
@@ -148,7 +148,8 @@ function glassSub(glass: GlassSheetGlass, by: string | undefined) {
   return [by ? `by ${by}` : null, size].filter(Boolean).join(' · ') || undefined;
 }
 
-/** The garnish fact: a discard says what happened to the peel ("Lemon peel, expressed and discarded"). */
+/** The garnish fact: a discard says what happened to the peel ("Lemon peel, expressed and discarded"), grated says so ("Grated nutmeg"). */
 export function garnishLabel(name: string, unit: string | null | undefined): string {
-  return (unit ?? '').toLowerCase() === 'discard' ? `${name} peel, expressed and discarded` : name;
+  const u = (unit ?? '').toLowerCase();
+  return u === 'discard' ? `${name} peel, expressed and discarded` : u === 'grated' ? grated(name) : name;
 }

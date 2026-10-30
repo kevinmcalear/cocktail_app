@@ -7,7 +7,7 @@ import {
   withMethodIce,
   amountLabel, amountOf, canSave, choiceList, convertPour, draftFromSpec, COMMON_ICE, creatorProfileId, EMPTY_DRAFT, GARNISH_CHIPS, guessUnit, hasContent, newLine, nextUnit, pickByName,
   likeExactly, QUICK_UNITS, searchByName, stepAmount, sketchLook, specLines, stepFilled, WIZARD_STEPS, type WizardDraft,
-  newDraftId, FINISH_CHIPS, FINISH_UNITS, finishLabel, finishStart, STEP_COPY, parseYear, savedNotice,
+  newDraftId, COMMON_METHODS, FINISH_CHIPS, FINISH_UNITS, finishLabel, finishStart, STEP_COPY, parseYear, savedNotice,
 } from './drinkWizard';
 import { draftSketchInputs } from './sketch/draft';
 import { RECIPE_UNITS } from './units';
@@ -217,6 +217,13 @@ assert.equal(methodIceLabel(['Whip (whisk or frother)']), 'Made with');
 assert.equal(methodIceLabel(['Whip (iSi)']), 'Shaken with');
 assert.equal(withMethodIce({ ...EMPTY_DRAFT, methods: [{ id: null, name: 'Dry shake' }] }, []).methodIce ?? null, null, 'a dry shake alone takes no ice');
 assert.equal(methodIceLabel(['Reverse dry shake']), 'Shaken with');
+// Churned in the glass (Eddie tf-061): its ice is the one it's served on.
+assert.equal(methodIceLabel(['Churn']), null);
+assert.ok(COMMON_METHODS.includes('Churn'));
+
+// Grated, with no amount (Eddie tf-062): "Grated nutmeg".
+assert.equal(finishLabel({ name: 'Nutmeg', amount: '', unit: 'grated' }), 'Grated nutmeg');
+assert.equal(GARNISH_CHIPS.find((c) => c.label === 'Grated nutmeg')?.unit, 'grated');
 
 // --- what it's shaken with starts on cubes, or the venue's (Q21) ---
 const pick = (name: string) => ({ id: null, name });
