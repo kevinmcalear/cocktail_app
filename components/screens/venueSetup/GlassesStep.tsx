@@ -12,6 +12,7 @@ import type { GlassModel } from '@/hooks/useGlassModels';
 import { useIsWideWeb } from '@/hooks/useIsWideWeb';
 import { anyLine, kindOf, kindRow, type GlassKind } from '@/lib/glassKinds';
 import { GLASS_TYPE_LABEL } from '@/lib/glassware';
+import type { GlassOutline } from '@/lib/sketch/outline';
 import type { SketchGlass } from '@/lib/sketch/types';
 import { heldNotOnPage } from '@/lib/whatNext';
 import { useVenueSetup } from '@/store/useVenueSetup';
@@ -39,6 +40,7 @@ interface Listed {
   /** "Urban Bar Retro Coupette 15cl": the real glass, when there is one. */
   real: string | null;
   is_default: boolean;
+  outline?: GlassOutline | null;
 }
 
 /** What the venue calls it: its own name ("Double rocks"), else its kind. */
@@ -74,7 +76,7 @@ export function GlassesStep({ barId, pageId, name }: { barId: string; pageId: st
   const [dismissed, setDismissed] = useState(false);
 
   const listed: Listed[] = [
-    ...glasses.map((g) => ({ key: g.id, id: g.id, glass: g.glass, variant: g.variant, name: g.name && g.name !== g.model?.name ? g.name : null, model_id: g.model_id, real: g.model ? [g.model.maker?.display_name, g.model.name].filter(Boolean).join(' ') : null, is_default: g.is_default })),
+    ...glasses.map((g) => ({ key: g.id, id: g.id, glass: g.glass, variant: g.variant, name: g.name && g.name !== g.model?.name ? g.name : null, model_id: g.model_id, real: g.model ? [g.model.maker?.display_name, g.model.name].filter(Boolean).join(' ') : null, is_default: g.is_default, outline: g.outline ?? g.model?.outline })),
     // A held catalog glass keeps its maker and name to show meanwhile.
     ...heldNotOnPage(held, glasses).map((h) => ({ ...h, id: null, name: h.model_id ? null : h.name, real: h.model_id ? [h.maker, h.name].filter(Boolean).join(' ') : null })),
   ];
@@ -141,7 +143,7 @@ export function GlassesStep({ barId, pageId, name }: { barId: string; pageId: st
             const just = !l.model_id && added.includes(kindOf(l)?.key ?? '');
             return (
               <View key={l.key} role="listitem" style={[styles.row, i ? { borderTopColor: ds.c.line, borderTopWidth: StyleSheet.hairlineWidth } : null]}>
-                <GlassThumb glass={l.glass} variant={l.variant} size={52} />
+                <GlassThumb glass={l.glass} variant={l.variant} outline={l.outline} size={52} />
                 <View style={styles.flex}>
                   <Body numberOfLines={1}>{titleOf(l)}</Body>
                   <Caption tone="muted" numberOfLines={2}>

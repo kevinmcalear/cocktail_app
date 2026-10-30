@@ -63,7 +63,7 @@ export function GlasswareScreen({ barId, openId }: { barId: string; openId?: str
             id: g.id,
             name: glassName(g),
             line: kitLine([realGlass(g) ?? 'Not matched to a real glass yet', source(g)]),
-            thumb: <GlassThumb glass={g.glass} variant={g.variant} outline={g.outline} />,
+            thumb: <GlassThumb glass={g.glass} variant={g.variant} outline={g.outline ?? g.model?.outline} />,
           })),
         },
       ]}
@@ -159,7 +159,7 @@ function GlassPage({ barId, pageId, glass, others, canEdit, venueName, justDrawn
       name={glassName(glass)}
       showTitle={wide}
       notice={justDrawn ? <SavedNote where={`${venueName}’s glassware`} /> : null}
-      thumb={<GlassThumb glass={glass.glass} variant={glass.variant} outline={glass.outline} size={72} />}
+      thumb={<GlassThumb glass={glass.glass} variant={glass.variant} outline={glass.outline ?? glass.model?.outline} size={72} />}
       facts={[
         { label: 'Which glass', value: [realGlass(glass) ?? 'Not matched to a real glass yet', glass.outline ? null : size].filter(Boolean).join(' · '), onChange: change(0) },
         ...tracedFacts(glass, canEdit ? () => onChange(0, 'size') : undefined),
