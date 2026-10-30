@@ -72,6 +72,14 @@ export function askShort(people: readonly Maker[]): string | null {
   return people.length ? `We’ll ask ${joinNames(people.map((p) => firstName(p.name)))} first.` : null;
 }
 
+/** People added by name with no page (Eddie, tf-063): saved as items.creator_names, shown in the credit without a link. */
+export function namedOnly(d: Credits): string[] {
+  return [...new Set(makers(d, null).filter((m) => !m.id).map((m) => m.name.trim()).filter(Boolean))].slice(0, MAX_NAMED);
+}
+
+/** items.creator_names holds up to five. */
+export const MAX_NAMED = 5;
+
 function toPick(m: Maker): CreditPick {
   const { me: _me, ...pick } = m;
   return pick;

@@ -86,6 +86,12 @@ async function main() {
   assert.equal(creditText(nameCredit(drink('bici', null, { is_catalog: true, origin_year: 1935, origin_year_guess: 'mid' }), null)), 'Classic, mid 1930s (best guess)');
   assert.equal(creditText(nameCredit(drink('mine', null, { creator: person }), null)), 'Created by Sam Ross');
 
+  // Makers with no page, by name (tf-063): after the ones with a page, no link; a classic reads "Created by".
+  const corpse = drink('Corpse Reviver No. 2', null, { is_catalog: true, creator_names: ['Harry Craddock'], origin_bar: { ...bar, display_name: 'The Savoy', locality: 'London' } });
+  assert.equal(creditText(nameCredit(corpse, null)), 'Created by Harry Craddock at The Savoy, London');
+  assert.equal(nameCredit(corpse, null)[1].profileId, undefined, 'a name with no page is not a link');
+  assert.equal(creditText(nameCredit(drink('mine', null, { creator: person, creator_names: ['Jo Bloggs'] }), null)), 'Created by Sam Ross and Jo Bloggs');
+
   // Credit sentences leave out what isn't known and keep links on names.
   const full = drink('penicillin', 'goldrush', { creator: person, origin_bar: bar, origin_year: 2005 });
   const parts = creditSentence(full, { id: 'goldrush', name: 'Gold Rush' });

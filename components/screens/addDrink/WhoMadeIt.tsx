@@ -10,7 +10,7 @@ import { useMyProfile } from '@/hooks/useMyProfile';
 import { usePublicPeople, type PublicPerson } from '@/hooks/useProfiles';
 import type { MaybeNear } from '@/hooks/useSearchNear';
 import type { StepProps } from '@/lib/drinkWizard';
-import { addMaker, askLines, asked, makers, removeMaker } from '@/lib/whoMadeIt';
+import { addMaker, askLines, asked, makers, MAX_NAMED, namedOnly, removeMaker } from '@/lib/whoMadeIt';
 
 import { StepSearchField, type StepSearch } from './stepSearch';
 import { Eyebrow } from './WizardChrome';
@@ -78,6 +78,20 @@ export function WhoMadeIt({ draft, set, venueName, search }: StepProps & { venue
             setWho('');
             search.done();
           }}
+          add={
+            namedOnly(draft).length < MAX_NAMED && !who.trim().startsWith('@')
+              ? {
+                  // No page for them (a classic's maker, someone not on the app): credited by name (tf-063).
+                  label: `Credit “${who.trim()}” by name`,
+                  sub: 'For someone without a page. Their name shows on the drink.',
+                  onPress: () => {
+                    set(addMaker(draft, me, { id: null, name: who.trim(), sub: 'By name, no page' }));
+                    setWho('');
+                    search.done();
+                  },
+                }
+              : undefined
+          }
         />
       ) : null}
       {over ? null : <Caption tone="muted">{me ? 'Take everyone off and it saves as Not sure.' : 'Make a profile on the You tab to take credit for your drinks.'}</Caption>}

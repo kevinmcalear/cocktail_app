@@ -23,6 +23,7 @@ import { capitalize } from '@/lib/stringUtils';
 import { ontoBarLines } from '@/lib/sameName';
 import type { SketchInputs } from '@/lib/sketch/types';
 import { supabase } from '@/lib/supabase';
+import { namedOnly } from '@/lib/whoMadeIt';
 import type { Insert } from '@/types/db';
 import { useMenuDrinkHandoff } from '@/store/useMenuDrinkHandoff';
 import { useRecentActivityStore } from '@/store/useRecentActivityStore';
@@ -152,6 +153,7 @@ export function useCreateDrink() {
         originBar = data?.id ?? null;
       }
       const creatorId = creatorProfileId(draft, myProfileId);
+      const creatorNames = namedOnly(draft);
       // Another bar's name on it is a suggestion until the bar confirms it, as a drink added in setup is (useSaveCareerDrink).
       const otherBar = fromElsewhere && !!originBar;
 
@@ -178,6 +180,8 @@ export function useCreateDrink() {
         ...(iceBuild ? { ice_build: iceBuild } : {}),
         riff_of_id: draft.riffOf?.id ?? null,
         creator_profile_id: creatorId,
+        // People with no page, by name (tf-063). Only when there are some: an older database refuses the column.
+        ...(creatorNames.length ? { creator_names: creatorNames } : {}),
         origin_bar_profile_id: originBar,
         origin_year: draft.originYear ?? null,
         price: barId ? await draftPrice(draft, barId) : null,

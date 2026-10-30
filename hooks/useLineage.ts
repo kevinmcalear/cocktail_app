@@ -7,7 +7,7 @@ import { supabase } from '@/lib/supabase';
 // directly; the items RLS policy applies the same visibility rules.
 export const PROFILE_COLUMNS = 'id, kind, handle, display_name, avatar_url, locality, is_closed, closed_year';
 export const LINEAGE_COLUMNS = `id, name, riff_of_id, origin_year, origin_year_approx, origin_year_guess, credit_status, origin,
-  is_catalog, lineage_parent_id, lineage_style_id, lineage_note,
+  is_catalog, lineage_parent_id, lineage_style_id, lineage_note, creator_names,
   creator:profiles!items_creator_profile_id_fkey(${PROFILE_COLUMNS}),
   origin_bar:profiles!items_origin_bar_profile_id_fkey(${PROFILE_COLUMNS}),
   co_creators:item_co_creators(status, profile:profiles(${PROFILE_COLUMNS}))`;

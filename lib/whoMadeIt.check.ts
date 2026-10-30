@@ -1,7 +1,7 @@
 import assert from 'node:assert/strict';
 
 import { EMPTY_DRAFT } from './drinkWizard';
-import { addMaker, askLines, askShort, asked, makers, removeMaker } from './whoMadeIt';
+import { addMaker, askLines, askShort, asked, makers, namedOnly, removeMaker } from './whoMadeIt';
 
 const ME = { id: 'p-jo', name: 'Jo Park' };
 const SAM = { id: 'p-sam', name: 'Sam Ortiz', sub: '@sam.ortiz · Little Rye', claimed: true };
@@ -51,3 +51,17 @@ assert.deepEqual(makers({ creator: null, coCreators: [] }, null), []);
 assert.equal(askShort([{ ...SAM, me: false }]), 'We’ll ask Sam first.');
 assert.equal(askShort([{ ...SAM, me: false }, { ...CW, me: false }]), 'We’ll ask Sam and Christine first.');
 assert.equal(askShort([]), null);
+
+// Someone with no page, typed by name (tf-063): on the list, never asked, saved as a name.
+{
+  let n = { creator: EMPTY_DRAFT.creator, coCreators: EMPTY_DRAFT.coCreators };
+  n = { ...n, ...addMaker(n, ME, { id: null, name: 'Harry Craddock' }) };
+  assert.deepEqual(makers(n, ME).map((m) => m.name), ['Jo Park', 'Harry Craddock']);
+  assert.deepEqual(asked(n, ME), []);
+  assert.deepEqual(namedOnly(n), ['Harry Craddock']);
+  // Take yourself off: Harry is the maker, still by name, with no profile.
+  n = { ...n, ...removeMaker(n, ME, { id: ME.id, name: ME.name }) };
+  assert.deepEqual(n.creator, { id: null, name: 'Harry Craddock' });
+  assert.deepEqual(namedOnly(n), ['Harry Craddock']);
+  assert.deepEqual(namedOnly({ creator: 'nobody', coCreators: [] }), []);
+}
