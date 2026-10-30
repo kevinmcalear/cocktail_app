@@ -602,7 +602,7 @@ export interface SourceSpec {
   ice?: { id: string; name: string } | null;
 }
 
-const GARNISH_UNIT = /^(peel|twist|wheel|slice|sprig|leaf|leaves|wedge|zest|garnish|spray|rinse|float|rim|pinch)s?$/;
+const GARNISH_UNIT = /^(peel|twist|wheel|slice|sprig|leaf|leaves|wedge|zest|garnish|spray|rinse|float|rim|pinch|grated)s?$/;
 const GARNISH_EACH = /cherr|olive|coffee bean|flower|petal|nutmeg|onion|mint|berry|berries/;
 const POUR_ML: Record<string, number> = { ml: 1, cl: 10, oz: 30 };
 const OZ_STEPS = [0.25, 0.5, 0.75, 1, 1.25, 1.5, 1.75, 2, 2.5, 3, 4];
@@ -631,7 +631,8 @@ export function draftFromSpec(spec: SourceSpec, usual: string): Partial<WizardDr
     const unit = (r.unit ?? '').trim().toLowerCase();
     const pick = { id: r.ingredient.id, name: r.ingredient.name };
     const garnish = GARNISH_UNIT.test(unit) || (unit === 'each' && GARNISH_EACH.test(pick.name.toLowerCase()));
-    if (garnish) garnishes.push(newLine(pick, unit, r.amount === null ? '1' : fmt(r.amount)));
+    // Grated has no amount to set (tf-062): it stays empty.
+    if (garnish) garnishes.push(newLine(pick, unit, r.amount === null ? (unit === 'grated' ? '' : '1') : fmt(r.amount)));
     else {
       const pour = convertPour(r.amount, unit || usual, usual);
       lines.push(newLine(pick, pour.unit, pour.amount));

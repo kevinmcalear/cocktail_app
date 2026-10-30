@@ -1,4 +1,4 @@
-import { Fragment, useState } from 'react';
+import { Fragment, useRef, useState } from 'react';
 import { Platform, ScrollView, StyleSheet, TextInput, View } from 'react-native';
 
 import { Body, Button, Caption, Headline, PressableScale, Sheet, Switch, useDs } from '@/components/ds';
@@ -6,6 +6,7 @@ import { IconSymbol } from '@/components/ui/icon-symbol';
 import { fontFamilies, layout, radius, space, type } from '@/constants/tokens';
 import type { SpecCategory } from '@/hooks/useCocktailEditor';
 import { COMMON_METHODS, iceLine } from '@/lib/drinkWizard';
+import { showMessage } from '@/lib/dialogs';
 import { findByName } from '@/lib/drinkMethods';
 import { iceBuildLine, saysMore } from '@/lib/iceBuild';
 
@@ -134,8 +135,22 @@ export function PickSheet({ editor, category, label, onClose, part }: { editor: 
   const current = ice ? ice.methodIceId : editor.getSpecId(spec);
   const setOne = (id: string | null) => (ice ? ice.setMethodIceId(id) : editor.setSpecId(spec, id));
   const picked = (id: string) => (multi ? methodIds.includes(id) : current === id);
+  // One new method row at a time: a second tap while Churn is being made doesn't make two.
+  const making = useRef(false);
   const choose = async (id: string, name: string) => {
-    if (multi) return toggleMethod(id.startsWith(NEW) ? await editor.handleAddPill('method', name) : id, name);
+    if (multi && id.startsWith(NEW)) {
+      if (making.current) return;
+      making.current = true;
+      try {
+        toggleMethod(await editor.handleAddPill('method', name), name);
+      } catch {
+        showMessage('Couldn’t add that method', 'Check your connection and try again.');
+      } finally {
+        making.current = false;
+      }
+      return;
+    }
+    if (multi) return toggleMethod(id, name);
     setOne(picked(id) ? null : id);
     onClose();
   };

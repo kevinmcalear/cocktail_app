@@ -224,6 +224,8 @@ assert.ok(COMMON_METHODS.includes('Churn'));
 // Grated, with no amount (Eddie tf-062): "Grated nutmeg".
 assert.equal(finishLabel({ name: 'Nutmeg', amount: '', unit: 'grated' }), 'Grated nutmeg');
 assert.equal(GARNISH_CHIPS.find((c) => c.label === 'Grated nutmeg')?.unit, 'grated');
+const fromGrated = draftFromSpec({ id: 'x', name: 'Flip', recipes: [{ amount: null, unit: 'grated', ingredient: { id: 'n', name: 'Nutmeg' } }] }, 'ml');
+assert.deepEqual(fromGrated.garnishes?.map((g) => [g.name, g.amount, g.unit]), [['Nutmeg', '', 'grated']], 'grated nutmeg is a garnish, with no amount');
 
 // --- what it's shaken with starts on cubes, or the venue's (Q21) ---
 const pick = (name: string) => ({ id: null, name });
