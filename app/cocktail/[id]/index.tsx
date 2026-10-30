@@ -8,6 +8,7 @@ import { recentEntry, useTrackRecent } from "@/hooks/useTrackRecent";
 import { useItemEditAccess } from "@/hooks/useViewAs";
 import { heroPicture } from "@/lib/itemImages";
 import { DrinkLoading, DrinkScreen } from "@/components/screens/drink/DrinkScreen";
+import type { OpenOn } from "@/components/screens/drink/edit/DrinkEditScreen";
 import { CouldNotLoad } from "@/components/screens/safety/NotAvailable";
 import { VisitorDrink } from "@/components/screens/drink/VisitorDrink";
 
@@ -42,8 +43,9 @@ export default function CocktailDetailsScreen() {
 
     const editAccess = useItemEditAccess(cocktail);
     const [isEditing, setIsEditing] = useState(false);
-    // Fit it to the glass opens the editor on its sheet.
-    const [fitOnOpen, setFitOnOpen] = useState(false);
+    // Fit it to the glass and the hero's Photos open the editor on their sheet.
+    const [openOn, setOpenOn] = useState<OpenOn>();
+    const editOn = (sheet?: OpenOn) => (setOpenOn(sheet), setIsEditing(true));
 
     // Not yours to read (another bar's drink): signed in, the in-app page from what the bar published; else its public page.
     if ((error as { code?: string } | null)?.code === "PGRST116") return signedIn ? <VisitorDrink id={id as string} /> : <Redirect href={`/d/${id}`} />;
@@ -57,8 +59,9 @@ export default function CocktailDetailsScreen() {
                 onToggleStudyPile={() => toggleStudyPile(cocktail.id)}
                 canEdit={editAccess === "edit"}
                 adminFix={editAccess === "admin"}
-                onEdit={() => setIsEditing(true)}
-                onFit={() => (setFitOnOpen(true), setIsEditing(true))}
+                onEdit={() => editOn()}
+                onFit={() => editOn("fit")}
+                onPhotos={() => editOn("photos")}
                 openBatch={batch === "1"}
                 sheet
             />
@@ -69,7 +72,7 @@ export default function CocktailDetailsScreen() {
 
     return (
         <Suspense fallback={null}>
-            <DrinkEditScreen id={id as string} onExit={() => (setFitOnOpen(false), setIsEditing(false))} openFit={fitOnOpen} />
+            <DrinkEditScreen id={id as string} onExit={() => (setOpenOn(undefined), setIsEditing(false))} openOn={openOn} />
         </Suspense>
     );
 }
