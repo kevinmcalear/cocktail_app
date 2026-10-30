@@ -96,6 +96,7 @@ async function main() {
   assert.equal(isRiff({ name: 'The Americano' }, americano), false, 'no verdict: the same name is a version');
   assert.equal(isRiff({ name: 'House Négroni' }, { name: 'Negroni' }), false);
   assert.equal(isRiff({ name: 'Negroni Sbagliato' }, { name: 'Negroni' }), true, 'no verdict: another name is a riff');
+  assert.equal(isRiff({ name: 'Gin and Tonic' }, { name: 'Gin & Tonic', aliases: ['Gin and Tonic', 'G&T'] }), false, 'one of its other names is the same drink');
   const rye = { ...bar, id: 'b2', display_name: 'Little Rye', locality: 'Brunswick' };
   const barAmericano = drink('Americano', 'amer', { origin_bar: rye });
   assert.equal(creditText(nameCredit(barAmericano, americano, 'variation')), 'Americano by Little Rye, Brunswick');

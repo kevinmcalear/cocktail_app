@@ -94,6 +94,7 @@ const penicillin: PreviewDrinkCard = {
   origin: 'Modern Classic',
   origin_year: 2005,
   riff_of_id: null,
+  riff_of: null,
   bar_id: null,
   publish_mode: 'description',
   image_url: null,

@@ -124,7 +124,7 @@ export function PublishedDrinkScreen({ id, releaseId }: { /** The drink's id, or
             originYear: drink.originYear,
             riffOfId: drink.riffOfId,
             name: drink.name,
-            riffOfName: drink.riffOfId ? more?.ancestors.find((a) => a.id === drink.riffOfId)?.name : null,
+            riffOf: more?.riffOf,
           },
           barName,
         )}

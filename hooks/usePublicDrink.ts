@@ -57,6 +57,8 @@ export interface PublicDrinkMore {
   riffs: TreeDrink[];
   /** Everyone named above, by id. */
   profiles: Record<string, PublicVenue>;
+  /** The drink it's a riff or version of, with its other names (classic_aliases); null when it can't be read. */
+  riffOf: { name: string; aliases: string[] } | null;
   /** The list it's ranked in ("Penicillin"): its classic, or itself. */
   rankedAs: { id: string; name: string };
 }
@@ -115,7 +117,7 @@ export function usePublicDrinkMore(drink: PublishedDrink | null | undefined) {
       ];
       const ids = [...new Set(people.filter((x): x is string => !!x))];
       const barIds = [...new Set([d.barId, ...parents.map((p) => p.bar_id), ...riffs.map((r) => r.bar_id)].filter((x): x is string => !!x))];
-      const [byId, byBar, scores] = await Promise.all([
+      const [byId, byBar, scores, aliases] = await Promise.all([
         ids.length ? supabase.from('profiles').select(PROFILE_COLUMNS).in('id', ids).eq('is_public', true) : Promise.resolve({ data: [], error: null }),
         barIds.length ? supabase.from('profiles').select(PROFILE_COLUMNS).in('bar_id', barIds).eq('kind', 'bar').eq('is_public', true) : Promise.resolve({ data: [], error: null }),
         riffs.length
@@ -123,7 +125,9 @@ export function usePublicDrinkMore(drink: PublishedDrink | null | undefined) {
               p_item_ids: riffs.map((r) => r.id),
             })
           : Promise.resolve({ data: [], error: null }),
+        d.riffOfId ? supabase.from('classic_aliases').select('alias').eq('classic_id', d.riffOfId) : Promise.resolve({ data: [], error: null }),
       ]);
+      if (aliases.error) throw aliases.error;
       if (byId.error) throw byId.error;
       if (byBar.error) throw byBar.error;
       if (scores.error) throw scores.error;
@@ -143,6 +147,7 @@ export function usePublicDrinkMore(drink: PublishedDrink | null | undefined) {
         venue: venueOfBar(d.barId) ?? (d.originBarProfileId ? (profiles[d.originBarProfileId] ?? null) : null),
         creator: d.creatorProfileId ? (profiles[d.creatorProfileId] ?? null) : null,
         ancestors: parents.map((p) => tree(p)),
+        riffOf: parent && parent.id === d.riffOfId ? { name: parent.name, aliases: (aliases.data ?? []).map((a) => a.alias) } : null,
         riffs: riffs.map((r) => tree(r, scoreOf.get(r.id) ?? null)).sort((a, b) => (b.score ?? -1) - (a.score ?? -1) || a.name.localeCompare(b.name)),
         profiles,
         rankedAs: rankedAs({

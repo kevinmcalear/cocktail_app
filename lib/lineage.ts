@@ -188,11 +188,14 @@ export const drinkNameKey = (name: string) =>
  * dec-21, dec-22, Eddie tf-086)? A bar pouring its Americano at 35/35 instead
  * of 40/40 is still the Americano. It's a riff only when the spec really
  * changes into another drink: the spec verdict says riff, or, with no
- * verdict (a parent outside the catalog, or before it loads), the name differs.
+ * verdict (a parent outside the catalog, or before it loads), the name is
+ * neither the parent's nor one of its other names (public.classic_aliases:
+ * "Gin and Tonic" is the Gin & Tonic), as the verdict itself reads it.
  */
-export function isRiff(drink: Pick<LineageDrink, 'name'>, parent: Pick<LineageDrink, 'name'>, verdict?: SpecVerdict | null): boolean {
+export function isRiff(drink: Pick<LineageDrink, 'name'>, parent: { name: string; aliases?: readonly string[] | null }, verdict?: SpecVerdict | null): boolean {
   if (verdict) return verdict === 'riff';
-  return drinkNameKey(drink.name) !== drinkNameKey(parent.name);
+  const key = drinkNameKey(drink.name);
+  return ![parent.name, ...(parent.aliases ?? [])].some((n) => drinkNameKey(n) === key);
 }
 
 /** One piece of a credit sentence; profile and drink pieces become links. */

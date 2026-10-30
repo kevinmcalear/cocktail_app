@@ -27,14 +27,19 @@ export function drinkKicker(
     origin: string | null;
     originYear: number | null;
     riffOfId: string | null;
-    /** The drink's name and its parent's, when known: the bar's own Americano is its version, not a riff (dec-21). */
-    name?: string;
-    riffOfName?: string | null;
+    name: string;
+    /**
+     * The drink it names, with its other names: the bar's own Americano is
+     * its version, not a riff (dec-21). Undefined while it loads, so the
+     * word doesn't change under the reader; null when it can't be read (a riff).
+     */
+    riffOf?: { name: string; aliases?: readonly string[] | null } | null;
   },
   barName: string | null,
 ): string {
   const label = d.origin?.trim().toLowerCase();
-  const version = !!d.name && !!d.riffOfName && !isRiff({ name: d.name }, { name: d.riffOfName });
+  if (d.riffOfId && d.riffOf === undefined && label !== 'classic' && label !== 'modern classic') return d.originYear ? String(d.originYear) : '';
+  const version = !!d.riffOf && !isRiff(d, d.riffOf);
   const kind = label === 'classic' ? 'Classic' : label === 'modern classic' ? 'Modern classic' : d.riffOfId ? (barName ? `${barName} ${version ? 'version' : 'riff'}` : version ? 'Version' : 'Riff') : barName ? `${barName} original` : 'Original';
   return d.originYear ? `${kind} · ${d.originYear}` : kind;
 }
