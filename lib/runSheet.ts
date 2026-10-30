@@ -322,7 +322,8 @@ export function buildRunSheet(input: RunSheetInput): RunSheet {
     const p = input.purchasing[t.id];
     const pack = p ? toQuantity(p.packAmount, p.packUnit) : null;
     const ml = t.quantities.find((q) => q.kind === 'ml')?.value ?? 0;
-    const bottles = !made && group === 'spirits' ? bottlesFor(ml, pack?.kind === 'ml' ? pack.value : null) : null;
+    // A pack set in other terms ("1 case") keeps the bar's own pack text.
+    const bottles = !made && group === 'spirits' && (!pack || pack.kind === 'ml') ? bottlesFor(ml, pack?.value ?? null) : null;
     const buy = made ? t.packs : bottles ? bottlesText(bottles) : t.packs ? `buy ${t.packs}` : null;
     const detail = [buy, fruitFor(t.name, t.quantities), keeps].filter(Boolean).join(' · ') || null;
     needs.push({ key: t.id, itemId: t.id, name: t.name, group, amount: amountOf(t.quantities, true), detail, forDrinks, ...ownerOf(t.id, made || viaPrep, forDrinks) });

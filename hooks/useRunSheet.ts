@@ -176,7 +176,7 @@ async function fetchRunSheet(menuId: string): Promise<RunSheetData> {
       profileId: p.profile_id,
       sortOrder: p.sort_order,
       isVenue: p.is_venue,
-      logoUrl: p.profile?.avatar_url ?? (p.profile_id ? brands[p.profile_id]?.logo : null) ?? null,
+      logoUrl: p.profile?.avatar_url || (p.profile_id ? brands[p.profile_id]?.logo : null) || null,
       page: p.profile ? { handle: p.profile.handle, claimed: p.profile.is_claimed || !!p.profile.bar_id } : null,
     })),
     owners: Object.fromEntries(((ownerRes.data ?? []) as { item_id: string; party_id: string | null }[]).map((o) => [o.item_id, o.party_id])),

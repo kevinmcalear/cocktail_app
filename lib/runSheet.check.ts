@@ -113,6 +113,9 @@ assert.equal(sheet.marginPct, 0, 'no margin unless asked');
 const noSize = buildRunSheet({ ...input, purchasing: {} });
 assert.equal(noSize.groups.flatMap((g) => g.needs).find((n) => n.name === 'Sweet vermouth')!.detail, 'buy 15 × 700 ml (700 ml assumed)');
 assert.equal(noSize.groups.flatMap((g) => g.needs).find((n) => n.name === 'Soda water')!.detail, null, 'only spirits count in bottles');
+// A pack set as a count keeps the bar's own pack, not an assumed 700 ml.
+const caseOf = buildRunSheet({ ...input, purchasing: { campari: { supplierName: null, packAmount: 6, packUnit: 'btl' } } });
+assert.equal(caseOf.groups.flatMap((g) => g.needs).find((n) => n.name === 'Campari')!.detail, null, 'no 700 ml guess over a pack the bar set');
 
 // Each party's part keeps the step 3 groups, and its logo.
 const withLogos = buildRunSheet({ ...input, hostLogoUrl: 'https://x/cottage.png', parties: input.parties.map((p) => (p.id === 'rye' ? { ...p, logoUrl: 'https://x/rye.png' } : p)) });
