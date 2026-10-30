@@ -94,10 +94,18 @@ export function EditPage({ editor, id, onExit, openFit }: { editor: DrinkEditor;
   const venueEdits = useRef<PendingEdits | null>(null);
   const [venueDirty, setVenueDirty] = useState(false);
 
+  // Done and Save changes both save: one at a time, or a double tap uploads the photos twice.
+  const saving = useRef(false);
   const done = async () => {
-    if (venueEdits.current?.dirty && !(await venueEdits.current.save())) return;
-    if (!editor.isDirty) return onExit();
-    if (draft ? await draft.handleSaveDraft(false) : await editor.handleSave()) onExit();
+    if (saving.current) return;
+    saving.current = true;
+    try {
+      if (venueEdits.current?.dirty && !(await venueEdits.current.save())) return;
+      if (!editor.isDirty) return onExit();
+      if (draft ? await draft.handleSaveDraft(false) : await editor.handleSave()) onExit();
+    } finally {
+      saving.current = false;
+    }
   };
   const leave = async () => {
     if ((editor.isDirty || venueEdits.current?.dirty) && !(await confirmAsync({ title: 'Discard your changes?', message: 'Nothing you changed here is saved yet.', confirmText: 'Discard', destructive: true }))) return;

@@ -1,15 +1,16 @@
+import { useDeferredValue, useMemo } from 'react';
 import { Platform, StyleSheet, useWindowDimensions, View } from 'react-native';
 
 import { BreakpointOverride, Caption, useDs } from '@/components/ds';
-import { radius, space } from '@/constants/tokens';
+import { layout, radius, space } from '@/constants/tokens';
 import { previewItem } from '@/lib/editPreview';
+import type { SketchInputs } from '@/lib/sketch/types';
 import type { DatabaseItem } from '@/types/types';
 
 import { DrinkScreen } from '../DrinkScreen';
 import type { DrinkEditor } from './EditParts';
 
-/** About an iPhone's screen, in points. */
-const PHONE_WIDTH = 390;
+const PHONE_WIDTH = layout.phoneFrame;
 const PHONE_HEIGHT = 780;
 /** How wide the window must be for the preview to sit beside the hero card (400) and a form of at least 480. */
 export const PREVIEW_ROOM = 400 + 480 + PHONE_WIDTH + space.xxl * 4;
@@ -19,27 +20,41 @@ const OPEN = { role: 40, levels: { generic: 0, brand: 0, measurement: 0, prep: 0
 const STICKY = Platform.OS === 'web' ? ({ position: 'sticky', top: space.xl } as object) : null;
 
 /**
- * Desktop editing's right side (jam decision dec-23): the finished drink as a
- * phone shows it, the real drink page in a phone-sized frame, redrawn as you
- * edit. A preview, so nothing on it saves or reaches the network for the
- * drink's people, scores or menus.
- * ponytail: drafts from the older editor have no saved drink to lay over, so they get none.
+ * The finished drink as a phone shows it (jam decision dec-23): the real
+ * drink page in a phone-sized frame, in its preview mode, so nothing on it
+ * saves, and it reads nothing of the drink's people, scores, menus or your
+ * collection. `photo` leads the hero; with none, `sketch` draws it (else the
+ * saved drawing). It redraws only when what it shows changes, and after the
+ * keystroke (useDeferredValue), so typing stays quick.
  */
-export function PhonePreview({ editor, saved }: { editor: DrinkEditor; saved: DatabaseItem }) {
+export function PhoneFrame(props: { item: DatabaseItem; photo?: string | null; sketch?: SketchInputs | null; sticky?: boolean }) {
   const ds = useDs();
-  const photo = editor.localImages[0]?.url ?? null;
+  // A new object each render from the same draft: compared by what it says.
+  const json = JSON.stringify([props.item, props.photo ?? null, props.sketch ?? null]);
+  const shown = useDeferredValue(useMemo(() => JSON.parse(json) as [DatabaseItem, string | null, SketchInputs | null], [json]));
+  const [item, photo, sketch] = shown;
+  const { sticky } = props;
   // The whole phone in view: shorter on a short window.
   const height = Math.min(PHONE_HEIGHT, useWindowDimensions().height - space.xxxl * 3);
   return (
-    <View style={[styles.column, STICKY]}>
+    <View style={[styles.column, sticky && STICKY]}>
       <Caption tone="muted">On a phone</Caption>
       <View accessibilityLabel="Preview of the drink page on a phone" style={[styles.frame, { height, borderColor: ds.c.lineStrong, backgroundColor: ds.c.ground }]}>
         <BreakpointOverride value="phone">
-          <DrinkScreen item={previewItem(editor, saved)} pane preview={{ ...OPEN, heroSource: photo }} canEdit={false} onEdit={() => {}} inStudyPile={false} onToggleStudyPile={() => {}} />
+          <DrinkScreen item={item} pane preview={{ ...OPEN, heroSource: photo ?? null, sketch }} canEdit={false} onEdit={() => {}} inStudyPile={false} onToggleStudyPile={() => {}} />
         </BreakpointOverride>
       </View>
     </View>
   );
+}
+
+/**
+ * Desktop editing's right side: the drink as saved with the edits laid over
+ * it, redrawn as you type.
+ * ponytail: drafts from the older editor have no saved drink to lay over, so they get none.
+ */
+export function PhonePreview({ editor, saved }: { editor: DrinkEditor; saved: DatabaseItem }) {
+  return <PhoneFrame item={previewItem(editor, saved)} photo={editor.localImages[0]?.url} sticky />;
 }
 
 const styles = StyleSheet.create({

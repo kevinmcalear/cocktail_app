@@ -1,10 +1,10 @@
-import { useEffect, useRef, useState, type ComponentRef, type ReactNode } from 'react';
+import { lazy, Suspense, useEffect, useRef, useState, type ComponentRef, type ReactNode } from 'react';
 import { ScrollView, StyleSheet, View, type TextInput } from 'react-native';
 
 import { Button, Caption, TextLink, useDs } from '@/components/ds';
 import { TellUs } from '@/components/feedback/TellUs';
 import { WebHead } from '@/components/WebHead';
-import { space } from '@/constants/tokens';
+import { layout, space } from '@/constants/tokens';
 import type { BarGlass } from '@/hooks/useBarGlassware';
 import type { VenueIce } from '@/hooks/useVenueIce';
 import { useCapabilities } from '@/hooks/useCapabilities';
@@ -16,12 +16,13 @@ import type { ClassicMatch } from '@/lib/classics';
 import { guessUnit, hasContent, newLine, pickByName, sketchLook, type WizardDraft, type WizardPick } from '@/lib/drinkWizard';
 import type { IngredientAlias } from '@/lib/ingredientNames';
 import { creditWaits, nameWaits, theirs } from '@/lib/sameName';
+import { draftPreviewItem } from '@/lib/editPreview';
 import { draftSketchInputs } from '@/lib/sketch/draft';
 import { suggestAmount } from '@/lib/specDefaults';
 import { getPreferredUnit } from '@/store/useSettingsStore';
 
 import { CreditsStep } from './CreditsStep';
-import { DeskCost, DeskDrinkCard, DeskKit, DeskMenuNote, DeskTaste, DeskToFinish } from './DrinkDeskRail';
+import { DeskColour, DeskCost, deskSketch, DeskKit, DeskMenuNote, DeskTaste, DeskToFinish } from './DrinkDeskRail';
 import { FinishStep } from './FinishStep';
 import { GlassStep } from './GlassStep';
 import { IngredientsStep } from './IngredientsStep';
@@ -42,6 +43,8 @@ import type { LineStock } from './StockToggle';
 import { BigName, NotesStep } from './TextSteps';
 import { useDeskLines } from './useDeskLines';
 import { Eyebrow, WizardChip } from './WizardChrome';
+
+const PhoneFrame = lazy(() => import('../drink/edit/PhonePreview').then((m) => ({ default: m.PhoneFrame }))); // The drink page, only once a desktop opens this.
 
 export interface DrinkDeskProps {
   draft: WizardDraft;
@@ -81,8 +84,8 @@ export interface DrinkDeskProps {
 
 /**
  * Adding a drink on a desktop browser (make-create-desktop, decided 15 Oct):
- * one page. The spec on the left, written in any order; the drink, its
- * taste and what it costs fixed on the right, filling in as it's written.
+ * one page. The spec on the left; on the right, in its own column, the drink as
+ * a phone will show it (dec-23), its taste and cost, filling in as it's written.
  * Phones and narrow windows keep the steps (AddDrinkWizard). Save, or ⌘↵.
  */
 export function DrinkDesk(p: DrinkDeskProps) {
@@ -153,7 +156,7 @@ export function DrinkDesk(p: DrinkDeskProps) {
   };
   const waitNote = nameWaits(draft, p.atBar) ? 'Pick one for the name first' : creditWaits(draft, p.atPlace) ? 'Pick one under Credit first' : null;
 
-  const look = sketchLook(p.drawn, p.barVariants, p.barIceKinds);
+  const sketch = deskSketch(sketchLook(p.drawn, p.barVariants, p.barIceKinds));
   const eyebrow = menu ? ['New drink for ' + menu, place?.section].filter(Boolean).join(' · ') : barId ? `New drink at ${p.venueName}` : 'New drink';
   const trail = drinkTrail(draft.name, { menu, venueName: barId ? p.venueName : null, onClose: p.onClose });
   const saveLabel = p.saving ? 'Saving…' : menu ? `Add to ${menu}` : 'Save drink';
@@ -253,8 +256,8 @@ export function DrinkDesk(p: DrinkDeskProps) {
           <ReviewPhotos photos={draft.photos ?? {}} onChange={(photos) => set({ photos })} sketch={draftSketchInputs(sketchLook(draft, p.barVariants, p.barIceKinds))} seed={draft.id ?? 'new-drink'} />
         </ScrollView>
         <ScrollView style={[styles.rail, { backgroundColor: ds.c.surface, borderLeftColor: ds.c.line }]} contentContainerStyle={styles.railBody}>
-          <Eyebrow>The drink, as you go</Eyebrow>
-          <DeskDrinkCard draft={draft} look={look} seed={draft.id ?? 'new-drink'} onTint={(tint) => set({ tint })} />
+          <Suspense fallback={null}><PhoneFrame item={draftPreviewItem(draft, barId, p.ingredients)} photo={draft.photos?.hero} sketch={sketch} /></Suspense>
+          <DeskColour draft={draft} inputs={sketch} seed={draft.id ?? 'new-drink'} onTint={(tint) => set({ tint })} />
           <DeskToFinish lines={draft.lines} making={prepOpen} />
           {prepOpen ? <DeskKit bar={barId ? { id: barId, name: p.venueName } : null} /> : null}
           <DeskTaste lines={perDrinkLines(draft.lines)} ingredients={p.ingredients} onAdd={addByName} />
@@ -291,6 +294,6 @@ const styles = StyleSheet.create({
   chips: { flexDirection: 'row', flexWrap: 'wrap', gap: space.sm },
   version: { gap: space.sm },
   undo: { alignSelf: 'flex-start' },
-  rail: { flex: 1, minWidth: 360, borderLeftWidth: StyleSheet.hairlineWidth },
-  railBody: { padding: space.xl, gap: space.lg },
+  rail: { flex: 1, minWidth: layout.phoneFrame + space.xl * 2, borderLeftWidth: StyleSheet.hairlineWidth },
+  railBody: { padding: space.xl, gap: space.lg, width: layout.phoneFrame + space.xl * 2, alignSelf: 'center' },
 });

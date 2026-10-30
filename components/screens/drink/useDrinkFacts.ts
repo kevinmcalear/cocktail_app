@@ -1,5 +1,5 @@
 import { useDropdowns } from '@/hooks/useDropdowns';
-import { glassModelSize, useDrinkGlassModel } from '@/hooks/useGlassModels';
+import { glassModelSize, useDrinkGlassModel, type GlassModel } from '@/hooks/useGlassModels';
 import { classifyMethod, isGarnishUnit, type BatchMethod } from '@/lib/batch';
 import { methodIcon, orderedMethodIds } from '@/lib/drinkMethods';
 import { glassIcon } from '@/lib/glasswareIcons';
@@ -47,11 +47,12 @@ interface Options {
  * the line-by-line sheet needs the amounts.
  */
 /** The drink's glass and ice as the Glass sheet reads them: the drink page's facts and the editor's Glass and ice row. */
-export function useDrinkGlass(item: Pick<DatabaseItem, 'id' | 'glassware_id' | 'ice_id'>) {
+export function useDrinkGlass(item: Pick<DatabaseItem, 'id' | 'glassware_id' | 'ice_id'> & { /** A preview's glass as edited (lib/editPreview): no read of the saved one. */ glass_model?: GlassModel | null }) {
   const { data: dropdowns } = useDropdowns();
   const find = (list: Named[] | undefined, id: string | null | undefined) => (id ? list?.find((x) => x.id === id) : undefined);
   const glassItem = find(dropdowns?.glassware as Named[], item.glassware_id);
-  const { data: model } = useDrinkGlassModel(item.id);
+  const saved = useDrinkGlassModel('glass_model' in item ? null : item.id).data;
+  const model = 'glass_model' in item ? item.glass_model : saved;
   const shape: GlassSheetGlass | null = glassItem
     ? { id: glassItem.id, name: glassItem.name, icon_key: glassItem.icon_key, bar_id: glassItem.bar_id ?? null, capacity_ml: glassItem.capacity_ml ?? null, iced_capacity_ml: glassItem.iced_capacity_ml ?? null }
     : null;
