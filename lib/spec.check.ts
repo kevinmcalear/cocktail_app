@@ -64,3 +64,7 @@ assert.deepEqual(specAccess(20, levels, true, { granted: true, revoked: false })
 assert.deepEqual(specAccess(30, levels, true, { granted: false, revoked: true }), { names: true, amounts: false, prep: false }, 'a specs revoke closes amounts, not names');
 
 console.log('spec: ok');
+
+// A grated garnish with no amount reads "Grated" in the amount column (Eddie tf-062).
+assert.equal(specLines([{ id: 'n', sort_order: 1, amount: null, unit: 'grated', display_ingredient_id: 'nutmeg', display_ingredient: { id: 'nutmeg', name: 'Nutmeg' } }])[0].amount, 'Grated');
+assert.equal(specLines([{ id: 'm', sort_order: 1, amount: null, unit: 'ml', display_ingredient_id: 'gin', display_ingredient: { id: 'gin', name: 'Gin' } }])[0].amount, null);

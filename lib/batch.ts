@@ -75,7 +75,7 @@ const BAR_ML_PER_OZ = 30;
 const GRAMS: Record<string, number> = { g: 1, kg: 1000 };
 const DASH_UNITS = new Set(['dash', 'dashes', 'drop', 'drops']);
 // A finish (a spray, a rinse, a float) is counted and done at the station too, never bottled.
-const GARNISH_UNITS = new Set(['each', 'pinch', 'sprig', 'leaf', 'peel', 'twist', 'discard', 'wheel', 'slice', 'cube', 'wedge', 'rim', 'spray', 'rinse', 'float']);
+const GARNISH_UNITS = new Set(['each', 'pinch', 'sprig', 'leaf', 'peel', 'twist', 'discard', 'wheel', 'slice', 'cube', 'wedge', 'rim', 'spray', 'rinse', 'float', 'grated']);
 // Drops of an oil go on top of each serve; saline and tincture drops go in the bottle.
 const OIL = /\boil\b/i;
 // A count with no unit ("1 Lemon twist"): the name says it's a garnish.
