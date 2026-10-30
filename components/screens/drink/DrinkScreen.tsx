@@ -27,6 +27,7 @@ import { heroPictures } from '@/lib/drinkPhotos';
 import { glassOver, orderedPictures, type ItemImageLink } from '@/lib/itemImages';
 import { drinkUrl, shareOrCopy } from '@/lib/shareLink';
 import { specLines, type PresentationRecipe, type SpecLevels } from '@/lib/spec';
+import type { SketchInputs } from '@/lib/sketch/types';
 import type { DatabaseItem } from '@/types/types';
 
 import { BatchSheet } from '../batch/BatchSheet';
@@ -66,8 +67,8 @@ export interface DrinkScreenProps {
   openBatch?: boolean;
   /** A bar's published drink read from its public page (VisitorDrink): the spec it keeps back. */
   visitorLock?: SpecLock | null;
-  /** /dev/drink only: a bundled hero image and a simulated role. */
-  preview?: { heroSource?: number | null; role: number; levels: SpecLevels };
+  /** /dev/drink and desktop's phone previews: a hero picture (bundled, or the photo being added), a drawing for a drink not yet saved, and a simulated role. */
+  preview?: { heroSource?: number | string | null; sketch?: SketchInputs | null; role: number; levels: SpecLevels };
 }
 
 /**
@@ -104,7 +105,7 @@ function DrinkPage({ item, inStudyPile, onToggleStudyPile, canEdit, adminFix = f
   // A bar's drink whose page keeps the spec back: no spec, method or notes, just why (and on a Names page, no description).
   const lock = useSpecLock(preview ? null : item).data ?? visitorLock;
   // The bookmark: To make in Collection (collected_items).
-  const toMake = useCollectToggle({ kind: 'drink', itemId: item.id }, item.name);
+  const toMake = useCollectToggle({ kind: 'drink', itemId: item.id }, item.name, !preview);
   const lines = specLines(item.recipes as PresentationRecipe[] | undefined);
   // Both modes: a party batch at home, a prep bottle at the bar.
   const canBatch = !lock && access.amounts && lines.some((l) => l.value !== null);
@@ -146,7 +147,7 @@ function DrinkPage({ item, inStudyPile, onToggleStudyPile, canEdit, adminFix = f
     scrollY.value = e.contentOffset.y;
   });
   const glassKey = glass?.icon_key || glass?.name || null;
-  const actions = useDrinkActions(item, heroPic, lines, venue?.name ?? null);
+  const actions = useDrinkActions(item, heroPic, lines, venue?.name ?? null, !preview);
   // A public drink shares its readable link (/d/penicillin); any other its id link, which asks the rest to sign in.
   const slug = useShareSlug('d', preview ? null : item.id).data;
   const share = () => void shareOrCopy(drinkUrl(slug ?? item.id), item.name);
@@ -190,7 +191,7 @@ function DrinkPage({ item, inStudyPile, onToggleStudyPile, canEdit, adminFix = f
     venueName: teamRole !== null ? (venue?.name ?? null) : null,
   };
   const sections = useDrinkSections(bodyProps);
-  const hero = (h: number) => <DrinkHero name={item.name} pictures={pictures} glass={glassKey} itemId={item.id} palette={pictures[0]?.palette} height={h} fade={!wide} onPhotos={canEdit && !preview ? onPhotos : undefined} />;
+  const hero = (h: number) => <DrinkHero name={item.name} pictures={pictures} glass={glassKey} itemId={item.id} palette={pictures[0]?.palette} height={h} fade={!wide} onPhotos={canEdit && !preview ? onPhotos : undefined} sketch={preview?.sketch} />;
   const deleteDrink = useDeleteDrink();
   // The editor's rule: the drink's own people, unless it's credited to a bar. Beside a list (pane), the list drops it.
   const onDelete = canEdit && !creditedToBar(item) ? () => {

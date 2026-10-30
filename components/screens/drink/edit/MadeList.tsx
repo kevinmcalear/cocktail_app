@@ -11,6 +11,7 @@ import { findByName } from '@/lib/drinkMethods';
 import { iceBuildLine, saysMore } from '@/lib/iceBuild';
 
 import type { DrinkEditor as Editor } from './EditParts';
+import { StepHead } from './EditParts';
 import { GlassPickSheet } from './GlassPickSheet';
 import { IceBuildSheet } from './IceBuildSheet';
 type Option = { id: string; name: string; ice_kind?: string | null };
@@ -22,12 +23,13 @@ type Category = SpecCategory | 'methodIce';
 type IceEditor = Extract<Editor, { setIceBuild: unknown }>;
 const iceEditor = (editor: Editor): IceEditor | null => ('setIceBuild' in editor ? editor : null);
 
+// In adding a drink's order (method, glass, ice), so editing feels the same (Eddie, tf-070).
 const ROWS: { category: Category; label: string; empty: string }[] = [
-  { category: 'glassware', label: 'Glass', empty: 'Pick a glass' },
+  { category: 'method', label: 'Method', empty: 'Shake, stir, build…' },
   // The ice it's made with (#697): this editor only.
   { category: 'methodIce', label: 'Ice (made with)', empty: 'Shaken with, stirred over…' },
+  { category: 'glassware', label: 'Glass', empty: 'Pick a glass' },
   { category: 'ice', label: 'Ice (served on)', empty: 'No ice set' },
-  { category: 'method', label: 'Method', empty: 'Shake, stir, build…' },
   { category: 'family', label: 'Family', empty: 'Sour, highball…' },
 ];
 
@@ -66,7 +68,7 @@ export function MadeList({ editor, itemId }: { editor: Editor; itemId: string | 
   const rows = ROWS.filter((r) => (r.category !== 'methodIce' || ice) && (r.category !== 'method' || !parted?.parts));
   return (
     <View style={styles.section}>
-      <Headline role="heading">How it’s made</Headline>
+      <StepHead step="method" eyebrow="Method, glass, ice" />
       <View style={[styles.group, { backgroundColor: ds.c.surface }]}>
         {rows.map((r, i) => {
           const value = valueOf(editor, r.category, optionsOf(editor, r.category));

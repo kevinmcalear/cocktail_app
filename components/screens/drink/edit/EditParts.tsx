@@ -3,13 +3,16 @@ import { Platform, ScrollView, StyleSheet, TextInput, View, type TextInputProps 
 
 import { BarAssignmentAccordion } from '@/components/BarAssignmentAccordion';
 import { SortableImageList, type ImageItem } from '@/components/cocktail/SortableImageList';
-import { Caption, DsText, GlassSurface, Headline, MULTILINE_MAX, PressableScale, Sheet, useDs, useSheetClose, type IconName } from '@/components/ds';
+import { Caption, DsText, GlassSurface, Headline, MULTILINE_MAX, PressableScale, Sheet, Title, useDs, useSheetClose, type IconName } from '@/components/ds';
 import { IconSymbol } from '@/components/ui/icon-symbol';
 import { STATUS } from '@/constants/palette';
 import { layout, radius, space } from '@/constants/tokens';
 import { readableAccent } from '@/lib/color';
+import { STEP_COPY, type WizardStep } from '@/lib/drinkWizard';
 import type { useCocktailDraftEditor } from '@/hooks/useCocktailDraftEditor';
 import type { useCocktailEditor } from '@/hooks/useCocktailEditor';
+
+import { Eyebrow } from '../../addDrink/WizardChrome';
 
 /** What editing in place drives: a saved drink's editor, or a draft's (which saves to drafts until it's published). */
 export type DrinkEditor = ReturnType<typeof useCocktailEditor> | ReturnType<typeof useCocktailDraftEditor>;
@@ -74,10 +77,20 @@ export function EditBottomBar({ onLine, lineHint = 'Add a line to the spec', onS
   );
 }
 
-export type MoreChoice = 'publish' | 'photos' | 'access' | 'discard' | 'delete';
+export type MoreChoice = 'publish' | 'photos' | 'access' | 'calc' | 'discard' | 'delete';
+
+/** A part of the editor headed as the add-drink step that asks it ("INGREDIENTS", "What goes in?"), so editing reads as adding does (Eddie, tf-070). */
+export function StepHead({ step, eyebrow }: { step: WizardStep; /** Several steps in one part: "Method, glass, ice". */ eyebrow?: string }) {
+  return (
+    <View style={styles.stepHead}>
+      <Eyebrow>{eyebrow ?? STEP_COPY[step].short}</Eyebrow>
+      <Title role="heading">{STEP_COPY[step].title}</Title>
+    </View>
+  );
+}
 
 /** Editing's More: photos in order, who can see the spec, discard the changes, delete the drink. A draft can also be published. */
-export function EditMoreMenu({ open, onClose, canDelete, dirty, draft, onPick, noun = 'drink', photosLabel = 'Photos' }: { open: boolean; onClose: () => void; canDelete: boolean; dirty: boolean; draft?: boolean; onPick: (c: MoreChoice) => void; /** What's edited: "drink", "beer", "wine" or "ingredient". */ noun?: string; /** An ingredient has one picture: "Its picture". */ photosLabel?: string }) {
+export function EditMoreMenu({ open, onClose, canDelete, dirty, draft, calc, onPick, noun = 'drink', photosLabel = 'Photos' }: { open: boolean; onClose: () => void; canDelete: boolean; dirty: boolean; draft?: boolean; /** The ingredient calculator, for a drink's phone footer (which has no tool bar). */ calc?: boolean; onPick: (c: MoreChoice) => void; /** What's edited: "drink", "beer", "wine" or "ingredient". */ noun?: string; /** An ingredient has one picture: "Its picture". */ photosLabel?: string }) {
   // What to open once the menu has gone: two sheets never stack.
   const then = useRef<MoreChoice | null>(null);
   const run = () => {
@@ -99,6 +112,7 @@ export function EditMoreMenu({ open, onClose, canDelete, dirty, draft, onPick, n
       {draft ? <MoreRow icon="paperplane.fill" label={`Publish ${noun}`} onPick={() => (then.current = 'publish')} /> : null}
       <MoreRow icon="photo" label={photosLabel} onPick={() => (then.current = 'photos')} />
       <MoreRow icon="lock.shield.fill" label={accessTitle(noun)} onPick={() => (then.current = 'access')} />
+      {calc ? <MoreRow icon="percent" label="Ingredient calculator" onPick={() => (then.current = 'calc')} /> : null}
       {dirty ? <MoreRow icon="arrow.uturn.backward" label="Discard changes" onPick={() => (then.current = 'discard')} /> : null}
       {canDelete ? <MoreRow icon="trash" label={draft ? 'Delete draft' : `Delete ${noun}`} danger onPick={() => (then.current = 'delete')} /> : null}
     </Sheet>
@@ -187,6 +201,7 @@ const styles = StyleSheet.create({
   tool: { flex: 1, alignItems: 'center', justifyContent: 'center', gap: 2, minHeight: 56 },
   row: { flexDirection: 'row', alignItems: 'center', gap: space.md, minHeight: layout.minTapTarget + space.sm, borderBottomWidth: StyleSheet.hairlineWidth },
   flex: { flex: 1 },
+  stepHead: { gap: space.sm },
   access: { maxHeight: 480 },
 });
 

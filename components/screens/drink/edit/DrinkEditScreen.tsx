@@ -1,6 +1,6 @@
 import { useRouter } from 'expo-router';
 import { useEffect, useRef, useState, type ReactNode } from 'react';
-import { Platform, StyleSheet, TextInput, View } from 'react-native';
+import { Platform, StyleSheet, TextInput, useWindowDimensions, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import { BackbarTheme, BrandProvider, Button, Caption, GlassButton, Headline, useBreakpoint, useDs, useGutter } from '@/components/ds';
@@ -17,16 +17,18 @@ import type { ItemImageLink } from '@/lib/itemImages';
 import { capitalize } from '@/lib/stringUtils';
 
 import type { CatalogIngredient } from '../../addDrink/IngredientSearch';
+import { WizardFooter } from '../../addDrink/WizardChrome';
 import { DrinkHero } from '../DrinkHero';
 import { SketchColourSheet } from '../SketchColour';
 import { useDeleteDrink } from '../useDeleteDrink';
 import { ShotList } from '../ShotList';
-import { AccessSheet, EditBottomBar, EditMoreMenu, GrowingField, PhotosSheet, type DrinkEditor, type MoreChoice } from './EditParts';
+import { AccessSheet, EditMoreMenu, GrowingField, PhotosSheet, StepHead, type DrinkEditor, type MoreChoice } from './EditParts';
 import { DrinkSpec } from './DrinkSpec';
 import { EditCredits } from './EditCredits';
 import { EditToolbar } from './EditToolbar';
 import { FitGlassEdit, useDraftGlassFill } from './FitGlassEdit';
 import { MadeList } from './MadeList';
+import { PhonePreview, PREVIEW_ROOM } from './PhonePreview';
 import { useEditHistory } from './useEditHistory';
 import { VenueSections, type PendingEdits, type VenueSheet } from './VenueSections';
 
@@ -75,6 +77,8 @@ export function EditPage({ editor, id, onExit, openOn }: { editor: DrinkEditor; 
   const insets = useSafeAreaInsets();
   const gutter = useGutter();
   const wide = useBreakpoint() !== 'phone';
+  // A wide desktop window: the finished drink on a phone, on the right (dec-23).
+  const roomy = useWindowDimensions().width >= PREVIEW_ROOM;
   // The drink page opens as a page sheet on iOS, which starts below the status bar (as DrinkScreen).
   const top = Platform.OS === 'ios' ? space.sm : insets.top;
   const cocktail = useCocktail(id ?? undefined).data;
@@ -88,18 +92,24 @@ export function EditPage({ editor, id, onExit, openOn }: { editor: DrinkEditor; 
   const venueName = venues.find((v) => v.id === editor.barId)?.name ?? null;
   const ingredients = (editor.allIngredients ?? []) as CatalogIngredient[];
   const backBar = useBackBarIds(editor.barId || null, ingredients);
-  // The bottom bar's Line puts the cursor in the search under the lines.
-  const [focus, setFocus] = useState(0);
 
   const [sheet, setSheet] = useState<MoreChoice | VenueSheet | 'calc' | 'more' | 'colour' | 'fit' | null>(openOn ?? null);
   // For the floor, Service and Price: saved with Done, next to the editor's own changes.
   const venueEdits = useRef<PendingEdits | null>(null);
   const [venueDirty, setVenueDirty] = useState(false);
 
+  // Done and Save changes both save: one at a time, or a double tap uploads the photos twice.
+  const saving = useRef(false);
   const done = async () => {
-    if (venueEdits.current?.dirty && !(await venueEdits.current.save())) return;
-    if (!editor.isDirty) return onExit();
-    if (draft ? await draft.handleSaveDraft(false) : await editor.handleSave()) onExit();
+    if (saving.current) return;
+    saving.current = true;
+    try {
+      if (venueEdits.current?.dirty && !(await venueEdits.current.save())) return;
+      if (!editor.isDirty) return onExit();
+      if (draft ? await draft.handleSaveDraft(false) : await editor.handleSave()) onExit();
+    } finally {
+      saving.current = false;
+    }
   };
   const leave = async () => {
     if ((editor.isDirty || venueEdits.current?.dirty) && !(await confirmAsync({ title: 'Discard your changes?', message: 'Nothing you changed here is saved yet.', confirmText: 'Discard', destructive: true }))) return;
@@ -137,8 +147,10 @@ export function EditPage({ editor, id, onExit, openOn }: { editor: DrinkEditor; 
   const openPhotos = () => setSheet('photos');
   const hero = (height: number) => <DrinkHero name={editor.name || cocktail?.name || ''} pictures={pictures} glass={null} itemId={id} height={height} fade={!wide} onColour={() => setSheet('colour')} onPhotos={pictures.length ? openPhotos : () => void editor.pickImage()} />;
   const fieldBox = [styles.box, NO_OUTLINE, { color: ds.c.ink, backgroundColor: ds.c.surface }];
+  // Headed and ordered as adding a drink asks it (Eddie, tf-070): name, what goes in, how it's made, notes.
   const words = (
     <>
+      <StepHead step="name" />
       <TextInput
         value={editor.name}
         onChangeText={editor.setName}
@@ -154,6 +166,7 @@ export function EditPage({ editor, id, onExit, openOn }: { editor: DrinkEditor; 
   const servicePhotos = cocktail && id ? <ShotList itemId={id} barId={cocktail.bar_id ?? null} links={cocktail.item_images as ItemImageLink[] | undefined} /> : null;
   const body = (
     <>
+      <StepHead step="ingredients" />
       <DrinkSpec
         editor={editor}
         name={editor.name || cocktail?.name || 'This drink'}
@@ -163,11 +176,11 @@ export function EditPage({ editor, id, onExit, openOn }: { editor: DrinkEditor; 
         loading={!editor.dropdowns?.ingredients}
         bar={editor.barId ? { id: editor.barId, name: venueName ?? '' } : null}
         backBar={editor.barId ? backBar : undefined}
-        focus={focus}
       />
       {cocktail ? <FitGlassEdit editor={editor} item={cocktail} result={fill} open={sheet === 'fit'} onOpen={() => setSheet('fit')} onClose={() => setSheet(null)} /> : null}
       <MadeList editor={editor} itemId={id} />
       {id ? <EditCredits itemId={id} /> : null}
+      <StepHead step="notes" />
       <View style={styles.section}>
         <Headline role="heading">Story</Headline>
         <GrowingField minHeight={96} value={editor.description} onChangeText={editor.setDescription} placeholder="Where it comes from, what it tastes like" placeholderTextColor={ds.c.muted} accessibilityLabel="Story" style={fieldBox} />
@@ -198,10 +211,11 @@ export function EditPage({ editor, id, onExit, openOn }: { editor: DrinkEditor; 
             {body}
             <Button label="Discard changes and leave" variant="ghost" onPress={() => void leave()} />
           </View>
+          {roomy && cocktail ? <PhonePreview editor={editor} saved={cocktail} /> : null}
         </FormScrollContainer>
       ) : (
         <>
-          <FormScrollContainer keyboardShouldPersistTaps="handled" contentContainerStyle={{ paddingBottom: insets.bottom + 120 }}>
+          <FormScrollContainer keyboardShouldPersistTaps="handled" contentContainerStyle={{ paddingBottom: space.xxl }}>
             {hero(PHONE_HERO + top)}
             <View style={[styles.phoneBody, { paddingHorizontal: gutter }]}>
               {words}
@@ -209,13 +223,14 @@ export function EditPage({ editor, id, onExit, openOn }: { editor: DrinkEditor; 
             </View>
           </FormScrollContainer>
           <View style={[styles.top, { top: top + space.sm, left: gutter, right: gutter }]}>{toolbar}</View>
-          <View style={[styles.bottom, { bottom: insets.bottom + space.md, left: gutter, right: gutter }]}>
-            <EditBottomBar onLine={() => setFocus(focus + 1)} onPhoto={openPhotos} photoHint="Photos: add, crop, choose the main one" onCalc={() => setSheet('calc')} onMore={() => setSheet('more')} />
+          {/* Pinned as adding a drink pins Next and Save (WizardFooter): More where Skip sits, Save beside it. */}
+          <View style={{ paddingHorizontal: gutter, paddingBottom: insets.bottom + space.md }}>
+            <WizardFooter optional skipLabel="More" onSkip={() => setSheet('more')} nextLabel={editor.saving ? 'Saving…' : draft ? 'Save draft' : 'Save changes'} canNext saving={editor.saving} onNext={() => void done()} />
           </View>
         </>
       )}
 
-      <EditMoreMenu open={sheet === 'more'} onClose={() => setSheet(null)} canDelete={!credited} dirty={editor.isDirty || venueDirty} draft={!!draft} onPick={onMore} />
+      <EditMoreMenu open={sheet === 'more'} onClose={() => setSheet(null)} canDelete={!credited} dirty={editor.isDirty || venueDirty} draft={!!draft} calc={!wide} onPick={onMore} />
       {sheet === 'photos' ? <PhotosSheet editor={editor} onClose={() => setSheet(null)} /> : null}
       {sheet === 'access' ? <AccessSheet editor={editor} onClose={() => setSheet(null)} /> : null}
       {sheet === 'colour' && id ? <SketchColourSheet visible onClose={() => setSheet(null)} itemId={id} name={editor.name || cocktail?.name || ''} /> : null}
@@ -233,7 +248,6 @@ const styles = StyleSheet.create({
   headRow: { flexDirection: 'row', alignItems: 'baseline', justifyContent: 'space-between' },
   box: { ...type.body, fontFamily: fontFamilies.body, borderRadius: radius.control, padding: space.md, textAlignVertical: 'top' },
   top: { position: 'absolute' },
-  bottom: { position: 'absolute' },
   wide: { flexDirection: 'row', gap: space.xxl, paddingHorizontal: space.xxl, paddingBottom: space.xxxl, alignItems: 'flex-start' },
   left: { width: 400, gap: space.lg },
   card: { borderRadius: radius.card, borderCurve: 'continuous', overflow: 'hidden' },
