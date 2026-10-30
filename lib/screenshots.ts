@@ -1,6 +1,9 @@
 import { requireOptionalNativeModule } from 'expo';
 import { Platform } from 'react-native';
 
+/** Left out of a web page's picture (screenshots.web.ts); a phone screenshot is the whole screen. */
+export const NOT_IN_SCREENSHOT = 'not-in-screenshot';
+
 /**
  * Calls `onScreenshot` each time someone takes a phone screenshot while the
  * app is in front. Returns the unsubscribe, or null where we can't tell:
