@@ -65,7 +65,9 @@ BEGIN
     -- The joins find nothing when the menu or the drink is the row being
     -- deleted (a cascade), so only a drink taken off a live menu is kept.
     INSERT INTO public.menu_drinks_removed (menu_id, item_id, section_name, price, went_on, taken_off_by)
-    SELECT m.id, i.id, s.name, coalesce(OLD.price, nullif(btrim(i.price), '')), greatest(OLD.created_at, m.starts_at), auth.uid()
+    SELECT m.id, i.id, s.name, coalesce(OLD.price, nullif(btrim(i.price), '')),
+           -- A row dated ahead (a script, a skewed clock) went on no later than now.
+           least(greatest(OLD.created_at, m.starts_at), now()), auth.uid()
     FROM public.menus m
     JOIN public.items i ON i.id = OLD.item_id
     LEFT JOIN public.menu_sections s ON s.id = OLD.menu_section_id
