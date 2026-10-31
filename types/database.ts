@@ -3476,6 +3476,61 @@ export type Database = {
           },
         ]
       }
+      menu_drinks_removed: {
+        Row: {
+          came_off: string
+          id: string
+          item_id: string
+          menu_id: string
+          price: string | null
+          section_name: string | null
+          taken_off_by: string | null
+          went_on: string
+        }
+        Insert: {
+          came_off?: string
+          id?: string
+          item_id: string
+          menu_id: string
+          price?: string | null
+          section_name?: string | null
+          taken_off_by?: string | null
+          went_on: string
+        }
+        Update: {
+          came_off?: string
+          id?: string
+          item_id?: string
+          menu_id?: string
+          price?: string | null
+          section_name?: string | null
+          taken_off_by?: string | null
+          went_on?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "menu_drinks_removed_item_id_fkey"
+            columns: ["item_id"]
+            isOneToOne: false
+            referencedRelation: "app_item_presentation"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "menu_drinks_removed_item_id_fkey"
+            columns: ["item_id"]
+            isOneToOne: false
+            referencedRelation: "items"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "menu_drinks_removed_menu_id_fkey"
+            columns: ["menu_id"]
+            isOneToOne: false
+            referencedRelation: "menus"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       menu_run_owners: {
         Row: {
           item_id: string
