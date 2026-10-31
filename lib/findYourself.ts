@@ -76,7 +76,7 @@ export interface MadeDrink {
   others: string[];
 }
 
-/** A menu a drink was on (menu_drink_runs). */
+/** A drink's run on a bar's menus (drink_menu_runs). */
 export interface DrinkRun {
   itemId: string;
   barId: string;

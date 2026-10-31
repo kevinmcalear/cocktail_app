@@ -6746,6 +6746,22 @@ export type Database = {
       }
       drink_allergens: { Args: { p_item_id: string }; Returns: Json }
       drink_cost: { Args: { p_bar: string; p_item: string }; Returns: Json }
+      drink_menu_runs: {
+        Args: { p_item_ids: string[] }
+        Returns: {
+          edition_id: string
+          edition_name: string
+          end_month: number
+          end_year: number
+          ends_on: string
+          is_current: boolean
+          item_id: string
+          profile_id: string
+          start_month: number
+          start_year: number
+          starts_on: string
+        }[]
+      }
       effective_bar_role: { Args: { real_role: number }; Returns: number }
       end_menu: { Args: { p_menu_id: string }; Returns: undefined }
       finish_bar_item: { Args: { p_item_id: string }; Returns: undefined }
