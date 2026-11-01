@@ -105,6 +105,7 @@ export function DrinkHero({ name, pictures, glass, itemId, palette, height, fade
                 generated={pictures[i].isSketch}
                 glass={glass}
                 placeholderColor={pictures[i].palette?.[0]}
+                thumbhash={pictures[i].thumbhash}
                 priority={i === 0 ? 'high' : 'normal'}
                 accessibilityLabel={name}
                 radius={0}
