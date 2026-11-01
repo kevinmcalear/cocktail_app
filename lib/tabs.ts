@@ -37,8 +37,8 @@ const VENUE_TABS: readonly VenueTab[] = ['index', 'library', 'menus', 'prep', 't
  */
 export function venueTabs(limit = Infinity): VenueTab[] {
   const tabs = [...VENUE_TABS];
-  for (const name of ['menus', 'test', 'prep'] as const) if (tabs.length > limit) tabs.splice(tabs.indexOf(name), 1);
-  return tabs;
+  const drop = ['menus', 'test', 'prep'].slice(0, Math.max(0, tabs.length - limit));
+  return tabs.filter((t) => !drop.includes(t));
 }
 
 /**
