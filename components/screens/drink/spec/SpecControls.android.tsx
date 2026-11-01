@@ -8,34 +8,38 @@ import { ConnectedButtons } from '@/components/ds/ConnectedButtons';
 import { DsText, PressableScale, useDs } from '@/components/ds';
 import { material } from '@/constants/material';
 import { font, radius, space } from '@/constants/tokens';
-import { MAKES, SPEC_VIEWS, type Makes, type SpecView } from '@/lib/specView';
+import { SPEC_VIEWS, type SpecView } from '@/lib/specView';
 
 import { useItemTones } from '../MaterialBar.android';
 
 const CHECK = require('@/assets/icons/android/check.xml');
 
-interface SpecControlsProps {
+export interface SpecControlsProps {
   view: SpecView;
   onView: (view: SpecView) => void;
-  makes: Makes;
-  onMakes: (makes: Makes) => void;
-  /** "A batch…": opens the Batch sheet. Left out where a batch makes no sense (nothing measured). */
-  onBatch?: () => void;
+  /** After "Makes" on the pill: "1" for a drink, "1 L" for a house-made. */
+  makes: string;
+  /** The menu's sizes ("Makes 2", "Makes 750 ml"); the picked one is checked. */
+  sizes: { key: string; label: string }[];
+  picked: string;
+  onPick: (key: string) => void;
+  /** Its own group under the sizes: "A batch…" (the Batch sheet), "From what I have…" (Make mode). */
+  more?: { label: string; onPress: () => void };
 }
 
 /**
  * Android's spec controls (And-kit-hybrid, And-who-bartender-menu): the
  * connected group, and Makes as a tonal button whose menu is the system's own
  * (@expo/ui's Material 3 Expressive menu). The open button squares off and
- * fills; A batch… sits in its own group.
+ * fills; A batch… (or a house-made's From what I have…) sits in its own group.
  */
-export function SpecControls({ view, onView, makes, onMakes, onBatch }: SpecControlsProps) {
+export function SpecControls({ view, onView, makes, sizes, picked, onPick, more }: SpecControlsProps) {
   const ds = useDs();
   const tones = useItemTones();
   const [open, setOpen] = useState(false);
   const close = () => setOpen(false);
   const ink = open ? tones.onPrimary : ds.c.ink;
-  const groups = onBatch ? 2 : 1;
+  const groups = more ? 2 : 1;
   const item = { textColor: ds.c.ink, containerColor: tones.menu, selectedTextColor: ds.c.ink, selectedContainerColor: tones.tonal, selectedLeadingIconColor: ds.c.ink };
   return (
     <View style={styles.row}>
@@ -61,19 +65,19 @@ export function SpecControls({ view, onView, makes, onMakes, onBatch }: SpecCont
           <Box>
             <DropdownMenuPopup expanded={open} onDismissRequest={close}>
               <DropdownMenuGroup shapes={{ index: 0, count: groups }} containerColor={tones.menu} modifiers={[width(MENU_WIDTH)]}>
-                {MAKES.map((n, i) => (
+                {sizes.map((s, i) => (
                   <SelectableDropdownMenuItem
-                    key={n}
-                    selected={n === makes}
-                    shapes={{ index: i, count: MAKES.length }}
+                    key={s.key}
+                    selected={s.key === picked}
+                    shapes={{ index: i, count: sizes.length }}
                     colors={item}
                     onClick={() => {
-                      onMakes(n);
+                      onPick(s.key);
                       close();
                     }}
                   >
                     <SelectableDropdownMenuItem.Text>
-                      <Text style={material.menuText}>{`Makes ${n}`}</Text>
+                      <Text style={material.menuText}>{s.label}</Text>
                     </SelectableDropdownMenuItem.Text>
                     <SelectableDropdownMenuItem.LeadingIcon>
                       <Spacer modifiers={[size(CHECK_SIZE, CHECK_SIZE)]} />
@@ -84,7 +88,7 @@ export function SpecControls({ view, onView, makes, onMakes, onBatch }: SpecCont
                   </SelectableDropdownMenuItem>
                 ))}
               </DropdownMenuGroup>
-              {onBatch ? (
+              {more ? (
                 <>
                   <Spacer modifiers={[heightOf(2)]} />
                   <DropdownMenuGroup shapes={{ index: 1, count: groups }} containerColor={tones.menu} modifiers={[width(MENU_WIDTH)]}>
@@ -92,11 +96,11 @@ export function SpecControls({ view, onView, makes, onMakes, onBatch }: SpecCont
                       elementColors={{ textColor: ds.c.ink }}
                       onClick={() => {
                         close();
-                        onBatch();
+                        more.onPress();
                       }}
                     >
                       <DropdownMenuItem.Text>
-                        <Text style={material.menuText}>A batch…</Text>
+                        <Text style={material.menuText}>{more.label}</Text>
                       </DropdownMenuItem.Text>
                       <DropdownMenuItem.LeadingIcon>
                         <Spacer modifiers={[size(CHECK_SIZE, CHECK_SIZE)]} />

@@ -21,6 +21,15 @@ function namesFor(name: string): string[] {
   return [...new Set([whole, last.length >= 4 ? last : ''].filter(Boolean))];
 }
 
+/** Where a step first names a line ("Combine the sugar…" names White sugar), or -1. */
+export function mentionAt(body: string, name: string): number {
+  for (const word of namesFor(name)) {
+    const m = new RegExp(`\\b${escape(word)}(es|s)?\\b`, 'i').exec(body);
+    if (m) return m.index;
+  }
+  return -1;
+}
+
 /**
  * "Combine the sugar and water" → "Combine the", [664 g sugar], "and",
  * [332 ml water]. Each line is marked once, at its first mention; the

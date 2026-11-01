@@ -82,6 +82,19 @@ export function withBatches(rows: OnHandRow[], batches: readonly Batch[]): Recor
   return out;
 }
 
+/**
+ * The house-made page's On hand row (board Item-page, Behind the bar): what's
+ * on hand, then when it was last made, "800 ml · made 30 Oct", "None · made
+ * 30 Oct". Either half alone when that's all there is; null with neither.
+ */
+export function onHandLine(last: Pick<Batch, 'madeAt'> | undefined, onHand: Quantity | undefined): string | null {
+  const batches = onHand?.unit === 'batch' && onHand.value !== 1;
+  const have = onHand ? (onHand.value > 0 ? `${formatQuantity(onHand)}${batches ? 'es' : ''}` : 'None') : null;
+  const made = last ? `made ${new Date(last.madeAt).toLocaleDateString('en-GB', { day: 'numeric', month: 'short' })}` : null;
+  const line = [have, made].filter(Boolean).join(' · ');
+  return line ? line[0].toUpperCase() + line.slice(1) : null;
+}
+
 export type ParQuantity = Quantity & { name: string };
 
 /** Par per item (with its name), adding every spot's par up when they share a kind of unit. */

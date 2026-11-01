@@ -4,7 +4,7 @@ import { View } from "react-native";
 
 import { BackbarTheme, Body, Button, useDs } from "@/components/ds";
 import { IngredientScreen } from "@/components/screens/ingredient/IngredientScreen";
-import type { PrepLine } from "@/components/screens/ingredient/PrepRecipe";
+import type { PrepLine } from "@/components/screens/ingredient/HouseMadeRecipe";
 import { space } from "@/constants/tokens";
 import { useIngredient } from "@/hooks/useIngredients";
 import { recentEntry, useTrackRecent } from "@/hooks/useTrackRecent";
