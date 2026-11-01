@@ -55,6 +55,13 @@ export interface SheetProps {
    * centred dialog on the web, a little wider. Decision sheets: mixed.
    */
   kind?: 'small' | 'flow';
+  /**
+   * Phones: grow out of the button that opened it (its frame in the window,
+   * from measureInWindow), as Add grows from the + (Prod-motion-sheet).
+   */
+  from?: { x: number; y: number; width: number; height: number } | null;
+  /** Phones: a card inset from the edges with every corner round (Prod-add-B), not edge to edge. */
+  floating?: boolean;
 }
 
 /**
@@ -112,11 +119,16 @@ function FlowSheet({ visible, onClose, accessibilityLabel, children, style, grou
   );
 }
 
-function SmallSheet({ visible, onClose, accessibilityLabel, children, style, ground, header, keyboard, keyboardOffset = 0, onShow, onDismiss }: SheetProps) {
+function SmallSheet({ visible, onClose, accessibilityLabel, children, style, ground, header, keyboard, keyboardOffset = 0, onShow, onDismiss, from, floating }: SheetProps) {
   const ds = useDs();
   const reduceMotion = useReducedMotion();
-  const slide = !sheetIsDialog && !reduceMotion;
-  const { height: windowHeight } = useWindowDimensions();
+  const grow = !!from && !sheetIsDialog && !reduceMotion;
+  const slide = !sheetIsDialog && !reduceMotion && !grow;
+  const { height: windowHeight, width: windowWidth } = useWindowDimensions();
+  const inset = floating && !sheetIsDialog ? space.sm : 0;
+  // 0 at the button, 1 where it sits; and where it sits, once laid out.
+  const grown = useSharedValue(grow ? 0 : 1);
+  const box = useSharedValue({ w: 0, h: 0 });
   // Gone once it has animated out: the Modal stays up until then.
   const [gone, setGone] = useState(!visible);
   if (visible && gone) setGone(false);
@@ -160,12 +172,13 @@ function SmallSheet({ visible, onClose, accessibilityLabel, children, style, gro
     offset.set(offset.get() + drag.get());
     drag.set(0);
     backdrop.set(withTiming(1, FADE_IN));
-    if (slide) offset.set(withSpring(0, springs.glide));
+    if (grow) grown.set(withSpring(1, springs.glide));
+    else if (slide) offset.set(withSpring(0, springs.glide));
     else {
       offset.set(0);
       opacity.set(withTiming(1, FADE_IN));
     }
-  }, [visible, gone, slide, backdrop, offset, opacity, drag]);
+  }, [visible, gone, slide, grow, grown, backdrop, offset, opacity, drag]);
 
   // The parent closed it (a Save, a Cancel): out, then the Modal goes.
   const hide = useEffectEvent(() => leave(() => setGone(true)));
@@ -175,7 +188,25 @@ function SmallSheet({ visible, onClose, accessibilityLabel, children, style, gro
 
   // The backdrop lightens as the sheet is pulled down; it still never moves.
   const backdropStyle = useAnimatedStyle(() => ({ opacity: backdrop.get() * dragShade(drag.get(), height.get()) }));
-  const panelStyle = useAnimatedStyle(() => ({ opacity: opacity.get(), transform: [{ translateY: offset.get() + drag.get() }] }));
+  const panelStyle = useAnimatedStyle(() => {
+    const g = grown.get();
+    const { w, h } = box.get();
+    if (!from || g >= 1 || !w || !h) return { opacity: opacity.get(), transform: [{ translateY: offset.get() + drag.get() }] };
+    // From the button's rectangle to the sheet's, centre to centre.
+    const cx = windowWidth / 2;
+    const cy = windowHeight - inset - h / 2;
+    return {
+      opacity: opacity.get(),
+      transform: [
+        { translateX: (from.x + from.width / 2 - cx) * (1 - g) },
+        { translateY: (from.y + from.height / 2 - cy) * (1 - g) + offset.get() + drag.get() },
+        { scaleX: from.width / w + (1 - from.width / w) * g },
+        { scaleY: from.height / h + (1 - from.height / h) * g },
+      ],
+    };
+  });
+  // The sheet's words come in once it has mostly grown.
+  const contentStyle = useAnimatedStyle(() => ({ opacity: Math.min(1, Math.max(0, (grown.get() - 0.5) * 2)) }));
 
   const placed = [styles.place, sheetFrame.scrim];
   // The caller's own colour and width, if it set them (RN 0.88 types flatten only for animated styles).
@@ -188,10 +219,14 @@ function SmallSheet({ visible, onClose, accessibilityLabel, children, style, gro
       aria-label={accessibilityLabel}
       accessibilityViewIsModal
       onAccessibilityEscape={dismiss}
-      onLayout={(e) => height.set(e.nativeEvent.layout.height)}
+      onLayout={(e) => {
+        height.set(e.nativeEvent.layout.height);
+        box.set({ w: e.nativeEvent.layout.width, h: e.nativeEvent.layout.height });
+      }}
       style={[
         styles.panel,
         sheetIsDialog ? styles.dialog : styles.sheet,
+        inset ? [styles.floating, { marginBottom: inset, width: windowWidth - inset * 2 }] : null,
         sheetFrame.panel,
         { backgroundColor: fill, borderColor: ds.c.lineStrong },
         style,
@@ -206,14 +241,14 @@ function SmallSheet({ visible, onClose, accessibilityLabel, children, style, gro
           {header}
         </View>
       )}
-      <SheetScrollContext value={scroll}>{children}</SheetScrollContext>
+      <SheetScrollContext value={scroll}>{grow ? <Animated.View style={[styles.shrink, contentStyle]}>{children}</Animated.View> : children}</SheetScrollContext>
     </Animated.View>
   );
 
   // Phones: a drag anywhere on the panel moves it. Just below the screen's
   // edge, moving with it, the sheet's colour carries on: what shows when it's pulled up past the top.
-  const dragged = sheetIsDialog ? (
-    panel
+  const dragged = sheetIsDialog || inset ? (
+    sheetIsDialog ? panel : <GestureDetector gesture={pan}>{panel}</GestureDetector>
   ) : (
     <>
       <Animated.View style={[styles.stretch, { backgroundColor: fill, maxWidth: own?.maxWidth ?? styles.panel.maxWidth }, panelStyle]} />
@@ -254,6 +289,8 @@ const styles = StyleSheet.create({
     borderCurve: 'continuous',
     borderTopWidth: StyleSheet.hairlineWidth,
   },
+  floating: { borderRadius: radius.sheet + 4, borderWidth: StyleSheet.hairlineWidth },
+  shrink: { flexShrink: 1 },
   stretch: { position: 'absolute', bottom: -STRETCH, alignSelf: 'center', width: '100%', height: STRETCH },
   dialog: { maxHeight: '86%' },
   handle: { paddingTop: space.sm },

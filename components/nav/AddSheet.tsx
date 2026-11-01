@@ -1,11 +1,12 @@
 import { useRouter, type Href } from 'expo-router';
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { Platform, StyleSheet, TextInput, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import { Body, Button, Caption, DsText, GlassButton, PressableScale, Sheet, sheetIsDialog, SheetScrollView, dragDismissesKeyboard, useDs, useSheetClose } from '@/components/ds';
 import { IconSymbol } from '@/components/ui/icon-symbol';
 import { font, layout, radius, space, type } from '@/constants/tokens';
+import { useDictation } from '@/hooks/useDictation';
 import { addIntent, clipLine } from '@/lib/addIntent';
 import { UNREAD_CLIP } from '@/lib/clipboardPeek';
 import { isLink } from '@/lib/bringIn';
@@ -23,12 +24,15 @@ const NO_OUTLINE = Platform.OS === 'web' ? ({ outlineStyle: 'none' } as object) 
  * in pencil; everything else is read by Bring in. `onMore` opens the
  * rest of what can be started (a bottle, beer, wine, a house-made, a menu).
  */
-export function AddSheet({ visible, onClose, onMore }: { visible: boolean; onClose: () => void; onMore: () => void }) {
+/** A button's place in the window (measureInWindow): what Add grows out of. */
+export type Frame = { x: number; y: number; width: number; height: number };
+
+export function AddSheet({ visible, onClose, onMore, listen, from }: { visible: boolean; onClose: () => void; onMore: () => void; /** Start listening as it opens (Android's Say it). */ listen?: boolean; /** The + it grows from. */ from?: Frame | null }) {
   const insets = useSafeAreaInsets();
   return (
-    <Sheet visible={visible} onClose={onClose} accessibilityLabel="Add" keyboard style={sheetIsDialog ? styles.dialog : undefined} header={<Header />}>
+    <Sheet visible={visible} onClose={onClose} accessibilityLabel="Add" keyboard from={from} floating={Platform.OS === 'ios'} style={sheetIsDialog ? styles.dialog : undefined} header={<Header />}>
       <SheetScrollView contentContainerStyle={[styles.body, { paddingBottom: sheetIsDialog ? space.lg : insets.bottom + space.lg }]} {...dragDismissesKeyboard}>
-        {visible ? <AddBody onClose={onClose} onMore={onMore} /> : null}
+        {visible ? <AddBody onClose={onClose} onMore={onMore} listen={listen} /> : null}
       </SheetScrollView>
     </Sheet>
   );
@@ -38,7 +42,8 @@ function Header() {
   const close = useSheetClose();
   return (
     <View style={styles.header}>
-      <GlassButton icon="xmark" accessibilityLabel="Close" onPress={close} />
+      {/* Android's sheets go back with an arrow (Prod-and); iOS and the web close with an X. */}
+      <GlassButton icon={Platform.OS === 'android' ? 'arrow.left' : 'xmark'} accessibilityLabel={Platform.OS === 'android' ? 'Back' : 'Close'} onPress={close} />
       <DsText role="heading" style={styles.title}>
         Add
       </DsText>
@@ -47,13 +52,20 @@ function Header() {
   );
 }
 
-function AddBody({ onClose, onMore }: { onClose: () => void; onMore: () => void }) {
+function AddBody({ onClose, onMore, listen }: { onClose: () => void; onMore: () => void; listen?: boolean }) {
   const ds = useDs();
   const router = useRouter();
   const add = useAddActions(onClose);
   const clip = useClipboardOffer();
   const [text, setText] = useState('');
   const intent = addIntent(text);
+  const voice = useDictation((heard) => setText(heard));
+  // Android's Say it opens the sheet listening.
+  useEffect(() => {
+    if (listen && voice.available) void voice.start();
+    // Once, as the sheet opens.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
   const go = (href: Href) => {
     onClose();
     router.push(href);
@@ -81,12 +93,26 @@ function AddBody({ onClose, onMore }: { onClose: () => void; onMore: () => void 
           aria-label="Name a drink, paste a link, or describe it"
           style={[styles.input, NO_OUTLINE, { color: ds.c.ink }]}
         />
-        {intent ? (
-          <PressableScale role="button" accessibilityLabel={intent === 'name' ? `Start a drink called ${text.trim()}` : 'Read it'} onPress={() => add.submit(text)} style={[styles.go, { backgroundColor: ds.accentFill.fill }]}>
-            <IconSymbol name="arrow.up" size={18} color={ds.accentFill.text} />
-          </PressableScale>
-        ) : null}
+        <View style={styles.tools}>
+          {voice.available ? (
+            <PressableScale
+              role="button"
+              accessibilityLabel={voice.listening ? 'Stop listening' : 'Say it'}
+              aria-pressed={voice.listening}
+              onPress={() => (voice.listening ? voice.stop() : void voice.start())}
+              style={[styles.round, { backgroundColor: voice.listening ? ds.accentFill.fill : ds.c.raised }]}
+            >
+              <IconSymbol name="mic" size={18} color={voice.listening ? ds.accentFill.text : ds.c.ink} />
+            </PressableScale>
+          ) : null}
+          {intent ? (
+            <PressableScale role="button" accessibilityLabel={intent === 'name' ? `Start a drink called ${text.trim()}` : 'Read it'} onPress={() => add.submit(text)} style={[styles.round, { backgroundColor: ds.accentFill.fill }]}>
+              <IconSymbol name="arrow.up" size={18} color={ds.accentFill.text} />
+            </PressableScale>
+          ) : null}
+        </View>
       </View>
+      {voice.listening ? <Caption tone="muted">Listening…</Caption> : voice.error ? <Caption tone="accent">{voice.error}</Caption> : null}
       {clipWords ? (
         <PressableScale role="button" accessibilityLabel={`${clipWords}. Paste`} onPress={() => void add.paste()} style={[styles.clip, { backgroundColor: ds.c.raised }]}>
           <IconSymbol name="doc.on.clipboard" size={18} color={ds.c.ink} />
@@ -129,7 +155,8 @@ const styles = StyleSheet.create({
   stack: { gap: space.md },
   field: { minHeight: 92, borderRadius: radius.card, borderWidth: StyleSheet.hairlineWidth, flexDirection: 'row', alignItems: 'flex-start', padding: space.sm, paddingLeft: space.lg },
   input: { flex: 1, minHeight: 72, paddingTop: space.sm, ...type.body, ...font.regular, textAlignVertical: 'top' },
-  go: { width: 36, height: 36, borderRadius: radius.pill, alignItems: 'center', justifyContent: 'center', alignSelf: 'flex-end' },
+  tools: { justifyContent: 'space-between', alignItems: 'flex-end', alignSelf: 'stretch' },
+  round: { width: 36, height: 36, borderRadius: radius.pill, alignItems: 'center', justifyContent: 'center' },
   clip: { flexDirection: 'row', alignItems: 'center', gap: space.md, borderRadius: radius.control + 4, paddingVertical: space.md, paddingHorizontal: space.lg },
   buttons: { gap: space.sm + 2, marginTop: space.xs },
   flex: { flex: 1 },
