@@ -1,47 +1,52 @@
 import { useRouter, type Href } from 'expo-router';
+import { useState } from 'react';
 import { StyleSheet, View } from 'react-native';
 
 import { Button, Caption, DsText, Headline, TextLink, useDs } from '@/components/ds';
+import { IconSymbol } from '@/components/ui/icon-symbol';
 import { UserAvatar } from '@/components/ui/UserAvatar';
-import { space } from '@/constants/tokens';
+import { radius, space, STATUS } from '@/constants/tokens';
 import { useAnswerJoinRequest, useClaimsToConfirm, useConfirmPersonClaim, useJoinRequests } from '@/hooks/useJoinRequests';
+import { askedAgo } from '@/lib/team';
 
 /**
- * People asking to join the team (find-yourself step 6), on the Team screen
- * for whoever manages it. Accept makes them a Bartender; you can change their
- * role after. Nothing when nobody is asking.
+ * People asking to join the team (find-yourself step 6), on top of Team for
+ * whoever manages it, as the board's prompt (Kept-team): "Sam Whitlock asked
+ * to join", when, then Add as Bartender or Not now. Not now says no (the
+ * request stays declined). Nothing when nobody is asking.
  */
-export function JoinRequests({ barId, barName }: { barId: string; barName: string }) {
+export function JoinRequests({ barId }: { barId: string }) {
   const ds = useDs();
   const router = useRouter();
   const requests = useJoinRequests(barId, true).data ?? [];
   const answer = useAnswerJoinRequest(barId);
+  const [now] = useState(Date.now);
   if (!requests.length) return null;
   const busy = answer.isPending;
 
   return (
-    <View style={styles.section}>
-      <Headline role="heading">Asking to join</Headline>
-      <Caption tone="muted">{`Accept makes them a Bartender at ${barName}. You can change their role once they’re in.`}</Caption>
-      <View role="list" aria-label="Asking to join">
-        {requests.map((r) => (
-          <View key={r.id} role="listitem" style={[styles.row, { borderBottomColor: ds.c.line }]}>
-            <UserAvatar uri={r.avatar_url} name={r.name} size={40} />
-            <View style={styles.flex}>
-              <DsText variant="headline" numberOfLines={1}>
-                {r.name}
-              </DsText>
-              {r.profile_handle ? <TextLink label={`@${r.profile_handle}`} onPress={() => router.push(`/p/${r.profile_handle}` as Href)} /> : null}
-              <View style={styles.actions}>
-                <Button label="Accept" disabled={busy} accessibilityLabel={`Accept ${r.name}`} onPress={() => answer.mutate({ id: r.id, accept: true })} />
-                <Button label="Decline" variant="ghost" disabled={busy} accessibilityLabel={`Decline ${r.name}`} onPress={() => answer.mutate({ id: r.id, accept: false })} />
+    <View role="list" aria-label="Asking to join" style={styles.section}>
+      {requests.map((r) => {
+        const ago = askedAgo(r.created_at, now);
+        return (
+          <View key={r.id} role="listitem" style={[styles.prompt, { backgroundColor: ds.c.raised }]}>
+            <View style={styles.promptHead}>
+              <IconSymbol name="person.badge.plus" size={20} color={ds.c.ink} />
+              <View style={styles.flex}>
+                <DsText variant="headline">{`${r.name} asked to join`}</DsText>
+                <Caption tone="muted">{`From your bar’s page${ago ? `, ${ago}` : ''}.`}</Caption>
+                {r.profile_handle ? <TextLink label={`See @${r.profile_handle}`} onPress={() => router.push(`/p/${r.profile_handle}` as Href)} /> : null}
               </View>
             </View>
+            <View style={styles.actions}>
+              <Button label="Add as Bartender" size="sm" disabled={busy} accessibilityLabel={`Add ${r.name} as Bartender`} onPress={() => answer.mutate({ id: r.id, accept: true })} />
+              <Button label="Not now" size="sm" variant="ghost" disabled={busy} accessibilityLabel={`Not now for ${r.name}`} onPress={() => answer.mutate({ id: r.id, accept: false })} />
+            </View>
           </View>
-        ))}
-      </View>
+        );
+      })}
       {answer.error ? (
-        <Caption tone="accent" role="alert">
+        <Caption color={STATUS.danger} role="alert">
           {answer.error.message}
         </Caption>
       ) : null}
@@ -96,4 +101,6 @@ const styles = StyleSheet.create({
   flex: { flex: 1, minWidth: 0, gap: space.xs },
   row: { flexDirection: 'row', alignItems: 'flex-start', gap: space.md, paddingVertical: space.md, borderBottomWidth: StyleSheet.hairlineWidth },
   actions: { flexDirection: 'row', flexWrap: 'wrap', gap: space.sm, marginTop: space.xs },
+  prompt: { padding: space.lg, gap: space.sm, borderRadius: radius.card, borderCurve: 'continuous' },
+  promptHead: { flexDirection: 'row', alignItems: 'flex-start', gap: space.md },
 });

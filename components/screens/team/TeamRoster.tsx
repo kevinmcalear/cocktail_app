@@ -1,291 +1,199 @@
-import { useState } from 'react';
+import { useState, type ReactNode } from 'react';
 import { StyleSheet, View } from 'react-native';
 
-import { RowDivider, SectionHeading } from '@/components/screens/settings/SettingsParts';
-import { Body, Button, Caption, DsText, Field, PressableScale, Segmented, Surface, Tag, useDs } from '@/components/ds';
+import { SectionHeading } from '@/components/screens/settings/SettingsParts';
+import { Body, Caption, PressableScale, Surface, Tag, TextLink, useDs } from '@/components/ds';
 import { MakerCreditRequests } from '@/components/maker/MakerCreditRequests';
 import { JobRequests } from '@/components/screens/profile/JobRequests';
 import { IconSymbol } from '@/components/ui/icon-symbol';
 import { UserAvatar } from '@/components/ui/UserAvatar';
-import { radius, space, STATUS } from '@/constants/tokens';
+import { space, STATUS } from '@/constants/tokens';
 import { useUserId } from '@/ctx/AuthContext';
-import { useBarInvites, useRemoveInvite, useSendInviteEmail } from '@/hooks/useBarInvites';
-import { useBarMembers, useRemoveMember, type BarMember } from '@/hooks/useBarDetail';
-import { useCapabilities } from '@/hooks/useCapabilities';
-import { useRoleMatrix, useSetMemberRoleChoice, type MemberRoleChoice } from '@/hooks/useVenueRoles';
+import { useBarInvites, useRemoveInvite, useSendInviteEmail, type BarInvite } from '@/hooks/useBarInvites';
+import { useBarMembers, type BarMember } from '@/hooks/useBarDetail';
+import { managesTeam, useOnShiftTonight } from '@/hooks/useTeam';
+import { useRoleMatrix } from '@/hooks/useVenueRoles';
 import { useCanManageStaff } from '@/hooks/useViewAs';
 import { plainDbMessage } from '@/lib/dbError';
 import { confirmAsync } from '@/lib/dialogs';
-import { reachCeiling, withinReach } from '@/lib/roleMatrix';
+import { endsLabel } from '@/lib/roleMatrix';
 import { roleLabel } from '@/lib/roles';
-import { agoLabel, joinedLabel, memberRoleName, personName, rosterGroups, TEAM_MANAGE, TEAM_SORTS } from '@/lib/team';
-import { useTeamSort } from '@/store/useTeamSort';
+import { canOpenMember, invitedDay, personName, TEAM_MANAGE, teamLine, teamSections } from '@/lib/team';
 
-import { InviteSheet, type InviteNote } from './InviteSheet';
+import type { InviteNote } from './InviteSheet';
 import { ClaimsToConfirm, JoinRequests } from './JoinRequests';
-import { MemberSheet } from './MemberSheet';
 import { WelcomeMessageRow } from './WelcomeMessage';
 
 const AVATAR = 44;
-const CHEVRON = 16;
-
-/** What went wrong, read out when it appears. Status red, never the accent. */
-function ErrorText({ children }: { children: string }) {
-  return (
-    <Caption color={STATUS.danger} role="alert">
-      {children}
-    </Caption>
-  );
-}
-
-function problem(error: unknown): string | null {
-  if (!error) return null;
-  return plainDbMessage(error) ?? "Couldn't save that. Check your connection and try again.";
-}
 
 /**
- * A venue's team: everyone on it with their photo and role, and for an Admin,
- * look-up, invites, and a sheet per person to change their role or remove
- * them. The database decides who may; this only hides the controls.
+ * A venue's team as the board draws it (Kept-team): who's asking to join on
+ * top, then Admins, Behind the bar, Guests (with the day their role ends),
+ * Floor, and Invited. Rows say who's on shift tonight. Someone who manages
+ * the team taps a person to open their page; the database decides who may.
  */
-export function TeamRoster({ barId, barName, role, inviting, onCloseInvite }: {
+export function TeamRoster({ barId, barName, role, note, onNote, selectedId, onOpen }: {
   barId: string;
   barName: string;
   role: number;
-  /** My team puts Invite in its title row and opens the sheet from there. */
-  inviting: boolean;
-  onCloseInvite: () => void;
+  /** What the last invite or resend said. */
+  note: InviteNote | null;
+  onNote: (note: InviteNote | null) => void;
+  /** The person open beside the list on a desktop. */
+  selectedId?: string | null;
+  onOpen: (member: BarMember) => void;
 }) {
   const myId = useUserId();
   const manage = useCanManageStaff(barId);
   const members = useBarMembers(barId);
-  const matrix = useRoleMatrix(manage ? barId : null).data ?? [];
-  const myCaps = useCapabilities(manage ? barId : null).data;
-  const change = useSetMemberRoleChoice(barId);
-  const remove = useRemoveMember(barId);
+  const matrix = useRoleMatrix(barId).data ?? [];
+  const onShift = useOnShiftTonight(barId);
   const { data: invites = [] } = useBarInvites(barId, manage);
   const cancel = useRemoveInvite(barId);
   const send = useSendInviteEmail(barId);
-  const [query, setQuery] = useState('');
-  const { sort, setSort } = useTeamSort();
-  // For "Invited 2 days ago": read once, so a render never sees the clock move.
-  const [now] = useState(Date.now);
-  const [note, setNote] = useState<InviteNote | null>(null);
-  const [openId, setOpenId] = useState<string | null>(null);
   // Someone with staff who isn't an Admin can't change, remove or cancel an Admin (the database refuses), so it isn't offered.
   const admin = role >= TEAM_MANAGE;
-  // And hands out only what they can do themselves: roles and invites beyond that aren't offered.
-  const mine = admin ? null : (myCaps ?? []);
-  const venueRoles = matrix.filter((r) => r.role_id && withinReach(r.capabilities, mine));
-  const ceiling = reachCeiling(matrix, mine, role);
-  const busy = change.isPending || remove.isPending || cancel.isPending || send.isPending;
+  const [now] = useState(Date.now);
 
   if (members.isLoading) return <Caption tone="muted">Loading the team…</Caption>;
-  if (members.error) return <Body tone="muted">Couldn’t load the team. Check your connection and try again.</Body>;
+  if (members.error) return <Body tone="muted" role="alert">Couldn’t load the team. Check your connection and try again.</Body>;
 
   const all = members.data ?? [];
-  const groups = rosterGroups(all, manage ? query : '', sort);
-  const open = all.find((m) => m.user_id === openId) ?? null;
+  const sections = teamSections(all, (m) => managesTeam(matrix, m), now);
+  const error = cancel.error ? (plainDbMessage(cancel.error) ?? 'Couldn’t cancel that invite. Check your connection and try again.') : null;
 
-  const emailInvite = (to: string) => {
-    setNote(null);
-    send.mutate(to, {
-      onSuccess: () => setNote({ text: `Invite emailed to ${to}.` }),
-      onError: (e) => setNote({ text: `The email didn’t send (${e.message}). They can still join from your staff link.`, failed: true }),
+  const resend = (inv: BarInvite) => {
+    onNote(null);
+    send.mutate(inv.email, {
+      onSuccess: () => onNote({ text: `Invite emailed to ${inv.name || inv.email} again.` }),
+      onError: (e) => onNote({ text: `The email didn’t send (${e.message}). They can still join from your staff link.`, failed: true }),
     });
   };
-
-  const setRole = async (m: BarMember, choice: MemberRoleChoice, label: string, level: number) => {
-    const who = personName(m);
-    const ok =
-      level < TEAM_MANAGE ||
-      m.role_level >= TEAM_MANAGE ||
-      (await confirmAsync({
-        title: label === roleLabel(TEAM_MANAGE) ? `Make ${who} an Admin?` : `Make ${who} ${label}?`,
-        message: 'Admins can change the venue and everyone’s role, including yours.',
-        confirmText: 'Make Admin',
-      }));
-    if (ok) change.mutate({ userId: m.user_id, choice });
-  };
-
-  const removeMember = async (m: BarMember) => {
+  const cancelInvite = async (inv: BarInvite) => {
     const ok = await confirmAsync({
-      title: `Remove ${personName(m)}?`,
-      message: `They lose access to ${barName}.`,
-      confirmText: 'Remove',
+      title: `Cancel the invite for ${inv.name || inv.email}?`,
+      message: 'The link in their email stops working.',
+      confirmText: 'Cancel invite',
       destructive: true,
     });
-    if (!ok) return;
-    remove.mutate(m.user_id, { onSuccess: () => setOpenId(null) });
+    if (ok) cancel.mutate(inv.id);
   };
-
-  const error = problem(change.error) || problem(remove.error) || problem(cancel.error);
 
   return (
     <View style={styles.roster}>
-      {admin ? <WelcomeMessageRow barId={barId} barName={barName} /> : null}
-      <View style={styles.section}>
-        {manage ? (
-          <Field label="Search the team" hideLabel value={query} onChangeText={setQuery} placeholder="Search by name or email" autoCapitalize="none" autoCorrect={false} />
-        ) : null}
-        <View style={styles.head}>
-          <SectionHeading>{`Team · ${all.length}`}</SectionHeading>
-          {all.length > 1 ? <Segmented variant="pill" choice accessibilityLabel="Sort the team" options={TEAM_SORTS} value={sort} onChange={setSort} /> : null}
-        </View>
-        {note ? (
-          <Caption tone={note.failed ? 'accent' : 'muted'} role={note.failed ? 'alert' : 'status'}>
-            {note.text}
-          </Caption>
-        ) : null}
-        {error && !open ? <ErrorText>{error}</ErrorText> : null}
+      {manage ? <JoinRequests barId={barId} /> : null}
+      {note ? (
+        <Caption tone={note.failed ? 'accent' : 'muted'} role={note.failed ? 'alert' : 'status'}>
+          {note.text}
+        </Caption>
+      ) : null}
+      {error ? <Caption color={STATUS.danger} role="alert">{error}</Caption> : null}
 
-        {groups.length === 0 ? (
+      {sections.length === 0 ? <Body tone="muted">No one is on this team yet.</Body> : null}
+      {sections.map((g) => (
+        <View key={g.key} role="list" aria-label={g.title} style={styles.group}>
+          <SectionHeading>{g.title}</SectionHeading>
           <Surface style={styles.card}>
-            <Body tone="muted" style={styles.empty}>{query.trim() ? 'No one matches that.' : 'No one is on this team yet.'}</Body>
-          </Surface>
-        ) : null}
-        {groups.map((g) => (
-          <View key={g.title ?? 'everyone'} style={styles.group}>
-            {g.title ? <DsText variant="label" tone="muted" role="heading" style={styles.groupTitle}>{`${g.title} · ${g.people.length}`}</DsText> : null}
-            <Surface style={styles.card}>
-              {g.people.map((m, i) => (
-                <View key={m.user_id}>
-                  {i > 0 ? <RowDivider /> : null}
-                  <MemberRow
-                    member={m}
-                    me={m.user_id === myId}
-                    showEmail={manage}
-                    showRole={!g.title}
-                    lineUp={manage}
-                    onPress={manage && m.user_id !== myId && (admin || m.role_level < TEAM_MANAGE) ? () => setOpenId(m.user_id) : undefined}
-                  />
-                </View>
-              ))}
-            </Surface>
-          </View>
-        ))}
-        {manage ? null : <Caption tone="muted">Only people who can invite and manage staff change roles here.</Caption>}
-      </View>
-
-      {invites.length > 0 ? (
-        <View style={styles.section}>
-          <SectionHeading>{`Invited, not joined yet · ${invites.length}`}</SectionHeading>
-          <Surface style={styles.card}>
-            {invites.map((inv, i) => (
-              <View key={inv.id}>
-                {i > 0 ? <RowDivider /> : null}
-                <InviteRow
-                  name={inv.name}
-                  email={inv.email}
-                  roleLevel={inv.role_level}
-                  ago={agoLabel(inv.created_at, now)}
-                  busy={busy}
-                  onResend={() => emailInvite(inv.email)}
-                  onCancel={admin || inv.role_level < TEAM_MANAGE ? () => cancel.mutate(inv.id) : undefined}
+            {g.people.map((m, i) => {
+              const ends = g.key === 'guests' ? endsLabel(m.role_ends_at) : null;
+              const canOpen = manage && canOpenMember(m, myId, role);
+              return (
+                <PersonRow
+                  key={m.user_id}
+                  first={i === 0}
+                  name={personName(m)}
+                  me={m.user_id === myId}
+                  avatar={m.avatar_url}
+                  email={m.email}
+                  line={teamLine(m, g.key, onShift.has(m.user_id), ends)}
+                  tag={ends ? 'Ends' : null}
+                  selected={selectedId === m.user_id}
+                  onPress={canOpen ? () => onOpen(m) : undefined}
                 />
-              </View>
-            ))}
+              );
+            })}
           </Surface>
-          <Caption tone="muted">They join when they accept, from the email or your staff link. You can change their role once they’re in.</Caption>
+        </View>
+      ))}
+
+      {manage && invites.length ? (
+        <View role="list" aria-label="Invited" style={styles.group}>
+          <SectionHeading>Invited</SectionHeading>
+          <Surface style={styles.card}>
+            {invites.map((inv, i) => {
+              const day = invitedDay(inv.created_at, now);
+              const canCancel = admin || inv.role_level < TEAM_MANAGE;
+              return (
+                <PersonRow
+                  key={inv.id}
+                  first={i === 0}
+                  name={inv.name || inv.email}
+                  email={inv.email}
+                  line={`Invited as ${roleLabel(inv.role_level)}${day ? ` · ${day}` : ''}`}
+                  trailing={
+                    <View style={styles.inviteActions}>
+                      <TextLink label="Resend" accessibilityHint={`Emails the invite to ${inv.email} again`} disabled={send.isPending} onPress={() => resend(inv)} />
+                      {canCancel ? <TextLink label="Cancel" accessibilityHint={`Cancels the invite for ${inv.name || inv.email}`} onPress={() => void cancelInvite(inv)} /> : null}
+                    </View>
+                  }
+                />
+              );
+            })}
+          </Surface>
         </View>
       ) : null}
 
-      {manage ? <JoinRequests barId={barId} barName={barName} /> : null}
+      {/* ponytail: not on the board; kept under the list so Admins can still change what every invite says, until the board places it. */}
+      {admin ? <WelcomeMessageRow barId={barId} barName={barName} /> : null}
       <ClaimsToConfirm barId={barId} barName={barName} admin={admin} />
       {manage ? <JobRequests venueId={barId} title="Job requests" /> : null}
       {manage ? <MakerCreditRequests venueId={barId} /> : null}
-
-      {manage ? (
-        <>
-          <InviteSheet visible={inviting} onClose={onCloseInvite} barId={barId} barName={barName} ceiling={ceiling} admin={admin} onDone={setNote} />
-          <MemberSheet member={open} barName={barName} ceiling={ceiling} venueRoles={venueRoles} busy={busy} onClose={() => setOpenId(null)} onRole={setRole} onRemove={removeMember} />
-        </>
-      ) : null}
     </View>
   );
 }
 
-/** A teammate: photo, name, a line about them, and their role. Opens their sheet when an Admin can manage them. */
-function MemberRow({ member, me, showEmail, showRole, lineUp, onPress }: {
-  member: BarMember;
-  me: boolean;
-  showEmail: boolean;
-  /** Off under a role heading, which already names it. */
-  showRole: boolean;
-  /** Keeps role tags in a column when other rows have a chevron. */
-  lineUp: boolean;
+/** One row: their photo, name and line, and on the right an Ends tag, Resend, or a chevron when it opens their page. */
+function PersonRow({ first, name, me, avatar, email, line, tag, selected, onPress, trailing }: {
+  first: boolean;
+  name: string;
+  me?: boolean;
+  avatar?: string | null;
+  email?: string | null;
+  line: string;
+  tag?: string | null;
+  selected?: boolean;
   onPress?: () => void;
+  trailing?: ReactNode;
 }) {
   const ds = useDs();
-  const name = personName(member);
-  const joined = joinedLabel(member.joined_at);
-  // An Admin needs the email to tell people apart; the date is in their sheet.
-  const line = showEmail ? member.email : joined;
   const content = (
     <>
-      <UserAvatar uri={member.avatar_url} name={name} email={member.email} size={AVATAR} />
+      <UserAvatar uri={avatar ?? null} name={name} email={email ?? undefined} size={AVATAR} />
       <View style={styles.text}>
-        <Body numberOfLines={2}>
+        <Body numberOfLines={1}>
           {name}
           {me ? <Body tone="muted"> (you)</Body> : null}
         </Body>
-        {line ? <Caption tone="muted" numberOfLines={1}>{line}</Caption> : null}
+        <Caption tone="muted" numberOfLines={1}>{line}</Caption>
       </View>
-      {showRole ? <Tag label={memberRoleName(member)} tone={member.role_level >= TEAM_MANAGE ? 'accent' : 'default'} style={styles.tag} /> : null}
-      {onPress ? <IconSymbol name="chevron.right" size={CHEVRON} color={ds.c.muted} /> : lineUp ? <View style={styles.chevronSpace} /> : null}
+      {tag ? <Tag label={tag} /> : null}
+      {trailing ?? (onPress ? <IconSymbol name="chevron.right" size={16} color={ds.c.muted} /> : null)}
     </>
   );
-  if (!onPress) return <View style={styles.row}>{content}</View>;
+  const style = [styles.row, first ? null : { borderTopColor: ds.c.line, borderTopWidth: StyleSheet.hairlineWidth }, selected ? { backgroundColor: ds.c.raised } : null];
+  if (!onPress) return <View role="listitem" style={style}>{content}</View>;
   return (
-    <PressableScale role="button" onPress={onPress} accessibilityLabel={`${name}, ${memberRoleName(member)}. Manage`} style={styles.row}>
+    <PressableScale role="button" aria-selected={selected} accessibilityLabel={`${name}, ${line}`} onPress={onPress} style={style}>
       {content}
     </PressableScale>
   );
 }
 
-function InviteRow({ name, email, roleLevel, ago, busy, onResend, onCancel }: {
-  name?: string | null;
-  email: string;
-  roleLevel: number;
-  ago: string | null;
-  busy: boolean;
-  onResend: () => void;
-  onCancel?: () => void;
-}) {
-  const ds = useDs();
-  return (
-    <View style={styles.inviteRow}>
-      <View style={[styles.row, styles.inviteMain]}>
-        <View style={[styles.envelope, { backgroundColor: ds.c.raised }]}>
-          <IconSymbol name="envelope" size={20} color={ds.c.muted} />
-        </View>
-        <View style={styles.text}>
-          <Body numberOfLines={1}>{name || email}</Body>
-          <Caption tone="muted" numberOfLines={1}>{`${name ? `${email} · ` : ''}Invited as ${roleLabel(roleLevel)}${ago ? ` · ${ago}` : ''}`}</Caption>
-        </View>
-      </View>
-      <View style={styles.inviteActions}>
-        <Button label="Resend" variant="ghost" accessibilityLabel={`Email the invite to ${email} again`} disabled={busy} onPress={onResend} size="sm" />
-        {onCancel ? <Button label="Cancel" variant="ghost" accessibilityLabel={`Cancel the invite for ${email}`} disabled={busy} onPress={onCancel} size="sm" /> : null}
-      </View>
-    </View>
-  );
-}
-
 const styles = StyleSheet.create({
   roster: { gap: space.xl },
-  section: { gap: space.md },
-  head: { flexDirection: 'row', flexWrap: 'wrap', alignItems: 'center', justifyContent: 'space-between', gap: space.sm },
   group: { gap: space.sm },
-  groupTitle: { paddingHorizontal: space.lg },
-  card: { paddingVertical: space.xs, gap: 0 },
-  empty: { paddingVertical: space.md },
-  row: { flexDirection: 'row', alignItems: 'center', gap: space.md, paddingVertical: space.md },
-  inviteMain: { flexGrow: 1, flexBasis: 260 },
+  card: { padding: 0, gap: 0, overflow: 'hidden' },
+  row: { flexDirection: 'row', alignItems: 'center', gap: space.md, paddingVertical: space.md, paddingHorizontal: space.lg },
   text: { flex: 1, gap: 2, minWidth: 0 },
-  tag: { alignSelf: 'center' },
-  chevronSpace: { width: CHEVRON },
-  envelope: { width: AVATAR, height: AVATAR, borderRadius: radius.pill, alignItems: 'center', justifyContent: 'center' },
-  inviteRow: { flexDirection: 'row', flexWrap: 'wrap', alignItems: 'center', columnGap: space.md },
-  inviteActions: { flexDirection: 'row', marginLeft: 'auto' },
+  inviteActions: { flexDirection: 'row', gap: space.md },
 });

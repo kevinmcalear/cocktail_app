@@ -1,11 +1,11 @@
 import { fireEvent, screen, within } from '@testing-library/react-native';
 
+import { MemberPage } from '@/components/screens/team/MemberPage';
 import { TeamScreen } from '@/components/screens/team/TeamScreen';
 import { renderWithProviders } from '@/jest.setup';
-import { useTeamSort } from '@/store/useTeamSort';
 
 const mockMutate = jest.fn();
-const mockRemove = jest.fn();
+const mockRemove = jest.fn(() => Promise.resolve());
 const mockAdd = jest.fn();
 const mockSend = jest.fn();
 const mockSendAsync = jest.fn();
@@ -33,6 +33,11 @@ jest.mock('@/hooks/useViewAs', () => ({ useEffectiveRole: () => mockRole, useCan
 jest.mock('@/hooks/useCapabilities', () => ({ useCapabilities: () => ({ data: ['menu'] }) }));
 jest.mock('@/ctx/AuthContext', () => jest.requireActual('@/jest.authMock').mockAuthContext(() => ({ user: { id: 'me' } })));
 jest.mock('@/lib/dialogs', () => ({ confirmAsync: jest.fn(async () => true) }));
+jest.mock('@/hooks/useTeam', () => ({
+  ...jest.requireActual('@/hooks/useTeam'),
+  useOnShiftTonight: () => new Set(['jo']),
+  useMemberStats: () => ({ credited: 4, onList: { name: 'Autumn', count: 2 }, nextShift: null, loading: false, failed: false }),
+}));
 jest.mock('@/hooks/useBarDetail', () => ({
   useBarMembers: () => ({
     data: [
@@ -43,7 +48,7 @@ jest.mock('@/hooks/useBarDetail', () => ({
     error: null,
   }),
   useSetMemberRole: () => ({ mutate: mockMutate, mutateAsync: mockAdd, isPending: false, error: null }),
-  useRemoveMember: () => ({ mutate: mockRemove, isPending: false, error: null }),
+  useRemoveMember: () => ({ mutateAsync: mockRemove, isPending: false, error: null }),
 }));
 const mockChoose = jest.fn();
 jest.mock('@/hooks/useVenueRoles', () => ({
@@ -67,7 +72,6 @@ jest.mock('@/hooks/useBarInvites', () => ({
 }));
 
 beforeEach(() => {
-  useTeamSort.setState({ sort: 'role' });
   mockRole = 40;
   mockMutate.mockClear();
   mockChoose.mockClear();
@@ -79,34 +83,6 @@ beforeEach(() => {
   mockPush.mockReset();
   mockWelcome = null;
   mockBrand = { logo_url: 'https://example.test/logo.png', primary_color: null, display_face: 'redaction' };
-});
-
-test('an admin can look someone up, then change their role and remove them from their sheet', async () => {
-  await renderWithProviders(<TeamScreen />);
-  // The sidebar names the venue.
-  expect(screen.queryByText('Caretakers')).toBeNull();
-  expect(screen.getByText('Team · 2')).toBeTruthy();
-  expect(screen.getByText('jo@example.test')).toBeTruthy();
-  expect(screen.getByText('Nia')).toBeTruthy();
-  expect(screen.getByText(/^new@example\.test · Invited as Bartender · \d+ months ago$/)).toBeTruthy();
-  // Your own row has no sheet: nobody demotes or removes themselves here.
-  expect(screen.queryByRole('button', { name: /^Ada, Admin/ })).toBeNull();
-
-  await fireEvent.changeText(screen.getByLabelText('Search the team'), 'jo');
-  expect(screen.queryByText('Ada (you)')).toBeNull();
-
-  await fireEvent.press(screen.getByRole('button', { name: 'Jo, Employee. Manage' }));
-  expect(screen.getByText('Joined 4 Mar 2026')).toBeTruthy();
-  expect(within(screen.getByLabelText('Role for Jo')).getByRole('radio', { name: 'Guest. Sees the menu only' })).toBeTruthy();
-  await fireEvent.press(within(screen.getByLabelText('Role for Jo')).getByRole('radio', { name: 'Bartender. Plus prep notes and the staff list' }));
-  expect(mockChoose).toHaveBeenCalledWith({ userId: 'jo', choice: { level: 30 } });
-  // The venue's own roles sit under the base levels.
-  expect(screen.getByText('CARETAKERS’S ROLES')).toBeTruthy();
-  await fireEvent.press(within(screen.getByLabelText('Role for Jo')).getByRole('radio', { name: 'Barback. From Employee, plus prep' }));
-  expect(mockChoose).toHaveBeenLastCalledWith({ userId: 'jo', choice: { venueRoleId: 'bb' } });
-
-  await fireEvent.press(screen.getByRole('button', { name: 'Remove from Caretakers' }));
-  expect(mockRemove).toHaveBeenCalledWith('jo', expect.anything());
 });
 
 test('an admin invites by name, email and role from the sheet, and the invite is emailed', async () => {
@@ -133,7 +109,7 @@ test('an admin invites by name, email and role from the sheet, and the invite is
   expect(mockSendAsync).toHaveBeenCalledWith('sam@example.test');
   expect(await screen.findByText('Invite emailed to Sam Okafor.')).toBeTruthy();
 
-  await fireEvent.press(screen.getByRole('button', { name: 'Email the invite to new@example.test again' }));
+  await fireEvent.press(screen.getByRole('button', { name: 'Resend' }));
   expect(mockSend).toHaveBeenLastCalledWith('new@example.test', expect.anything());
 });
 
@@ -172,31 +148,47 @@ test('a saved invite whose email fails says so', async () => {
   expect(await screen.findByText(/The invite is saved, but the email didn’t send \(rate limited\)/)).toBeTruthy();
 });
 
-test('an employee sees the team and cannot manage it', async () => {
+test('an admin sees the team in the board’s groups, who is on tonight, and the invited, and opens a person', async () => {
+  await renderWithProviders(<TeamScreen />);
+  expect(screen.getByText('Caretakers · 2 people')).toBeTruthy();
+  const headings = screen.getAllByRole('heading').map((h) => h.props.children);
+  expect(headings).toEqual(expect.arrayContaining(['Admins', 'Floor', 'Invited']));
+  expect(headings.indexOf('Admins')).toBeLessThan(headings.indexOf('Floor'));
+  expect(screen.getByText('Employee · on shift tonight')).toBeTruthy();
+  expect(screen.getByText(/^Invited as Bartender · \d+ \w+$/)).toBeTruthy();
+  // Your own row doesn't open: nobody demotes or removes themselves here.
+  expect(screen.queryByRole('button', { name: /^Ada,/ })).toBeNull();
+  await fireEvent.press(screen.getByRole('button', { name: 'Jo, Employee · on shift tonight' }));
+  expect(mockPush).toHaveBeenCalledWith('/team/jo');
+});
+
+test('an employee sees the team and cannot open anyone or see invites', async () => {
   mockRole = 20;
   await renderWithProviders(<TeamScreen />);
   expect(screen.getByText('Ada (you)')).toBeTruthy();
   expect(screen.getByText('Jo')).toBeTruthy();
-  expect(screen.getByText('Only people who can invite and manage staff change roles here.')).toBeTruthy();
-  expect(screen.queryByRole('button', { name: /Manage$/ })).toBeNull();
-  expect(screen.queryByLabelText('Search the team')).toBeNull();
-  expect(screen.getByText('Team · 2')).toBeTruthy();
+  expect(screen.queryByRole('button', { name: /^Jo,/ })).toBeNull();
   expect(screen.queryByText('Invite someone')).toBeNull();
-  expect(screen.queryByText('jo@example.test')).toBeNull();
   expect(screen.queryByText(/Invited as Bartender/)).toBeNull();
 });
 
-test('the team is grouped by role, Admin first, or listed A to Z with role tags', async () => {
-  mockRole = 20;
-  await renderWithProviders(<TeamScreen />);
-  expect(screen.getByRole('radio', { name: 'Role', checked: true })).toBeTruthy();
-  const headings = screen.getAllByRole('heading').map((h) => h.props.children);
-  expect(headings.indexOf('Admin · 1')).toBeGreaterThan(-1);
-  expect(headings.indexOf('Admin · 1')).toBeLessThan(headings.indexOf('Employee · 1'));
-  expect(screen.queryByText('Employee')).toBeNull();
-
-  await fireEvent.press(screen.getByRole('radio', { name: 'A to Z' }));
-  expect(screen.queryByText('Admin · 1')).toBeNull();
-  expect(screen.getByText('Employee')).toBeTruthy();
-  expect(screen.getByText('Admin')).toBeTruthy();
+test('a person’s page: their numbers, a new role, and Remove', async () => {
+  const onRemoved = jest.fn();
+  await renderWithProviders(
+    <MemberPage barId="bar" barName="Caretakers" role={40} onRemoved={onRemoved} member={{ user_id: 'jo', email: 'jo@example.test', role_level: 20, display_name: 'Jo Park', joined_at: '2026-03-04T00:00:00Z' }} />
+  );
+  expect(screen.getByText('Employee · since March 2026')).toBeTruthy();
+  expect(screen.getByText('drinks credited')).toBeTruthy();
+  expect(screen.getByText('on Autumn')).toBeTruthy();
+  await fireEvent.press(screen.getByRole('link', { name: 'Role, Employee' }));
+  expect(within(screen.getByLabelText('Role for Jo Park')).getByRole('radio', { name: 'Guest. Sees the menu only' })).toBeTruthy();
+  await fireEvent.press(within(screen.getByLabelText('Role for Jo Park')).getByRole('radio', { name: 'Bartender. Plus prep notes and the staff list' }));
+  expect(mockChoose).toHaveBeenCalledWith({ userId: 'jo', choice: { level: 30 } }, expect.anything());
+  await fireEvent.press(within(screen.getByLabelText('Role for Jo Park')).getByRole('radio', { name: 'Barback. From Employee, plus prep' }));
+  expect(mockChoose).toHaveBeenLastCalledWith({ userId: 'jo', choice: { venueRoleId: 'bb' } }, expect.anything());
+  await fireEvent.press(screen.getByRole('button', { name: 'Remove Jo from Caretakers' }));
+  expect(mockRemove).toHaveBeenCalledWith('jo');
+  await new Promise(process.nextTick);
+  expect(onRemoved).toHaveBeenCalled();
+  expect(screen.getByText('Jo’s name stays on the drinks they made.')).toBeTruthy();
 });
