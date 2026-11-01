@@ -5,7 +5,7 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import { useDs, useGutter } from '@/components/ds';
 import { useTabBarInset } from '@/components/nav/WebTabBar';
-import { space } from '@/constants/tokens';
+import { layout, space } from '@/constants/tokens';
 
 import { COLUMNS_FROM, DrinkColumns } from './DrinkColumns';
 import { phoneHeroHeight } from './DrinkHero';
@@ -66,7 +66,8 @@ export function ItemShell({ name, top, pane, photo, art, size, liquid, title, ac
     <PageControls
       top={top}
       scrollY={scrollY}
-      tuck={phone ? heroHeight + space.xxxl : Number.MAX_SAFE_INTEGER}
+      // Solid by the time the page's first line slides under the bar (top + controls), as the board's bar does.
+      tuck={phone ? heroHeight - (top + layout.minTapTarget + space.sm * 2) + space.lg : Number.MAX_SAFE_INTEGER}
       title={phone ? name : ''}
       titleInset={photo || !phone ? 0 : DOCKED + space.sm}
       noBack={pane}

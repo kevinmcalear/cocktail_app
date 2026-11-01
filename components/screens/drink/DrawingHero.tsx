@@ -3,7 +3,9 @@ import type { ReactNode } from 'react';
 import { StyleSheet, View } from 'react-native';
 import Animated, { interpolate, useAnimatedStyle, type SharedValue } from 'react-native-reanimated';
 
-import { DrinkDrawing, DrinkDrawingFor, useDs } from '@/components/ds';
+import { useDs } from '@/components/ds';
+// By path, not the ds barrel: through the barrel its Reanimated pour lands in the web's every-page chunk (check-web-chunks).
+import { DrinkDrawing, DrinkDrawingFor } from '@/components/ds/DrinkDrawing';
 import { drawing, layout, space } from '@/constants/tokens';
 import { useItemSketch } from '@/hooks/useItemSketch';
 import { drinkSky } from '@/lib/sky';

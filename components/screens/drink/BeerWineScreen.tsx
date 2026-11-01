@@ -2,7 +2,8 @@ import { Redirect, useLocalSearchParams, useRouter } from 'expo-router';
 import { Platform, StyleSheet, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
-import { BackbarTheme, Body, BrandProvider, DrinkDrawing } from '@/components/ds';
+import { BackbarTheme, Body, BrandProvider } from '@/components/ds';
+import { DrinkDrawing } from '@/components/ds/DrinkDrawing';
 import { CouldNotLoad, NotAvailable } from '@/components/screens/safety/NotAvailable';
 import { space } from '@/constants/tokens';
 import { useActiveVenue } from '@/hooks/useActiveVenue';
