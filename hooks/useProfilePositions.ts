@@ -11,6 +11,7 @@ import { countWaiting, workedBars, type CreditRow, type JobRow, type Waiting } f
 import { unclaimedNamesakes } from '@/lib/likelyClaimer';
 import { personSearchFilter } from '@/lib/profiles';
 import { supabase } from '@/lib/supabase';
+import { SHOWN_CREDITS } from '@/lib/whoMadeIt';
 
 export interface PositionProfile {
   id: string;
@@ -151,7 +152,12 @@ export function useWaiting(barIds: readonly string[], personIds: readonly string
       const counted = barIds.slice(0, WAITING_BARS);
       const [barCounts, mine, co, jobs, pages] = await Promise.all([
         Promise.all(counted.map((id) => drinksOf('id', true).eq('origin_bar_profile_id', id))),
-        personIds.length ? drinksOf('id, creator_profile_id').in('creator_profile_id', [...personIds]).limit(WAITING_ROWS) : none,
+        // A person's lead credits: signed in, item_credits (RLS keeps the drinks you can see); signed out, published cards.
+        !personIds.length
+          ? none
+          : userId
+            ? supabase.from('item_credits').select('item_id, profile_id').eq('role', 'creator').in('profile_id', [...personIds]).in('status', SHOWN_CREDITS).limit(WAITING_ROWS)
+            : drinksOf('item_id:id, profile_id:creator_profile_id').in('creator_profile_id', [...personIds]).limit(WAITING_ROWS),
         // Made with others, waiting for their yes or accepted (20261121200000), on drinks the reader could open.
         personIds.length ? supabase.rpc('waiting_co_credits', { p_profile_ids: [...personIds] }).limit(WAITING_ROWS) : none,
         barIds.length ? supabase.from('profile_positions').select('bar_profile_id, person_profile_id, is_current, is_shown, is_hidden').in('bar_profile_id', [...barIds]).limit(WAITING_ROWS) : none,
@@ -162,7 +168,8 @@ export function useWaiting(barIds: readonly string[], personIds: readonly string
       const claimed = new Set(((pages.data ?? []) as { id: string; is_claimed: boolean }[]).filter((r) => r.is_claimed).map((r) => r.id));
       const barDrinks = Object.fromEntries(counted.map((id, i) => [id, barCounts[i].count ?? 0]));
       // ponytail: the table and select are chosen at run time, so supabase-js can't type the row; split into literal queries to drop this cast.
-      const waiting = countWaiting(ids, (mine.data ?? []) as unknown as CreditRow[], (co.data ?? []) as { item_id: string; profile_id: string }[], (jobs.data ?? []) as JobRow[], claimed, barDrinks);
+      const credits = [...((mine.data ?? []) as unknown as CreditRow[]), ...((co.data ?? []) as CreditRow[])];
+      const waiting = countWaiting(ids, credits, (jobs.data ?? []) as JobRow[], claimed, barDrinks);
       // Bars past the counted ones keep their claimed tag but say no numbers, rather than a wrong one.
       for (const id of barIds.slice(WAITING_BARS)) waiting[id] = { ...waiting[id], drinks: 0, people: 0 };
       return waiting;

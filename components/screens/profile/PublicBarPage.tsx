@@ -101,7 +101,7 @@ export function PublicBarPage({ profile, signedIn = false }: { profile: Profile;
     ),
   );
   const theirDrinks = drinksShown ? drinksSection : null;
-  const classics = !drinksShown || originals.some((d) => d.riff_of_id) ? null : <StaffClassics barId={profile.bar_id} />;
+  const classics = !drinksShown || originals.some((d) => d.based_on_kind === 'riff') ? null : <StaffClassics barId={profile.bar_id} />;
   const facts_ = <PublicBarFacts profileId={profile.id} instagram={profile.instagram} />;
   const week = <BarWeek barId={profile.bar_id} profileId={profile.id} barName={profile.display_name} />;
   const menus = drinksShown ? section('Menus', <PublicMenus profileId={profile.id} name={profile.display_name} />, wide, true) : null;
