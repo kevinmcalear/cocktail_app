@@ -1,6 +1,6 @@
 // Inviting a person found by name (Kept-team, Invite > By email), including at
 // one of the bar's own roles: public.invite_profile_to_bar
-// (supabase/migrations/20261206320000_invite_by_profile.sql). The sender picks
+// (supabase/migrations/20261206330000_invite_by_profile.sql). The sender picks
 // a person's page and never gets their email; the invite rules are the ones
 // add_user_to_bar_by_email and invite_to_role already hold.
 // Runs against the local stack only: `npm run test:security`.
