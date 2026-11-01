@@ -56,7 +56,7 @@ export function useStaffList(barId: string | null | undefined) {
     queryKey: staffListKey(barId),
     enabled: !!barId,
     queryFn: async (): Promise<StaffPick[]> => {
-      const { data, error } = await supabase.from('bar_off_menu').select('item_id, sort_rank').eq('bar_id', barId!);
+      const { data, error } = await supabase.from('bar_also_makes').select('item_id, sort_rank').eq('bar_id', barId!);
       if (error) throw error;
       const picks = (data ?? []) as { item_id: string; sort_rank: number | null }[];
       const items = await itemNames(picks.map((p) => p.item_id), true);
@@ -118,7 +118,7 @@ export function useStaffListEdit(barId: string | null | undefined) {
       if (!barId) throw new Error('No venue');
       if (change.op === 'order') {
         if (change.join?.length) {
-          const joined = await supabase.from('bar_off_menu').insert(change.join.map((p) => ({ bar_id: barId, item_id: p.itemId, sort_rank: null })));
+          const joined = await supabase.from('bar_also_makes').insert(change.join.map((p) => ({ bar_id: barId, item_id: p.itemId, sort_rank: null })));
           if (joined.error) throw joined.error;
         }
         const { error } = await supabase.rpc('set_staff_list_order', { p_bar_id: barId, p_item_ids: change.itemIds });
@@ -128,8 +128,8 @@ export function useStaffListEdit(barId: string | null | undefined) {
       const ranks = (client.getQueryData<StaffPick[]>(key) ?? []).map((p) => p.rank);
       const { error } =
         change.op === 'add'
-          ? await supabase.from('bar_off_menu').insert({ bar_id: barId, item_id: change.itemId, sort_rank: appendRank(ranks) })
-          : await supabase.from('bar_off_menu').delete().eq('bar_id', barId).eq('item_id', change.itemId);
+          ? await supabase.from('bar_also_makes').insert({ bar_id: barId, item_id: change.itemId, sort_rank: appendRank(ranks) })
+          : await supabase.from('bar_also_makes').delete().eq('bar_id', barId).eq('item_id', change.itemId);
       if (error) throw error;
     },
     onMutate: async (change) => {

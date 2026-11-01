@@ -113,6 +113,31 @@ export interface SpecLevels {
   brand: number;
   measurement: number;
   prep: number;
+  /** The bar hides this drink's spec: only those who edit it see brands, amounts and prep notes. */
+  hidden?: boolean;
+}
+
+/** The lowest base level that edits drinks by default (Drink Creator): who still sees a hidden spec. */
+const EDITS_DRINKS = 35;
+
+/**
+ * Where each part opens, from the venue's built-in roles' permissions (with
+ * its changes, as get_venue_role_matrix returns them) and the drink's hide
+ * (20261204300000): names with talking_points or specs, brands and amounts
+ * with specs, prep notes with house_made. A part no built-in role opens reads 41.
+ */
+export function specLevelsFrom(rows: readonly { role_id: string | null; base_level: number; capabilities: readonly string[] }[], hidden = false): SpecLevels {
+  const lowest = (...caps: string[]) =>
+    Math.min(41, ...rows.filter((r) => r.role_id === null && caps.some((c) => r.capabilities.includes(c))).map((r) => r.base_level));
+  const specs = lowest('specs');
+  const prep = lowest('house_made');
+  return {
+    generic: lowest('talking_points', 'specs'),
+    brand: hidden ? Math.max(specs, EDITS_DRINKS) : specs,
+    measurement: hidden ? Math.max(specs, EDITS_DRINKS) : specs,
+    prep: hidden ? Math.max(prep, EDITS_DRINKS) : prep,
+    hidden,
+  };
 }
 
 export interface SpecAccess {
@@ -130,9 +155,10 @@ export interface SpecsMove {
 export const NO_SPECS_MOVE: SpecsMove = { granted: false, revoked: false };
 
 /**
- * What this role can see, as app_recipe_presentation decides it: the drink's
- * levels, moved by the role's specs grant (amounts, and the names with them)
- * or revoke (amounts). Personal drinks (no venue) show everything.
+ * What this role can see, as app_recipe_presentation decides it: where the
+ * venue's permissions open each part (specLevelsFrom), moved by the person's
+ * own role's specs grant (amounts and names) or revoke (amounts). Personal
+ * drinks (no venue) show everything.
  */
 export function specAccess(role: number, levels: SpecLevels | null, isVenueDrink: boolean, specs: SpecsMove = NO_SPECS_MOVE): SpecAccess {
   if (!isVenueDrink || !levels) return { names: true, amounts: true, prep: true };

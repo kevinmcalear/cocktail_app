@@ -61,6 +61,46 @@ export type Database = {
           },
         ]
       }
+      bar_also_makes: {
+        Row: {
+          bar_id: string
+          item_id: string
+          sort_rank: number | null
+        }
+        Insert: {
+          bar_id: string
+          item_id: string
+          sort_rank?: number | null
+        }
+        Update: {
+          bar_id?: string
+          item_id?: string
+          sort_rank?: number | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "bar_also_makes_bar_id_fkey"
+            columns: ["bar_id"]
+            isOneToOne: false
+            referencedRelation: "bars"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "bar_also_makes_item_id_fkey"
+            columns: ["item_id"]
+            isOneToOne: false
+            referencedRelation: "app_item_presentation"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "bar_also_makes_item_id_fkey"
+            columns: ["item_id"]
+            isOneToOne: false
+            referencedRelation: "items"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       bar_glassware: {
         Row: {
           capacity_ml: number | null
@@ -278,46 +318,6 @@ export type Database = {
           },
         ]
       }
-      bar_off_menu: {
-        Row: {
-          bar_id: string
-          item_id: string
-          sort_rank: number | null
-        }
-        Insert: {
-          bar_id: string
-          item_id: string
-          sort_rank?: number | null
-        }
-        Update: {
-          bar_id?: string
-          item_id?: string
-          sort_rank?: number | null
-        }
-        Relationships: [
-          {
-            foreignKeyName: "bar_off_menu_bar_id_fkey"
-            columns: ["bar_id"]
-            isOneToOne: false
-            referencedRelation: "bars"
-            referencedColumns: ["id"]
-          },
-          {
-            foreignKeyName: "bar_off_menu_item_id_fkey"
-            columns: ["item_id"]
-            isOneToOne: false
-            referencedRelation: "app_item_presentation"
-            referencedColumns: ["id"]
-          },
-          {
-            foreignKeyName: "bar_off_menu_item_id_fkey"
-            columns: ["item_id"]
-            isOneToOne: false
-            referencedRelation: "items"
-            referencedColumns: ["id"]
-          },
-        ]
-      }
       bar_zones: {
         Row: {
           bar_id: string
@@ -377,6 +377,7 @@ export type Database = {
       bars: {
         Row: {
           accent_light_color: string | null
+          advanced_options: boolean
           created_at: string
           currency: string | null
           default_generic_ingredient_level: number
@@ -410,6 +411,7 @@ export type Database = {
         }
         Insert: {
           accent_light_color?: string | null
+          advanced_options?: boolean
           created_at?: string
           currency?: string | null
           default_generic_ingredient_level?: number
@@ -443,6 +445,7 @@ export type Database = {
         }
         Update: {
           accent_light_color?: string | null
+          advanced_options?: boolean
           created_at?: string
           currency?: string | null
           default_generic_ingredient_level?: number
@@ -891,6 +894,136 @@ export type Database = {
           },
         ]
       }
+      drink_glass: {
+        Row: {
+          glass_model_id: string | null
+          glassware_id: string | null
+          item_id: string
+          sketch_variant: string | null
+          updated_at: string
+        }
+        Insert: {
+          glass_model_id?: string | null
+          glassware_id?: string | null
+          item_id: string
+          sketch_variant?: string | null
+          updated_at?: string
+        }
+        Update: {
+          glass_model_id?: string | null
+          glassware_id?: string | null
+          item_id?: string
+          sketch_variant?: string | null
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "drink_glass_glass_model_id_fkey"
+            columns: ["glass_model_id"]
+            isOneToOne: false
+            referencedRelation: "glass_models"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "drink_glass_glassware_id_fkey"
+            columns: ["glassware_id"]
+            isOneToOne: false
+            referencedRelation: "app_item_presentation"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "drink_glass_glassware_id_fkey"
+            columns: ["glassware_id"]
+            isOneToOne: false
+            referencedRelation: "items"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "drink_glass_item_id_fkey"
+            columns: ["item_id"]
+            isOneToOne: true
+            referencedRelation: "app_item_presentation"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "drink_glass_item_id_fkey"
+            columns: ["item_id"]
+            isOneToOne: true
+            referencedRelation: "items"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      drink_ice: {
+        Row: {
+          ice_build: Json | null
+          ice_id: string | null
+          ice_per_serve_g: number | null
+          item_id: string
+          method_ice_id: string | null
+          updated_at: string
+        }
+        Insert: {
+          ice_build?: Json | null
+          ice_id?: string | null
+          ice_per_serve_g?: number | null
+          item_id: string
+          method_ice_id?: string | null
+          updated_at?: string
+        }
+        Update: {
+          ice_build?: Json | null
+          ice_id?: string | null
+          ice_per_serve_g?: number | null
+          item_id?: string
+          method_ice_id?: string | null
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "drink_ice_ice_id_fkey"
+            columns: ["ice_id"]
+            isOneToOne: false
+            referencedRelation: "app_item_presentation"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "drink_ice_ice_id_fkey"
+            columns: ["ice_id"]
+            isOneToOne: false
+            referencedRelation: "items"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "drink_ice_item_id_fkey"
+            columns: ["item_id"]
+            isOneToOne: true
+            referencedRelation: "app_item_presentation"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "drink_ice_item_id_fkey"
+            columns: ["item_id"]
+            isOneToOne: true
+            referencedRelation: "items"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "drink_ice_method_ice_id_fkey"
+            columns: ["method_ice_id"]
+            isOneToOne: false
+            referencedRelation: "app_item_presentation"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "drink_ice_method_ice_id_fkey"
+            columns: ["method_ice_id"]
+            isOneToOne: false
+            referencedRelation: "items"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       drink_photos: {
         Row: {
           created_at: string
@@ -997,6 +1130,112 @@ export type Database = {
             columns: ["parent_style_id"]
             isOneToOne: false
             referencedRelation: "drink_styles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      drinks_had: {
+        Row: {
+          at_home: boolean
+          bar_name: string | null
+          collected_item_id: string | null
+          compared: string | null
+          created_at: string
+          had_on: string | null
+          id: string
+          image_id: string | null
+          item_id: string | null
+          made_drink_id: string | null
+          name: string | null
+          note: string | null
+          on_profile: boolean
+          rank_entry_id: string | null
+          source: string
+          swaps: Json
+          user_id: string
+          venue_profile_id: string | null
+        }
+        Insert: {
+          at_home: boolean
+          bar_name?: string | null
+          collected_item_id?: string | null
+          compared?: string | null
+          created_at?: string
+          had_on?: string | null
+          id?: string
+          image_id?: string | null
+          item_id?: string | null
+          made_drink_id?: string | null
+          name?: string | null
+          note?: string | null
+          on_profile?: boolean
+          rank_entry_id?: string | null
+          source: string
+          swaps?: Json
+          user_id?: string
+          venue_profile_id?: string | null
+        }
+        Update: {
+          at_home?: boolean
+          bar_name?: string | null
+          collected_item_id?: string | null
+          compared?: string | null
+          created_at?: string
+          had_on?: string | null
+          id?: string
+          image_id?: string | null
+          item_id?: string | null
+          made_drink_id?: string | null
+          name?: string | null
+          note?: string | null
+          on_profile?: boolean
+          rank_entry_id?: string | null
+          source?: string
+          swaps?: Json
+          user_id?: string
+          venue_profile_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "drinks_had_image_id_fkey"
+            columns: ["image_id"]
+            isOneToOne: false
+            referencedRelation: "images"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "drinks_had_item_id_fkey"
+            columns: ["item_id"]
+            isOneToOne: false
+            referencedRelation: "app_item_presentation"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "drinks_had_item_id_fkey"
+            columns: ["item_id"]
+            isOneToOne: false
+            referencedRelation: "items"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "drinks_had_rank_entry_id_fkey"
+            columns: ["rank_entry_id"]
+            isOneToOne: false
+            referencedRelation: "rank_entries"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "drinks_had_rank_entry_id_fkey"
+            columns: ["rank_entry_id"]
+            isOneToOne: false
+            referencedRelation: "rank_entry_scores"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "drinks_had_venue_profile_id_fkey"
+            columns: ["venue_profile_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
             referencedColumns: ["id"]
           },
         ]
@@ -2092,6 +2331,82 @@ export type Database = {
           },
         ]
       }
+      item_credits: {
+        Row: {
+          created_at: string
+          created_by: string | null
+          dispute_note: string | null
+          disputed_at: string | null
+          disputed_by: string | null
+          id: string
+          item_id: string
+          name: string | null
+          profile_id: string | null
+          role: string
+          sort_order: number
+          status: string
+          status_at: string
+          status_by: string | null
+          what: string
+        }
+        Insert: {
+          created_at?: string
+          created_by?: string | null
+          dispute_note?: string | null
+          disputed_at?: string | null
+          disputed_by?: string | null
+          id?: string
+          item_id: string
+          name?: string | null
+          profile_id?: string | null
+          role: string
+          sort_order?: number
+          status?: string
+          status_at?: string
+          status_by?: string | null
+          what?: string
+        }
+        Update: {
+          created_at?: string
+          created_by?: string | null
+          dispute_note?: string | null
+          disputed_at?: string | null
+          disputed_by?: string | null
+          id?: string
+          item_id?: string
+          name?: string | null
+          profile_id?: string | null
+          role?: string
+          sort_order?: number
+          status?: string
+          status_at?: string
+          status_by?: string | null
+          what?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "item_credits_item_id_fkey"
+            columns: ["item_id"]
+            isOneToOne: false
+            referencedRelation: "app_item_presentation"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "item_credits_item_id_fkey"
+            columns: ["item_id"]
+            isOneToOne: false
+            referencedRelation: "items"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "item_credits_profile_id_fkey"
+            columns: ["profile_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       item_flavors: {
         Row: {
           bitter: number
@@ -2932,6 +3247,9 @@ export type Database = {
           approved_by: string | null
           awaiting_approval: boolean
           bar_id: string | null
+          based_on_id: string | null
+          based_on_kind: string | null
+          based_on_style_id: string | null
           brand_maker: string | null
           capacity_ml: number | null
           created_at: string
@@ -2942,6 +3260,7 @@ export type Database = {
           density_g_ml: number | null
           description: string | null
           dilution_pct: number | null
+          drink_family: string | null
           family_id: string | null
           generic_id: string | null
           gi: string | null
@@ -2994,6 +3313,7 @@ export type Database = {
           sketch_liquid: string | null
           sketch_variant: string | null
           spec_from_id: string | null
+          spec_hidden: boolean
           spec_source: string
           status: string | null
         }
@@ -3004,6 +3324,9 @@ export type Database = {
           approved_by?: string | null
           awaiting_approval?: boolean
           bar_id?: string | null
+          based_on_id?: string | null
+          based_on_kind?: string | null
+          based_on_style_id?: string | null
           brand_maker?: string | null
           capacity_ml?: number | null
           created_at?: string
@@ -3014,6 +3337,7 @@ export type Database = {
           density_g_ml?: number | null
           description?: string | null
           dilution_pct?: number | null
+          drink_family?: string | null
           family_id?: string | null
           generic_id?: string | null
           gi?: string | null
@@ -3066,6 +3390,7 @@ export type Database = {
           sketch_liquid?: string | null
           sketch_variant?: string | null
           spec_from_id?: string | null
+          spec_hidden?: boolean
           spec_source?: string
           status?: string | null
         }
@@ -3076,6 +3401,9 @@ export type Database = {
           approved_by?: string | null
           awaiting_approval?: boolean
           bar_id?: string | null
+          based_on_id?: string | null
+          based_on_kind?: string | null
+          based_on_style_id?: string | null
           brand_maker?: string | null
           capacity_ml?: number | null
           created_at?: string
@@ -3086,6 +3414,7 @@ export type Database = {
           density_g_ml?: number | null
           description?: string | null
           dilution_pct?: number | null
+          drink_family?: string | null
           family_id?: string | null
           generic_id?: string | null
           gi?: string | null
@@ -3138,6 +3467,7 @@ export type Database = {
           sketch_liquid?: string | null
           sketch_variant?: string | null
           spec_from_id?: string | null
+          spec_hidden?: boolean
           spec_source?: string
           status?: string | null
         }
@@ -3147,6 +3477,27 @@ export type Database = {
             columns: ["bar_id"]
             isOneToOne: false
             referencedRelation: "bars"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "items_based_on_id_fkey"
+            columns: ["based_on_id"]
+            isOneToOne: false
+            referencedRelation: "app_item_presentation"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "items_based_on_id_fkey"
+            columns: ["based_on_id"]
+            isOneToOne: false
+            referencedRelation: "items"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "items_based_on_style_id_fkey"
+            columns: ["based_on_style_id"]
+            isOneToOne: false
+            referencedRelation: "drink_styles"
             referencedColumns: ["id"]
           },
           {
@@ -5773,6 +6124,80 @@ export type Database = {
           },
         ]
       }
+      want_list: {
+        Row: {
+          bar_name: string | null
+          collected_item_id: string | null
+          id: string
+          image_url: string | null
+          item_id: string | null
+          kind: string
+          name: string | null
+          release_id: string | null
+          source: string
+          user_id: string
+          venue_profile_id: string | null
+          wanted_at: string
+        }
+        Insert: {
+          bar_name?: string | null
+          collected_item_id?: string | null
+          id?: string
+          image_url?: string | null
+          item_id?: string | null
+          kind: string
+          name?: string | null
+          release_id?: string | null
+          source?: string
+          user_id?: string
+          venue_profile_id?: string | null
+          wanted_at?: string
+        }
+        Update: {
+          bar_name?: string | null
+          collected_item_id?: string | null
+          id?: string
+          image_url?: string | null
+          item_id?: string | null
+          kind?: string
+          name?: string | null
+          release_id?: string | null
+          source?: string
+          user_id?: string
+          venue_profile_id?: string | null
+          wanted_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "want_list_item_id_fkey"
+            columns: ["item_id"]
+            isOneToOne: false
+            referencedRelation: "app_item_presentation"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "want_list_item_id_fkey"
+            columns: ["item_id"]
+            isOneToOne: false
+            referencedRelation: "items"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "want_list_release_id_fkey"
+            columns: ["release_id"]
+            isOneToOne: false
+            referencedRelation: "releases"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "want_list_venue_profile_id_fkey"
+            columns: ["venue_profile_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
     }
     Views: {
       app_item_presentation: {
@@ -5948,6 +6373,9 @@ export type Database = {
             approved_by: string | null
             awaiting_approval: boolean
             bar_id: string | null
+            based_on_id: string | null
+            based_on_kind: string | null
+            based_on_style_id: string | null
             brand_maker: string | null
             capacity_ml: number | null
             created_at: string
@@ -5958,6 +6386,7 @@ export type Database = {
             density_g_ml: number | null
             description: string | null
             dilution_pct: number | null
+            drink_family: string | null
             family_id: string | null
             generic_id: string | null
             gi: string | null
@@ -6012,6 +6441,7 @@ export type Database = {
             sketch_liquid: string | null
             sketch_variant: string | null
             spec_from_id: string | null
+            spec_hidden: boolean
             spec_source: string
             status: string | null
           } | null
@@ -6056,6 +6486,46 @@ export type Database = {
           {
             foreignKeyName: "recipes_recipe_item_id_fkey"
             columns: ["recipe_item_id"]
+            isOneToOne: false
+            referencedRelation: "items"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      bar_off_menu: {
+        Row: {
+          bar_id: string | null
+          item_id: string | null
+          sort_rank: number | null
+        }
+        Insert: {
+          bar_id?: string | null
+          item_id?: string | null
+          sort_rank?: number | null
+        }
+        Update: {
+          bar_id?: string | null
+          item_id?: string | null
+          sort_rank?: number | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "bar_also_makes_bar_id_fkey"
+            columns: ["bar_id"]
+            isOneToOne: false
+            referencedRelation: "bars"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "bar_also_makes_item_id_fkey"
+            columns: ["item_id"]
+            isOneToOne: false
+            referencedRelation: "app_item_presentation"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "bar_also_makes_item_id_fkey"
+            columns: ["item_id"]
             isOneToOne: false
             referencedRelation: "items"
             referencedColumns: ["id"]
@@ -6338,6 +6808,10 @@ export type Database = {
         Args: { p_accept: boolean; p_item_id: string }
         Returns: Database["public"]["Enums"]["co_creator_status"]
       }
+      answer_item_credit: {
+        Args: { p_accept: boolean; p_credit_id: string }
+        Returns: string
+      }
       answer_join_request: {
         Args: { p_accept: boolean; p_id: string }
         Returns: undefined
@@ -6581,6 +7055,7 @@ export type Database = {
         }
         Returns: {
           accent_light_color: string | null
+          advanced_options: boolean
           created_at: string
           currency: string | null
           default_generic_ingredient_level: number
@@ -6625,6 +7100,7 @@ export type Database = {
           bar_name: string
           bar_place: string
           creator_name: string
+          credit_id: string
           item_id: string
           item_type: Database["public"]["Enums"]["entity_type"]
           name: string
@@ -6818,6 +7294,9 @@ export type Database = {
           approved_by: string | null
           awaiting_approval: boolean
           bar_id: string | null
+          based_on_id: string | null
+          based_on_kind: string | null
+          based_on_style_id: string | null
           brand_maker: string | null
           capacity_ml: number | null
           created_at: string
@@ -6828,6 +7307,7 @@ export type Database = {
           density_g_ml: number | null
           description: string | null
           dilution_pct: number | null
+          drink_family: string | null
           family_id: string | null
           generic_id: string | null
           gi: string | null
@@ -6880,6 +7360,7 @@ export type Database = {
           sketch_liquid: string | null
           sketch_variant: string | null
           spec_from_id: string | null
+          spec_hidden: boolean
           spec_source: string
           status: string | null
         }
@@ -6889,6 +7370,10 @@ export type Database = {
           isOneToOne: true
           isSetofReturn: true
         }
+      }
+      dispute_credit: {
+        Args: { p_credit_id: string; p_note: string }
+        Returns: string
       }
       drink_allergens: { Args: { p_item_id: string }; Returns: Json }
       drink_cost: { Args: { p_bar: string; p_item: string }; Returns: Json }
@@ -7108,6 +7593,7 @@ export type Database = {
       get_profile_made: {
         Args: { p_profile_id: string }
         Returns: {
+          had_id: string
           id: string
           image_is_generated: boolean
           image_url: string
@@ -7202,7 +7688,6 @@ export type Database = {
         }[]
       }
       is_card_public: { Args: { p_item_id: string }; Returns: boolean }
-      is_made_log_shown: { Args: { p_made_id: string }; Returns: boolean }
       is_spec_locked: { Args: { p_item_id: string }; Returns: boolean }
       join_requests: {
         Args: { p_bar_id: string }
@@ -7240,6 +7725,7 @@ export type Database = {
         Args: { p_bar_id: string }
         Returns: {
           created_at: string
+          credit_id: string
           credited_by: string
           drink_name: string
           item_id: string
@@ -7561,6 +8047,10 @@ export type Database = {
           isSetofReturn: false
         }
       }
+      resolve_credit_dispute: {
+        Args: { p_credit_id: string; p_keep: boolean }
+        Returns: string
+      }
       resolve_ingredient: { Args: { p_name: string }; Returns: string }
       resolve_report: {
         Args: {
@@ -7821,6 +8311,15 @@ export type Database = {
         }
         Returns: undefined
       }
+      set_maker_credit: {
+        Args: {
+          p_credited: boolean
+          p_item_id: string
+          p_profile_id: string
+          p_what: string
+        }
+        Returns: undefined
+      }
       set_role_capability: {
         Args: {
           p_bar_id: string
@@ -7974,6 +8473,7 @@ export type Database = {
         }
         Returns: {
           accent_light_color: string | null
+          advanced_options: boolean
           created_at: string
           currency: string | null
           default_generic_ingredient_level: number
@@ -8203,6 +8703,12 @@ export type Database = {
         | "playfair_display"
         | "josefin_sans"
         | "tenor_sans"
+        | "newsreader"
+        | "im_fell_english"
+        | "imbue"
+        | "besley"
+        | "belleza"
+        | "big_shoulders"
     }
     CompositeTypes: {
       [_ in never]: never
@@ -8431,6 +8937,12 @@ export const Constants = {
         "playfair_display",
         "josefin_sans",
         "tenor_sans",
+        "newsreader",
+        "im_fell_english",
+        "imbue",
+        "besley",
+        "belleza",
+        "big_shoulders",
       ],
     },
   },
