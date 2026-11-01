@@ -52,7 +52,7 @@ export function runRange(from: string, to: string, year = false): string {
   const short = (d: Date) => d.toLocaleDateString(undefined, { day: 'numeric', month: 'short' });
   const oneMonth = a.getMonth() === b.getMonth() && a.getFullYear() === b.getFullYear();
   const dayFirst = /^\d/.test(short(a));
-  const range = !oneMonth ? `${short(a)} to ${short(b)}` : dayFirst ? `${a.getDate()} to ${short(b)}` : `${short(a)} to ${b.getDate()}`;
+  const range = oneMonth && a.getDate() === b.getDate() ? short(a) : !oneMonth ? `${short(a)} to ${short(b)}` : dayFirst ? `${a.getDate()} to ${short(b)}` : `${short(a)} to ${b.getDate()}`;
   return year ? `${range} ${b.getFullYear()}` : range;
 }
 

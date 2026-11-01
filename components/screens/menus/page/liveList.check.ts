@@ -76,5 +76,6 @@ assert.equal(out.coming?.rows[0].sub, '21% cost');
 // Dates on a run, from a date column or a timestamp.
 assert.equal(runRange('2026-09-01', '2026-09-30'), new Date(2026, 8, 1).toLocaleDateString(undefined, { day: 'numeric', month: 'short' }).startsWith('1') ? '1 to 30 Sep' : 'Sep 1 to 30');
 assert.ok(runRange('2026-10-01', '2026-11-01', true).endsWith(' 2026'));
+assert.ok(!runRange('2026-11-01T15:00:00Z', '2026-11-01T18:00:00Z').includes(' to ')); // On and off the same day: one date
 
 console.log('liveList ok');
