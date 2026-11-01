@@ -64,13 +64,36 @@ export function carryFloatWords(draft: StepDraft, steps: readonly { key: string;
   if (!has(from) || steps.some((s) => s.key === 'float')) return draft;
   const to = steps.find((s) => s.key !== 'garnish' && s.lines.some((l) => l.float));
   if (!to) return draft;
-  const { float: _moved, ...rest } = draft;
-  const there = draft[to.key] ?? { aside: '', note: '' };
+  return joinWords(draft, 'float', to.key);
+}
+
+/** One step's words joined after another's (the rule of carryFloatWords); the first key's words are removed. */
+function joinWords(draft: StepDraft, fromKey: string, toKey: string): StepDraft {
+  const { [fromKey]: from, ...rest } = draft;
+  const there = rest[toKey] ?? { aside: '', note: '' };
   const [a1, a2] = [there.aside.trim(), from.aside.trim()];
   const joined = [a1, a2].filter(Boolean).join(' · ');
   const fits = joined.length <= ASIDE_MAX;
   const note = [there.note.trim(), fits ? '' : a2, from.note.trim()].filter(Boolean).join('\n\n');
-  return { ...rest, [to.key]: { aside: fits ? joined : a1, note: note.slice(0, NOTE_MAX) } };
+  return { ...rest, [toKey]: { aside: fits ? joined : a1, note: note.slice(0, NOTE_MAX) } };
+}
+
+type Step = { key: string; lines: readonly { name: string }[] };
+
+/**
+ * Parts turned off: each part that is no longer a step hands its words to the
+ * step its first line lands in (main, or float for a float line), joined by
+ * the same rule. `before` and `after` are the drink's steps with and without
+ * its parts. Part 1 keeps main's key, so its words stay. A part with no lines
+ * loses its words, as an emptied step does.
+ */
+export function carryPartWords(draft: StepDraft, before: readonly Step[], after: readonly Step[]): StepDraft {
+  const keys = new Set(after.map((s) => s.key));
+  return before.reduce((acc, step) => {
+    if (keys.has(step.key) || !has(acc[step.key])) return acc;
+    const to = after.find((s) => s.key !== 'garnish' && s.lines.some((l) => l.name === step.lines[0]?.name));
+    return to ? joinWords(acc, step.key, to.key) : acc;
+  }, draft);
 }
 
 /**

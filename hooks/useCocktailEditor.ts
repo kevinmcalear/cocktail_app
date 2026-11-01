@@ -18,7 +18,7 @@ import { mapPresentationRecipeToEditItem } from "@/lib/recipeUtils";
 import { supabase } from "@/lib/supabase";
 import { saveDrinkSpec } from "@/hooks/useVersions";
 import { fetchStepNotes, saveStepNotes } from "@/hooks/useStepNotes";
-import { carryFloatWords, draftSteps, stepDraft, stepNoteChanges, type StepDraft, type StepNote, type StepWords } from "@/lib/stepNotes";
+import { carryFloatWords, carryPartWords, draftSteps, stepDraft, stepNoteChanges, type StepDraft, type StepNote, type StepWords } from "@/lib/stepNotes";
 import { resolveEditItems } from "@/hooks/specLineSave";
 import { refreshIngredients } from "@/hooks/useDropdowns";
 import { showMessage } from "@/lib/dialogs";
@@ -428,6 +428,8 @@ export function useCocktailEditor(id: string, { enabled = true }: { enabled?: bo
             return setParts(startParts({ lines: recipeItems.map(toLine), methods: methodIds.map((mid) => ({ id: mid, name: named(mid) })) }));
         }
         if (parts) setMethodIds(idsOf(partsMethods(parts)));
+        // Each part's words go to the step its lines land in (lib/stepNotes carryPartWords).
+        if (parts) setStepNotes(carryPartWords(stepNotes, draftSteps(recipeItems, parts, null), draftSteps(recipeItems, null, null)));
         setPartsState(null);
         markDirty();
     };

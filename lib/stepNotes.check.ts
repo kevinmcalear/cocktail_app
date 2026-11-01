@@ -4,7 +4,7 @@ import assert from 'node:assert/strict';
 
 import type { DraftPart } from './drinkParts';
 import type { SortableRecipeItem } from './recipeItem';
-import { carryFloatWords, draftSteps, moveStepDraft, noteLeft, NOTE_MAX, stepDraft, stepNoteChanges } from './stepNotes';
+import { carryFloatWords, carryPartWords, draftSteps, moveStepDraft, noteLeft, NOTE_MAX, stepDraft, stepNoteChanges } from './stepNotes';
 
 const line = (key: string, unit: string, extra: Partial<SortableRecipeItem> = {}) => ({ key, ingredient_id: key, name: key, amount: '1', unit, ...extra }) as SortableRecipeItem;
 const penicillin = [line('scotch', 'ml'), line('lemon', 'ml'), line('islay', 'ml', { is_float: true }), line('ginger', 'each')];
@@ -74,5 +74,16 @@ assert.equal(carryFloatWords(floatWords, draftSteps(penicillin, null, 'Shake')),
 assert.equal(carryFloatWords(floatWords, draftSteps(penicillin.filter((l) => !l.is_float), parts, 'Shake')), floatWords);
 // Together they save: the Float row is cleared, the part's written.
 assert.deepEqual(stepNoteChanges([{ step_key: 'float', aside: 'a', note: null }], carryFloatWords({ float: { aside: 'a', note: '' } }, parted), parted.map((g) => g.key)), { rows: [{ step_key: 'part-2', aside: 'a', note: null }], gone: ['float'] });
+
+// Parts turned off: part 2's words go to the step its line lands in (a float line: float), joined after any there.
+const off = draftSteps(penicillin, null, 'Shake');
+const twoParts = { main: { aside: 'hard', note: '' }, 'part-2': { aside: 'on top', note: 'Slowly.' } };
+assert.deepEqual(carryPartWords(twoParts, parted, off), { main: twoParts.main, float: twoParts['part-2'] });
+// A part of plain lines goes to main, after main's own words.
+const plainLines = penicillin.map((l) => ({ ...l, is_float: false }));
+const plain: DraftPart[] = [{ name: '', lines: ['scotch', 'lemon'], methods: [] }, { name: '', lines: ['islay'], methods: [] }];
+assert.deepEqual(carryPartWords(twoParts, draftSteps(plainLines, plain, null), draftSteps(plainLines, null, null)).main, { aside: 'hard · on top', note: 'Slowly.' });
+// Part 1's words are main's already.
+assert.equal(carryPartWords({ main: twoParts.main }, parted, off).main, twoParts.main);
 
 console.log('stepNotes checks passed');
