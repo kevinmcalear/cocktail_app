@@ -1,4 +1,4 @@
-import { useLocalSearchParams, useRouter } from 'expo-router';
+import { useRouter } from 'expo-router';
 import { lazy, Suspense, useMemo, useState } from 'react';
 import { FlatList, StyleSheet, View } from 'react-native';
 
@@ -18,6 +18,7 @@ import { FILTER_DOCK, FilterDock, PinnedTitle, type FilterSet } from '@/componen
 import { LibraryEmpty } from '@/components/screens/library/LibraryEmpty';
 import { LibraryPanes } from '@/components/screens/library/LibraryPanes';
 import { LibraryTile } from '@/components/screens/library/LibraryTile';
+import { useLibraryView } from '@/components/screens/library/useLibraryView';
 import { NearResults } from '@/components/search/NearResults';
 import { SearchField } from '@/components/search/SearchField';
 import { SwapSheet } from '@/components/screens/library/SwapSheet';
@@ -56,8 +57,10 @@ const EVERYWHERE = { area: { kind: 'anywhere' }, kinds: ['drink', 'bar', 'person
  * garnishes and bottles. Without a venue, each type on its own. The filter lives
  * in the URL (?show=staff&menu=<id>), so a link opens the same view. Drinks
  * without a photo still get a proper tile, never someone else's photo.
+ * `beside`: the list in its column beside the Drinks stack on a desktop
+ * (components/nav/DrinksSplit.tsx), where a drink opens at its own URL.
  */
-export function LibraryScreen() {
+export function LibraryScreen({ beside = false }: { beside?: boolean }) {
   const ds = useDs();
   const router = useRouter();
   // The palette on wide screens, the search tab on phones (q01).
@@ -66,12 +69,13 @@ export function LibraryScreen() {
   const gutter = useGutter();
   const breakpoint = useBreakpoint();
   const bottom = useTabBarInset();
-  // A tablet beside the rail: the list and the picked drink side by side.
-  const panes = useWebNav() === 'rail';
+  // A tablet beside the rail: the list and the picked drink side by side. A desktop: the list, with the drink beside it.
+  const nav = useWebNav();
+  const panes = beside || nav === 'rail';
   // The venue in the header, not the old sidebar's multi-select contexts.
   const { active, isLoading: venuesLoading } = useActiveVenue();
   const activeId = active?.id ?? null;
-  const params = useLocalSearchParams<{ show?: string; menu?: string; kind?: string }>();
+  const { view: params, setView } = useLibraryView(beside);
   const show = parseShow(params.show, !!activeId || venuesLoading);
   const contextIds = useMemo(() => venueContextIds(activeId, venuesLoading), [activeId, venuesLoading]);
   const { items, isLoading } = useSearchCatalog(contextIds);
@@ -150,7 +154,7 @@ export function LibraryScreen() {
   const { glassName, lineOf } = useTileLines({ show, rndMenus: byMenu.rndMenus, prepLine: (id) => prepFacts[id]?.line ?? null, needsOf: kit.needsOf });
   const count = (value: Show) => (value === 'staff' ? classicRows(staff.data ?? [], linked.data ?? []).length : lists[value].length);
   const groups = filterGroups(!!activeId, canCost);
-  const pick = (value: Show) => router.setParams({ show: value, menu: undefined, kind: undefined });
+  const pick = (value: Show) => setView({ show: value, menu: undefined, kind: undefined });
   const filterSet: FilterSet = { ...splitFilters(groups), show, count, onPick: pick, nothing: !isLoading && !staff.isLoading && !linked.isLoading && groups.flat().every((f) => count(f.value) === 0) };
   const columns = COLUMNS[breakpoint];
   const staffView = show === 'staff' && !!activeId;
@@ -173,8 +177,8 @@ export function LibraryScreen() {
           label="Which menu"
           gutter={gutter}
           groups={[[
-            <Chip look="outline" key="all" label="Every menu on now" selected={!byMenu.onMenus.some((m) => m.id === params.menu)} onPress={() => router.setParams({ menu: undefined })} />,
-            ...byMenu.onMenus.map((m) => <Chip look="outline" key={m.id} label={m.name} count={m.itemIds.length} selected={params.menu === m.id} onPress={() => router.setParams({ menu: m.id })} />),
+            <Chip look="outline" key="all" label="Every menu on now" selected={!byMenu.onMenus.some((m) => m.id === params.menu)} onPress={() => setView({ menu: undefined })} />,
+            ...byMenu.onMenus.map((m) => <Chip look="outline" key={m.id} label={m.name} count={m.itemIds.length} selected={params.menu === m.id} onPress={() => setView({ menu: m.id })} />),
           ]]}
         />
       ) : null}
@@ -185,8 +189,8 @@ export function LibraryScreen() {
           label="Which collection"
           gutter={gutter}
           groups={[[
-            <Chip look="outline" key="all" label="Every R&D drink" selected={!byMenu.rndMenus.some((m) => m.id === params.menu)} onPress={() => router.setParams({ menu: undefined })} />,
-            ...byMenu.rndMenus.map((m) => <Chip look="outline" key={m.id} label={m.name} count={m.itemIds.length} selected={params.menu === m.id} onPress={() => router.setParams({ menu: m.id })} />),
+            <Chip look="outline" key="all" label="Every R&D drink" selected={!byMenu.rndMenus.some((m) => m.id === params.menu)} onPress={() => setView({ menu: undefined })} />,
+            ...byMenu.rndMenus.map((m) => <Chip look="outline" key={m.id} label={m.name} count={m.itemIds.length} selected={params.menu === m.id} onPress={() => setView({ menu: m.id })} />),
           ]]}
         />
       ) : null}
@@ -196,8 +200,8 @@ export function LibraryScreen() {
           label="Which house-made"
           gutter={gutter}
           groups={[[
-            <Chip look="outline" key="all" label="All house-made" count={lists.preps.length} selected={!kind} onPress={() => router.setParams({ kind: undefined })} />,
-            ...prepKinds.map((g) => <Chip look="outline" key={g.value} label={g.label} count={g.count} selected={kind?.value === g.value} onPress={() => router.setParams({ kind: g.value })} />),
+            <Chip look="outline" key="all" label="All house-made" count={lists.preps.length} selected={!kind} onPress={() => setView({ kind: undefined })} />,
+            ...prepKinds.map((g) => <Chip look="outline" key={g.value} label={g.label} count={g.count} selected={kind?.value === g.value} onPress={() => setView({ kind: g.value })} />),
           ]]}
         />
       ) : null}
@@ -232,7 +236,7 @@ export function LibraryScreen() {
   return (
     <View style={[styles.screen, { backgroundColor: ds.c.ground }]}>
       {panes && !staffView ? (
-        <LibraryPanes venueId={activeId} items={shown} lineOf={lineOf} header={header} empty={empty} footer={foot} />
+        <LibraryPanes venueId={activeId} items={shown} lineOf={lineOf} header={header} empty={empty} footer={foot} routed={beside} />
       ) : staffView && activeId ? (
         // The staff list drags to reorder, so it is the scroll view itself.
         <Suspense fallback={<FlatList data={[]} renderItem={() => null} ListHeaderComponent={header} contentContainerStyle={{ paddingHorizontal: gutter, paddingBottom: listBottom }} />}>

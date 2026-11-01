@@ -1,0 +1,39 @@
+import { usePathname, useRouter, type Href } from 'expo-router';
+
+import { useWebNav } from '@/hooks/useIsWideWeb';
+import { useMode } from '@/hooks/useMode';
+
+/**
+ * Drinks at a venue on a desktop (the sidebar, from 1200): the list stays on
+ * the left and the picked drink opens beside it at its own URL
+ * (/cocktail/<id>), the list beside the page the 2027 canvas draws from 1200.
+ * The tablet (768 to 1199) keeps its own two panes (LibraryPanes, ?pick=);
+ * phones never split. Home's Drinks is Collection, drawn as a full-width table.
+ */
+export function useDrinksSplit(): boolean {
+  const nav = useWebNav();
+  return useMode().mode !== 'home' && nav === 'sidebar';
+}
+
+/** The drink a path opens on a tab's stack (/cocktail/<id>, not its edit or batch pages), or null. */
+export function drinkInPane(pathname: string): string | null {
+  return /^\/cocktail\/([^/?#]+)$/.exec(pathname)?.[1] ?? null;
+}
+
+/**
+ * Opens a row from Drinks' list on a desktop. The first drink pushes beside
+ * the list, so Back closes the pane; the next replaces it, so Back doesn't
+ * walk through every drink looked at (and the web's stack doesn't keep each
+ * one mounted). Anything else (a bottle, a beer) opens as its own page.
+ */
+export function useOpenBeside(): { picked: string | null; open: (href: string) => void } {
+  const router = useRouter();
+  const picked = drinkInPane(usePathname());
+  const open = (href: string) => {
+    const id = drinkInPane(href);
+    if (id && id === picked) return;
+    if (id && picked) router.replace(href as Href);
+    else router.push(href as Href);
+  };
+  return { picked, open };
+}
