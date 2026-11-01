@@ -7,8 +7,6 @@ import { IngredientScreen } from "@/components/screens/ingredient/IngredientScre
 import type { PrepLine } from "@/components/screens/ingredient/PrepRecipe";
 import { space } from "@/constants/tokens";
 import { useIngredient } from "@/hooks/useIngredients";
-import { useStudyPile } from "@/hooks/useStudyPile";
-import { useMode } from "@/hooks/useMode";
 import { recentEntry, useTrackRecent } from "@/hooks/useTrackRecent";
 import { useCanEditItem } from "@/hooks/useViewAs";
 import { orderedPictures } from "@/lib/itemImages";
@@ -27,8 +25,6 @@ interface RecipeRow {
 
 export default function IngredientDetailScreen() {
     const { id } = useLocalSearchParams<{ id: string }>();
-    const { toggleStudyPile, isInStudyPile } = useStudyPile();
-    const study = useMode().mode === "venue";
 
     // isPending, not isLoading: "no data yet" includes the static prerender and the
     // first paint, when nothing is fetching, and those must not read as not found.
@@ -64,7 +60,6 @@ export default function IngredientDetailScreen() {
         optional: !!r.is_optional,
         houseMade: r.ingredient?.ingredient_role === 'prep',
     }));
-    const key = `ingredient-${ingredient.id}`;
 
     // The page reads it; Edit turns the same page into editing in place.
     if (isEditing) {
@@ -82,8 +77,6 @@ export default function IngredientDetailScreen() {
             drinks={(data?.usedIn ?? []).map((u) => ({ id: u.cocktail.id, name: u.cocktail.name }))}
             bottles={data?.bottles ?? []}
             pictures={orderedPictures(data?.heroImages)}
-            inStudyPile={isInStudyPile(key)}
-            onToggleStudyPile={() => (study ? toggleStudyPile(key) : undefined)}
             canEdit={canEdit}
             onEdit={() => setIsEditing(true)}
         />
