@@ -47,7 +47,7 @@ export function MenuTrio({ ids, ink, layout = 'hero', top = 64 }: { ids: string[
   const shown = ids.slice(0, 3);
   // One drink takes the middle place; two take the outer ones, closer together.
   const places = shown.length === 3 ? [0, 1, 2] : shown.length === 2 ? [0, 2] : [1];
-  const xs = shown.length === 2 ? [0, t.s[0] * 0.55] : places.map((p) => t.x[p]);
+  const xs = shown.length === 3 ? places.map((p) => t.x[p]) : shown.length === 2 ? [0, t.s[0] * 0.55] : [0];
   const ys = places.map((p) => (shown.length === 3 ? t.y[p] : 0));
   const width = Math.max(...places.map((p, i) => xs[i] + t.s[p]));
   const height = Math.max(...places.map((p, i) => ys[i] + t.s[p]));
