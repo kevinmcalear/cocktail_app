@@ -75,3 +75,4 @@ The Back Bar brief (https://claude.ai/artifact/1ksBAgPLyVmLGKdm48x6sf) is the ta
 9. **Done.** The old screens and the redesign flag are gone. New screens build from `components/ds`. Do not go looking for a redesign flag.
 10. **Launch cut (7 Oct 2026):** Study, Prep and Service mode stay built but are switched off, and Discover is its own tab in both modes.
 11. **No venue feature switches (31 Oct 2026):** every venue has the same tabs (`lib/tabs.ts`); the role changes what a page shows, never the tabs. The back bar map and Releases are parked behind `BACK_BAR_SHOWN` (`lib/backBar.ts`) and `RELEASES_SHOWN` (`lib/releases.ts`), with their data kept. `bars.enabled_features` and `venue_feature_events` are no longer read and drop in a later migration.
+12. **The relaunch shell (1 Nov 2026):** four tabs for everyone (Tonight, Drinks, Discover, You), a stack in each, and one drink route every tab pushes (`app/(tabs)/(tonight,drinks,discover,you)/`).

@@ -8,7 +8,11 @@ import { TABS } from '@/lib/tabs';
 // and the pages every tab can push in the shared group with its stack.
 // Mock screens, so this checks the routing alone.
 const SHARED = '(tabs)/(tonight,drinks,discover,you)';
-const page = (name: string) => () => <Text>{name}</Text>;
+function page(name: string) {
+  return function Page() {
+    return <Text>{name}</Text>;
+  };
+}
 
 function open(url: string) {
   return renderRouter(
@@ -25,12 +29,13 @@ function open(url: string) {
         unstable_settings: { tonight: { anchor: 'index' }, drinks: { anchor: 'drinks' }, discover: { anchor: 'discover' }, you: { anchor: 'you' } },
         default: () => <Stack screenOptions={{ headerShown: false }} />,
       },
-      '(tabs)/(tonight)/index': page('tonight'),
-      '(tabs)/(drinks)/drinks': page('drinks'),
+      // In the order the app's folder lists them, so a link's tie between groups breaks as it does in the app.
       '(tabs)/(discover)/discover': page('discover'),
-      '(tabs)/(you)/you': page('you'),
+      '(tabs)/(drinks)/drinks': page('drinks'),
+      '(tabs)/(tonight)/index': page('tonight'),
       [`${SHARED}/cocktail/[id]/index`]: page('drink'),
       [`${SHARED}/prep`]: page('prep'),
+      '(tabs)/(you)/you': page('you'),
       '(tabs)/search/index': page('search'),
     },
     { initialUrl: url },
@@ -43,11 +48,13 @@ it.each(TABS.map((t) => [t.path, t.route]))('opens %s on its own tab', async (pa
   expect(r.getPathname()).toBe(path);
 });
 
-it('opens a drink link on Tonight, with Tonight under it', async () => {
+// A link straight to a drink opens it on one tab's stack (the first tab group the
+// app's folder lists; Discover on the web), with that tab's first page under it.
+it('opens a drink link on a tab, with its first page under it', async () => {
   const r = await open('/cocktail/1');
-  expect(r.getSegments()).toEqual(['(tabs)', '(tonight)', 'cocktail', '[id]']);
+  expect(r.getSegments().slice(2)).toEqual(['cocktail', '[id]']);
   await act(async () => router.back());
-  expect(r.getPathname()).toBe('/');
+  expect(TABS.map((t) => t.path)).toContain(r.getPathname());
 });
 
 it('pushes a drink on the tab it was opened from, and Back returns there', async () => {

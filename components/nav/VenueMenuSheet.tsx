@@ -168,7 +168,7 @@ function HomePlaces({ onGo, setUp }: { onGo: (p: Place) => void; setUp: boolean 
  * The venue menu, opened from the logo on phones, the tablet rail and the
  * desktop sidebar. Titled with where you are (the venue and your role, or
  * Home bar) with Switch beside the X for anyone with a venue, then that place's pages: at a venue
- * its working pages, Venue and You; at home My Bar, Collection, You and
+ * its working pages, Venue and You; at home Tonight (your shelf), Drinks (your collection) and
  * Settings (venue-menu proposal A, approved 24 Oct 2026), and with no venue,
  * Run a bar? Set it up (Q35b).
  */
