@@ -28,7 +28,12 @@ export function useRowActs(menuId: string, rows: ListRow[]) {
   const toast = useToast();
   const changes = useListChanges(menuId);
   const may = useMayChangeList(menuId).data;
-  const failed = (e: Error) => toast.show({ title: e.message || 'Couldn’t change the list. Try again.', tone: 'error' });
+  // Each write is sent through `attempt`, so a refused one can be sent again with the same values.
+  type Opts = { onSuccess: () => void; onError: (e: Error) => void };
+  const attempt = (send: (o: Opts) => void, onSuccess: () => void) => {
+    const go = () => send({ onSuccess, onError: (e) => toast.show({ title: e.message || 'Couldn’t change the list.', tone: 'error', action: { label: 'Try again', onPress: go } }) });
+    go();
+  };
   const said = (title: string) => () => toast.show({ title: may === false ? `${title}: waiting for approval` : title });
   return {
     may,
@@ -38,18 +43,18 @@ export function useRowActs(menuId: string, rows: ListRow[]) {
       const name = view.drink.name;
       if (kind === 'undo' && !row) {
         // Taken off today with nothing in its place: it goes back on, at the end of its section.
-        changes.add.mutate({ sectionId, itemId: view.drink.id, sortOrder: 999 }, { onSuccess: said(`${name} is back`), onError: failed });
+        attempt((o) => changes.add.mutate({ sectionId, itemId: view.drink.id, sortOrder: 999 }, o), said(`${name} is back`));
         return;
       }
       if (!row) return;
-      if (kind === 'approve') changes.approve.mutate(row.id, { onSuccess: said(`${name} approved`), onError: failed });
-      if (kind === 'turnDown') changes.turnDown.mutate({ rowId: row.id, waiting: row.state === 'waiting_on' ? 'on' : 'off' }, { onSuccess: said(`${name} turned down`), onError: failed });
-      if (kind === 'undo') changes.undoSwap.mutate({ swappedIn: row, replaced: null }, { onSuccess: said(`${name} is back`), onError: failed });
+      if (kind === 'approve') attempt((o) => changes.approve.mutate(row.id, o), said(`${name} approved`));
+      if (kind === 'turnDown') attempt((o) => changes.turnDown.mutate({ rowId: row.id, waiting: row.state === 'waiting_on' ? 'on' : 'off' }, o), said(`${name} turned down`));
+      if (kind === 'undo') attempt((o) => changes.undoSwap.mutate({ swappedIn: row, replaced: null }, o), said(`${name} is back`));
       if (kind === 'keep') {
         // Taking back a planned swap keeps the drink it was swapping out, too.
         const out = row.state === 'coming' && row.replacesItemId ? rows.find((r) => r.itemId === row.replacesItemId && r.sectionId === row.sectionId && r.state === 'going') : undefined;
-        if (out) changes.undoSwap.mutate({ swappedIn: row, replaced: out }, { onSuccess: said('Swap taken back'), onError: failed });
-        else changes.turnDown.mutate({ rowId: row.id, waiting: row.state === 'coming' ? 'on' : 'off' }, { onSuccess: said(`${name} kept as it was`), onError: failed });
+        if (out) attempt((o) => changes.undoSwap.mutate({ swappedIn: row, replaced: out }, o), said('Swap taken back'));
+        else attempt((o) => changes.turnDown.mutate({ rowId: row.id, waiting: row.state === 'coming' ? 'on' : 'off' }, o), said(`${name} kept as it was`));
       }
     },
     confirm(target: ChangeTarget, to: MenuDrink | null, at: string | null, done: () => void) {
@@ -61,8 +66,8 @@ export function useRowActs(menuId: string, rows: ListRow[]) {
         said(title)();
         done();
       };
-      if (target.kind === 'swap' && to) changes.swap.mutate({ rowId: row.id, itemId: to.id, at }, { onSuccess: ok(`${to.name} on, ${name} off ${when}`), onError: failed });
-      if (target.kind === 'takeOff') changes.takeOff.mutate({ rowId: row.id, at }, { onSuccess: ok(`${name} off ${when}`), onError: failed });
+      if (target.kind === 'swap' && to) attempt((o) => changes.swap.mutate({ rowId: row.id, itemId: to.id, at }, o), ok(`${to.name} on, ${name} off ${when}`));
+      if (target.kind === 'takeOff') attempt((o) => changes.takeOff.mutate({ rowId: row.id, at }, o), ok(`${name} off ${when}`));
     },
   };
 }
