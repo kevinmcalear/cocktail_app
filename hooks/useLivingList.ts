@@ -5,6 +5,7 @@ import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 
 import { dropdownKeys } from '@/hooks/useDropdowns';
 import { menuKeys } from '@/hooks/useMenus';
+import { parseHours, type BarClock } from '@/lib/barHours';
 import { listRowState, type ListRowState } from '@/lib/listRows';
 import { supabase } from '@/lib/supabase';
 
@@ -21,6 +22,8 @@ export interface ListRow {
   offBy: string | null;
   replacesItemId: string | null;
   teamSharedAt: string | null;
+  /** When the row was made: when a change waiting was asked for. */
+  addedAt: string;
   state: ListRowState;
 }
 
@@ -44,7 +47,7 @@ export const listKeys = {
   day: (menuId: string, day: string) => ['living-list', menuId, 'day', day] as const,
 };
 
-const ROW_COLUMNS = 'id, item_id, menu_section_id, sort_order, price, slot_name, on_from, off_at, added_by, off_by, replaces_item_id, waiting, team_shared_at';
+const ROW_COLUMNS = 'id, item_id, menu_section_id, sort_order, price, slot_name, on_from, off_at, added_by, off_by, replaces_item_id, waiting, team_shared_at, created_at';
 
 /** Every drink on a list, with its state; what the caller may read (planned and waiting rows are the menu team's until shared). */
 export function useListRows(menuId: string | null | undefined) {
@@ -67,6 +70,7 @@ export function useListRows(menuId: string | null | undefined) {
         offBy: r.off_by,
         replacesItemId: r.replaces_item_id,
         teamSharedAt: r.team_shared_at,
+        addedAt: r.created_at,
         state: listRowState(r),
       }));
     },
@@ -97,6 +101,24 @@ export function useEndedRuns(menuId: string | null | undefined) {
         addedBy: r.added_by,
         replacesItemId: r.replaces_item_id,
       }));
+    },
+  });
+}
+
+/** A bar's time zone and hours, for when "after tonight" is: bars.timezone, else its page's, and the hours on its page. */
+export function useBarClock(barId: string | null | undefined) {
+  return useQuery({
+    queryKey: ['bar-clock', barId],
+    enabled: !!barId,
+    staleTime: 60 * 60_000,
+    queryFn: async (): Promise<BarClock> => {
+      const [bar, page] = await Promise.all([
+        supabase.from('bars').select('timezone').eq('id', barId!).maybeSingle(),
+        supabase.from('profiles').select('hours, timezone').eq('bar_id', barId!).eq('kind', 'bar').limit(1).maybeSingle(),
+      ]);
+      if (bar.error) throw bar.error;
+      if (page.error) throw page.error;
+      return { timezone: bar.data?.timezone ?? page.data?.timezone ?? null, hours: parseHours(page.data?.hours) };
     },
   });
 }
@@ -137,6 +159,7 @@ function useInvalidateList(menuId: string) {
       client.invalidateQueries({ queryKey: dropdownKeys.currentMenuDrinks }),
       client.invalidateQueries({ queryKey: ['drink-menu-runs'] }),
       client.invalidateQueries({ queryKey: ['menu-runs'] }),
+      client.invalidateQueries({ queryKey: ['drink-list-dates'] }),
     ]);
 }
 
@@ -173,6 +196,31 @@ export function useListChanges(menuId: string) {
             slot_name: p.slotName ?? null,
           })
         )),
+      ...opts,
+    }),
+    /**
+     * Takes back a swap: the drink swapped in goes, the one it replaced stays
+     * (planned) or comes back in its place (already done).
+     */
+    // ponytail: a swap already done leaves both short runs in menu_drinks_removed (the client can't write the record); a gated undo_swap RPC could drop them within a few minutes.
+    undoSwap: useMutation({
+      mutationFn: async ({ swappedIn, replaced }: { swappedIn: ListRow; replaced: ListRow | null }) => {
+        if (!swappedIn.replacesItemId) throw new Error('That drink wasn’t swapped in.');
+        await check(supabase.from('menu_drinks').delete().eq('id', swappedIn.id));
+        if (replaced) {
+          await check(supabase.from('menu_drinks').update({ off_at: null }).eq('id', replaced.id));
+          return;
+        }
+        await check(
+          supabase.from('menu_drinks').insert({
+            menu_id: menuId,
+            menu_section_id: swappedIn.sectionId,
+            item_id: swappedIn.replacesItemId,
+            sort_order: swappedIn.sortOrder ?? 0,
+            slot_name: swappedIn.slotName,
+          })
+        );
+      },
       ...opts,
     }),
     /** Approves a waiting change (only someone who may change the list). */
