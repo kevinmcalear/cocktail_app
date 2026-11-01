@@ -12,7 +12,6 @@ import { recentEntry, useTrackRecent } from '@/hooks/useTrackRecent';
 import { saveClaimReturn } from '@/lib/claimReturn';
 import { siteOrigin } from '@/lib/venueLink';
 
-import { LoveBarButton } from '../kept/LoveBarButton';
 import { PublicPage } from '../published/PublicChrome';
 import { SignInCard } from '../published/SignInCard';
 import { BlockedProfileNote, ProfileSafety } from '../safety/ProfileSafety';
@@ -82,8 +81,7 @@ function ProfilePage({ profileRef, checking }: { profileRef: string | string[] |
         <View style={styles.right}>
           {/* A claimed person's Share sits beside Follow under their name (Kept-follow); More stays here. */}
           {profile.kind === 'person' && !unclaimedPerson ? null : <ShareProfile profile={profile} />}
-          {/* A bar's Love sits beside Share (ppl-bar-top); Hide is in More (disc-hide-bar). */}
-          {profile.kind === 'bar' ? <LoveBarButton profileId={profile.id} name={profile.display_name} labelled /> : null}
+          {/* A bar's Follow sits under its name (Prod-bar), not up here; Hide is in More (disc-hide-bar). */}
           <ProfileSafety profile={profile} />
         </View>
       ) : null}
