@@ -136,7 +136,7 @@ const styles = StyleSheet.create({
   // Phone width on a desktop window: the viewfinder stays a viewfinder, not a wall.
   column: { flex: 1, width: '100%', maxWidth: 560, paddingHorizontal: space.xs },
   top: { height: 56, flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', paddingHorizontal: space.md },
-  title: { position: 'absolute', left: 0, right: 0, textAlign: 'center', ...type.body, ...font.semiBold, zIndex: -1 },
+  title: { position: 'absolute', left: 0, right: 0, textAlign: 'center', pointerEvents: 'none', ...type.body, ...font.semiBold },
   side: { flexDirection: 'row', gap: space.sm },
   finder: { flex: 1, borderRadius: radius.card + space.sm, overflow: 'hidden', marginTop: space.sm },
   off: { ...StyleSheet.absoluteFill, alignItems: 'center', justifyContent: 'center', gap: space.md, padding: space.xl },
