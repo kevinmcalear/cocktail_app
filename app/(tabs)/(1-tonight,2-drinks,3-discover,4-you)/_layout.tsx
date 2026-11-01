@@ -7,8 +7,8 @@ import { AddFab } from '@/components/nav/AddButton';
  * Each tab's own stack. This folder is shared by the four tab groups, so a
  * page here (a drink, Prep, Study) opens on the stack of the tab it was
  * opened from, and Back returns to that tab. Each tab's first page lives in
- * its own folder ((tonight)/index, (drinks)/drinks, (discover)/discover,
- * (you)/you), so /drinks always switches to the Drinks tab rather than
+ * its own folder ((1-tonight)/index, (2-drinks)/drinks, (3-discover)/discover,
+ * (4-you)/you), so /drinks always switches to the Drinks tab rather than
  * pushing it on the tab you're in.
  *
  * Today's pages draw their own headers (components/nav/ScreenHeader.tsx), so
@@ -16,16 +16,16 @@ import { AddFab } from '@/components/nav/AddButton';
  * swipe or back button, and with its own back on the web.
  */
 export const unstable_settings = {
-  tonight: { anchor: 'index' },
-  drinks: { anchor: 'drinks' },
-  discover: { anchor: 'discover' },
-  you: { anchor: 'you' },
+  '1-tonight': { anchor: 'index' },
+  '2-drinks': { anchor: 'drinks' },
+  '3-discover': { anchor: 'discover' },
+  '4-you': { anchor: 'you' },
 };
 
 const ROOTS = [undefined, 'drinks', 'discover', 'you'];
 
 export default function TabStack() {
-  // ['(tabs)', '(drinks)', 'drinks'] is a first page; ['(tabs)', '(tonight)'] is Tonight's.
+  // ['(tabs)', '(2-drinks)', 'drinks'] is a first page; ['(tabs)', '(1-tonight)'] is Tonight's.
   const page = (useSegments() as string[])[2];
   return (
     <>
