@@ -40,91 +40,31 @@
     "components/screens/drink/useDrinkFacts.ts": 1,
     "hooks/useCocktailDraftEditor.ts": 1,
     "hooks/useCocktailEditor.ts": 2,
-    "hooks/useCocktails.ts": 3,
+    "hooks/useCocktails.ts": 2,
     "hooks/usePublished.ts": 3,
-    "hooks/useSearchCatalog.ts": 4,
     "lib/editPreview.ts": 2,
     "lib/visitorDrink.ts": 1
   },
   "creator_profile_id": {
     "components/ds/gallery/drinkSample.ts": 1,
     "hooks/useCocktails.ts": 2,
-    "hooks/useCreateDrink.test.ts": 2,
-    "hooks/useCreateDrink.ts": 1,
-    "hooks/useOnboarding.ts": 1,
-    "hooks/useProfileOriginals.ts": 7,
+    "hooks/useProfileOriginals.ts": 6,
     "hooks/useProfilePositions.ts": 2,
     "hooks/usePublicDrink.ts": 6,
     "hooks/usePublished.ts": 3,
     "lib/drinkPreview.ts": 5,
-    "lib/findYourself.check.ts": 3,
-    "lib/findYourself.ts": 3,
     "lib/visitorDrink.ts": 1
   },
   "credit_status": {
     "components/screens/drink/Backstory.tsx": 1,
     "components/screens/drink/DrinkCredit.tsx": 2,
     "components/screens/profile/ProfileSections.tsx": 1,
-    "hooks/useCreateDrink.test.ts": 3,
-    "hooks/useCreateDrink.ts": 1,
-    "hooks/useHistoryStory.ts": 1,
-    "hooks/useLineage.ts": 2,
-    "hooks/useOnboarding.ts": 1,
+    "hooks/useLineage.ts": 1,
     "hooks/useProfileOriginals.ts": 4,
     "hooks/usePublicDrink.ts": 2,
     "hooks/usePublished.ts": 3,
     "lib/lineage.check.ts": 5,
     "lib/lineage.ts": 4
-  },
-  "riff_of_id": {
-    "components/screens/drink/ClassicLink.tsx": 1,
-    "components/screens/drink/VersionBanner.tsx": 2,
-    "components/screens/drink/edit/VenueSections.tsx": 1,
-    "components/screens/profile/PublicBarPage.tsx": 1,
-    "hooks/useClassics.ts": 4,
-    "hooks/useCreateDrink.ts": 1,
-    "hooks/useDiscover.ts": 1,
-    "hooks/useDrinkSources.ts": 6,
-    "hooks/useDrinkTree.ts": 1,
-    "hooks/useHistoryStory.ts": 1,
-    "hooks/useLineage.ts": 3,
-    "hooks/useProfileOriginals.ts": 5,
-    "hooks/usePublicDrink.ts": 7,
-    "hooks/usePublished.ts": 3,
-    "hooks/useRankings.ts": 6,
-    "hooks/useSameNameDrink.ts": 7,
-    "hooks/useSpecMatches.ts": 1,
-    "hooks/useStaffList.ts": 11,
-    "hooks/useWhatNext.ts": 1,
-    "lib/drinkPreview.ts": 4,
-    "lib/drinkStyles.ts": 1,
-    "lib/lineage.check.ts": 2,
-    "lib/lineage.ts": 5,
-    "lib/menuPreview.check.ts": 1,
-    "lib/ranking.check.ts": 6,
-    "lib/ranking.ts": 5,
-    "lib/whatNext.check.ts": 2,
-    "lib/whatNext.ts": 2
-  },
-  "item_co_creators": {
-    "components/screens/drink/CoCreatorAnswers.tsx": 1,
-    "hooks/useCreateDrink.ts": 1,
-    "hooks/useLineage.ts": 1,
-    "hooks/useProfileOriginals.ts": 1,
-    "lib/lineage.ts": 1,
-    "lib/whoMadeIt.ts": 1
-  },
-  "collected_items": {
-    "components/screens/drink/DrinkScreen.tsx": 1,
-    "hooks/useCollection.ts": 4,
-    "hooks/useFavorites.ts": 2,
-    "hooks/useMenuMutations.ts": 1,
-    "lib/collectionMemory.ts": 1
-  },
-  "made_drinks": {
-    "components/screens/made/MadeSheet.tsx": 1,
-    "hooks/useMade.ts": 4,
-    "lib/madeIt.ts": 2
   },
   "default_generic_ingredient_level": {
     "hooks/useBarDetail.ts": 1,
@@ -146,35 +86,37 @@
     "hooks/useBarEditor.test.tsx": 1,
     "hooks/useBarEditor.ts": 5
   },
+  "riff_of_id": {
+    "hooks/useLineage.ts": 1,
+    "hooks/useProfileOriginals.ts": 2,
+    "hooks/usePublicDrink.ts": 7,
+    "hooks/usePublished.ts": 3,
+    "hooks/useRankings.ts": 2,
+    "hooks/useSameNameDrink.ts": 5,
+    "lib/drinkPreview.ts": 4,
+    "lib/drinkStyles.ts": 1,
+    "lib/lineage.check.ts": 2,
+    "lib/lineage.ts": 3,
+    "lib/menuPreview.check.ts": 1,
+    "lib/ranking.check.ts": 1,
+    "lib/ranking.ts": 2
+  },
+  "lineage_parent_id": {
+    "hooks/useLineage.ts": 1,
+    "hooks/usePublicDrink.ts": 2,
+    "lib/lineage.check.ts": 1,
+    "lib/lineage.ts": 3
+  },
   "creator_names": {
-    "hooks/useCreateDrink.test.ts": 2,
-    "hooks/useCreateDrink.ts": 1,
     "hooks/useLineage.ts": 1,
     "hooks/usePublished.ts": 4,
     "lib/lineage.check.ts": 2,
-    "lib/lineage.ts": 4,
-    "lib/whoMadeIt.check.ts": 3,
-    "lib/whoMadeIt.ts": 6
-  },
-  "lineage_parent_id": {
-    "hooks/useDrinkTree.ts": 4,
-    "hooks/useLineage.ts": 3,
-    "hooks/usePublicDrink.ts": 2,
-    "lib/lineage.check.ts": 2,
-    "lib/lineage.ts": 5
+    "lib/lineage.ts": 4
   },
   "lineage_style_id": {
-    "hooks/useDrinkTree.ts": 4,
-    "hooks/useLineage.ts": 3,
-    "lib/lineage.ts": 2
+    "lib/lineage.ts": 1
   },
-  "lineage_family": {
-    "hooks/useDrinkTree.ts": 4
-  },
-  "item_maker_credits": {
-    "hooks/useMakers.ts": 5
-  },
-  "spec_from_id": {
-    "hooks/useSpecMatches.ts": 4
+  "item_co_creators": {
+    "lib/lineage.ts": 1
   }
 }
