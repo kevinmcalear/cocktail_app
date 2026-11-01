@@ -129,7 +129,7 @@ export function TeamRoster({ barId, barName, role, note, onNote, selectedId, onO
                   first={i === 0}
                   name={inv.name || inv.email}
                   email={inv.email}
-                  line={`Invited as ${roleLabel(inv.role_level)}${day ? ` · ${day}` : ''}`}
+                  line={`Invited as ${(inv.venue_role_id && matrix.find((r) => r.role_id === inv.venue_role_id)?.name) || roleLabel(inv.role_level)}${day ? ` · ${day}` : ''}`}
                   trailing={
                     <View style={styles.inviteActions}>
                       <TextLink label="Resend" accessibilityHint={`Emails the invite to ${inv.email} again`} disabled={send.isPending} onPress={() => resend(inv)} />
