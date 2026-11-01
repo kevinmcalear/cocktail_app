@@ -328,6 +328,32 @@ export type Database = {
           },
         ]
       }
+      bar_staff_links: {
+        Row: {
+          bar_id: string
+          made_at: string
+          token: string
+        }
+        Insert: {
+          bar_id: string
+          made_at?: string
+          token?: string
+        }
+        Update: {
+          bar_id?: string
+          made_at?: string
+          token?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "bar_staff_links_bar_id_fkey"
+            columns: ["bar_id"]
+            isOneToOne: true
+            referencedRelation: "bars"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       bar_zones: {
         Row: {
           bar_id: string
@@ -8104,6 +8130,7 @@ export type Database = {
         }[]
       }
       near_score: { Args: { p_name: string; p_query: string }; Returns: number }
+      new_staff_link: { Args: { p_bar_id: string }; Returns: string }
       next_pair_notes: {
         Args: { p_limit?: number }
         Returns: {

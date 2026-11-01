@@ -8,7 +8,8 @@ const mockMutate = jest.fn();
 const mockRemove = jest.fn(() => Promise.resolve());
 const mockShown = jest.fn();
 const mockSaveLink = jest.fn();
-let mockLink = { slug: 'caretakers', on: true, role: 30, approve: true };
+const mockNewLink = jest.fn();
+let mockLink: { slug: string; token: string | null; on: boolean; role: number; approve: boolean } = { slug: 'caretakers', token: 'secret', on: true, role: 30, approve: true };
 const mockAdd = jest.fn();
 const mockSend = jest.fn();
 const mockSendAsync = jest.fn();
@@ -40,6 +41,7 @@ jest.mock('burnt', () => ({ toast: jest.fn() }));
 jest.mock('@/hooks/useStaffLink', () => ({
   useStaffLink: () => ({ data: mockLink, isLoading: false, error: null }),
   useSaveStaffLink: () => ({ mutate: mockSaveLink, error: null }),
+  useNewStaffLink: () => ({ mutate: mockNewLink, isPending: false, error: null }),
 }));
 jest.mock('@/hooks/useTeam', () => ({
   ...jest.requireActual('@/hooks/useTeam'),
@@ -86,7 +88,7 @@ beforeEach(() => {
   mockMutate.mockClear();
   mockChoose.mockClear();
   mockRemove.mockClear();
-  mockLink = { slug: 'caretakers', on: true, role: 30, approve: true };
+  mockLink = { slug: 'caretakers', token: 'secret', on: true, role: 30, approve: true };
   mockAdd.mockReset();
   mockSend.mockReset();
   mockSendAsync.mockReset();
@@ -135,6 +137,23 @@ test('the staff link tab: the code, the join role and approval, and the link off
   expect(mockSaveLink).toHaveBeenCalledWith({ role: 20 });
   await fireEvent(screen.getByRole('switch', { name: 'You approve each one' }), 'valueChange', false);
   expect(mockSaveLink).toHaveBeenCalledWith({ approve: false });
+});
+
+test('the staff link carries its secret, and New link replaces it', async () => {
+  await renderWithProviders(<TeamScreen />);
+  await fireEvent.press(screen.getByRole('button', { name: 'Invite someone' }));
+  expect(screen.getByText(/\/v\/caretakers\?join=secret$/)).toBeTruthy();
+  await fireEvent.press(screen.getByLabelText('New link'));
+  expect(mockNewLink).toHaveBeenCalled();
+});
+
+test('without the secret (RLS shows it to Admins only), no code and no link', async () => {
+  mockLink = { ...mockLink, token: null };
+  await renderWithProviders(<TeamScreen />);
+  await fireEvent.press(screen.getByRole('button', { name: 'Invite someone' }));
+  expect(screen.queryByLabelText('QR code for Caretakers’s staff link')).toBeNull();
+  expect(screen.getByText('An Admin shares Caretakers’s staff link.')).toBeTruthy();
+  expect(screen.queryByLabelText('New link')).toBeNull();
 });
 
 test('with the link off, the tab says so and offers it back', async () => {

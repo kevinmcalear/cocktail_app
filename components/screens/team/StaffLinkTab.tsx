@@ -10,8 +10,8 @@ import { RowDivider, SettingsRow, SettingsSection, SwitchRow } from '@/component
 import { IconSymbol } from '@/components/ui/icon-symbol';
 import { radius, space, STATUS } from '@/constants/tokens';
 import { useActiveVenue } from '@/hooks/useActiveVenue';
-import { useSaveStaffLink, useStaffLink } from '@/hooks/useStaffLink';
-import { showMessage } from '@/lib/dialogs';
+import { useNewStaffLink, useSaveStaffLink, useStaffLink } from '@/hooks/useStaffLink';
+import { confirmAsync, showMessage } from '@/lib/dialogs';
 import { roleLabel } from '@/lib/roles';
 import { shareLink } from '@/lib/shareLink';
 import { INVITE_ROLES, TEAM_MANAGE } from '@/lib/team';
@@ -23,20 +23,24 @@ const QR = 208;
  * Invite's Staff link tab (Kept-team): the QR code, the link to copy, the role
  * new people join as, whether you approve each one, and Share. Only an Admin
  * changes them here, so for anyone else they read as plain rows. With the link off it says so, and an Admin can turn it back on.
+ * The link carries a secret only Admins read, so only they see the code and
+ * the link; New link replaces the secret and the old link stops working.
  */
 export function StaffLinkTab({ barId, barName, ceiling, admin }: { barId: string; barName: string; ceiling: number; admin: boolean }) {
   const ds = useDs();
   const { active } = useActiveVenue();
   const link = useStaffLink(barId);
   const save = useSaveStaffLink(barId);
+  const renew = useNewStaffLink(barId);
   const [picking, setPicking] = useState(false);
   const data = link.data;
 
   if (link.isLoading) return <Caption tone="muted">Loading…</Caption>;
   if (link.error || !data) return <Body tone="muted" role="alert">Couldn’t load the staff link. Check your connection and try again.</Body>;
 
-  const url = venueStaffUrl(data.slug);
+  const url = data.token ? venueStaffUrl(data.slug, data.token) : null;
   const copy = async () => {
+    if (!url) return;
     try {
       if ((await shareLink(url, `${barName} staff app`, { copy: true })) === 'copied') Burnt.toast({ title: 'Link copied', preset: 'done', duration: 2 });
     } catch {
@@ -44,7 +48,17 @@ export function StaffLinkTab({ barId, barName, ceiling, admin }: { barId: string
     }
   };
   const roles = INVITE_ROLES.filter((r) => r.level < TEAM_MANAGE && r.level <= ceiling);
-  const problem = save.error ? <Caption color={STATUS.danger} role="alert">{save.error.message}</Caption> : null;
+  const failed = save.error ?? renew.error;
+  const problem = failed ? <Caption color={STATUS.danger} role="alert">{failed.message}</Caption> : null;
+  const newLink = async () => {
+    const yes = await confirmAsync({
+      title: 'Make a new link?',
+      message: `The old link and its code stop working. People already on ${barName}’s team aren’t affected.`,
+      confirmText: 'New link',
+      destructive: true,
+    });
+    if (yes) renew.mutate();
+  };
 
   if (!data.on) {
     return (
@@ -62,16 +76,24 @@ export function StaffLinkTab({ barId, barName, ceiling, admin }: { barId: string
 
   return (
     <View style={styles.tab}>
-      <View style={styles.code}>
-        <DrinkCode url={url} label={`QR code for ${barName}’s staff link`} size={QR} onPaper mark={<VenueMark venue={active?.id === barId ? active : null} size={QR * 0.2} />} />
-      </View>
-      <SettingsSection>
-        <View style={styles.link}>
-          <IconSymbol name="link" size={18} color={ds.c.muted} />
-          <Body numberOfLines={1} selectable style={styles.url}>{url.replace(/^https?:\/\//, '')}</Body>
-          <TextLink label="Copy" accessibilityHint="Copies the staff link" onPress={() => void copy()} />
+      {url ? (
+        <View style={styles.code}>
+          <DrinkCode url={url} label={`QR code for ${barName}’s staff link`} size={QR} onPaper mark={<VenueMark venue={active?.id === barId ? active : null} size={QR * 0.2} />} />
         </View>
-        <RowDivider />
+      ) : (
+        <Body tone="muted">{`An Admin shares ${barName}’s staff link.`}</Body>
+      )}
+      <SettingsSection>
+        {url ? (
+          <>
+            <View style={styles.link}>
+              <IconSymbol name="link" size={18} color={ds.c.muted} />
+              <Body numberOfLines={1} selectable style={styles.url}>{url.replace(/^https?:\/\//, '')}</Body>
+              <TextLink label="Copy" accessibilityHint="Copies the staff link" onPress={() => void copy()} />
+            </View>
+            <RowDivider />
+          </>
+        ) : null}
         <SettingsRow label="New people join as" value={roleLabel(data.role)} disabled={!admin} expanded={admin ? picking : undefined} trailing={admin ? undefined : <View />} onPress={() => setPicking((on) => !on)} />
         <RowDivider />
         <SwitchRow label="You approve each one" value={data.approve} disabled={!admin} onValueChange={(approve) => save.mutate({ approve })} />
@@ -84,8 +106,11 @@ export function StaffLinkTab({ barId, barName, ceiling, admin }: { barId: string
         </View>
       ) : null}
       {problem}
-      <Button label="Share the link" icon="square.and.arrow.up" size="lg" variant="ink" onPress={() => void copy()} />
+      {url ? <Button label="Share the link" icon="square.and.arrow.up" size="lg" variant="ink" onPress={() => void copy()} /> : null}
       <Caption tone="muted">Anyone with the link can ask to join. Turn it off in Bar settings.</Caption>
+      {url && admin ? (
+        <TextLink label={renew.isPending ? 'Making a new link…' : 'New link'} accessibilityHint="Replaces the link and its code. The old one stops working." disabled={renew.isPending} onPress={() => void newLink()} />
+      ) : null}
     </View>
   );
 }
