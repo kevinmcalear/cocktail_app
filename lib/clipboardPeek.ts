@@ -26,6 +26,28 @@ export async function peekClipboard(): Promise<string | null> {
   }
 }
 
+/**
+ * A copied picture (a screenshot of a menu, a photo of a recipe), read now, or
+ * null. On the web the browser asks first; asking whether there is one doesn't.
+ */
+export async function readClipboardImage(): Promise<{ uri: string; mimeType: string } | null> {
+  try {
+    if (Platform.OS === 'web') {
+      const items = (await navigator.clipboard?.read?.()) ?? [];
+      for (const item of items) {
+        const kind = item.types.find((t) => t.startsWith('image/'));
+        if (kind) return { uri: URL.createObjectURL(await item.getType(kind)), mimeType: kind };
+      }
+      return null;
+    }
+    if (!clipboard || !(await clipboard.hasImageAsync())) return null;
+    const image = await clipboard.getImageAsync({ format: 'jpeg', jpegQuality: 0.7 });
+    return image ? { uri: image.data, mimeType: 'image/jpeg' } : null;
+  } catch {
+    return null;
+  }
+}
+
 /** The clipboard's text, read now (on iOS the system asks first). */
 export async function readClipboard(): Promise<string | null> {
   if (!clipboard) return null;

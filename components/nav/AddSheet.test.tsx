@@ -15,7 +15,7 @@ jest.mock('@/hooks/useDrafts', () => ({ useDrafts: () => ({ drafts: [] }) }));
 jest.mock('@/hooks/useBringInPlace', () => ({ useBringInPlace: () => ({ barId: 'bar', venueName: 'Pale Moth', heldBack: null, loading: false }) }));
 const mockStart = jest.fn();
 jest.mock('@/components/screens/bringin/useStartBringIn', () => ({ useStartBringIn: () => mockStart }));
-jest.mock('@/lib/clipboardPeek', () => ({ UNREAD_CLIP: '\u0000unread', peekClipboard: async () => 'https://www.instagram.com/reel/C9xAbcdefghijk', readClipboard: async () => 'https://www.instagram.com/reel/C9xAbcdefghijk' }));
+jest.mock('@/lib/clipboardPeek', () => ({ UNREAD_CLIP: '\u0000unread', readClipboardImage: async () => null, peekClipboard: async () => 'https://www.instagram.com/reel/C9xAbcdefghijk', readClipboard: async () => 'https://www.instagram.com/reel/C9xAbcdefghijk' }));
 jest.mock('@/ctx/AuthContext', () => ({ useAuth: () => ({ session: null }), useUserId: () => 'me' }));
 jest.mock('@/hooks/useDrinkDesk', () => ({ useMenuSectionPlace: () => ({ data: undefined }) }));
 

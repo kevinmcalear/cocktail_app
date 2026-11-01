@@ -14,6 +14,7 @@ import { GestureRoot } from '@/components/ds/GestureRoot';
 import { useEffect } from "react";
 import { backbar } from "@/constants/tokens";
 import '@/lib/reanimatedSetup';
+import { useReducedMotion } from '@/hooks/useReducedMotion';
 
 import { DialogHost } from '@/components/DialogHost';
 import { ToastHost } from '@/components/ds/Toast';
@@ -54,6 +55,7 @@ export const unstable_settings = {
 
 function RootLayoutNav() {
   const colorScheme = useColorScheme();
+  const reduceMotion = useReducedMotion();
   const { session, user, loading } = useAuth();
   const segments = useSegments();
   const pathname = usePathname();
@@ -189,6 +191,8 @@ function RootLayoutNav() {
                 (the drink or ingredient page) ignores headerShown set from inside it. */}
             <Stack.Screen name="back-bar" options={{ headerShown: false }} />
             <Stack.Screen name="team" options={{ headerShown: false }} />
+            {/* Add's viewfinder: the whole screen, no swipe away mid-shot; a fade under Reduce Motion. */}
+            <Stack.Screen name="snap" options={{ presentation: "fullScreenModal", headerShown: false, gestureEnabled: false, animation: reduceMotion ? "fade" : "slide_from_bottom" }} />
             <Stack.Screen name="bring-in/index" options={{ headerShown: false }} />
             <Stack.Screen name="bring-in/done" options={{ headerShown: false }} />
             <Stack.Screen name="drafts" options={{ headerShown: false }} />
