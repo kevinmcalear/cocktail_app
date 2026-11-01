@@ -1,6 +1,6 @@
 import { useRouter, type Href } from 'expo-router';
 import { useState } from 'react';
-import { Alert, FlatList, Platform, StyleSheet, View } from 'react-native';
+import { Alert, FlatList, StyleSheet, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import { Body, Button, Caption, GlassButton, useBreakpoint, useDs, useGutter } from '@/components/ds';
@@ -9,7 +9,7 @@ import { DRAWN_LIST_WINDOW } from '@/components/ds/SketchDrawing';
 import { space } from '@/constants/tokens';
 import { useActiveVenue } from '@/hooks/useActiveVenue';
 import { useIsWideWeb } from '@/hooks/useIsWideWeb';
-import { useListChanges } from '@/hooks/useLivingList';
+import { useEndedRuns, useListChanges } from '@/hooks/useLivingList';
 import { useMenuLens } from '@/hooks/useMenuLens';
 import { useEndMenu } from '@/hooks/useMenuMutations';
 import { useMenu, useVenueMenus } from '@/hooks/useMenus';
@@ -69,14 +69,13 @@ function HomeMenuPage({ menu }: { menu: MenuDetail }) {
   const shelf = useMyBar();
   const shopping = useShoppingEdit();
   const drinks = menu.sections.flatMap((s) => s.drinks);
+  const needs = shelf.isLoading ? [] : menuShopping(drinks, shelf.oneAway, shelf.twoAway);
   const toShopping = () => {
     if (shelf.isLoading) return;
-    const adds = menuShopping(drinks, shelf.oneAway, shelf.twoAway).map((a) => ({ ...a, source: 'menu' as const }));
-    if (adds.length) shopping.add.mutate(adds);
+    if (needs.length) shopping.add.mutate(needs.map((a) => ({ ...a, source: 'menu' as const })));
     router.push('/shopping' as Href);
   };
-  const toBuy = shelf.isLoading ? null : menuShopping(drinks, shelf.oneAway, shelf.twoAway).length;
-  return <MenuPage menu={menu} shelf={shelf.isLoading ? null : { match: shelf, toShopping, toBuy }} />;
+  return <MenuPage menu={menu} shelf={shelf.isLoading ? null : { match: shelf, toShopping, toBuy: needs.length }} />;
 }
 
 function MenuPage({ menu, shelf }: { menu: MenuDetail; shelf: { match: ShelfMatch; toShopping: () => void; toBuy: number | null } | null }) {
@@ -93,6 +92,9 @@ function MenuPage({ menu, shelf }: { menu: MenuDetail; shelf: { match: ShelfMatc
   const [changing, setChanging] = useState<RowTarget | null>(null);
   const lens = useMenuLens(menu);
   const hide = useListChanges(menu.id).hide;
+  // Only drinks that left after it went on: edits to a draft don't make it a living list.
+  const ended = useEndedRuns(lens.lens === 'creator' || lens.lens === 'admin' ? menu.id : null).data ?? [];
+  const endedRuns = menu.startsAt ? ended.filter((r) => Date.parse(r.cameOff) > Date.parse(menu.startsAt!)).length : 0;
   const end = useEndMenu();
   const { data: venueMenus = [] } = useVenueMenus(menu.barId);
   const back = () => (router.canGoBack() ? router.back() : router.replace('/menus/all'));
@@ -120,7 +122,7 @@ function MenuPage({ menu, shelf }: { menu: MenuDetail; shelf: { match: ShelfMatc
   const go = (href: string) => router.push(href as Href);
   // A drink opens in its menu: the drink page shows "Autumn · 4 of 8" and pages through it.
   const openDrink = (row: PageRowView) => go(`${menuDrinkHref(row.drink)}?menu=${menu.id}`);
-  const failed = (message: string) => (Platform.OS === 'web' ? window.alert(message) : Alert.alert(message));
+  const failed = (message: string) => Alert.alert(message);
   const endMenu = async () => {
     // A list still to come has nothing to end: it goes back to being a draft (as in More).
     const ok = await confirmAsync(
@@ -159,7 +161,7 @@ function MenuPage({ menu, shelf }: { menu: MenuDetail; shelf: { match: ShelfMatc
   const bartender = lens.lens === 'bartender';
   // A list that's on, or coming up: its drinks change one at a time, on the row.
   const changeable = team && (status === 'on' || status === 'upcoming');
-  const living = changeable && isLivingList(lens.rows, menu.startsAt);
+  const living = changeable && isLivingList(lens.rows, menu.startsAt, endedRuns);
 
   return (
     <View style={[styles.screen, { backgroundColor: ds.c.ground }]}>

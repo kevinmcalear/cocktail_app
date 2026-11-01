@@ -119,9 +119,10 @@ export function menuPageModel({ menu, status, lens: L, venueName, onNow, newIds,
       { label: 'On', value: on, action: 'dates' },
       ...(L.costs ? [{ label: 'Costing', value: L.averageCost ? `average ${L.averageCost}` : 'Not costed yet', action: 'costing' as const }] : []),
       ...(lens === 'creator' || lens === 'admin' ? [{ label: 'Run sheet', value: '', action: 'runSheet' as const }] : []),
-      ...(lens === 'admin' ? [barPageRow(menu), { label: 'End this menu', value: '', action: 'end' as const }] : []),
+      // Hiding is for a menu that ran (menus_hidden_ran); a list still to come is unscheduled instead.
+      ...(lens === 'admin' ? [...(status === 'on' && menu.startsAt ? [barPageRow(menu)] : []), { label: 'End this menu', value: '', action: 'end' as const }] : []),
     ];
-  } else if (lens === 'admin' && past) {
+  } else if (lens === 'admin' && past && menu.startsAt) {
     group = [barPageRow(menu)];
   }
 

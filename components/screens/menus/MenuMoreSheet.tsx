@@ -138,7 +138,7 @@ export function MenuMoreSheet({ menu, status, visible, onClose, onNight, onEdit 
         <Button label={rnd ? 'Move back to drafts' : 'File under R&D'} icon="flask" variant="secondary" onPress={file} disabled={busy} />
       ) : null}
       {/* A list that ran carries credit and the bar's timeline: it's ended and hidden, never deleted (menu-delete). */}
-      {!menu.barId || rnd || status === 'draft' || status === 'upcoming' ? <Button label="Delete menu" icon="trash" variant="ghost" onPress={destroy} disabled={busy} /> : null}
+      {!menu.barId || !menu.startsAt || rnd || status === 'draft' || status === 'upcoming' ? <Button label="Delete menu" icon="trash" variant="ghost" onPress={destroy} disabled={busy} /> : null}
       {error ? <Body tone="accent">{error}</Body> : null}
     </MenuSheet>
   );

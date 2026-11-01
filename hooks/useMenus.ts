@@ -64,9 +64,9 @@ export const MENU_PICTURES = 4;
 /** Query keys, for invalidating after a write. */
 export const menuKeys = {
   all: ['menus-v2'] as const,
-  // 'venue-5': summaries gained updatedAt, description, the plan and shortSections, so a persisted older list isn't read back.
+  // 'venue-6': summaries gained updatedAt, description, the plan, shortSections and hiddenAt, so a persisted older list isn't read back.
   // Bump PERSISTED_KEYS (lib/queryCachePersist.ts) with it; lib/queryKeys.check.ts fails otherwise.
-  venue: (barId: string | null, userId: string | null) => ['menus-v2', 'venue-5', barId, userId] as const,
+  venue: (barId: string | null, userId: string | null) => ['menus-v2', 'venue-6', barId, userId] as const,
   detail: (menuId: string) => ['menus-v2', 'detail', menuId] as const,
 };
 
