@@ -22,6 +22,7 @@ import { ObservabilityProvider } from '@/components/ObservabilityProvider';
 import { OfflineBanner } from '@/components/OfflineBanner';
 import { ViewAsBanner } from '@/components/ViewAsBanner';
 import { AuthProvider, useAuth } from "@/ctx/AuthContext";
+import { BarUnitSync } from '@/hooks/useBarUnitSync';
 import { useColorScheme } from "@/hooks/use-color-scheme";
 import { useIsWideWeb } from '@/hooks/useIsWideWeb';
 import { useHoldUpdates, useOtaUpdates } from '@/hooks/useOtaUpdates';
@@ -125,6 +126,7 @@ function RootLayoutNav() {
           }
         `}} />
       )}
+      <BarUnitSync />
       <View style={{ flex: 1, flexDirection: 'row' }}>
         {showWebSidebar ? <SideNav /> : null}
         <View style={{ flex: 1, minWidth: 0 }}>

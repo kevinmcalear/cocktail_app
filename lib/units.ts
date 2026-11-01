@@ -79,3 +79,23 @@ export function unitOnlyText(unit: string | null | undefined): string | null {
   const u = (unit ?? '').trim();
   return ONE_WORD.has(u) ? u[0].toUpperCase() + u.slice(1) : null;
 }
+
+/**
+ * A person's Units when their bar's unit (bars.spec_unit) becomes known. A
+ * unit saved before bars had one (`checked` false) is looked at once: the
+ * same as the bar's, it was the bar's all along and follows the bar from
+ * then on (null); a different one stays theirs.
+ */
+export function followBarUnit(s: { units: string | null; checked: boolean }, barUnit: string | null): { units: string | null; checked: boolean } {
+  if (s.checked || !barUnit) return s;
+  return { units: s.units === barUnit ? null : s.units, checked: true };
+}
+
+/**
+ * A unit saved before bars had one. ml was what everyone started on, picked or
+ * not, so it can't say the person chose it: it follows their bar like an unset
+ * Units, or that bar's own unit could never reach them. Anything else they picked.
+ */
+export function savedUnit(unit: string | null | undefined): string | null {
+  return unit && unit !== DEFAULT_UNIT ? unit : null;
+}

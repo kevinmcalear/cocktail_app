@@ -414,6 +414,7 @@ export type Database = {
           short_name: string | null
           show_spec_changes: boolean
           slug: string
+          spec_unit: string
           target_gp: number | null
           tax_rate: number
           timezone: string | null
@@ -448,6 +449,7 @@ export type Database = {
           short_name?: string | null
           show_spec_changes?: boolean
           slug: string
+          spec_unit?: string
           target_gp?: number | null
           tax_rate?: number
           timezone?: string | null
@@ -482,6 +484,7 @@ export type Database = {
           short_name?: string | null
           show_spec_changes?: boolean
           slug?: string
+          spec_unit?: string
           target_gp?: number | null
           tax_rate?: number
           timezone?: string | null
@@ -7247,6 +7250,7 @@ export type Database = {
           short_name: string | null
           show_spec_changes: boolean
           slug: string
+          spec_unit: string
           target_gp: number | null
           tax_rate: number
           timezone: string | null
@@ -8682,6 +8686,7 @@ export type Database = {
           p_prep: number
           p_primary_color?: string
           p_secondary_color?: string
+          p_spec_unit?: string
           p_specific: number
           p_visibility: number
         }
@@ -8714,6 +8719,7 @@ export type Database = {
           short_name: string | null
           show_spec_changes: boolean
           slug: string
+          spec_unit: string
           target_gp: number | null
           tax_rate: number
           timezone: string | null

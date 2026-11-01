@@ -6,7 +6,7 @@ import { font, space } from '@/constants/tokens';
 import { useSpecAccess } from '@/hooks/useSpecAccess';
 import type { SpecLevels, SpecLine } from '@/lib/spec';
 import { scaledAmount, serveLine, specGroups, type Makes } from '@/lib/specView';
-import { useSettingsStore } from '@/store/useSettingsStore';
+import { useUnits } from '@/store/useSettingsStore';
 import { useSpecView } from '@/store/useSpecViewStore';
 
 import { SpecControls } from './SpecControls';
@@ -43,7 +43,8 @@ export function SpecCard({ itemId, barId, lines, maker, verb = null, serve = [],
   const [view, setView] = useSpecView(maker);
   // Never saved: every page opens at Makes 1 (a Makes 3 carried onto the next drink is a mis-pour).
   const [makes, setMakes] = useState<Makes>(1);
-  const unit = useSettingsStore((s) => s.specUnit);
+  // Your own unit, else your bar's (bars.spec_unit), else ml.
+  const unit = useUnits().specUnit;
   const served = serveLine(serve);
   const measured = access.amounts && lines.some((l) => l.value !== null);
 

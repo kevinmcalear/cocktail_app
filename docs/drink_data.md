@@ -79,6 +79,14 @@ still read them until the drop; see [one_home_drop.md](one_home_drop.md).
 them. A staffed bar's menus live in `menus`; `profile_menu_editions` is
 research history for bars with no team yet.
 
+## Units
+
+`bars.spec_unit` is the unit a bar's people read specs and start new recipe lines
+in (ml, oz, cl or g; specs read cl as ml). Its Admins set it in the venue's
+settings. A person's own Units (Settings) wins over it, on their device:
+`store/useSettingsStore.ts` `units`, null to follow the bar (`barUnit`, kept by
+`hooks/useBarUnitSync.ts`), and with no bar, ml.
+
 ## Who sees the spec
 
 Permissions decide (20261204300000). Each role's permissions open what it

@@ -4,6 +4,7 @@ import { Platform } from 'react-native';
 import { ChoiceChips, ControlRow, RowDivider, SelectRow, SettingsSection, SwitchRow } from '@/components/screens/settings/SettingsParts';
 import { hasAiConsent, setAiConsent } from '@/lib/aiConsent';
 import { appIconChoices, currentAppIcon, setAppIcon } from '@/lib/appIcon';
+import { useActiveVenue } from '@/hooks/useActiveVenue';
 import { useMaxRealRole, useViewAs } from '@/hooks/useViewAs';
 import { roleLabel, viewAsOptions } from '@/lib/roles';
 import type { MapsApp } from '@/lib/directions';
@@ -18,7 +19,10 @@ const DIRECTIONS_OPTIONS = [
 
 /** How the app looks and behaves. Everything saves as it changes: View as to the account, the rest to this device. */
 export function PreferencesSection() {
-  const { themeMode, setThemeMode, defaultUnit, setDefaultUnit, directionsApp, setDirectionsApp } = useSettingsStore();
+  const { themeMode, setThemeMode, units, setUnits, directionsApp, setDirectionsApp } = useSettingsStore();
+  // Your bar's unit (bars.spec_unit) is the default; picking one of your own wins over it.
+  const active = useActiveVenue().active;
+  const bar = active?.unit ? { name: active.name, unit: active.unit } : null;
   const { viewAsRoleLevel, setViewAsRoleLevel, isSaving: viewAsSaving } = useViewAs();
   const maxRealRole = useMaxRealRole();
   const viewAsChoices = viewAsOptions(maxRealRole);
@@ -41,9 +45,13 @@ export function PreferencesSection() {
         <ChoiceChips label="Appearance" options={THEME_MODES} value={themeMode} onChange={setThemeMode} />
       </ControlRow>
       <RowDivider />
-      <ControlRow label="Units" detail="Specs on drink pages, and new recipe lines">
-        <ChoiceChips label="Units" options={DEFAULT_UNIT_OPTIONS} value={defaultUnit} onChange={setDefaultUnit} />
-      </ControlRow>
+      <SelectRow
+        label="Units"
+        detail={bar ? (units ? `Yours, over ${bar.name}’s ${bar.unit}` : `${bar.name}’s, for specs and new recipe lines`) : 'Specs on drink pages, and new recipe lines'}
+        options={bar ? [{ id: 'bar', label: `${bar.name}’s (${bar.unit})` }, ...DEFAULT_UNIT_OPTIONS] : DEFAULT_UNIT_OPTIONS}
+        value={units ?? (bar ? 'bar' : 'ml')}
+        onChange={(id) => setUnits(id === 'bar' ? null : id)}
+      />
       <RowDivider />
       <SwitchRow
         label="Read with AI"

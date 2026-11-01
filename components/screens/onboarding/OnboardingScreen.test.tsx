@@ -69,7 +69,7 @@ beforeEach(() => {
   [mockPersonClaim, mockParams] = [null, {}];
   mockSaveTaste.mockImplementation((_answers, opts) => opts?.onSuccess?.());
   mockSaveName.mockImplementation((_input, opts) => opts?.onSuccess?.('p1'));
-  useSettingsStore.setState({ specUnit: 'ml', defaultUnit: 'ml' });
+  useSettingsStore.setState({ units: null, barUnit: null });
 });
 
 async function named() {
@@ -114,8 +114,7 @@ describe('OnboardingScreen', () => {
 
     await fireEvent.press(screen.getByRole('radio', { name: 'oz' }));
     await fireEvent.press(screen.getByRole('button', { name: 'Continue' }));
-    expect(useSettingsStore.getState().specUnit).toBe('oz');
-    expect(useSettingsStore.getState().defaultUnit).toBe('oz');
+    expect(useSettingsStore.getState().units).toBe('oz');
 
     // Last, the chance to bring something in; home cooks are asked about their shelf.
     expect(screen.getByText('What’s on your shelf?')).toBeTruthy();
@@ -260,6 +259,7 @@ describe('OnboardingScreen', () => {
     expect(screen.getAllByRole('radio').map((r) => r.props.accessibilityLabel)).toEqual(['oz', 'ml', 'g']);
     expect(screen.getByText('Caretakers writes its specs in oz. You can still read them in ml any time.')).toBeTruthy();
     await fireEvent.press(screen.getByRole('button', { name: 'Have a look around' }));
+    expect(useSettingsStore.getState().units).toBeNull(); // Kept: it follows the venue's unit (bars.spec_unit).
     expect(mockFinish).toHaveBeenCalled();
   });
 
