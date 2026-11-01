@@ -13,6 +13,7 @@ const PAGES = new Set([
   'components/screens/ingredient/edit/IngredientEditScreen.tsx', // the same body, editing in place
   'components/screens/home/MyBarTablet.tsx', // the section cards' panels, in the page
   'components/screens/home/mapSheetChrome.tsx', // the phone map's results panel, docked on the map as Google Maps' is (phone widths only)
+  'components/ds/ConnectedButtons.tsx', // each button in a connected group rounds its own ends
 ]);
 // The Sheet itself, and its web twin (whose full-window style squares every corner).
 const SHEET = new Set(['components/ds/Sheet.tsx', 'components/ds/Sheet.web.tsx']);
@@ -21,7 +22,7 @@ const files = globSync('{app,components}/**/*.tsx').filter((f) => !f.endsWith('.
 const source = (f: string) => readFileSync(f, 'utf8');
 
 const docked = files
-  .filter((f) => !f.endsWith('.native.tsx') && !existsSync(f.replace(/\.tsx$/, '.web.tsx')))
+  .filter((f) => !/\.(native|android|ios)\.tsx$/.test(f) && !existsSync(f.replace(/\.tsx$/, '.web.tsx')))
   .filter((f) => /borderTopLeftRadius/.test(source(f)) && !/sheetFrame|sheetIsDialog/.test(source(f)));
 assert.deepEqual(docked, [], `Bottom sheets on the web: place these with sheetFrame (components/ds/sheetFrame.ts):\n  ${docked.join('\n  ')}`);
 
