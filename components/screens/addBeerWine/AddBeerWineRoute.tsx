@@ -25,7 +25,7 @@ export function AddBeerWineRoute({ kind, ...props }: AddDrinkProps & { kind: Dri
   const router = useRouter();
   const params = useLocalSearchParams<{ barId?: string; draftId?: string; name?: string; menuSectionId?: string }>();
   const draftId = props.draftIdProp !== undefined ? props.draftIdProp : params.draftId;
-  const goBack = () => (router.canGoBack() ? router.back() : router.replace('/(tabs)'));
+  const goBack = () => (router.canGoBack() ? router.back() : router.replace('/'));
   const barId = (props.barIdProp !== undefined ? props.barIdProp : params.barId) || null;
   const initialName = props.initialNameProp !== undefined ? props.initialNameProp : params.name;
   if (draftId) return <BeerWineDraftEditScreen kind={kind} draftId={draftId} barId={barId} initialName={initialName} onExit={props.onClose ?? goBack} />;

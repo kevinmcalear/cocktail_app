@@ -95,7 +95,7 @@ export function VenueSetupScreen() {
   const claimState: ClaimState = page || claim?.status === 'approved' ? 'approved' : claim?.status === 'pending' ? 'pending' : 'none';
   const writable = !!page;
 
-  const leave = () => (router.canGoBack() ? router.back() : router.replace('/(tabs)' as Href));
+  const leave = () => (router.canGoBack() ? router.back() : router.replace('/' as Href));
   const finish = (step: VenueStep) => {
     markDone(keyRef.current, step);
     setScreen(nextScreen(step));
@@ -238,7 +238,7 @@ export function VenueSetupScreen() {
           name={name}
           onOpen={() => {
             enterVenue(barId);
-            router.replace('/(tabs)' as Href);
+            router.replace('/' as Href);
           }}
         />
       ) : null}

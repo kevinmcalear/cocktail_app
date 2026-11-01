@@ -110,7 +110,7 @@ export function BringInFlow() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
-  const leave = () => (router.canGoBack() ? router.back() : router.replace('/(tabs)' as Href));
+  const leave = () => (router.canGoBack() ? router.back() : router.replace('/' as Href));
   const finishLater = () => {
     useBringIn.getState().setReviewing(null);
     if (!useBringIn.getState().next(place.barId)) leave();

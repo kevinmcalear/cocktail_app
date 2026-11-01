@@ -28,7 +28,7 @@ export function MakeRecipeRoute() {
   const { add } = useShelfEdit();
   // One save at a time: a quick second tap lands before the screen knows it's saving.
   const saving = useRef(false);
-  const goBack = () => (router.canGoBack() ? router.back() : router.replace('/(tabs)'));
+  const goBack = () => (router.canGoBack() ? router.back() : router.replace('/'));
   return (
     <VenueBrandProvider>
       <PrepBuilder
