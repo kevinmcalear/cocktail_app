@@ -25,6 +25,9 @@ assert.equal(veganWord(['Gin', 'Egg white', 'Heavy cream', 'Honey syrup', 'Lemon
 assert.equal(veganWord(['Gin', 'Foamer'], ['eggs']), 'not vegan (eggs)');
 assert.equal(veganWord(['Gin', 'Campari', 'Sweet vermouth']), 'vegan');
 assert.equal(veganWord([null]), null);
+assert.equal(veganWord(['Gin', 'Campari'], [], false), null, 'ingredients not checked: never a guessed "vegan"');
+assert.equal(veganWord(['Gin', null]), null, 'a name hidden: never a guessed "vegan"');
+assert.equal(veganWord(['Gin', 'Honey syrup'], [], false), 'not vegan (honey)', 'what the spec says still reads');
 assert.equal(withVegan('No allergens.', 'not vegan (honey)'), 'No allergens · not vegan (honey)');
 assert.equal(withVegan('Contains sulphites. 1 ingredient not checked yet.', 'vegan'), 'Contains sulphites · vegan. 1 ingredient not checked yet.');
 assert.equal(withVegan('No allergens.', null), 'No allergens.', 'names hidden: the line as it was');

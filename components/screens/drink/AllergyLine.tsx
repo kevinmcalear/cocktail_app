@@ -28,7 +28,11 @@ function FloorLine({ itemId, ingredients }: { itemId: string; ingredients: reado
   const { data } = useDrinkAllergens(itemId);
   // Nothing to declare yet (a beer, or a drink with no spec): no line, rather than a line about nothing.
   if (!data || (data.lines === 0 && !data.allergens.length)) return null;
-  const vegan = veganWord(ingredients, data.allergens.map((a) => a.allergen));
+  const vegan = veganWord(
+    ingredients,
+    data.allergens.map((a) => a.allergen),
+    data.unchecked === 0,
+  );
   return <AllergyBox title={withVegan(containsLine(data), vegan)} />;
 }
 

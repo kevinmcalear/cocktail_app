@@ -61,7 +61,7 @@ export interface SpecRowProps {
 export function SpecRow({ amount, ingredient, ingredientId, houseMade, optional, floated, note, flag: flagged, listed, role, detail, scale = 1, dense, onPress, onPressAmount, alignAmount }: SpecRowProps) {
   const ds = useDs();
   const flag = listed ? 'On your list' : flagged;
-  const big = (t: (typeof type)['spec']) => (scale === 1 ? undefined : { fontSize: t.fontSize * scale, lineHeight: t.lineHeight * scale });
+  const big = (t: Sized) => scaled(t, scale);
   const showAmount = amount.length > 0 || !!alignAmount;
   const split = !!onPressAmount && amount.length > 0;
   const rest = [ingredient, role, detail, houseMade && 'house-made', floated && 'float', optional && 'optional', note, flag].filter(Boolean).join(', ');
@@ -79,7 +79,7 @@ export function SpecRow({ amount, ingredient, ingredientId, houseMade, optional,
           {roleAfter ? <Body tone="muted" style={big(type.body)}>{` ${role}`}</Body> : null}
         </Body>
         {roleRight ? (
-          <Caption tone="muted" style={styles.roleRight}>
+          <Caption tone="muted" style={[styles.roleRight, big(type.caption)]}>
             {role}
           </Caption>
         ) : null}
@@ -139,15 +139,18 @@ export function SpecRow({ amount, ingredient, ingredientId, houseMade, optional,
   );
 }
 
+type Sized = { fontSize: number; lineHeight: number };
+/** A text style scaled for service mode (1.25); nothing at 1. */
+const scaled = (t: Sized, scale: number) => (scale === 1 ? undefined : { fontSize: t.fontSize * scale, lineHeight: t.lineHeight * scale });
+
 /** The number in the spec's figures, its unit smaller and muted (every spec board: 22 and 12). */
 function Amount({ text, scale, style }: { text: string; scale: number; style?: { width: number } }) {
   const { value, unit } = splitAmount(text);
-  const size = (t: { fontSize: number; lineHeight: number }) => (scale === 1 ? undefined : { fontSize: t.fontSize * scale, lineHeight: t.lineHeight * scale });
   return (
-    <Spec tone="accent" style={[style, size(type.spec)]}>
+    <Spec tone="accent" style={[style, scaled(type.spec, scale)]}>
       {value}
       {unit ? (
-        <Caption tone="muted" style={size(type.caption)}>
+        <Caption tone="muted" style={scaled(type.caption, scale)}>
           {` ${unit}`}
         </Caption>
       ) : null}

@@ -118,7 +118,7 @@ export function useDrinkSections(p: DrinkSectionsInput) {
     // Guests and the floor: the allergy line, what it tastes like, how it meets your palate.
     lead:
       names && live ? (
-        <NamesBlock itemId={item.id} name={item.name} guest={viewer === 'guest'} tastes={description} ingredients={lines.map((l) => l.ingredient)} />
+        <NamesBlock itemId={item.id} name={item.name} guest={viewer === 'guest'} tastes={description} ingredients={(lockedLines ?? lines).map((l) => l.ingredient)} />
       ) : viewer === 'public' && live && item.bar_id ? (
         // A bar's drink read in full by someone not on its team: their allergy warning first, as a guest's (Loop-allergy, A match).
         <AllergyLine itemId={item.id} guest />

@@ -53,7 +53,8 @@ export function BarRows({ item, barId, barName, lines, fill, onGlass, creator, c
   const { data: pricing } = usePricingSettings(costs ? barId : null);
   const { data: onMenu } = useDrinkOnMenu(item.id, barId);
   const house = lines.filter((l) => l.houseMade && l.ingredientId);
-  // Each house-made part: when it was made and what's on hand (the last count plus batches since).
+  // Each house-made part: when it was made and what's on hand.
+  // ponytail: on hand is the last count plus batches since (lib/stock withBatches), nothing poured is taken off, and batches reach back 14 days (BATCH_DAYS). Upgrade: subtract pours once service logs them.
   const { data: batches = [] } = useBatchLogs(house.length ? barId : null);
   const { data: counted = [] } = useStockOnHand(barId, house.length > 0);
   const onHand = withBatches(counted, batches);

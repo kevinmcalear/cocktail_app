@@ -73,12 +73,14 @@ export function SpecCard({ itemId, barId, lines, maker, verb = null, methods = [
   );
 
   // Under the spec: Ingredients' method line (it says the glass, ice and garnish); Steps' glass and ice (the garnish is its last rows); otherwise how it's served, garnish and all.
+  // A drink made in parts has a method per part: one line can't say them, so it reads how it's served (Steps says the rest).
+  const parts = new Set(lines.map((l) => l.part ?? 1)).size > 1;
   const under =
-    layout === 'rows'
+    layout === 'rows' && !parts
       ? methodLine({ verb, methods, glass, ice, lines })
       : layout === 'steps'
         ? serveLine([glass, ice])
-        : goesOut
+        : goesOut && layout === 'names'
           ? goesOutLine([glass, ice, ...garnish])
           : serveLine([glass, ice, ...garnish]);
 

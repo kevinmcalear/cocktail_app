@@ -5,7 +5,7 @@
  * that land on a jigger's marks once they are scaled or converted.
  */
 
-import { isGarnishUnit } from '@/lib/batch';
+import { isGarnishLine } from '@/lib/batch';
 import { barMl, convertLine, density, ML_PER_OZ, type MassUnit } from '@/lib/drinkMath';
 import type { SpecLine } from '@/lib/spec';
 import { amountText, grated, overIce } from '@/lib/units';
@@ -77,15 +77,13 @@ export interface SpecGroup {
   /** "Shake", "Float", "Part 2"; null when the drink is one group with no method to name. */
   title: string | null;
   lines: SpecLine[];
-  /** Garnish rows carry their tag instead of a heading. */
-  tag?: 'Garnish';
 }
 
 /**
  * Steps view: the ruled rows split where the drink has stages, in making order.
  * A drink made in parts gets a group per part; otherwise the main pour (titled
  * by its method: Shake, Stir, Build), then anything floated on top. A garnish
- * isn't a step: its rows come last, tagged, under no heading. A simple drink is
+ * isn't a step: its rows come last under no heading, each saying "garnish" (lineRole). A simple drink is
  * one group, so it reads like a spec sheet.
  */
 export function specGroups(lines: SpecLine[], verb: string | null = null): SpecGroup[] {
@@ -100,7 +98,7 @@ export function specGroups(lines: SpecLine[], verb: string | null = null): SpecG
           { key: 'float', title: 'Float', lines: rest.filter((l) => l.float) },
         ];
   const groups: SpecGroup[] = titled.filter((g) => g.lines.length).map((g, i) => ({ ...g, number: String(i + 1) }));
-  if (garnish.length) groups.push({ key: 'garnish', number: null, title: null, lines: garnish, tag: 'Garnish' });
+  if (garnish.length) groups.push({ key: 'garnish', number: null, title: null, lines: garnish });
   return groups;
 }
 
@@ -125,14 +123,6 @@ export function serveLine(parts: readonly (string | null | undefined)[]): string
 export function goesOutLine(parts: readonly (string | null | undefined)[]): string | null {
   const kept = parts.map((p) => p?.trim().toLowerCase()).filter((p): p is string => !!p);
   return kept.length ? `Goes out: ${kept.join(', ')}` : null;
-}
-
-/**
- * A garnish: a count-unit line (a twist, a sprig, grated nutmeg). An egg
- * white counted "1 each" goes in the drink, so it isn't one (Eddie tf-064).
- */
-export function isGarnishLine(l: Pick<SpecLine, 'unit' | 'ingredient'>): boolean {
-  return isGarnishUnit(l.unit) && !/\begg/i.test(l.ingredient ?? '');
 }
 
 /** The garnish as said aloud: a discard says what happened to the peel ("Lemon peel, expressed and discarded"), grated says so ("Grated nutmeg"). */

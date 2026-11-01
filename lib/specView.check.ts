@@ -2,8 +2,9 @@
 // scaling on jigger marks, and grouping by step. Run: npm run test:unit
 import assert from 'node:assert/strict';
 
+import { isGarnishLine } from './batch';
 import { specLines } from './spec';
-import { defaultSpecView, garnishLabel, garnishNames, goesOutLine, isGarnishLine, lineRole, methodLine, methodVerb, pickSpecView, scaledAmount, serveLine, snapToJigger, specGroups } from './specView';
+import { defaultSpecView, garnishLabel, garnishNames, goesOutLine, lineRole, methodLine, methodVerb, pickSpecView, scaledAmount, serveLine, snapToJigger, specGroups } from './specView';
 
 // Who is looking decides the default; a person's own pick sticks over it.
 assert.equal(defaultSpecView(true), 'steps');
@@ -43,10 +44,10 @@ assert.equal(scaledAmount(ozLine, 3, 'oz'), '2.25 oz');
 
 // Steps: the main pour titled by its method, the float, then the garnish under no heading.
 const groups = specGroups(penicillin, methodVerb(['Shaken']));
-assert.deepEqual(groups.map((g) => [g.number, g.title, g.lines.length, g.tag ?? null]), [
-  ['1', 'Shake', 3, null],
-  ['2', 'Float', 1, null],
-  [null, null, 1, 'Garnish'],
+assert.deepEqual(groups.map((g) => [g.number, g.title, g.lines.length]), [
+  ['1', 'Shake', 3],
+  ['2', 'Float', 1],
+  [null, null, 1],
 ]);
 // A simple drink is one group.
 assert.equal(specGroups(penicillin.slice(0, 3), 'Stir').length, 1);
