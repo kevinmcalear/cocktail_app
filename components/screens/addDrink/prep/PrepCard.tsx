@@ -3,7 +3,8 @@ import { StyleSheet, View } from 'react-native';
 
 import { Body, Button, Caption, Field, PressableScale, useDs } from '@/components/ds';
 import { layout, radius, space } from '@/constants/tokens';
-import { PREP_KINDS, recipeEyebrow, stepToFinish, withFacts } from '@/lib/prepKinds';
+import { IconSymbol } from '@/components/ui/icon-symbol';
+import { guessKind, PREP_KINDS, recipeEyebrow, stepToFinish, withFacts } from '@/lib/prepKinds';
 import { techniqueById } from '@/lib/techniques';
 
 import { Trail, trailInto } from '../Trail';
@@ -29,6 +30,7 @@ export const PREP_CARD_ID = 'prep-card-open';
 export function PrepCard({ name: started, venueName, initial, combinedFrom, inDrink, picked, technique, ingredients, aliases, onDone, onLater, onClose, bar = null, above, drinkName, nested, page }: Omit<PrepBuilderProps, 'name'> & { name: string; venueName: string | null; nested?: boolean; /** The draft page's nested page (Kept-add-helpers, Writing it, then back): its own header, no card. */ page?: boolean }) {
   const ds = useDs();
   const [name, setName] = useState(started);
+  const [kindOpen, setKindOpen] = useState(false);
   const combined = !!combinedFrom?.length;
   const { draft, current, changed, setDraft, view, setView, fromCatalog, pickKind, pickTechnique, version, phrase, named, slotsOpen } = usePrepDraft({ name: started, nameNow: name, initial, picked, technique, combined, bar });
   const set = (c: Partial<typeof draft>) => setDraft({ ...draft, ...c });
@@ -40,6 +42,16 @@ export function PrepCard({ name: started, venueName, initial, combinedFrom, inDr
   // A finished recipe opened again keeps a change made below it (a recipe inside it, picked up and left); otherwise it stays as it was.
   const trail = trailInto(above ?? [{ label: drinkName || 'Your drink' }], keep ?? (() => (changed() ? onDone(withFacts(current()), shown) : onClose())), shown);
   const word = (draft.technique ? techniqueById(draft.technique)?.name : draft.kind !== 'other' ? PREP_KINDS.find((k) => k.id === draft.kind)?.name : null)?.toLowerCase();
+  // Said by the name ("Pine syrup"): the drawn page leads with the lines.
+  const linesFirst = !!page && !!guessKind(shown) && draft.kind === guessKind(shown);
+  const kindName = PREP_KINDS.find((k) => k.id === draft.kind)?.name ?? 'Something else';
+  const kindBlock = (
+    <>
+      <Field label="Name" value={name} onChangeText={setName} maxLength={80} returnKeyType="done" />
+      <Eyebrow>What is it</Eyebrow>
+      <PrepKindStep name={shown} draft={draft} combined={combined} onKind={pickKind} onTechnique={pickTechnique} onChangeAmount={() => {}} bar={bar} />
+    </>
+  );
   return (
     <View nativeID={nested ? undefined : PREP_CARD_ID} role="group" aria-label={`House-made: ${shown}`} style={page ? styles.page : [styles.card, { backgroundColor: ds.c.raised, borderColor: ds.c.line }]}>
       {page ? (
@@ -60,9 +72,8 @@ export function PrepCard({ name: started, venueName, initial, combinedFrom, inDr
           <Caption tone="muted">{`${venueName ? `Private to ${venueName}. ` : ''}Made from parts you buy, so it costs itself.`}</Caption>
         </View>
       )}
-      <Field label="Name" value={name} onChangeText={setName} maxLength={80} returnKeyType="done" />
-      <Eyebrow>What is it</Eyebrow>
-      <PrepKindStep name={shown} draft={draft} combined={combined} onKind={pickKind} onTechnique={pickTechnique} onChangeAmount={() => {}} bar={bar} />
+      {/* The nested page starts on the lines when the name says what it is (Kevin, 1 Nov): what it is waits in a row under the method. */}
+      {linesFirst ? null : kindBlock}
       <View style={styles.recipeHead}>
         <Eyebrow>{recipeEyebrow(draft) || 'What goes in'}</Eyebrow>
         <RecipeView value={view} onChange={setView} />
@@ -81,6 +92,17 @@ export function PrepCard({ name: started, venueName, initial, combinedFrom, inDr
       />
       <Eyebrow>How it’s made</Eyebrow>
       <PrepMethodStep key={`method-${version}`} draft={draft} set={set} phrase={phrase} />
+      {linesFirst ? (
+        kindOpen ? (
+          kindBlock
+        ) : (
+          <PressableScale role="button" accessibilityLabel={`What it is: ${kindName}. Change`} onPress={() => setKindOpen(true)} style={[styles.kindRow, { backgroundColor: ds.c.surface }]}>
+            <Body style={styles.flex}>What it is</Body>
+            <Caption tone="muted">{kindName}</Caption>
+            <IconSymbol name="chevron.right" size={14} color={ds.c.muted} />
+          </PressableScale>
+        )
+      ) : null}
       {slotsOpen ? <Caption tone="accent">Pick the parts still marked, or take them out, to add it.</Caption> : null}
       <View style={styles.buttons}>
         <Button label={word ? `Add the ${word}` : `Add ${shown}`} disabled={!named || slotsOpen || !name.trim()} onPress={() => onDone(withFacts(draft), shown)} />
@@ -94,6 +116,7 @@ export function PrepCard({ name: started, venueName, initial, combinedFrom, inDr
 
 const styles = StyleSheet.create({
   page: { gap: space.md },
+  kindRow: { flexDirection: 'row', alignItems: 'center', gap: space.sm, minHeight: 52, paddingHorizontal: space.lg, borderRadius: radius.card },
   card: { marginLeft: 40 + space.md, marginBottom: space.md, gap: space.md, padding: space.lg, borderRadius: radius.card, borderWidth: 1 },
   head: { gap: space.xs },
   trailRow: { flexDirection: 'row', alignItems: 'center', gap: space.sm },
