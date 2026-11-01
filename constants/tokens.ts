@@ -229,8 +229,10 @@ export const layout = {
    * (components/nav/Page.tsx): text for lists and forms, wide for plans and grids.
    */
   page: { text: 760, wide: 1240 },
-  /** The list's column beside a page: Library's panes on a tablet, Drinks' list on a desktop (the tablet board's width). */
+  /** The list's column beside a page: Library's panes on a tablet (the tablet board's width). */
   listPane: 360,
+  /** Drinks' list beside the drink on a desktop, from 1200 (board Keep-desk; Kevin, 1 Nov). */
+  listPaneDesk: 460,
   /** Screens and components past this many lines get split (enforced by check:design). */
   maxScreenLines: 300,
 } as const;

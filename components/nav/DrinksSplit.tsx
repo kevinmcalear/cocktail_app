@@ -41,7 +41,7 @@ export function NoDrinkPicked() {
 }
 
 const styles = StyleSheet.create({
-  column: { width: layout.listPane, flexShrink: 0, borderRightWidth: StyleSheet.hairlineWidth },
+  column: { width: layout.listPaneDesk, flexShrink: 0, borderRightWidth: StyleSheet.hairlineWidth },
   hidden: { display: 'none' },
   fill: { flex: 1 },
   empty: { padding: space.xxl },
