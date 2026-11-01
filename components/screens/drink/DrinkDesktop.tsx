@@ -6,7 +6,7 @@ import { layout, radius, space } from '@/constants/tokens';
 
 import type { DrinkSections } from './DrinkSections';
 
-type Tab = 'spec' | 'service' | 'more';
+type Tab = 'spec' | 'more';
 
 interface DrinkDesktopProps {
   /** A cocktail's sections, in Spec | Service | More tabs. */
@@ -19,8 +19,6 @@ interface DrinkDesktopProps {
   heroActions: ReactNode;
   /** Batch, Rank it, I made it, in a row under the method. */
   actions?: ReactNode;
-  /** The venue's team: a Service tab. */
-  staff: boolean;
   top: number;
 }
 
@@ -35,14 +33,13 @@ const HERO_H = 640;
  * (13 Oct), the Spec tab is just what you need to make it; strength,
  * allergens, flavor, the backstory and the rest are under More.
  */
-export function DrinkDesktop({ sections: s, children, hero, heroActions, actions, staff, top }: DrinkDesktopProps) {
+export function DrinkDesktop({ sections: s, children, hero, heroActions, actions, top }: DrinkDesktopProps) {
   const ds = useDs();
   const gutter = useGutter();
   const desktop = useBreakpoint() === 'desktop';
   const [tab, setTab] = useState<Tab>('spec');
   const tabs = [
     { value: 'spec' as const, label: 'Spec' },
-    ...(staff ? [{ value: 'service' as const, label: 'Service' }] : []),
     { value: 'more' as const, label: 'More' },
   ];
   const shown = tabs.some((t) => t.value === tab) ? tab : 'spec';
@@ -69,7 +66,6 @@ export function DrinkDesktop({ sections: s, children, hero, heroActions, actions
               {s.kit}
             </View>
           ) : null}
-          {shown === 'service' ? <View style={styles.tab}>{s.service}</View> : null}
           {shown === 'more' ? (
             <View style={styles.tab}>
               {s.standing}

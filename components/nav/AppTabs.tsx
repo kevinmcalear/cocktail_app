@@ -3,15 +3,13 @@ import { useState } from 'react';
 import { Platform, View } from 'react-native';
 
 import { useDs } from '@/components/ds';
-import { useFeatureNewsDots } from '@/hooks/useFeatureNews';
 import { useFirstRound } from '@/hooks/useFirstRound';
 import { useIsWideWeb } from '@/hooks/useIsWideWeb';
 import { useMode } from '@/hooks/useMode';
 import { useTrackTab } from '@/hooks/useSearchFrom';
 import { useServiceDay } from '@/hooks/useServiceDay';
-import { useVenueFeatures } from '@/hooks/useVenueFeatures';
 import { withAlpha } from '@/lib/color';
-import { phoneTabs, type PhoneTab, type VenueTab } from '@/lib/venueFeatures';
+import { phoneTabs, type PhoneTab } from '@/lib/tabs';
 
 import { CreateSheet } from './CreateSheet';
 import { JsTabs } from './JsTabs';
@@ -22,9 +20,9 @@ import { VenueBrandProvider } from './VenueBrandProvider';
  * Redesigned tabs on iOS and Android: the system tab bar (Liquid Glass on
  * iOS 26+, Material 3 on Android), tinted with the venue's accent. Web uses
  * JsTabs.tsx. Venue mode: Library, Menus, Discover, plus Tonight, Prep
- * and Study when the venue switched them on (lib/venueFeatures.ts). Home
+ * and Study when the venue switched them on (lib/tabs.ts). Home
  * mode: Discover, My Bar, Collection. New is a tab in both, and the bar stays
- * at five with Search (lib/venueFeatures.ts phoneTabs); You opens from the
+ * at five with Search (lib/tabs.ts phoneTabs); You opens from the
  * header's avatar.
  * Tonight is a calendar page showing the date, which turns over at 6am.
  * The icons are the app's own (components/nav/tabImages.ts), template images
@@ -47,23 +45,17 @@ export function AppTabs() {
 function Tabs() {
   const ds = useDs();
   const { mode, ready } = useMode();
-  const features = useVenueFeatures();
   const home = mode === 'home';
   const day = useServiceDay() ?? 1;
   const [creating, setCreating] = useState(false);
-  // A new tab the venue switched on keeps a dot until it's first opened (hooks/useFeatureNews.ts).
-  const dots = useFeatureNewsDots();
-  const isNew = (name: VenueTab) => dots.includes(name);
-  const dot = (name: VenueTab) => <NativeTabs.Trigger.Badge hidden={!isNew(name)} />;
   // The first round holds Menus and Discover back until their steps come up (lib/firstRound.ts).
   const { hidden } = useFirstRound();
   // The search circle starts on the tab it was opened from (hooks/useSearchFrom.ts).
   useTrackTab();
   // Venue and home have different tabs, and switching remounts them all:
-  // wait for the mode (a moment, on a first launch) and the venue's switches
-  // rather than open the wrong set.
-  if (!ready || !features.ready) return <View style={{ flex: 1, backgroundColor: ds.c.ground }} />;
-  const shown = phoneTabs(home, features.has);
+  // wait for the mode (a moment, on a first launch) rather than open the wrong set.
+  if (!ready) return <View style={{ flex: 1, backgroundColor: ds.c.ground }} />;
+  const shown = phoneTabs(home);
   // Android's Material 3 bar in our colours: the surface, the accent's indicator pill (the
   // sidebar's current-row tint) and an ink ripple. iOS keeps the system's Liquid Glass untouched.
   const material = { backgroundColor: ds.c.surface, indicatorColor: withAlpha(ds.accentText, 0.16), rippleColor: withAlpha(ds.c.ink, 0.12) };
@@ -80,10 +72,9 @@ function Tabs() {
         labelVisibilityMode="labeled"
         {...(Platform.OS === 'android' ? material : null)}
       >
-        <NativeTabs.Trigger name="index" hidden={off('index')} accessibilityLabel={isNew('index') ? 'Tonight, new' : undefined}>
+        <NativeTabs.Trigger name="index" hidden={off('index')}>
           <NativeTabs.Trigger.Icon src={tonightImage(day)} renderingMode="template" />
           <NativeTabs.Trigger.Label>Tonight</NativeTabs.Trigger.Label>
-          {dot('index')}
         </NativeTabs.Trigger>
         <NativeTabs.Trigger name="library" hidden={off('library')}>
           <NativeTabs.Trigger.Icon src={TAB_IMAGES.library} renderingMode="template" />
@@ -93,15 +84,13 @@ function Tabs() {
           <NativeTabs.Trigger.Icon src={TAB_IMAGES.menus} renderingMode="template" />
           <NativeTabs.Trigger.Label>Menus</NativeTabs.Trigger.Label>
         </NativeTabs.Trigger>
-        <NativeTabs.Trigger name="prep" hidden={off('prep')} accessibilityLabel={isNew('prep') ? 'Prep, new' : undefined}>
+        <NativeTabs.Trigger name="prep" hidden={off('prep')}>
           <NativeTabs.Trigger.Icon src={TAB_IMAGES.prep} renderingMode="template" />
           <NativeTabs.Trigger.Label>Prep</NativeTabs.Trigger.Label>
-          {dot('prep')}
         </NativeTabs.Trigger>
-        <NativeTabs.Trigger name="test" hidden={off('test')} accessibilityLabel={isNew('test') ? 'Study, new' : undefined}>
+        <NativeTabs.Trigger name="test" hidden={off('test')}>
           <NativeTabs.Trigger.Icon src={TAB_IMAGES.test} renderingMode="template" />
           <NativeTabs.Trigger.Label>Study</NativeTabs.Trigger.Label>
-          {dot('test')}
         </NativeTabs.Trigger>
         <NativeTabs.Trigger name="discover" hidden={off('discover')}>
           <NativeTabs.Trigger.Icon src={TAB_IMAGES.discover} renderingMode="template" />

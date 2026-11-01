@@ -5,7 +5,7 @@ import Animated, { interpolate, runOnJS, useAnimatedReaction, useAnimatedStyle, 
 
 import { GlassButton, useDs, useGutter } from '@/components/ds';
 import { layout, space, type BackbarScheme } from '@/constants/tokens';
-import { useVenueFeature } from '@/hooks/useVenueFeatures';
+import { useMode } from '@/hooks/useMode';
 
 interface DrinkControlsProps {
   /** What fills the hero: a photo, or the cream paper a sketch sits on. */
@@ -49,7 +49,8 @@ export function DrinkControls({ media, top, heroHeight, scrollY, wide, noBack, s
   const ds = useDs();
   const router = useRouter();
   const gutter = useGutter();
-  const study = useVenueFeature('study');
+  // The study pile is the venue's; home has none.
+  const study = useMode().mode === 'venue';
   const barHeight = top + space.sm * 2 + layout.minTapTarget;
   // The scroll offset where the hero's bottom edge meets the bar's.
   const tucked = heroHeight - barHeight;

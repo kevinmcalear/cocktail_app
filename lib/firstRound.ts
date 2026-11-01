@@ -16,7 +16,7 @@
  * "First round and Features".
  */
 
-import type { VenueTab } from '@/lib/venueFeatures';
+import type { VenueTab } from '@/lib/tabs';
 
 /** A Drink Creator or above makes drinks; everyone else is staff. */
 export type RoundKind = 'make' | 'staff';

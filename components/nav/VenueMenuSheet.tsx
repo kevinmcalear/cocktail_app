@@ -7,19 +7,16 @@ import { MenuSheet } from '@/components/screens/menus/MenuSheet';
 import { IconSymbol } from '@/components/ui/icon-symbol';
 import { fontFamilies, layout, radius, space } from '@/constants/tokens';
 import { useActiveVenue, type Venue } from '@/hooks/useActiveVenue';
-import { useItemLocations, useWaitingForSpot } from '@/hooks/useBackBar';
 import { useCollection } from '@/hooks/useCollection';
 import { useShelf } from '@/hooks/useHomeBar';
 import { useVenueMenus } from '@/hooks/useMenus';
 import { useMode } from '@/hooks/useMode';
-import { useVenueFeatures } from '@/hooks/useVenueFeatures';
 import { useVenueSetup } from '@/store/useVenueSetup';
 import { startedSetup } from '@/lib/venueSetup';
 import { useBarWeek, useWeekStart } from '@/hooks/useWeek';
 import { groupMenus } from '@/lib/menus';
 import { roleLabel } from '@/lib/roles';
-import { backBarLine, collectionLine, featuresLine, menusLine, shelfLine, teamLine } from '@/lib/shellNav';
-import { VENUE_FEATURES } from '@/lib/venueFeatures';
+import { collectionLine, menusLine, shelfLine, teamLine } from '@/lib/shellNav';
 import { weekCount } from '@/lib/week';
 
 import { RoundPlacesNote, RoundSheetBlock } from '@/components/screens/firstRound/RoundElsewhere';
@@ -88,18 +85,13 @@ const SETTINGS: Place = { key: 'settings', label: 'Settings', icon: 'place.setti
 function useVenueValues(venue: Venue): Record<string, string> {
   const [now] = useState(() => Date.now());
   const menus = groupMenus((useVenueMenus(venue.id).data ?? []).filter((m) => m.barId === venue.id), now);
-  const placed = useItemLocations(venue.id).data?.length ?? 0;
-  const { waiting } = useWaitingForSpot(venue.id);
   const week = useBarWeek(venue.id).data;
   const from = useWeekStart();
-  const on = useVenueFeatures().on.length;
   const team = useTeamCard(venue.id);
   return {
     menus: menusLine(menus.on.length, menus.draft.length),
-    'back-bar': backBarLine(placed, waiting.length),
     week: weekCount(week ?? [], from),
     team: team.alone ? 'Invite' : team.members ? teamLine(team.members.length, 0) : '',
-    features: featuresLine(on, VENUE_FEATURES.length),
   };
 }
 
@@ -130,8 +122,8 @@ function Group({ heading, places, values, onGo, label }: { heading?: string; pla
 }
 
 /**
- * At a venue: its working pages (Menus, Back bar, This week), then Venue,
- * in the desktop sidebar's order (My team, Features, Brand, Roles and
+ * At a venue: its working pages (Menus, Glassware, This week), then Venue,
+ * in the desktop sidebar's order (My team, Brand, Roles and
  * access, Venue settings), then You (Settings). An Admin alone on the team
  * gets Invite on My team, which opens its invite sheet.
  */

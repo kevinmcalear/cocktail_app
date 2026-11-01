@@ -159,7 +159,6 @@ function BeerWinePage({ kind, item, favorite, onToggleFavorite, inStudyPile, onT
         <DrinkDesktop
           hero={hero}
           top={top}
-          staff={false}
           heroActions={
             <>
               <GlassButton accessibilityLabel={favorite ? 'Remove from favorites' : 'Add to favorites'} icon={favorite ? 'heart.fill' : 'heart'} onMedia onPress={onToggleFavorite} />

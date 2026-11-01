@@ -12,8 +12,7 @@ import { useBarPublishing } from '@/hooks/usePublishing';
 import { useVenueSuppliers } from '@/hooks/useVenueSuppliers';
 import { useRoleMatrix } from '@/hooks/useVenueRoles';
 import { PAGE_COPY } from '@/lib/pageVisibility';
-import { canSwitchFeatures } from '@/lib/venueFeatures';
-import { useCanManageStaff, useEffectiveRole } from '@/hooks/useViewAs';
+import { useCanManageStaff } from '@/hooks/useViewAs';
 
 const plural = (n: number, one: string, many = `${one}s`) => `${n} ${n === 1 ? one : many}`;
 
@@ -108,16 +107,8 @@ export function VenueSettingsLinks({ barId }: { barId: string }) {
   const router = useRouter();
   const publishing = useBarPublishing(barId).data;
   const go = (page: string) => () => router.push(`/settings/bar/${barId}/${page}` as Href);
-  const features = canSwitchFeatures(useEffectiveRole(barId));
   return (
     <SettingsSection title="More settings">
-      {/* Features has its own page now (venue-menu proposal, 24 Oct): this keeps a way there from here. */}
-      {features ? (
-        <>
-          <SettingsRow icon="switch.2" label="Features" detail="History, Prep, Study and the rest" onPress={go('features')} />
-          <RowDivider />
-        </>
-      ) : null}
       <SettingsRow icon="sparkles" label="Setup checklist" detail="Kit, bottles, first menu, first drinks, team" onPress={go('what-next')} />
       <RowDivider />
       <SettingsRow

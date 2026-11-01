@@ -12,13 +12,6 @@ const mockSetMode = jest.fn();
 const mockEnterVenue = jest.fn();
 jest.mock('@/hooks/useMode', () => ({ useMode: () => ({ mode: mockMode, setMode: mockSetMode }) }));
 const mockVenue = { id: 'rye', name: 'Little Rye', logoUrl: null, accent: null, displayFace: 'instrument', groundTint: null, roleLevel: 40 };
-// The venue's switches come from their own query (hooks/useVenueFeatures.ts); here, a list per test.
-let mockFeatures: string[] = [];
-jest.mock('@/hooks/useVenueFeatures', () => {
-  const { featureAtHome } = jest.requireActual<typeof import('@/lib/venueFeatures')>('@/lib/venueFeatures');
-  const features = () => ({ ready: true, home: mockMode === 'home', on: mockMode === 'home' ? [] : mockFeatures, has: (k: never) => (mockMode === 'home' ? featureAtHome(k) : mockFeatures.includes(k)) });
-  return { useVenueFeatures: features, useVenueFeature: (k: never) => features().has(k) };
-});
 
 const mockOther = { ...mockVenue, id: 'pale', name: 'Pale Moth', roleLevel: 30 };
 let mockVenues = [mockVenue, mockOther];
@@ -28,7 +21,6 @@ jest.mock('@/hooks/useViewAs', () => ({ useEffectiveRole: () => mockRole, useCan
 const ON = { id: 'm1', name: 'Autumn menu', barId: 'rye', startsAt: '2026-01-01T00:00:00Z', endsAt: null, kind: 'menu' };
 const DRAFT = { id: 'm2', name: 'Winter', barId: 'rye', startsAt: null, endsAt: null, kind: 'menu' };
 jest.mock('@/hooks/useMenus', () => ({ useVenueMenus: (barId: string | null) => ({ data: barId ? [ON, DRAFT, DRAFT] : [{ ...DRAFT, barId: null }] }) }));
-jest.mock('@/hooks/useBackBar', () => ({ useItemLocations: () => ({ data: new Array(84).fill({}) }), useWaitingForSpot: () => ({ waiting: [{}, {}, {}] }) }));
 let mockMembers: { user_id: string }[] = [];
 let mockInvites: object[] = [];
 jest.mock('@/hooks/useBarDetail', () => ({ useBarMembers: () => ({ data: mockMembers }) }));
@@ -52,26 +44,10 @@ jest.mock('@/hooks/useCollection', () => ({ useCollection: () => ({ data: { drin
 beforeEach(() => {
   mockMode = 'venue';
   mockVenues = [mockVenue, mockOther];
-  mockFeatures = ['tonight', 'backBar'];
   mockMembers = Array.from({ length: 9 }, (_, i) => ({ user_id: `u${i}` }));
   mockInvites = [{}, {}];
   mockRole = 40;
   jest.clearAllMocks();
-});
-
-test('a venue with nothing switched on: Menus, then Venue with Features, then Settings', async () => {
-  mockFeatures = [];
-  await renderWithTamagui(<VenueMenuSheet onClose={jest.fn()} />);
-  expect(screen.getAllByRole('link').map((el) => el.props.accessibilityLabel)).toEqual([
-    'Menus. 1 on',
-    'Glassware',
-    'My team. 9 people',
-    'Features',
-    'Brand',
-    'Roles and access',
-    'Venue settings',
-    'Settings',
-  ]);
 });
 
 test('at a venue: titled with it, its working pages first, then Venue and You', async () => {
@@ -86,21 +62,17 @@ test('at a venue: titled with it, its working pages first, then Venue and You', 
   const places = screen.getAllByRole('link').map((el) => el.props.accessibilityLabel);
   expect(places).toEqual([
     'Menus. 1 on',
-    'Back bar. 3 waiting',
     'Glassware',
     'This week',
     'My team. 9 people',
-    'Features. 2 of 9 on',
     'Brand',
     'Roles and access',
     'Venue settings',
     'Settings',
   ]);
-  await fireEvent.press(screen.getByRole('link', { name: /^Back bar/ }));
+  await fireEvent.press(screen.getByRole('link', { name: 'Glassware' }));
   expect(onClose).toHaveBeenCalled();
-  expect(mockPush).toHaveBeenLastCalledWith('/back-bar');
-  await fireEvent.press(screen.getByRole('link', { name: /^Features/ }));
-  expect(mockPush).toHaveBeenLastCalledWith('/settings/bar/rye/features');
+  expect(mockPush).toHaveBeenLastCalledWith('/settings/bar/rye/glassware');
   await fireEvent.press(screen.getByRole('link', { name: /^My team/ }));
   expect(mockPush).toHaveBeenLastCalledWith('/team');
 });
@@ -114,12 +86,6 @@ test('Switch opens a menu of Home bar and the venues; a pick switches', async ()
   expect(onClose).toHaveBeenCalled();
   expect(mockEnterVenue).toHaveBeenLastCalledWith('pale');
   expect(mockNavigate).toHaveBeenLastCalledWith('/');
-});
-
-test('a Bartender sees no Features: only Admins switch them', async () => {
-  mockRole = 30;
-  await renderWithTamagui(<VenueMenuSheet onClose={jest.fn()} />);
-  expect(screen.queryByRole('link', { name: /^Features/ })).toBeNull();
 });
 
 test('an Admin alone on the team gets Invite on My team', async () => {

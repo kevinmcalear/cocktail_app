@@ -15,7 +15,6 @@ import { useActiveVenue } from '@/hooks/useActiveVenue';
 import { useCapabilities } from '@/hooks/useCapabilities';
 import { useIsWideWeb } from '@/hooks/useIsWideWeb';
 import { useMenu, useVenueMenus } from '@/hooks/useMenus';
-import { useVenueFeatures } from '@/hooks/useVenueFeatures';
 import { useMyBar } from '@/hooks/useHomeBar';
 import { useShoppingEdit } from '@/hooks/useShoppingList';
 import { shelfReady } from '@/lib/collectionMenus';
@@ -65,7 +64,6 @@ export function MenuScreen({ menuId }: { menuId: string }) {
   const wide = useBreakpoint() !== 'phone';
   // Wide web: the sidebar is the way around, so crumbs instead of Back, and the page sits left.
   const sidebar = useIsWideWeb();
-  const { has } = useVenueFeatures();
   const { venues } = useActiveVenue();
   const { data: menu, isLoading, error } = useMenu(menuId);
   const [now] = useState(() => Date.now());
@@ -145,8 +143,8 @@ export function MenuScreen({ menuId }: { menuId: string }) {
                 {/* A home menu: Shopping list in Date and guests' place (d35); the night moves into More. */}
                 {canEdit && home ? <ShoppingAction drinks={pictures} /> : null}
                 <MenuAction label="Share" icon="square.and.arrow.up" onPress={() => (shareable ? setSharing(true) : go(`/menus/${menu.id}/card`))} />
-                {has('study') && status === 'on' ? <MenuAction label="Study" icon="book" onPress={() => go('/study/tonight')} /> : null}
-                {has('prep') && (status === 'on' || status === 'upcoming') ? <MenuAction label="Prep" icon="flask" onPress={() => go('/prep')} /> : null}
+                {!home && status === 'on' ? <MenuAction label="Study" icon="book" onPress={() => go('/study/tonight')} /> : null}
+                {!home && (status === 'on' || status === 'upcoming') ? <MenuAction label="Prep" icon="flask" onPress={() => go('/prep')} /> : null}
                 {menu.barId && Array.isArray(caps.data) && caps.data.includes('costs') ? <MenuAction label="Costing" icon="dollarsign.circle.fill" onPress={() => go(`/menus/${menu.id}/costing`)} /> : null}
               </View>
               {canEdit && drinkCount > 0 ? <RunSheetLink menuId={menu.id} /> : null}

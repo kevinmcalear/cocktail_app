@@ -1,5 +1,4 @@
 import { usePathname, useRouter, type Href } from 'expo-router';
-import type { ReactNode } from 'react';
 import { StyleSheet, View } from 'react-native';
 
 import { Body, Caption, PressableScale, useDs } from '@/components/ds';
@@ -10,7 +9,6 @@ import { useActiveVenue } from '@/hooks/useActiveVenue';
 import { useBarInvites } from '@/hooks/useBarInvites';
 import { useIsWideWeb } from '@/hooks/useIsWideWeb';
 import { useSetupChecklist, useSetupRun } from '@/hooks/useSetupChecklist';
-import { useVenueFeatures } from '@/hooks/useVenueFeatures';
 import { useVenueClaim, useVenuePage } from '@/hooks/useVenueSetup';
 import { onItsWay } from '@/lib/venueSetup';
 import { useVenueSetup } from '@/store/useVenueSetup';
@@ -72,32 +70,26 @@ export function TonightSetupBanner({ barId }: { barId: string }) {
   return <SetupBanner count={count} onPress={() => router.push(`/venue-setup?bar=${barId}` as Href)} />;
 }
 
-/** The same banner at the top of Library, for a venue with Tonight off (new venues start with it off). */
-export function LibrarySetupBanner({ barId }: { barId: string }) {
-  const { ready, has } = useVenueFeatures();
-  return ready && !has('tonight') ? <TonightSetupBanner barId={barId} /> : null;
-}
-
 const checklistHref = (barId: string) => `/settings/bar/${barId}/what-next` as Href;
 
 /**
  * The top of Library: on a phone, "Set up <bar>" while its checklist isn't
- * done (owner-setup call 6; the sidebar has it on a desktop), else the Setup banner.
+ * done (owner-setup call 6; the sidebar has it on a desktop). The Setup
+ * banner itself is on Tonight.
  */
 export function LibrarySetup({ barId }: { barId: string }) {
   const run = useSetupRun(barId);
   const wide = useIsWideWeb();
-  const banner = <LibrarySetupBanner barId={barId} />;
-  return run && !wide ? <ChecklistCard barId={barId} fallback={banner} /> : banner;
+  return run && !wide ? <ChecklistCard barId={barId} /> : null;
 }
 
-function ChecklistCard({ barId, fallback }: { barId: string; fallback: ReactNode }) {
+function ChecklistCard({ barId }: { barId: string }) {
   const ds = useDs();
   const router = useRouter();
   const name = useActiveVenue().venues.find((v) => v.id === barId)?.name ?? 'your bar';
   const { list, loading } = useSetupChecklist(barId);
   if (loading) return null;
-  if (list.finished) return fallback;
+  if (list.finished) return null;
   const next = list.rows.find((r) => r.key === list.next)?.title;
   const line = `${list.done} of ${list.total} done${next ? ` · Next: ${next.toLowerCase()}` : ''}`;
   return (

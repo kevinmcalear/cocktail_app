@@ -12,7 +12,6 @@ export type Show =
 /**
  * Which drinks: only at a venue. Classics is the ranked list that used to be
  * called Staff list (?show=staff), Old drinks what was Past (?show=past).
- * R&D is one of the extras (EXTRA_FILTERS).
  */
 export const LIST_FILTERS: { value: Show; label: string }[] = [
   { value: 'all', label: 'All' },
@@ -54,21 +53,10 @@ export const DRINK_CATEGORIES: readonly ItemCategory[] = ['Cocktail', 'Beer', 'W
 
 const SHOWS = new Set<string>([...LIST_FILTERS, ...SHELF_FILTERS, ...TYPE_FILTERS, NEEDS_PRICE, ...KIT_FILTERS].map((f) => f.value));
 
-/**
- * The filters past All, On menu, Classics, Old drinks, Beer and Wine: a venue
- * shows them once it switches on More library filters (the libraryExtras
- * feature, lib/venueFeatures.ts).
- */
-export const EXTRA_FILTERS: ReadonlySet<Show> = new Set<Show>(['rnd', 'batched', 'preps', 'garnishes', 'bottles', 'cocktails', 'ingredients', 'needs-price']);
-
-/**
- * The filter in the URL, or All. The old Off menu screen arrives as ?show=staff.
- * At a venue without the extras, theirs fall back to All.
- */
-export function parseShow(param: string | string[] | undefined, atVenue: boolean, extras = true): Show {
+/** The filter in the URL, or All. The old Off menu screen arrives as ?show=staff. */
+export function parseShow(param: string | string[] | undefined, atVenue: boolean): Show {
   const value = Array.isArray(param) ? param[0] : param;
   const show = value && SHOWS.has(value) ? (value as Show) : 'all';
-  if (atVenue && !extras && EXTRA_FILTERS.has(show)) return 'all';
   // Without a venue there are no menus, staff list or shelves.
   if (!atVenue && (LIST_FILTERS.some((f) => f.value === show) || show === 'batched')) return 'cocktails';
   if (!atVenue && SHELF_FILTERS.some((f) => f.value === show)) return 'ingredients';
@@ -179,15 +167,13 @@ export function venueShelves(
 /**
  * The groups of the chip row, in order (desktop draws a thin line between
  * them). A venue starts with All, On menu, Classics, Old drinks (the phone's
- * order, decided 24 Oct 2026), then Beer and
- * Wine; `extras` adds R&D, the shelves, Cocktails and Needs a price.
+ * order, decided 24 Oct 2026), R&D, the shelves, the kit check, then
+ * Cocktails, Beer, Wine and Needs a price.
  */
-export function filterGroups(atVenue: boolean, canCost: boolean, extras = true): { value: Show; label: string }[][] {
+export function filterGroups(atVenue: boolean, canCost: boolean): { value: Show; label: string }[][] {
   const types = atVenue ? TYPE_FILTERS.filter((f) => f.value !== 'ingredients') : TYPE_FILTERS;
   const groups = atVenue ? [LIST_FILTERS, SHELF_FILTERS, KIT_FILTERS] : [];
-  const all = [...groups, [...types, ...(canCost ? [NEEDS_PRICE] : [])]];
-  if (!atVenue || extras) return all;
-  return all.map((g) => g.filter((f) => !EXTRA_FILTERS.has(f.value))).filter((g) => g.length);
+  return [...groups, [...types, ...(canCost ? [NEEDS_PRICE] : [])]];
 }
 
 /** The four out front on a phone, in this order (lib-filters-proposal, decided 22 Oct 2026). */

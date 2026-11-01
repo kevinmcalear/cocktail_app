@@ -8,7 +8,7 @@ import type { PrepLine } from "@/components/screens/ingredient/PrepRecipe";
 import { space } from "@/constants/tokens";
 import { useIngredient } from "@/hooks/useIngredients";
 import { useStudyPile } from "@/hooks/useStudyPile";
-import { useVenueFeature } from "@/hooks/useVenueFeatures";
+import { useMode } from "@/hooks/useMode";
 import { recentEntry, useTrackRecent } from "@/hooks/useTrackRecent";
 import { useCanEditItem } from "@/hooks/useViewAs";
 import { orderedPictures } from "@/lib/itemImages";
@@ -28,7 +28,7 @@ interface RecipeRow {
 export default function IngredientDetailScreen() {
     const { id } = useLocalSearchParams<{ id: string }>();
     const { toggleStudyPile, isInStudyPile } = useStudyPile();
-    const study = useVenueFeature("study");
+    const study = useMode().mode === "venue";
 
     // isPending, not isLoading: "no data yet" includes the static prerender and the
     // first paint, when nothing is fetching, and those must not read as not found.
