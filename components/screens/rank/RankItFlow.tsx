@@ -6,14 +6,13 @@ import { useBarProfile } from '@/hooks/useRankings';
 import { useAgeGate } from '../safety/AgeGate';
 import { RankFlow } from './RankActions';
 import { RankFindSheet, type RankPick } from './RankFindSheet';
+import { useSnapMenu } from './useSnapMenu';
 
 /** How Rank it starts: the find sheet, or straight to ranking one drink (the suggested row). */
 export type RankItStart = { kind: 'find' } | ({ kind: 'rank' } & RankPick);
 
 interface RankItFlowProps {
   start: RankItStart;
-  /** Snap the menu; null where there's no camera. */
-  onSnap: (() => void) | null;
   onClose: () => void;
 }
 
@@ -23,8 +22,9 @@ interface RankItFlowProps {
  * had at the bar picked (RankFlow's atBar). Loaded when first tapped, so
  * Tonight doesn't carry it. Mount it fresh for each tap.
  */
-export function RankItFlow({ start, onSnap, onClose }: RankItFlowProps) {
+export function RankItFlow({ start, onClose }: RankItFlowProps) {
   const ageGate = useAgeGate();
+  const onSnap = useSnapMenu();
   const [finding, setFinding] = useState(false);
   const [ranking, setRanking] = useState<RankPick | null>(null);
   // iOS presents one modal at a time: what comes next waits until the find sheet has gone (onDismiss).

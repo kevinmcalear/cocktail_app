@@ -1,6 +1,7 @@
 import assert from 'node:assert/strict';
 
-import { anywhereRows, beforeLine, latestByDrink, menusOnNow, namedFirst, pickSuggestion, tonightEntry, tonightLine } from './rankIt';
+import { namedFirst } from './discover';
+import { anywhereRows, beforeLine, latestByDrink, menusOnNow, pickSuggestion, tonightEntry, tonightLine } from './rankIt';
 
 // --- the suggested drink ---
 const wants = [
@@ -29,7 +30,7 @@ assert.equal(pickSuggestion([], runs, new Set(), names), null);
 
 // --- tonight's ranking ---
 const now = new Date('2026-11-01T01:00:00');
-const entry = (itemId: string, hadOn: string | null, createdAt: string) => ({ itemId, name: itemId, score: 9, hadOn, createdAt, venueName: null });
+const entry = (itemId: string, hadOn: string | null, createdAt: string) => ({ itemId, score: 9, hadOn, createdAt });
 const lastNight = entry('late', '2026-10-31', new Date('2026-10-31T23:00:00').toISOString());
 const longAgo = entry('old', '2026-08-02', '2026-08-02T20:00:00.000Z');
 // Ranked at 11pm still shows at 1am.
@@ -39,8 +40,8 @@ const reranked = entry('re', '2026-11-01', '2026-06-01T20:00:00.000Z');
 assert.equal(tonightEntry([lastNight, reranked], now, '2026-11-01')?.itemId, 're');
 // Nothing from tonight: null.
 assert.equal(tonightEntry([longAgo], now, '2026-11-01'), null);
-assert.equal(tonightLine({ venueName: "Caretaker's" }), "Caretaker's · tonight");
-assert.equal(tonightLine({ venueName: null }), 'At home · tonight');
+assert.equal(tonightLine({ venue: { name: "Caretaker's" } }), "Caretaker's · tonight");
+assert.equal(tonightLine({ venue: null }), 'At home · tonight');
 
 // --- "Your 8.4 in August" ---
 assert.equal(beforeLine(8.4, '2026-08-14', now), 'Your 8.4 in August');

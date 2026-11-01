@@ -1,16 +1,14 @@
-import { useRouter } from 'expo-router';
 import { lazy, Suspense, useState } from 'react';
 import { StyleSheet, View } from 'react-native';
 
-import { RankedNote, RankField, RankLabel, RankRow } from '@/components/screens/rank/RankFindParts';
+import { RankCameraButton, RankedNote, RankField, RankLabel, RankRow } from '@/components/screens/rank/RankFindParts';
 import type { RankItStart } from '@/components/screens/rank/RankItFlow';
-import { useSnapMenu } from '@/components/screens/rank/useSnapMenu';
 import { space } from '@/constants/tokens';
-import { useSignedIn } from '@/ctx/AuthContext';
 import { useRankedTonight, useRankSuggestion } from '@/hooks/useRankIt';
 import { tonightLine } from '@/lib/rankIt';
 
-// The find and rank sheets load on the first tap, not with Tonight.
+// The camera loads after Tonight; the find and rank sheets on the first tap.
+const RankCamera = lazy(() => import('@/components/screens/rank/RankCamera').then((m) => ({ default: m.RankCamera })));
 const RankItFlow = lazy(() => import('@/components/screens/rank/RankItFlow').then((m) => ({ default: m.RankItFlow })));
 
 /**
@@ -21,22 +19,26 @@ const RankItFlow = lazy(() => import('@/components/screens/rank/RankItFlow').the
  * another?".
  */
 export function RankIt() {
-  const router = useRouter();
-  const signedIn = useSignedIn();
   const suggestion = useRankSuggestion();
   const tonight = useRankedTonight();
-  const snap = useSnapMenu();
   // A new key each tap, so the flow starts over (and asks the age check again if it was closed).
   const [open, setOpen] = useState<{ key: number; start: RankItStart } | null>(null);
-  const begin = (start: RankItStart) => (signedIn ? setOpen((o) => ({ key: (o?.key ?? 0) + 1, start })) : router.push('/auth/login'));
+  const begin = (start: RankItStart) => setOpen((o) => ({ key: (o?.key ?? 0) + 1, start }));
   const find = () => begin({ kind: 'find' });
   return (
     <View role="region" aria-label="Had a drink? Rank it" style={styles.block}>
       <RankLabel>Had a drink? Rank it</RankLabel>
-      <RankField onPress={find} onCamera={snap} />
+      <RankField
+        onPress={find}
+        camera={
+          <Suspense fallback={<RankCameraButton />}>
+            <RankCamera />
+          </Suspense>
+        }
+      />
       {tonight ? (
         <>
-          <RankRow itemId={tonight.itemId} name={tonight.name} sub={tonightLine(tonight)} score={tonight.score} />
+          <RankRow itemId={tonight.itemId} imageUrl={tonight.imageUrl} name={tonight.name} sub={tonightLine(tonight)} score={tonight.score} />
           <RankedNote onPress={find} />
         </>
       ) : suggestion ? (
@@ -49,7 +51,7 @@ export function RankIt() {
       ) : null}
       {open ? (
         <Suspense fallback={null}>
-          <RankItFlow key={open.key} start={open.start} onSnap={snap} onClose={() => setOpen(null)} />
+          <RankItFlow key={open.key} start={open.start} onClose={() => setOpen(null)} />
         </Suspense>
       ) : null}
     </View>

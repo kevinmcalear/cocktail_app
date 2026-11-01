@@ -21,8 +21,8 @@ export function RankLabel({ children }: { children: string }) {
   );
 }
 
-/** "What did you have?" with search leading and the camera trailing: tap opens the Rank it sheet, the camera snaps a menu. */
-export function RankField({ onPress, onCamera }: { onPress: () => void; onCamera: (() => void) | null }) {
+/** "What did you have?" with search leading and `camera` trailing: tap opens the Rank it sheet. */
+export function RankField({ onPress, camera }: { onPress: () => void; camera: ReactNode }) {
   const ds = useDs();
   return (
     <View style={[styles.field, { backgroundColor: ds.c.raised, borderColor: ds.c.lineStrong }]}>
@@ -32,12 +32,18 @@ export function RankField({ onPress, onCamera }: { onPress: () => void; onCamera
           What did you have?
         </DsText>
       </PressableScale>
-      {onCamera ? (
-        <PressableScale role="button" accessibilityLabel="Snap the menu" onPress={onCamera} style={styles.camera}>
-          <IconSymbol name="camera" size={20} color={ds.c.muted} />
-        </PressableScale>
-      ) : null}
+      {camera}
     </View>
+  );
+}
+
+/** The field's camera: snaps a menu. No `onPress` while its code loads. */
+export function RankCameraButton({ onPress }: { onPress?: () => void }) {
+  const ds = useDs();
+  return (
+    <PressableScale role="button" accessibilityLabel="Snap the menu" disabled={!onPress} onPress={onPress} style={styles.camera}>
+      <IconSymbol name="camera" size={20} color={ds.c.muted} />
+    </PressableScale>
   );
 }
 

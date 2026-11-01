@@ -40,6 +40,8 @@ interface ListOptions {
   onNow?: boolean;
   /** Mixed: one drink from every bar, then a second, and so on (browsing, not Nearest or one bar). */
   mix?: boolean;
+  /** Read only once there's a search: the debounce starts empty, and the whole list isn't wanted. */
+  searchedOnly?: boolean;
 }
 
 interface ListPage {
@@ -53,7 +55,7 @@ interface ListPage {
  * same area keeps the last results up while it loads; a new area doesn't, so
  * the map refits.
  */
-export function useDiscoverList(filter: DrinkFilter, { barId = null, enabled = true, pageSize = PAGE, from = null, onNow = false, mix = false }: ListOptions = {}) {
+export function useDiscoverList(filter: DrinkFilter, { barId = null, enabled = true, pageSize = PAGE, from = null, onNow = false, mix = false, searchedOnly = false }: ListOptions = {}) {
   const signedIn = !!useAuth().user;
   const search = searchKey(useDebounced(filter.search, 250));
   const where = barId ? {} : areaParams(filter.area);
@@ -66,7 +68,7 @@ export function useDiscoverList(filter: DrinkFilter, { barId = null, enabled = t
     queryKey: ['discover-list', where, barId, kinds, search, pageSize, near, ...(onNow ? ['on-now'] : []), ...(mix ? ['mix'] : [])],
     // Saved: the first screen of an area people come back to. Not a searched patch of map, a bar's own, or a big page.
     meta: { persist: !barId && !searchedHere && !near && pageSize === PAGE },
-    enabled: signedIn && enabled,
+    enabled: signedIn && enabled && (!searchedOnly || !!search),
     staleTime: 10 * 60 * 1000,
     placeholderData: (previous, previousQuery) =>
       previousQuery && (JSON.stringify(previousQuery.queryKey.slice(1, 3)) === JSON.stringify([where, barId]) || (searchedHere && previousQuery.queryKey[2] === null))
@@ -125,7 +127,7 @@ async function readBars(params: Record<string, unknown>, signal: AbortSignal): P
  * here, Filters lists the closed ones, and the area's pins come first.
  * `onNow`: also how many of those are on now ("14 drinks on now"), for search.
  */
-export function useDiscoverBars(area: Area, filter: { kinds?: readonly string[]; search?: string; onNow?: boolean } = {}, enabled = true) {
+export function useDiscoverBars(area: Area, filter: { kinds?: readonly string[]; search?: string; onNow?: boolean; searchedOnly?: boolean } = {}, enabled = true) {
   const signedIn = !!useAuth().user;
   const where = areaParams(area);
   const kinds = kindParams(filter.kinds ?? []);
@@ -134,7 +136,7 @@ export function useDiscoverBars(area: Area, filter: { kinds?: readonly string[];
     queryKey: ['discover-bars', where, kinds, search, ...(filter.onNow ? ['on-now'] : [])],
     // A searched patch of map isn't worth saving between launches; near me, a city and anywhere are.
     meta: { persist: !(area.kind === 'point' && area.source === 'map') },
-    enabled: signedIn && enabled,
+    enabled: signedIn && enabled && (!filter.searchedOnly || !!search),
     staleTime: 60 * 60 * 1000,
     placeholderData: keepPreviousData,
     queryFn: ({ signal }) => readBars({ ...where, ...kinds, p_query: search || null, ...(filter.onNow ? { p_on_now: true } : {}) }, signal),

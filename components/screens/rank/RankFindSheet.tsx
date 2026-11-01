@@ -10,7 +10,7 @@ import { IconSymbol } from '@/components/ui/icon-symbol';
 import { radius, space } from '@/constants/tokens';
 import { useDrinkLists } from '@/hooks/useDiscover';
 import { useLovedBars } from '@/hooks/useKept';
-import { useRankFindNear } from '@/hooks/useRankIt';
+import { useRankFindNear } from '@/hooks/useRankFind';
 import { findDrinks } from '@/lib/discover';
 import { plural } from '@/lib/menus';
 import { anywhereRows } from '@/lib/rankIt';
@@ -82,6 +82,18 @@ function Find({ onPick, onSnap, onBar }: { onPick: (p: RankPick) => void; onSnap
   const loading = asked && !found && (near.isLoading || lists.isPending);
   // One side can fail while the other answers: say so even with rows showing.
   const failed = asked && !loading && !!(near.error || lists.error);
+  const barLeads = near.barsFirst || !near.drinks.length;
+  const drinkRows = near.drinks.map((d, i) => <RankRow key={`${d.id}-${d.barId}`} itemId={d.id} imageUrl={d.imageUrl} name={d.name} sub={`${d.bar.name} · ${d.menuName ? `on ${d.menuName}` : 'on now'}`} first={i === 0 && !barLeads} onPress={() => onPick({ itemId: d.id, name: d.name, barId: d.barId })} />);
+  const barRows = near.bars.map((b, i) => (
+    <RankRow
+      key={b.id}
+      lead={<BarMark name={b.name} logoUrl={b.logo} brand={b.brand} profileId={b.id} size={40} filled />}
+      name={b.name}
+      sub={[b.onNow ? `${plural(b.onNow, 'drink')} on now` : null, b.locality ?? b.city].filter(Boolean).join(' · ')}
+      first={i === 0 && barLeads}
+      onPress={() => onBar({ id: b.id, name: b.name })}
+    />
+  ));
   return (
     <SheetScrollView contentContainerStyle={[styles.body, { paddingBottom: insets.bottom + space.xl }]} keyboardShouldPersistTaps="handled">
       <SearchField query={query} onQuery={setQuery} placeholder="What did you have?" autoFocus />
@@ -94,19 +106,8 @@ function Find({ onPick, onSnap, onBar }: { onPick: (p: RankPick) => void; onSnap
       ) : null}
       {near.drinks.length || near.bars.length ? (
         <Section title={near.near ? 'Near you' : 'On now'}>
-          {near.drinks.map((d, i) => (
-            <RankRow key={`${d.id}-${d.barId}`} itemId={d.id} imageUrl={d.imageUrl} name={d.name} sub={`${d.bar.name} · ${d.menuName ? `on ${d.menuName}` : 'on now'}`} first={i === 0} onPress={() => onPick({ itemId: d.id, name: d.name, barId: d.barId })} />
-          ))}
-          {near.bars.map((b, i) => (
-            <RankRow
-              key={b.id}
-              lead={<BarMark name={b.name} logoUrl={b.logo} brand={b.brand} profileId={b.id} size={40} filled />}
-              name={b.name}
-              sub={[b.onNow ? `${plural(b.onNow, 'drink')} on now` : null, b.locality ?? b.city].filter(Boolean).join(' · ')}
-              first={i === 0 && !near.drinks.length}
-              onPress={() => onBar({ id: b.id, name: b.name })}
-            />
-          ))}
+          {near.barsFirst ? barRows : drinkRows}
+          {near.barsFirst ? drinkRows : barRows}
         </Section>
       ) : null}
       {classics.length ? (

@@ -3,7 +3,8 @@
  * suggest, which ranking counts as tonight's, and the words on its rows.
  * Queries are in hooks/useRankIt.ts; checked by lib/rankIt.check.ts.
  */
-import { findDrinks } from './discover';
+import type { HadDrink } from './hadDrinks';
+import { formatScore } from './ranking';
 
 /** A drink on your Want list. */
 export interface WantedDrink {
@@ -47,16 +48,8 @@ export function pickSuggestion(wants: readonly WantedDrink[], runs: readonly Dri
   return find(true) ?? find(false);
 }
 
-/** A ranking of yours, as tonight's row needs it. */
-export interface RankedEntry {
-  itemId: string;
-  name: string;
-  score: number;
-  /** The day you said you had it (rank_entries.had_on, set on every rank). */
-  hadOn: string | null;
-  createdAt: string;
-  venueName: string | null;
-}
+/** A ranking of yours: hadOn is the day you said you had it, set on every rank. */
+type RankedEntry = Pick<HadDrink, 'itemId' | 'hadOn' | 'createdAt'>;
 
 /** How long a ranking stays tonight's when it was made before midnight. */
 const TONIGHT_HOURS = 12;
@@ -74,8 +67,8 @@ export function tonightEntry<T extends RankedEntry>(entries: readonly T[], now: 
 }
 
 /** "Caretaker's · tonight", or "At home · tonight". */
-export function tonightLine(e: Pick<RankedEntry, 'venueName'>): string {
-  return `${e.venueName ?? 'At home'} · tonight`;
+export function tonightLine(e: { venue: { name: string } | null }): string {
+  return `${e.venue?.name ?? 'At home'} · tonight`;
 }
 
 const MONTHS = ['January', 'February', 'March', 'April', 'May', 'June', 'July', 'August', 'September', 'October', 'November', 'December'];
@@ -85,7 +78,7 @@ const MONTHS = ['January', 'February', 'March', 'April', 'May', 'June', 'July', 
  * year too when it wasn't this year ("Your 8.4 in August 2025").
  */
 export function beforeLine(score: number, day: string | null, now: Date): string {
-  const formatted = `Your ${score.toFixed(1)}`;
+  const formatted = `Your ${formatScore(score)}`;
   const m = day ? /^(\d{4})-(\d{2})/.exec(day) : null;
   if (!m) return formatted;
   const year = Number(m[1]);
@@ -98,7 +91,7 @@ export function beforeLine(score: number, day: string | null, now: Date): string
  * Your latest score for each drink, by id: the newest ranking of it wins.
  * For "Your 8.4 in August" on a bar's list.
  */
-export function latestByDrink<T extends Pick<RankedEntry, 'itemId' | 'createdAt' | 'hadOn'>>(entries: readonly T[]): Map<string, T> {
+export function latestByDrink<T extends RankedEntry>(entries: readonly T[]): Map<string, T> {
   const out = new Map<string, T>();
   for (const e of entries) {
     const had = out.get(e.itemId);
@@ -115,15 +108,6 @@ export function latestByDrink<T extends Pick<RankedEntry, 'itemId' | 'createdAt'
  */
 export function anywhereRows<T extends { id: string; name: string }>(classics: readonly T[], max = 4): (T & { sub: string })[] {
   return classics.slice(0, max).map((c, i) => ({ ...c, sub: i === 0 ? 'At home, or a bar not listed' : 'A classic' }));
-}
-
-/**
- * What was typed is a drink's name here, so rows named it go first (starting
- * with it, then containing it), ahead of ones that matched on an ingredient.
- */
-export function namedFirst<T extends { name: string }>(rows: readonly T[], typed: string): T[] {
-  const named = findDrinks(rows, typed);
-  return [...named, ...rows.filter((r) => !named.includes(r))];
 }
 
 /** The menu on now for each drink at its own bar: "on Autumn". Keyed `${itemId}:${profileId}`. */
