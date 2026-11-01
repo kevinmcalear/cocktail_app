@@ -6096,18 +6096,21 @@ export type Database = {
       user_prefs: {
         Row: {
           allergies: Database["public"]["Enums"]["allergen"][] | null
+          spec_view: string | null
           taste_answers: Json | null
           user_id: string
           view_as_role_level: number | null
         }
         Insert: {
           allergies?: Database["public"]["Enums"]["allergen"][] | null
+          spec_view?: string | null
           taste_answers?: Json | null
           user_id: string
           view_as_role_level?: number | null
         }
         Update: {
           allergies?: Database["public"]["Enums"]["allergen"][] | null
+          spec_view?: string | null
           taste_answers?: Json | null
           user_id?: string
           view_as_role_level?: number | null

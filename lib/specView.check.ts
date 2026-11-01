@@ -8,9 +8,9 @@ import { defaultSpecView, methodVerb, pickSpecView, scaledAmount, serveLine, sna
 // Who is looking decides the default; a person's own pick sticks over it.
 assert.equal(defaultSpecView(true), 'steps');
 assert.equal(defaultSpecView(false), 'ingredients');
-assert.equal(pickSpecView({}, 'me', true), 'steps');
-assert.equal(pickSpecView({ me: 'ingredients' }, 'me', true), 'ingredients', 'my pick wins over the maker default');
-assert.equal(pickSpecView({ someoneElse: 'ingredients' }, 'me', true), 'steps', 'per person: another person on this device keeps theirs');
+assert.equal(pickSpecView(null, true), 'steps');
+assert.equal(pickSpecView('ingredients', true), 'ingredients', 'my pick wins over the maker default');
+assert.equal(pickSpecView(undefined, false), 'ingredients');
 
 // Jigger marks: quarter ounces, 2.5 ml under 30, 5 ml from 30, whole grams; never to zero.
 assert.equal(snapToJigger(44, 'ml'), 45);
@@ -60,3 +60,7 @@ assert.equal(serveLine(['Rocks', null, ' Large cube ', '', 'Candied ginger']), '
 assert.equal(serveLine([null]), null);
 
 console.log('specView: sticky view, Makes on jigger marks, grouped by step');
+
+// Step keys (drink_step_notes.step_key): the first part is main, like a drink in one part.
+assert.deepEqual(groups.map((g) => g.key), ['main', 'float', 'garnish']);
+assert.deepEqual(specGroups(parts, 'Build').map((g) => g.key), ['main', 'part-2']);

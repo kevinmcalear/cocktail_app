@@ -23,6 +23,8 @@ interface EditSnapshot {
   recipeItems: SortableRecipeItem[];
   /** Made in parts, where the editor has them (a draft doesn't): removing a part says Undo is in the toolbar. */
   parts: unknown;
+  /** The words on its steps, where the editor has them (a draft doesn't). */
+  stepNotes: unknown;
 }
 
 /** A pause this long ends a burst of typing, so the next change is a new step. */
@@ -42,6 +44,7 @@ const snapshotOf = (e: Editor): EditSnapshot => ({
   methodIceId: 'methodIceId' in e ? e.methodIceId : null,
   recipeItems: e.recipeItems,
   parts: 'parts' in e ? e.parts : null,
+  stepNotes: 'stepNotes' in e ? e.stepNotes : null,
 });
 
 /**
@@ -68,6 +71,7 @@ export function useEditHistory(editor: Editor) {
       if (s.methodIceId !== editor.methodIceId) editor.setMethodIceId(s.methodIceId);
     }
     editor.setRecipeItems(s.recipeItems);
+    if ('setStepNotes' in editor) editor.setStepNotes((s.stepNotes as typeof editor.stepNotes) ?? {});
   });
 }
 

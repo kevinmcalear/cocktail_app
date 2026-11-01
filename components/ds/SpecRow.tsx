@@ -44,6 +44,9 @@ export interface SpecRowProps {
   alignAmount?: boolean;
 }
 
+/** The amount column's width at scale 1: a step's note lines up with the names after it (SpecCard). */
+export const SPEC_AMOUNT_WIDTH = 96;
+
 /**
  * One line of a spec, readable across the bar: the amount in its own aligned
  * column in the accent, then the ingredient, then its drawing at the right edge.
@@ -58,7 +61,7 @@ export function SpecRow({ amount, ingredient, ingredientId, houseMade, optional,
   const showAmount = amount.length > 0 || !!alignAmount;
   const split = !!onPressAmount && amount.length > 0;
   const rest = [ingredient, detail, houseMade && 'house-made', floated && 'float', optional && 'optional', note, flag].filter(Boolean).join(', ');
-  const amountWidth = { width: 96 * scale };
+  const amountWidth = { width: SPEC_AMOUNT_WIDTH * scale };
   const cell = dense ? styles.dense : styles.cell;
 
   const text = (

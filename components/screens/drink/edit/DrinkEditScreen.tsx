@@ -25,6 +25,7 @@ import { ShotList } from '../ShotList';
 import { AccessSheet, EditMoreMenu, GrowingField, PhotosSheet, StepHead, type DrinkEditor, type MoreChoice } from './EditParts';
 import { DrinkSpec } from './DrinkSpec';
 import { EditCredits } from './EditCredits';
+import { EditStepNotes } from './EditStepNotes';
 import { EditToolbar } from './EditToolbar';
 import { FitGlassEdit, useDraftGlassFill } from './FitGlassEdit';
 import { MadeList } from './MadeList';
@@ -179,6 +180,7 @@ export function EditPage({ editor, id, onExit, openOn }: { editor: DrinkEditor; 
       />
       {cocktail ? <FitGlassEdit editor={editor} item={cocktail} result={fill} open={sheet === 'fit'} onOpen={() => setSheet('fit')} onClose={() => setSheet(null)} /> : null}
       <MadeList editor={editor} itemId={id} />
+      {'setStepNote' in editor ? <EditStepNotes editor={editor} known={cocktail?.item_methods} /> : null}
       {id ? <EditCredits itemId={id} /> : null}
       <StepHead step="notes" />
       <View style={styles.section}>

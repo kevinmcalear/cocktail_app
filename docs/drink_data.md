@@ -87,6 +87,22 @@ settings. A person's own Units (Settings) wins over it, on their device:
 `store/useSettingsStore.ts` `units`, null to follow the bar (`barUnit`, kept by
 `hooks/useBarUnitSync.ts`), and with no bar, ml.
 
+## Step words
+
+The Steps view groups a spec's lines by step (`lib/specView.ts` `specGroups`).
+Steps aren't rows; each has a key: `main` (the first pour, or the first part),
+`float`, `part-2` and on, `garnish`. `drink_step_notes` keeps the words on
+them, one row per drink and step: an `aside` beside the step's name ("hard,
+with ice", 60 characters) and a `note` under its lines (500). Those who edit
+the drink write them, in the editor's Steps field; anyone who can read the
+drink's amounts reads them. The drink page reads them with the drink
+(`step_notes` in `DRINK_PAGE_COLUMNS`), so the spec book has them offline. A
+part moved in the editor takes its words with it; a step the drink no longer
+has loses its words on save.
+
+Ingredients | Steps is the person's: `user_prefs.spec_view`, read by
+`hooks/useSpecView.ts`. Signed out, it stays on the device.
+
 ## Who sees the spec
 
 Permissions decide (20261204300000). Each role's permissions open what it

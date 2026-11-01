@@ -18,7 +18,7 @@ export { PopoverMenu, usePopover, type Anchor, type PopoverItem, type PopoverSec
 export { PressableScale } from './PressableScale';
 export { ReviewMark, ReviewRow, TextLink, type ReviewChoice, type ReviewState } from './ReviewRow';
 export { Segmented } from './Segmented';
-export { SpecRow, type SpecRowProps } from './SpecRow';
+export { SPEC_AMOUNT_WIDTH, SpecRow, type SpecRowProps } from './SpecRow';
 export { BreakpointOverride, Surface, useBreakpoint, useGutter, type Breakpoint } from './Surface';
 export { Switch } from './Switch';
 export { Tag, type TagTone } from './Tag';

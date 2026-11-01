@@ -17,6 +17,8 @@ import { fetchEditableRecipes } from "@/lib/editableRecipes";
 import { mapPresentationRecipeToEditItem } from "@/lib/recipeUtils";
 import { supabase } from "@/lib/supabase";
 import { saveDrinkSpec } from "@/hooks/useVersions";
+import { fetchStepNotes, saveStepNotes } from "@/hooks/useStepNotes";
+import { draftSteps, stepDraft, stepNoteChanges, type StepDraft, type StepNote, type StepWords } from "@/lib/stepNotes";
 import { resolveEditItems } from "@/hooks/specLineSave";
 import { refreshIngredients } from "@/hooks/useDropdowns";
 import { showMessage } from "@/lib/dialogs";
@@ -80,6 +82,11 @@ export function useCocktailEditor(id: string, { enabled = true }: { enabled?: bo
     // Each method's name as loaded with the drink, for part 1 when parts are turned on (the shared list may not have it yet).
     const methodNames = useRef<Record<string, string>>({});
     const [localImages, setLocalImages] = useState<ImageItem[]>([]);
+    // The words on its steps (drink_step_notes): an aside by a step's name, a note under it. Null until read; a failed read saves none.
+    const [stepNotes, setStepNotesState] = useState<StepDraft>({});
+    const storedNotes = useRef<StepNote[] | null>(null);
+    // The Steps field shows only once they're read, so nothing is typed that a save would drop.
+    const [stepNotesRead, setStepNotesRead] = useState(false);
 
     const markDirty = useCallback(() => setIsDirty(true), []);
 
@@ -108,6 +115,13 @@ export function useCocktailEditor(id: string, { enabled = true }: { enabled?: bo
         setRecipeItems(items);
         markDirty();
     }, [markDirty]);
+
+    const setStepNotes = wrap(setStepNotesState);
+    /** One step's aside or note typed. */
+    const setStepNote = (key: string, patch: Partial<StepWords>) => {
+        setStepNotesState((prev) => ({ ...prev, [key]: { ...(prev[key] ?? { aside: "", note: "" }), ...patch } }));
+        markDirty();
+    };
 
     const setLocalImagesDirty = useCallback((images: ImageItem[] | ((prev: ImageItem[]) => ImageItem[])) => {
         setLocalImages(images);
@@ -154,8 +168,9 @@ export function useCocktailEditor(id: string, { enabled = true }: { enabled?: bo
                 )
                 .eq("id", id)
                 .single(),
+            fetchStepNotes(id).catch(() => null),
         ])
-            .then(([recipes, { data, error }]) => {
+            .then(([recipes, { data, error }, notesRead]) => {
                 if (error || !data) throw error ?? new Error("Cocktail not found");
                 // Keyed by row, so each part can name its lines.
                 const items = recipes.map((r: any) => ({
@@ -180,6 +195,9 @@ export function useCocktailEditor(id: string, { enabled = true }: { enabled?: bo
                 if (loaded) setMethodIds(orderedMethodIds(methodRows));
                 setPartsState(loaded);
                 setRecipeItems(orderByPart(loaded, items));
+                storedNotes.current = notesRead;
+                setStepNotesRead(!!notesRead);
+                setStepNotesState(stepDraft(notesRead));
                 setBarId(data.bar_id);
                 setSketchVariant(data.sketch_variant ?? null);
                 setGlassModelState((data as unknown as { glass_model: GlassModel | null }).glass_model ?? null);
@@ -220,7 +238,7 @@ export function useCocktailEditor(id: string, { enabled = true }: { enabled?: bo
     const specForm = () => ({
         name, description, origin, notes, methodIds, glasswareId, familyId, iceId, methodIceId, iceBuild, iceTouched: iceTouched.current,
         sketchVariant, glassModel, barId, overrideVisibility, overrideGeneric, overrideSpecific, overrideMeasurement, overridePrep,
-        recipeItems, parts, localImages,
+        recipeItems, parts, localImages, stepNotes,
     });
     type SpecForm = ReturnType<typeof specForm>;
     const applyForm = (f: SpecForm) => {
@@ -230,17 +248,20 @@ export function useCocktailEditor(id: string, { enabled = true }: { enabled?: bo
         setOverrideVisibility(f.overrideVisibility); setOverrideGeneric(f.overrideGeneric); setOverrideSpecific(f.overrideSpecific);
         setOverrideMeasurement(f.overrideMeasurement); setOverridePrep(f.overridePrep); setRecipeItems(f.recipeItems); setPartsState(f.parts);
         setLocalImages(f.localImages);
+        // An edit kept before steps had words has none.
+        setStepNotesState(f.stepNotes ?? {});
         markDirty();
     };
-    // The spec as it loaded, for telling whether it changed under an edit kept offline.
+    // The spec as it loaded, for telling whether it changed under an edit kept offline. Not the step words: a read of them that failed once isn't a change.
     const loadedBase = useRef("");
+    const baseOf = ({ stepNotes: _words, ...form }: SpecForm) => specFingerprint(form);
     const keepOffline = () => {
         useOfflineEdits.getState().keep(id, { at: Date.now(), base: loadedBase.current, form: specForm() });
         showMessage("Kept on this phone", "There’s no signal, so your edit is saved here as a draft. Open this drink’s editor with signal and save to send it.");
     };
     useEffect(() => {
         if (!rawLoaded) return;
-        loadedBase.current = specFingerprint(specForm());
+        loadedBase.current = baseOf(specForm());
         const kept = useOfflineEdits.getState().edits[id];
         if (!kept) return;
         const when = new Date(kept.at).toLocaleString([], { weekday: "short", hour: "numeric", minute: "2-digit" });
@@ -490,6 +511,9 @@ export function useCocktailEditor(id: string, { enabled = true }: { enabled?: bo
                       ? { methodParts: methodIds.map(() => 1), parts: [] }
                       : undefined
             );
+            // The words on its steps, by the steps it has now: a step gone takes its words with it.
+            const notesChanged = storedNotes.current && stepNoteChanges(storedNotes.current, stepNotes, draftSteps(ordered, parted, null).map((g) => g.key));
+            if (notesChanged) await saveStepNotes(id, notesChanged.rows, notesChanged.gone);
             if (spec.created.length) void refreshIngredients(queryClient, spec.created);
             if (spec.warnings.length) showMessage("Saved", spec.warnings.join("\n\n"));
 
@@ -567,6 +591,10 @@ export function useCocktailEditor(id: string, { enabled = true }: { enabled?: bo
         setParts,
         setMadeInParts,
         togglePartMethod,
+        stepNotes,
+        stepNotesRead,
+        setStepNote,
+        setStepNotes,
         localImages,
         setLocalImages: setLocalImagesDirty,
         addImages,

@@ -173,6 +173,11 @@ export const DRINK_PAGE_COLUMNS = `
         method:items!item_methods_method_item_id_fkey (
             name
         )
+    ),
+    step_notes:drink_step_notes (
+        step_key,
+        aside,
+        note
     )
 `;
 
