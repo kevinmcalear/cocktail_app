@@ -21,6 +21,8 @@ export interface ListRow {
   offBy: string | null;
   replacesItemId: string | null;
   teamSharedAt: string | null;
+  /** When the row was made: when a change waiting was asked for. */
+  addedAt: string;
   state: ListRowState;
 }
 
@@ -44,7 +46,7 @@ export const listKeys = {
   day: (menuId: string, day: string) => ['living-list', menuId, 'day', day] as const,
 };
 
-const ROW_COLUMNS = 'id, item_id, menu_section_id, sort_order, price, slot_name, on_from, off_at, added_by, off_by, replaces_item_id, waiting, team_shared_at';
+const ROW_COLUMNS = 'id, item_id, menu_section_id, sort_order, price, slot_name, on_from, off_at, added_by, off_by, replaces_item_id, waiting, team_shared_at, created_at';
 
 /** Every drink on a list, with its state; what the caller may read (planned and waiting rows are the menu team's until shared). */
 export function useListRows(menuId: string | null | undefined) {
@@ -67,6 +69,7 @@ export function useListRows(menuId: string | null | undefined) {
         offBy: r.off_by,
         replacesItemId: r.replaces_item_id,
         teamSharedAt: r.team_shared_at,
+        addedAt: r.created_at,
         state: listRowState(r),
       }));
     },

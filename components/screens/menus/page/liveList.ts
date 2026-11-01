@@ -58,7 +58,8 @@ export function liveList({ sections, sectionIds, rows, ended, endedDrinks, may, 
       const swapFor = row.replacesItemId ? sections.flatMap((x) => x.rows).find((r) => r.drink.id === row.replacesItemId)?.drink.name : null;
       if (row.state === 'waiting_on' || row.state === 'waiting_off') {
         const on = row.state === 'waiting_on';
-        const what = [asked ? `${asked} asked` : 'Asked', on ? (swapFor ? `on in place of ${swapFor}` : 'to go on') : 'to come off'].join(' · ');
+        // A take-off's ask isn't timed in the data (the row is as old as its run); a drink asked on is (the row is new).
+        const what = [on ? `${asked ?? 'Someone'} asked at ${time(row.addedAt)}` : `${asked ?? 'Someone'} asked`, on ? (swapFor ? `on in place of ${swapFor}` : 'to go on') : 'to come off'].join(' · ');
         lead.push({
           ...view,
           line: what,
