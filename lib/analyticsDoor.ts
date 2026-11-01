@@ -1,4 +1,5 @@
 import { analyticsAvailable, analyticsOptedOut, track, type Door } from '@/lib/analytics';
+import { isFirstSignIn } from '@/lib/authCode';
 import { deviceStore } from '@/lib/deviceStore';
 
 export const ANALYTICS_DOOR_KEY = 'analytics_door_v1';
@@ -48,13 +49,15 @@ export function noteRankedSignedOut(): void {
 
 /**
  * Someone signed in on this device, by code or email link (AnalyticsIdentity
- * sees both). Sends kept for ranks waiting here, then forgets what was held.
+ * sees both). Sends sign_up with the way in when the account is new, and kept
+ * for ranks waiting here, then forgets what was held.
  */
-export function noteSignIn(): void {
+export function noteSignIn(user: Parameters<typeof isFirstSignIn>[0]): void {
   if (!analyticsAvailable()) return;
   void inTurn(async () => {
     const held = await read();
     await deviceStore.removeItem(ANALYTICS_DOOR_KEY).catch(() => undefined);
+    if (isFirstSignIn(user)) track('sign_up', { source: held.door ?? 'direct' });
     if (held.ranks > 0) track('kept', { ranks: held.ranks });
   }).catch(() => undefined);
 }
