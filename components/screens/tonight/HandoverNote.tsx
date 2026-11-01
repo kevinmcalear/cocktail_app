@@ -67,7 +67,7 @@ function Group({ title, icon, rows, action }: { title: string; icon: IconName; r
  * marks it read; once read, Add to it. In a sheet on phones, beside Tonight
  * on wide web (Loop-tonight-desk).
  */
-export function HandoverView({ h, onGotIt, onAdd, logBatch, ranOutSub }: { h: Handover; onGotIt: () => void; onAdd: () => void; logBatch?: (name: string) => (() => void) | null; ranOutSub?: (item: string) => string | null }) {
+export function HandoverView({ h, onGotIt, onAdd, logBatch, ranOutSub, forNight }: { h: Handover; onGotIt: () => void; onAdd: () => void; logBatch?: (name: string) => (() => void) | null; ranOutSub?: (item: string) => string | null; forNight?: string }) {
   const note = h.last;
   if (!note) return null;
   return (
@@ -81,7 +81,7 @@ export function HandoverView({ h, onGotIt, onAdd, logBatch, ranOutSub }: { h: Ha
       <Group
         title="What to prep"
         icon="drop.fill"
-        rows={note.prep}
+        rows={note.prep.map((line) => ({ ...line, sub: [line.sub, forNight && `for ${forNight}`].filter(Boolean).join(', ') || null }))}
         action={(line) => {
           const log = logBatch?.(line.name);
           return log ? <Button label="Log batch" size="sm" variant="secondary" accessibilityLabel={`Log a batch of ${line.name}`} onPress={log} /> : null;

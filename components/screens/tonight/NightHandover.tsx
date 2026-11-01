@@ -52,6 +52,8 @@ export function useNightHandover(t: Staff, barId: string, wide: boolean): NightH
     const id = t.houseMadeId(name);
     return id ? logNow(id, name) : null;
   };
+  // Tonight's close is for whoever opens tomorrow; the last close's was for whoever opens today.
+  const night = (close: string) => (t.date ? (close === h.tonight ? nextNight(t.date) : weekday(t.date)) : 'the next shift');
   // Saved here, not in the writing sheet: the sheet closes at once, and a failed send still needs somewhere to say so.
   const leaveWords = (closeDate: string, words: Words) => {
     if (!h.me) return;
@@ -74,9 +76,7 @@ export function useNightHandover(t: Staff, barId: string, wide: boolean): NightH
     const ids = new Set(t.blocks.flatMap((b) => b.sections.flatMap((s) => s.drinks.map((d) => d.id))));
     return (book?.items ?? []).filter((i) => ids.has(i.id)).map((i) => ({ name: i.name, uses: recipeNames(i.recipes).flatMap((l) => (l.ingredient ? [l.ingredient] : [])) }));
   }, [book, t.blocks]);
-  const view = { h, onGotIt: gotIt, onAdd: add, logBatch, ranOutSub: (item: string) => ranOutLine(item, onTonight) };
-  // Tonight's close is for whoever opens tomorrow; the last close's was for whoever opens today.
-  const night = (close: string) => (t.date ? (close === h.tonight ? nextNight(t.date) : weekday(t.date)) : 'the next shift');
+  const view = { h, onGotIt: gotIt, onAdd: add, logBatch, ranOutSub: (item: string) => ranOutLine(item, onTonight), forNight: h.last ? night(h.last.closeDate) : undefined };
 
   return {
     // Wide, the note open beside Tonight replaces its card.
