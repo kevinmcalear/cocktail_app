@@ -3,16 +3,15 @@ import { useState } from 'react';
 import { ScrollView, StyleSheet, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
-import { Body, Button, useDs } from '@/components/ds';
+import { Body, Caption, GlassButton, useDs } from '@/components/ds';
 import { PageHeader, usePageColumn } from '@/components/nav/Page';
 import { InviteTeamCard, useOpenTeam, useTeamCard } from '@/components/nav/TeamCard';
-import { space } from '@/constants/tokens';
+import { font, space } from '@/constants/tokens';
 import { useUserId } from '@/ctx/AuthContext';
 import { useActiveVenue } from '@/hooks/useActiveVenue';
 import { useCapabilities, useCapabilityOpensAt } from '@/hooks/useCapabilities';
 import { useVenueMenus } from '@/hooks/useMenus';
 import { useMode } from '@/hooks/useMode';
-import { groupMenus } from '@/lib/menus';
 import { roleLabel } from '@/lib/roles';
 
 import { MenuGroupList } from './MenuGroupList';
@@ -47,29 +46,23 @@ export function MenusScreen() {
 
   // The same groups in both modes: a venue's menus, or with none, your own.
   const own = menus.filter((m) => (barId ? m.barId === barId : m.barId === null && m.createdBy === userId));
-  const venue = groupMenus(own, now);
-  // The venue leads: "Little Rye · 1 on now · 2 coming up".
-  const summary = [
-    barId ? (active?.name ?? null) : 'For nights in',
-    venue.on.length ? `${venue.on.length} on now` : null,
-    venue.upcoming.length ? `${venue.upcoming.length} coming up` : null,
-  ]
-    .filter(Boolean)
-    .join(' · ');
-
   return (
     <View style={[styles.screen, { backgroundColor: ds.c.ground }]}>
       <ScrollView contentContainerStyle={[column, styles.content, { paddingBottom: insets.bottom + space.xxxl }]}>
         <PageHeader
           title="Menus"
           display
-          subtitle={summary}
+          above={
+            <Caption tone="muted" style={styles.eyebrow}>
+              {(barId ? (active?.name ?? '') : 'At home').toUpperCase()}
+            </Caption>
+          }
           onBack={() => (router.canGoBack() ? router.back() : router.navigate(barId ? '/' : '/drinks'))}
           backLabel={barId ? `Back to ${first}` : 'Back'}
           backText={barId ? first : 'Drinks'}
           crumbs={[barId ? { label: first, href: '/' } : { label: 'Drinks', href: '/drinks' }]}
           actionOnTop
-          action={canCreate ? <Button label="New menu" icon="plus" onPress={() => setCreating(true)} /> : null}
+          action={canCreate ? <GlassButton icon="plus" accessibilityLabel="New menu" onPress={() => setCreating(true)} /> : null}
         />
 
         {error ? <Body tone="muted">Couldn’t load the menus. Pull down or come back in a moment.</Body> : null}
@@ -82,16 +75,26 @@ export function MenusScreen() {
           </>
         ) : null}
 
-        <MenuGroupList menus={own} now={now} canBuild={canBuild || !barId} opensAt={opensAt ? roleLabel(opensAt) : undefined} />
+        <MenuGroupList
+          menus={own}
+          now={now}
+          canBuild={canBuild || !barId}
+          opensAt={opensAt ? roleLabel(opensAt) : undefined}
+          pastShown={PAST_SHOWN}
+          onAllPast={() => router.push('/menus/past')}
+        />
       </ScrollView>
       {creating && canCreate ? <NewMenuSheet visible onClose={() => setCreating(false)} menus={menus} now={now} /> : null}
     </View>
   );
 }
 
+const PAST_SHOWN = 2;
+
 const styles = StyleSheet.create({
   screen: { flex: 1 },
-  content: { gap: space.lg },
+  content: { gap: space.xl },
+  eyebrow: { letterSpacing: 1.5, ...font.medium },
 });
 
 /** An empty venue's Menus asks an Admin alone on the team to invite people (venue-library-empty-admin). */
