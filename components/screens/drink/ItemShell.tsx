@@ -72,7 +72,8 @@ export function ItemShell({ name, pane, photo, art, size, liquid, title, action,
   const tuck = heroHeight - (top + layout.minTapTarget + space.sm * 2) + space.lg;
   // iPhones have the system's bar, Android phones the Material one. The web and two columns draw theirs (PageControls).
   const nativeBar = Platform.OS === 'ios' && !columns && !pane;
-  const materialBar = Platform.OS === 'android' && !columns;
+  // A pane (the Library beside its list, the editor's preview) keeps the drawn controls.
+  const materialBar = Platform.OS === 'android' && !columns && !pane;
   useItemHeader({ name, on: nativeBar, pane, glyph: photo ? null : <DockGlyph art={art(false)} size={size} />, scrollY, tuck, controls });
   const barHeight = use(HeaderHeightContext) ?? 0;
   // Where it goes, from the page under this one, where there's room for a label (desktop boards).
@@ -133,7 +134,7 @@ export function ItemShell({ name, pane, photo, art, size, liquid, title, action,
             <View style={{ paddingHorizontal: gutter, marginTop: photo ? -space.xxl : 0 }}>{body(false)}</View>
           </Animated.ScrollView>
           {materialBar ? (
-            <MaterialBar name={name} top={top} photo={!!photo} hero={heroHeight} scrollY={scrollY} noBack={pane} controls={controls} drawing={photo ? null : dock({ dockLeft: MATERIAL_DOCK.left, dockTop: top + MATERIAL_DOCK.top })} />
+            <MaterialBar name={name} top={top} photo={!!photo} hero={heroHeight} width={width} scrollY={scrollY} noBack={pane} controls={controls} drawing={photo ? null : dock({ dockLeft: MATERIAL_DOCK.left, dockTop: top + MATERIAL_DOCK.top })} />
           ) : nativeBar ? (
             underNativeBar
           ) : (

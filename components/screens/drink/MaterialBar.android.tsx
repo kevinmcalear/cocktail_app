@@ -1,7 +1,7 @@
 import { useRouter } from 'expo-router';
 import { StatusBar } from 'expo-status-bar';
 import { createContext, use, useMemo, useState, type ComponentProps, type ReactNode } from 'react';
-import { Pressable, StyleSheet, useWindowDimensions, View } from 'react-native';
+import { Pressable, StyleSheet, View } from 'react-native';
 import Animated, { interpolate, useAnimatedStyle, type SharedValue } from 'react-native-reanimated';
 
 import { DsText, GlassButton, PressableScale, useDs } from '@/components/ds';
@@ -24,8 +24,9 @@ const TITLE_SCALE = displayName.row.fontSize / displayName.page.fontSize;
 /** "Edit" with its pencil, its padding and the gap after it. */
 const EDIT_WIDTH = 92;
 
-/** The fill comes in as the drawing lands (And-page: 200 to 280). */
-const FILL = [200, 280];
+/** The fill comes in as the body nears the bar: on And-page (hero 350) that is 200 to 280. */
+const FILL_EARLY = 50;
+const FILL_LATE = 30;
 /** The name's ride (And-scroll-glide: 90 to 290, eased). */
 const rideAt = (y: number) => {
   'worklet';
@@ -105,6 +106,8 @@ interface MaterialBarProps {
   photo: boolean;
   /** The hero's height. */
   hero: number;
+  /** The page's own width (a pane can be narrower than the window). */
+  width: number;
   scrollY: SharedValue<number>;
   noBack?: boolean;
   controls: Controls;
@@ -117,19 +120,23 @@ interface MaterialBarProps {
  * And-scroll-glide-*): 64 dp, plain icon Back and Share, a tonal Edit. On a
  * drawing's page the bar stays clear while the drawing and the name fold into
  * it, then fills. On a photo the icons sit in 40 dp tonal circles until the
- * bar fills, and the small name fades in. Drawn here, not the system's: @expo/ui
- * has no flexible app bar yet (And-kit-hybrid, Kevin's pick); swap when it ships.
+ * bar fills, and the small name fades in.
+ *
+ * ponytail: drawn in React Native, not the system's, because @expo/ui has no
+ * flexible top app bar yet (And-kit-hybrid, Kevin's pick). Swap to Compose's
+ * when @expo/ui ships one.
  */
-export function MaterialBar({ name, top, photo, hero, scrollY, noBack, controls, drawing }: MaterialBarProps) {
+export function MaterialBar({ name, top, photo, hero, width, scrollY, noBack, controls, drawing }: MaterialBarProps) {
   const ds = useDs();
   const router = useRouter();
   const tones = useItemTones();
-  const { width } = useWindowDimensions();
   const { save, onShare, onEdit, editLabel = 'Edit', more } = controls;
   const room = [save, onShare, more].filter(Boolean).length * material.iconButton + (onEdit ? EDIT_WIDTH : 0) + material.barInset;
   // A photo page fills when its first line reaches the bar: the body rides up over the hero by space.xxl.
   const tuck = hero - space.xxl - top - material.bar;
-  const fillAt = photo ? [tuck, tuck + 80] : FILL;
+  // A drawing's page fills as its body nears the bar, whatever the drawing's size.
+  const under = hero - top - material.bar;
+  const fillAt = photo ? [tuck, tuck + 80] : [under - FILL_EARLY, under + FILL_LATE];
   const fill = useAnimatedStyle(() => ({ opacity: interpolate(scrollY.get(), fillAt, [0, 1], 'clamp') }));
   const circleFade = useAnimatedStyle(() => ({ opacity: interpolate(scrollY.get(), fillAt, [1, 0], 'clamp') }));
   const circle = tones.circle ? { color: tones.circle, fade: circleFade } : null;
@@ -154,7 +161,7 @@ export function MaterialBar({ name, top, photo, hero, scrollY, noBack, controls,
                 </DsText>
               </PressableScale>
             ) : null}
-            {onShare ? <BarIcon label="Share" icon="square.and.arrow.up" onPress={onShare} /> : null}
+            {onShare ? <BarIcon label="Share" icon="share.nodes" onPress={onShare} /> : null}
             {more}
           </View>
         </Circle>

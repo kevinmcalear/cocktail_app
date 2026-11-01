@@ -39,6 +39,8 @@ const warning = (dark: boolean) => (dark ? { fill: withAlpha(lch(0.4, 0.09, 35),
 function seed(liquid: string | null, accent: string) {
   const k = hexToOklch(liquid ?? accent);
   if (liquid && k.C < 0.04) return { H: 235, C: 0.055 };
+  // A black, white or grey accent has no hue to speak of: warm neutrals, as over a photo.
+  if (k.C < 0.04) return { H: 80, C: 0.03 };
   return { H: k.H, C: Math.min(0.16, Math.max(0.11, k.C * 1.3)) };
 }
 

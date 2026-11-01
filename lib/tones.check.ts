@@ -29,6 +29,8 @@ assert.equal(pen.circle, null, 'no circles on a drawing');
 // A clear drink is icy blue; an item with no colour takes the accent; a warning never takes either.
 assert.ok(Math.abs(hexToOklch(itemTones('#8F887E', ACCENT, 'light').tonal).H - 235) < 10, 'clear drink is icy');
 assert.ok(Math.abs(hexToOklch(itemTones(null, ACCENT, 'light').tonal).H - hexToOklch(ACCENT).H) < 8, 'no colour: the accent');
+// A grey or black accent stays neutral, never a hue from rounding.
+for (const grey of ['#000000', '#7A7A7A', '#FFFFFF']) assert.ok(hexToOklch(itemTones(null, grey, 'light').primary).C < 0.05, `${grey}: neutral`);
 assert.deepEqual(itemTones('#2B4A8F', ACCENT, 'light').warn, itemTones('#9f363b', ACCENT, 'light').warn);
 
 // Over a photo: circles, and neutral controls that read.

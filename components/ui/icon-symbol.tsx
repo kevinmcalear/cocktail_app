@@ -13,8 +13,8 @@ import { GLYPHS, ICON_FILL, ICON_STROKE, type GlyphName } from './glyphs';
  * Decorative: say what it does on the control that holds it.
  */
 export function IconSymbol({ name, size = 24, color, on, style }: { name: GlyphName; size?: number; color: ColorValue; on?: boolean; style?: StyleProp<ViewStyle> }) {
-  // Android's back is an arrow, not the iOS chevron (every chevron.left in the app is a back button), and its Share is the three nodes.
-  const glyph = GLYPHS[Platform.OS === 'android' ? (ANDROID[name] ?? name) : name];
+  // Android's back is an arrow, not the iOS chevron (every chevron.left in the app is a back button).
+  const glyph = GLYPHS[name === 'chevron.left' && Platform.OS === 'android' ? 'arrow.left' : name];
   const fill = (on || glyph.on) && glyph.f;
   return (
     <Svg width={size} height={size} viewBox="0 0 24 24" fill="none" style={style} aria-hidden>
@@ -25,7 +25,6 @@ export function IconSymbol({ name, size = 24, color, on, style }: { name: GlyphN
   );
 }
 
-const ANDROID: Partial<Record<GlyphName, GlyphName>> = { 'chevron.left': 'arrow.left', 'square.and.arrow.up': 'share.nodes' };
 
 /** The day's size in the glyph's 24-unit box: the board's 7.5, a touch bigger to read at tab size. */
 const DAY_UNITS = 8;

@@ -11,7 +11,7 @@ export function MaterialPage({ children }: { liquid: string | null; photo: boole
   return <>{children}</>;
 }
 
-export function MaterialBar(_: { name: string; top: number; photo: boolean; hero: number; scrollY: SharedValue<number>; noBack?: boolean; controls: Controls; drawing: ReactNode }) {
+export function MaterialBar(_: { name: string; top: number; photo: boolean; hero: number; width: number; scrollY: SharedValue<number>; noBack?: boolean; controls: Controls; drawing: ReactNode }) {
   return null;
 }
 
