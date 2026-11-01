@@ -18,9 +18,14 @@ export const DOCK_SCROLL = 260;
 /** The last points of the Dock, where the system's bar takes over from the drawing over the page. */
 export const dockFade = (dock: number) => [dock - space.lg, dock];
 
-/** Where the drawing rests: under the top controls, centred. */
+/** Where the drawing rests: under the top controls, centred (And-page: 60 under the status bar). */
 export function drawingTop(top: number) {
-  return top + layout.minTapTarget + space.sm * 2 + space.sm;
+  return top + (Platform.OS === 'android' ? 60 : layout.minTapTarget + space.sm * 2 + space.sm);
+}
+
+/** The room the drawing takes at the top of the scroll: the controls, the drawing, a breath. */
+export function drawingRoom(top: number, size: number) {
+  return drawingTop(top) + size + (Platform.OS === 'android' ? space.xl : space.lg);
 }
 
 /** The size the drawing rests at: makers get the smaller one, so the spec stays above the fold (decision drawing-sizes). */
@@ -84,9 +89,9 @@ export function DockGlyph({ art, size }: { art: ReactNode; size: number }) {
   return <View style={[styles.glyph, { width: size, height: size, transform: [{ scale: DOCKED / size }] }]}>{art}</View>;
 }
 
-/** The room the drawing takes at the top of the scroll: the controls, the drawing, a breath. */
+/** Holds that room in the scroll. */
 export function DrawingSpace({ top, size }: { top: number; size: number }) {
-  return <View style={{ height: drawingTop(top) + size + space.lg }} />;
+  return <View style={{ height: drawingRoom(top, size) }} />;
 }
 
 const styles = StyleSheet.create({

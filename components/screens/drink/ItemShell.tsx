@@ -13,8 +13,9 @@ import { backWord } from '@/lib/tabs';
 
 import { COLUMNS_FROM, DrinkColumns } from './DrinkColumns';
 import { phoneHeroHeight } from './DrinkHero';
-import { DockedDrawing, DockGlyph, DOCKED, DrawingSpace, DrinkSky, drawingTop } from './DrawingHero';
+import { DockedDrawing, DockGlyph, DOCKED, DrawingSpace, DrinkSky, drawingRoom } from './DrawingHero';
 import { NATIVE_DOCK_LEFT, useItemHeader, type Controls } from './ItemHeader';
+import { MATERIAL_DOCK, MaterialBar, MaterialPage } from './MaterialBar';
 import { backWidth, BarBacking, PageControls } from './PageControls';
 import { PhotoMirror } from './PhotoMirror';
 
@@ -64,13 +65,14 @@ export function ItemShell({ name, pane, photo, art, size, liquid, title, action,
   const columns = !pane && width >= COLUMNS_FROM;
   const scrollY = useSharedValue(0);
   const onScroll = useAnimatedScrollHandler((e) => scrollY.set(e.contentOffset.y));
-  const heroHeight = photo ? phoneHeroHeight(width, height, top) : drawingTop(top) + size + space.lg;
+  const heroHeight = photo ? phoneHeroHeight(width, height, top) : drawingRoom(top, size);
   // Up to 400 on a wide screen, shrinking with a short window down to 220, so the side never scrolls.
   const wideSize = Math.min(400, Math.max(220, height - 440));
   // Solid by the time the page's first line slides under the bar (top + controls), as the board's bar does.
   const tuck = heroHeight - (top + layout.minTapTarget + space.sm * 2) + space.lg;
-  // Phones have the system's bar. The web and a wide iPad's two columns draw theirs (PageControls).
-  const nativeBar = Platform.OS !== 'web' && !columns && !pane;
+  // iPhones have the system's bar, Android phones the Material one. The web and two columns draw theirs (PageControls).
+  const nativeBar = Platform.OS === 'ios' && !columns && !pane;
+  const materialBar = Platform.OS === 'android' && !columns;
   useItemHeader({ name, on: nativeBar, pane, glyph: photo ? null : <DockGlyph art={art(false)} size={size} />, scrollY, tuck, controls });
   const barHeight = use(HeaderHeightContext) ?? 0;
   // Where it goes, from the page under this one, where there's room for a label (desktop boards).
@@ -90,7 +92,7 @@ export function ItemShell({ name, pane, photo, art, size, liquid, title, action,
     </>
   );
 
-  return (
+  const page = (
     <View style={[styles.screen, { backgroundColor: ds.c.ground }]} onLayout={(e) => setWidth(e.nativeEvent.layout.width)}>
       {columns ? (
         <>
@@ -130,12 +132,23 @@ export function ItemShell({ name, pane, photo, art, size, liquid, title, action,
             {photo ? photo.hero(heroHeight, true) : <DrawingSpace top={top} size={size} />}
             <View style={{ paddingHorizontal: gutter, marginTop: photo ? -space.xxl : 0 }}>{body(false)}</View>
           </Animated.ScrollView>
-          {nativeBar ? underNativeBar : drawnBar(true)}
+          {materialBar ? (
+            <MaterialBar name={name} top={top} photo={!!photo} hero={heroHeight} scrollY={scrollY} noBack={pane} controls={controls} drawing={photo ? null : dock({ dockLeft: MATERIAL_DOCK.left, dockTop: top + MATERIAL_DOCK.top })} />
+          ) : nativeBar ? (
+            underNativeBar
+          ) : (
+            drawnBar(true)
+          )}
           {fab ? <PageFab {...fab} scrollY={scrollY} bottom={bottom} /> : null}
         </>
       )}
       {children}
     </View>
+  );
+  return (
+    <MaterialPage liquid={liquid} photo={!!photo} bar={materialBar} glide={materialBar && !photo ? { scrollY, top: heroHeight, left: Math.max(0, (width - COLUMN) / 2) + gutter, width: Math.min(width, COLUMN) - gutter * 2 } : null}>
+      {page}
+    </MaterialPage>
   );
 }
 
@@ -151,10 +164,12 @@ function PageFab({ scrollY, bottom, ...fab }: NonNullable<ItemShellProps['fab']>
   return <ExtendedFab {...fab} icon="checkmark" open={open} style={{ bottom: bottom + space.lg }} />;
 }
 
+/** The phone page in a wider column from 768 to the split (desktop board). */
+const COLUMN = 680;
+
 const styles = StyleSheet.create({
   screen: { flex: 1 },
-  // The phone page in a wider column from 768 to the split (desktop board: up to 680).
-  column: { width: '100%', maxWidth: 680, alignSelf: 'center' },
+  column: { width: '100%', maxWidth: COLUMN, alignSelf: 'center' },
   centre: { alignItems: 'center' },
   photoHead: { gap: space.xl, marginBottom: space.xl },
 });
