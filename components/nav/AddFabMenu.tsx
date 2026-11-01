@@ -1,3 +1,4 @@
+import { useState } from 'react';
 import { Modal, Pressable, StyleSheet, View } from 'react-native';
 
 import { DsText, PressableScale, useDs, type IconName } from '@/components/ds';
@@ -24,10 +25,11 @@ export interface FabFrame {
 export function AddFabMenu({ frame, onClose, onType, onSay }: { frame: FabFrame; onClose: () => void; onType: () => void; onSay: () => void }) {
   const ds = useDs();
   const add = useAddActions(onClose);
+  const [say] = useState(canDictate);
   const items: { label: string; icon: IconName; onPress: () => void }[] = [
     ...(add.canSnap ? [{ label: 'Snap a menu or bottle', icon: 'camera' as const, onPress: add.snap }] : []),
     { label: 'Paste a link', icon: 'doc.on.clipboard', onPress: () => void add.paste() },
-    ...(canDictate() ? [{ label: 'Say it', icon: 'mic' as const, onPress: onSay }] : []),
+    ...(say ? [{ label: 'Say it', icon: 'mic' as const, onPress: onSay }] : []),
     { label: 'Type a drink', icon: 'pencil', onPress: onType },
   ];
   const container = withAlpha(ds.accentFill.fill, ds.scheme === 'dark' ? 0.32 : 0.28);
