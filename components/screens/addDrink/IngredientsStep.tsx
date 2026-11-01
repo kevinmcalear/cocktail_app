@@ -63,7 +63,7 @@ interface IngredientsStepProps extends StepProps {
   /** The desktop page: "Add “X”, a bottle you buy" adds the line with its card open under it (this line's key). */
   onNewBottle?: (key: string) => void;
   /** The desktop page: a house prep is written under its own line, not over the page. */
-  inlinePrep?: { venueName: string | null; onOpen?: (making: string | null) => void };
+  inlinePrep?: { venueName: string | null; onOpen?: (making: string | null) => void; page?: boolean };
   /** The venue the drink is for, whose Kit a recipe's ways are checked against; null at home. */
   bar?: { id: string; name: string } | null;
   /** Where the drink is, from the menu down to it, for a recipe's trail. */
@@ -73,8 +73,9 @@ interface IngredientsStepProps extends StepProps {
   focus?: number;
   /** The drink editor made in parts (drink-edit-parts): a part's heading. Each part's lines sit under it, with its own Add field (draft.parts). */
   partHead?: (part: number) => ReactNode;
-  /** The draft page shows the classic the name is: no list of others to start from. */
-  classicShown?: boolean;
+  classicShown?: boolean; // The draft page shows the classic the name is: no list of others to start from.
+  /** The draft page draws each line itself (DraftLine): the row to open, and how to write its recipe. */
+  renderLine?: (line: WizardLine, row: ReactNode, write: () => void) => ReactNode;
 }
 
 /**
@@ -86,7 +87,7 @@ interface IngredientsStepProps extends StepProps {
  * (make-anything-overview): from the search, or by holding one line over
  * another to combine them.
  */
-export function IngredientsStep({ draft, set, ingredients, loading, aliases = [], coreIds, forDrink = true, shelf, backBar, balance = true, lineDetail, lineBelow, stock, placeholder, onNewBottle, inlinePrep, bar, trail, editing, focus, partHead, classicShown }: IngredientsStepProps) {
+export function IngredientsStep({ draft, set, ingredients, loading, aliases = [], coreIds, forDrink = true, shelf, backBar, balance = true, lineDetail, lineBelow, stock, placeholder, onNewBottle, inlinePrep, bar, trail, editing, focus, partHead, classicShown, renderLine }: IngredientsStepProps) {
   const ds = useDs();
   // Made in parts: the part whose Add field was used last, which a new line goes into.
   const parts = partHead && draft.parts?.length ? draft.parts : null;
@@ -219,7 +220,7 @@ export function IngredientsStep({ draft, set, ingredients, loading, aliases = []
                       />
                     </View>
                   ) : (
-                    <LineRow
+                    (renderLine ?? ((_l: WizardLine, row: ReactNode) => row))(l, <LineRow
                       // A batch read from a file shows, and opens, as the house prep it saves as.
                       line={l.batch ? { ...l, prep: linePrep(l) } : l}
                       grip={grip}
@@ -255,7 +256,7 @@ export function IngredientsStep({ draft, set, ingredients, loading, aliases = []
                         </>
                       }
                       stock={stock?.toggle(l)}
-                    />
+                    />, () => (l.prep ? prep.edit(l) : make(l.name, l.key)))
                   )
                 }
               </DragRow>
@@ -265,12 +266,11 @@ export function IngredientsStep({ draft, set, ingredients, loading, aliases = []
       ) : null}
       {searching ? null : stock?.footer}
       {/* In parts the editor says it under Add a part (drink-edit-parts). */}
-      {draft.lines.length > 1 && !parts && !searching ? <Caption tone="muted">{`Hold a line${Platform.OS === 'web' ? ' by its grip' : ''} and move it ${forDrink ? 'over another. Let go to combine them; move away to just reorder.' : 'to reorder.'}`}</Caption> : null}
+      {draft.lines.length > 1 && !parts && !searching && !renderLine ? <Caption tone="muted">{`Hold a line${Platform.OS === 'web' ? ' by its grip' : ''} and move it ${forDrink ? 'over another. Let go to combine them; move away to just reorder.' : 'to reorder.'}`}</Caption> : null}
 
       {nudge && !searching ? (
         <NudgeCard nudge={nudge} name={nudgeLine?.name} onMake={() => nudgeLine && makeHouse(nudgeLine, nudge.technique, nudge.adjunct)} onNotNow={() => (nudge.from === 'typed' ? typed.drop(nudge.key) : setNudgeOff(true))} />
       ) : null}
-
       {removed && !searching ? (
         <View role="alert" style={[styles.undo, { backgroundColor: ds.c.raised }]}>
           <Body style={styles.flex} numberOfLines={1}>{`Removed ${removed.line.name}`}</Body>
@@ -282,7 +282,6 @@ export function IngredientsStep({ draft, set, ingredients, loading, aliases = []
       {forDrink && !quiet && !editing ? <Button label="Paste a whole spec" variant="ghost" size="sm" style={styles.paste} onPress={() => setPasting(true)} /> : null}
       {toFinish && !searching ? <WizardNotice>{`${toFinish} went to the finish.`}</WizardNotice> : null}
       {prep.builder}
-
       {/* The balance sits right under the field, then what goes with it (Flavor Atlas order). */}
       {forDrink && balance && !quiet && !editing ? <BalanceCard lines={poured} ingredients={ingredients} onAdd={(name) => add(pickByName(name, ingredients))} /> : null}
       {quiet || !forDrink || editing ? null : <IngredientSuggestions draft={draft} set={set} poured={poured} ingredients={ingredients} onAdd={add} classicShown={classicShown} />}
@@ -294,6 +293,5 @@ const styles = StyleSheet.create({
   stack: { gap: space.md },
   swap: { paddingVertical: space.md, borderBottomWidth: StyleSheet.hairlineWidth },
   undo: { flexDirection: 'row', alignItems: 'center', gap: space.md, borderRadius: radius.control, paddingLeft: space.lg, paddingRight: space.xs },
-  flex: { flex: 1 },
-  paste: { alignSelf: 'flex-start' },
+  flex: { flex: 1 }, paste: { alignSelf: 'flex-start' },
 });

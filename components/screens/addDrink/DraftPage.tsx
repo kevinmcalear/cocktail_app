@@ -1,3 +1,4 @@
+import { LinearGradient } from 'expo-linear-gradient';
 import { useRef, type ComponentRef, type ReactNode } from 'react';
 import { Platform, StyleSheet, View, type TextInput } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
@@ -11,9 +12,11 @@ import { useMenuSectionPlace } from '@/hooks/useDrinkDesk';
 import { sketchLook } from '@/lib/drinkWizard';
 import { creditWaits, nameWaits, theirs } from '@/lib/sameName';
 import { draftSketchInputs } from '@/lib/sketch/draft';
+import { liquidOf } from '@/lib/sketch/types';
 import { withAlpha } from '@/lib/color';
 
 import type { DrinkDeskProps } from './DrinkDesk';
+import { DraftLine } from './DraftLine';
 import { DraftRows } from './DraftRows';
 import { IngredientsStep } from './IngredientsStep';
 import { ApartHint, TakenWord } from './NameStepBody';
@@ -53,6 +56,7 @@ export function DraftPage({ lead, ...p }: DrinkDeskProps & { lead?: ReactNode })
   };
   const waitNote = nameWaits(draft, p.atBar) ? 'Pick one for the name first' : creditWaits(draft, p.atPlace) ? 'Pick one under Credit first' : null;
   const inputs = draftSketchInputs(sketchLook(p.drawn, p.barVariants, p.barIceKinds));
+  const sky = liquidOf(inputs).hex;
   // The modal starts below the status bar on iOS (as the drink editor).
   const top = Platform.OS === 'ios' ? space.md : insets.top + space.sm;
   const eyebrow = ['Draft', menu ? `for ${menu}` : 'in pencil until you save'].join(' · ');
@@ -63,7 +67,10 @@ export function DraftPage({ lead, ...p }: DrinkDeskProps & { lead?: ReactNode })
         <title>Add a drink</title>
       </WebHead>
       <FormScrollContainer keyboardShouldPersistTaps="handled" contentContainerStyle={{ paddingBottom: insets.bottom + space.xxl }}>
-        <View style={[styles.hero, { paddingTop: top + layout.minTapTarget, backgroundColor: withAlpha(ds.accentText, 0.06) }]}>
+        <View style={[styles.hero, { paddingTop: top + layout.minTapTarget }]}>
+          {/* The sky (Prod-add-flow 3): the drink's own colour, fading into the page. */}
+          <LinearGradient colors={[withAlpha(sky, ds.scheme === 'dark' ? 0.3 : 0.2), withAlpha(sky, ds.scheme === 'dark' ? 0.16 : 0.1)]} start={{ x: 0, y: 0 }} end={{ x: 1, y: 0 }} style={StyleSheet.absoluteFill} />
+          <LinearGradient colors={[withAlpha(ds.c.ground, 0), ds.c.ground]} locations={[0.35, 1]} style={StyleSheet.absoluteFill} />
           <PencilDrawing inputs={inputs} seed={draft.id ?? 'new-drink'} size={HERO} />
         </View>
         <View style={[styles.body, { paddingHorizontal: gutter }]}>
@@ -103,9 +110,12 @@ export function DraftPage({ lead, ...p }: DrinkDeskProps & { lead?: ReactNode })
             coreIds={p.coreIds}
             shelf={p.shelf}
             backBar={p.backBar}
-            stock={p.stock}
+            // The lines' own hints belong to their editors, shown when a line is tapped.
+            stock={p.stock ? { ...p.stock, footer: null } : undefined}
             bar={barId ? { id: barId, name: p.venueName } : null}
             classicShown={!!p.classic}
+            inlinePrep={{ venueName: barId ? p.venueName : null, page: true }}
+            renderLine={(line, row, write) => <DraftLine line={line} row={row} write={write} />}
           />
           <DraftRows {...p} onRename={rename} />
           <ReviewPhotos photos={draft.photos ?? {}} onChange={(photos) => set({ photos })} sketch={inputs} seed={draft.id ?? 'new-drink'} />

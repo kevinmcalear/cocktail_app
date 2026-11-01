@@ -11,6 +11,7 @@ import { Eyebrow } from '../WizardChrome';
 import type { PrepBuilderProps } from './PrepBuilder';
 import { PrepKindStep } from './PrepKindStep';
 import { PrepMethodStep } from './PrepMethodStep';
+import { PageHead } from './PageHead';
 import { PrepRecipeStep, RecipeView } from './PrepRecipeStep';
 import { useInside } from './useInside';
 import { usePrepDraft } from './usePrepDraft';
@@ -25,7 +26,7 @@ export const PREP_CARD_ID = 'prep-card-open';
  * hands it to the line; Leave for now keeps what's done on the line, a
  * recipe to finish (make-anything-steps-3, step 9).
  */
-export function PrepCard({ name: started, venueName, initial, combinedFrom, inDrink, picked, technique, ingredients, aliases, onDone, onLater, onClose, bar = null, above, drinkName, nested }: Omit<PrepBuilderProps, 'name'> & { name: string; venueName: string | null; nested?: boolean }) {
+export function PrepCard({ name: started, venueName, initial, combinedFrom, inDrink, picked, technique, ingredients, aliases, onDone, onLater, onClose, bar = null, above, drinkName, nested, page }: Omit<PrepBuilderProps, 'name'> & { name: string; venueName: string | null; nested?: boolean; /** The draft page's nested page (Kept-add-helpers, Writing it, then back): its own header, no card. */ page?: boolean }) {
   const ds = useDs();
   const [name, setName] = useState(started);
   const combined = !!combinedFrom?.length;
@@ -40,21 +41,25 @@ export function PrepCard({ name: started, venueName, initial, combinedFrom, inDr
   const trail = trailInto(above ?? [{ label: drinkName || 'Your drink' }], keep ?? (() => (changed() ? onDone(withFacts(current()), shown) : onClose())), shown);
   const word = (draft.technique ? techniqueById(draft.technique)?.name : draft.kind !== 'other' ? PREP_KINDS.find((k) => k.id === draft.kind)?.name : null)?.toLowerCase();
   return (
-    <View nativeID={nested ? undefined : PREP_CARD_ID} role="group" aria-label={`House-made: ${shown}`} style={[styles.card, { backgroundColor: ds.c.raised, borderColor: ds.c.line }]}>
-      <View style={styles.head}>
-        <View style={styles.trailRow}>
-          <View style={styles.flex}>
-            <Trail items={trail} />
+    <View nativeID={nested ? undefined : PREP_CARD_ID} role="group" aria-label={`House-made: ${shown}`} style={page ? styles.page : [styles.card, { backgroundColor: ds.c.raised, borderColor: ds.c.line }]}>
+      {page ? (
+        <PageHead trail={trail} drinkName={drinkName || 'Your drink'} name={shown} canAdd={named && !slotsOpen && !!name.trim()} onBack={keep ?? onClose} onDone={() => onDone(withFacts(draft), shown)} />
+      ) : (
+        <View style={styles.head}>
+          <View style={styles.trailRow}>
+            <View style={styles.flex}>
+              <Trail items={trail} />
+            </View>
+            {keep ? (
+              <PressableScale role="button" onPress={keep} accessibilityLabel={`Leave ${shown} for now. What you’ve done is kept`} style={styles.leave}>
+                <Caption tone="accent">Leave for now</Caption>
+              </PressableScale>
+            ) : null}
           </View>
-          {keep ? (
-            <PressableScale role="button" onPress={keep} accessibilityLabel={`Leave ${shown} for now. What you’ve done is kept`} style={styles.leave}>
-              <Caption tone="accent">Leave for now</Caption>
-            </PressableScale>
-          ) : null}
+          <Body>{`House-made: ${shown}`}</Body>
+          <Caption tone="muted">{`${venueName ? `Private to ${venueName}. ` : ''}Made from parts you buy, so it costs itself.`}</Caption>
         </View>
-        <Body>{`House-made: ${shown}`}</Body>
-        <Caption tone="muted">{`${venueName ? `Private to ${venueName}. ` : ''}Made from parts you buy, so it costs itself.`}</Caption>
-      </View>
+      )}
       <Field label="Name" value={name} onChangeText={setName} maxLength={80} returnKeyType="done" />
       <Eyebrow>What is it</Eyebrow>
       <PrepKindStep name={shown} draft={draft} combined={combined} onKind={pickKind} onTechnique={pickTechnique} onChangeAmount={() => {}} bar={bar} />
@@ -82,11 +87,13 @@ export function PrepCard({ name: started, venueName, initial, combinedFrom, inDr
         {/* A finished recipe opened again, or two lines just combined: leaving puts them back as they were. */}
         {keep ? null : <Button label="Keep it as it was" variant="secondary" onPress={onClose} />}
       </View>
+      {page ? <Caption tone="muted">Saves with the drink. It shows on House-made too.</Caption> : null}
     </View>
   );
 }
 
 const styles = StyleSheet.create({
+  page: { gap: space.md },
   card: { marginLeft: 40 + space.md, marginBottom: space.md, gap: space.md, padding: space.lg, borderRadius: radius.card, borderWidth: 1 },
   head: { gap: space.xs },
   trailRow: { flexDirection: 'row', alignItems: 'center', gap: space.sm },

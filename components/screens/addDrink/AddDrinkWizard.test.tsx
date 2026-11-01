@@ -67,6 +67,8 @@ beforeEach(() => {
 // iOS draws the screen after its first layout (the keyboard offset needs it).
 const laidOut = () => fireEvent(screen.getByTestId('add-drink'), 'layout', { persist: () => {}, nativeEvent: { layout: { x: 0, y: 0, width: 390, height: 800 } } });
 // A row on the draft page opens its sheet ("Glass: pick one").
+// A spec line on the draft page reads as drawn; a tap opens its editor (DraftLine).
+const line = (text: string) => fireEvent.press(screen.getByRole('button', { name: `${text}. Edit` }));
 const row = (name: string) => fireEvent.press(screen.getByRole('button', { name: new RegExp(`^${name}: `) }));
 describe('AddDrinkWizard', () => {
   test('a name, then ingredients by search, stepper, typing and a quick add', async () => {
@@ -79,6 +81,7 @@ describe('AddDrinkWizard', () => {
     expect(screen.queryByRole('group', { name: 'Quick adds' })).toBeNull();
     await fireEvent.changeText(screen.getByLabelText('Add an ingredient'), 'gin');
     await fireEvent.press(screen.getByRole('button', { name: 'Gin' }));
+    await line('60 ml Gin');
     expect(screen.getByLabelText('Amount of Gin').props.value).toBe('60');
     await fireEvent.press(screen.getByRole('button', { name: 'More Gin' }));
     await fireEvent.press(screen.getByRole('button', { name: 'Less Gin' }));
@@ -91,7 +94,7 @@ describe('AddDrinkWizard', () => {
 
     // With a line in, the quick adds show, and one starts at a likely pour.
     await fireEvent.press(screen.getByRole('button', { name: 'Add Campari' }));
-    expect(screen.getByLabelText('Amount of Campari').props.value).toBe('30');
+    expect(screen.getByRole('button', { name: '30 ml Campari. Edit' })).toBeTruthy();
     expect(useDrinkWizardStore.getState().kept.home.draft.lines.map((l) => [l.name, l.amount, l.unit])).toEqual([['Gin', '30', 'ml'], ['Campari', '30', 'ml']]);
   });
 
@@ -106,7 +109,9 @@ describe('AddDrinkWizard', () => {
     await renderWithProviders(<AddDrinkWizard onClose={jest.fn()} onSaved={mockSaved} />);
     await laidOut();
 
-    // The unit is in sight, and a tap away from changing.
+    // A line opens to its editor; the unit is a tap away from changing.
+    await line('30 ml Gin');
+    await line('30 ml Campari');
     await fireEvent.press(screen.getAllByRole('button', { name: 'Unit: ml' })[1]);
     await fireEvent.press(screen.getByRole('radio', { name: 'oz' }));
     expect(screen.getAllByRole('button', { name: 'Unit: oz' })).toHaveLength(1);
@@ -117,6 +122,11 @@ describe('AddDrinkWizard', () => {
     expect(screen.queryByLabelText('Amount of Gin')).toBeNull();
     await fireEvent.press(screen.getByRole('button', { name: 'Undo removing Gin' }));
     expect(useDrinkWizardStore.getState().kept.home.draft.lines.map((l) => l.name)).toEqual(['Gin', 'Campari']);
+    // No amount reads as the board's amber gap once the line is put away.
+    await fireEvent.changeText(screen.getByLabelText('Amount of Campari'), '');
+    await fireEvent.press(screen.getByRole('button', { name: 'Done with Campari' }));
+    expect(screen.getByText('Add amount')).toBeTruthy();
+    await line('Campari, no amount yet');
     await fireEvent.changeText(screen.getByLabelText('Amount of Campari'), '');
 
     // The kept draft is on the device already, before any save.
@@ -223,6 +233,7 @@ describe('AddDrinkWizard', () => {
     useDrinkWizardStore.getState().patch('home', { name: 'Martinez', lines: [{ key: 'k1', id: 'gin', name: 'Gin', amount: '45', unit: 'ml' }] });
     await renderWithProviders(<AddDrinkWizard onClose={jest.fn()} onSaved={mockSaved} />);
     await laidOut();
+    await line('45 ml Gin');
     await fireEvent.press(screen.getByRole('button', { name: 'Gin, 45 ml' }));
     await fireEvent.press(screen.getByRole('button', { name: 'Swap Gin for another ingredient' }));
     await fireEvent.changeText(screen.getByLabelText('Rename Gin or pick another'), 'verm');
@@ -266,7 +277,7 @@ describe('AddDrinkWizard', () => {
         riffOf: { id: 'c-negroni', name: 'Negroni' },
       })
     );
-    expect(screen.getByLabelText('Amount of Sweet Vermouth').props.value).toBe('30');
+    expect(screen.getByRole('button', { name: '30 ml Sweet Vermouth. Edit' })).toBeTruthy();
     expect(screen.queryByText('Negroni is a classic. Start from its spec?')).toBeNull();
 
     // All spirit: stirred, offered first.
