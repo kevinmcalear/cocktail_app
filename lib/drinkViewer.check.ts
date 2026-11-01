@@ -13,6 +13,8 @@ assert.equal(drinkViewer({ ...base, amounts: true }), 'public');
 assert.equal(drinkViewer({ ...base, teamRole: 20 }), 'floor');
 assert.equal(drinkViewer({ ...base, teamRole: 30, amounts: true }), 'bartender');
 assert.equal(drinkViewer({ ...base, teamRole: 35, amounts: true, canEdit: true }), 'creator');
+// Viewing as Guest (10) at your own bar reads as a guest.
+assert.equal(drinkViewer({ ...base, teamRole: 10, canEdit: true }), 'guest');
 // Viewing as a floor role (amounts gone) never shows the creator's rows, even with edit rights.
 assert.equal(drinkViewer({ ...base, teamRole: 20, canEdit: true }), 'floor');
 // Home: your own drink is Steps; a classic is public.

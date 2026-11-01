@@ -41,6 +41,7 @@ import { useDrinkSections } from './DrinkSections';
 import { DockedDrawing, DOCKED, DrawingSpace, DrinkSky, drawingSize, drawingTop } from './DrawingHero';
 import { GlassSheet } from './GlassSheet';
 import { PageControls } from './PageControls';
+import { PhotoMirror } from './PhotoMirror';
 import type { ShownPicture } from './PictureViewer';
 import { useDrinkActions } from './useDrinkActions';
 import { useDrinkFacts } from './useDrinkFacts';
@@ -221,6 +222,7 @@ function Page({ item, canEdit, adminFix = false, onEdit, sheet, pane, openBatch,
       ) : (
         <>
           <Animated.ScrollView onScroll={onScroll} scrollEventThrottle={16} contentContainerStyle={[styles.column, { paddingBottom: tabInset + space.xxl }]}>
+            {photos ? <PhotoMirror url={photos[0].url} top={heroHeight - space.xxxl} /> : null}
             {photos ? hero(heroHeight, true) : <DrinkSky itemId={item.id} sketch={preview?.sketch} />}
             {photos ? null : <DrawingSpace top={top} size={size} />}
             <View style={{ paddingHorizontal: gutter, marginTop: photos ? -space.xxl : 0 }}>

@@ -17,7 +17,7 @@ export interface ViewerInputs {
   home: boolean;
   /** You made it or may edit it (your own drink at home). */
   own: boolean;
-  /** Your role at the drink's bar, in venue mode (View as applied); null when you're not on its team. */
+  /** Your role at the drink's bar, in venue mode (View as applied); null when you're not on its team. Below Employee (20) is a guest. */
   teamRole: number | null;
   /** The drink's people may edit it: Edit, and the creator's rows. */
   canEdit: boolean;
@@ -27,7 +27,7 @@ export interface ViewerInputs {
 
 export function drinkViewer({ home, own, teamRole, canEdit, amounts }: ViewerInputs): DrinkViewer {
   if (home) return own && amounts ? 'home' : amounts ? 'public' : 'guest';
-  if (teamRole !== null) {
+  if (teamRole !== null && teamRole >= 20) {
     if (canEdit && amounts) return 'creator';
     return amounts ? 'bartender' : 'floor';
   }
