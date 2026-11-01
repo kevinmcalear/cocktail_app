@@ -115,6 +115,8 @@ export function liveList({ sections, sectionIds, rows, ended, endedDrinks, may, 
     const sectionId = e.sectionName ? sectionIds.get(e.sectionName) : undefined;
     const section = main.find((s) => s.id === sectionId);
     if (!drink || !section) continue;
+    // Back on already (Undo, or put on again today): nothing to strike.
+    if (rows.some((r) => r.itemId === e.itemId && r.sectionId === sectionId)) continue;
     const swappedIn = rows.find((r) => r.replacesItemId === e.itemId && r.sectionId === sectionId);
     const at = section.rows.findIndex((r) => r.drink.id === swappedIn?.itemId);
     const struck: PageRowView = {
@@ -129,14 +131,15 @@ export function liveList({ sections, sectionIds, rows, ended, endedDrinks, may, 
       ink: 'faded',
       struck: true,
       listRow: swappedIn,
-      acts: swappedIn ? [{ kind: 'undo', label: 'Undo' }] : [],
+      // Undo takes back the swap, or puts a drink taken off back on.
+      acts: [{ kind: 'undo', label: 'Undo' }],
     };
     section.rows.splice(at >= 0 ? at + 1 : section.rows.length, 0, struck);
   }
 
   // The latest change: a drink on today or a day before, or one taken off.
   const changes = [
-    ...rows.filter((r) => r.onFrom && Date.parse(r.onFrom) <= now).map((r) => ({ at: r.onFrom!, text: `${sections.flatMap((s) => s.rows).find((v) => v.drink.id === r.itemId)?.drink.name ?? 'A drink'} on` })),
+    ...rows.filter((r) => (r.state === 'on' || r.state === 'going') && r.onFrom && Date.parse(r.onFrom) <= now).map((r) => ({ at: r.onFrom!, text: `${sections.flatMap((s) => s.rows).find((v) => v.drink.id === r.itemId)?.drink.name ?? 'A drink'} on` })),
     ...ended.map((e) => ({ at: e.cameOff, text: `${endedDrinks.get(e.itemId)?.name ?? 'A drink'} off` })),
   ].sort((a, b) => b.at.localeCompare(a.at));
   const last = changes[0];

@@ -166,7 +166,7 @@ function MenuPage({ menu, shelf }: { menu: MenuDetail; shelf: { match: ShelfMatc
                 onAct={(kind) =>
                   kind === 'swap' || kind === 'takeOff'
                     ? setChanging({ kind, view: item.row!, sectionId: item.row!.listRow?.sectionId ?? item.sectionId! })
-                    : acts.act(kind, item.row!)
+                    : acts.act(kind, item.row!, item.sectionId!)
                 }
                 onPress={() =>
                   bartender || (changeable && item.row!.acts?.length && !alwaysActs(item.sectionId, item.row!)) ? setOpen((o) => (o === item.key ? null : item.key)) : openDrink(item.row!)

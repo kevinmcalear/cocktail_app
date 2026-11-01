@@ -35,10 +35,15 @@ export function useRowActs(menuId: string, rows: ListRow[]) {
   return {
     may,
     busy: changes.swap.isPending || changes.takeOff.isPending,
-    act(kind: ActKind, view: PageRowView) {
+    act(kind: ActKind, view: PageRowView, sectionId: string) {
       const row = view.listRow;
-      if (!row) return;
       const name = view.drink.name;
+      if (kind === 'undo' && !row) {
+        // Taken off today with nothing in its place: it goes back on, at the end of its section.
+        changes.add.mutate({ sectionId, itemId: view.drink.id, sortOrder: 999 }, { onSuccess: said(`${name} is back`), onError: failed });
+        return;
+      }
+      if (!row) return;
       if (kind === 'approve') changes.approve.mutate(row.id, { onSuccess: said(`${name} approved`), onError: failed });
       if (kind === 'turnDown') changes.turnDown.mutate({ rowId: row.id, waiting: row.state === 'waiting_on' ? 'on' : 'off' }, { onSuccess: said(`${name} turned down`), onError: failed });
       if (kind === 'undo') changes.undoSwap.mutate({ swappedIn: row, replaced: null }, { onSuccess: said(`${name} is back`), onError: failed });
