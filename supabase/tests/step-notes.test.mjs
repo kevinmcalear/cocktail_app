@@ -125,6 +125,35 @@ describe('who reads it', () => {
   });
 });
 
+describe('a save clears the words of steps it takes away (20261206400000)', () => {
+  const pour = (amount, extra = {}) => ({ ingredient_item_id: ids.gin, amount, unit: 'ml', preparation_notes: null, is_optional: false, ...extra });
+  const twist = { ingredient_item_id: ids.gin, amount: 1, unit: 'twist', preparation_notes: null, is_optional: false };
+  const keys = async (drink) => ((await service.from('drink_step_notes').select('step_key').eq('item_id', drink)).data ?? []).map((r) => r.step_key).sort();
+  const save = async (drink, lines, parts) => {
+    const { error } = await users.admin.client.rpc('save_drink_spec', { p_item: drink, p_lines: lines, p_method_ids: [], p_note: null, ...(parts ? { p_parts: parts } : {}) });
+    assert.ifError(error);
+  };
+  const words = (drink, step_keys) => service.from('drink_step_notes').upsert(step_keys.map((step_key) => ({ item_id: drink, step_key, note: `On ${step_key}` })));
+
+  test('steps that stay keep their words; the rest go', async () => {
+    const drink = (await insert('items', { name: `Clear drink ${run}`, item_type: 'cocktail', bar_id: ids.bar })).id;
+    try {
+      assert.ifError((await words(drink, ['main', 'float', 'garnish', 'part-2'])).error);
+      await save(drink, [pour(60), pour(15, { is_float: true }), twist]);
+      assert.deepEqual(await keys(drink), ['float', 'garnish', 'main'], 'one part: no part-2');
+      await save(drink, [pour(60)]);
+      assert.deepEqual(await keys(drink), ['main'], 'the float and the garnish went');
+      assert.ifError((await words(drink, ['float', 'part-2'])).error);
+      await save(drink, [pour(60, { part: 1 }), pour(30, { part: 2 })], [{ name: 'One' }, { name: 'Two' }]);
+      assert.deepEqual(await keys(drink), ['main', 'part-2'], 'in parts: part 1 is main, and there is no float step');
+      await save(drink, [pour(30, { part: 2 })]);
+      assert.deepEqual(await keys(drink), ['main'], 'one part left (its own number): it is the main step, as the page draws it');
+    } finally {
+      await service.from('items').delete().eq('id', drink);
+    }
+  });
+});
+
 describe('who writes it', () => {
   test('the Admin adds, changes and removes', async () => {
     const { client } = users.admin;
