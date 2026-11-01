@@ -1,6 +1,5 @@
 import { toastDone } from '@/lib/toast';
-import { decode } from "base64-arraybuffer";
-import { pickDrinkPhotos } from "@/components/drink/drinkImages";
+import { pickDrinkPhotos, uploadDrinkPhoto } from "@/components/drink/drinkImages";
 import { useQueryClient } from "@tanstack/react-query";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { Alert, Platform } from "react-native";
@@ -22,10 +21,9 @@ import {
 } from "@/lib/drafts";
 import { draftMethodIds, findByName, toggleId } from "@/lib/drinkMethods";
 import { identifyGlasswareFromPhoto } from "@/lib/identifyGlassware";
-import { imageExtFromUri, uriToBase64 } from "@/lib/imageBase64";
 import { kindColumns } from "@/lib/glassware";
 import { capitalize } from "@/lib/stringUtils";
-import { supabase, UPLOAD_CACHE_SECONDS } from "@/lib/supabase";
+import { supabase } from "@/lib/supabase";
 import { useRecentActivityStore } from "@/store/useRecentActivityStore";
 import type { SpecCategory } from "@/hooks/useCocktailEditor";
 
@@ -308,27 +306,10 @@ export function useCocktailDraftEditor({
             return newImgData.id;
         }
 
-        const ext = imageExtFromUri(uri);
-        const fileName = `cocktails/${cocktailId}/${Date.now()}_${Math.random().toString(36).substring(7)}.${ext}`;
-        const base64 = await uriToBase64(uri);
-        const arrayBuffer = decode(base64);
-        const { error: uploadError } = await supabase.storage
-            .from("drinks")
-            .upload(fileName, arrayBuffer, {
-                contentType: `image/${ext === "jpg" ? "jpeg" : ext}`,
-                upsert: false,
-                cacheControl: UPLOAD_CACHE_SECONDS,
-            });
-        if (uploadError) throw uploadError;
-
-        const { data: publicUrlData } = supabase.storage.from("drinks").getPublicUrl(fileName);
-        const { data: imgData, error: imgError } = await supabase
-            .from("images")
-            .insert({ url: publicUrlData.publicUrl })
-            .select()
-            .single();
-        if (imgError || !imgData) throw imgError ?? new Error("Couldn't save a photo.");
-        return imgData.id;
+        // The shared upload: made smaller on the phone, with its page copy and ThumbHash (components/drink/drinkImages.ts).
+        const uploaded = await uploadDrinkPhoto(uri, `cocktails/${cocktailId}`);
+        if (!uploaded) throw new Error("Couldn't save a photo.");
+        return uploaded.id;
     };
 
     /** Finds or creates a shared method, glass, family or ice by name, a new glass or ice with its kind. The picker selects the id it returns. */

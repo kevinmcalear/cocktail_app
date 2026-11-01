@@ -1,4 +1,3 @@
-import { decode } from "base64-arraybuffer";
 import { useQueryClient } from "@tanstack/react-query";
 import { useCallback, useEffect, useRef, useState } from "react";
 import { Alert } from "react-native";
@@ -8,7 +7,6 @@ import { saveItemNotes } from "@/hooks/useItemNotes";
 import { dropdownKeys, useDropdowns } from "@/hooks/useDropdowns";
 import { GLASS_MODEL_SELECT, type GlassModel } from "@/hooks/useGlassModels";
 import { identifyGlasswareFromPhoto } from "@/lib/identifyGlassware";
-import { imageExtFromUri, uriToBase64 } from "@/lib/imageBase64";
 import { readIceBuild, saysMore, type IceLayer } from "@/lib/iceBuild";
 import { isHeroLink } from "@/lib/itemImages";
 import { plainDbMessage } from "@/lib/dbError";
@@ -17,7 +15,7 @@ import { kindColumns } from "@/lib/glassware";
 import { capitalize } from "@/lib/stringUtils";
 import { fetchEditableRecipes } from "@/lib/editableRecipes";
 import { mapPresentationRecipeToEditItem } from "@/lib/recipeUtils";
-import { supabase, UPLOAD_CACHE_SECONDS } from "@/lib/supabase";
+import { supabase } from "@/lib/supabase";
 import { saveDrinkSpec } from "@/hooks/useVersions";
 import { resolveEditItems } from "@/hooks/specLineSave";
 import { refreshIngredients } from "@/hooks/useDropdowns";
@@ -25,7 +23,7 @@ import { showMessage } from "@/lib/dialogs";
 import { amountOf, type WizardPick } from "@/lib/drinkWizard";
 import { orderByPart, linePart, partsMethods, readParts, startParts, storedParts, type DraftPart } from "@/lib/drinkParts";
 import type { ImageItem } from "@/components/cocktail/SortableImageList";
-import { pickDrinkPhotos, setItemImages } from "@/components/drink/drinkImages";
+import { pickDrinkPhotos, setItemImages, uploadDrinkPhoto } from "@/components/drink/drinkImages";
 
 export type SpecCategory = "method" | "glassware" | "family" | "ice";
 
@@ -217,34 +215,9 @@ export function useCocktailEditor(id: string, { enabled = true }: { enabled?: bo
 
     const pickImage = async () => addImages(await pickDrinkPhotos({ cutout: true }));
 
-    const uploadAndLinkImage = async (uri: string): Promise<string | null> => {
-        try {
-            const ext = imageExtFromUri(uri);
-            const fileName = `cocktails/${id}/${Date.now()}_${Math.random().toString(36).substring(7)}.${ext}`;
-            const base64 = await uriToBase64(uri);
-            const arrayBuffer = decode(base64);
-
-            const { error: uploadError } = await supabase.storage
-                .from("drinks")
-                .upload(fileName, arrayBuffer, {
-                    contentType: `image/${ext === "jpg" ? "jpeg" : ext}`,
-                    upsert: false,
-                    cacheControl: UPLOAD_CACHE_SECONDS,
-                });
-            if (uploadError) return null;
-
-            const { data: publicUrlData } = supabase.storage.from("drinks").getPublicUrl(fileName);
-            const { data: imgData, error: imgError } = await supabase
-                .from("images")
-                .insert({ url: publicUrlData.publicUrl })
-                .select()
-                .single();
-            if (imgError || !imgData) return null;
-            return imgData.id;
-        } catch {
-            return null;
-        }
-    };
+    // The shared upload: made smaller on the phone, with its page copy and ThumbHash (components/drink/drinkImages.ts).
+    const uploadAndLinkImage = async (uri: string): Promise<string | null> =>
+        (await uploadDrinkPhoto(uri, `cocktails/${id}`).catch(() => null))?.id ?? null;
 
     /** Finds or creates a shared method, glass, family or ice by name, a new glass or ice with its kind. The picker selects the id it returns. */
     const handleAddPill = async (type: SpecCategory, newItemName: string, kind?: string | null): Promise<string> => {
