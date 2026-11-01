@@ -9,6 +9,7 @@ import { DRAWN_LIST_WINDOW } from '@/components/ds/SketchDrawing';
 import { space } from '@/constants/tokens';
 import { useActiveVenue } from '@/hooks/useActiveVenue';
 import { useIsWideWeb } from '@/hooks/useIsWideWeb';
+import { useOffTonight } from '@/hooks/useListAsks';
 import { useEndedRuns, useListChanges } from '@/hooks/useLivingList';
 import { useMenuLens } from '@/hooks/useMenuLens';
 import { useEndMenu } from '@/hooks/useMenuMutations';
@@ -125,6 +126,7 @@ function MenuPageBody({ menu, shelf, cover, now }: PageProps & { cover: string |
   const live = others.find((m) => menuStatus(m, now) === 'on');
   const previous = others.filter((m) => menuStatus(m, now) === 'previous');
   const drinks = menu.sections.flatMap((s) => s.drinks);
+  const offTonight = useOffTonight(lens.lens === 'employee' && status === 'on' ? menu.barId : null).data;
   const model = menuPageModel({
     menu,
     status,
@@ -136,6 +138,7 @@ function MenuPageBody({ menu, shelf, cover, now }: PageProps & { cover: string |
     toBuy: shelf?.toBuy ?? null,
     day,
     now,
+    offTonight: new Set(offTonight?.filter((o) => o.menuId === menu.id).map((o) => o.itemId)),
   });
   const team = lens.lens === 'creator' || lens.lens === 'admin';
   const home = !menu.barId;
