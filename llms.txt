@@ -7,7 +7,8 @@
 - [AGENTS.md](AGENTS.md): stack, how we work, enforced rules, coding conventions
 - [docs/dev_flow.md](docs/dev_flow.md): the cycle from issue to merge, local verification recipes, the redesign roadmap
 - [docs/design_system.md](docs/design_system.md): the Back Bar design rules (colour, type, motion, glass, images, layout, accessibility)
-- [Cocktail: the whole app](https://claude.ai/artifact/KRE17t8L8SC8f4M4KFLgZe): the source of truth canvas, every screen as it should be
+- [Cocktail 2027](https://claude.ai/artifact/HFuAkaE1wtZjnYhgjezDrF): the source of truth canvas, every screen as it should be
+- [Cocktail: the whole app](https://claude.ai/artifact/KRE17t8L8SC8f4M4KFLgZe): the previous canvas (history)
 - [Back Bar brief](https://claude.ai/artifact/1ksBAgPLyVmLGKdm48x6sf): research, mockups and data needs for the redesign (background)
 - [Who Pays for the Pour](https://claude.ai/artifact/DEL4jQdeGXfsa8sWAEQ4nR): monetization proposal (venue plans, what stays free, selling recipes, Discover sponsorship, legal checks, open questions). Design only, nothing decided
 - [NYC and Melbourne Market Model](https://claude.ai/artifact/3At2tiwetEBDdozvkm6UPf): interactive market sizing from licence data (venues, adoption, pricing, revenue ramp)
@@ -17,7 +18,7 @@
 - [docs/drink_data.md](docs/drink_data.md): which column holds each drink fact (who made it, where it came from, glass, ice), so a change puts a fact in its one home
 - [docs/one_home_drop.md](docs/one_home_drop.md): the old fields One home (20261204300000) keeps in step for builds before 2.0, their new homes, and the checks before the PR that drops them
 - [docs/kit_and_ice.md](docs/kit_and_ice.md): Kit and ice, the approved plan and its 7 PRs, and what the data is (venue ice items, item_ice, tools, glassware sources)
-- [docs/change_policy.md](docs/change_policy.md): what CI classifies as blast-radius (migrations, RLS, auth, `lib/roles.ts`) and needs the `human-approved` label on Kevin's approval
+- [docs/change_policy.md](docs/change_policy.md): what CI classifies as blast-radius (migrations, RLS, auth, `lib/roles.ts`) and needs the `human-approved` label, and Kevin's standing decision on what the merge owner may do without a per-PR ask
 - [docs/store-submission.md](docs/store-submission.md): App Store and Play submission notes
 - [lib/roles.ts](lib/roles.ts): role levels and what each can see
 - [constants/tokens.ts](constants/tokens.ts): Back Bar colours, type, radius. New screens use these via `components/ds`
