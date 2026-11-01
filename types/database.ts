@@ -7968,6 +7968,12 @@ export type Database = {
         | "playfair_display"
         | "josefin_sans"
         | "tenor_sans"
+        | "newsreader"
+        | "im_fell_english"
+        | "imbue"
+        | "besley"
+        | "belleza"
+        | "big_shoulders"
     }
     CompositeTypes: {
       [_ in never]: never
@@ -8196,6 +8202,12 @@ export const Constants = {
         "playfair_display",
         "josefin_sans",
         "tenor_sans",
+        "newsreader",
+        "im_fell_english",
+        "imbue",
+        "besley",
+        "belleza",
+        "big_shoulders",
       ],
     },
   },

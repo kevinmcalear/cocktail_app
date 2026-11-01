@@ -6,7 +6,7 @@ import { displayFaces, type DisplayFace } from '@/constants/tokens';
 import { LAZY_FACE_FONTS } from './fonts';
 
 /**
- * The lazy display faces that have finished loading, as ",playfair,tenor,".
+ * The lazy display faces that have finished loading, as ",imbue,besley,".
  * A string, so a render can compare it, and React re-renders when it changes.
  */
 let loaded = ',';
@@ -26,7 +26,7 @@ export function faceReady(face: DisplayFace, done: string): boolean {
   return !LAZY_FACE_FONTS[face] || done.includes(`,${face},`);
 }
 
-/** Loads a lazy face once. A failure (offline) leaves it unloaded, so its text stays in Instrument Serif. */
+/** Loads a lazy face once. A failure (offline) leaves it unloaded, so its text stays in Redaction. */
 function loadFace(face: DisplayFace): Promise<void> {
   const fonts = LAZY_FACE_FONTS[face];
   if (!fonts || faceReady(face, loaded)) return Promise.resolve();

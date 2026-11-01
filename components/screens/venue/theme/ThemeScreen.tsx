@@ -44,7 +44,7 @@ function ThemeEditor({ row, canEdit, header }: { row: VenueBrandRow; canEdit: bo
   const d = useBrandDraft(row, canEdit);
   const [scheme, setScheme] = useState<BackbarScheme>('light');
   const [page, setPage] = useState<MiniKind>('bar');
-  const parts = { row, draft: d.draft, set: d.set, suggested: d.suggested, busy: d.busy, problems: d.problems, onUpload: (k: 'logo' | 'icon') => void d.upload(k), onRemoveBackground: () => void d.removeBackground() };
+  const parts = { row, draft: d.draft, set: d.set, suggested: d.suggested, busy: d.busy, problems: d.problems, onUpload: (k: 'logo' | 'icon') => void d.upload(k), onRemoveBackground: () => void d.removeBackground(), look: d.look };
   const save = canEdit ? (
     <Button
       label={d.save.isPending ? 'Saving…' : 'Save'}

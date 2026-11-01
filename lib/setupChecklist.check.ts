@@ -49,5 +49,5 @@ const bare = { logo_url: null, primary_color: null, display_face: 'instrument_se
 assert.equal(lookSet(bare), false);
 assert.equal(lookSet({ ...bare, primary_color: '#D0643B' }), true);
 assert.equal(lookSet({ ...bare, logo_url: 'https://x/logo.png' }), true);
-assert.equal(lookSet({ ...bare, display_face: 'fraunces' }), true);
+assert.equal(lookSet({ ...bare, display_face: 'besley' }), true);
 assert.equal(lookSet(bare, { done: ['find', 'place', 'look'] }), true);

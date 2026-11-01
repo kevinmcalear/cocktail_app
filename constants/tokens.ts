@@ -130,7 +130,7 @@ export const BAR_COLOURS = [
 /** Two made-up venues, for the gallery and tests. Real venues come from `bars`. */
 export const SAMPLE_BRANDS = {
   littleRye: { name: 'Little Rye', accent: '#D0643B', displayFace: 'redaction' as const },
-  paleMoth: { name: 'Pale Moth', accent: '#B9A8F5', displayFace: 'fraunces' as const },
+  paleMoth: { name: 'Pale Moth', accent: '#B9A8F5', displayFace: 'imbue' as const },
 };
 
 /**
@@ -145,13 +145,16 @@ export const fontFamilies = {
   name: 'Redaction',
   nameItalic: 'RedactionItalic',
   nameBold: 'RedactionBold',
-  fraunces: 'Fraunces',
-  frauncesItalic: 'FrauncesItalic',
+  newsreader: 'Newsreader',
+  newsreaderItalic: 'NewsreaderItalic',
+  fell: 'IMFellEnglish',
+  fellItalic: 'IMFellEnglishItalic',
+  imbue: 'Imbue',
+  besley: 'Besley',
+  besleyItalic: 'BesleyItalic',
   bricolage: 'BricolageGrotesque',
-  playfair: 'PlayfairDisplay',
-  playfairItalic: 'PlayfairDisplayItalic',
-  josefin: 'JosefinSans',
-  tenor: 'TenorSans',
+  belleza: 'Belleza',
+  shoulders: 'BigShoulders',
 } as const;
 
 /** The system font: React Native maps 'System' to SF on iOS and system UI on the web; Android falls back to Roboto. */
@@ -167,20 +170,42 @@ export const font: Record<'regular' | 'medium' | 'semiBold' | 'figures' | 'figur
 };
 
 /**
- * The faces names can be set in: the app's own (Redaction), then the faces a
- * venue can pick, serifs then sans. The last three load only when a venue
- * uses them (components/ds/faces.ts).
+ * The faces names can be set in (Kevin, 31 Oct 2026: one per style on the
+ * type picker, all SIL OFL): the app's own (Redaction), then Book, Worn, Deco,
+ * Tavern, Modern, Poster and Sign. All but Redaction load only when a venue
+ * uses them (components/ds/faces.ts). `scale` sets each at the same visual
+ * height as Redaction; `spacing` is letter spacing in em; `upper` faces are
+ * set in capitals. Faces with no italic of their own stay upright.
  */
 export const displayFaces = {
-  redaction: { label: 'Redaction', regular: fontFamilies.name, italic: fontFamilies.nameItalic },
-  fraunces: { label: 'Fraunces', regular: fontFamilies.fraunces, italic: fontFamilies.frauncesItalic },
-  playfair: { label: 'Playfair Display', regular: fontFamilies.playfair, italic: fontFamilies.playfairItalic },
-  bricolage: { label: 'Bricolage Grotesque', regular: fontFamilies.bricolage, italic: fontFamilies.bricolage },
-  josefin: { label: 'Josefin Sans', regular: fontFamilies.josefin, italic: fontFamilies.josefin },
-  tenor: { label: 'Tenor Sans', regular: fontFamilies.tenor, italic: fontFamilies.tenor },
+  redaction: { label: 'Redaction', by: 'MCKL', style: 'Default', regular: fontFamilies.name, italic: fontFamilies.nameItalic, scale: 1, spacing: 0, upper: false },
+  newsreader: { label: 'Newsreader', by: 'Production Type', style: 'Book', regular: fontFamilies.newsreader, italic: fontFamilies.newsreaderItalic, scale: 0.92, spacing: 0, upper: false },
+  fell: { label: 'IM Fell English', by: 'Igino Marini', style: 'Worn', regular: fontFamilies.fell, italic: fontFamilies.fellItalic, scale: 0.95, spacing: 0, upper: false },
+  imbue: { label: 'Imbue', by: 'Tyler Finck', style: 'Deco', regular: fontFamilies.imbue, italic: fontFamilies.imbue, scale: 1.04, spacing: 0, upper: false },
+  besley: { label: 'Besley', by: 'Owen Earl', style: 'Tavern', regular: fontFamilies.besley, italic: fontFamilies.besleyItalic, scale: 0.8, spacing: 0, upper: false },
+  bricolage: { label: 'Bricolage Grotesque', by: 'Mathieu Triay', style: 'Modern', regular: fontFamilies.bricolage, italic: fontFamilies.bricolage, scale: 0.84, spacing: -0.025, upper: false },
+  belleza: { label: 'Belleza', by: 'Eduardo Tunni', style: 'Poster', regular: fontFamilies.belleza, italic: fontFamilies.belleza, scale: 0.72, spacing: 0.04, upper: true },
+  shoulders: { label: 'Big Shoulders', by: 'Patric King', style: 'Sign', regular: fontFamilies.shoulders, italic: fontFamilies.shoulders, scale: 1.05, spacing: 0.01, upper: true },
 } as const;
 
 export type DisplayFace = keyof typeof displayFaces;
+
+/**
+ * A name set in a face at a size: the face, scaled to sit at Redaction's
+ * height, with its letter spacing and capitals. The line height stays the
+ * size's own (components/ds/displayClip.check.ts).
+ */
+export function nameStyle(face: DisplayFace, size: { fontSize: number; lineHeight: number }, italic = false): TextStyle {
+  const f = displayFaces[face];
+  const fontSize = Math.round(size.fontSize * f.scale);
+  return {
+    fontFamily: italic ? f.italic : f.regular,
+    fontSize,
+    lineHeight: size.lineHeight,
+    ...(f.spacing ? { letterSpacing: f.spacing * fontSize } : null),
+    ...(f.upper ? { textTransform: 'uppercase' } : null),
+  };
+}
 
 /** Names set in the display face on rows (22/26) and on a menu's card (24/28), as the canvas draws them. */
 export const displayName = {

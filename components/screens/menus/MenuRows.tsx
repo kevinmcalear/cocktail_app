@@ -4,7 +4,7 @@ import { StyleSheet, View } from 'react-native';
 
 import { Caption, DrinkImage, DsText, Headline, PressableScale, Tag, useDs } from '@/components/ds';
 import { IconSymbol } from '@/components/ui/icon-symbol';
-import { displayFaces, displayName, font, radius, space, STATUS } from '@/constants/tokens';
+import { displayFaces, displayName, font, nameStyle, radius, space, STATUS } from '@/constants/tokens';
 import { readableAccent, withAlpha } from '@/lib/color';
 import { comingUpLine, draftLine, homeMenuLine, menuDateLine, menuStatus, plural, previousLine } from '@/lib/menus';
 import type { MenuPicture, MenuSummary } from '@/types/menus';
@@ -101,7 +101,7 @@ export function MenuCardFrame({ label, onPress, name, coverUrl, coverPosition, p
       <MenuVisual name={name} coverUrl={coverUrl} coverPosition={coverPosition} pictures={pictures} height={112} />
       <View style={styles.cardBody}>
         <View style={styles.flex}>
-          <Headline numberOfLines={1} style={[displayName.card, { fontFamily: displayFaces[ds.displayFace].regular }]}>
+          <Headline numberOfLines={1} style={[nameStyle(ds.displayFace, displayName.card)]}>
             {name}
           </Headline>
           <Caption tone="muted" numberOfLines={1}>
@@ -171,7 +171,7 @@ export function MenuRowFrame({ label, onPress, thumb, name, line, dashed, traili
     >
       {thumb}
       <View style={styles.flex}>
-        <Headline numberOfLines={1} style={[displayName.row, { fontFamily: displayFaces[ds.displayFace].regular }]}>
+        <Headline numberOfLines={1} style={[nameStyle(ds.displayFace, displayName.row)]}>
           {name}
         </Headline>
         <Caption tone="muted" color={dashed ? readableAccent(STATUS.warning, ds.c.ground) : undefined} numberOfLines={1}>

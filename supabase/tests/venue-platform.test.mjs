@@ -199,7 +199,8 @@ describe('venue identity', () => {
 
   test('every face the app offers is one the database takes', async () => {
     const client = users.admin.client;
-    for (const face of ['instrument_serif', 'fraunces', 'playfair_display', 'bricolage_grotesque', 'josefin_sans', 'tenor_sans']) {
+    // The theme faces (20261204500000_theme_faces.sql), and the older ones bars may still have.
+    for (const face of ['instrument_serif', 'newsreader', 'im_fell_english', 'imbue', 'besley', 'bricolage_grotesque', 'belleza', 'big_shoulders', 'fraunces', 'playfair_display', 'josefin_sans', 'tenor_sans']) {
       const { error } = await client.from('bars').update({ display_face: face }).eq('id', ids.barOne);
       assert.ifError(error);
     }

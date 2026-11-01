@@ -3,7 +3,7 @@ import { ScrollView, StyleSheet, View } from 'react-native';
 
 import { BackbarTheme, BrandProvider, Caption, DrinkImage, DsText, useDs } from '@/components/ds';
 import { VenueMark } from '@/components/nav/VenueMarks';
-import { DEFAULT_ACCENT, displayFaces, font, radius, space, type BackbarScheme } from '@/constants/tokens';
+import { DEFAULT_ACCENT, displayName, font, nameStyle, radius, space, type BackbarScheme } from '@/constants/tokens';
 import { BRAND_SAMPLE } from '@/lib/brandSample';
 
 import type { BrandLook } from '../BrandPreview';
@@ -47,7 +47,8 @@ export function ThemeMini({ kind, look, scheme, width }: { kind: MiniKind; look:
 
 function MiniPage({ kind, look }: { kind: MiniKind; look: BrandLook }) {
   const ds = useDs();
-  const name = { fontFamily: displayFaces[ds.displayFace].regular };
+  // Display and title set names in the face themselves (DsText); a row's name takes it at the row size.
+  const rowName = nameStyle(ds.displayFace, displayName.row);
   const button = (label: string) => (
     <View style={[styles.button, { backgroundColor: ds.accentFill.fill }]}>
       <DsText variant="body" color={ds.accentFill.text} style={styles.strong}>{label}</DsText>
@@ -71,7 +72,7 @@ function MiniPage({ kind, look }: { kind: MiniKind; look: BrandLook }) {
           </View>
         )}
         <View style={styles.body}>
-          <DsText variant="title" numberOfLines={1} style={name}>{DRINK.name}</DsText>
+          <DsText variant="title" numberOfLines={1}>{DRINK.name}</DsText>
           {rows}
           {button('Rank it')}
         </View>
@@ -82,11 +83,11 @@ function MiniPage({ kind, look }: { kind: MiniKind; look: BrandLook }) {
     return (
       <View style={[styles.page, styles.body, { backgroundColor: ds.c.ground }]}>
         <Caption tone="muted">{look.name} · Menu</Caption>
-        <DsText variant="display" numberOfLines={1} style={name}>Autumn</DsText>
+        <DsText variant="display" numberOfLines={1}>Autumn</DsText>
         {MENU.map((d) => (
           <View key={d.name} style={[styles.menuRow, { borderTopColor: ds.c.line }]}>
             <View style={styles.flex}>
-              <DsText variant="headline" numberOfLines={1} style={name}>{d.name}</DsText>
+              <DsText variant="headline" numberOfLines={1} style={rowName}>{d.name}</DsText>
               <Caption tone="muted" numberOfLines={1}>{d.line}</Caption>
             </View>
             <DsText variant="spec">{d.price}</DsText>
@@ -99,7 +100,7 @@ function MiniPage({ kind, look }: { kind: MiniKind; look: BrandLook }) {
     <View style={[styles.page, styles.body, styles.bar, { backgroundColor: ds.c.ground }]}>
       <VenueMark venue={{ ...look, roleLevel: 40 }} size={64} />
       <Caption tone="muted">Cocktail bar · open till 2</Caption>
-      <DsText variant="title" numberOfLines={2} style={name}>{look.name}</DsText>
+      <DsText variant="title" numberOfLines={2}>{look.name}</DsText>
       {button('See the menu')}
       <DsText variant="body" color={ds.accentText} style={styles.strong}>On the menu now</DsText>
       {rows}

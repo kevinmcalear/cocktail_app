@@ -5,13 +5,14 @@ import { Body, Button, Caption, DsText, PressableScale, Segmented, Sheet, SheetS
 import { VenueMark } from '@/components/nav/VenueMarks';
 import { ControlRow, RowDivider, SettingsRow, SettingsSection } from '@/components/screens/settings/SettingsParts';
 import { IconSymbol } from '@/components/ui/icon-symbol';
-import { BAR_COLOURS, DEFAULT_ACCENT, displayFaces, radius, space } from '@/constants/tokens';
+import { BAR_COLOURS, DEFAULT_ACCENT, displayFaces, nameStyle, radius, space, type } from '@/constants/tokens';
 import { pickPhotoColours, type VenueBrandRow } from '@/hooks/useVenueBrand';
 import { normalizeHex } from '@/lib/brand';
 import { colourName } from '@/lib/brandColours';
 import { groundOf, groundTintFor, type Ground } from '@/lib/palette';
 
 import { IconPart, logoColoursFor, SHORT_NAME_MAX, type BrandDraftState } from '../BrandForm';
+import type { BrandLook } from '../BrandPreview';
 import { LogoRow } from '../BrandSections';
 import { ColourSheet } from './ColourSheet';
 import { TypeSheet } from './TypeSheet';
@@ -31,6 +32,8 @@ export interface ThemePartProps {
   problems: Partial<Record<'accent' | 'groundTint' | 'shortName', string>>;
   onUpload: (kind: 'logo' | 'icon') => void;
   onRemoveBackground: () => void;
+  /** The draft as the previews draw it. */
+  look: BrandLook;
 }
 
 /** Colour (canvas Theme-flow-2): the one colour and where it came from, opening the Colour sheet, then Background. */
@@ -72,7 +75,7 @@ export function ColourSection({ row, draft, set, suggested, problems }: ThemePar
 }
 
 /** Type (Theme-flow-2): the bar's name in its face, opening the faces. */
-export function TypeSection({ row, draft, set }: ThemePartProps) {
+export function TypeSection({ row, draft, set, look }: ThemePartProps) {
   const ds = useDs();
   const [open, setOpen] = useState(false);
   const family = useDisplayFaces([draft.face]);
@@ -80,15 +83,15 @@ export function TypeSection({ row, draft, set }: ThemePartProps) {
     <SettingsSection title="Type" note="For names: your bar, its drinks and its menus. Amounts, allergens and buttons stay in the app’s type.">
       <PressableScale role="button" accessibilityLabel={`Type, ${displayFaces[draft.face].label}`} onPress={() => setOpen(true)} style={styles.typeRow}>
         <View style={styles.flex}>
-          <DsText variant="title" numberOfLines={1} style={{ fontFamily: family(draft.face) }}>{row.name}</DsText>
-          <Caption tone="muted">{displayFaces[draft.face].label}</Caption>
+          <DsText variant="title" numberOfLines={1} style={{ ...nameStyle(draft.face, type.title), fontFamily: family(draft.face) }}>{row.name}</DsText>
+          <Caption tone="muted">{`${displayFaces[draft.face].style} · ${displayFaces[draft.face].label} · ${displayFaces[draft.face].by}`}</Caption>
         </View>
         <IconSymbol name="chevron.right" size={16} color={ds.c.muted} />
       </PressableScale>
       <TypeSheet
         visible={open}
         onClose={() => setOpen(false)}
-        name={row.name}
+        look={look}
         value={draft.face}
         onUse={(face) => {
           setOpen(false);

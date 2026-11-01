@@ -15,7 +15,7 @@ export interface VenueBrandRow {
   logo_url: string | null;
   primary_color: string | null;
   secondary_color: string | null;
-  /** A venue_display_face value; one this build doesn't know reads as Instrument Serif (lib/brand faceFromDb). */
+  /** A venue_display_face value; one this build doesn't know reads as Redaction, an older one as the nearest face (lib/brand faceFromDb). */
   display_face: string;
   ground_tint: string | null;
   short_name: string | null;

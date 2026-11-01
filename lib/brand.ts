@@ -11,18 +11,32 @@ import { neutralsFrom } from '@/lib/palette';
 const FACE_TO_DB = {
   // Every venue starts on instrument_serif (the column's default), so it reads as no pick: the app's own face.
   redaction: 'instrument_serif',
-  fraunces: 'fraunces',
-  playfair: 'playfair_display',
+  newsreader: 'newsreader',
+  fell: 'im_fell_english',
+  imbue: 'imbue',
+  besley: 'besley',
   bricolage: 'bricolage_grotesque',
-  josefin: 'josefin_sans',
-  tenor: 'tenor_sans',
+  belleza: 'belleza',
+  shoulders: 'big_shoulders',
 } as const satisfies Record<DisplayFace, string>;
 
 export type DbDisplayFace = (typeof FACE_TO_DB)[DisplayFace];
 
+/**
+ * The faces bars could pick before the theme faces (Kevin, 31 Oct 2026), drawn
+ * as the nearest one now so every bar keeps a face. The database keeps the old
+ * value until the bar picks again (faceToSave).
+ */
+const OLD_FACES = new Map<string, DisplayFace>([
+  ['fraunces', 'newsreader'],
+  ['playfair_display', 'imbue'],
+  ['josefin_sans', 'bricolage'],
+  ['tenor_sans', 'belleza'],
+]);
+
 /** A face this app doesn't know (a newer one) shows as the app's own, Redaction. */
 export function faceFromDb(value: string | null | undefined): DisplayFace {
-  return (Object.keys(FACE_TO_DB) as DisplayFace[]).find((f) => FACE_TO_DB[f] === value) ?? 'redaction';
+  return (Object.keys(FACE_TO_DB) as DisplayFace[]).find((f) => FACE_TO_DB[f] === value) ?? OLD_FACES.get(value ?? '') ?? 'redaction';
 }
 
 export function faceToDb(face: DisplayFace): DbDisplayFace {

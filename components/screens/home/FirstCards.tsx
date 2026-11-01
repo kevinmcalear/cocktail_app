@@ -3,7 +3,7 @@ import { Linking, Platform, StyleSheet, View } from 'react-native';
 
 import { Body, Button, GlassSurface, Headline, PopoverMenu, PressableScale, Surface, useDs, usePopover } from '@/components/ds';
 import { IconSymbol } from '@/components/ui/icon-symbol';
-import { displayFaces, displayName, layout, radius, space } from '@/constants/tokens';
+import { displayName, layout, nameStyle, radius, space } from '@/constants/tokens';
 import { useBarCities } from '@/hooks/useDiscover';
 import type { NearMe } from '@/hooks/useNearMe';
 import type { LocationAccess } from '@/lib/deviceLocation';
@@ -107,7 +107,7 @@ function PromptCard({ title, onClose, closeLabel, onGlass, children }: { title: 
   const ds = useDs();
   const body = (
     <View role="group" aria-label={title} style={styles.card}>
-      <Headline role="heading" style={[styles.title, displayName.card, { fontFamily: displayFaces[ds.displayFace].regular }]}>
+      <Headline role="heading" style={[styles.title, nameStyle(ds.displayFace, displayName.card)]}>
         {title}
       </Headline>
       {children}
