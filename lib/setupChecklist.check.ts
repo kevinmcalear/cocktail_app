@@ -1,53 +1,45 @@
-// Checks for lib/setupChecklist.ts (owner-setup step 5). Run: npm run test:unit
 import assert from 'node:assert/strict';
 
-import { barSetUp, checklist, checklistIntro, drinksNote, kitNote, lookSet } from './setupChecklist';
+import { checklist, checklistEyebrow, lookSet, menuLine, placeSet } from './setupChecklist';
 
-const none = { bar: false, kit: false, bottles: false, menu: false, drinks: false, team: false };
+const none = { claim: false, menu: false, where: false, glassware: false, team: false, visibility: false, theme: false, calendars: false };
 
-// Fresh: Your bar is first, nothing done.
-let list = checklist(none);
-assert.equal(list.next, 'bar');
-assert.deepEqual(list.rows.map((r) => r.state), ['now', 'todo', 'todo', 'todo', 'todo', 'todo']);
-assert.equal(checklistIntro(list), 'Six things to set up. Each one brings you back here.');
+// --- the eight rows, as drawn (Kept-onboard, Owner after the three steps) ---
+let list = checklist({ ...none, claim: true, menu: true, where: true });
+assert.deepEqual(
+  list.rows.map((r) => r.title),
+  ['Claim it', 'Tonight’s menu', 'Where and when', 'Glassware from your drinks', 'Invite your team', 'Who sees your page', 'Theme', 'Calendars']
+);
+assert.equal(checklistEyebrow(list), 'Owner · 3 of 8 done');
+assert.equal(list.next, 'glassware');
+assert.equal(list.rows.find((r) => r.key === 'glassware')?.state, 'now');
+assert.equal(list.finished, false);
 
-// As drawn: the bar done, Kit next, the team skipped.
-list = checklist({ ...none, bar: true }, ['team']);
-assert.equal(list.next, 'kit');
-assert.deepEqual(list.rows.map((r) => r.state), ['done', 'now', 'todo', 'todo', 'todo', 'skipped']);
-assert.equal(list.done, 1);
-assert.equal(checklistIntro(list), 'One of six done. Each one brings you back here.');
+// --- skips, and Calendars never holds it open ---
+list = checklist({ ...none, claim: true, menu: true, where: true, theme: true, visibility: true }, ['glassware', 'team']);
+assert.equal(list.next, 'calendars', 'only the optional row is left');
+assert.equal(list.finished, true, 'the rest done or skipped: it leaves the top of the bar');
+assert.equal(list.rows.find((r) => r.key === 'team')?.state, 'skipped');
+assert.equal(checklist({ ...none }, ['kit']).rows.find((r) => r.key === 'glassware')?.state, 'skipped', 'an old Kit skip is the glassware row');
+assert.equal(checklist({ ...none, calendars: true }).next, 'claim', 'Calendars done early still leaves the rest first');
+assert.equal(checklist({ claim: true, menu: true, where: true, glassware: true, team: true, visibility: true, theme: true, calendars: true }).next, null);
 
-// A skipped row done later counts as done; done or skipped everywhere finishes it.
-list = checklist({ bar: true, kit: true, bottles: true, menu: true, drinks: false, team: true }, ['team', 'drinks']);
-assert.equal(list.finished, true);
-assert.equal(list.next, null);
-assert.equal(list.done, 5);
-assert.equal(checklist({ ...none, bar: true, kit: true, bottles: true }).done, 3);
-assert.equal(checklistIntro({ done: 3, total: 6 }), 'Three of six done. Each one brings you back here.');
+// --- lines ---
+assert.equal(menuLine('Winter', 4), 'Winter · 4 drinks');
+assert.equal(menuLine('Winter', 1), 'Winter · 1 drink');
 
-// Your bar: venue setup past who sees what.
-assert.equal(barSetUp(undefined), false);
-assert.equal(barSetUp({ done: ['find', 'place'], finished: false }), false);
-assert.equal(barSetUp({ done: ['find', 'place', 'look', 'visibility'], finished: false }), true);
-assert.equal(barSetUp({ done: [], finished: true }), true);
+// --- Where and when: venue setup got past it, or there's no setup here ---
+assert.equal(placeSet(undefined), true);
+assert.equal(placeSet({ done: ['find'], finished: false }), false);
+assert.equal(placeSet({ done: ['find', 'place'], finished: false }), true);
+assert.equal(placeSet({ done: [], finished: true }), true);
 
-// The Kit row's note: glasses, ice and tools, the empty ones left out.
-assert.equal(kitNote(0, 0, 0), undefined);
-assert.equal(kitNote(2, 0, 0), '2 glasses so far');
-assert.equal(kitNote(1, 2, 1), '1 glass, 2 ice, 1 tool so far');
-assert.equal(kitNote(0, 1, 3), '1 ice, 3 tools so far');
-
-// First drinks (E31): what's in the Library, and what an import still has to check.
-assert.equal(drinksNote(18, 28), '18 in your Library, 28 still to check');
-assert.equal(drinksNote(18, 0), '18 in your Library');
-assert.equal(drinksNote(0, 46), '46 still to check');
-assert.equal(drinksNote(0, 0), undefined);
-
-// Your team waits for the look: a logo, a colour, a changed font, or How it looks done in venue setup.
+// --- the look Your team waits for, and Theme's tick ---
 const bare = { logo_url: null, primary_color: null, display_face: 'instrument_serif' };
 assert.equal(lookSet(bare), false);
 assert.equal(lookSet({ ...bare, primary_color: '#D0643B' }), true);
 assert.equal(lookSet({ ...bare, logo_url: 'https://x/logo.png' }), true);
 assert.equal(lookSet({ ...bare, display_face: 'fraunces' }), true);
 assert.equal(lookSet(bare, { done: ['find', 'place', 'look'] }), true);
+
+console.log('setupChecklist.check: ok');

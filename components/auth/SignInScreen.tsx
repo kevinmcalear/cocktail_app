@@ -27,7 +27,7 @@ const openGmail = () =>
  * (the venue staff link, /v/<slug>). `expired` is the page an old sign-in
  * link lands on: the email again (remembered on this device) and a new code.
  */
-export function SignInScreen({ brand, subtitle, expired }: { brand?: AuthBrand; subtitle?: string; expired?: boolean } = {}) {
+export function SignInScreen({ brand, subtitle, expired, onBack }: { brand?: AuthBrand; subtitle?: string; expired?: boolean; onBack?: () => void } = {}) {
   const ds = useDs();
   const router = useRouter();
   const { sendCode, verifyCode } = useAuth();
@@ -189,6 +189,7 @@ export function SignInScreen({ brand, subtitle, expired }: { brand?: AuthBrand; 
       title="Sign in"
       subtitle={subtitle ?? 'Every spec with its amounts, your bars, menus and rankings.'}
       brand={brand}
+      onBack={onBack}
       footer={
         <>
           <Caption tone="muted" align="center">

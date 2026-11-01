@@ -192,6 +192,9 @@ function RootLayoutNav() {
             <Stack.Screen name="bring-in/index" options={{ headerShown: false }} />
             <Stack.Screen name="bring-in/done" options={{ headerShown: false }} />
             <Stack.Screen name="drafts" options={{ headerShown: false }} />
+            <Stack.Screen name="first-round/index" options={{ headerShown: false }} />
+            <Stack.Screen name="first-round/drink" options={{ headerShown: false }} />
+            <Stack.Screen name="first-round/ready" options={{ headerShown: false }} />
             <Stack.Screen name="p/[id]/index" options={{ headerShown: false }} />
             <Stack.Screen name="p/[id]/menus/[edition]" options={{ headerShown: false }} />
             <Stack.Screen name="p/[id]/claim" options={{ headerShown: false }} />

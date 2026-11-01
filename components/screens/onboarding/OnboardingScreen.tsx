@@ -9,6 +9,7 @@ import { useFinishOnboarding, useSaveOnboardingName, useSaveWorkplace } from '@/
 import { useMyProfile } from '@/hooks/useMyProfile';
 import { useFindNamesakes, useMyPersonClaim } from '@/hooks/useProfiles';
 import { inviteJobTitle, needsOnboarding, nextStep, splitName, stepProgress, type OnboardingStep, type StepChoice } from '@/lib/onboarding';
+import { roundKind } from '@/lib/firstRound';
 import { useAppMode } from '@/store/useAppMode';
 
 import { BringStep } from './BringStep';
@@ -200,6 +201,8 @@ export function OnboardingScreen() {
         onJoined={() => {
           setJoined(invite);
           enterVenue(invite.bar_id);
+          // A new bartender lands on Your first round (board Kept-onboard); makers on Tonight, as before.
+          if (roundKind(invite.role_level) === 'staff') setLanding('/first-round');
           setChosen('name');
         }}
         onDeclined={() => setChosen('name')}

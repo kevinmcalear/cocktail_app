@@ -74,22 +74,21 @@ export function RoundStepList({ steps, currentKey, onSkip, choices }: { steps: (
  * Does the step that's up. The first cocktail opens the add-drink wizard:
  * from the catalog's classic named `start`, at Review, or from scratch when
  * `start` is null. Without a start (the venue menu's Keep going) it goes to
- * the Library, where the card has the choices. The others open their tab.
+ * the Library, where the card has the choices. A maker's others open their
+ * tab; a bartender's open Your first round.
  */
 export function useRoundGo() {
   const router = useRouter();
-  const { venue, done } = useFirstRound();
+  const { venue } = useFirstRound();
   const startCocktail = useStartFirstCocktail();
   return (step: RoundStep | null, start?: string | null) => {
     if (!step || !venue) return;
     if (step.key === 'house_spec') {
       if (start === undefined) return router.navigate('/drinks');
       startCocktail(venue.id, start);
-    } else if (step.opens === 'menus') {
-      // A staff member's step is opening Menus: done first, so its tab is there to open (a hidden native tab may not be).
-      if (step.key === 'open_menu') done('open_menu');
-      router.navigate('/menus/all');
-    } else if (step.opens === 'discover') router.navigate('/discover');
+    } else if (step.opens === 'menus') router.navigate('/menus/all');
+    else if (step.opens === 'discover') router.navigate('/discover');
+    else router.push('/first-round');
   };
 }
 

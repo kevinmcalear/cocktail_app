@@ -1,9 +1,14 @@
 import assert from 'node:assert/strict';
 
-import { markDone, onAMenu, readRound, roundKind, roundView, seeDone, seeOpened, skipAll, startRound, yourMenuStep } from './firstRound';
+import { markDone, markRead, onAMenu, readRound, roundKind, roundView, seeDone, seeOpened, skipAll, startRound } from './firstRound';
+import { firstName, houseMadeLine, nextShift, readProgress, rotaLine, roundSetter, shiftDay } from './staffRound';
 
 const NOW = '2026-10-15T09:00:00Z';
 const fresh = startRound(NOW);
+
+// --- the old staff round ---
+assert.ok(readRound({ first_round: { v: 1, started_at: NOW, done: ['open_menu', 'discover'], seen: [] } })?.skipped_at, 'past the old round: not a new hire');
+assert.equal(readRound({ first_round: { v: 1, started_at: NOW, done: [], seen: [] } })?.skipped_at, null, 'a round not begun carries on');
 
 // --- who gets which round ---
 assert.equal(roundKind(40), 'make', 'Admin');
@@ -55,13 +60,12 @@ assert.equal(v.active, false, 'done: nothing held back');
 assert.equal(v.showDone, true, 'a quiet card says the round is over');
 assert.equal(roundView(seeDone(r), 'make').showDone, false, 'once');
 
-// --- staff: Menus opens when they open the menu ---
+// --- staff: three things, nothing held back ---
 v = roundView(fresh, 'staff');
-assert.equal(v.current?.key, 'open_menu');
-assert.deepEqual(v.hidden, ['menus', 'discover'], 'the Library alone, like a maker');
-v = roundView(markDone(fresh, 'open_menu'), 'staff');
-assert.deepEqual(v.hidden, [], 'Discover opens next');
-assert.equal(v.current?.key, 'discover');
+assert.equal(v.current?.key, 'read_menu');
+assert.deepEqual(v.hidden, [], 'Your first round holds nothing back');
+assert.deepEqual(v.steps.map((x) => x.title), ['Read tonight’s menu', 'Learn the house-made', 'Log a batch']);
+assert.equal(roundView(markDone(fresh, 'read_menu'), 'staff').current?.key, 'house_made');
 
 // --- Show me everything ---
 v = roundView(skipAll(fresh, NOW), 'make');
@@ -86,11 +90,48 @@ assert.equal(onAMenu(made, [...menus, { kind: 'menu', itemIds: ['of-1'] }]), tru
 assert.equal(onAMenu(made, [{ kind: 'rnd', itemIds: ['of-1'] }]), false, 'an R&D collection is not a menu');
 assert.equal(onAMenu(markDone(fresh, 'house_spec'), menus), true, 'skipped the first step: any menu with a drink');
 
-console.log('firstRound.check: ok');
+// --- reading tonight's menu one drink at a time ---
+const menu = ['martini', 'penicillin', 'clover'];
+let read = markRead(fresh, 'martini', { menu });
+assert.deepEqual(readProgress(read, menu), { read: 1, next: 'penicillin' });
+assert.equal(markRead(read, 'martini', { menu }).read?.length, 1, 'twice counts once');
+read = markRead(markRead(read, 'clover', { menu }), 'penicillin', { menu });
+assert.ok(read.done.includes('read_menu'), 'every drink read: the step is done');
+assert.deepEqual(readProgress(read, menu), { read: 3, next: null });
+assert.deepEqual(readProgress(null, menu), { read: 0, next: 'martini' });
+assert.deepEqual(readRound({ first_round: { v: 1, started_at: NOW, read: ['martini', 4] } })?.read, ['martini'], 'read ids are kept');
+read = markRead(fresh, 'grenadine', { houseMade: ['grenadine'] });
+assert.ok(read.done.includes('house_made') && !read.done.includes('read_menu'), 'the house-made step on its own');
 
-// Find yourself step 7: the menu on now, counting the drinks credited to you.
-const nightGarden = { name: 'Night Garden', kind: 'menu', itemIds: ['moth', 'sour', 'quiet'], status: 'on' };
-assert.deepEqual(yourMenuStep([nightGarden], new Set(['moth', 'sour'])), { title: 'Open the Night Garden menu', detail: '2 of its drinks are yours' });
-assert.equal(yourMenuStep([nightGarden], new Set(['moth']))?.detail, '1 of its drinks is yours');
-assert.equal(yourMenuStep([nightGarden], new Set(['other'])), null, 'none of yours: the plain step');
-assert.equal(yourMenuStep([{ ...nightGarden, status: 'previous' }], new Set(['moth'])), null, 'only the menu on now');
+// --- the round's lines ---
+assert.equal(houseMadeLine(['Honey-ginger', 'Grenadine', 'Saline', 'Orgeat']), 'Honey-ginger, grenadine, saline');
+assert.equal(houseMadeLine([]), null);
+assert.equal(firstName('Ana Ruiz'), 'Ana');
+const team = [
+  { user_id: 'me', role_level: 40, display_name: 'Me Myself', joined_at: '2026-01-01' },
+  { user_id: 'theo', role_level: 30, display_name: 'Theo', joined_at: '2025-01-01' },
+  { user_id: 'ana', role_level: 40, display_name: 'Ana Ruiz', joined_at: '2025-06-01' },
+  { user_id: 'bo', role_level: 40, display_name: 'Bo', joined_at: '2025-09-01' },
+];
+assert.equal(roundSetter(team, 'me', 40), 'Ana Ruiz', 'the Admin there longest, never you');
+assert.equal(roundSetter(team.slice(0, 2), 'me', 40), null, 'no Admin: Your bar set these');
+
+// --- Ready: the next shift on the rota ---
+const T = Date.parse('2026-11-04T12:00:00Z');
+const shifts = [
+  { user_id: 'theo', starts_at: '2026-11-06T21:00:00Z', ends_at: '2026-11-07T05:00:00Z', opens: true, closes: false },
+  { user_id: 'me', starts_at: '2026-11-06T23:00:00Z', ends_at: '2026-11-07T07:00:00Z', opens: false, closes: true },
+  { user_id: 'bo', starts_at: '2026-11-08T21:00:00Z', ends_at: '2026-11-09T05:00:00Z', opens: true, closes: true },
+];
+const next = nextShift(shifts, 'me', T);
+assert.equal(next?.mine.user_id, 'me');
+assert.deepEqual(next?.others.map((s) => s.user_id), ['theo'], 'only who overlaps your shift');
+assert.equal(rotaLine(next!, (id) => (id === 'theo' ? 'Theo' : id)), 'Theo opens, you close.');
+assert.equal(rotaLine({ mine: { ...shifts[1], opens: true }, others: [] }, String), 'You open and close.');
+assert.equal(rotaLine({ mine: { ...shifts[1], closes: false }, others: [] }, String), null, 'the rota says neither');
+assert.equal(nextShift(shifts, 'me', Date.parse('2026-11-08T00:00:00Z')), null, 'past shifts are not next');
+assert.equal(nextShift(shifts, null, T), null);
+assert.equal(shiftDay('2026-11-06T12:00:00', new Date('2026-11-04T12:00:00')), 'Friday');
+assert.equal(shiftDay('2026-11-04T20:00:00', new Date('2026-11-04T12:00:00')), 'tonight');
+
+console.log('firstRound.check: ok');

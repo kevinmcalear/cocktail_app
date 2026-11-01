@@ -4,22 +4,24 @@
  * more of the app, like learning a game one thing at a time. Drink Creators
  * and Admins add their first cocktail (from the Old Fashioned, a Margarita,
  * an Espresso Martini or from scratch, Eddie E30), put it on a menu (Menus opens),
- * then see who pours one near them (Discover opens). Bartenders and
- * Employees open the menu (Menus) and then Discover. Every step can be
+ * then see who pours one near them (Discover opens). Every step can be
  * skipped, Show me everything ends it, and it only ever hides Menus and
  * Discover: never a tab the venue switched on.
+ *
+ * Bartenders and Employees get "Your first round" (board Kept-onboard, 1 Nov
+ * 2026): read tonight's menu one drink at a time, learn the house-made, log a
+ * batch on their first shift. It holds nothing back.
  *
  * Progress lives in the person's auth user_metadata (`first_round`), beside
  * `onboarded`, so it follows them across devices. People who signed up
  * before this shipped have no `first_round` and never see it.
- * Checked by lib/firstRound.check.ts. Board: whole-app canvas, Onboarding,
- * "First round and Features".
+ * Checked by lib/firstRound.check.ts.
  */
 
 /** A Drink Creator or above makes drinks; everyone else is staff. */
 export type RoundKind = 'make' | 'staff';
 
-export type StepKey = 'house_spec' | 'menu' | 'discover' | 'open_menu';
+export type StepKey = 'house_spec' | 'menu' | 'discover' | 'read_menu' | 'house_made' | 'log_batch';
 
 /** A place the round holds back until its step comes up (Menus in the venue menu and sidebar; the four tabs never change). */
 export type RoundTab = 'menus' | 'discover';
@@ -48,6 +50,8 @@ export interface FirstRound {
   seen: RoundTab[];
   /** The drink saved in the first step: the menu step looks for it on a menu. */
   drink_id?: string | null;
+  /** Staff: the drinks and house-made they've read, one at a time. */
+  read?: string[];
 }
 
 /** Drink Creator is role level 35. */
@@ -62,9 +66,11 @@ const STEPS: Record<RoundKind, RoundStep[]> = {
     { key: 'menu', title: 'Put it on a menu', detail: 'Opens Menus', opens: 'menus', action: 'Open Menus' },
     { key: 'discover', title: 'See who pours one near you', detail: 'Opens Discover', opens: 'discover', action: 'Open Discover' },
   ],
+  // The lines under them come from the bar (the menu, its house-made, who you batch with): StaffRoundScreen.
   staff: [
-    { key: 'open_menu', title: 'Open the menu', detail: 'Opens Menus', opens: 'menus', action: 'Open the menu' },
-    { key: 'discover', title: 'See who pours your drinks near you', detail: 'Opens Discover', opens: 'discover', action: 'Open Discover' },
+    { key: 'read_menu', title: 'Read tonight’s menu', detail: 'One drink at a time', opens: null, action: 'Read tonight’s menu' },
+    { key: 'house_made', title: 'Learn the house-made', detail: 'What the bar makes itself', opens: null, action: 'Learn the house-made' },
+    { key: 'log_batch', title: 'Log a batch', detail: 'At the bar, on your first shift', opens: null, action: 'Log a batch' },
   ],
 };
 
@@ -79,7 +85,7 @@ export const OPENED_COPY: Record<RoundTab, { title: string; body: string; action
   discover: { title: 'Discover is open', body: 'Bars and drinks near you, and who pours what.', action: 'Open Discover' },
 };
 
-const STEP_KEYS: StepKey[] = ['house_spec', 'menu', 'discover', 'open_menu'];
+const STEP_KEYS: StepKey[] = ['house_spec', 'menu', 'discover', 'read_menu', 'house_made', 'log_batch'];
 const TABS: RoundTab[] = ['menus', 'discover'];
 
 /** A new round, as setup finishes or Settings replays it. */
@@ -97,10 +103,12 @@ export function readRound(metadata: unknown): FirstRound | null {
     v: 1,
     started_at: r.started_at,
     done: Array.isArray(r.done) ? r.done.filter((k): k is StepKey => STEP_KEYS.includes(k as StepKey)) : [],
-    skipped_at: typeof r.skipped_at === 'string' ? r.skipped_at : null,
+    // Someone who began the old staff round (Open the menu) is past their first round: it ends quietly.
+    skipped_at: typeof r.skipped_at === 'string' ? r.skipped_at : (r.done as string[] | undefined)?.includes?.('open_menu') ? r.started_at : null,
     done_seen: r.done_seen === true,
     seen: Array.isArray(r.seen) ? r.seen.filter((t): t is RoundTab => TABS.includes(t as RoundTab)) : [],
     drink_id: typeof r.drink_id === 'string' ? r.drink_id : null,
+    ...(Array.isArray(r.read) ? { read: r.read.filter((id): id is string => typeof id === 'string') } : {}),
   };
 }
 
@@ -157,13 +165,15 @@ export function roundView(round: FirstRound | null, kind: RoundKind): RoundView 
 }
 
 /**
- * A staff member's "Open the menu", once their own drinks are on the menu on
- * now (find-yourself step 7): "Open the Night Garden menu", "3 of its drinks
- * are yours". Null keeps the plain step.
+ * Read one drink or house-made. With `menu` (tonight's drinks, in order), the
+ * menu's step is done once every one of them is read; with `houseMade`, that
+ * step is done once all of those are.
  */
-export function yourMenuStep(menus: { name: string; kind: string; itemIds: string[]; status: string }[], yours: ReadonlySet<string>): { title: string; detail: string } | null {
-  const on = menus.find((m) => m.kind === 'menu' && m.status === 'on');
-  const count = on ? on.itemIds.filter((id) => yours.has(id)).length : 0;
-  if (!on || !count) return null;
-  return { title: `Open the ${on.name} menu`, detail: `${count} of its drinks ${count === 1 ? 'is' : 'are'} yours` };
+export function markRead(round: FirstRound, id: string, { menu, houseMade }: { menu?: readonly string[]; houseMade?: readonly string[] } = {}): FirstRound {
+  const read = round.read ?? [];
+  let next = read.includes(id) ? round : { ...round, read: [...read, id] };
+  const all = (ids?: readonly string[]) => !!ids?.length && ids.every((m) => next.read?.includes(m));
+  if (all(menu)) next = markDone(next, 'read_menu');
+  if (all(houseMade)) next = markDone(next, 'house_made');
+  return next;
 }

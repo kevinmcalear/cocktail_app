@@ -99,6 +99,7 @@ export function GallerySections() {
           <Button label="Add to prep list" />
           <Button label="Recipe" variant="secondary" />
           <Button label="Skip" variant="ghost" />
+          <Button label="I already have an account" variant="plain" />
           <Button label="Take photo" icon="camera.fill" size="lg" />
           <Button label="Publish" disabled />
         </View>

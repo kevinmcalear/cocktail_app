@@ -1,80 +1,82 @@
 import { useState } from 'react';
 
-import { useUserId } from '@/ctx/AuthContext';
-
-import { useBackBarStock } from '@/hooks/useBackBar';
 import { useBarMembers } from '@/hooks/useBarDetail';
 import { useBarGlassware, useHeldGlasses } from '@/hooks/useBarGlassware';
-import { useBarKit } from '@/hooks/useBarKit';
 import { useBarInvites } from '@/hooks/useBarInvites';
-import { useCocktails } from '@/hooks/useCocktails';
 import { useVenueMenus } from '@/hooks/useMenus';
-import { useVenueIce } from '@/hooks/useVenueIce';
-import { tally, waitingFor } from '@/lib/importReview';
+import { useBarPublishing } from '@/hooks/usePublishing';
+import { useVenueBrand } from '@/hooks/useVenueBrand';
+import { useVenueClaim, useVenuePage } from '@/hooks/useVenueSetup';
+import { useCalendarSources } from '@/hooks/useWeek';
 import { groupMenus } from '@/lib/menus';
-import { barSetUp, checklist, drinksNote, kitNote, type Checklist, type ChecklistKey } from '@/lib/setupChecklist';
+import { PAGE_COPY } from '@/lib/pageVisibility';
+import { checklist, lookSet, menuLine, placeSet, type Checklist, type ChecklistKey } from '@/lib/setupChecklist';
 import { heldNotOnPage } from '@/lib/whatNext';
-import { useBringIn } from '@/store/useBringIn';
 import { useVenueSetup } from '@/store/useVenueSetup';
 
 /**
- * "Set up <bar>" for a venue set up on this device (lib/setupChecklist.ts):
- * each row's state from the bar's data, a note for what's there, and Skip.
- * A venue with no setup on this device (Venue settings' Setup checklist) was
- * set up elsewhere, so Your bar counts as done. The top of Library and the
- * sidebar mount it only for a venue with a run (useSetupRun).
+ * "Set up <bar>" (lib/setupChecklist.ts): each row's state from the bar's
+ * data, the line under it, and Skip. A venue with no setup on this device
+ * (Venue settings' Setup checklist) was set up elsewhere, so Where and when
+ * counts as done. The top of Library and the sidebar mount it only for a
+ * venue with a run (useSetupRun).
  */
 export function useSetupChecklist(barId: string) {
   const run = useVenueSetup((s) => s.runs[barId]);
   const save = useVenueSetup((s) => s.save);
+  const claim = useVenueClaim(barId);
+  const page = useVenuePage(barId);
+  const menus = useVenueMenus(barId);
   const onPage = useBarGlassware(barId);
   const held = useHeldGlasses(barId);
-  const iceList = useVenueIce(barId);
-  const toolList = useBarKit(barId);
-  const ice = iceList.data?.length ?? 0;
-  const tools = toolList.data?.length ?? 0;
-  const stock = useBackBarStock(barId);
-  const menus = useVenueMenus(barId);
   const invites = useBarInvites(barId);
   const members = useBarMembers(barId);
-  // The Library's own query for the bar's drinks (venue only), so it's loaded once for both.
-  const drinks = useCocktails([barId]);
-  // A big import this person left part way (Fix 11): what's still to check is kept on the device.
-  const userId = useUserId();
-  const review = useBringIn((s) => waitingFor(s.reviews, userId, barId));
+  const publishing = useBarPublishing(barId);
+  const brand = useVenueBrand(barId);
+  const calendars = useCalendarSources(barId);
   const [now] = useState(() => Date.now());
-  // A menu on now, coming up or a draft: a claimed bar's past menus (its history) aren't a first menu.
-  const groups = groupMenus(menus.data ?? [], now);
-  const current = [...groups.on, ...groups.upcoming, ...groups.draft];
-  const withDrinks = current.find((m) => m.itemIds.length > 0);
-  const inLibrary = drinks.data?.length ?? 0;
-  const counted = review ? tally(review) : null;
-  const toCheck = counted ? counted.total - counted.checked : 0;
+
+  // Tonight's menu: one on now with drinks. Else the one being made (coming up or a draft) is where the row goes.
+  const groups = groupMenus((menus.data ?? []).filter((m) => m.barId === barId), now);
+  const tonight = groups.on.find((m) => m.itemIds.length > 0) ?? null;
+  const making = tonight ?? [...groups.on, ...groups.upcoming, ...groups.draft][0] ?? null;
+  const claimed = !!page.data || claim.data?.status === 'approved' || claim.data?.status === 'pending';
   const glasses = (onPage.data?.length ?? 0) + heldNotOnPage(held, onPage.data ?? []).length;
-  const bottles = stock.data?.length ?? 0;
   const team = (invites.data?.length ?? 0) + Math.max(0, (members.data?.length ?? 1) - 1);
-  const list: Checklist = checklist(
-    { bar: run ? barSetUp(run) : true, kit: glasses + ice + tools > 0, bottles: bottles > 0, menu: current.length > 0, drinks: inLibrary > 0 || !!withDrinks, team: team > 0 },
-    // A run from before 26 Oct that passed venue setup's old team step with nobody invited: still skipped, so a finished checklist stays finished.
-    [...(run?.skipped ?? []), ...((run?.done as readonly string[] | undefined)?.includes('team') ? ['team'] : [])]
-  );
-  const notes: Partial<Record<ChecklistKey, string>> = {
-    kit: kitNote(glasses, ice, tools),
-    bottles: bottles ? `${bottles} on your shelves` : undefined,
-    menu: current[0]?.name,
-    drinks: drinksNote(inLibrary, toCheck),
-    team: team ? `${team} invited` : undefined,
+  const visibility = publishing.data?.pageVisibility ?? 'description';
+  // A brand that won't load steps aside, as Your team's gate does.
+  const looks = brand.data ? lookSet(brand.data, run) : !!brand.error;
+
+  const done: Record<ChecklistKey, boolean> = {
+    claim: claimed,
+    menu: !!tonight,
+    where: placeSet(run),
+    glassware: glasses > 0,
+    team: team > 0,
+    visibility: !!run?.done.includes('visibility') || !!publishing.data?.pageChangedAt,
+    // Not when the brand failed to load: that only opens Your team.
+    theme: !!brand.data && looks,
+    calendars: (calendars.data?.length ?? 0) > 0,
+  };
+  // A run from before 26 Oct that passed venue setup's old team step with nobody invited: still skipped, so a finished checklist stays finished.
+  const list: Checklist = checklist(done, [...(run?.skipped ?? []), ...((run?.done as readonly string[] | undefined)?.includes('team') ? ['team'] : [])]);
+  // The line under each row: the drawn one, or what's there now.
+  const lines: Partial<Record<ChecklistKey, string | null>> = {
+    claim: claim.data?.status === 'pending' && !page.data ? 'We’re checking it’s yours' : done.claim ? null : undefined,
+    menu: making ? menuLine(making.name, making.itemIds.length) : undefined,
+    where: done.where ? null : undefined,
+    visibility: done.visibility ? PAGE_COPY[visibility].label : `${PAGE_COPY[visibility].label}, for now`,
   };
   return {
     run,
     list,
-    notes,
-    /** With no drinks yet, the menu First drinks opens: the one with drinks, else the newest. */
-    menuId: (withDrinks ?? current[0])?.id ?? null,
-    inLibrary,
-    /** An import left part way: First drinks carries on with it. */
-    reviewId: review?.id ?? null,
-    loading: onPage.isLoading || iceList.isLoading || toolList.isLoading || stock.isLoading || menus.isLoading || drinks.isLoading || invites.isLoading || members.isLoading,
+    /** Null: no line under a done row. Undefined: the row's own line. */
+    lines,
+    /** Tonight's menu, or the one being made: the row opens its editor. */
+    menuId: making?.id ?? null,
+    /** The look is set: Your team goes straight to the invites. */
+    looks,
+    loading: claim.isLoading || page.isLoading || menus.isLoading || onPage.isLoading || invites.isLoading || members.isLoading || publishing.isLoading || brand.isLoading || calendars.isLoading,
     skip: (key: ChecklistKey) => save(barId, { skipped: [...new Set([...(run?.skipped ?? []), key])] }),
   };
 }
