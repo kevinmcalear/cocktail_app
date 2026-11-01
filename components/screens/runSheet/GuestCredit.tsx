@@ -64,7 +64,7 @@ export function GuestCredit({ guest, drinks, menuName, day, onLink }: { guest: G
   const invite = () => {
     if (!page) return;
     const message = `Hi ${guest.name}, we’ve put ${list} on Cocktail, credited to you, for ${menuName}${day ? ` on ${day}` : ''}. Claim your page to see ${them} and fix anything: ${siteOrigin()}/p/${page.handle}`;
-    void shareText(message, `${guest.name}: claim your drinks`);
+    void shareText(message, `${guest.name}: claim your drinks`, 'guest_credit');
   };
   return (
     <View style={[styles.box, { backgroundColor: ds.c.ground }]}>
