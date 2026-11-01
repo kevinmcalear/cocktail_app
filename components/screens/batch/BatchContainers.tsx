@@ -1,7 +1,7 @@
-import { useState, type ReactNode } from 'react';
+import { lazy, Suspense, useState, type ReactNode } from 'react';
 import { StyleSheet, View } from 'react-native';
 
-import { Body, Caption, Chip, DsText, PressableScale, TextLink, useDs } from '@/components/ds';
+import { Body, Caption, Chip, DsText, PressableScale, useDs } from '@/components/ds';
 import { IconSymbol } from '@/components/ui/icon-symbol';
 import { font, layout, radius, space } from '@/constants/tokens';
 import { useBarKit } from '@/hooks/useBarKit';
@@ -10,7 +10,7 @@ import { CONTAINERS, containerText, keepsLabel, ownContainer, pickContainer, TON
 import { initials } from '@/lib/makeSteps';
 import { siteOrigin } from '@/lib/venueLink';
 
-import { LabelCard, useLabelPrint, type BatchLabel } from '../make/MakeLabel';
+import type { BatchLabel } from '../make/MakeLabel';
 import { BatchRow, Choice } from './BatchParts';
 
 const FRESH = [
@@ -107,15 +107,16 @@ export function UseBy({ hours, onChange }: { hours: number | null; onChange: (h:
   return <Changeable text={expiresText(hours, new Date()) ?? 'no use-by'} label="Use by" options={choices} value={hours} onChange={onChange} show={keepsLabel} />;
 }
 
-/** The label for a container while it's made, with print (web) or share (phone). */
+// The drawn label and its printing load only once a container is ticked, not with every drink page (B13).
+const DrawnLabel = lazy(() => import('./LabelBlock').then((m) => ({ default: m.LabelBlock })));
+
+/** The label for a container while it's made, with Print or share label. */
 export function LabelBlock({ label }: { label: BatchLabel | null }) {
-  const printing = useLabelPrint();
   if (!label) return null;
   return (
-    <View style={styles.label}>
-      <LabelCard label={label} pageRef={printing.ref} onPainted={printing.onPainted} />
-      <TextLink label="Print or share label ›" disabled={!printing.painted} onPress={() => void printing.print(label)} />
-    </View>
+    <Suspense fallback={null}>
+      <DrawnLabel label={label} />
+    </Suspense>
   );
 }
 
@@ -210,7 +211,6 @@ const styles = StyleSheet.create({
   chips: { flexDirection: 'row', flexWrap: 'wrap', alignItems: 'center', gap: space.sm },
   chip: { ...font.figures, paddingHorizontal: space.sm + 2, paddingVertical: space.xs, borderRadius: radius.pill, overflow: 'hidden' },
   choices: { flexDirection: 'row', flexWrap: 'wrap', gap: space.sm },
-  label: { gap: space.sm, paddingTop: space.md },
   order: { gap: 0 },
   step: { flexDirection: 'row', alignItems: 'flex-start', gap: space.md, paddingVertical: space.sm, borderBottomWidth: StyleSheet.hairlineWidth },
   stepN: { width: 20, paddingTop: 2 },

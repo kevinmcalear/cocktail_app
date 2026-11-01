@@ -73,19 +73,6 @@ export function labelFromBatch(input: {
   };
 }
 
-/** The page a batch's label code opens: its house-made, read as scanned from that batch (Bet-labels "Scanned: its page"). */
-export const batchPageUrl = (origin: string, itemId: string, batchId: string) => `${origin}/ingredient/${itemId}?batch=${encodeURIComponent(batchId)}`;
-
-/**
- * Where Made. Label it. opens for a batch just logged: `/label/<batch id>`
- * with the batch's own facts, so it draws before the batch has sent (Log
- * batch works with no signal). Without them it reads the batch.
- */
-export function labelHref(b: { id: string; itemId: string; amount: number; unit: string; madeAt: string }): string {
-  const q = new URLSearchParams({ item: b.itemId, amount: String(b.amount), unit: b.unit, made: b.madeAt });
-  return `/label/${encodeURIComponent(b.id)}?${q}`;
-}
-
 /** A batch with its house-made's name and how long it keeps (useFridge). */
 export interface FridgeBatch {
   id: string;

@@ -7,10 +7,12 @@ import { space } from '@/constants/tokens';
 import { useItemSketches } from '@/hooks/useItemSketch';
 import { usePrintSet, type PrintSet } from '@/hooks/usePrintSet';
 import { showMessage } from '@/lib/dialogs';
-import { PAPER } from '@/lib/paper/page';
+import { PAPER, type PaperPage } from '@/lib/paper/page';
+import { menuPoster } from '@/lib/paper/poster';
+import { listOnNow, runSheet, specSheet, studySheets, tableCards } from '@/lib/paper/print';
 import { printPages } from '@/lib/paper/printOut';
 
-import { SHEETS, sheetPages, type SheetKind } from './sheets';
+import { SHEETS, type SheetKind } from './sheets';
 
 type PageView = ComponentRef<typeof View>;
 
@@ -69,4 +71,24 @@ function stateOf(set: PrintSet, kind: SheetKind, pages: number): Parameters<type
   if (set.loading || (set.bar && !pages)) return { kind: 'loading', title: 'Setting the sheets…' };
   if (!set.bar) return { kind: 'empty', title: 'The print set is for a bar’s menus.', detail: 'Share a home menu from its page instead.' };
   return null;
+}
+
+/** The pages one row prints. `drawn` says which drinks have a drawing, for the poster. */
+export function sheetPages(kind: SheetKind, set: PrintSet, drawn: (id: string) => boolean): PaperPage[] {
+  const { bar, drinks, menuName, date } = set;
+  if (!bar) return [];
+  switch (kind) {
+    case 'list':
+      return listOnNow({ bar, menuName, drinks, date, team: set.team });
+    case 'run':
+      return runSheet(bar, drinks, date);
+    case 'spec':
+      return drinks.map((d) => specSheet(bar, d, date));
+    case 'study':
+      return studySheets(bar, menuName, drinks);
+    case 'table':
+      return tableCards(bar, drinks);
+    case 'poster':
+      return [menuPoster({ name: menuName, eyebrow: bar.name, drinks: drinks.map((d) => ({ id: d.id, name: d.name, drawn: drawn(d.id) })), accent: bar.accent, face: bar.face, scheme: 'light' }, 'letter')];
+  }
 }

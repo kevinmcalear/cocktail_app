@@ -1,7 +1,11 @@
 import { Stack, useLocalSearchParams } from 'expo-router';
+import { lazy, Suspense } from 'react';
 
-import { LabelScreen, type LabelParams } from '@/components/screens/label/LabelScreen';
+import type { LabelParams } from '@/components/screens/label/LabelScreen';
 import { WebHead } from '@/components/WebHead';
+
+// The screen loads with this route only, so its imports don't count toward the every-page chunk (B13).
+const LabelScreen = lazy(() => import('@/components/screens/label/LabelScreen').then((m) => ({ default: m.LabelScreen })));
 
 /** A batch's label: `/label/<batch id>`, with `?item&amount&unit&made` when it was just logged (labelHref). */
 export default function LabelRoute() {
@@ -12,7 +16,9 @@ export default function LabelRoute() {
       <WebHead>
         <title>Label</title>
       </WebHead>
-      <LabelScreen {...params} />
+      <Suspense fallback={null}>
+        <LabelScreen {...params} />
+      </Suspense>
     </>
   );
 }

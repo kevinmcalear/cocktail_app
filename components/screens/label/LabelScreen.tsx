@@ -14,7 +14,8 @@ import { useIngredient } from '@/hooks/useIngredients';
 import { useMyProfile } from '@/hooks/useMyProfile';
 import { useItemPrep } from '@/hooks/usePrepCard';
 import { allergenLabel } from '@/lib/allergens';
-import { batchPageUrl, labelFromBatch, type BatchLabel } from '@/lib/paper/label';
+import { batchPageUrl } from '@/lib/itemRoutes';
+import { labelFromBatch, type BatchLabel } from '@/lib/paper/label';
 import { siteOrigin } from '@/lib/venueLink';
 
 /** What `/label/<batch id>` was opened with: labelHref's facts, when the batch was just logged. */

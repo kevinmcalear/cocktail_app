@@ -1,8 +1,5 @@
 import type { IconName } from '@/components/ds';
 import type { PrintSet } from '@/hooks/usePrintSet';
-import type { PaperPage } from '@/lib/paper/page';
-import { menuPoster } from '@/lib/paper/poster';
-import { listOnNow, runSheet, specSheet, studySheets, tableCards } from '@/lib/paper/print';
 
 export const SHEET_KINDS = ['list', 'run', 'spec', 'study', 'table', 'poster'] as const;
 export type SheetKind = (typeof SHEET_KINDS)[number];
@@ -18,23 +15,3 @@ export const SHEETS: Record<SheetKind, { label: string; icon: IconName; detail: 
   table: { label: 'Table cards', icon: 'qrcode', detail: () => 'A code to each drink' },
   poster: { label: 'Menu poster', icon: 'sparkles', detail: () => 'Drawn, in your bar’s look' },
 };
-
-/** The pages one row prints. `drawn` says which drinks have a drawing, for the poster. */
-export function sheetPages(kind: SheetKind, set: PrintSet, drawn: (id: string) => boolean): PaperPage[] {
-  const { bar, drinks, menuName, date } = set;
-  if (!bar) return [];
-  switch (kind) {
-    case 'list':
-      return listOnNow({ bar, menuName, drinks, date, team: set.team });
-    case 'run':
-      return runSheet(bar, drinks, date);
-    case 'spec':
-      return drinks.map((d) => specSheet(bar, d, date));
-    case 'study':
-      return studySheets(bar, menuName, drinks);
-    case 'table':
-      return tableCards(bar, drinks);
-    case 'poster':
-      return [menuPoster({ name: menuName, eyebrow: bar.name, drinks: drinks.map((d) => ({ id: d.id, name: d.name, drawn: drawn(d.id) })), accent: bar.accent, face: bar.face, scheme: 'light' }, 'letter')];
-  }
-}

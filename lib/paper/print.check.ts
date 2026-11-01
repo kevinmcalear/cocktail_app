@@ -3,7 +3,8 @@ import assert from 'node:assert/strict';
 
 import { dayHues, printPaper } from '../../constants/tokens';
 import { contrast } from '../color';
-import { batchPageUrl, fridgeRows, labelFromBatch, labelHref, LABEL, prepLabel, type FridgeBatch } from './label';
+import { batchPageUrl, labelHref } from '../itemRoutes';
+import { fridgeRows, labelFromBatch, LABEL, prepLabel, type FridgeBatch } from './label';
 import type { PaperBox, PaperCode, PaperPage, PaperText } from './page';
 import { barInk, CARD, LETTER, listOnNow, longDate, runSheet, specSheet, studySheets, tableCards, type PrintBar, type PrintDrink } from './print';
 import { menuPoster } from './poster';
