@@ -457,23 +457,4 @@ describe('image worker', { skip: workerSkip }, () => {
     assert.equal((await links(legacy)).length, 0);
     assert.equal(await jobFor(legacy), null);
   });
-
-  test('the Generate button still works, spends the caller\'s quota and tags its sketch', async () => {
-    const drink = await newItem({ name: 'Buttoned syrup', item_type: 'ingredient', bar_id: ids.bar });
-    const { data, error } = await users.creator.client.functions.invoke('generate-ingredient-image', {
-      body: { ingredient_id: drink, ingredient_name: 'Buttoned syrup' },
-    });
-    assert.ifError(error);
-    assert.equal(data.success, true);
-
-    const rows = await links(drink);
-    assert.equal(rows.length, 1);
-    assert.equal(rows[0].is_generated, true);
-    assert.equal(rows[0].spec_fingerprint, await fingerprint(drink));
-    assert.equal(await usage('user_id', users.creator.id), 1);
-
-    // The pending automatic job now has nothing to draw.
-    await settle(drink);
-    assert.equal(await jobFor(drink), null);
-  });
 });

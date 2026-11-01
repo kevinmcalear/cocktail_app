@@ -3,7 +3,7 @@ import { useMemo } from 'react';
 import { barGlassFor, useBarGlassware, type BarGlass } from '@/hooks/useBarGlassware';
 import { useDilutionDefaults } from '@/hooks/useDrinkMath';
 import { useDropdowns } from '@/hooks/useDropdowns';
-import { useBarFeature } from '@/hooks/useVenueFeatures';
+import { useBarAdvanced } from '@/hooks/useAdvancedOptions';
 import { classifyMethod } from '@/lib/batch';
 import { orderedMethodIds } from '@/lib/drinkMethods';
 import { fitToWashLine, glassFill, washLine, type Fill, type FillLine, type Fitted, type WashLine } from '@/lib/glassFill';
@@ -50,10 +50,10 @@ export function useGlassFill(drink: FillDrink | null): GlassFillResult | null {
   const barId = drink?.barId ?? null;
   const { data: glasses } = useBarGlassware(barId);
   const { data: defaults } = useDilutionDefaults(barId);
-  const advanced = useBarFeature(barId, 'advanced');
+  const advanced = useBarAdvanced(barId);
   return useMemo(() => {
     // Wait for the venue's dilution too, or the house rule shows first and the note flickers.
-    if (!advanced || !drink || !glasses || !dropdowns || (barId && !defaults)) return null;
+    if (!advanced || !barId || !drink || !glasses || !dropdowns || !defaults) return null;
     const row = dropdowns.glassware.find((g) => g.id === drink.glasswareId);
     const name = row?.name;
     const shape = name ? glassOf(name, row.glass) : null;

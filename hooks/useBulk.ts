@@ -8,7 +8,6 @@ import { plainDbMessage } from '@/lib/dbError';
 import { orderedMethodIds } from '@/lib/drinkMethods';
 import type { NamedItem } from '@/lib/paste';
 import { swappedLines, type SwapDrink, type SwapLine, type SwapMode } from '@/lib/swapBottle';
-import { readAnything } from '@/lib/readAnything';
 import { supabase } from '@/lib/supabase';
 
 /** After a bulk write: the lists it touches, the pages of the drinks it changed, and the ingredients it added or removed. */
@@ -36,11 +35,6 @@ function toNamed(rows: unknown): NamedItem[] {
     const item = row as Record<string, unknown>;
     return typeof item.id === 'string' && typeof item.name === 'string' ? [{ id: item.id, name: item.name }] : [];
   });
-}
-
-/** Bring in's reader (read-anything): photos, PDFs or text of a menu, recipes or bottles. */
-export function useReadAnything() {
-  return useMutation({ mutationFn: readAnything, onError: () => {} });
 }
 
 /** Ingredients (with their other names), methods and glassware the paste, the bottle photo and the swap match against. `withCatalog`: false leaves the ingredients unloaded. */

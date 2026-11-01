@@ -7,12 +7,8 @@ import { renderWithTamagui } from '@/jest.setup';
 import { WebTabBar } from './WebTabBar';
 
 let mockMode = 'home';
-let mockFeatures: string[] = [];
 jest.mock('@/hooks/useMode', () => ({ useMode: () => ({ mode: mockMode }) }));
-jest.mock('@/hooks/useVenueFeatures', () => ({ useVenueFeatures: () => ({ ready: true, has: (k: string) => mockFeatures.includes(k) }) }));
 jest.mock('@/hooks/useIsWideWeb', () => ({ useIsWideWeb: () => false }));
-let mockDots: string[] = [];
-jest.mock('@/hooks/useFeatureNews', () => ({ useFeatureNewsDots: () => mockDots }));
 let mockHidden: string[] = [];
 jest.mock('@/hooks/useFirstRound', () => ({ useFirstRound: () => ({ hidden: mockHidden }) }));
 jest.mock('./CreateSheet', () => {
@@ -29,8 +25,6 @@ const props = {
 
 afterEach(() => {
   mockMode = 'home';
-  mockFeatures = [];
-  mockDots = [];
   mockHidden = [];
   useBottomSearchFocus.setState({ focused: false });
 });
@@ -50,27 +44,18 @@ test('while the bottom search field has focus, the bar steps aside for it', asyn
   expect(screen.queryByRole('tab', { name: 'Discover' })).toBeNull();
 });
 
-test('a venue with every tab on: New takes a tab’s room, so the bar stays at five with Search', async () => {
+test('at a venue: New takes a tab’s room, so the bar stays at five with Search', async () => {
   mockMode = 'venue';
-  mockFeatures = ['tonight', 'prep', 'study'];
   await renderWithTamagui(<WebTabBar {...props} />);
   expect(screen.getAllByRole('tab').map((t) => t.props.accessibilityLabel)).toEqual(['Tonight', 'Library', 'Discover']);
   expect(screen.getByRole('button', { name: /^New:/ })).toBeTruthy();
   expect(screen.getByRole('button', { name: 'Search' })).toBeTruthy();
 });
 
-test('a tab the venue just switched on says it’s new until it’s opened', async () => {
-  mockMode = 'venue';
-  mockFeatures = ['tonight'];
-  mockDots = ['index'];
-  await renderWithTamagui(<WebTabBar {...props} />);
-  expect(screen.getAllByRole('tab').map((t) => t.props.accessibilityLabel)).toEqual(['Tonight, new', 'Library', 'Discover']);
-});
-
 test('the first round holds Menus and Discover back until their steps come up', async () => {
   mockMode = 'venue';
   mockHidden = ['menus', 'discover'];
   await renderWithTamagui(<WebTabBar {...props} />);
-  expect(screen.getAllByRole('tab').map((t) => t.props.accessibilityLabel)).toEqual(['Library']);
+  expect(screen.getAllByRole('tab').map((t) => t.props.accessibilityLabel)).toEqual(['Tonight', 'Library']);
   expect(screen.getByRole('button', { name: 'Search' })).toBeTruthy();
 });

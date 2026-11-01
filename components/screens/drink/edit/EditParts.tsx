@@ -1,4 +1,4 @@
-import { useRef, useState, type ReactNode } from 'react';
+import { useRef, useState } from 'react';
 import { Platform, ScrollView, StyleSheet, TextInput, View, type TextInputProps } from 'react-native';
 
 import { BarAssignmentAccordion } from '@/components/BarAssignmentAccordion';
@@ -149,7 +149,7 @@ export function MoreRow({ icon, label, danger, note, onPick }: { icon: IconName;
  * The drink's photos in order, from More (the hero shows the first).
  * ponytail: SortableImageList's row of tiles inside a ds Sheet; redraw it when photos get their own board.
  */
-export function PhotosSheet({ editor, onClose, generate }: { editor: PhotosEditor; onClose: () => void; /** A tile that draws one (a beer or wine's Generate). */ generate?: ReactNode }) {
+export function PhotosSheet({ editor, onClose }: { editor: PhotosEditor; onClose: () => void }) {
   return (
     <Sheet style={SHEET_PAD} visible onClose={onClose} accessibilityLabel="Photos" header={<Headline role="heading">Photos</Headline>}>
       <SortableImageList
@@ -158,7 +158,6 @@ export function PhotosSheet({ editor, onClose, generate }: { editor: PhotosEdito
         onRemove={(index) => editor.setLocalImages(editor.localImages.filter((_, i) => i !== index))}
         onAdd={editor.pickImage}
         onAddUris={editor.addImages}
-        generateComponent={generate}
       />
       <Caption tone="muted">The main photo leads the page and the cards. Saved with Done.</Caption>
     </Sheet>

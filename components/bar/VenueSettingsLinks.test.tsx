@@ -48,6 +48,7 @@ test('Buying is only for people with Prep or Costs', async () => {
   await unmount();
   mockCaps = ['costs'];
   await renderWithTamagui(<VenueBuyingLinks barId="b" />);
-  expect(screen.getByText('Suppliers')).toBeTruthy();
-  expect(screen.getByText('2 suppliers')).toBeTruthy();
+  expect(screen.getByText('Pricing')).toBeTruthy();
+  // Suppliers are parked with the back bar (lib/backBar.ts BACK_BAR_SHOWN).
+  expect(screen.queryByText('Suppliers')).toBeNull();
 });

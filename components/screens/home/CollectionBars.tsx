@@ -12,6 +12,7 @@ import { useWantToGo } from '@/hooks/useWantToGo';
 import { averageScore, barNews } from '@/lib/collectionMenus';
 import { beenBars, nearestFirst, type BarStage, type BeenSort } from '@/lib/collectionStages';
 import { formatScore } from '@/lib/ranking';
+import { RELEASES_SHOWN } from '@/lib/releases';
 
 import { BeenRow, WantRow } from './CollectionBarRows';
 import { SortChoice, StageHead, StageStrip, TableHead, stageStyles } from './CollectionStages';
@@ -118,7 +119,7 @@ export function CollectionBars() {
                   const l = lovedById.get(b.venue.id);
                   return (
                     <View role="listitem" key={b.venue.id}>
-                      <BeenRow bar={b} loved={!!l} news={l ? barNews(l.currentMenu, l.latestRelease ? { name: l.latestRelease.name, date: l.latestRelease.date } : null) : null} everyone={scores.get(b.venue.id) ?? null} now={now} />
+                      <BeenRow bar={b} loved={!!l} news={l ? barNews(l.currentMenu, RELEASES_SHOWN && l.latestRelease ? { name: l.latestRelease.name, date: l.latestRelease.date } : null) : null} everyone={scores.get(b.venue.id) ?? null} now={now} />
                     </View>
                   );
                 })}

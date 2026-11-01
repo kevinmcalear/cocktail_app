@@ -9,7 +9,7 @@ import type { DrinkSections } from './DrinkSections';
 // Each section as its own name, so the test reads the order the page draws.
 const KEYS = [
   'header', 'spec', 'intro', 'journey', 'floor', 'moreHeading', 'standing', 'banner', 'description', 'facts', 'allergens',
-  'flavor', 'servedAt', 'menus', 'photos', 'service', 'history', 'cost', 'backstory', 'publish',
+  'flavor', 'servedAt', 'menus', 'photos', 'history', 'cost', 'backstory', 'publish',
 ] as const;
 const sections = Object.fromEntries(KEYS.map((k) => [k, <Text key={k}>{k}</Text>])) as unknown as DrinkSections;
 
@@ -24,7 +24,7 @@ test('the first screen is the make-it part: name, spec, then the rest under More
     expect(shown.indexOf(later)).toBeGreaterThan(shown.indexOf('moreHeading'));
   }
   // At a venue, the photos come before the staff rows.
-  expect(shown.indexOf('photos')).toBeLessThan(shown.indexOf('service'));
+  expect(shown.indexOf('photos')).toBeLessThan(shown.indexOf('history'));
 });
 
 test('at home the photos come last, after the backstory', async () => {

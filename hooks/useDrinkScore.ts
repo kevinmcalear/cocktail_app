@@ -19,7 +19,7 @@ export interface DrinkScore {
  * One drink's shared score and how many people it's from (get_item_scores),
  * where enough people have ranked it. Null otherwise. Works signed out.
  */
-export function useItemScore(itemId: string | null | undefined) {
+function useItemScore(itemId: string | null | undefined) {
   const viewer = viewerScoped(useUserId());
   return useQuery({
     queryKey: ['item-score', itemId, viewer.key],

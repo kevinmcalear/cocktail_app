@@ -17,13 +17,6 @@ const mockSetMode = jest.fn();
 const mockEnterVenue = jest.fn();
 jest.mock('@/hooks/useMode', () => ({ useMode: () => ({ mode: mockMode, setMode: mockSetMode }) }));
 const mockVenue = { id: 'caretakers', name: 'Caretakers', logoUrl: null, accent: null, displayFace: 'instrument', groundTint: null, roleLevel: 40 };
-// The venue's switches come from their own query (hooks/useVenueFeatures.ts); here, a list per test.
-let mockFeatures: string[] = [];
-jest.mock('@/hooks/useVenueFeatures', () => {
-  const { featureAtHome } = jest.requireActual<typeof import('@/lib/venueFeatures')>('@/lib/venueFeatures');
-  const features = () => ({ ready: true, home: mockMode === 'home', has: (k: never) => (mockMode === 'home' ? featureAtHome(k) : mockFeatures.includes(k)) });
-  return { useVenueFeatures: features, useVenueFeature: (k: never) => features().has(k) };
-});
 
 const mockOther = { ...mockVenue, id: 'pale', name: 'Pale Moth', roleLevel: 30 };
 jest.mock('@/hooks/useActiveVenue', () => ({ useActiveVenue: () => ({ active: mockVenue, venues: [mockVenue, mockOther], enterVenue: mockEnterVenue }) }));
@@ -37,7 +30,6 @@ jest.mock('@/components/nav/VenueSwitcher', () => {
   const { Text } = jest.requireActual<typeof import('react-native')>('react-native');
   return { VenueSwitcher: () => <Text>venue switcher</Text> };
 });
-jest.mock('@/hooks/useFeatureNews', () => ({ useFeatureNewsDots: () => [] }));
 jest.mock('@/hooks/useDrafts', () => ({ useDrafts: () => ({ drafts: [{ id: 'd1' }, { id: 'd2' }] }) }));
 jest.mock('@/hooks/useCapabilities', () => ({ useCapabilities: () => ({ data: ['edit_drinks'] }), useCapabilityOpensAt: () => ({ data: 35 }) }));
 jest.mock('@/hooks/useSearchMine', () => ({ useSearchMine: () => ({ venueId: 'caretakers', canAdd: true, label: 'Caretakers' }) }));
@@ -57,18 +49,6 @@ beforeEach(() => {
   mockPush.mockClear();
   mockRole = 40;
   mockMode = 'venue';
-  // Tonight, Back bar and History switched on; the first test turns them off.
-  mockFeatures = ['tonight', 'backBar', 'history'];
-});
-
-test('a venue with nothing switched on has Library, Menus and Discover, and its Venue section', async () => {
-  mockFeatures = [];
-  mockPathname = '/library';
-  await renderWithTamagui(<WebSideNav />);
-  expect(links()).toEqual(['Library', 'Menus', 'Discover', 'Glassware', 'My team', 'Features', 'Brand', 'Roles and access', 'Venue settings', 'You: Kevin M., Admin at Caretakers']);
-  expect(screen.queryByText('this week list')).toBeNull();
-  await fireEvent.press(screen.getByRole('link', { name: 'Menus' }));
-  expect(mockNavigate).toHaveBeenLastCalledWith('/menus');
 });
 
 test('venue mode lists search and the venue tabs, marking the current one', async () => {
@@ -76,14 +56,15 @@ test('venue mode lists search and the venue tabs, marking the current one', asyn
   mockPathname = '/library';
   await renderWithTamagui(<WebSideNav />);
 
-  // The canvas order: the tabs and History, Back bar, then the Venue section and you at the foot.
-  expect(links()).toEqual(['Tonight', 'Library', 'Menus', 'Discover', 'History', 'Back bar', 'Glassware', 'My team', 'Features', 'Brand', 'Roles and access', 'Venue settings', 'You: Kevin M., Admin at Caretakers']);
+  // The canvas order: the tabs and History, Glassware, then the Venue section and you at the foot.
+  // Every venue has the same tabs (the switches went 31 Oct); the back bar is parked.
+  expect(links()).toEqual(['Tonight', 'Library', 'Menus', 'Prep', 'Study', 'Discover', 'History', 'Glassware', 'My team', 'Brand', 'Roles and access', 'Venue settings', 'You: Kevin M., Admin at Caretakers']);
   expect(screen.getByText('this week list')).toBeTruthy();
   expect(screen.getByRole('link', { name: 'Library', selected: true })).toBeTruthy();
   expect(screen.getByRole('link', { name: 'Tonight', selected: false })).toBeTruthy();
 
-  await fireEvent.press(screen.getByRole('link', { name: 'Back bar' }));
-  expect(mockPush).toHaveBeenLastCalledWith('/back-bar');
+  await fireEvent.press(screen.getByRole('link', { name: 'Glassware' }));
+  expect(mockPush).toHaveBeenLastCalledWith('/settings/bar/caretakers/glassware');
   await fireEvent.press(screen.getByRole('link', { name: 'Menus' }));
   expect(mockNavigate).toHaveBeenLastCalledWith('/menus');
   await fireEvent.press(screen.getByRole('link', { name: 'Brand' }));
