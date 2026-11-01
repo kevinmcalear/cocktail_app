@@ -1,3 +1,4 @@
+import { useSegments } from 'expo-router';
 import { NativeTabs } from 'expo-router/native-tabs';
 import { Platform } from 'react-native';
 
@@ -25,7 +26,8 @@ import { VenueBrandProvider } from './VenueBrandProvider';
  * tabs, a real search tab ((tabs)/(search)) that turns the bar into the field.
  * Android has exactly four tabs: its search is the bar on top of the page,
  * which pushes /search on the tab's own stack, since a tab with no item in the
- * bar can't be navigated to.
+ * bar can't be navigated to. Open, Material's search view takes the whole
+ * screen, so the nav bar steps aside (Miss-search-and).
  * Tonight is a calendar page showing the date, which turns over at 6am.
  * The icons are the app's own (components/nav/tabImages.ts), template images
  * the system tints, so the glass and Material bars stay the system's.
@@ -50,6 +52,7 @@ function Tabs() {
   const ds = useDs();
   const day = useServiceDay() ?? 1;
   const roles = useMaterialRoles();
+  const page = (useSegments() as string[])[2];
   // The search circle starts on the tab it was opened from (hooks/useSearchFrom.ts).
   useTrackTab();
   // Android's Material 3 bar in our colours (Prod-and): ink icons and labels, the indicator pill
@@ -68,6 +71,7 @@ function Tabs() {
       badgeBackgroundColor={ds.accentFill.fill}
       minimizeBehavior="onScrollDown"
       labelVisibilityMode="labeled"
+      hidden={Platform.OS === 'android' && page === 'search'}
       {...(Platform.OS === 'android' ? material : null)}
     >
       {TABS.map((t) => (
