@@ -89,3 +89,6 @@ assert.equal(afterTonight(late, friNight, NY).toISOString(), '2026-10-10T07:00:0
 assert.equal(afterTonight({ fri: [['17:00', '23:00']] }, new Date('2026-10-09T18:00:00Z'), NY).toISOString(), '2026-10-10T03:00:00.000Z'); // Not open yet: tonight's close
 assert.equal(afterTonight({ mon: [['17:00', '23:00']] }, friNight, NY).toISOString(), '2026-10-10T04:00:00.000Z'); // Closed tonight: the bar's midnight
 assert.equal(afterTonight(null, friNight, NY).toISOString(), '2026-10-10T04:00:00.000Z'); // No hours: the same
+assert.equal(afterTonight({ fri: [['12:00', '15:00'], ['17:00', '23:00']] }, new Date('2026-10-09T17:00:00Z'), NY).toISOString(), '2026-10-10T03:00:00.000Z'); // At lunch: after dinner
+const allDay = Object.fromEntries(['mon', 'tue', 'wed', 'thu', 'fri', 'sat', 'sun'].map((d) => [d, [['00:00', '12:00'], ['12:00', '00:00']]])) as WeekHours;
+assert.equal(afterTonight(allDay, friNight, NY).toISOString(), '2026-10-10T04:00:00.000Z'); // Open round the clock: midnight

@@ -13,9 +13,9 @@ const time = (iso: string) => new Date(iso).toLocaleTimeString(undefined, { hour
 export function useLiveSections({ menu, sections, rows, may, on, living, now }: { menu: MenuDetail; sections: LiveSection[]; rows: ListRow[]; may: boolean; on: boolean; living: boolean; now: number }) {
   const userId = useUserId();
   const ended = useEndedRuns(on ? menu.id : null).data ?? [];
-  const today = ended.filter((e) => new Date(e.cameOff).toDateString() === new Date(now).toDateString());
   const members = useBarMembers(on && rows.some((r) => r.state.startsWith('waiting')) ? menu.barId : null).data ?? [];
-  const library = useMenuLibrary(menu.barId, on && today.length > 0).data ?? [];
+  // Names for drinks that left: today's struck rows, and the one a swap replaced in Last change.
+  const library = useMenuLibrary(menu.barId, on && ended.length > 0).data ?? [];
   if (!on) return { lead: null, main: sections, coming: null, lastChange: null, ended };
   const first = (id: string | null) => members.find((m) => m.user_id === id)?.display_name?.split(' ')[0] ?? null;
   return {
@@ -24,7 +24,7 @@ export function useLiveSections({ menu, sections, rows, may, on, living, now }: 
       sectionIds: new Map(menu.sections.map((s) => [s.name, s.id])),
       rows,
       ended,
-      endedDrinks: new Map(library.filter((d) => today.some((e) => e.itemId === d.id)).map((d) => [d.id, d])),
+      endedDrinks: new Map(library.filter((d) => ended.some((e) => e.itemId === d.id)).map((d) => [d.id, d])),
       may,
       living,
       userId,

@@ -51,6 +51,7 @@ export function runRange(from: string, to: string, year = false): string {
   const b = at(to);
   const short = (d: Date) => d.toLocaleDateString(undefined, { day: 'numeric', month: 'short' });
   const oneMonth = a.getMonth() === b.getMonth() && a.getFullYear() === b.getFullYear();
+  if (a.getFullYear() !== b.getFullYear()) return `${short(a)} ${a.getFullYear()} to ${short(b)}${year ? ` ${b.getFullYear()}` : ''}`;
   const dayFirst = /^\d/.test(short(a));
   const range = oneMonth && a.getDate() === b.getDate() ? short(a) : !oneMonth ? `${short(a)} to ${short(b)}` : dayFirst ? `${a.getDate()} to ${short(b)}` : `${short(a)} to ${b.getDate()}`;
   return year ? `${range} ${b.getFullYear()}` : range;
@@ -58,6 +59,8 @@ export function runRange(from: string, to: string, year = false): string {
 
 export function liveList({ sections, sectionIds, rows, ended, endedDrinks, may, living, userId, nameOf, day, time, listStart, now }: Input) {
   const rowOf = new Map(rows.map((r) => [`${r.sectionId}:${r.itemId}`, r]));
+  const names = new Map([...endedDrinks].map(([id, d]) => [id, d.name]));
+  for (const s of sections) for (const v of s.rows) names.set(v.drink.id, v.drink.name);
   const lead: PageRowView[] = [];
   const coming: PageRowView[] = [];
   const main = sections.map((s) => {
@@ -69,7 +72,7 @@ export function liveList({ sections, sectionIds, rows, ended, endedDrinks, may, 
         continue;
       }
       const asked = nameOf(row.state === 'waiting_off' ? row.offBy : row.addedBy);
-      const swapFor = row.replacesItemId ? sections.flatMap((x) => x.rows).find((r) => r.drink.id === row.replacesItemId)?.drink.name : null;
+      const swapFor = row.replacesItemId ? names.get(row.replacesItemId) : null;
       if (row.state === 'waiting_on' || row.state === 'waiting_off') {
         const on = row.state === 'waiting_on';
         // A take-off's ask isn't timed in the data (the row is as old as its run); a drink asked on is (the row is new).
@@ -152,7 +155,9 @@ export function liveList({ sections, sectionIds, rows, ended, endedDrinks, may, 
   }
 
   // The latest change: a drink on today or a day before, or one taken off.
-  const nameOfDrink = (id: string) => sections.flatMap((s) => s.rows).find((v) => v.drink.id === id)?.drink.name ?? endedDrinks.get(id)?.name;
+  const nameOfDrink = (id: string) => names.get(id);
+  // The drink a swap put on, at the moment the other came off (a swap writes both at once).
+  const swappedIn = (e: EndedRun) => rows.some((r) => r.replacesItemId === e.itemId && r.onFrom && Math.abs(Date.parse(r.onFrom) - Date.parse(e.cameOff)) < 60_000);
   const changes = [
     ...rows
       .filter((r) => (r.state === 'on' || r.state === 'going') && r.onFrom && Date.parse(r.onFrom) <= now)
@@ -161,7 +166,7 @@ export function liveList({ sections, sectionIds, rows, ended, endedDrinks, may, 
         return { at: r.onFrom!, text: `${nameOfDrink(r.itemId) ?? 'A drink'} ${out ? `for ${out}` : 'on'}` };
       }),
     // A drink swapped out reads with the one that took its place, above.
-    ...ended.filter((e) => !rows.some((r) => r.replacesItemId === e.itemId)).map((e) => ({ at: e.cameOff, text: `${endedDrinks.get(e.itemId)?.name ?? 'A drink'} off` })),
+    ...ended.filter((e) => !swappedIn(e)).map((e) => ({ at: e.cameOff, text: `${endedDrinks.get(e.itemId)?.name ?? 'A drink'} off` })),
   ].sort((a, b) => b.at.localeCompare(a.at));
   const last = changes[0];
   const lastChange = last ? `${sameDay(last.at, now) ? `today ${time(last.at)}` : day(last.at)} · ${last.text}` : null;

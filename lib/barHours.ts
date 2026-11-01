@@ -95,16 +95,21 @@ export interface BarClock {
 }
 
 /**
- * When tonight is over at the bar: the close of the range it's open in, or of
- * the one still to open today; with no hours for today, the bar's next
- * midnight. A range from 5pm to 2am lands at 2am, not mid-service at midnight.
+ * When tonight is over at the bar: the close of the day's last range (the one
+ * it's open in, or one still to open; lunch then dinner lands after dinner);
+ * with no hours for today, or open round the clock, the bar's next midnight.
+ * A range from 5pm to 2am lands at 2am, not mid-service at midnight.
+ * ponytail: minutes are added to now, so a DST change before the close is an hour out.
  */
 export function afterTonight(hours: WeekHours | null | undefined, now: Date, timeZone?: string | null): Date {
   const { day, minute } = barClock(now, timeZone);
   const t = day * DAY + minute;
   const all = hours ? spans(hours) : [];
-  const span = openSpan(all, t) ?? all.find((s) => s.start > t && Math.floor(s.start / DAY) === day);
-  const left = span ? (lastClose(all, span).end - t + WEEK) % WEEK : DAY - minute;
+  const open = openSpan(all, t);
+  const today = open ? Math.floor(open.start / DAY) : day;
+  const last = all.filter((s) => Math.floor(s.start / DAY) === today && (s === open || s.start > t)).at(-1);
+  const end = last ? lastClose(all, last).end : null;
+  const left = end != null && end !== last!.start ? (end - t + WEEK) % WEEK : DAY - minute;
   return new Date(now.getTime() + left * 60_000);
 }
 

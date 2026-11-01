@@ -59,7 +59,8 @@ export function LiveChangeSheet({ kind, drink, where, barId, wentOn, onFind, fou
   const [when, setWhen] = useState<When>('now');
   const [day, setDay] = useState(() => ymd(new Date(now + 2 * 86_400_000)));
   const past = useRepertoire(kind === 'swap' ? barId : null).past;
-  const clock = useBarClock(barId).data;
+  const barClock = useBarClock(barId);
+  const clock = barClock.data;
   const at = changeAt(when, day, now, clock);
   const offers = [...(found ? [found] : []), ...past.map((p) => p.drink).filter((d) => d.id !== found?.id && d.id !== drink.id)].slice(0, 3);
   const [picked, setPicked] = useState<string | null>(found?.id ?? null);
@@ -79,7 +80,7 @@ export function LiveChangeSheet({ kind, drink, where, barId, wentOn, onFind, fou
       title={kind === 'swap' ? `Swap ${drink.name}` : `Take off ${drink.name}`}
       footer={
         <View style={styles.footer}>
-          <Button label={busy ? 'Saving…' : cta} variant="ink" size="lg" disabled={busy || (kind === 'swap' && !to)} onPress={() => onConfirm(kind === 'swap' ? to : null, at)} style={styles.stretch} />
+          <Button label={busy ? 'Saving…' : cta} variant="ink" size="lg" disabled={busy || (kind === 'swap' && !to) || (when === 'tonight' && barClock.isLoading)} onPress={() => onConfirm(kind === 'swap' ? to : null, at)} style={styles.stretch} />
           <Caption tone="muted" align="center">
             {note}
           </Caption>
