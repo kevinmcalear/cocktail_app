@@ -31,7 +31,8 @@ export function contrast(a: string, b: string): number {
   return (hi + 0.05) / (lo + 0.05);
 }
 
-function mix(hex: string, toward: string, amount: number): string {
+/** `hex` moved `amount` (0 to 1) of the way toward `toward`. */
+export function mix(hex: string, toward: string, amount: number): string {
   const a = parseHex(hex);
   const b = parseHex(toward);
   return toHex(a.map((v, i) => v + (b[i] - v) * amount) as RGB);

@@ -97,8 +97,8 @@ export default ({ config }: ConfigContext): ExpoConfig => {
       [
         'expo-speech-recognition',
         {
-          microphonePermission: 'Cocktail uses the microphone when you tap the mic to say a drink.',
-          speechRecognitionPermission: 'Cocktail turns what you say into text when you tap the mic to add a drink.',
+          microphonePermission: '$(PRODUCT_NAME) uses the microphone when you tap the mic to say a drink.',
+          speechRecognitionPermission: '$(PRODUCT_NAME) turns what you say into text when you tap the mic to add a drink.',
           androidSpeechServicePackages: ['com.google.android.googlequicksearchbox'],
         },
       ],

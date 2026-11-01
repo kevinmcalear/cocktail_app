@@ -3,6 +3,10 @@ import type { ExpoSpeechRecognitionModuleType } from 'expo-speech-recognition/bu
 import { useEffect, useRef, useState } from 'react';
 import { Platform } from 'react-native';
 
+// ponytail: no mic on the web for now. vercel.json sends `Permissions-Policy: microphone=()`, which
+// blocks it, and that file is gated. Set this to true when the vercel.json PR lands.
+const WEB_MIC: boolean = false;
+
 type Native = ExpoSpeechRecognitionModuleType & {
   addListener: (event: string, listener: (e: { results?: { transcript: string }[]; isFinal?: boolean }) => void) => { remove: () => void };
 };
@@ -21,10 +25,23 @@ interface WebRecognition {
   stop: () => void;
 }
 const WebSpeech: (new () => WebRecognition) | null =
-  Platform.OS === 'web' && typeof window !== 'undefined' ? ((window as unknown as Record<string, new () => WebRecognition>).SpeechRecognition ?? (window as unknown as Record<string, new () => WebRecognition>).webkitSpeechRecognition ?? null) : null;
+  WEB_MIC && Platform.OS === 'web' && typeof window !== 'undefined' ? ((window as unknown as Record<string, new () => WebRecognition>).SpeechRecognition ?? (window as unknown as Record<string, new () => WebRecognition>).webkitSpeechRecognition ?? null) : null;
 
-/** Whether this device can turn speech into text here: the native module in the build, or the browser's own. */
-export const canDictate = !!native || !!WebSpeech;
+const NOT_HEARD = 'Couldn’t hear that. Try again, or type it.';
+
+/**
+ * Whether this device can turn speech into text now: the native module is in
+ * the build and has a speech service to talk to, or the browser has its own.
+ * Asks the device, so it's for when Add opens, not for every render.
+ */
+export function canDictate(): boolean {
+  if (WebSpeech) return true;
+  try {
+    return !!native?.isRecognitionAvailable();
+  } catch {
+    return false;
+  }
+}
 
 /**
  * Say it (Add's mic, Android's Say it): speech to text, on the device where
@@ -32,6 +49,7 @@ export const canDictate = !!native || !!WebSpeech;
  * web). `onText` gets the words so far as they're heard, then the final ones.
  */
 export function useDictation(onText: (text: string, final: boolean) => void) {
+  const [available] = useState(canDictate);
   const [listening, setListening] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const web = useRef<WebRecognition | null>(null);
@@ -52,7 +70,7 @@ export function useDictation(onText: (text: string, final: boolean) => void) {
       native.addListener('end', () => setListening(false)),
       native.addListener('error', () => {
         setListening(false);
-        setError('Couldn’t hear that. Try again, or type it.');
+        setError(NOT_HEARD);
       }),
     ];
     return () => {
@@ -65,10 +83,14 @@ export function useDictation(onText: (text: string, final: boolean) => void) {
   const start = async () => {
     setError(null);
     if (native) {
-      const allowed = await native.requestPermissionsAsync();
-      if (!allowed.granted) return setError('Turn on the microphone and speech recognition for Cocktail in Settings.');
-      native.start({ lang: 'en-US', interimResults: true, continuous: false });
-      setListening(true);
+      try {
+        const allowed = await native.requestPermissionsAsync();
+        if (!allowed.granted) return setError('Turn on the microphone and speech recognition in Settings.');
+        native.start({ lang: 'en-US', interimResults: true, continuous: false });
+        setListening(true);
+      } catch {
+        setError(NOT_HEARD);
+      }
     } else if (WebSpeech) {
       const r = new WebSpeech();
       r.lang = 'en-US';
@@ -81,7 +103,7 @@ export function useDictation(onText: (text: string, final: boolean) => void) {
       r.onend = () => setListening(false);
       r.onerror = () => {
         setListening(false);
-        setError('Couldn’t hear that. Try again, or type it.');
+        setError(NOT_HEARD);
       };
       web.current = r;
       r.start();
@@ -93,5 +115,5 @@ export function useDictation(onText: (text: string, final: boolean) => void) {
     web.current?.stop();
     setListening(false);
   };
-  return { available: canDictate, listening, error, start, stop };
+  return { available, listening, error, start, stop };
 }

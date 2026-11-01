@@ -19,7 +19,7 @@ import { VenueBrandProvider } from './VenueBrandProvider';
  * with the venue's accent, with Search beside them. Each tab holds its own
  * stack (app/(tabs)/(1-tonight,2-drinks,3-discover,4-you)/_layout.tsx). The place
  * button and the + sit in each page's header (ScreenHeader.tsx); Android's
- * Add is the extended FAB. Web uses JsTabs.tsx.
+ * Add is the plain FAB. Web uses JsTabs.tsx.
  * Tonight is a calendar page showing the date, which turns over at 6am.
  * The icons are the app's own (components/nav/tabImages.ts), template images
  * the system tints, so the glass and Material bars stay the system's.
