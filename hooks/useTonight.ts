@@ -19,6 +19,8 @@ export interface TonightDrink {
 /** A drink on Tonight: as the menu shows it, and whether it's new on this menu. */
 export interface TonightRow extends MenuDrink {
   isNew: boolean;
+  /** A planned take-off (menu_drinks.off_at): Tonight says when it comes off. */
+  offAt: string | null;
 }
 
 /** One menu that's on, with its sections in running order. */
@@ -28,6 +30,9 @@ export interface TonightBlock {
 }
 
 const CATEGORY: Record<string, ItemCategory> = { cocktail: 'Cocktail', beer: 'Beer', wine: 'Wine' };
+
+/** A list drink's kind as a page category, for its link (itemHref). */
+export const categoryOf = (kind: string): ItemCategory => CATEGORY[kind] ?? 'Cocktail';
 
 /**
  * What's pouring tonight at a venue: its menus on now (oldest first, the
@@ -59,9 +64,9 @@ export function useTonight(venueId: string | null) {
               .sort((a, b) => Number(a.sort_order ?? 0) - Number(b.sort_order ?? 0))
               .map((d) => {
                 const item = Array.isArray(d.item) ? d.item[0] : d.item;
-                return item ? toMenuDrink(item, d.price ?? null) : null;
+                return item ? { ...toMenuDrink(item, d.price ?? null), offAt: d.off_at ?? null } : null;
               })
-              .filter((d): d is MenuDrink => !!d)
+              .filter((d): d is MenuDrink & { offAt: string | null } => !!d)
               .map((d) => ({ ...d, isNew: fresh.has(d.id) })),
           }))
           .filter((s) => s.drinks.length);
@@ -75,7 +80,7 @@ export function useTonight(venueId: string | null) {
       blocks.flatMap((b) =>
         b.sections.flatMap((s) =>
           s.drinks.map((d) => {
-            const category = CATEGORY[d.kind] ?? 'Cocktail';
+            const category = categoryOf(d.kind);
             return { id: d.id, name: d.name, category, imageUrl: d.imageUrl, glass: d.glass || fallbackGlass(category), menuId: b.menu.id };
           })
         )

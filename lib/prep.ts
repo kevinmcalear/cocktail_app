@@ -144,6 +144,16 @@ function inPack(q: Quantity | undefined, pack: Quantity | null): Quantity | unde
   return { kind: pack.kind, value: q.value * pack.value, unit: pack.unit };
 }
 
+/** Serves of each drink when nothing says how busy the night is (Prep, and Tonight's Before doors). */
+export const DEFAULT_SERVES = 20;
+
+/** Tonight's service starts at 6 pm for start-by times; ponytail: a venue setting later (its hours know when doors open). */
+export function tonightAt6(): Date {
+  const d = new Date();
+  d.setHours(18, 0, 0, 0);
+  return d;
+}
+
 export function buildPrepList(input: PrepInput): PrepList {
   const needs = new Map<string, Need>();
   for (const drink of input.drinks) {

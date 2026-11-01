@@ -156,7 +156,7 @@ const styles = StyleSheet.create({
  * The header inside a list: ScreenHeader handles its own safe-area padding and
  * gutter, so this cancels the list's horizontal padding around it.
  */
-export function ScreenHeaderSpacer(props: { title?: string; actions?: ReactNode; add?: boolean }) {
+export function ScreenHeaderSpacer(props: { title?: string; actions?: ReactNode; add?: boolean; back?: boolean }) {
   const gutter = useGutter();
   return (
     <View style={{ marginHorizontal: -gutter }}>
