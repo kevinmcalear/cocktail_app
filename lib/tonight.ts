@@ -2,7 +2,9 @@
 // 2026): what the staff page says before doors and what the home page says
 // about the shelf. Plain functions so tonight.check.ts can hold them.
 
+import { isGarnishUnit } from './batch';
 import type { MakeLine } from './prep';
+import type { SpecLine } from './spec';
 
 /** The service day ends at 6 the next morning (as useServiceDate counts it). */
 export function serviceEnd(now: Date): Date {
@@ -16,6 +18,16 @@ export function serviceEnd(now: Date): Date {
 export function offTonight<T extends { offAt: string | null }>(drinks: readonly T[], now: Date): T[] {
   const end = serviceEnd(now).getTime();
   return drinks.filter((d) => d.offAt != null && Date.parse(d.offAt) <= end);
+}
+
+/**
+ * The drink's garnishes for the service line, in spec order: count-unit lines
+ * (a twist, a sprig), not an egg white counted "1 each".
+ * ponytail: lane D2 (relaunch/d2-spec) adds garnishNames() to lib/specView.ts,
+ * which also says "expressed and discarded" and "grated"; switch to it once it lands.
+ */
+export function garnishOf(lines: readonly Pick<SpecLine, 'ingredient' | 'unit'>[]): string[] {
+  return lines.filter((l) => l.ingredient && isGarnishUnit(l.unit) && !/\begg/i.test(l.ingredient)).map((l) => l.ingredient!);
 }
 
 /** "Comes off at 11pm". */

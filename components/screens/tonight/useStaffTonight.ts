@@ -22,9 +22,10 @@ import { groupMenus, printedPrice } from '@/lib/menus';
 import { buildPrepList, DEFAULT_SERVES, tonightAt6 } from '@/lib/prep';
 import { allergenLabel } from '@/lib/allergens';
 import { formatQuantity } from '@/lib/quantity';
+import { specLines } from '@/lib/spec';
 import { nextNight, nightPhase } from '@/lib/nightPhase';
 import { serveLine } from '@/lib/specView';
-import { enoughRows, offAtLine, offTonight, onShiftLine, runThroughMinutes, serviceEnd, talkAbout, talkThrough, tonightEyebrow, unpriced } from '@/lib/tonight';
+import { enoughRows, garnishOf, offAtLine, offTonight, onShiftLine, runThroughMinutes, serviceEnd, talkAbout, talkThrough, tonightEyebrow, unpriced } from '@/lib/tonight';
 
 /** Admins see Needs you (Prod-where: "Drink Creator and Admin"). */
 const NEEDS_YOU = 35;
@@ -103,12 +104,12 @@ export function useStaffTonight(barId: string) {
     (id) => allergens?.get(id)?.allergens,
     allergenLabel
   );
-  // During service, the lead list's drinks as they go out: "Rocks · Large cube", "raw egg white, tell guests".
+  // During service, the lead list's drinks as they go out: "Rocks · Large cube · Candied ginger", "raw egg white, tell guests".
   const book = useSpecBook(phase === 'service' ? barId : null).data;
   const lists = useDropdowns().data;
   const served = useMemo(() => {
     const named = (list: readonly { id: string; name: string }[] | undefined, id: string | null | undefined) => (id ? list?.find((x) => x.id === id)?.name : undefined);
-    return new Map((book?.items ?? []).map((i) => [i.id, serveLine([named(lists?.glassware, i.glassware_id), named(lists?.iceTypes, i.ice_id)])]));
+    return new Map((book?.items ?? []).map((i) => [i.id, serveLine([named(lists?.glassware, i.glassware_id), named(lists?.iceTypes, i.ice_id), ...garnishOf(specLines(i.recipes))])]));
   }, [book, lists]);
   const lead = blocks[0] ?? null;
   const service = (lead?.sections.flatMap((s) => s.drinks) ?? []).map((d) => {
