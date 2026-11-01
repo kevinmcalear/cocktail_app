@@ -10,7 +10,7 @@ assert.equal(needsOnboarding({ onboarded: false }), true);
 assert.equal(needsOnboarding({ onboarded: 'false' }), true);
 
 assert.equal(afterAgeCheck({ onboarded: false }), '/onboarding');
-assert.equal(afterAgeCheck({}), '/(tabs)');
+assert.equal(afterAgeCheck({}), '/');
 
 assert.equal(nextStep('name'), 'hospitality');
 assert.equal(nextStep('hospitality', 'yes'), 'find');
@@ -80,7 +80,7 @@ assert.match(yearError('nope') ?? '', /1900/);
 const base = { hasSession: false, inAuthGroup: false, authScreen: undefined, stayInAuth: false, segment: undefined, needsOnboarding: false };
 assert.equal(authRedirect({ ...base, inAuthGroup: true, authScreen: 'login', segment: 'auth' }), null);
 assert.equal(authRedirect(base), '/auth/login');
-assert.equal(authRedirect({ ...base, hasSession: true, inAuthGroup: true, authScreen: 'login' }), '/(tabs)');
+assert.equal(authRedirect({ ...base, hasSession: true, inAuthGroup: true, authScreen: 'login' }), '/');
 // A new account signed in with its first code: the age check, then setup.
 assert.equal(authRedirect({ ...base, hasSession: true, inAuthGroup: true, authScreen: 'login', needsOnboarding: true }), '/age-check');
 // The email link owns the next step; setup waits until the age check.
