@@ -1,6 +1,6 @@
 import { useRouter, type Href } from 'expo-router';
 import { useState } from 'react';
-import { FlatList, StyleSheet, View } from 'react-native';
+import { Alert, FlatList, Platform, StyleSheet, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import { Body, Button, Caption, GlassButton, useBreakpoint, useDs, useGutter } from '@/components/ds';
@@ -9,10 +9,14 @@ import { DRAWN_LIST_WINDOW } from '@/components/ds/SketchDrawing';
 import { space } from '@/constants/tokens';
 import { useActiveVenue } from '@/hooks/useActiveVenue';
 import { useIsWideWeb } from '@/hooks/useIsWideWeb';
+import { useListChanges } from '@/hooks/useLivingList';
 import { useMenuLens } from '@/hooks/useMenuLens';
+import { useEndMenu } from '@/hooks/useMenuMutations';
 import { useMenu, useVenueMenus } from '@/hooks/useMenus';
 import { useMyBar } from '@/hooks/useHomeBar';
 import { useShoppingEdit } from '@/hooks/useShoppingList';
+import { confirmAsync } from '@/lib/dialogs';
+import { isLivingList } from '@/lib/menuLens';
 import { isOneNightMenu, menuStatus, newDrinkIds } from '@/lib/menus';
 import { menuShopping } from '@/lib/shoppingList';
 import type { ShelfMatch } from '@/lib/collectionStages';
@@ -71,10 +75,11 @@ function HomeMenuPage({ menu }: { menu: MenuDetail }) {
     if (adds.length) shopping.add.mutate(adds);
     router.push('/shopping' as Href);
   };
-  return <MenuPage menu={menu} shelf={shelf.isLoading ? null : { match: shelf, toShopping }} />;
+  const toBuy = shelf.isLoading ? null : menuShopping(drinks, shelf.oneAway, shelf.twoAway).length;
+  return <MenuPage menu={menu} shelf={shelf.isLoading ? null : { match: shelf, toShopping, toBuy }} />;
 }
 
-function MenuPage({ menu, shelf }: { menu: MenuDetail; shelf: { match: ShelfMatch; toShopping: () => void } | null }) {
+function MenuPage({ menu, shelf }: { menu: MenuDetail; shelf: { match: ShelfMatch; toShopping: () => void; toBuy: number | null } | null }) {
   const ds = useDs();
   const router = useRouter();
   const insets = useSafeAreaInsets();
@@ -87,6 +92,8 @@ function MenuPage({ menu, shelf }: { menu: MenuDetail; shelf: { match: ShelfMatc
   const [open, setOpen] = useState<string | null>(null);
   const [changing, setChanging] = useState<RowTarget | null>(null);
   const lens = useMenuLens(menu);
+  const hide = useListChanges(menu.id).hide;
+  const end = useEndMenu();
   const { data: venueMenus = [] } = useVenueMenus(menu.barId);
   const back = () => (router.canGoBack() ? router.back() : router.replace('/menus/all'));
 
@@ -100,9 +107,10 @@ function MenuPage({ menu, shelf }: { menu: MenuDetail; shelf: { match: ShelfMatc
     status,
     lens,
     venueName: venues.find((v) => v.id === menu.barId)?.name ?? null,
-    onNow: live ? { name: live.name, itemIds: new Set(live.itemIds) } : null,
+    onNow: live ? { name: live.name, endsAt: live.endsAt, itemIds: new Set(live.itemIds) } : null,
     newIds: menu.barId && previous.length ? newDrinkIds(drinks.map((d) => d.id), previous) : undefined,
     shelf: lens.lens === 'home' ? (shelf?.match ?? null) : null,
+    toBuy: shelf?.toBuy ?? null,
     day,
     now,
   });
@@ -112,12 +120,27 @@ function MenuPage({ menu, shelf }: { menu: MenuDetail; shelf: { match: ShelfMatc
   const go = (href: string) => router.push(href as Href);
   // A drink opens in its menu: the drink page shows "Autumn · 4 of 8" and pages through it.
   const openDrink = (row: PageRowView) => go(`${menuDrinkHref(row.drink)}?menu=${menu.id}`);
+  const failed = (message: string) => (Platform.OS === 'web' ? window.alert(message) : Alert.alert(message));
+  const endMenu = async () => {
+    // A list still to come has nothing to end: it goes back to being a draft (as in More).
+    const ok = await confirmAsync(
+      status === 'upcoming'
+        ? { title: `Unschedule ${menu.name}?`, message: 'It goes back to being a draft.', confirmText: 'Unschedule' }
+        : { title: `End ${menu.name}?`, message: 'It moves to Past. You can put it on again later.', confirmText: 'End it' },
+    );
+    if (!ok) return;
+    try {
+      await end.mutateAsync(menu.id);
+    } catch {
+      failed('That didn’t work. Try again.');
+    }
+  };
   const share = () => (lens.lens === 'home' || isOneNightMenu(menu) ? setSheet('share') : go(`/menus/${menu.id}/card`));
 
   const actions: Record<Exclude<GroupAction, null>, () => void> = {
     dates: () => setSheet('more'),
-    end: () => setSheet('more'),
-    barPage: () => setSheet('more'),
+    end: () => void endMenu(),
+    barPage: () => hide.mutate(!menu.hiddenAt, { onError: () => failed('That didn’t work. Try again.') }),
     costing: () => go(`/menus/${menu.id}/costing`),
     runSheet: () => go(`/menus/${menu.id}/run-sheet`),
     prep: () => go('/prep'),
@@ -136,6 +159,7 @@ function MenuPage({ menu, shelf }: { menu: MenuDetail; shelf: { match: ShelfMatc
   const bartender = lens.lens === 'bartender';
   // A list that's on, or coming up: its drinks change one at a time, on the row.
   const changeable = team && (status === 'on' || status === 'upcoming');
+  const living = changeable && isLivingList(lens.rows, menu.startsAt);
 
   return (
     <View style={[styles.screen, { backgroundColor: ds.c.ground }]}>
@@ -183,7 +207,7 @@ function MenuPage({ menu, shelf }: { menu: MenuDetail; shelf: { match: ShelfMatc
               onShare={lens.lens === 'home' ? null : share}
               // Edit is the one action for the menu team; a draft's is Publish and a home menu's Share, so theirs is a glass pencil.
               onEdit={(team && draft) || lens.lens === 'home' ? () => go(`/menus/${menu.id}/edit`) : null}
-              pill={lens.lens === 'home' ? { label: 'Share', onPress: share } : team && !draft && status !== 'previous' ? { label: 'Edit', onPress: () => go(`/menus/${menu.id}/edit`) } : null}
+              pill={lens.lens === 'home' ? { label: 'Share', onPress: share } : team && !draft && status !== 'previous' && !living ? { label: 'Edit', onPress: () => go(`/menus/${menu.id}/edit`) } : null}
               bleed={gutter}
             />
             {model.banner ? (
@@ -206,7 +230,7 @@ function MenuPage({ menu, shelf }: { menu: MenuDetail; shelf: { match: ShelfMatc
       {changing ? <RowChanges menu={menu} rows={lens.rows} target={changing} onClose={() => setChanging(null)} /> : null}
       {sheet === 'night' ? <HomeNightSheet menu={menu} onClose={() => setSheet(null)} /> : null}
       {sheet === 'share' ? <ShareMenuSheet menu={menu} onClose={() => setSheet(null)} /> : null}
-      {sheet === 'more' ? <MenuMoreSheet menu={menu} status={status} visible onClose={() => setSheet(null)} onNight={home ? () => setSheet('night') : undefined} /> : null}
+      {sheet === 'more' ? <MenuMoreSheet menu={menu} status={status} visible onClose={() => setSheet(null)} onNight={home ? () => setSheet('night') : undefined} onEdit={living ? () => go(`/menus/${menu.id}/edit`) : undefined} /> : null}
       {sheet === 'publish' ? <GoLiveSheet visible menu={menu} others={others} onClose={() => setSheet(null)} onDone={() => setSheet(null)} /> : null}
     </View>
   );

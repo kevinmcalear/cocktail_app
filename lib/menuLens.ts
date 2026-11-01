@@ -52,6 +52,38 @@ export function allergyLine(labels: readonly string[], drinks: number): string |
   return `${labels.join(', ')} in ${drinks} ${drinks === 1 ? 'drink' : 'drinks'}`;
 }
 
+/**
+ * The floor's chips for one drink. Safety: a drink nobody has checked must
+ * never read "No allergens", so only a checked drink (labels, possibly none)
+ * reaches the empty list that reads that way. Unchecked, it says so; when
+ * nothing on the menu is checked yet the top line says it once instead.
+ */
+export function allergenChips(labels: readonly string[] | undefined, anyChecked: boolean): string[] | null {
+  if (labels) return [...labels];
+  return anyChecked ? ['Not checked'] : null;
+}
+
+/** "Allergens tonight": never "None on this menu" while any drink is unchecked. */
+export function allergensTonight(counts: ReadonlyMap<string, number>, checked: number, drinks: number): string {
+  if (!checked) return 'Not checked yet';
+  const left = Math.max(drinks - checked, 0);
+  if (!left) return allergenSummary(counts);
+  return [counts.size ? allergenSummary(counts) : null, `${left} not checked`].filter(Boolean).join(' · ');
+}
+
+/**
+ * A list kept on a drink at a time (Menu-l-*, "Cocktails"), not one menu run
+ * whole (Menu-who-creator, "Autumn"): a drink on it changed on its own date,
+ * or a drink has left it.
+ * ponytail: read from the runs because nothing stores this: `list_type` is
+ * 'main' for both. A list that never changed reads as seasonal. If Kevin wants
+ * it chosen, it wants its own list_type value (a gated migration).
+ */
+export function isLivingList(rows: readonly { onFrom: string | null }[], listStart: string | null, endedRuns = 0): boolean {
+  if (endedRuns > 0) return true;
+  return rows.some((r) => !!r.onFrom && (!listStart || Date.parse(r.onFrom) > Date.parse(listStart)));
+}
+
 /** The employee's top line: "Egg in 1 · sulphites in 2". */
 export function allergenSummary(counts: ReadonlyMap<string, number>): string {
   if (!counts.size) return 'None on this menu';

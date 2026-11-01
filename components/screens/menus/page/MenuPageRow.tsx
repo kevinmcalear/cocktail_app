@@ -28,7 +28,7 @@ export interface PageRowView {
   sub: string | null;
   /** A small mark after the name: "Egg" (a guest's allergy), "On now" (on a past menu), "On from Fri" (planned). */
   flag: { label: string; tone: "green" | "amber" | "quiet" } | null;
-  /** The floor's allergen chips; an empty list reads "No allergens". Null: none shown. */
+  /** The floor's allergen chips (lib/menuLens allergenChips): an empty list reads "No allergens", so only a checked drink may have one. Null: none shown. */
   chips: string[] | null;
   talkingPoint: string | null;
   ink: MenuInk;
@@ -64,7 +64,7 @@ export function MenuPageRow({
     quiet: ds.c.raised,
   };
   const { drink } = row;
-  const label = [drink.name, row.line, row.end, row.flag?.label]
+  const label = [drink.name, row.line, row.end, row.flag?.label, row.chips ? (row.chips.join(", ") || "No allergens") : null]
     .filter(Boolean)
     .join(", ");
   return (
@@ -139,9 +139,8 @@ export function MenuPageRow({
             ) : null}
             {row.talkingPoint ? (
               <DsText
-                variant="caption"
+                variant="body"
                 italic
-                tone="muted"
                 style={{ fontFamily: displayFaces[ds.displayFace].italic }}
               >
                 {row.talkingPoint}

@@ -8,7 +8,7 @@ import { useCapabilities } from '@/hooks/useCapabilities';
 import { useGuestDrinkAllergens, useMyAllergies } from '@/hooks/useGuestAllergies';
 import { useListRows, type ListRow } from '@/hooks/useLivingList';
 import { useMenuCosting } from '@/hooks/useMenuCosting';
-import { usePricingSettings } from '@/hooks/usePricing';
+import { usePricingSettings } from '@/hooks/usePricingSettings';
 import { useUserId } from '@/ctx/AuthContext';
 import { useViewAs } from '@/hooks/useViewAs';
 import { allergenLabel, allergyMatches, type GuestDrinkAllergens } from '@/lib/allergens';

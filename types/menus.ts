@@ -36,6 +36,8 @@ export interface MenuSummary {
   /** A draft's planned run, or one night, picked in New menu: not live until it goes on. */
   plannedStartsAt: string | null;
   plannedEndsAt: string | null;
+  /** A list that ran, hidden from the bar page and drink pages (its members still read it). */
+  hiddenAt: string | null;
   itemIds: string[];
   /** Sections with fewer drinks than their rule's least (a draft's "1 section short"). */
   shortSections: number;
