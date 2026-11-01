@@ -1,4 +1,4 @@
-// A bar's menu editions, and the menus a drink was on (menu_drink_runs) and who's credited.
+// A bar's menu editions, and the menus a drink was on (drink_list_dates) and who's credited.
 // Split out of hooks/useProfiles.ts, which still re-exports it.
 import { useQuery } from '@tanstack/react-query';
 
@@ -6,7 +6,7 @@ import { useUserId } from '@/ctx/AuthContext';
 import { MENU_DRINK_COLUMNS, toMenuDrink, type MenuItemRow } from '@/hooks/useMenus';
 import { viewerScoped } from '@/lib/authCache';
 import type { DrinkRun } from '@/lib/findYourself';
-import { runDates, sortEditions, type MenuDates, type MenuEdition, type MenuEditionDrink, type MenuRunRow } from '@/lib/menuEditions';
+import { runDates, sortEditions, type MenuDates, type MenuEdition, type MenuEditionDrink } from '@/lib/menuEditions';
 import { groupMenuCredits, type MenuCredit, type MenuDrinkRow } from '@/lib/profiles';
 import { jsonAs, supabase } from '@/lib/supabase';
 import type { MenuDrink } from '@/types/menus';
@@ -32,7 +32,7 @@ export interface DrinkMenuRun extends MenuDates {
   editionName: string;
 }
 
-/** The bar menus a drink was on, and when (menu_drink_runs). Empty for a drink no menu lists. */
+/** The bar menus a drink was on, and when (drink_list_dates): a bar can have more than one run. Empty for a drink no menu lists. */
 export function useDrinkMenuRuns(itemId: string | null) {
   const viewer = viewerScoped(useUserId());
   return useQuery({
@@ -40,14 +40,11 @@ export function useDrinkMenuRuns(itemId: string | null) {
     meta: viewer.meta,
     enabled: !!itemId,
     queryFn: async (): Promise<DrinkMenuRun[]> => {
-      const { data, error } = await supabase
-        .from('menu_drink_runs')
-        .select('profile_id, edition_id, edition_name, start_year, start_month, end_year, end_month, is_current')
-        .eq('item_id', itemId!);
+      const { data, error } = await supabase.rpc('drink_list_dates', { p_item_ids: [itemId!] });
       if (error) throw error;
-      const rows = (data ?? []) as (MenuRunRow & { profile_id: string; edition_id: string; edition_name: string })[];
+      const rows = data ?? [];
       if (!rows.length) return [];
-      const bars = await supabase.from('profiles').select('id, display_name').in('id', rows.map((r) => r.profile_id));
+      const bars = await supabase.from('profiles').select('id, display_name').in('id', [...new Set(rows.map((r) => r.profile_id))]);
       if (bars.error) throw bars.error;
       const names = new Map((bars.data ?? []).map((b) => [b.id as string, b.display_name as string]));
       return rows.map((r) => ({ ...runDates(r), barId: r.profile_id, barName: names.get(r.profile_id) ?? 'A bar', editionId: r.edition_id, editionName: r.edition_name }));
@@ -55,7 +52,7 @@ export function useDrinkMenuRuns(itemId: string | null) {
   });
 }
 
-/** Every bar menu these drinks were on, and when (menu_drink_runs): a person's "Made by" (find-yourself). */
+/** Every bar menu these drinks were on, and when (drink_list_dates): a person's "Made by" (find-yourself). */
 export function useMenuRuns(itemIds: readonly string[]) {
   const viewer = viewerScoped(useUserId());
   const ids = [...new Set(itemIds)].sort();
@@ -64,13 +61,9 @@ export function useMenuRuns(itemIds: readonly string[]) {
     meta: viewer.meta,
     enabled: ids.length > 0,
     queryFn: async (): Promise<DrinkRun[]> => {
-      const { data, error } = await supabase
-        .from('menu_drink_runs')
-        .select('item_id, profile_id, edition_id, edition_name, start_year, end_year, is_current')
-        .in('item_id', ids)
-        .limit(1000);
+      const { data, error } = await supabase.rpc('drink_list_dates', { p_item_ids: ids });
       if (error) throw error;
-      return ((data ?? []) as { item_id: string; profile_id: string; edition_id: string; edition_name: string; start_year: number; end_year: number | null; is_current: boolean }[]).map((r) => ({
+      return (data ?? []).map((r) => ({
         itemId: r.item_id,
         barId: r.profile_id,
         editionId: r.edition_id,

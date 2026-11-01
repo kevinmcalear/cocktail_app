@@ -3,7 +3,7 @@ import assert from 'node:assert/strict';
 import {
   iceLine,
   notesArePrivate,
-  methodIceLabel,
+  methodIceLabel, methodDetail, METHOD_GROUPS,
   withMethodIce,
   amountLabel, amountOf, canSave, choiceList, convertPour, draftFromSpec, COMMON_ICE, creatorProfileId, EMPTY_DRAFT, GARNISH_CHIPS, guessUnit, hasContent, newLine, nextUnit, pickByName,
   likeExactly, QUICK_UNITS, searchByName, stepAmount, sketchLook, specLines, stepFilled, WIZARD_STEPS, type WizardDraft,
@@ -212,6 +212,14 @@ assert.equal(methodIceLabel(['Dry shake', 'Shake']), 'Shaken with');
 assert.equal(methodIceLabel(['Stir']), 'Stirred down with');
 assert.equal(methodIceLabel(['Build']), null, 'built in the glass: its ice is the one it is served over');
 assert.equal(methodIceLabel([]), 'Made with');
+assert.equal(methodIceLabel(['Roll']), 'Rolled with');
+assert.equal(methodIceLabel(['Stir', 'Smoke the glass']), 'Stirred down with', 'smoke does not change the ice');
+assert.equal(methodIceLabel(['Flash blend']), 'Blended with');
+assert.equal(methodIceLabel(['Whip shake']), 'Shaken with');
+// Every chip names one method: none outside Mix and Air and texture reads as mixed with ice.
+for (const g of METHOD_GROUPS.slice(2)) for (const m of g.methods) assert.equal(methodIceLabel([m]), 'Made with', m);
+assert.equal(new Set(COMMON_METHODS.map((m) => m.toLowerCase())).size, COMMON_METHODS.length, 'no chip twice');
+for (const m of COMMON_METHODS) assert.ok(methodDetail(m), `${m} has a detail`);
 assert.equal(methodIceLabel(['Build', 'Whip (whisk or frother)']), null, 'a whisk takes no ice (Q20b)');
 assert.equal(methodIceLabel(['Whip (whisk or frother)']), 'Made with');
 assert.equal(methodIceLabel(['Whip (iSi)']), 'Shaken with');

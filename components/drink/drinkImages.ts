@@ -6,6 +6,7 @@ import { Platform } from 'react-native';
 
 import { imageExtFromUri, uriToBase64 } from '@/lib/imageBase64';
 import { isHeroLink } from '@/lib/itemImages';
+import { pageCopyPath } from '@/lib/thumbnails';
 import { canUseCamera } from '@/lib/photoAccess';
 import { supabase, UPLOAD_CACHE_SECONDS } from '@/lib/supabase';
 import { offerCutout } from '@/store/useCutoutOffer';
@@ -59,27 +60,79 @@ export async function cropPhoto(uri: string, rect: { originX: number; originY: n
   return web && saved.base64 ? `data:image/${png ? 'png' : 'jpeg'};base64,${saved.base64}` : saved.uri;
 }
 
-/** Uploads a local photo to the drinks bucket at `folder/`; returns its new `images` row id. */
-export async function uploadDrinkPhoto(uri: string, folder: string): Promise<{ id: string; url: string } | null> {
-  const ext = imageExtFromUri(uri);
-  const fileName = `${folder}/${Date.now()}_${Math.random().toString(36).substring(7)}.${ext}`;
-  const arrayBuffer = decode(await uriToBase64(uri));
+/** The widest a photo is kept: a page at 3x on the widest phone, and the full-screen viewer. */
+const KEEP_WIDTH = 2048;
+/** The page copy's width (lib/thumbnails.ts). */
+const PAGE_WIDTH = 1080;
 
-  const { error: uploadError } = await supabase.storage.from('drinks').upload(fileName, arrayBuffer, {
+interface Sized {
+  /** The photo at most KEEP_WIDTH wide, and its page copy at most PAGE_WIDTH. */
+  kept: string;
+  page: string;
+  width: number;
+  height: number;
+  /** Null on the web, which can't make one: the image-palette worker adds it there. */
+  thumbhash: string | null;
+}
+
+/**
+ * The photo made smaller on the phone before it uploads (decision
+ * image-pipeline): a phone camera's 4000 px photo is 2 to 3 MB, a page needs
+ * 1080 px. JPEG at 0.8, or PNG for a cut-out so it stays clear. Null where the
+ * build can't (no image manipulator): the original uploads as before.
+ */
+async function sizedCopies(uri: string, png: boolean): Promise<Sized | null> {
+  if (!canCropPhotos()) return null;
+  const { ImageManipulator, SaveFormat } = await import('expo-image-manipulator');
+  const web = Platform.OS === 'web';
+  const original = await ImageManipulator.manipulate(uri).renderAsync();
+  const at = async (width: number) => {
+    const image = await ImageManipulator.manipulate(uri).resize({ width: Math.min(width, original.width) }).renderAsync();
+    const saved = await image.saveAsync({ compress: 0.8, format: png ? SaveFormat.PNG : SaveFormat.JPEG, base64: web });
+    // The web hands back a blob: URL with no type; a data: URL keeps it (as cropPhoto does).
+    return { uri: web && saved.base64 ? `data:image/${png ? 'png' : 'jpeg'};base64,${saved.base64}` : saved.uri, width: saved.width, height: saved.height };
+  };
+  const kept = await at(KEEP_WIDTH);
+  const page = await at(PAGE_WIDTH);
+  const thumbhash = web ? null : await (await import('expo-image')).Image.generateThumbhashAsync(page.uri).catch(() => null);
+  return { kept: kept.uri, page: page.uri, width: kept.width, height: kept.height, thumbhash };
+}
+
+async function uploadFile(path: string, uri: string, ext: string) {
+  return supabase.storage.from('drinks').upload(path, decode(await uriToBase64(uri)), {
     contentType: `image/${ext === 'jpg' ? 'jpeg' : ext}`,
     upsert: false,
     cacheControl: UPLOAD_CACHE_SECONDS,
   });
+}
+
+/**
+ * Uploads a local photo to the drinks bucket at `folder/`; returns its new
+ * `images` row id. Made smaller first where the phone can (sizedCopies), with
+ * its page copy beside it; the row gets its size and ThumbHash, the ThumbHash
+ * only once the page copy is up (the app asks for that copy only then).
+ */
+export async function uploadDrinkPhoto(uri: string, folder: string): Promise<{ id: string; url: string } | null> {
+  const original = imageExtFromUri(uri);
+  const sized = await sizedCopies(uri, original === 'png').catch(() => null);
+  // Resized, it's a JPEG (or a PNG cut-out) whatever it came as.
+  const ext = sized ? (original === 'png' ? 'png' : 'jpg') : original;
+  const fileName = `${folder}/${Date.now()}_${Math.random().toString(36).substring(7)}.${ext}`;
+
+  const { error: uploadError } = await uploadFile(fileName, sized?.kept ?? uri, ext);
   if (uploadError) return null;
+  // Never failing the photo: without its page copy the page shows the photo itself.
+  const pageUp = sized ? !(await uploadFile(pageCopyPath(fileName), sized.page, ext).catch((e: Error) => ({ error: e }))).error : false;
 
   const { data: publicUrlData } = supabase.storage.from('drinks').getPublicUrl(fileName);
-  const { data: imgData, error: imgError } = await supabase
-    .from('images')
-    .insert({ url: publicUrlData.publicUrl })
-    .select()
-    .single();
-  if (imgError || !imgData) return null;
-  return { id: imgData.id, url: publicUrlData.publicUrl };
+  const url = publicUrlData.publicUrl;
+  const size = sized ? { width: sized.width, height: sized.height, ...(pageUp && sized.thumbhash ? { thumbhash: sized.thumbhash } : {}) } : {};
+  const insert = (row: { url: string; width?: number; height?: number; thumbhash?: string }) => supabase.from('images').insert(row).select('id').single();
+  let saved = await insert({ url, ...size });
+  // Before the image-sizes migration (20261204100000) is in, those columns aren't there yet: the photo still saves.
+  if (saved.error && sized && /thumbhash|width|height/.test(saved.error.message)) saved = await insert({ url });
+  if (saved.error || !saved.data) return null;
+  return { id: saved.data.id, url };
 }
 
 /**

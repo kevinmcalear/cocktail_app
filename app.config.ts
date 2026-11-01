@@ -91,6 +91,8 @@ export default ({ config }: ConfigContext): ExpoConfig => {
     plugins: [
       ...(config.plugins ?? []),
       ...(variant === 'production' ? ['@sentry/react-native'] : []),
+      // Predictive back that still reaches JS on Android 13 to 15.
+      './plugins/withPredictiveBack',
       // The app icons people can pick in Settings (dec-28). iOS and Android
       // only switch between icons bundled into the build, so a bar's icon
       // ships in a store build, never from an uploaded logo at runtime.
