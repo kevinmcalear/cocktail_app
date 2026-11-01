@@ -7889,6 +7889,7 @@ export type Database = {
       get_menu_editions: {
         Args: { p_profile_id: string }
         Returns: {
+          cover_url: string
           drinks: Json
           end_month: number
           end_year: number

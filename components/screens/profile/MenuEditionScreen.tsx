@@ -2,12 +2,13 @@ import { useNavigation, useRouter, type Href } from 'expo-router';
 import { lazy, Suspense, type ComponentProps } from 'react';
 import { Linking, StyleSheet, View } from 'react-native';
 
-import { Button, PressableScale, Tag } from '@/components/ds';
+import { BackbarTheme, Button, PressableScale, Tag } from '@/components/ds';
 import { WebHead } from '@/components/WebHead';
 import { space } from '@/constants/tokens';
 import { useSignedIn } from '@/ctx/AuthContext';
 import { useActiveVenue } from '@/hooks/useActiveVenue';
 import { useMenuLens } from '@/hooks/useMenuLens';
+import { usePhotoTone } from '@/hooks/usePhotoTone';
 import { useMenuEditionDrinks, useMenuEditions, useProfile } from '@/hooks/useProfiles';
 import { drinkPageHref } from '@/lib/itemRoutes';
 import { editionDates, editionMenu, editionMenuDrinks, editionSections, menuRange, menuState } from '@/lib/menuEditions';
@@ -75,6 +76,7 @@ export function MenuEditionScreen({ profileRef, editionId }: { profileRef: strin
       <BarGuestMenuPage
         menu={menu}
         status={past ? 'previous' : 'on'}
+        offTonight={new Set(edition.drinks.filter((d) => d.off_tonight).map((d) => d.id))}
         eyebrow={[bar.display_name, menuRange(dates)].filter(Boolean).join(' · ')}
         onNow={now ? { name: now.name, itemIds: new Set(now.drinks.map((d) => d.id)) } : null}
         onToNow={now ? () => router.replace(`/p/${bar.handle || bar.id}/menus/${now.id}` as Href) : undefined}
@@ -103,7 +105,13 @@ export function MenuEditionScreen({ profileRef, editionId }: { profileRef: strin
 
 /** A bar's menu marks the drinks with the guest's own allergies. */
 function BarGuestMenuPage(props: Omit<ComponentProps<typeof GuestMenuPage>, 'lens'>) {
-  return <GuestMenuPage {...props} lens={useMenuLens(props.menu)} />;
+  // The cover photo sets light or dark for the page (Menu-g-photo-dark, Menu-g-photo-bright).
+  const tone = usePhotoTone(props.menu.coverUrl);
+  return (
+    <BackbarTheme scheme={props.menu.coverUrl ? tone : undefined}>
+      <GuestMenuPage {...props} lens={useMenuLens(props.menu)} />
+    </BackbarTheme>
+  );
 }
 
 const styles = StyleSheet.create({

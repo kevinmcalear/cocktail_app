@@ -35,13 +35,15 @@ export function useRowActs(menu: { id: string; barId: string | null }, rows: Lis
   const tellTeam = useTellTeam(menuId, menu.barId);
   const offTonight = useSetOffTonight(menu.barId ?? '');
   const clock = useBarClock(menu.barId).data;
-  const may = useMayChangeList(bartender ? null : menuId).data;
+  const may = useMayChangeList(menuId).data;
+  // A bartender asks, unless the list is theirs to change (the daily list while they're on shift).
+  const asking = bartender && may !== true;
   const failed = (e: Error) => toast.show({ title: e.message || 'Couldn’t change the list. Try again.' });
   const said = (title: string) => () => toast.show({ title: may === false ? `${title}: waiting for approval` : title });
   const tell = (changes: Tell[]) => tellTeam.mutate(changes);
   return {
-    may: bartender ? false : may,
-    bartender,
+    may: asking ? false : may,
+    bartender: asking,
     busy: changes.swap.isPending || changes.takeOff.isPending || asks.create.isPending,
     act(kind: ActKind, view: PageRowView, sectionId: string) {
       const row = view.listRow;
@@ -95,7 +97,7 @@ export function useRowActs(menu: { id: string; barId: string | null }, rows: Lis
         said(title)();
         done();
       };
-      if (bartender) {
+      if (asking) {
         const fine = () => {
           toast.show({ title: opts.draft ? 'Kept as a draft. Only you see it.' : 'Asked. It waits for approval.' });
           done();
