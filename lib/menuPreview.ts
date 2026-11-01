@@ -3,6 +3,8 @@
 // these tags; api/menu-og.ts draws the image. Plain fetches and relative
 // imports only: these run on Vercel, outside the app's bundle.
 
+import brand from '../constants/brand.json';
+
 /** The parts of shared_menu() (supabase/migrations/20260930930000_share_home_menus.sql) a preview needs. */
 export interface SharedMenuRow {
   id: string;
@@ -99,9 +101,9 @@ export function previewHtml(meta: PreviewMeta): string {
 <html lang="en"><head><meta charset="utf-8">
 <title>${t}</title>
 <meta name="description" content="${d}">
-<link rel="canonical" href="${esc(meta.url)}">
+${brand.searchIndexing ? `<link rel="canonical" href="${esc(meta.url)}">` : '<meta name="robots" content="noindex, nofollow">'}
 <meta property="og:type" content="website">
-<meta property="og:site_name" content="Cocktail">
+<meta property="og:site_name" content="${esc(brand.productName)}">
 <meta property="og:title" content="${t}">
 <meta property="og:description" content="${d}">
 <meta property="og:url" content="${esc(meta.url)}">

@@ -1,6 +1,6 @@
 {
   "expo": {
-    "version": "1.5.0",
+    "version": "2.0.0",
     "orientation": "default",
     "icon": "./assets/images/icon.png",
     "userInterfaceStyle": "automatic",
@@ -60,7 +60,16 @@
         }
       ],
       "expo-web-browser",
-      "expo-font",
+      [
+        "expo-font",
+        {
+          "fonts": [
+            "./assets/fonts/redaction/Redaction-Regular.ttf",
+            "./assets/fonts/redaction/Redaction-Italic.ttf",
+            "./assets/fonts/redaction/Redaction-Bold.ttf"
+          ]
+        }
+      ],
       "expo-image",
       "expo-secure-store",
       "expo-status-bar",
