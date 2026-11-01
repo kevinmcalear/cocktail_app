@@ -1,7 +1,7 @@
 import { StyleSheet, View } from 'react-native';
 
 import { Body, Caption, PressableScale, useDs } from '@/components/ds';
-import { fontFamilies, space } from '@/constants/tokens';
+import { font, space } from '@/constants/tokens';
 import { useAuth, useUserId } from '@/ctx/AuthContext';
 import { useMenuSectionPlace } from '@/hooks/useDrinkDesk';
 import { COUNTED_STEPS, hasContent, WIZARD_STEPS, type WizardDraft, type WizardStep } from '@/lib/drinkWizard';
@@ -62,7 +62,7 @@ function ImportRow({ review, onOpen }: { review: ImportReview; onOpen: () => voi
   };
   return (
     <PressableScale role="link" accessibilityLabel={`${title}. ${where}`} onPress={open} style={[styles.row, { borderBottomColor: ds.c.line }]}>
-      <Body style={{ fontFamily: fontFamilies.bodySemiBold }} numberOfLines={1}>
+      <Body style={{ ...font.semiBold }} numberOfLines={1}>
         {title}
       </Body>
       <Caption tone="muted">{where}</Caption>
@@ -88,7 +88,7 @@ function DraftRow({ slot, draft, step, barId, onOpen }: { slot: string; draft: W
     });
   return (
     <PressableScale role="link" accessibilityLabel={[`${title}, ${where}`, ...left.map((t) => `${t.name}, recipe to finish`)].join('. ')} onPress={open} style={[styles.row, { borderBottomColor: ds.c.line }]}>
-      <Body style={{ fontFamily: fontFamilies.bodySemiBold }} numberOfLines={1}>
+      <Body style={{ ...font.semiBold }} numberOfLines={1}>
         {title}
       </Body>
       <Caption tone="muted">{where}</Caption>

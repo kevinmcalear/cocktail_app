@@ -7,7 +7,7 @@ import { BarMark, type BarBrand } from '@/components/screens/home/BarMark';
 import { IconSymbol } from '@/components/ui/icon-symbol';
 import { UserAvatar } from '@/components/ui/UserAvatar';
 import type { PublicPerson } from '@/hooks/useProfiles';
-import { fontFamilies, layout, radius, space } from '@/constants/tokens';
+import { font, layout, radius, space } from '@/constants/tokens';
 import { withAlpha } from '@/lib/color';
 import { barDrinksLine, closedLabel, type DiscoverBar } from '@/lib/discoverDrinks';
 import { waitingLine, type Waiting } from '@/lib/findYourself';
@@ -278,11 +278,11 @@ const styles = StyleSheet.create({
   headAction: { minHeight: 32, justifyContent: 'center' },
   cap: { letterSpacing: 0.8, textTransform: 'uppercase' },
   more: { alignSelf: 'flex-start', flexDirection: 'row', alignItems: 'center', gap: space.xs, minHeight: layout.minTapTarget },
-  moreText: { fontFamily: fontFamilies.bodyMedium },
+  moreText: { ...font.medium },
   miss: { flexDirection: 'row', alignItems: 'flex-start', gap: space.md, padding: space.md, borderRadius: radius.card, borderCurve: 'continuous' },
   missIcon: { width: 40, height: 40, borderRadius: radius.pill, alignItems: 'center', justifyContent: 'center' },
   missText: { flex: 1, minWidth: 0, gap: space.xs },
-  missTitle: { fontFamily: fontFamilies.bodySemiBold },
+  missTitle: { ...font.semiBold },
   missAction: { alignSelf: 'flex-start', flexDirection: 'row', alignItems: 'center', gap: space.xs, minHeight: 40, marginTop: space.xs, paddingHorizontal: space.md, borderWidth: 1, borderRadius: radius.pill },
   forget: { width: layout.minTapTarget, height: layout.minTapTarget, alignItems: 'center', justifyContent: 'center', marginRight: -space.md },
   everywhere: { flexDirection: 'row', alignItems: 'center', gap: space.sm, minHeight: layout.minTapTarget, paddingHorizontal: space.md, borderWidth: 1, borderRadius: radius.control },

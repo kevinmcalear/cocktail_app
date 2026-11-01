@@ -3,7 +3,7 @@ import { StyleSheet, View } from 'react-native';
 
 import { Caption, DsText, PressableScale, useDs } from '@/components/ds';
 import { IconSymbol } from '@/components/ui/icon-symbol';
-import { fontFamilies, radius, space } from '@/constants/tokens';
+import { font, radius, space } from '@/constants/tokens';
 import { dayHeading, detailLine, kindLabel, ticketHost, type WeekItem } from '@/lib/week';
 
 import { useDotColor, WeekDot, WeekLine, weekHref } from './WeekParts';
@@ -132,7 +132,7 @@ const styles = StyleSheet.create({
   grid: { flexDirection: 'row', gap: space.sm },
   column: { flex: 1, minWidth: 0, gap: space.sm },
   colHead: { flexDirection: 'row', alignItems: 'baseline', gap: space.xs, paddingBottom: space.xs },
-  mono: { fontFamily: fontFamilies.mono },
+  mono: { ...font.figures },
   card: { gap: space.xs, padding: space.md, borderRadius: radius.control, borderWidth: 1, borderCurve: 'continuous' },
   kind: { flexDirection: 'row', alignItems: 'center', gap: space.xs },
   flex: { flex: 1, minWidth: 0 },

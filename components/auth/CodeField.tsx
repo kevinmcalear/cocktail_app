@@ -3,7 +3,7 @@ import { Pressable, StyleSheet, TextInput, View } from 'react-native';
 
 import { DsText, useDs } from '@/components/ds';
 import { STATUS } from '@/constants/palette';
-import { fontFamilies, radius, space, type } from '@/constants/tokens';
+import { font, radius, space, type } from '@/constants/tokens';
 import { CODE_LENGTH, cleanCode } from '@/lib/authCode';
 import { readableAccent } from '@/lib/color';
 
@@ -75,7 +75,7 @@ const styles = StyleSheet.create({
   row: { flexDirection: 'row', gap: space.sm },
   cell: { flex: 1, height: 60, borderRadius: radius.control, alignItems: 'center', justifyContent: 'center' },
   dash: { width: space.sm, height: 2, alignSelf: 'center' },
-  digit: { ...type.headline, fontFamily: fontFamilies.monoMedium, fontVariant: ['tabular-nums'] },
+  digit: { ...type.headline, ...font.figuresMedium, fontVariant: ['tabular-nums'] },
   // Invisible but still focusable and fillable (opacity 0 stops some autofill).
   input: { color: 'transparent', backgroundColor: 'transparent', borderWidth: 0, opacity: 0.02 },
 });

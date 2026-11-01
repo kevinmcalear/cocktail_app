@@ -2,7 +2,7 @@ import { useState } from 'react';
 import { StyleSheet, View } from 'react-native';
 
 import { Body, Caption, DsText, PressableScale, Spec, useBreakpoint, useDs } from '@/components/ds';
-import { fontFamilies, layout, radius, space } from '@/constants/tokens';
+import { font, layout, radius, space } from '@/constants/tokens';
 import { useMakingKit } from '@/hooks/useBarKit';
 import { guessKind, keepsText, KIND_TILES, KIND_WAYS, PREP_KINDS, prepAmounts, tileOf, wayOf, waysByKit, type PrepDraft, type PrepKindId, type PrepWay } from '@/lib/prepKinds';
 import { formatQuantity, toQuantity } from '@/lib/quantity';
@@ -209,7 +209,7 @@ const styles = StyleSheet.create({
   way: { gap: space.xs, paddingHorizontal: space.md, paddingVertical: space.md, borderRadius: radius.control, borderWidth: 2 },
   wayHead: { flexDirection: 'row', alignItems: 'center', gap: space.sm },
   grade: { paddingHorizontal: space.xs + 2, borderRadius: radius.mark + 2, borderWidth: 1 },
-  mono: { fontFamily: fontFamilies.monoMedium },
+  mono: { ...font.figuresMedium },
   box: { gap: space.xs, padding: space.md, borderRadius: radius.card, borderWidth: 1, marginTop: space.sm },
   forRow: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', gap: space.sm },
   forAmount: { flexDirection: 'row', alignItems: 'center', flexShrink: 1 },

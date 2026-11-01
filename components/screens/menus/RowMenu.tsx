@@ -2,9 +2,8 @@ import { useState, type ComponentRef } from 'react';
 import { Modal, Platform, Pressable, StyleSheet, useWindowDimensions, View } from 'react-native';
 
 import { Body, PressableScale, useDs, type IconName } from '@/components/ds';
-import { STATUS } from '@/constants/palette';
 import { IconSymbol } from '@/components/ui/icon-symbol';
-import { layout, radius, space } from '@/constants/tokens';
+import { layout, radius, space, STATUS } from '@/constants/tokens';
 import { readableAccent } from '@/lib/color';
 
 import { MenuSheet } from './MenuSheet';

@@ -3,7 +3,7 @@ import type { ReactNode } from 'react';
 import { StyleSheet, View } from 'react-native';
 
 import { Caption, DrinkImage, DsText, Headline, PressableScale, Spec, useDs } from '@/components/ds';
-import { displayFaces, displayName, fontFamilies, space } from '@/constants/tokens';
+import { displayFaces, displayName, font, space } from '@/constants/tokens';
 import type { ShelfMatch } from '@/lib/collectionStages';
 import { drinkIdFromHref, itemHref, type ItemCategory } from '@/lib/itemRoutes';
 import { printedPrice } from '@/lib/menus';
@@ -286,7 +286,7 @@ const styles = StyleSheet.create({
   codeRow: { flexDirection: 'row', alignItems: 'center', gap: space.md, marginTop: space.sm },
   flex: { flex: 1, gap: 2 },
   shrink: { flexShrink: 1, minWidth: 0 },
-  mono: { fontFamily: fontFamilies.mono },
+  mono: { ...font.figures },
   centered: { alignItems: 'center', gap: 2 },
   nameRow: { flexDirection: 'row', alignItems: 'baseline', gap: space.md },
   nameRowCentered: { justifyContent: 'center', flexWrap: 'wrap' },

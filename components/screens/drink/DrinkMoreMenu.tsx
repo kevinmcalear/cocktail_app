@@ -4,8 +4,7 @@ import { Platform, ScrollView, StyleSheet, View } from 'react-native';
 
 import { Body, Caption, Chip, GlassButton, PressableScale, Sheet, Title, useDs, useSheetClose, type IconName } from '@/components/ds';
 import { IconSymbol } from '@/components/ui/icon-symbol';
-import { STATUS } from '@/constants/palette';
-import { layout, space } from '@/constants/tokens';
+import { layout, space, STATUS } from '@/constants/tokens';
 import { useSignedIn } from '@/ctx/AuthContext';
 import { useViewAs } from '@/hooks/useViewAs';
 import { readableAccent } from '@/lib/color';

@@ -3,7 +3,7 @@ import { StyleSheet, useWindowDimensions, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import { Body, Button, Caption, DsText, GlassButton, PressableScale, Sheet, Title, useDs, useGutter } from '@/components/ds';
-import { fontFamilies, radius, space } from '@/constants/tokens';
+import { font, radius, space } from '@/constants/tokens';
 import type { ReadKind } from '@/lib/bringIn';
 import type { ReadFile } from '@/lib/readAnything';
 import type { ReadPlace } from '@/supabase/functions/_shared/anythingRead';
@@ -92,7 +92,7 @@ export const checkStyles = StyleSheet.create({
 const styles = StyleSheet.create({
   top: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', gap: space.md },
   cancel: { minHeight: 44, justifyContent: 'center', paddingHorizontal: space.xs },
-  mono: { fontFamily: fontFamilies.mono, letterSpacing: 1 },
+  mono: { ...font.figures, letterSpacing: 1 },
   footer: { borderTopWidth: StyleSheet.hairlineWidth, paddingTop: space.md + 2 },
   footerInner: { width: '100%', maxWidth: 640, alignSelf: 'center', gap: space.sm },
   look: { paddingHorizontal: space.xl - 4, paddingTop: space.md, gap: space.md },

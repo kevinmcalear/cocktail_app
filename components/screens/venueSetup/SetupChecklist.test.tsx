@@ -1,6 +1,6 @@
 import { fireEvent, screen } from '@testing-library/react-native';
 
-import { renderWithTamagui } from '@/jest.setup';
+import { renderWithProviders } from '@/jest.setup';
 import { checklist } from '@/lib/setupChecklist';
 
 import { SetupChecklist } from './SetupChecklist';
@@ -93,7 +93,7 @@ beforeEach(() => {
 
 test('six rows, Kit next; Kit opens in place and comes back here', async () => {
   expect(checklist({ bar: true, kit: false, bottles: false, menu: true, drinks: false, team: false }, ['team']).next).toBe('kit');
-  await renderWithTamagui(<SetupChecklist barId="b1" name="Little Rye" />);
+  await renderWithProviders(<SetupChecklist barId="b1" name="Little Rye" />);
   expect(screen.getByText('Set up Little Rye')).toBeTruthy();
   expect(screen.getByText('Two of six done. Each one brings you back here.')).toBeTruthy();
   for (const row of ['Basic information, done', 'Kit, now', 'Bottles, todo', 'First menu, done', 'First drinks, todo', 'Your team, skipped']) expect(screen.getByRole('button', { name: row })).toBeTruthy();
@@ -110,7 +110,7 @@ test('six rows, Kit next; Kit opens in place and comes back here', async () => {
 });
 
 test('pages it opens: Basic information (Venue settings once setup is through, else setup where it stopped) and the menu for First drinks', async () => {
-  await renderWithTamagui(<SetupChecklist barId="b1" name="Little Rye" />);
+  await renderWithProviders(<SetupChecklist barId="b1" name="Little Rye" />);
   await fireEvent.press(screen.getByRole('button', { name: 'Basic information, done' }));
   expect(mockPush).toHaveBeenLastCalledWith('/settings/bar/b1');
   await fireEvent.press(screen.getByRole('button', { name: 'First drinks, todo' }));
@@ -119,14 +119,14 @@ test('pages it opens: Basic information (Venue settings once setup is through, e
 
 test('setup not through yet: Basic information picks venue setup up', async () => {
   mockRun = { finished: false, done: ['find', 'place'] };
-  await renderWithTamagui(<SetupChecklist barId="b1" name="Little Rye" />);
+  await renderWithProviders(<SetupChecklist barId="b1" name="Little Rye" />);
   await fireEvent.press(screen.getByRole('button', { name: 'Basic information, done' }));
   expect(mockPush).toHaveBeenLastCalledWith('/venue-setup?bar=b1');
 });
 
 test('First drinks (E31): an import left part way carries on', async () => {
   mockDrinks = { inLibrary: 18, reviewId: 'r1' };
-  await renderWithTamagui(<SetupChecklist barId="b1" name="Little Rye" />);
+  await renderWithProviders(<SetupChecklist barId="b1" name="Little Rye" />);
   await fireEvent.press(screen.getByRole('button', { name: 'First drinks, todo' }));
   expect(mockSetReviewing).toHaveBeenCalledWith('r1');
   expect(mockPush).toHaveBeenLastCalledWith('/bring-in');
@@ -134,19 +134,19 @@ test('First drinks (E31): an import left part way carries on', async () => {
 
 test('First drinks (E31): with nothing left to check, the drinks in the Library', async () => {
   mockDrinks = { inLibrary: 18, reviewId: null };
-  await renderWithTamagui(<SetupChecklist barId="b1" name="Little Rye" />);
+  await renderWithProviders(<SetupChecklist barId="b1" name="Little Rye" />);
   await fireEvent.press(screen.getByRole('button', { name: 'First drinks, todo' }));
   expect(mockNavigate).toHaveBeenLastCalledWith('/library');
 });
 
 test('First drinks not done: the four starts under it, coming back to the checklist once saved', async () => {
-  await renderWithTamagui(<SetupChecklist barId="b1" name="Little Rye" />);
+  await renderWithProviders(<SetupChecklist barId="b1" name="Little Rye" />);
   await fireEvent.press(screen.getByRole('button', { name: 'Margarita' }));
   expect(mockStart).toHaveBeenCalledWith('b1', 'Margarita', true);
 });
 
 test('Your team waits for How it looks: it opens the look first, then the team', async () => {
-  await renderWithTamagui(<SetupChecklist barId="b1" name="Little Rye" />);
+  await renderWithProviders(<SetupChecklist barId="b1" name="Little Rye" />);
   expect(screen.getByText('After how Little Rye looks: the invite wears it')).toBeTruthy();
   await fireEvent.press(screen.getByRole('button', { name: 'Your team, skipped' }));
   expect(screen.getByText('Your team’s invite wears this')).toBeTruthy();
@@ -157,7 +157,7 @@ test('Your team waits for How it looks: it opens the look first, then the team',
 
 test('with a look set, Your team goes straight to the invites', async () => {
   mockBrand = { logo_url: null, primary_color: '#D0643B', display_face: 'instrument_serif' };
-  await renderWithTamagui(<SetupChecklist barId="b1" name="Little Rye" />);
+  await renderWithProviders(<SetupChecklist barId="b1" name="Little Rye" />);
   expect(screen.getByText('Invite who works here, in Little Rye’s look')).toBeTruthy();
   await fireEvent.press(screen.getByRole('button', { name: 'Your team, skipped' }));
   expect(screen.getByText('Team step')).toBeTruthy();
@@ -165,7 +165,7 @@ test('with a look set, Your team goes straight to the invites', async () => {
 
 test('the rows wait for the look to load, so Your team can\'t skip the gate', async () => {
   mockBrandLoading = true;
-  await renderWithTamagui(<SetupChecklist barId="b1" name="Little Rye" />);
+  await renderWithProviders(<SetupChecklist barId="b1" name="Little Rye" />);
   expect(screen.getByText('Loading…')).toBeTruthy();
   expect(screen.queryByRole('button', { name: 'Your team, skipped' })).toBeNull();
 });

@@ -8,7 +8,7 @@ import { SetupFooter, SetupPage } from '@/components/screens/onboarding/SetupPag
 import { Monogram, SetupHead } from '@/components/screens/onboarding/SetupParts';
 import { IconSymbol } from '@/components/ui/icon-symbol';
 import { UserAvatar } from '@/components/ui/UserAvatar';
-import { fontFamilies, radius, space } from '@/constants/tokens';
+import { font, radius, space } from '@/constants/tokens';
 import { useBarPageCount, useClaimableBars, type ClaimableBar } from '@/hooks/useVenueSetup';
 
 const THUMB = 52;
@@ -119,8 +119,8 @@ const styles = StyleSheet.create({
   card: { gap: space.md, padding: space.lg, borderRadius: radius.card, borderCurve: 'continuous', borderWidth: 1 },
   top: { flexDirection: 'row', alignItems: 'center', gap: space.md },
   flex: { flex: 1, minWidth: 0 },
-  strong: { fontFamily: fontFamilies.bodySemiBold },
-  medium: { fontFamily: fontFamilies.bodyMedium },
+  strong: { ...font.semiBold },
+  medium: { ...font.medium },
   thumbs: { flexDirection: 'row', gap: space.sm },
   thumb: { width: THUMB, height: THUMB, borderRadius: radius.control, overflow: 'hidden' },
   fill: { width: THUMB, height: THUMB },

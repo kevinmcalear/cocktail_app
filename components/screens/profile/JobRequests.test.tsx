@@ -1,6 +1,6 @@
 import { fireEvent, screen } from '@testing-library/react-native';
 
-import { renderWithTamagui } from '@/jest.setup';
+import { renderWithProviders } from '@/jest.setup';
 
 import { JobRequests, MyJobRequests } from './JobRequests';
 
@@ -33,7 +33,7 @@ jest.mock('@/hooks/useProfiles', () => ({
 beforeEach(() => mockAnswer.mockClear());
 
 test("a venue's Admins see only their venue's requests, and accept or decline each", async () => {
-  await renderWithTamagui(<JobRequests venueId="venue" title="Job requests" />);
+  await renderWithProviders(<JobRequests venueId="venue" title="Job requests" />);
   expect(screen.getByText('Sam Sour')).toBeTruthy();
   expect(screen.queryByText('Ana Amaro')).toBeNull();
   await fireEvent.press(screen.getByLabelText('Accept'));
@@ -43,13 +43,13 @@ test("a venue's Admins see only their venue's requests, and accept or decline ea
 });
 
 test('moderators see requests at bars with no venue, with the bar named', async () => {
-  await renderWithTamagui(<JobRequests venueId={null} title="Jobs at bars not on Cocktail" />);
+  await renderWithProviders(<JobRequests venueId={null} title="Jobs at bars not on Cocktail" />);
   expect(screen.getByText('Ana Amaro')).toBeTruthy();
   expect(screen.getByText('Says they work at Bar 2 as Head bartender')).toBeTruthy();
 });
 
 test('the person accepts a job a bar listed them in, and sees what waits on the bar', async () => {
-  await renderWithTamagui(<MyJobRequests personId="jo" />);
+  await renderWithProviders(<MyJobRequests personId="jo" />);
   expect(screen.getByText('Barback, Dante')).toBeTruthy();
   expect(screen.getByText('Bartender, Attaboy')).toBeTruthy();
   expect(screen.getByText(/marked not confirmed, until the bar says yes/)).toBeTruthy();

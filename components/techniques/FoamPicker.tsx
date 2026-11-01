@@ -3,7 +3,7 @@ import { useState } from 'react';
 import { StyleSheet, TextInput, View } from 'react-native';
 
 import { Body, Button, Caption, PressableScale, useDs } from '@/components/ds';
-import { fontFamilies, layout, radius, space, type } from '@/constants/tokens';
+import { font, layout, radius, space, type } from '@/constants/tokens';
 import { baseHasFat, pickFoam, type Diet, type FoamAgent, type FoamKind, type FoamQuestion } from '@/lib/techniques/foamPicker';
 
 import { gradeLabel, Section } from './bits';
@@ -81,7 +81,7 @@ export function FoamPicker({ kind, diet = 'none', onUse }: FoamPickerProps) {
             // Cream, coconut or nut milk in the base: fat starts on Yes (still yours to change).
             if (baseHasFat(v)) setQ((s) => ({ ...s, fat: true }));
           }}
-          style={[styles.input, type.body, { fontFamily: fontFamilies.body, color: ds.c.ink }]}
+          style={[styles.input, type.body, { ...font.regular, color: ds.c.ink }]}
         />
       </View>
       {kind ? null : <Choice label="What kind?" options={KINDS} value={q.kind} onChange={set('kind')} />}
@@ -146,16 +146,16 @@ function AgentCard({ a, first, weak, onUse }: { a: FoamAgent; first: boolean; we
 const styles = StyleSheet.create({
   stack: { gap: space.lg },
   question: { gap: space.sm },
-  eyebrow: { fontFamily: fontFamilies.mono, letterSpacing: 1 },
+  eyebrow: { ...font.figures, letterSpacing: 1 },
   // Equal shares of the row, wrapping when the answers don't fit (a narrow dialog).
   segments: { flexDirection: 'row', flexWrap: 'wrap', gap: space.xs },
   segment: { flexGrow: 1, flexBasis: 0, minWidth: 64, minHeight: layout.minTapTarget, alignItems: 'center', justifyContent: 'center', paddingHorizontal: space.xs, borderRadius: radius.control, borderWidth: 1 },
-  medium: { fontFamily: fontFamilies.bodyMedium },
+  medium: { ...font.medium },
   base: { flexDirection: 'row', alignItems: 'center', gap: space.md, paddingHorizontal: space.md, borderRadius: radius.control },
   input: { flex: 1, minHeight: layout.minTapTarget + space.xs },
   card: { flexDirection: 'row', alignItems: 'center', gap: space.md, padding: space.md, borderRadius: radius.control, borderWidth: 1 },
   name: { flexDirection: 'row', flexWrap: 'wrap', alignItems: 'baseline', columnGap: space.sm },
-  badge: { fontFamily: fontFamilies.mono, letterSpacing: 1 },
+  badge: { ...font.figures, letterSpacing: 1 },
   out: { flexDirection: 'row', alignItems: 'center', gap: space.md, paddingHorizontal: space.sm },
   struck: { textDecorationLine: 'line-through' },
   flex: { flex: 1, minWidth: 0, gap: 2 },

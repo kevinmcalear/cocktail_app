@@ -1,7 +1,7 @@
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { act, fireEvent, screen } from '@testing-library/react-native';
 
-import { renderWithTamagui } from '@/jest.setup';
+import { renderWithProviders } from '@/jest.setup';
 import { useNoteDrafts } from '@/store/useNoteDrafts';
 
 import { photoType, sendFailure } from '@/hooks/useSendNote';
@@ -25,7 +25,7 @@ jest.mock('@/lib/monitoring', () => ({ reportFeedback: (...args: unknown[]) => m
 const about = { screen: 'Adding a drink › Ice', drinkName: 'Ash Garden', draftId: 'd1', barId: 'rye', barName: 'Little Rye' };
 const KEY = 'me:Adding a drink › Ice:rye:d1';
 const sheet = (report?: { onEmail: (kind: string, body: string) => Promise<string | null> }) =>
-  renderWithTamagui(
+  renderWithProviders(
     <QueryClientProvider client={new QueryClient()}>
       <NoteSheet visible onClose={() => {}} about={report ? { screen: 'Settings › Report a problem' } : about} report={report} />
     </QueryClientProvider>
@@ -130,7 +130,7 @@ test('the thanks stays while the sheet closes; opened again, it is a fresh sheet
     </QueryClientProvider>
   );
   const client = new QueryClient();
-  const { rerender } = await renderWithTamagui(view(true));
+  const { rerender } = await renderWithProviders(view(true));
   await fireEvent.changeText(screen.getByLabelText('What you do'), 'Graduated blocks.');
   mockInsert.mockResolvedValueOnce({ data: { id: 'n1' }, error: null });
   await fireEvent.press(screen.getByRole('button', { name: 'Send' }));
@@ -152,7 +152,7 @@ test('a report from a screenshot opens with it attached and sends it; Remove sen
       <NoteSheet visible onClose={() => {}} about={about} report={{}} photo={shot} />
     </QueryClientProvider>
   );
-  await renderWithTamagui(view);
+  await renderWithProviders(view);
   expect(screen.getByText('Screenshot added')).toBeTruthy();
   expect(screen.getByText('Sent with: your screenshot · app version and device')).toBeTruthy();
   // No email app can carry the screenshot, so there's no Email us instead here.
@@ -167,7 +167,7 @@ test('a report from a screenshot opens with it attached and sends it; Remove sen
 
 test('Remove takes the screenshot off a report before it goes', async () => {
   const shot = { uri: 'file:///tmp/shot.jpg', id: 'shot2', type: 'image/jpeg' };
-  await renderWithTamagui(
+  await renderWithProviders(
     <QueryClientProvider client={new QueryClient()}>
       <NoteSheet visible onClose={() => {}} about={{ screen: '/menus' }} report={{}} photo={shot} />
     </QueryClientProvider>

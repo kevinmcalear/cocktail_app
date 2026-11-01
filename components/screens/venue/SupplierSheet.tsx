@@ -3,7 +3,7 @@ import { useState } from 'react';
 import { StyleSheet, View } from 'react-native';
 
 import { Body, Button, Caption, Chip, Field, Headline, Sheet, SheetScrollView, Title, useDs } from '@/components/ds';
-import { fontFamilies, radius, space } from '@/constants/tokens';
+import { font, radius, space } from '@/constants/tokens';
 import { useRemoveSupplier, useSaveSupplier, useSupplierItems, type VenueSupplier } from '@/hooks/useVenueSuppliers';
 import { confirmAsync } from '@/lib/dialogs';
 import { SUPPLIES } from '@/lib/suppliers';
@@ -116,7 +116,7 @@ const styles = StyleSheet.create({
   pair: { flexDirection: 'row', gap: space.md },
   flex: { flex: 1, minWidth: 0 },
   between: { flexDirection: 'row', alignItems: 'baseline', justifyContent: 'space-between' },
-  mono: { fontFamily: fontFamilies.mono },
+  mono: { ...font.figures },
   items: { borderRadius: radius.card, paddingHorizontal: space.md },
   item: { flexDirection: 'row', alignItems: 'center', gap: space.md, minHeight: 48 },
   start: { alignSelf: 'flex-start' },

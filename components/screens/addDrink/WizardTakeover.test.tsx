@@ -2,7 +2,7 @@ import { useState } from 'react';
 import { BackHandler, Text } from 'react-native';
 import { act, fireEvent, screen } from '@testing-library/react-native';
 
-import { renderWithTamagui } from '@/jest.setup';
+import { renderWithProviders } from '@/jest.setup';
 import { EMPTY_DRAFT, type WizardDraft } from '@/lib/drinkWizard';
 
 import { IngredientsStep } from './IngredientsStep';
@@ -43,7 +43,7 @@ const field = () => screen.getByLabelText('Add an ingredient');
 const takenOver = () => !screen.queryByText('What goes in?') && !screen.queryByText('Band') && !screen.queryByText('Next: method');
 
 async function open() {
-  await renderWithTamagui(<Wizard />);
+  await renderWithProviders(<Wizard />);
   // iOS draws the frame after its first layout.
   await fireEvent(screen.getByTestId('frame'), 'layout', { persist: () => {}, nativeEvent: { layout: { x: 0, y: 0, width: 390, height: 844 } } });
 }

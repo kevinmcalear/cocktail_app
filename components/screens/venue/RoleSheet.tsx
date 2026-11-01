@@ -4,8 +4,7 @@ import { StyleSheet, View } from 'react-native';
 import { Button, Caption, DateField, Field } from '@/components/ds';
 import { Choice, MenuSheet } from '@/components/screens/menus/MenuSheet';
 import { RowDivider, SwitchRow } from '@/components/screens/settings/SettingsParts';
-import { STATUS } from '@/constants/palette';
-import { space } from '@/constants/tokens';
+import { space, STATUS } from '@/constants/tokens';
 import type { RoleMatrixRow, VenueRoleDraft } from '@/hooks/useVenueRoles';
 import {
   baseCapabilities, CAPABILITY_GROUPS, dayOfEnd, DRINK_TYPES, drinkTypesToSave, endOfDay, isLocked, limitTo, overridesFor, ROLE_PRESETS, today, withinReach,

@@ -1,6 +1,6 @@
 import { fireEvent, screen } from '@testing-library/react-native';
 
-import { renderWithTamagui } from '@/jest.setup';
+import { renderWithProviders } from '@/jest.setup';
 import { EMPTY_DRAFT } from '@/lib/drinkWizard';
 
 import { IngredientsStep } from './IngredientsStep';
@@ -24,7 +24,7 @@ describe('IngredientSearch, Did you mean', () => {
   test('a slip asks Did you mean: tapping it picks it, the add rows sit under No, and Return adds nothing new', async () => {
     const set = jest.fn();
     const GREEN = { id: 'gc', name: 'Green Chartreuse' };
-    await renderWithTamagui(<IngredientsStep draft={EMPTY_DRAFT} set={set} ingredients={[CAMPARI, GREEN]} />);
+    await renderWithProviders(<IngredientsStep draft={EMPTY_DRAFT} set={set} ingredients={[CAMPARI, GREEN]} />);
     await fireEvent.changeText(screen.getByLabelText('Add an ingredient'), 'chartruse');
     expect(screen.getByText('Did you mean')).toBeTruthy();
     // Where it's from, then how to take it (board q16-2, canvas 2A).

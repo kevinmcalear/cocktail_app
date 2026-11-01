@@ -3,7 +3,7 @@ import { StyleSheet, useWindowDimensions, View } from 'react-native';
 
 import { BackbarTheme, Body, Button, Caption, DsText, Field, IngredientThumb, PressableScale, Sheet, SheetScrollView, Title, useDs } from '@/components/ds';
 import { IconSymbol } from '@/components/ui/icon-symbol';
-import { fontFamilies, layout, radius, space } from '@/constants/tokens';
+import { font, layout, radius, space } from '@/constants/tokens';
 import { bottleAmounts, drinkMl } from '@/lib/batchLines';
 import { amountLabel, type WizardLine } from '@/lib/drinkWizard';
 import { yieldText } from '@/lib/libraryFilters';
@@ -188,12 +188,12 @@ const styles = StyleSheet.create({
   head: { flexDirection: 'row', alignItems: 'center', gap: space.md },
   thumb: { width: 36, height: 36, borderRadius: radius.control, alignItems: 'center', justifyContent: 'center' },
   flex: { flex: 1, minWidth: 0 },
-  strong: { fontFamily: fontFamilies.bodySemiBold },
+  strong: { ...font.semiBold },
   indent: { paddingLeft: 36 + space.md },
   links: { flexDirection: 'row', flexWrap: 'wrap', gap: space.lg },
   link: { minHeight: layout.minTapTarget, justifyContent: 'center' },
   body: { padding: space.lg, paddingTop: space.sm, paddingBottom: space.xxl, gap: space.lg },
-  eyebrow: { fontFamily: fontFamilies.mono, letterSpacing: 1 },
+  eyebrow: { ...font.figures, letterSpacing: 1 },
   group: { gap: space.sm },
   chips: { flexDirection: 'row', flexWrap: 'wrap', gap: space.sm },
   row: { flexDirection: 'row', alignItems: 'center', gap: space.md, minHeight: 48, borderBottomWidth: StyleSheet.hairlineWidth },

@@ -1,7 +1,7 @@
 import { screen } from '@testing-library/react-native';
 import { Text, View } from 'react-native';
 
-import { renderWithTamagui } from '@/jest.setup';
+import { renderWithProviders } from '@/jest.setup';
 import type { MenuDrink } from '@/types/menus';
 
 import { MenuSections } from './MenuSections';
@@ -19,7 +19,7 @@ const sections = [{ id: 's1', name: 'Drinks', drinks: [drink('d1', 'Americano', 
 const hidden = { includeHiddenElements: true };
 
 test('the guest card shows each drink’s photo, or its sketch drawn from its own id, with one note and no Sketch tag', async () => {
-  await renderWithTamagui(<MenuSections sections={sections} variant="card" pictures="above" />);
+  await renderWithProviders(<MenuSections sections={sections} variant="card" pictures="above" />);
   expect(screen.getAllByTestId('photo', hidden)).toHaveLength(1);
   expect(screen.getByTestId('sketch', hidden).props.children).toBe('d2');
   expect(screen.getByText(/Drawn from each spec/)).toBeTruthy();
@@ -29,13 +29,13 @@ test('the guest card shows each drink’s photo, or its sketch drawn from its ow
 
 test('beside the names, a card of photos needs no drawings note', async () => {
   const photos = [{ ...sections[0], drinks: [sections[0].drinks[0]] }];
-  await renderWithTamagui(<MenuSections sections={photos} variant="card" pictures="beside" />);
+  await renderWithProviders(<MenuSections sections={photos} variant="card" pictures="beside" />);
   expect(screen.getAllByTestId('photo', hidden)).toHaveLength(1);
   expect(screen.queryByText(/Drawn from each spec/)).toBeNull();
 });
 
 test('with pictures off, the card is names and lines only', async () => {
-  await renderWithTamagui(<MenuSections sections={sections} variant="card" pictures="none" />);
+  await renderWithProviders(<MenuSections sections={sections} variant="card" pictures="none" />);
   expect(screen.queryByTestId('photo', hidden)).toBeNull();
   expect(screen.queryByTestId('sketch', hidden)).toBeNull();
   expect(screen.queryByText(/Drawn from each spec/)).toBeNull();
@@ -44,7 +44,7 @@ test('with pictures off, the card is names and lines only', async () => {
 
 test('page rows: NEW after a new drink, the price at the row end, counts in the section head', async () => {
   const priced = [{ ...sections[0], drinks: [{ ...sections[0].drinks[0], price: '18' }, sections[0].drinks[1]] }];
-  await renderWithTamagui(<MenuSections sections={priced} variant="page" newIds={new Set(['d2'])} />);
+  await renderWithProviders(<MenuSections sections={priced} variant="page" newIds={new Set(['d2'])} />);
   expect(screen.getAllByText('NEW')).toHaveLength(1);
   expect(screen.getByLabelText('Pellican, new, Gin, vermouth')).toBeTruthy();
   expect(screen.getByText('18')).toBeTruthy();
@@ -53,7 +53,7 @@ test('page rows: NEW after a new drink, the price at the row end, counts in the 
 
 test('the printed card: the price and a QR code that opens each drink, then the foot', async () => {
   const priced = [{ ...sections[0], drinks: [{ ...sections[0].drinks[0], price: '18' }, sections[0].drinks[1]] }];
-  await renderWithTamagui(<MenuSections sections={priced} variant="card" pictures="above" codes foot={<MockText>Scan a code to open the drink</MockText>} />);
+  await renderWithProviders(<MenuSections sections={priced} variant="card" pictures="above" codes foot={<MockText>Scan a code to open the drink</MockText>} />);
   expect(screen.getByLabelText('QR code: opens Americano')).toBeTruthy();
   expect(screen.getByLabelText('QR code: opens Pellican')).toBeTruthy();
   expect(screen.getByText('18')).toBeTruthy();

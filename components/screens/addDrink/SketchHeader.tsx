@@ -7,7 +7,7 @@ import { Caption, Headline, PressableScale, Sheet, useDs } from '@/components/ds
 import { AnimatedSketch } from '@/components/ds/AnimatedSketch';
 import { SketchDrawing } from '@/components/ds/SketchDrawing';
 import { IconSymbol } from '@/components/ui/icon-symbol';
-import { backbar, fontFamilies, layout, radius, space } from '@/constants/tokens';
+import { backbar, font, layout, radius, space } from '@/constants/tokens';
 import { COUNTED_STEPS, sketchLook, WIZARD_STEPS, type WizardDraft, type WizardStep } from '@/lib/drinkWizard';
 import { draftSketchInputs, type DraftLook } from '@/lib/sketch/draft';
 import type { SketchInputs } from '@/lib/sketch/types';
@@ -209,7 +209,7 @@ function FadeAway({ inputs, seed }: { inputs: SketchInputs; seed: string }) {
 const styles = StyleSheet.create({
   passThrough: { pointerEvents: 'none' },
   colour: { flexDirection: 'row', alignItems: 'center', gap: space.xs, minHeight: layout.minTapTarget, paddingHorizontal: space.md, borderRadius: radius.pill },
-  colourLabel: { fontFamily: fontFamilies.bodySemiBold },
+  colourLabel: { ...font.semiBold },
   // The compact band's Colour: a round button like Back.
   colourIcon: { width: layout.minTapTarget, paddingHorizontal: 0, justifyContent: 'center' },
   full: { width: '100%', maxWidth: 320, aspectRatio: 1, alignSelf: 'center', borderRadius: radius.card, borderCurve: 'continuous', overflow: 'hidden' },

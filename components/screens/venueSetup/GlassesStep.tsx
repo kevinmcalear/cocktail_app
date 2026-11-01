@@ -6,7 +6,7 @@ import { Body, Button, Caption, Surface, useDs } from '@/components/ds';
 import { GlassModelPicker, GlassThumb } from '@/components/glass/GlassModelPicker';
 import { GlassSheet } from '@/components/screens/kit/GlassSheet';
 import { SectionHeading } from '@/components/screens/settings/SettingsParts';
-import { fontFamilies, space } from '@/constants/tokens';
+import { font, space } from '@/constants/tokens';
 import { useBarGlassware, useDeleteBarGlass, useHeldGlasses, useSaveBarGlass } from '@/hooks/useBarGlassware';
 import { useGlassModelsById, type GlassModel } from '@/hooks/useGlassModels';
 import { useIsWideWeb } from '@/hooks/useIsWideWeb';
@@ -245,7 +245,7 @@ const styles = StyleSheet.create({
   row: { flexDirection: 'row', alignItems: 'center', gap: space.md, minHeight: 68, paddingVertical: space.sm, paddingHorizontal: space.xs },
   model: { gap: space.md, padding: space.lg },
   why: { flexDirection: 'row', alignItems: 'flex-start', gap: space.md, padding: space.md },
-  strong: { fontFamily: fontFamilies.bodyMedium },
+  strong: { ...font.medium },
   start: { alignSelf: 'flex-start' },
   columns: { flexDirection: 'row', alignItems: 'flex-start', gap: space.xl },
   left: { flex: 1, minWidth: 0, maxWidth: 360, gap: space.lg },

@@ -8,7 +8,7 @@ import { IconSymbol } from '@/components/ui/icon-symbol';
 import { BRAND } from '@/constants/brand';
 import { STATUS } from '@/constants/palette';
 import { readableAccent, withAlpha } from '@/lib/color';
-import { fontFamilies, layout, radius, space } from '@/constants/tokens';
+import { font, layout, radius, space } from '@/constants/tokens';
 
 const LOGO = 88;
 
@@ -150,7 +150,7 @@ const styles = StyleSheet.create({
   head: { gap: space.sm },
   logo: { width: LOGO, height: LOGO, borderRadius: radius.card, marginBottom: space.md },
   mark: { alignItems: 'center', justifyContent: 'center', borderWidth: 1, borderRadius: radius.pill, width: 64, height: 64 },
-  eyebrow: { textTransform: 'uppercase', letterSpacing: 0.6, fontFamily: fontFamilies.bodyMedium },
+  eyebrow: { textTransform: 'uppercase', letterSpacing: 0.6, ...font.medium },
   body: { gap: space.lg },
   footer: { alignItems: 'center', gap: space.xs },
   message: { flexDirection: 'row', gap: space.sm, alignItems: 'flex-start' },
@@ -158,6 +158,6 @@ const styles = StyleSheet.create({
   errorBox: { paddingVertical: space.md, paddingHorizontal: space.lg, borderRadius: radius.control },
   linkRow: { flexDirection: 'row', flexWrap: 'wrap', alignItems: 'center', justifyContent: 'center', columnGap: space.xs },
   link: { minHeight: layout.minTapTarget, justifyContent: 'center' },
-  linkText: { fontFamily: fontFamilies.bodyMedium },
+  linkText: { ...font.medium },
   spinner: { alignItems: 'center', gap: space.md, paddingVertical: space.lg },
 });

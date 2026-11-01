@@ -1,6 +1,6 @@
 import { fireEvent, screen } from '@testing-library/react-native';
 
-import { renderWithTamagui } from '@/jest.setup';
+import { renderWithProviders } from '@/jest.setup';
 
 import { BackPill, FiltersButton, SearchPill } from './DiscoverControls';
 import { scrollAwayStep } from './DiscoverHeader';
@@ -11,7 +11,7 @@ jest.mock('@/hooks/useDiscover', () => ({ useBarCities: () => ({ data: [] }) }))
 
 test('the search pill clears only once there is a query', async () => {
   const onClear = jest.fn();
-  const { rerender } = await renderWithTamagui(<SearchPill query="" placeholder="Search bars and drinks" onOpen={() => {}} onClear={onClear} />);
+  const { rerender } = await renderWithProviders(<SearchPill query="" placeholder="Search bars and drinks" onOpen={() => {}} onClear={onClear} />);
   expect(screen.queryByRole('button', { name: 'Clear the search' })).toBeNull();
 
   await rerender(<SearchPill query="negroni" placeholder="Search bars and drinks" onOpen={() => {}} onClear={onClear} />);
@@ -23,7 +23,7 @@ test('the search pill clears only once there is a query', async () => {
 test("with a bar open on the phone map, the pill is its back arrow and name; the name opens search", async () => {
   const onBack = jest.fn();
   const onOpen = jest.fn();
-  await renderWithTamagui(<BackPill name="Grey Lady" onBack={onBack} onOpen={onOpen} />);
+  await renderWithProviders(<BackPill name="Grey Lady" onBack={onBack} onOpen={onOpen} />);
   await fireEvent.press(screen.getByRole('button', { name: 'Back to the results' }));
   expect(onBack).toHaveBeenCalledTimes(1);
   await fireEvent.press(screen.getByRole('button', { name: 'Grey Lady. Search' }));
@@ -34,7 +34,7 @@ test('filters pick several at once and clear together', async () => {
   const onChange = jest.fn();
   const onShow = jest.fn();
   const onPast = jest.fn();
-  await renderWithTamagui(<FiltersSheet kinds={['martini']} onChange={onChange} bars={3} closed={{ count: 4, shown: false, onShow }} past={{ shown: false, onShow: onPast }} onClose={() => {}} />);
+  await renderWithProviders(<FiltersSheet kinds={['martini']} onChange={onChange} bars={3} closed={{ count: 4, shown: false, onShow }} past={{ shown: false, onShow: onPast }} onClose={() => {}} />);
   expect(screen.getByRole('checkbox', { name: 'Martinis', checked: true })).toBeTruthy();
 
   await fireEvent.press(screen.getByRole('checkbox', { name: 'Gin' }));
@@ -54,7 +54,7 @@ test('filters pick several at once and clear together', async () => {
 
 test('"Not had yet" shows only when signed in, and clears with the rest', async () => {
   const props = { kinds: [], onChange: jest.fn(), bars: 3, closed: { count: 0, shown: false, onShow: jest.fn() }, past: { shown: false, onShow: jest.fn() }, onClose: () => {} };
-  const { rerender } = await renderWithTamagui(<FiltersSheet {...props} />);
+  const { rerender } = await renderWithProviders(<FiltersSheet {...props} />);
   expect(screen.queryByRole('checkbox', { name: 'Not had yet' })).toBeNull();
 
   const onNotHad = jest.fn();
@@ -84,7 +84,7 @@ test('the place menu: near me, this area, anywhere, then the cities; the one in 
 });
 
 test('Filters says how many are on', async () => {
-  await renderWithTamagui(<FiltersButton filters={2} onPress={() => {}} />);
+  await renderWithProviders(<FiltersButton filters={2} onPress={() => {}} />);
   expect(screen.getByRole('button', { name: 'Filters, 2 on' })).toBeTruthy();
 });
 

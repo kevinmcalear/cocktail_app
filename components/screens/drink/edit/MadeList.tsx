@@ -3,7 +3,7 @@ import { Platform, ScrollView, StyleSheet, TextInput, View } from 'react-native'
 
 import { Body, Button, Caption, Headline, PressableScale, Sheet, Switch, useDs } from '@/components/ds';
 import { IconSymbol } from '@/components/ui/icon-symbol';
-import { fontFamilies, layout, radius, space, type } from '@/constants/tokens';
+import { font, layout, radius, space, type } from '@/constants/tokens';
 import type { SpecCategory } from '@/hooks/useCocktailEditor';
 import { COMMON_METHODS, iceLine } from '@/lib/drinkWizard';
 import { showMessage } from '@/lib/dialogs';
@@ -225,5 +225,5 @@ const styles = StyleSheet.create({
   list: { maxHeight: 360 },
   option: { flexDirection: 'row', alignItems: 'center', minHeight: layout.minTapTarget + space.xs, borderBottomWidth: StyleSheet.hairlineWidth },
   addRow: { flexDirection: 'row', alignItems: 'center', gap: space.sm, paddingTop: space.md },
-  input: { ...type.body, fontFamily: fontFamilies.body, flex: 1, minHeight: layout.minTapTarget, borderRadius: radius.control, paddingHorizontal: space.md },
+  input: { ...type.body, ...font.regular, flex: 1, minHeight: layout.minTapTarget, borderRadius: radius.control, paddingHorizontal: space.md },
 });

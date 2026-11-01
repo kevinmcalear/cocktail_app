@@ -4,7 +4,7 @@ import DraggableFlatList, { NestableDraggableFlatList, ScaleDecorator, type Rend
 import { Body, Caption, Headline, PressableScale, Tag, useDs } from '@/components/ds';
 import { dragGripStyle, gripOnly, supportsNestableDrag } from '@/components/recipe/FormScrollContainer';
 import { IconSymbol } from '@/components/ui/icon-symbol';
-import { fontFamilies, layout, radius, space, type } from '@/constants/tokens';
+import { font, layout, radius, space, type } from '@/constants/tokens';
 import type { PrepFields } from '@/lib/prepCardForm';
 import { newStepField } from '@/lib/prepCardForm';
 
@@ -103,9 +103,9 @@ const styles = StyleSheet.create({
   grip: { width: GRIP, height: layout.minTapTarget, alignItems: 'center', justifyContent: 'center' },
   number: { width: 26, height: 26, marginTop: space.sm, borderRadius: radius.pill, alignItems: 'center', justifyContent: 'center' },
   flex: { flex: 1, minWidth: 0, gap: 2 },
-  body: { ...type.body, fontFamily: fontFamilies.body, borderRadius: radius.control, padding: space.sm, textAlignVertical: 'top' },
+  body: { ...type.body, ...font.regular, borderRadius: radius.control, padding: space.sm, textAlignVertical: 'top' },
   remove: { width: 32, height: layout.minTapTarget, alignItems: 'center', justifyContent: 'center' },
   add: { flexDirection: 'row', alignItems: 'center', gap: space.sm, minHeight: 52, paddingHorizontal: space.md, borderRadius: radius.control, borderWidth: 1.5, borderStyle: 'dashed', marginTop: space.xs },
-  medium: { fontFamily: fontFamilies.bodyMedium },
+  medium: { ...font.medium },
   tools: { flexDirection: 'row', flexWrap: 'wrap', gap: space.xs, paddingTop: space.xs },
 });

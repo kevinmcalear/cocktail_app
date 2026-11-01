@@ -3,8 +3,7 @@ import { StyleSheet, View } from 'react-native';
 
 import { Body, Button, Caption, PressableScale, Tag, useDs } from '@/components/ds';
 import { IconSymbol } from '@/components/ui/icon-symbol';
-import { STATUS } from '@/constants/palette';
-import { fontFamilies, layout, radius, space } from '@/constants/tokens';
+import { font, layout, radius, space, STATUS } from '@/constants/tokens';
 import { useVenueClaim, useVenuePage } from '@/hooks/useVenueSetup';
 import { withAlpha } from '@/lib/color';
 import type { RowState } from '@/lib/setupChecklist';
@@ -99,7 +98,7 @@ const styles = StyleSheet.create({
   row: { gap: space.xs },
   main: { flex: 1, flexDirection: 'row', alignItems: 'center', gap: space.md, minHeight: layout.minTapTarget + space.lg },
   mark: { width: 32, height: 32, borderRadius: radius.pill, alignItems: 'center', justifyContent: 'center' },
-  strong: { fontFamily: fontFamilies.bodySemiBold },
+  strong: { ...font.semiBold },
   flex: { flex: 1, minWidth: 0 },
   from: { borderBottomWidth: StyleSheet.hairlineWidth },
   claim: { gap: space.xs, padding: space.lg, borderRadius: radius.card, borderCurve: 'continuous' },
@@ -107,6 +106,6 @@ const styles = StyleSheet.create({
   start: { alignSelf: 'flex-start', marginTop: space.xs },
   go: { alignSelf: 'flex-start', marginBottom: space.md },
   next: { width: 320, gap: space.sm, padding: space.xl, borderRadius: radius.card, borderCurve: 'continuous' },
-  eyebrow: { fontFamily: fontFamilies.bodySemiBold, letterSpacing: 1.2 },
+  eyebrow: { ...font.semiBold, letterSpacing: 1.2 },
   lookFirst: { padding: space.md, borderRadius: radius.control, borderCurve: 'continuous' },
 });

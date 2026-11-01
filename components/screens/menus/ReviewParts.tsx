@@ -3,7 +3,7 @@ import { StyleSheet, View } from 'react-native';
 
 import { BackbarTheme, Body, Caption, DsText, PressableScale, useDs } from '@/components/ds';
 import { IconSymbol } from '@/components/ui/icon-symbol';
-import { displayFaces, fontFamilies, palateHues, radius, space } from '@/constants/tokens';
+import { displayFaces, font, palateHues, radius, space } from '@/constants/tokens';
 import { menuReadiness, plural } from '@/lib/menus';
 import type { MenuDrink, MenuSectionDetail } from '@/types/menus';
 
@@ -153,10 +153,10 @@ export function ReadyChecks({ sections, home, dated, onOpen }: {
 const styles = StyleSheet.create({
   paper: { borderRadius: radius.card, borderCurve: 'continuous', overflow: 'hidden' },
   paperText: { paddingVertical: space.md, paddingHorizontal: space.lg, gap: 2 },
-  eyebrow: { fontFamily: fontFamilies.mono, letterSpacing: 1.5 },
+  eyebrow: { ...font.figures, letterSpacing: 1.5 },
   cardLink: { flexDirection: 'row', justifyContent: 'center', alignItems: 'center', minHeight: 44 },
-  mono: { fontFamily: fontFamilies.mono },
-  label: { fontFamily: fontFamilies.mono, letterSpacing: 1.5 },
+  mono: { ...font.figures },
+  label: { ...font.figures, letterSpacing: 1.5 },
   checkRow: { alignItems: 'center' },
   check: { flexDirection: 'row', alignItems: 'flex-start', gap: space.md, paddingVertical: space.md, borderBottomWidth: StyleSheet.hairlineWidth },
   checkText: { flex: 1, gap: space.xs },

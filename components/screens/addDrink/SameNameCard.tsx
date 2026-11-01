@@ -2,7 +2,7 @@ import { useRouter, type Href } from 'expo-router';
 import { Alert, Platform, StyleSheet, TextInput, View } from 'react-native';
 
 import { Button, Caption, DrinkImage, DsText, Surface, useDs } from '@/components/ds';
-import { displayFaces, fontFamilies, radius, space, type } from '@/constants/tokens';
+import { displayFaces, font, radius, space, type } from '@/constants/tokens';
 import type { SameNameDrink } from '@/hooks/useSameNameDrink';
 import { useStartFromClassic } from '@/hooks/useStartFromClassic';
 import type { WizardDraft } from '@/lib/drinkWizard';
@@ -97,7 +97,7 @@ export function SameNameCard({ bar, drink, caption, wide, busy, words, onOpen, o
 /** "Negroni ( summer )": the word in brackets after a version's name. */
 export function BracketField({ name, value, onChange, label, autoFocus }: { name?: string; value: string; onChange: (word: string) => void; label: string; autoFocus?: boolean }) {
   const ds = useDs();
-  const face = { fontFamily: name ? displayFaces[ds.displayFace].regular : fontFamilies.body };
+  const face = name ? { fontFamily: displayFaces[ds.displayFace].regular } : font.regular;
   const text = name ? type.headline : type.body;
   return (
     <View style={[styles.bracket, { borderColor: ds.c.ink }]}>
@@ -168,7 +168,7 @@ const styles = StyleSheet.create({
   thumb: { width: 44, height: 44 },
   thumbWide: { width: 56, height: 56 },
   flex: { flex: 1, gap: 2 },
-  bold: { fontFamily: fontFamilies.bodySemiBold },
+  bold: font.semiBold,
   choices: { flexDirection: 'row', flexWrap: 'wrap', gap: space.sm },
   bracket: { flexDirection: 'row', alignItems: 'center', gap: space.xs, borderWidth: 1, borderRadius: radius.control, paddingHorizontal: space.md, minHeight: 48 },
   word: { flex: 1, paddingVertical: space.sm },

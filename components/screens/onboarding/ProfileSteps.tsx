@@ -3,7 +3,7 @@ import { StyleSheet, View } from 'react-native';
 
 import { Caption, DsText, Field, PalateFlower, PressableScale, Surface, Title, useDs } from '@/components/ds';
 import { TasteAnswers } from '@/components/screens/taste/TasteAnswers';
-import { fontFamilies, radius, space } from '@/constants/tokens';
+import { font, radius, space } from '@/constants/tokens';
 import { useSaveTasteAnswers } from '@/hooks/useFlavor';
 import { useVenueSpecUnit } from '@/hooks/useOnboarding';
 import { QUICK_QUESTIONS, tasteHeadline, type Taste } from '@/lib/flavor';
@@ -173,9 +173,9 @@ export function UnitsStep({ onDone, pending, error, joined = null }: { onDone: (
 const styles = StyleSheet.create({
   tiles: { flexDirection: 'row', gap: space.sm },
   tile: { flex: 1, minHeight: 64, borderRadius: radius.control, borderWidth: 1.5, alignItems: 'center', justifyContent: 'center' },
-  mono: { fontFamily: fontFamilies.monoMedium },
+  mono: { ...font.figuresMedium },
   flower: { alignItems: 'center', gap: space.sm, paddingVertical: space.sm },
-  strong: { fontFamily: fontFamilies.bodySemiBold },
+  strong: { ...font.semiBold },
   preview: { gap: space.sm },
   line: { flexDirection: 'row', alignItems: 'baseline', gap: space.md },
   amount: { minWidth: 72 },

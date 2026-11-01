@@ -3,7 +3,7 @@ import { useState } from 'react';
 import { StyleSheet, View } from 'react-native';
 
 import { Body, Caption, Chip, DsText, Field, TextLink, useDs } from '@/components/ds';
-import { fontFamilies, radius, space } from '@/constants/tokens';
+import { font, radius, space } from '@/constants/tokens';
 import { TAGLINES, type ProfileDraft } from '@/lib/profiles';
 
 const OWN = 'own';
@@ -34,7 +34,7 @@ export function ProfileIdentity({ draft, edit, error }: { draft: ProfileDraft; e
 
   return (
     <View style={styles.group}>
-      <Body style={{ fontFamily: fontFamilies.bodySemiBold }}>What do you do with drinks?</Body>
+      <Body style={{ ...font.semiBold }}>What do you do with drinks?</Body>
       <Caption tone="muted">Shown under your name. Pick Nothing and nothing shows. We never make one up.</Caption>
       <View role="radiogroup" accessibilityLabel="What do you do with drinks?" style={styles.wrap}>
         {options.map((o) => (

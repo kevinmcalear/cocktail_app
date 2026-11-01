@@ -5,7 +5,7 @@ import { Linking, StyleSheet, View } from 'react-native';
 
 import { Caption, DsText, Headline, PressableScale, Spec, Tag, TextLink, useDs } from '@/components/ds';
 import { IconSymbol } from '@/components/ui/icon-symbol';
-import { fontFamilies, layout, radius, space } from '@/constants/tokens';
+import { font, layout, radius, space } from '@/constants/tokens';
 import { useProfileAwards, useSetAwardPick } from '@/hooks/useProfiles';
 import { awardInitials, sortAwards, type Award } from '@/lib/awards';
 import { pickedShown, type ShareMode } from '@/lib/profiles';
@@ -169,7 +169,7 @@ const LOGO = 44;
 const styles = StyleSheet.create({
   section: { gap: space.sm },
   start: { alignSelf: 'flex-start' },
-  eyebrow: { letterSpacing: 1.2, textTransform: 'uppercase', fontFamily: fontFamilies.bodyMedium },
+  eyebrow: { letterSpacing: 1.2, textTransform: 'uppercase', ...font.medium },
   footRow: { flexDirection: 'row', flexWrap: 'wrap', alignItems: 'center', gap: space.md },
   row: { flexDirection: 'row', alignItems: 'flex-start', gap: space.xs, borderBottomWidth: StyleSheet.hairlineWidth },
   main: { flex: 1, minWidth: 0, flexDirection: 'row', alignItems: 'flex-start', gap: space.md, paddingVertical: space.md },

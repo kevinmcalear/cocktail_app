@@ -7,7 +7,7 @@ import { CategoryPickerModal, type CategoryPickerHandle } from '@/components/Cat
 import { Button, Caption, Chip, Field, GlassButton, Headline, useBreakpoint, useDs, useGutter } from '@/components/ds';
 import { FormScrollContainer } from '@/components/recipe/FormScrollContainer';
 import { CouldNotLoad } from '@/components/screens/safety/NotAvailable';
-import { displayFaces, fontFamilies, radius, space, type } from '@/constants/tokens';
+import { displayFaces, font, radius, space, type } from '@/constants/tokens';
 import { useBeerWineDraftEditor } from '@/hooks/useBeerWineDraftEditor';
 import { useBeerWineEditor, type BeerWineFields } from '@/hooks/useBeerWineEditor';
 import { useDropdowns } from '@/hooks/useDropdowns';
@@ -213,7 +213,7 @@ const styles = StyleSheet.create({
   section: { gap: space.sm },
   chips: { flexDirection: 'row', flexWrap: 'wrap', alignItems: 'center', gap: space.sm },
   row: { flexDirection: 'row', gap: space.md },
-  box: { ...type.body, fontFamily: fontFamilies.body, borderRadius: radius.control, padding: space.md, textAlignVertical: 'top' },
+  box: { ...type.body, ...font.regular, borderRadius: radius.control, padding: space.md, textAlignVertical: 'top' },
   top: { position: 'absolute' },
   bottom: { position: 'absolute' },
   wide: { flexDirection: 'row', gap: space.xxl, paddingHorizontal: space.xxl, paddingBottom: space.xxxl, alignItems: 'flex-start' },

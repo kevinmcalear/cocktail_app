@@ -6,7 +6,7 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import { BackbarTheme, Caption, PressableScale, TextLink, useDs, useGutter } from '@/components/ds';
 import { IconSymbol } from '@/components/ui/icon-symbol';
-import { backbar, fontFamilies, layout, radius, space } from '@/constants/tokens';
+import { backbar, font, layout, radius, space } from '@/constants/tokens';
 
 import { EDITOR_STATUS, MenuCoverEdit, MenuNameInput, saveStatus } from './EditorParts';
 import { usePourBounce } from './GuestPreview';
@@ -78,6 +78,6 @@ const styles = StyleSheet.create({
   band: { gap: space.md, paddingBottom: space.lg, borderBottomLeftRadius: radius.card, borderBottomRightRadius: radius.card, borderCurve: 'continuous' },
   controls: { flexDirection: 'row', alignItems: 'center', gap: space.md },
   back: { width: layout.minTapTarget, height: layout.minTapTarget, borderRadius: radius.pill, alignItems: 'center', justifyContent: 'center' },
-  status: { flex: 1, fontFamily: fontFamilies.monoMedium, letterSpacing: 0.6 },
+  status: { flex: 1, ...font.figuresMedium, letterSpacing: 0.6 },
   lip: { position: 'absolute', top: 0, left: 0, right: 0 },
 });

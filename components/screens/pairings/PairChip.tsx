@@ -2,7 +2,7 @@ import { StyleSheet } from 'react-native';
 
 import { Caption, DsText, PressableScale, useDs } from '@/components/ds';
 import { IconSymbol } from '@/components/ui/icon-symbol';
-import { fontFamilies, layout, radius, space } from '@/constants/tokens';
+import { font, layout, radius, space } from '@/constants/tokens';
 
 /**
  * An ingredient that pairs, with the drinks behind it: "Agave Syrup 15".
@@ -60,5 +60,5 @@ const styles = StyleSheet.create({
     borderWidth: StyleSheet.hairlineWidth,
   },
   add: { alignItems: 'center', gap: space.xs + 2, paddingHorizontal: space.md + 2 },
-  count: { fontFamily: fontFamilies.monoMedium, fontVariant: ['tabular-nums'] },
+  count: { ...font.figuresMedium, fontVariant: ['tabular-nums'] },
 });

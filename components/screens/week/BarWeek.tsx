@@ -4,7 +4,7 @@ import { Linking, StyleSheet, View } from 'react-native';
 
 import { Body, Caption, DsText, PressableScale, TextLink, Title, useDs } from '@/components/ds';
 import { IconSymbol } from '@/components/ui/icon-symbol';
-import { fontFamilies, layout, radius, space } from '@/constants/tokens';
+import { font, layout, radius, space } from '@/constants/tokens';
 import { useBarWeek, useWeekStart } from '@/hooks/useWeek';
 import { withAlpha } from '@/lib/color';
 import { toDay } from '@/lib/collection';
@@ -132,6 +132,6 @@ const styles = StyleSheet.create({
   flex: { flex: 1, minWidth: 0 },
   cardHead: { flexDirection: 'row', alignItems: 'center', gap: space.sm },
   line1: { flexDirection: 'row', alignItems: 'center', gap: space.md, minHeight: 56, paddingHorizontal: space.md + 2, borderRadius: radius.control, borderCurve: 'continuous', borderWidth: 1 },
-  when: { fontFamily: fontFamilies.bodySemiBold },
+  when: { ...font.semiBold },
   feed: { flexDirection: 'row', alignItems: 'center', gap: space.sm, minHeight: layout.minTapTarget, alignSelf: 'flex-start' },
 });

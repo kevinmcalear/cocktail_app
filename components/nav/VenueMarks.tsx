@@ -20,7 +20,7 @@ export function VenueMark({ venue, size = 32 }: { venue: Venue | null; size?: nu
   }
   return (
     <View style={[box, styles.initial, { backgroundColor: own.fill }]}>
-      <DsText variant="headline" color={own.text} style={{ fontFamily: family(venue?.displayFace ?? 'instrument', 'italic'), fontSize: size * 0.6, lineHeight: size * 0.75 }}>
+      <DsText variant="headline" color={own.text} style={{ fontFamily: family(venue?.displayFace ?? 'redaction', 'italic'), fontSize: size * 0.6, lineHeight: size * 0.75 }}>
         {(venue?.name ?? '·').charAt(0).toUpperCase()}
       </DsText>
     </View>

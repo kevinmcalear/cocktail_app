@@ -1,6 +1,6 @@
 import { act, fireEvent, screen } from '@testing-library/react-native';
 
-import { renderWithTamagui } from '@/jest.setup';
+import { renderWithProviders } from '@/jest.setup';
 import { useAppMode } from '@/store/useAppMode';
 import { useSettingsStore } from '@/store/useSettingsStore';
 
@@ -73,7 +73,7 @@ beforeEach(() => {
 });
 
 async function named() {
-  await renderWithTamagui(<OnboardingScreen />);
+  await renderWithProviders(<OnboardingScreen />);
   await fireEvent.changeText(screen.getByLabelText('Name'), 'Jo Juniper');
   await fireEvent.press(screen.getByRole('button', { name: 'Continue' }));
   await act(async () => {}); // The look for a page that could be theirs.
@@ -87,7 +87,7 @@ async function newCareer() {
 
 describe('OnboardingScreen', () => {
   test('a name is required, then home bartenders skip the workplace, say what they like and set a unit', async () => {
-    await renderWithTamagui(<OnboardingScreen />);
+    await renderWithProviders(<OnboardingScreen />);
     await fireEvent.press(screen.getByRole('button', { name: 'Continue' }));
     expect(screen.getByText('Add the name people will see.')).toBeTruthy();
     expect(mockSaveName).not.toHaveBeenCalled();
@@ -127,7 +127,7 @@ describe('OnboardingScreen', () => {
   });
 
   test('every step after the first has Back to the one before, and the bar counts the main path', async () => {
-    await renderWithTamagui(<OnboardingScreen />);
+    await renderWithProviders(<OnboardingScreen />);
     expect(screen.getByText('Step 1 of 5')).toBeTruthy();
     expect(screen.queryByRole('button', { name: 'Back' })).toBeNull();
     await fireEvent.changeText(screen.getByLabelText('Name'), 'Jo Juniper');
@@ -144,7 +144,7 @@ describe('OnboardingScreen', () => {
 
   test('bringing something in finishes setup and lands on Bring in', async () => {
     mockFinish.mockImplementation(() => (mockMeta = { onboarded: true }));
-    await renderWithTamagui(<OnboardingScreen />);
+    await renderWithProviders(<OnboardingScreen />);
     await fireEvent.changeText(screen.getByLabelText('Name'), 'Jo Juniper');
     await fireEvent.press(screen.getByRole('button', { name: 'Continue' }));
     await fireEvent.press(screen.getByRole('button', { name: 'I love drinks' }));
@@ -237,7 +237,7 @@ describe('OnboardingScreen', () => {
     mockInvites = [caretakers];
     mockAccept.mockImplementation((_v, opts) => opts?.onSuccess?.({ held: false }));
     mockSaveWork.mockImplementation((_input, opts) => opts?.onSettled?.());
-    await renderWithTamagui(<OnboardingScreen />);
+    await renderWithProviders(<OnboardingScreen />);
     expect(screen.getByText('Join Caretakers as a Bartender')).toBeTruthy();
     expect(screen.getByText(/^Ada added you\./)).toBeTruthy();
     expect(screen.getByText('Pick ml or oz')).toBeTruthy();
@@ -267,7 +267,7 @@ describe('OnboardingScreen', () => {
     mockInvites = [caretakers];
     mockAccept.mockImplementation((_v, opts) => opts?.onSuccess?.({ held: false }));
     mockSaveName.mockImplementationOnce((_input, opts) => opts?.onError?.(new Error('That handle is taken. Try another.')));
-    await renderWithTamagui(<OnboardingScreen />);
+    await renderWithProviders(<OnboardingScreen />);
     await fireEvent.press(screen.getByRole('button', { name: 'Accept and start' }));
     await fireEvent.press(screen.getByRole('button', { name: 'Continue' }));
     expect(screen.getByLabelText('Handle').props.value).toBe('sam.rivera');
@@ -279,7 +279,7 @@ describe('OnboardingScreen', () => {
   test('declining an invite runs the usual setup', async () => {
     mockInvites = [{ ...caretakers, bar_profile_id: null, role_level: 40, name: null, invited_by_name: null }];
     mockDecline.mockImplementation((_id, opts) => opts?.onSuccess?.());
-    await renderWithTamagui(<OnboardingScreen />);
+    await renderWithProviders(<OnboardingScreen />);
     expect(screen.getByText('Join Caretakers as an Admin')).toBeTruthy();
     expect(screen.getByText(/^Caretakers added you\./)).toBeTruthy();
     await fireEvent.press(screen.getByRole('button', { name: 'Not me? Decline' }));
@@ -293,7 +293,7 @@ describe('OnboardingScreen', () => {
 
   test('a finished account leaves setup', async () => {
     mockMeta = { onboarded: true };
-    await renderWithTamagui(<OnboardingScreen />);
+    await renderWithProviders(<OnboardingScreen />);
     expect(mockReplace).toHaveBeenCalledWith('/(tabs)');
   });
 });

@@ -1,6 +1,6 @@
 import { fireEvent, screen } from '@testing-library/react-native';
 
-import { renderWithTamagui } from '@/jest.setup';
+import { renderWithProviders } from '@/jest.setup';
 
 import { forgetSetupProgress, OnboardingScreen } from './OnboardingScreen';
 
@@ -43,7 +43,7 @@ beforeEach(() => {
 });
 
 test('setting up a bar: find it and open its page, or add it, and venue setup takes over with no career steps, taste or units', async () => {
-  await renderWithTamagui(<OnboardingScreen />);
+  await renderWithProviders(<OnboardingScreen />);
   await fireEvent.changeText(screen.getByLabelText('Name'), 'Jo Juniper');
   await fireEvent.press(screen.getByRole('button', { name: 'Continue' }));
   expect(screen.getByText('What brings you here?')).toBeTruthy();

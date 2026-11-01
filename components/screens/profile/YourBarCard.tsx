@@ -3,7 +3,7 @@ import { useEffect, useState, type ReactNode } from 'react';
 import { StyleSheet, View } from 'react-native';
 
 import { Body, Button, Caption, useDs } from '@/components/ds';
-import { fontFamilies, radius, space } from '@/constants/tokens';
+import { font, radius, space } from '@/constants/tokens';
 import { useBars } from '@/hooks/useBars';
 import { useUserId } from '@/ctx/AuthContext';
 import { useAskToJoin, useMyJoinRequest } from '@/hooks/useJoinRequests';
@@ -130,6 +130,6 @@ export function YourBarCard({ positions, headlineId = null }: { positions: Posit
 const styles = StyleSheet.create({
   card: { flexDirection: 'row', alignItems: 'flex-start', gap: space.md, padding: space.lg, borderRadius: radius.card, borderCurve: 'continuous', borderWidth: StyleSheet.hairlineWidth },
   flex: { flex: 1, minWidth: 0, gap: space.xs },
-  strong: { fontFamily: fontFamilies.bodySemiBold },
+  strong: { ...font.semiBold },
   actions: { flexDirection: 'row', flexWrap: 'wrap', gap: space.sm, marginTop: space.sm },
 });

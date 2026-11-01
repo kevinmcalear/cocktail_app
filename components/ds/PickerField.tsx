@@ -2,7 +2,7 @@ import type { ReactNode } from 'react';
 import { Keyboard, Pressable, StyleSheet, View } from 'react-native';
 
 import { IconSymbol } from '@/components/ui/icon-symbol';
-import { fontFamilies, layout, radius, space } from '@/constants/tokens';
+import { font, layout, radius, space } from '@/constants/tokens';
 
 import { Body, Caption, DsText } from './Text';
 import { useDs } from './theme';
@@ -99,7 +99,7 @@ export function PickerCell({ label, accessibilityLabel, selected, marked, disabl
           <DsText
             variant="body"
             color={selected ? ds.c.ground : disabled ? ds.c.faint : ds.c.ink}
-            style={{ fontFamily: selected || marked ? fontFamilies.bodySemiBold : fontFamilies.body }}
+            style={{ ...(selected || marked ? font.semiBold : font.regular) }}
           >
             {label}
           </DsText>

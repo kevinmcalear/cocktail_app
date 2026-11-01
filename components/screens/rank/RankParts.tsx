@@ -4,7 +4,7 @@ import { StyleSheet, TextInput, View } from 'react-native';
 import { Body, Button, Caption, Chip, DrinkImage, PressableScale, useDs } from '@/components/ds';
 import { AddBarForm } from '@/components/screens/home/AddBar';
 import { NearPicks, splitNear } from '@/components/search/NearPicks';
-import { fontFamilies, layout, radius, space, type } from '@/constants/tokens';
+import { font, layout, radius, space, type } from '@/constants/tokens';
 import { usePublicBars, type RankVenue } from '@/hooks/useRankings';
 import type { ItemPicture } from '@/lib/itemImages';
 import type { Sentiment } from '@/lib/ranking';
@@ -133,11 +133,11 @@ export function VsCard({ side, onPress, height }: { side: VsSide; onPress: () =>
 const styles = StyleSheet.create({
   stack: { gap: space.sm },
   answer: { minHeight: 56, borderRadius: radius.card, borderCurve: 'continuous', paddingHorizontal: space.xl, justifyContent: 'center' },
-  strong: { fontFamily: fontFamilies.bodySemiBold },
+  strong: { ...font.semiBold },
   where: { gap: space.sm },
   chips: { flexDirection: 'row', flexWrap: 'wrap', gap: space.sm, alignItems: 'center' },
   chip: { minHeight: layout.minTapTarget, paddingHorizontal: space.lg, borderRadius: radius.pill, justifyContent: 'center' },
-  input: { ...type.body, fontFamily: fontFamilies.body, minHeight: layout.minTapTarget, paddingHorizontal: space.lg, borderRadius: radius.control },
+  input: { ...type.body, ...font.regular, minHeight: layout.minTapTarget, paddingHorizontal: space.lg, borderRadius: radius.control },
   card: { borderRadius: radius.card, borderCurve: 'continuous', borderWidth: 1.5, overflow: 'hidden' },
   fill: { position: 'absolute', top: 0, left: 0, width: '100%', height: '100%' },
   label: { position: 'absolute', left: space.sm, right: space.sm, bottom: space.sm, borderRadius: radius.control, borderCurve: 'continuous', paddingHorizontal: space.md, paddingVertical: space.sm },

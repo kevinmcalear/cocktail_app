@@ -2,7 +2,7 @@ import { useRouter, type Href } from 'expo-router';
 import { Linking, StyleSheet, View } from 'react-native';
 
 import { Body, Button, Caption, Display, useDs } from '@/components/ds';
-import { fontFamilies, space } from '@/constants/tokens';
+import { font, space } from '@/constants/tokens';
 import { useSignedIn } from '@/ctx/AuthContext';
 import { useActiveVenue } from '@/hooks/useActiveVenue';
 import { useClassicCopy } from '@/hooks/useClassicCopy';
@@ -213,5 +213,5 @@ const styles = StyleSheet.create({
   flex: { flex: 1, minWidth: 0 },
   standing: { flexDirection: 'row', flexWrap: 'wrap', alignItems: 'center', gap: space.sm },
   more: { borderTopWidth: StyleSheet.hairlineWidth, paddingTop: space.xl },
-  moreLabel: { fontFamily: fontFamilies.mono, letterSpacing: 1.2, textTransform: 'uppercase' },
+  moreLabel: { ...font.figures, letterSpacing: 1.2, textTransform: 'uppercase' },
 });

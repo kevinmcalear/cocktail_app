@@ -1,6 +1,6 @@
 import { fireEvent, screen } from '@testing-library/react-native';
 
-import { renderWithTamagui } from '@/jest.setup';
+import { renderWithProviders } from '@/jest.setup';
 import type { MyProfile } from '@/hooks/useMyProfile';
 import type { HadDrink } from '@/lib/hadDrinks';
 
@@ -51,7 +51,7 @@ const pick = (onProfile: boolean | null, pin: number | null = null) => ({ onProf
 
 test('Picked: only the drinks you switch on show, with the count; switching one on saves it', async () => {
   mockHadPicks = { a: pick(true) };
-  await renderWithTamagui(<ProfilePicksScreen section="had" />);
+  await renderWithProviders(<ProfilePicksScreen section="had" />);
   expect(screen.getByText('1 of 3 shown')).toBeTruthy();
   expect(screen.getByText(/set to Picked: only the ones you switch on show/)).toBeTruthy();
   expect(screen.queryByRole('radio', { name: 'None' })).toBeNull();
@@ -62,7 +62,7 @@ test('Picked: only the drinks you switch on show, with the count; switching one 
 
 test('the filter shows only the hidden ones, and Hide all hides every drink', async () => {
   mockHadPicks = { a: pick(true) };
-  await renderWithTamagui(<ProfilePicksScreen section="had" />);
+  await renderWithProviders(<ProfilePicksScreen section="had" />);
   await fireEvent.press(screen.getByRole('radio', { name: 'Hidden' }));
   expect(screen.queryByRole('switch', { name: 'Show Martini on your profile' })).toBeNull();
   expect(screen.getByRole('switch', { name: 'Show Negroni on your profile' })).toBeTruthy();
@@ -73,7 +73,7 @@ test('the filter shows only the hidden ones, and Hide all hides every drink', as
 test('a fifth pin makes room by taking the oldest, and says so', async () => {
   mockHadPicks = { a: pick(true, 1), b: pick(true, 2), c: pick(true) };
   mockPin.mockImplementation((_v, opts) => opts.onSuccess('a'));
-  await renderWithTamagui(<ProfilePicksScreen section="had" />);
+  await renderWithProviders(<ProfilePicksScreen section="had" />);
   expect(screen.getByText(/Four fit\. Pin a fifth/)).toBeTruthy();
   await fireEvent.press(screen.getByRole('button', { name: 'Pin Long Island to your top four' }));
   expect(mockPin).toHaveBeenCalledWith({ id: 'c', pin: true }, expect.anything());
@@ -81,7 +81,7 @@ test('a fifth pin makes room by taking the oldest, and says so', async () => {
 });
 
 test('All: every bar shows except one you hid', async () => {
-  await renderWithTamagui(<ProfilePicksScreen section="bars" />);
+  await renderWithProviders(<ProfilePicksScreen section="bars" />);
   expect(screen.getByRole('switch', { name: 'Show Little Rye on your profile' }).props.value).toBe(false);
   await fireEvent(screen.getByRole('switch', { name: 'Show Little Rye on your profile' }), 'valueChange', true);
   expect(mockSetPick).toHaveBeenCalledWith({ profileId: 'p1', section: 'bars', targetId: 'rye', shown: true });

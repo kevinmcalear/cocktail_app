@@ -4,7 +4,7 @@ import { ActivityIndicator, Platform, StyleSheet, View } from 'react-native';
 
 import { Body, Caption, DsText, GlassSurface, PressableScale, Tag, TextLink, useBreakpoint, useDs, type IconName } from '@/components/ds';
 import { IconSymbol } from '@/components/ui/icon-symbol';
-import { fontFamilies, layout, radius, space } from '@/constants/tokens';
+import { font, layout, radius, space } from '@/constants/tokens';
 import { pickReadFiles, snapReadFiles, sourcesFromFiles, type ReadFile } from '@/lib/readAnything';
 import { useBringIn } from '@/store/useBringIn';
 
@@ -135,5 +135,5 @@ const styles = StyleSheet.create({
   tray: { borderRadius: radius.control + 6, borderWidth: 1, overflow: 'hidden', marginBottom: space.md },
   trayRow: { flexDirection: 'row', alignItems: 'center', gap: space.md, paddingVertical: space.md, paddingHorizontal: space.md + 2 },
   flex: { flex: 1, minWidth: 0 },
-  medium: { fontFamily: fontFamilies.bodyMedium },
+  medium: { ...font.medium },
 });

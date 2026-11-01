@@ -1,6 +1,6 @@
 import { StyleSheet, View } from 'react-native';
 
-import { fontFamilies, layout, radius, space, type } from '@/constants/tokens';
+import { font, layout, radius, space, type } from '@/constants/tokens';
 import { withAlpha } from '@/lib/color';
 
 import { PressableScale } from './PressableScale';
@@ -59,7 +59,7 @@ export function Segmented<T extends string>({ options, value, onChange, accessib
               numberOfLines={1}
               color={pill && selected && variant === 'ink' ? ds.c.ground : undefined}
               tone={selected || (variant === 'ink' && !choice) ? 'ink' : 'muted'}
-              style={[{ fontFamily: selected || variant === 'ink' ? fontFamilies.bodySemiBold : pill || stretch ? fontFamilies.bodyMedium : fontFamilies.body }, pill && !quiet ? styles.small : null, !pill && stretch ? type.label : null]}
+              style={[{ ...(selected || variant === 'ink' ? font.semiBold : pill || stretch ? font.medium : font.regular) }, pill && !quiet ? styles.small : null, !pill && stretch ? type.label : null]}
             >
               {o.label}
             </DsText>
@@ -84,5 +84,5 @@ const styles = StyleSheet.create({
   quiet: { padding: 2, gap: 2, borderWidth: 0, borderRadius: radius.control },
   quietSegment: { minHeight: 36, paddingHorizontal: space.xs, borderRadius: radius.control - 2 },
   // The control's labels a step under body, as drawn (15 on 24).
-  small: { fontSize: type.body.fontSize - 2, lineHeight: type.body.lineHeight - 2 },
+  small: { fontSize: type.label.fontSize, lineHeight: type.label.lineHeight },
 });

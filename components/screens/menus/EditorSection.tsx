@@ -2,10 +2,9 @@ import { Platform, StyleSheet, View } from 'react-native';
 import DraggableFlatList, { NestableDraggableFlatList, type RenderItemParams } from 'react-native-draggable-flatlist';
 
 import { Caption, DsText, PressableScale, useBreakpoint, useDs } from '@/components/ds';
-import { STATUS } from '@/constants/palette';
 import { gripOnly, supportsNestableDrag } from '@/components/recipe/FormScrollContainer';
 import { IconSymbol } from '@/components/ui/icon-symbol';
-import { fontFamilies, layout, radius, space } from '@/constants/tokens';
+import { font, layout, radius, space, STATUS } from '@/constants/tokens';
 import type { EditSection } from '@/lib/menuLayout';
 import { readableAccent } from '@/lib/color';
 import { sectionLine } from '@/lib/menus';
@@ -146,6 +145,6 @@ const styles = StyleSheet.create({
   flex: { flex: 1, gap: 2 },
   icon: { width: layout.minTapTarget, height: layout.minTapTarget, alignItems: 'center', justifyContent: 'center' },
   adding: { borderWidth: 1, borderRadius: radius.pill, paddingHorizontal: space.md, paddingVertical: 2 },
-  mono: { fontFamily: fontFamilies.mono, letterSpacing: 1.2 },
+  mono: { ...font.figures, letterSpacing: 1.2 },
   add: { marginTop: space.sm, minHeight: 48, borderRadius: radius.control, borderWidth: 1, borderStyle: 'dashed', flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: space.sm },
 });

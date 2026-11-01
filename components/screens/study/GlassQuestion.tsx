@@ -4,8 +4,7 @@ import { Platform, StyleSheet, View } from 'react-native';
 import { Body, Caption, PressableScale, useDs } from '@/components/ds';
 import { CustomIcon } from '@/components/ui/CustomIcons';
 import { IconSymbol } from '@/components/ui/icon-symbol';
-import { radius, space } from '@/constants/tokens';
-import { STATUS } from '@/constants/palette';
+import { radius, space, STATUS } from '@/constants/tokens';
 import { readableAccent } from '@/lib/color';
 import type { GlassOption } from '@/lib/study';
 

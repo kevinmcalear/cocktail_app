@@ -3,7 +3,7 @@ import { Fragment, useEffect, useMemo, useRef, useState } from 'react';
 import { Platform, StyleSheet, Text, View, type NativeSyntheticEvent } from 'react-native';
 
 import { LogoImage } from '@/components/ds';
-import { backbar, fontFamilies, radius, type } from '@/constants/tokens';
+import { backbar, font, radius, type } from '@/constants/tokens';
 import { useLocationAccess } from '@/hooks/useLocationAccess';
 import { useMapStyle } from '@/hooks/useMapStyle';
 import { AREA_CLUSTER, areaLook, areasFrom, DOT_PAINT, dotsFilter, dotsOf, pinDescription, pinLook, pinsToDraw, viewportFrom, type MapArea, type MapView } from '@/lib/discoverMap';
@@ -180,7 +180,7 @@ export function DiscoverMap({ pins, selectedId, onSelect, onViewportChange, came
                 {look.logo ? (
                   <LogoImage uri={look.logo} size={look.logoSize} radius={look.logoSize / 2} clearBackground={backbar.light.surface} />
                 ) : null}
-                {look.label ? <Text style={[styles.label, { color: look.color, fontSize: look.fontSize, fontFamily: fontFamilies[look.font] }]}>{look.label}</Text> : null}
+                {look.label ? <Text style={[styles.label, { color: look.color, fontSize: look.fontSize, ...font[look.font] }]}>{look.label}</Text> : null}
               </View>
             </Marker>
           );
@@ -195,7 +195,7 @@ export function DiscoverMap({ pins, selectedId, onSelect, onViewportChange, came
 const styles = StyleSheet.create({
   fill: { flex: 1 },
   pin: { flexDirection: 'row', borderRadius: radius.pill, alignItems: 'center', justifyContent: 'center' },
-  label: { fontFamily: fontFamilies.monoMedium, fontSize: type.caption.fontSize },
+  label: { ...font.figuresMedium, fontSize: type.caption.fontSize },
   area: { height: areaLook.height, paddingHorizontal: areaLook.paddingHorizontal, borderRadius: radius.pill, borderWidth: 1, borderColor: areaLook.borderColor, backgroundColor: areaLook.backgroundColor, justifyContent: 'center' },
-  areaLabel: { fontFamily: fontFamilies.monoMedium, fontSize: type.caption.fontSize, color: areaLook.color },
+  areaLabel: { ...font.figuresMedium, fontSize: type.caption.fontSize, color: areaLook.color },
 });

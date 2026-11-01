@@ -1,7 +1,7 @@
 import { fireEvent, screen } from '@testing-library/react-native';
 
 import { BackbarTheme } from '@/components/ds';
-import { renderWithTamagui } from '@/jest.setup';
+import { renderWithProviders } from '@/jest.setup';
 import type { MatchData } from '@/lib/bringInMatch';
 import type { CatalogItem } from '@/lib/match';
 import { cleanRecipes } from '@/supabase/functions/_shared/anythingRead';
@@ -29,7 +29,7 @@ const data = (over: Partial<MatchData> = {}): MatchData => ({
   ...over,
 });
 
-const ui = (node: React.ReactNode) => renderWithTamagui(<BackbarTheme>{node}</BackbarTheme>);
+const ui = (node: React.ReactNode) => renderWithProviders(<BackbarTheme>{node}</BackbarTheme>);
 
 test('the recipe check shows every line in your unit, flags the hard one, and saves through the wizard draft', async () => {
   const onSave = jest.fn();

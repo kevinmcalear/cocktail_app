@@ -2,7 +2,7 @@ import { StyleSheet, View } from 'react-native';
 
 import { Caption, PressableScale, useDs } from '@/components/ds';
 import { SketchDrawing } from '@/components/ds/SketchDrawing';
-import { fontFamilies, radius, space } from '@/constants/tokens';
+import { font, radius, space } from '@/constants/tokens';
 import type { ReadFile } from '@/lib/readAnything';
 import type { SketchInputs } from '@/lib/sketch/types';
 import type { ReadBox } from '@/supabase/functions/_shared/anythingRead';
@@ -64,8 +64,8 @@ export function FromYourFile({ file, box, words, page, title = 'From your file',
 const styles = StyleSheet.create({
   paper: { height: 210, paddingBottom: space.lg, borderRadius: radius.card, alignItems: 'center', justifyContent: 'center', overflow: 'hidden' },
   drawing: { width: 168, height: 168 },
-  label: { position: 'absolute', left: space.md, bottom: space.md, fontFamily: fontFamilies.mono },
+  label: { position: 'absolute', left: space.md, bottom: space.md, ...font.figures },
   row: { flexDirection: 'row', alignItems: 'center', gap: space.md, padding: space.sm + 2, borderRadius: radius.control },
-  title: { fontFamily: fontFamilies.bodySemiBold },
+  title: { ...font.semiBold },
   flex: { flex: 1 },
 });

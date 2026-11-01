@@ -3,7 +3,7 @@ import { StyleSheet, View } from 'react-native';
 import Svg, { Circle, G, Line, Text as SvgText } from 'react-native-svg';
 
 import { PressableScale, useDs } from '@/components/ds';
-import { fontFamilies, layout, type } from '@/constants/tokens';
+import { layout, systemFont, type } from '@/constants/tokens';
 import { centreLines, layoutLabels, mapSizeFor, placePairs, RINGS, type MapPair } from '@/lib/flavorMap';
 
 /**
@@ -18,8 +18,8 @@ export function RingMap({ pairs, centre, onPick }: { pairs: readonly MapPair[]; 
   const centreR = Math.max(w * 0.11, 40);
   const labels = new Map(layoutLabels(placed, w, type.caption.fontSize, 7.4, centreR).map((l) => [l.id, l]));
   const c = w / 2;
-  const font = {
-    fontFamily: fontFamilies.body,
+  const labelFont = {
+    fontFamily: systemFont,
     fontSize: type.caption.fontSize,
   };
 
@@ -40,7 +40,7 @@ export function RingMap({ pairs, centre, onPick }: { pairs: readonly MapPair[]; 
           {placed.map((p) => {
             const label = labels.get(p.id);
             if (!label || label.hidden) return null;
-            const props = { x: label.x, y: label.y, textAnchor: label.anchor, fontWeight: p.ring === 0 ? ('600' as const) : ('400' as const), ...font };
+            const props = { x: label.x, y: label.y, textAnchor: label.anchor, fontWeight: p.ring === 0 ? ('600' as const) : ('400' as const), ...labelFont };
             return (
               <G key={`n-${p.id}`}>
                 <SvgText {...props} stroke={ds.c.ground} strokeWidth={4} strokeLinejoin="round" fill={ds.c.ground}>
@@ -61,7 +61,7 @@ export function RingMap({ pairs, centre, onPick }: { pairs: readonly MapPair[]; 
               fill={ds.accentFill.text}
               textAnchor="middle"
               fontWeight="600"
-              {...font}
+              {...labelFont}
             >
               {line.text}
             </SvgText>

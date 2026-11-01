@@ -4,7 +4,7 @@ import { StyleSheet, View } from 'react-native';
 
 import { Body, Button, Caption, useDs } from '@/components/ds';
 import { useUserId } from '@/ctx/AuthContext';
-import { fontFamilies, radius, space } from '@/constants/tokens';
+import { font, radius, space } from '@/constants/tokens';
 import { fileTitle, tally, waitingFor, whenWords } from '@/lib/importReview';
 import { useBringIn } from '@/store/useBringIn';
 
@@ -50,7 +50,7 @@ export function ResumeCard({ barId, here }: { barId: string | null; here?: boole
 const styles = StyleSheet.create({
   card: { width: '100%', maxWidth: 560, borderRadius: radius.card - 4, borderWidth: 1, paddingVertical: space.md + 2, paddingHorizontal: space.lg, gap: space.sm + 2 },
   top: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'baseline', gap: space.md },
-  title: { flex: 1, fontFamily: fontFamilies.bodySemiBold },
+  title: { flex: 1, ...font.semiBold },
   buttons: { flexDirection: 'row', gap: space.sm + 2 },
   flex: { flex: 1 },
 });

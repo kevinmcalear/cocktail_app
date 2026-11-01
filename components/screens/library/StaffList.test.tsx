@@ -1,10 +1,10 @@
 import { fireEvent, screen } from '@testing-library/react-native';
 
-import { renderWithTamagui } from '@/jest.setup';
+import { renderWithProviders } from '@/jest.setup';
 
 import { StaffList } from './StaffList';
 
-const show = (canEdit: boolean) => renderWithTamagui(<StaffList barId="bar" canEdit={canEdit} onNow={onNow} past={past} />);
+const show = (canEdit: boolean) => renderWithProviders(<StaffList barId="bar" canEdit={canEdit} onNow={onNow} past={past} />);
 
 const mockMutate = jest.fn();
 // Drinks here linked to a classic; the staff list's own linked drink is among them.

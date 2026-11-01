@@ -3,7 +3,7 @@ import { StyleSheet, View } from 'react-native';
 
 import { Body, Button, Caption, Field, PressableScale, Switch, useDs } from '@/components/ds';
 import { IconSymbol } from '@/components/ui/icon-symbol';
-import { fontFamilies, space } from '@/constants/tokens';
+import { font, space } from '@/constants/tokens';
 import { useEditPosition, useProfilePositions, useShowPosition, type Position } from '@/hooks/useProfiles';
 import { jobYears } from '@/lib/profiles';
 
@@ -128,7 +128,7 @@ export function JobYears({ job, onDone }: { job: Position; onDone: () => void })
 }
 
 const styles = StyleSheet.create({
-  title: { fontFamily: fontFamilies.bodySemiBold },
+  title: { ...font.semiBold },
   box: { gap: space.md },
   item: { borderBottomWidth: StyleSheet.hairlineWidth, paddingBottom: space.sm },
   row: { flexDirection: 'row', alignItems: 'center', gap: space.sm },

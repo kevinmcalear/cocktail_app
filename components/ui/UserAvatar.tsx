@@ -1,7 +1,7 @@
 import { Image } from 'expo-image';
 import { StyleSheet, Text, View, type ColorValue } from 'react-native';
 
-import { backbar, fontFamilies } from '@/constants/tokens';
+import { backbar, font } from '@/constants/tokens';
 import { useAuth } from '@/ctx/AuthContext';
 
 // The canvas's muted, warm discs (ppl-you, ppl-person). Light ink initials read on all of them (7:1 or better).
@@ -78,6 +78,6 @@ const styles = StyleSheet.create({
   },
   initialsText: {
     color: backbar.dark.ink,
-    fontFamily: fontFamilies.bodySemiBold,
+    ...font.semiBold,
   },
 });

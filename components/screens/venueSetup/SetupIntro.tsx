@@ -4,7 +4,7 @@ import { Caption, DsText, useDs } from '@/components/ds';
 import { SetupFooter, SetupPage } from '@/components/screens/onboarding/SetupPage';
 import { IconSymbol } from '@/components/ui/icon-symbol';
 import { BRAND } from '@/constants/brand';
-import { fontFamilies, radius, space } from '@/constants/tokens';
+import { font, radius, space } from '@/constants/tokens';
 import { useBarPageCount } from '@/hooks/useVenueSetup';
 
 import { VALUE_ROWS } from './setupCopy';
@@ -39,5 +39,5 @@ const styles = StyleSheet.create({
   row: { flexDirection: 'row', alignItems: 'flex-start', gap: space.md, paddingVertical: space.lg },
   icon: { width: 40, height: 40, borderRadius: radius.control, alignItems: 'center', justifyContent: 'center' },
   flex: { flex: 1, minWidth: 0, gap: space.xs / 2 },
-  strong: { fontFamily: fontFamilies.bodySemiBold },
+  strong: { ...font.semiBold },
 });

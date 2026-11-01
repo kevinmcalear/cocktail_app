@@ -1,7 +1,7 @@
 import { Platform, StyleSheet, View } from 'react-native';
 
 import { Body, Button, useDs } from '@/components/ds';
-import { fontFamilies, printPaper, radius, space } from '@/constants/tokens';
+import { font, printPaper, radius, space } from '@/constants/tokens';
 import { claimPath } from '@/lib/claimLink';
 import { siteOrigin } from '@/lib/venueLink';
 
@@ -38,7 +38,7 @@ export function ClaimOnYourPhone({ profileRef, name, title }: { profileRef: stri
 
 const styles = StyleSheet.create({
   panel: { gap: space.md },
-  strong: { fontFamily: fontFamilies.bodySemiBold },
+  strong: { ...font.semiBold },
   code: { alignSelf: 'flex-start', padding: space.md, backgroundColor: printPaper.paper, borderRadius: radius.card, borderCurve: 'continuous', borderWidth: StyleSheet.hairlineWidth },
   start: { alignSelf: 'flex-start' },
 });

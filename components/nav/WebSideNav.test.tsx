@@ -1,7 +1,7 @@
 import { act, fireEvent, screen } from '@testing-library/react-native';
 
 import { WebSideNav } from '@/components/nav/WebSideNav';
-import { renderWithTamagui } from '@/jest.setup';
+import { renderWithProviders } from '@/jest.setup';
 import { useEightBallStore } from '@/store/useEightBallStore';
 import { useSearchPalette } from '@/store/useSearchPalette';
 
@@ -16,7 +16,7 @@ jest.mock('expo-router', () => ({
 const mockSetMode = jest.fn();
 const mockEnterVenue = jest.fn();
 jest.mock('@/hooks/useMode', () => ({ useMode: () => ({ mode: mockMode, setMode: mockSetMode }) }));
-const mockVenue = { id: 'caretakers', name: 'Caretakers', logoUrl: null, accent: null, displayFace: 'instrument', groundTint: null, roleLevel: 40 };
+const mockVenue = { id: 'caretakers', name: 'Caretakers', logoUrl: null, accent: null, displayFace: 'redaction', groundTint: null, roleLevel: 40 };
 
 const mockOther = { ...mockVenue, id: 'pale', name: 'Pale Moth', roleLevel: 30 };
 jest.mock('@/hooks/useActiveVenue', () => ({ useActiveVenue: () => ({ active: mockVenue, venues: [mockVenue, mockOther], enterVenue: mockEnterVenue }) }));
@@ -54,7 +54,7 @@ beforeEach(() => {
 test('venue mode lists search and the venue tabs, marking the current one', async () => {
   mockMode = 'venue';
   mockPathname = '/library';
-  await renderWithTamagui(<WebSideNav />);
+  await renderWithProviders(<WebSideNav />);
 
   // The canvas order: the tabs and History, Glassware, then the Venue section and you at the foot.
   // Every venue has the same tabs (the switches went 31 Oct); the back bar is parked.
@@ -77,7 +77,7 @@ test('venue mode lists search and the venue tabs, marking the current one', asyn
 });
 
 test('the top of the sidebar is one mark with a chevron (the switcher), never a row of venues', async () => {
-  await renderWithTamagui(<WebSideNav />);
+  await renderWithProviders(<WebSideNav />);
   // Kevin, 13 Oct: one mark with an arrow that opens the venue menu (VenueSwitcher, tested on its own).
   expect(screen.getByText('venue switcher')).toBeTruthy();
   expect(screen.queryByRole('radio', { name: 'Pale Moth, Bartender' })).toBeNull();
@@ -86,7 +86,7 @@ test('the top of the sidebar is one mark with a chevron (the switcher), never a 
 
 test('a page off the nav keeps the row it was opened from lit', async () => {
   mockPathname = '/library';
-  const view = await renderWithTamagui(<WebSideNav />);
+  const view = await renderWithProviders(<WebSideNav />);
   mockPathname = '/add-cocktail';
   await view.rerender(<WebSideNav />);
   expect(screen.getByRole('link', { name: 'Library', selected: true })).toBeTruthy();
@@ -95,27 +95,27 @@ test('a page off the nav keeps the row it was opened from lit', async () => {
 test('Menus stays marked on a menu page', async () => {
   mockMode = 'venue';
   mockPathname = '/menus/abc';
-  await renderWithTamagui(<WebSideNav />);
+  await renderWithProviders(<WebSideNav />);
   expect(screen.getByRole('link', { name: 'Menus', selected: true })).toBeTruthy();
 });
 
 test('an employee opens My team from the sidebar', async () => {
   mockRole = 20;
-  await renderWithTamagui(<WebSideNav />);
+  await renderWithProviders(<WebSideNav />);
   await fireEvent.press(screen.getByRole('link', { name: 'My team' }));
   expect(mockPush).toHaveBeenLastCalledWith('/team');
 });
 
 test('a guest does not see My team', async () => {
   mockRole = 10;
-  await renderWithTamagui(<WebSideNav />);
+  await renderWithProviders(<WebSideNav />);
   expect(screen.queryByRole('link', { name: 'My team' })).toBeNull();
 });
 
 test('home mode lists the home tabs and navigates to their routes', async () => {
   mockMode = 'home';
   mockPathname = '/discover';
-  await renderWithTamagui(<WebSideNav />);
+  await renderWithProviders(<WebSideNav />);
 
   // No Venue section at home; the foot says your shelf.
   expect(links()).toEqual(['Discover', 'History', 'My Bar', 'Collection', 'You', 'You: Kevin M., Home bar · 3 bottles']);
@@ -129,7 +129,7 @@ test('home mode lists the home tabs and navigates to their routes', async () => 
 
 test('Search opens the search over the current page instead of leaving it', async () => {
   useSearchPalette.setState({ open: false });
-  await renderWithTamagui(<WebSideNav />);
+  await renderWithProviders(<WebSideNav />);
   await fireEvent.press(screen.getByRole('button', { name: 'Search' }));
   expect(useSearchPalette.getState().open).toBe(true);
   expect(mockNavigate).not.toHaveBeenCalled();
@@ -139,7 +139,7 @@ test('Search opens the search over the current page instead of leaving it', asyn
 test('New opens the create sheet with the draft count, and each choice goes where it is made', async () => {
   mockMode = 'venue';
   mockPathname = '/';
-  await renderWithTamagui(<WebSideNav />);
+  await renderWithProviders(<WebSideNav />);
 
   await fireEvent.press(screen.getByRole('button', { name: 'New' }));
   expect(screen.getByText('2')).toBeTruthy();
@@ -159,7 +159,7 @@ test('N toggles the create sheet, but not while typing in a field', async () => 
   let onKey: (e: Partial<KeyboardEvent>) => void = () => {};
   (globalThis as { document?: unknown }).document = { addEventListener: (_: string, fn: typeof onKey) => (onKey = fn), removeEventListener: () => {} };
   const press = (target: { tagName: string }) => act(() => onKey({ key: 'n', target: target as unknown as EventTarget, preventDefault: () => {} }));
-  await renderWithTamagui(<WebSideNav />);
+  await renderWithProviders(<WebSideNav />);
   await press({ tagName: 'INPUT' });
   expect(screen.queryByText('2')).toBeNull();
   await press({ tagName: 'BODY' });
@@ -174,7 +174,7 @@ test('⇧⌘8 opens the eight ball over the page on the web, closing the search'
   const preventDefault = jest.fn();
   useSearchPalette.setState({ open: true });
   useEightBallStore.setState({ open: false });
-  await renderWithTamagui(<WebSideNav />);
+  await renderWithProviders(<WebSideNav />);
   // A bare 8 is typing, not the shortcut.
   await act(() => onKey({ key: '8', code: 'Digit8', target: { tagName: 'BODY' } as unknown as EventTarget, preventDefault }));
   expect(useEightBallStore.getState().open).toBe(false);

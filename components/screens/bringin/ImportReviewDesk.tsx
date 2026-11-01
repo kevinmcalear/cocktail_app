@@ -4,7 +4,7 @@ import { Platform, ScrollView, StyleSheet, TextInput, View } from 'react-native'
 
 import { Button, Caption, DsText, PressableScale, useDs } from '@/components/ds';
 import { SketchDrawing } from '@/components/ds/SketchDrawing';
-import { fontFamilies, radius, space, type as typeScale } from '@/constants/tokens';
+import { type as typeScale, font, fontFamilies, radius, space } from '@/constants/tokens';
 import { openPickLine } from '@/lib/bringInDraft';
 import type { MatchData } from '@/lib/bringInMatch';
 import { EMPTY_DRAFT } from '@/lib/drinkWizard';
@@ -119,7 +119,7 @@ export function ImportReviewDesk({ id, data, onFinishLater }: { id: string; data
             </View>
             <View style={[styles.flex, styles.titles]}>
               <Caption tone="muted" style={styles.mono}>{`Drink ${at + 1} of ${t.total}`}</Caption>
-              <TextInput accessibilityLabel="Drink name" editable={open} value={choices.name} onChangeText={(name) => setChoices(at, (c) => ({ ...c, name }))} style={[styles.name, { color: ds.c.ink, fontFamily: fontFamilies.instrument }]} />
+              <TextInput accessibilityLabel="Drink name" editable={open} value={choices.name} onChangeText={(name) => setChoices(at, (c) => ({ ...c, name }))} style={[styles.name, { color: ds.c.ink, fontFamily: fontFamilies.name }]} />
               <Caption tone="muted">{how}</Caption>
               {open ? <TakeOutLine onPress={() => setNotDrink(at)} /> : null}
             </View>
@@ -160,7 +160,7 @@ export function ImportReviewDesk({ id, data, onFinishLater }: { id: string; data
 const styles = StyleSheet.create({
   screen: { flex: 1 },
   header: { flexDirection: 'row', alignItems: 'center', gap: space.lg + 4, paddingHorizontal: space.xl, paddingVertical: space.lg + 2, borderBottomWidth: StyleSheet.hairlineWidth },
-  bold: { fontFamily: fontFamilies.bodySemiBold },
+  bold: { ...font.semiBold },
   flex: { flex: 1 },
   columns: { flex: 1, flexDirection: 'row' },
   list: { width: 280, flexGrow: 0, borderRightWidth: StyleSheet.hairlineWidth },
@@ -172,7 +172,7 @@ const styles = StyleSheet.create({
   paper: { width: 150, height: 170, borderRadius: radius.card - 4, alignItems: 'center', justifyContent: 'center' },
   drawing: { width: 130, height: 150 },
   titles: { gap: space.xs + 2 },
-  mono: { fontFamily: fontFamilies.mono },
+  mono: { ...font.figures },
   name: { ...typeScale.title, paddingVertical: 0 },
   actions: { marginTop: 'auto', flexDirection: 'row', flexWrap: 'wrap', alignItems: 'center', gap: space.md },
   // Beside the buttons when there's room, under them when there isn't.

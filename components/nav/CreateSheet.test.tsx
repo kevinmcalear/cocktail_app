@@ -1,6 +1,6 @@
 import { fireEvent, screen } from '@testing-library/react-native';
 
-import { renderWithTamagui } from '@/jest.setup';
+import { renderWithProviders } from '@/jest.setup';
 
 import { EMPTY_DRAFT } from '@/lib/drinkWizard';
 import { startReview } from '@/lib/importReview';
@@ -21,7 +21,7 @@ jest.mock('@/ctx/AuthContext', () => ({ useAuth: () => ({ session: null }), useU
 jest.mock('@/hooks/useDrinkDesk', () => ({ useMenuSectionPlace: () => ({ data: undefined }) }));
 
 async function open(label: string) {
-  await renderWithTamagui(<CreateSheet visible onClose={jest.fn()} />);
+  await renderWithProviders(<CreateSheet visible onClose={jest.fn()} />);
   await fireEvent.press(screen.getByRole('link', { name: new RegExp(`^${label}\\.`) }));
   return mockPush.mock.calls.at(-1)?.[0];
 }
@@ -46,7 +46,7 @@ test('at home, it is yours', async () => {
 
 test('without the right to add at the venue, drinks lock with the role that opens them, and home is one tap away', async () => {
   mockMine = { venueId: 'bar', canAdd: false, label: 'Pale Moth' };
-  await renderWithTamagui(<CreateSheet visible onClose={jest.fn()} />);
+  await renderWithProviders(<CreateSheet visible onClose={jest.fn()} />);
   expect(screen.getByText('Made at Pale Moth')).toBeTruthy();
   expect(screen.queryByRole('link', { name: /^Drink\./ })).toBeNull();
   expect(screen.getByText('Opens at Drink Creator')).toBeTruthy();
@@ -65,7 +65,7 @@ test('an unfinished import is its own entry under Drafts; Drink starts a new one
   useBringIn.setState({ reviews: { r1: review }, reviewing: null });
   // Its drink, left half edited, waits in the review, not in Drafts.
   useDrinkWizardStore.getState().begin('bar|review:r1#0', { ...EMPTY_DRAFT, name: 'Feijoa Smash' });
-  await renderWithTamagui(<CreateSheet visible onClose={jest.fn()} />);
+  await renderWithProviders(<CreateSheet visible onClose={jest.fn()} />);
   expect(screen.queryByText('Feijoa Smash')).toBeNull();
   await fireEvent.press(screen.getByRole('link', { name: 'Spec book. Finish your import · 0 of 2 checked' }));
   expect(useBringIn.getState().reviewing).toBe('r1');

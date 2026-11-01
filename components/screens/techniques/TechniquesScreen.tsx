@@ -9,7 +9,7 @@ import { usePageFrame } from '@/components/nav/PageFrame';
 import { TechniquePage } from '@/components/techniques/TechniquePage';
 import { TechniqueSheet } from '@/components/techniques/TechniqueSheet';
 import { IconSymbol } from '@/components/ui/icon-symbol';
-import { fontFamilies, layout, radius, space, type } from '@/constants/tokens';
+import { font, layout, radius, space, type } from '@/constants/tokens';
 import { useKitHere } from '@/hooks/useBarKit';
 import { canMake, groupById, GROUPS, searchTechniques, TECHNIQUES, type Technique } from '@/lib/techniques';
 import { membersLine } from '@/lib/techniques/facts';
@@ -62,7 +62,7 @@ export function TechniquesScreen({ group, foam = false }: { group?: string; foam
             placeholderTextColor={ds.c.muted}
             aria-label="Search techniques"
             autoCorrect={false}
-            style={[styles.input, type.body, { fontFamily: fontFamilies.body, color: ds.c.ink }]}
+            style={[styles.input, type.body, { ...font.regular, color: ds.c.ink }]}
           />
         </View>
         <View role="group" aria-label="Show" style={styles.chips}>
@@ -143,5 +143,5 @@ const styles = StyleSheet.create({
   icon: { width: 36, height: 36, borderRadius: radius.control, alignItems: 'center', justifyContent: 'center' },
   flex: { flex: 1, minWidth: 0, gap: 2 },
   kit: { flexDirection: 'row', alignItems: 'center', gap: space.md, minHeight: layout.minTapTarget + space.md, paddingHorizontal: space.xl, borderRadius: radius.pill, borderCurve: 'continuous' },
-  strong: { fontFamily: fontFamilies.bodySemiBold },
+  strong: { ...font.semiBold },
 });

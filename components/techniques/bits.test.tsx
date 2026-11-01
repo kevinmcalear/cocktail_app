@@ -1,6 +1,6 @@
 import { screen } from '@testing-library/react-native';
 
-import { renderWithTamagui } from '@/jest.setup';
+import { renderWithProviders } from '@/jest.setup';
 import type { BuyLink } from '@/lib/techniques';
 
 import { BuyList } from './bits';
@@ -14,7 +14,7 @@ const links: BuyLink[] = [
 ];
 
 test('the mode picks home or bar links as plain rows; links for both always show', async () => {
-  await renderWithTamagui(<BuyList links={links} />);
+  await renderWithProviders(<BuyList links={links} />);
   // The app's mode isn't known yet, so it shows the bar picks.
   expect(screen.getByText('Big sack')).toBeTruthy();
   expect(screen.queryByText('Small tub')).toBeNull();
@@ -23,6 +23,6 @@ test('the mode picks home or bar links as plain rows; links for both always show
 });
 
 test('every link shows when they all suit both', async () => {
-  await renderWithTamagui(<BuyList links={[links[2]]} />);
+  await renderWithProviders(<BuyList links={[links[2]]} />);
   expect(screen.getByText('Either')).toBeTruthy();
 });

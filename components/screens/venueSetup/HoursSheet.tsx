@@ -5,7 +5,7 @@ import { Body, Button, Caption, DsText, PressableScale, TextLink, TimeRange, use
 import { MenuSheet } from '@/components/screens/menus/MenuSheet';
 import { RadioPill } from '@/components/screens/publishing/RadioCard';
 import { IconSymbol } from '@/components/ui/icon-symbol';
-import { fontFamilies, layout, radius, space } from '@/constants/tokens';
+import { font, layout, radius, space } from '@/constants/tokens';
 import { clockLabel, WEEK_DAYS, type HoursRange, type WeekDay, type WeekHours } from '@/lib/barHours';
 import { blocksOf, closedLine, closesNextDay, DEFAULT_RANGE, modeFor, setDay, switchMode, tapDay, weekFrom, type HoursBlock, type HoursMode } from '@/lib/hoursWeek';
 
@@ -171,10 +171,10 @@ const styles = StyleSheet.create({
   dots: { flexDirection: 'row', gap: space.xs },
   // Seven share the row: as big as a tap target where there's room, smaller in a narrow dialog.
   dot: { flex: 1, aspectRatio: 1, maxWidth: layout.minTapTarget, borderRadius: radius.pill, borderWidth: 1, alignItems: 'center', justifyContent: 'center' },
-  bold: { fontFamily: fontFamilies.bodySemiBold },
+  bold: { ...font.semiBold },
   dayRow: { gap: space.sm, paddingVertical: space.sm },
   dayLine: { flex: 1, flexDirection: 'row', alignItems: 'center', gap: space.md, minHeight: layout.minTapTarget },
-  dayName: { width: 40, fontFamily: fontFamilies.bodySemiBold },
+  dayName: { width: 40, ...font.semiBold },
   flex: { flex: 1 },
   footer: { gap: space.sm },
 });

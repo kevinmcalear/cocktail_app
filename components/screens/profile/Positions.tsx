@@ -4,7 +4,7 @@ import { StyleSheet, View } from 'react-native';
 import { Body, Caption, DsText, Headline, PressableScale, useDs } from '@/components/ds';
 import { IconSymbol } from '@/components/ui/icon-symbol';
 import { UserAvatar } from '@/components/ui/UserAvatar';
-import { fontFamilies, space } from '@/constants/tokens';
+import { font, space } from '@/constants/tokens';
 import { useProfilePositions, type Position, type Profile } from '@/hooks/useProfiles';
 import { jobYears } from '@/lib/profiles';
 
@@ -108,8 +108,8 @@ function PositionList({ heading, positions, onPerson }: { heading: string | null
 const styles = StyleSheet.create({
   sections: { gap: space.xl },
   section: { gap: space.xs },
-  cap: { letterSpacing: 1.2, textTransform: 'uppercase', fontFamily: fontFamilies.bodyMedium },
-  title: { fontFamily: fontFamilies.bodySemiBold },
+  cap: { letterSpacing: 1.2, textTransform: 'uppercase', ...font.medium },
+  title: { ...font.semiBold },
   flex: { flex: 1, minWidth: 0 },
   mark: { flexDirection: 'row', alignItems: 'center', gap: space.xs },
   row: { flexDirection: 'row', alignItems: 'center', gap: space.md, minHeight: 56, paddingVertical: space.sm, borderBottomWidth: StyleSheet.hairlineWidth },

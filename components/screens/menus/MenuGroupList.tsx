@@ -2,7 +2,7 @@ import type { ReactNode } from 'react';
 import { StyleSheet, View } from 'react-native';
 
 import { Caption, LockedSection, TextLink } from '@/components/ds';
-import { fontFamilies, space } from '@/constants/tokens';
+import { font, space } from '@/constants/tokens';
 import { groupMenus, plural } from '@/lib/menus';
 import type { MenuSummary } from '@/types/menus';
 
@@ -96,5 +96,5 @@ export function MenuGroupList({ menus, now, canBuild, opensAt = 'Drink Creator',
 
 const styles = StyleSheet.create({
   group: { gap: space.sm },
-  title: { letterSpacing: 1.5, fontFamily: fontFamilies.mono },
+  title: { letterSpacing: 1.5, ...font.figures },
 });

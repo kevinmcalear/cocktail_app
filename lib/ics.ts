@@ -1,3 +1,5 @@
+import brand from '../constants/brand.json';
+
 /**
  * Calendar files (RFC 5545) for This week: one event to add to a calendar, or
  * a bar's public week to subscribe to. Plain text, no dependencies, so the
@@ -48,7 +50,7 @@ function vevent(e: IcsEvent, now: string): string[] {
   const end = e.endsAt ?? new Date(new Date(e.startsAt).getTime() + LATE_HOURS * 3600 * 1000).toISOString();
   return [
     'BEGIN:VEVENT',
-    `UID:${e.id}@babyvom.it`,
+    `UID:${e.id}@${brand.domain}`,
     `DTSTAMP:${stamp(now)}`,
     `DTSTART:${stamp(e.startsAt)}`,
     `DTEND:${stamp(end)}`,

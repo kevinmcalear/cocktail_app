@@ -5,7 +5,7 @@ import { Pressable, ScrollView, StyleSheet, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import { BackbarTheme, BrandProvider, Button, Caption, GlassButton, useBreakpoint, useDs, useGutter } from '@/components/ds';
-import { fontFamilies, radius, space } from '@/constants/tokens';
+import { font, radius, space } from '@/constants/tokens';
 import { useDrinkAllergens } from '@/hooks/useAllergens';
 import { useToolsFor } from '@/hooks/useBarKit';
 import { useMyProfile } from '@/hooks/useMyProfile';
@@ -247,6 +247,6 @@ const styles = StyleSheet.create({
   grow: { flex: 1 },
   footerRow: { flexDirection: 'row', gap: space.sm },
   center: { textAlign: 'center' },
-  mono: { fontFamily: fontFamilies.mono, letterSpacing: 1 },
+  mono: { ...font.figures, letterSpacing: 1 },
   pill: { paddingHorizontal: space.md, paddingVertical: space.xs, borderRadius: radius.pill, overflow: 'hidden', letterSpacing: 0 },
 });

@@ -1,7 +1,7 @@
 import { StyleSheet, View } from 'react-native';
 
 import { Body, Caption, PressableScale, useDs } from '@/components/ds';
-import { fontFamilies, layout, radius, space } from '@/constants/tokens';
+import { font, layout, radius, space } from '@/constants/tokens';
 import { useBarMembers } from '@/hooks/useBarDetail';
 import { useRoleMatrix } from '@/hooks/useVenueRoles';
 import { withAlpha } from '@/lib/color';
@@ -57,7 +57,7 @@ function ReaderRow({ label, detail, selected, onPress, last }: { label: string; 
         {selected ? <View style={[styles.dot, { backgroundColor: ds.c.ink }]} /> : null}
       </View>
       <View style={styles.text}>
-        <Body style={selected ? { fontFamily: fontFamilies.bodySemiBold } : null}>{label}</Body>
+        <Body style={selected ? { ...font.semiBold } : null}>{label}</Body>
         <Caption tone="muted">{detail}</Caption>
       </View>
     </PressableScale>

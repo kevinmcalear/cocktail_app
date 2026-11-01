@@ -1,6 +1,6 @@
 import { fireEvent, screen } from '@testing-library/react-native';
 
-import { renderWithTamagui } from '@/jest.setup';
+import { renderWithProviders } from '@/jest.setup';
 
 import { FindStep } from './FindStep';
 
@@ -18,7 +18,7 @@ jest.mock('@/hooks/useProfiles', () => ({
 }));
 
 test('one field finds bars and people, each saying what is waiting, and each opens its page', async () => {
-  await renderWithTamagui(<FindStep name="pale" pending={false} onClaimed={jest.fn()} onNew={jest.fn()} onSkip={jest.fn()} />);
+  await renderWithProviders(<FindStep name="pale" pending={false} onClaimed={jest.fn()} onNew={jest.fn()} onSkip={jest.fn()} />);
   expect(screen.getByLabelText('Search bars and people')).toBeTruthy();
   expect(screen.getByRole('link', { name: 'Pale Moth. Not claimed yet. Cocktail bar · Collingwood. 12 drinks · 4 people' })).toBeTruthy();
   await fireEvent.press(screen.getByRole('link', { name: /^Pale Moth/ }));

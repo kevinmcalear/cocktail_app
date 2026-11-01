@@ -1,6 +1,6 @@
 import { fireEvent, screen } from '@testing-library/react-native';
 
-import { renderWithTamagui } from '@/jest.setup';
+import { renderWithProviders } from '@/jest.setup';
 
 import { SheetSearchPanel } from './SheetSearchPanel';
 
@@ -24,7 +24,7 @@ const area = { label: 'This area', area: { kind: 'anywhere' }, kinds: [], onKind
 async function open(query = '') {
   const onApply = jest.fn();
   const onClose = jest.fn();
-  await renderWithTamagui(<SheetSearchPanel query={query} placeholder="Search near you" top={120} scope="area" onScope={() => {}} mine={mine} area={area} onApply={onApply} onClose={onClose} />);
+  await renderWithProviders(<SheetSearchPanel query={query} placeholder="Search near you" top={120} scope="area" onScope={() => {}} mine={mine} area={area} onApply={onApply} onClose={onClose} />);
   return { onApply, onClose, field: screen.getByPlaceholderText('Search near you') };
 }
 

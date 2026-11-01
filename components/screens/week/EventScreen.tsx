@@ -4,7 +4,7 @@ import { Alert, Linking, Platform, ScrollView, StyleSheet, View } from 'react-na
 
 import { Body, BrandProvider, Button, Caption, DsText, GlassButton, PressableScale, TextLink, useDisplayFaces, useDs } from '@/components/ds';
 import { PageHeader, usePageColumn } from '@/components/nav/Page';
-import { fontFamilies, radius, space } from '@/constants/tokens';
+import { font, radius, space } from '@/constants/tokens';
 import { useCapabilities } from '@/hooks/useCapabilities';
 import { useVenueMenus } from '@/hooks/useMenus';
 import { useBarPlace, useDeleteEvent, useEventDraft, useWeekEvent, useWeekEventBrand } from '@/hooks/useWeek';
@@ -184,7 +184,7 @@ const styles = StyleSheet.create({
   body: { gap: space.sm, paddingBottom: space.xxxl },
   above: { gap: space.sm },
   top: { flexDirection: 'row', alignItems: 'center', gap: space.sm },
-  when: { fontFamily: fontFamilies.bodySemiBold },
+  when: { ...font.semiBold },
   flex: { flex: 1 },
   marks: { flexDirection: 'row' },
   mark: { width: 52, height: 52, borderRadius: radius.control, alignItems: 'center', justifyContent: 'center' },

@@ -3,7 +3,7 @@ import { StyleSheet, View } from 'react-native';
 import Svg, { Path } from 'react-native-svg';
 
 import { Body, Caption, PressableScale, useDs } from '@/components/ds';
-import { DEFAULT_ACCENT, fontFamilies, layout, radius, space } from '@/constants/tokens';
+import { DEFAULT_ACCENT, font, layout, radius, space } from '@/constants/tokens';
 import { useBackBarParts, useStockMutations, type BackBarReason } from '@/hooks/useBackBar';
 import { useCapabilities } from '@/hooks/useCapabilities';
 import { useExpiring } from '@/hooks/useExpiring';
@@ -170,5 +170,5 @@ const styles = StyleSheet.create({
   note: { flexDirection: 'row', alignItems: 'center', gap: space.md, borderRadius: radius.control, paddingLeft: space.lg, paddingRight: space.xs, minHeight: 52 },
   flex: { flex: 1 },
   undo: { minHeight: layout.minTapTarget, justifyContent: 'center', paddingHorizontal: space.md },
-  underline: { textDecorationLine: 'underline', fontFamily: fontFamilies.bodySemiBold },
+  underline: { textDecorationLine: 'underline', ...font.semiBold },
 });

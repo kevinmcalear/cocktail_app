@@ -7,7 +7,7 @@ import { BackbarTheme, Body, Button, Caption, Chip, Display, DsText, GlassButton
 import { NoteSheet } from '@/components/feedback/NoteSheet';
 import { IconSymbol } from '@/components/ui/icon-symbol';
 import { WebHead } from '@/components/WebHead';
-import { fontFamilies, layout, radius, space } from '@/constants/tokens';
+import { font, layout, radius, space } from '@/constants/tokens';
 import { useMakerBottles, type MakerBottle } from '@/hooks/useMakers';
 import { useBottleUses, useMakerBottlePhotos, useOnMakerTeam } from '@/hooks/useMakerPhotos';
 import { usePhotoFolder } from '@/hooks/usePhotoFolder';
@@ -160,5 +160,5 @@ const styles = StyleSheet.create({
   tick: { width: 32, height: 32, borderRadius: radius.pill, alignItems: 'center', justifyContent: 'center' },
   flex: { flex: 1, minWidth: 0 },
   tellUs: { flexDirection: 'row', alignItems: 'center', alignSelf: 'flex-start', gap: space.sm, minHeight: layout.minTapTarget },
-  bold: { fontFamily: fontFamilies.bodySemiBold },
+  bold: { ...font.semiBold },
 });

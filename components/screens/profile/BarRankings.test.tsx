@@ -1,6 +1,6 @@
 import { fireEvent, screen } from '@testing-library/react-native';
 
-import { renderWithTamagui } from '@/jest.setup';
+import { renderWithProviders } from '@/jest.setup';
 import type { BarTopDrink } from '@/lib/barTopDrinks';
 
 import { BarRankings, BestHere } from './BarRankings';
@@ -63,7 +63,7 @@ beforeEach(() => {
 
 test('scored drinks with their score, ratings and menu, then early ones; drinks nobody has rated stay in the picker', async () => {
   mockRows = [gimlet, early, fresh];
-  await renderWithTamagui(<BarRankings bar={bar} />);
+  await renderWithProviders(<BarRankings bar={bar} />);
   expect(screen.getByText('8.4')).toBeTruthy();
   expect(screen.getByText('Gimlet · 64 ratings · on now')).toBeTruthy();
   expect(screen.getByText('Early')).toBeTruthy();
@@ -79,26 +79,26 @@ test('scored drinks with their score, ratings and menu, then early ones; drinks 
 
 test('no scores yet: says how a drink gets one', async () => {
   mockRows = [early, fresh];
-  await renderWithTamagui(<BarRankings bar={bar} />);
+  await renderWithProviders(<BarRankings bar={bar} />);
   expect(screen.getByText('Ranked so far')).toBeTruthy();
   expect(screen.getByText(/^No drink here has a score yet\./)).toBeTruthy();
 });
 
 test('nobody has ranked anything: asks to be the first', async () => {
   mockRows = [fresh];
-  await renderWithTamagui(<BarRankings bar={bar} />);
+  await renderWithProviders(<BarRankings bar={bar} />);
   expect(screen.getByText('Nobody has ranked a drink at Little Rye yet. Had something here? Be the first.')).toBeTruthy();
 });
 
 test('Rank a drink picks one of the bar’s drinks and ranks it here; signed out, it asks you to sign in', async () => {
   mockRows = [gimlet, fresh];
-  await renderWithTamagui(<BarRankings bar={bar} />);
+  await renderWithProviders(<BarRankings bar={bar} />);
   await fireEvent.press(screen.getByLabelText('Rank a drink'));
   await fireEvent.press(screen.getByText('Pick Old Flame'));
   expect(screen.getByText('Ranking Old Flame at Little Rye')).toBeTruthy();
 
   mockUser = null;
-  await renderWithTamagui(<BarRankings bar={bar} />);
+  await renderWithProviders(<BarRankings bar={bar} />);
   await fireEvent.press(screen.getByLabelText('Sign in to rank'));
   expect(mockPush).toHaveBeenCalledWith('/auth/login');
 });
@@ -106,13 +106,13 @@ test('Rank a drink picks one of the bar’s drinks and ranks it here; signed out
 test('Best here (a phone bar page, Q30 A): the top three scored drinks, nothing until one has a score', async () => {
   const scored = [2, 3, 4].map((n) => row({ item_id: `s${n}`, name: `Drink ${n}`, position: n, score: 9 - n / 10, rankers: 10 }));
   mockRows = [gimlet, ...scored, early];
-  await renderWithTamagui(<BestHere barId="p1" />);
+  await renderWithProviders(<BestHere barId="p1" />);
   expect(screen.getByText('Best here')).toBeTruthy();
   expect(screen.getByText('House Gimlet')).toBeTruthy();
   expect(screen.getByText('Drink 3')).toBeTruthy();
   expect(screen.queryByText('Drink 4')).toBeNull();
   expect(screen.queryByText('Early Bird')).toBeNull();
   mockRows = [early, fresh];
-  await renderWithTamagui(<BestHere barId="p1" />);
+  await renderWithProviders(<BestHere barId="p1" />);
   expect(screen.queryByText('Best here')).toBeNull();
 });

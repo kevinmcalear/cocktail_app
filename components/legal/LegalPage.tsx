@@ -5,7 +5,7 @@ import { Linking, StyleSheet, View } from 'react-native';
 import { Body, Headline } from '@/components/ds';
 import { SafetyPage } from '@/components/screens/safety/SafetyPage';
 import { BRAND } from '@/constants/brand';
-import { fontFamilies, space } from '@/constants/tokens';
+import { font, space } from '@/constants/tokens';
 
 /** A readable, single-column page for policies, on the same plain page as Support. Works signed in or out. */
 export function LegalPage({ title, children }: { title: string; children: ReactNode }) {
@@ -55,5 +55,5 @@ const styles = StyleSheet.create({
   section: { gap: space.sm, marginTop: space.md },
   bullets: { gap: space.sm },
   // As Support's links: ink, underlined, a step heavier.
-  link: { fontFamily: fontFamilies.bodySemiBold, textDecorationLine: 'underline' },
+  link: { ...font.semiBold, textDecorationLine: 'underline' },
 });

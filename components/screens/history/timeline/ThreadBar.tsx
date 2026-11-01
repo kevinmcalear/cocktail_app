@@ -4,7 +4,7 @@ import { StyleSheet, View } from 'react-native';
 
 import { Body, Button, Caption, DsText, PressableScale, RowScore, Spec, Title, useDs } from '@/components/ds';
 import { IconSymbol } from '@/components/ui/icon-symbol';
-import { fontFamilies, layout, radius, space } from '@/constants/tokens';
+import { font, fontFamilies, layout, radius, space } from '@/constants/tokens';
 import { useItemScores } from '@/hooks/useFlavor';
 import type { TreeNode } from '@/lib/drinkTree';
 import { yearLabel } from '@/lib/lineage';
@@ -168,12 +168,12 @@ const styles = StyleSheet.create({
   card: { gap: space.sm, borderRadius: radius.card, borderCurve: 'continuous' },
   phoneCard: { padding: space.md + 2 },
   head: { flexDirection: 'row', alignItems: 'center' },
-  eyebrow: { fontFamily: fontFamilies.mono, letterSpacing: 1.2, textTransform: 'uppercase' },
+  eyebrow: { ...font.figures, letterSpacing: 1.2, textTransform: 'uppercase' },
   close: { width: layout.minTapTarget, height: layout.minTapTarget, alignItems: 'center', justifyContent: 'center', marginRight: -space.sm, marginVertical: -space.sm },
   steps: { flexDirection: 'row', flexWrap: 'wrap', gap: space.sm },
   step: { minHeight: layout.minTapTarget, justifyContent: 'center', paddingHorizontal: space.md, borderRadius: radius.pill, borderWidth: 1 },
-  mono: { fontFamily: fontFamilies.monoMedium },
-  strong: { fontFamily: fontFamilies.bodySemiBold },
+  mono: { ...font.figuresMedium },
+  strong: { ...font.semiBold },
   stepDown: { flexDirection: 'row', alignItems: 'stretch', gap: space.sm + 2, minHeight: layout.minTapTarget },
   rail: { width: 12, alignItems: 'center' },
   railLine: { position: 'absolute', width: StyleSheet.hairlineWidth * 2, left: 6 - StyleSheet.hairlineWidth },
@@ -181,7 +181,7 @@ const styles = StyleSheet.create({
   railBottom: { top: space.sm + 6, bottom: 0 },
   ring: { width: 11, height: 11, marginTop: space.sm, borderRadius: radius.pill, borderWidth: 1.5 },
   stepText: { paddingBottom: space.sm },
-  serif: { fontFamily: fontFamilies.instrument },
+  serif: { fontFamily: fontFamilies.name },
   strip: { height: 14, borderRadius: radius.pill, overflow: 'hidden' },
   band: { position: 'absolute', top: 0, bottom: 0, width: StyleSheet.hairlineWidth },
   mark: { position: 'absolute', top: 3, width: 8, height: 8, marginLeft: -4, borderRadius: radius.pill },

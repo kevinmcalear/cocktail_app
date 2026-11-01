@@ -4,8 +4,7 @@ import { StyleSheet, View } from 'react-native';
 import { Body, Button, Caption, DsText, useGutter, useToast } from '@/components/ds';
 import { SettingsRow, SettingsSection } from '@/components/screens/settings/SettingsParts';
 import { IconSymbol } from '@/components/ui/icon-symbol';
-import { STATUS } from '@/constants/palette';
-import { fontFamilies, radius, space } from '@/constants/tokens';
+import { font, radius, space, STATUS } from '@/constants/tokens';
 import { useUserId } from '@/ctx/AuthContext';
 import { useActiveVenue } from '@/hooks/useActiveVenue';
 import { useBarMembers } from '@/hooks/useBarDetail';
@@ -133,6 +132,6 @@ const styles = StyleSheet.create({
   line: { flexDirection: 'row', alignItems: 'flex-start', gap: space.sm },
   icon: { marginTop: 2 },
   flex: { flex: 1, minWidth: 0, gap: 2 },
-  strong: { fontFamily: fontFamilies.bodySemiBold },
+  strong: { ...font.semiBold },
   actions: { flexDirection: 'row', flexWrap: 'wrap', gap: space.sm },
 });

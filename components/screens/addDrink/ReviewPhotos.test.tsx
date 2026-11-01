@@ -2,7 +2,7 @@ import { fireEvent, screen, within } from '@testing-library/react-native';
 import { useState } from 'react';
 import { Text } from 'react-native';
 
-import { renderWithTamagui } from '@/jest.setup';
+import { renderWithProviders } from '@/jest.setup';
 import { EMPTY_DRAFT, type WizardDraft } from '@/lib/drinkWizard';
 import type { AnglePhotos } from '@/lib/photoAngles';
 
@@ -33,7 +33,7 @@ describe('StartPhotos (E26)', () => {
 
   test('Add photos picks several at once, then Which is which? gives each its angle', async () => {
     mockPick.mockResolvedValueOnce(['a.jpg', 'b.jpg', 'c.jpg']);
-    await renderWithTamagui(<Start />);
+    await renderWithProviders(<Start />);
     await fireEvent.press(screen.getByRole('button', { name: 'Add photos, several at once' }));
     expect(mockPick).toHaveBeenLastCalledWith({ cutout: true, several: 5 });
     // The first picked starts as the Hero.
@@ -58,7 +58,7 @@ describe('StartPhotos (E26)', () => {
 
   test('one photo is the Hero, with no question', async () => {
     mockPick.mockResolvedValueOnce(['a.jpg']);
-    await renderWithTamagui(<Start />);
+    await renderWithProviders(<Start />);
     await fireEvent.press(screen.getByRole('button', { name: 'Add photos, several at once' }));
     expect(latest).toEqual({ hero: 'a.jpg' });
     expect(screen.queryByText(/photos? picked/)).toBeNull();
@@ -73,7 +73,7 @@ describe('ReviewStep (E25, Q15)', () => {
   );
 
   test('at a venue the cost comes last, after every answer', async () => {
-    await renderWithTamagui(review('little-rye'));
+    await renderWithProviders(review('little-rye'));
     const page = JSON.stringify(screen.toJSON());
     const cost = page.indexOf('COST CARD');
     expect(cost).toBeGreaterThan(page.indexOf('Who sees it'));
@@ -82,7 +82,7 @@ describe('ReviewStep (E25, Q15)', () => {
   });
 
   test('at home one photo, the one that leads the page', async () => {
-    await renderWithTamagui(review(null));
+    await renderWithProviders(review(null));
     expect(screen.getByRole('button', { name: 'Add a photo: it leads the drink page' })).toBeTruthy();
     expect(screen.getByText('It leads the drink’s page. Add more angles there.')).toBeTruthy();
     expect(screen.queryByRole('button', { name: 'Add a side photo' })).toBeNull();

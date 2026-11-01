@@ -2,7 +2,7 @@ import { Fragment } from 'react';
 import { StyleSheet, View } from 'react-native';
 
 import { Caption, PressableScale } from '@/components/ds';
-import { fontFamilies, layout, space } from '@/constants/tokens';
+import { font, layout, space } from '@/constants/tokens';
 import { useMenuSectionPlace } from '@/hooks/useDrinkDesk';
 
 /** One level of what's being made, from the menu down; `onPress` goes up to it. The last is where you are. */
@@ -82,8 +82,8 @@ export function trailInto(items: readonly TrailItem[], leave: () => void, here: 
 
 const styles = StyleSheet.create({
   trail: { flexDirection: 'row', flexWrap: 'wrap', alignItems: 'center', columnGap: space.xs + 2 },
-  mono: { fontFamily: fontFamilies.monoMedium },
-  here: { fontFamily: fontFamilies.monoMedium, fontWeight: '600' },
+  mono: { ...font.figuresMedium },
+  here: { ...font.figuresMedium, fontWeight: '600' },
   sep: { opacity: 0.6 },
   link: { minHeight: layout.minTapTarget, justifyContent: 'center' },
 });
