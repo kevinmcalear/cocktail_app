@@ -3,6 +3,8 @@
 // pencil), keep only the pencil (empty and loading states), and paint it for
 // night: only what light would catch.
 
+import { SKETCH } from '@/constants/sketch';
+
 import type { Scene, SceneEl, StageName } from './scene';
 
 type Visit = (el: SceneEl, stage: StageName | null) => SceneEl | null;
@@ -57,7 +59,7 @@ export function lchToHex({ L, C, H }: Lch): string {
 }
 
 /** Pencil at night: chalk. */
-export const CHALK = '#ECE5D9';
+export const CHALK = SKETCH.chalk;
 const isHex = (c: string) => /^#[0-9a-f]{6}$/i.test(c);
 
 /** A pigment as light would catch it: lifted to at least mid-tone and a touch richer; a clear drink reads silver. */
@@ -88,7 +90,7 @@ const CHALK_WEIGHT: Partial<Record<StageName, number>> = { glass: 0.72, ice: 1.1
  * the drink's colour (lib/sketch/types liquidOf).
  */
 export function nightScene(scene: Scene, liquid: string): Scene {
-  const frost = mix(lift(liquid), '#FFFFFF', 0.55);
+  const frost = mix(lift(liquid), SKETCH.white, 0.55);
   return mapScene(scene, (el, stage) => {
     switch (el.k) {
       case 'stroke':
@@ -104,7 +106,7 @@ export function nightScene(scene: Scene, liquid: string): Scene {
         if (paperLike(el.color)) return stage === 'ice' || stage === 'foam' ? { ...el, color: frost, edge: frost } : null;
         const color = lift(el.color);
         // The wash's dark edge becomes the lit rim: the fill line catching the light.
-        return { ...el, color, edge: mix(color, '#FFFFFF', 0.45), edgeO: Math.min(1, el.edgeO * 1.4) };
+        return { ...el, color, edge: mix(color, SKETCH.white, 0.45), edgeO: Math.min(1, el.edgeO * 1.4) };
       }
       default:
         return el;

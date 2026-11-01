@@ -21,6 +21,8 @@ export const SKETCH = {
   cremaShadow: '#8A5E36',
   froth: '#FFF9EC',
   white: '#FFFFFF',
+  /** The pencil at night (lib/sketch/passes nightScene). */
+  chalk: '#ECE5D9',
   foamShadow: '#8C7F6C',
   julepMetal: '#B4B6B2',
   tikiClay: '#9A6A44',
