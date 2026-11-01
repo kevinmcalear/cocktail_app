@@ -6,28 +6,28 @@ import { IconSymbol } from '@/components/ui/icon-symbol';
 import { layout, radius, space } from '@/constants/tokens';
 import { useBarZones, useItemLocations } from '@/hooks/useBackBar';
 import { usePrepData } from '@/hooks/usePrepList';
+import { useTonight } from '@/hooks/useTonight';
 import { useSaveZoneCount, useStockOnHand } from '@/hooks/useStockCounts';
 import { formatPar } from '@/lib/backBar';
 import { countStep, countUnit, formatCount, zoneSummary, type CountedSpot } from '@/lib/stock';
 import type { ItemLocation } from '@/types/backBar';
 
-interface CountScreenProps {
-  barId: string;
-  /** Tonight's menu ids, so house-made items are known for "goes on the prep list". */
-  menuIds: string[];
-}
-
 /**
  * Count: walk the back bar map zone by zone in the order it's laid out. Each
  * spot shows its container and par with a stepper in the unit that makes
- * sense; saving a zone records a count, and the prep and order lists pick
- * the short items up.
+ * sense; saving a zone records a count, and Tonight's Before doors and
+ * Drinks' Bottles pick the short items up. Tonight's lists say which spots
+ * are house-made. Opened from the back bar's head (it walks the map), since
+ * the Prep page folded into Tonight and house-made.
+ * ponytail: no board draws counting; it stays here, beside the map it walks,
+ * until one does (asked of the canvas lane).
  */
-export function CountScreen({ barId, menuIds }: CountScreenProps) {
+export function CountScreen({ barId }: { barId: string }) {
   const ds = useDs();
   const { data: zones = [], isPending: zonesPending } = useBarZones(barId);
   const { data: locations = [] } = useItemLocations(barId);
   const { data: onHand = [] } = useStockOnHand(barId);
+  const menuIds = useTonight(barId).menus.map((m) => m.id);
   const { data: prepData } = usePrepData(barId, menuIds);
   const save = useSaveZoneCount(barId);
   const [index, setIndex] = useState(0);

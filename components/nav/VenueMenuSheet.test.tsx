@@ -62,7 +62,6 @@ test('at a venue: titled with it, its working pages first, then Venue and You', 
   const places = screen.getAllByRole('link').map((el) => el.props.accessibilityLabel);
   expect(places).toEqual([
     'Menus. 1 on',
-    'Prep',
     'Study',
     'Glassware',
     'This week',

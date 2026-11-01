@@ -1,7 +1,7 @@
 // Checks for lib/eightBall.ts. Run: npm run test:unit
 import assert from 'node:assert/strict';
 
-import { buildPool, classicReason, makeA, NO_SHAKE, pickDrink, readShake, SHAKE, WEIGHT, type Motion, type ShakeState } from './eightBall';
+import { answerFrom, buildPool, classicReason, haveLine, NO_SHAKE, pickDrink, readShake, SHAKE, WEIGHT, type Motion, type ShakeState } from './eightBall';
 
 // --- shakes: three strong jolts close together, then a cooldown ---
 const rest = (at: number): Motion => ({ x: 0, y: 0, z: -1, at });
@@ -53,7 +53,7 @@ const pool = buildPool({
 });
 const byId = new Map(pool.map((c) => [c.id, c]));
 assert.equal(byId.get('negroni')?.weight, WEIGHT.canMake);
-assert.equal(byId.get('negroni')?.reason, 'You have all the bottles at home.', 'can make wins over a classic and a bar drink of the same id');
+assert.equal(byId.get('negroni')?.reason, 'You have it all at home.', 'can make wins over a classic and a bar drink of the same id');
 assert.equal(byId.get('house-sour')?.weight, WEIGHT.canMake, 'what the shelf makes is in, classic or not');
 assert.equal(byId.get('daiquiri')?.weight, WEIGHT.classic);
 assert.equal(byId.get('daiquiri')?.reason, 'A classic from about 1898.');
@@ -76,12 +76,16 @@ assert.equal(classicReason({ year: 1880, approx: true, creator: null, bar: null 
 assert.equal(classicReason({ year: null, approx: false, creator: null, bar: 'Harry\'s New York Bar' }), "A classic, at Harry's New York Bar.");
 assert.equal(classicReason({ year: null, approx: false, creator: null, bar: null }), 'A classic from the drink history.');
 
-assert.equal(makeA('Negroni'), 'Make a Negroni');
-assert.equal(makeA('Old Fashioned'), 'Make an Old Fashioned');
-assert.equal(makeA('Annibale'), 'Make an Annibale');
-assert.equal(makeA('A Bird in the Hand'), 'Make A Bird in the Hand');
-assert.equal(makeA('The Last Word'), 'Make The Last Word');
-assert.equal(makeA('Aviation'), 'Make an Aviation');
+assert.deepEqual(answerFrom(pool, [d('negroni'), d('house-sour')]).map((c) => c.id).sort(), ['house-sour', 'negroni'], 'a shelf that makes something answers from that');
+assert.equal(answerFrom(pool, []).length, pool.length, 'an empty shelf answers from everything');
+assert.equal(haveLine(['Gin', 'Lemon', 'Honey']), 'Gin, lemon, honey · you have it all');
+assert.equal(haveLine(['gin', 'Gin', ' ', 'Lemon', 'Honey', 'Soda']), 'Gin, lemon, honey · you have it all', 'no repeats or blanks, three at most');
+assert.equal(haveLine([]), 'You have it all at home.');
+assert.equal(
+  buildPool({ classics: [], canMake: [{ ...d('bees'), have: ['Gin', 'Lemon', 'Honey'] }], barDrinks: [], ratedBars: [], near: false })[0].reason,
+  'Gin, lemon, honey · you have it all',
+  'a shelf drink says what it uses'
+);
 
 // --- picking: by weight, skipping recent ones ---
 const weighted = [

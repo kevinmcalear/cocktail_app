@@ -38,7 +38,7 @@ export function BeforeDoors({ t, barId, title = 'Before doors' }: { t: Staff; ba
       return (
         <SettingsRow
           key={line.id}
-          icon="drop.fill"
+          icon="flask"
           label={line.name}
           detail={prepLine(line)}
           onPress={go(itemHref('Ingredient', line.id))}
@@ -46,7 +46,7 @@ export function BeforeDoors({ t, barId, title = 'Before doors' }: { t: Staff; ba
         />
       );
     }),
-    ...enough.map((row) => <SettingsRow key={row.id} icon="drop.fill" label={row.name} detail={row.sub} onPress={go(itemHref('Ingredient', row.id))} />),
+    ...enough.map((row) => <SettingsRow key={row.id} icon="flask" label={row.name} detail={row.sub} onPress={go(itemHref('Ingredient', row.id))} />),
   ];
   if (!rows.length) return null;
   return (

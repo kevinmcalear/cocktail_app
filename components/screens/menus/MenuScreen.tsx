@@ -14,6 +14,7 @@ import { useMenuLens } from '@/hooks/useMenuLens';
 import { useEndMenu } from '@/hooks/useMenuMutations';
 import { useMenu, useVenueMenus } from '@/hooks/useMenus';
 import { useMyBar } from '@/hooks/useHomeBar';
+import { useMenuHouseMade } from '@/hooks/usePrepList';
 import { useShoppingEdit } from '@/hooks/useShoppingList';
 import { confirmAsync } from '@/lib/dialogs';
 import { isLivingList } from '@/lib/menuLens';
@@ -98,6 +99,7 @@ function MenuPage({ menu, shelf }: { menu: MenuDetail; shelf: { match: ShelfMatc
   const endedRuns = menu.startsAt ? ended.filter((r) => Date.parse(r.cameOff) > Date.parse(menu.startsAt!)).length : 0;
   const end = useEndMenu();
   const { data: venueMenus = [] } = useVenueMenus(menu.barId);
+  const houseMade = useMenuHouseMade(lens.lens === 'bartender' ? menu.barId : null, menu.id);
   const back = () => (router.canGoBack() ? router.back() : router.replace('/menus/all'));
 
   const status = menuStatus(menu, now);
@@ -114,6 +116,7 @@ function MenuPage({ menu, shelf }: { menu: MenuDetail; shelf: { match: ShelfMatc
     newIds: menu.barId && previous.length ? newDrinkIds(drinks.map((d) => d.id), previous) : undefined,
     shelf: lens.lens === 'home' ? (shelf?.match ?? null) : null,
     toBuy: shelf?.toBuy ?? null,
+    houseMade,
     day,
     now,
   });
@@ -146,7 +149,8 @@ function MenuPage({ menu, shelf }: { menu: MenuDetail; shelf: { match: ShelfMatc
     barPage: () => hide.mutate(!menu.hiddenAt, { onError: () => failed('That didn’t work. Try again.') }),
     costing: () => go(`/menus/${menu.id}/costing`),
     runSheet: () => go(`/menus/${menu.id}/run-sheet`),
-    prep: () => go('/prep'),
+    // The menu's house-made: Drinks' House-made, with what's low on top (Prep folded into it and Tonight).
+    prep: () => go('/drinks?show=preps'),
     offMenu: () => go('/off-menu'),
     publish: () => setSheet('publish'),
     replaces: () => (live ? go(`/menus/${live.id}`) : undefined),

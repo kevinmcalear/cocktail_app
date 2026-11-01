@@ -84,7 +84,7 @@ function open(url: string) {
       [`${SHARED}/_layout`]: SharedLayout,
       '(tabs)/(1-tonight)/index': page('tonight'),
       [`${SHARED}/cocktail/[id]/index`]: Drink,
-      [`${SHARED}/prep`]: page('prep'),
+      [`${SHARED}/test`]: page('study'),
       '(tabs)/(2-drinks)/drinks': DrinksTab,
       '(tabs)/(3-discover)/discover': page('discover'),
       '(tabs)/(4-you)/you': page('you'),
@@ -124,8 +124,8 @@ test('from 1200 at a venue, a drink opens beside the list at its own URL, and Ba
 test('another page on the Drinks stack takes the width, and the list comes back with Back', async () => {
   await open('/drinks');
   await screen.findByText('list beside, none picked');
-  await act(async () => router.push('/prep'));
-  expect(screen.getByText('prep')).toBeTruthy();
+  await act(async () => router.push('/test'));
+  expect(screen.getByText('study')).toBeTruthy();
   expect(screen.queryByText('list beside, none picked')).toBeNull();
   await act(async () => router.back());
   expect(screen.getByText('list beside, none picked')).toBeTruthy();

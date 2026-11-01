@@ -80,7 +80,7 @@ export function HandoverView({ h, onGotIt, onAdd, logBatch, ranOutSub, forNight 
       <Group title="What ran out" icon="exclamationmark.triangle" rows={note.ranOut.map((name) => ({ name, sub: ranOutSub?.(name) ?? null }))} />
       <Group
         title="What to prep"
-        icon="drop.fill"
+        icon="flask"
         rows={note.prep.map((line) => ({ ...line, sub: [line.sub, forNight && `for ${forNight}`].filter(Boolean).join(', ') || null }))}
         action={(line) => {
           const log = logBatch?.(line.name);

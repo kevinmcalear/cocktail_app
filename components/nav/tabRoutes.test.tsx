@@ -32,7 +32,7 @@ function open(url: string) {
       // In the order the app's folder lists them, so a link's tie between groups breaks as it does in the app.
       '(tabs)/(1-tonight)/index': page('tonight'),
       [`${SHARED}/cocktail/[id]/index`]: page('drink'),
-      [`${SHARED}/prep`]: page('prep'),
+      [`${SHARED}/test`]: page('study'),
       '(tabs)/(2-drinks)/drinks': page('drinks'),
       '(tabs)/(3-discover)/discover': page('discover'),
       '(tabs)/(4-you)/you': page('you'),
@@ -64,8 +64,8 @@ it('pushes a drink on the tab it was opened from, and Back returns there', async
   await act(async () => router.back());
   expect(r.getPathname()).toBe('/drinks');
   await act(async () => router.navigate('/discover'));
-  await act(async () => router.push('/prep'));
-  expect(r.getSegments()).toEqual(['(tabs)', '(3-discover)', 'prep']);
+  await act(async () => router.push('/test'));
+  expect(r.getSegments()).toEqual(['(tabs)', '(3-discover)', 'test']);
 });
 
 it("switches tabs when a tab's path is opened from another tab", async () => {

@@ -1,7 +1,7 @@
 // Checks for lib/prep.ts and lib/quantity.ts. Run: npm run test:unit
 import assert from 'node:assert/strict';
 
-import { buildPrepList, servesPerDrink } from './prep';
+import { buildPrepList } from './prep';
 import { formatQuantity, toQuantity } from './quantity';
 
 assert.equal(formatQuantity(toQuantity(1.5, 'L')!), '1.5 L');
@@ -135,7 +135,5 @@ const late = buildPrepList({
 assert.equal(late.make[0].late, true, 'an hour-long prep 30 minutes before service is late');
 assert.equal(late.make[0].urgent, true);
 
-assert.equal(servesPerDrink(140, 9), 32, '140 guests × 2 drinks over 9 drinks');
-assert.equal(servesPerDrink(0, 9), 0);
 
 console.log('prep: ok');

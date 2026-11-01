@@ -35,7 +35,6 @@ const CAL: Glyph = { d: PAGE + 'M8 3v4M16 3v4M4 10h16', f: PAGE };
 const RING = C(12, 12, 9);
 const SPEC_BOOK = 'M5.5 4.5h11a2 2 0 0 1 2 2v14h-11a2 2 0 0 1-2-2z';
 const MENU_CARD = R(5.5, 3.5, 13, 17, 1.5);
-const TUB = 'M6.5 7h11l-1 12.6a1.5 1.5 0 0 1-1.5 1.4H9a1.5 1.5 0 0 1-1.5-1.4z';
 const MARK = 'M17.5 20.5L12 16.5l-5.5 4v-15a2 2 0 0 1 2-2h7a2 2 0 0 1 2 2z';
 const PIN = 'M12 21.5s6.5-5.8 6.5-11a6.5 6.5 0 0 0-13 0c0 5.2 6.5 11 6.5 11z';
 const BOTTLE = 'M6 20.5v-8.5l1.6-2.2V5.5h1.8v4.3L11 12v8.5z';
@@ -73,7 +72,6 @@ const G = {
   'place.tonight': { ...CAL, day: true },
   'place.library': { d: SPEC_BOOK + 'M5.5 18.5a2 2 0 0 1 2-2h11M9 8h6l-3 3.2zM12 11.2v2.6M10.5 13.8h3', f: SPEC_BOOK },
   'place.menus': { d: MENU_CARD + 'M9.5 7.5h5M8.5 11.5h7M8.5 14.5h7M8.5 17.5h4', f: MENU_CARD },
-  'place.prep': { d: 'M5.5 4.5h13v2.5h-13z' + TUB + 'M9 12.5h6v3H9z', f: TUB },
   'place.study': { d: CARD_BACK + CARD + 'M8.6 12.3a1.7 1.7 0 1 1 2.5 1.5c-.6.3-.85.7-.85 1.3M10.25 17.6h.01', f: CARD },
   'place.discover': { d: PIN + 'M9.6 8h4.8L12 10.6zM12 10.6v2.2M10.8 12.8h2.4', f: PIN },
   'place.history': { d: HOURGLASS, f: 'M9.5 20h5c0-1.6-1.2-2.6-2.5-3.4-1.3.8-2.5 1.8-2.5 3.4z' },

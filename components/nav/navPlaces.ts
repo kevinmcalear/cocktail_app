@@ -22,7 +22,7 @@ export const MENUS_PLACE: Place = { key: 'menus', label: 'Menus', icon: 'place.m
 
 /**
  * Where the shell can take you, for the mode you're in: the four tabs, the
- * venue's working pages (Menus, Glassware),
+ * venue's working pages (Menus, Study, Glassware),
  * and its Venue section (My team, Rota, Brand, Roles and access, Venue settings).
  * History and This week are null during the first round.
  */
@@ -41,8 +41,7 @@ export function useNavPlaces() {
   const work: Place[] =
     venue && settings && !round
       ? [
-          // Prep and Study fold into Tonight later; till then they open from here and Tonight.
-          { key: 'prep', label: 'Prep', icon: 'place.prep', path: '/prep' },
+          // Study folds into Tonight's Learn later; till then it opens from here. Prep folded into Tonight and house-made.
           { key: 'study', label: 'Study', icon: 'place.study', path: '/test' },
           ...(BACK_BAR_SHOWN ? [{ key: 'back-bar', label: 'Back bar', icon: 'place.backbar', path: '/back-bar' } as Place] : []),
           // Glassware is a working page, not a setting (Eddie, 29 Oct 2026): Kit's page, with its glasses' own pages under it.

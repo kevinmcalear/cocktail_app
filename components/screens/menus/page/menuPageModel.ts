@@ -44,6 +44,8 @@ interface Input {
   shelf: ShelfMatch | null;
   /** How many things a home menu still needs bought; null until the shelf is read. */
   toBuy: number | null;
+  /** The menu's house-made, and which of them are low (counted under what tonight needs): the bartender's row. */
+  houseMade: { count: number; low: readonly string[] } | null;
   day: (iso: string) => string;
   now: number;
 }
@@ -57,7 +59,7 @@ function replacesLine(onNow: { name: string; endsAt: string | null }, goesOn: st
   return last ? `${onNow.name}, on ${day(last)}` : onNow.name;
 }
 
-export function menuPageModel({ menu, status, lens: L, venueName, onNow, newIds, shelf, toBuy, day, now }: Input): MenuPageModel {
+export function menuPageModel({ menu, status, lens: L, venueName, onNow, newIds, shelf, toBuy, houseMade, day, now }: Input): MenuPageModel {
   const { lens } = L;
   // An undated home menu is an idea, not a draft: it isn't published, so it's never pencil.
   const draft = status === 'draft' && !!menu.barId;
@@ -110,7 +112,7 @@ export function menuPageModel({ menu, status, lens: L, venueName, onNow, newIds,
     ];
   } else if (lens === 'bartender' && !past) {
     group = [
-      { label: 'House-made for this menu', value: 'Prep list', action: 'prep' },
+      { label: 'House-made for this menu', value: houseMade ? houseMadeValue(houseMade.count, houseMade.low) : '', warn: !!houseMade?.low.length, action: 'prep' },
       { label: 'Also makes', value: 'What else we make', action: 'offMenu' },
     ];
   } else if (team && !past) {
@@ -181,4 +183,12 @@ export function menuPageModel({ menu, status, lens: L, venueName, onNow, newIds,
 
   const after = past ? (isStaffLens(lens) ? null : 'Prices are left off past menus, so nobody orders from one. Staff still see them.') : null;
   return { ink, quiet: draft || past, tag, eyebrow, group, banner, sections, after };
+}
+
+/** The bartender's House-made row (Menu-page): "4 · grenadine low", "4 · grenadine and orgeat low", "4 · 3 low", or just "4". */
+export function houseMadeValue(count: number, low: readonly string[]): string {
+  if (!count) return 'None';
+  const names = low.map((n) => n.toLowerCase());
+  const which = names.length > 2 ? String(names.length) : names.join(' and ');
+  return names.length ? `${count} · ${which} low` : String(count);
 }

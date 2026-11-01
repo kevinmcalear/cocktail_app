@@ -1,38 +1,16 @@
-import { StyleSheet, View } from 'react-native';
+import { StyleSheet } from 'react-native';
 
-import { Button, Caption, DsText, Surface, useDs, type IconName } from '@/components/ds';
+import { Surface } from '@/components/ds';
 import { SettingsRow } from '@/components/screens/settings/SettingsParts';
-import { IconSymbol } from '@/components/ui/icon-symbol';
-import { font, radius, space } from '@/constants/tokens';
+import { space } from '@/constants/tokens';
 import type { useHandover } from '@/hooks/useHandover';
 import { names, summary, type HandoverNote } from '@/lib/handover';
 
-import { TonightSection } from './TonightParts';
+import { Prompt, TonightSection } from './TonightParts';
 
 type Handover = ReturnType<typeof useHandover>;
 
 const first = (h: Handover, note: HandoverNote) => names(note.writers.map((w) => h.nameOf(w.user_id).split(' ')[0]));
-
-/** A note card: an icon, a title and a line under it, and its button (the board's prompt). */
-function Prompt({ icon, title, body, action, onPress }: { icon: IconName; title: string; body: string; action: string; onPress: () => void }) {
-  const ds = useDs();
-  return (
-    <View role="region" accessibilityLabel={title} style={[styles.prompt, { backgroundColor: ds.c.surface, borderColor: ds.c.line }]}>
-      <View style={styles.promptHead}>
-        <IconSymbol name={icon} size={20} color={ds.accentText} />
-        <View style={styles.flex}>
-          <DsText variant="label" style={font.semiBold}>
-            {title}
-          </DsText>
-          {body ? <Caption tone="muted">{body}</Caption> : null}
-        </View>
-      </View>
-      <View style={styles.promptActs}>
-        <Button label={action} size="sm" onPress={onPress} />
-      </View>
-    </View>
-  );
-}
 
 /** The last close's note, on top of Tonight until you've read it (Loop-handover). */
 export function HandoverCard({ h, onRead }: { h: Handover; onRead: () => void }) {
@@ -68,9 +46,5 @@ export function LeaveHandover({ h, night, onWrite }: { h: Handover; night: strin
 }
 
 const styles = StyleSheet.create({
-  prompt: { gap: space.md, padding: space.lg, borderRadius: radius.card, borderCurve: 'continuous', borderWidth: StyleSheet.hairlineWidth },
-  promptHead: { flexDirection: 'row', alignItems: 'flex-start', gap: space.md },
-  promptActs: { flexDirection: 'row', paddingLeft: space.xl + space.md },
   card: { paddingVertical: space.xs, paddingHorizontal: space.lg, overflow: 'hidden' },
-  flex: { flex: 1, minWidth: 0 },
 });

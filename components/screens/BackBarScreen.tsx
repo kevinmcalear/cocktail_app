@@ -4,6 +4,7 @@ import { Platform, ScrollView, StyleSheet, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import { BackBarPlan } from '@/components/backbar/BackBarPlan';
+import { CountScreen } from '@/components/backbar/CountScreen';
 import { AddZone, ZoneEditor } from '@/components/backbar/PlanEditor';
 import { useBottleToast } from '@/components/backbar/useBottleToast';
 import { WaitingForSpot } from '@/components/backbar/WaitingForSpot';
@@ -42,7 +43,8 @@ export function BackBarScreen({ placeItem }: { placeItem?: NamedItem }) {
   const canRead = !!capabilities?.includes('locations');
   // Mirrors the policies: zones need level 35 (edit_drinks); locations also allow `prep`.
   const canDraw = !!capabilities?.includes('edit_drinks');
-  const canPlace = canDraw || !!capabilities?.includes('prep');
+  const canCount = !!capabilities?.includes('prep');
+  const canPlace = canDraw || canCount;
   const { data: opensAt } = useCapabilityOpensAt(barId, 'locations');
 
   const zonesQuery = useBarZones(canRead ? barId : null);
@@ -57,6 +59,7 @@ export function BackBarScreen({ placeItem }: { placeItem?: NamedItem }) {
 
   const [selectedId, setSelectedId] = useState<string | null>(null);
   const [editing, setEditing] = useState(false);
+  const [counting, setCounting] = useState(false);
   const [placing, setPlacing] = useState<NamedItem | null>(null);
   const [pendingPlace, setPendingPlace] = useState(placeItem ?? null);
   const [moving, setMoving] = useState<ItemLocation | null>(null);
@@ -126,6 +129,7 @@ export function BackBarScreen({ placeItem }: { placeItem?: NamedItem }) {
     ) : (
       <Body tone="muted">Nobody has drawn {active?.name}’s back bar yet. Drink Creators and up can.</Body>
     );
+  else if (counting) body = <CountScreen barId={barId} />;
   else {
     const plan = (
       <View style={styles.stack}>
@@ -196,7 +200,8 @@ export function BackBarScreen({ placeItem }: { placeItem?: NamedItem }) {
               <View style={styles.actions}>
                 {/* Labels are printed from a browser; a phone's head has room for Edit the plan alone (tools-backbar-phone). */}
                 {wide && Platform.OS === 'web' ? <Button label="Print labels" icon="printer" variant="secondary" onPress={() => router.push('/back-bar-labels')} /> : null}
-                {canDraw ? (
+                {canCount && !editing ? <Button label={counting ? 'Done' : 'Count'} variant="secondary" onPress={() => setCounting((c) => !c)} /> : null}
+                {canDraw && !counting ? (
                   <Button label={editing ? 'Done' : 'Edit the plan'} icon={editing ? undefined : 'pencil'} variant={editing ? 'secondary' : 'primary'} onPress={() => setEditing((e) => !e)} />
                 ) : null}
               </View>

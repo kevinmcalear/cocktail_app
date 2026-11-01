@@ -3,9 +3,9 @@ import { useEffect, useMemo, useState } from 'react';
 
 import { useTopBars } from '@/hooks/useDiscover';
 import { useDrinkTree } from '@/hooks/useDrinkTree';
-import { useBarDrinks, useShelf } from '@/hooks/useHomeBar';
+import { useMyBar } from '@/hooks/useHomeBar';
 import { getKnownDeviceLocation } from '@/lib/deviceLocation';
-import { buildPool, type Candidate, type Classic } from '@/lib/eightBall';
+import { answerFrom, buildPool, type Candidate, type Classic } from '@/lib/eightBall';
 import { heroPicture, type ItemImageLink } from '@/lib/itemImages';
 import { NEAR_ME_KM, type Area } from '@/lib/nearMe';
 import { supabase } from '@/lib/supabase';
@@ -47,16 +47,16 @@ function useRatedBarDrinks(barIds: string[]) {
 }
 
 /**
- * The eight ball's pool, only drinks with a spec the person can follow: the
- * classics from the drink history, what their shelf makes, and well-rated
- * bars' open specs, weighted toward the shelf and then what's well rated
- * nearby (lib/eightBall.ts). Mounted only
+ * The eight ball's pool, only drinks with a spec the person can follow: what
+ * their shelf makes when it makes anything, else the classics from the drink
+ * history and well-rated bars' open specs, weighted toward what's well rated
+ * nearby (lib/eightBall.ts). `canMake` counts the shelf's drinks. Mounted only
  * while the ball is open, so nothing loads until someone shakes. Location
  * is used only if it's already allowed; a playful extra never asks for it.
  */
-export function useEightBallPool(): { pool: Candidate[]; isLoading: boolean } {
-  const shelf = useShelf();
-  const bar = useBarDrinks();
+export function useEightBallPool(): { pool: Candidate[]; isLoading: boolean; canMake: number } {
+  // The shelf with its names (for "Gin, lemon, honey"), and what it makes.
+  const bar = useMyBar();
   const [area, setArea] = useState<Area | null>(null);
   useEffect(() => {
     let live = true;
@@ -84,20 +84,24 @@ export function useEightBallPool(): { pool: Candidate[]; isLoading: boolean } {
       ),
     [tree.data]
   );
+  // A shelf drink's answer says what it uses ("Gin, lemon, honey"): the shelf's kinds, else their names.
+  const canMake = useMemo(() => {
+    const named = new Map(bar.shelf.map((s) => [s.id, s.kind ?? s.name]));
+    return bar.canMake.map((d) => ({ ...d, have: (d.shelfUses ?? []).flatMap((id) => named.get(id) ?? []) }));
+  }, [bar.canMake, bar.shelf]);
   const pool = useMemo(
     () =>
-      buildPool({
+      answerFrom(buildPool({
         classics,
-        canMake: bar.canMake,
+        canMake,
         barDrinks: barDrinks.data ?? [],
         ratedBars: (ranked ?? []).map((r) => ({ id: r.venue_profile_id, name: r.display_name, score: r.score })),
         near: area?.kind === 'point',
-      }),
-    [classics, bar.canMake, barDrinks.data, ranked, area]
+      }), canMake),
+    [classics, canMake, barDrinks.data, ranked, area]
   );
-  // Wait for the classics, what the shelf makes (an empty shelf makes
-  // nothing, so not then; EightBall gives up on a slow one) and location, so
-  // the first pick is already weighted. Bar drinks join when they arrive.
-  const shelfLoading = shelf.isLoading || (!!shelf.data?.length && bar.isLoading);
-  return { pool, isLoading: tree.isLoading || shelfLoading || area === null };
+  // Wait for the classics, the shelf and what it makes (EightBall gives up
+  // on a slow one) and location, so the first pick is already weighted. Bar
+  // drinks join when they arrive.
+  return { pool, isLoading: tree.isLoading || bar.isLoading || area === null, canMake: bar.canMake.length };
 }

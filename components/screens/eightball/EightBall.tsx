@@ -10,7 +10,7 @@ import { BackbarTheme, Body, Button, Caption, GlassButton, Title, useDs } from '
 import { GestureRoot } from '@/components/ds/GestureRoot';
 import { space, springs } from '@/constants/tokens';
 import { useEightBallPool } from '@/hooks/useEightBall';
-import { FORTUNES, makeA, pickDrink, RECENT, type Candidate } from '@/lib/eightBall';
+import { FORTUNES, pickDrink, RECENT, type Candidate } from '@/lib/eightBall';
 import { randomPose, SQUARE } from '@/lib/eightBallFace';
 import { itemHref } from '@/lib/itemRoutes';
 
@@ -33,12 +33,12 @@ type Answer = { state: 'thinking'; fortune: string; last?: string } | { state: '
 const randomFortune = () => FORTUNES[Math.floor(Math.random() * FORTUNES.length)];
 
 /**
- * The magic eight ball (issue #18), as the approved Shake design: the ball
- * wobbles, its window turns up a fortune, then the drink, with "Make a …",
- * why, and Another and Open recipe. Another turns it over to its 8 side,
- * gives it a shake, and turns it back to a new answer. Shaking the phone
- * again (routed in by EightBallHost through `rollRef`), or grabbing the
- * ball and shaking it, is Another. The ball rolls when the phone tilts and
+ * The magic eight ball (issue #18), as Kept-eightball draws it: "Shake for a
+ * drink" over the ball with its 8 side up, then the drink's name, what you
+ * have for it, and Make it and Shake again. Shake again turns it over to its
+ * 8 side, gives it a shake, and turns it back to a new answer. Shaking the
+ * phone again (routed in by EightBallHost through `rollRef`), or grabbing the
+ * ball and shaking it, is Shake again. The ball rolls when the phone tilts and
  * can be dragged and flung (useRollingBall). With Reduce Motion on, nothing
  * moves: the answer fades in.
  */
@@ -61,7 +61,7 @@ function Ball({ onClose, rollRef }: { onClose: () => void; rollRef: RefObject<((
   const prefetch = usePrefetchCocktail();
   const reduceMotion = useReducedMotion();
   const insets = useSafeAreaInsets();
-  const { pool, isLoading } = useEightBallPool();
+  const { pool, isLoading, canMake } = useEightBallPool();
   const [answer, setAnswer] = useState<Answer>(() => ({ state: 'thinking', fortune: randomFortune() }));
   // How the die lands against the window, new each time it floats up. Square on with Reduce Motion.
   const [pose, setPose] = useState(SQUARE);
@@ -102,7 +102,7 @@ function Ball({ onClose, rollRef }: { onClose: () => void; rollRef: RefObject<((
     }
     const drink = pickDrink(latest.current.pool, recent.current);
     if (drink) recent.current = [drink.id, ...recent.current].slice(0, RECENT);
-    // Open recipe is a ds Button (no press-in): load the page as the answer shows.
+    // Make it is a ds Button (no press-in): load the page as the answer shows.
     if (drink) prefetch(drink.id, { name: drink.name, imageUrl: drink.imageUrl });
     setAnswer({ state: 'shown', drink });
     turnDie();
@@ -111,7 +111,7 @@ function Ball({ onClose, rollRef }: { onClose: () => void; rollRef: RefObject<((
     bringUp(card);
     if (native) void Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
     // Android and web read the live region; iOS needs telling.
-    if (Platform.OS === 'ios') AccessibilityInfo.announceForAccessibility(drink ? `${makeA(drink.name)}. ${drink.reason}` : 'Nothing to pick yet');
+    if (Platform.OS === 'ios') AccessibilityInfo.announceForAccessibility(drink ? `${drink.name}. ${drink.reason}` : 'Nothing to pick yet');
   }
 
   function think({ kick }: { kick: boolean }) {
@@ -164,9 +164,8 @@ function Ball({ onClose, rollRef }: { onClose: () => void; rollRef: RefObject<((
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
-  // While the 8 side is up, the fortune shows under the ball instead of in the window.
-  const fortuneStyle = useAnimatedStyle(() => ({ opacity: Math.min(turn.get(), 1 - card.get()) }));
   const cardStyle = useAnimatedStyle(() => ({ opacity: card.get(), transform: [{ translateY: reduceMotion ? 0 : (1 - card.get()) * 24 }] }));
+  const headStyle = useAnimatedStyle(() => ({ opacity: card.get() }));
 
   const shown = answer.state === 'shown';
   const drink = shown ? answer.drink : null;
@@ -175,19 +174,30 @@ function Ball({ onClose, rollRef }: { onClose: () => void; rollRef: RefObject<((
     onClose();
     router.push(itemHref('Cocktail', drink.id) as never);
   };
+  const title = !shown ? 'Shake for a drink' : drink ? drink.name : 'Nothing to pick yet';
+  const sub = !shown
+    ? canMake
+      ? `One of the ${canMake} you can make tonight.`
+      : 'A classic, or a drink from a well-rated bar.'
+    : drink
+      ? drink.reason
+      : 'Add a few bottles to your shelf or save some drinks, then shake again.';
 
   return (
     <View
-      style={[styles.screen, { backgroundColor: ds.c.ground, paddingTop: insets.top + space.xxxl, paddingBottom: insets.bottom + space.xxl }]}
+      style={[styles.screen, { backgroundColor: ds.c.ground, paddingTop: insets.top + space.xxxl + space.lg, paddingBottom: insets.bottom + space.xxl }]}
       onLayout={rolling.onScreenLayout}
     >
       <View style={[styles.close, { top: insets.top + space.sm }]}>
         <GlassButton icon="xmark" accessibilityLabel="Close" onPress={onClose} />
       </View>
       <View style={styles.column} onLayout={rolling.onColumnLayout}>
-        <Caption tone="muted" style={styles.eyebrow}>
-          {shown ? 'THE BAR HAS SPOKEN' : 'ASKING THE BAR'}
-        </Caption>
+        <Animated.View style={[styles.head, shown ? headStyle : null]} aria-live="polite">
+          <Title align="center">{title}</Title>
+          <Body tone="muted" align="center">
+            {sub}
+          </Body>
+        </Animated.View>
         <View onLayout={rolling.onSlotLayout}>
           <GestureDetector gesture={rolling.pan}>
             <Animated.View style={rolling.style}>
@@ -203,44 +213,17 @@ function Ball({ onClose, rollRef }: { onClose: () => void; rollRef: RefObject<((
             </Animated.View>
           </GestureDetector>
         </View>
-        <View style={styles.copySlot}>
-          <Animated.View style={[styles.copy, cardStyle]} aria-live="polite">
-            {shown ? (
-              <>
-                <Title align="center">{drink ? makeA(drink.name) : 'Nothing to pick yet'}</Title>
-                <Body tone="muted" align="center">
-                  {drink ? drink.reason : 'Add a few bottles to My Bar or save some drinks, then ask again.'}
-                </Body>
-              </>
-            ) : null}
+        {shown ? (
+          <Animated.View style={[styles.actions, cardStyle]}>
+            {drink ? <Button label="Make it" size="lg" onPress={open} style={styles.action} /> : null}
+            <Button label="Shake again" variant="secondary" size="lg" onPress={() => roll({ kick: false })} style={styles.action} />
           </Animated.View>
-          {answer.state === 'thinking' && !reduceMotion ? (
-            <Animated.View style={[styles.fortune, fortuneStyle]} pointerEvents="none">
-              <Body tone="muted" align="center">
-                {answer.fortune}
-              </Body>
-            </Animated.View>
-          ) : null}
-        </View>
-      </View>
-      <Animated.View style={[styles.actions, cardStyle]} pointerEvents={shown ? 'auto' : 'none'}>
-        <Button
-          label="Another"
-          icon="arrow.clockwise"
-          variant="secondary"
-          size="lg"
-          onPress={() => roll({ kick: false })}
-          style={styles.action}
-        />
-        {drink ? <Button label="Open recipe" size="lg" onPress={open} style={styles.action} /> : null}
-      </Animated.View>
-      {native ? (
-        <Animated.View style={cardStyle}>
+        ) : (
           <Caption tone="muted" align="center">
-            Or shake your phone again
+            {native ? 'Tilt to roll it. Shake again for another.' : 'Drag it to roll it.'}
           </Caption>
-        </Animated.View>
-      ) : null}
+        )}
+      </View>
     </View>
   );
 }
@@ -248,12 +231,9 @@ function Ball({ onClose, rollRef }: { onClose: () => void; rollRef: RefObject<((
 const styles = StyleSheet.create({
   root: { flex: 1 },
   screen: { flex: 1, paddingHorizontal: space.xl, alignItems: 'center' },
-  close: { position: 'absolute', right: space.lg, zIndex: 1 },
+  close: { position: 'absolute', left: space.lg, zIndex: 1 },
   column: { flex: 1, width: '100%', maxWidth: 420, alignItems: 'center', gap: space.xl },
-  eyebrow: { letterSpacing: 0.8 },
-  copy: { gap: space.sm, alignItems: 'center', marginTop: space.md, minHeight: 120 },
-  copySlot: { alignSelf: 'stretch' },
-  fortune: { position: 'absolute', left: 0, right: 0, top: space.md },
+  head: { gap: space.sm, alignItems: 'center', alignSelf: 'stretch' },
   actions: { flexDirection: 'row', gap: space.sm, width: '100%', maxWidth: 420 },
   action: { flex: 1 },
 });

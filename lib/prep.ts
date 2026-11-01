@@ -244,12 +244,3 @@ export function buildPrepList(input: PrepInput): PrepList {
   return { make, order, ice };
 }
 
-/**
- * Expected serves of each drink: guests × drinks per guest, spread evenly
- * across the menu. ponytail: even spread is a starting point the person
- * adjusts; real sales data would replace it.
- */
-export function servesPerDrink(covers: number, drinkCount: number, drinksPerGuest = 2): number {
-  if (drinkCount <= 0 || covers <= 0) return 0;
-  return Math.max(1, Math.ceil((covers * drinksPerGuest) / drinkCount));
-}

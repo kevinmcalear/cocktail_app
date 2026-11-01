@@ -1,5 +1,5 @@
 import { useRouter, type Href } from 'expo-router';
-import { ScrollView, StyleSheet, View } from 'react-native';
+import { Platform, ScrollView, StyleSheet, View } from 'react-native';
 
 import { Caption, DrinkDrawingFor, DsText, PencilState, PressableScale, useDs, useGutter } from '@/components/ds';
 import { BarMark } from '@/components/screens/home/BarMark';
@@ -15,17 +15,18 @@ import { itemHref } from '@/lib/itemRoutes';
 import { plural } from '@/lib/menus';
 import { bestAway, oneBottleLine, shelfTiles } from '@/lib/tonight';
 import { byDay, detailLine, itemDay, shortDay, upcoming, type WeekItem } from '@/lib/week';
+import { useEightBallStore } from '@/store/useEightBallStore';
 
 import { Friends } from './Friends';
-import { DrinkTile, NoteCard, TonightSection } from './TonightParts';
+import { DrinkTile, NoteCard, Prompt, TonightSection } from './TonightParts';
 
 /** How many of the week's things sit under the strip. */
 const WEEK_ROWS = 3;
 
 /**
  * Tonight at home (Prod-today-home, with This week on top, Kept-events opt
- * B): the week at the bars you love, what your shelf makes, the one bottle
- * worth buying, and a new list from a bar you love. No feed of strangers.
+ * B): the week at the bars you love, what your shelf makes, Can't choose?
+ * (the eight ball, Kept-eightball), the one bottle worth buying, and a new list from a bar you love. No feed of strangers.
  */
 export function HomeTonight() {
   const router = useRouter();
@@ -47,6 +48,15 @@ export function HomeTonight() {
             ))}
           </Tiles>
         </TonightSection>
+      ) : null}
+      {drinks.canMake.length > 1 ? (
+        <Prompt
+          icon="8.circle"
+          title="Can’t choose?"
+          body={`${Platform.OS === 'web' ? 'Shake the ball' : 'Shake your phone'} for one of the ${drinks.canMake.length} you can make.`}
+          action="Shake for one"
+          onPress={() => useEightBallStore.getState().setOpen(true)}
+        />
       ) : null}
       {away && awayLine ? (
         <TonightSection title="One bottle away">

@@ -2,7 +2,7 @@ import { LinearGradient } from 'expo-linear-gradient';
 import type { ReactNode } from 'react';
 import { StyleSheet, View } from 'react-native';
 
-import { Caption, Display, DrinkDrawingFor, DsText, PressableScale, TextLink, useDs, type IconName } from '@/components/ds';
+import { Button, Caption, Display, DrinkDrawingFor, DsText, PressableScale, TextLink, useDs, type IconName } from '@/components/ds';
 import { IconSymbol } from '@/components/ui/icon-symbol';
 import { displayFaces, font, palateHues, radius, space } from '@/constants/tokens';
 import { useItemSketch } from '@/hooks/useItemSketch';
@@ -138,6 +138,30 @@ export function NoteCard({ icon, text, onPress }: { icon: IconName; text: string
   );
 }
 
+/**
+ * A note card: an icon, a title and a line under it, and its button (the
+ * board's prompt: the handover, Can't choose?).
+ */
+export function Prompt({ icon, title, body, action, onPress }: { icon: IconName; title: string; body: string; action: string; onPress: () => void }) {
+  const ds = useDs();
+  return (
+    <View role="region" accessibilityLabel={title} style={[styles.prompt, { backgroundColor: ds.c.surface, borderColor: ds.c.line }]}>
+      <View style={styles.promptHead}>
+        <IconSymbol name={icon} size={20} color={ds.accentText} />
+        <View style={styles.flex}>
+          <DsText variant="label" style={font.semiBold}>
+            {title}
+          </DsText>
+          {body ? <Caption tone="muted">{body}</Caption> : null}
+        </View>
+      </View>
+      <View style={styles.promptActs}>
+        <Button label={action} size="sm" onPress={onPress} />
+      </View>
+    </View>
+  );
+}
+
 /** A section: its label, then what's in it. */
 export function TonightSection({ title, aside, onAside, children }: { title: string; aside?: string | null; onAside?: () => void; children: ReactNode }) {
   return (
@@ -149,6 +173,9 @@ export function TonightSection({ title, aside, onAside, children }: { title: str
 }
 
 const styles = StyleSheet.create({
+  prompt: { gap: space.md, padding: space.lg, borderRadius: radius.card, borderCurve: 'continuous', borderWidth: StyleSheet.hairlineWidth },
+  promptHead: { flexDirection: 'row', alignItems: 'flex-start', gap: space.md },
+  promptActs: { flexDirection: 'row', paddingLeft: space.xl + space.md },
   head: { gap: space.xs, paddingBottom: space.md },
   caps: { textTransform: 'uppercase', letterSpacing: 1.2 },
   label: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', gap: space.md },

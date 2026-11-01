@@ -58,6 +58,8 @@ export interface EightBallDrink {
   name: string;
   imageUrl: string | null;
   glass: string | null;
+  /** A drink the shelf makes: what it uses from the shelf, by name ("Gin", "Lemon", "Honey"). */
+  have?: string[];
 }
 
 export interface Candidate extends EightBallDrink {
@@ -99,18 +101,26 @@ export interface PoolInput {
 /** Weights: what you can make tonight first, then what's well rated nearby, then the classics. */
 export const WEIGHT = { canMake: 6, ratedBar: 2, classic: 1 } as const;
 
-/** "Make a Negroni", "Make an Old Fashioned", "Make A Bird in the Hand". */
-export function makeA(name: string): string {
-  if (/^(a|an|the)\s/i.test(name)) return `Make ${name}`;
-  return `Make ${/^[aeiou]/i.test(name) ? 'an' : 'a'} ${name}`;
-}
-
 /** "A classic from about 1880.", "A classic from 2005, by Sam Ross at Milk & Honey.", "A classic from the drink history." */
 export function classicReason({ year, approx, guess, creator, bar }: Pick<Classic, 'year' | 'approx' | 'guess' | 'creator' | 'bar'>): string {
   const when = year ? ` from ${yearPhrase(year, approx, guess)}` : '';
   const who = [creator && `by ${creator}`, bar && `at ${bar}`].filter(Boolean).join(' ');
   if (!when && !who) return 'A classic from the drink history.';
   return `A classic${when}${who ? `, ${who}` : ''}.`;
+}
+
+/** How many of a drink's shelf things the answer names. */
+const HAVE_NAMES = 3;
+
+/**
+ * Why a drink the shelf makes (Kept-eightball): "Gin, lemon, honey · you have
+ * it all", the first few things it uses; without names, "You have it all at home."
+ */
+export function haveLine(names: readonly string[]): string {
+  const some = [...new Set(names.map((n) => n.trim().toLowerCase()).filter(Boolean))].slice(0, HAVE_NAMES);
+  if (!some.length) return 'You have it all at home.';
+  const list = some.join(', ');
+  return `${list.charAt(0).toUpperCase()}${list.slice(1)} · you have it all`;
 }
 
 /**
@@ -130,8 +140,19 @@ export function buildPool({ classics, canMake, barDrinks, ratedBars, near }: Poo
     const weight = WEIGHT.ratedBar * (1 + Math.max(0, Math.min(bar.score, 10)) / 10);
     pool.set(d.id, { id: d.id, name: d.name, imageUrl: d.imageUrl, glass: d.glass, weight, reason: `${near ? 'Well rated near you' : 'Well rated'}, at ${bar.name}.` });
   }
-  for (const d of canMake) pool.set(d.id, { ...d, weight: WEIGHT.canMake, reason: 'You have all the bottles at home.' });
+  for (const d of canMake) pool.set(d.id, { ...d, weight: WEIGHT.canMake, reason: haveLine(d.have ?? []) });
   return [...pool.values()];
+}
+
+/**
+ * What the ball answers from: when the shelf makes anything, only that
+ * (Kept-eightball, "one of the 14 you can make tonight"); otherwise the
+ * classics and the rated bars' drinks.
+ */
+export function answerFrom(pool: readonly Candidate[], canMake: readonly { id: string }[]): Candidate[] {
+  const mine = new Set(canMake.map((d) => d.id));
+  const shelf = pool.filter((c) => mine.has(c.id));
+  return shelf.length ? shelf : [...pool];
 }
 
 /**

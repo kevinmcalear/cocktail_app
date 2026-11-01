@@ -1,6 +1,7 @@
 import { useQuery } from '@tanstack/react-query';
+import { useMemo } from 'react';
 
-import type { HouseMade, Purchasing, SpecLine } from '@/lib/prep';
+import { buildPrepList, DEFAULT_SERVES, tonightAt6, type HouseMade, type Purchasing, type SpecLine } from '@/lib/prep';
 import type { Quantity } from '@/lib/quantity';
 import { parByItem, withBatches, type OnHandRow, type ParQuantity } from '@/lib/stock';
 import { supabase } from '@/lib/supabase';
@@ -167,4 +168,18 @@ export function usePrepData(barId: string | null | undefined, menuIds: string[])
       return { drinks, houseMade, purchasing, onHand, par };
     },
   });
+}
+
+/**
+ * A menu's house-made for the bartender's row on its page (Menu-page): how
+ * many, and which are low (counted, and under what the list needs tonight).
+ * Null until it loads, or with no bar.
+ */
+export function useMenuHouseMade(barId: string | null, menuId: string): { count: number; low: string[] } | null {
+  const data = usePrepData(barId, [menuId]).data;
+  return useMemo(() => {
+    if (!data) return null;
+    const make = buildPrepList({ ...data, servesPerDrink: DEFAULT_SERVES, startsAt: tonightAt6(), now: new Date() }).make;
+    return { count: Object.keys(data.houseMade).length, low: make.filter((l) => l.have).map((l) => l.name) };
+  }, [data]);
 }
