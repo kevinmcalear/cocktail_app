@@ -4,7 +4,7 @@ import assert from 'node:assert/strict';
 
 import type { DraftPart } from './drinkParts';
 import type { SortableRecipeItem } from './recipeItem';
-import { draftSteps, moveStepDraft, noteLeft, NOTE_MAX, stepDraft, stepNoteChanges } from './stepNotes';
+import { carryFloatWords, draftSteps, moveStepDraft, noteLeft, NOTE_MAX, stepDraft, stepNoteChanges } from './stepNotes';
 
 const line = (key: string, unit: string, extra: Partial<SortableRecipeItem> = {}) => ({ key, ingredient_id: key, name: key, amount: '1', unit, ...extra }) as SortableRecipeItem;
 const penicillin = [line('scotch', 'ml'), line('lemon', 'ml'), line('islay', 'ml', { is_float: true }), line('ginger', 'each')];
@@ -58,5 +58,21 @@ const three = { main: { aside: 'a', note: '' }, 'part-2': { aside: 'b', note: ''
 assert.deepEqual(moveStepDraft(three, [1, 0, 2], 3), { garnish: three.garnish, main: three['part-2'], 'part-2': three.main, 'part-3': three['part-3'] });
 // A part removed: its words go, the ones after move up.
 assert.deepEqual(moveStepDraft(three, [0, 2], 3), { garnish: three.garnish, main: three.main, 'part-2': three['part-3'] });
+
+// Float lines moved into a part: the Float step's words follow them, joined after any the part has.
+const floatWords = { float: { aside: 'over the back of a spoon', note: 'Pour slowly.' }, garnish: { aside: '', note: 'g' } };
+const parted = draftSteps(penicillin, parts, 'Shake');
+assert.deepEqual(carryFloatWords(floatWords, parted), { garnish: floatWords.garnish, 'part-2': { aside: 'over the back of a spoon', note: 'Pour slowly.' } });
+assert.deepEqual(carryFloatWords({ ...floatWords, 'part-2': { aside: 'cold', note: 'Chill first.' } }, parted)['part-2'], { aside: 'cold · over the back of a spoon', note: 'Chill first.\n\nPour slowly.' });
+// An aside too long to join goes into the note; the part's own stays the aside.
+const long = 'x'.repeat(40);
+assert.deepEqual(carryFloatWords({ float: { aside: 'y'.repeat(30), note: '' }, 'part-2': { aside: long, note: '' } }, parted)['part-2'], { aside: long, note: 'y'.repeat(30) });
+// Still a Float step (no drink in parts, or every line back in part 1), or no float line left: nothing moves.
+const intoMain = draftSteps(penicillin, [{ name: '', lines: ['scotch', 'lemon', 'islay'], methods: [] }, { name: '', lines: [], methods: [] }], 'Shake');
+assert.equal(carryFloatWords(floatWords, intoMain), floatWords);
+assert.equal(carryFloatWords(floatWords, draftSteps(penicillin, null, 'Shake')), floatWords);
+assert.equal(carryFloatWords(floatWords, draftSteps(penicillin.filter((l) => !l.is_float), parts, 'Shake')), floatWords);
+// Together they save: the Float row is cleared, the part's written.
+assert.deepEqual(stepNoteChanges([{ step_key: 'float', aside: 'a', note: null }], carryFloatWords({ float: { aside: 'a', note: '' } }, parted), parted.map((g) => g.key)), { rows: [{ step_key: 'part-2', aside: 'a', note: null }], gone: ['float'] });
 
 console.log('stepNotes checks passed');

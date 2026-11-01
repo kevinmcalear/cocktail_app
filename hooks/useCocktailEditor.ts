@@ -18,7 +18,7 @@ import { mapPresentationRecipeToEditItem } from "@/lib/recipeUtils";
 import { supabase } from "@/lib/supabase";
 import { saveDrinkSpec } from "@/hooks/useVersions";
 import { fetchStepNotes, saveStepNotes } from "@/hooks/useStepNotes";
-import { draftSteps, stepDraft, stepNoteChanges, type StepDraft, type StepNote, type StepWords } from "@/lib/stepNotes";
+import { carryFloatWords, draftSteps, stepDraft, stepNoteChanges, type StepDraft, type StepNote, type StepWords } from "@/lib/stepNotes";
 import { resolveEditItems } from "@/hooks/specLineSave";
 import { refreshIngredients } from "@/hooks/useDropdowns";
 import { showMessage } from "@/lib/dialogs";
@@ -525,7 +525,9 @@ export function useCocktailEditor(id: string, { enabled = true }: { enabled?: bo
                       : undefined
             );
             // The words on its steps, by the steps it has now: a step gone takes its words with it.
-            const notesChanged = storedNotes.current && stepNoteChanges(storedNotes.current, stepNotes, draftSteps(ordered, parted, null).map((g) => g.key));
+            // A Float step gone because its lines moved into a part hands its words to that part's step.
+            const steps = draftSteps(ordered, parted, null);
+            const notesChanged = storedNotes.current && stepNoteChanges(storedNotes.current, carryFloatWords(stepNotes, steps), steps.map((g) => g.key));
             if (notesChanged) await saveStepNotes(id, notesChanged.rows, notesChanged.gone);
             if (spec.created.length) void refreshIngredients(queryClient, spec.created);
             if (spec.warnings.length) showMessage("Saved", spec.warnings.join("\n\n"));

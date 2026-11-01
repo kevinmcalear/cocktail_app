@@ -44,6 +44,35 @@ export function draftSteps(items: readonly SortableRecipeItem[], parts: readonly
   return specGroups(lines, verb, parts?.map((p) => p.name));
 }
 
+const has = (w?: StepWords) => !!(w?.aside.trim() || w?.note.trim());
+
+/**
+ * Float lines moved into a part: the Float step is gone, so its words go to
+ * the step the float lines are in now (the first step with one), never
+ * dropped. Steps are keyed by kind (main, float, part-N), and a float key only
+ * exists while the drink isn't in parts, so this is the one place words would
+ * otherwise be lost on save.
+ *
+ * Where the target step has words already, the two are joined, the target's
+ * first: asides with " · " (if that is over ASIDE_MAX the float's aside goes
+ * to the front of the float's note instead), notes with a blank line (cut at
+ * NOTE_MAX, the table's limit, only if both together are longer than that).
+ * With no float lines left at all, the step is gone and so are its words.
+ */
+export function carryFloatWords(draft: StepDraft, steps: readonly { key: string; lines: readonly { float?: boolean }[] }[]): StepDraft {
+  const from = draft.float;
+  if (!has(from) || steps.some((s) => s.key === 'float')) return draft;
+  const to = steps.find((s) => s.key !== 'garnish' && s.lines.some((l) => l.float));
+  if (!to) return draft;
+  const { float: _moved, ...rest } = draft;
+  const there = draft[to.key] ?? { aside: '', note: '' };
+  const [a1, a2] = [there.aside.trim(), from.aside.trim()];
+  const joined = [a1, a2].filter(Boolean).join(' · ');
+  const fits = joined.length <= ASIDE_MAX;
+  const note = [there.note.trim(), fits ? '' : a2, from.note.trim()].filter(Boolean).join('\n\n');
+  return { ...rest, [to.key]: { aside: fits ? joined : a1, note: note.slice(0, NOTE_MAX) } };
+}
+
 /**
  * What saving the editor's words writes: a row for each of these steps with
  * words, and the keys to clear, which is every stored step that has none now
