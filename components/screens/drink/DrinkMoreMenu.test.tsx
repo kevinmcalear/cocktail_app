@@ -1,4 +1,4 @@
-import { fireEvent, screen } from '@testing-library/react-native';
+import { screen } from '@testing-library/react-native';
 import 'react-native-gesture-handler/jestSetup';
 
 import { BackbarTheme } from '@/components/ds';
@@ -7,40 +7,24 @@ import { renderWithProviders } from '@/jest.setup';
 import { DrinkMoreMenu } from './DrinkMoreMenu';
 
 jest.mock('@/ctx/AuthContext', () => jest.requireActual('@/jest.authMock').mockAuthContext(() => ({ user: { id: 'user-1' } })));
-jest.mock('@/hooks/useViewAs', () => ({ useViewAs: () => ({ viewAsRoleLevel: null, setViewAsRoleLevel: jest.fn() }) }));
 
-const moreLabel = async (props: { canEdit: boolean; adminFix?: boolean; wide?: boolean; onDelete?: () => void }) => {
+const moreLabel = async (props: { canEdit: boolean; adminFix?: boolean }) => {
   await renderWithProviders(
     <BackbarTheme>
-      <DrinkMoreMenu itemId="pearl-diver" name="The Pearl Diver" onEdit={() => {}} wide={props.wide ?? true} teamRole={null} {...props} />
+      <DrinkMoreMenu itemId="pearl-diver" name="The Pearl Diver" onEdit={() => {}} {...props} />
     </BackbarTheme>
   );
-  return screen.getByRole('button').props.accessibilityLabel;
+  return screen.queryByRole('button')?.props.accessibilityLabel ?? null;
 };
 
-test('a catalog admin on someone else\'s drink gets Fix as admin, at every width', async () => {
+test("a catalog admin on someone else's drink gets Fix as admin", async () => {
   expect(await moreLabel({ canEdit: false, adminFix: true })).toBe('More: report, fix as admin');
-  expect(await moreLabel({ canEdit: false, adminFix: true, wide: false })).toBe('More: report, fix as admin');
 });
 
-test('a visitor gets Report only; the drink\'s own people get Edit on phones', async () => {
+test('a visitor gets Report only', async () => {
   expect(await moreLabel({ canEdit: false })).toBe('More: report');
-  expect(await moreLabel({ canEdit: true, wide: false })).toBe('More: edit');
 });
 
-test('the drink\'s own people get Delete drink, at every width', async () => {
-  expect(await moreLabel({ canEdit: true, wide: true, onDelete: () => {} })).toBe('More: delete');
-  expect(await moreLabel({ canEdit: true, wide: false, onDelete: () => {} })).toBe('More: edit, delete');
-});
-
-test('View as is one row of role chips and one line on what the picked role sees', async () => {
-  await renderWithProviders(
-    <BackbarTheme>
-      <DrinkMoreMenu itemId="pearl-diver" name="The Pearl Diver" canEdit onEdit={() => {}} wide teamRole={40} />
-    </BackbarTheme>
-  );
-  await fireEvent.press(screen.getByRole('button'));
-  expect(screen.getAllByRole('radio').map((r) => r.props.accessibilityLabel)).toEqual(['Guest', 'Employee', 'Bartender', 'Drink Creator', 'Admin (you)']);
-  expect(screen.getByText('Admin sees everything, including publishing. Pick a role to see the page as they do.')).toBeTruthy();
-  expect(screen.getByLabelText('Who sees what')).toBeTruthy();
+test("the drink's own people have nothing here: Edit has its own button, and no View as on the page", async () => {
+  expect(await moreLabel({ canEdit: true })).toBeNull();
 });

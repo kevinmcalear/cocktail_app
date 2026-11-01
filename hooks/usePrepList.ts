@@ -2,7 +2,7 @@ import { useQuery } from '@tanstack/react-query';
 
 import type { HouseMade, Purchasing, SpecLine } from '@/lib/prep';
 import type { Quantity } from '@/lib/quantity';
-import { onHandByItem, parByItem, type OnHandRow, type ParQuantity } from '@/lib/stock';
+import { parByItem, withBatches, type OnHandRow, type ParQuantity } from '@/lib/stock';
 import { supabase } from '@/lib/supabase';
 
 export interface RecipeRow {
@@ -154,11 +154,15 @@ export function usePrepData(barId: string | null | undefined, menuIds: string[])
       // The shelf: the last count at each spot, and par per item. Both come
       // back empty below the locations capability (RLS), and the list then
       // assumes the bar starts from zero, as before.
-      const [stockRes, parRes] = await Promise.all([
+      // Batches logged since each count add to it (batch_logs; the last two weeks, like useBatchLogs).
+      const since = new Date(Date.now() - 14 * 86_400_000).toISOString();
+      const [stockRes, parRes, batchRes] = await Promise.all([
         supabase.rpc('stock_on_hand', { p_bar: barId! }),
         supabase.from('item_locations').select('item_id, par_amount, par_unit, item:items!item_id(name)').eq('bar_id', barId!),
+        supabase.from('batch_logs').select('id, item_id, amount, unit, made_at, made_by').eq('bar_id', barId!).gte('made_at', since),
       ]);
-      const onHand = onHandByItem((stockRes.data ?? []) as OnHandRow[]);
+      const batches = (batchRes.data ?? []).map((r) => ({ id: r.id, itemId: r.item_id, amount: Number(r.amount), unit: r.unit, madeAt: r.made_at, madeBy: r.made_by }));
+      const onHand = withBatches((stockRes.data ?? []) as OnHandRow[], batches);
       const par = parByItem((parRes.data ?? []) as { item_id: string; par_amount: number | null; par_unit: string | null; item: { name: string } | null }[]);
       return { drinks, houseMade, purchasing, onHand, par };
     },

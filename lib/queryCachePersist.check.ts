@@ -19,7 +19,7 @@ build(['cocktails', [], null]).setData([1]);
 build(['bars', 'u1']).setData([1]);
 build(['profile', 'mine', 'u1']).setData({});
 build(['profile', 'someone', 'u1']).setData({});
-build(['menus-v2', 'venue-5', 'b1', 'u1']).setData([]);
+build(['menus-v2', 'venue-6', 'b1', 'u1']).setData([]);
 build(['menus-v2', 'detail', 'm1']).setData({});
 build(['item-sketch', 'c1']).setData({});
 build(['bars', 'denied'], false).setData([1]);
@@ -28,7 +28,7 @@ build(['still-loading']);
 const saved = dehydrate(client, { shouldDehydrateQuery: shouldPersistQuery }).queries.map((q) => q.queryHash);
 assert.deepEqual(saved.sort(), [
   '["bars","u1"]',
-  '["menus-v2","venue-5","b1","u1"]',
+  '["menus-v2","venue-6","b1","u1"]',
   '["profile","mine","u1"]',
 ], 'only the first screen goes in the row; persist false always wins');
 const home = (queryKey: unknown[], persist?: boolean) => savedIn({ queryKey, meta: persist === undefined ? undefined : { persist } });

@@ -57,8 +57,10 @@ export function MenuStrip({ ids, ink, wide }: { ids: string[]; ink: MenuInk; wid
   return (
     <View style={wide ? styles.wide : styles.strip} aria-hidden>
       {ids.slice(0, wide ? 4 : 3).map((id, i) => (
-        <View key={id} style={{ marginLeft: i ? (wide ? 0 : -drawing.row / 2) : 0 }}>
-          <MenuDrawing itemId={id} size="row" ink={ink} bare />
+        <View key={id} style={wide ? styles.timeline : { marginLeft: i ? -drawing.row / 2 : 0 }}>
+          <View style={wide ? styles.timelineScale : undefined}>
+            <MenuDrawing itemId={id} size="row" ink={ink} bare />
+          </View>
         </View>
       ))}
     </View>
@@ -70,4 +72,7 @@ const styles = StyleSheet.create({
   band: { borderRadius: radius.card, overflow: 'hidden', borderCurve: 'continuous' },
   strip: { flexDirection: 'row', width: 96, height: drawing.row, alignItems: 'center', justifyContent: 'center' },
   wide: { flexDirection: 'row', gap: space.xs },
+  // Menu-p-timeline draws 58: a touch over the row size, so the row's drawing is scaled up rather than a fifth size added.
+  timeline: { width: 58, height: 58, alignItems: 'center', justifyContent: 'center' },
+  timelineScale: { transform: [{ scale: 58 / drawing.row }] },
 });

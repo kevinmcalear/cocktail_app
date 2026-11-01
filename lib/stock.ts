@@ -52,6 +52,36 @@ export function onHandByItem(rows: OnHandRow[]): Record<string, Quantity> {
   return out;
 }
 
+/** A batch of house-made someone logged (batch_logs, hooks/useBatches.ts). */
+export interface Batch {
+  id: string;
+  itemId: string;
+  amount: number;
+  unit: string;
+  madeAt: string;
+  madeBy: string | null;
+}
+
+/**
+ * What's on hand per item: the last count, plus the batches made since it
+ * (every batch, for an item never counted). A batch in another kind of unit
+ * than the count is left out rather than guessed.
+ */
+export function withBatches(rows: OnHandRow[], batches: readonly Batch[]): Record<string, Quantity> {
+  const out = onHandByItem(rows);
+  const countedAt: Record<string, number> = {};
+  for (const r of rows) countedAt[r.item_id] = Math.max(countedAt[r.item_id] ?? 0, Date.parse(r.counted_at));
+  for (const b of batches) {
+    if (b.itemId in countedAt && Date.parse(b.madeAt) <= countedAt[b.itemId]) continue;
+    const q = toQuantity(b.amount, b.unit);
+    if (!q) continue;
+    const have = out[b.itemId];
+    if (!have) out[b.itemId] = { ...q };
+    else if (sameKind(have, q)) have.value += q.value;
+  }
+  return out;
+}
+
 export type ParQuantity = Quantity & { name: string };
 
 /** Par per item (with its name), adding every spot's par up when they share a kind of unit. */

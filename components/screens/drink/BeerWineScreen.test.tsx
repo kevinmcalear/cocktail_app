@@ -27,21 +27,22 @@ jest.mock('expo-router', () => ({
 }));
 jest.mock('@/hooks/useBeers', () => ({ useBeer: (id: string) => ({ data: id === 'b1' ? lager : undefined, isPending: false, error: null, refetch: jest.fn() }) }));
 jest.mock('@/hooks/useWines', () => ({ useWine: () => ({ data: undefined, isPending: false, error: null, refetch: jest.fn() }) }));
-jest.mock('@/hooks/useDropdowns', () => ({ useDropdowns: () => ({ data: { categories: [{ id: 'c1', name: 'Lager' }] } }) }));
+jest.mock('@/hooks/useDropdowns', () => ({ useDropdowns: () => ({ data: { categories: [{ id: 'c1', name: 'Lager' }], glassware: [] } }) }));
 jest.mock('@/hooks/useFavorites', () => ({ useFavorites: () => ({ isFavorite: () => false, toggleFavorite: mockToggleFavorite }) }));
-jest.mock('@/hooks/useStudyPile', () => ({ useStudyPile: () => ({ isInStudyPile: () => false, toggleStudyPile: jest.fn() }) }));
 jest.mock('@/hooks/useActiveVenue', () => ({ useActiveVenue: () => ({ venues: [] }) }));
 jest.mock('@/hooks/useTrackRecent', () => ({ useTrackRecent: () => undefined, recentEntry: () => null }));
-jest.mock('@/hooks/useViewAs', () => ({ useCanEditItem: () => true }));
+jest.mock('@/hooks/useViewAs', () => ({ useCanEditItem: () => true, useEffectiveRole: () => 10 }));
+jest.mock('@/hooks/useTeamRole', () => ({ useTeamRole: () => null }));
+jest.mock('@/hooks/useFlavor', () => ({ useItemFlavor: () => ({ data: null }), useMyTaste: () => ({ data: null }), useFlavorBaseline: () => ({ data: null }) }));
 
-test('a beer reads on the drink page: its style, maker, strength, price, description and notes', async () => {
+test('a beer reads like a drink page: its style, maker, then tastes and the facts a menu gives', async () => {
   await renderWithProviders(<BeerWineScreen kind="beer" />);
 
-  expect(screen.getByText('Little Rye Lager')).toBeTruthy();
-  expect(screen.getByText('Lager')).toBeTruthy();
-  expect(screen.getByLabelText('Brewery: Bellwoods')).toBeTruthy();
-  expect(screen.getByLabelText('ABV: 4.8%')).toBeTruthy();
-  expect(screen.getByLabelText('Price: $9')).toBeTruthy();
+  expect(screen.getAllByText('Little Rye Lager').length).toBeGreaterThan(0);
+  expect(screen.getByText('Beer · Lager')).toBeTruthy();
+  expect(screen.getByText('Bellwoods')).toBeTruthy();
+  expect(screen.getByLabelText('Strength: 4.8%')).toBeTruthy();
+  expect(screen.getByLabelText('Pour: $9')).toBeTruthy();
   expect(screen.getByText('Crisp and bready.')).toBeTruthy();
   expect(screen.getByText('Pour it in the pint, not the stein.')).toBeTruthy();
 

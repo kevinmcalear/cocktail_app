@@ -1,5 +1,5 @@
 import { Image } from 'expo-image';
-import { StyleSheet, View } from 'react-native';
+import { Platform, StyleSheet, View } from 'react-native';
 
 import { DrinkDrawing, DrinkImage, useDs, type DrawingSize } from '@/components/ds';
 import { sceneFor } from '@/components/ds/SketchDrawing';
@@ -62,5 +62,6 @@ export function MenuDrawing({ itemId, size, ink, fallback, bare }: { itemId: str
 }
 
 const styles = StyleSheet.create({
-  faded: { opacity: 0.45 },
+  // A third of its colour. RN has no saturate on iOS, so native dims instead.
+  faded: Platform.OS === 'web' ? { filter: 'saturate(0.35)', opacity: 0.9 } : { opacity: 0.45 },
 });

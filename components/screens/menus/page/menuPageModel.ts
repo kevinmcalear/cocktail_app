@@ -3,7 +3,7 @@
 import type { MenuLensData } from '@/hooks/useMenuLens';
 import type { ShelfMatch } from '@/lib/collectionStages';
 import { menuRowShelf } from '@/lib/collectionStages';
-import { allergenSummary, allergyLine, isMenuTeam, isStaffLens, rowStateMark } from '@/lib/menuLens';
+import { allergenChips, allergensTonight, allergyLine, isMenuTeam, isStaffLens, rowStateMark } from '@/lib/menuLens';
 import { homeMenuLine, menuDateLine, plural, printedPrice } from '@/lib/menus';
 import type { MenuDetail, MenuStatus } from '@/types/menus';
 
@@ -38,15 +38,26 @@ interface Input {
   lens: MenuLensData;
   venueName: string | null;
   /** The bar's menu on now, for a draft's Replaces and a past menu's On now marks. */
-  onNow: { name: string; itemIds: Set<string> } | null;
+  onNow: { name: string; endsAt: string | null; itemIds: Set<string> } | null;
   /** Drinks new on this menu (no ended menu had them). */
   newIds: ReadonlySet<string> | undefined;
   shelf: ShelfMatch | null;
+  /** How many things a home menu still needs bought; null until the shelf is read. */
+  toBuy: number | null;
   day: (iso: string) => string;
   now: number;
 }
 
-export function menuPageModel({ menu, status, lens: L, venueName, onNow, newIds, shelf, day, now }: Input): MenuPageModel {
+/** On the bar page, Shown or Hidden: tapping it flips the menu's hidden_at. */
+const barPageRow = (menu: MenuDetail): ModelGroupRow => ({ label: 'On the bar page', value: menu.hiddenAt ? 'Hidden' : 'Shown', action: 'barPage' });
+
+/** "Autumn, on 30 Nov": the menu a draft replaces, to the last day it's on (its end, or the day before the draft goes on). */
+function replacesLine(onNow: { name: string; endsAt: string | null }, goesOn: string | null, day: (iso: string) => string): string {
+  const last = onNow.endsAt ?? (goesOn ? new Date(Date.parse(goesOn) - 86_400_000).toISOString() : null);
+  return last ? `${onNow.name}, on ${day(last)}` : onNow.name;
+}
+
+export function menuPageModel({ menu, status, lens: L, venueName, onNow, newIds, shelf, toBuy, day, now }: Input): MenuPageModel {
   const { lens } = L;
   // An undated home menu is an idea, not a draft: it isn't published, so it's never pencil.
   const draft = status === 'draft' && !!menu.barId;
@@ -81,12 +92,12 @@ export function menuPageModel({ menu, status, lens: L, venueName, onNow, newIds,
   if (draft && !home) {
     group = [
       { label: 'Goes on', value: menu.plannedStartsAt ? day(menu.plannedStartsAt) : 'Add a date', action: 'publish' },
-      ...(onNow ? [{ label: 'Replaces', value: onNow.name, action: 'replaces' as const }] : []),
+      ...(onNow ? [{ label: 'Replaces', value: replacesLine(onNow, menu.plannedStartsAt, day), action: 'replaces' as const }] : []),
       ...(noPrice.length ? [{ label: 'Unfinished', value: `${plural(noPrice.length, 'drink')} ${noPrice.length === 1 ? 'has' : 'have'} no price`, warn: true, action: null }] : []),
     ];
   } else if (home && lens === 'home') {
     group = [
-      { label: 'Shopping list', value: 'What to buy', action: 'shopping' },
+      { label: 'Shopping list', value: toBuy === null ? 'What to buy' : toBuy ? `${plural(toBuy, 'thing')} to buy` : 'Nothing to buy', warn: !!toBuy, action: 'shopping' },
       { label: 'Who’s coming', value: menu.guestCount ? plural(menu.guestCount, 'person', 'people') : 'Add a date and guests', action: 'night' },
     ];
   } else if (lens === 'employee') {
@@ -94,7 +105,7 @@ export function menuPageModel({ menu, status, lens: L, venueName, onNow, newIds,
     for (const labels of L.allergens.values()) for (const a of labels) counts.set(a, (counts.get(a) ?? 0) + 1);
     const fresh = drinks.filter((d) => newIds?.has(d.id)).map((d) => d.name);
     group = [
-      { label: 'Allergens tonight', value: L.allergens.size ? allergenSummary(counts) : 'Not checked yet', action: null },
+      { label: 'Allergens tonight', value: allergensTonight(counts, L.allergens.size, new Set(drinks.map((d) => d.id)).size), action: null },
       ...(fresh.length ? [{ label: 'New this menu', value: fresh.join(', '), action: null }] : []),
     ];
   } else if (lens === 'bartender' && !past) {
@@ -108,8 +119,11 @@ export function menuPageModel({ menu, status, lens: L, venueName, onNow, newIds,
       { label: 'On', value: on, action: 'dates' },
       ...(L.costs ? [{ label: 'Costing', value: L.averageCost ? `average ${L.averageCost}` : 'Not costed yet', action: 'costing' as const }] : []),
       ...(lens === 'creator' || lens === 'admin' ? [{ label: 'Run sheet', value: '', action: 'runSheet' as const }] : []),
-      ...(lens === 'admin' ? [{ label: 'On the bar page', value: 'Shown', action: 'barPage' as const }, { label: 'End this menu', value: '', action: 'end' as const }] : []),
+      // Hiding is for a menu that ran (menus_hidden_ran); a list still to come is unscheduled instead.
+      ...(lens === 'admin' ? [...(status === 'on' && menu.startsAt ? [barPageRow(menu)] : []), { label: 'End this menu', value: '', action: 'end' as const }] : []),
     ];
+  } else if (lens === 'admin' && past && menu.startsAt) {
+    group = [barPageRow(menu)];
   }
 
   // --- the banner ---
@@ -156,9 +170,9 @@ export function menuPageModel({ menu, status, lens: L, venueName, onNow, newIds,
         line: lens === 'bartender' && notes?.method ? notes.method : d.line,
         end,
         endTone,
-        sub: team && !draft ? (L.cost.get(d.id) ?? null) : null,
+        sub: team ? (L.cost.get(d.id) ?? null) : null,
         flag,
-        chips: lens === 'employee' ? (L.allergens.get(d.id) ?? (L.allergens.size ? [] : null)) : null,
+        chips: lens === 'employee' ? allergenChips(L.allergens.get(d.id), L.allergens.size > 0) : null,
         talkingPoint: lens === 'employee' ? (notes?.talkingPoint ?? null) : null,
         ink,
       };

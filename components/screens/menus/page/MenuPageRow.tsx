@@ -21,7 +21,7 @@ export interface PageRowView {
   sub: string | null;
   /** A small mark after the name: "Egg" (a guest's allergy), "On now" (on a past menu), "Waiting", "New". */
   flag: { label: string; tone: 'green' | 'amber' | 'quiet' } | null;
-  /** The floor's allergen chips; an empty list reads "No allergens". Null: none shown. */
+  /** The floor's allergen chips (lib/menuLens allergenChips): an empty list reads "No allergens", so only a checked drink may have one. Null: none shown. */
   chips: string[] | null;
   talkingPoint: string | null;
   ink: MenuInk;
@@ -60,7 +60,7 @@ export function MenuPageRow({ row, onPress, open, showActs, onAct, chevron, chil
   const tone = { ink: ds.c.ink, green, amber, quiet: ds.c.muted };
   const flagBg = { green: withAlpha(STATUS.success, 0.16), amber: withAlpha(STATUS.warning, 0.18), quiet: ds.c.raised };
   const { drink } = row;
-  const label = [drink.name, row.struck ? 'taken off today' : null, row.line, row.end, row.flag?.label].filter(Boolean).join(', ');
+  const label = [drink.name, row.struck ? 'taken off today' : null, row.line, row.end, row.flag?.label, row.chips ? row.chips.join(', ') || 'No allergens' : null].filter(Boolean).join(', ');
   const acts = showActs && row.acts?.length ? row.acts : null;
   return (
     <View style={[styles.wrap, { borderTopColor: ds.c.lineStrong }]}>
@@ -102,7 +102,7 @@ export function MenuPageRow({ row, onPress, open, showActs, onAct, chevron, chil
             </View>
           ) : null}
           {row.talkingPoint ? (
-            <DsText variant="caption" italic tone="muted" style={{ fontFamily: displayFaces[ds.displayFace].italic }}>
+            <DsText variant="body" italic style={{ fontFamily: displayFaces[ds.displayFace].italic }}>
               {row.talkingPoint}
             </DsText>
           ) : null}

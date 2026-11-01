@@ -1,16 +1,16 @@
 import { useRouter, type Href } from 'expo-router';
 import { StyleSheet, View } from 'react-native';
 
-import { Body, Button, Caption, DrinkDrawingFor, DsText, PencilState, PressableScale, Surface, useDs } from '@/components/ds';
-import { RowDivider, SettingsRow } from '@/components/screens/settings/SettingsParts';
+import { Body, Caption, DrinkDrawingFor, DsText, PencilState, PressableScale, useDs } from '@/components/ds';
+import { IconSymbol } from '@/components/ui/icon-symbol';
 import { TonightSetupBanner } from '@/components/screens/venueSetup/SetupBanner';
 import { TonightWeek } from '@/components/screens/week/TonightWeek';
 import { displayFaces, space } from '@/constants/tokens';
 import { categoryOf, type TonightBlock } from '@/hooks/useTonight';
 import { itemHref } from '@/lib/itemRoutes';
 import { plural } from '@/lib/menus';
-import { prepLine } from '@/lib/tonight';
 
+import { BeforeDoors, NeedsYou, OnShift } from './BeforeDoors';
 import { HeroTrio, ListHead, TonightSection } from './TonightParts';
 import type { useStaffTonight } from './useStaffTonight';
 
@@ -76,71 +76,31 @@ function DrinkGrid({ block }: { block: TonightBlock }) {
 
 /** Before doors, Needs you (admins), Learn, and the week: the column beside the lists when wide. */
 export function StaffSide({ t, barId }: { t: Staff; barId: string }) {
-  const router = useRouter();
-  const go = (href: string) => () => router.push(href as Href);
-  const make = t.make ?? [];
   return (
     <View style={styles.side}>
-      {(t.canPrep && (make.length || t.houseMade)) || t.off.length ? (
-        <TonightSection title="Before doors">
-          <Surface style={styles.card}>
-            {make.slice(0, 3).map((line, i) => (
-              <View key={line.id}>
-                {i ? <RowDivider /> : null}
-                <SettingsRow
-                  icon="drop.fill"
-                  label={line.name}
-                  detail={prepLine(line)}
-                  onPress={go(itemHref('Ingredient', line.id))}
-                  trailing={<Button label="Prep" size="sm" variant="secondary" accessibilityLabel={`Prep ${line.name}`} onPress={go('/prep')} />}
-                />
-              </View>
-            ))}
-            {!make.length && t.houseMade ? <SettingsRow icon="drop.fill" label="House-made" detail={`${plural(t.houseMade, 'prep')} · enough for tonight`} onPress={go('/prep')} /> : null}
-            {t.off.slice(0, 2).map((d) => (
-              <View key={`off-${d.id}`}>
-                <RowDivider />
-                <SettingsRow icon="exclamationmark.triangle" label="Off tonight" value={d.name} onPress={go(itemHref(categoryOf(d.kind), d.id))} />
-              </View>
-            ))}
-          </Surface>
-        </TonightSection>
-      ) : null}
-      {t.admin && (t.credits || t.next) ? (
-        <TonightSection title="Needs you">
-          <Surface style={styles.card}>
-            {t.credits ? <SettingsRow icon="person.2.fill" label="Credits to check" value={String(t.credits)} onPress={go('/credits-to-check')} /> : null}
-            {t.credits && t.next ? <RowDivider /> : null}
-            {t.next ? (
-              <SettingsRow
-                icon="doc.text"
-                label={`${t.next.name} goes on ${t.next.startsAt ? new Date(t.next.startsAt).toLocaleDateString(undefined, { day: 'numeric', month: 'short' }) : 'soon'}`}
-                value={plural(t.next.itemIds.length, 'drink')}
-                onPress={go(listHref(t.next.id) as string)}
-              />
-            ) : null}
-          </Surface>
-        </TonightSection>
-      ) : null}
+      <BeforeDoors t={t} barId={barId} />
+      <NeedsYou t={t} />
       {t.learn.length ? (
         <TonightSection title="Learn">
           <View role="list">
-            {t.learn.map(({ drink, list }, i) => (
-              <LearnRow key={drink.id} id={drink.id} kind={drink.kind} name={drink.name} sub={`New on ${list}`} first={i === 0} />
+            {t.learn.map((row, i) => (
+              <LearnRow key={`${row.id}-${i}`} {...row} first={i === 0} />
             ))}
           </View>
         </TonightSection>
       ) : null}
+      <OnShift t={t} />
       <TonightWeek barId={barId} />
     </View>
   );
 }
 
-function LearnRow({ id, kind, name, sub, first }: { id: string; kind: string; name: string; sub: string; first: boolean }) {
+/** A Learn row: a drink and what to learn about it; `href` opens Study on it (a run-through), null opens the drink. */
+function LearnRow({ id, kind, name, sub, href, first }: { id: string; kind: string; name: string; sub: string; href: string | null; first: boolean }) {
   const ds = useDs();
   const router = useRouter();
   return (
-    <PressableScale role="link" accessibilityLabel={`${name}. ${sub}`} onPress={() => router.push(itemHref(categoryOf(kind), id) as Href)} style={[styles.learn, { borderTopColor: first ? 'transparent' : ds.c.line }]}>
+    <PressableScale role="link" accessibilityLabel={`${name}. ${sub}`} onPress={() => router.push((href ?? itemHref(categoryOf(kind), id)) as Href)} style={[styles.learn, { borderTopColor: first ? 'transparent' : ds.c.line }]}>
       <DrinkDrawingFor itemId={id} size="row" pour={false} />
       <View style={styles.flex}>
         <DsText variant="headline" numberOfLines={1} style={{ fontFamily: displayFaces[ds.displayFace].regular }}>
@@ -148,6 +108,7 @@ function LearnRow({ id, kind, name, sub, first }: { id: string; kind: string; na
         </DsText>
         <Caption tone="muted">{sub}</Caption>
       </View>
+      <IconSymbol name="chevron.right" size={16} color={ds.c.muted} />
     </PressableScale>
   );
 }

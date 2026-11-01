@@ -1,6 +1,6 @@
 import assert from 'node:assert/strict';
 
-import { allergenSummary, allergyLine, menuLens, methodLine, rowStateMark } from './menuLens';
+import { allergenChips, allergenSummary, allergensTonight, allergyLine, isLivingList, menuLens, methodLine, rowStateMark } from './menuLens';
 
 const bar = 'b1';
 assert.equal(menuLens({ barId: null, caps: null, roleLevel: null, mine: true }), 'home');
@@ -29,5 +29,20 @@ assert.equal(allergyLine(['Egg'], 1), 'Egg in 1 drink');
 assert.equal(allergyLine(['Egg'], 0), null);
 assert.equal(allergenSummary(new Map([['Egg', 1], ['Sulphites', 2]])), 'Egg in 1 · sulphites in 2');
 assert.equal(allergenSummary(new Map()), 'None on this menu');
+
+// Safety: an unchecked drink never reads as free of allergens.
+assert.deepEqual(allergenChips(undefined, true), ['Not checked']);
+assert.equal(allergenChips(undefined, false), null);
+assert.deepEqual(allergenChips([], true), []);
+assert.deepEqual(allergenChips(['Egg'], true), ['Egg']);
+assert.equal(allergensTonight(new Map(), 0, 3), 'Not checked yet');
+assert.equal(allergensTonight(new Map(), 3, 3), 'None on this menu');
+assert.equal(allergensTonight(new Map(), 2, 3), '1 not checked');
+assert.equal(allergensTonight(new Map([['Egg', 1]]), 2, 3), 'Egg in 1 · 1 not checked');
+
+assert.equal(isLivingList([{ onFrom: null }], '2026-10-01T00:00:00Z'), false);
+assert.equal(isLivingList([{ onFrom: '2026-10-01T00:00:00Z' }], '2026-10-01T00:00:00Z'), false);
+assert.equal(isLivingList([{ onFrom: '2026-10-12T00:00:00Z' }], '2026-10-01T00:00:00Z'), true);
+assert.equal(isLivingList([{ onFrom: null }], '2026-10-01T00:00:00Z', 1), true);
 
 console.log('menuLens ok');

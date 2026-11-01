@@ -1,21 +1,18 @@
-import { useRouter, type Href } from 'expo-router';
 import { useState } from 'react';
-import { Platform, StyleSheet, useWindowDimensions, View } from 'react-native';
-import Animated, { useAnimatedScrollHandler, useSharedValue } from 'react-native-reanimated';
+import { Platform } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
-import { BackbarTheme, BrandProvider, GlassButton, useBreakpoint, useDs, useGutter } from '@/components/ds';
+import { BackbarTheme, BrandProvider } from '@/components/ds';
 import { space } from '@/constants/tokens';
-import { useSignedIn } from '@/ctx/AuthContext';
+import { useSignedIn, useUserId } from '@/ctx/AuthContext';
 import { useActiveVenue } from '@/hooks/useActiveVenue';
-import { creditedToBar } from '@/hooks/useCocktails';
 import { useCapabilities } from '@/hooks/useCapabilities';
 import { useDilutionDefaults } from '@/hooks/useDrinkMath';
 import { useDrinkPhotos } from '@/hooks/useDrinkPhotos';
 import { useItemGlassFill } from '@/hooks/useGlassFill';
-import { useDrinkMakerCredits } from '@/hooks/useMakers';
+import { useLineage } from '@/hooks/useLineage';
 import { useMode } from '@/hooks/useMode';
-import { useSearchMine } from '@/hooks/useSearchMine';
+import { useBarProfile } from '@/hooks/useRankings';
 import { useShareSlug } from '@/hooks/useShareSlug';
 import { useSpecAccess } from '@/hooks/useSpecAccess';
 import { useSpecLock, type SpecLock } from '@/hooks/useSpecLock';
@@ -24,56 +21,51 @@ import { useItemVersions } from '@/hooks/useVersions';
 import { useEffectiveRole } from '@/hooks/useViewAs';
 import { makingParts } from '@/lib/drinkParts';
 import { heroPictures } from '@/lib/drinkPhotos';
-import { glassOver, orderedPictures, type ItemImageLink } from '@/lib/itemImages';
+import { drinkViewer, makesIt, onTeam } from '@/lib/drinkViewer';
+import { glassOver, orderedPictures, type ItemImageLink, type ItemPicture } from '@/lib/itemImages';
 import { drinkUrl, shareOrCopy } from '@/lib/shareLink';
 import { specLines, type PresentationRecipe, type SpecLevels } from '@/lib/spec';
+import { methodVerb } from '@/lib/specView';
 import type { SketchInputs } from '@/lib/sketch/types';
 import type { DatabaseItem } from '@/types/types';
 
 import { BatchSheet } from '../batch/BatchSheet';
 import { useCollectToggle } from '../published/useCollectToggle';
-import { DrinkActionBar, ACTION_BAR_HEIGHT, type BarAction } from './DrinkActionBar';
 import { DrinkBody } from './DrinkBody';
-import { useDrinkSections } from './DrinkSections';
-import { DrinkControls } from './DrinkControls';
-import { DrinkDesktop } from './DrinkDesktop';
-import { DrinkHero, phoneHeroHeight } from './DrinkHero';
+import { DrinkHero } from './DrinkHero';
 import { DrinkMoreMenu } from './DrinkMoreMenu';
+import { useDrinkSections } from './DrinkSections';
+import { DrinkArt, drawingSize, useSkyColour } from './DrawingHero';
 import { GlassSheet } from './GlassSheet';
+import { ItemShell } from './ItemShell';
 import type { ShownPicture } from './PictureViewer';
-import { StrengthSheet } from './StrengthSheet';
-import { useDeleteDrink } from './useDeleteDrink';
 import { useDrinkActions } from './useDrinkActions';
 import { useDrinkFacts } from './useDrinkFacts';
 
 export interface DrinkScreenProps {
   item: DatabaseItem;
-  inStudyPile: boolean;
-  onToggleStudyPile: () => void;
   /** The drink's own people (its venue's team, its creator): Edit. The page itself stays a read view; changes happen in the editor. */
   canEdit: boolean;
   /** A catalog admin on someone else's drink: a visitor's page with one Fix as admin in More. */
   adminFix?: boolean;
   onEdit: () => void;
-  /** Fit it to the glass (QA Q38): opens the editor with the spec fitted to the glass's wash line. */
-  onFit?: () => void;
-  /** The hero's Photos button, for people who can edit: editing, on its photos. */
-  onPhotos?: () => void;
   /** Shown as a modal. An iOS page sheet starts below the status bar, but the insets still count it. */
   sheet?: boolean;
-  /** Beside a list (the tablet Library): the narrow layout, a short hero, no Back. */
+  /** Beside a list or in the editor's preview: nothing to go back to. */
   pane?: boolean;
   /** Open with the Batch sheet up (/cocktail/[id]/batch links here). */
   openBatch?: boolean;
   /** A bar's published drink read from its public page (VisitorDrink): the spec it keeps back. */
   visitorLock?: SpecLock | null;
-  /** /dev/drink and desktop's phone previews: a hero picture (bundled, or the photo being added), a drawing for a drink not yet saved, and a simulated role. */
+  /** /dev/drink and the editor's preview: a hero picture, a drawing for a drink not yet saved, and a simulated role. */
   preview?: { heroSource?: number | string | null; sketch?: SketchInputs | null; role: number; levels: SpecLevels };
 }
 
 /**
- * The redesigned drink page (read view). Editing still uses the existing
- * editor: onEdit hands over to it. The drink's own venue brands the page.
+ * The drink page (canvas GWBCX, Decided): a photo full bleed that decides
+ * light or dark, or the drawing on a soft sky of the drink's own colour that
+ * docks into the bar on scroll; then what this person may see, by who they
+ * are (lib/drinkViewer). Its venue brands it.
  */
 export function DrinkScreen(props: DrinkScreenProps) {
   const { venues } = useActiveVenue();
@@ -89,167 +81,103 @@ export function DrinkScreen(props: DrinkScreenProps) {
 
 export { DrinkLoading } from './DrinkLoading';
 
-function DrinkPage({ item, inStudyPile, onToggleStudyPile, canEdit, adminFix = false, onEdit, onFit, onPhotos, sheet, pane, openBatch, visitorLock, preview }: DrinkScreenProps) {
-  const ds = useDs();
-  const router = useRouter();
-  const insets = useSafeAreaInsets();
-  // In Library's pane: below an iPad's status bar (0 on the web).
-  const top = pane ? insets.top : sheet && Platform.OS === 'ios' ? space.sm : insets.top;
-  const gutter = useGutter();
-  const breakpoint = useBreakpoint();
-  const wide = breakpoint !== 'phone' && !pane;
-  const { width, height } = useWindowDimensions();
-  const home = useMode().mode === 'home';
-  const signedIn = useSignedIn();
-  const { access, amountsOpenAt } = useSpecAccess(item.id, item.bar_id, preview);
-  // A bar's drink whose page keeps the spec back: no spec, method or notes, just why (and on a Names page, no description).
-  const lock = useSpecLock(preview ? null : item).data ?? visitorLock;
-  // The bookmark: To make in Collection (want_list).
-  const toMake = useCollectToggle({ kind: 'drink', itemId: item.id }, !preview);
-  const lines = specLines(item.recipes as PresentationRecipe[] | undefined);
-  // Both modes: a party batch at home, a prep bottle at the bar.
-  const canBatch = !lock && access.amounts && lines.some((l) => l.value !== null);
-  const [batchOpen, setBatchOpen] = useState(!!openBatch);
-  const [strengthOpen, setStrengthOpen] = useState(false);
-  const [glassOpen, setGlassOpen] = useState(false);
-  const role = useEffectiveRole(item.bar_id);
-  const teamRole = useTeamRole(preview ? null : item.bar_id);
-  // The venue's own team sees its staff rows, in venue mode (decision b49). Viewing as a lower role, the app's
-  // banner says so where the board draws it, and Share moves into More (board drink-phone-floor).
-  const staff = !home && (teamRole !== null || !!preview);
-  const viewingAs = teamRole !== null && role < teamRole;
-  const { data: dilutionDefaults } = useDilutionDefaults(preview ? null : item.bar_id);
-  // The batch sheet's header names the spec: the house spec and its version at a venue.
-  const caps = useCapabilities(staff && !preview ? item.bar_id : null).data ?? [];
-  const version = useItemVersions(item.id, caps.includes('specs')).data?.[0]?.version;
-  const venue = useActiveVenue().venues.find((v) => v.id === item.bar_id);
-  // The Glass sheet checks the serve against the venue glass's wash line, as the spec's note does (QA Q38).
-  const glassFill = useItemGlassFill(glassOpen && staff && !lock && access.amounts ? item : null, lines);
-
-  const { make, marks, facts, tags, glass, ice, method, methods, strength } = useDrinkFacts(item, {
-    lines,
-    amounts: access.amounts && !preview,
-    dilutionDefaults,
-    openStrength: () => setStrengthOpen(true),
-    openGlass: preview ? undefined : () => setGlassOpen(true),
-    specLocked: !!lock,
-    measures: access.amounts && !lock,
-    makers: useDrinkMakerCredits(preview ? null : item.id).data,
-  });
+function DrinkPage(props: DrinkScreenProps) {
+  const { item, preview } = props;
   const links = item.item_images as ItemImageLink[] | undefined;
   // No photo of its own: the newest one someone posted leads, credited under the name.
   const shown = heroPictures(orderedPictures(links, item.show_sketch !== false), useDrinkPhotos(preview ? null : item.id).data);
-  const heroPic = shown.pictures[0] ?? null;
   const pictures: ShownPicture[] = preview ? (preview.heroSource ? [{ url: preview.heroSource, isSketch: false, isOutdated: false }] : []) : shown.pictures;
-  const heroHeight = pane ? PANE_HERO : wide ? height - top : phoneHeroHeight(width, height, top);
-  const scrollY = useSharedValue(0);
-  const onScroll = useAnimatedScrollHandler((e) => {
-    scrollY.value = e.contentOffset.y;
-  });
-  const glassKey = glass?.icon_key || glass?.name || null;
+  const photo = pictures[0] && !pictures[0].isSketch ? pictures : null;
+  // A photo decides light or dark for the whole page; the system mode only changes the controls (29 Oct).
+  return (
+    <BackbarTheme scheme={photo ? glassOver(photo[0]) : undefined}>
+      <Page {...props} photos={photo} photoCredit={shown.credit} heroPic={shown.pictures[0] ?? null} />
+    </BackbarTheme>
+  );
+}
+
+function Page({ item, canEdit, adminFix = false, onEdit, sheet, pane, openBatch, visitorLock, preview, photos, photoCredit, heroPic }: DrinkScreenProps & { photos: ShownPicture[] | null; photoCredit: string | null; heroPic: ItemPicture | null }) {
+  const insets = useSafeAreaInsets();
+  const top = pane ? insets.top : sheet && Platform.OS === 'ios' ? space.sm : insets.top;
+  const home = useMode().mode === 'home';
+  const signedIn = useSignedIn();
+  const userId = useUserId();
+  const { access } = useSpecAccess(item.id, item.bar_id, preview);
+  const lock = useSpecLock(preview ? null : item).data ?? visitorLock;
+  const lines = specLines(item.recipes as PresentationRecipe[] | undefined);
+  const realTeam = useTeamRole(preview ? null : item.bar_id);
+  const role = useEffectiveRole(item.bar_id);
+  const teamRole = preview ? (preview.role >= 20 ? preview.role : null) : !home && realTeam !== null ? role : null;
+  const viewer = drinkViewer({ home: home && !item.bar_id, own: !!userId && item.created_by === userId, teamRole, canEdit, amounts: access.amounts && !lock });
+  const viewingAs = realTeam !== null && role < realTeam;
+  const [batchOpen, setBatchOpen] = useState(!!openBatch);
+  const [glassOpen, setGlassOpen] = useState(false);
+  const caps = useCapabilities(onTeam(viewer) && !preview ? item.bar_id : null).data ?? [];
+  const version = useItemVersions(item.id, caps.includes('specs')).data?.[0]?.version;
+  const venue = useActiveVenue().venues.find((v) => v.id === item.bar_id);
+  const profile = useBarProfile(preview || venue ? null : item.bar_id).data;
+  const barName = lock?.bar.name ?? venue?.name ?? profile?.display_name ?? null;
+  const catalog = !!useLineage(preview ? null : item.id).data?.drink?.is_catalog;
+  const { data: dilutionDefaults } = useDilutionDefaults(preview ? null : item.bar_id);
+  const { glass, ice, method, methods, strength } = useDrinkFacts(item, { lines, amounts: access.amounts && !preview, dilutionDefaults, openStrength: () => {}, specLocked: !!lock, measures: access.amounts && !lock });
+  // How full the venue's glass comes, for whoever makes it there (QA Q38).
+  const fill = useItemGlassFill(makesIt(viewer) && onTeam(viewer) && !preview ? item : null, lines);
+  const canBatch = !lock && access.amounts && lines.some((l) => l.value !== null);
   const actions = useDrinkActions(item, heroPic, lines, venue?.name ?? null, !preview);
-  // A public drink shares its readable link (/d/penicillin); any other its id link, which asks the rest to sign in.
+  // To make: a bookmark for people who don't make it at a bar.
+  const bookmark = !preview && signedIn && !onTeam(viewer);
+  const toMake = useCollectToggle({ kind: 'drink', itemId: item.id }, bookmark);
   const slug = useShareSlug('d', preview ? null : item.id).data;
-  const share = () => void shareOrCopy(drinkUrl(slug ?? item.id), item.name);
-  // A riff starts where you are: your venue in venue mode, your own at home. Never in the drink's own bar (Kevin, 20 Oct).
-  const mine = useSearchMine();
-  const onRiff = signedIn && !preview ? () => router.push({ pathname: '/add-cocktail', params: { from: item.id, ...(mine.venueId ? { barId: mine.venueId } : {}) } } as unknown as Href) : null;
-  const riffNote = `Starts a new drink ${mine.venueId ? `at ${mine.label}` : 'of your own'} from this spec, credited as a riff on ${item.name}. This one stays as it is.`;
+  const share = preview || viewingAs ? undefined : () => void shareOrCopy(drinkUrl(slug ?? item.id), item.name);
+  const liquid = useSkyColour(photos ? null : item.id, preview?.sketch);
+  const eyebrow = viewer === 'home' ? 'My bar' : catalog ? 'Classic' : item.bar_id && barName ? `${barName} · House spec` : null;
 
-  // Pinned on phones (board drink-phone-venue): Batch, the accent in venue mode; at home the journey strip has I made it.
-  const barActions = (
-    [
-    canBatch ? { key: 'batch', label: 'Batch', icon: 'flask', primary: !home, accessibilityLabel: `Batch: scale this drink ${home ? 'for a party or a bottle' : 'into a bottle'}`, onPress: () => setBatchOpen(true) } : null,
-    preview ? null : { key: 'rank', label: 'Rank it', icon: 'list.number', accessibilityLabel: `Rank ${item.name} against others you've had`, onPress: actions.rank },
-    preview || lock || (home && signedIn) ? null : { key: 'made', label: actions.madeTimes ? `Made ×${actions.madeTimes}` : 'I made it', icon: 'house', accessibilityLabel: `I made ${item.name}`, onPress: actions.made },
-    ] as (BarAction | null)[]
-  ).filter((a): a is BarAction => !!a);
-  const pinned = !wide && barActions.length > 0;
-
-  const bodyProps = {
+  const sections = useDrinkSections({
     item,
+    viewer,
     preview,
-    home,
-    wide,
-    canEdit,
-    staff,
+    eyebrow,
+    barName,
     lock,
-    access,
-    amountsOpenAt,
     lines,
-    make,
-    marks,
-    facts,
-    tags,
-    glass: glassKey,
-    photoCredit: shown.credit ? { text: shown.credit, url: heroPic?.sourceUrl ?? null } : null,
-    toMake,
-    actions,
-    onRiff,
-    riffNote,
-    onFit: canEdit ? (onFit ?? null) : null,
-    venueName: teamRole !== null ? (venue?.name ?? null) : null,
-  };
-  const sections = useDrinkSections(bodyProps);
-  const hero = (h: number) => <DrinkHero name={item.name} pictures={pictures} glass={glassKey} itemId={item.id} palette={pictures[0]?.palette} height={h} fade={!wide} onPhotos={canEdit && !preview ? onPhotos : undefined} sketch={preview?.sketch} />;
-  const deleteDrink = useDeleteDrink();
-  // The editor's rule: the drink's own people, unless it's credited to a bar. Beside a list (pane), the list drops it.
-  const onDelete = canEdit && !creditedToBar(item) ? () => {
-    deleteDrink({ id: item.id, name: item.name });
-    if (pane) return;
-    if (router.canGoBack()) router.back();
-    else router.replace('/');
-  } : undefined;
-  const more = preview ? null : <DrinkMoreMenu itemId={item.id} name={item.name} canEdit={canEdit} adminFix={adminFix && !preview} onEdit={onEdit} wide={wide} onShare={viewingAs ? share : undefined} onDelete={onDelete} teamRole={teamRole} />;
-  const heroScheme = glassOver(pictures[0]);
+    verb: methodVerb(methods),
+    serve: [glass?.name, ice?.name],
+    fill,
+    onGlass: () => setGlassOpen(true),
+    onBatch: canBatch ? () => setBatchOpen(true) : undefined,
+    onRank: preview ? undefined : actions.rank,
+    canEdit,
+    photoCredit,
+  });
+
+  const size = drawingSize(makesIt(viewer));
+  const more = preview ? null : <DrinkMoreMenu itemId={item.id} name={item.name} canEdit={canEdit} adminFix={adminFix} onEdit={onEdit} />;
 
   return (
-    <View style={[styles.screen, { backgroundColor: ds.c.ground }]}>
-      {wide ? (
-        <DrinkDesktop
-          sections={sections}
-          hero={hero}
-          top={top}
-          actions={<DrinkActionBar actions={barActions} pinned={false} />}
-          heroActions={
-            <>
-              <GlassButton accessibilityLabel={toMake.saved ? 'Remove from To make' : 'Add to To make'} icon={toMake.saved ? 'bookmark.fill' : 'bookmark'} onMedia onPress={preview ? () => {} : toMake.toggle} />
-              {preview || viewingAs ? null : <GlassButton accessibilityLabel="Share" icon="square.and.arrow.up" onMedia onPress={share} />}
-              {canEdit ? <GlassButton accessibilityLabel="Edit drink" label="Edit" onMedia onPress={onEdit} /> : null}
-              {more}
-            </>
-          }
-        />
-      ) : (
-        <Animated.ScrollView onScroll={onScroll} scrollEventThrottle={16} contentContainerStyle={{ paddingBottom: insets.bottom + (pinned ? ACTION_BAR_HEIGHT : 0) + space.xxxl }}>
-          {hero(heroHeight)}
-          <View style={{ marginTop: -space.xxl, paddingHorizontal: gutter }}>
-            <DrinkBody sections={sections} home={home} />
-          </View>
-        </Animated.ScrollView>
-      )}
-      {pinned ? <DrinkActionBar actions={barActions} pinned /> : null}
-      {/* Wide: the sidebar and the hero card's own buttons; no floating back (board drink-desktop). */}
-      {wide && breakpoint === 'desktop' ? null : (
-      <DrinkControls
-        media={heroScheme === 'dark' ? 'photo' : 'paper'}
-        top={top}
-        heroHeight={heroHeight}
-        scrollY={scrollY}
-        wide={wide}
-        noBack={pane}
-        saved={toMake.saved} onToggleSaved={preview ? () => {} : toMake.toggle}
-        inStudyPile={inStudyPile} onToggleStudyPile={onToggleStudyPile}
-        canEdit={canEdit} onEdit={onEdit}
-        onShare={preview || viewingAs ? undefined : share}
-        more={more}
-        backOnly={wide}
-      />
-      )}
+    <ItemShell
+      name={item.name}
+      top={top}
+      pane={pane}
+      inTabs
+      photo={photos ? { url: photos[0].url, hero: (h, fade) => <DrinkHero name={item.name} pictures={photos} glass={glass?.icon_key || glass?.name || null} itemId={item.id} palette={photos[0].palette} height={h} fade={fade} /> } : null}
+      art={<DrinkArt itemId={item.id} sketch={preview?.sketch} label={`Drawing of ${item.name}`} size={size} />}
+      size={size}
+      liquid={liquid}
+      title={sections.title}
+      action={sections.action}
+      body={(columns) => <DrinkBody sections={{ ...sections, action: columns ? null : sections.action }} title={!columns} />}
+      controls={{
+        save: bookmark ? { saved: toMake.saved, onToggle: toMake.toggle, label: ['Add to To make', 'Remove from To make'] } : null,
+        onShare: share,
+        onEdit: canEdit && !preview ? onEdit : undefined,
+        editLabel: 'Edit drink',
+        more,
+      }}
+    >
       {toMake.sheet}
       {actions.sheets}
       {glassOpen ? (
-        <GlassSheet visible onClose={() => setGlassOpen(false)} itemId={item.id} name={item.name} glass={glass} iceName={ice?.name ?? null} serveMl={item.serve_ml ?? null} icePerServeG={item.ice_per_serve_g ?? null} editing={false} fill={glassFill} accent={venue?.accent ?? undefined} />
+        <GlassSheet visible onClose={() => setGlassOpen(false)} itemId={item.id} name={item.name} glass={glass} iceName={ice?.name ?? null} serveMl={item.serve_ml ?? null} icePerServeG={item.ice_per_serve_g ?? null} editing={false} fill={fill} accent={venue?.accent ?? undefined} />
       ) : null}
       {canBatch && batchOpen ? (
         <BatchSheet
@@ -265,34 +193,12 @@ function DrinkPage({ item, inStudyPile, onToggleStudyPile, canEdit, adminFix = f
           canEdit={canEdit}
           accent={venue?.accent ?? undefined}
           specLabel={item.bar_id ? `House spec${version ? ` · version ${version}` : ''}` : method === 'stirred' ? 'For the freezer' : item.name}
-          barId={staff ? item.bar_id : null}
+          barId={onTeam(viewer) ? item.bar_id : null}
           canPrep={caps.includes('house_made')}
           parts={makingParts(item.madeInParts, item.item_methods)}
           itemId={item.id}
         />
       ) : null}
-      {strength ? (
-        <StrengthSheet
-          visible={strengthOpen}
-          onClose={() => setStrengthOpen(false)}
-          itemId={item.id}
-          name={item.name}
-          strength={strength}
-          method={method}
-          dilutionPct={item.dilution_pct ?? null}
-          canEdit={canEdit}
-          defaultsHref={item.bar_id && role >= 40 ? (`/settings/bar/${item.bar_id}/dilution` as Href) : null}
-          accent={venue?.accent ?? undefined}
-        />
-      ) : null}
-    </View>
+    </ItemShell>
   );
 }
-
-/** The hero's height in the tablet Library's detail pane, as drawn. */
-const PANE_HERO = 220;
-
-const styles = StyleSheet.create({
-  screen: { flex: 1 },
-  flex: { flex: 1 },
-});
