@@ -56,7 +56,7 @@ function SideNav() {
   const setSearching = useSearchPalette((s) => s.setOpen);
 
   // A page that isn't a row (a drink, the add wizard) keeps the row it came from lit.
-  const rows = [...places.tabs, places.history, ...places.work, ...places.venuePlaces, places.week].filter((p): p is Place => !!p);
+  const rows = [...places.tabs, places.history, places.menus, ...places.work, ...places.venuePlaces, places.week].filter((p): p is Place => !!p);
   const [last, setLast] = useState<string | null>(null);
   // "Set up <bar>" lives under Venue settings' path but is its own row (SetupNav).
   const current = pathname.endsWith('/what-next') ? null : navCurrent(pathname, rows, last);
@@ -102,16 +102,15 @@ function SideNav() {
 
 /**
  * The desktop sidebar, as the canvas draws it: the marks, Search (⌘K), the
- * mode's tabs and History, the venue's Back bar, New (N), This week, the
- * Venue section, and you at the foot. A venue's switches decide which of
- * Tonight, Prep, Study, History, Back bar and This week are here. Pages need no header row of
- * their own.
+ * four tabs and History, the venue's Menus, Prep, Study, Back bar and
+ * Glassware, New (N), This week, the Venue section, and you at the foot.
+ * Pages need no header row of their own.
  */
 function Sidebar({ current, go, searching, onSearch, onNew }: SideNavProps) {
   const ds = useDs();
   // An iPad's status bar and home indicator; 0 on the web.
   const insets = useSafeAreaInsets();
-  const { venue, tabs, work, venuePlaces, history, week } = useNavPlaces();
+  const { venue, tabs, menus, work, venuePlaces, history, week } = useNavPlaces();
   const row = (p: Place) => <NavRow key={p.key} label={p.label} icon={p.icon} current={current === p.key} onPress={() => go(p)} />;
   // History sits right under Discover.
   const nav = tabs.flatMap((t) => (t.key === 'discover' && history ? [t, history] : [t]));
@@ -124,6 +123,7 @@ function Sidebar({ current, go, searching, onSearch, onNew }: SideNavProps) {
       <SetupNav />
       <NavRow label="Search" icon="magnifyingglass" role="button" look="filled" hint={keys ? (isApplePlatform() ? '⌘K' : 'Ctrl K') : undefined} current={searching} onPress={onSearch} />
       {nav.map(row)}
+      {menus ? row(menus) : null}
       {work.map(row)}
       <NavRow label="New" icon="plus" role="button" look="outlined" hint={keys ? 'N' : undefined} current={false} onPress={onNew} />
       {venue ? <RoundNav /> : null}

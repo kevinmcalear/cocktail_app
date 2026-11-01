@@ -201,7 +201,7 @@ function IngredientPage({ ingredient, lines, drinks, bottles, pictures: batchPic
 
   const hero = pictures ? <IngredientHero id={ingredient.id} name={ingredient.name} pictures={pictures} height={heroHeight} fade={!wide} /> : <View style={{ height: heroHeight }} />;
   const bottomRoom = insets.bottom + space.xxxl + (pinned ? layout.minTapTarget + space.xl : 0);
-  const trail: Crumb[] = home ? [{ label: 'My Bar', href: '/bar' }] : [{ label: 'Library', href: '/library' }, { label: isPrep ? 'House-made' : 'Ingredients', href: '/library' }];
+  const trail: Crumb[] = home ? [{ label: 'Tonight', href: '/' }] : [{ label: 'Drinks', href: '/drinks' }, { label: isPrep ? 'House-made' : 'Ingredients', href: '/drinks' }];
 
   return (
     <View style={[styles.screen, { backgroundColor: ds.c.ground }]}>

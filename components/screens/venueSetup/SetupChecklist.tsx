@@ -126,7 +126,7 @@ export function SetupChecklist({ barId, name, footer }: { barId: string; name: s
         open('/bring-in');
       } else if (inLibrary) {
         enterVenue(barId);
-        router.navigate('/library');
+        router.navigate('/drinks');
       } else if (menuId) open(`/menus/${menuId}/edit`);
       else setAt('menu');
     },

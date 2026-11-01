@@ -16,7 +16,7 @@ export function ShoppingScreen() {
   const gutter = useGutter();
   const wide = useBreakpoint() !== 'phone';
   const sidebar = useIsWideWeb();
-  const back = () => (router.canGoBack() ? router.back() : router.navigate('/bar' as Href));
+  const back = () => (router.canGoBack() ? router.back() : router.navigate('/'));
 
   return (
     <View style={[styles.screen, { backgroundColor: ds.c.ground }]}>

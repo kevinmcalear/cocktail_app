@@ -22,7 +22,7 @@ import { weekCount } from '@/lib/week';
 import { RoundPlacesNote, RoundSheetBlock } from '@/components/screens/firstRound/RoundElsewhere';
 import { useFirstRound } from '@/hooks/useFirstRound';
 
-import { MENUS_PLACE, useNavPlaces, type Place } from './navPlaces';
+import { useNavPlaces, type Place } from './navPlaces';
 import { useTeamCard } from './TeamCard';
 import { HomeMark, useSwitchTo, VenueMark } from './VenueMarks';
 
@@ -98,7 +98,7 @@ function useVenueValues(venue: Venue): Record<string, string> {
 function useHomeValues(): Record<string, string> {
   const bottles = useShelf().data?.length ?? 0;
   const toMake = useCollection().data?.drinks.length ?? 0;
-  return { bar: shelfLine(bottles), collection: collectionLine(toMake) };
+  return { tonight: shelfLine(bottles), drinks: collectionLine(toMake) };
 }
 
 /** One rounded group of places under its heading, as iOS Settings and Material lists draw a section. */
@@ -128,12 +128,9 @@ function Group({ heading, places, values, onGo, label }: { heading?: string; pla
  * gets Invite on My team, which opens its invite sheet.
  */
 function VenuePlaces({ venue, onGo }: { venue: Venue; onGo: (p: Place) => void }) {
-  const { work, venuePlaces, week } = useNavPlaces();
-  const round = useFirstRound();
+  const { menus, work, venuePlaces, week } = useNavPlaces();
   const values = useVenueValues(venue);
-  // Menus waits for its step in the first round, like its tab.
-  const menus = round.hidden.includes('menus') ? [] : [MENUS_PLACE];
-  const working = [...menus, ...work, ...(week ? [week] : [])];
+  const working = [menus, ...work, week].filter((p): p is Place => !!p);
   const setup = venuePlaces.map((p) => (p.key === 'team' && values.team === 'Invite' ? { ...p, path: '/team?invite=1' } : p));
   return (
     <>
@@ -154,9 +151,9 @@ const SET_UP: Place = { key: 'set-up', label: 'Run a bar? Set it up', icon: 'bui
 
 function HomePlaces({ onGo, setUp }: { onGo: (p: Place) => void; setUp: boolean }) {
   const started = startedSetup(useVenueSetup((s) => s.runs));
-  // My Bar, Collection and You, as decided on the canvas (10 Oct): the home tabs past Discover.
+  // Tonight (your shelf) and Drinks (your collection), with their counts, until the place switcher lane redraws this menu.
   const { tabs: all } = useNavPlaces();
-  const tabs = all.filter((t) => t.key !== 'discover');
+  const tabs = all.filter((t) => t.key === 'tonight' || t.key === 'drinks');
   const values = useHomeValues();
   return (
     <>

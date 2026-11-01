@@ -45,7 +45,7 @@ function Page({ barId, title, intro, children, crumb, up, wide }: PageProps) {
   const frame = usePageFrame(wide ? 'wide' : 'text');
   const gutter = useGutter();
   const tabBarInset = useTabBarInset();
-  const settings = (barId ? `/settings/bar/${barId}` : '/bar') as Href;
+  const settings = (barId ? `/settings/bar/${barId}` : '/') as Href;
   const crumbs = [{ label: barId ? 'Venue settings' : 'My Bar', href: settings }, ...(up ? [up] : [])];
   const back = up?.href ?? settings;
   return (
