@@ -17,7 +17,7 @@ import { VenueBrandProvider } from './VenueBrandProvider';
  * Discover and You, the same for everyone; the mode changes what each shows.
  * The system tab bar (Liquid Glass on iOS 26+, Material 3 on Android), tinted
  * with the venue's accent, with Search beside them. Each tab holds its own
- * stack (app/(tabs)/(tonight,drinks,discover,you)/_layout.tsx). The place
+ * stack (app/(tabs)/(1-tonight,2-drinks,3-discover,4-you)/_layout.tsx). The place
  * button and the + sit in each page's header (ScreenHeader.tsx); Android's
  * Add is the extended FAB. Web uses JsTabs.tsx.
  * Tonight is a calendar page showing the date, which turns over at 6am.
