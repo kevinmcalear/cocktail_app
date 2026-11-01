@@ -2,6 +2,7 @@ import { useEffect, useState } from 'react';
 import { Platform } from 'react-native';
 
 import { ChoiceChips, ControlRow, RowDivider, SelectRow, SettingsSection, SwitchRow } from '@/components/screens/settings/SettingsParts';
+import { UnitsRow } from '@/components/screens/settings/UnitsRow';
 import { hasAiConsent, setAiConsent } from '@/lib/aiConsent';
 import { appIconChoices, currentAppIcon, setAppIcon } from '@/lib/appIcon';
 import { useActiveVenue } from '@/hooks/useActiveVenue';
@@ -23,6 +24,8 @@ export function PreferencesSection() {
   // Your bar's unit (bars.spec_unit) is the default; picking one of your own wins over it.
   const active = useActiveVenue().active;
   const bar = active?.unit ? { name: active.name, unit: active.unit } : null;
+  // ml, oz and cl as drawn; grams stay for someone already on them.
+  const ownUnits = DEFAULT_UNIT_OPTIONS.filter((o) => o.id !== 'g' || units === 'g');
   const { viewAsRoleLevel, setViewAsRoleLevel, isSaving: viewAsSaving } = useViewAs();
   const maxRealRole = useMaxRealRole();
   const viewAsChoices = viewAsOptions(maxRealRole);
@@ -45,11 +48,11 @@ export function PreferencesSection() {
         <ChoiceChips label="Appearance" options={THEME_MODES} value={themeMode} onChange={setThemeMode} />
       </ControlRow>
       <RowDivider />
-      <SelectRow
-        label="Units"
-        detail={bar ? (units ? `Yours, over ${bar.name}’s ${bar.unit}` : `${bar.name}’s, for specs and new recipe lines`) : 'Specs on drink pages, and new recipe lines'}
-        options={bar ? [{ id: 'bar', label: `${bar.name}’s (${bar.unit})` }, ...DEFAULT_UNIT_OPTIONS] : DEFAULT_UNIT_OPTIONS}
+      <UnitsRow
+        intro={bar ? 'Yours wins over the bar’s, on every drink you open.' : undefined}
+        options={bar ? [{ id: 'bar', label: 'Like my bar', sub: `${bar.name} uses ${bar.unit}` }, ...ownUnits] : ownUnits}
         value={units ?? (bar ? 'bar' : 'ml')}
+        unit={units ?? bar?.unit ?? 'ml'}
         onChange={(id) => setUnits(id === 'bar' ? null : id)}
       />
       <RowDivider />
