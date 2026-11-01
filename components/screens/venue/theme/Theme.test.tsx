@@ -109,7 +109,7 @@ describe('Theme on Android', () => {
   test('draws the full-screen dialog: Light and Dark, the pages, Colour, Type for names, Logo', async () => {
     const onScheme = jest.fn();
     const onOpen = jest.fn();
-    await renderWithProviders(<ThemeAndroid parts={parts()} canEdit bar={null} scheme="light" onScheme={onScheme} onOpen={onOpen} message={null} />);
+    await renderWithProviders(<ThemeAndroid parts={parts()} canEdit bar={null} onClose={jest.fn()} scheme="light" onScheme={onScheme} onOpen={onOpen} message={null} />);
     expect(screen.getByText('Type for names')).toBeTruthy();
     expect(screen.getByText('Colours come from it')).toBeTruthy();
     expect(screen.getByRole('radio', { name: 'Neutral' })).toBeTruthy();

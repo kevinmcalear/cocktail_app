@@ -61,6 +61,7 @@ function ThemeEditor({ row, canEdit, header, onBack }: { row: VenueBrandRow; can
           parts={parts}
           canEdit={canEdit}
           bar={<DialogBar title="Theme" onClose={() => onBack(d.changed)} onSave={canEdit ? saveNow : undefined} canSave={canSave} saveLabel={saveLabel} />}
+          onClose={() => onBack(d.changed)}
           scheme={scheme}
           onScheme={setScheme}
           onOpen={setOpened}

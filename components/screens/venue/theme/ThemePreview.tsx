@@ -56,7 +56,8 @@ export function ThemePreview({ page, look, scheme, onScheme, onClose }: Props) {
   };
   const name = who === 'staff' ? 'The staff phone' : (MINIS.find((m) => m.kind === page)?.label ?? '');
   return (
-    <Modal visible={!!page} animationType={reduceMotion ? 'none' : 'slide'} onRequestClose={close} supportedOrientations={['portrait', 'landscape']}>
+    // Android: drawn under the status and navigation bars, so the page's own insets place it, as on iOS.
+    <Modal visible={!!page} animationType={reduceMotion ? 'none' : 'slide'} onRequestClose={close} statusBarTranslucent navigationBarTranslucent supportedOrientations={['portrait', 'landscape']}>
       {/* The photo decides its own mode (Decided), so its page is the night page in either. */}
       <BackbarTheme scheme={kind === 'photo' ? 'dark' : scheme}>
         <BrandProvider accent={look.accent ?? DEFAULT_ACCENT} groundTint={look.groundTint} displayFace={look.displayFace}>

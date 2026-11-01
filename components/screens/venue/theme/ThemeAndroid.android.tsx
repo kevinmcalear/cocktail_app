@@ -1,5 +1,5 @@
-import type { ReactNode } from 'react';
-import { ScrollView, StyleSheet, View } from 'react-native';
+import { useEffect, type ReactNode } from 'react';
+import { BackHandler, ScrollView, StyleSheet, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import { Body, Caption, DsText, PressableScale, useDs } from '@/components/ds';
@@ -21,6 +21,8 @@ export interface ThemeAndroidProps {
   canEdit: boolean;
   /** The full-screen dialog's bar: X, Theme, and Save as text. */
   bar: ReactNode;
+  /** Back closes it as the X does (asking first if anything changed). */
+  onClose: () => void;
   scheme: BackbarScheme;
   onScheme: (scheme: BackbarScheme) => void;
   onOpen: (kind: MiniKind) => void;
@@ -34,8 +36,16 @@ export interface ThemeAndroidProps {
  * under labels in the bar's colour. The tonal colours come from the bar's
  * colour, not the phone's wallpaper. The same sheets as the phone's.
  */
-export function ThemeAndroid({ parts, canEdit, bar, scheme, onScheme, onOpen, message }: ThemeAndroidProps) {
+export function ThemeAndroid({ parts, canEdit, bar, onClose, scheme, onScheme, onOpen, message }: ThemeAndroidProps) {
   const ds = useDs();
+  // Back (and predictive back, once it's on) closes the dialog the X's way. A sheet open over it takes back first.
+  useEffect(() => {
+    const sub = BackHandler.addEventListener('hardwareBackPress', () => {
+      onClose();
+      return true;
+    });
+    return () => sub.remove();
+  }, [onClose]);
   const insets = useSafeAreaInsets();
   const c = useColourPart(parts);
   const t = useTypePart(parts);
