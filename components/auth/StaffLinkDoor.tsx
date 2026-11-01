@@ -13,21 +13,24 @@ import { doorLines, doorState } from '@/lib/staffDoor';
  * Miss-door, Miss-door-desk). The link's settings decide the door: Ask to
  * join (an Admin approves each one), Asked (with Take back your ask), Join
  * as <role> straight in when nobody approves, or This link is off. Joining
- * calls onJoined, which opens the menu on now.
+ * calls onJoined, which opens the menu on now. The link's secret (token)
+ * opens the door: none, a wrong one, one for another bar, or one New link
+ * replaced reads as This link is off.
  */
-export function StaffLinkDoor({ slug, barId, brand, onJoined, fallback }: { slug: string; barId: string; brand: AuthBrand; onJoined: () => void; fallback: ReactNode }) {
+export function StaffLinkDoor({ token, barId, brand, onJoined, fallback }: { token: string | null; barId: string; brand: AuthBrand; onJoined: () => void; fallback: ReactNode }) {
   const router = useRouter();
   const { signOut } = useAuth();
-  const door = useStaffLinkDoor(slug, true);
+  const door = useStaffLinkDoor(token);
   const mine = useMyJoinRequest(barId);
-  const join = useJoinByStaffLink(slug, onJoined);
+  const join = useJoinByStaffLink(token, onJoined);
   const takeBack = useTakeBackJoinRequest();
   const [now] = useState(Date.now);
   const done = () => router.replace('/');
 
-  const d = door.data;
+  // Only this bar's link opens its door.
+  const d = door.data?.bar_id === barId ? door.data : null;
   // Nothing to show until both are read; a failed read says so, with Try again.
-  if (door.isPending || mine.isPending) return fallback;
+  if ((token && door.isPending) || mine.isPending) return fallback;
   if (door.isError || mine.isError) {
     return (
       <DoorPage brand={brand} title="Couldn’t open this link" body="Check your connection and try again.">
@@ -35,18 +38,9 @@ export function StaffLinkDoor({ slug, barId, brand, onJoined, fallback }: { slug
       </DoorPage>
     );
   }
-  // The slug changed between reading the bar and reading its door.
-  if (!d) {
-    return (
-      <DoorPage brand={brand} title="Link not found" body="This staff link doesn't match a venue. Ask your manager for a new one.">
-        <Button label="Done" variant="secondary" size="lg" onPress={done} />
-      </DoorPage>
-    );
-  }
-
   const ask = mine.data && !mine.data.declined_at ? mine.data : null;
-  const state = doorState({ linkOn: d.link_on, approve: d.approve, asked: !!ask });
-  const lines = doorLines(state, { bar: brand.name, me: d.me, admin: d.admin_name, admins: d.admin_count ?? 0, role: d.join_role, askedAt: ask?.created_at ?? null, now });
+  const state = doorState({ linkOn: !!d?.link_on, approve: d?.approve ?? true, asked: !!ask });
+  const lines = doorLines(state, { bar: brand.name, me: d?.me ?? null, admin: d?.admin_name ?? null, admins: d?.admin_count ?? 0, role: d?.join_role ?? null, askedAt: ask?.created_at ?? null, now });
   const busy = join.isPending || takeBack.isPending;
   const asking = state === 'ask' || state === 'join';
 

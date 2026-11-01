@@ -25,7 +25,8 @@ import { useAppMode } from '@/store/useAppMode';
  * venue selected. The installed app starts here too, and goes straight in.
  */
 export default function VenueStaffLink() {
-  const { slug } = useLocalSearchParams<{ slug: string }>();
+  // join: the staff link's secret (bar_staff_links.token). Without it, /v/<slug> is the team's own way in.
+  const { slug, join } = useLocalSearchParams<{ slug: string; join?: string }>();
   const venueQuery = useVenueBranding(slug?.toLowerCase());
   const venue = venueQuery.data;
   const { session, loading: authLoading } = useAuth();
@@ -86,7 +87,7 @@ export default function VenueStaffLink() {
     >
       {head}
       {session ? (
-        <MemberGate venue={venue} brand={brand} />
+        <MemberGate venue={venue} brand={brand} token={typeof join === 'string' && join ? join : null} />
       ) : (
         <StaffLinkSignIn slug={venue.slug} brand={brand} />
       )}
@@ -95,7 +96,7 @@ export default function VenueStaffLink() {
 }
 
 /** Signed in: on the venue's team, offer the install; with an invite, the invite; else the door (ask or join). */
-function MemberGate({ venue, brand }: { venue: VenueBranding; brand: AuthBrand }) {
+function MemberGate({ venue, brand, token }: { venue: VenueBranding; brand: AuthBrand; token: string | null }) {
   const router = useRouter();
   const { data: bars, isPending, isError, refetch } = useBars();
   const enterVenue = useAppMode((s) => s.enterVenue);
@@ -128,7 +129,7 @@ function MemberGate({ venue, brand }: { venue: VenueBranding; brand: AuthBrand }
   // Joining makes them a member, and the install step below takes over.
   if (!isMember && invite) return <InviteWelcome invite={invite} setUp onJoined={() => {}} onDeclined={() => router.replace('/')} />;
 
-  if (!isMember) return <StaffLinkDoor slug={venue.slug} barId={venue.id} brand={brand} onJoined={enter} fallback={<Loading />} />;
+  if (!isMember) return <StaffLinkDoor token={token} barId={venue.id} brand={brand} onJoined={enter} fallback={<Loading />} />;
 
   return (
     <AuthShell

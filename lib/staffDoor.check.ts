@@ -45,3 +45,7 @@ assert.match(doorLines('asked', { ...base, admins: 1 }).body, /^Ana sees your na
 assert.match(doorLines('asked', { ...base, admin: null }).body, /^The Admins see your name on Team\./);
 assert.equal(doorLines('ask', { ...base, admin: null }).note, 'You join as a Bartender. An Admin can change that.');
 assert.equal(doorLines('asked', { ...base, askedAt: '2026-11-01T19:59:30Z' }).note, 'Asked just now, as a Bartender.');
+
+// Their link was replaced while they wait: the ask stands, its role isn't known.
+assert.equal(doorLines('asked', { ...base, role: null }).note, 'Asked 20 minutes ago.');
+assert.equal(doorLines('off', { ...base, admin: null, role: null }).title, 'This link is off');

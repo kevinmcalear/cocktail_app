@@ -45,13 +45,14 @@ export function doorLines(
     /** The first name of the Admin who answers; none when the link is off or nobody is named. */
     admin: string | null;
     admins: number;
-    role: number;
+    /** The link's role; unknown when their link was replaced (only Asked shows then). */
+    role: number | null;
     askedAt: string | null;
     now: number;
   },
 ): DoorLines {
   const signedIn = x.me ? `You’re signed in as ${x.me}.` : 'You’re signed in.';
-  const as = withArticle(roleLabel(x.role));
+  const as = withArticle(roleLabel(x.role ?? 30));
   const who = x.admin ?? 'An Admin';
   if (state === 'off') {
     return {
@@ -71,7 +72,7 @@ export function doorLines(
       body: `${see} your name on Team. We’ll tell you when you’re in, and this link opens tonight’s menu from then on.`,
       primary: 'Done',
       secondary: 'Take back your ask',
-      note: ago ? `Asked ${ago}, as ${as}.` : `Asked, as ${as}.`,
+      note: x.role === null ? (ago ? `Asked ${ago}.` : null) : ago ? `Asked ${ago}, as ${as}.` : `Asked, as ${as}.`,
       noteIcon: 'clock',
     };
   }
