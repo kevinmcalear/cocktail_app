@@ -31,6 +31,9 @@ export interface TonightBlock {
 
 const CATEGORY: Record<string, ItemCategory> = { cocktail: 'Cocktail', beer: 'Beer', wine: 'Wine' };
 
+/** A list drink's kind as a page category, for its link (itemHref). */
+export const categoryOf = (kind: string): ItemCategory => CATEGORY[kind] ?? 'Cocktail';
+
 /**
  * What's pouring tonight at a venue: its menus on now (oldest first, the
  * running order), each with its sections and their drinks. A drink is new
@@ -77,7 +80,7 @@ export function useTonight(venueId: string | null) {
       blocks.flatMap((b) =>
         b.sections.flatMap((s) =>
           s.drinks.map((d) => {
-            const category = CATEGORY[d.kind] ?? 'Cocktail';
+            const category = categoryOf(d.kind);
             return { id: d.id, name: d.name, category, imageUrl: d.imageUrl, glass: d.glass || fallbackGlass(category), menuId: b.menu.id };
           })
         )

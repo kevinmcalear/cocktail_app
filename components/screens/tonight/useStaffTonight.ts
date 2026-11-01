@@ -1,4 +1,4 @@
-import { useMemo, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 
 import { useBarFacts } from '@/hooks/useBarFacts';
 import { useCapabilities } from '@/hooks/useCapabilities';
@@ -18,6 +18,9 @@ import { offTonight, tonightEyebrow } from '@/lib/tonight';
 /** Admins see Needs you (Prod-where: "Drink Creator and Admin"). */
 const NEEDS_YOU = 35;
 
+/** How often the page's clock moves on. */
+const TICK = 5 * 60_000;
+
 /**
  * Staff Tonight's data, from the one-home hooks: the lists on now (useTonight,
  * which the spec book serves offline), house-made short for tonight (the
@@ -29,7 +32,12 @@ export function useStaffTonight(barId: string) {
   const { menus, blocks, isLoading } = useTonight(barId);
   const date = useServiceDate();
   const hydrated = useIsHydrated();
-  const [now] = useState(() => new Date());
+  // The tab stays mounted all night: the clock moves on so doors, Off tonight and what's next stay true.
+  const [now, setNow] = useState(() => new Date());
+  useEffect(() => {
+    const tick = setInterval(() => setNow(new Date()), TICK);
+    return () => clearInterval(tick);
+  }, []);
   const role = useEffectiveRole(barId);
 
   // Doors: the bar's own hours, when its page has them.
@@ -58,7 +66,8 @@ export function useStaffTonight(barId: string) {
 
   const admin = role >= NEEDS_YOU;
   const credits = useCreditsToCheck().data?.length ?? 0;
-  const venueMenus = useVenueMenus(admin ? barId : null).data;
+  // The same query useTonight reads: no second fetch.
+  const venueMenus = useVenueMenus(barId).data;
   const next = useMemo(() => groupMenus((venueMenus ?? []).filter((m) => m.barId === barId), now.getTime()).upcoming[0] ?? null, [venueMenus, barId, now]);
 
   const lead = blocks[0] ?? null;

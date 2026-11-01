@@ -6,7 +6,7 @@ import { RowDivider, SettingsRow } from '@/components/screens/settings/SettingsP
 import { TonightSetupBanner } from '@/components/screens/venueSetup/SetupBanner';
 import { TonightWeek } from '@/components/screens/week/TonightWeek';
 import { displayFaces, space } from '@/constants/tokens';
-import type { TonightBlock } from '@/hooks/useTonight';
+import { categoryOf, type TonightBlock } from '@/hooks/useTonight';
 import { itemHref } from '@/lib/itemRoutes';
 import { plural } from '@/lib/menus';
 import { prepLine } from '@/lib/tonight';
@@ -63,7 +63,7 @@ function DrinkGrid({ block }: { block: TonightBlock }) {
   return (
     <View role="list" style={[styles.grid, { borderTopColor: ds.c.line }]}>
       {drinks.map((d) => (
-        <PressableScale key={d.id} role="link" accessibilityLabel={d.name} onPress={() => router.push(itemHref('Cocktail', d.id) as Href)} style={[styles.cell, { borderBottomColor: ds.c.line }]}>
+        <PressableScale key={d.id} role="link" accessibilityLabel={d.name} onPress={() => router.push(itemHref(categoryOf(d.kind), d.id) as Href)} style={[styles.cell, { borderBottomColor: ds.c.line }]}>
           <DrinkDrawingFor itemId={d.id} size="row" pour={false} />
           <DsText variant="headline" numberOfLines={1} style={[styles.flex, { fontFamily: displayFaces[ds.displayFace].regular }]}>
             {d.name}
@@ -100,7 +100,7 @@ export function StaffSide({ t, barId }: { t: Staff; barId: string }) {
             {t.off.slice(0, 2).map((d) => (
               <View key={`off-${d.id}`}>
                 <RowDivider />
-                <SettingsRow icon="exclamationmark.triangle" label="Off tonight" value={d.name} onPress={go(itemHref('Cocktail', d.id))} />
+                <SettingsRow icon="exclamationmark.triangle" label="Off tonight" value={d.name} onPress={go(itemHref(categoryOf(d.kind), d.id))} />
               </View>
             ))}
           </Surface>
@@ -126,7 +126,7 @@ export function StaffSide({ t, barId }: { t: Staff; barId: string }) {
         <TonightSection title="Learn">
           <View role="list">
             {t.learn.map(({ drink, list }, i) => (
-              <LearnRow key={drink.id} id={drink.id} name={drink.name} sub={`New on ${list}`} first={i === 0} />
+              <LearnRow key={drink.id} id={drink.id} kind={drink.kind} name={drink.name} sub={`New on ${list}`} first={i === 0} />
             ))}
           </View>
         </TonightSection>
@@ -136,11 +136,11 @@ export function StaffSide({ t, barId }: { t: Staff; barId: string }) {
   );
 }
 
-function LearnRow({ id, name, sub, first }: { id: string; name: string; sub: string; first: boolean }) {
+function LearnRow({ id, kind, name, sub, first }: { id: string; kind: string; name: string; sub: string; first: boolean }) {
   const ds = useDs();
   const router = useRouter();
   return (
-    <PressableScale role="link" accessibilityLabel={`${name}. ${sub}`} onPress={() => router.push(itemHref('Cocktail', id) as Href)} style={[styles.learn, { borderTopColor: first ? 'transparent' : ds.c.line }]}>
+    <PressableScale role="link" accessibilityLabel={`${name}. ${sub}`} onPress={() => router.push(itemHref(categoryOf(kind), id) as Href)} style={[styles.learn, { borderTopColor: first ? 'transparent' : ds.c.line }]}>
       <DrinkDrawingFor itemId={id} size="row" pour={false} />
       <View style={styles.flex}>
         <DsText variant="headline" numberOfLines={1} style={{ fontFamily: displayFaces[ds.displayFace].regular }}>

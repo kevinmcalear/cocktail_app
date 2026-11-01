@@ -1,6 +1,6 @@
 import { ScrollView, StyleSheet, View } from 'react-native';
 
-import { useDs } from '@/components/ds';
+import { PencilState, useDs } from '@/components/ds';
 import { ScreenHeader } from '@/components/nav/ScreenHeader';
 import { usePageColumn } from '@/components/nav/Page';
 import { useTabBarInset } from '@/components/nav/WebTabBar';
@@ -29,7 +29,14 @@ const SIDE = 340;
  */
 export function TonightScreen() {
   const home = useMode().mode === 'home';
-  const { active } = useActiveVenue();
+  const { active, isLoading } = useActiveVenue();
+  // While the bars load, a staff member's page waits rather than saying they have no bar.
+  if (!home && !active && isLoading)
+    return (
+      <Frame sky={[]} eyebrow="">
+        <PencilState kind="loading" title="Loading tonight" compact />
+      </Frame>
+    );
   return home || !active ? <HomePage venueless={!home} /> : <StaffPage barId={active.id} />;
 }
 

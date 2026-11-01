@@ -54,7 +54,7 @@ export function HomeTonight() {
       ) : null}
       {week.card ? (
         <TonightSection title="From bars you love">
-          <NewListCard item={week.card} />
+          <NewListCard item={week.card} from={week.from} />
         </TonightSection>
       ) : null}
       {nothing ? (
@@ -118,12 +118,12 @@ function WeekRow({ item, from, first }: { item: WeekItem; from: Date; first: boo
 }
 
 /** A new list from a bar you love, on a card with three of its drinks (Prod-today-home's Winter). */
-function NewListCard({ item }: { item: WeekItem }) {
+function NewListCard({ item, from }: { item: WeekItem; from: Date }) {
   const ds = useDs();
   const router = useRouter();
   const menu = useMenu(item.menuId).data;
   const ids = (menu?.sections ?? []).flatMap((s) => s.drinks.map((d) => d.id)).slice(0, 3);
-  const eyebrow = [item.barName, `goes on ${shortDay(itemDay(item), new Date()).toLowerCase()}`].filter(Boolean).join(' · ');
+  const eyebrow = [item.barName, `goes on ${shortDay(itemDay(item), from).toLowerCase()}`].filter(Boolean).join(' · ');
   const count = item.drinkCount ?? ids.length;
   return (
     <PressableScale role="link" accessibilityLabel={`${item.name}. ${eyebrow}`} onPress={() => router.push(weekHref(item, false))} style={[styles.card, { backgroundColor: ds.c.raised }]}>
