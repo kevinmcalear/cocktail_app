@@ -3,7 +3,7 @@ import { useRef, useState, type ComponentRef } from 'react';
 import { ScrollView, StyleSheet, Text, View } from 'react-native';
 
 import { Caption, DsText, Headline, PressableScale, TextLink, useDs } from '@/components/ds';
-import { displayFaces, fontFamilies, radius, space } from '@/constants/tokens';
+import { displayFaces, font, radius, space } from '@/constants/tokens';
 import { useSignedIn } from '@/ctx/AuthContext';
 import type { PublicDrinkMore, TreeDrink } from '@/hooks/usePublicDrink';
 import { drinkPageHref } from '@/lib/itemRoutes';
@@ -113,5 +113,5 @@ const styles = StyleSheet.create({
   },
   joint: { width: 18, height: 1.5 },
   riffs: { alignSelf: 'flex-start', gap: space.xs + 2, paddingLeft: space.md, borderLeftWidth: 1.5, marginTop: -space.xs },
-  score: { fontFamily: fontFamilies.mono },
+  score: { ...font.figures },
 });

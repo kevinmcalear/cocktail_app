@@ -3,7 +3,7 @@ import { Linking, Platform, StyleSheet, View } from 'react-native';
 
 import { Button, Caption, DsText, Field, PressableScale, useDs, type IconName } from '@/components/ds';
 import { IconSymbol } from '@/components/ui/icon-symbol';
-import { fontFamilies, radius, space } from '@/constants/tokens';
+import { font, radius, space } from '@/constants/tokens';
 import type { Profile } from '@/hooks/useProfiles';
 import {
   BAR_CLAIM_METHODS,
@@ -247,13 +247,13 @@ const styles = StyleSheet.create({
   flex: { flex: 1, minWidth: 0, gap: space.xs },
   shrink: { flexShrink: 1 },
   titleRow: { flexDirection: 'row', alignItems: 'flex-start', gap: space.sm },
-  strong: { fontFamily: fontFamilies.bodySemiBold },
-  medium: { fontFamily: fontFamilies.bodyMedium },
+  strong: { ...font.semiBold },
+  medium: { ...font.medium },
   // What the page is missing, typed under the way that needs it, lined up with the code.
   ask: { marginLeft: space.lg + 22 + space.md, marginRight: space.lg, marginBottom: space.lg },
   // The code in mono, left under the way it goes with (canvas make-venue-claim).
   code: { marginLeft: space.lg + 22 + space.md, marginRight: space.lg, marginBottom: space.lg, padding: space.md, gap: space.sm, borderWidth: 1, borderStyle: 'dashed', borderRadius: radius.control },
-  eyebrow: { letterSpacing: 1.2, fontFamily: fontFamilies.bodyMedium },
-  digits: { fontFamily: fontFamilies.monoMedium, fontVariant: ['tabular-nums'], letterSpacing: 2 },
+  eyebrow: { letterSpacing: 1.2, ...font.medium },
+  digits: { ...font.figuresMedium, fontVariant: ['tabular-nums'], letterSpacing: 2 },
   buttons: { flexDirection: 'row', flexWrap: 'wrap', gap: space.sm },
 });

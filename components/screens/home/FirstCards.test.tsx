@@ -1,6 +1,6 @@
 import { fireEvent, screen } from '@testing-library/react-native';
 
-import { renderWithTamagui } from '@/jest.setup';
+import { renderWithProviders } from '@/jest.setup';
 import { useFirstOpen } from '@/store/useFirstOpen';
 
 import type { NearMe } from '@/hooks/useNearMe';
@@ -53,7 +53,7 @@ beforeEach(() => {
 });
 
 test('location not yet asked: the location card comes first, and Use my location asks', async () => {
-  await renderWithTamagui(<Cards area={{ kind: 'anywhere' }} near={idle} access="ask" />);
+  await renderWithProviders(<Cards area={{ kind: 'anywhere' }} near={idle} access="ask" />);
   expect(screen.getByText('See what’s being poured near you')).toBeTruthy();
   expect(screen.queryByText('Any favourites near you?')).toBeNull();
   await fireEvent.press(screen.getByRole('button', { name: 'Use my location' }));
@@ -63,19 +63,19 @@ test('location not yet asked: the location card comes first, and Use my location
 });
 
 test('blocked: the card says so and offers Settings; a city picked before keeps it away', async () => {
-  const view = await renderWithTamagui(<Cards area={{ kind: 'anywhere' }} near={idle} access="blocked" />);
+  const view = await renderWithProviders(<Cards area={{ kind: 'anywhere' }} near={idle} access="blocked" />);
   expect(screen.getByText('Location is off for Cocktail')).toBeTruthy();
   expect(screen.getByRole('button', { name: 'Open Settings' })).toBeTruthy();
   expect(screen.getByRole('button', { name: 'Pick a city' })).toBeTruthy();
   await view.unmount();
   useFirstOpen.setState({ cityPicked: true });
-  await renderWithTamagui(<Cards area={{ kind: 'city', city: 'Melbourne', country_code: 'AU', label: 'Melbourne' }} near={idle} access="ask" />);
+  await renderWithProviders(<Cards area={{ kind: 'city', city: 'Melbourne', country_code: 'AU', label: 'Melbourne' }} near={idle} access="ask" />);
   expect(screen.queryByText('See what’s being poured near you')).toBeNull();
   expect(screen.getByText('Any favourites in Melbourne?')).toBeTruthy();
 });
 
 test('asks once, at home, before any bar is loved or hidden; Done saves the picks', async () => {
-  await renderWithTamagui(<Cards />);
+  await renderWithProviders(<Cards />);
   await openSheet();
   expect(screen.getAllByText('Any favourites near you?').length).toBeGreaterThan(0);
   await fireEvent.press(screen.getByLabelText('Love Little Rye'));
@@ -88,14 +88,14 @@ test('asks once, at home, before any bar is loved or hidden; Done saves the pick
 });
 
 test('the card’s X is Skip: it asks nothing again', async () => {
-  await renderWithTamagui(<Cards />);
+  await renderWithProviders(<Cards />);
   await fireEvent.press(screen.getByRole('button', { name: 'Skip' }));
   expect(useFirstOpen.getState().asked).toEqual(['me']);
   expect(screen.queryByText('Any favourites near you?')).toBeNull();
 });
 
 test('From Google Maps swaps the sheet for the import, and Cancel comes back', async () => {
-  await renderWithTamagui(<Cards />);
+  await renderWithProviders(<Cards />);
   await openSheet();
   await fireEvent.press(screen.getByLabelText('From Google Maps. Love the bars you saved there'));
   expect(screen.getAllByText('Your Google Maps places').length).toBeGreaterThan(0);
@@ -106,7 +106,7 @@ test('From Google Maps swaps the sheet for the import, and Cancel comes back', a
 });
 
 test('a second tap undoes a pick; Skip asks nothing again and saves nothing', async () => {
-  await renderWithTamagui(<Cards />);
+  await renderWithProviders(<Cards />);
   await openSheet();
   await fireEvent.press(screen.getByLabelText('Love Pale Moth'));
   await fireEvent.press(screen.getByLabelText('You love Pale Moth: undo'));
@@ -118,7 +118,7 @@ test('a second tap undoes a pick; Skip asks nothing again and saves nothing', as
 
 test('a pick that fails to save stays on screen with a note, and nothing is marked asked', async () => {
   mockLove.mockImplementationOnce(() => Promise.reject(new Error('offline')));
-  await renderWithTamagui(<Cards />);
+  await renderWithProviders(<Cards />);
   await openSheet();
   await fireEvent.press(screen.getByLabelText('Love Little Rye'));
   await fireEvent.press(screen.getByLabelText('Hide 1806 from Discover'));
@@ -137,7 +137,7 @@ test('no favourites card once asked, at a venue, with a bar already loved, with 
     () => (mockBars = mockBars.slice(0, 2)),
   ]) {
     setup();
-    const view = await renderWithTamagui(<Cards />);
+    const view = await renderWithProviders(<Cards />);
     expect(screen.queryByText('Any favourites near you?')).toBeNull();
     await view.unmount();
     mockMode = 'home';
@@ -146,6 +146,6 @@ test('no favourites card once asked, at a venue, with a bar already loved, with 
     mockBars = [bar('rye', 'Little Rye'), bar('gold', 'The Gold Room'), bar('1806', '1806'), bar('moth', 'Pale Moth')];
     useFirstOpen.setState({ asked: [] });
   }
-  await renderWithTamagui(<Cards area={{ kind: 'anywhere' }} />);
+  await renderWithProviders(<Cards area={{ kind: 'anywhere' }} />);
   expect(screen.queryByText('Any favourites anywhere?')).toBeNull();
 });

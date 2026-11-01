@@ -1,13 +1,13 @@
 import { fireEvent, screen } from '@testing-library/react-native';
 
 import { BackbarTheme } from '@/components/ds';
-import { renderWithTamagui } from '@/jest.setup';
+import { renderWithProviders } from '@/jest.setup';
 
 import { SpecMarks } from './SpecMarks';
 
 test('the glass is a button that opens its sheet; the method is a labelled picture', async () => {
   const openGlass = jest.fn();
-  await renderWithTamagui(
+  await renderWithProviders(
     <BackbarTheme>
       <SpecMarks
         marks={[

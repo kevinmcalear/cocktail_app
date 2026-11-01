@@ -2,7 +2,7 @@ import { useRouter } from 'expo-router';
 import { StyleSheet, View } from 'react-native';
 
 import { Button, Caption, DrinkImage, DsText, useDs } from '@/components/ds';
-import { displayFaces, fontFamilies, radius, space } from '@/constants/tokens';
+import { displayFaces, font, radius, space } from '@/constants/tokens';
 import { useCocktail } from '@/hooks/useCocktails';
 import { itemHref } from '@/lib/itemRoutes';
 import { amountText } from '@/lib/units';
@@ -72,7 +72,7 @@ const styles = StyleSheet.create({
   fill: { width: '100%', height: '100%' },
   title: { gap: 2 },
   line: { flexDirection: 'row', alignItems: 'center', gap: space.md, paddingVertical: space.xs + 2 },
-  amount: { width: 72, fontFamily: fontFamilies.monoMedium },
+  amount: { width: 72, ...font.figuresMedium },
   flex: { flex: 1, minWidth: 0 },
   actions: { flexDirection: 'row', gap: space.sm, marginTop: 'auto' },
 });

@@ -4,7 +4,7 @@ import { ActivityIndicator, StyleSheet, View } from 'react-native';
 import { Body, Button, Caption, PopoverMenu, useBreakpoint, useDs, usePopover, type PopoverSection } from '@/components/ds';
 import { IngredientPhoto } from '@/components/ds/IngredientDrawing';
 import { IconSymbol } from '@/components/ui/icon-symbol';
-import { fontFamilies, radius, space } from '@/constants/tokens';
+import { font, radius, space } from '@/constants/tokens';
 import type { MakerBottle } from '@/hooks/useMakers';
 import type { FolderPhoto } from '@/hooks/usePhotoFolder';
 import { shortName, type TrayRow } from '@/lib/folderMatch';
@@ -93,7 +93,7 @@ export function FolderTrayRow({ row, bottles, byId, maker, hasPhoto, onPick, onK
 const styles = StyleSheet.create({
   row: { flexDirection: 'row', alignItems: 'center', gap: space.md, minHeight: 64, paddingVertical: space.xs, borderBottomWidth: StyleSheet.hairlineWidth },
   thumb: { width: THUMB, height: THUMB, borderRadius: radius.control, borderCurve: 'continuous', overflow: 'hidden' },
-  file: { width: 250, fontFamily: fontFamilies.mono },
+  file: { width: 250, ...font.figures },
   flex: { flex: 1, minWidth: 0 },
   matched: { flexDirection: 'row', alignItems: 'center', gap: space.xs },
 });

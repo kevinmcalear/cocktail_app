@@ -2,14 +2,14 @@ import { Fragment } from 'react';
 import { StyleSheet, View } from 'react-native';
 
 import { DsText, type DsTextProps } from '@/components/ds';
-import { fontFamilies, printPaper as P, radius, space } from '@/constants/tokens';
+import { font, fontFamilies, printPaper as P, radius, space } from '@/constants/tokens';
 import { needGroups, type RunSheet, type SheetPart } from '@/lib/runSheet';
 import { needAmount, needName, sheetHead, thingCount } from '@/lib/runSheetText';
 
 const T = ({ style, ...props }: DsTextProps) => <DsText color={P.ink} {...props} style={style} />;
 const Muted = (props: DsTextProps) => <T variant="caption" color={P.muted} {...props} />;
-const mono = { fontFamily: fontFamilies.mono };
-const semi = { fontFamily: fontFamilies.bodySemiBold };
+const mono = { ...font.figures };
+const semi = { ...font.semiBold };
 
 /** A drink made in parts: the part's number and name over its lines, as the drink page has them. */
 function PartHead({ part }: { part: SheetPart }) {
@@ -45,7 +45,7 @@ export function SheetPaper({ sheet, menu, variant = 'full', printedOn }: {
     <View style={[styles.paper, full ? styles.fullPad : styles.smallPad]}>
       <View style={[styles.header, { borderBottomColor: P.ink }]}>
         <Muted style={[semi, styles.eyebrow]}>RUN SHEET</Muted>
-        <T variant={full ? 'title' : 'headline'} style={{ fontFamily: fontFamilies.instrument }}>{head.name}</T>
+        <T variant={full ? 'title' : 'headline'} style={{ fontFamily: fontFamilies.name }}>{head.name}</T>
         <T variant={full ? 'body' : 'caption'}>{head.when || 'No date yet'}</T>
         <Muted>{head.who}</Muted>
         {head.extra && variant !== 'mini' ? <Muted>{head.extra}</Muted> : null}
@@ -93,7 +93,7 @@ export function SheetPaper({ sheet, menu, variant = 'full', printedOn }: {
             full ? (
               <View key={d.id} style={[styles.drink, { borderBottomColor: P.rule }]}>
                 <View style={styles.drinkHead}>
-                  <T variant="title" style={{ fontFamily: fontFamilies.instrument }}>{d.name}</T>
+                  <T variant="title" style={{ fontFamily: fontFamilies.name }}>{d.name}</T>
                   <T variant="body" style={mono}>× {d.serves.toLocaleString('en-GB')}</T>
                 </View>
                 {d.serve ? <Muted>{d.serve}</Muted> : null}
@@ -117,7 +117,7 @@ export function SheetPaper({ sheet, menu, variant = 'full', printedOn }: {
               </View>
             ) : (
               <View key={d.id} style={styles.miniRow}>
-                <T variant="caption" style={{ fontFamily: fontFamilies.instrument }}>{d.name}</T>
+                <T variant="caption" style={{ fontFamily: fontFamilies.name }}>{d.name}</T>
                 <Muted style={mono}>× {d.serves.toLocaleString('en-GB')}</Muted>
               </View>
             ),

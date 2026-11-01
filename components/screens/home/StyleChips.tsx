@@ -3,7 +3,7 @@ import { ScrollView, StyleSheet, View } from 'react-native';
 
 import { Chip, DsText, GlassSurface, PressableScale, useDs } from '@/components/ds';
 import { IconSymbol } from '@/components/ui/icon-symbol';
-import { fontFamilies, layout, radius, space } from '@/constants/tokens';
+import { font, layout, radius, space } from '@/constants/tokens';
 import type { DiscoverDrink } from '@/lib/discoverDrinks';
 import { chipIds, stylesByBars } from '@/lib/discoverShelves';
 import { kindLabel } from '@/lib/drinkStyles';
@@ -90,5 +90,5 @@ const styles = StyleSheet.create({
   row: { gap: space.sm, paddingHorizontal: space.lg },
   // 36 tall with a 4-point hit slop makes the 44-point target.
   pill: { minHeight: layout.minTapTarget - space.sm, paddingHorizontal: space.md + 2, borderRadius: radius.pill, flexDirection: 'row', alignItems: 'center', gap: space.sm },
-  picked: { fontFamily: fontFamilies.bodySemiBold },
+  picked: { ...font.semiBold },
 });

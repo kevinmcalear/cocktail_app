@@ -1,7 +1,7 @@
 import { fireEvent, screen } from '@testing-library/react-native';
 import { View } from 'react-native';
 
-import { renderWithTamagui } from '@/jest.setup';
+import { renderWithProviders } from '@/jest.setup';
 import type { EditSection } from '@/lib/menuLayout';
 import type { MenuDrink } from '@/types/menus';
 
@@ -28,7 +28,7 @@ const onMoveTo = jest.fn();
 
 async function renderSection() {
   const onMove = jest.fn();
-  await renderWithTamagui(
+  await renderWithProviders(
     <EditorSection barId={null} section={section} sections={[section, other]} onSettings={jest.fn()} onRemove={jest.fn()} onReorder={jest.fn()} onMove={onMove} onMoveTo={onMoveTo} />
   );
   return onMove;
@@ -69,7 +69,7 @@ test('a row’s ... menu, a popover, moves a drink to another section, or to the
 
 test('a row’s ... menu has Delete drink only for a drink the person may delete', async () => {
   const onDelete = jest.fn();
-  await renderWithTamagui(
+  await renderWithProviders(
     <EditorSection barId={null} section={section} sections={[section]} onSettings={jest.fn()} onRemove={jest.fn()} onDelete={onDelete} onReorder={jest.fn()} onMove={jest.fn()} onMoveTo={jest.fn()} />
   );
   await fireEvent.press(screen.getByRole('button', { name: 'Pellican options' }));
@@ -80,7 +80,7 @@ test('a row’s ... menu has Delete drink only for a drink the person may delete
 });
 
 test('one amber line says what the section needs, and no Add a drink without onAdd', async () => {
-  await renderWithTamagui(
+  await renderWithProviders(
     <EditorSection barId={null} section={{ ...section, allowedTypes: ['cocktail', 'beer', 'wine'], minItems: 4, maxItems: 5 }} sections={[section]} onSettings={jest.fn()} onRemove={jest.fn()} onReorder={jest.fn()} onMove={jest.fn()} onMoveTo={jest.fn()} />
   );
   expect(screen.getByText('4 to 5 drinks · 3 in · needs one more')).toBeTruthy();

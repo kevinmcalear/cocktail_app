@@ -18,6 +18,12 @@ export function initMonitoring(): void {
     enableNetworkBreadcrumbs: false,
     beforeBreadcrumb: scrubBreadcrumb,
     beforeSend: scrubEvent,
+    // Crash health: a session per launch, so Sentry's release view shows
+    // crash-free sessions and users per build and OTA. Native crashes and
+    // app hangs are caught by the native SDK.
+    enableAutoSessionTracking: true,
+    enableNativeCrashHandling: true,
+    enableAppHangTracking: true,
   });
 }
 

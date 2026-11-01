@@ -3,7 +3,7 @@ import { useState } from 'react';
 import { Platform, Share, StyleSheet, View } from 'react-native';
 
 import { Body, Button, Caption, Headline, useDs } from '@/components/ds';
-import { fontFamilies, radius, space } from '@/constants/tokens';
+import { font, radius, space } from '@/constants/tokens';
 import type { PartySheet, RunSheet } from '@/lib/runSheet';
 import { partyListHtml } from '@/lib/runSheetHtml';
 import { partyList, partyListText, thingCount } from '@/lib/runSheetText';
@@ -56,7 +56,7 @@ export function SendLists({ sheet, menu, looks, claimUrls }: { sheet: RunSheet; 
             <View key={p.id} style={[styles.row, i < others.length - 1 ? { borderBottomWidth: StyleSheet.hairlineWidth, borderBottomColor: ds.c.line } : null]}>
               {look ? <Dot colour={look.colour} size={10} /> : null}
               <View style={{ flex: 1, minWidth: 0 }}>
-                <Body numberOfLines={1} style={{ fontFamily: fontFamilies.bodySemiBold }}>{p.name}</Body>
+                <Body numberOfLines={1} style={{ ...font.semiBold }}>{p.name}</Body>
                 <Caption tone="muted">{`${look?.role ?? p.role} · ${p.needs.length ? thingCount(p.needs.length) : `${drinksOf(p)} of their drinks`}`}</Caption>
               </View>
               <Button

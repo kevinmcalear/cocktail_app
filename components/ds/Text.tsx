@@ -1,6 +1,6 @@
-import { Platform, Text as RNText, type TextProps } from 'react-native';
+import { Platform, Text as RNText, type TextProps, type TextStyle } from 'react-native';
 
-import { displayFaces, fontFamilies, textSlack, type, type TypeStyle } from '@/constants/tokens';
+import { displayFaces, font, textSlack, type, type TypeStyle } from '@/constants/tokens';
 
 import { useDs } from './theme';
 
@@ -16,16 +16,13 @@ export interface DsTextProps extends TextProps {
   align?: 'left' | 'center' | 'right';
 }
 
-// Each weight is its own registered family on native, so the family carries
-// the weight and fontWeight stays normal.
-const FAMILY: Record<TypeStyle, string> = {
-  display: fontFamilies.instrument,
-  title: fontFamilies.instrument,
-  headline: fontFamilies.bodySemiBold,
-  body: fontFamilies.body,
-  spec: fontFamilies.monoMedium,
-  label: fontFamilies.bodyMedium,
-  caption: fontFamilies.bodyMedium,
+// Everything but display and title is the system font; spec amounts in tabular figures.
+const FACE: Record<Exclude<TypeStyle, 'display' | 'title'>, TextStyle> = {
+  headline: font.semiBold,
+  body: font.regular,
+  spec: font.figuresMedium,
+  label: font.medium,
+  caption: font.medium,
 };
 
 // iOS lays text out in a box exactly the size of its frame. Yoga rounds that
@@ -40,15 +37,16 @@ const FAMILY: Record<TypeStyle, string> = {
 const SLACK = Platform.OS === 'ios' ? { paddingBottom: textSlack } : null;
 
 /**
- * Text in one of the seven Back Bar styles. Display and title use the venue's
- * display face; everything else is fixed so every venue stays legible.
+ * Text in one of the seven Back Bar styles. Display and title set names, in
+ * the venue's face or the app's own (Redaction); everything else is the
+ * system font, so every venue stays legible.
  * Scales with the person's text size setting (Dynamic Type) by default.
  */
 export function DsText({ variant = 'body', tone = 'ink', italic, color, align, style, ...rest }: DsTextProps) {
   const ds = useDs();
   const isDisplay = variant === 'display' || variant === 'title';
   const face = displayFaces[ds.displayFace];
-  const fontFamily = isDisplay ? (italic ? face.italic : face.regular) : FAMILY[variant];
+  const faceStyle = isDisplay ? { fontFamily: italic ? face.italic : face.regular } : FACE[variant];
   const toneColor = {
     ink: ds.c.ink,
     muted: ds.c.muted,
@@ -61,12 +59,8 @@ export function DsText({ variant = 'body', tone = 'ink', italic, color, align, s
       style={[
         type[variant],
         SLACK,
-        {
-          fontFamily,
-          color: color ?? toneColor,
-          textAlign: align,
-          fontVariant: variant === 'spec' ? ['tabular-nums'] : undefined,
-        },
+        faceStyle,
+        { color: color ?? toneColor, textAlign: align },
         style,
       ]}
     />

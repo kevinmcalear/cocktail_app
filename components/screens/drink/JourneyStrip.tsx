@@ -2,7 +2,7 @@ import { StyleSheet, View } from 'react-native';
 
 import { Caption, DsText, PressableScale, Spec, useDs } from '@/components/ds';
 import { IconSymbol } from '@/components/ui/icon-symbol';
-import { fontFamilies, radius, space, type } from '@/constants/tokens';
+import { font, radius, space, type } from '@/constants/tokens';
 import { useCollection } from '@/hooks/useCollection';
 import { useMyRankList, useRankTarget } from '@/hooks/useRankings';
 import { dayOf, formatScore, rankedAs } from '@/lib/ranking';
@@ -97,5 +97,5 @@ const styles = StyleSheet.create({
   made: { justifyContent: 'space-between' },
   label: { flexDirection: 'row', alignItems: 'center', gap: space.xs },
   big: { fontSize: type.headline.fontSize, lineHeight: type.headline.lineHeight },
-  madeLabel: { fontFamily: fontFamilies.bodySemiBold },
+  madeLabel: { ...font.semiBold },
 });

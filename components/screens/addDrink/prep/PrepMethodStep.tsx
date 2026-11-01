@@ -5,7 +5,7 @@ import { Body, Button, Caption, Chip, Field, PressableScale, useDs } from '@/com
 import { dragGripStyle } from '@/components/recipe/FormScrollContainer';
 import type { GlyphName } from '@/components/ui/glyphs';
 import { IconSymbol } from '@/components/ui/icon-symbol';
-import { fontFamilies, layout, radius, space } from '@/constants/tokens';
+import { font, layout, radius, space } from '@/constants/tokens';
 import { dropIndex } from '@/lib/dropIndex';
 import { timerFromText } from '@/lib/makeSteps';
 import { keepsText, leadText, STORES, type PrepDraft } from '@/lib/prepKinds';
@@ -233,7 +233,7 @@ const styles = StyleSheet.create({
   flex: { flex: 1 },
   text: { minHeight: layout.minTapTarget, justifyContent: 'center', gap: space.xs, paddingVertical: space.xs },
   pill: { alignSelf: 'flex-start', flexDirection: 'row', alignItems: 'center', gap: space.xs + 2, minHeight: 30, paddingHorizontal: space.md - 2, marginTop: space.xs, borderRadius: radius.pill, borderWidth: 1 },
-  pillText: { fontFamily: fontFamilies.bodySemiBold },
+  pillText: { ...font.semiBold },
   editing: { flexDirection: 'row', alignItems: 'flex-start', gap: space.xs },
   remove: { minWidth: layout.minTapTarget, minHeight: layout.minTapTarget, alignItems: 'center', justifyContent: 'center' },
   add: { alignSelf: 'flex-start' },

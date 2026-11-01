@@ -3,7 +3,7 @@ import { Platform, StyleSheet, View } from 'react-native';
 
 import { Body, Button, Caption, Headline, PressableScale, Surface, useDs } from '@/components/ds';
 import { IconSymbol } from '@/components/ui/icon-symbol';
-import { fontFamilies, radius, space } from '@/constants/tokens';
+import { font, radius, space } from '@/constants/tokens';
 import { useFirstRound } from '@/hooks/useFirstRound';
 import { useVenueMenus } from '@/hooks/useMenus';
 import { useMyProfile } from '@/hooks/useMyProfile';
@@ -153,8 +153,8 @@ const styles = StyleSheet.create({
   actions: { gap: space.xs },
   row: { flexDirection: 'row', gap: space.sm },
   grow: { flex: 1, gap: 2 },
-  strong: { fontFamily: fontFamilies.bodySemiBold },
-  medium: { fontFamily: fontFamilies.bodyMedium },
+  strong: { ...font.semiBold },
+  medium: { ...font.medium },
   floating: { position: 'absolute', left: space.md, right: space.md, ...(Platform.OS === 'web' ? { maxWidth: 560 } : null) },
   opened: { gap: space.md, padding: space.lg, borderRadius: radius.card },
   openedRow: { flexDirection: 'row', gap: space.md, alignItems: 'flex-start' },

@@ -1,6 +1,6 @@
 import { fireEvent, screen } from '@testing-library/react-native';
 
-import { renderWithTamagui } from '@/jest.setup';
+import { renderWithProviders } from '@/jest.setup';
 
 import { SortableImageList, type ImageItem } from './SortableImageList';
 
@@ -23,7 +23,7 @@ const PHOTOS: ImageItem[] = [
 ];
 
 async function list(onReorder = jest.fn()) {
-  await renderWithTamagui(<SortableImageList images={PHOTOS} onReorder={onReorder} onRemove={jest.fn()} onAdd={jest.fn()} />);
+  await renderWithProviders(<SortableImageList images={PHOTOS} onReorder={onReorder} onRemove={jest.fn()} onAdd={jest.fn()} />);
   return onReorder;
 }
 

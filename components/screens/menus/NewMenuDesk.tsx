@@ -3,7 +3,7 @@ import { useEffect, useRef, useState, type ComponentRef } from 'react';
 import { ScrollView, StyleSheet, View } from 'react-native';
 
 import { Body, Button, Caption, Field, GlassButton, Sheet, Title, useDs, useSheetClose } from '@/components/ds';
-import { fontFamilies, radius, space } from '@/constants/tokens';
+import { font, radius, space } from '@/constants/tokens';
 import { useSetMissingPrices } from '@/hooks/useBulk';
 import { stageBringIn } from '@/lib/bringInHandoff';
 import { plural, savedLine } from '@/lib/menus';
@@ -190,8 +190,8 @@ const styles = StyleSheet.create({
   footer: { paddingHorizontal: space.xl, paddingVertical: space.lg, gap: space.sm, borderTopWidth: StyleSheet.hairlineWidth },
   actions: { flexDirection: 'row', alignItems: 'center', gap: space.md },
   flex: { flex: 1 },
-  keys: { fontFamily: fontFamilies.mono },
+  keys: { ...font.figures },
   right: { flex: 1, padding: space.xl, gap: space.md, alignItems: 'center' },
   rightHead: { alignSelf: 'stretch', flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between' },
-  monoNote: { fontFamily: fontFamilies.mono },
+  monoNote: { ...font.figures },
 });

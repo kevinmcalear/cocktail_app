@@ -3,7 +3,7 @@ import { StyleSheet, Text, TextInput, View } from 'react-native';
 
 import { Body, Caption, Chip, Field, PressableScale, Spec, useDs } from '@/components/ds';
 import { IconSymbol } from '@/components/ui/icon-symbol';
-import { displayFaces, fontFamilies, layout, radius, space, type } from '@/constants/tokens';
+import { displayFaces, font, layout, radius, space, type } from '@/constants/tokens';
 import { withAlpha } from '@/lib/color';
 import { clampServes, freezingPointC, type Batch, type BatchLine, type VolumeUnit } from '@/lib/batch';
 import type { SpecLine } from '@/lib/spec';
@@ -241,10 +241,10 @@ const styles = StyleSheet.create({
   ghost: { opacity: 0, paddingRight: space.xs },
   unit: { flex: 1, paddingBottom: space.xl },
   trailing: { paddingBottom: space.lg },
-  detail: { fontSize: type.body.fontSize - 2, lineHeight: type.body.lineHeight - 2 },
+  detail: { fontSize: type.label.fontSize, lineHeight: type.label.lineHeight },
   freezer: { gap: space.sm, alignItems: 'flex-start', padding: space.lg, borderRadius: radius.card, borderCurve: 'continuous', borderWidth: 1 },
   freezerHead: { flexDirection: 'row', alignItems: 'center', gap: space.sm },
-  strong: { fontFamily: fontFamilies.bodySemiBold },
+  strong: { ...font.semiBold },
   change: { minHeight: space.xl, justifyContent: 'center' },
   underline: { textDecorationLine: 'underline' },
   stock: { gap: space.md },

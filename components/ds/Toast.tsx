@@ -4,7 +4,7 @@ import { AccessibilityInfo, Animated, PanResponder, Platform, StyleSheet, View }
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import { IconSymbol } from '@/components/ui/icon-symbol';
-import { fontFamilies, layout, radius, space, springs } from '@/constants/tokens';
+import { font, layout, radius, space, springs } from '@/constants/tokens';
 import { withAlpha } from '@/lib/color';
 import { useToastStore, type Toast } from '@/store/useToastStore';
 
@@ -176,7 +176,7 @@ const styles = StyleSheet.create({
     minHeight: layout.minTapTarget + space.md,
   },
   text: { flex: 1 },
-  title: { fontFamily: fontFamilies.bodySemiBold },
+  title: { ...font.semiBold },
   action: {
     minWidth: layout.minTapTarget,
     minHeight: layout.minTapTarget,

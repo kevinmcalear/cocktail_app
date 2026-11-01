@@ -1,7 +1,7 @@
 import { fireEvent, screen } from '@testing-library/react-native';
 import 'react-native-gesture-handler/jestSetup';
 
-import { renderWithTamagui } from '@/jest.setup';
+import { renderWithProviders } from '@/jest.setup';
 
 import { BeerWineScreen } from './BeerWineScreen';
 
@@ -35,7 +35,7 @@ jest.mock('@/hooks/useTrackRecent', () => ({ useTrackRecent: () => undefined, re
 jest.mock('@/hooks/useViewAs', () => ({ useCanEditItem: () => true }));
 
 test('a beer reads on the drink page: its style, maker, strength, price, description and notes', async () => {
-  await renderWithTamagui(<BeerWineScreen kind="beer" />);
+  await renderWithProviders(<BeerWineScreen kind="beer" />);
 
   expect(screen.getByText('Little Rye Lager')).toBeTruthy();
   expect(screen.getByText('Lager')).toBeTruthy();

@@ -6,7 +6,7 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { BackbarTheme, BrandProvider, Button, Caption, GlassButton, Headline, useBreakpoint, useDs, useGutter } from '@/components/ds';
 import { FormScrollContainer } from '@/components/recipe/FormScrollContainer';
 import { ToolsSheet } from '@/components/tools/ToolsSheet';
-import { displayFaces, fontFamilies, radius, space, type } from '@/constants/tokens';
+import { displayFaces, font, radius, space, type } from '@/constants/tokens';
 import { useActiveVenue } from '@/hooks/useActiveVenue';
 import { useBackBarIds } from '@/hooks/useBackBar';
 import { creditedToBar, useCocktail } from '@/hooks/useCocktails';
@@ -243,10 +243,10 @@ const styles = StyleSheet.create({
   screen: { flex: 1 },
   phoneBody: { gap: space.xl, marginTop: -space.lg },
   name: { ...type.display, borderBottomWidth: StyleSheet.hairlineWidth, paddingBottom: space.xs },
-  origin: { ...type.body, fontFamily: fontFamilies.body, marginTop: -space.md },
+  origin: { ...type.body, ...font.regular, marginTop: -space.md },
   section: { gap: space.sm },
   headRow: { flexDirection: 'row', alignItems: 'baseline', justifyContent: 'space-between' },
-  box: { ...type.body, fontFamily: fontFamilies.body, borderRadius: radius.control, padding: space.md, textAlignVertical: 'top' },
+  box: { ...type.body, ...font.regular, borderRadius: radius.control, padding: space.md, textAlignVertical: 'top' },
   top: { position: 'absolute' },
   wide: { flexDirection: 'row', gap: space.xxl, paddingHorizontal: space.xxl, paddingBottom: space.xxxl, alignItems: 'flex-start' },
   left: { width: 400, gap: space.lg },

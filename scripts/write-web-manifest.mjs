@@ -1,4 +1,4 @@
-// Writes dist/manifest.webmanifest for the network web app from
+// Writes dist/manifest.webmanifest and dist/robots.txt for the network web app from
 // constants/brand.json, so "Add to Home Screen" / "Install app" shows the
 // product's name and icon. Run after `expo export -p web` (see build:web).
 import { readFileSync, writeFileSync } from 'node:fs';
@@ -23,3 +23,10 @@ const manifest = {
 
 writeFileSync('dist/manifest.webmanifest', `${JSON.stringify(manifest, null, 2)}\n`);
 console.log('wrote dist/manifest.webmanifest');
+
+// Search engines: kept out until constants/brand.json's searchIndexing is on
+// (the real domain). On, they may crawl everything public; a sitemap comes
+// with that change.
+const robots = brand.searchIndexing ? 'User-agent: *\nAllow: /\n' : 'User-agent: *\nDisallow: /\n';
+writeFileSync('dist/robots.txt', robots);
+console.log(`wrote dist/robots.txt (${brand.searchIndexing ? 'indexing on' : 'kept out of search'})`);

@@ -1,7 +1,7 @@
 import { fireEvent, screen, waitFor } from '@testing-library/react-native';
 import { Platform, Text } from 'react-native';
 
-import { renderWithTamagui } from '@/jest.setup';
+import { renderWithProviders } from '@/jest.setup';
 
 import { useAgeGate } from './AgeGate';
 import { DrinkingAgeGate } from './DrinkingAgeGate';
@@ -50,7 +50,7 @@ const profile = [{ label: '@jo', target: { kind: 'profile' as const, profileId: 
 
 describe('ReportSheet', () => {
   test('sends a report only once a reason is picked, with the details', async () => {
-    await renderWithTamagui(<ReportSheet subject="@jo" targets={profile} onClose={() => {}} />);
+    await renderWithProviders(<ReportSheet subject="@jo" targets={profile} onClose={() => {}} />);
     const send = screen.getByRole('button', { name: 'Send report' });
     expect(send.props.accessibilityState?.disabled ?? send.props['aria-disabled']).toBeTruthy();
 
@@ -63,7 +63,7 @@ describe('ReportSheet', () => {
 
   test('says so when the limit is reached, and confirms once sent', async () => {
     mockFile.error = new Error("You've sent 20 reports today, which is the most we take from one person in a day. Try again tomorrow.");
-    const { rerender } = await renderWithTamagui(<ReportSheet subject="@jo" targets={profile} onClose={() => {}} />);
+    const { rerender } = await renderWithProviders(<ReportSheet subject="@jo" targets={profile} onClose={() => {}} />);
     expect(screen.getByRole('alert').props.children).toMatch(/20 reports today/);
 
     mockFile.error = null;
@@ -74,7 +74,7 @@ describe('ReportSheet', () => {
 
   test('an open report already on file stops a second one', async () => {
     mockExisting = { id: 'r1', created_at: '2026-09-20T10:00:00Z' };
-    await renderWithTamagui(<ReportSheet subject="@jo" targets={profile} onClose={() => {}} />);
+    await renderWithProviders(<ReportSheet subject="@jo" targets={profile} onClose={() => {}} />);
     expect(screen.getByText('You’ve already reported this')).toBeTruthy();
     expect(screen.queryByRole('button', { name: 'Send report' })).toBeNull();
   });
@@ -84,7 +84,7 @@ describe('ReportSheet', () => {
       { label: 'Night Owl’s Martini', target: { kind: 'ranking' as const, itemId: 'm', profileId: 'b1' } },
       { label: 'Pale Moth’s Martini', target: { kind: 'ranking' as const, itemId: 'm', profileId: 'b2' } },
     ];
-    await renderWithTamagui(<ReportSheet subject="a Martini ranking" targets={bars} onClose={() => {}} />);
+    await renderWithProviders(<ReportSheet subject="a Martini ranking" targets={bars} onClose={() => {}} />);
     await fireEvent.press(screen.getByRole('radio', { name: 'Pale Moth’s Martini' }));
     await fireEvent.press(screen.getByRole('radio', { name: /Fake rankings/ }));
     await fireEvent.press(screen.getByRole('button', { name: 'Send report' }));
@@ -107,7 +107,7 @@ function Gated({ action }: { action: () => void }) {
 describe('useAgeGate', () => {
   test('a confirmed age goes straight through', async () => {
     const action = jest.fn();
-    await renderWithTamagui(<Gated action={action} />);
+    await renderWithProviders(<Gated action={action} />);
     await fireEvent.press(screen.getByText('Rank it'));
     expect(action).toHaveBeenCalledTimes(1);
   });
@@ -115,7 +115,7 @@ describe('useAgeGate', () => {
   test('no answer yet: asks for the birth date and country, and waits', async () => {
     mockAge = 'unknown';
     const action = jest.fn();
-    await renderWithTamagui(<Gated action={action} />);
+    await renderWithProviders(<Gated action={action} />);
     await fireEvent.press(screen.getByText('Rank it'));
     expect(action).not.toHaveBeenCalled();
     expect(screen.getByLabelText('Year')).toBeTruthy();
@@ -125,7 +125,7 @@ describe('useAgeGate', () => {
   test('under age: a final note, and the action never runs', async () => {
     mockAge = 'under_age';
     const action = jest.fn();
-    await renderWithTamagui(<Gated action={action} />);
+    await renderWithProviders(<Gated action={action} />);
     await fireEvent.press(screen.getByText('Rank it'));
     expect(action).not.toHaveBeenCalled();
     expect(screen.getByText('Thanks for being honest')).toBeTruthy();
@@ -141,7 +141,7 @@ describe('DrinkingAgeGate', () => {
   test('signed-out web visitors answer once; the answer stays on the device', async () => {
     setOs('web');
     mockUser = null;
-    await renderWithTamagui(
+    await renderWithProviders(
       <DrinkingAgeGate>
         <Text>The drink</Text>
       </DrinkingAgeGate>
@@ -155,7 +155,7 @@ describe('DrinkingAgeGate', () => {
     setOs('web');
     mockUser = null;
     mockStore.set('drinking-age-answer', 'no');
-    await renderWithTamagui(
+    await renderWithProviders(
       <DrinkingAgeGate>
         <Text>The drink</Text>
       </DrinkingAgeGate>
@@ -166,7 +166,7 @@ describe('DrinkingAgeGate', () => {
 
   test('signed-in people and the native app go straight through', async () => {
     setOs('web');
-    await renderWithTamagui(
+    await renderWithProviders(
       <DrinkingAgeGate>
         <Text>The drink</Text>
       </DrinkingAgeGate>
@@ -187,7 +187,7 @@ describe('MyReportsScreen', () => {
       report({ id: 'b', status: 'dismissed', target_kind: 'profile', profile: { display_name: 'Jo Park' }, item: null, item_id: null }),
       report({ id: 'c' }),
     ];
-    await renderWithTamagui(<MyReportsScreen />);
+    await renderWithProviders(<MyReportsScreen />);
     expect(screen.getByText('Action taken')).toBeTruthy();
     expect(screen.getByText('Taken down')).toBeTruthy();
     expect(screen.getByText('From the moderator: Taken down while we check the credit.')).toBeTruthy();
@@ -199,14 +199,14 @@ describe('MyReportsScreen', () => {
 
   test('says how to report when there’s nothing yet', async () => {
     mockReports = [];
-    await renderWithTamagui(<MyReportsScreen />);
+    await renderWithProviders(<MyReportsScreen />);
     expect(screen.getByText(/You haven’t reported anything/)).toBeTruthy();
   });
 });
 
 describe('NotAvailable', () => {
   test('says what might have happened and offers a way on, without saying which', async () => {
-    await renderWithTamagui(<NotAvailable what="drink" />);
+    await renderWithProviders(<NotAvailable what="drink" />);
     expect(screen.getByText('Not available')).toBeTruthy();
     expect(screen.getByText(/made private or removed, or a moderator may have hidden it\. Or it’s from someone you’ve blocked\./)).toBeTruthy();
     expect(screen.getByRole('button', { name: 'Discover drinks' })).toBeTruthy();
@@ -214,7 +214,7 @@ describe('NotAvailable', () => {
 
   test('signed out: no talk of blocks, and a way to sign in', async () => {
     mockUser = null;
-    await renderWithTamagui(<NotAvailable what="release" />);
+    await renderWithProviders(<NotAvailable what="release" />);
     expect(screen.getByText(/The bar may not have published it yet/)).toBeTruthy();
     expect(screen.queryByText(/blocked/)).toBeNull();
     expect(screen.getByRole('button', { name: 'Sign in to find more' })).toBeTruthy();
@@ -224,7 +224,7 @@ describe('NotAvailable', () => {
 describe('CouldNotLoad', () => {
   test('a failed request says so and retries, never "Not available"', async () => {
     const retry = jest.fn();
-    await renderWithTamagui(<CouldNotLoad what="menu" failed={{ retry }} />);
+    await renderWithProviders(<CouldNotLoad what="menu" failed={{ retry }} />);
     expect(screen.getByText('Couldn’t load this menu')).toBeTruthy();
     expect(screen.queryByText('Not available')).toBeNull();
     fireEvent.press(screen.getByRole('button', { name: 'Try again' }));
@@ -233,7 +233,7 @@ describe('CouldNotLoad', () => {
 
   test('offline: says so', async () => {
     mockOnline = false;
-    await renderWithTamagui(<CouldNotLoad what="drink" failed={{ retry: jest.fn() }} />);
+    await renderWithProviders(<CouldNotLoad what="drink" failed={{ retry: jest.fn() }} />);
     expect(screen.getByText(/You’re offline/)).toBeTruthy();
     mockOnline = true;
   });

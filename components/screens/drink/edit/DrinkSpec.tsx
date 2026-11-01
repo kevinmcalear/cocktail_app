@@ -3,7 +3,7 @@ import { Platform, StyleSheet, TextInput, View } from 'react-native';
 
 import { Body, Caption, DsText, PressableScale, Sheet, Switch, useDs, useSheetClose } from '@/components/ds';
 import { IconSymbol } from '@/components/ui/icon-symbol';
-import { fontFamilies, layout, radius, space, type } from '@/constants/tokens';
+import { font, layout, radius, space, type } from '@/constants/tokens';
 import { withAlpha } from '@/lib/color';
 import { addPart, linePart, MAX_PARTS, movePart, PART_JOINS, partMethodsSaid, removePart, type DraftPart } from '@/lib/drinkParts';
 import { toLine } from '@/lib/recipeItem';
@@ -257,7 +257,7 @@ const styles = StyleSheet.create({
   part: { gap: space.xs },
   title: { flexDirection: 'row', alignItems: 'center', gap: space.sm + 2, paddingTop: space.sm },
   disc: { width: DISC, height: DISC, borderRadius: radius.pill, alignItems: 'center', justifyContent: 'center' },
-  name: { ...type.body, fontFamily: fontFamilies.bodySemiBold, flex: 1, minWidth: 0, paddingVertical: 2, borderBottomWidth: StyleSheet.hairlineWidth },
+  name: { ...type.body, ...font.semiBold, flex: 1, minWidth: 0, paddingVertical: 2, borderBottomWidth: StyleSheet.hairlineWidth },
   more: { width: layout.minTapTarget, height: layout.minTapTarget, alignItems: 'center', justifyContent: 'center' },
   method: { alignSelf: 'flex-start', flexDirection: 'row', alignItems: 'center', gap: space.xs + 2, minHeight: 40, marginLeft: INDENT, paddingHorizontal: space.md, borderRadius: radius.pill, borderWidth: 1 },
   then: { flexDirection: 'row', alignItems: 'center', gap: space.sm, marginLeft: INDENT, marginTop: space.xs },

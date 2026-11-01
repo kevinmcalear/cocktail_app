@@ -4,7 +4,7 @@ import { StyleSheet, View } from 'react-native';
 
 import { Caption, Chip, DrinkImage, DsText, GlassSurface, Headline, MatchText, PopoverMenu, PressableScale, RowScore, scoreWords, useDs, usePopover } from '@/components/ds';
 import { IconSymbol } from '@/components/ui/icon-symbol';
-import { fontFamilies, layout, radius, space } from '@/constants/tokens';
+import { font, layout, radius, space } from '@/constants/tokens';
 import { useDrinkLists } from '@/hooks/useDiscover';
 import { withAlpha } from '@/lib/color';
 import { foldName } from '@/lib/discover';
@@ -173,12 +173,12 @@ const styles = StyleSheet.create({
   flex: { flex: 1, minWidth: 0, gap: 2 },
   // As tall as the chips' track beside it.
   token: { flexDirection: 'row', alignItems: 'center', gap: space.xs, height: layout.minTapTarget, maxWidth: 240, paddingHorizontal: space.md, borderRadius: radius.pill },
-  tokenText: { flexShrink: 1, fontFamily: fontFamilies.bodyMedium },
+  tokenText: { flexShrink: 1, ...font.medium },
   // 36-point chips in a 4-point track: a 44-point target (disc-desk-browse).
   track: { padding: space.xs },
   trackChips: { flexDirection: 'row', gap: space.xs + 2 },
   completion: { flexDirection: 'row', alignItems: 'center', gap: space.md, minHeight: layout.minTapTarget },
-  strong: { fontFamily: fontFamilies.bodySemiBold },
+  strong: { ...font.semiBold },
   group: { gap: space.sm },
   cap: { letterSpacing: 0.8, textTransform: 'uppercase' },
   hit: { flexDirection: 'row', alignItems: 'center', gap: space.md, padding: space.md, borderRadius: radius.card, borderCurve: 'continuous' },
@@ -186,5 +186,5 @@ const styles = StyleSheet.create({
   tiles: { flexDirection: 'row', flexWrap: 'wrap', gap: space.sm },
   tile: { flexGrow: 1, flexBasis: '45%', height: 104, borderRadius: radius.card, borderCurve: 'continuous', overflow: 'hidden', justifyContent: 'flex-end', padding: space.md },
   tileArt: { position: 'absolute', right: -6, top: 4, width: 96, pointerEvents: 'none' },
-  tileLabel: { fontFamily: fontFamilies.bodySemiBold },
+  tileLabel: { ...font.semiBold },
 });

@@ -4,8 +4,7 @@ import { Linking, Pressable, StyleSheet, View } from 'react-native';
 
 import { Button, Caption, DsText, useDs } from '@/components/ds';
 import { IconSymbol } from '@/components/ui/icon-symbol';
-import { STATUS } from '@/constants/palette';
-import { fontFamilies, layout, space } from '@/constants/tokens';
+import { font, layout, space, STATUS } from '@/constants/tokens';
 import type { BarFacts } from '@/hooks/useBarFacts';
 import { hoursStatus } from '@/lib/barHours';
 import { readableAccent } from '@/lib/color';
@@ -117,7 +116,7 @@ export function BarContact({ facts, from }: { facts: BarFacts | null | undefined
 const styles = StyleSheet.create({
   flex: { flex: 1, minWidth: 0 },
   line: { flexDirection: 'row', alignItems: 'center', gap: space.sm, flex: 1, minWidth: 0 },
-  strong: { fontFamily: fontFamilies.bodySemiBold },
+  strong: { ...font.semiBold },
   tap: { flexDirection: 'row', alignItems: 'center', gap: space.sm, minHeight: layout.minTapTarget },
   actions: { flexDirection: 'row', flexWrap: 'wrap', gap: space.sm },
 });

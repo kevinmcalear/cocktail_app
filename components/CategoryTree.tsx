@@ -1,6 +1,7 @@
-import { Chip } from '@/components/ds';
-import { LayoutAnimation } from 'react-native';
-import { Text, XStack, YStack } from 'tamagui';
+import { LayoutAnimation, StyleSheet, View } from 'react-native';
+
+import { Caption, Chip, useDs } from '@/components/ds';
+import { space } from '@/constants/tokens';
 
 export type CategoryTreeNode = {
   id: string;
@@ -8,33 +9,20 @@ export type CategoryTreeNode = {
   parent_id: string | null;
 };
 
-function hasSelectedDescendant(
-  id: string,
-  all: CategoryTreeNode[],
-  selectedIds: string[]
-): boolean {
+function hasSelectedDescendant(id: string, all: CategoryTreeNode[], selectedIds: string[]): boolean {
   const children = all.filter((c) => c.parent_id === id);
   if (children.some((c) => selectedIds.includes(c.id))) return true;
   return children.some((c) => hasSelectedDescendant(c.id, all, selectedIds));
 }
 
-function CategoryLayer({
-  parentId,
-  categories,
-  selectedIds,
-  onToggle,
-}: {
-  parentId: string;
-  categories: CategoryTreeNode[];
-  selectedIds: string[];
-  onToggle: (id: string) => void;
-}) {
+function CategoryLayer({ parentId, categories, selectedIds, onToggle }: { parentId: string; categories: CategoryTreeNode[]; selectedIds: string[]; onToggle: (id: string) => void }) {
+  const ds = useDs();
   const nodes = categories.filter((c) => c.parent_id === parentId);
   if (nodes.length === 0) return null;
 
   return (
-    <YStack gap="$3">
-      <XStack role="group" flexWrap="wrap" gap="$2">
+    <View style={styles.layer}>
+      <View role="group" style={styles.chips}>
         {nodes.map((child) => (
           <Chip
             key={child.id}
@@ -47,84 +35,45 @@ function CategoryLayer({
             }}
           />
         ))}
-      </XStack>
-
+      </View>
       {nodes.map((node) => {
         const hasKids = categories.some((c) => c.parent_id === node.id);
-        if (!hasKids) return null;
-        const expanded =
-          selectedIds.includes(node.id) ||
-          hasSelectedDescendant(node.id, categories, selectedIds);
-        if (!expanded) return null;
-
+        const expanded = selectedIds.includes(node.id) || hasSelectedDescendant(node.id, categories, selectedIds);
+        if (!hasKids || !expanded) return null;
         return (
-          <YStack
-            key={`sub-${node.id}`}
-            paddingLeft="$3"
-            borderLeftWidth={2}
-            borderColor="$color8"
-            marginLeft="$2"
-            gap="$2"
-          >
-            <Text
-              fontSize={11}
-              color="$color11"
-              textTransform="uppercase"
-              letterSpacing={0.7}
-              fontWeight="600"
-            >
-              {node.name} specifics
-            </Text>
-            <CategoryLayer
-              parentId={node.id}
-              categories={categories}
-              selectedIds={selectedIds}
-              onToggle={onToggle}
-            />
-          </YStack>
+          <View key={`sub-${node.id}`} style={[styles.sub, { borderColor: ds.c.lineStrong }]}>
+            <Caption tone="muted">{`${node.name} specifics`}</Caption>
+            <CategoryLayer parentId={node.id} categories={categories} selectedIds={selectedIds} onToggle={onToggle} />
+          </View>
         );
       })}
-    </YStack>
+    </View>
   );
 }
 
-/** Hierarchical category picker — roots are section headers, children expand on select. */
-export function CategoryTree({
-  categories,
-  selectedIds,
-  onToggle,
-}: {
-  categories: CategoryTreeNode[];
-  selectedIds: string[];
-  onToggle: (id: string) => void;
-}) {
+/** Hierarchical category picker: roots are section headers, children expand on select. */
+export function CategoryTree({ categories, selectedIds, onToggle }: { categories: CategoryTreeNode[]; selectedIds: string[]; onToggle: (id: string) => void }) {
   const roots = categories.filter((c) => !c.parent_id);
-
   return (
-    <YStack gap="$5">
+    <View style={styles.tree}>
       {roots.map((root) => {
-        const kids = categories.filter((c) => c.parent_id === root.id);
-        if (kids.length === 0) return null;
+        if (!categories.some((c) => c.parent_id === root.id)) return null;
         return (
-          <YStack key={root.id} gap="$3">
-            <Text
-              fontSize={11}
-              fontWeight="600"
-              color="$color11"
-              letterSpacing={0.7}
-              textTransform="uppercase"
-            >
+          <View key={root.id} style={styles.layer}>
+            <Caption tone="muted" role="heading">
               {root.name}
-            </Text>
-            <CategoryLayer
-              parentId={root.id}
-              categories={categories}
-              selectedIds={selectedIds}
-              onToggle={onToggle}
-            />
-          </YStack>
+            </Caption>
+            <CategoryLayer parentId={root.id} categories={categories} selectedIds={selectedIds} onToggle={onToggle} />
+          </View>
         );
       })}
-    </YStack>
+    </View>
   );
 }
+
+const styles = StyleSheet.create({
+  tree: { gap: space.xl },
+  layer: { gap: space.md },
+  chips: { flexDirection: 'row', flexWrap: 'wrap', gap: space.sm },
+  sub: { paddingLeft: space.md, marginLeft: space.sm, borderLeftWidth: 2, gap: space.sm },
+});

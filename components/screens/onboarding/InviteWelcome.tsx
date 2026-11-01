@@ -5,7 +5,7 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { BackbarTheme, Body, BrandProvider, Button, Caption, Display, DsText, useDs, useGutter } from '@/components/ds';
 import { VenueMark } from '@/components/nav/VenueMarks';
 import { WebHead } from '@/components/WebHead';
-import { fontFamilies, layout, radius, space } from '@/constants/tokens';
+import { font, layout, radius, space } from '@/constants/tokens';
 import { useAcceptInvite, useRemoveInvite, type MyInvite } from '@/hooks/useBarInvites';
 import { faceFromDb, usableGroundTint } from '@/lib/brand';
 import { isHexColor } from '@/lib/color';
@@ -174,7 +174,7 @@ const styles = StyleSheet.create({
     marginBottom: space.lg,
   },
   monogram: { marginBottom: space.lg },
-  kicker: { letterSpacing: 0.6, fontFamily: fontFamilies.bodyMedium },
+  kicker: { letterSpacing: 0.6, ...font.medium },
   welcome: { gap: space.sm },
   steps: { gap: space.xs, marginTop: space.md },
   step: { flexDirection: 'row', alignItems: 'center', gap: space.md, minHeight: layout.minTapTarget },

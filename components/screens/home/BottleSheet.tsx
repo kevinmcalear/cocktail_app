@@ -3,7 +3,7 @@ import { useState } from 'react';
 import { ScrollView, StyleSheet, View } from 'react-native';
 
 import { Body, Button, Caption, Headline, IngredientDrawing, IngredientThumb, PressableScale, Sheet, Tag, TextLink, Title, useDs } from '@/components/ds';
-import { fontFamilies, layout, radius, space } from '@/constants/tokens';
+import { font, layout, radius, space } from '@/constants/tokens';
 import { useItemFlavor } from '@/hooks/useFlavor';
 import { useBottleFacts, useFinishedBottles, type BarItem, type FinishedBottle, type ShelfItem } from '@/hooks/useHomeBar';
 import { NOTE_KINDS, NOTE_MIN, noteWord } from '@/lib/flavor';
@@ -202,7 +202,7 @@ const styles = StyleSheet.create({
   title: { flex: 1, minWidth: 0, gap: 2 },
   facts: { flexDirection: 'row', gap: space.sm },
   fact: { flex: 1, minWidth: 0, gap: 2, padding: space.md, borderRadius: radius.control, borderCurve: 'continuous' },
-  factValue: { fontFamily: fontFamilies.bodySemiBold },
+  factValue: { ...font.semiBold },
   oldHead: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', gap: space.sm },
   flex: { flex: 1 },
   block: { gap: space.sm },

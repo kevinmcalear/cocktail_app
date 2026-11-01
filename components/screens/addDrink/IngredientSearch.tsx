@@ -3,7 +3,7 @@ import { Platform, StyleSheet, TextInput, View } from 'react-native';
 
 import { Body, Button, Caption, PressableScale, useDs } from '@/components/ds';
 import { IconSymbol } from '@/components/ui/icon-symbol';
-import { fontFamilies, layout, radius, space, type } from '@/constants/tokens';
+import { font, layout, radius, space, type } from '@/constants/tokens';
 import { NearPicks } from '@/components/search/NearPicks';
 import { useNearIngredients } from '@/hooks/useNearIngredients';
 import { typedUnit, type WizardPick } from '@/lib/drinkWizard';
@@ -217,7 +217,7 @@ export function IngredientSearch(props: IngredientSearchProps) {
                 done();
               } else if (allowNew && q && !loading && !near.length) pick({ id: null, name: q });
             }}
-            style={[styles.input, type.body, { fontFamily: fontFamilies.body, color: ds.c.ink }, NO_OUTLINE]}
+            style={[styles.input, type.body, { ...font.regular, color: ds.c.ink }, NO_OUTLINE]}
           />
           {onCancel ? (
             <PressableScale onPress={onCancel} role="button" accessibilityLabel="Keep it as it was" style={styles.cancel}>

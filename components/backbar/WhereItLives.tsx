@@ -3,7 +3,7 @@ import { StyleSheet, View } from 'react-native';
 
 import { Body, Button, Caption, LockedSection, Spec, Surface, TextLink, useDs } from '@/components/ds';
 import { VenueBrandProvider } from '@/components/nav/VenueBrandProvider';
-import { fontFamilies, radius, space } from '@/constants/tokens';
+import { font, radius, space } from '@/constants/tokens';
 import { useActiveVenue } from '@/hooks/useActiveVenue';
 import { useBarZones, useItemLocations } from '@/hooks/useBackBar';
 import { useCapabilities, useCapabilityOpensAt } from '@/hooks/useCapabilities';
@@ -153,7 +153,7 @@ function WhereItLivesCard({ itemId, itemName, bare, onRecipe, readOnly }: WhereI
 
 const styles = StyleSheet.create({
   card: { gap: space.md },
-  eyebrow: { fontFamily: fontFamilies.mono, letterSpacing: 1.2 },
+  eyebrow: { ...font.figures, letterSpacing: 1.2 },
   place: { gap: space.xs },
   stats: { flexDirection: 'row', flexWrap: 'wrap', gap: space.sm, marginTop: space.xs },
   stat: { flex: 1, paddingHorizontal: space.md, paddingVertical: space.sm, borderRadius: radius.control },

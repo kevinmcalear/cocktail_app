@@ -3,7 +3,7 @@ import { StyleSheet, TextInput, View } from 'react-native';
 
 import { Body, Caption, Chip, IngredientThumb, PressableScale, Spec, Surface, Title, useDs } from '@/components/ds';
 import { IconSymbol } from '@/components/ui/icon-symbol';
-import { fontFamilies, layout, radius, space, type } from '@/constants/tokens';
+import { font, layout, radius, space, type } from '@/constants/tokens';
 import type { ScaledLine } from '@/lib/scale';
 
 import { stepHave } from './makeLogic';
@@ -122,7 +122,7 @@ export function MakeHowMuch(p: MakeHowMuchProps) {
               onChangeText={p.onHave}
               keyboardType="decimal-pad"
               aria-label={`How much ${haveLine?.name ?? ''} you have, in ${p.haveUnit || 'its unit'}`}
-              style={[styles.amount, type.spec, { fontFamily: fontFamilies.monoMedium, color: ds.c.ink, backgroundColor: ds.c.raised }]}
+              style={[styles.amount, type.spec, { ...font.figuresMedium, color: ds.c.ink, backgroundColor: ds.c.raised }]}
             />
             <Spec>{p.haveUnit}</Spec>
             <PressableScale accessibilityLabel={`More ${haveLine?.name ?? ''}`.trim()} onPress={() => step(1)} style={[styles.round, { backgroundColor: ds.c.raised }]}>
@@ -159,12 +159,12 @@ const styles = StyleSheet.create({
   stack: { gap: space.md },
   switch: { flexDirection: 'row', padding: space.xs, borderRadius: radius.pill },
   side: { flex: 1, minHeight: layout.minTapTarget, borderRadius: radius.pill, alignItems: 'center', justifyContent: 'center', paddingHorizontal: space.sm },
-  strong: { fontFamily: fontFamilies.bodySemiBold },
+  strong: { ...font.semiBold },
   tiles: { flexDirection: 'row', flexWrap: 'wrap', gap: space.sm },
   tile: { minHeight: 64, borderRadius: radius.card, borderCurve: 'continuous', borderWidth: 2, justifyContent: 'center' },
   quarter: { flexGrow: 1, flexBasis: '20%', alignItems: 'center' },
   half: { flexGrow: 1, flexBasis: '40%', paddingHorizontal: space.md, gap: 2 },
-  big: { ...type.headline, fontFamily: fontFamilies.monoMedium },
+  big: { ...type.headline, ...font.figuresMedium },
   chips: { flexDirection: 'row', flexWrap: 'wrap', gap: space.sm },
   stepper: { flexDirection: 'row', alignItems: 'center', gap: space.sm },
   round: { width: layout.minTapTarget, height: layout.minTapTarget, borderRadius: radius.pill, alignItems: 'center', justifyContent: 'center' },

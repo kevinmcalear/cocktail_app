@@ -1,6 +1,6 @@
 import { fireEvent, screen } from '@testing-library/react-native';
 
-import { renderWithTamagui } from '@/jest.setup';
+import { renderWithProviders } from '@/jest.setup';
 import { EMPTY_DRAFT } from '@/lib/drinkWizard';
 
 import { IngredientsStep } from './IngredientsStep';
@@ -25,7 +25,7 @@ describe('IngredientsStep swap', () => {
   test('a swap starts with the line’s name, so it can be renamed and keeps its pour (Eddie, 26 Oct)', async () => {
     const set = jest.fn();
     const draft = { ...EMPTY_DRAFT, lines: [{ key: 'a', id: 'feijoa', name: 'Feijoa', amount: '30', unit: 'ml' }] };
-    await renderWithTamagui(<IngredientsStep draft={draft} set={set} ingredients={[CAMPARI, { ...CAMPARI, id: 'feijoa', name: 'Feijoa' }]} />);
+    await renderWithProviders(<IngredientsStep draft={draft} set={set} ingredients={[CAMPARI, { ...CAMPARI, id: 'feijoa', name: 'Feijoa' }]} />);
     await fireEvent.press(screen.getByRole('button', { name: /^Feijoa, / }));
     await fireEvent.press(screen.getByRole('button', { name: 'Swap Feijoa for another ingredient' }));
     await fireEvent.changeText(screen.getByLabelText('Rename Feijoa or pick another'), 'Feijoa juice');
@@ -36,7 +36,7 @@ describe('IngredientsStep swap', () => {
   test('Return on a swap left as it was keeps the line, not the top match', async () => {
     const set = jest.fn();
     const draft = { ...EMPTY_DRAFT, lines: [{ key: 'a', id: null, name: 'Feijoa', amount: '30', unit: 'ml', named: true }] };
-    await renderWithTamagui(<IngredientsStep draft={draft} set={set} ingredients={[{ ...CAMPARI, id: 'fv', name: 'Feijoa Vodka' }]} />);
+    await renderWithProviders(<IngredientsStep draft={draft} set={set} ingredients={[{ ...CAMPARI, id: 'fv', name: 'Feijoa Vodka' }]} />);
     await fireEvent.press(screen.getByRole('button', { name: /^Feijoa, / }));
     await fireEvent.press(screen.getByRole('button', { name: 'Swap Feijoa for another ingredient' }));
     await fireEvent(screen.getByLabelText('Rename Feijoa or pick another'), 'submitEditing');

@@ -1,5 +1,8 @@
 {
   "productName": "Cocktail",
+  "domain": "babyvom.it",
+  "scheme": "cocktailapp",
+  "searchIndexing": false,
   "operator": "Kevin McAlear",
   "supportEmail": "kevin.mcalear@gmail.com",
   "legalUpdated": "7 October 2026"

@@ -4,7 +4,7 @@ import { StyleSheet, View, type StyleProp, type ViewStyle } from 'react-native';
 import DraggableFlatList, { type RenderItemParams } from 'react-native-draggable-flatlist';
 
 import { Body, Button, Caption, Field, useDs } from '@/components/ds';
-import { fontFamilies, space } from '@/constants/tokens';
+import { font, space } from '@/constants/tokens';
 import { useDrinkLists } from '@/hooks/useDiscover';
 import { useBarRiffs, useStaffList, useStaffListEdit, type StaffPick } from '@/hooks/useStaffList';
 import { plainDbMessage } from '@/lib/dbError';
@@ -191,7 +191,7 @@ const styles = StyleSheet.create({
   list: { gap: space.xs },
   top: { gap: space.md, paddingBottom: space.sm },
   cut: { flexDirection: 'row', alignItems: 'center', gap: space.sm, marginVertical: space.sm },
-  cutText: { fontFamily: fontFamilies.bodySemiBold, letterSpacing: 0.6 },
+  cutText: { ...font.semiBold, letterSpacing: 0.6 },
   rule: { flex: 1, height: StyleSheet.hairlineWidth },
   add: { gap: space.sm, paddingTop: space.md },
   result: { flexDirection: 'row', alignItems: 'center', gap: space.md },

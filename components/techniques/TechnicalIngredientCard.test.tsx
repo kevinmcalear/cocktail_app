@@ -1,6 +1,6 @@
 import { fireEvent, screen } from '@testing-library/react-native';
 
-import { renderWithTamagui } from '@/jest.setup';
+import { renderWithProviders } from '@/jest.setup';
 
 import { TechnicalIngredientCard, WhereToBuy } from './TechnicalIngredientCard';
 
@@ -8,7 +8,7 @@ const mockPush = jest.fn();
 jest.mock('expo-router', () => ({ useRouter: () => ({ push: mockPush }) }));
 
 test('a technical ingredient shows its doses by job and links to the techniques that use it', async () => {
-  await renderWithTamagui(<TechnicalIngredientCard name="Xanthan Gum" />);
+  await renderWithProviders(<TechnicalIngredientCard name="Xanthan Gum" />);
   expect(screen.getByText('Body in a no-alcohol drink')).toBeTruthy();
   expect(screen.getByText('0.05 to 0.1%')).toBeTruthy();
   // A number nobody has tested says so.
@@ -19,11 +19,11 @@ test('a technical ingredient shows its doses by job and links to the techniques 
 });
 
 test('where to buy is its own section', async () => {
-  await renderWithTamagui(<WhereToBuy name="Xanthan Gum" />);
+  await renderWithProviders(<WhereToBuy name="Xanthan Gum" />);
   expect(screen.getByLabelText('Xanthan gum 1 lb, WebstaurantStore. Opens the shop')).toBeTruthy();
 });
 
 test('an ordinary ingredient shows nothing', async () => {
-  await renderWithTamagui(<TechnicalIngredientCard name="Lime juice" />);
+  await renderWithProviders(<TechnicalIngredientCard name="Lime juice" />);
   expect(screen.queryByText('HOW TO USE IT')).toBeNull();
 });

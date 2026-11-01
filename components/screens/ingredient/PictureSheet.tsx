@@ -5,7 +5,7 @@ import { Body, Button, Caption, GlassButton, IngredientDrawing, PressableScale, 
 import { IngredientPhoto } from '@/components/ds/IngredientDrawing';
 import { pickDrinkPhotos, takeDrinkPhoto } from '@/components/drink/drinkImages';
 import { IconSymbol } from '@/components/ui/icon-symbol';
-import { fontFamilies, radius, space } from '@/constants/tokens';
+import { font, radius, space } from '@/constants/tokens';
 import { useWebImageDrop } from '@/hooks/useWebImageDrop';
 import type { IngredientPicture } from '@/lib/ingredientPicture';
 
@@ -162,7 +162,7 @@ const styles = StyleSheet.create({
   drop: { flex: 1, alignItems: 'center', justifyContent: 'center', gap: space.sm, padding: space.md, borderWidth: 2, borderStyle: 'dashed', borderRadius: radius.control },
   words: { flex: 1, minWidth: 0, gap: 2 },
   wordsWide: { gap: 2 },
-  bold: { fontFamily: fontFamilies.bodySemiBold },
+  bold: { ...font.semiBold },
   tick: { width: 26, height: 26, borderRadius: radius.pill, alignItems: 'center', justifyContent: 'center' },
   buttons: { flexDirection: 'row', gap: space.sm },
   flex: { flex: 1 },

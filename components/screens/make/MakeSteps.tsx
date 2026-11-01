@@ -4,7 +4,7 @@ import { StyleSheet, View } from 'react-native';
 import { Body, Caption, Chip, DsText, PressableScale, Spec, Surface, Title, useDs } from '@/components/ds';
 import { BigTimer } from '@/components/prep/StepTimer';
 import { IconSymbol } from '@/components/ui/icon-symbol';
-import { fontFamilies, layout, radius, space } from '@/constants/tokens';
+import { font, layout, radius, space } from '@/constants/tokens';
 import { withAlpha } from '@/lib/color';
 import { andList } from '@/lib/makers';
 import type { StepPart } from '@/lib/makeSteps';
@@ -129,7 +129,7 @@ export function MakeStep({ index, total, name, size, parts, hint, timer, next }:
 
 const styles = StyleSheet.create({
   stack: { gap: space.md },
-  eyebrow: { fontFamily: fontFamilies.mono, letterSpacing: 1 },
+  eyebrow: { ...font.figures, letterSpacing: 1 },
   list: { paddingVertical: 0 },
   check: { flexDirection: 'row', alignItems: 'center', gap: space.md, minHeight: layout.minTapTarget + space.md },
   box: { width: 26, height: 26, borderRadius: radius.control / 2, borderWidth: 2, alignItems: 'center', justifyContent: 'center' },

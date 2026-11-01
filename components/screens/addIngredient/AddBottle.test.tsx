@@ -1,6 +1,6 @@
 import { fireEvent, screen } from '@testing-library/react-native';
 
-import { renderWithTamagui } from '@/jest.setup';
+import { renderWithProviders } from '@/jest.setup';
 
 import { AddBottle } from './AddBottle';
 
@@ -35,7 +35,7 @@ describe('AddBottle', () => {
   beforeEach(() => mockCreate.mockReset());
 
   test('a bottle you buy: its name, maker and strength on one screen, saved as a bottle', async () => {
-    await renderWithTamagui(<AddBottle barId="bar-1" onClose={jest.fn()} onSaved={jest.fn()} onMake={jest.fn()} />);
+    await renderWithProviders(<AddBottle barId="bar-1" onClose={jest.fn()} onSaved={jest.fn()} onMake={jest.fn()} />);
     await laidOut();
     await fireEvent.changeText(screen.getByLabelText('Name'), 'Tanqueray No. Ten');
     await fireEvent.changeText(screen.getByLabelText('Who makes it'), 'Tanqueray');
@@ -47,7 +47,7 @@ describe('AddBottle', () => {
   test('a name that is already here offers that one; something you make goes to the recipe steps', async () => {
     const onSaved = jest.fn();
     const onMake = jest.fn();
-    await renderWithTamagui(<AddBottle onClose={jest.fn()} onSaved={onSaved} onMake={onMake} />);
+    await renderWithProviders(<AddBottle onClose={jest.fn()} onSaved={onSaved} onMake={onMake} />);
     await laidOut();
     await fireEvent.changeText(screen.getByLabelText('Name'), '1:1 sugar syrup');
     expect(screen.getByRole('button', { name: 'Save the bottle', disabled: true })).toBeTruthy();
@@ -59,7 +59,7 @@ describe('AddBottle', () => {
   });
 
   test('something else (a plain ingredient from a spec editor) is just its name', async () => {
-    await renderWithTamagui(<AddBottle initialName="Fresh lime juice" onClose={jest.fn()} onSaved={jest.fn()} onMake={jest.fn()} />);
+    await renderWithProviders(<AddBottle initialName="Fresh lime juice" onClose={jest.fn()} onSaved={jest.fn()} onMake={jest.fn()} />);
     await laidOut();
     await fireEvent.press(screen.getByRole('radio', { name: 'Something else' }));
     expect(screen.queryByLabelText('Who makes it')).toBeNull();

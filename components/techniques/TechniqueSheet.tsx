@@ -2,7 +2,7 @@ import type { ReactNode } from 'react';
 import { StyleSheet, View } from 'react-native';
 
 import { BackbarTheme, Caption, GlassButton, Sheet, SheetScrollView, Title, useSheetClose } from '@/components/ds';
-import { fontFamilies, space } from '@/constants/tokens';
+import { font, space } from '@/constants/tokens';
 
 interface Props {
   visible: boolean;
@@ -43,5 +43,5 @@ const styles = StyleSheet.create({
   body: { padding: space.xl, paddingTop: space.md, paddingBottom: space.xxxl, gap: space.lg },
   head: { flexDirection: 'row', alignItems: 'flex-start', gap: space.md },
   flex: { flex: 1, minWidth: 0, gap: space.xs },
-  eyebrow: { fontFamily: fontFamilies.mono, letterSpacing: 1 },
+  eyebrow: { ...font.figures, letterSpacing: 1 },
 });

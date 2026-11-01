@@ -4,7 +4,7 @@ import type { ReactNode } from 'react';
 import { Platform, StyleSheet, View, type StyleProp, type ViewStyle } from 'react-native';
 
 import { IconSymbol } from '@/components/ui/icon-symbol';
-import { backbar, fontFamilies, layout, radius, space, type BackbarScheme } from '@/constants/tokens';
+import { backbar, type BackbarScheme, font, layout, radius, space } from '@/constants/tokens';
 
 import type { IconName } from './Button';
 import { PressableScale } from './PressableScale';
@@ -81,7 +81,7 @@ export function GlassButton({ accessibilityLabel, icon, label, onPress, color, o
         <View style={styles.row}>
           {icon ? <IconSymbol name={icon} size={size ? 22 : 18} color={ink} /> : null}
           {label ? (
-            <DsText variant="caption" color={ink} style={{ fontFamily: fontFamilies.bodySemiBold }}>
+            <DsText variant="caption" color={ink} style={{ ...font.semiBold }}>
               {label}
             </DsText>
           ) : null}

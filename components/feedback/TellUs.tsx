@@ -3,7 +3,7 @@ import { StyleSheet, View } from 'react-native';
 
 import { BrandProvider, Caption, DsText, PressableScale, useDs } from '@/components/ds';
 import { IconSymbol } from '@/components/ui/icon-symbol';
-import { DEFAULT_ACCENT, fontFamilies, radius, space } from '@/constants/tokens';
+import { DEFAULT_ACCENT, font, radius, space } from '@/constants/tokens';
 import { withAlpha } from '@/lib/color';
 
 import { NoteSheet, type NoteAbout } from './NoteSheet';
@@ -65,5 +65,5 @@ function Row({ line, onPress }: { line: string; onPress: () => void }) {
 const styles = StyleSheet.create({
   row: { flexDirection: 'row', alignItems: 'center', gap: space.md, minHeight: 64, paddingHorizontal: space.lg, paddingVertical: space.sm, borderRadius: radius.control + 4, borderWidth: 1 },
   flex: { flex: 1, minWidth: 0 },
-  title: { fontFamily: fontFamilies.bodySemiBold },
+  title: { ...font.semiBold },
 });

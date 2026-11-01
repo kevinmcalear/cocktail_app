@@ -4,7 +4,7 @@ import { StyleSheet, View } from 'react-native';
 
 import { Body, Caption, DsText, PressableScale, useDs } from '@/components/ds';
 import { IconSymbol } from '@/components/ui/icon-symbol';
-import { fontFamilies, radius, space } from '@/constants/tokens';
+import { font, radius, space } from '@/constants/tokens';
 import { useFirstRound } from '@/hooks/useFirstRound';
 import type { RoundStep } from '@/lib/firstRound';
 
@@ -101,8 +101,8 @@ const styles = StyleSheet.create({
   // Under the step's title: past the 28 px number and its gap.
   choices: { paddingLeft: 28 + space.md },
   number: { width: 28, height: 28, borderRadius: radius.pill, alignItems: 'center', justifyContent: 'center' },
-  mono: { fontFamily: fontFamilies.mono },
+  mono: { ...font.figures },
   stepText: { flex: 1, gap: 2 },
-  medium: { fontFamily: fontFamilies.bodyMedium },
+  medium: { ...font.medium },
   skip: { minHeight: 44, paddingHorizontal: space.sm, justifyContent: 'center' },
 });

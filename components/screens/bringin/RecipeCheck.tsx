@@ -3,7 +3,7 @@ import { ScrollView, StyleSheet, TextInput, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import { Body, Button, Caption, Field, useDs, useGutter } from '@/components/ds';
-import { radius, space, type as typeScale, fontFamilies } from '@/constants/tokens';
+import { type as typeScale, font, fontFamilies, radius, space } from '@/constants/tokens';
 import { openPickLine, startChoices, type RecipeChoices } from '@/lib/bringInDraft';
 import type { MatchData } from '@/lib/bringInMatch';
 import type { ReadFile } from '@/lib/readAnything';
@@ -79,7 +79,7 @@ export function RecipeCheck({ recipe, files, from, data, saving, error, onCancel
               {from}
             </Caption>
           )}
-          <TextInput accessibilityLabel="Drink name" value={choices.name} onChangeText={(name) => set({ name })} style={[styles.name, { color: ds.c.ink, fontFamily: fontFamilies.instrument }]} />
+          <TextInput accessibilityLabel="Drink name" value={choices.name} onChangeText={(name) => set({ name })} style={[styles.name, { color: ds.c.ink, fontFamily: fontFamilies.name }]} />
         </View>
         {there ? <AlreadyThereCard there={there} pick={choices.same} onPick={(same) => set({ same })} /> : null}
         {page && recipe.at ? (
@@ -129,7 +129,7 @@ const styles = StyleSheet.create({
   name: { ...typeScale.title, paddingVertical: 0 },
   row: { flexDirection: 'row', gap: space.sm + 2 },
   made: { gap: space.sm },
-  input: { ...typeScale.body, paddingVertical: 2, fontFamily: fontFamilies.body },
+  input: { ...typeScale.body, paddingVertical: 2, ...font.regular },
   chips: { flexDirection: 'row', flexWrap: 'wrap', gap: space.sm },
   chip: { minHeight: 36, paddingHorizontal: space.md, borderRadius: radius.pill, borderWidth: 1, justifyContent: 'center' },
   notes: { borderWidth: 1, borderStyle: 'dashed', minHeight: 36 },

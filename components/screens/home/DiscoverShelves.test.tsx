@@ -1,6 +1,6 @@
 import { fireEvent, screen } from '@testing-library/react-native';
 
-import { renderWithTamagui } from '@/jest.setup';
+import { renderWithProviders } from '@/jest.setup';
 import type { DiscoverDrink } from '@/lib/discoverDrinks';
 import { pickShelves } from '@/lib/discoverShelves';
 
@@ -38,7 +38,7 @@ test('only shelves with three drinks show, and See all sets that filter', async 
   expect(picked[0].note).toBe('One from each bar');
   const onKind = jest.fn();
   const onShowBar = jest.fn();
-  await renderWithTamagui(<DiscoverShelves shelves={shelves} onKind={onKind} onShowBar={onShowBar} />);
+  await renderWithProviders(<DiscoverShelves shelves={shelves} onKind={onKind} onShowBar={onShowBar} />);
 
   expect(screen.getByRole('heading', { name: 'On menus around you' })).toBeTruthy();
   expect(screen.getByRole('heading', { name: 'Martinis, three ways' })).toBeTruthy();
@@ -59,7 +59,7 @@ test('only shelves with three drinks show, and See all sets that filter', async 
 test('how far sits on the picture, in miles or kilometres as the device measures', async () => {
   const around = [drink('1', 'a'), drink('2', 'b'), drink('3', 'c')];
   const shelves = pickShelves({ where: 'near you', around, style: null, styled: [], zero: [] });
-  await renderWithTamagui(
+  await renderWithProviders(
     <BarAway.Provider value={() => '0.2 mi'}>
       <DiscoverShelves shelves={shelves} />
     </BarAway.Provider>,
@@ -73,7 +73,7 @@ test('how far sits on the picture, in miles or kilometres as the device measures
 
 test('no shelves, nothing at all', async () => {
   const shelves = pickShelves({ where: 'near you', around: [drink('1', 'a'), drink('2', 'a')], style: null, styled: [], zero: [] });
-  await renderWithTamagui(<DiscoverShelves shelves={shelves} />);
+  await renderWithProviders(<DiscoverShelves shelves={shelves} />);
   expect(screen.queryByRole('heading')).toBeNull();
 });
 
@@ -89,7 +89,7 @@ test('wide grids fit 112 px tiles: three in a 428 list, four in 640', () => {
 
 test('a grid shows two rows, and Show all opens the rest in place', async () => {
   const drinks = Array.from({ length: 10 }, (_, i) => drink(String(i), `b${i}`));
-  await renderWithTamagui(<TileGrid drinks={drinks} showAll="Show all 10 drinks" />);
+  await renderWithProviders(<TileGrid drinks={drinks} showAll="Show all 10 drinks" />);
   // Before layout: three across, so six.
   expect(screen.getAllByRole('link')).toHaveLength(6);
   await fireEvent.press(screen.getByRole('button', { name: 'Show all 10 drinks' }));

@@ -4,7 +4,7 @@ import Animated, { Extrapolation, interpolate, useAnimatedStyle, type SharedValu
 
 import { Body, Caption, PressableScale, Title, useDs } from '@/components/ds';
 import { useTabBarTop } from '@/components/nav/WebTabBar';
-import { fontFamilies, radius, space, type } from '@/constants/tokens';
+import { font, radius, space, type } from '@/constants/tokens';
 
 /** How far up (0 = the one line, 1 = the next stop) the line has gone and the page has come in. */
 export const CROSSFADE = 0.35;
@@ -118,6 +118,6 @@ const styles = StyleSheet.create({
   row: { height: type.title.lineHeight + space.sm },
   big: { paddingHorizontal: space.lg, justifyContent: 'flex-end', paddingBottom: space.xs },
   line: { flex: 1, flexDirection: 'row', alignItems: 'center', gap: space.md, paddingHorizontal: space.lg, paddingBottom: space.sm },
-  title: { flex: 1, minWidth: 0, fontFamily: fontFamilies.bodySemiBold },
+  title: { flex: 1, minWidth: 0, ...font.semiBold },
   controls: { gap: space.sm },
 });

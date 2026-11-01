@@ -4,7 +4,7 @@ import { StyleSheet, TextInput, View } from 'react-native';
 
 import { Body, Button, Caption, DsText, Field, Headline, PressableScale, useDs } from '@/components/ds';
 import { Choice } from '@/components/screens/menus/MenuSheet';
-import { fontFamilies, layout, radius, space } from '@/constants/tokens';
+import { font, layout, radius, space } from '@/constants/tokens';
 import { useConfirmAge } from '@/hooks/useAgeCheck';
 import { countryName, searchCountries } from '@/lib/countries';
 import { birthPartDone, localeCountry, parseBirthDate } from '@/lib/safety';
@@ -92,7 +92,7 @@ function CountryField({ value, onChange }: { value: string | null; onChange: (co
           <DsText variant="body" style={styles.flex}>
             {countryName(value)}
           </DsText>
-          <DsText variant="caption" color={ds.accentText} style={{ fontFamily: fontFamilies.bodySemiBold }}>
+          <DsText variant="caption" color={ds.accentText} style={{ ...font.semiBold }}>
             Change
           </DsText>
         </PressableScale>

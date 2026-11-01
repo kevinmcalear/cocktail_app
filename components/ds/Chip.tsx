@@ -1,7 +1,7 @@
 import type { ReactNode } from 'react';
 import { StyleSheet } from 'react-native';
 
-import { fontFamilies, layout, radius, space } from '@/constants/tokens';
+import { font, layout, radius, space } from '@/constants/tokens';
 
 import { PressableScale } from './PressableScale';
 import { DsText } from './Text';
@@ -63,5 +63,5 @@ const styles = StyleSheet.create({
   quietCount: { opacity: 0.7 },
   // 36 inside a 4-point track makes the 44-point target (disc-desk-browse).
   small: { minHeight: layout.minTapTarget - space.sm, paddingHorizontal: space.md + 2 },
-  picked: { fontFamily: fontFamilies.bodySemiBold },
+  picked: { ...font.semiBold },
 });

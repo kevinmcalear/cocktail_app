@@ -3,7 +3,7 @@ import { useState } from 'react';
 import { Linking, StyleSheet, View } from 'react-native';
 
 import { Body, Caption, DsText, Headline, PressableScale, Spec, useDs } from '@/components/ds';
-import { fontFamilies, layout, radius, space, type } from '@/constants/tokens';
+import { font, layout, radius, space, type } from '@/constants/tokens';
 import { leadRecord, readUrl, RELATION_LABEL, RIGHTS_LABEL, sourceByline, throughTheYears, type PrintedRecipe } from '@/lib/drinkHistory';
 import { barMl, formatAmount } from '@/lib/drinkMath';
 import type { SpecLine } from '@/lib/spec';
@@ -188,7 +188,7 @@ const styles = StyleSheet.create({
   year: { width: space.xxxl + space.xs },
   flex: { flex: 1, minWidth: 0 },
   tr: { flexDirection: 'row', alignItems: 'center', gap: space.md, paddingVertical: space.sm },
-  th: { fontFamily: fontFamilies.monoMedium, letterSpacing: 1.2 },
+  th: { ...font.figuresMedium, letterSpacing: 1.2 },
   td: { minWidth: space.xxxl + space.lg, textAlign: 'right' },
   rowLine: { borderTopWidth: StyleSheet.hairlineWidth },
 });

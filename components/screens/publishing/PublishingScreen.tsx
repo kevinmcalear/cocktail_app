@@ -6,7 +6,7 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { BackbarTheme, Body, Button, Caption, DsText, Field, GlassButton, Headline, PressableScale, Surface, Title, useDs, useGutter } from '@/components/ds';
 import { Crumbs, usePageFrame } from '@/components/nav/PageFrame';
 import { WebHead } from '@/components/WebHead';
-import { fontFamilies, layout, space } from '@/constants/tokens';
+import { font, layout, space } from '@/constants/tokens';
 import { useActiveVenue } from '@/hooks/useActiveVenue';
 import { useCapabilities } from '@/hooks/useCapabilities';
 import { useSaveProfileInstagram } from '@/hooks/useMyProfile';
@@ -289,7 +289,7 @@ const styles = StyleSheet.create({
   igField: { flexGrow: 1, flexBasis: 260 },
   start: { alignItems: 'flex-start' },
   rule: { height: StyleSheet.hairlineWidth },
-  num: { fontFamily: fontFamilies.mono },
+  num: { ...font.figures },
   group: { gap: space.sm },
   menu: {
     gap: space.sm,

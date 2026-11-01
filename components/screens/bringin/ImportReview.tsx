@@ -3,7 +3,7 @@ import { ScrollView, StyleSheet, TextInput, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import { Button, Caption, DsText, PressableScale, useDs, useGutter } from '@/components/ds';
-import { fontFamilies, space, type as typeScale } from '@/constants/tokens';
+import { type as typeScale, font, fontFamilies, space } from '@/constants/tokens';
 import { openPickLine } from '@/lib/bringInDraft';
 import type { MatchData } from '@/lib/bringInMatch';
 import { EMPTY_DRAFT } from '@/lib/drinkWizard';
@@ -74,7 +74,7 @@ export function ImportReview({ id, data, onFinishLater }: { id: string; data: Ma
         </View>
         <ProgressLine t={t} words={`${t.checked} of ${t.total}`} />
         <DrawnFromSpec inputs={sketch} seed={recipe.name} name={choices.name} />
-        <TextInput accessibilityLabel="Drink name" editable={open} value={choices.name} onChangeText={(name) => setChoices(at, (c) => ({ ...c, name }))} style={[styles.name, { color: ds.c.ink, fontFamily: fontFamilies.instrument }]} />
+        <TextInput accessibilityLabel="Drink name" editable={open} value={choices.name} onChangeText={(name) => setChoices(at, (c) => ({ ...c, name }))} style={[styles.name, { color: ds.c.ink, fontFamily: fontFamilies.name }]} />
         {open ? <TakeOutLine onPress={() => setNotDrink(at)} /> : null}
         {there && open ? <AlreadyThereCard there={there} pick={choices.same} onPick={(same) => setChoices(at, (c) => ({ ...c, same }))} onSkip={() => skip(at)} /> : null}
         {page?.uri && recipe.at ? (
@@ -120,8 +120,8 @@ const styles = StyleSheet.create({
   body: { width: '100%', maxWidth: 640, alignSelf: 'center', gap: space.md, paddingBottom: space.xxl },
   top: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between' },
   later: { minHeight: 44, justifyContent: 'center' },
-  medium: { fontFamily: fontFamilies.bodyMedium },
-  mono: { fontFamily: fontFamilies.mono },
+  medium: { ...font.medium },
+  mono: { ...font.figures },
   name: { ...typeScale.title, paddingVertical: 0 },
   row: { flexDirection: 'row', gap: space.sm + 2 },
   flex: { flex: 1 },

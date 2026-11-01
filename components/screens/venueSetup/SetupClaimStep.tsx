@@ -6,7 +6,7 @@ import { ClaimMethods, methodDetails } from '@/components/screens/claim/ClaimMet
 import { CLAIM_LIMIT_NOTE } from '@/components/screens/claim/ClaimStart';
 import { SetupFooter, SetupPage } from '@/components/screens/onboarding/SetupPage';
 import { IconSymbol } from '@/components/ui/icon-symbol';
-import { fontFamilies, space } from '@/constants/tokens';
+import { font, space } from '@/constants/tokens';
 import { useAuth } from '@/ctx/AuthContext';
 import { useStartBarClaim } from '@/hooks/useBarClaims';
 import { useBarFacts } from '@/hooks/useBarFacts';
@@ -147,5 +147,5 @@ export function SetupClaimStep({ profileId, ensureVenue, held, venueError, after
 const styles = StyleSheet.create({
   status: { flexDirection: 'row', alignItems: 'flex-start', gap: space.md },
   flex: { flex: 1, minWidth: 0, gap: space.xs },
-  strong: { fontFamily: fontFamilies.bodySemiBold },
+  strong: { ...font.semiBold },
 });

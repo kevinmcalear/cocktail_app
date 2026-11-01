@@ -3,7 +3,7 @@ import { StyleSheet, View } from 'react-native';
 
 import { Body, Button, Caption, DateField, DsText, Field } from '@/components/ds';
 import { Choice, MenuSheet } from '@/components/screens/menus/MenuSheet';
-import { fontFamilies, space } from '@/constants/tokens';
+import { font, space } from '@/constants/tokens';
 import { useLogMade } from '@/hooks/useMade';
 import { useAddRankEntry, useMyRankList, useRankTarget, useRecordComparisons } from '@/hooks/useRankings';
 import { parseDay, toDay } from '@/lib/collection';
@@ -167,7 +167,7 @@ export function MadeSheet({ item, ingredients, lines = [], barName, onClose }: M
 
 const styles = StyleSheet.create({
   wrap: { flexDirection: 'row', flexWrap: 'wrap', gap: space.sm },
-  strong: { fontFamily: fontFamilies.bodySemiBold },
+  strong: { ...font.semiBold },
   noteRow: { flexDirection: 'row', alignItems: 'flex-start', gap: space.md },
   flex: { flex: 1, minWidth: 0 },
   footer: { gap: space.sm },

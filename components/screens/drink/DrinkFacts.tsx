@@ -1,7 +1,7 @@
 import { StyleSheet, View } from 'react-native';
 
 import { Caption, DsText, PressableScale, Tag, useDs } from '@/components/ds';
-import { fontFamilies, radius, space } from '@/constants/tokens';
+import { font, radius, space } from '@/constants/tokens';
 
 export interface Fact {
   label: string;
@@ -62,5 +62,5 @@ const styles = StyleSheet.create({
   grid: { flexDirection: 'row', flexWrap: 'wrap', gap: space.sm, justifyContent: 'space-between' },
   fact: { borderRadius: radius.control, padding: space.md, gap: 2, flexGrow: 1 },
   compact: { paddingVertical: space.sm, paddingHorizontal: space.sm + 2 },
-  medium: { fontFamily: fontFamilies.bodyMedium },
+  medium: { ...font.medium },
 });

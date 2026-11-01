@@ -1,7 +1,7 @@
 import { fireEvent, screen } from '@testing-library/react-native';
 import { useState } from 'react';
 
-import { renderWithTamagui } from '@/jest.setup';
+import { renderWithProviders } from '@/jest.setup';
 import { EMPTY_DRAFT, type WizardDraft } from '@/lib/drinkWizard';
 
 import { NotesStep } from './TextSteps';
@@ -29,7 +29,7 @@ function Harness({ barId = 'little-rye' }: { barId?: string | null }) {
 }
 
 test('at home, one box and just you to start (Q27)', async () => {
-  await renderWithTamagui(<Harness barId={null} />);
+  await renderWithProviders(<Harness barId={null} />);
   expect(screen.queryByText('On the menu')).toBeNull();
   expect(screen.getByText('What to change next time, where it came from.')).toBeTruthy();
   const chips = screen.getAllByRole('radio');
@@ -42,7 +42,7 @@ test('at home, one box and just you to start (Q27)', async () => {
 });
 
 test('at a venue the notes go to a role and everyone above it, in the venue\'s own role names (E29)', async () => {
-  await renderWithTamagui(<Harness barId="bar-1" />);
+  await renderWithProviders(<Harness barId="bar-1" />);
   expect(screen.getByRole('radio', { name: 'Everyone who sees the drink. Guests and staff, and the public if it is published', checked: true })).toBeTruthy();
   expect(screen.getByText('Employee, Apprentice, and everyone above')).toBeTruthy();
   expect(screen.getByText('Drink Creator, Head bartender, Admin')).toBeTruthy();

@@ -1,6 +1,6 @@
 import { fireEvent, screen } from '@testing-library/react-native';
 
-import { renderWithTamagui } from '@/jest.setup';
+import { renderWithProviders } from '@/jest.setup';
 import { startPrep } from '@/lib/prepKinds';
 
 import { PrepBuilder } from './PrepBuilder';
@@ -38,7 +38,7 @@ jest.mock('@/hooks/usePrepCard', () => ({
 // The builder draws after its first layout, as the wizard does on iOS.
 const laidOut = () => fireEvent(screen.getByTestId('add-prep'), 'layout', { persist: () => {}, nativeEvent: { layout: { x: 0, y: 0, width: 390, height: 800 } } });
 const open = async (name: string, onDone = jest.fn(), onLater?: () => void) => {
-  await renderWithTamagui(<PrepBuilder name={name} drinkName="Daiquiri" ingredients={[]} onDone={onDone} onLater={onLater} onClose={jest.fn()} />);
+  await renderWithProviders(<PrepBuilder name={name} drinkName="Daiquiri" ingredients={[]} onDone={onDone} onLater={onLater} onClose={jest.fn()} />);
   await laidOut();
   return onDone;
 };
@@ -124,7 +124,7 @@ describe('PrepBuilder', () => {
   test('leaving asks first, and keeps what is done as a recipe to finish', async () => {
     const onLater = jest.fn();
     const onClose = jest.fn();
-    await renderWithTamagui(<PrepBuilder name="Pineapple chili shrub" drinkName="Daiquiri" ingredients={[]} onDone={jest.fn()} onLater={onLater} onClose={onClose} />);
+    await renderWithProviders(<PrepBuilder name="Pineapple chili shrub" drinkName="Daiquiri" ingredients={[]} onDone={jest.fn()} onLater={onLater} onClose={onClose} />);
     await laidOut();
     await fireEvent.press(screen.getByRole('button', { name: 'Next: what goes in' }));
     await fireEvent.press(screen.getByRole('link', { name: 'Up to Daiquiri' }));
@@ -145,7 +145,7 @@ describe('PrepBuilder', () => {
 
   test('on its own page (New › Something you make): your recipes, and Save it', async () => {
     const onDone = jest.fn();
-    await renderWithTamagui(<PrepBuilder page name="" drinkName="" above={[]} ingredients={[]} onDone={onDone} onClose={jest.fn()} />);
+    await renderWithProviders(<PrepBuilder page name="" drinkName="" above={[]} ingredients={[]} onDone={onDone} onClose={jest.fn()} />);
     await laidOut();
     expect(screen.getByRole('button', { name: 'Back to Your recipes' })).toBeTruthy();
     expect(screen.getByText('SOMETHING YOU MAKE')).toBeTruthy();
@@ -252,7 +252,7 @@ describe('PrepBuilder', () => {
 
   test('a recipe already written keeps what goes in when another kind is picked', async () => {
     const onDone = jest.fn();
-    await renderWithTamagui(<PrepBuilder name="Pineapple shrub" drinkName="Daiquiri" initial={startPrep('shrub', 'Pineapple shrub')} first ingredients={[]} onDone={onDone} onClose={jest.fn()} />);
+    await renderWithProviders(<PrepBuilder name="Pineapple shrub" drinkName="Daiquiri" initial={startPrep('shrub', 'Pineapple shrub')} first ingredients={[]} onDone={onDone} onClose={jest.fn()} />);
     await laidOut();
     await fireEvent.press(screen.getByRole('radio', { name: /^Syrup, / }));
     await fireEvent.press(screen.getByRole('button', { name: 'Next: what goes in' }));

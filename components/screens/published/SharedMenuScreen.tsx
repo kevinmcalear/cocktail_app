@@ -82,7 +82,7 @@ export function SharedMenuScreen({ id }: { id: string }) {
   const made = (
     <Surface style={styles.made}>
       <View style={styles.madeText}>
-        <DsText variant="headline" style={{ fontFamily: displayFaces.instrument.regular }}>
+        <DsText variant="headline" style={{ fontFamily: displayFaces.redaction.regular }}>
           Menu made with Cocktail
         </DsText>
         <Caption tone="muted">Make one for your own night, with the drinks drawn for you.</Caption>

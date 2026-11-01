@@ -7,7 +7,7 @@ import { IconSymbol } from '@/components/ui/icon-symbol';
 
 import { usePageFrame } from '@/components/nav/PageFrame';
 import { BackbarTheme, Body, Button, Caption, dragDismissesKeyboard, GlassButton, PressableScale, Segmented, Title, useDs, useGutter } from '@/components/ds';
-import { fontFamilies, layout, radius, space, type } from '@/constants/tokens';
+import { font, layout, radius, space, type } from '@/constants/tokens';
 import { useActiveVenue } from '@/hooks/useActiveVenue';
 import { useMode } from '@/hooks/useMode';
 import { useCoreIngredients, useIngredientNames, usePairings, type PairEra } from '@/hooks/usePairings';
@@ -113,7 +113,7 @@ function FlavorMapPage() {
             placeholderTextColor={ds.c.muted}
             aria-label="Start from an ingredient"
             autoCorrect={false}
-            style={[styles.input, type.body, { fontFamily: fontFamilies.body, color: ds.c.ink }]}
+            style={[styles.input, type.body, { ...font.regular, color: ds.c.ink }]}
           />
         </View>
         {query.trim() ? (
@@ -230,16 +230,16 @@ const styles = StyleSheet.create({
   field: { minHeight: 52, borderRadius: radius.control, borderWidth: StyleSheet.hairlineWidth, paddingHorizontal: space.lg, flexDirection: 'row', alignItems: 'center', gap: space.sm },
   input: { flex: 1, minHeight: layout.minTapTarget },
   picked: { flexDirection: 'row', alignItems: 'center', gap: space.sm, minHeight: layout.minTapTarget - space.xs, paddingHorizontal: space.md, borderRadius: radius.pill },
-  pickedName: { fontFamily: fontFamilies.bodyMedium },
+  pickedName: { ...font.medium },
   panel: { borderRadius: radius.card, borderCurve: 'continuous', borderWidth: StyleSheet.hairlineWidth, paddingVertical: space.md, overflow: 'hidden' },
   results: { borderRadius: radius.control, borderWidth: 1, overflow: 'hidden' },
   result: { minHeight: layout.minTapTarget + 4, justifyContent: 'center', paddingHorizontal: space.md, borderBottomWidth: StyleSheet.hairlineWidth },
   chips: { flexDirection: 'row', flexWrap: 'wrap', gap: space.sm },
   ring: { paddingTop: space.md },
-  ringLabel: { fontFamily: fontFamilies.mono, letterSpacing: 1.2, paddingBottom: space.sm },
+  ringLabel: { ...font.figures, letterSpacing: 1.2, paddingBottom: space.sm },
   row: { flexDirection: 'row', alignItems: 'center', gap: space.md, minHeight: layout.minTapTarget, borderTopWidth: StyleSheet.hairlineWidth },
   flex: { flex: 1 },
-  count: { fontFamily: fontFamilies.monoMedium, fontVariant: ['tabular-nums'] },
+  count: { ...font.figuresMedium, fontVariant: ['tabular-nums'] },
   back: { position: 'absolute', flexDirection: 'row', justifyContent: 'space-between' },
   pinned: { position: 'absolute', left: 0, right: 0, bottom: 0, paddingTop: space.md, borderTopWidth: StyleSheet.hairlineWidth },
 });

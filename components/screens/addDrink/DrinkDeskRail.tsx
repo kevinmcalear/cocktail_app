@@ -214,7 +214,7 @@ const styles = StyleSheet.create({
   kitEdit: { alignSelf: 'flex-start', paddingVertical: space.xs },
   flex: { flex: 1 },
   card: { gap: space.sm },
-  words: { fontFamily: fontFamilies.instrument },
+  words: { fontFamily: fontFamilies.name },
   meter: { flexDirection: 'row', alignItems: 'center', gap: space.md },
   meterLabel: { width: 64 },
   meterWord: { width: 72 },

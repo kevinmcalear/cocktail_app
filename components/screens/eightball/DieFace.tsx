@@ -2,7 +2,7 @@ import { StyleSheet, Text, View } from 'react-native';
 import Svg, { Defs, Path, RadialGradient, Stop } from 'react-native-svg';
 
 import { DsText } from '@/components/ds';
-import { eightBall, fontFamilies } from '@/constants/tokens';
+import { eightBall, font } from '@/constants/tokens';
 import { DIE_BOX, FACE, faceLines, neighbours, scaled, toPath } from '@/lib/eightBallFace';
 
 const FACE_PATH = toPath(FACE);
@@ -44,7 +44,7 @@ export function DieFace({ text, up }: { text: string; up: boolean }) {
             allowFontScaling={false}
             color={eightBall.text}
             align="center"
-            style={{ fontFamily: fontFamilies.bodySemiBold, fontSize: size.rest, lineHeight: size.lineHeight, letterSpacing: size.letterSpacing }}
+            style={{ ...font.semiBold, fontSize: size.rest, lineHeight: size.lineHeight, letterSpacing: size.letterSpacing }}
           >
             {line.split(' ').map((word, w) => (
               <Text key={w}>

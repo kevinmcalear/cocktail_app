@@ -6,7 +6,7 @@ import { Platform, StyleSheet, View } from 'react-native';
 import { AuthLink, AuthMessage, AuthShell, type AuthBrand } from '@/components/auth/AuthShell';
 import { CodeField } from '@/components/auth/CodeField';
 import { Body, Button, Caption, Field, TextLink, useDs } from '@/components/ds';
-import { fontFamilies, space } from '@/constants/tokens';
+import { font, space } from '@/constants/tokens';
 import { useAuth } from '@/ctx/AuthContext';
 import { CODE_LENGTH, LIMIT_WAIT, RESEND_AFTER, emailLooksRight, formatWait, sendProblem, verifyProblem } from '@/lib/authCode';
 import { deviceStore } from '@/lib/deviceStore';
@@ -219,5 +219,5 @@ const styles = StyleSheet.create({
   app: { flex: 1 },
   resend: { flexDirection: 'row', flexWrap: 'wrap', alignItems: 'center', columnGap: space.xs },
   links: { flexDirection: 'row', flexWrap: 'wrap', columnGap: space.lg },
-  legal: { fontFamily: fontFamilies.bodyMedium, textDecorationLine: 'underline' },
+  legal: { ...font.medium, textDecorationLine: 'underline' },
 });

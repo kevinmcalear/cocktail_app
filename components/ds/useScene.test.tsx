@@ -1,6 +1,6 @@
 import { act, screen } from '@testing-library/react-native';
 
-import { renderWithTamagui } from '@/jest.setup';
+import { renderWithProviders } from '@/jest.setup';
 
 import { EquipmentDrawing } from './EquipmentDrawing';
 
@@ -11,14 +11,14 @@ const size = (node: unknown) => JSON.stringify(node).length;
 jest.useFakeTimers();
 
 test('a lazy drawing is blank paper first, then painted once the app is idle', async () => {
-  await renderWithTamagui(<EquipmentDrawing id="boston-shaker" lazy />);
+  await renderWithProviders(<EquipmentDrawing id="boston-shaker" lazy />);
   const blank = size(screen.toJSON());
   await act(async () => jest.runAllTimers());
   expect(size(screen.toJSON())).toBeGreaterThan(blank * 2);
 });
 
 test('a hero drawing paints at once', async () => {
-  await renderWithTamagui(<EquipmentDrawing id="jigger" />);
+  await renderWithProviders(<EquipmentDrawing id="jigger" />);
   const now = size(screen.toJSON());
   await act(async () => jest.runAllTimers());
   expect(size(screen.toJSON())).toBe(now);

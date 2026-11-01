@@ -5,7 +5,7 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import { usePageFrame } from '@/components/nav/PageFrame';
 import { BackbarTheme, Caption, dragDismissesKeyboard, GlassButton, Title, useDs, useGutter } from '@/components/ds';
-import { fontFamilies, layout, space } from '@/constants/tokens';
+import { font, layout, space } from '@/constants/tokens';
 
 interface Props {
   eyebrow?: string;
@@ -70,7 +70,7 @@ const styles = StyleSheet.create({
   screen: { flex: 1 },
   page: { gap: space.xl },
   header: { gap: space.sm },
-  eyebrow: { fontFamily: fontFamilies.mono, letterSpacing: 1 },
+  eyebrow: { ...font.figures, letterSpacing: 1 },
   back: { position: 'absolute' },
   footer: { position: 'absolute', left: 0, right: 0 },
 });

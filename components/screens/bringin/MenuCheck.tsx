@@ -91,7 +91,7 @@ export function MenuCheck({ reading, files, data, name: given, saving, error, on
         <CheckTop kind="menu" onCancel={onCancel} />
         <View>
           <MonoLabel>MENU NAME</MonoLabel>
-          <TextInput accessibilityLabel="Menu name" value={name} onChangeText={setName} style={[styles.name, { color: ds.c.ink, borderBottomColor: ds.c.lineStrong, fontFamily: fontFamilies.instrument }]} />
+          <TextInput accessibilityLabel="Menu name" value={name} onChangeText={setName} style={[styles.name, { color: ds.c.ink, borderBottomColor: ds.c.lineStrong, fontFamily: fontFamilies.name }]} />
         </View>
         <View style={styles.pills}>
           {have ? <Pill tone="have" label={`${have} in your bar`} /> : null}

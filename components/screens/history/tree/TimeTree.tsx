@@ -3,7 +3,7 @@ import { ScrollView, StyleSheet, View } from 'react-native';
 import Animated, { useAnimatedRef, useAnimatedScrollHandler, useAnimatedStyle, useSharedValue } from 'react-native-reanimated';
 
 import { Caption, DsText, PressableScale, useBreakpoint, useDs } from '@/components/ds';
-import { familyHues, fontFamilies, radius, space, type } from '@/constants/tokens';
+import { familyHues, font, radius, space, type } from '@/constants/tokens';
 import { withAlpha } from '@/lib/color';
 import { shortYear } from '@/lib/timeline';
 import { AXIS_TICKS, axisEras, axisX, TIER_LABEL, type AxisFamily, type AxisRow } from '@/lib/timeTree';
@@ -221,7 +221,7 @@ export function TimeTree({
 
 const styles = StyleSheet.create({
   band: { position: 'absolute', top: 0, bottom: 0, paddingLeft: space.xs },
-  mono: { fontFamily: fontFamilies.mono },
+  mono: { ...font.figures },
   // The board's faint alternate band: a third of a hairline's strength.
   fill: { opacity: 0.35 },
   from: { fontStyle: 'italic' },
@@ -233,10 +233,10 @@ const styles = StyleSheet.create({
   round: { borderRadius: radius.pill },
   ring: { position: 'absolute', width: MARK + 8, height: MARK + 8, top: (ROW - MARK) / 2 - 4, borderRadius: radius.pill, borderWidth: 2 },
   label: { position: 'absolute', top: space.xs, height: ROW - space.sm, flexDirection: 'row', alignItems: 'center', gap: space.sm, paddingHorizontal: space.xs },
-  name: { fontFamily: fontFamilies.bodyMedium },
-  picked: { fontFamily: fontFamilies.bodySemiBold },
-  styleName: { fontFamily: fontFamilies.mono, letterSpacing: 1.2, textTransform: 'uppercase' },
-  meta: { fontFamily: fontFamilies.mono },
+  name: { ...font.medium },
+  picked: { ...font.semiBold },
+  styleName: { ...font.figures, letterSpacing: 1.2, textTransform: 'uppercase' },
+  meta: { ...font.figures },
   head: { position: 'absolute', left: space.xs },
   family: { fontSize: type.headline.fontSize + 2, lineHeight: type.headline.lineHeight + 2 },
   familyWide: { fontSize: type.headline.fontSize + 6, lineHeight: type.headline.lineHeight + 4 },

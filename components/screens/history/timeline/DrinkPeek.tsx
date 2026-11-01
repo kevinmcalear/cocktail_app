@@ -6,7 +6,7 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { BackbarTheme, Body, Button, Caption, DrinkImage, PressableScale, RowScore, Sheet, SheetScrollView, Title, useDs } from '@/components/ds';
 import { IconSymbol } from '@/components/ui/icon-symbol';
 import { UserAvatar } from '@/components/ui/UserAvatar';
-import { fontFamilies, layout, radius, space } from '@/constants/tokens';
+import { font, layout, radius, space } from '@/constants/tokens';
 import { useDrinkSources } from '@/hooks/useDrinkSources';
 import { useItemScores } from '@/hooks/useFlavor';
 import type { TreeNode } from '@/lib/drinkTree';
@@ -145,7 +145,7 @@ const styles = StyleSheet.create({
   threadRow: { flexDirection: 'row', alignItems: 'center', gap: space.sm },
   dests: { flexDirection: 'row', flexWrap: 'wrap', gap: space.sm },
   dest: { flexGrow: 1, flexBasis: 150, minHeight: layout.minTapTarget + space.md, flexDirection: 'row', alignItems: 'center', gap: space.sm + 2, paddingHorizontal: space.md, borderRadius: radius.control, borderCurve: 'continuous' },
-  destName: { fontFamily: fontFamilies.bodySemiBold },
+  destName: { ...font.semiBold },
   barMark: { width: 32, height: 32, borderRadius: radius.control - 4, alignItems: 'center', justifyContent: 'center' },
   sheet: { maxHeight: '75%' },
   body: { paddingHorizontal: space.lg, paddingTop: space.sm, paddingBottom: space.sm },

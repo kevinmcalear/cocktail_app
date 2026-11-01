@@ -5,7 +5,7 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import { Body, Button, Caption, DsText, GlassButton, PressableScale, sheetIsDialog, Title, useDs } from '@/components/ds';
 import { IconSymbol } from '@/components/ui/icon-symbol';
-import { fontFamilies, radius, space } from '@/constants/tokens';
+import { font, radius, space } from '@/constants/tokens';
 import { bottleReadings, useBringInMatchData } from '@/hooks/useBringInMatchData';
 import { useMatchCatalog } from '@/hooks/useIngredientCatalog';
 import { usePdfPages } from '@/hooks/usePdfPages';
@@ -159,7 +159,7 @@ const styles = StyleSheet.create({
   thumb: { width: 32, height: 42, borderRadius: radius.mark, borderWidth: 2, overflow: 'hidden' },
   thumbPicture: { flex: 1 },
   more: { minHeight: 42, justifyContent: 'center', paddingHorizontal: space.xs },
-  mono: { fontFamily: fontFamilies.mono },
+  mono: { ...font.figures },
   add: { borderWidth: 1, borderStyle: 'dashed', alignItems: 'center', justifyContent: 'center' },
   paper: { flex: 1, alignItems: 'center', justifyContent: 'center', paddingHorizontal: space.xxl },
   tilt: { transform: [{ rotate: '-2deg' }], shadowOpacity: 0.5, shadowRadius: 30, shadowOffset: { width: 0, height: 24 }, elevation: 12 },

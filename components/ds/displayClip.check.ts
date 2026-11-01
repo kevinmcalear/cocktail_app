@@ -13,7 +13,8 @@ import { displayFaces, displayName, type } from '../../constants/tokens';
 // higher. ponytail: they can clip on a one-line display name; the full font
 // line height (1.3 em) would fix that at the cost of airy multi-line titles.
 const METRICS: Record<keyof typeof displayFaces, { descent: number; ascender: number }> = {
-  instrument: { descent: 0.31, ascender: 0.748 },
+  // Redaction from assets/fonts/redaction (italic 0.717).
+  redaction: { descent: 0.3, ascender: 0.725 },
   fraunces: { descent: 0.255, ascender: 0.738 },
   bricolage: { descent: 0.27, ascender: 0.712 },
   // Playfair's italic ascender, the taller of the two. Josefin's hhea ascent

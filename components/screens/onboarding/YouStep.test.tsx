@@ -1,6 +1,6 @@
 import { act, fireEvent, screen } from '@testing-library/react-native';
 
-import { renderWithTamagui } from '@/jest.setup';
+import { renderWithProviders } from '@/jest.setup';
 
 import { forgetSetupProgress, OnboardingScreen } from './OnboardingScreen';
 
@@ -40,7 +40,7 @@ beforeEach(() => {
 });
 
 async function named(name = 'Matt Resler') {
-  await renderWithTamagui(<OnboardingScreen />);
+  await renderWithProviders(<OnboardingScreen />);
   await fireEvent.changeText(screen.getByLabelText('Name'), name);
   await fireEvent.press(screen.getByRole('button', { name: 'Continue' }));
   await act(async () => {}); // The look for a page that could be theirs.

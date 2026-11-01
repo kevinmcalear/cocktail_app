@@ -3,7 +3,7 @@ import { StyleSheet, View } from 'react-native';
 
 import { Caption, DsText, PressableScale, Tag, useDs, type IconName } from '@/components/ds';
 import { IconSymbol } from '@/components/ui/icon-symbol';
-import { displayFaces, fontFamilies, radius, space } from '@/constants/tokens';
+import { displayFaces, font, radius, space } from '@/constants/tokens';
 import { withAlpha } from '@/lib/color';
 import type { MenuLayoutTemplate } from '@/hooks/useMenuMutations';
 import { menuDateLine, menuStatus, plural } from '@/lib/menus';
@@ -51,7 +51,7 @@ export function StartTiles({ saved, camera, onPick }: { saved: string | null; ca
             <IconSymbol name={t.icon} size={20} color={ds.c.ink} />
           </View>
           <View>
-            <DsText variant="body" style={{ fontFamily: fontFamilies.bodySemiBold }}>
+            <DsText variant="body" style={{ ...font.semiBold }}>
               {t.label}
             </DsText>
             <Caption tone="muted">{t.detail}</Caption>

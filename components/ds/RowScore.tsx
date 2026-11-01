@@ -1,6 +1,6 @@
 import { StyleSheet, Text, View } from 'react-native';
 
-import { fontFamilies, space } from '@/constants/tokens';
+import { font, space } from '@/constants/tokens';
 import { withAlpha } from '@/lib/color';
 import { matchParts } from '@/lib/matchParts';
 import { formatScore } from '@/lib/ranking';
@@ -70,7 +70,7 @@ export function MatchText({ text, query, look = 'accent' }: MatchTextProps) {
   const ds = useDs();
   const parts = query ? matchParts(text, query) : null;
   if (!parts?.some((p) => p.hit)) return text;
-  const lit = look === 'tint' ? { backgroundColor: withAlpha(ds.accentText, 0.2), color: ds.c.ink } : { color: ds.accentText, fontFamily: fontFamilies.bodySemiBold };
+  const lit = look === 'tint' ? { backgroundColor: withAlpha(ds.accentText, 0.2), color: ds.c.ink } : { color: ds.accentText, ...font.semiBold };
   return parts.map((p, i) =>
     p.hit ? (
       <Text key={i} style={lit}>

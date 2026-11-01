@@ -2,7 +2,7 @@ import { fireEvent, screen } from '@testing-library/react-native';
 import { useState } from 'react';
 
 import type { NearNameDrink } from '@/hooks/useNearNameDrink';
-import { renderWithTamagui } from '@/jest.setup';
+import { renderWithProviders } from '@/jest.setup';
 import { EMPTY_DRAFT, type WizardDraft } from '@/lib/drinkWizard';
 
 import { NearNameCard } from './NearNameCard';
@@ -39,7 +39,7 @@ function Card({ hidden = false }: { hidden?: boolean }) {
 beforeEach(() => jest.clearAllMocks());
 
 test('asks "Is it the Salti Boi from Pale Moth?"; Yes opens it and keeps the spelling', async () => {
-  await renderWithTamagui(<Card />);
+  await renderWithProviders(<Card />);
   expect(screen.getByText('Is it the Salti Boi from Pale Moth?')).toBeTruthy();
   expect(screen.getByText('Pale Moth · Collingwood · Riff on a Margarita')).toBeTruthy();
   expect(screen.getByText('Spelled close to yours. A different drink keeps your name as you typed it.')).toBeTruthy();
@@ -49,20 +49,20 @@ test('asks "Is it the Salti Boi from Pale Moth?"; Yes opens it and keeps the spe
 });
 
 test('No, a different drink keeps the name as typed and stops asking about that one', async () => {
-  await renderWithTamagui(<Card />);
+  await renderWithProviders(<Card />);
   await fireEvent.press(screen.getByRole('button', { name: 'No, a different drink' }));
   expect(changed).not.toHaveBeenCalled();
   expect(screen.queryByText('Is it the Salti Boi from Pale Moth?')).toBeNull();
 });
 
 test('Make our version with no spec to read links it and keeps their name', async () => {
-  await renderWithTamagui(<Card />);
+  await renderWithProviders(<Card />);
   await fireEvent.press(screen.getByRole('button', { name: 'Make our version' }));
   expect(mockStart).not.toHaveBeenCalled();
   expect(changed).toHaveBeenLastCalledWith(expect.objectContaining({ name: 'Salti Boi', riffOf: { id: 'c-marg', name: 'Margarita' } }));
 });
 
 test('stays out of the way when the same name or a classic is already shown', async () => {
-  await renderWithTamagui(<Card hidden />);
+  await renderWithProviders(<Card hidden />);
   expect(screen.queryByText('Is it the Salti Boi from Pale Moth?')).toBeNull();
 });

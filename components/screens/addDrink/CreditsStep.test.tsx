@@ -1,7 +1,7 @@
 import { fireEvent, screen } from '@testing-library/react-native';
 import { useState } from 'react';
 
-import { renderWithTamagui } from '@/jest.setup';
+import { renderWithProviders } from '@/jest.setup';
 import { EMPTY_DRAFT, type WizardDraft } from '@/lib/drinkWizard';
 
 import { CreditsStep } from './CreditsStep';
@@ -40,7 +40,7 @@ beforeEach(() => {
 
 describe('CreditsStep, who made it', () => {
   test('one list: you to start, Sam added and asked first, everyone off saves as Not sure', async () => {
-    await renderWithTamagui(<Harness venueName="Little Rye" />);
+    await renderWithProviders(<Harness venueName="Little Rye" />);
     expect(screen.getByText('Jo Park')).toBeTruthy();
     expect(screen.getByText('You · Little Rye')).toBeTruthy();
     expect(screen.queryByText('Made with')).toBeNull();
@@ -67,7 +67,7 @@ describe('CreditsStep, riff or original', () => {
       { id: 'c-mm', name: 'Mezcal Margarita', imageUrl: null, glass: null, shares: ['mezcal', 'lime', 'agave'] },
       { id: 'c-tm', name: 'Tommy’s Margarita', imageUrl: null, glass: null, shares: ['lime', 'agave'] },
     ];
-    await renderWithTamagui(<Harness />);
+    await renderWithProviders(<Harness />);
     expect(screen.getByText('Is it a riff on one of these?'.toUpperCase())).toBeTruthy();
     expect(screen.getByText('Shares mezcal, lime, agave')).toBeTruthy();
     await fireEvent.press(screen.getByRole('radio', { name: 'Mezcal Margarita, shares mezcal, lime, agave' }));
@@ -85,7 +85,7 @@ describe('CreditsStep, riff or original', () => {
 
 describe('CreditsStep, where and when', () => {
   test('at home: at home until a bar is picked, and a typed year only once it is one', async () => {
-    await renderWithTamagui(<Harness />);
+    await renderWithProviders(<Harness />);
     expect(screen.getByRole('radio', { name: 'At home', checked: true })).toBeTruthy();
     expect(screen.getByRole('radio', { name: 'Not sure', checked: true })).toBeTruthy();
 
@@ -107,7 +107,7 @@ describe('CreditsStep, where and when', () => {
   });
 
   test('a close spelling asks Did you mean; tapping it credits that bar, and adding one sits under No', async () => {
-    await renderWithTamagui(<Harness />);
+    await renderWithProviders(<Harness />);
     await fireEvent.changeText(screen.getByLabelText('First made at a bar'), 'atabboy');
     expect(screen.getByText('Did you mean')).toBeTruthy();
     expect(screen.getByText('No, it’s somewhere else')).toBeTruthy();
@@ -117,7 +117,7 @@ describe('CreditsStep, where and when', () => {
   });
 
   test("at a venue, it's the venue's unless it's from somewhere else", async () => {
-    await renderWithTamagui(<Harness venueName="Little Rye" />);
+    await renderWithProviders(<Harness venueName="Little Rye" />);
     expect(screen.getByRole('radio', { name: 'Yes, it’s ours', checked: true })).toBeTruthy();
     expect(screen.getByText('First made at Little Rye.')).toBeTruthy();
     expect(screen.queryByLabelText('Where’s it from?')).toBeNull();

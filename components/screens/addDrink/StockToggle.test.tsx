@@ -1,7 +1,7 @@
 import { fireEvent, screen } from '@testing-library/react-native';
 import { View } from 'react-native';
 
-import { renderWithTamagui } from '@/jest.setup';
+import { renderWithProviders } from '@/jest.setup';
 import { newLine, type WizardLine } from '@/lib/drinkWizard';
 
 import { useLineStock } from './StockToggle';
@@ -54,7 +54,7 @@ beforeEach(() => {
 
 describe('the bottle on the line', () => {
   test('bottles get it, juice does not; one tap puts it on the back bar with a note and Undo', async () => {
-    await renderWithTamagui(<Lines />);
+    await renderWithProviders(<Lines />);
     expect(screen.queryByLabelText(/Lime juice/)).toBeNull();
     expect(screen.getByText('The bottle on the right: lit when it’s on your back bar. Tap to change.')).toBeTruthy();
 
@@ -67,7 +67,7 @@ describe('the bottle on the line', () => {
 
   test('switched off, Undo puts its row back as it was, not as added from this drink', async () => {
     mockStocked = new Map([['vida', { item_id: 'vida', source: 'setup', from_name: null, added_at: '2026-10-01T12:00:00.000Z' }]]);
-    await renderWithTamagui(<Lines />);
+    await renderWithProviders(<Lines />);
     await fireEvent.press(screen.getByRole('button', { name: 'Del Maguey Vida is on Little Rye’s back bar' }));
     expect(mockRemove).toHaveBeenCalledWith('vida');
     await fireEvent.press(screen.getByRole('button', { name: 'Undo: Del Maguey Vida is off Little Rye’s back bar' }));
@@ -75,7 +75,7 @@ describe('the bottle on the line', () => {
   });
 
   test('a bottle another drink pours stays on, and the tap says why', async () => {
-    await renderWithTamagui(<Lines />);
+    await renderWithProviders(<Lines />);
     await fireEvent.press(screen.getByRole('button', { name: 'Campari is on Little Rye’s back bar' }));
     expect(mockRemove).not.toHaveBeenCalled();
     expect(screen.getByText('Another drink at Little Rye pours Campari, so it stays on the back bar')).toBeTruthy();
@@ -83,7 +83,7 @@ describe('the bottle on the line', () => {
 
   test('a role that cannot place items sees the state, and it does not switch', async () => {
     mockCaps = ['menu'];
-    await renderWithTamagui(<Lines />);
+    await renderWithProviders(<Lines />);
     const button = screen.getByLabelText('Agave syrup is not on the back bar. Your role can’t change it');
     await fireEvent.press(button);
     expect(mockAdd).not.toHaveBeenCalled();
@@ -91,7 +91,7 @@ describe('the bottle on the line', () => {
   });
 
   test('at home it means your shelf', async () => {
-    await renderWithTamagui(<Lines barId={null} />);
+    await renderWithProviders(<Lines barId={null} />);
     await fireEvent.press(screen.getByRole('button', { name: 'Agave syrup is not on your shelf. Add it' }));
     expect(mockShelfAdd).toHaveBeenCalledWith('agave');
     expect(screen.getByText('Agave syrup is on your shelf')).toBeTruthy();

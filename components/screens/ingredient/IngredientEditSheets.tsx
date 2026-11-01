@@ -4,7 +4,7 @@ import { ScrollView, StyleSheet, View } from 'react-native';
 import { BarAssignmentAccordion } from '@/components/BarAssignmentAccordion';
 import { Body, Caption, Chip, Headline, Sheet, SheetScrollView, Surface, TextLink } from '@/components/ds';
 import { IngredientSearch } from '@/components/screens/addDrink/IngredientSearch';
-import { fontFamilies, space } from '@/constants/tokens';
+import { font, space } from '@/constants/tokens';
 import type { IngredientForm } from '@/hooks/useIngredientEditor';
 import { useNearIngredients } from '@/hooks/useNearIngredients';
 import { nearIngredient, sameIngredient, type IngredientAlias, type IngredientRow } from '@/lib/ingredientNames';
@@ -142,6 +142,6 @@ const styles = StyleSheet.create({
   chips: { flexDirection: 'row', flexWrap: 'wrap', gap: space.sm },
   access: { maxHeight: 480 },
   notice: { gap: space.sm },
-  bold: { fontFamily: fontFamilies.bodySemiBold },
+  bold: { ...font.semiBold },
   links: { flexDirection: 'row', flexWrap: 'wrap', gap: space.lg, paddingTop: space.xs },
 });

@@ -3,7 +3,7 @@ import { Platform, StyleSheet, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import { Caption, GlassButton, Segmented, Title, useDs, useGutter } from '@/components/ds';
-import { fontFamilies, layout, space } from '@/constants/tokens';
+import { font, layout, space } from '@/constants/tokens';
 import { useViewAs } from '@/hooks/useViewAs';
 import type { TreeNode } from '@/lib/drinkTree';
 
@@ -92,6 +92,6 @@ const styles = StyleSheet.create({
   row: { flexDirection: 'row', alignItems: 'center', gap: space.sm },
   center: { flex: 1, minWidth: 0, alignItems: 'center' },
   wideHead: { flexDirection: 'row', alignItems: 'flex-end', gap: space.lg },
-  eyebrow: { fontFamily: fontFamilies.mono, letterSpacing: 1.2, textTransform: 'uppercase' },
+  eyebrow: { ...font.figures, letterSpacing: 1.2, textTransform: 'uppercase' },
   flex: { flex: 1, minWidth: 0 },
 });

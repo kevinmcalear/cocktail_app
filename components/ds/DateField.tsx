@@ -2,7 +2,7 @@ import { useState } from 'react';
 import { Pressable, StyleSheet, View } from 'react-native';
 
 import { IconSymbol } from '@/components/ui/icon-symbol';
-import { fontFamilies, layout, space } from '@/constants/tokens';
+import { font, layout, space } from '@/constants/tokens';
 import { monthOf, monthWeeks, outside, shiftMonth, weekStart, type Month } from '@/lib/calendar';
 import { dayLabel, toDay } from '@/lib/collection';
 
@@ -112,7 +112,7 @@ function Day({ day, selected, today, disabled, onPress }: { day: string; selecte
 
 const styles = StyleSheet.create({
   head: { flexDirection: 'row', alignItems: 'center', marginBottom: space.xs },
-  title: { flex: 1, textAlign: 'center', fontFamily: fontFamilies.bodySemiBold },
+  title: { flex: 1, textAlign: 'center', ...font.semiBold },
   arrow: { width: layout.minTapTarget, height: layout.minTapTarget, alignItems: 'center', justifyContent: 'center' },
   flip: { transform: [{ rotate: '180deg' }] },
   weekday: { flex: 1, textAlign: 'center', paddingVertical: space.xs },

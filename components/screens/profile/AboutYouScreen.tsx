@@ -4,7 +4,7 @@ import { StyleSheet, View } from 'react-native';
 
 import { Body, Button, Caption, Field, Segmented, Switch } from '@/components/ds';
 import { UserAvatar } from '@/components/ui/UserAvatar';
-import { fontFamilies, space } from '@/constants/tokens';
+import { font, space } from '@/constants/tokens';
 import { useAuth } from '@/ctx/AuthContext';
 import { useMyHiddenCity, useMyProfile, useSaveMyProfile, useSaveSharing, type MyProfile } from '@/hooks/useMyProfile';
 import { useSaveProfilePhoto } from '@/hooks/useProfilePhoto';
@@ -123,7 +123,7 @@ const styles = StyleSheet.create({
   photo: { flexDirection: 'row', alignItems: 'center', gap: space.lg },
   photoActions: { flex: 1, gap: space.xs, alignItems: 'flex-start' },
   group: { gap: space.sm },
-  strong: { fontFamily: fontFamilies.bodySemiBold },
+  strong: { ...font.semiBold },
   row: { flexDirection: 'row', alignItems: 'center', gap: space.md },
   flex: { flex: 1, minWidth: 0 },
 });

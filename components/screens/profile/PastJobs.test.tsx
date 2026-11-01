@@ -1,6 +1,6 @@
 import { fireEvent, screen } from '@testing-library/react-native';
 
-import { renderWithTamagui } from '@/jest.setup';
+import { renderWithProviders } from '@/jest.setup';
 
 import { PastJobs } from './PastJobs';
 
@@ -24,7 +24,7 @@ jest.mock('@/hooks/useProfiles', () => ({
 }));
 
 test('one list, a Shown switch on every job, the current one too; a past job starts hidden', async () => {
-  await renderWithTamagui(<PastJobs personId="jo" />);
+  await renderWithProviders(<PastJobs personId="jo" />);
   expect(screen.getByText('Little Rye · 2023 to now')).toBeTruthy();
   expect(screen.getByText('Confirmed by Little Rye')).toBeTruthy();
   expect(screen.getByText('Pale Moth · 2019 to 2023')).toBeTruthy();
@@ -41,7 +41,7 @@ test('one list, a Shown switch on every job, the current one too; a past job sta
 });
 
 test("a job the bar hasn't confirmed says so; one waiting on the person is left to the asking card", async () => {
-  await renderWithTamagui(<PastJobs personId="jo" />);
+  await renderWithProviders(<PastJobs personId="jo" />);
   expect(screen.getByText('Bar manager')).toBeTruthy();
   expect(screen.getByText('Not confirmed by the bar yet')).toBeTruthy();
   expect(screen.queryByText('Barback')).toBeNull();

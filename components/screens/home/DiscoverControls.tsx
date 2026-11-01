@@ -3,7 +3,7 @@ import { BackHandler, StyleSheet, View, type StyleProp, type ViewStyle } from 'r
 
 import { Body, DsText, GlassButton, GlassSurface, PressableScale, useDs } from '@/components/ds';
 import { IconSymbol } from '@/components/ui/icon-symbol';
-import { fontFamilies, layout, radius, space } from '@/constants/tokens';
+import { font, layout, radius, space } from '@/constants/tokens';
 import type { Area } from '@/lib/nearMe';
 
 /** What the area chip says: "Near me", "London", "This area", "Anywhere". */
@@ -182,6 +182,6 @@ const styles = StyleSheet.create({
   chip: { flexDirection: 'row', alignItems: 'center', gap: space.sm, minHeight: layout.minTapTarget + space.xs, paddingHorizontal: space.lg },
   round: { width: layout.minTapTarget, height: layout.minTapTarget, alignItems: 'center', justifyContent: 'center' },
   count: { minWidth: 20, height: 20, paddingHorizontal: space.xs, borderRadius: radius.pill, alignItems: 'center', justifyContent: 'center' },
-  countText: { fontFamily: fontFamilies.bodySemiBold },
+  countText: { ...font.semiBold },
   corner: { position: 'absolute', top: -space.xs, right: -space.xs },
 });

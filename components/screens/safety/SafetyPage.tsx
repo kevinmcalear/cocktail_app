@@ -9,7 +9,7 @@ import { usePageFrame } from '@/components/nav/PageFrame';
 import { useAuth } from '@/ctx/AuthContext';
 import { WebHead } from '@/components/WebHead';
 import { PublicPage } from '@/components/screens/published/PublicChrome';
-import { fontFamilies, layout, radius, space } from '@/constants/tokens';
+import { font, layout, radius, space } from '@/constants/tokens';
 
 /** Where a setup step is: the segments filled so far and the words beside them. */
 export interface StepProgressValue {
@@ -199,9 +199,9 @@ const styles = StyleSheet.create({
   publicColumn: { width: '100%', maxWidth: 720, alignSelf: 'center', paddingTop: space.xxl },
   back: { position: 'absolute' },
   flex: { flex: 1, minWidth: 0 },
-  strong: { fontFamily: fontFamilies.bodySemiBold },
-  medium: { fontFamily: fontFamilies.bodyMedium },
-  eyebrow: { fontFamily: fontFamilies.bodyMedium, letterSpacing: 0.6 },
+  strong: { ...font.semiBold },
+  medium: { ...font.medium },
+  eyebrow: { ...font.medium, letterSpacing: 0.6 },
   bareBack: { flexDirection: 'row', alignItems: 'center', justifyContent: 'center', minWidth: layout.minTapTarget, height: layout.minTapTarget, marginLeft: -space.sm - 2 },
   backWithLabel: { gap: space.xs, paddingRight: space.sm },
   segmentsWide: { flexGrow: 0, flexShrink: 0, flexBasis: 280, width: 280 },

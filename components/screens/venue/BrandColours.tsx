@@ -3,7 +3,7 @@ import { StyleSheet, View } from 'react-native';
 
 import { Body, BrandProvider, Button, Caption, DsText, Field, PressableScale, Sheet, SheetScrollView, useDs } from '@/components/ds';
 import { ColourWheel } from '@/components/ds/ColourWheelLazy';
-import { DEFAULT_ACCENT, fontFamilies, radius, space } from '@/constants/tokens';
+import { DEFAULT_ACCENT, font, radius, space } from '@/constants/tokens';
 import { normalizeHex } from '@/lib/brand';
 import { colourName } from '@/lib/brandColours';
 import { groundOf, groundTintFor, neutralsFor, shadeNotes, type Ground, type Palette } from '@/lib/palette';
@@ -161,8 +161,8 @@ const styles = StyleSheet.create({
   palette: { flexBasis: '30%', flexGrow: 1, minWidth: 0, gap: space.sm, padding: space.sm + 2, borderRadius: radius.control + 2, borderCurve: 'continuous' },
   bars: { flexDirection: 'row', gap: space.xs },
   bar: { flex: 1, height: 22, borderRadius: radius.mark + 1 },
-  bold: { fontFamily: fontFamilies.bodySemiBold },
-  mono: { fontFamily: fontFamilies.mono },
+  bold: { ...font.semiBold },
+  mono: { ...font.figures },
   own: { flexDirection: 'row', alignItems: 'center', gap: space.md, padding: space.sm + 2, borderWidth: 2, borderRadius: radius.control + 2, borderCurve: 'continuous' },
   ownSwatch: { width: 40, height: 40, borderRadius: radius.control - 2, borderWidth: 1 },
   flex: { flex: 1, minWidth: 0 },

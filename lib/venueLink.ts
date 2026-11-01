@@ -1,8 +1,8 @@
 import { Platform } from 'react-native';
 
+import { SITE_URL } from '@/constants/brand';
 import { isDesktopShell } from '@/lib/desktopShell';
 
-const SITE_URL = (process.env.EXPO_PUBLIC_SITE_URL || 'https://babyvom.it').replace(/\/$/, '');
 const SUPABASE_URL = (process.env.EXPO_PUBLIC_SUPABASE_URL || '').replace(/\/$/, '');
 
 /** The site staff links point at: the current origin on web, the public site on native and desktop. */

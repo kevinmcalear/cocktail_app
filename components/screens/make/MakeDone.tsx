@@ -2,7 +2,7 @@ import { StyleSheet, TextInput, View } from 'react-native';
 
 import { Body, Caption, GlassButton, Spec, Surface, Title, useDs } from '@/components/ds';
 import { IconSymbol } from '@/components/ui/icon-symbol';
-import { fontFamilies, layout, radius, space, type } from '@/constants/tokens';
+import { font, layout, radius, space, type } from '@/constants/tokens';
 import { labelDate } from '@/lib/makeSteps';
 
 import { LabelCard, type BatchLabel } from './MakeLabel';
@@ -43,7 +43,7 @@ export function MakeDone({ label, goesIn, made, onMade, madeUnit, onClose }: Mak
                 onChangeText={onMade}
                 keyboardType="decimal-pad"
                 aria-label={`It made, in ${madeUnit}`}
-                style={[styles.input, type.spec, { fontFamily: fontFamilies.monoMedium, color: ds.c.ink }]}
+                style={[styles.input, type.spec, { ...font.figuresMedium, color: ds.c.ink }]}
               />
               <Spec>{madeUnit}</Spec>
             </View>
@@ -80,5 +80,5 @@ const styles = StyleSheet.create({
   facts: { paddingVertical: 0 },
   row: { flexDirection: 'row', justifyContent: 'space-between', gap: space.md, paddingVertical: space.md, borderBottomWidth: StyleSheet.hairlineWidth },
   value: { flexShrink: 1, textAlign: 'right' },
-  eyebrow: { fontFamily: fontFamilies.mono, letterSpacing: 1 },
+  eyebrow: { ...font.figures, letterSpacing: 1 },
 });

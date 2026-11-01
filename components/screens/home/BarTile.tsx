@@ -3,7 +3,7 @@ import { StyleSheet, View } from 'react-native';
 
 import { Caption, DsText, PressableScale, useBreakpoint, useDs } from '@/components/ds';
 import { IconSymbol } from '@/components/ui/icon-symbol';
-import { fontFamilies, radius, space } from '@/constants/tokens';
+import { font, radius, space } from '@/constants/tokens';
 import { withAlpha } from '@/lib/color';
 
 /** Tiles to a row: three on a phone, four where there's room. */
@@ -135,10 +135,10 @@ const styles = StyleSheet.create({
   picture: { flex: 1, borderRadius: radius.control - 2, overflow: 'hidden' },
   faded: { opacity: 0.4 },
   low: { position: 'absolute', left: 6, bottom: 6, paddingHorizontal: 7, paddingVertical: 2, borderRadius: radius.pill },
-  lowText: { fontFamily: fontFamilies.bodySemiBold },
+  lowText: { ...font.semiBold },
   badge: { position: 'absolute', top: 7, right: 7, width: 24, height: 24, borderRadius: radius.pill, alignItems: 'center', justifyContent: 'center' },
   text: { gap: 1 },
-  name: { fontFamily: fontFamilies.bodyMedium },
+  name: { ...font.medium },
   plus: { flex: 1, alignItems: 'center', justifyContent: 'center' },
   grid: { flexDirection: 'row', flexWrap: 'wrap', marginHorizontal: -half, rowGap: space.lg },
   cell: { paddingHorizontal: half },

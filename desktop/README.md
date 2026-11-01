@@ -65,7 +65,7 @@ Import any `@tauri-apps/api` module statically, never with `import()`. A dynamic
 | `connect-src` | `us.i.posthog.com`, `eu.i.posthog.com` | PostHog, when `EXPO_PUBLIC_POSTHOG_KEY` is set. Add the host if `EXPO_PUBLIC_POSTHOG_HOST` changes. |
 | `connect-src` | `blob:`, `data:` | `lib/imageBase64.ts` fetches picked images |
 | `img-src`, `media-src` | `https:`, `data:`, `blob:` | Storage images, plus images imported from arbitrary recipe sites |
-| `style-src` | `'unsafe-inline'` | Tamagui and react-native-web inject styles at runtime. `dangerousDisableAssetCspModification: ["style-src"]` stops Tauri adding hashes, which would switch `'unsafe-inline'` off. |
+| `style-src` | `'unsafe-inline'` | react-native-web injects styles at runtime. `dangerousDisableAssetCspModification: ["style-src"]` stops Tauri adding hashes, which would switch `'unsafe-inline'` off. |
 | `script-src` | `'self'` only | No eval, no CDNs. Verified with a production export. |
 
 `devCsp` (used by `tauri dev`) also allows `localhost`/`127.0.0.1` on any port, for Metro and a local Supabase stack.

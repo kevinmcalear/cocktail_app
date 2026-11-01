@@ -1,5 +1,5 @@
-// Design ratchet: raw colours, font sizes and corner radii belong in the design
-// tokens, not in screens; screens get data through hooks/, not Supabase; no new
+// Design ratchet: raw colours, font sizes, font families and corner radii belong
+// in the design tokens, not in screens; screens get data through hooks/, not Supabase; no new
 // `any`; and screen files stay small enough for a person or an agent to hold in
 // their head. The codebase predates both rules, so instead of
 // failing on every existing violation this compares against a checked-in
@@ -19,14 +19,19 @@ const BASELINE = 'scripts/design-ratchet.baseline.json';
 const MAX_LINES = 300;
 const SOURCES = '{app,components,hooks,lib,store,ctx}/**/*.{ts,tsx}';
 // Where raw values are allowed: the token sources themselves, and scripts.
-const TOKEN_FILES = ['constants/**', 'tamagui.config.ts', 'lib/color.ts', '**/*.check.ts', '**/*.selfcheck.ts', '**/*.test.*'];
+const TOKEN_FILES = ['constants/**', 'lib/color.ts', '**/*.check.ts', '**/*.selfcheck.ts', '**/*.test.*'];
 
 const RAW_NUMBER = '/^(?!0$)[0-9.]/';
 const RULES = [
-  ['Literal[value=/^#(?:[0-9a-fA-F]{3,4}|[0-9a-fA-F]{6}|[0-9a-fA-F]{8})$/]', 'Raw hex colour: use a theme token ($color, $background, ...) or constants/tokens.ts. Legacy editors only: constants/palette.ts.'],
-  ['Literal[value=/^(?:rgba?|hsla?)\\(/i]', 'Raw rgb/hsl colour: use a theme token or constants/tokens.ts. Legacy editors only: constants/palette.ts.'],
-  [`Property[key.name="fontSize"][value.raw=${RAW_NUMBER}]`, 'Raw font size: use a type token ($1...$9) or a text style.'],
-  [`JSXAttribute[name.name="fontSize"] > JSXExpressionContainer > Literal[raw=${RAW_NUMBER}]`, 'Raw font size: use a type token ($1...$9) or a text style.'],
+  ['Literal[value=/^#(?:[0-9a-fA-F]{3,4}|[0-9a-fA-F]{6}|[0-9a-fA-F]{8})$/]', 'Raw hex colour: use a colour from useDs() or constants/tokens.ts.'],
+  ['Literal[value=/^(?:rgba?|hsla?)\\(/i]', 'Raw rgb/hsl colour: use a colour from useDs() or constants/tokens.ts.'],
+  [`Property[key.name="fontSize"][value.raw=${RAW_NUMBER}]`, 'Raw font size: use a text style (constants/tokens.ts type).'],
+  [`JSXAttribute[name.name="fontSize"] > JSXExpressionContainer > Literal[raw=${RAW_NUMBER}]`, 'Raw font size: use a text style (constants/tokens.ts type).'],
+  // Type (31 Oct 2026): Redaction for names, the system font for the rest, no mono, nothing under 13.
+  ['Property[key.name="fontSize"] > BinaryExpression[operator="-"]', 'A font size taken down from a text style can fall under 13 pt: use the smaller style.'],
+  ['Property[key.name="fontFamily"][value.type="Literal"]', 'Raw font family: spread a `font` style or use `fontFamilies` from constants/tokens.ts.'],
+  ['JSXAttribute[name.name="fontFamily"] > Literal', 'Raw font family: use `systemFont` or `fontFamilies` from constants/tokens.ts.'],
+  ['JSXAttribute[name.name="fontFamily"] > JSXExpressionContainer > Literal', 'Raw font family: use `systemFont` or `fontFamilies` from constants/tokens.ts.'],
   [`Property[key.name=/^(?:br|borderRadius|border(?:Top|Bottom)(?:Left|Right)Radius)$/][value.raw=${RAW_NUMBER}]`, 'Raw corner radius: use a radius token.'],
   [`JSXAttribute[name.name=/^(?:br|borderRadius|border(?:Top|Bottom)(?:Left|Right)Radius)$/] > JSXExpressionContainer > Literal[raw=${RAW_NUMBER}]`, 'Raw corner radius: use a radius token.'],
   ['TSAnyKeyword', 'No `any`: type it (see types/ and the generated Supabase types).'],

@@ -6,7 +6,7 @@
  */
 import type { CircleLayerSpecification, FilterSpecification, GeoJSONSourceSpecification, StyleSpecification } from 'maplibre-gl';
 
-import { backbar, fontFamilies, space, type, type DisplayFace } from '../constants/tokens';
+import { backbar, space, type, type DisplayFace } from '../constants/tokens';
 import { withAlpha } from './color';
 import { pinName } from './discoverMatch';
 import { formatScore } from './ranking';
@@ -316,8 +316,8 @@ export function pinLook(pin: MapPin, selected: boolean, accent: { fill: string; 
   const logoSize = marked ? (big ? 46 : 42) : pin.top && !big ? 32 : 36;
   const edge = named ? (big ? space.md + 2 : space.md) : big ? space.md : space.sm + 2;
   const height = marked ? logoSize + 2 * space.xs : pin.top ? (big ? 48 : 40) : big ? 36 : label ? 30 : logo ? logoSize + 4 : 18;
-  // Scores in mono, names in Geist (disc-desk-search).
-  const font: keyof typeof fontFamilies = named ? (big ? 'bodySemiBold' : 'bodyMedium') : 'monoMedium';
+  // Scores in tabular figures, names in the system font (disc-desk-search).
+  const font: 'semiBold' | 'medium' | 'figuresMedium' = named ? (big ? 'semiBold' : 'medium') : 'figuresMedium';
   return {
     label,
     logo,

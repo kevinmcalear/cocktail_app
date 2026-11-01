@@ -3,7 +3,7 @@ import { useMemo } from 'react';
 import { StyleSheet, View } from 'react-native';
 
 import { Body, Caption, Headline, PressableScale, useDs } from '@/components/ds';
-import { fontFamilies, layout, space } from '@/constants/tokens';
+import { font, layout, space } from '@/constants/tokens';
 import { useItemScores } from '@/hooks/useFlavor';
 import { useMenuRuns, useProfileNameCredits, useProfileOriginals, useProfilePositions, type Profile } from '@/hooks/useProfiles';
 import { madeByGroups, madeByStats, type MadeDrink, type MadeGroup } from '@/lib/findYourself';
@@ -107,5 +107,5 @@ const styles = StyleSheet.create({
   cap: { letterSpacing: 0.8, textTransform: 'uppercase' },
   job: { flexDirection: 'row', alignItems: 'center', gap: space.md, minHeight: layout.minTapTarget },
   flex: { flex: 1, minWidth: 0 },
-  mono: { fontFamily: fontFamilies.monoMedium },
+  mono: { ...font.figuresMedium },
 });

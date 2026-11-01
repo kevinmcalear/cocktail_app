@@ -1,10 +1,10 @@
+import type { TextStyle } from 'react-native';
+
 /**
  * Back Bar design tokens: the single source for the redesign's colour, type,
  * shape, space, motion and layout. The rules behind them are in
  * docs/design_system.md. Components read these through components/ds; screens
  * should use the ds components rather than these values directly.
- *
- * The current (pre-redesign) screens still use constants/palette.ts.
  */
 
 /** Service (dark) is the default; prep (light) is for daytime work. */
@@ -125,14 +125,22 @@ export const BRAND_PALETTES = [
 
 /** Two made-up venues, for the gallery and tests. Real venues come from `bars`. */
 export const SAMPLE_BRANDS = {
-  littleRye: { name: 'Little Rye', accent: '#D0643B', displayFace: 'instrument' as const },
+  littleRye: { name: 'Little Rye', accent: '#D0643B', displayFace: 'redaction' as const },
   paleMoth: { name: 'Pale Moth', accent: '#B9A8F5', displayFace: 'fraunces' as const },
 };
 
-/** Font family names, as registered with useFonts in app/_layout.tsx. */
+/**
+ * Type (decided 31 Oct 2026): Redaction for names, the system font (SF,
+ * Roboto, system UI on the web) for everything else, tabular figures for
+ * amounts. No mono, nothing under 13. These are the only font families the
+ * app sets (npm run check:design).
+ */
+
+/** Registered font family names (components/ds/fonts.ts). */
 export const fontFamilies = {
-  instrument: 'InstrumentSerif',
-  instrumentItalic: 'InstrumentSerifItalic',
+  name: 'Redaction',
+  nameItalic: 'RedactionItalic',
+  nameBold: 'RedactionBold',
   fraunces: 'Fraunces',
   frauncesItalic: 'FrauncesItalic',
   bricolage: 'BricolageGrotesque',
@@ -140,20 +148,27 @@ export const fontFamilies = {
   playfairItalic: 'PlayfairDisplayItalic',
   josefin: 'JosefinSans',
   tenor: 'TenorSans',
-  body: 'Geist',
-  bodyMedium: 'GeistMedium',
-  bodySemiBold: 'GeistSemiBold',
-  mono: 'GeistMono',
-  monoMedium: 'GeistMonoMedium',
 } as const;
 
+/** The system font: React Native maps 'System' to SF on iOS and system UI on the web; Android falls back to Roboto. */
+export const systemFont = 'System';
+
+/** The system font at the app's weights; `figures` for amounts, so columns line up. Spread into a style. */
+export const font: Record<'regular' | 'medium' | 'semiBold' | 'figures' | 'figuresMedium', TextStyle> = {
+  regular: { fontFamily: systemFont, fontWeight: '400' },
+  medium: { fontFamily: systemFont, fontWeight: '500' },
+  semiBold: { fontFamily: systemFont, fontWeight: '600' },
+  figures: { fontFamily: systemFont, fontWeight: '400', fontVariant: ['tabular-nums'] },
+  figuresMedium: { fontFamily: systemFont, fontWeight: '500', fontVariant: ['tabular-nums'] },
+};
+
 /**
- * The display faces a venue can pick for drink and menu names, in the picker's
- * order: serifs, then sans. The last three load only when a venue uses them
- * (components/ds/faces.ts).
+ * The faces names can be set in: the app's own (Redaction), then the faces a
+ * venue can pick, serifs then sans. The last three load only when a venue
+ * uses them (components/ds/faces.ts).
  */
 export const displayFaces = {
-  instrument: { label: 'Instrument Serif', regular: fontFamilies.instrument, italic: fontFamilies.instrumentItalic },
+  redaction: { label: 'Redaction', regular: fontFamilies.name, italic: fontFamilies.nameItalic },
   fraunces: { label: 'Fraunces', regular: fontFamilies.fraunces, italic: fontFamilies.frauncesItalic },
   playfair: { label: 'Playfair Display', regular: fontFamilies.playfair, italic: fontFamilies.playfairItalic },
   bricolage: { label: 'Bricolage Grotesque', regular: fontFamilies.bricolage, italic: fontFamilies.bricolage },
@@ -168,6 +183,9 @@ export const displayName = {
   row: { fontSize: 22, lineHeight: 26 },
   card: { fontSize: 24, lineHeight: 28 },
 } as const;
+
+/** The smallest text the app sets, in points (check:design holds every size to it). */
+export const MIN_FONT_SIZE = 13;
 
 /**
  * Seven text styles. Nothing below 13. Display and title leave room above the
@@ -262,3 +280,15 @@ export const springs = {
 export const pulse = { low: 0.45, ms: 900 } as const;
 
 export type SpringName = keyof typeof springs;
+
+/**
+ * Status colours for fills, dots and borders. `warning` is only 2:1 on the
+ * light ground, so amber text and small icons need a darker shade. Text on a
+ * status fill should be black (`#000`), not white.
+ */
+export const STATUS = {
+  danger: '#E5484D',
+  success: '#30A46C',
+  warning: '#E5A93B',
+  info: '#4A90E2',
+} as const;

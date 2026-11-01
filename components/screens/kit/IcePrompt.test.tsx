@@ -1,6 +1,6 @@
 import { fireEvent, screen } from '@testing-library/react-native';
 
-import { renderWithTamagui } from '@/jest.setup';
+import { renderWithProviders } from '@/jest.setup';
 import { useSettingsStore } from '@/store/useSettingsStore';
 
 import { IcePrompt } from './IcePrompt';
@@ -21,17 +21,17 @@ beforeEach(() => {
 });
 
 test('an ice the venue pours nothing like asks, and Add opens the sheet at where it comes from', async () => {
-  await renderWithTamagui(<IcePrompt barId="bar-1" ice="Sphere" drink="Old Fashioned" />);
+  await renderWithProviders(<IcePrompt barId="bar-1" ice="Sphere" drink="Old Fashioned" />);
   expect(screen.getByText('Sphere isn’t in Little Rye’s ice.')).toBeTruthy();
   await fireEvent.press(screen.getByRole('button', { name: 'Add to our ice' }));
   expect(mockSheet.mock.calls.at(-1)[0]).toMatchObject({ visible: true, initial: { name: 'Sphere', shape: 'sphere' }, startAt: 1, from: 'From the Old Fashioned' });
 });
 
 test('an ice drawn like one the venue pours asks nothing; Not now is kept for that kind', async () => {
-  await renderWithTamagui(<IcePrompt barId="bar-1" ice="Large cube" />);
+  await renderWithProviders(<IcePrompt barId="bar-1" ice="Large cube" />);
   expect(screen.queryByText(/isn’t in Little Rye’s ice/)).toBeNull();
 
-  await renderWithTamagui(<IcePrompt barId="bar-1" ice="Crushed" />);
+  await renderWithProviders(<IcePrompt barId="bar-1" ice="Crushed" />);
   await fireEvent.press(screen.getByRole('button', { name: 'Not now' }));
   expect(useSettingsStore.getState().glassesNotNow).toEqual(['ice:bar-1:crushed']);
   expect(screen.queryByText(/isn’t in Little Rye’s ice/)).toBeNull();
