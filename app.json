@@ -46,7 +46,7 @@
         {
           "photosPermission": "Allow $(PRODUCT_NAME) to use your photos so you can add pictures of drinks, menus, venue logos and your profile.",
           "cameraPermission": "Allow $(PRODUCT_NAME) to use the camera so you can photograph drinks for your team.",
-          "microphonePermission": false
+          "microphonePermission": "Cocktail uses the microphone when you tap the mic to say a drink."
         }
       ],
       [

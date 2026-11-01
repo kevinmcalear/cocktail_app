@@ -135,7 +135,7 @@ function SmallSheet({ visible, onClose, accessibilityLabel, children, style, gro
 
   const backdrop = useSharedValue(0);
   const offset = useSharedValue(slide ? windowHeight : 0);
-  const opacity = useSharedValue(slide ? 1 : 0);
+  const opacity = useSharedValue(slide || grow ? 1 : 0);
   // How far it's pulled down from where it sits; leaving slides this off screen.
   const drag = useSharedValue(0);
 
@@ -172,7 +172,10 @@ function SmallSheet({ visible, onClose, accessibilityLabel, children, style, gro
     offset.set(offset.get() + drag.get());
     drag.set(0);
     backdrop.set(withTiming(1, FADE_IN));
-    if (grow) grown.set(withSpring(1, springs.glide));
+    if (grow) {
+      grown.set(0);
+      grown.set(withSpring(1, springs.glide));
+    }
     else if (slide) offset.set(withSpring(0, springs.glide));
     else {
       offset.set(0);
@@ -197,12 +200,7 @@ function SmallSheet({ visible, onClose, accessibilityLabel, children, style, gro
     const cy = windowHeight - inset - h / 2;
     return {
       opacity: opacity.get(),
-      transform: [
-        { translateX: (from.x + from.width / 2 - cx) * (1 - g) },
-        { translateY: (from.y + from.height / 2 - cy) * (1 - g) + offset.get() + drag.get() },
-        { scaleX: from.width / w + (1 - from.width / w) * g },
-        { scaleY: from.height / h + (1 - from.height / h) * g },
-      ],
+      transform: [{ translateX: (from.x + from.width / 2 - cx) * (1 - g) }, { translateY: (from.y + from.height / 2 - cy) * (1 - g) + offset.get() + drag.get() }, { scaleX: from.width / w + (1 - from.width / w) * g }, { scaleY: from.height / h + (1 - from.height / h) * g }],
     };
   });
   // The sheet's words come in once it has mostly grown.
