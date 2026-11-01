@@ -54,6 +54,7 @@ const menu = (id: string, startsAt: string | null, endsAt: string | null, itemId
   description: null,
   plannedStartsAt: null,
   plannedEndsAt: null,
+  hiddenAt: null,
   itemIds,
   shortSections: 0,
   pictures: [],
