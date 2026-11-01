@@ -91,7 +91,7 @@ export function MenuGroupList({ menus, now, canBuild, opensAt = 'Drink Creator',
               <MenuPastLine key={m.id} menu={m} />
             ))}
           </View>
-          {pastShown !== undefined && onAllPast && g.previous.length > pastShown ? (
+          {pastShown !== undefined && onAllPast && g.previous.length > 0 ? (
             <MenuRowFrame label={`All past menus, ${g.previous.length}`} onPress={onAllPast} thumb={null} name={home ? 'All past nights' : 'All past menus'} line={`${g.previous.length} since ${new Date(g.previous[g.previous.length - 1].startsAt ?? g.previous[g.previous.length - 1].createdAt).getFullYear()}`} />
           ) : null}
         </MenuGroup>

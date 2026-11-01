@@ -47,7 +47,7 @@ export function MenuDrawing({ itemId, size, ink, fallback, bare }: { itemId: str
   if (ink === 'pencil') return <Pencil inputs={inputs} seed={itemId} px={px} paper={size === 'row' && !bare && ds.scheme !== 'dark' ? ds.c.paper : null} />;
   return (
     <View style={ink === 'faded' ? { opacity: 0.45 } : undefined} aria-hidden>
-      <DrinkDrawing inputs={inputs} seed={itemId} size={size} staff={size === 'hero'} pour={size !== 'row' && ink === 'colour'} bare={bare} />
+      <DrinkDrawing inputs={inputs} seed={itemId} size={size} staff={size === 'hero'} pour={false} bare={bare} />
     </View>
   );
 }

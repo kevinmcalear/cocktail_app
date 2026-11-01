@@ -99,7 +99,7 @@ export function menuPageModel({ menu, status, lens: L, venueName, onNow, newIds,
   } else if (lens === 'bartender' && !past) {
     group = [
       { label: 'House-made for this menu', value: 'Prep list', action: 'prep' },
-      { label: 'Off the menu', value: 'What else we make', action: 'offMenu' },
+      { label: 'Also makes', value: 'What else we make', action: 'offMenu' },
     ];
   } else if (team && !past) {
     const on = status === 'on' ? [dates ?? 'on now', menu.endsAt ? `ends ${day(menu.endsAt)}` : 'no end date'].join(' · ') : (dates ?? 'No date');
