@@ -1,7 +1,7 @@
 import { Modal, Pressable, StyleSheet, View } from 'react-native';
-import Animated, { FadeIn, FadeInDown, useReducedMotion } from 'react-native-reanimated';
 
 import { DsText, PressableScale, useDs, type IconName } from '@/components/ds';
+import { Appear } from '@/components/ds/Appear';
 import { IconSymbol } from '@/components/ui/icon-symbol';
 import { font, radius, space } from '@/constants/tokens';
 import { withAlpha } from '@/lib/color';
@@ -23,7 +23,6 @@ export interface FabFrame {
 export function AddFabMenu({ frame, onClose, onType }: { frame: FabFrame; onClose: () => void; onType: () => void }) {
   const ds = useDs();
   const add = useAddActions(onClose);
-  const still = useReducedMotion();
   const items: { label: string; icon: IconName; onPress: () => void }[] = [
     ...(add.canSnap ? [{ label: 'Snap a menu or bottle', icon: 'camera' as const, onPress: add.snap }] : []),
     { label: 'Paste a link', icon: 'doc.on.clipboard', onPress: () => void add.paste() },
@@ -32,17 +31,17 @@ export function AddFabMenu({ frame, onClose, onType }: { frame: FabFrame; onClos
   const container = withAlpha(ds.accentFill.fill, ds.scheme === 'dark' ? 0.32 : 0.28);
   return (
     <Modal visible transparent animationType="none" statusBarTranslucent navigationBarTranslucent onRequestClose={onClose}>
-      <Animated.View entering={still ? undefined : FadeIn.duration(150)} style={StyleSheet.absoluteFill}>
+      <Appear kind="fade" duration={150} style={StyleSheet.absoluteFill}>
         <Pressable accessibilityLabel="Close" onPress={onClose} style={[StyleSheet.absoluteFill, { backgroundColor: ds.c.scrim }]} />
-      </Animated.View>
+      </Appear>
       <View role="menu" aria-label="Add" style={[styles.menu, { right: frame.right, bottom: frame.bottom }]}>
-        {items.map((item, i) => (
-          <Animated.View key={item.label} entering={still ? undefined : FadeInDown.delay((items.length - 1 - i) * 30).duration(180)}>
+        {items.map((item) => (
+          <Appear key={item.label} kind="fade" duration={180}>
             <PressableScale role="menuitem" accessibilityLabel={item.label} onPress={item.onPress} style={[styles.item, { backgroundColor: container }]}>
               <IconSymbol name={item.icon} size={20} color={ds.c.ink} />
               <DsText style={{ ...font.medium }}>{item.label}</DsText>
             </PressableScale>
-          </Animated.View>
+          </Appear>
         ))}
         {add.error ? (
           <DsText variant="caption" tone="accent" style={styles.error}>
