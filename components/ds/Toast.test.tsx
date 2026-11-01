@@ -40,3 +40,18 @@ test('a refused save is announced as an alert and does not wear the success tick
   await fireEvent.press(screen.getByRole('alert'));
   expect(useToastStore.getState().toast).toBeNull();
 });
+
+test('an error toast stays past the five seconds a success toast goes after', async () => {
+  jest.useFakeTimers();
+  try {
+    await renderWithProviders(<ToastHost />);
+    await act(async () => void useToastStore.getState().show({ title: 'Saved' }));
+    await act(async () => void jest.advanceTimersByTime(6000));
+    expect(useToastStore.getState().toast).toBeNull();
+    await act(async () => void useToastStore.getState().show({ title: 'Couldn’t save the rota', tone: 'error' }));
+    await act(async () => void jest.advanceTimersByTime(60000));
+    expect(useToastStore.getState().toast?.title).toBe('Couldn’t save the rota');
+  } finally {
+    jest.useRealTimers();
+  }
+});

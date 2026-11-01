@@ -5,7 +5,7 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import { IconSymbol } from '@/components/ui/icon-symbol';
 import { font, layout, radius, space, springs, STATUS } from '@/constants/tokens';
-import { readableAccent, withAlpha } from '@/lib/color';
+import { toastWarnInk, withAlpha } from '@/lib/color';
 import { useToastStore, type Toast } from '@/store/useToastStore';
 
 import { GlassSurface } from './Glass';
@@ -40,7 +40,7 @@ export function useToast() {
  * The toast itself, mounted once at the root: a glass pill floating above the
  * bottom edge (bottom centre on the web), announced politely (an error as an
  * alert), gone after five
- * seconds, a swipe or a tap. With Reduce Motion on it fades instead of
+ * seconds (an error stays), a swipe or a tap. With Reduce Motion on it fades instead of
  * springing up.
  */
 export function ToastHost() {
@@ -80,7 +80,8 @@ export function ToastHost() {
   useEffect(() => {
     if (toast) {
       drag.setValue({ x: 0, y: 0 });
-      const t = setTimeout(() => useToastStore.getState().hide(toast.id), SHOW_MS);
+      // A refused save stays until it is tapped, swiped away or replaced (board Sta-errors draws it as a prompt that stays).
+      const t = toast.tone === 'error' ? undefined : setTimeout(() => useToastStore.getState().hide(toast.id), SHOW_MS);
       const enter = still
         ? Animated.timing(move, {
             toValue: 1,
@@ -112,7 +113,7 @@ function ToastPill({ toast, move, drag, still, handlers }: { toast: Toast; move:
   const hide = () => useToastStore.getState().hide(toast.id);
   const error = toast.tone === 'error';
   // The board's warn look: the amber triangle, on an amber wash.
-  const amber = readableAccent(STATUS.warning, ds.c.ground);
+  const amber = toastWarnInk(STATUS.warning, ds.c.raised, ds.c.ground).ink;
   const rise = still ? 0 : move.interpolate({ inputRange: [0, 1], outputRange: [space.xxl, 0] });
   return (
     <View pointerEvents="box-none" style={[styles.layer, { bottom: insets.bottom + space.lg + (toast.lift ?? 0) }]}>

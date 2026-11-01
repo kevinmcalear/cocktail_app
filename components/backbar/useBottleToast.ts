@@ -47,7 +47,7 @@ export function useBottleToast(barId: string | null) {
             stock ? () => spots.restock.mutateAsync(stock) : null,
           ];
           // Only the parts that failed are sent again, so one that went through is never done twice.
-          const run = async (list: typeof steps) => {
+          const run = async (list: typeof steps, again = false) => {
             const left: typeof steps = [];
             let failed: unknown = null;
             for (const step of list) {
@@ -58,7 +58,8 @@ export function useBottleToast(barId: string | null) {
                 left.push(step);
               }
             }
-            if (failed) toast.show({ title: 'Couldn’t undo all of it', detail: plainDbMessage(failed) ?? 'Check your connection. Old specs stay in each drink’s history.', tone: 'error', action: { label: 'Try again', onPress: () => void run(left) } });
+            if (failed) toast.show({ title: 'Couldn’t undo all of it', detail: plainDbMessage(failed) ?? 'Check your connection. Old specs stay in each drink’s history.', tone: 'error', action: { label: 'Try again', onPress: () => void run(left, true) } });
+            else if (again) toast.show({ title: 'Undone', detail: 'The old specs are in their history.' });
           };
           void run(steps);
         },
