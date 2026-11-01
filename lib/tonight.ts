@@ -4,7 +4,8 @@
 
 import { isGarnishUnit } from './batch';
 import type { MakeLine } from './prep';
-import type { SpecLine } from './spec';
+import { resolvePresentationIngredient, sortRecipesByOrder } from './recipeUtils';
+import type { PresentationRecipe } from './spec';
 
 /** The service day ends at 6 the next morning (as useServiceDate counts it). */
 export function serviceEnd(now: Date): Date {
@@ -26,8 +27,17 @@ export function offTonight<T extends { offAt: string | null }>(drinks: readonly 
  * ponytail: lane D2 (relaunch/d2-spec) adds garnishNames() to lib/specView.ts,
  * which also says "expressed and discarded" and "grated"; switch to it once it lands.
  */
-export function garnishOf(lines: readonly Pick<SpecLine, 'ingredient' | 'unit'>[]): string[] {
+export function garnishOf(lines: readonly { ingredient: string | null; unit: string | null | undefined }[]): string[] {
   return lines.filter((l) => l.ingredient && isGarnishUnit(l.unit) && !/\begg/i.test(l.ingredient)).map((l) => l.ingredient!);
+}
+
+/**
+ * A drink's lines as names and units, in spec order: what Tonight reads from
+ * the spec book without lib/spec's amounts (that stays out of the home page's
+ * first load).
+ */
+export function recipeNames(recipes: readonly PresentationRecipe[] | null | undefined): { ingredient: string | null; unit: string | null }[] {
+  return sortRecipesByOrder([...(recipes ?? [])]).map((r) => ({ ingredient: (resolvePresentationIngredient(r) as { name?: string } | null)?.name ?? null, unit: r.unit ?? null }));
 }
 
 /** "Comes off at 11pm". */
