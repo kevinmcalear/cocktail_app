@@ -7,7 +7,7 @@ import type { HandoverWrite } from '@/hooks/barWrites';
 import type { useHandover } from '@/hooks/useHandover';
 import { names, ranOutChoices } from '@/lib/handover';
 
-import { HandoverMessage } from './Handover';
+import { HandoverMessage } from './HandoverNote';
 import { TonightLabel } from './TonightParts';
 
 type Handover = ReturnType<typeof useHandover>;

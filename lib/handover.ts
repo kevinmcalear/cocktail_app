@@ -97,6 +97,18 @@ export function readByLine(readers: readonly string[], me: string | null, nameOf
   return `Read by ${names(ordered.map((id) => (id === me ? 'you' : nameOf(id).split(' ')[0])))}`;
 }
 
+/**
+ * Under something that ran out, the drinks on tonight's lists that use it:
+ * "Last Word is off until it comes", "Bijou and Last Word are off until it
+ * comes". Names match ignoring case. Null when nothing on tonight uses it.
+ */
+export function ranOutLine(item: string, drinks: readonly { name: string; uses: readonly string[] }[]): string | null {
+  const hit = drinks.filter((d) => d.uses.some((u) => key(u) === key(item))).map((d) => d.name);
+  const list = [...new Set(hit)].sort((a, b) => a.localeCompare(b));
+  if (!list.length) return null;
+  return `${names(list)} ${list.length === 1 ? 'is' : 'are'} off until it comes`;
+}
+
 /** What ran out, to tap: house-made on tonight's lists and what ran out lately, then anything picked that isn't among them. Case-insensitive, and a picked spelling wins so its chip shows picked; the order holds still as chips are picked. */
 export function ranOutChoices(houseMade: readonly string[], lately: readonly string[], picked: readonly string[], max = 8): string[] {
   const spelled = (s: string) => picked.find((p) => key(p) === key(s)) ?? s;

@@ -1,7 +1,7 @@
 // Checks for lib/handover.ts. Run: npm run test:unit
 import assert from 'node:assert/strict';
 
-import { isUnread, lastNote, lines, names, noteFor, ranOutChoices, readByLine, summary, type HandoverRow } from './handover';
+import { isUnread, lastNote, lines, names, noteFor, ranOutChoices, ranOutLine, readByLine, summary, type HandoverRow } from './handover';
 
 const row = (o: Partial<HandoverRow>): HandoverRow => ({ close_date: '2026-10-30', user_id: 'ana', ran_out: [], note: null, prep: null, broken: null, written_at: null, read_at: null, ...o });
 const rows: HandoverRow[] = [
@@ -43,5 +43,14 @@ assert.equal(readByLine([], 'me', nameOf), null);
 assert.deepEqual(ranOutChoices(['Grenadine', 'Honey-ginger syrup'], ['grenadine', 'Lemons'], ['Large cubes']), ['Grenadine', 'Honey-ginger syrup', 'Lemons', 'Large cubes'], 'stable order, picked extras last');
 assert.deepEqual(ranOutChoices(['A', 'B', 'C'], [], ['B'], 2), ['A', 'B']);
 assert.deepEqual(ranOutChoices(['Lemons'], [], ['lemons']), ['lemons'], 'a picked spelling wins, so its chip shows picked');
+
+const drinks = [
+  { name: 'Last Word', uses: ['Gin', 'Green Chartreuse', 'Maraschino', 'Lime'] },
+  { name: 'Bijou', uses: ['Gin', 'green chartreuse', 'Sweet vermouth'] },
+  { name: 'Penicillin', uses: ['Scotch', 'Honey-ginger syrup'] },
+];
+assert.equal(ranOutLine('Green Chartreuse', drinks), 'Bijou and Last Word are off until it comes');
+assert.equal(ranOutLine('honey-ginger syrup', drinks), 'Penicillin is off until it comes');
+assert.equal(ranOutLine('Lemons', drinks), null, 'nothing on tonight uses it');
 
 console.log('handover checks passed');

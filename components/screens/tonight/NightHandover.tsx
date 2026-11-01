@@ -1,15 +1,18 @@
-import { useState, type ReactNode } from 'react';
+import { useMemo, useState, type ReactNode } from 'react';
 import { Platform, StyleSheet, View } from 'react-native';
 
 import { GlassButton, Title, useToast } from '@/components/ds';
 import { space } from '@/constants/tokens';
 import type { HandoverWrite } from '@/hooks/barWrites';
 import { useHandover, useSaveHandover } from '@/hooks/useHandover';
+import { useSpecBook } from '@/hooks/useSpecBook';
+import { ranOutLine } from '@/lib/handover';
 import { nextNight } from '@/lib/nightPhase';
+import { specLines } from '@/lib/spec';
 
 import { useLogNow } from './BeforeDoors';
-import { HandoverCard, HandoverSection, HandoverSheet, HandoverView, LeaveHandover } from './Handover';
-import { HandoverWriteSheet } from './HandoverWrite';
+import { HandoverCard, HandoverSection, LeaveHandover } from './Handover';
+import { HandoverSheet, HandoverView, HandoverWriteSheet } from './HandoverLazy';
 import type { useStaffTonight } from './useStaffTonight';
 
 type Staff = ReturnType<typeof useStaffTonight>;
@@ -65,7 +68,13 @@ export function useNightHandover(t: Staff, barId: string, wide: boolean): NightH
     if (Platform.OS === 'ios' && !wide) setNext(h.last.closeDate);
     else setWriting(h.last.closeDate);
   };
-  const view = { h, onGotIt: gotIt, onAdd: add, logBatch };
+  // What ran out, against tonight's lists: "Last Word is off until it comes". The spec book is on the phone already.
+  const book = useSpecBook(h.last ? barId : null).data;
+  const onTonight = useMemo(() => {
+    const ids = new Set(t.blocks.flatMap((b) => b.sections.flatMap((s) => s.drinks.map((d) => d.id))));
+    return (book?.items ?? []).filter((i) => ids.has(i.id)).map((i) => ({ name: i.name, uses: specLines(i.recipes).flatMap((l) => (l.ingredient ? [l.ingredient] : [])) }));
+  }, [book, t.blocks]);
+  const view = { h, onGotIt: gotIt, onAdd: add, logBatch, ranOutSub: (item: string) => ranOutLine(item, onTonight) };
   // Tonight's close is for whoever opens tomorrow; the last close's was for whoever opens today.
   const night = (close: string) => (t.date ? (close === h.tonight ? nextNight(t.date) : weekday(t.date)) : 'the next shift');
 
