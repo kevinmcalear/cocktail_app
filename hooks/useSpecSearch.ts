@@ -21,8 +21,11 @@ function indexOf(book: SpecBook): SearchIndex {
 
 const onNowIds = (books: readonly SpecBook[]) => new Set(books.flatMap((b) => b.onNow.flatMap((m) => m.sections.flatMap((s) => s.drinks.map((d) => d.id)))));
 
-// Stable, so useQueries hands back the same array until a book changes.
-const loadedBooks = (results: { data?: SpecBook }[]) => results.flatMap((r) => (r.data ? [r.data] : []));
+// Stable, so useQueries hands back the same result until a book changes.
+const loadedBooks = (results: { data?: SpecBook; isPending: boolean }[]) => ({
+  books: results.flatMap((r) => (r.data ? [r.data] : [])),
+  loading: results.some((r) => r.isPending),
+});
 
 /**
  * Searches the spec books on this phone, with no network: every venue the
@@ -36,7 +39,7 @@ export function useSpecSearch(query: string, { barIds, limit = 50 }: { barIds?: 
   const { viewAsRoleLevel } = useViewAs();
   const { venues } = useActiveVenue();
   const ids = barIds ?? venues.map((v) => v.id);
-  const books = useQueries({ queries: ids.map((id) => specBookQuery(id, viewAsRoleLevel, userId)), combine: loadedBooks });
+  const { books, loading } = useQueries({ queries: ids.map((id) => specBookQuery(id, viewAsRoleLevel, userId)), combine: loadedBooks });
 
   const named = useMemo(() => books.flatMap((book) => searchNames(indexOf(book), query)), [books, query]);
   // Near misses cost more: they run on the deferred query, after the letter is on screen.
@@ -49,5 +52,6 @@ export function useSpecSearch(query: string, { barIds, limit = 50 }: { barIds?: 
 
   const onNow = useMemo(() => onNowIds(books), [books]);
   const hits: SearchHit[] = useMemo(() => rankHits([...named, ...near], onNow, limit), [named, near, onNow, limit]);
-  return { hits, ready: books.length > 0 };
+  // Ready once every book has loaded or failed; no venues (home) is ready with nothing to search.
+  return { hits, ready: !loading };
 }
