@@ -109,7 +109,6 @@ export function useSetFollow() {
     onSettled: () => {
       void queryClient.invalidateQueries({ queryKey: followsKey(userId) });
       void queryClient.invalidateQueries({ queryKey: ['friends-ranks'] });
-      void queryClient.invalidateQueries({ queryKey: ['follow-names'] });
     },
   });
 }
@@ -140,22 +139,24 @@ export function useFriendsRanks(limit = 5) {
   });
 }
 
-/** Someone linked to you by a follow, page or not: their name (null when they never gave one) and own picture. */
+/** Someone who follows you, page or not: the name they gave (null when none) and their own picture. */
 export interface FollowName {
   name: string | null;
   avatarUrl: string | null;
 }
 
 /**
- * Names and pictures of everyone you follow or who follows you, with a public
- * page or not (follow_people): People names them instead of counting them.
- * Never anything from an email; nobody blocked.
+ * Names and pictures of the people who follow you, with a public page or not
+ * (follow_people): Followers names them instead of counting them. Never the
+ * people you follow, never anything from an email, nobody blocked. Keyed on
+ * your followers, so a new one is named once they show.
  */
-export function useFollowNames() {
+export function useFollowNames(followerIds: readonly string[] | undefined) {
   const userId = useUserId();
   return useQuery({
-    queryKey: ['follow-names', userId],
-    enabled: !!userId,
+    queryKey: ['follow-names', userId, followerIds ?? []],
+    enabled: !!userId && !!followerIds?.length,
+    placeholderData: keepPreviousData,
     queryFn: async (): Promise<Record<string, FollowName>> => {
       const { data, error } = await supabase.rpc('follow_people');
       if (error) throw error;

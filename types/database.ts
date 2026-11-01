@@ -7588,8 +7588,6 @@ export type Database = {
         Returns: {
           avatar_url: string
           display_name: string
-          follows_me: boolean
-          i_follow: boolean
           user_id: string
         }[]
       }

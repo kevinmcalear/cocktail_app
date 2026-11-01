@@ -20,9 +20,9 @@ export const PEOPLE_NOTE = 'Only you see who you follow and who follows you.';
 /**
  * People (Kept-people): who you follow and who follows you, yours alone.
  * Following rows say what each person did lately; Followers rows say where
- * they are and how many they've ranked, with Follow back. Someone with no
- * public page gets a row with their account's name and the follow button;
- * anyone the read can't name (blocked, or the read failed) is counted.
+ * they are and how many they've ranked, with Follow back. A follower with no
+ * public page gets a row with the name they gave and Follow back; anyone left
+ * unnamed (people you follow with no page now, or if the read failed) is counted.
  */
 export function PeopleList({ tab, onTab, onOpen, onFind, selectedId }: { tab: PeopleTab; onTab: (t: PeopleTab) => void; onOpen: (p: FollowPerson) => void; onFind: () => void; selectedId?: string | null }) {
   const following = useFollowing();
@@ -30,13 +30,16 @@ export function PeopleList({ tab, onTab, onOpen, onFind, selectedId }: { tab: Pe
   const ids = tab === 'following' ? following : followers;
   const people = usePeopleByUser(ids.data);
   const list = ids.data?.length ? (people.data ?? []) : [];
-  // Someone with no public page is named from their account (follow_people); without that read, counted.
-  const names = useFollowNames().data;
+  // A follower with no public page is named as they gave it (follow_people); without that read, and for
+  // people you follow, counted. While pages refetch for new ids, nobody is called page-less too soon.
+  const followerNames = useFollowNames(followers.data);
+  const names = tab === 'followers' ? followerNames.data : undefined;
   const paged = new Map(list.map((p) => [p.userId, p]));
+  const settled = !people.isPlaceholderData;
   const rows = (ids.data ?? []).flatMap((id): { id: string; page: FollowPerson | null; named?: FollowName }[] => {
     const page = paged.get(id);
     if (page) return [{ id, page }];
-    return names?.[id] ? [{ id, page: null, named: names[id] }] : [];
+    return settled && names?.[id] ? [{ id, page: null, named: names[id] }] : [];
   });
   const unnamed = (ids.data?.length ?? 0) - rows.length;
   const failed = ids.error || people.error;
@@ -57,7 +60,7 @@ export function PeopleList({ tab, onTab, onOpen, onFind, selectedId }: { tab: Pe
       {failed ? (
         <View style={styles.note}>
           <Body tone="muted">Couldn’t load people. Check your connection and try again.</Body>
-          <Button label="Try again" variant="secondary" onPress={() => void (ids.refetch(), people.refetch())} style={styles.start} />
+          <Button label="Try again" variant="secondary" onPress={() => void (ids.refetch(), people.refetch(), followerNames.refetch())} style={styles.start} />
         </View>
       ) : loading ? (
         <Caption tone="muted">Loading people…</Caption>
@@ -81,7 +84,7 @@ export function PeopleList({ tab, onTab, onOpen, onFind, selectedId }: { tab: Pe
           )}
         </View>
       )}
-      {unnamed > 0 && !loading && !failed ? (
+      {unnamed > 0 && settled && !loading && !failed ? (
         <Caption tone="muted">
           {tab === 'following'
             ? `${plural(unnamed, 'more person', 'more people')} you follow ${unnamed === 1 ? 'has' : 'have'} no public page now.`
