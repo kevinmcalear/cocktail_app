@@ -100,6 +100,7 @@ const G = {
   'arrow.up': { d: 'M12 19V5M5.5 11.5L12 5l6.5 6.5' },
   'arrow.down': { d: 'M12 5v14M5.5 12.5L12 19l6.5-6.5' },
   'arrow.up.right': { d: 'M7 17L17 7M8.5 7H17v8.5' },
+  'arrow.up.left': { d: 'M18 18L7 7M7 15V7h8' },
   'arrow.up.to.line': { d: 'M5 4h14M12 20V8.5M6.5 14L12 8.5l5.5 5.5' },
   'arrow.up.and.down': { d: 'M8 4v16M4.5 7.5L8 4l3.5 3.5M16 20V4M12.5 16.5L16 20l3.5-3.5' },
   'arrow.left.and.right': { d: 'M3 12h18M6.5 8.5L3 12l3.5 3.5M17.5 8.5L21 12l-3.5 3.5' },

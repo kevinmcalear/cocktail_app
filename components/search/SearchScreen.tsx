@@ -12,6 +12,7 @@ import { useSearchMine } from '@/hooks/useSearchMine';
 import { SEARCH_TAB_HREF, useSearchFrom } from '@/hooks/useSearchFrom';
 import type { City } from '@/lib/discover';
 import { startScope, type SearchScope, type SearchShow, type ShowCounts } from '@/lib/searchScope';
+import { useRecentSearches } from '@/store/useRecentSearches';
 import { useSearchPalette, type SearchStart } from '@/store/useSearchPalette';
 
 /**
@@ -26,7 +27,7 @@ import { useSearchPalette, type SearchStart } from '@/store/useSearchPalette';
  * opened from it lands on that tab's stack, and Back returns to the search.
  * Where it shows:
  * - Android: that page, from the search bar on top of a tab's page, which
- *   opens into the field in the same place (TopSearch.tsx).
+ *   opens into Material's search view with the nav bar put away (TopSearch.tsx).
  * - Phone-width web: that page, from the search circle beside its tabs, with
  *   the field at the bottom, over the keyboard (BottomSearch.tsx); the tab
  *   bar steps aside for it (WebTabBar.tsx).
@@ -138,6 +139,10 @@ function useSearchTabState(): SearchTabState {
   useEffect(() => {
     if (!focused) Keyboard.dismiss();
   }, [focused]);
+  // A search that opened something is one to come back to (search2, Recent).
+  useEffect(() => {
+    if (!focused) useRecentSearches.getState().add(query);
+  }, [focused, query]);
   // Discover's results go back to its map; its style and city picks land there too.
   // Pushed on Discover's own stack, that's back down to it; from another tab, over to Discover.
   const onDiscover = (useSegments() as string[])[1] === '(3-discover)';
