@@ -2,9 +2,9 @@ import { Redirect, useLocalSearchParams, useRouter } from 'expo-router';
 import { Platform, StyleSheet, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
-import { BackbarTheme, Body, BrandProvider, Caption, Display, DrinkDrawing, useDs } from '@/components/ds';
+import { BackbarTheme, Body, BrandProvider, DrinkDrawing } from '@/components/ds';
 import { CouldNotLoad, NotAvailable } from '@/components/screens/safety/NotAvailable';
-import { displayFaces, space } from '@/constants/tokens';
+import { space } from '@/constants/tokens';
 import { useActiveVenue } from '@/hooks/useActiveVenue';
 import { useDropdowns } from '@/hooks/useDropdowns';
 import { useFavorites } from '@/hooks/useFavorites';
@@ -24,6 +24,7 @@ import { DrinkHero } from './DrinkHero';
 import { drawingSize } from './DrawingHero';
 import { DrinkLoading } from './DrinkLoading';
 import { ItemShell } from './ItemShell';
+import { ItemTitle } from './ItemTitle';
 import { PalateFit } from './NamesBlock';
 import { FactRows, RowGroup, type GroupRow } from './RowGroup';
 
@@ -129,15 +130,7 @@ function BeerWinePage({ kind, item, favorite, onToggleFavorite, canEdit, onEdit 
   const label = DRINK_KINDS[kind].label;
   const size = drawingSize(staff);
 
-  const title = (
-    <View style={styles.title}>
-      <Caption tone="muted" style={styles.eyebrow}>
-        {[label, tags[0]].filter(Boolean).join(' · ')}
-      </Caption>
-      <Display>{item.name}</Display>
-      {item.brand_maker || item.origin ? <ItalicLine text={[item.brand_maker, item.origin].filter(Boolean).join(', ')} /> : null}
-    </View>
-  );
+  const title = <ItemTitle eyebrow={[label, tags[0]].filter(Boolean).join(' · ')} name={item.name} credit={[item.brand_maker, item.origin].filter(Boolean).join(', ') || null} />;
 
   return (
     <ItemShell
@@ -156,7 +149,7 @@ function BeerWinePage({ kind, item, favorite, onToggleFavorite, canEdit, onEdit 
           {staff ? null : <PalateFit itemId={item.id} name={item.name} />}
           <FactRows rows={facts} />
           {staff ? <AllergyLine itemId={item.id} guest={false} /> : null}
-          {item.bar_id ? <ApprovalNotice itemId={item.id} /> : null}
+          {item.bar_id && staff ? <ApprovalNotice itemId={item.id} /> : null}
           {item.notes ? <Body tone="muted">{item.notes}</Body> : null}
           {staff ? <RowGroup title="Pour it" rows={pourIt} /> : null}
         </View>
@@ -170,18 +163,6 @@ function BeerWinePage({ kind, item, favorite, onToggleFavorite, canEdit, onEdit 
   );
 }
 
-/** The maker and where it's from, in the name's italic (board Item-page). */
-export function ItalicLine({ text }: { text: string }) {
-  const ds = useDs();
-  return (
-    <Body tone="muted" style={{ fontFamily: displayFaces[ds.displayFace].italic }}>
-      {text}
-    </Body>
-  );
-}
-
 const styles = StyleSheet.create({
   body: { gap: space.xl },
-  title: { gap: space.xs },
-  eyebrow: { textTransform: 'uppercase', letterSpacing: 1.2 },
 });

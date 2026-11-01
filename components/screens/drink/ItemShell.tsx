@@ -1,6 +1,7 @@
 import { useState, type ComponentProps, type ReactNode } from 'react';
 import { StyleSheet, useWindowDimensions, View } from 'react-native';
 import Animated, { useAnimatedScrollHandler, useSharedValue } from 'react-native-reanimated';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import { useDs, useGutter } from '@/components/ds';
 import { useTabBarInset } from '@/components/nav/WebTabBar';
@@ -33,6 +34,8 @@ interface ItemShellProps {
   /** The blocks. `columns`: beside the sticky side, which holds the title and the action. */
   body: (columns: boolean) => ReactNode;
   controls: Controls;
+  /** In a tab's stack (the drink route): clear of the floating tab bar. Root modals have none. */
+  inTabs?: boolean;
   /** Sheets the page opens. */
   children?: ReactNode;
 }
@@ -44,11 +47,12 @@ interface ItemShellProps {
  * drawing sits on its sky and docks into the bar. From 900 points of pane the
  * picture, name and one action stay put on the left and the rest scrolls.
  */
-export function ItemShell({ name, top, pane, photo, art, size, liquid, title, action, body, controls, children }: ItemShellProps) {
+export function ItemShell({ name, top, pane, photo, art, size, liquid, title, action, body, controls, inTabs, children }: ItemShellProps) {
   const ds = useDs();
   const gutter = useGutter();
-  // Clear of the floating tab bar: these routes sit in each tab's stack.
   const tabInset = useTabBarInset();
+  const insets = useSafeAreaInsets();
+  const bottom = inTabs ? tabInset : insets.bottom + space.lg;
   const { width: windowWidth, height } = useWindowDimensions();
   // The pane's own width: beside the Drinks list a 1300 window leaves about 600 (desk split, #1047).
   const [width, setWidth] = useState(windowWidth);
@@ -108,7 +112,7 @@ export function ItemShell({ name, top, pane, photo, art, size, liquid, title, ac
         </>
       ) : (
         <>
-          <Animated.ScrollView onScroll={onScroll} scrollEventThrottle={16} contentContainerStyle={[styles.column, { paddingBottom: tabInset + space.xxl }]}>
+          <Animated.ScrollView onScroll={onScroll} scrollEventThrottle={16} contentContainerStyle={[styles.column, { paddingBottom: bottom + space.xxl }]}>
             {photo ? <PhotoMirror url={photo.url} top={heroHeight - space.xxxl} /> : <DrinkSky liquid={liquid} />}
             {photo ? photo.hero(heroHeight, true) : <DrawingSpace top={top} size={size} />}
             <View style={{ paddingHorizontal: gutter, marginTop: photo ? -space.xxl : 0 }}>{body(false)}</View>

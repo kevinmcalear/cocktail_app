@@ -158,6 +158,7 @@ function Page({ item, canEdit, adminFix = false, onEdit, sheet, pane, openBatch,
       name={item.name}
       top={top}
       pane={pane}
+      inTabs
       photo={photos ? { url: photos[0].url, hero: (h, fade) => <DrinkHero name={item.name} pictures={photos} glass={glass?.icon_key || glass?.name || null} itemId={item.id} palette={photos[0].palette} height={h} fade={fade} /> } : null}
       art={<DrinkArt itemId={item.id} sketch={preview?.sketch} label={`Drawing of ${item.name}`} size={size} />}
       size={size}

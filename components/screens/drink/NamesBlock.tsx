@@ -13,6 +13,7 @@ interface NamesBlockProps {
   guest: boolean;
   /** What it tastes like: the drink's description. */
   tastes: string | null;
+  atBar: boolean;
 }
 
 /**
@@ -20,10 +21,10 @@ interface NamesBlockProps {
  * -floor): the allergy line, what it tastes like, and for a guest how it meets
  * their palate. Nothing here says what's held back.
  */
-export function NamesBlock({ itemId, name, guest, tastes }: NamesBlockProps) {
+export function NamesBlock({ itemId, name, guest, tastes, atBar }: NamesBlockProps) {
   return (
     <View style={styles.block}>
-      <AllergyLine itemId={itemId} guest={guest} />
+      <AllergyLine itemId={itemId} guest={guest} atBar={atBar} />
       {tastes ? <Body>{tastes}</Body> : null}
       {guest ? <PalateFit itemId={itemId} name={name} /> : null}
     </View>

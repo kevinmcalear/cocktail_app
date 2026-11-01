@@ -16,8 +16,8 @@ import { allergenLabel, allergyMatches, containsLine } from '@/lib/allergens';
  * has checked; unchecked says ask your bartender). Their list never leaves
  * the phone: matching happens here.
  */
-export function AllergyLine({ itemId, guest }: { itemId: string; guest: boolean }) {
-  return guest ? <GuestLine itemId={itemId} /> : <FloorLine itemId={itemId} />;
+export function AllergyLine({ itemId, guest, atBar = true }: { itemId: string; guest: boolean; atBar?: boolean }) {
+  return guest ? <GuestLine itemId={itemId} atBar={atBar} /> : <FloorLine itemId={itemId} />;
 }
 
 function FloorLine({ itemId }: { itemId: string }) {
@@ -27,13 +27,14 @@ function FloorLine({ itemId }: { itemId: string }) {
   return <Line text={containsLine(data)} />;
 }
 
-function GuestLine({ itemId }: { itemId: string }) {
+function GuestLine({ itemId, atBar }: { itemId: string; atBar: boolean }) {
   const { data: mine = [] } = useMyAllergies();
   const { data: drinks } = useGuestDrinkAllergens(mine.length ? [itemId] : []);
   const drink = drinks?.get(itemId);
   if (!mine.length || !drink) return null;
   const hits = allergyMatches(mine, drink);
-  if (hits === null) return <Line text="Ask your bartender about your allergies" aside="Your allergies" />;
+  // Unchecked: only a bar has a bartender to ask.
+  if (hits === null) return atBar ? <Line text="Ask your bartender about your allergies" aside="Your allergies" /> : null;
   if (!hits.length) return null;
   const text = `Contains ${hits.map((h) => `${allergenLabel(h.allergen).toLowerCase()}${h.ingredient ? `, from the ${h.ingredient.toLowerCase()}` : ''}`).join('; ')}`;
   return <Line text={text} aside="Your allergies" hit />;

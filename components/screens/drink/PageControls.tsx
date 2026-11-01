@@ -44,6 +44,9 @@ export function PageControls({ over, top, scrollY, tuck, title, titleInset = 0, 
   const router = useRouter();
   const gutter = useGutter();
   const barHeight = top + space.sm * 2 + layout.minTapTarget;
+  // Room for whatever sits on the right: round buttons, and Edit's wider pill.
+  const round = [save, onShare, more].filter(Boolean).length;
+  const rightRoom = round * (layout.minTapTarget + space.sm) + (onEdit ? EDIT_PILL + space.sm : 0);
   const backing = useAnimatedStyle(() => ({ opacity: interpolate(scrollY.get(), [tuck - space.xxxl, tuck], [0, 1], 'clamp') }));
   const small = useAnimatedStyle(() => ({ opacity: interpolate(scrollY.get(), [tuck - space.sm, tuck + space.xl], [0, 1], 'clamp') }));
   const back = noBack ? (
@@ -61,7 +64,7 @@ export function PageControls({ over, top, scrollY, tuck, title, titleInset = 0, 
     <>
       <Animated.View style={[styles.backing, { height: barHeight, backgroundColor: ds.c.ground, borderBottomColor: ds.c.line }, backing]} />
       {children}
-      <Animated.View style={[styles.title, { top: top + space.sm, height: layout.minTapTarget, left: gutter + layout.minTapTarget + space.sm + titleInset, right: gutter + layout.minTapTarget * 2 + space.sm * 2 }, small]} aria-hidden>
+      <Animated.View style={[styles.title, { top: top + space.sm, height: layout.minTapTarget, left: gutter + layout.minTapTarget + space.sm + titleInset, right: gutter + rightRoom }, small]} aria-hidden>
         <DsText variant="headline" numberOfLines={1} style={{ fontFamily: displayFaces[ds.displayFace].regular }}>
           {title}
         </DsText>
@@ -85,6 +88,9 @@ export function PageControls({ over, top, scrollY, tuck, title, titleInset = 0, 
     </>
   );
 }
+
+/** About the width of the labelled Edit pill. */
+const EDIT_PILL = 72;
 
 const styles = StyleSheet.create({
   backing: { position: 'absolute', top: 0, left: 0, right: 0, borderBottomWidth: StyleSheet.hairlineWidth, pointerEvents: 'none' },

@@ -1,7 +1,7 @@
 import { useRouter, type Href } from 'expo-router';
 import { StyleSheet, View } from 'react-native';
 
-import { Body, Button, Caption, Display, Headline, SpecRow } from '@/components/ds';
+import { Body, Button, Caption, Headline, SpecRow } from '@/components/ds';
 import { space } from '@/constants/tokens';
 import { useSignedIn } from '@/ctx/AuthContext';
 import { useLineage } from '@/hooks/useLineage';
@@ -13,10 +13,12 @@ import { pageShowsDescriptions } from '@/lib/pageVisibility';
 import type { SpecLevels, SpecLine } from '@/lib/spec';
 import type { DatabaseItem } from '@/types/types';
 
+import { ApprovalNotice } from './ApprovalNotice';
 import { BarRows } from './BarRows';
 import { Backstory } from './Backstory';
 import { DrinkCredit } from './DrinkCredit';
 import { ForTheFloor } from './ForTheFloor';
+import { ItemTitle } from './ItemTitle';
 import { MenuRuns } from './MenuRuns';
 import { MyNote } from './MyNote';
 import { NamesBlock } from './NamesBlock';
@@ -65,16 +67,11 @@ export function useDrinkSections(p: DrinkSectionsInput) {
   const team = onTeam(viewer) && !!item.bar_id && live;
 
   const title = (
-    <View style={styles.title}>
-      {p.eyebrow ? (
-        <Caption tone="muted" style={styles.eyebrow}>
-          {p.eyebrow}
-        </Caption>
-      ) : null}
-      <Display>{item.name}</Display>
-      {live ? <DrinkCredit itemId={item.id} italic /> : null}
+    <ItemTitle eyebrow={p.eyebrow} name={item.name} credit={live ? <DrinkCredit itemId={item.id} italic /> : null}>
       {p.photoCredit ? <Caption tone="muted">{p.photoCredit}</Caption> : null}
-    </View>
+      {/* Waiting on a Drink Creator's OK: its team sees it here. */}
+      {team ? <ApprovalNotice itemId={item.id} /> : null}
+    </ItemTitle>
   );
 
   const spec = lockedLines ? (
@@ -112,7 +109,7 @@ export function useDrinkSections(p: DrinkSectionsInput) {
   return {
     title,
     // Guests and the floor: the allergy line, what it tastes like, how it meets your palate.
-    lead: names && live ? <NamesBlock itemId={item.id} name={item.name} guest={viewer === 'guest'} tastes={description} /> : null,
+    lead: names && live ? <NamesBlock itemId={item.id} name={item.name} guest={viewer === 'guest'} tastes={description} atBar={!!item.bar_id} /> : null,
     spec,
     // The one prominent action: Rank it for a guest. The floor and bartenders have none; Edit is in the toolbar.
     action: viewer === 'guest' && p.onRank ? <Button label="Rank it" size="lg" onPress={p.onRank} accessibilityHint={`Rank ${item.name} against others you've had`} /> : null,
@@ -144,7 +141,5 @@ export type DrinkSections = ReturnType<typeof useDrinkSections>;
 const BLANK: Omit<SpecLine, 'key' | 'ingredient'> = { amount: null, ingredientId: null, note: null, optional: false, float: false, ml: null, value: null, unit: null, atService: null, abv: null, density: null };
 
 const styles = StyleSheet.create({
-  title: { gap: space.xs },
-  eyebrow: { textTransform: 'uppercase', letterSpacing: 1.2 },
   block: { gap: space.md },
 });

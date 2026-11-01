@@ -4,7 +4,7 @@ import { Platform, StyleSheet, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import { WhereItLives } from '@/components/backbar/WhereItLives';
-import { BackbarTheme, Body, BrandProvider, Button, Caption, Display, IngredientDrawing } from '@/components/ds';
+import { BackbarTheme, Body, BrandProvider, Button, IngredientDrawing } from '@/components/ds';
 import { AroundIt, useBottleTiles } from '@/components/ingredient/IngredientFacts';
 import { PairsWith } from '@/components/screens/pairings/PairsWith';
 import { TechnicalIngredientCard, WhereToBuy } from '@/components/techniques/TechnicalIngredientCard';
@@ -22,9 +22,9 @@ import { readNoteRecipe } from '@/lib/noteRecipe';
 import { leadTimeLabel, scaledYield } from '@/lib/scale';
 import { technicalIngredientFor } from '@/lib/techniques';
 
-import { ItalicLine } from '../drink/BeerWineScreen';
 import { DrinkHero } from '../drink/DrinkHero';
 import { ItemShell } from '../drink/ItemShell';
+import { ItemTitle } from '../drink/ItemTitle';
 import type { ShownPicture } from '../drink/PictureViewer';
 import { FactRows } from '../drink/RowGroup';
 import { ForTheBar } from './ForTheBar';
@@ -119,15 +119,7 @@ function IngredientPage({ ingredient, lines, drinks, bottles, pictures: batchPic
   // One action at most: Log batch, for whoever can read the recipe.
   const action = showRecipe ? <Button label={makes ? `Log batch · ${makes}` : 'Log batch'} size="lg" onPress={() => make()} /> : null;
 
-  const title = (
-    <View style={styles.title}>
-      <Caption tone="muted" style={styles.eyebrow}>
-        {eyebrow}
-      </Caption>
-      <Display>{ingredient.name}</Display>
-      {whose ? <ItalicLine text={whose} /> : null}
-    </View>
-  );
+  const title = <ItemTitle eyebrow={eyebrow} name={ingredient.name} credit={whose} />;
 
   const body = (columns: boolean) => (
     <View style={styles.body}>
@@ -174,7 +166,5 @@ function IngredientPage({ ingredient, lines, drinks, bottles, pictures: batchPic
 }
 
 const styles = StyleSheet.create({
-  title: { gap: space.xs },
-  eyebrow: { textTransform: 'uppercase', letterSpacing: 1.2 },
   body: { gap: space.xl },
 });

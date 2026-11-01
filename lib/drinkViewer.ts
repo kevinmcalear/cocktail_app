@@ -15,7 +15,7 @@ export type DrinkViewer = 'guest' | 'floor' | 'public' | 'bartender' | 'creator'
 export interface ViewerInputs {
   /** Home mode, on a drink with no bar (yours, or a classic). */
   home: boolean;
-  /** You made it or may edit it (your own drink at home). */
+  /** You made it (your own drink at home). */
   own: boolean;
   /** Your role at the drink's bar, in venue mode (View as applied); null when you're not on its team. Below Employee (20) is a guest. */
   teamRole: number | null;
