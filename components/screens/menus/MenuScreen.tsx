@@ -3,7 +3,7 @@ import { useState } from 'react';
 import { Alert, FlatList, StyleSheet, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
-import { Body, Button, Caption, GlassButton, useBreakpoint, useDs, useGutter } from '@/components/ds';
+import { BackbarTheme, Body, Button, Caption, GlassButton, useBreakpoint, useDs, useGutter } from '@/components/ds';
 import { Crumbs } from '@/components/nav/PageFrame';
 import { DRAWN_LIST_WINDOW } from '@/components/ds/SketchDrawing';
 import { space } from '@/constants/tokens';
@@ -14,6 +14,7 @@ import { useMenuLens } from '@/hooks/useMenuLens';
 import { useEndMenu } from '@/hooks/useMenuMutations';
 import { useMenu, useVenueMenus } from '@/hooks/useMenus';
 import { useMyBar } from '@/hooks/useHomeBar';
+import { usePhotoTone } from '@/hooks/usePhotoTone';
 import { useShoppingEdit } from '@/hooks/useShoppingList';
 import { confirmAsync } from '@/lib/dialogs';
 import { isLivingList } from '@/lib/menuLens';
@@ -79,7 +80,26 @@ function HomeMenuPage({ menu }: { menu: MenuDetail }) {
   return <MenuPage menu={menu} shelf={shelf.isLoading ? null : { match: shelf, toShopping, toBuy: needs.length }} />;
 }
 
-function MenuPage({ menu, shelf }: { menu: MenuDetail; shelf: { match: ShelfMatch; toShopping: () => void; toBuy: number | null } | null }) {
+type PageProps = { menu: MenuDetail; shelf: { match: ShelfMatch; toShopping: () => void; toBuy: number | null } | null };
+
+/**
+ * A bar's menu that's on or coming up leads with its cover photo when it has
+ * one, and the photo decides light or dark for the whole page (Menu-g-photo-dark,
+ * Menu-g-photo-bright). Drafts, past menus and home menus are drawn.
+ */
+function MenuPage(props: PageProps) {
+  const [now] = useState(() => Date.now());
+  const status = menuStatus(props.menu, now);
+  const cover = props.menu.barId && status !== 'draft' && status !== 'previous' ? props.menu.coverUrl : null;
+  const tone = usePhotoTone(cover);
+  return (
+    <BackbarTheme scheme={cover ? tone : undefined}>
+      <MenuPageBody {...props} cover={cover} now={now} />
+    </BackbarTheme>
+  );
+}
+
+function MenuPageBody({ menu, shelf, cover, now }: PageProps & { cover: string | null; now: number }) {
   const ds = useDs();
   const router = useRouter();
   const insets = useSafeAreaInsets();
@@ -87,7 +107,6 @@ function MenuPage({ menu, shelf }: { menu: MenuDetail; shelf: { match: ShelfMatc
   const wide = useBreakpoint() !== 'phone';
   const sidebar = useIsWideWeb();
   const { venues } = useActiveVenue();
-  const [now] = useState(() => Date.now());
   const [sheet, setSheet] = useState<'more' | 'night' | 'share' | 'publish' | null>(null);
   const [open, setOpen] = useState<string | null>(null);
   const [changing, setChanging] = useState<ChangeTarget | null>(null);
@@ -208,7 +227,7 @@ function MenuPage({ menu, shelf }: { menu: MenuDetail; shelf: { match: ShelfMatc
             {sidebar ? <Crumbs trail={[home ? { label: 'Drinks', href: '/drinks' } : { label: 'Menus', href: '/menus/all' }]} /> : null}
             <MenuPageHead
               heroIds={drinks.slice(0, 3).map((d) => d.id)}
-              coverUrl={menu.coverUrl}
+              coverUrl={cover}
               name={menu.name}
               ink={model.ink}
               quiet={model.quiet}
