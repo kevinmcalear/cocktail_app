@@ -20,11 +20,14 @@ const clover: DrinkAllergens = {
   ],
   unchecked: 0,
   lines: 5,
+  checked: '2026-10-12T18:00:00Z',
 };
 assert.equal(containsLine(clover), 'Contains eggs and sulphites.');
 assert.equal(containsLine({ ...clover, unchecked: 1 }), 'Contains eggs and sulphites. 1 ingredient not checked yet.');
-assert.equal(containsLine({ allergens: [], unchecked: 2, lines: 3 }), 'No allergens declared. 2 ingredients not checked yet.');
-assert.equal(containsLine({ allergens: [], unchecked: 0, lines: 3 }), 'No allergens declared.');
+assert.equal(containsLine({ ...clover, checked: null }), 'Contains eggs and sulphites. Not checked by the bar.');
+assert.equal(containsLine({ allergens: [], unchecked: 2, lines: 3, checked: '2026-10-12T18:00:00Z' }), 'Nothing declared yet. 2 ingredients not checked yet.');
+assert.equal(containsLine({ allergens: [], unchecked: 0, lines: 3, checked: '2026-10-12T18:00:00Z' }), 'No allergens.');
+assert.equal(containsLine({ allergens: [], unchecked: 0, lines: 3 }), 'Nothing declared yet. Not checked by the bar.', 'never clean before the bar checks');
 assert.equal(containsLine({ allergens: [], unchecked: 0, lines: 0 }), 'No spec yet, so nothing to declare.');
 assert.equal(containsLine(null), 'No spec yet, so nothing to declare.');
 

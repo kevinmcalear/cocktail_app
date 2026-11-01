@@ -1,7 +1,10 @@
+import { useRouter } from 'expo-router';
 import { useEffect, useState } from 'react';
 import { Platform } from 'react-native';
 
-import { ChoiceChips, ControlRow, RowDivider, SelectRow, SettingsSection, SwitchRow } from '@/components/screens/settings/SettingsParts';
+import { ChoiceChips, ControlRow, RowDivider, SelectRow, SettingsRow, SettingsSection, SwitchRow } from '@/components/screens/settings/SettingsParts';
+import { useMyAllergies } from '@/hooks/useGuestAllergies';
+import { myAllergiesLine } from '@/lib/allergens';
 import { hasAiConsent, setAiConsent } from '@/lib/aiConsent';
 import { appIconChoices, currentAppIcon, setAppIcon } from '@/lib/appIcon';
 import { useMaxRealRole, useViewAs } from '@/hooks/useViewAs';
@@ -21,6 +24,8 @@ export function PreferencesSection() {
   const { themeMode, setThemeMode, defaultUnit, setDefaultUnit, directionsApp, setDirectionsApp } = useSettingsStore();
   const { viewAsRoleLevel, setViewAsRoleLevel, isSaving: viewAsSaving } = useViewAs();
   const maxRealRole = useMaxRealRole();
+  const router = useRouter();
+  const allergies = useMyAllergies();
   const viewAsChoices = viewAsOptions(maxRealRole);
   // "We ask once. Change it any time in Settings." (Bring in's AI OK.)
   const [ai, setAi] = useState(false);
@@ -44,6 +49,9 @@ export function PreferencesSection() {
       <ControlRow label="Units" detail="Specs on drink pages, and new recipe lines">
         <ChoiceChips label="Units" options={DEFAULT_UNIT_OPTIONS} value={defaultUnit} onChange={setDefaultUnit} />
       </ControlRow>
+      <RowDivider />
+      {/* Private: on your account and this phone (Keep-phone Settings, Loop-allergy). */}
+      <SettingsRow label="Allergies" value={allergies.isError ? 'Couldn’t load' : allergies.data !== undefined ? myAllergiesLine(allergies.data) : undefined} onPress={() => router.push('/settings/allergies')} />
       <RowDivider />
       <SwitchRow
         label="Read with AI"

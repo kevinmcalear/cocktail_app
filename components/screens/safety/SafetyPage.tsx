@@ -5,7 +5,7 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import { BackbarTheme, Body, Caption, GlassButton, PressableScale, Title, useDs, useGutter } from '@/components/ds';
 import { IconSymbol } from '@/components/ui/icon-symbol';
-import { usePageFrame } from '@/components/nav/PageFrame';
+import { Crumbs, usePageFrame, type Crumb } from '@/components/nav/PageFrame';
 import { useAuth } from '@/ctx/AuthContext';
 import { WebHead } from '@/components/WebHead';
 import { PublicPage } from '@/components/screens/published/PublicChrome';
@@ -51,6 +51,8 @@ export interface SafetyPageProps {
   aside?: ReactNode;
   /** Top right, beside Back: Save, Preview, a count. */
   action?: ReactNode;
+  /** Wide web: the pages above this one, over the title (You / Settings). */
+  crumbs?: Crumb[];
   /** Wide web: how wide the column grows; the setup checklist's Next card needs 'wide'. */
   frameWidth?: 'text' | 'wide';
 }
@@ -93,7 +95,7 @@ function SetupBack({ onPress, label }: { onPress: () => void; label?: string }) 
   );
 }
 
-function Page({ title, intro, kicker, eyebrow, eyebrowTone = 'muted', topLabel, mark, children, noBack, backTo = '/settings', action, onBack, progress, topRight, footer, aside, frameWidth = 'text' }: SafetyPageProps) {
+function Page({ title, intro, kicker, eyebrow, eyebrowTone = 'muted', topLabel, mark, children, noBack, backTo = '/settings', action, onBack, progress, topRight, footer, aside, crumbs, frameWidth = 'text' }: SafetyPageProps) {
   const ds = useDs();
   const router = useRouter();
   const insets = useSafeAreaInsets();
@@ -112,6 +114,7 @@ function Page({ title, intro, kicker, eyebrow, eyebrowTone = 'muted', topLabel, 
   const back = onBack ?? (noBack || sidebar ? null : () => (router.canGoBack() ? router.back() : router.replace(backTo)));
   const heading = (
     <>
+      {sidebar && crumbs?.length ? <Crumbs trail={crumbs} /> : null}
       {mark}
       {kicker ? <Caption tone="muted">{kicker}</Caption> : null}
       {eyebrow ? (

@@ -84,6 +84,62 @@ export function useSetItemAllergens(itemId: string, barId: string | null) {
     onSuccess: () => {
       void queryClient.invalidateQueries({ queryKey: ['item-allergens', itemId] });
       void queryClient.invalidateQueries({ queryKey: ['drink-allergens'] });
+      void queryClient.invalidateQueries({ queryKey: ['line-allergens'] });
+      void queryClient.invalidateQueries({ queryKey: ['guest-drink-allergens'] });
+    },
+  });
+}
+
+/** One spec line's allergens on the bar's check sheet: what it contains, or that it has no list yet. */
+export interface LineAllergens {
+  allergens: Allergen[];
+  /** It has a list: a bought ingredient checked (here or in the catalogue), or a house-made one whose every part is. */
+  listed: boolean;
+  /** House-made: its allergens come from its own recipe. */
+  houseMade: boolean;
+}
+
+/**
+ * Each spec line's allergens for the bar's check (board Loop-allergy, "The
+ * bar checks"), by ingredient id, as the roll-up reads them: the bar's own
+ * check of a bought ingredient wins over the catalogue's; a house-made one
+ * reads its own recipe. Plain JSON for the cache.
+ */
+export function useLineAllergens(ingredientIds: readonly string[], barId: string | null) {
+  const ids = [...new Set(ingredientIds)].sort();
+  return useQuery({
+    queryKey: ['line-allergens', barId, ids],
+    enabled: ids.length > 0,
+    queryFn: async (): Promise<Record<string, LineAllergens>> => {
+      const scope = barId ? `bar_id.is.null,bar_id.eq.${barId}` : 'bar_id.is.null';
+      const [rows, checks] = await Promise.all([
+        supabase.from('item_allergens').select('item_id, bar_id, allergen').in('item_id', ids).or(scope),
+        supabase.from('item_allergen_checks').select('item_id, bar_id').in('item_id', ids).or(scope),
+      ]);
+      if (rows.error) throw rows.error;
+      if (checks.error) throw checks.error;
+      const out: Record<string, LineAllergens> = {};
+      const unlisted: string[] = [];
+      for (const id of ids) {
+        const mine = (checks.data ?? []).filter((c) => c.item_id === id);
+        const by = mine.some((c) => c.bar_id === barId && barId) ? barId : mine.some((c) => c.bar_id === null) ? null : undefined;
+        if (by === undefined) {
+          unlisted.push(id);
+          continue;
+        }
+        const allergens = (rows.data ?? []).filter((r) => r.item_id === id && r.bar_id === by).map((r) => r.allergen as Allergen);
+        out[id] = { allergens, listed: true, houseMade: false };
+      }
+      // Nobody declared it: a house-made ingredient reads its own recipe; anything else has no list yet.
+      await Promise.all(
+        unlisted.map(async (id) => {
+          const { data, error } = await supabase.rpc('drink_allergens', { p_item_id: id });
+          if (error) throw error;
+          const d = data as DrinkAllergens | null;
+          out[id] = d && d.lines > 0 ? { allergens: d.allergens.map((a) => a.allergen), listed: d.unchecked === 0, houseMade: true } : { allergens: [], listed: false, houseMade: false };
+        }),
+      );
+      return out;
     },
   });
 }

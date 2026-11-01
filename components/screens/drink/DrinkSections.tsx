@@ -13,6 +13,10 @@ import { pageShowsDescriptions } from '@/lib/pageVisibility';
 import type { SpecLevels, SpecLine } from '@/lib/spec';
 import type { DatabaseItem } from '@/types/types';
 
+import { GuestAllergens } from '@/components/allergens/GuestAllergens';
+import { TeamAllergens } from '@/components/allergens/TeamAllergens';
+
+import { AllergyLine } from './AllergyLine';
 import { ApprovalNotice } from './ApprovalNotice';
 import { BarRows } from './BarRows';
 import { Backstory } from './Backstory';
@@ -109,8 +113,21 @@ export function useDrinkSections(p: DrinkSectionsInput) {
   return {
     title,
     // Guests and the floor: the allergy line, what it tastes like, how it meets your palate.
-    lead: names && live ? <NamesBlock itemId={item.id} name={item.name} guest={viewer === 'guest'} tastes={description} atBar={!!item.bar_id} /> : null,
+    lead:
+      names && live ? (
+        <NamesBlock itemId={item.id} name={item.name} guest={viewer === 'guest'} tastes={description} />
+      ) : viewer === 'public' && live && item.bar_id ? (
+        // A bar's drink read in full by someone not on its team: their allergy warning first, as a guest's (Loop-allergy, A match).
+        <AllergyLine itemId={item.id} guest />
+      ) : null,
     spec,
+    // Under the spec: every allergen, the unchecked count and the bar's check (Loop-allergy). The floor reads its line above instead.
+    allergens:
+      !live || !item.bar_id || viewer === 'floor' ? null : team ? (
+        <TeamAllergens itemId={item.id} name={item.name} barId={item.bar_id} barName={p.barName} canCheck={p.canEdit} lines={lines} />
+      ) : (
+        <GuestAllergens itemId={item.id} barName={p.barName} />
+      ),
     // The one prominent action: Rank it for a guest. The floor and bartenders have none; Edit is in the toolbar.
     action: viewer === 'guest' && p.onRank ? <Button label="Rank it" size="lg" onPress={p.onRank} accessibilityHint={`Rank ${item.name} against others you've had`} /> : null,
     notes,
