@@ -3,6 +3,7 @@ import { keepPreviousData, useMutation, useQuery } from '@tanstack/react-query';
 import { pickerResult, usePickerTerm } from '@/hooks/useDiscover';
 import { glassSizeLabel } from '@/lib/glass';
 import { suggestGlassModels } from '@/lib/identifyGlassware';
+import type { GlassOutline } from '@/lib/sketch/outline';
 import type { SketchGlass } from '@/lib/sketch/types';
 import { supabase } from '@/lib/supabase';
 
@@ -28,10 +29,12 @@ export interface GlassModel {
   rim_mm: number | null;
   material: string | null;
   product_url: string | null;
+  /** Its traced shape (lib/sketch/outline.ts), drawn instead of the type's stock glass. Unset where a read leaves it out. */
+  outline?: GlassOutline | null;
 }
 
 export const GLASS_MODEL_SELECT =
-  'id, maker_profile_id, shape_item_id, glass, variant, name, series, designer, model_code, capacity_ml, height_mm, rim_mm, material, product_url, maker:profiles!glass_models_maker_profile_id_fkey(handle, display_name)';
+  'id, maker_profile_id, shape_item_id, glass, variant, name, series, designer, model_code, capacity_ml, height_mm, rim_mm, material, product_url, outline, maker:profiles!glass_models_maker_profile_id_fkey(handle, display_name)';
 
 /** How many glasses a search returns at most. */
 export const GLASS_SEARCH_LIMIT = 40;

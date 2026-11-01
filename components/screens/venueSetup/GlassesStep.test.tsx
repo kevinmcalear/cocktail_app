@@ -17,6 +17,7 @@ jest.mock('@/hooks/useBarGlassware', () => ({
 }));
 jest.mock('@/store/useVenueSetup', () => ({ useVenueSetup: (pick: (s: object) => unknown) => pick({ holdGlass: mockHold, dropGlass: mockDrop }) }));
 jest.mock('@/hooks/useIsWideWeb', () => ({ useIsWideWeb: () => false }));
+jest.mock('@/hooks/useGlassModels', () => ({ useGlassModelsById: () => ({ data: [] }) }));
 jest.mock('@/components/glass/GlassModelPicker', () => ({ GlassThumb: () => null, GlassModelPicker: () => null }));
 jest.mock('@/components/screens/kit/GlassSheet', () => ({ GlassSheet: () => null }));
 

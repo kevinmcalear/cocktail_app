@@ -6,10 +6,10 @@
  * added; everyone else is saved as made with. The drink page names them all
  * equally, so the order never shows.
  */
-import { joinNames } from './lineage';
+import { joinNames, type LineageDrink } from './lineage';
 import type { CreditPick, WizardDraft } from './drinkWizard';
 
-type Credits = Pick<WizardDraft, 'creator' | 'coCreators'>;
+export type Credits = Pick<WizardDraft, 'creator' | 'coCreators'>;
 type Me = { id: string; name: string } | null;
 
 export interface Maker extends CreditPick {
@@ -70,6 +70,83 @@ export function askLines(people: readonly Maker[]): string[] {
 /** Review's Credits row (board w3-credits-to-check): "We'll ask Sam first." */
 export function askShort(people: readonly Maker[]): string | null {
   return people.length ? `We’ll ask ${joinNames(people.map((p) => firstName(p.name)))} first.` : null;
+}
+
+/** People added by name with no page (Eddie, tf-063): saved as items.creator_names, shown in the credit without a link. */
+export function namedOnly(d: Credits): string[] {
+  return [...new Set(makers(d, null).filter((m) => !m.id).map((m) => m.name.trim()).filter(Boolean))].slice(0, MAX_NAMED);
+}
+
+/** items.creator_names holds up to five. */
+export const MAX_NAMED = 5;
+
+/**
+ * A saved drink's credit as Who made it reads it, for the drink editor: its
+ * creator, then everyone made with it who hasn't said Not me, then the names
+ * with no page. Nobody credited is Not sure.
+ */
+export function savedCredits(d: Pick<LineageDrink, 'creator' | 'co_creators' | 'creator_names'>): Credits {
+  const profiles: CreditPick[] = (d.co_creators ?? [])
+    .filter((c) => c.profile && c.status !== 'declined')
+    .map((c) => ({ id: c.profile!.id, name: c.profile!.display_name }));
+  const names: CreditPick[] = (d.creator_names ?? []).map((name) => ({ id: null, name, sub: BY_NAME }));
+  const [first, ...rest] = [...(d.creator ? [{ id: d.creator.id, name: d.creator.display_name }] : []), ...profiles, ...names];
+  return first ? { creator: first, coCreators: rest } : { creator: 'nobody', coCreators: [] };
+}
+
+/** Under a name with no page, on the list. */
+export const BY_NAME = 'By name, no page';
+
+/** A saved drink's credit as it is in the database: the creator's page, the names with no page, and each made-with row. */
+export interface SavedCredit {
+  creator: string | null;
+  names: string[];
+  rows: { id: string; status: 'pending' | 'accepted' | 'declined' }[];
+}
+
+/** What one change in the editor's Who made it writes (public.set_drink_credits). */
+export interface CreditEdit {
+  creator: string | null;
+  names: string[];
+  add: string[];
+  remove: string[];
+}
+
+export function savedCredit(d: Pick<LineageDrink, 'creator' | 'co_creators' | 'creator_names'>): SavedCredit {
+  return {
+    creator: d.creator?.id ?? null,
+    names: d.creator_names ?? [],
+    rows: (d.co_creators ?? []).flatMap((c) => (c.profile ? [{ id: c.profile.id, status: c.status ?? 'accepted' }] : [])),
+  };
+}
+
+const keep = (s: SavedCredit, change: Partial<CreditEdit>): CreditEdit => ({ creator: s.creator, names: s.names, add: [], remove: [], ...change });
+
+/**
+ * Adding someone in the drink editor (tf-063): never in the creator's place.
+ * Someone with a page is made with, asked first like any credit; a name with
+ * no page joins the names. Nothing when they're on it already (a declined
+ * row included: only that person can change it) or the names are full.
+ */
+export function editorAdd(s: SavedCredit, person: CreditPick): CreditEdit | null {
+  if (person.id) return person.id === s.creator || s.rows.some((r) => r.id === person.id) ? null : keep(s, { add: [person.id] });
+  const name = person.name.trim();
+  if (!name || s.names.includes(name) || s.names.length >= MAX_NAMED) return null;
+  return keep(s, { names: [...s.names, name] });
+}
+
+/**
+ * Taking someone off in the drink editor. The creator's place goes to the
+ * first person made with it who said yes, else to nobody; never to someone
+ * still waiting or who said Not me. A declined row is never taken off.
+ */
+export function editorRemove(s: SavedCredit, person: CreditPick): CreditEdit | null {
+  if (!person.id) return s.names.includes(person.name) ? keep(s, { names: s.names.filter((n) => n !== person.name) }) : null;
+  if (person.id === s.creator) {
+    const next = s.rows.find((r) => r.status === 'accepted');
+    return keep(s, { creator: next?.id ?? null, remove: next ? [next.id] : [] });
+  }
+  return s.rows.some((r) => r.id === person.id && r.status !== 'declined') ? keep(s, { remove: [person.id] }) : null;
 }
 
 function toPick(m: Maker): CreditPick {

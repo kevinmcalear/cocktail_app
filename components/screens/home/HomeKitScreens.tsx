@@ -60,7 +60,7 @@ export function HomeGlasswareScreen({ openId }: { openId?: string | null }) {
             <Caption tone="muted">Loading…</Caption>
           ) : (
             <KitList
-              sections={[{ entries: glasses.map((g) => ({ id: g.id, name: glassName(g), line: kitLine([realGlass(g) ?? 'Not matched to a real glass yet', glassFrom(g)]), thumb: <GlassThumb glass={g.glass} variant={g.variant} outline={g.outline} /> })) }]}
+              sections={[{ entries: glasses.map((g) => ({ id: g.id, name: glassName(g), line: kitLine([realGlass(g) ?? 'Not matched to a real glass yet', glassFrom(g)]), thumb: <GlassThumb glass={g.glass} variant={g.variant} outline={g.outline ?? g.model?.outline} /> })) }]}
               openId={openId}
               onOpen={open}
               addLabel="Add a glass"
@@ -76,7 +76,7 @@ export function HomeGlasswareScreen({ openId }: { openId?: string | null }) {
               name={glassName(opened)}
               showTitle={wide}
               notice={justDrawn ? <SavedNote where="your glassware" /> : null}
-              thumb={<GlassThumb glass={opened.glass} variant={opened.variant} outline={opened.outline} size={72} />}
+              thumb={<GlassThumb glass={opened.glass} variant={opened.variant} outline={opened.outline ?? opened.model?.outline} size={72} />}
               facts={[
                 { label: 'Which glass', value: realGlass(opened) ?? 'Not matched to a real glass yet', onChange: change(0) },
                 ...tracedFacts(opened, change(0, 'size')),

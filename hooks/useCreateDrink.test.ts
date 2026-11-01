@@ -231,6 +231,16 @@ test('at home, where and when it was first made are saved; another bar on it is 
   expect(mockInserts[1]).toMatchObject({ origin_year: 2019, origin_bar_profile_id: null, credit_status: 'claimed' });
 });
 
+test('someone with no page is saved by name (tf-063); with nobody by name, the column is left out', async () => {
+  const { result } = await renderHook(() => useCreateDrink() as unknown as { mutationFn: Fn });
+  const run = result.current.mutationFn;
+  mockInserts.length = 0;
+  await run({ draft: { ...EMPTY_DRAFT, name: 'Corpse Reviver No. 2', creator: { id: null, name: 'Harry Craddock' } }, barId: null, myProfileId: 'p-me' });
+  expect(mockInserts[0]).toMatchObject({ creator_profile_id: null, creator_names: ['Harry Craddock'], credit_status: null });
+  await run({ draft: { ...EMPTY_DRAFT, name: 'Ash Garden' }, barId: null, myProfileId: 'p-me' });
+  expect(mockInserts[1]).not.toHaveProperty('creator_names');
+});
+
 test('"Just me" notes are kept apart as yours, never on the drink', async () => {
   const { result } = await renderHook(() => useCreateDrink() as unknown as { mutationFn: Fn });
   const run = result.current.mutationFn;

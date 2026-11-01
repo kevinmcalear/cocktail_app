@@ -35,13 +35,15 @@ interface MenuSheetProps {
    * library) then draw only the rows in view.
    */
   list?: boolean;
+  /** What's picked is kept as it's tapped, so closing is done: a tick in place of the X. */
+  done?: boolean;
 }
 
 /**
  * A titled sheet with a scrolling body and an optional footer, on the app's
  * one Sheet (components/ds/Sheet): springs up on phones, a dialog on the web.
  */
-export function MenuSheet({ visible, onClose, title, subtitle, eyebrow, leading, aside, children, footer, onShow, save, plain, form, list }: MenuSheetProps) {
+export function MenuSheet({ visible, onClose, title, subtitle, eyebrow, leading, aside, children, footer, onShow, save, plain, form, list, done }: MenuSheetProps) {
   const ds = useDs();
   const insets = useSafeAreaInsets();
   return (
@@ -76,7 +78,7 @@ export function MenuSheet({ visible, onClose, title, subtitle, eyebrow, leading,
               {subtitle ? <Caption tone="muted">{subtitle}</Caption> : null}
             </View>
             {aside}
-            <SheetCloseButton />
+            <SheetCloseButton done={done} />
           </View>
         )
       }
@@ -93,11 +95,11 @@ export function MenuSheet({ visible, onClose, title, subtitle, eyebrow, leading,
   );
 }
 
-/** The X: closes the sheet it's in the way a drag does, sliding it away first. */
-function SheetCloseButton() {
+/** The X (or a tick, `done`): closes the sheet it's in the way a drag does, sliding it away first. */
+function SheetCloseButton({ done }: { done?: boolean }) {
   const close = useSheetClose();
   // A round glass button, as the canvas draws a sheet's close.
-  return <GlassButton icon="xmark" accessibilityLabel="Close" onPress={close} />;
+  return <GlassButton icon={done ? 'checkmark' : 'xmark'} accessibilityLabel={done ? 'Done' : 'Close'} onPress={close} />;
 }
 
 /** Cancel (closes the way a drag does), the title, and Save. */

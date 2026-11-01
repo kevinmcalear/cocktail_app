@@ -140,21 +140,23 @@ export interface BarLine {
   ingredient_item_id: string | null;
   preparation_notes: string | null;
   is_optional: boolean | null;
+  /** Floated on top (recipes.is_float); a sheet can't say so, so the bar's stays. */
+  is_float?: boolean | null;
 }
 
 /**
  * The sheet's lines written onto the bar's drink (Update it): a line with an
  * ingredient the drink already has keeps that row (and so its service
- * decision), its note when the sheet has none, and whether it's optional.
+ * decision), its note when the sheet has none, whether it's optional and floated.
  * Lines only on the sheet are new rows; lines only on the bar's go.
  */
-export function ontoBarLines<L extends { id?: string | null; ingredient_item_id: string; preparation_notes: string | null; is_optional: boolean }>(sheet: readonly L[], bar: readonly BarLine[]): L[] {
+export function ontoBarLines<L extends { id?: string | null; ingredient_item_id: string; preparation_notes: string | null; is_optional: boolean; is_float?: boolean }>(sheet: readonly L[], bar: readonly BarLine[]): L[] {
   const left = [...bar];
   return sheet.map((l) => {
     const at = left.findIndex((b) => b.ingredient_item_id === l.ingredient_item_id);
     if (at < 0) return l;
     const [b] = left.splice(at, 1);
-    return { ...l, id: b.id, preparation_notes: l.preparation_notes ?? b.preparation_notes, is_optional: b.is_optional ?? l.is_optional };
+    return { ...l, id: b.id, preparation_notes: l.preparation_notes ?? b.preparation_notes, is_optional: b.is_optional ?? l.is_optional, is_float: !!(l.is_float || b.is_float) };
   });
 }
 

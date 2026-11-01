@@ -24,7 +24,7 @@ test('what is always on, a switch per feature, and Try it only on Tonight and Ba
   await renderWithTamagui(<VenueFeatures barId="rye" venueName="Little Rye" />);
   expect(screen.getByText('Start small. Switch the rest on when your team is ready. Everyone at Little Rye sees what’s on.')).toBeTruthy();
   expect(screen.getByLabelText('Library, Menus and Discover: always on, for everyone here')).toBeTruthy();
-  expect(screen.getAllByRole('switch').map((s) => s.props.accessibilityLabel)).toEqual(['Tonight', 'Back bar', 'Prep', 'Study', 'History', 'Flavor map', 'Techniques', 'More library filters']);
+  expect(screen.getAllByRole('switch').map((s) => s.props.accessibilityLabel)).toEqual(['Tonight', 'Back bar', 'Prep', 'Study', 'History', 'Flavor map', 'Techniques', 'More library filters', 'Advanced options']);
   expect(tryButtons().map((b) => b.props.accessibilityLabel)).toEqual(['Try Tonight, 1 min', 'Try Back bar, 2 min']);
   expect(screen.getByText(/^Always there: Batch on every drink page/)).toBeTruthy();
 });
@@ -61,6 +61,6 @@ test('wide web: cards, the always-on line in the intro, Try it on the same two',
   await renderWithTamagui(<VenueFeatures barId="rye" venueName="Little Rye" />);
   expect(screen.queryByLabelText('Library, Menus and Discover: always on, for everyone here')).toBeNull();
   expect(screen.getByText(/Library, Menus and Discover are always on\.$/)).toBeTruthy();
-  expect(screen.getAllByRole('switch')).toHaveLength(8);
+  expect(screen.getAllByRole('switch')).toHaveLength(9);
   expect(tryButtons()).toHaveLength(2);
 });

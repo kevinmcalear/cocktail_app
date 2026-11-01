@@ -6,6 +6,7 @@ import {
   creditText,
   creators,
   hasLineage,
+  isRiff,
   nameCredit,
   joinNames,
   MAX_ANCESTORS,
@@ -85,6 +86,30 @@ async function main() {
   // A best guess names its range and says so.
   assert.equal(creditText(nameCredit(drink('bici', null, { is_catalog: true, origin_year: 1935, origin_year_guess: 'mid' }), null)), 'Classic, mid 1930s (best guess)');
   assert.equal(creditText(nameCredit(drink('mine', null, { creator: person }), null)), 'Created by Sam Ross');
+
+  // A bar's own version of a classic is not a riff (dec-21, Eddie tf-086): the verdict decides, else the name.
+  const americano = { id: 'amer', name: 'Americano' };
+  assert.equal(isRiff({ name: 'Americano' }, americano, 'variation'), false, '35/35 instead of 40/40 is still the Americano');
+  assert.equal(isRiff({ name: 'Americano' }, americano, 'same'), false);
+  assert.equal(isRiff({ name: 'Americano' }, americano, 'unlisted'), false);
+  assert.equal(isRiff({ name: 'Smoky Americano' }, americano, 'riff'), true);
+  assert.equal(isRiff({ name: 'The Americano' }, americano), false, 'no verdict: the same name is a version');
+  assert.equal(isRiff({ name: 'House Négroni' }, { name: 'Negroni' }), false);
+  assert.equal(isRiff({ name: 'Negroni Sbagliato' }, { name: 'Negroni' }), true, 'no verdict: another name is a riff');
+  assert.equal(isRiff({ name: 'Gin and Tonic' }, { name: 'Gin & Tonic', aliases: ['Gin and Tonic', 'G&T'] }), false, 'one of its other names is the same drink');
+  const rye = { ...bar, id: 'b2', display_name: 'Little Rye', locality: 'Brunswick' };
+  const barAmericano = drink('Americano', 'amer', { origin_bar: rye });
+  assert.equal(creditText(nameCredit(barAmericano, americano, 'variation')), 'Americano by Little Rye, Brunswick');
+  assert.equal(nameCredit(barAmericano, americano, 'variation')[0].drinkId, 'amer', 'the name links to the classic');
+  assert.equal(creditText(nameCredit({ ...barAmericano, creator: person }, americano)), 'Americano by Sam Ross at Little Rye, Brunswick');
+  assert.equal(creditText(nameCredit(drink('Americano', 'amer'), americano)), 'A version of the Americano');
+  assert.equal(creditText(nameCredit({ ...barAmericano, name: 'Smoky Americano' }, americano, 'riff')), 'Riff of Americano at Little Rye, Brunswick');
+
+  // Makers with no page, by name (tf-063): after the ones with a page, no link; a classic reads "Created by".
+  const corpse = drink('Corpse Reviver No. 2', null, { is_catalog: true, creator_names: ['Harry Craddock'], origin_bar: { ...bar, display_name: 'The Savoy', locality: 'London' } });
+  assert.equal(creditText(nameCredit(corpse, null)), 'Created by Harry Craddock at The Savoy, London');
+  assert.equal(nameCredit(corpse, null)[1].profileId, undefined, 'a name with no page is not a link');
+  assert.equal(creditText(nameCredit(drink('mine', null, { creator: person, creator_names: ['Jo Bloggs'] }), null)), 'Created by Sam Ross and Jo Bloggs');
 
   // Credit sentences leave out what isn't known and keep links on names.
   const full = drink('penicillin', 'goldrush', { creator: person, origin_bar: bar, origin_year: 2005 });

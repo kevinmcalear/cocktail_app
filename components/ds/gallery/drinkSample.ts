@@ -12,7 +12,9 @@ const ROWS = [
   { id: 'r1', brand: 'Monkey Shoulder', generic: 'Blended Scotch', amount: 60, unit: 'ml', abv: 40, note: null },
   { id: 'r2', brand: 'Lemon juice', generic: 'Lemon juice', amount: 22.5, unit: 'ml', abv: null, note: 'Juiced this afternoon' },
   { id: 'r3', brand: 'Honey-ginger syrup', generic: 'Honey-ginger syrup', amount: 22.5, unit: 'ml', abv: null, note: '2:1 honey, fresh ginger juice' },
-  { id: 'r4', brand: 'Laphroaig 10', generic: 'Islay Scotch', amount: 7.5, unit: 'ml', abv: 40, note: 'Float off a bar spoon' },
+  { id: 'r4', brand: 'Laphroaig 10', generic: 'Islay Scotch', amount: 7.5, unit: 'ml', abv: 40, note: 'Off a bar spoon', float: true },
+  { id: 'r5', brand: 'Candied ginger', generic: 'Candied ginger', amount: 1, unit: 'each', abv: null, note: null },
+  { id: 'r6', brand: 'Lemon', generic: 'Lemon', amount: 1, unit: 'twist', abv: null, note: null },
 ];
 
 function masked(role: number): PresentationRecipe[] {
@@ -27,6 +29,7 @@ function masked(role: number): PresentationRecipe[] {
       amount: amounts ? r.amount : null,
       unit: amounts ? r.unit : null,
       preparation_notes: role >= SAMPLE_LEVELS.prep ? r.note : null,
+      is_float: 'float' in r && r.float,
       display_ingredient_id: display?.id ?? null,
       display_ingredient: display,
     };

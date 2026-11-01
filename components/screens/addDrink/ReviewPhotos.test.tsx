@@ -16,6 +16,7 @@ jest.mock('@/components/ds/SketchDrawing', () => ({ SketchDrawing: () => null })
 jest.mock('@/hooks/useCapabilities', () => ({ useCapabilities: () => ({ data: ['photos'] }) }));
 jest.mock('@/hooks/usePublishing', () => ({ useBarPublishing: () => ({ data: undefined }) }));
 jest.mock('@/hooks/useMyProfile', () => ({ useMyProfile: () => ({ data: null }) }));
+jest.mock('@/hooks/useDiscover', () => ({ useDrinkLists: () => ({ data: [] }) }));
 
 let latest: AnglePhotos = {};
 function Start() {

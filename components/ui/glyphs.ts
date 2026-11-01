@@ -213,6 +213,8 @@ const G = {
   camera: { d: CAMERA + C(12, 13.5, 3.5), f: C(12, 13.5, 3.5) },
   'camera.fill': filled({ d: CAMERA + C(12, 13.5, 3.5), f: CAMERA }),
   photo: { d: PHOTO + C(9, 9, 1.5) + 'M20.5 15l-5-5L4.5 20.5', f: PHOTO },
+  // Two corners of a frame, crossed: cropping a photo.
+  crop: { d: 'M6.5 2.5v13a2 2 0 0 0 2 2h13M2.5 6.5h13a2 2 0 0 1 2 2v13' },
   doc: { d: DOC + 'M14 3v5h5M9 13h6M9 17h4', f: DOC },
   'doc.text': { d: DOC + 'M14 3v5h5M9 13h6M9 17h6', f: DOC },
   'doc.plaintext': { d: DOC + 'M14 3v5h5', f: DOC },

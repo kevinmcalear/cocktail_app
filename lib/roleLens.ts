@@ -44,7 +44,7 @@ export const LENS_GROUPS: { title: string; rows: LensRow[] }[] = [
     title: 'For the floor',
     rows: [
       { id: 'talking', label: 'Talking points and allergens', opensAt: 20, capability: 'talking_points' },
-      { id: 'service', label: 'Service: garnish, hand-off, photos', opensAt: 20, levelBound: true },
+      { id: 'service', label: 'Service: garnish, guest view, photos', opensAt: 20, levelBound: true },
       { id: 'where', label: 'Where it lives', detail: 'The back bar map', opensAt: 20, capability: 'locations' },
     ],
   },

@@ -1,6 +1,6 @@
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 
-import { toCapability, withToggle } from '@/lib/roleMatrix';
+import { toCapability, withToggle, type DrinkType } from '@/lib/roleMatrix';
 import { supabase } from '@/lib/supabase';
 
 /**
@@ -19,6 +19,8 @@ export interface RoleMatrixRow {
   capabilities: string[];
   /** What it could do before anyone changed it: the built-in role at this venue. */
   starts_with?: string[];
+  /** The drink kinds a venue role adds and edits; null (and built-in roles): every kind. */
+  drink_types?: string[] | null;
 }
 
 /** The five base levels and the venue's own roles, for members of the venue. */
@@ -43,6 +45,8 @@ export interface VenueRoleDraft {
   granted: string[];
   revoked: string[];
   ends_at: string | null;
+  /** A department (tf-059): the drink kinds it adds and edits, null for every kind. Its new drinks wait for approval. */
+  drink_types: DrinkType[] | null;
 }
 
 function useInvalidateRoles(barId: string | null | undefined) {

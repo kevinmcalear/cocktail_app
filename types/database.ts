@@ -2919,11 +2919,13 @@ export type Database = {
         Row: {
           abv: number | null
           abv_source: string
+          awaiting_approval: boolean
           bar_id: string | null
           brand_maker: string | null
           capacity_ml: number | null
           created_at: string
           created_by: string | null
+          creator_names: string[] | null
           creator_profile_id: string | null
           credit_status: Database["public"]["Enums"]["credit_status"] | null
           density_g_ml: number | null
@@ -2987,11 +2989,13 @@ export type Database = {
         Insert: {
           abv?: number | null
           abv_source?: string
+          awaiting_approval?: boolean
           bar_id?: string | null
           brand_maker?: string | null
           capacity_ml?: number | null
           created_at?: string
           created_by?: string | null
+          creator_names?: string[] | null
           creator_profile_id?: string | null
           credit_status?: Database["public"]["Enums"]["credit_status"] | null
           density_g_ml?: number | null
@@ -3055,11 +3059,13 @@ export type Database = {
         Update: {
           abv?: number | null
           abv_source?: string
+          awaiting_approval?: boolean
           bar_id?: string | null
           brand_maker?: string | null
           capacity_ml?: number | null
           created_at?: string
           created_by?: string | null
+          creator_names?: string[] | null
           creator_profile_id?: string | null
           credit_status?: Database["public"]["Enums"]["credit_status"] | null
           density_g_ml?: number | null
@@ -4503,6 +4509,7 @@ export type Database = {
           created_at: string
           id: string
           ingredient_item_id: string | null
+          is_float: boolean
           is_optional: boolean | null
           parent_ingredient_id: string | null
           part: number
@@ -4517,6 +4524,7 @@ export type Database = {
           created_at?: string
           id?: string
           ingredient_item_id?: string | null
+          is_float?: boolean
           is_optional?: boolean | null
           parent_ingredient_id?: string | null
           part?: number
@@ -4531,6 +4539,7 @@ export type Database = {
           created_at?: string
           id?: string
           ingredient_item_id?: string | null
+          is_float?: boolean
           is_optional?: boolean | null
           parent_ingredient_id?: string | null
           part?: number
@@ -5526,6 +5535,7 @@ export type Database = {
           base_level: number
           created_at: string
           created_by: string | null
+          drink_types: Database["public"]["Enums"]["entity_type"][] | null
           ends_at: string | null
           granted: Database["public"]["Enums"]["venue_capability"][]
           id: string
@@ -5537,6 +5547,7 @@ export type Database = {
           base_level: number
           created_at?: string
           created_by?: string | null
+          drink_types?: Database["public"]["Enums"]["entity_type"][] | null
           ends_at?: string | null
           granted?: Database["public"]["Enums"]["venue_capability"][]
           id?: string
@@ -5548,6 +5559,7 @@ export type Database = {
           base_level?: number
           created_at?: string
           created_by?: string | null
+          drink_types?: Database["public"]["Enums"]["entity_type"][] | null
           ends_at?: string | null
           granted?: Database["public"]["Enums"]["venue_capability"][]
           id?: string
@@ -5724,6 +5736,7 @@ export type Database = {
           display_ingredient_id: string | null
           id: string | null
           ingredient_item_id: string | null
+          is_float: boolean | null
           is_optional: boolean | null
           parent_ingredient_id: string | null
           part: number | null
@@ -5734,11 +5747,13 @@ export type Database = {
           display_ingredient: {
             abv: number | null
             abv_source: string
+            awaiting_approval: boolean
             bar_id: string | null
             brand_maker: string | null
             capacity_ml: number | null
             created_at: string
             created_by: string | null
+            creator_names: string[] | null
             creator_profile_id: string | null
             credit_status: Database["public"]["Enums"]["credit_status"] | null
             density_g_ml: number | null
@@ -5804,6 +5819,7 @@ export type Database = {
           published_ingredient: {
             abv: number | null
             bar_id: string | null
+            creator_names: string[] | null
             creator_profile_id: string | null
             credit_status: Database["public"]["Enums"]["credit_status"] | null
             description: string | null
@@ -5888,6 +5904,7 @@ export type Database = {
         Row: {
           abv: number | null
           bar_id: string | null
+          creator_names: string[] | null
           creator_profile_id: string | null
           credit_status: Database["public"]["Enums"]["credit_status"] | null
           description: string | null
@@ -6598,11 +6615,13 @@ export type Database = {
         Returns: {
           abv: number | null
           abv_source: string
+          awaiting_approval: boolean
           bar_id: string | null
           brand_maker: string | null
           capacity_ml: number | null
           created_at: string
           created_by: string | null
+          creator_names: string[] | null
           creator_profile_id: string | null
           credit_status: Database["public"]["Enums"]["credit_status"] | null
           density_g_ml: number | null
@@ -6936,6 +6955,7 @@ export type Database = {
         Returns: {
           base_level: number
           capabilities: Database["public"]["Enums"]["venue_capability"][]
+          drink_types: Database["public"]["Enums"]["entity_type"][]
           ends_at: string
           granted: Database["public"]["Enums"]["venue_capability"][]
           name: string
@@ -7098,6 +7118,10 @@ export type Database = {
         Args: { p_bar_id: string }
         Returns: Database["public"]["Enums"]["venue_capability"][]
       }
+      my_drink_types: {
+        Args: { p_bar_id: string }
+        Returns: Database["public"]["Enums"]["entity_type"][]
+      }
       my_hidden_city: { Args: never; Returns: string }
       my_ranked_drink_names: {
         Args: { p_item_ids: string[] }
@@ -7227,6 +7251,7 @@ export type Database = {
         Returns: {
           abv: number | null
           bar_id: string | null
+          creator_names: string[] | null
           creator_profile_id: string | null
           credit_status: Database["public"]["Enums"]["credit_status"] | null
           description: string | null
@@ -7539,6 +7564,16 @@ export type Database = {
         }
         Returns: undefined
       }
+      set_drink_credits: {
+        Args: {
+          p_add: string[]
+          p_creator_names: string[]
+          p_creator_profile_id: string
+          p_item_id: string
+          p_remove: string[]
+        }
+        Returns: undefined
+      }
       set_item_picture: {
         Args: {
           p_image_id?: string
@@ -7572,6 +7607,10 @@ export type Database = {
       set_staff_list_order: {
         Args: { p_bar_id: string; p_item_ids: string[] }
         Returns: undefined
+      }
+      set_venue_feature: {
+        Args: { p_bar_id: string; p_enabled: boolean; p_feature: string }
+        Returns: string[]
       }
       share_slug: { Args: { p_id: string; p_kind: string }; Returns: string }
       share_target: {

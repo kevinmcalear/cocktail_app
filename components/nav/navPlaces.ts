@@ -23,7 +23,7 @@ export const MENUS_PLACE: Place = { key: 'menus', label: 'Menus', icon: 'place.m
 
 /**
  * Where the shell can take you, for the mode you're in: the tabs (the
- * phone bar's, with none left out), the venue's working pages (Back bar),
+ * phone bar's, with none left out), the venue's working pages (Back bar, Glassware),
  * and its Venue section (My team, Features, Brand, Roles and access, Venue settings).
  * History and This week are null where the venue hasn't switched them on.
  */
@@ -39,8 +39,15 @@ export function useNavPlaces() {
 
   // Menus covers its own pages (/menus/<id>/edit) too.
   const tabs: Place[] = useModeTabs().map((t) => ({ key: t.name, label: t.label, icon: t.icon, path: tabPath(t.name), prefix: t.name === 'menus' ? '/menus' : undefined, tab: true }));
-  const work: Place[] = venue && !round && has('backBar') ? [{ key: 'back-bar', label: 'Back bar', icon: 'place.backbar', path: '/back-bar' }] : [];
   const settings = venue ? `/settings/bar/${venue.id}` : null;
+  const work: Place[] =
+    venue && settings && !round
+      ? [
+          ...(has('backBar') ? [{ key: 'back-bar', label: 'Back bar', icon: 'place.backbar', path: '/back-bar' } as Place] : []),
+          // Glassware is a working page, not a setting (Eddie, 29 Oct 2026): Kit's page, with its glasses' own pages under it.
+          { key: 'glassware', label: 'Glassware', icon: 'wineglass', path: `${settings}/glassware`, prefix: `${settings}/kit/glassware` },
+        ]
+      : [];
   const venuePlaces: Place[] =
     venue && settings
       ? [

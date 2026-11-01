@@ -1,10 +1,10 @@
 import { Image } from 'expo-image';
-import { useState } from 'react';
+import { useMemo, useState } from 'react';
 import { StyleSheet, View, type StyleProp, type ViewStyle } from 'react-native';
 
-import { CustomIcon } from '@/components/ui/CustomIcons';
 import { radius as radii } from '@/constants/tokens';
 import { isPng } from '@/lib/itemImages';
+import { bareGlassSketch } from '@/lib/sketch/draft';
 import type { SketchInputs } from '@/lib/sketch/types';
 import { markNoThumb, thumbToTry } from '@/lib/thumbnails';
 
@@ -53,7 +53,7 @@ export interface DrinkImageProps {
 /**
  * A drink's picture. Never falls back to another drink's photo: with no image
  * yet, it shows a sketch drawn from the drink's own spec (glass, colour, ice,
- * foam, garnish), or until that exists, its glass icon on the house paper.
+ * foam, garnish), or until that exists, its bare glass on the house paper.
  */
 export function DrinkImage({ source, generated, glass, itemId, accessibilityLabel, aspectRatio = 1, radius = 'card', style, ingredient, thumb = false, animate, sketchDetail, placeholderColor, priority, sketch }: DrinkImageProps) {
   const ds = useDs();
@@ -66,9 +66,11 @@ export function DrinkImage({ source, generated, glass, itemId, accessibilityLabe
   const shown = small ?? uri;
   // A cut-out sits on the drawn paper, as a sketch does, not on its own colour, which it would vanish into.
   const cutout = isPng(uri);
+  // No drawing yet (or still loading): the bare glass, drawn as the drawings are, not a small line icon (i-glass-pic).
+  const bare = useMemo(() => bareGlassSketch(glass), [glass]);
   const glassIcon = (
-    <View style={styles.empty}>
-      <CustomIcon name={glass || 'Coupe'} size={64} color={ds.c.sketchInk} />
+    <View style={styles.fill}>
+      <SketchDrawing inputs={bare} seed={glass || 'Coupe'} detail={sketchDetail ?? (thumb ? 'thumb' : 'full')} lazy={thumb || sketchDetail === 'thumb'} />
     </View>
   );
   return (
@@ -118,5 +120,4 @@ const styles = StyleSheet.create({
   // Explicit rather than StyleSheet.absoluteFill: expo-image on native didn't
   // size itself from it under RN 0.86 (blank images in the gallery).
   fill: { position: 'absolute', top: 0, left: 0, width: '100%', height: '100%' },
-  empty: { position: 'absolute', top: 0, right: 0, bottom: 0, left: 0, alignItems: 'center', justifyContent: 'center', opacity: 0.8 },
 });

@@ -73,8 +73,15 @@ export function SignOutSection({ onLogOut }: { onLogOut: () => void }) {
   const deleteAccount = async () => {
     const confirmed = await confirmAsync({
       title: 'Delete your account?',
-      message:
-        'This permanently deletes your account, profile, drafts and venue memberships. Drinks and menus you made in a venue stay with that venue. This cannot be undone.',
+      // Eddie, build 51 (tf-067): say plainly what goes, what stays with each
+      // bar, and that they can come back. prepare_account_deletion and the
+      // delete-account function are what this describes.
+      message: [
+        'We remove your sign-in, email, profile, rankings, drafts and saved drinks. They’re deleted, not hidden.',
+        'Drinks and menus you made for a bar with a team belong to that bar, so they stay there, without your name.',
+        'A bar where you’re the only one on the team goes with you: its private side (specs, back bar, drafts, run sheets) is deleted. Only its public page stays, unclaimed, so whoever runs it can claim it again.',
+        'You’re welcome back any time: sign up with the same email and start fresh.',
+      ].join('\n\n'),
       confirmText: 'Delete account',
       destructive: true,
     });
@@ -98,7 +105,7 @@ export function SignOutSection({ onLogOut }: { onLogOut: () => void }) {
       <RowDivider />
       <SettingsRow
         label="Delete account"
-        detail="Permanently remove your account and personal data"
+        detail="Removes your sign-in and personal data. Bars keep their pages."
         icon="trash"
         tone="danger"
         role="button"

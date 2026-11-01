@@ -27,6 +27,7 @@ assert.equal(findByName(methods, 'Freezer'), undefined);
 // The spec heading's icons: a method by any of its names, a glass by its key or else its name.
 assert.equal(methodIcon('Shake'), 'Shaken');
 assert.equal(methodIcon('Dry shake'), 'dry shake and shake');
+assert.equal(methodIcon('Churn'), 'Swizzled', 'a churn shares the swizzle drawing (tf-061)');
 assert.equal(methodIcon('Stirred'), 'Stirred');
 assert.equal(methodIcon('Build'), 'Built');
 assert.equal(methodIcon('Flask Pour'), 'Flask Pour');

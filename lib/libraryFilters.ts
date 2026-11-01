@@ -220,7 +220,7 @@ export function tileLine(...parts: (string | null | undefined)[]): string | null
   return shown.length ? shown.join(' · ') : null;
 }
 
-const METHOD_WORDS: Record<string, string> = { stir: 'Stirred', shake: 'Shaken', build: 'Built', blend: 'Blended', swizzle: 'Swizzled', throw: 'Thrown', roll: 'Rolled', whip: 'Whipped', dry: 'Dry shaken' };
+const METHOD_WORDS: Record<string, string> = { stir: 'Stirred', shake: 'Shaken', build: 'Built', blend: 'Blended', swizzle: 'Swizzled', churn: 'Churned', throw: 'Thrown', roll: 'Rolled', whip: 'Whipped', dry: 'Dry shaken' };
 
 /** "Stirred" for the method Stir: how a tile says how it's made. Other names stay as they are. */
 export function methodWord(name: string | null | undefined): string | null {

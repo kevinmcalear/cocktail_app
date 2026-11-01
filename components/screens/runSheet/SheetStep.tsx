@@ -24,11 +24,12 @@ export function useSheetActions(sheet: RunSheet, menu: Menu, breakDown = false) 
   const router = useRouter();
   const [copied, setCopied] = useState(false);
   const web = Platform.OS === 'web';
+  const query = `margin=${sheet.marginPct}${breakDown ? '&breakdown=1' : ''}`;
   return {
     web,
     copied,
-    print: () => router.push(`/menus/${menu.id}/run-sheet/print?print=1${breakDown ? '&breakdown=1' : ''}` as Href),
-    openFull: () => router.push(`/menus/${menu.id}/run-sheet/print${breakDown ? '?breakdown=1' : ''}` as Href),
+    print: () => router.push(`/menus/${menu.id}/run-sheet/print?print=1&${query}` as Href),
+    openFull: () => router.push(`/menus/${menu.id}/run-sheet/print?${query}` as Href),
     pdf: !web && canSharePdf(),
     shareText: () => void Share.share({ title: `Run sheet: ${menu.name}`, message: runSheetText(sheet, menu) }),
     share: async () => {

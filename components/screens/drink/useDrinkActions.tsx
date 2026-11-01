@@ -21,13 +21,13 @@ interface ActionItem {
  * strip open the same sheets. Both need a confirmed age; signed out, they ask
  * you to sign in. Render `sheets`.
  */
-export function useDrinkActions(item: ActionItem, picture: ItemPicture | null, lines: SpecLine[], barName: string | null = null) {
+export function useDrinkActions(item: ActionItem, picture: ItemPicture | null, lines: SpecLine[], barName: string | null = null, live = true) {
   const ingredients = lines.flatMap((l) => (l.ingredient ? [l.ingredient] : []));
   const router = useRouter();
   const signedIn = useSignedIn();
   const ageGate = useAgeGate();
   const [open, setOpen] = useState<'rank' | 'made' | null>(null);
-  const madeTimes = (useMadeDrinks().data ?? []).filter((m) => m.itemId === item.id).length;
+  const madeTimes = (useMadeDrinks(live).data ?? []).filter((m) => m.itemId === item.id).length;
   const start = (sheet: 'rank' | 'made') => (signedIn ? ageGate.gate(() => setOpen(sheet)) : router.push('/auth/login'));
   return {
     rank: () => start('rank'),

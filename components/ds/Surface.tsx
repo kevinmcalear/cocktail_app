@@ -1,4 +1,4 @@
-import type { ReactNode } from 'react';
+import { createContext, useContext, type ReactNode } from 'react';
 import { useWindowDimensions, View, type StyleProp, type ViewStyle } from 'react-native';
 
 import { layout, radius, space } from '@/constants/tokens';
@@ -7,9 +7,16 @@ import { useDs } from './theme';
 
 export type Breakpoint = 'phone' | 'tablet' | 'desktop';
 
+const Forced = createContext<Breakpoint | null>(null);
+
+/** Lays its children out as on that width, whatever the window's: the desktop drink editor's phone preview. */
+export const BreakpointOverride = Forced.Provider;
+
 /** Phone under 768, tablet to 1199, desktop from 1200 (docs/design_system.md#layout). */
 export function useBreakpoint(): Breakpoint {
   const { width } = useWindowDimensions();
+  const forced = useContext(Forced);
+  if (forced) return forced;
   if (width >= layout.breakpoints.desktop) return 'desktop';
   if (width >= layout.breakpoints.tablet) return 'tablet';
   return 'phone';

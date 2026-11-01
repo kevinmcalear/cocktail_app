@@ -26,6 +26,8 @@ export const RECIPE_UNITS: RecipeUnit[] = [
   { value: 'spray', label: 'spray', group: 'count' },
   { value: 'rinse', label: 'rinse', group: 'count' },
   { value: 'float', label: 'float', group: 'count' },
+  // Grated over the top (nutmeg, cinnamon): no amount needed, it reads "Grated" (Eddie tf-062).
+  { value: 'grated', label: 'grated', group: 'count' },
   // Weight (specs weighed on a scale, e.g. Ethyl imports)
   { value: 'g', label: 'g', group: 'weight' },
   { value: 'kg', label: 'kg', group: 'weight' },
@@ -60,8 +62,8 @@ const PLURALS: Record<string, string> = {
   drop: 'drops', dash: 'dashes', spray: 'sprays', rinse: 'rinses', float: 'floats', splash: 'splashes', pinch: 'pinches', sprig: 'sprigs',
   leaf: 'leaves', peel: 'peels', twist: 'twists', wheel: 'wheels', slice: 'slices', cube: 'cubes', wedge: 'wedges', rim: 'rims',
 };
-/** Said as the line itself: one rinse of absinthe reads "Rinse  Absinthe". */
-const ONE_WORD = new Set(['rinse', 'float']);
+/** Said as the line itself: one rinse of absinthe reads "Rinse  Absinthe", nutmeg with no amount "Grated  Nutmeg". */
+const ONE_WORD = new Set(['rinse', 'float', 'grated']);
 
 /** A spec amount as it reads: "3 drops", "1 dash", "22.5 ml", and a single rinse or float as just "Rinse". */
 export function amountText(amount: string, unit: string | null | undefined): string {
@@ -70,4 +72,10 @@ export function amountText(amount: string, unit: string | null | undefined): str
   const n = Number(amount);
   if (n === 1 && ONE_WORD.has(u)) return u[0].toUpperCase() + u.slice(1);
   return `${amount} ${n !== 1 ? (PLURALS[u] ?? u) : u}`;
+}
+
+/** A line with no amount whose unit says it all ("Grated", "Float"), else null. */
+export function unitOnlyText(unit: string | null | undefined): string | null {
+  const u = (unit ?? '').trim();
+  return ONE_WORD.has(u) ? u[0].toUpperCase() + u.slice(1) : null;
 }

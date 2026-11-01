@@ -33,7 +33,7 @@ export function FitGlassNote({ result, onFit }: { result: GlassFillResult | null
     <View style={[styles.note, { borderColor: ds.c.lineStrong, backgroundColor: ds.c.surface }]}>
       <View style={styles.flex}>
         <Body>{noteWords(result)}</Body>
-        <Caption tone="muted">{result.line.said ? 'The venue’s wash line for this glass.' : `About ${Math.round((result.line.ml / result.line.brimMl!) * 100)}% of its ${ml(result.line.brimMl!)} to the brim, until the venue sets its wash line in Kit › Glassware.`}</Caption>
+        <Caption tone="muted">The venue’s wash line for this glass.</Caption>
       </View>
       {onFit && result.fitted ? <Button label="Fit it" size="sm" variant="secondary" onPress={onFit} accessibilityHint="Shows the spec scaled to fill the glass to its wash line" /> : null}
     </View>
@@ -83,7 +83,7 @@ function FitBody({ result, names, amounts, onUse, onClose, cost }: FitGlassSheet
         {result.glassName}
       </Caption>
       <View style={[styles.glass, { backgroundColor: ds.c.paper }]}>
-        <GlassThumb glass={result.venueGlass.glass} variant={result.venueGlass.variant} outline={result.venueGlass.outline} size={96} />
+        <GlassThumb glass={result.venueGlass.glass} variant={result.venueGlass.variant} outline={result.venueGlass.outline ?? result.venueGlass.model?.outline} size={96} />
         <View style={styles.flex}>
           <DsText variant="label" color={ds.c.sketchInk}>{`Wash line ${ml(line.ml)}`}</DsText>
           <DsText variant="body" color={ds.c.sketchInk}>{`Fills to ${ml(fill.levelMl)}: ${ml(Math.abs(fill.diffMl))} ${fill.state === 'short' ? 'short' : 'over'}`}</DsText>

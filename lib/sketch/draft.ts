@@ -73,3 +73,9 @@ export function draftSketchInputs(draft: DraftLook): SketchInputs {
     ...(draft.iceLook ? { iceLook: draft.iceLook } : {}), ...(draft.glassMm ? { glassMm: draft.glassMm } : {}),
   };
 }
+
+/** A bare glass, by its name or icon key ("Martini"): what a drink with no drawing yet shows, in place of a line icon. */
+export function bareGlassSketch(glass: string | null | undefined): SketchInputs {
+  const inputs = draftSketchInputs({ name: '', glass: glass || 'Coupe', lines: [] });
+  return { ...inputs, ice: 'none', foam: null, float: null, bleed: null, fizz: false, garnish: null, liquid: { hex: inputs.liquid.hex, alpha: 0 } };
+}
