@@ -1,21 +1,26 @@
 -- The staff link door for someone signed in who isn't on the team (boards
 -- Miss-door and Miss-door-desk), so the link's settings (bars.staff_link_on,
--- staff_link_role, staff_link_approve, 20261206300000) change what it does:
+-- staff_link_role, staff_link_approve, 20261206300000) change what it does.
+-- The door takes the link's secret (bar_staff_links.token, 20261206300000),
+-- never the bar's slug: a wrong token, or one New link replaced, is refused
+-- exactly as a link that's off.
 --
 --   venue_join_requests.via_link   New column. The ask came through the staff
 --                                  link, so Team says "Through your staff
 --                                  link" instead of "From your bar's page".
---   staff_link_door(slug)          New definer read for the door: is the link
+--   staff_link_door(token)         New definer read for the door: is the link
 --                                  on, the role it joins at, whether an Admin
 --                                  approves, the first name of the Admin who
 --                                  answers (the owner, else the longest-serving
 --                                  Admin), how many Admins there are, and the
 --                                  caller's own name. Signed-in only, and the
 --                                  Admin's name only while the link is on.
---   join_by_staff_link(slug)       New. Approval on: asks (a join request
+--                                  No row for a wrong or replaced token.
+--   join_by_staff_link(token)      New. Approval on: asks (a join request
 --                                  through the link). Approval off: joins at
 --                                  the link's role straight away. Link off,
---                                  or a bar with no Admin: refuses. Never
+--                                  a wrong or replaced token, or a bar with
+--                                  no Admin: refuses. Never
 --                                  Admin: staff_link_role is 10 to 35
 --                                  (bars_staff_link_role_check).
 --   take_back_join_request(bar)    New. The asker withdraws a waiting ask. A
@@ -37,7 +42,7 @@ ALTER TABLE "public"."venue_join_requests"
 
 -- --- The door ---
 
-CREATE FUNCTION "public"."staff_link_door"("p_slug" "text") RETURNS TABLE (
+CREATE FUNCTION "public"."staff_link_door"("p_token" "text") RETURNS TABLE (
     "bar_id" uuid,
     "link_on" boolean,
     "join_role" integer,
@@ -51,7 +56,8 @@ CREATE FUNCTION "public"."staff_link_door"("p_slug" "text") RETURNS TABLE (
     AS $$
   WITH bar AS (
     SELECT b.id, b.staff_link_on, b.staff_link_role, b.staff_link_approve
-    FROM public.bars b WHERE b.slug = lower(p_slug) AND auth.uid() IS NOT NULL
+    FROM public.bars b JOIN public.bar_staff_links l ON l.bar_id = b.id
+    WHERE l.token = p_token AND auth.uid() IS NOT NULL
   ), admins AS (
     SELECT ub.user_id, ub.created_at,
            EXISTS (SELECT 1 FROM public.profile_claims c
@@ -79,7 +85,7 @@ $$;
 
 -- Through the staff link: ask, or join straight in when nobody approves.
 -- Returns 'asked' or 'joined'.
-CREATE FUNCTION "public"."join_by_staff_link"("p_slug" "text") RETURNS text
+CREATE FUNCTION "public"."join_by_staff_link"("p_token" "text") RETURNS text
     LANGUAGE plpgsql SECURITY DEFINER
     SET "search_path" TO ''
     AS $$
@@ -90,12 +96,10 @@ BEGIN
     IF auth.uid() IS NULL THEN
         RAISE EXCEPTION 'Sign in to join a team.' USING ERRCODE = '42501';
     END IF;
-    SELECT * INTO v_bar FROM public.bars WHERE slug = lower(p_slug);
-    IF v_bar.id IS NULL THEN
-        RAISE EXCEPTION 'This link doesn''t match a bar.';
-    END IF;
-    IF NOT v_bar.staff_link_on THEN
-        RAISE EXCEPTION 'This link is off. Ask someone on the team to invite you by email.';
+    SELECT b.* INTO v_bar FROM public.bars b JOIN public.bar_staff_links l ON l.bar_id = b.id WHERE l.token = p_token;
+    -- A wrong or replaced token says the same as a link that's off.
+    IF v_bar.id IS NULL OR NOT v_bar.staff_link_on THEN
+        RAISE EXCEPTION 'This link is off. Ask someone on the team to invite you by email, or for the new link.';
     END IF;
     -- A bar with no Admin has nobody to answer, and nobody chose its link's settings.
     IF NOT EXISTS (SELECT 1 FROM public.user_bars WHERE bar_id = v_bar.id AND role_level >= 40) THEN
