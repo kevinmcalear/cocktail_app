@@ -30,6 +30,8 @@ export default function Root({ children }: PropsWithChildren) {
         {/* The page title is set with expo-router's Head in app/_layout.tsx: its
             head manager adds its own <title>, which would otherwise win. */}
         <meta name="description" content={DESCRIPTION} />
+        {/* Out of search until the real domain: one switch in constants/brand.json. */}
+        {BRAND.searchIndexing ? null : <meta name="robots" content="noindex, nofollow" />}
         <meta name="theme-color" media="(prefers-color-scheme: light)" content="#F9F9FB" />
         <meta name="theme-color" media="(prefers-color-scheme: dark)" content="#161618" />
 

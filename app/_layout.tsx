@@ -7,6 +7,7 @@ import { PersistQueryClientProvider } from '@tanstack/react-query-persist-client
 import { Toaster } from 'burnt/web';
 import { Stack, usePathname, useRouter, useSegments } from "expo-router";
 import { loadAsync, useFonts } from 'expo-font';
+import { Observe, ObserveRoot, useObserve } from 'expo-observe';
 import { WebHead } from '@/components/WebHead';
 import { StatusBar } from "expo-status-bar";
 import { GestureRoot } from '@/components/ds/GestureRoot';
@@ -40,6 +41,10 @@ import { Platform, View } from 'react-native';
 export { ErrorScreen as ErrorBoundary } from '@/components/ErrorScreen';
 
 initMonitoring();
+// EAS Observe: launch, first render and time to interactive, per route too.
+// Module scope: the router integration can't be switched on once a screen
+// has mounted. Debug builds don't send (Observe's default).
+Observe.configure({ integrations: { 'expo-router': true } });
 installWebAlert();
 
 export const unstable_settings = {
@@ -56,6 +61,11 @@ function RootLayoutNav() {
   useOtaUpdates();
   // Signing in sends people to their mail for the code: a reload would lose the step.
   useHoldUpdates(segments[0] === 'auth' || segments[0] === 'onboarding');
+  // Interactive once auth has settled and the first screen can respond.
+  const { markInteractive } = useObserve();
+  useEffect(() => {
+    if (!loading) markInteractive();
+  }, [loading, markInteractive]);
 
   useEffect(() => {
     if (loading) return;
@@ -240,7 +250,7 @@ function useWebThemeChrome(scheme: 'light' | 'dark') {
   }, [scheme]);
 }
 
-export default function RootLayout() {
+function RootLayout() {
   const colorScheme = useColorScheme();
   useWebThemeChrome(colorScheme);
   // Native waits once for every face, so text never flashes in a fallback.
@@ -275,3 +285,5 @@ export default function RootLayout() {
     </PersistQueryClientProvider>
   );
 }
+
+export default ObserveRoot.wrap(RootLayout);

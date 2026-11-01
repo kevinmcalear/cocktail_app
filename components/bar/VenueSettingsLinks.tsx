@@ -1,6 +1,8 @@
 import { useRouter, type Href } from 'expo-router';
 
-import { RowDivider, SettingsRow, SettingsSection } from '@/components/screens/settings/SettingsParts';
+import { RowDivider, SettingsRow, SettingsSection, SwitchRow } from '@/components/screens/settings/SettingsParts';
+import { ADVANCED_DETAIL, ADVANCED_LABEL } from '@/components/screens/venueSetup/KitStep';
+import { useBarAdvanced, useSetBarAdvanced } from '@/hooks/useAdvancedOptions';
 import { useBarGlassware } from '@/hooks/useBarGlassware';
 import { useBarKit } from '@/hooks/useBarKit';
 import { useVenueIce } from '@/hooks/useVenueIce';
@@ -12,7 +14,8 @@ import { useBarPublishing } from '@/hooks/usePublishing';
 import { useVenueSuppliers } from '@/hooks/useVenueSuppliers';
 import { useRoleMatrix } from '@/hooks/useVenueRoles';
 import { PAGE_COPY } from '@/lib/pageVisibility';
-import { useCanManageStaff } from '@/hooks/useViewAs';
+import { useCanManageStaff, useEffectiveRole } from '@/hooks/useViewAs';
+import { BACK_BAR_SHOWN } from '@/lib/backBar';
 
 const plural = (n: number, one: string, many = `${one}s`) => `${n} ${n === 1 ? one : many}`;
 
@@ -83,20 +86,25 @@ export function VenueBuyingLinks({ barId }: { barId: string }) {
   const router = useRouter();
   const caps = useCapabilities(barId).data ?? [];
   const allowed = caps.includes('prep') || caps.includes('costs');
-  const suppliers = useVenueSuppliers(allowed ? barId : null).data;
+  const suppliers = useVenueSuppliers(allowed && BACK_BAR_SHOWN ? barId : null).data;
   const pricing = usePricingSettings(barId).data;
   if (!allowed) return null;
   const go = (page: string) => () => router.push(`/settings/bar/${barId}/${page}` as Href);
   return (
     <SettingsSection title="Buying" note="Who you order from and what it costs. Only people with Prep or Costs see this.">
-      <SettingsRow
-        icon="building.2.fill"
-        label="Suppliers"
-        detail="Who you order from, and their cut-offs"
-        value={suppliers ? plural(suppliers.length, 'supplier') : undefined}
-        onPress={go('suppliers')}
-      />
-      <RowDivider />
+      {/* Suppliers are parked with the back bar (lib/backBar.ts). */}
+      {BACK_BAR_SHOWN ? (
+        <>
+          <SettingsRow
+            icon="building.2.fill"
+            label="Suppliers"
+            detail="Who you order from, and their cut-offs"
+            value={suppliers ? plural(suppliers.length, 'supplier') : undefined}
+            onPress={go('suppliers')}
+          />
+          <RowDivider />
+        </>
+      ) : null}
       <SettingsRow icon="dollarsign.circle.fill" label="Pricing" detail="Currency, tax and target GP" value={pricingValue(pricing)} onPress={go('pricing')} />
     </SettingsSection>
   );
@@ -106,6 +114,10 @@ export function VenueBuyingLinks({ barId }: { barId: string }) {
 export function VenueSettingsLinks({ barId }: { barId: string }) {
   const router = useRouter();
   const publishing = useBarPublishing(barId).data;
+  // Admins only (level 40, lib/roles.ts): bars_update lets only them write it.
+  const admin = useEffectiveRole(barId) >= 40;
+  const advanced = useBarAdvanced(barId);
+  const setAdvanced = useSetBarAdvanced(barId);
   const go = (page: string) => () => router.push(`/settings/bar/${barId}/${page}` as Href);
   return (
     <SettingsSection title="More settings">
@@ -122,6 +134,12 @@ export function VenueSettingsLinks({ barId }: { barId: string }) {
       <SettingsRow icon="calendar" label="Calendars" detail="Calendars that bring events into This week" onPress={go('calendars')} />
       <RowDivider />
       <SettingsRow icon="drop.fill" label="Dilution" detail="How much water each method adds" onPress={go('dilution')} />
+      {admin ? (
+        <>
+          <RowDivider />
+          <SwitchRow label={ADVANCED_LABEL} detail={ADVANCED_DETAIL} value={advanced} onValueChange={(on) => setAdvanced.mutate(on)} />
+        </>
+      ) : null}
     </SettingsSection>
   );
 }

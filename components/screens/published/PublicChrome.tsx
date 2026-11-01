@@ -5,6 +5,7 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import { BackbarTheme, Body, Button, Caption, DsText, GlassButton, Headline, PressableScale, Surface, useBreakpoint, useDs, useGutter } from '@/components/ds';
 import { WebHead } from '@/components/WebHead';
+import { BRAND } from '@/constants/brand';
 import { displayFaces, font, layout, space } from '@/constants/tokens';
 
 // The public web's own chrome, around every signed-out page (/d, /p, /m, /r,
@@ -98,7 +99,7 @@ export function PublicFooter() {
       {link('Privacy', '/legal/privacy')}
       {link('Terms', '/legal/terms')}
       <View style={styles.flex} />
-      <Caption tone="muted">babyvom.it</Caption>
+      <Caption tone="muted">{BRAND.domain}</Caption>
     </View>
   );
 }
