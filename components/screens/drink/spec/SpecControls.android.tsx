@@ -23,8 +23,8 @@ export interface SpecControlsProps {
   sizes: { key: string; label: string }[];
   picked: string;
   onPick: (key: string) => void;
-  /** Its own group under the sizes: "A batch…" (the Batch sheet), "From what I have…" (Make mode). */
-  more?: { label: string; onPress: () => void };
+  /** Their own group under the sizes: "A batch…" (the Batch sheet); a house-made's ways into Make mode. */
+  more?: { label: string; onPress: () => void }[];
 }
 
 /**
@@ -39,7 +39,7 @@ export function SpecControls({ view, onView, makes, sizes, picked, onPick, more 
   const [open, setOpen] = useState(false);
   const close = () => setOpen(false);
   const ink = open ? tones.onPrimary : ds.c.ink;
-  const groups = more ? 2 : 1;
+  const groups = more?.length ? 2 : 1;
   const item = { textColor: ds.c.ink, containerColor: tones.menu, selectedTextColor: ds.c.ink, selectedContainerColor: tones.tonal, selectedLeadingIconColor: ds.c.ink };
   return (
     <View style={styles.row}>
@@ -88,24 +88,27 @@ export function SpecControls({ view, onView, makes, sizes, picked, onPick, more 
                   </SelectableDropdownMenuItem>
                 ))}
               </DropdownMenuGroup>
-              {more ? (
+              {more?.length ? (
                 <>
                   <Spacer modifiers={[heightOf(2)]} />
                   <DropdownMenuGroup shapes={{ index: 1, count: groups }} containerColor={tones.menu} modifiers={[width(MENU_WIDTH)]}>
-                    <DropdownMenuItem
-                      elementColors={{ textColor: ds.c.ink }}
-                      onClick={() => {
-                        close();
-                        more.onPress();
-                      }}
-                    >
-                      <DropdownMenuItem.Text>
-                        <Text style={material.menuText}>{more.label}</Text>
-                      </DropdownMenuItem.Text>
-                      <DropdownMenuItem.LeadingIcon>
-                        <Spacer modifiers={[size(CHECK_SIZE, CHECK_SIZE)]} />
-                      </DropdownMenuItem.LeadingIcon>
-                    </DropdownMenuItem>
+                    {more.map((m) => (
+                      <DropdownMenuItem
+                        key={m.label}
+                        elementColors={{ textColor: ds.c.ink }}
+                        onClick={() => {
+                          close();
+                          m.onPress();
+                        }}
+                      >
+                        <DropdownMenuItem.Text>
+                          <Text style={material.menuText}>{m.label}</Text>
+                        </DropdownMenuItem.Text>
+                        <DropdownMenuItem.LeadingIcon>
+                          <Spacer modifiers={[size(CHECK_SIZE, CHECK_SIZE)]} />
+                        </DropdownMenuItem.LeadingIcon>
+                      </DropdownMenuItem>
+                    ))}
                   </DropdownMenuGroup>
                 </>
               ) : null}

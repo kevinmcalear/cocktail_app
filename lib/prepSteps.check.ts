@@ -37,6 +37,13 @@ assert.deepEqual(loose.map((g) => [g.number, g.lines.length]), [[null, 2], ['1',
 assert.deepEqual(prepStepGroups([{ name: 'Salt' }], []).map((g) => [g.number, g.title, g.lines.length]), [[null, null, 1]]);
 assert.deepEqual(prepStepGroups([], []), []);
 
+// Two lines ending in the same word go by their whole name: "Juice the lemons" doesn't file Lime juice.
+const citrus = prepStepGroups([{ name: 'Lemon juice' }, { name: 'Lime juice' }], [
+  { body: 'Juice the lemons.', timer_seconds: null },
+  { body: 'Stir the lemon juice and lime juice together.', timer_seconds: null },
+]);
+assert.deepEqual(citrus.map((g) => [g.number, g.lines.map((l) => l.name)]), [['1', []], ['2', ['Lemon juice', 'Lime juice']]]);
+
 // Makes: a litre batch, half a litre, a 750 bottle; what Log batch writes.
 assert.deepEqual(
   batchSizes(1, 'L').map((s) => [s.makes, s.amount, s.unit]),
@@ -53,10 +60,13 @@ assert.deepEqual(
 );
 
 // On hand, then the day it was made.
-const made = { madeAt: '2026-10-30T18:00:00Z' };
+// Local noon, so the day is 30 Oct in every time zone.
+const made = { madeAt: new Date(2026, 9, 30, 12).toISOString() };
 assert.equal(onHandLine(made, { kind: 'ml', value: 800, unit: 'ml' }), '800 ml · made 30 Oct');
 assert.equal(onHandLine(made, { kind: 'ml', value: 0, unit: 'ml' }), 'None · made 30 Oct');
 assert.equal(onHandLine(undefined, { kind: 'count', value: 2, unit: 'batch' }), '2 batches');
+assert.equal(onHandLine(made, { kind: 'count', value: 0.5, unit: 'batch' }), '½ batch · made 30 Oct');
+assert.equal(onHandLine(made, { kind: 'count', value: 1, unit: 'batch' }), '1 batch · made 30 Oct');
 assert.equal(onHandLine(made, undefined), 'Made 30 Oct');
 assert.equal(onHandLine(undefined, undefined), null);
 

@@ -15,8 +15,8 @@ export interface SpecControlsProps {
   sizes: { key: string; label: string }[];
   picked: string;
   onPick: (key: string) => void;
-  /** Its own group under the sizes: "A batch…" (the Batch sheet), "From what I have…" (Make mode). */
-  more?: { label: string; onPress: () => void };
+  /** Their own group under the sizes: "A batch…" (the Batch sheet); a house-made's ways into Make mode. */
+  more?: { label: string; onPress: () => void }[];
 }
 
 /**
@@ -35,18 +35,16 @@ export function SpecControls({ view, onView, makes, sizes, picked, onPick, more 
   };
   const sections = [
     { items: sizes.map((s) => ({ label: s.label, checked: s.key === picked, onPress: pick(s.key) })) },
-    ...(more
+    ...(more?.length
       ? [
           {
-            items: [
-              {
-                label: more.label,
-                onPress: () => {
-                  menu.close();
-                  more.onPress();
-                },
+            items: more.map((m) => ({
+              label: m.label,
+              onPress: () => {
+                menu.close();
+                m.onPress();
               },
-            ],
+            })),
           },
         ]
       : []),

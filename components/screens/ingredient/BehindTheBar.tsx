@@ -23,6 +23,8 @@ interface BehindTheBarProps {
   /** The house-made this page was opened from, listed first under Used in. */
   from: string | null;
   canEditItem: boolean;
+  /** Has recipe lines, so its allergens roll up from them. */
+  houseMade: boolean;
 }
 
 const FIRST = 3;
@@ -34,7 +36,7 @@ const FIRST = 3;
  * it was last made (opens the prep list), and what it goes into, a drink by
  * name or a house-made with how much a batch takes.
  */
-export function BehindTheBar({ item, names, drinks, used, from, canEditItem }: BehindTheBarProps) {
+export function BehindTheBar({ item, names, drinks, used, from, canEditItem, houseMade }: BehindTheBarProps) {
   const router = useRouter();
   const [allergens, setAllergens] = useState(false);
   const [all, setAll] = useState(false);
@@ -70,7 +72,7 @@ export function BehindTheBar({ item, names, drinks, used, from, canEditItem }: B
       <RowGroup title="Behind the bar" rows={rows} />
       {allergens ? (
         <MenuSheet visible onClose={() => setAllergens(false)} title="Allergens" subtitle={item.name}>
-          <AllergenSection itemId={item.id} houseMade canEditItem={canEditItem} />
+          <AllergenSection itemId={item.id} houseMade={houseMade} canEditItem={canEditItem} />
         </MenuSheet>
       ) : null}
     </View>

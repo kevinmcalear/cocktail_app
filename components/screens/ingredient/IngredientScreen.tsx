@@ -1,5 +1,5 @@
 import { useLocalSearchParams, useRouter } from 'expo-router';
-import { useState } from 'react';
+import { useRef, useState } from 'react';
 import { Platform, StyleSheet, View } from 'react-native';
 
 import { WhereItLives } from '@/components/backbar/WhereItLives';
@@ -66,13 +66,14 @@ export function IngredientScreen(props: IngredientScreenProps) {
   return (
     <BackbarTheme>
       <BrandProvider accent={brand?.accent ?? undefined}>
-        <IngredientPage {...props} venueName={own?.name ?? null} />
+        {/* Log batch writes to the recipe's bar, or for a shared one at work, the bar you're at. */}
+        <IngredientPage {...props} venueName={own?.name ?? null} logBar={props.ingredient.bar_id ?? brand?.id ?? null} />
       </BrandProvider>
     </BackbarTheme>
   );
 }
 
-function IngredientPage({ ingredient, lines, drinks, bottles, pictures: batchPictures, canEdit, onEdit, venueName }: IngredientScreenProps & { venueName: string | null }) {
+function IngredientPage({ ingredient, lines, drinks, bottles, pictures: batchPictures, canEdit, onEdit, venueName, logBar }: IngredientScreenProps & { venueName: string | null; logBar: string | null }) {
   const userId = useUserId();
   const { data: card } = useItemPrep(ingredient.id);
   const { data: used } = usePrepUsedIn(ingredient.id);
@@ -87,11 +88,9 @@ function IngredientPage({ ingredient, lines, drinks, bottles, pictures: batchPic
   // Opened from a house-made it goes into: that one leads Used in and the credit (Back is named for it by the stack).
   const from = useLocalSearchParams<{ from?: string }>().from ?? null;
   const toast = useToast();
-  const { active } = useActiveVenue();
-  const home = useMode().mode === 'home';
-  // Log batch writes to the bar the recipe is (or, for a shared one at work, the bar you're at), for staff who make specs there.
-  const logBar = ingredient.bar_id ?? (home ? null : (active?.id ?? null));
+  // Log batch is for staff who make specs at that bar.
   const { data: logCaps } = useCapabilities(logBar);
+  const lastLog = useRef(0);
   const canLog = !!logBar && !!logCaps?.includes('specs');
   const logBatch = useLogBatch(logBar ?? '');
   const [sizeKey, setSizeKey] = useState('batch');
@@ -108,6 +107,9 @@ function IngredientPage({ ingredient, lines, drinks, bottles, pictures: batchPic
   const log = () => {
     // ponytail: with no bar to log at (home, or no specs there) it opens Make mode, as before; a home log needs a home batches table.
     if (!canLog) return make();
+    // A second tap straight after is the same batch, not another.
+    if (Date.now() - lastLog.current < 3000) return;
+    lastLog.current = Date.now();
     logBatch.mutate({ itemId: ingredient.id, amount: size.amount, unit: size.unit });
     toast.show({ title: `Logged ${size.makes} of ${ingredient.name}` });
   };
@@ -152,11 +154,11 @@ function IngredientPage({ ingredient, lines, drinks, bottles, pictures: batchPic
       {noteShown ? <NoteBar itemId={ingredient.id} barId={ingredient.bar_id} read={noteRead!} lines={noteChoice.lines} card={card} bottom={0} inline /> : null}
       <FactRows rows={facts} />
       {technical ? <TechnicalIngredientCard name={ingredient.name} /> : null}
-      {showRecipe ? <HouseMadeRecipe itemId={ingredient.id} lines={lines} steps={steps} sizes={sizes} size={size} onSize={setSizeKey} onFromWhatIHave={() => make('have')} checkedOn={sources?.filter((s) => s.field === 'recipe').map((s) => s.url)} /> : null}
+      {showRecipe ? <HouseMadeRecipe itemId={ingredient.id} lines={lines} steps={steps} sizes={sizes} size={size} onSize={setSizeKey} onMake={make} checkedOn={sources?.filter((s) => s.field === 'recipe').map((s) => s.url)} /> : null}
       {columns || fab ? null : action}
-      {team ? <BehindTheBar item={ingredient} names={lines.map((l) => l.name)} drinks={drinks} used={used} from={from} canEditItem={canEdit} /> : null}
+      {team ? <BehindTheBar item={ingredient} names={lines.map((l) => l.name)} drinks={drinks} used={used} from={from} canEditItem={canEdit} houseMade={lines.length > 0} /> : null}
       {isPrep || technical ? null : <WhereItLives itemId={ingredient.id} itemName={ingredient.name} readOnly={offerEdit} />}
-      {technical ? null : <ForTheBar item={ingredient} houseMade={lines.length > 0} canEditItem={canEdit} whereRow={isPrep} editable={offerEdit} allergensRow={!team} />}
+      {technical ? null : <ForTheBar item={ingredient} houseMade={lines.length > 0} canEditItem={canEdit} whereRow={isPrep} editable={offerEdit} allergensRow={!team || !lines.length} />}
       <AroundIt ingredient={ingredient} bottles={bottles} isPrep={isPrep} />
       {/* Goes with: kept and redrawn by the Learning lane (board Kept-pairings). */}
       <PairsWith itemId={ingredient.id} name={ingredient.name} />

@@ -66,7 +66,7 @@ export function SpecCard({ itemId, barId, lines, maker, verb = null, serve = [],
 
   return (
     <View style={styles.card}>
-      {measured ? <SpecControls view={view} onView={setView} makes={String(makes)} sizes={SIZES} picked={String(makes)} onPick={(k) => setMakes(Number(k) as Makes)} more={onBatch ? { label: 'A batch…', onPress: onBatch } : undefined} /> : null}
+      {measured ? <SpecControls view={view} onView={setView} makes={String(makes)} sizes={SIZES} picked={String(makes)} onPick={(k) => setMakes(Number(k) as Makes)} more={onBatch ? [{ label: 'A batch…', onPress: onBatch }] : undefined} /> : null}
       {access.names ? (
         measured && view === 'steps' ? (
           <View style={styles.groups}>

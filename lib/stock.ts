@@ -88,8 +88,9 @@ export function withBatches(rows: OnHandRow[], batches: readonly Batch[]): Recor
  * 30 Oct". Either half alone when that's all there is; null with neither.
  */
 export function onHandLine(last: Pick<Batch, 'madeAt'> | undefined, onHand: Quantity | undefined): string | null {
-  const batches = onHand?.unit === 'batch' && onHand.value !== 1;
-  const have = onHand ? (onHand.value > 0 ? `${formatQuantity(onHand)}${batches ? 'es' : ''}` : 'None') : null;
+  // Batches (a recipe with no yield) read as the Makes menu says them: "½ batch", "2 batches".
+  const batch = onHand?.unit === 'batch' ? (onHand.value === 0.5 ? '½ batch' : `${Number(onHand.value.toFixed(1))} ${onHand.value > 1 ? 'batches' : 'batch'}`) : null;
+  const have = onHand ? (onHand.value > 0 ? (batch ?? formatQuantity(onHand)) : 'None') : null;
   const made = last ? `made ${new Date(last.madeAt).toLocaleDateString('en-GB', { day: 'numeric', month: 'short' })}` : null;
   const line = [have, made].filter(Boolean).join(' · ');
   return line ? line[0].toUpperCase() + line.slice(1) : null;

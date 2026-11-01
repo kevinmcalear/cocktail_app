@@ -34,9 +34,14 @@ export function stepName(body: string): string | null {
   return word ? word[0].toUpperCase() + word.slice(1).toLowerCase() : null;
 }
 
+const lastWord = (name: string) => name.trim().toLowerCase().split(/\s+/).pop() ?? '';
+
 export function prepStepGroups<L extends { name: string }>(lines: readonly L[], steps: readonly { body: string; timer_seconds: number | null }[]): PrepStepGroup<L>[] {
   if (!steps.length) return lines.length ? [{ key: 'lines', number: null, title: null, aside: null, note: null, lines: [...lines] }] : [];
-  const home = lines.map((l) => steps.findIndex((s) => mentionAt(s.body, l.name) >= 0));
+  // Lemon juice and Lime juice both end in "juice": those go by their whole name only.
+  const whole = lines.map((l) => lines.some((o) => o !== l && lastWord(o.name) === lastWord(l.name)));
+  const at = steps.map((s) => lines.map((l, i) => mentionAt(s.body, l.name, whole[i])));
+  const home = lines.map((_, i) => at.findIndex((step) => step[i] >= 0));
   const lead = lines.filter((_, i) => home[i] < 0);
   return [
     ...(lead.length ? [{ key: 'lead', number: null, title: null, aside: null, note: null, lines: lead }] : []),
@@ -47,7 +52,11 @@ export function prepStepGroups<L extends { name: string }>(lines: readonly L[], 
       aside: s.timer_seconds ? timerLabel(s.timer_seconds) : null,
       note: s.body.trim() || null,
       // In the order the step names them.
-      lines: lines.filter((_, j) => home[j] === i).sort((a, b) => mentionAt(s.body, a.name) - mentionAt(s.body, b.name)),
+      lines: lines
+        .map((l, j) => ({ l, j }))
+        .filter(({ j }) => home[j] === i)
+        .sort((a, b) => at[i][a.j] - at[i][b.j])
+        .map(({ l }) => l),
     })),
   ];
 }

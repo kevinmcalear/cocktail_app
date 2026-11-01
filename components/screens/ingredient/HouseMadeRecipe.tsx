@@ -29,8 +29,8 @@ interface HouseMadeRecipeProps {
   sizes: BatchSize[];
   size: BatchSize;
   onSize: (key: string) => void;
-  /** "From what I have…": Make mode, scaled from one line. */
-  onFromWhatIHave: () => void;
+  /** Make mode at the size picked (steps, timers, what it really made), or "From what I have…", scaled from one line. */
+  onMake: (mode?: 'have') => void;
   /** The pages a shared recipe's ratio was checked on. */
   checkedOn?: string[];
 }
@@ -42,7 +42,7 @@ interface HouseMadeRecipeProps {
  * lines and its words. A line that's house-made itself opens its own page.
  * Scaling never changes the saved recipe.
  */
-export function HouseMadeRecipe({ itemId, lines, steps, sizes, size, onSize, onFromWhatIHave, checkedOn = [] }: HouseMadeRecipeProps) {
+export function HouseMadeRecipe({ itemId, lines, steps, sizes, size, onSize, onMake, checkedOn = [] }: HouseMadeRecipeProps) {
   const router = useRouter();
   const [view, setView] = useSpecView(true);
   const scaled = scaleRecipe(lines, size.factor);
@@ -78,7 +78,10 @@ export function HouseMadeRecipe({ itemId, lines, steps, sizes, size, onSize, onF
           sizes={sizes.map((s) => ({ key: s.key, label: `Makes ${s.makes}` }))}
           picked={size.key}
           onPick={onSize}
-          more={{ label: 'From what I have…', onPress: onFromWhatIHave }}
+          more={[
+            { label: 'Make it step by step…', onPress: () => onMake() },
+            { label: 'From what I have…', onPress: () => onMake('have') },
+          ]}
         />
       ) : null}
       {view === 'steps' || !lines.length ? (
@@ -100,9 +103,9 @@ export function HouseMadeRecipe({ itemId, lines, steps, sizes, size, onSize, onF
       )}
       {checkedOn.length ? (
         <View style={styles.sources}>
-          <Caption tone="muted">Ratio checked on</Caption>
+          <Caption tone="muted">Recipe checked on</Caption>
           {checkedOn.map((url) => (
-            <TextLink key={url} label={sourceSite(url)} accessibilityHint="Opens the page the ratio was checked on" onPress={() => void Linking.openURL(url)} />
+            <TextLink key={url} label={sourceSite(url)} accessibilityHint="Opens the page the recipe was checked on" onPress={() => void Linking.openURL(url)} />
           ))}
         </View>
       ) : null}
