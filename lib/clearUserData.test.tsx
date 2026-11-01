@@ -20,6 +20,7 @@ let mockAuth: Auth = { loading: true, user: null, session: null };
 
 jest.mock('@/ctx/AuthContext', () => ({ useAuth: () => mockAuth }));
 jest.mock('@/lib/deviceStore', () => ({ deviceStore: { removeItem: async () => {} } }));
+jest.mock('@/lib/specBookFile', () => ({ clearSavedSpecBooks: async () => {} }));
 // The real persister, over mockStore, throttled to 50 ms instead of 5 s.
 jest.mock('@/lib/react-query', () => {
   const { QueryClient } = jest.requireActual<typeof import('@tanstack/react-query')>('@tanstack/react-query');
@@ -46,6 +47,7 @@ jest.mock('@/lib/react-query', () => {
   return {
     queryClient,
     asyncStoragePersister,
+    savedQueryFiles: { clear: async () => {} },
     persistOptions: { persister: asyncStoragePersister, dehydrateOptions: { shouldDehydrateQuery: shouldPersistQuery } },
   };
 });

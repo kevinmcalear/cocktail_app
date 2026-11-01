@@ -82,7 +82,7 @@ after(async () => {
 });
 
 describe('menu sections', () => {
-  test('a maker saves the whole layout in order, and staff can read it', async () => {
+  test('a maker saves the whole layout in order, and staff read it once it is shared', async () => {
     const menu = await newMenu('Winter');
     const { error } = await users.maker.client.rpc('save_menu', {
       p_menu_id: menu,
@@ -95,6 +95,9 @@ describe('menu sections', () => {
       ],
     });
     assert.ifError(error);
+    const unshared = await users.floor.client.from('menu_sections').select('id').eq('menu_id', menu);
+    assert.deepEqual(unshared.data, [], 'a draft is the menu team\'s until it is shared (20261203100000)');
+    assert.ifError((await users.maker.client.from('menus').update({ team_shared_at: new Date().toISOString() }).eq('id', menu)).error);
 
     const { data: sections, error: readError } = await users.floor.client
       .from('menu_sections')

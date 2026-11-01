@@ -72,7 +72,8 @@ before(async () => {
   ids.millAsh = await item('Mill and Ash Gin', 'ingredient');
   ids.campari = await item('Campari', 'ingredient');
 
-  ids.menu = (await serviceInsert('menus', { name: `Halloween ${run}`, bar_id: ids.bar })).id;
+  // Shared with the team to learn, so the floor reads it before the night (20261203100000).
+  ids.menu = (await serviceInsert('menus', { name: `Halloween ${run}`, bar_id: ids.bar, team_shared_at: new Date().toISOString() })).id;
   ids.otherMenu = (await serviceInsert('menus', { name: `Other ${run}`, bar_id: ids.bar })).id;
   ids.negroniRow = (await menuDrink(ids.menu, ids.negroni, 0)).id;
   ids.martiniRow = (await menuDrink(ids.menu, ids.martini, 1)).id;

@@ -6,7 +6,7 @@ import { radius as radii } from '@/constants/tokens';
 import { isPng } from '@/lib/itemImages';
 import { bareGlassSketch } from '@/lib/sketch/draft';
 import type { SketchInputs } from '@/lib/sketch/types';
-import { markNoThumb, thumbToTry } from '@/lib/thumbnails';
+import { copyToTry, markNoCopy } from '@/lib/thumbnails';
 
 import { DrawnSketch } from './DrawnSketch';
 import { SketchDrawing, type SketchDetail } from './SketchDrawing';
@@ -48,6 +48,11 @@ export interface DrinkImageProps {
   priority?: 'low' | 'normal' | 'high';
   /** With no image: draw from these inputs instead of the stored ones (beer and wine, lib/sketch/pour.ts). */
   sketch?: SketchInputs | null;
+  /**
+   * The photo's ThumbHash (images.thumbhash): painted while it loads, and it
+   * says the 1080 px copy exists, so a page shows that instead of the original.
+   */
+  thumbhash?: string | null;
 }
 
 /**
@@ -55,15 +60,17 @@ export interface DrinkImageProps {
  * yet, it shows a sketch drawn from the drink's own spec (glass, colour, ice,
  * foam, garnish), or until that exists, its bare glass on the house paper.
  */
-export function DrinkImage({ source, generated, glass, itemId, accessibilityLabel, aspectRatio = 1, radius = 'card', style, ingredient, thumb = false, animate, sketchDetail, placeholderColor, priority, sketch }: DrinkImageProps) {
+export function DrinkImage({ source, generated, glass, itemId, accessibilityLabel, aspectRatio = 1, radius = 'card', style, ingredient, thumb = false, animate, sketchDetail, placeholderColor, priority, sketch, thumbhash }: DrinkImageProps) {
   const ds = useDs();
   const borderRadius = radius === 0 ? 0 : radii[radius];
   const uri = ingredient ? null : (source ?? null);
-  // The original whose thumbnail failed here; thumbToTry remembers it past this mount.
-  // Read in the condition so the compiler recomputes `small` when it changes.
-  const [noThumb, setNoThumb] = useState<string | null>(null);
-  const small = thumb && typeof uri === 'string' && noThumb !== uri ? thumbToTry(uri) : null;
-  const shown = small ?? uri;
+  // The list copy, or the page copy once the row says it was made (thumbhash);
+  // the original whose copy failed here, which copyToTry remembers past this mount.
+  // Read in the condition so the compiler recomputes `copy` when it changes.
+  const size = thumb ? 'thumb' : 'page';
+  const [noCopy, setNoCopy] = useState<string | null>(null);
+  const copy = typeof uri === 'string' && noCopy !== uri ? copyToTry(uri, size, !!thumbhash) : null;
+  const shown = copy ?? uri;
   // A cut-out sits on the drawn paper, as a sketch does, not on its own colour, which it would vanish into.
   const cutout = isPng(uri);
   // No drawing yet (or still loading): the bare glass, drawn as the drawings are, not a small line icon (i-glass-pic).
@@ -87,6 +94,8 @@ export function DrinkImage({ source, generated, glass, itemId, accessibilityLabe
         // recycling key blanks a recycled list cell instead of flashing its last drink.
         <Image
           source={typeof shown === 'string' ? { uri: shown } : shown}
+          // Its blur while the photo loads (images.thumbhash).
+          placeholder={thumbhash ? { thumbhash } : undefined}
           style={styles.fill}
           contentFit="cover"
           transition={200}
@@ -94,10 +103,10 @@ export function DrinkImage({ source, generated, glass, itemId, accessibilityLabe
           recyclingKey={String(uri)}
           priority={priority}
           onError={
-            small
+            copy
               ? () => {
-                  markNoThumb(uri as string);
-                  setNoThumb(uri as string);
+                  markNoCopy(uri as string, size);
+                  setNoCopy(uri as string);
                 }
               : undefined
           }
