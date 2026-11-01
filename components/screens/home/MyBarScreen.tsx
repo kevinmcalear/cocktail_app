@@ -141,7 +141,7 @@ export function MyBarScreen() {
       case 'top':
         return split ? null : (
           <View>
-            <ScreenHeaderSpacer title="My Bar" actions={<ShoppingBasket />} />
+            <ScreenHeaderSpacer title="My Bar" actions={<ShoppingBasket />} back />
             <View style={styles.top}>
               <Caption tone="muted">{bar.isLoading ? 'Checking your shelf…' : barSubtitle(bar.canMake.length, toMake.length)}</Caption>
               {bar.error ? <Body tone="muted">Couldn’t load your bar. Try again in a moment.</Body> : null}
@@ -252,7 +252,7 @@ export function MyBarScreen() {
         ) : split ? (
           <>
             {/* The list is a column here (shopping desk-mybar), so no basket. */}
-            <ScreenHeader />
+            <ScreenHeader back />
             <View style={[styles.deskHead, { paddingHorizontal: gutter }]}>
               <View style={styles.deskTitle}>
                 <Title>My Bar</Title>
