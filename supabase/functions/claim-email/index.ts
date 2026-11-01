@@ -2,7 +2,7 @@ import { timingSafeEqual } from "node:crypto";
 import { Buffer } from "node:buffer";
 import { createClient } from "npm:@supabase/supabase-js@2";
 
-import { barSender, type BarLook } from "../_shared/barEmail.ts";
+import { barSender, joinedEmail, type BarLook, type EmailContent } from "../_shared/barEmail.ts";
 import {
   claimApprovedEmail,
   claimArrivedEmail,
@@ -24,6 +24,8 @@ import { DEFAULT_SITE } from "../_shared/site.ts";
  *             person asked to confirm them
  *   approved  the claimant: the page is theirs
  *   rejected  the claimant: turned down, why, and how to try again
+ *   joined    someone who asked to join a venue's team: an Admin said yes
+ *             (a trigger on venue_join_requests, 20261206320000)
  * The trigger says who to email (user ids) and what the claim was, as it was
  * when it changed: approving a person can merge the page away. Addresses are
  * read here, one email each, so nobody sees the others'. Best effort: the
@@ -39,25 +41,15 @@ function authorized(req: Request): boolean {
 
 const text = (value: unknown): string | null => (typeof value === "string" && value.trim() ? value.trim() : null);
 
+const ROLES: Record<number, string> = { 10: "Guest", 20: "Employee", 30: "Bartender", 35: "Drink Creator", 40: "Admin" };
+
 serveJson("claim-email", async (req) => {
   if (!authorized(req)) throw new HttpError(401, "Not allowed.");
   const body = await req.json().catch(() => ({}));
   const event = body?.event;
-  if (event !== "arrived" && event !== "approved" && event !== "rejected") throw new HttpError(400, "event is required.");
+  if (event !== "arrived" && event !== "approved" && event !== "rejected" && event !== "joined") throw new HttpError(400, "event is required.");
   const to: string[] = Array.isArray(body?.to) ? body.to.map((id: unknown) => requireUuid(id, "to")) : [];
   if (!to.length) return { sent: 0 };
-  const page = body?.page ?? {};
-  const facts: ClaimFacts = {
-    page: { id: requireUuid(page.id, "page.id"), kind: text(page.kind) ?? "bar", name: text(page.name) ?? "This page", handle: text(page.handle) },
-    claimant: text(body.claimant),
-    method: text(body.method) ?? "note",
-    instagram: text(body.instagram),
-    note: text(body.note),
-    confirmBar: text(body.confirm_bar?.name),
-    confirmedByBar: body.confirmed_by_bar === true,
-    declineReason: text(body.decline_reason),
-    rival: body.rival === true,
-  };
   const site = new URL(Deno.env.get("SITE_URL") || DEFAULT_SITE).origin;
   const admin = createClient(Deno.env.get("SUPABASE_URL") ?? "", Deno.env.get("SUPABASE_SERVICE_ROLE_KEY") ?? "", {
     auth: { persistSession: false, autoRefreshToken: false },
@@ -70,7 +62,41 @@ serveJson("claim-email", async (req) => {
     return data ? { name: data.name, logoUrl: data.logo_url, color: data.primary_color, face: data.display_face, groundTint: data.ground_tint } : null;
   };
 
-  let content;
+  // One bad address doesn't stop the rest.
+  const send = async (from: string, content: EmailContent) => {
+    const results = await Promise.allSettled(
+      to.map(async (id) => {
+        const { data } = await admin.auth.admin.getUserById(id);
+        if (!data.user?.email) throw new Error("no email");
+        await sendEmail({ from, to: data.user.email, ...content });
+      }),
+    );
+    for (const r of results) if (r.status === "rejected") console.error(`claim-email: one ${event} email failed:`, r.reason);
+    return { sent: results.filter((r) => r.status === "fulfilled").length };
+  };
+
+  if (event === "joined") {
+    const bar = await lookOf(body.venue_id);
+    const slug = text(body.slug);
+    if (!bar || !slug) return { sent: 0 };
+    const content = joinedEmail({ bar, role: ROLES[Number(body.role)] ?? "Bartender", linkUrl: `${site}/v/${encodeURIComponent(slug)}` });
+    return await send(barSender(bar.name, fromAddress()), content);
+  }
+
+  const page = body?.page ?? {};
+  const facts: ClaimFacts = {
+    page: { id: requireUuid(page.id, "page.id"), kind: text(page.kind) ?? "bar", name: text(page.name) ?? "This page", handle: text(page.handle) },
+    claimant: text(body.claimant),
+    method: text(body.method) ?? "note",
+    instagram: text(body.instagram),
+    note: text(body.note),
+    confirmBar: text(body.confirm_bar?.name),
+    confirmedByBar: body.confirmed_by_bar === true,
+    declineReason: text(body.decline_reason),
+    rival: body.rival === true,
+  };
+
+  let content: EmailContent;
   let from = cocktailSender(fromAddress());
   if (event === "arrived" && body.to_bar === true) {
     const bar = await lookOf(body.confirm_bar?.venue_id);
@@ -86,15 +112,5 @@ serveJson("claim-email", async (req) => {
   } else {
     content = claimDeclinedEmail(facts, site);
   }
-
-  // One bad address doesn't stop the rest.
-  const results = await Promise.allSettled(
-    to.map(async (id) => {
-      const { data } = await admin.auth.admin.getUserById(id);
-      if (!data.user?.email) throw new Error("no email");
-      await sendEmail({ from, to: data.user.email, ...content });
-    }),
-  );
-  for (const r of results) if (r.status === "rejected") console.error(`claim-email: one ${event} email failed:`, r.reason);
-  return { sent: results.filter((r) => r.status === "fulfilled").length };
+  return await send(from, content);
 });
