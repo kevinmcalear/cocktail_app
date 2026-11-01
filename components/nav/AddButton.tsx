@@ -19,7 +19,7 @@ const LABEL = 'Add: name a drink, paste a link, describe it, or snap a menu, bot
 export function AddSheets({ onClose, listen, from }: { onClose: () => void; listen?: boolean; from?: Frame | null }) {
   const [open, setOpen] = useState<'add' | 'more'>('add');
   const [shown, setShown] = useState(true);
-  // The second sheet waits for the first to have gone.
+  // The second sheet waits for the first to have animated out.
   const more = () => {
     setShown(false);
     setTimeout(() => {
@@ -27,8 +27,7 @@ export function AddSheets({ onClose, listen, from }: { onClose: () => void; list
       setShown(true);
     }, 350);
   };
-  if (!shown) return null;
-  return <Suspense fallback={null}>{open === 'add' ? <AddSheet visible onClose={onClose} onMore={more} listen={listen} from={open === 'add' ? from : null} /> : <CreateSheet visible onClose={onClose} />}</Suspense>;
+  return <Suspense fallback={null}>{open === 'add' ? <AddSheet visible={shown} onClose={onClose} onMore={more} listen={listen} from={from} /> : <CreateSheet visible onClose={onClose} />}</Suspense>;
 }
 
 /** Add's sheets, opened by a button. Android's FAB opens its FAB menu first (AddFab). */

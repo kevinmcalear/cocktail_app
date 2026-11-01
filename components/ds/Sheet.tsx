@@ -176,10 +176,10 @@ function SmallSheet({ visible, onClose, accessibilityLabel, children, style, gro
     drag.set(0);
     backdrop.set(withTiming(1, FADE_IN));
     if (grow) {
+      offset.set(0);
       grown.set(0);
       grown.set(withSpring(1, springs.glide));
-    }
-    else if (slide) offset.set(withSpring(0, springs.glide));
+    } else if (slide) offset.set(withSpring(0, springs.glide));
     else {
       offset.set(0);
       opacity.set(withTiming(1, FADE_IN));
@@ -279,7 +279,8 @@ const styles = StyleSheet.create({
     borderCurve: 'continuous',
     borderTopWidth: StyleSheet.hairlineWidth,
   },
-  floating: { borderRadius: FLOATING_RADIUS, borderCurve: 'continuous', borderWidth: StyleSheet.hairlineWidth },
+  // Every corner the same: per-corner radii win over borderRadius, so the sheet's top ones are reset too.
+  floating: { borderRadius: FLOATING_RADIUS, borderTopLeftRadius: FLOATING_RADIUS, borderTopRightRadius: FLOATING_RADIUS, borderCurve: 'continuous', borderWidth: StyleSheet.hairlineWidth },
   stretch: { position: 'absolute', bottom: -STRETCH, alignSelf: 'center', width: '100%', height: STRETCH },
   dialog: { maxHeight: '86%' },
   handle: { paddingTop: space.sm },

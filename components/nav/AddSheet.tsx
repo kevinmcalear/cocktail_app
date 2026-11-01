@@ -1,5 +1,5 @@
 import { useRouter, type Href } from 'expo-router';
-import { useEffect, useRef, useState } from 'react';
+import { useEffect, useEffectEvent, useRef, useState } from 'react';
 import { Platform, StyleSheet, TextInput, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
@@ -32,7 +32,7 @@ export function AddSheet({ visible, onClose, onMore, listen, from }: { visible: 
   return (
     <Sheet visible={visible} onClose={onClose} accessibilityLabel="Add" keyboard from={from} floating={Platform.OS === 'ios'} style={sheetIsDialog ? styles.dialog : undefined} header={<Header />}>
       <SheetScrollView contentContainerStyle={[styles.body, { paddingBottom: sheetIsDialog ? space.lg : (Platform.OS === 'ios' ? Math.max(insets.bottom - space.sm * 2, 0) : insets.bottom) + space.lg }]} {...dragDismissesKeyboard}>
-        {visible ? <AddBody onClose={onClose} onMore={onMore} listen={listen} /> : null}
+        <AddBody onClose={onClose} onMore={onMore} listen={listen} />
       </SheetScrollView>
     </Sheet>
   );
@@ -67,11 +67,10 @@ function AddBody({ onClose, onMore, listen }: { onClose: () => void; onMore: () 
     void voice.start();
   };
   // Android's Say it opens the sheet listening.
-  useEffect(() => {
+  const listenOnOpen = useEffectEvent(() => {
     if (listen && voice.available) say();
-    // Once, as the sheet opens.
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []);
+  });
+  useEffect(() => listenOnOpen(), []);
   const go = (href: Href) => {
     onClose();
     router.push(href);
