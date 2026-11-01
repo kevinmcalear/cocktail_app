@@ -2,23 +2,18 @@ import { useLocalSearchParams, useRouter, type Href } from 'expo-router';
 import { lazy, Suspense, type ReactElement } from 'react';
 import { FlatList, StyleSheet, View } from 'react-native';
 
-import { Body, Button, Display, RowScore, scoreWords, useDs } from '@/components/ds';
-import { DrinkRow } from '@/components/screens/DrinkRow';
+import { Body, Button, Display, useDs } from '@/components/ds';
+import { DrinkListRow, type DrinkListRowProps } from '@/components/screens/drinks/DrinksParts';
 import { DrinkLoading } from '@/components/screens/drink/DrinkLoading';
-import { layout, radius, space } from '@/constants/tokens';
+import { layout, space } from '@/constants/tokens';
 import { useCocktail } from '@/hooks/useCocktails';
 import { useOpenBeside } from '@/hooks/useDrinksSplit';
-import { useItemScores } from '@/hooks/useFlavor';
-import { useMineFacts } from '@/hooks/useMineFacts';
 import { useItemEditAccess } from '@/hooks/useViewAs';
-import { withAlpha } from '@/lib/color';
-import { heroPicture } from '@/lib/itemImages';
-import { fallbackGlass, itemHref, type ItemCategory } from '@/lib/itemRoutes';
-import { drinkFacts } from '@/lib/searchCaptions';
+import { itemHref, type ItemCategory } from '@/lib/itemRoutes';
 import type { SearchItem } from '@/types/search';
 
 // The drink pane (and the animation code its scroll header runs on) loads when a
-// drink is first picked, not with the Library.
+// drink is first picked, not with the list.
 const DrinkScreen = lazy(() => import('@/components/screens/drink/DrinkScreen').then((m) => ({ default: m.DrinkScreen })));
 
 
@@ -54,27 +49,22 @@ function OtherPane({ item }: { item: SearchItem }) {
 }
 
 /**
- * Library on a tablet (768 to 1199 wide, beside the rail): the list with its
- * filters on the left, the picked drink's page on the right, as the canvas's
- * tablet board draws it. Each drink row says why it's here ("On the Autumn
- * menu", "Classics 2 · off menu", a Past pill) and ends with its score, as
- * search's rows do. The pick lives in the URL (?pick=<id>), so a link opens
- * the same drink; with none, the first one shows.
+ * The Drinks tab on a tablet (768 to 1199 wide, beside the rail): the list
+ * with its head and chips on the left, the picked drink's page on the right,
+ * as the canvas's tablet board draws it. The rows are the phone's
+ * (DrinkListRow, `rowOf`). The pick lives in the URL (?pick=<id>), so a link
+ * opens the same drink; with none, the first one shows.
  *
- * `routed` (a desktop, hooks/useDrinksSplit.ts): the list alone, in its column
- * beside the Drinks stack; a drink opens there at its own URL (/cocktail/<id>)
- * and its row stays lit.
+ * `routed` (a desktop, hooks/useDrinksSplit.ts; Sta-capsules-desk): the list
+ * alone, in its column beside the Drinks stack; a drink opens there at its
+ * own URL (/cocktail/<id>) and its row stays lit.
  */
-export function LibraryPanes({ venueId, items, lineOf, header, empty, footer, routed = false }: { venueId: string | null; items: SearchItem[]; lineOf?: (item: SearchItem) => string | null; header: ReactElement; empty: ReactElement | null; footer?: ReactElement | null; routed?: boolean }) {
+export function LibraryPanes({ items, rowOf, header, empty, footer, routed = false }: { items: SearchItem[]; rowOf: (item: SearchItem) => Omit<DrinkListRowProps, 'onPress' | 'picked'>; header: ReactElement; empty: ReactElement | null; footer?: ReactElement | null; routed?: boolean }) {
   const ds = useDs();
   const router = useRouter();
   const { pick } = useLocalSearchParams<{ pick?: string }>();
   const beside = useOpenBeside();
   const picked = routed ? (items.find((i) => i.id === beside.picked) ?? null) : (items.find((i) => i.id === pick) ?? items[0] ?? null);
-  const facts = useMineFacts(venueId, items);
-  const { data: scores } = useItemScores(items.filter((i) => i.category === 'Cocktail').map((i) => i.id));
-  // Drinks at a venue say why they're here; elsewhere (and other kinds) keep the tile's line.
-  const why = (i: SearchItem) => (venueId && i.category === 'Cocktail' ? drinkFacts(i.id, i.category, facts, true) : { caption: lineOf?.(i) ?? i.category ?? undefined, tag: undefined });
   const list = (
     <FlatList
       style={routed ? styles.fill : [styles.list, { borderRightColor: ds.c.line }]}
@@ -84,26 +74,13 @@ export function LibraryPanes({ venueId, items, lineOf, header, empty, footer, ro
       ListHeaderComponent={header}
       ListEmptyComponent={empty ?? undefined}
       ListFooterComponent={footer ?? undefined}
-      renderItem={({ item }) => {
-        const { caption, tag } = why(item);
-        const score = scores?.[item.id];
-        const said = scoreWords(score);
-        return (
-          <View style={[styles.pick, item.id === picked?.id && { backgroundColor: withAlpha(ds.accentText, 0.12) }]}>
-            <DrinkRow
-              name={item.name}
-              imageUrl={heroPicture(item.item_images ?? [])?.url ?? null}
-              glass={fallbackGlass(item.category as ItemCategory)}
-              itemId={item.id}
-              caption={caption}
-              tag={tag}
-              trailing={<RowScore score={score} />}
-              label={said ? [item.name, caption, tag, said].filter(Boolean).join('. ') : undefined}
-              onPress={() => (routed ? beside.open(itemHref(item.category as ItemCategory, item.id)) : router.setParams({ pick: item.id }))}
-            />
-          </View>
-        );
-      }}
+      renderItem={({ item }) => (
+        <DrinkListRow
+          {...rowOf(item)}
+          picked={item.id === picked?.id}
+          onPress={() => (routed ? beside.open(itemHref(item.category as ItemCategory, item.id)) : router.setParams({ pick: item.id }))}
+        />
+      )}
     />
   );
   if (routed) return list;
@@ -130,7 +107,6 @@ const styles = StyleSheet.create({
   fill: { flex: 1 },
   list: { width: layout.listPane, flexGrow: 0, flexShrink: 0, borderRightWidth: StyleSheet.hairlineWidth },
   listBody: { paddingHorizontal: space.xl, paddingBottom: space.xl, gap: space.xs },
-  pick: { borderRadius: radius.control, paddingHorizontal: space.sm, marginHorizontal: -space.sm },
   detail: { flex: 1, minWidth: 0 },
   other: { padding: space.xxl, gap: space.lg },
 });

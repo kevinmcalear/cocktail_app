@@ -9,7 +9,8 @@ import { BatchSheet } from './BatchSheet';
 
 jest.mock('@/components/tools/ToolsSheet', () => ({ ToolsSheet: () => null }));
 jest.mock('@/lib/shareLink', () => ({ shareText: jest.fn() }));
-jest.mock('@/hooks/useBatchPrep', () => ({ useShelfLives: () => ({ data: {} }), useSaveBatchAsPrep: () => ({ mutateAsync: jest.fn(), isPending: false, error: null }) }));
+jest.mock('@/hooks/useBatchPrep', () => ({ useSaveBatchAsPrep: () => ({ mutateAsync: jest.fn(), isPending: false, error: null }) }));
+jest.mock('@/hooks/useBatches', () => ({ ...jest.requireActual<object>('@/hooks/useBatches'), useShelfLives: () => ({ data: {} }) }));
 jest.mock('expo-router', () => ({ useRouter: () => ({ push: jest.fn() }) }));
 jest.mock('@/hooks/useBarKit', () => ({ useBarKit: () => ({ data: [] }) }));
 jest.mock('@/hooks/useMyProfile', () => ({ useMyProfile: () => ({ data: { displayName: 'Eddie Kim' } }) }));

@@ -23,7 +23,7 @@ const LINE: Row = { itemId: NOT_RANKED };
 const FIRST_PAINT = 12;
 
 /**
- * Classics in Library: the staff list, the drinks everyone here should know, most
+ * Classics in Drinks: the staff list, the drinks everyone here should know, most
  * important first, ranked to 50, with cut lines after 10 and 20, then every other
  * drink here linked to a classic under Not ranked yet (E50). Everyone at the venue reads it; Drink
  * Creators and up drag to reorder, add and remove (bar_also_makes, "Also makes", through
@@ -31,16 +31,14 @@ const FIRST_PAINT = 12;
  * header above it: nested in another scroll view, its drag gesture takes
  * every vertical swipe on Android and the page stops scrolling.
  */
-export function StaffList({ barId, canEdit, onNow, past, header, contentContainerStyle, onScrollOffset }: {
+export function StaffList({ barId, canEdit, onNow, past, header, contentContainerStyle }: {
   barId: string;
   canEdit: boolean;
   onNow: ReadonlySet<string>;
   past: ReadonlySet<string>;
-  /** The screen above the list (Library's title and filters). */
+  /** The screen above the list (Drinks' head and chips). */
   header?: ReactElement;
   contentContainerStyle?: StyleProp<ViewStyle>;
-  /** How far the list has scrolled: Library pins its filters past them. */
-  onScrollOffset?: (y: number) => void;
 }) {
   const router = useRouter();
   const prefetch = usePrefetchCocktail();
@@ -157,7 +155,6 @@ export function StaffList({ barId, canEdit, onNow, past, header, contentContaine
       ListHeaderComponent={top}
       ListFooterComponent={bottom}
       contentContainerStyle={contentContainerStyle}
-      onScrollOffsetChange={onScrollOffset}
       // The list's wrapper must fill the screen, or on web it grows to its
       // content and the screen clips it, so it never scrolls.
       containerStyle={styles.fill}

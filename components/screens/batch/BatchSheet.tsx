@@ -5,7 +5,7 @@ import { BackbarTheme, Body, BrandProvider, Caption, LockedSection, PressableSca
 import { IconSymbol } from '@/components/ui/icon-symbol';
 import { ToolsSheet } from '@/components/tools/ToolsSheet';
 import { layout, space } from '@/constants/tokens';
-import { useShelfLives } from '@/hooks/useBatchPrep';
+import { useShelfLives } from '@/hooks/useBatches';
 import { useSetPartFresh } from '@/hooks/useServiceSpec';
 import { aheadParts, partKeeps } from '@/lib/batchContainers';
 import { batchPrepLines, keepsFor, bottleExpiry, expiryLine } from '@/lib/batchPrep';

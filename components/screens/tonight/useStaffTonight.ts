@@ -1,7 +1,6 @@
 import { useEffect, useMemo, useState } from 'react';
 
 import { useBarFacts } from '@/hooks/useBarFacts';
-import { useCapabilities } from '@/hooks/useCapabilities';
 import { useCreditsToCheck } from '@/hooks/useCreditsToCheck';
 import { useGuestDrinkAllergens } from '@/hooks/useGuestAllergies';
 import { useIsHydrated } from '@/hooks/useIsHydrated';
@@ -10,14 +9,13 @@ import { useShifts } from '@/hooks/useRota';
 import { useBarShareOpens } from '@/hooks/useShareSlug';
 import { useBarMembers } from '@/hooks/useBarDetail';
 import { useUserId } from '@/ctx/AuthContext';
-import { usePrepData } from '@/hooks/usePrepList';
 import { useServiceDate } from '@/hooks/useServiceDay';
 import { useTonight, type TonightRow } from '@/hooks/useTonight';
+import { useTonightPrep } from '@/hooks/useTonightPrep';
 import { useVenueProfileId } from '@/hooks/useVenueRoles';
 import { useEffectiveRole } from '@/hooks/useViewAs';
 import { hoursStatus } from '@/lib/barHours';
 import { groupMenus, printedPrice } from '@/lib/menus';
-import { buildPrepList, DEFAULT_SERVES, tonightAt6 } from '@/lib/prep';
 import { allergenLabel } from '@/lib/allergens';
 import { formatQuantity } from '@/lib/quantity';
 import { enoughRows, offTonight, onShiftLine, runThroughMinutes, serviceEnd, talkThrough, tonightEyebrow, unpriced } from '@/lib/tonight';
@@ -55,14 +53,8 @@ export function useStaffTonight(barId: string) {
   const eyebrow = date ? tonightEyebrow(date, status && !status.open ? status.detail : null) : '';
 
   // Before doors (Prod-today-staff, bartenders up): the house-made Prep would have you make for
-  // tonight, and what's counted or logged and enough. Specs is the drink makers' permission.
-  const caps = useCapabilities(barId).data;
-  const canPrep = Array.isArray(caps) && (caps.includes('prep') || caps.includes('specs'));
-  const prepData = usePrepData(canPrep ? barId : null, menus.map((m) => m.id)).data;
-  const prep = useMemo(
-    () => (prepData ? buildPrepList({ ...prepData, servesPerDrink: DEFAULT_SERVES, startsAt: tonightAt6(), now }) : null),
-    [prepData, now]
-  );
+  // tonight, and what's counted or logged and enough (hooks/useTonightPrep.ts, shared with Drinks).
+  const { canPrep, prepData, prep, batchOf } = useTonightPrep(barId, menus.map((m) => m.id), now);
   const houseMade = prepData ? Object.keys(prepData.houseMade).length : 0;
   const lineNames = useMemo(() => {
     const names = new Map<string, string>();
@@ -72,12 +64,6 @@ export function useStaffTonight(barId: string) {
   const enough = prepData
     ? enoughRows(Object.keys(prepData.houseMade), prep?.make ?? [], prepData.onHand, (id) => lineNames.get(id), (id) => formatQuantity(prepData.onHand[id]))
     : [];
-  /** A house-made's batch, for a one-tap Log batch; null when its recipe doesn't say what it makes. */
-  const batchOf = (id: string) => {
-    const hm = prepData?.houseMade[id];
-    return hm?.yieldAmount && hm.yieldUnit ? { amount: hm.yieldAmount, unit: hm.yieldUnit } : null;
-  };
-
   const all = blocks.flatMap((b) => b.sections.flatMap((s) => s.drinks.map((d) => ({ drink: d, list: b.menu.name }))));
   const off: TonightRow[] = offTonight(
     all.map((a) => a.drink),

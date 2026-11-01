@@ -1,15 +1,14 @@
 import { useRouter, type Href } from 'expo-router';
 import { StyleSheet, View } from 'react-native';
 
-import { Button, Caption, DsText, PressableScale, Surface, useDs, useToast } from '@/components/ds';
+import { Caption, DsText, PressableScale, Surface, useDs } from '@/components/ds';
 import { RowDivider, SettingsRow } from '@/components/screens/settings/SettingsParts';
 import { IconSymbol } from '@/components/ui/icon-symbol';
 import { radius, space } from '@/constants/tokens';
-import { useLogBatch } from '@/hooks/useBatches';
+import { LogBatchButton } from '@/components/screens/prep/LogBatchButton';
 import { categoryOf } from '@/hooks/useTonight';
 import { itemHref } from '@/lib/itemRoutes';
 import { plural } from '@/lib/menus';
-import { formatQuantity, toQuantity } from '@/lib/quantity';
 import { prepLine } from '@/lib/tonight';
 
 import { TonightSection } from './TonightParts';
@@ -19,37 +18,25 @@ type Staff = ReturnType<typeof useStaffTonight>;
 
 /**
  * Before doors (Prod-today-staff): house-made that's low for tonight with
- * Log batch, what's counted or logged and enough, then what's off tonight.
- * Log batch logs one batch of the recipe at once (it waits on the phone with
- * no signal); a recipe that doesn't say what it makes opens its page instead.
+ * Log batch (LogBatchButton), what's counted or logged and enough, then
+ * what's off tonight.
  */
 export function BeforeDoors({ t, barId }: { t: Staff; barId: string }) {
   const router = useRouter();
-  const toast = useToast();
-  const logBatch = useLogBatch(barId);
   const go = (href: string) => () => router.push(href as Href);
   const make = t.canPrep ? (t.make ?? []).slice(0, 3) : [];
   const enough = t.canPrep ? t.enough.slice(0, 3) : [];
   const rows = [
-    ...make.map((line) => {
-      const batch = t.batchOf(line.id);
-      const log = () => {
-        if (!batch) return router.push(itemHref('Ingredient', line.id) as Href);
-        logBatch.mutate({ itemId: line.id, ...batch });
-        const q = toQuantity(batch.amount, batch.unit);
-        toast.show({ title: `Logged ${q ? formatQuantity(q) : `${batch.amount} ${batch.unit}`} of ${line.name}` });
-      };
-      return (
-        <SettingsRow
-          key={line.id}
-          icon="drop.fill"
-          label={line.name}
-          detail={prepLine(line)}
-          onPress={go(itemHref('Ingredient', line.id))}
-          trailing={<Button label="Log batch" size="sm" variant="secondary" accessibilityLabel={`Log a batch of ${line.name}`} onPress={log} />}
-        />
-      );
-    }),
+    ...make.map((line) => (
+      <SettingsRow
+        key={line.id}
+        icon="drop.fill"
+        label={line.name}
+        detail={prepLine(line)}
+        onPress={go(itemHref('Ingredient', line.id))}
+        trailing={<LogBatchButton barId={barId} id={line.id} name={line.name} batch={t.batchOf(line.id)} />}
+      />
+    )),
     ...enough.map((row) => <SettingsRow key={row.id} icon="drop.fill" label={row.name} detail={row.sub} onPress={go(itemHref('Ingredient', row.id))} />),
     ...t.off.slice(0, 2).map((d) => <SettingsRow key={`off-${d.id}`} icon="exclamationmark.triangle" label="Off tonight" value={d.name} onPress={go(itemHref(categoryOf(d.kind), d.id))} />),
   ];

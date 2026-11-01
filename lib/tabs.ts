@@ -36,7 +36,7 @@ export const SEARCH_ANYTHING = 'Search or add anything';
 /** What Android's search bar says on each page (Prod-and): what search starts on from there. */
 export function searchBarLabel(segments: readonly string[]): string {
   if (segments.includes('(3-discover)')) return 'Search bars, drinks, bottles';
-  if (segments.includes('(2-drinks)') || segments.includes('shelf')) return YOUR_DRINKS;
+  if (segments.includes('(2-drinks)')) return YOUR_DRINKS;
   return SEARCH_ANYTHING;
 }
 

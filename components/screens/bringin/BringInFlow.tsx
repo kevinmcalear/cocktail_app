@@ -147,16 +147,16 @@ export function BringInFlow() {
       void askToNudge();
       leave();
     };
-    // Bottles can be searched for by name instead, where they're added by hand: My Bar's search, or the venue's new bottle.
+    // Bottles can be searched for by name instead, where they're added by hand: the shelf's search, or the venue's new bottle.
     const bottles = job.reading?.kind === 'bottles' ? job.reading.bottles : null;
     const searchInstead = () => {
       useBringIn.getState().clear();
       const name = bottles?.[0]?.name;
       if (job.barId) router.replace({ pathname: '/add-ingredient', params: { barId: job.barId, ...(name ? { name } : {}) } });
       else {
-        // Your own shelf: My Bar is a home-mode tab, so a staffer snapping from a venue goes home for it.
+        // Your own shelf is home Drinks' Shelf, so a staffer snapping from a venue goes home for it.
         useAppMode.getState().setMode('home');
-        router.replace({ pathname: '/', params: { add: 'bottles' } });
+        router.replace({ pathname: '/drinks', params: { tab: 'shelf', add: 'bottles' } });
       }
     };
     return <ReadingScreen job={job} onClose={cancel} onBackground={background} onReady={() => setCheckedId(job.id)} onSearch={bottles ? searchInstead : undefined} />;
