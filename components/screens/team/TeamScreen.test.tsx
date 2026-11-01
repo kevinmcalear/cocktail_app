@@ -6,6 +6,7 @@ import { renderWithProviders } from '@/jest.setup';
 
 const mockMutate = jest.fn();
 const mockRemove = jest.fn(() => Promise.resolve());
+const mockShown = jest.fn();
 const mockAdd = jest.fn();
 const mockSend = jest.fn();
 const mockSendAsync = jest.fn();
@@ -37,6 +38,8 @@ jest.mock('@/hooks/useTeam', () => ({
   ...jest.requireActual('@/hooks/useTeam'),
   useOnShiftTonight: () => new Set(['jo']),
   useMemberStats: () => ({ credited: 4, onList: { name: 'Autumn', count: 2 }, nextShift: null, loading: false, failed: false }),
+  useMemberPosition: () => ({ data: { id: 'pos', is_hidden: false } }),
+  useSetPositionShown: () => ({ mutate: mockShown, isPending: false, error: null }),
 }));
 jest.mock('@/hooks/useBarDetail', () => ({
   useBarMembers: () => ({
@@ -180,6 +183,8 @@ test('a person’s page: their numbers, a new role, and Remove', async () => {
   expect(screen.getByText('Employee · since March 2026')).toBeTruthy();
   expect(screen.getByText('drinks credited')).toBeTruthy();
   expect(screen.getByText('on Autumn')).toBeTruthy();
+  await fireEvent(screen.getByRole('switch', { name: 'Shows on Caretakers’s page' }), 'valueChange', false);
+  expect(mockShown).toHaveBeenCalledWith({ id: 'pos', shown: false });
   await fireEvent.press(screen.getByRole('link', { name: 'Role, Employee' }));
   expect(within(screen.getByLabelText('Role for Jo Park')).getByRole('radio', { name: 'Guest. Sees the menu only' })).toBeTruthy();
   await fireEvent.press(within(screen.getByLabelText('Role for Jo Park')).getByRole('radio', { name: 'Bartender. Plus prep notes and the staff list' }));

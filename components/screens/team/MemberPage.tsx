@@ -2,12 +2,12 @@ import { useState } from 'react';
 import { StyleSheet, View } from 'react-native';
 
 import { Body, Caption, DsText, useDs } from '@/components/ds';
-import { SettingsRow, SettingsSection } from '@/components/screens/settings/SettingsParts';
+import { RowDivider, SettingsRow, SettingsSection, SwitchRow } from '@/components/screens/settings/SettingsParts';
 import { UserAvatar } from '@/components/ui/UserAvatar';
 import { displayFaces, space, STATUS } from '@/constants/tokens';
 import { useRemoveMember, type BarMember } from '@/hooks/useBarDetail';
 import { useCapabilities } from '@/hooks/useCapabilities';
-import { useMemberStats } from '@/hooks/useTeam';
+import { useMemberPosition, useMemberStats, useSetPositionShown } from '@/hooks/useTeam';
 import { useRoleMatrix, useSetMemberRoleChoice, type MemberRoleChoice } from '@/hooks/useVenueRoles';
 import { plainDbMessage } from '@/lib/dbError';
 import { confirmAsync } from '@/lib/dialogs';
@@ -38,6 +38,9 @@ export function MemberPage({ barId, barName, member, role, onRemoved }: {
   const change = useSetMemberRoleChoice(barId);
   const remove = useRemoveMember(barId);
   const stats = useMemberStats(barId, member.user_id);
+  const position = useMemberPosition(barId, member.user_id).data;
+  const show = useSetPositionShown(barId, member.user_id);
+  const canPublish = admin || !!myCaps?.includes('publish');
   const [picking, setPicking] = useState(false);
   const [now] = useState(Date.now);
   // Someone with staff who isn't an Admin hands out only what they can do themselves.
@@ -48,7 +51,7 @@ export function MemberPage({ barId, barName, member, role, onRemoved }: {
   const first = name.split(/\s+/)[0];
   const since = sinceLabel(member);
   const busy = change.isPending || remove.isPending;
-  const error = change.error ?? remove.error;
+  const error = change.error ?? remove.error ?? show.error;
 
   const setRole = async (choice: MemberRoleChoice, label: string, level: number) => {
     const ok =
@@ -96,6 +99,17 @@ export function MemberPage({ barId, barName, member, role, onRemoved }: {
       </View>
       <SettingsSection>
         <SettingsRow label="Role" value={memberRoleName(member)} disabled={busy} onPress={() => setPicking(true)} />
+        {/* Only when they have a job on the bar's page to show: with none, there's nothing to switch. */}
+        {position ? <RowDivider /> : null}
+        {position ? (
+          <SwitchRow
+            label={`Shows on ${barName}’s page`}
+            detail="Under Who makes the drinks"
+            value={!position.is_hidden}
+            disabled={!canPublish || show.isPending}
+            onValueChange={(shown) => show.mutate({ id: position.id, shown })}
+          />
+        ) : null}
       </SettingsSection>
       <View style={styles.remove}>
         <SettingsSection>
