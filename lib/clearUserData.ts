@@ -13,6 +13,7 @@ import { useDraftSyncStore } from '@/store/useDraftSyncStore';
 import { useDrinkWizardStore } from '@/store/useDrinkWizardStore';
 import { useLastPlace } from '@/store/useLastPlace';
 import { useNoteDrafts } from '@/store/useNoteDrafts';
+import { useOfflineEdits } from '@/store/useOfflineEdits';
 import { useRecentActivityStore } from '@/store/useRecentActivityStore';
 import { useVenueSetup } from '@/store/useVenueSetup';
 
@@ -41,6 +42,8 @@ export async function clearUserData(): Promise<void> {
   // Prep there puts them on the page. Signing out used to lose them for good.
   useVenueSetup.setState({ runs: {} });
   useNoteDrafts.setState({ drafts: {} });
+  // Spec edits kept on this phone with no signal: never sent as the next person.
+  useOfflineEdits.setState({ edits: {} });
   useBringIn.setState({ reviews: {}, reviewing: null, later: [] });
   await Promise.all([
     asyncStoragePersister.removeClient(),

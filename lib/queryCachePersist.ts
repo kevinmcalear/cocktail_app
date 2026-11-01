@@ -130,7 +130,7 @@ export function guardStorage(storage: AsyncStorage<string>): AsyncStorage<string
  * user's data straight back until the next throttled save. Bar iPads are
  * shared, and the app can be closed in between.
  */
-export function createCachePersister(storage: AsyncStorage<string>, throttleTime: number): Persister {
+export function createCachePersister(storage: AsyncStorage<string>, throttleTime: number): Persister & { saveNow: (client: PersistedClient) => Promise<void> } {
   let removals = 0;
   const takenAfter = new WeakMap<PersistedClient, number>();
   let saving: number | undefined;
@@ -158,8 +158,17 @@ export function createCachePersister(storage: AsyncStorage<string>, throttleTime
       takenAfter.set(client, removals);
       return persister.persistClient(client);
     },
+    /** Saves at once, past the throttle: a write waiting for signal must not be lost to the app closing in those seconds. */
+    saveNow: async (client) => {
+      const taken = removals;
+      const value = serializeCache(client);
+      if (taken === removals) await storage.setItem(ROW_KEY, value);
+    },
   };
 }
+
+/** The row's storage key (the library's default). */
+const ROW_KEY = 'REACT_QUERY_OFFLINE_CACHE';
 
 /** A short, file-safe name for a query hash (53-bit cyrb53, in base 36). */
 export function fileNameFor(queryHash: string): string {
