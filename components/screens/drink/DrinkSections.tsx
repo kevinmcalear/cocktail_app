@@ -1,217 +1,150 @@
 import { useRouter, type Href } from 'expo-router';
-import { Linking, StyleSheet, View } from 'react-native';
+import { StyleSheet, View } from 'react-native';
 
-import { Body, Button, Caption, Display, useDs } from '@/components/ds';
-import { font, space } from '@/constants/tokens';
+import { Body, Button, Caption, Display, Headline, SpecRow } from '@/components/ds';
+import { space } from '@/constants/tokens';
 import { useSignedIn } from '@/ctx/AuthContext';
-import { useActiveVenue } from '@/hooks/useActiveVenue';
-import { useClassicCopy } from '@/hooks/useClassicCopy';
-import { useDrinkOnMenu } from '@/hooks/useDrinkOnMenu';
 import { useLineage } from '@/hooks/useLineage';
-import { useItemGlassFill } from '@/hooks/useGlassFill';
 import { useDrinkMenuRuns } from '@/hooks/useProfiles';
-import { useEffectiveRole } from '@/hooks/useViewAs';
-import { withPastMenuTag } from '@/lib/menuEditions';
-import { pageShowsDescriptions, specLockNote } from '@/lib/pageVisibility';
-import { ingredientsLine } from '@/lib/publicDrink';
-import type { SpecAccess, SpecLevels, SpecLine, PresentationRecipe } from '@/lib/spec';
+import type { GlassFillResult } from '@/hooks/useGlassFill';
 import type { SpecLock } from '@/hooks/useSpecLock';
+import { makesIt, namesOnly, onTeam, type DrinkViewer } from '@/lib/drinkViewer';
+import { pageShowsDescriptions } from '@/lib/pageVisibility';
+import type { SpecLevels, SpecLine } from '@/lib/spec';
 import type { DatabaseItem } from '@/types/types';
 
-import { PublishSection } from '../publishing/PublishSection';
-import { MyNote } from './MyNote';
-import { AllergensSection } from './AllergensSection';
-import { AtHomeSpec } from './AtHomeSpec';
+import { BarRows } from './BarRows';
 import { Backstory } from './Backstory';
-import { CostSection } from './CostSection';
-import { ApprovalNotice } from './ApprovalNotice';
 import { DrinkCredit } from './DrinkCredit';
-import { DrinkFacts, DrinkTags, type Fact } from './DrinkFacts';
-import { FitGlassNote } from './FitGlass';
-import { FlavorSection } from './FlavorSection';
 import { ForTheFloor } from './ForTheFloor';
-import { HistorySection } from './HistorySection';
-import { JourneyStrip } from './JourneyStrip';
-import { KitCheckSection } from './KitCheckSection';
-import { DrinkParts } from './DrinkParts';
-import { MakeLine } from './MakeLine';
 import { MenuRuns } from './MenuRuns';
-import { PeoplePhotos } from './PeoplePhotos';
-import { ScoreCaption, ScoreMark } from './ScoreCaption';
-import { ServedAt } from './ServedAt';
-import { SpecLockPanel } from './SpecLockPanel';
-import type { SpecMark } from './SpecMarks';
-import { SpecSection } from './SpecSection';
-import type { DrinkActions } from './useDrinkActions';
-import { VersionBanner } from './VersionBanner';
+import { MyNote } from './MyNote';
+import { NamesBlock } from './NamesBlock';
+import { SpecCard } from './spec/SpecCard';
 
-export interface DrinkBodyProps {
+export interface DrinkSectionsInput {
   item: DatabaseItem;
+  viewer: DrinkViewer;
   preview?: { role: number; levels: SpecLevels };
-  /** Home mode: the journey strip, the spec against your shelf, no staff rows. */
-  home: boolean;
-  wide: boolean;
-  canEdit: boolean;
-  /** On this drink's venue team, in venue mode: the staff rows show (decision b49). */
-  staff: boolean;
+  /** "Caretaker's · House spec", "Classic", "My bar". */
+  eyebrow: string | null;
+  barName: string | null;
   lock: SpecLock | null | undefined;
-  access: SpecAccess;
-  amountsOpenAt: string;
   lines: SpecLine[];
-  /** Method, glass, ice, garnish: under the spec. */
-  make: Fact[];
-  /** The method and glass icons beside the Spec heading. */
-  marks: SpecMark[];
-  /** Strength, serve, family: under More. */
-  facts: Fact[];
-  tags: string[];
-  glass: string | null;
+  /** The method as a step's name ("Shake"). */
+  verb: string | null;
+  /** The glass and ice, for the serve line. */
+  serve: (string | null | undefined)[];
+  fill: GlassFillResult | null;
+  onGlass: () => void;
+  onBatch?: () => void;
+  onRank?: () => void;
+  canEdit: boolean;
   /** "Photo by Jo", when someone's photo leads the hero. */
-  photoCredit: { text: string; url: string | null } | null;
-  toMake: { saved: boolean; toggle: () => void };
-  actions: DrinkActions;
-  onRiff: (() => void) | null;
-  /** The drink's editors: Fit it to the glass. */
-  onFit?: (() => void) | null;
-  /** Under Make a riff: where the riff starts and what it's credited as. */
-  riffNote: string;
-  /** The drink's venue, when you're on its team: "Autumn menu at Little Rye". */
-  venueName: string | null;
+  photoCredit: string | null;
 }
 
-/** A description this short follows the spec; a longer one waits under More. */
-const SHORT_DESCRIPTION = 160;
-
 /**
- * Every section of the drink page, built once from the page's data, for the
- * phone column (DrinkBody) and the desktop tabs (DrinkDesktop) to arrange.
- * Staff rows come only for the venue's own team in venue mode (decision b49).
+ * Every block of the drink page (canvas GWBCX, Decided "The drink page by who
+ * is looking"), built once for the phone column (DrinkBody) and the desktop
+ * columns (DrinkDesktop) to arrange. What shows depends on who is looking,
+ * never on a switcher, and nothing hints at what's held back.
  */
-export function useDrinkSections(p: DrinkBodyProps) {
-  const { item, preview, home, staff, lock, access, lines } = p;
+export function useDrinkSections(p: DrinkSectionsInput) {
+  const { item, viewer, preview, lock, lines } = p;
   const router = useRouter();
   const signedIn = useSignedIn();
   const live = !preview;
-  const { venues } = useActiveVenue();
-  const barName = venues.find((v) => v.id === item.bar_id)?.name ?? null;
-  const effective = useEffectiveRole(item.bar_id);
-  const role = preview ? preview.role : effective;
-  const { data: menuRuns = [] } = useDrinkMenuRuns(live ? item.id : null);
-  const { data: onMenu } = useDrinkOnMenu(live ? item.id : null, item.bar_id);
-  // A bar's exact copy of a classic: its bottles in the spec, the classic's backstory.
-  const copy = useClassicCopy(live && item.bar_id ? item.id : null);
-  const tags = [...withPastMenuTag(p.tags, menuRuns), ...(onMenu && !home ? ["On tonight's menu"] : [])];
-  const recipes = item.recipes as PresentationRecipe[] | undefined;
-  const names = lines.map((l) => l.ingredient);
-  const description = item.description && pageShowsDescriptions(lock?.bar.visibility) ? <Body tone="muted">{item.description}</Body> : null;
-  const short = !!item.description && item.description.length <= SHORT_DESCRIPTION;
-  // A catalog classic's notes are its story, not a method (board drink-phone-classic draws a short method line): Backstory keeps them.
+  // A catalog classic's notes are its story, not a method: Backstory keeps them.
   const catalog = !!useLineage(live ? item.id : null).data?.drink?.is_catalog;
-  const method = item.notes && !lock && !catalog ? item.notes : null;
-  // How full the venue's glass comes, for its team (QA Q38).
-  const fill = useItemGlassFill(staff && live && !lock && access.amounts ? item : null, lines);
+  const names = namesOnly(viewer) || !!lock;
+  const { data: runs = [] } = useDrinkMenuRuns(live ? item.id : null);
+  const description = item.description && pageShowsDescriptions(lock?.bar.visibility) ? item.description : null;
+  // A bar's published drink keeps its spec back: its names alone, as a guest reads them.
+  const lockedLines: SpecLine[] | null = lock ? (lock.names ?? []).map((n, i) => ({ ...BLANK, key: `${i}`, ingredient: n.brand ? `${n.brand} ${n.name}` : n.name })) : null;
+  const team = onTeam(viewer) && !!item.bar_id && live;
 
-  // The spec, then method, glass, ice and garnish, a drink's parts (Q20b), then the steps: one recipe, read top to bottom.
-  const make = (
-    <>
-      <MakeLine facts={p.make} />
-      <DrinkParts item={item} />
-    </>
-  );
-  const spec = lock ? (
-    <View style={styles.make}>
-      <SpecLockPanel
-        note={specLockNote(lock.bar.name, !lock.bar.isClaimed, true)}
-        ingredients={ingredientsLine(lock.names ?? [])}
-        action={<Button label={lock.bar.isClaimed ? `See ${lock.bar.name}` : 'Work here? Claim this page'} variant="secondary" onPress={() => router.push(`/p/${lock.bar.handle}` as Href)} />}
-      />
-      {make}
-    </View>
-  ) : home && signedIn && live ? (
-    <AtHomeSpec item={item} lines={lines} recipes={recipes} method={method} make={make} marks={p.marks} onSwap={p.actions.made} />
-  ) : (
-    <SpecSection itemId={item.id} barId={item.bar_id} recipes={recipes} preview={preview} caption={copy?.barName ? `With ${copy.barName}'s bottles` : null} make={make} marks={p.marks} riff={p.onRiff ? { onPress: p.onRiff, note: p.riffNote } : null}>
-      <FitGlassNote result={fill} onFit={p.onFit ?? undefined} />
-      {method ? <Body>{method}</Body> : null}
-    </SpecSection>
-  );
-
-  // Just the name, who made it and its score over the spec; the tags and the rank caption wait under More.
-  const header = (
-    <View style={styles.header}>
-      <Display>{item.name}</Display>
-      {live ? (
-        <View style={styles.credit}>
-          <View style={styles.flex}>
-            <DrinkCredit itemId={item.id} />
-          </View>
-          <ScoreMark itemId={item.id} name={item.name} />
-        </View>
-      ) : null}
-      {live && p.photoCredit ? (
-        <Caption tone="muted" role={p.photoCredit.url ? 'link' : undefined} onPress={p.photoCredit.url ? () => void Linking.openURL(p.photoCredit!.url!) : undefined}>
-          {p.photoCredit.text}
+  const title = (
+    <View style={styles.title}>
+      {p.eyebrow ? (
+        <Caption tone="muted" style={styles.eyebrow}>
+          {p.eyebrow}
         </Caption>
       ) : null}
-      {live && item.bar_id ? <ApprovalNotice itemId={item.id} /> : null}
+      <Display>{item.name}</Display>
+      {live ? <DrinkCredit itemId={item.id} italic /> : null}
+      {p.photoCredit ? <Caption tone="muted">{p.photoCredit}</Caption> : null}
     </View>
   );
+
+  const spec = lockedLines ? (
+    <View>
+      {lockedLines.map((l) => (
+        <SpecRow key={l.key} amount="" dense ingredient={l.ingredient ?? ''} />
+      ))}
+    </View>
+  ) : (
+    <SpecCard
+      itemId={item.id}
+      barId={item.bar_id}
+      lines={lines}
+      maker={makesIt(viewer)}
+      verb={p.verb}
+      serve={p.serve}
+      onBatch={p.onBatch}
+      preview={preview}
+      goesOut={viewer === 'floor'}
+      onLine={live ? (l) => router.push(`/ingredient/${l.ingredientId}` as Href) : undefined}
+    />
+  );
+
+  // One notes block: the drink's notes as the server reads them for your role, the floor's talking points, and your own.
+  const drinkNotes = !names && item.notes && !lock && !catalog ? item.notes : null;
+  // Fragments, so an empty part leaves no gap in the column.
+  const notes = live ? (
+    <>
+      {drinkNotes ? <Body>{drinkNotes}</Body> : null}
+      {viewer === 'floor' && item.bar_id ? <ForTheFloor itemId={item.id} barId={item.bar_id} ingredients={lines.map((l) => l.ingredient)} /> : null}
+      {signedIn ? <MyNote itemId={item.id} name={item.name} /> : null}
+    </>
+  ) : null;
+
   return {
-    header,
-    intro: short ? description : null,
+    title,
+    // Guests and the floor: the allergy line, what it tastes like, how it meets your palate.
+    lead: names && live ? <NamesBlock itemId={item.id} name={item.name} guest={viewer === 'guest'} tastes={description} /> : null,
     spec,
-    moreHeading: <MoreHeading />,
-    standing:
-      tags.length || live ? (
-        <View style={styles.standing}>
-          {live ? <ScoreCaption itemId={item.id} name={item.name} /> : null}
-          <DrinkTags tags={tags} />
+    // The one prominent action: Rank it for a guest. The floor and bartenders have none; Edit is in the toolbar.
+    action: viewer === 'guest' && p.onRank ? <Button label="Rank it" size="lg" onPress={p.onRank} accessibilityHint={`Rank ${item.name} against others you've had`} /> : null,
+    notes,
+    bar:
+      team && viewer !== 'floor' && item.bar_id ? (
+        <BarRows item={item} barId={item.bar_id} barName={p.barName} lines={lines} fill={p.fill} onGlass={p.onGlass} creator={viewer === 'creator'} canEdit={p.canEdit} />
+      ) : null,
+    menus: live ? <MenuRuns runs={runs} own={null} /> : null,
+    story:
+      live && !names ? (
+        <View style={styles.block}>
+          {description ? (
+            <>
+              <Headline role="heading" aria-level={2}>
+                The story
+              </Headline>
+              <Body tone="muted">{description}</Body>
+            </>
+          ) : null}
+          <Backstory itemId={item.id} lines={lines} story={catalog ? item.notes : null} title={description ? null : 'The story'} />
         </View>
       ) : null,
-    myNote: live && signedIn ? <MyNote itemId={item.id} name={item.name} /> : null,
-    // Can you make it with My Bar's kit: home only, a venue's team has Library's Ready here.
-    kit: home && signedIn && live ? <KitCheckSection itemId={item.id} drink={item.name} /> : null,
-    journey:
-      home && signedIn && live ? (
-        <JourneyStrip itemId={item.id} name={item.name} saved={p.toMake.saved} onToggleSaved={p.toMake.toggle} onRank={p.actions.rank} onMade={p.actions.made} madeTimes={p.actions.madeTimes} lines={lines} />
-      ) : null,
-    menus: <MenuRuns runs={menuRuns} own={home && onMenu ? { menuId: onMenu.menuId, name: onMenu.name, venueName: p.venueName ?? null, price: onMenu.price ?? null } : null} />,
-    banner: live ? <VersionBanner itemId={item.id} inline={p.wide} venueName={barName} /> : null,
-    description: short ? null : description,
-    // The floor's talking points: for floor roles below Bartender, and editors who write them. A Bartender has the spec (board drink-phone-venue).
-    floor: staff && item.bar_id && live && (role < 30 || p.canEdit) ? <ForTheFloor itemId={item.id} barId={item.bar_id} ingredients={names} /> : null,
-    facts: <DrinkFacts facts={p.facts} columns={2} />,
-    allergens: <AllergensSection itemId={item.id} barId={item.bar_id} preview={!!preview} />,
-    flavor: live ? <FlavorSection itemId={item.id} name={item.name} /> : null,
-    servedAt: live ? <ServedAt itemId={item.id} /> : null,
-    photos: live ? <PeoplePhotos itemId={item.id} name={item.name} glass={p.glass} wide={p.wide} /> : null,
-    history: staff && live ? <HistorySection itemId={item.id} barId={item.bar_id} canEdit={p.canEdit} compact={p.wide} /> : null,
-    cost: staff && live ? <CostSection itemId={item.id} barId={item.bar_id} price={item.price} onMenu={onMenu} /> : null,
-    backstory: live ? <Backstory itemId={copy?.classicId ?? item.id} lines={lines} classicName={copy?.classicName} onRiff={p.onRiff} story={catalog && !lock ? item.notes : null} /> : null,
-    publish: live && (staff || !item.bar_id) ? <PublishSection itemId={item.id} barId={item.bar_id} showLocked={staff} mode="read" /> : null,
   };
 }
 
 export type DrinkSections = ReturnType<typeof useDrinkSections>;
 
-/** Where the make-it part ends: everything under it is for when you want to know more. */
-function MoreHeading() {
-  const ds = useDs();
-  return (
-    <View style={[styles.more, { borderTopColor: ds.c.line }]}>
-      <Caption tone="muted" role="heading" aria-level={2} style={styles.moreLabel}>
-        More about this drink
-      </Caption>
-    </View>
-  );
-}
+const BLANK: Omit<SpecLine, 'key' | 'ingredient'> = { amount: null, ingredientId: null, note: null, optional: false, float: false, ml: null, value: null, unit: null, atService: null, abv: null, density: null };
 
 const styles = StyleSheet.create({
-  header: { gap: space.sm },
-  make: { gap: space.md },
-  credit: { flexDirection: 'row', alignItems: 'center', gap: space.md },
-  flex: { flex: 1, minWidth: 0 },
-  standing: { flexDirection: 'row', flexWrap: 'wrap', alignItems: 'center', gap: space.sm },
-  more: { borderTopWidth: StyleSheet.hairlineWidth, paddingTop: space.xl },
-  moreLabel: { ...font.figures, letterSpacing: 1.2, textTransform: 'uppercase' },
+  title: { gap: space.xs },
+  eyebrow: { textTransform: 'uppercase', letterSpacing: 1.2 },
+  block: { gap: space.md },
 });

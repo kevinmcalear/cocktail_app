@@ -68,8 +68,6 @@ function Preview() {
       <Stack.Screen options={{ headerShown: false, title: 'Drink page preview' }} />
       <DrinkScreen
         item={sampleDrink(role)}
-        inStudyPile={false}
-        onToggleStudyPile={() => {}}
         canEdit={false}
         onEdit={() => {}}
         preview={{ heroSource: photo ? SAMPLE_IMAGES.photo : null, role, levels: SAMPLE_LEVELS }}

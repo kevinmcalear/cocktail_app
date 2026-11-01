@@ -163,6 +163,18 @@ export function meet(taste: Taste, profile: Profile, baseline: Profile | null): 
   return { shared, more, less };
 }
 
+/**
+ * A meeting in the drink page's two lines (board Decided-who-guest):
+ * "Smoky and sour, like you" and "More heat than usual, less bitter". Either
+ * can be null; with nothing to say there is no fit block.
+ */
+export function meetingWords(m: Meeting): { like: string | null; diff: string | null } {
+  const cap = (s: string) => s.charAt(0).toUpperCase() + s.slice(1);
+  const like = m.shared.length ? `${cap(m.shared.map((d) => LABEL[d]).join(' and '))}, like you` : null;
+  const parts = [m.more ? `more ${LABEL[m.more]} than usual` : null, m.less ? `less ${LABEL[m.less]}` : null].filter((p): p is string => !!p);
+  return { like, diff: parts.length ? cap(parts.join(', ')) : null };
+}
+
 /** A spring: the springs tokens' shape. */
 export interface SpringConfig {
   damping: number;
