@@ -7,6 +7,7 @@ import { Caption, Chip, DrinkImage, DsText, GlassSurface, Headline, PencilState,
 import { BarMark } from '@/components/screens/home/BarMark';
 import { DiscoverMap, mapAvailable } from '@/components/screens/home/DiscoverMap';
 import { MapCredit } from '@/components/screens/home/MapCredit';
+import { OfflineNote, SavedChip } from '@/components/screens/home/OfflineParts';
 import { DrinkTile, TonightLabel } from '@/components/screens/tonight/TonightParts';
 import { IconSymbol } from '@/components/ui/icon-symbol';
 import { displayFaces, layout, radius, space } from '@/constants/tokens';
@@ -180,10 +181,7 @@ export function DiscoverOffline() {
   const now = new Date();
   return (
     <View style={styles.section}>
-      <View style={[styles.saved, { backgroundColor: ds.c.raised }]}>
-        <IconSymbol name="phone" size={15} color={ds.c.ink} />
-        <DsText variant="label">{phone ? 'Saved on this phone · offline' : 'Saved on this device · offline'}</DsText>
-      </View>
+      <SavedChip label={phone ? 'Saved on this phone · offline' : 'Saved on this device · offline'} />
       {loved.length ? (
         <>
           <TonightLabel title="Bars you love" />
@@ -203,12 +201,7 @@ export function DiscoverOffline() {
           ))}
         </>
       ) : null}
-      <View style={styles.note}>
-        <IconSymbol name="exclamationmark.triangle" size={16} color={ds.c.muted} />
-        <Caption tone="muted" style={styles.flex}>
-          The map and what’s near you come back with a connection.
-        </Caption>
-      </View>
+      <OfflineNote text="The map and what’s near you come back with a connection." />
     </View>
   );
 }
@@ -262,8 +255,6 @@ const styles = StyleSheet.create({
   score: { alignItems: 'flex-end', gap: 2 },
   tiles: { gap: space.md },
   chips: { flexDirection: 'row', flexWrap: 'wrap', gap: space.sm },
-  saved: { flexDirection: 'row', alignItems: 'center', alignSelf: 'flex-start', gap: space.xs + 2, paddingHorizontal: space.md, paddingVertical: space.sm, borderRadius: radius.pill },
-  note: { flexDirection: 'row', alignItems: 'center', gap: space.sm, paddingTop: space.sm },
   outlineCard: { height: 180, borderWidth: 1, borderRadius: radius.card },
   loadingRow: { flexDirection: 'row', alignItems: 'center', gap: space.md, height: 74 },
   loadingPic: { width: 52, height: 52, borderWidth: 1, borderRadius: radius.pill },

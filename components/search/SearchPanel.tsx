@@ -1,3 +1,4 @@
+import { useNetInfo } from '@react-native-community/netinfo';
 import { useRouter } from 'expo-router';
 import { use, useDeferredValue, useState, type ReactNode } from 'react';
 import { Platform, StyleSheet, View } from 'react-native';
@@ -28,6 +29,7 @@ import { PublicResults } from './PublicResults';
 import { DrawnSearch, ResultGroup, ResultRow } from './ResultRows';
 import { ScopeSwitch } from './ScopeSwitch';
 import { SearchField } from './SearchField';
+import { SearchOffline } from './SearchOffline';
 import { StyleTiles } from './SearchParts';
 import { RecentSearches } from './RecentSearches';
 
@@ -123,7 +125,9 @@ export function SearchBody({ query: typed, scope, onScope, mine, area, onJump, c
   const query = useDeferredValue(typed);
   // Android's search has no suggestions or Top hit (Miss-search-and): its Recent still fills the field.
   const ahead = use(DrawnSearch) ? undefined : typeAhead;
+  const offline = useNetInfo().isConnected === false;
   if (!typed.trim() || !query.trim()) return <Recent scope={scope} mine={mine} onJump={onJump} commands={commands} onTerm={typeAhead} />;
+  if (offline) return <SearchOffline query={query} mine={mine} />;
   if (scope === 'mine') return <MineResults query={query} mine={mine} onEverywhere={() => onScope('everywhere')} commands={commands} palette={palette} show={show} onCounts={onCounts} typeAhead={ahead} />;
   return (
     <>

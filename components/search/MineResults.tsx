@@ -22,7 +22,7 @@ import type { SearchItem } from '@/types/search';
 
 import { PublicResults } from './PublicResults';
 import { NearResults } from './NearResults';
-import { DrawnSearch, EverywhereRow, MissCard, PersonResultRow, ResultGroup, ResultRow } from './ResultRows';
+import { DRAWN_STATES, DrawnSearch, EverywhereRow, MissCard, PersonResultRow, ResultGroup, ResultRow } from './ResultRows';
 import { Completions, TopHit } from './SearchParts';
 import { SearchLoading, SearchMore } from './SearchStates';
 
@@ -93,7 +93,7 @@ export function MineResults({ query, mine, onEverywhere, commands, palette, show
   }, [countKey, onCounts]);
 
   if (!found) {
-    if (isLoading) return drawn ? <SearchLoading /> : <Caption tone="muted">Searching…</Caption>;
+    if (isLoading) return drawn || DRAWN_STATES ? <SearchLoading /> : <Caption tone="muted">Searching…</Caption>;
     const where = mine.venueId ? mine.label : 'your drinks';
     const add = () => router.push(newDrinkHref(capitalize(q), mine.venueId) as never);
     const title = `Nothing ${mine.venueId ? `at ${mine.label}` : 'in your drinks'} called “${q}”`;

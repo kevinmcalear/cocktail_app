@@ -1,6 +1,6 @@
 import { useRouter } from 'expo-router';
 import { createContext, use, useState, type ReactNode } from 'react';
-import { StyleSheet, View } from 'react-native';
+import { Platform, StyleSheet, View } from 'react-native';
 
 import { Body, Caption, DsText, Headline, IngredientThumb, MatchText, PressableScale, RowScore, scoreWords, Tag, useDs, type IconName, type MatchTextProps } from '@/components/ds';
 import { BarMark, type BarBrand } from '@/components/screens/home/BarMark';
@@ -178,6 +178,9 @@ interface ResultGroupProps<T> {
 
 /** Android's open search (TopSearch.tsx), which draws its results its own way (Miss-search-and). */
 export const DrawnSearch = createContext(false);
+
+/** The phones' search: nothing found is a drawing, and loading is rows in outline (Sta-discover, Miss-search-and). The web keeps its words. */
+export const DRAWN_STATES = Platform.OS !== 'web';
 
 /** "Search everywhere for “negroni”" in the ⌘K palette: a slim outlined row with a globe (or `icon`), one the arrow keys reach. */
 export function EverywhereRow({ label, icon = 'globe', onPress }: { label: string; icon?: IconName; onPress: () => void }) {

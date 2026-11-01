@@ -39,7 +39,7 @@ import type { SearchItem } from '@/types/search';
 import { CanMakeContext, CanMakeEmpty } from './CanMake';
 import { BrowseChips, ClassicRow, StyleCard } from './ClassicRow';
 import { NearResults } from './NearResults';
-import { BarResultRow, DrawnSearch, PersonResultRow, ResultGroup, ResultRow } from './ResultRows';
+import { BarResultRow, DRAWN_STATES, DrawnSearch, PersonResultRow, ResultGroup, ResultRow } from './ResultRows';
 import { Completions, TopHit } from './SearchParts';
 import { drawnGroups, SearchLoading, SearchMore, SearchNoMatch } from './SearchStates';
 
@@ -221,7 +221,14 @@ export function PublicResults({ query, area, kinds = [], onKind, onEverywhere, m
     <ResultGroup key="ingredients" label="Ingredients" items={ingredients} render={(i) => <ResultRow key={i.id} title={i.name} ingredient={{ id: i.id }} query={q} matchLook={look} onPress={() => router.push(itemHref('Ingredient', i.id) as never)} />} />
   );
 
-  const miss = drawn ? results.isLoading ? <SearchLoading /> : <SearchNoMatch query={q} mine={mine} /> : signedIn ? <>{<Caption tone="muted">{results.isLoading ? 'Searching…' : `Nothing ${where} called “${q}”.`}</Caption>}{!results.isLoading && onAddBar ? <AddBarPrompt onPress={onAddBar} /> : null}</> : null;
+  // Phones draw nothing found and loading (Sta-discover); the web says it. A missing bar can be added under either, but Android's drawn search.
+  const said = drawn || (DRAWN_STATES && signedIn) ? results.isLoading ? <SearchLoading /> : <SearchNoMatch query={q} mine={mine} /> : signedIn ? <Caption tone="muted">{results.isLoading ? 'Searching…' : `Nothing ${where} called “${q}”.`}</Caption> : null;
+  const miss = (
+    <>
+      {said}
+      {!drawn && signedIn && !results.isLoading && onAddBar ? <AddBarPrompt onPress={onAddBar} /> : null}
+    </>
+  );
   // Each door's order, as its board draws it.
   let groups: ReactNode[];
   if (onKind && area) {
