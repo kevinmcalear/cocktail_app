@@ -11,7 +11,7 @@ import { space, STATUS } from '@/constants/tokens';
 import { useUserId } from '@/ctx/AuthContext';
 import { useBarInvites, useRemoveInvite, useSendInviteEmail, type BarInvite } from '@/hooks/useBarInvites';
 import { useBarMembers, type BarMember } from '@/hooks/useBarDetail';
-import { managesTeam, useOnShiftTonight } from '@/hooks/useTeam';
+import { managesTeam, useBarOwner, useOnShiftTonight } from '@/hooks/useTeam';
 import { useRoleMatrix } from '@/hooks/useVenueRoles';
 import { useCanManageStaff } from '@/hooks/useViewAs';
 import { plainDbMessage } from '@/lib/dbError';
@@ -48,6 +48,7 @@ export function TeamRoster({ barId, barName, role, note, onNote, selectedId, onO
   const members = useBarMembers(barId);
   const matrix = useRoleMatrix(barId).data ?? [];
   const onShift = useOnShiftTonight(barId);
+  const owner = useBarOwner(barId).data ?? null;
   const { data: invites = [] } = useBarInvites(barId, manage);
   const cancel = useRemoveInvite(barId);
   const send = useSendInviteEmail(barId);
@@ -105,7 +106,7 @@ export function TeamRoster({ barId, barName, role, note, onNote, selectedId, onO
                   me={m.user_id === myId}
                   avatar={m.avatar_url}
                   email={m.email}
-                  line={teamLine(m, g.key, onShift.has(m.user_id), ends)}
+                  line={teamLine(m, g.key, onShift.has(m.user_id), ends, m.user_id === owner)}
                   tag={ends ? 'Ends' : null}
                   selected={selectedId === m.user_id}
                   onPress={canOpen ? () => onOpen(m) : undefined}

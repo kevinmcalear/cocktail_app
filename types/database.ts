@@ -7070,6 +7070,7 @@ export type Database = {
         }[]
       }
       bar_claim_verified: { Args: { p_bar_id: string }; Returns: boolean }
+      bar_owner: { Args: { p_bar_id: string }; Returns: string }
       bar_share_opens: {
         Args: { p_bar: string; p_since: string }
         Returns: number

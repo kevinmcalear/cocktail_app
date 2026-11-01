@@ -57,6 +57,7 @@ assert.equal(canOpenMember({ user_id: 'a', role_level: 30 }, 'b', 35), true);
 assert.equal(canOpenMember({ user_id: 'a', role_level: 40 }, 'b', 40), true);
 assert.equal(teamLine(team[6], 'floor', false, null), 'Employee · menus and allergens');
 assert.equal(teamLine(team[4], 'admins', true, null), 'Head bartender · on shift tonight');
+assert.equal(teamLine(team[4], 'admins', false, null, true), 'Owner');
 
 const at = Date.parse('2026-11-06T20:00:00Z');
 assert.equal(askedAgo('2026-11-06T19:40:00Z', at), '20 minutes ago');

@@ -7,7 +7,7 @@ import { UserAvatar } from '@/components/ui/UserAvatar';
 import { displayFaces, space, STATUS } from '@/constants/tokens';
 import { useRemoveMember, type BarMember } from '@/hooks/useBarDetail';
 import { useCapabilities } from '@/hooks/useCapabilities';
-import { useMemberPosition, useMemberStats, useSetPositionShown } from '@/hooks/useTeam';
+import { useBarOwner, useMemberPosition, useMemberStats, useSetPositionShown } from '@/hooks/useTeam';
 import { useRoleMatrix, useSetMemberRoleChoice, type MemberRoleChoice } from '@/hooks/useVenueRoles';
 import { plainDbMessage } from '@/lib/dbError';
 import { confirmAsync } from '@/lib/dialogs';
@@ -38,6 +38,7 @@ export function MemberPage({ barId, barName, member, role, onRemoved }: {
   const change = useSetMemberRoleChoice(barId);
   const remove = useRemoveMember(barId);
   const stats = useMemberStats(barId, member.user_id);
+  const owner = useBarOwner(barId).data === member.user_id;
   const position = useMemberPosition(barId, member.user_id).data;
   const show = useSetPositionShown(barId, member.user_id);
   const canPublish = admin || !!myCaps?.includes('publish');
@@ -85,7 +86,7 @@ export function MemberPage({ barId, barName, member, role, onRemoved }: {
         <DsText variant="title" aria-level={1} style={{ fontFamily: displayFaces[ds.displayFace].regular }}>
           {name}
         </DsText>
-        <Caption tone="muted">{[memberRoleName(member), since].filter(Boolean).join(' · ')}</Caption>
+        <Caption tone="muted">{[owner ? 'Owner' : memberRoleName(member), since].filter(Boolean).join(' · ')}</Caption>
       </View>
       <View role="list" aria-label={`${first}’s numbers`} style={styles.stats}>
         {stats.failed ? <Caption tone="muted" role="alert" style={styles.statNote}>{`Couldn’t load ${first}’s numbers.`}</Caption> : null}

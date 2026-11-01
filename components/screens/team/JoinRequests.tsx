@@ -8,7 +8,6 @@ import { UserAvatar } from '@/components/ui/UserAvatar';
 import { radius, space, STATUS } from '@/constants/tokens';
 import { useAnswerJoinRequest, useClaimsToConfirm, useConfirmPersonClaim, useJoinRequests } from '@/hooks/useJoinRequests';
 import { useStaffLink } from '@/hooks/useStaffLink';
-import { useSetMemberRoleChoice } from '@/hooks/useVenueRoles';
 import { roleLabel } from '@/lib/roles';
 import { askedAgo } from '@/lib/team';
 
@@ -25,20 +24,13 @@ export function JoinRequests({ barId }: { barId: string }) {
   const router = useRouter();
   const requests = useJoinRequests(barId, true).data ?? [];
   const answer = useAnswerJoinRequest(barId);
-  const setRole = useSetMemberRoleChoice(barId);
   const link = useStaffLink(barId);
-  // Until the link's role is read, nobody is added at a guess. If it can't be read, Bartender is what the database adds.
+  // The button names the role the database adds them at (the staff link's), once it's read.
   const joinRole = link.data?.role ?? BARTENDER;
   const [now] = useState(Date.now);
   if (!requests.length) return null;
-  const busy = answer.isPending || setRole.isPending || link.isLoading;
-  const failed = answer.error ?? setRole.error;
-
-  // ponytail: answer_join_request always adds a Bartender, so another join role is a second write, and a failed one leaves a Bartender to change by hand. Upgrade path: the role in the function (Kevin's, it changes an existing function).
-  const accept = async (r: { id: string; user_id: string }) => {
-    await answer.mutateAsync({ id: r.id, accept: true });
-    if (joinRole !== BARTENDER) await setRole.mutateAsync({ userId: r.user_id, choice: { level: joinRole } });
-  };
+  const busy = answer.isPending || link.isLoading;
+  const failed = answer.error;
 
   return (
     <View role="list" aria-label="Asking to join" style={styles.section}>
@@ -55,7 +47,7 @@ export function JoinRequests({ barId }: { barId: string }) {
               </View>
             </View>
             <View style={styles.actions}>
-              <Button label={`Add as ${roleLabel(joinRole)}`} size="sm" disabled={busy} accessibilityLabel={`Add ${r.name} as ${roleLabel(joinRole)}`} onPress={() => void accept(r).catch(() => undefined)} />
+              <Button label={`Add as ${roleLabel(joinRole)}`} size="sm" disabled={busy} accessibilityLabel={`Add ${r.name} as ${roleLabel(joinRole)}`} onPress={() => answer.mutate({ id: r.id, accept: true })} />
               <Button label="Not now" size="sm" variant="ghost" disabled={busy} accessibilityLabel={`Not now for ${r.name}`} onPress={() => answer.mutate({ id: r.id, accept: false })} />
             </View>
           </View>

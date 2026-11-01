@@ -130,3 +130,17 @@ export function useSetPositionShown(barId: string, userId: string) {
     onError: () => {},
   });
 }
+
+/** Who owns the bar: the person whose claim of it was approved (bar_owner). Team says Owner on their row. Null when nobody has. */
+export function useBarOwner(barId: string | null | undefined) {
+  return useQuery({
+    queryKey: ['bar-owner', barId],
+    enabled: !!barId,
+    staleTime: 5 * 60_000,
+    queryFn: async (): Promise<string | null> => {
+      const { data, error } = await supabase.rpc('bar_owner', { p_bar_id: barId! });
+      if (error) throw error;
+      return data ?? null;
+    },
+  });
+}
