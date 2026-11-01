@@ -1,10 +1,10 @@
 import { useState, type ReactNode } from 'react';
-import { Platform, StyleSheet, View } from 'react-native';
+import { StyleSheet, View } from 'react-native';
 
-import { Caption, DayGrid, dragDismissesKeyboard, DsText, Field, GlassButton, PickerPanel, PressableScale, Sheet, SheetScrollView, Surface, TimeGrid, useDs, useSheetClose } from '@/components/ds';
+import { Caption, DayGrid, dragDismissesKeyboard, Field, FlowHead, PickerPanel, Sheet, SheetScrollView, Surface, TimeGrid, useDs, useSheetClose } from '@/components/ds';
 import { RowDivider, SettingsRow, SwitchRow } from '@/components/screens/settings/SettingsParts';
 import { IconSymbol } from '@/components/ui/icon-symbol';
-import { font, layout, radius, space } from '@/constants/tokens';
+import { space } from '@/constants/tokens';
 import type { Shift } from '@/hooks/useRota';
 import { newDraftId } from '@/lib/drinkWizard';
 import { clockOf, dayShort, nightOf, sheetClock, shiftMoments, type RotaChange } from '@/lib/rota';
@@ -24,33 +24,6 @@ type Panel = 'who' | 'day' | 'start' | 'end' | null;
 /** The drawn new shift: 4pm to midnight. */
 const START = '16:00';
 const END = '00:00';
-
-/** X, the title, a tick to Save: the board's sheet head. Android's back is the arrow. */
-function Head({ title, canSave, onSave }: { title: string; canSave: boolean; onSave: () => void }) {
-  const ds = useDs();
-  const close = useSheetClose();
-  return (
-    <View style={styles.head}>
-      <GlassButton icon={Platform.OS === 'android' ? 'chevron.left' : 'xmark'} accessibilityLabel="Close" onPress={close} />
-      <DsText role="heading" numberOfLines={1} style={styles.title}>
-        {title}
-      </DsText>
-      <PressableScale
-        role="button"
-        accessibilityLabel="Save"
-        aria-disabled={!canSave}
-        disabled={!canSave}
-        onPress={() => {
-          onSave();
-          close();
-        }}
-        style={[styles.save, { backgroundColor: ds.accentFill.fill, opacity: canSave ? 1 : 0.4 }]}
-      >
-        <IconSymbol name="checkmark" size={18} color={ds.accentFill.text} />
-      </PressableScale>
-    </View>
-  );
-}
 
 function DeleteRow({ onDelete }: { onDelete: () => void }) {
   const close = useSheetClose();
@@ -105,7 +78,7 @@ export function ShiftSheet({ open, barName, people, timeZone, onClose, onSave, o
   // Someone who's left can't be saved onto the rota (shifts_write checks the team): pick someone else or delete it.
   const title = !shift ? 'New shift' : person ? `${person.name.split(' ')[0]}’s shift` : 'Shift';
   return (
-    <Sheet visible onClose={onClose} accessibilityLabel={title} kind="flow" keyboard header={<Head title={title} canSave={!!person && start !== end} onSave={save} />}>
+    <Sheet visible onClose={onClose} accessibilityLabel={title} kind="flow" keyboard header={<FlowHead title={title} done={save} doneDisabled={!person || start === end} doneLabel="Save" />}>
       <SheetScrollView {...dragDismissesKeyboard} contentContainerStyle={styles.body}>
         <Grouped>
           <SettingsRow role="button" expanded={panel === 'who'} leading={person ? <PersonMark person={person} size={32} /> : undefined} icon="person" label={person?.name ?? 'Who'} detail={person?.role} value={person ? undefined : 'Pick from the team'} onPress={toggle('who')} />
@@ -170,9 +143,6 @@ export function ShiftSheet({ open, barName, people, timeZone, onClose, onSave, o
 }
 
 const styles = StyleSheet.create({
-  head: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', gap: space.md, paddingHorizontal: space.lg, paddingBottom: space.md },
-  title: { flex: 1, textAlign: 'center', ...font.semiBold },
-  save: { width: layout.minTapTarget, height: layout.minTapTarget, borderRadius: radius.pill, alignItems: 'center', justifyContent: 'center' },
   body: { paddingHorizontal: space.lg, paddingBottom: space.xxxl, gap: space.lg },
   card: { paddingVertical: space.xs, paddingHorizontal: space.lg, overflow: 'hidden' },
 });

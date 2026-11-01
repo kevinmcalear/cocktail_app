@@ -1,9 +1,10 @@
-import { createContext, use, useEffect, useEffectEvent, useRef, useState } from 'react';
+import { useEffect, useEffectEvent, useRef, useState } from 'react';
 import { Modal, Pressable, StyleSheet, View } from 'react-native';
 
 import { useReducedMotion } from '@/hooks/useReducedMotion';
 
 import type { SheetProps } from './Sheet';
+import { CloseContext } from './sheetClose';
 import { sheetFrame } from './sheetFrame';
 import { useDs } from './theme';
 import { EASE_IN, EASE_OUT, webMotion } from './webMotion';
@@ -13,14 +14,7 @@ import { attachSheetDrag } from './webSheetDrag';
 const IN_MS = 200;
 const OUT_MS = 180;
 
-const CloseContext = createContext<(() => void) | null>(null);
-
-/** Inside a Sheet: close it the way the backdrop does, fading out before onClose. */
-export function useSheetClose(): () => void {
-  const close = use(CloseContext);
-  if (!close) throw new Error('useSheetClose is for buttons inside a Sheet');
-  return close;
-}
+export { useSheetClose } from './sheetClose';
 
 /**
  * The web's Sheet: the same dialog in the middle of the window over the same
