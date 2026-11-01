@@ -1,8 +1,6 @@
 {
   "violations": {
     "app/+html.tsx": 2,
-    "components/BarAssignmentAccordion.tsx": 6,
-    "components/CategoryTree.tsx": 2,
     "components/ErrorScreen.tsx": 14,
     "components/auth/EmailLinkGate.tsx": 1,
     "components/drink/drinkImages.ts": 9,

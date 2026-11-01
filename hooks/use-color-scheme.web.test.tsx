@@ -9,7 +9,7 @@ import { useSettingsStore } from '@/store/useSettingsStore';
 jest.mock('react-native', () => ({ useColorScheme: () => 'dark' }));
 
 // A local DOM for hydrateRoot. The jsdom test environment can't load
-// jest.setup.tsx (Tamagui needs matchMedia at import time).
+// jest.setup.tsx.
 const dom = new JSDOM('<!doctype html><html><body></body></html>');
 const g = globalThis as Record<string, unknown>;
 

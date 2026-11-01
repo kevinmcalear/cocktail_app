@@ -47,7 +47,7 @@ function loadFace(face: DisplayFace): Promise<void> {
 
 /**
  * Fetches the given display faces if they aren't in yet, and returns a lookup
- * for their font family: the face itself once it has loaded, Instrument Serif
+ * for their font family: the face itself once it has loaded, Redaction
  * until then. Venues not using a lazy face never download it.
  */
 export function useDisplayFaces(faces: readonly (DisplayFace | null | undefined)[]): (face: DisplayFace, style?: 'regular' | 'italic') => string {
@@ -56,15 +56,15 @@ export function useDisplayFaces(faces: readonly (DisplayFace | null | undefined)
   useEffect(() => {
     if (missing) missing.split(',').forEach((f) => void loadFace(f as DisplayFace));
   }, [missing]);
-  return (face, style = 'regular') => displayFaces[faceReady(face, done) ? face : 'instrument'][style];
+  return (face, style = 'regular') => displayFaces[faceReady(face, done) ? face : 'redaction'][style];
 }
 
-/** The face to draw with now: the one asked for once it has loaded, else Instrument Serif. */
+/** The face to draw with now: the one asked for once it has loaded, else Redaction. */
 export function useLoadedFace(face: DisplayFace): DisplayFace {
   const done = useSyncExternalStore(subscribe, snapshot, serverSnapshot);
   const ready = faceReady(face, done);
   useEffect(() => {
     if (!ready) void loadFace(face);
   }, [face, ready]);
-  return ready ? face : 'instrument';
+  return ready ? face : 'redaction';
 }

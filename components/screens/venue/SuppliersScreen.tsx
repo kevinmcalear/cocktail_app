@@ -3,7 +3,7 @@ import { StyleSheet, View } from 'react-native';
 
 import { Body, Button, Caption, PressableScale, Surface, useDs } from '@/components/ds';
 import { Monogram } from '@/components/screens/onboarding/SetupParts';
-import { fontFamilies, space } from '@/constants/tokens';
+import { font, space } from '@/constants/tokens';
 import { useActiveVenue } from '@/hooks/useActiveVenue';
 import { useCapabilities } from '@/hooks/useCapabilities';
 import { useVenueSuppliers, type VenueSupplier } from '@/hooks/useVenueSuppliers';
@@ -86,6 +86,6 @@ const styles = StyleSheet.create({
   list: { paddingVertical: space.xs },
   row: { flexDirection: 'row', alignItems: 'center', gap: space.md, minHeight: 64, paddingVertical: space.sm },
   flex: { flex: 1, minWidth: 0 },
-  count: { fontFamily: fontFamilies.mono },
+  count: { ...font.figures },
   add: { alignSelf: 'flex-start' },
 });

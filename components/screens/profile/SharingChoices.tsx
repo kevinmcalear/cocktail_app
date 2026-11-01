@@ -3,7 +3,7 @@ import { StyleSheet, View } from 'react-native';
 
 import { Body, Button, Caption, DsText, PressableScale, Segmented, Switch, TextLink, useDs } from '@/components/ds';
 import { IconSymbol } from '@/components/ui/icon-symbol';
-import { fontFamilies, radius, space } from '@/constants/tokens';
+import { font, radius, space } from '@/constants/tokens';
 import { useMyProfile, useSaveSharing, type MyProfile, type SharingChange } from '@/hooks/useMyProfile';
 import { useProfilePositions } from '@/hooks/useProfiles';
 import { modeSummary, SHARE_MODES, type ShareMode } from '@/lib/profiles';
@@ -120,7 +120,7 @@ function LinkRow({ title, value, onPress, last }: { title: string; value: string
 const styles = StyleSheet.create({
   box: { gap: space.xl, marginTop: space.md },
   section: { gap: space.sm },
-  count: { fontFamily: fontFamilies.monoMedium },
+  count: { ...font.figuresMedium },
   card: { borderRadius: radius.card, borderCurve: 'continuous', paddingHorizontal: space.lg },
   row: { flexDirection: 'row', alignItems: 'center', gap: space.md },
   flex: { flex: 1, minWidth: 0 },

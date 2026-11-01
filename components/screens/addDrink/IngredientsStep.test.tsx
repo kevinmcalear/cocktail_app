@@ -1,6 +1,6 @@
 import { fireEvent, screen } from '@testing-library/react-native';
 
-import { renderWithTamagui } from '@/jest.setup';
+import { renderWithProviders } from '@/jest.setup';
 import { combineLines } from '@/lib/batchLines';
 import { EMPTY_DRAFT, newLine } from '@/lib/drinkWizard';
 import { startPrep } from '@/lib/prepKinds';
@@ -29,7 +29,7 @@ const CAMPARI = { id: 'campari', name: 'Campari', item_images: [{ images: { url:
 describe('IngredientsStep', () => {
   test('while the list loads, a typed name is never added as a new ingredient', async () => {
     const set = jest.fn();
-    await renderWithTamagui(<IngredientsStep draft={EMPTY_DRAFT} set={set} ingredients={[]} loading />);
+    await renderWithProviders(<IngredientsStep draft={EMPTY_DRAFT} set={set} ingredients={[]} loading />);
     await fireEvent.changeText(screen.getByLabelText('Add an ingredient'), 'Campari');
 
     expect(screen.getByText('Loading ingredients…')).toBeTruthy();
@@ -40,7 +40,7 @@ describe('IngredientsStep', () => {
 
   test('once loaded, it finds the bottle and still offers a new one', async () => {
     const set = jest.fn();
-    await renderWithTamagui(<IngredientsStep draft={EMPTY_DRAFT} set={set} ingredients={[CAMPARI]} />);
+    await renderWithProviders(<IngredientsStep draft={EMPTY_DRAFT} set={set} ingredients={[CAMPARI]} />);
     await fireEvent.changeText(screen.getByLabelText('Add an ingredient'), 'camp');
 
     expect(screen.getByRole('button', { name: 'Just add the name “camp”' })).toBeTruthy();
@@ -52,7 +52,7 @@ describe('IngredientsStep', () => {
 
   test('a pour typed before the name is the line\'s: "30ml camp" finds Campari at 30 ml, "1/2 pommeau" adds a new one', async () => {
     const set = jest.fn();
-    await renderWithTamagui(<IngredientsStep draft={EMPTY_DRAFT} set={set} ingredients={[CAMPARI]} />);
+    await renderWithProviders(<IngredientsStep draft={EMPTY_DRAFT} set={set} ingredients={[CAMPARI]} />);
     await fireEvent.changeText(screen.getByLabelText('Add an ingredient'), '30ml camp');
     expect(screen.getByText('30 ml of the one you pick')).toBeTruthy();
     await fireEvent.press(screen.getByRole('button', { name: 'Campari' }));
@@ -65,7 +65,7 @@ describe('IngredientsStep', () => {
 
   test('a prep the shelf lacks is made in house from a technique: the line carries its recipe', async () => {
     const set = jest.fn();
-    await renderWithTamagui(<IngredientsStep draft={EMPTY_DRAFT} set={set} ingredients={[CAMPARI]} />);
+    await renderWithProviders(<IngredientsStep draft={EMPTY_DRAFT} set={set} ingredients={[CAMPARI]} />);
     await fireEvent.changeText(screen.getByLabelText('Add an ingredient'), 'Clarified grapefruit');
 
     await fireEvent.press(screen.getByRole('button', { name: 'Make “Clarified grapefruit” in-house' }));
@@ -82,7 +82,7 @@ describe('IngredientsStep', () => {
 
   test('a shrub starts from its name: the fruit as the base, equal parts, a cold method', async () => {
     const set = jest.fn();
-    await renderWithTamagui(<IngredientsStep draft={{ ...EMPTY_DRAFT, name: 'Pineapple Heat' }} set={set} ingredients={[CAMPARI]} />);
+    await renderWithProviders(<IngredientsStep draft={{ ...EMPTY_DRAFT, name: 'Pineapple Heat' }} set={set} ingredients={[CAMPARI]} />);
     await fireEvent.changeText(screen.getByLabelText('Add an ingredient'), 'Pineapple chili shrub');
     await fireEvent.press(screen.getByRole('button', { name: 'Make “Pineapple chili shrub” in-house' }));
     await laidOut();
@@ -104,13 +104,13 @@ describe('IngredientsStep', () => {
 
   test('a prep can be left for later: the name now, its recipe to write, and the line offers it', async () => {
     const set = jest.fn();
-    await renderWithTamagui(<IngredientsStep draft={EMPTY_DRAFT} set={set} ingredients={[CAMPARI]} />);
+    await renderWithProviders(<IngredientsStep draft={EMPTY_DRAFT} set={set} ingredients={[CAMPARI]} />);
     await fireEvent.changeText(screen.getByLabelText('Add an ingredient'), 'pineapple chili shrub');
     expect(screen.queryByText('Nothing called that yet. Closest:')).toBeNull();
     await fireEvent.press(screen.getByRole('button', { name: 'Just add the name “pineapple chili shrub”' }));
     expect(set.mock.calls[0][0].lines[0]).toMatchObject({ id: null, name: 'Pineapple chili shrub', later: true });
 
-    await renderWithTamagui(<IngredientsStep draft={{ ...EMPTY_DRAFT, lines: set.mock.calls[0][0].lines }} set={set} ingredients={[CAMPARI]} />);
+    await renderWithProviders(<IngredientsStep draft={{ ...EMPTY_DRAFT, lines: set.mock.calls[0][0].lines }} set={set} ingredients={[CAMPARI]} />);
     // The row stays one ingredient and its pour; what it is and what to do sit behind a tap on the name.
     expect(screen.queryByText('House-made, recipe to write')).toBeNull();
     await fireEvent.press(screen.getByRole('button', { name: /^Pineapple chili shrub, / }));
@@ -120,7 +120,7 @@ describe('IngredientsStep', () => {
 
   test('nothing called that: the closest ingredients, then make it or just add the name', async () => {
     const PINEAPPLE = { id: 'pj', name: 'Pineapple Juice' };
-    await renderWithTamagui(<IngredientsStep draft={EMPTY_DRAFT} set={jest.fn()} ingredients={[CAMPARI, PINEAPPLE]} />);
+    await renderWithProviders(<IngredientsStep draft={EMPTY_DRAFT} set={jest.fn()} ingredients={[CAMPARI, PINEAPPLE]} />);
     await fireEvent.changeText(screen.getByLabelText('Add an ingredient'), 'pineapple chili shrub');
     expect(screen.getByText('Nothing called that yet. Closest:')).toBeTruthy();
     const rows = screen.getAllByRole('button').map((b) => b.props.accessibilityLabel ?? b.props['aria-label']);
@@ -129,7 +129,7 @@ describe('IngredientsStep', () => {
   });
 
   test('whatever is typed, Make it in house comes under the bottles that match, before the name alone', async () => {
-    await renderWithTamagui(<IngredientsStep draft={EMPTY_DRAFT} set={jest.fn()} ingredients={[CAMPARI]} />);
+    await renderWithProviders(<IngredientsStep draft={EMPTY_DRAFT} set={jest.fn()} ingredients={[CAMPARI]} />);
     await fireEvent.changeText(screen.getByLabelText('Add an ingredient'), 'Yuzu juice');
     expect(screen.getByText('No bottle by that name.')).toBeTruthy();
     let rows = screen.getAllByRole('button').map((b) => b.props.accessibilityLabel ?? b.props['aria-label']);
@@ -140,7 +140,7 @@ describe('IngredientsStep', () => {
   });
 
   test('a name that exists can still be made your own', async () => {
-    await renderWithTamagui(<IngredientsStep draft={EMPTY_DRAFT} set={jest.fn()} ingredients={[CAMPARI]} />);
+    await renderWithProviders(<IngredientsStep draft={EMPTY_DRAFT} set={jest.fn()} ingredients={[CAMPARI]} />);
     await fireEvent.changeText(screen.getByLabelText('Add an ingredient'), 'Campari');
     expect(screen.queryByRole('button', { name: /^Just add the name/ })).toBeNull();
     expect(screen.getByRole('button', { name: 'Make “Campari” in-house' })).toBeTruthy();
@@ -150,7 +150,7 @@ describe('IngredientsStep', () => {
   test('a swap opens the same search, Make it in house too, and a bottle picked drops the old one', async () => {
     const set = jest.fn();
     const draft = { ...EMPTY_DRAFT, lines: [{ key: 'a', id: 'lime', name: 'Lime juice', amount: '22.5', unit: 'ml' }] };
-    await renderWithTamagui(<IngredientsStep draft={draft} set={set} ingredients={[CAMPARI]} />);
+    await renderWithProviders(<IngredientsStep draft={draft} set={set} ingredients={[CAMPARI]} />);
     await fireEvent.press(screen.getByRole('button', { name: /^Lime juice, / }));
     // Making in house starts from the search, not the line.
     expect(screen.queryByRole('button', { name: /house/ })).toBeNull();
@@ -165,7 +165,7 @@ describe('IngredientsStep', () => {
   test('a house prep line says what it is, and a tap opens its recipe', async () => {
     const prep = { ...startPrep('shrub', 'Pineapple shrub'), way: 'hot' };
     const draft = { ...EMPTY_DRAFT, name: 'Pineapple Heat', lines: [{ key: 'a', id: null, name: 'Pineapple shrub', amount: '15', unit: 'ml', prep }] };
-    await renderWithTamagui(<IngredientsStep draft={draft} set={jest.fn()} ingredients={[CAMPARI]} />);
+    await renderWithProviders(<IngredientsStep draft={draft} set={jest.fn()} ingredients={[CAMPARI]} />);
     expect(screen.getByText('House-made')).toBeTruthy();
     expect(screen.getByText('Shrub, hot · Pineapple, white sugar, apple cider vinegar · 5 steps')).toBeTruthy();
     await fireEvent.press(screen.getByRole('button', { name: /^Pineapple shrub, 15 ml\. House-made/ }));
@@ -180,7 +180,7 @@ describe('IngredientsStep', () => {
 
   test('the drink’s name says how the rum is made: one tap makes it house, on the real bottle', async () => {
     const set = jest.fn();
-    await renderWithTamagui(<IngredientsStep draft={daiquiri} set={set} ingredients={[CAMPARI, BACARDI, WHITE_RUM]} />);
+    await renderWithProviders(<IngredientsStep draft={daiquiri} set={set} ingredients={[CAMPARI, BACARDI, WHITE_RUM]} />);
     expect(screen.getByText('The name says coconut fat-washed. Make the Bacardí Carta Blanca that way?')).toBeTruthy();
     await fireEvent.press(screen.getByRole('button', { name: 'Make it in-house' }));
     await laidOut();
@@ -197,7 +197,7 @@ describe('IngredientsStep', () => {
   test('a line moves up by its grip, and the new order is what saves', async () => {
     const set = jest.fn();
     const lines = [newLine({ id: 'mezcal', name: 'Mezcal' }, 'ml', '45'), newLine({ id: 'lime', name: 'Lime juice' }, 'ml', '22.5'), newLine({ id: 'agave', name: 'Agave syrup' }, 'ml', '15')];
-    await renderWithTamagui(<IngredientsStep draft={{ ...EMPTY_DRAFT, lines }} set={set} ingredients={[]} />);
+    await renderWithProviders(<IngredientsStep draft={{ ...EMPTY_DRAFT, lines }} set={set} ingredients={[]} />);
 
     expect(screen.getByText('Hold a line and move it over another. Let go to combine them; move away to just reorder.')).toBeTruthy();
     await fireEvent(screen.getByRole('button', { name: 'Reorder Agave syrup' }), 'accessibilityAction', { nativeEvent: { actionName: 'up' } });
@@ -206,9 +206,9 @@ describe('IngredientsStep', () => {
 
   test('held over another, a line offers to combine them into a house prep', async () => {
     // The line under it lights up; a tag above the lifted card says what letting go does, clear of the thumb, and the card keeps its name.
-    await renderWithTamagui(<LineRow line={newLine({ id: 'miso', name: 'Red miso' }, 'g', '5')} dropTarget="Tempus Fugit Crème de Banane" onChange={jest.fn()} onRemove={jest.fn()} onSwap={jest.fn()} />);
+    await renderWithProviders(<LineRow line={newLine({ id: 'miso', name: 'Red miso' }, 'g', '5')} dropTarget="Tempus Fugit Crème de Banane" onChange={jest.fn()} onRemove={jest.fn()} onSwap={jest.fn()} />);
     expect(screen.getByText('Let go to combine')).toBeTruthy();
-    await renderWithTamagui(<LineRow line={newLine({ id: 'tf', name: 'Tempus Fugit Crème de Banane' }, 'ml', '22.5')} lifted combineWith="Red miso" onChange={jest.fn()} onRemove={jest.fn()} onSwap={jest.fn()} />);
+    await renderWithProviders(<LineRow line={newLine({ id: 'tf', name: 'Tempus Fugit Crème de Banane' }, 'ml', '22.5')} lifted combineWith="Red miso" onChange={jest.fn()} onRemove={jest.fn()} onSwap={jest.fn()} />);
     expect(screen.getByText('Let go to make it in-house')).toBeTruthy();
     expect(screen.getByText('Tempus Fugit Crème de Banane + Red miso')).toBeTruthy();
     expect(screen.getByText('Tempus Fugit Crème de Banane')).toBeTruthy();
@@ -225,7 +225,7 @@ describe('IngredientsStep', () => {
   test('two lines combined open the house prep steps on What is it, as a Batch; Done gives the line its recipe', async () => {
     const set = jest.fn();
     const draft = saltyBoy();
-    await renderWithTamagui(<IngredientsStep draft={draft} set={set} ingredients={[]} />);
+    await renderWithProviders(<IngredientsStep draft={draft} set={set} ingredients={[]} />);
     // The drop opens it; here the line just combined is opened by a tap.
     await fireEvent.press(screen.getByRole('button', { name: /^Salty Boy batch, 22\.5 ml/ }));
     await laidOut();
@@ -262,7 +262,7 @@ describe('IngredientsStep', () => {
 
   test('backing out of two lines just combined puts them back', async () => {
     const set = jest.fn();
-    await renderWithTamagui(<IngredientsStep draft={saltyBoy()} set={set} ingredients={[]} />);
+    await renderWithProviders(<IngredientsStep draft={saltyBoy()} set={set} ingredients={[]} />);
     await fireEvent.press(screen.getByRole('button', { name: /^Salty Boy batch, / }));
     await laidOut();
     await fireEvent.press(screen.getByRole('button', { name: 'Back to Salty Boy' }));
@@ -277,7 +277,7 @@ describe('IngredientsStep', () => {
       { id: 'vida', name: 'Del Maguey Vida', generic_id: 'mezcal', ingredient_role: 'product', brand_maker: 'Del Maguey' },
       ...['Banhez Ensamble', 'Ilegal Joven', 'Montelobos Espadín', 'Bozal Cuishe'].map((name, i) => ({ id: `b${i}`, name, generic_id: 'mezcal', ingredient_role: 'product', brand_maker: name.split(' ')[0] })),
     ];
-    await renderWithTamagui(<IngredientsStep draft={EMPTY_DRAFT} set={set} ingredients={ingredients} backBar={new Set(['vida'])} />);
+    await renderWithProviders(<IngredientsStep draft={EMPTY_DRAFT} set={set} ingredients={ingredients} backBar={new Set(['vida'])} />);
     await fireEvent.changeText(screen.getByLabelText('Add an ingredient'), 'mezcal');
 
     expect(screen.getByText('Any mezcal · add it as it is')).toBeTruthy();

@@ -1,6 +1,6 @@
 import { fireEvent, screen } from '@testing-library/react-native';
 
-import { renderWithTamagui } from '@/jest.setup';
+import { renderWithProviders } from '@/jest.setup';
 import type { MyProfile } from '@/hooks/useMyProfile';
 import type { HadDrink } from '@/lib/hadDrinks';
 
@@ -70,18 +70,18 @@ beforeEach(() => {
 describe('YouScreen', () => {
   test('your taste in a line, with the way to change it', async () => {
     mockTaste = { taste: {}, entries: [], baseline: null, answers: null, rankedDrinks: 0 };
-    await renderWithTamagui(<YouScreen />);
+    await renderWithProviders(<YouScreen />);
     await fireEvent.press(screen.getByRole('link', { name: /^Your taste\. Not set yet\. Tell us what you like/ }));
     expect(mockPush).toHaveBeenCalledWith('/taste');
 
     mockTaste = { taste: { bitter: 0.9, strong: 0.95, smoky: 0.7, sour: 0.2 }, entries: [], baseline: null, answers: null, rankedDrinks: 3 };
-    await renderWithTamagui(<YouScreen />);
+    await renderWithProviders(<YouScreen />);
     expect(screen.getByText('Bitter and smoky.')).toBeTruthy();
     expect(screen.getByText("From the 3 drinks you've ranked.")).toBeTruthy();
   });
 
   test('nothing ranked yet: says how to start, and offers a public profile', async () => {
-    await renderWithTamagui(<YouScreen />);
+    await renderWithProviders(<YouScreen />);
     expect(screen.getByText('Jo Juniper')).toBeTruthy();
     expect(screen.getByText('No public profile yet')).toBeTruthy();
     expect(screen.getByLabelText('0 drinks')).toBeTruthy();
@@ -97,14 +97,14 @@ describe('YouScreen', () => {
   test('a claim waiting on a page: says so, and offers the page, not a second profile', async () => {
     mockClaim = { status: 'pending', confirm_bar: null, profile: { id: 'mr', handle: 'mathew.resler', display_name: 'Mathew Resler' } };
     try {
-      await renderWithTamagui(<YouScreen />);
+      await renderWithProviders(<YouScreen />);
       expect(screen.getByText('Claim sent for Mathew Resler · A person checks it, usually within a day')).toBeTruthy();
       expect(screen.queryByRole('button', { name: 'Make a public profile' })).toBeNull();
       await fireEvent.press(screen.getByRole('button', { name: 'See the page' }));
       expect(mockPush).toHaveBeenCalledWith('/p/mathew.resler');
 
       mockClaim = { ...mockClaim, confirm_bar: 'omakase' };
-      await renderWithTamagui(<YouScreen />);
+      await renderWithProviders(<YouScreen />);
       expect(screen.getByText('Claim sent for Mathew Resler · Cocktail Omakase’s Admin confirms it')).toBeTruthy();
     } finally {
       mockClaim = null;
@@ -115,7 +115,7 @@ describe('YouScreen', () => {
     mockProfile = { id: 'p1', handle: 'jo.home', displayName: 'Jo', bio: null, instagram: null, isPublic: true, sharing: { had: 'picked', bars: 'all', originals: 'all' }, showsDates: false, isModerated: false, tagline: 'Home bartender', headlinePositionId: null, showsPhoto: true, awardsMode: 'all', showsCity: true, city: 'Melbourne' };
     mockHad = [drink('a', 'Bolo Tie', 10), drink('b', 'Penicillin', 6.6), drink('c', 'Negroni', 5, { venue: null, hadOn: null })];
     mockPicks = { a: { onProfile: true, pin: 1, saysWhere: true } };
-    await renderWithTamagui(<YouScreen />);
+    await renderWithProviders(<YouScreen />);
     expect(screen.getByText('@jo.home · Melbourne · Public profile')).toBeTruthy();
     expect(screen.getByText('Home bartender')).toBeTruthy();
     expect(screen.getByLabelText('3 drinks')).toBeTruthy();

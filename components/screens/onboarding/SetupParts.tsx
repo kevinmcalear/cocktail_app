@@ -4,7 +4,7 @@ import { StyleSheet, View } from 'react-native';
 import { Body, Button, Caption, DsText, PressableScale, useDs } from '@/components/ds';
 import { SafetyPage } from '@/components/screens/safety/SafetyPage';
 import { IconSymbol } from '@/components/ui/icon-symbol';
-import { fontFamilies, layout, radius, space } from '@/constants/tokens';
+import { font, fontFamilies, layout, radius, space } from '@/constants/tokens';
 
 /** "Little Rye" -> "LR": the first letters of the first two words ("Cellar & Co" -> "CC", the "&" isn't one). */
 export function initials(name: string): string {
@@ -41,7 +41,7 @@ export function Monogram({ name, size = 48, accent, italic, quiet, plain }: { na
         // A person's small initial, in the body face (canvas make-onboarding-find).
         <Caption tone="muted">{initials(name)}</Caption>
       ) : (
-      <DsText variant={size >= 64 ? 'title' : 'headline'} italic={italic} color={tone} style={size >= 64 ? null : { fontFamily: italic ? fontFamilies.instrumentItalic : fontFamilies.instrument }}>
+      <DsText variant={size >= 64 ? 'title' : 'headline'} italic={italic} color={tone} style={size >= 64 ? null : { fontFamily: italic ? fontFamilies.nameItalic : fontFamilies.name }}>
         {initials(name)}
       </DsText>
       )}
@@ -89,12 +89,12 @@ export function Answer({ label, detail, onPress }: { label: string; detail: stri
 }
 
 const styles = StyleSheet.create({
-  head: { letterSpacing: 1.2, fontFamily: fontFamilies.bodyMedium, marginTop: space.sm },
+  head: { letterSpacing: 1.2, ...font.medium, marginTop: space.sm },
   mark: { borderRadius: radius.pill, borderWidth: 1, alignItems: 'center', justifyContent: 'center', overflow: 'hidden' },
   card: { flexDirection: 'row', alignItems: 'flex-start', gap: space.md, padding: space.lg, borderRadius: radius.card, borderCurve: 'continuous', borderWidth: 1 },
   dot: { width: 22, height: 22, borderRadius: radius.pill, marginTop: 1 },
   flex: { flex: 1, minWidth: 0, gap: space.xs },
-  strong: { fontFamily: fontFamilies.bodySemiBold },
+  strong: { ...font.semiBold },
   answer: { minHeight: layout.minTapTarget + space.xxl, borderRadius: radius.card, borderCurve: 'continuous', paddingHorizontal: space.xl, paddingVertical: space.md, flexDirection: 'row', alignItems: 'center', gap: space.md },
   answerText: { flex: 1, minWidth: 0 },
 });

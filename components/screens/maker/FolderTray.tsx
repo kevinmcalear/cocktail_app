@@ -3,7 +3,7 @@ import { Platform, StyleSheet, View } from 'react-native';
 
 import { Body, Button, Caption, Display, Surface, useBreakpoint, useDs, useToast } from '@/components/ds';
 import { IconSymbol } from '@/components/ui/icon-symbol';
-import { fontFamilies, radius, space } from '@/constants/tokens';
+import { font, radius, space } from '@/constants/tokens';
 import type { MakerBottle } from '@/hooks/useMakers';
 import type { MakerBottlePhoto } from '@/hooks/useMakerPhotos';
 import type { usePhotoFolder } from '@/hooks/usePhotoFolder';
@@ -117,6 +117,6 @@ const styles = StyleSheet.create({
   flex: { flex: 1, minWidth: 0 },
   actionsWide: { flexDirection: 'row', gap: space.sm },
   card: { flexDirection: 'row', alignItems: 'center', gap: space.md, borderWidth: 1, borderStyle: 'dashed', borderRadius: radius.card },
-  mono: { fontFamily: fontFamilies.mono },
+  mono: { ...font.figures },
   actions: { gap: space.sm },
 });

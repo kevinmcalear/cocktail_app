@@ -3,9 +3,6 @@ import 'react-native-gesture-handler/jestSetup';
 import { render } from '@testing-library/react-native';
 import type { ReactElement, ReactNode } from 'react';
 import { GestureHandlerRootView } from 'react-native-gesture-handler';
-import { TamaguiProvider } from 'tamagui';
-
-import tamaguiConfig from '@/tamagui.config';
 
 // These call into native modules on import; each ships its own Jest mock.
 jest.mock('react-native-worklets', () => jest.requireActual('react-native-worklets/src/mock'));
@@ -19,17 +16,10 @@ jest.mock('react-native-safe-area-context', () =>
   jest.requireActual<{ default: object }>('react-native-safe-area-context/jest/mock').default
 );
 
-// The same providers app/_layout.tsx wraps the app in: Tamagui, so $tokens and
-// themes resolve, and gesture-handler's root view, which gesture-handler 3
-// requires around every GestureDetector (edit mode's drag handles).
-function TamaguiWrapper({ children }: { children: ReactNode }) {
-  return (
-    <GestureHandlerRootView>
-      <TamaguiProvider config={tamaguiConfig} defaultTheme="light">
-        {children}
-      </TamaguiProvider>
-    </GestureHandlerRootView>
-  );
+// Gesture-handler's root view, as app/_layout.tsx has it: gesture-handler 3
+// requires one around every GestureDetector (edit mode's drag handles).
+function Providers({ children }: { children: ReactNode }) {
+  return <GestureHandlerRootView>{children}</GestureHandlerRootView>;
 }
 
-export const renderWithTamagui = (ui: ReactElement) => render(ui, { wrapper: TamaguiWrapper });
+export const renderWithProviders = (ui: ReactElement) => render(ui, { wrapper: Providers });

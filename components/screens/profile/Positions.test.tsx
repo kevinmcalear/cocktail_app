@@ -1,6 +1,6 @@
 import { screen } from '@testing-library/react-native';
 
-import { renderWithTamagui } from '@/jest.setup';
+import { renderWithProviders } from '@/jest.setup';
 
 import { Positions } from './Positions';
 
@@ -30,7 +30,7 @@ beforeEach(() => {
 });
 
 test('a person shows where they work now, not where they used to', async () => {
-  await renderWithTamagui(<Positions profile={{ id: 'jo', kind: 'person' }} />);
+  await renderWithProviders(<Positions profile={{ id: 'jo', kind: 'person' }} />);
   expect(screen.getByText('Attaboy · 2023 to now')).toBeTruthy();
   expect(screen.queryByText(/Milk & Honey/)).toBeNull();
   expect(screen.queryByText('Previously')).toBeNull();
@@ -38,7 +38,7 @@ test('a person shows where they work now, not where they used to', async () => {
 
 test('a shown past job sits under Previously, apart from where they work now', async () => {
   mockShown = true;
-  await renderWithTamagui(<Positions profile={{ id: 'jo', kind: 'person' }} />);
+  await renderWithProviders(<Positions profile={{ id: 'jo', kind: 'person' }} />);
   expect(screen.getByText('Works at')).toBeTruthy();
   expect(screen.getByText('Previously')).toBeTruthy();
   // The title first, the bar and its years, then who confirmed it (ppl-person).
@@ -48,7 +48,7 @@ test('a shown past job sits under Previously, apart from where they work now', a
 
 test('a bar splits its people into the current team and previous staff', async () => {
   mockShown = true;
-  await renderWithTamagui(<Positions profile={{ id: 'attaboy', kind: 'bar' }} emptyText="Nobody yet." />);
+  await renderWithProviders(<Positions profile={{ id: 'attaboy', kind: 'bar' }} emptyText="Nobody yet." />);
   expect(screen.getByText('Current team')).toBeTruthy();
   expect(screen.getByText('Previous')).toBeTruthy();
 });
@@ -56,14 +56,14 @@ test('a bar splits its people into the current team and previous staff', async (
 test('a bar with only past staff shows no current team heading', async () => {
   mockShown = true;
   mockOnlyPast = true;
-  await renderWithTamagui(<Positions profile={{ id: 'milk', kind: 'bar' }} emptyText="Nobody yet." />);
+  await renderWithProviders(<Positions profile={{ id: 'milk', kind: 'bar' }} emptyText="Nobody yet." />);
   expect(screen.queryByText('Current team')).toBeNull();
   expect(screen.getByText('Previous')).toBeTruthy();
 });
 
 test('a job that is not confirmed yet is marked pending (only the two sides can read it)', async () => {
   mockPending = true;
-  await renderWithTamagui(<Positions profile={{ id: 'jo', kind: 'person' }} />);
+  await renderWithProviders(<Positions profile={{ id: 'jo', kind: 'person' }} />);
   expect(screen.getByText('Barback')).toBeTruthy();
   expect(screen.getByText('Not confirmed by the bar yet')).toBeTruthy();
 });

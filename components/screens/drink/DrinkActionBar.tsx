@@ -4,7 +4,7 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import { DsText, GlassSurface, PressableScale, useDs, useGutter, type IconName } from '@/components/ds';
 import { IconSymbol } from '@/components/ui/icon-symbol';
-import { fontFamilies, radius, space } from '@/constants/tokens';
+import { font, radius, space } from '@/constants/tokens';
 import { withAlpha } from '@/lib/color';
 
 /** How tall the pinned bar is, for the page's bottom padding. */
@@ -83,5 +83,5 @@ const styles = StyleSheet.create({
   button: { height: 52, borderRadius: radius.pill, borderCurve: 'continuous', alignItems: 'center', justifyContent: 'center', paddingHorizontal: space.md },
   pill: { paddingHorizontal: space.xl },
   inner: { flexDirection: 'row', alignItems: 'center', gap: space.xs + 2 },
-  label: { fontFamily: fontFamilies.bodySemiBold },
+  label: { ...font.semiBold },
 });

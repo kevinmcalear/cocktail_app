@@ -5,7 +5,7 @@ import { StyleSheet, View } from 'react-native';
 import { Caption, DsText, Headline, PressableScale, TextLink, useDs } from '@/components/ds';
 import { DrinkThumb, MenuRowFrame } from '@/components/screens/menus/MenuRows';
 import { IconSymbol } from '@/components/ui/icon-symbol';
-import { fontFamilies, space } from '@/constants/tokens';
+import { font, space } from '@/constants/tokens';
 import { FIFTY_BEST_READ, useBarMenusForYou, useFiftyBest, type BarMenuForYou } from '@/hooks/useBarMenusForYou';
 import { useSavedMenus } from '@/hooks/useKept';
 import { useMyHadDrinks } from '@/hooks/useRankings';
@@ -121,6 +121,6 @@ const styles = StyleSheet.create({
   head: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', gap: space.md },
   group: { gap: space.sm + 2 },
   flex: { flex: 1, minWidth: 0 },
-  semi: { fontFamily: fontFamilies.bodySemiBold },
+  semi: { ...font.semiBold },
   news: { flexDirection: 'row', alignItems: 'center', gap: space.md, minHeight: 60, paddingVertical: space.sm, borderBottomWidth: StyleSheet.hairlineWidth },
 });

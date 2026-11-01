@@ -4,8 +4,7 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import { Body, Button, Caption, PressableScale, Surface, useDs, useGutter, type IconName, Switch } from '@/components/ds';
 import { IconSymbol } from '@/components/ui/icon-symbol';
-import { STATUS } from '@/constants/palette';
-import { fontFamilies, layout, radius, space } from '@/constants/tokens';
+import { font, layout, radius, space, STATUS } from '@/constants/tokens';
 import { withAlpha } from '@/lib/color';
 import { useIsWideWeb } from '@/hooks/useIsWideWeb';
 
@@ -113,7 +112,7 @@ export function ChoiceChips<T extends string>({ label, options, value, onChange 
             onPress={() => onChange(o.id)}
             style={[styles.choice, { borderColor: on ? ds.accentText : ds.c.lineStrong, backgroundColor: on ? withAlpha(ds.accentText, 0.16) : 'transparent' }]}
           >
-            <Body style={{ fontFamily: on ? fontFamilies.bodySemiBold : fontFamilies.body }}>{o.label}</Body>
+            <Body style={{ ...(on ? font.semiBold : font.regular) }}>{o.label}</Body>
           </PressableScale>
         );
       })}

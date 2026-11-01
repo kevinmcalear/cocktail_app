@@ -7,7 +7,7 @@ import Animated, { useAnimatedStyle, useReducedMotion, useSharedValue, withSeque
 import { Caption, PressableScale, Tag, useDs } from '@/components/ds';
 import { IconSymbol } from '@/components/ui/icon-symbol';
 import { ViewAsPill } from '@/components/ViewAsBanner';
-import { backbar, fontFamilies, layout, radius, space, springs } from '@/constants/tokens';
+import { backbar, font, layout, radius, space, springs } from '@/constants/tokens';
 import { withAlpha } from '@/lib/color';
 
 import { Trail, type TrailItem } from './Trail';
@@ -201,7 +201,7 @@ const styles = StyleSheet.create({
   controls: { alignSelf: 'stretch', flexDirection: 'row', alignItems: 'center', gap: space.md },
   back: { width: layout.minTapTarget, height: layout.minTapTarget, borderRadius: radius.pill, alignItems: 'center', justifyContent: 'center' },
   backTo: { flexDirection: 'row', alignItems: 'center', gap: space.xs, minHeight: layout.minTapTarget, paddingLeft: space.sm, paddingRight: space.md, borderRadius: radius.pill, flexShrink: 1 },
-  backToLabel: { fontFamily: fontFamilies.bodyMedium, flexShrink: 1 },
+  backToLabel: { ...font.medium, flexShrink: 1 },
   spacer: { flex: 1 },
   // The bar keeps some length however long the label is; the label gives way.
   track: { flex: 1, minWidth: layout.minTapTarget, height: 4, borderRadius: radius.pill, overflow: 'hidden' },
@@ -211,7 +211,7 @@ const styles = StyleSheet.create({
   // In the compact column the bar is a row of its own, not beside the label.
   trackCompact: { flex: 0, alignSelf: 'stretch' },
   fill: { height: 4, borderRadius: radius.pill },
-  mono: { fontFamily: fontFamilies.monoMedium },
+  mono: { ...font.figuresMedium },
   drawing: { marginTop: space.sm },
   hidden: { opacity: 0 },
   foot: { alignSelf: 'stretch', flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between' },

@@ -1,7 +1,7 @@
 import { fireEvent, screen } from '@testing-library/react-native';
 
 import type { BarGlass } from '@/hooks/useBarGlassware';
-import { renderWithTamagui } from '@/jest.setup';
+import { renderWithProviders } from '@/jest.setup';
 import { EMPTY_DRAFT, type WizardDraft } from '@/lib/drinkWizard';
 
 import { GlassStep } from './GlassStep';
@@ -26,7 +26,7 @@ const last = (set: jest.Mock) => set.mock.calls.at(-1)[0];
 
 test("a shape that is one of the bar's real glasses saves that glass; another shape lets it go", async () => {
   const set = jest.fn();
-  await renderWithTamagui(<GlassStep draft={draft} set={set} options={OPTIONS} barId="bar" barGlasses={BAR} barVariants={['coupe_wide']} />);
+  await renderWithProviders(<GlassStep draft={draft} set={set} options={OPTIONS} barId="bar" barGlasses={BAR} barVariants={['coupe_wide']} />);
   await fireEvent.press(screen.getByRole('radio', { name: /Fenwick coupe/ }));
   expect(last(set)).toEqual({ glassVariant: 'coupe_wide', glassModelId: 'm-fenwick' });
   await fireEvent.press(screen.getByRole('radio', { name: /Saucer coupe/ }));

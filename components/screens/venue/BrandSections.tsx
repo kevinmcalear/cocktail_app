@@ -51,7 +51,7 @@ export function LogoRow({ venue, logoUrl, busy, onPick, onRemoveBackground, onRe
         {logoUrl ? (
           <LogoImage uri={logoUrl} size={LOGO} radius={radius.control} style={[styles.logo, { borderColor: ds.c.line }]} onLoad={(s) => setSize({ url: logoUrl, ...s })} />
         ) : (
-          <VenueMark venue={{ ...venue, logoUrl: null, displayFace: 'instrument', groundTint: null, roleLevel: 40 }} size={LOGO} />
+          <VenueMark venue={{ ...venue, logoUrl: null, displayFace: 'redaction', groundTint: null, roleLevel: 40 }} size={LOGO} />
         )}
         <View style={styles.flex}>
           <Body numberOfLines={1}>{logoUrl ? fileName(logoUrl) : 'No logo yet'}</Body>
@@ -102,7 +102,7 @@ function BeforeAfter({ before, after }: { before: string; after: string }) {
 
 /** How each face sets the sample, as tools-brand-desktop draws them: Fraunces in its italic, the wide sans a step smaller. */
 const FACE_SAMPLE: Record<DisplayFace, { italic?: boolean; scale?: number }> = {
-  instrument: {},
+  redaction: {},
   fraunces: { italic: true },
   playfair: {},
   bricolage: { scale: 28 / 32 },

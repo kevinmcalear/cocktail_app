@@ -2,7 +2,7 @@ import { useState } from 'react';
 import { StyleSheet, TextInput, View } from 'react-native';
 
 import { Caption, useDs } from '@/components/ds';
-import { fontFamilies, radius, space, type } from '@/constants/tokens';
+import { font, radius, space, type } from '@/constants/tokens';
 import type { PrepDraft } from '@/lib/prepKinds';
 import { prepShares } from '@/lib/prepShares';
 
@@ -38,7 +38,7 @@ export function NumberField({ label, value, onChange, suffix, placeholder }: { l
           else if (!t.trim()) onChange(0);
         }}
         onBlur={() => setText(null)}
-        style={[styles.input, type.spec, { fontFamily: fontFamilies.mono, color: ds.c.ink }]}
+        style={[styles.input, type.spec, { ...font.figures, color: ds.c.ink }]}
       />
       {suffix ? <Caption tone="muted" style={styles.suffix}>{suffix}</Caption> : null}
     </View>

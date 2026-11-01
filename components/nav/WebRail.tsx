@@ -5,7 +5,7 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { DsText, GlassButton, PressableScale, useDs } from '@/components/ds';
 import { IconSymbol } from '@/components/ui/icon-symbol';
 import { CurrentUserAvatar, useUserDisplayName } from '@/components/ui/UserAvatar';
-import { fontFamilies, layout, radius, space } from '@/constants/tokens';
+import { font, layout, radius, space } from '@/constants/tokens';
 import { WEB_RAIL_WIDTH } from '@/hooks/useIsWideWeb';
 import { currentProps } from '@/lib/a11yState';
 import { withAlpha } from '@/lib/color';
@@ -92,7 +92,7 @@ const styles = StyleSheet.create({
   // A tab the venue just switched on: the phone bar's dot, by the icon's top right.
   // The board sets these 13/16 with no tracking, so a semibold Collection still fits the 64.
   label: { lineHeight: 16, letterSpacing: 0 },
-  strong: { fontFamily: fontFamilies.bodySemiBold },
+  strong: { ...font.semiBold },
   new: { width: layout.minTapTarget, height: layout.minTapTarget, marginTop: space.sm, borderRadius: radius.pill, borderWidth: 1, alignItems: 'center', justifyContent: 'center' },
   you: { marginTop: 'auto', minWidth: layout.minTapTarget, minHeight: layout.minTapTarget, alignItems: 'center', justifyContent: 'center' },
 });

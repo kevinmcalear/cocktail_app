@@ -2,7 +2,7 @@ import { usePathname, useRouter } from 'expo-router';
 import { StyleSheet, View } from 'react-native';
 
 import { DsText, PressableScale, useDs } from '@/components/ds';
-import { fontFamilies, radius, space } from '@/constants/tokens';
+import { font, radius, space } from '@/constants/tokens';
 import { useActiveVenue } from '@/hooks/useActiveVenue';
 import { useMode } from '@/hooks/useMode';
 import { useBarWeek, useMyWeek, useWeekStart } from '@/hooks/useWeek';
@@ -88,7 +88,7 @@ function WeekNavList({ items, member }: { items: WeekItem[]; member: boolean }) 
 const styles = StyleSheet.create({
   section: { marginTop: space.lg, gap: 2 },
   heading: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', minHeight: 36, paddingHorizontal: space.md, borderRadius: radius.control },
-  headingLabel: { fontFamily: fontFamilies.monoMedium, textTransform: 'uppercase', letterSpacing: 1 },
+  headingLabel: { ...font.figuresMedium, textTransform: 'uppercase', letterSpacing: 1 },
   empty: { paddingHorizontal: space.md },
   row: { flexDirection: 'row', alignItems: 'center', gap: space.md, minHeight: 40, paddingHorizontal: space.md, borderRadius: radius.control },
   dot: { width: 18, alignItems: 'center' },

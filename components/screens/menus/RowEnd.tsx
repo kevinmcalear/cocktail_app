@@ -1,9 +1,9 @@
 import { Spec, useDs } from '@/components/ds';
-import { STATUS } from '@/constants/palette';
 import { readableAccent } from '@/lib/color';
 import { menuRowShelf, needLine, type ShelfMatch } from '@/lib/collectionStages';
 import { printedPrice } from '@/lib/menus';
 import type { MenuDrink } from '@/types/menus';
+import { STATUS } from '@/constants/tokens';
 
 /** What a page row's end says, for its label: "ready to make", "Need Cynar", or the price. */
 export function rowEndLabel(drink: MenuDrink, shelf?: ShelfMatch | null): string | null {

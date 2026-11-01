@@ -4,7 +4,7 @@ import { Linking, StyleSheet, View } from 'react-native';
 
 import { Body, Button, Caption, DrinkImage, PressableScale, RowScore, Spec, Title, useDs } from '@/components/ds';
 import { IconSymbol } from '@/components/ui/icon-symbol';
-import { fontFamilies, layout, radius, space } from '@/constants/tokens';
+import { font, layout, radius, space } from '@/constants/tokens';
 import { useCocktail } from '@/hooks/useCocktails';
 import { useItemScores } from '@/hooks/useFlavor';
 import { useHistoryStory } from '@/hooks/useHistoryStory';
@@ -182,7 +182,7 @@ const styles = StyleSheet.create({
   head: { flexDirection: 'row', alignItems: 'center', gap: space.md + 2 },
   tile: { width: TILE, height: TILE },
   flex: { flex: 1, minWidth: 0 },
-  label: { fontFamily: fontFamilies.mono, letterSpacing: 1.2, textTransform: 'uppercase' },
+  label: { ...font.figures, letterSpacing: 1.2, textTransform: 'uppercase' },
   fact: { gap: space.xs + 2 },
   chips: { flexDirection: 'row', flexWrap: 'wrap', gap: space.xs + 2 },
   chip: { minHeight: space.xxl, flexDirection: 'row', alignItems: 'center', gap: space.xs + 2, paddingHorizontal: space.sm + 2, borderRadius: radius.pill, maxWidth: '100%' },

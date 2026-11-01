@@ -11,10 +11,8 @@ import { WebHead } from '@/components/WebHead';
 import { StatusBar } from "expo-status-bar";
 import { GestureRoot } from '@/components/ds/GestureRoot';
 import { useEffect } from "react";
-import { palette } from "@/constants/palette";
+import { backbar } from "@/constants/tokens";
 import '@/lib/reanimatedSetup';
-import { TamaguiProvider, Theme } from 'tamagui';
-import tamaguiConfig from '../tamagui.config';
 
 import { DialogHost } from '@/components/DialogHost';
 import { ToastHost } from '@/components/ds/Toast';
@@ -233,7 +231,7 @@ function RootLayoutNav() {
 function useWebThemeChrome(scheme: 'light' | 'dark') {
   useEffect(() => {
     if (Platform.OS !== 'web' || typeof document === 'undefined') return;
-    const background = palette[scheme].background;
+    const background = backbar[scheme].ground;
     document.querySelectorAll('meta[name="theme-color"]').forEach((m) => {
       m.setAttribute('content', background);
     });
@@ -261,23 +259,19 @@ export default function RootLayout() {
   }, []);
   if (!fontsLoaded && Platform.OS !== 'web') { return null; }
   return (
-    <TamaguiProvider config={tamaguiConfig} defaultTheme={colorScheme === "dark" ? "dark" : "light"}>
-      <Theme name={colorScheme === "dark" ? "dark" : "light"}>
-        <PersistQueryClientProvider client={queryClient} persistOptions={persistOptions} onSuccess={resumeSavedWrites}>
-          <GestureRoot style={{ flex: 1 }}>
-            <AuthProvider>
-              <ObservabilityProvider>
-                <OfflineBanner />
-                <ViewAsBanner />
-                <RootLayoutNav />
-              </ObservabilityProvider>
-            </AuthProvider>
-            <DialogHost />
-            <ToastHost />
-            {Platform.OS === 'web' ? <Toaster /> : null}
-          </GestureRoot>
-        </PersistQueryClientProvider>
-      </Theme>
-    </TamaguiProvider>
+    <PersistQueryClientProvider client={queryClient} persistOptions={persistOptions} onSuccess={resumeSavedWrites}>
+      <GestureRoot style={{ flex: 1 }}>
+        <AuthProvider>
+          <ObservabilityProvider>
+            <OfflineBanner />
+            <ViewAsBanner />
+            <RootLayoutNav />
+          </ObservabilityProvider>
+        </AuthProvider>
+        <DialogHost />
+        <ToastHost />
+        {Platform.OS === 'web' ? <Toaster /> : null}
+      </GestureRoot>
+    </PersistQueryClientProvider>
   );
 }

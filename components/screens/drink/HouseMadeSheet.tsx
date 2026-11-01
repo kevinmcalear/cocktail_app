@@ -2,7 +2,7 @@ import { useRouter, type Href } from 'expo-router';
 import { ScrollView, StyleSheet, View } from 'react-native';
 
 import { Body, Button, Caption, DsText, Headline, IngredientThumb, Sheet, Spec, useDs, useSheetClose } from '@/components/ds';
-import { fontFamilies, radius, space, type } from '@/constants/tokens';
+import { font, radius, space, type } from '@/constants/tokens';
 import { useIngredient } from '@/hooks/useIngredients';
 import { useItemPrep } from '@/hooks/usePrepCard';
 import { keepsFor } from '@/lib/batchPrep';
@@ -110,7 +110,7 @@ const styles = StyleSheet.create({
   facts: { flexDirection: 'row', gap: space.sm },
   fact: { flex: 1, minWidth: 0, paddingVertical: space.sm + 2, paddingHorizontal: space.md, borderRadius: radius.control, gap: 2 },
   value: { fontSize: type.caption.fontSize + 2, lineHeight: type.caption.lineHeight + 2 },
-  medium: { fontFamily: fontFamilies.bodyMedium },
+  medium: { ...font.medium },
   part: { flexDirection: 'row', alignItems: 'center', gap: space.md, paddingVertical: space.sm, borderBottomWidth: StyleSheet.hairlineWidth },
   amount: { width: 88 },
   actions: { flexDirection: 'row', gap: space.sm },

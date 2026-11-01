@@ -3,7 +3,7 @@ import { Platform, StyleSheet, TextInput, View, type StyleProp, type ViewStyle }
 
 import { Button, Caption, GlassSurface, PressableScale, useDs } from '@/components/ds';
 import { IconSymbol } from '@/components/ui/icon-symbol';
-import { fontFamilies, layout, radius, space, type } from '@/constants/tokens';
+import { font, layout, radius, space, type } from '@/constants/tokens';
 
 interface SearchFieldProps {
   query: string;
@@ -153,11 +153,11 @@ const styles = StyleSheet.create({
   },
   ring: { borderWidth: 1 },
   bare: { borderWidth: 0, paddingLeft: 0 },
-  input: { ...type.body, fontFamily: fontFamilies.body, flex: 1, minWidth: 0, paddingVertical: space.md },
+  input: { ...type.body, ...font.regular, flex: 1, minWidth: 0, paddingVertical: space.md },
   clear: { width: layout.minTapTarget, height: layout.minTapTarget, alignItems: 'center', justifyContent: 'center' },
   esc: { minHeight: layout.minTapTarget, justifyContent: 'center', paddingRight: space.md },
   cancel: { width: layout.minTapTarget + space.xs, height: layout.minTapTarget + space.xs, borderRadius: radius.pill, alignItems: 'center', justifyContent: 'center' },
   cancelRing: { borderWidth: StyleSheet.hairlineWidth },
   cap: { borderWidth: 1, borderRadius: radius.mark, paddingHorizontal: space.sm - 2, minWidth: space.xl, alignItems: 'center' },
-  capText: { fontFamily: fontFamilies.monoMedium },
+  capText: { ...font.figuresMedium },
 });

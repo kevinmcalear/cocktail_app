@@ -3,7 +3,7 @@ import { StyleSheet, View } from 'react-native';
 
 import { Caption, PressableScale, useDs } from '@/components/ds';
 import { IconSymbol } from '@/components/ui/icon-symbol';
-import { fontFamilies, layout, space } from '@/constants/tokens';
+import { font, layout, space } from '@/constants/tokens';
 
 interface FactRowProps {
   /** What the fact is, small above it: "Family", "First in print". */
@@ -72,6 +72,6 @@ const styles = StyleSheet.create({
   wrap: { borderTopWidth: StyleSheet.hairlineWidth },
   row: { flexDirection: 'row', alignItems: 'center', gap: space.md, minHeight: layout.minTapTarget, paddingVertical: space.md },
   text: { flex: 1, minWidth: 0, gap: space.xs },
-  label: { fontFamily: fontFamilies.mono, letterSpacing: 1.2, textTransform: 'uppercase' },
+  label: { ...font.figures, letterSpacing: 1.2, textTransform: 'uppercase' },
   more: { gap: space.md, paddingBottom: space.lg },
 });

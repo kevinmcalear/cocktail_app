@@ -1,6 +1,6 @@
 import { fireEvent, screen } from '@testing-library/react-native';
 
-import { renderWithTamagui } from '@/jest.setup';
+import { renderWithProviders } from '@/jest.setup';
 
 import { BarClassics } from './BarClassics';
 
@@ -18,7 +18,7 @@ jest.mock('@/hooks/useStaffList', () => ({
 }));
 
 test('a bar page starts at the top 10, then shows the rest of the top 50 and the other classics', async () => {
-  await renderWithTamagui(<BarClassics barId="bar" />);
+  await renderWithProviders(<BarClassics barId="bar" />);
   expect(screen.getByText('Classics they pour · Top 10')).toBeTruthy();
   expect(screen.queryByText('House Daiquiri')).toBeNull();
   await fireEvent.press(screen.getByRole('button', { name: 'All 3 classics' }));
@@ -30,6 +30,6 @@ test('a bar page starts at the top 10, then shows the rest of the top 50 and the
 });
 
 test('no bar means no list', async () => {
-  await renderWithTamagui(<BarClassics barId={null} />);
+  await renderWithProviders(<BarClassics barId={null} />);
   expect(screen.queryByText(/Top 10/)).toBeNull();
 });

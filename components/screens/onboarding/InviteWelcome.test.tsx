@@ -1,6 +1,6 @@
 import { fireEvent, screen } from '@testing-library/react-native';
 
-import { renderWithTamagui } from '@/jest.setup';
+import { renderWithProviders } from '@/jest.setup';
 import type { MyInvite } from '@/hooks/useBarInvites';
 
 import { InviteWelcome } from './InviteWelcome';
@@ -34,7 +34,7 @@ beforeEach(() => {
 
 test('an invite to a venue still waiting on its claim is held, and setup carries on', async () => {
   const onDeclined = jest.fn();
-  await renderWithTamagui(<InviteWelcome invite={{ ...invite, held: true }} onJoined={jest.fn()} onDeclined={onDeclined} />);
+  await renderWithProviders(<InviteWelcome invite={{ ...invite, held: true }} onJoined={jest.fn()} onDeclined={onDeclined} />);
   expect(screen.getByText(/You join Caretakers once its claim is approved/)).toBeTruthy();
   expect(screen.queryByRole('button', { name: 'Accept and start' })).toBeNull();
   await fireEvent.press(screen.getByRole('button', { name: 'Carry on' }));
@@ -44,7 +44,7 @@ test('an invite to a venue still waiting on its claim is held, and setup carries
 test('accepting while the claim waits does not enter the venue', async () => {
   const onJoined = jest.fn();
   mockAccept.mockImplementation((_v, opts) => opts?.onSuccess?.({ held: true }));
-  await renderWithTamagui(<InviteWelcome invite={invite} onJoined={onJoined} onDeclined={jest.fn()} />);
+  await renderWithProviders(<InviteWelcome invite={invite} onJoined={onJoined} onDeclined={jest.fn()} />);
   await fireEvent.press(screen.getByRole('button', { name: 'Accept and start' }));
   expect(onJoined).not.toHaveBeenCalled();
 });

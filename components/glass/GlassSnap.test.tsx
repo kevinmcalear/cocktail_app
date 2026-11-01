@@ -1,7 +1,7 @@
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { fireEvent, screen, waitFor } from '@testing-library/react-native';
 
-import { renderWithTamagui } from '@/jest.setup';
+import { renderWithProviders } from '@/jest.setup';
 import type { GlassModel } from '@/hooks/useGlassModels';
 
 import { GlassSnap } from './GlassSnap';
@@ -20,7 +20,7 @@ const model = (id: string, name: string, capacity_ml: number): GlassModel => ({
 });
 
 const snap = (onPick: (m: GlassModel) => void) =>
-  renderWithTamagui(
+  renderWithProviders(
     <QueryClientProvider client={new QueryClient()}>
       <GlassSnap onPick={onPick} />
     </QueryClientProvider>

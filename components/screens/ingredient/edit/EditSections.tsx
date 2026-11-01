@@ -7,7 +7,7 @@ import { Body, Caption, Headline, PressableScale, Sheet, Switch, useDs } from '@
 import { PublishSection } from '@/components/screens/publishing/PublishSection';
 import { RowDivider, SettingsRow } from '@/components/screens/settings/SettingsParts';
 import { IconSymbol } from '@/components/ui/icon-symbol';
-import { displayFaces, fontFamilies, radius, space, type } from '@/constants/tokens';
+import { displayFaces, font, radius, space, type } from '@/constants/tokens';
 import { useUserId } from '@/ctx/AuthContext';
 import { useCapabilities } from '@/hooks/useCapabilities';
 import { useItemPublishing } from '@/hooks/usePublishing';
@@ -129,7 +129,7 @@ const styles = StyleSheet.create({
   name: { ...type.display, borderBottomWidth: StyleSheet.hairlineWidth, paddingBottom: space.xs },
   kindBox: { borderRadius: radius.control, borderWidth: 1, paddingHorizontal: space.md },
   add: { flexDirection: 'row', alignItems: 'center', gap: space.sm, minHeight: 52, paddingHorizontal: space.md, borderRadius: radius.control, borderWidth: 1.5, borderStyle: 'dashed' },
-  medium: { fontFamily: fontFamilies.bodyMedium },
+  medium: { ...font.medium },
   switchRow: { flexDirection: 'row', alignItems: 'center', gap: space.md, paddingTop: space.xs },
   flex: { flex: 1, gap: 2 },
   sheet: { paddingHorizontal: space.xl, paddingBottom: space.xxl },

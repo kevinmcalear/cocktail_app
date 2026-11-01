@@ -28,7 +28,7 @@ assert.equal(pinLook(pins[0], false, accent).minWidth, 44);
 assert.equal(pinLook(pins[0], false, accent).logo, null, 'the score alone on the pill (disc-map-opt-c), no bar logo');
 assert.equal(pinLook({ ...pins[0], image: 'https://x/d.png' }, false, accent).logo, 'https://x/d.png', 'searching: the best match');
 assert.equal(pinLook({ ...pins[0], image: 'https://x/d.png' }, false, accent).paddingLeft, 5, 'the picture sits 5 in from the pill edge (disc-desk-search)');
-assert.equal(pinLook({ ...pins[0], top: 'Dirty Martini' }, false, accent).font, 'bodyMedium', 'a drink name in Geist, not mono');
+assert.equal(pinLook({ ...pins[0], top: 'Dirty Martini' }, false, accent).font, 'medium', 'a drink name in the system font, not figures');
 assert.equal(pinLook({ ...pins[0], top: 'Dirty Martini' }, true, accent).height, 48);
 assert.equal(pinLook(pins[1], false, accent).height, 18);
 assert.equal(pinLook({ ...pins[1], image: 'https://x/b.png' }, false, accent).height, 40, 'a lone picture leaves room for its ring');
@@ -48,7 +48,7 @@ assert.equal(pinLook(logoPin, false, accent, CLOSE_ZOOM).label, '', 'close, the 
 assert.equal(pinLook(logoPin, false, accent, CLOSE_ZOOM).logoSize, 42, 'a size up from the 36 further out');
 assert.equal(pinLook(logoPin, true, accent, CLOSE_ZOOM).label, logoPin.name);
 assert.equal(pinLook(logoPin, false, accent, CLOSE_ZOOM, true).label, logoPin.name, 'hovering the pin writes its name');
-assert.equal(pinLook(logoPin, true, accent, CLOSE_ZOOM).font, 'bodySemiBold');
+assert.equal(pinLook(logoPin, true, accent, CLOSE_ZOOM).font, 'semiBold');
 assert.equal(pinLook(pins[0], false, accent, CLOSE_ZOOM).label, '9.1', 'a score stays, without the bar');
 assert.equal(pinLook(pins[0], true, accent, CLOSE_ZOOM).label, `9.1 · ${pins[0].name}`, 'the hovered score pin keeps its score before the name');
 assert.equal(pinLook({ ...logoPin, name: 'The Exceptionally Long Bar Name' }, true, accent, 17).label.length, 18, 'long names cut as drink names are');

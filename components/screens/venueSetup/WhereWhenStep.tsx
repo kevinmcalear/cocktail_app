@@ -5,7 +5,7 @@ import { StyleSheet, TextInput, View } from 'react-native';
 import { Body, Button, Caption, DsText, Field, PressableScale, useDs, type IconName } from '@/components/ds';
 import { SetupFooter, SetupPage } from '@/components/screens/onboarding/SetupPage';
 import { IconSymbol } from '@/components/ui/icon-symbol';
-import { fontFamilies, radius, space } from '@/constants/tokens';
+import { font, radius, space } from '@/constants/tokens';
 import { useSaveClaimSetup } from '@/hooks/useBarClaims';
 import { useBarFacts, useSaveBarFacts, type BarFactsChange } from '@/hooks/useBarFacts';
 import { useSaveProfileInstagram } from '@/hooks/useMyProfile';
@@ -279,7 +279,7 @@ const styles = StyleSheet.create({
   card: { borderWidth: 1, borderRadius: radius.card, borderCurve: 'continuous', paddingHorizontal: space.lg },
   fact: { paddingVertical: space.lg, gap: space.md },
   edit: { flexDirection: 'row', alignItems: 'center', gap: space.xs, minHeight: 24 },
-  editLabel: { fontFamily: fontFamilies.bodySemiBold },
+  editLabel: { ...font.semiBold },
   factTop: { flexDirection: 'row', alignItems: 'flex-start', gap: space.md },
   flex: { flex: 1, minWidth: 0, gap: space.xs },
   editor: { gap: space.md },

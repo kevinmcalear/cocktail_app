@@ -3,7 +3,7 @@ import { StyleSheet, View } from 'react-native';
 
 import { Caption, DsText, PressableScale, Spec, useDs } from '@/components/ds';
 import { IconSymbol } from '@/components/ui/icon-symbol';
-import { fontFamilies, layout, radius, space } from '@/constants/tokens';
+import { font, layout, radius, space } from '@/constants/tokens';
 import { useDrinkScore } from '@/hooks/useDrinkScore';
 import { formatScore } from '@/lib/ranking';
 
@@ -69,7 +69,7 @@ export function ScoreMark({ itemId, name }: { itemId: string; name: string }) {
 const MARK_SLOP = { top: 10, bottom: 10, left: 12, right: 12 };
 
 const styles = StyleSheet.create({
-  strong: { fontFamily: fontFamilies.bodySemiBold },
+  strong: { ...font.semiBold },
   row: { flexDirection: 'row', flexWrap: 'wrap', alignItems: 'center', gap: space.sm },
   pill: {
     flexDirection: 'row',

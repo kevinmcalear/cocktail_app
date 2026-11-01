@@ -5,7 +5,7 @@ import { Caption, DsText, Headline, PressableScale, useDs } from '@/components/d
 import { PickList } from '@/components/search/NearPicks';
 import { IconSymbol } from '@/components/ui/icon-symbol';
 import { UserAvatar } from '@/components/ui/UserAvatar';
-import { fontFamilies, radius, space } from '@/constants/tokens';
+import { font, radius, space } from '@/constants/tokens';
 import { useMyProfile } from '@/hooks/useMyProfile';
 import { usePublicPeople, type PublicPerson } from '@/hooks/useProfiles';
 import type { MaybeNear } from '@/hooks/useSearchNear';
@@ -133,6 +133,6 @@ const styles = StyleSheet.create({
   list: { borderWidth: StyleSheet.hairlineWidth, borderRadius: radius.control, paddingHorizontal: space.md },
   row: { flexDirection: 'row', alignItems: 'center', gap: space.md, paddingVertical: space.sm + 2 },
   flex: { flex: 1, minWidth: 0 },
-  name: { fontFamily: fontFamilies.bodySemiBold },
+  name: { ...font.semiBold },
   remove: { width: 32, height: 32, alignItems: 'center', justifyContent: 'center' },
 });

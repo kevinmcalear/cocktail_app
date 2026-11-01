@@ -2,7 +2,7 @@ import { useState } from 'react';
 import { StyleSheet, TextInput, View } from 'react-native';
 
 import { Body, Caption, Chip, Spec, Surface, useDs } from '@/components/ds';
-import { fontFamilies, layout, radius, space, type } from '@/constants/tokens';
+import { font, layout, radius, space, type } from '@/constants/tokens';
 import { formatDose, scaleParts, type Technique } from '@/lib/techniques';
 
 /** "How much are you making?": the parts for any amount of the base, small doses to 0.01 g. */
@@ -38,7 +38,7 @@ export function Scaler({ base, parts }: { base: NonNullable<Technique['base']>; 
             keyboardType="decimal-pad"
             aria-label={`Amount of ${base.name.toLowerCase()} in ${unitLabel}`}
             maxLength={6}
-            style={[styles.input, type.body, { fontFamily: fontFamilies.body, color: ds.c.ink }]}
+            style={[styles.input, type.body, { ...font.regular, color: ds.c.ink }]}
           />
           <Caption tone="muted">{unitLabel}</Caption>
         </View>

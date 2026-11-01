@@ -4,7 +4,7 @@ import { Platform, StyleSheet, TextInput, View } from 'react-native';
 import { Button, Caption, Chip, Field, Headline, Sheet, SheetScrollView, useDs } from '@/components/ds';
 import { SketchGlassPicker } from '@/components/cocktail/SketchGlassPicker';
 import { GlassModelRow } from '@/components/glass/GlassModelPicker';
-import { fontFamilies, layout, radius, space, type } from '@/constants/tokens';
+import { font, layout, radius, space, type } from '@/constants/tokens';
 import { useActiveVenue } from '@/hooks/useActiveVenue';
 import { useBarGlassware } from '@/hooks/useBarGlassware';
 import { useGlassModelSearch, type GlassModel } from '@/hooks/useGlassModels';
@@ -183,5 +183,5 @@ const styles = StyleSheet.create({
   chips: { flexDirection: 'row', flexWrap: 'wrap', gap: space.xs },
   start: { alignSelf: 'flex-start' },
   addRow: { flexDirection: 'row', alignItems: 'center', gap: space.sm },
-  input: { ...type.body, fontFamily: fontFamilies.body, flex: 1, minHeight: layout.minTapTarget, borderRadius: radius.control, paddingHorizontal: space.md },
+  input: { ...type.body, ...font.regular, flex: 1, minHeight: layout.minTapTarget, borderRadius: radius.control, paddingHorizontal: space.md },
 });

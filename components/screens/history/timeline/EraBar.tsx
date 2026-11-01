@@ -3,7 +3,7 @@ import { useRef } from 'react';
 import { Platform, StyleSheet, View, type GestureResponderEvent, type LayoutChangeEvent } from 'react-native';
 
 import { Caption, GlassSurface, useDs } from '@/components/ds';
-import { fontFamilies, layout, radius, space } from '@/constants/tokens';
+import { font, layout, radius, space } from '@/constants/tokens';
 import { DECADES, ERAS, FIRST_DECADE, eraOf } from '@/lib/timeline';
 
 const HIST_H = 32;
@@ -94,7 +94,7 @@ const styles = StyleSheet.create({
   wrap: { position: 'absolute', left: space.md, right: space.md },
   glass: { borderRadius: radius.card + space.sm, paddingHorizontal: space.lg, paddingTop: space.sm + 2 },
   head: { flexDirection: 'row', alignItems: 'baseline', gap: space.sm + 2 },
-  year: { fontFamily: fontFamilies.mono, fontVariant: ['tabular-nums'] },
+  year: { ...font.figures, fontVariant: ['tabular-nums'] },
   flex: { flex: 1, minWidth: 0 },
   track: { height: layout.minTapTarget, justifyContent: 'flex-end' },
   bars: { flexDirection: 'row', alignItems: 'flex-end', gap: 2, height: HIST_H, marginBottom: space.xs + 2 },

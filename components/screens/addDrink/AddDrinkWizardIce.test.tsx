@@ -1,6 +1,6 @@
 import { fireEvent, screen } from '@testing-library/react-native';
 
-import { renderWithTamagui } from '@/jest.setup';
+import { renderWithProviders } from '@/jest.setup';
 import { useDrinkWizardStore } from '@/store/useDrinkWizardStore';
 import { useSettingsStore } from '@/store/useSettingsStore';
 
@@ -72,7 +72,7 @@ describe('AddDrinkWizard ice and method', () => {
     mockVenueIce = [{ name: 'Shaved', shape: 'shaved', draw_as: null }, { name: 'Large cube', shape: 'large', draw_as: null }];
     useDrinkWizardStore.getState().patch('bar-1', { name: 'Julep' });
     useDrinkWizardStore.getState().setStep('bar-1', 'ice');
-    await renderWithTamagui(<AddDrinkWizard barId="bar-1" onClose={jest.fn()} onSaved={mockSaved} />);
+    await renderWithProviders(<AddDrinkWizard barId="bar-1" onClose={jest.fn()} onSaved={mockSaved} />);
     await laidOut();
     // No One kind or quick builds on the step (Q21 + E24): the ice is picked straight away.
     expect(screen.queryByRole('radio', { name: 'One kind' })).toBeNull();
@@ -89,7 +89,7 @@ describe('AddDrinkWizard ice and method', () => {
   test('No ice says it is served up, and the drink keeps the plain name (Kevin, 26 Oct)', async () => {
     useDrinkWizardStore.getState().patch('bar-1', { name: 'Martini' });
     useDrinkWizardStore.getState().setStep('bar-1', 'ice');
-    await renderWithTamagui(<AddDrinkWizard barId="bar-1" onClose={jest.fn()} onSaved={mockSaved} />);
+    await renderWithProviders(<AddDrinkWizard barId="bar-1" onClose={jest.fn()} onSaved={mockSaved} />);
     await laidOut();
     await fireEvent.press(screen.getByRole('radio', { name: 'No ice (served up)' }));
     expect(useDrinkWizardStore.getState().kept['bar-1'].draft.ice).toEqual(expect.objectContaining({ name: 'No ice' }));
@@ -99,7 +99,7 @@ describe('AddDrinkWizard ice and method', () => {
     mockVenueIce = [{ name: 'Large cube', shape: 'large', draw_as: null }, { name: 'Hosh cubes', shape: 'cubes', draw_as: null }];
     useDrinkWizardStore.getState().patch('bar-1', { name: 'Daiquiri', methods: [{ id: null, name: 'Shake' }] });
     useDrinkWizardStore.getState().setStep('bar-1', 'method');
-    await renderWithTamagui(<AddDrinkWizard barId="bar-1" onClose={jest.fn()} onSaved={mockSaved} />);
+    await renderWithProviders(<AddDrinkWizard barId="bar-1" onClose={jest.fn()} onSaved={mockSaved} />);
     await laidOut();
     expect(screen.getByText('Shaken with hosh cubes')).toBeTruthy();
     expect(screen.getByRole('button', { name: 'Change what it’s shaken with' })).toBeTruthy();
@@ -118,7 +118,7 @@ describe('AddDrinkWizard ice and method', () => {
       methods: [{ id: 'm-build', name: 'Build' }],
     });
     useDrinkWizardStore.getState().setStep('home', 'method');
-    await renderWithTamagui(<AddDrinkWizard onClose={jest.fn()} onSaved={mockSaved} />);
+    await renderWithProviders(<AddDrinkWizard onClose={jest.fn()} onSaved={mockSaved} />);
     await laidOut();
     await fireEvent(screen.getByRole('switch', { name: 'Made in parts' }), 'valueChange', true);
     const parts = () => useDrinkWizardStore.getState().kept.home.draft.parts ?? [];

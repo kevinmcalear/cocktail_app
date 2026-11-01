@@ -3,7 +3,7 @@ import { useState } from 'react';
 
 import { GlassStep } from '@/components/screens/addDrink/GlassStep';
 import type { BarGlass } from '@/hooks/useBarGlassware';
-import { renderWithTamagui } from '@/jest.setup';
+import { renderWithProviders } from '@/jest.setup';
 import { EMPTY_DRAFT, type WizardDraft } from '@/lib/drinkWizard';
 import { useSettingsStore } from '@/store/useSettingsStore';
 
@@ -40,14 +40,14 @@ const asked = () => screen.queryByText('Is this one of your glasses?');
 
 describe('Is this one of your glasses?', () => {
   test('the venue’s glasses lead the list', async () => {
-    await renderWithTamagui(<Step />);
+    await renderWithProviders(<Step />);
     expect(screen.getByText('YOUR GLASSES')).toBeTruthy();
     expect(screen.getByText('OTHER GLASSES')).toBeTruthy();
     expect(screen.getAllByRole('radio').map((r) => r.props.accessibilityLabel)).toEqual(['Rocks', 'Coupe', 'Nick & Nora', 'Martini', 'Highball']);
   });
 
   test('a glass it has asks nothing; one it lacks opens the Add sheet on that shape, from the drink', async () => {
-    await renderWithTamagui(<Step />);
+    await renderWithProviders(<Step />);
     await fireEvent.press(screen.getByRole('radio', { name: 'Rocks' }));
     expect(asked()).toBeNull();
 
@@ -63,7 +63,7 @@ describe('Is this one of your glasses?', () => {
   });
 
   test('Not now is kept on this device for that glass', async () => {
-    await renderWithTamagui(<Step />);
+    await renderWithProviders(<Step />);
     await fireEvent.press(screen.getByRole('radio', { name: 'Nick & Nora' }));
     await fireEvent.press(screen.getByRole('button', { name: 'Not now' }));
     expect(asked()).toBeNull();
@@ -75,7 +75,7 @@ describe('Is this one of your glasses?', () => {
 
   test('only someone who may change the glassware is asked', async () => {
     mockCaps = ['specs'];
-    await renderWithTamagui(<Step />);
+    await renderWithProviders(<Step />);
     await fireEvent.press(screen.getByRole('radio', { name: 'Coupe' }));
     expect(asked()).toBeNull();
   });

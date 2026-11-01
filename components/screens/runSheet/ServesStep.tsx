@@ -2,7 +2,7 @@ import { useState, type ReactNode } from 'react';
 import { StyleSheet, TextInput, View } from 'react-native';
 
 import { Body, Button, Caption, DsText, Headline, PressableScale, Segmented, Spec, useDs } from '@/components/ds';
-import { fontFamilies, layout, radius, space, type } from '@/constants/tokens';
+import { font, layout, radius, space, type } from '@/constants/tokens';
 import { useSetDrinkParty, useSetServes, useSetVenue, type RunSheetData } from '@/hooks/useRunSheet';
 import { MAX_SERVES } from '@/lib/batch';
 import { clampServes, type RunDrink, type RunParty } from '@/lib/runSheet';
@@ -176,7 +176,7 @@ export function ServesStep({ data, total, summaries }: { data: RunSheetData; tot
           <View key={d.id} style={[styles.drink, { backgroundColor: ds.c.surface }]}>
             <View style={{ flex: 1, minWidth: 0, gap: space.xs + 2 }}>
               <View>
-                <Body style={{ fontFamily: fontFamilies.bodySemiBold }}>{d.name}</Body>
+                <Body style={{ ...font.semiBold }}>{d.name}</Body>
                 <Caption tone="muted" numberOfLines={1}>{summaries[d.id] || (d.itemType === 'cocktail' ? 'No spec yet' : 'One a serve')}</Caption>
               </View>
               {guest ? (
@@ -204,5 +204,5 @@ const styles = StyleSheet.create({
   drink: { flexDirection: 'row', alignItems: 'center', gap: space.md, borderRadius: radius.card, padding: space.md, borderCurve: 'continuous' },
   stepper: { flexDirection: 'row', alignItems: 'center', gap: space.xs },
   stepButton: { width: 36, height: layout.minTapTarget, alignItems: 'center', justifyContent: 'center' },
-  input: { height: layout.minTapTarget, borderWidth: 1, borderRadius: radius.control, textAlign: 'center', fontFamily: fontFamilies.monoMedium, fontSize: type.spec.fontSize, padding: 0 },
+  input: { height: layout.minTapTarget, borderWidth: 1, borderRadius: radius.control, textAlign: 'center', ...font.figuresMedium, fontSize: type.spec.fontSize, padding: 0 },
 });

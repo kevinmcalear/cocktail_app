@@ -3,7 +3,7 @@ import { StyleSheet, View } from 'react-native';
 
 import { Body, Caption, PressableScale, Segmented, useDs } from '@/components/ds';
 import { IconSymbol } from '@/components/ui/icon-symbol';
-import { fontFamilies, layout, partyHues, radius, space } from '@/constants/tokens';
+import { font, layout, partyHues, radius, space } from '@/constants/tokens';
 import type { RunParty } from '@/lib/runSheet';
 
 export type Step = 'serves' | 'specs' | 'who' | 'sheet';
@@ -97,5 +97,5 @@ const styles = StyleSheet.create({
   chip: { flexDirection: 'row', alignItems: 'center', gap: space.xs + 2, minHeight: 32, paddingHorizontal: space.sm + 2, borderRadius: radius.pill, borderWidth: 1 },
   link: { flexDirection: 'row', alignItems: 'center', gap: space.md, padding: space.lg, borderRadius: radius.card, borderWidth: 1, borderCurve: 'continuous', marginBottom: space.lg, minHeight: layout.minTapTarget },
   linkIcon: { width: 44, height: 44, borderRadius: radius.control, alignItems: 'center', justifyContent: 'center' },
-  strong: { fontFamily: fontFamilies.bodySemiBold },
+  strong: { ...font.semiBold },
 });

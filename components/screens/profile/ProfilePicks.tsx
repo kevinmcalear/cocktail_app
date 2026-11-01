@@ -4,7 +4,7 @@ import { StyleSheet, View } from 'react-native';
 import { Body, Button, Caption, Chip, DrinkImage, Field, PressableScale, RowScore, Switch, useDs } from '@/components/ds';
 import { NearLabel } from '@/components/search/NearPicks';
 import { IconSymbol } from '@/components/ui/icon-symbol';
-import { fontFamilies, layout, radius, space } from '@/constants/tokens';
+import { font, layout, radius, space } from '@/constants/tokens';
 import { useMyProfile, type MyProfile } from '@/hooks/useMyProfile';
 import { useMyMadeDrinks, useProfilePicks, useSetPick, useSetPicks } from '@/hooks/useProfiles';
 import { useMyHadDrinks, useMyHadPicks, usePinDrink, useSetAllHadPicks, useSetHadPick } from '@/hooks/useRankings';
@@ -212,9 +212,9 @@ const styles = StyleSheet.create({
   flex: { flex: 1, minWidth: 0 },
   chips: { flexDirection: 'row', flexWrap: 'wrap', gap: space.sm },
   pair: { flexDirection: 'row', gap: space.sm, marginTop: space.sm },
-  mono: { fontFamily: fontFamilies.monoMedium },
-  eyebrow: { letterSpacing: 1.2, textTransform: 'uppercase', fontFamily: fontFamilies.bodyMedium },
-  title: { fontFamily: fontFamilies.bodySemiBold },
+  mono: { ...font.figuresMedium },
+  eyebrow: { letterSpacing: 1.2, textTransform: 'uppercase', ...font.medium },
+  title: { ...font.semiBold },
   row: { flexDirection: 'row', alignItems: 'center', gap: space.sm, minHeight: 64, paddingVertical: space.sm, borderBottomWidth: StyleSheet.hairlineWidth },
   pin: { width: layout.minTapTarget, height: layout.minTapTarget, borderRadius: radius.pill, alignItems: 'center', justifyContent: 'center' },
 });

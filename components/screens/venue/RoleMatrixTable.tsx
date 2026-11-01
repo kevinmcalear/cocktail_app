@@ -3,7 +3,7 @@ import { ScrollView, StyleSheet, View } from 'react-native';
 
 import { Body, Caption, PressableScale, Surface, useBreakpoint, useDs } from '@/components/ds';
 import { IconSymbol } from '@/components/ui/icon-symbol';
-import { fontFamilies, radius, space } from '@/constants/tokens';
+import { font, radius, space } from '@/constants/tokens';
 import type { RoleMatrixRow } from '@/hooks/useVenueRoles';
 import { pressedProps } from '@/lib/a11yState';
 import { withAlpha } from '@/lib/color';
@@ -211,7 +211,7 @@ const styles = StyleSheet.create({
   card: { paddingVertical: space.xs, paddingHorizontal: 0 },
   scroll: { flexGrow: 1, paddingHorizontal: space.lg },
   table: { flexGrow: 1 },
-  head: { fontFamily: fontFamilies.bodySemiBold },
+  head: { ...font.semiBold },
   row: { flexDirection: 'row', alignItems: 'center', borderBottomWidth: StyleSheet.hairlineWidth },
   groupRow: { paddingTop: space.lg, paddingBottom: space.xs },
   groupTitle: { letterSpacing: 0.8 },

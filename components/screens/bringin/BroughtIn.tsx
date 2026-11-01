@@ -5,7 +5,7 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import { Body, Button, Caption, Display, PressableScale, Spec, useDs, useGutter } from '@/components/ds';
 import { IconSymbol } from '@/components/ui/icon-symbol';
-import { fontFamilies, radius, space } from '@/constants/tokens';
+import { font, radius, space } from '@/constants/tokens';
 import { useUndoBringIn } from '@/hooks/useBringInBatches';
 import { canUndo, fromLine, type BatchSummary } from '@/lib/bringInBatch';
 import { useBringIn } from '@/store/useBringIn';
@@ -169,5 +169,5 @@ const styles = StyleSheet.create({
   row: { flexDirection: 'row', gap: space.sm + 2 },
   flex: { flex: 1 },
   undo: { flex: 1, minHeight: 52, flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: space.sm, paddingHorizontal: space.md, borderRadius: radius.pill, borderWidth: 1 },
-  undoLabel: { flexShrink: 1, fontFamily: fontFamilies.bodySemiBold },
+  undoLabel: { flexShrink: 1, ...font.semiBold },
 });

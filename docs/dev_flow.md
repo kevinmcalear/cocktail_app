@@ -72,6 +72,6 @@ The Back Bar brief (https://claude.ai/artifact/1ksBAgPLyVmLGKdm48x6sf) is the ta
 6. **Expo SDK 58.** Now on 58.0.17 with React Native 0.88.0 (no more release candidate, so the `legacy-peer-deps` workaround is gone).
 7. **Home mode, then the public layer:** my bar, collections, profiles, credit and lineage, comparison rankings, moderation.
 8. **The gaps from steps 2 and 3:** venue brand settings with a live preview; the drink page's Service section.
-9. **Done.** The old screens and the redesign flag are gone. New screens build from `components/ds`. Cocktail edit, and beer and wine detail, still use the Tamagui layout until they are ported. Do not go looking for a redesign flag.
+9. **Done.** The old screens and the redesign flag are gone. New screens build from `components/ds`. Do not go looking for a redesign flag.
 10. **Launch cut (7 Oct 2026):** Study, Prep and Service mode stay built but are switched off, and Discover is its own tab in both modes.
 11. **No venue feature switches (31 Oct 2026):** every venue has the same tabs (`lib/tabs.ts`); the role changes what a page shows, never the tabs. The back bar map and Releases are parked behind `BACK_BAR_SHOWN` (`lib/backBar.ts`) and `RELEASES_SHOWN` (`lib/releases.ts`), with their data kept. `bars.enabled_features` and `venue_feature_events` are no longer read and drop in a later migration.

@@ -1,7 +1,7 @@
 import { StyleSheet, View } from 'react-native';
 
 import { Caption, DsText, PressableScale, useDs } from '@/components/ds';
-import { fontFamilies, space } from '@/constants/tokens';
+import { font, space } from '@/constants/tokens';
 
 import type { Fact } from './DrinkFacts';
 
@@ -50,7 +50,7 @@ const styles = StyleSheet.create({
   line: { flexDirection: 'row', flexWrap: 'wrap', columnGap: space.md, rowGap: space.md, paddingBottom: space.md, borderBottomWidth: StyleSheet.hairlineWidth },
   // Four to a phone row; a long glass name wraps to two lines rather than pushing the row wider.
   cell: { flexGrow: 1, flexBasis: 64, minWidth: 64, maxWidth: '50%', gap: 2 },
-  label: { fontFamily: fontFamilies.mono, letterSpacing: 1.2, textTransform: 'uppercase' },
-  value: { fontFamily: fontFamilies.bodyMedium },
+  label: { ...font.figures, letterSpacing: 1.2, textTransform: 'uppercase' },
+  value: { ...font.medium },
   tappable: { textDecorationLine: 'underline', textDecorationStyle: 'dotted' },
 });

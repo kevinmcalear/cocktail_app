@@ -2,7 +2,7 @@ import { act, fireEvent, screen } from '@testing-library/react-native';
 import 'react-native-gesture-handler/jestSetup';
 
 import { BackbarTheme } from '@/components/ds';
-import { renderWithTamagui } from '@/jest.setup';
+import { renderWithProviders } from '@/jest.setup';
 
 import { DrinkHero } from './DrinkHero';
 
@@ -21,7 +21,7 @@ const layOut = () =>
   });
 
 test('each picture is labelled in words, and tapping one opens the viewer on it', async () => {
-  await renderWithTamagui(
+  await renderWithProviders(
     <BackbarTheme>
       <DrinkHero name="Martinez" pictures={pictures} glass={null} height={320} fade />
     </BackbarTheme>
@@ -56,7 +56,7 @@ test('each picture is labelled in words, and tapping one opens the viewer on it'
 });
 
 test('one picture: no count, and no picture shows the glass', async () => {
-  await renderWithTamagui(
+  await renderWithProviders(
     <BackbarTheme>
       <DrinkHero name="Daiquiri" pictures={[pictures[1]]} glass={null} height={320} fade />
     </BackbarTheme>
@@ -65,7 +65,7 @@ test('one picture: no count, and no picture shows the glass', async () => {
   expect(screen.getByRole('button', { name: 'Daiquiri, photo. Open full screen' })).toBeTruthy();
   expect(screen.queryByText('1 of 1', { includeHiddenElements: true })).toBeNull();
 
-  await renderWithTamagui(
+  await renderWithProviders(
     <BackbarTheme>
       <DrinkHero name="Daiquiri" pictures={[]} glass={null} height={320} fade />
     </BackbarTheme>
@@ -76,7 +76,7 @@ test('one picture: no count, and no picture shows the glass', async () => {
 
 test('people who can edit it get a Photos button beside the count (Eddie, 29 Oct)', async () => {
   const onPhotos = jest.fn();
-  await renderWithTamagui(
+  await renderWithProviders(
     <BackbarTheme>
       <DrinkHero name="Martinez" pictures={pictures} glass={null} height={320} fade onPhotos={onPhotos} />
     </BackbarTheme>

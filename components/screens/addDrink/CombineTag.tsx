@@ -3,7 +3,7 @@ import { StyleSheet, View } from 'react-native';
 import Animated, { useAnimatedStyle, useSharedValue, withTiming } from 'react-native-reanimated';
 
 import { Body, Caption, useDs } from '@/components/ds';
-import { backbar, fontFamilies, radius, space } from '@/constants/tokens';
+import { backbar, font, radius, space } from '@/constants/tokens';
 
 /** The tag's point, down at the card. */
 const TAIL = 7;
@@ -42,6 +42,6 @@ export function CombineTag({ pair, title = 'Let go to make it in-house' }: { pai
 const styles = StyleSheet.create({
   wrap: { position: 'absolute', left: 0, right: 0, bottom: '100%', marginBottom: space.xs, alignItems: 'center', pointerEvents: 'none' },
   tag: { maxWidth: '100%', borderRadius: radius.control, paddingHorizontal: space.md, paddingVertical: space.sm, shadowColor: backbar.dark.ground, shadowOffset: { width: 0, height: 10 }, shadowOpacity: 0.4, shadowRadius: 18, elevation: 10 },
-  strong: { fontFamily: fontFamilies.bodySemiBold },
+  strong: { ...font.semiBold },
   tail: { width: 0, height: 0, borderLeftWidth: TAIL, borderRightWidth: TAIL, borderTopWidth: TAIL, borderLeftColor: 'transparent', borderRightColor: 'transparent' },
 });

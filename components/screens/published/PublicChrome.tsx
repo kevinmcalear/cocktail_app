@@ -5,7 +5,7 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import { BackbarTheme, Body, Button, Caption, DsText, GlassButton, Headline, PressableScale, Surface, useBreakpoint, useDs, useGutter } from '@/components/ds';
 import { WebHead } from '@/components/WebHead';
-import { displayFaces, fontFamilies, layout, space } from '@/constants/tokens';
+import { displayFaces, font, layout, space } from '@/constants/tokens';
 
 // The public web's own chrome, around every signed-out page (/d, /p, /m, /r,
 // Support and the legal pages): the frame with the site nav and footer, the
@@ -194,7 +194,7 @@ const styles = StyleSheet.create({
     paddingVertical: space.xl,
   },
   underline: { textDecorationLine: 'underline' },
-  kicker: { fontFamily: fontFamilies.monoMedium, letterSpacing: 1.4 },
+  kicker: { ...font.figuresMedium, letterSpacing: 1.4 },
   band: {
     flexDirection: 'row',
     flexWrap: 'wrap',

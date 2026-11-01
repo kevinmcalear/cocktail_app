@@ -1,7 +1,7 @@
 import { fireEvent, screen } from '@testing-library/react-native';
 import { Share } from 'react-native';
 
-import { renderWithTamagui } from '@/jest.setup';
+import { renderWithProviders } from '@/jest.setup';
 
 import { ShareMenuSheet } from './ShareMenuSheet';
 
@@ -25,7 +25,7 @@ describe('ShareMenuSheet', () => {
   test('with no public profile, the refusal comes with a way to make one', async () => {
     mockShare.mockRejectedValue(new Error('You need a public profile before you can share a menu.'));
     const onClose = jest.fn();
-    await renderWithTamagui(<ShareMenuSheet menu={menu} onClose={onClose} />);
+    await renderWithProviders(<ShareMenuSheet menu={menu} onClose={onClose} />);
     await fireEvent.press(screen.getByRole('button', { name: 'Share link' }));
     expect(mockShare).toHaveBeenCalledWith({ menuId: 'm1', shared: true });
     expect(await screen.findByText(/You need a public profile/)).toBeTruthy();
@@ -36,20 +36,20 @@ describe('ShareMenuSheet', () => {
 
   test('any other failure just says so', async () => {
     mockShare.mockRejectedValue(new Error('That didn’t work. Try again.'));
-    await renderWithTamagui(<ShareMenuSheet menu={menu} onClose={() => {}} />);
+    await renderWithProviders(<ShareMenuSheet menu={menu} onClose={() => {}} />);
     await fireEvent.press(screen.getByRole('button', { name: 'Share link' }));
     expect(await screen.findByText('That didn’t work. Try again.')).toBeTruthy();
     expect(screen.queryByRole('button', { name: 'Set up your public profile' })).toBeNull();
   });
 
   test('a shared menu shows its readable link', async () => {
-    await renderWithTamagui(<ShareMenuSheet menu={{ ...menu, sharedAt: '2026-10-12T00:00:00Z' }} onClose={() => {}} />);
+    await renderWithProviders(<ShareMenuSheet menu={{ ...menu, sharedAt: '2026-10-12T00:00:00Z' }} onClose={() => {}} />);
     expect(screen.getByText(/\/m\/saturday-at-home$/)).toBeTruthy();
   });
 
   test('Share link sends the link once (Q31)', async () => {
     const native = jest.spyOn(Share, 'share').mockResolvedValue({ action: 'sharedAction', activityType: undefined });
-    await renderWithTamagui(<ShareMenuSheet menu={{ ...menu, sharedAt: '2026-10-12T00:00:00Z' }} onClose={() => {}} />);
+    await renderWithProviders(<ShareMenuSheet menu={{ ...menu, sharedAt: '2026-10-12T00:00:00Z' }} onClose={() => {}} />);
     await fireEvent.press(screen.getByRole('button', { name: 'Share link' }));
     expect(native).toHaveBeenCalledTimes(1);
     const [content] = native.mock.calls[0];

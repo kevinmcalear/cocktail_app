@@ -4,7 +4,7 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import { Caption, dragDismissesKeyboard, DsText, GlassButton, Headline, PressableScale, Sheet, sheetIsDialog, SheetScrollView, Title, useDs, useSheetClose, type IconName } from '@/components/ds';
 import { IconSymbol } from '@/components/ui/icon-symbol';
-import { fontFamilies, layout, radius, space } from '@/constants/tokens';
+import { font, layout, radius, space } from '@/constants/tokens';
 import { withAlpha } from '@/lib/color';
 
 interface MenuSheetProps {
@@ -111,12 +111,12 @@ function FormHeader({ title, save }: { title: string; save?: MenuSheetProps['sav
       <PressableScale role="button" onPress={close} style={styles.formButton}>
         <DsText tone="muted">Cancel</DsText>
       </PressableScale>
-      <DsText role="heading" numberOfLines={1} style={[styles.formTitle, { fontFamily: fontFamilies.bodySemiBold }]}>
+      <DsText role="heading" numberOfLines={1} style={[styles.formTitle, { ...font.semiBold }]}>
         {title}
       </DsText>
       {save ? (
         <PressableScale role="button" onPress={save.onPress} disabled={save.disabled} style={[styles.formButton, styles.formSave, save.disabled && styles.disabled]}>
-          <DsText color={ds.accentText} style={{ fontFamily: fontFamilies.bodySemiBold }}>
+          <DsText color={ds.accentText} style={{ ...font.semiBold }}>
             {save.label}
           </DsText>
         </PressableScale>
@@ -194,7 +194,7 @@ export function Choice({ label, selected, onPress, kind = 'radio', detail, disab
       {/* Only the full-width row stretches its text; in a content-sized pill,
           flex: 1 collapses the label to nothing on iOS. */}
       <View style={detail ? styles.flex : styles.label}>
-        <DsText variant="body" color={ink} style={{ fontFamily: detail ? fontFamilies.bodyMedium : selected ? fontFamilies.bodySemiBold : fontFamilies.body }}>
+        <DsText variant="body" color={ink} style={{ ...(detail ? font.medium : selected ? font.semiBold : font.regular) }}>
           {label}
         </DsText>
         {detail ? <Caption tone="muted">{detail}</Caption> : null}
@@ -221,7 +221,7 @@ const styles = StyleSheet.create({
   body: { paddingHorizontal: space.xl, paddingTop: space.md, paddingBottom: space.xl, gap: space.md },
   footer: { paddingHorizontal: space.xl, paddingTop: space.md, borderTopWidth: StyleSheet.hairlineWidth, gap: space.sm },
   flex: { flex: 1, gap: 2 },
-  eyebrow: { fontFamily: fontFamilies.mono, letterSpacing: 1.2 },
+  eyebrow: { ...font.figures, letterSpacing: 1.2 },
   label: { gap: 2 },
   pill: { minHeight: layout.minTapTarget, paddingHorizontal: space.lg, borderRadius: radius.pill, justifyContent: 'center', flexDirection: 'row', alignItems: 'center' },
   pillSmall: { minHeight: 36, paddingHorizontal: space.md, gap: space.xs + 2 },

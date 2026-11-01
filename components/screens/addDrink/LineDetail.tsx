@@ -2,7 +2,7 @@ import { StyleSheet, View } from 'react-native';
 
 import { Caption, DsText, PressableScale, Tag, useDs } from '@/components/ds';
 import { IconSymbol } from '@/components/ui/icon-symbol';
-import { fontFamilies, radius, space } from '@/constants/tokens';
+import { font, radius, space } from '@/constants/tokens';
 
 /**
  * Under a line on the desktop page and, for Prep or Costs, the phone wizard:
@@ -38,5 +38,5 @@ export function LineDetail({ line, tag, words, price, open, onPress }: { line?: 
 const styles = StyleSheet.create({
   detail: { flexDirection: 'row', alignItems: 'center', gap: space.sm, marginTop: space.xs },
   chip: { flexDirection: 'row', alignItems: 'center', gap: space.xs, minHeight: 28, maxWidth: 240, paddingHorizontal: space.md, borderRadius: radius.pill, borderWidth: 1 },
-  mono: { fontFamily: fontFamilies.mono },
+  mono: { ...font.figures },
 });

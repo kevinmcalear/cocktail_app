@@ -2,7 +2,7 @@ import { useState } from 'react';
 import { StyleSheet, View } from 'react-native';
 
 import { Body, Button, Caption, DsText, Headline, Segmented, Switch, useDs } from '@/components/ds';
-import { fontFamilies, layout, radius, space } from '@/constants/tokens';
+import { font, layout, radius, space } from '@/constants/tokens';
 import type { Need, RunSheet } from '@/lib/runSheet';
 import { thingCount } from '@/lib/runSheetText';
 
@@ -59,7 +59,7 @@ export function WhoStep({ menuId, sheet, looks, breakDown, onBreakDown, margin, 
           <View key={l.id ?? 'host'} style={[styles.tile, { backgroundColor: ds.c.surface }]}>
             <View style={styles.tileHead}>
               <Dot colour={l.colour} size={10} />
-              <Caption numberOfLines={1} style={{ fontFamily: fontFamilies.bodySemiBold, flex: 1 }}>{l.name}</Caption>
+              <Caption numberOfLines={1} style={{ ...font.semiBold, flex: 1 }}>{l.name}</Caption>
             </View>
             <Caption tone="muted">{`${l.role} · ${thingCount(counts.get(l.id) ?? 0)}`}</Caption>
           </View>
@@ -111,5 +111,5 @@ const styles = StyleSheet.create({
   group: { borderRadius: radius.card, paddingHorizontal: space.md, paddingVertical: space.xs, borderCurve: 'continuous' },
   row: { flexDirection: 'row', alignItems: 'center', gap: space.md, minHeight: 60, borderBottomWidth: StyleSheet.hairlineWidth, paddingVertical: space.xs },
   qty: { alignItems: 'flex-end', minWidth: 120 },
-  mono: { fontFamily: fontFamilies.mono },
+  mono: { ...font.figures },
 });

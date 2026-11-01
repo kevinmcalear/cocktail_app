@@ -5,7 +5,7 @@ import { Caption, DrinkImage, DsText, Field, PressableScale, useDs } from '@/com
 import { pickDrinkPhotos } from '@/components/drink/drinkImages';
 import { Choice } from '@/components/screens/menus/MenuSheet';
 import { IconSymbol } from '@/components/ui/icon-symbol';
-import { fontFamilies, layout, radius, space } from '@/constants/tokens';
+import { font, layout, radius, space } from '@/constants/tokens';
 import { withAlpha } from '@/lib/color';
 import { showMessage } from '@/lib/dialogs';
 import { SWAP_LIMIT, SWAP_NAME_LIMIT, type Swap } from '@/lib/madeIt';
@@ -123,8 +123,8 @@ const styles = StyleSheet.create({
   wrap: { flexDirection: 'row', flexWrap: 'wrap', alignItems: 'center', gap: space.sm },
   swap: { flexDirection: 'row', alignItems: 'center', gap: space.sm, minHeight: layout.minTapTarget - space.xs, paddingHorizontal: space.md, borderRadius: radius.pill },
   add: { flexDirection: 'row', alignItems: 'center', gap: space.sm, minHeight: layout.minTapTarget - space.xs, paddingHorizontal: space.md, borderRadius: radius.pill, borderWidth: 1, borderStyle: 'dashed' },
-  medium: { fontFamily: fontFamilies.bodyMedium },
-  strong: { fontFamily: fontFamilies.bodySemiBold },
+  medium: { ...font.medium },
+  strong: { ...font.semiBold },
   when: { flexDirection: 'row', flexWrap: 'wrap', alignItems: 'center', gap: space.md },
   tile: { width: 88, height: 88, alignItems: 'center', justifyContent: 'center', gap: space.xs, borderRadius: radius.control, borderWidth: 1, borderStyle: 'dashed', overflow: 'hidden' },
 });

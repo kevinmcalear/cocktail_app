@@ -1,7 +1,7 @@
 import { StyleSheet, View } from 'react-native';
 
 import { Body, DsText, Headline, LockedSection, useDs } from '@/components/ds';
-import { fontFamilies, radius, space } from '@/constants/tokens';
+import { font, radius, space } from '@/constants/tokens';
 import { useDrinkAllergens } from '@/hooks/useAllergens';
 import { useCapabilities, useCapabilityOpensAt } from '@/hooks/useCapabilities';
 import { useServiceNotes } from '@/hooks/useServiceNotes';
@@ -73,6 +73,6 @@ function Point({ label, text }: { label: string; text: string }) {
 }
 
 const styles = StyleSheet.create({
-  label: { fontFamily: fontFamilies.bodySemiBold },
+  label: { ...font.semiBold },
   card: { gap: space.sm, padding: space.lg, borderRadius: radius.card, borderCurve: 'continuous' },
 });

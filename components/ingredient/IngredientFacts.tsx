@@ -5,7 +5,7 @@ import { StyleSheet, View } from 'react-native';
 import { Body, Button, Caption, Headline, PressableScale, useDs } from '@/components/ds';
 import type { Fact } from '@/components/screens/drink/DrinkFacts';
 import { IconSymbol } from '@/components/ui/icon-symbol';
-import { fontFamilies, layout, space } from '@/constants/tokens';
+import { font, layout, space } from '@/constants/tokens';
 import { useSwapFor, type IngredientBottle } from '@/hooks/useIngredients';
 import { useItemMaker } from '@/hooks/useMakers';
 import { usePrepRatio } from '@/hooks/usePrepCard';
@@ -127,5 +127,5 @@ const styles = StyleSheet.create({
   row: { flexDirection: 'row', alignItems: 'center', gap: space.md, minHeight: layout.minTapTarget, paddingVertical: space.sm, borderBottomWidth: StyleSheet.hairlineWidth },
   lead: { width: 72 },
   rowName: { flex: 1 },
-  value: { fontFamily: fontFamilies.mono },
+  value: { ...font.figures },
 });

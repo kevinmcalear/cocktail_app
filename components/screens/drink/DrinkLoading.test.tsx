@@ -1,7 +1,7 @@
 import { act, screen } from '@testing-library/react-native';
 import 'react-native-gesture-handler/jestSetup';
 
-import { renderWithTamagui } from '@/jest.setup';
+import { renderWithProviders } from '@/jest.setup';
 import { drinkSeed, seedDrink } from '@/lib/drinkSeeds';
 
 import { DrinkLoading } from './DrinkLoading';
@@ -16,7 +16,7 @@ const layOut = () =>
 
 test('a tapped row paints its picture and name while the drink loads', async () => {
   seedDrink({ id: 'd1', name: 'Martinez', imageUrl: 'https://x/martinez.jpg' });
-  await renderWithTamagui(<DrinkLoading seed={drinkSeed('d1')} />);
+  await renderWithProviders(<DrinkLoading seed={drinkSeed('d1')} />);
   await layOut();
   expect(screen.getByLabelText('Loading Martinez')).toBeTruthy();
   expect(screen.getByText('Martinez')).toBeTruthy();
@@ -24,7 +24,7 @@ test('a tapped row paints its picture and name while the drink loads', async () 
 });
 
 test('with no row, just the page ground', async () => {
-  await renderWithTamagui(<DrinkLoading seed={null} />);
+  await renderWithProviders(<DrinkLoading seed={null} />);
   expect(screen.getByLabelText('Loading drink')).toBeTruthy();
   expect(screen.queryByRole('button')).toBeNull();
 });

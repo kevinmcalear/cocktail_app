@@ -5,7 +5,7 @@ import { StyleSheet, View } from 'react-native';
 import { Body, DsText, PopoverMenu, PressableScale, useDs, usePopover, type IconName } from '@/components/ds';
 import { MenuSheet } from '@/components/screens/menus/MenuSheet';
 import { IconSymbol } from '@/components/ui/icon-symbol';
-import { fontFamilies, layout, radius, space } from '@/constants/tokens';
+import { font, layout, radius, space } from '@/constants/tokens';
 import { useActiveVenue, type Venue } from '@/hooks/useActiveVenue';
 import { useCollection } from '@/hooks/useCollection';
 import { useShelf } from '@/hooks/useHomeBar';
@@ -220,9 +220,9 @@ const styles = StyleSheet.create({
   row: { flexDirection: 'row', alignItems: 'center', gap: space.md, paddingLeft: space.lg },
   rowBody: { flex: 1, flexDirection: 'row', alignItems: 'center', gap: space.sm, minHeight: 52, paddingRight: space.md },
   label: { flex: 1 },
-  medium: { fontFamily: fontFamilies.bodyMedium },
+  medium: { ...font.medium },
   // The body's own gap plus this sets each section apart; its heading sits close to its group.
   section: { gap: space.sm, marginTop: space.sm },
-  heading: { fontFamily: fontFamilies.bodyMedium, marginLeft: space.xs },
+  heading: { ...font.medium, marginLeft: space.xs },
   switch: { flexDirection: 'row', alignItems: 'center', gap: space.xs, height: 32, paddingHorizontal: space.md, borderRadius: radius.pill, borderWidth: StyleSheet.hairlineWidth },
 });

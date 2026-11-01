@@ -2,7 +2,7 @@ import { StyleSheet, View } from 'react-native';
 
 import { BackbarTheme, Body, BrandProvider, Button, Caption, DsText, Headline, Sheet, SheetScrollView, useDs } from '@/components/ds';
 import { GlassThumb } from '@/components/glass/GlassModelPicker';
-import { fontFamilies, radius, space } from '@/constants/tokens';
+import { font, radius, space } from '@/constants/tokens';
 import type { GlassFillResult } from '@/hooks/useGlassFill';
 import { factorWords, fillWords } from '@/lib/glassFill';
 import { amountText } from '@/lib/units';
@@ -115,9 +115,9 @@ const styles = StyleSheet.create({
   note: { flexDirection: 'row', alignItems: 'center', gap: space.md, padding: space.md, borderRadius: radius.control, borderWidth: StyleSheet.hairlineWidth },
   flex: { flex: 1, minWidth: 0, gap: space.xs },
   body: { padding: space.xl, paddingTop: space.md, paddingBottom: space.xxxl, gap: space.lg },
-  eyebrow: { fontFamily: fontFamilies.mono, letterSpacing: 1.2, textTransform: 'uppercase' },
+  eyebrow: { ...font.figures, letterSpacing: 1.2, textTransform: 'uppercase' },
   glass: { flexDirection: 'row', alignItems: 'center', gap: space.lg, padding: space.lg, borderRadius: radius.card, borderCurve: 'continuous' },
   lines: { gap: space.sm },
   line: { flexDirection: 'row', alignItems: 'center', gap: space.md, minHeight: 52, paddingHorizontal: space.md, borderRadius: radius.control, borderWidth: 1.5 },
-  mono: { fontFamily: fontFamilies.monoMedium },
+  mono: { ...font.figuresMedium },
 });

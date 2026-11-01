@@ -3,7 +3,7 @@ import { StyleSheet, View } from 'react-native';
 
 import { Caption, DsText, PressableScale, useDs, type IconName } from '@/components/ds';
 import { IconSymbol } from '@/components/ui/icon-symbol';
-import { fontFamilies, radius, space } from '@/constants/tokens';
+import { font, radius, space } from '@/constants/tokens';
 import type { EditSection } from '@/lib/menuLayout';
 import type { MenuDrink } from '@/types/menus';
 
@@ -72,7 +72,7 @@ function Option({ icon, label, detail, keys, accent, tint, onPress }: { icon: Ic
         <IconSymbol name={icon} size={16} color={accent ? ds.accentFill.text : ds.c.ink} />
       </View>
       <View style={styles.flex}>
-        <DsText variant="body" numberOfLines={1} style={{ fontFamily: fontFamilies.bodySemiBold }}>
+        <DsText variant="body" numberOfLines={1} style={{ ...font.semiBold }}>
           {label}
         </DsText>
         <Caption tone="muted">{detail}</Caption>

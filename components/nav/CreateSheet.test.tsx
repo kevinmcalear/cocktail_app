@@ -1,6 +1,6 @@
 import { fireEvent, screen } from '@testing-library/react-native';
 
-import { renderWithTamagui } from '@/jest.setup';
+import { renderWithProviders } from '@/jest.setup';
 
 import { CreateSheet } from './CreateSheet';
 
@@ -14,7 +14,7 @@ let mockMine = { venueId: null as string | null, canAdd: true, label: 'Your drin
 jest.mock('@/hooks/useSearchMine', () => ({ useSearchMine: () => mockMine }));
 
 async function open(label: string) {
-  await renderWithTamagui(<CreateSheet visible onClose={jest.fn()} />);
+  await renderWithProviders(<CreateSheet visible onClose={jest.fn()} />);
   await fireEvent.press(screen.getByRole('link', { name: new RegExp(`^${label}\\.`) }));
   return mockPush.mock.calls.at(-1)?.[0];
 }
@@ -39,7 +39,7 @@ test('at home, it is yours', async () => {
 
 test('without the right to add at the venue, drinks lock with the role that opens them, and home is one tap away', async () => {
   mockMine = { venueId: 'bar', canAdd: false, label: 'Pale Moth' };
-  await renderWithTamagui(<CreateSheet visible onClose={jest.fn()} />);
+  await renderWithProviders(<CreateSheet visible onClose={jest.fn()} />);
   expect(screen.getByText('Made at Pale Moth')).toBeTruthy();
   expect(screen.queryByRole('link', { name: /^Drink\./ })).toBeNull();
   expect(screen.getByText('Opens at Drink Creator')).toBeTruthy();

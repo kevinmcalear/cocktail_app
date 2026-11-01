@@ -1,6 +1,6 @@
 import { fireEvent, screen } from '@testing-library/react-native';
 
-import { renderWithTamagui } from '@/jest.setup';
+import { renderWithProviders } from '@/jest.setup';
 import { EMPTY_DRAFT } from '@/lib/drinkWizard';
 import { useDrinkWizardStore } from '@/store/useDrinkWizardStore';
 import { useSettingsStore } from '@/store/useSettingsStore';
@@ -73,7 +73,7 @@ const imported = { ...EMPTY_DRAFT, name: 'Feijoa Smash', lines: [{ key: 'k1', id
 describe('AddDrinkWizard from an import', () => {
   test('opens at the first step with no "Picked up where you left off"', async () => {
     useDrinkWizardStore.getState().begin('bar-1', imported);
-    await renderWithTamagui(<AddDrinkWizard barId="bar-1" imported onClose={jest.fn()} onSaved={mockSaved} />);
+    await renderWithProviders(<AddDrinkWizard barId="bar-1" imported onClose={jest.fn()} onSaved={mockSaved} />);
     await laidOut();
     expect(screen.getByLabelText('Name').props.value).toBe('Feijoa Smash');
     expect(screen.queryByText('Picked up where you left off.')).toBeNull();
@@ -83,7 +83,7 @@ describe('AddDrinkWizard from an import', () => {
   test('picked up again later, Start over goes back to the spec as read, not to nothing', async () => {
     useDrinkWizardStore.getState().begin('bar-1', imported);
     useDrinkWizardStore.getState().patch('bar-1', { name: 'Feijoa Fizz', lines: [] });
-    await renderWithTamagui(<AddDrinkWizard barId="bar-1" onClose={jest.fn()} onSaved={mockSaved} />);
+    await renderWithProviders(<AddDrinkWizard barId="bar-1" onClose={jest.fn()} onSaved={mockSaved} />);
     await laidOut();
     expect(screen.getByLabelText('Name').props.value).toBe('Feijoa Fizz');
     await fireEvent.press(screen.getByRole('button', { name: 'Start over' }));

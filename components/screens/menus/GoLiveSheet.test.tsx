@@ -1,7 +1,7 @@
 import { fireEvent, screen } from '@testing-library/react-native';
 import { View } from 'react-native';
 
-import { renderWithTamagui } from '@/jest.setup';
+import { renderWithProviders } from '@/jest.setup';
 import type { MenuDrink } from '@/types/menus';
 
 import { GoLiveSheet } from './GoLiveSheet';
@@ -26,14 +26,14 @@ const menu = (drinks: number) => ({
 beforeEach(() => mockSchedule.mockReset());
 
 test('a short section stops it going on, and says so', async () => {
-  await renderWithTamagui(<GoLiveSheet visible onClose={jest.fn()} menu={menu(1)} others={[]} onDone={jest.fn()} />);
+  await renderWithProviders(<GoLiveSheet visible onClose={jest.fn()} menu={menu(1)} others={[]} onDone={jest.fn()} />);
   expect(screen.getByText('Stirred needs 1 more drink')).toBeTruthy();
   expect(screen.getByRole('button', { name: 'Put it on now' })).toBeDisabled();
 });
 
 test('the When answer opens its choices in place, and the button follows it', async () => {
   const onDone = jest.fn();
-  await renderWithTamagui(<GoLiveSheet visible onClose={jest.fn()} menu={menu(2)} others={[]} onDone={onDone} />);
+  await renderWithProviders(<GoLiveSheet visible onClose={jest.fn()} menu={menu(2)} others={[]} onDone={onDone} />);
   expect(screen.queryByRole('radio', { name: 'Tomorrow' })).toBeNull();
   await fireEvent.press(screen.getByRole('button', { name: 'When: Now' }));
   await fireEvent.press(screen.getByRole('radio', { name: 'Tomorrow' }));

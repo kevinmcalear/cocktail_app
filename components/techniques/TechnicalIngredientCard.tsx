@@ -2,7 +2,7 @@ import { useRouter } from 'expo-router';
 import { StyleSheet, View } from 'react-native';
 
 import { Body, Caption, DsText, Headline, PressableScale, Surface, Tag, useDs } from '@/components/ds';
-import { fontFamilies, layout, radius, space } from '@/constants/tokens';
+import { font, layout, radius, space } from '@/constants/tokens';
 import { doseLine } from '@/lib/doseLine';
 import { technicalIngredientFor, techniqueById } from '@/lib/techniques';
 
@@ -86,12 +86,12 @@ export function WhereToBuy({ name }: { name: string }) {
 
 const styles = StyleSheet.create({
   card: { gap: space.md },
-  eyebrow: { fontFamily: fontFamilies.mono, letterSpacing: 1 },
+  eyebrow: { ...font.figures, letterSpacing: 1 },
   tags: { flexDirection: 'row', flexWrap: 'wrap', gap: space.xs },
   job: { flexDirection: 'row', alignItems: 'center', gap: space.sm, paddingVertical: space.sm, borderBottomWidth: StyleSheet.hairlineWidth },
   // The grade sits beside the dose, or drops under it when both won't fit, so the dose itself keeps to one line where it can.
   dose: { flexDirection: 'row', flexWrap: 'wrap', justifyContent: 'flex-end', alignItems: 'center', gap: space.xs, columnGap: space.sm, flexShrink: 1, maxWidth: '66%' },
-  doseText: { flexShrink: 1, textAlign: 'right', fontFamily: fontFamilies.monoMedium },
+  doseText: { flexShrink: 1, textAlign: 'right', ...font.figuresMedium },
   block: { gap: space.xs },
   link: { minHeight: layout.minTapTarget, justifyContent: 'center', paddingHorizontal: space.md, borderRadius: radius.control, maxWidth: '100%' },
   // Room for a whole word (Suspension) beside the dose: a long dose wraps instead.

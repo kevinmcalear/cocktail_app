@@ -1,6 +1,6 @@
 import { fireEvent, screen } from '@testing-library/react-native';
 
-import { renderWithTamagui } from '@/jest.setup';
+import { renderWithProviders } from '@/jest.setup';
 import { EMPTY_DRAFT, type WizardDraft, type WizardStep } from '@/lib/drinkWizard';
 
 import { SketchHeader } from './SketchHeader';
@@ -25,7 +25,7 @@ describe('SketchHeader', () => {
   // keystroke swapped the drawing while the keyboard folded the band.
   test('a new drawing fades in over the last one, which stays under it as a layer', async () => {
     const glass = (name: string) => ({ ...EMPTY_DRAFT, name: 'N', glass: { id: null, name } });
-    const view = await renderWithTamagui(header(glass('Rocks')));
+    const view = await renderWithProviders(header(glass('Rocks')));
     expect(screen.getAllByTestId('drawing')).toHaveLength(1);
 
     // A keystroke that doesn't change the drawing doesn't redraw it.
@@ -40,7 +40,7 @@ describe('SketchHeader', () => {
   });
 
   test('the review step draws the drink again, and a tap draws it once more', async () => {
-    await renderWithTamagui(header({ ...EMPTY_DRAFT, name: 'Negroni' }, false, 'review'));
+    await renderWithProviders(header({ ...EMPTY_DRAFT, name: 'Negroni' }, false, 'review'));
     // The finished drawing, fading away over the animated one before it starts.
     expect(screen.getAllByTestId('drawing')).toHaveLength(1);
     fireEvent.press(screen.getByTestId('animated-0'));
@@ -51,7 +51,7 @@ describe('SketchHeader', () => {
 
   test('Colour on the band, from the first step, picks the drawing’s watercolour or Auto', async () => {
     const onTint = jest.fn();
-    await renderWithTamagui(<SketchHeader draft={{ ...EMPTY_DRAFT, name: 'Fig Leaf Spritz' }} step="name" onBack={jest.fn()} top={0} side={0} rounded={false} onTint={onTint} />);
+    await renderWithProviders(<SketchHeader draft={{ ...EMPTY_DRAFT, name: 'Fig Leaf Spritz' }} step="name" onBack={jest.fn()} top={0} side={0} rounded={false} onTint={onTint} />);
     await fireEvent.press(screen.getByLabelText('Sketch colour, Fig Leaf Spritz'));
     await fireEvent.press(await screen.findByLabelText('Blush'));
     expect(onTint).toHaveBeenLastCalledWith('#efb7ae');
@@ -60,13 +60,13 @@ describe('SketchHeader', () => {
   });
 
   test('no Colour without a way to keep it', async () => {
-    await renderWithTamagui(header({ ...EMPTY_DRAFT, name: 'Negroni' }));
+    await renderWithProviders(header({ ...EMPTY_DRAFT, name: 'Negroni' }));
     expect(screen.queryByLabelText('Sketch colour, Negroni')).toBeNull();
   });
 
   // Canvas Create, Q17 D: a phone's typing steps get a thumbnail beside the progress; the drawing steps keep it full.
   test('compact on the steps where you type, with the drawing a tap away; full on glass', async () => {
-    const view = await renderWithTamagui(header({ ...EMPTY_DRAFT, name: 'Ash Garden' }, false, 'ingredients'));
+    const view = await renderWithProviders(header({ ...EMPTY_DRAFT, name: 'Ash Garden' }, false, 'ingredients'));
     expect(screen.queryByText('Updates as you go')).toBeNull();
     await fireEvent.press(await screen.findByLabelText(/^Show the drawing full size/));
     expect(await screen.findByText('Updates as you go')).toBeTruthy();

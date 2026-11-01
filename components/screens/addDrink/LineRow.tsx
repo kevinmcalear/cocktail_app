@@ -3,7 +3,7 @@ import { Platform, StyleSheet, TextInput, View } from 'react-native';
 
 import { Body, Caption, DsText, IngredientThumb, PressableScale, useBreakpoint, useDs } from '@/components/ds';
 import { IconSymbol } from '@/components/ui/icon-symbol';
-import { backbar, fontFamilies, layout, radius, space, type } from '@/constants/tokens';
+import { backbar, font, layout, radius, space, type } from '@/constants/tokens';
 import { withAlpha } from '@/lib/color';
 import { convertPour, FINISH_UNITS, QUICK_UNITS, stepAmount, type WizardLine } from '@/lib/drinkWizard';
 import { prepSummary, toFinishSummary } from '@/lib/prepKinds';
@@ -163,7 +163,7 @@ export function LineRow({ line, onChange, onRemove, onSwap, onEditPrep, units: u
                       placeholderTextColor={ds.c.faint}
                       aria-label={`Amount of ${line.name}`}
                       maxLength={8}
-                      style={[styles.amount, type.spec, { fontFamily: fontFamilies.monoMedium, color: ds.c.ink }]}
+                      style={[styles.amount, type.spec, { ...font.figuresMedium, color: ds.c.ink }]}
                     />
                     <Round icon="plus" label={`More ${line.name}`} onPress={() => onChange({ amount: stepAmount(tidyAmount(line.amount), line.unit, 1) })} />
                   </>
@@ -210,7 +210,7 @@ export function LineRow({ line, onChange, onRemove, onSwap, onEditPrep, units: u
           aria-label={`Note on ${line.name}`}
           autoFocus={!line.note}
           maxLength={120}
-          style={[styles.note, grip ? styles.notedGripped : null, type.body, { fontFamily: fontFamilies.body, color: ds.c.ink, borderColor: ds.c.lineStrong }]}
+          style={[styles.note, grip ? styles.notedGripped : null, type.body, { ...font.regular, color: ds.c.ink, borderColor: ds.c.lineStrong }]}
         />
       ) : null}
       {units && !lifted ? (
@@ -281,7 +281,7 @@ const styles = StyleSheet.create({
   step: { width: layout.minTapTarget, height: layout.minTapTarget, alignItems: 'center', justifyContent: 'center' },
   amount: { width: 56, height: layout.minTapTarget, textAlign: 'center', padding: 0 },
   topLabel: { paddingHorizontal: space.xl },
-  mono: { fontFamily: fontFamilies.monoMedium },
+  mono: { ...font.figuresMedium },
   unit: {
     flexDirection: 'row',
     alignItems: 'center',

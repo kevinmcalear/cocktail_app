@@ -5,7 +5,7 @@ import { ScrollView, StyleSheet, View } from 'react-native';
 import { Body, Button, Caption, Headline, Sheet, Surface, TextLink, Title, useDs } from '@/components/ds';
 import { Eyebrow } from '@/components/screens/addDrink/WizardChrome';
 import { DrinkRow } from '@/components/screens/DrinkRow';
-import { fontFamilies, space } from '@/constants/tokens';
+import { font, space } from '@/constants/tokens';
 import type { TechniqueDrink } from '@/hooks/useTechniqueDrinks';
 import { itemHref } from '@/lib/itemRoutes';
 import { keepsFor } from '@/lib/myBarText';
@@ -118,7 +118,7 @@ const styles = StyleSheet.create({
   list: { gap: space.md, paddingTop: space.md },
   card: { gap: space.md },
   cardHead: { gap: 2 },
-  strong: { fontFamily: fontFamilies.bodySemiBold },
+  strong: { ...font.semiBold },
   actions: { flexDirection: 'row', gap: space.sm },
   flex: { flex: 1 },
   away: { gap: space.xs, paddingTop: space.lg },

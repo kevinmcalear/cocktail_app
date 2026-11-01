@@ -1,7 +1,7 @@
 import { screen } from '@testing-library/react-native';
 import { View } from 'react-native';
 
-import { renderWithTamagui } from '@/jest.setup';
+import { renderWithProviders } from '@/jest.setup';
 import type { MenuDrink } from '@/types/menus';
 
 import { GuestPreview } from './GuestPreview';
@@ -24,7 +24,7 @@ const editor = (name: string, drinks: MenuDrink[]) =>
   }) as unknown as LayoutEditor;
 
 test('the preview sets the unsaved layout as the guest card', async () => {
-  await renderWithTamagui(<GuestPreview editor={editor('Halloween party', [drink('a', 'Americano'), drink('b', 'Pellican')])} venue={null} />);
+  await renderWithProviders(<GuestPreview editor={editor('Halloween party', [drink('a', 'Americano'), drink('b', 'Pellican')])} venue={null} />);
   expect(screen.getByRole('heading', { name: 'Halloween party' })).toBeTruthy();
   expect(screen.getByText('Americano')).toBeTruthy();
   expect(screen.getByText('Pellican')).toBeTruthy();
@@ -35,7 +35,7 @@ test('the preview sets the unsaved layout as the guest card', async () => {
 });
 
 test('an empty menu says what will show up there', async () => {
-  await renderWithTamagui(<GuestPreview editor={editor('', [])} venue={null} />);
+  await renderWithProviders(<GuestPreview editor={editor('', [])} venue={null} />);
   expect(screen.getByRole('heading', { name: 'Menu' })).toBeTruthy();
   expect(screen.getByText(/Add drinks and they show up here/)).toBeTruthy();
 });

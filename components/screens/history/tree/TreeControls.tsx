@@ -2,7 +2,7 @@ import type { ReactNode } from 'react';
 import { ScrollView, StyleSheet, View } from 'react-native';
 
 import { Caption, PressableScale, Segmented, useDs } from '@/components/ds';
-import { familyHues, fontFamilies, layout, radius, space } from '@/constants/tokens';
+import { familyHues, font, layout, radius, space } from '@/constants/tokens';
 import type { AxisFamily } from '@/lib/timeTree';
 
 const SHOW = [
@@ -106,8 +106,8 @@ const styles = StyleSheet.create({
   wrap: { gap: space.md, paddingBottom: space.sm },
   wideRow: { flexDirection: 'row', flexWrap: 'wrap', alignItems: 'center', columnGap: space.lg, rowGap: space.sm, paddingBottom: space.md, borderBottomWidth: StyleSheet.hairlineWidth, zIndex: 2 },
   wrapRow: { flexWrap: 'wrap', flexBasis: '100%' },
-  strong: { fontFamily: fontFamilies.bodySemiBold },
-  mono: { fontFamily: fontFamilies.mono },
+  strong: { ...font.semiBold },
+  mono: { ...font.figures },
   chips: { paddingRight: space.lg },
   chipRow: { flexDirection: 'row', alignItems: 'center', gap: space.sm },
   chip: {

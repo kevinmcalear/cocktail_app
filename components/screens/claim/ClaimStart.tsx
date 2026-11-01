@@ -2,7 +2,7 @@ import { useState } from 'react';
 import { StyleSheet, View } from 'react-native';
 
 import { Body, Button, Caption, Headline, Segmented, Surface, Title, useDs } from '@/components/ds';
-import { fontFamilies, space } from '@/constants/tokens';
+import { font, space } from '@/constants/tokens';
 import { useAuth } from '@/ctx/AuthContext';
 import { useActiveVenue } from '@/hooks/useActiveVenue';
 import { useStartBarClaim } from '@/hooks/useBarClaims';
@@ -87,7 +87,7 @@ export function ClaimStart({ profile, declined }: { profile: Profile; declined: 
 const styles = StyleSheet.create({
   page: { gap: space.xl },
   header: { gap: space.sm },
-  strong: { fontFamily: fontFamilies.bodySemiBold },
+  strong: { ...font.semiBold },
   group: { gap: space.sm },
   declined: { gap: space.xs, borderWidth: 1 },
 });

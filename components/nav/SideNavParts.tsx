@@ -5,7 +5,7 @@ import { StyleSheet, View } from 'react-native';
 import { Caption, DsText, PressableScale, useDs, type IconName } from '@/components/ds';
 import { IconSymbol } from '@/components/ui/icon-symbol';
 import { CurrentUserAvatar, useUserDisplayName } from '@/components/ui/UserAvatar';
-import { fontFamilies, radius, space } from '@/constants/tokens';
+import { font, radius, space } from '@/constants/tokens';
 import type { Venue } from '@/hooks/useActiveVenue';
 import { useShelf } from '@/hooks/useHomeBar';
 import { currentProps } from '@/lib/a11yState';
@@ -117,9 +117,9 @@ const styles = StyleSheet.create({
   badge: { paddingHorizontal: space.sm, borderRadius: radius.pill, overflow: 'hidden' },
   row: { flexDirection: 'row', alignItems: 'center', gap: space.md, minHeight: 40, paddingHorizontal: space.md, borderRadius: radius.control },
   label: { flex: 1 },
-  strong: { fontFamily: fontFamilies.bodySemiBold },
-  kbd: { fontFamily: fontFamilies.monoMedium, paddingHorizontal: 6, paddingVertical: 2, borderRadius: radius.mark, overflow: 'hidden' },
-  heading: { fontFamily: fontFamilies.monoMedium, textTransform: 'uppercase', letterSpacing: 1, marginTop: space.lg, marginBottom: space.xs, marginHorizontal: space.md },
+  strong: { ...font.semiBold },
+  kbd: { ...font.figuresMedium, paddingHorizontal: 6, paddingVertical: 2, borderRadius: radius.mark, overflow: 'hidden' },
+  heading: { ...font.figuresMedium, textTransform: 'uppercase', letterSpacing: 1, marginTop: space.lg, marginBottom: space.xs, marginHorizontal: space.md },
   marks: { flexDirection: 'row', alignItems: 'center', paddingBottom: space.sm },
   ring: { padding: 2, borderWidth: 2, borderRadius: MARK * 0.28 + 4 },
   footer: { marginTop: 'auto', flexDirection: 'row', alignItems: 'center', gap: space.sm, paddingTop: space.md, paddingHorizontal: space.sm, paddingBottom: space.xs, borderTopWidth: StyleSheet.hairlineWidth },

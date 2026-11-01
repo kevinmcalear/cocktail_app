@@ -3,7 +3,7 @@ import { useState } from 'react';
 import { StyleSheet, View } from 'react-native';
 
 import { Body, Caption, GlassButton, PressableScale, Title, useDs } from '@/components/ds';
-import { fontFamilies, layout, radius, space } from '@/constants/tokens';
+import { font, layout, radius, space } from '@/constants/tokens';
 import { useZonePhoto } from '@/hooks/useZonePhoto';
 import { formatPar } from '@/lib/backBar';
 import type { BarZone, BarZoneKind, ItemLocation } from '@/types/backBar';
@@ -167,7 +167,7 @@ const styles = StyleSheet.create({
   head: { gap: space.xs },
   row: { borderBottomWidth: StyleSheet.hairlineWidth, paddingVertical: space.sm },
   rowInner: { flexDirection: 'row', alignItems: 'flex-start', gap: space.md, minHeight: layout.minTapTarget },
-  shelf: { fontFamily: fontFamilies.mono, letterSpacing: 0.8 },
+  shelf: { ...font.figures, letterSpacing: 0.8 },
   group: { gap: space.xs },
   sketch: { width: '46%', height: '80%', borderWidth: 1.5, borderRadius: radius.mark, justifyContent: 'space-evenly' },
   sketchShelf: { height: 1.5, marginHorizontal: space.xs },

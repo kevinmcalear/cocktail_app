@@ -5,7 +5,7 @@ import { Body, Caption, PressableScale, useDs, type IconName } from '@/component
 import { MenuSheet } from '@/components/screens/menus/MenuSheet';
 import { CustomIcon } from '@/components/ui/CustomIcons';
 import { IconSymbol } from '@/components/ui/icon-symbol';
-import { fontFamilies, radius, space } from '@/constants/tokens';
+import { font, radius, space } from '@/constants/tokens';
 import { useCapabilities, useCapabilityOpensAt } from '@/hooks/useCapabilities';
 import { useDrafts } from '@/hooks/useDrafts';
 import { useMode } from '@/hooks/useMode';
@@ -34,7 +34,7 @@ function Row({ icon, label, hint, trailing, onPress }: { icon: React.ReactNode; 
     <PressableScale role="link" accessibilityLabel={`${label}. ${hint}`} onPress={onPress} style={[styles.row, { borderBottomColor: ds.c.line }]}>
       <View style={[styles.icon, { backgroundColor: ds.c.raised }]}>{icon}</View>
       <View style={styles.text}>
-        <Body style={{ fontFamily: fontFamilies.bodySemiBold }}>{label}</Body>
+        <Body style={{ ...font.semiBold }}>{label}</Body>
         <Caption tone="muted">{hint}</Caption>
       </View>
       {trailing}
@@ -54,7 +54,7 @@ function LockedRow({ barId }: { barId: string }) {
         <IconSymbol name="lock.fill" size={18} color={ds.c.muted} />
       </View>
       <View style={styles.text}>
-        <Body tone="muted" style={{ fontFamily: fontFamilies.bodySemiBold }}>
+        <Body tone="muted" style={{ ...font.semiBold }}>
           Drink, ingredient, beer, wine
         </Body>
         <Caption tone="muted">{hint}</Caption>

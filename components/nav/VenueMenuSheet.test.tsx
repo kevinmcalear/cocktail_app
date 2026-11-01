@@ -1,6 +1,6 @@
 import { fireEvent, screen } from '@testing-library/react-native';
 
-import { renderWithTamagui } from '@/jest.setup';
+import { renderWithProviders } from '@/jest.setup';
 
 import { VenueMenuSheet } from './VenueMenuSheet';
 
@@ -11,7 +11,7 @@ let mockMode: 'venue' | 'home' = 'venue';
 const mockSetMode = jest.fn();
 const mockEnterVenue = jest.fn();
 jest.mock('@/hooks/useMode', () => ({ useMode: () => ({ mode: mockMode, setMode: mockSetMode }) }));
-const mockVenue = { id: 'rye', name: 'Little Rye', logoUrl: null, accent: null, displayFace: 'instrument', groundTint: null, roleLevel: 40 };
+const mockVenue = { id: 'rye', name: 'Little Rye', logoUrl: null, accent: null, displayFace: 'redaction', groundTint: null, roleLevel: 40 };
 
 const mockOther = { ...mockVenue, id: 'pale', name: 'Pale Moth', roleLevel: 30 };
 let mockVenues = [mockVenue, mockOther];
@@ -52,7 +52,7 @@ beforeEach(() => {
 
 test('at a venue: titled with it, its working pages first, then Venue and You', async () => {
   const onClose = jest.fn();
-  await renderWithTamagui(<VenueMenuSheet onClose={onClose} />);
+  await renderWithProviders(<VenueMenuSheet onClose={onClose} />);
   expect(screen.getByRole('heading', { name: 'Little Rye' })).toBeTruthy();
   expect(screen.getByText('Admin')).toBeTruthy();
   expect(screen.getByRole('heading', { name: 'Venue' })).toBeTruthy();
@@ -79,7 +79,7 @@ test('at a venue: titled with it, its working pages first, then Venue and You', 
 
 test('Switch opens a menu of Home bar and the venues; a pick switches', async () => {
   const onClose = jest.fn();
-  await renderWithTamagui(<VenueMenuSheet onClose={onClose} />);
+  await renderWithProviders(<VenueMenuSheet onClose={onClose} />);
   await fireEvent.press(screen.getByRole('button', { name: 'Switch to Home bar or another venue' }));
   expect(screen.getAllByRole('menuitem').map((el) => el.props.accessibilityLabel)).toEqual(['Home bar', 'Little Rye, picked', 'Pale Moth']);
   await fireEvent.press(screen.getByRole('menuitem', { name: 'Pale Moth' }));
@@ -91,14 +91,14 @@ test('Switch opens a menu of Home bar and the venues; a pick switches', async ()
 test('an Admin alone on the team gets Invite on My team', async () => {
   mockMembers = [{ user_id: 'me' }];
   mockInvites = [];
-  await renderWithTamagui(<VenueMenuSheet onClose={jest.fn()} />);
+  await renderWithProviders(<VenueMenuSheet onClose={jest.fn()} />);
   await fireEvent.press(screen.getByRole('link', { name: 'My team. Invite' }));
   expect(mockPush).toHaveBeenLastCalledWith('/team?invite=1');
 });
 
 test('at home: titled Home bar, My Bar, Collection and You, then Settings', async () => {
   mockMode = 'home';
-  await renderWithTamagui(<VenueMenuSheet onClose={jest.fn()} />);
+  await renderWithProviders(<VenueMenuSheet onClose={jest.fn()} />);
   expect(screen.getByRole('heading', { name: 'Home bar' })).toBeTruthy();
   expect(screen.getAllByRole('link').map((el) => el.props.accessibilityLabel)).toEqual([
     'My Bar. 4 bottles',
@@ -113,7 +113,7 @@ test('at home: titled Home bar, My Bar, Collection and You, then Settings', asyn
 test('with no venues there is no Switch: nowhere to switch to', async () => {
   mockMode = 'home';
   mockVenues = [];
-  await renderWithTamagui(<VenueMenuSheet onClose={jest.fn()} />);
+  await renderWithProviders(<VenueMenuSheet onClose={jest.fn()} />);
   expect(screen.getByRole('heading', { name: 'Home bar' })).toBeTruthy();
   expect(screen.queryByRole('button', { name: 'Switch to Home bar or another venue' })).toBeNull();
 });

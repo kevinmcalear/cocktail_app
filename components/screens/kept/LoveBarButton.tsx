@@ -3,7 +3,7 @@ import { StyleSheet, View } from 'react-native';
 
 import { Button, DsText, GlassButton, PressableScale, useDs } from '@/components/ds';
 import { IconSymbol } from '@/components/ui/icon-symbol';
-import { fontFamilies, layout, radius, space } from '@/constants/tokens';
+import { font, layout, radius, space } from '@/constants/tokens';
 import { useSignedIn } from '@/ctx/AuthContext';
 import { useLoveBar, useLovedBars } from '@/hooks/useKept';
 import { withAlpha } from '@/lib/color';
@@ -74,5 +74,5 @@ const styles = StyleSheet.create({
   love: { paddingHorizontal: space.lg },
   loved: { minHeight: layout.minTapTarget, paddingHorizontal: space.lg, borderRadius: radius.pill, borderWidth: 1, justifyContent: 'center' },
   row: { flexDirection: 'row', alignItems: 'center', gap: 6 },
-  text: { fontFamily: fontFamilies.bodySemiBold },
+  text: { ...font.semiBold },
 });

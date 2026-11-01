@@ -1,6 +1,6 @@
 import { act, fireEvent, screen } from '@testing-library/react-native';
 
-import { renderWithTamagui } from '@/jest.setup';
+import { renderWithProviders } from '@/jest.setup';
 import { useDrinkWizardStore } from '@/store/useDrinkWizardStore';
 import { useSettingsStore } from '@/store/useSettingsStore';
 
@@ -70,7 +70,7 @@ const next = () => fireEvent.press(screen.getByRole('button', { name: /^Next: / 
 describe('AddDrinkWizard', () => {
   // One walk through the wizard, in three parts so none runs near Jest's 5 s limit on a busy CI runner.
   test('a name, then ingredients by quick add, stepper, typing and search', async () => {
-    await renderWithTamagui(<AddDrinkWizard onClose={jest.fn()} onSaved={mockSaved} />);
+    await renderWithProviders(<AddDrinkWizard onClose={jest.fn()} onSaved={mockSaved} />);
     await laidOut();
     expect(screen.getByText('What’s it called?')).toBeTruthy();
 
@@ -103,7 +103,7 @@ describe('AddDrinkWizard', () => {
       ],
     });
     useDrinkWizardStore.getState().setStep('home', 'ingredients');
-    await renderWithTamagui(<AddDrinkWizard onClose={jest.fn()} onSaved={mockSaved} />);
+    await renderWithProviders(<AddDrinkWizard onClose={jest.fn()} onSaved={mockSaved} />);
     await laidOut();
 
     // The unit is in sight, and a tap away from changing.
@@ -142,7 +142,7 @@ describe('AddDrinkWizard', () => {
       ],
     });
     useDrinkWizardStore.getState().setStep('home', 'method');
-    await renderWithTamagui(<AddDrinkWizard onClose={jest.fn()} onSaved={mockSaved} />);
+    await renderWithProviders(<AddDrinkWizard onClose={jest.fn()} onSaved={mockSaved} />);
     await laidOut();
 
     // Method: several, in order, and your own.
@@ -185,7 +185,7 @@ describe('AddDrinkWizard', () => {
 
   test('a kept draft opens where it was left, and Start over clears it', async () => {
     useDrinkWizardStore.getState().patch('bar-1', { name: 'Paloma' });
-    await renderWithTamagui(<AddDrinkWizard barId="bar-1" onClose={jest.fn()} onSaved={mockSaved} />);
+    await renderWithProviders(<AddDrinkWizard barId="bar-1" onClose={jest.fn()} onSaved={mockSaved} />);
     await laidOut();
     expect(screen.getByLabelText('Name').props.value).toBe('Paloma');
     await fireEvent.press(screen.getByRole('button', { name: 'Start over' }));
@@ -200,7 +200,7 @@ describe('AddDrinkWizard', () => {
     ];
     useDrinkWizardStore.getState().patch('bar-1', { name: 'Negroni' });
     useDrinkWizardStore.getState().setStep('bar-1', 'glass');
-    await renderWithTamagui(<AddDrinkWizard barId="bar-1" onClose={jest.fn()} onSaved={mockSaved} />);
+    await renderWithProviders(<AddDrinkWizard barId="bar-1" onClose={jest.fn()} onSaved={mockSaved} />);
     await laidOut();
     expect(screen.queryByText('WHICH SHAPE?')).toBeNull();
 
@@ -228,7 +228,7 @@ describe('AddDrinkWizard', () => {
     mockVenueIce = [{ name: 'Shaved', shape: 'shaved', draw_as: null }, { name: 'Block', shape: 'block', draw_as: null }, { name: 'Large cube', shape: 'large', draw_as: null }];
     useDrinkWizardStore.getState().patch('bar-1', { name: 'Julep' });
     useDrinkWizardStore.getState().setStep('bar-1', 'ice');
-    await renderWithTamagui(<AddDrinkWizard barId="bar-1" onClose={jest.fn()} onSaved={mockSaved} />);
+    await renderWithProviders(<AddDrinkWizard barId="bar-1" onClose={jest.fn()} onSaved={mockSaved} />);
     await laidOut();
     expect(screen.getByText('LITTLE RYE’S ICE')).toBeTruthy();
     // Shaved isn't one of the common ones, but it's the venue's, so it's offered.
@@ -239,7 +239,7 @@ describe('AddDrinkWizard', () => {
   test('tapping a name, then Swap, swaps the ingredient and keeps its amount', async () => {
     useDrinkWizardStore.getState().patch('home', { name: 'Martinez', lines: [{ key: 'k1', id: 'gin', name: 'Gin', amount: '45', unit: 'ml' }] });
     useDrinkWizardStore.getState().setStep('home', 'ingredients');
-    await renderWithTamagui(<AddDrinkWizard onClose={jest.fn()} onSaved={mockSaved} />);
+    await renderWithProviders(<AddDrinkWizard onClose={jest.fn()} onSaved={mockSaved} />);
     await laidOut();
     await fireEvent.press(screen.getByRole('button', { name: 'Gin, 45 ml' }));
     await fireEvent.press(screen.getByRole('button', { name: 'Swap Gin for another ingredient' }));
@@ -258,7 +258,7 @@ describe('AddDrinkWizard', () => {
       ],
     });
     useDrinkWizardStore.getState().setStep('bar-1', 'ingredients');
-    await renderWithTamagui(<AddDrinkWizard barId="bar-1" onClose={jest.fn()} onSaved={mockSaved} />);
+    await renderWithProviders(<AddDrinkWizard barId="bar-1" onClose={jest.fn()} onSaved={mockSaved} />);
     await laidOut();
     expect(screen.getByText('Close to a Negroni.')).toBeTruthy();
     await fireEvent.press(screen.getByRole('button', { name: 'Make it a riff on the Negroni' }));
@@ -271,7 +271,7 @@ describe('AddDrinkWizard', () => {
   });
 
   test('a name that is a classic offers its spec, and the method step offers the guess from it', async () => {
-    await renderWithTamagui(<AddDrinkWizard onClose={jest.fn()} onSaved={mockSaved} />);
+    await renderWithProviders(<AddDrinkWizard onClose={jest.fn()} onSaved={mockSaved} />);
     await laidOut();
     await fireEvent.changeText(screen.getByLabelText('Name'), 'Negroni');
     await fireEvent.press(screen.getByRole('button', { name: 'Start from the Negroni' }));

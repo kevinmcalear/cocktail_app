@@ -1,7 +1,7 @@
 import { StyleSheet, View } from 'react-native';
 
 import { Body, Headline, useDs } from '@/components/ds';
-import { fontFamilies, radius, space } from '@/constants/tokens';
+import { font, radius, space } from '@/constants/tokens';
 import { useAuth } from '@/ctx/AuthContext';
 import { useLikelyAtBar } from '@/hooks/useLikelyClaimer';
 import { useMyPersonClaim, type Original, type Profile } from '@/hooks/useProfiles';
@@ -39,6 +39,6 @@ export function SeeYourName({ bar, originals, card = false }: { bar: Pick<Profil
 }
 
 const styles = StyleSheet.create({
-  strong: { fontFamily: fontFamilies.bodySemiBold },
+  strong: { ...font.semiBold },
   card: { gap: space.xs, padding: space.lg, borderRadius: radius.card, borderCurve: 'continuous', borderWidth: 1 },
 });

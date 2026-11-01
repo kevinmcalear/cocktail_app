@@ -6,7 +6,7 @@ import { Body, Caption, DrinkImage, Headline, MatchText, PressableScale, Tag, us
 import { BarMark } from '@/components/screens/home/BarMark';
 import { CanMakeTag } from '@/components/search/CanMake';
 import { useSearchNavRow } from '@/components/search/searchNav';
-import { displayFaces, fontFamilies, radius, space } from '@/constants/tokens';
+import { displayFaces, font, radius, space } from '@/constants/tokens';
 import { usePrefetchCocktail } from '@/hooks/useCocktails';
 import { withAlpha } from '@/lib/color';
 import { drinkIdFromHref } from '@/lib/itemRoutes';
@@ -136,6 +136,6 @@ const styles = StyleSheet.create({
   text: { flex: 1, gap: 2 },
   byline: { flexDirection: 'row', alignItems: 'flex-start', gap: space.xs, flexShrink: 1 },
   shrink: { flexShrink: 1 },
-  compactName: { fontFamily: fontFamilies.bodyMedium },
+  compactName: { ...font.medium },
   captionRow: { flexDirection: 'row', flexWrap: 'wrap', alignItems: 'center', gap: space.xs },
 });

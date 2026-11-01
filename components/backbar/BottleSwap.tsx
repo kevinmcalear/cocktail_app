@@ -4,7 +4,7 @@ import { StyleSheet, View } from 'react-native';
 import { Body, Caption, Field, IngredientThumb, TextLink, useDs } from '@/components/ds';
 import { BottleOptions, useBottleOptions } from '@/components/screens/drink/BottleOptions';
 import { Choice } from '@/components/screens/menus/MenuSheet';
-import { fontFamilies, radius, space } from '@/constants/tokens';
+import { font, radius, space } from '@/constants/tokens';
 import type { PourRow } from '@/lib/backBarSwap';
 
 export type Bottle = { id: string; name: string };
@@ -86,6 +86,6 @@ export function PourList({ replaceWith, rows, unticked, onToggle, onChange, canE
 const styles = StyleSheet.create({
   with: { flexDirection: 'row', alignItems: 'center', gap: space.md, minHeight: 56, paddingHorizontal: space.md, borderRadius: radius.control },
   flex: { flex: 1 },
-  strong: { fontFamily: fontFamilies.bodySemiBold },
+  strong: { ...font.semiBold },
   rows: { gap: space.sm },
 });

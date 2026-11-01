@@ -6,19 +6,11 @@
 export { default as BricolageGrotesque_600SemiBold } from '@/assets/fonts/web/BricolageGrotesque_600SemiBold.woff2';
 export { default as Fraunces_400Regular } from '@/assets/fonts/web/Fraunces_400Regular.woff2';
 export { default as Fraunces_400Regular_Italic } from '@/assets/fonts/web/Fraunces_400Regular_Italic.woff2';
-export { default as Geist_400Regular } from '@/assets/fonts/web/Geist_400Regular.woff2';
-export { default as Geist_500Medium } from '@/assets/fonts/web/Geist_500Medium.woff2';
-export { default as Geist_600SemiBold } from '@/assets/fonts/web/Geist_600SemiBold.woff2';
-export { default as GeistMono_400Regular } from '@/assets/fonts/web/GeistMono_400Regular.woff2';
-export { default as GeistMono_500Medium } from '@/assets/fonts/web/GeistMono_500Medium.woff2';
-export { default as IBMPlexSans_600SemiBold_Italic } from '@/assets/fonts/web/IBMPlexSans_600SemiBold_Italic.woff2';
-export { default as Inter_400Regular } from '@/assets/fonts/web/Inter_400Regular.woff2';
-export { default as Inter_500Medium } from '@/assets/fonts/web/Inter_500Medium.woff2';
-export { default as Inter_600SemiBold } from '@/assets/fonts/web/Inter_600SemiBold.woff2';
-export { default as Inter_700Bold } from '@/assets/fonts/web/Inter_700Bold.woff2';
-export { default as InstrumentSerif_400Regular } from '@/assets/fonts/web/InstrumentSerif_400Regular.woff2';
-export { default as InstrumentSerif_400Regular_Italic } from '@/assets/fonts/web/InstrumentSerif_400Regular_Italic.woff2';
 export { default as JosefinSans_600SemiBold } from '@/assets/fonts/web/JosefinSans_600SemiBold.woff2';
 export { default as PlayfairDisplay_400Regular } from '@/assets/fonts/web/PlayfairDisplay_400Regular.woff2';
 export { default as PlayfairDisplay_400Regular_Italic } from '@/assets/fonts/web/PlayfairDisplay_400Regular_Italic.woff2';
 export { default as TenorSans_400Regular } from '@/assets/fonts/web/TenorSans_400Regular.woff2';
+// Redaction: Fontsource's WOFF2 as published (@fontsource/redaction 5.3.0, latin, SIL OFL 1.1).
+export { default as Redaction_400Regular } from '@/assets/fonts/web/Redaction-Regular.woff2';
+export { default as Redaction_400Regular_Italic } from '@/assets/fonts/web/Redaction-Italic.woff2';
+export { default as Redaction_700Bold } from '@/assets/fonts/web/Redaction-Bold.woff2';

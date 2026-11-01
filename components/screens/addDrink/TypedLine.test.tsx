@@ -1,7 +1,7 @@
 import { act, fireEvent, screen } from '@testing-library/react-native';
 import { useEffect, useState } from 'react';
 
-import { renderWithTamagui } from '@/jest.setup';
+import { renderWithProviders } from '@/jest.setup';
 import { EMPTY_DRAFT, type WizardDraft } from '@/lib/drinkWizard';
 
 import { IngredientsStep } from './IngredientsStep';
@@ -43,7 +43,7 @@ const type = (text: string) => fireEvent.changeText(screen.getByLabelText('Add a
 
 describe('typing a line the way you’d write it', () => {
   test('says what it read, then Looks right makes the bottle house at the typed pour', async () => {
-    await renderWithTamagui(<Step />);
+    await renderWithProviders(<Step />);
     await type('60 ml coconut fat-washed bacardi');
     expect(screen.getByText('HERE’S WHAT I READ')).toBeTruthy();
     expect(screen.getByText('60 ml')).toBeTruthy();
@@ -63,7 +63,7 @@ describe('typing a line the way you’d write it', () => {
   });
 
   test('Check it adds the bottle and opens the house prep steps on What is it, the way you typed picked', async () => {
-    await renderWithTamagui(<Step />);
+    await renderWithProviders(<Step />);
     await type('coconut fat-washed bacardi');
     await fireEvent.press(screen.getByRole('button', { name: 'Check how Bacardí Carta Blanca was made' }));
     await laidOut();
@@ -76,7 +76,7 @@ describe('typing a line the way you’d write it', () => {
   });
 
   test('Return does what the card says, not the top search hit', async () => {
-    await renderWithTamagui(<Step />);
+    await renderWithProviders(<Step />);
     await type('60 ml coconut fat-washed bacardi');
     await fireEvent(screen.getByLabelText('Add an ingredient'), 'submitEditing');
     await laidOut();
@@ -85,7 +85,7 @@ describe('typing a line the way you’d write it', () => {
   });
 
   test('a plain bottle is just searched, with no reading', async () => {
-    await renderWithTamagui(<Step />);
+    await renderWithProviders(<Step />);
     await type('30 ml bacardi');
     expect(screen.queryByText('HERE’S WHAT I READ')).toBeNull();
     expect(screen.getByRole('button', { name: 'Bacardí Carta Blanca' })).toBeTruthy();
@@ -94,7 +94,7 @@ describe('typing a line the way you’d write it', () => {
 
 describe('pasting a whole spec', () => {
   test('every line is read first, then added in order: the finish to the finish, the wash asks once', async () => {
-    await renderWithTamagui(<Step />);
+    await renderWithProviders(<Step />);
     await fireEvent.press(screen.getByRole('button', { name: 'Paste a whole spec' }));
     await fireEvent.changeText(screen.getByLabelText('The spec'), 'Daiquiri\n2 oz coconut fat-washed Bacardi\n1 oz lime juice\n.5 oz simple syrup\n3 drops mint oil on top\nShake, fine strain');
     expect(screen.getByText('The drink’s name')).toBeTruthy();

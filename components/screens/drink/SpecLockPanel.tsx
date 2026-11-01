@@ -3,7 +3,7 @@ import { StyleSheet, View } from 'react-native';
 
 import { Body, Caption, DsText, Surface, useDs } from '@/components/ds';
 import { IconSymbol } from '@/components/ui/icon-symbol';
-import { fontFamilies, radius, space, type } from '@/constants/tokens';
+import { font, radius, space, type } from '@/constants/tokens';
 
 /**
  * "Recipes stay with the bar": where a spec would be, on a drink (or a bar's
@@ -40,7 +40,7 @@ export function SpecLockPanel({ note, ingredients, action, title = 'Recipes stay
 const styles = StyleSheet.create({
   // As drawn (ppl-bar-unclaimed): 20 in, a 17 on 22 semibold title, the note at 15 on 22.
   panel: { alignItems: 'center', gap: space.sm, borderWidth: StyleSheet.hairlineWidth, padding: space.lg + space.xs },
-  title: { fontFamily: fontFamilies.bodySemiBold, lineHeight: 22 },
+  title: { ...font.semiBold, lineHeight: 22 },
   note: { fontSize: type.label.fontSize, lineHeight: 22 },
   ring: { width: 52, height: 52, borderRadius: radius.pill, borderWidth: 1.5, alignItems: 'center', justifyContent: 'center' },
   ingredients: { alignSelf: 'stretch', gap: space.xs, marginTop: space.xs, paddingTop: space.md, borderTopWidth: StyleSheet.hairlineWidth },

@@ -3,7 +3,7 @@ import { StyleSheet, View } from 'react-native';
 
 import { Body, Caption, PressableScale, useDs } from '@/components/ds';
 import { IconSymbol } from '@/components/ui/icon-symbol';
-import { fontFamilies, radius, space } from '@/constants/tokens';
+import { font, radius, space } from '@/constants/tokens';
 import { ICE_WAYS, type IceWayKey } from '@/lib/iceRecipes';
 
 /**
@@ -51,7 +51,7 @@ const styles = StyleSheet.create({
   list: { gap: space.sm },
   row: { flexDirection: 'row', alignItems: 'center', gap: space.md, paddingHorizontal: space.md, paddingVertical: space.sm, minHeight: 56, borderRadius: radius.control, borderWidth: StyleSheet.hairlineWidth },
   flex: { flex: 1, minWidth: 0, gap: 2 },
-  title: { fontFamily: fontFamilies.bodySemiBold },
+  title: { ...font.semiBold },
   ring: { width: 20, height: 20, borderRadius: radius.pill, borderWidth: 1.5 },
   more: { flexDirection: 'row', alignItems: 'center', gap: space.xs, minHeight: 44 },
 });

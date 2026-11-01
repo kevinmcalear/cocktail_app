@@ -1,7 +1,7 @@
 import { StyleSheet, View } from 'react-native';
 
 import { Body, Button, Caption, Surface, useDs } from '@/components/ds';
-import { fontFamilies, space } from '@/constants/tokens';
+import { font, space } from '@/constants/tokens';
 import { useFirstRound } from '@/hooks/useFirstRound';
 
 import { nextLine, progressLine, RoundBars, useRoundGo } from './RoundParts';
@@ -96,7 +96,7 @@ const styles = StyleSheet.create({
   head: { flexDirection: 'row', alignItems: 'center', gap: space.md },
   stack: { gap: space.xs },
   grow: { flex: 1, gap: 2 },
-  medium: { fontFamily: fontFamilies.bodyMedium },
+  medium: { ...font.medium },
   note: { marginTop: space.md },
   nav: { marginTop: space.lg, gap: space.xs },
   navCard: { gap: space.sm, padding: space.md, borderWidth: StyleSheet.hairlineWidth },

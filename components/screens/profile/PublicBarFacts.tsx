@@ -4,8 +4,7 @@ import { Linking, Platform, StyleSheet, View } from 'react-native';
 
 import { Body, Button, Caption, DsText, PressableScale, useBreakpoint, useDs } from '@/components/ds';
 import { IconSymbol } from '@/components/ui/icon-symbol';
-import { STATUS } from '@/constants/palette';
-import { fontFamilies, layout, radius, space, type } from '@/constants/tokens';
+import { font, layout, radius, space, STATUS, type } from '@/constants/tokens';
 import { useBarFacts } from '@/hooks/useBarFacts';
 import { useIsHydrated } from '@/hooks/useIsHydrated';
 import { hoursStatus } from '@/lib/barHours';
@@ -129,7 +128,7 @@ export function PublicBarFacts({ profileId, instagram }: { profileId: string; in
 
 const styles = StyleSheet.create({
   flex: { flex: 1, minWidth: 0 },
-  strong: { fontFamily: fontFamilies.bodySemiBold },
+  strong: { ...font.semiBold },
   // 15 on 22, as drawn.
   text: { fontSize: type.label.fontSize, lineHeight: 22 },
   block: { gap: space.sm + 2 },

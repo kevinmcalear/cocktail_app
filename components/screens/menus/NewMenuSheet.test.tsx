@@ -1,6 +1,6 @@
 import { fireEvent, screen } from '@testing-library/react-native';
 
-import { renderWithTamagui } from '@/jest.setup';
+import { renderWithProviders } from '@/jest.setup';
 
 import { NewMenuSheet } from './NewMenuSheet';
 import { StartTiles } from './NewMenuStart';
@@ -35,7 +35,7 @@ beforeEach(() => {
 
 test('a home menu goes start, name, when: tapping a start goes on, and the card fills in', async () => {
   mockCreate.mockResolvedValue('new-id');
-  await renderWithTamagui(<NewMenuSheet visible onClose={jest.fn()} menus={[]} now={now} />);
+  await renderWithProviders(<NewMenuSheet visible onClose={jest.fn()} menus={[]} now={now} />);
   expect(screen.getByText('1 of 3')).toBeTruthy();
   expect(screen.queryByRole('button', { name: /^Next/ })).toBeNull();
   await fireEvent.press(screen.getByRole('button', { name: /^Blank/ }));
@@ -52,7 +52,7 @@ test('a home menu goes start, name, when: tapping a start goes on, and the card 
 });
 
 test('with no name, making it goes back to the name step and says why', async () => {
-  await renderWithTamagui(<NewMenuSheet visible onClose={jest.fn()} menus={[]} now={now} />);
+  await renderWithProviders(<NewMenuSheet visible onClose={jest.fn()} menus={[]} now={now} />);
   await fireEvent.press(screen.getByRole('button', { name: /^Blank/ }));
   await fireEvent.press(screen.getByRole('button', { name: 'Next: when' }));
   await fireEvent.press(screen.getByRole('button', { name: 'Create draft' }));
@@ -64,7 +64,7 @@ test('with no name, making it goes back to the name step and says why', async ()
 test('name ideas follow the season and month; tapping one names the menu', async () => {
   mockMode = 'venue';
   mockCreate.mockResolvedValue('venue-id');
-  await renderWithTamagui(<NewMenuSheet visible onClose={jest.fn()} menus={[]} now={now} />);
+  await renderWithProviders(<NewMenuSheet visible onClose={jest.fn()} menus={[]} now={now} />);
   await fireEvent.press(screen.getByRole('button', { name: /^Blank/ }));
   expect(screen.getByRole('radio', { name: 'October' })).toBeTruthy();
   await fireEvent.press(screen.getByRole('radio', { name: 'Autumn menu' }));
@@ -76,7 +76,7 @@ test('name ideas follow the season and month; tapping one names the menu', async
 test('a venue menu can go on one of the next two Mondays', async () => {
   mockMode = 'venue';
   mockCreate.mockResolvedValue('venue-id');
-  await renderWithTamagui(<NewMenuSheet visible onClose={jest.fn()} menus={[]} now={now} />);
+  await renderWithProviders(<NewMenuSheet visible onClose={jest.fn()} menus={[]} now={now} />);
   await fireEvent.press(screen.getByRole('button', { name: /^Blank/ }));
   await fireEvent.changeText(screen.getByLabelText('Name'), 'Halloween');
   await fireEvent.press(screen.getByRole('button', { name: 'Next: when' }));
@@ -90,7 +90,7 @@ test('a venue menu can go on one of the next two Mondays', async () => {
 test('Paste a list makes the draft and opens the builder on the paste sheet', async () => {
   mockMode = 'venue';
   mockCreate.mockResolvedValue('venue-id');
-  await renderWithTamagui(<NewMenuSheet visible onClose={jest.fn()} menus={[]} now={now} />);
+  await renderWithProviders(<NewMenuSheet visible onClose={jest.fn()} menus={[]} now={now} />);
   await fireEvent.press(screen.getByRole('button', { name: /^Paste a list/ }));
   await fireEvent.changeText(screen.getByLabelText('Name'), 'Spring menu');
   await fireEvent.press(screen.getByRole('button', { name: 'Next: when' }));
@@ -100,7 +100,7 @@ test('Paste a list makes the draft and opens the builder on the paste sheet', as
 
 test('a photo skips the name: two steps, and it needs a page to read', async () => {
   mockMode = 'venue';
-  await renderWithTamagui(<NewMenuSheet visible onClose={jest.fn()} menus={[]} now={now} />);
+  await renderWithProviders(<NewMenuSheet visible onClose={jest.fn()} menus={[]} now={now} />);
   expect(screen.queryByRole('button', { name: /^Snap the menu/ })).toBeNull();
   await fireEvent.press(screen.getByRole('button', { name: /^From your photos/ }));
   expect(mockPick).toHaveBeenCalled();
@@ -113,7 +113,7 @@ test('a photo skips the name: two steps, and it needs a page to read', async () 
 
 test('with a camera, Snap the menu and From your photos are both there', async () => {
   const onPick = jest.fn();
-  await renderWithTamagui(<StartTiles saved={null} camera onPick={onPick} />);
+  await renderWithProviders(<StartTiles saved={null} camera onPick={onPick} />);
   await fireEvent.press(screen.getByRole('button', { name: /^Snap the menu/ }));
   await fireEvent.press(screen.getByRole('button', { name: /^From your photos/ }));
   expect(onPick.mock.calls).toEqual([['photo'], ['library']]);

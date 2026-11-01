@@ -2,7 +2,7 @@ import { useState } from 'react';
 import { StyleSheet, View } from 'react-native';
 
 import { Body, Button, Caption, Chip, PressableScale, Spec, Tag, useDs } from '@/components/ds';
-import { fontFamilies, layout, space } from '@/constants/tokens';
+import { font, layout, space } from '@/constants/tokens';
 import { bottleLine, isBatchedStyle, SERVICE_STYLES, serviceSpec, serviceStyleLabel, type ServiceLine, type ServiceStyle } from '@/lib/service';
 import type { SpecLine } from '@/lib/spec';
 
@@ -146,7 +146,7 @@ const styles = StyleSheet.create({
   block: { gap: space.md },
   styles: { flexDirection: 'row', flexWrap: 'wrap', gap: space.sm },
   group: { gap: space.xs },
-  eyebrow: { fontFamily: fontFamilies.mono, letterSpacing: 1.2 },
+  eyebrow: { ...font.figures, letterSpacing: 1.2 },
   row: { flexDirection: 'row', alignItems: 'center', gap: space.md, minHeight: layout.minTapTarget, paddingVertical: space.sm, borderBottomWidth: StyleSheet.hairlineWidth },
   amount: { width: 96 },
   name: { flex: 1 },

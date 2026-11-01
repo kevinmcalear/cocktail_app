@@ -2,7 +2,7 @@ import { StyleSheet, View } from 'react-native';
 
 import { Caption, DsText, useDs } from '@/components/ds';
 import { IconSymbol } from '@/components/ui/icon-symbol';
-import { fontFamilies, radius, space } from '@/constants/tokens';
+import { font, radius, space } from '@/constants/tokens';
 import { useActiveVenue } from '@/hooks/useActiveVenue';
 import { useSameNameDrink, type SameNameDrink } from '@/hooks/useSameNameDrink';
 import { useCanEditItem } from '@/hooks/useViewAs';
@@ -128,6 +128,6 @@ const styles = StyleSheet.create({
   row: { flexDirection: 'row', alignItems: 'center', gap: space.md },
   flex: { flex: 1 },
   cell: { width: 92 },
-  mono: { fontFamily: fontFamilies.mono },
+  mono: { ...font.figures },
   chips: { flexDirection: 'row', flexWrap: 'wrap', gap: space.sm },
 });

@@ -1,6 +1,6 @@
 import { fireEvent, waitFor } from '@testing-library/react-native';
 
-import { renderWithTamagui } from '@/jest.setup';
+import { renderWithProviders } from '@/jest.setup';
 
 import { GlassWhich, type GlassWhichValue } from './GlassWhich';
 
@@ -24,7 +24,7 @@ const find: GlassWhichValue = { mode: 'find', model: null, glass: 'coupe', varia
 
 test("a real glass picked for the venue's Coupe keeps it a Coupe", async () => {
   const onChange = jest.fn();
-  renderWithTamagui(<GlassWhich value={find} onChange={onChange} keepShape />);
+  renderWithProviders(<GlassWhich value={find} onChange={onChange} keepShape />);
   await waitFor(() => expect(mockPick).toBeTruthy());
   mockPick!(pony);
   expect(onChange).toHaveBeenCalledWith(expect.objectContaining({ mode: 'picked', glass: 'coupe', variant: 'coupe_deep', name: 'Pony' }));
@@ -32,7 +32,7 @@ test("a real glass picked for the venue's Coupe keeps it a Coupe", async () => {
 
 test('a new glass takes the type the catalog files it under', async () => {
   const onChange = jest.fn();
-  renderWithTamagui(<GlassWhich value={find} onChange={onChange} />);
+  renderWithProviders(<GlassWhich value={find} onChange={onChange} />);
   await waitFor(() => expect(mockPick).toBeTruthy());
   mockPick!(pony);
   expect(onChange).toHaveBeenCalledWith(expect.objectContaining({ mode: 'picked', glass: 'nick', variant: 'nick_little' }));
@@ -41,7 +41,7 @@ test('a new glass takes the type the catalog files it under', async () => {
 test('a glass kept as the Coupe can still be filed under its own type', async () => {
   const onChange = jest.fn();
   const model = { ...pony, maker: null } as unknown as GlassWhichValue['model'];
-  const { getByRole } = await renderWithTamagui(<GlassWhich value={{ ...find, mode: 'picked', model }} onChange={onChange} keepShape />);
+  const { getByRole } = await renderWithProviders(<GlassWhich value={{ ...find, mode: 'picked', model }} onChange={onChange} keepShape />);
   fireEvent.press(getByRole('button', { name: 'Use it as a Nick & Nora' }));
   expect(onChange).toHaveBeenCalledWith(expect.objectContaining({ glass: 'nick', variant: 'nick_little' }));
 });

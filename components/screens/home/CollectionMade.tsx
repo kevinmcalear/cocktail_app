@@ -3,7 +3,7 @@ import { StyleSheet, View } from 'react-native';
 
 import { Body, Caption, DrinkImage, DsText, PressableScale, Spec, useBreakpoint, useDs } from '@/components/ds';
 import { DrinkRow } from '@/components/screens/DrinkRow';
-import { fontFamilies, radius, space } from '@/constants/tokens';
+import { font, radius, space } from '@/constants/tokens';
 import { withAlpha } from '@/lib/color';
 import { gapLabel, type MadeRow } from '@/lib/collectionStages';
 import { itemHref } from '@/lib/itemRoutes';
@@ -161,6 +161,6 @@ const styles = StyleSheet.create({
   num: { width: 56, textAlign: 'right' },
   gapCell: { width: 70, alignItems: 'flex-end' },
   gap: { paddingHorizontal: space.sm, paddingVertical: 2, borderRadius: radius.pill },
-  mono: { fontFamily: fontFamilies.mono, fontVariant: ['tabular-nums'] },
+  mono: { ...font.figures, fontVariant: ['tabular-nums'] },
   trailing: { alignItems: 'flex-end', minWidth: 64 },
 });

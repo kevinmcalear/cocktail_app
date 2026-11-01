@@ -4,8 +4,7 @@ import { StyleSheet, View } from 'react-native';
 
 import { Caption, DrinkImage, DsText, Headline, PressableScale, Tag, useDs } from '@/components/ds';
 import { IconSymbol } from '@/components/ui/icon-symbol';
-import { STATUS } from '@/constants/palette';
-import { displayFaces, displayName, fontFamilies, radius, space } from '@/constants/tokens';
+import { displayFaces, displayName, font, radius, space, STATUS } from '@/constants/tokens';
 import { readableAccent, withAlpha } from '@/lib/color';
 import { comingUpLine, draftLine, homeMenuLine, menuDateLine, menuStatus, plural, previousLine } from '@/lib/menus';
 import type { MenuPicture, MenuSummary } from '@/types/menus';
@@ -251,6 +250,6 @@ const styles = StyleSheet.create({
   fillThumb: { width: THUMB, height: THUMB },
   slot: { width: 22, height: 32, borderRadius: radius.mark + 1, borderWidth: 1.5, borderStyle: 'dashed' },
   past: { flexDirection: 'row', alignItems: 'center', gap: space.md, paddingVertical: space.sm + 2, paddingHorizontal: 2, borderBottomWidth: StyleSheet.hairlineWidth },
-  mono: { fontFamily: fontFamilies.mono },
+  mono: { ...font.figures },
   date: { width: 44, paddingVertical: space.xs, borderRadius: radius.control, alignItems: 'center' },
 });

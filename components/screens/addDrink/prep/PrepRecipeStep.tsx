@@ -4,7 +4,7 @@ import { StyleSheet, TextInput, View } from 'react-native';
 import { Body, Caption, IngredientThumb, PressableScale, Spec, useDs } from '@/components/ds';
 import { IconSymbol } from '@/components/ui/icon-symbol';
 import { Choice } from '@/components/screens/batch/BatchParts';
-import { fontFamilies, layout, radius, space, type } from '@/constants/tokens';
+import { font, layout, radius, space, type } from '@/constants/tokens';
 import type { IngredientAlias } from '@/lib/ingredientNames';
 import { ALLERGENS, listAllergens, type Allergen } from '@/lib/allergens';
 import { MEASURE_UNITS, partsText, prepAmounts, prepSummary, prepYield, slotMessage, toFinishSummary, type PrepDraft, type PrepDraftLine } from '@/lib/prepKinds';
@@ -168,7 +168,7 @@ export function PrepRecipeStep({ draft, view, set, ingredients, aliases, inDrink
                       placeholderTextColor={ds.c.muted}
                       aria-label={`Note on ${l.name}`}
                       maxLength={120}
-                      style={[styles.note, type.caption, { fontFamily: fontFamilies.body, color: ds.c.ink, borderColor: ds.c.lineStrong }]}
+                      style={[styles.note, type.caption, { ...font.regular, color: ds.c.ink, borderColor: ds.c.lineStrong }]}
                     />
                   ) : (
                     <PressableScale role="button" accessibilityLabel={l.note ? `Note on ${l.name}: ${l.note}. Change it` : `Add a note to ${l.name}`} onPress={() => setNoteKey(l.key)} style={styles.noteButton}>

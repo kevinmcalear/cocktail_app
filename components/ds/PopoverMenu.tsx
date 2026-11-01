@@ -2,7 +2,7 @@ import { useEffect, useState, type ComponentRef, type ReactNode } from 'react';
 import { Keyboard, Modal, Platform, Pressable, ScrollView, StyleSheet, useWindowDimensions, View } from 'react-native';
 
 import { IconSymbol } from '@/components/ui/icon-symbol';
-import { fontFamilies, layout, radius, space } from '@/constants/tokens';
+import { font, layout, radius, space } from '@/constants/tokens';
 import { withAlpha } from '@/lib/color';
 
 import { Appear } from './Appear';
@@ -183,5 +183,5 @@ const styles = StyleSheet.create({
   row: { flexDirection: 'row', alignItems: 'center', gap: space.sm, minHeight: layout.minTapTarget, paddingLeft: space.md, paddingRight: space.lg, paddingVertical: space.xs },
   tick: { width: 20, alignItems: 'center' },
   flex: { flex: 1 },
-  count: { fontFamily: fontFamilies.mono },
+  count: { ...font.figures },
 });

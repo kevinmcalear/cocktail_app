@@ -9,7 +9,8 @@ import { neutralsFrom } from '@/lib/palette';
 
 /** The app's display faces and their venue_display_face values in the database. */
 const FACE_TO_DB = {
-  instrument: 'instrument_serif',
+  // Every venue starts on instrument_serif (the column's default), so it reads as no pick: the app's own face.
+  redaction: 'instrument_serif',
   fraunces: 'fraunces',
   playfair: 'playfair_display',
   bricolage: 'bricolage_grotesque',
@@ -19,9 +20,9 @@ const FACE_TO_DB = {
 
 export type DbDisplayFace = (typeof FACE_TO_DB)[DisplayFace];
 
-/** A face this app doesn't know (a newer one) shows as Instrument Serif. */
+/** A face this app doesn't know (a newer one) shows as the app's own, Redaction. */
 export function faceFromDb(value: string | null | undefined): DisplayFace {
-  return (Object.keys(FACE_TO_DB) as DisplayFace[]).find((f) => FACE_TO_DB[f] === value) ?? 'instrument';
+  return (Object.keys(FACE_TO_DB) as DisplayFace[]).find((f) => FACE_TO_DB[f] === value) ?? 'redaction';
 }
 
 export function faceToDb(face: DisplayFace): DbDisplayFace {
