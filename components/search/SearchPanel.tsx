@@ -5,7 +5,9 @@ import { Platform, StyleSheet, View } from 'react-native';
 import { Body, Caption, Chip, useDs, useGutter } from '@/components/ds';
 import { IconSymbol } from '@/components/ui/icon-symbol';
 import { DrinkRow } from '@/components/screens/DrinkRow';
+import { AddBarSheet } from '@/components/screens/home/AddBar';
 import { space } from '@/constants/tokens';
+import { useAuth } from '@/ctx/AuthContext';
 import { useActiveVenue } from '@/hooks/useActiveVenue';
 import { useDrafts } from '@/hooks/useDrafts';
 import { useMineFacts } from '@/hooks/useMineFacts';
@@ -117,14 +119,17 @@ interface BodyProps {
   onCounts?: (counts: ShowCounts) => void;
   /** The search tab: suggestions finish the typed word, a Top hit leads, and Browse by style waits before typing. */
   typeAhead?: (query: string) => void;
-  /** Discover: add a bar when this search finds nothing. */
-  onAddBar?: () => void;
-  /** Discover: hovering a result opens its bar on the map. */
-  onShowBar?: (barId: string | null) => void;
 }
 
 /** What the search finds in its scope, or what was opened lately while nothing is typed. */
-export function SearchBody({ query: typed, scope, onScope, mine, area, onJump, commands, palette, show, onShow, onCounts, typeAhead, onAddBar, onShowBar }: BodyProps) {
+export function SearchBody({ query: typed, scope, onScope, mine, area, onJump, commands, palette, show, onShow, onCounts, typeAhead }: BodyProps) {
+  const router = useRouter();
+  const signedIn = !!useAuth().user;
+  const [adding, setAdding] = useState(false);
+  const openBar = (ref: string) => {
+    setAdding(false);
+    router.push(`/p/${ref}`);
+  };
   // The field never waits on the results: they catch up with the typing when there's time (a letter typed meanwhile starts them again).
   const query = useDeferredValue(typed);
   // Android's search has no suggestions or Top hit (Miss-search-and): its Recent still fills the field.
@@ -146,10 +151,10 @@ export function SearchBody({ query: typed, scope, onScope, mine, area, onJump, c
         onShow={onShow}
         onCounts={onCounts}
         typeAhead={ahead}
-        onAddBar={onAddBar}
-        onShowBar={onShowBar}
+        onAddBar={signedIn ? () => setAdding(true) : undefined}
       />
       {commands}
+      {adding ? <AddBarSheet onClose={() => setAdding(false)} onAdded={(v) => openBar(v.handle)} onOpenExisting={openBar} /> : null}
     </>
   );
 }

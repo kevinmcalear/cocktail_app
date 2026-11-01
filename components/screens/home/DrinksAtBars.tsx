@@ -37,7 +37,7 @@ export function scoreWords(drink?: number, bar?: number): string | null {
  * aren't repeated. `everywhere`: search's Everywhere, which puts why it
  * matched ("Riff on a Negroni") on its own line, the word lit (nav-search-everywhere).
  */
-export function DrinkAtBarRow({ drink: d, scores, query, matchLook = 'tint', atBar = false, everywhere = false, onPress, onShowBar }: { drink: DiscoverDrink; scores?: DrinkScores; query?: string; matchLook?: MatchTextProps['look']; atBar?: boolean; everywhere?: boolean; onPress?: () => void; /** Hovering opens this bar on the map. */ onShowBar?: (barId: string | null) => void }) {
+export function DrinkAtBarRow({ drink: d, scores, query, matchLook = 'tint', atBar = false, everywhere = false, onPress }: { drink: DiscoverDrink; scores?: DrinkScores; query?: string; matchLook?: MatchTextProps['look']; atBar?: boolean; everywhere?: boolean; onPress?: () => void; }) {
   const bar = d.bar;
   const version = useVersionLabel(d.id);
   const away = d.distance === null || d.distance === undefined ? null : formatDistance(d.distance / 1000, usesMiles(getLocales()[0]));
@@ -66,8 +66,6 @@ export function DrinkAtBarRow({ drink: d, scores, query, matchLook = 'tint', atB
       query={query}
       matchLook={matchLook}
       label={said ? [d.name, caption, everywhere ? d.why : null, d.menu.past, said].filter(Boolean).join('. ') : undefined}
-      onHoverIn={onShowBar ? () => onShowBar(d.barId) : undefined}
-      onHoverOut={onShowBar ? () => onShowBar(null) : undefined}
     />
   );
 }

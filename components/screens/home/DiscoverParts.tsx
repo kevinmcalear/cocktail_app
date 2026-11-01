@@ -1,9 +1,9 @@
 import { getLocales } from 'expo-localization';
 import { useRouter, type Href } from 'expo-router';
-import { useMemo } from 'react';
+import { useMemo, useState } from 'react';
 import { ScrollView, StyleSheet, View } from 'react-native';
 
-import { Caption, Chip, DrinkImage, DsText, GlassSurface, Headline, PressableScale, useBreakpoint, useDs } from '@/components/ds';
+import { Caption, Chip, DrinkImage, DsText, GlassSurface, Headline, PencilState, PressableScale, useBreakpoint, useDs } from '@/components/ds';
 import { BarMark } from '@/components/screens/home/BarMark';
 import { DiscoverMap, mapAvailable } from '@/components/screens/home/DiscoverMap';
 import { MapCredit } from '@/components/screens/home/MapCredit';
@@ -46,8 +46,10 @@ export function MapCard({ bars, named, area, me, caption, selectedId = null, pan
       return { ...pin, mark, named: at >= 0, order: at >= 0 ? at : undefined };
     });
   }, [bars, named, ds.c.ground, ds.c.ink, family]);
-  // Near me opens on the neighbourhood, a city on all its bars. A new camera object moves the map, so only when those change.
-  const camera = useMemo(() => cameraForArea(area, [], me) ?? cameraFor(pins), [pins, area, me]);
+  // Near me opens on the neighbourhood, a city on its bars. A new camera object moves the map, so the same view keeps the object (hours or a hover can't undo a pan).
+  const fit = cameraForArea(area, me) ?? cameraFor(pins);
+  const [camera, setCamera] = useState(fit);
+  if (fit?.latitude !== camera?.latitude || fit?.longitude !== camera?.longitude || fit?.zoom !== camera?.zoom) setCamera(fit);
   const open = (id: string | null) => {
     const pin = id ? pins.find((p: MapPin) => p.id === id) : null;
     if (pin) router.push(`/p/${pin.handle}` as Href);
@@ -110,13 +112,18 @@ function BestRowView({ row, highlight, onHover }: { row: BestRow; highlight: boo
 
 /**
  * "Best Martinis near you", All, and the ranked rows. Before 20 people have
- * ranked one there, the words Sta-rankings uses instead of rows.
+ * ranked one there, the words Sta-rankings uses instead of rows. `state`:
+ * the rankings are still coming, or didn't come.
  */
-export function BestNear({ label, classic, where, rows, limit, onAll, highlight, onHover }: { label: string; classic: string; where: string; rows: readonly BestRow[]; limit: number; onAll?: () => void; highlight?: string | null; onHover?: (barId: string | null) => void }) {
+export function BestNear({ label, classic, where, rows, limit, state, onRetry, onAll, highlight, onHover }: { label: string; classic: string; where: string; rows: readonly BestRow[]; limit: number; state?: 'loading' | 'error'; onRetry?: () => void; onAll?: () => void; highlight?: string | null; onHover?: (barId: string | null) => void }) {
   return (
     <View role="region" accessibilityLabel={label} style={styles.section}>
       <TonightLabel title={label} aside={onAll ? 'All' : null} onAside={onAll} />
-      {rows.length ? (
+      {state === 'loading' ? (
+        <RowsLoading />
+      ) : state === 'error' ? (
+        <PencilState kind="error" title="The rankings didn’t load." action={onRetry ? { label: 'Try again', onPress: onRetry } : undefined} />
+      ) : rows.length ? (
         <View>
           {rows.slice(0, limit).map((r) => (
             <BestRowView key={r.barId} row={r} highlight={highlight === r.barId} onHover={onHover} />
@@ -208,13 +215,12 @@ export function DiscoverOffline() {
 
 const LOADING_ROWS = [0, 1, 2];
 
-/** Loading (Sta-discover): the map card and three rows in outline. */
-export function DiscoverLoading() {
+/** Three rows in outline. */
+function RowsLoading() {
   const ds = useDs();
   const outline = { borderColor: ds.c.line };
   return (
-    <View role="progressbar" accessibilityLabel="Loading Discover" style={styles.section}>
-      <View style={[styles.outlineCard, outline]} />
+    <View style={styles.section}>
       {LOADING_ROWS.map((i) => (
         <View key={i} style={styles.loadingRow}>
           <View style={[styles.loadingPic, outline]} />
@@ -224,6 +230,17 @@ export function DiscoverLoading() {
           </View>
         </View>
       ))}
+    </View>
+  );
+}
+
+/** Loading (Sta-discover): the map card and three rows in outline. */
+export function DiscoverLoading() {
+  const ds = useDs();
+  return (
+    <View role="progressbar" accessibilityLabel="Loading Discover" style={styles.section}>
+      <View style={[styles.outlineCard, { borderColor: ds.c.line }]} />
+      <RowsLoading />
     </View>
   );
 }

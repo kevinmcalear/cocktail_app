@@ -17,7 +17,7 @@ const AT_BAR_MIN = 100;
 const MARK = 20;
 
 /** One drink on a shelf. `atBar`: already inside that bar's panel, so just the drawing and the drink. `size`: a grid's tile width. */
-export function ShelfTile({ drink: d, onShowBar, atBar = false, size = TILE }: { drink: DiscoverDrink; onShowBar?: (barId: string | null) => void; atBar?: boolean; size?: number }) {
+export function ShelfTile({ drink: d, atBar = false, size = TILE }: { drink: DiscoverDrink; atBar?: boolean; size?: number }) {
   const router = useRouter();
   const ds = useDs();
   const prefetch = usePrefetchCocktail();
@@ -28,10 +28,6 @@ export function ShelfTile({ drink: d, onShowBar, atBar = false, size = TILE }: {
       accessibilityLabel={[d.name, d.bar.name, place].filter(Boolean).join('. ')}
       onPressIn={() => prefetch(d.id, { name: d.name, imageUrl: d.imageUrl })}
       onPress={() => router.push(itemHref('Cocktail', d.id) as never)}
-      onHoverIn={onShowBar ? () => onShowBar(d.barId) : undefined}
-      onHoverOut={onShowBar ? () => onShowBar(null) : undefined}
-      onFocus={onShowBar ? () => onShowBar(d.barId) : undefined}
-      onBlur={onShowBar ? () => onShowBar(null) : undefined}
       style={[styles.tile, { width: size }]}
     >
       <View style={[styles.picture, { width: size, backgroundColor: ds.c.paper }]}>
@@ -66,7 +62,7 @@ export function gridColumns(width: number, min = TILE): number {
  * Wide screens' shelves (disc-desk-wide): a grid, `rows` deep, never a row that
  * scrolls sideways. `showAll` adds a button that opens the rest in place.
  */
-export function TileGrid({ drinks, rows = 2, atBar, showAll, onShowBar, style }: { drinks: DiscoverDrink[]; rows?: number; atBar?: boolean; showAll?: string; onShowBar?: (barId: string | null) => void; style?: StyleProp<ViewStyle> }) {
+export function TileGrid({ drinks, rows = 2, atBar, showAll, style }: { drinks: DiscoverDrink[]; rows?: number; atBar?: boolean; showAll?: string; style?: StyleProp<ViewStyle> }) {
   const ds = useDs();
   const [width, setWidth] = useState(0);
   const [open, setOpen] = useState(false);
@@ -78,7 +74,7 @@ export function TileGrid({ drinks, rows = 2, atBar, showAll, onShowBar, style }:
       <View role="list" style={styles.wrap} onLayout={(e) => setWidth(e.nativeEvent.layout.width)}>
         {shown.map((d) => (
           <View role="listitem" key={d.id}>
-            <ShelfTile drink={d} atBar={atBar} size={size} onShowBar={onShowBar} />
+            <ShelfTile drink={d} atBar={atBar} size={size} />
           </View>
         ))}
       </View>

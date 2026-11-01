@@ -59,12 +59,11 @@ export interface BestRow {
  * named after the bar's own drink of it ("House Martini") when the area's
  * drinks have one, else the classic ("Martini").
  */
-export function bestRows(ranked: readonly DiscoverRow[], drinks: readonly DiscoverDrink[], classic: string, limit: number): BestRow[] {
+export function bestRows(ranked: readonly DiscoverRow[], drinks: readonly DiscoverDrink[], classic: string): BestRow[] {
   const first = new Map<string, DiscoverDrink>();
   for (const d of drinks) if (!first.has(d.barId)) first.set(d.barId, d);
   return ranked
     .filter((r) => r.position !== null && r.score !== null)
-    .slice(0, limit)
     .map((r) => {
       const drink = first.get(r.venue_profile_id);
       return {

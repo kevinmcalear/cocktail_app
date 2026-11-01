@@ -107,7 +107,7 @@ const place = (b: DiscoverBar) => [b.locality, b.city].filter(Boolean).join(', '
  * when it shut, so nobody plans a night around it. With `waiting`, what is
  * credited there and "Not claimed yet" (find-yourself).
  */
-export function BarResultRow({ bar, score, away, waiting, query, matchLook, onShowBar }: { bar: DiscoverBar; score?: number; away?: string | null; waiting?: Waiting; query?: string; matchLook?: MatchTextProps['look']; /** Hovering opens this bar on the map. */ onShowBar?: (barId: string | null) => void }) {
+export function BarResultRow({ bar, score, away, waiting, query, matchLook }: { bar: DiscoverBar; score?: number; away?: string | null; waiting?: Waiting; query?: string; matchLook?: MatchTextProps['look']; }) {
   const router = useRouter();
   // "Fitzroy · 14 drinks on now" (nav-search-home).
   const caption = [bar.locality || bar.city, away, barDrinksLine(bar)].filter(Boolean).join(' · ') || place(bar) || undefined;
@@ -127,8 +127,6 @@ export function BarResultRow({ bar, score, away, waiting, query, matchLook, onSh
       matchLook={matchLook}
       label={said ? [bar.name, badge, caption, line, said].filter(Boolean).join('. ') : undefined}
       onPress={() => router.push(`/p/${bar.handle || bar.id}`)}
-      onHoverIn={onShowBar ? () => onShowBar(bar.id) : undefined}
-      onHoverOut={onShowBar ? () => onShowBar(null) : undefined}
     />
   );
 }

@@ -84,15 +84,11 @@ assert.ok(empty.zoom > 9 && empty.zoom < 12, `a 20 km circle, got ${empty.zoom}`
 const near = cameraForArea({ kind: 'point', latitude: 40.72, longitude: -73.99, radiusKm: 10, source: 'me' })!;
 assert.deepEqual([near.latitude, near.longitude], [40.72, -73.99]);
 assert.ok(near.zoom >= 13 && near.zoom <= 15, `near me shows the neighbourhood, got ${near.zoom}`);
-const walk = Array.from({ length: 6 }, (_, i) => ({ latitude: 40.72 + i * 0.001, longitude: -73.99 }));
-assert.equal(cameraForArea({ kind: 'point', latitude: 40.72, longitude: -73.99, radiusKm: 10, source: 'me' }, walk)!.zoom, CLOSE_ZOOM);
-assert.equal(cameraForArea({ kind: 'point', latitude: 40.72, longitude: -73.99, radiusKm: 10, source: 'me' }, walk.slice(0, 5))!.zoom, near.zoom);
 assert.equal(cameraForArea({ kind: 'anywhere' }), null);
-// Found, near me centres on the person, not the snapped area a kilometre off; crowded counts around them.
+// Found, near me centres on the person, not the snapped area a kilometre off.
 const me = { latitude: 40.7261, longitude: -73.9807 };
-assert.deepEqual(cameraForArea({ kind: 'point', latitude: 40.72, longitude: -73.99, radiusKm: 10, source: 'me' }, [], me), { ...me, zoom: near.zoom });
-assert.equal(cameraForArea({ kind: 'point', latitude: 40.72, longitude: -73.99, radiusKm: 10, source: 'me' }, walk, me)!.zoom, near.zoom);
-assert.equal(cameraForArea({ kind: 'point', latitude: 40.72, longitude: -73.99, radiusKm: 10, source: 'map' }, [], me)!.latitude, empty.latitude);
+assert.deepEqual(cameraForArea({ kind: 'point', latitude: 40.72, longitude: -73.99, radiusKm: 10, source: 'me' }, me), { ...me, zoom: near.zoom });
+assert.equal(cameraForArea({ kind: 'point', latitude: 40.72, longitude: -73.99, radiusKm: 10, source: 'map' }, me)!.latitude, empty.latitude);
 
 console.log('discoverMap: ok');
 

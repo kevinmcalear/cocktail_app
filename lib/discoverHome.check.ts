@@ -31,9 +31,9 @@ const row = (position: number | null, id: string, score: number | null, rankers:
   position, venue_profile_id: id, handle: id, display_name: id.toUpperCase(), locality: null, city: null, latitude: null, longitude: null, distance_km: 0.5, score, rankers, is_early: position === null,
 });
 const drink = (id: string, barId: string, name: string) => ({ id, barId, name }) as DiscoverDrink;
-const rows = bestRows([row(1, 'care', 9.1, 212), row(2, 'moth', 8.9, 96), row(null, 'new', null, 3)], [drink('d1', 'care', 'House Martini'), drink('d2', 'care', 'Dirty Martini')], 'Martini', 3);
+const rows = bestRows([row(1, 'care', 9.1, 212), row(2, 'moth', 8.9, 96), row(null, 'new', null, 3)], [drink('d1', 'care', 'House Martini'), drink('d2', 'care', 'Dirty Martini')], 'Martini');
 assert.deepEqual(rows.map((r) => [r.position, r.name, r.drinkId, r.rankers]), [[1, 'House Martini', 'd1', 212], [2, 'Martini', null, 96]], 'early bars left out; the first drink at the bar names it');
-assert.equal(bestRows([row(1, 'a', 9, 30), row(2, 'b', 8, 30)], [], 'Martini', 1).length, 1, 'limit');
+assert.equal(bestRows([row(1, 'a', 9, 40), row(2, 'b', 8, 30)], [], 'Martini').length, 2, 'every ranked row: the screen cuts the list');
 
 // --- newMenus: on now, newest first, the month only when it's this month ---
 const ed = (id: string, year: number, month: number | null, current = true): MenuEdition => ({ id, name: id, year, month, end_year: null, end_month: null, is_current: current, theme: null, drinks: [{ id: `${id}-1`, name: 'x' }] as MenuEdition['drinks'], source_url: null });

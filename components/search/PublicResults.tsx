@@ -72,8 +72,6 @@ interface PublicResultsProps {
   typeAhead?: (query: string) => void;
   /** Discover: shown when this search finds nothing. */
   onAddBar?: () => void;
-  /** Discover: hovering a bar or its drink opens that bar on the map. */
-  onShowBar?: (barId: string | null) => void;
   /** Discover: a city the search names moves the area there. Elsewhere it opens Discover on it. */
   onPlace?: (city: City) => void;
   /** The place searched first found nothing (MineResults): its card leads, and Did you mean takes its title, add and drinks. */
@@ -88,7 +86,7 @@ interface PublicResultsProps {
  * ends with its score (b02) and lights the searched word. Bars' drinks need
  * an account; the rest is public.
  */
-export function PublicResults({ query, area, kinds = [], onKind, onEverywhere, mine, show, canMake: atVenue, onShow, onCounts, typeAhead, onAddBar, onShowBar, onPlace, head }: PublicResultsProps) {
+export function PublicResults({ query, area, kinds = [], onKind, onEverywhere, mine, show, canMake: atVenue, onShow, onCounts, typeAhead, onAddBar, onPlace, head }: PublicResultsProps) {
   const router = useRouter();
   const drawn = use(DrawnSearch);
   const signedIn = useSignedIn();
@@ -157,14 +155,14 @@ export function PublicResults({ query, area, kinds = [], onKind, onEverywhere, m
   const away = (b: DiscoverBar) => (area?.kind === 'point' && b.latitude !== null && b.longitude !== null ? formatDistance(distanceKm(area, { latitude: b.latitude, longitude: b.longitude }), miles) : null);
 
   const drinkGroup = (label: string, list: typeof drinks) => (
-    <ResultGroup key={label} label={label} items={list} render={(d) => <DrinkAtBarRow key={d.id} drink={d} scores={scores} query={q} matchLook={look} everywhere={everywhere && !onKind} onShowBar={onShowBar} />} />
+    <ResultGroup key={label} label={label} items={list} render={(d) => <DrinkAtBarRow key={d.id} drink={d} scores={scores} query={q} matchLook={look} everywhere={everywhere && !onKind} />} />
   );
   const barGroup = (
     <ResultGroup
       key="bars"
       label={`Bars ${area ? where : ''}`.trim()}
       items={bars}
-      render={(b) => <BarResultRow key={b.id} bar={b} score={scores.bars[b.id]?.score} away={away(b)} waiting={waiting?.[b.id]} query={q} matchLook={look} onShowBar={onShowBar} />}
+      render={(b) => <BarResultRow key={b.id} bar={b} score={scores.bars[b.id]?.score} away={away(b)} waiting={waiting?.[b.id]} query={q} matchLook={look} />}
     />
   );
   const placeGroup = (
@@ -191,7 +189,7 @@ export function PublicResults({ query, area, kinds = [], onKind, onEverywhere, m
       key="classics"
       label="Classics"
       items={only(top ? classics.filter((c) => c !== top) : classics)}
-      render={(d) => <ClassicRow key={d.id} classic={d} line={lines?.[d.id]} served={servedBy[d.id]} variations={variations[d.id]} matches={matches} score={ownScores?.[d.id]} scores={scores} query={q} matchLook={look} onShowBar={onShowBar} />}
+      render={(d) => <ClassicRow key={d.id} classic={d} line={lines?.[d.id]} served={servedBy[d.id]} variations={variations[d.id]} matches={matches} score={ownScores?.[d.id]} scores={scores} query={q} matchLook={look} />}
     />
   );
   const yoursGroup = (

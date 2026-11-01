@@ -15,7 +15,7 @@ import { TonightHead } from '@/components/screens/tonight/TonightParts';
 import { space } from '@/constants/tokens';
 import { useBarCities } from '@/hooks/useDiscover';
 import { useDiscoverArea } from '@/hooks/useDiscoverArea';
-import { BEST_ROWS, useAreaBars, useBestNear, useNewMenus } from '@/hooks/useDiscoverHome';
+import { BEST_ROWS, useAreaBars, useBestNear, useNewMenus, useOpenClock } from '@/hooks/useDiscoverHome';
 import { useIsWideWeb } from '@/hooks/useIsWideWeb';
 import { usePublishSearchArea } from '@/hooks/useSearchFrom';
 import { mapCaption, placeName } from '@/lib/discoverHome';
@@ -24,6 +24,10 @@ import { areaLabel } from '@/lib/nearMe';
 
 /** The desktop's list column (Prod-desk-discover: 470 wide, beside the map). */
 const DESK_LIST = 470;
+/** Discover lends search no style filters: a style search picks the list here. */
+const NO_KINDS: readonly string[] = [];
+/** Whether a style can lead the list: it needs a classic to rank (Low & no has none). */
+const ranksFor = (id: string | undefined) => STYLES.some((s) => s.id === id && s.classics.length > 0);
 
 /**
  * Discover, as drawn (Prod-discover, Prod-and-dark, Prod-desk-discover,
@@ -48,19 +52,25 @@ export function DiscoverScreen() {
   const { area, onArea, onCity, preferNear, near, onNearMe, locating, note } = useDiscoverArea();
   // Search's style chips open Discover on a style (/discover?kind=negroni).
   const { kind } = useLocalSearchParams<{ kind?: string }>();
-  const [styleId, setStyleId] = useState(() => (STYLES.some((s) => s.id === kind) ? kind! : 'martini'));
+  const [styleId, setStyleId] = useState(() => (ranksFor(kind) ? kind! : 'martini'));
   const [openOnly, setOpenOnly] = useState(true);
   const [late, setLate] = useState(false);
   const [hover, setHover] = useState<string | null>(null);
 
-  const nearby = useAreaBars(area, locating);
+  const now = useOpenClock();
+  const nearby = useAreaBars(area, locating, now);
   // Open now and Late are the desktop's chips; a bar whose hours nobody knows stays in.
   const shown = useMemo(() => nearby.bars.filter((b) => (!split || !openOnly || b.open !== false) && (!split || !late || b.late)), [nearby.bars, split, openOnly, late]);
-  const shownIds = new Set(shown.map((b) => b.id));
   const best = useBestNear(area, styleId, !locating && !offline);
-  const rows = split ? best.rows.filter((r) => shownIds.has(r.barId) || !nearby.bars.some((b) => b.id === r.barId)) : best.rows;
-  const menus = useNewMenus(split ? [] : nearby.bars);
-  const named = useMemo(() => rows.slice(0, split ? BEST_ROWS.desk : BEST_ROWS.phone).map((r) => r.barId), [rows, split]);
+  // The chips filter every ranked row, then the list cuts it, so four show while four are open.
+  const rows = useMemo(() => {
+    if (!split) return best.rows;
+    const shownIds = new Set(shown.map((b) => b.id));
+    return best.rows.filter((r) => shownIds.has(r.barId) || !nearby.bars.some((b) => b.id === r.barId));
+  }, [best.rows, nearby.bars, shown, split]);
+  const menus = useNewMenus(split ? [] : nearby.bars, now);
+  const limit = split ? BEST_ROWS.desk : BEST_ROWS.phone;
+  const named = useMemo(() => rows.slice(0, limit).map((r) => r.barId), [rows, limit]);
   const me = useMemo(() => (near.status === 'ready' ? { latitude: near.latitude, longitude: near.longitude } : null), [near]);
   const open = nearby.bars.filter((b) => b.open).length;
   const eyebrow = `${placeName(area, nearby.bars)}${open ? ' · open now' : ''}`;
@@ -75,15 +85,15 @@ export function DiscoverScreen() {
   usePublishSearchArea({
     label: area.kind === 'anywhere' ? null : 'This area',
     area,
-    kinds: [],
-    onKind: (k) => STYLES.some((s) => s.id === k) && setStyleId(k),
+    kinds: NO_KINDS,
+    onKind: (k) => ranksFor(k) && setStyleId(k),
     onPlace: onCity,
   });
 
   const where = areaLabel(area);
   const label = `Best ${best.style.label} ${area.kind === 'point' && area.source === 'me' ? 'near you' : where}`;
   const onAll = best.classicId ? () => router.push(`/rankings/${best.classicId}` as Href) : undefined;
-  const bestList = <BestNear label={label} classic={best.style.classics[0] ?? ''} where={where} rows={rows} limit={split ? BEST_ROWS.desk : BEST_ROWS.phone} onAll={onAll} highlight={split ? (hover ?? rows[0]?.barId ?? null) : null} onHover={split ? setHover : undefined} />;
+  const bestList = <BestNear label={label} classic={best.style.classics[0] ?? ''} where={where} rows={rows} limit={limit} state={best.isLoading ? 'loading' : best.error ? 'error' : undefined} onRetry={() => void best.refetch()} onAll={onAll} highlight={split ? (hover ?? rows[0]?.barId ?? null) : null} onHover={split ? setHover : undefined} />;
 
   const body = offline ? (
     <DiscoverOffline />
@@ -102,7 +112,7 @@ export function DiscoverScreen() {
     </View>
   ) : (
     <View style={styles.body}>
-      <MapCard bars={nearby.bars} named={named.slice(0, PHONE_NAMES)} area={area} me={me} caption={mapCaption(open, nearby.bars.length, area)} />
+      <MapCard bars={nearby.bars} named={named.slice(0, PHONE_NAMES)} area={area} me={me} caption={mapCaption(open, nearby.total, area)} />
       {bestList}
       <NewMenus menus={menus.menus} />
     </View>
