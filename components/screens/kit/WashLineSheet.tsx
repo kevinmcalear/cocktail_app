@@ -12,8 +12,8 @@ export function washLineValue(glass: BarGlass): string {
 }
 
 /**
- * Change a venue glass's wash line (Fit it to the glass, QA Q38). Optional,
- * never advised (jam dec-24): pick one of
+ * Change a venue glass's wash line (Fit it to the glass, QA Q38), for venues
+ * with Advanced options on. Optional, never advised (jam dec-24): pick one of
  * a few lines worked out from the glass's size, or type the ml; No wash line
  * clears it, and then nothing checks the drinks against one.
  */
