@@ -197,6 +197,8 @@ function RootLayoutNav() {
             <Stack.Screen name="p/[id]/claim" options={{ headerShown: false }} />
             <Stack.Screen name="p/[id]/bottles" options={{ headerShown: false }} />
             <Stack.Screen name="credits-to-check" options={{ headerShown: false }} />
+            <Stack.Screen name="people/index" options={{ headerShown: false }} />
+            <Stack.Screen name="people/find" options={{ headerShown: false }} />
             <Stack.Screen name="taste" options={{ headerShown: false }} />
             <Stack.Screen name="support" options={{ headerShown: false, title: "Support" }} />
             <Stack.Screen name="history" options={{ headerShown: false, title: "Cocktail history" }} />

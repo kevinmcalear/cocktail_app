@@ -17,6 +17,7 @@ jest.mock('./JobRequests', () => ({ JobRequests: () => null, MyJobRequests: () =
 jest.mock('./CreditsToCheck', () => ({ CreditsToCheckCard: () => null }));
 jest.mock('@/hooks/useCreditsToCheck', () => ({ useCreditsToCheck: () => ({ data: [] }) }));
 jest.mock('./YourBarCard', () => ({ ItsYou: () => null, YourBarCard: () => null }));
+jest.mock('../people/YouPeople', () => ({ YouPeople: () => null }));
 jest.mock('expo-router', () => ({ useRouter: () => ({ push: mockPush, navigate: mockNavigate, replace: jest.fn(), back: jest.fn(), canGoBack: () => true }) }));
 jest.mock('@/ctx/AuthContext', () => ({ useAuth: () => ({ user: { id: 'me', user_metadata: { full_name: 'Jo Juniper' } }, loading: false }) }));
 jest.mock('@/components/nav/ScreenHeader', () => ({ ScreenHeader: () => null }));

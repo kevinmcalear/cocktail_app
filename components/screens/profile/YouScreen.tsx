@@ -14,6 +14,7 @@ import { hadStats } from '@/lib/hadDrinks';
 import { pickedShown, profileLine } from '@/lib/profiles';
 import { siteOrigin } from '@/lib/venueLink';
 
+import { YouPeople } from '../people/YouPeople';
 import { TasteCard } from '../taste/TasteCard';
 import { CreditsToCheckCard } from './CreditsToCheck';
 import { MyJobRequests } from './JobRequests';
@@ -113,6 +114,8 @@ function You() {
           </Stats>
 
           {profile ? <YourBarCard positions={positions} headlineId={profile.headlinePositionId} /> : null}
+
+          <YouPeople />
 
           <TasteCard />
 

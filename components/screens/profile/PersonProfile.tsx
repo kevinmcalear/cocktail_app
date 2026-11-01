@@ -5,23 +5,28 @@ import { Platform, StyleSheet, View } from 'react-native';
 import { Body, Button, Caption, PressableScale, Segmented, Tag, TextLink, Title } from '@/components/ds';
 import { UserAvatar } from '@/components/ui/UserAvatar';
 import { WebHead } from '@/components/WebHead';
-import { font, space } from '@/constants/tokens';
+import { space } from '@/constants/tokens';
 import { useSignedIn } from '@/ctx/AuthContext';
+import { useItemFamilies, useProfileUserId } from '@/hooks/useFollows';
 import { useProfileMade, useSetMadeShown } from '@/hooks/useMade';
 import { useMyProfile } from '@/hooks/useMyProfile';
 import { useMenuCredits, useProfileAwards, useProfileNameCredits, useProfileOriginals, useProfilePicks, useProfilePositions, useWorkedMenus, type Profile } from '@/hooks/useProfiles';
 import { useProfileBars, useProfileDrinks } from '@/hooks/useRankings';
-import { hadStats, topFour } from '@/lib/hadDrinks';
+import { dotLine, favouriteFamily, familyPlural } from '@/lib/follows';
+import { hadStats } from '@/lib/hadDrinks';
 import { plural } from '@/lib/menus';
 import { barsCrediting, personTabs, pickedShown, profileLine } from '@/lib/profiles';
+import { siteOrigin } from '@/lib/venueLink';
 
+import { useFollow } from '../people/Follow';
+import { PersonActions, PersonRanks } from '../people/PersonFollow';
 import { SharedDrinks } from './HadDrinks';
 import { PersonAwards } from './PersonAwards';
 import { Positions } from './Positions';
 import { ProfileLinks } from './ProfileLinks';
 import { NameCredits } from './NameCredits';
 import { MenuCredits, OriginalsGrid, Stat, Stats } from './ProfileSections';
-import { TopFour, fourSlots } from './TopFour';
+import { useShareLink } from './useShareLink';
 
 type Tab = 'had' | 'bars' | 'originals';
 const TABS = [
@@ -77,7 +82,14 @@ export function PersonProfile({ profile, columns }: { profile: Profile; columns:
   // What they said they do, or the job they picked; never a label we made up.
   const line = profileLine(profile, positions);
   const riffs = originals.reduce((n, d) => n + (d.versions?.[0]?.count ?? 0), 0);
-  const drinksHad = hadStats(had.data ?? []).drinks;
+  const stats = hadStats(had.data ?? []);
+  // Following (Kept-follow): their page's owner, and whether you follow each other. Never on your own page.
+  const ownerId = useProfileUserId(mine ? null : profile.id).data ?? null;
+  const follow = useFollow(ownerId, profile.display_name);
+  const share = useShareLink(`${siteOrigin()}/p/${profile.handle}`, profile.display_name);
+  const families = useItemFamilies((had.data ?? []).map((d) => d.itemId)).data ?? {};
+  const favourite = favouriteFamily((had.data ?? []).map((d) => families[d.itemId]));
+  const keeps = !mine && profile.had_mode === 'none';
 
   return (
     <View style={styles.body}>
@@ -87,8 +99,8 @@ export function PersonProfile({ profile, columns }: { profile: Profile; columns:
       <View style={styles.header}>
         <UserAvatar uri={profile.avatar_url} name={profile.display_name} size={88} />
         <Title align="center">{profile.display_name}</Title>
-        <Caption tone="muted" align="center" style={styles.mono}>
-          {[`@${profile.handle}`, place].filter(Boolean).join(' · ')}
+        <Caption tone="muted" align="center">
+          {dotLine([place, favourite && `mostly ${familyPlural(favourite).toLowerCase()}`, follow.followsYou && 'follows you']) || `@${profile.handle}`}
         </Caption>
         {line ? <Body align="center">{line}</Body> : null}
         <View style={styles.chips}>
@@ -101,13 +113,17 @@ export function PersonProfile({ profile, columns }: { profile: Profile; columns:
         <ProfileLinks profile={profile} align="center" />
       </View>
 
-      <Stats>
-        {showsMade ? <Stat value={originals.length} label={originals.length === 1 ? 'original' : 'originals'} /> : null}
-        {had.data?.length ? <Stat value={drinksHad} label={drinksHad === 1 ? 'drink had' : 'drinks had'} /> : null}
-        {showsMade && riffs ? <Stat value={riffs} label={riffs === 1 ? 'riff by others' : 'riffs by others'} /> : null}
+      <Stats ruled>
+        {had.data?.length ? <Stat ruled value={stats.drinks} label="ranked" /> : null}
+        {stats.bars ? <Stat ruled value={stats.bars} label={stats.bars === 1 ? 'bar' : 'bars'} /> : null}
+        {favourite ? <Stat ruled value={familyPlural(favourite)} label="favourite" /> : null}
+        {showsMade && originals.length ? <Stat ruled value={originals.length} label={originals.length === 1 ? 'original' : 'originals'} /> : null}
+        {showsMade && riffs ? <Stat ruled value={riffs} label={riffs === 1 ? 'riff by others' : 'riffs by others'} /> : null}
       </Stats>
 
-      {had.data ? <TopFour slots={fourSlots(topFour(had.data))} /> : null}
+      <PersonActions follow={mine || !ownerId ? null : follow} name={profile.display_name} onShare={() => void share()} />
+
+      <PersonRanks name={profile.display_name} drinks={had.data} keeps={keeps} following={follow.following} families={families} />
 
       <Positions profile={profile} />
 
@@ -177,5 +193,4 @@ const styles = StyleSheet.create({
   start: { alignSelf: 'flex-start' },
   mine: { flexDirection: 'row', alignItems: 'center', gap: space.sm },
   flex: { flex: 1, minWidth: 0 },
-  mono: { ...font.figuresMedium },
 });

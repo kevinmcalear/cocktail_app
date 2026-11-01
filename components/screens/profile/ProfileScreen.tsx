@@ -80,7 +80,8 @@ function ProfilePage({ profileRef, checking }: { profileRef: string | string[] |
       />
       {profile && !gated && !wideBar ? (
         <View style={styles.right}>
-          <ShareProfile profile={profile} />
+          {/* A claimed person's Share sits beside Follow under their name (Kept-follow); More stays here. */}
+          {profile.kind === 'person' && !unclaimedPerson ? null : <ShareProfile profile={profile} />}
           {/* A bar's Love sits beside Share (ppl-bar-top); Hide is in More (disc-hide-bar). */}
           {profile.kind === 'bar' ? <LoveBarButton profileId={profile.id} name={profile.display_name} labelled /> : null}
           <ProfileSafety profile={profile} />
