@@ -5,8 +5,9 @@ import { FlatList, StyleSheet, View } from 'react-native';
 import { Body, Button, Display, RowScore, scoreWords, useDs } from '@/components/ds';
 import { DrinkRow } from '@/components/screens/DrinkRow';
 import { DrinkLoading } from '@/components/screens/drink/DrinkLoading';
-import { radius, space } from '@/constants/tokens';
+import { layout, radius, space } from '@/constants/tokens';
 import { useCocktail } from '@/hooks/useCocktails';
+import { useOpenBeside } from '@/hooks/useDrinksSplit';
 import { useItemScores } from '@/hooks/useFlavor';
 import { useMineFacts } from '@/hooks/useMineFacts';
 import { useStudyPile } from '@/hooks/useStudyPile';
@@ -21,9 +22,6 @@ import type { SearchItem } from '@/types/search';
 // drink is first picked, not with the Library.
 const DrinkScreen = lazy(() => import('@/components/screens/drink/DrinkScreen').then((m) => ({ default: m.DrinkScreen })));
 
-
-/** The list pane's width, as the tablet board draws it. */
-const LIST_WIDTH = 360;
 
 /** The picked drink's page, beside the list. Opening it full (or editing) goes to its own page. */
 function DrinkPane({ id }: { id: string }) {
@@ -68,47 +66,56 @@ function OtherPane({ item }: { item: SearchItem }) {
  * menu", "Classics 2 · off menu", a Past pill) and ends with its score, as
  * search's rows do. The pick lives in the URL (?pick=<id>), so a link opens
  * the same drink; with none, the first one shows.
+ *
+ * `routed` (a desktop, hooks/useDrinksSplit.ts): the list alone, in its column
+ * beside the Drinks stack; a drink opens there at its own URL (/cocktail/<id>)
+ * and its row stays lit.
  */
-export function LibraryPanes({ venueId, items, lineOf, header, empty, footer }: { venueId: string | null; items: SearchItem[]; lineOf?: (item: SearchItem) => string | null; header: ReactElement; empty: ReactElement | null; footer?: ReactElement | null }) {
+export function LibraryPanes({ venueId, items, lineOf, header, empty, footer, routed = false }: { venueId: string | null; items: SearchItem[]; lineOf?: (item: SearchItem) => string | null; header: ReactElement; empty: ReactElement | null; footer?: ReactElement | null; routed?: boolean }) {
   const ds = useDs();
   const router = useRouter();
   const { pick } = useLocalSearchParams<{ pick?: string }>();
-  const picked = items.find((i) => i.id === pick) ?? items[0] ?? null;
+  const beside = useOpenBeside();
+  const picked = routed ? (items.find((i) => i.id === beside.picked) ?? null) : (items.find((i) => i.id === pick) ?? items[0] ?? null);
   const facts = useMineFacts(venueId, items);
   const { data: scores } = useItemScores(items.filter((i) => i.category === 'Cocktail').map((i) => i.id));
   // Drinks at a venue say why they're here; elsewhere (and other kinds) keep the tile's line.
   const why = (i: SearchItem) => (venueId && i.category === 'Cocktail' ? drinkFacts(i.id, i.category, facts, true) : { caption: lineOf?.(i) ?? i.category ?? undefined, tag: undefined });
+  const list = (
+    <FlatList
+      style={routed ? styles.fill : [styles.list, { borderRightColor: ds.c.line }]}
+      contentContainerStyle={styles.listBody}
+      data={items}
+      keyExtractor={(i) => i.id}
+      ListHeaderComponent={header}
+      ListEmptyComponent={empty ?? undefined}
+      ListFooterComponent={footer ?? undefined}
+      renderItem={({ item }) => {
+        const { caption, tag } = why(item);
+        const score = scores?.[item.id];
+        const said = scoreWords(score);
+        return (
+          <View style={[styles.pick, item.id === picked?.id && { backgroundColor: withAlpha(ds.accentText, 0.12) }]}>
+            <DrinkRow
+              name={item.name}
+              imageUrl={heroPicture(item.item_images ?? [])?.url ?? null}
+              glass={fallbackGlass(item.category as ItemCategory)}
+              itemId={item.id}
+              caption={caption}
+              tag={tag}
+              trailing={<RowScore score={score} />}
+              label={said ? [item.name, caption, tag, said].filter(Boolean).join('. ') : undefined}
+              onPress={() => (routed ? beside.open(itemHref(item.category as ItemCategory, item.id)) : router.setParams({ pick: item.id }))}
+            />
+          </View>
+        );
+      }}
+    />
+  );
+  if (routed) return list;
   return (
     <View style={styles.row}>
-      <FlatList
-        style={[styles.list, { borderRightColor: ds.c.line }]}
-        contentContainerStyle={styles.listBody}
-        data={items}
-        keyExtractor={(i) => i.id}
-        ListHeaderComponent={header}
-        ListEmptyComponent={empty ?? undefined}
-        ListFooterComponent={footer ?? undefined}
-        renderItem={({ item }) => {
-          const { caption, tag } = why(item);
-          const score = scores?.[item.id];
-          const said = scoreWords(score);
-          return (
-            <View style={[styles.pick, item.id === picked?.id && { backgroundColor: withAlpha(ds.accentText, 0.12) }]}>
-              <DrinkRow
-                name={item.name}
-                imageUrl={heroPicture(item.item_images ?? [])?.url ?? null}
-                glass={fallbackGlass(item.category as ItemCategory)}
-                itemId={item.id}
-                caption={caption}
-                tag={tag}
-                trailing={<RowScore score={score} />}
-                label={said ? [item.name, caption, tag, said].filter(Boolean).join('. ') : undefined}
-                onPress={() => router.setParams({ pick: item.id })}
-              />
-            </View>
-          );
-        }}
-      />
+      {list}
       <View style={styles.detail}>
         {!picked ? (
           <Body tone="muted" style={styles.other}>
@@ -126,7 +133,8 @@ export function LibraryPanes({ venueId, items, lineOf, header, empty, footer }: 
 
 const styles = StyleSheet.create({
   row: { flex: 1, flexDirection: 'row' },
-  list: { width: LIST_WIDTH, flexGrow: 0, flexShrink: 0, borderRightWidth: StyleSheet.hairlineWidth },
+  fill: { flex: 1 },
+  list: { width: layout.listPane, flexGrow: 0, flexShrink: 0, borderRightWidth: StyleSheet.hairlineWidth },
   listBody: { paddingHorizontal: space.xl, paddingBottom: space.xl, gap: space.xs },
   pick: { borderRadius: radius.control, paddingHorizontal: space.sm, marginHorizontal: -space.sm },
   detail: { flex: 1, minWidth: 0 },

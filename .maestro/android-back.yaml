@@ -1,0 +1,28 @@
+# Android Back: it leaves a page and closes a sheet without leaving the app,
+# and leaves the app only from a tab's first page.
+appId: com.kevinmcalear.cocktail.dev
+name: Android Back
+tags:
+  - android
+---
+- runFlow: subflows/start.yaml
+- tapOn: "Drinks"
+- tapOn:
+    text: ".*, open"
+    index: 0
+- assertVisible: "Close"
+- back
+- assertVisible:
+    text: "Drinks"
+    selected: true
+- assertVisible: ".*, open"
+# Add, the floating button on a tab's first page (components/nav/AddButton.tsx), opens the New sheet.
+- tapOn: "Add: a drink.*"
+- assertVisible: "Something you make"
+- back
+- assertNotVisible: "Something you make"
+- assertVisible: ".*, open"
+# Back on Tonight's first page leaves the app.
+- tapOn: "Tonight"
+- back
+- assertNotVisible: "Tonight"

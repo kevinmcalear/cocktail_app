@@ -3,7 +3,7 @@ import type { ReactNode } from 'react';
 import { Platform, StyleSheet, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
-import { Body, Display, GlassButton, PressableScale, Title, useDs, useGutter } from '@/components/ds';
+import { Body, Display, GlassButton, PressableScale, Title, useBreakpoint, useDs, useGutter } from '@/components/ds';
 import { IconSymbol } from '@/components/ui/icon-symbol';
 import { layout, radius, space } from '@/constants/tokens';
 import { useIsWideWeb } from '@/hooks/useIsWideWeb';
@@ -11,7 +11,7 @@ import { useOpenSearch } from '@/hooks/useSearchFrom';
 
 import { VenueDeleteBanner } from '@/components/screens/venue/DeleteVenue';
 
-import { AddButton } from './AddButton';
+import { AddButton, DeskAddButton } from './AddButton';
 import { VenueSwitcher } from './VenueSwitcher';
 
 /**
@@ -27,7 +27,8 @@ import { VenueSwitcher } from './VenueSwitcher';
  *
  * Wide web has the place button, New and you in the side nav: the title (at
  * display size with `display`) and `actions` share one line, or the row is
- * just the space above the page's own title.
+ * just the space above the page's own title. From 1200 (a desktop), "+ Add"
+ * ends that row wherever a phone shows its + (DeskAddButton).
  *
  * `center` (phones) fills the middle of the row, between the place button
  * and the +, and the title becomes a heading only screen readers hear
@@ -39,11 +40,14 @@ export function ScreenHeader({ title, display, actions, center, add = true, back
   const insets = useSafeAreaInsets();
   const gutter = useGutter();
   const wide = useIsWideWeb();
+  // The breakpoint, not the nav: Drinks' list beside a drink lays out as a tablet's, so it leaves Add to the page.
+  const desk = useBreakpoint() === 'desktop';
   // A venue's delete waiting its 7 days shows under every venue screen's header (E53).
   const banner = <VenueDeleteBanner />;
   if (wide) {
+    const plus = add && !back && desk ? <DeskAddButton /> : null;
     // insets.top: an iPad's status bar (0 on the web).
-    if (!title && !actions)
+    if (!title && !actions && !plus)
       return (
         <>
           <View style={[styles.wide, { marginTop: insets.top }]} />
@@ -54,7 +58,10 @@ export function ScreenHeader({ title, display, actions, center, add = true, back
       <>
         <View style={[styles.row, styles.wideTitled, { paddingHorizontal: gutter, marginTop: insets.top }]}>
           {!title ? <View /> : display ? <Display aria-level={1}>{title}</Display> : <Title aria-level={1}>{title}</Title>}
-          <View style={styles.end}>{actions}</View>
+          <View style={styles.end}>
+            {actions}
+            {plus}
+          </View>
         </View>
         {banner}
       </>
@@ -149,7 +156,7 @@ const styles = StyleSheet.create({
  * The header inside a list: ScreenHeader handles its own safe-area padding and
  * gutter, so this cancels the list's horizontal padding around it.
  */
-export function ScreenHeaderSpacer(props: { title?: string; actions?: ReactNode; back?: boolean }) {
+export function ScreenHeaderSpacer(props: { title?: string; actions?: ReactNode; add?: boolean; back?: boolean }) {
   const gutter = useGutter();
   return (
     <View style={{ marginHorizontal: -gutter }}>
