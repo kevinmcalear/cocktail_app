@@ -2,7 +2,17 @@ import assert from 'node:assert/strict';
 
 import { repertoire, type ListDates } from './repertoire';
 
-const d = (itemId: string, startsOn: string, endsOn: string | null, isCurrent = false): ListDates => ({ itemId, listName: 'Main', startsOn, endsOn, isCurrent });
+const d = (itemId: string, startsOn: string, endsOn: string | null, isCurrent = false): ListDates => ({
+  itemId,
+  listName: 'Main',
+  startsOn,
+  endsOn,
+  startYear: null,
+  startMonth: null,
+  endYear: null,
+  endMonth: null,
+  isCurrent,
+});
 const drinks = [{ id: 'martini' }, { id: 'clover' }, { id: 'lastword' }, { id: 'rnd' }];
 const r = repertoire(drinks, [
   d('martini', '2025-03-01', '2025-09-30'),

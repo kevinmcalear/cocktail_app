@@ -1,6 +1,6 @@
 import assert from 'node:assert/strict';
 
-import { allergenChips, allergenSummary, allergensTonight, allergyLine, isLivingList, menuLens, methodLine, rowStateMark } from './menuLens';
+import { allergenChips, allergenSummary, allergensTonight, allergyLine, isLivingList, menuLens, methodLine, rowStateMark, tastedLine } from './menuLens';
 
 const bar = 'b1';
 assert.equal(menuLens({ barId: null, caps: null, roleLevel: null, mine: true }), 'home');
@@ -44,5 +44,10 @@ assert.equal(isLivingList([{ onFrom: null }], '2026-10-01T00:00:00Z'), false);
 assert.equal(isLivingList([{ onFrom: '2026-10-01T00:00:00Z' }], '2026-10-01T00:00:00Z'), false);
 assert.equal(isLivingList([{ onFrom: '2026-10-12T00:00:00Z' }], '2026-10-01T00:00:00Z'), true);
 assert.equal(isLivingList([{ onFrom: null }], '2026-10-01T00:00:00Z', 1), true);
+
+// Tasted and approved: who and the day, or the day alone once the approver has gone.
+const oct28 = new Date(2026, 9, 28, 15).toLocaleDateString(undefined, { day: 'numeric', month: 'short' });
+assert.equal(tastedLine('Ana Ruiz', new Date(2026, 9, 28, 15).toISOString()), `Tasted and approved by Ana Ruiz, ${oct28}.`);
+assert.equal(tastedLine(null, new Date(2026, 9, 28, 15).toISOString()), `Tasted and approved, ${oct28}.`);
 
 console.log('menuLens ok');

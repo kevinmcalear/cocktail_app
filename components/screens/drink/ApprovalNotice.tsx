@@ -2,10 +2,13 @@ import { StyleSheet, View } from 'react-native';
 
 import { Body, Button, Caption, useDs } from '@/components/ds';
 import { IconSymbol } from '@/components/ui/icon-symbol';
-import { radius, space } from '@/constants/tokens';
+import { radius, space, STATUS } from '@/constants/tokens';
 import { useUserId } from '@/ctx/AuthContext';
+import { useBarMembers } from '@/hooks/useBarDetail';
 import { useCapabilities } from '@/hooks/useCapabilities';
 import { useApproveDrink, useDrinkApproval, useMyDrinkTypes } from '@/hooks/useDrinkApproval';
+import { readableAccent, withAlpha } from '@/lib/color';
+import { tastedLine } from '@/lib/menuLens';
 
 /**
  * A venue drink added by a role limited to some drink kinds waits for
@@ -45,7 +48,28 @@ export function ApprovalNotice({ itemId }: { itemId: string }) {
   );
 }
 
+/**
+ * "Tasted and approved by Ana Ruiz, 28 Oct." under the spec, for the drink's
+ * team (approval-states; Red-versions, Tasted and approved). Stamped when its
+ * wait for approval clears; drinks approved before the stamp say nothing.
+ */
+export function TastedLine({ itemId }: { itemId: string }) {
+  const ds = useDs();
+  const { data } = useDrinkApproval(itemId);
+  const members = useBarMembers(data?.approvedBy ? data.barId : null).data;
+  if (!data || data.waiting || !data.approvedAt) return null;
+  const name = members?.find((m) => m.user_id === data.approvedBy)?.display_name ?? null;
+  const green = readableAccent(STATUS.success, ds.c.ground);
+  return (
+    <View style={[styles.tasted, { backgroundColor: withAlpha(green, 0.1) }]}>
+      <IconSymbol name="checkmark" size={16} color={green} />
+      <Body style={styles.flex}>{tastedLine(name, data.approvedAt)}</Body>
+    </View>
+  );
+}
+
 const styles = StyleSheet.create({
+  tasted: { flexDirection: 'row', alignItems: 'center', gap: space.sm, paddingHorizontal: space.md, paddingVertical: space.sm, borderRadius: radius.control, borderCurve: 'continuous' },
   box: { gap: space.sm, padding: space.md, borderRadius: radius.control, borderCurve: 'continuous', borderWidth: StyleSheet.hairlineWidth, alignItems: 'flex-start' },
   row: { flexDirection: 'row', alignItems: 'center', gap: space.sm },
   flex: { flex: 1, minWidth: 0 },

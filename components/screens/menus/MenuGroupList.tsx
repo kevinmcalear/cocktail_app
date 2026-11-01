@@ -42,6 +42,8 @@ interface MenuGroupListProps {
   /** Past shows this many, then "All N" (Collection, where more follows below). */
   pastShown?: number;
   onAllPast?: () => void;
+  /** A bar's team: Our drinks, every drink with its runs, under Past (Menu-l-drinks; the way in isn't drawn). */
+  onOurDrinks?: () => void;
 }
 
 /**
@@ -49,7 +51,7 @@ interface MenuGroupListProps {
  * (on now, else the next) as a card, then Coming up, Drafts and R&D as rows,
  * and Past as lines. The Menus screen and Collection's Menus both draw this.
  */
-export function MenuGroupList({ menus, now, canBuild, opensAt = 'Drink Creator', note, pastShown, onAllPast }: MenuGroupListProps) {
+export function MenuGroupList({ menus, now, canBuild, opensAt = 'Drink Creator', note, pastShown, onAllPast, onOurDrinks }: MenuGroupListProps) {
   const g = groupMenus(menus, now);
   const home = menus.every((m) => !m.barId);
   // The first menu gets the card: what's on, else the next one.
@@ -84,7 +86,7 @@ export function MenuGroupList({ menus, now, canBuild, opensAt = 'Drink Creator',
           </LockedSection>
         )
       ) : null}
-      {g.previous.length ? (
+      {g.previous.length || (onOurDrinks && !home) ? (
         <MenuGroup title={home ? 'Past nights' : 'Past'}>
           <View>
             {g.previous.slice(0, pastShown).map((m) => (
@@ -94,6 +96,7 @@ export function MenuGroupList({ menus, now, canBuild, opensAt = 'Drink Creator',
           {pastShown !== undefined && onAllPast && g.previous.length > 0 ? (
             <MenuRowFrame ruled label={`All past menus, ${g.previous.length}`} onPress={onAllPast} thumb={null} name={home ? 'All past nights' : 'All past menus'} line={`${g.previous.length} since ${new Date(g.previous[g.previous.length - 1].startsAt ?? g.previous[g.previous.length - 1].createdAt).getFullYear()}`} />
           ) : null}
+          {onOurDrinks && !home ? <MenuRowFrame ruled label="Our drinks, every drink with its runs" onPress={onOurDrinks} thumb={null} name="Our drinks" line="Every drink with its runs, and Bring back" /> : null}
         </MenuGroup>
       ) : null}
       {g.rnd.length && canBuild ? (

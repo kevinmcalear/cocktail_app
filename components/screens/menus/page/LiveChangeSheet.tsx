@@ -14,18 +14,18 @@ import { MenuSheet } from '../MenuSheet';
 import { runRange } from './liveList';
 import { MenuDrawing } from './MenuDrawing';
 
-type When = 'now' | 'tonight' | 'date';
-const WHENS = [
+export type When = 'now' | 'tonight' | 'date';
+export const WHENS = [
   { value: 'now', label: 'Now' },
   { value: 'tonight', label: 'After tonight' },
   { value: 'date', label: 'On a date' },
 ] as const;
 
 const pad = (n: number) => String(n).padStart(2, '0');
-const ymd = (d: Date) => `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}`;
+export const ymd = (d: Date) => `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}`;
 
 /** When the change lands: null now; once the bar closes tonight; or the start of a picked day. */
-function changeAt(when: When, day: string, now: number, clock: BarClock | null | undefined): string | null {
+export function changeAt(when: When, day: string, now: number, clock: BarClock | null | undefined): string | null {
   if (when === 'now') return null;
   return (when === 'tonight' ? afterTonight(clock?.hours, new Date(now), clock?.timezone) : new Date(`${day}T00:00`)).toISOString();
 }

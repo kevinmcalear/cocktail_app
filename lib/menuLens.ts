@@ -91,3 +91,9 @@ export function allergenSummary(counts: ReadonlyMap<string, number>): string {
     .map(([label, n], i) => `${i ? label.toLowerCase() : label} in ${n}`)
     .join(' · ');
 }
+
+/** Under a drink's spec: "Tasted and approved by Ana Ruiz, 28 Oct." (approval-states); "Tasted and approved, 28 Oct." when the approver has left. */
+export function tastedLine(name: string | null, approvedAt: string): string {
+  const day = new Date(approvedAt).toLocaleDateString(undefined, { day: 'numeric', month: 'short' });
+  return `Tasted and approved${name ? ` by ${name}` : ''}, ${day}.`;
+}

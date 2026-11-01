@@ -14,7 +14,7 @@ import { pageShowsDescriptions } from '@/lib/pageVisibility';
 import type { SpecLevels, SpecLine } from '@/lib/spec';
 import type { DatabaseItem } from '@/types/types';
 
-import { ApprovalNotice } from './ApprovalNotice';
+import { ApprovalNotice, TastedLine } from './ApprovalNotice';
 import { BarRows } from './BarRows';
 import { Backstory } from './Backstory';
 import { DrinkCredit } from './DrinkCredit';
@@ -77,7 +77,7 @@ export function useDrinkSections(p: DrinkSectionsInput) {
     </ItemTitle>
   );
 
-  const spec = lockedLines ? (
+  const card = lockedLines ? (
     <View>
       {lockedLines.map((l) => (
         <SpecRow key={l.key} amount="" dense ingredient={l.ingredient ?? ''} />
@@ -96,6 +96,15 @@ export function useDrinkSections(p: DrinkSectionsInput) {
       goesOut={viewer === 'floor'}
       onLine={live ? (l) => router.push(`/ingredient/${l.ingredientId}` as Href) : undefined}
     />
+  );
+  // Under the spec, for its team: who tasted and approved it, and when (Red-versions).
+  const spec = team ? (
+    <>
+      {card}
+      <TastedLine itemId={item.id} />
+    </>
+  ) : (
+    card
   );
 
   // One notes block: the drink's notes as the server reads them for your role, the floor's talking points, and your own.

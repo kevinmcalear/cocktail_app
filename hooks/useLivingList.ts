@@ -160,6 +160,7 @@ function useInvalidateList(menuId: string) {
       client.invalidateQueries({ queryKey: ['drink-menu-runs'] }),
       client.invalidateQueries({ queryKey: ['menu-runs'] }),
       client.invalidateQueries({ queryKey: ['drink-list-dates'] }),
+      client.invalidateQueries({ queryKey: ['bar-list-drinks'] }),
     ]);
 }
 
@@ -175,8 +176,12 @@ export function useListChanges(menuId: string) {
   const opts = { onSuccess: invalidate, onError: () => {} };
   return {
     swap: useMutation({
-      mutationFn: async ({ rowId, itemId, at = null }: { rowId: string; itemId: string; at?: string | null }) =>
-        (await check(supabase.rpc('swap_menu_drink', { p_row_id: rowId, p_item_id: itemId, ...(at ? { p_at: at } : {}) }))).data,
+      mutationFn: async ({ rowId, itemId, at = null, price = null }: { rowId: string; itemId: string; at?: string | null; price?: string | null }) => {
+        const row = (await check(supabase.rpc('swap_menu_drink', { p_row_id: rowId, p_item_id: itemId, ...(at ? { p_at: at } : {}) }))).data;
+        // Bring back sets this list's price for the drink coming on (menu_drinks.price).
+        if (price && row) await check(supabase.from('menu_drinks').update({ price }).eq('id', row));
+        return row;
+      },
       ...opts,
     }),
     takeOff: useMutation({
@@ -185,7 +190,7 @@ export function useListChanges(menuId: string) {
       ...opts,
     }),
     add: useMutation({
-      mutationFn: async (p: { sectionId: string; itemId: string; sortOrder: number; at?: string | null; slotName?: string | null }) =>
+      mutationFn: async (p: { sectionId: string; itemId: string; sortOrder: number; at?: string | null; slotName?: string | null; price?: string | null }) =>
         void (await check(
           supabase.from('menu_drinks').insert({
             menu_id: menuId,
@@ -194,6 +199,7 @@ export function useListChanges(menuId: string) {
             sort_order: p.sortOrder,
             on_from: p.at ?? null,
             slot_name: p.slotName ?? null,
+            price: p.price ?? null,
           })
         )),
       ...opts,

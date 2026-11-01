@@ -9,6 +9,11 @@ export interface ListDates {
   /** Day it went on; null when only the month is known (research history). */
   startsOn: string | null;
   endsOn: string | null;
+  /** Known to the month only (research history): the year and month it went on and came off. */
+  startYear: number | null;
+  startMonth: number | null;
+  endYear: number | null;
+  endMonth: number | null;
   isCurrent: boolean;
 }
 

@@ -22,16 +22,25 @@ export function useMyDrinkTypes(barId: string | null | undefined) {
   });
 }
 
-/** Whether a venue drink is waiting for approval (dec-25), and who added it. */
+export interface DrinkApproval {
+  waiting: boolean;
+  createdBy: string | null;
+  barId: string | null;
+  /** Tasted and approved (approval-states): who and when, stamped as the wait clears. */
+  approvedBy: string | null;
+  approvedAt: string | null;
+}
+
+/** Whether a venue drink is waiting for approval (dec-25), who added it, and who tasted and approved it. */
 export function useDrinkApproval(itemId: string | null | undefined) {
   return useQuery({
     queryKey: ['drink-approval', itemId],
     enabled: !!itemId,
     staleTime: 30_000,
-    queryFn: async (): Promise<{ waiting: boolean; createdBy: string | null; barId: string | null } | null> => {
-      const { data, error } = await supabase.from('items').select('awaiting_approval, created_by, bar_id').eq('id', itemId!).maybeSingle();
+    queryFn: async (): Promise<DrinkApproval | null> => {
+      const { data, error } = await supabase.from('items').select('awaiting_approval, created_by, bar_id, approved_by, approved_at').eq('id', itemId!).maybeSingle();
       if (error) throw error;
-      return data ? { waiting: data.awaiting_approval, createdBy: data.created_by, barId: data.bar_id } : null;
+      return data ? { waiting: data.awaiting_approval, createdBy: data.created_by, barId: data.bar_id, approvedBy: data.approved_by, approvedAt: data.approved_at } : null;
     },
   });
 }

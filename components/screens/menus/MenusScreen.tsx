@@ -82,6 +82,7 @@ export function MenusScreen() {
           opensAt={opensAt ? roleLabel(opensAt) : undefined}
           pastShown={PAST_SHOWN}
           onAllPast={() => router.push('/menus/past')}
+          onOurDrinks={barId ? () => router.push('/menus/drinks') : undefined}
         />
       </ScrollView>
       {creating && canCreate ? <NewMenuSheet visible onClose={() => setCreating(false)} menus={menus} now={now} /> : null}
