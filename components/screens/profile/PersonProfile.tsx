@@ -12,6 +12,7 @@ import { useProfileMade, useSetMadeShown } from '@/hooks/useMade';
 import { useMyProfile } from '@/hooks/useMyProfile';
 import { useMenuCredits, useProfileAwards, useProfileNameCredits, useProfileOriginals, useProfilePicks, useProfilePositions, useWorkedMenus, type Profile } from '@/hooks/useProfiles';
 import { useProfileBars, useProfileDrinks } from '@/hooks/useRankings';
+import { familyName } from '@/lib/drinkTree';
 import { dotLine, favouriteFamily, familyPlural } from '@/lib/follows';
 import { hadStats } from '@/lib/hadDrinks';
 import { plural } from '@/lib/menus';
@@ -87,7 +88,7 @@ export function PersonProfile({ profile, columns }: { profile: Profile; columns:
   const ownerId = useProfileUserId(mine ? null : profile.id).data ?? null;
   const follow = useFollow(ownerId, profile.display_name);
   const share = useShareLink(`${siteOrigin()}/p/${profile.handle}`, profile.display_name);
-  const families = useItemFamilies((had.data ?? []).map((d) => d.itemId)).data ?? {};
+  const families = Object.fromEntries(Object.entries(useItemFamilies((had.data ?? []).map((d) => d.itemId)).data ?? {}).map(([id, f]) => [id, familyName(f)]));
   const favourite = favouriteFamily((had.data ?? []).map((d) => families[d.itemId]));
   const keeps = !mine && profile.had_mode === 'none';
 

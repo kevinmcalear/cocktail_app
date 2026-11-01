@@ -4,7 +4,6 @@
  * lines, and a person's favourite family. Pure, so lib/follows.check.ts
  * checks them without a database.
  */
-import { familyKey, type FamilyKey } from '@/lib/drinkTree';
 
 /** What the Follow button says: you already follow them, they follow you, or neither. */
 export function followLabel(s: { following: boolean; followsYou: boolean }): 'Following' | 'Follow back' | 'Follow' {
@@ -42,26 +41,6 @@ export const withArticle = (name: string) => `${/^[aeiou]/i.test(name) ? 'an' : 
 
 /** "Sam’s best sour": now their top drink of its family. */
 export const bestLine = (first: string, family: string) => `${first}’s best ${family.toLowerCase()}`;
-
-/** The tree's eight families by key, as one drink of them is called. */
-const FAMILY_NAMES: Record<FamilyKey, string> = {
-  oldfashioned: 'Old Fashioned',
-  martini: 'Martini',
-  negroni: 'Negroni',
-  sour: 'Sour',
-  sidecar: 'Sidecar',
-  highball: 'Highball',
-  tiki: 'Tiki',
-  flip: 'Flip',
-};
-
-/** One name per family, whatever items.drink_family says ("sour", "Sours" and "Sour" are all "Sour"). */
-export function familyName(raw: string | null | undefined): string | null {
-  const name = (raw ?? '').trim();
-  if (!name) return null;
-  const key = familyKey(name);
-  return key ? FAMILY_NAMES[key] : name.charAt(0).toUpperCase() + name.slice(1);
-}
 
 /** A family as many: "Sours", "Old Fashioneds", "Fizzes"; Tiki stays Tiki. */
 export function familyPlural(family: string): string {

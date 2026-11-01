@@ -1,7 +1,8 @@
 // Checks for lib/follows.ts. Run: npm run test:unit
 import assert from 'node:assert/strict';
 
-import { dotLine, familyName, favouriteFamily, familyPlural, followLabel, friendRankLines, isThisWeek, namesLine, rankWhen, withArticle } from './follows';
+import { familyName } from './drinkTree';
+import { dotLine, favouriteFamily, familyPlural, followLabel, friendRankLines, isThisWeek, namesLine, rankWhen, withArticle } from './follows';
 
 // The button: Following wins, then Follow back when they follow you.
 assert.equal(followLabel({ following: false, followsYou: false }), 'Follow');

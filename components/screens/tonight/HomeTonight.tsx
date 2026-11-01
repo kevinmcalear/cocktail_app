@@ -51,6 +51,7 @@ export function HomeTonight() {
           </Tiles>
         </TonightSection>
       ) : null}
+      {friends.followsNobody ? <FriendsPrompt /> : null}
       {away && awayLine ? (
         <TonightSection title="One bottle away">
           <NoteCard icon="place.mybar" text={awayLine} onPress={() => router.push(itemHref('Ingredient', away.bottles[0].id) as Href)} />
@@ -61,7 +62,6 @@ export function HomeTonight() {
           <NewListCard item={week.card} from={week.from} />
         </TonightSection>
       ) : null}
-      {friends.followsNobody ? <FriendsPrompt /> : null}
       {nothing ? (
         <PencilState
           kind="empty"

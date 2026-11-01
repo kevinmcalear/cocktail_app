@@ -30,6 +30,26 @@ export function familyKey(name: string | null | undefined): FamilyKey | null {
   return FAMILIES.find((f) => letters === f.key || letters === `${f.key}s`)?.key ?? null;
 }
 
+/** The eight families by key, as one drink of them is called ("now Sam’s best sour", "mostly sours"). */
+const ONE_OF: Record<FamilyKey, string> = {
+  oldfashioned: 'Old Fashioned',
+  martini: 'Martini',
+  negroni: 'Negroni',
+  sour: 'Sour',
+  sidecar: 'Sidecar',
+  highball: 'Highball',
+  tiki: 'Tiki',
+  flip: 'Flip',
+};
+
+/** One name per family, whatever items.drink_family says ("sour", "Sours" and "Sour" are all "Sour"). */
+export function familyName(raw: string | null | undefined): string | null {
+  const name = (raw ?? '').trim();
+  if (!name) return null;
+  const key = familyKey(name);
+  return key ? ONE_OF[key] : name.charAt(0).toUpperCase() + name.slice(1);
+}
+
 export interface TreeNode {
   /** "s:<id>" for a style, "d:<id>" for a drink. */
   key: string;

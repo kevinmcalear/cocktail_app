@@ -9,7 +9,8 @@ import { IconSymbol } from '@/components/ui/icon-symbol';
 import { WebHead } from '@/components/WebHead';
 import { radius, space } from '@/constants/tokens';
 import { useDebounced } from '@/hooks/useDiscover';
-import { useBarmates, useFindPeople, useFollowers, usePeopleByUser, type FollowPerson } from '@/hooks/useFollows';
+import { useBarmates, useFindPeople } from '@/hooks/useFindPeople';
+import { useFollowers, usePeopleByUser, type FollowPerson } from '@/hooks/useFollows';
 
 import { FollowText } from './Follow';
 import { usePersonSub } from './PeopleList';
