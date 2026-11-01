@@ -3,11 +3,13 @@
 import { useQuery } from '@tanstack/react-query';
 
 import { useUserId } from '@/ctx/AuthContext';
-import { MENU_DRINK_COLUMNS, toMenuDrink, type MenuItemRow } from '@/hooks/useMenus';
+import { MENU_DRINK_COLUMNS, publishedMenuDrink, toMenuDrink, type MenuItemRow } from '@/hooks/useMenus';
+import { fetchPublished } from '@/hooks/usePublished';
 import { viewerScoped } from '@/lib/authCache';
 import type { DrinkRun } from '@/lib/findYourself';
 import { runDates, sortEditions, type MenuDates, type MenuEdition, type MenuEditionDrink } from '@/lib/menuEditions';
 import { groupMenuCredits, type MenuCredit, type MenuDrinkRow } from '@/lib/profiles';
+import { ingredientsLine, type IngredientName } from '@/lib/publicDrink';
 import { jsonAs, supabase } from '@/lib/supabase';
 import type { MenuDrink } from '@/types/menus';
 
@@ -77,21 +79,34 @@ export function useMenuRuns(itemIds: readonly string[]) {
 }
 
 /**
- * The drinks on a menu edition with their ingredients and pictures, for
- * signed-in readers. Signed out, a bar's own drinks aren't readable, so the
- * menu shows their names (lib/menuEditions editionMenuDrinks).
+ * The drinks on a menu edition with what's in each and their pictures. Signed
+ * in, what the reader can open; for everyone, a bar's published drinks, with
+ * their ingredients by name (never amounts). A drink left out shows its name
+ * and price, and opens nothing (lib/menuEditions editionMenuDrinks).
  */
 export function useMenuEditionDrinks(drinks: MenuEditionDrink[]) {
   const userId = useUserId();
   const ids = drinks.map((d) => d.id);
   return useQuery({
     queryKey: ['menu-edition-drinks', ids, userId],
-    enabled: !!userId && ids.length > 0,
+    enabled: ids.length > 0,
     queryFn: async (): Promise<MenuDrink[]> => {
-      const { data, error } = await supabase.from('items').select(MENU_DRINK_COLUMNS).in('id', ids);
-      if (error) throw error;
-      // ponytail: supabase-js can't type an embed on items' own foreign keys ("more than one relationship"), so the row is cast; hint it as items!<fk> to drop this.
-      return ((data ?? []) as unknown as MenuItemRow[]).map((row) => toMenuDrink(row)).filter((d): d is MenuDrink => !!d);
+      let own: MenuDrink[] = [];
+      if (userId) {
+        const { data, error } = await supabase.from('items').select(MENU_DRINK_COLUMNS).in('id', ids);
+        if (error) throw error;
+        // ponytail: supabase-js can't type an embed on items' own foreign keys ("more than one relationship"), so the row is cast; hint it as items!<fk> to drop this.
+        own = ((data ?? []) as unknown as MenuItemRow[]).map((row) => toMenuDrink(row)).filter((d): d is MenuDrink => !!d);
+      }
+      const read = new Set(own.map((d) => d.id));
+      const rest = ids.filter((id) => !read.has(id));
+      if (!rest.length) return own;
+      const [published, names] = await Promise.all([fetchPublished(rest), supabase.rpc('public_drink_ingredients', { p_item_ids: rest })]);
+      if (names.error) throw names.error;
+      const lines: Record<string, IngredientName[]> = {};
+      for (const n of (names.data ?? []) as (IngredientName & { item_id: string })[]) (lines[n.item_id] ??= []).push({ name: n.name, brand: n.brand });
+      const open = published.map(publishedMenuDrink).filter((d): d is MenuDrink => !!d);
+      return [...own, ...open.map((d) => ({ ...d, line: ingredientsLine(lines[d.id] ?? []) ?? d.line }))];
     },
   });
 }

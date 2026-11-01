@@ -35,7 +35,8 @@ export interface PageRowView {
 
 interface MenuPageRowProps {
   row: PageRowView;
-  onPress: () => void;
+  /** Nothing to open: the row stays a plain row (a drink kept private). */
+  onPress?: () => void;
   /** A bartender's spec, or the menu team's actions, open under the row. */
   open?: boolean;
   /** Show the row's acts (a tapped row on a live list, or a change waiting). */
@@ -64,7 +65,7 @@ export function MenuPageRow({ row, onPress, open, showActs, onAct, chevron, chil
   const acts = showActs && row.acts?.length ? row.acts : null;
   return (
     <View style={[styles.wrap, { borderTopColor: ds.c.lineStrong }]}>
-      <PressableScale role="button" aria-expanded={open} accessibilityLabel={label} onPress={onPress} style={styles.row}>
+      <PressableScale role={onPress ? 'button' : undefined} aria-expanded={open} accessibilityLabel={label} onPress={onPress} disabled={!onPress} style={styles.row}>
         <View style={row.struck ? styles.struckPic : undefined}>
           <MenuDrawing itemId={drink.id} size="menuRow" ink={row.ink} fallback={{ imageUrl: drink.imageUrl, glass: drink.glass }} />
         </View>

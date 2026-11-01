@@ -3,8 +3,10 @@ import { Platform, StyleSheet, View } from 'react-native';
 
 import { DrinkDrawing, DrinkImage, isRowSize, useDs, type DrawingSize } from '@/components/ds';
 import { sceneFor } from '@/components/ds/SketchDrawing';
+import { CustomIcon } from '@/components/ui/CustomIcons';
 import { drawing, radius } from '@/constants/tokens';
 import { useItemSketch } from '@/hooks/useItemSketch';
+import { isPrivateDrink } from '@/lib/menus';
 import { CHALK, mapScene, pencilOnly } from '@/lib/sketch/passes';
 import type { Scene } from '@/lib/sketch/scene';
 import { sceneToSvg } from '@/lib/sketch/svg';
@@ -35,8 +37,17 @@ function pencilUri(scene: Scene, night: boolean): string {
  */
 export function MenuDrawing({ itemId, size, ink, fallback, bare }: { itemId: string; size: DrawingSize; ink: MenuInk; fallback?: { imageUrl: string | null; glass: string | null }; bare?: boolean }) {
   const ds = useDs();
-  const inputs = useItemSketch(itemId).data;
+  // A place held for a drink kept private has no id the database would take, and nothing to draw.
+  const kept = isPrivateDrink(itemId);
+  const inputs = useItemSketch(kept ? null : itemId).data;
   const px = size === 'hero' ? drawing.heroStaff : drawing[size];
+  if (kept) {
+    return (
+      <View style={[styles.kept, { width: px, height: px, backgroundColor: ds.c.paper }]} aria-hidden>
+        <CustomIcon name="Martini" size={Math.round(px * 0.55)} color={ds.c.sketchInk} />
+      </View>
+    );
+  }
   if (!inputs) {
     if (!fallback) return <View style={{ width: px, height: px }} />;
     return (
@@ -62,6 +73,7 @@ export function MenuDrawing({ itemId, size, ink, fallback, bare }: { itemId: str
 }
 
 const styles = StyleSheet.create({
+  kept: { alignItems: 'center', justifyContent: 'center', borderRadius: radius.control },
   // A third of its colour. RN has no saturate on iOS, so native dims instead.
   faded: Platform.OS === 'web' ? { filter: 'saturate(0.35)', opacity: 0.9 } : { opacity: 0.45 },
 });

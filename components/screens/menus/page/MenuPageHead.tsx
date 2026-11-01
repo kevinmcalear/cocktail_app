@@ -1,13 +1,14 @@
-import type { ReactNode } from 'react';
+import { lazy, Suspense, type ReactNode } from 'react';
 import { StyleSheet, View } from 'react-native';
 
 import { Caption, Display, DsText, GlassButton, PressableScale, Tag, useDs, type TagTone } from '@/components/ds';
-import { DrinkHero } from '@/components/screens/drink/DrinkHero';
-import { PhotoMirror } from '@/components/screens/drink/PhotoMirror';
 import { font, radius, space } from '@/constants/tokens';
 
 import { MenuSky, MenuTrio } from './MenuBand';
 import type { MenuInk } from './MenuDrawing';
+
+// The drink page's hero and its viewer load only for a menu with a cover: a home menu never has one.
+const MenuCover = lazy(() => import('./MenuCover'));
 
 const HERO_H = 300;
 /** A cover photo runs 470 down from the top of the screen, the name under it (Menu-g-photo-dark). */
@@ -34,6 +35,8 @@ interface MenuPageHeadProps {
   onEdit?: (() => void) | null;
   /** The one prominent action at the top: Edit, or Share on a home menu. */
   pill: { label: string; onPress: () => void } | null;
+  /** In Back's place on a page with no way back (a friend's shared menu): it goes home. */
+  label?: { text: string; onPress: () => void };
   /** The page's side margin: the hero runs out to the edges. */
   bleed: number;
   /** The status bar's height: the sky runs up under it. */
@@ -46,18 +49,16 @@ interface MenuPageHeadProps {
  * cover photo, or nothing yet), glass Back and Share, then the tag and
  * eyebrow, the name and its line (Menu-page).
  */
-export function MenuPageHead({ heroIds, coverUrl, name, ink, quiet, tag, eyebrow, description, onBack, onShare, onEdit, pill, bleed, top = 0, children }: MenuPageHeadProps) {
+export function MenuPageHead({ heroIds, coverUrl, name, ink, quiet, tag, eyebrow, description, onBack, onShare, onEdit, pill, label, bleed, top = 0, children }: MenuPageHeadProps) {
   const ds = useDs();
   const photo = !!coverUrl;
   const drawn = !photo && heroIds.length > 0;
   return (
     <View>
       {photo ? (
-        <View style={{ marginHorizontal: -bleed }}>
-          {/* The photo flipped and blurred runs on under the list, as on a drink's photo page. */}
-          <PhotoMirror url={coverUrl} top={PHOTO_H - space.xxxl} />
-          <DrinkHero name={name} pictures={[{ url: coverUrl, isSketch: false, isOutdated: false }]} glass={null} height={PHOTO_H} fade />
-        </View>
+        <Suspense fallback={<View style={{ height: PHOTO_H }} />}>
+          <MenuCover url={coverUrl} name={name} height={PHOTO_H} bleed={bleed} />
+        </Suspense>
       ) : drawn ? (
         <View style={{ height: HERO_H + top, marginHorizontal: -bleed, overflow: 'hidden' }}>
           {quiet ? null : <MenuSky ids={heroIds} fade />}
@@ -67,7 +68,15 @@ export function MenuPageHead({ heroIds, coverUrl, name, ink, quiet, tag, eyebrow
         <View style={{ height: 112 + top }} />
       )}
       <View style={[styles.bar, { top: top + space.lg }]}>
-        {onBack ? <GlassButton icon="chevron.left" accessibilityLabel="Back" onPress={onBack} onMedia={photo && ds.scheme === 'dark'} /> : <View />}
+        {onBack ? <GlassButton icon="chevron.left" accessibilityLabel="Back" onPress={onBack} onMedia={photo && ds.scheme === 'dark'} /> : label ? (
+          <PressableScale role="link" accessibilityLabel={label.text} onPress={label.onPress}>
+            <Caption tone="muted" style={styles.caps}>
+              {label.text.toUpperCase()}
+            </Caption>
+          </PressableScale>
+        ) : (
+          <View />
+        )}
         <View style={styles.barEnd}>
           {onEdit ? <GlassButton icon="pencil" accessibilityLabel="Edit" onPress={onEdit} onMedia={photo && ds.scheme === 'dark'} /> : null}
           {onShare ? <GlassButton icon="square.and.arrow.up" accessibilityLabel="Share" onPress={onShare} onMedia={photo && ds.scheme === 'dark'} /> : null}
