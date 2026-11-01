@@ -8,6 +8,13 @@ import { barSection } from './barSections';
 import { agoLabel } from './team';
 
 /**
+ * The back bar map is parked (31 Oct 2026): its ways in (Prep's Back bar
+ * button, the ingredient page's Where it lives) are hidden and its data is
+ * kept. ponytail: flip this to bring it back, with its sidebar row.
+ */
+export const BACK_BAR_SHOWN: boolean = false;
+
+/**
  * Every plan is drawn 2:1. ponytail: one shape for every venue; a per-venue
  * aspect (a column on bars) if a long, thin bar ever needs it.
  */

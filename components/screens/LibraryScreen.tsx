@@ -11,7 +11,6 @@ import { BottlePhotoSheet } from '@/components/screens/bottles/BottlePhotoSheet'
 import { MatchClassicsNudge } from '@/components/screens/classics/MatchClassicsNudge';
 import { ResumeCard } from '@/components/screens/bringin/ResumeCard';
 import { LibrarySetup } from '@/components/screens/venueSetup/SetupBanner';
-import { FeatureNewsLine } from '@/components/screens/library/FeatureNewsLine';
 import { FirstRoundCard, RoundOpened } from '@/components/screens/firstRound/FirstRoundCard';
 import { FilterRow } from '@/components/screens/library/LibraryChips';
 import { useTileLines } from '@/components/screens/library/useTileLines';
@@ -32,7 +31,6 @@ import { useVenueMenus } from '@/hooks/useMenus';
 import { usePricedItemIds } from '@/hooks/usePricing';
 import { useSearchCatalog } from '@/hooks/useSearchCatalog';
 import { useBarRiffs, useStaffList } from '@/hooks/useStaffList';
-import { useVenueFeature } from '@/hooks/useVenueFeatures';
 import { venueContextIds } from '@/lib/barContextFilter';
 import { itemHref, newDrinkHref, type ItemCategory } from '@/lib/itemRoutes';
 import { classicRows } from '@/lib/staffList';
@@ -74,8 +72,7 @@ export function LibraryScreen() {
   const { active, isLoading: venuesLoading } = useActiveVenue();
   const activeId = active?.id ?? null;
   const params = useLocalSearchParams<{ show?: string; menu?: string; kind?: string }>();
-  const extras = useVenueFeature('libraryExtras');
-  const show = parseShow(params.show, !!activeId || venuesLoading, extras);
+  const show = parseShow(params.show, !!activeId || venuesLoading);
   const contextIds = useMemo(() => venueContextIds(activeId, venuesLoading), [activeId, venuesLoading]);
   const { items, isLoading } = useSearchCatalog(contextIds);
   const { data: capabilities, isLoading: capsLoading } = useCapabilities(activeId);
@@ -152,7 +149,7 @@ export function LibraryScreen() {
   const { data: classicList } = useDrinkLists(!!q);
   const { glassName, lineOf } = useTileLines({ show, rndMenus: byMenu.rndMenus, prepLine: (id) => prepFacts[id]?.line ?? null, needsOf: kit.needsOf });
   const count = (value: Show) => (value === 'staff' ? classicRows(staff.data ?? [], linked.data ?? []).length : lists[value].length);
-  const groups = filterGroups(!!activeId, canCost, extras);
+  const groups = filterGroups(!!activeId, canCost);
   const pick = (value: Show) => router.setParams({ show: value, menu: undefined, kind: undefined });
   const filterSet: FilterSet = { ...splitFilters(groups), show, count, onPick: pick, nothing: !isLoading && !staff.isLoading && !linked.isLoading && groups.flat().every((f) => count(f.value) === 0) };
   const columns = COLUMNS[breakpoint];
@@ -166,7 +163,6 @@ export function LibraryScreen() {
         <PageHeader title="Library" width="full" display action={phone || staffView ? undefined : <SearchField query={find} onQuery={setFind} placeholder="Find in Library" />} />
       </View>
       {activeId ? (<><ResumeCard barId={activeId} /><LibrarySetup barId={activeId} /></>) : null}
-      <FeatureNewsLine />
       <FirstRoundCard />
       {active && canEdit ? <MatchClassicsNudge barId={active.id} /> : null}
       {phone ? null : (

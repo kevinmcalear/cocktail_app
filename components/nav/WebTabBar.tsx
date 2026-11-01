@@ -5,14 +5,12 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import { DsText, GlassButton, GlassSurface, PressableScale, useDs, type IconName } from '@/components/ds';
 import { IconSymbol } from '@/components/ui/icon-symbol';
-import { radius, space } from '@/constants/tokens';
+import { space } from '@/constants/tokens';
 import { useBottomSearchFocus } from '@/hooks/useBottomBar';
-import { useFeatureNewsDots } from '@/hooks/useFeatureNews';
 import { useFirstRound } from '@/hooks/useFirstRound';
 import { useIsWideWeb } from '@/hooks/useIsWideWeb';
 import { useMode } from '@/hooks/useMode';
-import { useVenueFeatures } from '@/hooks/useVenueFeatures';
-import { phoneTabs, venueTabs, type PhoneTab, type VenueTab } from '@/lib/venueFeatures';
+import { phoneTabs, venueTabs, type PhoneTab, type VenueTab } from '@/lib/tabs';
 
 import { CreateSheet } from './CreateSheet';
 
@@ -38,16 +36,14 @@ const HOME_TABS = {
 const TABS: Record<Exclude<PhoneTab, 'new'>, WebTab> = { ...VENUE_TABS, ...HOME_TABS };
 
 /**
- * The tabs for the mode you're in, for the sidebar. At a venue: Library,
- * Menus and Discover, plus Tonight, Prep and Study when the venue switched
- * them on (lib/venueFeatures.ts). Phone bars use phoneTabs, which caps them.
+ * The tabs for the mode you're in, for the sidebar (lib/tabs.ts). Phone bars
+ * use phoneTabs, which caps them.
  */
 export function useModeTabs(): WebTab[] {
   const { mode } = useMode();
-  const { has } = useVenueFeatures();
   // The first round holds Menus and Discover back until their steps come up (lib/firstRound.ts).
   const { hidden } = useFirstRound();
-  return mode === 'home' ? [DISCOVER, ...Object.values(HOME_TABS)] : venueTabs(has).flatMap((name) => ((hidden as readonly string[]).includes(name) ? [] : [VENUE_TABS[name]]));
+  return mode === 'home' ? [DISCOVER, ...Object.values(HOME_TABS)] : venueTabs().flatMap((name) => ((hidden as readonly string[]).includes(name) ? [] : [VENUE_TABS[name]]));
 }
 
 // The board's pill and search circle are both 64 tall.
@@ -96,16 +92,13 @@ export function WebTabBar({ state, emitter, navigateToTab }: BottomTabBarProps) 
   const ds = useDs();
   const insets = useSafeAreaInsets();
   const { mode } = useMode();
-  const { has } = useVenueFeatures();
   const current = state.routes[state.index]?.name;
   // New is the last tab and takes a tab's room (phoneTabs). While the bottom
   // search field has focus it takes the bar's place.
   const searching = useBottomSearchFocus((s) => s.focused);
   const [creating, setCreating] = useState(false);
-  // A new tab the venue switched on keeps a dot until it's first opened (hooks/useFeatureNews.ts).
-  const dots = useFeatureNewsDots();
   const { hidden } = useFirstRound();
-  const tabs = phoneTabs(mode === 'home', has).flatMap((name) => (name === 'new' || (hidden as readonly string[]).includes(name) ? [] : [TABS[name]]));
+  const tabs = phoneTabs(mode === 'home').flatMap((name) => (name === 'new' || (hidden as readonly string[]).includes(name) ? [] : [TABS[name]]));
   const go = (name: string) => {
     const route = state.routes.find((r) => r.name === name);
     if (!route) return;
@@ -119,19 +112,16 @@ export function WebTabBar({ state, emitter, navigateToTab }: BottomTabBarProps) 
         <View role="tablist" style={styles.row}>
           {tabs.map((t) => {
             const selected = current === t.name;
-            const isNew = dots.some((d) => d === t.name);
-            // The board lifts a new tab's label and icon to ink, beside its dot.
-            const color = selected ? ds.accentText : isNew ? ds.c.ink : ds.c.muted;
+            const color = selected ? ds.accentText : ds.c.muted;
             return (
               <PressableScale
                 key={t.name}
                 role="tab"
                 aria-selected={selected}
-                accessibilityLabel={isNew ? `${t.label}, new` : t.label}
+                accessibilityLabel={t.label}
                 onPress={() => go(t.name)}
                 style={[styles.tab, selected && { backgroundColor: ds.c.line }]}
               >
-                {isNew ? <View style={[styles.dot, { backgroundColor: ds.accentFill.fill }]} /> : null}
                 <IconSymbol name={t.icon} size={20} color={color} on={selected} />
                 <DsText variant="caption" color={color} numberOfLines={1}>
                   {t.label}
@@ -159,6 +149,4 @@ const styles = StyleSheet.create({
   tabs: { flex: 1, height: WEB_TAB_BAR_HEIGHT },
   row: { flex: 1, flexDirection: 'row', padding: space.xs },
   tab: { flex: 1, alignItems: 'center', justifyContent: 'center', borderRadius: WEB_TAB_BAR_HEIGHT / 2, gap: 2 },
-  // The board's new-tab dot: 8 across, up by the icon's top right.
-  dot: { position: 'absolute', top: 6, left: '50%', marginLeft: 18, width: space.sm, height: space.sm, borderRadius: radius.pill },
 });

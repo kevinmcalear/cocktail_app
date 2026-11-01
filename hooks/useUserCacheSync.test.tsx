@@ -13,7 +13,6 @@ jest.mock('@/lib/clearUserData', () => ({ clearUserData: () => mockClear() }));
 jest.mock('@/lib/react-query', () => ({ queryClient: {}, savedQueryFiles: { clear: async () => {} } }));
 jest.mock('@/lib/specBookFile', () => ({ clearSavedSpecBooks: async () => {} }));
 jest.mock('@/hooks/useDraftSync', () => ({ useDraftSync: () => {} }));
-jest.mock('@/hooks/useSpecBook', () => ({ useSpecBooks: () => {} }));
 jest.mock('@/lib/authCache', () => ({
   ...jest.requireActual('@/lib/authCache'),
   resetUserQueries: () => mockReset(),

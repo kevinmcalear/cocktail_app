@@ -2,7 +2,7 @@ import { useActiveVenue } from '@/hooks/useActiveVenue';
 import { useBarZones, useItemLocations } from '@/hooks/useBackBar';
 import { useCapabilities } from '@/hooks/useCapabilities';
 import { useMode } from '@/hooks/useMode';
-import { locationLine } from '@/lib/backBar';
+import { BACK_BAR_SHOWN, locationLine } from '@/lib/backBar';
 
 /**
  * Where a made batch goes at the venue you're working: its first back bar
@@ -14,7 +14,8 @@ export function useMakeSpot(itemId: string): string | null {
   const home = useMode().mode === 'home';
   const barId = home ? null : (active?.id ?? null);
   const caps = useCapabilities(barId);
-  const canRead = Array.isArray(caps.data) && caps.data.includes('locations');
+  // Nothing while the back bar is parked (lib/backBar.ts).
+  const canRead = BACK_BAR_SHOWN && Array.isArray(caps.data) && caps.data.includes('locations');
   const { data: zones = [] } = useBarZones(canRead ? barId : null);
   const { data: locations = [] } = useItemLocations(canRead ? barId : null);
   const here = locations.find((l) => l.item_id === itemId);

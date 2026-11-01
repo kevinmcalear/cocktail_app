@@ -15,7 +15,7 @@ export interface UnlinkedDrink {
  * "Match to classics". ponytail: one unpaginated read; fine for a few hundred
  * drinks per venue.
  */
-export function useUnlinkedDrinks(barId: string | null | undefined) {
+function useUnlinkedDrinks(barId: string | null | undefined) {
   return useQuery({
     queryKey: ['unlinked-drinks', barId],
     enabled: !!barId,

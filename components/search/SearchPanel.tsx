@@ -10,7 +10,6 @@ import { useActiveVenue } from '@/hooks/useActiveVenue';
 import { useDrafts } from '@/hooks/useDrafts';
 import { useMineFacts } from '@/hooks/useMineFacts';
 import { recentMatchesContext } from '@/hooks/useTrackRecent';
-import { useVenueFeatures } from '@/hooks/useVenueFeatures';
 import type { SearchMine } from '@/hooks/useSearchMine';
 import { belongsHere, inSelectedContext } from '@/lib/barContextFilter';
 import { fallbackGlass } from '@/lib/itemRoutes';
@@ -159,20 +158,19 @@ export function SearchBody({ query: typed, scope, onScope, mine, area, onJump, c
 }
 
 const KIND_LABEL: Record<RecentActivity['kind'], string> = { cocktail: 'Cocktail', beer: 'Beer', wine: 'Wine', ingredient: 'Ingredient', menu: 'Menu', bar: 'Bar', flavor: 'Flavor map' };
-// Ingredients is one of Library's extras: it shows with More library filters.
 const JUMPS = [
   { label: 'Classics', href: '/library?show=staff', icon: 'star' },
   { label: 'On menu now', href: '/library?show=on-menu', icon: 'list.bullet' },
   { label: 'Old drinks', href: '/library?show=past', icon: 'clock' },
   { label: 'Drafts', href: '/drafts', icon: 'pencil' },
-  { label: 'Ingredients', href: '/library?show=ingredients', icon: 'drop.fill', extra: true },
+  { label: 'Ingredients', href: '/library?show=ingredients', icon: 'drop.fill' },
 ] as const;
 
 /** The ways in that aren't a search: the flavor map, the history and the techniques (prep-flavor-entry), each when it's switched on. */
 const ENTRIES = [
-  { title: 'Flavor map', caption: 'What goes with what, counted from real drinks', icon: 'target', href: '/flavor-map', feature: 'flavorMap' },
-  { title: 'Cocktail history', caption: "Every classic's family tree, back to the punch bowl", icon: 'book', href: '/history', feature: 'history' },
-  { title: 'Techniques and equipment', caption: 'Foams, clarifying, milk punch, infusions, and the kit for each', icon: 'flask', href: '/techniques', feature: 'techniques' },
+  { title: 'Flavor map', caption: 'What goes with what, counted from real drinks', icon: 'target', href: '/flavor-map' },
+  { title: 'Cocktail history', caption: "Every classic's family tree, back to the punch bowl", icon: 'book', href: '/history' },
+  { title: 'Techniques and equipment', caption: 'Foams, clarifying, milk punch, infusions, and the kit for each', icon: 'flask', href: '/techniques' },
 ] as const;
 
 function Recent({ scope, mine, onJump, commands, browse }: { scope: SearchScope; mine: SearchMine; onJump?: () => void; commands?: ReactNode; browse?: boolean }) {
@@ -185,7 +183,6 @@ function Recent({ scope, mine, onJump, commands, browse }: { scope: SearchScope;
   const venue = scope === 'mine' && !!mine.venueId;
   const facts = useMineFacts(venue ? mine.venueId : null, NO_ITEMS);
   const { drafts } = useDrafts();
-  const { has } = useVenueFeatures();
   const [now] = useState(() => Date.now());
   const here = (r: RecentActivity) => (scope === 'mine' ? recentMatchesContext(r, mine.contextIds) : belongsHere(r.barId, myVenueIds, mine.venueId));
   const recent = all.filter(here);
@@ -235,7 +232,7 @@ function Recent({ scope, mine, onJump, commands, browse }: { scope: SearchScope;
           </Caption>
           <View style={styles.chips}>
             {/* Drafts stays with its count, even at none (decided 10 Oct, b53); outlined chips, as drawn. */}
-            {JUMPS.filter((j) => !('extra' in j) || has('libraryExtras')).map((j) => (
+            {JUMPS.map((j) => (
               <Chip
                 key={j.label}
                 label={j.label}
@@ -252,7 +249,7 @@ function Recent({ scope, mine, onJump, commands, browse }: { scope: SearchScope;
       {browse ? <StyleTiles /> : null}
       {commands}
       <View>
-        {ENTRIES.filter((e) => has(e.feature)).map((e) => (
+        {ENTRIES.map((e) => (
           <ResultRow key={e.href} title={e.title} caption={e.caption} icon={e.icon} accentIcon={e.href === '/flavor-map'} onPress={() => go(e.href)} />
         ))}
       </View>

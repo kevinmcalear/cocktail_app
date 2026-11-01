@@ -97,7 +97,7 @@ One set, the bar kit (whole-app canvas, Shell page, nav-icons), drawn the same o
 
 **Toasts** confirm a change and can carry one action, like Undo: `useToast().show({ title, detail, action })` (`components/ds/Toast.tsx`, mounted once at the root). A glass pill floats above the bottom edge (bottom centre on the web, `lift` clears a screen's own bottom bar), is announced as a status, and goes after five seconds, a swipe or a tap; Reduce Motion fades it. A plain "Saved" with no action can stay on `toastDone` (`lib/toast.ts`).
 
-Venue mode tabs: Library, Menus, Discover, plus Tonight, Prep and Study when the venue's Admin switches them on (Venue settings, Features; `lib/venueFeatures.ts`, stored in `bars.enabled_features`). Home mode tabs: Discover, My Bar, Collection, You. Search sits beside both. Phone bars hold four items and Search, and New is always one of the four (`phoneTabs`): at home You steps out (the header's avatar opens it), at a venue the next venue tab drops. The header has no +. A switched-off feature's links are hidden and its routes redirect to the first tab. The venue chip in the corner switches between venues and modes.
+Venue mode tabs: Tonight, Library, Menus, Prep, Study and Discover, the same at every venue (`lib/tabs.ts`). Home mode tabs: Discover, My Bar, Collection, You. Search sits beside both. Phone bars hold four items and Search, and New is always one of the four (`phoneTabs`): at home You steps out (the header's avatar opens it), at a venue the next venue tab drops. The header has no +. The venue chip in the corner switches between venues and modes.
 
 ## Permissions in the UI
 
@@ -128,4 +128,4 @@ Anything read from a photo or a paste (a menu, a spec, a shelf of bottles) is ch
 
 ## The gallery
 
-`/dev/gallery` renders every token and shared component in both themes (side by side on desktop), for no venue, Little Rye and Pale Moth, plus a light/dark toggle. The redesign flag is gone. The gallery is public but hidden (not linked anywhere). Add new ds components to it in the same PR; agents verify against it and against the brief.
+`/dev/gallery` renders every token and shared component in both themes (side by side on desktop), for no venue, Little Rye and Pale Moth, plus a light/dark toggle. The redesign flag is gone. The gallery and `/dev/drink` open in development builds only (`__DEV__`): release builds and the web drop them from the bundle. Add new ds components to it in the same PR; agents verify against it and against the brief.
