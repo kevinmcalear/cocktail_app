@@ -10,9 +10,15 @@ export type MenuLens = 'guest' | 'employee' | 'bartender' | 'creator' | 'admin' 
 
 const ADMIN_LEVEL = 40;
 
-/** The lens for a venue menu from the viewer's capabilities there, or a home menu by whose it is. */
-export function menuLens({ barId, caps, roleLevel, mine }: { barId: string | null; caps: readonly string[] | null | undefined; roleLevel: number | null | undefined; mine: boolean }): MenuLens {
+/** The lens for a venue menu from the viewer's capabilities there, or a home menu by whose it is. `viewAs`: a role level picked in View as, shown by its default lens. */
+export function menuLens({ barId, caps, roleLevel, mine, viewAs = null }: { barId: string | null; caps: readonly string[] | null | undefined; roleLevel: number | null | undefined; mine: boolean; viewAs?: number | null }): MenuLens {
   if (!barId) return mine ? 'home' : 'guest';
+  if (viewAs !== null && viewAs < (roleLevel ?? 0)) {
+    if (viewAs >= ADMIN_LEVEL) return 'admin';
+    if (viewAs >= 35) return 'creator';
+    if (viewAs >= 30) return 'bartender';
+    return viewAs >= 20 ? 'employee' : 'guest';
+  }
   const has = (c: string) => !!caps?.includes(c);
   if (has('menus')) return (roleLevel ?? 0) >= ADMIN_LEVEL ? 'admin' : 'creator';
   if (has('specs')) return 'bartender';

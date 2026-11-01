@@ -10,6 +10,7 @@ import { useListRows, type ListRow } from '@/hooks/useLivingList';
 import { useMenuCosting } from '@/hooks/useMenuCosting';
 import { usePricingSettings } from '@/hooks/usePricing';
 import { useUserId } from '@/ctx/AuthContext';
+import { useViewAs } from '@/hooks/useViewAs';
 import { allergenLabel, allergyMatches, type GuestDrinkAllergens } from '@/lib/allergens';
 import { margin } from '@/lib/costing';
 import { isMenuTeam, menuLens, methodLine, type MenuLens } from '@/lib/menuLens';
@@ -75,7 +76,8 @@ export function useMenuLens(menu: MenuDetail | null | undefined): MenuLensData {
   const barId = menu?.barId ?? null;
   const caps = useCapabilities(barId).data;
   const roleLevel = useActiveVenue().venues.find((v) => v.id === barId)?.roleLevel ?? null;
-  const lens = menuLens({ barId, caps: Array.isArray(caps) ? caps : null, roleLevel, mine: !!menu && menu.createdBy === userId });
+  const { viewAsRoleLevel } = useViewAs();
+  const lens = menuLens({ barId, caps: Array.isArray(caps) ? caps : null, roleLevel, mine: !!menu && menu.createdBy === userId, viewAs: viewAsRoleLevel });
   const drinks = menu?.sections.flatMap((s) => s.drinks) ?? [];
   const ids = drinks.map((d) => d.id);
   const glass = new Map(drinks.map((d) => [d.id, d.glass]));

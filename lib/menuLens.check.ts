@@ -11,6 +11,10 @@ assert.equal(menuLens({ barId: bar, caps: ['menu', 'talking_points', 'specs'], r
 assert.equal(menuLens({ barId: bar, caps: ['specs', 'menus'], roleLevel: 30, mine: false }), 'creator');
 assert.equal(menuLens({ barId: bar, caps: ['specs', 'menus'], roleLevel: 40, mine: false }), 'admin');
 
+assert.equal(menuLens({ barId: bar, caps: ['specs', 'menus'], roleLevel: 40, mine: false, viewAs: 10 }), 'guest');
+assert.equal(menuLens({ barId: bar, caps: ['specs', 'menus'], roleLevel: 40, mine: false, viewAs: 30 }), 'bartender');
+assert.equal(menuLens({ barId: bar, caps: ['menus'], roleLevel: 35, mine: false, viewAs: 40 }), 'creator');
+
 assert.equal(methodLine(['Stirred'], 'Nick & Nora', 'olive on a pick'), 'Stirred · Nick & Nora · olive on a pick');
 assert.equal(methodLine(['Dry shake', 'Shaken'], null, ' '), 'Dry shake, Shaken');
 assert.equal(methodLine([], null, null), '');
