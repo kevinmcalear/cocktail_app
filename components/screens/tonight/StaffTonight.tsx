@@ -160,7 +160,7 @@ export function NoVenue() {
 const styles = StyleSheet.create({
   stack: { gap: space.md },
   side: { gap: space.xl },
-  card: { padding: 0, overflow: 'hidden' },
+  card: { paddingVertical: space.xs, paddingHorizontal: space.lg, overflow: 'hidden' },
   grid: { flexDirection: 'row', flexWrap: 'wrap', borderTopWidth: StyleSheet.hairlineWidth, marginTop: space.sm },
   cell: { width: '25%', flexDirection: 'row', alignItems: 'center', gap: space.sm, paddingVertical: space.sm, borderBottomWidth: StyleSheet.hairlineWidth },
   learn: { flexDirection: 'row', alignItems: 'center', gap: space.md, paddingVertical: space.sm, borderTopWidth: StyleSheet.hairlineWidth },

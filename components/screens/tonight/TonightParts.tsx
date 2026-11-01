@@ -149,7 +149,8 @@ const styles = StyleSheet.create({
   caps: { textTransform: 'uppercase', letterSpacing: 1.2 },
   label: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', gap: space.md },
   sky: { position: 'absolute', left: 0, right: 0, top: 0, height: SKY },
-  trio: { flexDirection: 'row', alignItems: 'flex-end', justifyContent: 'center', paddingVertical: space.md },
+  // The drawings carry their own air above the glass, so the trio tucks up under the title.
+  trio: { flexDirection: 'row', alignItems: 'flex-end', justifyContent: 'center', marginTop: -space.xxxl, paddingBottom: space.md },
   side: { width: 96, alignItems: 'center', transform: [{ scale: 0.72 }], transformOrigin: 'bottom' },
   listHead: { gap: space.xs, alignSelf: 'flex-start' },
   listName: { flexDirection: 'row', alignItems: 'center', gap: space.sm },
