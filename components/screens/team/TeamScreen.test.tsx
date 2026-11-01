@@ -15,6 +15,7 @@ const mockInviteRole = jest.fn();
 const mockSend = jest.fn();
 const mockSendAsync = jest.fn();
 let mockRole = 40;
+let mockCustomInvite = false;
 
 jest.mock('@/components/screens/profile/JobRequests', () => ({ JobRequests: () => null, MyJobRequests: () => null }));
 jest.mock('./JoinRequests', () => ({ JoinRequests: () => null, ClaimsToConfirm: () => null }));
@@ -76,7 +77,7 @@ jest.mock('@/hooks/useVenueRoles', () => ({
 jest.mock('@/hooks/useTakeover', () => ({ useInviteToRole: () => ({ mutateAsync: mockInviteRole, isPending: false, error: null }) }));
 jest.mock('@/hooks/useBarInvites', () => ({
   useBarInvites: (_barId: string, enabled: boolean) => ({
-    data: enabled ? [{ id: 'i1', email: 'new@example.test', role_level: 30, name: 'Nia', created_at: '2026-01-01T00:00:00Z' }] : [],
+    data: enabled ? [{ id: 'i1', email: 'new@example.test', role_level: 30, venue_role_id: null, name: 'Nia', created_at: '2026-01-01T00:00:00Z' }, ...(mockCustomInvite ? [{ id: 'i2', email: 'bb@example.test', role_level: 20, venue_role_id: 'bb', name: 'Bo', created_at: '2026-01-01T00:00:00Z' }] : [])] : [],
   }),
   useRemoveInvite: () => ({ mutate: mockMutate, isPending: false, error: null }),
   useSendInviteEmail: () => ({ mutate: mockSend, mutateAsync: mockSendAsync, isPending: false, error: null }),
@@ -87,6 +88,7 @@ jest.mock('@/hooks/useBarInvites', () => ({
 
 beforeEach(() => {
   mockRole = 40;
+  mockCustomInvite = false;
   mockMutate.mockClear();
   mockChoose.mockClear();
   mockRemove.mockClear();
@@ -281,4 +283,10 @@ test('a person’s page: their numbers, a new role, and Remove', async () => {
   await new Promise(process.nextTick);
   expect(onRemoved).toHaveBeenCalled();
   expect(screen.getByText('Jo’s name stays on the drinks they made.')).toBeTruthy();
+});
+
+test('an invite to one of the bar’s own roles says that role, not its base level', async () => {
+  mockCustomInvite = true;
+  await renderWithProviders(<TeamScreen />);
+  expect(screen.getByText(/^Invited as Barback · /)).toBeTruthy();
 });
