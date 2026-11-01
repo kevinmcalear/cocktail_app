@@ -4,7 +4,7 @@ import { Platform, StyleSheet, View } from 'react-native';
 
 import { Caption, useDs, useGutter } from '@/components/ds';
 import { VenueBrandProvider } from '@/components/nav/VenueBrandProvider';
-import { DiscoverOverlay } from '@/components/screens/home/DiscoverSheet';
+import { DiscoverOverlay } from '@/components/screens/home/DiscoverOverlay';
 import { space } from '@/constants/tokens';
 import { useSearchFrom } from '@/hooks/useSearchFrom';
 import { useSearchMine } from '@/hooks/useSearchMine';

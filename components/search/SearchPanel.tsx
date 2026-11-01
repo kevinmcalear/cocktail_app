@@ -2,7 +2,7 @@ import { useRouter } from 'expo-router';
 import { use, useDeferredValue, useState, type ReactNode } from 'react';
 import { Platform, StyleSheet, View } from 'react-native';
 
-import { Body, Button, Caption, Chip, useDs, useGutter } from '@/components/ds';
+import { Body, Caption, Chip, useDs, useGutter } from '@/components/ds';
 import { IconSymbol } from '@/components/ui/icon-symbol';
 import { DrinkRow } from '@/components/screens/DrinkRow';
 import { space } from '@/constants/tokens';
@@ -121,12 +121,10 @@ interface BodyProps {
   onAddBar?: () => void;
   /** Discover: hovering a result opens its bar on the map. */
   onShowBar?: (barId: string | null) => void;
-  /** The search tab, searching Discover's area: "Show on the map" after the results (search-starts-here). */
-  onShowOnMap?: () => void;
 }
 
 /** What the search finds in its scope, or what was opened lately while nothing is typed. */
-export function SearchBody({ query: typed, scope, onScope, mine, area, onJump, commands, palette, show, onShow, onCounts, typeAhead, onAddBar, onShowBar, onShowOnMap }: BodyProps) {
+export function SearchBody({ query: typed, scope, onScope, mine, area, onJump, commands, palette, show, onShow, onCounts, typeAhead, onAddBar, onShowBar }: BodyProps) {
   // The field never waits on the results: they catch up with the typing when there's time (a letter typed meanwhile starts them again).
   const query = useDeferredValue(typed);
   // Android's search has no suggestions or Top hit (Miss-search-and): its Recent still fills the field.
@@ -151,11 +149,6 @@ export function SearchBody({ query: typed, scope, onScope, mine, area, onJump, c
         onAddBar={onAddBar}
         onShowBar={onShowBar}
       />
-      {scope === 'area' && onShowOnMap ? (
-        <View style={styles.mapButton}>
-          <Button label="Show on the map" icon="map.fill" variant="secondary" onPress={onShowOnMap} />
-        </View>
-      ) : null}
       {commands}
     </>
   );
@@ -285,7 +278,6 @@ const styles = StyleSheet.create({
   head: { gap: space.md },
   // The palette's line under its field, edge to edge across the card.
   rule: { height: StyleSheet.hairlineWidth },
-  mapButton: { alignSelf: 'flex-start' },
   empty: { gap: space.lg },
   jumps: { gap: space.sm },
   chips: { flexDirection: 'row', flexWrap: 'wrap', gap: space.sm },

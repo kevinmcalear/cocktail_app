@@ -110,7 +110,7 @@
       "measuredBy": "scripts/budgets.mjs in build:web (CI): webJs is every JavaScript file in the web export, raw bytes. Each route chunk carries its own copy of code fewer than 20 routes share, so a change to shared code counts once per route: hence `noise` of 512 KB (about 1%). The iOS Hermes bundle (14.0 to 14.7 MB in builds 44 to 52, by hand) and the store downloads are not measured in CI: they need `expo export -p ios` and EAS builds.",
       "noise": 524288,
       "current": {
-        "webJs": 49937598
+        "webJs": 49496288
       }
     },
     {
@@ -124,11 +124,11 @@
       "current": {
         "/d/[id]": 685261,
         "/m/[id]": 670256,
-        "/p/[id]": 795382,
-        "/": 750950,
-        "/drinks": 860931,
-        "/discover": 994282,
-        "/you": 717568
+        "/p/[id]": 793732,
+        "/": 750058,
+        "/drinks": 859322,
+        "/discover": 929699,
+        "/you": 716221
       },
       "limit": {
         "/d/[id]": 307200,

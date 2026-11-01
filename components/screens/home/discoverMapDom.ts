@@ -46,7 +46,7 @@ export function paintPin(el: HTMLElement, pin: MapPin, selected: boolean, accent
   const hovering = el.dataset.hover === '1';
   const look = pinLook(pin, selected, accent, hovering ? CLOSE_ZOOM : zoom, hovering);
   // Only rebuild what's inside when it changes, so logos don't reload on every render.
-  const key = `${look.logo ?? ''}|${look.logoSize}|${look.label}`;
+  const key = `${look.logo ?? ''}|${look.logoSize}|${look.label}|${look.beside?.name ?? ''}`;
   if (el.dataset.key !== key) {
     el.dataset.key = key;
     const parts: (HTMLElement | string)[] = [];
@@ -67,6 +67,14 @@ export function paintPin(el: HTMLElement, pin: MapPin, selected: boolean, accent
       parts.push(img);
     }
     if (look.label) parts.push(look.label);
+    if (look.beside) {
+      // Beside the mark, off its size, so the mark stays on the bar.
+      const name = document.createElement('span');
+      name.textContent = look.beside.name;
+      const halo = look.beside.halo;
+      Object.assign(name.style, { position: 'absolute', left: '100%', marginLeft: `${space.xs + 2}px`, color: look.beside.ink, font: `600 ${type.caption.fontSize}px system-ui, -apple-system, sans-serif`, textShadow: `0 0 4px ${halo}, 0 0 4px ${halo}`, pointerEvents: 'none' });
+      parts.push(name);
+    }
     el.replaceChildren(...parts);
   }
   el.setAttribute('aria-label', pinDescription(pin));
@@ -83,6 +91,7 @@ export function paintPin(el: HTMLElement, pin: MapPin, selected: boolean, accent
     color: look.color,
     opacity: String(look.opacity),
     font: `${look.font === 'semiBold' ? 600 : 500} ${look.fontSize}px system-ui, -apple-system, sans-serif`,
+    ...(look.family ? { fontFamily: look.family, fontWeight: '400' } : null),
     fontVariantNumeric: look.font === 'figuresMedium' ? 'tabular-nums' : 'normal',
     whiteSpace: 'nowrap',
     display: 'flex',
@@ -92,7 +101,7 @@ export function paintPin(el: HTMLElement, pin: MapPin, selected: boolean, accent
     zIndex: el.dataset.hover === '1' ? '400' : String(look.zIndex),
   });
   el.onmouseenter = () => {
-    if (pin.top || pin.closed || el.dataset.hover === '1') return;
+    if (pin.top || pin.closed || pin.mark || el.dataset.hover === '1') return;
     el.dataset.hover = '1';
     paintPin(el, pin, selected, accent, zoom);
   };

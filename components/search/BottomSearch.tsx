@@ -38,8 +38,6 @@ export interface SearchTabState {
   setCounts: (counts: ShowCounts) => void;
   /** Discover's area, when the search was opened from Discover. */
   area?: SearchArea | null;
-  /** Searching Discover's area: show the results on its map. */
-  onShowOnMap?: () => void;
 }
 
 /**
@@ -76,7 +74,7 @@ export const DISMISS = Platform.OS === 'ios' ? 'interactive' : 'on-drag';
  * scroll above and under them; dragging them pulls the keyboard down with
  * your finger.
  */
-export function SystemBottomSearch({ query, setQuery, scope, setScope, mine, area, onShowOnMap, focused, carried, show, setShow, counts, setCounts }: SearchTabState) {
+export function SystemBottomSearch({ query, setQuery, scope, setScope, mine, area, focused, carried, show, setShow, counts, setCounts }: SearchTabState) {
   const ds = useDs();
   const gutter = useGutter();
   const insets = useSafeAreaInsets();
@@ -130,7 +128,6 @@ export function SystemBottomSearch({ query, setQuery, scope, setScope, mine, are
           onScope={setScope}
           mine={mine}
           area={area}
-          onShowOnMap={onShowOnMap}
           show={show}
           onShow={setShow}
           onCounts={setCounts}
@@ -165,7 +162,7 @@ const SYSTEM_FIELD = 64;
  * Prod-phone draws search, no top bar, and the tab you came from waits as a
  * small circle beside the field, to go back to it. Android's is TopSearch.tsx.
  */
-export function BottomSearch({ query, setQuery, scope, setScope, mine, area, onShowOnMap, focused, show, setShow, counts, setCounts }: SearchTabState) {
+export function BottomSearch({ query, setQuery, scope, setScope, mine, area, focused, show, setShow, counts, setCounts }: SearchTabState) {
   const ds = useDs();
   const gutter = useGutter();
   const insets = useSafeAreaInsets();
@@ -197,7 +194,7 @@ export function BottomSearch({ query, setQuery, scope, setScope, mine, area, onS
         >
           {/* The tab's title row, as every tab has it. */}
           {SEARCH_TAB ? <ScreenHeaderSpacer title="Search" /> : null}
-          <SearchBody query={query} scope={scope} onScope={setScope} mine={mine} area={area} onShowOnMap={onShowOnMap} show={show} onShow={setShow} onCounts={setCounts} typeAhead={setQuery} />
+          <SearchBody query={query} scope={scope} onScope={setScope} mine={mine} area={area} show={show} onShow={setShow} onCounts={setCounts} typeAhead={setQuery} />
         </ScrollView>
         <View
           ref={dock}
