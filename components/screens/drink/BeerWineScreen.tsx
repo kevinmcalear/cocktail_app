@@ -141,9 +141,9 @@ function BeerWinePage({ kind, item, favorite, onToggleFavorite, canEdit, onEdit 
       liquid={liquidOf(sketch).hex}
       title={title}
       action={null}
-      body={(columns) => (
+      body={(_, titled) => (
         <View style={styles.body}>
-          {columns ? null : title}
+          {titled ? title : null}
           {item.description ? <Body>{item.description}</Body> : null}
           {staff ? null : <PalateFit itemId={item.id} name={item.name} />}
           <FactRows rows={facts} />

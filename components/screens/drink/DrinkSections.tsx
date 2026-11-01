@@ -46,8 +46,6 @@ export interface DrinkSectionsInput {
   /** How often they've logged it: Made ×n, under the button. */
   madeTimes?: number;
   canEdit: boolean;
-  /** "Photo by Jo", when someone's photo leads the hero. */
-  photoCredit: string | null;
 }
 
 /**
@@ -72,7 +70,6 @@ export function useDrinkSections(p: DrinkSectionsInput) {
 
   const title = (
     <ItemTitle eyebrow={p.eyebrow} name={item.name} credit={live ? <DrinkCredit itemId={item.id} italic /> : null}>
-      {p.photoCredit ? <Caption tone="muted">{p.photoCredit}</Caption> : null}
       {/* Waiting on a Drink Creator's OK: its team sees it here. */}
       {team ? <ApprovalNotice itemId={item.id} /> : null}
     </ItemTitle>

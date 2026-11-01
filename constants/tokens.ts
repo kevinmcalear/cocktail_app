@@ -225,6 +225,14 @@ export const layout = {
   /** Desktop's phone previews of a drink page: about an iPhone's width, in points. */
   phoneFrame: 390,
   /**
+   * The phone photo hero's height, as a share of the screen under the status
+   * bar. 0.3 is Eddie's (asked twice, 13 and 27 Oct); the boards draw 585 of
+   * 844, which is 0.675 here. This one number changes it.
+   */
+  photoHero: 0.3,
+  /** The photo beside the spec, from the split up (board Desk-photo-side-*). */
+  photoPanel: 500,
+  /**
    * How wide a page's column grows. Pages sit left, next to the sidebar
    * (components/nav/Page.tsx): text for lists and forms, wide for plans and grids.
    */

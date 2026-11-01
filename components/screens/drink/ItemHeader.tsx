@@ -26,7 +26,8 @@ interface ItemHeaderProps {
   /** The still drawing for the bar. Null on a photo page: it has only the small title. */
   glyph: ReactNode | null;
   scrollY: SharedValue<number>;
-  tuck: number;
+  /** Where the small title starts (PageControls smallAt). */
+  smallAt: number;
   controls: Controls;
 }
 
@@ -45,7 +46,7 @@ interface ItemHeaderProps {
  * Every page sets `title` whatever the platform: it's what Back says on the
  * page above this one.
  */
-export function useItemHeader({ name, on, pane, glyph, scrollY, tuck, controls }: ItemHeaderProps) {
+export function useItemHeader({ name, on, pane, glyph, scrollY, smallAt, controls }: ItemHeaderProps) {
   const navigation = useNavigation();
   const ds = useDs();
   const windowWidth = useWindowDimensions().width;
@@ -72,7 +73,7 @@ export function useItemHeader({ name, on, pane, glyph, scrollY, tuck, controls }
   useLayoutEffect(() => {
     if (pane) return;
     const theme = (node: ReactNode) => <BackbarTheme scheme={ds.scheme}>{node}</BackbarTheme>;
-    const title = theme(<BarTitle name={name} width={windowWidth - NATIVE_DOCK_LEFT - room - space.lg} glyph={docking ? glyph : null} docked={docked} scrollY={scrollY} tuck={tuck} />);
+    const title = theme(<BarTitle name={name} width={windowWidth - NATIVE_DOCK_LEFT - room - space.lg} glyph={docking ? glyph : null} docked={docked} scrollY={scrollY} smallAt={smallAt} />);
     const tools: Controls = {
       save: save && { ...save, onToggle: () => latest.current.save?.onToggle() },
       onShare: onShare && (() => latest.current.onShare?.()),
@@ -98,7 +99,7 @@ export function useItemHeader({ name, on, pane, glyph, scrollY, tuck, controls }
         : { ...shared, headerTitle: () => title, headerRight: () => theme(<RightIcons controls={tools} />) };
     navigation.setOptions(options);
     // eslint-disable-next-line react-hooks/exhaustive-deps -- by value: see `latest` and `moreKey`; glyph joins with docking.
-  }, [navigation, pane, on, name, docking, docked, windowWidth, room, tuck, scrollY, ds.scheme, ds.c.ink, ds.c.ground, save?.saved, save?.icon, save?.label[0], save?.label[1], !!onShare, !!onEdit, editLabel, moreKey]);
+  }, [navigation, pane, on, name, docking, docked, windowWidth, room, smallAt, scrollY, ds.scheme, ds.c.ink, ds.c.ground, save?.saved, save?.icon, save?.label[0], save?.label[1], !!onShare, !!onEdit, editLabel, moreKey]);
 
   // Editing in place takes over the same screen: it draws its own top, so the bar goes with this page.
   useLayoutEffect(() => {
@@ -162,9 +163,9 @@ function IconButton({ label, icon, onPress }: { label: string; icon: ComponentPr
 }
 
 /** The glyph and the small title, as the bar shows them once the page has docked. */
-function BarTitle({ name, width, glyph, docked, scrollY, tuck }: { name: string; width: number; glyph: ReactNode | null; docked: boolean; scrollY: SharedValue<number>; tuck: number }) {
+function BarTitle({ name, width, glyph, docked, scrollY, smallAt }: { name: string; width: number; glyph: ReactNode | null; docked: boolean; scrollY: SharedValue<number>; smallAt: number }) {
   const ds = useDs();
-  const small = useSmallTitle(scrollY, tuck);
+  const small = useSmallTitle(scrollY, smallAt);
   const fade = dockFade(DOCK_SCROLL);
   const inBar = useAnimatedStyle(() => ({ opacity: interpolate(scrollY.get(), fade, [0, 1], 'clamp') }));
   return (

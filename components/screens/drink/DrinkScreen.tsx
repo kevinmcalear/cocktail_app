@@ -143,7 +143,6 @@ function Page({ item, canEdit, adminFix = false, onEdit, pane, openBatch, visito
     onMade: preview || lock || !home || !access.amounts ? undefined : actions.made,
     madeTimes: actions.madeTimes,
     canEdit,
-    photoCredit,
   });
 
   const fab = Platform.OS === 'android' && !!sections.made;
@@ -154,13 +153,13 @@ function Page({ item, canEdit, adminFix = false, onEdit, pane, openBatch, visito
     <ItemShell
       name={item.name}
       pane={pane}
-      photo={photos ? { url: photos[0].url, hero: (h, fade) => <DrinkHero name={item.name} pictures={photos} glass={glass?.icon_key || glass?.name || null} itemId={item.id} palette={photos[0].palette} height={h} fade={fade} /> } : null}
+      photo={photos ? { url: photos[0].url, zone: photos[0].textZone, aspect: photos[0].aspect, hero: (h, fade) => <DrinkHero name={item.name} pictures={photos} glass={glass?.icon_key || glass?.name || null} itemId={item.id} palette={photos[0].palette} height={h} fade={fade} credit={photoCredit} /> } : null}
       art={(pour) => <DrinkArt itemId={item.id} sketch={preview?.sketch} label={`Drawing of ${item.name}`} size={size} pour={pour} />}
       size={size}
       liquid={liquid}
       title={sections.title}
       action={sections.action}
-      body={(columns) => <DrinkBody sections={{ ...sections, action: columns ? null : sections.action, made: fab && !columns ? sections.madeCount : sections.made }} title={!columns} />}
+      body={(columns, titled) => <DrinkBody sections={{ ...sections, action: columns ? null : sections.action, made: fab && !columns ? sections.madeCount : sections.made }} title={titled} />}
       fab={fab ? { label: 'I made it', accessibilityLabel: `I made ${item.name}`, onPress: actions.made } : null}
       controls={{
         save: bookmark ? { saved: toMake.saved, onToggle: toMake.toggle, label: ['Add to To make', 'Remove from To make'] } : null,

@@ -5,25 +5,40 @@ import { StyleSheet, View } from 'react-native';
 import { useDs } from '@/components/ds';
 import { withAlpha } from '@/lib/color';
 
+/** How far the ground dims the mirror, so text stays readable. */
+const DIM = 0.55;
+
 /**
  * Under a photo hero, the page continues the photo (decided 29 Oct,
  * "mirrored extension"): the photo flipped and blurred runs on under the
- * spec, dimmed toward the page's ground so text stays readable.
+ * spec, dimmed toward the page's ground so text stays readable. `left`: from
+ * the two-column split up it runs sideways from the photo's edge instead
+ * (board Desk-photo-side-*), behind the spec column.
  */
-export function PhotoMirror({ url, top }: { url: string | number; top: number }) {
+export function PhotoMirror({ url, top, left }: { url: string | number; top?: number; left?: number }) {
   const ds = useDs();
+  const sideways = left !== undefined;
   return (
-    <View style={[styles.mirror, { top }]} aria-hidden>
-      <Image source={typeof url === 'number' ? url : { uri: url }} blurRadius={30} contentFit="cover" style={styles.image} />
-      <View style={[StyleSheet.absoluteFill, { backgroundColor: withAlpha(ds.c.ground, 0.55) }]} />
+    <View style={sideways ? [styles.side, { left }] : [styles.mirror, { top }]} aria-hidden>
+      <Image source={typeof url === 'number' ? url : { uri: url }} blurRadius={sideways ? 40 : 30} contentFit="cover" style={sideways ? styles.imageSide : styles.image} />
+      <View style={[StyleSheet.absoluteFill, { backgroundColor: withAlpha(ds.c.ground, DIM) }]} />
       {/* The hero fades to the ground; the mirror eases in from it, so there is no seam. */}
-      <LinearGradient colors={[ds.c.ground, withAlpha(ds.c.ground, 0)]} style={styles.ease} />
+      {sideways ? null : <LinearGradient colors={[ds.c.ground, withAlpha(ds.c.ground, 0)]} style={styles.ease} />}
     </View>
   );
 }
 
+/** The photo's right edge, dimmed as the mirror is, so the two meet with no seam (the board masks it). */
+export function PhotoEdge() {
+  const ds = useDs();
+  return <LinearGradient colors={[withAlpha(ds.c.ground, 0), withAlpha(ds.c.ground, DIM)]} start={{ x: 0, y: 0 }} end={{ x: 1, y: 0 }} style={styles.edge} />;
+}
+
 const styles = StyleSheet.create({
   mirror: { position: 'absolute', left: 0, right: 0, height: 1500, overflow: 'hidden', pointerEvents: 'none' },
+  side: { position: 'absolute', top: 0, bottom: 0, right: 0, overflow: 'hidden', pointerEvents: 'none' },
+  imageSide: { width: '100%', height: '100%', transform: [{ scaleX: -1 }] },
+  edge: { position: 'absolute', top: 0, bottom: 0, right: 0, width: '14%', pointerEvents: 'none' },
   ease: { position: 'absolute', top: 0, left: 0, right: 0, height: 160 },
   image: { width: '100%', height: '100%', transform: [{ scaleY: -1 }] },
 });
