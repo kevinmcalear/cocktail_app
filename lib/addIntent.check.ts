@@ -13,3 +13,7 @@ assert.equal(addIntent('Orchard Fizz\ncalvados\npear'), 'read');
 
 assert.equal(clipLine('https://www.instagram.com/reel/C9xAbcdefghijk'), 'instagram.com/reel/C9xAbcde…');
 assert.equal(clipLine('short'), 'short');
+// Drink names say "and" all the time.
+assert.equal(addIntent('Ash and Ember'), 'name');
+assert.equal(addIntent('Gin and Tonic'), 'name');
+assert.equal(addIntent('Death in the Afternoon Royale'), 'name');

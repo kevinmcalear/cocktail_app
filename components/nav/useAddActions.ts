@@ -9,7 +9,7 @@ import { addIntent } from '@/lib/addIntent';
 import { peekClipboard, readClipboard, UNREAD_CLIP } from '@/lib/clipboardPeek';
 import { newDrinkHref } from '@/lib/itemRoutes';
 import { pickReadFiles, snapReadFiles, sourcesFromFiles, type ReadFile } from '@/lib/readAnything';
-import { capitalize } from '@/lib/stringUtils';
+import { capitalizeFirst } from '@/lib/stringUtils';
 
 /**
  * What Add does, for the iOS and web sheet and Android's FAB menu: a typed
@@ -51,7 +51,7 @@ export function useAddActions(done: () => void) {
       if (intent === 'read') return read(text.trim());
       if (intent !== 'name') return;
       done();
-      router.push(newDrinkHref(capitalize(text.trim()), place.barId) as never);
+      router.push(newDrinkHref(capitalizeFirst(text.trim()), place.barId) as never);
     },
     snap: () => void fromFiles(snapReadFiles),
     choose: () => void fromFiles(pickReadFiles),

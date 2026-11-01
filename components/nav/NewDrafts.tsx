@@ -59,7 +59,7 @@ export function NewDrafts({ barId, onOpen, onImport, onDrafts }: { barId: string
       ))}
       {older ? <PickRow icon="square.on.square" title="Drafts" sub={`${older} from the older editor`} onPress={onDrafts} /> : null}
       {/* Said only once each has reached the account. */}
-      {signedIn && drafts.length > 0 && drafts.every(([slot]) => seen.includes(slot)) ? <Caption tone="muted">Kept in your account, so your other phone and the web see them too.</Caption> : null}
+      {signedIn && drafts.length > 0 && drafts.every(([slot]) => seen.includes(slot)) ? <Caption tone="muted" style={styles.kept}>Kept in your account, so your other phone and the web see them too.</Caption> : null}
     </View>
   );
 }
@@ -110,4 +110,5 @@ const styles = StyleSheet.create({
   row: { flexDirection: 'row', alignItems: 'center', gap: space.md, minHeight: 60, paddingVertical: space.sm, borderBottomWidth: StyleSheet.hairlineWidth },
   icon: { width: 32, height: 32, borderRadius: radius.control - 4, alignItems: 'center', justifyContent: 'center' },
   text: { flex: 1, gap: 2 },
+  kept: { marginTop: space.sm },
 });

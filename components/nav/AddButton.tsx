@@ -1,13 +1,12 @@
-import { useRef, useState, type ComponentRef } from 'react';
+import { Suspense, useRef, useState, type ComponentRef } from 'react';
 import { StyleSheet, useWindowDimensions, View } from 'react-native';
 
 import { Button, DsText, PressableScale, useDs } from '@/components/ds';
 import { IconSymbol } from '@/components/ui/icon-symbol';
 import { font, layout, radius, space } from '@/constants/tokens';
 
-import { AddFabMenu, type FabFrame } from './AddFabMenu';
-import { AddSheet } from './AddSheet';
-import { CreateSheet } from './CreateSheet';
+import type { FabFrame } from './AddFabMenu';
+import { AddFabMenu, AddSheet, CreateSheet } from './addLayers';
 
 const LABEL = 'Add: name a drink, paste a link, describe it, or snap a menu, bottle or recipe';
 
@@ -27,7 +26,7 @@ export function AddSheets({ onClose }: { onClose: () => void }) {
     }, 350);
   };
   if (!shown) return null;
-  return open === 'add' ? <AddSheet visible onClose={onClose} onMore={more} /> : <CreateSheet visible onClose={onClose} />;
+  return <Suspense fallback={null}>{open === 'add' ? <AddSheet visible onClose={onClose} onMore={more} /> : <CreateSheet visible onClose={onClose} />}</Suspense>;
 }
 
 /** Add's sheets, opened by a button. Android's FAB opens its FAB menu first (AddFab). */
@@ -89,14 +88,16 @@ export function AddFab() {
         </PressableScale>
       </View>
       {menu ? (
-        <AddFabMenu
-          frame={menu}
-          onClose={() => setMenu(null)}
-          onType={() => {
-            setMenu(null);
-            add.open();
-          }}
-        />
+        <Suspense fallback={null}>
+          <AddFabMenu
+            frame={menu}
+            onClose={() => setMenu(null)}
+            onType={() => {
+              setMenu(null);
+              add.open();
+            }}
+          />
+        </Suspense>
       ) : null}
       {add.sheet}
     </>

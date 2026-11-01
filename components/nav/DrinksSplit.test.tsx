@@ -173,7 +173,7 @@ test('from 1200 the top row ends in + Add, which opens Add', async () => {
     </BreakpointOverride>,
   );
   await fireEvent.press(screen.getByRole('button', { name: /^Add: name a drink/ }));
-  expect(screen.getByLabelText('Name a drink, paste a link, or describe it')).toBeTruthy();
+  expect(await screen.findByLabelText('Name a drink, paste a link, or describe it')).toBeTruthy();
 });
 
 test('the list beside a drink (a tablet layout) leaves Add to the page', async () => {

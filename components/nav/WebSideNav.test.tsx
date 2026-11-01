@@ -164,14 +164,13 @@ test('New opens Add with the drafts to pick up, and its last row the other start
   await renderWithProviders(<WebSideNav />);
 
   await pressN();
-  expect(screen.getByLabelText('Name a drink, paste a link, or describe it')).toBeTruthy();
+  expect(await screen.findByLabelText('Name a drink, paste a link, or describe it')).toBeTruthy();
   await fireEvent.press(screen.getByRole('link', { name: 'Drafts. 2 from the older editor' }));
   expect(mockPush).toHaveBeenLastCalledWith('/drafts');
 
   await pressN();
-  await fireEvent.press(screen.getByRole('button', { name: /^Something else/ }));
-  await act(() => new Promise((r) => setTimeout(r, 400)));
-  expect(screen.getByText('Made at Caretakers, for its library')).toBeTruthy();
+  await fireEvent.press(await screen.findByRole('button', { name: /^Something else/ }));
+  expect(await screen.findByText('Made at Caretakers, for its library')).toBeTruthy();
   await fireEvent.press(screen.getByRole('link', { name: 'Something you make. A batch, syrup, infusion, cordial: anything with a recipe' }));
   // Made at the venue you're in, not your home bar.
   expect(mockPush).toHaveBeenLastCalledWith('/make-recipe?barId=caretakers');
@@ -187,7 +186,7 @@ test('N toggles Add, but not while typing in a field', async () => {
   await press({ tagName: 'INPUT' });
   expect(field()).toBeNull();
   await press({ tagName: 'BODY' });
-  expect(field()).toBeTruthy();
+  expect(await screen.findByLabelText('Name a drink, paste a link, or describe it')).toBeTruthy();
   await press({ tagName: 'BODY' });
   expect(field()).toBeNull();
 });

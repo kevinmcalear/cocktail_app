@@ -32,7 +32,7 @@ test('a name opens a draft of that drink, where Bring in puts things', async () 
   await fireEvent.changeText(field(), 'smoke signal');
   await fireEvent.press(screen.getByRole('button', { name: 'Start a drink called smoke signal' }));
   expect(onClose).toHaveBeenCalled();
-  expect(mockPush).toHaveBeenLastCalledWith('/add-cocktail?name=Smoke%20Signal&barId=bar');
+  expect(mockPush).toHaveBeenLastCalledWith('/add-cocktail?name=Smoke%20signal&barId=bar');
   expect(mockStart).not.toHaveBeenCalled();
 });
 
