@@ -25,7 +25,7 @@ export function ExtendedFab({ label, icon, onPress, accessibilityLabel = label, 
   const ink = colors?.text ?? ds.accentFill.text;
   return (
     <View style={[styles.fab, style]}>
-      <Host matchContents colorScheme={ds.scheme}>
+      <Host matchContents colorScheme={ds.scheme} style={styles.halo}>
         <ExtendedFloatingActionButton expanded={open} containerColor={fill} onClick={onPress} modifiers={[padding(SHADOW, SHADOW, SHADOW, SHADOW), semantics({ contentDescription: accessibilityLabel })]}>
           <ExtendedFloatingActionButton.Icon>
             <Icon source={ICONS[icon]} size={24} tint={ink} />
@@ -44,5 +44,7 @@ export function ExtendedFab({ label, icon, onPress, accessibilityLabel = label, 
 const SHADOW = space.md;
 
 const styles = StyleSheet.create({
-  fab: { position: 'absolute', right: space.lg - SHADOW, bottom: space.lg - SHADOW },
+  // The caller places the FAB itself; the shadow's room hangs outside that box.
+  fab: { position: 'absolute', right: space.lg, bottom: space.lg },
+  halo: { margin: -SHADOW },
 });
