@@ -2,7 +2,7 @@
 import assert from 'node:assert/strict';
 
 import { DIMENSIONS, type Profile } from './flavor';
-import { changeBetween, FAMILY, meet, springStep, labelSpot, outlinePath, palateByMonth, palateLabel, petalPath, pull, RINGS, shapedBy, tasteFromRankings, WHEEL, type RankedFlavor } from './palate';
+import { changeBetween, FAMILY, meet, meetingWords, springStep, labelSpot, outlinePath, palateByMonth, palateLabel, petalPath, pull, RINGS, shapedBy, tasteFromRankings, WHEEL, type RankedFlavor } from './palate';
 
 const p = (values: Partial<Profile>): Profile => Object.fromEntries(DIMENSIONS.map((d) => [d, values[d] ?? 0])) as Profile;
 const near = (a: number, b: number, msg?: string) => assert.ok(Math.abs(a - b) < 1e-9, msg ?? `${a} vs ${b}`);
@@ -115,3 +115,7 @@ assert.equal(palateLabel({ bitter: 0.9, smoky: 0.5 }), 'Palate: bitter intensely
 assert.equal(palateLabel({}), 'Palate: nothing yet');
 
 console.log('lib/palate.check: ok');
+
+// The drink page's palate fit, in words.
+assert.deepEqual(meetingWords({ shared: ['smoky', 'sour'], more: 'spicy', less: 'bitter' }), { like: 'Smoky and sour, like you', diff: 'More heat than usual, less bitter' });
+assert.deepEqual(meetingWords({ shared: [], more: null, less: null }), { like: null, diff: null });

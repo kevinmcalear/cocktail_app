@@ -41,7 +41,7 @@ export function PhoneFrame(props: { item: DatabaseItem; photo?: string | null; s
       <Caption tone="muted">On a phone</Caption>
       <View accessibilityLabel="Preview of the drink page on a phone" style={[styles.frame, { height, borderColor: ds.c.lineStrong, backgroundColor: ds.c.ground }]}>
         <BreakpointOverride value="phone">
-          <DrinkScreen item={item} pane preview={{ ...OPEN, heroSource: photo ?? null, sketch }} canEdit={false} onEdit={() => {}} inStudyPile={false} onToggleStudyPile={() => {}} />
+          <DrinkScreen item={item} pane preview={{ ...OPEN, heroSource: photo ?? null, sketch }} canEdit={false} onEdit={() => {}} />
         </BreakpointOverride>
       </View>
     </View>
