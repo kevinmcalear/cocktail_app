@@ -77,7 +77,7 @@ describe('Asks', () => {
   test('a draft is only its writer\'s', async () => {
     const { data, error } = await users.bartender.client
       .from('menu_drink_asks')
-      .insert({ menu_id: ids.menu, item_id: ids.martini, replaces_item_id: ids.negroni })
+      .insert({ menu_id: ids.menu, item_id: ids.martini, off_item_id: ids.negroni })
       .select()
       .single();
     assert.ifError(error);
@@ -122,6 +122,21 @@ describe('Asks', () => {
     assert.equal(notYet.data?.length ?? 0, 0, 'the menu team cannot remove a draft they cannot see');
     const withdrawn = await users.bartender.client.from('menu_drink_asks').delete().eq('id', draft.data.id).select();
     assert.equal(withdrawn.data.length, 1);
+  });
+
+  test('a take-off asks for nothing in its place; an ask asks for something', async () => {
+    const off = await users.bartender.client
+      .from('menu_drink_asks')
+      .insert({ menu_id: ids.menu, off_item_id: ids.negroni, at: ahead(6 * HOUR), asked_at: new Date().toISOString() })
+      .select()
+      .single();
+    assert.ifError(off.error);
+    assert.deepEqual(await asksSeenBy('creator'), [off.data.id]);
+    await users.creator.client.from('menu_drink_asks').delete().eq('id', off.data.id);
+    const empty = await users.bartender.client.from('menu_drink_asks').insert({ menu_id: ids.menu });
+    assert.ok(empty.error, 'neither on nor off');
+    const same = await users.bartender.client.from('menu_drink_asks').insert({ menu_id: ids.menu, item_id: ids.negroni, off_item_id: ids.negroni });
+    assert.ok(same.error, 'not a drink in place of itself');
   });
 });
 

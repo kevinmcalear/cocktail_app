@@ -1,14 +1,16 @@
-// A living list as the menu team sees it (2027 canvas, Menu-l-swap,
-// Menu-l-swapped, Menu-l-approve, Menu-l-states): changes waiting for them
-// on top, each drink's "since", a drink taken off today struck through with
-// Undo, and drinks planned for later under Coming up. Kept pure: the screen
-// wires the taps.
+// A living list as the team sees it (2027 canvas, Menu-l-swap,
+// Menu-l-swapped, Menu-l-approve, Menu-l-ask, Menu-l-states): changes
+// waiting for the menu team on top (or a bartender's own, under Your
+// changes), each drink's "since", a drink taken off today struck through
+// with Undo, one off for tonight faded, and drinks planned for later under
+// Coming up. Kept pure: the screen wires the taps.
+import type { ListAsk, OffTonight } from '@/hooks/useListAsks';
 import type { EndedRun, ListRow } from '@/hooks/useLivingList';
 import type { MenuDrink } from '@/types/menus';
 
 import type { PageRowView } from './MenuPageRow';
 
-export type ActKind = 'swap' | 'takeOff' | 'approve' | 'turnDown' | 'undo' | 'keep';
+export type ActKind = 'swap' | 'takeOff' | 'offTonight' | 'backOn' | 'approve' | 'turnDown' | 'undo' | 'keep' | 'ask' | 'withdraw';
 export interface Act {
   kind: ActKind;
   label: string;
@@ -30,6 +32,12 @@ interface Input {
   endedDrinks: Map<string, MenuDrink>;
   /** The caller's changes go straight on (false: they wait for approval). */
   may: boolean;
+  /** A bartender: their changes are asks (Menu-l-ask), and rows carry no "since". */
+  bartender: boolean;
+  /** Asks the caller reads: a bartender's own, drafts too; for the menu team, everyone's asked. */
+  asks: ListAsk[];
+  /** Drinks on this list off for tonight. */
+  offTonight: OffTonight[];
   /** A list kept a drink at a time reads "since 1 Oct" (Menu-l-swap); a seasonal one keeps each drink's cost (Menu-who-creator). */
   living: boolean;
   userId: string | null;
@@ -43,6 +51,7 @@ interface Input {
 }
 
 const sameDay = (a: string, now: number) => new Date(a).toDateString() === new Date(now).toDateString();
+const HOUR = 3_600_000;
 
 /** "1 to 30 Sep", "1 Oct to 1 Nov 2026": a drink's run, from dates or timestamps. */
 export function runRange(from: string, to: string, year = false): string {
@@ -57,18 +66,86 @@ export function runRange(from: string, to: string, year = false): string {
   return year ? `${range} ${b.getFullYear()}` : range;
 }
 
-export function liveList({ sections, sectionIds, rows, ended, endedDrinks, may, living, userId, nameOf, day, time, listStart, now }: Input) {
+export function liveList({ sections, sectionIds, rows, ended, endedDrinks, may, bartender, asks, offTonight, living, userId, nameOf, day, time, listStart, now }: Input) {
   const rowOf = new Map(rows.map((r) => [`${r.sectionId}:${r.itemId}`, r]));
   const names = new Map([...endedDrinks].map(([id, d]) => [id, d.name]));
-  for (const s of sections) for (const v of s.rows) names.set(v.drink.id, v.drink.name);
+  const views = new Map<string, PageRowView>();
+  for (const s of sections)
+    for (const v of s.rows) {
+      names.set(v.drink.id, v.drink.name);
+      views.set(v.drink.id, v);
+    }
+  for (const a of asks) if (a.drink) names.set(a.drink.id, a.drink.name);
+  // "now", "after tonight" (the bar's close, within a day and a half), "from Fri 6 Nov".
+  const when = (at: string | null) => (!at ? 'now' : Date.parse(at) - now < 36 * HOUR ? 'after tonight' : `from ${day(at)}`);
+  const offOf = new Map(offTonight.map((o) => [o.itemId, o]));
+  const asked = asks.filter((a) => a.askedAt);
+  // A drink someone asked to take off (a swap's, too) stays on and says so.
+  const askedOff = new Set(asked.map((a) => a.offItemId).filter(Boolean));
   const lead: PageRowView[] = [];
   const coming: PageRowView[] = [];
+
+  // The asks, on top: the menu team approve or turn them down; a bartender sees their own, drafts first.
+  for (const a of bartender ? [...asks].sort((x, y) => Number(!!x.askedAt) - Number(!!y.askedAt)) : asked) {
+    const who = a.createdBy === userId ? 'you' : (nameOf(a.createdBy) ?? 'Someone');
+    const at = a.askedAt ? time(a.askedAt) : null;
+    const offName = a.offItemId ? names.get(a.offItemId) : null;
+    const acts: PageRowView['acts'] = !bartender
+      ? [
+          { kind: 'approve', label: 'Approve' },
+          { kind: 'turnDown', label: 'Turn down' },
+        ]
+      : a.askedAt
+        ? [{ kind: 'withdraw', label: 'Withdraw' }]
+        : [
+            { kind: 'ask', label: 'Ask to put it on' },
+            { kind: 'withdraw', label: 'Withdraw' },
+          ];
+    if (a.drink) {
+      const base = views.get(a.drink.id) ?? { drink: a.drink, line: '', end: null, endTone: 'ink', sub: null, flag: null, chips: null, talkingPoint: null, ink: 'colour' };
+      const what = offName ? `on in place of ${offName}` : 'to go on';
+      lead.push({
+        ...base,
+        end: a.price ?? (a.askedAt ? base.end : null),
+        sub: null,
+        ask: a,
+        acts,
+        ...(!a.askedAt
+          ? { ink: 'pencil', flag: { label: 'Draft', tone: 'quiet' }, line: ['Only you see this', offName ? `in place of ${offName}` : null, a.price ?? base.end ?? 'no price yet'].filter(Boolean).join(' · ') }
+          : bartender
+            ? { flag: { label: 'Waiting', tone: 'amber' }, line: `${what[0].toUpperCase()}${what.slice(1)}${a.at ? ` ${when(a.at)}` : ''} · you asked at ${at}` }
+            : { flag: { label: 'Waiting', tone: 'amber' }, line: `${who === 'you' ? 'You' : who} asked at ${at} · ${what}` }),
+      });
+    }
+    const offView = a.offItemId ? views.get(a.offItemId) : null;
+    // A swap's drink coming off is its own row for the menu team (Menu-l-approve); a bartender's reads on the list below.
+    if (offView && (!a.drink || !bartender))
+      lead.push({
+        ...offView,
+        sub: null,
+        ask: a,
+        acts,
+        flag: { label: 'Waiting to come off', tone: 'amber' },
+        line: a.askedAt ? (bartender ? `Off ${when(a.at)} · you asked at ${at}` : `${who === 'you' ? 'You' : who} asked at ${at} · off ${when(a.at)}`) : `Only you see this · off ${when(a.at)}`,
+      });
+  }
+
   const main = sections.map((s) => {
     const out: PageRowView[] = [];
     for (const view of s.rows) {
       const row = rowOf.get(`${s.id}:${view.drink.id}`);
       if (!row) {
         out.push(view);
+        continue;
+      }
+      const off = offOf.get(row.itemId);
+      if (off && (row.state === 'on' || row.state === 'going')) {
+        // Off for tonight only: faded on the list, back on after close (or now).
+        out.push({ ...view, ink: 'faded', faded: true, sub: null, flag: { label: 'Not tonight', tone: 'quiet' }, listRow: row, offTonight: off, acts: bartender ? [] : [{ kind: 'backOn', label: 'Back on' }] });
+        continue;
+      }
+      if (askedOff.has(row.itemId) && (row.state === 'on' || row.state === 'going')) {
+        out.push({ ...view, sub: null, flag: { label: bartender ? 'Waiting to come off' : 'Waiting', tone: 'amber' }, line: bartender ? 'Stays on until it is approved' : view.line, listRow: row, acts: [] });
         continue;
       }
       const asked = nameOf(row.state === 'waiting_off' ? row.offBy : row.addedBy);
@@ -111,14 +188,18 @@ export function liveList({ sections, sectionIds, rows, ended, endedDrinks, may, 
       out.push({
         ...view,
         flag: row.state === 'going' ? { label: row.offAt ? `Off ${day(row.offAt)}` : 'Coming off', tone: 'quiet' } : fresh ? { label: 'New', tone: 'green' } : view.flag,
-        sub: living && since ? (fresh ? 'since today' : `since ${day(since)}`) : view.sub,
+        sub: living && since && !bartender ? (fresh ? 'since today' : `since ${day(since)}`) : view.sub,
         listRow: row,
         acts:
           row.state === 'going'
-            ? [{ kind: 'keep', label: 'Keep it on' }]
+            ? bartender
+              ? []
+              : [{ kind: 'keep', label: 'Keep it on' }]
             : [
                 { kind: 'swap', label: 'Swap' },
                 { kind: 'takeOff', label: 'Take off' },
+                // Off tonight is the menu team's for now (anyone on shift waits on Kevin's policy).
+                ...(bartender ? [] : [{ kind: 'offTonight' as const, label: 'Off tonight' }]),
               ],
       });
     }
@@ -172,7 +253,7 @@ export function liveList({ sections, sectionIds, rows, ended, endedDrinks, may, 
   const lastChange = last ? `${sameDay(last.at, now) ? `today ${time(last.at)}` : day(last.at)} · ${last.text}` : null;
 
   return {
-    lead: lead.length ? { id: 'waiting', name: may ? 'Waiting for you' : 'Your changes', rows: lead } : null,
+    lead: lead.length ? { id: 'waiting', name: may && !bartender ? 'Waiting for you' : 'Your changes', rows: lead } : null,
     main,
     coming: coming.length ? { id: 'coming', name: 'Coming up', rows: coming } : null,
     lastChange,

@@ -5,9 +5,10 @@
 -- policies or swap_menu_drink: an ask becomes a menu row only when the menu
 -- team puts it on with the calls they already have, and then deletes the ask.
 --
--- menu_drink_asks: a drink someone on the team wants on a list, or in place of
---   one on it. While asked_at is empty it is a draft only its writer reads
---   ("Only you see this"); Ask sets asked_at and the menu team see it
+-- menu_drink_asks: a change someone on the team asks for: a drink to go on
+--   (item_id), to come off (off_item_id), or one in place of the other (both),
+--   now or from `at`. While asked_at is empty it is a draft only its writer
+--   reads ("Only you see this"); Ask sets asked_at and the menu team see it
 --   ("Waiting for you"). The writer edits, asks and withdraws their own; the
 --   menu team turn it down or approve it (delete).
 -- menu_list_notices: Tell the team. One row per change (on, off, swap, off
@@ -26,9 +27,10 @@
 CREATE TABLE "public"."menu_drink_asks" (
     "id" "uuid" DEFAULT "gen_random_uuid"() NOT NULL PRIMARY KEY,
     "menu_id" "uuid" NOT NULL REFERENCES "public"."menus"("id") ON DELETE CASCADE,
-    "item_id" "uuid" NOT NULL REFERENCES "public"."items"("id") ON DELETE CASCADE,
+    "item_id" "uuid" REFERENCES "public"."items"("id") ON DELETE CASCADE,
     "menu_section_id" "uuid" REFERENCES "public"."menu_sections"("id") ON DELETE SET NULL,
-    "replaces_item_id" "uuid" REFERENCES "public"."items"("id") ON DELETE CASCADE,
+    "off_item_id" "uuid" REFERENCES "public"."items"("id") ON DELETE CASCADE,
+    "at" timestamp with time zone,
     "price" "text",
     "note" "text",
     "asked_at" timestamp with time zone,
@@ -36,13 +38,14 @@ CREATE TABLE "public"."menu_drink_asks" (
     "created_at" timestamp with time zone DEFAULT "now"() NOT NULL,
     CONSTRAINT "menu_drink_asks_price_check" CHECK ("price" IS NULL OR char_length("price") <= 20),
     CONSTRAINT "menu_drink_asks_note_check" CHECK ("note" IS NULL OR char_length("note") <= 280),
-    CONSTRAINT "menu_drink_asks_not_itself" CHECK ("replaces_item_id" IS NULL OR "replaces_item_id" <> "item_id")
+    CONSTRAINT "menu_drink_asks_something" CHECK ("item_id" IS NOT NULL OR "off_item_id" IS NOT NULL),
+    CONSTRAINT "menu_drink_asks_not_itself" CHECK ("off_item_id" IS NULL OR "item_id" IS NULL OR "off_item_id" <> "item_id")
 );
 
 CREATE INDEX "menu_drink_asks_menu_idx" ON "public"."menu_drink_asks" ("menu_id");
 CREATE INDEX "menu_drink_asks_created_by_idx" ON "public"."menu_drink_asks" ("created_by");
 CREATE INDEX "menu_drink_asks_item_idx" ON "public"."menu_drink_asks" ("item_id");
-CREATE INDEX "menu_drink_asks_replaces_idx" ON "public"."menu_drink_asks" ("replaces_item_id");
+CREATE INDEX "menu_drink_asks_off_item_idx" ON "public"."menu_drink_asks" ("off_item_id");
 CREATE INDEX "menu_drink_asks_section_idx" ON "public"."menu_drink_asks" ("menu_section_id");
 
 ALTER TABLE "public"."menu_drink_asks" ENABLE ROW LEVEL SECURITY;

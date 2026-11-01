@@ -3916,39 +3916,42 @@ export type Database = {
       menu_drink_asks: {
         Row: {
           asked_at: string | null
+          at: string | null
           created_at: string
           created_by: string
           id: string
-          item_id: string
+          item_id: string | null
           menu_id: string
           menu_section_id: string | null
           note: string | null
+          off_item_id: string | null
           price: string | null
-          replaces_item_id: string | null
         }
         Insert: {
           asked_at?: string | null
+          at?: string | null
           created_at?: string
           created_by?: string
           id?: string
-          item_id: string
+          item_id?: string | null
           menu_id: string
           menu_section_id?: string | null
           note?: string | null
+          off_item_id?: string | null
           price?: string | null
-          replaces_item_id?: string | null
         }
         Update: {
           asked_at?: string | null
+          at?: string | null
           created_at?: string
           created_by?: string
           id?: string
-          item_id?: string
+          item_id?: string | null
           menu_id?: string
           menu_section_id?: string | null
           note?: string | null
+          off_item_id?: string | null
           price?: string | null
-          replaces_item_id?: string | null
         }
         Relationships: [
           {
@@ -3980,15 +3983,15 @@ export type Database = {
             referencedColumns: ["id"]
           },
           {
-            foreignKeyName: "menu_drink_asks_replaces_item_id_fkey"
-            columns: ["replaces_item_id"]
+            foreignKeyName: "menu_drink_asks_off_item_id_fkey"
+            columns: ["off_item_id"]
             isOneToOne: false
             referencedRelation: "app_item_presentation"
             referencedColumns: ["id"]
           },
           {
-            foreignKeyName: "menu_drink_asks_replaces_item_id_fkey"
-            columns: ["replaces_item_id"]
+            foreignKeyName: "menu_drink_asks_off_item_id_fkey"
+            columns: ["off_item_id"]
             isOneToOne: false
             referencedRelation: "items"
             referencedColumns: ["id"]

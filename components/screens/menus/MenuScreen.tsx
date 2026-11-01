@@ -174,20 +174,21 @@ function MenuPageBody({ menu, shelf, cover, now }: PageProps & { cover: string |
     shopping: () => shelf?.toShopping(),
   };
 
-  // A list that's on, or coming up: its drinks change one at a time, on the row (Menu-l-swap).
-  const changeable = team && (status === 'on' || status === 'upcoming');
+  // A list that's on, or coming up: its drinks change one at a time, on the row (Menu-l-swap); a bartender asks (Menu-l-ask).
+  const bartender = lens.lens === 'bartender';
+  const current = !!menu.barId && (status === 'on' || status === 'upcoming');
+  const changeable = team && current;
   const living = changeable && isLivingList(lens.rows, menu.startsAt, endedRuns);
-  const acts = useRowActs(menu.id, lens.rows);
-  const listView = useLiveSections({ menu, sections: model.sections, rows: lens.rows, may: acts.may ?? false, on: changeable, living, now });
+  const acts = useRowActs(menu, lens.rows, bartender);
+  const listView = useLiveSections({ menu, sections: model.sections, rows: lens.rows, may: acts.may ?? false, on: changeable || (bartender && current), bartender, living, now });
   const shown = [...(listView.lead ? [listView.lead] : []), ...listView.main, ...(listView.coming ? [listView.coming] : [])];
   const items: Item[] = shown.flatMap((s) => [
     { key: `h-${s.id}`, head: { name: s.name, count: s.rows.filter((r) => !r.struck).length } },
     ...s.rows.map((row) => ({ key: `${s.id}-${row.drink.id}${row.struck ? '-off' : ''}`, row, sectionId: s.id })),
   ]);
   const column = { paddingHorizontal: gutter, maxWidth: wide ? 760 : undefined, width: '100%', alignSelf: sidebar ? 'flex-start' : 'center' } as const;
-  const bartender = lens.lens === 'bartender';
-  // Waiting changes, Undo and Coming up show their buttons; any other row shows Swap and Take off once tapped.
-  const alwaysActs = (id: string | undefined, row: PageRowView) => id === 'waiting' || id === 'coming' || !!row.struck;
+  // Waiting changes, Undo, Back on and Coming up show their buttons; any other row shows Swap and Take off once tapped.
+  const alwaysActs = (id: string | undefined, row: PageRowView) => id === 'waiting' || id === 'coming' || !!row.struck || !!row.offTonight;
 
   return (
     <View style={[styles.screen, { backgroundColor: ds.c.ground }]}>
@@ -208,7 +209,7 @@ function MenuPageBody({ menu, shelf, cover, now }: PageProps & { cover: string |
                 row={item.row}
                 open={bartender || changeable ? open === item.key : undefined}
                 chevron={bartender}
-                showActs={changeable && (open === item.key || alwaysActs(item.sectionId, item.row))}
+                showActs={(changeable || (bartender && current)) && (open === item.key || alwaysActs(item.sectionId, item.row))}
                 onAct={(kind) =>
                   kind === 'swap' || kind === 'takeOff'
                     ? setChanging({ kind, view: item.row!, sectionId: item.row!.listRow?.sectionId ?? item.sectionId! })
@@ -246,11 +247,12 @@ function MenuPageBody({ menu, shelf, cover, now }: PageProps & { cover: string |
             {model.banner ? (
               <MenuPageBanner text={model.banner.text} aside={model.banner.aside} warn={model.banner.warn} onPress={model.banner.toNow && live ? () => go(`/menus/${live.id}`) : undefined} />
             ) : null}
-            {acts.may === false && changeable ? <MenuPageBanner text="Your changes wait for approval" aside={null} warn={false} /> : null}
+            {acts.may === false && (changeable || (bartender && current)) ? <MenuPageBanner text="Your changes wait for approval" aside={listView.approvedBy} warn={false} /> : null}
             <MenuPageGroup
               rows={[
                 ...model.group.slice(0, 1),
                 ...(listView.lastChange ? [{ label: 'Last change', value: listView.lastChange, action: null }] : []),
+                ...(listView.toldAt ? [{ label: 'Team', value: listView.toldAt, action: null }] : []),
                 ...model.group.slice(1),
               ].map((r) => ({ ...r, onPress: r.action ? actions[r.action] : undefined }))}
             />

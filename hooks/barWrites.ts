@@ -86,7 +86,28 @@ async function sendBatch(w: BatchWrite) {
   return w.id;
 }
 
+export interface OffTonightWrite {
+  /** Made on the phone, so a resend finds the row there. */
+  id: string;
+  barId: string;
+  menuId: string;
+  itemId: string;
+  /** The bar's close tonight; null puts the drink back (deletes the row by id). */
+  until: string | null;
+}
+
+/** A drink off for tonight only (menu_off_tonight), or back on: sending twice is the same. */
+async function sendOffTonight(w: OffTonightWrite) {
+  if (w.until) check(await supabase.from('menu_off_tonight').upsert({ id: w.id, menu_id: w.menuId, item_id: w.itemId, until: w.until }, { onConflict: 'id', ignoreDuplicates: true }));
+  else check(await supabase.from('menu_off_tonight').delete().eq('id', w.id));
+}
+
 export const BAR_WRITES = {
+  offTonight: {
+    key: [BAR_WRITE, 'off-tonight'],
+    send: sendOffTonight,
+    refresh: (w: OffTonightWrite): QueryKey[] => [['off-tonight', w.barId]],
+  },
   zoneCount: {
     key: [BAR_WRITE, 'zone-count'],
     send: sendZoneCount,

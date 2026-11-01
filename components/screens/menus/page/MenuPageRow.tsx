@@ -3,6 +3,7 @@ import { StyleSheet, View } from 'react-native';
 import { Caption, DsText, Headline, PressableScale, useDs } from '@/components/ds';
 import { IconSymbol } from '@/components/ui/icon-symbol';
 import { displayFaces, font, radius, space, STATUS } from '@/constants/tokens';
+import type { ListAsk, OffTonight } from '@/hooks/useListAsks';
 import type { ListRow } from '@/hooks/useLivingList';
 import { readableAccent, withAlpha } from '@/lib/color';
 import type { MenuDrink } from '@/types/menus';
@@ -27,10 +28,16 @@ export interface PageRowView {
   ink: MenuInk;
   /** Taken off today: struck through, its picture faded. */
   struck?: boolean;
+  /** Off for tonight: its name quieter, its picture faded. */
+  faded?: boolean;
   /** The menu team's buttons under the row (Swap, Take off, Approve, Undo). */
   acts?: Act[];
   /** Its place on the living list, for the acts. */
   listRow?: ListRow;
+  /** The ask it stands for (a bartender's change, or one waiting for the menu team). */
+  ask?: ListAsk;
+  /** Off for tonight: the row that says so, to put it back. */
+  offTonight?: OffTonight;
 }
 
 interface MenuPageRowProps {
@@ -73,7 +80,7 @@ export function MenuPageRow({ row, onPress, open, showActs, onAct, chevron, chil
           <View style={styles.nameRow}>
             <Headline
               numberOfLines={2}
-              color={row.struck ? ds.c.muted : undefined}
+              color={row.struck || row.faded ? ds.c.muted : undefined}
               style={[styles.name, { fontFamily: displayFaces[ds.displayFace].regular }, row.struck && styles.struck]}
             >
               {drink.name}
@@ -125,8 +132,8 @@ export function MenuPageRow({ row, onPress, open, showActs, onAct, chevron, chil
       {acts ? (
         <View style={styles.acts}>
           {acts.map((a, i) => {
-            // The first is the tonal one (Swap, Approve); a quiet row's (Undo, Withdraw, Keep it on) are outlined.
-            const tonal = i === 0 && a.kind !== 'undo' && a.kind !== 'keep' && a.label !== 'Withdraw';
+            // The first is the tonal one (Swap, Approve, Ask to put it on); a quiet row's (Undo, Withdraw, Keep it on, Back on) are outlined.
+            const tonal = i === 0 && a.kind !== 'undo' && a.kind !== 'keep' && a.kind !== 'backOn' && a.label !== 'Withdraw';
             return (
               <PressableScale
                 key={a.kind + a.label}
