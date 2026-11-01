@@ -9,7 +9,7 @@ A platform for the life of a drink. Bars create, prep, teach and pour their drin
 
 ## Stack
 
-Expo SDK 58 (RN 0.88.0, React 19.3, React Compiler), Expo Router, Tamagui 2.7 (`tamagui.config.ts`), TanStack Query, Zustand, Reanimated 4, expo-image, expo-glass-effect, Supabase (Postgres + RLS, edge functions in Deno), EAS Build/Update, Vercel for web (babyvom.it). Sentry and PostHog are wired but off until their keys are set. Don't upgrade Tamagui to 3 until it's stable; that upgrade is its own PR.
+Expo SDK 58 (RN 0.88.0, React 19.3, React Compiler), Expo Router, TanStack Query, Zustand, Reanimated 4, expo-image, expo-glass-effect, Supabase (Postgres + RLS, edge functions in Deno), EAS Build/Update, Vercel for web (babyvom.it). Sentry and PostHog are wired but off until their keys are set.
 
 ## How we work
 

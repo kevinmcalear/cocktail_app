@@ -9,9 +9,7 @@ import { Keyboard, Platform } from 'react-native';
 export const MODAL_AUTOFOCUS = Platform.OS !== 'android';
 
 type Focusable = { focus(): void; blur(): void };
-// ponytail: Tamagui 2.7 types TamaguiElement with React Native 0.88's View
-// component rather than its instance, so a Tamagui input's ref is cast to this.
-// Drop the cast once Tamagui's types catch up.
+// Anything with focus and blur: a TextInput's ref.
 export type FocusableRef = { readonly current: Focusable | null };
 
 // ponytail: JS can't see when the Modal's window gains focus, so check for the

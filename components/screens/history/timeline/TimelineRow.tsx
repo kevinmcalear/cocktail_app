@@ -2,7 +2,7 @@ import { StyleSheet, View } from 'react-native';
 
 import { Caption, DrinkImage, DsText, PressableScale, Title, useDs } from '@/components/ds';
 import { IconSymbol } from '@/components/ui/icon-symbol';
-import { familyHues, fontFamilies, layout, radius, space } from '@/constants/tokens';
+import { familyHues, font, fontFamilies, layout, radius, space } from '@/constants/tokens';
 import { guessRange, yearPhrase } from '@/lib/lineage';
 import { ERAS, fromLine, shortYear, type TimelineRow as Row, type TimelineSection } from '@/lib/timeline';
 
@@ -192,7 +192,7 @@ export function EraHeader({ section, wide, compact }: { section: TimelineSection
 const styles = StyleSheet.create({
   row: { flexDirection: 'row', alignItems: 'stretch', minHeight: layout.minTapTarget + space.lg, borderRadius: radius.control, borderCurve: 'continuous', columnGap: space.sm },
   year: { width: YEAR_W, paddingTop: space.md + 2 },
-  mono: { fontFamily: fontFamilies.mono, fontVariant: ['tabular-nums'] },
+  mono: { ...font.figures, fontVariant: ['tabular-nums'] },
   spine: { width: SPINE_W, alignItems: 'center' },
   line: { position: 'absolute', top: 0, bottom: 0, width: 2 },
   // The thread's line starts or stops at the dot.
@@ -206,13 +206,13 @@ const styles = StyleSheet.create({
   dot: { width: 12, height: 12, borderRadius: radius.pill, marginTop: space.md + 3 },
   text: { flex: 1, minWidth: 0, gap: 2, paddingVertical: space.sm + 2 },
   nameLine: { flexDirection: 'row', alignItems: 'center', gap: space.sm, flexWrap: 'wrap' },
-  name: { fontFamily: fontFamilies.instrument },
-  styleTag: { fontFamily: fontFamilies.mono, letterSpacing: 1, borderWidth: StyleSheet.hairlineWidth, borderRadius: radius.mark, paddingHorizontal: space.xs + 2 },
+  name: { fontFamily: fontFamilies.name },
+  styleTag: { ...font.figures, letterSpacing: 1, borderWidth: StyleSheet.hairlineWidth, borderRadius: radius.mark, paddingHorizontal: space.xs + 2 },
   fold: { flexDirection: 'row', minHeight: layout.minTapTarget, columnGap: space.sm },
   dashed: { position: 'absolute', top: 0, bottom: 0, borderLeftWidth: 2, borderStyle: 'dashed' },
   foldText: { alignSelf: 'center' },
   note: { flex: 1.1, minWidth: 0, paddingTop: space.md + 2, paddingRight: space.sm },
   era: { paddingTop: space.lg, paddingBottom: space.md, gap: 2, borderBottomWidth: StyleSheet.hairlineWidth },
-  eyebrow: { fontFamily: fontFamilies.mono, letterSpacing: 1.2, textTransform: 'uppercase' },
+  eyebrow: { ...font.figures, letterSpacing: 1.2, textTransform: 'uppercase' },
   eraWide: { flexDirection: 'row', alignItems: 'baseline', gap: space.md, paddingHorizontal: space.sm },
 });

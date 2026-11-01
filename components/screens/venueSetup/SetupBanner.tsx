@@ -4,7 +4,7 @@ import { StyleSheet, View } from 'react-native';
 import { Body, Caption, PressableScale, useDs } from '@/components/ds';
 import { NavRow } from '@/components/nav/SideNavParts';
 import { IconSymbol } from '@/components/ui/icon-symbol';
-import { fontFamilies, layout, radius, space } from '@/constants/tokens';
+import { font, layout, radius, space } from '@/constants/tokens';
 import { useActiveVenue } from '@/hooks/useActiveVenue';
 import { useBarInvites } from '@/hooks/useBarInvites';
 import { useIsWideWeb } from '@/hooks/useIsWideWeb';
@@ -125,5 +125,5 @@ const styles = StyleSheet.create({
   banner: { flexDirection: 'row', alignItems: 'center', gap: space.sm, minHeight: layout.minTapTarget + space.md, paddingLeft: space.lg, paddingRight: space.sm, borderRadius: radius.card, borderCurve: 'continuous', borderWidth: 1 },
   see: { minHeight: 36, paddingHorizontal: space.md, borderRadius: radius.pill, borderWidth: 1, justifyContent: 'center' },
   flex: { flex: 1, minWidth: 0 },
-  strong: { fontFamily: fontFamilies.bodySemiBold },
+  strong: { ...font.semiBold },
 });

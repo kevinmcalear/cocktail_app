@@ -2,7 +2,7 @@ import { fireEvent, screen } from '@testing-library/react-native';
 import { useState } from 'react';
 
 import type { SameNameDrink } from '@/hooks/useSameNameDrink';
-import { renderWithTamagui } from '@/jest.setup';
+import { renderWithProviders } from '@/jest.setup';
 import { EMPTY_DRAFT, type WizardDraft } from '@/lib/drinkWizard';
 import { nameWaits } from '@/lib/sameName';
 
@@ -57,7 +57,7 @@ beforeEach(() => jest.clearAllMocks());
 test('at home the card is your own drink (Q14b): what it is and when you saved it, and a version is of yours', async () => {
   mockStart.mockImplementation((_id: string, { onSuccess }: { onSuccess: (c: Partial<WizardDraft>) => void }) => onSuccess({ lines: [] }));
   const mine = { ...negroni, id: 'my-negroni', barId: null, menu: null, classic: null, glassName: 'Rocks', saved: '12 Oct' };
-  await renderWithTamagui(<Name match={mine} barId={null} />);
+  await renderWithProviders(<Name match={mine} barId={null} />);
   expect(screen.getByText('You already have a Negroni')).toBeTruthy();
   expect(screen.getByText(/^Rocks · Gin, Campari, sweet vermouth · Saved 12 Oct$/)).toBeTruthy();
   expect(screen.getByRole('button', { name: 'Open your Negroni. Your draft is kept' })).toBeTruthy();
@@ -70,7 +70,7 @@ test('at home the card is your own drink (Q14b): what it is and when you saved i
 
 test('the name step says the bar has one, and a version starts from its spec with a word in brackets', async () => {
   mockStart.mockImplementation((_id: string, { onSuccess }: { onSuccess: (c: Partial<WizardDraft>) => void }) => onSuccess({ lines: [], riffOf: { id: 'lr-negroni', name: 'Negroni' } }));
-  await renderWithTamagui(<Name match={negroni} />);
+  await renderWithProviders(<Name match={negroni} />);
   expect(screen.getByText('Little Rye already has a Negroni')).toBeTruthy();
   expect(screen.getByText('Gin, Campari, sweet vermouth · Autumn menu')).toBeTruthy();
   expect(screen.getByRole('button', { name: 'Make this a version' })).toBeTruthy();
@@ -93,7 +93,7 @@ test('the name step says the bar has one, and a version starts from its spec wit
 });
 
 test("it's a different drink asks for a name that tells it apart; Open it keeps the draft", async () => {
-  await renderWithTamagui(<Name match={negroni} />);
+  await renderWithProviders(<Name match={negroni} />);
   await fireEvent.press(screen.getByRole('button', { name: /^Open Little Rye’s Negroni/ }));
   expect(mockPush).toHaveBeenCalledWith('/cocktail/lr-negroni');
 
@@ -113,7 +113,7 @@ test('crediting another bar shows its drink, and a version keeps your spec and a
     const [draft, setDraft] = useState<WizardDraft>({ ...EMPTY_DRAFT, name: 'Paper Plane', place: { id: 'p-tvh', name: 'The Violet Hour' } });
     return <CreditsStep draft={draft} set={(p) => setDraft(update(p))} venueName={null} ingredients={[]} match={draft.sameAs ? null : plane} onRename={onRename} />;
   }
-  await renderWithTamagui(<Credits />);
+  await renderWithProviders(<Credits />);
   expect(screen.getByText('The Violet Hour already has a Paper Plane')).toBeTruthy();
   expect(screen.getByText('Open it to save it, rank it or say you made it.')).toBeTruthy();
   await fireEvent.press(screen.getByRole('button', { name: 'Make this a version' }));

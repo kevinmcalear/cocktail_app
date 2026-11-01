@@ -1,6 +1,6 @@
 import { screen } from '@testing-library/react-native';
 
-import { renderWithTamagui } from '@/jest.setup';
+import { renderWithProviders } from '@/jest.setup';
 
 import { VenueBuyingLinks, VenueKitLinks } from './VenueSettingsLinks';
 
@@ -18,17 +18,17 @@ jest.mock('@/hooks/useVenueSuppliers', () => ({ useVenueSuppliers: (barId: strin
 
 test('the Glassware row says how many glasses the venue has', async () => {
   mockGlasses = [{}, {}, {}, {}];
-  await renderWithTamagui(<VenueKitLinks barId="b" />);
+  await renderWithProviders(<VenueKitLinks barId="b" />);
   expect(screen.getByText('4 glasses')).toBeTruthy();
 });
 
 test('one glass is singular, and nothing shows until the glasses load', async () => {
   mockGlasses = [{}];
-  const { unmount } = await renderWithTamagui(<VenueKitLinks barId="b" />);
+  const { unmount } = await renderWithProviders(<VenueKitLinks barId="b" />);
   expect(screen.getByText('1 glass')).toBeTruthy();
   await unmount();
   mockGlasses = undefined;
-  await renderWithTamagui(<VenueKitLinks barId="b" />);
+  await renderWithProviders(<VenueKitLinks barId="b" />);
   expect(screen.queryByText(/glass(es)?$/)).toBeNull();
 });
 
@@ -36,18 +36,18 @@ test('Kit counts the ice and the tools', async () => {
   mockGlasses = [];
   mockIce = [{}];
   mockKit = [{}, {}];
-  await renderWithTamagui(<VenueKitLinks barId="b" />);
+  await renderWithProviders(<VenueKitLinks barId="b" />);
   expect(screen.getByText('1 kind')).toBeTruthy();
   expect(screen.getByText('2 tools')).toBeTruthy();
 });
 
 test('Buying is only for people with Prep or Costs', async () => {
   mockCaps = ['menu', 'specs'];
-  const { unmount } = await renderWithTamagui(<VenueBuyingLinks barId="b" />);
+  const { unmount } = await renderWithProviders(<VenueBuyingLinks barId="b" />);
   expect(screen.queryByText('Suppliers')).toBeNull();
   await unmount();
   mockCaps = ['costs'];
-  await renderWithTamagui(<VenueBuyingLinks barId="b" />);
+  await renderWithProviders(<VenueBuyingLinks barId="b" />);
   expect(screen.getByText('Pricing')).toBeTruthy();
   // Suppliers are parked with the back bar (lib/backBar.ts BACK_BAR_SHOWN).
   expect(screen.queryByText('Suppliers')).toBeNull();

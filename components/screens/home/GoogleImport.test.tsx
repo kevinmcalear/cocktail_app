@@ -2,7 +2,7 @@ import { fireEvent, screen, waitFor } from '@testing-library/react-native';
 import { readFileSync } from 'node:fs';
 import { join } from 'node:path';
 
-import { renderWithTamagui } from '@/jest.setup';
+import { renderWithProviders } from '@/jest.setup';
 import type { SavedPlace } from '@/lib/googleTakeout';
 
 import { GoogleImportSheet } from './GoogleImport';
@@ -54,7 +54,7 @@ beforeEach(() => {
 
 test('reads the file, ticks the sure matches, and loves the ticked bars in one go', async () => {
   const onClose = jest.fn();
-  await renderWithTamagui(<GoogleImportSheet visible onClose={onClose} />);
+  await renderWithProviders(<GoogleImportSheet visible onClose={onClose} />);
   expect(screen.getByRole('button', { name: 'Love 0 bars' })).toBeDisabled();
   await fireEvent.press(screen.getByRole('button', { name: 'Choose the file' }));
   expect(await screen.findByText('3 of 6 places are bars we know')).toBeTruthy();
@@ -72,7 +72,7 @@ test('reads the file, ticks the sure matches, and loves the ticked bars in one g
 
 test('bars already loved are left out and counted', async () => {
   mockLoved = [{ id: 'margaux' }];
-  await renderWithTamagui(<GoogleImportSheet visible onClose={jest.fn()} />);
+  await renderWithProviders(<GoogleImportSheet visible onClose={jest.fn()} />);
   await fireEvent.press(screen.getByRole('button', { name: 'Choose the file' }));
   expect(await screen.findByText('3 of 6 places are bars we know · 1 you already love')).toBeTruthy();
   expect(screen.queryByRole('checkbox', { name: /Bar Margaux/ })).toBeNull();
@@ -81,7 +81,7 @@ test('bars already loved are left out and counted', async () => {
 
 test('a bar they hid is not offered', async () => {
   mockHidden = [{ id: 'olo' }];
-  await renderWithTamagui(<GoogleImportSheet visible onClose={jest.fn()} />);
+  await renderWithProviders(<GoogleImportSheet visible onClose={jest.fn()} />);
   await fireEvent.press(screen.getByRole('button', { name: 'Choose the file' }));
   expect(await screen.findByRole('button', { name: 'Love 2 bars' })).toBeTruthy();
   expect(screen.queryByRole('checkbox', { name: /Bar Olo/ })).toBeNull();
@@ -89,7 +89,7 @@ test('a bar they hid is not offered', async () => {
 
 test('a file that is not from Google Maps says so and saves nothing', async () => {
   mockFile.current = { name: 'notes.csv', text: 'Name,Amount\nGin,30' };
-  await renderWithTamagui(<GoogleImportSheet visible onClose={jest.fn()} />);
+  await renderWithProviders(<GoogleImportSheet visible onClose={jest.fn()} />);
   await fireEvent.press(screen.getByRole('button', { name: 'Choose the file' }));
   expect(await screen.findByText(/That isn’t a Google Maps file/)).toBeTruthy();
   expect(mockLove).not.toHaveBeenCalled();

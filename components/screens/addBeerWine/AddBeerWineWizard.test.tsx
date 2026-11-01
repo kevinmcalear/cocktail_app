@@ -1,6 +1,6 @@
 import { act, fireEvent, screen } from '@testing-library/react-native';
 
-import { renderWithTamagui } from '@/jest.setup';
+import { renderWithProviders } from '@/jest.setup';
 import { useBeerWineWizardStore } from '@/store/useBeerWineWizardStore';
 
 import { AddBeerWineWizard } from './AddBeerWineWizard';
@@ -33,7 +33,7 @@ const next = () => fireEvent.press(screen.getByRole('button', { name: /^Next: / 
 
 describe('AddBeerWineWizard', () => {
   test('a catalog beer fills in everything and goes straight to the review', async () => {
-    await renderWithTamagui(<AddBeerWineWizard kind="beer" onClose={jest.fn()} onSaved={mockSaved} />);
+    await renderWithProviders(<AddBeerWineWizard kind="beer" onClose={jest.fn()} onSaved={mockSaved} />);
     await laidOut('add-beer');
     expect(screen.getByText('What’s the beer?')).toBeTruthy();
     await fireEvent.changeText(screen.getByLabelText('Name'), 'punk');
@@ -53,7 +53,7 @@ describe('AddBeerWineWizard', () => {
   });
 
   test('step by step at a venue: kind, strength from the style, tasting words and a price', async () => {
-    await renderWithTamagui(<AddBeerWineWizard kind="wine" barId="bar-1" onClose={jest.fn()} onSaved={mockSaved} />);
+    await renderWithProviders(<AddBeerWineWizard kind="wine" barId="bar-1" onClose={jest.fn()} onSaved={mockSaved} />);
     await laidOut('add-wine');
     await fireEvent.changeText(screen.getByLabelText('Name'), 'house red');
     await next();
@@ -92,7 +92,7 @@ describe('AddBeerWineWizard', () => {
   test('at home there is no price step', async () => {
     useBeerWineWizardStore.getState().patch('beer:home', { name: 'Pils' });
     useBeerWineWizardStore.getState().setStep('beer:home', 'notes');
-    await renderWithTamagui(<AddBeerWineWizard kind="beer" onClose={jest.fn()} onSaved={mockSaved} />);
+    await renderWithProviders(<AddBeerWineWizard kind="beer" onClose={jest.fn()} onSaved={mockSaved} />);
     await laidOut('add-beer');
     expect(screen.getByRole('button', { name: 'Next: review' })).toBeTruthy();
   });

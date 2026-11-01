@@ -1,14 +1,14 @@
 import { fireEvent, screen, within } from '@testing-library/react-native';
 
 import { BackbarTheme, SpecRow } from '@/components/ds';
-import { renderWithTamagui } from '@/jest.setup';
+import { renderWithProviders } from '@/jest.setup';
 
 const label = (el: { props: { accessibilityLabel?: string; 'aria-label'?: string } }) => el.props.accessibilityLabel ?? el.props['aria-label'];
 
 test('an amount with its own action and a linked ingredient are two sibling buttons, not nested', async () => {
   const onPress = jest.fn();
   const onPressAmount = jest.fn();
-  await renderWithTamagui(
+  await renderWithProviders(
     <BackbarTheme>
       <SpecRow amount="128 oz" ingredient="Dry Gin" detail="3.78 L" optional onPress={onPress} onPressAmount={onPressAmount} />
     </BackbarTheme>
@@ -27,7 +27,7 @@ test('an amount with its own action and a linked ingredient are two sibling butt
 
 test('without an amount action the whole line is one button that reads the amount too', async () => {
   const onPress = jest.fn();
-  await renderWithTamagui(
+  await renderWithProviders(
     <BackbarTheme>
       <SpecRow amount="2 oz" ingredient="Rye" onPress={onPress} />
     </BackbarTheme>
@@ -37,7 +37,7 @@ test('without an amount action the whole line is one button that reads the amoun
 });
 
 test('a line on the shopping list says so in place of its flag, out loud too', async () => {
-  await renderWithTamagui(
+  await renderWithProviders(
     <BackbarTheme>
       <SpecRow amount="20 ml" ingredient="Cynar" flag="Not on your shelf" listed onPress={jest.fn()} />
     </BackbarTheme>

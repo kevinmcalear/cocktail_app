@@ -1,6 +1,6 @@
 import { fireEvent, screen } from '@testing-library/react-native';
 
-import { renderWithTamagui } from '@/jest.setup';
+import { renderWithProviders } from '@/jest.setup';
 import { EMPTY_DRAFT } from '@/lib/drinkWizard';
 
 import { SketchHeader } from './SketchHeader';
@@ -19,7 +19,7 @@ describe('SketchHeader with a hero photo', () => {
     const band = (keepDrawing?: boolean) => (
       <SketchHeader draft={{ ...EMPTY_DRAFT, name: 'Ash Garden', photos: { hero: 'hero.jpg' }, keepDrawing }} step="glass" onBack={jest.fn()} top={0} side={0} rounded={false} onTint={jest.fn()} onKeepDrawing={onKeep} />
     );
-    const { rerender } = await renderWithTamagui(band());
+    const { rerender } = await renderWithProviders(band());
     expect(screen.queryByLabelText('Sketch colour, Ash Garden')).toBeNull();
     await fireEvent.press(screen.getByRole('button', { name: 'Keep the drawing, after the photos' }));
     expect(onKeep).toHaveBeenLastCalledWith(true);
@@ -33,7 +33,7 @@ describe('SketchHeader with a hero photo', () => {
   // Last: it opens a Sheet.
   test('on a typing step the band stays compact: the photo is the thumbnail, the pill in its full-size sheet', async () => {
     const onKeep = jest.fn();
-    await renderWithTamagui(
+    await renderWithProviders(
       <SketchHeader draft={{ ...EMPTY_DRAFT, name: 'Ash Garden', photos: { hero: 'hero.jpg' } }} step="name" onBack={jest.fn()} top={0} side={0} rounded={false} onTint={jest.fn()} onKeepDrawing={onKeep} />
     );
     expect(screen.queryByRole('button', { name: 'Keep the drawing, after the photos' })).toBeNull();

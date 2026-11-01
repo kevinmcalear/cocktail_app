@@ -5,7 +5,7 @@ import { StyleSheet, View } from 'react-native';
 import { BackbarTheme, BrandProvider, Caption, DrinkImage, DsText, PressableScale, Tag, Title, useBreakpoint, useDs, type IconName } from '@/components/ds';
 import { VenueMark } from '@/components/nav/VenueMarks';
 import { IconSymbol } from '@/components/ui/icon-symbol';
-import { displayFaces, fontFamilies, layout, radius, space, type DisplayFace } from '@/constants/tokens';
+import { type DisplayFace, displayFaces, font, layout, radius, space } from '@/constants/tokens';
 import { BRAND_SAMPLE as SAMPLE } from '@/lib/brandSample';
 import { withAlpha } from '@/lib/color';
 
@@ -218,7 +218,7 @@ const styles = StyleSheet.create({
   wrap: { gap: space.lg },
   chips: { flexDirection: 'row', gap: space.sm },
   scheme: { minHeight: 40, minWidth: 64, paddingHorizontal: space.md, borderRadius: radius.pill, borderWidth: 1, alignItems: 'center', justifyContent: 'center' },
-  picked: { fontFamily: fontFamilies.bodySemiBold },
+  picked: { ...font.semiBold },
   schemes: { gap: space.md },
   schemesWide: { flexDirection: 'row' },
   flex: { flex: 1, gap: space.xs },
@@ -227,7 +227,7 @@ const styles = StyleSheet.create({
   round: { width: 28, height: 28, borderRadius: radius.pill, borderWidth: 1, alignItems: 'center', justifyContent: 'center' },
   tabPill: { flex: 1, flexDirection: 'row', justifyContent: 'space-around', padding: space.xs, borderRadius: radius.pill, borderWidth: 1 },
   tab: { alignItems: 'center', gap: 2, paddingVertical: space.xs, paddingHorizontal: space.sm, borderRadius: radius.pill },
-  tabLabel: { fontFamily: fontFamilies.bodyMedium },
+  tabLabel: { ...font.medium },
   search: { width: 44, height: 44, borderRadius: radius.pill, borderWidth: 1, alignItems: 'center', justifyContent: 'center' },
   switch: { flexDirection: 'row', padding: space.xs, borderRadius: radius.pill, borderWidth: 1 },
   switchItem: { flex: 1, minHeight: layout.minTapTarget - space.sm, justifyContent: 'center', alignItems: 'center', paddingHorizontal: space.lg, borderRadius: radius.pill },

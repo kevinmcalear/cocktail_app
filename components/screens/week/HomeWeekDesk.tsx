@@ -5,7 +5,7 @@ import { Linking, StyleSheet, View } from 'react-native';
 import { Body, Button, Caption, DrinkImage, DsText, PressableScale, Title, useDs } from '@/components/ds';
 import { Eyebrow } from '@/components/screens/addDrink/WizardChrome';
 import { IconSymbol } from '@/components/ui/icon-symbol';
-import { displayFaces, fontFamilies, palateHues, radius, space } from '@/constants/tokens';
+import { displayFaces, font, palateHues, radius, space } from '@/constants/tokens';
 import { useBarDrinks } from '@/hooks/useHomeBar';
 import { itemHref } from '@/lib/itemRoutes';
 import { dayHeading, detailLine, itemDay, kindLabel, shortDay, timeLine, type WeekItem } from '@/lib/week';
@@ -152,15 +152,15 @@ const styles = StyleSheet.create({
   day: { flexDirection: 'row', gap: space.xl - 4, paddingBottom: space.xl - 4 },
   gutter: { width: 64 },
   items: { flex: 1, minWidth: 0, gap: space.md },
-  mono: { fontFamily: fontFamilies.mono },
-  semi: { fontFamily: fontFamilies.bodySemiBold },
+  mono: { ...font.figures },
+  semi: { ...font.semiBold },
   row: { flexDirection: 'row', alignItems: 'center', gap: space.md + 2 },
   card: { padding: space.md + 2, borderRadius: radius.card - 6, borderWidth: 1, borderCurve: 'continuous' },
   marks: { flexDirection: 'row' },
   mark: { width: MARK, height: MARK, borderRadius: radius.control, alignItems: 'center', justifyContent: 'center' },
   over: { marginLeft: -10, borderWidth: 2 },
   flex: { flex: 1, minWidth: 0, gap: 2 },
-  name: { fontFamily: fontFamilies.bodyMedium },
+  name: { ...font.medium },
   calendar: { paddingHorizontal: space.md + 2 },
   aside: { width: 300, gap: space.xs },
   drink: { flexDirection: 'row', alignItems: 'center', gap: space.md, paddingVertical: space.sm + 2, borderBottomWidth: StyleSheet.hairlineWidth },

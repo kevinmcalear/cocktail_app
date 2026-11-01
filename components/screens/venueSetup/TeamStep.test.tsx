@@ -1,6 +1,6 @@
 import { fireEvent, screen } from '@testing-library/react-native';
 
-import { renderWithTamagui } from '@/jest.setup';
+import { renderWithProviders } from '@/jest.setup';
 
 import { TeamStep } from './TeamStep';
 
@@ -29,7 +29,7 @@ beforeEach(() => {
 
 test('several people are invited at once, each saved and emailed, and held while the claim waits', async () => {
   const onDone = jest.fn();
-  await renderWithTamagui(<TeamStep barId="v1" name="Little Rye" pending onDone={onDone} />);
+  await renderWithProviders(<TeamStep barId="v1" name="Little Rye" pending onDone={onDone} />);
   expect(screen.getByText(/they join Little Rye once your claim is approved/)).toBeTruthy();
   await fireEvent.changeText(screen.getAllByLabelText('Name')[0], 'Sam Okafor');
   await fireEvent.changeText(screen.getAllByLabelText('Email')[0], 'sam@example.com');
@@ -54,7 +54,7 @@ test('several people are invited at once, each saved and emailed, and held while
 
 test('a bad email stops the send and says why', async () => {
   const onDone = jest.fn();
-  await renderWithTamagui(<TeamStep barId="v1" name="Little Rye" pending={false} onDone={onDone} />);
+  await renderWithProviders(<TeamStep barId="v1" name="Little Rye" pending={false} onDone={onDone} />);
   await fireEvent.changeText(screen.getByLabelText('Email'), 'sam@');
   await fireEvent.press(screen.getByRole('button', { name: 'Send the invite' }));
   expect(screen.getByText('That email doesn’t look right.')).toBeTruthy();
@@ -65,7 +65,7 @@ test('a bad email stops the send and says why', async () => {
 
 test('a welcome message that could not be read is never overwritten with the suggestion', async () => {
   mockWelcomeQuery = { data: undefined, isLoading: false, isSuccess: false };
-  await renderWithTamagui(<TeamStep barId="v1" name="Little Rye" pending={false} onDone={jest.fn()} />);
+  await renderWithProviders(<TeamStep barId="v1" name="Little Rye" pending={false} onDone={jest.fn()} />);
   await fireEvent.changeText(screen.getByLabelText('Email'), 'sam@example.com');
   await fireEvent.press(screen.getByRole('button', { name: 'Send the invite' }));
   expect(mockAdd).toHaveBeenCalled();

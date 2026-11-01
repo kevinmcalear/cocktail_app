@@ -1,7 +1,7 @@
 import { fireEvent, screen } from '@testing-library/react-native';
 
 import type { IngredientForm } from '@/hooks/useIngredientEditor';
-import { renderWithTamagui } from '@/jest.setup';
+import { renderWithProviders } from '@/jest.setup';
 import { prepFields } from '@/lib/prepCardForm';
 
 import { EditBody } from './EditBody';
@@ -61,7 +61,7 @@ function editWith(form: IngredientForm, set: jest.Mock, setPrep = jest.fn()) {
 }
 
 const render = (edit: IngredientEdit, isPrep: boolean, onSheet = jest.fn()) =>
-  renderWithTamagui(<EditBody edit={edit} savedId="i1" isPrep={isPrep} wide={false} venueName={null} used={3} spiritTags={TAGS} onSheet={onSheet} selfId="i1" />);
+  renderWithProviders(<EditBody edit={edit} savedId="i1" isPrep={isPrep} wide={false} venueName={null} used={3} spiritTags={TAGS} onSheet={onSheet} selfId="i1" />);
 
 describe('EditBody', () => {
   test('a bottle edits what it is and its tags, no recipe', async () => {

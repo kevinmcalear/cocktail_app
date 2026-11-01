@@ -2,7 +2,7 @@ import { useRouter } from 'expo-router';
 import { ScrollView, StyleSheet, View } from 'react-native';
 
 import { Caption, DsText, PressableScale, TextLink, useDs } from '@/components/ds';
-import { displayFaces, fontFamilies, radius, space } from '@/constants/tokens';
+import { displayFaces, font, radius, space } from '@/constants/tokens';
 import { useMyWeek, useWeekStart } from '@/hooks/useWeek';
 import { detailLine, itemDay, kindLabel, shortDay, timeLine, upcoming, type WeekItem } from '@/lib/week';
 
@@ -81,6 +81,6 @@ const styles = StyleSheet.create({
   row: { gap: space.sm },
   cardHead: { flexDirection: 'row', alignItems: 'center', gap: space.sm },
   flex: { flex: 1, minWidth: 0 },
-  semi: { fontFamily: fontFamilies.bodySemiBold },
+  semi: { ...font.semiBold },
   card: { gap: space.xs, padding: space.md, borderRadius: radius.card, borderCurve: 'continuous', borderWidth: 1 },
 });

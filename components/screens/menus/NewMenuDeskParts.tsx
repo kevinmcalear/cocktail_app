@@ -3,10 +3,9 @@ import { StyleSheet, View } from 'react-native';
 
 import { BackbarTheme, BrandProvider, Caption, DsText, PressableScale, useDs, type IconName } from '@/components/ds';
 import { IconSymbol } from '@/components/ui/icon-symbol';
-import { displayFaces, fontFamilies, radius, space } from '@/constants/tokens';
+import { displayFaces, font, radius, space, STATUS } from '@/constants/tokens';
 import type { Venue } from '@/hooks/useActiveVenue';
 import type { MenuLayoutTemplate } from '@/hooks/useMenuMutations';
-import { STATUS } from '@/constants/palette';
 import { readableAccent, withAlpha } from '@/lib/color';
 import { menuStatus, plural, previewSections } from '@/lib/menus';
 import type { MenuPhoto } from '@/lib/readMenu';
@@ -46,7 +45,7 @@ export function DeskStartTiles({ picked, saved, onPick }: { picked: DeskStart; s
               <IconSymbol name={t.icon} size={16} color={ds.c.ink} />
             </View>
             <View style={styles.flex}>
-              <DsText variant="caption" style={{ fontFamily: fontFamilies.bodySemiBold }}>
+              <DsText variant="caption" style={{ ...font.semiBold }}>
                 {t.label}
               </DsText>
               <Caption tone="muted" numberOfLines={2}>
@@ -190,8 +189,8 @@ const styles = StyleSheet.create({
   card: { flex: 1, width: '100%', alignItems: 'center', overflow: 'hidden', gap: space.sm },
   page: { flex: 1, width: '100%' },
   empty: { flex: 1, alignItems: 'center', justifyContent: 'center', gap: space.sm },
-  foot: { fontFamily: fontFamilies.mono, letterSpacing: 1.5, paddingTop: space.md },
-  eyebrow: { fontFamily: fontFamilies.mono, letterSpacing: 1.5 },
+  foot: { ...font.figures, letterSpacing: 1.5, paddingTop: space.md },
+  eyebrow: { ...font.figures, letterSpacing: 1.5 },
   rule: { width: 48, height: 1, marginVertical: space.sm },
   frames: { flexDirection: 'row', flexWrap: 'wrap', width: '80%', justifyContent: 'space-around', rowGap: space.xl, paddingTop: space.lg },
   frameCell: { width: '40%', alignItems: 'center', gap: space.sm },

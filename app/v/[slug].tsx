@@ -7,7 +7,7 @@ import { AuthShell, AuthSpinner, type AuthBrand } from '@/components/auth/AuthSh
 import { StaffLinkSignIn } from '@/components/auth/StaffLinkSignIn';
 import { BackbarTheme, Body, BrandProvider, Button, Caption, useDs } from '@/components/ds';
 import { IconSymbol } from '@/components/ui/icon-symbol';
-import { fontFamilies, radius, space } from '@/constants/tokens';
+import { font, radius, space } from '@/constants/tokens';
 import { useAuth } from '@/ctx/AuthContext';
 import { InviteWelcome } from '@/components/screens/onboarding/InviteWelcome';
 import { useMyInvites } from '@/hooks/useBarInvites';
@@ -253,5 +253,5 @@ const styles = StyleSheet.create({
   step: { flexDirection: 'row', alignItems: 'center', gap: space.md },
   stepNumber: { width: 28, height: 28, borderRadius: radius.pill, alignItems: 'center', justifyContent: 'center' },
   inline: { flexDirection: 'row', flexWrap: 'wrap', alignItems: 'center', gap: space.xs },
-  strong: { fontFamily: fontFamilies.bodySemiBold },
+  strong: { ...font.semiBold },
 });

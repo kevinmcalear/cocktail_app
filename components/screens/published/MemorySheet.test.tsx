@@ -1,7 +1,7 @@
 import { fireEvent, screen } from '@testing-library/react-native';
 
 import type { CollectedDrink } from '@/hooks/useCollection';
-import { renderWithTamagui } from '@/jest.setup';
+import { renderWithProviders } from '@/jest.setup';
 
 import { MemorySheet } from './MemorySheet';
 
@@ -28,7 +28,7 @@ beforeEach(() => mockSave.mockClear());
 
 test('starts on Don’t remember with no date field, and saves no date', async () => {
   const onClose = jest.fn();
-  await renderWithTamagui(<MemorySheet memory={memory} onClose={onClose} />);
+  await renderWithProviders(<MemorySheet memory={memory} onClose={onClose} />);
   expect(screen.getByRole('radio', { name: 'Don’t remember', checked: true })).toBeTruthy();
   expect(screen.queryByText('Day')).toBeNull();
   await fireEvent.press(screen.getByRole('button', { name: 'Save' }));
@@ -37,7 +37,7 @@ test('starts on Don’t remember with no date field, and saves no date', async (
 });
 
 test('the date field shows only after Pick a day, which needs a day to save', async () => {
-  await renderWithTamagui(<MemorySheet memory={memory} onClose={jest.fn()} />);
+  await renderWithProviders(<MemorySheet memory={memory} onClose={jest.fn()} />);
   await fireEvent.press(screen.getByRole('radio', { name: 'Pick a day' }));
   expect(screen.getByText('Day')).toBeTruthy();
   await fireEvent.press(screen.getByRole('button', { name: 'Save' }));
@@ -46,7 +46,7 @@ test('the date field shows only after Pick a day, which needs a day to save', as
 });
 
 test('a day already saved opens on Pick a day with it', async () => {
-  await renderWithTamagui(<MemorySheet memory={{ ...memory, hadOn: '2026-09-12' }} onClose={jest.fn()} />);
+  await renderWithProviders(<MemorySheet memory={{ ...memory, hadOn: '2026-09-12' }} onClose={jest.fn()} />);
   expect(screen.getByRole('radio', { name: 'Pick a day', checked: true })).toBeTruthy();
   await fireEvent.press(screen.getByRole('button', { name: 'Save' }));
   expect(mockSave).toHaveBeenCalledWith({ id: 'c1', hadOn: '2026-09-12', note: null });

@@ -4,7 +4,7 @@ import { StyleSheet, View } from 'react-native';
 
 import { Caption, DsText, EquipmentThumb, IngredientThumb, PressableScale, useDs } from '@/components/ds';
 import { IconSymbol } from '@/components/ui/icon-symbol';
-import { fontFamilies, radius, space } from '@/constants/tokens';
+import { font, radius, space } from '@/constants/tokens';
 import type { ShelfItem } from '@/hooks/useHomeBar';
 import { SECTIONS } from '@/lib/barSections';
 import { cardFit, type ShelfSection } from '@/lib/myBarRows';
@@ -180,11 +180,11 @@ const styles = StyleSheet.create({
   flex: { flex: 1 },
   card: { flex: 1, minWidth: 0, gap: space.md, padding: space.md, borderRadius: radius.card, borderCurve: 'continuous' },
   head: { flexDirection: 'row', alignItems: 'center', gap: space.xs + 2, minHeight: 32 },
-  title: { fontFamily: fontFamilies.bodySemiBold, flexShrink: 1 },
+  title: { ...font.semiBold, flexShrink: 1 },
   tiles: { flexDirection: 'row', flexWrap: 'wrap', columnGap: GAP, rowGap: space.md },
   tile: { width: TILE, gap: space.xs + 2 },
   square: { width: TILE, height: TILE, borderRadius: radius.control - 2, borderCurve: 'continuous', overflow: 'hidden', alignItems: 'center', justifyContent: 'center' },
   dashed: { borderStyle: 'dashed', borderWidth: 1.5 },
   faded: { opacity: 0.4 },
-  name: { fontFamily: fontFamilies.bodyMedium },
+  name: { ...font.medium },
 });

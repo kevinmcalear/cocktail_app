@@ -3,7 +3,7 @@ import { StyleSheet, View } from 'react-native';
 
 import { Body, Caption, IngredientThumb, PressableScale, useDs } from '@/components/ds';
 import { IconSymbol } from '@/components/ui/icon-symbol';
-import { fontFamilies, layout, radius, space } from '@/constants/tokens';
+import { font, layout, radius, space } from '@/constants/tokens';
 import type { WizardPick } from '@/lib/drinkWizard';
 import { kindWords } from '@/lib/ingredientNames';
 
@@ -93,7 +93,7 @@ const styles = StyleSheet.create({
   stack: { gap: space.md },
   plain: { flexDirection: 'row', alignItems: 'center', gap: space.md, minHeight: 64, paddingHorizontal: space.md, borderRadius: radius.control + space.xs },
   flex: { flex: 1, minWidth: 0 },
-  strong: { fontFamily: fontFamilies.bodySemiBold },
+  strong: { ...font.semiBold },
   brands: { gap: space.xs, paddingTop: space.xs },
   brand: { flexDirection: 'row', alignItems: 'center', gap: space.md, minHeight: 56, borderBottomWidth: StyleSheet.hairlineWidth },
   all: { minHeight: layout.minTapTarget + space.xs, justifyContent: 'center' },

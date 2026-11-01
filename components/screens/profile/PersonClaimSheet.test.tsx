@@ -1,6 +1,6 @@
 import { fireEvent, screen, waitFor } from '@testing-library/react-native';
 
-import { renderWithTamagui } from '@/jest.setup';
+import { renderWithProviders } from '@/jest.setup';
 import type { Profile } from '@/hooks/useProfiles';
 
 import { PersonClaimSheet } from './PersonClaimSheet';
@@ -24,7 +24,7 @@ beforeEach(() => {
 test('one sheet: the Instagram code comes first, the bar waits, and Setup gets it back', async () => {
   const onClose = jest.fn();
   mockMeta = { onboarded: false };
-  await renderWithTamagui(<PersonClaimSheet profile={ash} bar="Pale Moth" stats={{ drinks: 5, menus: 2 }} visible onClose={onClose} />);
+  await renderWithProviders(<PersonClaimSheet profile={ash} bar="Pale Moth" stats={{ drinks: 5, menus: 2 }} visible onClose={onClose} />);
   expect(screen.getByText('Your 5 drinks, 2 menus and where you have worked move to your account. Nothing new goes public.')).toBeTruthy();
   expect(screen.getByRole('radio', { name: /^A message from your Instagram/ })).toBeChecked();
   expect(screen.getByRole('radio', { name: /^Pale Moth confirms you/ })).toBeDisabled();
@@ -38,7 +38,7 @@ test('one sheet: the Instagram code comes first, the bar waits, and Setup gets i
 });
 
 test('Something else sends a note, and is the only way when the page has no Instagram', async () => {
-  await renderWithTamagui(<PersonClaimSheet profile={ash} bar={null} stats={{ drinks: 1, menus: 0 }} visible onClose={jest.fn()} />);
+  await renderWithProviders(<PersonClaimSheet profile={ash} bar={null} stats={{ drinks: 1, menus: 0 }} visible onClose={jest.fn()} />);
   await fireEvent.press(screen.getByRole('radio', { name: /^Something else/ }));
   expect(screen.getByRole('button', { name: 'Send claim' })).toBeDisabled();
   await fireEvent.changeText(screen.getByLabelText('The link, or how we can check'), 'https://palemoth.example/team');
@@ -46,20 +46,20 @@ test('Something else sends a note, and is the only way when the page has no Inst
   expect(mockClaim).toHaveBeenCalledWith({ profile_id: 'ash', message: 'https://palemoth.example/team', method: 'note', code: null });
 
   const noGram = { ...ash, instagram: null } as unknown as Profile;
-  await renderWithTamagui(<PersonClaimSheet profile={noGram} bar={null} stats={{ drinks: 1, menus: 0 }} visible onClose={jest.fn()} />);
+  await renderWithProviders(<PersonClaimSheet profile={noGram} bar={null} stats={{ drinks: 1, menus: 0 }} visible onClose={jest.fn()} />);
   expect(screen.getAllByRole('radio', { name: /^A message from your Instagram/ }).at(-1)).toBeDisabled();
   expect(screen.getAllByRole('radio', { name: /^Something else/ }).at(-1)).toBeChecked();
 });
 
 test('past Setup, a sent claim stays on the page', async () => {
-  await renderWithTamagui(<PersonClaimSheet profile={ash} bar={null} stats={{ drinks: 1, menus: 0 }} visible onClose={jest.fn()} />);
+  await renderWithProviders(<PersonClaimSheet profile={ash} bar={null} stats={{ drinks: 1, menus: 0 }} visible onClose={jest.fn()} />);
   expect(screen.getByText('Your 1 drink and where you have worked move to your account. Nothing new goes public.')).toBeTruthy();
   await fireEvent.press(screen.getByRole('button', { name: 'Send claim' }));
   expect(mockDismissTo).not.toHaveBeenCalled();
 });
 
 test('on a phone that isn’t theirs, the claim opens on their own phone from a QR code', async () => {
-  await renderWithTamagui(<PersonClaimSheet profile={ash} bar={null} stats={{ drinks: 0, menus: 0 }} visible onClose={jest.fn()} />);
+  await renderWithProviders(<PersonClaimSheet profile={ash} bar={null} stats={{ drinks: 0, menus: 0 }} visible onClose={jest.fn()} />);
   expect(screen.getByText('Where you have worked moves to your account. Nothing new goes public.')).toBeTruthy();
   expect(screen.queryByLabelText('QR code that opens Ash Okafor’s claim on your phone')).toBeNull();
   await fireEvent.press(screen.getByRole('button', { name: 'Not your phone? Claim it on yours' }));
@@ -68,7 +68,7 @@ test('on a phone that isn’t theirs, the claim opens on their own phone from a 
 });
 
 test('once the bar is claimed, it can confirm you', async () => {
-  await renderWithTamagui(<PersonClaimSheet profile={ash} bar="Pale Moth" confirmBar="moth-page" stats={{ drinks: 1, menus: 0 }} visible onClose={jest.fn()} />);
+  await renderWithProviders(<PersonClaimSheet profile={ash} bar="Pale Moth" confirmBar="moth-page" stats={{ drinks: 1, menus: 0 }} visible onClose={jest.fn()} />);
   const option = screen.getByRole('radio', { name: /^Pale Moth confirms you/ });
   expect(option).not.toBeDisabled();
   await fireEvent.press(option);

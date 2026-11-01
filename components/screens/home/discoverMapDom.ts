@@ -1,6 +1,6 @@
 // The web map's HTML bits (DiscoverMap.web.tsx): its stylesheet, the score
 // pins and the area labels. Plain DOM, since MapLibre GL markers take elements.
-import { backbar, fontFamilies, radius, space, type } from '@/constants/tokens';
+import { backbar, radius, space, type } from '@/constants/tokens';
 import { areaLook, CLOSE_ZOOM, pinDescription, pinLook, ZOOM_BUTTON, type MapArea, type MapPin } from '@/lib/discoverMap';
 import { knownLogoEdge, lookAtLogoEdge, type KnownEdge } from '@/lib/logoEdge';
 
@@ -82,7 +82,8 @@ export function paintPin(el: HTMLElement, pin: MapPin, selected: boolean, accent
     background: look.backgroundColor,
     color: look.color,
     opacity: String(look.opacity),
-    font: `${look.fontSize}px ${fontFamilies[look.font]}, ${look.font === 'monoMedium' ? 'ui-monospace, monospace' : 'system-ui, sans-serif'}`,
+    font: `${look.font === 'semiBold' ? 600 : 500} ${look.fontSize}px system-ui, -apple-system, sans-serif`,
+    fontVariantNumeric: look.font === 'figuresMedium' ? 'tabular-nums' : 'normal',
     whiteSpace: 'nowrap',
     display: 'flex',
     alignItems: 'center',
@@ -116,7 +117,8 @@ export function areaElement(area: MapArea, onPress: () => void): HTMLElement {
     boxShadow: areaLook.boxShadow,
     background: areaLook.backgroundColor,
     color: areaLook.color,
-    font: `${type.caption.fontSize}px ${fontFamilies.monoMedium}, ui-monospace, monospace`,
+    font: `500 ${type.caption.fontSize}px system-ui, -apple-system, sans-serif`,
+    fontVariantNumeric: 'tabular-nums',
     whiteSpace: 'nowrap',
     cursor: 'pointer',
   });
@@ -146,7 +148,7 @@ ${m}-group button { width: ${ZOOM_BUTTON}px; height: ${ZOOM_BUTTON}px; backgroun
 ${m}-group button + button { border-top: 1px solid var(--dm-edge); }
 ${m}-group button:not(:disabled):hover { background-color: var(--dm-edge); }
 ${m}-icon { filter: var(--dm-icon); }
-${m}-bottom-right .maplibregl-ctrl-attrib { margin: 0 ${space.md}px ${space.sm + 2}px 0; padding: 0; background: transparent; font: ${type.caption.fontSize}px/${type.caption.lineHeight}px ${fontFamilies.body}, system-ui, sans-serif; color: var(--dm-muted); }
+${m}-bottom-right .maplibregl-ctrl-attrib { margin: 0 ${space.md}px ${space.sm + 2}px 0; padding: 0; background: transparent; font: ${type.caption.fontSize}px/${type.caption.lineHeight}px system-ui, -apple-system, sans-serif; color: var(--dm-muted); }
 ${m}-attrib a { color: inherit; }`;
   document.head.appendChild(css);
 }

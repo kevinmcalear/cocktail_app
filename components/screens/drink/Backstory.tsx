@@ -4,7 +4,7 @@ import { StyleSheet, View } from 'react-native';
 
 import { Body, Caption, DsText, Headline, PressableScale, useDs } from '@/components/ds';
 import { UserAvatar } from '@/components/ui/UserAvatar';
-import { fontFamilies, space } from '@/constants/tokens';
+import { font, space } from '@/constants/tokens';
 import { useDrinkHistory } from '@/hooks/useDrinkHistory';
 import { useLineage } from '@/hooks/useLineage';
 import { historyFor } from '@/lib/drinkHistory';
@@ -201,8 +201,8 @@ const styles = StyleSheet.create({
   section: { gap: space.sm },
   list: { borderBottomWidth: StyleSheet.hairlineWidth },
   flex: { flex: 1, minWidth: 0 },
-  year: { fontFamily: fontFamilies.mono },
-  here: { fontFamily: fontFamilies.bodySemiBold },
+  year: { ...font.figures },
+  here: { ...font.semiBold },
   faces: { flexDirection: 'row' },
   overlap: { marginLeft: -space.sm },
   riffLine: { flexDirection: 'row', alignItems: 'center', gap: space.sm },

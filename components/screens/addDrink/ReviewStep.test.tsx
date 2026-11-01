@@ -1,6 +1,6 @@
 import { screen } from '@testing-library/react-native';
 
-import { renderWithTamagui } from '@/jest.setup';
+import { renderWithProviders } from '@/jest.setup';
 import { EMPTY_DRAFT } from '@/lib/drinkWizard';
 
 import { ReviewStep } from './ReviewStep';
@@ -16,12 +16,12 @@ const review = (coCreators: { id: string; name: string }[]) => (
 );
 
 test('Credits says who is asked first, so Save drink is no surprise (board w3-credits-to-check)', async () => {
-  await renderWithTamagui(review([{ id: 'p-sam', name: 'Sam Ortiz' }]));
+  await renderWithProviders(review([{ id: 'p-sam', name: 'Sam Ortiz' }]));
   expect(screen.getByText('By you with Sam Ortiz')).toBeTruthy();
   expect(screen.getByText('We’ll ask Sam first.')).toBeTruthy();
 });
 
 test('nobody else named, nothing to ask', async () => {
-  await renderWithTamagui(review([]));
+  await renderWithProviders(review([]));
   expect(screen.queryByText(/^We’ll ask/)).toBeNull();
 });

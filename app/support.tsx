@@ -5,7 +5,7 @@ import { StyleSheet, View } from 'react-native';
 import { Body, Headline, Surface } from '@/components/ds';
 import { SafetyPage } from '@/components/screens/safety/SafetyPage';
 import { BRAND } from '@/constants/brand';
-import { fontFamilies, space } from '@/constants/tokens';
+import { font, space } from '@/constants/tokens';
 
 /**
  * Public help page, the store listings' Support URL (babyvom.it/support):
@@ -76,5 +76,5 @@ const styles = StyleSheet.create({
   card: { gap: space.sm, marginVertical: space.md },
   question: { gap: space.xs, marginTop: space.md },
   footer: { flexDirection: 'row', flexWrap: 'wrap', gap: space.xl, marginTop: space.xl },
-  link: { fontFamily: fontFamilies.bodySemiBold, textDecorationLine: 'underline' },
+  link: { ...font.semiBold, textDecorationLine: 'underline' },
 });

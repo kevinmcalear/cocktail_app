@@ -4,7 +4,7 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import { BackbarTheme, Body, BrandProvider, Button, Caption, DsText, LogoImage, useDs, useGutter } from '@/components/ds';
 import { logoFill } from '@/components/nav/VenueMarks';
-import { displayFaces, fontFamilies, radius, space } from '@/constants/tokens';
+import { displayFaces, font, radius, space } from '@/constants/tokens';
 import { useActiveVenue, type Venue } from '@/hooks/useActiveVenue';
 import { useMenu } from '@/hooks/useMenus';
 import { cardWhen, menuAsText } from '@/lib/menus';
@@ -152,7 +152,7 @@ const styles = StyleSheet.create({
   card: { width: '100%', maxWidth: 656, alignItems: 'center', gap: space.sm },
   mark: { width: 28, height: 28, borderRadius: radius.mark * 2, alignItems: 'center', justifyContent: 'center', overflow: 'hidden' },
   scan: { flexDirection: 'row', alignItems: 'center', gap: space.sm, flexShrink: 0 },
-  eyebrow: { fontFamily: fontFamilies.mono, letterSpacing: 1.5, textAlign: 'center' },
+  eyebrow: { ...font.figures, letterSpacing: 1.5, textAlign: 'center' },
   at: { marginTop: -space.xs },
   rule: { width: 48, height: 1, marginVertical: space.lg },
   ruleCompact: { marginVertical: space.sm },

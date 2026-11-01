@@ -2,7 +2,7 @@ import { StyleSheet, View } from 'react-native';
 
 import { Body, Caption, DsText, useDs } from '@/components/ds';
 import { IconSymbol } from '@/components/ui/icon-symbol';
-import { fontFamilies, layout, radius, space } from '@/constants/tokens';
+import { font, layout, radius, space } from '@/constants/tokens';
 import { joinStep, partOf, partSentence, type PartJoin } from '@/lib/drinkParts';
 import type { DatabaseItem } from '@/types/types';
 
@@ -92,11 +92,11 @@ function PartNumber({ n }: { n: number }) {
 const styles = StyleSheet.create({
   head: { flexDirection: 'row', alignItems: 'flex-start', gap: space.md, paddingTop: space.md, paddingBottom: space.xs },
   join: { flexDirection: 'row', alignItems: 'center', gap: space.md, minHeight: layout.minTapTarget },
-  strong: { fontFamily: fontFamilies.bodySemiBold },
+  strong: { ...font.semiBold },
   stack: { gap: space.sm },
-  label: { fontFamily: fontFamilies.mono, letterSpacing: 1.2, textTransform: 'uppercase' },
+  label: { ...font.figures, letterSpacing: 1.2, textTransform: 'uppercase' },
   row: { flexDirection: 'row', alignItems: 'flex-start', gap: space.md },
   number: { width: 24, height: 24, marginTop: 1, borderRadius: radius.pill, alignItems: 'center', justifyContent: 'center' },
-  name: { fontFamily: fontFamilies.bodyMedium },
+  name: { ...font.medium },
   flex: { flex: 1 },
 });

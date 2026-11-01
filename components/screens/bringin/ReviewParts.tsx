@@ -2,7 +2,7 @@ import { StyleSheet, View } from 'react-native';
 
 import { Caption, DsText, PressableScale, useDs } from '@/components/ds';
 import { IconSymbol } from '@/components/ui/icon-symbol';
-import { fontFamilies, palateHues, radius, space } from '@/constants/tokens';
+import { font, palateHues, radius, space } from '@/constants/tokens';
 import { withAlpha } from '@/lib/color';
 import type { DrinkMark, Tally } from '@/lib/importReview';
 import type { ReadFile } from '@/lib/readAnything';
@@ -107,10 +107,10 @@ const styles = StyleSheet.create({
   progress: { flexDirection: 'row', alignItems: 'center', gap: space.md },
   track: { flex: 1, height: 6, borderRadius: radius.mark, overflow: 'hidden' },
   fill: { height: 6, borderRadius: radius.mark },
-  mono: { fontFamily: fontFamilies.mono },
+  mono: { ...font.figures },
   takeOut: { flexDirection: 'row', alignItems: 'center', gap: space.xs + 2, alignSelf: 'flex-start' },
   takeOutButton: { minHeight: 44, justifyContent: 'center', paddingHorizontal: 2 },
-  bold: { fontFamily: fontFamilies.bodySemiBold },
+  bold: { ...font.semiBold },
   listRow: { flexDirection: 'row', alignItems: 'center', gap: space.sm + 2, minHeight: 40, paddingHorizontal: space.sm + 2, borderRadius: radius.control - 2 },
   listMark: { width: 16, alignItems: 'center' },
   dash: { width: 10, height: 2 },

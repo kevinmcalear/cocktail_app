@@ -3,7 +3,7 @@ import { Platform, StyleSheet, View } from 'react-native';
 
 import { Body, Caption, Chip, DsText, PressableScale, TextLink, useDs } from '@/components/ds';
 import { IconSymbol } from '@/components/ui/icon-symbol';
-import { fontFamilies, layout, radius, space } from '@/constants/tokens';
+import { font, layout, radius, space } from '@/constants/tokens';
 import { useBarKit } from '@/hooks/useBarKit';
 import { useMyProfile } from '@/hooks/useMyProfile';
 import { CONTAINERS, containerText, keepsLabel, ownContainer, pickContainer, TONIGHT_HOURS, expiresOn, expiresText, USE_BY_HOURS, type AheadPart, type Container } from '@/lib/batchContainers';
@@ -201,13 +201,13 @@ const styles = StyleSheet.create({
   eyebrow: { letterSpacing: 1.2 },
   eyebrowRow: { flexDirection: 'row', alignItems: 'center', gap: space.sm, paddingBottom: space.xs },
   disc: { width: 22, height: 22, borderRadius: radius.pill, alignItems: 'center', justifyContent: 'center' },
-  mono: { fontFamily: fontFamilies.mono },
+  mono: { ...font.figures },
   how: { paddingTop: space.sm },
   foot: { flexDirection: 'row', flexWrap: 'wrap', alignItems: 'flex-start', gap: space.sm, paddingTop: space.sm },
   changeable: { gap: space.sm, maxWidth: '100%' },
   pill: { flexDirection: 'row', alignItems: 'center', alignSelf: 'flex-start', gap: space.xs, minHeight: layout.minTapTarget, paddingHorizontal: space.md, borderRadius: radius.pill },
   chips: { flexDirection: 'row', flexWrap: 'wrap', alignItems: 'center', gap: space.sm },
-  chip: { fontFamily: fontFamilies.mono, paddingHorizontal: space.sm + 2, paddingVertical: space.xs, borderRadius: radius.pill, overflow: 'hidden' },
+  chip: { ...font.figures, paddingHorizontal: space.sm + 2, paddingVertical: space.xs, borderRadius: radius.pill, overflow: 'hidden' },
   choices: { flexDirection: 'row', flexWrap: 'wrap', gap: space.sm },
   label: { gap: space.sm, paddingTop: space.md },
   order: { gap: 0 },

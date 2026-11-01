@@ -1,6 +1,6 @@
 import { fireEvent, screen } from '@testing-library/react-native';
 
-import { renderWithTamagui } from '@/jest.setup';
+import { renderWithProviders } from '@/jest.setup';
 import type { SharedMenuPage } from '@/hooks/useSharedMenu';
 
 import { SharedMenuScreen } from './SharedMenuScreen';
@@ -51,7 +51,7 @@ beforeEach(() => {
 
 describe('SharedMenuScreen', () => {
   test('a drink that isn’t public keeps its place with no name and no link; public drinks open their page', async () => {
-    await renderWithTamagui(<SharedMenuScreen id="m1" />);
+    await renderWithProviders(<SharedMenuScreen id="m1" />);
     expect(screen.getByText('House drink')).toBeTruthy();
     expect(screen.queryByRole('link', { name: /House drink/ })).toBeNull();
     await fireEvent.press(screen.getByRole('link', { name: /Porch Sour/ }));
@@ -59,7 +59,7 @@ describe('SharedMenuScreen', () => {
   });
 
   test('each public drink has a Save to make it at home; a private one has none', async () => {
-    await renderWithTamagui(<SharedMenuScreen id="m1" />);
+    await renderWithProviders(<SharedMenuScreen id="m1" />);
     expect(screen.queryByLabelText('Save House drink to make at home')).toBeNull();
     await fireEvent.press(screen.getByLabelText('Save Porch Sour to make at home'));
     expect(mockToggle).toHaveBeenCalled();
@@ -68,7 +68,7 @@ describe('SharedMenuScreen', () => {
 
   test('names the night in full, and a guest signs in to report it', async () => {
     mockMenu = { ...mockMenu!, menuDate: '2026-10-31' };
-    await renderWithTamagui(<SharedMenuScreen id="m1" />);
+    await renderWithProviders(<SharedMenuScreen id="m1" />);
     expect(screen.getByText('Saturday 31 October · 2 drinks')).toBeTruthy();
     await fireEvent.press(screen.getByRole('link', { name: 'Report this menu' }));
     expect(mockPush).toHaveBeenCalledWith('/auth/login');
@@ -77,13 +77,13 @@ describe('SharedMenuScreen', () => {
   test("a drink's line is its ingredients when there are names, else its description", async () => {
     const g = (name: string, brand = false) => ({ name, brand });
     mockMenu = { ...mockMenu!, ingredients: { d1: [g('Rye'), g('Lemon Juice'), g('Rye'), g('Green Chartreuse', true)] } };
-    await renderWithTamagui(<SharedMenuScreen id="m1" />);
+    await renderWithProviders(<SharedMenuScreen id="m1" />);
     expect(screen.getByText('Rye, lemon juice, Green Chartreuse')).toBeTruthy();
     expect(screen.queryByText('Porch Sour notes')).toBeNull();
   });
 
   test('credits the owner, opening their profile', async () => {
-    await renderWithTamagui(<SharedMenuScreen id="m1" />);
+    await renderWithProviders(<SharedMenuScreen id="m1" />);
     await fireEvent.press(screen.getByRole('link', { name: /Shared by Sam/ }));
     expect(mockPush).toHaveBeenCalledWith('/p/sam');
   });

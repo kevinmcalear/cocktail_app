@@ -3,7 +3,7 @@ import { Platform, StyleSheet, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import { Body, Caption, PressableScale, useDs } from '@/components/ds';
-import { backbar, fontFamilies, layout, radius, space } from '@/constants/tokens';
+import { backbar, font, layout, radius, space } from '@/constants/tokens';
 import { useViewAs } from '@/hooks/useViewAs';
 import { roleLabel } from '@/lib/roles';
 
@@ -69,9 +69,9 @@ const styles = StyleSheet.create({
     borderWidth: StyleSheet.hairlineWidth,
   },
   label: { flexShrink: 1 },
-  strong: { fontFamily: fontFamilies.bodySemiBold },
+  strong: { ...font.semiBold },
   exit: { minHeight: layout.minTapTarget, minWidth: layout.minTapTarget, paddingHorizontal: space.md, alignItems: 'center', justifyContent: 'center' },
   wizardPill: { flexDirection: 'row', alignItems: 'center', gap: space.sm, marginTop: space.sm, paddingLeft: space.lg, borderRadius: radius.pill, maxWidth: '100%' },
-  pillText: { fontFamily: fontFamilies.bodySemiBold, flexShrink: 1 },
+  pillText: { ...font.semiBold, flexShrink: 1 },
   wizardExit: { minHeight: layout.minTapTarget - space.sm, justifyContent: 'center', paddingHorizontal: space.md },
 });

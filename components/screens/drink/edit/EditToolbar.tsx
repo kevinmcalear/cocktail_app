@@ -2,7 +2,7 @@ import { ActivityIndicator, StyleSheet, View } from 'react-native';
 
 import { Caption, DsText, GlassSurface, PressableScale, useDs } from '@/components/ds';
 import { IconSymbol } from '@/components/ui/icon-symbol';
-import { backbar, fontFamilies, layout, radius, space } from '@/constants/tokens';
+import { backbar, font, layout, radius, space } from '@/constants/tokens';
 
 export interface EditToolbarProps {
   canUndo: boolean;
@@ -106,8 +106,8 @@ const styles = StyleSheet.create({
   flip: { transform: [{ scaleX: -1 }] },
   doneRound: { width: 48, height: 48, borderRadius: radius.pill, alignItems: 'center', justifyContent: 'center' },
   donePill: { flexDirection: 'row', alignItems: 'center', gap: space.sm, minHeight: 40, paddingHorizontal: space.lg, borderRadius: radius.pill },
-  bold: { fontFamily: fontFamilies.bodySemiBold },
-  keys: { fontFamily: fontFamilies.monoMedium, opacity: 0.7 },
+  bold: { ...font.semiBold },
+  keys: { ...font.figuresMedium, opacity: 0.7 },
   wideRow: { flexDirection: 'row', alignItems: 'center', gap: space.xs },
   badge: { borderRadius: radius.pill, paddingHorizontal: space.md, paddingVertical: space.xs },
   push: { flex: 1 },

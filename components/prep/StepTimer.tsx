@@ -3,7 +3,7 @@ import { useEffect, useState } from 'react';
 import { Platform, StyleSheet, View } from 'react-native';
 
 import { Body, Button, Caption, PressableScale, Spec, useDs } from '@/components/ds';
-import { fontFamilies, layout, radius, space, type } from '@/constants/tokens';
+import { font, layout, radius, space, type } from '@/constants/tokens';
 import { countdown, timerLabel } from '@/lib/scale';
 
 import { IDLE, secondsLeft, toggleClock, type Clock } from './stepTimerClock';
@@ -82,6 +82,6 @@ const styles = StyleSheet.create({
   big: { flexDirection: 'row', flexWrap: 'wrap', alignItems: 'center', gap: space.md, padding: space.lg, borderRadius: radius.card, borderCurve: 'continuous' },
   flex: { flex: 1, minWidth: 180, gap: space.xs },
   // The board's big mono clock: the display size in the spec face.
-  clock: { ...type.display, fontFamily: fontFamilies.monoMedium },
+  clock: { ...type.display, ...font.figuresMedium },
   buttons: { gap: space.sm, alignItems: 'stretch' },
 });

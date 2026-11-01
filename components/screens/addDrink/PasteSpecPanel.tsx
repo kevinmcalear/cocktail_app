@@ -2,7 +2,7 @@ import { useDeferredValue, useMemo, useState } from 'react';
 import { StyleSheet, View } from 'react-native';
 
 import { Body, Button, Caption, Field, Title, useDs } from '@/components/ds';
-import { fontFamilies, radius, space } from '@/constants/tokens';
+import { font, radius, space } from '@/constants/tokens';
 import { typedUnit } from '@/lib/drinkWizard';
 import type { IngredientAlias } from '@/lib/ingredientNames';
 import { readSpec, type SpecRow } from '@/lib/specPaste';
@@ -113,9 +113,9 @@ const styles = StyleSheet.create({
   panel: { gap: space.lg, padding: space.lg, borderRadius: radius.control },
   read: { gap: space.xs },
   row: { gap: space.xs, paddingVertical: space.md, borderBottomWidth: StyleSheet.hairlineWidth },
-  source: { fontFamily: fontFamilies.mono },
+  source: { ...font.figures },
   line: { flexDirection: 'row', alignItems: 'baseline', gap: space.md },
-  amount: { width: 72, fontFamily: fontFamilies.mono },
+  amount: { width: 72, ...font.figures },
   flex: { flex: 1 },
   tag: { alignSelf: 'flex-start', paddingHorizontal: space.sm, paddingVertical: space.xs / 2, borderRadius: radius.pill },
   buttons: { flexDirection: 'row', flexWrap: 'wrap', gap: space.sm },

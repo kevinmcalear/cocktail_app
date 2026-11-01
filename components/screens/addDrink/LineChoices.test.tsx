@@ -1,6 +1,6 @@
 import { fireEvent, screen, within } from '@testing-library/react-native';
 
-import { renderWithTamagui } from '@/jest.setup';
+import { renderWithProviders } from '@/jest.setup';
 import { EMPTY_DRAFT, newLine } from '@/lib/drinkWizard';
 
 import { IngredientsStep } from './IngredientsStep';
@@ -28,7 +28,7 @@ const labels = (group: ReturnType<typeof screen.getByLabelText>) => within(group
 describe('A line that matched nothing (owner-setup-path, step 10)', () => {
   test('says "house": Make it in-house first, and it opens the recipe by its name without "house"', async () => {
     const set = jest.fn();
-    await renderWithTamagui(<IngredientsStep draft={draftWith(MEZCAL, 'House miso banana liqueur')} set={set} ingredients={[MEZCAL]} bar={{ id: "rye", name: "Little Rye" }} />);
+    await renderWithProviders(<IngredientsStep draft={draftWith(MEZCAL, 'House miso banana liqueur')} set={set} ingredients={[MEZCAL]} bar={{ id: "rye", name: "Little Rye" }} />);
 
     const group = screen.getByLabelText('What House miso banana liqueur is');
     expect(within(group).getByText('Not at Little Rye yet. It says “house”, so:')).toBeTruthy();
@@ -48,7 +48,7 @@ describe('A line that matched nothing (owner-setup-path, step 10)', () => {
 
   test('says nothing about house: A bottle we buy first, and it marks the line a bottle', async () => {
     const set = jest.fn();
-    await renderWithTamagui(<IngredientsStep draft={draftWith('Yuzu sake')} set={set} ingredients={[MEZCAL]} bar={{ id: "rye", name: "Little Rye" }} />);
+    await renderWithProviders(<IngredientsStep draft={draftWith('Yuzu sake')} set={set} ingredients={[MEZCAL]} bar={{ id: "rye", name: "Little Rye" }} />);
 
     const group = screen.getByLabelText('What Yuzu sake is');
     expect(within(group).getByText('Not at Little Rye yet. What is it?')).toBeTruthy();
@@ -59,7 +59,7 @@ describe('A line that matched nothing (owner-setup-path, step 10)', () => {
 
   test('Just the name: a plain name stops asking, a house one is a recipe to write later', async () => {
     const set = jest.fn();
-    await renderWithTamagui(<IngredientsStep draft={draftWith('Yuzu sake', 'House miso banana liqueur')} set={set} ingredients={[MEZCAL]} />);
+    await renderWithProviders(<IngredientsStep draft={draftWith('Yuzu sake', 'House miso banana liqueur')} set={set} ingredients={[MEZCAL]} />);
 
     // At home there's no venue to name, and the bottle is mine.
     expect(screen.getAllByText('Nothing called that yet. What is it?').length).toBe(1);
@@ -72,7 +72,7 @@ describe('A line that matched nothing (owner-setup-path, step 10)', () => {
 
   test('a spec pasted while the catalog loads waits for it, so a known bottle is never read as new', async () => {
     const set = jest.fn();
-    await renderWithTamagui(<IngredientsStep draft={EMPTY_DRAFT} set={set} ingredients={[]} loading />);
+    await renderWithProviders(<IngredientsStep draft={EMPTY_DRAFT} set={set} ingredients={[]} loading />);
     await fireEvent.press(screen.getByRole('button', { name: 'Paste a whole spec' }));
     await fireEvent.changeText(screen.getByLabelText('The spec'), '45 ml mezcal');
     await fireEvent.press(screen.getByRole('button', { name: 'Loading ingredients…' }));
@@ -81,7 +81,7 @@ describe('A line that matched nothing (owner-setup-path, step 10)', () => {
 
   test('"Just add the name" in the search has already said: its line asks nothing', async () => {
     const set = jest.fn();
-    await renderWithTamagui(<IngredientsStep draft={EMPTY_DRAFT} set={set} ingredients={[MEZCAL]} />);
+    await renderWithProviders(<IngredientsStep draft={EMPTY_DRAFT} set={set} ingredients={[MEZCAL]} />);
     await fireEvent.changeText(screen.getByLabelText('Add an ingredient'), 'Yuzu sake');
     await fireEvent.press(screen.getByRole('button', { name: 'Just add the name “Yuzu sake”' }));
     expect(set.mock.calls[0][0].lines[0]).toMatchObject({ id: null, name: 'Yuzu sake', named: true });

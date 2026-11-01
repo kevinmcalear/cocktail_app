@@ -1,6 +1,6 @@
 import { fireEvent, screen } from '@testing-library/react-native';
 
-import { renderWithTamagui } from '@/jest.setup';
+import { renderWithProviders } from '@/jest.setup';
 import { EMPTY_DRAFT, type WizardDraft } from '@/lib/drinkWizard';
 
 import { AddLayerSheet } from './AddLayerSheet';
@@ -15,7 +15,7 @@ const QUESTION = 'What kind of glass is it?';
 
 async function typeGlass(name: string) {
   const set = jest.fn();
-  await renderWithTamagui(<GlassStep draft={draft} set={set} options={OPTIONS} barVariants={[]} />);
+  await renderWithProviders(<GlassStep draft={draft} set={set} options={OPTIONS} barVariants={[]} />);
   await fireEvent.changeText(screen.getByLabelText('Another glass'), name);
   return set;
 }
@@ -52,7 +52,7 @@ test('Not sure saves no kind', async () => {
 
 test('Other ice asks how it looks in the glass', async () => {
   const onAdd = jest.fn();
-  await renderWithTamagui(<AddLayerSheet visible onClose={jest.fn()} onAdd={onAdd} options={[{ id: 'cubes', name: 'Cubes' }]} />);
+  await renderWithProviders(<AddLayerSheet visible onClose={jest.fn()} onAdd={onAdd} options={[{ id: 'cubes', name: 'Cubes' }]} />);
   await fireEvent.changeText(screen.getByLabelText('Other ice'), 'Hosh');
   expect(screen.getByText('How does it look in the glass?')).toBeTruthy();
   expect(screen.getByRole('radio', { name: 'Cubes', checked: true })).toBeTruthy();

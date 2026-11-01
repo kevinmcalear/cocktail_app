@@ -1,7 +1,7 @@
 import { screen } from '@testing-library/react-native';
 import { View } from 'react-native';
 
-import { renderWithTamagui } from '@/jest.setup';
+import { renderWithProviders } from '@/jest.setup';
 import { paintSketch } from '@/lib/sketch/paint';
 import type { SketchInputs } from '@/lib/sketch/types';
 
@@ -17,7 +17,7 @@ const inputs: SketchInputs = {
 
 test('on native a drawing is one image: the whole scene as an SVG document', async () => {
   const scene = paintSketch(inputs, { seed: 'drink-1', detail: 'thumb' });
-  await renderWithTamagui(<SceneSvg scene={scene} />);
+  await renderWithProviders(<SceneSvg scene={scene} />);
   const uri = (screen.getByTestId('drawing').props as { source: { uri: string } }).source.uri;
   expect(uri.startsWith('data:image/svg+xml;base64,')).toBe(true);
   const doc = atob(uri.slice(uri.indexOf(',') + 1));

@@ -2,7 +2,7 @@ import { useEffect, useRef, useState } from 'react';
 import { useReducedMotion } from '@/hooks/useReducedMotion';
 import Svg, { Circle, Path, Text as SvgText } from 'react-native-svg';
 
-import { fontFamilies, palateHues, springs } from '@/constants/tokens';
+import { palateHues, springs, systemFont } from '@/constants/tokens';
 import { LABEL, type Taste } from '@/lib/flavor';
 import { FAMILY, labelSpot, outlinePath, palateLabel, petalPath, RINGS, springStep, VIEW, WHEEL } from '@/lib/palate';
 
@@ -59,7 +59,7 @@ export function PalateFlower({ values, said, compare, size, labels = false, ring
         ? WHEEL.map((d, i) => {
             const spot = labelSpot(i);
             return (
-              <SvgText key={d} x={spot.x} y={spot.y} fill={ds.c.muted} fontSize={LABEL_SIZE} fontFamily={fontFamilies.body} textAnchor={spot.anchor}>
+              <SvgText key={d} x={spot.x} y={spot.y} fill={ds.c.muted} fontSize={LABEL_SIZE} fontFamily={systemFont} textAnchor={spot.anchor}>
                 {LABEL[d]}
               </SvgText>
             );

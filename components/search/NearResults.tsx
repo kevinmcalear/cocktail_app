@@ -5,7 +5,7 @@ import { StyleSheet, View } from 'react-native';
 import { Body, Button, Caption, RowScore, scoreWords, useDs, type MatchTextProps } from '@/components/ds';
 import { DrinkRow } from '@/components/screens/DrinkRow';
 import { IconSymbol } from '@/components/ui/icon-symbol';
-import { fontFamilies, radius, space } from '@/constants/tokens';
+import { font, radius, space } from '@/constants/tokens';
 import { useSignedIn } from '@/ctx/AuthContext';
 import { useItemScores } from '@/hooks/useFlavor';
 import { useSaveSpelling, useSearchNear } from '@/hooks/useSearchNear';
@@ -170,7 +170,7 @@ const styles = StyleSheet.create({
   head: { flexDirection: 'row', alignItems: 'flex-start', gap: space.md },
   icon: { width: 40, height: 40, borderRadius: radius.pill, alignItems: 'center', justifyContent: 'center' },
   text: { flex: 1, minWidth: 0, gap: 2 },
-  title: { fontFamily: fontFamilies.bodySemiBold },
+  title: { ...font.semiBold },
   inset: { borderRadius: radius.control, paddingHorizontal: space.sm, overflow: 'hidden' },
   buttons: { flexDirection: 'row', flexWrap: 'wrap', gap: space.sm },
 });

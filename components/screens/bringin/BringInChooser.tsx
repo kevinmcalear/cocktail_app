@@ -5,7 +5,7 @@ import { Platform, StyleSheet, View } from 'react-native';
 
 import { Body, Button, Caption, Field, PressableScale, Spec, Title, useDs, type IconName } from '@/components/ds';
 import { IconSymbol } from '@/components/ui/icon-symbol';
-import { fontFamilies, radius, space } from '@/constants/tokens';
+import { font, radius, space } from '@/constants/tokens';
 import { useBringInPlace } from '@/hooks/useBringInPlace';
 import { useLastBringIn } from '@/hooks/useBringInBatches';
 import { isCleanText, isLink, localReading } from '@/lib/bringIn';
@@ -148,10 +148,10 @@ const styles = StyleSheet.create({
   head: { gap: space.xs + 2 },
   tiles: { flexDirection: 'row', gap: space.sm },
   tile: { flex: 1, minWidth: 0, minHeight: 112, paddingVertical: space.md, paddingHorizontal: space.sm, borderRadius: radius.control + 4, borderWidth: 1, justifyContent: 'space-between' },
-  semibold: { fontFamily: fontFamilies.bodyMedium },
+  semibold: { ...font.medium },
   clip: { borderWidth: 1, borderStyle: 'dashed', borderRadius: radius.control + 4, paddingVertical: space.md + 2, paddingHorizontal: space.lg, gap: space.sm + 2 },
   clipHead: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', gap: space.sm },
-  mono: { fontFamily: fontFamilies.mono, letterSpacing: 0.5 },
+  mono: { ...font.figures, letterSpacing: 0.5 },
   end: { alignSelf: 'flex-end' },
   links: { borderTopWidth: StyleSheet.hairlineWidth },
   linkRow: { minHeight: 52, flexDirection: 'row', alignItems: 'center', gap: space.md, borderBottomWidth: StyleSheet.hairlineWidth },

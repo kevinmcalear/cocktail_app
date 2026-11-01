@@ -2,8 +2,7 @@ import type { ComponentProps } from 'react';
 import { StyleSheet, View, type StyleProp, type ViewStyle } from 'react-native';
 
 import { IconSymbol } from '@/components/ui/icon-symbol';
-import { STATUS } from '@/constants/palette';
-import { radius, space } from '@/constants/tokens';
+import { radius, space, STATUS } from '@/constants/tokens';
 import { readableAccent, withAlpha } from '@/lib/color';
 
 import { DsText } from './Text';

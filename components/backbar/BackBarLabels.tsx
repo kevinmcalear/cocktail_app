@@ -3,7 +3,7 @@ import { Platform, ScrollView, StyleSheet, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import { Body, Button, Caption, DsText, GlassButton, Title, useDs, useGutter } from '@/components/ds';
-import { fontFamilies, radius, space } from '@/constants/tokens';
+import { font, radius, space } from '@/constants/tokens';
 import { useActiveVenue } from '@/hooks/useActiveVenue';
 import { useBarZones, useItemLocations } from '@/hooks/useBackBar';
 import { useCapabilities } from '@/hooks/useCapabilities';
@@ -67,5 +67,5 @@ const styles = StyleSheet.create({
   page: { gap: space.lg, paddingTop: space.lg },
   grid: { flexDirection: 'row', flexWrap: 'wrap', gap: space.md },
   label: { width: 240, minHeight: 120, padding: space.md, gap: 2, borderWidth: 1.5, borderRadius: radius.control, borderStyle: 'dashed' },
-  zoneName: { fontFamily: fontFamilies.monoMedium, letterSpacing: 1 },
+  zoneName: { ...font.figuresMedium, letterSpacing: 1 },
 });

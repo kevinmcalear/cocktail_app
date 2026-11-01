@@ -1,7 +1,7 @@
 import { StyleSheet, View } from 'react-native';
 
 import { Body, Caption, PressableScale, useDs } from '@/components/ds';
-import { fontFamilies, layout, radius, space } from '@/constants/tokens';
+import { font, layout, radius, space } from '@/constants/tokens';
 import { withAlpha } from '@/lib/color';
 
 /**
@@ -60,7 +60,7 @@ const styles = StyleSheet.create({
   card: { flexDirection: 'row', alignItems: 'flex-start', gap: space.md + 2, padding: space.lg, borderRadius: radius.card, borderCurve: 'continuous', borderWidth: 1 },
   radio: { width: 22, height: 22, borderRadius: radius.pill, borderWidth: 2, marginTop: 1 },
   text: { flex: 1, gap: space.xs },
-  label: { fontFamily: fontFamilies.bodySemiBold },
+  label: { ...font.semiBold },
   pill: { minHeight: 40, justifyContent: 'center', paddingHorizontal: space.md + 2, borderRadius: radius.pill, borderWidth: 1, minWidth: layout.minTapTarget },
   disabled: { opacity: 0.45 },
 });

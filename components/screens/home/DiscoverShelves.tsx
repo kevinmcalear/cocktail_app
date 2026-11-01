@@ -5,7 +5,7 @@ import { ScrollView, StyleSheet, View, type StyleProp, type ViewStyle } from 're
 import { Caption, DrinkImage, DsText, Headline, PalateFlower, PressableScale, useBreakpoint, useDs, useGutter } from '@/components/ds';
 import { BarMark } from '@/components/screens/home/BarMark';
 import { BarAway } from '@/components/screens/home/DrinksAtBars';
-import { fontFamilies, radius, space, type } from '@/constants/tokens';
+import { font, radius, space, type } from '@/constants/tokens';
 import { withAlpha } from '@/lib/color';
 import { usePrefetchCocktail } from '@/hooks/useCocktails';
 import { useMyTaste } from '@/hooks/useFlavor';
@@ -177,10 +177,10 @@ const styles = StyleSheet.create({
     marginTop: space.xs,
     marginRight: space.sm,
     marginBottom: space.xs,
-    fontFamily: fontFamilies.bodyMedium,
-    fontSize: type.caption.fontSize - 2,
-    lineHeight: type.caption.lineHeight - 4,
+    ...font.medium,
+    fontSize: type.caption.fontSize,
+    lineHeight: type.caption.lineHeight,
   },
   barRow: { flexDirection: 'row', alignItems: 'center', gap: space.xs, padding: space.xs, paddingBottom: space.sm },
-  bar: { flex: 1, minWidth: 0, fontFamily: fontFamilies.bodySemiBold },
+  bar: { flex: 1, minWidth: 0, ...font.semiBold },
 });

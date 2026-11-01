@@ -1,11 +1,11 @@
 import { fireEvent, screen } from '@testing-library/react-native';
 
 import { BackbarTheme, ReviewRow } from '@/components/ds';
-import { renderWithTamagui } from '@/jest.setup';
+import { renderWithProviders } from '@/jest.setup';
 
 test('a pick shows its choices as a named radio group and reports the one chosen', async () => {
   const onChoose = jest.fn();
-  await renderWithTamagui(
+  await renderWithProviders(
     <BackbarTheme>
       <ReviewRow state="pick" amount="15 ml" title="Pear liqueur" detail="Which one?" choices={[{ id: 'a', label: 'Rothman & Winter' }, { id: 'b', label: 'Belle de Brillet', detail: 'Pear cognac' }]} chosen="a" onChoose={onChoose} />
     </BackbarTheme>
@@ -21,7 +21,7 @@ test('a pick shows its choices as a named radio group and reports the one chosen
 
 test('the action is a button at the end of the row; no choices, no radio group', async () => {
   const onPress = jest.fn();
-  await renderWithTamagui(
+  await renderWithProviders(
     <BackbarTheme>
       <ReviewRow state="new" title="Paper Plane" detail="New · Bourbon, Aperol" action={{ label: 'Finish', onPress }} />
     </BackbarTheme>

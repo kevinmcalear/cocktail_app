@@ -4,7 +4,7 @@ import { Pressable, Text } from 'react-native';
 import { State } from 'react-native-gesture-handler';
 import { fireGestureHandler, getByGestureTestId } from 'react-native-gesture-handler/jest-utils';
 
-import { renderWithTamagui } from '@/jest.setup';
+import { renderWithProviders } from '@/jest.setup';
 
 import { Sheet, useSheetClose } from './Sheet';
 import { SheetScrollView } from './useSheetDrag';
@@ -44,7 +44,7 @@ function Host({ onClose = () => {} }: { onClose?: () => void }) {
 
 test('the backdrop closes the sheet, after it has animated out', async () => {
   const onClose = jest.fn();
-  await renderWithTamagui(<Host onClose={onClose} />);
+  await renderWithProviders(<Host onClose={onClose} />);
   expect(screen.getByText('Inside')).toBeTruthy();
   await fireEvent.press(screen.getByLabelText('Close'));
   expect(onClose).toHaveBeenCalledTimes(1);
@@ -53,7 +53,7 @@ test('the backdrop closes the sheet, after it has animated out', async () => {
 
 test('a button inside closes it the same way', async () => {
   const onClose = jest.fn();
-  await renderWithTamagui(<Host onClose={onClose} />);
+  await renderWithProviders(<Host onClose={onClose} />);
   await fireEvent.press(screen.getByRole('button', { name: 'Done' }));
   expect(onClose).toHaveBeenCalledTimes(1);
   expect(screen.queryByText('Inside')).toBeNull();
@@ -61,7 +61,7 @@ test('a button inside closes it the same way', async () => {
 
 test('the parent can hide it and open it again', async () => {
   const onClose = jest.fn();
-  await renderWithTamagui(<Host onClose={onClose} />);
+  await renderWithProviders(<Host onClose={onClose} />);
   await fireEvent.press(screen.getByRole('button', { name: 'Hide' }));
   expect(screen.queryByText('Inside')).toBeNull();
   expect(onClose).not.toHaveBeenCalled();
@@ -86,7 +86,7 @@ async function pull(y: number, velocity: number) {
 
 test('a pull down past a quarter of the sheet closes it', async () => {
   const onClose = jest.fn();
-  await renderWithTamagui(<Host onClose={onClose} />);
+  await renderWithProviders(<Host onClose={onClose} />);
   await pull(300, 0);
   expect(onClose).toHaveBeenCalledTimes(1);
   expect(screen.queryByText('Inside')).toBeNull();
@@ -94,7 +94,7 @@ test('a pull down past a quarter of the sheet closes it', async () => {
 
 test('a short pull springs back and stays open', async () => {
   const onClose = jest.fn();
-  await renderWithTamagui(<Host onClose={onClose} />);
+  await renderWithProviders(<Host onClose={onClose} />);
   await pull(100, 0);
   expect(onClose).not.toHaveBeenCalled();
   expect(screen.getByText('Inside')).toBeTruthy();
@@ -102,20 +102,20 @@ test('a short pull springs back and stays open', async () => {
 
 test('a flick down closes it from a short pull', async () => {
   const onClose = jest.fn();
-  await renderWithTamagui(<Host onClose={onClose} />);
+  await renderWithProviders(<Host onClose={onClose} />);
   await pull(60, 1500);
   expect(onClose).toHaveBeenCalledTimes(1);
 });
 
 test('a long pull flicked back up stays open', async () => {
   const onClose = jest.fn();
-  await renderWithTamagui(<Host onClose={onClose} />);
+  await renderWithProviders(<Host onClose={onClose} />);
   await pull(400, -800);
   expect(onClose).not.toHaveBeenCalled();
 });
 
 test('outside a sheet, SheetScrollView is a plain scroll view', async () => {
-  await renderWithTamagui(
+  await renderWithProviders(
     <SheetScrollView>
       <Text>Loose</Text>
     </SheetScrollView>,

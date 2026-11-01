@@ -5,7 +5,7 @@ import { Platform, StyleSheet, View } from 'react-native';
 import { Body, Button, Caption, PressableScale, Segmented, Tag, TextLink, Title } from '@/components/ds';
 import { UserAvatar } from '@/components/ui/UserAvatar';
 import { WebHead } from '@/components/WebHead';
-import { fontFamilies, space } from '@/constants/tokens';
+import { font, space } from '@/constants/tokens';
 import { useSignedIn } from '@/ctx/AuthContext';
 import { useProfileMade, useSetMadeShown } from '@/hooks/useMade';
 import { useMyProfile } from '@/hooks/useMyProfile';
@@ -177,5 +177,5 @@ const styles = StyleSheet.create({
   start: { alignSelf: 'flex-start' },
   mine: { flexDirection: 'row', alignItems: 'center', gap: space.sm },
   flex: { flex: 1, minWidth: 0 },
-  mono: { fontFamily: fontFamilies.monoMedium },
+  mono: { ...font.figuresMedium },
 });

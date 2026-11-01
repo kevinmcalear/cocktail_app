@@ -1,7 +1,7 @@
 import { fireEvent, screen } from '@testing-library/react-native';
 import 'react-native-gesture-handler/jestSetup';
 
-import { renderWithTamagui } from '@/jest.setup';
+import { renderWithProviders } from '@/jest.setup';
 import { specLines } from '@/lib/spec';
 import { useSettingsStore } from '@/store/useSettingsStore';
 
@@ -35,7 +35,7 @@ const penicillin = specLines([
 const martini = specLines([line('gin', 'London Dry Gin', 75, 'ml', 40), line('dry', 'Dry vermouth', 15, 'ml', 18)]);
 
 const open = (lines = penicillin, methodNames = ['Shake']) =>
-  renderWithTamagui(<BatchSheet visible onClose={jest.fn()} name="Penicillin" lines={lines} methodNames={methodNames} lockedUntil={null} initialServes={12} />);
+  renderWithProviders(<BatchSheet visible onClose={jest.fn()} name="Penicillin" lines={lines} methodNames={methodNames} lockedUntil={null} initialServes={12} />);
 
 beforeEach(() => useSettingsStore.setState({ freezerC: -18 }));
 
@@ -81,7 +81,7 @@ test('a freezer Martini at 30% slushes at -18 and stays liquid at -12', async ()
 });
 
 test('making it turns the bottle into a checklist', async () => {
-  await renderWithTamagui(<BatchSheet visible onClose={() => {}} name="Penicillin" lines={penicillin} methodNames={["Shake"]} lockedUntil={null} initialServes={12} />);
+  await renderWithProviders(<BatchSheet visible onClose={() => {}} name="Penicillin" lines={penicillin} methodNames={["Shake"]} lockedUntil={null} initialServes={12} />);
   await fireEvent.press(screen.getByRole('button', { name: 'Make it, tick as I go' }));
   const scotch = screen.getByRole('checkbox', { name: '720 ml, Blended Scotch' });
   await fireEvent.press(scotch);
@@ -108,7 +108,7 @@ const irishParts = [
 ];
 const creamFresh = [irishParts[0], { ...irishParts[1], fresh: true }];
 const openIrish = (barId: string | null = 'bar', parts = creamFresh) =>
-  renderWithTamagui(<BatchSheet visible onClose={jest.fn()} name="Irish Coffee" lines={irish} methodNames={['Build', 'Whip (whisk or frother)']} lockedUntil={null} initialServes={12} barId={barId} parts={parts} specLabel="House spec" itemId="irish" canEdit />);
+  renderWithProviders(<BatchSheet visible onClose={jest.fn()} name="Irish Coffee" lines={irish} methodNames={['Build', 'Whip (whisk or frother)']} lockedUntil={null} initialServes={12} barId={barId} parts={parts} specLabel="House spec" itemId="irish" canEdit />);
 
 test('a part made fresh: the bottle holds part 1 and the cream is made for each serve, as before', async () => {
   await openIrish();

@@ -2,7 +2,7 @@ import { useState } from 'react';
 import { Platform, Pressable, StyleSheet, View, type GestureResponderEvent } from 'react-native';
 
 import { Caption, PressableScale, useDs } from '@/components/ds';
-import { fontFamilies, radius, space } from '@/constants/tokens';
+import { font, radius, space } from '@/constants/tokens';
 import { PLAN_ASPECT, zoneRect } from '@/lib/backBar';
 import { withAlpha } from '@/lib/color';
 import type { BarZone } from '@/types/backBar';
@@ -105,12 +105,12 @@ export function BackBarPlan({ zones, highlightIds = [], onPressZone, zoneHint, o
               <Caption
                 numberOfLines={1}
                 color={on ? accent : ds.c.muted}
-                style={[styles.name, !narrow && styles.label, { fontFamily: narrow ? fontFamilies.bodyMedium : on ? fontFamilies.monoMedium : fontFamilies.mono }]}
+                style={[styles.name, !narrow && styles.label, { ...(narrow ? font.medium : on ? font.figuresMedium : font.figures) }]}
               >
                 {narrow ? zone.name : zone.name.toUpperCase()}
               </Caption>
               {labels === 'all' && count != null ? (
-                <Caption color={on ? accent : ds.c.muted} style={{ fontFamily: fontFamilies.mono }} aria-hidden>
+                <Caption color={on ? accent : ds.c.muted} style={{ ...font.figures }} aria-hidden>
                   {String(count)}
                 </Caption>
               ) : null}
@@ -151,5 +151,5 @@ const styles = StyleSheet.create({
   side: { position: 'absolute', left: 0, right: 0, alignItems: 'center' },
   aisle: { top: '46%' },
   guests: { bottom: space.xs },
-  sideText: { fontFamily: fontFamilies.mono, letterSpacing: 2 },
+  sideText: { ...font.figures, letterSpacing: 2 },
 });

@@ -1,7 +1,7 @@
 import { type ColorValue, Platform, type StyleProp, type ViewStyle } from 'react-native';
 import Svg, { Path, Text } from 'react-native-svg';
 
-import { fontFamilies } from '@/constants/tokens';
+import { systemFont } from '@/constants/tokens';
 import { useServiceDay } from '@/hooks/useServiceDay';
 
 import { GLYPHS, ICON_FILL, ICON_STROKE, type GlyphName } from './glyphs';
@@ -32,7 +32,7 @@ const DAY_UNITS = 8;
 function ServiceDay({ color }: { color: ColorValue }) {
   const day = useServiceDay();
   return day ? (
-    <Text x={12} y={18} textAnchor="middle" fontFamily={fontFamilies.bodySemiBold} fontSize={DAY_UNITS} fill={color}>
+    <Text x={12} y={18} textAnchor="middle" fontFamily={systemFont} fontWeight="600" fontSize={DAY_UNITS} fill={color}>
       {String(day)}
     </Text>
   ) : null;

@@ -5,7 +5,7 @@ import { StyleSheet, View } from 'react-native';
 import { Body, Button, Caption, Field, Headline, PressableScale, Segmented, useDs } from '@/components/ds';
 import { CurrentUserAvatar } from '@/components/ui/UserAvatar';
 import { IconSymbol } from '@/components/ui/icon-symbol';
-import { fontFamilies, radius, space } from '@/constants/tokens';
+import { font, radius, space } from '@/constants/tokens';
 import { useAuth } from '@/ctx/AuthContext';
 import { useMyHiddenCity, useMyProfile, useSaveMyProfile, useSaveSharing, type MyProfile } from '@/hooks/useMyProfile';
 import { useProfilePositions } from '@/hooks/useProfiles';
@@ -201,7 +201,7 @@ const styles = StyleSheet.create({
   flex: { flex: 1, minWidth: 0, gap: 2 },
   row: { flexDirection: 'row', alignItems: 'center', gap: space.md, minHeight: 72, paddingVertical: space.md, borderBottomWidth: StyleSheet.hairlineWidth },
   card: { borderRadius: radius.card, borderCurve: 'continuous', paddingHorizontal: space.lg },
-  strong: { fontFamily: fontFamilies.bodySemiBold },
+  strong: { ...font.semiBold },
   group: { gap: space.sm },
   start: { alignSelf: 'flex-start' },
 });

@@ -5,8 +5,7 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { Caption, GlassSurface, useDs } from '@/components/ds';
 import { Appear } from '@/components/ds/Appear';
 import { IconSymbol } from '@/components/ui/icon-symbol';
-import { STATUS } from '@/constants/palette';
-import { fontFamilies, space } from '@/constants/tokens';
+import { font, space, STATUS } from '@/constants/tokens';
 import { readableAccent } from '@/lib/color';
 
 /** A glass pill at the top while the device is offline: what's on screen is the saved copy. */
@@ -40,5 +39,5 @@ export function OfflineBanner() {
 const styles = StyleSheet.create({
   layer: { position: 'absolute', left: 0, right: 0, alignItems: 'center', zIndex: 9999, pointerEvents: 'none' },
   row: { flexDirection: 'row', alignItems: 'center', gap: space.sm, paddingVertical: space.sm, paddingHorizontal: space.md + 2 },
-  label: { fontFamily: fontFamilies.bodySemiBold },
+  label: { ...font.semiBold },
 });

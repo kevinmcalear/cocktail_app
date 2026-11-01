@@ -1,6 +1,6 @@
 import { fireEvent, screen } from '@testing-library/react-native';
 
-import { renderWithTamagui } from '@/jest.setup';
+import { renderWithProviders } from '@/jest.setup';
 import type { SortableRecipeItem } from '@/lib/recipeItem';
 
 import { EditLines } from './EditLines';
@@ -23,7 +23,7 @@ const CATALOG = [
 ];
 
 const render = (onChange: jest.Mock, forDrink = true) =>
-  renderWithTamagui(<EditLines items={SPEC} onChange={onChange} name="Penicillin" ingredients={CATALOG} bar={null} forDrink={forDrink} />);
+  renderWithProviders(<EditLines items={SPEC} onChange={onChange} name="Penicillin" ingredients={CATALOG} bar={null} forDrink={forDrink} />);
 
 describe('EditLines', () => {
   test("a drink's spec is the making flow's list: lines combine, and New's suggestions stay in New", async () => {

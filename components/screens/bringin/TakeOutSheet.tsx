@@ -3,7 +3,7 @@ import { StyleSheet, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import { Body, Button, Caption, DsText, Sheet, Title, useDs } from '@/components/ds';
-import { fontFamilies, radius, space } from '@/constants/tokens';
+import { font, radius, space } from '@/constants/tokens';
 import type { RecipeReading } from '@/supabase/functions/_shared/anythingRead';
 
 import { amountShown } from './RecipeSpec';
@@ -90,5 +90,5 @@ const styles = StyleSheet.create({
   card: { borderRadius: radius.control, paddingHorizontal: space.md + 2, paddingVertical: space.xs },
   line: { flexDirection: 'row', alignItems: 'center', gap: space.md, minHeight: 48 },
   flex: { flex: 1 },
-  mono: { fontFamily: fontFamilies.mono },
+  mono: { ...font.figures },
 });

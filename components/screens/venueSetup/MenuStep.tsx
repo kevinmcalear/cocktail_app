@@ -4,7 +4,7 @@ import { StyleSheet, View } from 'react-native';
 import { Body, Caption, Chip, DrinkImage, Field, PressableScale, TextLink, useDs } from '@/components/ds';
 import { SetupChromeProvider, SetupPage, useSetupChrome } from '@/components/screens/onboarding/SetupPage';
 import { IconSymbol } from '@/components/ui/icon-symbol';
-import { fontFamilies, radius, space } from '@/constants/tokens';
+import { font, radius, space } from '@/constants/tokens';
 import type { DrinkList } from '@/hooks/useDiscover';
 import { useCreateMenu } from '@/hooks/useMenuMutations';
 import { useVenuePage } from '@/hooks/useVenueSetup';
@@ -181,7 +181,7 @@ const styles = StyleSheet.create({
   dot: { width: 22, height: 22, borderRadius: radius.pill, borderWidth: 2, alignItems: 'center', justifyContent: 'center' },
   dotOn: { width: 10, height: 10, borderRadius: radius.pill },
   wrap: { flexDirection: 'row', flexWrap: 'wrap', gap: space.xs },
-  strong: { fontFamily: fontFamilies.bodySemiBold },
+  strong: { ...font.semiBold },
   row: { flexDirection: 'row', alignItems: 'center', gap: space.md, minHeight: 52, paddingVertical: space.xs, borderBottomWidth: StyleSheet.hairlineWidth },
   drawing: { width: 40, height: 40 },
   flex: { flex: 1, minWidth: 0 },

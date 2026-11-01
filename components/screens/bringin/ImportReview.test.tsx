@@ -2,7 +2,7 @@ import AsyncStorage from '@react-native-async-storage/async-storage';
 import { act, fireEvent, screen } from '@testing-library/react-native';
 
 import { BackbarTheme } from '@/components/ds';
-import { renderWithTamagui } from '@/jest.setup';
+import { renderWithProviders } from '@/jest.setup';
 import { emptySummary } from '@/lib/bringInBatch';
 import { startChoices } from '@/lib/bringInDraft';
 import type { MatchData } from '@/lib/bringInMatch';
@@ -31,7 +31,7 @@ const data: MatchData = { catalog: [], aliases: [], venueId: 'bar', library: [],
 const recipe = (name: string): RecipeReading => ({ name, by: null, lines: [{ amount: 30, unit: 'ml', ingredient: 'Pink grapefruit juice', unsure: false }], method: 'Shake, fine strain', glass: 'Coupe', ice: null, garnish: null, notes: null });
 const recipes = ['Orchard Fizz', 'Smoke Signal', 'Low Tide'].map(recipe);
 
-const ui = (node: React.ReactNode) => renderWithTamagui(<BackbarTheme>{node}</BackbarTheme>);
+const ui = (node: React.ReactNode) => renderWithProviders(<BackbarTheme>{node}</BackbarTheme>);
 /** The app killed and opened again: memory gone, the store read back from what this device kept. */
 async function relaunch() {
   const kept = await AsyncStorage.getItem('bring-in-reviews');

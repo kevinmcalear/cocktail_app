@@ -4,8 +4,7 @@ import { StyleSheet, View } from 'react-native';
 
 import { Body, Button, Caption, Chip, Field, TextLink, TimeField } from '@/components/ds';
 import { RowDivider, SettingsSection } from '@/components/screens/settings/SettingsParts';
-import { STATUS } from '@/constants/palette';
-import { space } from '@/constants/tokens';
+import { space, STATUS } from '@/constants/tokens';
 import { useBarFacts, useSaveBarFacts, type BarFacts } from '@/hooks/useBarFacts';
 import { useVenueProfileId } from '@/hooks/useVenueRoles';
 import { WEEK_DAYS, type HoursRange, type WeekDay, type WeekHours } from '@/lib/barHours';

@@ -2,7 +2,7 @@ import { StyleSheet, View } from 'react-native';
 
 import { Body, Button, Caption, useDs } from '@/components/ds';
 import { BarMark } from '@/components/screens/home/BarMark';
-import { fontFamilies, space } from '@/constants/tokens';
+import { font, space } from '@/constants/tokens';
 import { useHiddenBars, useHideBar, type HiddenBar } from '@/hooks/useHiddenBars';
 
 import { SafetyPage } from './SafetyPage';
@@ -62,5 +62,5 @@ function HiddenRow({ bar }: { bar: HiddenBar }) {
 const styles = StyleSheet.create({
   row: { flexDirection: 'row', alignItems: 'center', gap: space.md, paddingVertical: space.md, borderBottomWidth: StyleSheet.hairlineWidth },
   flex: { flex: 1, minWidth: 0 },
-  name: { fontFamily: fontFamilies.bodySemiBold },
+  name: { ...font.semiBold },
 });

@@ -1,6 +1,6 @@
 import { fireEvent, screen } from '@testing-library/react-native';
 
-import { renderWithTamagui } from '@/jest.setup';
+import { renderWithProviders } from '@/jest.setup';
 import type { MyTaste } from '@/hooks/useFlavor';
 
 import { TasteScreen } from './TasteScreen';
@@ -43,14 +43,14 @@ beforeEach(() => {
 
 describe('TasteScreen', () => {
   test('shows where your taste comes from and where your rankings have moved it', async () => {
-    await renderWithTamagui(<TasteScreen />);
+    await renderWithProviders(<TasteScreen />);
     expect(screen.getByText(/Your rankings are 80% of it now/)).toBeTruthy();
     expect(screen.getByText('You said smoke wasn’t for you. Your rankings say otherwise: more smoky than you said.')).toBeTruthy();
     expect(flower()).toMatch(/^Palate: bitter intensely/);
   });
 
   test('what shaped it: a loved drink pulls, a disliked one pushes; and how it moved month to month', async () => {
-    await renderWithTamagui(<TasteScreen />);
+    await renderWithProviders(<TasteScreen />);
     expect(screen.getByRole('link', { name: 'Mezcal Negroni, 9.4. More smoky and bitter' })).toBeTruthy();
     expect(screen.getByRole('link', { name: 'Piña Colada, 2.1. Less fruity and creamy' })).toBeTruthy();
     expect(screen.getByText('+ smoky')).toBeTruthy();
@@ -59,7 +59,7 @@ describe('TasteScreen', () => {
   });
 
   test('changing an answer moves the flower, and Save keeps it', async () => {
-    await renderWithTamagui(<TasteScreen />);
+    await renderWithProviders(<TasteScreen />);
     expect(screen.queryByRole('button', { name: 'Save' })).toBeNull();
     // Open the bitter question; "Not for me" pulls it down from intensely.
     await fireEvent.press(screen.getByRole('button', { name: 'Bitter, like a Negroni? Not answered' }));
@@ -73,7 +73,7 @@ describe('TasteScreen', () => {
   test('signed out', async () => {
     mockMe = null;
     mockUser = null;
-    await renderWithTamagui(<TasteScreen />);
+    await renderWithProviders(<TasteScreen />);
     expect(screen.getByText('Sign in to see your taste.')).toBeTruthy();
   });
 });

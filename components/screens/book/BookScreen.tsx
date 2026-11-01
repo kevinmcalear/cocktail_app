@@ -4,7 +4,7 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import { usePageFrame } from '@/components/nav/PageFrame';
 import { BackbarTheme, Body, Button, Caption, GlassButton, Headline, PressableScale, RowScore, scoreWords, Title, useDs, useGutter } from '@/components/ds';
-import { familyHues, fontFamilies, layout, radius, space, type } from '@/constants/tokens';
+import { familyHues, font, fontFamilies, layout, radius, space, type } from '@/constants/tokens';
 import { withAlpha } from '@/lib/color';
 import { useBook } from '@/hooks/useDrinkHistory';
 import { useDrinkSources } from '@/hooks/useDrinkSources';
@@ -134,14 +134,14 @@ const styles = StyleSheet.create({
   screen: { flex: 1 },
   page: { gap: space.lg },
   header: { gap: space.sm },
-  eyebrow: { fontFamily: fontFamilies.mono, letterSpacing: 1.2 },
+  eyebrow: { ...font.figures, letterSpacing: 1.2 },
   top: { flexDirection: 'row', alignItems: 'center', gap: space.lg },
   cover: { width: 84, height: 112, padding: space.sm, gap: space.xs, justifyContent: 'space-between', borderRadius: radius.mark, borderWidth: StyleSheet.hairlineWidth },
-  coverTitle: { fontFamily: fontFamilies.instrument, fontSize: type.body.fontSize - 2, lineHeight: type.body.lineHeight - 4 },
+  coverTitle: { fontFamily: fontFamilies.name, fontSize: type.label.fontSize, lineHeight: type.label.lineHeight - 2 },
   card: { paddingHorizontal: space.lg, paddingVertical: space.md + 2, gap: space.xs, borderRadius: radius.card, borderCurve: 'continuous', borderWidth: StyleSheet.hairlineWidth },
   action: { alignSelf: 'flex-start', borderWidth: 0 },
   score: { minWidth: space.xxl, alignItems: 'flex-end' },
-  mono: { fontFamily: fontFamilies.mono },
+  mono: { ...font.figures },
   actions: { gap: space.sm },
   row: { flexDirection: 'row', alignItems: 'center', gap: space.md, minHeight: layout.minTapTarget + space.md, paddingVertical: space.sm, borderTopWidth: 1 },
   flex: { flex: 1, minWidth: 0 },

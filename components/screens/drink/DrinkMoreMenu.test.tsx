@@ -2,7 +2,7 @@ import { fireEvent, screen } from '@testing-library/react-native';
 import 'react-native-gesture-handler/jestSetup';
 
 import { BackbarTheme } from '@/components/ds';
-import { renderWithTamagui } from '@/jest.setup';
+import { renderWithProviders } from '@/jest.setup';
 
 import { DrinkMoreMenu } from './DrinkMoreMenu';
 
@@ -10,7 +10,7 @@ jest.mock('@/ctx/AuthContext', () => jest.requireActual('@/jest.authMock').mockA
 jest.mock('@/hooks/useViewAs', () => ({ useViewAs: () => ({ viewAsRoleLevel: null, setViewAsRoleLevel: jest.fn() }) }));
 
 const moreLabel = async (props: { canEdit: boolean; adminFix?: boolean; wide?: boolean; onDelete?: () => void }) => {
-  await renderWithTamagui(
+  await renderWithProviders(
     <BackbarTheme>
       <DrinkMoreMenu itemId="pearl-diver" name="The Pearl Diver" onEdit={() => {}} wide={props.wide ?? true} teamRole={null} {...props} />
     </BackbarTheme>
@@ -34,7 +34,7 @@ test('the drink\'s own people get Delete drink, at every width', async () => {
 });
 
 test('View as is one row of role chips and one line on what the picked role sees', async () => {
-  await renderWithTamagui(
+  await renderWithProviders(
     <BackbarTheme>
       <DrinkMoreMenu itemId="pearl-diver" name="The Pearl Diver" canEdit onEdit={() => {}} wide teamRole={40} />
     </BackbarTheme>

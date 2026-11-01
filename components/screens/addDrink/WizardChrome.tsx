@@ -3,7 +3,7 @@ import { StyleSheet, View } from 'react-native';
 
 import { Button, Caption, DsText, PressableScale, useDs } from '@/components/ds';
 import { IconSymbol } from '@/components/ui/icon-symbol';
-import { fontFamilies, layout, radius, space } from '@/constants/tokens';
+import { font, layout, radius, space } from '@/constants/tokens';
 
 /** On a desktop browser the footer ends the step (WizardFrame), not pinned: Next is a compact pill. */
 export const FooterInline = createContext(false);
@@ -112,7 +112,7 @@ const styles = StyleSheet.create({
   chip: { minHeight: layout.minTapTarget, paddingHorizontal: space.md + 2, borderRadius: radius.pill, borderWidth: 1, justifyContent: 'center' },
   add: { flexDirection: 'row', alignItems: 'center', gap: space.xs },
   notice: { flexDirection: 'row', alignItems: 'center', gap: space.md, minHeight: layout.minTapTarget + space.sm, paddingVertical: space.md, paddingHorizontal: space.lg, borderRadius: radius.control },
-  on: { fontFamily: fontFamilies.bodySemiBold },
+  on: { ...font.semiBold },
   eyebrow: { letterSpacing: 0.6 },
   footer: { gap: space.sm, paddingTop: space.md },
   buttons: { flexDirection: 'row', gap: space.md },

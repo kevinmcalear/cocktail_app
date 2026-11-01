@@ -4,8 +4,7 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import { Button, Caption, DsText, Field, GlassButton, Sheet, sheetIsDialog, SheetScrollView, Title, useBreakpoint, useDs, useSheetClose } from '@/components/ds';
 import { IconSymbol } from '@/components/ui/icon-symbol';
-import { STATUS } from '@/constants/palette';
-import { fontFamilies, radius, space } from '@/constants/tokens';
+import { font, radius, space, STATUS } from '@/constants/tokens';
 import { useUserId } from '@/ctx/AuthContext';
 import { useBarMembers } from '@/hooks/useBarDetail';
 import { useDeleteVenue } from '@/hooks/useDeleteVenue';
@@ -135,7 +134,7 @@ const styles = StyleSheet.create({
   line: { flexDirection: 'row', alignItems: 'flex-start', gap: space.sm },
   icon: { marginTop: 3 },
   info: { flexDirection: 'row', alignItems: 'flex-start', gap: space.sm, padding: space.md, borderRadius: radius.control, borderCurve: 'continuous' },
-  strong: { fontFamily: fontFamilies.bodySemiBold },
+  strong: { ...font.semiBold },
   actions: { gap: space.sm, marginTop: space.sm },
   dialogActions: { flexDirection: 'row-reverse', justifyContent: 'flex-start' },
 });

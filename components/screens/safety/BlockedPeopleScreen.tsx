@@ -2,7 +2,7 @@ import { StyleSheet, View } from 'react-native';
 
 import { Body, Button, Caption, useDs } from '@/components/ds';
 import { UserAvatar } from '@/components/ui/UserAvatar';
-import { fontFamilies, space } from '@/constants/tokens';
+import { font, space } from '@/constants/tokens';
 import { useMyBlocks, useSetBlocked, type BlockedPerson } from '@/hooks/useSafety';
 import { confirmAsync } from '@/lib/dialogs';
 
@@ -70,5 +70,5 @@ function BlockedRow({ person }: { person: BlockedPerson }) {
 const styles = StyleSheet.create({
   row: { flexDirection: 'row', alignItems: 'center', gap: space.md, paddingVertical: space.md, borderBottomWidth: StyleSheet.hairlineWidth },
   flex: { flex: 1, minWidth: 0 },
-  name: { fontFamily: fontFamilies.bodySemiBold },
+  name: { ...font.semiBold },
 });

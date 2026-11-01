@@ -1,7 +1,7 @@
 import { fireEvent, screen } from '@testing-library/react-native';
 import { Keyboard, Text } from 'react-native';
 
-import { renderWithTamagui } from '@/jest.setup';
+import { renderWithProviders } from '@/jest.setup';
 
 import { HidingHeadScroll } from './HidingHeadScroll';
 
@@ -9,7 +9,7 @@ import { HidingHeadScroll } from './HidingHeadScroll';
 const at = (y: number) => ({ nativeEvent: { contentOffset: { x: 0, y }, contentSize: { width: 390, height: 2000 }, layoutMeasurement: { width: 390, height: 800 } } });
 
 async function list() {
-  await renderWithTamagui(
+  await renderWithProviders(
     <HidingHeadScroll testID="results" head={<Text>Field</Text>}>
       <Text>Rows</Text>
     </HidingHeadScroll>,

@@ -1,6 +1,6 @@
 import { fireEvent, screen } from '@testing-library/react-native';
 
-import { renderWithTamagui } from '@/jest.setup';
+import { renderWithProviders } from '@/jest.setup';
 
 import { OptionChips, sortOptions } from './DiscoverOptions';
 
@@ -20,13 +20,13 @@ test('the order is a menu button; the toggles switch; one order alone shows no b
   const onSort = jest.fn();
   const onPast = jest.fn();
   const options = sortOptions({ searching: false, best: true, nearest: true });
-  await renderWithTamagui(<OptionChips onGlass sort={{ value: 'best', options, onChange: onSort }} past={{ on: false, onChange: onPast }} />);
+  await renderWithProviders(<OptionChips onGlass sort={{ value: 'best', options, onChange: onSort }} past={{ on: false, onChange: onPast }} />);
   expect(screen.queryByRole('checkbox', { name: 'Not had yet' })).toBeNull(); // signed out
   await fireEvent.press(screen.getByRole('checkbox', { name: 'Past menus' }));
   expect(onPast).toHaveBeenCalledWith(true);
   // The menu itself is PopoverMenu's (it places itself once the chip is measured).
   expect(screen.getByRole('button', { name: 'Order: Best first. Change' })).toBeTruthy();
 
-  await renderWithTamagui(<OptionChips sort={{ value: 'best', options: options.slice(0, 1), onChange: onSort }} past={{ on: false, onChange: onPast }} />);
+  await renderWithProviders(<OptionChips sort={{ value: 'best', options: options.slice(0, 1), onChange: onSort }} past={{ on: false, onChange: onPast }} />);
   expect(screen.queryByRole('button', { name: /^Order:/ })).toBeNull();
 });

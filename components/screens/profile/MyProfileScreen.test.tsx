@@ -1,6 +1,6 @@
 import { fireEvent, screen } from '@testing-library/react-native';
 
-import { renderWithTamagui } from '@/jest.setup';
+import { renderWithProviders } from '@/jest.setup';
 import type { MyProfile } from '@/hooks/useMyProfile';
 
 import { MyProfileScreen } from './MyProfileScreen';
@@ -40,7 +40,7 @@ beforeEach(() => {
 
 describe('MyProfileScreen', () => {
   test('a first profile starts from your name, public, and saves what you typed', async () => {
-    await renderWithTamagui(<MyProfileScreen />);
+    await renderWithProviders(<MyProfileScreen />);
     expect(screen.getByLabelText('Name').props.value).toBe('Jo Juniper');
     expect(screen.getByLabelText('Handle').props.value).toBe('jo.juniper');
     expect(screen.getByRole('radio', { name: 'Public', checked: true })).toBeTruthy();
@@ -50,7 +50,7 @@ describe('MyProfileScreen', () => {
   });
 
   test('a bad handle is caught before saving', async () => {
-    await renderWithTamagui(<MyProfileScreen />);
+    await renderWithProviders(<MyProfileScreen />);
     await fireEvent.changeText(screen.getByLabelText('Handle'), 'a');
     await fireEvent.press(screen.getByRole('button', { name: 'Make my profile' }));
     expect(screen.getByText(/Use 3 to 30 letters/)).toBeTruthy();
@@ -59,7 +59,7 @@ describe('MyProfileScreen', () => {
 
   test('the hub: three pages with their summaries, and Preview', async () => {
     mockProfile = profile();
-    await renderWithTamagui(<MyProfileScreen />);
+    await renderWithProviders(<MyProfileScreen />);
     expect(screen.getByText('Name, photo for people on Cocktail, Home bartender, Melbourne shown')).toBeTruthy();
     expect(screen.getByText('Drinks: Picked, 4 of 7 · Bars: Picked, 2 of 4 · Originals: All')).toBeTruthy();
     expect(screen.getByText('0 jobs shown')).toBeTruthy();
@@ -71,7 +71,7 @@ describe('MyProfileScreen', () => {
 
   test('Who can see it saves straight away', async () => {
     mockProfile = profile();
-    await renderWithTamagui(<MyProfileScreen />);
+    await renderWithProviders(<MyProfileScreen />);
     expect(screen.getByText(/People signed in to Cocktail see your page/)).toBeTruthy();
     await fireEvent.press(screen.getByRole('radio', { name: 'Only me' }));
     expect(mockSaveSharing).toHaveBeenCalledWith({ id: 'p1', isPublic: false });
@@ -79,7 +79,7 @@ describe('MyProfileScreen', () => {
 
   test('a new handle saves when you leave the field', async () => {
     mockProfile = profile();
-    await renderWithTamagui(<MyProfileScreen />);
+    await renderWithProviders(<MyProfileScreen />);
     await fireEvent.changeText(screen.getByLabelText('Handle'), 'jo.bar');
     await fireEvent(screen.getByLabelText('Handle'), 'blur');
     expect(mockMutate.mock.calls[0][0]).toMatchObject({ id: 'p1', draft: { handle: 'jo.bar', name: 'Jo', tagline: 'Home bartender' } });

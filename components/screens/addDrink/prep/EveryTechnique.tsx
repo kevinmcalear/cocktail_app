@@ -2,7 +2,7 @@ import { useState } from 'react';
 import { ScrollView, StyleSheet, View } from 'react-native';
 
 import { Body, Caption, Chip, DsText, Field, PressableScale, useDs } from '@/components/ds';
-import { fontFamilies, layout, radius, space } from '@/constants/tokens';
+import { font, layout, radius, space } from '@/constants/tokens';
 import { equipmentById, GROUPS, searchTechniques, TECHNIQUES, type Technique, type TechniqueGroup } from '@/lib/techniques';
 import { byKit, needsText } from '@/lib/techniques/kitFirst';
 import { waysToMake } from '@/lib/techniques/makeIt';
@@ -137,7 +137,7 @@ const styles = StyleSheet.create({
   head: { flexDirection: 'row', alignItems: 'center', gap: space.sm },
   flex: { flex: 1 },
   grade: { paddingHorizontal: space.xs + 2, borderRadius: radius.mark + 2, borderWidth: 1 },
-  mono: { fontFamily: fontFamilies.monoMedium },
+  mono: { ...font.figuresMedium },
   have: { minHeight: layout.minTapTarget, justifyContent: 'center', paddingHorizontal: space.xs },
   write: { minHeight: layout.minTapTarget, justifyContent: 'center', alignSelf: 'flex-start' },
 });

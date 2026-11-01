@@ -3,7 +3,7 @@ import { StyleSheet, View } from 'react-native';
 
 import { Body, Caption, DsText, PressableScale, Surface, useDs } from '@/components/ds';
 import { TechniquePage } from '@/components/techniques/TechniquePage';
-import { fontFamilies, radius, space } from '@/constants/tokens';
+import { font, radius, space } from '@/constants/tokens';
 import { useKit } from '@/hooks/useKit';
 import { canMake, EQUIPMENT, TECHNIQUES, TIER_LABEL, unlocks, type Equipment } from '@/lib/techniques';
 
@@ -62,7 +62,7 @@ function Toggle({ on, label, onPress }: { on: boolean; label: string; onPress: (
 
 const styles = StyleSheet.create({
   summary: { flexDirection: 'row', alignItems: 'baseline', flexWrap: 'wrap', gap: space.sm, padding: space.lg, borderRadius: radius.card, borderCurve: 'continuous' },
-  count: { fontFamily: fontFamilies.monoMedium },
+  count: { ...font.figuresMedium },
   list: { paddingVertical: 0 },
   row: { flexDirection: 'row', alignItems: 'center', gap: space.md, paddingVertical: space.md },
   flex: { flex: 1, minWidth: 0, gap: 2 },

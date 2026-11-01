@@ -1,6 +1,6 @@
 import { fireEvent, screen } from '@testing-library/react-native';
 
-import { renderWithTamagui } from '@/jest.setup';
+import { renderWithProviders } from '@/jest.setup';
 import { EMPTY_DRAFT, type WizardDraft } from '@/lib/drinkWizard';
 
 import { FinishStep } from './FinishStep';
@@ -26,7 +26,7 @@ const finish = (set: jest.Mock) => set.mock.calls.at(-1)[0].garnishes;
 describe('FinishStep', () => {
   test('drops of oil: the chip asks which, and the line starts at 3 drops', async () => {
     const set = jest.fn();
-    await renderWithTamagui(<FinishStep draft={daiquiri} set={set} ingredients={SHELF} />);
+    await renderWithProviders(<FinishStep draft={daiquiri} set={set} ingredients={SHELF} />);
     await fireEvent.press(screen.getByRole('checkbox', { name: 'Drops of oil' }));
     await fireEvent.changeText(screen.getByLabelText('Drops of what oil?'), 'agrumato');
     await fireEvent.press(screen.getByRole('button', { name: 'Agrumato Mint Oil' }));
@@ -35,7 +35,7 @@ describe('FinishStep', () => {
 
   test('mint oil made in house from the finish: the herb oil, kept 4 days cold, on as 3 drops', async () => {
     const set = jest.fn();
-    await renderWithTamagui(<FinishStep draft={daiquiri} set={set} ingredients={SHELF} />);
+    await renderWithProviders(<FinishStep draft={daiquiri} set={set} ingredients={SHELF} />);
     await fireEvent.changeText(screen.getByLabelText('Search for a garnish'), 'mint oil');
     // Made first, before the bottle that only shares the words.
     const rows = screen.getAllByRole('button').map((b) => b.props.accessibilityLabel ?? b.props['aria-label']);
@@ -57,7 +57,7 @@ describe('FinishStep', () => {
 
   test('a garnish the catalog lacks is added by its name, with making it in house under it', async () => {
     const set = jest.fn();
-    await renderWithTamagui(<FinishStep draft={daiquiri} set={set} ingredients={SHELF} />);
+    await renderWithProviders(<FinishStep draft={daiquiri} set={set} ingredients={SHELF} />);
     await fireEvent.changeText(screen.getByLabelText('Search for a garnish'), 'apricot leaves');
     const rows = screen.getAllByRole('button').map((b) => b.props.accessibilityLabel ?? b.props['aria-label']);
     expect(rows.indexOf('Add “Apricot leaves”')).toBeLessThan(rows.indexOf('Make “Apricot leaves” in-house'));
@@ -71,7 +71,7 @@ describe('FinishStep', () => {
 
   test('Garnish leads with the basics, then what the drink points to, over Drops, mist, rinse', async () => {
     const paloma: WizardDraft = { ...daiquiri, lines: [{ key: 'g', id: null, name: 'Grapefruit soda', amount: '90', unit: 'ml' }] };
-    await renderWithTamagui(<FinishStep draft={paloma} set={jest.fn()} ingredients={SHELF} />);
+    await renderWithProviders(<FinishStep draft={paloma} set={jest.fn()} ingredients={SHELF} />);
     const chips = screen.getAllByRole('checkbox').map((c) => c.props.accessibilityLabel ?? c.props['aria-label']);
     expect(chips.slice(0, 10)).toEqual(['Lime wedge', 'Lemon twist', 'Orange peel', 'Cherry', 'Olive', 'Mint sprig', 'Lime wheel', 'Grapefruit peel', 'Grapefruit discard', 'Drops of oil']);
     expect(chips).not.toContain('Grated nutmeg');
@@ -79,12 +79,12 @@ describe('FinishStep', () => {
 
   test('a whole chip adds its line; a garnish toggles; a finish line offers finish units', async () => {
     const set = jest.fn();
-    await renderWithTamagui(<FinishStep draft={daiquiri} set={set} ingredients={SHELF} />);
+    await renderWithProviders(<FinishStep draft={daiquiri} set={set} ingredients={SHELF} />);
     await fireEvent.press(screen.getByRole('checkbox', { name: 'Absinthe rinse' }));
     expect(finish(set).map((l: { id: string; amount: string; unit: string }) => [l.id, l.amount, l.unit])).toEqual([['absinthe', '1', 'rinse']]);
 
     const lines = [{ key: 'o', id: null, name: 'Mint oil', amount: '3', unit: 'drop' }, { key: 'p', id: null, name: 'Orange', amount: '1', unit: 'peel' }];
-    await renderWithTamagui(<FinishStep draft={{ ...daiquiri, garnishes: lines }} set={set} ingredients={SHELF} />);
+    await renderWithProviders(<FinishStep draft={{ ...daiquiri, garnishes: lines }} set={set} ingredients={SHELF} />);
     expect(screen.getByRole('checkbox', { name: 'Orange peel', checked: true })).toBeTruthy();
     await fireEvent.press(screen.getByRole('checkbox', { name: 'Orange peel' }));
     expect(finish(set).map((l: { name: string }) => l.name)).toEqual(['Mint oil']);

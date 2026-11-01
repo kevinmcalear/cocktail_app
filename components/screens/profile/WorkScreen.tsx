@@ -2,7 +2,7 @@ import { useState } from 'react';
 import { StyleSheet, View } from 'react-native';
 
 import { Body, Button, Caption, Chip, DsText, Field, Switch, useDs } from '@/components/ds';
-import { fontFamilies, radius, space } from '@/constants/tokens';
+import { font, radius, space } from '@/constants/tokens';
 import { useMyProfile, useSaveSharing, type MyProfile } from '@/hooks/useMyProfile';
 import { useAnswerPosition } from '@/hooks/usePositionRequests';
 import { useEditPosition, useProfilePositions, type Position } from '@/hooks/useProfiles';
@@ -85,7 +85,7 @@ function AskingCard({ job }: { job: Position }) {
         <BarMark name={job.bar.display_name} logoUrl={job.bar.avatar_url} size={40} />
         <DsText variant="body" style={styles.flex}>
           {`${job.bar.display_name} says you ${job.is_current ? 'are' : 'were'} a `}
-          <DsText variant="body" style={{ fontFamily: fontFamilies.bodySemiBold }}>
+          <DsText variant="body" style={{ ...font.semiBold }}>
             {job.title}
           </DsText>
           {` there${years ? `, ${years}` : ''}.`}

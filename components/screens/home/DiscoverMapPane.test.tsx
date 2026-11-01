@@ -1,6 +1,6 @@
 import { fireEvent, screen } from '@testing-library/react-native';
 
-import { renderWithTamagui } from '@/jest.setup';
+import { renderWithProviders } from '@/jest.setup';
 import type { DiscoverBar, DiscoverDrink, DrinkFilter } from '@/lib/discoverDrinks';
 import type { Area } from '@/lib/nearMe';
 
@@ -104,7 +104,7 @@ interface Extra { from?: { latitude: number; longitude: number } | null; pick?: 
 function renderPane(drinks: DiscoverDrink[], pick: { id: string; name: string } | null = null, mode: 'side' | 'sheet' = 'side', search = '', { title = 'Martinis anywhere', ...extra }: Extra = {}) {
   mockDrinks = drinks;
   mockBars = [{ ...bar, drinks: drinks.length }];
-  return renderWithTamagui(
+  return renderWithProviders(
     <DiscoverMapPane
       mode={mode}
       area={area}
@@ -267,7 +267,7 @@ test("the wide list's tapped bar shows Top rated scores, as the map does", async
   mockScores = { d2: 9.2 };
   mockDrinks = [drink('d1', 'House Martini', ['martini']), drink('d2', 'Gibson', ['martini']), drink('d3', 'Bamboo')];
   const pin = { id: bar.id, handle: bar.handle, name: bar.name, logo: null, place: 'Melbourne', latitude: bar.latitude!, longitude: bar.longitude!, score: null, position: null, rankers: 0 };
-  await renderWithTamagui(<PickedBar pin={pin} filter={{ kinds: [], search: '', area }} best={{ id: 'martini', name: 'Martini' }} onClose={() => {}} />);
+  await renderWithProviders(<PickedBar pin={pin} filter={{ kinds: [], search: '', area }} best={{ id: 'martini', name: 'Martini' }} onClose={() => {}} />);
   // Its martinis are counted (the bar's other drinks aren't martinis); the rows stay in the list.
   expect(screen.getByText('2 drinks here')).toBeTruthy();
   expect(screen.queryByText('Bamboo')).toBeNull();
@@ -278,7 +278,7 @@ test('switching to a city fits its bars, not the last area\'s still on screen', 
   const results = { drinks: [], more, barsById: new Map(), isLoading: false, title: 'Drinks' };
   const pane = (where: Area) => <DiscoverMapPane mode="side" area={where} onArea={() => {}} drink={null} filter={{ kinds: [], search: '', area: where }} results={results} layer="drinks" />;
   mockBarsQuery = { data: [{ ...bar, drinks: 2 }, nyc], isPending: false, isPlaceholderData: false };
-  const { rerender } = await renderWithTamagui(pane(area));
+  const { rerender } = await renderWithProviders(pane(area));
   const anywhere = mockCamera;
 
   // New York picked: its bars are loading, the query still holds anywhere's. The map waits.

@@ -3,7 +3,7 @@ import { StyleSheet, View } from 'react-native';
 import { Button, Caption, DsText, PressableScale, useDs } from '@/components/ds';
 import { IconSymbol } from '@/components/ui/icon-symbol';
 import { VenueMark } from '@/components/nav/VenueMarks';
-import { fontFamilies, radius, space } from '@/constants/tokens';
+import { font, radius, space } from '@/constants/tokens';
 import { withAlpha } from '@/lib/color';
 import { RAIL_STEPS, STEP_LINES, STEP_NAMES, type SetupDone, type VenueScreen, type VenueStep } from '@/lib/venueSetup';
 
@@ -57,10 +57,10 @@ const styles = StyleSheet.create({
   rail: { width: WIDTH, paddingHorizontal: space.xl, paddingVertical: space.xxl, gap: space.xl, borderRightWidth: StyleSheet.hairlineWidth },
   head: { flexDirection: 'row', alignItems: 'center', gap: space.md },
   flex: { flex: 1, minWidth: 0 },
-  eyebrow: { letterSpacing: 1.2, fontFamily: fontFamilies.bodySemiBold },
+  eyebrow: { letterSpacing: 1.2, ...font.semiBold },
   steps: { gap: space.xs },
   step: { flexDirection: 'row', alignItems: 'center', gap: space.md, padding: space.sm, borderRadius: radius.control },
   num: { width: 26, height: 26, borderRadius: radius.pill, borderWidth: 1.5, alignItems: 'center', justifyContent: 'center' },
-  strong: { fontFamily: fontFamilies.bodySemiBold },
+  strong: { ...font.semiBold },
   foot: { gap: space.sm, marginTop: 'auto' },
 });

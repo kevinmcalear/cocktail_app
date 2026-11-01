@@ -14,7 +14,7 @@ const APP = {
   name: brand.productName,
   /** Permanent once the first build is uploaded to App Store Connect / Play. */
   bundleId: 'com.kevinmcalear.cocktail',
-  scheme: 'cocktailapp',
+  scheme: brand.scheme,
 };
 
 type Variant = 'development' | 'preview' | 'production';
@@ -56,7 +56,7 @@ export default ({ config }: ConfigContext): ExpoConfig => {
       // The sign-in email's link and venue staff links open the app, not the
       // site (public/.well-known/apple-app-site-association lists these app
       // ids). Store and preview builds only: local dev builds sign without it.
-      ...(variant === 'development' ? {} : { associatedDomains: ['applinks:babyvom.it'] }),
+      ...(variant === 'development' ? {} : { associatedDomains: [`applinks:${brand.domain}`] }),
     },
     android: {
       ...config.android,
@@ -71,8 +71,8 @@ export default ({ config }: ConfigContext): ExpoConfig => {
                 action: 'VIEW',
                 autoVerify: true,
                 data: [
-                  { scheme: 'https', host: 'babyvom.it', path: '/auth/callback' },
-                  { scheme: 'https', host: 'babyvom.it', pathPrefix: '/v/' },
+                  { scheme: 'https', host: brand.domain, path: '/auth/callback' },
+                  { scheme: 'https', host: brand.domain, pathPrefix: '/v/' },
                 ],
                 category: ['BROWSABLE', 'DEFAULT'],
               },
@@ -91,6 +91,8 @@ export default ({ config }: ConfigContext): ExpoConfig => {
     plugins: [
       ...(config.plugins ?? []),
       ...(variant === 'production' ? ['@sentry/react-native'] : []),
+      // Predictive back that still reaches JS on Android 13 to 15.
+      './plugins/withPredictiveBack',
       // The app icons people can pick in Settings (dec-28). iOS and Android
       // only switch between icons bundled into the build, so a bar's icon
       // ships in a store build, never from an uploaded logo at runtime.

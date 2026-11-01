@@ -4,7 +4,7 @@ import { StyleSheet, View, type StyleProp, type ViewStyle } from 'react-native';
 
 import { Body, Button, Caption, DrinkImage, IngredientThumb, MatchText, PressableScale, RowScore, scoreWords, Surface, TextLink, useDs } from '@/components/ds';
 import { DrinkRow } from '@/components/screens/DrinkRow';
-import { fontFamilies, radius, space } from '@/constants/tokens';
+import { font, radius, space } from '@/constants/tokens';
 import type { BarItem } from '@/hooks/useHomeBar';
 import { isHexColor, readableAccent } from '@/lib/color';
 import { itemHref } from '@/lib/itemRoutes';
@@ -165,5 +165,5 @@ const styles = StyleSheet.create({
   groupText: { flex: 1, minWidth: 0, gap: 1 },
   card: { flex: 1, minWidth: 0, flexDirection: 'row', alignItems: 'center', gap: space.md, paddingVertical: space.sm + 2, paddingLeft: space.sm + 2, paddingRight: space.md, borderRadius: radius.card, borderCurve: 'continuous' },
   cardThumb: { width: 56 },
-  cardName: { fontFamily: fontFamilies.bodySemiBold },
+  cardName: { ...font.semiBold },
 });

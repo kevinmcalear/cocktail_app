@@ -1,7 +1,7 @@
 import { fireEvent, screen, within } from '@testing-library/react-native';
 
 import { TeamScreen } from '@/components/screens/team/TeamScreen';
-import { renderWithTamagui } from '@/jest.setup';
+import { renderWithProviders } from '@/jest.setup';
 import { useTeamSort } from '@/store/useTeamSort';
 
 const mockMutate = jest.fn();
@@ -19,7 +19,7 @@ let mockParams: { invite?: string } = {};
 const mockPush = jest.fn();
 jest.mock('expo-router', () => ({ useRouter: () => ({ navigate: jest.fn(), push: mockPush, back: jest.fn(), canGoBack: () => false }), useLocalSearchParams: () => mockParams }));
 // A logo set: the look is done, so Invite isn't held back.
-let mockBrand: { logo_url: string | null; primary_color: string | null; display_face: string } = { logo_url: 'https://example.test/logo.png', primary_color: null, display_face: 'instrument' };
+let mockBrand: { logo_url: string | null; primary_color: string | null; display_face: string } = { logo_url: 'https://example.test/logo.png', primary_color: null, display_face: 'redaction' };
 jest.mock('@/hooks/useVenueBrand', () => ({ useVenueBrand: () => ({ data: mockBrand }) }));
 const mockSaveWelcome = jest.fn();
 let mockWelcome: string | null = null;
@@ -78,11 +78,11 @@ beforeEach(() => {
   mockSaveWelcome.mockReset();
   mockPush.mockReset();
   mockWelcome = null;
-  mockBrand = { logo_url: 'https://example.test/logo.png', primary_color: null, display_face: 'instrument' };
+  mockBrand = { logo_url: 'https://example.test/logo.png', primary_color: null, display_face: 'redaction' };
 });
 
 test('an admin can look someone up, then change their role and remove them from their sheet', async () => {
-  await renderWithTamagui(<TeamScreen />);
+  await renderWithProviders(<TeamScreen />);
   // The sidebar names the venue.
   expect(screen.queryByText('Caretakers')).toBeNull();
   expect(screen.getByText('Team · 2')).toBeTruthy();
@@ -112,7 +112,7 @@ test('an admin can look someone up, then change their role and remove them from 
 test('an admin invites by name, email and role from the sheet, and the invite is emailed', async () => {
   mockAdd.mockResolvedValue(true);
   mockSendAsync.mockResolvedValue({ sent: true });
-  await renderWithTamagui(<TeamScreen />);
+  await renderWithProviders(<TeamScreen />);
   await fireEvent.press(screen.getByRole('button', { name: 'Invite someone' }));
   expect(screen.getByText('Invite to Caretakers')).toBeTruthy();
   expect(screen.getByRole('radio', { name: 'Bartender. Plus prep notes and the staff list', checked: true })).toBeTruthy();
@@ -139,7 +139,7 @@ test('an admin invites by name, email and role from the sheet, and the invite is
 
 test('an admin changes the welcome message once, from its row', async () => {
   mockWelcome = 'Welcome in.';
-  await renderWithTamagui(<TeamScreen />);
+  await renderWithProviders(<TeamScreen />);
   await fireEvent.press(screen.getByRole('button', { name: 'Welcome message. Change' }));
   await fireEvent.changeText(screen.getByLabelText('The message'), 'Welcome to the team.');
   await fireEvent.press(screen.getByRole('button', { name: 'Save' }));
@@ -147,8 +147,8 @@ test('an admin changes the welcome message once, from its row', async () => {
 });
 
 test('Invite waits for how the venue looks: until then it opens Brand', async () => {
-  mockBrand = { logo_url: null, primary_color: null, display_face: 'instrument' };
-  await renderWithTamagui(<TeamScreen />);
+  mockBrand = { logo_url: null, primary_color: null, display_face: 'redaction' };
+  await renderWithProviders(<TeamScreen />);
   expect(screen.getByText('Set how Caretakers looks first: the invite wears its logo, colour and font.')).toBeTruthy();
   await fireEvent.press(screen.getByRole('button', { name: 'Invite someone' }));
   expect(mockPush).toHaveBeenCalledWith('/settings/bar/bar/brand');
@@ -157,7 +157,7 @@ test('Invite waits for how the venue looks: until then it opens Brand', async ()
 
 test('/team?invite=1 opens on the invite sheet (Invite your team, from the venue sheet or an empty Library)', async () => {
   mockParams = { invite: '1' };
-  await renderWithTamagui(<TeamScreen />);
+  await renderWithProviders(<TeamScreen />);
   mockParams = {};
   expect(screen.getByText('Invite to Caretakers')).toBeTruthy();
 });
@@ -165,7 +165,7 @@ test('/team?invite=1 opens on the invite sheet (Invite your team, from the venue
 test('a saved invite whose email fails says so', async () => {
   mockAdd.mockResolvedValue(true);
   mockSendAsync.mockRejectedValue(new Error('rate limited'));
-  await renderWithTamagui(<TeamScreen />);
+  await renderWithProviders(<TeamScreen />);
   await fireEvent.press(screen.getByRole('button', { name: 'Invite someone' }));
   await fireEvent.changeText(screen.getByLabelText('Email'), 'sam@example.test');
   await fireEvent.press(screen.getByRole('button', { name: 'Email an invite' }));
@@ -174,7 +174,7 @@ test('a saved invite whose email fails says so', async () => {
 
 test('an employee sees the team and cannot manage it', async () => {
   mockRole = 20;
-  await renderWithTamagui(<TeamScreen />);
+  await renderWithProviders(<TeamScreen />);
   expect(screen.getByText('Ada (you)')).toBeTruthy();
   expect(screen.getByText('Jo')).toBeTruthy();
   expect(screen.getByText('Only people who can invite and manage staff change roles here.')).toBeTruthy();
@@ -188,7 +188,7 @@ test('an employee sees the team and cannot manage it', async () => {
 
 test('the team is grouped by role, Admin first, or listed A to Z with role tags', async () => {
   mockRole = 20;
-  await renderWithTamagui(<TeamScreen />);
+  await renderWithProviders(<TeamScreen />);
   expect(screen.getByRole('radio', { name: 'Role', checked: true })).toBeTruthy();
   const headings = screen.getAllByRole('heading').map((h) => h.props.children);
   expect(headings.indexOf('Admin · 1')).toBeGreaterThan(-1);

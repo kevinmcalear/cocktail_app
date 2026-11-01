@@ -1,6 +1,6 @@
 import { fireEvent, screen, waitFor } from '@testing-library/react-native';
 
-import { renderWithTamagui } from '@/jest.setup';
+import { renderWithProviders } from '@/jest.setup';
 import type { GlassPhoto } from '@/lib/glassPhoto';
 
 import { KitAddSheet } from '../KitAddSheet';
@@ -39,7 +39,7 @@ beforeEach(() => mockPick.mockReset());
 test('a photo and its height draw the glass; Looks right hands back the traced outline', async () => {
   mockPick.mockResolvedValue(photo(true));
   const onDone = jest.fn();
-  await renderWithTamagui(<Harness onDone={onDone} />);
+  await renderWithProviders(<Harness onDone={onDone} />);
   expect(screen.getByText('1 of 3 · Draw my glass')).toBeTruthy();
   await fireEvent.press(screen.getByRole('button', { name: 'Take a photo' }));
   await screen.findByText('One number sets its size');
@@ -60,7 +60,7 @@ test('a photo and its height draw the glass; Looks right hands back the traced o
 
 test('it stops and says why when it can’t see a glass', async () => {
   mockPick.mockResolvedValue(photo(false));
-  await renderWithTamagui(<Harness onDone={jest.fn()} />);
+  await renderWithProviders(<Harness onDone={jest.fn()} />);
   await fireEvent.press(screen.getByRole('button', { name: 'Take a photo' }));
   await screen.findByText('One number sets its size');
   await fireEvent.press(screen.getByRole('radio', { name: 'Capacity' }));

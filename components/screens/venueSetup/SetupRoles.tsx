@@ -4,7 +4,7 @@ import { StyleSheet, View } from 'react-native';
 import { Body, Caption, PressableScale, TextLink, useDs } from '@/components/ds';
 import { SectionHeading } from '@/components/screens/settings/SettingsParts';
 import { IconSymbol } from '@/components/ui/icon-symbol';
-import { fontFamilies, layout, radius, space } from '@/constants/tokens';
+import { font, layout, radius, space } from '@/constants/tokens';
 import { useRoleMatrix } from '@/hooks/useVenueRoles';
 import { ROLE_PRESETS, roleLine, roleSummary } from '@/lib/roleMatrix';
 import { roleLabel } from '@/lib/roles';
@@ -72,5 +72,5 @@ const styles = StyleSheet.create({
   row: { flexDirection: 'row', alignItems: 'center', gap: space.md, paddingVertical: space.md, minHeight: layout.minTapTarget },
   text: { flex: 1, minWidth: 0, gap: 2 },
   name: { flexDirection: 'row', alignItems: 'baseline', gap: space.sm },
-  bold: { fontFamily: fontFamilies.bodySemiBold },
+  bold: { ...font.semiBold },
 });

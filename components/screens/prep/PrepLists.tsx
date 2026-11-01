@@ -1,7 +1,7 @@
 import { StyleSheet, View } from 'react-native';
 
 import { Body, Caption, Headline, Spec, Tag, useDs } from '@/components/ds';
-import { fontFamilies, space } from '@/constants/tokens';
+import { font, space } from '@/constants/tokens';
 import { formatIce } from '@/lib/glass';
 import type { PrepList } from '@/lib/prep';
 
@@ -106,7 +106,7 @@ const styles = StyleSheet.create({
   row: { flexDirection: 'row', gap: space.md, paddingVertical: space.md, borderBottomWidth: StyleSheet.hairlineWidth, alignItems: 'flex-start' },
   rowMain: { flex: 1, gap: space.xs },
   rowAmount: { alignItems: 'flex-end', gap: 2 },
-  name: { fontFamily: fontFamilies.bodySemiBold },
+  name: { ...font.semiBold },
   group: { gap: 0 },
   supplier: { letterSpacing: 1.2, marginTop: space.md },
 });

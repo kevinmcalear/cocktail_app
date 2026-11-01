@@ -1,7 +1,7 @@
 import type { ComponentRef, ReactNode, Ref } from 'react';
 import { StyleSheet, TextInput, View, type TextInputProps } from 'react-native';
 
-import { fontFamilies, layout, radius, space, type } from '@/constants/tokens';
+import { font, layout, radius, space, type } from '@/constants/tokens';
 
 import { IconSymbol } from '@/components/ui/icon-symbol';
 
@@ -51,7 +51,7 @@ export function Field({ label, hideLabel, hint, error, minLines, trailing, icon,
         type.body,
         minLines ? { minHeight: layout.minTapTarget * minLines, paddingVertical: space.md, textAlignVertical: 'top' } : null,
         minLines || input.multiline ? { maxHeight: Math.max(MULTILINE_MAX, layout.minTapTarget * (minLines ?? 0)) } : null,
-        { fontFamily: fontFamilies.body, color: ds.c.ink, backgroundColor: ds.c.raised, borderColor: error ? ds.accentText : ds.c.line },
+        { ...font.regular, color: ds.c.ink, backgroundColor: ds.c.raised, borderColor: error ? ds.accentText : ds.c.line },
         trailing ? styles.withTrailing : null,
         icon ? styles.withIcon : null,
         prefix ? styles.withPrefix : null,

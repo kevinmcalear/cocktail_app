@@ -2,8 +2,7 @@ import type { ComponentProps } from 'react';
 import { StyleSheet, View, type StyleProp, type ViewStyle } from 'react-native';
 
 import { IconSymbol } from '@/components/ui/icon-symbol';
-import { STATUS } from '@/constants/palette';
-import { fontFamilies, layout, radius, space } from '@/constants/tokens';
+import { font, layout, radius, space, STATUS } from '@/constants/tokens';
 import { readableAccent, withAlpha } from '@/lib/color';
 
 import { PressableScale } from './PressableScale';
@@ -87,5 +86,5 @@ const styles = StyleSheet.create({
   },
   small: { paddingHorizontal: space.md + 2 },
   row: { flexDirection: 'row', alignItems: 'center', gap: space.sm },
-  label: { fontFamily: fontFamilies.bodySemiBold },
+  label: { ...font.semiBold },
 });

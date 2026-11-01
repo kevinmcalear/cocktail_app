@@ -2,8 +2,7 @@ import { useState } from 'react';
 import { StyleSheet, View } from 'react-native';
 
 import { Button, Caption, DsText, GlassButton, Sheet, Tag, Title, useDs } from '@/components/ds';
-import { STATUS } from '@/constants/palette';
-import { fontFamilies, layout, radius, space } from '@/constants/tokens';
+import { font, layout, radius, space, STATUS } from '@/constants/tokens';
 import { useSignedIn } from '@/ctx/AuthContext';
 import type { BarFacts } from '@/hooks/useBarFacts';
 import { hoursSource, hoursStatus, weekRows } from '@/lib/barHours';
@@ -90,7 +89,7 @@ const styles = StyleSheet.create({
   row: { flexDirection: 'row', alignItems: 'center', gap: space.sm, minHeight: layout.minTapTarget + space.sm },
   today: { borderRadius: radius.control, marginHorizontal: -space.sm, paddingHorizontal: space.sm },
   day: { flexDirection: 'row', alignItems: 'center', gap: space.sm },
-  strong: { fontFamily: fontFamilies.bodySemiBold },
+  strong: { ...font.semiBold },
   notes: { gap: space.xs, paddingTop: space.lg },
   start: { alignItems: 'flex-start', paddingTop: space.md },
 });

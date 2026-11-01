@@ -3,7 +3,7 @@ import { StyleSheet, View } from 'react-native';
 
 import { Body, Button, Caption, DsText, PressableScale, Tag, useDs } from '@/components/ds';
 import { IconSymbol } from '@/components/ui/icon-symbol';
-import { fontFamilies, layout, radius, space } from '@/constants/tokens';
+import { font, fontFamilies, layout, radius, space } from '@/constants/tokens';
 import { useSetSwaps, type RunSheetData } from '@/hooks/useRunSheet';
 import { pourSuggestions, type RunDrink, type RunSheet, type SheetDrink, type SheetLine } from '@/lib/runSheet';
 
@@ -36,7 +36,7 @@ function DrinkSpec({ drink, onLine }: { drink: SheetDrink; onLine: (line: SheetL
     <View role="group" aria-label={drink.name} style={[styles.card, { backgroundColor: ds.c.surface }]}>
       <View style={styles.head}>
         <DsText variant="headline" style={styles.name}>{drink.name}</DsText>
-        <Caption tone="muted" style={{ fontFamily: fontFamilies.mono }}>× {drink.serves.toLocaleString('en-GB')}</Caption>
+        <Caption tone="muted" style={{ ...font.figures }}>× {drink.serves.toLocaleString('en-GB')}</Caption>
       </View>
       {drink.lines.length ? null : <Body tone="muted">No spec to swap in.</Body>}
       {drink.parts
@@ -72,7 +72,7 @@ export function SpecsStep({ data, sheet }: { data: RunSheetData; sheet: RunSheet
       {suggestion ? (
         <View style={[styles.suggest, { backgroundColor: ds.c.raised }]}>
           <View style={{ flex: 1 }}>
-            <DsText variant="label" style={{ fontFamily: fontFamilies.bodySemiBold }}>Pour {suggestion.bottle.name} everywhere?</DsText>
+            <DsText variant="label" style={{ ...font.semiBold }}>Pour {suggestion.bottle.name} everywhere?</DsText>
             <Caption tone="muted">
               {suggestion.bottle.kindName ?? 'It'} shows up in {suggestion.drinkCount} {suggestion.drinkCount === 1 ? 'drink' : 'drinks'}. A brand on this sheet makes one.
             </Caption>
@@ -97,12 +97,12 @@ export function SpecsStep({ data, sheet }: { data: RunSheetData; sheet: RunSheet
 const styles = StyleSheet.create({
   card: { borderRadius: radius.card, padding: space.lg, gap: space.xs, borderCurve: 'continuous' },
   head: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'baseline', paddingBottom: space.sm },
-  name: { fontFamily: fontFamilies.instrument },
+  name: { fontFamily: fontFamilies.name },
   line: { flexDirection: 'row', alignItems: 'center', gap: space.md, minHeight: layout.minTapTarget, paddingVertical: space.xs, borderTopWidth: StyleSheet.hairlineWidth },
-  amount: { width: 80, fontFamily: fontFamilies.monoMedium },
+  amount: { width: 80, ...font.figuresMedium },
   partHead: { flexDirection: 'row', alignItems: 'center', gap: space.sm, paddingTop: space.md, paddingBottom: space.xs },
   partNo: { width: 24, height: 24, borderRadius: radius.pill, alignItems: 'center', justifyContent: 'center' },
-  partName: { flex: 1, fontFamily: fontFamilies.bodyMedium },
+  partName: { flex: 1, ...font.medium },
   struck: { textDecorationLine: 'line-through' },
   suggest: { flexDirection: 'row', alignItems: 'center', gap: space.md, borderRadius: radius.card, padding: space.md, paddingLeft: space.lg },
 });
