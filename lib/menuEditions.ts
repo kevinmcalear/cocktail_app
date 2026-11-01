@@ -53,7 +53,7 @@ export function editionDates(e: Pick<MenuEdition, 'year' | 'month' | 'end_year' 
   return { startYear: e.year, startMonth: e.month, endYear: e.end_year, endMonth: e.end_month, isCurrent: e.is_current };
 }
 
-/** A drink's run as menu_drink_runs and search_bar_drinks return it. */
+/** A drink's run as drink_list_dates and search_bar_drinks return it. */
 export interface MenuRunRow {
   start_year: number;
   start_month: number | null;

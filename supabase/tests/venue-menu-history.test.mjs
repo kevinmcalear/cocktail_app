@@ -167,7 +167,7 @@ describe('a bar gets staff', () => {
 });
 
 describe('who controls them', () => {
-  test("the bar's staff see them in Menus and can rename, change the drinks and delete", async () => {
+  test("the bar's staff see them in Menus and can rename, change the drinks and hide one, never delete it", async () => {
     const [opening, july] = await menusAt(ids.bar);
     const client = users.staff.client;
     const listed = await client.from('menus').select('id').eq('bar_id', ids.bar);
@@ -182,9 +182,13 @@ describe('who controls them', () => {
     assert.ifError(drop.error);
     assert.equal(drop.data.length, 1);
 
+    // A menu that ran is ended and hidden, never deleted (20261203100000).
     const gone = await client.from('menus').delete().eq('id', july.id).select('id');
     assert.ifError(gone.error);
-    assert.equal(gone.data.length, 1);
+    assert.equal(gone.data.length, 0);
+    const hidden = await client.from('menus').update({ hidden_at: new Date().toISOString() }).eq('id', july.id).select('id');
+    assert.ifError(hidden.error);
+    assert.equal(hidden.data.length, 1);
   });
 
   test('nobody else can change them', async () => {
