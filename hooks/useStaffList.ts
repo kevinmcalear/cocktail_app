@@ -34,13 +34,17 @@ export type StaffListChange = { op: 'add'; itemId: string } | { op: 'order'; ite
 interface ItemName {
   id: string;
   name: string;
-  riff_of_id: string | null;
+  based_on_id: string | null;
+  based_on_kind: string | null;
   item_images?: ItemImageLink[] | null;
 }
 
+/** The classic a drink is a version of: what it's based on as a riff (a classic's own history parent doesn't count). */
+const classicOf = (item: ItemName | undefined) => (item?.based_on_kind === 'riff' ? item.based_on_id : null);
+
 async function itemNames(ids: string[], images = false): Promise<Map<string, ItemName>> {
   if (!ids.length) return new Map();
-  const columns = images ? 'id, name, riff_of_id, item_images(angle, sort_order, is_generated, images(url))' : 'id, name, riff_of_id';
+  const columns = images ? 'id, name, based_on_id, based_on_kind, item_images(angle, sort_order, is_generated, images(url))' : 'id, name, based_on_id, based_on_kind';
   const { data, error } = await supabase.from('items').select(columns).in('id', ids);
   if (error) throw error;
   // ponytail: the select string is chosen at run time, so supabase-js can't type the row; split into literal selects to drop this cast.
@@ -60,10 +64,11 @@ export function useStaffList(barId: string | null | undefined) {
       if (error) throw error;
       const picks = (data ?? []) as { item_id: string; sort_rank: number | null }[];
       const items = await itemNames(picks.map((p) => p.item_id), true);
-      const classics = await itemNames([...items.values()].map((i) => i.riff_of_id).filter((id): id is string => !!id));
+      const classics = await itemNames([...items.values()].map(classicOf).filter((id): id is string => !!id));
       return picks.map((p) => {
         const item = items.get(p.item_id);
-        const classic = item?.riff_of_id ? classics.get(item.riff_of_id) : undefined;
+        const classicId = classicOf(item);
+        const classic = classicId ? classics.get(classicId) : undefined;
         return {
           itemId: p.item_id,
           rank: p.sort_rank,
@@ -84,18 +89,18 @@ export function useBarRiffs(barId: string | null | undefined) {
     queryFn: async (): Promise<BarRiff[]> => {
       const { data, error } = await supabase
         .from('items')
-        .select('id, name, riff_of_id')
+        .select('id, name, based_on_id, based_on_kind')
         .eq('bar_id', barId!)
         .eq('item_type', 'cocktail')
-        .not('riff_of_id', 'is', null)
+        .eq('based_on_kind', 'riff')
         .order('name');
       if (error) throw error;
       const rows = (data ?? []) as ItemName[];
-      const classics = await itemNames(rows.map((r) => r.riff_of_id).filter((id): id is string => !!id));
+      const classics = await itemNames(rows.map((r) => r.based_on_id).filter((id): id is string => !!id));
       return rows.map((r) => ({
         id: r.id,
         name: r.name,
-        classicName: (r.riff_of_id && classics.get(r.riff_of_id)?.name) || null,
+        classicName: (r.based_on_id && classics.get(r.based_on_id)?.name) || null,
       }));
     },
   });

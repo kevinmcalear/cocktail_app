@@ -3,13 +3,14 @@
 import { useQuery } from '@tanstack/react-query';
 
 import { useUserId } from '@/ctx/AuthContext';
-import { LINEAGE_COLUMNS, PROFILE_COLUMNS } from '@/hooks/useLineage';
+import { asLineage, LINEAGE_COLUMNS, PROFILE_COLUMNS, type LineageItem, type LineageRow } from '@/hooks/useLineage';
 import { viewerScoped } from '@/lib/authCache';
 import type { ItemImageLink } from '@/lib/itemImages';
-import type { CreditProfile, CreditStatus, LineageDrink } from '@/lib/lineage';
+import type { CreditProfile, CreditStatus } from '@/lib/lineage';
 import { supabase } from '@/lib/supabase';
+import { SHOWN_CREDITS } from '@/lib/whoMadeIt';
 
-export interface Original extends LineageDrink {
+export interface Original extends LineageItem {
   item_type: string;
   description: string | null;
   glass: { icon_key: string | null } | null;
@@ -18,15 +19,26 @@ export interface Original extends LineageDrink {
   versions?: { count: number }[] | null;
 }
 
-const ORIGINAL_COLUMNS = `${LINEAGE_COLUMNS}, item_type, description, glass:glassware_id(icon_key), item_images(angle, sort_order, is_generated, outdated_since, images(url)), versions:items!riff_of_id(count)`;
+// Glass through drink_glass; versions: only riffs (based_on_kind 'riff'), filtered on each query.
+const ORIGINAL_COLUMNS = `${LINEAGE_COLUMNS}, item_type, description, glass:drink_glass!drink_glass_item_id_fkey(glassware:items!drink_glass_glassware_id_fkey(icon_key)), item_images(angle, sort_order, is_generated, outdated_since, images(url)), versions:items!based_on_id(count)`;
 
-/** The `or` filters for drinks credited to a profile: its creator, its first bar, or one of several creators who said yes. */
-async function creditedTo(profileId: string): Promise<string[]> {
-  const co = await supabase.from('item_co_creators').select('item_id').eq('profile_id', profileId).eq('status', 'accepted').limit(100);
-  if (co.error) throw co.error;
-  const coIds = (co.data ?? []).map((r) => r.item_id as string);
-  return [`creator_profile_id.eq.${profileId}`, `origin_bar_profile_id.eq.${profileId}`, ...(coIds.length ? [`id.in.(${coIds.join(',')})`] : [])];
+/**
+ * Items with the columns an Original needs. With `credited`, each also brings
+ * back as `mine` the shown credits a profile (filtered on `mine.profile_id`)
+ * has on it: its lead, its first bar, or one of several creators who said
+ * yes. 'only' keeps just those drinks; 'also' keeps every drink, for an `or`.
+ */
+function originals(credited?: 'only' | 'also') {
+  const q = supabase.from('items').select(`${ORIGINAL_COLUMNS}${credited ? `, mine:item_credits${credited === 'only' ? '!inner' : ''}(id)` : ''}`).eq('versions.based_on_kind', 'riff');
+  return credited ? q.in('mine.role', ['creator', 'co_creator', 'bar']).in('mine.status', SHOWN_CREDITS) : q;
 }
+
+// ponytail: supabase-js can't type an embed on items' own foreign keys ("more than one relationship"), so the row is cast; hint it as items!<fk> to drop this.
+type OriginalRow = LineageRow & Omit<Original, keyof LineageItem | 'glass'> & { glass: { glassware: Original['glass'] } | null };
+
+// ponytail: supabase-js can't type an embed on items' own foreign keys ("more than one relationship"), so the rows are cast; hint them as items!<fk> to drop this.
+const asOriginals = (data: unknown): Original[] =>
+  ((data ?? []) as OriginalRow[]).map(({ glass, ...r }) => ({ ...asLineage(r as LineageRow & Omit<Original, keyof LineageItem>), glass: glass?.glassware ?? null }));
 
 interface PublicOriginalRow {
   id: string;
@@ -35,7 +47,8 @@ interface PublicOriginalRow {
   description: string | null;
   origin: string | null;
   origin_year: number | null;
-  riff_of_id: string | null;
+  /** A riff's drink (published_items doesn't carry based_on_* yet). */
+  based_on_id: string | null;
   credit_status: CreditStatus | null;
   creator_profile_id: string | null;
   origin_bar_profile_id: string | null;
@@ -50,7 +63,7 @@ interface PublicOriginalRow {
 async function publicOriginals(profileId: string): Promise<Original[]> {
   const { data, error } = await supabase
     .from('published_items')
-    .select('id, name, item_type, description, origin, origin_year, riff_of_id, credit_status, creator_profile_id, origin_bar_profile_id, image_url, image_is_generated')
+    .select('id, name, item_type, description, origin, origin_year, based_on_id:riff_of_id, credit_status, creator_profile_id, origin_bar_profile_id, image_url, image_is_generated')
     .eq('is_reference', false)
     .or(`creator_profile_id.eq.${profileId},origin_bar_profile_id.eq.${profileId}`)
     .order('name')
@@ -68,7 +81,12 @@ async function publicOriginals(profileId: string): Promise<Original[]> {
     description: r.description,
     origin: r.origin,
     origin_year: r.origin_year,
-    riff_of_id: r.riff_of_id,
+    based_on_id: r.based_on_id,
+    based_on_kind: r.based_on_id ? 'riff' : null,
+    based_on_style_id: null,
+    riff_of_id: r.based_on_id,
+    // Signed out, item_credits isn't read (the lead and first bar come from published_items).
+    credits: [],
     credit_status: r.credit_status,
     creator: (r.creator_profile_id && byId.get(r.creator_profile_id)) || null,
     origin_bar: (r.origin_bar_profile_id && byId.get(r.origin_bar_profile_id)) || null,
@@ -92,17 +110,11 @@ export function useProfileOriginals(profileId: string | null | undefined, { lock
     queryFn: async (): Promise<Original[]> => {
       if (!userId) return publicOriginals(profileId!);
       const [{ data, error }, cards] = await Promise.all([
-        supabase
-          .from('items')
-          .select(ORIGINAL_COLUMNS)
-          .or((await creditedTo(profileId!)).join(','))
-          .order('name')
-          .limit(100),
+        originals('only').eq('mine.profile_id', profileId!).order('name').limit(100),
         locked ? publicOriginals(profileId!) : Promise.resolve([]),
       ]);
       if (error) throw error;
-      // ponytail: supabase-js can't type an embed on items' own foreign keys ("more than one relationship"), so the row is cast; hint it as items!<fk> to drop this.
-      const rows = (data ?? []) as unknown as Original[];
+      const rows = asOriginals(data);
       const seen = new Set(rows.map((r) => r.id));
       const missing = cards.filter((c) => !seen.has(c.id));
       return missing.length ? [...rows, ...missing].sort((a, b) => a.name.localeCompare(b.name)) : rows;
@@ -112,10 +124,9 @@ export function useProfileOriginals(profileId: string | null | undefined, { lock
 
 /** Credited drinks by id, for a signed-in viewer (items RLS decides which come back). */
 export async function originalsByIds(ids: string[]): Promise<Original[]> {
-  const { data, error } = await supabase.from('items').select(ORIGINAL_COLUMNS).in('id', ids).order('name').limit(100);
+  const { data, error } = await originals().in('id', ids).order('name').limit(100);
   if (error) throw error;
-  // ponytail: supabase-js can't type an embed on items' own foreign keys ("more than one relationship"), so the row is cast; hint it as items!<fk> to drop this.
-  return (data ?? []) as unknown as Original[];
+  return asOriginals(data);
 }
 
 /**
@@ -129,16 +140,10 @@ export function useMyMadeDrinks(profileId: string | null | undefined, enabled = 
     queryKey: ['my-made', userId, profileId ?? null],
     enabled: !!userId && enabled,
     queryFn: async (): Promise<Original[]> => {
-      const { data, error } = await supabase
-        .from('items')
-        .select(ORIGINAL_COLUMNS)
-        .eq('item_type', 'cocktail')
-        .or([`created_by.eq.${userId}`, ...(profileId ? await creditedTo(profileId) : [])].join(','))
-        .order('name')
-        .limit(200);
+      const mine = profileId ? originals('also').eq('mine.profile_id', profileId).or(`created_by.eq.${userId},mine.not.is.null`) : originals().eq('created_by', userId!);
+      const { data, error } = await mine.eq('item_type', 'cocktail').order('name').limit(200);
       if (error) throw error;
-      // ponytail: supabase-js can't type an embed on items' own foreign keys ("more than one relationship"), so the row is cast; hint it as items!<fk> to drop this.
-      return (data ?? []) as unknown as Original[];
+      return asOriginals(data);
     },
   });
 }

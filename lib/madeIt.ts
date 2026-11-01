@@ -1,13 +1,14 @@
 /**
  * Made it: a drink someone made at home, logged against the one they had at
- * the bar. Pure helpers (lib/madeIt.check.ts); the table is made_drinks and
- * the score a "made at home" ranking (rank_entries, venue NULL).
+ * the bar. Pure helpers (lib/madeIt.check.ts); each make is a had
+ * (drinks_had, source 'made') and the score a "made at home" ranking
+ * (rank_entries, venue NULL).
  */
 import { rankKeyAt } from './ranking';
 
 export type Compared = 'better' | 'same' | 'worse';
 
-/** What the recipe called for, and what was used instead. A type, not an interface, so it passes as Json (made_drinks.swaps). */
+/** What the recipe called for, and what was used instead. A type, not an interface, so it passes as Json (drinks_had.swaps). */
 export type Swap = {
   from: string;
   to: string;

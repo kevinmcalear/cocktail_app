@@ -60,7 +60,7 @@ export function CreditRows({ credits }: { credits: CreditToCheck[] }) {
   return (
     <View role="list" aria-label="Credits to check">
       {credits.map((c, i) => (
-        <View key={c.item_id} role="listitem" style={[styles.row, i ? { borderTopColor: ds.c.line, borderTopWidth: StyleSheet.hairlineWidth } : null]}>
+        <View key={c.credit_id} role="listitem" style={[styles.row, i ? { borderTopColor: ds.c.line, borderTopWidth: StyleSheet.hairlineWidth } : null]}>
           <DrinkImage itemId={c.item_id} accessibilityLabel={c.name} thumb sketchDetail="thumb" radius="control" style={styles.thumb} />
           <View style={styles.flex}>
             <DsText variant="headline" role="link" numberOfLines={2} onPress={() => router.push(drinkHref(c) as Href)}>
@@ -69,10 +69,10 @@ export function CreditRows({ credits }: { credits: CreditToCheck[] }) {
             <Caption>{`${c.creator_name ?? 'Someone'} named you as a co-creator`}</Caption>
             <Caption tone="muted">{creditPlace(c)}</Caption>
             <View style={styles.actions}>
-              <Button label="Accept" size="sm" disabled={answer.isPending} accessibilityLabel={`Accept ${c.name}`} onPress={() => answer.mutate({ itemId: c.item_id, accept: true })} />
-              <Button label="Not me" size="sm" variant="secondary" disabled={answer.isPending} accessibilityLabel={`Not me, ${c.name}`} onPress={() => answer.mutate({ itemId: c.item_id, accept: false })} />
+              <Button label="Accept" size="sm" disabled={answer.isPending} accessibilityLabel={`Accept ${c.name}`} onPress={() => answer.mutate({ creditId: c.credit_id, accept: true })} />
+              <Button label="Not me" size="sm" variant="secondary" disabled={answer.isPending} accessibilityLabel={`Not me, ${c.name}`} onPress={() => answer.mutate({ creditId: c.credit_id, accept: false })} />
             </View>
-            {answer.error && answer.variables?.itemId === c.item_id ? (
+            {answer.error && answer.variables?.creditId === c.credit_id ? (
               <Caption tone="accent" role="alert">
                 {answer.error.message}
               </Caption>

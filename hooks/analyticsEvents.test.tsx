@@ -29,7 +29,7 @@ function wrapper({ children }: { children: ReactNode }) {
 test('logging a made drink sends drink_made', async () => {
   const { result } = await renderHook(() => useLogMade(), { wrapper });
   await act(() =>
-    result.current.mutateAsync({ item_id: 'd', made_on: '2026-10-31', compared: null, swaps: [], note: null, rank_entry_id: null, on_profile: false, photoUri: null })
+    result.current.mutateAsync({ item_id: 'd', had_on: '2026-10-31', compared: null, swaps: [], note: null, rank_entry_id: null, on_profile: false, photoUri: null })
   );
   expect(sent.find((s) => s.event === 'drink_made')).toEqual({ event: 'drink_made', props: { compared: 'none', swaps: 0, photo: false, shown: false } });
 });

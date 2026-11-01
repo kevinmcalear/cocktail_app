@@ -1,24 +1,93 @@
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 
-import { parentId, sortRiffs, styleChain, walkAncestors, type DrinkStyle, type LineageDrink } from '@/lib/lineage';
+import { sortRiffs, styleChain, walkAncestors, type CreditStatus, type DrinkStyle, type LineageDrink } from '@/lib/lineage';
 import { supabase } from '@/lib/supabase';
-import type { CreditEdit } from '@/lib/whoMadeIt';
+import { coAnswer, creditNames, leadCredit, type CreditEdit, type ItemCredit } from '@/lib/whoMadeIt';
 
-// The credit columns aren't in app_item_presentation, so these read items
-// directly; the items RLS policy applies the same visibility rules.
+// The credits aren't in app_item_presentation, so these read items and
+// item_credits directly; their RLS policies apply the same visibility rules.
 export const PROFILE_COLUMNS = 'id, kind, handle, display_name, avatar_url, locality, is_closed, closed_year';
-export const LINEAGE_COLUMNS = `id, name, riff_of_id, origin_year, origin_year_approx, origin_year_guess, credit_status, origin,
-  is_catalog, lineage_parent_id, lineage_style_id, lineage_note, creator_names,
-  creator:profiles!items_creator_profile_id_fkey(${PROFILE_COLUMNS}),
+/** A drink's credits, each with the page it names (item_credits). */
+export const CREDIT_COLUMNS = `credits:item_credits(id, role, what, profile_id, name, sort_order, status, disputed_at, dispute_note, profile:profiles(${PROFILE_COLUMNS}))`;
+export const LINEAGE_COLUMNS = `id, name, based_on_id, based_on_kind, based_on_style_id, origin_year, origin_year_approx, origin_year_guess, origin,
+  is_catalog, lineage_note,
   origin_bar:profiles!items_origin_bar_profile_id_fkey(${PROFILE_COLUMNS}),
-  co_creators:item_co_creators(status, profile:profiles(${PROFILE_COLUMNS}))`;
+  ${CREDIT_COLUMNS}`;
 const UUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
 export const STYLE_COLUMNS = 'id, key, name, family, parent_style_id, year, year_approx, summary';
 
-async function fetchDrink(id: string): Promise<LineageDrink | null> {
+/** What a drink is based on: a drink made from another, a classic that came from another classic, or a classic straight from a historic style. */
+export type BasedOnKind = 'riff' | 'descends' | 'style';
+
+/** A drink as LINEAGE_COLUMNS reads it: its one based-on link and its credits. */
+export interface LineageRow {
+  id: string;
+  name: string;
+  based_on_id: string | null;
+  based_on_kind: BasedOnKind | null;
+  /** A classic straight from a historic style (drink_styles). */
+  based_on_style_id: string | null;
+  origin_year: number | null;
+  origin_year_approx?: boolean | null;
+  origin_year_guess?: string | null;
+  origin: string | null;
+  is_catalog?: boolean | null;
+  lineage_note?: string | null;
+  origin_bar: LineageDrink['origin_bar'];
+  credits: ItemCredit[];
+}
+
+export type LineageItem = LineageDrink & LineageRow;
+
+/** The line's status in the old three words: the lead creator's, or the first bar's when there's none. */
+function lineStatus(credits: readonly ItemCredit[]): CreditStatus | null {
+  const main = leadCredit(credits) ?? credits.find((c) => c.role === 'bar' && c.status !== 'declined');
+  if (!main) return null;
+  return main.status === 'accepted' ? 'claimed' : main.status === 'verified' ? 'verified' : 'suggested';
+}
+
+/**
+ * ponytail: lib/lineage.ts still reads a drink's credit and parent by the
+ * names LineageDrink declares; this fills them from item_credits and
+ * based_on_*. It goes when lib/lineage.ts reads `credits` and `based_on_*`.
+ */
+export function asLineage<T extends LineageRow>(row: T): T & LineageDrink {
+  const credits = row.credits ?? [];
+  return {
+    ...row,
+    credits,
+    riff_of_id: row.based_on_kind === 'riff' ? row.based_on_id : null,
+    lineage_parent_id: row.based_on_kind === 'descends' ? row.based_on_id : null,
+    credit_status: lineStatus(credits),
+    creator: leadCredit(credits)?.profile ?? null,
+    co_creators: credits.filter((c) => c.role === 'co_creator').map((c) => ({ status: coAnswer(c.status), profile: c.profile })),
+    creator_names: creditNames(credits),
+  };
+}
+
+async function fetchDrink(id: string): Promise<LineageItem | null> {
   const { data, error } = await supabase.from('items').select(LINEAGE_COLUMNS).eq('id', id).maybeSingle();
   if (error) throw error;
-  return data ?? null;
+  return data ? asLineage(data as LineageRow) : null;
+}
+
+/**
+ * Drinks based on this one as `kind`, best-credited first, up to `limit`. A
+ * credit's status is in item_credits, which can't order the drinks, so the
+ * ones whose lead or first bar said yes (or a moderator checked) are read
+ * apart and lead, then the rest by name.
+ */
+export async function fetchBasedOn(id: string, kind: BasedOnKind, limit: number): Promise<LineageItem[]> {
+  const basedOn = (columns: string) => supabase.from('items').select(columns).eq('based_on_id', id).eq('based_on_kind', kind);
+  const [sure, rest] = await Promise.all([
+    basedOn(`${LINEAGE_COLUMNS}, sure:item_credits!inner(id)`).in('sure.role', ['creator', 'bar']).in('sure.status', ['accepted', 'verified']).order('name').limit(limit),
+    basedOn(LINEAGE_COLUMNS).order('name').limit(limit),
+  ]);
+  if (sure.error) throw sure.error;
+  if (rest.error) throw rest.error;
+  const rows = [...((sure.data ?? []) as unknown as LineageRow[]), ...((rest.data ?? []) as unknown as LineageRow[])];
+  const once = rows.filter((r, i) => rows.findIndex((s) => s.id === r.id) === i);
+  return sortRiffs(once.map(asLineage)).slice(0, limit);
 }
 
 /** Every historic style (about 25 rows), for family trees. */
@@ -29,15 +98,15 @@ export async function fetchStyles(): Promise<DrinkStyle[]> {
 }
 
 export interface Lineage {
-  drink: LineageDrink | null;
+  drink: LineageItem | null;
   /** Root first; the last one is what this drink is a riff of. */
-  ancestors: LineageDrink[];
+  ancestors: LineageItem[];
   /** The historic styles above the oldest drink, oldest first (Punch, Sour). */
   styles: DrinkStyle[];
   /** Classics that came from this one (Penicillin under Gold Rush). */
-  classics: LineageDrink[];
+  classics: LineageItem[];
   /** Bars' versions and riffs on it, best-credited first. */
-  riffs: LineageDrink[];
+  riffs: LineageItem[];
 }
 
 /**
@@ -53,39 +122,33 @@ export function useLineage(itemId: string | null | undefined) {
     // Only a real uuid reaches the queries (dev ids like "dev" would 400).
     enabled: !!itemId && UUID.test(itemId),
     queryFn: async (): Promise<Lineage> => {
-      // Two queries so a classic's bar versions (the Negroni has hundreds)
-      // never crowd its child classics out of the row limit.
+      // Apart, so a classic's bar versions (the Negroni has hundreds) never
+      // crowd its child classics out of the row limit.
       // ponytail: the 100 best-credited versions; page them if a list needs more.
-      const [drink, kids, versions] = await Promise.all([
+      const [drink, kids, riffs] = await Promise.all([
         fetchDrink(itemId!),
-        supabase.from('items').select(LINEAGE_COLUMNS).eq('lineage_parent_id', itemId!).limit(500),
-        supabase
-          .from('items')
-          .select(LINEAGE_COLUMNS)
-          .eq('riff_of_id', itemId!)
-          .order('credit_status', { ascending: false, nullsFirst: false })
-          .order('name')
-          .limit(100),
+        supabase.from('items').select(LINEAGE_COLUMNS).eq('based_on_id', itemId!).eq('based_on_kind', 'descends').limit(500),
+        fetchBasedOn(itemId!, 'riff', 100),
       ]);
       if (kids.error) throw kids.error;
-      if (versions.error) throw versions.error;
-      const ancestors = drink ? await walkAncestors(drink, fetchDrink) : [];
+      // Every drink up the line came from fetchDrink.
+      const ancestors = drink ? ((await walkAncestors(drink, fetchDrink)) as LineageItem[]) : [];
       const oldest = ancestors[0] ?? drink;
-      const styles = oldest && !parentId(oldest) && oldest.lineage_style_id ? styleChain(oldest.lineage_style_id, await fetchStyles()) : [];
+      const styles = oldest?.based_on_style_id ? styleChain(oldest.based_on_style_id, await fetchStyles()) : [];
       return {
         drink,
         ancestors,
         styles,
-        classics: (kids.data ?? []).sort((a, b) => (a.origin_year ?? 9999) - (b.origin_year ?? 9999)),
-        riffs: sortRiffs(versions.data ?? []),
+        classics: ((kids.data ?? []) as unknown as LineageRow[]).map(asLineage).sort((a, b) => (a.origin_year ?? 9999) - (b.origin_year ?? 9999)),
+        riffs,
       };
     },
   });
 }
 
-export type CreditDrink = LineageDrink & {
-  riff_of: Pick<LineageDrink, 'id' | 'name' | 'is_catalog'> | null;
-  lineage_parent: Pick<LineageDrink, 'id' | 'name'> | null;
+export type CreditDrink = LineageItem & {
+  /** The drink it's based on (a riff's drink, a classic's parent); null for a style or none. */
+  based_on: Pick<LineageDrink, 'id' | 'name' | 'is_catalog'> | null;
 };
 
 /**
@@ -100,11 +163,12 @@ export function useDrinkCredit(itemId: string | null | undefined) {
     queryFn: async (): Promise<CreditDrink | null> => {
       const { data, error } = await supabase
         .from('items')
-        .select(`${LINEAGE_COLUMNS}, riff_of:riff_of_id(id, name, is_catalog), lineage_parent:lineage_parent_id(id, name)`)
+        .select(`${LINEAGE_COLUMNS}, based_on:based_on_id(id, name, is_catalog)`)
         .eq('id', itemId!)
         .maybeSingle();
       if (error) throw error;
-      return (data as CreditDrink | null) ?? null;
+      // ponytail: supabase-js can't type an embed on items' own foreign keys ("more than one relationship"), so the row is cast.
+      return data ? asLineage(data as unknown as LineageRow & Pick<CreditDrink, 'based_on'>) : null;
     },
   });
 }

@@ -24,7 +24,7 @@ export interface SameNameDrink {
   glassName?: string | null;
   /** When it was saved (items.created_at), as the card says it: "12 Oct". */
   saved?: string | null;
-  /** The classic it's a version of (riff_of_id, when that's a catalog drink). */
+  /** The classic it's a version of (what it's based on as a riff, when that's a catalog drink). */
   classic: { id: string; name: string } | null;
   /** Its spec lines, in order, as stored. */
   spec: { id: string | null; name: string; amount: number | null; unit: string | null }[];
@@ -33,13 +33,14 @@ export interface SameNameDrink {
 type Row = MenuItemRow & {
   bar_id: string | null;
   created_at: string | null;
-  riff_of: { id: string; name: string; is_catalog: boolean | null } | null;
+  based_on_kind: string | null;
+  based_on: { id: string; name: string; is_catalog: boolean | null } | null;
   menu_drinks: { menu: { name: string; is_active: boolean | null } | null }[] | null;
   spec: { sort_order: number | null; amount: number | null; unit: string | null; ingredient: { id: string; name: string; ingredient_role: string | null } | null }[] | null;
 };
 
 const COLUMNS = `${MENU_DRINK_COLUMNS}, bar_id, created_at,
-  riff_of:riff_of_id(id, name, is_catalog),
+  based_on_kind, based_on:based_on_id(id, name, is_catalog),
   menu_drinks!menu_drinks_item_id_fkey(menu:menus(name, is_active)),
   spec:app_recipe_presentation!recipe_item_id(sort_order, amount, unit, ingredient:display_ingredient(id, name, ingredient_role))`;
 
@@ -107,7 +108,7 @@ async function readDrink(id: string): Promise<SameNameDrink | null> {
   const drink = row ? toMenuDrink(row) : null;
   if (!row || !drink) return null;
   const menus = (row.menu_drinks ?? []).flatMap((m) => (m.menu ? [m.menu] : []));
-  const riff = row.riff_of;
+  const riff = row.based_on_kind === 'riff' ? row.based_on : null;
   const spec = [...(row.spec ?? [])].sort((a, b) => (a.sort_order ?? 0) - (b.sort_order ?? 0));
   return {
     id: row.id,

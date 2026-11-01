@@ -2,6 +2,7 @@ import { useQuery } from '@tanstack/react-query';
 
 import { dropdownKeys } from '@/hooks/useDropdowns';
 import { MENU_DRINK_ITEM, type MenuItemRow } from '@/hooks/useMenus';
+import { onNowFilters } from '@/lib/listRows';
 import { supabase } from '@/lib/supabase';
 
 export interface CurrentSectionRow {
@@ -25,10 +26,14 @@ export function useCurrentMenuDrinks(menuIds: string[]) {
     // Tonight's first paint: saved between launches.
     meta: { persist: true },
     queryFn: async (): Promise<CurrentSectionRow[]> => {
+      // Only the drinks on now: not one planned for later or waiting for approval (lists and runs).
+      const [waiting, onFrom] = onNowFilters();
       const { data, error } = await supabase
         .from('menu_sections')
         .select(`id, menu_id, name, sort_order, menu_drinks(sort_order, price, ${MENU_DRINK_ITEM})`)
         .in('menu_id', key)
+        .or(waiting, { referencedTable: 'menu_drinks' })
+        .or(onFrom, { referencedTable: 'menu_drinks' })
         .order('sort_order', { ascending: true });
       if (error) throw error;
       return (data ?? []) as CurrentSectionRow[];

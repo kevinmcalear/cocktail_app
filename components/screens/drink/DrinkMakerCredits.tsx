@@ -5,6 +5,7 @@ import { Body, Button, Caption, Headline, Tag } from '@/components/ds';
 import { MakerPicker } from '@/components/maker/MakerPicker';
 import { space } from '@/constants/tokens';
 import { useDrinkBarPage, useDrinkMakerCredits, useEditMakerCredit, type MakerCredit } from '@/hooks/useMakers';
+import { plainDbMessage } from '@/lib/dbError';
 
 const WHAT = {
   ice: { title: 'Ice by', ask: 'Who cuts the ice?' },
@@ -18,7 +19,7 @@ const WHAT = {
  */
 export function DrinkMakerCredits({ itemId, canEdit }: { itemId: string; canEdit: boolean }) {
   const { data: credits = [] } = useDrinkMakerCredits(itemId);
-  const shown = canEdit ? credits : credits.filter((c) => c.confirmed_at);
+  const shown = canEdit ? credits : credits.filter((c) => c.status !== 'pending');
   if (!canEdit && !shown.length) return null;
   return (
     <View style={styles.stack}>
@@ -44,7 +45,7 @@ function CreditRow({ itemId, makes, credits, canEdit }: { itemId: string; makes:
           <Body numberOfLines={1} style={styles.name}>
             {c.maker?.display_name ?? 'A maker'}
           </Body>
-          {canEdit && !c.confirmed_at ? <Tag label="Waiting for them to confirm" /> : null}
+          {canEdit && c.status === 'pending' ? <Tag label="Waiting for them to confirm" /> : null}
           {canEdit ? (
             <Button label="Remove" variant="ghost" disabled={edit.isPending} onPress={() => edit.mutate({ profileId: c.profile_id, makes, remove: true })} />
           ) : null}
@@ -65,7 +66,8 @@ function CreditRow({ itemId, makes, credits, canEdit }: { itemId: string; makes:
       ) : null}
       {edit.error ? (
         <Caption tone="accent" role="alert">
-          Couldn’t save that. Check your connection and try again.
+          {/* The database's own words when it refuses (a maker that said no to this drink). */}
+          {plainDbMessage(edit.error) ?? 'Couldn’t save that. Check your connection and try again.'}
         </Caption>
       ) : null}
     </View>

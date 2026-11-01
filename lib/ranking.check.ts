@@ -88,19 +88,29 @@ assert.equal(rankKeyAt([0, 1, 2], 1), 0.5);
 }
 
 // --- Which list ---
-assert.deepEqual(rankedAs({ id: 'house', name: 'House Martini', origin: 'Classic', riff_of_id: 'martini', riff_of: { id: 'martini', name: 'Martini' } }), { id: 'martini', name: 'Martini' });
-assert.deepEqual(rankedAs({ id: 'riff', name: 'Smoky Martini', origin: 'Varient', riff_of_id: 'martini' }), { id: 'riff', name: 'Smoky Martini' });
-assert.deepEqual(rankedAs({ id: 'original', name: 'Bolo Tie', origin: 'Original', riff_of_id: null }), { id: 'original', name: 'Bolo Tie' });
-assert.deepEqual(rankedAs({ id: 'martini', name: 'Martini', origin: 'Classic', riff_of_id: null }), { id: 'martini', name: 'Martini' });
+assert.deepEqual(rankedAs({ id: 'house', name: 'House Martini', origin: 'Classic', based_on_id: 'martini', based_on_kind: 'riff', based_on: { id: 'martini', name: 'Martini' } }), { id: 'martini', name: 'Martini' });
+assert.deepEqual(rankedAs({ id: 'riff', name: 'Smoky Martini', origin: 'Varient', based_on_id: 'martini', based_on_kind: 'riff' }), { id: 'riff', name: 'Smoky Martini' });
+assert.deepEqual(rankedAs({ id: 'original', name: 'Bolo Tie', origin: 'Original', based_on_id: null, based_on_kind: null }), { id: 'original', name: 'Bolo Tie' });
+assert.deepEqual(rankedAs({ id: 'martini', name: 'Martini', origin: 'Classic', based_on_id: null }), { id: 'martini', name: 'Martini' });
 // Linked to a catalog classic: ranked with it whatever the bar labelled it.
 assert.deepEqual(
-  rankedAs({ id: 'mega', name: 'Mega Negroni', origin: null, riff_of_id: 'negroni', riff_of: { id: 'negroni', name: 'Negroni', is_catalog: true } }),
+  rankedAs({ id: 'mega', name: 'Mega Negroni', origin: null, based_on_id: 'negroni', based_on_kind: 'riff', based_on: { id: 'negroni', name: 'Negroni', is_catalog: true } }),
   { id: 'negroni', name: 'Negroni' }
 );
 // A riff on another bar's original stays its own list.
 assert.deepEqual(
-  rankedAs({ id: 'riff', name: 'Smoked Pear Penicillin', origin: 'Original', riff_of_id: 'pen', riff_of: { id: 'pen', name: 'Penicillin', is_catalog: false } }),
+  rankedAs({ id: 'riff', name: 'Smoked Pear Penicillin', origin: 'Original', based_on_id: 'pen', based_on_kind: 'riff', based_on: { id: 'pen', name: 'Penicillin', is_catalog: false } }),
   { id: 'riff', name: 'Smoked Pear Penicillin' }
+);
+// A classic that descends from another (history, not a version of it) is its own list.
+assert.deepEqual(
+  rankedAs({ id: 'pen', name: 'Penicillin', origin: 'Classic', based_on_id: 'goldrush', based_on_kind: 'descends', based_on: { id: 'goldrush', name: 'Gold Rush', is_catalog: true } }),
+  { id: 'pen', name: 'Penicillin' }
+);
+// published_items (usePublicDrink) still says it the old way: the same answer.
+assert.deepEqual(
+  rankedAs({ id: 'mega', name: 'Mega Negroni', origin: null, riff_of_id: 'negroni', riff_of: { id: 'negroni', name: 'Negroni', is_catalog: true } }),
+  { id: 'negroni', name: 'Negroni' }
 );
 
 assert.equal(plural('Martini'), 'Martinis');
