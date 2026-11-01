@@ -124,6 +124,8 @@ export function ShareMenuSheet({ menu, onClose }: { menu: SharedMenu; onClose: (
         />
         {menu.sharedAt ? <AnswerRow label="Link" value={url} /> : null}
       </View>
+      {/* The menu as a picture for a story or a post (Bet-poster); sharing it publishes nothing. */}
+      <Button label="Share as a poster" icon="photo" variant="ghost" onPress={() => go(`/share/poster?menu=${menu.id}`)} />
       {menu.sharedAt ? <Button label="Stop sharing" icon="xmark" variant="ghost" onPress={() => void setShared(false)} disabled={share.isPending} /> : null}
       {error ? <Body tone="accent">{error}</Body> : null}
       {error && NEEDS_PROFILE.test(error) ? <Button label="Set up your public profile" icon="person.crop.circle" variant="secondary" onPress={() => go('/settings/profile')} /> : null}

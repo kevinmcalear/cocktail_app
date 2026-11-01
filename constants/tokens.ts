@@ -110,6 +110,13 @@ export const partyHues = ['#D0643B', '#8FB3E8', '#9CC9A0', '#C9A0DC', '#E8C25A',
 /** The printed run sheet: black on white, whatever the theme (run sheet board "Sheet"). */
 export const printPaper = { paper: '#FFFFFF', ink: '#1A1714', muted: '#555049', rule: '#C9C2B6', hairline: '#E6E0D6' } as const;
 
+/**
+ * What leaves the app as a picture (lib/paper, Bet-poster): the warm paper a
+ * top three sits on by day and its night ground, the light panel a bar's
+ * drinks are drawn on, and the cream ink on a bar's colour.
+ */
+export const posterPaper = { day: '#F3E6DA', night: '#241D18', panel: '#F6E7DA', cream: '#FFF6EE' } as const;
+
 /** The accent when there's no venue brand: bar-light amber. */
 export const DEFAULT_ACCENT = '#E4B062';
 

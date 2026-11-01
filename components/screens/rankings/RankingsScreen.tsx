@@ -10,6 +10,8 @@ import { useSignedIn } from '@/ctx/AuthContext';
 import { areaFor, useDrinkRankings, useMyRankList, type RankScope, type RankVenue } from '@/hooks/useRankings';
 import { countryName } from '@/lib/countries';
 import { MIN_RANKERS, plural } from '@/lib/ranking';
+import { shareOrCopy } from '@/lib/shareLink';
+import { siteOrigin } from '@/lib/venueLink';
 
 import { ReportAction } from '../safety/ReportSheet';
 import { AreaRankList, ListNote, MyRankList } from './RankingLists';
@@ -115,11 +117,18 @@ function RankingsPage({ rankedAs, home }: RankingsScreenProps) {
           </View>
         </View>
       </ScrollView>
-      <View style={[styles.back, { top: insets.top + space.sm, left: gutter }]}>
+      <View style={[styles.top, { top: insets.top + space.sm, left: gutter, right: gutter }]}>
         <GlassButton
           accessibilityLabel={Platform.OS === 'web' ? 'Back' : 'Close'}
           icon={Platform.OS === 'web' ? 'chevron.left' : 'xmark'}
           onPress={() => (router.canGoBack() ? router.back() : router.replace('/'))}
+        />
+        {/* Your top three as a poster (Bet-poster); with no list of your own, the page's link. */}
+        <GlassButton
+          icon="square.and.arrow.up"
+          label="Share"
+          accessibilityLabel={mine?.length ? `Share your top three ${plural(rankedAs.name)}` : `Share the best ${rankedAs.name}`}
+          onPress={() => (mine?.length ? router.push(`/share/poster?list=${rankedAs.id}`) : void shareOrCopy(`${siteOrigin()}/rankings/${rankedAs.id}`, `Best ${rankedAs.name}`))}
         />
       </View>
     </View>
@@ -134,7 +143,7 @@ const styles = StyleSheet.create({
   columnsWide: { flexDirection: 'row', alignItems: 'flex-start' },
   column: { flex: 1, minWidth: 0 },
   section: { gap: space.sm },
-  back: { position: 'absolute' },
+  top: { position: 'absolute', flexDirection: 'row', justifyContent: 'space-between' },
   report: { alignItems: 'flex-start' },
   eyebrow: { letterSpacing: 1 },
 });

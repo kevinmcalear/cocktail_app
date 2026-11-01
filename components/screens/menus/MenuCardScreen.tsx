@@ -132,7 +132,11 @@ function CardBody({ menuId, venue }: { menuId: string; venue: Venue | null }) {
       <View nativeID="menu-card-controls" style={[styles.controls, { paddingTop: insets.top + space.sm, paddingHorizontal: gutter }]}>
         {/* A bare printable page: text Back and Print, no app chrome (the sidebar hides here too). */}
         <Button label="Back" variant="ghost" accessibilityLabel="Back to the menu" onPress={() => (router.canGoBack() ? router.back() : router.replace(`/menus/${menuId}`))} />
-        <Button label={web ? 'Print' : 'Share'} accessibilityHint={web ? 'Print it or save it as a PDF' : undefined} variant="secondary" onPress={share} disabled={!menu} />
+        <View style={styles.end}>
+          {/* The menu as a picture, in the bar's colour (Bet-poster). */}
+          <Button label="Poster" icon="photo" variant="secondary" onPress={() => router.push(`/share/poster?menu=${menuId}`)} disabled={!menu} />
+          <Button label={web ? 'Print' : 'Share'} accessibilityHint={web ? 'Print it or save it as a PDF' : undefined} variant="secondary" onPress={share} disabled={!menu} />
+        </View>
       </View>
       <ScrollView contentContainerStyle={[styles.page, { paddingHorizontal: gutter, paddingBottom: insets.bottom + space.xxxl }]}>
         {!menu ? (
@@ -148,6 +152,7 @@ function CardBody({ menuId, venue }: { menuId: string; venue: Venue | null }) {
 const styles = StyleSheet.create({
   screen: { flex: 1 },
   controls: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'flex-start', gap: space.md },
+  end: { flexDirection: 'row', gap: space.sm },
   page: { alignItems: 'center', paddingTop: space.xl },
   card: { width: '100%', maxWidth: 656, alignItems: 'center', gap: space.sm },
   mark: { width: 28, height: 28, borderRadius: radius.mark * 2, alignItems: 'center', justifyContent: 'center', overflow: 'hidden' },
