@@ -99,6 +99,9 @@ function PaperThing({ el, unit, uri, onArrive, family }: { el: PaperEl; unit: nu
     <Text
       aria-hidden
       numberOfLines={1}
+      // fitSize guesses a face's letter width; where a face runs wider (the display face on iOS), the line shrinks to fit instead of cutting the name.
+      adjustsFontSizeToFit
+      minimumFontScale={0.5}
       allowFontScaling={false}
       style={[
         styles.at,
