@@ -22,7 +22,8 @@ export function AllergyLine({ itemId, guest }: { itemId: string; guest: boolean 
 
 function FloorLine({ itemId }: { itemId: string }) {
   const { data } = useDrinkAllergens(itemId);
-  if (data === undefined) return null;
+  // Nothing to declare yet (a beer, or a drink with no spec): no line, rather than a line about nothing.
+  if (!data || (data.lines === 0 && !data.allergens.length)) return null;
   return <Line text={containsLine(data)} />;
 }
 

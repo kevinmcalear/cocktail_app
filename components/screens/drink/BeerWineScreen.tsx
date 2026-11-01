@@ -152,10 +152,10 @@ function BeerWinePage({ kind, item, favorite, onToggleFavorite, canEdit, onEdit 
       body={(columns) => (
         <View style={styles.body}>
           {columns ? null : title}
-          {staff ? <AllergyLine itemId={item.id} guest={false} /> : null}
           {item.description ? <Body>{item.description}</Body> : null}
           {staff ? null : <PalateFit itemId={item.id} name={item.name} />}
           <FactRows rows={facts} />
+          {staff ? <AllergyLine itemId={item.id} guest={false} /> : null}
           {item.bar_id ? <ApprovalNotice itemId={item.id} /> : null}
           {item.notes ? <Body tone="muted">{item.notes}</Body> : null}
           {staff ? <RowGroup title="Pour it" rows={pourIt} /> : null}
