@@ -3,7 +3,6 @@ import type { ReactNode } from 'react';
 import { StyleSheet, View } from 'react-native';
 
 import { Caption, Display, DrinkDrawingFor, DsText, PressableScale, TextLink, useDs, type IconName } from '@/components/ds';
-import { SectionHeading } from '@/components/screens/settings/SettingsParts';
 import { IconSymbol } from '@/components/ui/icon-symbol';
 import { displayFaces, palateHues, radius, space } from '@/constants/tokens';
 import { useItemSketch } from '@/hooks/useItemSketch';
@@ -29,7 +28,9 @@ export function TonightHead({ eyebrow }: { eyebrow: string }) {
 export function TonightLabel({ title, aside, onAside }: { title: string; aside?: string | null; onAside?: () => void }) {
   return (
     <View style={styles.label}>
-      <SectionHeading>{title}</SectionHeading>
+      <Caption tone="muted" role="heading" style={styles.caps}>
+        {title}
+      </Caption>
       {aside ? onAside ? <TextLink label={aside} onPress={onAside} /> : <Caption tone="muted">{aside}</Caption> : null}
     </View>
   );
@@ -67,9 +68,18 @@ export function HeroTrio({ ids, label, onPress }: { ids: readonly string[]; labe
   const [left, middle, right] = ids;
   return (
     <PressableScale role="link" accessibilityLabel={label} onPress={onPress} style={styles.trio}>
-      {left ? <DrinkDrawingFor itemId={left} size="tile" /> : null}
+      {/* All three on the sky (hero size, no paper), the outer two smaller and tucked in. */}
+      {left ? (
+        <View style={styles.side}>
+          <DrinkDrawingFor itemId={left} size="hero" staff />
+        </View>
+      ) : null}
       {middle ? <DrinkDrawingFor itemId={middle} size="hero" staff /> : null}
-      {right ? <DrinkDrawingFor itemId={right} size="tile" /> : null}
+      {right ? (
+        <View style={styles.side}>
+          <DrinkDrawingFor itemId={right} size="hero" staff />
+        </View>
+      ) : null}
     </PressableScale>
   );
 }
@@ -139,7 +149,8 @@ const styles = StyleSheet.create({
   caps: { textTransform: 'uppercase', letterSpacing: 1.2 },
   label: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', gap: space.md },
   sky: { position: 'absolute', left: 0, right: 0, top: 0, height: SKY },
-  trio: { flexDirection: 'row', alignItems: 'flex-end', justifyContent: 'center', gap: space.xs, paddingVertical: space.md },
+  trio: { flexDirection: 'row', alignItems: 'flex-end', justifyContent: 'center', paddingVertical: space.md },
+  side: { width: 96, alignItems: 'center', transform: [{ scale: 0.72 }], transformOrigin: 'bottom' },
   listHead: { gap: space.xs, alignSelf: 'flex-start' },
   listName: { flexDirection: 'row', alignItems: 'center', gap: space.sm },
   tile: { width: 132, gap: space.xs },
