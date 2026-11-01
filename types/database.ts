@@ -7584,7 +7584,7 @@ export type Database = {
         }[]
       }
       friends_ranks: {
-        Args: { p_limit?: number }
+        Args: { p_item_id?: string; p_limit?: number }
         Returns: {
           avatar_url: string
           best_in_family: boolean
