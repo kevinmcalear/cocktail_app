@@ -50,16 +50,16 @@ export function CountScreen({ barId, menuIds }: CountScreenProps) {
   const summary = zoneSummary(counted);
   const done = savedZones.includes(zone.id);
   const next = () => setIndex((i) => Math.min(i + 1, zones.length - 1));
-  const saveZone = () =>
-    save
-      .mutateAsync({
-        zoneId: zone.id,
-        lines: spots.filter((l) => valueOf(l) !== null).map((l) => ({ item_id: l.item_id, location_id: l.id, amount: valueOf(l)!, unit: countUnit(l.par_unit) })),
-      })
-      .then(() => {
-        setSavedZones((z) => [...z, zone.id]);
-        if (index < zones.length - 1) next();
-      }, () => {});
+  // The count is kept on the phone at once and sends when there's signal, so the next zone opens straight away.
+  const saveZone = () => {
+    save.mutate({
+      zoneId: zone.id,
+      lines: spots.filter((l) => valueOf(l) !== null).map((l) => ({ item_id: l.item_id, location_id: l.id, amount: valueOf(l)!, unit: countUnit(l.par_unit) })),
+    });
+    setSavedZones((z) => [...z, zone.id]);
+    if (index < zones.length - 1) next();
+  };
+  const sending = save.isPending && !save.isPaused;
 
   return (
     <View style={styles.block}>
@@ -104,9 +104,10 @@ export function CountScreen({ barId, menuIds }: CountScreenProps) {
         );
       })}
       {spots.length ? <Body tone="muted">{summary.sentence}</Body> : null}
-      {save.error ? <Caption tone="accent">{"Couldn't save the count. Check your connection and try again."}</Caption> : null}
+      {save.error ? <Caption tone="accent">{"Couldn't save the last count. Try it again."}</Caption> : null}
+      {save.isPaused ? <Caption tone="muted">Saved on this phone. It sends when there’s signal.</Caption> : null}
       <View style={styles.actions}>
-        {spots.length ? <Button label={save.isPending ? 'Saving…' : index < zones.length - 1 ? 'Save and next' : 'Save count'} disabled={save.isPending || !spots.some((l) => valueOf(l) !== null)} onPress={saveZone} /> : null}
+        {spots.length ? <Button label={sending ? 'Saving…' : index < zones.length - 1 ? 'Save and next' : 'Save count'} disabled={sending || !spots.some((l) => valueOf(l) !== null)} onPress={saveZone} /> : null}
         {index < zones.length - 1 ? <Button label={`Skip to ${zones[index + 1].name}`} variant="ghost" onPress={next} /> : null}
         {index > 0 ? <Button label="Back" variant="ghost" onPress={() => setIndex((i) => i - 1)} /> : null}
       </View>

@@ -1,6 +1,7 @@
 import { keepPreviousData, useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 
 import { useUserId } from '@/ctx/AuthContext';
+import { BAR_WRITES, type ServesWrite, type SwapChange, type SwapsWrite } from '@/hooks/barWrites';
 import { readBarBrands } from '@/hooks/useBarBrands';
 import { pickerResult, usePickerTerm } from '@/hooks/useDiscover';
 import { houseMadeUnder, purchasingFor, recipesFor, toLines } from '@/hooks/usePrepList';
@@ -221,41 +222,48 @@ function useRunSheetWrite<V>(menuId: string, write: (v: V) => Promise<unknown>, 
   });
 }
 
-/** Serves for some of the menu's drinks (null clears them). */
-export function useSetServes(menuId: string) {
-  return useRunSheetWrite<{ menuDrinkIds: string[]; serves: number | null }>(
-    menuId,
-    async ({ menuDrinkIds, serves }) => check(await supabase.from('menu_drinks').update({ serves }).in('id', menuDrinkIds)),
-    (data, { menuDrinkIds, serves }) => ({ ...data, drinks: data.drinks.map((d) => (menuDrinkIds.includes(d.id) ? { ...d, serves } : d)) }),
-  );
+/**
+ * A run sheet write that works with no signal (hooks/barWrites.ts): it shows
+ * at once on the cached sheet, waits on the phone and sends when there's signal.
+ */
+function useRunSheetBarWrite<W extends { menuId: string }>(
+  menuId: string,
+  write: { key: readonly string[]; send: (w: W) => Promise<unknown> },
+  patch: (data: RunSheetData, w: W) => RunSheetData,
+) {
+  const queryClient = useQueryClient();
+  const key = runSheetKey(menuId, useUserId());
+  return useMutation({
+    mutationKey: write.key,
+    mutationFn: write.send,
+    onMutate: async (w: W) => {
+      await queryClient.cancelQueries({ queryKey: key });
+      const before = queryClient.getQueryData<RunSheetData>(key);
+      if (before) queryClient.setQueryData<RunSheetData>(key, patch(before, w));
+      return { before };
+    },
+    onError: (_e, _w, ctx) => ctx?.before && queryClient.setQueryData(key, ctx.before),
+    onSettled: () => queryClient.invalidateQueries({ queryKey: ['run-sheet', menuId] }),
+  });
 }
 
-export interface SwapChange {
-  menuDrinkId: string;
-  fromItemId: string;
-  /** Null puts the library's bottle back. */
-  to: { id: string; name: string } | null;
+/** Serves for some of the menu's drinks (null clears them). */
+export function useSetServes(menuId: string) {
+  const mutation = useRunSheetBarWrite<ServesWrite>(menuId, BAR_WRITES.serves, (data, { menuDrinkIds, serves }) => ({
+    ...data,
+    drinks: data.drinks.map((d) => (menuDrinkIds.includes(d.id) ? { ...d, serves } : d)),
+  }));
+  return { ...mutation, mutate: (v: Omit<ServesWrite, 'menuId'>) => mutation.mutate({ ...v, menuId }) };
 }
 
 /** Swaps for this menu only: one line, or every line a suggestion found. */
 export function useSetSwaps(menuId: string) {
-  return useRunSheetWrite<SwapChange[]>(
-    menuId,
-    async (changes) => {
-      const set = changes.filter((c) => c.to && c.to.id !== c.fromItemId);
-      const clear = changes.filter((c) => !c.to || c.to.id === c.fromItemId);
-      if (set.length) {
-        const rows = set.map((c) => ({ menu_drink_id: c.menuDrinkId, from_item_id: c.fromItemId, to_item_id: c.to!.id }));
-        check(await supabase.from('menu_run_swaps').upsert(rows, { onConflict: 'menu_drink_id,from_item_id' }));
-      }
-      for (const c of clear) check(await supabase.from('menu_run_swaps').delete().eq('menu_drink_id', c.menuDrinkId).eq('from_item_id', c.fromItemId));
-    },
-    (data, changes) => {
-      const touched = (s: RunSwap) => changes.some((c) => c.menuDrinkId === s.menuDrinkId && c.fromItemId === s.fromItemId);
-      const added = changes.filter((c) => c.to && c.to.id !== c.fromItemId).map((c) => ({ menuDrinkId: c.menuDrinkId, fromItemId: c.fromItemId, toItemId: c.to!.id, toName: c.to!.name }));
-      return { ...data, swaps: [...data.swaps.filter((s) => !touched(s)), ...added] };
-    },
-  );
+  const mutation = useRunSheetBarWrite<SwapsWrite>(menuId, BAR_WRITES.swaps, (data, { changes }) => {
+    const touched = (s: RunSwap) => changes.some((c) => c.menuDrinkId === s.menuDrinkId && c.fromItemId === s.fromItemId);
+    const added = changes.filter((c) => c.to && c.to.id !== c.fromItemId).map((c) => ({ menuDrinkId: c.menuDrinkId, fromItemId: c.fromItemId, toItemId: c.to!.id, toName: c.to!.name }));
+    return { ...data, swaps: [...data.swaps.filter((s) => !touched(s)), ...added] };
+  });
+  return { ...mutation, mutate: (changes: SwapChange[]) => mutation.mutate({ menuId, changes }) };
 }
 
 export interface PartyInput {

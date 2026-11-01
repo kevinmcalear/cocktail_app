@@ -1,8 +1,9 @@
+import { BAR_WRITES } from '@/hooks/barWrites';
 import { deleteCocktailFn, updateCocktailFn } from '@/hooks/useCocktails';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import NetInfo from '@react-native-community/netinfo';
 import Constants from 'expo-constants';
-import { focusManager, type Mutation, MutationCache, notifyManager, onlineManager, QueryCache, QueryClient } from '@tanstack/react-query';
+import { dehydrate, focusManager, type Mutation, MutationCache, type QueryKey, notifyManager, onlineManager, QueryCache, QueryClient } from '@tanstack/react-query';
 import { AppState, Platform } from 'react-native';
 
 import { coalesceTimer } from '@/lib/coalesceTimer';
@@ -17,6 +18,7 @@ import {
   shouldPersistQuery,
 } from '@/lib/queryCachePersist';
 import { BASE, KEEP, queryDefaults } from '@/lib/queryDefaults';
+import { retryBarWrite } from '@/lib/offlineWrites';
 import { loadSavedSpecBooks } from '@/lib/specBookFile';
 
 // Setup network listener for TanStack Query
@@ -169,3 +171,27 @@ for (const { queryKey, options } of queryDefaults(PERSISTED_KEYS, FILE_KEYS)) {
 const refreshAll = () => queryClient.invalidateQueries();
 queryClient.setMutationDefaults(['updateCocktail'], { mutationFn: updateCocktailFn, onSettled: refreshAll });
 queryClient.setMutationDefaults(['deleteCocktail'], { mutationFn: deleteCocktailFn, onSettled: refreshAll });
+
+// Behind-the-bar writes (hooks/barWrites.ts): they wait for signal, try again
+// on a dropped connection, and survive the app closing.
+for (const write of Object.values(BAR_WRITES)) {
+  queryClient.setMutationDefaults(write.key, {
+    mutationFn: write.send as (v: unknown) => Promise<unknown>,
+    retry: retryBarWrite,
+    onSettled: (_data, _error, v) => {
+      for (const queryKey of (write.refresh as (v: unknown) => QueryKey[])(v)) void queryClient.invalidateQueries({ queryKey });
+    },
+  });
+}
+
+// The row saves every 5 seconds at most; a write that starts waiting for
+// signal is saved at once, so closing the app straight after can't lose it.
+let saving: ReturnType<typeof setTimeout> | undefined;
+queryClient.getMutationCache().subscribe((event) => {
+  if (event.type !== 'updated' || !event.mutation.state.isPaused || saving) return;
+  saving = setTimeout(() => {
+    saving = undefined;
+    const clientState = dehydrate(queryClient, persistOptions.dehydrateOptions);
+    void asyncStoragePersister.saveNow({ timestamp: Date.now(), buster: SAVED.buster, clientState }).catch(() => undefined);
+  }, 0);
+});
