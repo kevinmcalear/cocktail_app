@@ -27,8 +27,8 @@ import { MineResults } from './MineResults';
 import { PublicResults } from './PublicResults';
 import { DrawnSearch, ResultGroup, ResultRow } from './ResultRows';
 import { ScopeSwitch } from './ScopeSwitch';
-import { KeyCap, SearchField } from './SearchField';
-import { ScopeToken, StyleTiles } from './SearchParts';
+import { SearchField } from './SearchField';
+import { StyleTiles } from './SearchParts';
 import { RecentSearches } from './RecentSearches';
 
 const NO_ITEMS: SearchItem[] = [];
@@ -55,7 +55,7 @@ interface HeadProps {
   onDone?: () => void;
   /** Return in the field; Done (onDone) when not given. */
   onSubmit?: () => void;
-  /** The ⌘K palette: the place menu and the esc key cap at the field's end (nav-search-desk-preview). */
+  /** The ⌘K palette: "Search or add" with the esc key cap at the field's end (Prod-desk-cmdk). */
   keys?: boolean;
 }
 
@@ -73,11 +73,10 @@ export function SearchHead({ query, onQuery, scope, onScope, mine, area, autoFoc
   const options = scopeOptions(mine.label, area?.label ?? null);
   const placeholder = searchPlaceholder(scope, mine, area);
   if (keys) {
-    // The palette: the place at the field's end, as phones have it over theirs (q03, nav-search-desk-preview).
-    const place = <ScopeToken options={options} scope={scope} onScope={onScope} hint={<TabHint />} />;
+    // The palette searches where you are and adds there; "Search everywhere" at the results' end widens it.
     return (
       <View style={styles.head}>
-        <SearchField query={query} onQuery={onQuery} placeholder={placeholder} autoFocus={autoFocus} onSubmit={onSubmit ?? onDone} onDone={onDone} keys place={place} />
+        <SearchField query={query} onQuery={onQuery} placeholder="Search or add" autoFocus={autoFocus} onSubmit={onSubmit ?? onDone} onDone={onDone} keys />
         <View style={[styles.rule, { marginHorizontal: -gutter, backgroundColor: ds.c.line }]} />
       </View>
     );
@@ -90,16 +89,6 @@ export function SearchHead({ query, onQuery, scope, onScope, mine, area, autoFoc
   );
 }
 
-/** Under the palette's place menu: "tab moves to the next place". */
-function TabHint() {
-  return (
-    <>
-      <KeyCap label="tab" />
-      <Caption tone="muted">moves to the next place</Caption>
-    </>
-  );
-}
-
 interface BodyProps {
   query: string;
   scope: SearchScope;
@@ -108,7 +97,7 @@ interface BodyProps {
   area?: SearchArea | null;
   /** The palette closes itself when a jump stays on the same page (Library to a Library filter). */
   onJump?: () => void;
-  /** Rows of the door's own (⌘K's Commands group, Pick for me): with Techniques and History while nothing is typed, after the results once something is. */
+  /** Rows of the door's own (⌘K's Pick for me): with Techniques and History while nothing is typed, after the results once something is. */
   commands?: ReactNode;
   /** The ⌘K palette: "Search everywhere for …" is a slim row there, not a button (nav-search-desk-palette). */
   palette?: boolean;

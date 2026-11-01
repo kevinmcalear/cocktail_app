@@ -30,7 +30,7 @@ interface MineResultsProps {
   query: string;
   mine: SearchMine;
   onEverywhere: () => void;
-  /** The ⌘K palette's Commands group, after the results. */
+  /** Rows of the door's own, after the results. */
   commands?: ReactNode;
   /** In the ⌘K palette: Search everywhere is a slim row. */
   palette?: boolean;
@@ -50,6 +50,16 @@ export const specLine = (i: SearchItem) =>
     .slice(0, 4)
     .join(', ');
 
+/** The venue's library (or your own drinks), less what it hides. */
+export function useMineCatalog(mine: SearchMine) {
+  const { items: catalog, isLoading } = useSearchCatalog(mine.contextIds);
+  const items = useMemo(() => {
+    const hidden = new Set(mine.hiddenIds);
+    return hidden.size ? catalog.filter((i) => !hidden.has(itemIdOf(i.id))) : catalog;
+  }, [catalog, mine.hiddenIds]);
+  return { items, isLoading };
+}
+
 /**
  * The venue's library (or your own drinks) matching the query: drinks, each
  * saying why it's here and ending with its score, ingredients and menus, the
@@ -59,11 +69,7 @@ export const specLine = (i: SearchItem) =>
 export function MineResults({ query, mine, onEverywhere, commands, palette, show, onCounts, typeAhead }: MineResultsProps) {
   const router = useRouter();
   const drawn = use(DrawnSearch);
-  const { items: catalog, isLoading } = useSearchCatalog(mine.contextIds);
-  const items = useMemo(() => {
-    const hidden = new Set(mine.hiddenIds);
-    return hidden.size ? catalog.filter((i) => !hidden.has(itemIdOf(i.id))) : catalog;
-  }, [catalog, mine.hiddenIds]);
+  const { items, isLoading } = useMineCatalog(mine);
   const groups = useMemo(() => groupCatalog(items, query), [items, query]);
   const facts = useMineFacts(mine.venueId, items);
   const q = query.trim();

@@ -1,75 +1,47 @@
-import { createContext, useCallback, useContext, useEffect, useId, useState, type ReactNode } from 'react';
+import { createContext, useContext, useEffect, useId, useState, type ReactNode } from 'react';
 import { Platform } from 'react-native';
 
 /**
- * Keyboard moves through the ⌘K palette's results (nav-search-desk-palette):
- * the highlighted row, ↑↓ to move it, Return to open it. Rows find their
- * place from the page itself (their order on screen), so every row that
- * takes part (DrinkRow, ResultRow) only asks `useSearchNavRow`. Web only;
+ * Keyboard moves through the ⌘K palette's results (Prod-desk-cmdk): the
+ * highlighted row, ↑↓ to move it, Return to open it. Rows find their place
+ * from the page itself (their order on screen), so every row that takes part
+ * (DrinkRow, ResultRow, PaletteRow) only asks `useSearchNavRow`. Web only;
  * elsewhere it's inert.
  */
 const Active = createContext<string | null>(null);
 
-/** What the palette's preview pane shows for a highlighted drink row. */
-export interface SearchPreviewItem {
-  itemId: string;
-  name: string;
-  imageUrl: string | null;
-  glass: string | null;
-  caption?: string;
-}
-
-/** Where the palette's rows say what they preview (null clears it). Null outside the palette. */
-type Register = (id: string, preview: SearchPreviewItem | null) => void;
-const Previews = createContext<Register | null>(null);
-
 /** Every row's DOM id starts with this, so the palette can list them in screen order. */
 const PREFIX = 'search-row-';
 
-/**
- * A row's part: the id to render (`nativeID`) and whether it's the
- * highlighted one. A drink row passes what the palette's preview shows.
- */
-export function useSearchNavRow(preview?: SearchPreviewItem): { nativeID: string | undefined; active: boolean } {
+/** A row's part: the id to render (`nativeID`) and whether it's the highlighted one. */
+export function useSearchNavRow(): { nativeID: string | undefined; active: boolean } {
   const id = PREFIX + useId();
   const active = useContext(Active);
-  const register = useContext(Previews);
-  const key = preview ? JSON.stringify(preview) : '';
-  useEffect(() => {
-    if (!register || !key) return;
-    register(id, JSON.parse(key) as SearchPreviewItem);
-    return () => register(id, null);
-  }, [register, id, key]);
   return { nativeID: Platform.OS === 'web' ? id : undefined, active: active === id };
 }
 
 const rows = (root: HTMLElement | null) => (root ? Array.from(root.querySelectorAll<HTMLElement>(`[id^="${PREFIX}"]`)) : []);
+const byId = (id: string) => (typeof document === 'undefined' ? null : document.getElementById(id));
 
 /**
- * The palette's side: the highlighted row (the top one whenever the results
- * change), ↑↓ moving it, `open` pressing it, and Tab switching the scope.
- * `rootId` is the nativeID of the view holding the results.
+ * The palette's side: the highlighted row, ↑↓ moving it, and `open` pressing
+ * it. `rootId` is the nativeID of the view holding the results. Each time the
+ * results change the first row of `leadId` leads (Go to, so Return opens what
+ * was found rather than adding it again), else the first row of all.
  */
-export function useSearchNav(rootId: string, resultsKey: string, onTab: () => void) {
+export function useSearchNav(rootId: string, resultsKey: string, leadId?: string) {
   const [active, setActive] = useState<string | null>(null);
-  const root = () => (typeof document === 'undefined' ? null : document.getElementById(rootId));
-  // The top row leads each time the results change, once they've drawn.
+  // The lead row, once the results have drawn.
   useEffect(() => {
     if (Platform.OS !== 'web') return;
-    const t = setTimeout(() => setActive(rows(root())[0]?.id ?? null), 120);
+    const t = setTimeout(() => setActive((leadId ? rows(byId(leadId))[0] : undefined)?.id ?? rows(byId(rootId))[0]?.id ?? null), 120);
     return () => clearTimeout(t);
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [resultsKey]);
+  }, [resultsKey, rootId, leadId]);
   useEffect(() => {
     if (Platform.OS !== 'web') return;
     const onKey = (e: KeyboardEvent) => {
-      if (e.key === 'Tab' && !e.shiftKey && !e.metaKey && !e.ctrlKey) {
-        e.preventDefault();
-        onTab();
-        return;
-      }
       if (e.key !== 'ArrowDown' && e.key !== 'ArrowUp') return;
-      const list = rows(root());
+      const list = rows(byId(rootId));
       if (!list.length) return;
       e.preventDefault();
       const at = list.findIndex((r) => r.id === active);
@@ -85,32 +57,13 @@ export function useSearchNav(rootId: string, resultsKey: string, onTab: () => vo
     active,
     /** Return: press the highlighted row, as a click would. False when there's none. */
     open: () => {
-      const row = active ? document.getElementById(active) : null;
+      const row = active ? byId(active) : null;
       row?.click();
       return !!row;
     },
   };
 }
 
-/** The palette's side of the previews: the rows register into it, and `preview(active)` reads the highlighted one. */
-export function useSearchPreviews() {
-  const [all, setAll] = useState<Record<string, SearchPreviewItem>>({});
-  const register = useCallback<Register>((id, preview) => {
-    setAll((was) => {
-      if (preview) return { ...was, [id]: preview };
-      if (!(id in was)) return was;
-      const next = { ...was };
-      delete next[id];
-      return next;
-    });
-  }, []);
-  return { register, preview: (active: string | null) => (active ? (all[active] ?? null) : null) };
-}
-
-export function SearchNavProvider({ active, register, children }: { active: string | null; register?: Register; children: ReactNode }) {
-  return (
-    <Previews.Provider value={register ?? null}>
-      <Active.Provider value={active}>{children}</Active.Provider>
-    </Previews.Provider>
-  );
+export function SearchNavProvider({ active, children }: { active: string | null; children: ReactNode }) {
+  return <Active.Provider value={active}>{children}</Active.Provider>;
 }
