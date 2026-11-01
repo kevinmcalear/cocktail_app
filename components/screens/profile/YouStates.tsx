@@ -1,8 +1,9 @@
 import type { ReactNode } from 'react';
 import { ScrollView, StyleSheet, View } from 'react-native';
 
-import { Caption, Display, ListNote, OutlineRows, PencilState, SavedChip, SectionLabel, useDs } from '@/components/ds';
-import { usePageColumn } from '@/components/nav/Page';
+import { Caption, Display, PencilState, useDs } from '@/components/ds';
+import { ListNote, OutlineRows, SavedChip, SectionLabel } from '@/components/ds/ListGroup';
+import { usePageColumn } from '@/components/nav/pageColumn';
 import { useTabBarInset } from '@/components/nav/WebTabBar';
 import { space } from '@/constants/tokens';
 import { useOpenSearch } from '@/hooks/useSearchFrom';

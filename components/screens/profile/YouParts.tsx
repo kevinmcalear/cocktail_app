@@ -2,7 +2,8 @@ import { useRouter, type Href } from 'expo-router';
 import { Platform, StyleSheet, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
-import { Caption, DrinkImage, DsText, GlassButton, PressableScale, RowName, useDs, useGutter } from '@/components/ds';
+import { Caption, DrinkImage, DsText, GlassButton, PressableScale, useDs, useGutter } from '@/components/ds';
+import { RowName } from '@/components/ds/ListGroup';
 import { displayFaces, space } from '@/constants/tokens';
 import { whereLine, type HadDrink } from '@/lib/hadDrinks';
 import { formatScore } from '@/lib/ranking';

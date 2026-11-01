@@ -3,7 +3,7 @@ import { ScrollView, StyleSheet, View } from 'react-native';
 
 import { BackbarTheme, useDs } from '@/components/ds';
 import { NativeHeader, NativeTitle, useHeaderScroll } from '@/components/nav/NativeHeader';
-import { usePageColumn } from '@/components/nav/Page';
+import { usePageColumn } from '@/components/nav/pageColumn';
 import { WebHead } from '@/components/WebHead';
 import { useIsWideWeb } from '@/hooks/useIsWideWeb';
 import { space } from '@/constants/tokens';

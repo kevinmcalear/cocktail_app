@@ -12,6 +12,8 @@ import { TextLink } from './ReviewRow';
 import { Body, Caption, DsText } from './Text';
 import { useDs } from './theme';
 
+// Imported from this file, not the ds index: public pages load that index, and none of them draw these.
+
 /** A section's small label, with an aside on the right: "All 46" and "A to Z", "Your bars" and "All". */
 export function SectionLabel({ title, aside, onAside }: { title: string; aside?: string | null; onAside?: () => void }) {
   return (

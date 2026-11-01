@@ -26,6 +26,8 @@ jest.mock('@react-native-community/netinfo', () => ({ useNetInfo: () => ({ isCon
 jest.mock('@/hooks/useCollection', () => ({ useCollection: () => ({ data: { drinks: Array.from({ length: mockMade.length || mockHad.length ? 31 : 0 }, () => ({})) } }) }));
 jest.mock('@/hooks/useKept', () => ({
   useLovedBars: () => ({ data: mockMade.length || mockHad.length ? [{ name: 'Little Rye' }, { name: 'Pale Moth' }, { name: 'Bellamy' }] : [], isLoading: false, refetch: mockRefetch }),
+}));
+jest.mock('@/hooks/useWantSummary', () => ({
   useWantSummary: () => (mockMade.length || mockHad.length ? { count: 2, open: 1, isLoading: false } : { count: 0, open: 0, isLoading: false }),
 }));
 jest.mock('expo-router', () => ({ useRouter: () => ({ push: mockPush, navigate: mockNavigate, replace: jest.fn(), back: jest.fn(), canGoBack: () => true }) }));
