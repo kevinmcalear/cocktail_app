@@ -96,7 +96,7 @@ export function useGlassModelsById(ids: readonly string[]) {
 }
 
 /**
- * The real glass a drink is served in (items.glass_model_id), or null.
+ * The real glass a drink is served in (drink_glass.glass_model_id), or null.
  * ponytail: its own small read; move it into app_item_presentation the next time that view is redefined.
  */
 export function useDrinkGlassModel(itemId: string | null | undefined) {
@@ -106,9 +106,9 @@ export function useDrinkGlassModel(itemId: string | null | undefined) {
     meta: { public: true },
     queryFn: async (): Promise<GlassModel | null> => {
       const { data, error } = await supabase
-        .from('items')
-        .select(`glass_model:glass_models!items_glass_model_id_fkey(${GLASS_MODEL_SELECT})`)
-        .eq('id', itemId!)
+        .from('drink_glass')
+        .select(`glass_model:glass_models!drink_glass_glass_model_id_fkey(${GLASS_MODEL_SELECT})`)
+        .eq('item_id', itemId!)
         .maybeSingle();
       if (error) throw error;
       return (data as { glass_model: GlassModel | null } | null)?.glass_model ?? null;
