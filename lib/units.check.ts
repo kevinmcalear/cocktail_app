@@ -1,5 +1,6 @@
 import assert from 'node:assert/strict';
-import { amountText, DEFAULT_UNIT, isKnownUnit, overIce, splitAmount, unitLabel, RECIPE_UNITS } from './units';
+import { splitAmount } from './specView';
+import { amountText, DEFAULT_UNIT, isKnownUnit, overIce, unitLabel, RECIPE_UNITS } from './units';
 
 assert.equal(DEFAULT_UNIT, 'ml');
 assert.ok(RECIPE_UNITS.some((u) => u.value === 'ml'));

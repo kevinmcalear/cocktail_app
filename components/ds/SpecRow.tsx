@@ -1,7 +1,6 @@
 import { StyleSheet, View } from 'react-native';
 
 import { space, type } from '@/constants/tokens';
-import { splitAmount } from '@/lib/units';
 
 import { IngredientThumb } from './IngredientThumb';
 import { PressableScale } from './PressableScale';
@@ -11,8 +10,10 @@ import { Body, Caption, Spec } from './Text';
 import { useDs } from './theme';
 
 export interface SpecRowProps {
-  /** Already formatted for the person's units, e.g. "22.5 ml" or "1 dash". */
+  /** Already formatted for the person's units, e.g. "22.5 ml" or "1 dash"; just the number when `unit` is given. */
   amount: string;
+  /** The amount's unit, set smaller and muted after the number (the drink page's spec: 22 and 12). */
+  unit?: string;
   ingredient: string;
   /**
    * The ingredient whose drawing sits beside its name. Null draws from the name
@@ -58,11 +59,12 @@ export interface SpecRowProps {
  * When the amount has its own action, the line splits into two sibling
  * controls (amount, then ingredient) so no button sits inside another.
  */
-export function SpecRow({ amount, ingredient, ingredientId, houseMade, optional, floated, note, flag: flagged, listed, role, detail, scale = 1, dense, onPress, onPressAmount, alignAmount }: SpecRowProps) {
+export function SpecRow({ amount, unit, ingredient, ingredientId, houseMade, optional, floated, note, flag: flagged, listed, role, detail, scale = 1, dense, onPress, onPressAmount, alignAmount }: SpecRowProps) {
   const ds = useDs();
   const flag = listed ? 'On your list' : flagged;
   const big = (t: Sized) => scaled(t, scale);
   const showAmount = amount.length > 0 || !!alignAmount;
+  const said = unit ? `${amount} ${unit}` : amount;
   const split = !!onPressAmount && amount.length > 0;
   const rest = [ingredient, role, detail, houseMade && 'house-made', floated && 'float', optional && 'optional', note, flag].filter(Boolean).join(', ');
   const amountWidth = { width: 96 * scale };
@@ -111,8 +113,8 @@ export function SpecRow({ amount, ingredient, ingredientId, houseMade, optional,
     const Name = onPress ? PressableScale : View;
     return (
       <View style={[styles.row, { borderBottomColor: ds.c.line }]}>
-        <PressableScale role="button" aria-label={`${amount}, read in other units`} haptic={false} onPress={onPressAmount} style={[cell, amountWidth]}>
-          <Amount text={amount} scale={scale} />
+        <PressableScale role="button" aria-label={`${said}, read in other units`} haptic={false} onPress={onPressAmount} style={[cell, amountWidth]}>
+          <Amount text={amount} unit={unit} scale={scale} />
         </PressableScale>
         <Name accessible aria-label={rest} role={onPress ? 'button' : undefined} onPress={onPress} haptic={onPress ? false : undefined} style={[cell, styles.name, pictured && styles.pictured]}>
           {name}
@@ -125,15 +127,13 @@ export function SpecRow({ amount, ingredient, ingredientId, houseMade, optional,
   return (
     <Row
       accessible
-      aria-label={amount ? `${amount}, ${rest}` : rest}
+      aria-label={amount ? `${said}, ${rest}` : rest}
       role={onPress ? 'button' : undefined}
       onPress={onPress}
       haptic={onPress ? false : undefined}
       style={[styles.row, cell, { borderBottomColor: ds.c.line }]}
     >
-      {showAmount ? (
-        <Amount text={amount} scale={scale} style={amountWidth} />
-      ) : null}
+      {showAmount ? <Amount text={amount} unit={unit} scale={scale} style={amountWidth} /> : null}
       <View style={[styles.name, pictured && styles.pictured]}>{name}</View>
     </Row>
   );
@@ -143,12 +143,11 @@ type Sized = { fontSize: number; lineHeight: number };
 /** A text style scaled for service mode (1.25); nothing at 1. */
 const scaled = (t: Sized, scale: number) => (scale === 1 ? undefined : { fontSize: t.fontSize * scale, lineHeight: t.lineHeight * scale });
 
-/** The number in the spec's figures, its unit smaller and muted (every spec board: 22 and 12). */
-function Amount({ text, scale, style }: { text: string; scale: number; style?: { width: number } }) {
-  const { value, unit } = splitAmount(text);
+/** The number in the spec's figures, its unit (when given apart) smaller and muted. */
+function Amount({ text, unit, scale, style }: { text: string; unit?: string; scale: number; style?: { width: number } }) {
   return (
     <Spec tone="accent" style={[style, scaled(type.spec, scale)]}>
-      {value}
+      {text}
       {unit ? (
         <Caption tone="muted" style={scaled(type.caption, scale)}>
           {` ${unit}`}

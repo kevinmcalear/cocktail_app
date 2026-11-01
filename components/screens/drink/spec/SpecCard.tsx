@@ -5,7 +5,7 @@ import { DsText, SpecRow, useDs } from '@/components/ds';
 import { font, space } from '@/constants/tokens';
 import { useSpecAccess } from '@/hooks/useSpecAccess';
 import type { SpecLevels, SpecLine } from '@/lib/spec';
-import { garnishNames, goesOutLine, lineRole, methodLine, scaledAmount, serveLine, specGroups, type Makes, type SpecLayout } from '@/lib/specView';
+import { garnishNames, goesOutLine, lineRole, methodLine, scaledAmount, serveLine, specGroups, splitAmount, type Makes, type SpecLayout } from '@/lib/specView';
 import { useSettingsStore } from '@/store/useSettingsStore';
 import { useSpecView } from '@/store/useSpecViewStore';
 
@@ -58,19 +58,24 @@ export function SpecCard({ itemId, barId, lines, maker, verb = null, methods = [
   const [glass, ice] = serve;
   const garnish = access.names ? garnishNames(lines) : [];
 
-  const row = (l: SpecLine, underFloat = false) => (
-    <SpecRow
-      key={l.key}
-      amount={measured ? (scaledAmount(l, makes, unit) ?? '') : ''}
-      alignAmount={measured}
-      dense
-      ingredient={l.ingredient ?? 'Ingredient'}
-      ingredientId={l.ingredient ? l.ingredientId : undefined}
-      role={lineRole(l, layout, underFloat)}
-      note={access.prep ? (l.note ?? undefined) : undefined}
-      onPress={onLine && l.ingredientId ? () => onLine(l) : undefined}
-    />
-  );
+  const row = (l: SpecLine, underFloat = false) => {
+    // The unit set smaller beside the number (every spec board).
+    const amount = splitAmount(measured ? (scaledAmount(l, makes, unit) ?? '') : '');
+    return (
+      <SpecRow
+        key={l.key}
+        amount={amount.value}
+        unit={amount.unit || undefined}
+        alignAmount={measured}
+        dense
+        ingredient={l.ingredient ?? 'Ingredient'}
+        ingredientId={l.ingredient ? l.ingredientId : undefined}
+        role={lineRole(l, layout, underFloat)}
+        note={access.prep ? (l.note ?? undefined) : undefined}
+        onPress={onLine && l.ingredientId ? () => onLine(l) : undefined}
+      />
+    );
+  };
 
   // Under the spec: Ingredients' method line (it says the glass, ice and garnish); Steps' glass and ice (the garnish is its last rows); otherwise how it's served, garnish and all.
   // A drink made in parts has a method per part: one line can't say them, so it reads how it's served (Steps says the rest).
