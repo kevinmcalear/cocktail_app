@@ -1,6 +1,7 @@
 import { lazy, Suspense } from 'react';
 import { View } from 'react-native';
 
+import { layout } from '@/constants/tokens';
 import { WEB_SIDEBAR_WIDTH } from '@/hooks/useIsWideWeb';
 
 // Not on a phone's first screen (wide web, signed in, or a shake): the root
@@ -15,6 +16,28 @@ const BringInHost = lazy(() => import('@/components/screens/bringin/BringInHost'
 const LibraryScreen = lazy(() => import('@/components/screens/LibraryScreen').then((m) => ({ default: m.LibraryScreen })));
 
 const SignedInSyncHost = lazy(() => import('@/components/SignedInSync'));
+// The tab stacks' layout loads under every page, a share page too (the router
+// reads its anchors), so what only some tabs draw loads when first drawn.
+const DrinksListHost = lazy(() => import('@/components/nav/DrinksSplit').then((m) => ({ default: m.DrinksList })));
+const AddFabHost = lazy(() => import('@/components/nav/AddButton').then((m) => ({ default: m.AddFab })));
+
+/** Drinks' list column on a desktop at a venue (DrinksSplit.tsx); its width is held while it loads. */
+export function DrinksList({ shown }: { shown: boolean }) {
+  return (
+    <Suspense fallback={shown ? <View style={{ width: layout.listPaneDesk }} /> : null}>
+      <DrinksListHost shown={shown} />
+    </Suspense>
+  );
+}
+
+/** Android's floating Add on each tab's first page (AddButton.tsx). */
+export function AddFab() {
+  return (
+    <Suspense fallback={null}>
+      <AddFabHost />
+    </Suspense>
+  );
+}
 
 /** Wizard drafts kept in the account and the venues' spec books (components/SignedInSync.tsx). */
 export function SignedInSync() {

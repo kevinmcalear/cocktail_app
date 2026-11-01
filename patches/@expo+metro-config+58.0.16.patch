@@ -1,5 +1,5 @@
 diff --git a/node_modules/@expo/metro-config/build/serializer/chunking/createLegacyChunkingStrategy.js b/node_modules/@expo/metro-config/build/serializer/chunking/createLegacyChunkingStrategy.js
-index 2e3ff4b..cdb3051 100644
+index 2e3ff4b..14f1682 100644
 --- a/node_modules/@expo/metro-config/build/serializer/chunking/createLegacyChunkingStrategy.js
 +++ b/node_modules/@expo/metro-config/build/serializer/chunking/createLegacyChunkingStrategy.js
 @@ -8,6 +8,12 @@ Object.defineProperty(exports, "createLegacyChunkingStrategy", {
@@ -115,22 +115,23 @@ index 2e3ff4b..cdb3051 100644
                  }
              }
          });
-@@ -118,30 +158,91 @@ function removeEntryDepsFromAsyncChunks(entryChunk, chunks) {
+@@ -118,30 +158,93 @@ function removeEntryDepsFromAsyncChunks(entryChunk, chunks) {
          }
      }
  }
 +// Patched (patches/@expo+metro-config+58.0.16.patch). Upstream moves every module
 +// that two async chunks share into the common chunk, which every page loads, so
 +// each page carried code only other routes use. Now:
-+// - the common chunk (every page) takes what the root layout's chunk uses and at
-+//   least one other route chunk uses too;
++// - the common chunk (every page) takes what a layout on every page uses (the
++//   root layout, and the layouts listed in `publicWeb`, such as the root stack's
++//   anchor) and at least one other route chunk uses too;
 +// - the shared chunk takes what at least COMMON_CHUNK_MIN_USERS app route chunks
 +//   use (lazy imports don't count: they load on demand). App pages link it in
 +//   their HTML, and any chunk that left modules in it loads it with itself;
-+// - public pages (`publicWebRoutes` in the app's package.json: share pages people
-+//   open from a link, signed out) skip the shared chunk. What two or more of them
-+//   use goes in the public chunk, which they link; the rest stays in each page's
-+//   own chunk.
++// - public files (`publicWeb` in the app's package.json: the share pages people
++//   open from a link, signed out, and what those load on their own) skip the
++//   shared chunk. What two or more of them use goes in the public chunk, which
++//   public pages link; the rest stays in each one's own chunk.
 +// Everything else stays with each chunk that uses it. Metro's define() skips a
 +// module id it already has, so a copy loaded twice runs once.
 +// Returns { common, groups: [{ chunk, users, pages }] }: users are the chunks that
@@ -165,11 +166,12 @@ index 2e3ff4b..cdb3051 100644
 +    const isRoute = (chunk)=>appDir != null && entryPath(chunk).startsWith(appDir + path.sep);
 +    const isRootLayout = (chunk)=>appDir != null && entryPath(chunk).replace(/\.[cm]?[jt]sx?$/, '') === path.join(appDir, '_layout');
 +    const isLayout = (chunk)=>/(^|[\\/])_layout\.[cm]?[jt]sx?$/.test(entryPath(chunk));
-+    let publicRoutes = [];
++    let publicFiles = [];
 +    try {
-+        publicRoutes = (JSON.parse(require("fs").readFileSync(path.join(options.projectRoot, 'package.json'), 'utf8')).publicWebRoutes ?? []).map((file)=>path.join(options.projectRoot, file));
++        publicFiles = (JSON.parse(require("fs").readFileSync(path.join(options.projectRoot, 'package.json'), 'utf8')).publicWeb ?? []).map((file)=>path.join(options.projectRoot, file));
 +    } catch  {}
-+    const isPublic = (chunk)=>isRoute(chunk) && publicRoutes.includes(entryPath(chunk));
++    const isPublic = (chunk)=>!isLayout(chunk) && publicFiles.includes(entryPath(chunk));
++    const isEveryPage = (chunk)=>isRootLayout(chunk) || isLayout(chunk) && publicFiles.includes(entryPath(chunk));
 +    const users = new Map();
 +    const publicUsers = new Map();
 +    const onEveryPage = new Set();
@@ -177,7 +179,7 @@ index 2e3ff4b..cdb3051 100644
 +        const counts = isPublic(chunk) ? publicUsers : isRoute(chunk) ? users : null;
 +        for (const dep of chunk.deps){
 +            if (counts) counts.set(dep, (counts.get(dep) ?? 0) + 1);
-+            if (isRootLayout(chunk)) onEveryPage.add(dep);
++            if (isEveryPage(chunk)) onEveryPage.add(dep);
          }
      }
 -    // If common dependencies were found, extract them to the shared chunk.
@@ -216,9 +218,9 @@ index 2e3ff4b..cdb3051 100644
 +    for (const chunk of asyncChunks){
 +        for (const dep of common)chunk.deps.delete(dep);
 +    }
-+    // Every app page has a route file that isn't a layout (layouts are on public pages too).
++    // Every app page has a route file that isn't a layout.
 +    group('/__shared.js', shared, (chunk)=>!isPublic(chunk), (chunk)=>isRoute(chunk) && !isPublic(chunk) && !isLayout(chunk));
-+    group('/__public.js', forPublic, isPublic, isPublic);
++    group('/__public.js', forPublic, isPublic, (chunk)=>isPublic(chunk) && isRoute(chunk));
 +    return {
 +        common: common.size ? new _Chunk.Chunk('/__common.js', common, graph, options, strategy, false, true) : undefined,
 +        groups

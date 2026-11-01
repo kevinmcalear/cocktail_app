@@ -2,10 +2,12 @@
   "name": "cocktail_app",
   "main": "expo-router/entry",
   "version": "1.0.0",
-  "publicWebRoutes": [
+  "publicWeb": [
+    "app/(tabs)/_layout.tsx",
     "app/d/[id].tsx",
     "app/m/[id].tsx",
-    "app/p/[id]/index.tsx"
+    "app/p/[id]/index.tsx",
+    "lib/clearUserData.ts"
   ],
   "scripts": {
     "start": "NODE_OPTIONS=\"--max-old-space-size=8192\" expo start",

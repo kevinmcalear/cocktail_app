@@ -1,7 +1,14 @@
+import { useSegments } from 'expo-router';
+import { useState } from 'react';
+import { Platform } from 'react-native';
+
 import { AppTabs } from '@/components/nav/AppTabs';
 import { useAuth } from '@/ctx/AuthContext';
 import { useClaimReturn } from '@/lib/claimReturn';
 import { needsOnboarding } from '@/lib/onboarding';
+
+/** Share pages people open from a link (app/d, app/m, app/p). */
+const PUBLIC_PAGES = ['d', 'm', 'p'];
 
 /**
  * The tabs: native tabs on iPhone and Android (AppTabs.tsx), and the JS tabs
@@ -15,5 +22,12 @@ export default function TabLayout() {
   // route (the stack's anchor), so they mount before sign-in or the age check send someone on.
   const { session } = useAuth();
   useClaimReturn(!!session && !needsOnboarding(session.user.user_metadata));
-  return <AppTabs />;
+  // On the web, a share page opened from a link covers the tabs: they draw once
+  // someone goes back to them, so the page doesn't load a tab's code (and its
+  // data) that nobody sees. Once drawn they stay, keeping each tab's place.
+  const top = useSegments()[0] ?? '';
+  const covered = Platform.OS === 'web' && PUBLIC_PAGES.includes(top);
+  const [shown, setShown] = useState(!covered);
+  if (!covered && !shown) setShown(true);
+  return shown ? <AppTabs /> : null;
 }
