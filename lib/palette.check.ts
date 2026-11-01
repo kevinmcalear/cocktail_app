@@ -6,7 +6,7 @@ import { backbar } from '@/constants/tokens';
 
 import { usableGroundTint } from './brand';
 import { contrast } from './color';
-import { fromLch, groundOf, groundTintFor, neutralsFor, PALETTES, palettesFor, shadeNotes, toLch } from './palette';
+import { fromLch, groundOf, groundTintFor, neutralsFor, PALETTES, palettesFor, toLch } from './palette';
 
 // The round trip through OKLCH lands on the same hex.
 for (const hex of ['#E4B062', '#D0643B', '#0E0D0C', '#FFFFFF', '#3FB0A2']) {
@@ -63,15 +63,12 @@ assert.ok(swept > 500, `swept ${swept} usable tints`);
 // The dark ground is the saved tint itself.
 assert.equal(neutralsFor('dark', '#181019').ground, '#181019');
 
-// Logo colours come first, then the standard palettes, six in all, no repeats.
+// Logo colours come first, then the bar colours, six in all, no repeats.
 const named = palettesFor(['#d0643b', '#123456'], () => 'Logo');
 assert.equal(named.length, 6);
 assert.deepEqual(named.slice(0, 2).map((p) => p.accent), ['#D0643B', '#123456']);
 assert.equal(new Set(named.map((p) => p.accent)).size, 6);
 assert.equal(palettesFor([], (h) => h).length, 6);
 
-// Notes only when a mode shifts the colour: amber is deepened for light mode only.
-assert.deepEqual(shadeNotes('#E4B062', null, 'Amber'), ['Light mode uses a deeper amber for text, so it stays readable.']);
-assert.deepEqual(shadeNotes('#4F8FE0', groundTintFor('#4F8FE0', 'hint'), 'Blue'), ['Light mode uses a deeper blue for text, so it stays readable.']);
 
 console.log('palette checks passed');

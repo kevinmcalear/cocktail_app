@@ -13,7 +13,7 @@ export function setupCopy(screen: VenueScreen, bar: string, claim: ClaimState = 
     case 'place':
       return { title: 'Where and when', intro: `We filled this in from ${bar}’s page. Change anything. It shows on your bar page, in Discover and on the map.` };
     case 'look':
-      return { title: `Make it look like ${bar}`, intro: 'Your logo, colour and font on every phone and screen at the bar. Change any of it later in Brand.' };
+      return { title: `Make it look like ${bar}`, intro: 'Your logo, colour and font on every phone and screen at the bar. Change any of it later in Theme.' };
     case 'visibility':
       return { title: 'Who sees what', intro: `Outside ${bar}, your page. Inside, what each role can do.` };
     case 'done':

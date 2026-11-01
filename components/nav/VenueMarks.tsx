@@ -1,28 +1,53 @@
 import { useRouter } from 'expo-router';
-import { StyleSheet, View } from 'react-native';
+import { StyleSheet, Text, View } from 'react-native';
 
-import { DsText, LogoImage, useDisplayFaces, useDs } from '@/components/ds';
+import { LogoImage, useDisplayFaces, useDs } from '@/components/ds';
+import { SceneSvg } from '@/components/ds/SketchDrawing';
+import { useScene } from '@/components/ds/useScene';
 import { IconSymbol } from '@/components/ui/icon-symbol';
-import { backbar, DEFAULT_ACCENT } from '@/constants/tokens';
+import { DEFAULT_ACCENT, type DisplayFace } from '@/constants/tokens';
 import { useActiveVenue, type Venue } from '@/hooks/useActiveVenue';
 import { useMode } from '@/hooks/useMode';
 import { iconFill } from '@/lib/brandColours';
-import { accentFill } from '@/lib/color';
+import { initials } from '@/lib/collectionMenus';
+import { paintRingMark } from '@/lib/sketch/ringMark';
+import type { Scene } from '@/lib/sketch/scene';
+import { themeColours } from '@/lib/theme';
 
-/** The venue's mark: its logo, or its initial in its display face on its own colour (not the active venue's). */
+// One painting per bar and colour pair; a person sees a handful of bars.
+const rings = new Map<string, Scene>();
+/** Below this a mark has room for one letter, not two. */
+const TWO_LETTERS = 40;
+
+/** The venue's mark: its logo, or the generated one (RingMark) in its own colour (not the active venue's). */
 export function VenueMark({ venue, size = 32 }: { venue: Venue | null; size?: number }) {
-  const own = accentFill(venue?.accent ?? DEFAULT_ACCENT, backbar.dark.ground, backbar.light.surface);
-  // Only fetched when the initial is drawn, not over a logo.
-  const family = useDisplayFaces([venue?.logoUrl ? null : venue?.displayFace]);
-  const box = { width: size, height: size, borderRadius: size * 0.28 };
+  const radius = size * 0.28;
   if (venue?.logoUrl) {
-    return <LogoImage uri={venue.logoUrl} size={size} radius={box.borderRadius} fill={logoFill(venue)} />;
+    return <LogoImage uri={venue.logoUrl} size={size} radius={radius} fill={logoFill(venue)} />;
   }
+  return <RingMark id={venue?.id ?? 'app'} name={venue?.name ?? '·'} accent={venue?.accent ?? null} face={venue?.displayFace ?? 'redaction'} size={size} />;
+}
+
+/**
+ * A bar with no logo (themes-flow "bar presets", app-mark "ring", Kevin 31
+ * Oct): its initials in its face, on its colour, inside the ring a glass
+ * leaves, painted in the colour its label takes (lib/theme), so it reads.
+ */
+export function RingMark({ id, name, accent, face, size }: { id: string; name: string; accent: string | null; face: DisplayFace; size: number }) {
+  const ds = useDs();
+  const t = themeColours(accent ?? DEFAULT_ACCENT, ds.c.ground, ds.scheme === 'dark');
+  const family = useDisplayFaces([face]);
+  const scene = useScene(rings, `${id}|${t.onFill}`, false, () => paintRingMark(t.onFill, t.onFill, id));
+  const letters = size >= TWO_LETTERS ? initials(name) : initials(name).slice(0, 1);
+  const fontSize = size * (letters.length > 1 ? 0.3 : 0.4);
   return (
-    <View style={[box, styles.initial, { backgroundColor: own.fill }]}>
-      <DsText variant="headline" color={own.text} style={{ fontFamily: family(venue?.displayFace ?? 'redaction', 'italic'), fontSize: size * 0.6, lineHeight: size * 0.75 }}>
-        {(venue?.name ?? '·').charAt(0).toUpperCase()}
-      </DsText>
+    <View aria-hidden style={[styles.initial, { width: size, height: size, borderRadius: size * 0.28, backgroundColor: t.fill }]}>
+      <View style={StyleSheet.absoluteFill}>
+        <SceneSvg scene={scene} bare />
+      </View>
+      <Text allowFontScaling={false} style={{ fontFamily: family(face), color: t.onFill, fontSize, lineHeight: fontSize * 1.25 }}>
+        {letters}
+      </Text>
     </View>
   );
 }
@@ -58,5 +83,5 @@ export function useSwitchTo() {
 }
 
 const styles = StyleSheet.create({
-  initial: { alignItems: 'center', justifyContent: 'center' },
+  initial: { alignItems: 'center', justifyContent: 'center', overflow: 'hidden' },
 });

@@ -47,7 +47,7 @@ export const CAPABILITY_GROUPS: { title: string; rows: CapabilityRow[] }[] = [
     rows: [
       { id: 'publish', label: 'Publish to the public app', short: 'publishing', can: 'publish to the public app' },
       { id: 'staff', label: 'Invite and manage staff', short: 'staff', can: 'invite and manage staff' },
-      { id: 'brand', label: 'Edit brand', short: 'brand', can: 'edit brand' },
+      { id: 'brand', label: 'Edit the theme', short: 'theme', can: 'edit the theme' },
     ],
   },
 ];

@@ -146,12 +146,12 @@ test('an admin changes the welcome message once, from its row', async () => {
   expect(mockSaveWelcome).toHaveBeenCalledWith('Welcome to the team.', expect.anything());
 });
 
-test('Invite waits for how the venue looks: until then it opens Brand', async () => {
+test('Invite waits for how the venue looks: until then it opens Theme', async () => {
   mockBrand = { logo_url: null, primary_color: null, display_face: 'redaction' };
   await renderWithProviders(<TeamScreen />);
   expect(screen.getByText('Set how Caretakers looks first: the invite wears its logo, colour and font.')).toBeTruthy();
   await fireEvent.press(screen.getByRole('button', { name: 'Invite someone' }));
-  expect(mockPush).toHaveBeenCalledWith('/settings/bar/bar/brand');
+  expect(mockPush).toHaveBeenCalledWith('/settings/bar/bar/theme');
   expect(screen.queryByText('Invite to Caretakers')).toBeNull();
 });
 

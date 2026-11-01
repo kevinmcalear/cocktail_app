@@ -45,7 +45,7 @@ export function TeamScreen() {
   const inviting = asked && looks;
   const startInvite = () => {
     if (looks) setInviting(true);
-    else if (brand.data) router.push(`/settings/bar/${active!.id}/brand` as Href);
+    else if (brand.data) router.push(`/settings/bar/${active!.id}/theme` as Href);
   };
 
   let body: ReactNode;

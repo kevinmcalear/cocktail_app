@@ -100,6 +100,19 @@ export async function pickBrandImage(barId: string, withColors: boolean): Promis
   return { url: upload.imageUrl, colors };
 }
 
+/**
+ * A photo of the room (the bar top, the neon sign), for a logo with no colour
+ * in it (canvas Theme-flow-mono): its colours only. Nothing is kept: the
+ * function only reads the colours (extract_only).
+ */
+export async function pickPhotoColours(barId: string): Promise<string[] | null> {
+  const result = await ImagePicker.launchImageLibraryAsync({ mediaTypes: ['images'], quality: 0.8 });
+  if (result.canceled || !result.assets?.length) return null;
+  const uri = result.assets[0].uri;
+  const found = await extractColors(barId, uri, await uriToBase64(uri));
+  return [found?.primaryColor, found?.secondaryColor].filter((c): c is string => !!c).map((c) => c.toUpperCase());
+}
+
 /** What Remove background gives: the new logo and its original, or that the server can't do it yet. */
 export type RemovedBackground = { url: string; original: string } | 'unavailable';
 

@@ -113,14 +113,18 @@ export const printPaper = { paper: '#FFFFFF', ink: '#1A1714', muted: '#555049', 
 /** The accent when there's no venue brand: bar-light amber. */
 export const DEFAULT_ACCENT = '#E4B062';
 
-/** The six palettes a venue starts from on Brand when it has no logo: a colour and a background (lib/palette). */
-export const BRAND_PALETTES = [
-  { name: 'Amber', accent: DEFAULT_ACCENT, ground: 'hint' },
-  { name: 'Rust', accent: '#D0643B', ground: 'hint' },
-  { name: 'Rose', accent: '#E07A8E', ground: 'rich' },
-  { name: 'Violet', accent: '#9C86F0', ground: 'hint' },
-  { name: 'Blue', accent: '#4F8FE0', ground: 'hint' },
-  { name: 'Teal', accent: '#3FB0A2', ground: 'rich' },
+/**
+ * The six colours a bar can start from when it has no logo to take one from:
+ * colours from a bar, not an app builder's defaults (Kevin, 31 Oct, themes-flow
+ * "bar presets"). The background is picked on its own (lib/palette).
+ */
+export const BAR_COLOURS = [
+  { name: 'Campari red', hex: '#C41E2A' },
+  { name: 'Vermouth oxblood', hex: '#6B1F2A' },
+  { name: 'Brass', hex: '#B08D3C' },
+  { name: 'Absinthe green', hex: '#7F9F2F' },
+  { name: 'Ink navy', hex: '#1F2D4A' },
+  { name: 'Copper', hex: '#B87333' },
 ] as const;
 
 /** Two made-up venues, for the gallery and tests. Real venues come from `bars`. */

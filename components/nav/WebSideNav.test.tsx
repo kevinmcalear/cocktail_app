@@ -31,7 +31,8 @@ jest.mock('@/components/nav/VenueSwitcher', () => {
   return { VenueSwitcher: () => <Text>venue switcher</Text> };
 });
 jest.mock('@/hooks/useDrafts', () => ({ useDrafts: () => ({ drafts: [{ id: 'd1' }, { id: 'd2' }] }) }));
-jest.mock('@/hooks/useCapabilities', () => ({ useCapabilities: () => ({ data: ['edit_drinks'] }), useCapabilityOpensAt: () => ({ data: 35 }) }));
+let mockCaps = ['edit_drinks', 'brand'];
+jest.mock('@/hooks/useCapabilities', () => ({ useCapabilities: () => ({ data: mockCaps }), useCapabilityOpensAt: () => ({ data: 35 }) }));
 jest.mock('@/hooks/useSearchMine', () => ({ useSearchMine: () => ({ venueId: 'caretakers', canAdd: true, label: 'Caretakers' }) }));
 jest.mock('@/components/screens/week/WeekNav', () => {
   const { Text } = jest.requireActual<typeof import('react-native')>('react-native');
@@ -48,6 +49,7 @@ beforeEach(() => {
   mockNavigate.mockClear();
   mockPush.mockClear();
   mockRole = 40;
+  mockCaps = ['edit_drinks', 'brand'];
   mockMode = 'venue';
 });
 
@@ -58,7 +60,7 @@ test('venue mode lists search, the four tabs and the venue pages, marking the cu
 
   // The four tabs and History, the venue's Menus, Prep, Study and Glassware, then the Venue section and you at the foot.
   // Every person and role has the same tabs (tabs A, 31 Oct); the back bar is parked.
-  expect(links()).toEqual(['Tonight', 'Drinks', 'Discover', 'History', 'You', 'Menus', 'Prep', 'Study', 'Glassware', 'My team', 'Brand', 'Roles and access', 'Venue settings', 'You: Kevin M., Admin at Caretakers']);
+  expect(links()).toEqual(['Tonight', 'Drinks', 'Discover', 'History', 'You', 'Menus', 'Prep', 'Study', 'Glassware', 'My team', 'Theme', 'Roles and access', 'Venue settings', 'You: Kevin M., Admin at Caretakers']);
   expect(screen.getByText('this week list')).toBeTruthy();
   expect(screen.getByRole('link', { name: 'Drinks', selected: true })).toBeTruthy();
   expect(screen.getByRole('link', { name: 'Tonight', selected: false })).toBeTruthy();
@@ -67,13 +69,21 @@ test('venue mode lists search, the four tabs and the venue pages, marking the cu
   expect(mockPush).toHaveBeenLastCalledWith('/settings/bar/caretakers/glassware');
   await fireEvent.press(screen.getByRole('link', { name: 'Menus' }));
   expect(mockPush).toHaveBeenLastCalledWith('/menus/all');
-  await fireEvent.press(screen.getByRole('link', { name: 'Brand' }));
-  expect(mockPush).toHaveBeenLastCalledWith('/settings/bar/caretakers/brand');
+  await fireEvent.press(screen.getByRole('link', { name: 'Theme' }));
+  expect(mockPush).toHaveBeenLastCalledWith('/settings/bar/caretakers/theme');
   await fireEvent.press(screen.getByRole('link', { name: 'Venue settings' }));
   expect(mockPush).toHaveBeenLastCalledWith('/settings/bar/caretakers');
   // You is a tab, and the foot opens it too.
   await fireEvent.press(screen.getByRole('link', { name: 'You: Kevin M., Admin at Caretakers' }));
   expect(mockNavigate).toHaveBeenLastCalledWith('/you');
+});
+
+test('Theme is only there for people who can change it (Admins, the brand permission)', async () => {
+  mockCaps = ['edit_drinks'];
+  mockPathname = '/drinks';
+  await renderWithProviders(<WebSideNav />);
+  expect(links()).not.toContain('Theme');
+  expect(links()).toContain('Venue settings');
 });
 
 test('the top of the sidebar is one mark with a chevron (the switcher), never a row of venues', async () => {

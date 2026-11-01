@@ -83,7 +83,7 @@ const G = {
   'place.collection': { d: MARK + 'M9.8 7.5h4.4L12 9.9zM12 9.9v2', f: MARK },
   'place.you': { d: YOU, f: C(12, 12, 8.5) },
   'place.team': { d: TEAM, f: C(9, 8, 3) },
-  'place.brand': { d: PALETTE + 'M8 11.5h.01M10.5 7.8h.01M14.8 7.8h.01', f: PALETTE },
+  'place.theme': { d: PALETTE + 'M8 11.5h.01M10.5 7.8h.01M14.8 7.8h.01', f: PALETTE },
   'place.roles': { d: C(8, 15.5, 3.8) + 'M10.8 12.8L19.5 4M16.5 7l2.2 2.2M14 9.5l1.8 1.8', f: C(8, 15.5, 3.8) },
   'place.settings': { d: SLIDERS, f: C(15, 7, 2.5) + C(9, 17, 2.5) },
 

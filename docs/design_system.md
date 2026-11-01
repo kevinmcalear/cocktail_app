@@ -20,7 +20,7 @@ The written rules behind the Back Bar look. What each screen should be is drawn 
 | muted | `#A59C90` | `#6B645B` |
 | line | ink at 8 to 12% | ink at 8% |
 
-- **Accent** = the venue's `primary_color`, contrast-checked: if it's under 4.5:1 on the light ground, light mode uses a deeper shade automatically. The accent goes on the one primary action per screen, the active tab, and selection. Nowhere else.
+- **Accent** = the venue's `primary_color`, run through the guard rails in `lib/theme.ts` (canvas GWBCX "themes", decided 31 Oct): the button is held 2:1 off the page with a cream or ink label at 4.5:1, text in the colour gets its own shade at 4.5:1 per mode, neon is capped at chroma 0.2, a grey gives ink buttons. Increase Contrast overrides the bar (ink buttons). The accent goes on the one primary action per screen, the active tab, and selection. Nowhere else. A bar with no logo wears the ring mark (`RingMark`): its initials in its face on its colour, inside a painted ring.
 - **Drink field** = two or three colours extracted from a drink's photo at upload, used as a radial field behind the hero and the study card. Text never sits directly on it without a scrim.
 - **Status**: keep `STATUS` (danger, success, warning, info) and `warningText` for amber text. Status colour is separate from the accent and never the only signal.
 
@@ -64,7 +64,7 @@ The written rules behind the Back Bar look. What each screen should be is drawn 
 One set, the bar kit (whole-app canvas, Shell page, nav-icons), drawn the same on iOS, Android and web. The drawings live in `components/ui/glyphs.ts`; `IconSymbol` draws them and nothing else draws an icon.
 
 - **Style:** a 24-point box, a 1.7 stroke, round caps and joins. Off is the muted ink; on is the accent with the accent at 22% inside the main shape (`<IconSymbol on />`). Names ending `.fill` are always on. A loved heart and a dot are solid.
-- **Places:** the shell's places use `place.*` (Tonight, Library (the Drinks tab for now), Menus, Prep, Study, Discover, History, This week, Back bar, My Bar, Collection, You, My team, Brand, Roles and access, Settings), wherever the place is meant, not only in the nav. One icon per place: Menus is always the menu card, Settings always the sliders.
+- **Places:** the shell's places use `place.*` (Tonight, Library (the Drinks tab for now), Menus, Prep, Study, Discover, History, This week, Back bar, My Bar, Collection, You, My team, Theme, Roles and access, Settings), wherever the place is meant, not only in the nav. One icon per place: Menus is always the menu card, Settings always the sliders.
 - **Names:** SF Symbol names, so a call site reads the same everywhere. A new icon is drawn into `glyphs.ts` in this style (check it in the gallery's Icons section beside the rest), never pulled from an icon font.
 - **Sizes:** 24 for tabs and standalone buttons, 20 in rows and the rail, 18 inside text-sized controls. The control around it keeps its 44 (iOS) or 48 (Android) tap target.
 - **The system's bars:** the iOS and Android tab bars stay the system's (Liquid Glass on iOS 26+, Material 3 on Android) and take our drawings as template images the system tints, an off and an on image per tab (`components/nav/tabImages.ts`, drawn by `npx tsx scripts/nav-tab-icons.ts`). Run that script after changing a tab's glyph. iOS draws its own magnifying glass on the search tab.
@@ -128,7 +128,7 @@ Write from the person's side of the screen: "Where it lives", not "Location meta
 - Build from `components/ds`: `Display`/`Title`/`Headline`/`Body`/`Spec`/`Caption`, `Button`, `GlassButton`/`GlassSurface`, `Tag`, `Segmented`, `SpecRow`, `ReviewRow`, `DrinkImage`, `LockedSection`, `Surface`, `PressableScale`, and `useDs()` for colours. Use `useBreakpoint()`/`useGutter()` for layout.
 - A page starts with `PageHeader` inside a `usePageColumn()` column (`components/nav/Page.tsx`): title, a subtitle only when it says something new (never the venue's name, the sidebar has it), the main action on the right. On wide web the column sits left, next to the sidebar: 760 for lists and forms, 1240 for plans, full width for grids. Never centre a page.
 - Accessibility props: use `role` and `aria-*` (`aria-selected`, `aria-disabled`). The legacy `accessibilityRole`/`accessibilityState` props don't reach the DOM on web.
-- A venue accent is only ever used through `useDs().accentText` (text) and `useDs().accentFill` (button fills); both are contrast-checked by `lib/color.ts`.
+- A venue accent is only ever used through `useDs().accentText` (text) and `useDs().accentFill` (button fills); both come from `lib/theme.ts`.
 
 ## Bring in: reviewing what was read
 

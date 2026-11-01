@@ -199,6 +199,7 @@ function RootLayoutNav() {
             <Stack.Screen name="settings/index" options={{ headerShown: false, title: "Settings" }} />
             <Stack.Screen name="settings/bar/[id]/index" options={{ headerShown: false }} />
             <Stack.Screen name="settings/bar/[id]/brand" options={{ headerShown: false }} />
+            <Stack.Screen name="settings/bar/[id]/theme" options={{ headerShown: false }} />
             <Stack.Screen name="p/review-claims" options={{ headerShown: false }} />
             <Stack.Screen name="p/review-photos" options={{ headerShown: false }} />
             <Stack.Screen name="rankings/[itemId]" options={{ headerShown: false }} />

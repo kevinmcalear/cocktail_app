@@ -5,8 +5,8 @@
  * built from that hex's hue and strength in OKLCH, so cards, lines and text
  * all follow it. No tint keeps the app's own Back Bar colours.
  */
-import { backbar, BRAND_PALETTES, type BackbarColors, type BackbarScheme } from '@/constants/tokens';
-import { parseHex, readableAccent, toHex, withAlpha } from '@/lib/color';
+import { backbar, BAR_COLOURS, type BackbarColors, type BackbarScheme } from '@/constants/tokens';
+import { parseHex, toHex, withAlpha } from '@/lib/color';
 
 export type Ground = 'neutral' | 'hint' | 'rich';
 
@@ -139,12 +139,12 @@ export interface Palette {
   ground: Ground;
 }
 
-/** The six palettes a venue starts from when it has no logo. */
-export const PALETTES: Palette[] = [...BRAND_PALETTES];
+/** The six bar colours a venue starts from when it has no logo, each with A hint. */
+export const PALETTES: Palette[] = BAR_COLOURS.map((c) => ({ name: c.name, accent: c.hex, ground: 'hint' }));
 
 /**
  * The palettes to offer: the logo's colours first, each with A hint, then
- * the standard ones until there are six. `name` names a colour (lib/brandColours).
+ * the bar colours until there are six. `name` names a colour (lib/brandColours).
  */
 export function palettesFor(logoColours: string[], name: (hex: string) => string): Palette[] {
   const seen = new Set<string>();
@@ -154,14 +154,5 @@ export function palettesFor(logoColours: string[], name: (hex: string) => string
     seen.add(p.accent);
     out.push(p);
   }
-  return out;
-}
-
-/** The plain notes under the colours: only when a mode shifts the colour so text stays readable. */
-export function shadeNotes(accent: string, tint: string | null, name: string): string[] {
-  const out: string[] = [];
-  const word = name.toLowerCase();
-  if (readableAccent(accent, neutralsFor('light', tint).ground) !== toHex(parseHex(accent))) out.push(`Light mode uses a deeper ${word} for text, so it stays readable.`);
-  if (readableAccent(accent, neutralsFor('dark', tint).ground) !== toHex(parseHex(accent))) out.push(`Dark mode uses a lighter ${word} for text, so it stays readable.`);
   return out;
 }

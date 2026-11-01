@@ -1,0 +1,152 @@
+import { useState } from 'react';
+import { StyleSheet, View } from 'react-native';
+
+import { Body, Button, Caption, DsText, PressableScale, Segmented, Sheet, SheetScrollView, useDisplayFaces, useDs } from '@/components/ds';
+import { VenueMark } from '@/components/nav/VenueMarks';
+import { ControlRow, RowDivider, SettingsRow, SettingsSection } from '@/components/screens/settings/SettingsParts';
+import { IconSymbol } from '@/components/ui/icon-symbol';
+import { BAR_COLOURS, DEFAULT_ACCENT, displayFaces, radius, space } from '@/constants/tokens';
+import { pickPhotoColours, type VenueBrandRow } from '@/hooks/useVenueBrand';
+import { normalizeHex } from '@/lib/brand';
+import { colourName } from '@/lib/brandColours';
+import { groundOf, groundTintFor, type Ground } from '@/lib/palette';
+
+import { IconPart, logoColoursFor, SHORT_NAME_MAX, type BrandDraftState } from '../BrandForm';
+import { LogoRow } from '../BrandSections';
+import { ColourSheet } from './ColourSheet';
+import { TypeSheet } from './TypeSheet';
+
+const GROUNDS: { value: Ground; label: string }[] = [
+  { value: 'neutral', label: 'Neutral' },
+  { value: 'hint', label: 'A hint' },
+  { value: 'rich', label: 'Rich' },
+];
+
+export interface ThemePartProps {
+  row: VenueBrandRow;
+  draft: BrandDraftState;
+  set: <K extends keyof BrandDraftState>(key: K) => (value: BrandDraftState[K]) => void;
+  suggested: string[];
+  busy: 'logo' | 'icon' | 'background' | null;
+  problems: Partial<Record<'accent' | 'groundTint' | 'shortName', string>>;
+  onUpload: (kind: 'logo' | 'icon') => void;
+  onRemoveBackground: () => void;
+}
+
+/** Colour (canvas Theme-flow-2): the one colour and where it came from, opening the Colour sheet, then Background. */
+export function ColourSection({ row, draft, set, suggested, problems }: ThemePartProps) {
+  const [open, setOpen] = useState(false);
+  const accent = normalizeHex(draft.accent);
+  const current = accent ?? DEFAULT_ACCENT;
+  const ground = groundOf(current, normalizeHex(draft.tint));
+  const logoColours = logoColoursFor(row, draft.logoUrl, suggested);
+  const bar = BAR_COLOURS.find((c) => c.hex === accent);
+  const name = accent ? (bar?.name ?? colourName(accent)) : 'Not picked yet';
+  const from = !accent ? 'The app’s own amber until you pick one' : logoColours.includes(accent) ? 'From your logo' : bar ? 'A bar colour' : 'Your own';
+  // A grey can't tint anything, so it only gets Neutral.
+  const grounds = groundTintFor(current, 'hint') ? GROUNDS : GROUNDS.slice(0, 1);
+  return (
+    <SettingsSection title="Colour" note={`${accent ? name : 'Your colour'} goes on the one main button and on what’s selected. Drink pages keep each drink’s own colour.`}>
+      <SettingsRow label={name} detail={from} leading={<View style={[styles.swatch, { backgroundColor: current }]} />} onPress={() => setOpen(true)} />
+      <RowDivider />
+      <ControlRow label="Background" detail={ground ? undefined : 'An older tint. Pick one to change it.'}>
+        <Segmented variant="pill" choice accessibilityLabel="Background" options={grounds} value={ground ?? ('' as Ground)} onChange={(g) => set('tint')(groundTintFor(current, g) ?? '')} />
+      </ControlRow>
+      {problems.accent || problems.groundTint ? <Caption tone="accent" role="alert" style={styles.pad}>{problems.accent ?? problems.groundTint}</Caption> : null}
+      <ColourSheet
+        visible={open}
+        onClose={() => setOpen(false)}
+        accent={accent}
+        ground={ground ?? 'hint'}
+        logoUrl={draft.logoUrl}
+        logoColours={logoColours}
+        onPhoto={() => pickPhotoColours(row.id)}
+        onUse={(hex) => {
+          setOpen(false);
+          set('accent')(hex);
+          set('tint')(groundTintFor(hex, ground ?? 'hint') ?? '');
+        }}
+      />
+    </SettingsSection>
+  );
+}
+
+/** Type (Theme-flow-2): the bar's name in its face, opening the faces. */
+export function TypeSection({ row, draft, set }: ThemePartProps) {
+  const ds = useDs();
+  const [open, setOpen] = useState(false);
+  const family = useDisplayFaces([draft.face]);
+  return (
+    <SettingsSection title="Type" note="For names: your bar, its drinks and its menus. Amounts, allergens and buttons stay in the app’s type.">
+      <PressableScale role="button" accessibilityLabel={`Type, ${displayFaces[draft.face].label}`} onPress={() => setOpen(true)} style={styles.typeRow}>
+        <View style={styles.flex}>
+          <DsText variant="title" numberOfLines={1} style={{ fontFamily: family(draft.face) }}>{row.name}</DsText>
+          <Caption tone="muted">{displayFaces[draft.face].label}</Caption>
+        </View>
+        <IconSymbol name="chevron.right" size={16} color={ds.c.muted} />
+      </PressableScale>
+      <TypeSheet
+        visible={open}
+        onClose={() => setOpen(false)}
+        name={row.name}
+        value={draft.face}
+        onUse={(face) => {
+          setOpen(false);
+          set('face')(face);
+        }}
+      />
+    </SettingsSection>
+  );
+}
+
+/** Logo and icon (Theme-flow-2): the logo with Replace, and the home-screen icon with its name, each opening its sheet. */
+export function LogoSection({ row, draft, set, busy, problems, onUpload, onRemoveBackground }: ThemePartProps) {
+  const [open, setOpen] = useState<'logo' | 'icon' | null>(null);
+  const close = () => setOpen(null);
+  const accent = normalizeHex(draft.accent);
+  return (
+    <SettingsSection title="Logo and icon">
+      <SettingsRow
+        label="Logo"
+        leading={<VenueMark venue={{ id: row.id, name: row.name, logoUrl: draft.logoUrl, accent, displayFace: draft.face, groundTint: null, roleLevel: 40 }} size={32} />}
+        trailing={<Body tone="muted">{draft.logoUrl ? 'Replace' : 'Add'}</Body>}
+        onPress={() => setOpen('logo')}
+      />
+      <RowDivider />
+      <SettingsRow label="Home-screen icon" value={draft.shortName.trim() || row.name.slice(0, SHORT_NAME_MAX)} onPress={() => setOpen('icon')} />
+      <Sheet visible={open === 'logo'} onClose={close} accessibilityLabel="Logo">
+        <SheetScrollView contentContainerStyle={styles.sheet}>
+          <DsText variant="title">Logo</DsText>
+          <LogoRow
+            venue={{ id: row.id, name: row.name, accent }}
+            logoUrl={draft.logoUrl}
+            busy={busy}
+            onPick={() => onUpload('logo')}
+            onRemoveBackground={onRemoveBackground}
+            onRemove={() => set('logoUrl')(null)}
+            onUseOriginal={set('logoUrl')}
+          />
+          <Button label="Done" onPress={close} />
+        </SheetScrollView>
+      </Sheet>
+      <Sheet visible={open === 'icon'} onClose={close} accessibilityLabel="Home-screen icon" keyboard>
+        <SheetScrollView contentContainerStyle={styles.sheet} keyboardShouldPersistTaps="handled">
+          <DsText variant="title">Home-screen icon</DsText>
+          <Caption tone="muted">What staff see when they add your staff link to their home screen.</Caption>
+          <IconPart {...{ row, draft, set, busy, problems, onUpload }} />
+          <Button label="Done" onPress={close} disabled={!!problems.shortName} />
+        </SheetScrollView>
+      </Sheet>
+    </SettingsSection>
+  );
+}
+
+const SWATCH = 28;
+
+const styles = StyleSheet.create({
+  swatch: { width: SWATCH, height: SWATCH, borderRadius: radius.pill },
+  pad: { paddingHorizontal: space.lg, paddingBottom: space.md },
+  typeRow: { flexDirection: 'row', alignItems: 'center', gap: space.md, paddingHorizontal: space.lg, paddingVertical: space.md },
+  flex: { flex: 1, minWidth: 0 },
+  sheet: { gap: space.lg, padding: space.lg, paddingBottom: space.xxxl },
+});
