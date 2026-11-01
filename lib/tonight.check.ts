@@ -1,7 +1,7 @@
 // Checks for lib/tonight.ts. Run: npm run test:unit
 import assert from 'node:assert/strict';
 
-import { bestAway, offTonight, oneBottleLine, prepLine, serviceEnd, shelfTiles, tonightEyebrow } from './tonight';
+import { bestAway, enoughRows, offTonight, oneBottleLine, onShiftLine, prepLine, runThroughMinutes, serviceEnd, shelfTiles, talkThrough, tonightEyebrow, unpriced } from './tonight';
 
 // The night runs to 6am: at 1am it is still last night's.
 assert.equal(serviceEnd(new Date(2026, 10, 1, 20)).getTime(), new Date(2026, 10, 2, 6).getTime());
@@ -45,3 +45,38 @@ assert.deepEqual(
 );
 assert.equal(shelfTiles(ready, [], 4).length, 4, 'all ready when nothing is one away');
 assert.equal(shelfTiles([], [{ bottles: [{ name: 'Campari' }], drinks: [{ id: 'n', name: 'Negroni' }] }], 4)[0].status, 'Need Campari');
+
+assert.equal(runThroughMinutes('Blended Scotch, lemon, honey-ginger, Islay float'), 1);
+assert.equal(runThroughMinutes('Gin, Campari, sweet vermouth, orange, soda, bitters'), 2);
+assert.equal(runThroughMinutes(''), 1);
+
+const drinkList = [
+  { id: 'pen', name: 'Penicillin' },
+  { id: 'clover', name: 'Clover Club' },
+];
+const found: Record<string, { allergen: string; via: string[][] }[]> = {
+  pen: [{ allergen: 'sulphites', via: [['Islay float']] }],
+  clover: [{ allergen: 'eggs', via: [['Raw egg white']] }],
+};
+assert.deepEqual(
+  talkThrough(drinkList, (id) => found[id], (k) => k),
+  { id: 'clover', name: 'Clover Club', sub: 'Raw egg white: what to tell guests' },
+  'eggs lead, named by the ingredient they come through'
+);
+assert.equal(talkThrough(drinkList, () => undefined, (k) => k), null);
+assert.equal(talkThrough([{ id: 'x', name: 'X' }], () => [{ allergen: 'milk', via: [] }], () => 'Milk')?.sub, 'Milk: what to tell guests');
+assert.deepEqual(
+  enoughRows(['hg', 'gren', 'none'], [{ id: 'gren' }], { hg: { value: 1200 }, gren: { value: 200 } }, (id) => ({ hg: 'Honey-ginger syrup', gren: 'Grenadine', none: 'Orgeat' })[id], () => '1.2 L'),
+  [{ id: 'hg', name: 'Honey-ginger syrup', sub: '1.2 L · enough for tonight' }],
+  'only counted house-made that needs no batch'
+);
+
+assert.equal(unpriced([{ price: null }, { price: '18' }, { price: null, menuPrice: '20' }], (d) => d.menuPrice ?? d.price), 1);
+
+const names: Record<string, string> = { ana: 'Ana Ruiz', theo: 'Theo Park', me: 'Kevin M' };
+assert.deepEqual(
+  onShiftLine([{ user_id: 'me', opens: false, closes: true }, { user_id: 'ana', opens: false, closes: false }, { user_id: 'theo', opens: true, closes: false }], (id) => names[id], 'me'),
+  { names: 'Ana, Theo and you', sub: 'Theo opens · you close' }
+);
+assert.deepEqual(onShiftLine([{ user_id: 'ana', opens: false, closes: false }], (id) => names[id], 'me'), { names: 'Ana', sub: null });
+assert.equal(onShiftLine([], (id) => names[id], 'me'), null);

@@ -16,6 +16,7 @@ import { plural } from '@/lib/menus';
 import { bestAway, oneBottleLine, shelfTiles } from '@/lib/tonight';
 import { byDay, detailLine, itemDay, shortDay, upcoming, type WeekItem } from '@/lib/week';
 
+import { Friends } from './Friends';
 import { DrinkTile, NoteCard, TonightSection } from './TonightParts';
 
 /** How many of the week's things sit under the strip. */
@@ -57,6 +58,7 @@ export function HomeTonight() {
           <NewListCard item={week.card} from={week.from} />
         </TonightSection>
       ) : null}
+      <Friends />
       {nothing ? (
         <PencilState
           kind="empty"

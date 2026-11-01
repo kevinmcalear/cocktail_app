@@ -1,7 +1,7 @@
 // Checks for lib/stock.ts. Run: npm run test:unit
 import assert from 'node:assert/strict';
 
-import { countStep, countUnit, formatCount, onHandByItem, parByItem, zoneSummary } from './stock';
+import { countStep, countUnit, formatCount, onHandByItem, parByItem, withBatches, zoneSummary } from './stock';
 
 assert.equal(countStep('btl'), 0.1);
 assert.equal(countStep('L'), 0.1);
@@ -50,3 +50,14 @@ assert.equal(zoneSummary([{ name: 'Gin', amount: 3, par: 2, unit: 'btl', houseMa
 assert.equal(zoneSummary([{ name: 'Gin', amount: null, par: 2, unit: 'btl', houseMade: false }]).sentence, 'Count each spot to see what is short.');
 
 console.log('stock: ok');
+
+// On hand with batches: the last count plus batches made since; older batches sit under the count.
+{
+  const counted = [{ item_id: 'g', location_id: null, amount: 200, unit: 'ml', counted_at: '2026-11-01T12:00:00Z' }];
+  const batch = (id: string, amount: number, unit: string, madeAt: string) => ({ id, itemId: 'g', amount, unit, madeAt, madeBy: null });
+  const before = batch('a', 1, 'L', '2026-11-01T10:00:00Z');
+  const after = batch('b', 1, 'L', '2026-11-01T15:00:00Z');
+  assert.equal(withBatches(counted, [before, after]).g.value, 1200, '200 ml counted + 1 L made since; the morning batch is in the count');
+  assert.equal(withBatches([], [before]).g.value, 1000, 'never counted: every batch');
+  assert.equal(withBatches(counted, [batch('c', 2, 'btl', '2026-11-01T16:00:00Z')]).g.value, 200, 'another kind of unit is left out');
+}

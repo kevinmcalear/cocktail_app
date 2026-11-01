@@ -63,6 +63,29 @@ async function sendServes({ menuDrinkIds, serves }: ServesWrite) {
   check(await supabase.from('menu_drinks').update({ serves }).in('id', menuDrinkIds));
 }
 
+export interface BatchWrite {
+  /** Made on the phone, so a resend finds the row there. */
+  id: string;
+  barId: string;
+  itemId: string;
+  amount: number;
+  unit: string;
+  madeAt: string;
+  madeBy: string | null;
+  locationId: string | null;
+  note: string | null;
+}
+
+/** One batch of house-made (Log batch), skipped if already there. */
+async function sendBatch(w: BatchWrite) {
+  check(
+    await supabase
+      .from('batch_logs')
+      .upsert({ id: w.id, bar_id: w.barId, item_id: w.itemId, amount: w.amount, unit: w.unit, made_at: w.madeAt, made_by: w.madeBy, location_id: w.locationId, note: w.note }, { onConflict: 'id', ignoreDuplicates: true })
+  );
+  return w.id;
+}
+
 export const BAR_WRITES = {
   zoneCount: {
     key: [BAR_WRITE, 'zone-count'],
@@ -73,6 +96,11 @@ export const BAR_WRITES = {
     key: [BAR_WRITE, 'run-swaps'],
     send: sendSwaps,
     refresh: (w: SwapsWrite): QueryKey[] => [['run-sheet', w.menuId]],
+  },
+  batch: {
+    key: [BAR_WRITE, 'batch'],
+    send: sendBatch,
+    refresh: (w: BatchWrite): QueryKey[] => [['batch-logs', w.barId], ['prep-data']],
   },
   serves: {
     key: [BAR_WRITE, 'run-serves'],
