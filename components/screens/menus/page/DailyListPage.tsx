@@ -52,10 +52,11 @@ function DailyBody({ menu }: { menu: MenuDetail }) {
   const { venues } = useActiveVenue();
   const lens = useMenuLens(menu).lens;
   const staff = isStaffLens(lens);
-  // Anyone on shift writes it (20261205910000), and the menu team.
+  const team = lens === 'creator' || lens === 'admin';
+  // The menu team writes it, and anyone on shift once #1095 lands.
   const may = useMayChangeList(staff ? menu.id : null).data === true;
-  const list = useDailyList(menu);
-  const writes = useDailyWrites(menu, list.today);
+  const list = useDailyList(menu, { staff });
+  const writes = useDailyWrites(menu, { timeZone: list.timeZone, writtenDay: list.writtenDay });
   const [sheet, setSheet] = useState<'note' | 'day' | 'written' | null>(null);
   // A switch moves at once; the list catches up when the write lands.
   const [flipped, setFlipped] = useState<Record<string, boolean>>({});
@@ -63,11 +64,19 @@ function DailyBody({ menu }: { menu: MenuDetail }) {
   const back = () => (router.canGoBack() ? router.back() : router.replace('/menus/all'));
   const time = (iso: string) => clockAt(iso, list.timeZone);
 
-  const flip = (row: DailyRow, on: boolean) => {
-    setFlipped((f) => ({ ...f, [row.drink.id]: on }));
-    const done = { onSettled: () => setFlipped(({ [row.drink.id]: _, ...rest }) => rest), onError: () => Alert.alert(`${row.drink.name} didn’t ${on ? 'go on' : 'come off'}. Check your connection and try again.`) };
-    if (on) writes.switchOn.mutate(row.drink.id, done);
-    else if (row.rowId) writes.switchOff.mutate(row.rowId, done);
+  // One write per drink at a time: a second flip waits until the first lands (and the row has its id).
+  const flip = async (row: DailyRow, on: boolean) => {
+    const id = row.drink.id;
+    if (id in flipped || (!on && !row.rowId)) return;
+    setFlipped((f) => ({ ...f, [id]: on }));
+    try {
+      if (on) await writes.switchOn.mutateAsync(id);
+      else await writes.switchOff.mutateAsync(row.rowId!);
+    } catch {
+      Alert.alert(`${row.drink.name} didn’t ${on ? 'go on' : 'come off'}. Check your connection and try again.`);
+    } finally {
+      setFlipped(({ [id]: _, ...rest }) => rest);
+    }
   };
   const isOn = (row: DailyRow, on: boolean) => flipped[row.drink.id] ?? on;
 
@@ -121,7 +130,7 @@ function DailyBody({ menu }: { menu: MenuDetail }) {
               <MenuPageRow
                 row={view(item.row, !!item.on)}
                 onPress={() => go(`${menuDrinkHref(item.row!.drink)}?menu=${menu.id}`)}
-                trailing={staff && may ? <Switch value={isOn(item.row, !!item.on)} label={`${item.row.drink.name} on tonight`} onValueChange={(on) => flip(item.row!, on)} /> : undefined}
+                trailing={staff && may ? <Switch value={isOn(item.row, !!item.on)} label={`${item.row.drink.name} on tonight`} onValueChange={(on) => void flip(item.row!, on)} /> : undefined}
               />
             ) : null}
           </View>
@@ -140,7 +149,7 @@ function DailyBody({ menu }: { menu: MenuDetail }) {
               description={lead}
               onBack={sidebar ? null : back}
               onShare={() => go(`/menus/${menu.id}/card`)}
-              pill={null}
+              pill={team ? { label: 'Edit', onPress: () => go(`/menus/${menu.id}/edit`) } : null}
               bleed={gutter}
               top={sidebar ? 0 : insets.top}
             />
@@ -150,9 +159,9 @@ function DailyBody({ menu }: { menu: MenuDetail }) {
             ) : list.loading ? (
               <PencilState kind="loading" title="Opening tonight’s list…" />
             ) : !list.on.length && !list.off.length ? (
-              <Body tone="muted">No drinks on this list yet. Add them from Edit in More.</Body>
+              <Body tone="muted">{team ? 'No drinks on this list yet. Add them with Edit.' : 'No drinks on this list yet.'}</Body>
             ) : !list.on.length ? (
-              <Body tone="muted">Nothing is on tonight yet. Switch drinks on below.</Body>
+              <Body tone="muted">{may ? 'Nothing is on tonight yet. Switch drinks on below.' : 'Nothing is on tonight yet.'}</Body>
             ) : null}
           </View>
         }

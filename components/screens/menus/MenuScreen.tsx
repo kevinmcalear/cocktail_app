@@ -66,7 +66,6 @@ export function MenuScreen({ menuId }: { menuId: string }) {
     );
   }
   // Only a home menu reads your shelf (Ready, Need limes, the shopping list).
-  if (menu.barId && menu.listType === 'daily') return <DailyListPage menu={menu} />;
   return menu.barId ? <MenuPage menu={menu} shelf={null} /> : <HomeMenuPage menu={menu} />;
 }
 
@@ -96,6 +95,8 @@ function MenuPage(props: PageProps) {
   const status = menuStatus(props.menu, now);
   const cover = props.menu.barId && status !== 'draft' && status !== 'previous' ? props.menu.coverUrl : null;
   const tone = usePhotoTone(cover);
+  // A daily list that's on is Tonight (Menu-l-tonight-*); its draft and past runs read as menus.
+  if (props.menu.listType === 'daily' && status === 'on') return <DailyListPage menu={props.menu} />;
   return (
     <BackbarTheme scheme={cover ? tone : undefined}>
       <MenuPageBody {...props} cover={cover} now={now} />

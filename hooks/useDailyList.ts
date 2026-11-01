@@ -2,7 +2,7 @@
 // on the row, the day's author and note (menu_days), the drinks on lately,
 // and any other day's list (list_on_day). Each switch saves as it goes.
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
-import { useMemo, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 
 import { useUserId } from '@/ctx/AuthContext';
 import { useBarMembers } from '@/hooks/useBarDetail';
@@ -63,15 +63,20 @@ export interface DailyRow {
  * this list) and the ones on lately that aren't, the day's author, time and
  * note, and yesterday's count for Another day.
  */
-export function useDailyList(menu: MenuDetail) {
-  const [now] = useState(() => Date.now());
+export function useDailyList(menu: MenuDetail, { staff }: { staff: boolean }) {
+  // The clock moves on each minute, so the page turns to the new day at midnight.
+  const [now, setNow] = useState(() => Date.now());
+  useEffect(() => {
+    const id = setInterval(() => setNow(Date.now()), 60_000);
+    return () => clearInterval(id);
+  }, []);
   const clock = useBarClock(menu.barId);
   const timeZone = clock.data?.timezone ?? null;
   const today = barDay(now, timeZone);
   const rows = useListRows(menu.id);
   const ended = useEndedRuns(menu.id);
   const day = useMenuDay(menu.id, clock.isPending ? null : today);
-  const members = useBarMembers(menu.barId);
+  const members = useBarMembers(staff ? menu.barId : null);
   const yesterday = useListOnDay(menu.id, clock.isPending ? null : barDay(now - 86_400_000, timeZone));
 
   const onRows = useMemo(() => (rows.data ?? []).filter((r) => r.state === 'on' || r.state === 'going' || r.state === 'waiting_off'), [rows.data]);
@@ -89,7 +94,11 @@ export function useDailyList(menu: MenuDetail) {
   }, [onRows, ended.data, menu.startsAt, now, timeZone]);
 
   const known = useMemo(() => new Map(menu.sections.flatMap((s) => s.drinks).map((d) => [d.id, d])), [menu.sections]);
-  const missing = useMemo(() => lines.off.map((l) => l.itemId).filter((id) => !known.has(id)), [lines.off, known]);
+  // On tonight but not in the menu's own read yet, and (for the team) on lately.
+  const missing = useMemo(
+    () => [...lines.on, ...(staff ? lines.off : [])].map((l) => l.itemId).filter((id) => !known.has(id)),
+    [lines.on, lines.off, known, staff],
+  );
   const others = useDrinks(missing);
   const drinkOf = (id: string) => known.get(id) ?? others.data?.find((d) => d.id === id);
   const rowOf = new Map(onRows.map((r) => [r.itemId, r.id]));
@@ -103,8 +112,10 @@ export function useDailyList(menu: MenuDetail) {
     today,
     timeZone,
     on: lines.on.map(toRow).filter((r): r is DailyRow => !!r),
-    off: lines.off.map(toRow).filter((r): r is DailyRow => !!r),
+    off: staff ? lines.off.map(toRow).filter((r): r is DailyRow => !!r) : [],
     day: day.data ?? null,
+    /** The day today's row was read for, once someone has written it. */
+    writtenDay: day.data ? today : null,
     writer: name(day.data?.writtenBy ?? null),
     yesterdayCount: yesterday.data ? new Set(yesterday.data.map((r) => r.item_id)).size : null,
     name,
@@ -135,16 +146,19 @@ export function useDailyDay(menuId: string, day: string | null) {
  * takes it off (its run ends now, and is kept); the first change of the day
  * writes the day as the caller's. The note is the day's own.
  */
-export function useDailyWrites(menu: MenuDetail, today: string) {
+export function useDailyWrites(menu: MenuDetail, { timeZone, writtenDay }: { timeZone: string | null; writtenDay: string | null }) {
   const client = useQueryClient();
   const userId = useUserId();
   const changes = useListChanges(menu.id);
+  // The day is read when the write happens, so a page left open past midnight writes the new day.
   const claimDay = async () => {
+    const today = barDay(Date.now(), timeZone);
     if (!userId) throw new Error('Sign in to change tonight’s list.');
     // The day stays the first writer's: a later change doesn't take it over.
-    await check(supabase.from('menu_days').upsert({ menu_id: menu.id, day: today, written_by: userId }, { onConflict: 'menu_id,day', ignoreDuplicates: true }));
+    if (writtenDay !== today) await check(supabase.from('menu_days').upsert({ menu_id: menu.id, day: today, written_by: userId }, { onConflict: 'menu_id,day', ignoreDuplicates: true }));
+    return today;
   };
-  const dayChanged = () => client.invalidateQueries({ queryKey: dayKey(menu.id, today) });
+  const dayChanged = () => client.invalidateQueries({ queryKey: ['living-list', menu.id, 'menu-day'] });
   const section = menu.sections[0];
   return {
     switchOn: useMutation({
@@ -166,7 +180,7 @@ export function useDailyWrites(menu: MenuDetail, today: string) {
     }),
     note: useMutation({
       mutationFn: async (note: string) => {
-        await claimDay();
+        const today = await claimDay();
         await check(supabase.from('menu_days').update({ note: note.trim() || null }).eq('menu_id', menu.id).eq('day', today));
       },
       onSuccess: dayChanged,
