@@ -1,6 +1,6 @@
 import assert from 'node:assert/strict';
 
-import { draftSlot, sectionSlots, slotStart } from './wizardSlots';
+import { draftSlot, importsInPlainSlots, isReviewSlot, reviewSlots, sectionSlots, slotStart } from './wizardSlots';
 
 // A plain New drink keeps the place's one draft, as before.
 assert.equal(draftSlot('home', {}), 'home');
@@ -33,7 +33,33 @@ for (const { slot, name } of sectionSlots(kept, 'home', 's1')) assert.equal(draf
 // New's Drafts open a slot with what it was started from.
 {
   const slot = draftSlot('bar-1', { menuSectionId: 'sec-9', name: 'Salty Boy' });
-  assert.deepEqual(slotStart(slot), { place: 'bar-1', menuSectionId: 'sec-9', from: null, name: 'salty boy' });
-  assert.deepEqual(slotStart('home'), { place: 'home', menuSectionId: null, from: null, name: null });
+  assert.deepEqual(slotStart(slot), { place: 'bar-1', menuSectionId: 'sec-9', from: null, review: null, name: 'salty boy' });
+  assert.deepEqual(slotStart('home'), { place: 'home', menuSectionId: null, from: null, review: null, name: null });
 }
 assert.equal(slotStart(draftSlot('home', { name: 'Gin | Tonic' })).name, 'gin | tonic', 'a name as typed, bars and all');
+
+// An import's drink being edited is never the plain New drink (Eddie, 29 Oct).
+{
+  const slot = draftSlot('bar-1', { review: 'u1-17#3' });
+  assert.equal(slot, 'bar-1|review:u1-17#3');
+  assert.ok(isReviewSlot(slot));
+  assert.ok(!isReviewSlot('bar-1') && !isReviewSlot(draftSlot('bar-1', { name: 'x |review: y' })));
+  assert.deepEqual(reviewSlots({ [slot]: 1, 'bar-1|review:u1-170#0': 1, 'bar-1': 1 }, 'bar-1', 'u1-17'), [slot]);
+  assert.equal(slotStart(slot).review, 'u1-17#3');
+}
+
+// One already left in the plain slot (it has a `start`) moves to its own draft by name; a plain draft typed by hand stays.
+{
+  const kept = {
+    home: { draft: { name: 'Paloma ' }, start: { name: 'Paloma' } },
+    'bar-1': { draft: { name: 'Mine' } },
+    'bar-2': { draft: { name: '' }, start: { name: '' } },
+    'bar-3': { draft: { name: 'Gimlet' }, start: { name: 'Gimlet' } },
+    'bar-3|name:gimlet': { draft: { name: 'Gimlet' } },
+  };
+  assert.deepEqual(importsInPlainSlots(kept), [
+    { from: 'home', to: 'home|name:paloma' },
+    { from: 'bar-2', to: 'bar-2|name:imported drink' },
+    { from: 'bar-3', to: 'bar-3|name:gimlet (imported)' },
+  ]);
+}
