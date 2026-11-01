@@ -22,7 +22,7 @@ interface Props {
 export function FoamerHint({ draft, set, ingredients }: Props) {
   const [open, setOpen] = useState(false);
   const names = draft.lines.map((l) => l.name);
-  if (!needsFoamer(draft.methods.map((m) => m.name), names)) return null;
+  if (draft.putAway?.includes('foamer') || !needsFoamer(draft.methods.map((m) => m.name), names)) return null;
   const vegan = names.length > 0 && prepFacts(names).vegan === true;
   return (
     <>
@@ -31,6 +31,7 @@ export function FoamerHint({ draft, set, ingredients }: Props) {
         title="Nothing in this spec foams yet."
         body={vegan ? 'It’s vegan so far, so egg white is out: try aquafaba or a few foamer drops.' : 'Egg white, aquafaba or a few foamer drops will.'}
         actions={[{ label: 'Pick a foamer', onPress: () => setOpen(true) }]}
+        onDismiss={() => set({ putAway: [...(draft.putAway ?? []), 'foamer'] })}
       />
       <TechniqueSheet visible={open} onClose={() => setOpen(false)} eyebrow="Foam" title="Pick a foamer">
         <FoamPicker

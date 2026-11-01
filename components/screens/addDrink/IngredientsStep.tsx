@@ -21,6 +21,7 @@ import { getPreferredUnit } from '@/store/useSettingsStore';
 
 import type { TrailItem } from './Trail';
 import { DragRow, SpecRows } from './DragRow';
+import type { DraftLineParts } from './DraftLine';
 import { NudgeCard } from './NudgeCard';
 import { BalanceCard } from './GoesWith';
 import { IngredientSearch, type CatalogIngredient } from './IngredientSearch';
@@ -74,8 +75,8 @@ interface IngredientsStepProps extends StepProps {
   /** The drink editor made in parts (drink-edit-parts): a part's heading. Each part's lines sit under it, with its own Add field (draft.parts). */
   partHead?: (part: number) => ReactNode;
   classicShown?: boolean; // The draft page shows the classic the name is: no list of others to start from.
-  /** The draft page draws each line itself (DraftLine): the row to open, and how to write its recipe. */
-  renderLine?: (line: WizardLine, row: ReactNode, write: () => void) => ReactNode;
+  /** The draft page draws each line itself (DraftLine): the row to open, and what a closed line needs. */
+  renderLine?: (line: WizardLine, row: ReactNode, parts: DraftLineParts) => ReactNode;
 }
 
 /**
@@ -159,10 +160,11 @@ export function IngredientsStep({ draft, set, ingredients, loading, aliases = []
   // The taste and what goes with it read one drink's own lines, not the batch.
   const poured = perDrinkLines(draft.lines);
   const search = { ingredients, aliases, coreIds, loading, shelf, backBar, brands: true };
+  const putAway = (prompt: string) => set({ putAway: [...(draft.putAway ?? []), prompt] });
 
   // Pasting takes the step's place, right under its heading, so the box sits above the keyboard (canvas make-create-finish-oil, step 4).
   if (pasting) {
-    return <PasteSpecPanel onClose={() => setPasting(false)} drinkName={draft.name} {...search} have={backBar ?? shelf} haveLabel={backBar ? 'On your back bar' : 'On your shelf'} onAdd={(rows) => setToFinish(typed.paste(rows).join(', ') || null)} />;
+    return <PasteSpecPanel onClose={() => (setPasting(false), takeover?.set(false))} drinkName={draft.name} {...search} have={backBar ?? shelf} haveLabel={backBar ? 'On your back bar' : 'On your shelf'} onAdd={(rows) => setToFinish(typed.paste(rows).join(', ') || null)} />;
   }
 
   // A field to add a line: in parts each part has its own, and a new line goes in the part it's under.
@@ -192,6 +194,7 @@ export function IngredientsStep({ draft, set, ingredients, loading, aliases = []
         <SpecRows entries={combine.entries} shift={combine.shift} onHeight={combine.height} head={(p) => (<>{addField(p - 1)}{partHead?.(p)}</>)}>
           {(i, row) => {
             const l = draft.lines[i];
+            const place = { dropTarget: combine.target === i ? combine.holding : null, combineWith: combine.combineWith(i), moveTo: combine.moveTo ? partName(combine.moveTo) : null, onMove: (by: -1 | 1) => combine.step(row, by), detail: lineDetail?.(l) };
             return (
               <DragRow key={l.key} index={row} fold onDrop={combine.onDrop} onMove={combine.onMove} shift={combine.shift(row)} flat={combine.combineWith(i) !== null} onHeight={(h) => combine.height({ line: i }, h)}>
                 {(grip, lifted) =>
@@ -225,19 +228,15 @@ export function IngredientsStep({ draft, set, ingredients, loading, aliases = []
                       line={l.batch ? { ...l, prep: linePrep(l) } : l}
                       grip={grip}
                       lifted={lifted}
-                      dropTarget={combine.target === i ? combine.holding : null}
-                      combineWith={combine.combineWith(i)}
-                      moveTo={combine.moveTo ? partName(combine.moveTo) : null}
-                      onMove={(by) => combine.step(row, by)}
+                      {...place}
                       onChange={(c) => change(l.key, c)}
                       onRemove={() => remove(l)}
                       onSwap={() => setSwapKey(l.key)}
                       onEditPrep={() => prep.edit(l)}
-                      detail={lineDetail?.(l)}
                       below={
                         <>
                           {lineBelow?.(l)}
-                          {forDrink ? <SalineHint line={l} ingredients={ingredients} onChange={(c) => change(l.key, c)} /> : null}
+                          {forDrink ? <SalineHint line={l} ingredients={ingredients} onChange={(c) => change(l.key, c)} away={draft.putAway} onAway={putAway} /> : null}
                           {/* A line that matched nothing asks what it is, until its recipe opens under it (step 10). */}
                           {prep.card(l.key) ??
                             (forDrink && unmatched(l) ? (
@@ -256,7 +255,7 @@ export function IngredientsStep({ draft, set, ingredients, loading, aliases = []
                         </>
                       }
                       stock={stock?.toggle(l)}
-                    />, () => (l.prep ? prep.edit(l) : make(l.name, l.key)))
+                    />, { ...place, grip, lifted, below: lineBelow?.(l), write: () => prep.edit(l) })
                   )
                 }
               </DragRow>
@@ -266,7 +265,7 @@ export function IngredientsStep({ draft, set, ingredients, loading, aliases = []
       ) : null}
       {searching ? null : stock?.footer}
       {/* In parts the editor says it under Add a part (drink-edit-parts). */}
-      {draft.lines.length > 1 && !parts && !searching && !renderLine ? <Caption tone="muted">{`Hold a line${Platform.OS === 'web' ? ' by its grip' : ''} and move it ${forDrink ? 'over another. Let go to combine them; move away to just reorder.' : 'to reorder.'}`}</Caption> : null}
+      {draft.lines.length > 1 && !parts && !searching ? <Caption tone="muted">{`Hold a line${Platform.OS === 'web' ? ' by its grip' : ''} and move it ${forDrink ? 'over another. Let go to combine them; move away to just reorder.' : 'to reorder.'}`}</Caption> : null}
 
       {nudge && !searching ? (
         <NudgeCard nudge={nudge} name={nudgeLine?.name} onMake={() => nudgeLine && makeHouse(nudgeLine, nudge.technique, nudge.adjunct)} onNotNow={() => (nudge.from === 'typed' ? typed.drop(nudge.key) : setNudgeOff(true))} />
@@ -279,12 +278,12 @@ export function IngredientsStep({ draft, set, ingredients, loading, aliases = []
       ) : null}
 
       {addField(parts?.length)}
-      {forDrink && !quiet && !editing ? <Button label="Paste a whole spec" variant="ghost" size="sm" style={styles.paste} onPress={() => setPasting(true)} /> : null}
+      {forDrink && !quiet && !editing ? <Button label="Paste a whole spec" variant="ghost" size="sm" style={styles.paste} onPress={() => (setPasting(true), takeover?.set(true))} /> : null}
       {toFinish && !searching ? <WizardNotice>{`${toFinish} went to the finish.`}</WizardNotice> : null}
       {prep.builder}
       {/* The balance sits right under the field, then what goes with it (Flavor Atlas order). */}
-      {forDrink && balance && !quiet && !editing ? <BalanceCard lines={poured} ingredients={ingredients} onAdd={(name) => add(pickByName(name, ingredients))} /> : null}
-      {quiet || !forDrink || editing ? null : <IngredientSuggestions draft={draft} set={set} poured={poured} ingredients={ingredients} onAdd={add} classicShown={classicShown} />}
+      {forDrink && balance && !quiet && !editing ? <BalanceCard lines={poured} ingredients={ingredients} onAdd={(name) => add(pickByName(name, ingredients))} away={draft.putAway} onAway={putAway} /> : null}
+      {quiet || !forDrink || editing ? null : <IngredientSuggestions draft={draft} set={set} onAway={putAway} poured={poured} ingredients={ingredients} onAdd={add} classicShown={classicShown} />}
     </View>
   );
 }

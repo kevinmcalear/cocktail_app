@@ -1,12 +1,13 @@
 import { Image } from 'expo-image';
 import { StyleSheet, View } from 'react-native';
 
-import { Caption, PressableScale, useDs } from '@/components/ds';
+import { Body, Button, Caption, PressableScale, useDs } from '@/components/ds';
 import { SketchDrawing } from '@/components/ds/SketchDrawing';
 import { CutoutOfferHost } from '@/components/drink/CutoutOfferHost';
 import { pickDrinkPhotos } from '@/components/drink/drinkImages';
 import { IconSymbol } from '@/components/ui/icon-symbol';
 import { radius, space } from '@/constants/tokens';
+import { useCapabilities } from '@/hooks/useCapabilities';
 import type { ImageAngle } from '@/lib/itemImages';
 import { showMessage } from '@/lib/dialogs';
 import { SERVICE_ANGLES } from '@/lib/servicePhotos';
@@ -34,6 +35,68 @@ function usePhotoSlots(photos: Photos, onChange: (photos: Photos) => void) {
     onChange(next);
   };
   return { choose, remove };
+}
+
+/**
+ * The draft page's photos: at home one, the one that leads the drink's page
+ * (Q15), more angles go on the page; at a venue the slots, for those who may
+ * add photos, and nothing for anyone else.
+ */
+export function DraftPhotos({ barId, photos, onChange, sketch, seed }: { barId: string | null; photos: Photos; onChange: (photos: Photos) => void; sketch: SketchInputs; seed: string }) {
+  const caps = useCapabilities(barId).data;
+  if (!barId) return <HomePhoto photos={photos} onChange={onChange} />;
+  return caps?.includes('photos') ? <ReviewPhotos photos={photos} onChange={onChange} sketch={sketch} seed={seed} /> : null;
+}
+
+/** At home, one photo: the one that leads the drink's page. */
+function HomePhoto({ photos, onChange }: { photos: Photos; onChange: (photos: Photos) => void }) {
+  const ds = useDs();
+  const { choose, remove } = usePhotoSlots(photos, onChange);
+  const hero = photos.hero;
+  return (
+    <View style={styles.stack}>
+      <Eyebrow>Photo</Eyebrow>
+      <View>
+        <PressableScale
+          role="button"
+          onPress={() => choose('hero')}
+          accessibilityLabel={hero ? 'Photo added. Change it' : 'Add a photo: it leads the drink page'}
+          style={[styles.wide, hero ? { backgroundColor: ds.c.paper } : [styles.empty, { borderColor: ds.c.lineStrong }]]}
+        >
+          {hero ? (
+            <Image source={{ uri: hero }} style={StyleSheet.absoluteFill} contentFit="cover" />
+          ) : (
+            <>
+              <IconSymbol name="camera" size={22} color={ds.c.ink} />
+              <Body>Add a photo</Body>
+            </>
+          )}
+        </PressableScale>
+        {hero ? (
+          <PressableScale role="button" onPress={() => remove('hero')} accessibilityLabel="Remove the photo" hitSlop={space.sm} style={[styles.remove, { backgroundColor: ds.c.ground }]}>
+            <IconSymbol name="xmark" size={10} color={ds.c.ink} />
+          </PressableScale>
+        ) : null}
+      </View>
+      <Caption tone="muted">It leads the drink’s page. Add more angles there.</Caption>
+      <CutoutOfferHost />
+    </View>
+  );
+}
+
+/**
+ * With a hero photo: whether the drawing stays on the drink's page after the
+ * photos. Removed to start (Kevin's call B, 26 Oct), Keep it in one tap.
+ */
+export function DrawingChoice({ kept, onChange }: { kept: boolean; onChange: (keep: boolean) => void }) {
+  const ds = useDs();
+  return (
+    <View style={styles.drawing}>
+      <IconSymbol name="pencil" size={16} color={ds.c.muted} />
+      <Body style={styles.flex}>{kept ? 'Drawing: after the photos' : 'Drawing removed'}</Body>
+      <Button label={kept ? 'Remove' : 'Keep it'} size="sm" variant="secondary" accessibilityLabel={kept ? 'Remove the drawing: photos only on the drink’s page' : 'Keep the drawing, after the photos'} onPress={() => onChange(!kept)} />
+    </View>
+  );
 }
 
 /**
@@ -99,11 +162,8 @@ const styles = StyleSheet.create({
   tile: { aspectRatio: 1, borderRadius: radius.control, borderCurve: 'continuous', overflow: 'hidden', alignItems: 'center', justifyContent: 'center', gap: 2 },
   empty: { borderWidth: 1, borderStyle: 'dashed' },
   wide: { height: 150, borderRadius: radius.card, borderCurve: 'continuous', overflow: 'hidden', alignItems: 'center', justifyContent: 'center', gap: space.xs },
-  tiles: { flexDirection: 'row', flexWrap: 'wrap', gap: space.sm },
-  // Four to a row, as drawn, on any phone.
-  tileCell: { width: '23%', gap: space.xs },
-  addTile: { alignSelf: 'flex-start' },
-  thumb: { width: '100%', aspectRatio: 1, borderRadius: radius.control, borderCurve: 'continuous', overflow: 'hidden', alignItems: 'center', justifyContent: 'center', gap: 2 },
+  drawing: { flexDirection: 'row', alignItems: 'center', gap: space.sm },
+  flex: { flex: 1, minWidth: 0 },
   onPicture: { position: 'absolute', left: space.xs, bottom: space.xs },
   remove: { position: 'absolute', top: -space.xs, right: -space.xs, width: 20, height: 20, borderRadius: radius.pill, alignItems: 'center', justifyContent: 'center' },
 });

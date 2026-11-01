@@ -17,8 +17,6 @@ interface Props {
   hidden: boolean;
   /** Desktop: the drink beside the heading, the choices in a row. */
   wide?: boolean;
-  /** After Make our version fills the spec in: on to the ingredients. */
-  onStarted?: () => void;
 }
 
 /**
@@ -29,7 +27,7 @@ interface Props {
  * (just links it when the spec can't be read); No keeps the name as typed
  * and stops asking about that drink. It asks; nothing waits on it.
  */
-export function NearNameCard({ draft, set, barId, venueName, hidden, wide, onStarted }: Props) {
+export function NearNameCard({ draft, set, barId, venueName, hidden, wide }: Props) {
   const picks = useSameNamePicks(set);
   const save = useSaveSpelling();
   const [notThese, setNotThese] = useState<string[]>([]);
@@ -55,7 +53,7 @@ export function NearNameCard({ draft, set, barId, venueName, hidden, wide, onSta
         save.mutate({ itemId: drink.id, typed: draft.name });
         picks.open(drink);
       }}
-      onVersion={() => picks.version(drink, bar, drink.spec.length > 0, onStarted)}
+      onVersion={() => picks.version(drink, bar, drink.spec.length > 0)}
       onDifferent={() => setNotThese([...notThese, drink.id])}
     />
   );

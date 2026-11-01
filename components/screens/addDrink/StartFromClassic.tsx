@@ -15,7 +15,6 @@ interface Props {
   set: (change: Partial<WizardDraft>) => void;
   /** The classic the name already is ("House Negroni" is a Negroni): one card, not a list. */
   match?: ClassicMatch | null;
-  onStarted?: () => void;
 }
 
 /**
@@ -24,16 +23,13 @@ interface Props {
  * `match`, a card for the classic the name is; otherwise the best-known
  * classics as chips, for an empty spec.
  */
-export function StartFromClassic({ set, match, onStarted }: Props) {
+export function StartFromClassic({ set, match }: Props) {
   const classics = useDrinkLists().data ?? [];
   const start = useStartFromClassic();
   const [gone, setGone] = useState(false);
   const go = (id: string) =>
     start.mutate(id, {
-      onSuccess: (change) => {
-        set(change);
-        onStarted?.();
-      },
+      onSuccess: set,
       onError: (e) => Alert.alert('Couldn’t load that spec', e.message),
     });
 

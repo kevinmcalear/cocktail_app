@@ -129,7 +129,7 @@ function Wizard({ barId = null, menuSectionId, initialName, startFrom, firstRoun
 
   const ingredients = dropdowns?.ingredients ?? [];
   const coreIds = new Set(dropdowns?.coreIngredientIds ?? []);
-  const stock = useLineStock({ barId, venueName, drinkName: draft.name.trim(), ingredients, lines: draft.lines, pinned: !desk });
+  const stock = useLineStock({ barId, venueName, drinkName: draft.name.trim(), ingredients, lines: draft.lines });
   const methods = choiceList(COMMON_METHODS, dropdowns?.methods ?? []);
   const glasses = choiceList(COMMON_GLASSES, dropdowns?.glassware ?? []);
   const ices = choiceList([...COMMON_ICE, ...barIce], dropdowns?.iceTypes ?? []);

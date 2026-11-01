@@ -22,7 +22,7 @@ const listNames = (names: string[]) => (names.length < 3 ? names.join(' and ') :
  * to `fallback` (the common quick adds) when nothing pairs with all of them.
  * `after` (the classic it's close to) sits under the chips.
  */
-export function GoesWith({ lines, onAdd, fallback, after }: { lines: readonly WizardLine[]; onAdd: (pick: WizardPick) => void; fallback: ReactNode; after?: ReactNode }) {
+export function GoesWith({ lines, onAdd, fallback, after, away, onAway }: { lines: readonly WizardLine[]; onAdd: (pick: WizardPick) => void; fallback: ReactNode; after?: ReactNode; /** Put away for this draft (draft.putAway). */ away?: boolean; onAway?: () => void }) {
   const router = useRouter();
   const known = lines.filter((l): l is WizardLine & { id: string } => !!l.id);
   const { data: pairs = [] } = usePairings(
@@ -30,10 +30,10 @@ export function GoesWith({ lines, onAdd, fallback, after }: { lines: readonly Wi
     { limit: 10 }
   );
   const fresh = pairs.filter((p) => !lines.some((l) => l.id === p.id)).slice(0, 8);
-  if (!known.length || !fresh.length) {
+  if (!known.length || !fresh.length || away) {
     return (
       <>
-        {fallback}
+        {away ? null : fallback}
         {after}
       </>
     );
@@ -45,6 +45,7 @@ export function GoesWith({ lines, onAdd, fallback, after }: { lines: readonly Wi
         icon="leaf.fill"
         title={`Goes with ${listNames(names)}`}
         body="From real drinks that use them."
+        onDismiss={onAway}
         chips={fresh.map((p) => ({ label: p.name, onPress: () => onAdd({ id: p.id, name: p.name }), accessibilityLabel: `Add ${p.name}. In drinks with ${names.map((n, i) => `${n} ${p.together[i] ?? 0} times`).join(', ')}` }))}
       >
         <DsText
@@ -91,18 +92,20 @@ export function CloseToClassic({ ingredients, riffOf, onRiff }: { ingredients: r
  * is missing something, one amber line and the one-tap fixes for it ("+ Agave
  * syrup" for a sour mezcal drink). The taste meters are the desktop rail's.
  */
-export function BalanceCard({ lines, ingredients, onAdd }: { lines: readonly WizardLine[]; ingredients: readonly Ingredient[]; onAdd?: (name: string) => void }) {
+export function BalanceCard({ lines, ingredients, onAdd, away, onAway }: { lines: readonly WizardLine[]; ingredients: readonly Ingredient[]; onAdd?: (name: string) => void; away?: readonly string[]; onAway?: (prompt: string) => void }) {
   const byId = new Map(ingredients.map((i) => [i.id, i]));
   const parts = lines.map((l) => {
     const generic = l.id ? byId.get(byId.get(l.id)?.generic_id ?? '') : null;
     return { name: l.name, genericName: generic?.name ?? null, amount: amountOf(l.amount), unit: l.unit || null };
   });
   const balance = balanceOf(parts);
-  if (!balance?.hint) return null;
+  // Put away, what it said stays away; a new gap still shows.
+  if (!balance?.hint || away?.includes(balance.hint)) return null;
+  const hint = balance.hint;
   const fixes = balance.need && onAdd ? fixesFor(balance.need, parts) : [];
   // "Sour with nothing sweet." then the reason.
-  const [title, ...rest] = balance.hint.split(/(?<=\.) /);
-  return <Prompt warn icon="exclamationmark.triangle" title={title} body={rest.join(' ')} chips={fixes.map((name) => ({ label: name, onPress: () => onAdd?.(name), accessibilityLabel: `Add ${name} to balance it` }))} />;
+  const [title, ...rest] = hint.split(/(?<=\.) /);
+  return <Prompt warn icon="exclamationmark.triangle" title={title} body={rest.join(' ')} onDismiss={onAway ? () => onAway(hint) : undefined} chips={fixes.map((name) => ({ label: name, onPress: () => onAdd?.(name), accessibilityLabel: `Add ${name} to balance it` }))} />;
 }
 
 const styles = StyleSheet.create({

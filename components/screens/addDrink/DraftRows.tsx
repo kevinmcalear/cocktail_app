@@ -1,7 +1,7 @@
 import { useState, type ReactNode } from 'react';
 import { StyleSheet, View } from 'react-native';
 
-import { Body, PressableScale, useDs } from '@/components/ds';
+import { Body, Caption, PressableScale, useDs } from '@/components/ds';
 import { TellUs } from '@/components/feedback/TellUs';
 import { IconSymbol } from '@/components/ui/icon-symbol';
 import { radius, space, STATUS } from '@/constants/tokens';
@@ -10,10 +10,13 @@ import { useMyProfile } from '@/hooks/useMyProfile';
 import { draftIceLine, finishLabel } from '@/lib/drinkWizard';
 import { PUBLISH_COPY } from '@/lib/publishing';
 import { readableAccent } from '@/lib/color';
+import { tintName } from '@/lib/sketch/tintName';
+import type { SketchInputs } from '@/lib/sketch/types';
 import { askShort, asked } from '@/lib/whoMadeIt';
 
 import { MenuSheet } from '../menus/MenuSheet';
 import type { DrinkDeskProps } from './DrinkDesk';
+import { DraftTintPicker } from './DraftTintPicker';
 import { FinishStep } from './FinishStep';
 import { FoamerHint } from './FoamerHint';
 import { GlassStep } from './GlassStep';
@@ -26,17 +29,18 @@ import { CreditsStep } from './CreditsStep';
 import { credits, notesLine } from './ReviewStep';
 import { NotesStep } from './TextSteps';
 
-type Part = 'method' | 'glass' | 'ice' | 'finish' | 'credit' | 'notes' | 'publish';
+type Part = 'method' | 'glass' | 'ice' | 'finish' | 'credit' | 'notes' | 'publish' | 'colour';
 
-const TITLES: Record<Part, string> = { method: 'Method', glass: 'Glass', ice: 'Ice', finish: 'Finish', credit: 'Credit', notes: 'Notes', publish: 'Who sees it' };
+const TITLES: Record<Part, string> = { method: 'Method', glass: 'Glass', ice: 'Ice', finish: 'Finish', credit: 'Credit', notes: 'Notes', publish: 'Who sees it', colour: 'Colour' };
 
 /**
  * The draft page's rows (Prod-add-flow, step 3): how it's made, the glass, the
  * credit and the rest, each a tap away in its own sheet. A gap the drink
- * needs says "Pick one" in amber. The foamer prompt sits under them once
- * the method asks for one.
+ * needs says "Pick one" in amber. The drawing's colour is the last row, gone
+ * once a photo takes the drawing's place. The foamer prompt sits under them
+ * once the method asks for one.
  */
-export function DraftRows(p: DrinkDeskProps & { onRename: () => void }) {
+export function DraftRows(p: DrinkDeskProps & { onRename: () => void; sketch: SketchInputs }) {
   const ds = useDs();
   const { draft, set, barId } = p;
   const [open, setOpen] = useState<Part | null>(null);
@@ -55,6 +59,7 @@ export function DraftRows(p: DrinkDeskProps & { onRename: () => void }) {
     credit: [credits(draft, hasProfile, aliases), ask].filter(Boolean).join(' · '),
     notes: [draft.description.trim(), notesLine(draft, barId)].filter(Boolean).join(' · '),
     publish: draft.publish ? PUBLISH_COPY[draft.publish].label : barId ? 'Same as the venue' : 'Private',
+    colour: tintName(draft.tint),
   };
   // What a drink can't be drawn or made without: amber until it's picked.
   const needed: Part[] = ['method', 'glass'];
@@ -75,12 +80,20 @@ export function DraftRows(p: DrinkDeskProps & { onRename: () => void }) {
     credit: () => <CreditsStep draft={draft} set={set} venueName={venue} ingredients={p.ingredients} match={p.atPlace} onRename={() => (setOpen(null), p.onRename())} />,
     notes: () => <NotesStep draft={draft} set={set} barId={barId} />,
     publish: () => <PublishStep draft={draft} set={set} barId={barId} />,
+    colour: () => (
+      <>
+        <Caption tone="muted">The watercolour in the drink’s drawing while it has no photo, on every menu and tile.</Caption>
+        <DraftTintPicker inputs={p.sketch} seed={draft.id ?? 'new-drink'} value={draft.tint ?? null} onChange={(tint) => set({ tint })} photo={draft.photos?.hero} />
+      </>
+    ),
   };
+  // A hero photo takes the drawing's place unless it's kept, and its colour only matters then.
+  const parts = (Object.keys(TITLES) as Part[]).filter((part) => part !== 'colour' || !draft.photos?.hero || draft.keepDrawing);
 
   return (
     <View style={styles.stack}>
       <View role="list" style={[styles.group, { backgroundColor: ds.c.surface }]}>
-        {(Object.keys(TITLES) as Part[]).map((part, i) => {
+        {parts.map((part, i) => {
           const value = values[part];
           const gap = !value && needed.includes(part);
           return (

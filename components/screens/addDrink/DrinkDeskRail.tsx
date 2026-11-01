@@ -16,7 +16,7 @@ import { useMenuDrinkSpecs } from '@/hooks/useDrinkDesk';
 import { equipmentById } from '@/lib/techniques';
 import type { PricingSettings } from '@/hooks/usePricing';
 
-import { DraftTintPicker } from './DraftColourSheet';
+import { DraftTintPicker } from './DraftTintPicker';
 import { inputsFor } from './sketchInputs';
 import { Eyebrow, WizardChip } from './WizardChrome';
 import type { CatalogIngredient } from './IngredientSearch';

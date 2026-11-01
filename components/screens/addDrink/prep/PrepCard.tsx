@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useEffect, useState, type RefObject } from 'react';
 import { StyleSheet, View } from 'react-native';
 
 import { Body, Button, Caption, Field, PressableScale, useDs } from '@/components/ds';
@@ -27,7 +27,7 @@ export const PREP_CARD_ID = 'prep-card-open';
  * hands it to the line; Leave for now keeps what's done on the line, a
  * recipe to finish (make-anything-steps-3, step 9).
  */
-export function PrepCard({ name: started, venueName, initial, combinedFrom, inDrink, picked, technique, ingredients, aliases, onDone, onLater, onClose, bar = null, above, drinkName, nested, page }: Omit<PrepBuilderProps, 'name'> & { name: string; venueName: string | null; nested?: boolean; /** The draft page's nested page (Kept-add-helpers, Writing it, then back): its own header, no card. */ page?: boolean }) {
+export function PrepCard({ name: started, venueName, initial, first, combinedFrom, inDrink, picked, technique, ingredients, aliases, onDone, onLater, onClose, bar = null, above, drinkName, nested, page, backRef }: Omit<PrepBuilderProps, 'name'> & { name: string; venueName: string | null; nested?: boolean; /** The draft page's nested page (Kept-add-helpers, Writing it, then back): its own header, no card. */ page?: boolean; /** Android's back on that page: the same leaving as its Back. */ backRef?: RefObject<() => void> }) {
   const ds = useDs();
   const [name, setName] = useState(started);
   const [kindOpen, setKindOpen] = useState(false);
@@ -39,11 +39,15 @@ export function PrepCard({ name: started, venueName, initial, combinedFrom, inDr
   const inside = useInside(draft, setDraft, shown);
   // Leaving keeps what's done, picked up where it stops.
   const keep = onLater && !combined ? () => onLater({ ...withFacts(current()), at: stepToFinish(current()) }, shown) : null;
-  // A finished recipe opened again keeps a change made below it (a recipe inside it, picked up and left); otherwise it stays as it was.
-  const trail = trailInto(above ?? [{ label: drinkName || 'Your drink' }], keep ?? (() => (changed() ? onDone(withFacts(current()), shown) : onClose())), shown);
+  // A finished recipe opened again keeps a change (its name, or a recipe inside it picked up and left); otherwise it stays as it was.
+  const leave = keep ?? (() => (changed() || shown !== started ? onDone(withFacts(current()), shown) : onClose()));
+  useEffect(() => {
+    if (backRef) backRef.current = leave;
+  });
+  const trail = trailInto(above ?? [{ label: drinkName || 'Your drink' }], leave, shown);
   const word = (draft.technique ? techniqueById(draft.technique)?.name : draft.kind !== 'other' ? PREP_KINDS.find((k) => k.id === draft.kind)?.name : null)?.toLowerCase();
-  // Said by the name ("Pine syrup"): the drawn page leads with the lines.
-  const linesFirst = !!page && !!guessKind(shown) && draft.kind === guessKind(shown);
+  // Said by the name ("Pine syrup"): the drawn page leads with the lines. Decided as it opens, so typing the name never moves its field; a combine or a typed line to check always opens on What is it.
+  const [linesFirst] = useState(() => !!page && !first && !!guessKind(started) && draft.kind === guessKind(started));
   const kindName = PREP_KINDS.find((k) => k.id === draft.kind)?.name ?? 'Something else';
   const kindBlock = (
     <>
@@ -55,7 +59,7 @@ export function PrepCard({ name: started, venueName, initial, combinedFrom, inDr
   return (
     <View nativeID={nested ? undefined : PREP_CARD_ID} role="group" aria-label={`House-made: ${shown}`} style={page ? styles.page : [styles.card, { backgroundColor: ds.c.raised, borderColor: ds.c.line }]}>
       {page ? (
-        <PageHead trail={trail} drinkName={drinkName || 'Your drink'} name={shown} canAdd={named && !slotsOpen && !!name.trim()} onBack={keep ?? onClose} onDone={() => onDone(withFacts(draft), shown)} />
+        <PageHead trail={trail} drinkName={drinkName || 'Your drink'} name={shown} canAdd={named && !slotsOpen && !!name.trim()} onBack={leave} onDone={() => onDone(withFacts(draft), shown)} />
       ) : (
         <View style={styles.head}>
           <View style={styles.trailRow}>
