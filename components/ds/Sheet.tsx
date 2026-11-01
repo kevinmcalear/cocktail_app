@@ -1,6 +1,7 @@
 import { createContext, use, useEffect, useEffectEvent, useState, type ReactNode } from 'react';
 import { KeyboardAvoidingView, Modal, Platform, Pressable, StyleSheet, useWindowDimensions, View, type ColorValue, type StyleProp, type ViewStyle } from 'react-native';
 import { GestureDetector, GestureHandlerRootView } from 'react-native-gesture-handler';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import Animated, { Easing, useAnimatedStyle, useReducedMotion, useSharedValue, withSpring, withTiming } from 'react-native-reanimated';
 import { scheduleOnRN } from 'react-native-worklets';
 
@@ -46,6 +47,14 @@ export interface SheetProps {
   onShow?: () => void;
   /** iOS: once the sheet is fully gone (to open another modal after it). */
   onDismiss?: () => void;
+  /**
+   * small (the default): our sheet, for pickers, menus and short forms.
+   * flow: a whole flow (Add, Rank it, Theme). The system's own sheet on
+   * phones: iOS's page sheet (its glass, grabber and swipe to close) and a
+   * full-screen dialog on Android, which brings its own back. The same
+   * centred dialog on the web, a little wider. Decision sheets: mixed.
+   */
+  kind?: 'small' | 'flow';
 }
 
 /**
@@ -55,9 +64,55 @@ export interface SheetProps {
  * SheetScrollView so it hands over to the drag at its top. With Reduce Motion
  * it fades instead.
  * On the web it's a dialog in the middle of the window (sheetFrame), with the
- * same fading backdrop. Every sheet, popup and picker builds on this.
+ * same fading backdrop. Every sheet, popup and picker builds on this; a
+ * whole flow passes kind="flow" for the system's sheet on phones.
  */
-export function Sheet({ visible, onClose, accessibilityLabel, children, style, ground, header, keyboard, keyboardOffset = 0, onShow, onDismiss }: SheetProps) {
+export function Sheet(props: SheetProps) {
+  return props.kind === 'flow' && !sheetIsDialog ? <FlowSheet {...props} /> : <SmallSheet {...props} />;
+}
+
+/**
+ * A whole flow in the system's sheet: no drag or backdrop of ours, the
+ * platform draws and dismisses it. Its X and Cancel still close it with
+ * useSheetClose(); a swipe down (iOS) or back (Android) calls onClose.
+ */
+function FlowSheet({ visible, onClose, accessibilityLabel, children, style, ground, header, keyboard, keyboardOffset = 0, onShow, onDismiss }: SheetProps) {
+  const ds = useDs();
+  const insets = useSafeAreaInsets();
+  const android = Platform.OS === 'android';
+  const body = (
+    <View role="dialog" aria-label={accessibilityLabel} style={[styles.flex, style]}>
+      {header}
+      {children}
+    </View>
+  );
+  return (
+    <Modal
+      visible={visible}
+      animationType="slide"
+      presentationStyle={android ? 'fullScreen' : 'pageSheet'}
+      statusBarTranslucent={android}
+      navigationBarTranslucent={android}
+      onRequestClose={onClose}
+      onShow={onShow}
+      onDismiss={onDismiss}
+    >
+      <GestureHandlerRootView style={[styles.flex, { backgroundColor: ground ? ds.c.ground : ds.c.surface, paddingTop: android ? insets.top : 0, paddingBottom: android ? insets.bottom : 0 }]}>
+        <CloseContext value={onClose}>
+          {keyboard ? (
+            <KeyboardAvoidingView behavior={Platform.select({ ios: 'padding', android: 'height' })} keyboardVerticalOffset={keyboardOffset} style={styles.flex}>
+              {body}
+            </KeyboardAvoidingView>
+          ) : (
+            body
+          )}
+        </CloseContext>
+      </GestureHandlerRootView>
+    </Modal>
+  );
+}
+
+function SmallSheet({ visible, onClose, accessibilityLabel, children, style, ground, header, keyboard, keyboardOffset = 0, onShow, onDismiss }: SheetProps) {
   const ds = useDs();
   const reduceMotion = useReducedMotion();
   const slide = !sheetIsDialog && !reduceMotion;

@@ -276,6 +276,17 @@ export const springs = {
   pour: { damping: 12, stiffness: 120, mass: 1 },
 } as const;
 
+/**
+ * A drink's drawing at three sizes, in points (decision drawing-sizes,
+ * components/ds/DrinkDrawing): a guest's hero (260 to 300), a staff page's
+ * smaller hero so the spec stays above the fold, a tile, and a row (56 or
+ * more: under that a drawing is a smudge).
+ */
+export const drawing = { hero: 280, heroStaff: 180, tile: 160, row: 56 } as const;
+
+/** How the colour pours into a drawing as it appears: fills the glass bottom up, after a beat. Reduce Motion skips it. */
+export const pour = { delay: 200, ms: 1100 } as const;
+
 /** How deep and slow a loading placeholder breathes (components/ds/Pulse). */
 export const pulse = { low: 0.45, ms: 900 } as const;
 
