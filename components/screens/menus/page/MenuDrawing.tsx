@@ -1,5 +1,5 @@
 import { Image } from 'expo-image';
-import { View } from 'react-native';
+import { StyleSheet, View } from 'react-native';
 
 import { DrinkDrawing, DrinkImage, useDs, type DrawingSize } from '@/components/ds';
 import { sceneFor } from '@/components/ds/SketchDrawing';
@@ -8,7 +8,6 @@ import { useItemSketch } from '@/hooks/useItemSketch';
 import { CHALK, mapScene, pencilOnly } from '@/lib/sketch/passes';
 import type { Scene } from '@/lib/sketch/scene';
 import { sceneToSvg } from '@/lib/sketch/svg';
-import type { SketchInputs } from '@/lib/sketch/types';
 
 /** colour: as published. pencil: a draft's, until it is published (D1). faded: a past menu's, a third of its colour (P1). */
 export type MenuInk = 'colour' | 'pencil' | 'faded';
@@ -20,17 +19,19 @@ function pencilUri(scene: Scene, night: boolean): string {
   const key = night ? 'night' : 'day';
   let out = byMode.get(key);
   if (!out) {
-    const pencil = pencilOnly(scene);
-    const shown = night ? mapScene(pencil, (el) => (el.k === 'stroke' ? { ...el, color: CHALK } : el)) : pencil;
-    byMode.set(key, (out = `data:image/svg+xml;base64,${btoa(sceneToSvg(shown))}`));
+    // At night the pencil is chalk.
+    const lines = pencilOnly(scene);
+    byMode.set(key, (out = `data:image/svg+xml;base64,${btoa(sceneToSvg(night ? mapScene(lines, (el) => (el.k === 'stroke' ? { ...el, color: CHALK } : el)) : lines))}`));
   }
   return out;
 }
 
 /**
  * A drink's drawing on a menu page: in colour, in pencil while its menu is a
- * draft, or faded on a past menu. A drink with nothing to draw from (beer,
- * wine) shows its picture, so every row still has one.
+ * draft, or faded on a past menu; the colour pours in as on the drink page.
+ * A drink with nothing to draw from (beer, wine) shows its picture, so every
+ * row has one.
+ * `bare`: no square of paper behind a row (drawings set together on a sky).
  */
 export function MenuDrawing({ itemId, size, ink, fallback, bare }: { itemId: string; size: DrawingSize; ink: MenuInk; fallback?: { imageUrl: string | null; glass: string | null }; bare?: boolean }) {
   const ds = useDs();
@@ -44,20 +45,22 @@ export function MenuDrawing({ itemId, size, ink, fallback, bare }: { itemId: str
       </View>
     );
   }
-  if (ink === 'pencil') return <Pencil inputs={inputs} seed={itemId} px={px} paper={size === 'row' && !bare && ds.scheme !== 'dark' ? ds.c.paper : null} />;
+  if (ink === 'pencil') {
+    const paper = !bare && size === 'row' && ds.scheme !== 'dark' ? { backgroundColor: ds.c.paper, borderRadius: radius.control } : null;
+    const uri = pencilUri(sceneFor(inputs, itemId, size === 'row' ? 'thumb' : 'full'), ds.scheme === 'dark');
+    return (
+      <View style={[{ width: px, height: px, overflow: 'hidden' }, paper]} aria-hidden>
+        <Image source={{ uri }} style={{ width: px, height: px }} contentFit="contain" cachePolicy="memory" accessible={false} />
+      </View>
+    );
+  }
   return (
-    <View style={ink === 'faded' ? { opacity: 0.45 } : undefined} aria-hidden>
-      <DrinkDrawing inputs={inputs} seed={itemId} size={size} staff={size === 'hero'} pour={false} bare={bare} />
+    <View style={ink === 'faded' ? styles.faded : undefined} aria-hidden>
+      <DrinkDrawing inputs={inputs} seed={itemId} size={size} staff={size === 'hero'} pour={size !== 'row' && ink === 'colour'} bare={bare} />
     </View>
   );
 }
 
-function Pencil({ inputs, seed, px, paper }: { inputs: SketchInputs; seed: string; px: number; paper: string | null }) {
-  const ds = useDs();
-  const uri = pencilUri(sceneFor(inputs, seed, px <= drawing.row ? 'thumb' : 'full'), ds.scheme === 'dark');
-  return (
-    <View style={{ width: px, height: px, backgroundColor: paper ?? undefined, borderRadius: radius.control, overflow: 'hidden' }} aria-hidden>
-      <Image source={{ uri }} style={{ width: px, height: px }} contentFit="contain" cachePolicy="memory" accessible={false} />
-    </View>
-  );
-}
+const styles = StyleSheet.create({
+  faded: { opacity: 0.45 },
+});
