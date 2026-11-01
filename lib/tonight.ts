@@ -145,5 +145,6 @@ export function onShiftLine(
   const opener = shifts.find((s) => s.opens);
   const closer = shifts.find((s) => s.closes);
   const parts = [opener ? `${call(opener.user_id)} open${opener.user_id === me ? '' : 's'}` : null, closer ? `${call(closer.user_id)} close${closer.user_id === me ? '' : 's'}` : null].filter(Boolean);
-  return { names: names.charAt(0).toUpperCase() + names.slice(1), sub: parts.length ? parts.join(' · ') : null };
+  const sentence = (text: string) => text.charAt(0).toUpperCase() + text.slice(1);
+  return { names: sentence(names), sub: parts.length ? sentence(parts.join(' · ')) : null };
 }
