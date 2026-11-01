@@ -11,8 +11,9 @@
 --     role it is invite_to_role (a custom role such as Takeover bartender);
 --     without, add_user_to_bar_by_email. The profile must be a public person
 --     page with an account. Anyone without the staff permission at the bar
---     gets the same refusal whatever the profile, so it can't be used to ask
---     who has an account.
+--     gets the same refusal whatever the profile. Someone with it can tell a
+--     page with an account from one without, which public.profiles.is_claimed
+--     already shows everyone, and an invite is the person's to accept.
 --
 -- send-bar-invite takes a profile_id in place of an email for the same reason
 -- (edge function, deployed by hand): it resolves the email itself and never

@@ -99,6 +99,7 @@ export function InviteSheet({ visible, onClose, barId, barName, ceiling, admin, 
 
   const submit = async () => {
     if (!typed) return setProblem('Add a name or an email.');
+    if (searching) return setProblem('Still looking for them on the app. One moment.');
     if (!person && !to) {
       setElsewhere(true);
       return setProblem(`Add ${name.split(/\s+/)[0]}’s email.`);
@@ -139,7 +140,7 @@ export function InviteSheet({ visible, onClose, barId, barName, ceiling, admin, 
       onClose={close}
       title={`Invite to ${barName}`}
       onShow={MODAL_AUTOFOCUS || tab === 'link' ? undefined : () => focusInModal(whoRef)}
-      footer={tab === 'link' ? undefined : <Button label={busy ? 'Sending…' : 'Send invite'} size="lg" onPress={submit} disabled={busy} />}
+      footer={tab === 'link' ? undefined : <Button label={busy ? 'Sending…' : 'Send invite'} size="lg" onPress={submit} disabled={busy || searching} />}
     >
       <Segmented
         accessibilityLabel="How to invite"

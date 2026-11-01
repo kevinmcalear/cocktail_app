@@ -28,6 +28,8 @@ const ROLE_LABELS: Record<number, string> = { 10: "Guest", 20: "Employee", 30: "
  * Admins, is what lets anything be sent. An invite onto one of the venue's own
  * roles names that role in the email.
  */
+const NO_INVITE = "There's no invite for that email or person. Invite them first.";
+
 serveJson("send-bar-invite", async (req) => {
   const caller = await requireUser(req);
   const body = await req.json().catch(() => ({}));
@@ -47,7 +49,8 @@ serveJson("send-bar-invite", async (req) => {
     .eq("email", email)
     .maybeSingle();
   if (inviteError) throw inviteError;
-  if (!invite) throw new HttpError(404, "There's no invite for that email. Invite them first.");
+  // One answer for no invite, no such page and a page with no account, so a profile_id can't be used to ask who has one.
+  if (!invite) throw new HttpError(404, NO_INVITE);
 
   // Each email takes one of today's: a few per invite, a few dozen per Admin.
   // ponytail: a send that then fails still uses its slot; hand it back if
@@ -94,7 +97,7 @@ async function profileEmail(caller: Caller, profileId: string): Promise<string> 
   const { data: found, error: userError } = profile?.user_id ? await caller.admin.auth.admin.getUserById(profile.user_id) : { data: null, error: null };
   if (userError) throw userError;
   const email = found?.user?.email?.toLowerCase();
-  if (!email) throw new HttpError(404, "There's no invite for that person. Invite them first.");
+  if (!email) throw new HttpError(404, NO_INVITE);
   return email;
 }
 
