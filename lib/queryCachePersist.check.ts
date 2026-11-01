@@ -116,43 +116,37 @@ const tick = () => new Promise((resolve) => setTimeout(resolve, 5));
 async function checkFiles() {
   const files = memoryFiles();
   const saving = { maxAge: 60_000, buster: 'v1' };
-  const launch = () => {
-    const cache = new QueryCache();
-    return { client: new QueryClient({ queryCache: cache, defaultOptions: { queries: { retry: false } } }), files: createFilePersister(files, cache, saving) };
+  // As lib/react-query.ts sets it up: the persister on every query by default.
+  const launch = (buster = saving.buster) => {
+    const queryCache = new QueryCache();
+    const persister = createFilePersister(files, queryCache, { ...saving, buster });
+    return new QueryClient({ queryCache, defaultOptions: { queries: { retry: false, persister: persister.persisterFn } } });
   };
   let fetches = 0;
-  const drink = (id: string, persister: ReturnType<typeof launch>['files']) => ({
-    queryKey: ['cocktail', id, null],
-    queryFn: async () => ({ id, fetch: ++fetches }),
-    persister: persister.persisterFn,
-    staleTime: 60_000,
-  });
+  const drink = (id: string) => ({ queryKey: ['cocktail', id, null], queryFn: async () => ({ id, fetch: ++fetches }), staleTime: 60_000 });
 
   const first = launch();
-  await first.client.fetchQuery(drink('c1', first.files));
+  await first.fetchQuery(drink('c1'));
   await tick();
   assert.equal(files.map.size, 1, 'saved after it fetched');
 
-  const next = launch();
-  assert.deepEqual(await next.client.fetchQuery(drink('c1', next.files)), { id: 'c1', fetch: 1 }, 'read back after a relaunch');
+  assert.deepEqual(await launch().fetchQuery(drink('c1')), { id: 'c1', fetch: 1 }, 'read back after a relaunch');
   assert.equal(fetches, 1, 'and not fetched again while fresh');
 
-  await first.client.fetchQuery({ queryKey: ['bars', 'u1'], queryFn: async () => [1], persister: first.files.persisterFn });
+  await first.fetchQuery({ queryKey: ['bars', 'u1'], queryFn: async () => [1] });
   await tick();
   assert.equal(files.map.size, 1, 'a row query is not a file');
 
-  await first.client.fetchQuery(drink('c2', first.files));
-  first.client.removeQueries();
+  await first.fetchQuery(drink('c2'));
+  first.removeQueries();
   await tick();
   assert.equal(files.map.size, 1, 'removed (sign-out) before its save landed: not written');
 
-  const other = createFilePersister(files, new QueryCache(), { ...saving, buster: 'v2' });
-  const afterUpdate = new QueryClient({ defaultOptions: { queries: { retry: false } } });
-  assert.deepEqual(await afterUpdate.fetchQuery(drink('c1', other)), { id: 'c1', fetch: 3 }, 'another app version fetches');
+  assert.deepEqual(await launch('v2').fetchQuery(drink('c1')), { id: 'c1', fetch: 3 }, 'another app version fetches');
+  await tick();
 
   files.map.clear();
-  const old = launch();
-  await old.client.fetchQuery(drink('c4', old.files));
+  await launch().fetchQuery(drink('c4'));
   await tick();
   assert.equal(files.map.size, 1);
   await pruneQueryFiles(files, saving, Date.now() + 120_000);
