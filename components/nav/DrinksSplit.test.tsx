@@ -1,6 +1,7 @@
 import { act, fireEvent, screen } from '@testing-library/react-native';
 import { router, Stack, Tabs, useLocalSearchParams } from 'expo-router';
 import { renderRouter } from 'expo-router/testing-library';
+import type { ReactElement } from 'react';
 import { Text } from 'react-native';
 
 import * as TabStack from '@/app/(tabs)/(1-tonight,2-drinks,3-discover,4-you)/_layout';
@@ -59,6 +60,8 @@ jest.mock('@/components/screens/home/CollectionScreen', () => {
 });
 
 const SHARED = '(tabs)/(1-tonight,2-drinks,3-discover,4-you)';
+// The layout takes expo-router's `segment` prop, which the mock config's type doesn't know.
+const SharedLayout = { ...TabStack, default: TabStack.default as unknown as () => ReactElement };
 const page = (name: string) =>
   function Page() {
     return <Text>{name}</Text>;
@@ -78,7 +81,7 @@ function open(url: string) {
           ))}
         </Tabs>
       ),
-      [`${SHARED}/_layout`]: TabStack,
+      [`${SHARED}/_layout`]: SharedLayout,
       '(tabs)/(1-tonight)/index': page('tonight'),
       [`${SHARED}/cocktail/[id]/index`]: Drink,
       [`${SHARED}/prep`]: page('prep'),

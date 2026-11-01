@@ -1,4 +1,4 @@
-import { usePathname, useRouter, type Href } from 'expo-router';
+import { usePathname, useRouter, useSegments, type Href } from 'expo-router';
 
 import { useWebNav } from '@/hooks/useIsWideWeb';
 import { useMode } from '@/hooks/useMode';
@@ -13,6 +13,13 @@ import { useMode } from '@/hooks/useMode';
 export function useDrinksSplit(): boolean {
   const nav = useWebNav();
   return useMode().mode !== 'home' && nav === 'sidebar';
+}
+
+/** A page on Drinks' stack while it sits beside the list: the drink there opens its editor as its own, full-width page. */
+export function useBesideList(): boolean {
+  const split = useDrinksSplit();
+  const group = (useSegments() as string[])[1];
+  return split && group === '(2-drinks)';
 }
 
 /** The drink a path opens on a tab's stack (/cocktail/<id>, not its edit or batch pages), or null. */
