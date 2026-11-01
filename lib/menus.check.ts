@@ -37,7 +37,7 @@ assert.equal(menuDateLine({ startsAt: d('2026-09-01T00:00:00Z'), endsAt: null, m
 // --- grouping and order ---
 const menu = (id: string, startsAt: string | null, endsAt: string | null, createdAt = '2026-01-01T00:00:00Z'): MenuSummary => ({
   id, name: id, barId: 'bar', createdBy: null, coverUrl: null, coverPosition: 50,
-  startsAt: startsAt && d(startsAt), endsAt: endsAt && d(endsAt), createdAt: d(createdAt), menuDate: null, guestCount: null, sharedAt: null, kind: 'menu', updatedAt: d(createdAt), description: null, plannedStartsAt: null, plannedEndsAt: null, itemIds: [], shortSections: 0, pictures: [], event: null,
+  startsAt: startsAt && d(startsAt), endsAt: endsAt && d(endsAt), createdAt: d(createdAt), menuDate: null, guestCount: null, sharedAt: null, kind: 'menu', updatedAt: d(createdAt), description: null, plannedStartsAt: null, plannedEndsAt: null, hiddenAt: null, itemIds: [], shortSections: 0, pictures: [], event: null,
 });
 const groups = groupMenus(
   [

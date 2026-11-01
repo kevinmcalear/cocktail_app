@@ -39,27 +39,34 @@ const WEEKDAYS = Array.from({ length: 7 }, (_, i) => new Date(2026, 9, 4 + ((FIR
  */
 export function DateField({ label, value, onChange, min, max, hint, error, bare, placeholder = 'Pick a day', clearable }: DateFieldProps) {
   const [now] = useState(() => Date.now());
-  const today = toDay(new Date(now));
-  const start = () => monthOf(value || (min && today < min ? min : max && today > max ? max : today));
   // Opens at once when a day is needed and none is picked yet.
   const [open, setOpen] = useState(!value && !clearable);
-  const [shown, setShown] = useState<Month>(start);
-
-  const toggle = () => {
-    if (!open) setShown(start());
-    setOpen(!open);
-  };
   const pick = (day: string) => {
     onChange(day);
     setOpen(false);
   };
+  return (
+    <PickerField label={label} text={value ? dayLabel(value, now) : null} placeholder={placeholder} open={open} onToggle={() => setOpen(!open)} hint={hint} error={error} bare={bare}>
+      <DayGrid value={value} onPick={pick} min={min} max={max} />
+      {clearable && value ? (
+        <Pressable role="button" accessibilityLabel={`Clear ${label}`} onPress={() => pick('')} style={styles.clear}>
+          <Caption tone="muted">Clear</Caption>
+        </Pressable>
+      ) : null}
+    </PickerField>
+  );
+}
 
+/** The month a day is picked from, on the month of `value` when it mounts. Mount it when it opens. */
+export function DayGrid({ value, onPick, min, max }: { value: string; onPick: (day: string) => void; min?: string; max?: string }) {
+  const [today] = useState(() => toDay(new Date()));
+  const [shown, setShown] = useState<Month>(() => monthOf(value || (min && today < min ? min : max && today > max ? max : today)));
   const first = toDay(new Date(shown.year, shown.month, 1));
   const last = toDay(new Date(shown.year, shown.month + 1, 0));
   const title = new Date(shown.year, shown.month, 1).toLocaleDateString(undefined, { month: 'long', year: 'numeric' });
 
   return (
-    <PickerField label={label} text={value ? dayLabel(value, now) : null} placeholder={placeholder} open={open} onToggle={toggle} hint={hint} error={error} bare={bare}>
+    <>
       <View style={styles.head}>
         <MonthArrow back disabled={Boolean(min && first <= min)} onPress={() => setShown(shiftMonth(shown, -1))} />
         <DsText variant="body" style={styles.title} role="heading" aria-live="polite">
@@ -76,15 +83,10 @@ export function DateField({ label, value, onChange, min, max, hint, error, bare,
       </View>
       {monthWeeks(shown, FIRST_DAY).map((week) => (
         <View key={week.find(Boolean)} style={pickerStyles.row}>
-          {week.map((day, i) => (day ? <Day key={day} day={day} selected={day === value} today={day === today} disabled={outside(day, min, max)} onPress={() => pick(day)} /> : <View key={i} style={pickerStyles.blank} />))}
+          {week.map((day, i) => (day ? <Day key={day} day={day} selected={day === value} today={day === today} disabled={outside(day, min, max)} onPress={() => onPick(day)} /> : <View key={i} style={pickerStyles.blank} />))}
         </View>
       ))}
-      {clearable && value ? (
-        <Pressable role="button" accessibilityLabel={`Clear ${label}`} onPress={() => pick('')} style={styles.clear}>
-          <Caption tone="muted">Clear</Caption>
-        </Pressable>
-      ) : null}
-    </PickerField>
+    </>
   );
 }
 

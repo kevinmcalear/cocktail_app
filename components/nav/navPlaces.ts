@@ -23,7 +23,7 @@ export const MENUS_PLACE: Place = { key: 'menus', label: 'Menus', icon: 'place.m
 /**
  * Where the shell can take you, for the mode you're in: the four tabs, the
  * venue's working pages (Menus, Glassware),
- * and its Venue section (My team, Brand, Roles and access, Venue settings).
+ * and its Venue section (My team, Rota, Brand, Roles and access, Venue settings).
  * History and This week are null during the first round.
  */
 export function useNavPlaces() {
@@ -53,6 +53,8 @@ export function useNavPlaces() {
     venue && settings
       ? [
           ...(canSeeTeam(role) && !round ? [{ key: 'team', label: 'My team', icon: 'place.team', path: '/team' } as Place] : []),
+          // The rota: everyone at the bar reads it.
+          ...(round ? [] : [{ key: 'rota', label: 'Rota', icon: 'calendar', path: '/team/rota' } as Place]),
           ...(round
             ? []
             : [
