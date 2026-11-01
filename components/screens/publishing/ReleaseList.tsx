@@ -5,12 +5,16 @@ import { StyleSheet, View } from 'react-native';
 import { Body, Button, Caption, Headline, PressableScale, useDs } from '@/components/ds';
 import { space } from '@/constants/tokens';
 import { useVenueReleases } from '@/hooks/useReleases';
-import { dayStart, RELEASE_STATUS_LABEL, releaseStatus } from '@/lib/releases';
+import { dayStart, RELEASE_STATUS_LABEL, releaseStatus, RELEASES_SHOWN } from '@/lib/releases';
 
 export const releaseHref = (barId: string, id: string) => `/settings/bar/${barId}/releases/${id}` as Href;
 
-/** The venue's releases on its Publishing screen, for people who can publish there. */
+/** The venue's releases on its Publishing screen, for people who can publish there. Parked: see RELEASES_SHOWN. */
 export function ReleaseList({ barId }: { barId: string }) {
+  return RELEASES_SHOWN ? <Releases barId={barId} /> : null;
+}
+
+function Releases({ barId }: { barId: string }) {
   const ds = useDs();
   const router = useRouter();
   const { data: releases = [], isLoading } = useVenueReleases(barId);

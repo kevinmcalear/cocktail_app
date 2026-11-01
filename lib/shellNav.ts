@@ -68,12 +68,6 @@ export function menusLine(on: number, drafts: number): string {
   return drafts ? plural(drafts, 'draft') : '';
 }
 
-/** Back bar: what waits for a spot first, else how many are placed. */
-export function backBarLine(placed: number, waiting: number): string {
-  if (waiting) return `${waiting} waiting`;
-  return placed ? `${placed} placed` : '';
-}
-
 /** My team: "9 people · 2 invited". */
 export function teamLine(people: number, invited: number): string {
   return [plural(people, 'person', 'people'), invited ? `${invited} invited` : null].filter(Boolean).join(' · ');
@@ -89,7 +83,3 @@ export function collectionLine(toMake: number): string {
   return toMake ? `${toMake} to make` : '';
 }
 
-/** Features: "2 of 8 on". */
-export function featuresLine(on: number, of: number): string {
-  return on ? `${on} of ${of} on` : '';
-}

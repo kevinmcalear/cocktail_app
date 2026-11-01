@@ -1,7 +1,7 @@
 // Checks for lib/shellNav.ts and the web nav breakpoints. Run: npm run test:unit
 import assert from 'node:assert/strict';
 
-import { backBarLine, collectionLine, featuresLine, footerLine, menusLine, navCurrent, shelfLine, shortPersonName, teamLine, webNavFor, type NavMatch } from './shellNav';
+import { collectionLine, footerLine, menusLine, navCurrent, shelfLine, shortPersonName, teamLine, webNavFor, type NavMatch } from './shellNav';
 
 const rows: NavMatch[] = [
   { key: 'index', path: '/' },
@@ -40,11 +40,6 @@ assert.equal(footerLine(null, 0), 'Home bar');
 assert.equal(menusLine(1, 2), '1 on');
 assert.equal(menusLine(0, 1), '1 draft');
 assert.equal(menusLine(0, 0), '');
-assert.equal(featuresLine(2, 8), '2 of 8 on');
-assert.equal(featuresLine(0, 8), '');
-assert.equal(backBarLine(84, 3), '3 waiting');
-assert.equal(backBarLine(84, 0), '84 placed');
-assert.equal(backBarLine(0, 0), '');
 assert.equal(teamLine(9, 2), '9 people · 2 invited');
 assert.equal(teamLine(1, 0), '1 person');
 assert.equal(shelfLine(4), '4 bottles');

@@ -14,7 +14,7 @@ import { useCapabilities } from '@/hooks/useCapabilities';
 import { useDropdowns } from '@/hooks/useDropdowns';
 import { glassModelSize } from '@/hooks/useGlassModels';
 import { useIsWideWeb } from '@/hooks/useIsWideWeb';
-import { useBarFeature } from '@/hooks/useVenueFeatures';
+import { useBarAdvanced } from '@/hooks/useAdvancedOptions';
 import { GLASS_TYPE_LABEL, glassCapacity } from '@/lib/glassware';
 import { kitLine, kitSourceLine } from '@/lib/venueKit';
 import { useVenueSetup } from '@/store/useVenueSetup';
@@ -144,7 +144,7 @@ function GlassPage({ barId, pageId, glass, others, canEdit, venueName, justDrawn
   const remove = useDeleteBarGlass(barId);
   const change = (at: 0 | 1 | 2) => (canEdit ? () => onChange(at) : undefined);
   const [washOpen, setWashOpen] = useState(false);
-  const advanced = useBarFeature(barId, 'advanced');
+  const advanced = useBarAdvanced(barId);
   const size = (glass.model && glassModelSize(glass.model)) ?? glassCapacity(glass, items, barId);
   const sameType = others.filter((g) => g.glass === glass.glass);
   const type = GLASS_TYPE_LABEL[glass.glass];
