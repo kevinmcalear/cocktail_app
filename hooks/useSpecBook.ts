@@ -1,4 +1,5 @@
 import { queryOptions, useQueries, useQuery, useQueryClient } from '@tanstack/react-query';
+import { Image } from 'expo-image';
 import { useEffect } from 'react';
 
 import { useUserId } from '@/ctx/AuthContext';
@@ -13,6 +14,7 @@ import { menuStatus } from '@/lib/menus';
 import { SPEC_BOOK_VERSION, specBookKey, type SpecBook } from '@/lib/specBook';
 import { dropOtherSpecBooks, saveSpecBook } from '@/lib/specBookFile';
 import { supabase } from '@/lib/supabase';
+import { thumbUrl } from '@/lib/thumbnails';
 import type { MenuDetail } from '@/types/menus';
 
 /** A book this old refreshes when the app opens or comes back; a write of yours refreshes it sooner (lib/react-query.ts). */
@@ -71,6 +73,12 @@ export function specBookQuery(barId: string, level: number | null, userId: strin
   });
 }
 
+/** Every list copy of a picture on a list on now, across the books, as one string so it only changes when they do. */
+const onNowPictures = (results: { data?: SpecBook }[]) =>
+  [...new Set(results.flatMap((r) => r.data?.onNow.flatMap((m) => m.sections.flatMap((s) => s.drinks.map((d) => (d.imageUrl ? thumbUrl(d.imageUrl) : null)))) ?? []))]
+    .filter((url): url is string => !!url)
+    .join(' ');
+
 /** A venue's spec book, from the phone at once and refreshed behind it. Null venue: nothing. */
 export function useSpecBook(barId: string | null | undefined) {
   const userId = useUserId();
@@ -90,7 +98,13 @@ export function useSpecBooks() {
   const { venues } = useActiveVenue();
   const bars = useBars();
   const client = useQueryClient();
-  useQueries({ queries: venues.map((v) => specBookQuery(v.id, viewAsRoleLevel, userId)) });
+  const onNow = useQueries({ queries: venues.map((v) => specBookQuery(v.id, viewAsRoleLevel, userId)), combine: onNowPictures });
+  // The pictures of the drinks on tonight's lists, kept on the phone with their book: their
+  // list copies, so Tonight shows them with no signal. Not the whole book's: on a phone plan
+  // that's tens of MB.
+  useEffect(() => {
+    if (onNow) void Image.prefetch(onNow.split(' '), 'disk').catch(() => undefined);
+  }, [onNow]);
 
   const known = bars.isSuccess && !!userId;
   const ids = venues.map((v) => v.id).join(',');

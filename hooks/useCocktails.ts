@@ -126,7 +126,11 @@ export function useCocktails(barIds?: readonly string[] | 'home') {
     });
 }
 
-/** The drink page's columns (app_item_presentation), for one drink or a whole spec book (hooks/useSpecBook.ts). */
+/**
+ * The drink page's columns (app_item_presentation), for one drink or a whole
+ * spec book (hooks/useSpecBook.ts). A photo's row whole (images *): its
+ * ThumbHash reads once its migration is in, and the page reads before then too.
+ */
 export const DRINK_PAGE_COLUMNS = `
     *,
     item_images (
@@ -135,13 +139,7 @@ export const DRINK_PAGE_COLUMNS = `
         sort_order,
         is_generated,
         outdated_since,
-        images (
-            url,
-            id,
-            palette,
-            credit,
-            source_url
-        )
+        images (*)
     ),
     recipes:app_recipe_presentation!recipe_item_id (
         id,
