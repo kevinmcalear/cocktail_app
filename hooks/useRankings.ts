@@ -130,9 +130,9 @@ export function useMyHadDrinks() {
 }
 
 /**
- * The drinks I've had or ranked, by id: Discover's "Not had yet". A rank
- * entry is a drink had (at a bar, or made at home). Read only when asked
- * (`enabled`), and kept fresh by ranking (it's under 'my-had').
+ * The drinks I've had, by id: Discover's "Not had yet". Every had counts:
+ * ranked, made at home or remembered (drinks_had). Read only when asked
+ * (`enabled`), and kept fresh by ranking and making (it's under 'my-had').
  */
 export function useMyHadIds(enabled = true) {
   const userId = useUserId();
@@ -141,7 +141,7 @@ export function useMyHadIds(enabled = true) {
     enabled: enabled && !!userId,
     queryFn: async (): Promise<string[]> => {
       const rows = await allRowsById<{ id: string; item_id: string }>((after, size) => {
-        let query = supabase.from('rank_entries').select('id, item_id').eq('user_id', userId!);
+        let query = supabase.from('drinks_had').select('id, item_id').eq('user_id', userId!).not('item_id', 'is', null);
         if (after) query = query.gt('id', after);
         return query.order('id').limit(size);
       });

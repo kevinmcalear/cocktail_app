@@ -298,7 +298,7 @@ export function useMenuLibrary(barId: string | null | undefined, enabled = true)
       const [ownRows, catalogRows, collected] = await Promise.all([
         allRows((from, to) => drinks().is('bar_id', null).eq('created_by', userId!).order('created_at', { ascending: false }).order('id').range(from, to)),
         allRows((from, to) => drinks().is('bar_id', null).eq('is_catalog', true).order('name').order('id').range(from, to)),
-        supabase.from('collected_items').select('item_id').not('item_id', 'is', null).order('collected_at', { ascending: false }),
+        supabase.from('want_list').select('item_id').eq('user_id', userId!).eq('kind', 'drink').not('item_id', 'is', null).order('wanted_at', { ascending: false }),
       ]);
       if (collected.error) throw collected.error;
       const collectedIds = new Set(collected.data.map((c) => c.item_id as string));
