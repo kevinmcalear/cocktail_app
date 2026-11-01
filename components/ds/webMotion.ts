@@ -11,7 +11,6 @@ interface WebMotion {
   transitionTimingFunction?: string;
   animationKeyframes?: Record<string, ViewStyle>;
   animationDuration?: string;
-  animationDelay?: string;
   animationTimingFunction?: string;
   animationIterationCount?: number | 'infinite';
   animationDirection?: 'normal' | 'alternate';
