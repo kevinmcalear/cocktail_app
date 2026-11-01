@@ -9,8 +9,10 @@ const mockNavigate = jest.fn();
 let mockPathname = '/';
 let mockMode: 'venue' | 'home' = 'venue';
 
+let mockSegments: string[] = [];
 jest.mock('expo-router', () => ({
   usePathname: () => mockPathname,
+  useSegments: () => mockSegments,
   useRouter: () => ({ navigate: mockNavigate, push: mockPush }),
 }));
 const mockSetMode = jest.fn();
@@ -94,6 +96,19 @@ test('the top of the sidebar is one mark with a chevron (the switcher), never a 
   expect(screen.queryByRole('radio', { name: 'Home bar' })).toBeNull();
 });
 
+test('a drink opened cold lights the tab its stack is in', async () => {
+  mockPathname = '/cocktail/1';
+  mockSegments = ['(tabs)', '(1-tonight)', 'cocktail', '[id]'];
+  await renderWithProviders(<WebSideNav />);
+  expect(screen.getByRole('link', { name: 'Tonight', selected: true })).toBeTruthy();
+  mockSegments = [];
+});
+
+test('the sidebar has no New row: + Add and the N key open New', async () => {
+  await renderWithProviders(<WebSideNav />);
+  expect(screen.queryByRole('button', { name: 'New' })).toBeNull();
+});
+
 test('a page off the nav keeps the row it was opened from lit', async () => {
   mockPathname = '/drinks';
   const view = await renderWithProviders(<WebSideNav />);
@@ -149,16 +164,19 @@ test('Search opens the search over the current page instead of leaving it', asyn
 test('New opens the create sheet with the draft count, and each choice goes where it is made', async () => {
   mockMode = 'venue';
   mockPathname = '/';
+  let onKey: (e: Partial<KeyboardEvent>) => void = () => {};
+  (globalThis as { document?: unknown }).document = { addEventListener: (_: string, fn: typeof onKey) => (onKey = fn), removeEventListener: () => {} };
+  const pressN = () => act(() => onKey({ key: 'n', target: { tagName: 'DIV' } as unknown as EventTarget, preventDefault: () => {} }));
   await renderWithProviders(<WebSideNav />);
 
-  await fireEvent.press(screen.getByRole('button', { name: 'New' }));
+  await pressN();
   expect(screen.getByText('2')).toBeTruthy();
   expect(screen.getByText('Made at Caretakers, for its library')).toBeTruthy();
   await fireEvent.press(screen.getByRole('link', { name: 'Something you make. A batch, syrup, infusion, cordial: anything with a recipe' }));
   // Made at the venue you're in, not your home bar.
   expect(mockPush).toHaveBeenLastCalledWith('/make-recipe?barId=caretakers');
 
-  await fireEvent.press(screen.getByRole('button', { name: 'New' }));
+  await pressN();
   await fireEvent.press(screen.getByRole('link', { name: 'Drafts. Pick up where you left off' }));
   expect(mockPush).toHaveBeenLastCalledWith('/drafts');
 });

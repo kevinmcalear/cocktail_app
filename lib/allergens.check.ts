@@ -1,7 +1,7 @@
 // Checks for lib/allergens.ts. Run: npm run test:unit
 import assert from 'node:assert/strict';
 
-import { ALLERGENS, allergenLabel, checkedLine, containsLine, listAllergens, viaLine, type DrinkAllergens } from './allergens';
+import { ALLERGENS, allergenLabel, allergyMatches, checkedLine, containsLine, listAllergens, viaLine, type DrinkAllergens } from './allergens';
 
 assert.equal(ALLERGENS.length, 14, 'the 14 regulated allergens');
 assert.equal(new Set(ALLERGENS.map((a) => a.key)).size, 14);
@@ -38,3 +38,10 @@ assert.equal(checkedLine('2026-09-24T10:00:00Z', now), 'Checked 24 Sept');
 assert.equal(checkedLine('2025-12-24T10:00:00Z', now), 'Checked 24 Dec 2025', 'another year says so');
 
 console.log('allergens ok');
+
+// A guest's own allergies: only on a checked drink, naming the top ingredient.
+const guestDrink = { allergens: [{ allergen: 'tree_nuts' as const, via: [['Orgeat', 'Almond']] }, { allergen: 'eggs' as const, via: [[]] }], checked_at: '2026-11-03T00:00:00Z' };
+assert.deepEqual(allergyMatches(['tree_nuts'], guestDrink), [{ allergen: 'tree_nuts', ingredient: 'Orgeat' }]);
+assert.deepEqual(allergyMatches(['eggs'], guestDrink), [{ allergen: 'eggs', ingredient: null }], 'a hidden name is left out, the warning stays');
+assert.deepEqual(allergyMatches(['milk'], guestDrink), [], 'no match');
+assert.equal(allergyMatches(['tree_nuts'], { ...guestDrink, checked_at: null }), null, 'unchecked: ask your bartender');

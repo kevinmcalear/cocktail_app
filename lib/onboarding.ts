@@ -24,7 +24,7 @@ export type OnboardingStep = 'invite' | 'name' | 'you' | 'hospitality' | 'bar' |
 /** What the person picked on a step that branches: 'owner' is "I'm setting up a bar". */
 export type StepChoice = 'yes' | 'no' | 'claim' | 'new' | 'owner';
 
-export type AuthTarget = '/auth/login' | '/age-check' | '/onboarding' | '/(tabs)';
+export type AuthTarget = '/auth/login' | '/age-check' | '/onboarding' | '/';
 
 /** GoTrue may hand the flag back as a boolean or the string it stored. */
 export function needsOnboarding(metadata: unknown): boolean {
@@ -34,8 +34,8 @@ export function needsOnboarding(metadata: unknown): boolean {
 }
 
 /** Where the age check sends someone once it's done or skipped. */
-export function afterAgeCheck(metadata: unknown): '/onboarding' | '/(tabs)' {
-  return needsOnboarding(metadata) ? '/onboarding' : '/(tabs)';
+export function afterAgeCheck(metadata: unknown): '/onboarding' | '/' {
+  return needsOnboarding(metadata) ? '/onboarding' : '/';
 }
 
 /**
@@ -230,7 +230,7 @@ export function authRedirect(input: {
   if (!input.hasSession && !input.inAuthGroup) return '/auth/login';
   if (input.hasSession && input.inAuthGroup && !input.stayInAuth) {
     // A new account (the emailed code just made it) does the age check, then setup.
-    return input.needsOnboarding ? '/age-check' : '/(tabs)';
+    return input.needsOnboarding ? '/age-check' : '/';
   }
   if (
     input.hasSession &&

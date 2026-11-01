@@ -1,0 +1,25 @@
+# The four tabs show, and each one opens as the selected tab.
+appId: com.kevinmcalear.cocktail.dev
+name: The four tabs
+---
+- runFlow: subflows/start.yaml
+- assertVisible: "Tonight"
+- assertVisible: "Drinks"
+- assertVisible: "Discover"
+- assertVisible: "You"
+- tapOn: "Drinks"
+- assertVisible:
+    text: "Drinks"
+    selected: true
+- tapOn: "Discover"
+- assertVisible:
+    text: "Discover"
+    selected: true
+- tapOn: "You"
+- assertVisible:
+    text: "You"
+    selected: true
+- tapOn: "Tonight"
+- assertVisible:
+    text: "Tonight"
+    selected: true

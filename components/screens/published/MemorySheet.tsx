@@ -34,7 +34,7 @@ export function MemorySheet({ memory, onClose }: { memory: CollectedDrink; onClo
     if (hadOn && hadOn > today) return setError('That day hasn’t happened yet.');
     setError(null);
     try {
-      await save.mutateAsync({ id: memory.id, hadOn, note: note.trim() || null });
+      await save.mutateAsync({ hadId: memory.hadId, itemId: memory.itemId, hadOn, note: note.trim() || null });
       onClose();
     } catch (e) {
       setError(e instanceof Error ? e.message : 'Couldn’t save that. Try again.');

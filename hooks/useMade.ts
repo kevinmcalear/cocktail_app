@@ -11,6 +11,7 @@ import { supabase } from '@/lib/supabase';
 
 /** One time someone made a drink at home. Plain JSON (the query cache is persisted). */
 export interface MadeDrink {
+  /** The had (drinks_had, source 'made'). */
   id: string;
   itemId: string;
   name: string;
@@ -28,7 +29,7 @@ export interface MadeDrink {
 interface MadeRow {
   id: string;
   item_id: string;
-  made_on: string;
+  had_on: string;
   compared: Compared | null;
   swaps: Swap[];
   note: string | null;
@@ -39,8 +40,10 @@ interface MadeRow {
 
 const madeKey = (userId: string | null) => ['made', userId] as const;
 
-/** Everything you've made at home, latest first. Private to you (made_drinks). */
-/** `live` false: none (a preview of a drink page). */
+/**
+ * Everything you've made at home, latest first: your hads with source
+ * 'made'. Private to you. `live` false: none (a preview of a drink page).
+ */
 export function useMadeDrinks(live = true) {
   const userId = useUserId();
   return useQuery({
@@ -48,11 +51,15 @@ export function useMadeDrinks(live = true) {
     enabled: live && !!userId,
     staleTime: 60_000,
     queryFn: async (): Promise<MadeDrink[]> => {
-      // ponytail: one page. People log dozens of nights in, not thousands; page by made_on past that.
+      // ponytail: one page. People log dozens of nights in, not thousands; page by had_on past that.
       const { data, error } = await supabase
-        .from('made_drinks')
-        .select('id, item_id, made_on, compared, swaps, note, rank_entry_id, photo:images!image_id(url), item:items!item_id(name, is_catalog, item_images(angle, sort_order, is_generated, images(url)))')
-        .order('made_on', { ascending: false })
+        .from('drinks_had')
+        .select('id, item_id, had_on, compared, swaps, note, rank_entry_id, photo:images!image_id(url), item:items!item_id(name, is_catalog, item_images(angle, sort_order, is_generated, images(url)))')
+        .eq('user_id', userId!)
+        .eq('source', 'made')
+        // A make whose drink was deleted stays only as your memory of it.
+        .not('item_id', 'is', null)
+        .order('had_on', { ascending: false })
         .order('created_at', { ascending: false });
       if (error) throw error;
       // A bar's drink a guest can't read in items still has its published name.
@@ -62,7 +69,7 @@ export function useMadeDrinks(live = true) {
         itemId: r.item_id,
         name: r.item?.name ?? 'A drink',
         imageUrl: r.photo?.url ?? heroPicture(r.item?.item_images)?.url ?? null,
-        madeOn: r.made_on,
+        madeOn: r.had_on,
         compared: r.compared,
         swaps: r.swaps ?? [],
         note: r.note,
@@ -75,7 +82,7 @@ export function useMadeDrinks(live = true) {
 
 export interface NewMade {
   item_id: string;
-  made_on: string;
+  had_on: string;
   compared: Compared | null;
   swaps: Swap[];
   note: string | null;
@@ -94,20 +101,19 @@ export function useLogMade() {
       // The bucket refuses uploads past the day's limit (has_upload_room), which lands here too.
       const image = photoUri ? await uploadDrinkPhoto(photoUri, `cocktails/${made.item_id}/made`).catch(() => null) : null;
       if (photoUri && !image) throw new Error('the photo didn’t upload. Check your connection, or try again tomorrow if you’ve added a lot of photos today.');
-      const { error } = await supabase.from('made_drinks').insert({ ...made, image_id: image?.id ?? null });
+      const { error } = await supabase.from('drinks_had').insert({ ...made, at_home: true, source: 'made', image_id: image?.id ?? null });
       if (error) throw new Error(error.message);
     },
     onSuccess: (_, made) => track('drink_made', { compared: made.compared ?? 'none', swaps: made.swaps.length, photo: !!made.photoUri, shown: made.on_profile }),
-    onSettled: () => {
-      void qc.invalidateQueries({ queryKey: ['made'] });
-      void qc.invalidateQueries({ queryKey: ['profile-made'] });
-    },
+    // A make is a had (Not had yet), and it can move its ranking's day.
+    onSettled: () => Promise.all([['made'], ['profile-made'], ['my-had'], ['rank-list']].map((queryKey) => qc.invalidateQueries({ queryKey }))),
     onError: () => {},
   });
 }
 
 /** One drink someone made at home and shows on their profile (get_profile_made). Plain JSON. */
 export interface SharedMade {
+  /** The had (drinks_had): what hiding it changes. */
   id: string;
   itemId: string;
   name: string;
@@ -120,7 +126,7 @@ export interface SharedMade {
 }
 
 interface SharedMadeRow {
-  id: string;
+  had_id: string;
   item_id: string;
   name: string;
   image_url: string | null;
@@ -139,13 +145,14 @@ interface SharedMadeRow {
 export function useProfileMade(profileId: string | null | undefined, enabled: boolean) {
   const userId = useUserId();
   return useQuery({
-    queryKey: ['profile-made', profileId, userId],
+    // The last part is the shape's version: ids were the old makes' before they were the hads'.
+    queryKey: ['profile-made', profileId, userId, 2],
     enabled: enabled && !!profileId,
     queryFn: async (): Promise<SharedMade[]> => {
       const { data, error } = await supabase.rpc('get_profile_made', { p_profile_id: profileId! });
       if (error) throw error;
       return ((data ?? []) as SharedMadeRow[]).map((r) => ({
-        id: r.id,
+        id: r.had_id,
         itemId: r.item_id,
         name: r.name,
         imageUrl: r.photo_url ?? r.image_url,
@@ -162,7 +169,7 @@ export function useSetMadeShown() {
   const qc = useQueryClient();
   return useMutation({
     mutationFn: async ({ id, shown }: { id: string; shown: boolean }) => {
-      const { error } = await supabase.from('made_drinks').update({ on_profile: shown }).eq('id', id);
+      const { error } = await supabase.from('drinks_had').update({ on_profile: shown }).eq('id', id);
       if (error) throw new Error(error.message);
     },
     onSettled: () => {

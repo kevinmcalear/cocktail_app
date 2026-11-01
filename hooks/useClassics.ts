@@ -11,7 +11,7 @@ export interface UnlinkedDrink {
 }
 
 /**
- * A venue's cocktails that aren't linked to anything yet (no riff_of_id), for
+ * A venue's cocktails that aren't based on anything yet (no based_on_id), for
  * "Match to classics". ponytail: one unpaginated read; fine for a few hundred
  * drinks per venue.
  */
@@ -25,7 +25,7 @@ function useUnlinkedDrinks(barId: string | null | undefined) {
         .select('id, name')
         .eq('bar_id', barId!)
         .eq('item_type', 'cocktail')
-        .is('riff_of_id', null)
+        .is('based_on_id', null)
         .order('name');
       if (error) throw error;
       return (data ?? []) as UnlinkedDrink[];
@@ -35,9 +35,9 @@ function useUnlinkedDrinks(barId: string | null | undefined) {
 
 /**
  * Link drinks to the catalog classic they're a version of (or unlink with
- * null), so they're ranked in that classic's list. Only riff_of_id changes,
- * which doesn't touch the drink's spec or queue a new sketch. RLS allows it
- * for the venue's editors.
+ * null), so they're ranked in that classic's list: a riff on it. Only the
+ * based-on link changes, which doesn't touch the drink's spec or queue a new
+ * sketch. RLS allows it for the venue's editors.
  */
 export function useLinkClassic() {
   const client = useQueryClient();
@@ -46,7 +46,7 @@ export function useLinkClassic() {
       // A few at a time: "Link all" can be a hundred rows.
       for (let i = 0; i < links.length; i += 8) {
         const results = await Promise.all(
-          links.slice(i, i + 8).map(({ itemId, classicId }) => supabase.from('items').update({ riff_of_id: classicId }).eq('id', itemId))
+          links.slice(i, i + 8).map(({ itemId, classicId }) => supabase.from('items').update({ based_on_id: classicId, based_on_kind: classicId ? 'riff' : null }).eq('id', itemId))
         );
         const failed = results.find((r) => r.error);
         if (failed?.error) throw failed.error;

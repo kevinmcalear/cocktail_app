@@ -32,7 +32,7 @@ export function CreditTag({ status }: { status: CreditStatus | null }) {
 export function DrinkCredit({ itemId }: { itemId: string }) {
   const router = useRouter();
   const { data: own } = useDrinkCredit(itemId);
-  const classicId = own?.riff_of?.is_catalog ? own.riff_of.id : null;
+  const classicId = own?.based_on_kind === 'riff' && own.based_on?.is_catalog ? own.based_on.id : null;
   // The same key and ids as ClassicNote, so the page asks once.
   const { data: matches } = useSpecMatches(classicId ? itemId : undefined, classicId ? [itemId] : []);
   const verdict = classicId ? matches?.[itemId]?.spec_match : undefined;
@@ -41,7 +41,7 @@ export function DrinkCredit({ itemId }: { itemId: string }) {
   const drink = same && classic ? classic : own;
   if (!drink) return null;
   // The bar's own version reads "Americano by Little Rye"; only a real change of spec is a riff (dec-21).
-  const parts = nameCredit(drink, drink.riff_of ?? drink.lineage_parent, same ? null : verdict);
+  const parts = nameCredit(drink, drink.based_on, same ? null : verdict);
   // Waiting and declined credits are this drink's own, even when it shows the classic's credit.
   const answers = own ? <CoCreatorAnswers drink={own} /> : null;
   if (!parts.length) return answers;

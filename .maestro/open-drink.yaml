@@ -1,0 +1,17 @@
+# Drinks: open a drink from the venue's library, close it, and land back on the list.
+appId: com.kevinmcalear.cocktail.dev
+name: Open a drink and go back
+---
+- runFlow: subflows/start.yaml
+- tapOn: "Drinks"
+# Each library tile reads "<name>, <line>, open" (components/screens/library/LibraryTile.tsx).
+- tapOn:
+    text: ".*, open"
+    index: 0
+# The drink page's Close (components/screens/drink/DrinkControls.tsx).
+- assertVisible: "Close"
+- tapOn: "Close"
+- assertVisible:
+    text: "Drinks"
+    selected: true
+- assertVisible: ".*, open"

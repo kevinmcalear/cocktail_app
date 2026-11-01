@@ -1,4 +1,4 @@
-// The staff list in Library (bar_off_menu, migration
+// The staff list in Library (bar_also_makes, once bar_off_menu; migration
 // 20261007170000_staff_list_fifty): ranked to 50, reordered in one call, and
 // only by people who can build menus. Runs against the local stack only:
 // `npm run test:security`.
@@ -44,7 +44,7 @@ async function serviceInsert(table, row) {
 
 async function order() {
   const { rows } = await db.query(
-    'SELECT item_id FROM public.bar_off_menu WHERE bar_id = $1 AND sort_rank IS NOT NULL ORDER BY sort_rank',
+    'SELECT item_id FROM public.bar_also_makes WHERE bar_id = $1 AND sort_rank IS NOT NULL ORDER BY sort_rank',
     [ids.bar]
   );
   return rows.map((r) => r.item_id);
@@ -65,7 +65,7 @@ before(async () => {
   for (const name of ['Martini', 'Negroni', 'Daiquiri']) {
     ids.items.push((await serviceInsert('items', { name: `${name} ${run}`, item_type: 'cocktail', is_catalog: true })).id);
   }
-  for (const [i, id] of ids.items.entries()) await serviceInsert('bar_off_menu', { bar_id: ids.bar, item_id: id, sort_rank: i + 1 });
+  for (const [i, id] of ids.items.entries()) await serviceInsert('bar_also_makes', { bar_id: ids.bar, item_id: id, sort_rank: i + 1 });
 });
 
 after(async () => {
@@ -79,9 +79,9 @@ after(async () => {
 describe('the staff list', () => {
   test('ranks run to 50, not past it', async () => {
     const [martini] = ids.items;
-    await assert.rejects(db.query('UPDATE public.bar_off_menu SET sort_rank = 51 WHERE bar_id = $1 AND item_id = $2', [ids.bar, martini]), /bar_off_menu_rank_range/);
-    await db.query('UPDATE public.bar_off_menu SET sort_rank = 50 WHERE bar_id = $1 AND item_id = $2', [ids.bar, martini]);
-    await db.query('UPDATE public.bar_off_menu SET sort_rank = 1 WHERE bar_id = $1 AND item_id = $2', [ids.bar, martini]);
+    await assert.rejects(db.query('UPDATE public.bar_also_makes SET sort_rank = 51 WHERE bar_id = $1 AND item_id = $2', [ids.bar, martini]), /bar_also_makes_rank_range/);
+    await db.query('UPDATE public.bar_also_makes SET sort_rank = 50 WHERE bar_id = $1 AND item_id = $2', [ids.bar, martini]);
+    await db.query('UPDATE public.bar_also_makes SET sort_rank = 1 WHERE bar_id = $1 AND item_id = $2', [ids.bar, martini]);
   });
 
   test('a Drink Creator reorders it in one call, swaps and all', async () => {
@@ -89,14 +89,19 @@ describe('the staff list', () => {
     const { error } = await reorder('maker', [daiquiri, martini]);
     assert.ifError(error);
     assert.deepEqual(await order(), [daiquiri, martini]);
-    const { rows } = await db.query('SELECT sort_rank FROM public.bar_off_menu WHERE bar_id = $1 AND item_id = $2', [ids.bar, negroni]);
+    const { rows } = await db.query('SELECT sort_rank FROM public.bar_also_makes WHERE bar_id = $1 AND item_id = $2', [ids.bar, negroni]);
     assert.equal(rows[0].sort_rank, null, 'left out of the order means unranked, still on the list');
   });
 
   test('floor staff can read it but not reorder it', async () => {
     const before = await order();
-    const { data } = await users.floor.client.from('bar_off_menu').select('item_id').eq('bar_id', ids.bar);
+    const { data } = await users.floor.client.from('bar_also_makes').select('item_id').eq('bar_id', ids.bar);
     assert.equal(data.length, 3);
+    // Builds before 2.0 read the old name (20261204300000).
+    const old = await users.floor.client.from('bar_off_menu').select('item_id').eq('bar_id', ids.bar);
+    assert.equal(old.data.length, 3);
+    const outsider = await users.outsider.client.from('bar_off_menu').select('item_id').eq('bar_id', ids.bar);
+    assert.equal(outsider.data?.length ?? 0, 0, 'the old name keeps the rules');
     const { error } = await reorder('floor', [...before].reverse());
     assert.match(error?.message ?? '', /opens at Drink Creator/);
     assert.deepEqual(await order(), before);

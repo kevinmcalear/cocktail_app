@@ -130,9 +130,9 @@ export function useMyHadDrinks() {
 }
 
 /**
- * The drinks I've had or ranked, by id: Discover's "Not had yet". A rank
- * entry is a drink had (at a bar, or made at home). Read only when asked
- * (`enabled`), and kept fresh by ranking (it's under 'my-had').
+ * The drinks I've had, by id: Discover's "Not had yet". Every had counts:
+ * ranked, made at home or remembered (drinks_had). Read only when asked
+ * (`enabled`), and kept fresh by ranking and making (it's under 'my-had').
  */
 export function useMyHadIds(enabled = true) {
   const userId = useUserId();
@@ -141,7 +141,7 @@ export function useMyHadIds(enabled = true) {
     enabled: enabled && !!userId,
     queryFn: async (): Promise<string[]> => {
       const rows = await allRowsById<{ id: string; item_id: string }>((after, size) => {
-        let query = supabase.from('rank_entries').select('id, item_id').eq('user_id', userId!);
+        let query = supabase.from('drinks_had').select('id, item_id').eq('user_id', userId!).not('item_id', 'is', null);
         if (after) query = query.gt('id', after);
         return query.order('id').limit(size);
       });
@@ -293,8 +293,9 @@ export interface RankTarget {
   name: string;
   bar_id: string | null;
   origin: string | null;
-  riff_of_id: string | null;
-  riff_of: { id: string; name: string; is_catalog: boolean } | null;
+  based_on_id: string | null;
+  based_on_kind: string | null;
+  based_on: { id: string; name: string; is_catalog: boolean } | null;
   origin_bar_profile_id: string | null;
   created_by: string | null;
 }
@@ -318,13 +319,14 @@ export function useRankTarget(itemId: string | null | undefined) {
     queryFn: async (): Promise<RankTarget | null> => {
       const { data, error } = await supabase
         .from('items')
-        .select('id, name, bar_id, origin, riff_of_id, riff_of:riff_of_id ( id, name, is_catalog ), origin_bar_profile_id, created_by')
+        .select('id, name, bar_id, origin, based_on_id, based_on_kind, based_on:based_on_id ( id, name, is_catalog ), origin_bar_profile_id, created_by')
         .eq('id', itemId!)
         .maybeSingle();
       if (error) throw error;
-      // ponytail: supabase-js can't type an embed on items' own foreign keys ("more than one relationship"), so the row is cast; hint it as items!<fk> to drop this.
+      // ponytail: supabase-js can't type an embed on items' own foreign keys ("more than one relationship"), so the row is cast (PostgREST doesn't take the constraint name as a hint on a self-link either).
       if (data) return data as unknown as RankTarget;
 
+      // ponytail: published_items has only the old riff link column until the view carries based_on_*; read it as a riff.
       const { data: pub, error: pubError } = await supabase
         .from('published_items')
         .select('id, name, bar_id, origin, riff_of_id, origin_bar_profile_id')
@@ -333,13 +335,21 @@ export function useRankTarget(itemId: string | null | undefined) {
         .maybeSingle();
       if (pubError) throw pubError;
       if (!pub) return null;
+      const { riff_of_id: basedOnId, ...rest } = pub;
       // The classic it's a version of is in the catalog, which everyone signed in can read.
-      const riff = pub.riff_of_id ? await supabase.from('items').select('id, name, is_catalog').eq('id', pub.riff_of_id).maybeSingle() : null;
+      const riff = basedOnId ? await supabase.from('items').select('id, name, is_catalog').eq('id', basedOnId).maybeSingle() : null;
       if (riff?.error) throw riff.error;
       // published_items doesn't say who made a drink. Signed in, a bar
       // signature reads from `items`, so one with no bar here is a person's:
       // don't default it to the bar it's credited to (signatureBarOf).
-      return { ...pub, origin_bar_profile_id: pub.bar_id ? pub.origin_bar_profile_id : null, riff_of: riff?.data ?? null, created_by: null } as RankTarget;
+      return {
+        ...rest,
+        origin_bar_profile_id: pub.bar_id ? pub.origin_bar_profile_id : null,
+        based_on_id: basedOnId,
+        based_on_kind: basedOnId ? 'riff' : null,
+        based_on: riff?.data ?? null,
+        created_by: null,
+      } as RankTarget;
     },
   });
 }

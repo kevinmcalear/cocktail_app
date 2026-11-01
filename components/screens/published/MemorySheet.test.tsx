@@ -16,6 +16,7 @@ const memory: CollectedDrink = {
   name: 'Bolo Tie',
   barName: 'Little Rye',
   imageUrl: null,
+  hadId: null,
   hadOn: null,
   note: null,
   liveMode: null,
@@ -32,7 +33,7 @@ test('starts on Don’t remember with no date field, and saves no date', async (
   expect(screen.getByRole('radio', { name: 'Don’t remember', checked: true })).toBeTruthy();
   expect(screen.queryByText('Day')).toBeNull();
   await fireEvent.press(screen.getByRole('button', { name: 'Save' }));
-  expect(mockSave).toHaveBeenCalledWith({ id: 'c1', hadOn: null, note: null });
+  expect(mockSave).toHaveBeenCalledWith({ hadId: null, itemId: 'i1', hadOn: null, note: null });
   expect(onClose).toHaveBeenCalled();
 });
 
@@ -46,8 +47,8 @@ test('the date field shows only after Pick a day, which needs a day to save', as
 });
 
 test('a day already saved opens on Pick a day with it', async () => {
-  await renderWithProviders(<MemorySheet memory={{ ...memory, hadOn: '2026-09-12' }} onClose={jest.fn()} />);
+  await renderWithProviders(<MemorySheet memory={{ ...memory, hadId: 'h1', hadOn: '2026-09-12' }} onClose={jest.fn()} />);
   expect(screen.getByRole('radio', { name: 'Pick a day', checked: true })).toBeTruthy();
   await fireEvent.press(screen.getByRole('button', { name: 'Save' }));
-  expect(mockSave).toHaveBeenCalledWith({ id: 'c1', hadOn: '2026-09-12', note: null });
+  expect(mockSave).toHaveBeenCalledWith({ hadId: 'h1', itemId: 'i1', hadOn: '2026-09-12', note: null });
 });

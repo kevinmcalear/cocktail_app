@@ -9,27 +9,27 @@ import { useVenueIce } from '@/hooks/useVenueIce';
 import { kitCheck, type CheckDrink, type CheckKit, type KitCheck } from '@/lib/kitCheck';
 import { supabase } from '@/lib/supabase';
 
-// The kit check's data (lib/kitCheck.ts): a drink's glass and ice by name and
-// kind (items.glass, items.ice_kind), its methods by name, and the venue's Kit with the recipes of the ice it makes. Recipes are
+// The kit check's data (lib/kitCheck.ts): a drink's glass and ice (drink_glass,
+// drink_ice) by name and kind (items.glass, items.ice_kind), its methods by name, and the venue's Kit with the recipes of the ice it makes. Recipes are
 // read as house preps are, so without Prep at the venue an ice's own tools
 // aren't followed.
 
-const DRINK_COLUMNS = 'id, glass:glassware_id(name, glass), ice:ice_id(name, ice_kind), method_ice:method_ice_id(name, ice_kind), ice_build, item_methods!item_methods_item_id_fkey(method:method_item_id(name))';
+const DRINK_COLUMNS = `id, glass:drink_glass!drink_glass_item_id_fkey(glassware:items!drink_glass_glassware_id_fkey(name, glass)),
+  ice:drink_ice!drink_ice_item_id_fkey(ice_build, ice:items!drink_ice_ice_id_fkey(name, ice_kind), method_ice:items!drink_ice_method_ice_id_fkey(name, ice_kind)),
+  item_methods!item_methods_item_id_fkey(method:method_item_id(name))`;
 
 type Ice = { name: string; ice_kind: string | null };
 type DrinkRow = {
   id: string;
-  glass: { name: string; glass: string | null } | null;
-  ice: Ice | null;
-  method_ice: Ice | null;
-  ice_build: { ice?: unknown }[] | null;
+  glass: { glassware: { name: string; glass: string | null } | null } | null;
+  ice: { ice_build: { ice?: unknown }[] | null; ice: Ice | null; method_ice: Ice | null } | null;
   item_methods: { method: { name: string } | null }[];
 };
 
 export type CheckedDrink = CheckDrink & { id: string };
 
 /** A build's layers are ice item ids (lib/iceBuild.ts toStored). */
-const layerIds = (r: DrinkRow) => (Array.isArray(r.ice_build) ? r.ice_build : []).flatMap((l) => (typeof l.ice === 'string' ? [l.ice] : []));
+const layerIds = (r: DrinkRow) => (Array.isArray(r.ice?.ice_build) ? r.ice.ice_build : []).flatMap((l) => (typeof l.ice === 'string' ? [l.ice] : []));
 
 /** The drinks as the check reads them, their builds' ice by name and kind (one read for every layer). */
 async function drinksOf(rows: DrinkRow[]): Promise<CheckedDrink[]> {
@@ -46,11 +46,13 @@ async function drinksOf(rows: DrinkRow[]): Promise<CheckedDrink[]> {
 /** A drink row as the check reads it: every ice layer (else its one ice) and what it's shaken or stirred with. */
 function drinkOf(r: DrinkRow, names: ReadonlyMap<string, Ice>): CheckedDrink {
   const layers = layerIds(r).flatMap((id) => (names.has(id) ? [names.get(id)!] : []));
+  const ice = r.ice?.ice;
+  const methodIce = r.ice?.method_ice;
   return {
     id: r.id,
-    glass: r.glass?.name ?? null,
-    glassKind: r.glass?.glass ?? null,
-    ice: [...(layers.length ? layers : r.ice ? [r.ice] : []), ...(r.method_ice ? [r.method_ice] : [])],
+    glass: r.glass?.glassware?.name ?? null,
+    glassKind: r.glass?.glassware?.glass ?? null,
+    ice: [...(layers.length ? layers : ice ? [ice] : []), ...(methodIce ? [methodIce] : [])],
     methods: r.item_methods.flatMap((m) => (m.method ? [m.method.name] : [])),
   };
 }
@@ -66,7 +68,7 @@ export function useVenueDrinks(barId: string | null | undefined) {
       // ponytail: one page of a venue's drinks; past 1000 the rest aren't checked. A paged read if a venue gets there.
       const { data, error } = await supabase.from('items').select(DRINK_COLUMNS).eq('bar_id', barId!).eq('item_type', 'cocktail').limit(1000);
       if (error) throw error;
-      // ponytail: supabase-js can't type an embed on items' own foreign keys ("more than one relationship"), so the row is cast; hint it as items!<fk> to drop this.
+      // ice_build is Json to supabase-js, so the row is cast.
       return drinksOf((data ?? []) as unknown as DrinkRow[]);
     },
   });
@@ -81,7 +83,7 @@ function useDrink(itemId: string) {
     queryFn: async (): Promise<CheckedDrink | null> => {
       const { data, error } = await supabase.from('items').select(DRINK_COLUMNS).eq('id', itemId).maybeSingle();
       if (error) throw error;
-      // ponytail: supabase-js can't type an embed on items' own foreign keys ("more than one relationship"), so the row is cast; hint it as items!<fk> to drop this.
+      // ice_build is Json to supabase-js, so the row is cast.
       return data ? ((await drinksOf([data as unknown as DrinkRow]))[0] ?? null) : null;
     },
   });

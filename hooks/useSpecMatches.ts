@@ -84,7 +84,8 @@ export function useBarVersions(classicId: string | undefined, profileIds: string
       const { data: versions, error } = await supabase
         .from('items')
         .select('id, origin_bar_profile_id')
-        .eq('riff_of_id', classicId!)
+        .eq('based_on_id', classicId!)
+        .eq('based_on_kind', 'riff')
         .in('origin_bar_profile_id', profileIds.slice(0, 200));
       if (error) throw error;
       const rows = (versions ?? []) as { id: string; origin_bar_profile_id: string }[];
@@ -117,18 +118,18 @@ export function useSetSpecMatch() {
 }
 
 /**
- * Where a drink's spec came from: its own ('bar'), or filled in from a classic
- * ('classic', spec_from_id) because the bar published none
+ * Where a drink's spec came from: its own ('bar'), or filled in from the
+ * classic it's based on ('classic', from based_on_id) because the bar published none
  * (20261011140000_classic_fill.sql). Null when the drink isn't found.
  */
 export function useSpecSource(itemId: string | undefined) {
   return useQuery({
     queryKey: ['spec-source', itemId],
     enabled: !!itemId,
-    queryFn: async (): Promise<{ spec_source: 'bar' | 'classic'; spec_from_id: string | null } | null> => {
-      const { data, error } = await supabase.from('items').select('spec_source, spec_from_id').eq('id', itemId!).maybeSingle();
+    queryFn: async (): Promise<{ spec_source: 'bar' | 'classic'; based_on_id: string | null } | null> => {
+      const { data, error } = await supabase.from('items').select('spec_source, based_on_id').eq('id', itemId!).maybeSingle();
       if (error) throw error;
-      return (data as { spec_source: 'bar' | 'classic'; spec_from_id: string | null } | null) ?? null;
+      return (data as { spec_source: 'bar' | 'classic'; based_on_id: string | null } | null) ?? null;
     },
   });
 }
