@@ -17,6 +17,7 @@ import { snapReadFiles, sourcesFromFiles } from '@/lib/readAnything';
 import { askToNudge } from '@/lib/readyNudge';
 import { useAppMode } from '@/store/useAppMode';
 import { useBringIn, type BringInJob } from '@/store/useBringIn';
+import { useRankReturn } from '@/store/useRankReturn';
 import { slotStart } from '@/lib/wizardSlots';
 import { draftSlot, freeNameSlot, useDrinkWizardStore, wizardPlace } from '@/store/useDrinkWizardStore';
 
@@ -95,6 +96,9 @@ export function BringInFlow() {
     useBringIn.getState().setForeground(true);
     return () => {
       useBringIn.getState().setForeground(false);
+      // Left with nothing reading or saved: a Rank it that sent the menu here opens again. (Reading in the background keeps waiting.)
+      const { job: left } = useBringIn.getState();
+      if (!left || left.status === 'failed') useRankReturn.getState().back();
       // Left without Finish later (back, a link): what's left still waits, from the card.
       useBringIn.getState().setReviewing(null);
     };
@@ -176,6 +180,7 @@ export function BringInFlow() {
     save.mutate(input, {
       onSuccess: (done) => {
         useBringIn.getState().setDone(done);
+        useRankReturn.getState().saved(done.menuId);
         useBringIn.getState().clear(true);
         router.replace((done.batchId ? `/bring-in/done?batch=${done.batchId}` : '/bring-in/done') as Href);
       },

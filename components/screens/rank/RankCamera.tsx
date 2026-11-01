@@ -8,5 +8,5 @@ import { useSnapMenu } from './useSnapMenu';
  */
 export function RankCamera() {
   const snap = useSnapMenu();
-  return snap ? <RankCameraButton onPress={snap} /> : null;
+  return snap ? <RankCameraButton onPress={() => void snap()} /> : null;
 }

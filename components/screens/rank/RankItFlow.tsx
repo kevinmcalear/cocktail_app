@@ -9,7 +9,7 @@ import { RankFindSheet, type RankPick } from './RankFindSheet';
 import { useSnapMenu } from './useSnapMenu';
 
 /** How Rank it starts: the find sheet, or straight to ranking one drink (the suggested row). */
-export type RankItStart = { kind: 'find' } | ({ kind: 'rank' } & RankPick);
+export type RankItStart = { kind: 'find'; query?: string; menuId?: string | null } | ({ kind: 'rank' } & RankPick);
 
 interface RankItFlowProps {
   start: RankItStart;
@@ -27,6 +27,8 @@ export function RankItFlow({ start, onClose }: RankItFlowProps) {
   const onSnap = useSnapMenu();
   const [finding, setFinding] = useState(false);
   const [ranking, setRanking] = useState<RankPick | null>(null);
+  // The search typed, kept while the camera has the screen so Rank it opens again as it was.
+  const [typed, setTyped] = useState(start.kind === 'find' ? (start.query ?? '') : '');
   // iOS presents one modal at a time: what comes next waits until the find sheet has gone (onDismiss).
   const next = useRef<(() => void) | null>(null);
 
@@ -49,15 +51,26 @@ export function RankItFlow({ start, onClose }: RankItFlowProps) {
       <RankFindSheet
         visible={finding}
         onPick={(pick) => leave(() => setRanking(pick))}
-        // The web opens its camera only straight from a tap, so it isn't put off there.
+        initialQuery={typed}
+        broughtMenuId={start.kind === 'find' ? (start.menuId ?? null) : null}
+        // The web opens its camera only straight from a tap, so it isn't put off there. Cancelled, the sheet comes back as it was; started, Bring in has the screen and Tonight opens Rank it again when it ends (useRankReturn).
         onSnap={
           onSnap
-            ? () => {
-                if (Platform.OS !== 'ios') onSnap();
-                leave(() => {
-                  if (Platform.OS === 'ios') onSnap();
-                  onClose();
-                });
+            ? (query) => {
+                setTyped(query);
+                const snap = () =>
+                  onSnap(query).then((started) => {
+                    if (started) onClose();
+                    else {
+                      moving.current = false;
+                      setFinding(true);
+                    }
+                  });
+                if (Platform.OS === 'ios') leave(() => void snap());
+                else {
+                  void snap();
+                  leave(() => {});
+                }
               }
             : null
         }

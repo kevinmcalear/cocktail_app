@@ -10,6 +10,7 @@ import { IconSymbol } from '@/components/ui/icon-symbol';
 import { radius, space } from '@/constants/tokens';
 import { useDrinkLists } from '@/hooks/useDiscover';
 import { useLovedBars } from '@/hooks/useKept';
+import { useMenu } from '@/hooks/useMenus';
 import { useRankFindNear } from '@/hooks/useRankFind';
 import { findDrinks } from '@/lib/discover';
 import { plural } from '@/lib/menus';
@@ -28,8 +29,12 @@ export interface RankPick {
 interface RankFindSheetProps {
   visible: boolean;
   onPick: (pick: RankPick) => void;
-  /** Snap the menu; null where there's no camera. */
-  onSnap: (() => void) | null;
+  /** Snap the menu, with the search typed; null where there's no camera. */
+  onSnap: ((query: string) => void) | null;
+  /** The search to open with (coming back from the camera or Bring in). */
+  initialQuery?: string;
+  /** The menu just brought in, whose drinks lead the list. */
+  broughtMenuId?: string | null;
   onClose: () => void;
   /** iOS: once the sheet has gone, so the rank sheet or the camera can open. */
   onDismiss: () => void;
@@ -46,12 +51,12 @@ interface OpenBar {
  * (at home, or a bar the app doesn't list); Can't find it? snaps the menu.
  * A bar opens its list on now. Picking a drink hands it to the rank sheet.
  */
-export function RankFindSheet({ visible, onPick, onSnap, onClose, onDismiss }: RankFindSheetProps) {
+export function RankFindSheet({ visible, onPick, onSnap, initialQuery = '', broughtMenuId = null, onClose, onDismiss }: RankFindSheetProps) {
   const [bar, setBar] = useState<OpenBar | null>(null);
   return (
     <BackbarTheme>
       <Sheet visible={visible} onClose={onClose} onDismiss={onDismiss} accessibilityLabel={bar ? `Rank a drink from ${bar.name}` : 'Rank it'} style={styles.sheet} keyboard header={<Head title={bar?.name ?? 'Rank it'} onBack={bar ? () => setBar(null) : null} />}>
-        {bar ? <RankBarList bar={bar} onPick={onPick} /> : <Find onPick={onPick} onSnap={onSnap} onBar={setBar} />}
+        {bar ? <RankBarList bar={bar} onPick={onPick} /> : <Find onPick={onPick} onSnap={onSnap} onBar={setBar} initialQuery={initialQuery} broughtMenuId={broughtMenuId} />}
       </Sheet>
     </BackbarTheme>
   );
@@ -70,9 +75,9 @@ function Head({ title, onBack }: { title: string; onBack: (() => void) | null })
   );
 }
 
-function Find({ onPick, onSnap, onBar }: { onPick: (p: RankPick) => void; onSnap: (() => void) | null; onBar: (bar: OpenBar) => void }) {
+function Find({ onPick, onSnap, onBar, initialQuery, broughtMenuId }: { onPick: (p: RankPick) => void; onSnap: ((query: string) => void) | null; onBar: (bar: OpenBar) => void; initialQuery: string; broughtMenuId: string | null }) {
   const insets = useSafeAreaInsets();
-  const [query, setQuery] = useState('');
+  const [query, setQuery] = useState(initialQuery);
   const asked = query.trim().length >= 2;
   const near = useRankFindNear(query);
   const lists = useDrinkLists(asked);
@@ -97,6 +102,7 @@ function Find({ onPick, onSnap, onBar }: { onPick: (p: RankPick) => void; onSnap
   return (
     <SheetScrollView contentContainerStyle={[styles.body, { paddingBottom: insets.bottom + space.xl }]} keyboardShouldPersistTaps="handled">
       <SearchField query={query} onQuery={setQuery} placeholder="What did you have?" autoFocus />
+      {broughtMenuId ? <BroughtMenu menuId={broughtMenuId} query={query} onPick={onPick} /> : null}
       {!asked && loved.length ? (
         <Section title="Bars you love">
           {loved.map((b, i) => (
@@ -122,10 +128,27 @@ function Find({ onPick, onSnap, onBar }: { onPick: (p: RankPick) => void; onSnap
       {asked && !found && !loading && !failed ? <Caption tone="muted">{`Nothing called “${query.trim()}” on a list we know.`}</Caption> : null}
       {onSnap ? (
         <Section title="Can’t find it?">
-          <SnapRow onPress={onSnap} />
+          <SnapRow onPress={() => onSnap(query)} />
         </Section>
       ) : null}
     </SheetScrollView>
+  );
+}
+
+/** The menu just brought in: its drinks (those matching the search, else all), to pick the one you had. */
+function BroughtMenu({ menuId, query, onPick }: { menuId: string; query: string; onPick: (p: RankPick) => void }) {
+  const menu = useMenu(menuId);
+  const all = (menu.data?.sections ?? []).flatMap((s) => s.drinks);
+  if (!menu.data) return menu.isError ? <Caption tone="muted">Couldn’t load the menu you brought in. Search for the drink instead.</Caption> : <Caption tone="muted">Loading the menu…</Caption>;
+  const hits = findDrinks(all, query);
+  const shown = hits.length ? hits : all;
+  if (!shown.length) return null;
+  return (
+    <Section title={`Just brought in · ${menu.data.name}`}>
+      {shown.map((d, i) => (
+        <RankRow key={d.id} itemId={d.id} name={d.name} sub={d.line || null} first={i === 0} onPress={() => onPick({ itemId: d.id, name: d.name, barId: null })} />
+      ))}
+    </Section>
   );
 }
 
