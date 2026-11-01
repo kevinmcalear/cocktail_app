@@ -13,6 +13,8 @@ export interface JoinRequest {
   avatar_url: string | null;
   /** Their person page, when they have one. */
   profile_handle: string | null;
+  /** Asked through the staff link, not from the bar's page. */
+  via_link: boolean;
 }
 
 const wordy = (error: { code?: string; message: string }) =>
@@ -47,6 +49,64 @@ export function useAskToJoin() {
       await qc.invalidateQueries({ queryKey: ['bars'] });
     },
     // Shown inline under the button, not as the global toast.
+    onError: () => {},
+  });
+}
+
+/** The staff link door, signed in and not on the team: the link's settings, who answers, and your name (staff_link_door). */
+export interface StaffLinkDoor {
+  bar_id: string;
+  link_on: boolean;
+  join_role: number;
+  approve: boolean;
+  /** The first name of the Admin who answers, while the link is on. */
+  admin_name: string | null;
+  admin_count: number | null;
+  me: string | null;
+}
+
+export function useStaffLinkDoor(slug: string, enabled: boolean) {
+  const userId = useUserId();
+  return useQuery({
+    queryKey: ['staff-link-door', userId, slug],
+    enabled: enabled && !!userId,
+    // The settings can change while the door is open in another tab: read them fresh.
+    staleTime: 0,
+    queryFn: async (): Promise<StaffLinkDoor | null> => {
+      const { data, error } = await supabase.rpc('staff_link_door', { p_slug: slug });
+      if (error) throw error;
+      return (data?.[0] as StaffLinkDoor | undefined) ?? null;
+    },
+  });
+}
+
+/** Ask through the staff link, or join straight in when nobody approves (join_by_staff_link). */
+export function useJoinByStaffLink(slug: string) {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: async (): Promise<'asked' | 'joined'> => {
+      const { data, error } = await supabase.rpc('join_by_staff_link', { p_slug: slug });
+      if (error) throw new Error(wordy(error));
+      return data === 'joined' ? 'joined' : 'asked';
+    },
+    onSettled: async () => {
+      await qc.invalidateQueries({ queryKey: ['join-request'] });
+      await qc.invalidateQueries({ queryKey: ['staff-link-door'] });
+      await qc.invalidateQueries({ queryKey: ['bars'] });
+    },
+    onError: () => {},
+  });
+}
+
+/** Take back a waiting ask (take_back_join_request). */
+export function useTakeBackJoinRequest() {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: async (barId: string) => {
+      const { error } = await supabase.rpc('take_back_join_request', { p_bar_id: barId });
+      if (error) throw new Error(wordy(error));
+    },
+    onSettled: () => qc.invalidateQueries({ queryKey: ['join-request'] }),
     onError: () => {},
   });
 }

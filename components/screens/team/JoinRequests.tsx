@@ -13,7 +13,8 @@ import { roleLabel } from '@/lib/roles';
 import { askedAgo } from '@/lib/team';
 
 /**
- * People asking to join the team (find-yourself step 6), on top of Team for
+ * People asking to join the team, from the bar's page (find-yourself step 6)
+ * or through the staff link (Miss-door), on top of Team for
  * whoever manages it, as the board's prompt (Kept-team): "Sam Whitlock asked
  * to join", when, then Add as the staff link's join role, or Not now. Not
  * now says no (the request stays declined). Nothing when nobody is asking.
@@ -50,7 +51,7 @@ export function JoinRequests({ barId }: { barId: string }) {
               <IconSymbol name="person.badge.plus" size={20} color={ds.c.ink} />
               <View style={styles.flex}>
                 <DsText variant="headline">{`${r.name} asked to join`}</DsText>
-                <Caption tone="muted">{`From your bar’s page${ago ? `, ${ago}` : ''}.`}</Caption>
+                <Caption tone="muted">{`${r.via_link ? 'Through your staff link' : 'From your bar’s page'}${ago ? `, ${ago}` : ''}.`}</Caption>
                 {r.profile_handle ? <TextLink label={`See @${r.profile_handle}`} onPress={() => router.push(`/p/${r.profile_handle}` as Href)} /> : null}
               </View>
             </View>

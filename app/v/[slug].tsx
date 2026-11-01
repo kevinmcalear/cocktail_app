@@ -4,6 +4,7 @@ import { useCallback, useEffect, useSyncExternalStore, type ReactNode } from 're
 import { StyleSheet, View } from 'react-native';
 
 import { AuthShell, AuthSpinner, type AuthBrand } from '@/components/auth/AuthShell';
+import { StaffLinkDoor } from '@/components/auth/StaffLinkDoor';
 import { StaffLinkSignIn } from '@/components/auth/StaffLinkSignIn';
 import { BackbarTheme, Body, BrandProvider, Button, Caption, useDs } from '@/components/ds';
 import { IconSymbol } from '@/components/ui/icon-symbol';
@@ -93,10 +94,9 @@ export default function VenueStaffLink() {
   );
 }
 
-/** Signed in: check the user is on the venue's team, then offer the install. */
+/** Signed in: on the venue's team, offer the install; with an invite, the invite; else the door (ask or join). */
 function MemberGate({ venue, brand }: { venue: VenueBranding; brand: AuthBrand }) {
   const router = useRouter();
-  const { user, signOut } = useAuth();
   const { data: bars, isPending, isError, refetch } = useBars();
   const enterVenue = useAppMode((s) => s.enterVenue);
   const mode = useInstallMode();
@@ -128,18 +128,7 @@ function MemberGate({ venue, brand }: { venue: VenueBranding; brand: AuthBrand }
   // Joining makes them a member, and the install step below takes over.
   if (!isMember && invite) return <InviteWelcome invite={invite} setUp onJoined={() => {}} onDeclined={() => router.replace('/')} />;
 
-  if (!isMember) {
-    return (
-      <AuthShell
-        brand={brand}
-        title="You're not on this team yet"
-        subtitle={`You're signed in as ${user?.email ?? 'someone else'}. Ask a ${venue.name} manager to invite that email, then open this link again.`}
-      >
-        <PrimaryButton label="Use a different account" onPress={() => void signOut()} />
-        <HomeButton />
-      </AuthShell>
-    );
-  }
+  if (!isMember) return <StaffLinkDoor slug={venue.slug} barId={venue.id} brand={brand} onJoined={enter} fallback={<Loading />} />;
 
   return (
     <AuthShell
