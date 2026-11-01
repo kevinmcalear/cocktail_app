@@ -12,6 +12,12 @@ import type { PaperPage, PosterSize } from '@/lib/paper/page';
 import { menuPoster, topThreePoster } from '@/lib/paper/poster';
 import { topThree } from '@/lib/ranking';
 import type { SketchInputs } from '@/lib/sketch/types';
+import { creditNames, leadCredit } from '@/lib/whoMadeIt';
+
+/** Who made it (item_credits): the lead creator with a page, else the first named one. */
+function makerOf(credits: Parameters<typeof leadCredit>[0]): string | null {
+  return leadCredit(credits)?.profile?.display_name ?? creditNames(credits)[0] ?? null;
+}
 
 /** A poster to show and send, or why there isn't one yet. */
 export interface PosterData {
@@ -85,7 +91,7 @@ export function useTopThreePoster(listId: string, size: PosterSize): PosterData 
           {
             person: me.data?.displayName?.trim().split(/\s+/)[0] || null,
             listName,
-            entries: top.map((e, i) => ({ itemId: e.item_id, score: e.score, bar: e.venue?.display_name ?? null, maker: credits[i]?.data?.creator_names?.[0] ?? null, drawn: !!sketches.byId[e.item_id] })),
+            entries: top.map((e, i) => ({ itemId: e.item_id, score: e.score, bar: e.venue?.display_name ?? null, maker: makerOf(credits[i]?.data?.credits), drawn: !!sketches.byId[e.item_id] })),
             scheme: ds.scheme,
           },
           size,
