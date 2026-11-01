@@ -1534,6 +1534,24 @@ export type Database = {
           },
         ]
       }
+      follows: {
+        Row: {
+          created_at: string
+          followee_id: string
+          follower_id: string
+        }
+        Insert: {
+          created_at?: string
+          followee_id: string
+          follower_id?: string
+        }
+        Update: {
+          created_at?: string
+          followee_id?: string
+          follower_id?: string
+        }
+        Relationships: []
+      }
       glass_models: {
         Row: {
           aliases: string[]
@@ -7563,6 +7581,22 @@ export type Database = {
           spicy: number
           strong: number
           sweet: number
+        }[]
+      }
+      friends_ranks: {
+        Args: { p_limit?: number }
+        Returns: {
+          avatar_url: string
+          best_in_family: boolean
+          created_at: string
+          display_name: string
+          drink_family: string
+          entry_id: string
+          item_id: string
+          name: string
+          profile_id: string
+          score: number
+          venue_name: string
         }[]
       }
       get_bar_classics: {
