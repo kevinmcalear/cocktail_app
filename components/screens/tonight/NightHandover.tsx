@@ -8,7 +8,7 @@ import { useHandover, useSaveHandover } from '@/hooks/useHandover';
 import { useSpecBook } from '@/hooks/useSpecBook';
 import { ranOutLine } from '@/lib/handover';
 import { nextNight } from '@/lib/nightPhase';
-import { specLines } from '@/lib/spec';
+import { recipeNames } from '@/lib/tonight';
 
 import { useLogNow } from './BeforeDoors';
 import { HandoverCard, HandoverSection, LeaveHandover } from './Handover';
@@ -72,7 +72,7 @@ export function useNightHandover(t: Staff, barId: string, wide: boolean): NightH
   const book = useSpecBook(h.last ? barId : null).data;
   const onTonight = useMemo(() => {
     const ids = new Set(t.blocks.flatMap((b) => b.sections.flatMap((s) => s.drinks.map((d) => d.id))));
-    return (book?.items ?? []).filter((i) => ids.has(i.id)).map((i) => ({ name: i.name, uses: specLines(i.recipes).flatMap((l) => (l.ingredient ? [l.ingredient] : [])) }));
+    return (book?.items ?? []).filter((i) => ids.has(i.id)).map((i) => ({ name: i.name, uses: recipeNames(i.recipes).flatMap((l) => (l.ingredient ? [l.ingredient] : [])) }));
   }, [book, t.blocks]);
   const view = { h, onGotIt: gotIt, onAdd: add, logBatch, ranOutSub: (item: string) => ranOutLine(item, onTonight) };
   // Tonight's close is for whoever opens tomorrow; the last close's was for whoever opens today.
