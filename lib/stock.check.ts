@@ -1,7 +1,7 @@
 // Checks for lib/stock.ts. Run: npm run test:unit
 import assert from 'node:assert/strict';
 
-import { countStep, countUnit, formatCount, onHandByItem, parByItem, withBatches, zoneSummary } from './stock';
+import { countStep, countUnit, formatCount, madeLine, onHandByItem, parByItem, withBatches, zoneSummary } from './stock';
 
 assert.equal(countStep('btl'), 0.1);
 assert.equal(countStep('L'), 0.1);
@@ -60,4 +60,14 @@ console.log('stock: ok');
   assert.equal(withBatches(counted, [before, after]).g.value, 1200, '200 ml counted + 1 L made since; the morning batch is in the count');
   assert.equal(withBatches([], [before]).g.value, 1000, 'never counted: every batch');
   assert.equal(withBatches(counted, [batch('c', 2, 'btl', '2026-11-01T16:00:00Z')]).g.value, 200, 'another kind of unit is left out');
+}
+
+// A house-made row's value: last made and what's on hand (boards Draw-scroll, Desk-page).
+{
+  const ml = (value: number) => ({ kind: 'ml' as const, value, unit: 'ml' });
+  assert.match(madeLine({ madeAt: '2026-10-30T15:00:00Z' }, ml(800)) ?? '', /^Made .*30.* · 800 ml left$/);
+  assert.match(madeLine({ madeAt: '2026-10-30T15:00:00Z' }, undefined) ?? '', /^Made .*30/);
+  assert.equal(madeLine(undefined, ml(1500)), '1.5 L left');
+  assert.equal(madeLine(undefined, ml(0)), 'None left');
+  assert.equal(madeLine(undefined, undefined), null);
 }

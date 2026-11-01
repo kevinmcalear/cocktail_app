@@ -8,7 +8,7 @@
 import { isGarnishUnit } from '@/lib/batch';
 import { barMl, convertLine, density, ML_PER_OZ, type MassUnit } from '@/lib/drinkMath';
 import type { SpecLine } from '@/lib/spec';
-import { amountText } from '@/lib/units';
+import { amountText, grated, overIce } from '@/lib/units';
 
 export type SpecView = 'ingredients' | 'steps';
 
@@ -89,8 +89,8 @@ export interface SpecGroup {
  * one group, so it reads like a spec sheet.
  */
 export function specGroups(lines: SpecLine[], verb: string | null = null): SpecGroup[] {
-  const garnish = lines.filter((l) => isGarnishUnit(l.unit));
-  const rest = lines.filter((l) => !isGarnishUnit(l.unit));
+  const garnish = lines.filter(isGarnishLine);
+  const rest = lines.filter((l) => !isGarnishLine(l));
   const parts = [...new Set(rest.map((l) => l.part ?? 1))].sort((a, b) => a - b);
   const titled: { key: string; title: string | null; lines: SpecLine[] }[] =
     parts.length > 1
@@ -119,4 +119,90 @@ export function methodVerb(methods: readonly string[]): string | null {
 export function serveLine(parts: readonly (string | null | undefined)[]): string | null {
   const kept = parts.map((p) => p?.trim()).filter((p): p is string => !!p);
   return kept.length ? kept.join(' · ') : null;
+}
+
+/** The floor's serve line (board Decided-who-floor): "Goes out: rocks, large cube, candied ginger". */
+export function goesOutLine(parts: readonly (string | null | undefined)[]): string | null {
+  const kept = parts.map((p) => p?.trim().toLowerCase()).filter((p): p is string => !!p);
+  return kept.length ? `Goes out: ${kept.join(', ')}` : null;
+}
+
+/**
+ * A garnish: a count-unit line (a twist, a sprig, grated nutmeg). An egg
+ * white counted "1 each" goes in the drink, so it isn't one (Eddie tf-064).
+ */
+export function isGarnishLine(l: Pick<SpecLine, 'unit' | 'ingredient'>): boolean {
+  return isGarnishUnit(l.unit) && !/\begg/i.test(l.ingredient ?? '');
+}
+
+/** The garnish as said aloud: a discard says what happened to the peel ("Lemon peel, expressed and discarded"), grated says so ("Grated nutmeg"). */
+export function garnishLabel(name: string, unit: string | null | undefined): string {
+  const u = (unit ?? '').toLowerCase();
+  return u === 'discard' ? `${name} peel, expressed and discarded` : u === 'grated' ? grated(name) : name;
+}
+
+/** The drink's garnishes in spec order, as said aloud. Names as written. */
+export function garnishNames(lines: readonly SpecLine[]): string[] {
+  return lines.filter((l) => l.ingredient && isGarnishLine(l)).map((l) => garnishLabel(l.ingredient!, l.unit));
+}
+
+/** How the spec is laid out: Ingredients' ruled rows, Steps' groups, or names only (a guest, the floor, no amounts). */
+export type SpecLayout = 'rows' | 'steps' | 'names';
+
+/**
+ * The word after a line's name (boards Draw-bg, Desk-page, And-page). In
+ * the ruled rows it follows the name, muted: "float", "garnish". On a names
+ * list it sits at the right, capitalised: "Garnish", "Float", "House-made".
+ * In Steps the Float heading already says it (`underFloat`). Whether a line
+ * floats never depends on the view someone saved.
+ */
+export function lineRole(l: Pick<SpecLine, 'unit' | 'ingredient' | 'float' | 'houseMade' | 'optional'>, layout: SpecLayout, underFloat = false): string | null {
+  const kind = isGarnishLine(l) ? 'garnish' : l.float && !underFloat ? 'float' : l.houseMade && layout === 'names' ? 'house-made' : null;
+  const words = [kind, l.optional ? 'optional' : null].filter(Boolean).join(', ');
+  if (!words) return null;
+  return layout === 'names' ? words[0].toUpperCase() + words.slice(1) : words;
+}
+
+/** A glass or ice name mid-line: "coupe", "large cube", but a name with its own capitals ("Nick & Nora") as written. */
+function midLine(name: string): string {
+  const n = name.trim();
+  return /\s\p{Lu}/u.test(n) ? n : n.toLowerCase();
+}
+
+const article = (word: string) => (/^[aeiou]/i.test(word) ? `an ${word}` : `a ${word}`);
+
+export interface MethodLineInput {
+  /** "Shake", "Stir" (methodVerb). */
+  verb: string | null;
+  /** The drink's method names, for a double strain. */
+  methods: readonly string[];
+  glass: string | null | undefined;
+  /** The ice it's served over; "No ice" or "Up" for none. */
+  ice: string | null | undefined;
+  lines: readonly SpecLine[];
+}
+
+/**
+ * Ingredients view's one line under the rows (boards Decided-spec-rows,
+ * who-public, Desk-who-public): how it's made, how it goes in, what floats,
+ * the garnish. "Shake · strain over a large cube · float the Islay scotch ·
+ * Candied ginger". A rocks glass goes without saying over ice; any other
+ * glass is named. Ingredient names as written. Null with nothing to say.
+ */
+export function methodLine({ verb, methods, glass, ice, lines }: MethodLineInput): string | null {
+  const said = methods.join(' ').toLowerCase();
+  const strained = verb === 'Shake' || verb === 'Stir' || verb === 'Throw';
+  const strain = /strain/.test(said) && /double|fine/.test(said) ? 'double strain' : strained ? 'strain' : null;
+  const iced = ice?.trim() && !/^(no ice|up|neat)\b/i.test(ice.trim()) ? ice.trim() : null;
+  const cup = glass?.trim() ? midLine(glass) : null;
+  const into = iced
+    ? [`over ${overIce(iced)}`, cup && !/rocks|old fashioned|lowball|tumbler/i.test(cup) ? `in ${article(cup)}` : null].filter(Boolean).join(' ')
+    : cup
+      ? `${strain ? 'into' : 'in'} ${article(cup)}`
+      : null;
+  const pour = [strain, into].filter(Boolean).join(' ');
+  const floats = lines.filter((l) => l.float && l.ingredient && !isGarnishLine(l)).map((l) => `float the ${l.ingredient}`);
+  const garnish = garnishNames(lines).join(', ');
+  const parts = [verb, pour, ...floats, garnish].filter((p): p is string => !!p);
+  return parts.length ? parts.join(' · ') : null;
 }

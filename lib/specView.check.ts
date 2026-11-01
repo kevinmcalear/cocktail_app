@@ -3,7 +3,7 @@
 import assert from 'node:assert/strict';
 
 import { specLines } from './spec';
-import { defaultSpecView, methodVerb, pickSpecView, scaledAmount, serveLine, snapToJigger, specGroups } from './specView';
+import { defaultSpecView, garnishLabel, garnishNames, goesOutLine, isGarnishLine, lineRole, methodLine, methodVerb, pickSpecView, scaledAmount, serveLine, snapToJigger, specGroups } from './specView';
 
 // Who is looking decides the default; a person's own pick sticks over it.
 assert.equal(defaultSpecView(true), 'steps');
@@ -58,5 +58,41 @@ assert.equal(methodVerb(['stir and strain']), 'Stir');
 assert.equal(methodVerb([]), null);
 assert.equal(serveLine(['Rocks', null, ' Large cube ', '', 'Candied ginger']), 'Rocks · Large cube · Candied ginger');
 assert.equal(serveLine([null]), null);
+
+// Garnish: a count-unit line, not an egg counted "1 each"; said aloud as served.
+assert.equal(isGarnishLine({ unit: 'each', ingredient: 'Candied ginger' }), true);
+assert.equal(isGarnishLine({ unit: 'each', ingredient: 'Egg white' }), false);
+assert.equal(isGarnishLine({ unit: 'ml', ingredient: 'Lemon juice' }), false);
+assert.deepEqual(garnishNames(penicillin), ['Candied ginger']);
+assert.equal(garnishLabel('Nutmeg', 'grated'), 'Grated nutmeg');
+assert.equal(garnishLabel('Lemon', 'discard'), 'Lemon peel, expressed and discarded');
+
+// The word after a name: muted after it in the rows, capitalised at the right on a names list.
+assert.equal(lineRole(penicillin[4], 'rows'), 'garnish');
+assert.equal(lineRole(penicillin[3], 'rows'), 'float', 'a float reads in Ingredients, whatever view was saved');
+assert.equal(lineRole(penicillin[3], 'steps', true), null, 'under the Float heading it goes without saying');
+assert.equal(lineRole(penicillin[3], 'names'), 'Float');
+assert.equal(lineRole(penicillin[4], 'names'), 'Garnish');
+assert.equal(lineRole({ ...penicillin[2], houseMade: true }, 'names'), 'House-made');
+assert.equal(lineRole({ ...penicillin[2], houseMade: true }, 'rows'), null, 'house-made is tagged on the names list only');
+assert.equal(lineRole({ ...penicillin[1], optional: true }, 'rows'), 'optional');
+assert.equal(lineRole(penicillin[0], 'rows'), null);
+
+// The method line under Ingredients (boards Decided-spec-rows, who-public).
+assert.equal(
+  methodLine({ verb: 'Shake', methods: ['Shaken'], glass: 'Rocks', ice: 'Large cube', lines: penicillin }),
+  'Shake · strain over a large cube · float the Islay Scotch · Candied ginger',
+);
+assert.equal(
+  methodLine({ verb: 'Shake', methods: ['Shaken', 'Double strain'], glass: 'Coupe', ice: 'No ice', lines: [] }),
+  'Shake · double strain into a coupe',
+);
+assert.equal(methodLine({ verb: 'Stir', methods: ['Stirred'], glass: 'Nick & Nora', ice: null, lines: [] }), 'Stir · strain into a Nick & Nora', 'a name with its own capitals keeps them');
+assert.equal(methodLine({ verb: 'Build', methods: ['Built'], glass: 'Highball', ice: 'Cubes', lines: [] }), 'Build · over cubes in a highball');
+assert.equal(methodLine({ verb: null, methods: [], glass: null, ice: null, lines: [] }), null);
+
+// The floor's served line.
+assert.equal(goesOutLine(['Rocks', null, 'Candied ginger']), 'Goes out: rocks, candied ginger');
+assert.equal(goesOutLine([null, '']), null);
 
 console.log('specView: sticky view, Makes on jigger marks, grouped by step');

@@ -1,6 +1,7 @@
 import { StyleSheet, View } from 'react-native';
 
 import { space, type } from '@/constants/tokens';
+import { splitAmount } from '@/lib/units';
 
 import { IngredientThumb } from './IngredientThumb';
 import { PressableScale } from './PressableScale';
@@ -26,6 +27,12 @@ export interface SpecRowProps {
   note?: string;
   /** A word about this line for this person, as a tag: "Not on your shelf". */
   flag?: string;
+  /**
+   * What the line is, as a muted word (the drink page's spec, boards Draw-bg
+   * and Desk-page): after the name on a measured row ("Islay scotch float"),
+   * at the right on a names-only row ("Candied ginger    Garnish").
+   */
+  role?: string | null;
   /** On the shopping list (shopping In 2): an accent "On your list" tag with a tick, in place of the flag. */
   listed?: boolean;
   /** A small line under the name, e.g. the ingredient's "40% ABV". */
@@ -51,19 +58,32 @@ export interface SpecRowProps {
  * When the amount has its own action, the line splits into two sibling
  * controls (amount, then ingredient) so no button sits inside another.
  */
-export function SpecRow({ amount, ingredient, ingredientId, houseMade, optional, floated, note, flag: flagged, listed, detail, scale = 1, dense, onPress, onPressAmount, alignAmount }: SpecRowProps) {
+export function SpecRow({ amount, ingredient, ingredientId, houseMade, optional, floated, note, flag: flagged, listed, role, detail, scale = 1, dense, onPress, onPressAmount, alignAmount }: SpecRowProps) {
   const ds = useDs();
   const flag = listed ? 'On your list' : flagged;
   const big = (t: (typeof type)['spec']) => (scale === 1 ? undefined : { fontSize: t.fontSize * scale, lineHeight: t.lineHeight * scale });
   const showAmount = amount.length > 0 || !!alignAmount;
   const split = !!onPressAmount && amount.length > 0;
-  const rest = [ingredient, detail, houseMade && 'house-made', floated && 'float', optional && 'optional', note, flag].filter(Boolean).join(', ');
+  const rest = [ingredient, role, detail, houseMade && 'house-made', floated && 'float', optional && 'optional', note, flag].filter(Boolean).join(', ');
   const amountWidth = { width: 96 * scale };
   const cell = dense ? styles.dense : styles.cell;
 
+  // A measured row reads its role after the name; a names-only row puts it at the right.
+  const roleAfter = role && showAmount;
+  const roleRight = role && !showAmount;
   const text = (
     <>
-      <Body style={big(type.body)}>{ingredient}</Body>
+      <View style={roleRight ? styles.nameLine : null}>
+        <Body style={[big(type.body), roleRight ? styles.grow : null]}>
+          {ingredient}
+          {roleAfter ? <Body tone="muted" style={big(type.body)}>{` ${role}`}</Body> : null}
+        </Body>
+        {roleRight ? (
+          <Caption tone="muted" style={styles.roleRight}>
+            {role}
+          </Caption>
+        ) : null}
+      </View>
       {detail ? <Caption tone="muted">{detail}</Caption> : null}
       {note ? <Caption tone="muted">{note}</Caption> : null}
       {houseMade || floated || optional || flag ? (
@@ -92,9 +112,7 @@ export function SpecRow({ amount, ingredient, ingredientId, houseMade, optional,
     return (
       <View style={[styles.row, { borderBottomColor: ds.c.line }]}>
         <PressableScale role="button" aria-label={`${amount}, read in other units`} haptic={false} onPress={onPressAmount} style={[cell, amountWidth]}>
-          <Spec tone="accent" style={big(type.spec)}>
-            {amount}
-          </Spec>
+          <Amount text={amount} scale={scale} />
         </PressableScale>
         <Name accessible aria-label={rest} role={onPress ? 'button' : undefined} onPress={onPress} haptic={onPress ? false : undefined} style={[cell, styles.name, pictured && styles.pictured]}>
           {name}
@@ -114,16 +132,33 @@ export function SpecRow({ amount, ingredient, ingredientId, houseMade, optional,
       style={[styles.row, cell, { borderBottomColor: ds.c.line }]}
     >
       {showAmount ? (
-        <Spec tone="accent" style={[amountWidth, big(type.spec)]}>
-          {amount}
-        </Spec>
+        <Amount text={amount} scale={scale} style={amountWidth} />
       ) : null}
       <View style={[styles.name, pictured && styles.pictured]}>{name}</View>
     </Row>
   );
 }
 
+/** The number in the spec's figures, its unit smaller and muted (every spec board: 22 and 12). */
+function Amount({ text, scale, style }: { text: string; scale: number; style?: { width: number } }) {
+  const { value, unit } = splitAmount(text);
+  const size = (t: { fontSize: number; lineHeight: number }) => (scale === 1 ? undefined : { fontSize: t.fontSize * scale, lineHeight: t.lineHeight * scale });
+  return (
+    <Spec tone="accent" style={[style, size(type.spec)]}>
+      {value}
+      {unit ? (
+        <Caption tone="muted" style={size(type.caption)}>
+          {` ${unit}`}
+        </Caption>
+      ) : null}
+    </Spec>
+  );
+}
+
 const styles = StyleSheet.create({
+  nameLine: { flexDirection: 'row', alignItems: 'baseline', gap: space.sm },
+  grow: { flex: 1 },
+  roleRight: { flexShrink: 0 },
   row: {
     flexDirection: 'row',
     alignItems: 'flex-start',

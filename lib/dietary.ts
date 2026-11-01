@@ -37,3 +37,30 @@ export function dietaryLine(names: readonly (string | null)[], allergens: readon
   if (declared.length) return `Contains ${declared.join(' and ')}, so not vegan.`;
   return 'Nothing from animals in the spec, so vegan.';
 }
+
+/**
+ * Vegan in the floor's allergy line (board Decided-who-floor: "No allergens ·
+ * not vegan (honey)"): what makes it not vegan, by the word in the spec, or
+ * "vegan". Null when the names are hidden from this role.
+ */
+export function veganWord(names: readonly (string | null)[], allergens: readonly Allergen[] = []): string | null {
+  const known = names.filter((n): n is string => !!n);
+  if (!known.length) return null;
+  const words = [...new Set(animalLines(known).map((n) => ANIMAL.exec(n.replace(PLANT, ''))?.[0].toLowerCase() ?? n.toLowerCase()))];
+  if (words.length) return `not vegan (${list(words.slice(0, 3))})`;
+  const declared = allergens.filter((a) => a === 'eggs' || a === 'milk');
+  if (declared.length) return `not vegan (${declared.join(' and ')})`;
+  return 'vegan';
+}
+
+/**
+ * The floor's one allergy line: the allergens' first sentence with vegan on
+ * it, the rest after ("Contains sulphites · vegan. 1 ingredient not checked
+ * yet."). One sentence reads with no full stop, as the board draws it.
+ */
+export function withVegan(contains: string, vegan: string | null): string {
+  if (!vegan) return contains;
+  const cut = contains.indexOf('. ');
+  const first = (cut < 0 ? contains : contains.slice(0, cut)).replace(/\.$/, '');
+  return cut < 0 ? `${first} · ${vegan}` : `${first} · ${vegan}. ${contains.slice(cut + 2)}`;
+}

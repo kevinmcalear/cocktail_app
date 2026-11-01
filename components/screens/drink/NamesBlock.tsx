@@ -13,6 +13,8 @@ interface NamesBlockProps {
   guest: boolean;
   /** What it tastes like: the drink's description. */
   tastes: string | null;
+  /** Names on the spec as this role sees them: vegan on the floor's allergy line. */
+  ingredients: readonly (string | null)[];
 }
 
 /**
@@ -20,10 +22,10 @@ interface NamesBlockProps {
  * -floor): the allergy line, what it tastes like, and for a guest how it meets
  * their palate. Nothing here says what's held back.
  */
-export function NamesBlock({ itemId, name, guest, tastes }: NamesBlockProps) {
+export function NamesBlock({ itemId, name, guest, tastes, ingredients }: NamesBlockProps) {
   return (
     <View style={styles.block}>
-      <AllergyLine itemId={itemId} guest={guest} />
+      <AllergyLine itemId={itemId} guest={guest} ingredients={ingredients} />
       {tastes ? <Body>{tastes}</Body> : null}
       {guest ? <PalateFit itemId={itemId} name={name} /> : null}
     </View>

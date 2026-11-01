@@ -82,6 +82,17 @@ export function withBatches(rows: OnHandRow[], batches: readonly Batch[]): Recor
   return out;
 }
 
+/**
+ * A house-made row in Behind the bar (boards Draw-scroll, Desk-page): when it
+ * was last made and what's on hand, "Made 30 Oct · 800 ml left". Either half
+ * alone when that's all there is; null with neither.
+ */
+export function madeLine(last: Pick<Batch, 'madeAt'> | undefined, onHand: Quantity | undefined): string | null {
+  const made = last ? `Made ${new Date(last.madeAt).toLocaleDateString(undefined, { day: 'numeric', month: 'short' })}` : null;
+  const left = onHand ? (onHand.value > 0 ? `${formatQuantity(onHand)} left` : 'None left') : null;
+  return [made, left].filter(Boolean).join(' · ') || null;
+}
+
 export type ParQuantity = Quantity & { name: string };
 
 /** Par per item (with its name), adding every spot's par up when they share a kind of unit. */

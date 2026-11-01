@@ -7,6 +7,7 @@ import { useDrinkAllergens } from '@/hooks/useAllergens';
 import { useGuestDrinkAllergens, useMyAllergies } from '@/hooks/useGuestAllergies';
 import { withAlpha } from '@/lib/color';
 import { allergyMatches, allergyWarning, containsLine } from '@/lib/allergens';
+import { veganWord, withVegan } from '@/lib/dietary';
 
 /**
  * One line, first on the page (boards Decided-who-floor, -guest-hit,
@@ -18,15 +19,17 @@ import { allergyMatches, allergyWarning, containsLine } from '@/lib/allergens';
  * the Allergens section under the spec. Their list never leaves the phone:
  * matching happens here.
  */
-export function AllergyLine({ itemId, guest }: { itemId: string; guest: boolean }) {
-  return guest ? <GuestLine itemId={itemId} /> : <FloorLine itemId={itemId} />;
+export function AllergyLine({ itemId, guest, ingredients = [] }: { itemId: string; guest: boolean; ingredients?: readonly (string | null)[] }) {
+  return guest ? <GuestLine itemId={itemId} /> : <FloorLine itemId={itemId} ingredients={ingredients} />;
 }
 
-function FloorLine({ itemId }: { itemId: string }) {
+/** The floor's line, vegan on it from the spec's names: "No allergens · not vegan (honey)". */
+function FloorLine({ itemId, ingredients }: { itemId: string; ingredients: readonly (string | null)[] }) {
   const { data } = useDrinkAllergens(itemId);
   // Nothing to declare yet (a beer, or a drink with no spec): no line, rather than a line about nothing.
   if (!data || (data.lines === 0 && !data.allergens.length)) return null;
-  return <AllergyBox title={containsLine(data)} />;
+  const vegan = veganWord(ingredients, data.allergens.map((a) => a.allergen));
+  return <AllergyBox title={withVegan(containsLine(data), vegan)} />;
 }
 
 function GuestLine({ itemId }: { itemId: string }) {

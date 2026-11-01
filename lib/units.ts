@@ -79,3 +79,23 @@ export function unitOnlyText(unit: string | null | undefined): string | null {
   const u = (unit ?? '').trim();
   return ONE_WORD.has(u) ? u[0].toUpperCase() + u.slice(1) : null;
 }
+
+/** "a large cube", "a spear", but "cubes" and "crushed": a lone piece takes "a", plurals and loose ice don't. */
+export const overIce = (name: string) => {
+  const n = name.trim().toLowerCase();
+  return /^(large cube|big cube|cube|spear|sphere|block|ball)$/.test(n) ? `a ${n}` : n;
+};
+
+/** "Grated nutmeg": the garnish grated over the top, its name kept lower case after. */
+export const grated = (name: string) => `Grated ${name.charAt(0).toLowerCase()}${name.slice(1)}`;
+
+/**
+ * An amount as its number and its unit, so the unit can be set smaller
+ * (every spec board: the amount 22, its unit 12 and muted). A ranged or mixed
+ * number stays whole ("2-3 dashes", "1 ½ oz"); a word with no number ("Top",
+ * "Rinse") is all number, no unit.
+ */
+export function splitAmount(text: string): { value: string; unit: string } {
+  const m = /^([\d.,/½¼¾⅓⅔⅛⅜⅝⅞]+(?:[\s-]+[\d/½¼¾⅓⅔⅛⅜⅝⅞]+)?)\s+(\S.*)$/.exec(text.trim());
+  return m ? { value: m[1], unit: m[2] } : { value: text.trim(), unit: '' };
+}

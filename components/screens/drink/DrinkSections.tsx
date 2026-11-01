@@ -39,6 +39,8 @@ export interface DrinkSectionsInput {
   lines: SpecLine[];
   /** The method as a step's name ("Shake"). */
   verb: string | null;
+  /** The drink's method names, for the method line ("double strain"). */
+  methods: readonly string[];
   /** The glass and ice, for the serve line. */
   serve: (string | null | undefined)[];
   fill: GlassFillResult | null;
@@ -91,6 +93,7 @@ export function useDrinkSections(p: DrinkSectionsInput) {
       lines={lines}
       maker={makesIt(viewer)}
       verb={p.verb}
+      methods={p.methods}
       serve={p.serve}
       onBatch={p.onBatch}
       preview={preview}
@@ -105,7 +108,7 @@ export function useDrinkSections(p: DrinkSectionsInput) {
   const notes = live ? (
     <>
       {drinkNotes ? <Body>{drinkNotes}</Body> : null}
-      {viewer === 'floor' && item.bar_id ? <ForTheFloor itemId={item.id} barId={item.bar_id} ingredients={lines.map((l) => l.ingredient)} /> : null}
+      {viewer === 'floor' && item.bar_id ? <ForTheFloor itemId={item.id} barId={item.bar_id} /> : null}
       {signedIn ? <MyNote itemId={item.id} name={item.name} /> : null}
     </>
   ) : null;
@@ -115,7 +118,7 @@ export function useDrinkSections(p: DrinkSectionsInput) {
     // Guests and the floor: the allergy line, what it tastes like, how it meets your palate.
     lead:
       names && live ? (
-        <NamesBlock itemId={item.id} name={item.name} guest={viewer === 'guest'} tastes={description} />
+        <NamesBlock itemId={item.id} name={item.name} guest={viewer === 'guest'} tastes={description} ingredients={lines.map((l) => l.ingredient)} />
       ) : viewer === 'public' && live && item.bar_id ? (
         // A bar's drink read in full by someone not on its team: their allergy warning first, as a guest's (Loop-allergy, A match).
         <AllergyLine itemId={item.id} guest />
