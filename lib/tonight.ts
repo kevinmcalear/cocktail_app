@@ -108,3 +108,42 @@ export function talkThrough(
   }
   return best && { id: best.id, name: best.name, sub: best.sub };
 }
+
+/** House-made used tonight that needs no batch: "1.2 L · enough for tonight" rows, for what has been counted or logged. */
+export function enoughRows(
+  houseMadeIds: readonly string[],
+  make: readonly { id: string }[],
+  onHand: Readonly<Record<string, { value: number }>>,
+  name: (id: string) => string | undefined,
+  have: (id: string) => string
+): { id: string; name: string; sub: string }[] {
+  const making = new Set(make.map((m) => m.id));
+  return houseMadeIds
+    .filter((id) => !making.has(id) && onHand[id] && onHand[id].value > 0 && name(id))
+    .map((id) => ({ id, name: name(id)!, sub: `${have(id)} · enough for tonight` }));
+}
+
+/** How many of a list's drinks print no price (Needs you: "1 drink has no price"). */
+export function unpriced(drinks: readonly { price: string | null; menuPrice?: string | null }[], printed: (d: { price: string | null; menuPrice?: string | null }) => string | null): number {
+  return drinks.filter((d) => !printed(d)).length;
+}
+
+/**
+ * On shift: who's working tonight ("Ana, Theo and you") and who opens and
+ * closes ("Theo opens · you close"). First names; you last as "you".
+ */
+export function onShiftLine(
+  shifts: readonly { user_id: string; opens: boolean; closes: boolean }[],
+  nameOf: (userId: string) => string,
+  me: string | null
+): { names: string; sub: string | null } | null {
+  const ids = [...new Set(shifts.map((s) => s.user_id))];
+  if (!ids.length) return null;
+  const call = (id: string) => (id === me ? 'you' : nameOf(id).split(' ')[0]);
+  const ordered = [...ids.filter((id) => id !== me), ...ids.filter((id) => id === me)].map(call);
+  const names = ordered.length === 1 ? ordered[0] : `${ordered.slice(0, -1).join(', ')} and ${ordered[ordered.length - 1]}`;
+  const opener = shifts.find((s) => s.opens);
+  const closer = shifts.find((s) => s.closes);
+  const parts = [opener ? `${call(opener.user_id)} open${opener.user_id === me ? '' : 's'}` : null, closer ? `${call(closer.user_id)} close${closer.user_id === me ? '' : 's'}` : null].filter(Boolean);
+  return { names: names.charAt(0).toUpperCase() + names.slice(1), sub: parts.length ? parts.join(' · ') : null };
+}

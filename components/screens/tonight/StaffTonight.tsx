@@ -1,17 +1,16 @@
 import { useRouter, type Href } from 'expo-router';
 import { StyleSheet, View } from 'react-native';
 
-import { Body, Button, Caption, DrinkDrawingFor, DsText, PencilState, PressableScale, Surface, useDs } from '@/components/ds';
+import { Body, Caption, DrinkDrawingFor, DsText, PencilState, PressableScale, useDs } from '@/components/ds';
 import { IconSymbol } from '@/components/ui/icon-symbol';
-import { RowDivider, SettingsRow } from '@/components/screens/settings/SettingsParts';
 import { TonightSetupBanner } from '@/components/screens/venueSetup/SetupBanner';
 import { TonightWeek } from '@/components/screens/week/TonightWeek';
 import { displayFaces, space } from '@/constants/tokens';
 import { categoryOf, type TonightBlock } from '@/hooks/useTonight';
 import { itemHref } from '@/lib/itemRoutes';
 import { plural } from '@/lib/menus';
-import { prepLine } from '@/lib/tonight';
 
+import { BeforeDoors, NeedsYou, OnShift } from './BeforeDoors';
 import { HeroTrio, ListHead, TonightSection } from './TonightParts';
 import type { useStaffTonight } from './useStaffTonight';
 
@@ -77,53 +76,10 @@ function DrinkGrid({ block }: { block: TonightBlock }) {
 
 /** Before doors, Needs you (admins), Learn, and the week: the column beside the lists when wide. */
 export function StaffSide({ t, barId }: { t: Staff; barId: string }) {
-  const router = useRouter();
-  const go = (href: string) => () => router.push(href as Href);
-  const make = t.make ?? [];
   return (
     <View style={styles.side}>
-      {(t.canPrep && (make.length || t.houseMade)) || t.off.length ? (
-        <TonightSection title="Before doors">
-          <Surface style={styles.card}>
-            {make.slice(0, 3).map((line, i) => (
-              <View key={line.id}>
-                {i ? <RowDivider /> : null}
-                <SettingsRow
-                  icon="drop.fill"
-                  label={line.name}
-                  detail={prepLine(line)}
-                  onPress={go(itemHref('Ingredient', line.id))}
-                  trailing={<Button label="Prep" size="sm" variant="secondary" accessibilityLabel={`Prep ${line.name}`} onPress={go('/prep')} />}
-                />
-              </View>
-            ))}
-            {!make.length && t.houseMade ? <SettingsRow icon="drop.fill" label="House-made" detail={`${plural(t.houseMade, 'prep')} · enough for tonight`} onPress={go('/prep')} /> : null}
-            {t.off.slice(0, 2).map((d, i) => (
-              <View key={`off-${d.id}`}>
-                {/* A line between rows, never above the first. */}
-                {i || make.length || (t.canPrep && t.houseMade) ? <RowDivider /> : null}
-                <SettingsRow icon="exclamationmark.triangle" label="Off tonight" value={d.name} onPress={go(itemHref(categoryOf(d.kind), d.id))} />
-              </View>
-            ))}
-          </Surface>
-        </TonightSection>
-      ) : null}
-      {t.admin && (t.credits || t.next) ? (
-        <TonightSection title="Needs you">
-          <Surface style={styles.card}>
-            {t.credits ? <SettingsRow icon="person.2.fill" label="Credits to check" value={String(t.credits)} onPress={go('/credits-to-check')} /> : null}
-            {t.credits && t.next ? <RowDivider /> : null}
-            {t.next ? (
-              <SettingsRow
-                icon="doc.text"
-                label={`${t.next.name} goes on ${t.next.startsAt ? new Date(t.next.startsAt).toLocaleDateString(undefined, { day: 'numeric', month: 'short' }) : 'soon'}`}
-                value={plural(t.next.itemIds.length, 'drink')}
-                onPress={go(listHref(t.next.id) as string)}
-              />
-            ) : null}
-          </Surface>
-        </TonightSection>
-      ) : null}
+      <BeforeDoors t={t} barId={barId} />
+      <NeedsYou t={t} />
       {t.learn.length ? (
         <TonightSection title="Learn">
           <View role="list">
@@ -133,6 +89,7 @@ export function StaffSide({ t, barId }: { t: Staff; barId: string }) {
           </View>
         </TonightSection>
       ) : null}
+      <OnShift t={t} />
       <TonightWeek barId={barId} />
     </View>
   );
