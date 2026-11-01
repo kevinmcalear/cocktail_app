@@ -51,6 +51,8 @@ function useInvalidateMenus() {
       // Tonight, Prep, Study and the legacy screens still read menus from here.
       queryClient.invalidateQueries({ queryKey: dropdownKeys.menus }),
       queryClient.invalidateQueries({ queryKey: dropdownKeys.currentMenuDrinks }),
+      // The run sheet lists the menu's drinks: one added in the editor gets its serves box at once (tf-077).
+      queryClient.invalidateQueries({ queryKey: ['run-sheet'] }),
     ]);
 }
 

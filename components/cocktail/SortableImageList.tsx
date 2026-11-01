@@ -3,17 +3,24 @@ import { useState, type ReactNode } from 'react';
 import { Platform, StyleSheet, View } from 'react-native';
 import DraggableFlatList, { ScaleDecorator, type RenderItemParams } from 'react-native-draggable-flatlist';
 
-import { Caption, DsText, GlassButton, PressableScale, useDs } from '@/components/ds';
+import { Caption, DsText, GlassButton, PressableScale, Tag, useDs } from '@/components/ds';
 import { CutoutOfferHost } from '@/components/drink/CutoutOfferHost';
+import { canCropPhotos, uploadDrinkPhoto } from '@/components/drink/drinkImages';
 import { IconSymbol } from '@/components/ui/icon-symbol';
 import { radius, space } from '@/constants/tokens';
 import { useWebImageDrop } from '@/hooks/useWebImageDrop';
 import { withAlpha } from '@/lib/color';
 
+import { CropPhoto } from './CropPhoto';
+
 export interface ImageItem {
   id?: string;
   url: string;
   isNew?: boolean;
+  /** Who a borrowed photo belongs to (images.credit). A crop would be a new, uncredited copy, so it has none. */
+  credit?: string | null;
+  /** When the spec changed after it was taken (item_images.outdated_since). A crop keeps it. */
+  outdatedSince?: string | null;
 }
 
 interface SortableImageListProps {
@@ -30,14 +37,26 @@ const isWeb = Platform.OS === 'web';
 /**
  * A drink's photos in order, side by side: Add (and Generate, when given)
  * first, then each photo, held (or dragged on the web) to reorder, with an x
- * to remove it. On the web, images dropped on the row are added.
+ * to remove it. The first is the main photo, which leads the page and the
+ * cards; a star makes another one main, and Crop recrops one (Eddie, 29 Oct).
+ * On the web, images dropped on the row are added.
  */
 export function SortableImageList({ images, onReorder, onRemove, onAdd, onAddUris, generateComponent }: SortableImageListProps) {
   const ds = useDs();
   const [dragOver, setDragOver] = useState(false);
   const dropRef = useWebImageDrop(onAddUris, setDragOver);
+  // The photo being cropped, by its place in the list.
+  const [cropping, setCropping] = useState<number | null>(null);
+  const crops = canCropPhotos();
+  const indexOf = (getIndex: () => number | undefined, then: (index: number) => void) => () => {
+    const index = getIndex();
+    if (index !== undefined) then(index);
+  };
+  const makeMain = (index: number) => onReorder([images[index], ...images.filter((_, i) => i !== index)]);
 
-  const renderItem = ({ item, drag, isActive, getIndex }: RenderItemParams<ImageItem>) => (
+  const renderItem = ({ item, drag, isActive, getIndex }: RenderItemParams<ImageItem>) => {
+    const main = getIndex() === 0;
+    return (
     <ScaleDecorator>
       <View style={[styles.tile, { backgroundColor: ds.c.raised }, isActive && { borderColor: ds.accentText, borderWidth: 2, opacity: 0.8 }]}>
         <PressableScale
@@ -57,16 +76,18 @@ export function SortableImageList({ images, onReorder, onRemove, onAdd, onAddUri
             icon="xmark"
             onMedia
             size={28}
-            accessibilityLabel="Remove photo"
-            onPress={() => {
-              const index = getIndex();
-              if (index !== undefined) onRemove(index);
-            }}
+            accessibilityLabel={main ? 'Remove main photo' : 'Remove photo'}
+            onPress={indexOf(getIndex, onRemove)}
           />
+        </View>
+        <View style={styles.foot}>
+          {main ? <Tag label="Main" tone="accent" style={{ backgroundColor: ds.c.ground }} /> : <GlassButton icon="star" onMedia size={28} accessibilityLabel="Make this the main photo" onPress={indexOf(getIndex, makeMain)} />}
+          {crops && !item.credit ? <GlassButton icon="crop" onMedia size={28} accessibilityLabel={main ? 'Crop main photo' : 'Crop photo'} onPress={indexOf(getIndex, setCropping)} /> : null}
         </View>
       </View>
     </ScaleDecorator>
-  );
+    );
+  };
 
   return (
     <View style={styles.container}>
@@ -74,7 +95,7 @@ export function SortableImageList({ images, onReorder, onRemove, onAdd, onAddUri
         <DsText variant="label" tone="muted">
           Photos
         </DsText>
-        <Caption tone="muted">{isWeb ? 'Drop images or drag to reorder' : 'Long press to reorder'}</Caption>
+        <Caption tone="muted">{isWeb ? 'Drop images or drag to reorder' : 'Hold to reorder'}</Caption>
       </View>
 
       <View style={[styles.listBox, dragOver && [styles.dropping, { outlineColor: ds.accentText }]]} ref={dropRef}>
@@ -106,6 +127,17 @@ export function SortableImageList({ images, onReorder, onRemove, onAdd, onAddUri
           }
         />
       </View>
+      <CropPhoto
+        uri={cropping === null ? null : (images[cropping]?.url ?? null)}
+        onClose={() => setCropping(null)}
+        onCropped={async (uri) => {
+          // Uploaded now, so editors (and a draft's autosave) only ever keep a storage URL, never the web's data: URL.
+          const uploaded = await uploadDrinkPhoto(uri, 'cocktails/crops').catch(() => null);
+          if (!uploaded) throw new Error("Couldn't upload the crop.");
+          onReorder(images.map((image, i) => (i === cropping ? { id: uploaded.id, url: uploaded.url, outdatedSince: image.outdatedSince } : image)));
+          setCropping(null);
+        }}
+      />
       {/* The cocktail editors pick with a cut-out offer; it shows from this sheet. */}
       <CutoutOfferHost />
     </View>
@@ -128,4 +160,5 @@ const styles = StyleSheet.create({
   grab: { cursor: 'grab' } as object,
   newDot: { position: 'absolute', top: space.sm, left: space.sm, width: space.sm, height: space.sm, borderRadius: radius.pill },
   remove: { position: 'absolute', top: space.xs, right: space.xs },
+  foot: { position: 'absolute', bottom: space.xs, left: space.xs, right: space.xs, flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between' },
 });

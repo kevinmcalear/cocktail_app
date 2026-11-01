@@ -23,10 +23,12 @@ interface DrawnSketchProps {
 
 function Loaded({ itemId, fallback, animate, detail = 'full', lazy }: DrawnSketchProps) {
   const person = usePeopleHero(itemId).data ?? null;
-  const sketch = useItemSketch(person ? null : itemId).data ?? null;
+  const drawing = useItemSketch(person ? null : itemId);
+  const sketch = drawing.data ?? null;
   const [play, setPlay] = useState(0);
   if (person) return <Image source={{ uri: person }} style={styles.fill} contentFit="cover" transition={200} />;
-  if (!sketch) return <>{fallback}</>;
+  // The hero draws its drawing from blank: showing the bare glass while it loads would draw that glass twice.
+  if (!sketch) return animate && drawing.isPending ? null : <>{fallback}</>;
   if (animate) {
     return (
       // A toy, not a control: screen readers get the picture's label from the frame.

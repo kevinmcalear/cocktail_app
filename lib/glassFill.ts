@@ -10,14 +10,29 @@
 import type { BatchMethod } from './batch';
 import { density, dilutionFor, isWaterLine, toMl, type DilutionDefaults } from './drinkMath';
 
-/** A glass's wash line, when the venue hasn't said: this much of what it holds to the brim. */
-export const WASH_LINE_SHARE = 0.9;
+/**
+ * A few wash lines to pick from, by how much of the glass to the brim they
+ * fill, so nobody has to work it out in ml (jam dec-24, 29 Oct 2026). Never
+ * applied on their own: a glass has a wash line only when the venue picks one.
+ * ponytail: shares of the volume, not of the height, so on a flared glass a
+ * finger down is more than this. Upgrade path: read the glass's outline.
+ */
+export const WASH_LINE_PRESETS = [
+  { label: 'To the brim', share: 1 },
+  { label: 'Just under the rim', share: 0.95 },
+  { label: 'A finger down', share: 0.9 },
+  { label: 'Two fingers down', share: 0.8 },
+] as const;
+
+/** A preset's ml in a glass that holds `brimMl`, to the nearest 5 ml. */
+export const presetMl = (brimMl: number, share: number) => Math.round((brimMl * share) / 5) * 5;
+
 /** Fit it scales by at most this much either way: past it the glass or the spec is more likely wrong than short. */
 export const MAX_FIT = 2;
 /** Ice is about 0.92 g per ml (lib/glass.ts): the room a serve's ice takes. */
 const ICE_G_PER_ML = 0.92;
 
-/** A venue glass as the wash line reads it: its own figure, else the capacity the venue typed, else its real glass's. */
+/** A venue glass as the wash line reads it: its own figure, and to the brim the capacity the venue typed, else its real glass's. */
 export interface WashGlass {
   wash_line_ml: number | null;
   capacity_ml: number | null;
@@ -26,17 +41,16 @@ export interface WashGlass {
 
 export interface WashLine {
   ml: number;
-  /** The venue said it; false when it's read from the capacity. */
-  said: boolean;
   /** To the brim, when known. */
   brimMl: number | null;
 }
 
-/** The glass's wash line: the venue's own, else about 90% of its capacity to the nearest 5 ml. Null with neither. */
+/** What the glass holds to the brim, when known. */
+export const brimOf = (glass: WashGlass): number | null => glass.capacity_ml ?? glass.model?.capacity_ml ?? null;
+
+/** The glass's wash line: the one the venue set, or null. It's optional, so never guessed from the capacity (jam dec-24). */
 export function washLine(glass: WashGlass): WashLine | null {
-  const brim = glass.capacity_ml ?? glass.model?.capacity_ml ?? null;
-  if (glass.wash_line_ml) return { ml: Number(glass.wash_line_ml), said: true, brimMl: brim };
-  return brim ? { ml: Math.round((brim * WASH_LINE_SHARE) / 5) * 5, said: false, brimMl: brim } : null;
+  return glass.wash_line_ml ? { ml: Number(glass.wash_line_ml), brimMl: brimOf(glass) } : null;
 }
 
 /** A spec line as the fill reads it: the editor's draft lines and the drink page's lines both fit. */

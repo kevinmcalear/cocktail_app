@@ -246,7 +246,9 @@ CREATE TEMP VIEW old_app_recipe_presentation WITH (security_invoker='false') AS
             ELSE NULL::boolean
         END AS at_service,
     -- 20261123100000_drink_parts added each line's part, passed through as it is.
-    r.part
+    r.part,
+    -- 20261130100000_spec_line_float added whether the line is floated, passed through as it is.
+    r.is_float
    FROM (((((((public.recipes r
      JOIN public.items c ON ((r.recipe_item_id = c.id)))
      LEFT JOIN public.items s ON ((s.id = r.ingredient_item_id)))

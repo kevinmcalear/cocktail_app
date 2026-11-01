@@ -27,6 +27,8 @@ export interface PreviewDrinkCard {
   /** Who made it, and the bar it's from (a venue's own, or the one it's credited to). */
   creator: string | null;
   bar: string | null;
+  /** The drink it's a riff or version of, with its other names; null when there's none or it can't be read. */
+  riff_of: { name: string; aliases: string[] } | null;
   /** Its ingredient names, never amounts (public_drink_ingredients); empty on a locked bar page. */
   ingredients: IngredientName[];
 }
@@ -37,7 +39,7 @@ async function get<T>(db: Supabase, path: string): Promise<T[]> {
   return (await res.json()) as T[];
 }
 
-type Row = Omit<PreviewDrinkCard, 'creator' | 'bar' | 'ingredients'> & { creator_profile_id: string | null; origin_bar_profile_id: string | null };
+type Row = Omit<PreviewDrinkCard, 'creator' | 'bar' | 'ingredients' | 'riff_of'> & { creator_profile_id: string | null; origin_bar_profile_id: string | null };
 
 /** The drink, signed out; null when it isn't (or is no longer) public. */
 export async function fetchPreviewDrinkCard(db: Supabase, id: string): Promise<PreviewDrinkCard | null> {
@@ -47,15 +49,19 @@ export async function fetchPreviewDrinkCard(db: Supabase, id: string): Promise<P
   );
   if (!d) return null;
   const ids = [d.creator_profile_id, d.origin_bar_profile_id].filter(Boolean);
-  const [people, venue, lines] = await Promise.all([
+  const riff = d.riff_of_id;
+  const [people, venue, lines, parent, aliases] = await Promise.all([
     ids.length ? get<{ id: string; display_name: string }>(db, `profiles?select=id,display_name&is_public=eq.true&id=in.(${ids.join(',')})`) : Promise.resolve([]),
     d.bar_id ? get<{ display_name: string }>(db, `profiles?select=display_name&kind=eq.bar&is_public=eq.true&bar_id=eq.${d.bar_id}`) : Promise.resolve([]),
     get<IngredientName>(db, `rpc/public_drink_ingredients?p_item_ids=%7B${id}%7D`),
+    riff ? get<{ name: string }>(db, `published_items?select=name&is_reference=eq.false&id=eq.${riff}`) : Promise.resolve([]),
+    riff ? get<{ alias: string }>(db, `classic_aliases?select=alias&classic_id=eq.${riff}`) : Promise.resolve([]),
   ]);
   const name = (pid: string | null) => people.find((p) => p.id === pid)?.display_name ?? null;
   const ingredients = lines.map(({ name, brand }) => ({ name, brand }));
   const { creator_profile_id, origin_bar_profile_id, ...rest } = d;
-  return { ...rest, creator: name(creator_profile_id), bar: venue[0]?.display_name ?? name(origin_bar_profile_id), ingredients };
+  const riffOf = parent[0] ? { name: parent[0].name, aliases: aliases.map((a) => a.alias) } : null;
+  return { ...rest, creator: name(creator_profile_id), bar: venue[0]?.display_name ?? name(origin_bar_profile_id), ingredients, riff_of: riffOf };
 }
 
 /** "Scotch, lemon, honey syrup, ginger": its ingredient names, else the description. */
@@ -76,7 +82,7 @@ export function createdBy(d: Pick<PreviewDrinkCard, 'creator' | 'bar'>): string 
 }
 
 /** "MODERN CLASSIC · 2005" over the name on the image. */
-export const drinkKickerFor = (d: PreviewDrinkCard) => drinkKicker({ origin: d.origin, originYear: d.origin_year, riffOfId: d.riff_of_id }, d.bar_id ? d.bar : null);
+export const drinkKickerFor = (d: PreviewDrinkCard) => drinkKicker({ name: d.name, origin: d.origin, originYear: d.origin_year, riffOfId: d.riff_of_id, riffOf: d.riff_of }, d.bar_id ? d.bar : null);
 
 /** Changes whenever what the image shows changes. */
 export function drinkVersion(d: PreviewDrinkCard, drawn = ''): string {

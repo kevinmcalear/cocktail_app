@@ -28,7 +28,7 @@ export function whatGoes(name: string, people?: number): string[] {
 /** Step 1's "Stays on the public page" list. */
 export function whatStays(name: string): string[] {
   return [
-    `${name}’s public page, back to not claimed. Whoever runs it can claim it again.`,
+    `${name}’s public page, back to unclaimed. You, or whoever runs it next, can claim it again.`,
     'Drinks guests can see, as descriptions without specs, with their credits and people’s rankings',
     'Past menus, in the page’s history, and people’s saved copies',
     `Awards, the people who worked here, and rankings at ${name}`,

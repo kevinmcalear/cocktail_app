@@ -3,6 +3,7 @@ import { Platform } from 'react-native';
 
 import { ChoiceChips, ControlRow, RowDivider, SelectRow, SettingsSection, SwitchRow } from '@/components/screens/settings/SettingsParts';
 import { hasAiConsent, setAiConsent } from '@/lib/aiConsent';
+import { appIconChoices, currentAppIcon, setAppIcon } from '@/lib/appIcon';
 import { useMaxRealRole, useViewAs } from '@/hooks/useViewAs';
 import { roleLabel, viewAsOptions } from '@/lib/roles';
 import type { MapsApp } from '@/lib/directions';
@@ -23,6 +24,9 @@ export function PreferencesSection() {
   const viewAsChoices = viewAsOptions(maxRealRole);
   // "We ask once. Change it any time in Settings." (Bring in's AI OK.)
   const [ai, setAi] = useState(false);
+  // Null on web and on store builds without the icons (dec-28).
+  const [iconChoices] = useState(appIconChoices);
+  const [icon, setIcon] = useState(currentAppIcon);
   useEffect(() => {
     void hasAiConsent().then(setAi);
   }, []);
@@ -59,6 +63,22 @@ export function PreferencesSection() {
             options={DIRECTIONS_OPTIONS}
             value={directionsApp ?? 'ask'}
             onChange={(id) => setDirectionsApp(id === 'ask' ? null : (id as MapsApp))}
+          />
+        </>
+      ) : null}
+      {iconChoices ? (
+        <>
+          <RowDivider />
+          <SelectRow
+            label="App icon"
+            detail="The icon on your home screen"
+            options={iconChoices}
+            value={icon}
+            onChange={(id) => {
+              const was = icon;
+              setIcon(id);
+              setAppIcon(id).catch(() => setIcon(was));
+            }}
           />
         </>
       ) : null}

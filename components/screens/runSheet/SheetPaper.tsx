@@ -3,15 +3,13 @@ import { StyleSheet, View } from 'react-native';
 
 import { DsText, type DsTextProps } from '@/components/ds';
 import { fontFamilies, printPaper as P, radius, space } from '@/constants/tokens';
-import type { RunSheet, SheetPart } from '@/lib/runSheet';
-import { needAmount, sheetHead, thingCount } from '@/lib/runSheetText';
+import { needGroups, type RunSheet, type SheetPart } from '@/lib/runSheet';
+import { needAmount, needName, sheetHead, thingCount } from '@/lib/runSheetText';
 
 const T = ({ style, ...props }: DsTextProps) => <DsText color={P.ink} {...props} style={style} />;
 const Muted = (props: DsTextProps) => <T variant="caption" color={P.muted} {...props} />;
 const mono = { fontFamily: fontFamilies.mono };
 const semi = { fontFamily: fontFamilies.bodySemiBold };
-// Print keeps a party's box or a drink's table on one page.
-const keep = { dataSet: { printBlock: 'true' } } as object;
 
 /** A drink made in parts: the part's number and name over its lines, as the drink page has them. */
 function PartHead({ part }: { part: SheetPart }) {
@@ -28,8 +26,10 @@ function PartHead({ part }: { part: SheetPart }) {
 
 /**
  * The run sheet on paper, black on white in both themes (board "Sheet", A4):
- * who brings what, by party, then each drink as swapped for this menu.
- * `compact` is the desktop's live preview, `mini` the phone's Sheet step.
+ * who brings what, by party and group, then each drink as swapped for this
+ * menu. `full` is a phone's full-size look (the PDF and the web's print page
+ * are lib/runSheetHtml.ts), `compact` the desktop's live preview, `mini` the
+ * phone's Sheet step.
  */
 export function SheetPaper({ sheet, menu, variant = 'full', printedOn }: {
   sheet: RunSheet;
@@ -48,6 +48,7 @@ export function SheetPaper({ sheet, menu, variant = 'full', printedOn }: {
         <T variant={full ? 'title' : 'headline'} style={{ fontFamily: fontFamilies.instrument }}>{head.name}</T>
         <T variant={full ? 'body' : 'caption'}>{head.when || 'No date yet'}</T>
         <Muted>{head.who}</Muted>
+        {head.extra && variant !== 'mini' ? <Muted>{head.extra}</Muted> : null}
       </View>
 
       <View style={{ gap: space.md }}>
@@ -61,20 +62,25 @@ export function SheetPaper({ sheet, menu, variant = 'full', printedOn }: {
               </View>
             ))
           : parties.map((p) => (
-              <View key={p.id ?? 'host'} {...keep} style={[styles.box, { borderColor: P.rule }]}>
+              <View key={p.id ?? 'host'} style={[styles.box, { borderColor: P.rule }]}>
                 <View style={[styles.boxHead, { borderBottomColor: P.rule }]}>
                   <T variant={full ? 'body' : 'caption'} style={semi}>{p.name}</T>
                   <Muted>{p.role}</Muted>
                 </View>
                 {full ? (
-                  p.needs.map((n) => (
-                    <View key={n.key} style={[styles.tr, { borderBottomColor: P.hairline }]}>
-                      <T variant="label" style={styles.cell}>{n.name}</T>
-                      <T variant="label" style={[mono, styles.amount]}>{needAmount(n)}</T>
-                    </View>
+                  needGroups(p.needs).map((g) => (
+                    <Fragment key={g.key}>
+                      <Muted style={[semi, styles.groupTitle]}>{g.title.toUpperCase()}</Muted>
+                      {g.needs.map((n) => (
+                        <View key={n.key} style={[styles.tr, { borderBottomColor: P.hairline }]}>
+                          <T variant="label" style={styles.cell}>{n.name}</T>
+                          <T variant="label" style={[mono, styles.amount]}>{needAmount(n)}</T>
+                        </View>
+                      ))}
+                    </Fragment>
                   ))
                 ) : (
-                  <Muted color={P.ink}>{p.needs.map((n) => `${n.name} ${n.amount}`).join(', ')}</Muted>
+                  <Muted color={P.ink}>{p.needs.map((n) => `${needName(n)} ${n.amount}`).join(', ')}</Muted>
                 )}
               </View>
             ))}
@@ -85,7 +91,7 @@ export function SheetPaper({ sheet, menu, variant = 'full', printedOn }: {
           <T variant={full ? 'headline' : 'label'} style={semi}>The drinks</T>
           {(full ? drinks : drinks.slice(0, 3)).map((d) =>
             full ? (
-              <View key={d.id} {...keep} style={[styles.drink, { borderBottomColor: P.rule }]}>
+              <View key={d.id} style={[styles.drink, { borderBottomColor: P.rule }]}>
                 <View style={styles.drinkHead}>
                   <T variant="title" style={{ fontFamily: fontFamilies.instrument }}>{d.name}</T>
                   <T variant="body" style={mono}>× {d.serves.toLocaleString('en-GB')}</T>
@@ -133,6 +139,7 @@ const styles = StyleSheet.create({
   smallPad: { padding: space.xl, gap: space.md, borderRadius: radius.mark },
   header: { gap: space.xs + 2, borderBottomWidth: 2, paddingBottom: space.lg },
   eyebrow: { letterSpacing: 1 },
+  groupTitle: { letterSpacing: 1, paddingTop: space.sm },
   box: { borderWidth: 1, borderRadius: radius.mark, paddingHorizontal: space.lg, paddingVertical: space.md },
   boxHead: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'baseline', paddingBottom: space.xs + 2, borderBottomWidth: 1, marginBottom: space.xs },
   tr: { flexDirection: 'row', gap: space.md, paddingVertical: space.xs + 1, borderBottomWidth: 1 },

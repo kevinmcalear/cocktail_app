@@ -130,6 +130,7 @@ export function SpecSection({ itemId, barId, recipes, preview, heading = 'Spec',
             ingredient={l.ingredient ?? 'Hidden ingredient'}
             ingredientId={l.ingredient ? l.ingredientId : undefined}
             optional={l.optional}
+            floated={l.float}
             houseMade={l.houseMade}
             note={l.note ?? undefined}
             flag={missing.includes(l.key) ? 'Not on your shelf' : undefined}

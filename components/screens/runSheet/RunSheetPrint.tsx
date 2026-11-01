@@ -1,62 +1,64 @@
 import { useLocalSearchParams, useRouter, type Href } from 'expo-router';
-import { useEffect, useMemo, useRef } from 'react';
+import { useMemo, useRef, useState } from 'react';
 import { Platform, ScrollView, StyleSheet, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import { Body, Button, useDs, useGutter } from '@/components/ds';
-import { printPaper, space } from '@/constants/tokens';
+import { printPaper, radius, space } from '@/constants/tokens';
 import { useRunSheet } from '@/hooks/useRunSheet';
-import { buildRunSheet } from '@/lib/runSheet';
+import { buildRunSheet, DEFAULT_MARGIN_PCT } from '@/lib/runSheet';
+import { runSheetHtml } from '@/lib/runSheetHtml';
 
 import { SheetPaper } from './SheetPaper';
 import { useSheetActions } from './SheetStep';
 
-// A4 with the page's own margins; the app's scroll boxes open up so every page prints, not just the first screenful.
-const PRINT_CSS = `
-@page { size: A4; margin: 12mm; }
-@media print {
-  #run-sheet-controls { display: none !important; }
-  html, body, #root { height: auto !important; overflow: visible !important; color-scheme: light !important; background: ${printPaper.paper} !important; }
-  #root * { overflow: visible !important; }
-  #run-sheet-page { padding: 0 !important; }
-  #run-sheet-screen, #run-sheet-page { background: ${printPaper.paper} !important; }
-  [data-print-block] { break-inside: avoid; }
-}`;
-
 /**
- * The run sheet as a bare page (no sidebar), to print or save as a PDF from
- * the browser's print dialog, like the guest card. `?print=1` opens the
- * dialog once the sheet is ready. On a phone it shares as text.
+ * The run sheet as a bare page (no sidebar). On the web it's the same A4 page
+ * a phone shares as a PDF (lib/runSheetHtml.ts), in a frame that prints on
+ * its own, so the browser's Save as PDF gives that PDF. `?print=1` opens the
+ * dialog once the sheet is ready. On a phone it's the sheet full size, to share.
  */
 export function RunSheetPrint({ menuId }: { menuId: string }) {
   const ds = useDs();
   const router = useRouter();
   const insets = useSafeAreaInsets();
   const gutter = useGutter();
-  const params = useLocalSearchParams<{ print?: string; breakdown?: string }>();
+  const params = useLocalSearchParams<{ print?: string; breakdown?: string; margin?: string }>();
   const { data, isLoading } = useRunSheet(menuId);
-  const sheet = useMemo(() => (data ? buildRunSheet({ ...data, hostName: data.menu.hostName, breakDownPreps: params.breakdown === '1' }) : null), [data, params.breakdown]);
+  const margin = params.margin != null && Number.isFinite(Number(params.margin)) ? Number(params.margin) : DEFAULT_MARGIN_PCT;
+  const sheet = useMemo(
+    () => (data ? buildRunSheet({ ...data, hostName: data.menu.hostName, hostLogoUrl: data.menu.hostLogoUrl, breakDownPreps: params.breakdown === '1', marginPct: margin }) : null),
+    [data, params.breakdown, margin],
+  );
   const web = Platform.OS === 'web';
+  const html = useMemo(() => (web && sheet && data ? runSheetHtml(sheet, data.menu) : null), [web, sheet, data]);
+  const frame = useRef<HTMLIFrameElement | null>(null);
+  const [height, setHeight] = useState(1123);
   const printed = useRef(false);
+  const printFrame = () => frame.current?.contentWindow?.print();
 
-  useEffect(() => {
-    if (!web || !sheet || params.print !== '1' || printed.current) return;
+  // The frame grows to its page, and `?print=1` opens the dialog once it (and its logos) has loaded.
+  const onFrameLoad = () => {
+    const doc = frame.current?.contentDocument;
+    if (doc) setHeight(doc.documentElement.scrollHeight + 2);
+    if (params.print !== '1' || printed.current) return;
     printed.current = true;
-    // After the sheet has painted (and its fonts), so the dialog shows it all.
-    const t = setTimeout(() => window.print(), 400);
-    return () => clearTimeout(t);
-  }, [web, sheet, params.print]);
+    setTimeout(printFrame, 200);
+  };
 
   const back = () => (router.canGoBack() ? router.back() : router.replace(`/menus/${menuId}/run-sheet` as Href));
   return (
-    <View nativeID="run-sheet-screen" style={[styles.screen, { backgroundColor: ds.c.ground }]}>
-      {web ? <style>{PRINT_CSS}</style> : null}
-      <View nativeID="run-sheet-controls" style={[styles.controls, { paddingTop: insets.top + space.sm, paddingHorizontal: gutter }]}>
+    <View style={[styles.screen, { backgroundColor: ds.c.ground }]}>
+      <View style={[styles.controls, { paddingTop: insets.top + space.sm, paddingHorizontal: gutter }]}>
         <Button label="Back" variant="ghost" accessibilityLabel="Back to the run sheet" onPress={back} />
-        {sheet && data ? <Actions sheet={sheet} menu={data.menu} /> : null}
+        {sheet && data ? web ? <Button label="Print or save as PDF" variant="secondary" icon="printer" onPress={printFrame} /> : <Actions sheet={sheet} menu={data.menu} /> : null}
       </View>
-      <ScrollView contentContainerStyle={[styles.page, { paddingHorizontal: gutter, paddingBottom: insets.bottom + space.xxxl }]} nativeID="run-sheet-page">
-        {sheet && data ? (
+      <ScrollView contentContainerStyle={[styles.page, { paddingHorizontal: gutter, paddingBottom: insets.bottom + space.xxxl }]}>
+        {html ? (
+          <View style={styles.a4}>
+            <iframe ref={frame} title="Run sheet" srcDoc={html} onLoad={onFrameLoad} style={{ width: '100%', height, border: 0, borderRadius: radius.mark, background: printPaper.paper, display: 'block' }} />
+          </View>
+        ) : sheet && data ? (
           <View style={styles.a4}>
             <SheetPaper sheet={sheet} menu={data.menu} />
           </View>
@@ -70,7 +72,7 @@ export function RunSheetPrint({ menuId }: { menuId: string }) {
 
 function Actions({ sheet, menu }: { sheet: NonNullable<ReturnType<typeof buildRunSheet>>; menu: { id: string; name: string; startsAt: string | null; endsAt: string | null } }) {
   const a = useSheetActions(sheet, menu);
-  return a.web ? <Button label="Print or save as PDF" variant="secondary" icon="printer" onPress={() => window.print()} /> : <Button label={a.pdf ? 'Share PDF' : 'Share'} variant="secondary" icon="square.and.arrow.up" onPress={() => void a.share()} />;
+  return <Button label={a.pdf ? 'Share PDF' : 'Share'} variant="secondary" icon="square.and.arrow.up" onPress={() => void a.share()} />;
 }
 
 const styles = StyleSheet.create({

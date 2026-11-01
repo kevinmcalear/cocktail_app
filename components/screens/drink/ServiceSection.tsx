@@ -63,7 +63,7 @@ export function ServiceSection({ itemId, barId, name, links, glass, lines, showL
       {notes.handoff.length ? (
         <View style={styles.group}>
           <Caption tone="muted" style={styles.eyebrow}>
-            HAND-OFF
+            GUEST VIEW
           </Caption>
           <View role="list">
             {notes.handoff.map((step, i) => (

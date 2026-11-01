@@ -103,7 +103,7 @@ export function PublishedDrinkScreen({ id, releaseId }: { /** The drink's id, or
     : null;
   const venue = more?.venue ?? null;
   const barName = bar?.name ?? venue?.display_name ?? null;
-  const credit = createdByLine(more?.creator ?? null, barName ? { name: barName, place: venue?.locality ?? venue?.city } : null, drink.creditStatus);
+  const credit = createdByLine(more?.creator ?? null, barName ? { name: barName, place: venue?.locality ?? venue?.city } : null, drink.creditStatus, drink.creatorNames ?? []);
   const shared = drink.publishMode === 'spec' && data.recipes.length > 0;
   const classic = !drink.barId && /^(modern )?classic$/i.test(drink.origin?.trim() ?? '');
   // Signed out with a spec behind Sign in, the spec card holds the page's one gold button.
@@ -123,6 +123,8 @@ export function PublishedDrinkScreen({ id, releaseId }: { /** The drink's id, or
             origin: drink.origin,
             originYear: drink.originYear,
             riffOfId: drink.riffOfId,
+            name: drink.name,
+            riffOf: more?.riffOf,
           },
           barName,
         )}

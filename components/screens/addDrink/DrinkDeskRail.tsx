@@ -1,10 +1,8 @@
 import { useRouter } from 'expo-router';
 import { StyleSheet, View } from 'react-native';
 
-import { BackbarTheme, Body, Caption, DsText, Field, Headline, PressableScale, Spec, Surface, Title, useDs } from '@/components/ds';
-import { SketchDrawing } from '@/components/ds/SketchDrawing';
+import { Body, Caption, DsText, Field, Headline, PressableScale, Spec, Surface, useDs } from '@/components/ds';
 import { fontFamilies, radius, space } from '@/constants/tokens';
-import { withAlpha } from '@/lib/color';
 import { balanceOf, fixesFor, tasteWord } from '@/lib/balance';
 import { formatPct, margin } from '@/lib/costing';
 import { amountOf, type WizardDraft, type WizardLine } from '@/lib/drinkWizard';
@@ -12,6 +10,7 @@ import { menuNote } from '@/lib/menuNote';
 import { recipesToFinish } from '@/lib/prepKinds';
 import { formatAmount, priceMinor } from '@/lib/money';
 import type { DraftLook } from '@/lib/sketch/draft';
+import type { SketchInputs } from '@/lib/sketch/types';
 import { useMakingKit } from '@/hooks/useBarKit';
 import { useMenuDrinkSpecs } from '@/hooks/useDrinkDesk';
 import { equipmentById } from '@/lib/techniques';
@@ -22,40 +21,19 @@ import { inputsFor } from './SketchHeader';
 import { Eyebrow, WizardChip } from './WizardChrome';
 import type { CatalogIngredient } from './IngredientSearch';
 
+/** The desk's drawing: a coupe until there's a glass or a line. */
+export const deskSketch = (look: DraftLook) => inputsFor(!look.glass && !look.lines.length && !look.methods?.length ? { ...look, glass: 'Coupe' } : look);
+
 /**
- * The drink as it's written: its drawing, name and what's in it
- * (make-create-desktop, "The drink, as you go"), and the drawing's colour
- * under it: Auto, its photo's colours, or a house watercolour that holds
- * while the spec changes.
+ * The drawing's colour, under the phone preview (make-create-desktop): Auto,
+ * its photo's colours, or a house watercolour that holds while the spec changes.
  */
-export function DeskDrinkCard({ draft, look, seed, onTint }: { draft: WizardDraft; look: DraftLook; seed: string; onTint: (tint: string | null) => void }) {
-  const ds = useDs();
-  const empty = !look.glass && !look.lines.length && !look.methods?.length;
-  const inputs = inputsFor(empty ? { ...look, glass: 'Coupe' } : look);
-  const name = draft.name.trim() || 'New drink';
-  const what = [...draft.lines, ...draft.garnishes].map((l) => l.name.toLowerCase()).join(', ');
+export function DeskColour({ draft, inputs, seed, onTint }: { draft: WizardDraft; inputs: SketchInputs; seed: string; onTint: (tint: string | null) => void }) {
   return (
-    <View style={[styles.card, styles.paper, { backgroundColor: ds.c.paper }]}>
-      <View style={styles.drink}>
-        <View style={styles.sketch} role="img" aria-label={`Sketch of ${name}`}>
-          <SketchDrawing inputs={inputs} seed={seed} detail="full" />
-        </View>
-        <View style={styles.flex}>
-          <Title color={ds.c.sketchInk} numberOfLines={2}>
-            {name}
-          </Title>
-          {what ? <Body color={ds.c.sketchInk}>{what.charAt(0).toUpperCase() + what.slice(1)}</Body> : <Caption color={ds.c.sketchInk}>Draws itself as you write the spec.</Caption>}
-          {what ? <Caption color={withAlpha(ds.c.sketchInk, 0.7)} style={styles.guests}>What guests see</Caption> : null}
-        </View>
-      </View>
-      {/* On paper: the light scheme's ink, so the picked swatch's ring shows. */}
-      <BackbarTheme scheme="light">
-        <View style={[styles.colour, { borderTopColor: withAlpha(ds.c.sketchInk, 0.16) }]}>
-          <Eyebrow>Colour</Eyebrow>
-          <DraftTintPicker inputs={inputs} seed={seed} value={draft.tint ?? null} onChange={onTint} frame={false} photo={draft.photos?.hero} />
-        </View>
-      </BackbarTheme>
-    </View>
+    <Surface raised style={styles.card}>
+      <Eyebrow>Colour</Eyebrow>
+      <DraftTintPicker inputs={inputs} seed={seed} value={draft.tint ?? null} onChange={onTint} frame={false} photo={draft.photos?.hero} />
+    </Surface>
   );
 }
 
@@ -234,14 +212,9 @@ const styles = StyleSheet.create({
   kitList: { flexDirection: 'row', flexWrap: 'wrap', gap: space.xs },
   kitTag: { paddingHorizontal: space.sm, paddingVertical: space.xs, borderRadius: radius.control, borderWidth: StyleSheet.hairlineWidth },
   kitEdit: { alignSelf: 'flex-start', paddingVertical: space.xs },
-  paper: { padding: space.lg, borderRadius: radius.card + 6 },
-  drink: { flexDirection: 'row', alignItems: 'center', gap: space.lg },
-  colour: { gap: space.xs, paddingTop: space.md, borderTopWidth: StyleSheet.hairlineWidth },
-  sketch: { width: 130, height: 160 },
   flex: { flex: 1 },
   card: { gap: space.sm },
   words: { fontFamily: fontFamilies.instrument },
-  guests: { fontFamily: fontFamilies.mono, letterSpacing: 1, textTransform: 'uppercase' },
   meter: { flexDirection: 'row', alignItems: 'center', gap: space.md },
   meterLabel: { width: 64 },
   meterWord: { width: 72 },

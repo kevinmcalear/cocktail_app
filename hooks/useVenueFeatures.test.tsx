@@ -10,6 +10,9 @@ type Result = { data: unknown; error: { code: string } | null };
 let mockRead: Result = { data: null, error: null };
 let mockWrite: Result = { data: null, error: null };
 let mockReads = 0;
+// set_venue_feature: missing before its migration (PGRST202).
+let mockRpc: Result = { data: null, error: { code: 'PGRST202' } };
+let mockWritten: unknown = null;
 
 jest.mock('@/hooks/useMode', () => ({ useMode: () => ({ mode: 'venue' }) }));
 jest.mock('@/hooks/useActiveVenue', () => {
@@ -18,6 +21,7 @@ jest.mock('@/hooks/useActiveVenue', () => {
 });
 jest.mock('@/lib/supabase', () => ({
   supabase: {
+    rpc: async () => mockRpc,
     from: () => ({
       select: () => ({
         eq: () => ({
@@ -27,7 +31,10 @@ jest.mock('@/lib/supabase', () => ({
           },
         }),
       }),
-      update: () => ({ eq: () => ({ select: () => ({ single: async () => mockWrite }) }) }),
+      update: (row: { enabled_features: unknown }) => {
+        mockWritten = row.enabled_features;
+        return { eq: () => ({ select: () => ({ single: async () => mockWrite }) }) };
+      },
     }),
   },
 }));
@@ -44,6 +51,8 @@ beforeEach(() => {
   mockReads = 0;
   mockRead = { data: null, error: null };
   mockWrite = { data: null, error: null };
+  mockRpc = { data: null, error: { code: 'PGRST202' } };
+  mockWritten = null;
 });
 
 test('before the migration: the read fails once, and the venue gets the default three', async () => {
@@ -56,13 +65,36 @@ test('before the migration: the read fails once, and the venue gets the default 
   expect(mockReads).toBe(1);
 });
 
-test('after it: the switches read back, unknown keys dropped', async () => {
+test('after it: the switches read back, unknown keys kept but not counted', async () => {
   mockRead = { data: { enabled_features: ['tonight', 'disco'] }, error: null };
   const client = newClient();
   const { result } = await renderHook(() => useVenueFeatures(), { wrapper: wrapper(client) });
   await waitFor(() => expect(result.current.ready).toBe(true));
   expect(result.current.has('tonight')).toBe(true);
-  expect(client.getQueryData(venueFeaturesKey('rye'))).toEqual(['tonight']);
+  expect(client.getQueryData(venueFeaturesKey('rye'))).toEqual(['tonight', 'disco']);
+  expect(result.current.on).toEqual(['tonight']);
+});
+
+test('a switch changes one key on the server, and the list it sends back is kept', async () => {
+  mockRead = { data: { enabled_features: ['disco'] }, error: null };
+  mockRpc = { data: ['disco', 'tonight'], error: null };
+  const client = newClient();
+  const { result } = await renderHook(() => useSetVenueFeature('rye'), { wrapper: wrapper(client) });
+  await waitFor(() => expect(result.current.features).toEqual(['disco']));
+  // The refetch after it reads what the server now has.
+  mockRead = { data: { enabled_features: ['disco', 'tonight'] }, error: null };
+  result.current.set('tonight', true);
+  await waitFor(() => expect(client.getQueryData(venueFeaturesKey('rye'))).toEqual(['disco', 'tonight']));
+  expect(mockWritten).toBeNull();
+});
+
+test('before set_venue_feature: the whole list is written, keeping keys this build doesn’t know', async () => {
+  mockRead = { data: { enabled_features: ['disco'] }, error: null };
+  const client = newClient();
+  const { result } = await renderHook(() => useSetVenueFeature('rye'), { wrapper: wrapper(client) });
+  await waitFor(() => expect(result.current.features).toEqual(['disco']));
+  result.current.set('tonight', true);
+  await waitFor(() => expect(mockWritten).toEqual(['tonight', 'disco']));
 });
 
 test('offline: a failed read keeps the saved switches', async () => {

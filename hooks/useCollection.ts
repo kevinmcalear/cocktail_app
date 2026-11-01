@@ -57,11 +57,12 @@ export interface Collection {
 // The last part is the shape's version: the cache is persisted, and an older shape mustn't come back.
 const collectionKey = (userId: string | null) => ['collection', userId, 2] as const;
 
-export function useCollection() {
+/** `live` false: none (a preview of a drink page, which reads nothing of yours). */
+export function useCollection(live = true) {
   const userId = useUserId();
   return useQuery({
     queryKey: collectionKey(userId),
-    enabled: !!userId,
+    enabled: live && !!userId,
     staleTime: 60_000,
     queryFn: async (): Promise<Collection> => {
       await moveHeartsToCollection();

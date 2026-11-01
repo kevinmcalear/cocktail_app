@@ -72,14 +72,16 @@ interface PickListProps {
   onPick: (id: string) => void;
   /** The picker's own add row: "Add “Lanturn Room” as a new bar". */
   add?: { label: string; sub: string; onPress: () => void };
+  /** Taps wait (a pick is saving). */
+  disabled?: boolean;
 }
 
 /** A picker's list of names: what matched, then the close ones (NearPicks), then its add row. */
-export function PickList({ rows, empty, no, onPick, add }: PickListProps) {
+export function PickList({ rows, empty, no, onPick, add, disabled }: PickListProps) {
   const ds = useDs();
   const [plain, near] = splitNear(rows);
   const row = (r: PickRow) => (
-    <PressableScale key={r.id} role="button" accessibilityLabel={r.sub ? `${r.label}, ${r.sub}` : r.label} onPress={() => onPick(r.id)} style={[styles.row, { borderBottomColor: ds.c.line }]}>
+    <PressableScale key={r.id} role="button" accessibilityLabel={r.sub ? `${r.label}, ${r.sub}` : r.label} disabled={disabled} onPress={() => onPick(r.id)} style={[styles.row, { borderBottomColor: ds.c.line }]}>
       <Body numberOfLines={1}>{r.label}</Body>
       {r.sub ? (
         <Caption tone="muted" numberOfLines={1}>
@@ -99,7 +101,7 @@ export function PickList({ rows, empty, no, onPick, add }: PickListProps) {
       ) : null}
       <NearPicks found={plain.length > 0} near={near} render={row} no={no} labelStyle={styles.inset}>
         {add ? (
-          <PressableScale role="button" accessibilityLabel={add.label} accessibilityHint={add.sub} onPress={add.onPress} style={[styles.row, { borderBottomColor: ds.c.line }]}>
+          <PressableScale role="button" accessibilityLabel={add.label} accessibilityHint={add.sub} disabled={disabled} onPress={add.onPress} style={[styles.row, { borderBottomColor: ds.c.line }]}>
             <Body numberOfLines={1}>{add.label}</Body>
             <Caption tone="muted">{add.sub}</Caption>
           </PressableScale>

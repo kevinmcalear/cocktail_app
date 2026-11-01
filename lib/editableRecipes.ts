@@ -18,6 +18,7 @@ export async function fetchEditableRecipes(itemId: string) {
             unit,
             preparation_notes,
             is_optional,
+            is_float,
             part,
             ingredient:items!ingredient_item_id (
                 id,

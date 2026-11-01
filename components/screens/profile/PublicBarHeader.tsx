@@ -7,6 +7,7 @@ import { BarMark } from '@/components/screens/home/BarMark';
 import { space, type } from '@/constants/tokens';
 import { useVenueScore } from '@/hooks/useDiscover';
 import type { Profile } from '@/hooks/useProfiles';
+import { showMessage } from '@/lib/dialogs';
 import { rankedCount } from '@/lib/nearMe';
 import { formatScore, MIN_RANKERS } from '@/lib/ranking';
 import { shareLink } from '@/lib/shareLink';
@@ -68,10 +69,13 @@ export function PublicBarActions({ profile, signedIn = false }: { profile: Profi
   const wide = useBreakpoint() !== 'phone';
   const [copied, setCopied] = useState(false);
   const share = async () => {
+    const url = `${siteOrigin()}/p/${profile.handle}`;
     try {
-      setCopied((await shareLink(`${siteOrigin()}/p/${profile.handle}`, profile.display_name)) === 'copied');
+      setCopied((await shareLink(url, profile.display_name)) === 'copied');
     } catch {
+      // The browser refused the clipboard too: show the link to copy by hand, not nothing.
       setCopied(false);
+      showMessage("Couldn't share the link", url);
     }
   };
   const signIn = () => router.push('/auth/login');

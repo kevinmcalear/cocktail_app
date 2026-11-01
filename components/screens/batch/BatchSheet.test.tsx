@@ -51,10 +51,14 @@ test('splits the bottle from what each serve adds at the station', async () => {
   // Shaken to order: the bottle holds no water, and says so (board drink-sheet-batch-venue).
   expect(screen.getByLabelText('0 ml, Water, the shake dilutes it')).toBeTruthy();
   expect(screen.queryByText(/Will slush/)).toBeNull();
+  // The simple batch first: no ways to scale until More, and it says how to keep the bottle.
+  expect(screen.queryByRole('tab', { name: 'Fill a bottle' })).toBeNull();
+  expect(screen.getByText(/in the fridge/)).toBeTruthy();
 });
 
 test('fills a bottle: 12 Penicillins to a litre', async () => {
   await open();
+  await fireEvent.press(screen.getByText('More ways to batch: fill a bottle, what I have, units'));
   await fireEvent.press(screen.getByRole('tab', { name: 'Fill a bottle' }));
   await fireEvent.press(screen.getByRole('radio', { name: '1 L' }));
   expect(screen.getByLabelText('In the bottle: 990 ml, 1 × 1 L bottle, 29% ABV')).toBeTruthy();
@@ -62,6 +66,7 @@ test('fills a bottle: 12 Penicillins to a litre', async () => {
 
 test('starts from what is on the shelf', async () => {
   await open();
+  await fireEvent.press(screen.getByText('More ways to batch: fill a bottle, what I have, units'));
   await fireEvent.press(screen.getByRole('tab', { name: 'What I have' }));
   await fireEvent.changeText(screen.getByLabelText('How much Blended Scotch you have, in ml'), '300');
   expect(screen.getByLabelText('300 ml, Blended Scotch')).toBeTruthy();

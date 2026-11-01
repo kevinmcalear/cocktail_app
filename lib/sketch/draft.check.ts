@@ -1,6 +1,7 @@
 import assert from 'node:assert/strict';
 
-import { draftSketchInputs } from './draft';
+import { bareGlassSketch, draftSketchInputs } from './draft';
+import { paintSketch } from './paint';
 import { liquidOf, readSketchInputs } from './types';
 
 // A drink with only a name still draws: a default glass and colour.
@@ -78,3 +79,13 @@ assert.equal(discard.garnish, null, 'a discard draws no garnish');
 assert.equal(discard.from.garnish, 'default');
 const both = draftSketchInputs({ ...spritz, lines: [...spritzLines, { name: 'Lemon', amount: 1, unit: 'discard' }, { name: 'Olive', amount: 1, unit: 'each' }] });
 assert.equal(both.garnish, 'olive', 'a real garnish line still draws beside a discard');
+
+// A drink with no drawing yet shows its bare glass, by name or icon key: no liquid, ice or garnish (i-glass-pic).
+const martini = bareGlassSketch('Martini');
+assert.equal(martini.glass, 'martini');
+assert.equal(bareGlassSketch('Nick & Nora').glass, 'nick');
+assert.equal(bareGlassSketch(null).glass, 'coupe');
+assert.deepEqual([martini.liquid.alpha, martini.ice, martini.garnish, martini.foam], [0, 'none', null, null]);
+const empty = paintSketch(martini, { seed: 'bare' });
+const full = paintSketch({ ...martini, liquid: { hex: '#d8a050', alpha: 0.7 } }, { seed: 'bare' });
+assert.ok(JSON.stringify(empty.els).length < JSON.stringify(full.els).length, 'a bare glass paints no drink');

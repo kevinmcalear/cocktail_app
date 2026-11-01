@@ -90,12 +90,13 @@ const sheetLines = [
 ];
 const barRows = [
   { id: 'r1', ingredient_item_id: 'rye', preparation_notes: 'chilled', is_optional: false },
-  { id: 'r2', ingredient_item_id: 'fig', preparation_notes: 'house', is_optional: true },
+  { id: 'r2', ingredient_item_id: 'fig', preparation_notes: 'house', is_optional: true, is_float: true },
   { id: 'r3', ingredient_item_id: 'orange', preparation_notes: null, is_optional: false },
 ];
 assert.deepEqual(ontoBarLines(sheetLines, barRows), [
-  { id: 'r1', ingredient_item_id: 'rye', amount: 60, unit: 'ml', preparation_notes: 'chilled', is_optional: false },
-  { id: 'r2', ingredient_item_id: 'fig', amount: 15, unit: 'ml', preparation_notes: 'warm', is_optional: true },
+  { id: 'r1', ingredient_item_id: 'rye', amount: 60, unit: 'ml', preparation_notes: 'chilled', is_optional: false, is_float: false },
+  // The bar's float stays: a sheet can't say a line is floated (tf-060).
+  { id: 'r2', ingredient_item_id: 'fig', amount: 15, unit: 'ml', preparation_notes: 'warm', is_optional: true, is_float: true },
   { id: null, ingredient_item_id: 'new', amount: 2, unit: 'dash', preparation_notes: null, is_optional: false },
 ]);
 // One bar row is kept once, even when the sheet has the ingredient twice.

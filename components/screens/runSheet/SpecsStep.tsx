@@ -61,18 +61,14 @@ function DrinkSpec({ drink, onLine }: { drink: SheetDrink; onLine: (line: SheetL
 export function SpecsStep({ data, sheet }: { data: RunSheetData; sheet: RunSheet }) {
   const ds = useDs();
   const setSwaps = useSetSwaps(data.menu.id);
-  const [showAll, setShowAll] = useState(false);
   const [swapping, setSwapping] = useState<{ drink: RunDrink; line: SheetLine } | null>(null);
   const cocktails = sheet.drinks.filter((d) => data.drinks.find((x) => x.id === d.id)?.itemType === 'cocktail');
-  const swapped = cocktails.filter((d) => d.lines.some((l) => l.was));
-  const shown = showAll || !swapped.length ? cocktails : swapped;
-  const hidden = cocktails.filter((d) => !shown.includes(d));
   const [suggestion] = pourSuggestions(data.drinks.filter((d) => d.itemType === 'cocktail'), data.swaps, data.items, data.brandBottles);
   const open = (d: SheetDrink, line: SheetLine) => setSwapping({ drink: data.drinks.find((x) => x.id === d.id)!, line });
 
   return (
     <View style={{ gap: space.xl }}>
-      <Body tone="muted">Swap a bottle or a garnish for this night. Your library specs stay as they are.</Body>
+      <Body tone="muted">Your library specs stay as they are.</Body>
       {suggestion ? (
         <View style={[styles.suggest, { backgroundColor: ds.c.raised }]}>
           <View style={{ flex: 1 }}>
@@ -88,18 +84,10 @@ export function SpecsStep({ data, sheet }: { data: RunSheetData; sheet: RunSheet
           />
         </View>
       ) : null}
-      {shown.map((d) => (
+      {/* Every drink stays open after a swap, to check them all (tf-082). */}
+      {cocktails.map((d) => (
         <DrinkSpec key={d.id} drink={d} onLine={(line) => open(d, line)} />
       ))}
-      {hidden.length ? (
-        <View style={[styles.card, styles.collapsed, { backgroundColor: ds.c.surface }]}>
-          <View style={{ flex: 1 }}>
-            <Body style={{ fontFamily: fontFamilies.bodySemiBold }}>{hidden.map((d) => d.name).join(', ')}</Body>
-            <Caption tone="muted">No swaps</Caption>
-          </View>
-          <Button label="Show" size="sm" variant="secondary" accessibilityLabel="Show the drinks with no swaps" onPress={() => setShowAll(true)} />
-        </View>
-      ) : null}
       {!cocktails.length ? <Body tone="muted">No cocktails on this menu yet.</Body> : null}
       {swapping ? <RunSwapSheet data={data} drink={swapping.drink} line={swapping.line} onClose={() => setSwapping(null)} /> : null}
     </View>
@@ -117,5 +105,4 @@ const styles = StyleSheet.create({
   partName: { flex: 1, fontFamily: fontFamilies.bodyMedium },
   struck: { textDecorationLine: 'line-through' },
   suggest: { flexDirection: 'row', alignItems: 'center', gap: space.md, borderRadius: radius.card, padding: space.md, paddingLeft: space.lg },
-  collapsed: { flexDirection: 'row', alignItems: 'center', gap: space.md },
 });

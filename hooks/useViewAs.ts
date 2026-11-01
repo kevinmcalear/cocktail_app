@@ -1,5 +1,6 @@
 import { useBars } from '@/hooks/useBars';
 import { useCapabilities } from '@/hooks/useCapabilities';
+import { useMyDrinkTypes } from '@/hooks/useDrinkApproval';
 import { effectiveRole } from '@/lib/roles';
 import { supabase } from '@/lib/supabase';
 import { canManageTeam } from '@/lib/team';
@@ -129,9 +130,21 @@ export function useItemEditAccess(item: { id: string; bar_id: string | null } | 
   const caps = useCapabilities(decidingBarId).data;
   // The edit_drinks permission there (a role the bar made can have it); under View as, the previewed built-in role.
   const editsThere = !!decidingBarId && (!deciding.previewing && caps ? caps.includes('edit_drinks') : deciding.role > 30);
+  // A role limited to some drink kinds (tf-059) edits only those: the server says whether this one is.
+  const myTypes = useMyDrinkTypes(barId).data;
+  const limited = !!barId && editsThere && !deciding.previewing && !!myTypes;
+  const { data: kindOk } = useQuery({
+    queryKey: ['itemEditAccess', 'kind', item?.id, userId],
+    enabled: limited,
+    queryFn: async () => {
+      const { data, error } = await supabase.rpc('can_edit_item', { p_item_id: item!.id });
+      if (error) throw error;
+      return data === true;
+    },
+  });
 
   if (!item) return null;
-  if (barId) return editsThere ? 'edit' : null;
+  if (barId) return editsThere && (!limited || kindOk === true) ? 'edit' : null;
   if (!sharedAccess || (viewAsRoleLevel != null && viewAsRoleLevel <= 30)) return null;
   return sharedAccess.creator || editsThere ? 'edit' : 'admin';
 }

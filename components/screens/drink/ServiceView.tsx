@@ -106,7 +106,7 @@ function Service({ item, start, venueName }: { item: DatabaseItem; start: Servic
             <>
             {notes.garnish ? <Group title="GARNISH"><Body>{notes.garnish}</Body></Group> : null}
             {notes.handoff.length ? (
-              <Group title="HAND-OFF">
+              <Group title="GUEST VIEW">
                 <View role="list">
                   {notes.handoff.map((step, i) => (
                     <View key={`${i}-${step}`} role="listitem" style={[styles.step, { borderBottomColor: ds.c.line }]}>
@@ -117,7 +117,7 @@ function Service({ item, start, venueName }: { item: DatabaseItem; start: Servic
                 </View>
               </Group>
             ) : null}
-            {!notes.garnish && !notes.handoff.length ? <Body tone="muted">No garnish or hand-off notes yet. Editors add them in Edit, under Service.</Body> : null}
+            {!notes.garnish && !notes.handoff.length ? <Body tone="muted">No garnish or guest view notes yet. Editors add them in Edit, under Service.</Body> : null}
             {parts && access.amounts && lines.length ? (
               <Group title="AT THE STATION" tag={[batched ? style : null, `Made in ${parts.length} parts`]}>
                 {serviceParts(lines, parts, batched).map((p) => (
