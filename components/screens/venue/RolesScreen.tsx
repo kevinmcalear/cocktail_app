@@ -90,12 +90,12 @@ export function RolesScreen({ barId }: { barId: string }) {
         undo
           ? toast.show({ title: toggleLine(roleName(c), capability, on), action: { label: 'Undo', onPress: () => void flip(c, capability, !on, false) } })
           : undefined,
-      (e: unknown) => toast.show({ title: problem(e) ?? 'Couldn’t change that.' }),
+      (e: unknown) => toast.show({ title: problem(e) ?? 'Couldn’t change that.', tone: 'error' }),
     );
   const resetRole = (c: RoleMatrixRow) =>
     reset.mutate(c.base_level, {
       onSuccess: (done) => toast.show({ title: done ? `${roleName(c)} is back to built in` : `Nothing to reset: ${roleName(c)} is already built in` }),
-      onError: (e) => toast.show({ title: problem(e) ?? 'Couldn’t reset that.' }),
+      onError: (e) => toast.show({ title: problem(e) ?? 'Couldn’t reset that.', tone: 'error' }),
     });
   // Someone with staff who isn't an Admin can't change Admin roles (the database refuses), so they aren't offered.
   const canChange = (c: RoleMatrixRow) => admin || c.base_level < ADMIN;

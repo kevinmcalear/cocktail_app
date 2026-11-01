@@ -28,7 +28,7 @@ export function useRowActs(menuId: string, rows: ListRow[]) {
   const toast = useToast();
   const changes = useListChanges(menuId);
   const may = useMayChangeList(menuId).data;
-  const failed = (e: Error) => toast.show({ title: e.message || 'Couldn’t change the list. Try again.' });
+  const failed = (e: Error) => toast.show({ title: e.message || 'Couldn’t change the list. Try again.', tone: 'error' });
   const said = (title: string) => () => toast.show({ title: may === false ? `${title}: waiting for approval` : title });
   return {
     may,

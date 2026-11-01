@@ -61,7 +61,7 @@ function Rota({ barId, barName }: { barId: string; barName: string }) {
   const team = canSeeTeam(useEffectiveRole(barId));
   const grid = useWebNav() === 'sidebar';
   const r = useRotaWeek(barId, edit);
-  const save = useSaveShifts(barId, () => toast.show({ title: 'Couldn’t save the rota', detail: 'It’s back as it was. Try again.' }));
+  const save = useSaveShifts(barId, () => toast.show({ title: 'Couldn’t save the rota', detail: 'It’s back as it was. Try again.', tone: 'error' }));
   const [sheet, setSheet] = useState<ShiftSheetOpen | null>(null);
 
   const add = (night = r.selected, userId?: string) => setSheet({ night, userId });

@@ -29,3 +29,14 @@ test('a new toast replaces the one showing, and tapping it closes it', async () 
   await fireEvent.press(screen.getByRole('status'));
   expect(useToastStore.getState().toast).toBeNull();
 });
+
+test('a refused save is announced as an alert and does not wear the success tick', async () => {
+  await renderWithProviders(<ToastHost />);
+  await act(async () => {
+    useToastStore.getState().show({ title: 'Couldn’t save the rota', detail: 'It’s back as it was. Try again.', tone: 'error' });
+  });
+  expect(screen.getByRole('alert')).toBeTruthy();
+  expect(screen.queryByRole('status')).toBeNull();
+  await fireEvent.press(screen.getByRole('alert'));
+  expect(useToastStore.getState().toast).toBeNull();
+});

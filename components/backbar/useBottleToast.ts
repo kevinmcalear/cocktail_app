@@ -55,7 +55,7 @@ export function useBottleToast(barId: string | null) {
                 failed ??= e;
               }
             }
-            if (failed) toast.show({ title: 'Couldn’t undo all of it', detail: plainDbMessage(failed) ?? 'Check your connection. Old specs stay in each drink’s history.' });
+            if (failed) toast.show({ title: 'Couldn’t undo all of it', detail: plainDbMessage(failed) ?? 'Check your connection. Old specs stay in each drink’s history.', tone: 'error' });
           })();
         },
       },
