@@ -36,7 +36,6 @@ export function DrinkBody({ sections: s, home }: { sections: DrinkSections; home
       {s.servedAt}
       {s.menus}
       {home ? null : s.photos}
-      {s.service}
       {s.history}
       {s.cost}
       {s.backstory}

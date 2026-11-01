@@ -1,19 +1,16 @@
-import { useRouter } from 'expo-router';
 import { useEffect, useState } from 'react';
 import { Platform, StyleSheet, View } from 'react-native';
 
-import { Body, Button, Caption, Headline, PressableScale, Surface, TextLink, useDs } from '@/components/ds';
+import { Body, Button, Caption, Headline, PressableScale, Surface, useDs } from '@/components/ds';
 import { IconSymbol } from '@/components/ui/icon-symbol';
 import { fontFamilies, radius, space } from '@/constants/tokens';
 import { useFirstRound } from '@/hooks/useFirstRound';
 import { useVenueMenus } from '@/hooks/useMenus';
 import { useMyProfile } from '@/hooks/useMyProfile';
 import { useMyMadeDrinks } from '@/hooks/useProfiles';
-import { useEffectiveRole } from '@/hooks/useViewAs';
 import { useTabBarInset } from '@/components/nav/WebTabBar';
 import { onAMenu, OPENED_COPY, yourMenuStep } from '@/lib/firstRound';
 import { menuStatus } from '@/lib/menus';
-import { canSwitchFeatures } from '@/lib/venueFeatures';
 
 import { FirstCocktailChoices } from './FirstCocktailChoices';
 import { nextLine, progressLine, RoundBars, RoundStepList, useRoundGo } from './RoundParts';
@@ -35,7 +32,6 @@ function CloseButton({ label, onPress }: { label: string; onPress: () => void })
  */
 export function FirstRoundCard() {
   const ds = useDs();
-  const router = useRouter();
   const round = useFirstRound();
   const go = useRoundGo();
   const [open, setOpen] = useState<boolean | null>(null);
@@ -45,8 +41,6 @@ export function FirstRoundCard() {
   const mine = useMyMadeDrinks(profileId, round.active && round.current?.key === 'open_menu' && !!profileId).data;
   const markMenu = !!menus && round.current?.key === 'menu' && onAMenu(round.round, menus.filter((m) => m.barId === round.venue?.id));
   const { done } = round;
-  // Admins can switch more on, as the role they're viewing as (the Features row and page check the same).
-  const switches = canSwitchFeatures(useEffectiveRole(round.venue?.id ?? null));
   useEffect(() => {
     if (markMenu) done('menu');
   }, [markMenu, done]);
@@ -61,9 +55,8 @@ export function FirstRoundCard() {
         <CloseButton label="Dismiss" onPress={round.seeDone} />
         <View role="status" style={styles.doneText}>
           <Body style={styles.strong}>That’s the round</Body>
-          <Caption tone="muted">{`Menus and Discover are open. Anything else ${venue.name} turns on shows up here.`}</Caption>
+          <Caption tone="muted">Menus and Discover are open.</Caption>
         </View>
-        {switches ? <TextLink label={`Turn on more for ${venue.name}`} tone="ink" onPress={() => router.push(`/settings/bar/${venue.id}/features`)} /> : null}
       </Surface>
     );
   }

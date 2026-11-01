@@ -5,6 +5,13 @@
  * (private.guard_release_publish); these say them before saving.
  */
 
+/**
+ * Releases are parked (31 Oct 2026): the editor's list, Collection's
+ * Releases and a loved bar's release news are hidden; the tables, collected
+ * releases and /r/<id> stay. ponytail: flip this to bring them back.
+ */
+export const RELEASES_SHOWN: boolean = false;
+
 export type ReleaseStatus = 'draft' | 'scheduled' | 'live' | 'hidden';
 
 export const RELEASE_STATUS_LABEL: Record<ReleaseStatus, string> = {

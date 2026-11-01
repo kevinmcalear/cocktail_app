@@ -15,13 +15,6 @@ assert.equal(parseShow('preps', true), 'preps');
 assert.equal(parseShow('ingredients', true), 'bottles');
 assert.equal(parseShow('garnishes', false), 'ingredients');
 assert.equal(parseShow('batched', false), 'cocktails');
-// A venue without More library filters: the extras fall back to All; the rest stay.
-assert.equal(parseShow('bottles', true, false), 'all');
-assert.equal(parseShow('rnd', true, false), 'all');
-assert.equal(parseShow('ingredients', true, false), 'all');
-assert.equal(parseShow('staff', true, false), 'staff');
-assert.equal(parseShow('wine', true, false), 'wine');
-assert.equal(parseShow('wine', false, false), 'wine', 'extras only apply at a venue');
 
 assert.ok(isGarnishLine('garnish, discarded', null) && isGarnishLine(null, 'Twist') && !isGarnishLine('not in batch', 'ml'));
 {
@@ -114,11 +107,8 @@ assert.equal(itemIdOf('0000-3'), '0000-3');
     ['Cocktails', 'Beer', 'Wine'],
   ]);
   assert.deepEqual(filterGroups(false, true).map((g) => g.map((f) => f.label)), [['Cocktails', 'Ingredients', 'Beer', 'Wine', 'Needs a price']]);
-  // Without the extras: All, On menu, Classics, Old drinks, Beer, Wine (phone order since 24 Oct), and the kit check (Kit and ice, step 11) at every venue.
-  assert.deepEqual(filterGroups(true, true, false).map((g) => g.map((f) => f.label)), [['All', 'On menu', 'Classics', 'Old drinks'], ['Ready here', 'Needs something'], ['Beer', 'Wine']]);
   assert.equal(parseShow('needs', false), 'cocktails', 'no venue, no kit');
-  assert.equal(parseShow('ready', true, false), 'ready');
-  assert.deepEqual(filterGroups(false, true, false), filterGroups(false, true), 'no venue: extras do not apply');
+  assert.equal(parseShow('ready', true), 'ready');
   assert.equal(tileLine('Stirred', 'Coupe'), 'Stirred · Coupe');
   assert.equal(tileLine('Stirred', null, 'Martini flight'), 'Stirred · Martini flight');
   assert.equal(tileLine(null, ''), null);
@@ -145,7 +135,7 @@ assert.equal(methodWord(null), null);
 
 // A phone's chip row: four out front, the rest in the filter menu by section.
 {
-  const split = splitFilters(filterGroups(true, true, true));
+  const split = splitFilters(filterGroups(true, true));
   assert.deepEqual(split.front.map((f) => f.label), ['All', 'On menu', 'Classics', 'House-made']);
   assert.deepEqual(split.more.map((s) => [s.title, s.filters.map((f) => f.label)]), [
     ['Drinks', ['Old drinks', 'R&D', 'Batched']],
@@ -155,10 +145,8 @@ assert.equal(methodWord(null), null);
     ['Kit', ['Ready here', 'Needs something']],
   ]);
   // Every filter lands somewhere, once.
-  const every = filterGroups(true, true, true).flat().map((f) => f.value).sort();
+  const every = filterGroups(true, true).flat().map((f) => f.value).sort();
   assert.deepEqual([...split.front, ...split.more.flatMap((s) => s.filters)].map((f) => f.value).sort(), every);
-  // Without the extras there are no preps: three out front.
-  assert.deepEqual(splitFilters(filterGroups(true, false, false)).front.map((f) => f.label), ['All', 'On menu', 'Classics']);
   // Without a venue, each type stays out front and there's no menu.
   const solo = splitFilters(filterGroups(false, false));
   assert.deepEqual(solo.front.map((f) => f.label), ['Cocktails', 'Ingredients', 'Beer', 'Wine']);

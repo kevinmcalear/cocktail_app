@@ -4,6 +4,7 @@ import { DrinkThumb, MenuRowFrame } from '@/components/screens/menus/MenuRows';
 import { MenuGroup } from '@/components/screens/menus/MenuGroupList';
 import { useCollection } from '@/hooks/useCollection';
 import { plural } from '@/lib/menus';
+import { RELEASES_SHOWN } from '@/lib/releases';
 
 const MONTHS = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
 const shortDay = (day: string) => {
@@ -20,7 +21,7 @@ const shortDay = (day: string) => {
 export function CollectionReleases({ canMakeIds }: { canMakeIds: Set<string> }) {
   const router = useRouter();
   const releases = useCollection().data?.releases ?? [];
-  if (!releases.length) return null;
+  if (!RELEASES_SHOWN || !releases.length) return null;
   return (
     <MenuGroup title="Releases">
       {releases.map((r) => {

@@ -8,18 +8,18 @@ import { KitToolsScreen } from '@/components/screens/venue/KitToolsScreen';
 import { SettingsSection, SwitchRow } from '@/components/screens/settings/SettingsParts';
 import { SubPageInline } from '@/components/screens/venue/VenueSubPage';
 import { useIsWideWeb } from '@/hooks/useIsWideWeb';
-import { useSetVenueFeature } from '@/hooks/useVenueFeatures';
-import { VENUE_FEATURES } from '@/lib/venueFeatures';
+import { useBarAdvanced, useSetBarAdvanced } from '@/hooks/useAdvancedOptions';
 
 import { GlassesStep } from './GlassesStep';
+
+export const ADVANCED_LABEL = 'Advanced options';
+export const ADVANCED_DETAIL = 'Wash lines on glasses, with Fit it in the drink editor, and Ice and Tools in setup';
 
 const TABS: { value: KitKind; label: string }[] = [
   { value: 'glassware', label: 'Glassware' },
   { value: 'ice', label: 'Ice' },
   { value: 'tools', label: 'Tools' },
 ];
-
-const ADVANCED = VENUE_FEATURES.find((f) => f.key === 'advanced')!;
 
 /**
  * The checklist's Kit row (owner-setup steps 6 and 7, call 8). Simple by
@@ -31,8 +31,8 @@ const ADVANCED = VENUE_FEATURES.find((f) => f.key === 'advanced')!;
 export function KitStep({ barId, pageId, name, step, onBack, onDone }: { barId: string; pageId: string | null; name: string; step: string; onBack: () => void; onDone: () => void }) {
   const chrome = useSetupChrome();
   const wide = useIsWideWeb();
-  const { features, set, error } = useSetVenueFeature(barId);
-  const advanced = features.includes('advanced');
+  const advanced = useBarAdvanced(barId);
+  const setAdvanced = useSetBarAdvanced(barId);
   const [picked, setTab] = useState<KitKind>('glassware');
   const tab = advanced ? picked : 'glassware';
   // A phone names the tab; a wide screen names the place, as the board draws them.
@@ -48,13 +48,13 @@ export function KitStep({ barId, pageId, name, step, onBack, onDone }: { barId: 
           <SubPageInline.Provider value>{tab === 'ice' ? <KitIceScreen barId={barId} /> : <KitToolsScreen barId={barId} />}</SubPageInline.Provider>
         )}
         {tab === 'glassware' ? (
-          <SettingsSection note="Most bars start without them. Change it any time in Features.">
-            <SwitchRow label={ADVANCED.label} detail={ADVANCED.detail} value={advanced} onValueChange={(on) => set('advanced', on)} />
+          <SettingsSection note="Most bars start without them. Change it any time in Venue settings.">
+            <SwitchRow label={ADVANCED_LABEL} detail={ADVANCED_DETAIL} value={advanced} onValueChange={(on) => setAdvanced.mutate(on)} />
           </SettingsSection>
         ) : null}
-        {error ? (
+        {setAdvanced.error ? (
           <Caption tone="accent" role="alert">
-            {error}
+            Couldn’t save that. Check your connection and try again.
           </Caption>
         ) : null}
       </SetupPage>

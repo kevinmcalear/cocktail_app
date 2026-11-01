@@ -145,14 +145,6 @@ function RootLayoutNav() {
               options={{ presentation: "modal", headerShown: false }}
             />
             <Stack.Screen
-              name="cocktail/[id]/service"
-              options={{ presentation: "modal", headerShown: false }}
-            />
-            <Stack.Screen
-              name="cocktail/[id]/photos"
-              options={{ presentation: "modal", headerShown: false }}
-            />
-            <Stack.Screen
               name="cocktail/[id]/roles"
               options={{ presentation: "modal", headerShown: false }}
             />

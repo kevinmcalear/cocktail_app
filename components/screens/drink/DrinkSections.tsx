@@ -11,7 +11,6 @@ import { useLineage } from '@/hooks/useLineage';
 import { useItemGlassFill } from '@/hooks/useGlassFill';
 import { useDrinkMenuRuns } from '@/hooks/useProfiles';
 import { useEffectiveRole } from '@/hooks/useViewAs';
-import type { ItemImageLink } from '@/lib/itemImages';
 import { withPastMenuTag } from '@/lib/menuEditions';
 import { pageShowsDescriptions, specLockNote } from '@/lib/pageVisibility';
 import { ingredientsLine } from '@/lib/publicDrink';
@@ -40,7 +39,6 @@ import { MenuRuns } from './MenuRuns';
 import { PeoplePhotos } from './PeoplePhotos';
 import { ScoreCaption, ScoreMark } from './ScoreCaption';
 import { ServedAt } from './ServedAt';
-import { ServiceSection } from './ServiceSection';
 import { SpecLockPanel } from './SpecLockPanel';
 import type { SpecMark } from './SpecMarks';
 import { SpecSection } from './SpecSection';
@@ -187,20 +185,6 @@ export function useDrinkSections(p: DrinkBodyProps) {
     flavor: live ? <FlavorSection itemId={item.id} name={item.name} /> : null,
     servedAt: live ? <ServedAt itemId={item.id} /> : null,
     photos: live ? <PeoplePhotos itemId={item.id} name={item.name} glass={p.glass} wide={p.wide} /> : null,
-    service: staff ? (
-      <ServiceSection
-        itemId={item.id}
-        barId={item.bar_id}
-        name={item.name}
-        links={item.item_images as ItemImageLink[] | undefined}
-        glass={p.glass}
-        lines={access.names ? lines : []}
-        showLines={access.amounts}
-        splitOpensAt={p.amountsOpenAt}
-        serviceStyle={item.service_style}
-        preview={preview}
-      />
-    ) : null,
     history: staff && live ? <HistorySection itemId={item.id} barId={item.bar_id} canEdit={p.canEdit} compact={p.wide} /> : null,
     cost: staff && live ? <CostSection itemId={item.id} barId={item.bar_id} price={item.price} onMenu={onMenu} /> : null,
     backstory: live ? <Backstory itemId={copy?.classicId ?? item.id} lines={lines} classicName={copy?.classicName} onRiff={p.onRiff} story={catalog && !lock ? item.notes : null} /> : null,
