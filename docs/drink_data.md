@@ -98,7 +98,8 @@ the drink write them, in the editor's Steps field; anyone who can read the
 drink's amounts reads them. The drink page reads them with the drink
 (`step_notes` in `DRINK_PAGE_COLUMNS`), so the spec book has them offline. A
 part moved in the editor takes its words with it; a step the drink no longer
-has loses its words on save.
+has loses its words on save. A part's step goes by the part's own name, or
+`Part 2` with none.
 
 Ingredients | Steps is the person's: `user_prefs.spec_view`, read by
 `hooks/useSpecView.ts`. Signed out, it stays on the device.

@@ -19,6 +19,14 @@ export type StepDraft = Record<string, StepWords>;
 
 export const ASIDE_MAX = 60;
 export const NOTE_MAX = 500;
+/** The count shows from here (Miss-steps-cases, Near the limit). */
+const NOTE_NEAR = 50;
+
+/** "42 left" once a note nears NOTE_MAX; null before that. */
+export function noteLeft(note: string): string | null {
+  const left = NOTE_MAX - note.length;
+  return left <= NOTE_NEAR ? `${left} left` : null;
+}
 
 export function stepDraft(rows: readonly StepNote[] | null | undefined): StepDraft {
   return Object.fromEntries((rows ?? []).map((r) => [r.step_key, { aside: r.aside ?? '', note: r.note ?? '' }]));
@@ -29,10 +37,11 @@ export function draftSteps(items: readonly SortableRecipeItem[], parts: readonly
   const lines = items.map((item, i) => ({
     // Trimmed as the page's lines are (lib/spec.ts), so both find the same garnish.
     unit: item.unit?.trim() || null,
+    name: item.name,
     float: !!item.is_float,
     part: parts ? linePart(parts, toLine(item, i).key, false) : 1,
   }));
-  return specGroups(lines, verb);
+  return specGroups(lines, verb, parts?.map((p) => p.name));
 }
 
 /**

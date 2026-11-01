@@ -4,7 +4,7 @@ import assert from 'node:assert/strict';
 
 import type { DraftPart } from './drinkParts';
 import type { SortableRecipeItem } from './recipeItem';
-import { draftSteps, moveStepDraft, stepDraft, stepNoteChanges } from './stepNotes';
+import { draftSteps, moveStepDraft, noteLeft, NOTE_MAX, stepDraft, stepNoteChanges } from './stepNotes';
 
 const line = (key: string, unit: string, extra: Partial<SortableRecipeItem> = {}) => ({ key, ingredient_id: key, name: key, amount: '1', unit, ...extra }) as SortableRecipeItem;
 const penicillin = [line('scotch', 'ml'), line('lemon', 'ml'), line('islay', 'ml', { is_float: true }), line('ginger', 'each')];
@@ -22,6 +22,17 @@ const empty: DraftPart[] = [{ name: 'Base', lines: [], methods: [] }, { name: 'M
 assert.deepEqual(draftSteps(penicillin, empty, 'Shake').map((g) => g.key), ['part-2', 'part-3', 'garnish']);
 // A unit with stray spaces is the same garnish the page finds.
 assert.deepEqual(draftSteps([line('scotch', 'ml'), line('ginger', ' each ')], null, null).map((g) => g.key), ['main', 'garnish']);
+
+// A part's own name is its step's name; a blank one reads Part 2; the first part's method still names it.
+assert.deepEqual(draftSteps(penicillin, parts, 'Shake').map((g) => g.title), ['Shake', 'Top', null]);
+assert.deepEqual(draftSteps(penicillin, parts, null).map((g) => g.title), ['Base', 'Top', null]);
+assert.equal(draftSteps(penicillin, [parts[0], { ...parts[1], name: ' ' }], 'Shake')[1].title, 'Part 2');
+// Each step lists what's in it.
+assert.deepEqual(draftSteps(penicillin, null, 'Shake')[0].lines.map((l) => l.name), ['scotch', 'lemon']);
+
+// The count shows near the limit (the board's 42 left), not before.
+assert.equal(noteLeft('x'.repeat(NOTE_MAX - 51)), null);
+assert.equal(noteLeft('x'.repeat(NOTE_MAX - 42)), '42 left');
 
 // Loading: nulls read as empty boxes.
 const stored = [

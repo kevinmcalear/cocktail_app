@@ -85,8 +85,8 @@ export function useCocktailEditor(id: string, { enabled = true }: { enabled?: bo
     // The words on its steps (drink_step_notes): an aside by a step's name, a note under it. Null until read; a failed read saves none.
     const [stepNotes, setStepNotesState] = useState<StepDraft>({});
     const storedNotes = useRef<StepNote[] | null>(null);
-    // The Steps field shows only once they're read, so nothing is typed that a save would drop.
-    const [stepNotesRead, setStepNotesRead] = useState(false);
+    // The Steps field opens only once they're read, so nothing is typed that a save would drop.
+    const [stepNotesStatus, setStepNotesStatus] = useState<"loading" | "failed" | "ready">("loading");
 
     const markDirty = useCallback(() => setIsDirty(true), []);
 
@@ -117,6 +117,18 @@ export function useCocktailEditor(id: string, { enabled = true }: { enabled?: bo
     }, [markDirty]);
 
     const setStepNotes = wrap(setStepNotesState);
+    /** Try again after a read that failed. Words already in this edit (kept offline) stay. */
+    const retryStepNotes = async () => {
+        setStepNotesStatus("loading");
+        try {
+            const rows = await fetchStepNotes(id);
+            storedNotes.current = rows;
+            setStepNotesState((prev) => ({ ...stepDraft(rows), ...prev }));
+            setStepNotesStatus("ready");
+        } catch {
+            setStepNotesStatus("failed");
+        }
+    };
     /** One step's aside or note typed. */
     const setStepNote = (key: string, patch: Partial<StepWords>) => {
         setStepNotesState((prev) => ({ ...prev, [key]: { ...(prev[key] ?? { aside: "", note: "" }), ...patch } }));
@@ -157,6 +169,7 @@ export function useCocktailEditor(id: string, { enabled = true }: { enabled?: bo
         // presentation views: a save writes every field back, so masked values
         // would overwrite real ones. Saving waits until both have loaded.
         setRawLoaded(false);
+        setStepNotesStatus("loading");
         Promise.all([
             fetchEditableRecipes(id),
             supabase
@@ -196,7 +209,7 @@ export function useCocktailEditor(id: string, { enabled = true }: { enabled?: bo
                 setPartsState(loaded);
                 setRecipeItems(orderByPart(loaded, items));
                 storedNotes.current = notesRead;
-                setStepNotesRead(!!notesRead);
+                setStepNotesStatus(notesRead ? "ready" : "failed");
                 setStepNotesState(stepDraft(notesRead));
                 setBarId(data.bar_id);
                 setSketchVariant(data.sketch_variant ?? null);
@@ -592,7 +605,8 @@ export function useCocktailEditor(id: string, { enabled = true }: { enabled?: bo
         setMadeInParts,
         togglePartMethod,
         stepNotes,
-        stepNotesRead,
+        stepNotesStatus,
+        retryStepNotes,
         setStepNote,
         setStepNotes,
         localImages,

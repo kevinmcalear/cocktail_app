@@ -32,6 +32,8 @@ export interface SpecCardProps {
   goesOut?: boolean;
   /** The words the drink's editors put on its steps: an aside by a step's name, a note under its lines (Steps only). */
   stepNotes?: readonly StepNote[] | null;
+  /** Made in parts: each part's own name, in order, for its step. */
+  partNames?: readonly (string | null | undefined)[];
 }
 
 /**
@@ -41,7 +43,7 @@ export interface SpecCardProps {
  * names only (a guest, the floor): what's in it by name and the serve line,
  * with no toggle and no hint at what's held back; nothing at all: the serve line.
  */
-export function SpecCard({ itemId, barId, lines, maker, verb = null, serve = [], onBatch, preview, onLine, goesOut, stepNotes }: SpecCardProps) {
+export function SpecCard({ itemId, barId, lines, maker, verb = null, serve = [], onBatch, preview, onLine, goesOut, stepNotes, partNames }: SpecCardProps) {
   const { access } = useSpecAccess(itemId, barId, preview);
   const [view, setView] = useSpecView(maker);
   // Never saved: every page opens at Makes 1 (a Makes 3 carried onto the next drink is a mis-pour).
@@ -74,7 +76,7 @@ export function SpecCard({ itemId, barId, lines, maker, verb = null, serve = [],
       {access.names ? (
         measured && view === 'steps' ? (
           <View style={styles.groups}>
-            {specGroups(lines, verb).map((g) => {
+            {specGroups(lines, verb, partNames).map((g) => {
               const words = stepNotes?.find((n) => n.step_key === g.key);
               const aside = g.title ? words?.aside : null;
               return (

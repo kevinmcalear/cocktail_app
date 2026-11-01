@@ -80,7 +80,7 @@ export interface SpecGroup<L extends StepLine = SpecLine> {
   key: string;
   /** "1", "2": numbered in making order; null for the garnish rows at the end, which sit under no heading. */
   number: string | null;
-  /** "Shake", "Float", "Part 2"; null when the drink is one group with no method to name. */
+  /** "Shake", "Float", a part's own name ("Part 2" when it has none); null when the drink is one group with no method to name. */
   title: string | null;
   lines: L[];
   /** Garnish rows carry their tag instead of a heading. */
@@ -94,14 +94,14 @@ export interface SpecGroup<L extends StepLine = SpecLine> {
  * isn't a step: its rows come last, tagged, under no heading. A simple drink is
  * one group, so it reads like a spec sheet.
  */
-export function specGroups<L extends StepLine>(lines: L[], verb: string | null = null): SpecGroup<L>[] {
+export function specGroups<L extends StepLine>(lines: L[], verb: string | null = null, partNames: readonly (string | null | undefined)[] = []): SpecGroup<L>[] {
   const garnish = lines.filter((l) => isGarnishUnit(l.unit));
   const rest = lines.filter((l) => !isGarnishUnit(l.unit));
   const parts = [...new Set(rest.map((l) => l.part ?? 1))].sort((a, b) => a - b);
   // Part 1 keeps the key of the first pour, so its words stay when a drink goes into parts or out of them. Keyed by the part's own number, not its place in this list, so a part with no lines here doesn't pass its words on.
   const titled: { key: string; title: string | null; lines: L[] }[] =
     parts.length > 1
-      ? parts.map((p) => ({ key: p === 1 ? 'main' : `part-${p}`, title: p === parts[0] && verb ? verb : `Part ${p}`, lines: rest.filter((l) => (l.part ?? 1) === p) }))
+      ? parts.map((p) => ({ key: p === 1 ? 'main' : `part-${p}`, title: p === parts[0] && verb ? verb : partNames[p - 1]?.trim() || `Part ${p}`, lines: rest.filter((l) => (l.part ?? 1) === p) }))
       : [
           { key: 'main', title: verb, lines: rest.filter((l) => !l.float) },
           { key: 'float', title: 'Float', lines: rest.filter((l) => l.float) },
