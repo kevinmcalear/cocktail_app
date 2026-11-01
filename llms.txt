@@ -26,3 +26,5 @@
 - [supabase/migrations](supabase/migrations): schema and RLS
 - [supabase/functions](supabase/functions): edge functions (AI images, glassware ID, account deletion, venue web app)
 - [scripts/design-ratchet.mjs](scripts/design-ratchet.mjs): the design and code-quality ratchet
+- [quality/budgets.json](quality/budgets.json): the 17 quality budgets (speed, size, offline, accessibility, stability) with today's numbers; `npm run check:budgets` gates the web ones
+- [.maestro/README.md](.maestro/README.md) and [e2e/web](e2e/web): the phone (Maestro) and web (Playwright) journeys, run on the local stack

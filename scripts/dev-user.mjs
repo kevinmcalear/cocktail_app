@@ -4,12 +4,15 @@
 // signs in, and writes the session to .expo/dev-session.json.
 //
 //   node scripts/dev-user.mjs
+//   node scripts/dev-user.mjs --link   also prints a one-time sign-in link for the
+//                                      dev build (and nothing else on stdout), for
+//                                      Maestro (.maestro/README.md) or a simulator
 //
 // Web: put the file's contents in localStorage under its `storageKey`, then
 // reload. Refuses to run against anything but a local stack.
 import { execFileSync } from 'node:child_process';
 import { randomBytes } from 'node:crypto';
-import { mkdirSync, writeFileSync } from 'node:fs';
+import { mkdirSync, readFileSync, writeFileSync } from 'node:fs';
 import { createClient } from '@supabase/supabase-js';
 
 const status = JSON.parse(execFileSync('supabase', ['status', '-o', 'json'], { encoding: 'utf8' }));
@@ -59,4 +62,13 @@ if (signInError) throw signInError;
 const storageKey = `sb-${new URL(url).hostname.split('.')[0]}-auth-token`;
 mkdirSync('.expo', { recursive: true });
 writeFileSync('.expo/dev-session.json', JSON.stringify({ storageKey, session: signIn.session }));
-console.log(`Signed in ${EMAIL} (Admin at Little Rye, Bartender at Pale Moth). Session written to .expo/dev-session.json.`);
+const link = process.argv.includes('--link');
+(link ? console.error : console.log)(`Signed in ${EMAIL} (Admin at Little Rye, Bartender at Pale Moth). Session written to .expo/dev-session.json.`);
+
+if (link) {
+  // The dev build's scheme (app.config.ts adds -dev); the app shows Continue, then signs in.
+  const { scheme } = JSON.parse(readFileSync('constants/brand.json', 'utf8'));
+  const { data, error } = await admin.auth.admin.generateLink({ type: 'magiclink', email: EMAIL });
+  if (error) throw error;
+  console.log(`${scheme}-dev://auth/callback?token_hash=${data.properties.hashed_token}&type=magiclink`);
+}

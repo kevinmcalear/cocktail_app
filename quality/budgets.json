@@ -1,0 +1,188 @@
+{
+  "about": "Kevin's 17 quality budgets (B1 to B17 of the quality bar, 31 Oct 2026), enforced (decided 1 Nov 2026). Target and howMeasured are copied from the quality bar. `current` is the best number measured so far, null when nothing in the repo measures it yet (`why` says what would). `npm run check:budgets` (run by build:web, so CI) fails when a number it measures gets worse than `current` by more than `noise`, and `--update` locks gains in. To accept a worse number, edit `current` by hand and say why in the PR. Sizes are bytes.",
+  "devices": "No reference phones yet: device numbers are measured on simulators and emulators for now, not on the iPhone 13, the 6 GB Android and the bar iPad the quality bar names. Say which simulator or emulator when recording one.",
+  "budgets": [
+    {
+      "id": "B1",
+      "name": "Cold start to a usable first screen (native)",
+      "target": "First frame ≤ 400 ms on iPhone (Apple). TTI p75 ≤ 1.5 s on the iPhone, ≤ 2.5 s on the reference Android. Android vitals call ≥ 5 s cold \"slow\".",
+      "howMeasured": "`expo-observe` `cold_launch` and `tti` with `markInteractive` on Tonight and the drink page. Flashlight on the reference Android.",
+      "ratchet": "lower",
+      "current": null,
+      "why": "Not measured yet. Read `eas observe:metrics` once a build with Observe is in use, or time it on a simulator or emulator."
+    },
+    {
+      "id": "B2",
+      "name": "Warm return to the app",
+      "target": "p75 ≤ 300 ms to interactive. Android \"slow\" warm start is ≥ 2 s.",
+      "howMeasured": "`expo-observe` warm launch.",
+      "ratchet": "lower",
+      "current": null,
+      "why": "Not measured yet: Observe warm launch, from a build in use."
+    },
+    {
+      "id": "B3",
+      "name": "Screen open, data already on the phone",
+      "target": "Content on screen ≤ 100 ms p75 after the tap. Never a spinner.",
+      "howMeasured": "`expo-observe` per-route navigation TTR. A Maestro timing step.",
+      "ratchet": "lower",
+      "current": null,
+      "why": "Not measured yet: Observe navigation TTR, or a Maestro timing step (the flows in .maestro/ check paths, not time)."
+    },
+    {
+      "id": "B4",
+      "name": "Screen open, data not on the phone",
+      "target": "Drawn outline (pencil) ≤ 100 ms. Content ≤ 1 s p75 on 4G. Shopify's screen target is 500 ms p75.",
+      "howMeasured": "Playwright request count per route on the local stack. Observe TTR.",
+      "ratchet": "lower",
+      "current": null,
+      "why": "Not measured yet: Observe TTR. The request count is B17."
+    },
+    {
+      "id": "B5",
+      "name": "Tap to visible response",
+      "target": "≤ 100 ms (Nielsen, RAIL), feedback ≤ 50 ms. Web INP ≤ 200 ms p75.",
+      "howMeasured": "Reassure render time. Web INP from PostHog or Vercel field data.",
+      "ratchet": "lower",
+      "current": null,
+      "why": "Not measured yet: no Reassure tests, and no INP field data read."
+    },
+    {
+      "id": "B6",
+      "name": "Search, per keystroke",
+      "target": "Typed letter echoes in the same frame. Local results ≤ 50 ms p95 on the reference Android (Superhuman's < 100 ms, aim < 50; Algolia ≤ 50 ms, vendor). ≤ 8 ms of JS per keystroke. 0 network calls for your venue or your drinks. Everywhere: at most 1 server call per settled query (250 ms pause), results ≤ 500 ms p75, appended below, never reordering the top hit.",
+      "howMeasured": "`lib/searchBench.check.ts` counting operations (CI-stable). An on-device probe in a release build, reported as an Observe event. A Maestro typing flow.",
+      "ratchet": "lower",
+      "current": null,
+      "why": "Not measured yet: lib/searchBench.check.ts does not exist."
+    },
+    {
+      "id": "B7",
+      "name": "Offline",
+      "target": "Everything below opens with no network and no spinner: the active venue's whole spec book (drinks, lines, steps, house-mades, allergens, current menus), your drinks, rankings, shelf and the catalog names.",
+      "howMeasured": "Maestro flow in airplane mode (Android `setAirplaneMode`). A check that the spec book covers the venue.",
+      "ratchet": "lower",
+      "current": null,
+      "why": "Not measured yet: no spec book and no airplane-mode Maestro flow."
+    },
+    {
+      "id": "B8",
+      "name": "Writes",
+      "target": "Every write shows its result ≤ 100 ms (optimistic), is queued offline, survives a relaunch and is idempotent (client id).",
+      "howMeasured": "Ratchet rule: `useMutation` without a `mutationKey` and registered defaults. Maestro offline add-a-drink flow.",
+      "ratchet": "lower",
+      "current": null,
+      "why": "Not measured yet: no rule counts `useMutation` calls without a `mutationKey`."
+    },
+    {
+      "id": "B9",
+      "name": "Scrolling long lists",
+      "target": "0 frozen frames (> 700 ms). < 5% slow frames while scrolling Library (500 rows), Discover sheet and rankings on the reference Android. 120 Hz animations on ProMotion.",
+      "howMeasured": "Flashlight score (FPS, JS FPS) on Android. Observe or Sentry frames. Play vitals slow and frozen rendering.",
+      "ratchet": "lower",
+      "current": null,
+      "why": "Not measured yet: Flashlight on an Android emulator, or Observe frames."
+    },
+    {
+      "id": "B10",
+      "name": "Images",
+      "target": "List thumbnail ≤ 30 KB. Hero ≤ 250 KB. A ThumbHash paints in the first frame. 0 layout shift.",
+      "howMeasured": "Playwright bytes per Library screen. Upload check script.",
+      "ratchet": "lower",
+      "current": null,
+      "why": "Not measured yet: no byte count per Library screen and no upload check."
+    },
+    {
+      "id": "B11",
+      "name": "Memory",
+      "target": "Foreground p75 ≤ 400 MB on the 6 GB Android (Play's bad-behaviour line is 2.0 to 2.25 GB, store visibility from Feb 2027, Announced). P99/P50 < 3.5.",
+      "howMeasured": "Play vitals memory. Flashlight RAM.",
+      "ratchet": "lower",
+      "current": null,
+      "why": "Not measured yet: Flashlight on an Android emulator, or Play vitals once the app is in Play."
+    },
+    {
+      "id": "B12",
+      "name": "App size",
+      "target": "iOS download ≤ 40 MB. Android ≤ 30 MB. JS bundle ≤ 12 MB and not growing (Google: each 6 MB costs about 1% of installs).",
+      "howMeasured": "CI job: `expo export -p ios` bytecode size against budget. EAS build size in the release checklist.",
+      "ratchet": "lower",
+      "measuredBy": "scripts/budgets.mjs in build:web (CI): webJs is every JavaScript file in the web export, raw bytes. Each route chunk carries its own copy of code fewer than 20 routes share, so a change to shared code counts once per route: hence `noise` of 512 KB (about 1%). The iOS Hermes bundle (14.0 to 14.7 MB in builds 44 to 52, by hand) and the store downloads are not measured in CI: they need `expo export -p ios` and EAS builds.",
+      "noise": 524288,
+      "current": {
+        "webJs": 50452270
+      }
+    },
+    {
+      "id": "B13",
+      "name": "Public web pages (`/d /m /p`, table page)",
+      "target": "LCP ≤ 2.5 s, INP ≤ 200 ms, CLS ≤ 0.1 at p75. First-load JS ≤ 300 KB br for public pages and ≤ 50 KB for a table page; app pages ≤ 600 KB br (judgment).",
+      "howMeasured": "Lighthouse CI (mobile) on 3 routes per PR. Byte budget in `scripts/check-web-chunks.mjs`. Field data.",
+      "ratchet": "lower",
+      "measuredBy": "scripts/budgets.mjs in build:web (CI): first-load JS per page, the app's scripts in its exported HTML, brotli quality 11, in bytes (KB is 1024). A page fails when it gets worse than `current` by more than `noise`, not for being over `limit`: the gap is reported. App pages are the four tabs' first pages. LCP, INP and CLS are not measured yet (Lighthouse CI and field data).",
+      "noise": 2048,
+      "current": {
+        "/d/[id]": 681194,
+        "/m/[id]": 663472,
+        "/p/[id]": 790520,
+        "/": 782406,
+        "/drinks": 829849,
+        "/discover": 962226,
+        "/you": 685686
+      },
+      "limit": {
+        "/d/[id]": 307200,
+        "/m/[id]": 307200,
+        "/p/[id]": 307200,
+        "table page": 51200,
+        "/": 614400,
+        "/drinks": 614400,
+        "/discover": 614400,
+        "/you": 614400
+      },
+      "pending": {
+        "table page": "The guest's table page has no route yet (a Discover-lane screen). When it lands, rename this key in `limit` to its route, delete it here, and run `npm run check:budgets -- --update`."
+      }
+    },
+    {
+      "id": "B14",
+      "name": "Accessibility",
+      "target": "Every top-5 journey completes at iOS AX5 (Body 53 pt) and Android font scale 2.0 with no clipped text. VoiceOver and TalkBack label and role every control. Contrast 4.5:1, or 3:1 for large text and UI. Reduce Motion, Increase Contrast, Reduce Transparency and Bold Text all honoured. Targets 44 pt / 48 dp. No text under 13 pt. Qualify for Apple's Accessibility Nutrition Labels.",
+      "howMeasured": "Maestro at the largest text size with screenshots. `@axe-core/playwright` on web (0 serious). Ratchet rules. A manual VoiceOver and TalkBack pass per screen.",
+      "ratchet": "lower",
+      "current": null,
+      "why": "Not measured yet: no axe run and no large-text Maestro flow. The design ratchet already fails a font size taken under 13 pt."
+    },
+    {
+      "id": "B15",
+      "name": "Stability",
+      "target": "Crash-free sessions ≥ 99.9% floor, 99.95% target (Luciq median, vendor). User-perceived crash rate < 0.5% (Play bad line 1.09%). ANR < 0.2% (Play line 0.47%).",
+      "howMeasured": "Sentry release health per OTA. Play vitals. EAS Update insights per update.",
+      "ratchet": "higher",
+      "current": null,
+      "why": "Field data, not the repo: read Sentry release health and EAS Update insights per release."
+    },
+    {
+      "id": "B16",
+      "name": "Database",
+      "target": "Every hot RPC p95 ≤ 150 ms of server time at 10x today's rows. 0 statement timeouts a week. No Seq Scan on items, recipes or rank_entries in hot paths.",
+      "howMeasured": "EXPLAIN checks in `supabase/tests` against a 10x seed. `pg_stat_statements` top 10 in `npm run db:health`.",
+      "ratchet": "lower",
+      "current": null,
+      "why": "Not measured yet: no 10x seed or EXPLAIN checks, and db:health does not read pg_stat_statements."
+    },
+    {
+      "id": "B17",
+      "name": "Server calls per screen",
+      "target": "Drink page cold ≤ 3 calls (one read model plus images). Library ≤ 2. Search ≤ 2 per settled query.",
+      "howMeasured": "Playwright network count per route (local stack) as a ratchet.",
+      "ratchet": "lower",
+      "measuredBy": "npm run test:e2e:web, on the local stack (not CI): every request to the Supabase API (REST, RPC, auth, storage) from opening the page until none for 2 s. Public: /d/<a published drink>, signed out. Staff: /cocktail/<the House Martini> as the demo Admin at Little Rye, opened cold, so it also counts the app shell under the page. The staff count moves with what the shared local stack holds: rerun on a freshly seeded stack before believing a jump. Library and Search are not counted yet.",
+      "noise": 5,
+      "current": {
+        "public drink page, cold": 14,
+        "staff drink page, cold": 59
+      }
+    }
+  ]
+}
