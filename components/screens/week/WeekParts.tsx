@@ -116,7 +116,8 @@ export function WeekRibbon({ days, today, onPick, picked }: { days: { day: strin
 const styles = StyleSheet.create({
   line: { flexDirection: 'row', alignItems: 'center', gap: space.md, minHeight: 56, paddingVertical: space.sm, borderBottomWidth: StyleSheet.hairlineWidth },
   day: { width: 64, ...font.figures },
-  dayShort: { width: 40 },
+  // Fits "Tonight" in the system font on one line.
+  dayShort: { width: 56 },
   flex: { flex: 1, minWidth: 0 },
   ribbon: { flexDirection: 'row', gap: space.xs },
   cell: { flex: 1, alignItems: 'center', gap: space.xs, paddingVertical: space.sm, borderRadius: radius.control, minHeight: 64 },

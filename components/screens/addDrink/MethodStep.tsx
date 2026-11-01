@@ -27,8 +27,8 @@ interface MethodStepProps extends StepProps {
 
 /**
  * How it's made: the picks first, as numbered steps in the order tapped
- * ("1 Dry shake ... 15 s, no ice"), then every method in two groups (Mix,
- * Air and texture), and a field for your own. Made in parts (Q20b), each
+ * ("1 Dry shake ... 15 s, no ice"), then every method in its group (Mix,
+ * Air and texture, Smoke and fire and the rest), and a field for your own. Made in parts (Q20b), each
  * part has its own instead (MethodParts).
  */
 export function MethodStep({ options, draft, set, suggested, why, hint, tellUs }: MethodStepProps) {

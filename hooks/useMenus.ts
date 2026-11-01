@@ -1,10 +1,11 @@
-import { useQuery } from '@tanstack/react-query';
+import { useQuery, useQueryClient } from '@tanstack/react-query';
 
 import { useUserId } from '@/ctx/AuthContext';
 import { fetchPublished, type PublishedDrink } from '@/hooks/usePublished';
 import { heroPicture, type ItemImageLink } from '@/lib/itemImages';
 import { ingredientLine, readingName, sentenceLine } from '@/lib/menus';
 import { sortRecipesByOrder } from '@/lib/recipeUtils';
+import { bookFor, bookMenu } from '@/lib/specBook';
 import { normalizeAllowedTypes, type SectionDrinkType } from '@/lib/sectionAllowedTypes';
 import { supabase } from '@/lib/supabase';
 import type { MenuDetail, MenuDrink, MenuSummary } from '@/types/menus';
@@ -73,47 +74,54 @@ export const menuKeys = {
  */
 export function useVenueMenus(barId: string | null | undefined) {
   const userId = useUserId();
+  const client = useQueryClient();
   return useQuery({
     queryKey: menuKeys.venue(barId ?? null, userId),
     enabled: !!userId,
     staleTime: 60_000,
-    queryFn: async (): Promise<MenuSummary[]> => {
-      // ponytail: every menu the venue has ever had, in one page. A venue runs
-      // a handful a year; page by ends_at if one ever has hundreds.
-      // A venue's list is only the venue's menus; your own live in home mode.
-      const scope = barId ? `bar_id.eq.${barId}` : `and(bar_id.is.null,created_by.eq.${userId})`;
-      const { data, error } = await supabase
-        .from('menus')
-        // Every drink's id (Library's "on a menu" filter), but pictures for
-        // only the first few: a cover-less menu's visual shows MENU_PICTURES.
-        .select(
-          `${MENU_COLUMNS}, menu_drinks(item_id), pictured:menu_drinks(sort_order, item:items!item_id(id, name, item_images(angle, sort_order, is_generated, images(url)))), events(id, name, starts_at), menu_sections(min_items, menu_drinks(count))`
-        )
-        .or(scope)
-        .order('created_at', { ascending: false })
-        .order('sort_order', { referencedTable: 'pictured' })
-        .limit(MENU_PICTURES, { referencedTable: 'pictured' });
-      if (error) throw error;
-      return (data ?? []).map((row) => {
-        const event = one(row.events as { id: string; name: string; starts_at: string }[] | null);
-        const drinks = row.pictured ?? [];
-        return {
-          ...toSummaryBase(row as MenuRow),
-          itemIds: (row.menu_drinks ?? []).map((d) => d.item_id).filter((id): id is string => !!id),
-          // Sections still short of their least: a draft's amber "1 section short".
-          shortSections: ((row.menu_sections ?? []) as { min_items: number | null; menu_drinks: { count: number }[] }[]).filter(
-            (sec) => (sec.min_items ?? 0) > (sec.menu_drinks?.[0]?.count ?? 0)
-          ).length,
-          pictures: drinks.flatMap((d) => {
-            const item = one(d.item);
-            if (!item) return [];
-            const hero = heroPicture(Array.isArray(item.item_images) ? item.item_images : item.item_images ? [item.item_images] : []);
-            return [{ id: item.id, name: item.name, imageUrl: hero?.url ?? null, isSketch: hero?.isSketch ?? false }];
-          }).slice(0, MENU_PICTURES),
-          event: event ? { id: event.id, name: event.name, startsAt: event.starts_at } : null,
-        };
-      });
-    },
+    // The venue's spec book on this phone paints the list first (hooks/useSpecBook.ts).
+    initialData: () => (barId ? bookFor(client, barId)?.menus : undefined),
+    initialDataUpdatedAt: () => (barId ? bookFor(client, barId)?.syncedAt : undefined),
+    queryFn: () => fetchVenueMenus(barId ?? null, userId),
+  });
+}
+
+/** useVenueMenus' list, also read into a venue's spec book. */
+export async function fetchVenueMenus(barId: string | null, userId: string | null): Promise<MenuSummary[]> {
+  // ponytail: every menu the venue has ever had, in one page. A venue runs
+  // a handful a year; page by ends_at if one ever has hundreds.
+  // A venue's list is only the venue's menus; your own live in home mode.
+  const scope = barId ? `bar_id.eq.${barId}` : `and(bar_id.is.null,created_by.eq.${userId})`;
+  const { data, error } = await supabase
+    .from('menus')
+    // Every drink's id (Library's "on a menu" filter), but pictures for
+    // only the first few: a cover-less menu's visual shows MENU_PICTURES.
+    .select(
+      `${MENU_COLUMNS}, menu_drinks(item_id), pictured:menu_drinks(sort_order, item:items!item_id(id, name, item_images(angle, sort_order, is_generated, images(url)))), events(id, name, starts_at), menu_sections(min_items, menu_drinks(count))`
+    )
+    .or(scope)
+    .order('created_at', { ascending: false })
+    .order('sort_order', { referencedTable: 'pictured' })
+    .limit(MENU_PICTURES, { referencedTable: 'pictured' });
+  if (error) throw error;
+  return (data ?? []).map((row) => {
+    const event = one(row.events as { id: string; name: string; starts_at: string }[] | null);
+    const drinks = row.pictured ?? [];
+    return {
+      ...toSummaryBase(row as MenuRow),
+      itemIds: (row.menu_drinks ?? []).map((d) => d.item_id).filter((id): id is string => !!id),
+      // Sections still short of their least: a draft's amber "1 section short".
+      shortSections: ((row.menu_sections ?? []) as { min_items: number | null; menu_drinks: { count: number }[] }[]).filter(
+        (sec) => (sec.min_items ?? 0) > (sec.menu_drinks?.[0]?.count ?? 0)
+      ).length,
+      pictures: drinks.flatMap((d) => {
+        const item = one(d.item);
+        if (!item) return [];
+        const hero = heroPicture(Array.isArray(item.item_images) ? item.item_images : item.item_images ? [item.item_images] : []);
+        return [{ id: item.id, name: item.name, imageUrl: hero?.url ?? null, isSketch: hero?.isSketch ?? false }];
+      }).slice(0, MENU_PICTURES),
+      event: event ? { id: event.id, name: event.name, startsAt: event.starts_at } : null,
+    };
   });
 }
 
@@ -176,48 +184,55 @@ export const MENU_DRINK_ITEM = `item:items!item_id(${MENU_DRINK_COLUMNS})`;
  * `fresh`: always fetch on mount, whatever is cached (the editor starts from this).
  */
 export function useMenu(menuId: string | null | undefined, { fresh = false }: { fresh?: boolean } = {}) {
+  const client = useQueryClient();
   return useQuery({
     queryKey: menuKeys.detail(menuId ?? ''),
     enabled: !!menuId,
     staleTime: 30_000,
     refetchOnMount: fresh ? 'always' : true,
-    queryFn: async (): Promise<MenuDetail | null> => {
-      const [menuRes, sectionsRes] = await Promise.all([
-        supabase.from('menus').select(MENU_COLUMNS).eq('id', menuId!).maybeSingle(),
-        supabase
-          .from('menu_sections')
-          .select(`id, name, sort_order, min_items, max_items, allowed_types, menu_drinks(sort_order, item_id, price, ${MENU_DRINK_ITEM})`)
-          .eq('menu_id', menuId!)
-          .order('sort_order'),
-      ]);
-      if (menuRes.error) throw menuRes.error;
-      if (sectionsRes.error) throw sectionsRes.error;
-      if (!menuRes.data) return null;
-      type Row = { sort_order: number | null; item_id: string | null; price: string | null; item: MenuItemRow | MenuItemRow[] | null };
-      const rows = (sectionsRes.data ?? []).flatMap((s) => (s.menu_drinks ?? []) as Row[]);
-      // A home menu can hold drinks other bars published: the public read them
-      // through published_items, not items.
-      const published = await fetchPublished(rows.filter((r) => !one(r.item) && r.item_id).map((r) => r.item_id!));
-      const drinkFor = (r: Row): MenuDrink | null => {
-        const item = one(r.item);
-        if (item) return toMenuDrink(item, r.price);
-        const p = published.find((x) => x.id === r.item_id);
-        return p ? publishedMenuDrink(p) : null;
-      };
-      return {
-        ...toSummaryBase(menuRes.data as MenuRow),
-        sections: (sectionsRes.data ?? []).map((s) => ({
-          id: s.id,
-          name: s.name,
-          minItems: s.min_items ?? 0,
-          maxItems: s.max_items ?? null,
-          allowedTypes: normalizeAllowedTypes(s.allowed_types),
-          drinks: [...((s.menu_drinks ?? []) as Row[])]
-            .sort((a, b) => Number(a.sort_order ?? 0) - Number(b.sort_order ?? 0))
-            .map(drinkFor)
-            .filter((d): d is MenuDrink => !!d),
-        })),
-      };
-    },
+    // A list on now is in the venue's spec book on this phone (hooks/useSpecBook.ts).
+    initialData: () => (menuId ? bookMenu(client, menuId)?.menu : undefined),
+    initialDataUpdatedAt: () => (menuId ? bookMenu(client, menuId)?.syncedAt : undefined),
+    queryFn: () => fetchMenu(menuId!),
   });
+}
+
+/** One menu as useMenu reads it, also read into a venue's spec book for each list on now. */
+export async function fetchMenu(menuId: string): Promise<MenuDetail | null> {
+  const [menuRes, sectionsRes] = await Promise.all([
+    supabase.from('menus').select(MENU_COLUMNS).eq('id', menuId!).maybeSingle(),
+    supabase
+      .from('menu_sections')
+      .select(`id, name, sort_order, min_items, max_items, allowed_types, menu_drinks(sort_order, item_id, price, ${MENU_DRINK_ITEM})`)
+      .eq('menu_id', menuId!)
+      .order('sort_order'),
+  ]);
+  if (menuRes.error) throw menuRes.error;
+  if (sectionsRes.error) throw sectionsRes.error;
+  if (!menuRes.data) return null;
+  type Row = { sort_order: number | null; item_id: string | null; price: string | null; item: MenuItemRow | MenuItemRow[] | null };
+  const rows = (sectionsRes.data ?? []).flatMap((s) => (s.menu_drinks ?? []) as Row[]);
+  // A home menu can hold drinks other bars published: the public read them
+  // through published_items, not items.
+  const published = await fetchPublished(rows.filter((r) => !one(r.item) && r.item_id).map((r) => r.item_id!));
+  const drinkFor = (r: Row): MenuDrink | null => {
+    const item = one(r.item);
+    if (item) return toMenuDrink(item, r.price);
+    const p = published.find((x) => x.id === r.item_id);
+    return p ? publishedMenuDrink(p) : null;
+  };
+  return {
+    ...toSummaryBase(menuRes.data as MenuRow),
+    sections: (sectionsRes.data ?? []).map((s) => ({
+      id: s.id,
+      name: s.name,
+      minItems: s.min_items ?? 0,
+      maxItems: s.max_items ?? null,
+      allowedTypes: normalizeAllowedTypes(s.allowed_types),
+      drinks: [...((s.menu_drinks ?? []) as Row[])]
+        .sort((a, b) => Number(a.sort_order ?? 0) - Number(b.sort_order ?? 0))
+        .map(drinkFor)
+        .filter((d): d is MenuDrink => !!d),
+    })),
+  };
 }
