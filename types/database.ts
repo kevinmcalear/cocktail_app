@@ -3913,6 +3913,88 @@ export type Database = {
           },
         ]
       }
+      menu_drink_asks: {
+        Row: {
+          asked_at: string | null
+          created_at: string
+          created_by: string
+          id: string
+          item_id: string
+          menu_id: string
+          menu_section_id: string | null
+          note: string | null
+          price: string | null
+          replaces_item_id: string | null
+        }
+        Insert: {
+          asked_at?: string | null
+          created_at?: string
+          created_by?: string
+          id?: string
+          item_id: string
+          menu_id: string
+          menu_section_id?: string | null
+          note?: string | null
+          price?: string | null
+          replaces_item_id?: string | null
+        }
+        Update: {
+          asked_at?: string | null
+          created_at?: string
+          created_by?: string
+          id?: string
+          item_id?: string
+          menu_id?: string
+          menu_section_id?: string | null
+          note?: string | null
+          price?: string | null
+          replaces_item_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "menu_drink_asks_item_id_fkey"
+            columns: ["item_id"]
+            isOneToOne: false
+            referencedRelation: "app_item_presentation"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "menu_drink_asks_item_id_fkey"
+            columns: ["item_id"]
+            isOneToOne: false
+            referencedRelation: "items"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "menu_drink_asks_menu_id_fkey"
+            columns: ["menu_id"]
+            isOneToOne: false
+            referencedRelation: "menus"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "menu_drink_asks_menu_section_id_fkey"
+            columns: ["menu_section_id"]
+            isOneToOne: false
+            referencedRelation: "menu_sections"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "menu_drink_asks_replaces_item_id_fkey"
+            columns: ["replaces_item_id"]
+            isOneToOne: false
+            referencedRelation: "app_item_presentation"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "menu_drink_asks_replaces_item_id_fkey"
+            columns: ["replaces_item_id"]
+            isOneToOne: false
+            referencedRelation: "items"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       menu_drinks: {
         Row: {
           added_by: string | null
@@ -4097,6 +4179,124 @@ export type Database = {
             columns: ["replaces_item_id"]
             isOneToOne: false
             referencedRelation: "items"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      menu_list_notices: {
+        Row: {
+          at: string
+          created_at: string
+          id: string
+          item_id: string
+          kind: string
+          menu_id: string
+          to_item_id: string | null
+          told_by: string
+        }
+        Insert: {
+          at?: string
+          created_at?: string
+          id?: string
+          item_id: string
+          kind: string
+          menu_id: string
+          to_item_id?: string | null
+          told_by?: string
+        }
+        Update: {
+          at?: string
+          created_at?: string
+          id?: string
+          item_id?: string
+          kind?: string
+          menu_id?: string
+          to_item_id?: string | null
+          told_by?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "menu_list_notices_item_id_fkey"
+            columns: ["item_id"]
+            isOneToOne: false
+            referencedRelation: "app_item_presentation"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "menu_list_notices_item_id_fkey"
+            columns: ["item_id"]
+            isOneToOne: false
+            referencedRelation: "items"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "menu_list_notices_menu_id_fkey"
+            columns: ["menu_id"]
+            isOneToOne: false
+            referencedRelation: "menus"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "menu_list_notices_to_item_id_fkey"
+            columns: ["to_item_id"]
+            isOneToOne: false
+            referencedRelation: "app_item_presentation"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "menu_list_notices_to_item_id_fkey"
+            columns: ["to_item_id"]
+            isOneToOne: false
+            referencedRelation: "items"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      menu_off_tonight: {
+        Row: {
+          created_at: string
+          id: string
+          item_id: string
+          menu_id: string
+          set_by: string
+          until: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          item_id: string
+          menu_id: string
+          set_by?: string
+          until: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          item_id?: string
+          menu_id?: string
+          set_by?: string
+          until?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "menu_off_tonight_item_id_fkey"
+            columns: ["item_id"]
+            isOneToOne: false
+            referencedRelation: "app_item_presentation"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "menu_off_tonight_item_id_fkey"
+            columns: ["item_id"]
+            isOneToOne: false
+            referencedRelation: "items"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "menu_off_tonight_menu_id_fkey"
+            columns: ["menu_id"]
+            isOneToOne: false
+            referencedRelation: "menus"
             referencedColumns: ["id"]
           },
         ]
