@@ -10,7 +10,6 @@ import { useCocktail } from '@/hooks/useCocktails';
 import { useOpenBeside } from '@/hooks/useDrinksSplit';
 import { useItemScores } from '@/hooks/useFlavor';
 import { useMineFacts } from '@/hooks/useMineFacts';
-import { useStudyPile } from '@/hooks/useStudyPile';
 import { useItemEditAccess } from '@/hooks/useViewAs';
 import { withAlpha } from '@/lib/color';
 import { heroPicture } from '@/lib/itemImages';
@@ -26,7 +25,6 @@ const DrinkScreen = lazy(() => import('@/components/screens/drink/DrinkScreen').
 /** The picked drink's page, beside the list. Opening it full (or editing) goes to its own page. */
 function DrinkPane({ id }: { id: string }) {
   const router = useRouter();
-  const { toggleStudyPile, isInStudyPile } = useStudyPile();
   const query = useCocktail(id, { seeded: true });
   const drink = query.isPlaceholderData ? undefined : query.data;
   const editAccess = useItemEditAccess(drink);
@@ -36,13 +34,9 @@ function DrinkPane({ id }: { id: string }) {
       <DrinkScreen
         pane
         item={drink}
-        inStudyPile={isInStudyPile(drink.id)}
-        onToggleStudyPile={() => toggleStudyPile(drink.id)}
         canEdit={editAccess === 'edit'}
         adminFix={editAccess === 'admin'}
         onEdit={() => router.push(`/cocktail/${drink.id}/edit` as Href)}
-        onFit={() => router.push(`/cocktail/${drink.id}/edit?fit=1` as Href)}
-        onPhotos={() => router.push(`/cocktail/${drink.id}/edit?photos=1` as Href)}
       />
     </Suspense>
   );

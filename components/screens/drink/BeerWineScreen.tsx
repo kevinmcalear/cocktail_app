@@ -1,29 +1,33 @@
 import { Redirect, useLocalSearchParams, useRouter } from 'expo-router';
-import { Platform, StyleSheet, useWindowDimensions, View } from 'react-native';
-import Animated, { useAnimatedScrollHandler, useSharedValue } from 'react-native-reanimated';
+import { Platform, StyleSheet, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
-import { BackbarTheme, Body, BrandProvider, Display, GlassButton, Headline, useBreakpoint, useDs, useGutter } from '@/components/ds';
+import { BackbarTheme, Body, BrandProvider } from '@/components/ds';
+import { DrinkDrawing } from '@/components/ds/DrinkDrawing';
 import { CouldNotLoad, NotAvailable } from '@/components/screens/safety/NotAvailable';
 import { space } from '@/constants/tokens';
 import { useActiveVenue } from '@/hooks/useActiveVenue';
 import { useDropdowns } from '@/hooks/useDropdowns';
 import { useFavorites } from '@/hooks/useFavorites';
-import { useStudyPile } from '@/hooks/useStudyPile';
+import { useMode } from '@/hooks/useMode';
+import { useTeamRole } from '@/hooks/useTeamRole';
 import { recentEntry, useTrackRecent } from '@/hooks/useTrackRecent';
-import { useCanEditItem } from '@/hooks/useViewAs';
+import { useCanEditItem, useEffectiveRole } from '@/hooks/useViewAs';
 import { savedSketch } from '@/lib/beerWineWizard';
 import { formatAbv } from '@/lib/drinkMath';
 import { bareItemId, DRINK_KINDS, type DrinkKind } from '@/lib/drinkKinds';
-import { glassOver, heroPicture, orderedPictures, type ItemImageLink } from '@/lib/itemImages';
+import { heroPicture, orderedPictures, type ItemImageLink } from '@/lib/itemImages';
+import { liquidOf } from '@/lib/sketch/types';
 
+import { AllergyLine } from './AllergyLine';
 import { ApprovalNotice } from './ApprovalNotice';
-import { DrinkControls } from './DrinkControls';
-import { DrinkDesktop } from './DrinkDesktop';
-import { DrinkTags, type Fact } from './DrinkFacts';
-import { DrinkHero, phoneHeroHeight } from './DrinkHero';
+import { DrinkHero } from './DrinkHero';
+import { drawingSize } from './DrawingHero';
 import { DrinkLoading } from './DrinkLoading';
-import { MakeLine } from './MakeLine';
+import { ItemShell } from './ItemShell';
+import { ItemTitle } from './ItemTitle';
+import { PalateFit } from './NamesBlock';
+import { FactRows, RowGroup, type GroupRow } from './RowGroup';
 
 type Item = NonNullable<ReturnType<(typeof DRINK_KINDS)['beer']['useItem']>['data']>;
 
@@ -34,7 +38,6 @@ export function BeerWineScreen({ kind: kindName }: { kind: DrinkKind }) {
   const safeId = bareItemId(kind.kind, id);
   const router = useRouter();
   const { isFavorite, toggleFavorite } = useFavorites();
-  const { toggleStudyPile, isInStudyPile } = useStudyPile();
   // isPending, not isLoading: "no data yet" includes the static prerender and the
   // first paint, when nothing is fetching, and those must not read as not found.
   const { data: item, isPending, error, refetch } = kind.useItem(safeId);
@@ -52,7 +55,7 @@ export function BeerWineScreen({ kind: kindName }: { kind: DrinkKind }) {
       </BackbarTheme>
     );
   }
-  // Favourites and the study pile keep the prefixed id they always had.
+  // Favourites keep the prefixed id they always had.
   const key = `${kind.kind}-${item.id}`;
   return (
     <BeerWineBrand barId={item.bar_id}>
@@ -61,8 +64,6 @@ export function BeerWineScreen({ kind: kindName }: { kind: DrinkKind }) {
         item={item}
         favorite={isFavorite(key)}
         onToggleFavorite={() => void toggleFavorite(key)}
-        inStudyPile={isInStudyPile(key)}
-        onToggleStudyPile={() => toggleStudyPile(key)}
         canEdit={canEdit}
         onEdit={() => router.push(`/${kind.kind}/${id}/edit`)}
       />
@@ -87,121 +88,82 @@ interface BeerWinePageProps {
   item: Item;
   favorite: boolean;
   onToggleFavorite: () => void;
-  inStudyPile: boolean;
-  onToggleStudyPile: () => void;
   canEdit: boolean;
   onEdit: () => void;
 }
 
 /**
- * A beer or a wine on the drink page: the same hero, controls and desktop card
- * as a cocktail, with no spec. Its name and style, then the maker, strength
- * and price in the make line (the Library draws it "Beer · Pint"), the
- * description and its notes. With no photo it's drawn in its glass, as the
+ * A beer or a wine (canvas GWBCX, Item-page): the drink page's hero, sky and
+ * type, with no spec and so no toggle. Guests read what it tastes like, how it
+ * meets their palate and the facts a menu gives; the bar's team adds the
+ * allergens and how to pour it. With no photo it's drawn in its glass, as the
  * add wizard drew it.
  */
-function BeerWinePage({ kind, item, favorite, onToggleFavorite, inStudyPile, onToggleStudyPile, canEdit, onEdit }: BeerWinePageProps) {
-  const ds = useDs();
+function BeerWinePage({ kind, item, favorite, onToggleFavorite, canEdit, onEdit }: BeerWinePageProps) {
   const insets = useSafeAreaInsets();
   // A modal: an iOS page sheet starts below the status bar, but the insets still count it.
   const top = Platform.OS === 'ios' ? space.sm : insets.top;
-  const gutter = useGutter();
-  const breakpoint = useBreakpoint();
-  const wide = breakpoint !== 'phone';
-  const { width, height } = useWindowDimensions();
   const { data: dropdowns } = useDropdowns();
-  const scrollY = useSharedValue(0);
-  const onScroll = useAnimatedScrollHandler((e) => {
-    scrollY.value = e.contentOffset.y;
-  });
+  const home = useMode().mode === 'home';
+  const teamRole = useTeamRole(item.bar_id);
+  const viewing = useEffectiveRole(item.bar_id);
+  // The bar's own team, in venue mode, at Employee or up (View as applied): allergens and Pour it.
+  const staff = !home && teamRole !== null && viewing >= 20;
 
   // Style and region are stored as tags.
   const tags = ((item.item_categories ?? []) as { category_id: string }[])
     .map((ic) => dropdowns?.categories?.find((c) => c.id === ic.category_id)?.name)
     .filter((n): n is string => !!n);
-  const pictures = orderedPictures(item.item_images as ItemImageLink[] | undefined);
+  const pictures = orderedPictures(item.item_images as ItemImageLink[] | undefined).filter((p) => !p.isSketch);
   // ponytail: app_item_presentation has no sketch_variant yet, so this is the style's usual glass; add the column to the view to show the pick.
   const sketch = savedSketch(kind, tags, (item as { sketch_variant?: string | null }).sketch_variant ?? null);
   const abv = formatAbv(item.abv);
-  const facts = (
-    [
-      item.brand_maker ? { label: DRINK_KINDS[kind].maker.label, value: item.brand_maker } : null,
-      abv ? { label: 'ABV', value: abv } : null,
-      item.price != null ? { label: 'Price', value: `$${item.price}` } : null,
-    ] as (Fact | null)[]
-  ).filter((f): f is Fact => !!f);
-  const heroHeight = wide ? height - top : phoneHeroHeight(width, height, top);
-  const hero = (h: number) => <DrinkHero name={item.name} pictures={pictures} glass={null} itemId={item.id} sketch={sketch} palette={pictures[0]?.palette} height={h} fade={!wide} />;
+  const glass = dropdowns?.glassware.find((g) => g.id === item.glassware_id)?.name ?? null;
+  const pour = [item.serve_ml ? `${item.serve_ml} ml` : null, item.price != null ? `$${item.price}` : null].filter(Boolean).join(' · ');
+  const facts = [
+    abv ? { label: 'Strength', value: abv } : null,
+    pour ? { label: kind === 'wine' ? 'Glass' : 'Pour', value: pour } : null,
+    glass ? { label: 'Served', value: glass } : null,
+  ].filter((f): f is { label: string; value: string } => !!f);
+  const pourIt: GroupRow[] = [];
+  if (glass) pourIt.push({ key: 'glass', label: 'Glass', value: glass });
+  if (item.serve_ml) pourIt.push({ key: 'pour', label: 'Pour', value: `${item.serve_ml} ml` });
+  const label = DRINK_KINDS[kind].label;
+  const size = drawingSize(staff);
 
-  const body = (
-    <View style={styles.body}>
-      <View style={styles.make}>
-        <View style={styles.header}>
-          <Display>{item.name}</Display>
-          <DrinkTags tags={tags} />
-        </View>
-        <MakeLine facts={facts} />
-      </View>
-      {item.bar_id ? <ApprovalNotice itemId={item.id} /> : null}
-      {item.description ? <Body tone="muted">{item.description}</Body> : null}
-      {item.notes ? (
-        <View style={styles.notes}>
-          <Headline role="heading">Notes</Headline>
-          <Body>{item.notes}</Body>
-        </View>
-      ) : null}
-    </View>
-  );
+  const title = <ItemTitle eyebrow={[label, tags[0]].filter(Boolean).join(' · ')} name={item.name} credit={[item.brand_maker, item.origin].filter(Boolean).join(', ') || null} />;
 
   return (
-    <View style={[styles.screen, { backgroundColor: ds.c.ground }]}>
-      {wide ? (
-        <DrinkDesktop
-          hero={hero}
-          top={top}
-          heroActions={
-            <>
-              <GlassButton accessibilityLabel={favorite ? 'Remove from favorites' : 'Add to favorites'} icon={favorite ? 'heart.fill' : 'heart'} onMedia onPress={onToggleFavorite} />
-              {canEdit ? <GlassButton accessibilityLabel={`Edit ${kind}`} label="Edit" onMedia onPress={onEdit} /> : null}
-            </>
-          }
-        >
-          {body}
-        </DrinkDesktop>
-      ) : (
-        <Animated.ScrollView onScroll={onScroll} scrollEventThrottle={16} contentContainerStyle={{ paddingBottom: insets.bottom + space.xxxl }}>
-          {hero(heroHeight)}
-          <View style={{ marginTop: -space.xxl, paddingHorizontal: gutter }}>{body}</View>
-        </Animated.ScrollView>
+    <ItemShell
+      name={item.name}
+      top={top}
+      photo={pictures[0] ? { url: pictures[0].url, hero: (h, fade) => <DrinkHero name={item.name} pictures={pictures} glass={null} itemId={item.id} palette={pictures[0].palette} height={h} fade={fade} /> } : null}
+      art={<DrinkDrawing inputs={sketch} seed={item.id} size="hero" staff={staff} label={`Drawing of ${item.name}`} />}
+      size={size}
+      liquid={liquidOf(sketch).hex}
+      title={title}
+      action={null}
+      body={(columns) => (
+        <View style={styles.body}>
+          {columns ? null : title}
+          {item.description ? <Body>{item.description}</Body> : null}
+          {staff ? null : <PalateFit itemId={item.id} name={item.name} />}
+          <FactRows rows={facts} />
+          {staff ? <AllergyLine itemId={item.id} guest={false} /> : null}
+          {item.bar_id && staff ? <ApprovalNotice itemId={item.id} /> : null}
+          {item.notes ? <Body tone="muted">{item.notes}</Body> : null}
+          {staff ? <RowGroup title="Pour it" rows={pourIt} /> : null}
+        </View>
       )}
-      {/* Wide: the sidebar and the hero card's own buttons; no floating back (board drink-desktop). */}
-      {wide && breakpoint === 'desktop' ? null : (
-        <DrinkControls
-          media={glassOver(pictures[0]) === 'dark' ? 'photo' : 'paper'}
-          top={top}
-          heroHeight={heroHeight}
-          scrollY={scrollY}
-          wide={wide}
-          saved={favorite}
-          onToggleSaved={onToggleFavorite}
-          saveAs="favorite"
-          inStudyPile={inStudyPile}
-          onToggleStudyPile={onToggleStudyPile}
-          canEdit={canEdit}
-          onEdit={onEdit}
-          editLabel={`Edit ${kind}`}
-          backOnly={wide}
-        />
-      )}
-    </View>
+      controls={{
+        save: { saved: favorite, onToggle: onToggleFavorite, label: ['Add to favorites', 'Remove from favorites'], icon: 'heart' },
+        onEdit: canEdit ? onEdit : undefined,
+        editLabel: `Edit ${kind}`,
+      }}
+    />
   );
 }
 
 const styles = StyleSheet.create({
-  screen: { flex: 1 },
-  center: { justifyContent: 'center' },
   body: { gap: space.xl },
-  make: { gap: space.md },
-  header: { gap: space.sm },
-  notes: { gap: space.sm },
 });
