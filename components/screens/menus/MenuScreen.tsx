@@ -32,7 +32,8 @@ import { MenuPageHead } from './page/MenuPageHead';
 import { MenuPageRow, type PageRowView } from './page/MenuPageRow';
 import { menuPageModel, type GroupAction } from './page/menuPageModel';
 import { MenuSpecInPlace } from './page/MenuSpecInPlace';
-import { RowChanges, type RowTarget } from './page/RowChanges';
+import { RowChanges, useRowActs, type ChangeTarget } from './page/RowChanges';
+import { useLiveSections } from './page/useLiveSections';
 
 const day = (iso: string) => new Date(iso).toLocaleDateString(undefined, { weekday: 'short', day: 'numeric', month: 'short' });
 
@@ -89,7 +90,7 @@ function MenuPage({ menu, shelf }: { menu: MenuDetail; shelf: { match: ShelfMatc
   const [now] = useState(() => Date.now());
   const [sheet, setSheet] = useState<'more' | 'night' | 'share' | 'publish' | null>(null);
   const [open, setOpen] = useState<string | null>(null);
-  const [changing, setChanging] = useState<RowTarget | null>(null);
+  const [changing, setChanging] = useState<ChangeTarget | null>(null);
   const lens = useMenuLens(menu);
   const hide = useListChanges(menu.id).hide;
   // Only drinks that left after it went on: edits to a draft don't make it a living list.
@@ -153,15 +154,20 @@ function MenuPage({ menu, shelf }: { menu: MenuDetail; shelf: { match: ShelfMatc
     shopping: () => shelf?.toShopping(),
   };
 
-  const items: Item[] = model.sections.flatMap((s) => [
-    { key: `h-${s.id}`, head: { name: s.name, count: s.rows.length } },
-    ...s.rows.map((row) => ({ key: `${s.id}-${row.drink.id}`, row, sectionId: s.id })),
+  // A list that's on, or coming up: its drinks change one at a time, on the row (Menu-l-swap).
+  const changeable = team && (status === 'on' || status === 'upcoming');
+  const living = changeable && isLivingList(lens.rows, menu.startsAt, endedRuns);
+  const acts = useRowActs(menu.id, lens.rows);
+  const listView = useLiveSections({ menu, sections: model.sections, rows: lens.rows, may: acts.may ?? false, on: changeable, living, now });
+  const shown = [...(listView.lead ? [listView.lead] : []), ...listView.main, ...(listView.coming ? [listView.coming] : [])];
+  const items: Item[] = shown.flatMap((s) => [
+    { key: `h-${s.id}`, head: { name: s.name, count: s.rows.filter((r) => !r.struck).length } },
+    ...s.rows.map((row) => ({ key: `${s.id}-${row.drink.id}${row.struck ? '-off' : ''}`, row, sectionId: s.id })),
   ]);
   const column = { paddingHorizontal: gutter, maxWidth: wide ? 760 : undefined, width: '100%', alignSelf: sidebar ? 'flex-start' : 'center' } as const;
   const bartender = lens.lens === 'bartender';
-  // A list that's on, or coming up: its drinks change one at a time, on the row.
-  const changeable = team && (status === 'on' || status === 'upcoming');
-  const living = changeable && isLivingList(lens.rows, menu.startsAt, endedRuns);
+  // Waiting changes, Undo and Coming up show their buttons; any other row shows Swap and Take off once tapped.
+  const alwaysActs = (id: string | undefined, row: PageRowView) => id === 'waiting' || id === 'coming' || !!row.struck;
 
   return (
     <View style={[styles.screen, { backgroundColor: ds.c.ground }]}>
@@ -170,7 +176,7 @@ function MenuPage({ menu, shelf }: { menu: MenuDetail; shelf: { match: ShelfMatc
         data={items}
         keyExtractor={(i) => i.key}
         windowSize={DRAWN_LIST_WINDOW}
-        contentContainerStyle={{ paddingTop: insets.top, paddingBottom: insets.bottom + (draft && team ? 140 : space.xxxl) }}
+        contentContainerStyle={{ paddingBottom: insets.bottom + (draft && team ? 140 : space.xxxl) }}
         renderItem={({ item }) => (
           <View style={column}>
             {item.head ? (
@@ -180,12 +186,16 @@ function MenuPage({ menu, shelf }: { menu: MenuDetail; shelf: { match: ShelfMatc
             ) : item.row ? (
               <MenuPageRow
                 row={item.row}
-                open={bartender ? open === item.key : undefined}
-                onPress={() => (bartender ? setOpen((o) => (o === item.key ? null : item.key)) : openDrink(item.row!))}
-                onMore={
-                  changeable
-                    ? (anchor) => setChanging({ drink: item.row!.drink, sectionId: item.sectionId!, row: lens.rows.find((r) => r.itemId === item.row!.drink.id && r.sectionId === item.sectionId), anchor })
-                    : undefined
+                open={bartender || changeable ? open === item.key : undefined}
+                chevron={bartender}
+                showActs={changeable && (open === item.key || alwaysActs(item.sectionId, item.row))}
+                onAct={(kind) =>
+                  kind === 'swap' || kind === 'takeOff'
+                    ? setChanging({ kind, view: item.row!, sectionId: item.row!.listRow?.sectionId ?? item.sectionId! })
+                    : acts.act(kind, item.row!, item.sectionId!)
+                }
+                onPress={() =>
+                  bartender || (changeable && item.row!.acts?.length && !alwaysActs(item.sectionId, item.row!)) ? setOpen((o) => (o === item.key ? null : item.key)) : openDrink(item.row!)
                 }
               >
                 {bartender && open === item.key ? <MenuSpecInPlace itemId={item.row.drink.id} barId={menu.barId} onOpen={() => openDrink(item.row!)} /> : null}
@@ -211,11 +221,19 @@ function MenuPage({ menu, shelf }: { menu: MenuDetail; shelf: { match: ShelfMatc
               onEdit={(team && draft) || lens.lens === 'home' ? () => go(`/menus/${menu.id}/edit`) : null}
               pill={lens.lens === 'home' ? { label: 'Share', onPress: share } : team && !draft && status !== 'previous' && !living ? { label: 'Edit', onPress: () => go(`/menus/${menu.id}/edit`) } : null}
               bleed={gutter}
+              top={sidebar ? 0 : insets.top}
             />
             {model.banner ? (
               <MenuPageBanner text={model.banner.text} aside={model.banner.aside} warn={model.banner.warn} onPress={model.banner.toNow && live ? () => go(`/menus/${live.id}`) : undefined} />
             ) : null}
-            <MenuPageGroup rows={model.group.map((r) => ({ ...r, onPress: r.action ? actions[r.action] : undefined }))} />
+            {acts.may === false && changeable ? <MenuPageBanner text="Your changes wait for approval" aside={null} warn={false} /> : null}
+            <MenuPageGroup
+              rows={[
+                ...model.group.slice(0, 1),
+                ...(listView.lastChange ? [{ label: 'Last change', value: listView.lastChange, action: null }] : []),
+                ...model.group.slice(1),
+              ].map((r) => ({ ...r, onPress: r.action ? actions[r.action] : undefined }))}
+            />
             {!drinks.length ? <Body tone="muted">No drinks on this menu yet.</Body> : null}
           </View>
         }
@@ -229,7 +247,7 @@ function MenuPage({ menu, shelf }: { menu: MenuDetail; shelf: { match: ShelfMatc
           </Caption>
         </View>
       ) : null}
-      {changing ? <RowChanges menu={menu} rows={lens.rows} target={changing} onClose={() => setChanging(null)} /> : null}
+      {changing ? <RowChanges menu={menu} target={changing} ended={listView.ended} acts={acts} onClose={() => setChanging(null)} /> : null}
       {sheet === 'night' ? <HomeNightSheet menu={menu} onClose={() => setSheet(null)} /> : null}
       {sheet === 'share' ? <ShareMenuSheet menu={menu} onClose={() => setSheet(null)} /> : null}
       {sheet === 'more' ? <MenuMoreSheet menu={menu} status={status} visible onClose={() => setSheet(null)} onNight={home ? () => setSheet('night') : undefined} onEdit={living ? () => go(`/menus/${menu.id}/edit`) : undefined} /> : null}
