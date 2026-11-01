@@ -1,12 +1,13 @@
 import { useQuery } from '@tanstack/react-query';
 
+import { specLevelsFrom, type SpecLevels } from '@/lib/spec';
 import { supabase } from '@/lib/supabase';
-import type { SpecLevels } from '@/lib/spec';
 
 /**
- * The levels at which a venue drink's names, amounts and prep notes open: the
- * drink's own overrides, else the venue's defaults. Used only to label locked
- * sections ("Opens at Bartender"); the server does the actual hiding.
+ * The levels at which a venue drink's names, amounts and prep notes open:
+ * where the venue's role permissions open them, and the drink's hide
+ * (20261204300000_one_home.sql: permissions decide amounts). Used only to
+ * label locked sections ("Opens at Bartender"); the server does the hiding.
  */
 export function useSpecLevels(itemId: string | null | undefined, barId: string | null | undefined) {
   return useQuery({
@@ -14,29 +15,15 @@ export function useSpecLevels(itemId: string | null | undefined, barId: string |
     enabled: !!itemId && !!barId,
     staleTime: 5 * 60_000,
     queryFn: async (): Promise<SpecLevels | null> => {
-      const [bar, item] = await Promise.all([
-        supabase
-          .from('bars')
-          .select('default_generic_ingredient_level, default_specific_brand_level, default_measurement_level, default_prep_level')
-          .eq('id', barId!)
-          .maybeSingle(),
-        supabase
-          .from('items')
-          .select('override_generic_ingredient_level, override_specific_brand_level, override_measurement_level, override_prep_level')
-          .eq('id', itemId!)
-          .maybeSingle(),
+      const [matrix, item] = await Promise.all([
+        supabase.rpc('get_venue_role_matrix', { p_bar_id: barId! }),
+        supabase.from('items').select('spec_hidden').eq('id', itemId!).maybeSingle(),
       ]);
-      if (bar.error) throw bar.error;
-      if (!bar.data) return null;
-      // ponytail: if the item row isn't readable at this role, the venue's
-      // defaults are the best label we have.
-      const o = item.data;
-      return {
-        generic: o?.override_generic_ingredient_level ?? bar.data.default_generic_ingredient_level,
-        brand: o?.override_specific_brand_level ?? bar.data.default_specific_brand_level,
-        measurement: o?.override_measurement_level ?? bar.data.default_measurement_level,
-        prep: o?.override_prep_level ?? bar.data.default_prep_level,
-      };
+      if (matrix.error) throw matrix.error;
+      const rows = (matrix.data as { role_id: string | null; base_level: number; capabilities: string[] }[] | null) ?? [];
+      if (!rows.length) return null;
+      // ponytail: if the item row isn't readable at this role, it reads as not hidden; the server still hides it.
+      return specLevelsFrom(rows, item.data?.spec_hidden ?? false);
     },
   });
 }

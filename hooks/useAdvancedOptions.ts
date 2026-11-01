@@ -6,9 +6,9 @@ import { supabase } from '@/lib/supabase';
  * A venue's Advanced options (jam dec-24, kept by Kevin 31 Oct when the other
  * feature switches went): wash lines on glasses, Fit it in the drink editor,
  * and Ice and Tools in setup. Off unless the venue turns it on in its
- * settings. The one place the app reads or writes it.
- * ponytail: stored as 'advanced' in bars.enabled_features until the Data
- * lane gives it a column of its own; then only this file changes.
+ * settings. Its home is bars.advanced_options (20261204300000_one_home.sql),
+ * which old builds' feature switch stays in step with. The one
+ * place the app reads or writes it.
  */
 const advancedKey = (barId: string | null) => ['venue-advanced', barId] as const;
 
@@ -19,10 +19,9 @@ export function useBarAdvanced(barId: string | null | undefined): boolean {
     enabled: !!id,
     meta: { persist: true },
     queryFn: async (): Promise<boolean> => {
-      const { data: row, error } = await supabase.from('bars').select('enabled_features').eq('id', id!).maybeSingle();
+      const { data: row, error } = await supabase.from('bars').select('advanced_options').eq('id', id!).maybeSingle();
       if (error) throw error;
-      const on = row?.enabled_features;
-      return Array.isArray(on) && on.includes('advanced');
+      return row?.advanced_options ?? false;
     },
   });
   return data ?? false;
@@ -34,8 +33,9 @@ export function useSetBarAdvanced(barId: string) {
   const queryKey = advancedKey(barId);
   return useMutation({
     mutationFn: async (on: boolean) => {
-      const { error } = await supabase.rpc('set_venue_feature', { p_bar_id: barId, p_feature: 'advanced', p_enabled: on });
+      const { data, error } = await supabase.from('bars').update({ advanced_options: on }).eq('id', barId).select('id');
       if (error) throw error;
+      if (!data?.length) throw new Error('Only the venue’s Admins can switch Advanced options.');
     },
     onMutate: async (on) => {
       await client.cancelQueries({ queryKey });

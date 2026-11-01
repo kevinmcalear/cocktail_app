@@ -142,7 +142,8 @@ describe('app_recipe_presentation with the bar defaults', () => {
     guest: [null, null, null, null],
     employee: ['generic', null, null, null],
     bartender: ['brand', 2, 'oz', null],
-    creator: ['brand', 2, 'oz', null],
+    // Prep notes follow house_made, which opens at Drink Creator (20261204300000).
+    creator: ['brand', 2, 'oz', 'standard prep'],
     admin: ['brand', 2, 'oz', 'standard prep'],
   };
 
@@ -274,14 +275,23 @@ describe('ingredient columns and the display_ingredient relationship', () => {
 });
 
 describe('app_recipe_presentation with per-drink overrides', () => {
-  test('lower measurement and prep levels open detail to those roles', async () => {
-    const [employeeRow] = await presented(users.employee.client, ids.open);
-    assert.equal(Number(employeeRow.amount), 2);
-    assert.equal(employeeRow.unit, 'oz');
-    assert.equal(employeeRow.preparation_notes, null);
+  test("a drink's old levels open nothing; switching a role's permissions does", async () => {
+    // Permissions decide amounts (20261204300000): ids.open's lower levels no longer move anything.
+    const [closed] = await presented(users.employee.client, ids.open);
+    assert.equal(closed.amount, null);
+    await serviceInsert('venue_level_overrides', { bar_id: ids.bar, base_level: 20, granted: ['specs'], revoked: [] });
+    await serviceInsert('venue_level_overrides', { bar_id: ids.bar, base_level: 30, granted: ['house_made'], revoked: [] });
+    try {
+      const [employeeRow] = await presented(users.employee.client, ids.open);
+      assert.equal(Number(employeeRow.amount), 2);
+      assert.equal(employeeRow.unit, 'oz');
+      assert.equal(employeeRow.preparation_notes, null);
 
-    const [bartenderRow] = await presented(users.bartender.client, ids.open);
-    assert.equal(bartenderRow.preparation_notes, `open prep ${run}`);
+      const [bartenderRow] = await presented(users.bartender.client, ids.open);
+      assert.equal(bartenderRow.preparation_notes, `open prep ${run}`);
+    } finally {
+      await service.from('venue_level_overrides').delete().eq('bar_id', ids.bar);
+    }
   });
 
   test('a raised visibility level hides the whole recipe from lower roles', async () => {

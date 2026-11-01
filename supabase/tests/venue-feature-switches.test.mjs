@@ -97,3 +97,19 @@ describe('venue feature switches', () => {
     assert.ok(nulls.error, 'null is refused');
   });
 });
+
+describe('Advanced options (20261204300000)', () => {
+  test("one setting per venue, kept in step with old builds' switch both ways", async () => {
+    const off = await service.from('bars').select('advanced_options').eq('id', barId).single();
+    assert.equal(off.data.advanced_options, false, 'off by default');
+    const on = await users.admin.client.from('bars').update({ advanced_options: true }).eq('id', barId).select('advanced_options, enabled_features');
+    assert.ifError(on.error);
+    assert.equal(on.data[0].advanced_options, true);
+    assert.ok(on.data[0].enabled_features.includes('advanced'), 'old builds see it on');
+    const old = await users.admin.client.rpc('set_venue_feature', { p_bar_id: barId, p_feature: 'advanced', p_enabled: false });
+    assert.ifError(old.error);
+    assert.equal((await service.from('bars').select('advanced_options').eq('id', barId).single()).data.advanced_options, false, 'an old build switches it off');
+    const bartender = await users.bartender.client.from('bars').update({ advanced_options: true }).eq('id', barId).select('id');
+    assert.equal(bartender.data?.length ?? 0, 0, 'only its Admins');
+  });
+});
