@@ -12,24 +12,28 @@ import { CreateSheet } from './CreateSheet';
 const LABEL = 'Add: name a drink, paste a link, describe it, or snap a menu, bottle or recipe';
 
 /**
- * Add opens over the page you're on: the Add sheet, and from its last row
- * the New sheet (a bottle, beer, wine, a house-made or a menu). Android's
- * FAB opens its FAB menu first (`fab`).
+ * Add over the page you're on, and from its last row the New sheet (a
+ * bottle, beer, wine, a house-made or a menu). `onClose` once both have gone.
  */
-function useAdd() {
-  const [open, setOpen] = useState<'add' | 'more' | null>(null);
+export function AddSheets({ onClose }: { onClose: () => void }) {
+  const [open, setOpen] = useState<'add' | 'more'>('add');
+  const [shown, setShown] = useState(true);
   // The second sheet waits for the first to have gone.
   const more = () => {
-    setOpen(null);
-    setTimeout(() => setOpen('more'), 350);
+    setShown(false);
+    setTimeout(() => {
+      setOpen('more');
+      setShown(true);
+    }, 350);
   };
-  const sheet = (
-    <>
-      {open === 'add' ? <AddSheet visible onClose={() => setOpen(null)} onMore={more} /> : null}
-      {open === 'more' ? <CreateSheet visible onClose={() => setOpen(null)} /> : null}
-    </>
-  );
-  return { open: () => setOpen('add'), sheet };
+  if (!shown) return null;
+  return open === 'add' ? <AddSheet visible onClose={onClose} onMore={more} /> : <CreateSheet visible onClose={onClose} />;
+}
+
+/** Add's sheets, opened by a button. Android's FAB opens its FAB menu first (AddFab). */
+function useAdd() {
+  const [open, setOpen] = useState(false);
+  return { open: () => setOpen(true), sheet: open ? <AddSheets onClose={() => setOpen(false)} /> : null };
 }
 
 /** The + at the top right of a tab's first page on iOS and phone-width web: a filled circle in the venue's accent. */
