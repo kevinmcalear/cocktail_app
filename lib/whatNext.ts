@@ -23,10 +23,10 @@ export function classicsToAdd<T extends { id: string }>(offered: readonly T[], u
   return offered.filter((c) => !unticked.has(c.id) && !have.has(c.id));
 }
 
-/** A bar's drink that is already that classic: a version of it, or the same name. */
-export function haveClassics(classics: readonly { id: string; name: string }[], drinks: readonly { name: string; riff_of_id: string | null }[]): Set<string> {
+/** A bar's drink that is already that classic: a version of it (based on it; a bar's drinks are only ever riffs), or the same name. */
+export function haveClassics(classics: readonly { id: string; name: string }[], drinks: readonly { name: string; based_on_id: string | null }[]): Set<string> {
   const fold = (s: string) => s.trim().toLowerCase().replace(/\s+/g, ' ');
-  const riffs = new Set(drinks.map((d) => d.riff_of_id).filter(Boolean));
+  const riffs = new Set(drinks.map((d) => d.based_on_id).filter(Boolean));
   const names = new Set(drinks.map((d) => fold(d.name)));
   return new Set(classics.filter((c) => riffs.has(c.id) || names.has(fold(c.name))).map((c) => c.id));
 }

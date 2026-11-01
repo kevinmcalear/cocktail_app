@@ -23,7 +23,7 @@ export function VersionBanner({ itemId, inline = false, venueName = null }: { it
   const router = useRouter();
   const { data } = useLineage(itemId);
   const drink = data?.drink;
-  const classic = drink?.riff_of_id ? data?.ancestors.find((a) => a.id === drink.riff_of_id) : undefined;
+  const classic = drink?.based_on_kind === 'riff' ? data?.ancestors.find((a) => a.id === drink.based_on_id) : undefined;
   const { data: matches } = useSpecMatches(itemId, classic?.is_catalog ? [itemId] : []);
   const { data: source } = useSpecSource(itemId);
   // The classic's other bars, for "and 7 other bars".

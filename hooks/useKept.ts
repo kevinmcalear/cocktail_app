@@ -8,17 +8,18 @@ import { supabase } from '@/lib/supabase';
 
 /**
  * The bars and bar menus a home bartender keeps in Collection: bars they
- * love (loved_bars) and menus they saved (saved_menu_editions: a researched
- * menu by edition, or a venue's own menu by menu id). Both are
- * private to them. Plain JSON (the query cache is persisted).
+ * love (loved_bars, following them), bars they want to go to (want_list kind
+ * 'bar') and menus they saved (saved_menu_editions: a researched menu by
+ * edition, or a venue's own menu by menu id). All private to them. Plain JSON
+ * (the query cache is persisted).
  */
 
 /** What a loved bar may tell you about (loved_bars.alerts). */
 export type LoveAlerts = 'everything' | 'events' | 'menus' | 'none';
 
-export interface LovedBar {
+/** A bar you keep, as Collection shows it. */
+export interface KeptBar {
   id: string;
-  alerts: LoveAlerts;
   handle: string | null;
   name: string;
   avatarUrl: string | null;
@@ -32,6 +33,10 @@ export interface LovedBar {
   timezone: string | null;
   latitude: number | null;
   longitude: number | null;
+}
+
+export interface LovedBar extends KeptBar {
+  alerts: LoveAlerts;
 }
 
 export interface SavedMenu {
@@ -48,29 +53,64 @@ export interface SavedMenu {
   openSpecs: boolean;
 }
 
-interface LovedRow {
-  alerts: LoveAlerts;
-  profile: {
-    id: string;
-    handle: string | null;
-    display_name: string;
-    avatar_url: string | null;
-    locality: string | null;
-    city: string | null;
-    bar_id: string | null;
-    hours: unknown;
-    timezone: string | null;
-    latitude: number | null;
-    longitude: number | null;
-  } | null;
+interface BarPage {
+  id: string;
+  handle: string | null;
+  display_name: string;
+  avatar_url: string | null;
+  locality: string | null;
+  city: string | null;
+  bar_id: string | null;
+  hours: unknown;
+  timezone: string | null;
+  latitude: number | null;
+  longitude: number | null;
 }
+
+const BAR_PAGE = 'id, handle, display_name, avatar_url, locality, city, bar_id, hours, timezone, latitude, longitude';
 
 type EditionCols = Pick<MenuEdition, 'id' | 'name' | 'year' | 'month' | 'end_year' | 'end_month' | 'is_current'>;
 
 const lovedKey = (userId: string | null) => ['loved-bars', userId] as const;
 const savedKey = (userId: string | null) => ['saved-menus', userId] as const;
 
-/** Bars you love, latest first, each with the menu it's pouring now. */
+/** Kept bars' pages, in the same order, each with the menu it's pouring now and its latest release. */
+async function keptBars(bars: BarPage[]): Promise<KeptBar[]> {
+  const ids = bars.map((b) => b.id);
+  const venueIds = bars.flatMap((b) => (b.bar_id ? [b.bar_id] : []));
+  const [current, releases] = await Promise.all([
+    ids.length
+      ? supabase.from('profile_menu_editions').select('id, name, profile_id, year, month, end_year, end_month, is_current').in('profile_id', ids).eq('is_current', true)
+      : { data: [], error: null },
+    // Live releases only (RLS); newest first, so the first per bar is its latest.
+    venueIds.length
+      ? supabase.from('releases').select('id, name, release_date, bar_id').in('bar_id', venueIds).order('release_date', { ascending: false })
+      : { data: [], error: null },
+  ]);
+  if (current.error) throw current.error;
+  if (releases.error) throw releases.error;
+  const menus = (current.data ?? []) as (EditionCols & { profile_id: string })[];
+  const live = (releases.data ?? []) as { id: string; name: string; release_date: string; bar_id: string }[];
+  return bars.map((b) => {
+    const menu = menus.find((m) => m.profile_id === b.id);
+    const release = b.bar_id ? live.find((r) => r.bar_id === b.bar_id) : undefined;
+    return {
+      id: b.id,
+      handle: b.handle,
+      name: b.display_name,
+      avatarUrl: b.avatar_url,
+      place: [b.locality, b.city].filter(Boolean).join(', ') || null,
+      currentMenu: menu ? { id: menu.id, name: menu.name, dates: editionDates(menu) } : null,
+      latestRelease: release ? { id: release.id, name: release.name, date: release.release_date } : null,
+      hours: parseHours(b.hours),
+      timezone: b.timezone,
+      latitude: b.latitude,
+      longitude: b.longitude,
+    };
+  });
+}
+
+/** Bars you love (follow), latest first, each with the menu it's pouring now. */
 export function useLovedBars() {
   const userId = useUserId();
   return useQuery({
@@ -78,46 +118,36 @@ export function useLovedBars() {
     enabled: !!userId,
     staleTime: 60_000,
     queryFn: async (): Promise<LovedBar[]> => {
-      const { data, error } = await supabase
-        .from('loved_bars')
-        .select('alerts, profile:profiles!profile_id(id, handle, display_name, avatar_url, locality, city, bar_id, hours, timezone, latitude, longitude)')
-        .order('loved_at', { ascending: false });
+      const { data, error } = await supabase.from('loved_bars').select(`alerts, profile:profiles!profile_id(${BAR_PAGE})`).order('loved_at', { ascending: false });
       if (error) throw error;
       // A bar whose page went private drops out (its profile embed comes back empty).
-      const bars = ((data ?? []) as LovedRow[]).flatMap((r) => (r.profile ? [{ ...r.profile, alerts: r.alerts ?? 'everything' }] : []));
-      const ids = bars.map((b) => b.id);
-      const venueIds = bars.flatMap((b) => (b.bar_id ? [b.bar_id] : []));
-      const [current, releases] = await Promise.all([
-        ids.length
-          ? supabase.from('profile_menu_editions').select('id, name, profile_id, year, month, end_year, end_month, is_current').in('profile_id', ids).eq('is_current', true)
-          : { data: [], error: null },
-        // Live releases only (RLS); newest first, so the first per bar is its latest.
-        venueIds.length
-          ? supabase.from('releases').select('id, name, release_date, bar_id').in('bar_id', venueIds).order('release_date', { ascending: false })
-          : { data: [], error: null },
-      ]);
-      if (current.error) throw current.error;
-      if (releases.error) throw releases.error;
-      const menus = (current.data ?? []) as (EditionCols & { profile_id: string })[];
-      const live = (releases.data ?? []) as { id: string; name: string; release_date: string; bar_id: string }[];
-      return bars.map((b) => {
-        const menu = menus.find((m) => m.profile_id === b.id);
-        const release = b.bar_id ? live.find((r) => r.bar_id === b.bar_id) : undefined;
-        return {
-          id: b.id,
-          alerts: b.alerts,
-          handle: b.handle,
-          name: b.display_name,
-          avatarUrl: b.avatar_url,
-          place: [b.locality, b.city].filter(Boolean).join(', ') || null,
-          currentMenu: menu ? { id: menu.id, name: menu.name, dates: editionDates(menu) } : null,
-          latestRelease: release ? { id: release.id, name: release.name, date: release.release_date } : null,
-          hours: parseHours(b.hours),
-          timezone: b.timezone,
-          latitude: b.latitude,
-          longitude: b.longitude,
-        };
-      });
+      const bars = ((data ?? []) as { alerts: LoveAlerts | null; profile: BarPage | null }[]).flatMap((r) => (r.profile ? [{ ...r.profile, alerts: r.alerts ?? 'everything' }] : []));
+      return (await keptBars(bars)).map((b, i) => ({ ...b, alerts: bars[i].alerts }));
+    },
+  });
+}
+
+/**
+ * Bars you want to go to (want_list kind 'bar'), latest first, as
+ * useLovedBars has them. Kept under 'loved-bars': loving, unloving and hiding
+ * a bar change it too (the database keeps them in step), and each refreshes that.
+ */
+export function useWantBars() {
+  const userId = useUserId();
+  return useQuery({
+    queryKey: [...lovedKey(userId), 'want'],
+    enabled: !!userId,
+    staleTime: 60_000,
+    queryFn: async (): Promise<KeptBar[]> => {
+      const { data, error } = await supabase
+        .from('want_list')
+        .select(`profile:profiles!venue_profile_id(${BAR_PAGE})`)
+        .eq('user_id', userId!)
+        .eq('kind', 'bar')
+        .order('wanted_at', { ascending: false });
+      if (error) throw error;
+      const bars = ((data ?? []) as { profile: BarPage | null }[]).flatMap((r) => (r.profile ? [r.profile] : []));
+      return keptBars(bars);
     },
   });
 }

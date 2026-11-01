@@ -16,6 +16,8 @@ export interface CreditToCheck {
   /** That bar's suburb or city, when its page shows one. */
   bar_place: string | null;
   named_at: string;
+  /** The credit to answer (answer_item_credit). */
+  credit_id: string;
 }
 
 /** The signed-in person's pending co-creator credits, newest first: "Credits to check" on You. */
@@ -33,15 +35,15 @@ export function useCreditsToCheck() {
 }
 
 /**
- * Says yes or no to a credit on a drink. Only the person named can; a no
- * hides it from everyone but them and the drink's editors, and either can be
- * changed later.
+ * Says yes or no to a credit on a drink (public.answer_item_credit). Only the
+ * one named can; a no hides it from everyone but them and the drink's
+ * editors, nobody can name them there again, and either can be changed later.
  */
 export function useAnswerCredit() {
   const qc = useQueryClient();
   return useMutation({
-    mutationFn: async ({ itemId, accept }: { itemId: string; accept: boolean }): Promise<Enum<'co_creator_status'>> => {
-      const { data, error } = await supabase.rpc('answer_credit', { p_item_id: itemId, p_accept: accept });
+    mutationFn: async ({ creditId, accept }: { creditId: string; accept: boolean }): Promise<string> => {
+      const { data, error } = await supabase.rpc('answer_item_credit', { p_credit_id: creditId, p_accept: accept });
       // The database's own words when it refuses (no longer named on it); otherwise the connection.
       if (error) throw new Error(error.code === 'P0001' ? error.message : "Couldn't save that. Check your connection and try again.");
       return data;

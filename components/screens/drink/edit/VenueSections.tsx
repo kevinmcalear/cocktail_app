@@ -175,9 +175,9 @@ function LinkedTo({ item, onOpen }: { item: DatabaseItem; onOpen: (sheet: VenueS
   const { data: target } = useRankTarget(item.bar_id ? item.id : null);
   const { data: caps = [] } = useCapabilities(item.bar_id);
   const { data: publishing } = useItemPublishing(item.id, item.bar_id);
-  const classic = target?.riff_of?.is_catalog ? target.riff_of : null;
+  const classic = target?.based_on?.is_catalog ? target.based_on : null;
   // A riff on a drink outside the catalog has its own family: nothing to link (as ClassicLink).
-  const canLink = !!item.bar_id && !!target && !(target.riff_of_id && !classic);
+  const canLink = !!item.bar_id && !!target && !(target.based_on_id && !classic);
   const canPublish = !!publishing && (item.bar_id ? caps.includes('publish') : !!userId && publishing.createdBy === userId);
   const rows = [
     ...(canLink ? [{ label: 'Version of', value: classic?.name ?? 'Not linked', hint: 'Link it to the classic it is', onPress: () => onOpen('classic') }] : []),

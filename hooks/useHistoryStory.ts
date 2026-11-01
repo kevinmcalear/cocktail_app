@@ -1,5 +1,6 @@
 import { useQuery } from '@tanstack/react-query';
 
+import { fetchBasedOn } from '@/hooks/useLineage';
 import { supabase } from '@/lib/supabase';
 
 // Row shapes are written by hand until types/ is regenerated.
@@ -16,7 +17,7 @@ export interface HistoryStory {
 /**
  * What History's drink sheet and side panel add to the tree's own facts: a
  * classic's aliases, its first few bar versions and the books it's printed in.
- * Three small queries, only for the picked drink.
+ * A few small queries, only for the picked drink.
  */
 export function useHistoryStory(itemId: string | null) {
   return useQuery({
@@ -25,23 +26,16 @@ export function useHistoryStory(itemId: string | null) {
     queryFn: async (): Promise<HistoryStory> => {
       const [aliases, versions, printed] = await Promise.all([
         supabase.from('classic_aliases').select('alias, source').eq('classic_id', itemId!).order('alias'),
-        supabase
-          .from('items')
-          .select('id, name, origin_bar:profiles!items_origin_bar_profile_id_fkey(display_name)')
-          .eq('riff_of_id', itemId!)
-          .order('credit_status', { ascending: false, nullsFirst: false })
-          .order('name')
-          // ponytail: the first 60 bar versions, so the story can lead with the best scored; a classic with more pages through its own drink page.
-          .limit(60),
+        // ponytail: the 60 best-credited bar versions, so the story can lead with the best scored; a classic with more pages through its own drink page.
+        fetchBasedOn(itemId!, 'riff', 60),
         supabase.from('source_recipes').select('source:sources(key, title, year, author)').eq('item_id', itemId!),
       ]);
       if (aliases.error) throw aliases.error;
-      if (versions.error) throw versions.error;
       if (printed.error) throw printed.error;
       const books = (printed.data ?? []).flatMap((p) => (p.source ? [p.source] : []));
       return {
         aliases: (aliases.data ?? []) as HistoryStory['aliases'],
-        versions: (versions.data ?? []).map((v) => ({ id: v.id, name: v.name, bar: v.origin_bar?.display_name ?? null })),
+        versions: versions.map((v) => ({ id: v.id, name: v.name, bar: v.origin_bar?.display_name ?? null })),
         books: [...new Map(books.map((b) => [b.key, b])).values()].sort((a, b) => (a.year ?? 9999) - (b.year ?? 9999)),
       };
     },

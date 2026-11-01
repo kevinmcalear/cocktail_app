@@ -113,13 +113,19 @@ export function useSaveCareerDrink() {
         item_type: 'cocktail',
         bar_id: null,
         created_by: userId,
-        creator_profile_id: input.personId,
         origin_bar_profile_id: input.barId,
-        credit_status: 'suggested',
         publish_mode: 'description',
       }).select('id').single();
       if (error) throw savedError(error, "You've already added that cocktail.");
-      return (data as { id: string }).id;
+      const id = (data as { id: string }).id;
+      // Who made it is its own call (item_credits), and starts as suggested.
+      const credit = await supabase.rpc('set_drink_credits', { p_item_id: id, p_creator_profile_id: input.personId, p_creator_names: [], p_add: [], p_remove: [] });
+      if (credit.error) {
+        // No half-made drink: trying again doesn't leave a copy.
+        await supabase.from('items').delete().eq('id', id);
+        throw new Error(SAVED);
+      }
+      return id;
     },
     onSuccess: () => qc.invalidateQueries({ queryKey: ['profile-originals'] }),
     onError: () => {},

@@ -26,7 +26,7 @@ const FIRST_PAINT = 12;
  * Classics in Library: the staff list, the drinks everyone here should know, most
  * important first, ranked to 50, with cut lines after 10 and 20, then every other
  * drink here linked to a classic under Not ranked yet (E50). Everyone at the venue reads it; Drink
- * Creators and up drag to reorder, add and remove (bar_off_menu, through
+ * Creators and up drag to reorder, add and remove (bar_also_makes, "Also makes", through
  * set_staff_list_order). It is the screen's scroll view, with the screen's
  * header above it: nested in another scroll view, its drag gesture takes
  * every vertical swipe on Android and the page stops scrolling.

@@ -6,8 +6,60 @@
  * added; everyone else is saved as made with. The drink page names them all
  * equally, so the order never shows.
  */
-import { joinNames, type LineageDrink } from './lineage';
+import { joinNames, type CreditProfile } from './lineage';
 import type { CreditPick, WizardDraft } from './drinkWizard';
+
+/**
+ * A credit's status (item_credits.status): named and nobody has answered,
+ * waiting for their yes, yes, checked by a moderator, no (it sticks, hidden),
+ * or said to be wrong by the one it names (shown, flagged).
+ */
+export type CreditState = 'suggested' | 'pending' | 'accepted' | 'verified' | 'declined' | 'disputed';
+
+/** The statuses everyone who reads the drink sees. */
+export const SHOWN_CREDITS: CreditState[] = ['suggested', 'accepted', 'verified', 'disputed'];
+
+/**
+ * One credit on a drink (public.item_credits), with the page it names: the
+ * lead creator (a page, sort_order 0) and names with no page (1 to 5),
+ * co-creators, the bar it was first made at, and who made its ice or glass.
+ * Waiting and declined ones come back only to the one named, the drink's
+ * editors and moderators.
+ */
+export interface ItemCredit {
+  id: string;
+  role: 'creator' | 'co_creator' | 'bar' | 'maker';
+  what: string;
+  profile_id: string | null;
+  name: string | null;
+  sort_order: number;
+  status: CreditState;
+  disputed_at: string | null;
+  dispute_note: string | null;
+  profile: CreditProfile | null;
+}
+
+type Credited = { credits?: readonly ItemCredit[] | null };
+
+/** The lead creator's credit (a page, first), unless they said no. */
+export function leadCredit(credits: readonly ItemCredit[] | null | undefined): ItemCredit | undefined {
+  return credits?.find((c) => c.role === 'creator' && !!c.profile_id && c.status !== 'declined');
+}
+
+/** Makers with no page, by name ("Harry Craddock"), in the order given. */
+export function creditNames(credits: readonly ItemCredit[] | null | undefined): string[] {
+  return (credits ?? [])
+    .filter((c) => c.role === 'creator' && !!c.name && c.status !== 'declined')
+    .sort((a, b) => a.sort_order - b.sort_order)
+    .map((c) => c.name!);
+}
+
+/** A co-creator's answer as the credit reads it: waiting, said no, or yes (a moderator's check or a dispute still shows it). */
+export function coAnswer(status: CreditState): 'pending' | 'accepted' | 'declined' {
+  return status === 'pending' || status === 'declined' ? status : 'accepted';
+}
+
+const coCredits = (d: Credited) => (d.credits ?? []).filter((c): c is ItemCredit & { profile: CreditProfile } => c.role === 'co_creator' && !!c.profile);
 
 export type Credits = Pick<WizardDraft, 'creator' | 'coCreators'>;
 type Me = { id: string; name: string } | null;
@@ -43,7 +95,7 @@ export function removeMaker(d: Credits, me: Me, person: CreditPick): Partial<Wiz
   return { creator: first.me ? 'me' : toPick(first), coCreators: rest.map(toPick) };
 }
 
-/** The people saved as made with: each is asked first (item_co_creators.status, #899), unless it's you. */
+/** The people saved as made with: each is asked first (a co-creator's credit waits for their yes, #899), unless it's you. */
 export function asked(d: Credits, me: Me): Maker[] {
   return makers(d, me).slice(1).filter((m) => !m.me && !!m.id);
 }
@@ -72,12 +124,12 @@ export function askShort(people: readonly Maker[]): string | null {
   return people.length ? `We’ll ask ${joinNames(people.map((p) => firstName(p.name)))} first.` : null;
 }
 
-/** People added by name with no page (Eddie, tf-063): saved as items.creator_names, shown in the credit without a link. */
+/** People added by name with no page (Eddie, tf-063): saved as credits by name, shown in the credit without a link. */
 export function namedOnly(d: Credits): string[] {
   return [...new Set(makers(d, null).filter((m) => !m.id).map((m) => m.name.trim()).filter(Boolean))].slice(0, MAX_NAMED);
 }
 
-/** items.creator_names holds up to five. */
+/** A drink names up to five with no page. */
 export const MAX_NAMED = 5;
 
 /**
@@ -85,12 +137,13 @@ export const MAX_NAMED = 5;
  * creator, then everyone made with it who hasn't said Not me, then the names
  * with no page. Nobody credited is Not sure.
  */
-export function savedCredits(d: Pick<LineageDrink, 'creator' | 'co_creators' | 'creator_names'>): Credits {
-  const profiles: CreditPick[] = (d.co_creators ?? [])
-    .filter((c) => c.profile && c.status !== 'declined')
-    .map((c) => ({ id: c.profile!.id, name: c.profile!.display_name }));
-  const names: CreditPick[] = (d.creator_names ?? []).map((name) => ({ id: null, name, sub: BY_NAME }));
-  const [first, ...rest] = [...(d.creator ? [{ id: d.creator.id, name: d.creator.display_name }] : []), ...profiles, ...names];
+export function savedCredits(d: Credited): Credits {
+  const lead = leadCredit(d.credits)?.profile;
+  const profiles: CreditPick[] = coCredits(d)
+    .filter((c) => c.status !== 'declined')
+    .map((c) => ({ id: c.profile.id, name: c.profile.display_name }));
+  const names: CreditPick[] = creditNames(d.credits).map((name) => ({ id: null, name, sub: BY_NAME }));
+  const [first, ...rest] = [...(lead ? [{ id: lead.id, name: lead.display_name }] : []), ...profiles, ...names];
   return first ? { creator: first, coCreators: rest } : { creator: 'nobody', coCreators: [] };
 }
 
@@ -112,11 +165,11 @@ export interface CreditEdit {
   remove: string[];
 }
 
-export function savedCredit(d: Pick<LineageDrink, 'creator' | 'co_creators' | 'creator_names'>): SavedCredit {
+export function savedCredit(d: Credited): SavedCredit {
   return {
-    creator: d.creator?.id ?? null,
-    names: d.creator_names ?? [],
-    rows: (d.co_creators ?? []).flatMap((c) => (c.profile ? [{ id: c.profile.id, status: c.status ?? 'accepted' }] : [])),
+    creator: leadCredit(d.credits)?.profile?.id ?? null,
+    names: creditNames(d.credits),
+    rows: coCredits(d).map((c) => ({ id: c.profile.id, status: coAnswer(c.status) })),
   };
 }
 

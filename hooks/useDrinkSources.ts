@@ -26,8 +26,8 @@ interface SourceRow {
   name: string;
   is_catalog: boolean | null;
   origin: string | null;
-  riff_of_id: string | null;
-  riff_of: { name: string; classic_aliases: { alias: string }[] | null } | null;
+  based_on_kind: string | null;
+  based_on: { name: string; classic_aliases: { alias: string }[] | null } | null;
   creator: { display_name: string } | null;
   origin_bar: { display_name: string; city: string | null } | null;
   versions: { count: number }[] | null;
@@ -49,18 +49,19 @@ export function useDrinkSources(itemIds: readonly string[]) {
         chunk(ids, 150).map(async (batch) => {
           const { data, error } = await supabase
             .from('items')
-            .select('id, name, is_catalog, origin, riff_of_id, riff_of:riff_of_id(name, classic_aliases(alias)), creator:profiles!items_creator_profile_id_fkey(display_name), origin_bar:profiles!items_origin_bar_profile_id_fkey(display_name, city), versions:items!riff_of_id(count)')
+            .select('id, name, is_catalog, origin, based_on_kind, based_on:based_on_id(name, classic_aliases(alias)), creator:profiles!items_creator_profile_id_fkey(display_name), origin_bar:profiles!items_origin_bar_profile_id_fkey(display_name, city), versions:items!based_on_id(count)')
             .in('id', batch)
-            .eq('versions.is_catalog', false);
+            .eq('versions.is_catalog', false)
+            .eq('versions.based_on_kind', 'riff');
           if (error) throw error;
-          // riff_of_id(name) is the parent (as useLineage reads it); the generated types can't tell the two items links apart.
+          // based_on_id(name) is the parent, items!based_on_id the drinks based on it; the generated types can't tell the two items links apart.
           return (data ?? []) as unknown as SourceRow[];
         })
       );
       return Object.fromEntries(
         batches.flat().map((r) => {
           const classic = !!r.is_catalog || r.origin === 'Classic';
-          return [r.id, { by: classic ? 'Classic' : (r.creator?.display_name ?? r.origin_bar?.display_name ?? null), city: r.origin_bar?.city ?? null, classic, maker: r.creator?.display_name ?? r.origin_bar?.display_name ?? null, riff: !classic && !!r.riff_of_id && (!r.riff_of || isRiff(r, { name: r.riff_of.name, aliases: r.riff_of.classic_aliases?.map((a) => a.alias) })), versions: r.versions?.[0]?.count ?? 0 }];
+          return [r.id, { by: classic ? 'Classic' : (r.creator?.display_name ?? r.origin_bar?.display_name ?? null), city: r.origin_bar?.city ?? null, classic, maker: r.creator?.display_name ?? r.origin_bar?.display_name ?? null, riff: !classic && r.based_on_kind === 'riff' && (!r.based_on || isRiff(r, { name: r.based_on.name, aliases: r.based_on.classic_aliases?.map((a) => a.alias) })), versions: r.versions?.[0]?.count ?? 0 }];
         })
       );
     },

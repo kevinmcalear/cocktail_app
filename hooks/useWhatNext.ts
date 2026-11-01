@@ -50,7 +50,7 @@ export function useBarClassics(barId: string | null | undefined, classics: reado
     enabled: !!barId && ids.length > 0,
     placeholderData: keepPreviousData,
     queryFn: async (): Promise<string[]> => {
-      const { data, error } = await supabase.from('items').select('name, riff_of_id').eq('bar_id', barId!).eq('item_type', 'cocktail');
+      const { data, error } = await supabase.from('items').select('name, based_on_id').eq('bar_id', barId!).eq('item_type', 'cocktail');
       if (error) throw error;
       return [...haveClassics(classics, data ?? [])];
     },
