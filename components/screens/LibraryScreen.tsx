@@ -87,7 +87,7 @@ export function LibraryScreen({ beside = false }: { beside?: boolean }) {
   const label = [...d.chips.flat(), { value: 'preps', label: 'House-made' }, { value: 'bottles', label: 'Bottles' }].find((f) => f.value === show)?.label ?? 'All';
   const rowOf = (item: SearchItem) => {
     const category = item.category as ItemCategory;
-    const facts = show === 'bottles' ? bottles.row(item) : { line: d.lineOf(item), tag: category === 'Cocktail' ? d.tagOf(item) : null };
+    const facts = show === 'bottles' ? bottles.row(item) : { line: d.lineOf(item), tag: category === 'Ingredient' ? null : d.tagOf(item) };
     return { itemId: item.id, name: item.name, ingredient: category === 'Ingredient', onPressIn: category === 'Cocktail' ? () => prefetch(item.id, { name: item.name, item_images: item.item_images }) : undefined, ...facts };
   };
   const chip = (f: { value: typeof show; label: string }) => <Chip key={f.value} label={f.label} count={String(d.count(f.value))} selected={show === f.value} onPress={() => d.pick(f.value)} />;

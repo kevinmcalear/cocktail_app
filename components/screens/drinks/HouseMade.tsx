@@ -6,7 +6,8 @@ import { useDs } from '@/components/ds';
 import { ListGroup, ListRow, SectionLabel } from '@/components/ds/ListGroup';
 import { LogBatchButton } from '@/components/screens/prep/LogBatchButton';
 import { dayHues, radius, space } from '@/constants/tokens';
-import { useBatchLogs, useShelfLives } from '@/hooks/useBatches';
+import { useBatchLogs } from '@/hooks/useBatches';
+import { useShelfLives } from '@/hooks/useShelfLives';
 import { useTonight } from '@/hooks/useTonight';
 import { useTonightPrep } from '@/hooks/useTonightPrep';
 import { fridgeRows, lowLine } from '@/lib/drinksTab';
@@ -21,8 +22,8 @@ function DayMark({ day }: { day: number | null }) {
 /**
  * House-made's top (Sta-capsules, House-made): Low, the house-made tonight's
  * lists need more of (Prep's own rule) with Log batch, then In the fridge,
- * each one's newest batch in its day colour with its use-by, "Use today" in
- * amber. Both need Prep or Specs (useTonightPrep); without them, or with
+ * each one's newest batch in its day colour with its use-by, "Use today" and
+ * "Throw out" (past it) in amber. Both need Prep or Specs (useTonightPrep); without them, or with
  * nothing to show, the section stays out and the house-made list follows.
  */
 export function HouseMadeTop({ barId, nameOf }: { barId: string; nameOf: (id: string) => string | null }) {
@@ -58,7 +59,16 @@ export function HouseMadeTop({ barId, nameOf }: { barId: string; nameOf: (id: st
           <SectionLabel title="In the fridge" aside={String(fridge.length)} />
           <ListGroup>
             {fridge.map((row, i) => (
-              <ListRow key={row.id} first={i === 0} lead={<DayMark day={row.madeDay} />} title={row.name} detail={row.line} value={row.today ? 'Use today' : null} warn={row.today} onPress={open(row.id)} />
+              <ListRow
+                key={row.id}
+                first={i === 0}
+                lead={<DayMark day={row.madeDay} />}
+                title={row.name}
+                detail={row.line}
+                value={row.gone ? 'Throw out' : row.today ? 'Use today' : null}
+                warn={row.gone || row.today}
+                onPress={open(row.id)}
+              />
             ))}
           </ListGroup>
         </View>

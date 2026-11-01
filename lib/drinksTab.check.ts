@@ -66,12 +66,14 @@ assert.equal(onNowSub(3, { name: 'Draft', startsAt: null }), '3 drinks');
   assert.deepEqual(
     rows.map((r) => [r.name, r.line, r.today]),
     [
+      ['Old cordial', '1 L · use by Tue 3 Nov, past it', false],
       ['Oleo saccharum', '400 ml · use today', true],
       ['Honey-ginger syrup', '1.2 L · use by Sat 14 Nov', false],
       ['Saline 20%', '100 ml · keeps', false],
     ]
   );
-  assert.equal(rows[1].madeDay, 1);
+  assert.equal(rows[2].madeDay, 1);
+  assert.equal(rows[0].gone, true);
 }
 
 assert.equal(lowLine({ have: 'have 200 ml', needed: '1 L', forDrinks: ['Jack Rose'] }), '200 ml · Jack Rose needs it');

@@ -1,5 +1,6 @@
 import { useNetInfo } from '@react-native-community/netinfo';
 import { useLocalSearchParams, useRouter, type Href } from 'expo-router';
+import { useQueryClient } from '@tanstack/react-query';
 import { lazy, Suspense, useState, type ReactNode } from 'react';
 import { FlatList, ScrollView, StyleSheet, View } from 'react-native';
 
@@ -98,6 +99,7 @@ function HomeList({ head }: { head: ReactNode }) {
   const offline = useNetInfo().isConnected === false;
   const router = useRouter();
   const openSearch = useOpenSearch();
+  const client = useQueryClient();
   const bottom = useTabBarInset();
   const column = usePageColumn('text');
   const [chip, setChip] = useState<HomeChip>('make');
@@ -114,7 +116,8 @@ function HomeList({ head }: { head: ReactNode }) {
   const ids = (styled ? [...src.make, ...src.saved, ...src.ranked] : src[chip]).map((d) => d.id);
   const lines = useDrinkLines(ids);
   const rows = homeRows(chip, src, (id) => lines.data?.[id]);
-  const loading = bar.isLoading || collection.isLoading || had.isLoading || (styled && lines.isLoading);
+  // Each chip waits on its own list; the style chips on every list and the drinks' lines.
+  const loading = chip === 'make' ? bar.isLoading : chip === 'saved' ? collection.isLoading : chip === 'ranked' ? had.isLoading : bar.isLoading || collection.isLoading || had.isLoading || lines.isLoading;
   const failed = { make: !!bar.error && !src.make.length, saved: !!collection.error && !collection.data, ranked: !!had.error && !had.data, sours: false, stirred: false }[chip];
   const empty = EMPTY[chip];
   const end = (id: string) => {
@@ -141,7 +144,7 @@ function HomeList({ head }: { head: ReactNode }) {
         }}
         ListEmptyComponent={
           failed ? (
-            <PencilState kind="error" title="Your drinks didn’t load" detail="The connection dropped halfway." action={{ label: 'Try again', onPress: () => void Promise.all([collection.refetch(), had.refetch()]) }} />
+            <PencilState kind="error" title="Your drinks didn’t load" detail="The connection dropped halfway." action={{ label: 'Try again', onPress: () => void client.refetchQueries({ type: 'active' }) }} />
           ) : loading ? (
             <DrinksLoading />
           ) : (

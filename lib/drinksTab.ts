@@ -86,6 +86,8 @@ export interface FridgeRow {
   line: string;
   /** Its last day is today. */
   today: boolean;
+  /** Past its use-by: still listed, so someone throws it out. */
+  gone: boolean;
   useBy: number | null;
 }
 
@@ -93,8 +95,8 @@ const sameDay = (a: Date, b: Date) => a.toDateString() === b.toDateString();
 
 /**
  * In the fridge: each house-made's newest batch while it keeps, the soonest
- * to go first, then the ones that keep with no date. A batch past its use-by
- * has gone, so it's left out. `keeps`: hours from each card (item_prep).
+ * to go first (past its use-by at the top, to throw out), then the ones that
+ * keep with no date. `keeps`: hours from each card (item_prep).
  */
 export function fridgeRows(batches: readonly Batch[], keeps: Readonly<Record<string, number>>, nameOf: (id: string) => string | null, now: Date): FridgeRow[] {
   const newest = new Map<string, Batch>();
@@ -108,10 +110,10 @@ export function fridgeRows(batches: readonly Batch[], keeps: Readonly<Record<str
     if (!name) continue;
     const made = new Date(b.madeAt);
     const by = keepsUntil(made, keeps[b.itemId] ?? null);
-    if (by && by.getTime() < now.getTime() && !sameDay(by, now)) continue;
     const today = !!by && sameDay(by, now);
-    const when = !by ? 'keeps' : today ? 'use today' : `use by ${labelDate(by)}`;
-    rows.push({ id: b.itemId, name, madeDay: made.getDay(), line: `${amountText(b.amount, b.unit)} · ${when}`, today, useBy: by?.getTime() ?? null });
+    const gone = !!by && !today && by.getTime() < now.getTime();
+    const when = !by ? 'keeps' : today ? 'use today' : gone ? `use by ${labelDate(by)}, past it` : `use by ${labelDate(by)}`;
+    rows.push({ id: b.itemId, name, madeDay: made.getDay(), line: `${amountText(b.amount, b.unit)} · ${when}`, today, gone, useBy: by?.getTime() ?? null });
   }
   return rows.sort((a, b) => (a.useBy ?? Infinity) - (b.useBy ?? Infinity) || a.name.localeCompare(b.name));
 }
