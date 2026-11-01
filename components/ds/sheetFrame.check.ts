@@ -14,7 +14,8 @@ const PAGES = new Set([
   'components/screens/home/MyBarTablet.tsx', // the section cards' panels, in the page
   'components/screens/home/mapSheetChrome.tsx', // the phone map's results panel, docked on the map as Google Maps' is (phone widths only)
 ]);
-const SHEET = 'components/ds/Sheet.tsx';
+// The Sheet itself, and its web twin (whose full-window style squares every corner).
+const SHEET = new Set(['components/ds/Sheet.tsx', 'components/ds/Sheet.web.tsx']);
 
 const files = globSync('{app,components}/**/*.tsx').filter((f) => !f.endsWith('.test.tsx') && !PAGES.has(f));
 const source = (f: string) => readFileSync(f, 'utf8');
@@ -24,7 +25,7 @@ const docked = files
   .filter((f) => /borderTopLeftRadius/.test(source(f)) && !/sheetFrame|sheetIsDialog/.test(source(f)));
 assert.deepEqual(docked, [], `Bottom sheets on the web: place these with sheetFrame (components/ds/sheetFrame.ts):\n  ${docked.join('\n  ')}`);
 
-const handBuilt = files.filter((f) => f !== SHEET && /<Modal\b/.test(source(f)) && /borderTopLeftRadius/.test(source(f)));
+const handBuilt = files.filter((f) => !SHEET.has(f) && /<Modal\b/.test(source(f)) && /borderTopLeftRadius/.test(source(f)));
 assert.deepEqual(handBuilt, [], `Hand-built Modal sheets: build these on Sheet (components/ds/Sheet.tsx):\n  ${handBuilt.join('\n  ')}`);
 
 console.log('sheetFrame: every sheet is the one Sheet, and a dialog on the web');

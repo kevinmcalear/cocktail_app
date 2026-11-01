@@ -10,13 +10,14 @@ import { WEB_TABS } from '@/components/nav/WebTabBar';
 import { layout, space } from '@/constants/tokens';
 import { SEARCH_TAB } from '@/hooks/useBottomBar';
 import { useKeyboardHeight, useWebKeyboardInset } from '@/hooks/useKeyboardInset';
+import { SEARCH_ANYTHING } from '@/lib/tabs';
 import type { SearchMine } from '@/hooks/useSearchMine';
 import { useSearchFrom } from '@/hooks/useSearchFrom';
 import { scopeOptions, type SearchScope, type SearchShow, type ShowCounts } from '@/lib/searchScope';
 
 import { CanMakeChip } from './CanMake';
 import { SearchField } from './SearchField';
-import { SearchBody, searchPlaceholder, type SearchArea } from './SearchPanel';
+import { SearchBody, type SearchArea } from './SearchPanel';
 import { ScopeToken, ShowChips } from './SearchParts';
 
 /** The search tab's state, shared by the wide web's page and the two bottom layouts. */
@@ -103,7 +104,7 @@ export function SystemBottomSearch({ query, setQuery, scope, setScope, mine, are
           title: '',
           headerSearchBarOptions: {
             ref: bar,
-            placeholder: searchPlaceholder(scope, mine, area),
+            placeholder: SEARCH_ANYTHING,
             autoCapitalize: 'none',
             tintColor: ds.accentText,
             hideNavigationBar: false,
@@ -208,7 +209,7 @@ export function BottomSearch({ query, setQuery, scope, setScope, mine, area, onS
           <View style={[styles.fieldRow, { paddingHorizontal: gutter }]}>
             {Platform.OS === 'web' ? <BackToTab /> : null}
             <View style={styles.field}>
-              <SearchField query={query} onQuery={setQuery} placeholder={searchPlaceholder(scope, mine, area)} autoFocus={focused} cancel glass onFocusChange={setFieldFocused} />
+              <SearchField query={query} onQuery={setQuery} placeholder={SEARCH_ANYTHING} autoFocus={focused} cancel glass onFocusChange={setFieldFocused} />
             </View>
           </View>
         </View>
