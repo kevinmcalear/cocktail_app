@@ -76,3 +76,74 @@ function needName(name: string): string {
   const fruit = /^(?:fresh\s+)?(lime|lemon|orange|grapefruit)(?:\s+juice)?$/i.exec(name.trim());
   return fruit ? `${fruit[1].toLowerCase()}s` : name;
 }
+
+/** A run-through's length: about 20 seconds a line of the spec, at least a minute. `line` is the menu's "Gin, lemon, honey". */
+export function runThroughMinutes(line: string): number {
+  const lines = line.split(/,\s*/).filter(Boolean).length;
+  return Math.max(1, Math.round((lines * 20) / 60));
+}
+
+/** Allergens worth a word at the table first: eggs (raw egg white) and milk lead, then the rest in the regulated order. */
+const TALK_FIRST = ['eggs', 'milk'];
+
+/**
+ * Learn's talk-through row: the first drink on tonight's lists with an
+ * allergen to explain, and what to call it ("Raw egg white: what to tell
+ * guests"): the ingredient it comes through when known, else the allergen.
+ */
+export function talkThrough(
+  drinks: readonly { id: string; name: string }[],
+  allergens: (id: string) => { allergen: string; via: string[][] }[] | undefined,
+  label: (key: string) => string
+): { id: string; name: string; sub: string } | null {
+  const rank = (key: string) => (TALK_FIRST.includes(key) ? TALK_FIRST.indexOf(key) : TALK_FIRST.length);
+  let best: { id: string; name: string; sub: string; rank: number } | null = null;
+  for (const d of drinks) {
+    for (const a of allergens(d.id) ?? []) {
+      const r = rank(a.allergen);
+      if (best && best.rank <= r) continue;
+      const via = a.via[0]?.[a.via[0].length - 1];
+      best = { id: d.id, name: d.name, sub: `${via ?? label(a.allergen)}: what to tell guests`, rank: r };
+    }
+  }
+  return best && { id: best.id, name: best.name, sub: best.sub };
+}
+
+/** House-made used tonight that needs no batch: "1.2 L · enough for tonight" rows, for what has been counted or logged. */
+export function enoughRows(
+  houseMadeIds: readonly string[],
+  make: readonly { id: string }[],
+  onHand: Readonly<Record<string, { value: number }>>,
+  name: (id: string) => string | undefined,
+  have: (id: string) => string
+): { id: string; name: string; sub: string }[] {
+  const making = new Set(make.map((m) => m.id));
+  return houseMadeIds
+    .filter((id) => !making.has(id) && onHand[id] && onHand[id].value > 0 && name(id))
+    .map((id) => ({ id, name: name(id)!, sub: `${have(id)} · enough for tonight` }));
+}
+
+/** How many of a list's drinks print no price (Needs you: "1 drink has no price"). */
+export function unpriced(drinks: readonly { price: string | null; menuPrice?: string | null }[], printed: (d: { price: string | null; menuPrice?: string | null }) => string | null): number {
+  return drinks.filter((d) => !printed(d)).length;
+}
+
+/**
+ * On shift: who's working tonight ("Ana, Theo and you") and who opens and
+ * closes ("Theo opens · you close"). First names; you last as "you".
+ */
+export function onShiftLine(
+  shifts: readonly { user_id: string; opens: boolean; closes: boolean }[],
+  nameOf: (userId: string) => string,
+  me: string | null
+): { names: string; sub: string | null } | null {
+  const ids = [...new Set(shifts.map((s) => s.user_id))];
+  if (!ids.length) return null;
+  const call = (id: string) => (id === me ? 'you' : nameOf(id).split(' ')[0]);
+  const ordered = [...ids.filter((id) => id !== me), ...ids.filter((id) => id === me)].map(call);
+  const names = ordered.length === 1 ? ordered[0] : `${ordered.slice(0, -1).join(', ')} and ${ordered[ordered.length - 1]}`;
+  const opener = shifts.find((s) => s.opens);
+  const closer = shifts.find((s) => s.closes);
+  const parts = [opener ? `${call(opener.user_id)} open${opener.user_id === me ? '' : 's'}` : null, closer ? `${call(closer.user_id)} close${closer.user_id === me ? '' : 's'}` : null].filter(Boolean);
+  return { names: names.charAt(0).toUpperCase() + names.slice(1), sub: parts.length ? parts.join(' · ') : null };
+}
