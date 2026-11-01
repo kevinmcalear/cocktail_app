@@ -1,11 +1,16 @@
-import { fireEvent, screen } from '@testing-library/react-native';
+import { act, screen } from '@testing-library/react-native';
 import 'react-native-gesture-handler/jestSetup';
 
 import { renderWithProviders } from '@/jest.setup';
 
 import { BeerWineScreen } from './BeerWineScreen';
 
+// burnt ships untranspiled ESM; the toast isn't what's tested here.
+jest.mock('burnt', () => ({ toast: jest.fn() }));
+
 const mockPush = jest.fn();
+// The page's tools sit in the native bar, so they arrive as the stack's options.
+const mockOptions: { unstable_headerRightItems?: () => { label?: string; accessibilityLabel?: string; onPress?: () => void }[] } = {};
 const mockToggleFavorite = jest.fn();
 const lager = {
   id: 'b1',
@@ -23,8 +28,10 @@ const lager = {
 jest.mock('expo-router', () => ({
   useLocalSearchParams: () => ({ id: 'beer-b1' }),
   useRouter: () => ({ push: mockPush, back: jest.fn(), replace: jest.fn(), canGoBack: () => true }),
+  useNavigation: () => ({ setOptions: (o: object) => Object.assign(mockOptions, o) }),
   Redirect: () => null,
 }));
+jest.mock('@/hooks/useShareSlug', () => ({ useShareSlug: () => ({ data: 'little-rye-lager' }) }));
 jest.mock('@/hooks/useBeers', () => ({ useBeer: (id: string) => ({ data: id === 'b1' ? lager : undefined, isPending: false, error: null, refetch: jest.fn() }) }));
 jest.mock('@/hooks/useWines', () => ({ useWine: () => ({ data: undefined, isPending: false, error: null, refetch: jest.fn() }) }));
 jest.mock('@/hooks/useDropdowns', () => ({ useDropdowns: () => ({ data: { categories: [{ id: 'c1', name: 'Lager' }], glassware: [] } }) }));
@@ -47,8 +54,9 @@ test('a beer reads like a drink page: its style, maker, then tastes and the fact
   expect(screen.getByText('Pour it in the pint, not the stein.')).toBeTruthy();
 
   // Favourites keep the prefixed id they always had; Edit opens its edit page.
-  await fireEvent.press(screen.getByRole('button', { name: 'Add to favorites' }));
+  const barItem = (name: string) => mockOptions.unstable_headerRightItems?.().find((i) => (i.accessibilityLabel ?? i.label) === name);
+  await act(async () => barItem('Add to favorites')?.onPress?.());
   expect(mockToggleFavorite).toHaveBeenCalledWith('beer-b1');
-  await fireEvent.press(screen.getByRole('button', { name: 'Edit beer' }));
+  await act(async () => barItem('Edit beer')?.onPress?.());
   expect(mockPush).toHaveBeenCalledWith('/beer/beer-b1/edit');
 });

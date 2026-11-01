@@ -1,9 +1,7 @@
 import { useState } from 'react';
 import { Platform } from 'react-native';
-import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import { BackbarTheme, BrandProvider } from '@/components/ds';
-import { space } from '@/constants/tokens';
 import { useSignedIn, useUserId } from '@/ctx/AuthContext';
 import { useActiveVenue } from '@/hooks/useActiveVenue';
 import { useCapabilities } from '@/hooks/useCapabilities';
@@ -49,8 +47,6 @@ export interface DrinkScreenProps {
   /** A catalog admin on someone else's drink: a visitor's page with one Fix as admin in More. */
   adminFix?: boolean;
   onEdit: () => void;
-  /** Shown as a modal. An iOS page sheet starts below the status bar, but the insets still count it. */
-  sheet?: boolean;
   /** Beside a list or in the editor's preview: nothing to go back to. */
   pane?: boolean;
   /** Open with the Batch sheet up (/cocktail/[id]/batch links here). */
@@ -96,9 +92,7 @@ function DrinkPage(props: DrinkScreenProps) {
   );
 }
 
-function Page({ item, canEdit, adminFix = false, onEdit, sheet, pane, openBatch, visitorLock, preview, photos, photoCredit, heroPic }: DrinkScreenProps & { photos: ShownPicture[] | null; photoCredit: string | null; heroPic: ItemPicture | null }) {
-  const insets = useSafeAreaInsets();
-  const top = pane ? insets.top : sheet && Platform.OS === 'ios' ? space.sm : insets.top;
+function Page({ item, canEdit, adminFix = false, onEdit, pane, openBatch, visitorLock, preview, photos, photoCredit, heroPic }: DrinkScreenProps & { photos: ShownPicture[] | null; photoCredit: string | null; heroPic: ItemPicture | null }) {
   const home = useMode().mode === 'home';
   const signedIn = useSignedIn();
   const userId = useUserId();
@@ -146,26 +140,28 @@ function Page({ item, canEdit, adminFix = false, onEdit, sheet, pane, openBatch,
     onGlass: () => setGlassOpen(true),
     onBatch: canBatch ? () => setBatchOpen(true) : undefined,
     onRank: preview ? undefined : actions.rank,
+    onMade: preview || lock || !home || !access.amounts ? undefined : actions.made,
+    madeTimes: actions.madeTimes,
     canEdit,
     photoCredit,
   });
 
+  const fab = Platform.OS === 'android' && !!sections.made;
   const size = drawingSize(makesIt(viewer));
   const more = preview ? null : <DrinkMoreMenu itemId={item.id} name={item.name} canEdit={canEdit} adminFix={adminFix} onEdit={onEdit} />;
 
   return (
     <ItemShell
       name={item.name}
-      top={top}
       pane={pane}
-      inTabs
       photo={photos ? { url: photos[0].url, hero: (h, fade) => <DrinkHero name={item.name} pictures={photos} glass={glass?.icon_key || glass?.name || null} itemId={item.id} palette={photos[0].palette} height={h} fade={fade} /> } : null}
-      art={<DrinkArt itemId={item.id} sketch={preview?.sketch} label={`Drawing of ${item.name}`} size={size} />}
+      art={(pour) => <DrinkArt itemId={item.id} sketch={preview?.sketch} label={`Drawing of ${item.name}`} size={size} pour={pour} />}
       size={size}
       liquid={liquid}
       title={sections.title}
       action={sections.action}
-      body={(columns) => <DrinkBody sections={{ ...sections, action: columns ? null : sections.action }} title={!columns} />}
+      body={(columns) => <DrinkBody sections={{ ...sections, action: columns ? null : sections.action, made: fab && !columns ? sections.madeCount : sections.made }} title={!columns} />}
+      fab={fab ? { label: 'I made it', accessibilityLabel: `I made ${item.name}`, onPress: actions.made } : null}
       controls={{
         save: bookmark ? { saved: toMake.saved, onToggle: toMake.toggle, label: ['Add to To make', 'Remove from To make'] } : null,
         onShare: share,

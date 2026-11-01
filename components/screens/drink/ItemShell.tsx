@@ -1,29 +1,31 @@
-import { useState, type ComponentProps, type ReactNode } from 'react';
-import { StyleSheet, useWindowDimensions, View } from 'react-native';
-import Animated, { useAnimatedScrollHandler, useSharedValue } from 'react-native-reanimated';
+import { HeaderBackContext, HeaderHeightContext } from 'expo-router/react-navigation';
+import { use, useState, type ReactNode } from 'react';
+import { Platform, StyleSheet, useWindowDimensions, View } from 'react-native';
+import Animated, { useAnimatedReaction, useAnimatedScrollHandler, useSharedValue, type SharedValue } from 'react-native-reanimated';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
+import { scheduleOnRN } from 'react-native-worklets';
 
-import { useDs, useGutter } from '@/components/ds';
+import { ExtendedFab, useDs, useGutter } from '@/components/ds';
 import { useTabBarInset } from '@/components/nav/WebTabBar';
 import { layout, space } from '@/constants/tokens';
+import { useIsWideWeb } from '@/hooks/useIsWideWeb';
+import { backWord } from '@/lib/tabs';
 
 import { COLUMNS_FROM, DrinkColumns } from './DrinkColumns';
 import { phoneHeroHeight } from './DrinkHero';
-import { DockedDrawing, DOCKED, DrawingSpace, DrinkSky, drawingTop } from './DrawingHero';
-import { PageControls } from './PageControls';
+import { DockedDrawing, DockGlyph, DOCKED, DrawingSpace, DrinkSky, drawingTop } from './DrawingHero';
+import { NATIVE_DOCK_LEFT, useItemHeader, type Controls } from './ItemHeader';
+import { backWidth, BarBacking, PageControls } from './PageControls';
 import { PhotoMirror } from './PhotoMirror';
-
-type Controls = Pick<ComponentProps<typeof PageControls>, 'save' | 'onShare' | 'onEdit' | 'editLabel' | 'more'>;
 
 interface ItemShellProps {
   name: string;
-  top: number;
   /** Beside a list or in the editor's preview: no Back, and one column. */
   pane?: boolean;
   /** A photo leads full bleed (its hero at a height, faded on phones); else the drawing on its sky. */
   photo: { url: string | number; hero: (height: number, fade: boolean) => ReactNode } | null;
-  /** The drawing, drawn at `size`. */
-  art: ReactNode;
+  /** The drawing, drawn at `size`. `pour` off for its still copy in the bar. */
+  art: (pour?: boolean) => ReactNode;
   size: number;
   /** The sky's colour: the drink's liquid, the beer's, the syrup's. */
   liquid: string | null;
@@ -34,8 +36,8 @@ interface ItemShellProps {
   /** The blocks. `columns`: beside the sticky side, which holds the title and the action. */
   body: (columns: boolean) => ReactNode;
   controls: Controls;
-  /** In a tab's stack (the drink route): clear of the floating tab bar. Root modals have none. */
-  inTabs?: boolean;
+  /** Android's phone page: the one main action as the extended FAB. The body drops its button (`columns` stays inline). */
+  fab?: { label: string; accessibilityLabel: string; onPress: () => void } | null;
   /** Sheets the page opens. */
   children?: ReactNode;
 }
@@ -47,12 +49,15 @@ interface ItemShellProps {
  * drawing sits on its sky and docks into the bar. From 900 points of pane the
  * picture, name and one action stay put on the left and the rest scrolls.
  */
-export function ItemShell({ name, top, pane, photo, art, size, liquid, title, action, body, controls, inTabs, children }: ItemShellProps) {
+export function ItemShell({ name, pane, photo, art, size, liquid, title, action, body, controls, fab, children }: ItemShellProps) {
   const ds = useDs();
   const gutter = useGutter();
-  const tabInset = useTabBarInset();
   const insets = useSafeAreaInsets();
-  const bottom = inTabs ? tabInset : insets.bottom + space.lg;
+  const tabInset = useTabBarInset();
+  const top = insets.top;
+  // Beside a list or in the editor's preview, no floating tab bar sits over this page.
+  const bottom = pane ? insets.bottom + space.lg : tabInset;
+  const wide = useIsWideWeb();
   const { width: windowWidth, height } = useWindowDimensions();
   // The pane's own width: beside the Drinks list a 1300 window leaves about 600 (desk split, #1047).
   const [width, setWidth] = useState(windowWidth);
@@ -62,20 +67,27 @@ export function ItemShell({ name, top, pane, photo, art, size, liquid, title, ac
   const heroHeight = photo ? phoneHeroHeight(width, height, top) : drawingTop(top) + size + space.lg;
   // Up to 400 on a wide screen, shrinking with a short window down to 220, so the side never scrolls.
   const wideSize = Math.min(400, Math.max(220, height - 440));
-  const bar = (phone: boolean) => (
-    <PageControls
-      top={top}
-      scrollY={scrollY}
-      // Solid by the time the page's first line slides under the bar (top + controls), as the board's bar does.
-      tuck={phone ? heroHeight - (top + layout.minTapTarget + space.sm * 2) + space.lg : Number.MAX_SAFE_INTEGER}
-      title={phone ? name : ''}
-      titleInset={photo || !phone ? 0 : DOCKED + space.sm}
-      noBack={pane}
-      backLabel={columns ? 'Back' : undefined}
-      {...controls}
-    >
-      {!photo && phone ? <DockedDrawing art={art} size={size} top={top} width={width} gutter={gutter} scrollY={scrollY} /> : null}
+  // Solid by the time the page's first line slides under the bar (top + controls), as the board's bar does.
+  const tuck = heroHeight - (top + layout.minTapTarget + space.sm * 2) + space.lg;
+  // Phones have the system's bar. The web and a wide iPad's two columns draw theirs (PageControls).
+  const nativeBar = Platform.OS !== 'web' && !columns && !pane;
+  useItemHeader({ name, on: nativeBar, pane, glyph: photo ? null : <DockGlyph art={art(false)} size={size} />, scrollY, tuck, controls });
+  const barHeight = use(HeaderHeightContext) ?? 0;
+  // Where it goes, from the page under this one, where there's room for a label (desktop boards).
+  const under = use(HeaderBackContext)?.title;
+  const backLabel = columns || (Platform.OS === 'web' && wide) ? backWord(under) : undefined;
+  const dock = (over: { dockLeft: number; dockTop: number; handOff?: boolean }) => <DockedDrawing art={art()} size={size} top={top} width={width} scrollY={scrollY} {...over} />;
+  const drawnBar = (phone: boolean) => (
+    <PageControls top={top} scrollY={scrollY} tuck={phone ? tuck : Number.MAX_SAFE_INTEGER} title={phone ? name : ''} titleInset={photo || !phone ? 0 : DOCKED + space.sm} noBack={pane} backLabel={backLabel} {...controls}>
+      {!photo && phone ? dock({ dockLeft: gutter + backWidth(backLabel) + space.sm, dockTop: top + space.sm + (layout.minTapTarget - DOCKED) / 2 }) : null}
     </PageControls>
+  );
+  // The page's half of the native bar: its backing and the drawing on its way up to the bar's glyph.
+  const underNativeBar = (
+    <>
+      <BarBacking height={barHeight} scrollY={scrollY} tuck={tuck} />
+      {photo ? null : dock({ dockLeft: NATIVE_DOCK_LEFT, dockTop: (top + barHeight - DOCKED) / 2, handOff: true })}
+    </>
   );
 
   return (
@@ -93,7 +105,7 @@ export function ItemShell({ name, top, pane, photo, art, size, liquid, title, ac
               ) : (
                 <>
                   <View style={[styles.centre, { height: wideSize }]}>
-                    <View style={{ transform: [{ scale: wideSize / size }], transformOrigin: 'center top' }}>{art}</View>
+                    <View style={{ transform: [{ scale: wideSize / size }], transformOrigin: 'center top' }}>{art()}</View>
                   </View>
                   {title}
                   {action}
@@ -109,7 +121,7 @@ export function ItemShell({ name, top, pane, photo, art, size, liquid, title, ac
             ) : null}
             {body(true)}
           </DrinkColumns>
-          {bar(false)}
+          {drawnBar(false)}
         </>
       ) : (
         <>
@@ -118,12 +130,25 @@ export function ItemShell({ name, top, pane, photo, art, size, liquid, title, ac
             {photo ? photo.hero(heroHeight, true) : <DrawingSpace top={top} size={size} />}
             <View style={{ paddingHorizontal: gutter, marginTop: photo ? -space.xxl : 0 }}>{body(false)}</View>
           </Animated.ScrollView>
-          {bar(true)}
+          {nativeBar ? underNativeBar : drawnBar(true)}
+          {fab ? <PageFab {...fab} scrollY={scrollY} bottom={bottom} /> : null}
         </>
       )}
       {children}
     </View>
   );
+}
+
+/** The extended FAB, shrinking to a round one once the page moves (board And-page). */
+function PageFab({ scrollY, bottom, ...fab }: NonNullable<ItemShellProps['fab']> & { scrollY: SharedValue<number>; bottom: number }) {
+  const [open, setOpen] = useState(true);
+  useAnimatedReaction(
+    () => scrollY.get() < 40,
+    (now, was) => {
+      if (now !== was) scheduleOnRN(setOpen, now);
+    },
+  );
+  return <ExtendedFab {...fab} icon="checkmark" open={open} style={{ bottom: bottom + space.lg }} />;
 }
 
 const styles = StyleSheet.create({

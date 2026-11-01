@@ -32,6 +32,8 @@ function open(url: string) {
       // In the order the app's folder lists them, so a link's tie between groups breaks as it does in the app.
       '(tabs)/(1-tonight)/index': page('tonight'),
       [`${SHARED}/cocktail/[id]/index`]: page('drink'),
+      [`${SHARED}/beer/[id]/index`]: page('beer'),
+      [`${SHARED}/ingredient/[id]/index`]: page('ingredient'),
       [`${SHARED}/prep`]: page('prep'),
       [`${SHARED}/search`]: page('search page'),
       '(tabs)/(2-drinks)/drinks': page('drinks'),
@@ -102,4 +104,16 @@ it("returns Discover's search to its map", async () => {
   expect(r.getSegments()).toEqual(['(tabs)', '(3-discover)', 'search']);
   await act(async () => router.dismissTo('/discover'));
   expect(r.getSegments()).toEqual(['(tabs)', '(3-discover)', 'discover']);
+});
+
+it('pushes a beer and the bottle in it on the same tab, and Back steps through them', async () => {
+  const r = await open('/drinks');
+  await act(async () => router.push('/beer/1'));
+  expect(r.getSegments()).toEqual(['(tabs)', '(2-drinks)', 'beer', '[id]']);
+  await act(async () => router.push('/ingredient/2'));
+  expect(r.getSegments()).toEqual(['(tabs)', '(2-drinks)', 'ingredient', '[id]']);
+  await act(async () => router.back());
+  expect(r.getPathname()).toBe('/beer/1');
+  await act(async () => router.back());
+  expect(r.getPathname()).toBe('/drinks');
 });

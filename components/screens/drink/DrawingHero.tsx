@@ -1,6 +1,6 @@
 import { LinearGradient } from 'expo-linear-gradient';
 import type { ReactNode } from 'react';
-import { StyleSheet, View } from 'react-native';
+import { Platform, StyleSheet, View } from 'react-native';
 import Animated, { interpolate, useAnimatedStyle, type SharedValue } from 'react-native-reanimated';
 
 import { useDs } from '@/components/ds';
@@ -11,10 +11,12 @@ import { useItemSketch } from '@/hooks/useItemSketch';
 import { drinkSky } from '@/lib/sky';
 import { liquidOf, type SketchInputs } from '@/lib/sketch/types';
 
-/** The docked glyph, beside Back (board Draw-scroll, dock). */
-export const DOCKED = 34;
+/** The docked glyph, beside Back (board Draw-scroll, dock; And-page draws 36). */
+export const DOCKED = Platform.OS === 'android' ? 36 : 34;
 /** Over this much scroll the drawing tucks into the bar. */
-const DOCK_SCROLL = 260;
+export const DOCK_SCROLL = 260;
+/** The last points of the Dock, where the system's bar takes over from the drawing over the page. */
+export const dockFade = (dock: number) => [dock - space.lg, dock];
 
 /** Where the drawing rests: under the top controls, centred. */
 export function drawingTop(top: number) {
@@ -49,17 +51,18 @@ export function useSkyColour(itemId: string | null, sketch?: SketchInputs | null
  * The drawing over the page (Dock, decided 29 Oct): at rest it sits centred
  * under the controls; over the first 260 points of scroll it shrinks into a
  * 34-point glyph in the bar beside Back, so a long spec always shows which
- * drink you're in. Lives above the scroll view, under the buttons.
+ * drink you're in. Lives above the scroll view, under the buttons. `handOff`:
+ * the system's bar shows the docked glyph itself, so this one fades as it lands.
  */
-export function DockedDrawing({ art, size, top, width, gutter, scrollY }: { art: ReactNode; size: number; top: number; width: number; gutter: number; scrollY: SharedValue<number> }) {
+export function DockedDrawing({ art, size, top, width, dockLeft, dockTop, handOff, scrollY }: { art: ReactNode; size: number; top: number; width: number; dockLeft: number; dockTop: number; handOff?: boolean; scrollY: SharedValue<number> }) {
   const restLeft = (width - size) / 2;
   const restTop = drawingTop(top);
-  const dockLeft = gutter + layout.minTapTarget + space.sm;
-  const dockTop = top + space.sm + (layout.minTapTarget - DOCKED) / 2;
+  const fade = dockFade(DOCK_SCROLL);
   const style = useAnimatedStyle(() => {
     const p = Math.min(1, Math.max(0, scrollY.get() / DOCK_SCROLL));
     const q = p * p * (3 - 2 * p);
     return {
+      opacity: handOff ? interpolate(scrollY.get(), fade, [1, 0], 'clamp') : 1,
       transform: [
         { translateX: interpolate(q, [0, 1], [restLeft, dockLeft]) },
         { translateY: interpolate(q, [0, 1], [restTop, dockTop]) },
@@ -71,9 +74,14 @@ export function DockedDrawing({ art, size, top, width, gutter, scrollY }: { art:
 }
 
 /** A drink's drawing at the page's size: a preview's inputs, else its stored drawing. */
-export function DrinkArt({ itemId, sketch, label, size }: { itemId: string; sketch?: SketchInputs | null; label: string; size: number }) {
+export function DrinkArt({ itemId, sketch, label, size, pour }: { itemId: string; sketch?: SketchInputs | null; label: string; size: number; pour?: boolean }) {
   const staff = size === drawing.heroStaff;
-  return sketch ? <DrinkDrawing inputs={sketch} seed={itemId} size="hero" staff={staff} label={label} /> : <DrinkDrawingFor itemId={itemId} size="hero" staff={staff} label={label} />;
+  return sketch ? <DrinkDrawing inputs={sketch} seed={itemId} size="hero" staff={staff} pour={pour} label={label} /> : <DrinkDrawingFor itemId={itemId} size="hero" staff={staff} pour={pour} label={label} />;
+}
+
+/** A drawing made for `size`, shown at the docked glyph's size in the bar. */
+export function DockGlyph({ art, size }: { art: ReactNode; size: number }) {
+  return <View style={[styles.glyph, { width: size, height: size, transform: [{ scale: DOCKED / size }] }]}>{art}</View>;
 }
 
 /** The room the drawing takes at the top of the scroll: the controls, the drawing, a breath. */
@@ -84,4 +92,5 @@ export function DrawingSpace({ top, size }: { top: number; size: number }) {
 const styles = StyleSheet.create({
   sky: { position: 'absolute', top: 0, left: 0, right: 0, pointerEvents: 'none' },
   dock: { position: 'absolute', top: 0, left: 0, transformOrigin: 'left top', pointerEvents: 'none' },
+  glyph: { transformOrigin: 'left top', pointerEvents: 'none' },
 });

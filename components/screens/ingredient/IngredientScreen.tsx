@@ -1,7 +1,6 @@
 import { useRouter } from 'expo-router';
 import { useState } from 'react';
-import { Platform, StyleSheet, View } from 'react-native';
-import { useSafeAreaInsets } from 'react-native-safe-area-context';
+import { StyleSheet, View } from 'react-native';
 
 import { WhereItLives } from '@/components/backbar/WhereItLives';
 import { BackbarTheme, Body, BrandProvider, Button, IngredientDrawing } from '@/components/ds';
@@ -20,6 +19,7 @@ import { useEffectiveRole } from '@/hooks/useViewAs';
 import { ingredientHeroPictures, shownIngredientPicture, type IngredientPicture } from '@/lib/ingredientPicture';
 import { readNoteRecipe } from '@/lib/noteRecipe';
 import { leadTimeLabel, scaledYield } from '@/lib/scale';
+import { ingredientUrl, shareOrCopy } from '@/lib/shareLink';
 import { technicalIngredientFor } from '@/lib/techniques';
 
 import { DrinkHero } from '../drink/DrinkHero';
@@ -72,9 +72,6 @@ export function IngredientScreen(props: IngredientScreenProps) {
 
 function IngredientPage({ ingredient, lines, drinks, bottles, pictures: batchPictures, canEdit, onEdit, venueName }: IngredientScreenProps & { venueName: string | null }) {
   const userId = useUserId();
-  const insets = useSafeAreaInsets();
-  // A modal: an iOS page sheet starts below the status bar, but the insets still count it.
-  const top = Platform.OS === 'ios' ? space.sm : insets.top;
   const { data: card } = useItemPrep(ingredient.id);
   const { data: used } = usePrepUsedIn(ingredient.id);
   // Shared preps cite their ratio; signed-in readers only, like the sources themselves.
@@ -144,13 +141,12 @@ function IngredientPage({ ingredient, lines, drinks, bottles, pictures: batchPic
   return (
     <ItemShell
       name={ingredient.name}
-      top={top}
       photo={photo ? { url: photo[0].url, hero: (h, fade) => <DrinkHero name={ingredient.name} pictures={photo} glass={null} itemId={null} height={h} fade={fade} /> } : null}
-      art={
+      art={() => (
         <View style={{ width: drawing.heroStaff, height: drawing.heroStaff }} accessibilityLabel={`Drawing of ${ingredient.name}`}>
           <IngredientDrawing id={ingredient.id} name={ingredient.name} drawn bare />
         </View>
-      }
+      )}
       size={drawing.heroStaff}
       liquid={null}
       title={title}
@@ -158,6 +154,7 @@ function IngredientPage({ ingredient, lines, drinks, bottles, pictures: batchPic
       body={body}
       controls={{
         save: { saved: onShelf, onToggle: toggleShelf, label: ['Save to your bar', 'Take off your bar'] },
+        onShare: () => void shareOrCopy(ingredientUrl(ingredient.id), ingredient.name),
         onEdit: offerEdit ? onEdit : undefined,
         editLabel: `Edit ${ingredient.name}`,
       }}

@@ -14,5 +14,5 @@ export default function EditCocktailScreen() {
         if (router.canGoBack()) router.back();
         else router.replace(`/cocktail/${id}`);
     };
-    return <DrinkEditScreen id={id} onExit={exit} openOn={fit === "1" ? "fit" : photos === "1" ? "photos" : undefined} />;
+    return <DrinkEditScreen id={id} onExit={exit} openOn={fit === "1" ? "fit" : photos === "1" ? "photos" : undefined} inSheet />;
 }

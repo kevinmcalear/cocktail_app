@@ -1,9 +1,9 @@
 import { useState } from 'react';
 import { StyleSheet } from 'react-native';
 
-import { Button, DsText, PressableScale, useDs } from '@/components/ds';
+import { Button, ExtendedFab, PressableScale, useDs } from '@/components/ds';
 import { IconSymbol } from '@/components/ui/icon-symbol';
-import { font, layout, radius, space } from '@/constants/tokens';
+import { layout, radius } from '@/constants/tokens';
 
 import { CreateSheet } from './CreateSheet';
 
@@ -51,16 +51,10 @@ export function DeskAddButton() {
  * sheet until the Add lane draws its FAB menu.
  */
 export function AddFab() {
-  const ds = useDs();
   const add = useAdd();
   return (
     <>
-      <PressableScale role="button" accessibilityLabel={LABEL} onPress={add.open} style={[styles.fab, { backgroundColor: ds.accentFill.fill }]}>
-        <IconSymbol name="plus" size={20} color={ds.accentFill.text} />
-        <DsText color={ds.accentFill.text} style={styles.fabLabel}>
-          Add
-        </DsText>
-      </PressableScale>
+      <ExtendedFab label="Add" icon="plus" accessibilityLabel={LABEL} onPress={add.open} />
       {add.sheet}
     </>
   );
@@ -69,7 +63,4 @@ export function AddFab() {
 const SIZE = 32;
 const styles = StyleSheet.create({
   circle: { width: SIZE, height: SIZE, borderRadius: radius.pill, alignItems: 'center', justifyContent: 'center' },
-  // Material 3's extended FAB: 56 tall, 16 in from the edges, a level-3 shadow.
-  fab: { position: 'absolute', right: space.lg, bottom: space.lg, height: 56, paddingHorizontal: space.lg, borderRadius: radius.control + 4, flexDirection: 'row', alignItems: 'center', gap: space.sm, elevation: 3 },
-  fabLabel: { ...font.semiBold },
 });

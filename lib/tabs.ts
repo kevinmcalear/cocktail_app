@@ -31,3 +31,18 @@ export const TABS: readonly Tab[] = [
 export function tabOfGroup(group: string | undefined): TabName | null {
   return TABS.find((t) => t.route === group)?.name ?? null;
 }
+
+/** The route name of each tab's first page, and of the search page, as a stack names them. */
+const PAGE_WORDS: Record<string, string> = { index: 'Tonight', drinks: 'Drinks', discover: 'Discover', you: 'You', search: 'Search' };
+
+/**
+ * What Back says on the wide web (desktop boards: "Back says where it goes"):
+ * the page under this one, from its stack title. A title is the page's own name
+ * (a drink, Prep); a tab's first page has only its route name. Anything else
+ * still a route path, or nothing under it at all, just says Back.
+ */
+export function backWord(title: string | undefined): string {
+  if (!title || title.includes('/') || title.includes('[')) return 'Back';
+  // An untitled page has only its route name ('prep'): say it as a word.
+  return PAGE_WORDS[title] ?? title[0].toUpperCase() + title.slice(1);
+}
