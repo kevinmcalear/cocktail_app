@@ -72,7 +72,7 @@ export function OnboardingScreen() {
   // Handed something to read on the last step: setup ends in Bring in, where it's being read.
   const [handed, setHanded] = useState(false);
   // Where setup ends: the app, Bring in with what they handed over, or venue setup for an owner.
-  const [landing, setLanding] = useState<Href>('/(tabs)');
+  const [landing, setLanding] = useState<Href>('/');
   const personId = createdId ?? profile.data?.id ?? null;
 
   useEffect(() => {

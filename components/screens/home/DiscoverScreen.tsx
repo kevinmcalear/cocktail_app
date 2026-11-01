@@ -231,7 +231,8 @@ export function DiscoverScreen() {
       style={split ? { width: breakpoint === 'desktop' ? third : 420, flexGrow: 0 } : undefined}
       contentContainerStyle={{ paddingHorizontal: gutter, paddingBottom: bottom, paddingTop: split ? 0 : headerHeight, maxWidth: 760, width: '100%' }}
     >
-      {split ? <ScreenHeaderSpacer title="Discover" /> : null}
+      {/* No Add beside the map: the desktop board (Prod-desk-discover) draws none. */}
+      {split ? <ScreenHeaderSpacer title="Discover" add={false} /> : null}
       {split ? <View style={[styles.sticky, { backgroundColor: ds.c.ground }]}>{controls}</View> : null}
       <View style={styles.body}>
         {split && picked && !deskSearch ? <PickedBar key={picked.id} pin={picked} filter={filter} best={layer === 'best' && kinds.length ? drink : null} me={me} onClose={() => setPicked(null)} /> : null}

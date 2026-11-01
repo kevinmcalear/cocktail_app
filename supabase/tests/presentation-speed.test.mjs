@@ -256,7 +256,9 @@ describe('old and new definitions agree for every reader', () => {
 
     test(`${reader}: app_recipe_presentation`, async () => {
       await asReader(reader, async () => {
-        const sql = (view) => `SELECT t::text FROM ${view} t WHERE t.recipe_item_id = ANY($1)`;
+        // Which lines each reader sees. What a line shows follows permissions
+        // since 20261204300000_one_home.sql (amounts-by-permission.test.mjs).
+        const sql = (view) => `SELECT t.id::text FROM ${view} t WHERE t.recipe_item_id = ANY($1)`;
         const before = await rows(sql('old_app_recipe_presentation'), [drinkIds()]);
         assert.deepEqual(await rows(sql('public.app_recipe_presentation'), [drinkIds()]), before);
       });

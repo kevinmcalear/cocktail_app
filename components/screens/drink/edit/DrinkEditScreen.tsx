@@ -122,7 +122,7 @@ export function EditPage({ editor, id, onExit, openOn }: { editor: DrinkEditor; 
     // No question first: the toast's Undo brings it back (useDeleteDrink).
     deleteDrink({ id: cocktail.id, name: cocktail.name });
     if (router.canGoBack()) router.back();
-    else router.replace('/(tabs)');
+    else router.replace('/');
   };
   const publish = async () => void (draft && (await draft.handlePublish()) && onExit());
   const onMore = (c: MoreChoice) => (c === 'discard' ? void leave() : c === 'delete' ? void remove() : c === 'publish' ? void publish() : setSheet(c));

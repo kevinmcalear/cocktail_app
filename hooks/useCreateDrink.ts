@@ -179,15 +179,12 @@ export function useCreateDrink() {
         ...(methodIceId ? { method_ice_id: methodIceId } : {}),
         // The same for the build (20261029500000).
         ...(iceBuild ? { ice_build: iceBuild } : {}),
-        riff_of_id: draft.riffOf?.id ?? null,
-        creator_profile_id: creatorId,
-        // People with no page, by name (tf-063). Only when there are some: an older database refuses the column.
-        ...(creatorNames.length ? { creator_names: creatorNames } : {}),
+        based_on_id: draft.riffOf?.id ?? null,
+        based_on_kind: draft.riffOf ? 'riff' : null,
+        // The bar it was first made at (its credit follows from it); who made it is saved below.
         origin_bar_profile_id: originBar,
         origin_year: draft.originYear ?? null,
         price: barId ? await draftPrice(draft, barId) : null,
-        // You can claim your own credit; anyone else's starts as suggested.
-        credit_status: creatorId && creatorId === myProfileId && !otherBar ? 'claimed' : null,
       };
       // Under the draft's id, so it's drawn with the wizard's seed. A clash
       // (an earlier try that saved but never answered) gets an id of its own.
@@ -198,7 +195,24 @@ export function useCreateDrink() {
       if (itemError || !item) throw itemError ?? new Error('Couldn’t save the drink.');
       const id = item.id as string;
 
+      // Who made it (item_credits), as the drink editor saves it: the creator and people with no page, by name (tf-063).
+      const saveCredits = (add: string[]) =>
+        // Null is nobody; the generated types don't say a uuid argument can be null.
+        supabase.rpc('set_drink_credits', { p_item_id: id, p_creator_profile_id: creatorId as string, p_creator_names: creatorNames, p_add: add, p_remove: [] });
       try {
+        if (creatorId || creatorNames.length) {
+          const { error } = await saveCredits([]);
+          if (error) throw error;
+        }
+        // You can say yes to your own credit; anyone else's starts as suggested.
+        if (creatorId && creatorId === myProfileId && !otherBar) {
+          const lead = await supabase.from('item_credits').select('id').eq('item_id', id).eq('role', 'creator').eq('profile_id', creatorId).maybeSingle();
+          if (lead.error) throw lead.error;
+          if (lead.data) {
+            const { error } = await supabase.rpc('answer_item_credit', { p_credit_id: lead.data.id, p_accept: true });
+            if (error) throw error;
+          }
+        }
         // Every method, in order, in the same transaction as the spec.
         await saveDrinkSpec(id, lines, methodIds, null, parts);
       } catch (e) {
@@ -226,7 +240,7 @@ export function useCreateDrink() {
       // Not the person credited first, and only people with a profile (the database checks both).
       const coIds = [...new Set((draft.coCreators ?? []).map((c) => c.id).filter((p): p is string => !!p && p !== creatorId))];
       if (coIds.length) {
-        const { error } = await supabase.from('item_co_creators').insert(coIds.map((profile_id) => ({ item_id: id, profile_id })));
+        const { error } = await saveCredits(coIds);
         if (error) warnings.push(plainDbMessage(error) ?? 'The people who made it with you weren’t added. Add them on the drink’s page.');
       }
 

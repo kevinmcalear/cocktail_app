@@ -1,6 +1,6 @@
 /**
  * The staff list: the venue's drinks to know and suggest, ranked 1 to 50
- * (bar_off_menu.sort_rank), with cut lines after 10 and 20. A drink with no
+ * (bar_also_makes.sort_rank), with cut lines after 10 and 20. A drink with no
  * rank is on the list but not in the ranking.
  */
 export const CUTS = [10, 20] as const;
@@ -23,7 +23,7 @@ export interface ClassicRow {
   name: string;
   classicName: string | null;
   imageUrl: string | null;
-  /** On the staff list (bar_off_menu); false for a drink that is only linked to a classic. */
+  /** On the staff list (bar_also_makes, "Also makes"); false for a drink that is only linked to a classic. */
   onList: boolean;
 }
 

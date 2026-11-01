@@ -21,7 +21,7 @@ const classics = [
   { id: 'd', name: 'Daiquiri' },
   { id: 'm', name: 'Martini' },
 ];
-assert.deepEqual([...haveClassics(classics, [{ name: 'House Negroni', riff_of_id: 'n' }, { name: ' daiquiri ', riff_of_id: null }])].sort(), ['d', 'n']);
+assert.deepEqual([...haveClassics(classics, [{ name: 'House Negroni', based_on_id: 'n' }, { name: ' daiquiri ', based_on_id: null }])].sort(), ['d', 'n']);
 assert.equal(haveClassics(classics, []).size, 0);
 
 // --- classicsToAdd: ticked and not already there, so running it again adds nothing twice ---

@@ -9,7 +9,7 @@ import { useSpecMatches } from '@/hooks/useSpecMatches';
  */
 export function useClassicCopy(itemId: string | null | undefined): { classicId: string; classicName: string; barName: string | null } | null {
   const { data: own } = useDrinkCredit(itemId);
-  const classic = own?.riff_of?.is_catalog ? own.riff_of : null;
+  const classic = own?.based_on_kind === 'riff' && own.based_on?.is_catalog ? own.based_on : null;
   const { data: matches } = useSpecMatches(classic && itemId ? itemId : undefined, classic && itemId ? [itemId] : []);
   if (!classic || !itemId || matches?.[itemId]?.spec_match !== 'same') return null;
   return { classicId: classic.id, classicName: classic.name, barName: own?.origin_bar?.display_name ?? null };

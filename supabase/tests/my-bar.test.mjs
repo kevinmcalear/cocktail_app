@@ -155,15 +155,16 @@ before(async () => {
   await recipe('no-amounts', [['rye', null, false, noAmount], ['lemon', null, false, noAmount]]);
   await recipe('topped', [['mezcal'], ['water', null, false, noAmount]]);
 
-  // A bar keeping a gin-and-Campari drink to its staff, one its members (role 20) see with the brand masked,
-  // and one whose measurements are above them: names, no spec.
-  ids.bar = (await serviceInsert('bars', { name: `My Bar Test ${run}`, default_measurement_level: 20 })).id;
+  // A bar keeping a gin-and-Campari drink to its staff, one its members (role 20, given the specs
+  // permission) follow, and one whose spec it hides: names, no spec (20261204300000).
+  ids.bar = (await serviceInsert('bars', { name: `My Bar Test ${run}` })).id;
+  await serviceInsert('venue_level_overrides', { bar_id: ids.bar, base_level: 20, granted: ['specs'], revoked: [] });
   await serviceInsert('user_bars', { user_id: users.member.id, bar_id: ids.bar, role_level: 20 });
   await item('staffOnly', { name: 'Staff Only', item_type: 'cocktail', bar_id: ids.bar, override_visibility_level: 40 });
   await recipe('staffOnly', [['gin'], ['campari']]);
   await item('house', { name: 'House Negroni', item_type: 'cocktail', bar_id: ids.bar });
   await recipe('house', [['tanqueray', 'gin'], ['campari']]);
-  await item('namesOnly', { name: 'Names Only', item_type: 'cocktail', bar_id: ids.bar, override_measurement_level: 30 });
+  await item('namesOnly', { name: 'Names Only', item_type: 'cocktail', bar_id: ids.bar, spec_hidden: true });
   await recipe('namesOnly', [['mezcal'], ['lemon']]);
 });
 
@@ -229,8 +230,8 @@ describe('my_bar_drinks', () => {
     assert.deepEqual(data, [], 'and cannot read anyone else\'s');
   });
 
-  test('a member sees the masked line: their generic covers it, the brand is never shown', async () => {
-    await shelve('member', ['gin']);
+  test('a member with the specs permission sees the line as it is: the brand is what covers it', async () => {
+    await shelve('member', ['tanqueray']);
     const r = await myBar('member');
     assert.equal(r.away.house, 'campari');
     await shelve('home', ['gin']);
@@ -266,11 +267,11 @@ describe('my_bar_drinks', () => {
     await shelve('home', []);
     const two = await myBar('home', { p_two_away: true });
     assert.ok(!('no-amounts' in two.away) && !('no-amounts' in two.two), 'nor one or two away');
-    await shelve('member', ['gin']);
+    await shelve('member', ['tanqueray']);
     const m = await myBar('member');
     assert.equal(m.away.house, 'campari', 'the member sees this one\'s amounts');
     await shelve('member', ['mezcal']);
-    assert.ok(!('namesOnly' in (await myBar('member')).away), 'but not these: the bar keeps measurements above their role');
+    assert.ok(!('namesOnly' in (await myBar('member')).away), 'but not these: the bar hides this spec');
   });
 
   test('two away only when asked, so older apps see the same rows', async () => {
@@ -488,7 +489,8 @@ describe('ingredient_used_in', () => {
   test('as the caller\'s recipe view shows it: a masked line counts for its generic, not the brand', async () => {
     assert.deepEqual(await usedIn('home', 'tanqueray'), ['negroni']);
     assert.deepEqual(await usedIn('home', 'gin'), ['bees-knees', 'martini']);
-    assert.deepEqual(await usedIn('member', 'tanqueray'), ['negroni']);
-    assert.deepEqual(await usedIn('member', 'gin'), ['bees-knees', 'house', 'martini']);
+    // The member holds the specs permission, so their bar's line shows its brand (20261204300000).
+    assert.deepEqual(await usedIn('member', 'tanqueray'), ['house', 'negroni']);
+    assert.deepEqual(await usedIn('member', 'gin'), ['bees-knees', 'martini']);
   });
 });

@@ -34,6 +34,39 @@ export interface DrinkAllergens {
   unchecked: number;
   /** Lines in the spec. */
   lines: number;
+  /** When the bar checked this drink's list, while that check still holds (20261204400000). */
+  checked?: string | null;
+  /** The bar checked it, then the spec or what it's made of changed. */
+  stale?: boolean;
+}
+
+/** What guest_drink_allergens() returns for one drink: every allergen, never who checked. */
+export interface GuestDrinkAllergens {
+  item_id: string;
+  allergens: DrinkAllergen[];
+  unchecked: number;
+  lines: number;
+  /** When the bar checked it, while that holds; null: "Ask your bartender". */
+  checked_at: string | null;
+}
+
+export interface AllergyMatch {
+  allergen: Allergen;
+  /** The ingredient it comes through, when the guest may see its name. */
+  ingredient: string | null;
+}
+
+/**
+ * The guest's own allergies found in a drink (guest-allergies): only on a
+ * drink the bar has checked, warnings only (never a reassuring tick), naming
+ * the top ingredient it comes through. Null when the bar hasn't checked it,
+ * so the page says Ask your bartender.
+ */
+export function allergyMatches(mine: readonly string[], drink: Pick<GuestDrinkAllergens, 'allergens' | 'checked_at'>): AllergyMatch[] | null {
+  if (!drink.checked_at) return null;
+  return drink.allergens
+    .filter((a) => mine.includes(a.allergen))
+    .map((a) => ({ allergen: a.allergen, ingredient: a.via.find((path) => path.length > 0)?.[0] ?? null }));
 }
 
 export function allergenLabel(key: string): string {

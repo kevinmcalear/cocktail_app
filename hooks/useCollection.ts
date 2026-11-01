@@ -9,13 +9,16 @@ import { supabase } from '@/lib/supabase';
 
 /**
  * A home bartender's collection: drinks they saved to make (the bookmark on
- * any drink they can read) and drinks and releases they collected from bars. Each keeps a memory (name, bar, picture, and for drinks when they had
- * it and a note) that outlives the bar unpublishing it. The spec only ever
- * comes from the live, published drink. Private to the collector; collecting
- * needs a confirmed age (get_my_age_check).
+ * any drink they can read, want_list kind 'drink') and releases they
+ * collected from bars. Each keeps a memory (name, bar, picture) that outlives
+ * the bar unpublishing it; a drink's day and note are a remembered had
+ * (drinks_had, source 'memory'), which stays when the drink is let go. The
+ * spec only ever comes from the live, published drink. Private to the
+ * collector; collecting needs a confirmed age (get_my_age_check).
  */
 
 export interface CollectedDrink {
+  /** The want_list row. */
   id: string;
   itemId: string | null;
   releaseId: string | null;
@@ -23,6 +26,8 @@ export interface CollectedDrink {
   name: string;
   barName: string | null;
   imageUrl: string | null;
+  /** The remembered had holding hadOn and note, once there is one. */
+  hadId: string | null;
   hadOn: string | null;
   note: string | null;
   /** The drink's public mode now, or null when it isn't published. */
@@ -55,7 +60,10 @@ export interface Collection {
 }
 
 // The last part is the shape's version: the cache is persisted, and an older shape mustn't come back.
-const collectionKey = (userId: string | null) => ['collection', userId, 2] as const;
+const collectionKey = (userId: string | null) => ['collection', userId, 3] as const;
+
+/** A want and its memory match by drink, or by the remembered name once the drink is gone. */
+const memoryKey = (r: { item_id: string | null; name: string | null }) => r.item_id ?? `name:${r.name}`;
 
 /** `live` false: none (a preview of a drink page, which reads nothing of yours). */
 export function useCollection(live = true) {
@@ -68,18 +76,24 @@ export function useCollection(live = true) {
       await moveHeartsToCollection();
       // ponytail: the whole collection in one page. A person collects dozens,
       // not thousands; page by collected_at if someone gets there.
-      const [drinks, releases] = await Promise.all([
+      const [drinks, memories, releases] = await Promise.all([
         supabase
-          .from('collected_items')
-          .select('id, item_id, release_id, collected_at, name, bar_name, image_url, had_on, note')
-          .order('collected_at', { ascending: false }),
+          .from('want_list')
+          .select('id, item_id, release_id, wanted_at, name, bar_name, image_url')
+          .eq('user_id', userId!)
+          .eq('kind', 'drink')
+          .order('wanted_at', { ascending: false }),
+        // Oldest first, so the newest memory of a drink wins below.
+        supabase.from('drinks_had').select('id, item_id, name, had_on, note').eq('user_id', userId!).eq('source', 'memory').order('created_at'),
         supabase
           .from('collected_releases')
           .select('id, release_id, collected_at, name, bar_name, cover_url, release_date, release:releases(id, release_items(item_id, sort_order))')
           .order('collected_at', { ascending: false }),
       ]);
       if (drinks.error) throw drinks.error;
+      if (memories.error) throw memories.error;
       if (releases.error) throw releases.error;
+      const memory = new Map((memories.data ?? []).map((m) => [memoryKey(m), m]));
       const itemIds = (drinks.data ?? []).map((d) => d.item_id).filter((id): id is string => !!id);
       const live = await fetchPublished(itemIds);
       // The drinks whose own row they can read: their spec opens, whatever the bar published (a classic, say).
@@ -99,16 +113,18 @@ export function useCollection(live = true) {
       return {
         drinks: (drinks.data ?? []).map((d) => {
           const shown = memoryNow({ name: d.name, barName: d.bar_name, imageUrl: d.image_url }, now(d.item_id));
+          const had = memory.get(memoryKey(d));
           return {
             id: d.id,
             itemId: d.item_id,
             releaseId: d.release_id,
-            collectedAt: d.collected_at,
+            collectedAt: d.wanted_at,
             name: shown.name ?? 'A drink',
             barName: shown.barName,
             imageUrl: shown.imageUrl,
-            hadOn: d.had_on,
-            note: d.note,
+            hadId: had?.id ?? null,
+            hadOn: had?.had_on ?? null,
+            note: had?.note ?? null,
             liveMode: live.find((p) => p.id === d.item_id)?.publishMode ?? null,
             readable: !!d.item_id && !isLive(d.item_id) && opens.has(d.item_id),
             specOpens: !!d.item_id && opens.has(d.item_id),
@@ -139,17 +155,17 @@ type CollectChange =
   | { kind: 'remove-drink'; id: string }
   | { kind: 'remove-release'; id: string };
 
-/** Collect or let go of a drink or a release. */
+/** Collect or let go of a drink or a release. Letting go of a drink keeps its day and note (a had). */
 export function useCollect() {
   const queryClient = useQueryClient();
   return useMutation({
     mutationFn: async (change: CollectChange) => {
       const { error } =
         change.kind === 'drink'
-          ? await supabase.from('collected_items').insert({ item_id: change.itemId, release_id: change.releaseId ?? null })
+          ? await supabase.from('want_list').insert({ kind: 'drink', item_id: change.itemId, release_id: change.releaseId ?? null })
           : change.kind === 'release'
             ? await supabase.from('collected_releases').insert({ release_id: change.releaseId })
-            : await supabase.from(change.kind === 'remove-drink' ? 'collected_items' : 'collected_releases').delete().eq('id', change.id);
+            : await supabase.from(change.kind === 'remove-drink' ? 'want_list' : 'collected_releases').delete().eq('id', change.id);
       // Already collected (a double tap, or another device): nothing to do.
       if (error && error.code !== '23505') throw new Error(error.message);
     },
@@ -161,15 +177,38 @@ export function useCollect() {
   });
 }
 
-/** The collector's own part of a memory: when they had it, and a note. */
+export interface MemoryChange {
+  /** The remembered had to change, or null to start one for the drink. */
+  hadId: string | null;
+  itemId: string | null;
+  hadOn: string | null;
+  note: string | null;
+}
+
+/**
+ * The collector's own part of a memory: when they had it, and a note, as a
+ * remembered had (drinks_had, source 'memory'). Clearing both deletes it.
+ */
 export function useUpdateMemory() {
   const queryClient = useQueryClient();
   return useMutation({
-    mutationFn: async ({ id, hadOn, note }: { id: string; hadOn: string | null; note: string | null }) => {
-      const { error } = await supabase.from('collected_items').update({ had_on: hadOn, note }).eq('id', id);
-      if (error) throw new Error(error.message);
+    mutationFn: async ({ hadId, itemId, hadOn, note }: MemoryChange) => {
+      const had = supabase.from('drinks_had');
+      const empty = !hadOn && !note;
+      if (hadId) {
+        const { error } = empty ? await had.delete().eq('id', hadId) : await had.update({ had_on: hadOn, note }).eq('id', hadId);
+        if (error) throw new Error(error.message);
+        return;
+      }
+      if (empty) return;
+      // ponytail: a new memory needs a drink they can still read (drinks_had_insert_own), so one off its bar's menu
+      // keeps only a memory it already had. Lift that in the policy if people ask to date those.
+      const offMenu = 'This drink isn’t on its bar’s menu now, so it can’t take a new day or note.';
+      if (!itemId) throw new Error(offMenu);
+      const { error } = await had.insert({ item_id: itemId, had_on: hadOn, note, at_home: false, source: 'memory' });
+      if (error) throw new Error(error.code === '42501' ? offMenu : error.message);
     },
-    onSettled: () => queryClient.invalidateQueries({ queryKey: ['collection'] }),
+    onSettled: () => Promise.all([['collection'], ['my-had']].map((queryKey) => queryClient.invalidateQueries({ queryKey }))),
     onError: () => {},
   });
 }

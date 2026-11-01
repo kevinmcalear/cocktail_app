@@ -161,7 +161,7 @@ export function useImportReview(id: string, data: MatchData) {
     store.dropReview(id);
     const wizard = useDrinkWizardStore.getState();
     for (const slot of reviewSlots(wizard.kept, wizardPlace(r.barId), id)) wizard.clear(slot);
-    if (!count) return void (router.canGoBack() ? router.back() : router.replace('/(tabs)' as Href));
+    if (!count) return void (router.canGoBack() ? router.back() : router.replace('/' as Href));
     store.setDone({
       batchId: null,
       kind: 'recipes',

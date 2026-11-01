@@ -133,7 +133,7 @@ export interface MenuItemRow {
   brand_maker: string | null;
   origin: string | null;
   price: string | null;
-  glass: { icon_key: string | null; name: string | null } | { icon_key: string | null; name: string | null }[] | null;
+  glass: { glassware: { icon_key: string | null; name: string | null } | null } | null;
   item_images: ItemImageLink[] | ItemImageLink | null;
   recipes: { sort_order: number | null; created_at?: string; display_ingredient: LineIngredient | LineIngredient[] | null }[] | null;
 }
@@ -148,7 +148,7 @@ export function toMenuDrink(item: MenuItemRow, menuPrice: string | null = null):
   if (!kind) return null;
   const images = Array.isArray(item.item_images) ? item.item_images : item.item_images ? [item.item_images] : [];
   const hero = heroPicture(images);
-  const glass = one(item.glass);
+  const glass = item.glass?.glassware;
   const line =
     kind === 'cocktail'
       ? sentenceLine(ingredientLine(sortRecipesByOrder(item.recipes ?? []).map((r) => readingName(one(r.display_ingredient))))) || (item.description ?? '')
@@ -174,7 +174,8 @@ export function publishedMenuDrink(p: PublishedDrink): MenuDrink | null {
 }
 
 /** The columns a menu needs from a drink (items), for toMenuDrink. */
-export const MENU_DRINK_COLUMNS = `id, name, item_type, description, brand_maker, origin, price, glass:glassware_id(icon_key, name),
+export const MENU_DRINK_COLUMNS = `id, name, item_type, description, brand_maker, origin, price,
+  glass:drink_glass!drink_glass_item_id_fkey(glassware:items!drink_glass_glassware_id_fkey(icon_key, name)),
   item_images(angle, sort_order, is_generated, images(url)),
   recipes:app_recipe_presentation!recipe_item_id(sort_order, created_at, display_ingredient(name, ingredient_role))`;
 export const MENU_DRINK_ITEM = `item:items!item_id(${MENU_DRINK_COLUMNS})`;

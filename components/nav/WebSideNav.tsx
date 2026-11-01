@@ -1,4 +1,4 @@
-import { usePathname, useRouter, type Href } from 'expo-router';
+import { usePathname, useRouter, useSegments, type Href } from 'expo-router';
 import { useEffect, useState } from 'react';
 import { Platform, StyleSheet, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
@@ -13,6 +13,7 @@ import { useSearchPalette } from '@/store/useSearchPalette';
 import { isEditable } from '@/lib/bringInAnywhere';
 import { isApplePlatform } from '@/lib/platformKeys';
 import { navCurrent } from '@/lib/shellNav';
+import { tabOfGroup } from '@/lib/tabs';
 
 import { WeekNav } from '@/components/screens/week/WeekNav';
 import { RoundNav } from '@/components/screens/firstRound/RoundElsewhere';
@@ -58,8 +59,10 @@ function SideNav() {
   // A page that isn't a row (a drink, the add wizard) keeps the row it came from lit.
   const rows = [...places.tabs, places.history, places.menus, ...places.work, ...places.venuePlaces, places.week].filter((p): p is Place => !!p);
   const [last, setLast] = useState<string | null>(null);
+  // Opened cold (a link or a refresh), there's no row it came from: the tab its stack is in is lit.
+  const tab = tabOfGroup((useSegments() as string[])[1]);
   // "Set up <bar>" lives under Venue settings' path but is its own row (SetupNav).
-  const current = pathname.endsWith('/what-next') ? null : navCurrent(pathname, rows, last);
+  const current = pathname.endsWith('/what-next') ? null : navCurrent(pathname, rows, last ?? tab);
   if (current !== last) setLast(current);
 
   // ponytail: ⌘K, the eight ball key and N live on the always-mounted side nav. ⌘K toggles the search over this page;
@@ -103,10 +106,11 @@ function SideNav() {
 /**
  * The desktop sidebar, as the canvas draws it: the marks, Search (⌘K), the
  * four tabs and History, the venue's Menus, Prep, Study, Back bar and
- * Glassware, New (N), This week, the Venue section, and you at the foot.
+ * Glassware, This week, the Venue section, and you at the foot. New is the + Add
+ * top right (and the N key).
  * Pages need no header row of their own.
  */
-function Sidebar({ current, go, searching, onSearch, onNew }: SideNavProps) {
+function Sidebar({ current, go, searching, onSearch }: SideNavProps) {
   const ds = useDs();
   // An iPad's status bar and home indicator; 0 on the web.
   const insets = useSafeAreaInsets();
@@ -125,7 +129,6 @@ function Sidebar({ current, go, searching, onSearch, onNew }: SideNavProps) {
       {nav.map(row)}
       {menus ? row(menus) : null}
       {work.map(row)}
-      <NavRow label="New" icon="plus" role="button" look="outlined" hint={keys ? 'N' : undefined} current={false} onPress={onNew} />
       {venue ? <RoundNav /> : null}
       {week ? <WeekNav /> : null}
       {venuePlaces.length ? (

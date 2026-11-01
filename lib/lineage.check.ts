@@ -10,6 +10,7 @@ import {
   nameCredit,
   joinNames,
   MAX_ANCESTORS,
+  parentId,
   shortNames,
   sortRiffs,
   styleChain,
@@ -24,7 +25,7 @@ const person: CreditProfile = { id: 'p1', kind: 'person', handle: 'sam', display
 const bar: CreditProfile = { id: 'b1', kind: 'bar', handle: 'mh', display_name: 'Milk & Honey', avatar_url: null, locality: 'New York' };
 
 function drink(id: string, riffOf: string | null, extra: Partial<LineageDrink> = {}): LineageDrink {
-  return { id, name: id, riff_of_id: riffOf, origin_year: null, credit_status: null, origin: null, creator: null, origin_bar: null, ...extra };
+  return { id, name: id, based_on_id: riffOf, based_on_kind: riffOf ? 'riff' : null, origin_year: null, credit_status: null, origin: null, creator: null, origin_bar: null, ...extra };
 }
 
 async function main() {
@@ -144,13 +145,18 @@ async function main() {
   assert.equal(hasLineage(drink('x', null, { creator: person }), [], []), true);
   assert.equal(hasLineage(drink('x', null), [], [drink('r', 'x')]), true);
 
-  // A bar's drink climbs to its classic by riff_of_id, then classic to classic by lineage_parent_id.
+  // A bar's drink climbs to its classic (a riff on it), then classic to classic (descends from it).
   const tree = new Map([
     ['goldrush', drink('goldrush', null, { is_catalog: true })],
-    ['penicillin', drink('penicillin', null, { is_catalog: true, lineage_parent_id: 'goldrush' })],
+    ['penicillin', drink('penicillin', null, { is_catalog: true, based_on_id: 'goldrush', based_on_kind: 'descends' })],
     ['house', drink('house', 'penicillin')],
   ]);
   assert.deepEqual((await walkAncestors(tree.get('house')!, async (id) => tree.get(id) ?? null)).map((d) => d.id), ['goldrush', 'penicillin']);
+  // A classic straight from a style has no drink above it.
+  assert.equal(parentId({ based_on_id: null }), null);
+  // Readers still on the old link (published_items) climb the same way.
+  assert.equal(parentId({ riff_of_id: 'penicillin' }), 'penicillin');
+  assert.equal(parentId({ riff_of_id: null, lineage_parent_id: 'goldrush' }), 'goldrush');
 
   // Styles come back oldest first and survive a loop.
   const style = (id: string, parent: string | null): DrinkStyle => ({ id, key: id, name: id, family: 'sour', parent_style_id: parent, year: null, year_approx: false, summary: null });

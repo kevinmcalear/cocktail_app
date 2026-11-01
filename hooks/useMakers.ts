@@ -5,6 +5,7 @@ import { pickerResult, usePickerTerm } from '@/hooks/useDiscover';
 import { originalsByIds, type Original } from '@/hooks/useProfiles';
 import { withNear, type MaybeNear } from '@/hooks/useSearchNear';
 import { supabase } from '@/lib/supabase';
+import type { CreditState } from '@/lib/whoMadeIt';
 
 export interface MakerBottle {
   id: string;
@@ -51,10 +52,11 @@ export function useMakerDrinks(profileId: string | null | undefined) {
     enabled: !!profileId && !!userId,
     queryFn: async (): Promise<Original[]> => {
       const { data, error } = await supabase
-        .from('item_maker_credits')
+        .from('item_credits')
         .select('item_id')
+        .eq('role', 'maker')
         .eq('profile_id', profileId!)
-        .not('confirmed_at', 'is', null)
+        .in('status', CONFIRMED)
         .limit(100);
       if (error) throw error;
       const ids = [...new Set((data ?? []).map((r) => r.item_id as string))];
@@ -174,14 +176,18 @@ export function useSetItemMaker(itemId: string) {
   });
 }
 
+/** A maker's credit the team said yes to (or a moderator checked, or the team since disputed): shown on its page and the drink's. */
+const CONFIRMED: CreditState[] = ['accepted', 'verified', 'disputed'];
+
 export interface MakerCredit {
   profile_id: string;
   makes: 'ice' | 'glassware';
-  confirmed_at: string | null;
+  /** Waiting for the maker's team (pending), or confirmed. */
+  status: CreditState;
   maker: MakerRef | null;
 }
 
-/** Who cut a drink's ice or made its glass, confirmed or not. */
+/** Who cut a drink's ice or made its glass, confirmed or not (only the drink's editors and the maker's team are sent ones still waiting). */
 export function useDrinkMakerCredits(itemId: string | null | undefined) {
   const userId = useUserId();
   return useQuery({
@@ -189,9 +195,12 @@ export function useDrinkMakerCredits(itemId: string | null | undefined) {
     enabled: !!itemId && !!userId,
     queryFn: async (): Promise<MakerCredit[]> => {
       const { data, error } = await supabase
-        .from('item_maker_credits')
-        .select(`profile_id, makes, confirmed_at, maker:profiles(${MAKER_REF})`)
-        .eq('item_id', itemId!);
+        .from('item_credits')
+        .select(`profile_id, makes:what, status, maker:profiles(${MAKER_REF})`)
+        .eq('item_id', itemId!)
+        .eq('role', 'maker')
+        // A maker's no sticks, out of sight.
+        .neq('status', 'declined');
       if (error) throw error;
       return (data ?? []) as MakerCredit[];
     },
@@ -203,9 +212,7 @@ export function useEditMakerCredit(itemId: string) {
   const qc = useQueryClient();
   return useMutation({
     mutationFn: async ({ profileId, makes, remove }: { profileId: string; makes: 'ice' | 'glassware'; remove?: boolean }) => {
-      const { error } = remove
-        ? await supabase.from('item_maker_credits').delete().eq('item_id', itemId).eq('profile_id', profileId).eq('makes', makes)
-        : await supabase.from('item_maker_credits').insert({ item_id: itemId, profile_id: profileId, makes });
+      const { error } = await supabase.rpc('set_maker_credit', { p_item_id: itemId, p_profile_id: profileId, p_what: makes, p_credited: !remove });
       if (error) throw error;
     },
     onSettled: () => {
@@ -239,6 +246,8 @@ export interface MakerCreditRequest {
   drink_name: string;
   credited_by: string | null;
   created_at: string;
+  /** The credit to answer (answer_item_credit). */
+  credit_id: string;
 }
 
 /** Credits naming this venue's maker page that wait for its team to confirm. */
@@ -255,19 +264,18 @@ export function useMakerCreditRequests(barId: string | null | undefined) {
   });
 }
 
-/** Say yes to a credit (confirm_maker_credit) or take it off. */
+/** Say yes or no to a credit. A no sticks: the drink's editors can't name the maker there again. */
 export function useAnswerMakerCredit(barId: string | null | undefined) {
   const qc = useQueryClient();
   return useMutation({
     mutationFn: async ({ request, yes }: { request: MakerCreditRequest; yes: boolean }) => {
-      const { error } = yes
-        ? await supabase.rpc('confirm_maker_credit', { p_item_id: request.item_id, p_profile_id: request.profile_id, p_makes: request.makes })
-        : await supabase.from('item_maker_credits').delete().eq('item_id', request.item_id).eq('profile_id', request.profile_id).eq('makes', request.makes);
+      const { error } = await supabase.rpc('answer_item_credit', { p_credit_id: request.credit_id, p_accept: yes });
       if (error) throw error;
     },
     onSettled: () => {
       qc.invalidateQueries({ queryKey: ['maker-credit-requests', barId] });
       qc.invalidateQueries({ queryKey: ['maker-drinks'] });
+      qc.invalidateQueries({ queryKey: ['drink-maker-credits'] });
     },
   });
 }
