@@ -63,7 +63,7 @@ export function useDrinkSections(p: DrinkSectionsInput) {
   const { data: runs = [] } = useDrinkMenuRuns(live ? item.id : null);
   const description = item.description && pageShowsDescriptions(lock?.bar.visibility) ? item.description : null;
   // A bar's published drink keeps its spec back: its names alone, as a guest reads them.
-  const lockedLines: SpecLine[] | null = lock ? (lock.names ?? []).map((n, i) => ({ ...BLANK, key: `${i}`, ingredient: n.brand ? `${n.brand} ${n.name}` : n.name })) : null;
+  const lockedLines: SpecLine[] | null = lock ? (lock.names ?? []).map((n, i) => ({ ...BLANK, key: `${i}`, ingredient: n.name })) : null;
   const team = onTeam(viewer) && !!item.bar_id && live;
 
   const title = (
