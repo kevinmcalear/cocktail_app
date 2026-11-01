@@ -14,4 +14,6 @@ export const material = {
   control: 40,
   /** Label large, Material's button text. */
   label: { fontSize: 14, lineHeight: 20, letterSpacing: 0.14 },
+  /** The Makes menu's rows, Compose text. */
+  menuText: { fontSize: 15 },
 } as const;
