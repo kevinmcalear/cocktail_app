@@ -11,7 +11,7 @@ export function EquipmentDetailScreen({ id }: { id: string }) {
   const e = equipmentById(id);
   if (!e) {
     return (
-      <TechniquePage title="Not found" intro={<Body tone="muted">That isn’t in the equipment list.</Body>}>
+      <TechniquePage title="Not found" intro={<Body tone="muted">That isn’t in the equipment list.</Body>} crumbs={LEARN_CRUMBS}>
         <Button label="All equipment" onPress={() => router.replace('/equipment' as Href)} />
       </TechniquePage>
     );

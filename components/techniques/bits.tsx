@@ -7,7 +7,7 @@ import { RowDivider } from '@/components/screens/settings/SettingsParts';
 import { IconSymbol } from '@/components/ui/icon-symbol';
 import { font, layout, radius, space } from '@/constants/tokens';
 import { missingKit, type BuyAudience, type BuyLink, type Grade, type Source, type Technique } from '@/lib/techniques';
-import { useAppMode } from '@/store/useAppMode';
+import { useAppMode, type AppMode } from '@/store/useAppMode';
 
 const GRADE: Record<Grade, { label: string; long: string }> = {
   A: { label: 'Well tested', long: 'A primary or tested source' },
@@ -60,16 +60,26 @@ export function Group({ children }: { children: ReactNode[] }) {
   );
 }
 
-/** A row that only says something: an icon, a label, and its value on the right (Time · 2 hours). */
+/** A row that only says something: an icon, a label, and its value on the right (Time · 2 hours), or under the label when it runs long. */
 export function ValueRow({ icon, label, value }: { icon?: Parameters<typeof IconSymbol>[0]['name']; label: string; value: string }) {
   const ds = useDs();
+  const long = value.length > 32;
   return (
     <View style={styles.value}>
       {icon ? <IconSymbol name={icon} size={20} color={ds.c.muted} /> : null}
-      <Body>{label}</Body>
-      <Body tone="muted" style={styles.valueText}>
-        {value}
-      </Body>
+      {long ? (
+        <View style={styles.flex}>
+          <Body>{label}</Body>
+          <Caption tone="muted">{value}</Caption>
+        </View>
+      ) : (
+        <>
+          <Body>{label}</Body>
+          <Body tone="muted" style={styles.valueText}>
+            {value}
+          </Body>
+        </>
+      )}
     </View>
   );
 }
@@ -125,6 +135,13 @@ export function SourceList({ sources }: { sources: Source[] }) {
   );
 }
 
+/** The shops to show: with home and bar picks both listed, the mode the app is in picks which. */
+export function shopsFor(links: BuyLink[], mode: AppMode | null): BuyLink[] {
+  const audience: BuyAudience = mode === 'home' ? 'home' : 'bar';
+  const split = links.some((l) => l.audience === 'home') && links.some((l) => l.audience === 'bar');
+  return split ? links.filter((l) => !l.audience || l.audience === audience) : links;
+}
+
 /**
  * Where to buy, opening the shop's page. When there are home and bar picks
  * (small sizes and home kit, or bulk and commercial), the mode the app is in
@@ -134,9 +151,7 @@ export function BuyList({ links }: { links: BuyLink[] }) {
   const ds = useDs();
   const appMode = useAppMode((s) => s.known);
   // Plain rows as drawn (prep-ing-xanthan): the picks for the mode the app is in.
-  const audience: BuyAudience = appMode === 'home' ? 'home' : 'bar';
-  const split = links.some((l) => l.audience === 'home') && links.some((l) => l.audience === 'bar');
-  const shown = split ? links.filter((l) => !l.audience || l.audience === audience) : links;
+  const shown = shopsFor(links, appMode);
   return (
     <View style={styles.notes}>
       <View>

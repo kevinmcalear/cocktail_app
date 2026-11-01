@@ -8,7 +8,7 @@ import { Group, Section } from '@/components/techniques/bits';
 import { TechniquePage } from '@/components/techniques/TechniquePage';
 import { IconSymbol } from '@/components/ui/icon-symbol';
 import { displayFaces, palateHues, radius, space } from '@/constants/tokens';
-import { useKitHere } from '@/hooks/useBarKit';
+import { useShelfHere } from '@/hooks/useBarKit';
 import { useCoreIngredients, usePairings } from '@/hooks/usePairings';
 import { EQUIPMENT, GROUPS, TECHNIQUES } from '@/lib/techniques';
 import { kitPicks, pairLine, pickOfDay, type KitPick } from '@/lib/techniques/learn';
@@ -23,7 +23,7 @@ const HUB_GROUPS = ['cold', 'clarify', 'foam', 'infuse', 'preserve'].flatMap((id
  */
 export function LearnScreen() {
   const router = useRouter();
-  const kit = useKitHere();
+  const { kit, bar } = useShelfHere();
   const go = (href: string) => () => router.push(href as Href);
   return (
     <TechniquePage
@@ -43,7 +43,7 @@ export function LearnScreen() {
       <Section title="Equipment" aside={`All ${EQUIPMENT.length}`} onAside={go('/equipment')}>
         <View role="list">
           {kitPicks(kit).map((p) => (
-            <KitRow key={p.id} pick={p} onPress={go(`/equipment/${p.id}`)} />
+            <KitRow key={p.id} pick={p} shelf={bar ? 'In the bar’s kit' : 'On your shelf'} onPress={go(`/equipment/${p.id}`)} />
           ))}
         </View>
       </Section>
@@ -55,9 +55,9 @@ export function LearnScreen() {
 }
 
 /** A piece of kit: its drawing, its name in the display face, and On your shelf with Have it, or what it would open. */
-function KitRow({ pick, onPress }: { pick: KitPick; onPress: () => void }) {
+function KitRow({ pick, shelf, onPress }: { pick: KitPick; shelf: string; onPress: () => void }) {
   const ds = useDs();
-  const sub = pick.have ? 'On your shelf' : `Unlocks ${pick.opens} ${pick.opens === 1 ? 'technique' : 'techniques'}`;
+  const sub = pick.have ? shelf : `Unlocks ${pick.opens} ${pick.opens === 1 ? 'technique' : 'techniques'}`;
   return (
     <PressableScale role="link" accessibilityLabel={`${pick.name}. ${sub}${pick.have ? '. You have it' : ''}`} onPress={onPress} style={styles.kit}>
       <View style={[styles.pic, { backgroundColor: ds.c.surface }]}>

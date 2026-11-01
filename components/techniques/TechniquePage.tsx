@@ -23,7 +23,7 @@ interface Props {
   art?: ReactNode;
   /** Round buttons at the top right (Kept-learn: Search on Learn). */
   actions?: ReactNode;
-  /** Wide web: the pages above this one, where a phone has Back. */
+  /** Wide web: the pages above this one, where a phone has Back. A phone opened straight here goes back to the last. */
   crumbs?: Crumb[];
   /** Wide web: a column beside the page (Kept-learn-desk: the tool beside the technique). */
   aside?: ReactNode;
@@ -99,7 +99,7 @@ export function TechniquePage({ eyebrow, title, intro, art, actions, crumbs, asi
       ) : null}
       {wide ? null : (
         <View pointerEvents="box-none" style={[styles.bar, { top: insets.top + space.sm, paddingHorizontal: gutter }]}>
-          <GlassButton accessibilityLabel="Back" icon="chevron.left" onPress={() => (router.canGoBack() ? router.back() : router.replace('/learn' as Href))} />
+          <GlassButton accessibilityLabel="Back" icon="chevron.left" onPress={() => (router.canGoBack() ? router.back() : router.replace((crumbs?.at(-1)?.href ?? '/learn') as Href))} />
           <View style={styles.actions}>{actions}</View>
         </View>
       )}

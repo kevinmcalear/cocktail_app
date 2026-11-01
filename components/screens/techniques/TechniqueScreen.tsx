@@ -2,19 +2,19 @@ import { useRouter, type Href } from 'expo-router';
 import { useState } from 'react';
 import { StyleSheet, View } from 'react-native';
 
-import { Body, Button, Caption, EquipmentDrawing, Surface, Tag, useDs } from '@/components/ds';
+import { Body, Button, Caption, Surface, Tag, useDs } from '@/components/ds';
 import { SettingsRow } from '@/components/screens/settings/SettingsParts';
 import { gradeLong, Group, Notes, Section, SourceList, ValueRow } from '@/components/techniques/bits';
-import { EquipmentPanel } from '@/components/techniques/EquipmentBody';
+import { EquipmentArt, EquipmentPanel } from '@/components/techniques/EquipmentBody';
 import { Scaler } from '@/components/techniques/Scaler';
 import { LEARN_CRUMBS, TechniquePage } from '@/components/techniques/TechniquePage';
 import { TechniqueSteps } from '@/components/techniques/TechniqueSteps';
 import { IconSymbol } from '@/components/ui/icon-symbol';
 import { palateHues, space } from '@/constants/tokens';
 import { useIsWideWeb } from '@/hooks/useIsWideWeb';
-import { useKitHere } from '@/hooks/useBarKit';
+import { useShelfHere } from '@/hooks/useBarKit';
 import { equipmentById, groupById, techniqueById, type Equipment, type Technique } from '@/lib/techniques';
-import { factTiles, ratioTile, swapLine } from '@/lib/techniques/facts';
+import { keepLine, ratioTile, swapLine } from '@/lib/techniques/facts';
 
 const GATE = {
   safety: 'This can hurt someone. Read every warning before you start.',
@@ -36,7 +36,7 @@ export function TechniqueScreen({ id }: { id: string }) {
   const [shown, setShown] = useState<string | null>(null);
   if (!t) {
     return (
-      <TechniquePage title="Not found" intro={<Body tone="muted">That technique isn’t in the library.</Body>}>
+      <TechniquePage title="Not found" intro={<Body tone="muted">That technique isn’t in the library.</Body>} crumbs={LEARN_CRUMBS}>
         <Button label="All techniques" onPress={() => router.replace('/techniques' as Href)} />
       </TechniquePage>
     );
@@ -49,9 +49,9 @@ export function TechniqueScreen({ id }: { id: string }) {
       eyebrow={group ? `Technique · ${group.name}` : 'Technique'}
       title={t.name}
       intro={<Body tone="muted">{t.summary}</Body>}
-      art={kitIds[0] ? <Art id={kitIds[0]} /> : null}
+      art={kitIds[0] ? <EquipmentArt id={kitIds[0]} plain /> : null}
       crumbs={group ? [...LEARN_CRUMBS, { label: group.name, href: `/techniques?group=${group.id}` }] : LEARN_CRUMBS}
-      aside={tool ? <EquipmentPanel e={tool} /> : null}
+      aside={tool ? <EquipmentPanel key={tool.id} e={tool} /> : null}
     >
       {t.gate ? (
         <Surface style={[styles.callout, styles.gate, { borderColor: ds.c.ink }]}>
@@ -80,25 +80,12 @@ export function TechniqueScreen({ id }: { id: string }) {
   );
 }
 
-/** The technique's tool, drawn large on the ground over its name. */
-function Art({ id }: { id: string }) {
-  return (
-    <View aria-hidden style={styles.art}>
-      <View style={styles.drawing}>
-        <EquipmentDrawing id={id} bare />
-      </View>
-    </View>
-  );
-}
-
 /** Time, how long it keeps, the ratio, then a row for each tool: green when it's on your shelf. */
 function Facts({ t, shown, onKit }: { t: Technique; shown: string | null; onKit: (id: string) => void }) {
   const ds = useDs();
-  const kit = useKitHere();
+  const { kit, bar } = useShelfHere();
   const ratio = ratioTile(t);
-  const keep = factTiles(t)
-    .slice(1)
-    .find((f) => f.caption !== ratio?.caption);
+  const keep = keepLine(t);
   const tool = (id: string, label: string) => {
     const e: Equipment | undefined = equipmentById(id);
     if (!e) return null;
@@ -109,7 +96,7 @@ function Facts({ t, shown, onKit }: { t: Technique; shown: string | null; onKit:
         key={`${label}-${id}`}
         icon="hammer.fill"
         label={e.name}
-        detail={[label, have ? 'on your shelf' : e.swap ? `without one: ${e.swap.charAt(0).toLowerCase()}${e.swap.slice(1)}` : null].filter(Boolean).join(' · ')}
+        detail={[label, have ? (bar ? 'in the bar’s kit' : 'on your shelf') : e.swap ? `without one: ${e.swap.charAt(0).toLowerCase()}${e.swap.slice(1)}` : null].filter(Boolean).join(' · ')}
         onPress={() => onKit(id)}
         // Green when it's on your shelf; wide web: the tool beside the page is the one in the accent.
         trailing={have || shown === id ? <IconSymbol name={shown === id ? 'chevron.right' : 'checkmark'} size={16} color={shown === id ? ds.accentText : palateHues[ds.scheme].green} /> : undefined}
@@ -120,7 +107,7 @@ function Facts({ t, shown, onKit }: { t: Technique; shown: string | null; onKit:
     <Group>
       {[
         <ValueRow key="time" icon="clock" label="Time" value={t.time} />,
-        keep ? <ValueRow key="keeps" icon="calendar" label="Keeps" value={`${keep.value}, ${keep.caption}`} /> : null,
+        keep ? <ValueRow key="keeps" icon="calendar" label="Keeps" value={keep} /> : null,
         ratio ? <ValueRow key="ratio" icon="percent" label="Ratio" value={`${ratio.value} (${ratio.caption})`} /> : null,
         ...(t.equipment.length ? t.equipment.map((e) => tool(e, 'You need')) : [<ValueRow key="none" icon="hammer.fill" label="You need" value="Nothing special" />]),
         ...(t.helpful ?? []).map((e) => tool(e, 'Helps')),
@@ -157,8 +144,6 @@ function Warnings({ t }: { t: Technique }) {
 }
 
 const styles = StyleSheet.create({
-  art: { height: 190, alignItems: 'center', justifyContent: 'center' },
-  drawing: { width: 170, height: 170 },
   tags: { flexDirection: 'row', flexWrap: 'wrap', gap: space.xs },
   callout: { flexDirection: 'row', alignItems: 'flex-start', gap: space.md },
   gate: { borderWidth: 1 },
