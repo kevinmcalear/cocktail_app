@@ -17,6 +17,7 @@ import { bestAway, oneBottleLine, shelfTiles } from '@/lib/tonight';
 import { byDay, detailLine, itemDay, shortDay, upcoming, type WeekItem } from '@/lib/week';
 
 import { Friends } from './Friends';
+import { RankIt } from './RankIt';
 import { DrinkTile, NoteCard, TonightSection } from './TonightParts';
 
 /** How many of the week's things sit under the strip. */
@@ -24,8 +25,9 @@ const WEEK_ROWS = 3;
 
 /**
  * Tonight at home (Prod-today-home, with This week on top, Kept-events opt
- * B): the week at the bars you love, what your shelf makes, the one bottle
- * worth buying, and a new list from a bar you love. No feed of strangers.
+ * B), led by "Had a drink? Rank it" (Loop-rank): the week at the bars you
+ * love, what your shelf makes, the one bottle worth buying, and a new list
+ * from a bar you love. No feed of strangers.
  */
 export function HomeTonight() {
   const router = useRouter();
@@ -38,6 +40,7 @@ export function HomeTonight() {
   const nothing = !drinks.isLoading && !tiles.length && !week.card && !week.rows.length;
   return (
     <View style={styles.stack}>
+      <RankIt />
       <ThisWeek week={week} />
       {tiles.length ? (
         <TonightSection title="From your shelf" aside={`${drinks.canMake.length} you can make`} onAside={openShelf}>
