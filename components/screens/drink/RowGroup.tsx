@@ -63,4 +63,28 @@ const styles = StyleSheet.create({
   row: { flexDirection: 'row', alignItems: 'center', gap: space.sm, paddingVertical: space.md + 2, paddingHorizontal: space.lg },
   label: { flexShrink: 1 },
   value: { flex: 1 },
+  fact: { flexDirection: 'row', alignItems: 'baseline', justifyContent: 'space-between', gap: space.md, paddingVertical: space.sm + 3, borderTopWidth: StyleSheet.hairlineWidth },
 });
+
+/**
+ * The facts a menu gives, as ruled rows: label left, value right (board
+ * Item-page: Strength, Pour, Served; Keeps, Store, Takes).
+ */
+export function FactRows({ rows }: { rows: { label: string; value: string }[] }) {
+  const ds = useDs();
+  if (!rows.length) return null;
+  return (
+    <View style={{ borderBottomWidth: StyleSheet.hairlineWidth, borderBottomColor: ds.c.line }}>
+      {rows.map((r) => (
+        <View key={r.label} accessible accessibilityLabel={`${r.label}: ${r.value}`} style={[styles.fact, { borderTopColor: ds.c.line }]}>
+          <DsText variant="body" tone="muted">
+            {r.label}
+          </DsText>
+          <DsText variant="body" align="right" style={styles.value}>
+            {r.value}
+          </DsText>
+        </View>
+      ))}
+    </View>
+  );
+}

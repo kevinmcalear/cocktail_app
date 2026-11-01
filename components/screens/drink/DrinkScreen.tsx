@@ -1,11 +1,9 @@
 import { useState } from 'react';
-import { Platform, StyleSheet, useWindowDimensions, View } from 'react-native';
-import Animated, { useAnimatedScrollHandler, useSharedValue } from 'react-native-reanimated';
+import { Platform } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
-import { BackbarTheme, BrandProvider, DrinkDrawing, DrinkDrawingFor, useDs, useGutter } from '@/components/ds';
-import { useTabBarInset } from '@/components/nav/WebTabBar';
-import { drawing, space } from '@/constants/tokens';
+import { BackbarTheme, BrandProvider } from '@/components/ds';
+import { space } from '@/constants/tokens';
 import { useSignedIn, useUserId } from '@/ctx/AuthContext';
 import { useActiveVenue } from '@/hooks/useActiveVenue';
 import { useCapabilities } from '@/hooks/useCapabilities';
@@ -34,14 +32,12 @@ import type { DatabaseItem } from '@/types/types';
 import { BatchSheet } from '../batch/BatchSheet';
 import { useCollectToggle } from '../published/useCollectToggle';
 import { DrinkBody } from './DrinkBody';
-import { COLUMNS_FROM, DrinkColumns } from './DrinkColumns';
-import { DrinkHero, phoneHeroHeight } from './DrinkHero';
+import { DrinkHero } from './DrinkHero';
 import { DrinkMoreMenu } from './DrinkMoreMenu';
 import { useDrinkSections } from './DrinkSections';
-import { DockedDrawing, DOCKED, DrawingSpace, DrinkSky, drawingSize, drawingTop } from './DrawingHero';
+import { DrinkArt, drawingSize, useSkyColour } from './DrawingHero';
 import { GlassSheet } from './GlassSheet';
-import { PageControls } from './PageControls';
-import { PhotoMirror } from './PhotoMirror';
+import { ItemShell } from './ItemShell';
 import type { ShownPicture } from './PictureViewer';
 import { useDrinkActions } from './useDrinkActions';
 import { useDrinkFacts } from './useDrinkFacts';
@@ -101,16 +97,8 @@ function DrinkPage(props: DrinkScreenProps) {
 }
 
 function Page({ item, canEdit, adminFix = false, onEdit, sheet, pane, openBatch, visitorLock, preview, photos, photoCredit, heroPic }: DrinkScreenProps & { photos: ShownPicture[] | null; photoCredit: string | null; heroPic: ItemPicture | null }) {
-  const ds = useDs();
   const insets = useSafeAreaInsets();
   const top = pane ? insets.top : sheet && Platform.OS === 'ios' ? space.sm : insets.top;
-  const gutter = useGutter();
-  // Clear of the floating tab bar: the drink route sits in each tab's stack.
-  const tabInset = useTabBarInset();
-  const { width: windowWidth, height } = useWindowDimensions();
-  // The pane's own width: beside the Drinks list a 1300 window leaves about 600 (desk split, #1047).
-  const [width, setWidth] = useState(windowWidth);
-  const columns = !pane && width >= COLUMNS_FROM;
   const home = useMode().mode === 'home';
   const signedIn = useSignedIn();
   const userId = useUserId();
@@ -141,6 +129,7 @@ function Page({ item, canEdit, adminFix = false, onEdit, sheet, pane, openBatch,
   const toMake = useCollectToggle({ kind: 'drink', itemId: item.id }, bookmark);
   const slug = useShareSlug('d', preview ? null : item.id).data;
   const share = preview || viewingAs ? undefined : () => void shareOrCopy(drinkUrl(slug ?? item.id), item.name);
+  const liquid = useSkyColour(photos ? null : item.id, preview?.sketch);
   const eyebrow = viewer === 'home' ? 'My bar' : catalog ? 'Classic' : item.bar_id && barName ? `${barName} · House spec` : null;
 
   const sections = useDrinkSections({
@@ -162,76 +151,28 @@ function Page({ item, canEdit, adminFix = false, onEdit, sheet, pane, openBatch,
   });
 
   const size = drawingSize(makesIt(viewer));
-  const wideSize = Math.min(400, Math.max(220, height - 440));
-  const scrollY = useSharedValue(0);
-  const onScroll = useAnimatedScrollHandler((e) => scrollY.set(e.contentOffset.y));
-  const heroHeight = photos ? phoneHeroHeight(width, height, top) : drawingTop(top) + size + space.lg;
-  const label = `Drawing of ${item.name}`;
-  const hero = (h: number, fade: boolean) => <DrinkHero name={item.name} pictures={photos ?? []} glass={glass?.icon_key || glass?.name || null} itemId={item.id} palette={photos?.[0]?.palette} height={h} fade={fade} />;
   const more = preview ? null : <DrinkMoreMenu itemId={item.id} name={item.name} canEdit={canEdit} adminFix={adminFix} onEdit={onEdit} />;
-  const controls = (title: boolean) => (
-    <PageControls
-      top={top}
-      scrollY={scrollY}
-      tuck={title ? heroHeight + space.xxxl : Number.MAX_SAFE_INTEGER}
-      title={title ? item.name : ''}
-      titleInset={photos || !title ? 0 : DOCKED + space.sm}
-      noBack={pane}
-      backLabel={columns ? 'Back' : undefined}
-      save={bookmark ? { saved: toMake.saved, onToggle: toMake.toggle, label: ['Add to To make', 'Remove from To make'] } : null}
-      onShare={share}
-      onEdit={canEdit && !preview ? onEdit : undefined}
-      editLabel="Edit drink"
-      more={more}
-    >
-      {!photos && title ? <DockedDrawing itemId={item.id} sketch={preview?.sketch} label={label} size={size} top={top} width={width} gutter={gutter} scrollY={scrollY} /> : null}
-    </PageControls>
-  );
 
   return (
-    <View style={[styles.screen, { backgroundColor: ds.c.ground }]} onLayout={(e) => setWidth(e.nativeEvent.layout.width)}>
-      {columns ? (
-        <>
-          <DrinkColumns
-            photo={!!photos}
-            top={top}
-            gutter={gutter}
-            behind={photos ? null : <DrinkSky itemId={item.id} sketch={preview?.sketch} tall />}
-            side={
-              photos ? (
-                hero(height, false)
-              ) : (
-                <>
-                  {/* Up to 400, shrinking with a short window down to 220, so this column never scrolls. */}
-                  <View style={[styles.centre, { height: wideSize }]}>
-                    <View style={{ transform: [{ scale: wideSize / drawing.hero }], transformOrigin: 'center top' }}>
-                      {preview?.sketch ? <DrinkDrawing inputs={preview.sketch} seed={item.id} size="hero" label={label} /> : <DrinkDrawingFor itemId={item.id} size="hero" label={label} />}
-                    </View>
-                  </View>
-                  {sections.title}
-                  {sections.action}
-                </>
-              )
-            }
-          >
-            {photos ? sections.title : null}
-            <DrinkBody sections={{ ...sections, action: photos ? sections.action : null }} title={false} />
-          </DrinkColumns>
-          {controls(false)}
-        </>
-      ) : (
-        <>
-          <Animated.ScrollView onScroll={onScroll} scrollEventThrottle={16} contentContainerStyle={[styles.column, { paddingBottom: tabInset + space.xxl }]}>
-            {photos ? <PhotoMirror url={photos[0].url} top={heroHeight - space.xxxl} /> : null}
-            {photos ? hero(heroHeight, true) : <DrinkSky itemId={item.id} sketch={preview?.sketch} />}
-            {photos ? null : <DrawingSpace top={top} size={size} />}
-            <View style={{ paddingHorizontal: gutter, marginTop: photos ? -space.xxl : 0 }}>
-              <DrinkBody sections={sections} />
-            </View>
-          </Animated.ScrollView>
-          {controls(true)}
-        </>
-      )}
+    <ItemShell
+      name={item.name}
+      top={top}
+      pane={pane}
+      photo={photos ? { url: photos[0].url, hero: (h, fade) => <DrinkHero name={item.name} pictures={photos} glass={glass?.icon_key || glass?.name || null} itemId={item.id} palette={photos[0].palette} height={h} fade={fade} /> } : null}
+      art={<DrinkArt itemId={item.id} sketch={preview?.sketch} label={`Drawing of ${item.name}`} size={size} />}
+      size={size}
+      liquid={liquid}
+      title={sections.title}
+      action={sections.action}
+      body={(columns) => <DrinkBody sections={{ ...sections, action: columns ? null : sections.action }} title={!columns} />}
+      controls={{
+        save: bookmark ? { saved: toMake.saved, onToggle: toMake.toggle, label: ['Add to To make', 'Remove from To make'] } : null,
+        onShare: share,
+        onEdit: canEdit && !preview ? onEdit : undefined,
+        editLabel: 'Edit drink',
+        more,
+      }}
+    >
       {toMake.sheet}
       {actions.sheets}
       {glassOpen ? (
@@ -257,13 +198,6 @@ function Page({ item, canEdit, adminFix = false, onEdit, sheet, pane, openBatch,
           itemId={item.id}
         />
       ) : null}
-    </View>
+    </ItemShell>
   );
 }
-
-const styles = StyleSheet.create({
-  screen: { flex: 1 },
-  // The phone page in a wider column from 768 to the split (desktop board: up to 680).
-  column: { width: '100%', maxWidth: 680, alignSelf: 'center' },
-  centre: { alignItems: 'center' },
-});
