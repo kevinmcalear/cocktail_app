@@ -44,4 +44,10 @@ config.resolver.blockList = [
   /[\\/]smoke[\\/]node_modules[\\/].*/,
 ];
 
+// babel.config.js turns imports from the design system's barrel into direct
+// file imports on the web, using the barrel's map: when that map changes,
+// rebuild every file, or a cached one could import a name from its old file.
+const barrel = require('fs').readFileSync(path.join(__dirname, 'components/ds/index.ts'));
+config.cacheVersion = `${config.cacheVersion ?? ''}:ds-${require('crypto').createHash('sha1').update(barrel).digest('hex').slice(0, 12)}`;
+
 module.exports = config;

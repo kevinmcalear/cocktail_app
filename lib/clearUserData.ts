@@ -17,6 +17,25 @@ import { useOfflineEdits } from '@/store/useOfflineEdits';
 import { useRecentActivityStore } from '@/store/useRecentActivityStore';
 import { useVenueSetup } from '@/store/useVenueSetup';
 
+type Persisted = { persist?: { hasHydrated: () => boolean; onFinishHydration: (done: () => void) => () => void } };
+
+/**
+ * Resolves once a persisted store has read its saved copy, or after 2 s: a
+ * read that fails never says it finished, and the rest must still be cleared.
+ */
+function hydrated({ persist }: Persisted): Promise<void> {
+  if (!persist || persist.hasHydrated()) return Promise.resolve();
+  return new Promise((resolve) => {
+    const done = () => {
+      stop();
+      clearTimeout(timer);
+      resolve();
+    };
+    const timer = setTimeout(done, 2000);
+    const stop = persist.onFinishHydration(done);
+  });
+}
+
 /**
  * Forgets everything the signed-out user left on this device: cached query
  * data (in memory, the saved row and the saved query files), the venues'
@@ -32,6 +51,12 @@ export async function clearUserData(): Promise<void> {
   // mid-fetch leaves that page loading forever.
   queryClient.removeQueries({ predicate: isUserQuery });
   dropUnsentWrites(queryClient);
+  // This module loads on demand (hooks/useUserCacheSync), so its stores may
+  // still be reading the device's copy: cleared before that read ends, the
+  // read would put the last person's things back.
+  await Promise.all(
+    [useRecentActivityStore, useLastPlace, useAppMode, useDrinkWizardStore, useDraftSyncStore, useBeerWineWizardStore, useVenueSetup, useNoteDrafts, useOfflineEdits, useBringIn].map(hydrated),
+  );
   useRecentActivityStore.setState({ items: [] });
   useLastPlace.getState().clear();
   useAppMode.getState().forgetVenue();

@@ -2,6 +2,11 @@
   "name": "cocktail_app",
   "main": "expo-router/entry",
   "version": "1.0.0",
+  "publicWebRoutes": [
+    "app/d/[id].tsx",
+    "app/m/[id].tsx",
+    "app/p/[id]/index.tsx"
+  ],
   "scripts": {
     "start": "NODE_OPTIONS=\"--max-old-space-size=8192\" expo start",
     "android": "NODE_OPTIONS=\"--max-old-space-size=8192\" expo start --android",

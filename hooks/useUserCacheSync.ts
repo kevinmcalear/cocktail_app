@@ -2,9 +2,7 @@ import { useIsRestoring } from '@tanstack/react-query';
 import { useEffect, useRef } from 'react';
 
 import { useAuth } from '@/ctx/AuthContext';
-import { useDraftSync } from '@/hooks/useDraftSync';
 import { cacheActionOnAuth, resetUserQueries } from '@/lib/authCache';
-import { clearUserData } from '@/lib/clearUserData';
 import { queryClient, savedQueryFiles } from '@/lib/react-query';
 import { clearSavedSpecBooks } from '@/lib/specBookFile';
 
@@ -26,8 +24,6 @@ import { clearSavedSpecBooks } from '@/lib/specBookFile';
  * back in afterwards.
  */
 export function useUserCacheSync() {
-  // Drinks half made in the wizard, kept in the account for the same user (hooks/useDraftSync).
-  useDraftSync();
   const { session, user, loading } = useAuth();
   const userId = session?.user.id ?? null;
   const provisionalId = loading ? (user?.id ?? null) : null;
@@ -43,7 +39,11 @@ export function useUserCacheSync() {
     const action = cacheActionOnAuth(shownUserId.current, userId);
     shownUserId.current = userId;
     if (action === 'clear') {
-      clearUserData().catch((e) => console.warn('Clearing signed-out data failed', e));
+      // Loaded on demand: it reaches every store, and through them the wizards'
+      // code, which a signed-out public page doesn't need on its first load.
+      import('@/lib/clearUserData')
+        .then((m) => m.clearUserData())
+        .catch((e) => console.warn('Clearing signed-out data failed', e));
     } else if (action === 'reset') {
       // The saved files first: a query reset reads its file back as it refetches.
       (async () => {

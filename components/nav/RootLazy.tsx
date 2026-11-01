@@ -14,6 +14,17 @@ const BringInHost = lazy(() => import('@/components/screens/bringin/BringInHost'
 // Only a desktop at a venue draws it, beside the Drinks stack, so it loads with Drinks, not with every tab's stack.
 const LibraryScreen = lazy(() => import('@/components/screens/LibraryScreen').then((m) => ({ default: m.LibraryScreen })));
 
+const SignedInSyncHost = lazy(() => import('@/components/SignedInSync'));
+
+/** Wizard drafts kept in the account and the venues' spec books (components/SignedInSync.tsx). */
+export function SignedInSync() {
+  return (
+    <Suspense fallback={null}>
+      <SignedInSyncHost />
+    </Suspense>
+  );
+}
+
 /** The wide web's side nav; its width is held while it loads, so nothing shifts. */
 export function SideNav() {
   return (

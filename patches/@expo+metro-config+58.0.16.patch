@@ -1,5 +1,5 @@
 diff --git a/node_modules/@expo/metro-config/build/serializer/chunking/createLegacyChunkingStrategy.js b/node_modules/@expo/metro-config/build/serializer/chunking/createLegacyChunkingStrategy.js
-index 2e3ff4b..bf495fd 100644
+index 2e3ff4b..cdb3051 100644
 --- a/node_modules/@expo/metro-config/build/serializer/chunking/createLegacyChunkingStrategy.js
 +++ b/node_modules/@expo/metro-config/build/serializer/chunking/createLegacyChunkingStrategy.js
 @@ -8,6 +8,12 @@ Object.defineProperty(exports, "createLegacyChunkingStrategy", {
@@ -15,17 +15,127 @@ index 2e3ff4b..bf495fd 100644
  function _isResolvedDependency() {
      const data = require("@expo/metro/metro/lib/isResolvedDependency");
      _isResolvedDependency = function() {
-@@ -118,25 +124,43 @@ function removeEntryDepsFromAsyncChunks(entryChunk, chunks) {
+@@ -31,6 +37,10 @@ function _interop_require_default(obj) {
+ }
+ function createLegacyChunkingStrategy(context) {
+     const { entryFile, preModules, graph, options } = context;
++    // Patched: chunk => the group chunks (extractCommonChunk) it needs loaded with it,
++    // and group chunk => the route files whose pages link it in their HTML.
++    let groupsOf = null;
++    const groupPages = new Map();
+     const strategy = {
+         async serializeAsync () {
+             // Create chunks for splitting.
+@@ -39,11 +49,20 @@ function createLegacyChunkingStrategy(context) {
+             const entryChunk = collectChunk(entryFile, preModules, false, true);
+             if (entryChunk) {
+                 removeEntryDepsFromAsyncChunks(entryChunk, chunks);
+-                const commonChunk = extractCommonChunk(chunks, graph, options, strategy);
++                const { common: commonChunk, groups } = extractCommonChunk(chunks, graph, options, strategy);
+                 if (commonChunk) {
+                     entryChunk.requiredChunks.add(commonChunk);
+                     chunks.add(commonChunk);
+                 }
++                for (const group of groups){
++                    chunks.add(group.chunk);
++                    groupsOf = groupsOf ?? new Map();
++                    for (const user of group.users)groupsOf.set(user, [
++                        ...groupsOf.get(user) ?? [],
++                        group.chunk
++                    ]);
++                    groupPages.set(group.chunk, group.pages);
++                }
+                 deduplicateAgainstKnownChunks(chunks, entryChunk, commonChunk);
+                 removeEmptyChunks(chunks);
+                 if (commonChunk) {
+@@ -61,30 +80,41 @@ function createLegacyChunkingStrategy(context) {
+                         const target = chunksByPath.get(dependency.absolutePath);
+                         // Merges can leave async imports pointing at eagerly loaded chunks.
+                         if (target?.isAsync) targets.add(target);
++                        for (const group of groupsOf?.get(target) ?? [])if (group !== chunk) targets.add(group);
+                     }
+                 }
+             }
+             return targets;
+         },
+-        getStableSerializationOptions () {
+-            return {};
++        getStableSerializationOptions (chunk) {
++            // Patched: an import that loads several files checks each one registered
++            // itself (expo/src/async-require/buildAsyncRequire.ts), as Granular chunks do.
++            return groupsOf ? {
++                includeChunkCompletion: chunk.isAsync && !chunk.sealed
++            } : {};
+         },
+         getSerializationOptions (chunk, chunksByPath, filenamesByChunk) {
+             return {
+-                computedAsyncModulePaths: getComputedPathsForAsyncDependencies(chunk, chunksByPath, filenamesByChunk)
++                computedAsyncModulePaths: getComputedPathsForAsyncDependencies(chunk, chunksByPath, filenamesByChunk, groupsOf)
+             };
+         },
+         getMetadata (chunk) {
+             return {
++                // Patched: a group chunk also lists the route files of the pages it
++                // serves, so their HTML links it (@expo/cli serializeHtml matches
++                // a page's route files against modulePaths).
+                 modulePaths: [
+-                    ...chunk.deps
+-                ].map((module)=>module.path)
++                    ...[
++                        ...chunk.deps
++                    ].map((module)=>module.path),
++                    ...groupPages.get(chunk) ?? []
++                ]
+             };
+         }
+     };
+     return strategy;
+ }
+-function getComputedPathsForAsyncDependencies(chunk, chunksByPath, filenamesByChunk) {
++function getComputedPathsForAsyncDependencies(chunk, chunksByPath, filenamesByChunk, groupsOf) {
+     const baseUrl = (0, _Chunk.getBaseUrlOption)(chunk.graph, chunk.options);
+     // Only calculate production paths when all chunks are being exported.
+     if (chunk.options.includeAsyncPaths) {
+@@ -99,7 +129,17 @@ function getComputedPathsForAsyncDependencies(chunk, chunksByPath, filenamesByCh
+                 if (chunkContainingModule.isAsync) {
+                     const moduleIdName = filenamesByChunk.get(chunkContainingModule);
+                     (0, _assert().default)(moduleIdName, 'Precomputed filename missing for async chunk: ' + chunkContainingModule.name);
+-                    computedAsyncModulePaths[dependency.absolutePath] = (baseUrl ?? '/') + moduleIdName;
++                    const url = (baseUrl ?? '/') + moduleIdName;
++                    // Patched: a chunk that left modules in a group chunk loads it too.
++                    const groups = (groupsOf?.get(chunkContainingModule) ?? []).map((group)=>{
++                        const name = filenamesByChunk.get(group);
++                        (0, _assert().default)(name, 'Precomputed filename missing for group chunk: ' + group.name);
++                        return (baseUrl ?? '/') + name;
++                    });
++                    computedAsyncModulePaths[dependency.absolutePath] = groups.length ? [
++                        ...groups,
++                        url
++                    ] : url;
+                 }
+             }
+         });
+@@ -118,30 +158,91 @@ function removeEntryDepsFromAsyncChunks(entryChunk, chunks) {
          }
      }
  }
-+// Patched (patches/@expo+metro-config+58.0.16.patch): upstream moves every module
++// Patched (patches/@expo+metro-config+58.0.16.patch). Upstream moves every module
 +// that two async chunks share into the common chunk, which every page loads, so
-+// each page carried code only other routes use. Now a module goes there when the
-+// root layout's chunk (also on every page) uses it, or at least
-+// COMMON_CHUNK_MIN_USERS route chunks do (lazy imports don't count: they load on demand); otherwise each chunk keeps its own copy.
-+// Metro's define() skips a module id it already has, so a copy loaded twice runs
-+// once. Checked by scripts/commonChunk.check.ts.
++// each page carried code only other routes use. Now:
++// - the common chunk (every page) takes what the root layout's chunk uses and at
++//   least one other route chunk uses too;
++// - the shared chunk takes what at least COMMON_CHUNK_MIN_USERS app route chunks
++//   use (lazy imports don't count: they load on demand). App pages link it in
++//   their HTML, and any chunk that left modules in it loads it with itself;
++// - public pages (`publicWebRoutes` in the app's package.json: share pages people
++//   open from a link, signed out) skip the shared chunk. What two or more of them
++//   use goes in the public chunk, which they link; the rest stays in each page's
++//   own chunk.
++// Everything else stays with each chunk that uses it. Metro's define() skips a
++// module id it already has, so a copy loaded twice runs once.
++// Returns { common, groups: [{ chunk, users, pages }] }: users are the chunks that
++// left modules in the group chunk, pages the route files whose HTML links it.
++// Checked by scripts/commonChunk.check.ts.
 +const COMMON_CHUNK_MIN_USERS = 20; // about a fifth of the routes: rarer modules ship with their routes, which are prefetched after the first screen's data (lib/prefetchRoutes.web.ts)
  function extractCommonChunk(chunks, graph, options, strategy) {
 -    const toCompare = [
@@ -48,29 +158,71 @@ index 2e3ff4b..bf495fd 100644
 -            }
 +    ].filter((chunk)=>!chunk.sealed && chunk.isAsync);
 +    const routerRoot = graph.transformOptions?.customTransformOptions?.routerRoot;
-+    const rootLayout = typeof routerRoot === 'string' ? path.join(options.projectRoot, decodeURI(routerRoot), '_layout') : null;
-+    const isRootLayout = (chunk)=>rootLayout != null && [
++    const appDir = typeof routerRoot === 'string' ? path.join(options.projectRoot, decodeURI(routerRoot)) : null;
++    const entryPath = (chunk)=>[
 +            ...chunk.entries
-+        ].some((m)=>m.path.replace(/\.[cm]?[jt]sx?$/, '') === rootLayout);
-+    const isRoute = (chunk)=>typeof routerRoot === 'string' && [
-+            ...chunk.entries
-+        ].some((m)=>m.path.startsWith(path.join(options.projectRoot, decodeURI(routerRoot)) + path.sep));
++        ][0]?.path ?? '';
++    const isRoute = (chunk)=>appDir != null && entryPath(chunk).startsWith(appDir + path.sep);
++    const isRootLayout = (chunk)=>appDir != null && entryPath(chunk).replace(/\.[cm]?[jt]sx?$/, '') === path.join(appDir, '_layout');
++    const isLayout = (chunk)=>/(^|[\\/])_layout\.[cm]?[jt]sx?$/.test(entryPath(chunk));
++    let publicRoutes = [];
++    try {
++        publicRoutes = (JSON.parse(require("fs").readFileSync(path.join(options.projectRoot, 'package.json'), 'utf8')).publicWebRoutes ?? []).map((file)=>path.join(options.projectRoot, file));
++    } catch  {}
++    const isPublic = (chunk)=>isRoute(chunk) && publicRoutes.includes(entryPath(chunk));
 +    const users = new Map();
++    const publicUsers = new Map();
 +    const onEveryPage = new Set();
 +    for (const chunk of asyncChunks){
-+        const root = isRootLayout(chunk);
++        const counts = isPublic(chunk) ? publicUsers : isRoute(chunk) ? users : null;
 +        for (const dep of chunk.deps){
-+            if (isRoute(chunk)) users.set(dep, (users.get(dep) ?? 0) + 1);
-+            if (root) onEveryPage.add(dep);
++            if (counts) counts.set(dep, (counts.get(dep) ?? 0) + 1);
++            if (isRootLayout(chunk)) onEveryPage.add(dep);
          }
      }
-+    const commonDependencies = new Set();
-+    for (const [dep, count] of users){
-+        if (count >= COMMON_CHUNK_MIN_USERS || count >= 2 && onEveryPage.has(dep)) commonDependencies.add(dep);
-+    }
+-    // If common dependencies were found, extract them to the shared chunk.
+-    if (commonDependencies.size) {
+-        return new _Chunk.Chunk('/__common.js', commonDependencies, graph, options, strategy, false, true);
++    const common = new Set();
++    const shared = new Set();
++    const forPublic = new Set();
++    for (const dep of new Set([
++        ...users.keys(),
++        ...publicUsers.keys()
++    ])){
++        const app = users.get(dep) ?? 0;
++        const pub = publicUsers.get(dep) ?? 0;
++        if (onEveryPage.has(dep) && app + pub >= 2) common.add(dep);
++        else {
++            if (app >= COMMON_CHUNK_MIN_USERS) shared.add(dep);
++            if (pub >= 2) forPublic.add(dep);
++        }
+     }
+-    return undefined;
++    const groups = [];
++    const group = (name, deps, takesFrom, pages)=>{
++        if (!deps.size) return;
++        const chunk = new _Chunk.Chunk(name, deps, graph, options, strategy, true, true);
++        const users = new Set();
++        for (const user of asyncChunks.filter(takesFrom)){
++            for (const dep of deps)if (user.deps.delete(dep)) users.add(user);
++        }
++        groups.push({
++            chunk,
++            users,
++            pages: asyncChunks.filter(pages).map(entryPath)
++        });
++    };
 +    for (const chunk of asyncChunks){
-+        for (const dep of commonDependencies)chunk.deps.delete(dep);
++        for (const dep of common)chunk.deps.delete(dep);
 +    }
-     // If common dependencies were found, extract them to the shared chunk.
-     if (commonDependencies.size) {
-         return new _Chunk.Chunk('/__common.js', commonDependencies, graph, options, strategy, false, true);
++    // Every app page has a route file that isn't a layout (layouts are on public pages too).
++    group('/__shared.js', shared, (chunk)=>!isPublic(chunk), (chunk)=>isRoute(chunk) && !isPublic(chunk) && !isLayout(chunk));
++    group('/__public.js', forPublic, isPublic, isPublic);
++    return {
++        common: common.size ? new _Chunk.Chunk('/__common.js', common, graph, options, strategy, false, true) : undefined,
++        groups
++    };
+ }
+ function deduplicateAgainstKnownChunks(chunks, entryChunk, commonChunk) {
+     // TODO: Optimize this pass more.
