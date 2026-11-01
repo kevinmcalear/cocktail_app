@@ -14,7 +14,7 @@ import { usePrepData } from '@/hooks/usePrepList';
 import { useServiceDate } from '@/hooks/useServiceDay';
 import { useTonight, type TonightRow } from '@/hooks/useTonight';
 import { useVenueProfileId } from '@/hooks/useVenueRoles';
-import { useEffectiveRole } from '@/hooks/useViewAs';
+import { useCanManageStaff, useEffectiveRole } from '@/hooks/useViewAs';
 import { hoursStatus } from '@/lib/barHours';
 import { groupMenus, printedPrice } from '@/lib/menus';
 import { buildPrepList, DEFAULT_SERVES, tonightAt6 } from '@/lib/prep';
@@ -115,6 +115,7 @@ export function useStaffTonight(barId: string) {
   const members = useBarMembers(shifts.length ? barId : null).data ?? [];
   const me = useUserId();
   const onShift = onShiftLine(shifts, (id) => members.find((m) => m.user_id === id)?.display_name ?? 'Someone', me);
+  const writesRota = useCanManageStaff(barId);
 
   const lead = blocks[0] ?? null;
   const leadIds = lead ? lead.sections.flatMap((s) => s.drinks.map((d) => d.id)) : [];
@@ -137,5 +138,6 @@ export function useStaffTonight(barId: string) {
     nextUnpriced,
     shares,
     onShift,
+    writesRota,
   };
 }

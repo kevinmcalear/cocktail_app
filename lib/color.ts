@@ -37,6 +37,20 @@ function mix(hex: string, toward: string, amount: number): string {
   return toHex(a.map((v, i) => v + (b[i] - v) * amount) as RGB);
 }
 
+/** `hex` laid over `onto` at `alpha`: what a tint looks like once it sits on its ground. */
+export function over(hex: string, onto: string, alpha: number): string {
+  return mix(onto, hex, alpha);
+}
+
+/**
+ * The amber of an error toast's triangle, read against the pill it sits on:
+ * the raised fill at 85% on the ground, then the 16% amber wash on that.
+ */
+export function toastWarnInk(warning: string, raised: string, ground: string): { ink: string; pill: string } {
+  const pill = over(warning, over(raised, ground, 0.85), 0.16);
+  return { ink: readableAccent(warning, pill), pill };
+}
+
 const AA = 4.5;
 
 /**
