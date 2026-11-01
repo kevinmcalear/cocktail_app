@@ -9,6 +9,8 @@ import type { WizardDraft } from '@/lib/drinkWizard';
 import { withArticle } from '@/lib/closestClassic';
 import { theirs, versionName } from '@/lib/sameName';
 
+import { Prompt } from './Prompt';
+
 // The box is the field: no browser focus ring on the word (as BigName).
 const NO_OUTLINE = Platform.OS === 'web' ? ({ outlineStyle: 'none' } as object) : null;
 
@@ -53,36 +55,33 @@ export function SameNameCard({ bar, drink, caption, wide, busy, words, onOpen, o
     different: 'It’s a different drink',
   };
   const { title, line } = said;
-  const thumb = <DrinkImage source={drink.imageUrl} itemId={drink.id} glass={drink.glass} thumb sketchDetail="thumb" radius="control" accessibilityLabel={drink.name} style={wide ? styles.thumbWide : styles.thumb} />;
+  // Phones (Kept-add-helpers, Did you mean): the draft page's prompt.
+  if (!wide) {
+    return (
+      <Prompt
+        icon="magnifyingglass"
+        title={words ? title : `Did you mean ${theirs(bar, drink.name)}?`}
+        body={words ? [line, caption].filter(Boolean).join('. ') : `Same name, already here${line ? `: ${line}` : ''}. ${caption}`}
+        actions={[
+          { label: said.open, onPress: onOpen, disabled: busy, accessibilityLabel: `Open ${theirs(bar, drink.name)}. Your draft is kept` },
+          { label: busy ? 'Loading…' : said.version, onPress: onVersion, disabled: busy },
+          { label: words ? said.different : 'No, a new drink', onPress: onDifferent, disabled: busy },
+        ]}
+      />
+    );
+  }
   return (
     <Surface raised>
       <View role="group" aria-label={title} style={styles.card}>
-        {wide ? (
-          <View style={styles.drinkRow}>
-            {thumb}
-            <View style={styles.flex}>
-              <DsText variant="body" color={ds.c.ink} style={styles.bold}>
-                {title}
-              </DsText>
-              {line ? <Caption tone="muted">{line}</Caption> : null}
-            </View>
-          </View>
-        ) : (
-          <>
+        <View style={styles.drinkRow}>
+          <DrinkImage source={drink.imageUrl} itemId={drink.id} glass={drink.glass} thumb sketchDetail="thumb" radius="control" accessibilityLabel={drink.name} style={styles.thumbWide} />
+          <View style={styles.flex}>
             <DsText variant="body" color={ds.c.ink} style={styles.bold}>
               {title}
             </DsText>
-            <View style={[styles.drinkRow, styles.drink, { backgroundColor: ds.c.surface }]}>
-              {thumb}
-              <View style={styles.flex}>
-                <DsText variant="label" color={ds.c.ink} style={styles.bold} numberOfLines={1}>
-                  {drink.name}
-                </DsText>
-                {line ? <Caption tone="muted">{line}</Caption> : null}
-              </View>
-            </View>
-          </>
-        )}
+            {line ? <Caption tone="muted">{line}</Caption> : null}
+          </View>
+        </View>
         <View style={styles.choices}>
           <Button label={said.open} size="sm" onPress={onOpen} disabled={busy} accessibilityLabel={`Open ${theirs(bar, drink.name)}. Your draft is kept`} />
           <Button label={busy ? 'Loading…' : said.version} size="sm" variant="secondary" onPress={onVersion} disabled={busy} />

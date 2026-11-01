@@ -1,18 +1,16 @@
 import { useRouter } from 'expo-router';
+import { useState, type ReactNode } from 'react';
 import { StyleSheet, View } from 'react-native';
 
-import type { ReactNode } from 'react';
-
-import { Body, Caption, DsText, PressableScale, Surface, useDs } from '@/components/ds';
-import { layout, radius, space } from '@/constants/tokens';
+import { Body, DsText } from '@/components/ds';
+import { space } from '@/constants/tokens';
 import { useClosestClassic } from '@/hooks/useClosestClassic';
 import { usePairings } from '@/hooks/usePairings';
 import { balanceOf, fixesFor } from '@/lib/balance';
 import { withArticle, type SpecIngredient } from '@/lib/closestClassic';
 import { amountOf, type WizardLine, type WizardPick } from '@/lib/drinkWizard';
 
-import { PairChip } from '../pairings/PairChip';
-import { Eyebrow } from './WizardChrome';
+import { Prompt } from './Prompt';
 
 type Ingredient = { id: string; name: string | null; generic_id?: string | null };
 
@@ -43,27 +41,23 @@ export function GoesWith({ lines, onAdd, fallback, after }: { lines: readonly Wi
   const names = known.map((l) => l.name);
   return (
     <View style={styles.stack}>
-      <Eyebrow>{`Goes with ${listNames(names)}`}</Eyebrow>
-      <View role="group" aria-label="Goes with what's in it" style={styles.chips}>
-        {fresh.map((p) => (
-          <PairChip
-            key={p.id}
-            label={p.name}
-            add
-            onPress={() => onAdd({ id: p.id, name: p.name })}
-            accessibilityLabel={`Add ${p.name}. In drinks with ${names.map((n, i) => `${n} ${p.together[i] ?? 0} times`).join(', ')}`}
-          />
-        ))}
-      </View>
-      {after}
-      <DsText
-        variant="caption"
-        tone="accent"
-        role="link"
-        onPress={() => router.push({ pathname: '/flavor-map', params: { with: known.map((l) => l.id).join(',') } })}
+      <Prompt
+        icon="leaf.fill"
+        title={`Goes with ${listNames(names)}`}
+        body="From real drinks that use them."
+        chips={fresh.map((p) => ({ label: p.name, onPress: () => onAdd({ id: p.id, name: p.name }), accessibilityLabel: `Add ${p.name}. In drinks with ${names.map((n, i) => `${n} ${p.together[i] ?? 0} times`).join(', ')}` }))}
       >
-        Explore more on the flavor map
-      </DsText>
+        <DsText
+          variant="caption"
+          tone="accent"
+          role="link"
+          style={styles.more}
+          onPress={() => router.push({ pathname: '/flavor-map', params: { with: known.map((l) => l.id).join(',') } })}
+        >
+          Explore more on the flavor map
+        </DsText>
+      </Prompt>
+      {after}
     </View>
   );
 }
@@ -75,73 +69,43 @@ export function GoesWith({ lines, onAdd, fallback, after }: { lines: readonly Wi
  */
 export function CloseToClassic({ ingredients, riffOf, onRiff }: { ingredients: readonly SpecIngredient[]; riffOf: WizardPick | null; onRiff: (classic: WizardPick) => void }) {
   const { data: classic } = useClosestClassic(ingredients);
-  if (!classic) return null;
+  const [no, setNo] = useState<string | null>(null);
+  if (!classic || no === classic.id) return null;
   const close = `Close to ${withArticle(classic.name)}.`;
   if (riffOf?.id === classic.id) return <Body tone="muted">{`${close} It’s down as a riff on it.`}</Body>;
   return (
-    <View style={styles.close}>
-      <Body tone="muted">{close}</Body>
-      <PressableScale role="button" onPress={() => onRiff(classic)} accessibilityLabel={`Make it a riff on the ${classic.name}`} style={styles.riff}>
-        <Body tone="accent">Make it a riff?</Body>
-      </PressableScale>
-    </View>
+    <Prompt
+      icon="arrow.left.and.right"
+      title={`${close} Make it a riff?`}
+      body={`The ${classic.name}’s page will list it.`}
+      actions={[
+        { label: `Riff on the ${classic.name}`, onPress: () => onRiff(classic) },
+        { label: 'No', onPress: () => setNo(classic.id) },
+      ]}
+    />
   );
 }
 
 /**
- * The drink so far on four meters, with one sentence when something's
- * missing and the one-tap fixes for it ("+ Agave syrup" for a sour mezcal drink).
+ * "Sour with nothing sweet." (Kept-add-helpers, Balance): when the spec so far
+ * is missing something, one amber line and the one-tap fixes for it ("+ Agave
+ * syrup" for a sour mezcal drink). The taste meters are the desktop rail's.
  */
 export function BalanceCard({ lines, ingredients, onAdd }: { lines: readonly WizardLine[]; ingredients: readonly Ingredient[]; onAdd?: (name: string) => void }) {
-  const ds = useDs();
   const byId = new Map(ingredients.map((i) => [i.id, i]));
   const parts = lines.map((l) => {
     const generic = l.id ? byId.get(byId.get(l.id)?.generic_id ?? '') : null;
     return { name: l.name, genericName: generic?.name ?? null, amount: amountOf(l.amount), unit: l.unit || null };
   });
   const balance = balanceOf(parts);
-  if (!balance) return null;
+  if (!balance?.hint) return null;
   const fixes = balance.need && onAdd ? fixesFor(balance.need, parts) : [];
-  const meters: [string, number][] = [
-    ['Strong', balance.strong],
-    ['Sour', balance.sour],
-    ['Sweet', balance.sweet],
-    ['Bitter', balance.bitter],
-  ];
-  return (
-    <Surface raised style={styles.balance}>
-      <View role="list" aria-label="How it balances">
-        {meters.map(([label, v]) => (
-          <View key={label} role="listitem" aria-label={`${label}: ${Math.round(v * 100)} of 100`} style={styles.meterRow}>
-            <Caption tone="muted" style={styles.meterLabel}>
-              {label}
-            </Caption>
-            <View style={[styles.track, { backgroundColor: ds.c.line }]}>
-              <View style={[styles.fill, { width: `${Math.max(2, Math.round(v * 100))}%`, backgroundColor: ds.c.ink }]} />
-            </View>
-          </View>
-        ))}
-      </View>
-      {balance.hint ? <Caption>{balance.hint}</Caption> : null}
-      {fixes.length ? (
-        <View role="group" aria-label="To balance it" style={styles.chips}>
-          {fixes.map((name) => (
-            <PairChip key={name} label={name} add onPress={() => onAdd?.(name)} accessibilityLabel={`Add ${name} to balance it`} />
-          ))}
-        </View>
-      ) : null}
-    </Surface>
-  );
+  // "Sour with nothing sweet." then the reason.
+  const [title, ...rest] = balance.hint.split(/(?<=\.) /);
+  return <Prompt warn icon="exclamationmark.triangle" title={title} body={rest.join(' ')} chips={fixes.map((name) => ({ label: name, onPress: () => onAdd?.(name), accessibilityLabel: `Add ${name} to balance it` }))} />;
 }
 
 const styles = StyleSheet.create({
   stack: { gap: space.md },
-  close: { flexDirection: 'row', flexWrap: 'wrap', alignItems: 'center', columnGap: space.xs },
-  riff: { minHeight: layout.minTapTarget, justifyContent: 'center' },
-  chips: { flexDirection: 'row', flexWrap: 'wrap', gap: space.sm },
-  balance: { gap: space.md, padding: space.lg },
-  meterRow: { flexDirection: 'row', alignItems: 'center', gap: space.md, minHeight: space.xl },
-  meterLabel: { width: space.xxxl + space.lg },
-  track: { flex: 1, height: space.xs, borderRadius: radius.pill, overflow: 'hidden' },
-  fill: { height: '100%', borderRadius: radius.pill },
+  more: { paddingLeft: 20 + space.md },
 });

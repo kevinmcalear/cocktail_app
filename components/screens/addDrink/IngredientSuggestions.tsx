@@ -34,11 +34,14 @@ export function IngredientSuggestions({ draft, set, poured, ingredients, onAdd }
         lines={poured}
         onAdd={onAdd}
         fallback={
-          <View role="group" accessibilityLabel="Quick adds" style={styles.chips}>
-            {quick.map((n) => (
-              <WizardChip key={n} label={n} add kind="button" onPress={() => onAdd(pickByName(n, ingredients))} />
-            ))}
-          </View>
+          // An empty spec offers a classic to start from instead.
+          draft.lines.length ? (
+            <View role="group" accessibilityLabel="Quick adds" style={styles.chips}>
+              {quick.map((n) => (
+                <WizardChip key={n} label={n} add kind="button" onPress={() => onAdd(pickByName(n, ingredients))} />
+              ))}
+            </View>
+          ) : null
         }
         after={<CloseToClassic ingredients={poured.flatMap((l) => (l.id ? [{ id: l.id, generic: genericOf(l.id) }] : []))} riffOf={draft.riffOf} onRiff={(riffOf) => set({ riffOf })} />}
       />

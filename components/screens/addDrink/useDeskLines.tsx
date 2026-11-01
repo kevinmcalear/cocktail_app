@@ -1,8 +1,6 @@
 import { useState } from 'react';
 
-import { useCapabilities } from '@/hooks/useCapabilities';
 import { useDraftPacks } from '@/hooks/useDrinkDesk';
-import { usePricingSettings, useShownCurrency } from '@/hooks/usePricing';
 import { perDrinkLines } from '@/lib/batchLines';
 import { lineCostMinor } from '@/lib/costing';
 import { density } from '@/lib/drinkMath';
@@ -10,9 +8,8 @@ import { amountOf, type WizardDraft, type WizardLine } from '@/lib/drinkWizard';
 import { formatAmount, parseMoney } from '@/lib/money';
 import { prepCostMinor } from '@/lib/prepCost';
 import { bottleKindRow } from '@/lib/newBottle';
-import { venueParts } from '@/lib/suppliers';
 
-import { DeskCost, type DeskCostLine } from './DrinkDeskRail';
+import { type DeskCostLine } from './DrinkDeskRail';
 import type { CatalogIngredient } from './IngredientSearch';
 import { NewBottleCard } from './NewBottleCard';
 import { LineDetail } from './LineDetail';
@@ -105,24 +102,4 @@ export function useDeskLines({ draft, set, barId, venueName, ingredients, coreId
   /** A new bottle just added from the field: its card opens under its line. */
   const onNewBottle = canBuy ? (key: string) => setOpenKey(key) : undefined;
   return { costLines, lineDetail, lineBelow, onNewBottle };
-}
-
-/**
- * The same venue parts on a phone (m01, decided 24 Oct 2026): a new bottle's
- * card under its line on the ingredients step, and what it costs on review.
- * Prep or Costs see the new bottle's card; Costs see prices.
- * Null `barId` (at home, or the desktop page, which has its own) turns it off.
- */
-export function useVenueLines(args: Omit<DeskLinesArgs, 'canBuy' | 'canCost' | 'currency'>) {
-  const { canBuy, canCost } = venueParts(args.barId, useCapabilities(args.barId).data);
-  const pricing = usePricingSettings(canCost ? args.barId : null).data ?? null;
-  const currency = useShownCurrency(args.barId, canCost);
-  // On review the card isn't on screen, so nothing reads "adding".
-  const { costLines, lineDetail, lineBelow, onNewBottle } = useDeskLines({ ...args, canBuy, canCost, currency, adding: false });
-  return {
-    /** For IngredientsStep. */
-    lines: { lineDetail, lineBelow, onNewBottle },
-    /** For review: the cost card, with the price and GP. */
-    cost: canCost ? <DeskCost lines={costLines} pricing={pricing} currency={currency} price={args.draft.price ?? ''} onPrice={(price) => args.set({ price })} /> : null,
-  };
 }

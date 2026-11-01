@@ -12,11 +12,6 @@ import { Eyebrow, WizardChip } from './WizardChrome';
 // The underline shows focus. Chrome draws `outline-style: auto` at any width, so it's switched off (as SearchField does).
 const NO_OUTLINE = Platform.OS === 'web' ? ({ outlineStyle: 'none' } as object) : null;
 
-/** The drink's name, big, in the venue's display face. Return moves on. */
-export function NameStep({ draft, set, onDone, resumed, onStartOver }: StepProps & { onDone: () => void; resumed: boolean; onStartOver: () => void }) {
-  return <BigName value={draft.name} onChange={(name) => set({ name })} onDone={onDone} resumed={resumed} onStartOver={onStartOver} />;
-}
-
 /** A wizard's first step: the name, big, in the venue's display face, with "Start over" for a kept draft. */
 export function BigName({ value, onChange, onDone, resumed, onStartOver, placeholder = 'Name', inputRef }: { value: string; onChange: (name: string) => void; onDone: () => void; resumed: boolean; onStartOver: () => void; placeholder?: string; inputRef?: Ref<ComponentRef<typeof TextInput>> }) {
   const ds = useDs();

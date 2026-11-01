@@ -1,21 +1,17 @@
 import { Image } from 'expo-image';
-import { useState } from 'react';
 import { StyleSheet, View } from 'react-native';
 
-import { Body, Caption, PressableScale, useDs } from '@/components/ds';
+import { Caption, PressableScale, useDs } from '@/components/ds';
 import { SketchDrawing } from '@/components/ds/SketchDrawing';
 import { CutoutOfferHost } from '@/components/drink/CutoutOfferHost';
 import { pickDrinkPhotos } from '@/components/drink/drinkImages';
 import { IconSymbol } from '@/components/ui/icon-symbol';
 import { radius, space } from '@/constants/tokens';
-import { useCapabilities } from '@/hooks/useCapabilities';
 import type { ImageAngle } from '@/lib/itemImages';
 import { showMessage } from '@/lib/dialogs';
-import { addPhotos, angleOf, PHOTO_ANGLES, photoUris, roomFor } from '@/lib/photoAngles';
 import { SERVICE_ANGLES } from '@/lib/servicePhotos';
 import type { SketchInputs } from '@/lib/sketch/types';
 
-import { WhichIsWhich } from './WhichIsWhich';
 import { Eyebrow } from './WizardChrome';
 
 type Photos = Partial<Record<ImageAngle, string>>;
@@ -38,111 +34,6 @@ function usePhotoSlots(photos: Photos, onChange: (photos: Photos) => void) {
     onChange(next);
   };
   return { choose, remove };
-}
-
-/**
- * Photos at the start, at a venue (Ian at Bar Snack, 16 Oct; E26, board
- * w2-wizard-finish): Add photos picks several at once, then "Which is which?"
- * gives each its angle. A tap on a photo opens it again. The same draft
- * photos the review shows. Nothing at a venue that doesn't let you add photos.
- */
-export function StartPhotos({ photos, onChange, barId }: { photos: Photos; onChange: (photos: Photos) => void; barId: string | null }) {
-  const ds = useDs();
-  const caps = useCapabilities(barId).data;
-  const { remove } = usePhotoSlots(photos, onChange);
-  // The rows of "Which is which?" while it's open, in the order picked.
-  const [rows, setRows] = useState<string[] | null>(null);
-  if (barId && !caps?.includes('photos')) return null;
-  const shown = photoUris(photos);
-  const room = roomFor(photos);
-  const add = async () => {
-    try {
-      const uris = (await pickDrinkPhotos({ cutout: true, several: room })).slice(0, room);
-      if (!uris.length) return;
-      onChange(addPhotos(photos, uris));
-      // One photo is the Hero; several need telling apart.
-      const next = [...(rows ?? shown), ...uris];
-      if (next.length > 1) setRows(next);
-    } catch {
-      showMessage('Couldn’t open your photos', 'Try again, or add photos on the drink’s page.');
-    }
-  };
-  return (
-    <View style={styles.stack}>
-      <Eyebrow>{shown.length ? `Photos · ${shown.length}` : 'Photos'}</Eyebrow>
-      {shown.length ? (
-        <View style={styles.tiles}>
-          {shown.map((uri) => {
-            const label = PHOTO_ANGLES.find((a) => a.angle === angleOf(photos, uri))?.label ?? '';
-            return (
-              <View key={uri} style={styles.tileCell}>
-                <PressableScale role="button" onPress={() => setRows(shown)} accessibilityLabel={`${label} photo. Change which is which`} style={[styles.thumb, { backgroundColor: ds.c.paper }]}>
-                  <Image source={{ uri }} style={StyleSheet.absoluteFill} contentFit="cover" />
-                </PressableScale>
-                <Caption tone="muted">{label}</Caption>
-                <PressableScale role="button" onPress={() => remove(angleOf(photos, uri)!)} accessibilityLabel={`Remove the ${label.toLowerCase()} photo`} hitSlop={space.sm} style={[styles.remove, { backgroundColor: ds.c.ground }]}>
-                  <IconSymbol name="xmark" size={10} color={ds.c.ink} />
-                </PressableScale>
-              </View>
-            );
-          })}
-          {room ? (
-            <PressableScale role="button" onPress={add} accessibilityLabel="Add photos, several at once" style={[styles.thumb, styles.tileCell, styles.addTile, styles.empty, { borderColor: ds.c.lineStrong }]}>
-              <IconSymbol name="plus" size={18} color={ds.c.ink} />
-              <Caption>Add</Caption>
-            </PressableScale>
-          ) : null}
-        </View>
-      ) : (
-        <>
-          <PressableScale role="button" onPress={add} accessibilityLabel="Add photos, several at once" style={[styles.wide, styles.empty, { borderColor: ds.c.lineStrong }]}>
-            <IconSymbol name="camera" size={22} color={ds.c.ink} />
-            <Body>Add photos</Body>
-          </PressableScale>
-          <Caption tone="muted">Got photos? Pick several at once; the Hero leads the drink page. No photo, and the drawing stands in.</Caption>
-        </>
-      )}
-      <WhichIsWhich visible={!!rows} onClose={() => setRows(null)} uris={rows ?? []} photos={photos} onChange={onChange} onAddMore={add} />
-      <CutoutOfferHost />
-    </View>
-  );
-}
-
-/**
- * At home, one photo on the review (Q15): the one that leads the drink's
- * page. More angles are added there.
- */
-export function HomePhoto({ photos, onChange }: { photos: Photos; onChange: (photos: Photos) => void }) {
-  const ds = useDs();
-  const { choose, remove } = usePhotoSlots(photos, onChange);
-  const hero = photos.hero;
-  return (
-    <View style={styles.stack}>
-      <Eyebrow>Photo</Eyebrow>
-      <View>
-        <PressableScale
-          role="button"
-          onPress={() => choose('hero')}
-          accessibilityLabel={hero ? 'Photo added. Change it' : 'Add a photo: it leads the drink page'}
-          style={[styles.wide, hero ? { backgroundColor: ds.c.paper } : [styles.empty, { borderColor: ds.c.lineStrong }]]}
-        >
-          {hero ? <Image source={{ uri: hero }} style={StyleSheet.absoluteFill} contentFit="cover" /> : (
-            <>
-              <IconSymbol name="camera" size={22} color={ds.c.ink} />
-              <Body>Add a photo</Body>
-            </>
-          )}
-        </PressableScale>
-        {hero ? (
-          <PressableScale role="button" onPress={() => remove('hero')} accessibilityLabel="Remove the photo" hitSlop={space.sm} style={[styles.remove, { backgroundColor: ds.c.ground }]}>
-            <IconSymbol name="xmark" size={10} color={ds.c.ink} />
-          </PressableScale>
-        ) : null}
-      </View>
-      <Caption tone="muted">It leads the drink’s page. Add more angles there.</Caption>
-      <CutoutOfferHost />
-    </View>
-  );
 }
 
 /**

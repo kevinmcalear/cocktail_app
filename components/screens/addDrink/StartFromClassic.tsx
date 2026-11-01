@@ -1,13 +1,12 @@
-import { Alert, StyleSheet, View } from 'react-native';
+import { useState } from 'react';
+import { Alert } from 'react-native';
 
-import { Body, Button, Caption, Surface } from '@/components/ds';
-import { space } from '@/constants/tokens';
 import { useDrinkLists } from '@/hooks/useDiscover';
 import { useStartFromClassic } from '@/hooks/useStartFromClassic';
 import type { ClassicMatch } from '@/lib/classics';
 import type { WizardDraft } from '@/lib/drinkWizard';
 
-import { Eyebrow, WizardChip } from './WizardChrome';
+import { Prompt } from './Prompt';
 
 /** How many classics the empty spec offers. */
 const OFFERED = 6;
@@ -28,6 +27,7 @@ interface Props {
 export function StartFromClassic({ set, match, onStarted }: Props) {
   const classics = useDrinkLists().data ?? [];
   const start = useStartFromClassic();
+  const [gone, setGone] = useState(false);
   const go = (id: string) =>
     start.mutate(id, {
       onSuccess: (change) => {
@@ -40,37 +40,23 @@ export function StartFromClassic({ set, match, onStarted }: Props) {
   if (match) {
     const name = match.classic.name;
     return (
-      <Surface raised style={styles.card}>
-        <Body>{`${name} is a classic. Start from its spec?`}</Body>
-        <Caption tone="muted">Fills in what goes in, the method, glass, ice and garnish. Change any of it after.</Caption>
-        <Button
-          label={start.isPending ? 'Loading…' : `Start from the ${name}`}
-          icon="sparkles"
-          variant="secondary"
-          disabled={start.isPending}
-          onPress={() => go(match.classic.id)}
-          style={styles.button}
-        />
-      </Surface>
+      <Prompt
+        icon="book"
+        title={`${name} is a classic. Start from its spec?`}
+        body="Its spec fills in, then change what you like. It’s noted as a riff."
+        actions={[{ label: start.isPending ? 'Loading…' : `Start from the ${name}`, disabled: start.isPending, onPress: () => go(match.classic.id) }]}
+      />
     );
   }
 
-  if (!classics.length) return null;
+  if (!classics.length || gone) return null;
   return (
-    <View style={styles.stack}>
-      <Eyebrow>Or start from a classic</Eyebrow>
-      <View role="group" accessibilityLabel="Start from a classic" style={styles.chips}>
-        {classics.slice(0, OFFERED).map((c) => (
-          <WizardChip key={c.id} label={c.name} kind="button" onPress={() => go(c.id)} />
-        ))}
-      </View>
-    </View>
+    <Prompt
+      icon="book"
+      title="Start from a classic?"
+      body="Its spec fills in, then change what you like. It’s noted as a riff."
+      chips={classics.slice(0, OFFERED).map((c) => ({ label: c.name, onPress: () => go(c.id), accessibilityLabel: `Start from the ${c.name}` }))}
+      onDismiss={() => setGone(true)}
+    />
   );
 }
-
-const styles = StyleSheet.create({
-  card: { gap: space.sm, padding: space.lg },
-  button: { alignSelf: 'flex-start', marginTop: space.xs },
-  stack: { gap: space.sm },
-  chips: { flexDirection: 'row', flexWrap: 'wrap', gap: space.sm },
-});
