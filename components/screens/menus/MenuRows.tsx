@@ -10,7 +10,7 @@ import { comingUpLine, draftLine, homeMenuLine, menuDateLine, menuStatus, plural
 import type { MenuPicture, MenuSummary } from '@/types/menus';
 
 import { MenuVisual } from './MenuVisual';
-import { MenuBand, MenuStrip } from './page/MenuBand';
+import { MenuBand, MenuStrip } from './page/MenuBandLazy';
 
 export const menuHref = (id: string) => `/menus/${id}` as const;
 
