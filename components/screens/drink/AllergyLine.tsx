@@ -3,10 +3,10 @@ import { StyleSheet, View } from 'react-native';
 import { DsText, PressableScale, useDs } from '@/components/ds';
 import { IconSymbol } from '@/components/ui/icon-symbol';
 import { radius, space, STATUS } from '@/constants/tokens';
-import { useDrinkAllergens } from '@/hooks/useAllergens';
+import { useDrinkAllergens, useItemAllergens } from '@/hooks/useAllergens';
 import { useGuestDrinkAllergens, useMyAllergies } from '@/hooks/useGuestAllergies';
 import { withAlpha } from '@/lib/color';
-import { allergenLabel, allergyMatches, containsLine } from '@/lib/allergens';
+import { allergenLabel, allergyMatches, containsLine, ownAllergenLine } from '@/lib/allergens';
 import { veganWord, withVegan } from '@/lib/dietary';
 
 import { useItemTones } from './MaterialBar';
@@ -19,14 +19,19 @@ import { useItemTones } from './MaterialBar';
  * has checked; unchecked says ask your bartender). Their list never leaves
  * the phone: matching happens here.
  */
-export function AllergyLine({ itemId, guest, atBar = true, ingredients, onPress }: { itemId: string; guest: boolean; atBar?: boolean; ingredients?: readonly (string | null)[]; onPress?: () => void }) {
-  return guest ? <GuestLine itemId={itemId} atBar={atBar} /> : <FloorLine itemId={itemId} ingredients={ingredients} onPress={onPress} />;
+export function AllergyLine({ itemId, guest, atBar = true, ingredients, own, onPress }: { itemId: string; guest: boolean; atBar?: boolean; ingredients?: readonly (string | null)[]; own?: string | null; onPress?: () => void }) {
+  return guest ? <GuestLine itemId={itemId} atBar={atBar} /> : <FloorLine itemId={itemId} ingredients={ingredients} own={own} onPress={onPress} />;
 }
 
 /** With the recipe's names, vegan rides on it (board Item-page, house-made staff: "No allergens · not vegan (honey)"); `onPress` opens the full list. */
-function FloorLine({ itemId, ingredients, onPress }: { itemId: string; ingredients?: readonly (string | null)[]; onPress?: () => void }) {
+function FloorLine({ itemId, ingredients, own, onPress }: { itemId: string; ingredients?: readonly (string | null)[]; own?: string | null; onPress?: () => void }) {
   const { data } = useDrinkAllergens(itemId);
-  // Nothing to declare yet (a beer, or a drink with no spec): no line, rather than a line about nothing.
+  // A beer or wine has no spec: its own declaration, the bar's once it has checked it, else the catalogue's
+  // (Item-page staff: "Sulphites"). `own` is the item's bar, set where the item is poured as it is.
+  const mine = own !== undefined && data?.lines === 0;
+  const { data: declared, isPending } = useItemAllergens(mine ? itemId : null, own ?? null);
+  if (mine) return isPending ? null : <Line text={ownAllergenLine(declared?.bar ?? declared?.catalogue ?? null)} onPress={onPress} />;
+  // Nothing to declare yet (a drink with no spec): no line, rather than a line about nothing.
   if (!data || (data.lines === 0 && !data.allergens.length)) return null;
   const vegan = ingredients
     ? veganWord(

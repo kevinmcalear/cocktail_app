@@ -31,8 +31,11 @@ export function NamesBlock({ itemId, name, guest, tastes, atBar }: NamesBlockPro
   );
 }
 
-/** Their taste as petals, the drink as a line, in lib/palate's words. Only with a taste to compare. */
-export function PalateFit({ itemId, name }: { itemId: string; name: string }) {
+/**
+ * Their taste as petals, the drink as a line, in lib/palate's words. Only with
+ * a taste to compare. A beer, wine or bottle calls its line "this one" (Item-page).
+ */
+export function PalateFit({ itemId, name, line = 'this drink' }: { itemId: string; name: string; line?: string }) {
   const { data: flavor } = useItemFlavor(itemId);
   const { data: me } = useMyTaste();
   const { data: baseline } = useFlavorBaseline();
@@ -49,7 +52,7 @@ export function PalateFit({ itemId, name }: { itemId: string; name: string }) {
           </DsText>
         ) : null}
         {words.diff ? <DsText variant="label" tone="muted">{words.diff}</DsText> : null}
-        <Caption tone="muted">Petals: your taste · line: this drink</Caption>
+        <Caption tone="muted">{`Petals: your taste · line: ${line}`}</Caption>
       </View>
     </View>
   );

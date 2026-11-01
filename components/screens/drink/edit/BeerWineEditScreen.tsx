@@ -60,7 +60,7 @@ export function BeerWineDraftEditScreen(props: { kind: DrinkKind; draftId: strin
 
 type Editor = ReturnType<typeof useBeerWineEditor> | ReturnType<typeof useBeerWineDraftEditor>;
 /** What undo puts back: the words and tags (not photos or who can see it). */
-type Words = Pick<BeerWineFields, 'name' | 'maker' | 'abv' | 'price' | 'description' | 'selectedCategories'>;
+type Words = Pick<BeerWineFields, 'name' | 'maker' | 'abv' | 'price' | 'description' | 'selectedCategories' | 'serveMl' | 'serveTemp' | 'glassNote' | 'pourNote' | 'tapLine' | 'bottlePrice'>;
 
 /**
  * The drink edit page for a beer or wine: its hero with Add a photo, the
@@ -81,7 +81,20 @@ function BeerWineEditPage({ editor, onExit }: { editor: Editor; onExit: () => vo
   const picker = useRef<CategoryPickerHandle>(null);
   const [sheet, setSheet] = useState<MoreChoice | 'more' | null>(null);
   useHoldUpdates();
-  const words: Words = { name: editor.name, maker: editor.maker, abv: editor.abv, price: editor.price, description: editor.description, selectedCategories: editor.selectedCategories };
+  const words: Words = {
+    name: editor.name,
+    maker: editor.maker,
+    abv: editor.abv,
+    price: editor.price,
+    description: editor.description,
+    selectedCategories: editor.selectedCategories,
+    serveMl: editor.serveMl,
+    serveTemp: editor.serveTemp,
+    glassNote: editor.glassNote,
+    pourNote: editor.pourNote,
+    tapLine: editor.tapLine,
+    bottlePrice: editor.bottlePrice,
+  };
   const history = useSnapshotHistory<Words>(editor.ready ? words : null, editor.set);
 
   const done = async () => {
@@ -160,6 +173,7 @@ function BeerWineEditPage({ editor, onExit }: { editor: Editor; onExit: () => vo
           <Field label="Price ($)" placeholder={kind.placeholders.price} value={editor.price} onChangeText={editor.setPrice} keyboardType="decimal-pad" />
         </View>
       </View>
+      {editor.barId ? <PourFields editor={editor} /> : null}
       <View style={styles.section}>
         <Headline role="heading">Description</Headline>
         <GrowingField minHeight={96} value={editor.description} onChangeText={editor.setDescription} placeholder="What a guest would want to know" placeholderTextColor={ds.c.muted} accessibilityLabel="Description" style={[styles.box, NO_OUTLINE, { color: ds.c.ink, backgroundColor: ds.c.surface }]} />
@@ -199,6 +213,31 @@ function BeerWineEditPage({ editor, onExit }: { editor: Editor; onExit: () => vo
       {sheet === 'photos' ? <PhotosSheet editor={editor} onClose={() => setSheet(null)} /> : null}
       {sheet === 'access' ? <AccessSheet editor={editor} noun={noun} onClose={() => setSheet(null)} /> : null}
       <CategoryPickerModal ref={picker} domains={[editor.kind]} selectedCategoryIds={editor.selectedCategories} onToggleCategory={(cat) => editor.toggleCategory(cat.id)} />
+    </View>
+  );
+}
+
+/** Pour it, for a bar's beer or wine: the rows its page shows the team (Item-page, staff), written where they show. */
+function PourFields({ editor }: { editor: Editor }) {
+  const beer = editor.kind === 'beer';
+  return (
+    <View style={styles.section}>
+      <Headline role="heading">Pour it</Headline>
+      <View style={styles.row}>
+        <View style={styles.flex}>
+          <Field label="Pour (ml)" placeholder={beer ? '400' : '150'} value={editor.serveMl} onChangeText={editor.setServeMl} keyboardType="number-pad" />
+        </View>
+        <View style={styles.flex}>
+          <Field label="Served at (°C)" placeholder={beer ? '3' : '16'} value={editor.serveTemp} onChangeText={editor.setServeTemp} keyboardType="numbers-and-punctuation" />
+        </View>
+      </View>
+      <Field label="The glass" placeholder={beer ? 'Rinsed cold' : 'Chilled'} value={editor.glassNote} onChangeText={editor.setGlassNote} maxLength={80} />
+      <Field label="The pour" placeholder={beer ? 'Two fingers of head' : 'To the widest point'} value={editor.pourNote} onChangeText={editor.setPourNote} maxLength={80} />
+      {beer ? (
+        <Field label="Tap line" placeholder="Line 2" hint="Leave it empty when it isn't on tap." value={editor.tapLine} onChangeText={editor.setTapLine} maxLength={40} />
+      ) : (
+        <Field label="Bottle price ($)" placeholder="64" value={editor.bottlePrice} onChangeText={editor.setBottlePrice} keyboardType="decimal-pad" maxLength={20} />
+      )}
     </View>
   );
 }

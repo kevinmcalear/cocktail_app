@@ -3349,6 +3349,7 @@ export type Database = {
           based_on_id: string | null
           based_on_kind: string | null
           based_on_style_id: string | null
+          bottle_price: string | null
           brand_maker: string | null
           capacity_ml: number | null
           created_at: string
@@ -3365,6 +3366,7 @@ export type Database = {
           gi: string | null
           glass: string | null
           glass_model_id: string | null
+          glass_note: string | null
           glassware_id: string | null
           hide_from_search: boolean
           ice_build: Json | null
@@ -3401,12 +3403,14 @@ export type Database = {
           override_visibility_level: number | null
           parts: Json | null
           picture: Database["public"]["Enums"]["item_picture"]
+          pour_note: string | null
           price: string | null
           publish_mode: Database["public"]["Enums"]["item_publish_mode"] | null
           published_at: string | null
           riff_of_id: string | null
           serve_abv: number | null
           serve_ml: number | null
+          serve_temp_c: number | null
           service_style: string | null
           show_sketch: boolean
           sketch_liquid: string | null
@@ -3415,6 +3419,7 @@ export type Database = {
           spec_hidden: boolean
           spec_source: string
           status: string | null
+          tap_line: string | null
         }
         Insert: {
           abv?: number | null
@@ -3429,6 +3434,7 @@ export type Database = {
           based_on_id?: string | null
           based_on_kind?: string | null
           based_on_style_id?: string | null
+          bottle_price?: string | null
           brand_maker?: string | null
           capacity_ml?: number | null
           created_at?: string
@@ -3445,6 +3451,7 @@ export type Database = {
           gi?: string | null
           glass?: string | null
           glass_model_id?: string | null
+          glass_note?: string | null
           glassware_id?: string | null
           hide_from_search?: boolean
           ice_build?: Json | null
@@ -3481,12 +3488,14 @@ export type Database = {
           override_visibility_level?: number | null
           parts?: Json | null
           picture?: Database["public"]["Enums"]["item_picture"]
+          pour_note?: string | null
           price?: string | null
           publish_mode?: Database["public"]["Enums"]["item_publish_mode"] | null
           published_at?: string | null
           riff_of_id?: string | null
           serve_abv?: number | null
           serve_ml?: number | null
+          serve_temp_c?: number | null
           service_style?: string | null
           show_sketch?: boolean
           sketch_liquid?: string | null
@@ -3495,6 +3504,7 @@ export type Database = {
           spec_hidden?: boolean
           spec_source?: string
           status?: string | null
+          tap_line?: string | null
         }
         Update: {
           abv?: number | null
@@ -3509,6 +3519,7 @@ export type Database = {
           based_on_id?: string | null
           based_on_kind?: string | null
           based_on_style_id?: string | null
+          bottle_price?: string | null
           brand_maker?: string | null
           capacity_ml?: number | null
           created_at?: string
@@ -3525,6 +3536,7 @@ export type Database = {
           gi?: string | null
           glass?: string | null
           glass_model_id?: string | null
+          glass_note?: string | null
           glassware_id?: string | null
           hide_from_search?: boolean
           ice_build?: Json | null
@@ -3561,12 +3573,14 @@ export type Database = {
           override_visibility_level?: number | null
           parts?: Json | null
           picture?: Database["public"]["Enums"]["item_picture"]
+          pour_note?: string | null
           price?: string | null
           publish_mode?: Database["public"]["Enums"]["item_publish_mode"] | null
           published_at?: string | null
           riff_of_id?: string | null
           serve_abv?: number | null
           serve_ml?: number | null
+          serve_temp_c?: number | null
           service_style?: string | null
           show_sketch?: boolean
           sketch_liquid?: string | null
@@ -3575,6 +3589,7 @@ export type Database = {
           spec_hidden?: boolean
           spec_source?: string
           status?: string | null
+          tap_line?: string | null
         }
         Relationships: [
           {
@@ -6537,6 +6552,7 @@ export type Database = {
             based_on_id: string | null
             based_on_kind: string | null
             based_on_style_id: string | null
+            bottle_price: string | null
             brand_maker: string | null
             capacity_ml: number | null
             created_at: string
@@ -6553,6 +6569,7 @@ export type Database = {
             gi: string | null
             glass: string | null
             glass_model_id: string | null
+            glass_note: string | null
             glassware_id: string | null
             hide_from_search: boolean
             ice_build: Json | null
@@ -6589,6 +6606,7 @@ export type Database = {
             override_visibility_level: number | null
             parts: Json | null
             picture: Database["public"]["Enums"]["item_picture"]
+            pour_note: string | null
             price: string | null
             publish_mode:
               | Database["public"]["Enums"]["item_publish_mode"]
@@ -6597,6 +6615,7 @@ export type Database = {
             riff_of_id: string | null
             serve_abv: number | null
             serve_ml: number | null
+            serve_temp_c: number | null
             service_style: string | null
             show_sketch: boolean
             sketch_liquid: string | null
@@ -6605,6 +6624,7 @@ export type Database = {
             spec_hidden: boolean
             spec_source: string
             status: string | null
+            tap_line: string | null
           } | null
           published_ingredient: {
             abv: number | null
@@ -7465,6 +7485,7 @@ export type Database = {
           based_on_id: string | null
           based_on_kind: string | null
           based_on_style_id: string | null
+          bottle_price: string | null
           brand_maker: string | null
           capacity_ml: number | null
           created_at: string
@@ -7481,6 +7502,7 @@ export type Database = {
           gi: string | null
           glass: string | null
           glass_model_id: string | null
+          glass_note: string | null
           glassware_id: string | null
           hide_from_search: boolean
           ice_build: Json | null
@@ -7517,12 +7539,14 @@ export type Database = {
           override_visibility_level: number | null
           parts: Json | null
           picture: Database["public"]["Enums"]["item_picture"]
+          pour_note: string | null
           price: string | null
           publish_mode: Database["public"]["Enums"]["item_publish_mode"] | null
           published_at: string | null
           riff_of_id: string | null
           serve_abv: number | null
           serve_ml: number | null
+          serve_temp_c: number | null
           service_style: string | null
           show_sketch: boolean
           sketch_liquid: string | null
@@ -7531,6 +7555,7 @@ export type Database = {
           spec_hidden: boolean
           spec_source: string
           status: string | null
+          tap_line: string | null
         }
         SetofOptions: {
           from: "app_recipe_presentation"

@@ -1,5 +1,8 @@
 import { Redirect, useLocalSearchParams, useRouter } from 'expo-router';
+import { useState } from 'react';
 import { StyleSheet, View } from 'react-native';
+
+import { AllergenSection } from '@/components/allergens/AllergenSection';
 
 import { BackbarTheme, Body, BrandProvider } from '@/components/ds';
 import { DrinkDrawing } from '@/components/ds/DrinkDrawing';
@@ -8,16 +11,17 @@ import { space } from '@/constants/tokens';
 import { useActiveVenue } from '@/hooks/useActiveVenue';
 import { useDropdowns } from '@/hooks/useDropdowns';
 import { useFavorites } from '@/hooks/useFavorites';
+import { useItemPour } from '@/hooks/useItemPour';
 import { useMode } from '@/hooks/useMode';
 import { useShareSlug } from '@/hooks/useShareSlug';
 import { useTeamRole } from '@/hooks/useTeamRole';
 import { recentEntry, useTrackRecent } from '@/hooks/useTrackRecent';
 import { useCanEditItem, useEffectiveRole } from '@/hooks/useViewAs';
 import { savedSketch } from '@/lib/beerWineWizard';
-import { formatAbv } from '@/lib/drinkMath';
 import { bareItemId, DRINK_KINDS, type DrinkKind } from '@/lib/drinkKinds';
 import { heroPicture, orderedPictures, type ItemImageLink } from '@/lib/itemImages';
 import { drinkUrl, shareOrCopy } from '@/lib/shareLink';
+import { pourFacts, pourRows } from '@/lib/pour';
 import { liquidOf } from '@/lib/sketch/types';
 
 import { AllergyLine } from './AllergyLine';
@@ -28,7 +32,8 @@ import { DrinkLoading } from './DrinkLoading';
 import { ItemShell } from './ItemShell';
 import { ItemTitle } from './ItemTitle';
 import { PalateFit } from './NamesBlock';
-import { FactRows, RowGroup, type GroupRow } from './RowGroup';
+import { MenuSheet } from '../menus/MenuSheet';
+import { FactRows, RowGroup } from './RowGroup';
 
 type Item = NonNullable<ReturnType<(typeof DRINK_KINDS)['beer']['useItem']>['data']>;
 
@@ -115,17 +120,13 @@ function BeerWinePage({ kind, item, favorite, onToggleFavorite, canEdit, onEdit 
   const pictures = orderedPictures(item.item_images as ItemImageLink[] | undefined).filter((p) => !p.isSketch);
   // ponytail: app_item_presentation has no sketch_variant yet, so this is the style's usual glass; add the column to the view to show the pick.
   const sketch = savedSketch(kind, tags, (item as { sketch_variant?: string | null }).sketch_variant ?? null);
-  const abv = formatAbv(item.abv);
   const glass = dropdowns?.glassware.find((g) => g.id === item.glassware_id)?.name ?? null;
-  const pour = [item.serve_ml ? `${item.serve_ml} ml` : null, item.price != null ? `$${item.price}` : null].filter(Boolean).join(' · ');
-  const facts = [
-    abv ? { label: 'Strength', value: abv } : null,
-    pour ? { label: kind === 'wine' ? 'Glass' : 'Pour', value: pour } : null,
-    glass ? { label: 'Served', value: glass } : null,
-  ].filter((f): f is { label: string; value: string } => !!f);
-  const pourIt: GroupRow[] = [];
-  if (glass) pourIt.push({ key: 'glass', label: 'Glass', value: glass });
-  if (item.serve_ml) pourIt.push({ key: 'pour', label: 'Pour', value: `${item.serve_ml} ml` });
+  // How the bar pours it (Strength, Pour, Served or Bottle; then Pour it for the team).
+  const { data: pour } = useItemPour(item.id);
+  const poured = { ...item, ...pour };
+  const facts = pourFacts(kind, poured, glass);
+  const pourIt = pourRows(kind, poured, glass).map((r) => ({ key: r.label, label: r.label, value: r.value }));
+  const [allergens, setAllergens] = useState(false);
   const label = DRINK_KINDS[kind].label;
   const size = drawingSize(staff);
   const slug = useShareSlug('d', item.id).data;
@@ -145,12 +146,17 @@ function BeerWinePage({ kind, item, favorite, onToggleFavorite, canEdit, onEdit 
         <View style={styles.body}>
           {columns ? null : title}
           {item.description ? <Body>{item.description}</Body> : null}
-          {staff ? null : <PalateFit itemId={item.id} name={item.name} />}
+          {staff ? null : <PalateFit itemId={item.id} name={item.name} line="this one" />}
           <FactRows rows={facts} />
-          {staff ? <AllergyLine itemId={item.id} guest={false} /> : null}
+          {staff ? <AllergyLine itemId={item.id} guest={false} own={item.bar_id} onPress={() => setAllergens(true)} /> : null}
           {item.bar_id && staff ? <ApprovalNotice itemId={item.id} /> : null}
           {item.notes ? <Body tone="muted">{item.notes}</Body> : null}
           {staff ? <RowGroup title="Pour it" rows={pourIt} /> : null}
+          {allergens ? (
+            <MenuSheet visible onClose={() => setAllergens(false)} title="Allergens" subtitle={item.name}>
+              <AllergenSection itemId={item.id} houseMade={false} canEditItem={canEdit} />
+            </MenuSheet>
+          ) : null}
         </View>
       )}
       controls={{

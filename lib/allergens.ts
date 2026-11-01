@@ -81,6 +81,17 @@ export function listAllergens(keys: readonly string[]): string {
 }
 
 /**
+ * A beer's, wine's or bottle's own declaration as one line (board Item-page,
+ * staff: "Sulphites"): what it contains, "No allergens" once checked with
+ * none, and never none when nobody has checked.
+ */
+export function ownAllergenLine(declared: { allergens: readonly string[] } | null): string {
+  if (!declared) return 'Allergens not checked yet';
+  const list = listAllergens(declared.allergens);
+  return list ? list[0].toUpperCase() + list.slice(1) : 'No allergens';
+}
+
+/**
  * The one line a server reads out: "Contains eggs and sulphites." Unchecked
  * ingredients are never hidden behind a clean bill.
  */

@@ -75,9 +75,10 @@ export function useVenueDrinks(barId: string | null | undefined) {
 }
 
 /** One drink as the check reads it (the home drink page's check). */
-function useDrink(itemId: string) {
+function useDrink(itemId: string, enabled = true) {
   return useQuery({
     queryKey: ['drink-kit', itemId],
+    enabled: enabled && !!itemId,
     // Short: a drink changed on its own page should check again when it's opened.
     staleTime: 30_000,
     queryFn: async (): Promise<CheckedDrink | null> => {
@@ -145,6 +146,17 @@ export function useHomeDrinkKitCheck(itemId: string): KitCheck | null {
   const kit = useHomeCheckKit();
   const drink = useDrink(itemId).data;
   return useMemo(() => (kit && drink ? kitCheck(drink, kit) : null), [kit, drink]);
+}
+
+/**
+ * Can the bar you're at make another bar's drink (board Kept-kit, Can we make
+ * it): the check against its Kit, and the Kit, for the glass nearest to a
+ * missing one. Null while it loads, or with no bar.
+ */
+export function useBarDrinkKitCheck(itemId: string, barId: string | null): { check: KitCheck; kit: CheckKit } | null {
+  const kit = useVenueKit(barId);
+  const drink = useDrink(itemId, !!barId).data;
+  return useMemo(() => (kit && drink ? { check: kitCheck(drink, kit), kit } : null), [kit, drink]);
 }
 
 /** Every drink of the venue, checked, by id (Library's Ready here / Needs something). */

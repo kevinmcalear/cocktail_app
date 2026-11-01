@@ -1,6 +1,6 @@
 import assert from 'node:assert/strict';
 
-import { kitCheck, methodTools } from './kitCheck';
+import { canMakeLine, glassPlural, kitCheck, methodTools, nearestGlass } from './kitCheck';
 
 assert.deepEqual(methodTools(['Shake', 'Dry shake']), ['shaker', 'strainers']);
 assert.deepEqual(methodTools(['Build']), []);
@@ -53,3 +53,16 @@ const kinded = kitCheck({ glass: 'Custom', glassKind: 'rocks', ice: [{ name: 'Ho
 assert.deepEqual(kinded.glass, { name: 'Custom', glass: 'rocks', ok: true, yours: 'Rocks 300 ml' });
 assert.deepEqual(kinded.ice.map((i) => [i.name, i.kind, i.ok]), [['Hosh', 'sphere', false]]);
 assert.equal(kitCheck({ glass: 'Custom', ice: ['Hosh'], methods: [] }, kit).ice[0].kind, 'cubes', 'not sure reads the name');
+
+// Can we make it (Kept-kit): the board's Aperol Spritz at a bar with no wine glasses.
+const spritz = kitCheck({ glass: 'Wine glass', ice: ['Cubes'], methods: [] }, { ...kit, glasses: [...kit.glasses, { id: 'g9', glass: 'collins', name: null, model_id: null }] });
+assert.equal(spritz.glass?.ok, false);
+assert.deepEqual(spritz.others, []);
+assert.equal(canMakeLine(spritz, ['Aperol', 'prosecco'], []), "You have the Aperol and prosecco. It's served in a wine glass, and you have none.");
+assert.equal(nearestGlass('wine', { glasses: [{ id: 'g9', glass: 'collins', name: null, model_id: null }] }), 'Collins');
+assert.equal(nearestGlass('wine', { glasses: [] }), null);
+assert.equal(glassPlural('wine'), 'wine glasses');
+assert.equal(glassPlural('coupe'), 'coupes');
+assert.equal(canMakeLine(aviation, [], ['Crème de violette']), "You don't have the Crème de violette. It's served in a coupe, and you have none. It also needs shaker tins.");
+assert.equal(canMakeLine(kitCheck({ glass: null, ice: [], methods: [] }, kit), ['Gin'], []), 'You have the Gin.');
+assert.equal(canMakeLine(kitCheck({ glass: null, ice: [], methods: [] }, kit), [], []), 'You have what it needs.');

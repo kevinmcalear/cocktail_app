@@ -4,7 +4,7 @@ import { Platform, StyleSheet, View } from 'react-native';
 
 import { WhereItLives } from '@/components/backbar/WhereItLives';
 import { BackbarTheme, Body, BrandProvider, Button, IngredientDrawing, useIngredientColour, useToast } from '@/components/ds';
-import { AroundIt, useBottleTiles } from '@/components/ingredient/IngredientFacts';
+import { AroundIt, useBottleFacts } from '@/components/ingredient/IngredientFacts';
 import { PairsWith } from '@/components/screens/pairings/PairsWith';
 import { TechnicalIngredientCard, WhereToBuy } from '@/components/techniques/TechnicalIngredientCard';
 import { drawing, space } from '@/constants/tokens';
@@ -29,6 +29,7 @@ import { ItemTitle } from '../drink/ItemTitle';
 import type { ShownPicture } from '../drink/PictureViewer';
 import { FactRows } from '../drink/RowGroup';
 import { BehindTheBar } from './BehindTheBar';
+import { BottleAtBar } from './BottleAtBar';
 import { ForTheBar } from './ForTheBar';
 import { HouseMadeRecipe, type PrepLine } from './HouseMadeRecipe';
 import { prepFacts } from './IngredientBits';
@@ -67,13 +68,13 @@ export function IngredientScreen(props: IngredientScreenProps) {
     <BackbarTheme>
       <BrandProvider accent={brand?.accent ?? undefined}>
         {/* Log batch writes to the recipe's bar, or for a shared one at work, the bar you're at. */}
-        <IngredientPage {...props} venueName={own?.name ?? null} logBar={props.ingredient.bar_id ?? brand?.id ?? null} />
+        <IngredientPage {...props} venueName={own?.name ?? null} logBar={props.ingredient.bar_id ?? brand?.id ?? null} atBar={home || !active ? null : { id: active.id, name: active.name }} />
       </BrandProvider>
     </BackbarTheme>
   );
 }
 
-function IngredientPage({ ingredient, lines, drinks, bottles, pictures: batchPictures, canEdit, onEdit, venueName, logBar }: IngredientScreenProps & { venueName: string | null; logBar: string | null }) {
+function IngredientPage({ ingredient, lines, drinks, bottles, pictures: batchPictures, canEdit, onEdit, venueName, logBar, atBar }: IngredientScreenProps & { venueName: string | null; logBar: string | null; atBar: { id: string; name: string } | null }) {
   const userId = useUserId();
   const { data: card } = useItemPrep(ingredient.id);
   const { data: used } = usePrepUsedIn(ingredient.id);
@@ -82,6 +83,7 @@ function IngredientPage({ ingredient, lines, drinks, bottles, pictures: batchPic
   const { data: capabilities } = useCapabilities(ingredient.bar_id);
   // A venue's recipe opens at Drink Creator (Item-page, house-made: "as now"); shared ones are open.
   const venueRole = useEffectiveRole(ingredient.bar_id);
+  const atBarRole = useEffectiveRole(atBar?.id ?? null);
   const canViewDetails = !ingredient.bar_id || venueRole > 30;
   const canEditPrep = ingredient.bar_id ? !!capabilities?.includes('prep') || canEdit : canEdit;
   const router = useRouter();
@@ -123,8 +125,10 @@ function IngredientPage({ ingredient, lines, drinks, bottles, pictures: batchPic
   const team = isPrep && !!ingredient.bar_id && venueRole >= 20;
   // A technical ingredient (xanthan) reads like the technique library, with where to buy it.
   const technical = !isPrep && !!technicalIngredientFor(ingredient.name);
-  const bottleTiles = useBottleTiles(ingredient);
-  const facts = (isPrep ? prepFacts(prep) : bottleTiles).map((f) => ({ label: f.label, value: String(f.value) }));
+  // A bottle, for the team at the bar you're at (Employee and up): the bar's bottles of it and the drinks it goes into.
+  const bottleTeam = !isPrep && !technical && !!atBar && atBarRole >= 20;
+  const bottleFacts = useBottleFacts(ingredient, bottles);
+  const facts = isPrep ? prepFacts(prep).map((f) => ({ label: f.label, value: String(f.value) })) : bottleFacts;
   // Anyone who can read a prep's recipe can edit it: when other drinks use it, or it isn't
   // theirs to change, the editor asks at Save (prep-prep-edit-shared, AskAtSave).
   const offerEdit = canEdit || (showRecipe && !!userId);
@@ -156,6 +160,7 @@ function IngredientPage({ ingredient, lines, drinks, bottles, pictures: batchPic
       {technical ? <TechnicalIngredientCard name={ingredient.name} /> : null}
       {showRecipe ? <HouseMadeRecipe itemId={ingredient.id} lines={lines} steps={steps} sizes={sizes} size={size} onSize={setSizeKey} onMake={make} checkedOn={sources?.filter((s) => s.field === 'recipe').map((s) => s.url)} /> : null}
       {columns || fab ? null : action}
+      {bottleTeam ? <BottleAtBar item={ingredient} bottles={bottles} used={used} bar={atBar!} /> : null}
       {team ? <BehindTheBar item={ingredient} names={lines.map((l) => l.name)} drinks={drinks} used={used} from={from} canEditItem={canEdit} houseMade={lines.length > 0} /> : null}
       {isPrep || technical ? null : <WhereItLives itemId={ingredient.id} itemName={ingredient.name} readOnly={offerEdit} />}
       {technical ? null : <ForTheBar item={ingredient} houseMade={lines.length > 0} canEditItem={canEdit} whereRow={isPrep} editable={offerEdit} allergensRow={!team || !lines.length} />}
@@ -163,7 +168,7 @@ function IngredientPage({ ingredient, lines, drinks, bottles, pictures: batchPic
       {/* Goes with: kept and redrawn by the Learning lane (board Kept-pairings). */}
       <PairsWith itemId={ingredient.id} name={ingredient.name} />
       {technical ? <WhereToBuy name={ingredient.name} /> : null}
-      {team ? null : <PrepUsedIn name={ingredient.name} drinks={drinks} used={used} isPrep={isPrep} wide={columns} yieldAmount={prep?.yield_amount ?? null} yieldUnit={prep?.yield_unit ?? null} />}
+      {team || bottleTeam ? null : <PrepUsedIn name={ingredient.name} drinks={drinks} used={used} isPrep={isPrep} wide={columns} yieldAmount={prep?.yield_amount ?? null} yieldUnit={prep?.yield_unit ?? null} />}
     </View>
   );
 

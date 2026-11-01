@@ -5,6 +5,7 @@ import { Alert } from 'react-native';
 import type { ImageItem } from '@/components/cocktail/SortableImageList';
 import { imageIdFor, pickDrinkPhotos, setItemImages } from '@/components/drink/drinkImages';
 import { plainDbMessage } from '@/lib/dbError';
+import { POUR_COLUMNS, type ItemPour } from '@/hooks/useItemPour';
 import { DRINK_KINDS, type DrinkKind, type DrinkKindConfig } from '@/lib/drinkKinds';
 import { changedColumns, levelColumns, levelFields, OVERRIDE_LEVELS, saveItemTags, type LevelRow } from '@/lib/itemSave';
 import { formatPrice } from '@/lib/menus';
@@ -19,6 +20,13 @@ export interface BeerWineFields {
   maker: string;
   abv: string;
   price: string;
+  /** How the bar pours it (Pour it on its page): size in ml, degrees, the glass's and the pour's notes, tap line, bottle price. */
+  serveMl: string;
+  serveTemp: string;
+  glassNote: string;
+  pourNote: string;
+  tapLine: string;
+  bottlePrice: string;
   /** Style and region, as tags (item_categories). */
   selectedCategories: string[];
   localImages: ImageItem[];
@@ -36,6 +44,12 @@ export const EMPTY_BEER_WINE_FIELDS: BeerWineFields = {
   maker: '',
   abv: '',
   price: '',
+  serveMl: '',
+  serveTemp: '',
+  glassNote: '',
+  pourNote: '',
+  tapLine: '',
+  bottlePrice: '',
   selectedCategories: [],
   localImages: [],
   barId: null,
@@ -74,6 +88,12 @@ export function useBeerWineFields(initial: BeerWineFields) {
     setMaker: field('maker'),
     setAbv: field('abv'),
     setPrice: field('price'),
+    setServeMl: field('serveMl'),
+    setServeTemp: field('serveTemp'),
+    setGlassNote: field('glassNote'),
+    setPourNote: field('pourNote'),
+    setTapLine: field('tapLine'),
+    setBottlePrice: field('bottlePrice'),
     setLocalImages: field('localImages'),
     setBarId: field('barId'),
     setOverrideVisibility: field('overrideVisibility'),
@@ -96,9 +116,21 @@ export function beerWineColumns(f: BeerWineFields) {
     abv: f.abv ? parseFloat(f.abv) : null,
     // Text as typed: "19.50" stays "19.50" and "MP" stays "MP".
     price: formatPrice(f.price),
+    serve_ml: whole(f.serveMl),
+    serve_temp_c: whole(f.serveTemp),
+    glass_note: f.glassNote.trim() || null,
+    pour_note: f.pourNote.trim() || null,
+    tap_line: f.tapLine.trim() || null,
+    bottle_price: formatPrice(f.bottlePrice),
     bar_id: f.barId || null,
     ...levelColumns(f),
   };
+}
+
+/** A whole number as typed ("400", "16", "-2"), or null. */
+function whole(v: string): number | null {
+  const n = parseInt(v, 10);
+  return Number.isFinite(n) ? n : null;
 }
 
 /** Uploads the new photos into `folder` and returns every photo's image id, in order. */
@@ -120,7 +152,7 @@ type Item = NonNullable<ReturnType<DrinkKindConfig['useItem']>['data']>;
 
 const text = (v: unknown) => (v == null ? '' : String(v));
 
-function fieldsOf(item: Item, levels: LevelRow | undefined): BeerWineFields {
+function fieldsOf(item: Item, levels: (LevelRow & Partial<ItemPour>) | undefined): BeerWineFields {
   const links = (item.item_images ?? []) as { sort_order: number | null; images: { id: string; url: string } | null }[];
   return {
     name: text(item.name),
@@ -128,6 +160,12 @@ function fieldsOf(item: Item, levels: LevelRow | undefined): BeerWineFields {
     maker: text(item.brand_maker),
     abv: text(item.abv),
     price: text(item.price),
+    serveMl: text(item.serve_ml),
+    serveTemp: text(levels?.serve_temp_c),
+    glassNote: text(levels?.glass_note),
+    pourNote: text(levels?.pour_note),
+    tapLine: text(levels?.tap_line),
+    bottlePrice: text(levels?.bottle_price),
     selectedCategories: ((item.item_categories ?? []) as { category_id: string }[]).map((ic) => ic.category_id),
     localImages: [...links]
       .sort((a, b) => (a.sort_order || 0) - (b.sort_order || 0))
@@ -150,8 +188,8 @@ export function useBeerWineEditor(kindName: DrinkKind, id: string) {
     staleTime: 0,
     gcTime: 0,
     retry: false,
-    queryFn: async (): Promise<LevelRow> => {
-      const { data, error } = await supabase.from('items').select(OVERRIDE_LEVELS).eq('id', id).single();
+    queryFn: async (): Promise<LevelRow & ItemPour> => {
+      const { data, error } = await supabase.from('items').select(`${OVERRIDE_LEVELS}, ${POUR_COLUMNS}`).eq('id', id).single();
       if (error) throw error;
       return data;
     },
@@ -191,6 +229,7 @@ export function useBeerWineEditor(kindName: DrinkKind, id: string) {
 
       await queryClient.invalidateQueries({ queryKey: [kind.kind, id] });
       await queryClient.invalidateQueries({ queryKey: [kind.listQueryKey] });
+      await queryClient.invalidateQueries({ queryKey: ['item-pour', id] });
       form.markClean();
       toastDone(`${kind.label} saved`, capitalize(f.name));
       return true;

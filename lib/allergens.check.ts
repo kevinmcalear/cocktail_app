@@ -1,7 +1,7 @@
 // Checks for lib/allergens.ts. Run: npm run test:unit
 import assert from 'node:assert/strict';
 
-import { ALLERGENS, allergenLabel, allergyMatches, checkedLine, containsLine, listAllergens, viaLine, type DrinkAllergens } from './allergens';
+import { ALLERGENS, allergenLabel, allergyMatches, checkedLine, containsLine, listAllergens, ownAllergenLine, viaLine, type DrinkAllergens } from './allergens';
 
 assert.equal(ALLERGENS.length, 14, 'the 14 regulated allergens');
 assert.equal(new Set(ALLERGENS.map((a) => a.key)).size, 14);
@@ -27,6 +27,10 @@ assert.equal(containsLine({ allergens: [], unchecked: 2, lines: 3 }), 'No allerg
 assert.equal(containsLine({ allergens: [], unchecked: 0, lines: 3 }), 'No allergens declared.');
 assert.equal(containsLine({ allergens: [], unchecked: 0, lines: 0 }), 'No spec yet, so nothing to declare.');
 assert.equal(containsLine(null), 'No spec yet, so nothing to declare.');
+// A beer's or wine's own declaration (no spec lines).
+assert.equal(ownAllergenLine({ allergens: ['sulphites'] }), 'Sulphites');
+assert.equal(ownAllergenLine({ allergens: [] }), 'No allergens');
+assert.equal(ownAllergenLine(null), 'Allergens not checked yet');
 
 assert.equal(viaLine(['Raspberry syrup', 'Egg white']), 'via Raspberry syrup, in Egg white');
 assert.equal(viaLine(['Dolin Dry vermouth']), 'via Dolin Dry vermouth');

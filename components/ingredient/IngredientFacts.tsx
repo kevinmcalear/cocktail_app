@@ -9,6 +9,7 @@ import { font, layout, space } from '@/constants/tokens';
 import { useSwapFor, type IngredientBottle } from '@/hooks/useIngredients';
 import { useItemMaker } from '@/hooks/useMakers';
 import { usePrepRatio } from '@/hooks/usePrepCard';
+import { strengthLine } from '@/lib/pour';
 
 import { IngredientMaker } from './IngredientMaker';
 
@@ -37,19 +38,21 @@ export function bottleFacts(b: { brand_maker?: string | null; abv?: number | nul
   return [b.brand_maker?.trim(), b.abv != null ? `${Number(b.abv)}%` : null, b.origin?.trim()].filter(Boolean).join(' · ');
 }
 
-/** Strength, From, Maker: a bottle's fact tiles under its description (prep-ing-campari). */
-export function useBottleTiles(b: { id: string; ingredient_role?: string | null; brand_maker?: string | null; abv?: number | null; origin?: string | null }): Fact[] {
+/**
+ * A bottle's facts as ruled rows (board Item-page, bottle): Strength (a kind
+ * of spirit reads its bottles' range, "Usually 40 to 46%"), From, and Kind of,
+ * which opens the family it belongs to. Who makes it is in the credit line and
+ * Around it.
+ */
+export function useBottleFacts(b: { id: string; abv?: number | null; origin?: string | null; generic?: Link | null }, bottles: readonly { abv?: number | null }[]): Fact[] {
   const router = useRouter();
-  const { data: maker } = useItemMaker(b.ingredient_role === 'product' ? b.id : null);
-  if (b.ingredient_role !== 'product') return [];
-  return [
-    b.abv != null ? { label: 'Strength', value: `${Number(b.abv)}% ABV` } : null,
+  const strength = strengthLine(b.abv, bottles);
+  const rows: (Fact | null)[] = [
+    strength ? { label: 'Strength', value: strength } : null,
     b.origin?.trim() ? { label: 'From', value: b.origin.trim() } : null,
-    // The maker's tile opens its page, so Around it needn't repeat it (prep-ing-campari).
-    maker?.display_name || b.brand_maker?.trim()
-      ? { label: 'Maker', value: maker?.display_name || b.brand_maker!.trim(), onPress: maker ? () => router.push(`/p/${maker.handle}` as Href) : undefined, accessibilityHint: maker ? 'Opens the maker' : undefined }
-      : null,
-  ].filter((f): f is Fact => !!f);
+    b.generic ? { label: 'Kind of', value: b.generic.name, onPress: () => router.push(`/ingredient/${b.generic!.id}`), accessibilityHint: `Opens ${b.generic.name}` } : null,
+  ];
+  return rows.filter((f): f is Fact => !!f);
 }
 
 /**
@@ -63,16 +66,21 @@ export function AroundIt({ ingredient, bottles: allBottles, isPrep, extra }: Pro
   const { data: ratio } = usePrepRatio(isPrep ? ingredient.generic?.id : null);
   const bottle = ingredient.ingredient_role === 'product' && !!ingredient.id;
   const { data: swaps = [] } = useSwapFor(bottle ? ingredient.id! : null, ingredient.generic?.id);
-  // A prep's Around it is what it's a kind of, and nothing else (prep-prep-phone).
+  // Who makes a bottle: its page, now that the facts end at Kind of (Item-page).
+  const { data: maker } = useItemMaker(bottle ? ingredient.id! : null);
+  const router = useRouter();
+  // A prep's Around it is what it's a kind of, and nothing else (prep-prep-phone); a bottle's Kind of is in its facts.
   const bottles = isPrep ? [] : allBottles;
-  if (!bottle && !ingredient.generic && !ingredient.madeFrom && !bottles.length && !extra) return null;
+  const kindOf = isPrep ? ingredient.generic : null;
+  if (!bottle && !kindOf && !ingredient.madeFrom && !bottles.length && !extra) return null;
   const shown = all ? bottles : bottles.slice(0, FIRST);
 
   return (
     <View style={styles.section}>
       <Headline role="heading">Around it</Headline>
       <View>
-        {ingredient.generic ? <LinkRow lead="Kind of" item={ingredient.generic} value={ratio ?? undefined} /> : null}
+        {kindOf ? <LinkRow lead="Kind of" item={kindOf} value={ratio ?? undefined} /> : null}
+        {maker ? <LinkRow lead="Maker" item={{ id: maker.handle, name: maker.display_name }} onPress={() => router.push(`/p/${maker.handle}` as Href)} /> : null}
         {ingredient.madeFrom ? <LinkRow lead="Made from" item={ingredient.madeFrom} /> : null}
         {swaps.length && ingredient.generic ? <LinkRow lead="Swap for" item={{ id: ingredient.generic.id, name: swaps.map((x) => x.name).join(', ') }} /> : null}
         {extra}

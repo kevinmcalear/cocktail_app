@@ -66,6 +66,8 @@ export interface KitCheck {
   ready: boolean;
   /** "Needs a sphere", "Needs shaved ice and a block ice shaver"; null when ready. */
   needs: string | null;
+  /** What it needs besides its glass, as words: "a sphere", "shaker tins". */
+  others: string[];
 }
 
 const ICE_WORDS: Record<IceKind, string> = {
@@ -126,10 +128,64 @@ export function kitCheck(drink: CheckDrink, kit: CheckKit): KitCheck {
   const needed = methodTools(drink.methods);
   const tools = needed.length && kit.tools.length ? { needed, missing: needed.filter((t) => !kit.tools.includes(t)) } : null;
 
-  const words = [
-    ...(glass && !glass.ok ? [glassWord(glass.glass)] : []),
+  const others = [
     ...ice.filter((i) => !i.ok).map((i) => ICE_WORDS[i.kind]),
     ...[...ice.flatMap((i) => i.missing), ...(tools?.missing ?? [])].filter((t, n, all) => all.indexOf(t) === n).map(toolWord),
   ];
-  return { glass, ice, tools, ready: !words.length, needs: words.length ? `Needs ${andList(words)}` : null };
+  const words = [...(glass && !glass.ok ? [glassWord(glass.glass)] : []), ...others];
+  return { glass, ice, tools, ready: !words.length, needs: words.length ? `Needs ${andList(words)}` : null, others };
+}
+
+/** The glasses that stand in for each other, nearest first (a spritz in a wine glass, else a Collins). */
+const NEAR_GLASS: Record<SketchGlass, readonly SketchGlass[]> = {
+  coupe: ['nick', 'martini', 'flute'],
+  nick: ['coupe', 'martini'],
+  martini: ['coupe', 'nick'],
+  rocks: ['julep', 'ceramic'],
+  highball: ['collins', 'fizz'],
+  collins: ['highball', 'fizz'],
+  fizz: ['highball', 'collins'],
+  flute: ['coupe', 'wine'],
+  wine: ['spritz', 'collins', 'highball'],
+  spritz: ['wine', 'collins', 'highball'],
+  snifter: ['rocks', 'wine'],
+  julep: ['rocks', 'highball'],
+  tiki: ['collins', 'highball'],
+  mug: ['ceramic', 'tiki'],
+  ceramic: ['mug', 'tiki'],
+  beer: ['highball', 'collins'],
+  shot: ['cordial'],
+  cordial: ['shot', 'nick'],
+};
+
+/** The venue's glass nearest to one it doesn't have, by its kind's label ("Collins"); null when none stands in. */
+export function nearestGlass(shape: SketchGlass, kit: Pick<CheckKit, 'glasses'>): string | null {
+  const near = NEAR_GLASS[shape]?.find((g) => kit.glasses.some((k) => k.glass === g));
+  return near ? GLASS_TYPE_LABEL[near] : null;
+}
+
+/** "wine glasses", "coupes", "Nick & Noras": more of a glass, for "Add wine glasses". */
+export const glassPlural = (g: SketchGlass) => {
+  const n = glassNoun(g);
+  return /(s|sh|ch)$/.test(n) ? `${n}es` : `${n}s`;
+};
+
+/**
+ * What a bartender reads under "Can <bar> make it?" (board Kept-kit, Can we
+ * make it): what goes in that the bar has, then the kit it lacks. "You have
+ * the Aperol and prosecco. It's served in a wine glass, and you have none."
+ * `have` and `lack` are the drink's ingredients split by the bar's back bar.
+ */
+export function canMakeLine(check: KitCheck, have: readonly string[], lack: readonly string[]): string {
+  const goesIn = lack.length
+    ? have.length
+      ? `You have the ${andList(have)}, but not the ${andList(lack)}.`
+      : `You don't have the ${andList(lack)}.`
+    : have.length
+      ? `You have the ${andList(have)}.`
+      : null;
+  const glass = check.glass && !check.glass.ok ? `It's served in ${glassWord(check.glass.glass)}, and you have none.` : null;
+  const rest = check.others.length ? `It ${glass ? 'also ' : ''}needs ${andList(check.others)}.` : null;
+  const all = [goesIn, glass, rest].filter(Boolean).join(' ');
+  return all || 'You have what it needs.';
 }

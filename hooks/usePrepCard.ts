@@ -98,13 +98,21 @@ export interface UsedInPrep {
   unit: string | null;
 }
 
+export interface UsedInPour {
+  amount: number | string | null;
+  unit: string | null;
+  float?: boolean;
+  name?: string;
+  barId?: string | null;
+}
+
 export interface PrepUsedIn {
   /** The other house-made ingredients this one goes into (drinks are listed by useIngredient). */
   preps: UsedInPrep[];
   /** It goes on a drink as a garnish (a twist, a wheel, a sprig), so it can carry a prep card of its own. */
   garnish: boolean;
-  /** How much each drink pours, by drink id, as this role's recipe view shows it (null amounts when masked). */
-  pours: Record<string, { amount: number | string | null; unit: string | null }>;
+  /** How much each drink pours, by drink id, as this role's recipe view shows it (null amounts when masked); whether it floats, and the drink's name and bar. */
+  pours: Record<string, UsedInPour>;
 }
 
 /** Where this ingredient goes: into other preps, and whether it's a garnish on a drink. */
@@ -115,15 +123,15 @@ export function usePrepUsedIn(itemId: string | null | undefined) {
     queryFn: async (): Promise<PrepUsedIn> => {
       const { data, error } = await supabase
         .from('app_recipe_presentation')
-        .select('amount, unit, parent:app_item_presentation!recipe_item_id(id, name, item_type)')
+        .select('amount, unit, is_float, parent:app_item_presentation!recipe_item_id(id, name, item_type, bar_id)')
         .eq('display_ingredient_id', itemId!);
       if (error) throw error;
       const seen = new Map<string, UsedInPrep>();
       let garnish = false;
       const pours: PrepUsedIn['pours'] = {};
-      for (const row of (data ?? []) as { amount: number | string | null; unit: string | null; parent: { id: string; name: string; item_type: string } | null }[]) {
+      for (const row of (data ?? []) as { amount: number | string | null; unit: string | null; is_float: boolean | null; parent: { id: string; name: string; item_type: string; bar_id: string | null } | null }[]) {
         if (row.parent?.item_type === 'ingredient') seen.set(row.parent.id, { id: row.parent.id, name: row.parent.name, amount: row.amount, unit: row.unit });
-        else if (row.parent) pours[row.parent.id] = { amount: row.amount, unit: row.unit };
+        else if (row.parent) pours[row.parent.id] = { amount: row.amount, unit: row.unit, float: !!row.is_float, name: row.parent.name, barId: row.parent.bar_id };
         if (isGarnishUnit(row.unit)) garnish = true;
       }
       return { preps: [...seen.values()].sort((a, b) => a.name.localeCompare(b.name)), garnish, pours };
