@@ -144,6 +144,8 @@ test('the staff link carries its secret, and New link replaces it', async () => 
   await fireEvent.press(screen.getByRole('button', { name: 'Invite someone' }));
   expect(screen.getByText(/\/v\/caretakers\?join=secret$/)).toBeTruthy();
   await fireEvent.press(screen.getByLabelText('New link'));
+  expect(mockNewLink).not.toHaveBeenCalled();
+  await fireEvent.press(screen.getByRole('button', { name: 'Make a new link' }));
   expect(mockNewLink).toHaveBeenCalled();
 });
 

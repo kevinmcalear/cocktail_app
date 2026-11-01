@@ -11,7 +11,7 @@ import { IconSymbol } from '@/components/ui/icon-symbol';
 import { radius, space, STATUS } from '@/constants/tokens';
 import { useActiveVenue } from '@/hooks/useActiveVenue';
 import { useNewStaffLink, useSaveStaffLink, useStaffLink } from '@/hooks/useStaffLink';
-import { confirmAsync, showMessage } from '@/lib/dialogs';
+import { showMessage } from '@/lib/dialogs';
 import { roleLabel } from '@/lib/roles';
 import { shareLink } from '@/lib/shareLink';
 import { INVITE_ROLES, TEAM_MANAGE } from '@/lib/team';
@@ -33,6 +33,8 @@ export function StaffLinkTab({ barId, barName, ceiling, admin }: { barId: string
   const save = useSaveStaffLink(barId);
   const renew = useNewStaffLink(barId);
   const [picking, setPicking] = useState(false);
+  // Asked here, not in a dialog: on the web a dialog opens behind this sheet.
+  const [renewing, setRenewing] = useState(false);
   const data = link.data;
 
   if (link.isLoading) return <Caption tone="muted">Loading…</Caption>;
@@ -50,15 +52,7 @@ export function StaffLinkTab({ barId, barName, ceiling, admin }: { barId: string
   const roles = INVITE_ROLES.filter((r) => r.level < TEAM_MANAGE && r.level <= ceiling);
   const failed = save.error ?? renew.error;
   const problem = failed ? <Caption color={STATUS.danger} role="alert">{failed.message}</Caption> : null;
-  const newLink = async () => {
-    const yes = await confirmAsync({
-      title: 'Make a new link?',
-      message: `The old link and its code stop working. People already on ${barName}’s team aren’t affected.`,
-      confirmText: 'New link',
-      destructive: true,
-    });
-    if (yes) renew.mutate();
-  };
+  const newLink = () => renew.mutate(undefined, { onSuccess: () => setRenewing(false) });
 
   if (!data.on) {
     return (
@@ -108,8 +102,13 @@ export function StaffLinkTab({ barId, barName, ceiling, admin }: { barId: string
       {problem}
       {url ? <Button label="Share the link" icon="square.and.arrow.up" size="lg" variant="ink" onPress={() => void copy()} /> : null}
       <Caption tone="muted">Anyone with the link can ask to join. Turn it off in Bar settings.</Caption>
-      {url && admin ? (
-        <TextLink label={renew.isPending ? 'Making a new link…' : 'New link'} accessibilityHint="Replaces the link and its code. The old one stops working." disabled={renew.isPending} onPress={() => void newLink()} />
+      {url && admin && !renewing ? <TextLink label="New link" accessibilityHint="Replaces the link and its code. The old one stops working." onPress={() => setRenewing(true)} /> : null}
+      {url && admin && renewing ? (
+        <View style={styles.renew}>
+          <Body>{`The old link and its code stop working. People already on ${barName}’s team aren’t affected.`}</Body>
+          <Button label={renew.isPending ? 'Making a new link…' : 'Make a new link'} variant="danger" disabled={renew.isPending} onPress={newLink} />
+          <TextLink label="Keep this link" disabled={renew.isPending} onPress={() => setRenewing(false)} />
+        </View>
       ) : null}
     </View>
   );
@@ -121,4 +120,5 @@ const styles = StyleSheet.create({
   link: { flexDirection: 'row', alignItems: 'center', gap: space.sm, paddingVertical: space.md },
   url: { flex: 1, minWidth: 0 },
   roles: { gap: space.sm },
+  renew: { gap: space.sm, alignItems: 'flex-start' },
 });
