@@ -310,10 +310,18 @@ export const COMMON_INGREDIENTS = [
   'Gin', 'Lime juice', 'Lemon juice', 'Simple syrup', 'Sweet vermouth', 'Campari', 'Angostura bitters', 'Rye whiskey',
   'Bourbon', 'White rum', 'Tequila', 'Mezcal', 'Vodka', 'Dry vermouth', 'Soda water', 'Egg white',
 ] as const;
-/** The method step's chips, in its two groups, all shown. A float, mist or rinse is on the Finish step. */
+/**
+ * The method step's chips, in groups, all shown. A float, mist or rinse is on the Finish step.
+ * Names stay clear of the ice words methodIceLabel and private.drink_method match
+ * ("shak", "stir", "buil", "blend", "whip") unless they really are that method.
+ */
 export const METHOD_GROUPS: readonly { label: string; methods: readonly string[] }[] = [
-  { label: 'Mix', methods: ['Shake', 'Stir', 'Build', 'Throw', 'Swizzle', 'Churn', 'Blend', 'Muddle'] },
-  { label: 'Air and texture', methods: ['Dry shake', 'Reverse dry shake', 'Whip (iSi)', 'Whip (whisk or frother)', 'Top with foam'] },
+  { label: 'Mix', methods: ['Shake', 'Stir', 'Build', 'Throw', 'Swizzle', 'Churn', 'Blend', 'Muddle', 'Roll', 'Hard shake', 'Whip shake', 'Flash blend', 'Layer'] },
+  { label: 'Air and texture', methods: ['Dry shake', 'Reverse dry shake', 'Whip (iSi)', 'Whip (whisk or frother)', 'Top with foam', 'Carbonate', 'Nitro'] },
+  { label: 'Smoke and fire', methods: ['Smoke the glass', 'Smoke under a cloche', 'Smoke the drink', 'Set alight', 'Torch', 'Hot poker'] },
+  { label: 'Cold and heat', methods: ['Chill the glass', 'Freezer pour', 'Liquid nitrogen', 'Frozen', 'Heat', 'Steam'] },
+  { label: 'Strain and pour', methods: ['Fine strain', 'Strain over fresh ice', 'Dirty dump'] },
+  { label: 'Made ahead', methods: ['Batch', 'Pre-dilute', 'Bottle', 'Keg', 'Barrel age', 'Infuse', 'Sous vide', 'Fat-wash', 'Milk-wash', 'Clarify', 'Centrifuge', 'Rotovap'] },
 ];
 export const COMMON_METHODS = METHOD_GROUPS.flatMap((g) => g.methods);
 /** What a picked method's step card says under its name. */
@@ -327,15 +335,48 @@ const METHOD_DETAIL: Record<string, string> = {
   churn: 'in the glass, on crushed ice',
   blend: 'with ice',
   muddle: 'in the tin first',
+  roll: 'between tins, gently',
+  'hard shake': 'hard and fast, three points',
+  'whip shake': 'with a few pieces of crushed ice',
+  'flash blend': 'a few seconds, with crushed ice',
+  layer: 'heaviest first, by spoon',
   'dry shake': '15 s, no ice',
   'reverse dry shake': 'with ice, then again without',
   'whip (isi)': 'in a charged siphon',
   'whip (whisk or frother)': 'by hand, no ice',
   'top with foam': 'spooned on last',
+  carbonate: 'chilled, then charged',
+  nitro: 'charged with nitrogen',
+  'smoke the glass': 'upturned over smoke',
+  'smoke under a cloche': 'served under the dome',
+  'smoke the drink': 'with a smoking gun',
+  'set alight': 'put out before it is drunk',
+  torch: 'caramelised with a torch',
+  'hot poker': 'a hot iron, to warm and froth',
+  'chill the glass': 'in the freezer or with ice',
+  'freezer pour': 'batched, poured from the freezer',
+  'liquid nitrogen': 'left to boil off before serving',
+  frozen: 'from a slush machine',
+  heat: 'warmed, served hot',
+  steam: 'with a steam wand',
+  'fine strain': 'through a tea strainer',
+  'strain over fresh ice': 'not the ice it was mixed with',
+  'dirty dump': 'tin and ice into the glass',
+  batch: 'made ahead, by the bottle',
+  'pre-dilute': 'water in the batch',
+  bottle: 'bottled, poured cold',
+  keg: 'on draft',
+  'barrel age': 'rested in wood',
+  infuse: 'steeped ahead',
+  'sous vide': 'in a warm water bath',
+  'fat-wash': 'washed, frozen, then strained',
+  'milk-wash': 'curdled, then strained clear',
+  clarify: 'with milk, agar or a centrifuge',
+  centrifuge: 'spun clear',
+  rotovap: 'distilled under vacuum',
   float: 'over the back of a spoon',
   mist: 'over the top',
   smoke: 'the glass first',
-  carbonate: 'chilled, then charged',
 };
 export const methodDetail = (name: string): string | null => METHOD_DETAIL[norm(name)] ?? null;
 export const COMMON_GLASSES = ['Coupe', 'Nick & Nora', 'Martini', 'Rocks', 'Highball', 'Collins', 'Flute', 'Wine', 'Julep cup', 'Mug', 'Tiki'] as const;
@@ -354,6 +395,7 @@ export function methodIceLabel(methods: readonly string[]): string | null {
   if (/stir/.test(all)) return 'Stirred down with';
   if (/swizzl/.test(all)) return 'Swizzled with';
   if (/throw/.test(all)) return 'Thrown over';
+  if (/\broll/.test(all)) return 'Rolled with';
   // Churned in the glass, on the ice it's served on (tf-061).
   if (/build|built|churn/.test(all)) return null;
   return 'Made with';
