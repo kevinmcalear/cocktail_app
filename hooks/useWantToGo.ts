@@ -3,7 +3,7 @@ import { useState, useSyncExternalStore } from 'react';
 
 import { useCollection } from '@/hooks/useCollection';
 import { useVenueScores } from '@/hooks/useDiscover';
-import { useLovedBars, type LovedBar } from '@/hooks/useKept';
+import { useWantBars, type KeptBar } from '@/hooks/useKept';
 import { useMyHadDrinks } from '@/hooks/useRankings';
 import { hoursStatus } from '@/lib/barHours';
 import { beenBars, type WantBar } from '@/lib/collectionStages';
@@ -12,7 +12,7 @@ import { formatDistance, usesMiles } from '@/lib/nearMe';
 import { useLastPlace } from '@/store/useLastPlace';
 
 /** Why a bar is on your list: the drinks you saved from it, else what it's pouring now. */
-function whyLine(bar: LovedBar, saved: number): string | null {
+function whyLine(bar: KeptBar, saved: number): string | null {
   if (saved) return `You saved ${saved === 1 ? 'a drink' : `${saved} drinks`} from here`;
   return bar.currentMenu ? `${bar.currentMenu.name} on now` : null;
 }
@@ -24,13 +24,13 @@ function hoursText(s: { open: boolean; detail: string | null }): string {
 }
 
 /**
- * Want to go (board home-collection-bars): the bars you love and haven't had
- * a drink at yet, each with how far (from where near me last found you),
+ * Want to go (board home-collection-bars): the bars you want to go to
+ * (want_list) and haven't had a drink at yet, each with how far (from where near me last found you),
  * tonight's hours, why it's here and everyone's score. Collection's Bars
  * lists them; Discover's map pins them (/discover?list=want).
  */
 export function useWantToGo(): { want: WantBar[]; isLoading: boolean; error: Error | null } {
-  const { data: loved = [], isLoading, error } = useLovedBars();
+  const { data: wanted = [], isLoading, error } = useWantBars();
   const hadQuery = useMyHadDrinks();
   const had = hadQuery.data ?? [];
   const saved = useCollection().data?.drinks ?? [];
@@ -39,7 +39,8 @@ export function useWantToGo(): { want: WantBar[]; isLoading: boolean; error: Err
   const placeReady = useSyncExternalStore(useLastPlace.persist.onFinishHydration, useLastPlace.persist.hasHydrated, useLastPlace.persist.hasHydrated);
   const [now] = useState(() => Date.now());
   const beenIds = new Set(beenBars(had, 'score').map((b) => b.venue.id));
-  const bars = loved.filter((b) => !beenIds.has(b.id));
+  // Done is read, never stored: a bar you've had a drink at is Been.
+  const bars = wanted.filter((b) => !beenIds.has(b.id));
   const scores = useVenueScores(bars.map((b) => b.id));
   const miles = usesMiles(getLocales()[0]);
   const want = bars.map((b): WantBar => {

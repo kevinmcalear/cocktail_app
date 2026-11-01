@@ -1,8 +1,10 @@
 /**
  * A drink's family tree: what it's a riff of (up to the root) and who made it
- * where. A bar's drink points at its classic (riff_of_id); a classic points at
- * the classic it came from (lineage_parent_id) or at a historic style
- * (lineage_style_id), and styles point at older styles, back to Punch. Pure helpers, so the ordering and wording can be checked without a
+ * where. Each drink has one based-on link (items.based_on_id with
+ * based_on_kind): a bar's drink points at its classic ('riff'); a classic
+ * points at the classic it came from ('descends') or at a historic style
+ * (based_on_style_id, 'style'), and styles point at older styles, back to
+ * Punch. Pure helpers, so the ordering and wording can be checked without a
  * database (lib/lineage.check.ts). The queries are in hooks/useLineage.ts.
  */
 
@@ -29,7 +31,20 @@ export interface CreditProfile {
 export interface LineageDrink {
   id: string;
   name: string;
-  riff_of_id: string | null;
+  /** What it's based on: a bar's drink's classic ('riff'), a classic's older classic ('descends'). */
+  based_on_id?: string | null;
+  /** 'riff', 'descends' or 'style'. */
+  based_on_kind?: string | null;
+  /** Catalog classics: the historic style it comes straight from (kind 'style'). */
+  based_on_style_id?: string | null;
+  /**
+   * ponytail: the old homes of the based-on link, for readers that haven't
+   * moved yet (useLineage, useProfileOriginals, and usePublicDrink, which
+   * reads published_items); drop them once those read based_on_*.
+   */
+  riff_of_id?: string | null;
+  lineage_parent_id?: string | null;
+  lineage_style_id?: string | null;
   origin_year: number | null;
   credit_status: CreditStatus | null;
   /** The legacy label: Classic, Original, Variant. */
@@ -44,9 +59,6 @@ export interface LineageDrink {
   co_creators?: { status?: CoCreatorStatus; profile: CreditProfile | null }[] | null;
   /** Makers with no page, by name ("Harry Craddock"): items.creator_names. Credited after the makers with a page, with no link. */
   creator_names?: string[] | null;
-  /** Catalog classics: the classic it came from, or the style. */
-  lineage_parent_id?: string | null;
-  lineage_style_id?: string | null;
   /** What changed from its parent, in a line. */
   lineage_note?: string | null;
   /** The year is approximate ("c. 1880"). */
@@ -68,9 +80,11 @@ export interface DrinkStyle {
   summary: string | null;
 }
 
+type ParentLink = Pick<LineageDrink, 'based_on_id' | 'riff_of_id' | 'lineage_parent_id'>;
+
 /** The next drink up: a bar's drink to its classic, a classic to the classic it came from. */
-export function parentId(drink: Pick<LineageDrink, 'riff_of_id' | 'lineage_parent_id'>): string | null {
-  return drink.riff_of_id ?? drink.lineage_parent_id ?? null;
+export function parentId(drink: ParentLink): string | null {
+  return drink.based_on_id ?? drink.riff_of_id ?? drink.lineage_parent_id ?? null;
 }
 
 /** "1888", "c. 1880", "mid 1930s (best guess)", or null. */
@@ -128,7 +142,7 @@ export const MAX_ANCESTORS = 12;
  * see (fetch returns null), on a loop, or after MAX_ANCESTORS.
  */
 export async function walkAncestors(
-  start: Pick<LineageDrink, 'id' | 'riff_of_id' | 'lineage_parent_id'>,
+  start: Pick<LineageDrink, 'id'> & ParentLink,
   fetchDrink: (id: string) => Promise<LineageDrink | null>
 ): Promise<LineageDrink[]> {
   const seen = new Set([start.id]);

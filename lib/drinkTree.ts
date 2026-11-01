@@ -20,6 +20,16 @@ export const FAMILIES = [
 
 export type FamilyKey = (typeof FAMILIES)[number]['key'];
 
+/**
+ * The tree's family for a drink's family name (items.drink_family): "Old
+ * Fashioned" and "Sours" are in it, "Sipper" and "Low ABV" aren't. The same
+ * rule as private.family_key: lower case, letters only, an optional plural "s".
+ */
+export function familyKey(name: string | null | undefined): FamilyKey | null {
+  const letters = (name ?? '').toLowerCase().replace(/[^a-z]/g, '');
+  return FAMILIES.find((f) => letters === f.key || letters === `${f.key}s`)?.key ?? null;
+}
+
 export interface TreeNode {
   /** "s:<id>" for a style, "d:<id>" for a drink. */
   key: string;

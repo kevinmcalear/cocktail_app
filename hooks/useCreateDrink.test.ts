@@ -57,7 +57,8 @@ jest.mock('@/lib/supabase', () => {
         return { data: args.p_name === 'Cupuacu' ? 'cupuacu-kept' : null, error: null };
       },
       from: (table: string) => ({
-        ...chain(() => ({ data: null, error: null })),
+        // The lead creator's credit, once set_drink_credits has made it.
+        ...chain(() => ({ data: table === 'item_credits' ? { id: 'lead-credit' } : null, error: null })),
         insert: (row: Record<string, unknown>) => {
           if (table === 'items' && row.item_type === 'ingredient') {
             mockIngredientInserts.push(row);
@@ -220,25 +221,51 @@ test('a house prep made for the finish is saved like an ingredient’s: its own 
   expect(lines.map((l: { ingredient_item_id: string; amount: number; unit: string }) => [l.ingredient_item_id, l.amount, l.unit])).toEqual([['lime', 30, 'ml'], ['new-row', 3, 'drop']]);
 });
 
+const credited = () => mockRpcs.filter(([fn]) => fn === 'set_drink_credits' || fn === 'answer_item_credit');
+
 test('at home, where and when it was first made are saved; another bar on it is a suggestion', async () => {
   const { result } = await renderHook(() => useCreateDrink() as unknown as { mutationFn: Fn });
   const run = result.current.mutationFn;
   mockInserts.length = 0;
-  await run({ draft: { ...EMPTY_DRAFT, name: 'Ash Garden', originYear: 2019, place: { id: 'bar-p-attaboy', name: 'Attaboy' } }, barId: null, myProfileId: 'p-me' });
-  expect(mockInserts[0]).toMatchObject({ origin_year: 2019, origin_bar_profile_id: 'bar-p-attaboy', creator_profile_id: 'p-me', credit_status: null });
+  mockRpcs.length = 0;
+  await run({ draft: { ...EMPTY_DRAFT, id: 'd-attaboy', name: 'Ash Garden', originYear: 2019, place: { id: 'bar-p-attaboy', name: 'Attaboy' } }, barId: null, myProfileId: 'p-me' });
+  expect(mockInserts[0]).toMatchObject({ origin_year: 2019, origin_bar_profile_id: 'bar-p-attaboy' });
+  // Who made it is set apart (item_credits), and you stay suggested while another bar is named.
+  expect(credited()).toEqual([['set_drink_credits', { p_item_id: 'd-attaboy', p_creator_profile_id: 'p-me', p_creator_names: [], p_add: [], p_remove: [] }]]);
 
-  await run({ draft: { ...EMPTY_DRAFT, name: 'Ash Garden', originYear: 2019 }, barId: null, myProfileId: 'p-me' });
-  expect(mockInserts[1]).toMatchObject({ origin_year: 2019, origin_bar_profile_id: null, credit_status: 'claimed' });
+  mockRpcs.length = 0;
+  await run({ draft: { ...EMPTY_DRAFT, id: 'd-home', name: 'Ash Garden', originYear: 2019 }, barId: null, myProfileId: 'p-me' });
+  expect(mockInserts[1]).toMatchObject({ origin_year: 2019, origin_bar_profile_id: null });
+  // Your own credit: you say yes to it at once.
+  expect(credited()).toEqual([
+    ['set_drink_credits', { p_item_id: 'd-home', p_creator_profile_id: 'p-me', p_creator_names: [], p_add: [], p_remove: [] }],
+    ['answer_item_credit', { p_credit_id: 'lead-credit', p_accept: true }],
+  ]);
 });
 
-test('someone with no page is saved by name (tf-063); with nobody by name, the column is left out', async () => {
+test('someone with no page is saved by name (tf-063); nobody credited saves no credit', async () => {
   const { result } = await renderHook(() => useCreateDrink() as unknown as { mutationFn: Fn });
   const run = result.current.mutationFn;
-  mockInserts.length = 0;
-  await run({ draft: { ...EMPTY_DRAFT, name: 'Corpse Reviver No. 2', creator: { id: null, name: 'Harry Craddock' } }, barId: null, myProfileId: 'p-me' });
-  expect(mockInserts[0]).toMatchObject({ creator_profile_id: null, creator_names: ['Harry Craddock'], credit_status: null });
-  await run({ draft: { ...EMPTY_DRAFT, name: 'Ash Garden' }, barId: null, myProfileId: 'p-me' });
-  expect(mockInserts[1]).not.toHaveProperty('creator_names');
+  mockRpcs.length = 0;
+  await run({ draft: { ...EMPTY_DRAFT, id: 'd-craddock', name: 'Corpse Reviver No. 2', creator: { id: null, name: 'Harry Craddock' } }, barId: null, myProfileId: 'p-me' });
+  expect(credited()).toEqual([['set_drink_credits', { p_item_id: 'd-craddock', p_creator_profile_id: null, p_creator_names: ['Harry Craddock'], p_add: [], p_remove: [] }]]);
+  mockRpcs.length = 0;
+  await run({ draft: { ...EMPTY_DRAFT, name: 'Ash Garden', creator: 'nobody' }, barId: null, myProfileId: 'p-me' });
+  expect(credited()).toEqual([]);
+});
+
+test('people made with are asked through the same call, after the drink is saved', async () => {
+  const { result } = await renderHook(() => useCreateDrink() as unknown as { mutationFn: Fn });
+  mockRpcs.length = 0;
+  await result.current.mutationFn({
+    draft: { ...EMPTY_DRAFT, id: 'd-with', name: 'Ash Garden', creator: { id: 'p-sam', name: 'Sam Ross' }, coCreators: [{ id: 'p-kit', name: 'Kit Lee' }, { id: 'p-sam', name: 'Sam Ross' }] },
+    barId: null,
+    myProfileId: 'p-me',
+  });
+  expect(credited()).toEqual([
+    ['set_drink_credits', { p_item_id: 'd-with', p_creator_profile_id: 'p-sam', p_creator_names: [], p_add: [], p_remove: [] }],
+    ['set_drink_credits', { p_item_id: 'd-with', p_creator_profile_id: 'p-sam', p_creator_names: [], p_add: ['p-kit'], p_remove: [] }],
+  ]);
 });
 
 test('"Just me" notes are kept apart as yours, never on the drink', async () => {

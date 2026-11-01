@@ -1,6 +1,6 @@
 // What a collected drink shows: the drink as it is now while the collector
 // can still read it, else the memory kept when it was collected
-// (collected_items name, bar_name, image_url). Collections are memories:
+// (want_list name, bar_name, image_url). Collections are memories:
 // they outlive a drink going private or being deleted, but a renamed drink
 // or bar shouldn't stay stale while it's readable (database audit, 22 Oct, 2.8).
 

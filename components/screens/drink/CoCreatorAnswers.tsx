@@ -5,24 +5,27 @@ import { IconSymbol } from '@/components/ui/icon-symbol';
 import { radius, space } from '@/constants/tokens';
 import { useAnswerCredit } from '@/hooks/useCreditsToCheck';
 import { useMyProfile } from '@/hooks/useMyProfile';
-import type { CreditProfile, LineageDrink } from '@/lib/lineage';
+import type { CreditProfile } from '@/lib/lineage';
+import { leadCredit, type ItemCredit } from '@/lib/whoMadeIt';
 
 /**
  * Under a drink's credit: co-creators who haven't said yes (Q34, board
  * w3-credits-to-check). The person named gets Accept and Not me, as on You,
  * and can take back a no. The drink's editors get "With Kevin McAlear ·
  * waiting for a yes" or "Kevin McAlear said Not me". Nobody else is sent
- * these rows (item_co_creators RLS), so they see only who said yes.
+ * these rows (item_credits RLS), so they see only who said yes.
  */
-export function CoCreatorAnswers({ drink }: { drink: Pick<LineageDrink, 'id' | 'creator' | 'origin_bar' | 'co_creators'> }) {
+export function CoCreatorAnswers({ drink }: { drink: { credits: readonly ItemCredit[]; origin_bar: CreditProfile | null } }) {
   const ds = useDs();
   const meId = useMyProfile().data?.id ?? null;
   const answer = useAnswerCredit();
-  const open = (drink.co_creators ?? []).filter((c): c is { status: 'pending' | 'declined'; profile: CreditProfile } => !!c.profile && (c.status === 'pending' || c.status === 'declined'));
+  const open = drink.credits.filter(
+    (c): c is ItemCredit & { status: 'pending' | 'declined'; profile: CreditProfile } => c.role === 'co_creator' && !!c.profile && (c.status === 'pending' || c.status === 'declined')
+  );
   if (!open.length) return null;
-  const by = drink.creator ?? drink.origin_bar;
-  const first = drink.creator?.display_name.split(' ')[0];
-  const ask = (accept: boolean) => answer.mutate({ itemId: drink.id, accept });
+  const lead = leadCredit(drink.credits)?.profile ?? null;
+  const by = lead ?? drink.origin_bar;
+  const first = lead?.display_name.split(' ')[0];
 
   return (
     <View style={styles.list}>
@@ -35,8 +38,8 @@ export function CoCreatorAnswers({ drink }: { drink: Pick<LineageDrink, 'id' | '
                 : 'You said Not me. Made it after all?'}
             </Body>
             <View style={styles.actions}>
-              <Button label="Accept" size="sm" disabled={answer.isPending} onPress={() => ask(true)} />
-              {c.status === 'pending' ? <Button label="Not me" size="sm" variant="secondary" disabled={answer.isPending} onPress={() => ask(false)} /> : null}
+              <Button label="Accept" size="sm" disabled={answer.isPending} onPress={() => answer.mutate({ creditId: c.id, accept: true })} />
+              {c.status === 'pending' ? <Button label="Not me" size="sm" variant="secondary" disabled={answer.isPending} onPress={() => answer.mutate({ creditId: c.id, accept: false })} /> : null}
             </View>
             {answer.error ? (
               <Caption tone="accent" role="alert">

@@ -26,10 +26,11 @@ const number = (s: string) => {
 };
 
 /**
- * Saves the beer or wine wizard's draft in one go: the item, its style and
- * region (as categories, when the catalog has them), then its photo. The
- * photo and categories are extras: if they don't stick the item is still
- * saved, and the caller hears what didn't.
+ * Saves the beer or wine wizard's draft in one go: the item, the glass it's
+ * drawn in (drink_glass), its style and region (as categories, when the
+ * catalog has them), then its photo. The glass, photo and categories are
+ * extras: if they don't stick the item is still saved, and the caller hears
+ * what didn't.
  */
 export function useCreateBeerWine() {
   const qc = useQueryClient();
@@ -48,12 +49,17 @@ export function useCreateBeerWine() {
           description: fullDescription(draft) || null,
           origin: draft.origin,
           bar_id: barId,
-          sketch_variant: beerWineSketch(kind, draft).variant,
         })
         .select('id')
         .single();
       if (error || !data) throw error ?? new Error(`Couldn’t save the ${config.label.toLowerCase()}.`);
       const id = data.id as string;
+
+      const variant = beerWineSketch(kind, draft).variant;
+      if (variant) {
+        const { error: glassError } = await supabase.from('drink_glass').insert({ item_id: id, sketch_variant: variant });
+        if (glassError) warnings.push(plainDbMessage(glassError) ?? 'Its glass didn’t save, so it’s drawn in the usual one.');
+      }
 
       const names = [draft.style, draft.region].filter((n): n is string => !!n);
       if (names.length) {

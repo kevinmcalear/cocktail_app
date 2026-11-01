@@ -55,7 +55,15 @@ interface DrinkRow {
   id: string;
   serves: number | null;
   party_id: string | null;
-  item: { id: string; name: string; item_type: string; glassware_id: string | null; ice_id: string | null; ice_per_serve_g: number | null; origin_bar_profile_id: string | null; parts: unknown } | null;
+  item: {
+    id: string;
+    name: string;
+    item_type: string;
+    glass: { glassware_id: string | null } | null;
+    ice: { ice_id: string | null; ice_per_serve_g: number | null } | null;
+    origin_bar_profile_id: string | null;
+    parts: unknown;
+  } | null;
 }
 interface FactRow {
   id: string;
@@ -87,7 +95,9 @@ async function fetchRunSheet(menuId: string): Promise<RunSheetData> {
     supabase.from('menus').select('id, name, bar_id, created_by, starts_at, ends_at, planned_starts_at, planned_ends_at, menu_date, bar:bars(name, logo_url)').eq('id', menuId).single(),
     supabase
       .from('menu_drinks')
-      .select('id, serves, party_id, item:items!item_id(id, name, item_type, glassware_id, ice_id, ice_per_serve_g, origin_bar_profile_id, parts)')
+      .select(
+        'id, serves, party_id, item:items!item_id(id, name, item_type, glass:drink_glass!drink_glass_item_id_fkey(glassware_id), ice:drink_ice!drink_ice_item_id_fkey(ice_id, ice_per_serve_g), origin_bar_profile_id, parts)'
+      )
       .eq('menu_id', menuId)
       .order('sort_order'),
     supabase.from('menu_run_parties').select('id, kind, name, profile_id, sort_order, is_venue, profile:profiles!profile_id(handle, is_claimed, bar_id, avatar_url)').eq('menu_id', menuId).order('sort_order'),
@@ -119,7 +129,7 @@ async function fetchRunSheet(menuId: string): Promise<RunSheetData> {
   const recipes = new Map(cocktailIds.map((id) => [id, toLines(recipeRows, id)]));
   const ingredientIds = [...new Set([...[...recipes.values()].flatMap((lines) => lines.map((l) => l.ingredientId)), ...swapRows.map((s) => s.to_item_id)])];
   const { houseMade, leaves } = await houseMadeUnder(ingredientIds, new Set(cocktailIds));
-  const kitIds = rows.flatMap((r) => [r.item!.glassware_id, r.item!.ice_id]).filter((id): id is string => !!id);
+  const kitIds = rows.flatMap((r) => [r.item!.glass?.glassware_id, r.item!.ice?.ice_id]).filter((id): id is string => !!id);
   const brandProfiles = partyRows.filter((p) => p.kind === 'brand' && p.profile_id).map((p) => p.profile_id!);
   const linked = partyRows.flatMap((p) => (p.profile_id ? [p.profile_id] : []));
   const [purchasing, items, bottleRes, brands] = await Promise.all([
@@ -143,9 +153,9 @@ async function fetchRunSheet(menuId: string): Promise<RunSheetData> {
       itemType: item.item_type,
       serves: r.serves,
       recipe: recipes.get(item.id) ?? [],
-      glass: named(item.glassware_id),
-      ice: named(item.ice_id),
-      icePerServeG: item.ice_per_serve_g,
+      glass: named(item.glass?.glassware_id ?? null),
+      ice: named(item.ice?.ice_id ?? null),
+      icePerServeG: item.ice?.ice_per_serve_g ?? null,
       partyId: r.party_id,
       originProfileId: item.origin_bar_profile_id,
       parts: readParts(item.parts),

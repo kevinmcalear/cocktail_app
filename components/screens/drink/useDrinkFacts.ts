@@ -37,7 +37,7 @@ interface Options {
   /** This viewer may see the spec's amounts. Without them no ml or grams show (serve, ice, glass room). */
   measures: boolean;
   /** Who cut the ice and made the glass, once the maker has confirmed it. */
-  makers?: { makes: string; confirmed_at: string | null; maker: { display_name: string } | null }[];
+  makers?: { makes: string; status: string; maker: { display_name: string } | null }[];
 }
 
 /**
@@ -82,7 +82,7 @@ export function useDrinkFacts(item: DatabaseItem, { lines, amounts, dilutionDefa
   const strengthPress = strength ? openStrength : undefined;
   const strengthHint = strength ? 'Opens the ethanol in each line and the dilution' : undefined;
   const glassHint = openGlass && measures ? 'Opens the glass size and the ice per serve' : undefined;
-  const madeBy = (makes: string) => makers.find((c) => c.makes === makes && c.confirmed_at)?.maker?.display_name;
+  const madeBy = (makes: string) => makers.find((c) => c.makes === makes && c.status !== 'pending')?.maker?.display_name;
   const iceBy = madeBy('ice');
   const glassBy = madeBy('glassware') ?? model?.maker?.display_name;
 

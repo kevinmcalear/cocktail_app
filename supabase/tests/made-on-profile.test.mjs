@@ -76,6 +76,8 @@ const onProfile = async (client, profileId) => {
   assert.ifError(error);
   return data;
 };
+/** The shown make, as others find it on the maker's profile. */
+const seen = async (client) => (await onProfile(client, ids.makerProfile)).map((r) => r.id).filter((id) => id === ids.shown);
 
 before(async () => {
   await db.connect();
@@ -120,11 +122,9 @@ describe('made_drinks on a profile', () => {
   });
 
   test('a shown log of a public profile reads signed in and signed out, without the owner id', async () => {
-    assert.equal((await visible(users.reader.client, ids.shown)).length, 1);
-    const { data, error } = await anon.from('made_drinks').select('id, item_id, note, image_id').eq('id', ids.shown);
-    assert.ifError(error);
-    assert.equal(data.length, 1);
-    assert.ok((await anon.from('made_drinks').select('user_id').eq('id', ids.shown)).error, 'anon never reads user_id');
+    // Others read shown makes only through get_profile_made, never the table (20261204300000).
+    assert.deepEqual(await visible(users.reader.client, ids.shown), []);
+    assert.deepEqual(await visible(anon, ids.shown), []);
 
     for (const client of [users.reader.client, anon]) {
       const rows = await onProfile(client, ids.makerProfile);
@@ -159,21 +159,21 @@ describe('made_drinks on a profile', () => {
 
   test('a profile showing no drinks had, a hidden profile, or a block hides them all', async () => {
     await db.query("UPDATE public.profiles SET had_mode = 'none' WHERE id = $1", [ids.makerProfile]);
-    assert.deepEqual(await visible(anon, ids.shown), []);
+    assert.deepEqual(await seen(anon), []);
     await db.query("UPDATE public.profiles SET had_mode = 'picked', moderated_at = now() WHERE id = $1", [ids.makerProfile]);
-    assert.deepEqual(await visible(users.reader.client, ids.shown), []);
+    assert.deepEqual(await seen(users.reader.client), []);
     await db.query('UPDATE public.profiles SET moderated_at = NULL WHERE id = $1', [ids.makerProfile]);
-    assert.deepEqual(await visible(users.blocked.client, ids.shown), [], 'nobody on either side of a block');
-    assert.equal((await visible(users.reader.client, ids.shown)).length, 1);
+    assert.deepEqual(await seen(users.blocked.client), [], 'nobody on either side of a block');
+    assert.equal((await seen(users.reader.client)).length, 1);
   });
 
   test('the owner can toggle it, and nobody else can', async () => {
     const hide = await users.maker.client.from('made_drinks').update({ on_profile: false }).eq('id', ids.shown).select('id');
     assert.ifError(hide.error);
-    assert.deepEqual(await visible(anon, ids.shown), []);
+    assert.deepEqual(await seen(anon), []);
     const show = await users.maker.client.from('made_drinks').update({ on_profile: true }).eq('id', ids.shown).select('id');
     assert.ifError(show.error);
-    assert.equal((await visible(anon, ids.shown)).length, 1);
+    assert.equal((await seen(anon)).length, 1);
 
     const sneaky = await users.reader.client.from('made_drinks').update({ on_profile: true }).eq('id', ids.unshown).select('id');
     assert.deepEqual(sneaky.data ?? [], []);
