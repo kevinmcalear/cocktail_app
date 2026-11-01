@@ -1,7 +1,9 @@
 // Checks for lib/batch.ts. Run: npm run test:unit
 import assert from 'node:assert/strict';
 
-import { buildBatch, chillLine, clampServes, classifyMethod, formatVolume, formatWeight, freezingPointC, isGarnishUnit, leaveOutFor, MAX_SERVES, servesFromStock, servesStops, servesToFill, stepStops, stockLines, stockUnit, stopPosition } from './batch';
+import { readFileSync } from 'node:fs';
+
+import { buildBatch, chillLine, clampServes, classifyMethod, formatVolume, formatWeight, freezingPointC, GARNISH_UNITS, isGarnishUnit, leaveOutFor, MAX_SERVES, servesFromStock, servesStops, servesToFill, stepStops, stockLines, stockUnit, stopPosition } from './batch';
 import { specLines } from './spec';
 
 const row = (id: string, name: string, amount: number | null, unit: string | null) => ({
@@ -222,5 +224,13 @@ assert.equal(chillLine('stirred', true, -18, 40), 'Chill it in the freezer at \u
 assert.match(chillLine('stirred', true, -18, 20), /would slush.*\u221212/, 'a weak stirred batch is not sent to a -18 freezer');
 assert.match(chillLine('built', true, -18), /fridge.*at least 4 hours/, 'a bottled highball chills in the fridge');
 assert.match(chillLine('shaken', false, -18), /until service/, 'a shaken batch only keeps cold');
+
+// The garnish units have a second home in SQL (names-only readers can't see the unit): keep them equal.
+{
+  const sql = readFileSync(new URL('../supabase/migrations/20261206010000_garnish_for_names.sql', import.meta.url), 'utf8');
+  const lists = [...sql.matchAll(/ANY \(ARRAY\[([^\]]+)\]\)/g)].map((m) => [...m[1].matchAll(/'([a-z]+)'/g)].map((x) => x[1]).sort());
+  assert.equal(lists.length, 2, 'the view and the names list');
+  for (const l of lists) assert.deepEqual(l, [...GARNISH_UNITS].sort(), 'lib/batch GARNISH_UNITS and 20261206010000 list the same garnish units');
+}
 
 console.log('batch: ok');
