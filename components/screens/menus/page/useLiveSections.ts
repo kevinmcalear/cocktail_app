@@ -10,7 +10,7 @@ const day = (iso: string) => new Date(iso).toLocaleDateString(undefined, { day: 
 const time = (iso: string) => new Date(iso).toLocaleTimeString(undefined, { hour: 'numeric', minute: '2-digit' });
 
 /** The menu team's view of a list that's on (liveList), with what it reads: runs ended, who asked, the drinks taken off. Off: the sections as they are. */
-export function useLiveSections({ menu, sections, rows, may, on, now }: { menu: MenuDetail; sections: LiveSection[]; rows: ListRow[]; may: boolean; on: boolean; now: number }) {
+export function useLiveSections({ menu, sections, rows, may, on, living, now }: { menu: MenuDetail; sections: LiveSection[]; rows: ListRow[]; may: boolean; on: boolean; living: boolean; now: number }) {
   const userId = useUserId();
   const ended = useEndedRuns(on ? menu.id : null).data ?? [];
   const today = ended.filter((e) => new Date(e.cameOff).toDateString() === new Date(now).toDateString());
@@ -26,6 +26,7 @@ export function useLiveSections({ menu, sections, rows, may, on, now }: { menu: 
       ended,
       endedDrinks: new Map(library.filter((d) => today.some((e) => e.itemId === d.id)).map((d) => [d.id, d])),
       may,
+      living,
       userId,
       nameOf: (id) => (id === userId ? 'You' : first(id)),
       day,

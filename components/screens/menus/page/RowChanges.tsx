@@ -17,8 +17,6 @@ export interface ChangeTarget {
   sectionId: string;
 }
 
-const short = (iso: string) => new Date(iso).toLocaleDateString(undefined, { day: 'numeric', month: 'short', year: 'numeric' });
-
 /**
  * The acts on a living list's rows that need no sheet (decision page, swap
  * and approval-states; Menu-l-approve, Menu-l-swapped): Approve, Turn down
@@ -78,7 +76,6 @@ export function RowChanges({ menu, target, ended, acts, onClose }: { menu: MenuD
   if (!section) return null;
   const row = target.view.listRow;
   const wentOn = row?.onFrom ?? menu.startsAt ?? ended.find((e) => e.itemId === target.view.drink.id)?.wentOn ?? null;
-  const run = wentOn ? `from ${short(wentOn)}` : '';
 
   if (finding) {
     return (
@@ -104,7 +101,7 @@ export function RowChanges({ menu, target, ended, acts, onClose }: { menu: MenuD
       drink={target.view.drink}
       where={`${menu.name} · ${section.name}`}
       barId={menu.barId}
-      run={run}
+      wentOn={wentOn}
       found={found}
       onFind={() => setFinding(true)}
       busy={acts.busy}

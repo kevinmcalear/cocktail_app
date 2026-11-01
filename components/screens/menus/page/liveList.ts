@@ -30,6 +30,8 @@ interface Input {
   endedDrinks: Map<string, MenuDrink>;
   /** The caller's changes go straight on (false: they wait for approval). */
   may: boolean;
+  /** A list kept a drink at a time reads "since 1 Oct" (Menu-l-swap); a seasonal one keeps each drink's cost (Menu-who-creator). */
+  living: boolean;
   userId: string | null;
   /** "Sam" for who asked. */
   nameOf: (userId: string | null) => string | null;
@@ -42,7 +44,19 @@ interface Input {
 
 const sameDay = (a: string, now: number) => new Date(a).toDateString() === new Date(now).toDateString();
 
-export function liveList({ sections, sectionIds, rows, ended, endedDrinks, may, userId, nameOf, day, time, listStart, now }: Input) {
+/** "1 to 30 Sep", "1 Oct to 1 Nov 2026": a drink's run, from dates or timestamps. */
+export function runRange(from: string, to: string, year = false): string {
+  const at = (s: string) => new Date(s.length === 10 ? `${s}T00:00` : s);
+  const a = at(from);
+  const b = at(to);
+  const short = (d: Date) => d.toLocaleDateString(undefined, { day: 'numeric', month: 'short' });
+  const oneMonth = a.getMonth() === b.getMonth() && a.getFullYear() === b.getFullYear();
+  const dayFirst = /^\d/.test(short(a));
+  const range = !oneMonth ? `${short(a)} to ${short(b)}` : dayFirst ? `${a.getDate()} to ${short(b)}` : `${short(a)} to ${b.getDate()}`;
+  return year ? `${range} ${b.getFullYear()}` : range;
+}
+
+export function liveList({ sections, sectionIds, rows, ended, endedDrinks, may, living, userId, nameOf, day, time, listStart, now }: Input) {
   const rowOf = new Map(rows.map((r) => [`${r.sectionId}:${r.itemId}`, r]));
   const lead: PageRowView[] = [];
   const coming: PageRowView[] = [];
@@ -84,7 +98,6 @@ export function liveList({ sections, sectionIds, rows, ended, endedDrinks, may, 
           ...view,
           line: [row.replacesItemId && swapFor ? `In place of ${swapFor}` : null, view.line].filter(Boolean).join(' · '),
           flag: { label: row.onFrom ? day(row.onFrom) : 'Coming', tone: 'quiet' },
-          sub: null,
           listRow: row,
           acts: [{ kind: 'keep', label: 'Don’t put it on' }],
         });
@@ -95,7 +108,7 @@ export function liveList({ sections, sectionIds, rows, ended, endedDrinks, may, 
       out.push({
         ...view,
         flag: row.state === 'going' ? { label: row.offAt ? `Off ${day(row.offAt)}` : 'Coming off', tone: 'quiet' } : fresh ? { label: 'New', tone: 'green' } : view.flag,
-        sub: since ? (fresh ? 'since today' : `since ${day(since)}`) : view.sub,
+        sub: living && since ? (fresh ? 'since today' : `since ${day(since)}`) : view.sub,
         listRow: row,
         acts:
           row.state === 'going'
@@ -139,9 +152,16 @@ export function liveList({ sections, sectionIds, rows, ended, endedDrinks, may, 
   }
 
   // The latest change: a drink on today or a day before, or one taken off.
+  const nameOfDrink = (id: string) => sections.flatMap((s) => s.rows).find((v) => v.drink.id === id)?.drink.name ?? endedDrinks.get(id)?.name;
   const changes = [
-    ...rows.filter((r) => (r.state === 'on' || r.state === 'going') && r.onFrom && Date.parse(r.onFrom) <= now).map((r) => ({ at: r.onFrom!, text: `${sections.flatMap((s) => s.rows).find((v) => v.drink.id === r.itemId)?.drink.name ?? 'A drink'} on` })),
-    ...ended.map((e) => ({ at: e.cameOff, text: `${endedDrinks.get(e.itemId)?.name ?? 'A drink'} off` })),
+    ...rows
+      .filter((r) => (r.state === 'on' || r.state === 'going') && r.onFrom && Date.parse(r.onFrom) <= now)
+      .map((r) => {
+        const out = r.replacesItemId ? nameOfDrink(r.replacesItemId) : null;
+        return { at: r.onFrom!, text: `${nameOfDrink(r.itemId) ?? 'A drink'} ${out ? `for ${out}` : 'on'}` };
+      }),
+    // A drink swapped out reads with the one that took its place, above.
+    ...ended.filter((e) => !rows.some((r) => r.replacesItemId === e.itemId)).map((e) => ({ at: e.cameOff, text: `${endedDrinks.get(e.itemId)?.name ?? 'A drink'} off` })),
   ].sort((a, b) => b.at.localeCompare(a.at));
   const last = changes[0];
   const lastChange = last ? `${sameDay(last.at, now) ? `today ${time(last.at)}` : day(last.at)} · ${last.text}` : null;

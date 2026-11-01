@@ -5,6 +5,7 @@ import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 
 import { dropdownKeys } from '@/hooks/useDropdowns';
 import { menuKeys } from '@/hooks/useMenus';
+import { parseHours, type BarClock } from '@/lib/barHours';
 import { listRowState, type ListRowState } from '@/lib/listRows';
 import { supabase } from '@/lib/supabase';
 
@@ -100,6 +101,24 @@ export function useEndedRuns(menuId: string | null | undefined) {
         addedBy: r.added_by,
         replacesItemId: r.replaces_item_id,
       }));
+    },
+  });
+}
+
+/** A bar's time zone and hours, for when "after tonight" is: bars.timezone, else its page's, and the hours on its page. */
+export function useBarClock(barId: string | null | undefined) {
+  return useQuery({
+    queryKey: ['bar-clock', barId],
+    enabled: !!barId,
+    staleTime: 60 * 60_000,
+    queryFn: async (): Promise<BarClock> => {
+      const [bar, page] = await Promise.all([
+        supabase.from('bars').select('timezone').eq('id', barId!).maybeSingle(),
+        supabase.from('profiles').select('hours, timezone').eq('bar_id', barId!).eq('kind', 'bar').limit(1).maybeSingle(),
+      ]);
+      if (bar.error) throw bar.error;
+      if (page.error) throw page.error;
+      return { timezone: bar.data?.timezone ?? page.data?.timezone ?? null, hours: parseHours(page.data?.hours) };
     },
   });
 }

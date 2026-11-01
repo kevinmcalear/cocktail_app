@@ -71,6 +71,43 @@ function spans(hours: WeekHours): Span[] {
   return out.sort((a, b) => a.start - b.start);
 }
 
+/** The range open at `t`, minutes from Monday 00:00; a Sunday range past midnight covers the start of Monday, so it looks a week back too. */
+function openSpan(all: Span[], t: number): Span | undefined {
+  return all.find((s) => (t >= s.start && t < s.end) || (t + WEEK >= s.start && t + WEEK < s.end));
+}
+
+/** Where a range really ends: one that runs straight into the next (to midnight, then from midnight) reads as one. */
+function lastClose(all: Span[], span: Span): { end: number; close: string } {
+  let end = span.end % WEEK;
+  let close = span.close;
+  for (let guard = 0; guard < 14; guard++) {
+    const next = all.find((s) => s.start === end);
+    if (!next || next === span) break;
+    end = next.end % WEEK;
+    close = next.close;
+  }
+  return { end, close };
+}
+
+export interface BarClock {
+  timezone: string | null;
+  hours: WeekHours | null;
+}
+
+/**
+ * When tonight is over at the bar: the close of the range it's open in, or of
+ * the one still to open today; with no hours for today, the bar's next
+ * midnight. A range from 5pm to 2am lands at 2am, not mid-service at midnight.
+ */
+export function afterTonight(hours: WeekHours | null | undefined, now: Date, timeZone?: string | null): Date {
+  const { day, minute } = barClock(now, timeZone);
+  const t = day * DAY + minute;
+  const all = hours ? spans(hours) : [];
+  const span = openSpan(all, t) ?? all.find((s) => s.start > t && Math.floor(s.start / DAY) === day);
+  const left = span ? (lastClose(all, span).end - t + WEEK) % WEEK : DAY - minute;
+  return new Date(now.getTime() + left * 60_000);
+}
+
 export interface HoursStatus {
   open: boolean;
   /** "Open now" or "Closed". */
@@ -85,20 +122,8 @@ export function hoursStatus(hours: WeekHours | null | undefined, now: Date, time
   const all = spans(hours);
   const { day, minute } = barClock(now, timeZone);
   const t = day * DAY + minute;
-  // A Sunday range past midnight covers the start of Monday, so look a week back too.
-  const current = all.find((s) => (t >= s.start && t < s.end) || (t + WEEK >= s.start && t + WEEK < s.end));
-  if (current) {
-    // A range that runs straight into the next one (to midnight, then from midnight) reads as one.
-    let end = current.end % WEEK;
-    let close = current.close;
-    for (let guard = 0; guard < 14; guard++) {
-      const next = all.find((s) => s.start === end);
-      if (!next || next === current) break;
-      end = next.end % WEEK;
-      close = next.close;
-    }
-    return { open: true, state: 'Open now', detail: `until ${clockLabel(close)}` };
-  }
+  const current = openSpan(all, t);
+  if (current) return { open: true, state: 'Open now', detail: `until ${clockLabel(lastClose(all, current).close)}` };
   if (all.length === 0) return { open: false, state: 'Closed', detail: null };
   const next = all.find((s) => s.start > t) ?? all[0];
   const nextDay = Math.floor(next.start / DAY);
