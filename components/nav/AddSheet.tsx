@@ -31,7 +31,7 @@ export function AddSheet({ visible, onClose, onMore, listen, from }: { visible: 
   const insets = useSafeAreaInsets();
   return (
     <Sheet visible={visible} onClose={onClose} accessibilityLabel="Add" keyboard from={from} floating={Platform.OS === 'ios'} style={sheetIsDialog ? styles.dialog : undefined} header={<Header />}>
-      <SheetScrollView contentContainerStyle={[styles.body, { paddingBottom: sheetIsDialog ? space.lg : insets.bottom + space.lg }]} {...dragDismissesKeyboard}>
+      <SheetScrollView contentContainerStyle={[styles.body, { paddingBottom: sheetIsDialog ? space.lg : (Platform.OS === 'ios' ? Math.max(insets.bottom - space.sm * 2, 0) : insets.bottom) + space.lg }]} {...dragDismissesKeyboard}>
         {visible ? <AddBody onClose={onClose} onMore={onMore} listen={listen} /> : null}
       </SheetScrollView>
     </Sheet>
