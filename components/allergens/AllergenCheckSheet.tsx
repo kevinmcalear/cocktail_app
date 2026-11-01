@@ -6,9 +6,9 @@ import { IconSymbol } from '@/components/ui/icon-symbol';
 import { font, layout, radius, space, STATUS } from '@/constants/tokens';
 import { useLineChecks } from '@/hooks/useAllergens';
 import { useBarMembers } from '@/hooks/useBarDetail';
-import { useAllergenCheckedBy, useCheckDrinkAllergens } from '@/hooks/useGuestAllergies';
+import { useAllergenCheck, useCheckDrinkAllergens } from '@/hooks/useGuestAllergies';
 import { withAlpha } from '@/lib/color';
-import { allergenLabel, dayLine, type DrinkAllergens } from '@/lib/allergens';
+import { allergenLabel, dayLine, staleNote, type DrinkAllergens } from '@/lib/allergens';
 import type { SpecLine } from '@/lib/spec';
 
 import { AllergenSection } from './AllergenSection';
@@ -39,7 +39,8 @@ export function AllergenCheckSheet({ itemId, name, barId, barName, data, lines, 
   const [adding, setAdding] = useState<string | null | false>(false);
   const addingLine = lines.find((l) => l.key === adding);
   const byLine = useLineChecks(itemId, barId);
-  const checkerId = useAllergenCheckedBy(itemId).data;
+  const record = useAllergenCheck(itemId, !!data.stale).data;
+  const checkerId = record?.by;
   const checker = useBarMembers(data.checked && checkerId ? barId : null).data?.find((m) => m.user_id === checkerId)?.display_name;
   const changed = on !== !!data.checked;
   const amber = ds.scheme === 'dark' ? STATUS.warning : ds.c.ink;
@@ -75,7 +76,7 @@ export function AllergenCheckSheet({ itemId, name, barId, barName, data, lines, 
           <View role="note" style={[styles.note, { backgroundColor: withAlpha(STATUS.warning, 0.14) }]}>
             <IconSymbol name="exclamationmark.triangle" size={16} color={amber} />
             <Caption color={amber} style={styles.flex}>
-              The spec changed, so the check cleared. Guests see Ask your bartender until you check it again.
+              {staleNote(record?.specChanged ?? null)}
             </Caption>
           </View>
         ) : null}

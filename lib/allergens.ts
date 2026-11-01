@@ -211,11 +211,23 @@ export function viaLine(path: string[]): string {
   return `via ${path.join(', in ')}`;
 }
 
+/** "24 Sep", with the year when it isn't this one. */
+function shortDay(at: string, now = new Date()): string {
+  const d = new Date(at);
+  return d.toLocaleDateString('en-GB', { day: 'numeric', month: 'short', ...(d.getFullYear() === now.getFullYear() ? {} : { year: 'numeric' }) });
+}
+
 /** "Checked 24 Sep" or "Not checked yet". */
 export function checkedLine(checkedAt: string | null | undefined, now = new Date()): string {
-  if (!checkedAt) return 'Not checked yet';
-  const at = new Date(checkedAt);
-  const sameYear = at.getFullYear() === now.getFullYear();
-  const date = at.toLocaleDateString('en-GB', { day: 'numeric', month: 'short', ...(sameYear ? {} : { year: 'numeric' }) });
-  return `Checked ${date}`;
+  return checkedAt ? `Checked ${shortDay(checkedAt, now)}` : 'Not checked yet';
+}
+
+/**
+ * The check sheet's note once a change cleared the bar's check (board
+ * Loop-allergy, "A changed spec clears it"): when the spec changed, or, when
+ * it was an ingredient's list instead, what changed.
+ */
+export function staleNote(specChanged: string | null, now = new Date()): string {
+  const what = specChanged ? `The spec changed on ${shortDay(specChanged, now)}` : 'What goes in it changed';
+  return `${what}, so the check cleared. Guests see Ask your bartender until you check it again.`;
 }

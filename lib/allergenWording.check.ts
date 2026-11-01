@@ -17,6 +17,7 @@ import {
   isClear,
   myAllergiesLine,
   prepAllergenNames,
+  staleNote,
   type AllergenRead,
   type DrinkAllergen,
 } from './allergens';
@@ -112,5 +113,10 @@ assert.deepEqual(mergeAllergies(['eggs'], ['tree_nuts', 'eggs']), ['eggs', 'tree
 assert.deepEqual(allergyCopyFor(allergyCopy('a', ['eggs']), 'a'), ['eggs']);
 assert.equal(allergyCopyFor(allergyCopy('a', ['eggs']), 'b'), null, "someone else's copy never reads as yours");
 assert.equal(allergyCopyFor(null, 'a'), null);
+
+// The note once a change cleared the check (Loop-allergy, "A changed spec clears it").
+const late = new Date('2026-11-01T12:00:00Z');
+assert.equal(staleNote('2026-10-28T12:00:00Z', late), 'The spec changed on 28 Oct, so the check cleared. Guests see Ask your bartender until you check it again.');
+assert.equal(staleNote(null, late), 'What goes in it changed, so the check cleared. Guests see Ask your bartender until you check it again.');
 
 console.log(`allergen wording ok (${shapes.length} shapes)`);

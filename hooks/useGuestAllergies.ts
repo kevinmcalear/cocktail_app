@@ -94,15 +94,26 @@ export function useSaveMyAllergies() {
   });
 }
 
-/** Who checked a drink's allergens, for its team's check sheet (guests never see who). */
-export function useAllergenCheckedBy(itemId: string | null) {
+/**
+ * For the team's check sheet (guests never see who): who checked a drink's
+ * allergens, and, once a change cleared it, when the spec last changed after
+ * that check (null: what's in it changed instead). Every spec save writes a
+ * version, so the newest version is the spec's last change. `stale` is in the
+ * key so the sheet reads it again when a change clears the check.
+ */
+export function useAllergenCheck(itemId: string, stale: boolean) {
   return useQuery({
-    queryKey: ['allergens-checked-by', itemId],
-    enabled: !!itemId,
-    queryFn: async (): Promise<string | null> => {
-      const { data, error } = await supabase.from('items').select('allergens_checked_by').eq('id', itemId!).maybeSingle();
-      if (error) throw error;
-      return data?.allergens_checked_by ?? null;
+    queryKey: ['allergens-checked-by', itemId, stale],
+    queryFn: async (): Promise<{ by: string | null; specChanged: string | null }> => {
+      const [item, version] = await Promise.all([
+        supabase.from('items').select('allergens_checked_by, allergens_checked_at').eq('id', itemId).maybeSingle(),
+        supabase.from('item_versions').select('created_at').eq('item_id', itemId).order('version', { ascending: false }).limit(1).maybeSingle(),
+      ]);
+      if (item.error) throw item.error;
+      if (version.error) throw version.error;
+      const checkedAt = item.data?.allergens_checked_at;
+      const last = version.data?.created_at ?? null;
+      return { by: item.data?.allergens_checked_by ?? null, specChanged: stale && checkedAt && last && last > checkedAt ? last : null };
     },
   });
 }
