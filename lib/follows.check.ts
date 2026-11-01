@@ -1,7 +1,7 @@
 // Checks for lib/follows.ts. Run: npm run test:unit
 import assert from 'node:assert/strict';
 
-import { dotLine, favouriteFamily, familyPlural, followLabel, friendRankLines, isThisWeek, namesLine, rankWhen, withArticle } from './follows';
+import { dotLine, familyName, favouriteFamily, familyPlural, followLabel, friendRankLines, isThisWeek, namesLine, rankWhen, withArticle } from './follows';
 
 // The button: Following wins, then Follow back when they follow you.
 assert.equal(followLabel({ following: false, followsYou: false }), 'Follow');
@@ -38,6 +38,19 @@ assert.equal(favouriteFamily(['Sour', 'Sour', 'Martini', 'Martini']), null, 'a t
 assert.equal(familyPlural('Sour'), 'Sours');
 assert.equal(familyPlural('Old Fashioned'), 'Old Fashioneds');
 assert.equal(familyPlural('Tiki'), 'Tiki');
+assert.equal(familyPlural('Fizz'), 'Fizzes');
+assert.equal(familyPlural('Punch'), 'Punches');
+assert.equal(familyName('sours'), 'Sour', 'one name, whatever the row says');
+assert.equal(familyName('Old fashioned'), 'Old Fashioned');
+assert.equal(familyName('fizz'), 'Fizz', 'outside the eight: capitalised as it is');
+assert.equal(familyName('  '), null);
+
+// The week is seven nights, the same ones rankWhen names by weekday: never a bare date.
+const sun1am = new Date(2026, 10, 1, 1, 0).toISOString(); // the night of Saturday 31 October
+assert.equal(isThisWeek(sun1am, new Date(2026, 10, 7, 22, 0)), false);
+assert.equal(rankWhen(sun1am, new Date(2026, 10, 7, 22, 0), 'en-GB'), '31 Oct');
+assert.equal(isThisWeek(sun1am, new Date(2026, 10, 6, 22, 0)), true);
+assert.equal(rankWhen(sun1am, new Date(2026, 10, 6, 22, 0), 'en-GB'), 'Saturday');
 
 // You's Following row.
 assert.equal(namesLine(['Sam Whitlock', 'Ana Ruiz'], 14), 'Sam, Ana and 12 more');

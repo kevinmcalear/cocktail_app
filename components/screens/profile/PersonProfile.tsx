@@ -113,13 +113,16 @@ export function PersonProfile({ profile, columns }: { profile: Profile; columns:
         <ProfileLinks profile={profile} align="center" />
       </View>
 
-      <Stats ruled>
-        {had.data?.length ? <Stat ruled value={stats.drinks} label="ranked" /> : null}
-        {stats.bars ? <Stat ruled value={stats.bars} label={stats.bars === 1 ? 'bar' : 'bars'} /> : null}
-        {favourite ? <Stat ruled value={familyPlural(favourite)} label="favourite" /> : null}
-        {showsMade && originals.length ? <Stat ruled value={originals.length} label={originals.length === 1 ? 'original' : 'originals'} /> : null}
-        {showsMade && riffs ? <Stat ruled value={riffs} label={riffs === 1 ? 'riff by others' : 'riffs by others'} /> : null}
-      </Stats>
+      {/* Nothing to count (nothing ranked or made): no empty ruled band. */}
+      {had.data?.length || (showsMade && originals.length) ? (
+        <Stats ruled>
+          {had.data?.length ? <Stat ruled value={stats.drinks} label="ranked" /> : null}
+          {stats.bars ? <Stat ruled value={stats.bars} label={stats.bars === 1 ? 'bar' : 'bars'} /> : null}
+          {favourite ? <Stat ruled value={familyPlural(favourite)} label="favourite" /> : null}
+          {showsMade && originals.length ? <Stat ruled value={originals.length} label={originals.length === 1 ? 'original' : 'originals'} /> : null}
+          {showsMade && riffs ? <Stat ruled value={riffs} label={riffs === 1 ? 'riff by others' : 'riffs by others'} /> : null}
+        </Stats>
+      ) : null}
 
       <PersonActions follow={mine || !ownerId ? null : follow} name={profile.display_name} onShare={() => void share()} />
 

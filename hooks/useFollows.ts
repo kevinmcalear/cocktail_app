@@ -1,9 +1,13 @@
-import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
+import { keepPreviousData, useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 
 import { useUserId } from '@/ctx/AuthContext';
 import { useBars } from '@/hooks/useBars';
+import { chunk } from '@/lib/commandSearchGrid';
+import { familyName } from '@/lib/follows';
+import { personSearchFilter } from '@/lib/profiles';
 import { roleLabel } from '@/lib/roles';
 import { supabase } from '@/lib/supabase';
+import type { Row } from '@/types/db';
 
 export interface FriendRank {
   profileId: string;
@@ -37,19 +41,7 @@ export interface FollowPerson {
 
 const PERSON_COLUMNS = 'id, user_id, handle, display_name, avatar_url, locality, city, shows_city, tagline, headline_position_id, had_mode';
 
-type PersonRow = {
-  id: string;
-  user_id: string | null;
-  handle: string;
-  display_name: string;
-  avatar_url: string | null;
-  locality: string | null;
-  city: string | null;
-  shows_city: boolean;
-  tagline: string | null;
-  headline_position_id: string | null;
-  had_mode: string;
-};
+type PersonRow = Pick<Row<'profiles'>, 'id' | 'user_id' | 'handle' | 'display_name' | 'avatar_url' | 'locality' | 'city' | 'shows_city' | 'tagline' | 'headline_position_id' | 'had_mode'>;
 
 const toPerson = (r: PersonRow): FollowPerson => ({
   profileId: r.id,
@@ -172,13 +164,21 @@ export function useProfileUserId(profileId: string | null | undefined) {
 export function usePeopleByUser(userIds: readonly string[] | undefined) {
   const ids = userIds ?? [];
   return useQuery({
-    queryKey: ['follow-people', [...ids].sort()],
+    // In the order given (newest follow first), so a re-follow moves them back to the top.
+    queryKey: ['follow-people', ids],
     enabled: ids.length > 0,
+    // Following or unfollowing changes the ids: keep the list on screen while it refetches.
+    placeholderData: keepPreviousData,
     queryFn: async (): Promise<FollowPerson[]> => {
-      // ponytail: one request for up to 500 people; past that, page through (People has no paging yet).
-      const { data, error } = await supabase.from('profiles').select(PERSON_COLUMNS).eq('kind', 'person').in('user_id', ids.slice(0, 500));
-      if (error) throw error;
-      const byUser = new Map(((data ?? []) as PersonRow[]).map((r) => [r.user_id, toPerson(r)]));
+      // ponytail: every page at once, 150 ids a request (the URL limit); People has no paging yet.
+      const pages = await Promise.all(
+        chunk([...ids], 150).map(async (batch) => {
+          const { data, error } = await supabase.from('profiles').select(PERSON_COLUMNS).eq('kind', 'person').in('user_id', batch);
+          if (error) throw error;
+          return data ?? [];
+        }),
+      );
+      const byUser = new Map(pages.flat().map((r) => [r.user_id, toPerson(r)]));
       return ids.flatMap((id) => byUser.get(id) ?? []);
     },
   });
@@ -191,20 +191,22 @@ export function useItemFamilies(itemIds: readonly string[]) {
     queryKey: ['item-families', ids],
     enabled: ids.length > 0,
     queryFn: async (): Promise<Record<string, string | null>> => {
-      const { data, error } = await supabase.from('items').select('id, drink_family').in('id', ids.slice(0, 500));
-      if (error) throw error;
-      return Object.fromEntries((data ?? []).map((r) => [r.id, r.drink_family]));
+      const pages = await Promise.all(
+        chunk(ids, 150).map(async (batch) => {
+          const { data, error } = await supabase.from('items').select('id, drink_family').in('id', batch);
+          if (error) throw error;
+          return data ?? [];
+        }),
+      );
+      return Object.fromEntries(pages.flat().map((r) => [r.id, familyName(r.drink_family)]));
     },
   });
 }
 
-/** Strips what would break a PostgREST or() filter, and escapes LIKE's wildcards. */
-const searchable = (term: string) => term.replace(/[,()*:"]/g, ' ').trim().replace(/\s+/g, ' ').replace(/[\\%_]/g, (c) => `\\${c}`);
-
 /** People's public pages by name or handle (Find people). Not you. */
 export function useFindPeople(term: string) {
   const userId = useUserId();
-  const q = searchable(term);
+  const q = term.trim().replace(/^@/, '').replace(/\s+/g, ' ');
   return useQuery({
     queryKey: ['find-people', q.toLowerCase(), userId],
     enabled: !!userId && q.length >= 2,
@@ -213,12 +215,12 @@ export function useFindPeople(term: string) {
         .from('profiles')
         .select(PERSON_COLUMNS)
         .eq('kind', 'person')
-        .or(`display_name.ilike.%${q}%,handle.ilike.%${q}%`)
+        .or(personSearchFilter(q))
         .order('display_name')
         .limit(20)
         .abortSignal(signal);
       if (error) throw error;
-      return ((data ?? []) as PersonRow[]).filter((r) => r.user_id !== userId).map(toPerson);
+      return (data ?? []).filter((r) => r.user_id !== userId).map(toPerson);
     },
   });
 }

@@ -8,6 +8,7 @@ import { useTabBarInset } from '@/components/nav/WebTabBar';
 import { IconSymbol } from '@/components/ui/icon-symbol';
 import { WebHead } from '@/components/WebHead';
 import { radius, space } from '@/constants/tokens';
+import { useDebounced } from '@/hooks/useDiscover';
 import { useBarmates, useFindPeople, useFollowers, usePeopleByUser, type FollowPerson } from '@/hooks/useFollows';
 
 import { FollowText } from './Follow';
@@ -34,7 +35,8 @@ function FindPeople() {
   const frame = usePageFrame('text');
   const bottom = useTabBarInset();
   const [term, setTerm] = useState('');
-  const found = useFindPeople(term);
+  // One search once typing pauses, not one a keystroke.
+  const found = useFindPeople(useDebounced(term, 250));
   const typed = term.trim().length >= 2;
   const mates = useBarmates();
   const mateIds = (mates.data ?? []).map((m) => m.userId);

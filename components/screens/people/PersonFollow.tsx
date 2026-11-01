@@ -12,9 +12,9 @@ import { formatScore } from '@/lib/ranking';
 import { RankRow } from '../rankings/RankingLists';
 import { FollowButton, type useFollow } from './Follow';
 
-/** Lately shows this many of their newest ranks; their best, this many. */
+/** Lately shows this many of their newest ranks; their best, this many (pins run 1 to 4, so every pin shows). */
 const LATELY = 3;
-const BEST = 3;
+const BEST = 4;
 
 /**
  * Under a person's name (Kept-follow): Follow (or Following, or Follow back)

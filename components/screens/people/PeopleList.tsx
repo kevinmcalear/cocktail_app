@@ -2,7 +2,7 @@ import { StyleSheet, View } from 'react-native';
 
 import { Body, Button, Caption, Segmented } from '@/components/ds';
 import { space } from '@/constants/tokens';
-import { useFollowers, useFollowing, useFriendsRanks, usePeopleByUser, type FollowPerson, type FriendRank } from '@/hooks/useFollows';
+import { useFollowers, useFollowing, usePeopleByUser, type FollowPerson } from '@/hooks/useFollows';
 import { useProfilePositions } from '@/hooks/useProfilePositions';
 import { useProfileDrinks } from '@/hooks/useRankings';
 import { isThisWeek, rankWhen, withArticle } from '@/lib/follows';
@@ -28,8 +28,6 @@ export function PeopleList({ tab, onTab, onOpen, onFind, selectedId }: { tab: Pe
   const followers = useFollowers();
   const ids = tab === 'following' ? following : followers;
   const people = usePeopleByUser(ids.data);
-  // Their latest shared rank, for "Ranked a Penicillin tonight" (friends_ranks reads only what they show).
-  const latest = useFriendsRanks(50).data ?? [];
   const list = ids.data?.length ? (people.data ?? []) : [];
   const unnamed = (ids.data?.length ?? 0) - list.length;
   const failed = ids.error || people.error;
@@ -64,7 +62,7 @@ export function PeopleList({ tab, onTab, onOpen, onFind, selectedId }: { tab: Pe
         <View role="list">
           {list.map((p, i) =>
             tab === 'following' ? (
-              <FollowingRow key={p.profileId} person={p} latest={latest.find((r) => r.profileId === p.profileId)} first={i === 0} selected={p.profileId === selectedId} onPress={() => onOpen(p)} />
+              <FollowingRow key={p.profileId} person={p} first={i === 0} selected={p.profileId === selectedId} onPress={() => onOpen(p)} />
             ) : (
               <FollowerRow key={p.profileId} person={p} first={i === 0} selected={p.profileId === selectedId} onPress={() => onOpen(p)} />
             ),
@@ -84,12 +82,15 @@ export function PeopleList({ tab, onTab, onOpen, onFind, selectedId }: { tab: Pe
 
 const count = (label: string, ids: string[] | undefined) => (ids ? `${label} · ${ids.length}` : label);
 
-/** Someone you follow: what they ranked this week, else their line, else nothing new. */
-function FollowingRow({ person: p, latest, first, selected, onPress }: { person: FollowPerson; latest: FriendRank | undefined; first: boolean; selected: boolean; onPress: () => void }) {
+/** Someone you follow: what they ranked this week (from what they show), else their line, else nothing new. */
+function FollowingRow({ person: p, first, selected, onPress }: { person: FollowPerson; first: boolean; selected: boolean; onPress: () => void }) {
   const positions = useProfilePositions({ id: p.profileId, kind: 'person' }).data ?? [];
+  // The same read as their page, so opening them is instant.
+  const drinks = useProfileDrinks(p.profileId, p.hadMode !== 'none').data ?? [];
+  const latest = drinks.reduce<(typeof drinks)[number] | null>((a, d) => (d.createdAt && (!a?.createdAt || d.createdAt > a.createdAt) ? d : a), null);
   const now = new Date();
   const sub =
-    latest && isThisWeek(latest.createdAt, now)
+    latest?.createdAt && isThisWeek(latest.createdAt, now)
       ? `Ranked ${withArticle(latest.name)} ${rankWhen(latest.createdAt, now)}`
       : (profileLine({ tagline: p.tagline, headline_position_id: p.headlinePositionId }, positions) ?? 'Nothing new this week');
   return <PersonRow name={p.name} avatarUrl={p.avatarUrl} sub={sub} first={first} selected={selected} onPress={onPress} />;

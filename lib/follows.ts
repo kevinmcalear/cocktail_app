@@ -4,6 +4,7 @@
  * lines, and a person's favourite family. Pure, so lib/follows.check.ts
  * checks them without a database.
  */
+import { familyKey, type FamilyKey } from '@/lib/drinkTree';
 
 /** What the Follow button says: you already follow them, they follow you, or neither. */
 export function followLabel(s: { following: boolean; followsYou: boolean }): 'Following' | 'Follow back' | 'Follow' {
@@ -20,9 +21,8 @@ const dayOf = (d: Date) => new Date(d.getFullYear(), d.getMonth(), d.getDate()).
  * "yesterday", the weekday within the week, then the date ("12 Oct").
  */
 export function rankWhen(at: string, now: Date, locale?: string): string {
-  const night = (d: Date) => new Date(d.getTime() - 6 * 60 * 60 * 1000);
   const then = night(new Date(at));
-  const days = Math.round((dayOf(night(now)) - dayOf(then)) / DAY_MS);
+  const days = nightsAgo(at, now);
   const hour = new Date(at).getHours();
   if (days <= 0) return hour >= 17 || hour < 6 ? 'tonight' : 'today';
   if (days === 1) return 'yesterday';
@@ -30,8 +30,12 @@ export function rankWhen(at: string, now: Date, locale?: string): string {
   return then.toLocaleDateString(locale, { day: 'numeric', month: 'short' });
 }
 
-/** Within the last seven nights: "Ranked a Penicillin tonight" on People, else their line. */
-export const isThisWeek = (at: string, now: Date) => dayOf(now) - dayOf(new Date(at)) < 7 * DAY_MS;
+/** A night runs till 6am: a 1:30am rank belongs to the evening before. */
+const night = (d: Date) => new Date(d.getTime() - 6 * 60 * 60 * 1000);
+const nightsAgo = (at: string, now: Date) => Math.round((dayOf(night(now)) - dayOf(night(new Date(at)))) / DAY_MS);
+
+/** Within the last seven nights, the ones rankWhen names by weekday: "Ranked a Penicillin tonight" on People, else their line. */
+export const isThisWeek = (at: string, now: Date) => nightsAgo(at, now) < 7;
 
 /** "a Penicillin", "an Old Fashioned". */
 export const withArticle = (name: string) => `${/^[aeiou]/i.test(name) ? 'an' : 'a'} ${name}`;
@@ -39,9 +43,30 @@ export const withArticle = (name: string) => `${/^[aeiou]/i.test(name) ? 'an' : 
 /** "Sam’s best sour": now their top drink of its family. */
 export const bestLine = (first: string, family: string) => `${first}’s best ${family.toLowerCase()}`;
 
-/** A family as many: "Sours", "Old Fashioneds"; Tiki stays Tiki. */
+/** The tree's eight families by key, as one drink of them is called. */
+const FAMILY_NAMES: Record<FamilyKey, string> = {
+  oldfashioned: 'Old Fashioned',
+  martini: 'Martini',
+  negroni: 'Negroni',
+  sour: 'Sour',
+  sidecar: 'Sidecar',
+  highball: 'Highball',
+  tiki: 'Tiki',
+  flip: 'Flip',
+};
+
+/** One name per family, whatever items.drink_family says ("sour", "Sours" and "Sour" are all "Sour"). */
+export function familyName(raw: string | null | undefined): string | null {
+  const name = (raw ?? '').trim();
+  if (!name) return null;
+  const key = familyKey(name);
+  return key ? FAMILY_NAMES[key] : name.charAt(0).toUpperCase() + name.slice(1);
+}
+
+/** A family as many: "Sours", "Old Fashioneds", "Fizzes"; Tiki stays Tiki. */
 export function familyPlural(family: string): string {
   if (/tiki$/i.test(family) || /s$/i.test(family)) return family;
+  if (/(x|z|ch|sh)$/i.test(family)) return `${family}es`;
   return `${family}s`;
 }
 
