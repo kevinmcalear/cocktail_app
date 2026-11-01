@@ -1171,6 +1171,42 @@ export type Database = {
           },
         ]
       }
+      drink_step_notes: {
+        Row: {
+          aside: string | null
+          item_id: string
+          note: string | null
+          step_key: string
+        }
+        Insert: {
+          aside?: string | null
+          item_id: string
+          note?: string | null
+          step_key: string
+        }
+        Update: {
+          aside?: string | null
+          item_id?: string
+          note?: string | null
+          step_key?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "drink_step_notes_item_id_fkey"
+            columns: ["item_id"]
+            isOneToOne: false
+            referencedRelation: "app_item_presentation"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "drink_step_notes_item_id_fkey"
+            columns: ["item_id"]
+            isOneToOne: false
+            referencedRelation: "items"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       drink_styles: {
         Row: {
           created_at: string
