@@ -20,17 +20,12 @@ const require = createRequire(import.meta.url);
 const OUT = 'assets/images/tabs';
 const PX = 96;
 
-/** The tab bar's tabs by route name (components/nav/AppTabs.tsx), and Android's Search tab. */
+/** The tab bar's tabs (lib/tabs.ts; Tonight is the calendar page below), and Android's Search item.
+ * ponytail: Drinks shows the Library's book until a Drinks glyph is drawn. */
 export const TAB_GLYPHS = {
-  library: 'place.library',
-  menus: 'place.menus',
-  prep: 'place.prep',
-  test: 'place.study',
+  drinks: 'place.library',
   discover: 'place.discover',
-  bar: 'place.mybar',
-  collection: 'place.collection',
-  profile: 'place.you',
-  new: 'plus',
+  you: 'place.you',
   search: 'magnifyingglass',
 } as const satisfies Record<string, GlyphName>;
 

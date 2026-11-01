@@ -9,8 +9,10 @@ const mockNavigate = jest.fn();
 let mockPathname = '/';
 let mockMode: 'venue' | 'home' = 'venue';
 
+let mockSegments: string[] = [];
 jest.mock('expo-router', () => ({
   usePathname: () => mockPathname,
+  useSegments: () => mockSegments,
   useRouter: () => ({ navigate: mockNavigate, push: mockPush }),
 }));
 const mockSetMode = jest.fn();
@@ -51,29 +53,29 @@ beforeEach(() => {
   mockMode = 'venue';
 });
 
-test('venue mode lists search and the venue tabs, marking the current one', async () => {
+test('venue mode lists search, the four tabs and the venue pages, marking the current one', async () => {
   mockMode = 'venue';
-  mockPathname = '/library';
+  mockPathname = '/drinks';
   await renderWithProviders(<WebSideNav />);
 
-  // The canvas order: the tabs and History, Glassware, then the Venue section and you at the foot.
-  // Every venue has the same tabs (the switches went 31 Oct); the back bar is parked.
-  expect(links()).toEqual(['Tonight', 'Library', 'Menus', 'Prep', 'Study', 'Discover', 'History', 'Glassware', 'My team', 'Brand', 'Roles and access', 'Venue settings', 'You: Kevin M., Admin at Caretakers']);
+  // The four tabs and History, the venue's Menus, Prep, Study and Glassware, then the Venue section and you at the foot.
+  // Every person and role has the same tabs (tabs A, 31 Oct); the back bar is parked.
+  expect(links()).toEqual(['Tonight', 'Drinks', 'Discover', 'History', 'You', 'Menus', 'Prep', 'Study', 'Glassware', 'My team', 'Brand', 'Roles and access', 'Venue settings', 'You: Kevin M., Admin at Caretakers']);
   expect(screen.getByText('this week list')).toBeTruthy();
-  expect(screen.getByRole('link', { name: 'Library', selected: true })).toBeTruthy();
+  expect(screen.getByRole('link', { name: 'Drinks', selected: true })).toBeTruthy();
   expect(screen.getByRole('link', { name: 'Tonight', selected: false })).toBeTruthy();
 
   await fireEvent.press(screen.getByRole('link', { name: 'Glassware' }));
   expect(mockPush).toHaveBeenLastCalledWith('/settings/bar/caretakers/glassware');
   await fireEvent.press(screen.getByRole('link', { name: 'Menus' }));
-  expect(mockNavigate).toHaveBeenLastCalledWith('/menus');
+  expect(mockPush).toHaveBeenLastCalledWith('/menus/all');
   await fireEvent.press(screen.getByRole('link', { name: 'Brand' }));
   expect(mockPush).toHaveBeenLastCalledWith('/settings/bar/caretakers/brand');
   await fireEvent.press(screen.getByRole('link', { name: 'Venue settings' }));
   expect(mockPush).toHaveBeenLastCalledWith('/settings/bar/caretakers');
-  // Pages have no avatar on wide web, so You lives in the foot.
+  // You is a tab, and the foot opens it too.
   await fireEvent.press(screen.getByRole('link', { name: 'You: Kevin M., Admin at Caretakers' }));
-  expect(mockPush).toHaveBeenLastCalledWith('/you');
+  expect(mockNavigate).toHaveBeenLastCalledWith('/you');
 });
 
 test('the top of the sidebar is one mark with a chevron (the switcher), never a row of venues', async () => {
@@ -84,12 +86,25 @@ test('the top of the sidebar is one mark with a chevron (the switcher), never a 
   expect(screen.queryByRole('radio', { name: 'Home bar' })).toBeNull();
 });
 
+test('a drink opened cold lights the tab its stack is in', async () => {
+  mockPathname = '/cocktail/1';
+  mockSegments = ['(tabs)', '(1-tonight)', 'cocktail', '[id]'];
+  await renderWithProviders(<WebSideNav />);
+  expect(screen.getByRole('link', { name: 'Tonight', selected: true })).toBeTruthy();
+  mockSegments = [];
+});
+
+test('the sidebar has no New row: + Add and the N key open New', async () => {
+  await renderWithProviders(<WebSideNav />);
+  expect(screen.queryByRole('button', { name: 'New' })).toBeNull();
+});
+
 test('a page off the nav keeps the row it was opened from lit', async () => {
-  mockPathname = '/library';
+  mockPathname = '/drinks';
   const view = await renderWithProviders(<WebSideNav />);
   mockPathname = '/add-cocktail';
   await view.rerender(<WebSideNav />);
-  expect(screen.getByRole('link', { name: 'Library', selected: true })).toBeTruthy();
+  expect(screen.getByRole('link', { name: 'Drinks', selected: true })).toBeTruthy();
 });
 
 test('Menus stays marked on a menu page', async () => {
@@ -112,19 +127,19 @@ test('a guest does not see My team', async () => {
   expect(screen.queryByRole('link', { name: 'My team' })).toBeNull();
 });
 
-test('home mode lists the home tabs and navigates to their routes', async () => {
+test('home mode lists the same four tabs and navigates to their routes', async () => {
   mockMode = 'home';
   mockPathname = '/discover';
   await renderWithProviders(<WebSideNav />);
 
   // No Venue section at home; the foot says your shelf.
-  expect(links()).toEqual(['Discover', 'History', 'My Bar', 'Collection', 'You', 'You: Kevin M., Home bar · 3 bottles']);
+  expect(links()).toEqual(['Tonight', 'Drinks', 'Discover', 'History', 'You', 'You: Kevin M., Home bar · 3 bottles']);
   expect(screen.getByRole('link', { name: 'Discover', selected: true })).toBeTruthy();
 
   await fireEvent.press(screen.getByRole('link', { name: 'Discover' }));
   expect(mockNavigate).toHaveBeenLastCalledWith('/discover');
-  await fireEvent.press(screen.getByRole('link', { name: 'My Bar' }));
-  expect(mockNavigate).toHaveBeenLastCalledWith('/bar');
+  await fireEvent.press(screen.getByRole('link', { name: 'Tonight' }));
+  expect(mockNavigate).toHaveBeenLastCalledWith('/');
 });
 
 test('Search opens the search over the current page instead of leaving it', async () => {
@@ -139,16 +154,19 @@ test('Search opens the search over the current page instead of leaving it', asyn
 test('New opens the create sheet with the draft count, and each choice goes where it is made', async () => {
   mockMode = 'venue';
   mockPathname = '/';
+  let onKey: (e: Partial<KeyboardEvent>) => void = () => {};
+  (globalThis as { document?: unknown }).document = { addEventListener: (_: string, fn: typeof onKey) => (onKey = fn), removeEventListener: () => {} };
+  const pressN = () => act(() => onKey({ key: 'n', target: { tagName: 'DIV' } as unknown as EventTarget, preventDefault: () => {} }));
   await renderWithProviders(<WebSideNav />);
 
-  await fireEvent.press(screen.getByRole('button', { name: 'New' }));
+  await pressN();
   expect(screen.getByText('2')).toBeTruthy();
   expect(screen.getByText('Made at Caretakers, for its library')).toBeTruthy();
   await fireEvent.press(screen.getByRole('link', { name: 'Something you make. A batch, syrup, infusion, cordial: anything with a recipe' }));
   // Made at the venue you're in, not your home bar.
   expect(mockPush).toHaveBeenLastCalledWith('/make-recipe?barId=caretakers');
 
-  await fireEvent.press(screen.getByRole('button', { name: 'New' }));
+  await pressN();
   await fireEvent.press(screen.getByRole('link', { name: 'Drafts. Pick up where you left off' }));
   expect(mockPush).toHaveBeenLastCalledWith('/drafts');
 });

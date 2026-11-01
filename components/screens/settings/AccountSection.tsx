@@ -43,7 +43,7 @@ export function AccountSection() {
   const { replay: restart, venue } = useFirstRound();
   const replay = () => {
     restart();
-    if (venue) router.navigate('/library');
+    if (venue) router.navigate('/drinks');
     else showMessage('First round', 'It starts the next time you open a venue.');
   };
   const linkRow = ({ label, detail, icon, onPress }: LinkRowProps) => (

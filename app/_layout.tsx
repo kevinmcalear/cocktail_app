@@ -144,10 +144,6 @@ function RootLayoutNav() {
             <Stack.Screen name="add-beer" options={{ presentation: "modal", headerShown: false }} />
             <Stack.Screen name="add-wine" options={{ presentation: "modal", headerShown: false }} />
             <Stack.Screen
-              name="cocktail/[id]/index"
-              options={{ presentation: "modal", headerShown: false }}
-            />
-            <Stack.Screen
               name="cocktail/[id]/edit"
               options={{ presentation: "modal", headerShown: false }}
             />
@@ -199,7 +195,6 @@ function RootLayoutNav() {
             <Stack.Screen name="p/[id]/menus/[edition]" options={{ headerShown: false }} />
             <Stack.Screen name="p/[id]/claim" options={{ headerShown: false }} />
             <Stack.Screen name="p/[id]/bottles" options={{ headerShown: false }} />
-            <Stack.Screen name="you" options={{ headerShown: false }} />
             <Stack.Screen name="credits-to-check" options={{ headerShown: false }} />
             <Stack.Screen name="taste" options={{ headerShown: false }} />
             <Stack.Screen name="support" options={{ headerShown: false, title: "Support" }} />

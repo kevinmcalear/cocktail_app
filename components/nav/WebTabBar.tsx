@@ -1,5 +1,4 @@
 import type { BottomTabBarProps } from 'expo-router/js-tabs';
-import { useState } from 'react';
 import { Platform, StyleSheet, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
@@ -7,44 +6,15 @@ import { DsText, GlassButton, GlassSurface, PressableScale, useDs, type IconName
 import { IconSymbol } from '@/components/ui/icon-symbol';
 import { space } from '@/constants/tokens';
 import { useBottomSearchFocus } from '@/hooks/useBottomBar';
-import { useFirstRound } from '@/hooks/useFirstRound';
 import { useIsWideWeb } from '@/hooks/useIsWideWeb';
-import { useMode } from '@/hooks/useMode';
-import { phoneTabs, venueTabs, type PhoneTab, type VenueTab } from '@/lib/tabs';
+import { TABS, type Tab, type TabName } from '@/lib/tabs';
 
-import { CreateSheet } from './CreateSheet';
+export type WebTab = Tab & { icon: IconName };
 
-export type WebTab = { name: string; label: string; icon: IconName };
+const ICONS: Record<TabName, IconName> = { tonight: 'place.tonight', drinks: 'place.library', discover: 'place.discover', you: 'place.you' };
 
-const DISCOVER: WebTab = { name: 'discover', label: 'Discover', icon: 'place.discover' };
-
-const VENUE_TABS: Record<VenueTab, WebTab> = {
-  index: { name: 'index', label: 'Tonight', icon: 'place.tonight' },
-  library: { name: 'library', label: 'Library', icon: 'place.library' },
-  menus: { name: 'menus', label: 'Menus', icon: 'place.menus' },
-  prep: { name: 'prep', label: 'Prep', icon: 'place.prep' },
-  test: { name: 'test', label: 'Study', icon: 'place.study' },
-  discover: DISCOVER,
-};
-
-const HOME_TABS = {
-  bar: { name: 'bar', label: 'My Bar', icon: 'place.mybar' },
-  collection: { name: 'collection', label: 'Collection', icon: 'place.collection' },
-  profile: { name: 'profile', label: 'You', icon: 'place.you' },
-} satisfies Record<string, WebTab>;
-
-const TABS: Record<Exclude<PhoneTab, 'new'>, WebTab> = { ...VENUE_TABS, ...HOME_TABS };
-
-/**
- * The tabs for the mode you're in, for the sidebar (lib/tabs.ts). Phone bars
- * use phoneTabs, which caps them.
- */
-export function useModeTabs(): WebTab[] {
-  const { mode } = useMode();
-  // The first round holds Menus and Discover back until their steps come up (lib/firstRound.ts).
-  const { hidden } = useFirstRound();
-  return mode === 'home' ? [DISCOVER, ...Object.values(HOME_TABS)] : venueTabs().flatMap((name) => ((hidden as readonly string[]).includes(name) ? [] : [VENUE_TABS[name]]));
-}
+/** The four tabs with their icons, for the phone pill, the tablet rail and the sidebar (lib/tabs.ts). */
+export const WEB_TABS: readonly WebTab[] = TABS.map((t) => ({ ...t, icon: ICONS[t.name] }));
 
 // The board's pill and search circle are both 64 tall.
 export const WEB_TAB_BAR_HEIGHT = 64;
@@ -85,20 +55,16 @@ export function useTabBarTop() {
 export const TAB_PILL = Platform.OS === 'ios' ? { inset: 21, radius: 31 } : { inset: space.md, radius: WEB_TAB_BAR_HEIGHT / 2 };
 
 /**
- * The redesigned tab bar for phone-width web: labelled tabs in a glass pill,
- * with search as its own circle, like the system bar on iOS 26.
+ * The tab bar for phone-width web: the four tabs in a glass pill, with search
+ * as its own circle, like the system bar on iOS 26. The + is in each page's
+ * header (ScreenHeader.tsx).
  */
 export function WebTabBar({ state, emitter, navigateToTab }: BottomTabBarProps) {
   const ds = useDs();
   const insets = useSafeAreaInsets();
-  const { mode } = useMode();
   const current = state.routes[state.index]?.name;
-  // New is the last tab and takes a tab's room (phoneTabs). While the bottom
-  // search field has focus it takes the bar's place.
+  // While the bottom search field has focus it takes the bar's place.
   const searching = useBottomSearchFocus((s) => s.focused);
-  const [creating, setCreating] = useState(false);
-  const { hidden } = useFirstRound();
-  const tabs = phoneTabs(mode === 'home').flatMap((name) => (name === 'new' || (hidden as readonly string[]).includes(name) ? [] : [TABS[name]]));
   const go = (name: string) => {
     const route = state.routes.find((r) => r.name === name);
     if (!route) return;
@@ -110,8 +76,8 @@ export function WebTabBar({ state, emitter, navigateToTab }: BottomTabBarProps) 
     <View style={[styles.wrap, { bottom: insets.bottom + space.md }]}>
       <GlassSurface style={styles.tabs}>
         <View role="tablist" style={styles.row}>
-          {tabs.map((t) => {
-            const selected = current === t.name;
+          {WEB_TABS.map((t) => {
+            const selected = current === t.route;
             const color = selected ? ds.accentText : ds.c.muted;
             return (
               <PressableScale
@@ -119,7 +85,7 @@ export function WebTabBar({ state, emitter, navigateToTab }: BottomTabBarProps) 
                 role="tab"
                 aria-selected={selected}
                 accessibilityLabel={t.label}
-                onPress={() => go(t.name)}
+                onPress={() => go(t.route)}
                 style={[styles.tab, selected && { backgroundColor: ds.c.line }]}
               >
                 <IconSymbol name={t.icon} size={20} color={color} on={selected} />
@@ -129,17 +95,10 @@ export function WebTabBar({ state, emitter, navigateToTab }: BottomTabBarProps) 
               </PressableScale>
             );
           })}
-          <PressableScale role="button" accessibilityLabel="New: drink, ingredient, beer, wine, menu, bring something in, or a draft" onPress={() => setCreating(true)} style={styles.tab}>
-            <IconSymbol name="plus" size={20} color={ds.c.muted} />
-            <DsText variant="caption" color={ds.c.muted} numberOfLines={1}>
-              New
-            </DsText>
-          </PressableScale>
         </View>
       </GlassSurface>
       {/* While search is open, its circle is the current item: its icon takes the accent. */}
       <GlassButton accessibilityLabel={current === 'search' ? 'Search, open' : 'Search'} icon="magnifyingglass" size={WEB_TAB_BAR_HEIGHT} color={current === 'search' ? ds.accentText : undefined} onPress={() => go('search')} />
-      {creating ? <CreateSheet visible onClose={() => setCreating(false)} /> : null}
     </View>
   );
 }

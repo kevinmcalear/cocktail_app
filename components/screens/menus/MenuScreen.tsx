@@ -124,7 +124,7 @@ export function MenuScreen({ menuId }: { menuId: string }) {
               <View style={{ height: sidebar ? space.xxl + space.sm : insets.top + 72 }} />
             )}
             <View style={[styles.body, styles.head, column, { marginTop: hero ? -84 : 0 }]}>
-              {sidebar ? <Crumbs trail={[home ? { label: 'Collection', href: '/collection' } : { label: 'Menus', href: '/menus/all' }]} /> : null}
+              {sidebar ? <Crumbs trail={[home ? { label: 'Drinks', href: '/drinks' } : { label: 'Menus', href: '/menus/all' }]} /> : null}
               {/* A solid ground behind it: it sits on the photo, which can be light or dark. */}
               {home ? (
                 // A home menu isn't on a venue's calendar: its tag is its night, tinted like the list's date tile (BandMenu).

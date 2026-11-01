@@ -125,7 +125,7 @@ export function PrepScreen() {
     // handles the top safe area itself, the same as on Tonight and Library.
     <View style={[styles.screen, { backgroundColor: ds.c.ground }]}>
       <ScrollView contentContainerStyle={{ paddingBottom: bottom }}>
-        <ScreenHeader title="Prep" display />
+        <ScreenHeader title="Prep" display back />
         <View style={[styles.body, { paddingHorizontal: gutter }]}>
           <View style={styles.links}>
             <BackBarLink />

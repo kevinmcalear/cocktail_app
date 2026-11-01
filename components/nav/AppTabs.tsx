@@ -1,29 +1,25 @@
 import { NativeTabs } from 'expo-router/native-tabs';
-import { useState } from 'react';
-import { Platform, View } from 'react-native';
+import { Platform } from 'react-native';
 
 import { useDs } from '@/components/ds';
-import { useFirstRound } from '@/hooks/useFirstRound';
 import { useIsWideWeb } from '@/hooks/useIsWideWeb';
-import { useMode } from '@/hooks/useMode';
 import { useTrackTab } from '@/hooks/useSearchFrom';
 import { useServiceDay } from '@/hooks/useServiceDay';
 import { withAlpha } from '@/lib/color';
-import { phoneTabs, type PhoneTab } from '@/lib/tabs';
+import { TABS } from '@/lib/tabs';
 
-import { CreateSheet } from './CreateSheet';
 import { JsTabs } from './JsTabs';
-import { NEW_TAB_IMAGE, TAB_IMAGES, tonightImage } from './tabImages';
+import { TAB_IMAGES, tonightImage } from './tabImages';
 import { VenueBrandProvider } from './VenueBrandProvider';
 
 /**
- * Redesigned tabs on iOS and Android: the system tab bar (Liquid Glass on
- * iOS 26+, Material 3 on Android), tinted with the venue's accent. Web uses
- * JsTabs.tsx. Venue mode: Library, Menus, Discover, plus Tonight, Prep
- * and Study when the venue switched them on (lib/tabs.ts). Home
- * mode: Discover, My Bar, Collection. New is a tab in both, and the bar stays
- * at five with Search (lib/tabs.ts phoneTabs); You opens from the
- * header's avatar.
+ * The four tabs on iPhone and Android (tabs A, 31 Oct 2026): Tonight, Drinks,
+ * Discover and You, the same for everyone; the mode changes what each shows.
+ * The system tab bar (Liquid Glass on iOS 26+, Material 3 on Android), tinted
+ * with the venue's accent, with Search beside them. Each tab holds its own
+ * stack (app/(tabs)/(1-tonight,2-drinks,3-discover,4-you)/_layout.tsx). The place
+ * button and the + sit in each page's header (ScreenHeader.tsx); Android's
+ * Add is the extended FAB. Web uses JsTabs.tsx.
  * Tonight is a calendar page showing the date, which turns over at 6am.
  * The icons are the app's own (components/nav/tabImages.ts), template images
  * the system tints, so the glass and Material bars stay the system's.
@@ -42,83 +38,31 @@ export function AppTabs() {
   );
 }
 
+const IMAGES = { tonight: null, drinks: TAB_IMAGES.drinks, discover: TAB_IMAGES.discover, you: TAB_IMAGES.you } as const;
+
 function Tabs() {
   const ds = useDs();
-  const { mode, ready } = useMode();
-  const home = mode === 'home';
   const day = useServiceDay() ?? 1;
-  const [creating, setCreating] = useState(false);
-  // The first round holds Menus and Discover back until their steps come up (lib/firstRound.ts).
-  const { hidden } = useFirstRound();
   // The search circle starts on the tab it was opened from (hooks/useSearchFrom.ts).
   useTrackTab();
-  // Venue and home have different tabs, and switching remounts them all:
-  // wait for the mode (a moment, on a first launch) rather than open the wrong set.
-  if (!ready) return <View style={{ flex: 1, backgroundColor: ds.c.ground }} />;
-  const shown = phoneTabs(home);
   // Android's Material 3 bar in our colours: the surface, the accent's indicator pill (the
   // sidebar's current-row tint) and an ink ripple. iOS keeps the system's Liquid Glass untouched.
   const material = { backgroundColor: ds.c.surface, indicatorColor: withAlpha(ds.accentText, 0.16), rippleColor: withAlpha(ds.c.ink, 0.12) };
-  const off = (name: PhoneTab) => !shown.includes(name) || (hidden as readonly string[]).includes(name);
-  // Discover is in both modes. The rest swap, the way an account switch swaps
-  // an app's tabs; home mode's index redirects to Discover. Android's Material
-  // bar hides unselected labels past three tabs; "labeled" keeps every tab named.
+  // Android's Material bar hides unselected labels past three tabs; "labeled" keeps every tab named.
   return (
-    <>
-      <NativeTabs
-        tintColor={ds.accentText}
-        badgeBackgroundColor={ds.accentFill.fill}
-        minimizeBehavior="onScrollDown"
-        labelVisibilityMode="labeled"
-        {...(Platform.OS === 'android' ? material : null)}
-      >
-        <NativeTabs.Trigger name="index" hidden={off('index')}>
-          <NativeTabs.Trigger.Icon src={tonightImage(day)} renderingMode="template" />
-          <NativeTabs.Trigger.Label>Tonight</NativeTabs.Trigger.Label>
+    <NativeTabs
+      tintColor={ds.accentText}
+      badgeBackgroundColor={ds.accentFill.fill}
+      minimizeBehavior="onScrollDown"
+      labelVisibilityMode="labeled"
+      {...(Platform.OS === 'android' ? material : null)}
+    >
+      {TABS.map((t) => (
+        <NativeTabs.Trigger key={t.name} name={t.route}>
+          <NativeTabs.Trigger.Icon src={IMAGES[t.name] ?? tonightImage(day)} renderingMode="template" />
+          <NativeTabs.Trigger.Label>{t.label}</NativeTabs.Trigger.Label>
         </NativeTabs.Trigger>
-        <NativeTabs.Trigger name="library" hidden={off('library')}>
-          <NativeTabs.Trigger.Icon src={TAB_IMAGES.library} renderingMode="template" />
-          <NativeTabs.Trigger.Label>Library</NativeTabs.Trigger.Label>
-        </NativeTabs.Trigger>
-        <NativeTabs.Trigger name="menus" hidden={off('menus')}>
-          <NativeTabs.Trigger.Icon src={TAB_IMAGES.menus} renderingMode="template" />
-          <NativeTabs.Trigger.Label>Menus</NativeTabs.Trigger.Label>
-        </NativeTabs.Trigger>
-        <NativeTabs.Trigger name="prep" hidden={off('prep')}>
-          <NativeTabs.Trigger.Icon src={TAB_IMAGES.prep} renderingMode="template" />
-          <NativeTabs.Trigger.Label>Prep</NativeTabs.Trigger.Label>
-        </NativeTabs.Trigger>
-        <NativeTabs.Trigger name="test" hidden={off('test')}>
-          <NativeTabs.Trigger.Icon src={TAB_IMAGES.test} renderingMode="template" />
-          <NativeTabs.Trigger.Label>Study</NativeTabs.Trigger.Label>
-        </NativeTabs.Trigger>
-        <NativeTabs.Trigger name="discover" hidden={off('discover')}>
-          <NativeTabs.Trigger.Icon src={TAB_IMAGES.discover} renderingMode="template" />
-          <NativeTabs.Trigger.Label>Discover</NativeTabs.Trigger.Label>
-        </NativeTabs.Trigger>
-        <NativeTabs.Trigger name="bar" hidden={off('bar')}>
-          <NativeTabs.Trigger.Icon src={TAB_IMAGES.bar} renderingMode="template" />
-          <NativeTabs.Trigger.Label>My Bar</NativeTabs.Trigger.Label>
-        </NativeTabs.Trigger>
-        <NativeTabs.Trigger name="collection" hidden={off('collection')}>
-          <NativeTabs.Trigger.Icon src={TAB_IMAGES.collection} renderingMode="template" />
-          <NativeTabs.Trigger.Label>Collection</NativeTabs.Trigger.Label>
-        </NativeTabs.Trigger>
-        <NativeTabs.Trigger name="profile" hidden={off('profile')}>
-          <NativeTabs.Trigger.Icon src={TAB_IMAGES.profile} renderingMode="template" />
-          <NativeTabs.Trigger.Label>You</NativeTabs.Trigger.Label>
-        </NativeTabs.Trigger>
-        {/* A button, not a page: disabled, so a press never selects it, only tells us. */}
-        <NativeTabs.Trigger
-          name="new"
-          hidden={off('new')}
-          disabled
-          accessibilityLabel="New: drink, ingredient, beer, wine, menu, bring something in, or a draft"
-          listeners={{ tabPress: () => setCreating(true) }}
-        >
-          <NativeTabs.Trigger.Icon src={NEW_TAB_IMAGE} renderingMode="template" />
-          <NativeTabs.Trigger.Label>New</NativeTabs.Trigger.Label>
-        </NativeTabs.Trigger>
+      ))}
         {/* iOS 27 only moves the search field into the tab bar for a real
             UISearchTab that activates search when picked (react-native-screens
             4.29+). expo-router forwards role="search" only as the legacy system
@@ -131,8 +75,6 @@ function Tabs() {
           <NativeTabs.Trigger.Icon src={Platform.OS === 'android' ? TAB_IMAGES.search : undefined} renderingMode="template" />
           <NativeTabs.Trigger.Label>Search</NativeTabs.Trigger.Label>
         </NativeTabs.Trigger>
-      </NativeTabs>
-      {creating ? <CreateSheet visible onClose={() => setCreating(false)} /> : null}
-    </>
+    </NativeTabs>
   );
 }

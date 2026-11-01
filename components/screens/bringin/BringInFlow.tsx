@@ -110,7 +110,7 @@ export function BringInFlow() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
-  const leave = () => (router.canGoBack() ? router.back() : router.replace('/(tabs)' as Href));
+  const leave = () => (router.canGoBack() ? router.back() : router.replace('/' as Href));
   const finishLater = () => {
     useBringIn.getState().setReviewing(null);
     if (!useBringIn.getState().next(place.barId)) leave();
@@ -156,7 +156,7 @@ export function BringInFlow() {
       else {
         // Your own shelf: My Bar is a home-mode tab, so a staffer snapping from a venue goes home for it.
         useAppMode.getState().setMode('home');
-        router.replace({ pathname: '/bar', params: { add: 'bottles' } });
+        router.replace({ pathname: '/', params: { add: 'bottles' } });
       }
     };
     return <ReadingScreen job={job} onClose={cancel} onBackground={background} onReady={() => setCheckedId(job.id)} onSearch={bottles ? searchInstead : undefined} />;

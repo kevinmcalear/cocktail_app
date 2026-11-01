@@ -107,7 +107,7 @@ function MemberGate({ venue, brand }: { venue: VenueBranding; brand: AuthBrand }
 
   const enter = useCallback(() => {
     enterVenue(venue.id);
-    router.replace('/(tabs)');
+    router.replace('/');
   }, [venue.id, enterVenue, router]);
 
   // Opened from the home screen: nothing to install, go straight in.
@@ -126,7 +126,7 @@ function MemberGate({ venue, brand }: { venue: VenueBranding; brand: AuthBrand }
   }
 
   // Joining makes them a member, and the install step below takes over.
-  if (!isMember && invite) return <InviteWelcome invite={invite} setUp onJoined={() => {}} onDeclined={() => router.replace('/(tabs)')} />;
+  if (!isMember && invite) return <InviteWelcome invite={invite} setUp onJoined={() => {}} onDeclined={() => router.replace('/')} />;
 
   if (!isMember) {
     return (

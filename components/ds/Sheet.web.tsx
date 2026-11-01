@@ -28,7 +28,7 @@ export function useSheetClose(): () => void {
  * load Reanimated or Gesture Handler. A finger drags it down to close it
  * (webSheetDrag), as on native.
  */
-export function Sheet({ visible, onClose, accessibilityLabel, children, style, ground, header, onShow, onDismiss }: SheetProps) {
+export function Sheet({ visible, onClose, accessibilityLabel, children, style, ground, header, onShow, onDismiss, kind }: SheetProps) {
   const ds = useDs();
   const reduceMotion = useReducedMotion();
   // Gone once it has faded out: the Modal stays up until then.
@@ -102,6 +102,7 @@ export function Sheet({ visible, onClose, accessibilityLabel, children, style, g
             aria-label={accessibilityLabel}
             style={[
               styles.panel,
+              kind === 'flow' ? styles.flow : null,
               sheetFrame.panel,
               { backgroundColor: ground ? ds.c.ground : ds.c.surface, borderColor: ds.c.lineStrong },
               style,
@@ -121,4 +122,6 @@ export function Sheet({ visible, onClose, accessibilityLabel, children, style, g
 const styles = StyleSheet.create({
   place: { flex: 1, justifyContent: 'flex-end', alignItems: 'center', pointerEvents: 'box-none' },
   panel: { width: '100%', maxWidth: 560, maxHeight: '86%', overflow: 'hidden' },
+  // A whole flow (Add, Rank it, Theme): the same dialog, a little wider and taller.
+  flow: { maxWidth: 680, maxHeight: '92%' },
 });

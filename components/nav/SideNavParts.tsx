@@ -95,8 +95,7 @@ export function YouFooter({ venue }: { venue: Venue | null }) {
     <PressableScale
       role="link"
       accessibilityLabel={`You: ${name}, ${line}`}
-      // Home mode has You as a tab; venue mode opens it over the page.
-      onPress={() => (venue ? router.push('/you') : router.navigate('/profile'))}
+      onPress={() => router.navigate('/you')}
       style={[styles.footer, { borderTopColor: ds.c.line }]}
     >
       <CurrentUserAvatar size={32} />

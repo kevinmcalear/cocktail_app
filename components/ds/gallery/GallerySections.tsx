@@ -26,6 +26,7 @@ import { IconSet } from './IconSet';
 import { KitDrawings } from './KitDrawings';
 import { LogoMarks } from './LogoMarks';
 import { SheetDemo } from './SheetDemo';
+import { DrawingSizes, PencilStates, SpecPieces } from './SharedPieces';
 import { IMAGES, PENICILLIN } from './samples';
 
 function Section({ title, children }: { title: string; children: ReactNode }) {
@@ -165,6 +166,18 @@ export function GallerySections() {
         {PENICILLIN.map((row) => (
           <SpecRow key={row.ingredient} {...row} />
         ))}
+      </Section>
+
+      <Section title="Spec controls">
+        <SpecPieces />
+      </Section>
+
+      <Section title="States in pencil">
+        <PencilStates />
+      </Section>
+
+      <Section title="Drawings at three sizes">
+        <DrawingSizes />
       </Section>
 
       <Section title="Review rows">

@@ -37,13 +37,15 @@ interface MenuSheetProps {
   list?: boolean;
   /** What's picked is kept as it's tapped, so closing is done: a tick in place of the X. */
   done?: boolean;
+  /** A whole flow (Add, Rank it, Theme): the system's sheet on phones (Sheet's kind). Small sheets leave it out. */
+  kind?: 'small' | 'flow';
 }
 
 /**
  * A titled sheet with a scrolling body and an optional footer, on the app's
  * one Sheet (components/ds/Sheet): springs up on phones, a dialog on the web.
  */
-export function MenuSheet({ visible, onClose, title, subtitle, eyebrow, leading, aside, children, footer, onShow, save, plain, form, list, done }: MenuSheetProps) {
+export function MenuSheet({ visible, onClose, title, subtitle, eyebrow, leading, aside, children, footer, onShow, save, plain, form, list, done, kind }: MenuSheetProps) {
   const ds = useDs();
   const insets = useSafeAreaInsets();
   return (
@@ -53,6 +55,7 @@ export function MenuSheet({ visible, onClose, title, subtitle, eyebrow, leading,
       onClose={onClose}
       onShow={onShow}
       accessibilityLabel={title}
+      kind={kind}
       keyboard
       keyboardOffset={footer ? -insets.bottom : 0}
       style={sheetIsDialog ? styles.dialog : undefined}

@@ -95,7 +95,7 @@ export function ShoppingDoneSheet({ got, ready, visible, onClose }: { got: Shopp
             variant="secondary"
             onPress={() => {
               onClose();
-              router.navigate('/bar' as Href);
+              router.navigate('/');
             }}
             style={styles.grow}
           />

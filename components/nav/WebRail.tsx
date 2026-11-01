@@ -39,8 +39,8 @@ function RailItem({ place, current, onPress }: { place: Place; current: boolean;
 
 /**
  * The tablet rail (768 to 1199 wide), as canvas board nav-tablet draws it:
- * the logo (the venue menu, as on a phone), Search, the tabs with labels,
- * Menus and Back bar at a venue, New (an outlined circle), and you at the
+ * the logo (the venue menu, as on a phone), Search, the four tabs with
+ * labels, the venue's Menus, Prep, Study and Back bar, New (an outlined circle), and you at the
  * foot. The page beside it gets the rest of the width.
  */
 export function WebRail({ current, go, searching, onSearch, onNew }: SideNavProps) {
@@ -48,7 +48,7 @@ export function WebRail({ current, go, searching, onSearch, onNew }: SideNavProp
   // An iPad's status bar and home indicator; 0 on the web.
   const insets = useSafeAreaInsets();
   const router = useRouter();
-  const { venue, tabs, work } = useNavPlaces();
+  const { venue, tabs, menus, work } = useNavPlaces();
   const name = shortPersonName(useUserDisplayName());
   const line = footerLine(venue ? { name: venue.name, role: roleLabel(venue.roleLevel) } : null, null);
   return (
@@ -61,7 +61,7 @@ export function WebRail({ current, go, searching, onSearch, onNew }: SideNavProp
         <GlassButton icon="magnifyingglass" accessibilityLabel="Search" color={searching ? ds.accentText : undefined} onPress={onSearch} />
       </View>
       <View style={styles.items}>
-        {[...tabs, ...work].map((p) => (
+        {[...tabs, ...(menus ? [menus] : []), ...work].map((p) => (
           <RailItem key={p.key} place={p} current={current === p.key} onPress={() => go(p)} />
         ))}
       </View>
@@ -71,7 +71,7 @@ export function WebRail({ current, go, searching, onSearch, onNew }: SideNavProp
       <PressableScale
         role="link"
         accessibilityLabel={`You: ${name}, ${line}`}
-        onPress={() => (venue ? router.push('/you') : router.navigate('/profile'))}
+        onPress={() => router.navigate('/you')}
         style={styles.you}
       >
         <CurrentUserAvatar size={32} />

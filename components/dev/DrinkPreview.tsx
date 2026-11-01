@@ -12,8 +12,8 @@ import { roleLabel, ROLE_LEVELS } from '@/lib/roles';
 
 // Through the drink page routes, not the components: a static import here made
 // the web build put the whole drink page in the chunk every page loads.
-const DrinkScreen = lazy(() => import('@/app/cocktail/[id]/index').then((m) => ({ default: m.DrinkScreen })));
-const BatchSheet = lazy(() => import('@/app/cocktail/[id]/index').then((m) => ({ default: m.BatchSheet })));
+const DrinkScreen = lazy(() => import('@/app/(tabs)/(1-tonight,2-drinks,3-discover,4-you)/cocktail/[id]/index').then((m) => ({ default: m.DrinkScreen })));
+const BatchSheet = lazy(() => import('@/app/(tabs)/(1-tonight,2-drinks,3-discover,4-you)/cocktail/[id]/index').then((m) => ({ default: m.BatchSheet })));
 
 /**
  * The redesigned drink page with a sample Penicillin, masked as the server

@@ -62,6 +62,8 @@ test('at a venue: titled with it, its working pages first, then Venue and You', 
   const places = screen.getAllByRole('link').map((el) => el.props.accessibilityLabel);
   expect(places).toEqual([
     'Menus. 1 on',
+    'Prep',
+    'Study',
     'Glassware',
     'This week',
     'My team. 9 people',
@@ -96,18 +98,17 @@ test('an Admin alone on the team gets Invite on My team', async () => {
   expect(mockPush).toHaveBeenLastCalledWith('/team?invite=1');
 });
 
-test('at home: titled Home bar, My Bar, Collection and You, then Settings', async () => {
+test('at home: titled Home bar, Tonight (your shelf) and Drinks (your collection), then Settings', async () => {
   mockMode = 'home';
   await renderWithProviders(<VenueMenuSheet onClose={jest.fn()} />);
   expect(screen.getByRole('heading', { name: 'Home bar' })).toBeTruthy();
   expect(screen.getAllByRole('link').map((el) => el.props.accessibilityLabel)).toEqual([
-    'My Bar. 4 bottles',
-    'Collection. 12 to make',
-    'You',
+    'Tonight. 4 bottles',
+    'Drinks. 12 to make',
     'Settings',
   ]);
-  await fireEvent.press(screen.getByRole('link', { name: /^My Bar/ }));
-  expect(mockNavigate).toHaveBeenLastCalledWith('/bar');
+  await fireEvent.press(screen.getByRole('link', { name: /^Drinks/ }));
+  expect(mockNavigate).toHaveBeenLastCalledWith('/drinks');
 });
 
 test('with no venues there is no Switch: nowhere to switch to', async () => {

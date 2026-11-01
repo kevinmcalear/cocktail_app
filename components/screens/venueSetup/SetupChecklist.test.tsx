@@ -136,7 +136,7 @@ test('First drinks (E31): with nothing left to check, the drinks in the Library'
   mockDrinks = { inLibrary: 18, reviewId: null };
   await renderWithProviders(<SetupChecklist barId="b1" name="Little Rye" />);
   await fireEvent.press(screen.getByRole('button', { name: 'First drinks, todo' }));
-  expect(mockNavigate).toHaveBeenLastCalledWith('/library');
+  expect(mockNavigate).toHaveBeenLastCalledWith('/drinks');
 });
 
 test('First drinks not done: the four starts under it, coming back to the checklist once saved', async () => {

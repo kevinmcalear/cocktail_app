@@ -56,7 +56,7 @@ export function WantToGoMap() {
   // Back to Collection, leaving Discover as everyone else sees it.
   const back = () => {
     router.setParams({ list: undefined });
-    router.navigate('/collection');
+    router.navigate('/drinks');
   };
   const onSelect = (id: string | null) => {
     setPickedId(id);

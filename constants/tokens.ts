@@ -229,6 +229,10 @@ export const layout = {
    * (components/nav/Page.tsx): text for lists and forms, wide for plans and grids.
    */
   page: { text: 760, wide: 1240 },
+  /** The list's column beside a page: Library's panes on a tablet (the tablet board's width). */
+  listPane: 360,
+  /** Drinks' list beside the drink on a desktop, from 1200 (board Keep-desk; Kevin, 1 Nov). */
+  listPaneDesk: 460,
   /** Screens and components past this many lines get split (enforced by check:design). */
   maxScreenLines: 300,
 } as const;
@@ -275,6 +279,17 @@ export const springs = {
   /** Liquid, the spec glass, playful moments. */
   pour: { damping: 12, stiffness: 120, mass: 1 },
 } as const;
+
+/**
+ * A drink's drawing at three sizes, in points (decision drawing-sizes,
+ * components/ds/DrinkDrawing): a guest's hero (260 to 300), a staff page's
+ * smaller hero so the spec stays above the fold, a tile, and a row (56 or
+ * more: under that a drawing is a smudge).
+ */
+export const drawing = { hero: 280, heroStaff: 180, tile: 160, row: 56 } as const;
+
+/** How the colour pours into a drawing as it appears: fills the glass bottom up, after a beat. Reduce Motion skips it. */
+export const pour = { delay: 200, ms: 1100 } as const;
 
 /** How deep and slow a loading placeholder breathes (components/ds/Pulse). */
 export const pulse = { low: 0.45, ms: 900 } as const;
