@@ -71,7 +71,6 @@ export default function CocktailDetailsScreen() {
                 onFit={() => editOn("fit")}
                 onPhotos={() => editOn("photos")}
                 openBatch={batch === "1"}
-                sheet
             />
         ) : (
             <DrinkLoading seed={query.isPlaceholderData ? query.data : null} />

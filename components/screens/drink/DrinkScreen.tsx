@@ -198,7 +198,7 @@ function DrinkPage({ item, inStudyPile, onToggleStudyPile, canEdit, adminFix = f
     deleteDrink({ id: item.id, name: item.name });
     if (pane) return;
     if (router.canGoBack()) router.back();
-    else router.replace('/(tabs)');
+    else router.replace('/');
   } : undefined;
   const more = preview ? null : <DrinkMoreMenu itemId={item.id} name={item.name} canEdit={canEdit} adminFix={adminFix && !preview} onEdit={onEdit} wide={wide} onShare={viewingAs ? share : undefined} onDelete={onDelete} teamRole={teamRole} />;
   const heroScheme = glassOver(pictures[0]);
