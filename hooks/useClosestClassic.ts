@@ -12,7 +12,7 @@ type Touch = { id: string; name: string; recipes: { ingredient_item_id: string }
 type Spec = {
   id: string;
   name: string;
-  glass: { icon_key: string | null } | null;
+  glass: { glassware: { icon_key: string | null } | null } | null;
   item_images: ItemImageLink[] | null;
   recipes: { ingredient_item_id: string; ingredient: { generic_id: string | null; name: string; ingredient_role: string | null } | null }[];
 };
@@ -78,11 +78,11 @@ function useClose<T>(ingredients: readonly SpecIngredient[], select: (c: Close) 
       const specs = await supabase
         .from('items')
         .select(
-          'id, name, glass:glassware_id(icon_key), item_images(angle, sort_order, is_generated, images(url)), recipes:app_recipe_presentation!recipe_item_id(ingredient_item_id, ingredient:display_ingredient(generic_id, name, ingredient_role))'
+          'id, name, glass:drink_glass!drink_glass_item_id_fkey(glassware:items!drink_glass_glassware_id_fkey(icon_key)), item_images(angle, sort_order, is_generated, images(url)), recipes:app_recipe_presentation!recipe_item_id(ingredient_item_id, ingredient:display_ingredient(generic_id, name, ingredient_role))'
         )
         .in('id', candidates);
       if (specs.error) throw specs.error;
-      // ponytail: supabase-js can't type an embed on items' own foreign keys ("more than one relationship"), so the row is cast; hint it as items!<fk> to drop this.
+      // The view's columns are all nullable to supabase-js, so the row is cast.
       const rows = ((specs.data ?? []) as unknown as Spec[]).map((s) => ({
         ...s,
         ingredients: s.recipes.map((r) => ({ id: r.ingredient_item_id, generic: r.ingredient?.generic_id ?? null, name: readingName(r.ingredient) })),
@@ -94,7 +94,7 @@ function useClose<T>(ingredients: readonly SpecIngredient[], select: (c: Close) 
           id: spec.id,
           name: spec.name,
           imageUrl: heroPicture(spec.item_images)?.url ?? null,
-          glass: spec.glass?.icon_key ?? null,
+          glass: spec.glass?.glassware?.icon_key ?? null,
           shares: [...new Set(lines.flatMap((l) => (l.name ? [l.name] : [])))],
         })),
       };

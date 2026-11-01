@@ -18,7 +18,12 @@ export interface Original extends LineageDrink {
   versions?: { count: number }[] | null;
 }
 
-const ORIGINAL_COLUMNS = `${LINEAGE_COLUMNS}, item_type, description, glass:glassware_id(icon_key), item_images(angle, sort_order, is_generated, outdated_since, images(url)), versions:items!riff_of_id(count)`;
+const ORIGINAL_COLUMNS = `${LINEAGE_COLUMNS}, item_type, description, glass:drink_glass!drink_glass_item_id_fkey(glassware:items!drink_glass_glassware_id_fkey(icon_key)), item_images(angle, sort_order, is_generated, outdated_since, images(url)), versions:items!riff_of_id(count)`;
+
+type OriginalRow = Omit<Original, 'glass'> & { glass: { glassware: Original['glass'] } | null };
+
+/** A row as read (its glass through drink_glass) as an Original. */
+const toOriginal = ({ glass, ...r }: OriginalRow): Original => ({ ...r, glass: glass?.glassware ?? null });
 
 /** The `or` filters for drinks credited to a profile: its creator, its first bar, or one of several creators who said yes. */
 async function creditedTo(profileId: string): Promise<string[]> {
@@ -102,7 +107,7 @@ export function useProfileOriginals(profileId: string | null | undefined, { lock
       ]);
       if (error) throw error;
       // ponytail: supabase-js can't type an embed on items' own foreign keys ("more than one relationship"), so the row is cast; hint it as items!<fk> to drop this.
-      const rows = (data ?? []) as unknown as Original[];
+      const rows = ((data ?? []) as unknown as OriginalRow[]).map(toOriginal);
       const seen = new Set(rows.map((r) => r.id));
       const missing = cards.filter((c) => !seen.has(c.id));
       return missing.length ? [...rows, ...missing].sort((a, b) => a.name.localeCompare(b.name)) : rows;
@@ -115,7 +120,7 @@ export async function originalsByIds(ids: string[]): Promise<Original[]> {
   const { data, error } = await supabase.from('items').select(ORIGINAL_COLUMNS).in('id', ids).order('name').limit(100);
   if (error) throw error;
   // ponytail: supabase-js can't type an embed on items' own foreign keys ("more than one relationship"), so the row is cast; hint it as items!<fk> to drop this.
-  return (data ?? []) as unknown as Original[];
+  return ((data ?? []) as unknown as OriginalRow[]).map(toOriginal);
 }
 
 /**
@@ -138,7 +143,7 @@ export function useMyMadeDrinks(profileId: string | null | undefined, enabled = 
         .limit(200);
       if (error) throw error;
       // ponytail: supabase-js can't type an embed on items' own foreign keys ("more than one relationship"), so the row is cast; hint it as items!<fk> to drop this.
-      return (data ?? []) as unknown as Original[];
+      return ((data ?? []) as unknown as OriginalRow[]).map(toOriginal);
     },
   });
 }

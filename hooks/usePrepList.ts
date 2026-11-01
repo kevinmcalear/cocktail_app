@@ -18,8 +18,7 @@ interface MenuItem {
   id: string;
   name: string;
   item_type: string;
-  ice_per_serve_g: number | null;
-  ice_id: string | null;
+  ice: { ice_per_serve_g: number | null; ice_id: string | null } | null;
 }
 
 export interface PrepData {
@@ -129,7 +128,7 @@ export function usePrepData(barId: string | null | undefined, menuIds: string[])
     queryFn: async (): Promise<PrepData> => {
       const { data: menuRows, error: menuError } = await supabase
         .from('menu_drinks')
-        .select('item:items!item_id(id, name, item_type, ice_per_serve_g, ice_id)')
+        .select('item:items!item_id(id, name, item_type, ice:drink_ice!drink_ice_item_id_fkey(ice_per_serve_g, ice_id))')
         .in('menu_id', key);
       if (menuError) throw menuError;
       const drinkItems = new Map<string, MenuItem>();
@@ -137,7 +136,7 @@ export function usePrepData(barId: string | null | undefined, menuIds: string[])
         if (row.item?.item_type === 'cocktail') drinkItems.set(row.item.id, row.item);
       }
       const drinkIds = [...drinkItems.keys()];
-      const iceIds = [...new Set([...drinkItems.values()].map((i) => i.ice_id).filter((id): id is string => !!id))];
+      const iceIds = [...new Set([...drinkItems.values()].map((i) => i.ice?.ice_id).filter((id): id is string => !!id))];
       const [drinkRecipes, iceRes] = await Promise.all([
         recipesFor(drinkIds),
         iceIds.length ? supabase.from('app_item_presentation').select('id, name').in('id', iceIds) : Promise.resolve({ data: [], error: null }),
@@ -146,7 +145,8 @@ export function usePrepData(barId: string | null | undefined, menuIds: string[])
       const iceNames = new Map(((iceRes.data ?? []) as { id: string; name: string }[]).map((i) => [i.id, i.name]));
       const drinks = drinkIds.map((id) => {
         const item = drinkItems.get(id)!;
-        return { id, name: item.name, recipe: toLines(drinkRecipes, id), iceType: item.ice_id ? (iceNames.get(item.ice_id) ?? null) : null, icePerServeG: item.ice_per_serve_g };
+        const iceId = item.ice?.ice_id;
+        return { id, name: item.name, recipe: toLines(drinkRecipes, id), iceType: iceId ? (iceNames.get(iceId) ?? null) : null, icePerServeG: item.ice?.ice_per_serve_g ?? null };
       });
 
       const { houseMade, leaves } = await houseMadeUnder(drinks.flatMap((d) => d.recipe.map((l) => l.ingredientId)), new Set(drinkIds));

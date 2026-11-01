@@ -15,12 +15,12 @@ export function useSetGlassSize(glassId: string) {
   });
 }
 
-/** The ice a serve of this drink takes (items.ice_per_serve_g), or null to unset it. */
+/** The ice a serve of this drink takes (drink_ice.ice_per_serve_g), or null to unset it. */
 export function useSetIcePerServe(itemId: string) {
   const queryClient = useQueryClient();
   return useMutation({
     mutationFn: async (grams: number | null) => {
-      const { error } = await supabase.from('items').update({ ice_per_serve_g: grams }).eq('id', itemId);
+      const { error } = await supabase.from('drink_ice').upsert({ item_id: itemId, ice_per_serve_g: grams }, { onConflict: 'item_id' });
       if (error) throw error;
     },
     onSuccess: () => {
