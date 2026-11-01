@@ -1,0 +1,101 @@
+import { src } from '../sources';
+import type { Technique } from '../types';
+
+/**
+ * Shake and stir (Kept-learn, "Dilution, dry shakes, the whip"): the ways of
+ * chilling and watering a drink in the tin or glass. All methods, none made
+ * in house. The reverse dry shake stays under Foams and airs, where the foam
+ * is the point.
+ */
+export const SHAKE: Technique[] = [
+  {
+    id: 'shake-on-ice',
+    name: 'Shake on ice',
+    group: 'shake',
+    method: true,
+    also: ['hard shake', 'shaken', 'dilution'],
+    summary: 'Chill and water a drink with juice, egg or cream in it, and mix it hard.',
+    why: 'Ice melts as it chills the drink, so the shake sets both the cold and the water. Shaking adds more water than stirring because it breaks the ice up as well.',
+    time: '1 min',
+    totalMinutes: 1,
+    steps: [
+      { text: 'Build the drink in the small tin, then fill the tin with cold, dry ice.' },
+      { text: 'Seal the tins and shake hard until the tin frosts over.', timer: 12 },
+      { text: 'Strain into the glass, through a fine strainer too if there is pulp or ice chips to catch.' },
+    ],
+    equipment: [],
+    helpful: ['strainers'],
+    vegan: true,
+    watch: ['Wet, small or old ice melts faster and waters the drink down: use fresh, cold ice from the freezer.'],
+    grade: 'B',
+    sources: [src('arnoldDilution', 'B')],
+  },
+  {
+    id: 'stir-on-ice',
+    name: 'Stir on ice',
+    group: 'shake',
+    method: true,
+    also: ['stirred', 'stirring', 'dilution'],
+    summary: 'Chill and water a drink made only of spirits, vermouth and bitters, and keep it clear.',
+    why: 'Stirring chills and dilutes more gently than shaking and adds no air, so the drink stays clear and silky.',
+    time: '1 min',
+    totalMinutes: 1,
+    steps: [
+      { text: 'Build the drink in a mixing glass, then fill it with cold, dry ice.' },
+      { text: 'Stir with a bar spoon, back of the spoon against the glass, until the glass is cold to the touch.', timer: 25 },
+      { text: 'Taste a drop from the spoon: it should be cold, round and not watery.' },
+      { text: 'Strain into a chilled glass.' },
+    ],
+    equipment: [],
+    vegan: true,
+    watch: ['Stir a little less for a drink served over ice, which keeps diluting in the glass.'],
+    grade: 'C',
+    sources: [src('arnoldDilution', 'B')],
+  },
+  {
+    id: 'dry-shake',
+    name: 'Dry shake',
+    group: 'shake',
+    method: true,
+    also: ['shake without ice', 'egg white sour'],
+    summary: 'Shake without ice first to whip air into egg white or aquafaba, then shake again on ice.',
+    why: 'Without ice in the way, the foamer whips freely. The second shake on ice then chills and waters the drink.',
+    time: '1 min',
+    totalMinutes: 1,
+    steps: [
+      { text: 'Build the drink with its foamer in the tin, with no ice.' },
+      { text: 'Seal and shake hard.', timer: 15 },
+      { text: 'Add ice, seal and shake again until the tin frosts.', timer: 12 },
+      { text: 'Strain into the glass and let the foam settle a few seconds before garnishing.' },
+    ],
+    equipment: [],
+    vegan: false,
+    allergens: ['Egg (with egg white)'],
+    watch: ['Pasteurised whites are the safer default for egg.', 'Fat kills a foam: no cream, coconut or butter-washed spirit in the same drink.'],
+    swap: 'The reverse dry shake (ice first, then without) gives a bigger head: see Foams and airs.',
+    grade: 'B',
+    sources: [src('totcShake', 'B')],
+  },
+  {
+    id: 'whip-shake',
+    name: 'Whip shake',
+    group: 'shake',
+    method: true,
+    also: ['flash blend', 'short shake', 'crushed ice'],
+    summary: 'A short shake with a little crushed ice, poured with the ice into the glass.',
+    why: 'Crushed ice melts fast, so a few seconds is enough to chill and water the drink. It is poured out with the ice and topped with more.',
+    time: '1 min',
+    totalMinutes: 1,
+    steps: [
+      { text: 'Build the drink in the tin and add a small scoop of crushed ice.' },
+      { text: 'Shake briefly, just until the tin is cold.', timer: 6 },
+      { text: 'Pour everything, ice included, into the glass without straining.' },
+      { text: 'Top with more crushed ice and garnish.' },
+    ],
+    equipment: [],
+    vegan: true,
+    watch: ['Shaken longer, crushed ice overwaters the drink: stop as soon as the tin is cold.'],
+    grade: 'C',
+    sources: [src('arnoldDilution', 'B')],
+  },
+];

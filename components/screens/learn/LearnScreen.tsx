@@ -14,7 +14,7 @@ import { EQUIPMENT, GROUPS, TECHNIQUES } from '@/lib/techniques';
 import { kitPicks, pairLine, pickOfDay, type KitPick } from '@/lib/techniques/learn';
 
 /** The five groups Kept-learn draws on the hub, in its order; All opens the other eight. */
-const HUB_GROUPS = ['cold', 'clarify', 'foam', 'infuse', 'preserve'].flatMap((id) => GROUPS.filter((g) => g.id === id));
+const HUB_GROUPS = ['shake', 'clarify', 'foam', 'infuse', 'preserve'].flatMap((id) => GROUPS.filter((g) => g.id === id));
 
 /**
  * Learn (Kept-learn, "Learn, from Discover"): techniques by group, the kit

@@ -1,6 +1,7 @@
 import assert from 'node:assert/strict';
 
 import { EQUIPMENT } from './equipment';
+import { GROUPS, TECHNIQUES } from './index';
 import { kitPicks, pairLine, pickOfDay, stepParts } from './learn';
 
 // Steps as Kept-learn draws them: the first sentence is the name.
@@ -28,3 +29,7 @@ assert.equal(pairLine('Gin', 'Lime', 1), 'Gin goes with Lime in 1 drink.');
 assert.equal(pickOfDay([], new Date(2026, 10, 1)), undefined);
 assert.equal(pickOfDay(['a', 'b'], new Date(2026, 10, 1, 1)), pickOfDay(['a', 'b'], new Date(2026, 10, 1, 23)), 'the same all day');
 assert.notEqual(pickOfDay(['a', 'b'], new Date(2026, 10, 1)), pickOfDay(['a', 'b'], new Date(2026, 10, 2)), 'and the next day the next');
+
+// The hub's first group is the one the board draws: Shake and stir, with something in it.
+assert.equal(GROUPS[0].name, 'Shake and stir');
+assert.ok(TECHNIQUES.some((t) => t.group === 'shake'));

@@ -17,6 +17,7 @@ import { GARNISH } from './data/garnish';
 import { INFUSE } from './data/infuse';
 import { LAB } from './data/lab';
 import { CARBONATE, COLD, DISTIL, PRESERVE } from './data/more';
+import { SHAKE } from './data/shake';
 import { SYRUP } from './data/syrup';
 import { TEXTURE } from './data/texture';
 import { equipmentById } from './equipment';
@@ -27,6 +28,7 @@ export { EQUIPMENT, EQUIPMENT_KINDS, equipmentById, equipmentMatches, TIER_LABEL
 export { technicalIngredientFor, TECHNICAL_INGREDIENTS, type TechnicalIngredient } from './ingredients';
 
 export const GROUPS: { id: TechniqueGroup; name: string; blurb: string; icon: IconName }[] = [
+  { id: 'shake', name: 'Shake and stir', blurb: 'Dilution, dry shakes, the whip', icon: 'wineglass' },
   { id: 'foam', name: 'Foams and airs', blurb: 'Shaken heads, siphon foams, airs', icon: 'sparkles' },
   { id: 'clarify', name: 'Clarify', blurb: 'Agar, gelatin, centrifuge', icon: 'drop.fill' },
   { id: 'wash', name: 'Wash', blurb: 'Milk punch, fat washing', icon: 'mug.fill' },
@@ -43,7 +45,7 @@ export const GROUPS: { id: TechniqueGroup; name: string; blurb: string; icon: Ic
 ];
 
 export const TECHNIQUES: Technique[] = [
-  ...FOAM, ...CLARIFY, ...WASH, ...INFUSE, ...SYRUP, ...TEXTURE, ...CARBONATE, ...COLD, ...PRESERVE, ...DISTIL,
+  ...SHAKE, ...FOAM, ...CLARIFY, ...WASH, ...INFUSE, ...SYRUP, ...TEXTURE, ...CARBONATE, ...COLD, ...PRESERVE, ...DISTIL,
   ...LAB, ...FERMENT, ...COOK, ...GARNISH, ...AGE, ...KITCHEN,
 ];
 
