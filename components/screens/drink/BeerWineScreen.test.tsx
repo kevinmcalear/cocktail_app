@@ -30,7 +30,6 @@ jest.mock('@/hooks/useWines', () => ({ useWine: () => ({ data: undefined, isPend
 jest.mock('@/hooks/useDropdowns', () => ({ useDropdowns: () => ({ data: { categories: [{ id: 'c1', name: 'Lager' }] } }) }));
 jest.mock('@/hooks/useFavorites', () => ({ useFavorites: () => ({ isFavorite: () => false, toggleFavorite: mockToggleFavorite }) }));
 jest.mock('@/hooks/useStudyPile', () => ({ useStudyPile: () => ({ isInStudyPile: () => false, toggleStudyPile: jest.fn() }) }));
-jest.mock('@/hooks/useVenueFeatures', () => ({ useVenueFeature: () => false }));
 jest.mock('@/hooks/useActiveVenue', () => ({ useActiveVenue: () => ({ venues: [] }) }));
 jest.mock('@/hooks/useTrackRecent', () => ({ useTrackRecent: () => undefined, recentEntry: () => null }));
 jest.mock('@/hooks/useViewAs', () => ({ useCanEditItem: () => true }));

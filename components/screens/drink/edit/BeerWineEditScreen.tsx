@@ -5,7 +5,6 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import { CategoryPickerModal, type CategoryPickerHandle } from '@/components/CategoryPickerModal';
 import { Button, Caption, Chip, Field, GlassButton, Headline, useBreakpoint, useDs, useGutter } from '@/components/ds';
-import { GenerateImageButton } from '@/components/GenerateImageButton';
 import { FormScrollContainer } from '@/components/recipe/FormScrollContainer';
 import { CouldNotLoad } from '@/components/screens/safety/NotAvailable';
 import { displayFaces, fontFamilies, radius, space, type } from '@/constants/tokens';
@@ -197,7 +196,7 @@ function BeerWineEditPage({ editor, onExit }: { editor: Editor; onExit: () => vo
         </>
       )}
       <EditMoreMenu open={sheet === 'more'} onClose={() => setSheet(null)} canDelete={!!draft} dirty={editor.isDirty} draft={!!draft} noun={noun} onPick={(c) => void onMore(c)} />
-      {sheet === 'photos' ? <PhotosSheet editor={editor} onClose={() => setSheet(null)} generate={'handleSave' in editor ? <GenerateImageButton type={editor.kind} id={editor.id} /> : undefined} /> : null}
+      {sheet === 'photos' ? <PhotosSheet editor={editor} onClose={() => setSheet(null)} /> : null}
       {sheet === 'access' ? <AccessSheet editor={editor} noun={noun} onClose={() => setSheet(null)} /> : null}
       <CategoryPickerModal ref={picker} domains={[editor.kind]} selectedCategoryIds={editor.selectedCategories} onToggleCategory={(cat) => editor.toggleCategory(cat.id)} />
     </View>

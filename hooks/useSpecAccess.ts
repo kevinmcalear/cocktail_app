@@ -11,7 +11,7 @@ import { NO_SPECS_MOVE, specAccess, type SpecAccess, type SpecLevels, type Specs
  * change to their built-in role. Under View as a lower role, none (the
  * server shows the built-in role there too).
  */
-export function useSpecsMove(barId: string | null | undefined): SpecsMove {
+function useSpecsMove(barId: string | null | undefined): SpecsMove {
   const { data: bars } = useBars();
   const { previewing } = useRoleAt(barId);
   const me = barId ? bars?.find((b) => b.bar_id === barId) : undefined;

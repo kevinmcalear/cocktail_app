@@ -7,7 +7,6 @@
     "components/auth/EmailLinkGate.tsx": 1,
     "components/drink/drinkImages.ts": 9,
     "components/ui/CustomIcons.tsx": 1,
-    "components/ui/PictureTag.tsx": 4,
     "components/ui/UserAvatar.tsx": 6,
     "hooks/useBarEditor.ts": 4,
     "hooks/useCocktailDraftEditor.ts": 6,
@@ -16,7 +15,6 @@
     "hooks/useDrafts.ts": 1,
     "hooks/useIngredients.ts": 1,
     "hooks/useSearchCatalog.ts": 14,
-    "lib/draftProgress.ts": 28,
     "lib/drafts.ts": 13,
     "lib/platformKeys.ts": 1,
     "lib/recipeUtils.ts": 2

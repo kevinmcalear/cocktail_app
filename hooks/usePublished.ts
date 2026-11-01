@@ -174,44 +174,6 @@ export async function fetchPublicBars(barIds: (string | null)[]): Promise<Public
 
 export const barName = (bars: PublicBar[] | undefined, barId: string | null) => bars?.find((b) => b.barId === barId)?.name ?? null;
 
-const NEW_DRINKS = 20;
-const NEW_RELEASES = 10;
-
-/**
- * "New from bars" on Discover: live releases, newest first, and recently
- * published drinks. ponytail: one page of each, everywhere; narrow it to the
- * Discover area (like TopBars) once enough bars publish to need it.
- */
-export function useNewFromBars() {
-  return useQuery({
-    queryKey: ['published', 'new'],
-    meta: { public: true },
-    staleTime: 5 * 60_000,
-    queryFn: async () => {
-      const now = new Date().toISOString();
-      const [releases, drinks] = await Promise.all([
-        // Publishers can also read their own drafts and scheduled releases: only live ones here.
-        supabase.from('releases').select(RELEASE_COLUMNS).lte('published_at', now).order('published_at', { ascending: false }).limit(NEW_RELEASES),
-        supabase
-          .from('published_items')
-          .select(PUBLISHED_COLUMNS)
-          .eq('is_reference', false)
-          // Not the catalog and seeded signatures, which are listed so their cards open signed out.
-          .eq('is_shared', false)
-          .in('item_type', ['cocktail', 'beer', 'wine'])
-          .order('published_at', { ascending: false, nullsFirst: false })
-          .limit(NEW_DRINKS),
-      ]);
-      if (releases.error) throw releases.error;
-      if (drinks.error) throw drinks.error;
-      const list = ((releases.data ?? []) as ReleaseRow[]).map(toRelease);
-      const published = ((drinks.data ?? []) as PublishedRow[]).map(toPublishedDrink);
-      const bars = await fetchPublicBars([...list.map((r) => r.barId), ...published.map((d) => d.barId)]);
-      return { releases: list, drinks: published, bars };
-    },
-  });
-}
-
 export interface PublishedDrinkPage {
   drink: PublishedDrink;
   /** Its venue's bar, or for a shared drink the bar it's credited to. */

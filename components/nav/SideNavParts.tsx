@@ -26,7 +26,7 @@ export function Kbd({ children }: { children: string }) {
 }
 
 /** One sidebar row: icon and label, lit when it's the page you're on. `look` gives Search its fill and New its outline. */
-export function NavRow({ label, icon, current, hint, badge, role = 'link', look, isNew, onPress }: {
+export function NavRow({ label, icon, current, hint, badge, role = 'link', look, onPress }: {
   label: string;
   icon: IconName;
   current: boolean;
@@ -35,8 +35,6 @@ export function NavRow({ label, icon, current, hint, badge, role = 'link', look,
   badge?: string;
   role?: 'link' | 'button';
   look?: 'filled' | 'outlined';
-  /** A tab the venue just switched on, not opened yet: an accent dot (hooks/useFeatureNews.ts). */
-  isNew?: boolean;
   onPress: () => void;
 }) {
   const ds = useDs();
@@ -44,7 +42,7 @@ export function NavRow({ label, icon, current, hint, badge, role = 'link', look,
     <PressableScale
       role={role}
       {...currentProps(current)}
-      accessibilityLabel={[label, isNew ? 'new' : null, badge ? `${badge} done` : null].filter(Boolean).join(', ')}
+      accessibilityLabel={[label, badge ? `${badge} done` : null].filter(Boolean).join(', ')}
       onPress={onPress}
       style={[
         styles.row,
@@ -57,7 +55,6 @@ export function NavRow({ label, icon, current, hint, badge, role = 'link', look,
       <DsText color={current || look === 'outlined' ? ds.c.ink : ds.c.muted} numberOfLines={1} style={[styles.label, current && styles.strong]}>
         {label}
       </DsText>
-      {isNew ? <View style={[styles.dot, { backgroundColor: ds.accentFill.fill }]} /> : null}
       {hint ? <Kbd>{hint}</Kbd> : null}
       {badge ? <Caption color={ds.accentText} style={[styles.badge, { backgroundColor: withAlpha(ds.accentText, 0.14) }]}>{badge}</Caption> : null}
     </PressableScale>
@@ -121,7 +118,6 @@ const styles = StyleSheet.create({
   row: { flexDirection: 'row', alignItems: 'center', gap: space.md, minHeight: 40, paddingHorizontal: space.md, borderRadius: radius.control },
   label: { flex: 1 },
   strong: { fontFamily: fontFamilies.bodySemiBold },
-  dot: { width: space.sm, height: space.sm, borderRadius: radius.pill },
   kbd: { fontFamily: fontFamilies.monoMedium, paddingHorizontal: 6, paddingVertical: 2, borderRadius: radius.mark, overflow: 'hidden' },
   heading: { fontFamily: fontFamilies.monoMedium, textTransform: 'uppercase', letterSpacing: 1, marginTop: space.lg, marginBottom: space.xs, marginHorizontal: space.md },
   marks: { flexDirection: 'row', alignItems: 'center', paddingBottom: space.sm },

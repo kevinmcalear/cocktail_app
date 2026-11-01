@@ -210,7 +210,6 @@ function DrinkPage({ item, inStudyPile, onToggleStudyPile, canEdit, adminFix = f
           sections={sections}
           hero={hero}
           top={top}
-          staff={staff}
           actions={<DrinkActionBar actions={barActions} pinned={false} />}
           heroActions={
             <>
