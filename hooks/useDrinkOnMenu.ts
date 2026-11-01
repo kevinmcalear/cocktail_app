@@ -1,6 +1,7 @@
 import { useQuery } from '@tanstack/react-query';
 
 import { useUserId } from '@/ctx/AuthContext';
+import { onNowFilters } from '@/lib/listRows';
 import { supabase } from '@/lib/supabase';
 
 /** A venue menu that's on now and lists this drink. Plain JSON. */
@@ -22,11 +23,15 @@ export function useDrinkOnMenu(itemId: string | null | undefined, barId: string 
     queryKey: ['drink-on-menu', itemId, userId],
     enabled: !!itemId && !!barId && !!userId,
     queryFn: async (): Promise<OnMenu | null> => {
+      // On now: not planned for later or waiting for approval (lists and runs).
+      const [waiting, onFrom] = onNowFilters();
       const { data, error } = await supabase
         .from('menu_drinks')
         .select('price, menu:menus!inner(id, name, is_active, kind)')
         .eq('item_id', itemId!)
         .eq('menu.is_active', true)
+        .or(waiting)
+        .or(onFrom)
         .limit(5);
       if (error) throw error;
       const rows = (data ?? []) as { price: string | null; menu: { id: string; name: string; kind: string } }[];

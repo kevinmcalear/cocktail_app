@@ -21,7 +21,7 @@ export function CollectButton({
   labels?: [string, string];
   style?: StyleProp<ViewStyle>;
 }) {
-  const { saved, toggle, error, pending, sheet } = useCollectToggle(target, name);
+  const { saved, toggle, error, pending, sheet } = useCollectToggle(target);
   return (
     <View style={styles.wrap}>
       <Button

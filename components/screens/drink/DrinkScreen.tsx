@@ -104,8 +104,8 @@ function DrinkPage({ item, inStudyPile, onToggleStudyPile, canEdit, adminFix = f
   const { access, amountsOpenAt } = useSpecAccess(item.id, item.bar_id, preview);
   // A bar's drink whose page keeps the spec back: no spec, method or notes, just why (and on a Names page, no description).
   const lock = useSpecLock(preview ? null : item).data ?? visitorLock;
-  // The bookmark: To make in Collection (collected_items).
-  const toMake = useCollectToggle({ kind: 'drink', itemId: item.id }, item.name, !preview);
+  // The bookmark: To make in Collection (want_list).
+  const toMake = useCollectToggle({ kind: 'drink', itemId: item.id }, !preview);
   const lines = specLines(item.recipes as PresentationRecipe[] | undefined);
   // Both modes: a party batch at home, a prep bottle at the bar.
   const canBatch = !lock && access.amounts && lines.some((l) => l.value !== null);

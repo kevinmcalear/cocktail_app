@@ -26,8 +26,9 @@ export function ClassicLink({ item }: { item: { id: string; name: string; bar_id
   const [search, setSearch] = useState('');
 
   if (!item.bar_id || isLoading || !catalog?.length) return null;
-  const linked = target?.riff_of?.is_catalog ? target.riff_of : null;
-  if (target?.riff_of_id && !linked) return null;
+  // A venue's drink is only ever based on another as a riff.
+  const linked = target?.based_on?.is_catalog ? target.based_on : null;
+  if (target?.based_on_id && !linked) return null;
 
   const save = (classicId: string | null) =>
     link.mutate([{ itemId: item.id, classicId }], {

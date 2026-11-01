@@ -105,22 +105,29 @@ export function formatScore(score: number): string {
   return score.toFixed(1);
 }
 
+type RankLink = { id: string; name: string; is_catalog?: boolean | null };
+
 /**
- * The list a drink is ranked in. A bar's version of a catalog classic (linked
- * with `riff_of_id`), or any drink labelled "Classic" with `riff_of_id` set,
- * is compared with every other martini; originals and riffs are their own
- * list.
+ * The list a drink is ranked in. A bar's version of a catalog classic (based
+ * on it, kind 'riff'), or any drink labelled "Classic" that's a riff, is
+ * compared with every other martini; originals, riffs on other drinks and a
+ * classic that descends from another are their own list.
  */
 export function rankedAs(item: {
   id: string;
   name: string;
   origin?: string | null;
+  based_on_id?: string | null;
+  based_on_kind?: string | null;
+  based_on?: RankLink | null;
+  // ponytail: usePublicDrink reads published_items, which has only the old riff link; drop these two once it reads based_on_*.
   riff_of_id?: string | null;
-  riff_of?: { id: string; name: string; is_catalog?: boolean | null } | null;
+  riff_of?: RankLink | null;
 }): { id: string; name: string } {
-  if (item.riff_of_id && (item.riff_of?.is_catalog || item.origin === 'Classic')) {
-    return { id: item.riff_of_id, name: item.riff_of?.name ?? item.name };
-  }
+  const riff = item.based_on_kind === 'riff';
+  const linkId = riff ? item.based_on_id : item.riff_of_id;
+  const link = riff ? item.based_on : item.riff_of;
+  if (linkId && (link?.is_catalog || item.origin === 'Classic')) return { id: linkId, name: link?.name ?? item.name };
   return { id: item.id, name: item.name };
 }
 

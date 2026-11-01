@@ -1,7 +1,7 @@
 // Checks for lib/spec.ts. Run: npm run test:unit
 import assert from 'node:assert/strict';
 
-import { gramsPerMl, ratio, specAccess, specLines } from './spec';
+import { gramsPerMl, ratio, specAccess, specLevelsFrom, specLines } from './spec';
 
 const rows = [
   { id: 'b', sort_order: 2, amount: 22.5, unit: 'ml', display_ingredient_id: 'lemon', display_ingredient: { id: 'lemon', name: 'Lemon juice' } },
@@ -74,3 +74,22 @@ const float = specLines([{ id: 'w', sort_order: 1, amount: 15, unit: 'ml', is_fl
 assert.equal(float.amount, '15 ml');
 assert.equal(float.float, true);
 assert.equal(float.ml, 15, 'a float still counts in the drink');
+
+// Permissions decide amounts (20261204300000): where each part opens, from the role matrix.
+{
+  const builtIn = (base_level: number, capabilities: string[]) => ({ role_id: null, base_level, capabilities });
+  const matrix = [
+    builtIn(10, ['menu']),
+    builtIn(20, ['menu', 'talking_points']),
+    builtIn(30, ['menu', 'talking_points', 'specs']),
+    builtIn(35, ['menu', 'talking_points', 'specs', 'house_made', 'edit_drinks']),
+    builtIn(40, ['menu', 'talking_points', 'specs', 'house_made', 'edit_drinks']),
+    { role_id: 'r1', base_level: 10, capabilities: ['specs'] },
+  ];
+  assert.deepEqual(specLevelsFrom(matrix), { generic: 20, brand: 30, measurement: 30, prep: 35, hidden: false }, 'a venue role never moves the labels');
+  assert.deepEqual(specLevelsFrom(matrix, true), { generic: 20, brand: 35, measurement: 35, prep: 35, hidden: true }, 'a hidden spec opens to who edits it');
+  assert.deepEqual(specLevelsFrom([builtIn(40, ['menu'])]).measurement, 41, 'nobody built in opens it');
+  const hidden = specLevelsFrom(matrix, true);
+  assert.deepEqual(specAccess(30, hidden, true), { names: true, amounts: false, prep: false });
+  assert.deepEqual(specAccess(35, hidden, true), { names: true, amounts: true, prep: true });
+}
