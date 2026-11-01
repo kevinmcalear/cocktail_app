@@ -137,6 +137,7 @@ function useInvalidateList(menuId: string) {
       client.invalidateQueries({ queryKey: dropdownKeys.currentMenuDrinks }),
       client.invalidateQueries({ queryKey: ['drink-menu-runs'] }),
       client.invalidateQueries({ queryKey: ['menu-runs'] }),
+      client.invalidateQueries({ queryKey: ['drink-list-dates'] }),
     ]);
 }
 
@@ -173,6 +174,31 @@ export function useListChanges(menuId: string) {
             slot_name: p.slotName ?? null,
           })
         )),
+      ...opts,
+    }),
+    /**
+     * Takes back a swap: the drink swapped in goes, the one it replaced stays
+     * (planned) or comes back in its place (already done).
+     */
+    // ponytail: a swap already done leaves both short runs in menu_drinks_removed (the client can't write the record); a gated undo_swap RPC could drop them within a few minutes.
+    undoSwap: useMutation({
+      mutationFn: async ({ swappedIn, replaced }: { swappedIn: ListRow; replaced: ListRow | null }) => {
+        if (!swappedIn.replacesItemId) throw new Error('That drink wasn’t swapped in.');
+        await check(supabase.from('menu_drinks').delete().eq('id', swappedIn.id));
+        if (replaced) {
+          await check(supabase.from('menu_drinks').update({ off_at: null }).eq('id', replaced.id));
+          return;
+        }
+        await check(
+          supabase.from('menu_drinks').insert({
+            menu_id: menuId,
+            menu_section_id: swappedIn.sectionId,
+            item_id: swappedIn.replacesItemId,
+            sort_order: swappedIn.sortOrder ?? 0,
+            slot_name: swappedIn.slotName,
+          })
+        );
+      },
       ...opts,
     }),
     /** Approves a waiting change (only someone who may change the list). */

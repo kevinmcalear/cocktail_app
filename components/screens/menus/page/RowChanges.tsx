@@ -101,13 +101,8 @@ export function RowChanges({ menu, rows, target, onClose }: { menu: MenuDetail; 
                 onPress: () => {
                   // Taking back a planned swap keeps the drink it was swapping out, too.
                   const out = row.state === 'coming' && row.replacesItemId ? rows.find((r) => r.itemId === row.replacesItemId && r.sectionId === row.sectionId && r.state === 'going') : undefined;
-                  changes.turnDown.mutate(
-                    { rowId: row.id, waiting: row.state === 'coming' ? 'on' : 'off' },
-                    {
-                      onSuccess: () => (out ? changes.turnDown.mutate({ rowId: out.id, waiting: 'off' }, { onSuccess: () => done('Swap taken back'), onError: failed }) : done(`${drink.name} kept as it was`)),
-                      onError: failed,
-                    }
-                  );
+                  if (out) changes.undoSwap.mutate({ swappedIn: row, replaced: out }, { onSuccess: () => done('Swap taken back'), onError: failed });
+                  else changes.turnDown.mutate({ rowId: row.id, waiting: row.state === 'coming' ? 'on' : 'off' }, { onSuccess: () => done(`${drink.name} kept as it was`), onError: failed });
                 },
               },
             ]
