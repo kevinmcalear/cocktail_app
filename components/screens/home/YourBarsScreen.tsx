@@ -10,6 +10,7 @@ import { useProfilePositions } from '@/hooks/useProfiles';
 import { useLovedRows, useWantToGo } from '@/hooks/useWantToGo';
 import { nearestFirst, wantCamera, wantLine, wantPins, type WantBar } from '@/lib/collectionStages';
 import { readableAccent } from '@/lib/color';
+import { confirmedJob } from '@/lib/profiles';
 import { useLastPlace } from '@/store/useLastPlace';
 
 import { YouPage } from '../profile/YouPage';
@@ -44,34 +45,51 @@ export function YourBarsScreen() {
   );
 }
 
-function BarRow({ bar, line, open, first }: { bar: { id: string; handle: string | null; name: string; avatarUrl: string | null }; line: string | null; open?: boolean; first: boolean }) {
+function BarRow({
+  bar,
+  line,
+  open,
+  first,
+}: {
+  bar: {
+    id: string;
+    handle: string | null;
+    name: string;
+    avatarUrl: string | null;
+  };
+  line: string | null;
+  open?: boolean;
+  first: boolean;
+}) {
   const ds = useDs();
   const router = useRouter();
   return (
-    <PressableScale
-      role="link"
-      accessibilityLabel={[bar.name, line, open ? 'Open' : null].filter(Boolean).join('. ')}
-      onPress={() => router.push(`/p/${bar.handle || bar.id}` as Href)}
-      style={[styles.row, { borderTopColor: first ? 'transparent' : ds.c.line }]}
-    >
-      <BarMark name={bar.name} logoUrl={bar.avatarUrl} profileId={bar.id} size={44} />
-      <View style={styles.words}>
-        <RowName>{bar.name}</RowName>
-        {line ? (
-          <Caption tone="muted" numberOfLines={1}>
-            {line}
-          </Caption>
-        ) : null}
-      </View>
-      {open ? <Body color={readableAccent(STATUS.success, ds.c.ground)}>Open</Body> : <IconSymbol name="chevron.right" size={16} color={ds.c.faint} />}
-    </PressableScale>
+    <View role="listitem">
+      <PressableScale
+        role="link"
+        accessibilityLabel={[bar.name, line, open ? 'Open' : null].filter(Boolean).join('. ')}
+        onPress={() => router.push(`/p/${bar.handle || bar.id}` as Href)}
+        style={[styles.row, { borderTopColor: first ? 'transparent' : ds.c.line }]}
+      >
+        <BarMark name={bar.name} logoUrl={bar.avatarUrl} profileId={bar.id} size={44} />
+        <View style={styles.words}>
+          <RowName>{bar.name}</RowName>
+          {line ? (
+            <Caption tone="muted" numberOfLines={1}>
+              {line}
+            </Caption>
+          ) : null}
+        </View>
+        {open ? <Body color={readableAccent(STATUS.success, ds.c.ground)}>Open</Body> : <IconSymbol name="chevron.right" size={16} color={ds.c.faint} />}
+      </PressableScale>
+    </View>
   );
 }
 
 function Loved() {
   const { data: profile } = useMyProfile();
   const positions = useProfilePositions(profile ? { id: profile.id, kind: 'person' } : null).data ?? [];
-  const { rows, isLoading, error } = useLovedRows(new Set(positions.filter((p) => p.is_current && p.person_accepted).map((p) => p.bar.id)));
+  const { rows, isLoading, error } = useLovedRows(new Set(positions.filter((p) => p.is_current && confirmedJob(p)).map((p) => p.bar.id)));
   if (error) return <PencilState kind="error" title="Your bars didn’t load" detail="The connection dropped halfway." />;
   if (isLoading) return <OutlineRows count={5} round pic={44} />;
   if (!rows.length) return <PencilState kind="empty" title="No loved bars yet" detail="Tap the heart on a bar’s page and it stays here." />;
@@ -137,8 +155,27 @@ function WantCard({ rows }: { rows: WantBar[] }) {
 }
 
 const styles = StyleSheet.create({
-  row: { flexDirection: 'row', alignItems: 'center', gap: space.md, minHeight: 64, paddingVertical: space.sm + 2, borderTopWidth: StyleSheet.hairlineWidth },
+  row: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: space.md,
+    minHeight: 64,
+    paddingVertical: space.sm + 2,
+    borderTopWidth: StyleSheet.hairlineWidth,
+  },
   words: { flex: 1, minWidth: 0 },
-  map: { height: 196, borderRadius: radius.card, borderCurve: 'continuous', overflow: 'hidden' },
-  caption: { position: 'absolute', left: space.md, bottom: space.md, paddingVertical: space.xs, paddingHorizontal: space.md, borderRadius: radius.pill },
+  map: {
+    height: 196,
+    borderRadius: radius.card,
+    borderCurve: 'continuous',
+    overflow: 'hidden',
+  },
+  caption: {
+    position: 'absolute',
+    left: space.md,
+    bottom: space.md,
+    paddingVertical: space.xs,
+    paddingHorizontal: space.md,
+    borderRadius: radius.pill,
+  },
 });

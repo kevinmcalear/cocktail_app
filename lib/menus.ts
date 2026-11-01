@@ -444,3 +444,10 @@ export function bandLoopJump(x: number, tile: number, count: number, lead: numbe
   if (x > (lead + count) * tile - 1) return -count * tile;
   return 0;
 }
+
+/** "Little Rye, Pale Moth and 10 more": a list's first two names. */
+export function namesLine(names: readonly string[]): string | null {
+  if (!names.length) return null;
+  if (names.length <= 2) return names.join(' and ');
+  return `${names.slice(0, 2).join(', ')} and ${names.length - 2} more`;
+}

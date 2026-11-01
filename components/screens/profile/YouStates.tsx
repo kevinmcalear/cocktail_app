@@ -3,13 +3,12 @@ import { ScrollView, StyleSheet, View } from 'react-native';
 
 import { Caption, Display, ListNote, OutlineRows, PencilState, SavedChip, SectionLabel, useDs } from '@/components/ds';
 import { usePageColumn } from '@/components/nav/Page';
-import { ScreenHeader } from '@/components/nav/ScreenHeader';
 import { useTabBarInset } from '@/components/nav/WebTabBar';
 import { space } from '@/constants/tokens';
 import { useOpenSearch } from '@/hooks/useSearchFrom';
 import type { HadDrink } from '@/lib/hadDrinks';
 
-import { BestRows, SettingsGear } from './YouParts';
+import { BestRows, YouTop } from './YouParts';
 
 /** The states' page: the tab's own header with the gear, then You under your name (Sta-you). */
 function StatePage({ name, children }: { name: string; children: ReactNode }) {
@@ -19,7 +18,7 @@ function StatePage({ name, children }: { name: string; children: ReactNode }) {
   return (
     <View style={[styles.screen, { backgroundColor: ds.c.ground }]}>
       <ScrollView contentContainerStyle={{ paddingBottom: bottom }}>
-        <ScreenHeader add={false} actions={<SettingsGear />} />
+        <YouTop place />
         <View style={[column, styles.body]}>
           <View>
             <Caption tone="muted">{name}</Caption>
@@ -37,7 +36,7 @@ export function YouEmpty({ name }: { name: string }) {
   const openSearch = useOpenSearch();
   return (
     <StatePage name={name}>
-      <PencilState kind="empty" title="No ranks yet" detail="Rank your first drink tonight and your list starts here." action={{ label: 'Rank a drink', onPress: openSearch }} />
+      <PencilState kind="empty" title="No ranks yet" detail="Rank your first drink tonight and your list starts here." action={{ label: 'Rank a drink', onPress: () => openSearch() }} />
     </StatePage>
   );
 }

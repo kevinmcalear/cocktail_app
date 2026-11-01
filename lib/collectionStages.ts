@@ -253,13 +253,6 @@ export function hoursText(s: { open: boolean; detail: string | null }): string {
   return s.detail ? s.detail.charAt(0).toUpperCase() + s.detail.slice(1) : 'Closed';
 }
 
-/** "Little Rye, Pale Moth and 10 more": a list's first two names. */
-export function namesLine(names: readonly string[]): string | null {
-  if (!names.length) return null;
-  if (names.length <= 2) return names.join(' and ');
-  return `${names.slice(0, 2).join(', ')} and ${names.length - 2} more`;
-}
-
 /** A Loved row's line (Kept-you-bars): where you work, or what's new there, else its hours, then how far. */
 export function lovedLine({ work, news, hours, away }: { work: boolean; news: string | null; hours: { open: boolean; text: string } | null; away: string | null }): string | null {
   if (work) return 'Where you work';

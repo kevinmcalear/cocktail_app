@@ -95,11 +95,18 @@ export function taglineProblem(raw: string): string | undefined {
  * confirmed it and it's on their page, else what they said they do, else
  * nothing. Never a label the app made up.
  */
-export function profileLine(
-  p: { tagline: string | null; headline_position_id: string | null },
-  positions: { id: string; title: string; is_current: boolean; is_shown: boolean; is_hidden?: boolean; person_accepted: boolean; bar_accepted: boolean; bar: { display_name: string } }[]
-): string | null {
-  const job = positions.find((j) => j.id === p.headline_position_id && j.person_accepted && j.bar_accepted && !j.is_hidden && (j.is_current || j.is_shown));
+type LinePosition = { id: string; title: string; is_current: boolean; is_shown: boolean; is_hidden?: boolean; person_accepted: boolean; bar_accepted: boolean; bar: { display_name: string } };
+
+/** A job both sides confirmed and nobody hid: one people may read. */
+export const confirmedJob = (j: Pick<LinePosition, 'person_accepted' | 'bar_accepted' | 'is_hidden'>) => j.person_accepted && j.bar_accepted && !j.is_hidden;
+
+/** The job a profile's line names: its headline, confirmed and shown. */
+export function headlineJob<P extends LinePosition>(headlineId: string | null, positions: readonly P[]): P | undefined {
+  return positions.find((j) => j.id === headlineId && confirmedJob(j) && (j.is_current || j.is_shown));
+}
+
+export function profileLine(p: { tagline: string | null; headline_position_id: string | null }, positions: readonly LinePosition[]): string | null {
+  const job = headlineJob(p.headline_position_id, positions);
   if (job) return `${job.title} ${job.is_current ? 'at' : 'formerly at'} ${job.bar.display_name}`;
   return p.tagline?.trim() || null;
 }

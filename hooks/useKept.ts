@@ -1,10 +1,12 @@
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
+import { useState } from 'react';
 
 import { useUserId } from '@/ctx/AuthContext';
 import { fetchPublished } from '@/hooks/usePublished';
-import { parseHours, type WeekHours } from '@/lib/barHours';
+import { hoursStatus, parseHours, type WeekHours } from '@/lib/barHours';
 import { editionDates, type MenuDates, type MenuEdition } from '@/lib/menuEditions';
 import { supabase } from '@/lib/supabase';
+import { useMyHadDrinks } from '@/hooks/useRankings';
 
 /**
  * The bars and bar menus a home bartender keeps in Collection: bars they
@@ -132,6 +134,16 @@ export function useLovedBars() {
  * useLovedBars has them. Kept under 'loved-bars': loving, unloving and hiding
  * a bar change it too (the database keeps them in step), and each refreshes that.
  */
+/** You's Want to go row: the bars you want to go to and haven't had a drink at (as /your-bars lists them), and how many are open now. */
+export function useWantSummary(): { count: number; open: number; isLoading: boolean; error: Error | null } {
+  const { data: wanted = [], isLoading, error } = useWantBars();
+  const had = useMyHadDrinks();
+  const [now] = useState(() => new Date());
+  const been = new Set((had.data ?? []).map((d) => d.venue?.id));
+  const bars = wanted.filter((b) => !been.has(b.id));
+  return { count: bars.length, open: bars.filter((b) => hoursStatus(b.hours, now, b.timezone)?.open).length, isLoading: isLoading || had.isLoading, error };
+}
+
 export function useWantBars() {
   const userId = useUserId();
   return useQuery({

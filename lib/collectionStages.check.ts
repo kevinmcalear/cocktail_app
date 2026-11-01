@@ -1,6 +1,6 @@
 import assert from 'node:assert/strict';
 
-import { beatCount, beenBars, dayShort, gapLabel, hadOutRows, homeReach, hoursText, lovedLine, madeRows, menuRowShelf, namesLine, nearestFirst, nextBottle, toMakeGroups, wantCamera, wantLine, wantPins, type HadMemory, type WantBar } from './collectionStages';
+import { beatCount, beenBars, dayShort, gapLabel, hadOutRows, homeReach, hoursText, lovedLine, madeRows, menuRowShelf, nearestFirst, nextBottle, toMakeGroups, wantCamera, wantLine, wantPins, type HadMemory, type WantBar } from './collectionStages';
 import { cameraFor } from './discoverMap';
 import type { HadDrink } from './hadDrinks';
 
@@ -122,9 +122,6 @@ assert.deepEqual(wantCamera([want('a', 900, [1, 1]), want('b', null, [2, 2])]), 
 assert.equal(wantCamera([nowhere]), null);
 
 // --- Your bars' lines ---
-assert.equal(namesLine([]), null);
-assert.equal(namesLine(['Little Rye', 'Pale Moth']), 'Little Rye and Pale Moth');
-assert.equal(namesLine(['Little Rye', 'Pale Moth', 'Bellamy', 'Omakase']), 'Little Rye, Pale Moth and 2 more');
 assert.equal(hoursText({ open: true, detail: 'until 1am' }), 'Open until 1am');
 assert.equal(hoursText({ open: false, detail: 'opens 5pm Thu' }), 'Opens 5pm Thu');
 assert.equal(hoursText({ open: false, detail: null }), 'Closed');

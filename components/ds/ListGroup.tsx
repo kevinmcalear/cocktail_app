@@ -71,9 +71,11 @@ export function ListRow({ title, detail, value, warn, icon, lead, end, onPress, 
     </>
   );
   return onPress && !end ? (
-    <PressableScale role="link" accessibilityLabel={[title, detail, value].filter(Boolean).join('. ')} onPress={onPress} style={[styles.row, line]}>
-      {words}
-    </PressableScale>
+    <View role="listitem">
+      <PressableScale role="link" accessibilityLabel={[title, detail, value].filter(Boolean).join('. ')} onPress={onPress} style={[styles.row, line]}>
+        {words}
+      </PressableScale>
+    </View>
   ) : (
     <View role="listitem" style={[styles.row, line]}>
       {words}

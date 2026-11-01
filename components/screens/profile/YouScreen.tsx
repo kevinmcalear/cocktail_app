@@ -11,17 +11,15 @@ import { space } from '@/constants/tokens';
 import { useCollection } from '@/hooks/useCollection';
 import { useCreditsToCheck } from '@/hooks/useCreditsToCheck';
 import { useMyTaste } from '@/hooks/useFlavor';
-import { useLovedBars } from '@/hooks/useKept';
+import { useLovedBars, useWantSummary } from '@/hooks/useKept';
 import { useMyProfile } from '@/hooks/useMyProfile';
 import { useMyMadeDrinks, useMyPersonClaim, useProfile, useProfilePositions } from '@/hooks/useProfiles';
 import { useMyHadDrinks } from '@/hooks/useRankings';
 import { useOpenSearch } from '@/hooks/useSearchFrom';
-import { useWantToGo } from '@/hooks/useWantToGo';
-import { namesLine } from '@/lib/collectionStages';
 import { tasteHeadline } from '@/lib/flavor';
 import { sortHad } from '@/lib/hadDrinks';
-import { plural } from '@/lib/menus';
-import { profileLine, youLine } from '@/lib/profiles';
+import { namesLine, plural } from '@/lib/menus';
+import { headlineJob, profileLine, youLine } from '@/lib/profiles';
 
 import { CreditsToCheckCard } from './CreditsToCheck';
 import { MyJobRequests } from './JobRequests';
@@ -61,7 +59,7 @@ function You() {
   const had = useMyHadDrinks();
   const made = useMyMadeDrinks(profile?.id);
   const loved = useLovedBars();
-  const { want, isLoading: wantLoading } = useWantToGo();
+  const want = useWantSummary();
   const saved = useCollection().data?.drinks.length ?? 0;
   const taste = useMyTaste().data;
   const waitingCredits = useCreditsToCheck().data?.length ?? 0;
@@ -74,23 +72,41 @@ function You() {
   const drinks = had.data;
   const best = sortHad(drinks ?? [], 'score').slice(0, BEST);
   if (offline) return <YouOffline name={name} best={best} />;
-  if (had.error && !drinks) return <YouError name={name} onRetry={() => void had.refetch()} />;
-  if (me.isLoading || had.isLoading || loved.isLoading || wantLoading) return <YouLoading name={name} />;
+  if ((had.error && !drinks) || (loved.error && !loved.data))
+    return (
+      <YouError
+        name={name}
+        onRetry={() => {
+          void had.refetch();
+          void loved.refetch();
+        }}
+      />
+    );
+  if (me.isLoading || had.isLoading || loved.isLoading || want.isLoading || made.isLoading) return <YouLoading name={name} />;
 
   const ranked = drinks?.length ?? 0;
   const lovedBars = loved.data ?? [];
   const madeCount = made.data?.length ?? 0;
-  if (!ranked && !lovedBars.length && !want.length && !madeCount) return <YouEmpty name={name} />;
-
   const headline = taste ? tasteHeadline(taste.taste) : null;
-  const job = positions.find((p) => p.id === profile?.headlinePositionId && p.is_current);
+  // Nothing at all yet; anything waiting on you (a claim, credits, a job) still shows the page.
+  if (!ranked && !lovedBars.length && !want.count && !madeCount && !saved && !headline && !waiting && !waitingCredits && !positions.length) return <YouEmpty name={name} />;
+
+  const job = profile ? headlineJob(profile.headlinePositionId, positions) : undefined;
   const line = youLine({
-    line: profile ? profileLine({ tagline: profile.tagline, headline_position_id: profile.headlinePositionId }, positions) : null,
-    since: job?.start_year ?? null,
+    line: profile
+      ? profileLine(
+          {
+            tagline: profile.tagline,
+            headline_position_id: profile.headlinePositionId,
+          },
+          positions
+        )
+      : null,
+    since: job?.is_current ? job.start_year : null,
     city: profile?.showsCity ? profile.city : null,
     taste: headline,
   });
-  const openNow = want.filter((b) => b.hours?.open).length;
+  const openNow = want.open;
   const push = (href: string) => () => router.push(href as Href);
 
   return (
@@ -116,7 +132,10 @@ function You() {
           <YouStats
             stats={[
               { n: ranked, label: 'ranked' },
-              { n: lovedBars.length, label: lovedBars.length === 1 ? 'bar loved' : 'bars loved' },
+              {
+                n: lovedBars.length,
+                label: lovedBars.length === 1 ? 'bar loved' : 'bars loved',
+              },
               { n: madeCount, label: 'made by you' },
             ]}
           />
@@ -137,19 +156,29 @@ function You() {
             <SectionLabel title="Your bars" aside="All" onAside={push('/your-bars')} />
             <ListGroup>
               <ListRow first icon="heart" title="Loved" detail={namesLine(lovedBars.map((b) => b.name))} value={String(lovedBars.length)} onPress={push('/your-bars')} />
-              <ListRow icon="mappin.and.ellipse" title="Want to go" detail={openNow ? `${openNow === want.length && openNow > 1 ? 'All' : openNow} of them ${openNow === 1 ? 'is' : 'are'} open now` : null} value={String(want.length)} onPress={push('/your-bars?tab=want')} />
+              <ListRow
+                icon="mappin.and.ellipse"
+                title="Want to go"
+                detail={openNow ? `${openNow === want.count && openNow > 1 ? 'All' : openNow} of them ${openNow === 1 ? 'is' : 'are'} open now` : null}
+                value={String(want.count)}
+                onPress={push('/your-bars?tab=want')}
+              />
             </ListGroup>
           </View>
 
           <View style={styles.section}>
             <SectionLabel title="Your best" />
-            {best.length ? <BestRows drinks={best} /> : <PencilState compact kind="empty" title="No ranks yet" detail="Rank your first drink tonight and your list starts here." action={{ label: 'Rank a drink', onPress: openSearch }} />}
+            {best.length ? (
+              <BestRows drinks={best} />
+            ) : (
+              <PencilState compact kind="empty" title="No ranks yet" detail="Rank your first drink tonight and your list starts here." action={{ label: 'Rank a drink', onPress: () => openSearch() }} />
+            )}
           </View>
 
           <View style={styles.section}>
             <SectionLabel title="Your taste" />
             <ListGroup>
-              <ListRow first title={headline ?? 'Not set yet'} detail={headline && ranked ? `From your ${plural(ranked, 'rank')}` : 'Tell us what you like'} onPress={push('/taste')} />
+              <ListRow first title={headline ?? 'Not set yet'} detail={!headline ? 'Tell us what you like' : ranked ? `From your ${plural(ranked, 'rank')}` : 'From your answers'} onPress={push('/taste')} />
             </ListGroup>
           </View>
 

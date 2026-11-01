@@ -23,9 +23,11 @@ jest.mock('./CreditsToCheck', () => ({ CreditsToCheckCard: () => null }));
 jest.mock('@/hooks/useCreditsToCheck', () => ({ useCreditsToCheck: () => ({ data: [] }) }));
 jest.mock('./YourBarCard', () => ({ ItsYou: () => null, YourBarCard: () => null }));
 jest.mock('@react-native-community/netinfo', () => ({ useNetInfo: () => ({ isConnected: mockOffline ? false : true }) }));
-jest.mock('@/hooks/useCollection', () => ({ useCollection: () => ({ data: { drinks: Array.from({ length: 31 }, () => ({})) } }) }));
-jest.mock('@/hooks/useKept', () => ({ useLovedBars: () => ({ data: mockMade.length || mockHad.length ? [{ name: 'Little Rye' }, { name: 'Pale Moth' }, { name: 'Bellamy' }] : [], isLoading: false }) }));
-jest.mock('@/hooks/useWantToGo', () => ({ useWantToGo: () => ({ want: mockMade.length || mockHad.length ? [{ hours: { open: true } }, { hours: { open: false } }] : [], isLoading: false }) }));
+jest.mock('@/hooks/useCollection', () => ({ useCollection: () => ({ data: { drinks: Array.from({ length: mockMade.length || mockHad.length ? 31 : 0 }, () => ({})) } }) }));
+jest.mock('@/hooks/useKept', () => ({
+  useLovedBars: () => ({ data: mockMade.length || mockHad.length ? [{ name: 'Little Rye' }, { name: 'Pale Moth' }, { name: 'Bellamy' }] : [], isLoading: false, refetch: mockRefetch }),
+  useWantSummary: () => (mockMade.length || mockHad.length ? { count: 2, open: 1, isLoading: false } : { count: 0, open: 0, isLoading: false }),
+}));
 jest.mock('expo-router', () => ({ useRouter: () => ({ push: mockPush, navigate: mockNavigate, replace: jest.fn(), back: jest.fn(), canGoBack: () => true }) }));
 jest.mock('@/ctx/AuthContext', () => ({ useAuth: () => ({ user: { id: 'me', user_metadata: { full_name: 'Jo Juniper' } }, loading: false }) }));
 jest.mock('@/components/nav/ScreenHeader', () => ({ ScreenHeader: () => null }));
