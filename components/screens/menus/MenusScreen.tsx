@@ -13,7 +13,6 @@ import { useActiveVenue } from '@/hooks/useActiveVenue';
 import { useCapabilities, useCapabilityOpensAt } from '@/hooks/useCapabilities';
 import { useVenueMenus } from '@/hooks/useMenus';
 import { useMode } from '@/hooks/useMode';
-import { useVenueFeature } from '@/hooks/useVenueFeatures';
 import { groupMenus } from '@/lib/menus';
 import { roleLabel } from '@/lib/roles';
 
@@ -32,8 +31,8 @@ export function MenusScreen({ tab = false }: { tab?: boolean }) {
   const insets = useSafeAreaInsets();
   const tabBarInset = useTabBarInset();
   const column = usePageColumn();
-  // Back from a venue's menus goes to its first tab: Tonight, or Library when Tonight is off.
-  const first = useVenueFeature('tonight') ? 'Tonight' : 'Library';
+  // Back from a venue's menus goes to its first tab, Tonight.
+  const first = 'Tonight';
   const userId = useUserId();
   const { active, isLoading: venuesLoading } = useActiveVenue();
   const home = useMode().mode === 'home';

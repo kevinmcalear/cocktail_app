@@ -8,7 +8,6 @@
 
 import type { BatchSummary } from '@/lib/bringInBatch';
 import type { MadeBatches, RecipeChoices } from '@/lib/bringInDraft';
-import { dayWord } from '@/lib/featureNews';
 import type { ReadFile } from '@/lib/readAnything';
 import { drinkRecipe } from '@/lib/readBatch';
 import { sameName } from '@/lib/sameName';
@@ -155,10 +154,16 @@ export function waitingFor(reviews: Record<string, ImportReview>, userId: string
 /** "Little Rye spec book.pdf" is "Little Rye spec book" on the card. */
 export const fileTitle = (name: string) => name.replace(/\.[a-z0-9]{2,4}$/i, '') || name;
 
-/** "Today", "Yesterday" or "3 Oct". */
+const MONTHS = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
+
+/** "Today", "Yesterday" or "3 Oct", on this device's calendar. */
 export function whenWords(iso: string, now: number): string {
-  const word = dayWord(iso, now);
-  return word.charAt(0).toUpperCase() + word.slice(1);
+  const d = new Date(iso);
+  const startOf = (t: Date) => new Date(t.getFullYear(), t.getMonth(), t.getDate()).getTime();
+  const days = Math.round((startOf(new Date(now)) - startOf(d)) / 86_400_000);
+  if (days <= 0) return 'Today';
+  if (days === 1) return 'Yesterday';
+  return `${d.getDate()} ${MONTHS[d.getMonth()]}`;
 }
 
 /** A drink taken out (it wasn't a drink, board w2-import-review E20), kept so Undo puts it back where it was. */

@@ -635,22 +635,3 @@ export function usePantryItems() {
   });
 }
 
-/** These drinks, by id, as the person can see them (hearted drinks on Collection). */
-export function useDrinksById(ids: readonly string[]) {
-  const glass = useGlassIcons();
-  const sorted = [...ids].sort();
-  const query = useQuery({
-    queryKey: ['drinks-by-id', sorted],
-    enabled: sorted.length > 0,
-    queryFn: () => readItems(sorted),
-  });
-  const drinks = useMemo(() => {
-    const byId = new Map((query.data ?? []).filter((r) => r.item_type === 'cocktail').map((r) => [r.id, r]));
-    return ids.flatMap((id) => {
-      const r = byId.get(id);
-      return r ? [{ id: r.id, name: r.name, type: 'cocktail' as const, imageUrl: heroPicture(r.item_images)?.url ?? null, glass: glass(r.glassware_id) }] : [];
-    });
-  }, [ids, query.data, glass]);
-  return { drinks, isLoading: query.isLoading };
-}
-

@@ -9,7 +9,7 @@ import { SYSTEM_BOTTOM_SEARCH, useBottomSearch } from '@/hooks/useBottomBar';
 import { useIsHydrated } from '@/hooks/useIsHydrated';
 import { useSearchMine } from '@/hooks/useSearchMine';
 import { useSearchFrom } from '@/hooks/useSearchFrom';
-import { useVenueFeatures } from '@/hooks/useVenueFeatures';
+import { useMode } from '@/hooks/useMode';
 import type { City } from '@/lib/discover';
 import { startScope, type SearchScope, type SearchShow, type ShowCounts } from '@/lib/searchScope';
 import { useSearchPalette } from '@/store/useSearchPalette';
@@ -51,8 +51,9 @@ function ToPalette() {
   const router = useRouter();
   const { q, scope } = useLocalSearchParams<{ q?: string; scope?: string }>();
   // Straight to the page the first tab would redirect to (app/(tabs)/index.tsx), so nothing moves under the palette.
-  const { ready, home, has } = useVenueFeatures();
-  const first = home ? '/discover' : has('tonight') ? '/' : '/library';
+  const { mode, ready } = useMode();
+  const home = mode === 'home';
+  const first = home ? '/discover' : '/';
   useEffect(() => {
     if (!ready && !home) return;
     const start = { query: q ?? '', scope: scope === 'everywhere' ? ('everywhere' as const) : null };

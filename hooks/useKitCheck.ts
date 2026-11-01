@@ -88,7 +88,7 @@ function useDrink(itemId: string) {
 }
 
 /** The venue's ice it makes: the tools each one's steps name, and the ice it starts from. */
-export function useIceRecipes(barId: string | null | undefined, ids: readonly string[]) {
+function useIceRecipes(barId: string | null | undefined, ids: readonly string[]) {
   return useQuery({
     queryKey: ['venue-ice-recipes', barId, ids],
     enabled: !!barId && ids.length > 0,
@@ -146,7 +146,7 @@ export function useHomeDrinkKitCheck(itemId: string): KitCheck | null {
 }
 
 /** Every drink of the venue, checked, by id (Library's Ready here / Needs something). */
-export function useVenueKitChecks(barId: string | null | undefined): ReadonlyMap<string, KitCheck> | null {
+function useVenueKitChecks(barId: string | null | undefined): ReadonlyMap<string, KitCheck> | null {
   const kit = useVenueKit(barId);
   const drinks = useVenueDrinks(barId).data;
   return useMemo(() => (kit && drinks ? new Map(drinks.map((d) => [d.id, kitCheck(d, kit)])) : null), [kit, drinks]);

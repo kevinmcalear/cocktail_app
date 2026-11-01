@@ -1,5 +1,5 @@
 import { Image as ExpoImage } from 'expo-image';
-import { useState, type ReactNode } from 'react';
+import { useState } from 'react';
 import { Platform, StyleSheet, View } from 'react-native';
 import DraggableFlatList, { ScaleDecorator, type RenderItemParams } from 'react-native-draggable-flatlist';
 
@@ -29,19 +29,18 @@ interface SortableImageListProps {
   onRemove: (index: number) => void;
   onAdd: () => void;
   onAddUris?: (uris: string[]) => void;
-  generateComponent?: ReactNode;
 }
 
 const isWeb = Platform.OS === 'web';
 
 /**
- * A drink's photos in order, side by side: Add (and Generate, when given)
+ * A drink's photos in order, side by side: Add
  * first, then each photo, held (or dragged on the web) to reorder, with an x
  * to remove it. The first is the main photo, which leads the page and the
  * cards; a star makes another one main, and Crop recrops one (Eddie, 29 Oct).
  * On the web, images dropped on the row are added.
  */
-export function SortableImageList({ images, onReorder, onRemove, onAdd, onAddUris, generateComponent }: SortableImageListProps) {
+export function SortableImageList({ images, onReorder, onRemove, onAdd, onAddUris }: SortableImageListProps) {
   const ds = useDs();
   const [dragOver, setDragOver] = useState(false);
   const dropRef = useWebImageDrop(onAddUris, setDragOver);
@@ -117,12 +116,6 @@ export function SortableImageList({ images, onReorder, onRemove, onAdd, onAddUri
                   {dragOver ? 'Drop' : 'Add'}
                 </DsText>
               </PressableScale>
-              {generateComponent ? (
-                <>
-                  <View style={[styles.divider, { backgroundColor: ds.c.line }]} />
-                  <View style={styles.action}>{generateComponent}</View>
-                </>
-              ) : null}
             </View>
           }
         />
@@ -155,7 +148,6 @@ const styles = StyleSheet.create({
   tile: { width: 100, height: 125, marginTop: 12.5, borderRadius: radius.control, borderCurve: 'continuous', overflow: 'hidden' },
   actions: { borderWidth: 1, borderStyle: 'dashed' },
   action: { flex: 1, flexDirection: 'row', gap: space.xs + 2, alignItems: 'center', justifyContent: 'center' },
-  divider: { height: StyleSheet.hairlineWidth },
   fill: { width: '100%', height: '100%' },
   grab: { cursor: 'grab' } as object,
   newDot: { position: 'absolute', top: space.sm, left: space.sm, width: space.sm, height: space.sm, borderRadius: radius.pill },

@@ -9,8 +9,7 @@ import { useBarZones, useItemLocations } from '@/hooks/useBackBar';
 import { useCapabilities, useCapabilityOpensAt } from '@/hooks/useCapabilities';
 import { useMode } from '@/hooks/useMode';
 import { useStockOnHand } from '@/hooks/useStockCounts';
-import { useVenueFeature } from '@/hooks/useVenueFeatures';
-import { formatPar, locationLine } from '@/lib/backBar';
+import { BACK_BAR_SHOWN, formatPar, locationLine } from '@/lib/backBar';
 import { withAlpha } from '@/lib/color';
 import { roleLabel } from '@/lib/roles';
 
@@ -48,8 +47,8 @@ export function useWhereItLives(itemId: string) {
   const { active } = useActiveVenue();
   // Home mode has no venue, even for staff: useActiveVenue falls back to their first one.
   const home = useMode().mode === 'home';
-  // A venue that hasn't switched the back bar on has no map to point at.
-  const backBar = useVenueFeature('backBar');
+  // While the back bar is parked there's no map to point at.
+  const backBar = BACK_BAR_SHOWN;
   const barId = home || !backBar ? null : (active?.id ?? null);
   const caps = useCapabilities(barId);
   const capabilities = Array.isArray(caps.data) ? caps.data : null;
@@ -59,7 +58,7 @@ export function useWhereItLives(itemId: string) {
   const here = locations.filter((l) => l.item_id === itemId);
   const zoneName = (id: string) => zones.find((z) => z.id === id)?.name ?? null;
   const lines = here.map((l) => locationLine(zoneName(l.zone_id), l.shelf));
-  // Home mode, no venue, or a venue without the back bar yet: nothing to say.
+  // Home mode, no venue, or the back bar parked: nothing to say.
   const shown = !home && backBar && !!active && !caps.error && !!capabilities;
   return { shown, active, barId, capabilities, canRead, zones, here, lines };
 }
