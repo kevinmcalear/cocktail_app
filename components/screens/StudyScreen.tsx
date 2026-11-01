@@ -61,7 +61,7 @@ export function StudyScreen() {
   return (
     <View style={[styles.screen, { backgroundColor: ds.c.ground }]}>
       <ScrollView contentContainerStyle={{ paddingBottom: bottom }}>
-        <ScreenHeader title="Study" display />
+        <ScreenHeader title="Study" display back />
         <View style={[styles.body, { paddingHorizontal: gutter }]}>
           {run > 0 ? (
             <Tag label={`${run}-day streak`} tone="accent" />

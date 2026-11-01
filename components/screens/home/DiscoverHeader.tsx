@@ -29,7 +29,7 @@ interface DiscoverHeaderProps {
 
 /**
  * Discover's phone header: the logo, the search pill carrying the place
- * ("Search | This area"), the Filters button with its count, and you, on one
+ * ("Search | This area"), the Filters button with its count, and the +, on one
  * row (discover-options-proposal, approved 24 Oct). The pill is the page's
  * identity, so "Discover" is a heading only screen readers hear.
  */
@@ -42,8 +42,8 @@ export function DiscoverHeader({ query, onSearch, onClear, place, filters, onFil
       <FiltersButton filters={filters} onPress={onFilters} />
     </View>
   );
-  // A search (or a picked style) needs the room: you step aside, as the board draws it.
-  return <ScreenHeader title="Discover" center={pill} you={searchBelow || !query.trim() || !!bar} />;
+  // A search (or a picked style) needs the room: the + steps aside, as the board draws it.
+  return <ScreenHeader title="Discover" center={pill} add={searchBelow || !query.trim() || !!bar} />;
 }
 
 /** Scrolled this far past the top before the header may go, and the travel either way that hides or brings it back. */

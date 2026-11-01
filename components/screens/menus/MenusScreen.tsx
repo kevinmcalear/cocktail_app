@@ -6,7 +6,6 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { Body, Button, useDs } from '@/components/ds';
 import { PageHeader, usePageColumn } from '@/components/nav/Page';
 import { InviteTeamCard, useOpenTeam, useTeamCard } from '@/components/nav/TeamCard';
-import { useTabBarInset } from '@/components/nav/WebTabBar';
 import { space } from '@/constants/tokens';
 import { useUserId } from '@/ctx/AuthContext';
 import { useActiveVenue } from '@/hooks/useActiveVenue';
@@ -20,16 +19,15 @@ import { MenuGroupList } from './MenuGroupList';
 import { NewMenuSheet } from './NewMenuSheet';
 
 /**
- * Every menu at the venue: on now, coming up, drafts, past and R&D. The Menus
- * tab (`tab`), and opened from Tonight and the venue menu. In home mode (or
- * with no venue) it's the person's own menus, reached from Collection, in the
+ * Every menu at the venue: on now, coming up, drafts, past and R&D. Opened from
+ * Tonight, Drinks and the venue menu. In home mode (or
+ * with no venue) it's the person's own menus, reached from Drinks, in the
  * same groups (menus-one-look). The two never mix.
  */
-export function MenusScreen({ tab = false }: { tab?: boolean }) {
+export function MenusScreen() {
   const ds = useDs();
   const router = useRouter();
   const insets = useSafeAreaInsets();
-  const tabBarInset = useTabBarInset();
   const column = usePageColumn();
   // Back from a venue's menus goes to its first tab, Tonight.
   const first = 'Tonight';
@@ -61,15 +59,15 @@ export function MenusScreen({ tab = false }: { tab?: boolean }) {
 
   return (
     <View style={[styles.screen, { backgroundColor: ds.c.ground }]}>
-      <ScrollView contentContainerStyle={[column, styles.content, { paddingBottom: (tab ? tabBarInset : insets.bottom) + space.xxxl }]}>
+      <ScrollView contentContainerStyle={[column, styles.content, { paddingBottom: insets.bottom + space.xxxl }]}>
         <PageHeader
           title="Menus"
           display
           subtitle={summary}
-          onBack={tab ? undefined : () => (router.canGoBack() ? router.back() : router.navigate(barId ? '/' : '/collection'))}
+          onBack={() => (router.canGoBack() ? router.back() : router.navigate(barId ? '/' : '/drinks'))}
           backLabel={barId ? `Back to ${first}` : 'Back'}
-          backText={barId ? first : 'Collection'}
-          crumbs={tab ? undefined : [barId ? { label: first, href: '/' } : { label: 'Collection', href: '/collection' }]}
+          backText={barId ? first : 'Drinks'}
+          crumbs={[barId ? { label: first, href: '/' } : { label: 'Drinks', href: '/drinks' }]}
           actionOnTop
           action={canCreate ? <Button label="New menu" icon="plus" onPress={() => setCreating(true)} /> : null}
         />

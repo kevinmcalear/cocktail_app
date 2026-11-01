@@ -21,7 +21,7 @@ export function VenueBasics({ editor, barId }: { editor: Editor; barId: string }
   const drinks = `${editor.drinkCount} ${editor.drinkCount === 1 ? 'drink' : 'drinks'}`;
   const openLibrary = () => {
     enterVenue(barId);
-    router.navigate('/library' as Href);
+    router.navigate('/drinks');
   };
   return (
     <SettingsSection title="Venue">

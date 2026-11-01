@@ -10,18 +10,11 @@ import type { ImageSourcePropType } from 'react-native';
 type TabImage = { default: ImageSourcePropType; selected: ImageSourcePropType };
 
 export const TAB_IMAGES = {
-  library: { default: require('@/assets/images/tabs/library.png'), selected: require('@/assets/images/tabs/library-on.png') },
-  menus: { default: require('@/assets/images/tabs/menus.png'), selected: require('@/assets/images/tabs/menus-on.png') },
-  prep: { default: require('@/assets/images/tabs/prep.png'), selected: require('@/assets/images/tabs/prep-on.png') },
-  test: { default: require('@/assets/images/tabs/test.png'), selected: require('@/assets/images/tabs/test-on.png') },
+  drinks: { default: require('@/assets/images/tabs/drinks.png'), selected: require('@/assets/images/tabs/drinks-on.png') },
   discover: { default: require('@/assets/images/tabs/discover.png'), selected: require('@/assets/images/tabs/discover-on.png') },
-  bar: { default: require('@/assets/images/tabs/bar.png'), selected: require('@/assets/images/tabs/bar-on.png') },
-  collection: { default: require('@/assets/images/tabs/collection.png'), selected: require('@/assets/images/tabs/collection-on.png') },
-  profile: { default: require('@/assets/images/tabs/profile.png'), selected: require('@/assets/images/tabs/profile-on.png') },
+  you: { default: require('@/assets/images/tabs/you.png'), selected: require('@/assets/images/tabs/you-on.png') },
   search: { default: require('@/assets/images/tabs/search.png'), selected: require('@/assets/images/tabs/search-on.png') },
 } satisfies Record<string, TabImage>;
-
-export const NEW_TAB_IMAGE: ImageSourcePropType = require('@/assets/images/tabs/new.png');
 
 /** Tonight's page for each day of the month, which turns over at 6am (hooks/useServiceDay.ts). */
 const DAYS: TabImage[] = [

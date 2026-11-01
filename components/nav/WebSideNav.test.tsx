@@ -51,29 +51,29 @@ beforeEach(() => {
   mockMode = 'venue';
 });
 
-test('venue mode lists search and the venue tabs, marking the current one', async () => {
+test('venue mode lists search, the four tabs and the venue pages, marking the current one', async () => {
   mockMode = 'venue';
-  mockPathname = '/library';
+  mockPathname = '/drinks';
   await renderWithProviders(<WebSideNav />);
 
-  // The canvas order: the tabs and History, Glassware, then the Venue section and you at the foot.
-  // Every venue has the same tabs (the switches went 31 Oct); the back bar is parked.
-  expect(links()).toEqual(['Tonight', 'Library', 'Menus', 'Prep', 'Study', 'Discover', 'History', 'Glassware', 'My team', 'Brand', 'Roles and access', 'Venue settings', 'You: Kevin M., Admin at Caretakers']);
+  // The four tabs and History, the venue's Menus, Prep, Study and Glassware, then the Venue section and you at the foot.
+  // Every person and role has the same tabs (tabs A, 31 Oct); the back bar is parked.
+  expect(links()).toEqual(['Tonight', 'Drinks', 'Discover', 'History', 'You', 'Menus', 'Prep', 'Study', 'Glassware', 'My team', 'Brand', 'Roles and access', 'Venue settings', 'You: Kevin M., Admin at Caretakers']);
   expect(screen.getByText('this week list')).toBeTruthy();
-  expect(screen.getByRole('link', { name: 'Library', selected: true })).toBeTruthy();
+  expect(screen.getByRole('link', { name: 'Drinks', selected: true })).toBeTruthy();
   expect(screen.getByRole('link', { name: 'Tonight', selected: false })).toBeTruthy();
 
   await fireEvent.press(screen.getByRole('link', { name: 'Glassware' }));
   expect(mockPush).toHaveBeenLastCalledWith('/settings/bar/caretakers/glassware');
   await fireEvent.press(screen.getByRole('link', { name: 'Menus' }));
-  expect(mockNavigate).toHaveBeenLastCalledWith('/menus');
+  expect(mockPush).toHaveBeenLastCalledWith('/menus/all');
   await fireEvent.press(screen.getByRole('link', { name: 'Brand' }));
   expect(mockPush).toHaveBeenLastCalledWith('/settings/bar/caretakers/brand');
   await fireEvent.press(screen.getByRole('link', { name: 'Venue settings' }));
   expect(mockPush).toHaveBeenLastCalledWith('/settings/bar/caretakers');
-  // Pages have no avatar on wide web, so You lives in the foot.
+  // You is a tab, and the foot opens it too.
   await fireEvent.press(screen.getByRole('link', { name: 'You: Kevin M., Admin at Caretakers' }));
-  expect(mockPush).toHaveBeenLastCalledWith('/you');
+  expect(mockNavigate).toHaveBeenLastCalledWith('/you');
 });
 
 test('the top of the sidebar is one mark with a chevron (the switcher), never a row of venues', async () => {
@@ -85,11 +85,11 @@ test('the top of the sidebar is one mark with a chevron (the switcher), never a 
 });
 
 test('a page off the nav keeps the row it was opened from lit', async () => {
-  mockPathname = '/library';
+  mockPathname = '/drinks';
   const view = await renderWithProviders(<WebSideNav />);
   mockPathname = '/add-cocktail';
   await view.rerender(<WebSideNav />);
-  expect(screen.getByRole('link', { name: 'Library', selected: true })).toBeTruthy();
+  expect(screen.getByRole('link', { name: 'Drinks', selected: true })).toBeTruthy();
 });
 
 test('Menus stays marked on a menu page', async () => {
@@ -112,19 +112,19 @@ test('a guest does not see My team', async () => {
   expect(screen.queryByRole('link', { name: 'My team' })).toBeNull();
 });
 
-test('home mode lists the home tabs and navigates to their routes', async () => {
+test('home mode lists the same four tabs and navigates to their routes', async () => {
   mockMode = 'home';
   mockPathname = '/discover';
   await renderWithProviders(<WebSideNav />);
 
   // No Venue section at home; the foot says your shelf.
-  expect(links()).toEqual(['Discover', 'History', 'My Bar', 'Collection', 'You', 'You: Kevin M., Home bar · 3 bottles']);
+  expect(links()).toEqual(['Tonight', 'Drinks', 'Discover', 'History', 'You', 'You: Kevin M., Home bar · 3 bottles']);
   expect(screen.getByRole('link', { name: 'Discover', selected: true })).toBeTruthy();
 
   await fireEvent.press(screen.getByRole('link', { name: 'Discover' }));
   expect(mockNavigate).toHaveBeenLastCalledWith('/discover');
-  await fireEvent.press(screen.getByRole('link', { name: 'My Bar' }));
-  expect(mockNavigate).toHaveBeenLastCalledWith('/bar');
+  await fireEvent.press(screen.getByRole('link', { name: 'Tonight' }));
+  expect(mockNavigate).toHaveBeenLastCalledWith('/');
 });
 
 test('Search opens the search over the current page instead of leaving it', async () => {

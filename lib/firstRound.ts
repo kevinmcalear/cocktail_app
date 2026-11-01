@@ -16,15 +16,13 @@
  * "First round and Features".
  */
 
-import type { VenueTab } from '@/lib/tabs';
-
 /** A Drink Creator or above makes drinks; everyone else is staff. */
 export type RoundKind = 'make' | 'staff';
 
 export type StepKey = 'house_spec' | 'menu' | 'discover' | 'open_menu';
 
-/** A tab the round can hold back until its step comes up. */
-export type RoundTab = Extract<VenueTab, 'menus' | 'discover'>;
+/** A place the round holds back until its step comes up (Menus in the venue menu and sidebar; the four tabs never change). */
+export type RoundTab = 'menus' | 'discover';
 
 export interface RoundStep {
   key: StepKey;

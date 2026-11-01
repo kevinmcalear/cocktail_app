@@ -155,7 +155,7 @@ function Page({ edit, savedId, onExit }: { edit: IngredientEdit; savedId: string
   );
   const body = <EditBody edit={edit} savedId={savedId} isPrep={isPrep} wide={wide} venueName={venues.find((v) => v.id === form.barId)?.name ?? null} used={data?.usedIn?.length ?? 0} spiritTags={spiritTags} onSheet={setSheet} selfId={selfId} focus={focus} />;
   const toolbar = <EditToolbar canUndo={history.canUndo} canRedo={history.canRedo} onUndo={history.undo} onRedo={history.redo} changes={history.changes} onDone={done} saving={edit.saving} wide={wide} media={pictures?.length ? 'photo' : 'paper'} more={wide ? <GlassButton accessibilityLabel="More" icon="ellipsis" onPress={() => setSheet('more')} /> : undefined} />;
-  const trail: Crumb[] = home ? [{ label: 'My Bar', href: '/bar' }] : [{ label: 'Library', href: '/library' }, { label: isPrep ? 'House-made' : 'Ingredients', href: '/library' }];
+  const trail: Crumb[] = home ? [{ label: 'Tonight', href: '/' }] : [{ label: 'Drinks', href: '/drinks' }, { label: isPrep ? 'House-made' : 'Ingredients', href: '/drinks' }];
   const canSpot = !!savedId && !home;
 
   return (

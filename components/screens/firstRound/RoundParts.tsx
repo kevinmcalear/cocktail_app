@@ -83,12 +83,12 @@ export function useRoundGo() {
   return (step: RoundStep | null, start?: string | null) => {
     if (!step || !venue) return;
     if (step.key === 'house_spec') {
-      if (start === undefined) return router.navigate('/library');
+      if (start === undefined) return router.navigate('/drinks');
       startCocktail(venue.id, start);
     } else if (step.opens === 'menus') {
       // A staff member's step is opening Menus: done first, so its tab is there to open (a hidden native tab may not be).
       if (step.key === 'open_menu') done('open_menu');
-      router.navigate('/menus');
+      router.navigate('/menus/all');
     } else if (step.opens === 'discover') router.navigate('/discover');
   };
 }

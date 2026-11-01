@@ -4,10 +4,11 @@ import { create } from 'zustand';
 
 import type { SearchArea } from '@/components/search/SearchPanel';
 import { useIsWideWeb } from '@/hooks/useIsWideWeb';
+import { tabOfGroup } from '@/lib/tabs';
 import { useSearchPalette, type SearchStart } from '@/store/useSearchPalette';
 
 interface SearchFrom {
-  /** The last tab opened before the search tab ('library', 'discover'; 'index' is Tonight). */
+  /** The last tab opened before the search tab ('tonight', 'drinks', 'discover', 'you'). */
   from: string | null;
   /** Discover's area while Discover is mounted, so the search circle can search it. */
   area: SearchArea | null;
@@ -38,9 +39,9 @@ export function useOpenSearch() {
 /** Remembers the tab that's showing, so the search tab can start there. Called by the tab layouts. */
 export function useTrackTab() {
   const segments = useSegments() as string[];
-  const tab = segments[0] === '(tabs)' ? (segments[1] ?? 'index') : null;
+  const tab = segments[0] === '(tabs)' ? tabOfGroup(segments[1]) : null;
   useEffect(() => {
-    if (tab && tab !== 'search') useSearchFrom.setState({ from: tab });
+    if (tab) useSearchFrom.setState({ from: tab });
   }, [tab]);
 }
 

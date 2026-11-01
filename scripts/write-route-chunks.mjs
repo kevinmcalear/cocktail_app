@@ -5,8 +5,8 @@
 // page is gone, so a renamed route doesn't silently stop being prefetched.
 import { existsSync, readFileSync, writeFileSync } from 'node:fs';
 
-// The screens people go to next: the tabs, and a drink.
-const PAGES = ['index', 'library', 'discover', 'bar', 'menus', 'search', 'cocktail/[id]'];
+// The screens people go to next: the four tabs, search, and a drink.
+const PAGES = ['index', 'drinks', 'discover', 'you', 'search', 'cocktail/[id]'];
 
 const routes = {};
 for (const page of PAGES) {

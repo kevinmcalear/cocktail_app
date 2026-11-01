@@ -15,7 +15,7 @@ import { VisitorDrink } from "@/components/screens/drink/VisitorDrink";
 // Editing in place only loads when someone edits, which keeps its gesture code off the web's first load.
 const DrinkEditScreen = lazy(() => import("@/components/screens/drink/edit/DrinkEditScreen").then((m) => ({ default: m.DrinkEditScreen })));
 
-// For /dev/drink, which loads it through this route so the web build reuses this
+// For /dev/drink (components/dev/DrinkPreview.tsx), which loads it through this route so the web build reuses this
 // route's chunk instead of putting the whole drink page in the shared one.
 export { DrinkScreen };
 export { BatchSheet } from "@/components/screens/batch/BatchSheet";
