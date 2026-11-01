@@ -20,7 +20,7 @@ import { confirmAsync } from '@/lib/dialogs';
 import { isLivingList } from '@/lib/menuLens';
 import { isOneNightMenu, menuStatus, newDrinkIds } from '@/lib/menus';
 import { menuShopping } from '@/lib/shoppingList';
-import type { ShelfMatch } from '@/lib/collectionStages';
+import type { ShelfMatch } from '@/lib/shelfReach';
 import type { MenuDetail } from '@/types/menus';
 
 import { GoLiveSheet } from './GoLiveSheet';

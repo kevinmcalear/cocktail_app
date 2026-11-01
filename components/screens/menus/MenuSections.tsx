@@ -4,7 +4,7 @@ import { StyleSheet, View } from 'react-native';
 
 import { Caption, DrinkImage, DsText, Headline, PressableScale, Spec, useDs } from '@/components/ds';
 import { displayFaces, displayName, font, space } from '@/constants/tokens';
-import type { ShelfMatch } from '@/lib/collectionStages';
+import type { ShelfMatch } from '@/lib/shelfReach';
 import { drinkIdFromHref, itemHref, type ItemCategory } from '@/lib/itemRoutes';
 import { printedPrice } from '@/lib/menus';
 import type { SketchInputs } from '@/lib/sketch/types';
