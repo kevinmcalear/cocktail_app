@@ -51,20 +51,29 @@ assert.equal(titleReads(ink, { top: 0, bottom: 0.4, light: 0.45 }), false);
 assert.equal(titleReads(cream, { top: 0, bottom: 0.4, light: 0.15 }), true);
 
 const zone = { top: 0.02, bottom: 0.5, light: 0.1 };
-const phone = { aspect: 4 / 5, width: 390, from: 110, muted: cream };
+type Room = { zone?: typeof zone | null; aspect?: number | null };
+const one = (room: Room = {}) => [{ zone, aspect: 4 / 5, ...room }];
+const phone = { width: 390, from: 110, muted: cream };
+const top = (spot: { top: number } | null) => spot?.top ?? null;
 // The board's 585 frame shows the whole of a 4:5 photo's height: room from under the bar.
-assert.equal(titleSpot({ ...phone, zone, height: 585, to: 505 }), 110);
+assert.deepEqual(titleSpot({ ...phone, photos: one(), height: 585, to: 505 }), { top: 110, bottom: 293 });
 // Today's 30% hero: cover crops the top of a 4:5 photo and leaves no 150 points of room.
-assert.equal(titleSpot({ ...phone, zone, height: 286, to: 206 }), null);
+assert.equal(titleSpot({ ...phone, photos: one(), height: 286, to: 206 }), null);
 // Desktop's panel: the full height of the photo.
-assert.equal(titleSpot({ zone, aspect: 4 / 5, width: 500, height: 900, from: 76, to: 900, muted: cream }), 76);
+const desk = { width: 500, height: 900, from: 76, to: 900, muted: cream };
+assert.equal(top(titleSpot({ ...desk, photos: one() })), 76);
 // Room too short once it's clear of the bar.
-assert.equal(titleSpot({ ...phone, zone: { ...zone, bottom: 0.3 }, height: 585, to: 505 }), null);
+assert.equal(titleSpot({ ...phone, photos: one({ zone: { ...zone, bottom: 0.3 } }), height: 585, to: 505 }), null);
 assert.equal(TITLE_ROOM, 150);
 // No room found, a room the ink can't read on, and an unknown size taken as 4:5.
-assert.equal(titleSpot({ ...phone, zone: null, height: 585, to: 505 }), null);
-assert.equal(titleSpot({ ...phone, zone: { ...zone, light: 0.6 }, height: 585, to: 505 }), null);
-assert.equal(titleSpot({ ...phone, aspect: null, zone, height: 585, to: 505 }), 110);
+assert.equal(titleSpot({ ...phone, photos: one({ zone: null }), height: 585, to: 505 }), null);
+assert.equal(titleSpot({ ...phone, photos: one({ zone: { ...zone, light: 0.6 } }), height: 585, to: 505 }), null);
+assert.equal(top(titleSpot({ ...phone, photos: one({ aspect: null }), height: 585, to: 505 })), 110);
+// Several photos: the title stays put as they swipe, so only the room they all share counts.
+assert.deepEqual(titleSpot({ ...desk, photos: [...one(), ...one({ zone: { ...zone, top: 0.1, bottom: 0.4 } })] }), { top: 90, bottom: 360 });
+assert.equal(titleSpot({ ...desk, photos: [...one(), ...one({ zone: { ...zone, top: 0.45, bottom: 0.9 } })] }), null);
+assert.equal(titleSpot({ ...desk, photos: [...one(), ...one({ zone: null })] }), null);
+assert.equal(titleSpot({ ...desk, photos: [] }), null);
 
 // The column as the app reads it.
 assert.deepEqual(asTextZone({ top: 0, bottom: 0.2, light: 0.1 }), { top: 0, bottom: 0.2, light: 0.1 });

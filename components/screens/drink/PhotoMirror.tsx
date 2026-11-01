@@ -1,9 +1,11 @@
 import { Image } from 'expo-image';
 import { LinearGradient } from 'expo-linear-gradient';
+import { useState } from 'react';
 import { StyleSheet, View } from 'react-native';
 
 import { useDs } from '@/components/ds';
 import { withAlpha } from '@/lib/color';
+import { markNoCopy, thumbToTry } from '@/lib/thumbnails';
 
 /** How far the ground dims the mirror, so text stays readable. */
 const DIM = 0.55;
@@ -18,9 +20,16 @@ const DIM = 0.55;
 export function PhotoMirror({ url, top, left }: { url: string | number; top?: number; left?: number }) {
   const ds = useDs();
   const sideways = left !== undefined;
+  // Blurred this far, the 480 list copy looks the same as the original; the original when it has none.
+  const [uri, setUri] = useState(() => (typeof url === 'string' ? (thumbToTry(url) ?? url) : null));
+  const onError = () => {
+    if (typeof url !== 'string' || uri === url) return;
+    markNoCopy(url, 'thumb');
+    setUri(url);
+  };
   return (
     <View style={sideways ? [styles.side, { left }] : [styles.mirror, { top }]} aria-hidden>
-      <Image source={typeof url === 'number' ? url : { uri: url }} blurRadius={sideways ? 40 : 30} contentFit="cover" style={sideways ? styles.imageSide : styles.image} />
+      <Image source={uri ? { uri } : url} onError={onError} blurRadius={sideways ? 40 : 30} contentFit="cover" style={sideways ? styles.imageSide : styles.image} />
       <View style={[StyleSheet.absoluteFill, { backgroundColor: withAlpha(ds.c.ground, DIM) }]} />
       {/* The hero fades to the ground; the mirror eases in from it, so there is no seam. */}
       {sideways ? null : <LinearGradient colors={[ds.c.ground, withAlpha(ds.c.ground, 0)]} style={styles.ease} />}

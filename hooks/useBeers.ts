@@ -32,7 +32,7 @@ export function useBeer(id: string) {
         queryFn: async () => {
             const { data, error } = await supabase
                 .from('app_item_presentation')
-                .select('*, item_images(sort_order,image_id,is_generated,outdated_since,images(id,url,palette)), item_categories(category_id)')
+                .select('*, item_images(sort_order,image_id,is_generated,outdated_since,images(id,url,palette,credit,brightness,text_zone,width,height)), item_categories(category_id)')
                 .eq('id', id)
                 .single();
 

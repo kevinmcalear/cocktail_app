@@ -16,7 +16,8 @@ import { useCanEditItem, useEffectiveRole } from '@/hooks/useViewAs';
 import { savedSketch } from '@/lib/beerWineWizard';
 import { formatAbv } from '@/lib/drinkMath';
 import { bareItemId, DRINK_KINDS, type DrinkKind } from '@/lib/drinkKinds';
-import { heroPicture, orderedPictures, type ItemImageLink } from '@/lib/itemImages';
+import { glassOver, heroPicture, orderedPictures, type ItemImageLink } from '@/lib/itemImages';
+import { photoRooms } from '@/lib/photoTitle';
 import { drinkUrl, shareOrCopy } from '@/lib/shareLink';
 import { liquidOf } from '@/lib/sketch/types';
 
@@ -58,8 +59,10 @@ export function BeerWineScreen({ kind: kindName }: { kind: DrinkKind }) {
   }
   // Favourites keep the prefixed id they always had.
   const key = `${kind.kind}-${item.id}`;
+  const photo = orderedPictures(item.item_images as ItemImageLink[] | undefined).find((p) => !p.isSketch);
   return (
-    <BeerWineBrand barId={item.bar_id}>
+    // A photo decides light or dark for the whole page, as on a cocktail's (DrinkScreen).
+    <BeerWineBrand barId={item.bar_id} scheme={photo ? glassOver(photo) : undefined}>
       <BeerWinePage
         kind={kindName}
         item={item}
@@ -73,10 +76,10 @@ export function BeerWineScreen({ kind: kindName }: { kind: DrinkKind }) {
 }
 
 /** The drink page's theme, in the colours of the venue it belongs to (as DrinkScreen). */
-function BeerWineBrand({ barId, children }: { barId: string | null; children: React.ReactNode }) {
+function BeerWineBrand({ barId, scheme, children }: { barId: string | null; scheme?: 'light' | 'dark'; children: React.ReactNode }) {
   const venue = useActiveVenue().venues.find((v) => v.id === barId);
   return (
-    <BackbarTheme>
+    <BackbarTheme scheme={scheme}>
       <BrandProvider accent={venue?.accent ?? undefined} displayFace={venue?.displayFace}>
         {children}
       </BrandProvider>
@@ -135,7 +138,7 @@ function BeerWinePage({ kind, item, favorite, onToggleFavorite, canEdit, onEdit 
   return (
     <ItemShell
       name={item.name}
-      photo={pictures[0] ? { url: pictures[0].url, hero: (h, fade) => <DrinkHero name={item.name} pictures={pictures} glass={null} itemId={item.id} palette={pictures[0].palette} height={h} fade={fade} /> } : null}
+      photo={pictures[0] ? { url: pictures[0].url, rooms: photoRooms(pictures), credit: pictures.some((p) => !!p.credit), hero: (h, fade) => <DrinkHero name={item.name} pictures={pictures} glass={null} itemId={item.id} palette={pictures[0].palette} height={h} fade={fade} /> } : null}
       art={(pour) => <DrinkDrawing inputs={sketch} seed={item.id} size="hero" staff={staff} pour={pour} label={`Drawing of ${item.name}`} />}
       size={size}
       liquid={liquidOf(sketch).hex}

@@ -21,6 +21,7 @@ import { makingParts } from '@/lib/drinkParts';
 import { heroPictures } from '@/lib/drinkPhotos';
 import { drinkViewer, makesIt, onTeam } from '@/lib/drinkViewer';
 import { glassOver, orderedPictures, type ItemImageLink, type ItemPicture } from '@/lib/itemImages';
+import { photoRooms } from '@/lib/photoTitle';
 import { drinkUrl, shareOrCopy } from '@/lib/shareLink';
 import { specLines, type PresentationRecipe, type SpecLevels } from '@/lib/spec';
 import { methodVerb } from '@/lib/specView';
@@ -153,7 +154,7 @@ function Page({ item, canEdit, adminFix = false, onEdit, pane, openBatch, visito
     <ItemShell
       name={item.name}
       pane={pane}
-      photo={photos ? { url: photos[0].url, zone: photos[0].textZone, aspect: photos[0].aspect, hero: (h, fade) => <DrinkHero name={item.name} pictures={photos} glass={glass?.icon_key || glass?.name || null} itemId={item.id} palette={photos[0].palette} height={h} fade={fade} credit={photoCredit} /> } : null}
+      photo={photos ? { url: photos[0].url, rooms: photoRooms(photos), credit: !!photoCredit || photos.some((p) => !!p.credit), hero: (h, fade) => <DrinkHero name={item.name} pictures={photos} glass={glass?.icon_key || glass?.name || null} itemId={item.id} palette={photos[0].palette} height={h} fade={fade} credit={photoCredit} /> } : null}
       art={(pour) => <DrinkArt itemId={item.id} sketch={preview?.sketch} label={`Drawing of ${item.name}`} size={size} pour={pour} />}
       size={size}
       liquid={liquid}

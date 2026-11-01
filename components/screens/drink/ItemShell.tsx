@@ -1,7 +1,8 @@
+import { useIsFocused } from 'expo-router';
 import { HeaderBackContext, HeaderHeightContext } from 'expo-router/react-navigation';
 import { StatusBar } from 'expo-status-bar';
 import { use, useState, type ReactNode } from 'react';
-import { Platform, StyleSheet, useWindowDimensions, View } from 'react-native';
+import { Platform, StyleSheet, useWindowDimensions, View, type LayoutChangeEvent } from 'react-native';
 import Animated, { useAnimatedReaction, useAnimatedScrollHandler, useSharedValue, type SharedValue } from 'react-native-reanimated';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { scheduleOnRN } from 'react-native-worklets';
@@ -10,8 +11,7 @@ import { ExtendedFab, useDs, useGutter } from '@/components/ds';
 import { useTabBarInset } from '@/components/nav/WebTabBar';
 import { layout, space } from '@/constants/tokens';
 import { useIsWideWeb } from '@/hooks/useIsWideWeb';
-import type { TextZone } from '@/lib/itemImages';
-import { TITLE_ROOM, titleSpot } from '@/lib/photoTitle';
+import { TITLE_ROOM, titleSpot, type PhotoRoom } from '@/lib/photoTitle';
 import { backWord } from '@/lib/tabs';
 
 import { COLUMNS_FROM, DrinkColumns } from './DrinkColumns';
@@ -28,10 +28,11 @@ interface ItemShellProps {
   pane?: boolean;
   /**
    * A photo leads full bleed (its hero at a height, faded on phones); else the
-   * drawing on its sky. Its quiet room (`zone`, with its `aspect`) takes the
-   * title where there's room and it reads there (lib/photoTitle.ts).
+   * drawing on its sky. The quiet room every photo in the hero shares (`rooms`)
+   * takes the title where it fits and reads (lib/photoTitle.ts). `credit`: a
+   * photographer's line sits at the hero's foot, so the page starts under it.
    */
-  photo: { url: string | number; hero: (height: number, fade: boolean) => ReactNode; zone?: TextZone | null; aspect?: number | null } | null;
+  photo: { url: string | number; hero: (height: number, fade: boolean) => ReactNode; rooms?: PhotoRoom[]; credit?: boolean } | null;
   /** The drawing, drawn at `size`. `pour` off for its still copy in the bar. */
   art: (pour?: boolean) => ReactNode;
   size: number;
@@ -78,14 +79,23 @@ export function ItemShell({ name, pane, photo, art, size, liquid, title, action,
   const bar = top + layout.minTapTarget + space.sm * 2;
   // Solid by the time the page's first line slides under the bar (top + controls), as the board's bar does.
   const tuck = heroHeight - bar + space.lg;
-  // The title in the photo's quiet room, or null: under the photo, or on a wide page at the top of the spec.
-  const spot = !photo
+  // The photos' quiet room, or null: the title goes under the photo, or on a wide page at the top of the spec.
+  const room = !photo?.rooms
     ? null
     : columns
-      ? titleSpot({ zone: photo.zone, aspect: photo.aspect, width: layout.photoPanel, height, from: bar, to: height, muted: ds.c.muted })
-      : titleSpot({ zone: photo.zone, aspect: photo.aspect, width: Math.min(width, COLUMN), height: heroHeight, from: bar, to: heroHeight - FADE, muted: ds.c.muted });
+      ? titleSpot({ photos: photo.rooms, width: layout.photoPanel, height, from: bar, to: height, muted: ds.c.muted })
+      : titleSpot({ photos: photo.rooms, width: Math.min(width, COLUMN), height: heroHeight, from: bar, to: heroHeight - FADE, muted: ds.c.muted });
+  // The title as laid out in the room: a long name or the action can need more than TITLE_ROOM. onLayout fires
+  // whenever its size changes (a new width wraps the name differently), so the last height is the one to check.
+  const [measured, setMeasured] = useState<number | null>(null);
+  const spot = room && (measured === null || measured <= room.bottom - room.top - space.lg) ? room.top : null;
   // A title in the photo scrolls off with it (boards Decided-photo-top, -scrolled): the small one comes as it goes under the bar.
   const smallAt = spot === null ? tuck : spot + TITLE_ROOM - bar - space.xl;
+  // Hidden until it has been measured in the room, so a title that doesn't fit never shows across the drink.
+  const inPhoto = { opacity: measured === null ? 0 : 1 };
+  const onTitleLayout = (e: LayoutChangeEvent) => setMeasured(e.nativeEvent.layout.height);
+  // Only the page in front sets the system bars: one under a pushed page or in another tab stays mounted.
+  const focused = useIsFocused();
   // Phones have the system's bar. The web and a wide iPad's two columns draw theirs (PageControls).
   const nativeBar = Platform.OS !== 'web' && !columns && !pane;
   useItemHeader({ name, on: nativeBar, pane, glyph: photo ? null : <DockGlyph art={art(false)} size={size} />, scrollY, smallAt, controls });
@@ -110,21 +120,21 @@ export function ItemShell({ name, pane, photo, art, size, liquid, title, action,
   return (
     <View style={[styles.screen, { backgroundColor: ds.c.ground }]} onLayout={(e) => setWidth(e.nativeEvent.layout.width)}>
       {/* The photo decides the system bars too, not the phone's mode (board And-photo-bright). */}
-      {photo && !pane ? <StatusBar style={ds.scheme === 'dark' ? 'light' : 'dark'} /> : null}
+      {photo && !pane && focused ? <StatusBar style={ds.scheme === 'dark' ? 'light' : 'dark'} /> : null}
       {columns ? (
         <>
           <DrinkColumns
             photo={!!photo}
             top={top}
             gutter={gutter}
-            behind={photo ? <PhotoMirror url={photo.url} left={layout.photoPanel} /> : <DrinkSky liquid={liquid} tall />}
+            behind={photo ? <PhotoMirror key={String(photo.url)} url={photo.url} left={layout.photoPanel} /> : <DrinkSky liquid={liquid} tall />}
             side={
               photo ? (
                 <>
                   {photo.hero(height, false)}
                   {spot === null ? null : (
                     <TitleOnPhoto.Provider value={ds.scheme === 'dark'}>
-                      <View style={[styles.photoTitle, styles.sideTitle, { top: spot + space.lg }]}>
+                      <View onLayout={onTitleLayout} style={[styles.photoTitle, styles.sideTitle, inPhoto, { top: spot + space.lg }]}>
                         {title}
                         {action}
                       </View>
@@ -155,10 +165,14 @@ export function ItemShell({ name, pane, photo, art, size, liquid, title, action,
       ) : (
         <>
           <Animated.ScrollView onScroll={onScroll} scrollEventThrottle={16} contentContainerStyle={[styles.column, { paddingBottom: bottom + space.xxl }]}>
-            {photo ? <PhotoMirror url={photo.url} top={heroHeight} /> : <DrinkSky liquid={liquid} />}
+            {photo ? <PhotoMirror key={String(photo.url)} url={photo.url} top={heroHeight} /> : <DrinkSky liquid={liquid} />}
             {photo ? photo.hero(heroHeight, true) : <DrawingSpace top={top} size={size} />}
-            {spot === null ? null : <View style={[styles.photoTitle, { top: spot + space.lg, left: gutter, right: gutter }]}>{title}</View>}
-            <View style={{ paddingHorizontal: gutter, marginTop: !photo ? 0 : spot === null ? -space.xxl : space.lg }}>{body(false, spot === null)}</View>
+            {spot === null ? null : (
+              <View onLayout={onTitleLayout} style={[styles.photoTitle, inPhoto, { top: spot + space.lg, left: gutter, right: gutter }]}>
+                {title}
+              </View>
+            )}
+            <View style={{ paddingHorizontal: gutter, marginTop: !photo ? 0 : spot !== null ? space.lg : photo.credit ? -space.sm : -space.xxl }}>{body(false, spot === null)}</View>
           </Animated.ScrollView>
           {nativeBar ? underNativeBar : drawnBar(true)}
           {fab ? <PageFab {...fab} scrollY={scrollY} bottom={bottom} /> : null}

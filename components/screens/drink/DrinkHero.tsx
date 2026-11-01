@@ -6,7 +6,7 @@ import { Caption, DrinkImage, GlassButton, GlassSurface, Tag, useDs } from '@/co
 import { backbar, layout, space } from '@/constants/tokens';
 import { useItemSketch } from '@/hooks/useItemSketch';
 import { withAlpha } from '@/lib/color';
-import { pictureLabel, pictureTag } from '@/lib/itemImages';
+import { glassOver, pictureLabel, pictureTag } from '@/lib/itemImages';
 import type { SketchInputs } from '@/lib/sketch/types';
 
 import { PicturePager } from './PicturePager';
@@ -139,7 +139,8 @@ export function DrinkHero({ name, pictures, glass, itemId, palette, height, fade
         </View>
       ) : null}
       {line ? (
-        <Caption color={fade ? ds.c.muted : ds.c.ink} numberOfLines={1} style={fade ? styles.creditUnder : styles.creditOn}>
+        // On the photo it takes the photo's ink, whatever the page's scheme (a beer page in light mode can lead with a dark photo).
+        <Caption color={fade ? ds.c.muted : backbar[glassOver(shown)].ink} numberOfLines={1} style={fade ? styles.creditUnder : styles.creditOn}>
           {line}
         </Caption>
       ) : null}
@@ -162,7 +163,8 @@ function ColourButton({ itemId, name, bottom, onPress }: { itemId: string; name:
 const styles = StyleSheet.create({
   fill: { width: '100%' },
   page: { flex: 1 },
-  overlay: { position: 'absolute', top: 0, left: 0, right: 0, bottom: 0, pointerEvents: 'none' },
+  // A point past the foot: a gradient's last row blends with what's under it, and that showed as a hairline.
+  overlay: { position: 'absolute', top: 0, left: 0, right: 0, bottom: -1, pointerEvents: 'none' },
   badges: { position: 'absolute', right: space.lg, flexDirection: 'row', alignItems: 'center', gap: space.sm, pointerEvents: 'box-none' },
   marks: { flexDirection: 'row', alignItems: 'center', gap: space.sm, pointerEvents: 'none' },
   colour: { position: 'absolute', left: space.lg },
