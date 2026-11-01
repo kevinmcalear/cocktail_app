@@ -7,6 +7,8 @@ import { useGuestDrinkAllergens } from '@/hooks/useGuestAllergies';
 import { useIsHydrated } from '@/hooks/useIsHydrated';
 import { useMenu, useVenueMenus } from '@/hooks/useMenus';
 import { useShifts } from '@/hooks/useRota';
+import { useDropdowns } from '@/hooks/useDropdowns';
+import { useSpecBook } from '@/hooks/useSpecBook';
 import { useBarShareOpens } from '@/hooks/useShareSlug';
 import { useBarMembers } from '@/hooks/useBarDetail';
 import { useUserId } from '@/ctx/AuthContext';
@@ -20,7 +22,9 @@ import { groupMenus, printedPrice } from '@/lib/menus';
 import { buildPrepList, DEFAULT_SERVES, tonightAt6 } from '@/lib/prep';
 import { allergenLabel } from '@/lib/allergens';
 import { formatQuantity } from '@/lib/quantity';
-import { enoughRows, offTonight, onShiftLine, runThroughMinutes, serviceEnd, talkThrough, tonightEyebrow, unpriced } from '@/lib/tonight';
+import { nextNight, nightPhase } from '@/lib/nightPhase';
+import { serveLine } from '@/lib/specView';
+import { enoughRows, offAtLine, offTonight, onShiftLine, runThroughMinutes, serviceEnd, talkAbout, talkThrough, tonightEyebrow, unpriced } from '@/lib/tonight';
 
 /** Admins see Needs you (Prod-where: "Drink Creator and Admin"). */
 const NEEDS_YOU = 35;
@@ -52,7 +56,11 @@ export function useStaffTonight(barId: string) {
   const profileId = useVenueProfileId(barId).data;
   const facts = useBarFacts(profileId).data;
   const status = hydrated && facts?.hours ? hoursStatus(facts.hours, now, facts.timezone) : null;
-  const eyebrow = date ? tonightEyebrow(date, status && !status.open ? status.detail : null) : '';
+  // By the hour (Loop-tonight): before doors, during service, after close. The web's static render has no clock.
+  const phase = hydrated ? nightPhase(facts?.hours, now, facts?.timezone) : 'before';
+  const doors = phase === 'before' && status && !status.open ? status.detail : null;
+  const tail = phase === 'service' && status?.open ? status.detail?.replace(/^until /, 'open till ') : phase === 'after' && status ? 'closed' : null;
+  const eyebrow = date ? [tonightEyebrow(date, doors), tail].filter(Boolean).join(' · ') : '';
 
   // Before doors (Prod-today-staff, bartenders up): the house-made Prep would have you make for
   // tonight, and what's counted or logged and enough. Specs is the drink makers' permission.
@@ -64,6 +72,8 @@ export function useStaffTonight(barId: string) {
     [prepData, now]
   );
   const houseMade = prepData ? Object.keys(prepData.houseMade).length : 0;
+  // Before doors shows once the bar counts (or logs a batch of) anything: before that it has nothing true to say.
+  const counted = !!prepData && Object.keys(prepData.onHand).length > 0;
   const lineNames = useMemo(() => {
     const names = new Map<string, string>();
     for (const line of [...(prepData?.drinks ?? []).flatMap((d) => d.recipe), ...Object.values(prepData?.houseMade ?? {}).flatMap((h) => h.recipe)]) names.set(line.ingredientId, line.name);
@@ -93,6 +103,22 @@ export function useStaffTonight(barId: string) {
     (id) => allergens?.get(id)?.allergens,
     allergenLabel
   );
+  // During service, the lead list's drinks as they go out: "Rocks · Large cube", "raw egg white, tell guests".
+  const book = useSpecBook(phase === 'service' ? barId : null).data;
+  const lists = useDropdowns().data;
+  const served = useMemo(() => {
+    const named = (list: readonly { id: string; name: string }[] | undefined, id: string | null | undefined) => (id ? list?.find((x) => x.id === id)?.name : undefined);
+    return new Map((book?.items ?? []).map((i) => [i.id, serveLine([named(lists?.glassware, i.glassware_id), named(lists?.iceTypes, i.ice_id)])]));
+  }, [book, lists]);
+  const lead = blocks[0] ?? null;
+  const service = (lead?.sections.flatMap((s) => s.drinks) ?? []).map((d) => {
+    const talk = talkAbout(allergens?.get(d.id)?.allergens, allergenLabel);
+    const word = talk ? `${talk.word.charAt(0).toLowerCase()}${talk.word.slice(1)}, tell guests` : null;
+    // Off once its take-off time has passed; until then it says when it comes off.
+    const offAt = off.find((o) => o.id === d.id)?.offAt ?? null;
+    const gone = offAt != null && Date.parse(offAt) <= now.getTime();
+    return { id: d.id, kind: d.kind, name: d.name, off: gone, sub: gone ? 'Off tonight' : serveLine([served.get(d.id), word, offAt && offAtLine(offAt).replace(/^C/, 'c')]) };
+  });
   const learn = [
     ...fresh.map(({ drink, list }) => ({ id: drink.id, kind: drink.kind, name: drink.name, sub: `New on ${list} · a ${runThroughMinutes(drink.line)}-minute run-through`, href: `/study/tonight?drink=${drink.id}` })),
     ...(talk ? [{ ...talk, kind: once.find((a) => a.drink.id === talk.id)!.drink.kind, href: null }] : []),
@@ -112,25 +138,33 @@ export function useStaffTonight(barId: string) {
   // On shift: who's on between now and the end of the night.
   const hourNow = new Date(Math.floor(now.getTime() / HOUR) * HOUR).toISOString();
   const shifts = useShifts(barId, hourNow, serviceEnd(now).toISOString()).data ?? [];
-  const members = useBarMembers(shifts.length ? barId : null).data ?? [];
+  // After close, tomorrow's: the next service day, 6am to 6am.
+  const nextEnd = new Date(serviceEnd(now));
+  nextEnd.setDate(nextEnd.getDate() + 1);
+  const nextShifts = useShifts(phase === 'after' ? barId : null, serviceEnd(now).toISOString(), nextEnd.toISOString()).data ?? [];
+  const members = useBarMembers(shifts.length || nextShifts.length ? barId : null).data ?? [];
   const me = useUserId();
-  const onShift = onShiftLine(shifts, (id) => members.find((m) => m.user_id === id)?.display_name ?? 'Someone', me);
+  const nameOf = (id: string) => members.find((m) => m.user_id === id)?.display_name ?? 'Someone';
+  const onShift = onShiftLine(shifts, nameOf, me);
+  const tomorrow = phase === 'after' ? { night: date ? nextNight(date) : 'Tomorrow', onShift: onShiftLine(nextShifts, nameOf, me) } : null;
   const writesRota = useCanManageStaff(barId);
 
-  const lead = blocks[0] ?? null;
   const leadIds = lead ? lead.sections.flatMap((s) => s.drinks.map((d) => d.id)) : [];
   return {
     eyebrow,
+    phase,
     isLoading,
     blocks,
     lead,
     heroIds: leadIds.slice(0, 3),
     canPrep,
+    counted,
     make: prep?.make ?? null,
     houseMade,
     enough,
     batchOf,
     off,
+    service,
     learn,
     admin,
     credits,
@@ -139,5 +173,6 @@ export function useStaffTonight(barId: string) {
     shares,
     onShift,
     writesRota,
+    tomorrow,
   };
 }

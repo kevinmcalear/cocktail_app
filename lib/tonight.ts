@@ -18,6 +18,9 @@ export function offTonight<T extends { offAt: string | null }>(drinks: readonly 
   return drinks.filter((d) => d.offAt != null && Date.parse(d.offAt) <= end);
 }
 
+/** "Comes off at 11pm". */
+export const offAtLine = (offAt: string | null) => (offAt ? `Comes off at ${new Date(offAt).toLocaleTimeString(undefined, { hour: 'numeric', minute: '2-digit' })}` : 'Off tonight');
+
 /** "Saturday 1 November", and "doors at 6pm" while the bar is closed and opens later today. */
 export function tonightEyebrow(date: Date, opens: string | null, locale?: string): string {
   const day = date.toLocaleDateString(locale, { weekday: 'long', day: 'numeric', month: 'long' });
@@ -96,17 +99,24 @@ export function talkThrough(
   allergens: (id: string) => { allergen: string; via: string[][] }[] | undefined,
   label: (key: string) => string
 ): { id: string; name: string; sub: string } | null {
-  const rank = (key: string) => (TALK_FIRST.includes(key) ? TALK_FIRST.indexOf(key) : TALK_FIRST.length);
   let best: { id: string; name: string; sub: string; rank: number } | null = null;
   for (const d of drinks) {
-    for (const a of allergens(d.id) ?? []) {
-      const r = rank(a.allergen);
-      if (best && best.rank <= r) continue;
-      const via = a.via[0]?.[a.via[0].length - 1];
-      best = { id: d.id, name: d.name, sub: `${via ?? label(a.allergen)}: what to tell guests`, rank: r };
-    }
+    const talk = talkAbout(allergens(d.id), label);
+    if (talk && (!best || talk.rank < best.rank)) best = { id: d.id, name: d.name, sub: `${talk.word}: what to tell guests`, rank: talk.rank };
   }
   return best && { id: best.id, name: best.name, sub: best.sub };
+}
+
+/** One drink's allergen worth a word at the table, by what it comes through ("Raw egg white"), eggs and milk first. */
+export function talkAbout(allergens: readonly { allergen: string; via: string[][] }[] | undefined, label: (key: string) => string): { word: string; rank: number } | null {
+  const rank = (key: string) => (TALK_FIRST.includes(key) ? TALK_FIRST.indexOf(key) : TALK_FIRST.length);
+  let best: { word: string; rank: number } | null = null;
+  for (const a of allergens ?? []) {
+    const r = rank(a.allergen);
+    if (best && best.rank <= r) continue;
+    best = { word: a.via[0]?.[a.via[0].length - 1] ?? label(a.allergen), rank: r };
+  }
+  return best;
 }
 
 /** House-made used tonight that needs no batch: "1.2 L · enough for tonight" rows, for what has been counted or logged. */
