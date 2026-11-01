@@ -5,6 +5,9 @@
   "outputDirectory": "dist",
   "framework": null,
   "cleanUrls": true,
+  "redirects": [
+    { "source": "/cocktail/:id/service", "destination": "/cocktail/:id", "permanent": true }
+  ],
   "rewrites": [
     {
       "source": "/book/:key",
