@@ -53,6 +53,8 @@ function PosterFrame({ size, onSize, data }: { size: PosterSize; onSize: (s: Pos
   const page = useRef<ComponentRef<typeof View>>(null);
   const [busy, setBusy] = useState<'save' | 'share' | null>(null);
   const [painted, setPainted] = useState(false);
+  // The stage's real height: on iOS the poster opens as a page sheet, shorter than the window, so the window's height overflows it.
+  const [stageH, setStageH] = useState<number | null>(null);
 
   // Any change to what's drawn draws the picture ahead again (the web; phones take it on the tap).
   const stamp = data.page ? JSON.stringify(data.page) : '';
@@ -75,7 +77,7 @@ function PosterFrame({ size, onSize, data }: { size: PosterSize; onSize: (s: Pos
   };
 
   const roomW = Math.min(window.width - 2 * gutter, WIDEST);
-  const roomH = Math.max(160, window.height - insets.top - insets.bottom - CHROME);
+  const roomH = Math.max(160, stageH ?? window.height - insets.top - insets.bottom - CHROME);
   let body;
   if (data.failed) body = <PencilState kind="error" title="Couldn’t draw the poster" detail="Check your connection and try again." action={{ label: 'Try again', onPress: data.retry }} />;
   else if (data.empty) body = <PencilState kind="empty" title={data.empty} />;
@@ -104,7 +106,9 @@ function PosterFrame({ size, onSize, data }: { size: PosterSize; onSize: (s: Pos
       </View>
       <View style={[styles.column, { width: roomW }]}>
         <Segmented variant="pill" stretch accessibilityLabel="Size" options={SIZES} value={size} onChange={onSize} />
-        <View style={styles.stage}>{body}</View>
+        <View style={styles.stage} onLayout={(e) => setStageH(e.nativeEvent.layout.height)}>
+          {body}
+        </View>
         <View style={styles.actions}>
           <Button label="Save" icon="square.and.arrow.down" variant="secondary" size="lg" onPress={() => void send('save')} disabled={off} style={styles.flex} />
           <Button label="Share" icon="square.and.arrow.up" variant="ink" size="lg" onPress={() => void send('share')} disabled={off} style={styles.flex} />
