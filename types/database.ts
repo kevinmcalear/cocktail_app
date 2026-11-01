@@ -220,6 +220,7 @@ export type Database = {
           name: string | null
           note: string | null
           role_level: number
+          venue_role_id: string | null
         }
         Insert: {
           accepted_at?: string | null
@@ -232,6 +233,7 @@ export type Database = {
           name?: string | null
           note?: string | null
           role_level: number
+          venue_role_id?: string | null
         }
         Update: {
           accepted_at?: string | null
@@ -244,6 +246,7 @@ export type Database = {
           name?: string | null
           note?: string | null
           role_level?: number
+          venue_role_id?: string | null
         }
         Relationships: [
           {
@@ -252,6 +255,13 @@ export type Database = {
             isOneToOne: false
             referencedRelation: "bars"
             referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "bar_invites_venue_role_fkey"
+            columns: ["venue_role_id", "bar_id"]
+            isOneToOne: false
+            referencedRelation: "venue_roles"
+            referencedColumns: ["id", "bar_id"]
           },
         ]
       }
@@ -3243,6 +3253,9 @@ export type Database = {
         Row: {
           abv: number | null
           abv_source: string
+          allergens_checked_at: string | null
+          allergens_checked_by: string | null
+          allergens_checked_spec: string | null
           approved_at: string | null
           approved_by: string | null
           awaiting_approval: boolean
@@ -3320,6 +3333,9 @@ export type Database = {
         Insert: {
           abv?: number | null
           abv_source?: string
+          allergens_checked_at?: string | null
+          allergens_checked_by?: string | null
+          allergens_checked_spec?: string | null
           approved_at?: string | null
           approved_by?: string | null
           awaiting_approval?: boolean
@@ -3397,6 +3413,9 @@ export type Database = {
         Update: {
           abv?: number | null
           abv_source?: string
+          allergens_checked_at?: string | null
+          allergens_checked_by?: string | null
+          allergens_checked_spec?: string | null
           approved_at?: string | null
           approved_by?: string | null
           awaiting_approval?: boolean
@@ -4244,6 +4263,7 @@ export type Database = {
           planned_ends_at: string | null
           planned_starts_at: string | null
           publish_mode: Database["public"]["Enums"]["item_publish_mode"] | null
+          run_margin_pct: number
           shared_at: string | null
           starts_at: string | null
           team_shared_at: string | null
@@ -4271,6 +4291,7 @@ export type Database = {
           planned_ends_at?: string | null
           planned_starts_at?: string | null
           publish_mode?: Database["public"]["Enums"]["item_publish_mode"] | null
+          run_margin_pct?: number
           shared_at?: string | null
           starts_at?: string | null
           team_shared_at?: string | null
@@ -4298,6 +4319,7 @@ export type Database = {
           planned_ends_at?: string | null
           planned_starts_at?: string | null
           publish_mode?: Database["public"]["Enums"]["item_publish_mode"] | null
+          run_margin_pct?: number
           shared_at?: string | null
           starts_at?: string | null
           team_shared_at?: string | null
@@ -5901,16 +5923,19 @@ export type Database = {
       }
       user_prefs: {
         Row: {
+          allergies: Database["public"]["Enums"]["allergen"][] | null
           taste_answers: Json | null
           user_id: string
           view_as_role_level: number | null
         }
         Insert: {
+          allergies?: Database["public"]["Enums"]["allergen"][] | null
           taste_answers?: Json | null
           user_id: string
           view_as_role_level?: number | null
         }
         Update: {
+          allergies?: Database["public"]["Enums"]["allergen"][] | null
           taste_answers?: Json | null
           user_id?: string
           view_as_role_level?: number | null
@@ -6369,6 +6394,9 @@ export type Database = {
           display_ingredient: {
             abv: number | null
             abv_source: string
+            allergens_checked_at: string | null
+            allergens_checked_by: string | null
+            allergens_checked_spec: string | null
             approved_at: string | null
             approved_by: string | null
             awaiting_approval: boolean
@@ -7290,6 +7318,9 @@ export type Database = {
         Returns: {
           abv: number | null
           abv_source: string
+          allergens_checked_at: string | null
+          allergens_checked_by: string | null
+          allergens_checked_spec: string | null
           approved_at: string | null
           approved_by: string | null
           awaiting_approval: boolean
@@ -7395,6 +7426,7 @@ export type Database = {
       }
       effective_bar_role: { Args: { real_role: number }; Returns: number }
       end_menu: { Args: { p_menu_id: string }; Returns: undefined }
+      end_run_sheet_link: { Args: { p_party_id: string }; Returns: undefined }
       finish_bar_item: { Args: { p_item_id: string }; Returns: undefined }
       flavor_baseline: {
         Args: never
@@ -7677,6 +7709,16 @@ export type Database = {
         }[]
       }
       give_back_review_code_try: { Args: { p_id: number }; Returns: undefined }
+      guest_drink_allergens: {
+        Args: { p_item_ids: string[] }
+        Returns: {
+          allergens: Json
+          checked_at: string
+          item_id: string
+          lines: number
+          unchecked: number
+        }[]
+      }
       ingredient_key: { Args: { p_name: string }; Returns: string }
       ingredient_used_in: {
         Args: { p_ingredient_id: string; p_limit?: number }
@@ -7686,6 +7728,15 @@ export type Database = {
           image_url: string
           name: string
         }[]
+      }
+      invite_to_role: {
+        Args: {
+          p_email: string
+          p_name?: string
+          p_note?: string
+          p_role_id: string
+        }
+        Returns: undefined
       }
       is_card_public: { Args: { p_item_id: string }; Returns: boolean }
       is_spec_locked: { Args: { p_item_id: string }; Returns: boolean }
@@ -8087,6 +8138,8 @@ export type Database = {
         Args: { p_item: string; p_version: number }
         Returns: number
       }
+      run_sheet_link: { Args: { p_token: string }; Returns: Json }
+      run_sheet_link_token: { Args: { p_party_id: string }; Returns: string }
       save_claim_setup: {
         Args: { p_claim_id: string; p_setup: Json }
         Returns: {
@@ -8176,6 +8229,10 @@ export type Database = {
       save_prep_spec: {
         Args: { p_item: string; p_lines?: Json; p_prep: Json; p_steps: Json }
         Returns: undefined
+      }
+      save_run_sheet_link: {
+        Args: { p_list: Json; p_party_id: string }
+        Returns: string
       }
       save_spelling: {
         Args: { p_item_id: string; p_typed: string }
@@ -8703,12 +8760,6 @@ export type Database = {
         | "playfair_display"
         | "josefin_sans"
         | "tenor_sans"
-        | "newsreader"
-        | "im_fell_english"
-        | "imbue"
-        | "besley"
-        | "belleza"
-        | "big_shoulders"
     }
     CompositeTypes: {
       [_ in never]: never
@@ -8937,12 +8988,6 @@ export const Constants = {
         "playfair_display",
         "josefin_sans",
         "tenor_sans",
-        "newsreader",
-        "im_fell_english",
-        "imbue",
-        "besley",
-        "belleza",
-        "big_shoulders",
       ],
     },
   },
