@@ -12,10 +12,11 @@ import { useIsHydrated } from '@/hooks/useIsHydrated';
 import { useWebNav } from '@/hooks/useIsWideWeb';
 import { useMode } from '@/hooks/useMode';
 import { useSaveShifts, type Shift } from '@/hooks/useRota';
-import { useCanManageStaff } from '@/hooks/useViewAs';
+import { useCanManageStaff, useEffectiveRole } from '@/hooks/useViewAs';
 import { newDraftId } from '@/lib/drinkWizard';
 import { plural } from '@/lib/menus';
 import { addDays, copyShifts, weekLine, type RotaChange } from '@/lib/rota';
+import { canSeeTeam } from '@/lib/team';
 
 import { GridKey, RotaGrid } from './RotaGrid';
 import { AskNote, CloseWarning, EmptyWeek } from './RotaParts';
@@ -56,6 +57,8 @@ function Rota({ barId, barName }: { barId: string; barName: string }) {
   const toast = useToast();
   const column = usePageColumn('full');
   const edit = useCanManageStaff(barId);
+  // The crumb goes through My team only for someone the nav shows it to.
+  const team = canSeeTeam(useEffectiveRole(barId));
   const grid = useWebNav() === 'sidebar';
   const r = useRotaWeek(barId, edit);
   const save = useSaveShifts(barId, () => toast.show({ title: 'Couldn’t save the rota', detail: 'It’s back as it was. Try again.' }));
@@ -116,10 +119,10 @@ function Rota({ barId, barName }: { barId: string; barName: string }) {
           width="full"
           onBack={() => (router.canGoBack() ? router.back() : router.navigate('/'))}
           actionOnTop
-          crumbs={[{ label: barName, href: '/' as Href }, { label: 'My team', href: '/team' as Href }]}
+          crumbs={[{ label: barName, href: '/' as Href }, ...(team ? [{ label: 'My team', href: '/team' as Href }] : [])]}
           above={<WeekLine barName={barName} r={r} />}
           action={
-            !edit ? null : grid ? (
+            !edit || r.failed ? null : grid ? (
               <>
                 <Button label="Copy last week" icon="arrow.left.arrow.right" variant="secondary" onPress={() => copy(true)} />
                 <Button label="Add a shift" icon="plus" onPress={() => add()} />

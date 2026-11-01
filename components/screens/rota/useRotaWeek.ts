@@ -5,10 +5,9 @@ import { useBarMembers, type BarMember } from '@/hooks/useBarDetail';
 import { useBarFacts } from '@/hooks/useBarFacts';
 import { useShifts, type Shift } from '@/hooks/useRota';
 import { useVenueProfileId } from '@/hooks/useVenueRoles';
-import { addDays, daysOfWeek, mondayOf, nextShifts, nightOf, noClose, rotaMaker, weekWindow } from '@/lib/rota';
+import { addDays, daysOfWeek, mondayOf, nextShifts, nightOf, nightStart, noClose, rotaMaker, weekWindow } from '@/lib/rota';
 import { roleLabel } from '@/lib/roles';
 
-const HOUR = 3_600_000;
 /** How far ahead a bartender's next shifts are read: far enough to find three on a quiet rota. */
 const AHEAD_DAYS = 28;
 
@@ -48,13 +47,13 @@ export function useRotaWeek(barId: string, edit: boolean) {
   const current = useShifts(bar, w.from, w.to);
   const last = useShifts(edit ? bar : null, before.from, before.to);
   const next = useShifts(edit ? bar : null, after.from, after.to);
-  // To the hour, so the key holds still.
-  const hour = Math.floor(now.getTime() / HOUR) * HOUR;
-  const ahead = useShifts(bar, new Date(hour).toISOString(), new Date(hour + AHEAD_DAYS * 24 * HOUR).toISOString()).data;
+  // From tonight's 6am, so tonight's line counts a shift that's already ended. Only a bartender's view shows it.
+  const ahead = useShifts(edit ? null : bar, nightStart(today, timeZone), nightStart(addDays(today, AHEAD_DAYS), timeZone)).data;
 
   const days = daysOfWeek(current.data ?? [], shown, timeZone);
   const shifts: Shift[] = days.flatMap((d) => d.shifts);
-  const members = useBarMembers(barId).data;
+  const team = useBarMembers(barId);
+  const members = team.data;
   const people = (members ?? []).map(personOf);
   const person = (id: string) => people.find((p) => p.user_id === id);
   const nameOf = (id: string) => person(id)?.name ?? 'Someone';
@@ -76,7 +75,8 @@ export function useRotaWeek(barId: string, edit: boolean) {
     days,
     /** The week's shifts, each on a night of the week. */
     shifts,
-    loading: !settled || current.isLoading,
+    // The team too: without it every shift looks like a leaver's, and copying would leave them all out.
+    loading: !settled || current.isLoading || team.isLoading,
     failed: current.isError && !current.data,
     retry: () => void current.refetch(),
     gaps: noClose(days, today),

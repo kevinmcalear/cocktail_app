@@ -34,6 +34,7 @@ export function RotaPhone({ r, edit, warning, onOpen, onCopyLast, onCopyNext, on
     return (
       <>
         {strip}
+        {edit ? null : <NextShifts r={r} />}
         <EmptyWeek
           edit={edit}
           actions={
@@ -90,19 +91,25 @@ function AdminDays({ r, onOpen }: { r: RotaWeek; onOpen: (shift: Shift) => void 
   );
 }
 
+/** A bartender's next shifts, from the coming weeks: there even when the week shown is empty. */
+function NextShifts({ r }: { r: RotaWeek }) {
+  if (!r.mine.length) return null;
+  return (
+    <View>
+      <DayLabel title="Your next shifts" />
+      {r.mine.map((n) => (
+        <ShiftRow key={n.shift.id} person={r.person(n.shift.user_id)} title={n.title} sub={n.sub} shift={n.shift} timeZone={r.timeZone} />
+      ))}
+    </View>
+  );
+}
+
 /** A bartender's rota: their next shifts, then everyone on the night picked, and who to ask. */
 function BartenderDays({ r }: { r: RotaWeek }) {
   const night = r.days.find((d) => d.day === r.selected);
   return (
     <>
-      {r.mine.length ? (
-        <View>
-          <DayLabel title="Your next shifts" />
-          {r.mine.map((n) => (
-            <ShiftRow key={n.shift.id} person={r.person(n.shift.user_id)} title={n.title} sub={n.sub} shift={n.shift} timeZone={r.timeZone} />
-          ))}
-        </View>
-      ) : null}
+      <NextShifts r={r} />
       {night?.shifts.length ? (
         <View>
           <DayLabel title={`${night.day === r.today ? 'Tonight' : dayHeading(night.day)} · everyone`} />

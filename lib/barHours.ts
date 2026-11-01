@@ -37,21 +37,28 @@ export function clockLabel(t: string): string {
   return `${h12}${min ? `:${String(min).padStart(2, '0')}` : ''}${h < 12 ? 'am' : 'pm'}`;
 }
 
-/** The bar's weekday (0 = Monday) and minutes past midnight at `now`, in `timeZone` (the device's if missing or unknown). */
-export function barClock(now: Date, timeZone?: string | null): { day: number; minute: number } {
+/**
+ * The wall clock in `timeZone` (the device's if missing or unknown) at `at`,
+ * as a UTC timestamp: read it back with getUTC* for the bar's date and time.
+ */
+export function wallTime(at: Date, timeZone?: string | null): number {
   if (timeZone) {
     try {
-      const parts = new Intl.DateTimeFormat('en-US', { timeZone, weekday: 'short', hour: 'numeric', minute: 'numeric', hourCycle: 'h23' }).formatToParts(now);
-      const get = (type: string) => parts.find((p) => p.type === type)?.value ?? '';
-      const day = SHORT_NAMES.indexOf(get('weekday'));
-      const hour = Number(get('hour')) % 24;
-      const minute = Number(get('minute'));
-      if (day >= 0 && Number.isFinite(hour) && Number.isFinite(minute)) return { day, minute: hour * 60 + minute };
+      const parts = new Intl.DateTimeFormat('en-US', { timeZone, year: 'numeric', month: 'numeric', day: 'numeric', hour: 'numeric', minute: 'numeric', hourCycle: 'h23' }).formatToParts(at);
+      const get = (type: string) => Number(parts.find((p) => p.type === type)?.value);
+      const t = Date.UTC(get('year'), get('month') - 1, get('day'), get('hour') % 24, get('minute'));
+      if (Number.isFinite(t)) return t;
     } catch {
       // ponytail: an unknown zone falls back to the device's clock; most readers are in the bar's city.
     }
   }
-  return { day: (now.getDay() + 6) % 7, minute: now.getHours() * 60 + now.getMinutes() };
+  return Date.UTC(at.getFullYear(), at.getMonth(), at.getDate(), at.getHours(), at.getMinutes());
+}
+
+/** The bar's weekday (0 = Monday) and minutes past midnight at `now`, in `timeZone` (the device's if missing or unknown). */
+export function barClock(now: Date, timeZone?: string | null): { day: number; minute: number } {
+  const wall = new Date(wallTime(now, timeZone));
+  return { day: (wall.getUTCDay() + 6) % 7, minute: wall.getUTCHours() * 60 + wall.getUTCMinutes() };
 }
 
 interface Span { start: number; end: number; open: string; close: string }

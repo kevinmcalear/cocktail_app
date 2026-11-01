@@ -6,21 +6,13 @@
  * at 1am belongs to the night before.
  */
 
-import { clockLabel, WEEK_DAYS, type WeekHours } from '@/lib/barHours';
+import { clockLabel, wallTime as wall, WEEK_DAYS, type WeekHours } from '@/lib/barHours';
 import { TURNOVER_HOUR } from '@/lib/serviceDay';
 import { onShiftLine } from '@/lib/tonight';
+import type { Row } from '@/types/db';
 
 /** A row of public.shifts, as useShifts reads it. Plain JSON: it sits in the query cache. */
-export interface RotaShift {
-  id: string;
-  user_id: string;
-  starts_at: string;
-  ends_at: string;
-  opens: boolean;
-  closes: boolean;
-  note: string | null;
-  created_by: string | null;
-}
+export type RotaShift = Pick<Row<'shifts'>, 'id' | 'user_id' | 'starts_at' | 'ends_at' | 'opens' | 'closes' | 'note' | 'created_by'>;
 
 /** What a shift write sends: rows to add or change, ids to take off. Sending it twice changes nothing. */
 export interface RotaChange {
@@ -30,21 +22,6 @@ export interface RotaChange {
 
 const HOUR = 3_600_000;
 const TURNOVER = `${String(TURNOVER_HOUR).padStart(2, '0')}:00`;
-
-/** The wall clock in `timeZone` (the device's if missing or unknown), as if it were UTC. */
-function wall(at: Date, timeZone?: string | null): number {
-  if (timeZone) {
-    try {
-      const parts = new Intl.DateTimeFormat('en-US', { timeZone, year: 'numeric', month: 'numeric', day: 'numeric', hour: 'numeric', minute: 'numeric', hourCycle: 'h23' }).formatToParts(at);
-      const get = (type: string) => Number(parts.find((p) => p.type === type)?.value);
-      const t = Date.UTC(get('year'), get('month') - 1, get('day'), get('hour') % 24, get('minute'));
-      if (Number.isFinite(t)) return t;
-    } catch {
-      // ponytail: an unknown zone falls back to the device's clock, as lib/barHours does; most readers are in the bar's city.
-    }
-  }
-  return Date.UTC(at.getFullYear(), at.getMonth(), at.getDate(), at.getHours(), at.getMinutes());
-}
 
 const dayOfUtc = (t: number) => new Date(t).toISOString().slice(0, 10);
 const utcOf = (day: string) => Date.parse(`${day}T00:00:00Z`);
@@ -71,6 +48,9 @@ export function atWall(day: string, time: string, timeZone?: string | null): str
   for (let i = 0; i < 2; i++) at = target - (wall(new Date(at), timeZone) - at);
   return new Date(at).toISOString();
 }
+
+/** When a service night starts: 6am that day, in the bar's time. */
+export const nightStart = (day: string, timeZone?: string | null) => atWall(day, TURNOVER, timeZone);
 
 /** A week's window for useShifts: 6am Monday to 6am the next Monday. */
 export function weekWindow(monday: string, timeZone?: string | null) {
@@ -105,6 +85,8 @@ export function shiftTimes(s: Pick<RotaShift, 'starts_at' | 'ends_at'>, timeZone
   return `${shortClock(clockOf(s.starts_at, timeZone))} to ${shortClock(clockOf(s.ends_at, timeZone))}`;
 }
 
+/** Start order, by the moment: rows from Postgres say +00:00, rows made here say Z. */
+const byStart = (a: Pick<RotaShift, 'starts_at'>, b: Pick<RotaShift, 'starts_at'>) => Date.parse(a.starts_at) - Date.parse(b.starts_at);
 const lengthOf = (s: Pick<RotaShift, 'starts_at' | 'ends_at'>) => (Date.parse(s.ends_at) - Date.parse(s.starts_at)) / HOUR;
 
 /** "7.5 h". */
@@ -144,7 +126,7 @@ export interface RotaDay {
 
 /** The week's seven nights, each with its shifts in start order. A shift from the night before the week isn't in it. */
 export function daysOfWeek(shifts: readonly RotaShift[], monday: string, timeZone?: string | null): RotaDay[] {
-  return weekDays(monday).map((day) => ({ day, shifts: shifts.filter((s) => nightOf(s.starts_at, timeZone) === day).sort((a, b) => a.starts_at.localeCompare(b.starts_at)) }));
+  return weekDays(monday).map((day) => ({ day, shifts: shifts.filter((s) => nightOf(s.starts_at, timeZone) === day).sort(byStart) }));
 }
 
 /** Nights from today on with people on and nobody closing. */
@@ -179,22 +161,23 @@ export function copyShifts({ from, days, memberIds, existing, newId, timeZone }:
   newId: () => string;
   timeZone?: string | null;
 }): { rows: RotaChange['rows']; gone: number } {
-  const taken = new Set(existing.map((s) => `${s.user_id} ${s.starts_at}`));
+  // By the moment, not the text: Postgres writes +00:00 where toISOString writes Z.
+  const taken = new Set(existing.map((s) => `${s.user_id} ${Date.parse(s.starts_at)}`));
   const moved = (at: string) => atWall(addDays(new Date(wall(new Date(at), timeZone)).toISOString().slice(0, 10), days), clockOf(at, timeZone), timeZone);
   const onTeam = from.filter((s) => memberIds.includes(s.user_id));
   const rows = onTeam
     .map((s) => ({ id: newId(), user_id: s.user_id, starts_at: moved(s.starts_at), ends_at: moved(s.ends_at), opens: s.opens, closes: s.closes, note: s.note }))
-    .filter((s) => !taken.has(`${s.user_id} ${s.starts_at}`));
+    .filter((s) => !taken.has(`${s.user_id} ${Date.parse(s.starts_at)}`));
   return { rows, gone: from.length - onTeam.length };
 }
 
 /** A write's effect on one cached window, so it shows at once: its rows in or out of the window, in start order. */
 export function patchShifts(list: readonly RotaShift[], change: RotaChange, from: string, to: string, me: string | null): RotaShift[] {
   const changed = new Map(change.rows.map((r) => [r.id, r]));
-  const inWindow = (s: Pick<RotaShift, 'starts_at' | 'ends_at'>) => s.starts_at < to && s.ends_at > from;
+  const inWindow = (s: Pick<RotaShift, 'starts_at' | 'ends_at'>) => Date.parse(s.starts_at) < Date.parse(to) && Date.parse(s.ends_at) > Date.parse(from);
   const kept = list.filter((s) => !changed.has(s.id) && !change.removed.includes(s.id));
   const put = change.rows.filter(inWindow).map((r) => ({ ...r, created_by: list.find((s) => s.id === r.id)?.created_by ?? me }));
-  return [...kept, ...put].sort((a, b) => a.starts_at.localeCompare(b.starts_at));
+  return [...kept, ...put].sort(byStart);
 }
 
 const first = (name: string) => name.split(' ')[0];
@@ -230,7 +213,7 @@ export function nextShifts({ shifts, me, today, nameOf, timeZone, limit = 3 }: {
   }
   return shifts
     .filter((s) => s.user_id === me && nightOf(s.starts_at, timeZone) >= today)
-    .sort((a, b) => a.starts_at.localeCompare(b.starts_at))
+    .sort(byStart)
     .slice(0, limit)
     .map((shift) => {
       const night = nightOf(shift.starts_at, timeZone);
@@ -254,9 +237,9 @@ export function rotaMaker(shifts: readonly RotaShift[]): string | null {
  * rest of the team, so anyone can be given a shift from the grid.
  */
 export function gridPeople<M extends { user_id: string; name: string }>(members: readonly M[], shifts: readonly RotaShift[], everyone: boolean): M[] {
-  const firstAt = new Map<string, string>();
-  for (const s of shifts) if (!firstAt.has(s.user_id) || s.starts_at < firstAt.get(s.user_id)!) firstAt.set(s.user_id, s.starts_at);
+  const firstAt = new Map<string, number>();
+  for (const s of shifts) if (!firstAt.has(s.user_id) || Date.parse(s.starts_at) < firstAt.get(s.user_id)!) firstAt.set(s.user_id, Date.parse(s.starts_at));
   const byName = (a: M, b: M) => a.name.localeCompare(b.name);
-  const on = members.filter((m) => firstAt.has(m.user_id)).sort((a, b) => firstAt.get(a.user_id)!.localeCompare(firstAt.get(b.user_id)!) || byName(a, b));
+  const on = members.filter((m) => firstAt.has(m.user_id)).sort((a, b) => firstAt.get(a.user_id)! - firstAt.get(b.user_id)! || byName(a, b));
   return everyone ? [...on, ...members.filter((m) => !firstAt.has(m.user_id)).sort(byName)] : on;
 }

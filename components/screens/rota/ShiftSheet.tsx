@@ -102,9 +102,10 @@ export function ShiftSheet({ open, barName, people, timeZone, onClose, onSave, o
   const toggle = (next: Panel) => () => setPanel(panel === next ? null : next);
 
   const save = () => onSave({ id: shift?.id ?? newDraftId(), user_id: userId!, ...shiftMoments(night, start, end, timeZone), opens, closes, note: note.trim() || null });
-  const title = shift ? `${(person?.name ?? 'Their').split(' ')[0]}’s shift` : 'New shift';
+  // Someone who's left can't be saved onto the rota (shifts_write checks the team): pick someone else or delete it.
+  const title = !shift ? 'New shift' : person ? `${person.name.split(' ')[0]}’s shift` : 'Shift';
   return (
-    <Sheet visible onClose={onClose} accessibilityLabel={title} kind="flow" keyboard header={<Head title={title} canSave={!!userId && start !== end} onSave={save} />}>
+    <Sheet visible onClose={onClose} accessibilityLabel={title} kind="flow" keyboard header={<Head title={title} canSave={!!person && start !== end} onSave={save} />}>
       <SheetScrollView {...dragDismissesKeyboard} contentContainerStyle={styles.body}>
         <Grouped>
           <SettingsRow role="button" expanded={panel === 'who'} leading={person ? <PersonMark person={person} size={32} /> : undefined} icon="person" label={person?.name ?? 'Who'} detail={person?.role} value={person ? undefined : 'Pick from the team'} onPress={toggle('who')} />
@@ -161,6 +162,7 @@ export function ShiftSheet({ open, barName, people, timeZone, onClose, onSave, o
           <SwitchRow label="Closes" detail="Counts down and locks up" value={closes} onValueChange={setCloses} />
         </Grouped>
         <Field label="Note" hideLabel placeholder="Note, like “bar back till 8”" value={note} onChangeText={setNote} maxLength={200} />
+        {shift && !person ? <Caption tone="muted">Whoever had this shift isn’t on the team now. Pick someone to keep it, or delete it.</Caption> : null}
         {shift ? <DeleteRow onDelete={() => onDelete(shift)} /> : <Caption tone="muted">{`Only people on ${barName}’s team can be on its rota. They see it on Tonight.`}</Caption>}
       </SheetScrollView>
     </Sheet>

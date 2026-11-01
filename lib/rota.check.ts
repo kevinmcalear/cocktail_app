@@ -79,6 +79,9 @@ assert.equal(copied.rows[0].note, 'bar back');
 assert.equal(copied.rows[0].closes, true);
 const twice = copyShifts({ from: [satNight], days: 7, memberIds: ['ana'], existing: [shift('x', 'ana', atWall('2026-11-07', '19:00', NY), atWall('2026-11-08', '02:00', NY))], newId, timeZone: NY });
 assert.equal(twice.rows.length, 0, 'copying twice adds nothing');
+const fromDb = (at: string) => new Date(at).toISOString().replace('.000Z', '+00:00');
+const again = copyShifts({ from: [satNight], days: 7, memberIds: ['ana'], existing: [shift('y', 'ana', fromDb(atWall('2026-11-07', '19:00', NY)), fromDb(atWall('2026-11-08', '02:00', NY)))], newId, timeZone: NY });
+assert.equal(again.rows.length, 0, 'a row read back from Postgres (+00:00) still counts as there');
 
 // A write shows at once, in the windows it falls in.
 const list = [fri];
