@@ -28,5 +28,8 @@ assert.equal(heroPictures([], [unscored]).credit, 'Photo by Ari', 'no scores at 
 assert.equal(heroPictures([], [joPhoto]).pictures.length, 1, 'no pictures at all: theirs');
 assert.deepEqual(heroPictures([sketch], []), { pictures: [sketch], credit: null });
 assert.deepEqual(heroPictures([sketch], undefined), { pictures: [sketch], credit: null }, 'signed out: no person photos');
+const bright = { ...joPhoto, brightness: 0.82, textZone: { top: 0.05, bottom: 0.4, light: 0.2 }, aspect: 0.8 };
+const lead = heroPictures([sketch], [bright]).pictures[0];
+assert.deepEqual([lead.brightness, lead.textZone, lead.aspect], [0.82, bright.textZone, 0.8], "their photo's layout makes the page, like the drink's own");
 
 console.log('drinkPhotos hero ok');
