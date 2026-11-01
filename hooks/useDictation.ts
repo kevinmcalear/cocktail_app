@@ -53,6 +53,14 @@ export function useDictation(onText: (text: string, final: boolean) => void) {
   const [listening, setListening] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const web = useRef<WebRecognition | null>(null);
+  // Gone while the permission prompt was up: don't start listening with nothing to show it.
+  const gone = useRef(false);
+  useEffect(() => {
+    gone.current = false;
+    return () => {
+      gone.current = true;
+    };
+  }, []);
   // The latest onText, for listeners set up once.
   const said = useRef(onText);
   useEffect(() => {
@@ -85,6 +93,7 @@ export function useDictation(onText: (text: string, final: boolean) => void) {
     if (native) {
       try {
         const allowed = await native.requestPermissionsAsync();
+        if (gone.current) return;
         if (!allowed.granted) return setError('Turn on the microphone and speech recognition in Settings.');
         native.start({ lang: 'en-US', interimResults: true, continuous: false });
         setListening(true);

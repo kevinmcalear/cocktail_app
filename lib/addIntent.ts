@@ -10,7 +10,8 @@ import { isLink } from './bringIn';
 export function addIntent(text: string): 'name' | 'read' | null {
   const t = text.trim();
   if (!t) return null;
-  if (isLink(t) || t.includes('\n') || /\d/.test(t) || /[,;:]/.test(t)) return 'read';
+  // One number can be part of a name (French 75, Ward 8); two read as amounts.
+  if (isLink(t) || t.includes('\n') || /[,;:]/.test(t) || (t.match(/\d+/g) ?? []).length > 1) return 'read';
   const words = t.split(/\s+/);
   if (words.length > 6 || words.some((w) => /^(with|but|like|instead|without|less|more|plus)$/i.test(w))) return 'read';
   return 'name';
