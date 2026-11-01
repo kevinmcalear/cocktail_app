@@ -489,6 +489,74 @@ export type Database = {
         }
         Relationships: []
       }
+      batch_logs: {
+        Row: {
+          amount: number
+          bar_id: string
+          created_at: string
+          id: string
+          item_id: string
+          location_id: string | null
+          made_at: string
+          made_by: string | null
+          note: string | null
+          unit: string
+        }
+        Insert: {
+          amount: number
+          bar_id: string
+          created_at?: string
+          id?: string
+          item_id: string
+          location_id?: string | null
+          made_at?: string
+          made_by?: string | null
+          note?: string | null
+          unit: string
+        }
+        Update: {
+          amount?: number
+          bar_id?: string
+          created_at?: string
+          id?: string
+          item_id?: string
+          location_id?: string | null
+          made_at?: string
+          made_by?: string | null
+          note?: string | null
+          unit?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "batch_logs_bar_id_fkey"
+            columns: ["bar_id"]
+            isOneToOne: false
+            referencedRelation: "bars"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "batch_logs_item_id_fkey"
+            columns: ["item_id"]
+            isOneToOne: false
+            referencedRelation: "app_item_presentation"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "batch_logs_item_id_fkey"
+            columns: ["item_id"]
+            isOneToOne: false
+            referencedRelation: "items"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "batch_logs_location_id_fkey"
+            columns: ["location_id"]
+            isOneToOne: false
+            referencedRelation: "item_locations"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       bring_in_batches: {
         Row: {
           bar_id: string | null
@@ -5382,6 +5450,53 @@ export type Database = {
           },
         ]
       }
+      shifts: {
+        Row: {
+          bar_id: string
+          closes: boolean
+          created_at: string
+          created_by: string | null
+          ends_at: string
+          id: string
+          note: string | null
+          opens: boolean
+          starts_at: string
+          user_id: string
+        }
+        Insert: {
+          bar_id: string
+          closes?: boolean
+          created_at?: string
+          created_by?: string | null
+          ends_at: string
+          id?: string
+          note?: string | null
+          opens?: boolean
+          starts_at: string
+          user_id: string
+        }
+        Update: {
+          bar_id?: string
+          closes?: boolean
+          created_at?: string
+          created_by?: string | null
+          ends_at?: string
+          id?: string
+          note?: string | null
+          opens?: boolean
+          starts_at?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "shifts_bar_id_fkey"
+            columns: ["bar_id"]
+            isOneToOne: false
+            referencedRelation: "bars"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       shopping_list_items: {
         Row: {
           added_at: string
@@ -6928,6 +7043,10 @@ export type Database = {
         }[]
       }
       bar_claim_verified: { Args: { p_bar_id: string }; Returns: boolean }
+      bar_share_opens: {
+        Args: { p_bar: string; p_since: string }
+        Returns: number
+      }
       bar_week: {
         Args: { p_bar_id: string; p_days?: number; p_from: string }
         Returns: {
@@ -8049,6 +8168,10 @@ export type Database = {
           isOneToOne: true
           isSetofReturn: true
         }
+      }
+      record_share_open: {
+        Args: { p_key: string; p_kind: string }
+        Returns: undefined
       }
       refresh_my_profile_photo: { Args: never; Returns: undefined }
       refund_ai_quota: {
