@@ -10,8 +10,10 @@ const mockReset = jest.fn(() => Promise.resolve());
 
 jest.mock('@/ctx/AuthContext', () => ({ useAuth: () => mockAuth }));
 jest.mock('@/lib/clearUserData', () => ({ clearUserData: () => mockClear() }));
-jest.mock('@/lib/react-query', () => ({ queryClient: {} }));
+jest.mock('@/lib/react-query', () => ({ queryClient: {}, savedQueryFiles: { clear: async () => {} } }));
+jest.mock('@/lib/specBookFile', () => ({ clearSavedSpecBooks: async () => {} }));
 jest.mock('@/hooks/useDraftSync', () => ({ useDraftSync: () => {} }));
+jest.mock('@/hooks/useSpecBook', () => ({ useSpecBooks: () => {} }));
 jest.mock('@/lib/authCache', () => ({
   ...jest.requireActual('@/lib/authCache'),
   resetUserQueries: () => mockReset(),

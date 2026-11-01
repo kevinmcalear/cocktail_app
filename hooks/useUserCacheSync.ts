@@ -3,9 +3,11 @@ import { useEffect, useRef } from 'react';
 
 import { useAuth } from '@/ctx/AuthContext';
 import { useDraftSync } from '@/hooks/useDraftSync';
+import { useSpecBooks } from '@/hooks/useSpecBook';
 import { cacheActionOnAuth, resetUserQueries } from '@/lib/authCache';
 import { clearUserData } from '@/lib/clearUserData';
-import { queryClient } from '@/lib/react-query';
+import { queryClient, savedQueryFiles } from '@/lib/react-query';
+import { clearSavedSpecBooks } from '@/lib/specBookFile';
 
 /**
  * Keeps the query cache to the signed-in user. Signed out (button, expiry or
@@ -19,13 +21,16 @@ import { queryClient } from '@/lib/react-query';
  * shown for, so settling on anyone else resets it and settling on nobody
  * clears it.
  *
- * Both wait for the saved cache to finish loading (PersistQueryClientProvider):
+ * A new person also loses the saved query files and spec books, which were
+ * fetched as the last one. Both wait for the saved cache to finish loading (PersistQueryClientProvider):
  * cleared or reset before that, the load would put the previous user's data
  * back in afterwards.
  */
 export function useUserCacheSync() {
   // Drinks half made in the wizard, kept in the account for the same user (hooks/useDraftSync).
   useDraftSync();
+  // The spec book of every venue they work at, on this phone (hooks/useSpecBook.ts).
+  useSpecBooks();
   const { session, user, loading } = useAuth();
   const userId = session?.user.id ?? null;
   const provisionalId = loading ? (user?.id ?? null) : null;
@@ -43,7 +48,10 @@ export function useUserCacheSync() {
     if (action === 'clear') {
       clearUserData().catch((e) => console.warn('Clearing signed-out data failed', e));
     } else if (action === 'reset') {
-      resetUserQueries(queryClient).catch((e) => console.warn('Refetching after sign-in failed', e));
+      // The saved files first: a query reset reads its file back as it refetches.
+      Promise.all([savedQueryFiles.clear(), clearSavedSpecBooks()])
+        .then(() => resetUserQueries(queryClient))
+        .catch((e) => console.warn('Refetching after sign-in failed', e));
     }
   }, [loading, userId, provisionalId, restoring]);
 }

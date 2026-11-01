@@ -1,14 +1,20 @@
 import { createAsyncStoragePersister } from '@tanstack/query-async-storage-persister';
-import type { AsyncStorage, PersistedClient, Persister } from '@tanstack/query-persist-client-core';
-import { defaultShouldDehydrateQuery, type Query } from '@tanstack/react-query';
+import {
+  experimental_createQueryPersister,
+  type AsyncStorage,
+  type PersistedClient,
+  type PersistedQuery,
+  type Persister,
+} from '@tanstack/query-persist-client-core';
+import { defaultShouldDehydrateQuery, type Query, type QueryCache } from '@tanstack/react-query';
 
+import type { FileStore } from '@/lib/fileStore';
 import { DROPDOWNS_QUERY_KEY } from '@/lib/queryDefaults';
 
 /**
- * Query keys (by prefix) saved between launches: small, and what the first
- * screen paints from (who you are, your venues and mode, tonight's menus,
- * Discover's lists), plus drink pages you opened, so a spec still reads with
- * no signal behind the bar. A hook can opt in with `meta: { persist: true }`.
+ * Query keys (by prefix) saved in the one storage row, read back before the
+ * first screen paints: small, and what that screen paints from (who you
+ * are, your venues and mode, tonight's menus, Discover's lists).
  */
 export const PERSISTED_KEYS: readonly (readonly string[])[] = [
   ['bars'],
@@ -25,29 +31,44 @@ export const PERSISTED_KEYS: readonly (readonly string[])[] = [
   [DROPDOWNS_QUERY_KEY[0], 'menus'],
   ['drafts'],
   ['home-bar'],
-  ['collection'],
   ['drink-lists'],
   ['bar-cities'],
   ['discover-top-bars'],
-  // Your taste is built from these, so it's there offline.
-  ['my-had'],
   ['flavor-baseline'],
-  ['cocktail'],
 ];
+
+/**
+ * Query keys (by prefix) saved in a file each (lib/fileStore.ts) and read back
+ * when the query first runs: drink and ingredient pages you opened, so a spec
+ * still reads with no signal behind the bar, and your collection and what
+ * you've had, which your taste is built from. A hook opts in with
+ * `meta: { persist: true }` (the Library's venue lists, the spec lists).
+ */
+export const FILE_KEYS: readonly (readonly string[])[] = [['cocktail'], ['ingredient'], ['collection'], ['my-had']];
 
 const startsWith = (key: readonly unknown[], prefix: readonly string[]) => prefix.every((part, i) => key[i] === part);
 
 /**
- * What's saved between launches: successful queries on the list above or
- * marked `meta: { persist: true }`, never one marked `persist: false` (keyed
+ * Where a query is saved between launches: in the row (the first screen),
+ * in a file of its own, or not at all. `persist: false` always wins (keyed
  * by where the person is standing, hooks/useDiscover.ts). Everything else
- * refetches when its screen opens. The whole cache is one storage row,
- * Android can't read a row over about 2 MB back (SQLite CursorWindow), and a
- * smaller row restores faster on every launch.
+ * refetches when its screen opens.
+ */
+export function savedIn(query: Pick<Query, 'queryKey' | 'meta'>): 'row' | 'file' | null {
+  if (query.meta?.persist === false) return null;
+  if (PERSISTED_KEYS.some((prefix) => startsWith(query.queryKey, prefix))) return 'row';
+  if (query.meta?.persist === true || FILE_KEYS.some((prefix) => startsWith(query.queryKey, prefix))) return 'file';
+  return null;
+}
+
+/**
+ * What goes in the row: successful queries saved there. The row is one
+ * AsyncStorage value, Android can't read one over about 2 MB back (SQLite
+ * CursorWindow), and a smaller row restores faster on every launch, so
+ * anything big or numerous is a file instead.
  */
 export function shouldPersistQuery(query: Query): boolean {
-  if (!defaultShouldDehydrateQuery(query) || query.meta?.persist === false) return false;
-  return query.meta?.persist === true || PERSISTED_KEYS.some((prefix) => startsWith(query.queryKey, prefix));
+  return defaultShouldDehydrateQuery(query) && savedIn(query) === 'row';
 }
 
 /**
@@ -138,4 +159,57 @@ export function createCachePersister(storage: AsyncStorage<string>, throttleTime
       return persister.persistClient(client);
     },
   };
+}
+
+/** A short, file-safe name for a query hash (53-bit cyrb53, in base 36). */
+export function fileNameFor(queryHash: string): string {
+  let h1 = 0xdeadbeef;
+  let h2 = 0x41c6ce57;
+  for (let i = 0; i < queryHash.length; i++) {
+    const ch = queryHash.charCodeAt(i);
+    h1 = Math.imul(h1 ^ ch, 2654435761);
+    h2 = Math.imul(h2 ^ ch, 1597334677);
+  }
+  h1 = Math.imul(h1 ^ (h1 >>> 16), 2246822507) ^ Math.imul(h2 ^ (h2 >>> 13), 3266489909);
+  h2 = Math.imul(h2 ^ (h2 >>> 16), 2246822507) ^ Math.imul(h1 ^ (h1 >>> 13), 3266489909);
+  return (4294967296 * (2097151 & h2) + (h1 >>> 0)).toString(36);
+}
+
+/**
+ * Saves each query marked for a file (savedIn) in a file of its own after it
+ * fetches, and reads it back the first time the query runs with nothing in
+ * memory: the page paints from it, then refreshes if it's stale. No size
+ * cap, since no file shares a row. A snapshot is only written while it is
+ * still the live state of a query in `cache`: one that lands after sign-out
+ * removed its query would put the last person's data back on a shared iPad.
+ */
+export function createFilePersister(files: FileStore, cache: QueryCache, { maxAge, buster }: { maxAge: number; buster: string }) {
+  const PREFIX = 'q';
+  const nameOf = (storageKey: string) => fileNameFor(storageKey.slice(PREFIX.length + 1));
+  return experimental_createQueryPersister<PersistedQuery>({
+    storage: {
+      getItem: async (key) => {
+        const value = (await files.read(nameOf(key))) as PersistedQuery | null;
+        // Two hashes that share a name: not this query's file.
+        return value && `${PREFIX}-${value.queryHash}` === key ? value : null;
+      },
+      setItem: (key, value) => (cache.get(value.queryHash)?.state === value.state ? files.write(nameOf(key), value) : undefined),
+      removeItem: (key) => files.remove(nameOf(key)),
+    },
+    serialize: (query) => query,
+    deserialize: (query) => query,
+    prefix: PREFIX,
+    maxAge,
+    buster,
+    filters: { predicate: (query) => savedIn(query) === 'file' },
+  });
+}
+
+/** Deletes saved query files past `maxAge` or from another app version. Run when the app is idle. */
+export async function pruneQueryFiles(files: FileStore, { maxAge, buster }: { maxAge: number; buster: string }, now = Date.now()): Promise<void> {
+  for (const name of await files.names()) {
+    const query = (await files.read(name)) as PersistedQuery | null;
+    const age = now - (query?.state?.dataUpdatedAt ?? 0);
+    if (!query || query.buster !== buster || age > maxAge) await files.remove(name);
+  }
 }

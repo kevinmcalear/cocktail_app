@@ -87,15 +87,16 @@ export const TIERS: Record<'static' | 'catalog' | 'public' | 'user' | 'live', { 
 /** Who you are and your venues: an hour, as before. A write refreshes them. */
 const HOURLY: Key[] = [['bars'], ['viewAs'], ['venue-brand'], ['age-check'], ['am-i-moderator'], ['profile', 'mine'], ['drink-lists'], ['bar-cities'], ['discover-top-bars']];
 
-/** Saved by `meta: { persist: true }` rather than a PERSISTED_KEYS prefix. */
+/** Saved by `meta: { persist: true }` rather than a key prefix, so in a file each. */
 const META_PERSISTED: Key[] = [[D, 'specs'], [D, 'current_menu_drinks'], ['discover-list'], ['discover-bars'], ['discover-tile']];
 
 /**
  * Each prefix's options, merged across tiers, shorter prefixes first:
  * TanStack applies every matching prefix in the order set, so ['profile',
- * 'mine'] (yours) overrides ['profile'] (anyone's).
+ * 'mine'] (yours) overrides ['profile'] (anyone's). `persisted`: saved in the
+ * row; `files`: saved in a file each.
  */
-export function queryDefaults(persisted: readonly Key[]): { queryKey: Key; options: TierOptions }[] {
+export function queryDefaults(persisted: readonly Key[], files: readonly Key[] = []): { queryKey: Key; options: TierOptions }[] {
   const merged = new Map<string, { queryKey: Key; options: TierOptions }>();
   const add = (queryKey: Key, options: TierOptions) => {
     const id = JSON.stringify(queryKey);
@@ -103,6 +104,6 @@ export function queryDefaults(persisted: readonly Key[]): { queryKey: Key; optio
   };
   for (const tier of Object.values(TIERS)) for (const key of tier.keys) add(key, tier.options);
   for (const key of HOURLY) add(key, { staleTime: HOUR });
-  for (const key of [...persisted, ...META_PERSISTED]) add(key, { gcTime: KEEP });
+  for (const key of [...persisted, ...files, ...META_PERSISTED]) add(key, { gcTime: KEEP });
   return [...merged.values()].sort((a, b) => a.queryKey.length - b.queryKey.length);
 }

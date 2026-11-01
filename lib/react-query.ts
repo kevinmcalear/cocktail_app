@@ -2,12 +2,22 @@ import { deleteCocktailFn, updateCocktailFn } from '@/hooks/useCocktails';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import NetInfo from '@react-native-community/netinfo';
 import Constants from 'expo-constants';
-import { focusManager, type Mutation, notifyManager, onlineManager, QueryClient } from '@tanstack/react-query';
+import { focusManager, type Mutation, MutationCache, notifyManager, onlineManager, QueryCache, QueryClient } from '@tanstack/react-query';
 import { AppState, Platform } from 'react-native';
 
 import { coalesceTimer } from '@/lib/coalesceTimer';
-import { createCachePersister, guardStorage, PERSISTED_KEYS, shouldPersistQuery } from '@/lib/queryCachePersist';
+import { fileStore } from '@/lib/fileStore';
+import {
+  createCachePersister,
+  createFilePersister,
+  FILE_KEYS,
+  guardStorage,
+  PERSISTED_KEYS,
+  pruneQueryFiles,
+  shouldPersistQuery,
+} from '@/lib/queryCachePersist';
 import { BASE, KEEP, queryDefaults } from '@/lib/queryDefaults';
+import { loadSavedSpecBooks } from '@/lib/specBookFile';
 
 // Setup network listener for TanStack Query
 onlineManager.setEventListener((setOnline) => {
@@ -29,9 +39,36 @@ if (Platform.OS !== 'web') {
 // Every query result that lands in one tick reaches the screen in one commit (lib/coalesceTimer.ts).
 notifyManager.setScheduler(coalesceTimer());
 
+/**
+ * What's saved between launches lasts a week, not the 24 h default: opening
+ * the app after a weekend paints the last results at once and refreshes
+ * behind them. A new app version starts clean, since its query shapes may
+ * differ (an OTA bumps a key instead).
+ */
+const SAVED = { maxAge: KEEP, buster: Constants.expoConfig?.version ?? '' };
+
+const queryCache = new QueryCache();
+/** Queries saved in a file each (lib/queryCachePersist.ts savedIn), on the phone or in the browser's IndexedDB. */
+export const savedQueryFiles = fileStore('query-cache');
+const queryFiles = createFilePersister(savedQueryFiles, queryCache, SAVED);
+
+// A write of yours changes what the venues' spec books hold: refresh them
+// once the writes go quiet (hooks/useSpecBook.ts).
+let bookRefresh: ReturnType<typeof setTimeout> | undefined;
+const refreshSpecBooksSoon = () => {
+  clearTimeout(bookRefresh);
+  bookRefresh = setTimeout(() => void queryClient.invalidateQueries({ queryKey: ['spec-book'] }), 2000);
+};
+
 export const queryClient = new QueryClient({
+  queryCache,
+  mutationCache: new MutationCache({ onSuccess: refreshSpecBooksSoon }),
   defaultOptions: {
     queries: {
+      // Run once even with no signal, so a query saved in a file reads it back
+      // (queryFiles) behind the bar; the refresh then waits for signal.
+      networkMode: 'offlineFirst',
+      persister: queryFiles.persisterFn,
       // "No rows" (PostgREST's PGRST116 from .single()) is an answer, not a
       // glitch: a drink that's private, hidden or gone won't appear on a
       // retry, and retrying only keeps a blank page up before the not
@@ -71,18 +108,27 @@ export const queryClient = new QueryClient({
   },
 });
 
-// The cache is one storage row, sized for Android by serializeCache. Each
-// save serializes the whole cache, so save at most every 5 seconds.
+// The first screen's queries and unsent writes are one storage row, sized
+// for Android by serializeCache. Each save serializes the whole row, so save
+// at most every 5 seconds.
 export const asyncStoragePersister = createCachePersister(guardStorage(AsyncStorage), 5000);
 
-/** What's saved to storage between launches: see lib/queryCachePersist.ts. */
+/**
+ * What's saved to storage between launches: see lib/queryCachePersist.ts.
+ * Before the first screen paints: the row, and the spec books, so Tonight
+ * and a drink page open from the phone with no spinner and no signal.
+ */
 export const persistOptions = {
-  persister: asyncStoragePersister,
-  // A week, not the 24 h default: opening the app after a weekend paints the
-  // last results at once and refreshes behind them. A new app version starts
-  // clean, since its query shapes may differ (an OTA bumps a key instead).
-  maxAge: KEEP,
-  buster: Constants.expoConfig?.version ?? '',
+  persister: {
+    ...asyncStoragePersister,
+    restoreClient: async () => {
+      const [row] = await Promise.all([asyncStoragePersister.restoreClient(), loadSavedSpecBooks(queryClient).catch(() => undefined)]);
+      // Old query files go once the first screens have settled.
+      setTimeout(() => void pruneQueryFiles(savedQueryFiles, SAVED).catch(() => undefined), 30_000);
+      return row;
+    },
+  },
+  ...SAVED,
   dehydrateOptions: { shouldDehydrateQuery: shouldPersistQuery, shouldDehydrateMutation: canResendAfterRelaunch },
 };
 
@@ -112,7 +158,7 @@ export async function resumeSavedWrites(): Promise<void> {
 
 // Freshness by kind of data (static, catalog, public, yours, live), and a
 // week in memory for whatever is saved between launches. A hook's own options win.
-for (const { queryKey, options } of queryDefaults(PERSISTED_KEYS)) {
+for (const { queryKey, options } of queryDefaults(PERSISTED_KEYS, FILE_KEYS)) {
   queryClient.setQueryDefaults(queryKey, options);
 }
 

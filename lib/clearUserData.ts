@@ -4,7 +4,8 @@ import { STUDY_PILE_KEY } from '@/hooks/useStudyPile';
 import { AI_CONSENT_KEY } from '@/lib/aiConsent';
 import { dropUnsentWrites, isUserQuery } from '@/lib/authCache';
 import { deviceStore } from '@/lib/deviceStore';
-import { asyncStoragePersister, queryClient } from '@/lib/react-query';
+import { asyncStoragePersister, queryClient, savedQueryFiles } from '@/lib/react-query';
+import { clearSavedSpecBooks } from '@/lib/specBookFile';
 import { useAppMode } from '@/store/useAppMode';
 import { useBeerWineWizardStore } from '@/store/useBeerWineWizardStore';
 import { useBringIn } from '@/store/useBringIn';
@@ -17,7 +18,8 @@ import { useVenueSetup } from '@/store/useVenueSetup';
 
 /**
  * Forgets everything the signed-out user left on this device: cached query
- * data (in memory and persisted), edits made offline and not yet sent, recent
+ * data (in memory, the saved row and the saved query files), the venues'
+ * spec books, edits made offline and not yet sent, recent
  * activity, favorites and the study pile, AI consent, the last near-me place, the
  * venue they were working in and its setup progress, drinks and bottles half added, big imports
  * waiting to be reviewed, and notes to us not yet sent. Bar iPads are shared,
@@ -42,6 +44,8 @@ export async function clearUserData(): Promise<void> {
   useBringIn.setState({ reviews: {}, reviewing: null, later: [] });
   await Promise.all([
     asyncStoragePersister.removeClient(),
+    savedQueryFiles.clear(),
+    clearSavedSpecBooks(),
     deviceStore.removeItem(FAVORITES_KEY),
     deviceStore.removeItem(STUDY_PILE_KEY),
     deviceStore.removeItem(AI_CONSENT_KEY),
