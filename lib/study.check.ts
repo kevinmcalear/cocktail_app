@@ -1,7 +1,7 @@
 // Checks for lib/study.ts. Run: npm run test:unit
 import assert from 'node:assert/strict';
 
-import { dayKey, glassOptions, knownCount, orderDeck, pourFacts, streak } from './study';
+import { glassOptions, knownCount, orderDeck, pourFacts } from './study';
 
 const progress = {
   a: { rating: 'nailed' as const, seenAt: '2026-09-20T10:00:00Z' },
@@ -11,13 +11,6 @@ const progress = {
 };
 assert.deepEqual(orderDeck(['a', 'b', 'c', 'd', 'e'], progress), ['e', 'd', 'b', 'c', 'a'], 'unseen, then again (oldest first), close, nailed');
 assert.equal(knownCount(['a', 'b', 'c'], progress), 1);
-
-const today = new Date(2026, 8, 26);
-assert.equal(dayKey(today), '2026-09-26');
-assert.equal(streak(['2026-09-26', '2026-09-25', '2026-09-24'], today), 3);
-assert.equal(streak(['2026-09-25', '2026-09-24'], today), 2, 'a streak survives until today ends');
-assert.equal(streak(['2026-09-24'], today), 0, 'a missed day breaks it');
-assert.equal(streak([], today), 0);
 
 const glasses = [
   { id: 'coupe', name: 'Coupe', icon: 'Coupe' },

@@ -2,7 +2,8 @@ import { useRouter } from 'expo-router';
 import type { ReactNode } from 'react';
 import { Linking, StyleSheet, View } from 'react-native';
 
-import { Body, Caption, Headline, PressableScale, Tag, useDs } from '@/components/ds';
+import { Body, Caption, Headline, PressableScale, Surface, Tag, TextLink, useDs } from '@/components/ds';
+import { RowDivider } from '@/components/screens/settings/SettingsParts';
 import { IconSymbol } from '@/components/ui/icon-symbol';
 import { font, layout, radius, space } from '@/constants/tokens';
 import { missingKit, type BuyAudience, type BuyLink, type Grade, type Source, type Technique } from '@/lib/techniques';
@@ -28,14 +29,47 @@ export function gradeLong(grade: Grade) {
   return GRADE[grade].long;
 }
 
-/** A heading over a block of a page. */
-export function Section({ title, children }: { title: string; children: ReactNode }) {
+/** A heading over a block of a page, with an aside on the right that opens the rest ("All 82"). */
+export function Section({ title, aside, onAside, children }: { title: string; aside?: string; onAside?: () => void; children: ReactNode }) {
   return (
     <View style={styles.section}>
-      <Caption tone="muted" role="heading" style={styles.eyebrow}>
-        {title.toUpperCase()}
-      </Caption>
+      <View style={styles.label}>
+        <Caption tone="muted" role="heading" style={styles.eyebrow}>
+          {title.toUpperCase()}
+        </Caption>
+        {aside && onAside ? <TextLink label={aside} onPress={onAside} /> : null}
+      </View>
       {children}
+    </View>
+  );
+}
+
+/** Rows on one card, a hairline between them (the boards' grouped rows). Falsy children are skipped. */
+export function Group({ children }: { children: ReactNode[] }) {
+  const rows = children.filter(Boolean);
+  if (!rows.length) return null;
+  return (
+    <Surface style={styles.group}>
+      {rows.map((row, i) => (
+        <View key={i}>
+          {i ? <RowDivider /> : null}
+          {row}
+        </View>
+      ))}
+    </Surface>
+  );
+}
+
+/** A row that only says something: an icon, a label, and its value on the right (Time · 2 hours). */
+export function ValueRow({ icon, label, value }: { icon?: Parameters<typeof IconSymbol>[0]['name']; label: string; value: string }) {
+  const ds = useDs();
+  return (
+    <View style={styles.value}>
+      {icon ? <IconSymbol name={icon} size={20} color={ds.c.muted} /> : null}
+      <Body>{label}</Body>
+      <Body tone="muted" style={styles.valueText}>
+        {value}
+      </Body>
     </View>
   );
 }
@@ -134,6 +168,10 @@ export function Notes({ items, icon = 'exclamationmark.triangle' }: { items: str
 
 const styles = StyleSheet.create({
   section: { gap: space.sm },
+  group: { paddingVertical: space.xs },
+  value: { flexDirection: 'row', alignItems: 'center', gap: space.md, minHeight: layout.minTapTarget + space.sm, paddingVertical: space.sm },
+  valueText: { flex: 1, minWidth: 0, textAlign: 'right' },
+  label: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', gap: space.md },
   eyebrow: { ...font.figures, letterSpacing: 1 },
   row: { flexDirection: 'row', alignItems: 'center', gap: space.md, paddingVertical: space.md, borderBottomWidth: StyleSheet.hairlineWidth },
   card: { flexDirection: 'row', alignItems: 'center', gap: space.md, minHeight: layout.minTapTarget + space.md, padding: space.md, borderRadius: radius.card, borderCurve: 'continuous' },

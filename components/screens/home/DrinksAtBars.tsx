@@ -8,6 +8,7 @@ import { DiscoverShelves } from '@/components/screens/home/DiscoverShelves';
 import type { MapLayer } from '@/components/screens/home/DiscoverControls';
 import { TopBarsShelf } from '@/components/screens/home/TopBars';
 import { ListNote } from '@/components/screens/rankings/RankingLists';
+import { LinkRow } from '@/components/techniques/bits';
 import { space } from '@/constants/tokens';
 import { useBestDrink, useRowScores } from '@/hooks/useBestDrink';
 import { useDiscoverList } from '@/hooks/useDiscoverDrinks';
@@ -155,7 +156,13 @@ export function DrinkAtBarList({ drinks, limit = 8, scores, more, query, onOpen,
  */
 export function BrowseShelves({ filter, around, enabled, onKind, onTopBars, onShowBar }: { filter: DrinkFilter; around: DiscoverDrink[]; enabled: boolean; onKind?: (kind: string) => void; onTopBars: () => void; onShowBar?: (barId: string | null) => void }) {
   const shelves = useDiscoverShelves(filter, around, enabled);
-  return <DiscoverShelves shelves={shelves} second={<TopBarsShelf area={filter.area} onSeeAll={onTopBars} onShowBar={onShowBar} />} onKind={onKind} onShowBar={onShowBar} />;
+  return (
+    <>
+      <DiscoverShelves shelves={shelves} second={<TopBarsShelf area={filter.area} onSeeAll={onTopBars} onShowBar={onShowBar} />} onKind={onKind} onShowBar={onShowBar} />
+      {/* Learn (Kept-learn, "Learn, from Discover"): techniques, kit and pairings. */}
+      <LinkRow title="Learn" detail="Techniques, kit and pairings" href="/learn" icon="book" />
+    </>
+  );
 }
 
 interface DrinksHereProps {
