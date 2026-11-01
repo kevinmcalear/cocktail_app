@@ -2,14 +2,13 @@ import { useRouter } from 'expo-router';
 import { useState } from 'react';
 import { StyleSheet, View } from 'react-native';
 
-import { Body, Button, Caption, Display, DsText, GlassButton, Title, useBreakpoint } from '@/components/ds';
+import { Body, Button, Caption, Display, GlassButton, Title, useBreakpoint } from '@/components/ds';
 import { BarMark } from '@/components/screens/home/BarMark';
 import { space, type } from '@/constants/tokens';
 import { useVenueScore } from '@/hooks/useDiscover';
 import type { Profile } from '@/hooks/useProfiles';
 import { showMessage } from '@/lib/dialogs';
 import { rankedCount } from '@/lib/nearMe';
-import { formatScore, MIN_RANKERS } from '@/lib/ranking';
 import { shareLink } from '@/lib/shareLink';
 import { siteOrigin } from '@/lib/venueLink';
 
@@ -19,28 +18,17 @@ import { ProfileSafety } from '../safety/ProfileSafety';
 /**
  * A bar's name on its public page (ppl-pub-bar-desktop, -phone): the logo, or
  * its initials in its venue's display face and accent on a ring (BarMark); the name large; what and where
- * it is, then claimed and how many have ranked; its score at the right (under
- * the name on a phone). The score shows once MIN_RANKERS people have ranked.
+ * it is, then claimed and how many have ranked. Its score is the row under it
+ * (BarScore, Kept-score).
  */
 export function PublicBarHeader({ profile, place, claimed, numbers }: { profile: Profile; place: string; claimed: string; numbers?: string }) {
   const wide = useBreakpoint() !== 'phone';
   const { data } = useVenueScore(profile.id);
-  const score = data?.score ?? null;
   const ranked = data?.rankers ? rankedCount(data.rankers) : null;
   const size = wide ? 88 : 64;
-  const scoreLabel = score !== null ? `Bar score ${formatScore(score)} out of 10` : ranked ? `No bar score until ${MIN_RANKERS} people have ranked here` : null;
-  const scoreBlock =
-    score !== null ? (
-      <View style={wide ? styles.scoreWide : styles.scorePhone} aria-hidden>
-        <DsText variant="spec" tone="accent" style={wide ? type.title : type.headline}>
-          {formatScore(score)}
-        </DsText>
-        <Caption tone="muted">bar score</Caption>
-      </View>
-    ) : null;
   return (
     <View style={styles.block}>
-      <View accessible accessibilityLabel={[profile.display_name, place, claimed, ranked, numbers, scoreLabel].filter(Boolean).join('. ')} style={styles.header}>
+      <View accessible accessibilityLabel={[profile.display_name, place, claimed, ranked, numbers].filter(Boolean).join('. ')} style={styles.header}>
         {/* Its logo, else its venue's public Brand logo, else its initials in the venue's accent and face. */}
         <BarMark name={profile.display_name} logoUrl={profile.avatar_url} profileId={profile.id} size={size} />
         <View style={styles.name}>
@@ -50,9 +38,7 @@ export function PublicBarHeader({ profile, place, claimed, numbers }: { profile:
           {/* A phone's numbers, on one line (Q30 A). */}
           {numbers ? <Caption tone="muted">{numbers}</Caption> : null}
         </View>
-        {wide ? scoreBlock : null}
       </View>
-      {wide ? null : scoreBlock}
     </View>
   );
 }
@@ -103,8 +89,6 @@ const styles = StyleSheet.create({
   name: { flex: 1, minWidth: 200, gap: space.xs },
   // 15, as drawn.
   place: { fontSize: type.label.fontSize, lineHeight: 22 },
-  scoreWide: { alignItems: 'flex-end' },
-  scorePhone: { alignItems: 'flex-start' },
   actions: { flexDirection: 'row', gap: space.sm },
   wrap: { flexWrap: 'wrap' },
   grow: { flex: 1, paddingHorizontal: space.sm },

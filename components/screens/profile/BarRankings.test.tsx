@@ -3,7 +3,7 @@ import { fireEvent, screen } from '@testing-library/react-native';
 import { renderWithProviders } from '@/jest.setup';
 import type { BarTopDrink } from '@/lib/barTopDrinks';
 
-import { BarRankings, BestHere } from './BarRankings';
+import { BarRankings } from './BarRankings';
 
 const mockPush = jest.fn();
 let mockUser: { id: string } | null = { id: 'me' };
@@ -103,16 +103,3 @@ test('Rank a drink picks one of the bar’s drinks and ranks it here; signed out
   expect(mockPush).toHaveBeenCalledWith('/auth/login');
 });
 
-test('Best here (a phone bar page, Q30 A): the top three scored drinks, nothing until one has a score', async () => {
-  const scored = [2, 3, 4].map((n) => row({ item_id: `s${n}`, name: `Drink ${n}`, position: n, score: 9 - n / 10, rankers: 10 }));
-  mockRows = [gimlet, ...scored, early];
-  await renderWithProviders(<BestHere barId="p1" />);
-  expect(screen.getByText('Best here')).toBeTruthy();
-  expect(screen.getByText('House Gimlet')).toBeTruthy();
-  expect(screen.getByText('Drink 3')).toBeTruthy();
-  expect(screen.queryByText('Drink 4')).toBeNull();
-  expect(screen.queryByText('Early Bird')).toBeNull();
-  mockRows = [early, fresh];
-  await renderWithProviders(<BestHere barId="p1" />);
-  expect(screen.queryByText('Best here')).toBeNull();
-});

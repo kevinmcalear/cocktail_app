@@ -87,6 +87,7 @@ before(async () => {
   await serviceInsert('user_bars', { user_id: users.barAdmin.id, bar_id: ids.bar, role_level: 40 });
   ids.martini = (await serviceInsert('items', { name: `Martini ${run}`, item_type: 'cocktail', created_by: null })).id;
   ids.negroni = (await serviceInsert('items', { name: `Negroni ${run}`, item_type: 'cocktail', created_by: null })).id;
+  ids.gimlet = (await serviceInsert('items', { name: `Gimlet ${run}`, item_type: 'cocktail', created_by: null })).id;
 });
 
 after(async () => {
@@ -231,9 +232,11 @@ describe('near me, bar scores and early lists', () => {
     const rankers = [];
     for (let i = 0; i < 28; i++) rankers.push((await makeUser(`ranker${i}`, { signIn: false })).id);
     extraUserIds.push(...rankers);
-    // Anchor: 20 people loved its martini, 5 of them found its negroni fine.
+    // Anchor: 20 people loved its martini and its gimlet, 10 of them found
+    // its negroni fine: 50 ranks, so its drinks together have a score.
     for (const id of rankers.slice(0, 20)) await rank(id, ids.martini, ids.a, 'loved');
-    for (const id of rankers.slice(0, 5)) await rank(id, ids.negroni, ids.a, 'fine');
+    for (const id of rankers.slice(0, 20)) await rank(id, ids.gimlet, ids.a, 'loved');
+    for (const id of rankers.slice(0, 10)) await rank(id, ids.negroni, ids.a, 'fine');
     // Buoy and the hidden bar: three people each, so early.
     for (const id of rankers.slice(20, 23)) await rank(id, ids.martini, ids.b, 'loved');
     for (const id of rankers.slice(23, 26)) await rank(id, ids.martini, ids.hidden, 'loved');
@@ -271,21 +274,21 @@ describe('near me, bar scores and early lists', () => {
     assert.ok(data[0].distance_km < 2.2);
   });
 
-  test('a bar score is its drinks\' scores weighted by rankers, once 20 different people have ranked there', async () => {
+  test('a bar score is its drinks\' scores weighted by rankers, once 20 different people and 50 ranks are in', async () => {
     const { data, error } = await anon.rpc('discover_top_bars', near);
     assert.ifError(error);
     // A bar nobody has ranked is listed too, last, with no score.
     assert.deepEqual(data.map((r) => [r.venue_profile_id, r.position, r.is_early, r.rankers, r.drinks]), [
-      [ids.a, 1, false, 20, 2],
+      [ids.a, 1, false, 20, 3],
       [ids.b, null, true, 3, 1],
       [ids.d, null, true, 0, 0],
     ]);
-    // Martini 10 (20 rankers), negroni 6.6 (5): (200 + 33) / 25 = 9.32.
+    // Martini 10 and gimlet 10 (20 rankers each), negroni 6.6 (10): (200 + 200 + 66) / 50 = 9.32.
     assert.equal(Number(data[0].score), 9.3);
     assert.equal(data[1].score, null);
 
     const score = await anon.rpc('get_venue_score', { p_venue_profile_id: ids.a });
-    assert.deepEqual(score.data.map((r) => [Number(r.score), r.rankers, r.drinks, r.is_early]), [[9.3, 20, 2, false]]);
+    assert.deepEqual(score.data.map((r) => [Number(r.score), r.rankers, r.drinks, r.is_early]), [[9.3, 20, 3, false]]);
     const early = await anon.rpc('get_venue_score', { p_venue_profile_id: ids.b });
     assert.deepEqual(early.data.map((r) => [r.score, r.rankers, r.is_early]), [[null, 3, true]]);
     const hidden = await anon.rpc('get_venue_score', { p_venue_profile_id: ids.hidden });

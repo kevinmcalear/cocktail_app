@@ -4,6 +4,7 @@ import { StyleSheet, View } from 'react-native';
 
 import { Body, Button, Caption, Headline, Segmented, useBreakpoint } from '@/components/ds';
 import { BarWeek, BarWeekLine } from '@/components/screens/week/BarWeek';
+import { BarScore } from '@/components/screens/scores/BarScore';
 import { WebHead } from '@/components/WebHead';
 import { space } from '@/constants/tokens';
 import { useBarFacts } from '@/hooks/useBarFacts';
@@ -22,7 +23,7 @@ import { SpecLockPanel } from '../drink/SpecLockPanel';
 import { Kicker, PublicPage, SignInBand } from '../published/PublicChrome';
 import { BarMatches } from './BarMatches';
 import { BAR_TABS, FIRST_ON_NOW, PEOPLE_ONLY, type BarTab } from './BarProfile';
-import { BarRankings, BestHere } from './BarRankings';
+import { BarRankings } from './BarRankings';
 import { BarYours, useYouHere } from './BarYours';
 import { BarClaimCard, ClaimLine } from './BarClaimCard';
 import { ClassicsTheyPour, usePouredSplit } from './ClassicsTheyPour';
@@ -132,6 +133,8 @@ export function PublicBarPage({ profile, signedIn = false }: { profile: Profile;
         {wide ? null : facts_}
         <PublicBarActions profile={profile} signedIn={signedIn} />
       </View>
+      {/* Its score from its drinks and its best (Kept-score A). */}
+      {drinksShown ? <BarScore profileId={profile.id} barId={profile.bar_id} name={profile.display_name} /> : null}
       {/* Claiming it comes before its menus (owner-setup call 3). */}
       <BarClaimCard profile={profile} />
       {signedIn ? <BarMatches barProfileId={profile.id} /> : null}
@@ -172,7 +175,6 @@ export function PublicBarPage({ profile, signedIn = false }: { profile: Profile;
             <>
               {/* Drinks first (Q30 A): on the menu now, best here, then its own and the classics it pours. */}
               <MenuNow profileId={profile.id} originals={originals} details={pageShowsDescriptions(profile.page_visibility)} first={FIRST_ON_NOW} locked={false} />
-              <BestHere barId={profile.id} />
               {theirDrinks}
               {classics}
             </>

@@ -4,6 +4,7 @@ import { StyleSheet, View } from 'react-native';
 
 import { Button, Caption, Headline, Segmented, Tag } from '@/components/ds';
 import { BarWeekLine } from '@/components/screens/week/BarWeek';
+import { BarScore } from '@/components/screens/scores/BarScore';
 import { WebHead } from '@/components/WebHead';
 import { space } from '@/constants/tokens';
 import { useActiveVenue } from '@/hooks/useActiveVenue';
@@ -19,7 +20,7 @@ import { SpecLockPanel } from '../drink/SpecLockPanel';
 import { BarClassics } from './BarClassics';
 import { usePouredSplit } from './ClassicsTheyPour';
 import { BarMatches } from './BarMatches';
-import { BarRankings, BestHere } from './BarRankings';
+import { BarRankings } from './BarRankings';
 import { BarFactsList, BarYours, useYouHere } from './BarYours';
 import { Awards, MenuHistory } from './BarRecord';
 import { LockedOriginals } from './LockedOriginals';
@@ -93,6 +94,7 @@ export function BarProfile({ profile, columns }: { profile: Profile; columns: nu
       </WebHead>
       <BarHeader
         profile={profile}
+        noScore
         detail={[barPlace(facts?.bar_type, place) || 'Bar', here.count ? `you’ve had ${plural(here.count, 'drink')} here` : null].filter(Boolean).join(' · ')}
         numbers={numbers}
         tagInline={unclaimed}
@@ -109,6 +111,8 @@ export function BarProfile({ profile, columns }: { profile: Profile; columns: nu
       />
       {/* Your name may be on its drinks: the credits open your page (find-yourself), for the likely person only (Q33). */}
       <SeeYourName bar={profile} originals={originals} card />
+      {/* Its score from its drinks and its best (Kept-score A). */}
+      {drinksShown ? <BarScore profileId={profile.id} barId={profile.bar_id} name={profile.display_name} /> : null}
       {/* Opened from Setup's Find your bar, or a claim on its way (owner-setup call 3). */}
       <BarClaimCard profile={profile} />
       {/* Hours, the address and Instagram, then Directions, Call and Website three across (b32: claimed or not), and where the hours came from. */}
@@ -125,8 +129,7 @@ export function BarProfile({ profile, columns }: { profile: Profile; columns: nu
       {shownTab === 'drinks' ? (
         <View style={styles.tab}>
           {searched ? null : <MenuNow profileId={profile.id} originals={originals} details={details} first={FIRST_ON_NOW} locked={specsLocked} />}
-          <BestHere barId={profile.id} />
-          {/* Its own drinks and the classics it pours, under Best here (Q30 A: the Originals tab folds in). */}
+          {/* Its own drinks and the classics it pours (Q30 A: the Originals tab folds in). */}
           <View style={styles.section}>
             <Headline role="heading">Their drinks</Headline>
             {isLoading ? (

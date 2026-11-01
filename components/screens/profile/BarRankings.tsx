@@ -116,30 +116,6 @@ function Group({ title, hint, children }: { title: string; hint: string; childre
   );
 }
 
-/**
- * "Best here, by score" in a phone bar page's Drinks tab (Q30 A): the top
- * three of its Top drinks. Nothing until a drink has a score.
- */
-export function BestHere({ barId }: { barId: string }) {
-  const { scored } = splitTopDrinks(useBarTopDrinks(barId).data ?? []);
-  if (!scored.length) return null;
-  return (
-    <View role="region" accessibilityLabel="Best here, by score" style={styles.group}>
-      <View style={styles.head}>
-        <Headline role="heading">Best here</Headline>
-        <Caption tone="muted">by score</Caption>
-      </View>
-      <View role="list">
-        {scored.slice(0, BEST_HERE).map((d) => (
-          <TopDrinkRow key={d.item_id} drink={d} />
-        ))}
-      </View>
-    </View>
-  );
-}
-
-const BEST_HERE = 3;
-
 /** A drink in the list: its place, picture, name, ratings and score. Opens the drink. */
 function TopDrinkRow({ drink: d }: { drink: BarTopDrink }) {
   const ds = useDs();

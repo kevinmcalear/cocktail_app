@@ -183,9 +183,9 @@ export function MenuCredits({ credits, names, worked = [] }: { credits: MenuCred
  * The tag (Claimed) sits under the name, or with `tagInline` after the place
  * line, with how many ranked under it (Not claimed yet, ppl-bar-unclaimed).
  */
-export function BarHeader({ profile, detail, numbers, tag, tagInline, neutral, size = 64 }: { profile: { id: string; display_name: string; avatar_url: string | null }; detail: string; numbers?: string; tag?: ReactNode; tagInline?: boolean; neutral?: boolean; size?: number }) {
+export function BarHeader({ profile, detail, numbers, tag, tagInline, neutral, noScore, size = 64 }: { profile: { id: string; display_name: string; avatar_url: string | null }; detail: string; numbers?: string; tag?: ReactNode; tagInline?: boolean; neutral?: boolean; /** A bar's page: its score is the row under it (BarScore). */ noScore?: boolean; size?: number }) {
   const { data } = useVenueScore(profile.id);
-  const score = data?.score ?? null;
+  const score = noScore ? null : (data?.score ?? null);
   const ranked = data?.rankers ? `${peopleCount(data.rankers)} ranked` : null;
   const scoreLabel = score !== null ? `Bar score ${formatScore(score)} out of 10` : ranked ? `No bar score until ${MIN_RANKERS} people have ranked here` : null;
   // Ranked sits under the score (ppl-bar-top), on its own line with an inline tag (ppl-bar-unclaimed), else after the place.

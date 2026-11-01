@@ -4,6 +4,7 @@ import { View } from 'react-native';
 
 import { space } from '@/constants/tokens';
 import { useCapabilities } from '@/hooks/useCapabilities';
+import { useDrinkGuestSays } from '@/hooks/useScores';
 import { useDrinkCost } from '@/hooks/useDrinkCost';
 import { useDrinkOnMenu } from '@/hooks/useDrinkOnMenu';
 import type { GlassFillResult } from '@/hooks/useGlassFill';
@@ -49,6 +50,8 @@ export function BarRows({ item, barId, barName, lines, fill, onGlass, creator, c
   const { data: cost } = useDrinkCost(item.id, barId, costs);
   const { data: pricing } = usePricingSettings(costs ? barId : null);
   const { data: onMenu } = useDrinkOnMenu(item.id, barId);
+  const now = useDrinkGuestSays(creator && caps.includes('edit_drinks') ? item.id : null).data?.versions[0];
+  const guestsLine = now ? (now.liked != null ? `${now.liked} liked` : `${now.rankers} ${now.rankers === 1 ? 'rank' : 'ranks'}`) : null;
 
   const behind: GroupRow[] = [
     ...lines
@@ -64,6 +67,10 @@ export function BarRows({ item, barId, barName, lines, fill, onGlass, creator, c
     ? [
         ...(costs ? [{ key: 'cost', label: 'Cost', value: money ? [money, m ? `${formatPct(m.gp)} GP` : null].filter(Boolean).join(' · ') : null, onPress: () => setOpen('cost') }] : []),
         ...(onMenu ? [{ key: 'menu', label: 'On menus', value: onMenu.name, onPress: () => router.push(`/menus/${onMenu.menuId}` as Href) }] : []),
+        // Loop-reasons: liked, fine and not for me, and why, version by version.
+        ...(caps.includes('edit_drinks')
+          ? [{ key: 'guests', label: 'What guests say', value: guestsLine, onPress: () => router.push({ pathname: '/guests/[itemId]', params: { itemId: item.id, name: item.name, ...(barName ? { bar: barName } : {}) } }) }]
+          : []),
       ]
     : [];
 

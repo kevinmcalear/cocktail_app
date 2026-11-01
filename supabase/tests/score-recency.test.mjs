@@ -187,6 +187,27 @@ describe('get_bar_score', () => {
   test('a private bar page has none', async () => {
     assert.equal(await rpc(anon, 'get_bar_score', { p_profile_id: ids.hidden.profile }), null);
   });
+
+  test('the header and Discover use the same floors', async () => {
+    const [venue] = await rpc(anon, 'get_venue_score', { p_venue_profile_id: ids.home.profile });
+    const bar = await rpc(anon, 'get_bar_score', { p_profile_id: ids.home.profile });
+    assert.equal(Number(venue.score), Number(bar.score));
+    assert.equal(venue.is_early, false);
+    // The hidden bar's drinks: 24 people but 24 ranks, under 50, were it public.
+    await db.query("UPDATE public.bars SET page_visibility = 'open' WHERE id = $1", [ids.hidden.bar]);
+    try {
+      const [early] = await rpc(anon, 'get_venue_score', { p_venue_profile_id: ids.hidden.profile });
+      assert.equal(early.score, null, '20 people but under 50 ranks: no bar score yet');
+      assert.equal(early.is_early, true);
+      const listed = await rpc(anon, 'discover_top_bars', { p_city: `Scoreville ${run}`, p_country_code: 'US' });
+      const byId = Object.fromEntries(listed.map((r) => [r.venue_profile_id, r]));
+      assert.equal(byId[ids.home.profile]?.is_early, false);
+      assert.equal(byId[ids.hidden.profile]?.is_early, true);
+      assert.equal(byId[ids.hidden.profile]?.score, null);
+    } finally {
+      await db.query("UPDATE public.bars SET page_visibility = 'private' WHERE id = $1", [ids.hidden.bar]);
+    }
+  });
 });
 
 describe('what guests say', () => {

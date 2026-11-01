@@ -9,7 +9,9 @@
 --     carries the old one, so a bar doesn't drop off a list the hour it tweaks
 --     a spec. The floor (20 people) still counts every spec.
 --   * A bar's score comes from its drinks, each weighted by how many people
---     ranked it and how recently.
+--     ranked it and how recently, and shows once 20 people and 50 ranks are
+--     in: on its page (get_venue_score, get_bar_score) and in Discover
+--     (discover_top_bars), the same rule everywhere.
 --
 -- Recreates the three score views (private.venue_drink_scores, item_scores,
 -- venue_scores) with the same columns plus new ones, so every existing read
@@ -323,6 +325,8 @@ BEGIN
   END IF;
 
   RETURN jsonb_build_object(
+    'name', (SELECT i.name FROM public.items i WHERE i.id = p_item_id),
+    'ranked_as_name', (SELECT i.name FROM public.items i WHERE i.id = v_place.ranked_as_item_id),
     'venue_profile_id', v_bar.id,
     'bar_name', v_bar.display_name,
     'city', v_bar.city,
@@ -550,6 +554,58 @@ $$;
 
 COMMENT ON FUNCTION "public"."get_bar_guest_says"("uuid") IS
     'What guests say about a bar, for its Admins: its drinks'' score and the change since the current menu went on, people in the last 90 days, and once 20 of them said something about the room, the room''s totals. Never who said it.';
+
+-- --- a bar's score everywhere: 20 people and 50 ranks, as its page says ---
+
+-- The bar's own page header, as before, with the 50 ranks.
+CREATE OR REPLACE FUNCTION "public"."get_venue_score"("p_venue_profile_id" "uuid") RETURNS TABLE("score" numeric, "rankers" integer, "drinks" integer, "is_early" boolean)
+    LANGUAGE "sql" STABLE SECURITY DEFINER
+    SET "search_path" TO ''
+    AS $$
+  SELECT CASE WHEN s.rankers >= private.score_floor('people') AND s.ranks >= private.score_floor('bar_ranks') THEN s.score END,
+         s.rankers, s.drinks, NOT (s.rankers >= private.score_floor('people') AND s.ranks >= private.score_floor('bar_ranks'))
+  FROM private.venue_scores s
+  JOIN public.profiles p ON p.id = s.venue_profile_id
+  WHERE s.venue_profile_id = p_venue_profile_id AND p.kind = 'bar' AND p.is_public
+    AND p.id NOT IN (SELECT private.private_page_profile_ids());
+$$;
+
+-- Discover's bars, as before, ranked once a bar has 20 people and 50 ranks.
+CREATE OR REPLACE FUNCTION "public"."discover_top_bars"("p_latitude" double precision DEFAULT NULL::double precision, "p_longitude" double precision DEFAULT NULL::double precision, "p_radius_km" double precision DEFAULT 10, "p_country_code" "text" DEFAULT NULL::"text", "p_city" "text" DEFAULT NULL::"text", "p_limit" integer DEFAULT 20) RETURNS TABLE("position" bigint, "venue_profile_id" "uuid", "handle" "text", "display_name" "text", "locality" "text", "city" "text", "latitude" double precision, "longitude" double precision, "distance_km" double precision, "score" numeric, "rankers" integer, "drinks" integer, "is_early" boolean)
+    LANGUAGE "sql" STABLE SECURITY DEFINER
+    SET "search_path" TO ''
+    AS $$
+  WITH area AS MATERIALIZED (
+    SELECT * FROM private.bars_in_area(p_latitude, p_longitude, p_radius_km, p_country_code, p_city)
+  ), rows AS (
+    SELECT a.id AS venue_profile_id, s.score, coalesce(s.rankers, 0) AS rankers, coalesce(s.drinks, 0) AS drinks,
+           a.distance_km,
+           coalesce(s.rankers, 0) >= private.score_floor('people') AND coalesce(s.ranks, 0) >= private.score_floor('bar_ranks') AS ranked,
+           r.loved, r.stale, r.relevance
+    FROM area a
+    JOIN private.bar_relevance(ARRAY(SELECT area.id FROM area)) r ON r.id = a.id
+    -- A Private bar stays on the map, unscored.
+    LEFT JOIN private.venue_scores s ON s.venue_profile_id = a.id AND a.id NOT IN (SELECT private.private_page_profile_ids())
+  ), numbered AS (
+    SELECT r.*, row_number() OVER (
+      PARTITION BY r.ranked
+      ORDER BY CASE WHEN r.ranked THEN r.score END DESC NULLS LAST,
+               CASE WHEN NOT r.ranked THEN r.loved END DESC,
+               r.rankers DESC, r.relevance DESC, r.distance_km NULLS LAST,
+               lower(p.display_name), r.venue_profile_id
+    ) AS n
+    FROM rows r
+    JOIN public.profiles p ON p.id = r.venue_profile_id
+    -- Stale bars drop off, unless loved by the viewer or ranked there.
+    WHERE r.ranked OR r.loved OR r.rankers > 0 OR NOT r.stale
+  )
+  SELECT CASE WHEN x.ranked THEN x.n END, p.id, p.handle, p.display_name, p.locality, p.city, p.latitude, p.longitude,
+         x.distance_km, CASE WHEN x.ranked THEN x.score END, x.rankers, x.drinks, NOT x.ranked
+  FROM numbered x
+  JOIN public.profiles p ON p.id = x.venue_profile_id
+  WHERE x.n <= least(greatest(coalesce(p_limit, 20), 1), 100)
+  ORDER BY x.ranked DESC, x.n;
+$$;
 
 -- --- grants ---
 

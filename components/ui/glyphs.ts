@@ -200,6 +200,9 @@ const G = {
   safari: { d: RING + 'M15.5 8.5l-2 5-5 2 2-5z', f: 'M15.5 8.5l-2 5-5 2 2-5z' },
   calendar: CAL,
   clock: { d: RING + 'M12 7.5V12l3 2', f: RING },
+  // Tell me when (Loop-want) and a score's notes (Loop-ladder), as the canvas draws them.
+  bell: { d: 'M6 16v-5a6 6 0 0 1 12 0v5l1.5 2h-15zM10 20.5h4', f: 'M6 16v-5a6 6 0 0 1 12 0v5l1.5 2h-15z' },
+  'chart.bar': { d: 'M4 20h16M7 16v-4M12 16V7M17 16v-7' },
   'paintpalette.fill': filled({ d: PALETTE + 'M8 11.5h.01M10.5 7.8h.01M14.8 7.8h.01', f: PALETTE }),
   'map.fill': filled({ d: MAP + 'M8.5 3.5v14M15.5 6.5v14', f: MAP }),
   'mappin.and.ellipse': { d: 'M12 17s5.5-4.6 5.5-9a5.5 5.5 0 0 0-11 0c0 4.4 5.5 9 5.5 9z' + C(12, 8, 2) + 'M7.5 17.5c-2 .4-3.5 1.1-3.5 1.8 0 1.2 3.6 2.2 8 2.2s8-1 8-2.2c0-.7-1.5-1.4-3.5-1.8', f: C(12, 8, 2) },

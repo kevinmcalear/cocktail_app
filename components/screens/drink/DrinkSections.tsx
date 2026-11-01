@@ -13,6 +13,9 @@ import { pageShowsDescriptions } from '@/lib/pageVisibility';
 import type { SpecLevels, SpecLine } from '@/lib/spec';
 import type { DatabaseItem } from '@/types/types';
 
+import { ScoreLadder } from '@/components/screens/scores/ScoreLadder';
+import { WantBlock } from '@/components/screens/want/WantBlock';
+
 import { ApprovalNotice } from './ApprovalNotice';
 import { BarRows } from './BarRows';
 import { Backstory } from './Backstory';
@@ -112,7 +115,17 @@ export function useDrinkSections(p: DrinkSectionsInput) {
     lead: names && live ? <NamesBlock itemId={item.id} name={item.name} guest={viewer === 'guest'} tastes={description} atBar={!!item.bar_id} /> : null,
     spec,
     // The one prominent action: Rank it for a guest. The floor and bartenders have none; Edit is in the toolbar.
-    action: viewer === 'guest' && p.onRank ? <Button label="Rank it" size="lg" onPress={p.onRank} accessibilityHint={`Rank ${item.name} against others you've had`} /> : null,
+    // At a bar, a guest's Want beside "Had it? Rank it" (Loop-want "matchline"); elsewhere Rank it alone.
+    action:
+      viewer === 'guest' && p.onRank ? (
+        item.bar_id && live ? (
+          <WantBlock itemId={item.id} name={item.name} onRank={p.onRank} />
+        ) : (
+          <Button label="Rank it" size="lg" onPress={p.onRank} accessibilityHint={`Rank ${item.name} against others you've had`} />
+        )
+      ) : null,
+    // Where its score stands (Loop-ladder): a bar's drink only.
+    score: live && (item.bar_id || item.origin_bar_profile_id) ? <ScoreLadder itemId={item.id} /> : null,
     notes,
     bar:
       team && viewer !== 'floor' && item.bar_id ? (

@@ -13,7 +13,7 @@ import { withMade } from '@/lib/madeIt';
 import { plural } from '@/lib/menus';
 import { dayOf, formatScore } from '@/lib/ranking';
 
-import { RankRow } from '../rankings/RankingLists';
+import { ScoreRow } from '../rankings/ScoreRows';
 
 const MONTH_YEAR = new Intl.DateTimeFormat(undefined, { month: 'short', year: 'numeric' });
 const href = (d: { itemId: string }) => itemHref('Cocktail', d.itemId);
@@ -121,11 +121,11 @@ export function BarTallies({ bars, whose }: { bars: BarTally[]; whose: string })
         {bars.map((b, i) => {
           const venue = b.venue;
           return (
-            <RankRow
+            <ScoreRow
               key={b.key}
               position={i + 1}
               title={venue?.name ?? 'At home'}
-              detail={b.best ? `${plural(b.drinks, 'drink')} · best: ${b.best.name}` : plural(b.drinks, 'drink')}
+              sub={b.best ? `${plural(b.drinks, 'drink')} · best: ${b.best.name}` : plural(b.drinks, 'drink')}
               score={b.average}
               scoreDetail={b.drinks > 1 ? 'average' : undefined}
               logo={venue?.avatarUrl ?? null}
