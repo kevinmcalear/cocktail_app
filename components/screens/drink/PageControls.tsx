@@ -11,7 +11,7 @@ interface PageControlsProps {
   over?: BackbarScheme;
   top: number;
   scrollY: SharedValue<number>;
-  /** The scroll offset where the big title passes under the bar: the backing and the small title fade in. */
+  /** The scroll offset where the page's first line reaches the bar: the backing is solid by then, the small title follows. */
   tuck: number;
   /** The small title in the bar. */
   title: string;
@@ -48,7 +48,8 @@ export function PageControls({ over, top, scrollY, tuck, title, titleInset = 0, 
   const round = [save, onShare, more].filter(Boolean).length;
   const rightRoom = round * (layout.minTapTarget + space.sm) + (onEdit ? EDIT_PILL + space.sm : 0);
   const backing = useAnimatedStyle(() => ({ opacity: interpolate(scrollY.get(), [tuck - space.xxxl, tuck], [0, 1], 'clamp') }));
-  const small = useAnimatedStyle(() => ({ opacity: interpolate(scrollY.get(), [tuck - space.sm, tuck + space.xl], [0, 1], 'clamp') }));
+  // The small title once the big one (a display line, about 64) has gone under the bar.
+  const small = useAnimatedStyle(() => ({ opacity: interpolate(scrollY.get(), [tuck + space.xl, tuck + space.xxxl + space.sm], [0, 1], 'clamp') }));
   const back = noBack ? (
     <View />
   ) : (
