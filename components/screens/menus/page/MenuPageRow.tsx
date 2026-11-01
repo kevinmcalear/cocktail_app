@@ -1,3 +1,4 @@
+import { useRef, type ComponentRef } from 'react';
 import { StyleSheet, View } from 'react-native';
 
 import { Caption, DsText, Headline, PressableScale, useDs } from '@/components/ds';
@@ -5,6 +6,8 @@ import { IconSymbol } from '@/components/ui/icon-symbol';
 import { displayFaces, font, radius, space, STATUS } from '@/constants/tokens';
 import { readableAccent, withAlpha } from '@/lib/color';
 import type { MenuDrink } from '@/types/menus';
+
+import type { Anchor } from '../RowMenu';
 
 import { MenuDrawing, type MenuInk } from './MenuDrawing';
 
@@ -31,8 +34,9 @@ export interface PageRowView {
  * looking adds (Menu-page rows). Tap opens it, or for a bartender opens the
  * spec in place (`open`, `onToggle`).
  */
-export function MenuPageRow({ row, onPress, open, children }: { row: PageRowView; onPress: () => void; open?: boolean; children?: React.ReactNode }) {
+export function MenuPageRow({ row, onPress, open, onMore, children }: { row: PageRowView; onPress: () => void; open?: boolean; onMore?: (anchor: Anchor) => void; children?: React.ReactNode }) {
   const ds = useDs();
+  const more = useRef<ComponentRef<typeof View>>(null);
   const amber = readableAccent(STATUS.warning, ds.c.ground);
   const green = readableAccent(STATUS.success, ds.c.ground);
   const tone = { ink: ds.c.ink, green, amber, quiet: ds.c.muted };
@@ -94,6 +98,18 @@ export function MenuPageRow({ row, onPress, open, children }: { row: PageRowView
           ) : null}
           {open !== undefined ? <IconSymbol name={open ? 'chevron.up' : 'chevron.down'} size={14} color={ds.c.muted} /> : null}
         </View>
+        {onMore ? (
+          <View ref={more} collapsable={false}>
+            <PressableScale
+              accessibilityLabel={`Change ${drink.name}: swap or take off`}
+              aria-haspopup="menu"
+              onPress={() => more.current?.measureInWindow((x, y, width, height) => onMore({ x, y, width, height }))}
+              style={styles.more}
+            >
+              <IconSymbol name="ellipsis" size={16} color={ds.c.muted} />
+            </PressableScale>
+          </View>
+        ) : null}
       </PressableScale>
       {children}
     </View>
@@ -111,4 +127,5 @@ const styles = StyleSheet.create({
   chips: { flexDirection: 'row', flexWrap: 'wrap', gap: space.xs, marginTop: space.xs },
   chip: { paddingHorizontal: space.xs + 2, paddingVertical: 1, borderRadius: radius.mark },
   end: { alignItems: 'flex-end', gap: 2, minWidth: 44 },
+  more: { width: 32, height: 44, alignItems: 'center', justifyContent: 'center', marginRight: -space.sm },
 });

@@ -32,7 +32,7 @@ function pencilUri(scene: Scene, night: boolean): string {
  * draft, or faded on a past menu. A drink with nothing to draw from (beer,
  * wine) shows its picture, so every row still has one.
  */
-export function MenuDrawing({ itemId, size, ink, fallback }: { itemId: string; size: DrawingSize; ink: MenuInk; fallback?: { imageUrl: string | null; glass: string | null } }) {
+export function MenuDrawing({ itemId, size, ink, fallback, bare }: { itemId: string; size: DrawingSize; ink: MenuInk; fallback?: { imageUrl: string | null; glass: string | null }; bare?: boolean }) {
   const ds = useDs();
   const inputs = useItemSketch(itemId).data;
   const px = size === 'hero' ? drawing.heroStaff : drawing[size];
@@ -44,10 +44,10 @@ export function MenuDrawing({ itemId, size, ink, fallback }: { itemId: string; s
       </View>
     );
   }
-  if (ink === 'pencil') return <Pencil inputs={inputs} seed={itemId} px={px} paper={size === 'row' && ds.scheme !== 'dark' ? ds.c.paper : null} />;
+  if (ink === 'pencil') return <Pencil inputs={inputs} seed={itemId} px={px} paper={size === 'row' && !bare && ds.scheme !== 'dark' ? ds.c.paper : null} />;
   return (
     <View style={ink === 'faded' ? { opacity: 0.45 } : undefined} aria-hidden>
-      <DrinkDrawing inputs={inputs} seed={itemId} size={size} staff={size === 'hero'} pour={size !== 'row' && ink === 'colour'} />
+      <DrinkDrawing inputs={inputs} seed={itemId} size={size} staff={size === 'hero'} pour={size !== 'row' && ink === 'colour'} bare={bare} />
     </View>
   );
 }

@@ -1,6 +1,6 @@
 import { useRouter, type Href } from 'expo-router';
 import { useState } from 'react';
-import { FlatList, StyleSheet, View, useWindowDimensions } from 'react-native';
+import { FlatList, StyleSheet, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import { Body, Button, Caption, GlassButton, useBreakpoint, useDs, useGutter } from '@/components/ds';
@@ -26,10 +26,11 @@ import { MenuPageHead } from './page/MenuPageHead';
 import { MenuPageRow, type PageRowView } from './page/MenuPageRow';
 import { menuPageModel, type GroupAction } from './page/menuPageModel';
 import { MenuSpecInPlace } from './page/MenuSpecInPlace';
+import { RowChanges, type RowTarget } from './page/RowChanges';
 
 const day = (iso: string) => new Date(iso).toLocaleDateString(undefined, { weekday: 'short', day: 'numeric', month: 'short' });
 
-type Item = { key: string; head?: { name: string; count: number }; row?: PageRowView };
+type Item = { key: string; head?: { name: string; count: number }; row?: PageRowView; sectionId?: string };
 
 /**
  * One menu page for everyone, with more on it as the role rises (2027
@@ -45,12 +46,12 @@ export function MenuScreen({ menuId }: { menuId: string }) {
   const gutter = useGutter();
   const wide = useBreakpoint() !== 'phone';
   const sidebar = useIsWideWeb();
-  const { width } = useWindowDimensions();
   const { venues } = useActiveVenue();
   const { data: menu, isLoading, error } = useMenu(menuId);
   const [now] = useState(() => Date.now());
   const [sheet, setSheet] = useState<'more' | 'night' | 'share' | 'publish' | null>(null);
   const [open, setOpen] = useState<string | null>(null);
+  const [changing, setChanging] = useState<RowTarget | null>(null);
   const lens = useMenuLens(menu);
   const { data: venueMenus = [] } = useVenueMenus(menu?.barId ?? null);
   const shelf = useMyBar();
@@ -111,10 +112,12 @@ export function MenuScreen({ menuId }: { menuId: string }) {
 
   const items: Item[] = model.sections.flatMap((s) => [
     { key: `h-${s.id}`, head: { name: s.name, count: s.rows.length } },
-    ...s.rows.map((row) => ({ key: `${s.id}-${row.drink.id}`, row })),
+    ...s.rows.map((row) => ({ key: `${s.id}-${row.drink.id}`, row, sectionId: s.id })),
   ]);
   const column = { paddingHorizontal: gutter, maxWidth: wide ? 760 : undefined, width: '100%', alignSelf: sidebar ? 'flex-start' : 'center' } as const;
   const bartender = lens.lens === 'bartender';
+  // A list that's on, or coming up: its drinks change one at a time, on the row.
+  const changeable = team && (status === 'on' || status === 'upcoming');
 
   return (
     <View style={[styles.screen, { backgroundColor: ds.c.ground }]}>
@@ -135,6 +138,11 @@ export function MenuScreen({ menuId }: { menuId: string }) {
                 row={item.row}
                 open={bartender ? open === item.key : undefined}
                 onPress={() => (bartender ? setOpen((o) => (o === item.key ? null : item.key)) : openDrink(item.row!))}
+                onMore={
+                  changeable
+                    ? (anchor) => setChanging({ drink: item.row!.drink, sectionId: item.sectionId!, row: lens.rows.find((r) => r.itemId === item.row!.drink.id && r.sectionId === item.sectionId), anchor })
+                    : undefined
+                }
               >
                 {bartender && open === item.key ? <MenuSpecInPlace itemId={item.row.drink.id} barId={menu.barId} onOpen={() => openDrink(item.row!)} /> : null}
               </MenuPageRow>
@@ -156,7 +164,7 @@ export function MenuScreen({ menuId }: { menuId: string }) {
               onBack={sidebar ? null : back}
               onShare={lens.lens === 'home' ? null : share}
               pill={lens.lens === 'home' ? { label: 'Share', onPress: share } : team && !draft && status !== 'previous' ? { label: 'Edit', onPress: () => go(`/menus/${menu.id}/edit`) } : null}
-              width={Math.min(width, 760) - gutter * 2}
+              bleed={gutter}
             />
             {model.banner ? (
               <MenuPageBanner text={model.banner.text} aside={model.banner.aside} warn={model.banner.warn} onPress={model.banner.toNow && live ? () => go(`/menus/${live.id}`) : undefined} />
@@ -175,6 +183,7 @@ export function MenuScreen({ menuId }: { menuId: string }) {
           </Caption>
         </View>
       ) : null}
+      {changing ? <RowChanges menu={menu} target={changing} onClose={() => setChanging(null)} /> : null}
       {sheet === 'night' ? <HomeNightSheet menu={menu} onClose={() => setSheet(null)} /> : null}
       {sheet === 'share' ? <ShareMenuSheet menu={menu} onClose={() => setSheet(null)} /> : null}
       {sheet === 'more' ? <MenuMoreSheet menu={menu} status={status} visible onClose={() => setSheet(null)} onNight={home ? () => setSheet('night') : undefined} /> : null}
