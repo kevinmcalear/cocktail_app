@@ -1,14 +1,19 @@
 import { useState } from 'react';
 
-import { Button, Segmented } from '@/components/ds';
+import { Button, Caption, Segmented } from '@/components/ds';
 import { SetupChromeProvider, SetupPage, useSetupChrome } from '@/components/screens/onboarding/SetupPage';
 import type { KitKind } from '@/components/screens/kit/KitPage';
 import { KitIceScreen } from '@/components/screens/venue/KitIceScreen';
 import { KitToolsScreen } from '@/components/screens/venue/KitToolsScreen';
+import { SettingsSection, SwitchRow } from '@/components/screens/settings/SettingsParts';
 import { SubPageInline } from '@/components/screens/venue/VenueSubPage';
 import { useIsWideWeb } from '@/hooks/useIsWideWeb';
+import { useBarAdvanced, useSetBarAdvanced } from '@/hooks/useAdvancedOptions';
 
 import { GlassesStep } from './GlassesStep';
+
+export const ADVANCED_LABEL = 'Advanced options';
+export const ADVANCED_DETAIL = 'Wash lines on glasses, with Fit it in the drink editor, and Ice and Tools in setup';
 
 const TABS: { value: KitKind; label: string }[] = [
   { value: 'glassware', label: 'Glassware' },
@@ -17,27 +22,41 @@ const TABS: { value: KitKind; label: string }[] = [
 ];
 
 /**
- * The checklist's Kit row (owner-setup steps 6 and 7, call 8): three tabs.
- * Glassware asks for kinds first; Ice and Tools are Kit's own lists and Add
- * sheets (Kit and ice), here under setup's title. Done, from any tab, goes
- * back to the checklist.
+ * The checklist's Kit row (owner-setup steps 6 and 7, call 8). Simple by
+ * default (jam dec-24): the glasses, and under them a switch for Advanced
+ * options. With it on, three tabs: Glassware asks for kinds first; Ice and
+ * Tools are Kit's own lists and Add sheets (Kit and ice), here under setup's
+ * title. Done, from any tab, goes back to the checklist.
  */
 export function KitStep({ barId, pageId, name, step, onBack, onDone }: { barId: string; pageId: string | null; name: string; step: string; onBack: () => void; onDone: () => void }) {
   const chrome = useSetupChrome();
   const wide = useIsWideWeb();
-  const [tab, setTab] = useState<KitKind>('glassware');
+  const advanced = useBarAdvanced(barId);
+  const setAdvanced = useSetBarAdvanced(barId);
+  const [picked, setTab] = useState<KitKind>('glassware');
+  const tab = advanced ? picked : 'glassware';
   // A phone names the tab; a wide screen names the place, as the board draws them.
-  const title = wide ? 'Kit' : TABS.find((t) => t.value === tab)!.label;
-  const intro = wide ? `What ${name} pours into, the ice it pours and the tools behind the bar.` : undefined;
+  const title = !advanced ? 'Glassware' : wide ? 'Kit' : TABS.find((t) => t.value === tab)!.label;
+  const intro = !advanced ? `The glasses ${name} pours into.` : wide ? `What ${name} pours into, the ice it pours and the tools behind the bar.` : undefined;
   return (
     <SetupChromeProvider value={{ ...chrome, title, intro, mark: undefined, eyebrow: null, progress: null, topLabel: step, noBack: false, onBack }}>
       <SetupPage footer={<Button label="Done, back to setup" size="lg" onPress={onDone} />}>
-        <Segmented options={TABS} value={tab} onChange={setTab} accessibilityLabel="Kit" variant="pill" stretch />
+        {advanced ? <Segmented options={TABS} value={tab} onChange={setTab} accessibilityLabel="Kit" variant="pill" stretch /> : null}
         {tab === 'glassware' ? (
           <GlassesStep barId={barId} pageId={pageId} name={name} />
         ) : (
           <SubPageInline.Provider value>{tab === 'ice' ? <KitIceScreen barId={barId} /> : <KitToolsScreen barId={barId} />}</SubPageInline.Provider>
         )}
+        {tab === 'glassware' ? (
+          <SettingsSection note="Most bars start without them. Change it any time in Venue settings.">
+            <SwitchRow label={ADVANCED_LABEL} detail={ADVANCED_DETAIL} value={advanced} onValueChange={(on) => setAdvanced.mutate(on)} />
+          </SettingsSection>
+        ) : null}
+        {setAdvanced.error ? (
+          <Caption tone="accent" role="alert">
+            Couldn’t save that. Check your connection and try again.
+          </Caption>
+        ) : null}
       </SetupPage>
     </SetupChromeProvider>
   );
