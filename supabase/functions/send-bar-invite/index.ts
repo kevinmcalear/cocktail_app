@@ -21,21 +21,28 @@ const ROLE_LABELS: Record<number, string> = { 10: "Guest", 20: "Employee", 30: "
  * The email carries the venue's welcome message, signed by the sender, and
  * the person's note. The reply is the same either way, like
  * add_user_to_bar_by_email's.
+ *
+ * Who it goes to is an email, or a profile_id when the invite was made by
+ * invite_profile_to_bar (found by name): the email is looked up here and never
+ * returned, and the invite lookup below, which RLS limits to the venue's
+ * Admins, is what lets anything be sent. An invite onto one of the venue's own
+ * roles names that role in the email.
  */
 serveJson("send-bar-invite", async (req) => {
   const caller = await requireUser(req);
   const body = await req.json().catch(() => ({}));
   const barId = requireUuid(body?.bar_id, "bar_id");
-  const email = typeof body?.email === "string" ? body.email.trim().toLowerCase() : "";
+  let email = typeof body?.email === "string" ? body.email.trim().toLowerCase() : "";
+  if (!email && body?.profile_id !== undefined) email = await profileEmail(caller, requireUuid(body.profile_id, "profile_id"));
   const site = siteOrigin(body?.site, Deno.env.get("SITE_URL") || DEFAULT_SITE, isLocalStack());
-  if (!email) throw new HttpError(400, "email is required.");
+  if (!email) throw new HttpError(400, "email or profile_id is required.");
 
   // bar_invites RLS shows a venue's invites to its Admins and an invite to
   // its own invitee. Ruling out the caller's own email leaves the Admins.
   if (email === caller.user.email?.toLowerCase()) throw new HttpError(403, "Only the venue's Admins can send invites.");
   const { data: invite, error: inviteError } = await caller.userClient
     .from("bar_invites")
-    .select("role_level, name, note")
+    .select("role_level, venue_role_id, name, note")
     .eq("bar_id", barId)
     .eq("email", email)
     .maybeSingle();
@@ -61,7 +68,11 @@ serveJson("send-bar-invite", async (req) => {
     .single();
   if (barError) throw barError;
 
-  const role = ROLE_LABELS[invite.role_level] ?? "a member";
+  let role = ROLE_LABELS[invite.role_level] ?? "a member";
+  if (invite.venue_role_id) {
+    const { data: own } = await caller.admin.from("venue_roles").select("name").eq("id", invite.venue_role_id).eq("bar_id", barId).maybeSingle();
+    if (own?.name) role = own.name;
+  }
   const joinUrl = await joinLink(caller, email, site, bar, { invite_bar: bar.name, invite_role: role, invite_name: invite.name ?? "" });
   const sender = await callerName(caller);
   const content = inviteEmail({
@@ -75,6 +86,17 @@ serveJson("send-bar-invite", async (req) => {
   await sendEmail({ from: barSender(bar.name, fromAddress()), to: email, ...content });
   return { sent: true };
 });
+
+/** The email of a public person page's account. Not found is the same 404 as an invite that isn't there. */
+async function profileEmail(caller: Caller, profileId: string): Promise<string> {
+  const { data: profile, error } = await caller.admin.from("profiles").select("user_id").eq("id", profileId).eq("kind", "person").maybeSingle();
+  if (error) throw error;
+  const { data: found, error: userError } = profile?.user_id ? await caller.admin.auth.admin.getUserById(profile.user_id) : { data: null, error: null };
+  if (userError) throw userError;
+  const email = found?.user?.email?.toLowerCase();
+  if (!email) throw new HttpError(404, "There's no invite for that person. Invite them first.");
+  return email;
+}
 
 /**
  * The Join button's link: a token_hash the app exchanges on any device (no

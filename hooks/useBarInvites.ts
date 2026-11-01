@@ -149,15 +149,50 @@ export function useSaveWelcomeMessage(barId: string) {
   });
 }
 
+/** Who an invite email goes to: an email, or a person's page when they were found by name (their email stays on the server). */
+export type InviteTarget = string | { profileId: string };
+
 /**
  * Emails an invite that already exists (send-bar-invite): one email in the
  * venue's look with its welcome message and the person's note, account or not.
  */
 export function useSendInviteEmail(barId: string) {
   return useMutation({
-    mutationFn: (email: string) =>
-      invokeFunction<{ sent: boolean }>('send-bar-invite', { bar_id: barId, email: email.trim().toLowerCase(), site: getAuthSite() }),
+    mutationFn: (to: InviteTarget) =>
+      invokeFunction<{ sent: boolean }>('send-bar-invite', {
+        bar_id: barId,
+        ...(typeof to === 'string' ? { email: to.trim().toLowerCase() } : { profile_id: to.profileId }),
+        site: getAuthSite(),
+      }),
     onSuccess: () => track('invite_sent'),
+    onError: () => {},
+  });
+}
+
+/**
+ * Invites a person found by name (invite_profile_to_bar): the database looks
+ * up their email, so the sender never has it. Resolves to true when it made an
+ * invite, false when they were already on the team and just got the new
+ * built-in role. `roleId` puts them on one of the bar's own roles.
+ */
+export function useInviteProfile(barId: string) {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: async (p: { profileId: string; roleLevel: number; roleId?: string | null }): Promise<boolean> => {
+      const { data, error } = await supabase.rpc('invite_profile_to_bar', {
+        p_profile_id: p.profileId,
+        p_bar_id: barId,
+        p_role_level: p.roleLevel,
+        ...(p.roleId ? { p_role_id: p.roleId } : {}),
+      });
+      if (error) throw error;
+      return data === true;
+    },
+    onSuccess: async () => {
+      await queryClient.invalidateQueries({ queryKey: ['bar', barId] });
+      await queryClient.invalidateQueries({ queryKey: ['bar-members', barId] });
+      await queryClient.invalidateQueries({ queryKey: ['bar-invites', barId] });
+    },
     onError: () => {},
   });
 }

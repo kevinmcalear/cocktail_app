@@ -74,7 +74,9 @@ jest.mock('@/hooks/useVenueRoles', () => ({
   useSetMemberRoleChoice: () => ({ mutate: mockChoose, isPending: false, error: null }),
 }));
 jest.mock('@/hooks/useTakeover', () => ({ useInviteToRole: () => ({ mutateAsync: mockInviteRole, isPending: false, error: null }) }));
+jest.mock('@/hooks/useProfiles', () => ({ ...jest.requireActual('@/hooks/useProfiles'), usePublicPeople: () => ({ data: [], isFetching: false }) }));
 jest.mock('@/hooks/useBarInvites', () => ({
+  useInviteProfile: () => ({ mutateAsync: jest.fn(), isPending: false, error: null }),
   useBarInvites: (_barId: string, enabled: boolean) => ({
     data: enabled ? [{ id: 'i1', email: 'new@example.test', role_level: 30, name: 'Nia', created_at: '2026-01-01T00:00:00Z' }] : [],
   }),
