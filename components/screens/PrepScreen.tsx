@@ -16,7 +16,7 @@ import { useCapabilities, useCapabilityOpensAt } from '@/hooks/useCapabilities';
 import { useDropdowns } from '@/hooks/useDropdowns';
 import { useEvents } from '@/hooks/useEvents';
 import { usePrepData } from '@/hooks/usePrepList';
-import { buildPrepList, servesPerDrink } from '@/lib/prep';
+import { buildPrepList, DEFAULT_SERVES, servesPerDrink, tonightAt6 } from '@/lib/prep';
 import { roleLabel } from '@/lib/roles';
 
 interface MenuRow {
@@ -33,15 +33,7 @@ const SEGMENTS = [
 ] as const;
 type Segment = (typeof SEGMENTS)[number]['value'];
 
-const DEFAULT_SERVES = 20;
 const DRINKS_PER_GUEST = 2;
-
-/** Tonight's service starts at 6 pm for start-by times; ponytail: a venue setting later. */
-function tonightAt6(): Date {
-  const d = new Date();
-  d.setHours(18, 0, 0, 0);
-  return d;
-}
 
 /**
  * Prep: worked back from tonight's menu or an upcoming event. What to make

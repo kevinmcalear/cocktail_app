@@ -1,16 +1,17 @@
 import { QueryClientContext } from '@tanstack/react-query';
 import { Image } from 'expo-image';
-import { useContext, useEffect } from 'react';
+import { useContext } from 'react';
 import { StyleSheet, View } from 'react-native';
-import Animated, { Easing, useAnimatedStyle, useReducedMotion, useSharedValue, withDelay, withTiming } from 'react-native-reanimated';
 
-import { drawing, pour as POUR, radius } from '@/constants/tokens';
+import { drawing, radius } from '@/constants/tokens';
 import { useItemSketch } from '@/hooks/useItemSketch';
+import { useReducedMotion } from '@/hooks/useReducedMotion';
 import { glowScene, nightScene, onlyStages, withoutStages } from '@/lib/sketch/passes';
 import type { Scene } from '@/lib/sketch/scene';
 import { sceneToSvg } from '@/lib/sketch/svg';
 import { liquidOf, type SketchInputs } from '@/lib/sketch/types';
 
+import { PourLevel } from './PourLevel';
 import { sceneFor } from './SketchDrawing';
 import { useDs } from './theme';
 
@@ -73,11 +74,6 @@ export function DrinkDrawing({ inputs, seed, size, staff, pour = size !== 'row',
   const layers = layersOf(scene, night, liquidOf(inputs).hex);
   const reduceMotion = useReducedMotion();
   const moving = pour && !reduceMotion;
-  const fill = useSharedValue(moving ? 0 : 1);
-  useEffect(() => {
-    if (moving) fill.set(withDelay(POUR.delay, withTiming(1, { duration: POUR.ms, easing: Easing.out(Easing.cubic) })));
-  }, [moving, fill]);
-  const level = useAnimatedStyle(() => ({ height: `${fill.get() * 100}%` }));
 
   const frame = [
     styles.frame,
@@ -94,7 +90,7 @@ export function DrinkDrawing({ inputs, seed, size, staff, pour = size !== 'row',
       {pour ? (
         <>
           {/* The liquid, under the pencil, revealed from the bottom of the glass up. */}
-          <Animated.View style={[styles.level, level]}>{picture(layers.liquid)}</Animated.View>
+          <PourLevel moving={moving}>{picture(layers.liquid)}</PourLevel>
           {picture(layers.rest)}
         </>
       ) : (
@@ -118,6 +114,5 @@ function ById({ itemId, ...rest }: Omit<DrinkDrawingProps, 'inputs' | 'seed'> & 
 const styles = StyleSheet.create({
   frame: { overflow: 'hidden' },
   square: { position: 'absolute', left: 0, bottom: 0 },
-  level: { position: 'absolute', left: 0, right: 0, bottom: 0, overflow: 'hidden' },
   glow: { opacity: 0.5 },
 });
