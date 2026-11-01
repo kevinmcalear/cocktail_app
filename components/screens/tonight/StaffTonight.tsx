@@ -2,6 +2,7 @@ import { useRouter, type Href } from 'expo-router';
 import { StyleSheet, View } from 'react-native';
 
 import { Body, Button, Caption, DrinkDrawingFor, DsText, PencilState, PressableScale, Surface, useDs } from '@/components/ds';
+import { IconSymbol } from '@/components/ui/icon-symbol';
 import { RowDivider, SettingsRow } from '@/components/screens/settings/SettingsParts';
 import { TonightSetupBanner } from '@/components/screens/venueSetup/SetupBanner';
 import { TonightWeek } from '@/components/screens/week/TonightWeek';
@@ -97,9 +98,10 @@ export function StaffSide({ t, barId }: { t: Staff; barId: string }) {
               </View>
             ))}
             {!make.length && t.houseMade ? <SettingsRow icon="drop.fill" label="House-made" detail={`${plural(t.houseMade, 'prep')} · enough for tonight`} onPress={go('/prep')} /> : null}
-            {t.off.slice(0, 2).map((d) => (
+            {t.off.slice(0, 2).map((d, i) => (
               <View key={`off-${d.id}`}>
-                <RowDivider />
+                {/* A line between rows, never above the first. */}
+                {i || make.length || (t.canPrep && t.houseMade) ? <RowDivider /> : null}
                 <SettingsRow icon="exclamationmark.triangle" label="Off tonight" value={d.name} onPress={go(itemHref(categoryOf(d.kind), d.id))} />
               </View>
             ))}
@@ -125,8 +127,8 @@ export function StaffSide({ t, barId }: { t: Staff; barId: string }) {
       {t.learn.length ? (
         <TonightSection title="Learn">
           <View role="list">
-            {t.learn.map(({ drink, list }, i) => (
-              <LearnRow key={drink.id} id={drink.id} kind={drink.kind} name={drink.name} sub={`New on ${list}`} first={i === 0} />
+            {t.learn.map((row, i) => (
+              <LearnRow key={`${row.id}-${i}`} {...row} first={i === 0} />
             ))}
           </View>
         </TonightSection>
@@ -136,11 +138,12 @@ export function StaffSide({ t, barId }: { t: Staff; barId: string }) {
   );
 }
 
-function LearnRow({ id, kind, name, sub, first }: { id: string; kind: string; name: string; sub: string; first: boolean }) {
+/** A Learn row: a drink and what to learn about it; `href` opens Study on it (a run-through), null opens the drink. */
+function LearnRow({ id, kind, name, sub, href, first }: { id: string; kind: string; name: string; sub: string; href: string | null; first: boolean }) {
   const ds = useDs();
   const router = useRouter();
   return (
-    <PressableScale role="link" accessibilityLabel={`${name}. ${sub}`} onPress={() => router.push(itemHref(categoryOf(kind), id) as Href)} style={[styles.learn, { borderTopColor: first ? 'transparent' : ds.c.line }]}>
+    <PressableScale role="link" accessibilityLabel={`${name}. ${sub}`} onPress={() => router.push((href ?? itemHref(categoryOf(kind), id)) as Href)} style={[styles.learn, { borderTopColor: first ? 'transparent' : ds.c.line }]}>
       <DrinkDrawingFor itemId={id} size="row" pour={false} />
       <View style={styles.flex}>
         <DsText variant="headline" numberOfLines={1} style={{ fontFamily: displayFaces[ds.displayFace].regular }}>
@@ -148,6 +151,7 @@ function LearnRow({ id, kind, name, sub, first }: { id: string; kind: string; na
         </DsText>
         <Caption tone="muted">{sub}</Caption>
       </View>
+      <IconSymbol name="chevron.right" size={16} color={ds.c.muted} />
     </PressableScale>
   );
 }

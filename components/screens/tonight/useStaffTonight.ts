@@ -3,6 +3,7 @@ import { useEffect, useMemo, useState } from 'react';
 import { useBarFacts } from '@/hooks/useBarFacts';
 import { useCapabilities } from '@/hooks/useCapabilities';
 import { useCreditsToCheck } from '@/hooks/useCreditsToCheck';
+import { useGuestDrinkAllergens } from '@/hooks/useGuestAllergies';
 import { useIsHydrated } from '@/hooks/useIsHydrated';
 import { useVenueMenus } from '@/hooks/useMenus';
 import { usePrepData } from '@/hooks/usePrepList';
@@ -13,7 +14,8 @@ import { useEffectiveRole } from '@/hooks/useViewAs';
 import { hoursStatus } from '@/lib/barHours';
 import { groupMenus } from '@/lib/menus';
 import { buildPrepList, DEFAULT_SERVES, tonightAt6 } from '@/lib/prep';
-import { offTonight, tonightEyebrow } from '@/lib/tonight';
+import { allergenLabel } from '@/lib/allergens';
+import { offTonight, runThroughMinutes, talkThrough, tonightEyebrow } from '@/lib/tonight';
 
 /** Admins see Needs you (Prod-where: "Drink Creator and Admin"). */
 const NEEDS_YOU = 35;
@@ -62,7 +64,19 @@ export function useStaffTonight(barId: string) {
     now
   );
   // Learn: what's new on the lists tonight, once each.
-  const learn = all.filter((a, i) => a.drink.isNew && all.findIndex((b) => b.drink.id === a.drink.id) === i).slice(0, 3);
+  const once = all.filter((a, i) => all.findIndex((b) => b.drink.id === a.drink.id) === i);
+  // Learn (Prod-today-staff): what's new on the lists, each a short run-through in Study, then one drink's allergen to explain at the table.
+  const fresh = once.filter((a) => a.drink.isNew).slice(0, 2);
+  const allergens = useGuestDrinkAllergens(once.map((a) => a.drink.id)).data;
+  const talk = talkThrough(
+    once.map((a) => a.drink),
+    (id) => allergens?.get(id)?.allergens,
+    allergenLabel
+  );
+  const learn = [
+    ...fresh.map(({ drink, list }) => ({ id: drink.id, kind: drink.kind, name: drink.name, sub: `New on ${list} · a ${runThroughMinutes(drink.line)}-minute run-through`, href: `/study/tonight?drink=${drink.id}` })),
+    ...(talk ? [{ ...talk, kind: once.find((a) => a.drink.id === talk.id)!.drink.kind, href: null }] : []),
+  ];
 
   const admin = role >= NEEDS_YOU;
   const credits = useCreditsToCheck().data?.length ?? 0;
