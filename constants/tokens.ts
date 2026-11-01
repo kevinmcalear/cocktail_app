@@ -176,24 +176,34 @@ export const font: Record<'regular' | 'medium' | 'semiBold' | 'figures' | 'figur
  * uses them (components/ds/faces.ts). `scale` sets each at the same visual
  * height as Redaction; `spacing` is letter spacing in em; `upper` faces are
  * set in capitals. Faces with no italic of their own stay upright.
+ * `ascender` and `descent` are per em, measured with fontTools from the files
+ * the app ships (Redaction from assets/fonts/redaction): the hhea descent, and
+ * the tallest of d h k l f b and the capitals A H E I T, italic included.
+ * nameStyle gives a name the line height they need.
  */
 export const displayFaces = {
-  redaction: { label: 'Redaction', by: 'MCKL', style: 'Default', regular: fontFamilies.name, italic: fontFamilies.nameItalic, scale: 1, spacing: 0, upper: false },
-  newsreader: { label: 'Newsreader', by: 'Production Type', style: 'Book', regular: fontFamilies.newsreader, italic: fontFamilies.newsreaderItalic, scale: 0.92, spacing: 0, upper: false },
-  fell: { label: 'IM Fell English', by: 'Igino Marini', style: 'Worn', regular: fontFamilies.fell, italic: fontFamilies.fellItalic, scale: 0.95, spacing: 0, upper: false },
-  imbue: { label: 'Imbue', by: 'Tyler Finck', style: 'Deco', regular: fontFamilies.imbue, italic: fontFamilies.imbue, scale: 1.04, spacing: 0, upper: false },
-  besley: { label: 'Besley', by: 'Owen Earl', style: 'Tavern', regular: fontFamilies.besley, italic: fontFamilies.besleyItalic, scale: 0.8, spacing: 0, upper: false },
-  bricolage: { label: 'Bricolage Grotesque', by: 'Mathieu Triay', style: 'Modern', regular: fontFamilies.bricolage, italic: fontFamilies.bricolage, scale: 0.84, spacing: -0.025, upper: false },
-  belleza: { label: 'Belleza', by: 'Eduardo Tunni', style: 'Poster', regular: fontFamilies.belleza, italic: fontFamilies.belleza, scale: 0.72, spacing: 0.04, upper: true },
-  shoulders: { label: 'Big Shoulders', by: 'Patric King', style: 'Sign', regular: fontFamilies.shoulders, italic: fontFamilies.shoulders, scale: 1.05, spacing: 0.01, upper: true },
+  redaction: { label: 'Redaction', by: 'MCKL', style: 'Default', regular: fontFamilies.name, italic: fontFamilies.nameItalic, scale: 1, spacing: 0, upper: false, ascender: 0.725, descent: 0.3 },
+  newsreader: { label: 'Newsreader', by: 'Production Type', style: 'Book', regular: fontFamilies.newsreader, italic: fontFamilies.newsreaderItalic, scale: 0.92, spacing: 0, upper: false, ascender: 0.715, descent: 0.265 },
+  fell: { label: 'IM Fell English', by: 'Igino Marini', style: 'Worn', regular: fontFamilies.fell, italic: fontFamilies.fellItalic, scale: 0.95, spacing: 0, upper: false, ascender: 0.752, descent: 0.363 },
+  imbue: { label: 'Imbue', by: 'Tyler Finck', style: 'Deco', regular: fontFamilies.imbue, italic: fontFamilies.imbue, scale: 1.08, spacing: 0, upper: false, ascender: 0.755, descent: 0.25 },
+  besley: { label: 'Besley', by: 'Owen Earl', style: 'Tavern', regular: fontFamilies.besley, italic: fontFamilies.besleyItalic, scale: 0.8, spacing: 0, upper: false, ascender: 0.791, descent: 0.425 },
+  bricolage: { label: 'Bricolage Grotesque', by: 'Mathieu Triay', style: 'Modern', regular: fontFamilies.bricolage, italic: fontFamilies.bricolage, scale: 0.84, spacing: -0.025, upper: false, ascender: 0.712, descent: 0.27 },
+  belleza: { label: 'Belleza', by: 'Eduardo Tunni', style: 'Poster', regular: fontFamilies.belleza, italic: fontFamilies.belleza, scale: 0.72, spacing: 0.04, upper: true, ascender: 0.692, descent: 0.224 },
+  shoulders: { label: 'Big Shoulders', by: 'Patric King', style: 'Sign', regular: fontFamilies.shoulders, italic: fontFamilies.shoulders, scale: 1.05, spacing: 0.01, upper: true, ascender: 0.81, descent: 0.214 },
 } as const;
 
 export type DisplayFace = keyof typeof displayFaces;
 
+/** Points a name's line keeps above its tallest letters (components/ds/displayClip.check.ts). */
+export const NAME_ROOM = 1;
+
 /**
  * A name set in a face at a size: the face, scaled to sit at Redaction's
- * height, with its letter spacing and capitals. The line height stays the
- * size's own (components/ds/displayClip.check.ts).
+ * height, with its letter spacing and capitals. The line height is the
+ * size's own, or taller where the face needs it: iOS sits a line set tighter
+ * than its font one descent above its foot and cuts off whatever reaches past
+ * the top, so the line keeps NAME_ROOM above the face's tallest letters
+ * (Imbue's titles at its 1.08 scale, for one).
  */
 export function nameStyle(face: DisplayFace, size: { fontSize: number; lineHeight: number }, italic = false): TextStyle {
   const f = displayFaces[face];
@@ -201,7 +211,7 @@ export function nameStyle(face: DisplayFace, size: { fontSize: number; lineHeigh
   return {
     fontFamily: italic ? f.italic : f.regular,
     fontSize,
-    lineHeight: size.lineHeight,
+    lineHeight: Math.max(size.lineHeight, Math.ceil(fontSize * (f.ascender + f.descent) + NAME_ROOM)),
     ...(f.spacing ? { letterSpacing: f.spacing * fontSize } : null),
     ...(f.upper ? { textTransform: 'uppercase' } : null),
   };
@@ -241,8 +251,11 @@ export type TypeStyle = keyof typeof type;
  */
 export const textSlack = 0.01;
 
-/** `mark`: shapes drawn inside a card that can be only a few points tall, like zones on the back bar plan. */
-export const radius = { mark: 4, control: 12, card: 22, sheet: 36, pill: 999 } as const;
+/**
+ * `mark`: shapes drawn inside a card that can be only a few points tall, like
+ * zones on the back bar plan. `chip`: Material 3 filter chips on Android (8dp).
+ */
+export const radius = { mark: 4, chip: 8, control: 12, card: 22, sheet: 36, pill: 999 } as const;
 
 /** 4-point grid. */
 export const space = { xs: 4, sm: 8, md: 12, lg: 16, xl: 24, xxl: 32, xxxl: 48 } as const;

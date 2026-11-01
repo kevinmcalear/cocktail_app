@@ -1,7 +1,7 @@
 import { Image } from 'expo-image';
 import { ScrollView, StyleSheet, View } from 'react-native';
 
-import { BackbarTheme, BrandProvider, Caption, DrinkImage, DsText, useDs } from '@/components/ds';
+import { BackbarTheme, BrandProvider, Caption, DrinkImage, DsText, PressableScale, useDs } from '@/components/ds';
 import { VenueMark } from '@/components/nav/VenueMarks';
 import { DEFAULT_ACCENT, displayName, font, nameStyle, radius, space, type BackbarScheme } from '@/constants/tokens';
 import { BRAND_SAMPLE } from '@/lib/brandSample';
@@ -27,13 +27,20 @@ const MENU = [...BRAND_SAMPLE, { name: 'Daiquiri', line: 'White rum · lime · s
 /**
  * One of the bar's pages in the draft theme (canvas Theme-flow-2: a drawn
  * drink, a photo drink, its menu, its bar page). The photo decides its own
- * mode (Decided), so it's always the night page.
+ * mode (Decided), so it's always the night page. Tapped, it opens full size
+ * (Theme-flow-6, ThemePreview).
  */
-export function ThemeMini({ kind, look, scheme, width }: { kind: MiniKind; look: BrandLook; scheme: BackbarScheme; width: number }) {
+export function ThemeMini({ kind, look, scheme, width, onOpen }: { kind: MiniKind; look: BrandLook; scheme: BackbarScheme; width: number; onOpen: (kind: MiniKind) => void }) {
   const ds = useDs();
   const scale = width / BASE_W;
   return (
-    <View role="img" aria-label={`${MINIS.find((m) => m.kind === kind)?.label} at ${look.name}, ${scheme} mode`} style={[styles.frame, { width, height: BASE_H * scale, borderColor: ds.c.lineStrong }]}>
+    <PressableScale
+      role="button"
+      accessibilityLabel={`${MINIS.find((m) => m.kind === kind)?.label} at ${look.name}, ${scheme} mode`}
+      accessibilityHint="Opens it full size"
+      onPress={() => onOpen(kind)}
+      style={[styles.frame, { width, height: BASE_H * scale, borderColor: ds.c.lineStrong }]}
+    >
       <View style={[styles.base, { transform: [{ scale }] }]}>
         <BackbarTheme scheme={kind === 'photo' ? 'dark' : scheme}>
           <BrandProvider accent={look.accent ?? DEFAULT_ACCENT} groundTint={look.groundTint} displayFace={look.displayFace}>
@@ -41,7 +48,7 @@ export function ThemeMini({ kind, look, scheme, width }: { kind: MiniKind; look:
           </BrandProvider>
         </BackbarTheme>
       </View>
-    </View>
+    </PressableScale>
   );
 }
 
@@ -108,13 +115,13 @@ function MiniPage({ kind, look }: { kind: MiniKind; look: BrandLook }) {
   );
 }
 
-/** The four previews in a row that scrolls sideways, with their names under them (phones and the narrow column). */
-export function ThemeMiniStrip({ look, scheme }: { look: BrandLook; scheme: BackbarScheme }) {
+/** The four previews in a row that scrolls sideways, with their names under them (phones and the narrow column); each opens full size. */
+export function ThemeMiniStrip({ look, scheme, onOpen }: { look: BrandLook; scheme: BackbarScheme; onOpen: (kind: MiniKind) => void }) {
   return (
     <ScrollView horizontal showsHorizontalScrollIndicator={false} style={styles.stripBox} contentContainerStyle={styles.strip}>
       {MINIS.map((m) => (
         <View key={m.kind} style={styles.cell}>
-          <ThemeMini kind={m.kind} look={look} scheme={scheme} width={MINI_W} />
+          <ThemeMini kind={m.kind} look={look} scheme={scheme} width={MINI_W} onOpen={onOpen} />
           <Caption tone="muted" align="center">{m.label}</Caption>
         </View>
       ))}

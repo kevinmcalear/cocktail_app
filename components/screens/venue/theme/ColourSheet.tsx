@@ -6,8 +6,12 @@ import { ColourWheel } from '@/components/ds/ColourWheelLazy';
 import { SectionHeading, SettingsRow } from '@/components/screens/settings/SettingsParts';
 import { IconSymbol } from '@/components/ui/icon-symbol';
 import { BAR_COLOURS, backbar, font, radius, space } from '@/constants/tokens';
+import type { LogoColours } from '@/hooks/useLogoColours';
 import { normalizeHex } from '@/lib/brand';
+import { withAlpha } from '@/lib/color';
 import { colourName } from '@/lib/brandColours';
+import { useLogoEdge } from '@/lib/logoEdge';
+import { logoRect } from '@/lib/logoPins';
 import { groundTintFor, neutralsFor, type Ground } from '@/lib/palette';
 import { isGrey, notForButton, themeFor } from '@/lib/theme';
 
@@ -22,19 +26,21 @@ interface Props {
   accent: string | null;
   ground: Ground;
   logoUrl: string | null;
-  /** The logo's colours, most of it first. */
-  logoColours: string[];
+  /** The logo's colours, most of it first, and where each sits in it (useLogoColours). */
+  logo: LogoColours;
   onPhoto: () => Promise<string[] | null>;
   onUse: (accent: string) => void;
 }
 
 /**
- * Colour (canvas Theme-flow-3, 4 and mono): from your logo, each colour
- * showing the button on paper and at night, then the six bar colours; or
- * your own on the wheel, with how it reads in both modes and what the rails
- * moved. A black and white logo offers ink, or a colour from a photo of the room.
+ * Colour (canvas Theme-flow-3, 4 and mono): from your logo, with a pin where
+ * each of its colours sits and a tile per colour showing the button on paper
+ * and at night, then the six bar colours; or your own on the wheel, with how
+ * it reads in both modes and what the rails moved. A black and white logo
+ * offers ink, or a colour from a photo of the room. Closing it with a new
+ * colour not kept asks "Discard changes?" first.
  */
-export function ColourSheet({ visible, onClose, accent, ground, logoUrl, logoColours, onPhoto, onUse }: Props) {
+export function ColourSheet({ visible, onClose, accent, ground, logoUrl, logo, onPhoto, onUse }: Props) {
   const [pick, setPick] = useState(accent);
   const [text, setText] = useState(accent ?? '');
   const [source, setSource] = useState<ColourSource>('logo');
@@ -44,10 +50,10 @@ export function ColourSheet({ visible, onClose, accent, ground, logoUrl, logoCol
   const reset = () => {
     setPick(accent);
     setText(accent ?? '');
-    setSource(accent && !logoColours.includes(accent) && !BAR_COLOURS.some((c) => c.hex === accent) ? 'own' : 'logo');
+    setSource(accent && !logo.colours.includes(accent) && !BAR_COLOURS.some((c) => c.hex === accent) ? 'own' : 'logo');
   };
   return (
-    <Sheet visible={visible} onClose={onClose} onShow={reset} accessibilityLabel="Colour" kind="flow" keyboard>
+    <Sheet visible={visible} onClose={onClose} onShow={reset} accessibilityLabel="Colour" kind="flow" keyboard ground phoneFull dirty={chosen !== accent}>
       <BrandProvider accent={chosen ?? undefined}>
         <FlowHead title="Colour" canDone={!!chosen} onDone={() => chosen && onUse(chosen)} />
       </BrandProvider>
@@ -62,7 +68,7 @@ export function ColourSheet({ visible, onClose, accent, ground, logoUrl, logoCol
           onChange={setSource}
         />
         {source === 'logo' ? (
-          <FromLogo {...{ logoUrl, logoColours, photo, pick, ground }} onPick={setPick} onPhoto={async () => setPhoto((await onPhoto()) ?? photo)} />
+          <FromLogo {...{ logoUrl, logo, photo, pick, ground }} onPick={setPick} onPhoto={async () => setPhoto((await onPhoto()) ?? photo)} />
         ) : (
           <YourOwn text={text} onText={setText} hex={own} ground={ground} />
         )}
@@ -71,8 +77,9 @@ export function ColourSheet({ visible, onClose, accent, ground, logoUrl, logoCol
   );
 }
 
-function FromLogo({ logoUrl, logoColours, photo, pick, ground, onPick, onPhoto }: { logoUrl: string | null; logoColours: string[]; photo: string[]; pick: string | null; ground: Ground; onPick: (hex: string) => void; onPhoto: () => void }) {
+function FromLogo({ logoUrl, logo, photo, pick, ground, onPick, onPhoto }: { logoUrl: string | null; logo: LogoColours; photo: string[]; pick: string | null; ground: Ground; onPick: (hex: string) => void; onPhoto: () => void }) {
   const ds = useDs();
+  const logoColours = logo.colours;
   const mono = !!logoUrl && logoColours.length > 0 && logoColours.every(isGrey);
   const found = [...new Set([...(mono ? logoColours.filter((c) => !notForButton(c)) : logoColours), ...photo])].slice(0, 3);
   const pale = found.find((c) => notForButton(c) === 'Too pale for a button');
@@ -80,9 +87,8 @@ function FromLogo({ logoUrl, logoColours, photo, pick, ground, onPick, onPhoto }
     <View style={styles.part}>
       {logoUrl ? (
         <>
-          <View style={[styles.logoBox, { backgroundColor: ds.c.raised }]}>
-            <LogoImage uri={logoUrl} size={120} radius={radius.card} />
-          </View>
+          {/* A black and white logo has no colour to pin (Theme-flow-mono). */}
+          <LogoPins uri={logoUrl} logo={logo} shown={mono ? [] : found} />
           <SectionHeading>{mono ? 'Your logo is black and white' : 'From your logo'}</SectionHeading>
           <View role="radiogroup" aria-label="Colours from your logo" style={styles.tiles}>
             {found.map((hex, i) => (
@@ -106,6 +112,35 @@ function FromLogo({ logoUrl, logoColours, photo, pick, ground, onPick, onPhoto }
         ))}
       </View>
       <Caption tone="muted">{logoUrl ? 'Or start from a bar’s colours.' : 'Colours from a bar, to start from. Add a logo to take a colour from it.'}</Caption>
+    </View>
+  );
+}
+
+/** The logo on its card, 180 in a 240 square, with the pins (canvas Theme-flow-3): the logo's main colour larger, each where it sits. */
+const CARD = 240;
+const LOGO = 180;
+const PIN = { main: 30, other: 22, ring: 3 };
+
+function LogoPins({ uri, logo, shown }: { uri: string; logo: LogoColours; shown: string[] }) {
+  const ds = useDs();
+  const edge = useLogoEdge(uri);
+  const rect = logoRect(edge?.kind ?? null, LOGO, logo.aspect);
+  const pins = shown.flatMap((hex, i) => {
+    const pin = logo.pins.find((p) => p.hex === hex);
+    if (!pin) return [];
+    const x = rect.left + pin.x * rect.width;
+    const y = rect.top + pin.y * rect.height;
+    // A cropped (busy) logo can hide a colour's place; no pin off the logo.
+    return x < 0 || y < 0 || x > LOGO || y > LOGO ? [] : [{ hex, x, y, size: i === 0 ? PIN.main : PIN.other }];
+  });
+  return (
+    <View role="img" aria-label={pins.length ? `Your logo, with where ${pins.map((p) => colourName(p.hex)).join(', ')} ${pins.length === 1 ? 'sits' : 'sit'} in it` : 'Your logo'} style={[styles.logoCard, { backgroundColor: ds.c.surface, borderColor: ds.c.line }]}>
+      <View style={styles.logoAt}>
+        <LogoImage uri={uri} size={LOGO} radius={radius.card} />
+        {pins.map((p) => (
+          <View key={p.hex} style={[styles.pin, { left: p.x - p.size / 2, top: p.y - p.size / 2, width: p.size, height: p.size, backgroundColor: p.hex }]} />
+        ))}
+      </View>
     </View>
   );
 }
@@ -184,7 +219,9 @@ const DOT = 40;
 const styles = StyleSheet.create({
   body: { gap: space.lg, padding: space.lg, paddingBottom: space.xxxl },
   part: { gap: space.md },
-  logoBox: { alignSelf: 'center', padding: space.lg, borderRadius: radius.card, borderCurve: 'continuous' },
+  logoCard: { alignSelf: 'center', width: CARD, height: CARD, alignItems: 'center', justifyContent: 'center', borderRadius: radius.card, borderCurve: 'continuous', borderWidth: StyleSheet.hairlineWidth },
+  logoAt: { width: LOGO, height: LOGO },
+  pin: { position: 'absolute', borderRadius: radius.pill, borderWidth: PIN.ring, borderColor: backbar.light.surface, boxShadow: `0 2px 8px ${withAlpha(backbar.dark.ground, 0.35)}`, pointerEvents: 'none' },
   tiles: { flexDirection: 'row', gap: space.sm },
   tile: { flex: 1, minWidth: 0, borderRadius: radius.control, borderCurve: 'continuous', overflow: 'hidden' },
   half: { padding: space.sm, alignItems: 'center' },

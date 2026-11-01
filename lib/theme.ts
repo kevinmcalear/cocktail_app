@@ -130,6 +130,17 @@ export function themeFor(accent: string, tint: string | null, name: string): { l
 }
 
 /**
+ * Material 3's tonal fill in the bar's hue (its secondary container), for a
+ * selected filter chip on Android (canvas Theme-type, Android): a pale tint on
+ * paper, a deep one at night, each with its own ink. The tonal colours come
+ * from the bar's colour, not the phone's wallpaper (th-n-plat).
+ */
+export function tonalFor(accent: string, dark: boolean): { fill: string; ink: string } {
+  const { h } = toLch(accent);
+  return dark ? { fill: fromLch(0.32, 0.05, h), ink: fromLch(0.92, 0.03, h) } : { fill: fromLch(0.9, 0.045, h), ink: fromLch(0.28, 0.06, h) };
+}
+
+/**
  * Why a logo colour can't be the button (canvas "From your logo" tiles): too
  * pale or too dark to stand off one of the pages. Null when it can. Greys
  * (black and white logos) can: they give ink buttons.

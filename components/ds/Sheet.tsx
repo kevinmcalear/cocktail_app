@@ -7,6 +7,7 @@ import { scheduleOnRN } from 'react-native-worklets';
 
 import { radius, space, springs } from '@/constants/tokens';
 
+import { useDiscardGuard } from './discardGuard';
 import { dragShade, STRETCH } from './sheetDrag';
 import { sheetFrame, sheetIsDialog } from './sheetFrame';
 import { useDs } from './theme';
@@ -48,6 +49,14 @@ export interface SheetProps {
   /** iOS: once the sheet is fully gone (to open another modal after it). */
   onDismiss?: () => void;
   /**
+   * Unsaved changes in it: closing it any way but the caller's own Done (a
+   * swipe or drag down, the backdrop, back, Escape, its X or Cancel) asks
+   * "Discard changes?" first, and it stays open unless they say Discard.
+   */
+  dirty?: boolean;
+  /** The web at phone width: fill the window, as the phone's own sheet does, instead of a dialog in the middle (the theme's Type and Colour). */
+  phoneFull?: boolean;
+  /**
    * small (the default): our sheet, for pickers, menus and short forms.
    * flow: a whole flow (Add, Rank it, Theme). The system's own sheet on
    * phones: iOS's page sheet (its glass, grabber and swipe to close) and a
@@ -76,10 +85,13 @@ export function Sheet(props: SheetProps) {
  * platform draws and dismisses it. Its X and Cancel still close it with
  * useSheetClose(); a swipe down (iOS) or back (Android) calls onClose.
  */
-function FlowSheet({ visible, onClose, accessibilityLabel, children, style, ground, header, keyboard, keyboardOffset = 0, onShow, onDismiss }: SheetProps) {
+function FlowSheet({ visible, onClose, accessibilityLabel, children, style, ground, header, keyboard, keyboardOffset = 0, onShow, onDismiss, dirty }: SheetProps) {
   const ds = useDs();
   const insets = useSafeAreaInsets();
   const android = Platform.OS === 'android';
+  // iOS holds the page sheet in place (modalInPresentation) and reports a swipe down here, as Android does back.
+  const guard = useDiscardGuard(dirty);
+  const close = () => guard(onClose);
   const body = (
     <View role="dialog" aria-label={accessibilityLabel} style={[styles.flex, style]}>
       {header}
@@ -93,12 +105,12 @@ function FlowSheet({ visible, onClose, accessibilityLabel, children, style, grou
       presentationStyle={android ? 'fullScreen' : 'pageSheet'}
       statusBarTranslucent={android}
       navigationBarTranslucent={android}
-      onRequestClose={onClose}
+      onRequestClose={close}
       onShow={onShow}
       onDismiss={onDismiss}
     >
       <GestureHandlerRootView style={[styles.flex, { backgroundColor: ground ? ds.c.ground : ds.c.surface, paddingTop: android ? insets.top : 0, paddingBottom: android ? insets.bottom : 0 }]}>
-        <CloseContext value={onClose}>
+        <CloseContext value={close}>
           {keyboard ? (
             <KeyboardAvoidingView behavior={Platform.select({ ios: 'padding', android: 'height' })} keyboardVerticalOffset={keyboardOffset} style={styles.flex}>
               {body}
@@ -112,7 +124,7 @@ function FlowSheet({ visible, onClose, accessibilityLabel, children, style, grou
   );
 }
 
-function SmallSheet({ visible, onClose, accessibilityLabel, children, style, ground, header, keyboard, keyboardOffset = 0, onShow, onDismiss }: SheetProps) {
+function SmallSheet({ visible, onClose, accessibilityLabel, children, style, ground, header, keyboard, keyboardOffset = 0, onShow, onDismiss, dirty }: SheetProps) {
   const ds = useDs();
   const reduceMotion = useReducedMotion();
   const slide = !sheetIsDialog && !reduceMotion;
@@ -144,13 +156,18 @@ function SmallSheet({ visible, onClose, accessibilityLabel, children, style, gro
     setGone(true);
     onClose();
   };
-  const dismiss = () => leave(closed);
+  const guard = useDiscardGuard(dirty);
+  const dismiss = () => guard(() => leave(closed));
   const { height, pan, scroll } = useSheetDrag({
     drag,
     enabled: !sheetIsDialog,
     onClose: (velocity) => {
       'worklet';
-      leave(closed, velocity);
+      // Unsaved changes: back up into place, then ask.
+      if (dirty) {
+        drag.set(withSpring(0, springs.glide));
+        scheduleOnRN(dismiss);
+      } else leave(closed, velocity);
     },
   });
 

@@ -4,8 +4,9 @@ import assert from 'node:assert/strict';
 
 import { BAR_COLOURS, DEFAULT_ACCENT } from '@/constants/tokens';
 
+import { contrast } from './color';
 import { groundTintFor, neutralsFor, toLch } from './palette';
-import { isGrey, notForButton, themeColours, themeFor } from './theme';
+import { isGrey, notForButton, themeColours, themeFor, tonalFor } from './theme';
 
 const canvas = { Rust: '#D0643B', Lavender: '#B9A8F5', 'Neon green': '#39FF14', Ink: '#1E1B17' };
 const seeds: [string, string][] = [...Object.entries(canvas), ['Amber', DEFAULT_ACCENT], ...BAR_COLOURS.map((c): [string, string] => [c.name, c.hex])];
@@ -57,5 +58,13 @@ assert.equal(notForButton('#FFFFFF'), 'Too pale for a button');
 assert.equal(notForButton('#120616'), 'Too dark for a button');
 assert.equal(notForButton('#0B0B0B'), null);
 assert.equal(notForButton('#D0643B'), null);
+
+// Android's tonal chip: the bar's hue, pale on paper and deep at night, its ink at 4.5:1 or better.
+for (const dark of [false, true]) {
+  const t = tonalFor('#D0643B', dark);
+  assert.ok(Math.abs(toLch(t.fill).h - toLch('#D0643B').h) < 8, 'keeps the hue');
+  assert.ok(contrast(t.ink, t.fill) >= 4.5, `tonal ink reads (${contrast(t.ink, t.fill).toFixed(1)}:1)`);
+}
+assert.ok(toLch(tonalFor('#D0643B', false).fill).l > 0.85 && toLch(tonalFor('#D0643B', true).fill).l < 0.4);
 
 console.log('theme checks passed');

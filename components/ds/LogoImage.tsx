@@ -2,9 +2,7 @@ import { Image } from 'expo-image';
 import { StyleSheet, View, type StyleProp, type ViewStyle } from 'react-native';
 
 import { useLogoEdge } from '@/lib/logoEdge';
-
-/** An opaque logo sits in this share of its tile, as the home-screen icon does (venue-app). */
-const INSET = 0.8;
+import { LOGO_INSET } from '@/lib/logoPins';
 
 export interface LogoImageProps {
   uri: string;
@@ -39,7 +37,7 @@ export function LogoImage({ uri, size, radius, fill, clearBackground, style, onL
   const loaded = onLoad ? (e: { source: { width: number; height: number } }) => onLoad({ width: e.source.width, height: e.source.height }) : undefined;
   if (edge === undefined) return <View style={[box, style]} {...a11y} />;
   if (edge?.kind === 'solid') {
-    const inner = Math.round(size * INSET);
+    const inner = Math.round(size * LOGO_INSET);
     return (
       <View style={[box, styles.tile, { backgroundColor: fill ?? edge.color }, style]} {...a11y}>
         <Image source={{ uri }} style={{ width: inner, height: inner }} contentFit="contain" cachePolicy="memory-disk" recyclingKey={uri} accessibilityIgnoresInvertColors onLoad={loaded} />

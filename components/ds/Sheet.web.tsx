@@ -1,8 +1,11 @@
 import { createContext, use, useEffect, useEffectEvent, useRef, useState } from 'react';
-import { Modal, Pressable, StyleSheet, View } from 'react-native';
+import { Modal, Pressable, StyleSheet, useWindowDimensions, View } from 'react-native';
+
+import { layout } from '@/constants/tokens';
 
 import { useReducedMotion } from '@/hooks/useReducedMotion';
 
+import { useDiscardGuard } from './discardGuard';
 import type { SheetProps } from './Sheet';
 import { sheetFrame } from './sheetFrame';
 import { useDs } from './theme';
@@ -28,8 +31,11 @@ export function useSheetClose(): () => void {
  * load Reanimated or Gesture Handler. A finger drags it down to close it
  * (webSheetDrag), as on native.
  */
-export function Sheet({ visible, onClose, accessibilityLabel, children, style, ground, header, onShow, onDismiss, kind }: SheetProps) {
+export function Sheet({ visible, onClose, accessibilityLabel, children, style, ground, header, onShow, onDismiss, kind, dirty, phoneFull }: SheetProps) {
   const ds = useDs();
+  // At phone width a sheet that asks for it fills the window, as the phone's own sheet does.
+  const { width } = useWindowDimensions();
+  const full = !!phoneFull && width < layout.breakpoints.tablet;
   const reduceMotion = useReducedMotion();
   // Gone once it has faded out: the Modal stays up until then.
   const [gone, setGone] = useState(!visible);
@@ -56,15 +62,29 @@ export function Sheet({ visible, onClose, accessibilityLabel, children, style, g
       onClose();
     }, leaveMs);
   };
-  const close = () => dismiss();
+  const guard = useDiscardGuard(dirty);
+  const close = () => guard(() => dismiss());
+  // Unsaved changes: a drag that would close it settles back and asks instead.
+  const held = () => {
+    if (!dirty) return false;
+    close();
+    return true;
+  };
   // The drag attaches once per panel and reads these when a finger lets go.
-  const latest = useRef({ dismiss, reduceMotion });
+  const latest = useRef({ dismiss, reduceMotion, held });
   useEffect(() => {
-    latest.current = { dismiss, reduceMotion };
+    latest.current = { dismiss, reduceMotion, held };
   });
   const dragRef = (el: React.ComponentRef<typeof View> | null) =>
     // ponytail: on web a React Native view is a DOM element, which RN's types don't describe.
-    el ? attachSheetDrag(el as unknown as HTMLElement, (ms) => latest.current.dismiss(ms), () => latest.current.reduceMotion) : undefined;
+    el
+      ? attachSheetDrag(
+          el as unknown as HTMLElement,
+          (ms) => latest.current.dismiss(ms),
+          () => latest.current.reduceMotion,
+          () => latest.current.held(),
+        )
+      : undefined;
 
   useEffect(() => {
     if (!visible || gone) return;
@@ -94,7 +114,7 @@ export function Sheet({ visible, onClose, accessibilityLabel, children, style, g
         <View style={[StyleSheet.absoluteFill, { backgroundColor: ds.c.scrim }, fade, opacity]}>
           <Pressable accessibilityLabel="Close" style={StyleSheet.absoluteFill} onPress={close} />
         </View>
-        <View style={[styles.place, sheetFrame.scrim]}>
+        <View style={[styles.place, sheetFrame.scrim, full && sheetFrame.fullScrim]}>
           <View
             ref={dragRef}
             role="dialog"
@@ -106,6 +126,7 @@ export function Sheet({ visible, onClose, accessibilityLabel, children, style, g
               sheetFrame.panel,
               { backgroundColor: ground ? ds.c.ground : ds.c.surface, borderColor: ds.c.lineStrong },
               style,
+              full && sheetFrame.full,
               fade,
               opacity,
             ]}

@@ -27,4 +27,7 @@ export const sheetFrame = StyleSheet.create({
         overflow: 'hidden',
       }
     : {},
+  // At phone width a sheet that asks for it (Sheet's phoneFull) fills the window instead.
+  fullScrim: { padding: 0 },
+  full: { maxWidth: '100%', maxHeight: '100%', height: '100%', borderTopLeftRadius: 0, borderTopRightRadius: 0, borderBottomLeftRadius: 0, borderBottomRightRadius: 0, borderWidth: 0 },
 });

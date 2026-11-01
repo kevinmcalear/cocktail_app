@@ -23,7 +23,7 @@ function bucketKey(r: number, g: number, b: number, step = 24): string {
     return `${br},${bg},${bb}`;
 }
 
-export function extractBrandColorsFromPixels(pixels: Uint8ClampedArray): BrandColors {
+export function extractBrandColorsFromPixels(pixels: ArrayLike<number>): BrandColors {
     const buckets = new Map<string, { count: number; r: number; g: number; b: number }>();
 
     for (let index = 0; index < pixels.length; index += 4) {
