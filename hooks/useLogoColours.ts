@@ -1,7 +1,7 @@
 import { useQuery } from '@tanstack/react-query';
 
 import { extractBrandColorsFromPixels } from '@/lib/extractBrandColors';
-import { mergeLogoColours, pinsFromPixels, type LogoPin } from '@/lib/logoPins';
+import { logoColoursFrom, type LogoPin } from '@/lib/logoPins';
 import { readLogoPixels } from '@/lib/logoPixels';
 
 export interface LogoColours {
@@ -33,10 +33,7 @@ export function useLogoColours(logoUrl: string | null, known: string[]) {
       const px = logoUrl ? await readLogoPixels(logoUrl).catch(() => null) : null;
       if (!px) return fallback;
       const found = extractBrandColorsFromPixels(px.data);
-      const offered = mergeLogoColours(known, [found.primaryColor, found.secondaryColor]);
-      const pins = pinsFromPixels(px.data, px.width, px.height, offered);
-      // A colour read from the pixels stays only if it's there to pin (the rule's grey stand-in for a logo with no colour isn't).
-      const colours = offered.filter((c) => known.some((k) => k.toUpperCase() === c) || pins.some((p) => p.hex === c));
+      const { colours, pins } = logoColoursFrom(px.data, px.width, px.height, known, [found.primaryColor, found.secondaryColor]);
       return { colours, pins, aspect: px.width / px.height };
     },
   });

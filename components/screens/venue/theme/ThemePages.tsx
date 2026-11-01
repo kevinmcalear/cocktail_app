@@ -1,6 +1,6 @@
 import { Image } from 'expo-image';
 import { LinearGradient } from 'expo-linear-gradient';
-import { StyleSheet, View } from 'react-native';
+import { ScrollView, StyleSheet, View } from 'react-native';
 
 import { Body, Caption, DrinkImage, DsText, GlassButton, GlassSurface, useDs } from '@/components/ds';
 import { VenueMark } from '@/components/nav/VenueMarks';
@@ -34,6 +34,8 @@ const BAR_ROWS = [
 /** The drink page's hero on a phone (DrinkHero: about 30% of the screen). */
 const HERO = 300;
 const PHOTO_HERO = 420;
+/** The bar page's drink tiles. */
+const TILE = 120;
 
 export type PageKind = MiniKind | 'staff';
 
@@ -158,16 +160,16 @@ function BarBody({ look, top }: { look: BrandLook; top: number }) {
       <Body>Rye, sours and a short seasonal list in a narrow room.</Body>
       <Pill label="See the menu" />
       <Body style={styles.strong}>On the menu now</Body>
-      <View style={styles.tiles}>
-        {BRAND_SAMPLE.map((d) => (
+      <ScrollView horizontal showsHorizontalScrollIndicator={false} style={styles.tilesBox} contentContainerStyle={styles.tiles}>
+        {[...BRAND_SAMPLE, DAIQUIRI].map((d) => (
           <View key={d.name} style={styles.tile}>
             <View style={[styles.tileArt, { backgroundColor: ds.c.paper }]}>
               <DrinkImage thumb sketchDetail="thumb" sketch={d.sketch} itemId={d.name} accessibilityLabel={d.name} radius="card" />
             </View>
-            <DsText variant="body" numberOfLines={1} style={nameStyle(ds.displayFace, type.body)}>{d.name}</DsText>
+            <DsText variant="body" numberOfLines={2} style={nameStyle(ds.displayFace, type.body)}>{d.name}</DsText>
           </View>
         ))}
-      </View>
+      </ScrollView>
       <View style={[styles.rule, { borderColor: ds.c.line }]}>
         {BAR_ROWS.map((r) => (
           <View key={r.label} style={[styles.part, { borderColor: ds.c.line }]}>
@@ -209,7 +211,9 @@ const styles = StyleSheet.create({
   thumb: { width: 64, height: 64, borderRadius: radius.control, overflow: 'hidden' },
   logo: { alignSelf: 'flex-start', borderRadius: radius.card, overflow: 'hidden' },
   pill: { height: 50, alignItems: 'center', justifyContent: 'center', borderRadius: radius.pill, marginVertical: space.sm },
-  tiles: { flexDirection: 'row', gap: space.md },
-  tile: { flex: 1, gap: space.xs, minWidth: 0 },
-  tileArt: { aspectRatio: 1, borderRadius: radius.card, overflow: 'hidden' },
+  // Sideways, past the gutter, as the bar page's own row scrolls (Theme-rye-bar).
+  tilesBox: { flexGrow: 0, marginRight: -space.xl },
+  tiles: { gap: space.sm + 2, paddingRight: space.xl },
+  tile: { width: TILE, gap: space.xs },
+  tileArt: { width: TILE, height: TILE, borderRadius: radius.card, overflow: 'hidden' },
 });

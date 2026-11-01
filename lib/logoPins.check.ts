@@ -2,7 +2,7 @@
 // Run: npm run test:unit
 import assert from 'node:assert/strict';
 
-import { logoRect, mergeLogoColours, pinsFromPixels } from './logoPins';
+import { logoColoursFrom, logoRect, mergeLogoColours, pinsFromPixels } from './logoPins';
 
 const RUST = '#D0643B';
 const PINE = '#2F4A3A';
@@ -53,6 +53,14 @@ for (const p of pins) {
   assert.deepEqual([...image.slice(i, i + 3)], rgb(p.hex), `${p.hex} pin on its own colour`);
 }
 
+// How much of the logo each is: the rust disc most, then the ring, then the wheat.
+assert.ok(at[RUST].share > at[PINE].share && at[PINE].share > at[CREAM].share, pins.map((p) => `${p.hex} ${p.share.toFixed(2)}`).join(', '));
+assert.ok(Math.abs(pins.reduce((s, p) => s + p.share, 0) - 1) < 0.02, 'the three are the whole logo');
+
+// Each pin knows its colour exactly as the logo has it most.
+assert.deepEqual(pins.map((p) => p.exact), [RUST, PINE, CREAM]);
+assert.equal(pinsFromPixels(littleRye(SIDE), SIDE, SIDE, ['#CF633A'])[0].exact, RUST);
+
 // A shade a little off (a JPEG's, a soft edge) still counts as the colour.
 const soft = new Uint8ClampedArray(4 * 4 * 4).fill(255);
 for (let p = 0; p < 16; p++) soft.set([200, 105, 65, 255], p * 4);
@@ -73,5 +81,13 @@ assert.deepEqual(logoRect(null, 100, 0.5), { left: 0, top: -50, width: 100, heig
 // The colours offered: known first, then what the pixels show, no near repeats, at most three.
 assert.deepEqual(mergeLogoColours(['#2f4a3a'], ['#D0643B', '#2E4B3B']), [PINE, RUST]);
 assert.deepEqual(mergeLogoColours([RUST], [PINE, CREAM, '#4F8FE0']), [RUST, PINE, CREAM]);
+
+// A saved logo: the one colour saved, then what its pixels show (a soft-edged
+// rust and pine, as the upload's rule may read them), as the logo has them,
+// most of it first; a grey stand-in that isn't in the logo is dropped.
+const saved = logoColoursFrom(littleRye(SIDE), SIDE, SIDE, ['#F4E6D0'], ['#CF633A', '#2E4B3B']);
+assert.deepEqual(saved.colours, [RUST, PINE, '#F4E6D0']);
+assert.deepEqual(saved.pins.map((p) => p.hex).sort(), [RUST, PINE, '#F4E6D0'].sort());
+assert.deepEqual(logoColoursFrom(littleRye(SIDE), SIDE, SIDE, [], ['#888888']).colours, []);
 
 console.log('logoPins: each colour pinned where it sits in the logo');

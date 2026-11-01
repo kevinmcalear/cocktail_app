@@ -7,11 +7,18 @@
  * mark, never at an average that falls on something else.
  */
 
-/** A colour's place in the logo, as fractions of the image's width and height. */
+/**
+ * A colour's place in the logo, as fractions of the image's width and height;
+ * how much of the logo it is (0 to 1 of what's drawn); and the exact colour
+ * its pixels have most (a colour read from the logo comes from one pixel of
+ * its kind, which can be a soft edge's).
+ */
 export interface LogoPin {
   hex: string;
   x: number;
   y: number;
+  share: number;
+  exact: string;
 }
 
 /** How far (0 to 441, RGB) a pixel can be from a colour and still count as it: its bucket at upload is 24 a channel, plus the logo's soft edges. */
@@ -70,16 +77,21 @@ function depths(mine: (p: number) => boolean, width: number, height: number): Fl
  */
 export function pinsFromPixels(rgba: ArrayLike<number>, width: number, height: number, colours: string[]): LogoPin[] {
   const owner = owners(rgba, width * height, colours.map(rgb));
+  let drawn = 0;
+  for (let p = 0; p < width * height; p++) if (rgba[p * 4 + 3] >= SEEN) drawn++;
   return colours.flatMap((hex, t) => {
     const d = depths((p) => owner[p] === t, width, height);
     let sx = 0;
     let sy = 0;
     let n = 0;
+    const exact = new Map<number, number>();
     for (let p = 0; p < d.length; p++) {
       if (!d[p]) continue;
       sx += p % width;
       sy += Math.floor(p / width);
       n++;
+      const key = (rgba[p * 4] << 16) | (rgba[p * 4 + 1] << 8) | rgba[p * 4 + 2];
+      exact.set(key, (exact.get(key) ?? 0) + 1);
     }
     if (!n) return [];
     const [cx, cy] = [sx / n, sy / n];
@@ -91,7 +103,8 @@ export function pinsFromPixels(rgba: ArrayLike<number>, width: number, height: n
       const off = Math.hypot((p % width) - cx, Math.floor(p / width) - cy);
       if (d[p] > deepest || off < near) [best, deepest, near] = [p, d[p], off];
     }
-    return [{ hex, x: ((best % width) + 0.5) / width, y: (Math.floor(best / width) + 0.5) / height }];
+    const most = [...exact].reduce((a, b) => (b[1] > a[1] ? b : a))[0];
+    return [{ hex, x: ((best % width) + 0.5) / width, y: (Math.floor(best / width) + 0.5) / height, share: n / drawn, exact: `#${most.toString(16).padStart(6, '0').toUpperCase()}` }];
   });
 }
 
@@ -120,4 +133,26 @@ export function mergeLogoColours(known: string[], read: string[]): string[] {
     if (!out.some((o) => Math.hypot(...rgb(o).map((v, i) => v - [r, g, b][i])) < NEAR / 2)) out.push(hex);
   }
   return out.slice(0, 3);
+}
+
+/**
+ * The logo's colours to offer and their pins, from its pixels: the known ones
+ * (a fresh upload's, or the one saved) and those the upload's rule reads
+ * (`read`), most of the logo first. A colour read from the pixels is taken as
+ * the logo has it most, not from the one pixel the rule saw first, so it
+ * matches a colour saved from it; it stays only if it's there to pin (the
+ * rule's grey stand-in for a logo with no colour isn't).
+ */
+export function logoColoursFrom(rgba: ArrayLike<number>, width: number, height: number, known: string[], read: string[]): { colours: string[]; pins: LogoPin[] } {
+  const offered = mergeLogoColours(known, read);
+  const isKnown = (c: string) => known.some((k) => k.toUpperCase() === c);
+  const raw = pinsFromPixels(rgba, width, height, offered);
+  const shown = (c: string) => {
+    const pin = raw.find((p) => p.hex === c);
+    return pin && !isKnown(c) ? pin.exact : c;
+  };
+  const pins = raw.map((p) => ({ ...p, hex: shown(p.hex) }));
+  const share = (c: string) => pins.find((p) => p.hex === c)?.share ?? -1;
+  const colours = [...new Set(offered.map(shown))].filter((c) => isKnown(c) || share(c) >= 0).sort((a, b) => share(b) - share(a));
+  return { colours, pins };
 }

@@ -45,6 +45,8 @@ export function TypeSheet({ visible, onClose, look, value, onUse }: Props) {
     if (!visible || Platform.OS !== 'web') return;
     const onKey = (e: KeyboardEvent) => {
       if (e.key !== 'Enter' || useDialogStore.getState().queue.length) return;
+      // Enter on a button (Cancel) is that button's; on a choice or nowhere, it's Done.
+      if ((e.target as HTMLElement | null)?.closest?.('button, [role="button"], input, textarea')) return;
       e.preventDefault();
       onUse(face);
     };
