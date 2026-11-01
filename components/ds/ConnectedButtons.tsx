@@ -17,8 +17,10 @@ interface ConnectedButtonsProps<T extends string> {
 /**
  * Material 3 Expressive's connected button group (And-kit-hybrid): 40 tall, 2
  * apart, its ends round and the seams nearly square, the picked one a full
- * pill with a check. Drawn here because @expo/ui has no such group yet; swap
- * when it ships. Android only, so it isn't in the ds barrel.
+ * pill with a check. Android only, so it isn't in the ds barrel.
+ *
+ * ponytail: drawn in React Native because @expo/ui has no connected button
+ * group yet. Swap to Compose's when @expo/ui ships one.
  */
 export function ConnectedButtons<T extends string>({ options, value, onChange, accessibilityLabel, colors }: ConnectedButtonsProps<T>) {
   return (
