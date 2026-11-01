@@ -17,7 +17,7 @@ export interface ItemImageLink {
   is_generated?: boolean | null;
   outdated_since?: string | null;
   /** palette is jsonb: the colours as "#rrggbb", [] for none, null until worked out. */
-  images?: { url?: string | null; credit?: string | null; source_url?: string | null; palette?: Json | null } | null;
+  images?: { url?: string | null; credit?: string | null; source_url?: string | null; palette?: Json | null; thumbhash?: string | null } | null;
 }
 
 export interface ItemPicture {
@@ -29,6 +29,8 @@ export interface ItemPicture {
   sourceUrl: string | null;
   /** Its colours (images.palette), where the query read them: the first fills the frame while it loads. */
   palette?: string[] | null;
+  /** Its ThumbHash (images.thumbhash), where the query read it: painted while it loads; set once its smaller copies exist. */
+  thumbhash?: string | null;
 }
 
 /**
@@ -78,6 +80,7 @@ export function toPicture(link: ItemImageLink): ItemPicture {
     credit: link.images!.credit ?? null,
     sourceUrl: link.images!.source_url ?? null,
     palette: Array.isArray(link.images!.palette) ? link.images!.palette.filter((c) => typeof c === 'string') : null,
+    thumbhash: link.images!.thumbhash ?? null,
   };
 }
 

@@ -1609,32 +1609,41 @@ export type Database = {
         Row: {
           created_at: string
           credit: string | null
+          height: number | null
           id: string
           is_generated: boolean
           palette: Json | null
           source_url: string | null
           spec_fingerprint: string | null
+          thumbhash: string | null
           url: string
+          width: number | null
         }
         Insert: {
           created_at?: string
           credit?: string | null
+          height?: number | null
           id?: string
           is_generated?: boolean
           palette?: Json | null
           source_url?: string | null
           spec_fingerprint?: string | null
+          thumbhash?: string | null
           url: string
+          width?: number | null
         }
         Update: {
           created_at?: string
           credit?: string | null
+          height?: number | null
           id?: string
           is_generated?: boolean
           palette?: Json | null
           source_url?: string | null
           spec_fingerprint?: string | null
+          thumbhash?: string | null
           url?: string
+          width?: number | null
         }
         Relationships: []
       }
