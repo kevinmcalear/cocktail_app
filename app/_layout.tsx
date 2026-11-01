@@ -187,8 +187,8 @@ function RootLayoutNav() {
             />
             <Stack.Screen name="share/poster" options={{ presentation: "modal", headerShown: false }} />
             <Stack.Screen name="print/index" options={{ presentation: "modal", headerShown: false }} />
-            <Stack.Screen name="print/[sheet]" options={{ headerShown: false }} />
-            <Stack.Screen name="label/[id]" options={{ presentation: "modal", headerShown: false }} />
+            <Stack.Screen name="print/sheet" options={{ headerShown: false }} />
+            <Stack.Screen name="label/index" options={{ presentation: "modal", headerShown: false }} />
             {/* Redesign routes. Declared here because on iOS, a screen pushed over a modal
                 (the drink or ingredient page) ignores headerShown set from inside it. */}
             <Stack.Screen name="back-bar" options={{ headerShown: false }} />

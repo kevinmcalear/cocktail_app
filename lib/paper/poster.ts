@@ -67,8 +67,8 @@ export function menuPoster(input: MenuPosterInput, size: PosterSize): PaperPage 
   const ink = palette.text;
   const els: PaperEl[] = [];
 
-  // Letter is shorter than a story for its width: a lower panel, and the drinks in two columns.
-  const letter = size === 'letter';
+  // Letter and A4 are shorter than a story for their width: a lower panel, and the drinks in two columns.
+  const letter = size === 'letter' || size === 'a4';
   const panelH = letter ? 196 : story ? 270 : 200;
   const drawn = input.drinks.filter((d) => d.drawn).slice(0, 3);
   // With nothing drawn yet there's no panel: an empty one reads as broken, so the words sit higher up instead.

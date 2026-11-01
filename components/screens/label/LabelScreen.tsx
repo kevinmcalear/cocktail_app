@@ -18,7 +18,7 @@ import { batchPageUrl } from '@/lib/itemRoutes';
 import { labelFromBatch, type BatchLabel } from '@/lib/paper/label';
 import { siteOrigin } from '@/lib/venueLink';
 
-/** What `/label/<batch id>` was opened with: labelHref's facts, when the batch was just logged. */
+/** What `/label?batch=<batch id>` was opened with: labelHref's facts, when the batch was just logged. */
 export interface LabelParams {
   id: string;
   item?: string;

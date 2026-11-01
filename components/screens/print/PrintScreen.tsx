@@ -1,5 +1,5 @@
 import { useRouter, type Href } from 'expo-router';
-import { useEffect, useRef, useState } from 'react';
+import { useState } from 'react';
 import { ScrollView, StyleSheet, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
@@ -13,27 +13,28 @@ import { usePrintSet, type PrintSet } from '@/hooks/usePrintSet';
 import { PrintPagesView, usePrintSheet } from './PrintPages';
 import { SHEET_KINDS, SHEETS, type SheetKind } from './sheets';
 
-// The list beside the sheet on wide web (Bet-print-desk).
-const LIST_W = 560;
-const SHEET_W = 600;
+// Two sheets side by side on wide web (Bet-print-desk): the first in a 560 pane, the second centred in the rest.
+const PANE_W = 560;
+const FIRST_W = PANE_W - 2 * space.xl;
+const SECOND_W = 560;
 
 /**
  * Print (Bet-print): everything that prints for a menu, in the bar's colour
  * and face. The list on now prints in one tap; the others open their sheets
- * to look at first. On wide web the list sits beside the chosen sheet, with
- * Print in the top bar (Bet-print-desk).
+ * to look at first. On wide web two sheets sit side by side, the list on now
+ * and the run sheet to start, each name a choice of sheet, with Print in the
+ * top bar printing both (Bet-print-desk).
  */
 export function PrintScreen({ menuId }: { menuId: string }) {
   return <BackbarTheme>{useIsWideWeb() ? <WidePrint menuId={menuId} /> : <PhonePrint menuId={menuId} />}</BackbarTheme>;
 }
 
-function Rows({ set, chosen, onOpen, onPrintList }: { set: PrintSet; chosen?: SheetKind; onOpen: (k: SheetKind) => void; onPrintList: () => void }) {
-  const ds = useDs();
+function Rows({ set, onOpen, onPrintList }: { set: PrintSet; onOpen: (k: SheetKind) => void; onPrintList: () => void }) {
   return (
     <View style={styles.rows}>
       <Surface style={styles.card}>
         {SHEET_KINDS.map((k, i) => (
-          <View key={k} style={chosen === k ? { backgroundColor: ds.c.raised } : null}>
+          <View key={k}>
             {i ? <RowDivider /> : null}
             <SettingsRow
               icon={SHEETS[k].icon}
@@ -63,7 +64,7 @@ function PhonePrint({ menuId }: { menuId: string }) {
   const insets = useSafeAreaInsets();
   const gutter = useGutter();
   const set = usePrintSet(menuId);
-  const open = (k: SheetKind, print = false) => router.push(`/print/${k}?menu=${menuId}${print ? '&print=1' : ''}` as Href);
+  const open = (k: SheetKind, print = false) => router.push(`/print/sheet?kind=${k}&menu=${menuId}${print ? '&print=1' : ''}` as Href);
   const close = () => (router.canGoBack() ? router.back() : router.replace(`/menus/${menuId}` as Href));
   return (
     <View style={[styles.screen, { backgroundColor: ds.c.ground, paddingTop: insets.top + space.sm }]}>
@@ -83,36 +84,35 @@ function PhonePrint({ menuId }: { menuId: string }) {
 
 function WidePrint({ menuId }: { menuId: string }) {
   const ds = useDs();
-  const [kind, setKind] = useState<SheetKind>('list');
-  const sheet = usePrintSheet(menuId, kind);
-  const set = sheet.set;
-  // The list's own Print: show the list and print it once the list's own pages have painted.
-  const pending = useRef(false);
-  const listReady = kind === 'list' && sheet.canPrint;
-  useEffect(() => {
-    if (!pending.current || !listReady) return;
-    pending.current = false;
-    void sheet.print();
-  }, [listReady, sheet]);
-  const printList = () => {
-    if (listReady) return void sheet.print();
-    pending.current = true;
-    setKind('list');
-  };
+  const [kinds, setKinds] = useState<[SheetKind, SheetKind]>(['list', 'run']);
+  const first = usePrintSheet(menuId, kinds[0]);
+  const second = usePrintSheet(menuId, kinds[1]);
+  const set = first.set;
+  const names = `${SHEETS[kinds[0]].label.toLowerCase()} and ${SHEETS[kinds[1]].label.toLowerCase()}`;
+  // Print prints what's on the desk: both sheets, in one go.
+  const print = () => void first.print(second.views() ?? [], SHEETS[kinds[1]].label.toLowerCase());
   return (
     <View style={[styles.screen, { backgroundColor: ds.c.ground }]}>
       <View style={[styles.deskBar, { borderBottomColor: ds.c.line }]}>
         <Crumbs trail={[{ label: set.bar?.name ?? 'Menu', href: `/menus/${menuId}` as Href }, { label: 'Print', href: `/print?menu=${menuId}` as Href }]} />
-        <Button label="Print" icon="printer" size="sm" accessibilityLabel={`Print ${SHEETS[kind].label.toLowerCase()}`} disabled={!sheet.canPrint} onPress={() => void sheet.print()} />
+        <Button label="Print" icon="printer" size="sm" accessibilityLabel={`Print ${names}`} disabled={!first.canPrint || !second.canPrint} onPress={print} />
       </View>
-      <View style={styles.desk}>
-        <ScrollView style={[styles.list, { borderRightColor: ds.c.line }]} contentContainerStyle={styles.deskPad}>
-          {set.bar && !set.loading ? <Rows set={set} chosen={kind} onOpen={setKind} onPrintList={printList} /> : <Waiting set={set} />}
-        </ScrollView>
-        <ScrollView style={styles.flex} contentContainerStyle={[styles.deskPad, styles.center]}>
-          <View style={{ width: SHEET_W }}>{set.bar ? <PrintPagesView kind={kind} sheet={sheet} width={SHEET_W} /> : null}</View>
-        </ScrollView>
-      </View>
+      {set.bar && !set.loading ? (
+        <View style={styles.desk}>
+          <ScrollView style={[styles.pane, { borderRightColor: ds.c.line }]} contentContainerStyle={styles.deskPad}>
+            <PrintPagesView kind={kinds[0]} sheet={first} width={FIRST_W} onPick={(k) => setKinds([k, kinds[1]])} />
+          </ScrollView>
+          <ScrollView style={styles.flex} contentContainerStyle={[styles.deskPad, styles.center]}>
+            <View style={{ width: SECOND_W }}>
+              <PrintPagesView kind={kinds[1]} sheet={second} width={SECOND_W} onPick={(k) => setKinds([kinds[0], k])} />
+            </View>
+          </ScrollView>
+        </View>
+      ) : (
+        <View style={styles.deskPad}>
+          <Waiting set={set} />
+        </View>
+      )}
     </View>
   );
 }
@@ -127,7 +127,7 @@ const styles = StyleSheet.create({
   card: { padding: 0, overflow: 'hidden' },
   deskBar: { height: 64, flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', paddingHorizontal: space.xxxl, borderBottomWidth: StyleSheet.hairlineWidth },
   desk: { flex: 1, flexDirection: 'row' },
-  list: { width: LIST_W, flexGrow: 0, borderRightWidth: StyleSheet.hairlineWidth },
-  deskPad: { padding: space.xxxl, gap: space.lg },
+  pane: { width: PANE_W, flexGrow: 0, borderRightWidth: StyleSheet.hairlineWidth },
+  deskPad: { padding: space.xl, gap: space.lg },
   center: { alignItems: 'center' },
 });

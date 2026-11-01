@@ -1,4 +1,4 @@
-import { lazy, Suspense, useState, type ReactNode } from 'react';
+import { useState, type ReactNode } from 'react';
 import { StyleSheet, View } from 'react-native';
 
 import { Body, Caption, Chip, DsText, PressableScale, useDs } from '@/components/ds';
@@ -12,6 +12,7 @@ import { siteOrigin } from '@/lib/venueLink';
 
 import type { BatchLabel } from '../make/MakeLabel';
 import { BatchRow, Choice } from './BatchParts';
+import { DrawnLabel } from './DrawnLabel';
 
 const FRESH = [
   { value: 'ahead', label: 'Made ahead' },
@@ -107,17 +108,9 @@ export function UseBy({ hours, onChange }: { hours: number | null; onChange: (h:
   return <Changeable text={expiresText(hours, new Date()) ?? 'no use-by'} label="Use by" options={choices} value={hours} onChange={onChange} show={keepsLabel} />;
 }
 
-// The drawn label and its printing load only once a container is ticked, not with every drink page (B13).
-const DrawnLabel = lazy(() => import('./LabelBlock').then((m) => ({ default: m.LabelBlock })));
-
 /** The label for a container while it's made, with Print or share label. */
 export function LabelBlock({ label }: { label: BatchLabel | null }) {
-  if (!label) return null;
-  return (
-    <Suspense fallback={null}>
-      <DrawnLabel label={label} />
-    </Suspense>
-  );
+  return label ? <DrawnLabel label={label} /> : null;
 }
 
 /**

@@ -140,7 +140,9 @@ export const SAMPLE_BRANDS = {
  * Type (decided 31 Oct 2026): Redaction for names, the system font (SF,
  * Roboto, system UI on the web) for everything else, tabular figures for
  * amounts. No mono, nothing under 13. These are the only font families the
- * app sets (npm run check:design).
+ * app sets (npm run check:design). Paper is the one exception: what prints
+ * (lib/paper) sets labels, caps and amounts in the platform's typewriter
+ * face (components/paper/PaperPage), as Bet-labels and Bet-print draw them.
  */
 
 /** Registered font family names (components/ds/fonts.ts). */

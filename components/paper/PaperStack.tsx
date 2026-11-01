@@ -11,7 +11,7 @@ import { PaperPage } from './PaperPage';
 type PageView = ComponentRef<typeof View>;
 
 // Pages are laid out at their paper's width in points and scaled down to fit: a picture taken for print stays sharp.
-const LAID_OUT: Record<Paper, number> = { letter: 612, label: 340 };
+const LAID_OUT: Record<Paper, number> = { letter: 612, a4: 595, label: 340 };
 
 interface PaperStackProps {
   pages: Page[];

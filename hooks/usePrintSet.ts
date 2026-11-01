@@ -1,12 +1,15 @@
 import { useMemo, useState } from 'react';
 
 import { useBarMembers } from '@/hooks/useBarDetail';
+import { useBarFacts } from '@/hooks/useBarFacts';
+import { useBarPageId } from '@/hooks/useBarGlassware';
 import { useMenu } from '@/hooks/useMenus';
 import { useRunSheet } from '@/hooks/useRunSheet';
 import { useShifts } from '@/hooks/useRota';
 import { useVenueBrand } from '@/hooks/useVenueBrand';
 import { faceFromDb, normalizeHex } from '@/lib/brand';
 import { printedPrice } from '@/lib/menus';
+import { paperFor, type SheetPaper } from '@/lib/paper/page';
 import type { PrintBar, PrintDrink } from '@/lib/paper/print';
 import { buildRunSheet, DEFAULT_MARGIN_PCT } from '@/lib/runSheet';
 import { onShiftLine, serviceEnd } from '@/lib/tonight';
@@ -19,6 +22,10 @@ export interface PrintSet {
   /** Who's on tonight: "Jo, Ana and Theo", or null with no rota. */
   team: string | null;
   date: Date;
+  /** Letter or A4, from where the bar is (lib/paper/page paperFor). */
+  paper: SheetPaper;
+  /** The bar's public page, which a table card's code opens with its table; null when the bar has none. */
+  pageUrl: string | null;
   loading: boolean;
   failed: boolean;
   retry: () => void;
@@ -29,8 +36,9 @@ export interface PrintSet {
 /**
  * Everything the print set prints for one menu (Bet-print): the bar's name,
  * colour and face, each drink with what guests hear, its price and its spec
- * per serve (the run sheet's own build, lib/runSheet), and who's on tonight
- * from the rota.
+ * per serve (the run sheet's own build, lib/runSheet), who's on tonight
+ * from the rota, the paper from where the bar is, and its public page for
+ * the table cards.
  */
 export function usePrintSet(menuId: string | null | undefined): PrintSet {
   const [date] = useState(() => new Date());
@@ -43,6 +51,8 @@ export function usePrintSet(menuId: string | null | undefined): PrintSet {
   const rota = useShifts(barId, night.from, night.to);
   const shifts = rota.data;
   const team = useBarMembers(shifts?.length ? barId : null);
+  const pageId = useBarPageId(barId);
+  const facts = useBarFacts(pageId.data);
 
   const sheet = useMemo(
     () => (run.data ? buildRunSheet({ ...run.data, hostName: run.data.menu.hostName, hostLogoUrl: run.data.menu.hostLogoUrl, breakDownPreps: false, marginPct: DEFAULT_MARGIN_PCT }) : null),
@@ -77,7 +87,11 @@ export function usePrintSet(menuId: string | null | undefined): PrintSet {
   const teamLine = shifts && (!shifts.length || team.data) ? (onShiftLine(shifts, (id) => team.data?.find((m) => m.user_id === id)?.display_name ?? 'Someone', null)?.names ?? null) : null;
   const teamPending = !!barId && !rota.error && (rota.isPending || (!!shifts?.length && team.isPending && !team.error));
 
-  const loading = menu.isPending || (!!barId && (brand.isPending || run.isPending)) || teamPending;
+  // The paper waits for the bar's zone, so the sheets aren't laid out twice; a page that can't be read prints on this device's paper.
+  const pagePending = !!barId && !pageId.error && (pageId.isPending || (!!pageId.data && facts.isPending && !facts.error));
+  const paper = paperFor(facts.data?.timezone);
+  const pageUrl = pageId.data ? `${siteOrigin()}/p/${pageId.data}` : null;
+  const loading = menu.isPending || (!!barId && (brand.isPending || run.isPending)) || teamPending || pagePending;
   // A menu that isn't there fails the run sheet's read too: that's missing, not failed.
   const failed = !!menu.error || (!!menu.data && (!!brand.error || !!run.error));
   const missing = !menu.isPending && !menu.data && !menu.error;
@@ -96,6 +110,8 @@ export function usePrintSet(menuId: string | null | undefined): PrintSet {
       drinks,
       team: teamLine,
       date,
+      paper,
+      pageUrl,
       loading,
       failed,
       retry: () => {
@@ -105,6 +121,6 @@ export function usePrintSet(menuId: string | null | undefined): PrintSet {
       },
       missing,
     }),
-    [barName, barAccent, barFace, name, drinks, teamLine, date, loading, failed, missing, menuAgain, brandAgain, runAgain],
+    [barName, barAccent, barFace, name, drinks, teamLine, date, paper, pageUrl, loading, failed, missing, menuAgain, brandAgain, runAgain],
   );
 }

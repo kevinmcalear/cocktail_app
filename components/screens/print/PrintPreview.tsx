@@ -3,8 +3,9 @@ import { useEffect, useRef } from 'react';
 import { ScrollView, StyleSheet, useWindowDimensions, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
-import { BackbarTheme, Button, GlassButton, useDs, useGutter } from '@/components/ds';
-import { space } from '@/constants/tokens';
+import { BackbarTheme, GlassButton, PressableScale, useDs, useGutter } from '@/components/ds';
+import { IconSymbol } from '@/components/ui/icon-symbol';
+import { layout, radius, space } from '@/constants/tokens';
 
 import { PrintPagesView, usePrintSheet } from './PrintPages';
 import { SHEETS, type SheetKind } from './sheets';
@@ -14,7 +15,7 @@ const WIDEST = 640;
 
 /**
  * One row of the print set as it will print (Bet-print "The list on now",
- * "Run sheet"): Back, then Print, over the sheets on paper. `?print=1`
+ * "Run sheet"): Back, then Print (the accent check), over the sheets on paper. `?print=1`
  * opens the print sheet once the pages have painted (the row's own Print).
  */
 export function PrintPreview({ menuId, kind }: { menuId: string; kind: SheetKind }) {
@@ -46,7 +47,16 @@ function PreviewBody({ menuId, kind }: { menuId: string; kind: SheetKind }) {
     <View style={[styles.screen, { backgroundColor: ds.c.ground }]}>
       <View style={[styles.bar, { paddingTop: insets.top + space.sm, paddingHorizontal: gutter }]}>
         <GlassButton icon="chevron.left" accessibilityLabel="Back to Print" onPress={back} />
-        <Button label="Print" variant="ink" size="sm" icon="printer" accessibilityLabel={`Print ${SHEETS[kind].label.toLowerCase()}`} disabled={!sheet.canPrint} onPress={() => void sheet.print()} />
+        <PressableScale
+          role="button"
+          accessibilityLabel={`Print ${SHEETS[kind].label.toLowerCase()}`}
+          aria-disabled={!sheet.canPrint}
+          disabled={!sheet.canPrint}
+          onPress={() => void sheet.print()}
+          style={[styles.print, { backgroundColor: ds.accentFill.fill, opacity: sheet.canPrint ? 1 : 0.5 }]}
+        >
+          <IconSymbol name="checkmark" size={18} color={ds.accentFill.text} />
+        </PressableScale>
       </View>
       <ScrollView contentContainerStyle={[styles.page, { paddingHorizontal: gutter, paddingBottom: insets.bottom + space.xxxl }]}>
         <View style={{ width: pageW }}>
@@ -61,4 +71,5 @@ const styles = StyleSheet.create({
   screen: { flex: 1 },
   bar: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', paddingBottom: space.sm },
   page: { alignItems: 'center', paddingTop: space.md },
+  print: { width: layout.minTapTarget, height: layout.minTapTarget, borderRadius: radius.pill, alignItems: 'center', justifyContent: 'center' },
 });

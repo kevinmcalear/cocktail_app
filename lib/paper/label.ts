@@ -117,7 +117,7 @@ export function fridgeRows(batches: FridgeBatch[], now: Date): FridgeRow[] {
 /** The label's size, in page units: about 62 × 32 mm, the common roll. */
 export const LABEL = { w: 340, h: 176 } as const;
 
-/** The label as a page, as Bet-labels draws it. */
+/** The label as a page, as Bet-labels draws it: every line in the typewriter face. */
 export function prepLabel(l: BatchLabel): PaperPage {
   const { w, h } = LABEL;
   const x = 30;
@@ -128,10 +128,10 @@ export function prepLabel(l: BatchLabel): PaperPage {
     y,
     w: textW,
     t,
-    size: fitSize(t, size, textW, 'system', 0.04, size * 0.7),
-    face: 'system',
+    size: fitSize(t, size, textW, 'mono', 0.02, size * 0.7),
+    face: 'mono',
     weight,
-    tracking: 0.04,
+    tracking: 0.02,
     color,
     align: 'left',
   });

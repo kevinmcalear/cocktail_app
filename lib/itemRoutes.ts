@@ -47,11 +47,10 @@ export function fallbackGlass(category: ItemCategory | undefined): string {
 export const batchPageUrl = (origin: string, itemId: string, batchId: string) => `${origin}/ingredient/${itemId}?batch=${encodeURIComponent(batchId)}`;
 
 /**
- * Where Made. Label it. opens for a batch just logged: `/label/<batch id>`
+ * Where Made. Label it. opens for a batch just logged: `/label?batch=<id>`
  * with the batch's own facts, so it draws before the batch has sent (Log
  * batch works with no signal). Without them it reads the batch.
  */
 export function labelHref(b: { id: string; itemId: string; amount: number; unit: string; madeAt: string }): string {
-  const q = new URLSearchParams({ item: b.itemId, amount: String(b.amount), unit: b.unit, made: b.madeAt });
-  return `/label/${encodeURIComponent(b.id)}?${q}`;
+  return `/label?${new URLSearchParams({ batch: b.id, item: b.itemId, amount: String(b.amount), unit: b.unit, made: b.madeAt })}`;
 }
