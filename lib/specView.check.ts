@@ -90,6 +90,7 @@ assert.equal(
 assert.equal(methodLine({ verb: 'Stir', methods: ['Stirred'], glass: 'Nick & Nora', ice: null, lines: [] }), 'Stir · strain into a Nick & Nora', 'a name with its own capitals keeps them');
 assert.equal(methodLine({ verb: 'Build', methods: ['Built'], glass: 'Highball', ice: 'Cubes', lines: [] }), 'Build · over cubes in a highball');
 assert.equal(methodLine({ verb: null, methods: [], glass: null, ice: null, lines: [] }), null);
+assert.equal(methodLine({ verb: 'Stir', methods: [], glass: 'Rocks', ice: null, lines: [] }), 'Stir · strain into a rocks glass', 'a rocks with no ice still names the glass');
 
 // The floor's served line.
 assert.equal(goesOutLine(['Rocks', null, 'Candied ginger']), 'Goes out: rocks, candied ginger');

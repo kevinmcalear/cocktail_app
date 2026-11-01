@@ -195,10 +195,12 @@ export function methodLine({ verb, methods, glass, ice, lines }: MethodLineInput
   const strain = /strain/.test(said) && /double|fine/.test(said) ? 'double strain' : strained ? 'strain' : null;
   const iced = ice?.trim() && !/^(no ice|up|neat)\b/i.test(ice.trim()) ? ice.trim() : null;
   const cup = glass?.trim() ? midLine(glass) : null;
+  const rocks = !!cup && /rocks|old fashioned|lowball|tumbler/i.test(cup);
   const into = iced
-    ? [`over ${overIce(iced)}`, cup && !/rocks|old fashioned|lowball|tumbler/i.test(cup) ? `in ${article(cup)}` : null].filter(Boolean).join(' ')
+    ? [`over ${overIce(iced)}`, cup && !rocks ? `in ${article(cup)}` : null].filter(Boolean).join(' ')
     : cup
-      ? `${strain ? 'into' : 'in'} ${article(cup)}`
+      ? // "a rocks glass": a rocks with no ice to say it by still needs its noun.
+        `${strain ? 'into' : 'in'} ${article(rocks && !/glass$/i.test(cup) ? `${cup} glass` : cup)}`
       : null;
   const pour = [strain, into].filter(Boolean).join(' ');
   const floats = lines.filter((l) => l.float && l.ingredient && !isGarnishLine(l)).map((l) => `float the ${l.ingredient}`);
