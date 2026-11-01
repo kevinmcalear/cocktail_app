@@ -1,20 +1,30 @@
 import type { ReactNode } from 'react';
 import { StyleSheet, View } from 'react-native';
 
-import { Caption, LockedSection, TextLink } from '@/components/ds';
-import { font, space } from '@/constants/tokens';
+import { Caption, LockedSection, useDs } from '@/components/ds';
+import { font, radius, space, STATUS } from '@/constants/tokens';
+import { readableAccent } from '@/lib/color';
 import { groupMenus, plural } from '@/lib/menus';
 import type { MenuSummary } from '@/types/menus';
 
-import { MenuCard, MenuListRow, MenuPastLine } from './MenuRows';
+import { MenuCard, MenuListRow, MenuPastLine, MenuRowFrame } from './MenuRows';
 
-/** A group's label: mono caps, the only caps on the list. */
-export function MenuGroup({ title, children }: { title: string; children: ReactNode }) {
+/** A group's label in small capitals, with a dot (green on now, amber drafts) and a note at the right ("Your team only"). */
+export function MenuGroup({ title, dot, aside, children }: { title: string; dot?: 'green' | 'amber'; aside?: string; children: ReactNode }) {
+  const ds = useDs();
   return (
     <View style={styles.group}>
-      <Caption tone="muted" role="heading" style={styles.title}>
-        {title.toUpperCase()}
-      </Caption>
+      <View style={styles.head}>
+        {dot ? <View style={[styles.dot, { backgroundColor: readableAccent(dot === 'green' ? STATUS.success : STATUS.warning, ds.c.ground) }]} /> : null}
+        <Caption tone="muted" role="heading" style={[styles.title, styles.grow]}>
+          {title.toUpperCase()}
+        </Caption>
+        {aside ? (
+          <Caption tone="muted" style={styles.title}>
+            {aside.toUpperCase()}
+          </Caption>
+        ) : null}
+      </View>
       {children}
     </View>
   );
@@ -41,13 +51,14 @@ interface MenuGroupListProps {
  */
 export function MenuGroupList({ menus, now, canBuild, opensAt = 'Drink Creator', note, pastShown, onAllPast }: MenuGroupListProps) {
   const g = groupMenus(menus, now);
+  const home = menus.every((m) => !m.barId);
   // The first menu gets the card: what's on, else the next one.
   const lead = g.on.length ? g.on : g.upcoming.slice(0, 1);
   const comingUp = g.on.length ? g.upcoming : g.upcoming.slice(1);
   return (
     <>
       {lead.length ? (
-        <MenuGroup title={g.on.length ? 'On now' : 'Coming up'}>
+        <MenuGroup title={g.on.length ? 'On now' : 'Coming up'} dot={g.on.length ? 'green' : undefined}>
           {lead.map((m) => (
             <MenuCard key={m.id} menu={m} now={now} note={note?.(m)} />
           ))}
@@ -56,15 +67,15 @@ export function MenuGroupList({ menus, now, canBuild, opensAt = 'Drink Creator',
       {comingUp.length ? (
         <MenuGroup title="Coming up">
           {comingUp.map((m) => (
-            <MenuListRow key={m.id} menu={m} now={now} note={note?.(m)} />
+            <MenuListRow key={m.id} menu={m} now={now} note={note?.(m)} ruled />
           ))}
         </MenuGroup>
       ) : null}
       {g.draft.length ? (
         canBuild ? (
-          <MenuGroup title="Drafts">
+          <MenuGroup title="Drafts" dot="amber" aside={home ? undefined : 'Your team only'}>
             {g.draft.map((m) => (
-              <MenuListRow key={m.id} menu={m} now={now} note={note?.(m)} />
+              <MenuListRow key={m.id} menu={m} now={now} note={note?.(m)} ruled />
             ))}
           </MenuGroup>
         ) : (
@@ -74,19 +85,21 @@ export function MenuGroupList({ menus, now, canBuild, opensAt = 'Drink Creator',
         )
       ) : null}
       {g.previous.length ? (
-        <MenuGroup title="Past">
+        <MenuGroup title={home ? 'Past nights' : 'Past'}>
           <View>
             {g.previous.slice(0, pastShown).map((m) => (
               <MenuPastLine key={m.id} menu={m} />
             ))}
           </View>
-          {pastShown !== undefined && onAllPast && g.previous.length > pastShown ? <TextLink label={`All ${g.previous.length}`} onPress={onAllPast} /> : null}
+          {pastShown !== undefined && onAllPast && g.previous.length > 0 ? (
+            <MenuRowFrame ruled label={`All past menus, ${g.previous.length}`} onPress={onAllPast} thumb={null} name={home ? 'All past nights' : 'All past menus'} line={`${g.previous.length} since ${new Date(g.previous[g.previous.length - 1].startsAt ?? g.previous[g.previous.length - 1].createdAt).getFullYear()}`} />
+          ) : null}
         </MenuGroup>
       ) : null}
       {g.rnd.length && canBuild ? (
         <MenuGroup title="R&D">
           {g.rnd.map((m) => (
-            <MenuListRow key={m.id} menu={m} now={now} note={note?.(m)} />
+            <MenuListRow key={m.id} menu={m} now={now} note={note?.(m)} ruled />
           ))}
         </MenuGroup>
       ) : null}
@@ -96,5 +109,8 @@ export function MenuGroupList({ menus, now, canBuild, opensAt = 'Drink Creator',
 
 const styles = StyleSheet.create({
   group: { gap: space.sm },
-  title: { letterSpacing: 1.5, ...font.figures },
+  head: { flexDirection: 'row', alignItems: 'center', gap: space.sm },
+  dot: { width: 7, height: 7, borderRadius: radius.pill },
+  grow: { flex: 1 },
+  title: { letterSpacing: 1.5, ...font.medium },
 });
