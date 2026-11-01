@@ -53,11 +53,11 @@ export function useSetFollow() {
 }
 
 /** Recent ranks by people you follow, newest first, as each of them shares them (friends_ranks). */
-export function useFriendsRanks(limit = 5) {
+export function useFriendsRanks(limit = 5, enabled = true) {
   const userId = useUserId();
   return useQuery({
     queryKey: ['friends-ranks', userId, limit],
-    enabled: !!userId,
+    enabled: enabled && !!userId,
     queryFn: async (): Promise<FriendRank[]> => {
       const { data, error } = await supabase.rpc('friends_ranks', { p_limit: limit });
       if (error) throw error;

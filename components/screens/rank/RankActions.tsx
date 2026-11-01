@@ -54,24 +54,11 @@ interface RankFlowProps extends RankActionsProps {
  * once someone taps Rank (after the age check), not before.
  */
 export function RankFlow({ item, picture, atBar = null, onClose }: RankFlowProps) {
-  const router = useRouter();
   const { data: target } = useRankTarget(item.id);
-  const { data: ownBar } = useBarProfile(item.bar_id, signatureBarOf(target));
+  const { data: ownBar, isLoading: barLoading } = useBarProfile(item.bar_id, signatureBarOf(target));
   const rankedAs = target ? rankedAsOf(target) : null;
   const { data: list, isError: listFailed } = useMyRankList(rankedAs?.id);
-  if (!rankedAs) return null;
-  return (
-    <RankSheet
-      drink={{ id: item.id, name: item.name, picture }}
-      rankedAs={rankedAs}
-      ownBar={ownBar ?? atBar}
-      list={list}
-      listFailed={listFailed}
-      onClose={onClose}
-      onSeeRankings={() => {
-        onClose();
-        router.push(`/rankings/${item.id}`);
-      }}
-    />
-  );
+  // Wait for the drink's bar, or a quick tap would put it at home.
+  if (!rankedAs || barLoading) return null;
+  return <RankSheet drink={{ id: item.id, name: item.name, picture }} rankedAs={rankedAs} venue={ownBar ?? atBar} list={list} listFailed={listFailed} onClose={onClose} />;
 }
