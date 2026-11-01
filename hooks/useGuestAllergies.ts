@@ -5,9 +5,10 @@
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 
 import { useUserId } from '@/ctx/AuthContext';
-import { allergyCopy, allergyCopyFor, mergeAllergies, type Allergen, type GuestDrinkAllergens } from '@/lib/allergens';
+import type { Allergen, GuestDrinkAllergens } from '@/lib/allergens';
 import { viewerScoped } from '@/lib/authCache';
 import { deviceStore } from '@/lib/deviceStore';
+import { allergyCopy, allergyCopyFor, mergeAllergies } from '@/lib/myAllergies';
 import { supabase } from '@/lib/supabase';
 
 /** A signed-out guest's list on this phone. It survives opening the app signed out, and moves to the account at sign-in. */

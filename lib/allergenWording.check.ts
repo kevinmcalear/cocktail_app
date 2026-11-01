@@ -10,19 +10,17 @@ import {
   allergenFooter,
   allergenNames,
   allergenRows,
-  allergyCopy,
-  allergyCopyFor,
   allergyMatches,
   allergyWarning,
   containsLine,
   fromGuest,
   isClear,
-  mergeAllergies,
   myAllergiesLine,
   prepAllergenNames,
   type AllergenRead,
   type DrinkAllergen,
 } from './allergens';
+import { allergyCopy, allergyCopyFor, mergeAllergies } from './myAllergies';
 
 const CLEAN = /\bno allergens?\b|\bnone\b|\bsafe\b|\ballergen[- ]free\b|\bfree of\b/i;
 const CHECKED = '2026-10-12T18:00:00Z';
