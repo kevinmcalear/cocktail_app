@@ -22,7 +22,7 @@ export function useHandoverRows(barId: string | null, tonight: string | null) {
       since.setDate(since.getDate() - DAYS);
       const { data, error } = await supabase
         .from('handover_notes')
-        .select('close_date, user_id, ran_out, note, prep, broken, written_at, read_at')
+        .select('close_date, user_id, ran_out, note, prep, broken, broken_photo, written_at, read_at')
         .eq('bar_id', barId!)
         .gte('close_date', toDay(since))
         .lte('close_date', tonight!)
@@ -79,7 +79,7 @@ export function useSaveHandover(barId: string) {
       for (const [key, rows] of queryClient.getQueriesData<HandoverRow[]>({ queryKey: ['handover', barId] })) {
         if (!rows) continue;
         const old = rows.find((r) => r.close_date === w.closeDate && r.user_id === w.userId);
-        const row: HandoverRow = { close_date: w.closeDate, user_id: w.userId, ran_out: [], note: null, prep: null, broken: null, written_at: null, ...old, ...handoverColumns(w.words), read_at: w.readAt };
+        const row: HandoverRow = { close_date: w.closeDate, user_id: w.userId, ran_out: [], note: null, prep: null, broken: null, broken_photo: null, written_at: null, ...old, ...handoverColumns(w.words), read_at: w.readAt };
         queryClient.setQueryData(key, [row, ...rows.filter((r) => r !== old)]);
       }
     },

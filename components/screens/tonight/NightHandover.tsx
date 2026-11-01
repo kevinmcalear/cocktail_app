@@ -107,7 +107,7 @@ export function useNightHandover(t: Staff, barId: string, wide: boolean): NightH
           }}
           {...view}
         />
-        {writing ? <HandoverWriteSheet h={h} closeDate={writing} night={night(writing)} houseMade={t.houseMadeNames} onLeave={(words) => leaveWords(writing, words)} onClose={() => setWriting(null)} /> : null}
+        {writing ? <HandoverWriteSheet h={h} barId={barId} closeDate={writing} night={night(writing)} houseMade={t.houseMadeNames} onLeave={(words) => leaveWords(writing, words)} onClose={() => setWriting(null)} /> : null}
       </>
     ),
   };

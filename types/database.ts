@@ -1721,6 +1721,7 @@ export type Database = {
         Row: {
           bar_id: string
           broken: string | null
+          broken_photo: string | null
           close_date: string
           created_at: string
           id: string
@@ -1734,6 +1735,7 @@ export type Database = {
         Insert: {
           bar_id: string
           broken?: string | null
+          broken_photo?: string | null
           close_date: string
           created_at?: string
           id?: string
@@ -1747,6 +1749,7 @@ export type Database = {
         Update: {
           bar_id?: string
           broken?: string | null
+          broken_photo?: string | null
           close_date?: string
           created_at?: string
           id?: string

@@ -10,6 +10,8 @@ export interface HandoverRow {
   note: string | null;
   prep: string | null;
   broken: string | null;
+  /** A photo of what's broken: its path in the handover bucket. */
+  broken_photo?: string | null;
   written_at: string | null;
   read_at: string | null;
 }
@@ -27,6 +29,8 @@ export interface HandoverNote {
   ranOut: string[];
   prep: HandoverLine[];
   broken: HandoverLine[];
+  /** Photos of what's broken, in the order they were written. */
+  photos: string[];
   /** People who read it without writing (the writers read it as they wrote it). */
   readers: string[];
 }
@@ -44,6 +48,7 @@ export function noteFor(rows: readonly HandoverRow[], closeDate: string): Handov
     ranOut: unique(writers.flatMap((w) => w.ran_out)),
     prep: writers.flatMap((w) => lines(w.prep)),
     broken: writers.flatMap((w) => lines(w.broken)),
+    photos: writers.flatMap((w) => (w.broken_photo ? [w.broken_photo] : [])),
     readers: all.filter((r) => r.read_at && !written(r)).map((r) => r.user_id),
   };
 }
