@@ -2,19 +2,22 @@ import { createContext, use, useEffect, useEffectEvent, useState, type ReactNode
 import { KeyboardAvoidingView, Modal, Platform, Pressable, StyleSheet, useWindowDimensions, View, type ColorValue, type StyleProp, type ViewStyle } from 'react-native';
 import { GestureDetector, GestureHandlerRootView } from 'react-native-gesture-handler';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
-import Animated, { Easing, useAnimatedStyle, useReducedMotion, useSharedValue, withSpring, withTiming } from 'react-native-reanimated';
+import Animated, { Easing, Extrapolation, interpolate, useAnimatedStyle, useReducedMotion, useSharedValue, withSpring, withTiming } from 'react-native-reanimated';
 import { scheduleOnRN } from 'react-native-worklets';
 
 import { radius, space, springs } from '@/constants/tokens';
 
 import { dragShade, STRETCH } from './sheetDrag';
 import { sheetFrame, sheetIsDialog } from './sheetFrame';
+import { SheetGrow } from './SheetGrow';
 import { useDs } from './theme';
 import { SheetScrollContext, slideAway, useSheetDrag } from './useSheetDrag';
 
 /** The backdrop fades on its own, about 200 ms, easing out; it never moves with the sheet. */
 const FADE_IN = { duration: 200, easing: Easing.out(Easing.cubic) };
 const FADE_OUT = { duration: 180, easing: Easing.in(Easing.cubic) };
+
+const FLOATING_RADIUS = radius.sheet + 4;
 
 const CloseContext = createContext<(() => void) | null>(null);
 
@@ -56,8 +59,8 @@ export interface SheetProps {
    */
   kind?: 'small' | 'flow';
   /**
-   * Phones: grow out of the button that opened it (its frame in the window,
-   * from measureInWindow), as Add grows from the + (Prod-motion-sheet).
+   * Phones: grow out of the + that opened it (its frame in the window, from
+   * measureInWindow), as Add does (Prod-motion-sheet). With Reduce Motion it fades.
    */
   from?: { x: number; y: number; width: number; height: number } | null;
   /** Phones: a card inset from the edges with every corner round (Prod-add-B), not edge to edge. */
@@ -126,7 +129,7 @@ function SmallSheet({ visible, onClose, accessibilityLabel, children, style, gro
   const slide = !sheetIsDialog && !reduceMotion && !grow;
   const { height: windowHeight, width: windowWidth } = useWindowDimensions();
   const inset = floating && !sheetIsDialog ? space.sm : 0;
-  // 0 at the button, 1 where it sits; and where it sits, once laid out.
+  // 0 at the button, 1 where it sits; and how big it is, once laid out.
   const grown = useSharedValue(grow ? 0 : 1);
   const box = useSharedValue({ w: 0, h: 0 });
   // Gone once it has animated out: the Modal stays up until then.
@@ -147,7 +150,7 @@ function SmallSheet({ visible, onClose, accessibilityLabel, children, style, gro
       if (finished) scheduleOnRN(then);
     };
     backdrop.set(withTiming(0, FADE_OUT));
-    if (slide) slideAway(drag, windowHeight, velocity, done);
+    if (slide || grow) slideAway(drag, windowHeight, velocity, done);
     else opacity.set(withTiming(0, FADE_OUT, done));
   };
 
@@ -191,20 +194,8 @@ function SmallSheet({ visible, onClose, accessibilityLabel, children, style, gro
 
   // The backdrop lightens as the sheet is pulled down; it still never moves.
   const backdropStyle = useAnimatedStyle(() => ({ opacity: backdrop.get() * dragShade(drag.get(), height.get()) }));
-  const panelStyle = useAnimatedStyle(() => {
-    const g = grown.get();
-    const { w, h } = box.get();
-    if (!from || g >= 1 || !w || !h) return { opacity: opacity.get(), transform: [{ translateY: offset.get() + drag.get() }] };
-    // From the button's rectangle to the sheet's, centre to centre.
-    const cx = windowWidth / 2;
-    const cy = windowHeight - inset - h / 2;
-    return {
-      opacity: opacity.get(),
-      transform: [{ translateX: (from.x + from.width / 2 - cx) * (1 - g) }, { translateY: (from.y + from.height / 2 - cy) * (1 - g) + offset.get() + drag.get() }, { scaleX: from.width / w + (1 - from.width / w) * g }, { scaleY: from.height / h + (1 - from.height / h) * g }],
-    };
-  });
-  // The sheet's words come in once it has mostly grown.
-  const contentStyle = useAnimatedStyle(() => ({ opacity: Math.min(1, Math.max(0, (grown.get() - 0.5) * 2)) }));
+  // Growing, the card below stands in for the panel until it has nearly arrived.
+  const panelStyle = useAnimatedStyle(() => ({ opacity: opacity.get() * interpolate(grown.get(), [0.7, 1], [0, 1], Extrapolation.CLAMP), transform: [{ translateY: offset.get() + drag.get() }] }));
 
   const placed = [styles.place, sheetFrame.scrim];
   // The caller's own colour and width, if it set them (RN 0.88 types flatten only for animated styles).
@@ -239,7 +230,7 @@ function SmallSheet({ visible, onClose, accessibilityLabel, children, style, gro
           {header}
         </View>
       )}
-      <SheetScrollContext value={scroll}>{grow ? <Animated.View style={[styles.shrink, contentStyle]}>{children}</Animated.View> : children}</SheetScrollContext>
+      <SheetScrollContext value={scroll}>{children}</SheetScrollContext>
     </Animated.View>
   );
 
@@ -262,6 +253,7 @@ function SmallSheet({ visible, onClose, accessibilityLabel, children, style, gro
           <Animated.View style={[StyleSheet.absoluteFill, { backgroundColor: ds.c.scrim }, backdropStyle]}>
             <Pressable accessibilityLabel="Close" style={StyleSheet.absoluteFill} onPress={dismiss} />
           </Animated.View>
+          {grow && from ? <SheetGrow from={from} grown={grown} size={box} opacity={opacity} drag={drag} bottom={inset} corner={inset ? FLOATING_RADIUS : radius.sheet} fill={fill} /> : null}
           {keyboard ? (
             // Web gets no behaviour: there the dialog sits in the middle anyway.
             <KeyboardAvoidingView behavior={Platform.select({ ios: 'padding', android: 'height' })} keyboardVerticalOffset={keyboardOffset} style={placed}>
@@ -287,8 +279,7 @@ const styles = StyleSheet.create({
     borderCurve: 'continuous',
     borderTopWidth: StyleSheet.hairlineWidth,
   },
-  floating: { borderRadius: radius.sheet + 4, borderWidth: StyleSheet.hairlineWidth },
-  shrink: { flexShrink: 1 },
+  floating: { borderRadius: FLOATING_RADIUS, borderCurve: 'continuous', borderWidth: StyleSheet.hairlineWidth },
   stretch: { position: 'absolute', bottom: -STRETCH, alignSelf: 'center', width: '100%', height: STRETCH },
   dialog: { maxHeight: '86%' },
   handle: { paddingTop: space.sm },

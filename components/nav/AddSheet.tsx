@@ -1,5 +1,5 @@
 import { useRouter, type Href } from 'expo-router';
-import { useEffect, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { Platform, StyleSheet, TextInput, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
@@ -59,10 +59,16 @@ function AddBody({ onClose, onMore, listen }: { onClose: () => void; onMore: () 
   const clip = useClipboardOffer();
   const [text, setText] = useState('');
   const intent = addIntent(text);
-  const voice = useDictation((heard) => setText(heard));
+  // What was typed before the mic: what's said carries on from it.
+  const typed = useRef('');
+  const voice = useDictation((heard) => setText(typed.current ? `${typed.current} ${heard}` : heard));
+  const say = () => {
+    typed.current = text.trim();
+    void voice.start();
+  };
   // Android's Say it opens the sheet listening.
   useEffect(() => {
-    if (listen && voice.available) void voice.start();
+    if (listen && voice.available) say();
     // Once, as the sheet opens.
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
@@ -99,10 +105,10 @@ function AddBody({ onClose, onMore, listen }: { onClose: () => void; onMore: () 
               role="button"
               accessibilityLabel={voice.listening ? 'Stop listening' : 'Say it'}
               aria-pressed={voice.listening}
-              onPress={() => (voice.listening ? voice.stop() : void voice.start())}
+              onPress={() => (voice.listening ? voice.stop() : say())}
               style={[styles.round, { backgroundColor: voice.listening ? ds.accentFill.fill : ds.c.raised }]}
             >
-              <IconSymbol name="mic" size={18} color={voice.listening ? ds.accentFill.text : ds.c.ink} />
+              <IconSymbol name="mic" size={19} color={voice.listening ? ds.accentFill.text : ds.c.ink} />
             </PressableScale>
           ) : null}
           {intent ? (
@@ -153,9 +159,9 @@ const styles = StyleSheet.create({
   side: { width: layout.minTapTarget },
   body: { paddingHorizontal: space.lg, paddingTop: space.sm },
   stack: { gap: space.md },
-  field: { minHeight: 92, borderRadius: radius.card, borderWidth: StyleSheet.hairlineWidth, flexDirection: 'row', alignItems: 'flex-start', padding: space.sm, paddingLeft: space.lg },
-  input: { flex: 1, minHeight: 72, paddingTop: space.sm, ...type.body, ...font.regular, textAlignVertical: 'top' },
-  tools: { justifyContent: 'space-between', alignItems: 'flex-end', alignSelf: 'stretch' },
+  field: { minHeight: 92, borderRadius: radius.card, borderWidth: StyleSheet.hairlineWidth, flexDirection: 'row', alignItems: 'flex-start', gap: space.sm + 2, paddingTop: space.lg, paddingRight: space.sm + 2, paddingBottom: space.sm + 2, paddingLeft: space.lg },
+  input: { flex: 1, minHeight: 64, paddingTop: 0, ...type.body, ...font.regular, textAlignVertical: 'top' },
+  tools: { justifyContent: 'space-between', alignItems: 'flex-end', alignSelf: 'stretch', gap: space.xs },
   round: { width: 36, height: 36, borderRadius: radius.pill, alignItems: 'center', justifyContent: 'center' },
   clip: { flexDirection: 'row', alignItems: 'center', gap: space.md, borderRadius: radius.control + 4, paddingVertical: space.md, paddingHorizontal: space.lg },
   buttons: { gap: space.sm + 2, marginTop: space.xs },

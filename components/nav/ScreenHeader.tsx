@@ -19,7 +19,7 @@ import { VenueSwitcher } from './VenueSwitcher';
  * place button (switch between your bars and home) with the page's title
  * beside it on the left, the page's tools and the + (Add) on the right. You
  * is a tab, so there's no avatar. Android has no + here: its Add is the
- * extended FAB (AddButton.tsx), and its top row is the search bar, "Search
+ * plain FAB (AddButton.tsx), and its top row is the search bar, "Search
  * or add anything", with the place button at its end; the title sits under it.
  *
  * `back`: a page pushed on a tab (Prep, Study) gets a back button in the

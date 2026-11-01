@@ -1,9 +1,10 @@
 import { Suspense, useRef, useState, type ComponentRef } from 'react';
 import { StyleSheet, useWindowDimensions, View } from 'react-native';
 
-import { Button, DsText, PressableScale, useDs } from '@/components/ds';
+import { Button, PressableScale, useDs } from '@/components/ds';
 import { IconSymbol } from '@/components/ui/icon-symbol';
-import { font, layout, radius, space } from '@/constants/tokens';
+import { layout, radius, space, STATUS } from '@/constants/tokens';
+import { mix, withAlpha } from '@/lib/color';
 
 import type { FabFrame } from './AddFabMenu';
 import type { Frame } from './AddSheet';
@@ -44,6 +45,7 @@ export function AddButton() {
   const ds = useDs();
   const add = useAdd();
   const ref = useRef<ComponentRef<typeof View>>(null);
+  const [pressed, setPressed] = useState(false);
   // Add grows out of the + (Prod-motion-sheet): where the + is, then open.
   const open = () => {
     const el = ref.current;
@@ -53,7 +55,17 @@ export function AddButton() {
   return (
     <>
       <View ref={ref}>
-        <PressableScale role="button" accessibilityLabel={LABEL} onPress={open} hitSlop={(layout.minTapTarget - SIZE) / 2} style={[styles.circle, { backgroundColor: ds.accentFill.fill }]}>
+        {/* Prod-motion-sheet step 1: an amber ring while it's pressed. */}
+        {pressed ? <View style={[styles.ring, { backgroundColor: withAlpha(STATUS.warning, ds.scheme === 'dark' ? 0.16 : 0.3) }]} /> : null}
+        <PressableScale
+          role="button"
+          accessibilityLabel={LABEL}
+          onPress={open}
+          onPressIn={() => setPressed(true)}
+          onPressOut={() => setPressed(false)}
+          hitSlop={(layout.minTapTarget - SIZE) / 2}
+          style={[styles.circle, { backgroundColor: ds.accentFill.fill }]}
+        >
           <IconSymbol name="plus" size={18} color={ds.accentFill.text} />
         </PressableScale>
       </View>
@@ -78,9 +90,9 @@ export function DeskAddButton() {
 }
 
 /**
- * Android's Add: a Material 3 extended FAB at the bottom right of a tab's
- * first page, over the bottom bar (approved 31 Oct 2026). It opens the FAB
- * menu (AddFabMenu), whose Type a drink opens the Add sheet.
+ * Android's Add: a plain Material 3 FAB, just the +, at the bottom right of a
+ * tab's first page, over the bottom bar (Kevin's pick, android-add-fab; board
+ * Prod-and). It opens the FAB menu (AddFabMenu), whose Type a drink opens the Add sheet.
  */
 export function AddFab() {
   const ds = useDs();
@@ -88,16 +100,15 @@ export function AddFab() {
   const window = useWindowDimensions();
   const ref = useRef<ComponentRef<typeof View>>(null);
   const [menu, setMenu] = useState<FabFrame | null>(null);
+  // The menu's tonal colour, solid over the page: our palette in Material's roles.
+  const tonal = mix(ds.accentFill.fill, ds.c.ground, ds.scheme === 'dark' ? 0.68 : 0.72);
   const openMenu = () =>
     ref.current?.measureInWindow((x: number, y: number, w: number, h: number) => setMenu({ right: window.width - x - w, bottom: window.height - y - h }));
   return (
     <>
       <View ref={ref} style={styles.fabSpot}>
-        <PressableScale role="button" aria-expanded={!!menu} accessibilityLabel={LABEL} onPress={openMenu} style={[styles.fab, { backgroundColor: ds.accentFill.fill }]}>
-          <IconSymbol name="plus" size={20} color={ds.accentFill.text} />
-          <DsText color={ds.accentFill.text} style={styles.fabLabel}>
-            Add
-          </DsText>
+        <PressableScale role="button" aria-expanded={!!menu} accessibilityLabel={LABEL} onPress={openMenu} style={[styles.fab, { backgroundColor: tonal }]}>
+          <IconSymbol name="plus" size={24} color={ds.c.ink} />
         </PressableScale>
       </View>
       {menu ? (
@@ -122,10 +133,11 @@ export function AddFab() {
 }
 
 const SIZE = 32;
+const RING = 6;
 const styles = StyleSheet.create({
   circle: { width: SIZE, height: SIZE, borderRadius: radius.pill, alignItems: 'center', justifyContent: 'center' },
-  // Material 3's extended FAB: 56 tall, 16 in from the edges, a level-3 shadow.
+  ring: { position: 'absolute', top: -RING, right: -RING, bottom: -RING, left: -RING, borderRadius: radius.pill },
+  // Material 3's FAB: 56 square, corners of 16, 16 in from the edges, a level-3 shadow.
   fabSpot: { position: 'absolute', right: space.lg, bottom: space.lg },
-  fab: { height: 56, paddingHorizontal: space.lg, borderRadius: radius.control + 4, flexDirection: 'row', alignItems: 'center', gap: space.sm, elevation: 3 },
-  fabLabel: { ...font.semiBold },
+  fab: { width: 56, height: 56, borderRadius: radius.control + 4, alignItems: 'center', justifyContent: 'center', elevation: 3 },
 });
