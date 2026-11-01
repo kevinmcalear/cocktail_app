@@ -1,7 +1,7 @@
 import { useRef, useState, type ComponentRef } from 'react';
 import { StyleSheet, View, type TextInput } from 'react-native';
 
-import { Body, Button, Caption, Field } from '@/components/ds';
+import { Body, Button, Caption, Field, Segmented } from '@/components/ds';
 import { Choice, MenuSheet } from '@/components/screens/menus/MenuSheet';
 import { space } from '@/constants/tokens';
 import { useSetMemberRole } from '@/hooks/useBarDetail';
@@ -13,6 +13,7 @@ import { roleLabel } from '@/lib/roles';
 import { INVITE_ROLES, inviteButtonLabel, NOTE_MAX, TEAM_MANAGE, welcomeSuggestion } from '@/lib/team';
 
 import { InvitePreview } from './InvitePreview';
+import { StaffLinkTab } from './StaffLinkTab';
 
 /** What happened, for the Team screen to say once the sheet closes. */
 export interface InviteNote {
@@ -35,9 +36,9 @@ interface InviteSheetProps {
 const BARTENDER = 30;
 
 /**
- * Invite someone to the venue: their name, email, what they can do, and a
- * note just for them under the welcome message (invite-team-last, step 6).
- * Saves the invite (add_user_to_bar_by_email), then emails it
+ * Invite to the venue (Kept-team): the Staff link tab, or By email with their
+ * name, email, what they can do, and a note just for them under the welcome
+ * message (invite-team-last, step 6). Saves the invite (add_user_to_bar_by_email), then emails it
  * (send-bar-invite). An email that's already on the team just gets the new
  * role. An Admin's first invite saves the suggested welcome message too, as
  * Your team would have.
@@ -50,6 +51,7 @@ export function InviteSheet({ visible, onClose, barId, barName, ceiling, admin, 
   const sender = useSenderName();
   // Until it's read, nothing: the preview never promises a welcome the email won't carry.
   const welcome = saved.isSuccess ? (saved.data ?? (admin ? welcomeSuggestion(barName) : '')) : '';
+  const [tab, setTab] = useState<'link' | 'email'>('link');
   const [name, setName] = useState('');
   const [email, setEmail] = useState('');
   const [note, setNote] = useState('');
@@ -63,6 +65,11 @@ export function InviteSheet({ visible, onClose, barId, barName, ceiling, admin, 
   const busy = add.isPending || send.isPending;
   const roles = INVITE_ROLES.filter((r) => r.level <= ceiling);
 
+  const close = () => {
+    setTab('link');
+    onClose();
+  };
+
   const finish = (note: InviteNote) => {
     setName('');
     setEmail('');
@@ -70,7 +77,7 @@ export function InviteSheet({ visible, onClose, barId, barName, ceiling, admin, 
     setPreviewing(false);
     setProblem(null);
     onDone(note);
-    onClose();
+    close();
   };
 
   const submit = async () => {
@@ -106,16 +113,27 @@ export function InviteSheet({ visible, onClose, barId, barName, ceiling, admin, 
   return (
     <MenuSheet
       visible={visible}
-      onClose={onClose}
+      onClose={close}
       title={`Invite to ${barName}`}
-      onShow={MODAL_AUTOFOCUS ? undefined : () => focusInModal(nameRef)}
-      footer={
+      onShow={MODAL_AUTOFOCUS || tab === 'link' ? undefined : () => focusInModal(nameRef)}
+      footer={tab === 'link' ? undefined : (
         <View style={styles.footer}>
           <Button label={busy ? 'Sending…' : inviteButtonLabel(name)} size="lg" onPress={submit} disabled={busy} />
           <Button label={previewing ? 'Hide the email' : 'Preview the email'} variant="ghost" onPress={() => setPreviewing((on) => !on)} />
         </View>
-      }
+      )}
     >
+      <Segmented
+        accessibilityLabel="How to invite"
+        variant="pill"
+        stretch
+        value={tab}
+        onChange={setTab}
+        options={[{ value: 'link', label: 'Staff link' }, { value: 'email', label: 'By email' }]}
+      />
+      {tab === 'link' ? <StaffLinkTab barId={barId} barName={barName} ceiling={ceiling} admin={admin} /> : null}
+      {tab === 'email' ? (
+        <>
       {/* iOS offers a contact's name and email (textContentType); autoComplete stays off so a browser doesn't fill in your own. */}
       <Field
         ref={nameRef}
@@ -130,7 +148,7 @@ export function InviteSheet({ visible, onClose, barId, barName, ceiling, admin, 
         submitBehavior="submit"
         onSubmitEditing={() => emailRef.current?.focus()}
         maxLength={80}
-        autoFocus={MODAL_AUTOFOCUS}
+        autoFocus={MODAL_AUTOFOCUS && tab === 'email'}
       />
       <Field
         ref={emailRef}
@@ -164,6 +182,8 @@ export function InviteSheet({ visible, onClose, barId, barName, ceiling, admin, 
         <Body tone="accent" role="alert">
           {problem}
         </Body>
+      ) : null}
+        </>
       ) : null}
     </MenuSheet>
   );

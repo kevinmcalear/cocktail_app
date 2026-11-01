@@ -7,6 +7,8 @@ import { renderWithProviders } from '@/jest.setup';
 const mockMutate = jest.fn();
 const mockRemove = jest.fn(() => Promise.resolve());
 const mockShown = jest.fn();
+const mockSaveLink = jest.fn();
+let mockLink = { slug: 'caretakers', on: true, role: 30, approve: true };
 const mockAdd = jest.fn();
 const mockSend = jest.fn();
 const mockSendAsync = jest.fn();
@@ -34,6 +36,11 @@ jest.mock('@/hooks/useViewAs', () => ({ useEffectiveRole: () => mockRole, useCan
 jest.mock('@/hooks/useCapabilities', () => ({ useCapabilities: () => ({ data: ['menu'] }) }));
 jest.mock('@/ctx/AuthContext', () => jest.requireActual('@/jest.authMock').mockAuthContext(() => ({ user: { id: 'me' } })));
 jest.mock('@/lib/dialogs', () => ({ confirmAsync: jest.fn(async () => true) }));
+jest.mock('burnt', () => ({ toast: jest.fn() }));
+jest.mock('@/hooks/useStaffLink', () => ({
+  useStaffLink: () => ({ data: mockLink, isLoading: false, error: null }),
+  useSaveStaffLink: () => ({ mutate: mockSaveLink, error: null }),
+}));
 jest.mock('@/hooks/useTeam', () => ({
   ...jest.requireActual('@/hooks/useTeam'),
   useOnShiftTonight: () => new Set(['jo']),
@@ -79,6 +86,7 @@ beforeEach(() => {
   mockMutate.mockClear();
   mockChoose.mockClear();
   mockRemove.mockClear();
+  mockLink = { slug: 'caretakers', on: true, role: 30, approve: true };
   mockAdd.mockReset();
   mockSend.mockReset();
   mockSendAsync.mockReset();
@@ -94,6 +102,7 @@ test('an admin invites by name, email and role from the sheet, and the invite is
   await renderWithProviders(<TeamScreen />);
   await fireEvent.press(screen.getByRole('button', { name: 'Invite someone' }));
   expect(screen.getByText('Invite to Caretakers')).toBeTruthy();
+  await fireEvent.press(screen.getByText('By email'));
   expect(screen.getByRole('radio', { name: 'Bartender. Plus prep notes and the staff list', checked: true })).toBeTruthy();
   expect(within(screen.getByLabelText('What they can do')).queryByRole('radio', { name: /^Guest/ })).toBeNull();
 
@@ -114,6 +123,26 @@ test('an admin invites by name, email and role from the sheet, and the invite is
 
   await fireEvent.press(screen.getByRole('button', { name: 'Resend' }));
   expect(mockSend).toHaveBeenLastCalledWith('new@example.test', expect.anything());
+});
+
+test('the staff link tab: the code, the join role and approval, and the link off', async () => {
+  await renderWithProviders(<TeamScreen />);
+  await fireEvent.press(screen.getByRole('button', { name: 'Invite someone' }));
+  expect(screen.getByLabelText('QR code for Caretakers’s staff link')).toBeTruthy();
+  await fireEvent.press(screen.getByRole('link', { name: 'New people join as, Bartender' }));
+  expect(within(screen.getByLabelText('New people join as')).queryByRole('radio', { name: /^Admin/ })).toBeNull();
+  await fireEvent.press(screen.getByRole('radio', { name: /^Employee/ }));
+  expect(mockSaveLink).toHaveBeenCalledWith({ role: 20 });
+  await fireEvent(screen.getByRole('switch', { name: 'You approve each one' }), 'valueChange', false);
+  expect(mockSaveLink).toHaveBeenCalledWith({ approve: false });
+});
+
+test('with the link off, the tab says so and offers it back', async () => {
+  mockLink = { ...mockLink, on: false };
+  await renderWithProviders(<TeamScreen />);
+  await fireEvent.press(screen.getByRole('button', { name: 'Invite someone' }));
+  expect(screen.getByText(/The staff link is off/)).toBeTruthy();
+  expect(screen.queryByLabelText('QR code for Caretakers’s staff link')).toBeNull();
 });
 
 test('an admin changes the welcome message once, from its row', async () => {
@@ -146,6 +175,7 @@ test('a saved invite whose email fails says so', async () => {
   mockSendAsync.mockRejectedValue(new Error('rate limited'));
   await renderWithProviders(<TeamScreen />);
   await fireEvent.press(screen.getByRole('button', { name: 'Invite someone' }));
+  await fireEvent.press(screen.getByText('By email'));
   await fireEvent.changeText(screen.getByLabelText('Email'), 'sam@example.test');
   await fireEvent.press(screen.getByRole('button', { name: 'Email an invite' }));
   expect(await screen.findByText(/The invite is saved, but the email didn’t send \(rate limited\)/)).toBeTruthy();

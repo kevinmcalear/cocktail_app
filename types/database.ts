@@ -414,6 +414,9 @@ export type Database = {
           short_name: string | null
           show_spec_changes: boolean
           slug: string
+          staff_link_approve: boolean
+          staff_link_on: boolean
+          staff_link_role: number
           target_gp: number | null
           tax_rate: number
           timezone: string | null
@@ -448,6 +451,9 @@ export type Database = {
           short_name?: string | null
           show_spec_changes?: boolean
           slug: string
+          staff_link_approve?: boolean
+          staff_link_on?: boolean
+          staff_link_role?: number
           target_gp?: number | null
           tax_rate?: number
           timezone?: string | null
@@ -482,6 +488,9 @@ export type Database = {
           short_name?: string | null
           show_spec_changes?: boolean
           slug?: string
+          staff_link_approve?: boolean
+          staff_link_on?: boolean
+          staff_link_role?: number
           target_gp?: number | null
           tax_rate?: number
           timezone?: string | null

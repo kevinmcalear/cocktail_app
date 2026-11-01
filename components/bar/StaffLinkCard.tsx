@@ -1,20 +1,25 @@
 import * as Burnt from 'burnt';
 import { Platform, StyleSheet, View } from 'react-native';
 
-import { Body, Button, useDs } from '@/components/ds';
-import { SettingsSection } from '@/components/screens/settings/SettingsParts';
+import { Body, Button, Caption, useDs } from '@/components/ds';
+import { RowDivider, SettingsSection, SwitchRow } from '@/components/screens/settings/SettingsParts';
 import { IconSymbol } from '@/components/ui/icon-symbol';
-import { radius, space } from '@/constants/tokens';
+import { radius, space, STATUS } from '@/constants/tokens';
+import { useSaveStaffLink, useStaffLink } from '@/hooks/useStaffLink';
 import { showMessage } from '@/lib/dialogs';
 import { shareLink } from '@/lib/shareLink';
 import { venueStaffUrl } from '@/lib/venueLink';
 
 /**
  * The venue's staff link. Staff open it on their phone, sign in, and add the
- * venue's own app (its name and logo) to their home screen.
+ * venue's own app (its name and logo) to their home screen. Turning it off
+ * stops anyone new using it; the team already on it carries on.
  */
-export function StaffLinkCard({ slug, venueName }: { slug: string; venueName: string }) {
+export function StaffLinkCard({ barId, slug, venueName, canEdit }: { barId: string; slug: string; venueName: string; canEdit: boolean }) {
   const ds = useDs();
+  const link = useStaffLink(barId);
+  const save = useSaveStaffLink(barId);
+  const on = link.data?.on ?? true;
   const url = venueStaffUrl(slug);
   const web = Platform.OS === 'web';
 
@@ -30,9 +35,11 @@ export function StaffLinkCard({ slug, venueName }: { slug: string; venueName: st
   return (
     <SettingsSection
       title="Staff link"
-      note={`Send this to your team. They sign in and add ${venueName} to their home screen, with your name and logo.`}
+      note={on ? `Send this to your team. They sign in and add ${venueName} to their home screen, with your name and logo.` : 'Off, so nobody new can use it.'}
     >
-      <View style={styles.row}>
+      <SwitchRow label="Staff link" value={on} disabled={!canEdit || !link.data} onValueChange={(next) => save.mutate({ on: next })} />
+      {on ? <RowDivider /> : null}
+      {on ? <View style={styles.row}>
         <View style={[styles.url, { backgroundColor: ds.c.raised }]}>
           <IconSymbol name="link" size={16} color={ds.c.muted} />
           <Body style={styles.fill} numberOfLines={1} selectable>
@@ -45,7 +52,9 @@ export function StaffLinkCard({ slug, venueName }: { slug: string; venueName: st
           label={web ? 'Copy link' : 'Share'}
           onPress={() => void share()}
         />
-      </View>
+      </View> : null}
+      {link.error ? <Caption tone="muted" role="alert">Couldn’t check whether the link is on. Check your connection and try again.</Caption> : null}
+      {save.error ? <Caption color={STATUS.danger} role="alert">{save.error.message}</Caption> : null}
     </SettingsSection>
   );
 }
