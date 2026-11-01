@@ -236,6 +236,8 @@ function useRunSheetBarWrite<W extends { menuId: string }>(
   return useMutation({
     mutationKey: write.key,
     mutationFn: write.send,
+    // One menu's writes send in the order made, after a relaunch too: a swap set then cleared must not land the other way round.
+    scope: { id: `run-sheet-${menuId}` },
     onMutate: async (w: W) => {
       await queryClient.cancelQueries({ queryKey: key });
       const before = queryClient.getQueryData<RunSheetData>(key);
