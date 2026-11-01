@@ -73,6 +73,8 @@ interface IngredientsStepProps extends StepProps {
   focus?: number;
   /** The drink editor made in parts (drink-edit-parts): a part's heading. Each part's lines sit under it, with its own Add field (draft.parts). */
   partHead?: (part: number) => ReactNode;
+  /** The draft page shows the classic the name is: no list of others to start from. */
+  classicShown?: boolean;
 }
 
 /**
@@ -84,7 +86,7 @@ interface IngredientsStepProps extends StepProps {
  * (make-anything-overview): from the search, or by holding one line over
  * another to combine them.
  */
-export function IngredientsStep({ draft, set, ingredients, loading, aliases = [], coreIds, forDrink = true, shelf, backBar, balance = true, lineDetail, lineBelow, stock, placeholder, onNewBottle, inlinePrep, bar, trail, editing, focus, partHead }: IngredientsStepProps) {
+export function IngredientsStep({ draft, set, ingredients, loading, aliases = [], coreIds, forDrink = true, shelf, backBar, balance = true, lineDetail, lineBelow, stock, placeholder, onNewBottle, inlinePrep, bar, trail, editing, focus, partHead, classicShown }: IngredientsStepProps) {
   const ds = useDs();
   // Made in parts: the part whose Add field was used last, which a new line goes into.
   const parts = partHead && draft.parts?.length ? draft.parts : null;
@@ -283,7 +285,7 @@ export function IngredientsStep({ draft, set, ingredients, loading, aliases = []
 
       {/* The balance sits right under the field, then what goes with it (Flavor Atlas order). */}
       {forDrink && balance && !quiet && !editing ? <BalanceCard lines={poured} ingredients={ingredients} onAdd={(name) => add(pickByName(name, ingredients))} /> : null}
-      {quiet || !forDrink || editing ? null : <IngredientSuggestions draft={draft} set={set} poured={poured} ingredients={ingredients} onAdd={add} />}
+      {quiet || !forDrink || editing ? null : <IngredientSuggestions draft={draft} set={set} poured={poured} ingredients={ingredients} onAdd={add} classicShown={classicShown} />}
     </View>
   );
 }

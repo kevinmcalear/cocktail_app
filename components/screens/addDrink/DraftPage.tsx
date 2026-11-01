@@ -78,7 +78,7 @@ export function DraftPage({ lead, ...p }: DrinkDeskProps & { lead?: ReactNode })
               </View>
             </View>
           ) : (
-            <BigName inputRef={nameRef} value={draft.name} onChange={(name) => set({ name })} onDone={() => {}} resumed={p.resumed} onStartOver={p.onStartOver} />
+            <BigName hint={false} inputRef={nameRef} value={draft.name} onChange={(name) => set({ name })} onDone={() => {}} resumed={p.resumed} onStartOver={p.onStartOver} />
           )}
           {same?.as === 'different' ? <ApartHint done={!nameWaits(draft, null)} words={`Give it a name that tells it apart from ${theirs(same.bar, same.name)}.`} /> : null}
           {p.atBar && asking ? (
@@ -105,6 +105,7 @@ export function DraftPage({ lead, ...p }: DrinkDeskProps & { lead?: ReactNode })
             backBar={p.backBar}
             stock={p.stock}
             bar={barId ? { id: barId, name: p.venueName } : null}
+            classicShown={!!p.classic}
           />
           <DraftRows {...p} onRename={rename} />
           <ReviewPhotos photos={draft.photos ?? {}} onChange={(photos) => set({ photos })} sketch={inputs} seed={draft.id ?? 'new-drink'} />

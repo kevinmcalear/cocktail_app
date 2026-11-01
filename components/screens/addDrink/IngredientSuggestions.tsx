@@ -16,6 +16,8 @@ interface IngredientSuggestionsProps extends StepProps {
   poured: readonly WizardLine[];
   ingredients: readonly CatalogIngredient[];
   onAdd: (pick: WizardPick) => void;
+  /** The name already is a classic, with its own card: no list of others to start from. */
+  classicShown?: boolean;
 }
 
 /**
@@ -23,7 +25,7 @@ interface IngredientSuggestionsProps extends StepProps {
  * common ones as quick adds until something does), the classic it's close
  * to, and, with nothing in it yet, a classic to start from.
  */
-export function IngredientSuggestions({ draft, set, poured, ingredients, onAdd }: IngredientSuggestionsProps) {
+export function IngredientSuggestions({ draft, set, poured, ingredients, onAdd, classicShown }: IngredientSuggestionsProps) {
   const has = (name: string) => poured.some((l) => l.name.trim().toLowerCase() === name.toLowerCase());
   const quick = COMMON_INGREDIENTS.filter((n) => !has(n)).slice(0, QUICK);
   // Its generic's id (Mezcal's is Agave Spirit), for matching classics.
@@ -45,7 +47,7 @@ export function IngredientSuggestions({ draft, set, poured, ingredients, onAdd }
         }
         after={<CloseToClassic ingredients={poured.flatMap((l) => (l.id ? [{ id: l.id, generic: genericOf(l.id) }] : []))} riffOf={draft.riffOf} onRiff={(riffOf) => set({ riffOf })} />}
       />
-      {draft.lines.length ? null : <StartFromClassic set={set} />}
+      {draft.lines.length || classicShown ? null : <StartFromClassic set={set} />}
     </>
   );
 }

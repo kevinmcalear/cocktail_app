@@ -52,7 +52,7 @@ jest.mock('@/hooks/useSameNameDrink', () => ({ useSameNameDrink: () => ({ data: 
 jest.mock('@/hooks/useKit', () => ({ useKit: () => ({ owned: [], kit: new Set(), toggle: jest.fn() }) }));
 jest.mock('@/hooks/useBarKit', () => ({ useMakingKit: () => ({ kit: new Set(), where: 'My Bar', add: jest.fn() }) }));
 jest.mock('@/hooks/useDrinkDesk', () => ({ ...jest.requireActual('@/hooks/useDrinkDesk'), useMenuSectionPlace: () => ({ data: undefined }) }));
-// A venue's suppliers and costs (m01) read their own hooks; these tests are about the steps.
+// A venue's suppliers and costs (m01) read their own hooks; these tests are about the draft page.
 jest.mock('./useDeskLines', () => ({ ...jest.requireActual('./useDeskLines'), useVenueLines: () => ({ lines: {}, cost: null }) }));
 beforeEach(() => {
   mockCreate.mockReset();
@@ -66,19 +66,19 @@ beforeEach(() => {
 });
 // iOS draws the screen after its first layout (the keyboard offset needs it).
 const laidOut = () => fireEvent(screen.getByTestId('add-drink'), 'layout', { persist: () => {}, nativeEvent: { layout: { x: 0, y: 0, width: 390, height: 800 } } });
-const next = () => fireEvent.press(screen.getByRole('button', { name: /^Next: / }));
+// A row on the draft page opens its sheet ("Glass: pick one").
+const row = (name: string) => fireEvent.press(screen.getByRole('button', { name: new RegExp(`^${name}: `) }));
 describe('AddDrinkWizard', () => {
-  // One walk through the wizard, in three parts so none runs near Jest's 5 s limit on a busy CI runner.
-  test('a name, then ingredients by quick add, stepper, typing and search', async () => {
+  test('a name, then ingredients by search, stepper, typing and a quick add', async () => {
     await renderWithProviders(<AddDrinkWizard onClose={jest.fn()} onSaved={mockSaved} />);
     await laidOut();
-    expect(screen.getByText('What’s it called?')).toBeTruthy();
-
     await fireEvent.changeText(screen.getByLabelText('Name'), 'house negroni');
-    await next();
+    expect(useDrinkWizardStore.getState().kept.home.draft.name).toBe('House Negroni');
 
-    // Ingredients: a quick add starts at a likely pour; the stepper walks it, and it can be typed.
-    await fireEvent.press(screen.getByRole('button', { name: 'Add Gin' }));
+    // An empty spec offers classics to start from, not quick adds.
+    expect(screen.queryByRole('group', { name: 'Quick adds' })).toBeNull();
+    await fireEvent.changeText(screen.getByLabelText('Add an ingredient'), 'gin');
+    await fireEvent.press(screen.getByRole('button', { name: 'Gin' }));
     expect(screen.getByLabelText('Amount of Gin').props.value).toBe('60');
     await fireEvent.press(screen.getByRole('button', { name: 'More Gin' }));
     await fireEvent.press(screen.getByRole('button', { name: 'Less Gin' }));
@@ -88,13 +88,14 @@ describe('AddDrinkWizard', () => {
     await fireEvent(screen.getByLabelText('Amount of Gin'), 'blur');
     expect(screen.getByLabelText('Amount of Gin').props.value).toBe('1.5');
     await fireEvent.changeText(screen.getByLabelText('Amount of Gin'), '30');
-    await fireEvent.changeText(screen.getByLabelText('Add another ingredient'), 'camp');
-    await fireEvent.press(screen.getByRole('button', { name: 'Campari' }));
+
+    // With a line in, the quick adds show, and one starts at a likely pour.
+    await fireEvent.press(screen.getByRole('button', { name: 'Add Campari' }));
     expect(screen.getByLabelText('Amount of Campari').props.value).toBe('30');
     expect(useDrinkWizardStore.getState().kept.home.draft.lines.map((l) => [l.name, l.amount, l.unit])).toEqual([['Gin', '30', 'ml'], ['Campari', '30', 'ml']]);
   });
 
-  test('ingredients: the unit switch, remove and undo, and Back keep what was added', async () => {
+  test('ingredients: the unit switch, remove and undo, kept on the device as they change', async () => {
     useDrinkWizardStore.getState().patch('home', {
       name: 'House Negroni',
       lines: [
@@ -102,7 +103,6 @@ describe('AddDrinkWizard', () => {
         { key: 'k2', id: 'campari', name: 'Campari', amount: '30', unit: 'ml' },
       ],
     });
-    useDrinkWizardStore.getState().setStep('home', 'ingredients');
     await renderWithProviders(<AddDrinkWizard onClose={jest.fn()} onSaved={mockSaved} />);
     await laidOut();
 
@@ -117,23 +117,15 @@ describe('AddDrinkWizard', () => {
     expect(screen.queryByLabelText('Amount of Gin')).toBeNull();
     await fireEvent.press(screen.getByRole('button', { name: 'Undo removing Gin' }));
     expect(useDrinkWizardStore.getState().kept.home.draft.lines.map((l) => l.name)).toEqual(['Gin', 'Campari']);
-
-    // Back to the name and forward again: nothing is lost.
-    await fireEvent.press(screen.getByRole('button', { name: 'Back' }));
-    expect(screen.getByLabelText('Name').props.value).toBe('House Negroni');
-    await next();
-    expect(screen.getByLabelText('Amount of Campari').props.value).toBe('1');
     await fireEvent.changeText(screen.getByLabelText('Amount of Campari'), '');
-    await next();
 
     // The kept draft is on the device already, before any save.
     const kept = useDrinkWizardStore.getState().kept.home;
-    expect(kept.step).toBe('method');
     expect(kept.draft.name).toBe('House Negroni');
     expect(kept.draft.lines.map((l) => [l.id, l.amount, l.unit])).toEqual([['gin', '30', 'ml'], ['campari', '', 'oz']]);
   });
 
-  test('method, skipped steps, then the review saves once', async () => {
+  test('the method in its sheet, then Save saves once', async () => {
     useDrinkWizardStore.getState().patch('home', {
       name: 'House Negroni',
       lines: [
@@ -141,33 +133,22 @@ describe('AddDrinkWizard', () => {
         { key: 'k2', id: 'campari', name: 'Campari', amount: '', unit: 'oz' },
       ],
     });
-    useDrinkWizardStore.getState().setStep('home', 'method');
     await renderWithProviders(<AddDrinkWizard onClose={jest.fn()} onSaved={mockSaved} />);
     await laidOut();
+    expect(screen.getByRole('button', { name: 'Back to where you were. Your draft is kept' })).toBeTruthy();
+    expect(screen.getByRole('button', { name: 'Glass: pick one' })).toBeTruthy();
+    expect(screen.getByRole('button', { name: 'Ice: not added' })).toBeTruthy();
 
     // Method: several, in order, and your own.
+    await row('Method');
     await fireEvent.press(screen.getByRole('checkbox', { name: 'Stir, suggested' }));
+    await fireEvent.press(screen.getByRole('button', { name: 'More' }));
     await fireEvent.changeText(screen.getByLabelText('Your own method'), 'Smoke rinse');
     await fireEvent.press(screen.getByRole('button', { name: 'Add' }));
-    expect(screen.getByText('Stir, then smoke rinse')).toBeTruthy();
-    // The picks lead as numbered steps; your own sits in a group of its own.
-    expect(screen.getByText('with ice, until cold')).toBeTruthy();
-    expect(screen.getAllByText('Smoke rinse')).toHaveLength(2);
     expect(screen.getByRole('checkbox', { name: 'Smoke rinse', checked: true })).toBeTruthy();
-    await next();
+    await fireEvent.press(screen.getByRole('button', { name: 'Done' }));
+    expect(screen.getByRole('button', { name: 'Method: Stir, then Smoke rinse' })).toBeTruthy();
 
-    // Optional steps can be skipped.
-    expect(screen.getByRole('button', { name: 'Next: ice' })).toBeTruthy();
-    await fireEvent.press(screen.getByRole('button', { name: 'Skip' }));
-    expect(screen.getByText('What ice?')).toBeTruthy();
-
-    expect(useDrinkWizardStore.getState().kept.home.step).toBe('ice');
-
-    // On to the review and save.
-    for (let i = 0; i < 5; i++) await fireEvent.press(screen.getByRole('button', { name: 'Skip' }));
-    expect(screen.getByText('30 ml Gin\nCampari')).toBeTruthy();
-    expect(screen.getByRole('button', { name: 'Add a photo: it leads the drink page' })).toBeTruthy(); // At home one photo (Q15)
-    expect(screen.getByText('You can change any of it on the drink’s page.')).toBeTruthy();
     expect(mockCreate).not.toHaveBeenCalled();
     await fireEvent.press(screen.getByRole('button', { name: 'Save drink' }));
     expect(mockCreate).toHaveBeenCalledTimes(1);
@@ -183,25 +164,27 @@ describe('AddDrinkWizard', () => {
     expect(useDrinkWizardStore.getState().kept.home).toBeUndefined();
   });
 
-  test('a kept draft opens where it was left, and Start over clears it', async () => {
+  test('a kept draft opens as it was left, and Start over clears it', async () => {
     useDrinkWizardStore.getState().patch('bar-1', { name: 'Paloma' });
     await renderWithProviders(<AddDrinkWizard barId="bar-1" onClose={jest.fn()} onSaved={mockSaved} />);
     await laidOut();
     expect(screen.getByLabelText('Name').props.value).toBe('Paloma');
+    expect(screen.getByText('Picked up where you left off.')).toBeTruthy();
     await fireEvent.press(screen.getByRole('button', { name: 'Start over' }));
     expect(screen.getByLabelText('Name').props.value).toBe('');
-    expect(screen.getByRole('button', { name: 'Next: ingredients', disabled: true })).toBeTruthy();
+    expect(screen.queryByText('Picked up where you left off.')).toBeNull();
+    expect(screen.getByRole('button', { name: 'Save drink', disabled: true })).toBeTruthy();
   });
 
-  test('the glass step offers the bar\'s own glasses, else every shape, and a new glass drops the pick', async () => {
+  test('the glass sheet offers the bar\'s own glasses, else every shape, and a new glass drops the pick', async () => {
     mockBarGlasses = [
       { id: 'bg', glass: 'rocks', variant: 'rocks_tapered', name: 'Butcher Glass', is_default: true, bar_name: 'Little Rye' },
       { id: 'bg2', glass: 'rocks', variant: 'rocks_heavy', name: 'Heavy rocks', is_default: false, bar_name: 'Little Rye' },
     ];
     useDrinkWizardStore.getState().patch('bar-1', { name: 'Negroni' });
-    useDrinkWizardStore.getState().setStep('bar-1', 'glass');
     await renderWithProviders(<AddDrinkWizard barId="bar-1" onClose={jest.fn()} onSaved={mockSaved} />);
     await laidOut();
+    await row('Glass');
     expect(screen.queryByText('WHICH SHAPE?')).toBeNull();
 
     await fireEvent.press(screen.getByRole('radio', { name: 'Rocks' }));
@@ -224,12 +207,12 @@ describe('AddDrinkWizard', () => {
     expect(screen.queryByText('Is this one of your glasses?')).toBeNull();
   });
 
-  test('the ice step offers the venue\'s own ice first', async () => {
+  test('the ice sheet offers the venue\'s own ice first', async () => {
     mockVenueIce = [{ name: 'Shaved', shape: 'shaved', draw_as: null }, { name: 'Block', shape: 'block', draw_as: null }, { name: 'Large cube', shape: 'large', draw_as: null }];
     useDrinkWizardStore.getState().patch('bar-1', { name: 'Julep' });
-    useDrinkWizardStore.getState().setStep('bar-1', 'ice');
     await renderWithProviders(<AddDrinkWizard barId="bar-1" onClose={jest.fn()} onSaved={mockSaved} />);
     await laidOut();
+    await row('Ice');
     expect(screen.getByText('LITTLE RYE’S ICE')).toBeTruthy();
     // Shaved isn't one of the common ones, but it's the venue's, so it's offered.
     await fireEvent.press(screen.getByRole('radio', { name: 'Shaved' }));
@@ -238,7 +221,6 @@ describe('AddDrinkWizard', () => {
 
   test('tapping a name, then Swap, swaps the ingredient and keeps its amount', async () => {
     useDrinkWizardStore.getState().patch('home', { name: 'Martinez', lines: [{ key: 'k1', id: 'gin', name: 'Gin', amount: '45', unit: 'ml' }] });
-    useDrinkWizardStore.getState().setStep('home', 'ingredients');
     await renderWithProviders(<AddDrinkWizard onClose={jest.fn()} onSaved={mockSaved} />);
     await laidOut();
     await fireEvent.press(screen.getByRole('button', { name: 'Gin, 45 ml' }));
@@ -248,7 +230,7 @@ describe('AddDrinkWizard', () => {
     expect(useDrinkWizardStore.getState().kept.home.draft.lines).toEqual([{ key: 'k1', id: 'vermouth', name: 'Sweet Vermouth', amount: '45', unit: 'ml' }]);
   });
 
-  test('a spec close to a classic offers it as a riff, and Credits picks it up', async () => {
+  test('a spec close to a classic offers it as a riff, and Credit picks it up', async () => {
     mockClosest = { id: 'c-negroni', name: 'Negroni' };
     useDrinkWizardStore.getState().patch('bar-1', {
       name: 'Rye Bitter',
@@ -257,24 +239,26 @@ describe('AddDrinkWizard', () => {
         { key: 'k2', id: 'campari', name: 'Campari', amount: '30', unit: 'ml' },
       ],
     });
-    useDrinkWizardStore.getState().setStep('bar-1', 'ingredients');
     await renderWithProviders(<AddDrinkWizard barId="bar-1" onClose={jest.fn()} onSaved={mockSaved} />);
     await laidOut();
-    expect(screen.getByText('Close to a Negroni.')).toBeTruthy();
-    await fireEvent.press(screen.getByRole('button', { name: 'Make it a riff on the Negroni' }));
+    expect(screen.getByText('Close to a Negroni. Make it a riff?')).toBeTruthy();
+    await fireEvent.press(screen.getByRole('button', { name: 'Riff on the Negroni' }));
     expect(useDrinkWizardStore.getState().kept['bar-1'].draft.riffOf).toEqual({ id: 'c-negroni', name: 'Negroni' });
+    expect(screen.getByText('Close to a Negroni. It’s down as a riff on it.')).toBeTruthy();
 
-    useDrinkWizardStore.getState().setStep('bar-1', 'credits');
+    await row('Credit');
     expect(await screen.findByRole('radio', { name: 'Negroni, shares gin, campari', checked: true })).toBeTruthy();
     expect(screen.getByText('It’s credited to Little Rye too.')).toBeTruthy();
     expect(screen.getByText('First made at Little Rye.')).toBeTruthy();
   });
 
-  test('a name that is a classic offers its spec, and the method step offers the guess from it', async () => {
+  test('a name that is a classic offers its spec, and the method sheet offers the guess from it', async () => {
     await renderWithProviders(<AddDrinkWizard onClose={jest.fn()} onSaved={mockSaved} />);
     await laidOut();
     await fireEvent.changeText(screen.getByLabelText('Name'), 'Negroni');
-    await fireEvent.press(screen.getByRole('button', { name: 'Start from the Negroni' }));
+    expect(screen.getByText('Negroni is a classic. Start from its spec?')).toBeTruthy();
+    // The card for the name leads; the empty spec's classic chips come after it.
+    await fireEvent.press(screen.getAllByRole('button', { name: 'Start from the Negroni' })[0]);
     expect(mockStart.mock.calls[0][0]).toBe('c-negroni');
     await act(() =>
       mockStart.mock.calls[0][1].onSuccess({
@@ -282,17 +266,12 @@ describe('AddDrinkWizard', () => {
         riffOf: { id: 'c-negroni', name: 'Negroni' },
       })
     );
-    expect(screen.getByText('What goes in?')).toBeTruthy();
     expect(screen.getByLabelText('Amount of Sweet Vermouth').props.value).toBe('30');
+    expect(screen.queryByText('Negroni is a classic. Start from its spec?')).toBeNull();
 
-    // All spirit: stirred, offered first, and all three in one tap.
-    await next();
-    expect(screen.getByRole('checkbox', { name: 'Stir, suggested' })).toBeTruthy();
-    await fireEvent.press(screen.getByRole('button', { name: /^Use Stir, / }));
-    const d = useDrinkWizardStore.getState().kept.home;
-    expect(d.step).toBe('garnish');
-    expect(d.draft.methods).toEqual([{ id: 'm-stir', name: 'Stir' }]);
-    expect(d.draft.glass?.name).toBeTruthy();
-    expect(d.draft.ice?.name).toBeTruthy();
+    // All spirit: stirred, offered first.
+    await row('Method');
+    await fireEvent.press(screen.getByRole('checkbox', { name: 'Stir, suggested' }));
+    expect(useDrinkWizardStore.getState().kept.home.draft.methods).toEqual([{ id: 'm-stir', name: 'Stir' }]);
   });
 });
