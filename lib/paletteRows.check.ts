@@ -18,7 +18,10 @@ assert.equal(usedFor({ name: 'Daiquiri' }, 'grenad'), null);
 assert.equal(usedFor({ name: 'Ward Eight', recipes: [{ ingredient: null }, { ingredient: { name: 'Grenadine' } }] }, 'GRÉNAD'), 'Grenadine', 'case and accents aside');
 
 // --- Learn's titles ---
-assert.equal(learnTitle({ name: 'Grenadine' }), 'How to make grenadine');
+assert.equal(learnTitle({ name: 'Grenadine', nameAs: 'Grenadine' }), 'How to make grenadine');
+assert.equal(learnTitle({ name: 'Milk washing', nameAs: '{with}-washed {base}' }), 'Milk washing', 'makes many things');
+assert.equal(learnTitle({ name: 'Nixtamalization', nameAs: 'Nixtamalized {base}' }), 'Nixtamalization');
 assert.equal(learnTitle({ name: 'Dry shake', method: true }), 'Dry shake');
+assert.equal(learnTitle({ name: 'Clear ice' }), 'Clear ice', 'no name of its own');
 
 console.log('paletteRows: ok');

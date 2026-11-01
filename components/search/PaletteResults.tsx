@@ -1,11 +1,11 @@
 import { useRouter } from 'expo-router';
+import { useDeferredValue, useMemo } from 'react';
 import { StyleSheet, View } from 'react-native';
 
 import { Body, Caption, PressableScale, useDs, type IconName } from '@/components/ds';
 import { IconSymbol } from '@/components/ui/icon-symbol';
 import { layout, radius, space } from '@/constants/tokens';
 import { useMineFacts } from '@/hooks/useMineFacts';
-import { useVenueShelves } from '@/hooks/useVenueShelves';
 import type { SearchMine } from '@/hooks/useSearchMine';
 import { foldName } from '@/lib/discover';
 import { newDrinkHref } from '@/lib/itemRoutes';
@@ -35,12 +35,12 @@ const LEARN = 3;
  * One of the palette's rows (Prod-desk-cmdk): an icon, the words, what it is
  * on the right, and ↵ on the row the arrow keys are on.
  */
-export function PaletteRow({ icon, title, aside, onPress }: { icon: IconName; title: string; aside?: string; onPress: () => void }) {
+export function PaletteRow({ icon, title, aside, action, onPress }: { icon: IconName; title: string; aside?: string; action?: boolean; onPress: () => void }) {
   const ds = useDs();
   const nav = useSearchNavRow();
   return (
     <PressableScale
-      role="link"
+      role={action ? 'button' : 'link'}
       accessibilityLabel={[title, aside].filter(Boolean).join('. ')}
       onPress={onPress}
       nativeID={nav.nativeID}
@@ -79,19 +79,20 @@ export function PaletteDo({ query, mine, made, batch }: { query: string; mine: S
   const q = query.trim();
   if (!q || (!mine.canAdd && !batch)) return null;
   const name = capitalize(q);
-  const drink = <PaletteRow key="drink" icon="plus" title={`Add “${q}” as a new drink`} onPress={() => router.push(newDrinkHref(name, mine.venueId) as never)} />;
+  const drink = <PaletteRow key="drink" icon="plus" action title={`Add “${q}” as a new drink`} onPress={() => router.push(newDrinkHref(name, mine.venueId) as never)} />;
   const house = (
     <PaletteRow
       key="house"
       icon="plus"
+      action
       title={`Add “${q}” as a new house-made`}
       onPress={() => router.push({ pathname: '/make-recipe', params: { name, ...(mine.venueId ? { barId: mine.venueId } : {}) } })}
     />
   );
   return (
-    <View role="list" nativeID={batch ? LEAD : undefined}>
+    <View nativeID={batch ? LEAD : undefined}>
       <Head label="Do" />
-      {batch ? <PaletteRow icon="flask" title={`Log a batch of ${batch.name}`} aside="House-made" onPress={() => router.push(`/ingredient/${batch.id}/make?factor=1` as never)} /> : null}
+      {batch ? <PaletteRow icon="flask" action title={`Log a batch of ${batch.name}`} aside="House-made" onPress={() => router.push(`/ingredient/${batch.id}/make?factor=1` as never)} /> : null}
       {mine.canAdd ? (made ? [house, drink] : [drink, house]) : null}
     </View>
   );
@@ -101,36 +102,29 @@ export function PaletteDo({ query, mine, made, batch }: { query: string; mine: S
  * The palette with something typed, searching where you are (Prod-desk-cmdk):
  * Do, then Go to: the house-mades and bottles, the drinks (one found by what
  * it uses says so), the menus, then Learn's pages, and Search everywhere at
- * the end. Nothing here: Do, then what everywhere has (MineResults).
+ * the end. Nothing of the place's: Do, any Learn pages, then what everywhere
+ * has (MineResults).
  */
-export function PaletteResults({ query, mine, onEverywhere }: { query: string; mine: SearchMine; onEverywhere: () => void }) {
+export function PaletteResults({ query: typed, mine, onEverywhere }: { query: string; mine: SearchMine; onEverywhere: () => void }) {
   const router = useRouter();
+  // The field never waits on the results, as SearchBody's don't.
+  const query = useDeferredValue(typed);
   const { items, isLoading } = useMineCatalog(mine);
   const facts = useMineFacts(mine.venueId, items);
-  // The house-mades its drinks use, shared ones too, as the Library's Preps shelf has them.
-  const shelves = useVenueShelves(mine.venueId, items.filter((i) => !i.isDraft));
   const q = query.trim();
-  const groups = groupCatalog(items, q);
-  const preps = shelves.preps.filter((p) => foldName(p.name).includes(foldName(q)));
+  const groups = useMemo(() => groupCatalog(items, q), [items, q]);
+  // The house-mades its drinks use, shared ones too, as the Library's Preps shelf has them.
+  const preps = useMemo(() => facts.prepItems.filter((p) => foldName(p.name).includes(foldName(q))), [facts.prepItems, q]);
   const ingredients = [...preps, ...groups.ingredients.filter((i) => !preps.some((p) => p.id === i.id))];
-  const learn = searchTechniques(q).slice(0, LEARN);
+  const learn = useMemo(() => searchTechniques(q).slice(0, LEARN), [q]);
   const open = (item: SearchItem) => openSearchItem(item, (href) => router.push(href as never));
   const made = madeFirst({ drinks: groups.drinks, ingredients }, q);
-  const batch = mine.venueId ? (preps[0] ?? null) : null;
+  const batch = mine.canPrep ? (preps[0] ?? null) : null;
   const found = ingredients.length + groups.drinks.length + groups.menus.length;
-  if (!found && (isLoading || !learn.length)) {
-    return (
-      <>
-        <PaletteDo query={q} mine={mine} made={made} />
-        <MineResults query={q} mine={mine} onEverywhere={onEverywhere} palette />
-      </>
-    );
-  }
   const drinkIds = groups.drinks.map((i) => i.id);
-  return (
-    <>
-      <PaletteDo query={q} mine={mine} made={made} batch={batch} />
-      <View role="list" nativeID={batch ? undefined : LEAD}>
+  const goTo =
+    found || learn.length ? (
+      <View nativeID={batch ? undefined : LEAD}>
         <Head label="Go to" />
         {ingredients.map((i) => (
           <PaletteRow key={i.id} icon={facts.preps.has(i.id) ? 'flask' : 'drop.fill'} title={i.name} aside={i.isDraft ? 'Draft' : ingredientFacts(i.id, facts)} onPress={() => open(i)} />
@@ -147,7 +141,12 @@ export function PaletteResults({ query, mine, onEverywhere }: { query: string; m
           <PaletteRow key={t.id} icon="book" title={learnTitle(t)} aside="Learn" onPress={() => router.push(`/techniques/${t.id}` as never)} />
         ))}
       </View>
-      <EverywhereRow label={`Search everywhere for “${q}”`} onPress={onEverywhere} />
+    ) : null;
+  return (
+    <>
+      <PaletteDo query={q} mine={mine} made={made} batch={batch} />
+      {goTo}
+      {found ? <EverywhereRow label={`Search everywhere for “${q}”`} onPress={onEverywhere} /> : isLoading ? null : <MineResults query={q} mine={mine} onEverywhere={onEverywhere} palette />}
     </>
   );
 }

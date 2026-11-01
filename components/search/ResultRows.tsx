@@ -179,8 +179,8 @@ interface ResultGroupProps<T> {
 /** Android's open search (TopSearch.tsx), which draws its results its own way (Miss-search-and). */
 export const DrawnSearch = createContext(false);
 
-/** "Search everywhere for “negroni”" in the ⌘K palette: a slim outlined row with a globe, one the arrow keys reach. */
-export function EverywhereRow({ label, onPress }: { label: string; onPress: () => void }) {
+/** "Search everywhere for “negroni”" in the ⌘K palette: a slim outlined row with a globe (or `icon`), one the arrow keys reach. */
+export function EverywhereRow({ label, icon = 'globe', onPress }: { label: string; icon?: IconName; onPress: () => void }) {
   const ds = useDs();
   const nav = useSearchNavRow();
   return (
@@ -191,7 +191,7 @@ export function EverywhereRow({ label, onPress }: { label: string; onPress: () =
       nativeID={nav.nativeID}
       style={[styles.everywhere, { borderColor: ds.c.lineStrong }, nav.active && { backgroundColor: withAlpha(ds.accentText, 0.14) }]}
     >
-      <IconSymbol name="globe" size={16} color={ds.c.muted} />
+      <IconSymbol name={icon} size={16} color={ds.c.muted} />
       <Caption style={[styles.moreText, styles.shrink]} numberOfLines={1}>
         {label}
       </Caption>

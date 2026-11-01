@@ -16,6 +16,7 @@ import { useEightBallStore } from '@/store/useEightBallStore';
 import { useSearchPalette } from '@/store/useSearchPalette';
 
 import { LEAD, PaletteDo, PaletteResults, PaletteRow } from './PaletteResults';
+import { EverywhereRow } from './ResultRows';
 import { KeyCap } from './SearchField';
 import { SearchNavProvider, useSearchNav } from './searchNav';
 import { SearchBody, SearchHead } from './SearchPanel';
@@ -53,9 +54,10 @@ function Palette() {
   const q = query.trim();
   // Before typing: Pick for me, the Easter egg phones open with a shake, with its keys (WebSideNav).
   const pick = (
-    <View role="list">
+    <View>
       <PaletteRow
         icon="8.circle"
+        action
         title="Pick for me"
         aside="A drink to make, at random"
         onPress={() => {
@@ -93,7 +95,11 @@ function Palette() {
           ) : (
             <>
               <PaletteDo query={query} mine={mine} />
-              <SearchBody query={query} scope={scope} onScope={setScope} mine={mine} area={lent} onJump={close} commands={q ? undefined : pick} palette />
+              <View nativeID={LEAD} style={styles.results}>
+                <SearchBody query={query} scope={scope} onScope={setScope} mine={mine} area={lent} onJump={close} commands={q ? undefined : pick} palette />
+              </View>
+              {/* The palette shows no place: off yours (Search everywhere, or from Discover), one row back to it. */}
+              {scope !== 'mine' ? <EverywhereRow icon="arrow.uturn.backward" label={`Search ${mine.venueId ? mine.label : 'your drinks'} instead`} onPress={() => setScope('mine')} /> : null}
             </>
           )}
         </View>

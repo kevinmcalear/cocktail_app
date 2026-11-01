@@ -21,7 +21,12 @@ export function usedFor(drink: WithRecipe, query: string): string | null {
   return (drink.recipes ?? []).map((r) => r.ingredient?.name).find((n): n is string => !!n && foldName(n).includes(q)) ?? null;
 }
 
-/** "How to make grenadine": a thing you make; a way of making a drink keeps its own name ("Dry shake"). */
-export function learnTitle(t: Named & { method?: boolean }): string {
-  return t.method ? t.name : `How to make ${t.name.charAt(0).toLowerCase()}${t.name.slice(1)}`;
+/**
+ * "How to make grenadine": a technique that makes one named thing (its
+ * `nameAs` fills in nothing). One that makes many ("Clarified {base}") or a
+ * way of making a drink keeps its own name ("Milk washing", "Dry shake").
+ */
+export function learnTitle(t: Named & { method?: boolean; nameAs?: string }): string {
+  if (t.method || !t.nameAs || t.nameAs.includes('{')) return t.name;
+  return `How to make ${t.name.charAt(0).toLowerCase()}${t.name.slice(1)}`;
 }
