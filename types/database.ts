@@ -4332,6 +4332,7 @@ export type Database = {
           bar_id: string | null
           change_level: number | null
           change_role_id: string | null
+          cover_credit: string | null
           cover_position: number | null
           cover_url: string | null
           created_at: string
@@ -4360,6 +4361,7 @@ export type Database = {
           bar_id?: string | null
           change_level?: number | null
           change_role_id?: string | null
+          cover_credit?: string | null
           cover_position?: number | null
           cover_url?: string | null
           created_at?: string
@@ -4388,6 +4390,7 @@ export type Database = {
           bar_id?: string | null
           change_level?: number | null
           change_role_id?: string | null
+          cover_credit?: string | null
           cover_position?: number | null
           cover_url?: string | null
           created_at?: string

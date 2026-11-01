@@ -8,7 +8,7 @@ import { MENU_DRINK_COLUMNS, menuKeys, publishedMenuDrink, toMenuDrink, type Men
 import { fetchPublished } from '@/hooks/usePublished';
 import { fetchShareSlug, shareSlugKey } from '@/hooks/useShareSlug';
 import { allRows } from '@/lib/allRows';
-import { savePayload, type EditSection, type MenuLayout } from '@/lib/menuLayout';
+import { creditOf, savePayload, type EditSection, type MenuLayout } from '@/lib/menuLayout';
 import { normalizeAllowedTypes } from '@/lib/sectionAllowedTypes';
 import { uriToBase64 } from '@/lib/imageBase64';
 import { supabase, UPLOAD_CACHE_SECONDS } from '@/lib/supabase';
@@ -60,14 +60,25 @@ function useInvalidateMenus() {
 export function useSaveMenu(menuId: string) {
   const invalidate = useInvalidateMenus();
   return useMutation({
-    mutationFn: (layout: MenuLayout) =>
-      rpc('save_menu', {
+    mutationFn: async (layout: MenuLayout) => {
+      const saved = await rpc('save_menu', {
         p_menu_id: menuId,
         p_name: layout.name,
         p_cover_url: layout.coverUrl,
         p_cover_position: layout.coverPosition,
         p_sections: savePayload(layout),
-      }),
+      });
+      // The cover's credit isn't save_menu's: it goes on the menu after it (a new cover
+      // clears the old credit in the database), and only when the editor says it changed.
+      // ponytail: two writes, not one transaction; a failed credit write fails the save,
+      // and the retry runs save_menu again, which is harmless. Folding the credit into
+      // save_menu (a gated function change) would make it one.
+      if (layout.coverCredit !== undefined) {
+        const { error } = await supabase.from('menus').update({ cover_credit: creditOf(layout) }).eq('id', menuId);
+        if (error) throw readable(error);
+      }
+      return saved;
+    },
     onSuccess: invalidate,
     onError: () => {},
   });
@@ -96,6 +107,7 @@ export function useCreateMenu() {
           created_by: userId,
           cover_url: layout.coverUrl,
           cover_position: layout.coverPosition,
+          cover_credit: creditOf(layout),
           menu_date: night?.menuDate ?? null,
           guest_count: night?.guestCount ?? null,
           // A venue draft's planned dates (New menu's third step): not live.

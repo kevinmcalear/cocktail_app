@@ -1,6 +1,6 @@
 import { StyleSheet, TextInput, View } from 'react-native';
 
-import { Button, Caption, DsText, GlassButton, GlassSurface, PressableScale, useDs } from '@/components/ds';
+import { Button, Caption, DsText, Field, GlassButton, GlassSurface, PressableScale, useDs } from '@/components/ds';
 import { RunSheetLink } from '@/components/screens/runSheet/parts';
 import { IconSymbol } from '@/components/ui/icon-symbol';
 import { displayFaces, radius, space, type } from '@/constants/tokens';
@@ -47,6 +47,24 @@ export function MenuCoverEdit({ editor, height }: { editor: LayoutEditor; height
         {coverUrl ? <GlassButton icon="xmark" accessibilityLabel="Remove cover" onPress={editor.removeCover} onMedia /> : null}
       </View>
     </View>
+  );
+}
+
+/** Who took the cover, shown on it as "Photo: <name>". Only with a cover. */
+export function CoverCreditField({ editor }: { editor: LayoutEditor }) {
+  const { coverUrl, coverCredit } = editor.layout;
+  if (!coverUrl) return null;
+  const name = coverCredit?.trim();
+  return (
+    <Field
+      label="Photo by"
+      placeholder="Who took it?"
+      value={coverCredit ?? ''}
+      onChangeText={editor.setCoverCredit}
+      maxLength={80}
+      autoCapitalize="words"
+      hint={`Shows on the cover as Photo: ${name || 'their name'}. Leave it empty and there's no line.`}
+    />
   );
 }
 
