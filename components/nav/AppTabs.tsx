@@ -65,6 +65,8 @@ function Tabs() {
     labelStyle: { default: { color: ds.c.ink, fontWeight: '500' }, selected: { color: roles.onIndicator, fontWeight: '600' } },
   } as const;
   // Android's Material bar hides unselected labels past three tabs; "labeled" keeps every tab named.
+  // `hidden` on Android relies on patches/expo-router+58.0.25.patch: unpatched, hiding the bar
+  // remounts every tab's pages, so the search lost what was typed and every tab its place.
   return (
     <NativeTabs
       tintColor={Platform.OS === 'android' ? roles.onIndicator : ds.accentText}
