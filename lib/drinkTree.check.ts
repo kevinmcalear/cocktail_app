@@ -1,6 +1,6 @@
 import assert from 'node:assert/strict';
 
-import { familyFor, familyRows, pathTo, rowMeta, searchTree, type TreeNode } from './drinkTree';
+import { familyFor, familyKey, familyRows, pathTo, rowMeta, searchTree, type TreeNode } from './drinkTree';
 
 const node = (key: string, family: string, parentKey: string | null, extra: Partial<TreeNode> = {}): TreeNode => ({
   key,
@@ -77,5 +77,16 @@ assert.equal(familyFor(nodes, 'penicillin'), 'sour');
 assert.equal(familyFor(nodes, 's:fizz'), 'highball');
 assert.equal(familyFor(nodes, 'nope'), 'oldfashioned');
 assert.equal(familyFor(nodes, null), 'oldfashioned');
+
+// A drink's family name to the tree's key, as private.family_key reads it.
+assert.equal(familyKey('Old Fashioned'), 'oldfashioned');
+assert.equal(familyKey('Sours'), 'sour');
+assert.equal(familyKey('  Highball '), 'highball');
+assert.equal(familyKey('Tiki'), 'tiki');
+assert.equal(familyKey('Sipper'), null, 'a family outside the eight is not in the tree');
+assert.equal(familyKey('Daiquiri'), null, 'only the family names, not the drinks under them');
+assert.equal(familyKey('Sourss'), null);
+assert.equal(familyKey(null), null);
+assert.equal(familyKey(''), null);
 
 console.log('drinkTree: ok');

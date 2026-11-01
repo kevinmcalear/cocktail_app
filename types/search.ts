@@ -34,7 +34,6 @@ export interface SearchItem {
   image?: { uri?: string } | null;
   method_id?: string | null;
   glassware_id?: string | null;
-  family_id?: string | null;
   ice_id?: string | null;
   /** A public drink (not in the library): the bar or bartender it's credited to. */
   fromBar?: string;
