@@ -26,6 +26,7 @@ import { AuthProvider, useAuth } from "@/ctx/AuthContext";
 import { useColorScheme } from "@/hooks/use-color-scheme";
 import { useIsWideWeb } from '@/hooks/useIsWideWeb';
 import { useHoldUpdates, useOtaUpdates } from '@/hooks/useOtaUpdates';
+import { useSpecBooks } from '@/hooks/useSpecBook';
 import { useUserCacheSync } from '@/hooks/useUserCacheSync';
 import { BRAND } from '@/constants/brand';
 import { authRedirect, needsOnboarding } from '@/lib/onboarding';
@@ -55,6 +56,8 @@ function RootLayoutNav() {
   const pathname = usePathname();
   const router = useRouter();
   useUserCacheSync();
+  // The spec book of every venue they work at, on this phone (hooks/useSpecBook.ts).
+  useSpecBooks();
   useOtaUpdates();
   // Signing in sends people to their mail for the code: a reload would lose the step.
   useHoldUpdates(segments[0] === 'auth' || segments[0] === 'onboarding');
