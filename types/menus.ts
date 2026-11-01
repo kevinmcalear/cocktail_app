@@ -38,6 +38,8 @@ export interface MenuSummary {
   plannedEndsAt: string | null;
   /** A list that ran, hidden from the bar page and drink pages (its members still read it). */
   hiddenAt: string | null;
+  /** What kind of list (menus.list_type): 'daily' is written each day (Menu-l-tonight). Missing in a cache from before it was read. */
+  listType?: string;
   itemIds: string[];
   /** Sections with fewer drinks than their rule's least (a draft's "1 section short"). */
   shortSections: number;

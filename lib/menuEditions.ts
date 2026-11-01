@@ -8,6 +8,8 @@ export interface MenuEditionDrink {
   /** A venue's own menu: the price it prints (its own for the drink, else the drink's), as typed, and the menu section it sits in. */
   price?: string | null;
   section?: string | null;
+  /** A daily list's drink on tonight for the first time (guests read "New"). */
+  new_today?: boolean;
 }
 
 /**
@@ -30,6 +32,10 @@ export interface MenuEdition {
   source_url: string | null;
   /** The venue's own menu, not a researched one. Not savable to a Collection yet. */
   from_venue?: boolean;
+  /** menus.list_type for a venue menu: 'daily' is the list written each day (Menu-l-tonight). */
+  list_type?: string | null;
+  /** A daily list: when today's was first written (menu_days), null before anyone has. */
+  written_at?: string | null;
 }
 
 /**

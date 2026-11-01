@@ -30,6 +30,7 @@ import { menuDrinkHref } from './MenuSections';
 import { SectionHead } from './SectionHead';
 import { MenuMoreSheet } from './MenuMoreSheet';
 import { ShareMenuSheet } from './ShareMenuSheet';
+import { DailyListPage } from './page/DailyListPage';
 import { MenuPageBanner, MenuPageGroup } from './page/MenuPageGroup';
 import { MenuPageHead } from './page/MenuPageHead';
 import { MenuPageRow, type PageRowView } from './page/MenuPageRow';
@@ -65,6 +66,7 @@ export function MenuScreen({ menuId }: { menuId: string }) {
     );
   }
   // Only a home menu reads your shelf (Ready, Need limes, the shopping list).
+  if (menu.barId && menu.listType === 'daily') return <DailyListPage menu={menu} />;
   return menu.barId ? <MenuPage menu={menu} shelf={null} /> : <HomeMenuPage menu={menu} />;
 }
 

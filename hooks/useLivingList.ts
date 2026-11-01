@@ -256,26 +256,3 @@ export function useListChanges(menuId: string) {
     }),
   };
 }
-
-/** A daily list's day: who wrote it and the names printed on it. */
-export function useMenuDay(menuId: string | null | undefined, day: string | null | undefined) {
-  return useQuery({
-    queryKey: ['living-list', menuId ?? '', 'menu-day', day ?? ''],
-    enabled: !!menuId && !!day,
-    queryFn: async () => {
-      const { data, error } = await supabase.from('menu_days').select('id, written_by, names, note').eq('menu_id', menuId!).eq('day', day!).maybeSingle();
-      if (error) throw error;
-      return data;
-    },
-  });
-}
-
-export function useSaveMenuDay(menuId: string) {
-  const client = useQueryClient();
-  return useMutation({
-    mutationFn: async ({ day, writtenBy, names, note }: { day: string; writtenBy: string; names: string | null; note: string | null }) =>
-      void (await check(supabase.from('menu_days').upsert({ menu_id: menuId, day, written_by: writtenBy, names, note }, { onConflict: 'menu_id,day' }))),
-    onSuccess: () => client.invalidateQueries({ queryKey: ['living-list', menuId] }),
-    onError: () => {},
-  });
-}
