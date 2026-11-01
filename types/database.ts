@@ -377,7 +377,6 @@ export type Database = {
       bars: {
         Row: {
           accent_light_color: string | null
-          accent_text: string | null
           created_at: string
           currency: string | null
           default_generic_ingredient_level: number
@@ -410,7 +409,6 @@ export type Database = {
         }
         Insert: {
           accent_light_color?: string | null
-          accent_text?: string | null
           created_at?: string
           currency?: string | null
           default_generic_ingredient_level?: number
@@ -443,7 +441,6 @@ export type Database = {
         }
         Update: {
           accent_light_color?: string | null
-          accent_text?: string | null
           created_at?: string
           currency?: string | null
           default_generic_ingredient_level?: number
@@ -6382,7 +6379,6 @@ export type Database = {
         }
         Returns: {
           accent_light_color: string | null
-          accent_text: string | null
           created_at: string
           currency: string | null
           default_generic_ingredient_level: number
@@ -7739,7 +7735,6 @@ export type Database = {
         }
         Returns: {
           accent_light_color: string | null
-          accent_text: string | null
           created_at: string
           currency: string | null
           default_generic_ingredient_level: number
