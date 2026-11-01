@@ -1,4 +1,4 @@
-import { useState, type ReactNode } from 'react';
+import type { ReactNode } from 'react';
 import { StyleSheet, View } from 'react-native';
 
 import { Body, Caption, DsText, PressableScale, useDs, type IconName } from '@/components/ds';
@@ -84,12 +84,6 @@ export function Prompt({ title, body, icon = 'sparkles', warn, actions = [], chi
       {children}
     </View>
   );
-}
-
-/** A prompt put away stays away for this page (state, not the draft: it comes back next time). */
-export function useDismissed() {
-  const [gone, setGone] = useState<readonly string[]>([]);
-  return { gone: (key: string) => gone.includes(key), dismiss: (key: string) => () => setGone((g) => [...g, key]) };
 }
 
 const styles = StyleSheet.create({
