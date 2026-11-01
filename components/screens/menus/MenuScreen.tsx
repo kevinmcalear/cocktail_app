@@ -15,6 +15,8 @@ import { useMyBar } from '@/hooks/useHomeBar';
 import { useShoppingEdit } from '@/hooks/useShoppingList';
 import { isOneNightMenu, menuStatus, newDrinkIds } from '@/lib/menus';
 import { menuShopping } from '@/lib/shoppingList';
+import type { ShelfMatch } from '@/lib/collectionStages';
+import type { MenuDetail } from '@/types/menus';
 
 import { GoLiveSheet } from './GoLiveSheet';
 import { HomeNightSheet } from './HomeNight';
@@ -44,21 +46,9 @@ export function MenuScreen({ menuId }: { menuId: string }) {
   const router = useRouter();
   const insets = useSafeAreaInsets();
   const gutter = useGutter();
-  const wide = useBreakpoint() !== 'phone';
-  const sidebar = useIsWideWeb();
-  const { venues } = useActiveVenue();
   const { data: menu, isLoading, error } = useMenu(menuId);
-  const [now] = useState(() => Date.now());
-  const [sheet, setSheet] = useState<'more' | 'night' | 'share' | 'publish' | null>(null);
-  const [open, setOpen] = useState<string | null>(null);
-  const [changing, setChanging] = useState<RowTarget | null>(null);
-  const lens = useMenuLens(menu);
-  const { data: venueMenus = [] } = useVenueMenus(menu?.barId ?? null);
-  const shelf = useMyBar();
-  const shopping = useShoppingEdit();
-
-  const back = () => (router.canGoBack() ? router.back() : router.replace('/menus/all'));
   if (!menu) {
+    const back = () => (router.canGoBack() ? router.back() : router.replace('/menus/all'));
     return (
       <View style={[styles.screen, styles.missing, { backgroundColor: ds.c.ground, paddingTop: insets.top + space.sm, paddingHorizontal: gutter }]}>
         <GlassButton icon="chevron.left" accessibilityLabel="Back" onPress={back} />
@@ -66,6 +56,39 @@ export function MenuScreen({ menuId }: { menuId: string }) {
       </View>
     );
   }
+  // Only a home menu reads your shelf (Ready, Need limes, the shopping list).
+  return menu.barId ? <MenuPage menu={menu} shelf={null} /> : <HomeMenuPage menu={menu} />;
+}
+
+function HomeMenuPage({ menu }: { menu: MenuDetail }) {
+  const router = useRouter();
+  const shelf = useMyBar();
+  const shopping = useShoppingEdit();
+  const drinks = menu.sections.flatMap((s) => s.drinks);
+  const toShopping = () => {
+    if (shelf.isLoading) return;
+    const adds = menuShopping(drinks, shelf.oneAway, shelf.twoAway).map((a) => ({ ...a, source: 'menu' as const }));
+    if (adds.length) shopping.add.mutate(adds);
+    router.push('/shopping' as Href);
+  };
+  return <MenuPage menu={menu} shelf={shelf.isLoading ? null : { match: shelf, toShopping }} />;
+}
+
+function MenuPage({ menu, shelf }: { menu: MenuDetail; shelf: { match: ShelfMatch; toShopping: () => void } | null }) {
+  const ds = useDs();
+  const router = useRouter();
+  const insets = useSafeAreaInsets();
+  const gutter = useGutter();
+  const wide = useBreakpoint() !== 'phone';
+  const sidebar = useIsWideWeb();
+  const { venues } = useActiveVenue();
+  const [now] = useState(() => Date.now());
+  const [sheet, setSheet] = useState<'more' | 'night' | 'share' | 'publish' | null>(null);
+  const [open, setOpen] = useState<string | null>(null);
+  const [changing, setChanging] = useState<RowTarget | null>(null);
+  const lens = useMenuLens(menu);
+  const { data: venueMenus = [] } = useVenueMenus(menu.barId);
+  const back = () => (router.canGoBack() ? router.back() : router.replace('/menus/all'));
 
   const status = menuStatus(menu, now);
   const others = venueMenus.filter((m) => m.barId === menu.barId && m.id !== menu.id);
@@ -79,7 +102,7 @@ export function MenuScreen({ menuId }: { menuId: string }) {
     venueName: venues.find((v) => v.id === menu.barId)?.name ?? null,
     onNow: live ? { name: live.name, itemIds: new Set(live.itemIds) } : null,
     newIds: menu.barId && previous.length ? newDrinkIds(drinks.map((d) => d.id), previous) : undefined,
-    shelf: lens.lens === 'home' && !shelf.isLoading ? shelf : null,
+    shelf: lens.lens === 'home' ? (shelf?.match ?? null) : null,
     day,
     now,
   });
@@ -102,12 +125,7 @@ export function MenuScreen({ menuId }: { menuId: string }) {
     publish: () => setSheet('publish'),
     replaces: () => (live ? go(`/menus/${live.id}`) : undefined),
     night: () => setSheet('night'),
-    shopping: () => {
-      if (shelf.isLoading) return;
-      const adds = menuShopping(drinks, shelf.oneAway, shelf.twoAway).map((a) => ({ ...a, source: 'menu' as const }));
-      if (adds.length) shopping.add.mutate(adds);
-      go('/shopping');
-    },
+    shopping: () => shelf?.toShopping(),
   };
 
   const items: Item[] = model.sections.flatMap((s) => [
@@ -163,6 +181,8 @@ export function MenuScreen({ menuId }: { menuId: string }) {
               description={menu.description}
               onBack={sidebar ? null : back}
               onShare={lens.lens === 'home' ? null : share}
+              // Edit is the one action for the menu team; a draft's is Publish and a home menu's Share, so theirs is a glass pencil.
+              onEdit={(team && draft) || lens.lens === 'home' ? () => go(`/menus/${menu.id}/edit`) : null}
               pill={lens.lens === 'home' ? { label: 'Share', onPress: share } : team && !draft && status !== 'previous' ? { label: 'Edit', onPress: () => go(`/menus/${menu.id}/edit`) } : null}
               bleed={gutter}
             />
@@ -183,7 +203,7 @@ export function MenuScreen({ menuId }: { menuId: string }) {
           </Caption>
         </View>
       ) : null}
-      {changing ? <RowChanges menu={menu} target={changing} onClose={() => setChanging(null)} /> : null}
+      {changing ? <RowChanges menu={menu} rows={lens.rows} target={changing} onClose={() => setChanging(null)} /> : null}
       {sheet === 'night' ? <HomeNightSheet menu={menu} onClose={() => setSheet(null)} /> : null}
       {sheet === 'share' ? <ShareMenuSheet menu={menu} onClose={() => setSheet(null)} /> : null}
       {sheet === 'more' ? <MenuMoreSheet menu={menu} status={status} visible onClose={() => setSheet(null)} onNight={home ? () => setSheet('night') : undefined} /> : null}

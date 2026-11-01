@@ -26,6 +26,8 @@ interface MenuPageHeadProps {
   /** Back is hidden on the wide web, where the sidebar is the way around. */
   onBack: (() => void) | null;
   onShare: (() => void) | null;
+  /** A glass pencil, when Edit isn't the page's one action (a draft, a home menu). */
+  onEdit?: (() => void) | null;
   /** The one prominent action at the top: Edit, or Share on a home menu. */
   pill: { label: string; onPress: () => void } | null;
   /** The page's side margin: the hero runs out to the edges. */
@@ -38,7 +40,7 @@ interface MenuPageHeadProps {
  * cover photo, or nothing yet), glass Back and Share, then the tag and
  * eyebrow, the name and its line (Menu-page).
  */
-export function MenuPageHead({ heroIds, coverUrl, name, ink, quiet, tag, eyebrow, description, onBack, onShare, pill, bleed, children }: MenuPageHeadProps) {
+export function MenuPageHead({ heroIds, coverUrl, name, ink, quiet, tag, eyebrow, description, onBack, onShare, onEdit, pill, bleed, children }: MenuPageHeadProps) {
   const ds = useDs();
   const photo = !!coverUrl && ink === 'colour';
   const drawn = !photo && heroIds.length > 0;
@@ -59,6 +61,7 @@ export function MenuPageHead({ heroIds, coverUrl, name, ink, quiet, tag, eyebrow
       <View style={styles.bar}>
         {onBack ? <GlassButton icon="chevron.left" accessibilityLabel="Back" onPress={onBack} onMedia={photo} /> : <View />}
         <View style={styles.barEnd}>
+          {onEdit ? <GlassButton icon="pencil" accessibilityLabel="Edit" onPress={onEdit} onMedia={photo} /> : null}
           {onShare ? <GlassButton icon="square.and.arrow.up" accessibilityLabel="Share" onPress={onShare} onMedia={photo} /> : null}
           {pill ? (
             <PressableScale role="button" accessibilityLabel={pill.label} onPress={pill.onPress} style={[styles.pill, { backgroundColor: ds.c.ink }]}>

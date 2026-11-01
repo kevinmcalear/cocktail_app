@@ -2,7 +2,7 @@ import { useRouter } from 'expo-router';
 import type { ReactNode } from 'react';
 import { StyleSheet, View } from 'react-native';
 
-import { Caption, DrinkImage, DsText, Headline, PressableScale, useDs } from '@/components/ds';
+import { Caption, DrinkImage, DsText, Headline, PressableScale, Tag, useDs } from '@/components/ds';
 import { IconSymbol } from '@/components/ui/icon-symbol';
 import { displayFaces, displayName, font, radius, space, STATUS } from '@/constants/tokens';
 import { readableAccent } from '@/lib/color';
@@ -154,8 +154,10 @@ interface MenuRowFrameProps {
   thumb: ReactNode;
   name: string;
   line: string;
-  /** A draft: a dashed edge and its line in amber. */
+  /** A draft: its line in amber (on a card row, a dashed edge too). */
   dashed?: boolean;
+  /** A ruled row, as the Menus list draws it (Menu-shelf); otherwise the card row other lists use. */
+  ruled?: boolean;
   trailing?: ReactNode;
 }
 
@@ -164,7 +166,7 @@ interface MenuRowFrameProps {
  * face, one line, then what ends it. Your menus, and bar menus you saved or
  * collected, all draw through it.
  */
-export function MenuRowFrame({ label, onPress, thumb, name, line, dashed, trailing }: MenuRowFrameProps) {
+export function MenuRowFrame({ label, onPress, thumb, name, line, dashed, ruled, trailing }: MenuRowFrameProps) {
   const ds = useDs();
   return (
     <PressableScale
@@ -172,7 +174,11 @@ export function MenuRowFrame({ label, onPress, thumb, name, line, dashed, traili
       disabled={!onPress}
       accessibilityLabel={label}
       onPress={onPress}
-      style={[styles.row, { borderTopColor: ds.c.lineStrong }]}
+      style={
+        ruled
+          ? [styles.ruled, { borderTopColor: ds.c.lineStrong }]
+          : [styles.row, dashed ? { borderColor: ds.c.lineStrong, borderStyle: 'dashed' } : { borderColor: ds.c.line, backgroundColor: ds.c.surface }]
+      }
     >
       {thumb}
       <View style={styles.flex}>
@@ -194,7 +200,7 @@ export function MenuRowFrame({ label, onPress, thumb, name, line, dashed, traili
  * draft is dashed, its line in amber saying what's missing. `note` adds to
  * the line, like how many of the drinks you can make at home.
  */
-export function MenuListRow({ menu, now, note }: { menu: MenuSummary; now: number; note?: string }) {
+export function MenuListRow({ menu, now, note, ruled }: { menu: MenuSummary; now: number; note?: string; ruled?: boolean }) {
   const router = useRouter();
   const status = statusOf(menu, now);
   const draft = status === 'draft';
@@ -207,6 +213,8 @@ export function MenuListRow({ menu, now, note }: { menu: MenuSummary; now: numbe
       name={menu.name}
       line={line}
       dashed={draft}
+      ruled={ruled}
+      trailing={!ruled && status === 'on' ? <Tag label="On now" tone="success" dot /> : undefined}
     />
   );
 }
@@ -224,6 +232,7 @@ export function MenuPastLine({ menu }: { menu: MenuSummary }) {
       thumb={null}
       name={menu.name}
       line={count}
+      ruled
       trailing={
         <Caption tone="muted" style={styles.mono}>
           {dates}
@@ -255,7 +264,17 @@ const styles = StyleSheet.create({
   cover: { borderRadius: radius.card, overflow: 'hidden', borderCurve: 'continuous' },
   cardBody: { flexDirection: 'row', alignItems: 'center', gap: space.md },
   flex: { flex: 1, minWidth: 0, gap: 2 },
-  row: { flexDirection: 'row', alignItems: 'center', gap: space.md, paddingVertical: space.md, borderTopWidth: StyleSheet.hairlineWidth },
+  row: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: space.md,
+    padding: space.sm,
+    paddingRight: space.lg - 2,
+    borderRadius: radius.card,
+    borderWidth: 1,
+    borderCurve: 'continuous',
+  },
+  ruled: { flexDirection: 'row', alignItems: 'center', gap: space.md, paddingVertical: space.md, borderTopWidth: StyleSheet.hairlineWidth },
   thumb: { width: THUMB, height: THUMB, borderRadius: radius.control, overflow: 'hidden', borderCurve: 'continuous' },
   empty: { alignItems: 'center', justifyContent: 'center' },
   fillThumb: { width: THUMB, height: THUMB },

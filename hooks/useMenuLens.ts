@@ -64,6 +64,8 @@ export interface MenuLensData {
   mine: Map<string, string[]>;
   /** "19% cost" per item id, for the menu team. */
   cost: Map<string, string>;
+  /** The viewer may see costs (the costs permission, on the menu team). */
+  costs: boolean;
   /** The average pour cost, "20%". */
   averageCost: string | null;
   /** The list's rows (planned and waiting drinks too), for the menu team. */
@@ -116,7 +118,7 @@ export function useMenuLens(menu: MenuDetail | null | undefined): MenuLensData {
   }
   const averageCost = pcts.length ? `${Math.round(pcts.reduce((a, b) => a + b, 0) / pcts.length)}%` : null;
 
-  return { lens, notes, allergens, mine, cost, averageCost, rows };
+  return { lens, notes, allergens, mine, cost, costs, averageCost, rows };
 }
 
 /** "Egg" for a guest's row mark, the short form of the label. */

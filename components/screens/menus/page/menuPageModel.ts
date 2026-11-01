@@ -48,7 +48,8 @@ interface Input {
 
 export function menuPageModel({ menu, status, lens: L, venueName, onNow, newIds, shelf, day, now }: Input): MenuPageModel {
   const { lens } = L;
-  const draft = status === 'draft';
+  // An undated home menu is an idea, not a draft: it isn't published, so it's never pencil.
+  const draft = status === 'draft' && !!menu.barId;
   const past = status === 'previous';
   const home = lens === 'home' || !menu.barId;
   const team = isMenuTeam(lens);
@@ -105,8 +106,8 @@ export function menuPageModel({ menu, status, lens: L, venueName, onNow, newIds,
     const on = status === 'on' ? [dates ?? 'on now', menu.endsAt ? `ends ${day(menu.endsAt)}` : 'no end date'].join(' · ') : (dates ?? 'No date');
     group = [
       { label: 'On', value: on, action: 'dates' },
-      ...(L.averageCost ? [{ label: 'Costing', value: `average ${L.averageCost}`, action: 'costing' as const }] : []),
-      ...(lens === 'creator' ? [{ label: 'Run sheet', value: '', action: 'runSheet' as const }] : []),
+      ...(L.costs ? [{ label: 'Costing', value: L.averageCost ? `average ${L.averageCost}` : 'Not costed yet', action: 'costing' as const }] : []),
+      ...(lens === 'creator' || lens === 'admin' ? [{ label: 'Run sheet', value: '', action: 'runSheet' as const }] : []),
       ...(lens === 'admin' ? [{ label: 'On the bar page', value: 'Shown', action: 'barPage' as const }, { label: 'End this menu', value: '', action: 'end' as const }] : []),
     ];
   }
@@ -121,7 +122,7 @@ export function menuPageModel({ menu, status, lens: L, venueName, onNow, newIds,
   if (past && !isStaffLens(lens)) banner = { text: 'This menu has ended', aside: onNow ? 'What’s on now ›' : null, warn: false, toNow: !!onNow };
 
   // --- rows ---
-  const stateOf = new Map(L.rows.map((r) => [r.itemId, r]));
+  const stateOf = new Map(L.rows.map((r) => [`${r.sectionId}:${r.itemId}`, r]));
   const sections = menu.sections.map((s) => ({
     id: s.id,
     name: s.name,
@@ -147,7 +148,7 @@ export function menuPageModel({ menu, status, lens: L, venueName, onNow, newIds,
           endTone = reach.ready ? 'green' : 'amber';
         }
       }
-      const row = team ? stateOf.get(d.id) : undefined;
+      const row = team ? stateOf.get(`${s.id}:${d.id}`) : undefined;
       const mark = row ? rowStateMark(row.state, row.onFrom, row.offAt, day) : null;
       if (mark) flag = { label: mark, tone: row!.state.startsWith('waiting') ? 'amber' : 'quiet' };
       return {

@@ -67,7 +67,7 @@ export function MenuGroupList({ menus, now, canBuild, opensAt = 'Drink Creator',
       {comingUp.length ? (
         <MenuGroup title="Coming up">
           {comingUp.map((m) => (
-            <MenuListRow key={m.id} menu={m} now={now} note={note?.(m)} />
+            <MenuListRow key={m.id} menu={m} now={now} note={note?.(m)} ruled />
           ))}
         </MenuGroup>
       ) : null}
@@ -75,7 +75,7 @@ export function MenuGroupList({ menus, now, canBuild, opensAt = 'Drink Creator',
         canBuild ? (
           <MenuGroup title="Drafts" dot="amber" aside={home ? undefined : 'Your team only'}>
             {g.draft.map((m) => (
-              <MenuListRow key={m.id} menu={m} now={now} note={note?.(m)} />
+              <MenuListRow key={m.id} menu={m} now={now} note={note?.(m)} ruled />
             ))}
           </MenuGroup>
         ) : (
@@ -92,14 +92,14 @@ export function MenuGroupList({ menus, now, canBuild, opensAt = 'Drink Creator',
             ))}
           </View>
           {pastShown !== undefined && onAllPast && g.previous.length > 0 ? (
-            <MenuRowFrame label={`All past menus, ${g.previous.length}`} onPress={onAllPast} thumb={null} name={home ? 'All past nights' : 'All past menus'} line={`${g.previous.length} since ${new Date(g.previous[g.previous.length - 1].startsAt ?? g.previous[g.previous.length - 1].createdAt).getFullYear()}`} />
+            <MenuRowFrame ruled label={`All past menus, ${g.previous.length}`} onPress={onAllPast} thumb={null} name={home ? 'All past nights' : 'All past menus'} line={`${g.previous.length} since ${new Date(g.previous[g.previous.length - 1].startsAt ?? g.previous[g.previous.length - 1].createdAt).getFullYear()}`} />
           ) : null}
         </MenuGroup>
       ) : null}
       {g.rnd.length && canBuild ? (
         <MenuGroup title="R&D">
           {g.rnd.map((m) => (
-            <MenuListRow key={m.id} menu={m} now={now} note={note?.(m)} />
+            <MenuListRow key={m.id} menu={m} now={now} note={note?.(m)} ruled />
           ))}
         </MenuGroup>
       ) : null}

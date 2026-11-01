@@ -32,16 +32,17 @@ type Step = { kind: 'menu' } | { kind: 'pick' } | { kind: 'when'; swapTo: MenuDr
  * by someone who may not change this list waits for approval (the database
  * decides); someone who may approves or turns it down here.
  */
-export function RowChanges({ menu, target, onClose }: { menu: MenuDetail; target: RowTarget; onClose: () => void }) {
+export function RowChanges({ menu, rows, target, onClose }: { menu: MenuDetail; rows: ListRow[]; target: RowTarget; onClose: () => void }) {
   const toast = useToast();
   const changes = useListChanges(menu.id);
-  const may = useMayChangeList(menu.id).data ?? false;
-  const library = useMenuLibrary(menu.barId).data ?? [];
+  // Unknown until it loads: nothing is said about approval, and approving waits.
+  const may = useMayChangeList(menu.id).data;
   const [step, setStep] = useState<Step>({ kind: 'menu' });
+  const library = useMenuLibrary(menu.barId, step.kind === 'pick').data ?? [];
   const { drink, row } = target;
   const section = menu.sections.find((s) => s.id === target.sectionId);
   const done = (title: string) => {
-    toast.show({ title: may ? title : `${title}: waiting for approval` });
+    toast.show({ title: may === false ? `${title}: waiting for approval` : title });
     onClose();
   };
   const failed = (e: Error) => toast.show({ title: e.message || 'Couldn’t change the list. Try again.' });
@@ -81,7 +82,7 @@ export function RowChanges({ menu, target, onClose }: { menu: MenuDetail; target
           { label: 'From tomorrow', icon: 'calendar', onPress: () => at(tomorrow()) },
         ]
       : row.state === 'waiting_on' || row.state === 'waiting_off'
-        ? may
+        ? may === true
           ? [
               { label: 'Approve', icon: 'checkmark', onPress: () => changes.approve.mutate(row.id, { onSuccess: () => done(`${drink.name} approved`), onError: failed }) },
               {
@@ -97,7 +98,17 @@ export function RowChanges({ menu, target, onClose }: { menu: MenuDetail; target
               {
                 label: row.state === 'coming' ? 'Don’t put it on' : 'Keep it on',
                 icon: 'arrow.uturn.backward',
-                onPress: () => changes.turnDown.mutate({ rowId: row.id, waiting: row.state === 'coming' ? 'on' : 'off' }, { onSuccess: () => done(`${drink.name} kept as it was`), onError: failed }),
+                onPress: () => {
+                  // Taking back a planned swap keeps the drink it was swapping out, too.
+                  const out = row.state === 'coming' && row.replacesItemId ? rows.find((r) => r.itemId === row.replacesItemId && r.sectionId === row.sectionId && r.state === 'going') : undefined;
+                  changes.turnDown.mutate(
+                    { rowId: row.id, waiting: row.state === 'coming' ? 'on' : 'off' },
+                    {
+                      onSuccess: () => (out ? changes.turnDown.mutate({ rowId: out.id, waiting: 'off' }, { onSuccess: () => done('Swap taken back'), onError: failed }) : done(`${drink.name} kept as it was`)),
+                      onError: failed,
+                    }
+                  );
+                },
               },
             ]
           : [
