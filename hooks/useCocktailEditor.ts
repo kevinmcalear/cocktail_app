@@ -536,6 +536,8 @@ export function useCocktailEditor(id: string, { enabled = true }: { enabled?: bo
 
             await queryClient.invalidateQueries({ queryKey: ["cocktail", id] });
             await queryClient.invalidateQueries({ queryKey: ["cocktails"] });
+            // The venue's spec book holds a copy the drink page opens from (and the phone keeps it between launches); this save isn't a mutation, so nothing else refreshes it.
+            await queryClient.invalidateQueries({ queryKey: ["spec-book"] });
             // The database redraws it in the chosen glass as the row saves.
             await queryClient.invalidateQueries({ queryKey: ["item-sketch", id] });
             await queryClient.invalidateQueries({ queryKey: ["drink-glass-model", id] });
