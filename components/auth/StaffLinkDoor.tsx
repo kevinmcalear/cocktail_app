@@ -20,17 +20,26 @@ export function StaffLinkDoor({ slug, barId, brand, onJoined, fallback }: { slug
   const { signOut } = useAuth();
   const door = useStaffLinkDoor(slug, true);
   const mine = useMyJoinRequest(barId);
-  const join = useJoinByStaffLink(slug);
+  const join = useJoinByStaffLink(slug, onJoined);
   const takeBack = useTakeBackJoinRequest();
   const [now] = useState(Date.now);
+  const done = () => router.replace('/');
 
   const d = door.data;
-  // Nothing to show until both are read; a failed read keeps the old words and Try again.
+  // Nothing to show until both are read; a failed read says so, with Try again.
   if (door.isPending || mine.isPending) return fallback;
-  if (door.isError || mine.isError || !d) {
+  if (door.isError || mine.isError) {
     return (
       <DoorPage brand={brand} title="Couldn’t open this link" body="Check your connection and try again.">
         <Button label="Try again" variant="ink" size="lg" onPress={() => void Promise.all([door.refetch(), mine.refetch()])} />
+      </DoorPage>
+    );
+  }
+  // The slug changed between reading the bar and reading its door.
+  if (!d) {
+    return (
+      <DoorPage brand={brand} title="Link not found" body="This staff link doesn't match a venue. Ask your manager for a new one.">
+        <Button label="Done" variant="secondary" size="lg" onPress={done} />
       </DoorPage>
     );
   }
@@ -39,17 +48,9 @@ export function StaffLinkDoor({ slug, barId, brand, onJoined, fallback }: { slug
   const state = doorState({ linkOn: d.link_on, approve: d.approve, asked: !!ask });
   const lines = doorLines(state, { bar: brand.name, me: d.me, admin: d.admin_name, admins: d.admin_count ?? 0, role: d.join_role, askedAt: ask?.created_at ?? null, now });
   const busy = join.isPending || takeBack.isPending;
-  const done = () => router.replace('/');
+  const asking = state === 'ask' || state === 'join';
 
-  const primary =
-    state === 'ask' || state === 'join'
-      ? () =>
-          join.mutate(undefined, {
-            onSuccess: (result) => {
-              if (result === 'joined') onJoined();
-            },
-          })
-      : done;
+  const primary = asking ? () => join.mutate() : done;
   const secondary = state === 'asked' ? () => takeBack.mutate(barId) : () => void signOut();
 
   return (
@@ -57,10 +58,11 @@ export function StaffLinkDoor({ slug, barId, brand, onJoined, fallback }: { slug
       brand={brand}
       title={lines.title}
       body={lines.body}
-      alert={join.error?.message ?? takeBack.error?.message ?? null}
+      // Only the error of what this door offers: an old one doesn't follow them to the next state.
+      alert={(asking ? join.error?.message : state === 'asked' ? takeBack.error?.message : null) ?? null}
       note={lines.note ? { icon: lines.noteIcon, text: lines.note } : null}
     >
-      {state === 'ask' || state === 'join' ? (
+      {asking ? (
         <Button label={lines.primary} icon="person.badge.plus" variant="ink" size="lg" disabled={busy} onPress={primary} />
       ) : (
         <Button label={lines.primary} variant="secondary" size="lg" onPress={primary} />

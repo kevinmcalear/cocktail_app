@@ -80,21 +80,30 @@ export function useStaffLinkDoor(slug: string, enabled: boolean) {
   });
 }
 
-/** Ask through the staff link, or join straight in when nobody approves (join_by_staff_link). */
-export function useJoinByStaffLink(slug: string) {
+/**
+ * Ask through the staff link, or join straight in when nobody approves
+ * (join_by_staff_link). onJoined runs here, not in mutate(): the fresh venues
+ * make the door unmount, and mutate()'s own callbacks die with it.
+ */
+export function useJoinByStaffLink(slug: string, onJoined: () => void) {
   const qc = useQueryClient();
+  const refresh = async () => {
+    await qc.invalidateQueries({ queryKey: ['join-request'] });
+    await qc.invalidateQueries({ queryKey: ['staff-link-door'] });
+    await qc.invalidateQueries({ queryKey: ['bars'] });
+  };
   return useMutation({
     mutationFn: async (): Promise<'asked' | 'joined'> => {
       const { data, error } = await supabase.rpc('join_by_staff_link', { p_slug: slug });
       if (error) throw new Error(wordy(error));
       return data === 'joined' ? 'joined' : 'asked';
     },
-    onSettled: async () => {
-      await qc.invalidateQueries({ queryKey: ['join-request'] });
-      await qc.invalidateQueries({ queryKey: ['staff-link-door'] });
-      await qc.invalidateQueries({ queryKey: ['bars'] });
+    onSuccess: async (result) => {
+      await refresh();
+      if (result === 'joined') onJoined();
     },
-    onError: () => {},
+    // The link may have changed under them (turned off, approval off): read it again.
+    onError: () => void refresh(),
   });
 }
 
