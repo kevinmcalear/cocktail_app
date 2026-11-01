@@ -1,9 +1,9 @@
 import { Image } from 'expo-image';
-import type { ComponentRef, Ref } from 'react';
+import { useEffect, useState, type ComponentRef, type Ref } from 'react';
 import { StyleSheet, Text, View } from 'react-native';
 
-import { drawingUri, useDisplayFaces } from '@/components/ds';
-import { font } from '@/constants/tokens';
+import { drawingUri, loadFace, useDisplayFaces } from '@/components/ds';
+import { font, type DisplayFace } from '@/constants/tokens';
 import type { PaperEl, PaperPage as Page } from '@/lib/paper/page';
 import type { SketchInputs } from '@/lib/sketch/types';
 
@@ -19,6 +19,8 @@ interface PaperPageProps {
   sketches: Record<string, SketchInputs | null | undefined>;
   /** The page's own view, to take its picture (lib/paper/picture). */
   ref?: Ref<ComponentRef<typeof View>>;
+  /** Whether its face and drawings are in, so a picture taken now is the page as laid out. */
+  onPainted?: (painted: boolean) => void;
 }
 
 /**
@@ -27,8 +29,30 @@ interface PaperPageProps {
  * is the same on all four platforms. Names in the page's display face, the
  * rest in the system font, drawings from lib/sketch as the app draws them.
  */
-export function PaperPage({ page, unit, sketches, ref }: PaperPageProps) {
+export function PaperPage({ page, unit, sketches, ref, onPainted }: PaperPageProps) {
   const face = useDisplayFaces([page.displayFace]);
+  // loadFace also settles when a face can't load: its text stays in Redaction and the page can still be sent.
+  const [settled, setSettled] = useState<DisplayFace | null>(null);
+  useEffect(() => {
+    let current = true;
+    void loadFace(page.displayFace).then(() => {
+      if (current) setSettled(page.displayFace);
+    });
+    return () => {
+      current = false;
+    };
+  }, [page.displayFace]);
+
+  const uris = page.els.map((el) => {
+    const inputs = el.k === 'drawing' ? sketches[el.itemId] : null;
+    return el.k === 'drawing' && inputs ? drawingUri(inputs, el.itemId, el.night) : null;
+  });
+  // A drawing that can't paint counts too, or the page could never be sent.
+  const [arrived, setArrived] = useState<readonly string[]>([]);
+  const arrive = (uri: string) => setArrived((a) => (a.includes(uri) ? a : [...a, uri]));
+  const painted = settled === page.displayFace && uris.every((u) => !u || arrived.includes(u));
+  useEffect(() => onPainted?.(painted), [painted, onPainted]);
+
   return (
     <View
       ref={ref}
@@ -38,21 +62,21 @@ export function PaperPage({ page, unit, sketches, ref }: PaperPageProps) {
       style={[styles.page, { width: page.w * unit, height: page.h * unit, backgroundColor: page.ground }]}
     >
       {page.els.map((el, i) => (
-        <PaperThing key={i} el={el} unit={unit} sketches={sketches} family={face(page.displayFace)} />
+        <PaperThing key={i} el={el} unit={unit} uri={uris[i]} onArrive={arrive} family={face(page.displayFace)} />
       ))}
     </View>
   );
 }
 
-function PaperThing({ el, unit, sketches, family }: { el: PaperEl; unit: number; sketches: PaperPageProps['sketches']; family: string }) {
+function PaperThing({ el, unit, uri, onArrive, family }: { el: PaperEl; unit: number; uri: string | null; onArrive: (uri: string) => void; family: string }) {
   if (el.k === 'box') {
     return <View aria-hidden style={[styles.at, { left: el.x * unit, top: el.y * unit, width: el.w * unit, height: el.h * unit, backgroundColor: el.fill, borderRadius: (el.r ?? 0) * unit }]} />;
   }
   if (el.k === 'drawing') {
-    const inputs = sketches[el.itemId];
-    if (!inputs) return null;
+    if (!uri) return null;
     const box = { left: el.x * unit, top: el.y * unit, width: el.s * unit, height: el.s * unit };
-    return <Image source={{ uri: drawingUri(inputs, el.itemId, el.night) }} style={[styles.at, box]} contentFit="contain" cachePolicy="memory" accessible={false} />;
+    // Eager: on the web a lazy image out of view waits, and the picture needs every drawing.
+    return <Image source={{ uri }} style={[styles.at, box]} contentFit="contain" cachePolicy="memory" loading="eager" accessible={false} onLoad={() => onArrive(uri)} onError={() => onArrive(uri)} />;
   }
   const size = el.size * unit;
   const type = el.face === 'display' ? { fontFamily: family } : WEIGHT[el.weight ?? '400'];
@@ -60,6 +84,7 @@ function PaperThing({ el, unit, sketches, family }: { el: PaperEl; unit: number;
     <Text
       aria-hidden
       numberOfLines={1}
+      allowFontScaling={false}
       style={[
         styles.at,
         type,

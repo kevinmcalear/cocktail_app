@@ -67,8 +67,9 @@ export function menuPoster(input: MenuPosterInput, size: PosterSize): PaperPage 
   const els: PaperEl[] = [];
 
   const panelH = story ? 270 : 200;
-  els.push({ k: 'box', x: GUTTER, y: GUTTER, w: w - 2 * GUTTER, h: panelH, fill: posterPaper.panel, r: 16 });
   const drawn = input.drinks.filter((d) => d.drawn).slice(0, 3);
+  // With nothing drawn yet there's no panel: an empty one reads as broken, so the words sit higher up instead.
+  if (drawn.length) els.push({ k: 'box', x: GUTTER, y: GUTTER, w: w - 2 * GUTTER, h: panelH, fill: posterPaper.panel, r: 16 });
   // The panel is light in both themes, so the drawings are painted by day.
   const k = story ? 1.05 : 1;
   const lift = GUTTER + (panelH - 200 * k) / 2;
@@ -78,12 +79,12 @@ export function menuPoster(input: MenuPosterInput, size: PosterSize): PaperPage 
     els.push({ k: 'drawing', x: w / 2 + c.dx * k, y: lift + c.dy * k, s: c.s * k, itemId: order[i].id, night: false } satisfies PaperDrawing);
   });
 
-  let y = GUTTER + panelH + 16;
+  let y = drawn.length ? GUTTER + panelH + 16 : story ? 96 : 120;
   if (input.eyebrow) {
     els.push(eyebrow(input.eyebrow, y, w, ink));
     y += 22;
   }
-  const titleSize = fitSize(input.name, 58, w - 2 * GUTTER);
+  const titleSize = fitSize(input.name, 58, w - 2 * GUTTER, 'display', 0, 12);
   els.push({ k: 'text', x: GUTTER, y, w: w - 2 * GUTTER, t: input.name, size: titleSize, face: 'display', color: ink, align: 'center' });
   y += titleSize * 1.15 + 18;
 

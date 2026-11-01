@@ -4,6 +4,7 @@ import assert from 'node:assert/strict';
 import { BRAND } from '../../constants/brand';
 import { posterPaper } from '../../constants/tokens';
 import { contrast } from '../color';
+import { topThree } from '../ranking';
 import { fitSize, POSTER_SIZES, type PaperPage, type PaperText } from './page';
 import { menuPoster, topThreePoster } from './poster';
 
@@ -54,6 +55,9 @@ const long = menuPoster({ ...winter, drinks: Array.from({ length: 30 }, (_, i) =
 assert.ok(inside(long));
 assert.match(texts(long).at(-2)!.t, /^and \d+ more$/);
 assert.equal(drawings(long).length, 0);
+// Nothing drawn yet: no empty panel.
+assert.ok(!long.els.some((e) => e.k === 'box'));
+assert.equal(menuPoster(winter, 'story').els.filter((e) => e.k === 'box').length, 1);
 
 // A light bar colour takes dark ink; a home menu sits on the paper of its theme.
 const amber = menuPoster({ ...winter, accent: '#E4B062' }, 'square');
@@ -64,6 +68,10 @@ assert.equal(menuPoster({ ...winter, accent: null, eyebrow: null, scheme: 'dark'
 // A long name is set smaller to fit, never under its floor.
 assert.equal(fitSize('Winter', 58, 328), 58);
 assert.ok(fitSize('The Long Winter Menu of Little Rye', 58, 328) < 58);
+// A menu's long name is sized to its one line, not cut off.
+const title50 = 'A very long menu name indeed'.repeat(2).slice(0, 50);
+const longTitle = texts(menuPoster({ ...winter, name: title50 }, 'square')).find((t) => t.t === title50)!;
+assert.ok(longTitle.size * 0.48 * title50.length <= longTitle.w);
 
 // Top three: a column each, drawn by night in the dark.
 const top = topThreePoster(
@@ -94,5 +102,10 @@ assert.ok(inside(one));
 assert.equal(texts(one)[0].t, 'MY BEST MARTINIS');
 const pic = drawings(one)[0];
 assert.ok(pic.k === 'drawing' && Math.abs(pic.x + pic.s / 2 - one.w / 2) < 1);
+
+// A top three skips what they disliked, and stops at three.
+const entries = (['loved', 'fine', 'disliked', 'loved'] as const).map((sentiment, i) => ({ sentiment, i }));
+assert.deepEqual(topThree(entries).map((e) => e.i), [0, 1, 3]);
+assert.deepEqual(topThree([{ sentiment: 'disliked' as const }]), []);
 
 console.log('poster checks passed');

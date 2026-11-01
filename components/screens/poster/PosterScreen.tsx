@@ -1,6 +1,6 @@
 import * as Burnt from 'burnt';
 import { useRouter } from 'expo-router';
-import { useRef, useState, type ComponentRef } from 'react';
+import { useEffect, useRef, useState, type ComponentRef } from 'react';
 import { PixelRatio, Platform, StyleSheet, useWindowDimensions, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
@@ -9,7 +9,7 @@ import { PaperPage } from '@/components/paper/PaperPage';
 import { layout, radius, space } from '@/constants/tokens';
 import { showMessage } from '@/lib/dialogs';
 import { POSTER_PIXELS, type PosterSize } from '@/lib/paper/page';
-import { sendPicture } from '@/lib/paper/picture';
+import { preparePicture, sendPicture } from '@/lib/paper/picture';
 
 import { useMenuPoster, useTopThreePoster, type PosterData } from './posterData';
 
@@ -52,13 +52,20 @@ function PosterFrame({ size, onSize, data }: { size: PosterSize; onSize: (s: Pos
   const window = useWindowDimensions();
   const page = useRef<ComponentRef<typeof View>>(null);
   const [busy, setBusy] = useState<'save' | 'share' | null>(null);
+  const [painted, setPainted] = useState(false);
+
+  // Any change to what's drawn draws the picture ahead again (the web; phones take it on the tap).
+  const stamp = data.page ? JSON.stringify(data.page) : '';
+  useEffect(() => {
+    if (stamp && data.ready && painted && page.current) preparePicture(page.current);
+  }, [stamp, data.ready, painted]);
 
   const close = () => (router.canGoBack() ? router.back() : router.replace('/'));
   const send = async (action: 'save' | 'share') => {
     if (!page.current || !data.page) return;
     setBusy(action);
     try {
-      const result = await sendPicture(page.current, data.page, action, data.title);
+      const result = await sendPicture(page.current, action, data.title);
       if (result === 'saved') Burnt.toast({ title: Platform.OS === 'web' ? 'Saved' : 'Saved to Photos', preset: 'done', duration: 2 });
     } catch {
       showMessage('Couldn’t make the picture', 'Try again in a moment.');
@@ -79,13 +86,13 @@ function PosterFrame({ size, onSize, data }: { size: PosterSize; onSize: (s: Pos
     body = (
       <View style={[styles.preview, { width: PAGE_POINTS * scale, height: data.page.h * unit * scale }]}>
         <View style={{ transform: [{ scale }], transformOrigin: 'left top' }}>
-          <PaperPage ref={page} page={data.page} unit={unit} sketches={data.sketches} />
+          <PaperPage ref={page} page={data.page} unit={unit} sketches={data.sketches} onPainted={setPainted} />
         </View>
       </View>
     );
   }
 
-  const off = !data.ready || !!busy;
+  const off = !data.ready || !painted || !!busy;
   return (
     <View style={[styles.screen, { backgroundColor: ds.c.ground, paddingTop: insets.top + space.sm, paddingBottom: insets.bottom + space.lg }]}>
       <View style={[styles.bar, { paddingHorizontal: gutter }]}>

@@ -9,7 +9,7 @@ import { layout, space } from '@/constants/tokens';
 import { useSignedIn } from '@/ctx/AuthContext';
 import { areaFor, useDrinkRankings, useMyRankList, type RankScope, type RankVenue } from '@/hooks/useRankings';
 import { countryName } from '@/lib/countries';
-import { MIN_RANKERS, plural } from '@/lib/ranking';
+import { MIN_RANKERS, plural, topThree } from '@/lib/ranking';
 import { shareOrCopy } from '@/lib/shareLink';
 import { siteOrigin } from '@/lib/venueLink';
 
@@ -52,6 +52,7 @@ function RankingsPage({ rankedAs, home }: RankingsScreenProps) {
   const wide = useBreakpoint() !== 'phone';
   const signedIn = useSignedIn();
   const { data: mine, isLoading: mineLoading } = useMyRankList(rankedAs.id);
+  const myBest = topThree(mine ?? []).length > 0;
 
   // The area is around the drink's bar, or else the last bar I had it at.
   const place: Place | null = home ?? mine?.find((e) => e.venue?.country_code)?.venue ?? null;
@@ -127,8 +128,8 @@ function RankingsPage({ rankedAs, home }: RankingsScreenProps) {
         <GlassButton
           icon="square.and.arrow.up"
           label="Share"
-          accessibilityLabel={mine?.length ? `Share your top three ${plural(rankedAs.name)}` : `Share the best ${rankedAs.name}`}
-          onPress={() => (mine?.length ? router.push(`/share/poster?list=${rankedAs.id}`) : void shareOrCopy(`${siteOrigin()}/rankings/${rankedAs.id}`, `Best ${rankedAs.name}`))}
+          accessibilityLabel={myBest ? `Share your top three ${plural(rankedAs.name)}` : `Share the best ${rankedAs.name}`}
+          onPress={() => (myBest ? router.push(`/share/poster?list=${rankedAs.id}`) : void shareOrCopy(`${siteOrigin()}/rankings/${rankedAs.id}`, `Best ${rankedAs.name}`))}
         />
       </View>
     </View>
