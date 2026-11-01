@@ -138,11 +138,15 @@ describe('a drink taken off a menu', () => {
     assert.equal((await removed(ids.live.id)).length, 2);
   });
 
-  test('deleting a live menu keeps nothing, and its record goes with it', async () => {
+  test('a live menu is never deleted in the app; a script deleting one keeps nothing, and its record goes with it', async () => {
     ids.doomed = await menu('Doomed', { starts_at: new Date(Date.now() - DAY).toISOString() }, [ids.negroni, ids.collins]);
     assert.ifError((await save(users.admin.client, ids.doomed, [ids.collins])).error);
     assert.equal((await removed(ids.doomed.id)).length, 1);
-    const del = await users.admin.client.from('menus').delete().eq('id', ids.doomed.id).select('id');
+    // A list that ran is ended and hidden, never deleted (20261203100000).
+    const refused = await users.admin.client.from('menus').delete().eq('id', ids.doomed.id).select('id');
+    assert.ifError(refused.error);
+    assert.equal(refused.data.length, 0, 'its Admin may not delete it');
+    const del = await service.from('menus').delete().eq('id', ids.doomed.id).select('id');
     assert.ifError(del.error);
     assert.equal(del.data.length, 1, 'the menu is gone');
     assert.deepEqual(await removed(ids.doomed.id), []);

@@ -37,13 +37,14 @@ export function MenuRuns({ runs, own }: { runs: DrinkMenuRun[]; own?: OwnMenu | 
             onPress={() => router.push(`/menus/${own.menuId}` as Href)}
           />
         ) : null}
-        {runs.map((r) => {
+        {runs.map((r, i) => {
           const live = menuState(r) === 'current';
           const line = live ? 'On now' : menuRange(r);
           return (
             <MenuLine
-              key={r.barId}
-              // A run spans every menu at the bar it was on, so the line names the bar, not one menu.
+              key={`${r.barId}:${i}`}
+              // A run spans the bar's menus it stayed on, so the line names the bar, not one menu.
+              // A drink that came off and went back on later has a line for each run.
               name={r.barName}
               line={line}
               live={live}
