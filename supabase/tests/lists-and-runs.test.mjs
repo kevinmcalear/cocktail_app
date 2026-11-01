@@ -316,3 +316,23 @@ describe('the daily list', () => {
     assert.equal(out.data.length, 0);
   });
 });
+
+describe('deleting an account', () => {
+  test('nulls who added, took off and shared, and the lists stay', async () => {
+    const leaver = await makeUser('leaver');
+    await insert('user_bars', { user_id: leaver.id, bar_id: ids.bar, role_level: 35 });
+    const kept = await list('Kept', { starts_at: ago(DAY) }, []);
+    const add = await leaver.client.from('menu_drinks').insert({ menu_id: kept.id, menu_section_id: kept.section, item_id: ids.collins, sort_order: 0 }).select('id').single();
+    assert.ifError(add.error);
+    const shared = await insert('menus', { bar_id: ids.bar, name: `Shared draft ${run}`, created_by: users.admin.id });
+    menus.push(shared.id);
+    assert.ifError((await leaver.client.from('menus').update({ team_shared_at: new Date().toISOString() }).eq('id', shared.id)).error);
+    const { error } = await service.auth.admin.deleteUser(leaver.id);
+    assert.ifError(error);
+    const row = (await db.query('SELECT added_by FROM public.menu_drinks WHERE id = $1', [add.data.id])).rows[0];
+    assert.equal(row.added_by, null);
+    const m = (await db.query('SELECT team_shared_at, team_shared_by FROM public.menus WHERE id = $1', [shared.id])).rows[0];
+    assert.equal(m.team_shared_by, null);
+    assert.ok(m.team_shared_at, 'still shared');
+  });
+});

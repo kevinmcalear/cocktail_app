@@ -162,6 +162,19 @@ WHERE m."id" = md."menu_id"
 
 -- --- 3. Who may change a list ---
 
+-- Deleting an account nulls the "who" columns above that name it (their
+-- foreign keys are ON DELETE SET NULL). The stamp triggers below let that
+-- through: it is the account that's gone, not a client rewriting history.
+CREATE FUNCTION "private"."user_gone"("p_user_id" "uuid") RETURNS boolean
+    LANGUAGE "sql" STABLE SECURITY DEFINER
+    SET "search_path" TO ''
+    AS $$
+    SELECT p_user_id IS NOT NULL AND NOT EXISTS (SELECT 1 FROM auth.users u WHERE u.id = p_user_id);
+$$;
+
+REVOKE ALL ON FUNCTION "private"."user_gone"("uuid") FROM PUBLIC, "anon", "authenticated";
+
+
 -- The caller may change this list without approval: they build menus there,
 -- aren't in a department (#1023), and the list's owner rule lets them. A
 -- home menu (no bar) is its owner's. Scripts (no caller) may.
@@ -257,7 +270,9 @@ BEGIN
     END IF;
 
     -- UPDATE
-    IF v_user IS NULL THEN
+    IF v_user IS NULL
+       OR (NEW.added_by IS NULL AND private.user_gone(OLD.added_by))
+       OR (NEW.off_by IS NULL AND private.user_gone(OLD.off_by)) THEN
         RETURN NEW;
     END IF;
     NEW.added_by := OLD.added_by;
@@ -428,7 +443,8 @@ CREATE FUNCTION "private"."stamp_item_approval"() RETURNS "trigger"
     SET "search_path" TO ''
     AS $$
 BEGIN
-    IF auth.uid() IS NULL OR private.is_app_admin() THEN
+    IF auth.uid() IS NULL OR private.is_app_admin()
+       OR (NEW.approved_by IS NULL AND private.user_gone(OLD.approved_by)) THEN
         RETURN NEW;
     END IF;
     IF OLD.awaiting_approval AND NOT NEW.awaiting_approval THEN
@@ -525,7 +541,7 @@ CREATE POLICY "menus_delete" ON "public"."menus" FOR DELETE TO "authenticated"
 
 -- Sharing a list stamps who shared it; unsharing clears it.
 CREATE FUNCTION "private"."stamp_menu_team_share"() RETURNS "trigger"
-    LANGUAGE "plpgsql"
+    LANGUAGE "plpgsql" SECURITY DEFINER
     SET "search_path" TO ''
     AS $$
 BEGIN
@@ -534,7 +550,7 @@ BEGIN
         IF NEW.team_shared_at IS NOT NULL AND auth.uid() IS NOT NULL THEN
             NEW.team_shared_at := now();
         END IF;
-    ELSE
+    ELSIF NOT (NEW.team_shared_by IS NULL AND private.user_gone(OLD.team_shared_by)) THEN
         NEW.team_shared_by := OLD.team_shared_by;
     END IF;
     RETURN NEW;
@@ -545,6 +561,23 @@ REVOKE EXECUTE ON FUNCTION "private"."stamp_menu_team_share"() FROM PUBLIC, "ano
 
 CREATE TRIGGER "stamp_menu_team_share" BEFORE UPDATE ON "public"."menus"
     FOR EACH ROW EXECUTE FUNCTION "private"."stamp_menu_team_share"();
+
+-- Touching the lists whose rows changed (20261014500000) bumps only their
+-- updated_at, so it runs with the definer's rights: deleting an account
+-- nulls added_by and off_by on menu_drinks as the auth service, which may
+-- not write menus itself.
+CREATE OR REPLACE FUNCTION "private"."touch_menus_of_rows"() RETURNS "trigger"
+    LANGUAGE "plpgsql" SECURITY DEFINER
+    SET "search_path" TO ''
+    AS $$
+BEGIN
+    UPDATE public.menus SET updated_at = now()
+     WHERE id IN (SELECT DISTINCT changed.menu_id FROM changed WHERE changed.menu_id IS NOT NULL);
+    RETURN NULL;
+END;
+$$;
+
+REVOKE EXECUTE ON FUNCTION "private"."touch_menus_of_rows"() FROM PUBLIC, "anon", "authenticated";
 
 -- --- 8. The daily list ---
 
