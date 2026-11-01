@@ -1,8 +1,11 @@
 import { Image } from 'expo-image';
 import { useEffect, useState, type ComponentRef, type Ref } from 'react';
 import { StyleSheet, Text, View } from 'react-native';
+import Svg, { Path } from 'react-native-svg';
+import { toQR } from 'toqr';
 
 import { drawingUri, loadFace, useDisplayFaces } from '@/components/ds';
+import { qrPath } from '@/components/screens/make/makeLogic';
 import { font, type DisplayFace } from '@/constants/tokens';
 import type { PaperEl, PaperPage as Page } from '@/lib/paper/page';
 import type { SketchInputs } from '@/lib/sketch/types';
@@ -70,7 +73,16 @@ export function PaperPage({ page, unit, sketches, ref, onPainted }: PaperPagePro
 
 function PaperThing({ el, unit, uri, onArrive, family }: { el: PaperEl; unit: number; uri: string | null; onArrive: (uri: string) => void; family: string }) {
   if (el.k === 'box') {
-    return <View aria-hidden style={[styles.at, { left: el.x * unit, top: el.y * unit, width: el.w * unit, height: el.h * unit, backgroundColor: el.fill, borderRadius: (el.r ?? 0) * unit }]} />;
+    const edge = el.stroke ? { borderWidth: Math.max(StyleSheet.hairlineWidth, unit), borderColor: el.stroke } : null;
+    return <View aria-hidden style={[styles.at, edge, { left: el.x * unit, top: el.y * unit, width: el.w * unit, height: el.h * unit, backgroundColor: el.fill, borderRadius: (el.r ?? 0) * unit }]} />;
+  }
+  if (el.k === 'code') {
+    const { d, size } = qrPath(toQR(el.url));
+    return (
+      <Svg aria-hidden width={el.s * unit} height={el.s * unit} viewBox={`0 0 ${size} ${size}`} style={[styles.at, { left: el.x * unit, top: el.y * unit }]}>
+        <Path d={d} fill={el.color} />
+      </Svg>
+    );
   }
   if (el.k === 'drawing') {
     if (!uri) return null;

@@ -11,7 +11,7 @@ import { menuPoster, topThreePoster } from './poster';
 const texts = (p: PaperPage) => p.els.filter((e): e is PaperText => e.k === 'text');
 const drawings = (p: PaperPage) => p.els.filter((e) => e.k === 'drawing');
 const inside = (p: PaperPage) =>
-  p.els.every((e) => e.x >= -1 && e.y >= 0 && (e.k === 'drawing' ? e.x + e.s <= p.w + 1 && e.y + e.s <= p.h : e.k === 'box' ? e.x + e.w <= p.w && e.y + e.h <= p.h : e.y + e.size <= p.h));
+  p.els.every((e) => e.x >= -1 && e.y >= 0 && (e.k === 'drawing' || e.k === 'code' ? e.x + e.s <= p.w + 1 && e.y + e.s <= p.h : e.k === 'box' ? e.x + e.w <= p.w && e.y + e.h <= p.h : e.y + e.size <= p.h));
 
 const winter = {
   name: 'Winter',

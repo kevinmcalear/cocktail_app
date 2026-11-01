@@ -8,6 +8,7 @@ import { radius, space } from '@/constants/tokens';
 import { useLogBatch } from '@/hooks/useBatches';
 import { categoryOf } from '@/hooks/useTonight';
 import { itemHref } from '@/lib/itemRoutes';
+import { labelHref } from '@/lib/paper/label';
 import { plural } from '@/lib/menus';
 import { formatQuantity, toQuantity } from '@/lib/quantity';
 import { prepLine } from '@/lib/tonight';
@@ -35,9 +36,10 @@ export function BeforeDoors({ t, barId }: { t: Staff; barId: string }) {
       const batch = t.batchOf(line.id);
       const log = () => {
         if (!batch) return router.push(itemHref('Ingredient', line.id) as Href);
-        logBatch.mutate({ itemId: line.id, ...batch });
+        const logged = logBatch.mutate({ itemId: line.id, ...batch });
         const q = toQuantity(batch.amount, batch.unit);
-        toast.show({ title: `Logged ${q ? formatQuantity(q) : `${batch.amount} ${batch.unit}`} of ${line.name}` });
+        // Bet-labels: a batch logged gets its label (Made. Label it.), which draws before the batch has sent.
+        toast.show({ title: `Logged ${q ? formatQuantity(q) : `${batch.amount} ${batch.unit}`} of ${line.name}`, action: { label: 'Label it', onPress: () => router.push(labelHref(logged) as Href) } });
       };
       return (
         <SettingsRow

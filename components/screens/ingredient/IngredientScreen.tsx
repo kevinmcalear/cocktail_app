@@ -1,4 +1,4 @@
-import { useRouter } from 'expo-router';
+import { useLocalSearchParams, useRouter } from 'expo-router';
 import { useState } from 'react';
 import { Platform, StyleSheet, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
@@ -11,12 +11,14 @@ import { TechnicalIngredientCard, WhereToBuy } from '@/components/techniques/Tec
 import { drawing, space } from '@/constants/tokens';
 import { useUserId } from '@/ctx/AuthContext';
 import { useActiveVenue } from '@/hooks/useActiveVenue';
+import { useBatch, useMakerNames } from '@/hooks/useBatches';
 import { useCapabilities } from '@/hooks/useCapabilities';
 import { useShelf, useShelfEdit } from '@/hooks/useHomeBar';
 import type { IngredientBottle } from '@/hooks/useIngredients';
 import { useMode } from '@/hooks/useMode';
 import { useItemPrep, usePrepSources, usePrepUsedIn } from '@/hooks/usePrepCard';
 import { useEffectiveRole } from '@/hooks/useViewAs';
+import { labelDate, useByDate as expiry } from '@/lib/makeSteps';
 import { ingredientHeroPictures, shownIngredientPicture, type IngredientPicture } from '@/lib/ingredientPicture';
 import { readNoteRecipe } from '@/lib/noteRecipe';
 import { leadTimeLabel, scaledYield } from '@/lib/scale';
@@ -94,6 +96,10 @@ function IngredientPage({ ingredient, lines, drinks, bottles, pictures: batchPic
   const toggleShelf = () => (!userId ? router.push('/auth/login') : onShelf ? shelfEdit.remove.mutate(ingredient.id) : shelfEdit.add.mutate(ingredient.id));
 
   const prep = card?.prep ?? null;
+  // Opened from a label's code (Bet-labels "Scanned: its page"): that batch's day, use-by and where it goes, first.
+  const { data: batch } = useBatch(useLocalSearchParams<{ batch?: string }>().batch);
+  const scanned = batch?.itemId === ingredient.id ? batch : null;
+  const makers = useMakerNames(scanned?.barId);
   const steps = card?.steps ?? [];
   // A recipe still written as a note: it's a prep, and whoever can edit it can turn it into lines.
   const noteRead = lines.length ? null : readNoteRecipe(ingredient.description);
@@ -105,6 +111,7 @@ function IngredientPage({ ingredient, lines, drinks, bottles, pictures: batchPic
   const technical = !isPrep && !!technicalIngredientFor(ingredient.name);
   const bottleTiles = useBottleTiles(ingredient);
   const facts = (isPrep ? prepFacts(prep) : bottleTiles).map((f) => ({ label: f.label, value: String(f.value) }));
+  if (scanned) facts.unshift(...scannedFacts(scanned, scanned.madeBy ? makers[scanned.madeBy] : undefined, prep?.shelf_life_hours ?? null, drinks));
   const makes = size ? size.makes : scaledYield(prep?.yield_amount ?? null, prep?.yield_unit ?? null, 1);
   // Anyone who can read a prep's recipe can edit it: when other drinks use it, or it isn't
   // theirs to change, the editor asks at Save (prep-prep-edit-shared, AskAtSave).
@@ -115,7 +122,7 @@ function IngredientPage({ ingredient, lines, drinks, bottles, pictures: batchPic
   const pictures = ingredientHeroPictures(shown, batchPictures);
   const photo = pictures?.[0] && !pictures[0].isSketch ? pictures : null;
   const whose = isPrep ? (venueName ? `${venueName}'s recipe` : userId && ingredient.created_by === userId ? 'Your recipe' : null) : [ingredient.brand_maker, ingredient.origin].filter(Boolean).join(', ') || null;
-  const eyebrow = isPrep ? ['House-made', prep?.actions?.[0]].filter(Boolean).join(' · ') : (ingredient.generic?.name ?? (ingredient.ingredient_role === 'product' ? 'Bottle' : 'Ingredient'));
+  const eyebrow = scanned ? 'House-made · scanned from a label' : isPrep ? ['House-made', prep?.actions?.[0]].filter(Boolean).join(' · ') : (ingredient.generic?.name ?? (ingredient.ingredient_role === 'product' ? 'Bottle' : 'Ingredient'));
   // One action at most: Log batch, for whoever can read the recipe.
   const action = showRecipe ? <Button label={makes ? `Log batch · ${makes}` : 'Log batch'} size="lg" onPress={() => make()} /> : null;
 
@@ -163,6 +170,17 @@ function IngredientPage({ ingredient, lines, drinks, bottles, pictures: batchPic
       }}
     />
   );
+}
+
+/** A scanned batch's rows: when it was made and by whom, its use-by, and the drinks it goes in. */
+function scannedFacts(batch: { madeAt: string }, by: string | undefined, shelfLifeHours: number | null, drinks: { name: string }[]) {
+  const made = new Date(batch.madeAt);
+  const useBy = expiry(made, shelfLifeHours);
+  return [
+    { label: 'Made', value: `${labelDate(made)}${by ? ` · ${by}` : ''}` },
+    ...(useBy ? [{ label: 'Use by', value: labelDate(useBy) }] : []),
+    ...(drinks.length ? [{ label: 'Goes in', value: drinks.map((d) => d.name).join(', ') }] : []),
+  ];
 }
 
 const styles = StyleSheet.create({

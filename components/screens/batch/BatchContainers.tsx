@@ -1,5 +1,5 @@
 import { useState, type ReactNode } from 'react';
-import { Platform, StyleSheet, View } from 'react-native';
+import { StyleSheet, View } from 'react-native';
 
 import { Body, Caption, Chip, DsText, PressableScale, TextLink, useDs } from '@/components/ds';
 import { IconSymbol } from '@/components/ui/icon-symbol';
@@ -10,7 +10,7 @@ import { CONTAINERS, containerText, keepsLabel, ownContainer, pickContainer, TON
 import { initials } from '@/lib/makeSteps';
 import { siteOrigin } from '@/lib/venueLink';
 
-import { LabelCard, shareLabel, type BatchLabel } from '../make/MakeLabel';
+import { LabelCard, useLabelPrint, type BatchLabel } from '../make/MakeLabel';
 import { BatchRow, Choice } from './BatchParts';
 
 const FRESH = [
@@ -109,11 +109,12 @@ export function UseBy({ hours, onChange }: { hours: number | null; onChange: (h:
 
 /** The label for a container while it's made, with print (web) or share (phone). */
 export function LabelBlock({ label }: { label: BatchLabel | null }) {
+  const printing = useLabelPrint();
   if (!label) return null;
   return (
     <View style={styles.label}>
-      <LabelCard label={label} />
-      <TextLink label={Platform.OS === 'web' ? 'Print label ›' : 'Share label ›'} onPress={() => void shareLabel(label)} />
+      <LabelCard label={label} pageRef={printing.ref} onPainted={printing.onPainted} />
+      <TextLink label="Print or share label ›" disabled={!printing.painted} onPress={() => void printing.print(label)} />
     </View>
   );
 }
