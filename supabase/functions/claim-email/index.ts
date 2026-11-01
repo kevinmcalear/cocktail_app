@@ -14,6 +14,7 @@ import {
 import { HttpError, requireUuid, serveJson } from "../_shared/http.ts";
 import { isLocalStack, LOCAL_CLAIM_EMAIL_SECRET } from "../_shared/localStack.ts";
 import { fromAddress, sendEmail } from "../_shared/resend.ts";
+import { ROLE_LABELS } from "../_shared/roles.ts";
 import { DEFAULT_SITE } from "../_shared/site.ts";
 
 /**
@@ -40,8 +41,6 @@ function authorized(req: Request): boolean {
 }
 
 const text = (value: unknown): string | null => (typeof value === "string" && value.trim() ? value.trim() : null);
-
-const ROLES: Record<number, string> = { 10: "Guest", 20: "Employee", 30: "Bartender", 35: "Drink Creator", 40: "Admin" };
 
 serveJson("claim-email", async (req) => {
   if (!authorized(req)) throw new HttpError(401, "Not allowed.");
@@ -79,7 +78,7 @@ serveJson("claim-email", async (req) => {
     const bar = await lookOf(body.venue_id);
     const slug = text(body.slug);
     if (!bar || !slug) return { sent: 0 };
-    const content = joinedEmail({ bar, role: ROLES[Number(body.role)] ?? "Bartender", linkUrl: `${site}/v/${encodeURIComponent(slug)}` });
+    const content = joinedEmail({ bar, role: ROLE_LABELS[Number(body.role)] ?? "Bartender", linkUrl: `${site}/v/${encodeURIComponent(slug)}` });
     return await send(barSender(bar.name, fromAddress()), content);
   }
 

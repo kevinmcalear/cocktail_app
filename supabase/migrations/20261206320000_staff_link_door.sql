@@ -14,16 +14,19 @@
 --                                  Admin's name only while the link is on.
 --   join_by_staff_link(slug)       New. Approval on: asks (a join request
 --                                  through the link). Approval off: joins at
---                                  the link's role straight away. Link off:
---                                  refuses. Never Admin: staff_link_role is
---                                  10 to 35 (bars_staff_link_role_check).
+--                                  the link's role straight away. Link off,
+--                                  or a bar with no Admin: refuses. Never
+--                                  Admin: staff_link_role is 10 to 35
+--                                  (bars_staff_link_role_check).
 --   take_back_join_request(bar)    New. The asker withdraws a waiting ask. A
 --                                  declined one stays, so they can't ask again.
 --   join_requests(bar)             Changed (existing function): also returns
 --                                  via_link.
 --   request_join_email()           New trigger on venue_join_requests: when an
---                                  Admin says yes (the row goes and the person
---                                  is on the team), claim-email tells them
+--                                  Admin says yes to an ask through the link
+--                                  (the row goes and the person is on the
+--                                  team, at answer_join_request's role, which
+--                                  #1083 makes the link's), claim-email tells them
 --                                  they're in ("We'll tell you when you're
 --                                  in"). Same Vault secrets as the claim
 --                                  emails; does nothing until they exist, and
@@ -93,6 +96,10 @@ BEGIN
     END IF;
     IF NOT v_bar.staff_link_on THEN
         RAISE EXCEPTION 'This link is off. Ask someone on the team to invite you by email.';
+    END IF;
+    -- A bar with no Admin has nobody to answer, and nobody chose its link's settings.
+    IF NOT EXISTS (SELECT 1 FROM public.user_bars WHERE bar_id = v_bar.id AND role_level >= 40) THEN
+        RAISE EXCEPTION 'This bar has no team on Cocktail yet.';
     END IF;
     IF EXISTS (SELECT 1 FROM public.user_bars WHERE user_id = auth.uid() AND bar_id = v_bar.id) THEN
         RETURN 'joined';
@@ -175,6 +182,8 @@ GRANT EXECUTE ON FUNCTION "public"."join_requests"(uuid) TO "authenticated", "se
 -- (answer_join_request adds them, then deletes it), the asker taking it back,
 -- and joining straight in (join_by_staff_link deletes it before adding them).
 -- Only the first leaves them on the team as the row goes, so only it emails.
+-- Only asks through the staff link: that door promises it, and the email
+-- links back to it. An ask from the bar's page is answered as before.
 CREATE FUNCTION "private"."request_join_email"() RETURNS trigger
     LANGUAGE "plpgsql" SECURITY DEFINER
     SET "search_path" TO ''
@@ -185,7 +194,7 @@ DECLARE
     v_role integer;
     v_slug text;
 BEGIN
-    IF OLD.declined_at IS NOT NULL THEN
+    IF OLD.declined_at IS NOT NULL OR NOT OLD.via_link THEN
         RETURN NULL;
     END IF;
     SELECT ub.role_level INTO v_role FROM public.user_bars ub WHERE ub.bar_id = OLD.bar_id AND ub.user_id = OLD.user_id;

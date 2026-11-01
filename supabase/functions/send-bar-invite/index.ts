@@ -3,10 +3,8 @@ import { barSender, inviteEmail } from "../_shared/barEmail.ts";
 import { HttpError, requireUuid, serveJson } from "../_shared/http.ts";
 import { isLocalStack } from "../_shared/localStack.ts";
 import { fromAddress, sendEmail } from "../_shared/resend.ts";
+import { ROLE_LABELS } from "../_shared/roles.ts";
 import { DEFAULT_SITE, siteOrigin } from "../_shared/site.ts";
-
-// ponytail: copied from lib/roles.ts (functions can't import app code); keep in step.
-const ROLE_LABELS: Record<number, string> = { 10: "Guest", 20: "Employee", 30: "Bartender", 35: "Drink Creator", 40: "Admin" };
 
 /**
  * Emails someone their invite to a venue, in the venue's look

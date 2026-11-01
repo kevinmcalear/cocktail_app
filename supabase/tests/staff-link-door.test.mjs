@@ -129,6 +129,16 @@ describe('through the link', () => {
     assert.equal(await roleOf('nope'), null);
   });
 
+  test('a bar with no Admin takes nobody', async () => {
+    const slug = `noteam-${run}`;
+    const id = (await one('INSERT INTO public.bars (name, slug) VALUES ($1, $2) RETURNING id', [`No team ${run}`, slug])).id;
+    try {
+      assert.match((await users.sam.client.rpc('join_by_staff_link', { p_slug: slug })).error?.message ?? '', /no team on Cocktail/);
+    } finally {
+      await db.query('DELETE FROM public.bars WHERE id = $1', [id]);
+    }
+  });
+
   test('the link can never make an Admin', async () => {
     await assert.rejects(settings({ on: true, approve: false, role: 40 }));
   });
