@@ -167,6 +167,13 @@ const S = {
   toddyFaq: { name: 'Toddy: cold brew system', url: 'https://toddycafe.com/product/toddy-cold-brew-system' },
   equalExchangeToddy: { name: 'Equal Exchange: brewing with a Toddy', url: 'https://info.equalexchange.coop/articles/how-to-brew-toddy' },
   roseBrownButter: { name: 'Real Baking with Rose: clarified and brown butter', url: 'https://www.realbakingwithrose.com/blog/2019/1/28/clarifying-clarified-butter-and-brown-butterbeurre-noisette-and-the-control-freak' },
+  diffordsShake: { name: 'Difford’s: how to shake cocktails', url: 'https://www.diffordsguide.com/encyclopedia/312/cocktails/cocktail-shakers-and-how-to-shake-a-cocktail' },
+  diffordsWater: { name: 'Difford’s: some cocktails benefit from added water', url: 'https://www.diffordsguide.com/encyclopedia/3711/cocktails/some-cocktails-benefit-from-added-water' },
+  deathCoShakeStir: { name: 'Death & Co: shaken or stirred', url: 'https://fashioned.deathandcompany.com/pages/shaken-or-stirred' },
+  bolsStir: { name: 'Bols: how to stir a cocktail', url: 'https://bols.com/cocktail-moments/how-to-stir-a-cocktail' },
+  punchDryShake: { name: 'Punch: reverse dry shake and the flip', url: 'https://punchdrink.com/articles/how-to-make-egg-white-cocktail-reverse-dry-shake-flip/' },
+  punchWhipShake: { name: 'Punch: the whip shake', url: 'https://punchdrink.com/articles/who-said-whip-shake-ramos-gin-fizz-cocktail-technique/' },
+  tastingWhipShake: { name: 'Tasting Table: how to whip shake', url: 'https://tastingtable.com/1282201/how-pull-off-whip-shake-cloudlike-drink-textures' },
 } as const;
 
 export type SourceKey = keyof typeof S;
