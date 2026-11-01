@@ -56,29 +56,21 @@ function useInvalidateMenus() {
     ]);
 }
 
-/** Saves a menu's name, cover and whole layout in one transaction (save_menu). */
+/** Saves a menu's name, cover, cover credit and whole layout in one transaction (save_menu). */
 export function useSaveMenu(menuId: string) {
   const invalidate = useInvalidateMenus();
   return useMutation({
-    mutationFn: async (layout: MenuLayout) => {
-      const saved = await rpc('save_menu', {
+    mutationFn: (layout: MenuLayout) =>
+      rpc('save_menu', {
         p_menu_id: menuId,
         p_name: layout.name,
         p_cover_url: layout.coverUrl,
         p_cover_position: layout.coverPosition,
         p_sections: savePayload(layout),
-      });
-      // The cover's credit isn't save_menu's: it goes on the menu after it (a new cover
-      // clears the old credit in the database), and only when the editor says it changed.
-      // ponytail: two writes, not one transaction; a failed credit write fails the save,
-      // and the retry runs save_menu again, which is harmless. Folding the credit into
-      // save_menu (a gated function change) would make it one.
-      if (layout.coverCredit !== undefined) {
-        const { error } = await supabase.from('menus').update({ cover_credit: creditOf(layout) }).eq('id', menuId);
-        if (error) throw readable(error);
-      }
-      return saved;
-    },
+        // Only when the editor says the credit changed ('' for none). Left out, it stays,
+        // and a new cover drops the old one in the database.
+        p_cover_credit: layout.coverCredit === undefined ? undefined : (creditOf(layout) ?? ''),
+      }),
     onSuccess: invalidate,
     onError: () => {},
   });

@@ -8377,6 +8377,7 @@ export type Database = {
       }
       save_menu: {
         Args: {
+          p_cover_credit?: string
           p_cover_position: number
           p_cover_url: string
           p_menu_id: string

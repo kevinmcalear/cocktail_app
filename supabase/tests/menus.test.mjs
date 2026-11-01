@@ -152,6 +152,27 @@ describe('menu sections', () => {
     assert.deepEqual(rows.map((r) => r.item_id), [ids.martini]);
   });
 
+  test('the cover and its credit save together (20261206420000)', async () => {
+    const menu = await newMenu('Credit');
+    const save = async (cover, credit) => {
+      const { error } = await users.maker.client.rpc('save_menu', {
+        p_menu_id: menu, p_name: `Credit ${run}`, p_cover_url: cover, p_cover_position: null, p_sections: [],
+        ...(credit === undefined ? {} : { p_cover_credit: credit }),
+      });
+      assert.ifError(error);
+      return (await db.query('SELECT cover_url, cover_credit FROM public.menus WHERE id = $1', [menu])).rows[0].cover_credit;
+    };
+    assert.equal(await save('https://example.test/a.jpg', '  Jess Rowe '), 'Jess Rowe', 'set with the cover, trimmed');
+    assert.equal(await save('https://example.test/a.jpg'), 'Jess Rowe', 'left out: it stays');
+    assert.equal(await save('https://example.test/b.jpg'), null, 'a new cover without a credit drops the old one');
+    assert.equal(await save('https://example.test/c.jpg', 'Jess Rowe'), 'Jess Rowe', 'a new cover with the same name keeps it');
+    assert.equal(await save('https://example.test/c.jpg', ''), null, "'' clears it");
+    const { error } = await users.floor.client.rpc('save_menu', {
+      p_menu_id: menu, p_name: 'Taken', p_cover_url: null, p_cover_position: null, p_sections: [], p_cover_credit: 'Not me',
+    });
+    assert.ok(error, 'only those who can edit the menu');
+  });
+
   test('staff below Drink Creator and other venues cannot write sections', async () => {
     const menu = await newMenu('Locked');
     for (const who of ['floor', 'outsider']) {
