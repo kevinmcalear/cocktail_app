@@ -39,7 +39,6 @@ export function toCocktailSearchItem(c: any): SearchItem {
     item_categories: c.item_categories,
     method_id: c.item_methods?.[0]?.method_item_id ?? null,
     glassware_id: c.glassware_id,
-    family_id: c.family_id,
     ice_id: c.ice_id,
   };
 }
@@ -175,7 +174,6 @@ export function useSearchCatalog(selectedContextIds: string[], { ingredients = t
             : undefined,
           method_id: draftMethodIds(data)[0] ?? data.method_id ?? null,
           glassware_id: data.glasswareId ?? data.glassware_id ?? null,
-          family_id: data.familyId ?? data.family_id ?? null,
           ice_id: data.iceId ?? data.ice_id ?? null,
           item_categories: (data.selectedCategories || []).map((id: string) => ({
             category_id: id,
