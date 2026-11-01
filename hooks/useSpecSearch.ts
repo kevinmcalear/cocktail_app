@@ -22,9 +22,9 @@ function indexOf(book: SpecBook): SearchIndex {
 const onNowIds = (books: readonly SpecBook[]) => new Set(books.flatMap((b) => b.onNow.flatMap((m) => m.sections.flatMap((s) => s.drinks.map((d) => d.id)))));
 
 // Stable, so useQueries hands back the same result until a book changes.
-const loadedBooks = (results: { data?: SpecBook; isPending: boolean }[]) => ({
+const loadedBooks = (results: { data?: SpecBook; isLoading: boolean }[]) => ({
   books: results.flatMap((r) => (r.data ? [r.data] : [])),
-  loading: results.some((r) => r.isPending),
+  loading: results.some((r) => r.isLoading),
 });
 
 /**
