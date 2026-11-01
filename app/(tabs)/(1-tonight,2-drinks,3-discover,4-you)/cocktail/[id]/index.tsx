@@ -1,8 +1,9 @@
-import { Redirect, useLocalSearchParams } from "expo-router";
+import { Redirect, useLocalSearchParams, useRouter, type Href } from "expo-router";
 import React, { lazy, Suspense, useState } from "react";
 
 import { useSignedIn } from "@/ctx/AuthContext";
 import { useCocktail } from "@/hooks/useCocktails";
+import { useBesideList } from "@/hooks/useDrinksSplit";
 import { useStudyPile } from "@/hooks/useStudyPile";
 import { recentEntry, useTrackRecent } from "@/hooks/useTrackRecent";
 import { useItemEditAccess } from "@/hooks/useViewAs";
@@ -25,6 +26,9 @@ export default function CocktailDetailsScreen() {
 
     const { toggleStudyPile, isInStudyPile } = useStudyPile();
     const signedIn = useSignedIn();
+    const router = useRouter();
+    // Beside Drinks' list on a desktop the pane is too narrow for the editor and its preview: it opens full width, as the tablet's pane does.
+    const besideList = useBesideList();
 
     // A placeholder (the tapped row's name and picture) paints the hero only: the rest waits for the drink.
     const query = useCocktail(id as string, { seeded: true });
@@ -45,7 +49,11 @@ export default function CocktailDetailsScreen() {
     const [isEditing, setIsEditing] = useState(false);
     // Fit it to the glass and the hero's Photos open the editor on their sheet.
     const [openOn, setOpenOn] = useState<OpenOn>();
-    const editOn = (sheet?: OpenOn) => (setOpenOn(sheet), setIsEditing(true));
+    const editOn = (sheet?: OpenOn) => {
+        if (besideList) return router.push(`/cocktail/${id}/edit${sheet ? `?${sheet}=1` : ""}` as Href);
+        setOpenOn(sheet);
+        setIsEditing(true);
+    };
 
     // Not yours to read (another bar's drink): signed in, the in-app page from what the bar published; else its public page.
     if ((error as { code?: string } | null)?.code === "PGRST116") return signedIn ? <VisitorDrink id={id as string} /> : <Redirect href={`/d/${id}`} />;
@@ -63,7 +71,6 @@ export default function CocktailDetailsScreen() {
                 onFit={() => editOn("fit")}
                 onPhotos={() => editOn("photos")}
                 openBatch={batch === "1"}
-                sheet
             />
         ) : (
             <DrinkLoading seed={query.isPlaceholderData ? query.data : null} />

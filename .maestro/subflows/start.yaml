@@ -1,0 +1,38 @@
+# Opens the app and signs in the local demo user (scripts/dev-user.mjs) when
+# it's signed out. The runner passes (see ../README.md):
+#   METRO_URL     a dev build's Metro server, URL-encoded; leave it out for a
+#                 build with its JavaScript inside
+#   SIGN_IN_LINK  a one-time link from `node scripts/dev-user.mjs --link`
+appId: com.kevinmcalear.cocktail.dev
+env:
+  METRO_URL: ${METRO_URL || ''}
+---
+- launchApp
+- runFlow:
+    when:
+      true: ${!!METRO_URL}
+    commands:
+      - openLink: cocktailapp-dev://expo-development-client/?url=${METRO_URL}&disableOnboarding=1
+# A cold Metro can take minutes to bundle.
+- extendedWaitUntil:
+    visible: "Sign in|Tonight"
+    timeout: 300000
+- runFlow:
+    when:
+      visible: "Sign in"
+    commands:
+      - openLink: ${SIGN_IN_LINK}
+      # The email link asks before it signs in (components/auth/EmailLinkGate.tsx).
+      - tapOn: "Continue"
+      # The age check, the first time (components/screens/safety/AgeCheckScreen.tsx): it can wait.
+      - extendedWaitUntil:
+          visible: "Not now|Tonight"
+          timeout: 60000
+      - runFlow:
+          when:
+            visible: "Not now"
+          commands:
+            - tapOn: "Not now"
+- extendedWaitUntil:
+    visible: "Tonight"
+    timeout: 60000

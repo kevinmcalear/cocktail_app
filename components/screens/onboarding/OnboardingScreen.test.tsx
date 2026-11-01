@@ -294,6 +294,6 @@ describe('OnboardingScreen', () => {
   test('a finished account leaves setup', async () => {
     mockMeta = { onboarded: true };
     await renderWithProviders(<OnboardingScreen />);
-    expect(mockReplace).toHaveBeenCalledWith('/(tabs)');
+    expect(mockReplace).toHaveBeenCalledWith('/');
   });
 });

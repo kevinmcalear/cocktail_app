@@ -1,7 +1,7 @@
 import { useState } from 'react';
 import { StyleSheet } from 'react-native';
 
-import { DsText, PressableScale, useDs } from '@/components/ds';
+import { Button, DsText, PressableScale, useDs } from '@/components/ds';
 import { IconSymbol } from '@/components/ui/icon-symbol';
 import { font, layout, radius, space } from '@/constants/tokens';
 
@@ -25,6 +25,21 @@ export function AddButton() {
       <PressableScale role="button" accessibilityLabel={LABEL} onPress={add.open} hitSlop={(layout.minTapTarget - SIZE) / 2} style={[styles.circle, { backgroundColor: ds.accentFill.fill }]}>
         <IconSymbol name="plus" size={18} color={ds.accentFill.text} />
       </PressableScale>
+      {add.sheet}
+    </>
+  );
+}
+
+/**
+ * A desktop's Add (from 1200): "+ Add", a small pill in the venue's accent, at
+ * the top right where a phone has its + (board Prod-desk-today, 2027 canvas).
+ * The tablet's rail keeps New in the nav.
+ */
+export function DeskAddButton() {
+  const add = useAdd();
+  return (
+    <>
+      <Button label="Add" icon="plus" size="sm" accessibilityLabel={LABEL} onPress={add.open} />
       {add.sheet}
     </>
   );

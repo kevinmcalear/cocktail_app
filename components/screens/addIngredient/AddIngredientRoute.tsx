@@ -18,7 +18,7 @@ interface Props {
 export function AddIngredientRoute({ isInline, barIdProp, onClose, onSave }: Props) {
   const router = useRouter();
   const params = useLocalSearchParams<{ barId?: string; name?: string }>();
-  const goBack = () => (router.canGoBack() ? router.back() : router.replace('/(tabs)'));
+  const goBack = () => (router.canGoBack() ? router.back() : router.replace('/'));
   const barId = (barIdProp !== undefined ? barIdProp : params.barId) || null;
   const wizard = (
     <AddBottle

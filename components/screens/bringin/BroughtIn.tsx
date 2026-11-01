@@ -85,8 +85,8 @@ export function BroughtIn({ view }: { view: BroughtInView }) {
       : view.drinkIds.length === 1
         ? { label: 'Open the drink', onPress: () => go(`/cocktail/${view.drinkIds[0]}`) }
         : s.kind === 'bottles' && !view.barId
-          ? { label: 'Open My Bar', onPress: () => router.replace('/(tabs)' as Href) }
-          : { label: 'Done', onPress: () => router.replace('/(tabs)' as Href) };
+          ? { label: 'Open My Bar', onPress: () => router.replace('/' as Href) }
+          : { label: 'Done', onPress: () => router.replace('/' as Href) };
 
   return (
     <View style={[styles.screen, { backgroundColor: ds.c.ground }]}>
@@ -133,7 +133,7 @@ export function BroughtIn({ view }: { view: BroughtInView }) {
         {undo.error ? <Caption tone="accent">{undo.error.message}</Caption> : null}
       </ScrollView>
       <View style={[styles.footer, { paddingBottom: insets.bottom + space.lg, paddingHorizontal: gutter }]}>
-        <Button label={undone ? 'Done' : primary.label} size="lg" onPress={undone ? () => router.replace('/(tabs)' as Href) : primary.onPress} />
+        <Button label={undone ? 'Done' : primary.label} size="lg" onPress={undone ? () => router.replace('/' as Href) : primary.onPress} />
         <View style={styles.row}>
           <Button label="Bring in more" size="lg" variant="secondary" onPress={() => useBringIn.getState().openSheet()} style={styles.flex} />
           {undoable ? (
