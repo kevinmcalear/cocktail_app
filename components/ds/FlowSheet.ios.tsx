@@ -1,13 +1,18 @@
 import { BottomSheet, Group, Host, RNHostView } from '@expo/ui/swift-ui';
 import { preferredColorScheme, presentationBackground, presentationDetents, presentationDragIndicator } from '@expo/ui/swift-ui/modifiers';
-import { useEffect, useEffectEvent, useState } from 'react';
+import { useEffect, useEffectEvent, useRef, useState } from 'react';
 import { StyleSheet, View } from 'react-native';
 import { GestureHandlerRootView } from 'react-native-gesture-handler';
+
+import { space } from '@/constants/tokens';
 
 import { flowDetents } from './flowDetents';
 import type { SheetProps } from './Sheet';
 import { CloseContext } from './sheetClose';
 import { useDs } from './theme';
+
+/** About how long the system's sheet takes to come up: onShow waits for it, as Modal's did. */
+const PRESENT_MS = 350;
 
 /**
  * iOS's whole flow (Add, Rank it, Theme): SwiftUI's own sheet, so it has the
@@ -24,30 +29,34 @@ import { useDs } from './theme';
 export function FlowSheet({ visible, onClose, accessibilityLabel, children, style, ground, header, onShow, onDismiss, part }: SheetProps) {
   const ds = useDs();
   const fill = ground ? ds.c.ground : ds.c.surface;
+  const { detents, rest } = flowDetents(part);
 
   // Up while the parent wants it and nobody inside has closed it.
   const [shown, setShown] = useState(visible);
   const [wanted, setWanted] = useState(visible);
-  // Closed from inside (X, swipe): the parent hears once it has animated away.
-  const [ours, setOurs] = useState(false);
+  // Where it rests: the step's stop, or wherever the person dragged it, until the step changes or it opens again.
+  const [at, setAt] = useState(rest);
+  const [step, setStep] = useState(part);
   if (visible !== wanted) {
     setWanted(visible);
     setShown(visible);
-    setOurs(false);
+    if (visible) setAt(rest);
   }
-  const close = () => {
-    setOurs(true);
-    setShown(false);
-  };
-
-  // Rests where the step wants it; a drag between stops is the person's until the step changes.
-  const { detents, rest } = flowDetents(part);
-  const [at, setAt] = useState(rest);
-  const [step, setStep] = useState(part);
   if (part !== step) {
     setStep(part);
     setAt(rest);
   }
+
+  // Closed from inside (X, swipe): the parent hears once it has animated away.
+  // A ref, as SwiftUI can send the swipe and the dismiss before React renders again.
+  const ours = useRef(false);
+  const close = () => {
+    ours.current = true;
+    setShown(false);
+  };
+  useEffect(() => {
+    if (visible) ours.current = false;
+  }, [visible]);
 
   return (
     <Host style={styles.host} pointerEvents="none">
@@ -57,8 +66,8 @@ export function FlowSheet({ visible, onClose, accessibilityLabel, children, styl
           if (!presented && shown) close();
         }}
         onDismiss={() => {
-          if (ours) {
-            setOurs(false);
+          if (ours.current) {
+            ours.current = false;
             onClose();
           }
           onDismiss?.();
@@ -73,7 +82,8 @@ export function FlowSheet({ visible, onClose, accessibilityLabel, children, styl
           ]}
         >
           <RNHostView>
-            <GestureHandlerRootView style={[styles.flex, { backgroundColor: fill }]}>
+            {/* The grabber is drawn over the top of the content: the head starts below it. */}
+            <GestureHandlerRootView style={[styles.flex, styles.grabber, { backgroundColor: fill }]}>
               <Shown onShow={onShow} />
               <CloseContext value={close}>
                 <View role="dialog" aria-label={accessibilityLabel} style={[styles.flex, style]}>
@@ -89,14 +99,19 @@ export function FlowSheet({ visible, onClose, accessibilityLabel, children, styl
   );
 }
 
-/** The sheet's content mounts as it's presented: that's its onShow. */
+/** The content mounts as the sheet starts up; onShow waits until it's on screen. */
 function Shown({ onShow }: { onShow?: () => void }) {
   const shown = useEffectEvent(() => onShow?.());
-  useEffect(() => shown(), []);
+  useEffect(() => {
+    // ponytail: a fixed wait for the present animation; SwiftUI's sheet sends no "presented" event to hook instead.
+    const timer = setTimeout(shown, PRESENT_MS);
+    return () => clearTimeout(timer);
+  }, []);
   return null;
 }
 
 const styles = StyleSheet.create({
   host: { position: 'absolute' },
   flex: { flex: 1 },
+  grabber: { paddingTop: space.md },
 });
