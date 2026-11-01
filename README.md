@@ -24,4 +24,4 @@ npm run test:security  # needs the local Supabase stack
 
 ## Contributing
 
-Read [AGENTS.md](AGENTS.md) first (it applies to people too), then [docs/dev_flow.md](docs/dev_flow.md) and [docs/design_system.md](docs/design_system.md). Work on a branch, open a PR, and Kevin merges when CI is green.
+Read [AGENTS.md](AGENTS.md) first (it applies to people too), then [docs/dev_flow.md](docs/dev_flow.md) and [docs/design_system.md](docs/design_system.md). Work on a branch and open a PR; the merge owner merges it once CI is green, and Kevin merges anything gated.

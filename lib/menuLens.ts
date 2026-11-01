@@ -1,0 +1,93 @@
+// Who is looking at a menu page, and what that adds to it (2027 canvas,
+// page Menus, "The menu by who is looking", decided 30 Oct): one page for
+// every role, more on it as the role rises, from the capabilities a role
+// has (lib/roleMatrix), never from its name.
+
+import type { ListRowState } from '@/lib/listRows';
+
+/** guest: names, what's in each, prices. employee: allergens and talking points. bartender: the method, specs in place. creator: Edit, cost per row. admin: plus the bar page and End. home: your own night. */
+export type MenuLens = 'guest' | 'employee' | 'bartender' | 'creator' | 'admin' | 'home';
+
+const ADMIN_LEVEL = 40;
+
+/** The lens for a venue menu from the viewer's capabilities there, or a home menu by whose it is. `viewAs`: a role level picked in View as, shown by its default lens. */
+export function menuLens({ barId, caps, roleLevel, mine, viewAs = null }: { barId: string | null; caps: readonly string[] | null | undefined; roleLevel: number | null | undefined; mine: boolean; viewAs?: number | null }): MenuLens {
+  if (!barId) return mine ? 'home' : 'guest';
+  if (viewAs !== null && viewAs < (roleLevel ?? 0)) {
+    if (viewAs >= ADMIN_LEVEL) return 'admin';
+    if (viewAs >= 35) return 'creator';
+    if (viewAs >= 30) return 'bartender';
+    return viewAs >= 20 ? 'employee' : 'guest';
+  }
+  const has = (c: string) => !!caps?.includes(c);
+  if (has('menus')) return (roleLevel ?? 0) >= ADMIN_LEVEL ? 'admin' : 'creator';
+  if (has('specs')) return 'bartender';
+  if (has('talking_points')) return 'employee';
+  return 'guest';
+}
+
+/** Staff of the bar see the menu's tag ("On now") before its eyebrow, and its "since" date. */
+export const isStaffLens = (lens: MenuLens) => lens === 'employee' || lens === 'bartender' || lens === 'creator' || lens === 'admin';
+
+/** Who makes menus: Edit, the cost on each row, a list's planned and waiting drinks. */
+export const isMenuTeam = (lens: MenuLens) => lens === 'creator' || lens === 'admin';
+
+/** A bartender's row line: "Stirred · Nick & Nora · olive on a pick". */
+export function methodLine(methods: readonly string[], glass: string | null | undefined, garnish: string | null | undefined): string {
+  return [methods.join(', '), glass, garnish].map((p) => p?.trim()).filter(Boolean).join(' · ');
+}
+
+/** A team member's mark on a living-list row that isn't simply on: when it goes on or comes off, or that it waits. */
+export function rowStateMark(state: ListRowState, onFrom: string | null, offAt: string | null, day: (iso: string) => string): string | null {
+  if (state === 'coming') return onFrom ? `On from ${day(onFrom)}` : 'Coming';
+  if (state === 'going') return offAt ? `Off from ${day(offAt)}` : 'Coming off';
+  if (state === 'waiting_on') return 'Waiting to go on';
+  if (state === 'waiting_off') return 'Waiting to come off';
+  return null;
+}
+
+/** "Egg in 1 drink" for a guest's allergy line; null when nothing on the menu has theirs. */
+export function allergyLine(labels: readonly string[], drinks: number): string | null {
+  if (!labels.length || !drinks) return null;
+  return `${labels.join(', ')} in ${drinks} ${drinks === 1 ? 'drink' : 'drinks'}`;
+}
+
+/**
+ * The floor's chips for one drink. Safety: a drink nobody has checked must
+ * never read "No allergens", so only a checked drink (labels, possibly none)
+ * reaches the empty list that reads that way. Unchecked, it says so; when
+ * nothing on the menu is checked yet the top line says it once instead.
+ */
+export function allergenChips(labels: readonly string[] | undefined, anyChecked: boolean): string[] | null {
+  if (labels) return [...labels];
+  return anyChecked ? ['Not checked'] : null;
+}
+
+/** "Allergens tonight": never "None on this menu" while any drink is unchecked. */
+export function allergensTonight(counts: ReadonlyMap<string, number>, checked: number, drinks: number): string {
+  if (!checked) return 'Not checked yet';
+  const left = Math.max(drinks - checked, 0);
+  if (!left) return allergenSummary(counts);
+  return [counts.size ? allergenSummary(counts) : null, `${left} not checked`].filter(Boolean).join(' · ');
+}
+
+/**
+ * A list kept on a drink at a time (Menu-l-*, "Cocktails"), not one menu run
+ * whole (Menu-who-creator, "Autumn"): a drink on it changed on its own date,
+ * or a drink has left it.
+ * ponytail: read from the runs because nothing stores this: `list_type` is
+ * 'main' for both. A list that never changed reads as seasonal. If Kevin wants
+ * it chosen, it wants its own list_type value (a gated migration).
+ */
+export function isLivingList(rows: readonly { onFrom: string | null }[], listStart: string | null, endedRuns = 0): boolean {
+  if (endedRuns > 0) return true;
+  return rows.some((r) => !!r.onFrom && (!listStart || Date.parse(r.onFrom) > Date.parse(listStart)));
+}
+
+/** The employee's top line: "Egg in 1 · sulphites in 2". */
+export function allergenSummary(counts: ReadonlyMap<string, number>): string {
+  if (!counts.size) return 'None on this menu';
+  return [...counts]
+    .map(([label, n], i) => `${i ? label.toLowerCase() : label} in ${n}`)
+    .join(' · ');
+}

@@ -19,6 +19,8 @@ interface MenuMoreSheetProps {
   onClose: () => void;
   /** A home menu's night and guests, moved here when Shopping list took its place on the page. */
   onNight?: () => void;
+  /** A living list has no Edit on its page, so it opens here. */
+  onEdit?: () => void;
 }
 
 /**
@@ -26,7 +28,7 @@ interface MenuMoreSheetProps {
  * file a venue's draft under R&D (or back), delete it. A home menu also sets
  * its date and guests here.
  */
-export function MenuMoreSheet({ menu, status, visible, onClose, onNight }: MenuMoreSheetProps) {
+export function MenuMoreSheet({ menu, status, visible, onClose, onNight, onEdit }: MenuMoreSheetProps) {
   const router = useRouter();
   const create = useCreateMenu();
   const end = useEndMenu();
@@ -125,6 +127,7 @@ export function MenuMoreSheet({ menu, status, visible, onClose, onNight }: MenuM
           }}
         />
       ) : null}
+      {onEdit ? <Button label="Edit the list" icon="pencil" variant="secondary" onPress={onEdit} disabled={busy} /> : null}
       <Button label="Duplicate as a new draft" icon="doc.on.doc" variant="secondary" onPress={duplicate} disabled={busy} />
       {rnd ? null : status === 'on' || status === 'upcoming' ? (
         <Button label={status === 'on' ? 'Take it off now' : 'Unschedule'} icon="xmark" variant="secondary" onPress={takeOff} disabled={busy} />
@@ -134,7 +137,8 @@ export function MenuMoreSheet({ menu, status, visible, onClose, onNight }: MenuM
       {menu.barId && (rnd || status === 'draft') ? (
         <Button label={rnd ? 'Move back to drafts' : 'File under R&D'} icon="flask" variant="secondary" onPress={file} disabled={busy} />
       ) : null}
-      <Button label="Delete menu" icon="trash" variant="ghost" onPress={destroy} disabled={busy} />
+      {/* A list that ran carries credit and the bar's timeline: it's ended and hidden, never deleted (menu-delete). */}
+      {!menu.barId || !menu.startsAt || rnd || status === 'draft' || status === 'upcoming' ? <Button label="Delete menu" icon="trash" variant="ghost" onPress={destroy} disabled={busy} /> : null}
       {error ? <Body tone="accent">{error}</Body> : null}
     </MenuSheet>
   );

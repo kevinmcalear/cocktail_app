@@ -27,6 +27,8 @@ interface AddDrinkSheetProps {
   /** Which other menu each drink is on (on now or coming up), by drink id. */
   elsewhere: Record<string, string>;
   onAdd: (drink: MenuDrink) => void;
+  /** The sheet's title, when it isn't adding to the section ("Swap Negroni for"). */
+  title?: string;
 }
 
 /** One drink in the library, with what adding it would do. */
@@ -65,7 +67,7 @@ export function LibraryGroupHead({ title }: { title: string }) {
   ) : null;
 }
 
-export function AddDrinkSheet({ section, barId, onClose, library, canMake, elsewhere, onAdd }: AddDrinkSheetProps) {
+export function AddDrinkSheet({ section, barId, onClose, library, canMake, elsewhere, onAdd, title }: AddDrinkSheetProps) {
   const router = useRouter();
   const [query, setQuery] = useState('');
   // All, only what's already in this section (to look back over what's picked), or only drinks on no other menu.
@@ -92,7 +94,7 @@ export function AddDrinkSheet({ section, barId, onClose, library, canMake, elsew
       visible
       list
       onClose={onClose}
-      title={`Add to ${section.name}`}
+      title={title ?? `Add to ${section.name}`}
       subtitle={sectionRule(section)}
       // Picks land as they're tapped, so closing keeps them: a tick, not an X (tf-075).
       done
