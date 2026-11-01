@@ -1,4 +1,4 @@
-import { KeyboardAvoidingView, Modal, Platform, StyleSheet, View } from 'react-native';
+import { KeyboardAvoidingView, Modal, StyleSheet, View } from 'react-native';
 import { GestureHandlerRootView } from 'react-native-gesture-handler';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
@@ -36,7 +36,7 @@ export function FlowSheet({ visible, onClose, accessibilityLabel, children, styl
       <GestureHandlerRootView style={[styles.flex, { backgroundColor: ground ? ds.c.ground : ds.c.surface, paddingTop: insets.top, paddingBottom: insets.bottom }]}>
         <CloseContext value={onClose}>
           {keyboard ? (
-            <KeyboardAvoidingView behavior={Platform.select({ ios: 'padding', android: 'height' })} keyboardVerticalOffset={keyboardOffset} style={styles.flex}>
+            <KeyboardAvoidingView behavior="height" keyboardVerticalOffset={keyboardOffset} style={styles.flex}>
               {body}
             </KeyboardAvoidingView>
           ) : (

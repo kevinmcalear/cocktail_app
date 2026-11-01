@@ -33,7 +33,7 @@ export function FlowHead({ title, done, doneDisabled, doneLabel = 'Done' }: Flow
   const close = useSheetClose();
   const android = Platform.OS === 'android';
   return (
-    <View style={[styles.head, Platform.OS === 'ios' && styles.underGrabber]}>
+    <View style={styles.head}>
       <GlassButton accessibilityLabel={android ? 'Back' : 'Close'} icon={android ? 'chevron.left' : 'xmark'} onPress={close} />
       <Body role="heading" style={styles.title} align="center" numberOfLines={1}>
         {title ?? ''}
@@ -61,8 +61,6 @@ export function FlowHead({ title, done, doneDisabled, doneLabel = 'Done' }: Flow
 
 const styles = StyleSheet.create({
   head: { flexDirection: 'row', alignItems: 'center', gap: space.sm, paddingHorizontal: space.lg, paddingTop: space.md, paddingBottom: space.sm },
-  // iOS's sheet draws its grabber over the top of the content.
-  underGrabber: { paddingTop: space.xl },
   title: { flex: 1, ...font.semiBold },
   done: { width: layout.minTapTarget, height: layout.minTapTarget, borderRadius: radius.pill, alignItems: 'center', justifyContent: 'center' },
   off: { opacity: 0.4 },

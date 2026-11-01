@@ -81,8 +81,11 @@ test('its X closes it, and the parent hears once it has gone', async () => {
 test('a swipe down closes it the same way', async () => {
   const onClose = jest.fn();
   await renderWithProviders(<Flow onClose={onClose} />);
-  await act(() => sheet.change!(false));
-  await act(() => sheet.dismiss!());
+  // SwiftUI can send both before React renders again.
+  await act(() => {
+    sheet.change!(false);
+    sheet.dismiss!();
+  });
   expect(onClose).toHaveBeenCalledTimes(1);
 });
 
