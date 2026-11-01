@@ -1,7 +1,9 @@
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { decode } from 'base64-arraybuffer';
 import * as ImagePicker from 'expo-image-picker';
+import { useWindowDimensions } from 'react-native';
 
+import { menuCover } from '@/constants/tokens';
 import { useUserId } from '@/ctx/AuthContext';
 import { dropdownKeys } from '@/hooks/useDropdowns';
 import { MENU_DRINK_COLUMNS, menuKeys, publishedMenuDrink, toMenuDrink, type MenuItemRow } from '@/hooks/useMenus';
@@ -317,13 +319,16 @@ export function useMenuLibrary(barId: string | null | undefined, enabled = true)
 }
 
 /**
- * Picks a cover from the photo library (5:2, like the legacy editor) and
+ * Picks a cover from the photo library, cropped to the shape of the menu
+ * page's cover hero (menuCover: the page's column wide, 470 tall), and
  * uploads it. Resolves null when the person cancels.
  */
 export function usePickMenuCover(menuId: string) {
+  const { width } = useWindowDimensions();
+  const aspect: [number, number] = [Math.round(Math.min(width, menuCover.column)), menuCover.height];
   return useMutation({
     mutationFn: async (): Promise<string | null> => {
-      const result = await ImagePicker.launchImageLibraryAsync({ mediaTypes: ['images'], allowsEditing: true, aspect: [5, 2], quality: 0.85 });
+      const result = await ImagePicker.launchImageLibraryAsync({ mediaTypes: ['images'], allowsEditing: true, aspect, quality: 0.85 });
       if (result.canceled || !result.assets?.length) return null;
       return uploadMenuCover(result.assets[0].uri, menuId);
     },
