@@ -1,20 +1,16 @@
-import { useRouter, useSegments } from 'expo-router';
+import { useRouter } from 'expo-router';
 import type { ReactNode } from 'react';
 import { Platform, StyleSheet, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
-import { Body, Display, GlassButton, PressableScale, Title, useBreakpoint, useDs, useGutter } from '@/components/ds';
-import { IconSymbol } from '@/components/ui/icon-symbol';
-import { layout, radius, space } from '@/constants/tokens';
-import { useAuth } from '@/ctx/AuthContext';
+import { Display, GlassButton, Title, useBreakpoint, useGutter } from '@/components/ds';
+import { space } from '@/constants/tokens';
 import { useIsWideWeb } from '@/hooks/useIsWideWeb';
-import { useOpenSearch } from '@/hooks/useSearchFrom';
-import { useBringIn } from '@/store/useBringIn';
 
 import { VenueDeleteBanner } from '@/components/screens/venue/DeleteVenue';
 
 import { AddButton, DeskAddButton } from './AddButton';
-import { useMaterialRoles } from './material';
+import { SearchBar } from './SearchBar';
 import { VenueSwitcher } from './VenueSwitcher';
 
 /**
@@ -134,47 +130,6 @@ export function ScreenHeader({ title, display, actions, center, add = true, back
 /** The place's mark in Android's search bar (Prod-and). */
 const ANDROID_MARK = 40;
 
-/** "Search your drinks" opens search on your drinks, whatever the tab would start on. */
-const YOUR_DRINKS = 'Search your drinks';
-
-/** What Android's search bar says on each page (Prod-and): what search starts on from there. */
-export function searchBarLabel(segments: readonly string[]): string {
-  if (segments.includes('(3-discover)')) return 'Search bars, drinks, bottles';
-  if (segments.includes('(2-drinks)') || segments.includes('shelf')) return YOUR_DRINKS;
-  return 'Search or add anything';
-}
-
-/**
- * Android's top search bar (Prod-and): a Material 3 search bar that opens the
- * one search (the /search page, pushed on the tab's stack), the camera into Bring
- * in, and the place at its end.
- */
-function SearchBar({ end }: { end: ReactNode }) {
-  const ds = useDs();
-  const roles = useMaterialRoles();
-  const openSearch = useOpenSearch();
-  const label = searchBarLabel(useSegments());
-  // Bring in mounts with a session (app/_layout.tsx), so the camera does too.
-  const { session } = useAuth();
-  const open = () => openSearch(label === YOUR_DRINKS ? { query: '', scope: 'mine' } : undefined);
-  return (
-    <View style={[styles.search, { backgroundColor: roles.search }]}>
-      <PressableScale role="button" accessibilityLabel={label} onPress={open} style={styles.searchField}>
-        <IconSymbol name="magnifyingglass" size={22} color={ds.c.ink} />
-        <Body tone="muted" numberOfLines={1} style={styles.searchLabel}>
-          {label}
-        </Body>
-      </PressableScale>
-      {session ? (
-        <PressableScale role="button" accessibilityLabel="Snap a menu or bottle" onPress={() => useBringIn.getState().openSheet()} style={styles.searchTool}>
-          <IconSymbol name="camera" size={22} color={ds.c.ink} />
-        </PressableScale>
-      ) : null}
-      {end}
-    </View>
-  );
-}
-
 const styles = StyleSheet.create({
   row: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', gap: space.md },
   // A pill in the middle (Discover's) gets the room: the board's 8 between it, the logo and you.
@@ -189,11 +144,6 @@ const styles = StyleSheet.create({
   readerOnly: { position: 'absolute', left: -10000, width: 1, height: 1, overflow: 'hidden' },
   end: { flexDirection: 'row', alignItems: 'center', gap: space.sm },
   android: { gap: space.md },
-  // Material 3's search bar: 56 tall, a full pill.
-  search: { flex: 1, flexDirection: 'row', alignItems: 'center', height: 56, paddingLeft: space.lg + 2, paddingRight: space.sm, borderRadius: radius.pill },
-  searchField: { flex: 1, minWidth: 0, flexDirection: 'row', alignItems: 'center', gap: space.md + 2, minHeight: layout.minTapTarget },
-  searchLabel: { flexShrink: 1 },
-  searchTool: { width: layout.minTapTarget, height: layout.minTapTarget, alignItems: 'center', justifyContent: 'center' },
 });
 
 /**
