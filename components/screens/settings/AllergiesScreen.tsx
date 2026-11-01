@@ -27,7 +27,8 @@ export function AllergiesScreen() {
   const save = useSaveMyAllergies();
   const [picked, setPicked] = useState<Allergen[] | null>(null);
   const mine = picked ?? data ?? [];
-  const dirty = picked !== null && (picked.length !== (data ?? []).length || picked.some((a) => !(data ?? []).includes(a)));
+  // Never set: Save with nothing picked is an answer, None, and differs from Not set.
+  const dirty = data === null || (picked !== null && (picked.length !== (data ?? []).length || picked.some((a) => !(data ?? []).includes(a))));
   const toggle = (key: Allergen) => setPicked(mine.includes(key) ? mine.filter((k) => k !== key) : [...mine, key]);
   const done = () => (router.canGoBack() ? router.back() : router.replace(signedIn ? '/settings' : '/'));
   const onSave = () => (dirty ? save.mutate(mine, { onSuccess: done }) : done());

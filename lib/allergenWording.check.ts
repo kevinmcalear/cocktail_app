@@ -10,11 +10,14 @@ import {
   allergenFooter,
   allergenNames,
   allergenRows,
+  allergyCopy,
+  allergyCopyFor,
   allergyMatches,
   allergyWarning,
   containsLine,
   fromGuest,
   isClear,
+  mergeAllergies,
   myAllergiesLine,
   prepAllergenNames,
   type AllergenRead,
@@ -82,9 +85,14 @@ assert.deepEqual(allergenRows({ ...clover, unchecked: 1 }).at(-1), { key: 'unche
 assert.equal(allergenRows({ ...clover, allergens: [hidden] })[0].sub, null, 'a hidden name is left out, the allergen stays');
 assert.equal(allergenFooter(clover, 'Caretaker’s', now), 'Checked by Caretaker’s, 12 October.');
 assert.equal(allergenFooter({ ...clover, checked: '2025-12-24T10:00:00Z' }, null, now), 'Checked by the bar, 24 December 2025.');
-assert.deepEqual(allergyWarning(allergyMatches(['eggs'], { allergens: clover.allergens, checked_at: CHECKED })), { title: 'Egg white, on your list', body: 'Tell your bartender.' });
-assert.equal(allergyWarning(allergyMatches(['eggs', 'sulphites'], { allergens: clover.allergens, checked_at: CHECKED }))?.title, 'Egg white and dry vermouth, on your list');
-assert.equal(allergyWarning(allergyMatches(['milk'], { allergens: [hidden], checked_at: CHECKED }))?.title, 'Milk, on your list', 'a hidden ingredient names the allergen');
+assert.deepEqual(allergyWarning(allergyMatches(['eggs'], { allergens: clover.allergens, checked_at: CHECKED })), { title: 'Contains eggs, from the egg white', body: 'Tell your bartender.' });
+assert.equal(allergyWarning(allergyMatches(['eggs', 'sulphites'], { allergens: clover.allergens, checked_at: CHECKED }))?.title, 'Contains eggs and sulphites, from the egg white, dry vermouth and raspberry syrup');
+assert.equal(allergyWarning(allergyMatches(['milk'], { allergens: [hidden], checked_at: CHECKED }))?.title, 'Contains milk', 'a hidden ingredient still names the allergen');
+assert.equal(
+  allergyWarning(allergyMatches(['sulphites'], { allergens: [{ allergen: 'sulphites', via: [['Dry vermouth'], ['Raspberry syrup', 'Lemon']] }], checked_at: CHECKED }))?.title,
+  'Contains sulphites, from the dry vermouth and raspberry syrup',
+  'every ingredient it comes through, never just the first',
+);
 assert.equal(allergyWarning(allergyMatches(['tree_nuts'], { allergens: clover.allergens, checked_at: CHECKED })), null, 'no match: nothing, never a tick');
 assert.equal(allergenNames(clover), 'Eggs, Sulphites');
 
@@ -97,5 +105,14 @@ assert.equal(prepAllergenNames({ allergens: [egg], unchecked: 2, lines: 3 }), 'E
 assert.equal(myAllergiesLine(null), 'Not set');
 assert.equal(myAllergiesLine([]), 'None');
 assert.equal(myAllergiesLine(['eggs', 'tree_nuts']), 'Eggs, Tree nuts');
+
+// A list saved on a phone meets the account: neither loses an allergy, and a copy is only ever its owner's.
+assert.equal(mergeAllergies(null, null), null, 'never set stays never set');
+assert.deepEqual(mergeAllergies([], null), [], 'None stays None');
+assert.deepEqual(mergeAllergies([], ['tree_nuts']), ['tree_nuts'], 'an empty account does not drop what was picked on the phone');
+assert.deepEqual(mergeAllergies(['eggs'], ['tree_nuts', 'eggs']), ['eggs', 'tree_nuts']);
+assert.deepEqual(allergyCopyFor(allergyCopy('a', ['eggs']), 'a'), ['eggs']);
+assert.equal(allergyCopyFor(allergyCopy('a', ['eggs']), 'b'), null, "someone else's copy never reads as yours");
+assert.equal(allergyCopyFor(null, 'a'), null);
 
 console.log(`allergen wording ok (${shapes.length} shapes)`);

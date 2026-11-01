@@ -59,25 +59,31 @@ export interface AllergyMatch {
 /**
  * The guest's own allergies found in a drink (guest-allergies): only on a
  * drink the bar has checked, warnings only (never a reassuring tick), naming
- * the top ingredient it comes through. Null when the bar hasn't checked it,
+ * every top ingredient it comes through. Null when the bar hasn't checked it,
  * so the page says Ask your bartender.
  */
 export function allergyMatches(mine: readonly string[], drink: Pick<GuestDrinkAllergens, 'allergens' | 'checked_at'>): AllergyMatch[] | null {
   if (!drink.checked_at) return null;
   return drink.allergens
     .filter((a) => mine.includes(a.allergen))
-    .map((a) => ({ allergen: a.allergen, ingredient: a.via.find((path) => path.length > 0)?.[0] ?? null }));
+    .flatMap((a): AllergyMatch[] => {
+      const tops = [...new Set(a.via.map((path) => path[0]).filter(Boolean))];
+      return tops.length ? tops.map((ingredient) => ({ allergen: a.allergen, ingredient })) : [{ allergen: a.allergen, ingredient: null }];
+    });
 }
 
 export function allergenLabel(key: string): string {
   return ALLERGENS.find((a) => a.key === key)?.label ?? key;
 }
 
-/** "eggs and sulphites", "milk, eggs and sulphites". Lower case for mid-sentence. */
-export function listAllergens(keys: readonly string[]): string {
-  const names = keys.map((k) => allergenLabel(k).toLowerCase());
+function andList(names: readonly string[]): string {
   if (names.length < 2) return names[0] ?? '';
   return `${names.slice(0, -1).join(', ')} and ${names[names.length - 1]}`;
+}
+
+/** "eggs and sulphites", "milk, eggs and sulphites". Lower case for mid-sentence. */
+export function listAllergens(keys: readonly string[]): string {
+  return andList(keys.map((k) => allergenLabel(k).toLowerCase()));
 }
 
 /** A drink's allergens as any reader gets them: staff (drink_allergens) or guests (guest_drink_allergens). */
@@ -180,15 +186,33 @@ export function allergenFooter(d: AllergenRead, barName: string | null, now = ne
 }
 
 /**
- * The warning at the top of the page (boards Loop-allergy "A match",
- * Decided-who-guest-hit): "Egg white, on your list" / "Tell your bartender."
- * Only on a drink the bar has checked, never a tick: null otherwise.
+ * The warning at the top of the page: "Contains sulphites, from the dry
+ * vermouth" (board Decided-who-guest-hit) / "Tell your bartender." (board
+ * Loop-allergy "A match"). It names the allergen and every ingredient it comes
+ * through, so a guest never acts on half of it. Only on a drink the bar has
+ * checked, never a tick: null otherwise.
  */
 export function allergyWarning(hits: AllergyMatch[] | null): { title: string; body: string } | null {
   if (!hits?.length) return null;
-  const names = [...new Set(hits.map((h) => h.ingredient ?? allergenLabel(h.allergen)))].map((n, i) => (i ? n.toLowerCase() : n));
-  const list = names.length < 2 ? names[0] : `${names.slice(0, -1).join(', ')} and ${names[names.length - 1]}`;
-  return { title: `${list}, on your list`, body: 'Tell your bartender.' };
+  const allergens = listAllergens([...new Set(hits.map((h) => h.allergen))]);
+  const names = [...new Set(hits.flatMap((h) => (h.ingredient ? [h.ingredient.toLowerCase()] : [])))];
+  return { title: `Contains ${allergens}${names.length ? `, from the ${andList(names)}` : ''}`, body: 'Tell your bartender.' };
+}
+
+/** Two lists of allergies as one, so a list picked on a phone never drops one from the account. Null: neither was ever set. */
+export function mergeAllergies(a: readonly Allergen[] | null | undefined, b: readonly Allergen[] | null | undefined): Allergen[] | null {
+  if (!a && !b) return null;
+  return [...new Set([...(a ?? []), ...(b ?? [])])];
+}
+
+/** The phone's copy of an account's allergies, saved with whose it is. */
+export const allergyCopy = (userId: string, allergies: readonly Allergen[]) => JSON.stringify({ userId, allergies });
+
+/** Reads that copy back for its owner only, so one person's list never reaches the next on a shared phone. */
+export function allergyCopyFor(raw: string | null | undefined, userId: string): Allergen[] | null {
+  if (!raw) return null;
+  const copy = JSON.parse(raw) as { userId: string; allergies: Allergen[] };
+  return copy.userId === userId ? copy.allergies : null;
 }
 
 /** The Settings row's value: "Eggs, Tree nuts", "None", or "Not set" (null: never set). */

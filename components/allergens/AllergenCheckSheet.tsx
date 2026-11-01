@@ -4,7 +4,7 @@ import { StyleSheet, View } from 'react-native';
 import { Body, Button, Caption, Chip, DsText, GlassButton, PressableScale, Sheet, SheetScrollView, Switch, Title, useDs } from '@/components/ds';
 import { IconSymbol } from '@/components/ui/icon-symbol';
 import { font, layout, radius, space, STATUS } from '@/constants/tokens';
-import { useLineAllergens } from '@/hooks/useAllergens';
+import { useLineChecks } from '@/hooks/useAllergens';
 import { useBarMembers } from '@/hooks/useBarDetail';
 import { useAllergenCheckedBy, useCheckDrinkAllergens } from '@/hooks/useGuestAllergies';
 import { withAlpha } from '@/lib/color';
@@ -33,10 +33,12 @@ interface AllergenCheckSheetProps {
 export function AllergenCheckSheet({ itemId, name, barId, barName, data, lines, onClose }: AllergenCheckSheetProps) {
   const ds = useDs();
   const check = useCheckDrinkAllergens(itemId);
-  const [on, setOn] = useState(!!data.checked);
+  const [tick, setTick] = useState<{ on: boolean; against: string | null } | null>(null);
+  // A tick counts only against the check it was made on: when a change clears the check the switch goes off with it, so Save can't re-stamp a list nobody looked at again.
+  const on = tick && tick.against === (data.checked ?? null) ? tick.on : !!data.checked;
   const [adding, setAdding] = useState<string | null | false>(false);
-  const ids = lines.map((l) => l.ingredientId).filter((id): id is string => !!id);
-  const byLine = useLineAllergens(ids, barId);
+  const addingLine = lines.find((l) => l.key === adding);
+  const byLine = useLineChecks(itemId, barId);
   const checkerId = useAllergenCheckedBy(itemId).data;
   const checker = useBarMembers(data.checked && checkerId ? barId : null).data?.find((m) => m.user_id === checkerId)?.display_name;
   const changed = on !== !!data.checked;
@@ -88,15 +90,18 @@ export function AllergenCheckSheet({ itemId, name, barId, barName, data, lines, 
             </Caption>
           </View>
           {lines.map((l) => {
-            const a = l.ingredientId ? byLine.data?.[l.ingredientId] : undefined;
-            const listed = !!a?.listed;
-            const value = !a && byLine.isPending && l.ingredientId ? '…' : !listed ? 'Not listed' : a!.allergens.length ? a!.allergens.map(allergenLabel).join(', ') : 'Nothing';
+            // What's on the page, so the table can't read differently from what guests read.
+            const contains = data.allergens.filter((x) => x.via.some((path) => path[0] === l.ingredient)).map((x) => allergenLabel(x.allergen));
+            const listed = !!byLine.data?.[l.key]?.listed;
+            const loading = !byLine.data && byLine.isPending;
+            const short = !listed && !loading;
+            const value = contains.length ? `${contains.join(', ')}${short ? ', rest not listed' : ''}` : loading ? '…' : listed ? 'Nothing' : 'Not listed';
             return (
               <View key={l.key} role="row" style={[styles.tr, { borderTopColor: ds.c.line, borderTopWidth: StyleSheet.hairlineWidth }]}>
                 <Body role="cell" style={styles.flex}>
                   {l.ingredient ?? ''}
                 </Body>
-                <Body role="cell" tone={listed && !a!.allergens.length ? 'muted' : undefined} color={!listed && value !== '…' ? amber : undefined} style={[styles.contains, !listed ? font.semiBold : null]}>
+                <Body role="cell" tone={listed && !contains.length ? 'muted' : undefined} color={short ? amber : undefined} style={[styles.contains, short ? font.semiBold : null]}>
                   {value}
                 </Body>
               </View>
@@ -117,10 +122,10 @@ export function AllergenCheckSheet({ itemId, name, barId, barName, data, lines, 
               {lines
                 .filter((l) => l.ingredientId)
                 .map((l) => (
-                  <Chip key={l.key} quiet label={l.ingredient ?? ''} selected={adding === l.ingredientId} onPress={() => setAdding(l.ingredientId)} />
+                  <Chip key={l.key} quiet label={l.ingredient ?? ''} selected={adding === l.key} onPress={() => setAdding(l.key)} />
                 ))}
             </View>
-            {adding ? <AllergenSection itemId={adding} houseMade={!!byLine.data?.[adding]?.houseMade} canEditItem={false} /> : null}
+            {addingLine?.ingredientId ? <AllergenSection itemId={addingLine.ingredientId} houseMade={!!byLine.data?.[addingLine.key]?.houseMade} canEditItem={false} barId={barId} barName={barName} /> : null}
           </View>
         )}
 
@@ -129,7 +134,7 @@ export function AllergenCheckSheet({ itemId, name, barId, barName, data, lines, 
             <Body style={font.semiBold}>I checked these against the bottles</Body>
             <Caption tone="muted">{data.checked && !changed ? `Checked by ${checker ?? 'your team'}, ${when}` : 'Your name and the date go on the drink'}</Caption>
           </View>
-          <Switch label="I checked these against the bottles" value={on} onValueChange={setOn} disabled={check.isPending} />
+          <Switch label="I checked these against the bottles" value={on} onValueChange={(next) => setTick({ on: next, against: data.checked ?? null })} disabled={check.isPending} />
         </View>
         {check.error ? (
           <Caption tone="accent" role="alert">

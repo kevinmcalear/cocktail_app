@@ -1,6 +1,6 @@
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { FAVORITES_KEY } from '@/hooks/useFavorites';
-import { GUEST_ALLERGIES_KEY } from '@/hooks/useGuestAllergies';
+import { ACCOUNT_ALLERGIES_KEY } from '@/hooks/useGuestAllergies';
 import { STUDY_PILE_KEY } from '@/hooks/useStudyPile';
 import { AI_CONSENT_KEY } from '@/lib/aiConsent';
 import { dropUnsentWrites, isUserQuery } from '@/lib/authCache';
@@ -22,7 +22,7 @@ import { useVenueSetup } from '@/store/useVenueSetup';
  * Forgets everything the signed-out user left on this device: cached query
  * data (in memory, the saved row and the saved query files), the venues'
  * spec books, edits made offline and not yet sent, recent
- * activity, favorites and the study pile, AI consent, this phone's copy of their allergies, the last near-me place, the
+ * activity, favorites and the study pile, AI consent, this phone's copy of their account's allergies, the last near-me place, the
  * venue they were working in and its setup progress, drinks and bottles half added, big imports
  * waiting to be reviewed, and notes to us not yet sent. Bar iPads are shared,
  * so the next person must not see any of it, or send it as themselves.
@@ -53,8 +53,9 @@ export async function clearUserData(): Promise<void> {
     deviceStore.removeItem(FAVORITES_KEY),
     deviceStore.removeItem(STUDY_PILE_KEY),
     deviceStore.removeItem(AI_CONSENT_KEY),
-    // Their allergies stay on their account; the next person on a shared phone never sees them.
-    deviceStore.removeItem(GUEST_ALLERGIES_KEY),
+    // Their allergies stay on their account; the next person on a shared phone never sees them. This also runs
+    // on opening the app signed out, so the signed-out guest's own list (GUEST_ALLERGIES_KEY) stays.
+    deviceStore.removeItem(ACCOUNT_ALLERGIES_KEY),
     // The old step-by-step ingredient wizard's kept draft (gone since A bottle you buy).
     AsyncStorage.removeItem('ingredient-wizard'),
   ]);
