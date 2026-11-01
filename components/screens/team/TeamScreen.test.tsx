@@ -11,6 +11,7 @@ const mockSaveLink = jest.fn();
 const mockNewLink = jest.fn();
 let mockLink: { slug: string; token: string | null; on: boolean; role: number; approve: boolean } = { slug: 'caretakers', token: 'secret', on: true, role: 30, approve: true };
 const mockAdd = jest.fn();
+const mockInviteRole = jest.fn();
 const mockSend = jest.fn();
 const mockSendAsync = jest.fn();
 let mockRole = 40;
@@ -72,6 +73,7 @@ jest.mock('@/hooks/useVenueRoles', () => ({
   }),
   useSetMemberRoleChoice: () => ({ mutate: mockChoose, isPending: false, error: null }),
 }));
+jest.mock('@/hooks/useTakeover', () => ({ useInviteToRole: () => ({ mutateAsync: mockInviteRole, isPending: false, error: null }) }));
 jest.mock('@/hooks/useBarInvites', () => ({
   useBarInvites: (_barId: string, enabled: boolean) => ({
     data: enabled ? [{ id: 'i1', email: 'new@example.test', role_level: 30, name: 'Nia', created_at: '2026-01-01T00:00:00Z' }] : [],
@@ -90,6 +92,7 @@ beforeEach(() => {
   mockRemove.mockClear();
   mockLink = { slug: 'caretakers', token: 'secret', on: true, role: 30, approve: true };
   mockAdd.mockReset();
+  mockInviteRole.mockReset();
   mockSend.mockReset();
   mockSendAsync.mockReset();
   mockSaveWelcome.mockReset();
@@ -98,7 +101,7 @@ beforeEach(() => {
   mockBrand = { logo_url: 'https://example.test/logo.png', primary_color: null, display_face: 'redaction' };
 });
 
-test('an admin invites by name, email and role from the sheet, and the invite is emailed', async () => {
+test('an admin invites by email and role from the sheet, and the invite is emailed', async () => {
   mockAdd.mockResolvedValue(true);
   mockSendAsync.mockResolvedValue({ sent: true });
   await renderWithProviders(<TeamScreen />);
@@ -106,25 +109,56 @@ test('an admin invites by name, email and role from the sheet, and the invite is
   expect(screen.getByText('Invite to Caretakers')).toBeTruthy();
   await fireEvent.press(screen.getByText('By email'));
   expect(screen.getByRole('radio', { name: 'Bartender. Plus prep notes and the staff list', checked: true })).toBeTruthy();
-  expect(within(screen.getByLabelText('What they can do')).queryByRole('radio', { name: /^Guest/ })).toBeNull();
+  expect(within(screen.getByLabelText('As')).queryByRole('radio', { name: /^Guest/ })).toBeNull();
+  // The old form's note and preview are gone.
+  expect(screen.queryByRole('button', { name: 'Preview the email' })).toBeNull();
 
-  await fireEvent.changeText(screen.getByLabelText('Name'), 'Sam Okafor');
-  await fireEvent.changeText(screen.getByLabelText('Email'), ' Sam@Example.test ');
+  // An email stands alone: no second field.
+  await fireEvent.changeText(screen.getByLabelText('Name or email'), ' Sam@Example.test ');
+  expect(screen.queryByLabelText(/’s email$/)).toBeNull();
   await fireEvent.press(screen.getByRole('radio', { name: 'Drink Creator. Adds and edits drinks and menus' }));
-  await fireEvent.changeText(screen.getByLabelText('A note just for Sam (optional)'), 'Read the Autumn menu first.');
-  // The preview is the email: the suggested welcome, signed, then the note.
-  await fireEvent.press(screen.getByRole('button', { name: 'Preview the email' }));
-  expect(screen.getByText('Join Caretakers as a Drink Creator')).toBeTruthy();
-  expect(screen.getByText('A note for you')).toBeTruthy();
-  await fireEvent.press(screen.getByRole('button', { name: 'Email Sam an invite' }));
+  await fireEvent.press(screen.getByRole('button', { name: 'Send invite' }));
   // The first invite keeps the suggested welcome on the venue, as Your team would.
   expect(mockSaveWelcome).toHaveBeenCalledWith(expect.stringMatching(/^Welcome to Caretakers\. /));
-  expect(mockAdd).toHaveBeenCalledWith({ email: 'sam@example.test', roleLevel: 35, name: 'Sam Okafor', note: 'Read the Autumn menu first.' });
+  expect(mockAdd).toHaveBeenCalledWith({ email: 'sam@example.test', roleLevel: 35, name: '' });
   expect(mockSendAsync).toHaveBeenCalledWith('sam@example.test');
-  expect(await screen.findByText('Invite emailed to Sam Okafor.')).toBeTruthy();
+  expect(await screen.findByText('Invite emailed to sam@example.test.')).toBeTruthy();
 
   await fireEvent.press(screen.getByRole('button', { name: 'Resend' }));
   expect(mockSend).toHaveBeenLastCalledWith('new@example.test', expect.anything());
+});
+
+test('a name asks for an email, and a custom role is invited by its id', async () => {
+  mockInviteRole.mockResolvedValue(undefined);
+  mockSendAsync.mockResolvedValue({ sent: true });
+  await renderWithProviders(<TeamScreen />);
+  await fireEvent.press(screen.getByRole('button', { name: 'Invite someone' }));
+  await fireEvent.press(screen.getByText('By email'));
+  await fireEvent.changeText(screen.getByLabelText('Name or email'), 'Sam Okafor');
+  // Without an email, Send says what's missing and sends nothing.
+  await fireEvent.press(screen.getByRole('button', { name: 'Send invite' }));
+  expect(await screen.findByText('Add Sam’s email.')).toBeTruthy();
+  expect(mockInviteRole).not.toHaveBeenCalled();
+  await fireEvent.changeText(screen.getByLabelText('Sam’s email'), 'sam@example.test');
+  await fireEvent.press(screen.getByRole('radio', { name: 'Barback. Sees menus, talking points and where things live' }));
+  await fireEvent.press(screen.getByRole('button', { name: 'Send invite' }));
+  expect(mockInviteRole).toHaveBeenCalledWith({ email: 'sam@example.test', roleId: 'bb', name: 'Sam Okafor' });
+  expect(mockAdd).not.toHaveBeenCalled();
+  expect(mockSendAsync).toHaveBeenCalledWith('sam@example.test');
+  expect(await screen.findByText('Invite emailed to Sam Okafor.')).toBeTruthy();
+});
+
+test('a refused invite shows the database’s words and keeps the sheet open', async () => {
+  mockInviteRole.mockRejectedValue({ message: 'They’re already on your team.' });
+  await renderWithProviders(<TeamScreen />);
+  await fireEvent.press(screen.getByRole('button', { name: 'Invite someone' }));
+  await fireEvent.press(screen.getByText('By email'));
+  await fireEvent.changeText(screen.getByLabelText('Name or email'), 'jo@example.test');
+  await fireEvent.press(screen.getByRole('radio', { name: 'Barback. Sees menus, talking points and where things live' }));
+  await fireEvent.press(screen.getByRole('button', { name: 'Send invite' }));
+  expect(await screen.findByRole('alert')).toBeTruthy();
+  expect(mockSendAsync).not.toHaveBeenCalled();
+  expect(screen.getByText('Invite to Caretakers')).toBeTruthy();
 });
 
 test('the staff link tab: the code, the join role and approval, and the link off', async () => {
@@ -197,8 +231,8 @@ test('a saved invite whose email fails says so', async () => {
   await renderWithProviders(<TeamScreen />);
   await fireEvent.press(screen.getByRole('button', { name: 'Invite someone' }));
   await fireEvent.press(screen.getByText('By email'));
-  await fireEvent.changeText(screen.getByLabelText('Email'), 'sam@example.test');
-  await fireEvent.press(screen.getByRole('button', { name: 'Email an invite' }));
+  await fireEvent.changeText(screen.getByLabelText('Name or email'), 'sam@example.test');
+  await fireEvent.press(screen.getByRole('button', { name: 'Send invite' }));
   expect(await screen.findByText(/The invite is saved, but the email didn’t send \(rate limited\)/)).toBeTruthy();
 });
 

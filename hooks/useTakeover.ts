@@ -11,6 +11,7 @@ import type { Json } from '@/types/db';
 
 /** Invite a guest bartender onto the takeover's role at the host; they lose access when it ends. */
 export function useInviteToRole() {
+  const client = useQueryClient();
   return useMutation({
     mutationFn: async (p: { email: string; roleId: string; name?: string | null; note?: string | null }) => {
       const { error } = await supabase.rpc('invite_to_role', {
@@ -21,6 +22,7 @@ export function useInviteToRole() {
       });
       if (error) throw error;
     },
+    onSuccess: () => client.invalidateQueries({ queryKey: ['bar-invites'] }),
     onError: () => {},
   });
 }
