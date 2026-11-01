@@ -7,7 +7,7 @@ import { layout, space } from '@/constants/tokens';
 import { useActiveVenue, type Venue } from '@/hooks/useActiveVenue';
 import { useMode } from '@/hooks/useMode';
 
-import { VenueMenuSheet } from './VenueMenuSheet';
+import { VenueMenuSheet } from './VenueMenuSheetLazy';
 import { HomeMark, VenueMark } from './VenueMarks';
 
 /** What the switcher says to screen readers: the mark carries no name. With no venues there's nowhere to switch to, so it opens the menu. */
