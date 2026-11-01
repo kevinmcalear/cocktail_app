@@ -1,4 +1,4 @@
-import { useRouter } from 'expo-router';
+import { useRouter, useSegments } from 'expo-router';
 import type { ReactNode } from 'react';
 import { Platform, StyleSheet, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
@@ -6,12 +6,15 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { Body, Display, GlassButton, PressableScale, Title, useBreakpoint, useDs, useGutter } from '@/components/ds';
 import { IconSymbol } from '@/components/ui/icon-symbol';
 import { layout, radius, space } from '@/constants/tokens';
+import { useAuth } from '@/ctx/AuthContext';
 import { useIsWideWeb } from '@/hooks/useIsWideWeb';
 import { useOpenSearch } from '@/hooks/useSearchFrom';
+import { useBringIn } from '@/store/useBringIn';
 
 import { VenueDeleteBanner } from '@/components/screens/venue/DeleteVenue';
 
 import { AddButton, DeskAddButton } from './AddButton';
+import { useMaterialRoles } from './material';
 import { VenueSwitcher } from './VenueSwitcher';
 
 /**
@@ -19,11 +22,13 @@ import { VenueSwitcher } from './VenueSwitcher';
  * place button (switch between your bars and home) with the page's title
  * beside it on the left, the page's tools and the + (Add) on the right. You
  * is a tab, so there's no avatar. Android has no + here: its Add is the
- * extended FAB (AddButton.tsx), and its top row is the search bar, "Search
- * or add anything", with the place button at its end; the title sits under it.
+ * extended FAB (AddButton.tsx), and its top row is the search bar (Prod-and),
+ * with the camera and the place at its end; the title sits under it.
+ * The bar opens the /search page over the tabs: Android has no Search tab.
  *
- * `back`: a page pushed on a tab (Prep, Study) gets a back button in the
- * place button's spot and no +.
+ * Pages pushed on a tab (Prep, Study) use the stack's header instead
+ * (NativeHeader.tsx). `back`: a page outside the tabs that still draws its own
+ * row (My Bar) gets a back button in the place button's spot and no +.
  *
  * Wide web has the place button, New and you in the side nav: the title (at
  * display size with `display`) and `actions` share one line, or the row is
@@ -31,9 +36,10 @@ import { VenueSwitcher } from './VenueSwitcher';
  * ends that row wherever a phone shows its + (DeskAddButton).
  *
  * `center` (phones) fills the middle of the row, between the place button
- * and the +, and the title becomes a heading only screen readers hear
- * (Discover's search pill). `add={false}`: the + steps aside, so the middle
- * has the room (Discover's pill while it holds a search).
+ * and the +, or the row under Android's search bar, and the title becomes a
+ * heading only screen readers hear (Discover's search pill). `add={false}`:
+ * the + steps aside, so the middle has the room (Discover's pill while it
+ * holds a search).
  */
 export function ScreenHeader({ title, display, actions, center, add = true, back }: { title?: string; display?: boolean; actions?: ReactNode; center?: ReactNode; add?: boolean; back?: boolean }) {
   const router = useRouter();
@@ -68,13 +74,14 @@ export function ScreenHeader({ title, display, actions, center, add = true, back
     );
   }
   const goBack = () => (router.canGoBack() ? router.back() : router.navigate('/'));
-  const start = back ? <GlassButton icon="chevron.left" accessibilityLabel="Back" onPress={goBack} /> : <VenueSwitcher />;
+  const android = Platform.OS === 'android';
+  const start = back ? <GlassButton icon="chevron.left" accessibilityLabel="Back" onPress={goBack} /> : android ? <VenueSwitcher size={ANDROID_MARK} chevron={false} /> : <VenueSwitcher />;
   const heading = title ? (
     <Title aria-level={1} numberOfLines={1} style={center ? styles.readerOnly : styles.title}>
       {title}
     </Title>
   ) : null;
-  if (Platform.OS === 'android' && !center) {
+  if (android) {
     return (
       <>
         <View style={[styles.android, { paddingTop: insets.top + space.sm, paddingHorizontal: gutter }]}>
@@ -82,7 +89,15 @@ export function ScreenHeader({ title, display, actions, center, add = true, back
             {back ? start : null}
             <SearchBar end={back ? null : start} />
           </View>
-          {heading || actions ? (
+          {center ? (
+            <View style={styles.row}>
+              <View style={styles.center}>
+                {heading}
+                {center}
+              </View>
+              {actions ? <View style={styles.end}>{actions}</View> : null}
+            </View>
+          ) : heading || actions ? (
             <View style={styles.row}>
               {heading ?? <View />}
               <View style={styles.end}>{actions}</View>
@@ -108,7 +123,7 @@ export function ScreenHeader({ title, display, actions, center, add = true, back
         ) : null}
         <View style={styles.end}>
           {actions}
-          {add && !back && Platform.OS !== 'android' ? <AddButton /> : null}
+          {add && !back ? <AddButton /> : null}
         </View>
       </View>
       {banner}
@@ -116,18 +131,45 @@ export function ScreenHeader({ title, display, actions, center, add = true, back
   );
 }
 
-/** Android's top search bar: a Material 3 search bar that opens the one search, with the place button at its end. */
+/** The place's mark in Android's search bar (Prod-and). */
+const ANDROID_MARK = 40;
+
+/** "Search your drinks" opens search on your drinks, whatever the tab would start on. */
+const YOUR_DRINKS = 'Search your drinks';
+
+/** What Android's search bar says on each page (Prod-and): what search starts on from there. */
+export function searchBarLabel(segments: readonly string[]): string {
+  if (segments.includes('(3-discover)')) return 'Search bars, drinks, bottles';
+  if (segments.includes('(2-drinks)') || segments.includes('shelf')) return YOUR_DRINKS;
+  return 'Search or add anything';
+}
+
+/**
+ * Android's top search bar (Prod-and): a Material 3 search bar that opens the
+ * one search (the /search page, pushed on the tab's stack), the camera into Bring
+ * in, and the place at its end.
+ */
 function SearchBar({ end }: { end: ReactNode }) {
   const ds = useDs();
+  const roles = useMaterialRoles();
   const openSearch = useOpenSearch();
+  const label = searchBarLabel(useSegments());
+  // Bring in mounts with a session (app/_layout.tsx), so the camera does too.
+  const { session } = useAuth();
+  const open = () => openSearch(label === YOUR_DRINKS ? { query: '', scope: 'mine' } : undefined);
   return (
-    <View style={[styles.search, { backgroundColor: ds.c.raised }]}>
-      <PressableScale role="button" accessibilityLabel="Search or add anything" onPress={() => openSearch()} style={styles.searchField}>
-        <IconSymbol name="magnifyingglass" size={20} color={ds.c.muted} />
-        <Body tone="muted" numberOfLines={1}>
-          Search or add anything
+    <View style={[styles.search, { backgroundColor: roles.search }]}>
+      <PressableScale role="button" accessibilityLabel={label} onPress={open} style={styles.searchField}>
+        <IconSymbol name="magnifyingglass" size={22} color={ds.c.ink} />
+        <Body tone="muted" numberOfLines={1} style={styles.searchLabel}>
+          {label}
         </Body>
       </PressableScale>
+      {session ? (
+        <PressableScale role="button" accessibilityLabel="Snap a menu or bottle" onPress={() => useBringIn.getState().openSheet()} style={styles.searchTool}>
+          <IconSymbol name="camera" size={22} color={ds.c.ink} />
+        </PressableScale>
+      ) : null}
       {end}
     </View>
   );
@@ -148,8 +190,10 @@ const styles = StyleSheet.create({
   end: { flexDirection: 'row', alignItems: 'center', gap: space.sm },
   android: { gap: space.md },
   // Material 3's search bar: 56 tall, a full pill.
-  search: { flex: 1, flexDirection: 'row', alignItems: 'center', height: 56, paddingLeft: space.lg, paddingRight: space.xs, borderRadius: radius.pill },
-  searchField: { flex: 1, flexDirection: 'row', alignItems: 'center', gap: space.md, minHeight: layout.minTapTarget },
+  search: { flex: 1, flexDirection: 'row', alignItems: 'center', height: 56, paddingLeft: space.lg + 2, paddingRight: space.sm, borderRadius: radius.pill },
+  searchField: { flex: 1, minWidth: 0, flexDirection: 'row', alignItems: 'center', gap: space.md + 2, minHeight: layout.minTapTarget },
+  searchLabel: { flexShrink: 1 },
+  searchTool: { width: layout.minTapTarget, height: layout.minTapTarget, alignItems: 'center', justifyContent: 'center' },
 });
 
 /**

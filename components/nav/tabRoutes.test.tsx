@@ -20,7 +20,7 @@ function open(url: string) {
       _layout: () => <Stack screenOptions={{ headerShown: false }} />,
       '(tabs)/_layout': () => (
         <Tabs>
-          {[...TABS.map((t) => t.route), 'search'].map((name) => (
+          {[...TABS.map((t) => t.route), '(search)'].map((name) => (
             <Tabs.Screen key={name} name={name} />
           ))}
         </Tabs>
@@ -33,10 +33,11 @@ function open(url: string) {
       '(tabs)/(1-tonight)/index': page('tonight'),
       [`${SHARED}/cocktail/[id]/index`]: page('drink'),
       [`${SHARED}/prep`]: page('prep'),
+      [`${SHARED}/search`]: page('search page'),
       '(tabs)/(2-drinks)/drinks': page('drinks'),
       '(tabs)/(3-discover)/discover': page('discover'),
       '(tabs)/(4-you)/you': page('you'),
-      '(tabs)/search/index': page('search'),
+      '(tabs)/(search)/index': page('search'),
     },
     { initialUrl: url },
   );
@@ -79,4 +80,26 @@ it("switches tabs when a tab's path is opened from another tab", async () => {
 it('opens a cold link to a drink on Tonight', async () => {
   const r = await open('/cocktail/1');
   expect(r.getSegments()).toEqual(['(tabs)', '(1-tonight)', 'cocktail', '[id]']);
+});
+
+// Search (Android and phone web) is a page on the tab it was opened from, so what
+// it opens stays on that tab, and Back steps back through the search.
+it('pushes search and its results on the tab it was opened from', async () => {
+  const r = await open('/drinks');
+  await act(async () => router.navigate('/search'));
+  expect(r.getSegments()).toEqual(['(tabs)', '(2-drinks)', 'search']);
+  await act(async () => router.push('/cocktail/1'));
+  expect(r.getSegments()).toEqual(['(tabs)', '(2-drinks)', 'cocktail', '[id]']);
+  await act(async () => router.back());
+  expect(r.getPathname()).toBe('/search');
+  await act(async () => router.back());
+  expect(r.getPathname()).toBe('/drinks');
+});
+
+it("returns Discover's search to its map", async () => {
+  const r = await open('/discover');
+  await act(async () => router.navigate('/search'));
+  expect(r.getSegments()).toEqual(['(tabs)', '(3-discover)', 'search']);
+  await act(async () => router.dismissTo('/discover'));
+  expect(r.getSegments()).toEqual(['(tabs)', '(3-discover)', 'discover']);
 });

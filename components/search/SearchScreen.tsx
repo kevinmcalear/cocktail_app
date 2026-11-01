@@ -1,59 +1,81 @@
-import { useIsFocused, useLocalSearchParams, useRouter } from 'expo-router';
+import { useIsFocused, useLocalSearchParams, useRouter, useSegments } from 'expo-router';
 import { useEffect, useState } from 'react';
-import { Keyboard } from 'react-native';
+import { Keyboard, Platform } from 'react-native';
 
 import { BackbarTheme } from '@/components/ds';
 import { MountOnFocus } from '@/components/nav/MountOnFocus';
 import { BottomSearch, SystemBottomSearch, type SearchTabState } from '@/components/search/BottomSearch';
-import { SYSTEM_BOTTOM_SEARCH, useBottomSearch } from '@/hooks/useBottomBar';
+import { TopSearch } from '@/components/search/TopSearch';
+import { SEARCH_TAB, SYSTEM_BOTTOM_SEARCH, useBottomSearch } from '@/hooks/useBottomBar';
 import { useIsHydrated } from '@/hooks/useIsHydrated';
 import { useSearchMine } from '@/hooks/useSearchMine';
-import { useSearchFrom } from '@/hooks/useSearchFrom';
+import { SEARCH_TAB_HREF, useSearchFrom } from '@/hooks/useSearchFrom';
 import type { City } from '@/lib/discover';
 import { startScope, type SearchScope, type SearchShow, type ShowCounts } from '@/lib/searchScope';
-import { useSearchPalette } from '@/store/useSearchPalette';
+import { useSearchPalette, type SearchStart } from '@/store/useSearchPalette';
 
 /**
- * The search circle beside the tabs: the one search, opened where you came
- * from (search-starts-here, 22 Oct 2026): Discover's area from Discover, else
- * the venue in venue mode and Everywhere in home mode. On phones the field sits at the
- * bottom, over the keyboard (components/search/BottomSearch.tsx); it's
- * focused, keyboard up, every time the tab opens, and leaving the tab puts
- * the keyboard away. Wide screens open the same search as a palette (⌘K).
+ * The one search, opened where you came from (search-starts-here, 22 Oct
+ * 2026): Discover's area from Discover, else the venue in venue mode and
+ * Everywhere in home mode. It's focused, keyboard up, every time search
+ * opens, and leaving puts the keyboard away.
+ *
+ * Its one address is /search, which every link and door opens
+ * (hooks/useSearchFrom.ts useOpenSearch). The page lives in the folder the
+ * four tabs share, so it's pushed on the tab it was opened from: a result
+ * opened from it lands on that tab's stack, and Back returns to the search.
+ * Where it shows:
+ * - Android: that page, from the search bar on top of a tab's page, which
+ *   opens into the field in the same place (TopSearch.tsx).
+ * - Phone-width web: that page, from the search circle beside its tabs, with
+ *   the field at the bottom, over the keyboard (BottomSearch.tsx); the tab
+ *   bar steps aside for it (WebTabBar.tsx).
+ * - iPhone: the system's search tab, the circle beside the tabs, which turns
+ *   the tab bar into the field ((tabs)/(search), `tab`). It can't be a page:
+ *   iOS only does that for a tab. /search hands what it carries to that tab.
+ * - Wide screens: the ⌘K palette (q01, decided 24 Oct 2026). /search hands
+ *   what it carries to the palette over the first tab.
  */
-export default function SearchScreen() {
+export function SearchScreen({ tab = false }: { tab?: boolean }) {
   return (
     <BackbarTheme>
       <MountOnFocus>
-        <SearchTab />
+        <Search tab={tab} />
       </MountOnFocus>
     </BackbarTheme>
   );
 }
 
-function SearchTab() {
+function Search({ tab }: { tab: boolean }) {
   const bottom = useBottomSearch();
-  if (!bottom) return <ToPalette />;
+  if (!bottom) return <HandOff to="palette" />;
+  if (SEARCH_TAB && !tab) return <HandOff to="tab" />;
   return <BottomTab />;
 }
 
 function BottomTab() {
   const state = useSearchTabState();
+  if (Platform.OS === 'android') return <TopSearch {...state} />;
   return SYSTEM_BOTTOM_SEARCH ? <SystemBottomSearch {...state} /> : <BottomSearch {...state} />;
 }
 
 /**
- * Wide screens search in the ⌘K palette, not on a page (q01, decided 24 Oct 2026):
- * a /search link opens the palette, with what it carries, over the first tab.
+ * A /search link where search isn't a page: what it carries (?q=, ?scope=everywhere)
+ * opens the ⌘K palette over the page under it, or iOS's search tab. The page
+ * steps off its tab's stack first, so no empty search is left behind.
  */
-function ToPalette() {
+function HandOff({ to }: { to: 'palette' | 'tab' }) {
   const router = useRouter();
   const { q, scope } = useLocalSearchParams<{ q?: string; scope?: string }>();
   useEffect(() => {
-    const start = { query: q ?? '', scope: scope === 'everywhere' ? ('everywhere' as const) : null };
-    useSearchPalette.getState().search(start);
-    router.replace('/');
-  }, [q, scope, router]);
+    const start: SearchStart = { query: q ?? '', scope: scope === 'everywhere' ? 'everywhere' : null };
+    if (to === 'palette') useSearchPalette.getState().search(start);
+    else useSearchFrom.setState({ start });
+    // Opened cold, the tab's first page is under it (the stack's anchor).
+    if (router.canGoBack()) router.back();
+    else if (to === 'palette') router.replace('/');
+    if (to === 'tab') router.navigate(SEARCH_TAB_HREF);
+  }, [to, q, scope, router]);
   return null;
 }
 
@@ -111,13 +133,15 @@ function useSearchTabState(): SearchTabState {
     pickScope(next);
     setShow('all');
   };
-  // Native tabs stay mounted, so focus follows the tab rather than the first mount.
+  // iOS's search tab stays mounted, so focus follows the tab rather than the first mount.
   const focused = useIsFocused();
   useEffect(() => {
     if (!focused) Keyboard.dismiss();
   }, [focused]);
   // Discover's results go back to its map; its style and city picks land there too.
-  const toDiscover = () => router.navigate('/discover');
+  // Pushed on Discover's own stack, that's back down to it; from another tab, over to Discover.
+  const onDiscover = (useSegments() as string[])[1] === '(3-discover)';
+  const toDiscover = () => (onDiscover ? router.dismissTo('/discover') : router.navigate('/discover'));
   const lent = area && { ...area, onKind: (k: string) => (area.onKind(k), toDiscover()), onPlace: (c: City) => (area.onPlace(c), toDiscover()) };
   const onShowOnMap = showOnMap ? () => (showOnMap(query), toDiscover()) : undefined;
   return { query, setQuery, scope, setScope, mine, area: lent, onShowOnMap, focused, carried: written, show, setShow, counts, setCounts };

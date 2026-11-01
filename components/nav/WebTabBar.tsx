@@ -1,3 +1,4 @@
+import { useSegments } from 'expo-router';
 import type { BottomTabBarProps } from 'expo-router/js-tabs';
 import { Platform, StyleSheet, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
@@ -7,11 +8,12 @@ import { IconSymbol } from '@/components/ui/icon-symbol';
 import { space } from '@/constants/tokens';
 import { useBottomSearchFocus } from '@/hooks/useBottomBar';
 import { useIsWideWeb } from '@/hooks/useIsWideWeb';
+import { useOpenSearch } from '@/hooks/useSearchFrom';
 import { TABS, type Tab, type TabName } from '@/lib/tabs';
 
 export type WebTab = Tab & { icon: IconName };
 
-const ICONS: Record<TabName, IconName> = { tonight: 'place.tonight', drinks: 'place.library', discover: 'place.discover', you: 'place.you' };
+const ICONS: Record<TabName, IconName> = { tonight: 'place.tonight', drinks: 'place.drinks', discover: 'place.discover', you: 'place.you' };
 
 /** The four tabs with their icons, for the phone pill, the tablet rail and the sidebar (lib/tabs.ts). */
 export const WEB_TABS: readonly WebTab[] = TABS.map((t) => ({ ...t, icon: ICONS[t.name] }));
@@ -56,22 +58,27 @@ export const TAB_PILL = Platform.OS === 'ios' ? { inset: 21, radius: 31 } : { in
 
 /**
  * The tab bar for phone-width web: the four tabs in a glass pill, with search
- * as its own circle, like the system bar on iOS 26. The + is in each page's
- * header (ScreenHeader.tsx).
+ * as its own circle, like the system bar on iOS 26. The circle opens the
+ * /search page on the tab's stack (components/search/SearchScreen.tsx), where
+ * the bar folds down to the tab you came from beside the field. The + is in each
+ * page's header (ScreenHeader.tsx).
  */
 export function WebTabBar({ state, emitter, navigateToTab }: BottomTabBarProps) {
   const ds = useDs();
   const insets = useSafeAreaInsets();
+  const openSearch = useOpenSearch();
   const current = state.routes[state.index]?.name;
-  // While the bottom search field has focus it takes the bar's place.
+  // While a bottom search field has focus (Discover's sheet) it takes the bar's place.
   const searching = useBottomSearchFocus((s) => s.focused);
+  // The /search page, pushed on a tab's stack, draws its own bottom: the field and the tab it came from.
+  const onSearch = (useSegments() as string[])[2] === 'search';
   const go = (name: string) => {
     const route = state.routes.find((r) => r.name === name);
     if (!route) return;
     const event = emitter.emit({ type: 'tabPress', target: route.key, canPreventDefault: true });
     if (current !== name && !event.defaultPrevented) navigateToTab(route.key);
   };
-  if (searching) return null;
+  if (searching || onSearch) return null;
   return (
     <View style={[styles.wrap, { bottom: insets.bottom + space.md }]}>
       <GlassSurface style={styles.tabs}>
@@ -88,7 +95,7 @@ export function WebTabBar({ state, emitter, navigateToTab }: BottomTabBarProps) 
                 onPress={() => go(t.route)}
                 style={[styles.tab, selected && { backgroundColor: ds.c.line }]}
               >
-                <IconSymbol name={t.icon} size={20} color={color} on={selected} />
+                <IconSymbol name={t.icon} size={20} color={color} />
                 <DsText variant="caption" color={color} numberOfLines={1}>
                   {t.label}
                 </DsText>
@@ -97,8 +104,7 @@ export function WebTabBar({ state, emitter, navigateToTab }: BottomTabBarProps) 
           })}
         </View>
       </GlassSurface>
-      {/* While search is open, its circle is the current item: its icon takes the accent. */}
-      <GlassButton accessibilityLabel={current === 'search' ? 'Search, open' : 'Search'} icon="magnifyingglass" size={WEB_TAB_BAR_HEIGHT} color={current === 'search' ? ds.accentText : undefined} onPress={() => go('search')} />
+      <GlassButton accessibilityLabel="Search" icon="magnifyingglass" size={WEB_TAB_BAR_HEIGHT} onPress={() => openSearch()} />
     </View>
   );
 }
