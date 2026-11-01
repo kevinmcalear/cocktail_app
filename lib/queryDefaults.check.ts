@@ -1,12 +1,12 @@
 import assert from 'node:assert/strict';
 import { QueryClient } from '@tanstack/react-query';
 
-import { PERSISTED_KEYS } from './queryCachePersist';
+import { FILE_KEYS, PERSISTED_KEYS } from './queryCachePersist';
 import { BASE, GC_TIME, KEEP, queryDefaults, venueListOptions } from './queryDefaults';
 
 const MIN = 60_000;
 const client = new QueryClient({ defaultOptions: { queries: { ...BASE } } });
-for (const { queryKey, options } of queryDefaults(PERSISTED_KEYS)) client.setQueryDefaults(queryKey, options);
+for (const { queryKey, options } of queryDefaults(PERSISTED_KEYS, FILE_KEYS)) client.setQueryDefaults(queryKey, options);
 const opts = (queryKey: unknown[]) => {
   const o = client.defaultQueryOptions({ queryKey });
   return { staleTime: o.staleTime, gcTime: o.gcTime, focus: o.refetchOnWindowFocus };

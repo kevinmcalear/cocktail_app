@@ -11,6 +11,7 @@ import { DatabaseItem } from '@/types/types';
 import { QueryClientContext, queryOptions, useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { useContext } from 'react';
 import { drinkSeed, seedDrink, type DrinkSeed } from '@/lib/drinkSeeds';
+import { bookItem } from '@/lib/specBook';
 import { readParts } from '@/lib/drinkParts';
 
 /**
@@ -125,6 +126,88 @@ export function useCocktails(barIds?: readonly string[] | 'home') {
     });
 }
 
+/**
+ * The drink page's columns (app_item_presentation), for one drink or a whole
+ * spec book (hooks/useSpecBook.ts). A photo's row whole (images *): its
+ * ThumbHash reads once its migration is in, and the page reads before then too.
+ */
+export const DRINK_PAGE_COLUMNS = `
+    *,
+    item_images (
+        id,
+        angle,
+        sort_order,
+        is_generated,
+        outdated_since,
+        images (*)
+    ),
+    recipes:app_recipe_presentation!recipe_item_id (
+        id,
+        sort_order,
+        part,
+        created_at,
+        amount,
+        unit,
+        preparation_notes,
+        is_float,
+        at_service,
+        display_ingredient_id,
+        display_ingredient (
+            id,
+            name,
+            abv,
+            ingredient_role,
+            item_images (
+                angle,
+                sort_order,
+                is_generated,
+                images (
+                    url
+                )
+            )
+        )
+    ),
+    item_methods!item_methods_item_id_fkey (
+        method_item_id,
+        sort_order,
+        part,
+        method:items!item_methods_method_item_id_fkey (
+            name
+        )
+    )
+`;
+
+type Named = { id: string; name: string };
+export type SpecLists = Partial<Record<'glassware' | 'families' | 'iceTypes', Named[]>>;
+type DrinkPageRow = { recipes?: unknown[] | null; glassware_id: string | null; family_id: string | null; ice_id: string | null };
+
+/**
+ * A row of DRINK_PAGE_COLUMNS as the drink page reads it. Glass, family and
+ * ice by name for the legacy editor and Start from a classic, from the spec
+ * lists already loaded (no second request); the drink page reads the ids
+ * against those lists itself (useDrinkFacts).
+ */
+export function toDrinkPage(data: DrinkPageRow, specs: SpecLists | undefined, parts: unknown): DatabaseItem {
+    const named = (list: Named[] | undefined, itemId: string | null) => {
+        const row = itemId ? list?.find((i) => i.id === itemId) : undefined;
+        return row ? { id: row.id, name: row.name } : undefined;
+    };
+    return {
+        ...data,
+        // Map the secure recipes payload to match the expected UI shapes
+        recipes: sortRecipesByOrder(
+            data.recipes?.map((recipe: any) => ({
+                ...recipe,
+                ingredient: resolvePresentationIngredient(recipe),
+            }))
+        ),
+        glassware: named(specs?.glassware, data.glassware_id),
+        family: named(specs?.families, data.family_id),
+        ice: named(specs?.iceTypes, data.ice_id),
+        madeInParts: readParts(parts),
+    } as DatabaseItem;
+}
+
 /** The drink page's query, shared by the page and a row's press-in prefetch (usePrefetchCocktail). */
 export function cocktailQuery(id: string | string[] | undefined, viewAsRoleLevel: ReturnType<typeof useViewAs>['viewAsRoleLevel']) {
     return queryOptions({
@@ -138,85 +221,12 @@ export function cocktailQuery(id: string | string[] | undefined, viewAsRoleLevel
 
             const { data, error } = await supabase
                 .from('app_item_presentation')
-                .select(`
-                    *,
-                    item_images (
-                        id,
-                        angle,
-                        sort_order,
-                        is_generated,
-                        outdated_since,
-                        images (
-                            url,
-                            id,
-                            palette,
-                            credit,
-                            source_url
-                        )
-                    ),
-                    recipes:app_recipe_presentation!recipe_item_id (
-                        id,
-                        sort_order,
-                        part,
-                        created_at,
-                        amount,
-                        unit,
-                        preparation_notes,
-                        is_float,
-                        at_service,
-                        display_ingredient_id,
-                        display_ingredient (
-                            id,
-                            name,
-                            abv,
-                            ingredient_role,
-                            item_images (
-                                angle,
-                                sort_order,
-                                is_generated,
-                                images (
-                                    url
-                                )
-                            )
-                        )
-                    ),
-                    item_methods!item_methods_item_id_fkey (
-                        method_item_id,
-                        sort_order,
-                        part,
-                        method:items!item_methods_method_item_id_fkey (
-                            name
-                        )
-                    )
-                `)
+                .select(DRINK_PAGE_COLUMNS)
                 .eq('id', cocktailId)
                 .single();
 
             if (error) throw error;
-
-            // Glass, family and ice by name for the legacy editor and Start from a classic,
-            // from the spec lists already loaded (no second request). The drink page reads
-            // the ids against those lists itself (useDrinkFacts).
-            type Named = { id: string; name: string };
-            const specs = client.getQueryData<Record<'glassware' | 'families' | 'iceTypes', Named[]>>(dropdownKeys.specs);
-            const named = (list: Named[] | undefined, itemId: string | null) => {
-                const row = itemId ? list?.find((i) => i.id === itemId) : undefined;
-                return row ? { id: row.id, name: row.name } : undefined;
-            };
-            return {
-                ...data,
-                // Map the secure recipes payload to match the expected UI shapes
-                recipes: sortRecipesByOrder(
-                    data.recipes?.map((recipe: any) => ({
-                        ...recipe,
-                        ingredient: resolvePresentationIngredient(recipe),
-                    }))
-                ),
-                glassware: named(specs?.glassware, data.glassware_id),
-                family: named(specs?.families, data.family_id),
-                ice: named(specs?.iceTypes, data.ice_id),
-                madeInParts: readParts((await partsRead).data?.parts),
-            } as DatabaseItem;
+            return toDrinkPage(data, client.getQueryData<SpecLists>(dropdownKeys.specs), (await partsRead).data?.parts);
         },
         enabled: !!id,
     });
@@ -229,8 +239,18 @@ export function cocktailQuery(id: string | string[] | undefined, viewAsRoleLevel
  */
 export function useCocktail(id?: string | string[], { seeded = false }: { seeded?: boolean } = {}) {
     const { viewAsRoleLevel } = useViewAs();
-    const seed = seeded ? drinkSeed(Array.isArray(id) ? id[0] : id) : undefined;
-    return useQuery({ ...cocktailQuery(id, viewAsRoleLevel), placeholderData: seed as DatabaseItem | undefined });
+    const client = useQueryClient();
+    const drinkId = Array.isArray(id) ? id[0] : id;
+    const seed = seeded ? drinkSeed(drinkId) : undefined;
+    // A drink in a venue's spec book opens from the phone at once, signal or not,
+    // and refreshes behind it once the book is older than the page's staleTime.
+    const fromBook = () => bookItem(client, drinkId, viewAsRoleLevel);
+    return useQuery({
+        ...cocktailQuery(id, viewAsRoleLevel),
+        initialData: () => fromBook()?.item,
+        initialDataUpdatedAt: () => fromBook()?.syncedAt,
+        placeholderData: seed as DatabaseItem | undefined,
+    });
 }
 
 /**
@@ -248,6 +268,8 @@ export function usePrefetchCocktail() {
         if (!client) return;
         // The view-as level the page will key on (useViewAs), as it's cached.
         const level = client.getQueriesData<number | null>({ queryKey: ['viewAs'] })[0]?.[1] ?? null;
+        // In a spec book on this phone: the page opens from it, no request needed.
+        if (bookItem(client, id, level)) return;
         void client.prefetchQuery({ ...cocktailQuery(id, level), staleTime: 60 * 1000 });
     };
 }

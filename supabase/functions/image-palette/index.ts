@@ -1,20 +1,24 @@
 // Computes the drink-field palette for one `images` row and saves it, and
 // saves the picture's list-sized thumbnail (_shared/thumbnail.ts) from the
-// same decoded pixels.
+// same decoded pixels. A picture with no ThumbHash yet also gets its 1080 px
+// page copy, its ThumbHash and its size (images.thumbhash, width, height);
+// the phone makes those itself at upload, so this does older pictures and
+// those from the web (scripts/backfill-palettes.mjs runs it over them all).
+// Needs migration 20261204100000 in before it's deployed.
 //
 // Called by the database (a trigger on `images` insert, through pg_net) and by
 // scripts/backfill-palettes.mjs, never by the app. Both send the shared
 // IMAGE_PALETTE_SECRET instead of a user session; a local stack falls back to
 // a fixed local secret.
 //
-// POST { image_id, force? } -> { palette, thumbnail }  (palette [] when the picture has no colour)
+// POST { image_id, force? } -> { palette, thumbnail, thumbhash }  (palette [] when the picture has no colour)
 import { createClient } from "npm:@supabase/supabase-js@2";
 
 import { decodePixels } from "../_shared/decodeImage.ts";
 import { HttpError, requireUuid, serveJson } from "../_shared/http.ts";
 import { isLocalStack, LOCAL_IMAGE_PALETTE_SECRET } from "../_shared/localStack.ts";
 import { pickPalette } from "../_shared/palette.ts";
-import { saveThumbnail } from "../_shared/thumbnail.ts";
+import { savePageCopy, saveThumbnail, thumbHashOf } from "../_shared/thumbnail.ts";
 
 /** Photos from the app are a few hundred KB; anything this big is not a drink photo. */
 const MAX_BYTES = 12 * 1024 * 1024;
@@ -35,10 +39,10 @@ serveJson("image-palette", async (req) => {
     auth: { persistSession: false, autoRefreshToken: false },
   });
 
-  const { data: image, error } = await admin.from("images").select("id, url, palette").eq("id", imageId).maybeSingle();
+  const { data: image, error } = await admin.from("images").select("id, url, palette, thumbhash").eq("id", imageId).maybeSingle();
   if (error) throw error;
   if (!image) throw new HttpError(404, "No such image.");
-  if (image.palette !== null && !force) return { palette: image.palette, skipped: true };
+  if (image.palette !== null && image.thumbhash !== null && !force) return { palette: image.palette, skipped: true };
 
   const path = new URL(image.url).pathname.match(STORAGE_PATH)?.[1];
   if (!path) throw new HttpError(422, "The image is not in the drinks bucket.");
@@ -68,7 +72,27 @@ serveJson("image-palette", async (req) => {
     console.error("image-palette: thumbnail failed", imageId, err);
     return null;
   });
-  return { palette, thumbnail };
+
+  // The page copy first, then the ThumbHash that says it's there; never failing the palette either.
+  let thumbhash: string | null = image.thumbhash;
+  if (thumbhash === null || force) {
+    thumbhash = await savePageCopy(admin, decodeURIComponent(path), pixels)
+      .then(async () => {
+        const hash = thumbHashOf(pixels);
+        const { error: sizeError } = await admin
+          .from("images")
+          .update({ thumbhash: hash, width: pixels.width, height: pixels.height })
+          .eq("id", imageId)
+          .eq("url", image.url);
+        if (sizeError) throw sizeError;
+        return hash;
+      })
+      .catch((err) => {
+        console.error("image-palette: page copy failed", imageId, err);
+        return null;
+      });
+  }
+  return { palette, thumbnail, thumbhash };
 });
 
 function timingSafeEqual(a: string, b: string): boolean {

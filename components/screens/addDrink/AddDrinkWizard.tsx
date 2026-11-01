@@ -58,8 +58,9 @@ export interface AddDrinkWizardProps {
   startFrom?: string | null;
   /** The first round's "Add your first cocktail": from a classic straight to Review, or from scratch at the name, with the round's strip. */
   firstRound?: boolean;
-  /** Opened from an import's Edit this drink: the draft is the import, not one left off, so no "Picked up where you left off". */
+  /** Opened from an import's Edit this drink: the draft is the import, not one left off, so no "Picked up where you left off". `review` ("<review id>#<drink>") is its own slot, never the plain New drink. */
   imported?: boolean;
+  review?: string | null;
   /** Inside the desktop workspace: no safe-area padding. */
   embedded?: boolean;
   onClose: () => void;
@@ -76,8 +77,8 @@ export function AddDrinkWizard(props: AddDrinkWizardProps) {
   return ready ? <Wizard {...props} /> : null;
 }
 
-function Wizard({ barId = null, menuSectionId, initialName, startFrom, firstRound, imported, embedded, onClose, onSaved }: AddDrinkWizardProps) {
-  const place = draftSlot(wizardPlace(barId), { menuSectionId, name: initialName, from: startFrom });
+function Wizard({ barId = null, menuSectionId, initialName, startFrom, firstRound, imported, review, embedded, onClose, onSaved }: AddDrinkWizardProps) {
+  const place = draftSlot(wizardPlace(barId), { menuSectionId, name: initialName, from: startFrom, review });
   const kept = useDrinkWizardStore((s) => s.kept[place]);
   const patch = useDrinkWizardStore((s) => s.patch);
   const setStoredStep = useDrinkWizardStore((s) => s.setStep);

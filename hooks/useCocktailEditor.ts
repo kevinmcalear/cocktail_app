@@ -1,5 +1,4 @@
-import { decode } from "base64-arraybuffer";
-import { useQueryClient } from "@tanstack/react-query";
+import { onlineManager, useQueryClient } from "@tanstack/react-query";
 import { useCallback, useEffect, useRef, useState } from "react";
 import { Alert } from "react-native";
 
@@ -8,7 +7,6 @@ import { saveItemNotes } from "@/hooks/useItemNotes";
 import { dropdownKeys, useDropdowns } from "@/hooks/useDropdowns";
 import { GLASS_MODEL_SELECT, type GlassModel } from "@/hooks/useGlassModels";
 import { identifyGlasswareFromPhoto } from "@/lib/identifyGlassware";
-import { imageExtFromUri, uriToBase64 } from "@/lib/imageBase64";
 import { readIceBuild, saysMore, type IceLayer } from "@/lib/iceBuild";
 import { isHeroLink } from "@/lib/itemImages";
 import { plainDbMessage } from "@/lib/dbError";
@@ -17,15 +15,17 @@ import { kindColumns } from "@/lib/glassware";
 import { capitalize } from "@/lib/stringUtils";
 import { fetchEditableRecipes } from "@/lib/editableRecipes";
 import { mapPresentationRecipeToEditItem } from "@/lib/recipeUtils";
-import { supabase, UPLOAD_CACHE_SECONDS } from "@/lib/supabase";
+import { supabase } from "@/lib/supabase";
 import { saveDrinkSpec } from "@/hooks/useVersions";
 import { resolveEditItems } from "@/hooks/specLineSave";
 import { refreshIngredients } from "@/hooks/useDropdowns";
 import { showMessage } from "@/lib/dialogs";
+import { isNetworkError, specFingerprint } from "@/lib/offlineWrites";
+import { useOfflineEdits } from "@/store/useOfflineEdits";
 import { amountOf, type WizardPick } from "@/lib/drinkWizard";
 import { orderByPart, linePart, partsMethods, readParts, startParts, storedParts, type DraftPart } from "@/lib/drinkParts";
 import type { ImageItem } from "@/components/cocktail/SortableImageList";
-import { pickDrinkPhotos, setItemImages } from "@/components/drink/drinkImages";
+import { pickDrinkPhotos, setItemImages, uploadDrinkPhoto } from "@/components/drink/drinkImages";
 
 export type SpecCategory = "method" | "glassware" | "family" | "ice";
 
@@ -197,7 +197,12 @@ export function useCocktailEditor(id: string, { enabled = true }: { enabled?: bo
                 setRawLoaded(true);
             })
             .catch(() => {
-                Alert.alert("Error", "Could not load this cocktail for editing.");
+                Alert.alert(
+                    "Error",
+                    onlineManager.isOnline()
+                        ? "Could not load this cocktail for editing."
+                        : "Editing needs signal to open the full spec. The drink page still reads with none."
+                );
             });
     }, [cocktail, enabled, id]);
 
@@ -207,8 +212,50 @@ export function useCocktailEditor(id: string, { enabled = true }: { enabled?: bo
     }, []);
 
     const discardChanges = useCallback(() => {
+        useOfflineEdits.getState().forget(id);
         resetLoaded();
-    }, [resetLoaded]);
+    }, [resetLoaded, id]);
+
+    // --- an edit kept on the phone when it couldn't send (store/useOfflineEdits.ts) ---
+    const specForm = () => ({
+        name, description, origin, notes, methodIds, glasswareId, familyId, iceId, methodIceId, iceBuild, iceTouched: iceTouched.current,
+        sketchVariant, glassModel, barId, overrideVisibility, overrideGeneric, overrideSpecific, overrideMeasurement, overridePrep,
+        recipeItems, parts, localImages,
+    });
+    type SpecForm = ReturnType<typeof specForm>;
+    const applyForm = (f: SpecForm) => {
+        setName(f.name); setDescription(f.description); setOrigin(f.origin); setNotes(f.notes); setMethodIds(f.methodIds);
+        setGlasswareId(f.glasswareId); setFamilyId(f.familyId); setIceId(f.iceId); setMethodIceIdState(f.methodIceId); setIceBuildState(f.iceBuild);
+        iceTouched.current = f.iceTouched; setSketchVariant(f.sketchVariant); setGlassModelState(f.glassModel); setBarId(f.barId);
+        setOverrideVisibility(f.overrideVisibility); setOverrideGeneric(f.overrideGeneric); setOverrideSpecific(f.overrideSpecific);
+        setOverrideMeasurement(f.overrideMeasurement); setOverridePrep(f.overridePrep); setRecipeItems(f.recipeItems); setPartsState(f.parts);
+        setLocalImages(f.localImages);
+        markDirty();
+    };
+    // The spec as it loaded, for telling whether it changed under an edit kept offline.
+    const loadedBase = useRef("");
+    const keepOffline = () => {
+        useOfflineEdits.getState().keep(id, { at: Date.now(), base: loadedBase.current, form: specForm() });
+        showMessage("Kept on this phone", "There’s no signal, so your edit is saved here as a draft. Open this drink’s editor with signal and save to send it.");
+    };
+    useEffect(() => {
+        if (!rawLoaded) return;
+        loadedBase.current = specFingerprint(specForm());
+        const kept = useOfflineEdits.getState().edits[id];
+        if (!kept) return;
+        const when = new Date(kept.at).toLocaleString([], { weekday: "short", hour: "numeric", minute: "2-digit" });
+        const apply = () => {
+            applyForm(kept.form as SpecForm);
+            showMessage("Your edit is back", `Kept on this phone ${when}. Save to send it.`);
+        };
+        if (kept.base === loadedBase.current) return apply();
+        Alert.alert("This spec changed", `Someone saved a change to it after your edit from ${when}, kept on this phone. Which one do you want?`, [
+            { text: "Use the new spec", style: "destructive", onPress: () => useOfflineEdits.getState().forget(id) },
+            { text: "Keep my edit", onPress: apply },
+        ]);
+        // Once per load: the fields it reads were all set with rawLoaded.
+        // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, [rawLoaded, id]);
 
     const addImages = useCallback((uris: string[]) => {
         if (!uris.length) return;
@@ -217,34 +264,9 @@ export function useCocktailEditor(id: string, { enabled = true }: { enabled?: bo
 
     const pickImage = async () => addImages(await pickDrinkPhotos({ cutout: true }));
 
-    const uploadAndLinkImage = async (uri: string): Promise<string | null> => {
-        try {
-            const ext = imageExtFromUri(uri);
-            const fileName = `cocktails/${id}/${Date.now()}_${Math.random().toString(36).substring(7)}.${ext}`;
-            const base64 = await uriToBase64(uri);
-            const arrayBuffer = decode(base64);
-
-            const { error: uploadError } = await supabase.storage
-                .from("drinks")
-                .upload(fileName, arrayBuffer, {
-                    contentType: `image/${ext === "jpg" ? "jpeg" : ext}`,
-                    upsert: false,
-                    cacheControl: UPLOAD_CACHE_SECONDS,
-                });
-            if (uploadError) return null;
-
-            const { data: publicUrlData } = supabase.storage.from("drinks").getPublicUrl(fileName);
-            const { data: imgData, error: imgError } = await supabase
-                .from("images")
-                .insert({ url: publicUrlData.publicUrl })
-                .select()
-                .single();
-            if (imgError || !imgData) return null;
-            return imgData.id;
-        } catch {
-            return null;
-        }
-    };
+    // The shared upload: made smaller on the phone, with its page copy and ThumbHash (components/drink/drinkImages.ts).
+    const uploadAndLinkImage = async (uri: string): Promise<string | null> =>
+        (await uploadDrinkPhoto(uri, `cocktails/${id}`).catch(() => null))?.id ?? null;
 
     /** Finds or creates a shared method, glass, family or ice by name, a new glass or ice with its kind. The picker selects the id it returns. */
     const handleAddPill = async (type: SpecCategory, newItemName: string, kind?: string | null): Promise<string> => {
@@ -386,6 +408,12 @@ export function useCocktailEditor(id: string, { enabled = true }: { enabled?: bo
             return false;
         }
 
+        // No signal: the edit stays on the phone as a draft rather than failing halfway.
+        if (!onlineManager.isOnline()) {
+            keepOffline();
+            return false;
+        }
+
         setSaving(true);
         try {
             const finalImageIds: string[] = [];
@@ -472,9 +500,12 @@ export function useCocktailEditor(id: string, { enabled = true }: { enabled?: bo
             await queryClient.invalidateQueries({ queryKey: ["drink-glass-model", id] });
             setIsDirty(false);
             isLoaded.current = false;
+            useOfflineEdits.getState().forget(id);
             return true;
         } catch (error) {
-            Alert.alert("Error", plainDbMessage(error) ?? "Failed to update cocktail.");
+            // The connection dropped on the way: keep the edit, a save with signal sends it all again.
+            if (isNetworkError(error)) keepOffline();
+            else Alert.alert("Error", plainDbMessage(error) ?? "Failed to update cocktail.");
             return false;
         } finally {
             setSaving(false);
