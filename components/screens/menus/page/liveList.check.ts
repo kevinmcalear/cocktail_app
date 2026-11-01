@@ -13,7 +13,7 @@ const row = (itemId: string, o: Partial<ListRow> = {}): ListRow => ({
   id: `r-${itemId}`, itemId, sectionId: 's', sortOrder: 0, price: null, slotName: null, onFrom: null, offAt: null, addedBy: null, offBy: null, replacesItemId: null, teamSharedAt: null, addedAt: '2026-11-01T14:05:00Z', state: 'on', ...o,
 });
 const now = Date.parse('2026-11-01T18:00:00Z');
-const base = { bartender: false, asks: [] as ListAsk[], offTonight: [], living: true, sectionIds: new Map([['Shaken', 's']]), userId: 'me', nameOf: (id: string | null) => (id === 'sam' ? 'Sam' : null), day: (iso: string) => iso.slice(5, 10), time: () => '4pm', listStart: '2026-10-01T00:00:00Z', now };
+const base = { bartender: false, asks: [] as ListAsk[], offTonight: [], closesAt: null as string | null, living: true, sectionIds: new Map([['Shaken', 's']]), userId: 'me', nameOf: (id: string | null) => (id === 'sam' ? 'Sam' : null), day: (iso: string) => iso.slice(5, 10), time: () => '4pm', listStart: '2026-10-01T00:00:00Z', now };
 const ended = (itemId: string): EndedRun => ({ itemId, sectionName: 'Shaken', slotName: null, price: null, wentOn: '2026-10-01T00:00:00Z', cameOff: '2026-11-01T16:00:00Z', takenOffBy: 'me', addedBy: null, replacesItemId: null });
 
 // A swap done today: the new drink on, the old one struck after it, with Undo.
@@ -88,7 +88,7 @@ assert.deepEqual(out.main[0].rows[1].acts?.map((a) => a.kind), ['swap', 'takeOff
 
 // The menu team see the same swap as two rows to approve (Menu-l-approve), after tonight.
 const tonight = new Date(now + 8 * 3_600_000).toISOString();
-out = liveList({ ...base, nameOf: () => 'Sam', asks: [ask({ itemId: 'bees', drink: drink('bees'), offItemId: 'jack', at: tonight, askedAt: '2026-11-01T14:05:00Z', createdBy: 'sam' })], sections: [{ id: 's', name: 'Shaken', rows: [view('jack')] }], rows: [row('jack')], ended: [], endedDrinks: new Map(), may: true });
+out = liveList({ ...base, closesAt: tonight, nameOf: () => 'Sam', asks: [ask({ itemId: 'bees', drink: drink('bees'), offItemId: 'jack', at: tonight, askedAt: '2026-11-01T14:05:00Z', createdBy: 'sam' })], sections: [{ id: 's', name: 'Shaken', rows: [view('jack')] }], rows: [row('jack')], ended: [], endedDrinks: new Map(), may: true });
 assert.equal(out.lead?.name, 'Waiting for you');
 assert.deepEqual(out.lead?.rows.map((r) => [r.drink.id, r.line]), [['bees', 'Sam asked at 4pm · on in place of jack'], ['jack', 'Sam asked at 4pm · off after tonight']]);
 assert.deepEqual(out.lead?.rows[1].acts?.map((a) => a.kind), ['approve', 'turnDown']);

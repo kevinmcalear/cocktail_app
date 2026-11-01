@@ -90,7 +90,8 @@ export function useRowActs(menu: { id: string; barId: string | null }, rows: Lis
       const when = at ? 'from ' + new Date(at).toLocaleDateString(undefined, { weekday: 'short', day: 'numeric', month: 'short' }) : 'now';
       const name = target.view.drink.name;
       const ok = (title: string, told: Tell | null) => () => {
-        if (told && opts.tell) tell([told]);
+        // Told only when it's on: a change waiting for approval isn't one yet.
+        if (told && opts.tell && may !== false) tell([told]);
         said(title)();
         done();
       };

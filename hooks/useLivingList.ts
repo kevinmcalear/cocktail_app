@@ -163,7 +163,7 @@ function useInvalidateList(menuId: string) {
     ]);
 }
 
-async function check<T extends { error: { message: string } | null }>(res: PromiseLike<T>): Promise<T> {
+export async function check<T extends { error: { message: string } | null }>(res: PromiseLike<T>): Promise<T> {
   const out = await res;
   if (out.error) throw new Error(out.error.message);
   return out;

@@ -38,6 +38,8 @@ interface Input {
   asks: ListAsk[];
   /** Drinks on this list off for tonight. */
   offTonight: OffTonight[];
+  /** When the bar closes tonight (ISO): an ask for then reads "after tonight". */
+  closesAt: string | null;
   /** A list kept a drink at a time reads "since 1 Oct" (Menu-l-swap); a seasonal one keeps each drink's cost (Menu-who-creator). */
   living: boolean;
   userId: string | null;
@@ -51,7 +53,6 @@ interface Input {
 }
 
 const sameDay = (a: string, now: number) => new Date(a).toDateString() === new Date(now).toDateString();
-const HOUR = 3_600_000;
 
 /** "1 to 30 Sep", "1 Oct to 1 Nov 2026": a drink's run, from dates or timestamps. */
 export function runRange(from: string, to: string, year = false): string {
@@ -66,7 +67,7 @@ export function runRange(from: string, to: string, year = false): string {
   return year ? `${range} ${b.getFullYear()}` : range;
 }
 
-export function liveList({ sections, sectionIds, rows, ended, endedDrinks, may, bartender, asks, offTonight, living, userId, nameOf, day, time, listStart, now }: Input) {
+export function liveList({ sections, sectionIds, rows, ended, endedDrinks, may, bartender, asks, offTonight, closesAt, living, userId, nameOf, day, time, listStart, now }: Input) {
   const rowOf = new Map(rows.map((r) => [`${r.sectionId}:${r.itemId}`, r]));
   const names = new Map([...endedDrinks].map(([id, d]) => [id, d.name]));
   const views = new Map<string, PageRowView>();
@@ -76,8 +77,9 @@ export function liveList({ sections, sectionIds, rows, ended, endedDrinks, may, 
       views.set(v.drink.id, v);
     }
   for (const a of asks) if (a.drink) names.set(a.drink.id, a.drink.name);
-  // "now", "after tonight" (the bar's close, within a day and a half), "from Fri 6 Nov".
-  const when = (at: string | null) => (!at ? 'now' : Date.parse(at) - now < 36 * HOUR ? 'after tonight' : `from ${day(at)}`);
+  // "now" (or a time that passed), "after tonight" (the bar's close), "from Fri 6 Nov".
+  const when = (at: string | null) =>
+    !at || Date.parse(at) <= now ? 'now' : closesAt && Math.abs(Date.parse(at) - Date.parse(closesAt)) < 60_000 ? 'after tonight' : `from ${day(at)}`;
   const offOf = new Map(offTonight.map((o) => [o.itemId, o]));
   const asked = asks.filter((a) => a.askedAt);
   // A drink someone asked to take off (a swap's, too) stays on and says so.
@@ -141,7 +143,7 @@ export function liveList({ sections, sectionIds, rows, ended, endedDrinks, may, 
       const off = offOf.get(row.itemId);
       if (off && (row.state === 'on' || row.state === 'going')) {
         // Off for tonight only: faded on the list, back on after close (or now).
-        out.push({ ...view, ink: 'faded', faded: true, sub: null, flag: { label: 'Not tonight', tone: 'quiet' }, listRow: row, offTonight: off, acts: bartender ? [] : [{ kind: 'backOn', label: 'Back on' }] });
+        out.push({ ...view, ink: 'faded', faded: true, sub: null, flag: { label: 'Not tonight', tone: 'quiet' }, listRow: row, offTonight: off, acts: may && !bartender ? [{ kind: 'backOn', label: 'Back on' }] : [] });
         continue;
       }
       if (askedOff.has(row.itemId) && (row.state === 'on' || row.state === 'going')) {
@@ -179,7 +181,7 @@ export function liveList({ sections, sectionIds, rows, ended, endedDrinks, may, 
           line: [row.replacesItemId && swapFor ? `In place of ${swapFor}` : null, view.line].filter(Boolean).join(' · '),
           flag: { label: row.onFrom ? day(row.onFrom) : 'Coming', tone: 'quiet' },
           listRow: row,
-          acts: [{ kind: 'keep', label: 'Don’t put it on' }],
+          acts: bartender ? [] : [{ kind: 'keep', label: 'Don’t put it on' }],
         });
         continue;
       }
@@ -198,8 +200,8 @@ export function liveList({ sections, sectionIds, rows, ended, endedDrinks, may, 
             : [
                 { kind: 'swap', label: 'Swap' },
                 { kind: 'takeOff', label: 'Take off' },
-                // Off tonight is the menu team's for now (anyone on shift waits on Kevin's policy).
-                ...(bartender ? [] : [{ kind: 'offTonight' as const, label: 'Off tonight' }]),
+                // Off tonight is for whoever may change the list, for now (anyone on shift waits on Kevin's policy).
+                ...(may && !bartender ? [{ kind: 'offTonight' as const, label: 'Off tonight' }] : []),
               ],
       });
     }
@@ -230,7 +232,7 @@ export function liveList({ sections, sectionIds, rows, ended, endedDrinks, may, 
       struck: true,
       listRow: swappedIn,
       // Undo takes back the swap, or puts a drink taken off back on.
-      acts: [{ kind: 'undo', label: 'Undo' }],
+      acts: bartender ? [] : [{ kind: 'undo', label: 'Undo' }],
     };
     section.rows.splice(at >= 0 ? at + 1 : section.rows.length, 0, struck);
   }

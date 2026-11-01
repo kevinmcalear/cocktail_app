@@ -184,7 +184,8 @@ function MenuPageBody({ menu, shelf, cover, now }: PageProps & { cover: string |
   const shown = [...(listView.lead ? [listView.lead] : []), ...listView.main, ...(listView.coming ? [listView.coming] : [])];
   const items: Item[] = shown.flatMap((s) => [
     { key: `h-${s.id}`, head: { name: s.name, count: s.rows.filter((r) => !r.struck).length } },
-    ...s.rows.map((row) => ({ key: `${s.id}-${row.drink.id}${row.struck ? '-off' : ''}`, row, sectionId: s.id })),
+    // A drink can be in two asks, or an ask and a waiting row: the ask keys it.
+    ...s.rows.map((row) => ({ key: `${s.id}-${row.ask ? `${row.ask.id}-` : ''}${row.drink.id}${row.struck ? '-off' : ''}`, row, sectionId: s.id })),
   ]);
   const column = { paddingHorizontal: gutter, maxWidth: wide ? 760 : undefined, width: '100%', alignSelf: sidebar ? 'flex-start' : 'center' } as const;
   // Waiting changes, Undo, Back on and Coming up show their buttons; any other row shows Swap and Take off once tapped.

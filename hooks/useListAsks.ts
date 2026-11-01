@@ -6,7 +6,7 @@
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 
 import { BAR_WRITES, type OffTonightWrite } from '@/hooks/barWrites';
-import { useListChanges, type ListRow } from '@/hooks/useLivingList';
+import { check, useListChanges, type ListRow } from '@/hooks/useLivingList';
 import { MENU_DRINK_COLUMNS, toMenuDrink, type MenuItemRow } from '@/hooks/useMenus';
 import { newDraftId } from '@/lib/drinkWizard';
 import { supabase } from '@/lib/supabase';
@@ -86,12 +86,6 @@ export function useListAsks(menuId: string | null | undefined) {
   });
 }
 
-async function check<T extends { error: { message: string } | null }>(res: PromiseLike<T>): Promise<T> {
-  const out = await res;
-  if (out.error) throw new Error(out.error.message);
-  return out;
-}
-
 /** One change to tell the team about. */
 export interface Tell {
   itemId: string;
@@ -158,22 +152,31 @@ export function useAskChanges(menuId: string, barId: string | null) {
     /** Approve: the change goes on the list now or from its date, the team are told, and the ask goes. */
     approve: useMutation({
       mutationFn: async ({ ask, rows, sectionId }: { ask: ListAsk; rows: ListRow[]; sectionId: string | null }) => {
-        const out = ask.offItemId ? rows.find((r) => r.itemId === ask.offItemId && (r.state === 'on' || r.state === 'waiting_off')) : undefined;
-        if (ask.offItemId && !out) throw new Error('That drink isn’t on the list any more.');
-        if (ask.itemId && out) await list.swap.mutateAsync({ rowId: out.id, itemId: ask.itemId, at: ask.at });
-        else if (out) await list.takeOff.mutateAsync({ rowId: out.id, at: ask.at });
-        else if (ask.itemId) {
-          const section = ask.sectionId ?? sectionId;
-          if (!section) throw new Error('Pick a section for it first.');
-          await list.add.mutateAsync({ sectionId: section, itemId: ask.itemId, sortOrder: 999, at: ask.at });
+        // A time that passed while it waited lands now.
+        const at = ask.at && Date.parse(ask.at) > Date.now() ? ask.at : null;
+        const live = (r: ListRow) => r.state === 'on' || r.state === 'going' || r.state === 'waiting_off';
+        const outs = ask.offItemId ? rows.filter((r) => r.itemId === ask.offItemId && live(r)) : [];
+        const out = outs.find((r) => r.sectionId === ask.sectionId) ?? outs[0];
+        // Approved before (the ask outlived it): the drink is already on, or already coming.
+        const done = !!ask.itemId && rows.some((r) => r.itemId === ask.itemId && (!ask.sectionId || r.sectionId === ask.sectionId));
+        if (!done) {
+          if (ask.offItemId && !out) throw new Error('That drink isn’t on the list any more.');
+          if (ask.itemId && out) await list.swap.mutateAsync({ rowId: out.id, itemId: ask.itemId, at });
+          else if (out) await list.takeOff.mutateAsync({ rowId: out.id, at });
+          else if (ask.itemId) {
+            const section = ask.sectionId ?? sectionId;
+            if (!section) throw new Error('Pick a section for it first.');
+            await list.add.mutateAsync({ sectionId: section, itemId: ask.itemId, sortOrder: 999, at });
+          }
         }
+        // The change is on: a notice that doesn't send mustn't keep the ask waiting.
         await tell(menuId, [
           ask.itemId && ask.offItemId
-            ? { itemId: ask.offItemId, kind: 'swap', toItemId: ask.itemId, at: ask.at }
+            ? { itemId: ask.offItemId, kind: 'swap', toItemId: ask.itemId, at }
             : ask.itemId
-              ? { itemId: ask.itemId, kind: 'on', at: ask.at }
-              : { itemId: ask.offItemId!, kind: 'off', at: ask.at },
-        ]);
+              ? { itemId: ask.itemId, kind: 'on', at }
+              : { itemId: ask.offItemId!, kind: 'off', at },
+        ]).catch(() => {});
         await check(supabase.from('menu_drink_asks').delete().eq('id', ask.id));
       },
       ...opts,
