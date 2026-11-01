@@ -97,6 +97,25 @@ async function sendShifts({ barId, rows, removed }: ShiftsWrite) {
   if (removed.length) check(await supabase.from('shifts').delete().eq('bar_id', barId).in('id', removed));
 }
 
+export interface HandoverWrite {
+  barId: string;
+  /** The service day of the close (YYYY-MM-DD). */
+  closeDate: string;
+  userId: string;
+  /** What they wrote; left out when only marking the note read. */
+  words?: { ranOut: string[]; note: string | null; prep: string | null; broken: string | null; writtenAt: string };
+  readAt: string;
+}
+
+/** What someone wrote, as handover_notes columns (also the page's at-once copy, hooks/useHandover.ts). */
+export const handoverColumns = (words: HandoverWrite['words']) =>
+  words ? { ran_out: words.ranOut, note: words.note, prep: words.prep, broken: words.broken, written_at: words.writtenAt } : {};
+
+/** A person's row for a close (the handover note), by bar, day and person, so sending twice is the same. */
+async function sendHandover(w: HandoverWrite) {
+  check(await supabase.from('handover_notes').upsert({ bar_id: w.barId, close_date: w.closeDate, user_id: w.userId, read_at: w.readAt, ...handoverColumns(w.words) }, { onConflict: 'bar_id,close_date,user_id' }));
+}
+
 export const BAR_WRITES = {
   zoneCount: {
     key: [BAR_WRITE, 'zone-count'],
@@ -122,5 +141,10 @@ export const BAR_WRITES = {
     key: [BAR_WRITE, 'shifts'],
     send: sendShifts,
     refresh: (w: ShiftsWrite): QueryKey[] => [['shifts', w.barId]],
+  },
+  handover: {
+    key: [BAR_WRITE, 'handover'],
+    send: sendHandover,
+    refresh: (w: HandoverWrite): QueryKey[] => [['handover', w.barId]],
   },
 } as const;

@@ -13,12 +13,15 @@ import { useServiceDate } from '@/hooks/useServiceDay';
 import { tonightEyebrow } from '@/lib/tonight';
 
 import { HomeTonight } from './HomeTonight';
+import { useNightHandover } from './NightHandover';
 import { NoVenue, showsLists, StaffLists, StaffSide } from './StaffTonight';
 import { TonightHead, TonightSky } from './TonightParts';
 import { useStaffTonight } from './useStaffTonight';
 
 /** The column beside the lists on wide web (Prod-desk-today). */
 const SIDE = 340;
+/** Tonight's column while the handover sits beside it (Loop-tonight-desk). */
+const NIGHT = 620;
 
 /**
  * Tonight, the first tab (decided 31 Oct 2026, renamed 1 Nov): one column,
@@ -63,24 +66,39 @@ function Frame({ sky, eyebrow, children }: { sky: readonly string[]; eyebrow: st
 function StaffPage({ barId }: { barId: string }) {
   const t = useStaffTonight(barId);
   const wide = useIsWideWeb();
+  const handover = useNightHandover(t, barId, wide);
   const lists = showsLists(t.phase);
+  // The handover note sits on top until read, before doors and during service (Loop-handover).
+  const card = lists ? handover.card : null;
+  const stack = (
+    <View style={styles.stack}>
+      {card}
+      {lists ? <StaffLists t={t} barId={barId} wide={false} /> : null}
+      <StaffSide t={t} barId={barId} wide={false} handover={handover} />
+    </View>
+  );
   return (
     <Frame sky={t.heroIds} eyebrow={t.eyebrow}>
-      {wide && lists ? (
+      {handover.pane ? (
+        // Wide, the open note sits beside Tonight's column (Loop-tonight-desk).
+        <View style={styles.columns}>
+          <View style={styles.night}>{stack}</View>
+          <View style={styles.main}>{handover.pane}</View>
+        </View>
+      ) : wide && lists ? (
         <View style={styles.columns}>
           <View style={styles.main}>
+            {card}
             <StaffLists t={t} barId={barId} wide />
           </View>
           <View style={styles.side}>
-            <StaffSide t={t} barId={barId} wide />
+            <StaffSide t={t} barId={barId} wide handover={handover} />
           </View>
         </View>
       ) : (
-        <View style={styles.stack}>
-          {lists ? <StaffLists t={t} barId={barId} wide={false} /> : null}
-          <StaffSide t={t} barId={barId} wide={false} />
-        </View>
+        stack
       )}
+      {handover.sheets}
     </Frame>
   );
 }
@@ -101,6 +119,7 @@ const styles = StyleSheet.create({
   body: { gap: space.lg },
   stack: { gap: space.xl },
   columns: { flexDirection: 'row', alignItems: 'flex-start', gap: space.xxxl },
-  main: { flex: 1, minWidth: 0 },
+  main: { flex: 1, minWidth: 0, gap: space.xl },
   side: { width: SIDE, paddingTop: space.xl },
+  night: { width: NIGHT },
 });
