@@ -105,7 +105,7 @@ export function LiveChangeSheet({ kind, drink, where, barId, wentOn, onFind, fou
               const meta = [before ? `Past · last on ${lastOn}` : 'Not on a list yet', printedPrice(d) ?? 'no price yet'].join(' · ');
               return (
                 <PressableScale key={d.id} role="radio" aria-checked={on} accessibilityLabel={d.name} onPress={() => setPicked(d.id)} style={[styles.pick, { borderTopColor: ds.c.lineStrong }]}>
-                  <MenuDrawing itemId={d.id} size="row" ink="colour" bare fallback={{ imageUrl: d.imageUrl, glass: d.glass }} />
+                  <MenuDrawing itemId={d.id} size="row" ink="colour" fallback={{ imageUrl: d.imageUrl, glass: d.glass }} />
                   <View style={styles.grow}>
                     <Headline style={{ fontFamily: displayFaces[ds.displayFace].regular }}>{d.name}</Headline>
                     <Caption tone="muted">{meta}</Caption>

@@ -6,6 +6,7 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import { BackbarTheme, Body, Button, Caption, GlassButton, useBreakpoint, useDs, useGutter } from '@/components/ds';
 import { Crumbs } from '@/components/nav/PageFrame';
+import { DrawingBar } from '@/components/ds/DrawingBar';
 import { DRAWN_LIST_WINDOW } from '@/components/ds/SketchDrawing';
 import { space } from '@/constants/tokens';
 import { useActiveVenue } from '@/hooks/useActiveVenue';
@@ -64,7 +65,8 @@ export function MenuScreen({ menuId }: { menuId: string }) {
     );
   }
   // Only a home menu reads your shelf (Ready, Need limes, the shopping list).
-  return menu.barId ? <MenuPage menu={menu} shelf={null} /> : <HomeMenuPage menu={menu} />;
+  // Every drink on it drawn in the bar's own glassware; a home menu in stock glasses.
+  return <DrawingBar barId={menu.barId}>{menu.barId ? <MenuPage menu={menu} shelf={null} /> : <HomeMenuPage menu={menu} />}</DrawingBar>;
 }
 
 function HomeMenuPage({ menu }: { menu: MenuDetail }) {

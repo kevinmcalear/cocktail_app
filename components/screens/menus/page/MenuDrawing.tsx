@@ -2,9 +2,11 @@ import { Image } from 'expo-image';
 import { Platform, StyleSheet, View } from 'react-native';
 
 import { DrinkDrawing, DrinkImage, isRowSize, useDs, type DrawingSize } from '@/components/ds';
+import { useDrawingGlasses } from '@/components/ds/drawingGlasses';
 import { sceneFor } from '@/components/ds/SketchDrawing';
-import { drawing, radius } from '@/constants/tokens';
+import { drawing } from '@/constants/tokens';
 import { useItemSketch } from '@/hooks/useItemSketch';
+import { inBarGlassCached } from '@/lib/sketch/barGlass';
 import { CHALK, mapScene, pencilOnly } from '@/lib/sketch/passes';
 import type { Scene } from '@/lib/sketch/scene';
 import { sceneToSvg } from '@/lib/sketch/svg';
@@ -30,12 +32,13 @@ function pencilUri(scene: Scene, night: boolean): string {
  * A drink's drawing on a menu page: in colour, in pencil while its menu is a
  * draft, or faded on a past menu; the colour pours in as on the drink page.
  * A drink with nothing to draw from (beer, wine) shows its picture, so every
- * row has one.
- * `bare`: no square of paper behind a row (drawings set together on a sky).
+ * row has one. No card behind any of them (decision chrome); the bar's own
+ * glassware, as DrinkDrawing draws it.
  */
-export function MenuDrawing({ itemId, size, ink, fallback, bare }: { itemId: string; size: DrawingSize; ink: MenuInk; fallback?: { imageUrl: string | null; glass: string | null }; bare?: boolean }) {
+export function MenuDrawing({ itemId, size, ink, fallback }: { itemId: string; size: DrawingSize; ink: MenuInk; fallback?: { imageUrl: string | null; glass: string | null } }) {
   const ds = useDs();
   const inputs = useItemSketch(itemId).data;
+  const glasses = useDrawingGlasses();
   const px = size === 'hero' ? drawing.heroStaff : drawing[size];
   if (!inputs) {
     if (!fallback) return <View style={{ width: px, height: px }} />;
@@ -46,17 +49,16 @@ export function MenuDrawing({ itemId, size, ink, fallback, bare }: { itemId: str
     );
   }
   if (ink === 'pencil') {
-    const paper = !bare && isRowSize(size) && ds.scheme !== 'dark' ? { backgroundColor: ds.c.paper, borderRadius: radius.control } : null;
-    const uri = pencilUri(sceneFor(inputs, itemId, isRowSize(size) ? 'thumb' : 'full'), ds.scheme === 'dark');
+    const uri = pencilUri(sceneFor(inBarGlassCached(inputs, glasses), itemId, isRowSize(size) ? 'thumb' : 'full'), ds.scheme === 'dark');
     return (
-      <View style={[{ width: px, height: px, overflow: 'hidden' }, paper]} aria-hidden>
+      <View style={{ width: px, height: px, overflow: 'hidden' }} aria-hidden>
         <Image source={{ uri }} style={{ width: px, height: px }} contentFit="contain" cachePolicy="memory" accessible={false} />
       </View>
     );
   }
   return (
     <View style={ink === 'faded' ? styles.faded : undefined} aria-hidden>
-      <DrinkDrawing inputs={inputs} seed={itemId} size={size} staff={size === 'hero'} pour={!isRowSize(size) && ink === 'colour'} bare={bare} />
+      <DrinkDrawing inputs={inputs} seed={itemId} size={size} staff={size === 'hero'} pour={!isRowSize(size) && ink === 'colour'} />
     </View>
   );
 }
