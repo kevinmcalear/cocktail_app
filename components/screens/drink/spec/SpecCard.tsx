@@ -27,6 +27,8 @@ export interface SpecCardProps {
   preview?: { role: number; levels: SpecLevels };
   /** A line's name was tapped: its ingredient or house-made page. */
   onLine?: (line: SpecLine) => void;
+  /** The floor's serve line: "Goes out: rocks, candied ginger" (board Decided-who-floor). */
+  goesOut?: boolean;
 }
 
 /**
@@ -36,7 +38,7 @@ export interface SpecCardProps {
  * names only (a guest, the floor): what's in it by name and the serve line,
  * with no toggle and no hint at what's held back; nothing at all: the serve line.
  */
-export function SpecCard({ itemId, barId, lines, maker, verb = null, serve = [], onBatch, preview, onLine }: SpecCardProps) {
+export function SpecCard({ itemId, barId, lines, maker, verb = null, serve = [], onBatch, preview, onLine, goesOut }: SpecCardProps) {
   const { access } = useSpecAccess(itemId, barId, preview);
   const [view, setView] = useSpecView(maker);
   // Never saved: every page opens at Makes 1 (a Makes 3 carried onto the next drink is a mis-pour).
@@ -79,7 +81,7 @@ export function SpecCard({ itemId, barId, lines, maker, verb = null, serve = [],
           <View>{lines.map((l) => row(l))}</View>
         )
       ) : null}
-      {served ? <ServeLine text={served} /> : null}
+      {served ? <ServeLine text={goesOut ? `Goes out: ${served.toLowerCase()}` : served} /> : null}
     </View>
   );
 }
