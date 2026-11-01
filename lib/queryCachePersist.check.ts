@@ -1,9 +1,10 @@
 // Checks for lib/queryCachePersist.ts. Run: npm run test:unit
 import assert from 'node:assert/strict';
 
-import { dehydrate, QueryClient } from '@tanstack/react-query';
+import { dehydrate, QueryCache, QueryClient } from '@tanstack/react-query';
 
-import { guardStorage, serializeCache, shouldPersistQuery } from './queryCachePersist';
+import type { FileStore } from './fileStore';
+import { createFilePersister, fileNameFor, guardStorage, pruneQueryFiles, savedIn, serializeCache, shouldPersistQuery } from './queryCachePersist';
 
 // --- which queries are saved ---
 const client = new QueryClient();
@@ -27,12 +28,21 @@ build(['still-loading']);
 const saved = dehydrate(client, { shouldDehydrateQuery: shouldPersistQuery }).queries.map((q) => q.queryHash);
 assert.deepEqual(saved.sort(), [
   '["bars","u1"]',
-  '["cocktail","c1",null]',
-  '["dropdowns_v7","current_menu_drinks","with-glass",["m1"]]',
-  '["dropdowns_v7","specs"]',
   '["menus-v2","venue-5","b1","u1"]',
   '["profile","mine","u1"]',
-], 'only the allowlist and meta.persist true; persist false always wins');
+], 'only the first screen goes in the row; persist false always wins');
+const home = (queryKey: unknown[], persist?: boolean) => savedIn({ queryKey, meta: persist === undefined ? undefined : { persist } });
+assert.equal(home(['cocktail', 'c1', null]), 'file', 'a drink page opened is a file');
+assert.equal(home(['dropdowns_v7', 'specs'], true), 'file', 'meta.persist true is a file');
+assert.equal(home(['bars', 'u1'], true), 'row', 'the first screen stays in the row, marked or not');
+assert.equal(home(['cocktail', 'c1', null], false), null, 'persist false always wins');
+assert.equal(home(['spec-book', 'b1', null], false), null, 'a spec book is its own file (lib/specBookFile.ts)');
+assert.equal(home(['item-sketch', 'c1']), null);
+
+// --- file names ---
+assert.equal(fileNameFor('["cocktail","c1",null]'), fileNameFor('["cocktail","c1",null]'), 'stable');
+assert.notEqual(fileNameFor('["cocktail","c1",null]'), fileNameFor('["cocktail","c2",null]'));
+assert.match(fileNameFor('["dropdowns_v7","current_menu_drinks",["m1"]]'), /^[0-9a-z]{1,11}$/, 'short and file-safe');
 
 // --- size guard drops the largest queries first ---
 const persisted = (sizes: Record<string, number>) => ({
@@ -89,4 +99,60 @@ async function checkGuard() {
   assert.equal(await fine.getItem('cache'), 'v');
 }
 
-checkGuard().then(() => console.log('queryCachePersist checks passed'));
+// --- a query saved in its own file ---
+function memoryFiles(): FileStore & { map: Map<string, unknown> } {
+  const map = new Map<string, unknown>();
+  return {
+    map,
+    read: async (name) => structuredClone(map.get(name) ?? null),
+    write: async (name, value) => void map.set(name, structuredClone(value)),
+    remove: async (name) => void map.delete(name),
+    names: async () => [...map.keys()],
+    clear: async () => map.clear(),
+  };
+}
+const tick = () => new Promise((resolve) => setTimeout(resolve, 5));
+
+async function checkFiles() {
+  const files = memoryFiles();
+  const saving = { maxAge: 60_000, buster: 'v1' };
+  // As lib/react-query.ts sets it up: the persister on every query by default.
+  const launch = (buster = saving.buster) => {
+    const queryCache = new QueryCache();
+    const persister = createFilePersister(files, queryCache, { ...saving, buster });
+    return new QueryClient({ queryCache, defaultOptions: { queries: { retry: false, persister: persister.persisterFn } } });
+  };
+  let fetches = 0;
+  const drink = (id: string) => ({ queryKey: ['cocktail', id, null], queryFn: async () => ({ id, fetch: ++fetches }), staleTime: 60_000 });
+
+  const first = launch();
+  await first.fetchQuery(drink('c1'));
+  await tick();
+  assert.equal(files.map.size, 1, 'saved after it fetched');
+
+  assert.deepEqual(await launch().fetchQuery(drink('c1')), { id: 'c1', fetch: 1 }, 'read back after a relaunch');
+  assert.equal(fetches, 1, 'and not fetched again while fresh');
+
+  await first.fetchQuery({ queryKey: ['bars', 'u1'], queryFn: async () => [1] });
+  await tick();
+  assert.equal(files.map.size, 1, 'a row query is not a file');
+
+  await first.fetchQuery(drink('c2'));
+  first.removeQueries();
+  await tick();
+  assert.equal(files.map.size, 1, 'removed (sign-out) before its save landed: not written');
+
+  assert.deepEqual(await launch('v2').fetchQuery(drink('c1')), { id: 'c1', fetch: 3 }, 'another app version fetches');
+  await tick();
+
+  files.map.clear();
+  await launch().fetchQuery(drink('c4'));
+  await tick();
+  assert.equal(files.map.size, 1);
+  await pruneQueryFiles(files, saving, Date.now() + 120_000);
+  assert.equal(files.map.size, 0, 'a file past maxAge is pruned');
+}
+
+checkGuard()
+  .then(checkFiles)
+  .then(() => console.log('queryCachePersist checks passed'));

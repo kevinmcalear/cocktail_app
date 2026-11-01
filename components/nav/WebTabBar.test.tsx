@@ -8,7 +8,7 @@ import { WebTabBar } from './WebTabBar';
 
 jest.mock('@/hooks/useIsWideWeb', () => ({ useIsWideWeb: () => false }));
 
-const names = ['(tonight)', '(drinks)', '(discover)', '(you)', 'search'];
+const names = ['(1-tonight)', '(2-drinks)', '(3-discover)', '(4-you)', 'search'];
 const navigateToTab = jest.fn();
 const props = {
   state: { index: 0, routes: names.map((name) => ({ key: name, name })) },
@@ -27,7 +27,7 @@ test('the four tabs and the search circle, the same for everyone', async () => {
   expect(screen.getByRole('tab', { name: 'Tonight', selected: true })).toBeTruthy();
   expect(screen.queryByRole('button', { name: /^New/ })).toBeNull();
   await fireEvent.press(screen.getByRole('tab', { name: 'Drinks' }));
-  expect(navigateToTab).toHaveBeenLastCalledWith('(drinks)');
+  expect(navigateToTab).toHaveBeenLastCalledWith('(2-drinks)');
   await fireEvent.press(screen.getByRole('button', { name: 'Search' }));
   expect(navigateToTab).toHaveBeenLastCalledWith('search');
 });

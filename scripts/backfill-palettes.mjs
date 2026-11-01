@@ -1,5 +1,7 @@
-// Computes the drink-field palette for pictures that don't have one yet, by
-// calling the image-palette edge function for each `images` row.
+// Computes the drink-field palette for pictures that don't have one yet, and
+// the 1080 px page copy and ThumbHash for those without one (the image-sizes
+// backfill, 20261204100000), by calling the image-palette edge function for
+// each `images` row.
 //
 // Local stack by default (reads `supabase status`; the edge runtime must be
 // running):
@@ -76,7 +78,7 @@ let seen = 0;
 
 while (seen < limit) {
   let query = service.from('images').select('id, url').gt('id', lastId).order('id').limit(Math.min(PAGE, limit - seen));
-  if (!args.force) query = query.is('palette', null);
+  if (!args.force) query = query.or('palette.is.null,thumbhash.is.null');
   const { data: rows, error } = await query;
   if (error) throw error;
   if (rows.length === 0) break;

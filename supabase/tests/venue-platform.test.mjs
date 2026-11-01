@@ -339,12 +339,10 @@ describe('venue roles', () => {
     assert.ok(rows[0].role_since.getTime() > before.getTime());
   });
 
-  test('text on accent is cream, ink or automatic, and only admins set it', async () => {
-    assert.ifError((await users.admin.client.from('bars').update({ accent_text: 'ink' }).eq('id', ids.barOne)).error);
-    assert.ok((await users.admin.client.from('bars').update({ accent_text: 'white' }).eq('id', ids.barOne)).error);
-    const { data } = await users.maker.client.from('bars').update({ accent_text: 'cream' }).eq('id', ids.barOne).select('id');
-    assert.deepEqual(data, []);
-    assert.ifError((await users.admin.client.from('bars').update({ accent_text: null }).eq('id', ids.barOne)).error);
+  test('text on accent is gone: buttons pick their own ink', async () => {
+    assert.ok((await users.admin.client.from('bars').update({ accent_text: 'ink' }).eq('id', ids.barOne)).error);
+    const { rows } = await db.query("SELECT 1 FROM information_schema.columns WHERE table_schema = 'public' AND table_name = 'bars' AND column_name = 'accent_text'");
+    assert.equal(rows.length, 0);
   });
 
   test('guest staff lose access the moment their role ends', async () => {
