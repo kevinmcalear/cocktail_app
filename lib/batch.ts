@@ -109,8 +109,9 @@ export function isGarnishUnit(unit: string | null | undefined): boolean {
  * A garnish line: a count unit (a twist, a sprig, grated nutmeg). An egg
  * white counted "1 each" goes in the drink, so it isn't one (Eddie tf-064).
  */
-export function isGarnishLine(l: { unit: string | null | undefined; ingredient: string | null | undefined }): boolean {
-  return isGarnishUnit(l.unit) && !/\begg/i.test(l.ingredient ?? '');
+export function isGarnishLine(l: { unit: string | null | undefined; ingredient: string | null | undefined; garnish?: boolean }): boolean {
+  // The server's word where the unit is masked (names only), else the unit.
+  return (l.garnish ?? isGarnishUnit(l.unit)) && !/\begg/i.test(l.ingredient ?? '');
 }
 
 /** The guess from the name and unit, for lines nobody has decided yet. */

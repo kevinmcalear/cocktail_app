@@ -64,6 +64,11 @@ assert.equal(serveLine([null]), null);
 assert.equal(isGarnishLine({ unit: 'each', ingredient: 'Candied ginger' }), true);
 assert.equal(isGarnishLine({ unit: 'each', ingredient: 'Egg white' }), false);
 assert.equal(isGarnishLine({ unit: 'ml', ingredient: 'Lemon juice' }), false);
+// Names only: the unit is masked, the server says garnish (20261206010000).
+assert.equal(isGarnishLine({ unit: null, ingredient: 'Ginger', garnish: true }), true);
+assert.equal(isGarnishLine({ unit: null, ingredient: 'Ginger' }), false, 'before the server says, nothing is guessed');
+assert.equal(lineRole({ ingredient: 'Ginger', unit: null, float: false, optional: false, garnish: true }, 'names'), 'Garnish');
+assert.equal(goesOutLine(['Rocks', ...garnishNames([{ ...penicillin[4], unit: null, garnish: true }])]), 'Goes out: rocks, candied ginger');
 assert.deepEqual(garnishNames(penicillin), ['Candied ginger']);
 assert.equal(garnishLabel('Nutmeg', 'grated'), 'Grated nutmeg');
 assert.equal(garnishLabel('Lemon', 'discard'), 'Lemon peel, expressed and discarded');

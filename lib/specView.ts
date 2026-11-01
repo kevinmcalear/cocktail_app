@@ -146,7 +146,7 @@ export type SpecLayout = 'rows' | 'steps' | 'names';
  * In Steps the Float heading already says it (`underFloat`). Whether a line
  * floats never depends on the view someone saved.
  */
-export function lineRole(l: Pick<SpecLine, 'unit' | 'ingredient' | 'float' | 'houseMade' | 'optional'>, layout: SpecLayout, underFloat = false): string | null {
+export function lineRole(l: Pick<SpecLine, 'unit' | 'ingredient' | 'float' | 'houseMade' | 'optional' | 'garnish'>, layout: SpecLayout, underFloat = false): string | null {
   const kind = isGarnishLine(l) ? 'garnish' : l.float && !underFloat ? 'float' : l.houseMade && layout === 'names' ? 'house-made' : null;
   const words = [kind, l.optional ? 'optional' : null].filter(Boolean).join(', ');
   if (!words) return null;
