@@ -144,7 +144,7 @@ function MenuPage({ menu, shelf }: { menu: MenuDetail; shelf: { match: ShelfMatc
         data={items}
         keyExtractor={(i) => i.key}
         windowSize={DRAWN_LIST_WINDOW}
-        contentContainerStyle={{ paddingTop: insets.top, paddingBottom: insets.bottom + (draft && team ? 140 : space.xxxl) }}
+        contentContainerStyle={{ paddingBottom: insets.bottom + (draft && team ? 140 : space.xxxl) }}
         renderItem={({ item }) => (
           <View style={column}>
             {item.head ? (
@@ -185,6 +185,7 @@ function MenuPage({ menu, shelf }: { menu: MenuDetail; shelf: { match: ShelfMatc
               onEdit={(team && draft) || lens.lens === 'home' ? () => go(`/menus/${menu.id}/edit`) : null}
               pill={lens.lens === 'home' ? { label: 'Share', onPress: share } : team && !draft && status !== 'previous' ? { label: 'Edit', onPress: () => go(`/menus/${menu.id}/edit`) } : null}
               bleed={gutter}
+              top={sidebar ? 0 : insets.top}
             />
             {model.banner ? (
               <MenuPageBanner text={model.banner.text} aside={model.banner.aside} warn={model.banner.warn} onPress={model.banner.toNow && live ? () => go(`/menus/${live.id}`) : undefined} />

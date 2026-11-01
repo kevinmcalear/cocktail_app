@@ -32,6 +32,8 @@ interface MenuPageHeadProps {
   pill: { label: string; onPress: () => void } | null;
   /** The page's side margin: the hero runs out to the edges. */
   bleed: number;
+  /** The status bar's height: the sky runs up under it. */
+  top?: number;
   children?: ReactNode;
 }
 
@@ -40,7 +42,7 @@ interface MenuPageHeadProps {
  * cover photo, or nothing yet), glass Back and Share, then the tag and
  * eyebrow, the name and its line (Menu-page).
  */
-export function MenuPageHead({ heroIds, coverUrl, name, ink, quiet, tag, eyebrow, description, onBack, onShare, onEdit, pill, bleed, children }: MenuPageHeadProps) {
+export function MenuPageHead({ heroIds, coverUrl, name, ink, quiet, tag, eyebrow, description, onBack, onShare, onEdit, pill, bleed, top = 0, children }: MenuPageHeadProps) {
   const ds = useDs();
   const photo = !!coverUrl && ink === 'colour';
   const drawn = !photo && heroIds.length > 0;
@@ -51,14 +53,14 @@ export function MenuPageHead({ heroIds, coverUrl, name, ink, quiet, tag, eyebrow
           <DrinkHero name={name} pictures={[{ url: coverUrl, isSketch: false, isOutdated: false }]} glass={null} height={420} fade />
         </View>
       ) : drawn ? (
-        <View style={{ height: HERO_H, marginHorizontal: -bleed, overflow: 'hidden' }}>
+        <View style={{ height: HERO_H + top, marginHorizontal: -bleed, overflow: 'hidden' }}>
           {quiet ? null : <MenuSky ids={heroIds} fade />}
-          <MenuTrio ids={heroIds} ink={ink} />
+          <MenuTrio ids={heroIds} ink={ink} top={64 + top} />
         </View>
       ) : (
-        <View style={{ height: 112 }} />
+        <View style={{ height: 112 + top }} />
       )}
-      <View style={styles.bar}>
+      <View style={[styles.bar, { top: top + space.lg }]}>
         {onBack ? <GlassButton icon="chevron.left" accessibilityLabel="Back" onPress={onBack} onMedia={photo} /> : <View />}
         <View style={styles.barEnd}>
           {onEdit ? <GlassButton icon="pencil" accessibilityLabel="Edit" onPress={onEdit} onMedia={photo} /> : null}
