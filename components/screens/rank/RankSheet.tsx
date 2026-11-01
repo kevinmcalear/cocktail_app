@@ -3,9 +3,8 @@ import { useRef, useState, type ReactNode } from 'react';
 import { Platform, StyleSheet, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
-import { Body, Button, Caption, GlassButton, PressableScale, Sheet, SheetScrollView, Title, useBreakpoint, useDs, useSheetClose } from '@/components/ds';
-import { IconSymbol } from '@/components/ui/icon-symbol';
-import { font, layout, radius, space } from '@/constants/tokens';
+import { Body, Button, Caption, FlowHead, Sheet, SheetScrollView, Title, useBreakpoint } from '@/components/ds';
+import { space } from '@/constants/tokens';
 import { useAddRankEntry, useRecordComparisons, type RankEntry, type RankVenue } from '@/hooks/useRankings';
 import { heroPicture, type ItemPicture } from '@/lib/itemImages';
 import { monthHad, stepCount } from '@/lib/rankResult';
@@ -156,7 +155,7 @@ export function RankSheet({ onClose, drink, rankedAs, venue, list, listFailed }:
   }
 
   return (
-    <Sheet visible kind="flow" onClose={onClose} accessibilityLabel={`Rank ${drink.name}`} header={<Head title={title} done={!!landed} />}>
+    <Sheet visible kind="flow" part={!landed && !comparing ? FIRST_STEP : undefined} onClose={onClose} accessibilityLabel={`Rank ${drink.name}`} header={<FlowHead title={title} done={!!landed} />}>
       <SheetScrollView contentContainerStyle={[styles.body, !landed && !comparing && styles.first, { paddingBottom: insets.bottom + space.xl }]} keyboardShouldPersistTaps="handled">
         {body}
         {saving ? (
@@ -175,35 +174,10 @@ export function RankSheet({ onClose, drink, rankedAs, venue, list, listFailed }:
   );
 }
 
-/**
- * The sheet's top row: Close (Android's back arrow, as its full-height
- * sheets have), the step ("2 of 3") and, once it's placed, Done.
- */
-function Head({ title, done }: { title: string; done: boolean }) {
-  const ds = useDs();
-  const close = useSheetClose();
-  const android = Platform.OS === 'android';
-  return (
-    <View style={styles.head}>
-      <GlassButton accessibilityLabel={android ? 'Back' : 'Close'} icon={android ? 'chevron.left' : 'xmark'} onPress={close} />
-      <Body style={styles.title} align="center" numberOfLines={1}>
-        {title}
-      </Body>
-      {done ? (
-        <PressableScale accessibilityLabel="Done" onPress={close} style={[styles.done, { backgroundColor: ds.accentFill.fill }]}>
-          <IconSymbol name="checkmark" size={18} color={ds.accentFill.text} />
-        </PressableScale>
-      ) : (
-        <View style={styles.done} />
-      )}
-    </View>
-  );
-}
+/** How was it rests part-way up (Prod-rank-A 1); the sheet grows to full height for the pairs and the result. */
+const FIRST_STEP = 0.6;
 
 const styles = StyleSheet.create({
-  head: { flexDirection: 'row', alignItems: 'center', gap: space.sm, paddingHorizontal: space.lg, paddingTop: space.md, paddingBottom: space.sm },
-  title: { flex: 1, ...font.semiBold },
-  done: { width: layout.minTapTarget, height: layout.minTapTarget, borderRadius: radius.pill, alignItems: 'center', justifyContent: 'center' },
   body: { flexGrow: 1, paddingHorizontal: space.xl, paddingTop: space.md, gap: space.xl },
   // How was it sits low, where the drawn small sheet sits and a thumb reaches.
   first: { justifyContent: 'flex-end' },
