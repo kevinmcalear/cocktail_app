@@ -40,7 +40,7 @@ type Row = MenuItemRow & {
 
 const COLUMNS = `${MENU_DRINK_COLUMNS}, bar_id, created_at,
   riff_of:riff_of_id(id, name, is_catalog),
-  menu_drinks(menu:menus(name, is_active)),
+  menu_drinks!menu_drinks_item_id_fkey(menu:menus(name, is_active)),
   spec:app_recipe_presentation!recipe_item_id(sort_order, amount, unit, ingredient:display_ingredient(id, name, ingredient_role))`;
 
 // ponytail: a bar's cocktails whose letters come in the name's order, enough for any one bar's list; a page of them if a bar ever has more.
