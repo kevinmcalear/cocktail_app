@@ -34,8 +34,8 @@ interface MadeSheetProps {
 }
 
 /**
- * "I made it": log a drink made at home (made_drinks). When you had it at a
- * bar, say how yours compared: that places your home version beside the
+ * "I made it": log a drink made at home (a had, source 'made'). When you had
+ * it at a bar, say how yours compared: that places your home version beside the
  * bar's in your rankings (a made-at-home rank_entries row), which is the
  * score your profile shows if you share rankings. Then what you swapped,
  * when, a photo and a note, and whether it shows on your profile (off until
@@ -104,7 +104,7 @@ export function MadeSheet({ item, ingredients, lines = [], barName, onClose }: M
             : { winner_entry_id: barEntry.id, loser_entry_id: row.id, is_tie: compared === 'same' },
         ]);
       }
-      await log.mutateAsync({ item_id: item.id, made_on: madeOn, compared, swaps: cleanSwaps(swaps), note: note.trim() || null, rank_entry_id: rankEntryId, on_profile: shown, photoUri: photo });
+      await log.mutateAsync({ item_id: item.id, had_on: madeOn, compared, swaps: cleanSwaps(swaps), note: note.trim() || null, rank_entry_id: rankEntryId, on_profile: shown, photoUri: photo });
       onClose();
     } catch (e) {
       // Supabase errors are plain objects, not Errors: say what went wrong either way.

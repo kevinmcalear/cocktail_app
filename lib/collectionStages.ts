@@ -3,7 +3,8 @@
  * make and Made for drinks; Want to go and Been for bars. The tiles switch
  * the list under them. Pure helpers (lib/collectionStages.check.ts); the
  * data comes from useMyHadDrinks, useCollection, useMadeDrinks, useMyBar and
- * useLovedBars; Want to go's map pins its bars as Discover does (lib/discoverMap.ts).
+ * useWantToGo (want_list); Want to go's map pins its bars as Discover does
+ * (lib/discoverMap.ts).
  */
 import { averageScore } from './collectionMenus';
 import { cameraFor, type Camera, type MapPin } from './discoverMap';
