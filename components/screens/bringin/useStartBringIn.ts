@@ -21,8 +21,11 @@ export function useStartBringIn() {
       store.enqueue(rest);
     }
     store.closeSheet();
-    // Already on /bring-in (it marks itself foreground): it shows the new job.
-    if (store.foreground) return;
+    // Already on /bring-in (it marks itself foreground): it shows the new job. From a page over it (the viewfinder), back to it.
+    if (store.foreground) {
+      if (options.replace) router.back();
+      return;
+    }
     if (options.replace) router.replace('/bring-in' as Href);
     else router.push('/bring-in' as Href);
   };

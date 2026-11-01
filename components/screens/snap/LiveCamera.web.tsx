@@ -5,8 +5,13 @@ import type { CameraState, LiveCameraHandle } from './cameraTypes';
 type TorchCapabilities = MediaTrackCapabilities & { torch?: boolean };
 
 /** Whether the browser can show a live viewfinder (getUserMedia, which needs https). Without it Snap opens the file chooser. */
-export function hasLiveCamera(): boolean {
-  return typeof window !== 'undefined' && window.isSecureContext && !!navigator.mediaDevices?.getUserMedia;
+export async function hasLiveCamera(): Promise<boolean> {
+  if (typeof window === 'undefined' || !window.isSecureContext || !navigator.mediaDevices?.getUserMedia) return false;
+  // A desktop with no webcam goes straight to the file chooser.
+  return navigator.mediaDevices.enumerateDevices().then(
+    (devices) => devices.some((d) => d.kind === 'videoinput'),
+    () => false,
+  );
 }
 
 /**
@@ -22,6 +27,8 @@ export function LiveCamera({ ref, torch, onState }: { ref: Ref<LiveCameraHandle>
   });
 
   useEffect(() => {
+    // Opened straight at /snap over http, or in a browser without it.
+    if (!navigator.mediaDevices?.getUserMedia) return told.current('failed', false);
     let live = true;
     navigator.mediaDevices
       .getUserMedia({ video: { facingMode: { ideal: 'environment' }, width: { ideal: 1920 } }, audio: false })
@@ -29,8 +36,6 @@ export function LiveCamera({ ref, torch, onState }: { ref: Ref<LiveCameraHandle>
         if (!live) return s.getTracks().forEach((t) => t.stop());
         stream.current = s;
         if (video.current) video.current.srcObject = s;
-        const track = s.getVideoTracks()[0];
-        told.current('live', !!(track?.getCapabilities?.() as TorchCapabilities | undefined)?.torch);
       })
       .catch((e: unknown) => {
         if (!live) return;
@@ -62,5 +67,7 @@ export function LiveCamera({ ref, torch, onState }: { ref: Ref<LiveCameraHandle>
     },
   }));
 
-  return <video ref={video} autoPlay playsInline muted aria-hidden style={{ position: 'absolute', inset: 0, width: '100%', height: '100%', objectFit: 'cover' }} />;
+  // Live once there's a picture to take, not just a stream.
+  const ready = () => told.current('live', !!(stream.current?.getVideoTracks()[0]?.getCapabilities?.() as TorchCapabilities | undefined)?.torch);
+  return <video ref={video} autoPlay playsInline muted aria-hidden onLoadedMetadata={ready} style={{ position: 'absolute', inset: 0, width: '100%', height: '100%', objectFit: 'cover' }} />;
 }

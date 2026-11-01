@@ -7,7 +7,7 @@ import { useStartBringIn } from '@/components/screens/bringin/useStartBringIn';
 import { hasLiveCamera } from '@/components/screens/snap/LiveCamera';
 import { useBringInPlace } from '@/hooks/useBringInPlace';
 import { addIntent } from '@/lib/addIntent';
-import { peekClipboard, readClipboard, readClipboardImage, UNREAD_CLIP } from '@/lib/clipboardPeek';
+import { peekClipboard, readClipboardAny, UNREAD_CLIP } from '@/lib/clipboardPeek';
 import { newDrinkHref } from '@/lib/itemRoutes';
 import { pickReadFiles, snapReadFiles, sourcesFromFiles, type ReadFile } from '@/lib/readAnything';
 import { capitalizeFirst } from '@/lib/stringUtils';
@@ -63,21 +63,20 @@ export function useAddActions(done: () => void, { replace = false }: { replace?:
      * module (or the browser can show one); builds from before it, and
      * browsers without, open the system camera or file chooser as before.
      */
-    snap: () => {
-      if (!hasLiveCamera()) return void fromFiles(snapReadFiles);
+    snap: async () => {
+      if (!(await hasLiveCamera())) return void fromFiles(snapReadFiles);
       done();
       router.push('/snap' as never);
     },
     choose: () => void fromFiles(pickReadFiles),
     /** Reads a photo the viewfinder took. */
     photo: (file: ReadFile) => fromFiles(async () => [file]),
-    /** Reads what's on the clipboard, a picture or text (iOS asks first, so it's only read on this tap). */
+    /** Reads what's on the clipboard: text, or a picture when there's no text (iOS asks first, so it's only read on this tap). */
     paste: async () => {
-      const image = await readClipboardImage();
-      if (image) return fromFiles(async () => [image]);
-      const text = await readClipboard();
-      if (text?.trim()) read(text.trim());
-      else setError('Nothing copied yet.');
+      const clip = await readClipboardAny();
+      if (!clip) return setError('Nothing copied yet.');
+      if ('image' in clip) return fromFiles(async () => [clip.image]);
+      read(clip.text);
     },
   };
 }

@@ -1,6 +1,6 @@
 import type { CameraView } from 'expo-camera';
 import { useEffect, useImperativeHandle, useRef, useState, type Ref } from 'react';
-import { Platform, StyleSheet } from 'react-native';
+import { AppState, Platform, StyleSheet } from 'react-native';
 
 import { optionalNative } from '@/lib/optionalNative';
 
@@ -12,7 +12,7 @@ type CameraModule = typeof import('expo-camera');
 const cam = Platform.OS === 'web' ? null : optionalNative<CameraModule>('ExpoCamera', () => require('expo-camera'));
 
 /** Whether this build can show a live viewfinder (it has expo-camera's native module). */
-export function hasLiveCamera(): boolean {
+export async function hasLiveCamera(): Promise<boolean> {
   return !!cam;
 }
 
@@ -29,21 +29,28 @@ export function LiveCamera({ ref, torch, onState }: { ref: Ref<LiveCameraHandle>
   });
 
   useEffect(() => {
-    if (!cam) return;
+    if (!cam) return told.current('failed', false);
+    const { Camera } = cam;
     let live = true;
-    void (async () => {
+    const check = async (ask: boolean) => {
       try {
-        const before = await cam.Camera.getCameraPermissionsAsync();
-        const granted = before.granted || (before.canAskAgain && (await cam.Camera.requestCameraPermissionsAsync()).granted);
+        const before = await Camera.getCameraPermissionsAsync();
+        const granted = before.granted || (ask && before.canAskAgain && (await Camera.requestCameraPermissionsAsync()).granted);
         if (!live) return;
         if (granted) setAllowed(true);
         else told.current('off', false);
       } catch {
         if (live) told.current('failed', false);
       }
-    })();
+    };
+    void check(true);
+    // Back from Settings with the camera turned on.
+    const sub = AppState.addEventListener('change', (next) => {
+      if (next === 'active') void check(false);
+    });
     return () => {
       live = false;
+      sub.remove();
     };
   }, []);
 
@@ -56,5 +63,6 @@ export function LiveCamera({ ref, torch, onState }: { ref: Ref<LiveCameraHandle>
 
   if (!cam || !allowed) return null;
   const { CameraView: View } = cam;
-  return <View ref={view} style={StyleSheet.absoluteFill} facing="back" enableTorch={torch} animateShutter={false} onCameraReady={() => onState('live', true)} onMountError={() => onState('failed', false)} />;
+  return <View ref={view} style={StyleSheet.absoluteFill} facing="back" enableTorch={torch} animateShutter={false} // ponytail: expo-camera doesn't say whether there's a torch, so Flash shows on devices without one and does nothing there.
+      onCameraReady={() => onState('live', true)} onMountError={() => onState('failed', false)} />;
 }

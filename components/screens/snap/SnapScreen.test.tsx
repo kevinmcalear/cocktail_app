@@ -10,12 +10,12 @@ jest.mock('expo-router', () => ({ useRouter: () => ({ push: mockPush, replace: m
 jest.mock('@/hooks/useBringInPlace', () => ({ useBringInPlace: () => ({ barId: 'bar', venueName: 'Pale Moth', heldBack: null, loading: false }) }));
 const mockStart = jest.fn();
 jest.mock('@/components/screens/bringin/useStartBringIn', () => ({ useStartBringIn: () => mockStart }));
-const mockImage = jest.fn();
-jest.mock('@/lib/clipboardPeek', () => ({ UNREAD_CLIP: '\u0000unread', readClipboardImage: () => mockImage(), peekClipboard: async () => null, readClipboard: async () => 'a negroni but with mezcal' }));
+const mockClip = jest.fn();
+jest.mock('@/lib/clipboardPeek', () => ({ UNREAD_CLIP: '\u0000unread', readClipboardAny: () => mockClip(), peekClipboard: async () => null }));
 jest.mock('@/hooks/useDictation', () => ({ useDictation: () => ({ available: true, listening: false, error: null, start: jest.fn(), stop: jest.fn() }) }));
 let mockCamera: 'live' | 'off' = 'live';
 jest.mock('./LiveCamera', () => ({
-  hasLiveCamera: () => true,
+  hasLiveCamera: async () => true,
   LiveCamera: ({ ref, onState }: { ref: React.Ref<unknown>; onState: (s: string, torch: boolean) => void }) => {
     const { useEffect, useImperativeHandle } = jest.requireActual<typeof import('react')>('react');
     useImperativeHandle(ref, () => ({ snap: async () => ({ uri: 'file:///menu.jpg', mimeType: 'image/jpeg' }) }));
@@ -27,7 +27,7 @@ jest.mock('./LiveCamera', () => ({
 beforeEach(() => {
   mockStart.mockReset();
   mockReplace.mockReset();
-  mockImage.mockReset().mockResolvedValue(null);
+  mockClip.mockReset();
   mockCamera = 'live';
 });
 
@@ -38,8 +38,8 @@ test('the shutter takes the photo and Bring in reads it in place of the viewfind
   expect(mockStart).toHaveBeenLastCalledWith([{ files: [{ uri: 'file:///menu.jpg', mimeType: 'image/jpeg' }], text: null, url: null, name: null }], { barId: 'bar', replace: true });
 });
 
-test('Paste reads a copied picture first, then copied text', async () => {
-  mockImage.mockResolvedValueOnce({ uri: 'data:image/jpeg;base64,AAAA', mimeType: 'image/jpeg' });
+test('Paste reads a copied picture or copied text', async () => {
+  mockClip.mockResolvedValueOnce({ image: { uri: 'data:image/jpeg;base64,AAAA', mimeType: 'image/jpeg' } }).mockResolvedValueOnce({ text: 'a negroni but with mezcal' });
   await renderWithProviders(<SnapScreen />);
   await fireEvent.press(screen.getByRole('button', { name: 'Paste' }));
   expect(mockStart).toHaveBeenLastCalledWith([{ files: [{ uri: 'data:image/jpeg;base64,AAAA', mimeType: 'image/jpeg' }], text: null, url: null, name: null }], { barId: 'bar', replace: true });

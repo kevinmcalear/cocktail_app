@@ -27,22 +27,29 @@ export async function peekClipboard(): Promise<string | null> {
 }
 
 /**
- * A copied picture (a screenshot of a menu, a photo of a recipe), read now, or
- * null. On the web the browser asks first; asking whether there is one doesn't.
+ * What's copied, read now: its text, or a picture (a screenshot of a menu)
+ * when there's no text, or null. Text first, so a card that offered the copied
+ * link reads that link. One read on the web, where the browser asks first.
  */
-export async function readClipboardImage(): Promise<{ uri: string; mimeType: string } | null> {
+export async function readClipboardAny(): Promise<{ text: string } | { image: { uri: string; mimeType: string } } | null> {
   try {
     if (Platform.OS === 'web') {
       const items = (await navigator.clipboard?.read?.()) ?? [];
       for (const item of items) {
+        if (item.types.includes('text/plain')) {
+          const text = (await (await item.getType('text/plain')).text()).trim();
+          if (text) return { text };
+        }
         const kind = item.types.find((t) => t.startsWith('image/'));
-        if (kind) return { uri: URL.createObjectURL(await item.getType(kind)), mimeType: kind };
+        if (kind) return { image: { uri: URL.createObjectURL(await item.getType(kind)), mimeType: kind } };
       }
       return null;
     }
+    const text = await readClipboard();
+    if (text) return { text };
     if (!clipboard || !(await clipboard.hasImageAsync())) return null;
     const image = await clipboard.getImageAsync({ format: 'jpeg', jpegQuality: 0.7 });
-    return image ? { uri: image.data, mimeType: 'image/jpeg' } : null;
+    return image ? { image: { uri: image.data, mimeType: 'image/jpeg' } } : null;
   } catch {
     return null;
   }
