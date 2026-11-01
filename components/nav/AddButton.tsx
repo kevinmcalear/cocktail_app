@@ -1,19 +1,35 @@
-import { useState } from 'react';
-import { StyleSheet } from 'react-native';
+import { useRef, useState, type ComponentRef } from 'react';
+import { StyleSheet, useWindowDimensions, View } from 'react-native';
 
 import { Button, DsText, PressableScale, useDs } from '@/components/ds';
 import { IconSymbol } from '@/components/ui/icon-symbol';
 import { font, layout, radius, space } from '@/constants/tokens';
 
+import { AddFabMenu, type FabFrame } from './AddFabMenu';
+import { AddSheet } from './AddSheet';
 import { CreateSheet } from './CreateSheet';
 
-const LABEL = 'Add: a drink, a bottle, something you make, beer, wine, a menu, or bring something in';
+const LABEL = 'Add: name a drink, paste a link, describe it, or snap a menu, bottle or recipe';
 
-/** Add opens the New sheet over the page you're on (it stands in for the Add sheet the Add lane draws). */
+/**
+ * Add opens over the page you're on: the Add sheet, and from its last row
+ * the New sheet (a bottle, beer, wine, a house-made or a menu). Android's
+ * FAB opens its FAB menu first (`fab`).
+ */
 function useAdd() {
-  const [open, setOpen] = useState(false);
-  const sheet = open ? <CreateSheet visible onClose={() => setOpen(false)} /> : null;
-  return { open: () => setOpen(true), sheet };
+  const [open, setOpen] = useState<'add' | 'more' | null>(null);
+  // The second sheet waits for the first to have gone.
+  const more = () => {
+    setOpen(null);
+    setTimeout(() => setOpen('more'), 350);
+  };
+  const sheet = (
+    <>
+      {open === 'add' ? <AddSheet visible onClose={() => setOpen(null)} onMore={more} /> : null}
+      {open === 'more' ? <CreateSheet visible onClose={() => setOpen(null)} /> : null}
+    </>
+  );
+  return { open: () => setOpen('add'), sheet };
 }
 
 /** The + at the top right of a tab's first page on iOS and phone-width web: a filled circle in the venue's accent. */
@@ -47,20 +63,37 @@ export function DeskAddButton() {
 
 /**
  * Android's Add: a Material 3 extended FAB at the bottom right of a tab's
- * first page, over the bottom bar (approved 31 Oct 2026). It opens the New
- * sheet until the Add lane draws its FAB menu.
+ * first page, over the bottom bar (approved 31 Oct 2026). It opens the FAB
+ * menu (AddFabMenu), whose Type a drink opens the Add sheet.
  */
 export function AddFab() {
   const ds = useDs();
   const add = useAdd();
+  const window = useWindowDimensions();
+  const ref = useRef<ComponentRef<typeof View>>(null);
+  const [menu, setMenu] = useState<FabFrame | null>(null);
+  const openMenu = () =>
+    ref.current?.measureInWindow((x: number, y: number, w: number, h: number) => setMenu({ right: window.width - x - w, bottom: window.height - y - h }));
   return (
     <>
-      <PressableScale role="button" accessibilityLabel={LABEL} onPress={add.open} style={[styles.fab, { backgroundColor: ds.accentFill.fill }]}>
-        <IconSymbol name="plus" size={20} color={ds.accentFill.text} />
-        <DsText color={ds.accentFill.text} style={styles.fabLabel}>
-          Add
-        </DsText>
-      </PressableScale>
+      <View ref={ref} style={styles.fabSpot}>
+        <PressableScale role="button" aria-expanded={!!menu} accessibilityLabel={LABEL} onPress={openMenu} style={[styles.fab, { backgroundColor: ds.accentFill.fill }]}>
+          <IconSymbol name="plus" size={20} color={ds.accentFill.text} />
+          <DsText color={ds.accentFill.text} style={styles.fabLabel}>
+            Add
+          </DsText>
+        </PressableScale>
+      </View>
+      {menu ? (
+        <AddFabMenu
+          frame={menu}
+          onClose={() => setMenu(null)}
+          onType={() => {
+            setMenu(null);
+            add.open();
+          }}
+        />
+      ) : null}
       {add.sheet}
     </>
   );
@@ -70,6 +103,7 @@ const SIZE = 32;
 const styles = StyleSheet.create({
   circle: { width: SIZE, height: SIZE, borderRadius: radius.pill, alignItems: 'center', justifyContent: 'center' },
   // Material 3's extended FAB: 56 tall, 16 in from the edges, a level-3 shadow.
-  fab: { position: 'absolute', right: space.lg, bottom: space.lg, height: 56, paddingHorizontal: space.lg, borderRadius: radius.control + 4, flexDirection: 'row', alignItems: 'center', gap: space.sm, elevation: 3 },
+  fabSpot: { position: 'absolute', right: space.lg, bottom: space.lg },
+  fab: { height: 56, paddingHorizontal: space.lg, borderRadius: radius.control + 4, flexDirection: 'row', alignItems: 'center', gap: space.sm, elevation: 3 },
   fabLabel: { ...font.semiBold },
 });

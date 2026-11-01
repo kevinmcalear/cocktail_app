@@ -170,6 +170,8 @@ export function MineResults({ query, mine, onEverywhere, commands, palette, show
       <NearResults query={q} found={found} shown={shownIds} yours={items} yoursCaption={mine.label} title="" miss={null} show={show} />
       {commands}
       {everywhere}
+      {/* The results end with Add "what you typed" (Prod-phone search, Add B). */}
+      {mine.canAdd && !palette ? <ResultRow title={`Add “${capitalize(q)}” as a new drink`} icon="plus" accentIcon onPress={() => router.push(newDrinkHref(capitalize(q), mine.venueId) as never)} /> : null}
     </View>
   );
 }
