@@ -1,7 +1,7 @@
 // Checks for lib/tonight.ts. Run: npm run test:unit
 import assert from 'node:assert/strict';
 
-import { bestAway, offTonight, oneBottleLine, prepLine, serviceEnd, shelfTiles, tonightEyebrow } from './tonight';
+import { bestAway, offTonight, oneBottleLine, prepLine, runThroughMinutes, serviceEnd, shelfTiles, talkThrough, tonightEyebrow } from './tonight';
 
 // The night runs to 6am: at 1am it is still last night's.
 assert.equal(serviceEnd(new Date(2026, 10, 1, 20)).getTime(), new Date(2026, 10, 2, 6).getTime());
@@ -45,3 +45,23 @@ assert.deepEqual(
 );
 assert.equal(shelfTiles(ready, [], 4).length, 4, 'all ready when nothing is one away');
 assert.equal(shelfTiles([], [{ bottles: [{ name: 'Campari' }], drinks: [{ id: 'n', name: 'Negroni' }] }], 4)[0].status, 'Need Campari');
+
+assert.equal(runThroughMinutes('Blended Scotch, lemon, honey-ginger, Islay float'), 1);
+assert.equal(runThroughMinutes('Gin, Campari, sweet vermouth, orange, soda, bitters'), 2);
+assert.equal(runThroughMinutes(''), 1);
+
+const drinkList = [
+  { id: 'pen', name: 'Penicillin' },
+  { id: 'clover', name: 'Clover Club' },
+];
+const found: Record<string, { allergen: string; via: string[][] }[]> = {
+  pen: [{ allergen: 'sulphites', via: [['Islay float']] }],
+  clover: [{ allergen: 'eggs', via: [['Raw egg white']] }],
+};
+assert.deepEqual(
+  talkThrough(drinkList, (id) => found[id], (k) => k),
+  { id: 'clover', name: 'Clover Club', sub: 'Raw egg white: what to tell guests' },
+  'eggs lead, named by the ingredient they come through'
+);
+assert.equal(talkThrough(drinkList, () => undefined, (k) => k), null);
+assert.equal(talkThrough([{ id: 'x', name: 'X' }], () => [{ allergen: 'milk', via: [] }], () => 'Milk')?.sub, 'Milk: what to tell guests');

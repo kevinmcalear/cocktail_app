@@ -76,3 +76,35 @@ function needName(name: string): string {
   const fruit = /^(?:fresh\s+)?(lime|lemon|orange|grapefruit)(?:\s+juice)?$/i.exec(name.trim());
   return fruit ? `${fruit[1].toLowerCase()}s` : name;
 }
+
+/** A run-through's length: about 20 seconds a line of the spec, at least a minute. `line` is the menu's "Gin, lemon, honey". */
+export function runThroughMinutes(line: string): number {
+  const lines = line.split(/,\s*/).filter(Boolean).length;
+  return Math.max(1, Math.round((lines * 20) / 60));
+}
+
+/** Allergens worth a word at the table first: eggs (raw egg white) and milk lead, then the rest in the regulated order. */
+const TALK_FIRST = ['eggs', 'milk'];
+
+/**
+ * Learn's talk-through row: the first drink on tonight's lists with an
+ * allergen to explain, and what to call it ("Raw egg white: what to tell
+ * guests"): the ingredient it comes through when known, else the allergen.
+ */
+export function talkThrough(
+  drinks: readonly { id: string; name: string }[],
+  allergens: (id: string) => { allergen: string; via: string[][] }[] | undefined,
+  label: (key: string) => string
+): { id: string; name: string; sub: string } | null {
+  const rank = (key: string) => (TALK_FIRST.includes(key) ? TALK_FIRST.indexOf(key) : TALK_FIRST.length);
+  let best: { id: string; name: string; sub: string; rank: number } | null = null;
+  for (const d of drinks) {
+    for (const a of allergens(d.id) ?? []) {
+      const r = rank(a.allergen);
+      if (best && best.rank <= r) continue;
+      const via = a.via[0]?.[a.via[0].length - 1];
+      best = { id: d.id, name: d.name, sub: `${via ?? label(a.allergen)}: what to tell guests`, rank: r };
+    }
+  }
+  return best && { id: best.id, name: best.name, sub: best.sub };
+}
