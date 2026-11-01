@@ -6,6 +6,7 @@ import { IconSymbol } from '@/components/ui/icon-symbol';
 import { font, layout, radius, space } from '@/constants/tokens';
 
 import type { FabFrame } from './AddFabMenu';
+import type { Frame } from './AddSheet';
 import { AddFabMenu, AddSheet, CreateSheet } from './addLayers';
 
 const LABEL = 'Add: name a drink, paste a link, describe it, or snap a menu, bottle or recipe';
@@ -14,7 +15,7 @@ const LABEL = 'Add: name a drink, paste a link, describe it, or snap a menu, bot
  * Add over the page you're on, and from its last row the New sheet (a
  * bottle, beer, wine, a house-made or a menu). `onClose` once both have gone.
  */
-export function AddSheets({ onClose }: { onClose: () => void }) {
+export function AddSheets({ onClose, listen, from }: { onClose: () => void; listen?: boolean; from?: Frame | null }) {
   const [open, setOpen] = useState<'add' | 'more'>('add');
   const [shown, setShown] = useState(true);
   // The second sheet waits for the first to have gone.
@@ -26,24 +27,36 @@ export function AddSheets({ onClose }: { onClose: () => void }) {
     }, 350);
   };
   if (!shown) return null;
-  return <Suspense fallback={null}>{open === 'add' ? <AddSheet visible onClose={onClose} onMore={more} /> : <CreateSheet visible onClose={onClose} />}</Suspense>;
+  return <Suspense fallback={null}>{open === 'add' ? <AddSheet visible onClose={onClose} onMore={more} listen={listen} from={open === 'add' ? from : null} /> : <CreateSheet visible onClose={onClose} />}</Suspense>;
 }
 
 /** Add's sheets, opened by a button. Android's FAB opens its FAB menu first (AddFab). */
 function useAdd() {
-  const [open, setOpen] = useState(false);
-  return { open: () => setOpen(true), sheet: open ? <AddSheets onClose={() => setOpen(false)} /> : null };
+  const [open, setOpen] = useState<{ say: boolean; from: Frame | null } | null>(null);
+  return {
+    open: (say = false, from: Frame | null = null) => setOpen({ say, from }),
+    sheet: open ? <AddSheets onClose={() => setOpen(null)} listen={open.say} from={open.from} /> : null,
+  };
 }
 
 /** The + at the top right of a tab's first page on iOS and phone-width web: a filled circle in the venue's accent. */
 export function AddButton() {
   const ds = useDs();
   const add = useAdd();
+  const ref = useRef<ComponentRef<typeof View>>(null);
+  // Add grows out of the + (Prod-motion-sheet): where the + is, then open.
+  const open = () => {
+    const el = ref.current;
+    if (!el) return add.open();
+    el.measureInWindow((x: number, y: number, width: number, height: number) => add.open(false, { x, y, width, height }));
+  };
   return (
     <>
-      <PressableScale role="button" accessibilityLabel={LABEL} onPress={add.open} hitSlop={(layout.minTapTarget - SIZE) / 2} style={[styles.circle, { backgroundColor: ds.accentFill.fill }]}>
-        <IconSymbol name="plus" size={18} color={ds.accentFill.text} />
-      </PressableScale>
+      <View ref={ref}>
+        <PressableScale role="button" accessibilityLabel={LABEL} onPress={open} hitSlop={(layout.minTapTarget - SIZE) / 2} style={[styles.circle, { backgroundColor: ds.accentFill.fill }]}>
+          <IconSymbol name="plus" size={18} color={ds.accentFill.text} />
+        </PressableScale>
+      </View>
       {add.sheet}
     </>
   );
@@ -58,7 +71,7 @@ export function DeskAddButton() {
   const add = useAdd();
   return (
     <>
-      <Button label="Add" icon="plus" size="sm" accessibilityLabel={LABEL} onPress={add.open} />
+      <Button label="Add" icon="plus" size="sm" accessibilityLabel={LABEL} onPress={() => add.open()} />
       {add.sheet}
     </>
   );
@@ -95,6 +108,10 @@ export function AddFab() {
             onType={() => {
               setMenu(null);
               add.open();
+            }}
+            onSay={() => {
+              setMenu(null);
+              add.open(true);
             }}
           />
         </Suspense>

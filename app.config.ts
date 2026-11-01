@@ -93,6 +93,15 @@ export default ({ config }: ConfigContext): ExpoConfig => {
       ...(variant === 'production' ? ['@sentry/react-native'] : []),
       // Predictive back that still reaches JS on Android 13 to 15.
       './plugins/withPredictiveBack',
+      // Add's mic and Android's Say it: speech to text on the device (Prod-add-B, Prod-and).
+      [
+        'expo-speech-recognition',
+        {
+          microphonePermission: 'Cocktail uses the microphone when you tap the mic to say a drink.',
+          speechRecognitionPermission: 'Cocktail turns what you say into text when you tap the mic to add a drink.',
+          androidSpeechServicePackages: ['com.google.android.googlequicksearchbox'],
+        },
+      ],
       // The app icons people can pick in Settings (dec-28). iOS and Android
       // only switch between icons bundled into the build, so a bar's icon
       // ships in a store build, never from an uploaded logo at runtime.

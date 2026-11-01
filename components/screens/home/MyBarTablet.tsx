@@ -43,7 +43,7 @@ export function TabletOverview<R extends { key: string }>({ portrait, counts, no
   const insets = useSafeAreaInsets();
   const head = (
     <View style={styles.head}>
-      <ScreenHeaderSpacer title="My Bar" />
+      <ScreenHeaderSpacer title="My Bar" back />
       <Caption tone="muted">{note ?? shelfCountsLine(counts)}</Caption>
       {error ? <Body tone="muted">Couldn’t load your bar. Try again in a moment.</Body> : null}
     </View>
