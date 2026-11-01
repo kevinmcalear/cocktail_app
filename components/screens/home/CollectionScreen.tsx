@@ -8,17 +8,15 @@ import { layout, space } from '@/constants/tokens';
 import { useMyBar } from '@/hooks/useHomeBar';
 
 import { BarMenusForYou } from './BarMenusForYou';
-import { CollectionBars } from './CollectionBars';
 import { CollectionDrinks } from './CollectionDrinks';
 import { CollectionMenus } from './CollectionMenus';
 import { CollectionReleases } from './CollectionReleases';
 import { CollectionSavedMenus } from './CollectionSavedMenus';
 
-type Tab = 'drinks' | 'menus' | 'bars';
+type Tab = 'drinks' | 'menus';
 const TABS = [
   { value: 'drinks', label: 'Drinks' },
   { value: 'menus', label: 'Menus' },
-  { value: 'bars', label: 'Bars' },
 ] as const;
 
 /**
@@ -68,11 +66,6 @@ export function CollectionScreen() {
                 <CollectionReleases canMakeIds={bar.canMakeIds} />
               </View>
               <BarMenusForYou wide={desk} />
-            </View>
-          ) : null}
-          {tab === 'bars' ? (
-            <View style={desk ? styles.table : null}>
-              <CollectionBars />
             </View>
           ) : null}
         </View>

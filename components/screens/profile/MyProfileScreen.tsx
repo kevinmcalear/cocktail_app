@@ -2,7 +2,7 @@ import { useRouter, type Href } from 'expo-router';
 import { useState } from 'react';
 import { StyleSheet, View } from 'react-native';
 
-import { Body, Button, Caption, Field, Headline, PressableScale, Segmented, useDs } from '@/components/ds';
+import { Body, Button, Caption, Field, GlassButton, Headline, PressableScale, Segmented, useDs } from '@/components/ds';
 import { CurrentUserAvatar } from '@/components/ui/UserAvatar';
 import { IconSymbol } from '@/components/ui/icon-symbol';
 import { font, radius, space } from '@/constants/tokens';
@@ -14,7 +14,9 @@ import { plural } from '@/lib/menus';
 import { siteOrigin } from '@/lib/venueLink';
 
 import { SafetyPage } from '../safety/SafetyPage';
+import { MyAwards } from './PersonAwards';
 import { isShownPosition } from './Positions';
+import { useShareLink } from './useShareLink';
 import { modeCount, useSharingCounts } from './useSharingCounts';
 
 export const PUBLIC_MEANS = 'People signed in to Cocktail see your page, with only what you choose to show. You need this to publish a drink or share a menu.';
@@ -72,6 +74,7 @@ function Hub({ profile }: { profile: MyProfile }) {
   const [handleError, setHandleError] = useState<string | undefined>();
   const isPublic = save.isPending && save.variables?.isPublic !== undefined ? save.variables.isPublic : profile.isPublic;
   const line = profileLine({ tagline: profile.tagline, headline_position_id: profile.headlinePositionId }, positions);
+  const share = useShareLink(`${siteOrigin()}/p/${profile.handle}`, profile.displayName);
 
   const city = profile.showsCity ? profile.city : hiddenCity;
   const about = ['Name', profile.showsPhoto ? 'photo for people on Cocktail' : 'initials for everyone else', line, city ? `${city} ${profile.showsCity ? 'shown' : 'hidden'}` : null].filter(Boolean).join(', ');
@@ -102,7 +105,8 @@ function Hub({ profile }: { profile: MyProfile }) {
             {[`@${profile.handle}`, line].filter(Boolean).join(' · ')}
           </Caption>
         </View>
-        <Button label="Preview" variant="secondary" accessibilityHint="Opens You, your profile as people see it" onPress={() => router.push('/you')} />
+        <Button label="Preview" variant="secondary" accessibilityHint="Opens your profile as people see it" onPress={() => router.push(`/p/${profile.handle}` as Href)} />
+        {isPublic && !profile.isModerated ? <GlassButton icon="square.and.arrow.up" accessibilityLabel="Share your profile" onPress={() => void share()} /> : null}
       </View>
       {/* The three parts in one grouped card (ppl-settings). */}
       <View role="list" style={[styles.card, { backgroundColor: ds.c.surface }]}>
@@ -140,6 +144,7 @@ function Hub({ profile }: { profile: MyProfile }) {
         maxLength={31}
       />
       <Caption tone="muted">Each choice saves as you change it.</Caption>
+      <MyAwards profileId={profile.id} mode={profile.awardsMode} />
     </View>
   );
 }

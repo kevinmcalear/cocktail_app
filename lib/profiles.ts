@@ -104,6 +104,12 @@ export function profileLine(
   return p.tagline?.trim() || null;
 }
 
+/** You's line under your name (Prod-you): "Bartender at Caretaker's · since 2025", else "New York · drinks mostly stirred". */
+export function youLine({ line, since, city, taste }: { line: string | null; since: number | null; city: string | null; taste: string | null }): string | null {
+  if (line) return since ? `${line} · since ${since}` : line;
+  return [city, taste ? `drinks mostly ${taste.toLowerCase()}` : null].filter(Boolean).join(' · ') || null;
+}
+
 /** A new profile's line under the name (none) and photo (shown). */
 export const DEFAULT_IDENTITY = { tagline: '', headlinePositionId: null, showsPhoto: true } as const;
 

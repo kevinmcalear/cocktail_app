@@ -42,15 +42,15 @@ interface Row {
 }
 
 /**
- * Had / Bars / Originals on You (ppl-you), each row with its eye: the
+ * Had / Bars / Originals on /your-drinks (ppl-you), each row with its eye: the
  * section's mode and "4 of 7 shown" with Change, and a footnote with Choose
  * all at once. Without a public profile, the rows and a line saying only you
  * see them.
  */
-export function YouTabs({ profile, drinks, made, loading, failed }: { profile: MyProfile | null; drinks: HadDrink[]; made: Original[]; loading: boolean; failed: boolean }) {
+export function YouTabs({ initial, profile, drinks, made, loading, failed }: { initial?: ShareSection; profile: MyProfile | null; drinks: HadDrink[]; made: Original[]; loading: boolean; failed: boolean }) {
   const router = useRouter();
   const openSearch = useOpenSearch();
-  const [tab, setTab] = useState<ShareSection>('had');
+  const [tab, setTab] = useState<ShareSection>(initial ?? 'had');
   const [sort, setSort] = useState<HadSort>('score');
   const hadPicks = useMyHadPicks().data ?? {};
   const barPicks = useProfilePicks(profile?.id, 'bars').data ?? {};
@@ -145,7 +145,7 @@ export function YouTabs({ profile, drinks, made, loading, failed }: { profile: M
 
   return (
     <View style={styles.section}>
-      <Segmented accessibilityLabel="Your drinks" variant="ink" stretch options={TABS} value={tab} onChange={setTab} />
+      <Segmented accessibilityLabel="Your drinks" variant="capsule" options={TABS} value={tab} onChange={setTab} />
       {profile && rows.length ? <ModeLine mode={mode} shown={shownCount} total={rows.length} onChange={() => router.push('/settings/profile-sharing' as Href)} /> : null}
       {tab === 'had' && hasDates(drinks) ? (
         <View role="radiogroup" accessibilityLabel="Sort" style={styles.chips}>

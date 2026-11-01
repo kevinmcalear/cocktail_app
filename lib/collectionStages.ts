@@ -13,7 +13,6 @@ import type { MadeTally } from './madeIt';
 import type { AwayGroup } from './toMake';
 
 export type DrinkStage = 'had' | 'make' | 'made';
-export type BarStage = 'want' | 'been';
 
 /** What the shelf says about a drink: makeable, one or two bottles off (which), or further. */
 export interface ShelfMatch {
@@ -246,6 +245,30 @@ export interface WantBar {
   hours: { open: boolean; text: string } | null;
   why: string | null;
   everyone: number | null;
+}
+
+/** "Open until 1am", "Opens 5pm Thu", "Closed". */
+export function hoursText(s: { open: boolean; detail: string | null }): string {
+  if (s.open) return s.detail ? `Open ${s.detail}` : 'Open now';
+  return s.detail ? s.detail.charAt(0).toUpperCase() + s.detail.slice(1) : 'Closed';
+}
+
+/** "Little Rye, Pale Moth and 10 more": a list's first two names. */
+export function namesLine(names: readonly string[]): string | null {
+  if (!names.length) return null;
+  if (names.length <= 2) return names.join(' and ');
+  return `${names.slice(0, 2).join(', ')} and ${names.length - 2} more`;
+}
+
+/** A Loved row's line (Kept-you-bars): where you work, or what's new there, else its hours, then how far. */
+export function lovedLine({ work, news, hours, away }: { work: boolean; news: string | null; hours: { open: boolean; text: string } | null; away: string | null }): string | null {
+  if (work) return 'Where you work';
+  return [news ?? hours?.text, away].filter(Boolean).join(' · ') || null;
+}
+
+/** A Want to go row's line: how far, then why it's here while it's open (Open sits at the row's end), or when it opens. */
+export function wantLine(b: Pick<WantBar, 'away' | 'place' | 'hours' | 'why'>): string | null {
+  return [b.away ?? b.place, b.hours && !b.hours.open ? b.hours.text : b.why].filter(Boolean).join(' · ') || null;
 }
 
 /** How near a Want to go bar must be for the map to open on it (board home-collection-bars, step 3). */
