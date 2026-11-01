@@ -5,7 +5,7 @@ import Animated, { useAnimatedReaction, useAnimatedScrollHandler, useSharedValue
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { scheduleOnRN } from 'react-native-worklets';
 
-import { ExtendedFab, useDs, useGutter } from '@/components/ds';
+import { ExtendedFab, useDs, useGutter, type FabIcon } from '@/components/ds';
 import { useTabBarInset } from '@/components/nav/WebTabBar';
 import { layout, space } from '@/constants/tokens';
 import { useIsWideWeb } from '@/hooks/useIsWideWeb';
@@ -15,7 +15,7 @@ import { COLUMNS_FROM, DrinkColumns } from './DrinkColumns';
 import { phoneHeroHeight } from './DrinkHero';
 import { DockedDrawing, DockGlyph, DOCKED, DrawingSpace, DrinkSky, drawingRoom } from './DrawingHero';
 import { NATIVE_DOCK_LEFT, useItemHeader, type Controls } from './ItemHeader';
-import { MATERIAL_DOCK, MaterialBar, MaterialPage } from './MaterialBar';
+import { MATERIAL_DOCK, MaterialBar, MaterialPage, useItemTones } from './MaterialBar';
 import { backWidth, BarBacking, PageControls } from './PageControls';
 import { PhotoMirror } from './PhotoMirror';
 
@@ -38,7 +38,7 @@ interface ItemShellProps {
   body: (columns: boolean) => ReactNode;
   controls: Controls;
   /** Android's phone page: the one main action as the extended FAB. The body drops its button (`columns` stays inline). */
-  fab?: { label: string; accessibilityLabel: string; onPress: () => void } | null;
+  fab?: { label: string; accessibilityLabel: string; icon: FabIcon; onPress: () => void } | null;
   /** Sheets the page opens. */
   children?: ReactNode;
 }
@@ -128,7 +128,7 @@ export function ItemShell({ name, pane, photo, art, size, liquid, title, action,
         </>
       ) : (
         <>
-          <Animated.ScrollView onScroll={onScroll} scrollEventThrottle={16} contentContainerStyle={[styles.column, { paddingBottom: bottom + space.xxl }]}>
+          <Animated.ScrollView onScroll={onScroll} scrollEventThrottle={16} contentContainerStyle={[styles.column, { paddingBottom: bottom + space.xxl + (fab ? FAB_ROOM : 0) }]}>
             {photo ? <PhotoMirror url={photo.url} top={heroHeight - space.xxxl} /> : <DrinkSky liquid={liquid} />}
             {photo ? photo.hero(heroHeight, true) : <DrawingSpace top={top} size={size} />}
             <View style={{ paddingHorizontal: gutter, marginTop: photo ? -space.xxl : 0 }}>{body(false)}</View>
@@ -162,9 +162,12 @@ function PageFab({ scrollY, bottom, ...fab }: NonNullable<ItemShellProps['fab']>
       if (now !== was) scheduleOnRN(setOpen, now);
     },
   );
-  return <ExtendedFab {...fab} icon="checkmark" open={open} style={{ bottom: bottom + space.lg }} />;
+  const tones = useItemTones();
+  return <ExtendedFab {...fab} open={open} colors={tones ? { fill: tones.fab, text: tones.onFab } : undefined} style={{ bottom: bottom + space.lg }} />;
 }
 
+/** Room under the page's last line for the FAB: 56 and its margins. */
+const FAB_ROOM = 88;
 /** The phone page in a wider column from 768 to the split (desktop board). */
 const COLUMN = 680;
 

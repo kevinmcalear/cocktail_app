@@ -146,7 +146,8 @@ function Page({ item, canEdit, adminFix = false, onEdit, pane, openBatch, visito
     photoCredit,
   });
 
-  const fab = Platform.OS === 'android' && !!sections.made;
+  // Android's one main action is the extended FAB (And-who-guest, Miss-made).
+  const fab = Platform.OS !== 'android' ? null : sections.made ? ({ label: 'I made it', accessibilityLabel: `I made ${item.name}`, icon: 'checkmark', onPress: actions.made } as const) : sections.action ? ({ label: 'Rank it', accessibilityLabel: `Rank ${item.name} against others you've had`, icon: 'rank', onPress: actions.rank } as const) : null;
   const size = drawingSize(makesIt(viewer));
   const more = preview ? null : <DrinkMoreMenu itemId={item.id} name={item.name} canEdit={canEdit} adminFix={adminFix} onEdit={onEdit} />;
 
@@ -160,8 +161,8 @@ function Page({ item, canEdit, adminFix = false, onEdit, pane, openBatch, visito
       liquid={liquid}
       title={sections.title}
       action={sections.action}
-      body={(columns) => <DrinkBody sections={{ ...sections, action: columns ? null : sections.action, made: fab && !columns ? sections.madeCount : sections.made }} title={!columns} />}
-      fab={fab ? { label: 'I made it', accessibilityLabel: `I made ${item.name}`, onPress: actions.made } : null}
+      body={(columns) => <DrinkBody sections={{ ...sections, action: columns || fab ? null : sections.action, made: fab && !columns ? sections.madeCount : sections.made }} title={!columns} />}
+      fab={fab}
       controls={{
         save: bookmark ? { saved: toMake.saved, onToggle: toMake.toggle, label: ['Add to To make', 'Remove from To make'] } : null,
         onShare: share,

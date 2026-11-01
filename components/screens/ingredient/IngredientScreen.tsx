@@ -1,6 +1,6 @@
 import { useRouter } from 'expo-router';
 import { useState } from 'react';
-import { StyleSheet, View } from 'react-native';
+import { Platform, StyleSheet, View } from 'react-native';
 
 import { WhereItLives } from '@/components/backbar/WhereItLives';
 import { BackbarTheme, Body, BrandProvider, Button, IngredientDrawing } from '@/components/ds';
@@ -114,7 +114,10 @@ function IngredientPage({ ingredient, lines, drinks, bottles, pictures: batchPic
   const whose = isPrep ? (venueName ? `${venueName}'s recipe` : userId && ingredient.created_by === userId ? 'Your recipe' : null) : [ingredient.brand_maker, ingredient.origin].filter(Boolean).join(', ') || null;
   const eyebrow = isPrep ? ['House-made', prep?.actions?.[0]].filter(Boolean).join(' · ') : (ingredient.generic?.name ?? (ingredient.ingredient_role === 'product' ? 'Bottle' : 'Ingredient'));
   // One action at most: Log batch, for whoever can read the recipe.
-  const action = showRecipe ? <Button label={makes ? `Log batch · ${makes}` : 'Log batch'} size="lg" onPress={() => make()} /> : null;
+  const logBatch = makes ? `Log batch · ${makes}` : 'Log batch';
+  const action = showRecipe ? <Button label={logBatch} size="lg" onPress={() => make()} /> : null;
+  // On an Android phone it's the extended FAB (And-item-house-creator-*).
+  const fab = showRecipe && Platform.OS === 'android' ? ({ label: 'Log batch', accessibilityLabel: logBatch, icon: 'plus', onPress: () => make() } as const) : null;
 
   const title = <ItemTitle eyebrow={eyebrow} name={ingredient.name} credit={whose} />;
 
@@ -127,7 +130,7 @@ function IngredientPage({ ingredient, lines, drinks, bottles, pictures: batchPic
       {technical ? <TechnicalIngredientCard name={ingredient.name} /> : null}
       {showRecipe ? <PrepRecipe lines={lines} yieldAmount={prep?.yield_amount ?? null} yieldUnit={prep?.yield_unit ?? null} onSize={(f, m) => setSize({ factor: f, makes: m })} onFromWhatIHave={() => make('have')} checkedOn={sources?.filter((s) => s.field === 'recipe').map((s) => s.url)} /> : null}
       {isPrep && canViewDetails ? <PrepMethod steps={steps} takes={leadTimeLabel(prep?.lead_time_minutes ?? null, prep?.lead_time_note ?? null)} /> : null}
-      {columns ? null : action}
+      {columns || fab ? null : action}
       {isPrep || technical ? null : <WhereItLives itemId={ingredient.id} itemName={ingredient.name} readOnly={offerEdit} />}
       {technical ? null : <ForTheBar item={ingredient} houseMade={lines.length > 0} canEditItem={canEdit} whereRow={isPrep} editable={offerEdit} />}
       <AroundIt ingredient={ingredient} bottles={bottles} isPrep={isPrep} />
@@ -152,6 +155,7 @@ function IngredientPage({ ingredient, lines, drinks, bottles, pictures: batchPic
       title={title}
       action={action}
       body={body}
+      fab={fab}
       controls={{
         save: { saved: onShelf, onToggle: toggleShelf, label: ['Save to your bar', 'Take off your bar'] },
         onShare: () => void shareOrCopy(ingredientUrl(ingredient.id), ingredient.name),

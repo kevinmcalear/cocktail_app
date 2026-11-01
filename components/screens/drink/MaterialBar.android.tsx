@@ -99,6 +99,16 @@ export function useItemTones(): Tones {
   return useMemo(() => page?.tones ?? itemTones(null, ds.accentFill.fill, ds.scheme), [page?.tones, ds.accentFill.fill, ds.scheme]);
 }
 
+/** Material's segmented list: one tile per row, rounded at the group's ends (And-item-*-staff). */
+export function useTile() {
+  const { tile } = useItemTones();
+  return (index: number, count: number) => {
+    const top = index === 0 ? material.tile.end : material.tile.seam;
+    const bottom = index === count - 1 ? material.tile.end : material.tile.seam;
+    return { backgroundColor: tile, minHeight: material.tile.height, overflow: 'hidden' as const, borderTopLeftRadius: top, borderTopRightRadius: top, borderBottomLeftRadius: bottom, borderBottomRightRadius: bottom };
+  };
+}
+
 interface MaterialBarProps {
   name: string;
   /** The status bar's height. */

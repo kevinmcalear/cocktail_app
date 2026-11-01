@@ -16,4 +16,8 @@ export const material = {
   label: { fontSize: 14, lineHeight: 20, letterSpacing: 0.14 },
   /** The Makes menu's rows, Compose text. */
   menuText: { fontSize: 15 },
+  /** The FAB's label, Compose text. */
+  fabText: { fontSize: 16, fontWeight: '500' },
+  /** A list tile: 56 tall, its group's ends round and its seams nearly square. */
+  tile: { height: 56, end: 20, seam: 4 },
 } as const;

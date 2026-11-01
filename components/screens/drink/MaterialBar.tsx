@@ -17,6 +17,9 @@ export function MaterialBar(_: { name: string; top: number; photo: boolean; hero
 
 export const useItemTones = (): Tones | null => null;
 
+/** Android's list tiles (RowGroup): a tile's look by its place in the group. */
+export const useTile = (): ((index: number, count: number) => object) | null => null;
+
 /** The dock's end beside Android's Back. */
 export const MATERIAL_DOCK = { left: 0, top: 0 };
 

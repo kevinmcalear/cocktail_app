@@ -8,6 +8,8 @@ import { useGuestDrinkAllergens, useMyAllergies } from '@/hooks/useGuestAllergie
 import { withAlpha } from '@/lib/color';
 import { allergenLabel, allergyMatches, containsLine } from '@/lib/allergens';
 
+import { useItemTones } from './MaterialBar';
+
 /**
  * One line, first on the page (boards Decided-who-floor, -guest-hit).
  * The floor always sees the drink's allergens, "No allergens" too: they need
@@ -42,10 +44,13 @@ function GuestLine({ itemId, atBar }: { itemId: string; atBar: boolean }) {
 
 function Line({ text, aside, hit }: { text: string; aside?: string; hit?: boolean }) {
   const ds = useDs();
-  const ink = hit ? (ds.scheme === 'dark' ? STATUS.warning : ds.c.ink) : ds.c.ink;
+  // Android's tonal card (And-who-floor, -guest-hit): the page's tone, or the error colours on a match.
+  const tones = useItemTones();
+  const ink = hit ? (tones?.warn.ink ?? (ds.scheme === 'dark' ? STATUS.warning : ds.c.ink)) : ds.c.ink;
+  const fill = tones ? (hit ? tones.warn.fill : tones.card) : hit ? withAlpha(STATUS.danger, ds.scheme === 'dark' ? 0.22 : 0.12) : ds.c.raised;
   return (
-    <View role="note" style={[styles.line, { backgroundColor: hit ? withAlpha(STATUS.danger, ds.scheme === 'dark' ? 0.22 : 0.12) : ds.c.raised }]}>
-      <IconSymbol name="exclamationmark.triangle" size={18} color={ink} />
+    <View role="note" style={[styles.line, tones ? styles.card : null, { backgroundColor: fill }]}>
+      <IconSymbol name="exclamationmark.triangle" size={tones ? 20 : 18} color={ink} />
       <DsText variant="label" color={ink} style={styles.text}>
         {text}
       </DsText>
@@ -60,5 +65,6 @@ function Line({ text, aside, hit }: { text: string; aside?: string; hit?: boolea
 
 const styles = StyleSheet.create({
   line: { flexDirection: 'row', alignItems: 'center', gap: space.sm + 2, paddingVertical: space.md, paddingHorizontal: space.md + 2, borderRadius: radius.control + 2, borderCurve: 'continuous' },
+  card: { gap: space.md, paddingHorizontal: space.lg, borderRadius: space.lg },
   text: { flex: 1, fontWeight: '600' },
 });
