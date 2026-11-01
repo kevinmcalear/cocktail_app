@@ -7583,6 +7583,16 @@ export type Database = {
           sweet: number
         }[]
       }
+      follow_people: {
+        Args: never
+        Returns: {
+          avatar_url: string
+          display_name: string
+          follows_me: boolean
+          i_follow: boolean
+          user_id: string
+        }[]
+      }
       friends_ranks: {
         Args: { p_limit?: number }
         Returns: {

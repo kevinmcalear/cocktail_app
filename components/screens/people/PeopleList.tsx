@@ -2,7 +2,7 @@ import { StyleSheet, View } from 'react-native';
 
 import { Body, Button, Caption, Segmented } from '@/components/ds';
 import { space } from '@/constants/tokens';
-import { useFollowers, useFollowing, usePeopleByUser, type FollowPerson } from '@/hooks/useFollows';
+import { useFollowers, useFollowing, useFollowNames, usePeopleByUser, type FollowName, type FollowPerson } from '@/hooks/useFollows';
 import { useProfilePositions } from '@/hooks/useProfilePositions';
 import { useProfileDrinks } from '@/hooks/useRankings';
 import { isThisWeek, rankWhen, withArticle } from '@/lib/follows';
@@ -21,7 +21,8 @@ export const PEOPLE_NOTE = 'Only you see who you follow and who follows you.';
  * People (Kept-people): who you follow and who follows you, yours alone.
  * Following rows say what each person did lately; Followers rows say where
  * they are and how many they've ranked, with Follow back. Someone with no
- * public page can't be named here, so they're counted under the list.
+ * public page gets a row with their account's name and the follow button;
+ * anyone the read can't name (blocked, or the read failed) is counted.
  */
 export function PeopleList({ tab, onTab, onOpen, onFind, selectedId }: { tab: PeopleTab; onTab: (t: PeopleTab) => void; onOpen: (p: FollowPerson) => void; onFind: () => void; selectedId?: string | null }) {
   const following = useFollowing();
@@ -29,7 +30,15 @@ export function PeopleList({ tab, onTab, onOpen, onFind, selectedId }: { tab: Pe
   const ids = tab === 'following' ? following : followers;
   const people = usePeopleByUser(ids.data);
   const list = ids.data?.length ? (people.data ?? []) : [];
-  const unnamed = (ids.data?.length ?? 0) - list.length;
+  // Someone with no public page is named from their account (follow_people); without that read, counted.
+  const names = useFollowNames().data;
+  const paged = new Map(list.map((p) => [p.userId, p]));
+  const rows = (ids.data ?? []).flatMap((id): { id: string; page: FollowPerson | null; named?: FollowName }[] => {
+    const page = paged.get(id);
+    if (page) return [{ id, page }];
+    return names?.[id] ? [{ id, page: null, named: names[id] }] : [];
+  });
+  const unnamed = (ids.data?.length ?? 0) - rows.length;
   const failed = ids.error || people.error;
   const loading = ids.isLoading || (!!ids.data?.length && people.isLoading);
 
@@ -60,8 +69,11 @@ export function PeopleList({ tab, onTab, onOpen, onFind, selectedId }: { tab: Pe
         )
       ) : (
         <View role="list">
-          {list.map((p, i) =>
-            tab === 'following' ? (
+          {rows.map(({ id, page: p, named }, i) =>
+            !p ? (
+              // No public page: their name, "No public page", and the follow button (nothing to open).
+              <PersonRow key={id} name={named?.name ?? 'Someone'} avatarUrl={named?.avatarUrl ?? null} sub="No public page" first={i === 0} end={<FollowText userId={id} name={named?.name ?? 'them'} />} />
+            ) : tab === 'following' ? (
               <FollowingRow key={p.profileId} person={p} first={i === 0} selected={p.profileId === selectedId} onPress={() => onOpen(p)} />
             ) : (
               <FollowerRow key={p.profileId} person={p} first={i === 0} selected={p.profileId === selectedId} onPress={() => onOpen(p)} />

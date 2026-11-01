@@ -109,6 +109,7 @@ export function useSetFollow() {
     onSettled: () => {
       void queryClient.invalidateQueries({ queryKey: followsKey(userId) });
       void queryClient.invalidateQueries({ queryKey: ['friends-ranks'] });
+      void queryClient.invalidateQueries({ queryKey: ['follow-names'] });
     },
   });
 }
@@ -135,6 +136,30 @@ export function useFriendsRanks(limit = 5) {
         drinkFamily: r.drink_family,
         bestInFamily: r.best_in_family,
       }));
+    },
+  });
+}
+
+/** Someone linked to you by a follow, page or not: their name (null when they never gave one) and own picture. */
+export interface FollowName {
+  name: string | null;
+  avatarUrl: string | null;
+}
+
+/**
+ * Names and pictures of everyone you follow or who follows you, with a public
+ * page or not (follow_people): People names them instead of counting them.
+ * Never anything from an email; nobody blocked.
+ */
+export function useFollowNames() {
+  const userId = useUserId();
+  return useQuery({
+    queryKey: ['follow-names', userId],
+    enabled: !!userId,
+    queryFn: async (): Promise<Record<string, FollowName>> => {
+      const { data, error } = await supabase.rpc('follow_people');
+      if (error) throw error;
+      return Object.fromEntries((data ?? []).map((r) => [r.user_id, { name: r.display_name, avatarUrl: r.avatar_url }]));
     },
   });
 }

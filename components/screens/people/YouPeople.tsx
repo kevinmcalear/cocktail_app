@@ -5,7 +5,7 @@ import { Surface } from '@/components/ds';
 import { RowDivider, SettingsRow } from '@/components/screens/settings/SettingsParts';
 import { TonightLabel } from '@/components/screens/tonight/TonightParts';
 import { space } from '@/constants/tokens';
-import { useFollowers, useFollowing, usePeopleByUser } from '@/hooks/useFollows';
+import { useFollowers, useFollowing, useFollowNames } from '@/hooks/useFollows';
 import { namesLine } from '@/lib/follows';
 
 /**
@@ -16,10 +16,11 @@ export function YouPeople() {
   const router = useRouter();
   const following = useFollowing().data;
   const followers = useFollowers().data;
-  const names = usePeopleByUser(following?.slice(0, 2)).data ?? [];
+  // Names from follow_people cover people with no public page too.
+  const names = useFollowNames().data ?? {};
   const followingLine = following?.length
     ? namesLine(
-        names.map((p) => p.name),
+        following.flatMap((id) => names[id]?.name ?? []),
         following.length,
       )
     : 'Nobody yet';
