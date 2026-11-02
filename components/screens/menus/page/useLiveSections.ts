@@ -6,6 +6,7 @@ import { useListAsks, useListNotices, useOffTonight } from '@/hooks/useListAsks'
 import { useBarClock, useEndedRuns, type ListRow } from '@/hooks/useLivingList';
 import { afterTonight } from '@/lib/barHours';
 import { ROLE_LEVELS } from '@/lib/roles';
+import { useShifts } from '@/hooks/useRota';
 import { useMenuLibrary } from '@/hooks/useMenuMutations';
 import type { MenuDetail } from '@/types/menus';
 
@@ -50,6 +51,9 @@ export function useLiveSections({
   const told = useListNotices(on && !bartender ? menu.barId : null, today).data?.find((n) => n.menuId === menu.id);
   // Names for drinks that left: today's struck rows, and the one a swap replaced in Last change.
   const library = useMenuLibrary(menu.barId, on && ended.length > 0).data ?? [];
+  // Anyone on shift (now, or starting within two hours) pulls a drink for tonight, as the database lets them.
+  const [soon] = useState(() => [new Date(now).toISOString(), new Date(now + 2 * 3_600_000).toISOString()] as const);
+  const onShift = (useShifts(on && bartender ? menu.barId : null, soon[0], soon[1]).data ?? []).some((s) => s.user_id === userId);
   const clock = useBarClock(on && asks.some((a) => a.at) ? menu.barId : null).data;
   const first = (id: string | null) => members.find((m) => m.user_id === id)?.display_name?.split(' ')[0] ?? null;
   // ponytail: Drink Creators and up approve (as menuLens reads them); a list's own change level (menus.change_level) isn't read here.
@@ -68,6 +72,7 @@ export function useLiveSections({
       bartender,
       asks,
       offTonight: off.filter((o) => o.menuId === menu.id && Date.parse(o.until) > now),
+      pullsTonight: (may && !bartender) || onShift,
       closesAt: clock ? afterTonight(clock.hours, new Date(now), clock.timezone).toISOString() : null,
       living,
       userId,

@@ -7942,16 +7942,19 @@ export type Database = {
       get_menu_editions: {
         Args: { p_profile_id: string }
         Returns: {
+          cover_url: string
           drinks: Json
           end_month: number
           end_year: number
           from_venue: boolean
           id: string
           is_current: boolean
+          list_type: string
           month: number
           name: string
           source_url: string
           theme: string
+          written_at: string
           year: number
         }[]
       }
