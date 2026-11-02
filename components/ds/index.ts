@@ -38,5 +38,5 @@ export { MatchText, RowScore, scoreWords, type MatchTextProps, type RowScoreProp
 export { SheetScrollView } from './SheetScrollView';
 export { dragDismissesKeyboard } from './keyboardDrag';
 export { HidingHeadScroll } from './HidingHeadScroll';
-export { DrinkDrawing, DrinkDrawingFor, type DrawingSize, type DrinkDrawingProps } from './DrinkDrawing';
+export { DrinkDrawing, DrinkDrawingFor, isRowSize, type DrawingSize, type DrinkDrawingProps } from './DrinkDrawing';
 export { PencilState, type PencilStateKind, type PencilStateProps } from './PencilState';

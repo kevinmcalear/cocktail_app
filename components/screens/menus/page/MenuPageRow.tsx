@@ -66,7 +66,7 @@ export function MenuPageRow({ row, onPress, open, showActs, onAct, chevron, chil
     <View style={[styles.wrap, { borderTopColor: ds.c.lineStrong }]}>
       <PressableScale role="button" aria-expanded={open} accessibilityLabel={label} onPress={onPress} style={styles.row}>
         <View style={row.struck ? styles.struckPic : undefined}>
-          <MenuDrawing itemId={drink.id} size="row" ink={row.ink} fallback={{ imageUrl: drink.imageUrl, glass: drink.glass }} />
+          <MenuDrawing itemId={drink.id} size="menuRow" ink={row.ink} fallback={{ imageUrl: drink.imageUrl, glass: drink.glass }} />
         </View>
         <View style={styles.text}>
           <View style={styles.nameRow}>
