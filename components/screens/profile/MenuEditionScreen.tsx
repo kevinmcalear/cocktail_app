@@ -1,5 +1,5 @@
-import { useNavigation, useRouter, type Href } from 'expo-router';
-import { lazy, Suspense, type ComponentProps } from 'react';
+import { Redirect, useNavigation, useRouter, type Href } from 'expo-router';
+import { type ComponentProps } from 'react';
 import { Linking, StyleSheet, View } from 'react-native';
 
 import { Button, PressableScale, Tag } from '@/components/ds';
@@ -18,9 +18,6 @@ import { siteOrigin } from '@/lib/venueLink';
 import { SaveMenuButton } from '../kept/SaveMenuButton';
 import { GuestMenuPage } from '../menus/page/GuestMenuPage';
 import { loadFailure, PublicMissing } from '../published/PublicShell';
-
-// The team's menu page, with every layer they work from: only the bar's own staff get it, so guests on this page never load it.
-const MenuScreen = lazy(() => import('../menus/MenuScreen').then((m) => ({ default: m.MenuScreen })));
 
 /**
  * One menu a bar put out, on the menu page: a researched one, or the venue's
@@ -42,11 +39,8 @@ export function MenuEditionScreen({ profileRef, editionId }: { profileRef: strin
   if (!profile.data || !edition) return <PublicMissing loading={profile.isPending || (!!profile.data && editions.isPending)} what="menu" failed={loadFailure(profile, editions)} />;
 
   const bar = profile.data;
-  if (edition.from_venue && venues.some((v) => v.id === bar.bar_id)) return (
-      <Suspense fallback={<PublicMissing loading what="menu" />}>
-        <MenuScreen menuId={edition.id} />
-      </Suspense>
-    );
+  // The bar's own team go to the menu page they work from (/menus/[id]), with its layers.
+  if (edition.from_venue && venues.some((v) => v.id === bar.bar_id)) return <Redirect href={`/menus/${edition.id}` as Href} />;
 
   const readable = new Set((loaded.data ?? []).map((d) => d.id));
   const drinks = editionMenuDrinks(edition.drinks, loaded.data ?? []);
