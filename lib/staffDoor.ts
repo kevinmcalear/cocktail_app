@@ -49,6 +49,8 @@ export function doorLines(
     role: number | null;
     askedAt: string | null;
     now: number;
+    /** Their last ask was turned down: the door says so and lets them ask again (board Keep-phone join, step 6). */
+    declined?: boolean;
   },
 ): DoorLines {
   const signedIn = x.me ? `You’re signed in as ${x.me}.` : 'You’re signed in.';
@@ -91,7 +93,7 @@ export function doorLines(
     body: `${signedIn} Ask, and an Admin adds you. Then you’ll see tonight’s menu, the specs and the prep list.`,
     primary: 'Ask to join',
     secondary: 'Use a different account',
-    note: `You join as ${as}. ${who} can change that.`,
-    noteIcon: 'person.2',
+    note: x.declined ? 'The team said no last time. You can ask again.' : `You join as ${as}. ${who} can change that.`,
+    noteIcon: x.declined ? 'clock' : 'person.2',
   };
 }

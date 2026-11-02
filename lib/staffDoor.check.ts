@@ -49,3 +49,10 @@ assert.equal(doorLines('asked', { ...base, askedAt: '2026-11-01T19:59:30Z' }).no
 // Their link was replaced while they wait: the ask stands, its role isn't known.
 assert.equal(doorLines('asked', { ...base, role: null }).note, 'Asked 20 minutes ago.');
 assert.equal(doorLines('off', { ...base, admin: null, role: null }).title, 'This link is off');
+
+// Asked before and the team said no: the note says so, and they can ask again.
+const again = doorLines('ask', { ...base, declined: true });
+assert.equal(again.note, 'The team said no last time. You can ask again.');
+assert.equal(again.noteIcon, 'clock');
+assert.equal(again.primary, 'Ask to join');
+assert.equal(doorLines('join', { ...base, declined: true }).note, 'Ana can change your role, or take you off the team.', 'only the ask door says it');
