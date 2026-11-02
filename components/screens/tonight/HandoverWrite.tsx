@@ -58,6 +58,7 @@ export function HandoverWriteSheet({ h, barId, closeDate, night, houseMade, onLe
       accessibilityLabel="Handover"
       kind="flow"
       keyboard
+      style={styles.sheet}
       header={
         <View style={styles.head}>
           <GlassButton accessibilityLabel="Close" icon="xmark" onPress={onClose} />
@@ -116,7 +117,9 @@ export function HandoverWriteSheet({ h, barId, closeDate, night, houseMade, onLe
 }
 
 const styles = StyleSheet.create({
-  head: { flexDirection: 'row', alignItems: 'center', gap: space.md },
+  // The phone gutter on every platform: the Sheet itself brings no inset.
+  sheet: { paddingHorizontal: space.lg },
+  head: { flexDirection: 'row', alignItems: 'center', gap: space.md, paddingVertical: space.md },
   form: { gap: space.xl, paddingBottom: space.xxl },
   group: { gap: space.sm },
   chips: { flexDirection: 'row', flexWrap: 'wrap', gap: space.sm },
