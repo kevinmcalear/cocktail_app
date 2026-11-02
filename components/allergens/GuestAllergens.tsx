@@ -1,7 +1,7 @@
 import { useRouter } from 'expo-router';
 
 import { useGuestDrinkAllergens } from '@/hooks/useGuestAllergies';
-import { fromGuest } from '@/lib/allergens';
+import { fromGuest } from '@/lib/allergenWords';
 
 import { AllergenList, AllergensFailed } from './AllergenList';
 

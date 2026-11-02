@@ -6,7 +6,8 @@ import { radius, space, STATUS } from '@/constants/tokens';
 import { useDrinkAllergens } from '@/hooks/useAllergens';
 import { useGuestDrinkAllergens, useMyAllergies } from '@/hooks/useGuestAllergies';
 import { withAlpha } from '@/lib/color';
-import { allergyMatches, allergyWarning, containsLine } from '@/lib/allergens';
+import { allergyMatches } from '@/lib/allergens';
+import { allergyWarning, containsLine } from '@/lib/allergenWords';
 import { veganWord, withVegan } from '@/lib/dietary';
 
 import { useItemTones } from './MaterialBar';

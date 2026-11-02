@@ -7,7 +7,7 @@ import { iceLine } from '@/lib/drinkWizard';
 import { iceBuildLine, readIceBuild, saysMore } from '@/lib/iceBuild';
 import { drinkStrength, formatAbv, formatAmount, type DilutionDefaults, type Strength } from '@/lib/drinkMath';
 import type { SpecLine } from '@/lib/spec';
-import { garnishNames } from '@/lib/specView';
+import { garnishNames } from '@/lib/specLines';
 import type { DatabaseItem } from '@/types/types';
 
 import type { Fact } from './DrinkFacts';

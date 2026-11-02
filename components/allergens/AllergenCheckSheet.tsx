@@ -7,7 +7,8 @@ import { font, layout, radius, space, STATUS } from '@/constants/tokens';
 import { useAllergenCheck, useCheckDrinkAllergens, useLineChecks } from '@/hooks/useAllergenCheckSheet';
 import { useBarMembers } from '@/hooks/useBarDetail';
 import { withAlpha } from '@/lib/color';
-import { allergenLabel, dayLine, staleNote, type DrinkAllergens } from '@/lib/allergens';
+import { allergenLabel, type DrinkAllergens } from '@/lib/allergens';
+import { dayLine, staleNote } from '@/lib/allergenWords';
 import type { SpecLine } from '@/lib/spec';
 
 import { AllergenSection } from './AllergenSection';

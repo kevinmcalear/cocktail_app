@@ -5,7 +5,8 @@ import { DsText, SpecRow, useDs } from '@/components/ds';
 import { font, space } from '@/constants/tokens';
 import { useSpecAccess } from '@/hooks/useSpecAccess';
 import type { SpecLevels, SpecLine } from '@/lib/spec';
-import { garnishNames, goesOutLine, lineRole, MAKES, methodLine, scaledAmount, serveLine, specGroups, splitAmount, type Makes, type SpecLayout } from '@/lib/specView';
+import { garnishNames, goesOutLine, lineRole, methodLine, splitAmount, type SpecLayout } from '@/lib/specLines';
+import { MAKES, scaledAmount, serveLine, specGroups, type Makes } from '@/lib/specView';
 import { useSettingsStore } from '@/store/useSettingsStore';
 import { useSpecView } from '@/store/useSpecViewStore';
 

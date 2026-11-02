@@ -11,7 +11,7 @@ import type { SpecLock } from '@/hooks/useSpecLock';
 import { makesIt, namesOnly, onTeam, type DrinkViewer } from '@/lib/drinkViewer';
 import { pageShowsDescriptions } from '@/lib/pageVisibility';
 import type { SpecLevels, SpecLine } from '@/lib/spec';
-import { lineRole } from '@/lib/specView';
+import { lineRole } from '@/lib/specLines';
 import type { DatabaseItem } from '@/types/types';
 
 import { GuestAllergens } from '@/components/allergens/GuestAllergens';

@@ -1,7 +1,8 @@
 // Checks for lib/allergens.ts. Run: npm run test:unit
 import assert from 'node:assert/strict';
 
-import { ALLERGENS, allergenLabel, allergyMatches, checkedLine, containsLine, listAllergens, viaLine, type DrinkAllergens } from './allergens';
+import { ALLERGENS, allergenLabel, allergyMatches, listAllergens, type DrinkAllergens } from './allergens';
+import { checkedLine, containsLine, viaLine } from './allergenWords';
 
 assert.equal(ALLERGENS.length, 14, 'the 14 regulated allergens');
 assert.equal(new Set(ALLERGENS.map((a) => a.key)).size, 14);

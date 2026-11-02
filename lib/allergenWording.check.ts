@@ -1,4 +1,4 @@
-// Allergen wording is safety copy. Every helper in lib/allergens.ts that
+// Allergen wording is safety copy. Every helper in lib/allergenWords.ts that
 // writes words about a drink is swept over every shape of drink, and none may
 // say "no allergens", "none" or anything clean unless the bar has checked the
 // drink and every ingredient under it has a list (isClear). The menu page's
@@ -6,21 +6,8 @@
 // the case this guards. Run: npm run test:unit
 import assert from 'node:assert/strict';
 
-import {
-  allergenFooter,
-  allergenNames,
-  allergenRows,
-  allergyMatches,
-  allergyWarning,
-  containsLine,
-  fromGuest,
-  isClear,
-  myAllergiesLine,
-  prepAllergenNames,
-  staleNote,
-  type AllergenRead,
-  type DrinkAllergen,
-} from './allergens';
+import { allergyMatches, type DrinkAllergen } from './allergens';
+import { allergenFooter, allergenNames, allergenRows, allergyWarning, containsLine, fromGuest, isClear, myAllergiesLine, prepAllergenNames, staleNote, type AllergenRead } from './allergenWords';
 import { allergyCopy, allergyCopyFor, mergeAllergies } from './myAllergies';
 
 const CLEAN = /\bno allergens?\b|\bnone\b|\bsafe\b|\ballergen[- ]free\b|\bfree of\b/i;
