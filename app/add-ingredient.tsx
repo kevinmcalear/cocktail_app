@@ -1,7 +1,7 @@
 import { useLocalSearchParams, useRouter } from "expo-router";
 
 import { AddIngredientRoute } from "@/components/screens/addIngredient/AddIngredientRoute";
-import { IngredientDraftEditScreen } from "@/components/screens/ingredient/edit/IngredientEditScreen";
+import { IngredientDraftEditScreen } from "@/components/screens/drink/edit/EditRoutesLazy";
 
 /** A new ingredient is added with the wizard; a draft saved by the older editor (New > Drafts) opens on the ingredient page in editing. */
 export default function AddIngredientScreen() {

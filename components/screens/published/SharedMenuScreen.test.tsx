@@ -11,8 +11,8 @@ let mockMenu: SharedMenuPage | null = null;
 jest.mock('expo-router', () => ({ useRouter: () => ({ push: mockPush, replace: jest.fn(), back: jest.fn(), canGoBack: () => false }) }));
 jest.mock('@/ctx/AuthContext', () => jest.requireActual('@/jest.authMock').mockAuthContext(() => ({ user: null, loading: false })));
 jest.mock('@/hooks/useSharedMenu', () => ({ useSharedMenu: () => ({ data: mockMenu, isPending: false }) }));
-const mockToggle = jest.fn();
-jest.mock('./useCollectToggle', () => ({ useCollectToggle: () => ({ saved: false, toggle: mockToggle, sheet: null }) }));
+jest.mock('@/hooks/useItemSketch', () => ({ useItemSketch: () => ({ data: null }) }));
+jest.mock('@/lib/shareLink', () => ({ shareOrCopy: jest.fn() }));
 
 const drink = (id: string, name: string) => ({
   id,
@@ -50,26 +50,19 @@ beforeEach(() => {
 });
 
 describe('SharedMenuScreen', () => {
-  test('a drink that isn’t public keeps its place with no name and no link; public drinks open their page', async () => {
+  test('a drink kept private holds its place with no name and no link', async () => {
     await renderWithProviders(<SharedMenuScreen id="m1" />);
     expect(screen.getByText('House drink')).toBeTruthy();
-    expect(screen.queryByRole('link', { name: /House drink/ })).toBeNull();
-    await fireEvent.press(screen.getByRole('link', { name: /Porch Sour/ }));
+    expect(screen.queryByRole('button', { name: /House drink/ })).toBeNull();
+    await fireEvent.press(screen.getByRole('button', { name: /Porch Sour/ }));
     expect(mockPush).toHaveBeenCalledWith('/d/d1');
   });
 
-  test('each public drink has a Save to make it at home; a private one has none', async () => {
-    await renderWithProviders(<SharedMenuScreen id="m1" />);
-    expect(screen.queryByLabelText('Save House drink to make at home')).toBeNull();
-    await fireEvent.press(screen.getByLabelText('Save Porch Sour to make at home'));
-    expect(mockToggle).toHaveBeenCalled();
-    expect(screen.getByText('Menu made with Cocktail')).toBeTruthy();
-  });
-
-  test('names the night in full, and a guest signs in to report it', async () => {
+  test('says whose menu and which night, with no prices, and a guest signs in to report it', async () => {
     mockMenu = { ...mockMenu!, menuDate: '2026-10-31' };
     await renderWithProviders(<SharedMenuScreen id="m1" />);
-    expect(screen.getByText('Saturday 31 October · 2 drinks')).toBeTruthy();
+    expect(screen.getByText(/SAM.S MENU · SAT 31 OCT/)).toBeTruthy();
+    expect(screen.getByText(/you see what is in each drink, not the amounts/)).toBeTruthy();
     await fireEvent.press(screen.getByRole('link', { name: 'Report this menu' }));
     expect(mockPush).toHaveBeenCalledWith('/auth/login');
   });
@@ -82,9 +75,10 @@ describe('SharedMenuScreen', () => {
     expect(screen.queryByText('Porch Sour notes')).toBeNull();
   });
 
-  test('credits the owner, opening their profile', async () => {
+  test('no way back but home', async () => {
     await renderWithProviders(<SharedMenuScreen id="m1" />);
-    await fireEvent.press(screen.getByRole('link', { name: /Shared by Sam/ }));
-    expect(mockPush).toHaveBeenCalledWith('/p/sam');
+    expect(screen.queryByRole('button', { name: 'Back' })).toBeNull();
+    await fireEvent.press(screen.getByRole('link', { name: 'Cocktail' }));
+    expect(mockPush).toHaveBeenCalledWith('/');
   });
 });

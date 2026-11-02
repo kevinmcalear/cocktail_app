@@ -19,7 +19,7 @@ import { WeekNav } from '@/components/screens/week/WeekNav';
 import { RoundNav } from '@/components/screens/firstRound/RoundElsewhere';
 import { SetupNav } from '@/components/screens/venueSetup/SetupBanner';
 
-import { CreateSheet } from './CreateSheet';
+import { CreateSheet } from './CreateSheetLazy';
 import { useNavPlaces, type Place } from './navPlaces';
 import { MarksRow, NavHeading, NavRow, YouFooter } from './SideNavParts';
 import { VenueBrandProvider } from './VenueBrandProvider';
