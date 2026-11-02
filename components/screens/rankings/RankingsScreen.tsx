@@ -11,7 +11,7 @@ import { areaFor, useDrinkRankings, useMyRankList, type RankScope, type RankVenu
 import { countryName } from '@/lib/countries';
 import { MIN_RANKERS, plural } from '@/lib/ranking';
 
-import { ReportAction } from '../safety/ReportSheet';
+import { ReportAction } from '../safety/ReportAction';
 import { AreaRankList, ListNote, MyRankList } from './RankingLists';
 
 export interface RankingsScreenProps {

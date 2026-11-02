@@ -17,7 +17,7 @@ import { claimBar } from '../profile/ClaimProfile';
 
 import { useHideBarToggle } from '../kept/useHideBarToggle';
 
-import { ReportSheet } from './ReportSheet';
+import { ReportSheet } from './ReportSheetLazy';
 
 export const BLOCK_EFFECT = 'You won’t see each other’s drinks, rankings or profile. They aren’t told you blocked them.';
 

@@ -1,7 +1,7 @@
 /**
  * Android's Material 3 measures on the drink and item pages (boards And-page,
- * And-photo), in dp. Mostly Android's own files read these (the FAB's size is
- * also read where the FAB tells the toast its top), so they stay small.
+ * And-photo), in dp. Only Android's own files read these, so they stay out of
+ * the web's bundles.
  */
 export const material = {
   /** The top app bar, under the status bar. */
@@ -18,8 +18,6 @@ export const material = {
   menuText: { fontSize: 15 },
   /** The FAB's label, Compose text. */
   fabText: { fontSize: 16, fontWeight: '500' },
-  /** A FAB's height, plain or extended, and the plain one's width. */
-  fab: 56,
   /** A list tile: 56 tall, its group's ends round and its seams nearly square. */
   tile: { height: 56, end: 20, seam: 4 },
 } as const;

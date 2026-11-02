@@ -14,7 +14,7 @@ import { plural } from '@/lib/menus';
 import { ingredientsLine } from '@/lib/publicDrink';
 import type { MenuDrink } from '@/types/menus';
 
-import { ReportSheet } from '../safety/ReportSheet';
+import { ReportSheet } from '../safety/ReportSheetLazy';
 import { Kicker, PublicPage } from './PublicChrome';
 import { loadFailure, PublicMissing } from './PublicShell';
 import { SaveToMake } from './SaveToMake';
