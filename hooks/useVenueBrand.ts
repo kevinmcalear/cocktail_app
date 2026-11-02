@@ -3,6 +3,7 @@ import * as ImagePicker from 'expo-image-picker';
 
 import { extractColors, uploadLogo } from '@/hooks/useBarEditor';
 import { isUnknownFaceError } from '@/lib/brand';
+import { extractBrandColorsFromUri } from '@/lib/extractBrandColors';
 import { uriToBase64 } from '@/lib/imageBase64';
 import { invokeFunction } from '@/lib/invokeFunction';
 import { supabase } from '@/lib/supabase';
@@ -91,11 +92,14 @@ export async function pickBrandImage(barId: string, withColors: boolean): Promis
   if (result.canceled || !result.assets?.length) return null;
   const uri = result.assets[0].uri;
   const base64 = await uriToBase64(uri);
-  const [upload, found] = await Promise.all([
+  // One request: the upload answers with the logo's colours too. Read them on the device where it can (the web),
+  // and never let a colour read that fails lose the upload (it used to send the same photo twice, and either failing lost both).
+  const [upload, local] = await Promise.all([
     uploadLogo(barId, base64),
-    withColors ? extractColors(barId, uri, base64) : Promise.resolve(null),
+    withColors ? extractBrandColorsFromUri(uri).catch(() => null) : Promise.resolve(null),
   ]);
-  if (!upload.imageUrl) throw new Error('The image didn’t upload. Try again.');
+  if (!upload?.imageUrl) throw new Error('The image didn’t upload. Try again.');
+  const found = withColors ? (local ?? upload) : null;
   const colors = [found?.primaryColor, found?.secondaryColor].filter((c): c is string => !!c);
   return { url: upload.imageUrl, colors };
 }

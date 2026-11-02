@@ -1,6 +1,6 @@
 import { useState } from 'react';
 
-import { useLoadedFace } from '@/components/ds';
+import { useLoadedFace, useToast } from '@/components/ds';
 import { displayFaces } from '@/constants/tokens';
 import { pickBrandImage, removeLogoBackground, useSaveVenueBrand, type VenueBrandRow } from '@/hooks/useVenueBrand';
 import { brandProblems, faceFromDb, faceToSave, normalizeHex, usableGroundTint } from '@/lib/brand';
@@ -32,6 +32,11 @@ export function useBrandDraft(row: VenueBrandRow, canEdit: boolean) {
   const [busy, setBusy] = useState<'logo' | 'icon' | 'background' | null>(null);
   const [message, setMessage] = useState<string | null>(null);
   const save = useSaveVenueBrand(row.id);
+  // A failed upload or background removal is the drawn failed save (Sta-errors): an error toast that stays, with
+  // Try again. The toast draws over an open sheet (Logo, Home-screen icon), where a line on the page would be hidden.
+  const toast = useToast();
+  const failed = (title: string, e: unknown, retry: () => void) =>
+    toast.show({ title, detail: e instanceof Error ? e.message : 'Try again in a moment.', tone: 'error', action: { label: 'Try again', onPress: retry } });
 
   const problems = brandProblems({ accent: draft.accent, groundTint: draft.tint, shortName: draft.shortName });
   const patch = {
@@ -57,7 +62,7 @@ export function useBrandDraft(row: VenueBrandRow, canEdit: boolean) {
         setSuggested(picked.colors.map((c) => c.toUpperCase()));
       } else set('iconUrl')(picked.url);
     } catch (e) {
-      setMessage(e instanceof Error ? e.message : 'The image didn’t upload. Try again.');
+      failed(kind === 'logo' ? 'Couldn’t upload the logo' : 'Couldn’t upload the icon', e, () => void upload(kind));
     } finally {
       setBusy(null);
     }
@@ -75,7 +80,7 @@ export function useBrandDraft(row: VenueBrandRow, canEdit: boolean) {
         setMessage('Background removed. Check it on dark and light, then save.');
       }
     } catch (e) {
-      setMessage(e instanceof Error ? e.message : 'Couldn’t remove the background. Try again.');
+      failed('Couldn’t remove the background', e, () => void removeBackground());
     } finally {
       setBusy(null);
     }
