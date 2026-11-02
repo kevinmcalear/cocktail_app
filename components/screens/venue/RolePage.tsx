@@ -68,13 +68,13 @@ export function RolePage({ barId, roleKey }: { barId: string; roleKey: string })
         if (undo) toast.show({ title: toggleLine(name, capability, on), action: { label: 'Undo', onPress: () => void flip(r, capability, !on, false) } });
       },
       (e: unknown) => {
-        toast.show({ title: roleProblem(e) ?? 'Couldn’t change that.' });
+        toast.show({ title: roleProblem(e) ?? 'Couldn’t change that.', tone: 'error', action: { label: 'Try again', onPress: () => void flip(r, capability, on, undo) } });
       },
     );
   const resetRole = () =>
     reset.mutate(role.base_level, {
       onSuccess: (done) => toast.show({ title: done ? `${name} is back to built in` : `Nothing to reset: ${name} is already built in` }),
-      onError: (e) => toast.show({ title: roleProblem(e) ?? 'Couldn’t reset that.' }),
+      onError: (e) => toast.show({ title: roleProblem(e) ?? 'Couldn’t reset that.', tone: 'error', action: { label: 'Try again', onPress: () => resetRole() } }),
     });
   const deleteRole = async () => {
     const ok = await confirmAsync({ title: `Delete ${name}?`, message: 'Anyone with this role keeps its base level.', confirmText: 'Delete', destructive: true });

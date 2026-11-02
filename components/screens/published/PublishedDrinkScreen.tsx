@@ -9,6 +9,7 @@ import { useSignedIn } from '@/ctx/AuthContext';
 import { useCollection, type CollectedDrink } from '@/hooks/useCollection';
 import { usePublicDrinkMore } from '@/hooks/usePublicDrink';
 import { usePublishedDrink, type BarCredit } from '@/hooks/usePublished';
+import { noteRankedSignedOut } from '@/lib/analyticsDoor';
 import { hadOnLine } from '@/lib/collection';
 import type { ItemPicture } from '@/lib/itemImages';
 import { createdByLine, drinkKicker } from '@/lib/publicDrink';
@@ -65,7 +66,11 @@ function PublicActions({ id, name, barId, picture, releaseId }: { id: string; na
         variant="secondary"
         style={styles.action}
         accessibilityHint={`Ranks ${name} against others you've had`}
-        onPress={() => (signedIn ? ageGate.gate(() => setRanking(true)) : router.push('/auth/login'))}
+        onPress={() => {
+          if (signedIn) return ageGate.gate(() => setRanking(true));
+          noteRankedSignedOut();
+          router.push('/auth/login');
+        }}
       />
       {ranking ? <RankFlow item={{ id, name, bar_id: barId }} picture={picture} onClose={() => setRanking(false)} /> : null}
       {ageGate.sheet}

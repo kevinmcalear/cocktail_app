@@ -3,7 +3,7 @@
  * can be made in on its page. Pure; components/screens/ingredient uses it.
  */
 
-import { toQuantity } from '@/lib/quantity';
+import { formatQuantity, toQuantity } from '@/lib/quantity';
 import type { RecipeLine } from '@/lib/scale';
 
 /** "½ part", "1 part", "2 parts", "1½ parts". */
@@ -76,6 +76,35 @@ export function sizeOptions(yieldAmount: number | null, yieldUnit: string | null
     return out;
   }
   return [...out, { key: 'half', label: '½', factor: 0.5 }, { key: 'double', label: '2×', factor: 2 }];
+}
+
+export interface BatchSize {
+  key: string;
+  factor: number;
+  /** What the Makes pill and its menu say after "Makes": "1 L", "750 ml", "½ batch". */
+  makes: string;
+  /** What Log batch writes to batch_logs. */
+  amount: number;
+  unit: string;
+}
+
+/**
+ * The house-made page's Makes menu (board Item-page, "Makes 1 L ⌄"): the
+ * sizes, smallest first, each with what Log batch logs. With no yield on the
+ * recipe a batch is logged as batches ("1 batch"), so the day is kept even
+ * though the amount isn't known (on hand leaves it out: lib/stock withBatches).
+ */
+export function batchSizes(yieldAmount: number | null, yieldUnit: string | null): BatchSize[] {
+  const y = toQuantity(yieldAmount, yieldUnit);
+  return sizeOptions(yieldAmount, yieldUnit)
+    .map((s) => {
+      if (y && y.value > 0) {
+        const value = y.value * s.factor;
+        return { key: s.key, factor: s.factor, makes: formatQuantity({ ...y, value }), amount: Math.round(value * 100) / 100, unit: y.unit };
+      }
+      return { key: s.key, factor: s.factor, makes: s.factor === 0.5 ? '½ batch' : s.factor === 1 ? '1 batch' : `${s.factor} batches`, amount: s.factor, unit: 'batch' };
+    })
+    .sort((a, b) => a.factor - b.factor);
 }
 
 /** "About 75 drinks at 15 ml": how far one batch goes in its most common pour. */
