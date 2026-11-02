@@ -1,4 +1,4 @@
-// Garnish where only names show (20261206485000_garnish_for_names.sql): a
+// Garnish where only names show (20261206495000_garnish_for_names.sql): a
 // guest or the floor learns which line is the garnish, and still reads no
 // amount, unit or prep note. Whoever can't read a line's name learns nothing
 // about it. Runs through the real API against the local stack.

@@ -20,7 +20,7 @@ export interface PresentationRecipe {
   is_optional?: boolean | null;
   /** Floated on top (recipes.is_float). */
   is_float?: boolean | null;
-  /** A garnish, said even where the unit is masked (20261206485000; absent before it). */
+  /** A garnish, said even where the unit is masked (20261206495000; absent before it). */
   is_garnish?: boolean | null;
   display_ingredient_id?: string | null;
   ingredient_item_id?: string | null;

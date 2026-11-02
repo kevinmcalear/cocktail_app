@@ -109,7 +109,7 @@ describe('views that run with owner rights', () => {
         ]);
         // A floated line (20261130100000): is_float is only a yes or no on a line the reader can already see.
         await db.query("INSERT INTO public.recipes (recipe_item_id, ingredient_item_id, amount, unit, is_float) VALUES ($1, $2, 45, 'ml', true)", [drinks[mode], gin]);
-        // A garnish line (20261206485000): is_garnish is only a yes or no on a line the reader can already see.
+        // A garnish line (20261206495000): is_garnish is only a yes or no on a line the reader can already see.
         await db.query("INSERT INTO public.recipes (recipe_item_id, ingredient_item_id, amount, unit, sort_order) VALUES ($1, $2, 1, 'twist', 1)", [drinks[mode], gin]);
       }
       const look = async () => {
