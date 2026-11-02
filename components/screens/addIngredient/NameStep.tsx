@@ -1,4 +1,4 @@
-import * as Device from 'expo-device';
+import { isDevice } from '@/lib/realDevice';
 import { Alert, Platform, StyleSheet, View } from 'react-native';
 
 import { Body, Button, Caption, IngredientThumb, Surface } from '@/components/ds';
@@ -32,7 +32,7 @@ interface Props {
  */
 export function NameStep({ draft, set, ingredients, aliases, core, onDone, onUseExisting, resumed, onStartOver }: Props) {
   const read = useReadLabel();
-  const camera = Platform.OS !== 'web' && Device.isDevice;
+  const camera = Platform.OS !== 'web' && isDevice;
   const same = draft.name.trim() ? sameIngredient(draft.name, ingredients, aliases) : null;
   // "chartruse": Green Chartreuse, by a slip or a word spelled close (useNearIngredients).
   const near = useNearIngredients(draft.name, ingredients, { skip: !!same || !draft.name.trim(), first: same ? null : nearIngredient(draft.name, ingredients, aliases), limit: 1 })[0] ?? null;

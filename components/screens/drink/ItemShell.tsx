@@ -117,7 +117,7 @@ export function ItemShell({ name, pane, photo, art, size, liquid, title, action,
     <>
       <BarBacking height={barHeight} scrollY={scrollY} tuck={tuck} />
       {photo ? null : dock({ dockLeft: NATIVE_DOCK_LEFT, dockTop: (top + barHeight - DOCKED) / 2 })}
-      <IosBarName name={name} left={NATIVE_DOCK_LEFT + (photo ? 0 : DOCKED + space.sm)} right={space.lg + iosBarRoom(controls)} top={top} height={barHeight - top} scrollY={scrollY} tuck={tuck} />
+      <IosBarName name={name} left={NATIVE_DOCK_LEFT + (photo ? 0 : DOCKED + space.sm)} right={space.lg + iosBarRoom(controls)} top={top} height={barHeight - top} scrollY={scrollY} tuck={smallAt} />
     </>
   );
 

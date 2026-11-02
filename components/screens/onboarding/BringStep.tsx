@@ -1,4 +1,4 @@
-import * as Device from 'expo-device';
+import { isDevice } from '@/lib/realDevice';
 import { useState, type ReactNode } from 'react';
 import { ActivityIndicator, Platform, StyleSheet, View } from 'react-native';
 
@@ -82,7 +82,7 @@ export function BringStep({ barId, onFiles, onPaste, footer, onLater, examples =
   const web = Platform.OS === 'web';
   const phone = useBreakpoint() === 'phone';
   // The simulator has no camera, and launching it there crashes the app. A phone's browser opens its camera.
-  const camera = web ? phone : Device.isDevice;
+  const camera = web ? phone : isDevice;
   const from = async (get: () => Promise<ReadFile[]>) => {
     setProblem(null);
     try {

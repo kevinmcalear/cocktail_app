@@ -1,4 +1,4 @@
-import * as Device from 'expo-device';
+import { isDevice } from '@/lib/realDevice';
 import { useState } from 'react';
 import { Platform, StyleSheet, View } from 'react-native';
 
@@ -77,7 +77,7 @@ function ShotRow({ shot, busy, uploading, onPhoto }: { shot: ServiceShot; busy: 
   const ds = useDs();
   const web = Platform.OS === 'web';
   // The native picker throws, killing the app, where there's no camera (simulators).
-  const camera = !web && Device.isDevice;
+  const camera = !web && isDevice;
   // Only a desk has files to drag; phones and tablets pick or shoot.
   const canDrop = useBreakpoint() === 'desktop' && web;
   const [dragOver, setDragOver] = useState(false);
