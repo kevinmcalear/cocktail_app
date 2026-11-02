@@ -7,8 +7,8 @@ import type { DrinkSections } from './DrinkSections';
 /**
  * The drink page's blocks in one column, in the board's fixed order (canvas
  * GWBCX, Decided-who-*): the name, what a guest or the floor reads first, the
- * spec, I made it at the end of the recipe, the one action, notes, the bar's
- * own rows, its menus and the story.
+ * spec, its allergens, I made it at the end of the recipe, the one action,
+ * notes, the bar's own rows, its menus and the story.
  * Each block is already empty for anyone it isn't for.
  */
 export function DrinkBody({ sections: s, title = true }: { sections: DrinkSections; title?: boolean }) {
@@ -17,6 +17,7 @@ export function DrinkBody({ sections: s, title = true }: { sections: DrinkSectio
       {title ? s.title : null}
       {s.lead}
       {s.spec}
+      {s.allergens}
       {s.made}
       {s.action}
       {s.notes}

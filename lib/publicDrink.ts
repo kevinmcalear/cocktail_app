@@ -68,6 +68,8 @@ export function makerLabel(p: Pick<PublicProfile, 'kind' | 'handle' | 'display_n
 export interface IngredientName {
   name: string;
   brand: boolean;
+  /** A garnish (public_drink_ingredients from 20261206010000; absent before it). */
+  garnish?: boolean;
 }
 
 // ponytail: the place and proper words a generic's name keeps capitalised ("Islay Scotch"); grow it as names need, or store a reading name per ingredient.
