@@ -1,4 +1,4 @@
-import * as Device from 'expo-device';
+import { isDevice } from '@/lib/realDevice';
 import { Image } from 'expo-image';
 import { Alert, Platform, StyleSheet, View } from 'react-native';
 
@@ -34,7 +34,7 @@ export function NameStep({ kind, draft, set, onDone, onFilled, resumed, onStartO
   const ds = useDs();
   const found = useCatalogBottles(kind, draft.name).data ?? [];
   const read = useReadLabel();
-  const camera = Platform.OS !== 'web' && Device.isDevice;
+  const camera = Platform.OS !== 'web' && isDevice;
 
   const snap = async (get: () => Promise<BottlePhoto | null>) => {
     try {
