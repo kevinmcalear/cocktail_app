@@ -30,6 +30,8 @@ interface ForTheBarProps {
   whereRow: boolean;
   /** This person can open Edit, where the spot and the price change: the sheets only read. */
   editable: boolean;
+  /** Off where the page leads with the allergen line instead (a house-made's Behind the bar). */
+  allergensRow?: boolean;
 }
 
 type Open = 'allergens' | 'where' | 'cost' | 'publish' | null;
@@ -40,7 +42,7 @@ type Open = 'allergens' | 'where' | 'cost' | 'publish' | null;
  * where it lives, cost, who can see it). A row shows only when its section has
  * something for this person.
  */
-export function ForTheBar({ item, houseMade, canEditItem, whereRow, editable }: ForTheBarProps) {
+export function ForTheBar({ item, houseMade, canEditItem, whereRow, editable, allergensRow = true }: ForTheBarProps) {
   const [open, setOpen] = useState<Open>(null);
   const allergens = useAllergenValue(item.id, houseMade);
   const where = useWhereItLives(item.id);
@@ -49,7 +51,7 @@ export function ForTheBar({ item, houseMade, canEditItem, whereRow, editable }: 
   const close = () => setOpen(null);
 
   const rows: { key: Exclude<Open, null>; label: string; value: string; body: ReactNode; readOnly?: boolean }[] = [
-    { key: 'allergens', label: 'Allergens', value: allergens, body: <AllergenSection itemId={item.id} houseMade={houseMade} canEditItem={canEditItem} /> },
+    ...(allergensRow ? [{ key: 'allergens' as const, label: 'Allergens', value: allergens, body: <AllergenSection itemId={item.id} houseMade={houseMade} canEditItem={canEditItem} /> }] : []),
     ...(whereRow && where.shown
       ? [{ key: 'where' as const, label: 'Where it lives', value: !where.canRead ? 'Locked' : (where.lines[0] ?? 'No spot yet'), body: <WhereItLives itemId={item.id} itemName={item.name} bare onRecipe={houseMade ? close : undefined} readOnly={editable} /> }]
       : []),
@@ -57,6 +59,7 @@ export function ForTheBar({ item, houseMade, canEditItem, whereRow, editable }: 
     ...(publish ? [{ key: 'publish' as const, label: 'Who can see it', value: publish.value, readOnly: !publish.canChange, body: <PublishSection itemId={item.id} barId={item.bar_id} noun="ingredient" mode="read" /> }] : []),
   ];
   const shown = rows.find((r) => r.key === open);
+  if (!rows.length) return null;
 
   return (
     <View style={styles.section}>

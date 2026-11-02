@@ -25,6 +25,7 @@ export function IconSymbol({ name, size = 24, color, on, style }: { name: GlyphN
   );
 }
 
+
 /** The day's size in the glyph's 24-unit box: the board's 7.5, a touch bigger to read at tab size. */
 const DAY_UNITS = 8;
 
