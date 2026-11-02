@@ -3,7 +3,6 @@ import { decode } from 'base64-arraybuffer';
 import * as ImagePicker from 'expo-image-picker';
 import { useWindowDimensions } from 'react-native';
 
-import { canCropPhotos, cropPhoto } from '@/components/drink/drinkImages';
 import { menuCover } from '@/constants/tokens';
 import { useUserId } from '@/ctx/AuthContext';
 import { dropdownKeys } from '@/hooks/useDropdowns';
@@ -335,6 +334,8 @@ export function usePickMenuCover(menuId: string) {
       const photo = result.assets[0];
       // `aspect` holds on Android only: iOS's editor hands back a square, the web the whole photo. Cut those to the hero, centred.
       const rect = centredCrop(photo, frame);
+      // Loaded here, not at the top: every menu screen imports these hooks, and the photo tools would ride along on every page.
+      const { canCropPhotos, cropPhoto } = await import('@/components/drink/drinkImages');
       const uri = rect && canCropPhotos() ? await cropPhoto(photo.uri, rect, false) : photo.uri;
       return uploadMenuCover(uri, menuId);
     },
