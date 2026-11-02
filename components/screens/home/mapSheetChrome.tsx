@@ -1,4 +1,4 @@
-import { createContext, use, useState, type ReactNode } from 'react';
+import { useState } from 'react';
 import { StyleSheet, View, type LayoutChangeEvent, type ViewProps } from 'react-native';
 import Animated, { Extrapolation, interpolate, useAnimatedStyle, type SharedValue } from 'react-native-reanimated';
 
@@ -7,10 +7,10 @@ import { useTabBarTop } from '@/components/nav/WebTabBar';
 import { font, radius, space, type } from '@/constants/tokens';
 
 /** How far up (0 = the one line, 1 = the next stop) the line has gone and the page has come in. */
-export const CROSSFADE = 0.35;
+const CROSSFADE = 0.35;
 
 /** The sheet's ground: the surface, edge to edge, its top corners rounded, lifted off the map. */
-export function SheetGround({ style }: Pick<ViewProps, 'style'>) {
+function SheetGround({ style }: Pick<ViewProps, 'style'>) {
   const ds = useDs();
   return <View pointerEvents="none" style={[style, styles.ground, { backgroundColor: ds.c.surface, shadowColor: ds.c.ground }]} />;
 }
@@ -36,13 +36,6 @@ export function useMapSheetChrome() {
   };
 }
 
-/**
- * The search field over the sheet's line (SheetSearch, Q29). A context, not a
- * prop: the handle must keep one identity (a new one remounts it), and the
- * field's handlers change as the search does.
- */
-export const SheetSearchSlot = createContext<ReactNode>(null);
-
 interface SheetLineProps {
   animatedIndex: SharedValue<number>;
   /** None while a tapped bar's card leads: it has its own name. */
@@ -55,18 +48,16 @@ interface SheetLineProps {
 }
 
 /**
- * The sheet's handle: the grabber, the search field on phones' Discover, then one line, "Drinks in this area" and
+ * The sheet's handle: the grabber, then one line, "Drinks in this area" and
  * "229 bars", which gives way to the display title as the sheet rises. Being
  * the handle, the title stays put as the list under it scrolls.
  */
 export function SheetLine({ animatedIndex, title, count, onOpen, onMeasure }: SheetLineProps) {
-  const search = use(SheetSearchSlot);
   const line = useAnimatedStyle(() => ({ opacity: interpolate(animatedIndex.value, [0, CROSSFADE], [1, 0], Extrapolation.CLAMP) }));
   const big = useAnimatedStyle(() => ({ opacity: interpolate(animatedIndex.value, [0, CROSSFADE], [0, 1], Extrapolation.CLAMP) }));
   return (
     <View onLayout={(e) => onMeasure(Math.ceil(e.nativeEvent.layout.height))}>
       <Grabber />
-      {search ? <View style={styles.search}>{search}</View> : null}
       {title ? (
         <View style={styles.row}>
           {/* The line below says the same to a screen reader, and opens the sheet. */}
@@ -94,7 +85,7 @@ export function SheetLine({ animatedIndex, title, count, onOpen, onMeasure }: Sh
 }
 
 /** The sheet's grabber, the bar at its top. */
-export function Grabber() {
+function Grabber() {
   const ds = useDs();
   return (
     <View style={styles.grabber}>
@@ -103,16 +94,10 @@ export function Grabber() {
   );
 }
 
-/** The page under the handle: hidden at rest (it would sit behind the tab bar), in as the sheet rises. */
-export function usePageFade(animatedIndex: SharedValue<number>) {
-  return useAnimatedStyle(() => ({ opacity: interpolate(animatedIndex.value, [0, CROSSFADE], [0, 1], Extrapolation.CLAMP) }));
-}
-
 const styles = StyleSheet.create({
   box: { position: 'absolute', left: 0, right: 0, bottom: 0 },
   ground: { borderTopLeftRadius: radius.card, borderTopRightRadius: radius.card, shadowOffset: { width: 0, height: -6 }, shadowOpacity: 0.35, shadowRadius: 18, elevation: 12 },
   grabber: { alignItems: 'center', paddingTop: space.sm, paddingBottom: space.sm },
-  search: { paddingHorizontal: space.lg, paddingBottom: space.sm },
   indicator: { width: space.xxl, height: space.xs, borderRadius: radius.pill },
   // As tall as the display title, so the one line and the title trade places without the sheet moving.
   row: { height: type.title.lineHeight + space.sm },
