@@ -7,8 +7,8 @@ import { useDrinksSplit } from '@/hooks/useDrinksSplit';
 
 /**
  * Each tab's own stack. This folder is shared by the four tab groups, so a
- * page here (a drink, Prep, Study) opens on the stack of the tab it was
- * opened from, and Back returns to that tab. Each tab's first page lives in
+ * page here (a drink, a beer, a wine, an ingredient, Prep, Study) opens on the
+ * stack of the tab it was opened from, and Back returns to that tab. Each tab's first page lives in
  * its own folder ((1-tonight)/index, (2-drinks)/drinks, (3-discover)/discover,
  * (4-you)/you), so /drinks always switches to the Drinks tab rather than
  * pushing it on the tab you're in.
@@ -29,7 +29,8 @@ export const unstable_settings = {
   '4-you': { anchor: 'you' },
 };
 
-const ROOTS = [undefined, 'drinks', 'discover', 'you'];
+/** The first pages with Android's Add on them (Prod-and); Discover and You have none. */
+const FAB_PAGES = [undefined, 'drinks'];
 
 /** `segment`: which tab's stack this is ('(2-drinks)'), from expo-router, as the folder is shared. */
 export default function TabStack({ segment }: { segment?: string }) {
@@ -37,16 +38,16 @@ export default function TabStack({ segment }: { segment?: string }) {
   const segments = useSegments() as string[];
   const page = segments[2];
   const split = useDrinksSplit() && segment === '(2-drinks)';
-  // Beside the list: Drinks' first page (nothing picked yet) or a drink. Another page (Prep, Study) takes the width.
-  const listShown = segments[1] !== segment || page === 'drinks' || page === 'cocktail';
+  // Beside the list: Drinks' first page (nothing picked yet) or anything in it. Another page (Prep, Study) takes the width.
+  const listShown = segments[1] !== segment || ['drinks', 'cocktail', 'beer', 'wine', 'ingredient'].includes(page);
   return (
     <View style={styles.row}>
       {split ? <DrinksList shown={listShown} /> : null}
       <View style={styles.fill}>
         <Stack screenOptions={{ headerShown: false }} />
       </View>
-      {/* Android's Add floats on each tab's first page (AddButton.tsx); iOS and the web have the + in the header. */}
-      {Platform.OS === 'android' && ROOTS.includes(page) ? <AddFab /> : null}
+      {/* Android's Add floats on Tonight and Drinks (AddButton.tsx); iOS and the web have the + in the header. */}
+      {Platform.OS === 'android' && FAB_PAGES.includes(page) ? <AddFab /> : null}
     </View>
   );
 }

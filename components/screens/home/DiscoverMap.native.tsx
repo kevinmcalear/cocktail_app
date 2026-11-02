@@ -3,7 +3,7 @@ import { Fragment, useEffect, useMemo, useRef, useState } from 'react';
 import { Platform, StyleSheet, Text, View, type NativeSyntheticEvent } from 'react-native';
 
 import { LogoImage } from '@/components/ds';
-import { backbar, font, radius, type } from '@/constants/tokens';
+import { backbar, font, radius, space, type } from '@/constants/tokens';
 import { useLocationAccess } from '@/hooks/useLocationAccess';
 import { useMapStyle } from '@/hooks/useMapStyle';
 import { AREA_CLUSTER, areaLook, areasFrom, DOT_PAINT, dotsFilter, dotsOf, pinDescription, pinLook, pinsToDraw, viewportFrom, type MapArea, type MapView } from '@/lib/discoverMap';
@@ -157,6 +157,9 @@ export function DiscoverMap({ pins, selectedId, onSelect, onViewportChange, came
                 onSelect(pin.id);
               }}
             >
+              {/* The name beside a mark, and the same again unseen the other side, so the marker stays centred on the bar. */}
+              <View style={styles.marked}>
+              {look.beside ? <Text aria-hidden style={[styles.name, styles.unseen]}>{look.beside.name}</Text> : null}
               <View
                 role="button"
                 aria-label={pinDescription(pin)}
@@ -180,7 +183,9 @@ export function DiscoverMap({ pins, selectedId, onSelect, onViewportChange, came
                 {look.logo ? (
                   <LogoImage uri={look.logo} size={look.logoSize} radius={look.logoSize / 2} clearBackground={backbar.light.surface} />
                 ) : null}
-                {look.label ? <Text style={[styles.label, { color: look.color, fontSize: look.fontSize, ...font[look.font] }]}>{look.label}</Text> : null}
+                {look.label ? <Text style={[styles.label, { color: look.color, fontSize: look.fontSize, ...font[look.font] }, look.family ? { fontFamily: look.family, fontWeight: '400' } : null]}>{look.label}</Text> : null}
+              </View>
+              {look.beside ? <Text style={[styles.name, { color: look.beside.ink, textShadowColor: look.beside.halo }]}>{look.beside.name}</Text> : null}
               </View>
             </Marker>
           );
@@ -196,6 +201,9 @@ const styles = StyleSheet.create({
   fill: { flex: 1 },
   pin: { flexDirection: 'row', borderRadius: radius.pill, alignItems: 'center', justifyContent: 'center' },
   label: { ...font.figuresMedium, fontSize: type.caption.fontSize },
+  marked: { flexDirection: 'row', alignItems: 'center', gap: space.xs + 2 },
+  name: { ...font.semiBold, fontSize: type.caption.fontSize, textShadowRadius: space.xs },
+  unseen: { opacity: 0 },
   area: { height: areaLook.height, paddingHorizontal: areaLook.paddingHorizontal, borderRadius: radius.pill, borderWidth: 1, borderColor: areaLook.borderColor, backgroundColor: areaLook.backgroundColor, justifyContent: 'center' },
   areaLabel: { ...font.figuresMedium, fontSize: type.caption.fontSize, color: areaLook.color },
 });

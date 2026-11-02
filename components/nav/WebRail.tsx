@@ -28,7 +28,7 @@ function RailItem({ place, current, onPress }: { place: Place; current: boolean;
       style={[styles.item, current && { backgroundColor: withAlpha(ds.accentText, 0.16) }]}
     >
       <View style={styles.icon}>
-        <IconSymbol name={place.icon} size={20} color={color} on={current} />
+        <IconSymbol name={place.icon} size={20} color={color} />
       </View>
       <DsText variant="caption" color={color} numberOfLines={1} align="center" style={[styles.label, current && styles.strong]}>
         {place.label}

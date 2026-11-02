@@ -6,6 +6,8 @@ import type { Update } from '@/types/db';
 /** The venue's staff link and its settings (Kept-team, Invite). */
 export interface StaffLink {
   slug: string;
+  /** The link's secret (bar_staff_links): only the bar's Admins read it, so it's null for anyone else. */
+  token: string | null;
   on: boolean;
   /** The role new people join as. */
   role: number;
@@ -21,9 +23,14 @@ export function useStaffLink(barId: string | null | undefined) {
     queryKey: key(barId),
     enabled: !!barId,
     queryFn: async (): Promise<StaffLink | null> => {
-      const { data, error } = await supabase.from('bars').select('slug, staff_link_on, staff_link_role, staff_link_approve').eq('id', barId!).maybeSingle();
-      if (error) throw error;
-      return data ? { slug: data.slug, on: data.staff_link_on, role: data.staff_link_role, approve: data.staff_link_approve } : null;
+      const [bar, secret] = await Promise.all([
+        supabase.from('bars').select('slug, staff_link_on, staff_link_role, staff_link_approve').eq('id', barId!).maybeSingle(),
+        supabase.from('bar_staff_links').select('token').eq('bar_id', barId!).maybeSingle(),
+      ]);
+      if (bar.error) throw bar.error;
+      if (secret.error) throw secret.error;
+      const data = bar.data;
+      return data ? { slug: data.slug, token: secret.data?.token ?? null, on: data.staff_link_on, role: data.staff_link_role, approve: data.staff_link_approve } : null;
     },
   });
 }
@@ -58,6 +65,20 @@ export function useSaveStaffLink(barId: string | null | undefined) {
       if (patch.approve !== undefined) back.approve = before.approve;
       client.setQueryData<StaffLink | null>(key(barId), (now) => (now ? { ...now, ...back } : now));
     },
+    onSettled: () => client.invalidateQueries({ queryKey: key(barId) }),
+  });
+}
+
+/** New link: replaces the secret, so the old link stops working (new_staff_link, Admins only). */
+export function useNewStaffLink(barId: string | null | undefined) {
+  const client = useQueryClient();
+  return useMutation({
+    mutationFn: async () => {
+      const { data, error } = await supabase.rpc('new_staff_link', { p_bar_id: barId! });
+      if (error) throw new Error(error.code === '42501' ? 'Only an Admin can make a new staff link.' : 'Couldn’t make a new link. Check your connection and try again.');
+      return data;
+    },
+    onSuccess: (token) => client.setQueryData<StaffLink | null>(key(barId), (now) => (now ? { ...now, token } : now)),
     onSettled: () => client.invalidateQueries({ queryKey: key(barId) }),
   });
 }

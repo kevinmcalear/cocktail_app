@@ -13,19 +13,22 @@ import { venueStaffUrl } from '@/lib/venueLink';
 /**
  * The venue's staff link. Staff open it on their phone, sign in, and add the
  * venue's own app (its name and logo) to their home screen. Turning it off
- * stops anyone new using it; the team already on it carries on.
+ * stops anyone new using it; the team already on it carries on. The link
+ * carries a secret only the bar's Admins read, so only they see it here.
  */
 export function StaffLinkCard({ barId, slug, venueName, canEdit }: { barId: string; slug: string; venueName: string; canEdit: boolean }) {
   const ds = useDs();
   const link = useStaffLink(barId);
   const save = useSaveStaffLink(barId);
   const on = link.data?.on ?? true;
-  const url = venueStaffUrl(slug);
+  const token = link.data?.token;
+  const url = token ? venueStaffUrl(slug, token) : null;
   const web = Platform.OS === 'web';
 
   const share = async () => {
+    if (!url) return;
     try {
-      if ((await shareLink(url, `${venueName} staff app`, { copy: true })) === 'copied') Burnt.toast({ title: 'Link copied', preset: 'done', duration: 2 });
+      if ((await shareLink(url, `${venueName} staff app`, 'staff_link', { copy: true })) === 'copied') Burnt.toast({ title: 'Link copied', preset: 'done', duration: 2 });
     } catch {
       // The browser can refuse clipboard access; show the link to copy by hand.
       showMessage("Couldn't copy the link", url);
@@ -35,11 +38,11 @@ export function StaffLinkCard({ barId, slug, venueName, canEdit }: { barId: stri
   return (
     <SettingsSection
       title="Staff link"
-      note={on ? `Send this to your team. They sign in and add ${venueName} to their home screen, with your name and logo.` : 'Off, so nobody new can use it.'}
+      note={!on ? 'Off, so nobody new can use it.' : url ? `Send this to your team. They sign in and add ${venueName} to their home screen, with your name and logo.` : 'An Admin shares the link, from Team › Invite.'}
     >
       <SwitchRow label="Staff link" value={on} disabled={!canEdit || !link.data} onValueChange={(next) => save.mutate({ on: next })} />
-      {on ? <RowDivider /> : null}
-      {on ? <View style={styles.row}>
+      {on && url ? <RowDivider /> : null}
+      {on && url ? <View style={styles.row}>
         <View style={[styles.url, { backgroundColor: ds.c.raised }]}>
           <IconSymbol name="link" size={16} color={ds.c.muted} />
           <Body style={styles.fill} numberOfLines={1} selectable>

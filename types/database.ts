@@ -328,6 +328,32 @@ export type Database = {
           },
         ]
       }
+      bar_staff_links: {
+        Row: {
+          bar_id: string
+          made_at: string
+          token: string
+        }
+        Insert: {
+          bar_id: string
+          made_at?: string
+          token?: string
+        }
+        Update: {
+          bar_id?: string
+          made_at?: string
+          token?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "bar_staff_links_bar_id_fkey"
+            columns: ["bar_id"]
+            isOneToOne: true
+            referencedRelation: "bars"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       bar_zones: {
         Row: {
           bar_id: string
@@ -1722,6 +1748,59 @@ export type Database = {
             columns: ["model_id"]
             isOneToOne: false
             referencedRelation: "glass_models"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      handover_notes: {
+        Row: {
+          bar_id: string
+          broken: string | null
+          broken_photo: string | null
+          close_date: string
+          created_at: string
+          id: string
+          note: string | null
+          prep: string | null
+          ran_out: string[]
+          read_at: string | null
+          user_id: string
+          written_at: string | null
+        }
+        Insert: {
+          bar_id: string
+          broken?: string | null
+          broken_photo?: string | null
+          close_date: string
+          created_at?: string
+          id?: string
+          note?: string | null
+          prep?: string | null
+          ran_out?: string[]
+          read_at?: string | null
+          user_id?: string
+          written_at?: string | null
+        }
+        Update: {
+          bar_id?: string
+          broken?: string | null
+          broken_photo?: string | null
+          close_date?: string
+          created_at?: string
+          id?: string
+          note?: string | null
+          prep?: string | null
+          ran_out?: string[]
+          read_at?: string | null
+          user_id?: string
+          written_at?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "handover_notes_bar_id_fkey"
+            columns: ["bar_id"]
+            isOneToOne: false
+            referencedRelation: "bars"
             referencedColumns: ["id"]
           },
         ]
@@ -7257,6 +7336,9 @@ export type Database = {
           short_name: string | null
           show_spec_changes: boolean
           slug: string
+          staff_link_approve: boolean
+          staff_link_on: boolean
+          staff_link_role: number
           target_gp: number | null
           tax_rate: number
           timezone: string | null
@@ -7594,7 +7676,7 @@ export type Database = {
         }[]
       }
       friends_ranks: {
-        Args: { p_limit?: number }
+        Args: { p_item_id?: string; p_limit?: number }
         Returns: {
           avatar_url: string
           best_in_family: boolean
@@ -8105,6 +8187,7 @@ export type Database = {
         }[]
       }
       near_score: { Args: { p_name: string; p_query: string }; Returns: number }
+      new_staff_link: { Args: { p_bar_id: string }; Returns: string }
       next_pair_notes: {
         Args: { p_limit?: number }
         Returns: {
@@ -8724,6 +8807,9 @@ export type Database = {
           short_name: string | null
           show_spec_changes: boolean
           slug: string
+          staff_link_approve: boolean
+          staff_link_on: boolean
+          staff_link_role: number
           target_gp: number | null
           tax_rate: number
           timezone: string | null

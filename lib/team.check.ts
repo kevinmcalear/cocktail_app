@@ -1,7 +1,7 @@
 import assert from 'node:assert/strict';
 
 import {
-  askedAgo, canManageTeam, canOpenMember, canSeeTeam, INVITE_ROLES, inviteButtonLabel, invitedDay, nextShiftLabel, personName, sinceLabel, TEAM_MANAGE, TEAM_SEE, teamGroup, teamLine, teamSections,
+  askedAgo, canManageTeam, canOpenMember, canSeeTeam, INVITE_ROLES, invitedDay, inviteRoleOptions, looksLikeEmail, nextShiftLabel, personName, sinceLabel, TEAM_MANAGE, TEAM_SEE, teamGroup, teamLine, teamSections,
 } from './team';
 
 const NOW = Date.parse('2026-11-01T12:00:00Z');
@@ -18,8 +18,28 @@ assert.equal(personName({ display_name: '', email: 'ada@bar.test' }), 'ada');
 assert.equal(personName({ display_name: null, email: null }), 'Team member');
 
 assert.deepEqual(INVITE_ROLES.map((r) => r.level), [20, 30, 35, 40]);
-assert.equal(inviteButtonLabel('  Sam Okafor '), 'Email Sam an invite');
-assert.equal(inviteButtonLabel(''), 'Email an invite');
+
+// --- the As list on Invite > By email ---
+assert.equal(looksLikeEmail(' sam@bar.test '), true);
+assert.equal(looksLikeEmail('Sam Okafor'), false);
+assert.equal(looksLikeEmail('sam@'), false);
+const matrix = [
+  { role_id: null, name: null, base_level: 30, ends_at: null },
+  { role_id: 'tk', name: 'Takeover bartender', base_level: 30, ends_at: null },
+  { role_id: 'old', name: 'Last year', base_level: 30, ends_at: '2026-01-01T00:00:00Z' },
+  { role_id: 'soon', name: 'Guest shift', base_level: 20, ends_at: '2026-12-05T12:00:00Z' },
+  { role_id: 'hd', name: 'Head', base_level: 40, ends_at: null },
+  { role_id: 'cr', name: 'Creator plus', base_level: 35, ends_at: null },
+];
+const asList = (ceiling: number) => inviteRoleOptions(ceiling, matrix, NOW).map((r) => r.label);
+assert.deepEqual(asList(40), ['Bartender', 'Drink Creator', 'Employee', 'Creator plus', 'Guest shift', 'Takeover bartender', 'Admin']);
+// Below Admin: no Admin, no Admin-level role; below Drink Creator, no role above the inviter.
+assert.deepEqual(asList(35), ['Bartender', 'Drink Creator', 'Employee', 'Creator plus', 'Guest shift', 'Takeover bartender']);
+assert.deepEqual(asList(30), ['Bartender', 'Employee', 'Guest shift', 'Takeover bartender']);
+assert.deepEqual(inviteRoleOptions(40, undefined, NOW).map((r) => r.label), ['Bartender', 'Drink Creator', 'Employee', 'Admin']);
+const takeover = inviteRoleOptions(40, matrix, NOW).find((r) => r.roleId === 'tk')!;
+assert.equal(takeover.level, 30);
+assert.equal(inviteRoleOptions(40, matrix, NOW).find((r) => r.roleId === 'soon')!.detail, 'Sees menus, talking points and where things live, until 5 Dec');
 
 // --- the team in its groups (Kept-team) ---
 const team = [

@@ -34,9 +34,23 @@ export function factTiles(t: Pick<Technique, 'time' | 'base' | 'parts' | 'keeps'
   const tiles: FactTile[] = [{ value: t.time, caption: 'start to finish' }];
   const ratio = ratioTile(t);
   if (ratio) tiles.push(ratio);
-  if (typeof t.keepsHours === 'number' && t.keepsHours > 0) tiles.push({ value: keepLabel(t.keepsHours), caption: t.storage ? KEPT[t.storage] : 'keeps' });
-  else if (t.keeps) tiles.push({ value: t.keeps, caption: 'keeps' });
+  const keep = keepTile(t);
+  if (keep) tiles.push(keep);
   return tiles;
+}
+
+type Keeps = Pick<Technique, 'keeps' | 'keepsHours' | 'storage'>;
+
+function keepTile(t: Keeps): FactTile | null {
+  if (typeof t.keepsHours === 'number' && t.keepsHours > 0) return { value: keepLabel(t.keepsHours), caption: t.storage ? KEPT[t.storage] : 'keeps' };
+  return t.keeps ? { value: t.keeps, caption: 'keeps' } : null;
+}
+
+/** How long it keeps as one line, for a row labelled Keeps: "2 weeks, cold, to be safe". */
+export function keepLine(t: Keeps): string | null {
+  const tile = keepTile(t);
+  if (!tile) return null;
+  return tile.caption === 'keeps' ? tile.value : `${tile.value}, ${tile.caption}`;
 }
 
 /** "Dry shake, siphon, lecithin air": a group's first few techniques, the rest lower case. */
