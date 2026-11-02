@@ -60,6 +60,8 @@ export interface DrinkDrawingProps {
   pour?: boolean;
   /** Read out ("Drawing of a Negroni on the rocks"); left out, the drawing is decorative. */
   label?: string;
+  /** A row or tile without its square of paper, for drawings set together on a sky (a menu's band). */
+  bare?: boolean;
 }
 
 /**
@@ -69,7 +71,7 @@ export interface DrinkDrawingProps {
  * (chalk pencil, the drink lit, a soft glow of the drink behind it). The
  * colour pours in from the bottom of the glass when it appears.
  */
-export function DrinkDrawing({ inputs, seed, size, staff, pour = size !== 'row', label }: DrinkDrawingProps) {
+export function DrinkDrawing({ inputs, seed, size, staff, pour = size !== 'row', label, bare }: DrinkDrawingProps) {
   const ds = useDs();
   const night = ds.scheme === 'dark';
   const px = size === 'hero' ? (staff ? drawing.heroStaff : drawing.hero) : drawing[size];
@@ -82,7 +84,7 @@ export function DrinkDrawing({ inputs, seed, size, staff, pour = size !== 'row',
     styles.frame,
     { width: px, height: px },
     // A row or tile sits on its own square of paper by day; a hero sits on the page (its sky).
-    !night && size !== 'hero' ? { backgroundColor: ds.c.paper, borderRadius: size === 'row' ? radius.control : radius.card } : null,
+    !night && !bare && size !== 'hero' ? { backgroundColor: ds.c.paper, borderRadius: size === 'row' ? radius.control : radius.card } : null,
   ];
   const picture = (source: string) => <Image source={{ uri: source }} style={[styles.square, { width: px, height: px }]} contentFit="contain" cachePolicy="memory" accessible={false} />;
   return (

@@ -1,5 +1,5 @@
 import { useLocalSearchParams, useRouter } from 'expo-router';
-import { Platform, ScrollView, Share, StyleSheet, View } from 'react-native';
+import { Platform, ScrollView, StyleSheet, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import { BackbarTheme, Body, BrandProvider, Caption, DsText, GlassButton, LogoImage, PressableScale, useDs, useGutter } from '@/components/ds';
@@ -10,6 +10,7 @@ import { withAlpha } from '@/lib/color';
 import { useActiveVenue, type Venue } from '@/hooks/useActiveVenue';
 import { useMenu } from '@/hooks/useMenus';
 import { cardWhen, menuAsText } from '@/lib/menus';
+import { shareText } from '@/lib/shareLink';
 import type { MenuSectionDetail } from '@/types/menus';
 
 import { MenuSections, type CardPictures } from './MenuSections';
@@ -126,7 +127,7 @@ function CardBody({ menuId, venue }: { menuId: string; venue: Venue | null }) {
     if (!menu) return;
     if (web) window.print();
     // ponytail: on a phone it shares the menu as text; the printed card (web) carries the QR codes.
-    else void Share.share({ message: menuAsText(menu, venue?.name) });
+    else void shareText(menuAsText(menu, venue?.name), menu.name, 'menu');
   };
   const dark = ds.scheme === 'dark';
   const back = () => (router.canGoBack() ? router.back() : router.replace(`/menus/${menuId}`));

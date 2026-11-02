@@ -1,6 +1,6 @@
 import { LinearGradient } from 'expo-linear-gradient';
 import { useState, type ReactNode } from 'react';
-import { StyleSheet, View, type LayoutChangeEvent } from 'react-native';
+import { Platform, StyleSheet, View, type LayoutChangeEvent } from 'react-native';
 import Animated, { useAnimatedScrollHandler, useAnimatedStyle, useReducedMotion, useSharedValue, withSpring, withTiming } from 'react-native-reanimated';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { scheduleOnRN } from 'react-native-worklets';
@@ -31,13 +31,16 @@ interface DiscoverHeaderProps {
  * Discover's phone header: the logo, the search pill carrying the place
  * ("Search | This area"), the Filters button with its count, and the +, on one
  * row (discover-options-proposal, approved 24 Oct). The pill is the page's
- * identity, so "Discover" is a heading only screen readers hear.
+ * identity, so "Discover" is a heading only screen readers hear. Android has
+ * the search bar on top (ScreenHeader), so a search only shows here once
+ * there is one to hold.
  */
 export function DiscoverHeader({ query, onSearch, onClear, place, filters, onFilters, bar, searchBelow }: DiscoverHeaderProps) {
+  const placeOnly = searchBelow || (Platform.OS === 'android' && !query.trim());
   const pill = (
     <View style={styles.middle}>
-      <View style={[styles.flex, searchBelow && !bar ? styles.start : null]}>
-        {bar ? <BackPill name={bar.name} onBack={bar.onBack} onOpen={onSearch} /> : searchBelow ? place : <SearchPill compact query={query} placeholder="Search" label="Search bars and drinks" onOpen={onSearch} onClear={onClear} place={place} />}
+      <View style={[styles.flex, placeOnly && !bar ? styles.start : null]}>
+        {bar ? <BackPill name={bar.name} onBack={bar.onBack} onOpen={onSearch} /> : placeOnly ? place : <SearchPill compact query={query} placeholder="Search" label="Search bars and drinks" onOpen={onSearch} onClear={onClear} place={place} />}
       </View>
       <FiltersButton filters={filters} onPress={onFilters} />
     </View>
