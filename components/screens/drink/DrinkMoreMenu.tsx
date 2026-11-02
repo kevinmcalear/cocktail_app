@@ -1,13 +1,14 @@
 import { useRef, useState } from 'react';
 import { Platform, ScrollView, StyleSheet, View } from 'react-native';
 
-import { Body, GlassButton, PressableScale, Sheet, Title, useDs, useSheetClose, type IconName } from '@/components/ds';
+import { Body, PressableScale, Sheet, Title, useDs, useSheetClose, type IconName } from '@/components/ds';
 import { IconSymbol } from '@/components/ui/icon-symbol';
 import { layout, space, STATUS } from '@/constants/tokens';
 import { useSignedIn } from '@/ctx/AuthContext';
 import { readableAccent } from '@/lib/color';
 
 import { ReportSheet } from '../safety/ReportSheet';
+import { BarButton } from './MaterialBar';
 
 interface DrinkMoreMenuProps {
   itemId: string;
@@ -44,7 +45,7 @@ export function DrinkMoreMenu({ itemId, name, canEdit, adminFix = false, onEdit,
 
   return (
     <>
-      <GlassButton accessibilityLabel={`More: ${parts}`} icon="ellipsis" scheme={scheme} onPress={() => setOpen(true)} />
+      <BarButton accessibilityLabel={`More: ${parts}`} icon="ellipsis" scheme={scheme} onPress={() => setOpen(true)} />
       <Sheet
         visible={open}
         onClose={() => {
