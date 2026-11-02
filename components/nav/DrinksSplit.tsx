@@ -1,11 +1,10 @@
 import { StyleSheet, View } from 'react-native';
 
-import { Body, BreakpointOverride, useDs } from '@/components/ds';
-import { layout, space } from '@/constants/tokens';
+import { BreakpointOverride, useDs } from '@/components/ds';
+import { layout } from '@/constants/tokens';
 
 import { MountOnFocus } from './MountOnFocus';
 import { LibraryBeside } from './RootLazy';
-import { ScreenHeader } from './ScreenHeader';
 
 /**
  * Drinks' list on a desktop (hooks/useDrinksSplit.ts): a column beside the
@@ -27,22 +26,7 @@ export function DrinksList({ shown }: { shown: boolean }) {
   );
 }
 
-/** Drinks' first page on a desktop: the list is beside it, so it waits for a pick, with Add at its top right. */
-export function NoDrinkPicked() {
-  const ds = useDs();
-  return (
-    <View style={[styles.fill, { backgroundColor: ds.c.ground }]}>
-      <ScreenHeader />
-      <Body tone="muted" style={styles.empty}>
-        Pick a drink to see it here.
-      </Body>
-    </View>
-  );
-}
-
 const styles = StyleSheet.create({
   column: { width: layout.listPaneDesk, flexShrink: 0, borderRightWidth: StyleSheet.hairlineWidth },
   hidden: { display: 'none' },
-  fill: { flex: 1 },
-  empty: { padding: space.xxl },
 });

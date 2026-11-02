@@ -1,7 +1,12 @@
 import assert from 'node:assert/strict';
 
-import { factTiles, keepLabel, membersLine, ratioTile, swapLine } from './facts';
+import { factTiles, keepLabel, keepLine, membersLine, ratioTile, swapLine } from './facts';
 import { techniqueById } from './index';
+
+// The Keeps row: how long and how, never the word keeps again.
+assert.equal(keepLine({ keepsHours: 14 * 24, storage: undefined }), '2 weeks');
+assert.equal(keepLine({ keeps: '2 weeks cold, to be safe.' }), '2 weeks cold, to be safe.');
+assert.equal(keepLine({}), null);
 
 assert.equal(keepLabel(14 * 24), '2 weeks');
 assert.equal(keepLabel(24 * 7), '1 week');

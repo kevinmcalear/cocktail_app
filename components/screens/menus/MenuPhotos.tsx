@@ -1,4 +1,4 @@
-import * as Device from 'expo-device';
+import * as Device from '@/lib/realDevice';
 import { Image } from 'expo-image';
 import { useRef, type ComponentRef } from 'react';
 import { Alert, Platform, StyleSheet, View } from 'react-native';

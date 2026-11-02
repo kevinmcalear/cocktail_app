@@ -36,6 +36,8 @@ assert.deepEqual(opts(['profile-claims', 'pending']), { staleTime: 30_000, gcTim
 assert.deepEqual(opts(['discover-list', 'x']), { staleTime: 5 * MIN, gcTime: KEEP, focus: false });
 assert.deepEqual(opts(['discover-rankings', 'x']), { staleTime: 5 * MIN, gcTime: GC_TIME, focus: false });
 assert.deepEqual(opts(['bar-cities']), { staleTime: 60 * MIN, gcTime: KEEP, focus: false });
+// Bars you love: saved in a file, so offline Discover lists them; kept as long.
+assert.equal(opts(['loved-bars', 'u1']).gcTime, KEEP);
 
 // Every saved prefix is kept as long as the saved cache.
 for (const key of PERSISTED_KEYS) assert.equal(opts([...key, 'x']).gcTime, KEEP, key.join('/'));

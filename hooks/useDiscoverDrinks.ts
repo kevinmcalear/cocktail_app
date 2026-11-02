@@ -1,4 +1,4 @@
-import { keepPreviousData, useInfiniteQuery, useQueries, useQuery, useQueryClient, type QueryClient } from '@tanstack/react-query';
+import { keepPreviousData, useInfiniteQuery, useQuery } from '@tanstack/react-query';
 import { useMemo } from 'react';
 
 import { useAuth } from '@/ctx/AuthContext';
@@ -7,8 +7,6 @@ import { useTrackSearch } from '@/hooks/useTrackSearch';
 import { foldName } from '@/lib/discover';
 import { useMyHadIds } from '@/hooks/useRankings';
 import { closedBars, cursorAfter, kindParams, toDiscoverBar, toDiscoverDrink, withoutHad, type BarRow, type DiscoverBar, type DiscoverDrink, type DrinkFilter, type DrinkRow } from '@/lib/discoverDrinks';
-import type { Viewport } from '@/lib/discoverMap';
-import { inBox, parentTiles, tileBox, tilesFor, type Tile } from '@/lib/discoverTiles';
 import { areaParams, roundCoord, type Area } from '@/lib/nearMe';
 import { allRowsById } from '@/lib/allRows';
 import { supabase } from '@/lib/supabase';
@@ -16,7 +14,7 @@ import { supabase } from '@/lib/supabase';
 /**
  * Discover's data, a page at a time (supabase/migrations/20261009700000_discover_index.sql):
  * the matching drinks in an area best first (discover_list), the bars in an
- * area (discover_bars), and the bars in the map's view a tile at a time. The
+ * area (discover_bars). The
  * server matches, ranks and counts; the phone gets what it shows. Small, so
  * all of it is saved between launches: Discover opens on the last results
  * and refreshes behind them. Signed-in only, like every shared drink.
@@ -141,54 +139,6 @@ export function useDiscoverBars(area: Area, filter: { kinds?: readonly string[];
     placeholderData: keepPreviousData,
     queryFn: ({ signal }) => readBars({ ...where, ...kinds, p_query: search || null, ...(filter.onNow ? { p_on_now: true } : {}) }, signal),
   });
-}
-
-const tileQueryKey = (t: Tile, kinds: ReturnType<typeof kindParams>, search: string) => ['discover-tile', t.z, t.x, t.y, kinds, search] as const;
-
-/** A coarser tile already loaded with the same filters answers for this one, so zooming in never asks again. */
-function fromParent(client: QueryClient, t: Tile, kinds: ReturnType<typeof kindParams>, search: string): DiscoverBar[] | undefined {
-  const box = tileBox(t);
-  for (const p of parentTiles(t)) {
-    const bars = client.getQueryData<DiscoverBar[]>(tileQueryKey(p, kinds, search));
-    if (bars) return bars.filter((b) => inBox(b, box));
-  }
-  return undefined;
-}
-
-/** One list of bars from a view's tiles. Module-level, so useQueries only reruns it when a tile changes. */
-function combineTiles(rs: { data?: DiscoverBar[]; isPending: boolean; fetchStatus: string }[]) {
-  return { bars: rs.flatMap((r) => r.data ?? []), isLoading: rs.some((r) => r.isPending && r.fetchStatus !== 'idle') };
-}
-
-/**
- * The bars in what the map shows, a tile at a time, all of a view's tiles at
- * once. Tiles are kept for the session (not saved: panning would fill the
- * saved cache), so panning back or zooming in reuses them; zooming out loads
- * coarser ones. Nothing while `viewport` is null (the map shows the area,
- * which useDiscoverBars has). `bars` only changes when a tile does, so the
- * map isn't handed new pins on every render.
- */
-export function useTileBars(viewport: Viewport | null, filter: { kinds: readonly string[]; search: string }, enabled = true) {
-  const signedIn = !!useAuth().user;
-  const client = useQueryClient();
-  const kinds = kindParams(filter.kinds);
-  const search = searchKey(useDebounced(filter.search, 250));
-  const tiles = useMemo(() => (viewport ? tilesFor(viewport) : []), [viewport]);
-  const results = useQueries({
-    queries: tiles.map((t) => ({
-      queryKey: tileQueryKey(t, kinds, search),
-      meta: { persist: false },
-      enabled: signedIn && enabled,
-      staleTime: 60 * 60 * 1000,
-      initialData: () => fromParent(client, t, kinds, search),
-      queryFn: ({ signal }: { signal: AbortSignal }) => {
-        const box = tileBox(t);
-        return readBars({ p_west: box.west, p_south: box.south, p_east: box.east, p_north: box.north, ...kinds, p_query: search || null }, signal);
-      },
-    })),
-    combine: combineTiles,
-  });
-  return results;
 }
 
 /**

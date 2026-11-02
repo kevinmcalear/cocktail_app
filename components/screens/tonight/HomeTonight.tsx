@@ -16,7 +16,7 @@ import { plural } from '@/lib/menus';
 import { bestAway, oneBottleLine, shelfTiles } from '@/lib/tonight';
 import { byDay, detailLine, itemDay, shortDay, upcoming, type WeekItem } from '@/lib/week';
 
-import { Friends } from './Friends';
+import { Friends, FriendsPrompt, useFriends } from './Friends';
 import { RankIt } from './RankIt';
 import { DrinkTile, NoteCard, TonightSection } from './TonightParts';
 
@@ -37,11 +37,14 @@ export function HomeTonight() {
   const awayLine = away ? oneBottleLine(away.bottles, away.drinks) : null;
   const openShelf = () => router.push('/shelf');
   const week = useHomeWeek();
+  const friends = useFriends();
   const nothing = !drinks.isLoading && !tiles.length && !week.card && !week.rows.length;
   return (
     <View style={styles.stack}>
       <RankIt />
       <ThisWeek week={week} />
+      {/* Friends' ranks lead (Kept-follow); following nobody yet, the prompt comes after the shelf. */}
+      <Friends ranks={friends.ranks} />
       {tiles.length ? (
         <TonightSection title="From your shelf" aside={`${drinks.canMake.length} you can make`} onAside={openShelf}>
           <Tiles>
@@ -51,6 +54,7 @@ export function HomeTonight() {
           </Tiles>
         </TonightSection>
       ) : null}
+      {friends.followsNobody ? <FriendsPrompt /> : null}
       {away && awayLine ? (
         <TonightSection title="One bottle away">
           <NoteCard icon="place.mybar" text={awayLine} onPress={() => router.push(itemHref('Ingredient', away.bottles[0].id) as Href)} />
@@ -61,7 +65,6 @@ export function HomeTonight() {
           <NewListCard item={week.card} from={week.from} />
         </TonightSection>
       ) : null}
-      <Friends />
       {nothing ? (
         <PencilState
           kind="empty"

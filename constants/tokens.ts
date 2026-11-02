@@ -178,10 +178,27 @@ export const displayFaces = {
 
 export type DisplayFace = keyof typeof displayFaces;
 
+const DISPLAY_FAMILIES = new Set<string>(Object.values(fontFamilies));
+
+/**
+ * The weight a text style needs when its caller swapped a display face into a
+ * system variant (a name set in the bar's face on a Headline or Caption). The
+ * faces are single-weight files, and on Android a 500 or 600 weight left on
+ * one measures the line narrower than it draws, so the last word drops out of
+ * sight ("House drink" read "House"). Undefined when nothing needs resetting:
+ * the family is the system font, or the caller set its own weight.
+ * Checked by components/ds/faceWeight.check.ts.
+ */
+export function faceWeightReset(fontFamily: unknown, fontWeight: unknown): { fontWeight: '400' } | undefined {
+  return typeof fontFamily === 'string' && DISPLAY_FAMILIES.has(fontFamily) && fontWeight === undefined ? { fontWeight: '400' } : undefined;
+}
+
 /** Names set in the display face on rows (22/26) and on a menu's card (24/28), as the canvas draws them. */
 export const displayName = {
   row: { fontSize: 22, lineHeight: 26 },
   card: { fontSize: 24, lineHeight: 28 },
+  /** At the top of Android's drink and item pages (And-page). */
+  page: { fontSize: 46, lineHeight: 52, letterSpacing: 0 },
 } as const;
 
 /** The smallest text the app sets, in points (check:design holds every size to it). */
@@ -281,12 +298,23 @@ export const springs = {
 } as const;
 
 /**
- * A drink's drawing at three sizes, in points (decision drawing-sizes,
+ * A drink's drawing at its sizes, in points (decision drawing-sizes,
  * components/ds/DrinkDrawing): a guest's hero (260 to 300), a staff page's
- * smaller hero so the spec stays above the fold, a tile, and a row (56 or
- * more: under that a drawing is a smudge).
+ * smaller hero so the spec stays above the fold, the larger middle of a
+ * menu's three (Menu-page), a tile, a menu page's row, and a row (56 or more:
+ * under that a drawing is a smudge).
  */
-export const drawing = { hero: 280, heroStaff: 180, tile: 160, row: 56 } as const;
+export const drawing = { hero: 280, heroStaff: 180, middle: 206, tile: 160, menuRow: 64, row: 56 } as const;
+
+/**
+ * A menu page's cover photo: it runs 470 down from the top of the screen
+ * (Menu-g-photo-dark), across the page's column (760 at most on a wide
+ * screen). The cover picker crops to this shape.
+ */
+export const menuCover = { height: 470, column: 760 } as const;
+
+/** A menu card's band of drawings or cover on a list of menus (Menu-shelf). */
+export const menuBandHeight = 176;
 
 /** How the colour pours into a drawing as it appears: fills the glass bottom up, after a beat. Reduce Motion skips it. */
 export const pour = { delay: 200, ms: 1100 } as const;

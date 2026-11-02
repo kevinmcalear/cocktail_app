@@ -1,4 +1,3 @@
-import * as Burnt from 'burnt';
 import { Platform, StyleSheet, View } from 'react-native';
 
 import { Body, Button, useDs } from '@/components/ds';
@@ -7,6 +6,7 @@ import { IconSymbol } from '@/components/ui/icon-symbol';
 import { radius, space } from '@/constants/tokens';
 import { showMessage } from '@/lib/dialogs';
 import { shareLink } from '@/lib/shareLink';
+import { toast } from '@/lib/systemToast';
 import { venueStaffUrl } from '@/lib/venueLink';
 
 /**
@@ -20,7 +20,7 @@ export function StaffLinkCard({ slug, venueName }: { slug: string; venueName: st
 
   const share = async () => {
     try {
-      if ((await shareLink(url, `${venueName} staff app`, 'staff_link', { copy: true })) === 'copied') Burnt.toast({ title: 'Link copied', preset: 'done', duration: 2 });
+      if ((await shareLink(url, `${venueName} staff app`, 'staff_link', { copy: true })) === 'copied') toast({ title: 'Link copied', preset: 'done', duration: 2 });
     } catch {
       // The browser can refuse clipboard access; show the link to copy by hand.
       showMessage("Couldn't copy the link", url);

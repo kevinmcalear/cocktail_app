@@ -1,4 +1,4 @@
-import * as Device from 'expo-device';
+import * as Device from '@/lib/realDevice';
 import { useRouter, type Href } from 'expo-router';
 import { useEffect, useState } from 'react';
 import { Platform, StyleSheet, View } from 'react-native';
