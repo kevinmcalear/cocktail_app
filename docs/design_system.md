@@ -1,6 +1,6 @@
 # Design system: Back Bar
 
-The written rules behind the Back Bar look. What each screen should be is drawn on the source of truth canvas, "Cocktail: the whole app" (https://claude.ai/artifact/KRE17t8L8SC8f4M4KFLgZe); the original Back Bar brief (https://claude.ai/artifact/1ksBAgPLyVmLGKdm48x6sf) is background. When the canvas and this file disagree, ask. The tokens are in `constants/tokens.ts`; the components that use them are in `components/ds/` (see the gallery below). Screens that haven't been redesigned yet still use `constants/palette.ts`. `npm run check:design` stops new raw values either way.
+The written rules behind the Back Bar look. What each screen should be is drawn on the source of truth canvas, "Cocktail 2027" (https://claude.ai/artifact/HFuAkaE1wtZjnYhgjezDrF); the original Back Bar brief (https://claude.ai/artifact/1ksBAgPLyVmLGKdm48x6sf) is background. When the canvas and this file disagree, ask. The tokens are in `constants/tokens.ts`; the components that use them are in `components/ds/` (see the gallery below). Screens that haven't been redesigned yet still use `constants/palette.ts`. `npm run check:design` stops new raw values either way.
 
 ## Principles
 
@@ -67,7 +67,7 @@ One set, the bar kit (whole-app canvas, Shell page, nav-icons), drawn the same o
 - **Places:** the shell's places use `place.*` (Tonight, Library (the Drinks tab for now), Menus, Prep, Study, Discover, History, This week, Back bar, My Bar, Collection, You, My team, Brand, Roles and access, Settings), wherever the place is meant, not only in the nav. One icon per place: Menus is always the menu card, Settings always the sliders.
 - **Names:** SF Symbol names, so a call site reads the same everywhere. A new icon is drawn into `glyphs.ts` in this style (check it in the gallery's Icons section beside the rest), never pulled from an icon font.
 - **Sizes:** 24 for tabs and standalone buttons, 20 in rows and the rail, 18 inside text-sized controls. The control around it keeps its 44 (iOS) or 48 (Android) tap target.
-- **The system's bars:** the iOS and Android tab bars stay the system's (Liquid Glass on iOS 26+, Material 3 on Android) and take our drawings as template images the system tints, an off and an on image per tab (`components/nav/tabImages.ts`, drawn by `npx tsx scripts/nav-tab-icons.ts`). Run that script after changing a tab's glyph. iOS draws its own magnifying glass on the search tab.
+- **The system's bars:** the iOS and Android tab bars stay the system's (Liquid Glass on iOS 26+, Material 3 on Android) and take our drawings as template images the system tints: the same outline selected or not (and so do the web's tab bar, rail and sidebar, Kept-glyph), and Android's selected Drinks with its bowl filled (`components/nav/tabImages.ts`, drawn by `npx tsx scripts/nav-tab-icons.ts`). Run that script after changing a tab's glyph. iOS draws its own magnifying glass on the search tab. Android has four tabs and searches from the bar on top of a tab's page; its Material colours come from `components/nav/material.ts`. A pushed page's header is the system's (`components/nav/NativeHeader.tsx`).
 - **Android back** is an arrow, iOS and web a chevron (`IconSymbol` swaps `chevron.left`).
 - **Accessibility:** icons are decorative (`aria-hidden`); the control that holds one carries the label.
 

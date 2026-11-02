@@ -4,12 +4,13 @@ import { StyleSheet, View } from 'react-native';
 
 import { Caption, DrinkImage, DsText, Headline, PressableScale, Tag, useDs } from '@/components/ds';
 import { IconSymbol } from '@/components/ui/icon-symbol';
-import { displayFaces, displayName, font, radius, space, STATUS } from '@/constants/tokens';
-import { readableAccent, withAlpha } from '@/lib/color';
-import { comingUpLine, draftLine, homeMenuLine, menuDateLine, menuStatus, plural, previousLine } from '@/lib/menus';
+import { displayFaces, displayName, font, menuBandHeight, radius, space, STATUS } from '@/constants/tokens';
+import { readableAccent } from '@/lib/color';
+import { comingUpLine, draftLine, homeMenuLine, menuDateLine, menuStatus, plural } from '@/lib/menus';
 import type { MenuPicture, MenuSummary } from '@/types/menus';
 
 import { MenuVisual } from './MenuVisual';
+import { MenuBand, MenuStrip } from './page/MenuBandLazy';
 
 export const menuHref = (id: string) => `/menus/${id}` as const;
 
@@ -37,26 +38,19 @@ function startOf(menu: MenuSummary): Date | null {
   return startsAt ? new Date(startsAt) : null;
 }
 
-/** A coming-up menu's day: the weekday over the date, tinted in the accent. */
+/** A coming-up menu's day at the start of its row: the month over the date (Menu-shelf). */
 function DateTile({ start }: { start: Date }) {
   const ds = useDs();
   return (
-    <View style={[styles.date, { backgroundColor: withAlpha(ds.accentText, 0.16) }]}>
-      <Caption color={ds.accentText}>{start.toLocaleDateString(undefined, { weekday: 'short' }).toUpperCase()}</Caption>
-      <DsText variant="spec" color={ds.accentText}>
+    <View style={[styles.date, { backgroundColor: ds.c.raised }]} aria-hidden>
+      <Caption tone="muted" style={styles.caps}>
+        {start.toLocaleDateString(undefined, { month: 'short' }).toUpperCase()}
+      </Caption>
+      <DsText variant="headline" style={{ fontFamily: displayFaces[ds.displayFace].regular }}>
         {start.getDate()}
       </DsText>
     </View>
   );
-}
-
-/** What ends a card or row: On now, a coming-up menu's day, or (for a draft or R&D) a chevron. */
-function Trailing({ menu, status }: { menu: MenuSummary; status: RowStatus }) {
-  const ds = useDs();
-  const start = status === 'upcoming' ? startOf(menu) : null;
-  if (status === 'on') return <Tag label="On now" tone="success" dot />;
-  if (start) return <DateTile start={start} />;
-  return status === 'draft' || status === 'rnd' ? <IconSymbol name="chevron.right" size={16} color={ds.c.muted} /> : null;
 }
 
 /**
@@ -77,7 +71,6 @@ export function MenuCard({ menu, now, note }: { menu: MenuSummary; now: number; 
       coverPosition={menu.coverPosition}
       pictures={menu.pictures}
       line={line}
-      trailing={<Trailing menu={menu} status={status} />}
     />
   );
 }
@@ -93,12 +86,18 @@ interface MenuCardFrameProps {
   trailing?: ReactNode;
 }
 
-/** The one menu card: the drink band, the name in the display face, one line, then what ends it. A bar's menu on now draws through it too. */
+/** The one menu card (Menu-shelf): the drinks drawn together on their sky (or the cover), then the name with a chevron and one line. A bar's menu on now draws through it too. */
 export function MenuCardFrame({ label, onPress, name, coverUrl, coverPosition, pictures, line, trailing }: MenuCardFrameProps) {
   const ds = useDs();
   return (
-    <PressableScale role="link" accessibilityLabel={label} onPress={onPress} style={[styles.card, { backgroundColor: ds.c.surface, borderColor: ds.c.line }]}>
-      <MenuVisual name={name} coverUrl={coverUrl} coverPosition={coverPosition} pictures={pictures} height={112} />
+    <PressableScale role="link" accessibilityLabel={label} onPress={onPress} style={styles.card}>
+      {coverUrl || !pictures.length ? (
+        <View style={styles.cover}>
+          <MenuVisual name={name} coverUrl={coverUrl} coverPosition={coverPosition} pictures={pictures} height={menuBandHeight} />
+        </View>
+      ) : (
+        <MenuBand ids={pictures.slice(0, 3).map((p) => p.id)} />
+      )}
       <View style={styles.cardBody}>
         <View style={styles.flex}>
           <Headline numberOfLines={1} style={[displayName.card, { fontFamily: displayFaces[ds.displayFace].regular }]}>
@@ -108,27 +107,33 @@ export function MenuCardFrame({ label, onPress, name, coverUrl, coverPosition, p
             {line}
           </Caption>
         </View>
-        {trailing}
+        {trailing ?? <IconSymbol name="chevron.right" size={16} color={ds.c.muted} />}
       </View>
     </PressableScale>
   );
 }
 
-/** The band cut to a square: the menu's cover or its first drink. A draft with no drinks gets a dashed slot, R&D a grid. */
+/** What starts a row (Menu-shelf): a coming-up menu's day, a draft's pencil drawings in a dashed amber frame, the drinks drawn small, or R&D's grid. */
 function Thumb({ menu, status }: { menu: MenuSummary; status: RowStatus }) {
   const ds = useDs();
-  if (menu.coverUrl || menu.pictures.length) {
+  const start = status === 'upcoming' ? startOf(menu) : null;
+  if (start) return <DateTile start={start} />;
+  const ids = menu.pictures.map((p) => p.id);
+  if (status === 'draft') {
     return (
-      <View style={styles.thumb} aria-hidden>
-        <MenuVisual name={menu.name} coverUrl={menu.coverUrl} coverPosition={menu.coverPosition} pictures={menu.pictures.slice(0, 1)} height={THUMB} />
+      <View style={[styles.dashed, { borderColor: readableAccent(STATUS.warning, ds.c.ground) }]} aria-hidden>
+        {ids.length ? <MenuStrip ids={ids} ink="pencil" /> : null}
       </View>
     );
   }
-  return (
-    <View style={[styles.thumb, styles.empty, { backgroundColor: status === 'rnd' ? ds.c.raised : withAlpha(ds.c.paper, 0.08) }]} aria-hidden>
-      {status === 'rnd' ? <IconSymbol name="square.grid.2x2" size={22} color={ds.c.muted} /> : status === 'draft' ? <View style={[styles.slot, { borderColor: ds.c.lineStrong }]} /> : null}
-    </View>
-  );
+  if (status === 'rnd' || !ids.length) {
+    return (
+      <View style={[styles.thumb, styles.empty, { backgroundColor: ds.c.raised }]} aria-hidden>
+        <IconSymbol name="square.grid.2x2" size={22} color={ds.c.muted} />
+      </View>
+    );
+  }
+  return <MenuStrip ids={ids} ink="colour" />;
 }
 
 /** A drink's picture cut to the row's square: its photo, or with none, its sketch. */
@@ -149,8 +154,10 @@ interface MenuRowFrameProps {
   thumb: ReactNode;
   name: string;
   line: string;
-  /** A draft: a dashed edge and its line in amber. */
+  /** A draft: its line in amber (on a card row, a dashed edge too). */
   dashed?: boolean;
+  /** A ruled row, as the Menus list draws it (Menu-shelf); otherwise the card row other lists use. */
+  ruled?: boolean;
   trailing?: ReactNode;
 }
 
@@ -159,7 +166,7 @@ interface MenuRowFrameProps {
  * face, one line, then what ends it. Your menus, and bar menus you saved or
  * collected, all draw through it.
  */
-export function MenuRowFrame({ label, onPress, thumb, name, line, dashed, trailing }: MenuRowFrameProps) {
+export function MenuRowFrame({ label, onPress, thumb, name, line, dashed, ruled, trailing }: MenuRowFrameProps) {
   const ds = useDs();
   return (
     <PressableScale
@@ -167,7 +174,11 @@ export function MenuRowFrame({ label, onPress, thumb, name, line, dashed, traili
       disabled={!onPress}
       accessibilityLabel={label}
       onPress={onPress}
-      style={[styles.row, dashed ? { borderColor: ds.c.lineStrong, borderStyle: 'dashed' } : { borderColor: ds.c.line, backgroundColor: ds.c.surface }]}
+      style={
+        ruled
+          ? [styles.ruled, { borderTopColor: ds.c.lineStrong }]
+          : [styles.row, dashed ? { borderColor: ds.c.lineStrong, borderStyle: 'dashed' } : { borderColor: ds.c.line, backgroundColor: ds.c.surface }]
+      }
     >
       {thumb}
       <View style={styles.flex}>
@@ -189,7 +200,7 @@ export function MenuRowFrame({ label, onPress, thumb, name, line, dashed, traili
  * draft is dashed, its line in amber saying what's missing. `note` adds to
  * the line, like how many of the drinks you can make at home.
  */
-export function MenuListRow({ menu, now, note }: { menu: MenuSummary; now: number; note?: string }) {
+export function MenuListRow({ menu, now, note, ruled }: { menu: MenuSummary; now: number; note?: string; ruled?: boolean }) {
   const router = useRouter();
   const status = statusOf(menu, now);
   const draft = status === 'draft';
@@ -202,7 +213,8 @@ export function MenuListRow({ menu, now, note }: { menu: MenuSummary; now: numbe
       name={menu.name}
       line={line}
       dashed={draft}
-      trailing={<Trailing menu={menu} status={status} />}
+      ruled={ruled}
+      trailing={!ruled && status === 'on' ? <Tag label="On now" tone="success" dot /> : undefined}
     />
   );
 }
@@ -210,8 +222,24 @@ export function MenuListRow({ menu, now, note }: { menu: MenuSummary; now: numbe
 /** A past menu: a plain divided line, its name in the display face and its dates and count in mono. */
 export function MenuPastLine({ menu }: { menu: MenuSummary }) {
   const router = useRouter();
-  const line = previousLine(menu);
-  return <MenuLine name={menu.name} line={line} label={`${menu.name}, ${line} drinks`} onPress={() => router.push(menuHref(menu.id))} />;
+  const short = (iso: string) => new Date(iso).toLocaleDateString(undefined, { day: 'numeric', month: 'short' });
+  const dates = menu.endsAt ? (menu.startsAt ? `${short(menu.startsAt)} to ${short(menu.endsAt)}` : `off since ${short(menu.endsAt)}`) : '';
+  const count = plural(new Set(menu.itemIds).size, 'drink');
+  return (
+    <MenuRowFrame
+      label={`${menu.name}, ${count}, ${dates}`}
+      onPress={() => router.push(menuHref(menu.id))}
+      thumb={null}
+      name={menu.name}
+      line={count}
+      ruled
+      trailing={
+        <Caption tone="muted" style={styles.mono}>
+          {dates}
+        </Caption>
+      }
+    />
+  );
 }
 
 /** The one menu line: the name in the display face, then mono dates (or a green "On now", `live`). Past menus anywhere, and a drink's menus. */
@@ -232,8 +260,9 @@ export function MenuLine({ name, line, label, live, onPress }: { name: string; l
 const THUMB = 56;
 
 const styles = StyleSheet.create({
-  card: { borderRadius: radius.card, borderWidth: StyleSheet.hairlineWidth, overflow: 'hidden', borderCurve: 'continuous' },
-  cardBody: { flexDirection: 'row', alignItems: 'center', gap: space.md, paddingVertical: space.md, paddingHorizontal: space.lg - 2 },
+  card: { gap: space.md },
+  cover: { borderRadius: radius.card, overflow: 'hidden', borderCurve: 'continuous' },
+  cardBody: { flexDirection: 'row', alignItems: 'center', gap: space.md },
   flex: { flex: 1, minWidth: 0, gap: 2 },
   row: {
     flexDirection: 'row',
@@ -245,11 +274,13 @@ const styles = StyleSheet.create({
     borderWidth: 1,
     borderCurve: 'continuous',
   },
+  ruled: { flexDirection: 'row', alignItems: 'center', gap: space.md, paddingVertical: space.md, borderTopWidth: StyleSheet.hairlineWidth },
   thumb: { width: THUMB, height: THUMB, borderRadius: radius.control, overflow: 'hidden', borderCurve: 'continuous' },
   empty: { alignItems: 'center', justifyContent: 'center' },
   fillThumb: { width: THUMB, height: THUMB },
-  slot: { width: 22, height: 32, borderRadius: radius.mark + 1, borderWidth: 1.5, borderStyle: 'dashed' },
+  dashed: { width: 96, height: THUMB + space.sm, borderRadius: radius.control, borderWidth: 1.5, borderStyle: 'dashed', alignItems: 'center', justifyContent: 'center' },
+  caps: { letterSpacing: 1, ...font.medium },
   past: { flexDirection: 'row', alignItems: 'center', gap: space.md, paddingVertical: space.sm + 2, paddingHorizontal: 2, borderBottomWidth: StyleSheet.hairlineWidth },
   mono: { ...font.figures },
-  date: { width: 44, paddingVertical: space.xs, borderRadius: radius.control, alignItems: 'center' },
+  date: { width: THUMB, height: THUMB, borderRadius: radius.control, alignItems: 'center', justifyContent: 'center' },
 });
