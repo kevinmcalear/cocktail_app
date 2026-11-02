@@ -9,11 +9,13 @@
  *      starting point to test, never as the answer
  */
 
+import type { SourceKey } from './sourceBook';
+
 export type Grade = 'A' | 'B' | 'C';
 
+/** A citation: which source (its name and link are in sourceBook.ts) and how far to trust it here. */
 export interface Source {
-  name: string;
-  url: string;
+  key: SourceKey;
   grade: Grade;
 }
 

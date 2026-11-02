@@ -7,6 +7,7 @@ import { RowDivider } from '@/components/screens/settings/SettingsParts';
 import { IconSymbol } from '@/components/ui/icon-symbol';
 import { font, layout, space } from '@/constants/tokens';
 import { missingKit, type BuyAudience, type BuyLink, type Grade, type Source, type Technique } from '@/lib/techniques';
+import { sourceOf } from '@/lib/techniques/sourceBook';
 import { useAppMode, type AppMode } from '@/store/useAppMode';
 
 export { LinkRow } from './LinkRow';
@@ -111,7 +112,7 @@ export function SourceList({ sources }: { sources: Source[] }) {
   const ds = useDs();
   return (
     <View>
-      {sources.map((s) => (
+      {sources.map(sourceOf).map((s) => (
         <PressableScale key={s.url} role="link" accessibilityLabel={`${s.name}, ${GRADE[s.grade].label}. Opens the source`} onPress={() => void Linking.openURL(s.url)} style={[styles.source, { borderBottomColor: ds.c.line }]}>
           <Body style={styles.flex}>{s.name}</Body>
           <GradeTag grade={s.grade} />
