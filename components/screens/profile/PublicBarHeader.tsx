@@ -71,7 +71,7 @@ export function PublicBarActions({ profile, signedIn = false }: { profile: Profi
   const share = async () => {
     const url = `${siteOrigin()}/p/${profile.handle}`;
     try {
-      setCopied((await shareLink(url, profile.display_name)) === 'copied');
+      setCopied((await shareLink(url, profile.display_name, 'bar')) === 'copied');
     } catch {
       // The browser refused the clipboard too: show the link to copy by hand, not nothing.
       setCopied(false);

@@ -1,7 +1,7 @@
 // Checks for lib/tonight.ts. Run: npm run test:unit
 import assert from 'node:assert/strict';
 
-import { bestAway, enoughRows, offTonight, oneBottleLine, onShiftLine, prepLine, runThroughMinutes, serviceEnd, shelfTiles, talkThrough, tonightEyebrow, unpriced } from './tonight';
+import { bestAway, enoughRows, garnishOf, offTonight, oneBottleLine, onShiftLine, prepLine, runThroughMinutes, serviceEnd, shelfTiles, talkThrough, tonightEyebrow, unpriced } from './tonight';
 
 // The night runs to 6am: at 1am it is still last night's.
 assert.equal(serviceEnd(new Date(2026, 10, 1, 20)).getTime(), new Date(2026, 10, 2, 6).getTime());
@@ -80,3 +80,13 @@ assert.deepEqual(
 );
 assert.deepEqual(onShiftLine([{ user_id: 'ana', opens: false, closes: false }], (id) => names[id], 'me'), { names: 'Ana', sub: null });
 assert.equal(onShiftLine([], (id) => names[id], 'me'), null);
+
+assert.deepEqual(
+  garnishOf([
+    { ingredient: 'Rye', unit: 'ml' },
+    { ingredient: 'Egg white', unit: 'each' },
+    { ingredient: 'Candied ginger', unit: 'each' },
+  ]),
+  ['Candied ginger'],
+  'garnish: count-unit lines, not an egg white'
+);
