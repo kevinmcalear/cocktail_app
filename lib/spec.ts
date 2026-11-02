@@ -20,6 +20,8 @@ export interface PresentationRecipe {
   is_optional?: boolean | null;
   /** Floated on top (recipes.is_float). */
   is_float?: boolean | null;
+  /** A garnish, said even where the unit is masked (20261206495000; absent before it). */
+  is_garnish?: boolean | null;
   display_ingredient_id?: string | null;
   ingredient_item_id?: string | null;
   parent_ingredient_id?: string | null;
@@ -69,6 +71,8 @@ export interface SpecLine {
   houseMade?: boolean;
   /** A drink made in parts: which part the line is in (recipes.part, from 1). */
   part?: number | null;
+  /** A garnish, as the server says where the unit is masked (a guest's or the floor's names); unset, the unit decides (lib/batch isGarnishLine). */
+  garnish?: boolean;
 }
 
 // Grams convert to ml through the ingredient's density (lib/drinkMath.ts).
@@ -95,6 +99,7 @@ export function specLines(recipes: PresentationRecipe[] | null | undefined): Spe
       density: typeof resolved?.density_g_ml === 'number' ? resolved.density_g_ml : null,
       houseMade: resolved?.ingredient_role === 'prep',
       part: r.part ?? null,
+      ...(typeof r.is_garnish === 'boolean' ? { garnish: r.is_garnish } : {}),
     };
   });
 }

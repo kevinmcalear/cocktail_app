@@ -77,6 +77,7 @@ One set, the bar kit (whole-app canvas, Shell page, nav-icons), drawn the same o
 - Android: solid raised surfaces (expo-blur can't blur the tab bar cleanly there).
 - Web: `backdrop-filter` blur with a solid fallback.
 - Glass controls sitting on a photo use `onMedia` (dark glass, light ink) in both themes; otherwise dark ink on a dark photo disappears.
+- A drink's photo decides its page (`images.brightness`, read at upload): bright makes a light page, everything else dark, whatever the phone's mode. The title sits in the photo's quiet room (`images.text_zone`) when at least 150 points of it are clear of the bar and the fade and the muted ink reads at 4.5:1 there (`lib/photoTitle.ts`); otherwise it goes under the photo. Never across the drink. There is no scrim: a mid-tone photo sends the title under it.
 
 ## Images
 

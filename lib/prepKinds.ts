@@ -11,10 +11,13 @@
  * Keeps are always the safer number when sources differ.
  */
 import type { Allergen } from './allergens';
-import { asLike, keepFor, nameParts, partsFor, prepFacts, slotIngredient, splitName } from './techniques/template';
+import { guessKind, withFacts } from './prepMath';
+import { asLike, keepFor, nameParts, partsFor, slotIngredient, splitName } from './techniques/template';
 import { techniqueById } from './techniques';
 import { byKit } from './techniques/kitFirst';
 import type { Technique } from './techniques/types';
+
+export { guessKind, pickUpAt, prepAmounts, prepYield, recipesToFinish, sourceSite, withFacts } from './prepMath';
 
 /** 'batch' is a drink's pours bottled ahead (lib/batchLines): where combining two lines starts. 'wash' is a fat or milk wash; 'clarified' and 'distillate' are made one of the library's clarifying or distilling ways. */
 export type PrepKindId = 'syrup' | 'rich' | 'shrub' | 'cordial' | 'oleo' | 'infusion' | 'super' | 'other' | 'batch' | 'wash' | 'clarified' | 'distillate';
@@ -51,8 +54,6 @@ export interface PrepDraftStep {
 /** The three steps of a recipe made in-house, in order (make-anything-steps-1 and 2, steps 4 to 6). */
 export const RECIPE_STEPS = ['kind', 'recipe', 'method'] as const;
 export type RecipeStep = (typeof RECIPE_STEPS)[number];
-const STEP_NAMES: Record<RecipeStep, string> = { kind: 'what it is', recipe: 'what goes in', method: 'how it’s made' };
-
 export interface PrepDraft {
   kind: PrepKindId;
   /** Left for later at this step (make-anything-steps-3, step 9): a recipe to finish, picked up where it was left. */
@@ -123,20 +124,6 @@ export const tileOf = (kind: PrepKindId): PrepKindId => (kind === 'rich' || kind
 
 const DAY = 24;
 const WEEK = 7 * DAY;
-const KIND_WORDS: [RegExp, PrepKindId][] = [
-  [/\bsuper\s*juice\b/i, 'super'],
-  [/\brich\b.*\bsyrup\b|\b2\s*:\s*1\b/i, 'rich'],
-  [/\bshrub\b/i, 'shrub'],
-  [/\bcordial\b/i, 'cordial'],
-  [/\boleo\b/i, 'oleo'],
-  // Not tinctures or bitters by name: Tincture is a way of an infusion, made from its own technique (strong spirit, kept a year). A house liqueur is a spirit with a flavour in it.
-  [/\b(infused|infusion|liqueur)\b/i, 'infusion'],
-  [/\bsyrup\b|\bgomme\b/i, 'syrup'],
-  [/\bclarified\b/i, 'clarified'],
-  [/\b(distillate|hydrosol)\b/i, 'distillate'],
-  [/\bbatch\b/i, 'batch'],
-];
-
 /** One way to make a kind (a cold shrub), as "How?" lists them under the kinds. */
 export interface PrepWay {
   id: string;
@@ -266,22 +253,6 @@ export function stepToFinish(d: PrepDraft): RecipeStep {
   return !d.lines.some((l) => l.name.trim()) ? 'kind' : openSlots(d).length ? 'recipe' : 'method';
 }
 
-/** "at what goes in": where a recipe to finish picks up. */
-export const pickUpAt = (d: Pick<PrepDraft, 'at'>): string => `at ${STEP_NAMES[d.at ?? 'kind']}`;
-
-/**
- * Every recipe still to finish in what's being made, down through the
- * recipes inside it (make-anything-steps-3, steps 9 and 10): its name, where
- * it picks up, and how deep. A line left with no recipe at all (Later on its
- * first step) counts too.
- */
-export function recipesToFinish(lines: readonly { name: string; later?: boolean; prep?: PrepDraft }[], depth = 0): { name: string; at: string; depth: number }[] {
-  return lines.flatMap((l) => [
-    ...(l.prep?.at || l.later ? [{ name: l.name, at: l.prep ? pickUpAt(l.prep) : 'nothing written yet', depth }] : []),
-    ...(l.prep ? recipesToFinish(l.prep.lines, depth + 1) : []),
-  ]);
-}
-
 /** Under a house prep's line in the drink (make-anything-steps-2, step 7): "Infusion, sous vide · Tempus Fugit, red miso · 4 steps". */
 export function prepSummary(d: PrepDraft, techniqueName?: string | null): string {
   const way = wayOf(d);
@@ -307,11 +278,6 @@ export function recipeEyebrow(d: PrepDraft): string | null {
   const equal = parted.length > 1 && parted.some((l) => l.key === d.baseKey) && parted.every((l) => l.parts === parted[0].parts && l.unit === parted[0].unit);
   const by = parted[0]?.unit === 'g' ? 'by weight' : parted[0]?.unit === 'ml' ? 'by volume' : null;
   return equal && by ? `${head} · equal parts ${by}` : head;
-}
-
-/** The kind a name says it is ("Pineapple chili shrub" is a shrub), or null. */
-export function guessKind(name: string): PrepKindId | null {
-  return KIND_WORDS.find(([re]) => re.test(name))?.[1] ?? null;
 }
 
 /**
@@ -440,29 +406,6 @@ export function startPrep(kind: PrepKindId, name: string, way?: string): PrepDra
   }
 }
 
-/** How much of each line, from the base amount and the parts. */
-export function prepAmounts(d: PrepDraft): { line: PrepDraftLine; amount: number | null }[] {
-  const base = d.lines.find((l) => l.key === d.baseKey);
-  const perPart = base?.parts ? d.baseAmount / base.parts : null;
-  return d.lines.map((l) => {
-    if (l.parts !== null && perPart !== null) return { line: l, amount: Math.round(l.parts * perPart * 10) / 10 };
-    const typed = Number(l.amount);
-    return { line: l, amount: l.amount.trim() && typed > 0 ? typed : null };
-  });
-}
-
-/** About how much a batch makes, in ml, rounded to 10; null when nothing says. */
-export function prepYield(d: PrepDraft): number | null {
-  let ml = 0;
-  for (const { line: l, amount } of prepAmounts(d)) {
-    if (amount === null || l.removed) continue;
-    ml += amount * (l.yieldPer ?? (l.unit === 'ml' ? 1 : 0));
-  }
-  // A batch fills its bottle exactly, so 60 ml of it costs what the drink's own pours do.
-  if (ml > 0 && d.kind === 'batch') return Math.round(ml);
-  return ml > 0 ? Math.round(ml / 10) * 10 : null;
-}
-
 /** "1 part", "2 parts", "2%" for the small ones, as the recipe step shows them. */
 export function partsText(parts: number, baseParts: number): string {
   const share = parts / baseParts;
@@ -504,13 +447,6 @@ export function slotMessage(d: Pick<PrepDraft, 'lines'>): string | null {
   const [first, ...more] = openSlots(d);
   if (!first) return null;
   return more.length ? `Pick the ${first.slot} and the ${more.map((l) => l.slot).join(' and the ')}, or take them out, to go on.` : `Pick the ${first.slot}, or take it out, to go on.`;
-}
-
-/** Allergens and vegan, read again from the lines as they are now (a line swapped or added). */
-export function withFacts<D extends PrepDraft>(d: D): D {
-  const facts = prepFacts(d.lines.filter((l) => !l.slot).map((l) => l.name), d.lines.some((l) => l.slot));
-  // Allergens set by hand stay as they were set.
-  return { ...d, allergens: d.allergensSet ? d.allergens : facts.allergens, contains: facts.contains, vegan: facts.vegan };
 }
 
 /** What a library technique says about its batch (lib/techniques Technique, structurally). */
@@ -692,9 +628,4 @@ export function prepFromCatalog(name: string, recipe: CatalogRecipeLike): PrepDr
     leadMinutes: prep?.lead_time_minutes ?? null,
     actions: prep?.actions ?? [],
   });
-}
-
-/** "https://www.imbibemagazine.com/recipe/x" → "imbibemagazine.com": a source as people say it. */
-export function sourceSite(url: string): string {
-  return url.replace(/^https?:\/\/(www\.)?/i, '').split(/[/?#]/)[0];
 }

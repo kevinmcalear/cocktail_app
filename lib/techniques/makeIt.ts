@@ -4,7 +4,7 @@
  * would make it. Choosing one gives the new ingredient a prep card: its
  * action tag, how long it takes, and the steps with the amounts for a batch.
  */
-import { guessKind } from '../prepKinds';
+import { guessKind } from '../prepMath';
 import type { PREP_ACTIONS } from '../scale';
 import { formatDose, scaleParts, techniqueById, TECHNIQUES } from './index';
 import type { BaseKind, Technique, TechniqueGroup } from './types';

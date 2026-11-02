@@ -30,6 +30,7 @@ jest.mock('expo-router', () => ({
   useLocalSearchParams: () => ({ id: 'beer-b1' }),
   useRouter: () => ({ push: mockPush, back: jest.fn(), replace: jest.fn(), canGoBack: () => true }),
   useNavigation: () => ({ setOptions: (o: object) => Object.assign(mockOptions, o) }),
+  useIsFocused: () => true,
   Redirect: () => null,
   useSegments: () => [],
 }));
