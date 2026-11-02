@@ -1,6 +1,6 @@
 import { Spec, useDs } from '@/components/ds';
 import { readableAccent } from '@/lib/color';
-import { menuRowShelf, needLine, type ShelfMatch } from '@/lib/collectionStages';
+import { menuRowShelf, needLine, type ShelfMatch } from '@/lib/shelfReach';
 import { printedPrice } from '@/lib/menus';
 import type { MenuDrink } from '@/types/menus';
 import { STATUS } from '@/constants/tokens';

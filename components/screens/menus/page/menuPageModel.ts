@@ -1,8 +1,7 @@
 // What a menu page shows, from the menu, where it is in its life and who is
 // looking (2027 canvas, Menu-page): kept pure so the screen only wires taps.
 import type { MenuLensData } from '@/hooks/useMenuLens';
-import type { ShelfMatch } from '@/lib/collectionStages';
-import { menuRowShelf } from '@/lib/collectionStages';
+import { menuRowShelf, type ShelfMatch } from '@/lib/shelfReach';
 import { allergenChips, allergensTonight, allergyLine, isMenuTeam, isStaffLens, rowStateMark } from '@/lib/menuLens';
 import { homeMenuLine, menuDateLine, plural, printedPrice } from '@/lib/menus';
 import type { MenuDetail, MenuStatus } from '@/types/menus';
