@@ -211,12 +211,16 @@ export function liveList({ sections, sectionIds, rows, ended, endedDrinks, may, 
   });
 
   // Taken off today: struck through in its section, its run kept, with Undo while the drink swapped in is still there.
+  // One struck row per drink and section: a drink taken off, put back and taken
+  // off again today has two ended runs (latest first), and the latest one speaks.
+  const struckOnce = new Set<string>();
   for (const e of ended) {
     if (!sameDay(e.cameOff, now)) continue;
     const drink = endedDrinks.get(e.itemId);
     const sectionId = e.sectionName ? sectionIds.get(e.sectionName) : undefined;
     const section = main.find((s) => s.id === sectionId);
-    if (!drink || !section) continue;
+    if (!drink || !section || struckOnce.has(`${section.id}:${e.itemId}`)) continue;
+    struckOnce.add(`${section.id}:${e.itemId}`);
     // Back on already (Undo, or put on again today): nothing to strike.
     if (rows.some((r) => r.itemId === e.itemId && r.sectionId === sectionId)) continue;
     const swappedIn = rows.find((r) => r.replacesItemId === e.itemId && r.sectionId === sectionId);
