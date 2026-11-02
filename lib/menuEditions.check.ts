@@ -3,11 +3,14 @@ import assert from 'node:assert/strict';
 
 import {
   drinkRunTags,
+  type MenuEdition,
   editionCardLine,
   editionPastLine,
   editionDates,
+  editionMenu,
   editionMenuDrinks,
   editionSections,
+  leftTheMenu,
   menuOrder,
   menuRange,
   menuState,
@@ -112,3 +115,19 @@ assert.equal(editionPastLine(edition('old', 2024, 2025, false, ['a', 'b'])), 'Ja
 assert.equal(editionPastLine(edition('lost', 2019, null, false, [])), 'From Jan 2019, end date unknown');
 
 console.log('menu editions checks passed');
+
+// A guest reads an edition on the menu page: a researched menu is still a bar's, never a home one.
+{
+  const edition = { id: 'e1', name: 'Autumn', year: 2026, month: 9, end_year: 2026, end_month: 11, theme: 'Long nights', drinks: [] } as unknown as MenuEdition;
+  const menu = editionMenu(edition, [], 'bar1');
+  assert.equal(menu.barId, 'bar1');
+  assert.equal(menu.description, 'Long nights');
+  assert.equal(menu.startsAt, '2026-09-01T00:00:00.000Z');
+  assert.equal(menu.endsAt, '2026-11-01T00:00:00.000Z');
+}
+
+// Off every menu, not just the last one.
+assert.equal(leftTheMenu([]), false);
+const ended = { startYear: 2020, startMonth: 1, endYear: 2020, endMonth: 2, isCurrent: false };
+assert.equal(leftTheMenu([ended]), true);
+assert.equal(leftTheMenu([ended, { ...ended, endYear: null, endMonth: null, isCurrent: true }]), false);
