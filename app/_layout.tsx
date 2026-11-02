@@ -17,6 +17,7 @@ import '@/lib/reanimatedSetup';
 
 import { DialogHost } from '@/components/DialogHost';
 import { ToastHost } from '@/components/ds/Toast';
+import { useTabBarClearance } from '@/components/nav/WebTabBar';
 import { APP_FONTS, FIRST_PAINT_FONTS, LATER_FONTS } from '@/components/ds/fonts';
 import { ObservabilityProvider } from '@/components/ObservabilityProvider';
 import { OfflineBanner } from '@/components/OfflineBanner';
@@ -235,6 +236,11 @@ function useWebThemeChrome(scheme: 'light' | 'dark') {
   }, [scheme]);
 }
 
+/** The toast, over the tab bar where one shows. */
+function Toasts() {
+  return <ToastHost above={useTabBarClearance()} />;
+}
+
 function RootLayout() {
   const colorScheme = useColorScheme();
   useWebThemeChrome(colorScheme);
@@ -264,7 +270,7 @@ function RootLayout() {
           </ObservabilityProvider>
         </AuthProvider>
         <DialogHost />
-        <ToastHost />
+        <Toasts />
         {Platform.OS === 'web' ? <Toaster /> : null}
       </GestureRoot>
     </PersistQueryClientProvider>

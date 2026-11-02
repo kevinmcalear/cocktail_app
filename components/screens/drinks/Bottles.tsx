@@ -123,5 +123,6 @@ export function ToOrder({ barId }: { barId: string }) {
 }
 
 const styles = StyleSheet.create({
-  order: { paddingTop: space.md },
+  // Full width: the foot it sits in lines things up at the start, and a ListRow's words only take the room left over.
+  order: { alignSelf: 'stretch', paddingTop: space.md },
 });

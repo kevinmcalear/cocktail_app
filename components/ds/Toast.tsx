@@ -38,12 +38,13 @@ export function useToast() {
 
 /**
  * The toast itself, mounted once at the root: a glass pill floating above the
- * bottom edge (bottom centre on the web), announced politely (an error as an
+ * bottom edge, or above the tab bar where one shows (`above`, from
+ * useTabBarClearance), bottom centre on the web, announced politely (an error as an
  * alert), gone after five
  * seconds (an error stays), a swipe or a tap. With Reduce Motion on it fades instead of
  * springing up.
  */
-export function ToastHost() {
+export function ToastHost({ above = 0 }: { above?: number }) {
   const toast = useToastStore((s) => s.toast);
   // Kept while it slides away, after the store has moved on.
   const [shown, setShown] = useState<Toast | null>(null);
@@ -104,10 +105,10 @@ export function ToastHost() {
   }, [toast, still, move, drag]);
 
   if (!shown) return null;
-  return <ToastPill toast={shown} move={move} drag={drag} still={still} handlers={pan.panHandlers} />;
+  return <ToastPill toast={shown} move={move} drag={drag} still={still} handlers={pan.panHandlers} above={above} />;
 }
 
-function ToastPill({ toast, move, drag, still, handlers }: { toast: Toast; move: Animated.Value; drag: Animated.ValueXY; still: boolean; handlers: object }) {
+function ToastPill({ toast, move, drag, still, handlers, above }: { toast: Toast; move: Animated.Value; drag: Animated.ValueXY; still: boolean; handlers: object; above: number }) {
   const ds = useDs();
   const insets = useSafeAreaInsets();
   const hide = () => useToastStore.getState().hide(toast.id);
@@ -116,7 +117,7 @@ function ToastPill({ toast, move, drag, still, handlers }: { toast: Toast; move:
   const amber = toastWarnInk(STATUS.warning, ds.c.raised, ds.c.ground).ink;
   const rise = still ? 0 : move.interpolate({ inputRange: [0, 1], outputRange: [space.xxl, 0] });
   return (
-    <View pointerEvents="box-none" style={[styles.layer, { bottom: insets.bottom + space.lg + (toast.lift ?? 0) }]}>
+    <View pointerEvents="box-none" style={[styles.layer, { bottom: (above || insets.bottom) + space.lg + (toast.lift ?? 0) }]}>
       <Animated.View
         {...handlers}
         style={[

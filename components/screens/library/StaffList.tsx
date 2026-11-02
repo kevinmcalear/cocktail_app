@@ -65,10 +65,17 @@ export function StaffList({ barId, canEdit, onNow, past, header, contentContaine
     edit.mutate(join.length ? { op: 'order', itemIds, join } : { op: 'order', itemIds });
   };
   // Ranked, the Not ranked line, then the rest: one list, so a Not ranked drink drags into the ranking.
-  const data: Row[] = order.unranked.length ? [...order.ranked, LINE, ...order.unranked] : order.ranked;
+  const saved: Row[] = order.unranked.length ? [...order.ranked, LINE, ...order.unranked] : order.ranked;
+  // A drop that leaves the ranking as it was (a move under the line, which stays A to Z) saves nothing,
+  // and the list only lets go of where it dropped the rows when their order changes: show the drop
+  // for one render, then the saved order again, so the rows go back where they were.
+  const [held, setHeld] = useState<Row[] | null>(null);
+  const data = held ?? saved;
   const dropped = (rows: Row[]) => {
     const next = rankedAbove(rows.map((r) => r.itemId));
-    if (next.join() !== ids.join()) reorder(next);
+    if (next.join() !== ids.join()) return reorder(next);
+    setHeld(rows);
+    requestAnimationFrame(() => setHeld(null));
   };
   const remove = (pick: ClassicRow) => {
     // Close the gap first, so the places stay 1, 2, 3.
