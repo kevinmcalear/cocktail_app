@@ -5,6 +5,7 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import type { SheetProps } from './Sheet';
 import { CloseContext } from './sheetClose';
 import { useDs } from './theme';
+import { ToastHost } from './Toast';
 
 /**
  * Android's whole flow (Add, Rank it, Theme): a full-screen dialog that
@@ -43,6 +44,8 @@ export function FlowSheet({ visible, onClose, accessibilityLabel, children, styl
             body
           )}
         </CloseContext>
+        {/* The sheet is a window over the app: a toast shown from it draws here, on top. */}
+        <ToastHost />
       </GestureHandlerRootView>
     </Modal>
   );

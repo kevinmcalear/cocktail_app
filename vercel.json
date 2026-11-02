@@ -191,6 +191,10 @@
       "destination": "/settings/bar/[id]/brand"
     },
     {
+      "source": "/settings/bar/:id/theme",
+      "destination": "/settings/bar/[id]/theme"
+    },
+    {
       "source": "/settings/bar/:id/roles",
       "destination": "/settings/bar/[id]/roles"
     },

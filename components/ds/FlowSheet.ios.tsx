@@ -10,6 +10,7 @@ import { flowDetents } from './flowDetents';
 import type { SheetProps } from './Sheet';
 import { CloseContext } from './sheetClose';
 import { useDs } from './theme';
+import { ToastHost } from './Toast';
 
 /** About how long the system's sheet takes to come up: onShow waits for it, as Modal's did. */
 const PRESENT_MS = 350;
@@ -91,6 +92,8 @@ export function FlowSheet({ visible, onClose, accessibilityLabel, children, styl
                   {children}
                 </View>
               </CloseContext>
+              {/* The sheet is a window over the app: a toast shown from it draws here, on top. */}
+              <ToastHost />
             </GestureHandlerRootView>
           </RNHostView>
         </Group>

@@ -11,6 +11,7 @@ import { CloseContext } from './sheetClose';
 import { dragShade, STRETCH } from './sheetDrag';
 import { sheetFrame, sheetIsDialog } from './sheetFrame';
 import { useDs } from './theme';
+import { ToastHost } from './Toast';
 import { SheetScrollContext, slideAway, useSheetDrag } from './useSheetDrag';
 
 /** The backdrop fades on its own, about 200 ms, easing out; it never moves with the sheet. */
@@ -55,6 +56,8 @@ export interface SheetProps {
    * iOS reads it.
    */
   part?: number;
+  /** The web at phone width: the whole window, not a dialog (Sheet.web). */
+  fullAtPhoneWidth?: boolean;
 }
 
 /**
@@ -197,6 +200,7 @@ function SmallSheet({ visible, onClose, accessibilityLabel, children, style, gro
             <View style={placed}>{dragged}</View>
           )}
         </CloseContext>
+        <ToastHost />
       </GestureHandlerRootView>
     </Modal>
   );
