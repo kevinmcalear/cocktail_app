@@ -77,7 +77,7 @@ export function ShareMenuSheet({ menu, onClose }: { menu: SharedMenu; onClose: (
     }
     setError(null);
     try {
-      setCopied((await shareLink(link, menu.name, { copy: true })) === 'copied');
+      setCopied((await shareLink(link, menu.name, 'menu', { copy: true })) === 'copied');
     } catch {
       // The browser can refuse clipboard access; the link is on screen to copy by hand.
       setError('Couldn’t copy the link. Select it above and copy it yourself.');

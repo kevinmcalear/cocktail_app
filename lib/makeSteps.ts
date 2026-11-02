@@ -21,6 +21,20 @@ function namesFor(name: string): string[] {
   return [...new Set([whole, last.length >= 4 ? last : ''].filter(Boolean))];
 }
 
+/** A step's first mention of a line: its whole name, else its last word. `wholeOnly` skips the last word (two lines share it). */
+function firstMention(body: string, name: string, wholeOnly = false): RegExpExecArray | null {
+  for (const word of wholeOnly ? namesFor(name).slice(0, 1) : namesFor(name)) {
+    const m = new RegExp(`\\b${escape(word)}(es|s)?\\b`, 'i').exec(body);
+    if (m) return m;
+  }
+  return null;
+}
+
+/** Where a step first names a line ("Combine the sugar…" names White sugar), or -1. */
+export function mentionAt(body: string, name: string, wholeOnly = false): number {
+  return firstMention(body, name, wholeOnly)?.index ?? -1;
+}
+
 /**
  * "Combine the sugar and water" → "Combine the", [664 g sugar], "and",
  * [332 ml water]. Each line is marked once, at its first mention; the
@@ -31,13 +45,8 @@ export function stepParts(body: string, lines: NamedAmount[]): StepPart[] {
   const hits: Hit[] = [];
   for (const line of lines) {
     if (!line.amount) continue;
-    for (const word of namesFor(line.name)) {
-      const m = new RegExp(`\\b${escape(word)}(es|s)?\\b`, 'i').exec(body);
-      if (m) {
-        hits.push({ start: m.index, end: m.index + m[0].length, amount: line.amount });
-        break;
-      }
-    }
+    const m = firstMention(body, line.name);
+    if (m) hits.push({ start: m.index, end: m.index + m[0].length, amount: line.amount });
   }
   hits.sort((a, b) => a.start - b.start || b.end - a.end);
   const parts: StepPart[] = [];
