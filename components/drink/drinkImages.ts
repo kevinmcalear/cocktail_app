@@ -148,7 +148,7 @@ export async function uploadDrinkPhoto(uri: string, folder: string): Promise<{ i
   const layout = original === 'png' ? null : await photoLayoutOf(sized?.page ?? uri);
   const insert = (row: Insert<'images'>) => supabase.from('images').insert(row).select('id').single();
   let saved = await insert({ url, ...size, ...layout });
-  // Before the photo-layout migration (20261206000000) is in, those columns aren't there yet: the photo still saves.
+  // Before the photo-layout migration (20261206150000) is in, those columns aren't there yet: the photo still saves.
   if (saved.error && layout && /brightness|text_zone/.test(saved.error.message)) saved = await insert({ url, ...size });
   if (saved.error || !saved.data) return null;
   return { id: saved.data.id, url };
