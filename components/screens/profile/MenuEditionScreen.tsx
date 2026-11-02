@@ -1,13 +1,15 @@
-import { Redirect, useNavigation, useRouter, type Href } from 'expo-router';
+import { Redirect, useIsFocused, useNavigation, useRouter, type Href } from 'expo-router';
+import { StatusBar } from 'expo-status-bar';
 import { useState, type ComponentProps } from 'react';
 import { Linking, StyleSheet, View } from 'react-native';
 
-import { Button, PressableScale, Tag } from '@/components/ds';
+import { BackbarTheme, Button, PressableScale, Tag } from '@/components/ds';
 import { WebHead } from '@/components/WebHead';
 import { space } from '@/constants/tokens';
 import { useSignedIn } from '@/ctx/AuthContext';
 import { useActiveVenue } from '@/hooks/useActiveVenue';
 import { useMenuLens } from '@/hooks/useMenuLens';
+import { usePhotoTone } from '@/hooks/usePhotoTone';
 import { useMenuEditionDrinks, useMenuEditions, useProfile } from '@/hooks/useProfiles';
 import { drinkPageHref } from '@/lib/itemRoutes';
 import { barDay, clockAt, DAILY_AFTER, dailyLead, dayText } from '@/lib/dailyList';
@@ -74,6 +76,7 @@ export function MenuEditionScreen({ profileRef, editionId }: { profileRef: strin
       <BarGuestMenuPage
         menu={menu}
         status={past ? 'previous' : 'on'}
+        offTonight={new Set(edition.drinks.filter((d) => d.off_tonight).map((d) => d.id))}
         eyebrow={[bar.display_name, daily ? dayText(today) : menuRange(dates)].filter(Boolean).join(' · ')}
         description={daily ? (edition.written_at ? dailyLead(edition.written_at, (iso) => clockAt(iso)) : 'Today’s list') : undefined}
         fresh={daily ? new Set(edition.drinks.filter((d) => d.new_today).map((d) => d.id)) : undefined}
@@ -105,7 +108,16 @@ export function MenuEditionScreen({ profileRef, editionId }: { profileRef: strin
 
 /** A bar's menu marks the drinks with the guest's own allergies. */
 function BarGuestMenuPage(props: Omit<ComponentProps<typeof GuestMenuPage>, 'lens'>) {
-  return <GuestMenuPage {...props} lens={useMenuLens(props.menu)} />;
+  // The cover photo sets light or dark for the page (Menu-g-photo-dark, Menu-g-photo-bright).
+  const tone = usePhotoTone(props.menu.coverUrl);
+  const focused = useIsFocused();
+  return (
+    <BackbarTheme scheme={props.menu.coverUrl ? tone : undefined}>
+      {/* The clock and battery follow the page's tone, not the phone's (iOS and Android); only while it's on top, as the staff menu does. */}
+      {props.menu.coverUrl && focused ? <StatusBar style={tone === 'dark' ? 'light' : 'dark'} /> : null}
+      <GuestMenuPage {...props} lens={useMenuLens(props.menu)} />
+    </BackbarTheme>
+  );
 }
 
 const styles = StyleSheet.create({

@@ -10,6 +10,8 @@ export interface MenuEditionDrink {
   section?: string | null;
   /** A daily list's drink on tonight for the first time (guests read "New"). */
   new_today?: boolean;
+  /** A venue menu's drink taken off for tonight only (guests read "Not tonight"). */
+  off_tonight?: boolean;
 }
 
 /**
@@ -36,6 +38,8 @@ export interface MenuEdition {
   list_type?: string | null;
   /** A daily list: when today's was first written (menu_days), null before anyone has. */
   written_at?: string | null;
+  /** A venue menu's cover photo. */
+  cover_url?: string | null;
 }
 
 /**
@@ -187,7 +191,8 @@ export function editionMenu(edition: MenuEdition, sections: { id: string; name: 
     name: edition.name,
     barId,
     createdBy: null,
-    coverUrl: null,
+    // The photo leads a menu that's on; a past one is drawn (as on the team's page).
+    coverUrl: edition.from_venue && edition.is_current ? (edition.cover_url ?? null) : null,
     coverPosition: 50,
     startsAt: iso(edition.year, edition.month),
     endsAt: iso(edition.end_year, edition.end_month),

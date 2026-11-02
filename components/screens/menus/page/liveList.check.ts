@@ -13,7 +13,7 @@ const row = (itemId: string, o: Partial<ListRow> = {}): ListRow => ({
   id: `r-${itemId}`, itemId, sectionId: 's', sortOrder: 0, price: null, slotName: null, onFrom: null, offAt: null, addedBy: null, offBy: null, replacesItemId: null, teamSharedAt: null, addedAt: '2026-11-01T14:05:00Z', state: 'on', ...o,
 });
 const now = Date.parse('2026-11-01T18:00:00Z');
-const base = { bartender: false, asks: [] as ListAsk[], offTonight: [], closesAt: null as string | null, living: true, sectionIds: new Map([['Shaken', 's']]), userId: 'me', nameOf: (id: string | null) => (id === 'sam' ? 'Sam' : null), day: (iso: string) => iso.slice(5, 10), time: () => '4pm', listStart: '2026-10-01T00:00:00Z', now };
+const base = { bartender: false, asks: [] as ListAsk[], offTonight: [], pullsTonight: false, closesAt: null as string | null, living: true, sectionIds: new Map([['Shaken', 's']]), userId: 'me', nameOf: (id: string | null) => (id === 'sam' ? 'Sam' : null), day: (iso: string) => iso.slice(5, 10), time: () => '4pm', listStart: '2026-10-01T00:00:00Z', now };
 const ended = (itemId: string): EndedRun => ({ itemId, sectionName: 'Shaken', slotName: null, price: null, wentOn: '2026-10-01T00:00:00Z', cameOff: '2026-11-01T16:00:00Z', takenOffBy: 'me', addedBy: null, replacesItemId: null });
 
 // A swap done today: the new drink on, the old one struck after it, with Undo.
@@ -107,8 +107,12 @@ assert.deepEqual(out.lead?.rows[1].acts?.map((a) => a.kind), ['approve', 'turnDo
 assert.equal(out.main[0].rows[0].flag?.label, 'Waiting');
 
 // Off tonight: faded on the list with Back on; the third act on any other drink.
-out = liveList({ ...base, offTonight: [{ id: 'o', menuId: 'm', itemId: 'jack', until: tonight }], sections: [{ id: 's', name: 'Shaken', rows: [view('jack'), view('daiquiri')] }], rows: [row('jack'), row('daiquiri')], ended: [], endedDrinks: new Map(), may: true });
+out = liveList({ ...base, offTonight: [{ id: 'o', menuId: 'm', itemId: 'jack', until: tonight }], sections: [{ id: 's', name: 'Shaken', rows: [view('jack'), view('daiquiri')] }], rows: [row('jack'), row('daiquiri')], ended: [], endedDrinks: new Map(), may: true, pullsTonight: true });
 assert.deepEqual([out.main[0].rows[0].flag?.label, out.main[0].rows[0].ink, out.main[0].rows[0].acts?.map((a) => a.kind)], ['Not tonight', 'faded', ['backOn']]);
+assert.deepEqual(out.main[0].rows[1].acts?.map((a) => a.label), ['Swap', 'Take off', 'Off tonight']);
+// A bartender on shift pulls a drink for tonight too; their swaps are still asks.
+out = liveList({ ...base, bartender: true, offTonight: [{ id: 'o', menuId: 'm', itemId: 'jack', until: tonight }], sections: [{ id: 's', name: 'Shaken', rows: [view('jack'), view('daiquiri')] }], rows: [row('jack'), row('daiquiri')], ended: [], endedDrinks: new Map(), may: false, pullsTonight: true });
+assert.deepEqual(out.main[0].rows[0].acts?.map((a) => a.kind), ['backOn']);
 assert.deepEqual(out.main[0].rows[1].acts?.map((a) => a.label), ['Swap', 'Take off', 'Off tonight']);
 
 // Dates on a run, from a date column or a timestamp.

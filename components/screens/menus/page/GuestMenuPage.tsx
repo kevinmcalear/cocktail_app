@@ -43,6 +43,7 @@ export function GuestMenuPage({
   fresh,
   under,
   footer,
+  offTonight,
 }: {
   menu: MenuDetail;
   /** What the person looking adds (their allergies); a friend's menu has none. */
@@ -67,6 +68,8 @@ export function GuestMenuPage({
   /** Under the name, above the drinks. */
   under?: ReactNode;
   footer?: ReactNode;
+  /** Drinks off for tonight only: "Not tonight". */
+  offTonight?: ReadonlySet<string>;
 }) {
   const ds = useDs();
   const insets = useSafeAreaInsets();
@@ -86,6 +89,7 @@ export function GuestMenuPage({
     toBuy: null,
     day,
     now,
+    offTonight,
   });
   const items: Item[] = model.sections.flatMap((s) => [
     { key: `h-${s.id}`, head: { name: s.name, count: s.rows.length } },
@@ -118,7 +122,7 @@ export function GuestMenuPage({
           <View style={[column, styles.head]}>
             <MenuPageHead
               heroIds={hero}
-              coverUrl={null}
+              coverUrl={menu.coverUrl}
               name={menu.name}
               ink={model.ink}
               quiet={model.quiet}
