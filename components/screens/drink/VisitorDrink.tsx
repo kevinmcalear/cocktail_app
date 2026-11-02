@@ -25,7 +25,6 @@ export function VisitorDrink({ id }: { id: string }) {
       visitorLock={lock}
       canEdit={false}
       onEdit={() => {}}
-      sheet
     />
   );
 }

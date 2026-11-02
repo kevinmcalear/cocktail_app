@@ -2,7 +2,7 @@ import { Platform, StyleSheet, useWindowDimensions, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import { BackbarTheme, Display, useBreakpoint, useDs, useGutter } from '@/components/ds';
-import { layout, space } from '@/constants/tokens';
+import { displayName, layout, space } from '@/constants/tokens';
 import { orderedPictures, type ItemImageLink } from '@/lib/itemImages';
 
 import { DrinkHero, phoneHeroHeight } from './DrinkHero';
@@ -26,17 +26,15 @@ export function DrinkLoading({ seed }: DrinkLoadingProps) {
 
 function LoadingGround({ seed }: DrinkLoadingProps) {
   const ds = useDs();
-  const insets = useSafeAreaInsets();
+  const top = useSafeAreaInsets().top;
   const gutter = useGutter();
   const wide = useBreakpoint() !== 'phone';
   const { width, height } = useWindowDimensions();
-  // As DrinkPage lays out a sheet (the route always opens one).
-  const top = Platform.OS === 'ios' ? space.sm : insets.top;
   const heroHeight = wide ? height - top : phoneHeroHeight(width, height, top);
   if (!seed) return <View style={[styles.screen, { backgroundColor: ds.c.ground }]} accessibilityLabel="Loading drink" />;
   const pictures = orderedPictures(seed.item_images as ItemImageLink[] | undefined);
   const hero = <DrinkHero name={seed.name} pictures={pictures} glass={null} itemId={seed.id} height={heroHeight} fade={!wide} />;
-  const name = <Display>{seed.name}</Display>;
+  const name = <Display style={Platform.OS === 'android' ? displayName.page : undefined}>{seed.name}</Display>;
   return (
     <View style={[styles.screen, { backgroundColor: ds.c.ground }]} accessibilityLabel={`Loading ${seed.name}`}>
       {wide ? (
