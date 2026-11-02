@@ -135,6 +135,7 @@ function Page({ item, canEdit, adminFix = false, onEdit, pane, openBatch, visito
     lock,
     lines,
     verb: methodVerb(methods),
+    methods,
     serve: [glass?.name, ice?.name],
     fill,
     onGlass: () => setGlassOpen(true),

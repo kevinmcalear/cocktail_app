@@ -8,7 +8,8 @@ import { mix, withAlpha } from '@/lib/color';
 
 import type { FabFrame } from './AddFabMenu';
 import type { Frame } from './AddSheet';
-import { AddFabMenu, AddSheet, CreateSheet } from './addLayers';
+import { AddFabMenu, AddSheet } from './addLayers';
+import { CreateSheet } from './CreateSheetLazy';
 
 const LABEL = 'Add: name a drink, paste a link, describe it, or snap a menu, bottle or recipe';
 

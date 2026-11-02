@@ -1,12 +1,11 @@
 import { useRouter } from 'expo-router';
-import { useState } from 'react';
 import { ScrollView, StyleSheet, View } from 'react-native';
 
-import { Body, Button, Caption, Headline, Surface, Tag, useDs, useGutter } from '@/components/ds';
+import { Body, Button, Caption, Headline, Surface, useDs, useGutter } from '@/components/ds';
 import { NativeHeader, NativeTitle, useHeaderScroll } from '@/components/nav/NativeHeader';
 import { radius, space } from '@/constants/tokens';
 import { useStudyDecks, type Deck } from '@/hooks/useStudyDecks';
-import { knownCount, streak } from '@/lib/study';
+import { knownCount } from '@/lib/study';
 import { useStudyProgress } from '@/store/useStudyProgress';
 
 function DeckCard({ deck, primary }: { deck: Deck; primary: boolean }) {
@@ -45,16 +44,14 @@ function DeckCard({ deck, primary }: { deck: Deck; primary: boolean }) {
 /**
  * Study: learn the venue's drinks as flashcards, weakest first. Each role
  * studies what it can see: the spec on the back is masked like everywhere
- * else.
+ * else. No streaks (decision no-streaks): what you know, never how many days
+ * in a row.
  */
 export function StudyScreen() {
   const ds = useDs();
   const gutter = useGutter();
   const scroll = useHeaderScroll();
   const { decks, isLoading } = useStudyDecks();
-  const days = useStudyProgress((s) => s.days);
-  const [today] = useState(() => new Date());
-  const run = streak(days, today);
   const firstWithCards = decks.find((d) => d.cardIds.length)?.id;
 
   return (
@@ -64,11 +61,6 @@ export function StudyScreen() {
       <ScrollView {...scroll.props} contentContainerStyle={{ paddingBottom: scroll.bottom }}>
         <View style={[styles.body, { paddingHorizontal: gutter }]}>
           <NativeTitle title="Study" />
-          {run > 0 ? (
-            <Tag label={`${run}-day streak`} tone="accent" />
-          ) : (
-            <Caption tone="muted">Study a few cards today to start a streak.</Caption>
-          )}
           {isLoading ? <Caption tone="muted">Loading your decks…</Caption> : null}
           {decks.map((d) => (
             <DeckCard key={d.id} deck={d} primary={d.id === firstWithCards} />

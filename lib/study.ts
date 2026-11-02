@@ -1,5 +1,5 @@
 /**
- * Study: which cards come first, streaks, and the glass question. Pure; the
+ * Study: which cards come first, and the glass question. Pure; the
  * progress lives in store/useStudyProgress and the cards in hooks/useStudyDecks.
  */
 
@@ -29,28 +29,6 @@ export function orderDeck(ids: string[], progress: Record<string, CardProgress |
 /** How many cards in a deck are "nailed". */
 export function knownCount(ids: string[], progress: Record<string, CardProgress | undefined>): number {
   return ids.filter((id) => progress[id]?.rating === 'nailed').length;
-}
-
-/** Local calendar day, as YYYY-MM-DD. */
-export function dayKey(date: Date): string {
-  const pad = (n: number) => String(n).padStart(2, '0');
-  return `${date.getFullYear()}-${pad(date.getMonth() + 1)}-${pad(date.getDate())}`;
-}
-
-/**
- * Consecutive days studied, ending today or yesterday (so the streak survives
- * until the end of today). `days` are dayKey strings, any order, duplicates ok.
- */
-export function streak(days: string[], today: Date): number {
-  const set = new Set(days);
-  const cursor = new Date(today);
-  if (!set.has(dayKey(cursor))) cursor.setDate(cursor.getDate() - 1);
-  let count = 0;
-  while (set.has(dayKey(cursor))) {
-    count++;
-    cursor.setDate(cursor.getDate() - 1);
-  }
-  return count;
 }
 
 export interface GlassOption {

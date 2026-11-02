@@ -124,6 +124,10 @@ export function bothPrices(drink: Pick<MenuDrink, 'price' | 'menuPrice'>): strin
   return own ? `${own}, or ${menu} on this menu` : `${menu} on this menu only`;
 }
 
+/** A place held on a shared menu for a drink the reader may not see. */
+export const PRIVATE_DRINK = 'private:';
+export const isPrivateDrink = (id: string) => id.startsWith(PRIVATE_DRINK);
+
 export function plural(n: number, one: string, many = `${one}s`): string {
   return `${n} ${n === 1 ? one : many}`;
 }

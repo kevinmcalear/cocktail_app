@@ -1,7 +1,7 @@
 import { lazy, Suspense, type ComponentProps } from 'react';
 import { View } from 'react-native';
 
-import { drawing } from '@/constants/tokens';
+import { drawing, menuBandHeight } from '@/constants/tokens';
 import { useIsHydrated } from '@/hooks/useIsHydrated';
 
 import type { MenuBand as Band, MenuStrip as Strip } from './MenuBand';
@@ -17,7 +17,7 @@ const LazyStrip = lazy(() => import('./MenuBand').then((m) => ({ default: m.Menu
  */
 export function MenuBand(props: ComponentProps<typeof Band>) {
   const hydrated = useIsHydrated();
-  const space = <View style={{ height: props.height ?? 190 }} />;
+  const space = <View style={{ height: props.height ?? menuBandHeight }} />;
   if (!hydrated) return space;
   return (
     <Suspense fallback={space}>
