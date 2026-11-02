@@ -17,9 +17,9 @@ const brand = { name: 'Caretaker’s' } as never;
 const door = () => renderWithProviders(<StaffLinkDoor token="secret" barId="bar" brand={brand} onJoined={jest.fn()} fallback={null} />);
 
 describe('StaffLinkDoor, ask to join', () => {
-  it('says the team turned them down last time (board Keep-phone join, step 6)', () => {
+  it('says the team turned them down last time (board Keep-phone join, step 6)', async () => {
     mockMine = { data: { created_at: '2026-11-01T19:00:00Z', declined_at: '2026-11-01T19:30:00Z' }, isPending: false, isError: false };
-    door();
+    await door();
     expect(screen.getByText('The team said no last time. You can ask again.')).toBeTruthy();
     expect(screen.getByText('Ask to join')).toBeTruthy();
   });
