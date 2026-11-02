@@ -1,7 +1,7 @@
 import type { ItemPicture } from './itemImages';
 import { formatScore } from './ranking';
 
-interface PersonPhoto {
+interface PersonPhoto extends Pick<ItemPicture, 'brightness' | 'textZone' | 'aspect'> {
   imageUrl: string;
   isMine: boolean;
   poster: { name: string } | null;
@@ -28,7 +28,9 @@ export function heroPictures(own: ItemPicture[], people: PersonPhoto[] | null | 
   const person = own.some((p) => !p.isSketch) ? null : ([...(people ?? [])].sort((a, b) => (b.score ?? -1) - (a.score ?? -1))[0] ?? null);
   if (person) {
     const credit = photoCredit(person);
-    return { pictures: [{ url: person.imageUrl, isSketch: false, isOutdated: false, credit, sourceUrl: null }, ...own], credit };
+    // Its layout (get_drink_photos) makes the page light or puts the title in it, like the drink's own photos.
+    const { brightness, textZone, aspect } = person;
+    return { pictures: [{ url: person.imageUrl, isSketch: false, isOutdated: false, credit, sourceUrl: null, brightness, textZone, aspect }, ...own], credit };
   }
   return { pictures: own, credit: own[0]?.credit ? `Photo: ${own[0].credit}` : null };
 }

@@ -9,8 +9,6 @@
 import type { BatchSummary } from '@/lib/bringInBatch';
 import type { MadeBatches, RecipeChoices } from '@/lib/bringInDraft';
 import type { ReadFile } from '@/lib/readAnything';
-import { drinkRecipe } from '@/lib/readBatch';
-import { sameName } from '@/lib/sameName';
 import type { RecipeReading } from '@/supabase/functions/_shared/anythingRead';
 
 /** Approved is saved; saving is on its way; skipped is left out (and can still be approved). */
@@ -215,20 +213,4 @@ export function putBack(review: ImportReview, gone: TakenOut, now: string): Impo
     unsure: gone.unsure ? [...unsure, i] : unsure,
     at: i,
   };
-}
-
-/**
- * Kept as house-made: the drinks still to check that call for it match it
- * again. A line someone set to "make it new" goes back to matching, so it
- * finds the house-made once the catalog has it; picks stay as picked.
- */
-export function rematch(review: ImportReview, name: string): ImportReview {
-  const choices = review.choices.map((c, k) => {
-    if (!canCheck(review, k)) return c;
-    // Choices follow the lines as shown (a batch kept as separate lines included).
-    const shown = review.recipes[k] ? drinkRecipe(review.recipes[k], c).lines : [];
-    const lines = Object.fromEntries(Object.entries(c.lines).filter(([at, choice]) => !('fresh' in choice && sameName(shown[Number(at)]?.ingredient ?? '', name))));
-    return Object.keys(lines).length === Object.keys(c.lines).length ? c : { ...c, lines };
-  });
-  return { ...review, choices };
 }
