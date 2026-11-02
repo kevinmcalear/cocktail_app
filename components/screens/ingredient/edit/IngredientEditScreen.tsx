@@ -40,11 +40,11 @@ const PHONE_HERO = 280;
  * bottle what it is, its tags, where it lives, its price and who sees it.
  * Done saves; a prep other drinks use asks first (AskAtSave).
  */
-export function IngredientEditScreen({ id, onExit }: { id: string; onExit: () => void }) {
+export function IngredientEditScreen({ id, onExit, inSheet }: { id: string; onExit: () => void; inSheet?: boolean }) {
   const edit = useIngredientEdit(id);
   return (
     <EditBrand barId={useIngredient(id).data?.ingredient?.bar_id}>
-      <Page edit={edit} savedId={id} onExit={onExit} />
+      <Page edit={edit} savedId={id} onExit={onExit} inSheet={inSheet} />
     </EditBrand>
   );
 }
@@ -54,19 +54,19 @@ export function IngredientDraftEditScreen({ draft, onExit }: { draft: Parameters
   const edit = useIngredientDraftEdit(draft);
   return (
     <EditBrand barId={edit.editor.form.barId}>
-      <Page edit={edit} savedId={null} onExit={onExit} />
+      <Page edit={edit} savedId={null} onExit={onExit} inSheet />
     </EditBrand>
   );
 }
 
 type Sheet = MoreChoice | BodySheet | 'more' | null;
 
-function Page({ edit, savedId, onExit }: { edit: IngredientEdit; savedId: string | null; onExit: () => void }) {
+function Page({ edit, savedId, onExit, inSheet }: { edit: IngredientEdit; savedId: string | null; onExit: () => void; inSheet?: boolean }) {
   const ds = useDs();
   const insets = useSafeAreaInsets();
   const gutter = useGutter();
   const wide = useBreakpoint() !== 'phone';
-  const top = Platform.OS === 'ios' ? space.sm : insets.top;
+  const top = inSheet && Platform.OS === 'ios' ? space.sm : insets.top;
   const { editor, prep, setPrep, history } = edit;
   const { form } = editor;
   const draft = 'publish' in editor ? editor : null;

@@ -2,7 +2,7 @@ import { useRouter, type Href } from 'expo-router';
 import { StyleSheet, View } from 'react-native';
 
 import { Caption, DsText, PressableScale, TextLink, Title, useDs } from '@/components/ds';
-import { radius, space } from '@/constants/tokens';
+import { font, radius, space } from '@/constants/tokens';
 import { useIsHydrated } from '@/hooks/useIsHydrated';
 import { useBarWeek, useWeekStart } from '@/hooks/useWeek';
 import { toDay } from '@/lib/collection';
@@ -36,7 +36,7 @@ export function TonightWeek({ barId }: { barId: string }) {
         <TonightEvent key={event.id} event={event} />
       ))}
       <View style={styles.head}>
-        <DsText variant="caption" tone="muted" style={styles.caps}>
+        <DsText variant="label" role="heading" aria-level={2} style={font.semiBold}>
           This week
         </DsText>
         <TextLink label="See the week" onPress={() => router.push('/week')} />
@@ -81,7 +81,6 @@ function TonightEvent({ event }: { event: WeekItem }) {
 const styles = StyleSheet.create({
   wrap: { gap: space.md, paddingTop: space.sm },
   head: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between' },
-  caps: { textTransform: 'uppercase', letterSpacing: 0.8 },
   card: { gap: space.xs, padding: space.lg, borderRadius: radius.card, borderCurve: 'continuous', borderWidth: 1 },
   rule: { height: StyleSheet.hairlineWidth, marginTop: space.sm },
 });
