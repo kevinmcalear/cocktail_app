@@ -1,7 +1,8 @@
 // Launch analytics: a short, fixed list of product events. Everything goes
 // through track(), so what we collect is readable in one place. Properties are
 // only flags, counts and fixed labels: never names, emails, free text, ids of
-// people or anything someone typed. PostHog itself loads lazily (Analytics.tsx)
+// people or anything someone typed (lib/analyticsCallers.check.ts refuses a bare
+// string, and an event nothing sends). PostHog itself loads lazily (Analytics.tsx)
 // and only when EXPO_PUBLIC_POSTHOG_KEY is set; without it track() does nothing.
 // People can turn it off in Settings (lib/analyticsChoice.ts saves that).
 
@@ -9,9 +10,17 @@ import type { BarClaimMethod } from '@/lib/claimVerification';
 
 export type AnalyticsProps = Record<string, boolean | number | string | null>;
 
+/** How someone first reached the app (lib/analyticsDoor.ts). */
+export type Door = 'table' | 'shared' | 'rank' | 'invite';
+/** A new account's way in: its device's door, or direct (the store, a search, a typed address). */
+export type SignUpSource = Door | 'direct';
+
+/** What was handed on (lib/shareLink.ts). */
+export type SharedWhat = 'drink' | 'menu' | 'profile' | 'bar' | 'claim' | 'event' | 'calendar' | 'staff_link' | 'flavour' | 'batch' | 'guest_credit';
+
 /** Every event we send, with the properties it may carry. */
 export interface AnalyticsEvents {
-  sign_up: undefined;
+  sign_up: { source: SignUpSource };
   age_check_passed: undefined;
   drink_ranked: { rerank: boolean; at_bar: boolean };
   drink_collected: { kind: 'drink' | 'release' };
@@ -20,6 +29,14 @@ export interface AnalyticsEvents {
   invite_sent: undefined;
   claim_started: { method: BarClaimMethod; approved: boolean };
   search_used: { surface: 'search' | 'discover' };
+  // The guest loop. table_opened is a public drink or menu link opened
+  // (hooks/useShareSlug): what a table's QR opens until the table page has a
+  // route. ranked_signed_out is Rank it tapped with no account; held stays false
+  // until a rank can wait on the phone. kept is that person signing in.
+  table_opened: { kind: 'drink' | 'menu' };
+  ranked_signed_out: { held: boolean };
+  kept: { ranks: number };
+  shared: { what: SharedWhat; how: 'sheet' | 'clipboard' };
 }
 
 export type AnalyticsEvent = keyof AnalyticsEvents;
