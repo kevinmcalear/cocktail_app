@@ -1,6 +1,6 @@
 import { StyleSheet, View } from 'react-native';
 
-import { Body, Caption, DrinkImage, PressableScale, TextLink, useDs } from '@/components/ds';
+import { Body, Caption, DrinkImage, PressableScale, Switch, TextLink, useDs } from '@/components/ds';
 import { pickDrinkPhotos } from '@/components/drink/drinkImages';
 import { IconSymbol } from '@/components/ui/icon-symbol';
 import { radius, space } from '@/constants/tokens';
@@ -43,8 +43,8 @@ export function MadePhoto({ uri, name, onChange }: { uri: string | null; name: s
 }
 
 /**
- * "Show on my profile" above Save. When the profile can't show it yet
- * (no public profile, or it shows no drinks had), says so under the box.
+ * "Show on my profile", a switch on its own row. When the profile can't show
+ * it yet (no public profile, or it shows no drinks had), says so under it.
  */
 export function ShowOnProfile({ on, onChange }: { on: boolean; onChange: (on: boolean) => void }) {
   const ds = useDs();
@@ -56,12 +56,10 @@ export function ShowOnProfile({ on, onChange }: { on: boolean; onChange: (on: bo
       : null;
   return (
     <View style={styles.show}>
-      <PressableScale role="checkbox" aria-checked={on} accessibilityLabel="Show on my profile" onPress={() => onChange(!on)} style={styles.showRow}>
+      <View style={[styles.showRow, { backgroundColor: ds.c.surface }]}>
         <Body>Show on my profile</Body>
-        <View style={[styles.mark, { borderColor: on ? ds.accentText : ds.c.lineStrong, backgroundColor: on ? ds.accentText : 'transparent' }]}>
-          {on ? <IconSymbol name="checkmark" size={14} color={ds.c.ground} /> : null}
-        </View>
-      </PressableScale>
+        <Switch value={on} onValueChange={onChange} label="Show on my profile" />
+      </View>
       {on && blocked ? <Caption tone="muted">{blocked}</Caption> : null}
     </View>
   );
@@ -72,6 +70,5 @@ const styles = StyleSheet.create({
   tile: { width: TILE, height: TILE, borderRadius: radius.control, alignItems: 'center', justifyContent: 'center', gap: space.xs, overflow: 'hidden' },
   fill: { width: TILE, height: TILE },
   show: { gap: space.xs },
-  showRow: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', minHeight: 44, gap: space.md },
-  mark: { width: 22, height: 22, borderRadius: radius.mark, borderWidth: 1.5, alignItems: 'center', justifyContent: 'center' },
+  showRow: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', minHeight: 52, paddingHorizontal: space.lg, borderRadius: radius.card, gap: space.md },
 });

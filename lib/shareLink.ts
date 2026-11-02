@@ -13,6 +13,11 @@ export function drinkUrl(slugOrId: string): string {
   return `${siteOrigin()}/d/${slugOrId}`;
 }
 
+/** A bottle's or house-made thing's link: its page in the app (they have no public page), a sign-in for the rest. */
+export function ingredientUrl(id: string): string {
+  return `${siteOrigin()}/ingredient/${id}`;
+}
+
 /**
  * What the native share sheet gets for a link. iOS sends `message` and `url`
  * as two items, so a link in both arrives twice (Q31): iOS gets only the
