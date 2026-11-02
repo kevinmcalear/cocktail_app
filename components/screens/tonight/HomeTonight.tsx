@@ -33,7 +33,7 @@ export function HomeTonight() {
   const tiles = shelfTiles(drinks.canMake, drinks.oneAway);
   const away = bestAway(drinks.oneAway);
   const awayLine = away ? oneBottleLine(away.bottles, away.drinks) : null;
-  const openShelf = () => router.push('/shelf');
+  const openShelf = () => router.push('/drinks?tab=shelf');
   const week = useHomeWeek();
   const friends = useFriends();
   const nothing = !drinks.isLoading && !tiles.length && !week.card && !week.rows.length;

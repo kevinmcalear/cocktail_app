@@ -1,4 +1,4 @@
-import { useDs } from '@/components/ds';
+import { useDs } from '@/components/ds/theme';
 import { mix } from '@/lib/color';
 
 /**

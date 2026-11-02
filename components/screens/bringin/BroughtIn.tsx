@@ -85,7 +85,7 @@ export function BroughtIn({ view }: { view: BroughtInView }) {
       : view.drinkIds.length === 1
         ? { label: 'Open the drink', onPress: () => go(`/cocktail/${view.drinkIds[0]}`) }
         : s.kind === 'bottles' && !view.barId
-          ? { label: 'Open My Bar', onPress: () => router.replace('/' as Href) }
+          ? { label: 'Open your shelf', onPress: () => router.replace('/drinks?tab=shelf' as Href) }
           : { label: 'Done', onPress: () => router.replace('/' as Href) };
 
   return (

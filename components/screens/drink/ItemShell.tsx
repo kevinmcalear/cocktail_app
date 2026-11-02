@@ -8,6 +8,7 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { scheduleOnRN } from 'react-native-worklets';
 
 import { ExtendedFab, useDs, useGutter, type FabIcon } from '@/components/ds';
+import { useFabUnderToast } from '@/components/ds/Toast';
 import { useTabBarInset } from '@/components/nav/WebTabBar';
 import { layout, space } from '@/constants/tokens';
 import { useIsWideWeb } from '@/hooks/useIsWideWeb';
@@ -208,6 +209,8 @@ function PageFab({ scrollY, bottom, ...fab }: NonNullable<ItemShellProps['fab']>
     },
   );
   const tones = useItemTones();
+  // The toast goes above it, while this page is the one showing.
+  useFabUnderToast(useIsFocused() ? bottom + layout.fab : null);
   // `bottom` already holds the 16 dp gap (useTabBarInset, or the pane's inset + space.lg): no second one.
   return <ExtendedFab {...fab} open={open} colors={tones ? { fill: tones.fab, text: tones.onFab } : undefined} style={{ bottom }} />;
 }
