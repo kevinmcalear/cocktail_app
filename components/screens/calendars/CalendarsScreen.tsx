@@ -122,7 +122,7 @@ function FeedSection({ barId }: { barId: string }) {
         disabled={!feed}
         onPress={async () => {
           if (!feed) return;
-          setCopied((await shareLink(feed, 'Our calendar', { copy: true }).catch(() => null)) === 'copied');
+          setCopied((await shareLink(feed, 'Our calendar', 'calendar', { copy: true }).catch(() => null)) === 'copied');
         }}
         trailing={<Caption tone="accent">{copied ? 'Copied' : 'Copy'}</Caption>}
       />

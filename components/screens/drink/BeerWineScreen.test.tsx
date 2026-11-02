@@ -24,6 +24,7 @@ jest.mock('expo-router', () => ({
   useLocalSearchParams: () => ({ id: 'beer-b1' }),
   useRouter: () => ({ push: mockPush, back: jest.fn(), replace: jest.fn(), canGoBack: () => true }),
   Redirect: () => null,
+  useSegments: () => [],
 }));
 jest.mock('@/hooks/useBeers', () => ({ useBeer: (id: string) => ({ data: id === 'b1' ? lager : undefined, isPending: false, error: null, refetch: jest.fn() }) }));
 jest.mock('@/hooks/useWines', () => ({ useWine: () => ({ data: undefined, isPending: false, error: null, refetch: jest.fn() }) }));

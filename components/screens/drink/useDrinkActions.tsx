@@ -3,6 +3,7 @@ import { useState } from 'react';
 
 import { useSignedIn } from '@/ctx/AuthContext';
 import { useMadeDrinks } from '@/hooks/useMade';
+import { noteRankedSignedOut } from '@/lib/analyticsDoor';
 import type { ItemPicture } from '@/lib/itemImages';
 import type { SpecLine } from '@/lib/spec';
 
@@ -28,7 +29,11 @@ export function useDrinkActions(item: ActionItem, picture: ItemPicture | null, l
   const ageGate = useAgeGate();
   const [open, setOpen] = useState<'rank' | 'made' | null>(null);
   const madeTimes = (useMadeDrinks(live).data ?? []).filter((m) => m.itemId === item.id).length;
-  const start = (sheet: 'rank' | 'made') => (signedIn ? ageGate.gate(() => setOpen(sheet)) : router.push('/auth/login'));
+  const start = (sheet: 'rank' | 'made') => {
+    if (signedIn) return ageGate.gate(() => setOpen(sheet));
+    if (sheet === 'rank') noteRankedSignedOut();
+    router.push('/auth/login');
+  };
   return {
     rank: () => start('rank'),
     made: () => start('made'),

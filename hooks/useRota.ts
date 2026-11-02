@@ -32,9 +32,9 @@ export function useShifts(barId: string | null | undefined, fromIso: string, toI
  * waits on the phone and sends when there's signal (hooks/barWrites.ts), in
  * the order it was made. Use `mutate`, not `mutateAsync`: a queued write
  * doesn't resolve until it sends. `onRefused` hears a write the database said
- * no to; the refetch after it puts the rota back.
+ * no to (with a way to send the same write again); the refetch after it puts the rota back.
  */
-export function useSaveShifts(barId: string, onRefused?: () => void) {
+export function useSaveShifts(barId: string, onRefused?: (retry: () => void) => void) {
   const queryClient = useQueryClient();
   const me = useUserId();
   const write = BAR_WRITES.shifts;
@@ -49,7 +49,7 @@ export function useSaveShifts(barId: string, onRefused?: () => void) {
         queryClient.setQueryData<Shift[]>(key, (old) => (old ? patchShifts(old, w, from, to, me) : old));
       }
     },
-    onError: () => onRefused?.(),
+    onError: (_e, w) => onRefused?.(() => mutation.mutate(w)),
     onSettled: (_data, _error, w) => {
       for (const queryKey of write.refresh(w)) void queryClient.invalidateQueries({ queryKey });
     },
