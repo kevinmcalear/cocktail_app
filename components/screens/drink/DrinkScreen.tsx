@@ -128,7 +128,7 @@ function Page({ item, canEdit, adminFix = false, onEdit, sheet, pane, openBatch,
   const bookmark = !preview && signedIn && !onTeam(viewer);
   const toMake = useCollectToggle({ kind: 'drink', itemId: item.id }, bookmark);
   const slug = useShareSlug('d', preview ? null : item.id).data;
-  const share = preview || viewingAs ? undefined : () => void shareOrCopy(drinkUrl(slug ?? item.id), item.name);
+  const share = preview || viewingAs ? undefined : () => void shareOrCopy(drinkUrl(slug ?? item.id), item.name, 'drink');
   const liquid = useSkyColour(photos ? null : item.id, preview?.sketch);
   const eyebrow = viewer === 'home' ? 'My bar' : catalog ? 'Classic' : item.bar_id && barName ? `${barName} · House spec` : null;
 

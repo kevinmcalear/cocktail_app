@@ -51,7 +51,7 @@ export function NavRow({ label, icon, current, hint, badge, role = 'link', look,
         current && { backgroundColor: withAlpha(ds.accentText, 0.16) },
       ]}
     >
-      <IconSymbol name={icon} size={18} color={current ? ds.accentText : look === 'outlined' ? ds.c.ink : ds.c.muted} on={current} />
+      <IconSymbol name={icon} size={18} color={current ? ds.accentText : look === 'outlined' ? ds.c.ink : ds.c.muted} />
       <DsText color={current || look === 'outlined' ? ds.c.ink : ds.c.muted} numberOfLines={1} style={[styles.label, current && styles.strong]}>
         {label}
       </DsText>

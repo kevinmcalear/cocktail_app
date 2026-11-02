@@ -16,6 +16,7 @@ import { useLastPlace } from '@/store/useLastPlace';
 import { useNoteDrafts } from '@/store/useNoteDrafts';
 import { useOfflineEdits } from '@/store/useOfflineEdits';
 import { useRecentActivityStore } from '@/store/useRecentActivityStore';
+import { useRecentSearches } from '@/store/useRecentSearches';
 import { useVenueSetup } from '@/store/useVenueSetup';
 
 /**
@@ -34,6 +35,7 @@ export async function clearUserData(): Promise<void> {
   queryClient.removeQueries({ predicate: isUserQuery });
   dropUnsentWrites(queryClient);
   useRecentActivityStore.setState({ items: [] });
+  useRecentSearches.setState({ terms: [] });
   useLastPlace.getState().clear();
   useAppMode.getState().forgetVenue();
   useDrinkWizardStore.setState({ kept: {}, cleared: [] });
