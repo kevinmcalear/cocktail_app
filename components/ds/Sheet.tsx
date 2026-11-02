@@ -56,6 +56,8 @@ export interface SheetProps {
    * centred dialog on the web, a little wider. Decision sheets: mixed.
    */
   kind?: 'small' | 'flow';
+  /** The web at phone width: the whole window, not a dialog (Sheet.web). */
+  fullAtPhoneWidth?: boolean;
 }
 
 /**

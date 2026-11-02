@@ -110,13 +110,17 @@ async function keptBars(bars: BarPage[]): Promise<KeptBar[]> {
   });
 }
 
-/** Bars you love (follow), latest first, each with the menu it's pouring now. */
+/**
+ * Bars you love (follow), latest first, each with the menu it's pouring now.
+ * Saved in a file, so offline Discover still lists them (Sta-discover).
+ */
 export function useLovedBars() {
   const userId = useUserId();
   return useQuery({
     queryKey: lovedKey(userId),
     enabled: !!userId,
     staleTime: 60_000,
+    meta: { persist: true },
     queryFn: async (): Promise<LovedBar[]> => {
       const { data, error } = await supabase.from('loved_bars').select(`alerts, profile:profiles!profile_id(${BAR_PAGE})`).order('loved_at', { ascending: false });
       if (error) throw error;

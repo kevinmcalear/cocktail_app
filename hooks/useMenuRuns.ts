@@ -11,17 +11,19 @@ import { groupMenuCredits, type MenuCredit, type MenuDrinkRow } from '@/lib/prof
 import { jsonAs, supabase } from '@/lib/supabase';
 import type { MenuDrink } from '@/types/menus';
 
+/** A bar's menus as one query, shared by its page and Discover's New menus (hooks/useDiscoverHome.ts). */
+export const menuEditionsQuery = (profileId: string) => ({
+  queryKey: ['profile-menu-editions', profileId],
+  queryFn: async (): Promise<MenuEdition[]> => {
+    const { data, error } = await supabase.rpc('get_menu_editions', { p_profile_id: profileId });
+    if (error) throw error;
+    return sortEditions((data ?? []).map((e) => ({ ...e, drinks: jsonAs<MenuEditionDrink[]>(e.drinks) })));
+  },
+});
+
 /** Every cocktail menu a bar has put out, newest first. */
 export function useMenuEditions(profileId: string | null | undefined) {
-  return useQuery({
-    queryKey: ['profile-menu-editions', profileId],
-    enabled: !!profileId,
-    queryFn: async (): Promise<MenuEdition[]> => {
-      const { data, error } = await supabase.rpc('get_menu_editions', { p_profile_id: profileId! });
-      if (error) throw error;
-      return sortEditions((data ?? []).map((e) => ({ ...e, drinks: jsonAs<MenuEditionDrink[]>(e.drinks) })));
-    },
-  });
+  return useQuery({ ...menuEditionsQuery(profileId ?? ''), enabled: !!profileId });
 }
 
 export interface DrinkMenuRun extends MenuDates {

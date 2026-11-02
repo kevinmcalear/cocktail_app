@@ -12,13 +12,15 @@ export type AnalyticsProps = Record<string, boolean | number | string | null>;
 
 /** How someone first reached the app (lib/analyticsDoor.ts). */
 export type Door = 'table' | 'shared' | 'rank' | 'invite';
+/** A new account's way in: its device's door, or direct (the store, a search, a typed address). */
+export type SignUpSource = Door | 'direct';
 
 /** What was handed on (lib/shareLink.ts). */
-export type SharedWhat = 'drink' | 'menu' | 'profile' | 'bar' | 'claim' | 'event' | 'calendar' | 'staff_link' | 'flavour' | 'batch' | 'guest_credit';
+export type SharedWhat = 'drink' | 'menu' | 'profile' | 'bar' | 'claim' | 'event' | 'calendar' | 'staff_link' | 'flavour' | 'batch' | 'guest_credit' | 'ingredient';
 
 /** Every event we send, with the properties it may carry. */
 export interface AnalyticsEvents {
-  sign_up: undefined;
+  sign_up: { source: SignUpSource };
   age_check_passed: undefined;
   drink_ranked: { rerank: boolean; at_bar: boolean };
   drink_collected: { kind: 'drink' | 'release' };
