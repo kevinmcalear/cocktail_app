@@ -110,7 +110,8 @@ export function useMenuLens(menu: MenuDetail | null | undefined): MenuLensData {
   const cost = new Map<string, string>();
   const pcts: number[] = [];
   for (const r of costRows) {
-    const total = r.cost && !(r.cost.total_minor === 0 && r.cost.missing > 0) ? r.cost.total_minor : null;
+    // A drink with no spec, or none of it priced, has no cost yet (not 0%).
+    const total = r.cost && r.cost.total_minor > 0 ? r.cost.total_minor : null;
     const m = total == null ? null : margin(total, priceMinor(printedPrice(r), settings?.currency ?? null), tax);
     if (!m) continue;
     cost.set(r.id, `${Math.round(m.pourCost)}% cost`);
