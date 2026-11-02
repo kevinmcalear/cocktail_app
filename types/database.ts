@@ -7915,7 +7915,9 @@ export type Database = {
       get_drink_photos: {
         Args: { p_item_id: string; p_limit?: number }
         Returns: {
+          brightness: number
           created_at: string
+          height: number
           id: string
           image_url: string
           is_mine: boolean
@@ -7923,6 +7925,8 @@ export type Database = {
           poster_handle: string
           poster_name: string
           score: number
+          text_zone: Json
+          width: number
         }[]
       }
       get_drink_rankings: {
