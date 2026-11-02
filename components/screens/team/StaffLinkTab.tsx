@@ -46,11 +46,11 @@ export function StaffLinkTab({ barId, barName, ceiling, admin }: { barId: string
   const copy = async () => {
     if (!url) return;
     if (await writeClipboard(url)) Burnt.toast({ title: 'Link copied', preset: 'done', duration: 2 });
-    else await shareOrCopy(url, title);
+    else await shareOrCopy(url, title, 'staff_link');
   };
   // Share the link opens the share sheet (the browser's on the web, where there is one).
   const share = () => {
-    if (url) void shareOrCopy(url, title);
+    if (url) void shareOrCopy(url, title, 'staff_link');
   };
   const roles = INVITE_ROLES.filter((r) => r.level < TEAM_MANAGE && r.level <= ceiling);
   const failed = save.error ?? renew.error;

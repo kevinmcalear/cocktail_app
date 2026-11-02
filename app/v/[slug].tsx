@@ -15,6 +15,7 @@ import { useMyInvites } from '@/hooks/useBarInvites';
 import { useBars } from '@/hooks/useBars';
 import { useVenueBranding, type VenueBranding } from '@/hooks/useVenueBranding';
 import { useVenueWebHead } from '@/hooks/useVenueWebHead';
+import { noteDoor } from '@/lib/analyticsDoor';
 import { faceFromDb, usableGroundTint } from '@/lib/brand';
 import { installMode, promptInstall, subscribeInstall, type InstallMode } from '@/lib/webInstall';
 import { useAppMode } from '@/store/useAppMode';
@@ -30,8 +31,12 @@ export default function VenueStaffLink() {
   const venueQuery = useVenueBranding(slug?.toLowerCase());
   const venue = venueQuery.data;
   const { session, loading: authLoading } = useAuth();
+  const signedOut = !authLoading && !session;
 
   useVenueWebHead(venue);
+  useEffect(() => {
+    if (signedOut) noteDoor('invite');
+  }, [signedOut]);
 
   const title = venue?.name ?? 'Staff link';
   const head = (

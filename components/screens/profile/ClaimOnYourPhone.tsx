@@ -17,7 +17,7 @@ import { useShareLink } from './useShareLink';
 export function ClaimOnYourPhone({ profileRef, name, title }: { profileRef: string; name: string; title?: string }) {
   const ds = useDs();
   const url = `${siteOrigin()}${claimPath(profileRef)}`;
-  const share = useShareLink(url, `Claim ${name}`);
+  const share = useShareLink(url, `Claim ${name}`, 'claim');
   return (
     <View style={styles.panel}>
       {title ? (
