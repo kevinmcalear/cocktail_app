@@ -8,6 +8,7 @@ import { radius, space } from '@/constants/tokens';
 import { LogBatchButton } from '@/components/screens/prep/LogBatchButton';
 import { categoryOf } from '@/hooks/useTonight';
 import { itemHref } from '@/lib/itemRoutes';
+import { withAlpha } from '@/lib/color';
 import { plural } from '@/lib/menus';
 import { prepLine } from '@/lib/tonight';
 
@@ -97,17 +98,22 @@ export function NeedsYou({ t }: { t: Staff }) {
   );
 }
 
-/** On shift: who's on tonight, who opens and closes, from the rota (shifts). Opens My team. */
+/**
+ * On shift: who's on tonight, who opens and closes, from the rota. Opens the
+ * rota. With nobody on, someone who writes the rota still gets the way in.
+ */
 export function OnShift({ t }: { t: Staff }) {
   const ds = useDs();
   const router = useRouter();
-  if (!t.onShift) return null;
-  const { names, sub } = t.onShift;
+  if (!t.onShift && !t.writesRota) return null;
+  const go = () => router.push('/team/rota' as Href);
+  const names = t.onShift?.names ?? 'Nobody’s on tonight yet';
+  const sub = t.onShift ? t.onShift.sub : 'Set the rota';
   return (
-    <TonightSection title="On shift">
-      <PressableScale role="link" accessibilityLabel={[names, sub].filter(Boolean).join('. ')} onPress={() => router.push('/team' as Href)} style={[styles.shift, { borderBottomColor: ds.c.line }]}>
+    <TonightSection title="On shift" aside="Rota" onAside={go}>
+      <PressableScale role="link" accessibilityLabel={[names, sub].filter(Boolean).join('. ')} onPress={go} style={[styles.shift, { backgroundColor: withAlpha(ds.c.ink, 0.06) }]}>
         <View style={[styles.mark, { backgroundColor: ds.c.raised }]}>
-          <DsText variant="headline">{names.charAt(0)}</DsText>
+          {t.onShift ? <DsText variant="headline">{names.charAt(0)}</DsText> : <IconSymbol name="calendar" size={20} color={ds.c.muted} />}
         </View>
         <View style={styles.flex}>
           <DsText variant="body">{names}</DsText>
@@ -122,7 +128,7 @@ export function OnShift({ t }: { t: Staff }) {
 const styles = StyleSheet.create({
   card: { paddingVertical: space.xs, paddingHorizontal: space.lg, overflow: 'hidden' },
   end: { flexDirection: 'row', alignItems: 'center', gap: space.sm },
-  shift: { flexDirection: 'row', alignItems: 'center', gap: space.md, paddingVertical: space.md, borderBottomWidth: StyleSheet.hairlineWidth },
+  shift: { flexDirection: 'row', alignItems: 'center', gap: space.md, padding: space.sm + 2, marginHorizontal: -(space.sm + 2), borderRadius: radius.control + 4 },
   mark: { width: 40, height: 40, borderRadius: radius.pill, alignItems: 'center', justifyContent: 'center' },
   flex: { flex: 1, minWidth: 0 },
 });

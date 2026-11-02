@@ -74,7 +74,7 @@ function Hub({ profile }: { profile: MyProfile }) {
   const [handleError, setHandleError] = useState<string | undefined>();
   const isPublic = save.isPending && save.variables?.isPublic !== undefined ? save.variables.isPublic : profile.isPublic;
   const line = profileLine({ tagline: profile.tagline, headline_position_id: profile.headlinePositionId }, positions);
-  const share = useShareLink(`${siteOrigin()}/p/${profile.handle}`, profile.displayName);
+  const share = useShareLink(`${siteOrigin()}/p/${profile.handle}`, profile.displayName, 'profile');
 
   const city = profile.showsCity ? profile.city : hiddenCity;
   const about = ['Name', profile.showsPhoto ? 'photo for people on Cocktail' : 'initials for everyone else', line, city ? `${city} ${profile.showsCity ? 'shown' : 'hidden'}` : null].filter(Boolean).join(', ');
