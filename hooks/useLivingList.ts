@@ -169,6 +169,18 @@ async function check<T extends { error: { message: string } | null }>(res: Promi
   return out;
 }
 
+/** Said when the database refused a change without an error (row-level security): the list may not be the caller's to change any more. */
+export const NOT_CHANGED = 'Couldn’t change the list. It may not be yours to change now.';
+
+/**
+ * An update or delete that RLS refuses changes no rows and returns no error,
+ * so each one asks for the ids it changed and fails when there are none.
+ */
+async function changed(res: PromiseLike<{ data: unknown[] | null; error: { message: string } | null }>): Promise<void> {
+  const { data } = await check(res);
+  if (!data?.length) throw new Error(NOT_CHANGED);
+}
+
 /** The changes on a list's rows. `at` null: now; an ISO date: from then (the next service). */
 export function useListChanges(menuId: string) {
   const invalidate = useInvalidateList(menuId);
@@ -181,7 +193,7 @@ export function useListChanges(menuId: string) {
     }),
     takeOff: useMutation({
       mutationFn: async ({ rowId, at = null }: { rowId: string; at?: string | null }) =>
-        void (await check(supabase.from('menu_drinks').update({ off_at: at ?? new Date().toISOString() }).eq('id', rowId))),
+        changed(supabase.from('menu_drinks').update({ off_at: at ?? new Date().toISOString() }).eq('id', rowId).select('id')),
       ...opts,
     }),
     add: useMutation({
@@ -206,9 +218,9 @@ export function useListChanges(menuId: string) {
     undoSwap: useMutation({
       mutationFn: async ({ swappedIn, replaced }: { swappedIn: ListRow; replaced: ListRow | null }) => {
         if (!swappedIn.replacesItemId) throw new Error('That drink wasn’t swapped in.');
-        await check(supabase.from('menu_drinks').delete().eq('id', swappedIn.id));
+        await changed(supabase.from('menu_drinks').delete().eq('id', swappedIn.id).select('id'));
         if (replaced) {
-          await check(supabase.from('menu_drinks').update({ off_at: null }).eq('id', replaced.id));
+          await changed(supabase.from('menu_drinks').update({ off_at: null }).eq('id', replaced.id).select('id'));
           return;
         }
         await check(
@@ -225,33 +237,35 @@ export function useListChanges(menuId: string) {
     }),
     /** Approves a waiting change (only someone who may change the list). */
     approve: useMutation({
-      mutationFn: async (rowId: string) => void (await check(supabase.from('menu_drinks').update({ waiting: null }).eq('id', rowId))),
+      mutationFn: async (rowId: string) => changed(supabase.from('menu_drinks').update({ waiting: null }).eq('id', rowId).select('id')),
       ...opts,
     }),
     /** Turns down a waiting change: an add goes, a take-off is withdrawn. */
     turnDown: useMutation({
       mutationFn: async ({ rowId, waiting }: { rowId: string; waiting: 'on' | 'off' }) =>
-        void (await check(
-          waiting === 'on' ? supabase.from('menu_drinks').delete().eq('id', rowId) : supabase.from('menu_drinks').update({ off_at: null }).eq('id', rowId)
-        )),
+        changed(
+          waiting === 'on'
+            ? supabase.from('menu_drinks').delete().eq('id', rowId).select('id')
+            : supabase.from('menu_drinks').update({ off_at: null }).eq('id', rowId).select('id')
+        ),
       ...opts,
     }),
     /** Shares a planned drink with the whole bar to learn (or stops sharing it). */
     shareDrink: useMutation({
       mutationFn: async ({ rowId, shared }: { rowId: string; shared: boolean }) =>
-        void (await check(supabase.from('menu_drinks').update({ team_shared_at: shared ? new Date().toISOString() : null }).eq('id', rowId))),
+        changed(supabase.from('menu_drinks').update({ team_shared_at: shared ? new Date().toISOString() : null }).eq('id', rowId).select('id')),
       ...opts,
     }),
     /** Shares a list that hasn't started with the whole bar (or stops sharing it). */
     shareList: useMutation({
       mutationFn: async (shared: boolean) =>
-        void (await check(supabase.from('menus').update({ team_shared_at: shared ? new Date().toISOString() : null }).eq('id', menuId))),
+        changed(supabase.from('menus').update({ team_shared_at: shared ? new Date().toISOString() : null }).eq('id', menuId).select('id')),
       ...opts,
     }),
     /** Hides a list that ran from the bar page and drink pages (it is never deleted). */
     hide: useMutation({
       mutationFn: async (hidden: boolean) =>
-        void (await check(supabase.from('menus').update({ hidden_at: hidden ? new Date().toISOString() : null }).eq('id', menuId))),
+        changed(supabase.from('menus').update({ hidden_at: hidden ? new Date().toISOString() : null }).eq('id', menuId).select('id')),
       ...opts,
     }),
   };
