@@ -1995,6 +1995,7 @@ export type Database = {
       }
       images: {
         Row: {
+          brightness: number | null
           created_at: string
           credit: string | null
           height: number | null
@@ -2003,11 +2004,13 @@ export type Database = {
           palette: Json | null
           source_url: string | null
           spec_fingerprint: string | null
+          text_zone: Json | null
           thumbhash: string | null
           url: string
           width: number | null
         }
         Insert: {
+          brightness?: number | null
           created_at?: string
           credit?: string | null
           height?: number | null
@@ -2016,11 +2019,13 @@ export type Database = {
           palette?: Json | null
           source_url?: string | null
           spec_fingerprint?: string | null
+          text_zone?: Json | null
           thumbhash?: string | null
           url: string
           width?: number | null
         }
         Update: {
+          brightness?: number | null
           created_at?: string
           credit?: string | null
           height?: number | null
@@ -2029,6 +2034,7 @@ export type Database = {
           palette?: Json | null
           source_url?: string | null
           spec_fingerprint?: string | null
+          text_zone?: Json | null
           thumbhash?: string | null
           url?: string
           width?: number | null
