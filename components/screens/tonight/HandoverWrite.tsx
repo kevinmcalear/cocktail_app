@@ -34,10 +34,10 @@ export function HandoverWriteSheet({ h, barId, closeDate, night, houseMade, onLe
   const [photo, setPhoto] = useState<string | null>(own?.broken_photo ?? null);
   const addPhoto = useAddHandoverPhoto(barId);
   const toast = useToast();
-  const pickPhoto = () =>
+  const pickPhoto = (): void =>
     addPhoto.mutate(undefined, {
       onSuccess: (path) => path && setPhoto(path),
-      onError: (e) => toast.show({ title: 'The photo didn’t upload', detail: e.message }),
+      onError: (e) => toast.show({ title: 'The photo didn’t upload', detail: e.message, tone: 'error', action: { label: 'Try again', onPress: pickPhoto } }),
     });
   const lately = h.rows.filter((r) => r.close_date !== closeDate).flatMap((r) => r.ran_out);
   const choices = ranOutChoices(houseMade, lately, picked);
