@@ -10,7 +10,8 @@ import { IconSymbol } from '@/components/ui/icon-symbol';
 import { radius, space } from '@/constants/tokens';
 import type { CollectedDrink } from '@/hooks/useCollection';
 import { useShelfEdit } from '@/hooks/useHomeBar';
-import { needLine, nextBottle, toMakeGroups, type HomeReach, type ShelfMatch } from '@/lib/collectionStages';
+import { nextBottle, toMakeGroups } from '@/lib/collectionStages';
+import { needLine, type HomeReach, type ShelfMatch } from '@/lib/shelfReach';
 import { itemHref } from '@/lib/itemRoutes';
 
 import { stageStyles } from './CollectionStages';
