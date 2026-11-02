@@ -15,7 +15,10 @@ import { PourLevel } from './PourLevel';
 import { sceneFor } from './SketchDrawing';
 import { useDs } from './theme';
 
-export type DrawingSize = 'hero' | 'tile' | 'row';
+export type DrawingSize = 'hero' | 'middle' | 'tile' | 'menuRow' | 'row';
+
+/** The list sizes: drawn from the thumbnail scene, on a control's corner, with no pour. */
+export const isRowSize = (size: DrawingSize) => size === 'row' || size === 'menuRow';
 
 const POURED = ['liquid'] as const;
 
@@ -47,7 +50,7 @@ export interface DrinkDrawingProps {
   inputs: SketchInputs;
   /** What makes it this drink's drawing: its id. */
   seed: string;
-  /** hero: a drink page (guests 280, staff 180, `staff`); tile: grids and cards (160); row: lists (56). */
+  /** hero: a drink page (guests 280, staff 180, `staff`); middle: the middle of a menu's three (206); tile: grids and cards (160); menuRow: a menu page's rows (64); row: lists (56). */
   size: DrawingSize;
   /** A staff page: the smaller hero, so the spec stays above the fold. */
   staff?: boolean;
@@ -55,20 +58,22 @@ export interface DrinkDrawingProps {
   pour?: boolean;
   /** Read out ("Drawing of a Negroni on the rocks"); left out, the drawing is decorative. */
   label?: string;
+  /** A row or tile without its square of paper, for drawings set together on a sky (a menu's band). */
+  bare?: boolean;
 }
 
 /**
- * A drink's drawing at one of three sizes, from one painted scene
+ * A drink's drawing at one of its sizes, from one painted scene
  * (lib/sketch), in the glass its bar uses (item_sketches already carries the
  * bar's glassware). Light: on the house paper. Dark: painted for night
  * (chalk pencil, the drink lit, a soft glow of the drink behind it). The
  * colour pours in from the bottom of the glass when it appears.
  */
-export function DrinkDrawing({ inputs, seed, size, staff, pour = size !== 'row', label }: DrinkDrawingProps) {
+export function DrinkDrawing({ inputs, seed, size, staff, pour = !isRowSize(size), label, bare }: DrinkDrawingProps) {
   const ds = useDs();
   const night = ds.scheme === 'dark';
   const px = size === 'hero' ? (staff ? drawing.heroStaff : drawing.hero) : drawing[size];
-  const scene = sceneFor(inputs, seed, size === 'row' ? 'thumb' : 'full');
+  const scene = sceneFor(inputs, seed, isRowSize(size) ? 'thumb' : 'full');
   const layers = layersOf(scene, night, liquidOf(inputs).hex);
   const reduceMotion = useReducedMotion();
   const moving = pour && !reduceMotion;
@@ -77,7 +82,7 @@ export function DrinkDrawing({ inputs, seed, size, staff, pour = size !== 'row',
     styles.frame,
     { width: px, height: px },
     // A row or tile sits on its own square of paper by day; a hero sits on the page (its sky).
-    !night && size !== 'hero' ? { backgroundColor: ds.c.paper, borderRadius: size === 'row' ? radius.control : radius.card } : null,
+    !night && !bare && size !== 'hero' ? { backgroundColor: ds.c.paper, borderRadius: isRowSize(size) ? radius.control : radius.card } : null,
   ];
   const picture = (source: string) => <Image source={{ uri: source }} style={[styles.square, { width: px, height: px }]} contentFit="contain" cachePolicy="memory" accessible={false} />;
   return (
