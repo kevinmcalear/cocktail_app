@@ -227,10 +227,10 @@ assert.match(chillLine('shaken', false, -18), /until service/, 'a shaken batch o
 
 // The garnish units have a second home in SQL (names-only readers can't see the unit): keep them equal.
 {
-  const sql = readFileSync(new URL('../supabase/migrations/20261206010000_garnish_for_names.sql', import.meta.url), 'utf8');
+  const sql = readFileSync(new URL('../supabase/migrations/20261206485000_garnish_for_names.sql', import.meta.url), 'utf8');
   const lists = [...sql.matchAll(/ANY \(ARRAY\[([^\]]+)\]\)/g)].map((m) => [...m[1].matchAll(/'([a-z]+)'/g)].map((x) => x[1]).sort());
   assert.equal(lists.length, 2, 'the view and the names list');
-  for (const l of lists) assert.deepEqual(l, [...GARNISH_UNITS].sort(), 'lib/batch GARNISH_UNITS and 20261206010000 list the same garnish units');
+  for (const l of lists) assert.deepEqual(l, [...GARNISH_UNITS].sort(), 'lib/batch GARNISH_UNITS and 20261206485000 list the same garnish units');
 }
 
 console.log('batch: ok');

@@ -75,7 +75,7 @@ const BAR_ML_PER_OZ = 30;
 const GRAMS: Record<string, number> = { g: 1, kg: 1000 };
 const DASH_UNITS = new Set(['dash', 'dashes', 'drop', 'drops']);
 // A finish (a spray, a rinse, a float) is counted and done at the station too, never bottled.
-// The same list is app_recipe_presentation.is_garnish's and public_drink_ingredients' (20261206010000; lib/batch.check.ts keeps them equal).
+// The same list is app_recipe_presentation.is_garnish's and public_drink_ingredients' (20261206485000; lib/batch.check.ts keeps them equal).
 export const GARNISH_UNITS = new Set(['each', 'pinch', 'sprig', 'leaf', 'peel', 'twist', 'discard', 'wheel', 'slice', 'cube', 'wedge', 'rim', 'spray', 'rinse', 'float', 'grated']);
 // Drops of an oil go on top of each serve; saline and tincture drops go in the bottle.
 const OIL = /\boil\b/i;
