@@ -1,7 +1,7 @@
 import { src } from '../sources';
 import type { Technique } from '../types';
 
-/** Garnishes from the pastry and modernist kitchen. Dried citrus wheels stay in Ferment, pickle and dry. */
+/** Garnishes from the pastry and modernist kitchen. Dried citrus wheels stay in Ferment and preserve. */
 export const GARNISH: Technique[] = [
   {
     id: 'candied-peel',

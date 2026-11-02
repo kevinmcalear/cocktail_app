@@ -108,6 +108,7 @@ export function GallerySections() {
       <Section title="Sheets">
         <SheetDemo />
         <Button label="Show a toast" variant="secondary" onPress={() => toast.show({ title: 'Penicillin now uses Fernhill', detail: 'The old spec is in its history.', action: { label: 'Undo', onPress: () => {} } })} />
+        <Button label="Show an error toast" variant="secondary" onPress={() => toast.show({ title: 'Couldn’t save the rota', detail: 'It’s back as it was.', tone: 'error', action: { label: 'Try again', onPress: () => toast.show({ title: 'Rota saved' }) } })} />
       </Section>
 
       <Section title="Tags and tabs">

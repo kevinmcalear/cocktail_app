@@ -15,12 +15,22 @@ export interface Toast {
   accent?: string;
   /** Points to sit above the bottom edge's usual spot, for a screen with its own bottom bar. */
   lift?: number;
+  /** `error` is for a save or change that was refused (board Sta-errors): amber, a triangle, announced as an alert. */
+  tone?: 'error';
 }
 
 interface ToastState {
   toast: Toast | null;
   show: (toast: Omit<Toast, 'id'>) => number;
   hide: (id?: number) => void;
+  /**
+   * The toast hosts mounted, oldest first: the root's, then one inside each
+   * open sheet. A sheet is a window of its own over the app (a Modal), so a
+   * toast drawn at the root sits under it; only the newest host draws.
+   */
+  hosts: number[];
+  addHost: (id: number) => void;
+  removeHost: (id: number) => void;
 }
 
 let next = 1;
@@ -36,4 +46,7 @@ export const useToastStore = create<ToastState>((set, get) => ({
   hide: (id) => {
     if (id === undefined || get().toast?.id === id) set({ toast: null });
   },
+  hosts: [],
+  addHost: (id) => set({ hosts: [...get().hosts, id] }),
+  removeHost: (id) => set({ hosts: get().hosts.filter((h) => h !== id) }),
 }));
