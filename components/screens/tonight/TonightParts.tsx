@@ -12,14 +12,23 @@ import { liquidOf } from '@/lib/sketch/types';
 /** How far down the sky reaches before it is the page's ground. */
 const SKY = 440;
 
-/** The page's date line in small capitals, and Tonight in the display face (Prod-today boards). */
-export function TonightHead({ eyebrow }: { eyebrow: string }) {
+/** The page's date line in small capitals, and Tonight in the display face (Prod-today boards); Discover's head too. */
+export function TonightHead({ eyebrow, title = 'Tonight', onEyebrow, eyebrowLabel }: { eyebrow: string; title?: string; onEyebrow?: () => void; eyebrowLabel?: string }) {
+  const line = (
+    <Caption tone="muted" style={styles.caps}>
+      {eyebrow || ' '}
+    </Caption>
+  );
   return (
     <View style={styles.head}>
-      <Caption tone="muted" style={styles.caps}>
-        {eyebrow || ' '}
-      </Caption>
-      <Display aria-level={1}>Tonight</Display>
+      {onEyebrow ? (
+        <PressableScale role="button" accessibilityLabel={eyebrowLabel} onPress={onEyebrow}>
+          {line}
+        </PressableScale>
+      ) : (
+        line
+      )}
+      <Display aria-level={1}>{title}</Display>
     </View>
   );
 }
@@ -106,20 +115,25 @@ export function ListHead({ eyebrow, name, onPress }: { eyebrow: string; name: st
   );
 }
 
-/** A drink tile: its drawing on its own colour, the name in the display face, Ready or Need limes under it. */
-export function DrinkTile({ id, name, status, ready, onPress }: { id: string; name: string; status: string; ready: boolean; onPress: () => void }) {
+/**
+ * A drink tile: its drawing on its own colour, the name in the display face, Ready or Need limes under it.
+ * Without `ready` the line is muted (Discover's New menus: the menu's name and its bar, a little wider and shorter).
+ */
+export function DrinkTile({ id, name, status, ready, wide, onPress }: { id: string; name: string; status: string; ready?: boolean; wide?: boolean; onPress: () => void }) {
   const ds = useDs();
   const tint = useDrinkTint(id);
   const hues = palateHues[ds.scheme];
   return (
-    <PressableScale role="link" accessibilityLabel={`${name}. ${status}`} onPress={onPress} style={styles.tile}>
-      <View style={[styles.tileArt, { backgroundColor: tint ? withAlpha(tint, ds.scheme === 'dark' ? 0.28 : 0.2) : ds.c.raised }]}>
+    <PressableScale role="link" accessibilityLabel={`${name}. ${status}`} onPress={onPress} style={[styles.tile, wide ? styles.tileWide : null]}>
+      <View style={[styles.tileArt, wide ? styles.tileArtShort : null, { backgroundColor: tint ? withAlpha(tint, ds.scheme === 'dark' ? 0.28 : 0.2) : ds.c.raised }]}>
         <DrinkDrawingFor itemId={id} size="tile" pour={false} />
       </View>
       <DsText variant="headline" numberOfLines={1} style={{ fontFamily: displayFaces[ds.displayFace].regular }}>
         {name}
       </DsText>
-      <Caption color={ready ? hues.green : ds.accentText}>{status}</Caption>
+      <Caption color={ready === undefined ? ds.c.muted : ready ? hues.green : ds.accentText} numberOfLines={1}>
+        {status}
+      </Caption>
     </PressableScale>
   );
 }
@@ -159,6 +173,9 @@ const styles = StyleSheet.create({
   listHead: { gap: space.xs, alignSelf: 'flex-start' },
   listName: { flexDirection: 'row', alignItems: 'center', gap: space.sm },
   tile: { width: 132, gap: space.xs },
+  // New menus' tiles, as Prod-discover draws them: 150 wide, the picture 120 tall.
+  tileWide: { width: 150 },
+  tileArtShort: { height: 120 },
   tileArt: { height: 148, borderRadius: radius.card, borderCurve: 'continuous', alignItems: 'center', justifyContent: 'flex-end', overflow: 'hidden' },
   note: { flexDirection: 'row', alignItems: 'center', gap: space.md, padding: space.lg, borderRadius: radius.card, borderCurve: 'continuous' },
   flex: { flex: 1, minWidth: 0 },

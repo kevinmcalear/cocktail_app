@@ -10,20 +10,20 @@ const recorder = { capture: (e: string, p?: unknown) => void seen.push([e, p]) }
 // Off without a key: nothing is captured or queued.
 delete process.env.EXPO_PUBLIC_POSTHOG_KEY;
 g.window = {};
-track('sign_up');
+track('sign_up', { source: 'table' });
 setAnalyticsClient(recorder);
 assert.deepEqual(seen, []);
 setAnalyticsClient(null);
 
 // On: events from before PostHog loads wait, then go in order with their properties.
 process.env.EXPO_PUBLIC_POSTHOG_KEY = 'phc_test';
-track('sign_up');
+track('sign_up', { source: 'table' });
 track('search_used', { surface: 'discover' });
 assert.deepEqual(seen, []);
 setAnalyticsClient(recorder);
 track('drink_collected', { kind: 'drink' });
 assert.deepEqual(seen, [
-  ['sign_up', undefined],
+  ['sign_up', { source: 'table' }],
   ['search_used', { surface: 'discover' }],
   ['drink_collected', { kind: 'drink' }],
 ]);
@@ -43,7 +43,7 @@ setAnalyticsClient({ ...recorder, optOut: () => calls.push('optOut'), optIn: () 
 calls.length = 0;
 setAnalyticsOptOut(true);
 assert.equal(analyticsOptedOut(), true);
-track('sign_up');
+track('sign_up', { source: 'table' });
 setAnalyticsClient(null);
 track('invite_sent');
 setAnalyticsOptOut(false);
@@ -57,7 +57,7 @@ assert.deepEqual(seen, [['age_check_passed', undefined]]);
 setAnalyticsClient(recorder);
 seen.length = 0;
 delete g.window;
-track('sign_up');
+track('sign_up', { source: 'table' });
 assert.deepEqual(seen, []);
 
 console.log('analytics checks passed');
