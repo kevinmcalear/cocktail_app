@@ -3,13 +3,11 @@
 import { useQuery } from '@tanstack/react-query';
 
 import { useUserId } from '@/ctx/AuthContext';
-import { MENU_DRINK_COLUMNS, publishedMenuDrink, toMenuDrink, type MenuItemRow } from '@/hooks/useMenus';
-import { fetchPublished } from '@/hooks/usePublished';
+import { MENU_DRINK_COLUMNS, toMenuDrink, type MenuItemRow } from '@/hooks/useMenus';
 import { viewerScoped } from '@/lib/authCache';
 import type { DrinkRun } from '@/lib/findYourself';
 import { runDates, sortEditions, type MenuDates, type MenuEdition, type MenuEditionDrink } from '@/lib/menuEditions';
 import { groupMenuCredits, type MenuCredit, type MenuDrinkRow } from '@/lib/profiles';
-import { ingredientsLine, type IngredientName } from '@/lib/publicDrink';
 import { jsonAs, supabase } from '@/lib/supabase';
 import type { MenuDrink } from '@/types/menus';
 
@@ -103,12 +101,9 @@ export function useMenuEditionDrinks(drinks: MenuEditionDrink[]) {
       const read = new Set(own.map((d) => d.id));
       const rest = ids.filter((id) => !read.has(id));
       if (!rest.length) return own;
-      const [published, names] = await Promise.all([fetchPublished(rest), supabase.rpc('public_drink_ingredients', { p_item_ids: rest })]);
-      if (names.error) throw names.error;
-      const lines: Record<string, IngredientName[]> = {};
-      for (const n of (names.data ?? []) as (IngredientName & { item_id: string })[]) (lines[n.item_id] ??= []).push({ name: n.name, brand: n.brand });
-      const open = published.map(publishedMenuDrink).filter((d): d is MenuDrink => !!d);
-      return [...own, ...open.map((d) => ({ ...d, line: ingredientsLine(lines[d.id] ?? []) ?? d.line }))];
+      // Loaded here, not imported: this file rides on every page's first load (hooks/publishedMenuDrinks.ts).
+      const { publishedMenuDrinks } = await import('@/hooks/publishedMenuDrinks');
+      return [...own, ...(await publishedMenuDrinks(rest))];
     },
   });
 }
