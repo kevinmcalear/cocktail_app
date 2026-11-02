@@ -8,7 +8,8 @@ import { refreshIngredients } from '@/hooks/useDropdowns';
 import { useCreatePrep } from '@/hooks/usePrepCard';
 import { recipePrep, type RecipeChoices } from '@/lib/bringInDraft';
 import type { MatchData } from '@/lib/bringInMatch';
-import { approved, canCheck, isFinished, nextOpen, putBack, rematch, setMark, takeOut, tally, type ImportReview } from '@/lib/importReview';
+import { rematch } from '@/lib/importRematch';
+import { approved, canCheck, isFinished, nextOpen, putBack, setMark, takeOut, tally, type ImportReview } from '@/lib/importReview';
 import { useBringIn } from '@/store/useBringIn';
 import { draftSlot, reviewSlots, useDrinkWizardStore, wizardPlace } from '@/store/useDrinkWizardStore';
 
