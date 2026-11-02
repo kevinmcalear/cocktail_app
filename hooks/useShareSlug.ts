@@ -1,6 +1,8 @@
 import { useQuery } from '@tanstack/react-query';
 
 import { useSignedIn } from '@/ctx/AuthContext';
+import { track } from '@/lib/analytics';
+import { noteDoor } from '@/lib/analyticsDoor';
 import { isShareSlug, isUuid, type ShareKind } from '@/lib/menuPreview';
 import { supabase } from '@/lib/supabase';
 
@@ -49,6 +51,10 @@ export async function resolveShareKey(kind: ShareKind, key: string): Promise<str
 
 // Links opened this app session: each counts once, however often its page refetches.
 const opened = new Set<string>();
+// ponytail: only the first link page of an app session is a table open, as a
+// visitor tapping a drink on a shared menu lands on /d/ too. A link opened
+// later into a running app isn't counted; a launch-URL check would catch it.
+let landed = false;
 
 /**
  * Count a shared link's open for its bar ("Shared links this week" on
@@ -59,6 +65,11 @@ function countOpen(kind: ShareKind, key: string) {
   const k = `${kind}:${key.toLowerCase()}`;
   if (opened.has(k)) return;
   opened.add(k);
+  if (!landed) {
+    landed = true;
+    track('table_opened', { kind: kind === 'm' ? 'menu' : 'drink' });
+    noteDoor(kind === 'm' ? 'table' : 'shared');
+  }
   void supabase.rpc('record_share_open', { p_kind: kind, p_key: key }).then(() => undefined, () => undefined);
 }
 

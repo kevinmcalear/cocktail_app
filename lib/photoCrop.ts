@@ -40,3 +40,16 @@ export function cropRect(photo: Size, frame: Size, view: CropView): { originX: n
     height,
   };
 }
+
+/**
+ * The centred part of a photo in the frame's shape, or null when the photo has
+ * that shape already (within 1%). For a picker that may ignore the shape asked
+ * for: expo-image-picker's `aspect` is Android only, iOS crops square and the
+ * web doesn't crop.
+ */
+export function centredCrop(photo: Size, frame: Size): { originX: number; originY: number; width: number; height: number } | null {
+  if (!photo.width || !photo.height || !frame.width || !frame.height) return null;
+  const want = frame.width / frame.height;
+  if (Math.abs(photo.width / photo.height - want) <= want * 0.01) return null;
+  return cropRect(photo, frame, { zoom: 1, x: 0, y: 0 });
+}

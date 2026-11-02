@@ -7,7 +7,7 @@ import { useSpecAccess } from '@/hooks/useSpecAccess';
 import { useSpecView } from '@/hooks/useSpecView';
 import type { SpecLevels, SpecLine } from '@/lib/spec';
 import type { StepNote } from '@/lib/stepNotes';
-import { scaledAmount, serveLine, specGroups, type Makes } from '@/lib/specView';
+import { MAKES, scaledAmount, serveLine, specGroups, type Makes } from '@/lib/specView';
 import { useUnits } from '@/store/useSettingsStore';
 
 import { SpecControls } from './SpecControls';
@@ -72,7 +72,7 @@ export function SpecCard({ itemId, barId, lines, maker, verb = null, serve = [],
 
   return (
     <View style={styles.card}>
-      {measured ? <SpecControls view={view} onView={setView} makes={makes} onMakes={setMakes} onBatch={onBatch} /> : null}
+      {measured ? <SpecControls view={view} onView={setView} makes={String(makes)} sizes={SIZES} picked={String(makes)} onPick={(k) => setMakes(Number(k) as Makes)} more={onBatch ? [{ label: 'A batch…', onPress: onBatch }] : undefined} /> : null}
       {access.names ? (
         measured && view === 'steps' ? (
           <View style={styles.groups}>
@@ -97,7 +97,9 @@ export function SpecCard({ itemId, barId, lines, maker, verb = null, serve = [],
   );
 }
 
-function GroupHead({ number, title, aside }: { number: string | null; title: string; aside?: string | null }) {
+const SIZES = MAKES.map((n) => ({ key: String(n), label: `Makes ${n}` }));
+
+export function GroupHead({ number, title, aside }: { number: string | null; title: string; aside?: string | null }) {
   const ds = useDs();
   return (
     <View style={styles.head} role="heading" aria-level={3}>
