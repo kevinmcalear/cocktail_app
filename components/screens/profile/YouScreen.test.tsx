@@ -31,6 +31,7 @@ jest.mock('@/hooks/useWantSummary', () => ({
   useWantSummary: () => (mockMade.length || mockHad.length ? { count: 2, open: 1, isLoading: false } : { count: 0, open: 0, isLoading: false }),
 }));
 jest.mock('expo-router', () => ({ useRouter: () => ({ push: mockPush, navigate: mockNavigate, replace: jest.fn(), back: jest.fn(), canGoBack: () => true }), useSegments: () => [] }));
+jest.mock('../people/YouPeople', () => ({ YouPeople: () => null }));
 jest.mock('@/ctx/AuthContext', () => ({ useAuth: () => ({ user: { id: 'me', user_metadata: { full_name: 'Jo Juniper' } }, loading: false }) }));
 jest.mock('@/components/nav/ScreenHeader', () => ({ ScreenHeader: () => null }));
 jest.mock('@/hooks/useMyProfile', () => ({ useMyProfile: () => ({ data: mockProfile }) }));

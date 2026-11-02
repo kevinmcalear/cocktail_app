@@ -1,18 +1,15 @@
-import { lazy, Suspense, useState, type ComponentProps } from 'react';
+import { lazy, Suspense, type ComponentProps } from 'react';
 
-import type * as Sheet from './DeleteVenueSheet';
+import type { DeleteVenueSheet as Sheet } from './DeleteVenueSheet';
 
 const Lazy = lazy(() => import('./DeleteVenueSheet').then((m) => ({ default: m.DeleteVenueSheet })));
 
 /**
- * On the web the delete-venue sheet loads the first time it opens, then
- * stays mounted so it can slide away. The banner that opens it is in every
- * page's header, and each page carried its own copy (quality budget B12).
+ * On the web, the delete-venue sheet loads when its banner or settings row is
+ * first drawn (it stays mounted, closed, so it can animate). The banner sits in
+ * every page's header, and each route chunk kept its own copy of the sheet.
  */
-export function DeleteVenueSheet(props: ComponentProps<typeof Sheet.DeleteVenueSheet>) {
-  const [opened, setOpened] = useState(false);
-  if (props.visible && !opened) setOpened(true);
-  if (!opened) return null;
+export function DeleteVenueSheet(props: ComponentProps<typeof Sheet>) {
   return (
     <Suspense fallback={null}>
       <Lazy {...props} />

@@ -23,6 +23,7 @@ import { sortHad } from '@/lib/hadDrinks';
 import { namesLine, plural } from '@/lib/menus';
 import { headlineJob, profileLine, youLine } from '@/lib/profiles';
 
+import { YouPeople } from '../people/YouPeople';
 import { CreditsToCheckCard } from './CreditsToCheck';
 import { MyJobRequests } from './JobRequests';
 import { BestRows, YouStats, YouTop } from './YouParts';
@@ -167,6 +168,8 @@ function You() {
               />
             </ListGroup>
           </View>
+
+          <YouPeople />
 
           <View style={styles.section}>
             <SectionLabel title="Your best" />

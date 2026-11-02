@@ -21,9 +21,9 @@ const load = () =>
 let Lazy = load();
 
 /**
- * On the web, the New sheet (drafts, the drink desk's hooks, the kind icons)
- * loads when Add is first tapped. Imported with the header, every page with
- * one carried its own copy (quality budget B12).
+ * On the web, the New sheet (its drafts, icons and hooks) loads when Add is
+ * first tapped. Every page with a header has Add, and each route chunk kept
+ * its own copy of the sheet.
  */
 export function CreateSheet(props: Props) {
   return (
