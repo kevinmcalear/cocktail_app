@@ -9,7 +9,8 @@ import { SafetyPage } from '@/components/screens/safety/SafetyPage';
 import { IconSymbol } from '@/components/ui/icon-symbol';
 import { radius, space } from '@/constants/tokens';
 import { useSignedIn } from '@/ctx/AuthContext';
-import { useMyAllergies, useSaveMyAllergies } from '@/hooks/useGuestAllergies';
+import { useMyAllergies } from '@/hooks/useGuestAllergies';
+import { useSaveMyAllergies } from '@/hooks/useSaveMyAllergies';
 import { ALLERGENS, allergyMatches, type Allergen } from '@/lib/allergens';
 import { allergyWarning, type AllergenRead } from '@/lib/allergenWords';
 

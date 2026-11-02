@@ -2,20 +2,15 @@
 // (20261204400000_takeovers_and_allergens.sql). The allergies stay private:
 // on the account (user_prefs, its owner's alone) or on this phone; matching
 // happens here, so they are never sent in a request.
-import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
+import { useQuery, useQueryClient } from '@tanstack/react-query';
 
 import { useUserId } from '@/ctx/AuthContext';
 import type { Allergen, GuestDrinkAllergens } from '@/lib/allergens';
 import { viewerScoped } from '@/lib/authCache';
 import { deviceStore } from '@/lib/deviceStore';
-import { allergyCopy, allergyCopyFor, mergeAllergies } from '@/lib/myAllergies';
+import { ACCOUNT_ALLERGIES_KEY, allergyCopy, allergyCopyFor, GUEST_ALLERGIES_KEY, mergeAllergies, myAllergiesKey as myKey } from '@/lib/myAllergies';
 import { supabase } from '@/lib/supabase';
 
-/** A signed-out guest's list on this phone. It survives opening the app signed out, and moves to the account at sign-in. */
-export const GUEST_ALLERGIES_KEY = 'guest-allergies';
-/** This phone's copy of a signed-in account's list, for no signal behind a bar: saved with whose it is, gone at sign-out. */
-export const ACCOUNT_ALLERGIES_KEY = 'account-allergies';
-const myKey = (viewer: string) => ['my-allergies', viewer] as const;
 
 async function guestList(): Promise<Allergen[] | null> {
   const raw = await deviceStore.getItem(GUEST_ALLERGIES_KEY);
@@ -74,22 +69,5 @@ export function useMyAllergies() {
       if (mine) await deviceStore.setItem(ACCOUNT_ALLERGIES_KEY, allergyCopy(userId, mine));
       return mine;
     },
-  });
-}
-
-/** Saves your allergies: on your account and its copy here when signed in, else on this phone. */
-export function useSaveMyAllergies() {
-  const userId = useUserId();
-  const client = useQueryClient();
-  return useMutation({
-    mutationFn: async (allergies: Allergen[]) => {
-      if (!userId) return deviceStore.setItem(GUEST_ALLERGIES_KEY, JSON.stringify(allergies));
-      const { error } = await supabase.from('user_prefs').upsert({ user_id: userId, allergies });
-      if (error) throw error;
-      // What was saved started from the phone's list too, so one taken off stays off.
-      await Promise.all([deviceStore.setItem(ACCOUNT_ALLERGIES_KEY, allergyCopy(userId, allergies)), deviceStore.removeItem(GUEST_ALLERGIES_KEY)]);
-    },
-    onSuccess: (_, allergies) => client.setQueryData(myKey(viewerScoped(userId).key), allergies),
-    onError: () => {},
   });
 }

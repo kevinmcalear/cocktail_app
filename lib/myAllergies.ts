@@ -3,6 +3,13 @@
 // every-page chunk and must not pull the whole allergen module in with it.
 import type { Allergen } from '@/lib/allergens';
 
+/** A signed-out guest's list on this phone. It survives opening the app signed out, and moves to the account at sign-in. */
+export const GUEST_ALLERGIES_KEY = 'guest-allergies';
+/** This phone's copy of a signed-in account's list, for no signal behind a bar: saved with whose it is, gone at sign-out. */
+export const ACCOUNT_ALLERGIES_KEY = 'account-allergies';
+/** The query key of the viewer's own list (hooks/useGuestAllergies, useSaveMyAllergies). */
+export const myAllergiesKey = (viewer: string) => ['my-allergies', viewer] as const;
+
 /** Two lists of allergies as one, so a list picked on a phone never drops one from the account. Null: neither was ever set. */
 export function mergeAllergies(a: readonly Allergen[] | null | undefined, b: readonly Allergen[] | null | undefined): Allergen[] | null {
   if (!a && !b) return null;
