@@ -8,6 +8,8 @@ export interface MenuEditionDrink {
   /** A venue's own menu: the price it prints (its own for the drink, else the drink's), as typed, and the menu section it sits in. */
   price?: string | null;
   section?: string | null;
+  /** A venue menu's drink taken off for tonight only (guests read "Not tonight"). */
+  off_tonight?: boolean;
 }
 
 /**
@@ -30,6 +32,8 @@ export interface MenuEdition {
   source_url: string | null;
   /** The venue's own menu, not a researched one. Not savable to a Collection yet. */
   from_venue?: boolean;
+  /** A venue menu's cover photo. */
+  cover_url?: string | null;
 }
 
 /**
@@ -181,7 +185,8 @@ export function editionMenu(edition: MenuEdition, sections: { id: string; name: 
     name: edition.name,
     barId,
     createdBy: null,
-    coverUrl: null,
+    // The photo leads a menu that's on; a past one is drawn (as on the team's page).
+    coverUrl: edition.from_venue && edition.is_current ? (edition.cover_url ?? null) : null,
     coverPosition: 50,
     startsAt: iso(edition.year, edition.month),
     endsAt: iso(edition.end_year, edition.end_month),
