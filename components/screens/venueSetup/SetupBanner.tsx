@@ -1,17 +1,18 @@
-import { usePathname, useRouter, type Href } from 'expo-router';
+import { useRouter, type Href } from 'expo-router';
 import { StyleSheet, View } from 'react-native';
 
 import { Body, Caption, PressableScale, useDs } from '@/components/ds';
-import { NavRow } from '@/components/nav/SideNavParts';
 import { IconSymbol } from '@/components/ui/icon-symbol';
 import { font, layout, radius, space } from '@/constants/tokens';
 import { useActiveVenue } from '@/hooks/useActiveVenue';
 import { useBarInvites } from '@/hooks/useBarInvites';
 import { useIsWideWeb } from '@/hooks/useIsWideWeb';
-import { useSetupChecklist, useSetupRun } from '@/hooks/useSetupChecklist';
+import { useSetupRun } from '@/hooks/useSetupChecklist';
 import { useVenueClaim, useVenuePage } from '@/hooks/useVenueSetup';
 import { onItsWay } from '@/lib/venueSetup';
 import { useVenueSetup } from '@/store/useVenueSetup';
+
+import { ChecklistCard, SetupNavRow } from './SetupChecklistNavLazy';
 
 /**
  * "Setup: 3 things on their way · See": the banner on Tonight (or Library,
@@ -70,8 +71,6 @@ export function TonightSetupBanner({ barId }: { barId: string }) {
   return <SetupBanner count={count} onPress={() => router.push(`/venue-setup?bar=${barId}` as Href)} />;
 }
 
-const checklistHref = (barId: string) => `/settings/bar/${barId}/what-next` as Href;
-
 /**
  * The top of Library: on a phone, "Set up <bar>" while its checklist isn't
  * done (owner-setup call 6; the sidebar has it on a desktop). The Setup
@@ -83,28 +82,6 @@ export function LibrarySetup({ barId }: { barId: string }) {
   return run && !wide ? <ChecklistCard barId={barId} /> : null;
 }
 
-function ChecklistCard({ barId }: { barId: string }) {
-  const ds = useDs();
-  const router = useRouter();
-  const name = useActiveVenue().venues.find((v) => v.id === barId)?.name ?? 'your bar';
-  const { list, loading } = useSetupChecklist(barId);
-  if (loading) return null;
-  if (list.finished) return null;
-  const next = list.rows.find((r) => r.key === list.next)?.title;
-  const line = `${list.done} of ${list.total} done${next ? ` · Next: ${next.toLowerCase()}` : ''}`;
-  return (
-    <PressableScale role="button" accessibilityLabel={`Set up ${name}. ${line}. Continue`} onPress={() => router.push(checklistHref(barId))} style={[styles.card, { backgroundColor: ds.c.surface, borderColor: ds.c.line }]}>
-      <View style={styles.flex}>
-        <Body style={styles.strong} numberOfLines={1}>{`Set up ${name}`}</Body>
-        <Caption tone="muted">{line}</Caption>
-      </View>
-      <View style={[styles.see, { backgroundColor: ds.accentFill.fill, borderColor: ds.accentFill.fill }]}>
-        <Caption color={ds.accentFill.text} style={styles.strong}>Continue</Caption>
-      </View>
-    </PressableScale>
-  );
-}
-
 /** "Set up <bar> · 3 of 6": the first row of the desktop sidebar while its checklist isn't done (owner-setup call 6). */
 export function SetupNav() {
   const { active } = useActiveVenue();
@@ -112,16 +89,7 @@ export function SetupNav() {
   return active && run ? <SetupNavRow barId={active.id} name={active.name} /> : null;
 }
 
-function SetupNavRow({ barId, name }: { barId: string; name: string }) {
-  const router = useRouter();
-  const pathname = usePathname();
-  const { list, loading } = useSetupChecklist(barId);
-  if (loading || list.finished) return null;
-  return <NavRow label={`Set up ${name}`} icon="list.bullet" badge={`${list.done} of ${list.total}`} current={pathname === `/settings/bar/${barId}/what-next`} onPress={() => router.push(checklistHref(barId))} />;
-}
-
 const styles = StyleSheet.create({
-  card: { flexDirection: 'row', alignItems: 'center', gap: space.md, minHeight: layout.minTapTarget + space.lg, paddingLeft: space.lg, paddingRight: space.sm, borderRadius: radius.card, borderCurve: 'continuous', borderWidth: 1 },
   banner: { flexDirection: 'row', alignItems: 'center', gap: space.sm, minHeight: layout.minTapTarget + space.md, paddingLeft: space.lg, paddingRight: space.sm, borderRadius: radius.card, borderCurve: 'continuous', borderWidth: 1 },
   see: { minHeight: 36, paddingHorizontal: space.md, borderRadius: radius.pill, borderWidth: 1, justifyContent: 'center' },
   flex: { flex: 1, minWidth: 0 },
