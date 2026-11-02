@@ -19,7 +19,7 @@ export interface Source {
   grade: Grade;
 }
 
-export type TechniqueGroup = 'foam' | 'clarify' | 'wash' | 'infuse' | 'syrup' | 'texture' | 'carbonate' | 'cold' | 'preserve' | 'distil' | 'cook' | 'garnish' | 'age';
+export type TechniqueGroup = 'shake' | 'foam' | 'clarify' | 'wash' | 'infuse' | 'syrup' | 'texture' | 'carbonate' | 'cold' | 'preserve' | 'distil' | 'cook' | 'garnish' | 'age';
 
 /**
  * What a technique starts from, the thing it changes: a spirit to wash or

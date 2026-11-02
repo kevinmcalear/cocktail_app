@@ -27,22 +27,14 @@ type Staff = ReturnType<typeof useStaffTonight>;
  */
 export function BeforeDoors({ t, barId, title = 'Before doors' }: { t: Staff; barId: string; title?: string }) {
   const router = useRouter();
-  const toast = useToast();
-  const logBatch = useLogBatch(barId);
+  const logNow = useLogNow(t, barId);
   const go = (href: string) => () => router.push(href as Href);
   const shown = t.canPrep && t.counted;
   const make = shown ? (t.make ?? []).slice(0, 3) : [];
   const enough = shown ? t.enough.slice(0, 3) : [];
   const rows = [
     ...make.map((line) => {
-      const batch = t.batchOf(line.id);
-      const log = () => {
-        if (!batch) return router.push(itemHref('Ingredient', line.id) as Href);
-        const logged = logBatch.mutate({ itemId: line.id, ...batch });
-        const q = toQuantity(batch.amount, batch.unit);
-        // Bet-labels: a batch logged gets its label (Made. Label it.), which draws before the batch has sent.
-        toast.show({ title: `Logged ${q ? formatQuantity(q) : `${batch.amount} ${batch.unit}`} of ${line.name}`, action: { label: 'Label it', onPress: () => router.push(labelHref(logged) as Href) } });
-      };
+      const log = logNow(line.id, line.name);
       return (
         <SettingsRow
           key={line.id}
@@ -69,6 +61,25 @@ export function BeforeDoors({ t, barId, title = 'Before doors' }: { t: Staff; ba
       </Surface>
     </TonightSection>
   );
+}
+
+/**
+ * Log batch at one tap: one batch of the recipe, with a toast; a recipe that
+ * doesn't say what it makes opens its page instead. Before doors and the
+ * handover's What to prep share it.
+ */
+export function useLogNow(t: Staff, barId: string) {
+  const router = useRouter();
+  const toast = useToast();
+  const logBatch = useLogBatch(barId);
+  return (id: string, name: string) => () => {
+    const batch = t.batchOf(id);
+    if (!batch) return router.push(itemHref('Ingredient', id) as Href);
+    const logged = logBatch.mutate({ itemId: id, ...batch });
+    const q = toQuantity(batch.amount, batch.unit);
+    // Bet-labels: a batch logged gets its label (Made. Label it.), which draws before the batch has sent.
+    toast.show({ title: `Logged ${q ? formatQuantity(q) : `${batch.amount} ${batch.unit}`} of ${name}`, action: { label: 'Label it', onPress: () => router.push(labelHref(logged) as Href) } });
+  };
 }
 
 /** Off tonight (Loop-tonight): drinks on the lists that come off before the night is out, and when. */

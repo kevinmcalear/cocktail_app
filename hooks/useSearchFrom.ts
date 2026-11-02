@@ -13,14 +13,12 @@ interface SearchFrom {
   from: string | null;
   /** Discover's area while Discover is mounted, so search can search it. */
   area: SearchArea | null;
-  /** Discover shows a search's results on its map. */
-  showOnMap: ((query: string) => void) | null;
   /** A search a door opened search on (Discover's pill, My Bar's "Search every drink for …"); search takes it once. */
   start: SearchStart | null;
 }
 
 /** Where search was opened from (search-starts-here, 22 Oct 2026). */
-export const useSearchFrom = create<SearchFrom>(() => ({ from: null, area: null, showOnMap: null, start: null }));
+export const useSearchFrom = create<SearchFrom>(() => ({ from: null, area: null, start: null }));
 
 /** iPhone's search tab: a group with no path of its own, so it's named by its group (app/(tabs)/(search)). */
 export const SEARCH_TAB_HREF = '/(tabs)/(search)' as Href;
@@ -51,20 +49,19 @@ export function useTrackTab() {
 }
 
 /**
- * Discover lends search its area, kinds and map while it's mounted.
+ * Discover lends search its area and kinds while it's mounted.
  * The calls go through a ref, so the latest ones run without re-publishing on every render.
  */
-export function usePublishSearchArea(area: SearchArea, showOnMap: (query: string) => void) {
-  const latest = useRef({ area, showOnMap });
+export function usePublishSearchArea(area: SearchArea) {
+  const latest = useRef({ area });
   useEffect(() => {
-    latest.current = { area, showOnMap };
+    latest.current = { area };
   });
   const { label, area: where, kinds } = area;
   useEffect(() => {
     useSearchFrom.setState({
       area: { label, area: where, kinds, onKind: (k) => latest.current.area.onKind(k), onPlace: (c) => latest.current.area.onPlace(c) },
-      showOnMap: (q) => latest.current.showOnMap(q),
     });
   }, [label, where, kinds]);
-  useEffect(() => () => useSearchFrom.setState({ area: null, showOnMap: null }), []);
+  useEffect(() => () => useSearchFrom.setState({ area: null }), []);
 }

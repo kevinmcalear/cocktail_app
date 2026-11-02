@@ -2,12 +2,15 @@ import { useRouter } from 'expo-router';
 import type { ReactNode } from 'react';
 import { Linking, StyleSheet, View } from 'react-native';
 
-import { Body, Caption, Headline, PressableScale, Tag, useDs } from '@/components/ds';
+import { Body, Caption, Headline, PressableScale, Surface, Tag, TextLink, useDs } from '@/components/ds';
+import { RowDivider } from '@/components/screens/settings/SettingsParts';
 import { IconSymbol } from '@/components/ui/icon-symbol';
-import { font, layout, radius, space } from '@/constants/tokens';
+import { font, layout, space } from '@/constants/tokens';
 import { missingKit, type BuyAudience, type BuyLink, type Grade, type Source, type Technique } from '@/lib/techniques';
 import { sourceOf } from '@/lib/techniques/sourceBook';
-import { useAppMode } from '@/store/useAppMode';
+import { useAppMode, type AppMode } from '@/store/useAppMode';
+
+export { LinkRow } from './LinkRow';
 
 const GRADE: Record<Grade, { label: string; long: string }> = {
   A: { label: 'Well tested', long: 'A primary or tested source' },
@@ -29,14 +32,57 @@ export function gradeLong(grade: Grade) {
   return GRADE[grade].long;
 }
 
-/** A heading over a block of a page. */
-export function Section({ title, children }: { title: string; children: ReactNode }) {
+/** A heading over a block of a page, with an aside on the right that opens the rest ("All 82"). */
+export function Section({ title, aside, onAside, children }: { title: string; aside?: string; onAside?: () => void; children: ReactNode }) {
   return (
     <View style={styles.section}>
-      <Caption tone="muted" role="heading" style={styles.eyebrow}>
-        {title.toUpperCase()}
-      </Caption>
+      <View style={styles.label}>
+        <Caption tone="muted" role="heading" style={styles.eyebrow}>
+          {title.toUpperCase()}
+        </Caption>
+        {aside && onAside ? <TextLink label={aside} onPress={onAside} /> : null}
+      </View>
       {children}
+    </View>
+  );
+}
+
+/** Rows on one card, a hairline between them (the boards' grouped rows). Falsy children are skipped. */
+export function Group({ children }: { children: ReactNode[] }) {
+  const rows = children.filter(Boolean);
+  if (!rows.length) return null;
+  return (
+    <Surface style={styles.group}>
+      {rows.map((row, i) => (
+        <View key={i}>
+          {i ? <RowDivider /> : null}
+          {row}
+        </View>
+      ))}
+    </Surface>
+  );
+}
+
+/** A row that only says something: an icon, a label, and its value on the right (Time · 2 hours), or under the label when it runs long. */
+export function ValueRow({ icon, label, value }: { icon?: Parameters<typeof IconSymbol>[0]['name']; label: string; value: string }) {
+  const ds = useDs();
+  const long = value.length > 32;
+  return (
+    <View style={styles.value}>
+      {icon ? <IconSymbol name={icon} size={20} color={ds.c.muted} /> : null}
+      {long ? (
+        <View style={styles.flex}>
+          <Body>{label}</Body>
+          <Caption tone="muted">{value}</Caption>
+        </View>
+      ) : (
+        <>
+          <Body>{label}</Body>
+          <Body tone="muted" style={styles.valueText}>
+            {value}
+          </Body>
+        </>
+      )}
     </View>
   );
 }
@@ -61,22 +107,6 @@ export function TechniqueRow({ t, kit }: { t: Technique; kit: ReadonlySet<string
   );
 }
 
-/** A tappable row that opens another screen in the library, or `onPress` (a sheet over this one). */
-export function LinkRow({ title, detail, href, icon, onPress }: { title: string; detail?: string; href: string; icon?: Parameters<typeof IconSymbol>[0]['name']; onPress?: () => void }) {
-  const ds = useDs();
-  const router = useRouter();
-  return (
-    <PressableScale role="link" accessibilityLabel={detail ? `${title}. ${detail}` : title} onPress={onPress ?? (() => router.push(href as never))} style={[styles.card, { backgroundColor: ds.c.surface }]}>
-      {icon ? <IconSymbol name={icon} size={20} color={ds.c.ink} /> : null}
-      <View style={styles.flex}>
-        <Headline>{title}</Headline>
-        {detail ? <Caption tone="muted">{detail}</Caption> : null}
-      </View>
-      <IconSymbol name="chevron.right" size={16} color={ds.c.muted} />
-    </PressableScale>
-  );
-}
-
 /** Where a number came from, opening the page. */
 export function SourceList({ sources }: { sources: Source[] }) {
   const ds = useDs();
@@ -92,6 +122,13 @@ export function SourceList({ sources }: { sources: Source[] }) {
   );
 }
 
+/** The shops to show: with home and bar picks both listed, the mode the app is in picks which. */
+export function shopsFor(links: BuyLink[], mode: AppMode | null): BuyLink[] {
+  const audience: BuyAudience = mode === 'home' ? 'home' : 'bar';
+  const split = links.some((l) => l.audience === 'home') && links.some((l) => l.audience === 'bar');
+  return split ? links.filter((l) => !l.audience || l.audience === audience) : links;
+}
+
 /**
  * Where to buy, opening the shop's page. When there are home and bar picks
  * (small sizes and home kit, or bulk and commercial), the mode the app is in
@@ -101,9 +138,7 @@ export function BuyList({ links }: { links: BuyLink[] }) {
   const ds = useDs();
   const appMode = useAppMode((s) => s.known);
   // Plain rows as drawn (prep-ing-xanthan): the picks for the mode the app is in.
-  const audience: BuyAudience = appMode === 'home' ? 'home' : 'bar';
-  const split = links.some((l) => l.audience === 'home') && links.some((l) => l.audience === 'bar');
-  const shown = split ? links.filter((l) => !l.audience || l.audience === audience) : links;
+  const shown = shopsFor(links, appMode);
   return (
     <View style={styles.notes}>
       <View>
@@ -135,9 +170,12 @@ export function Notes({ items, icon = 'exclamationmark.triangle' }: { items: str
 
 const styles = StyleSheet.create({
   section: { gap: space.sm },
+  group: { paddingVertical: space.xs },
+  value: { flexDirection: 'row', alignItems: 'center', gap: space.md, minHeight: layout.minTapTarget + space.sm, paddingVertical: space.sm },
+  valueText: { flex: 1, minWidth: 0, textAlign: 'right' },
+  label: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', gap: space.md },
   eyebrow: { ...font.figures, letterSpacing: 1 },
   row: { flexDirection: 'row', alignItems: 'center', gap: space.md, paddingVertical: space.md, borderBottomWidth: StyleSheet.hairlineWidth },
-  card: { flexDirection: 'row', alignItems: 'center', gap: space.md, minHeight: layout.minTapTarget + space.md, padding: space.md, borderRadius: radius.card, borderCurve: 'continuous' },
   source: { flexDirection: 'row', alignItems: 'center', gap: space.md, minHeight: layout.minTapTarget, paddingVertical: space.sm, borderBottomWidth: StyleSheet.hairlineWidth },
   notes: { gap: space.sm },
   note: { flexDirection: 'row', gap: space.sm, alignItems: 'flex-start' },
