@@ -9,7 +9,7 @@ import { space } from '@/constants/tokens';
 import { useBottomSearchFocus } from '@/hooks/useBottomBar';
 import { useIsWideWeb } from '@/hooks/useIsWideWeb';
 import { useOpenSearch } from '@/hooks/useSearchFrom';
-import { TABS, type Tab, type TabName } from '@/lib/tabs';
+import { androidBarShown, TABS, type Tab, type TabName } from '@/lib/tabs';
 
 export type WebTab = Tab & { icon: IconName };
 
@@ -31,8 +31,10 @@ export const WEB_TAB_BAR_HEIGHT = 64;
 export function useTabBarInset() {
   const bottom = useSafeAreaInsets().bottom;
   const wide = useIsWideWeb();
+  const barShown = androidBarShown(useSegments() as string[]);
   if (Platform.OS === 'web') return wide ? space.xl : bottom + WEB_TAB_BAR_HEIGHT + space.xl;
-  return (Platform.OS === 'ios' ? bottom : 0) + space.lg;
+  // Android's bar is hidden on a pushed page, so the content reaches the system nav bar.
+  return (Platform.OS === 'ios' || !barShown ? bottom : 0) + space.lg;
 }
 
 /**
