@@ -14,6 +14,7 @@ import { plural } from '@/lib/menus';
 import { pageLocksSpecs, pageShowsDescriptions, pageShowsDrinks, privatePageNote, specLockNote } from '@/lib/pageVisibility';
 
 import { barPlace } from '../bar/BarFactLines';
+import { LoveBarButton } from '../kept/LoveBarButton';
 import { OnTheMenu } from '../bar/OnTheMenu';
 import { SpecLockPanel } from '../drink/SpecLockPanel';
 import { BarClassics } from './BarClassics';
@@ -107,6 +108,10 @@ export function BarProfile({ profile, columns }: { profile: Profile; columns: nu
           )
         }
       />
+      {/* Follow, under the name (Prod-bar's chips): following a bar is loving it, one fact. */}
+      <View style={styles.chips}>
+        <LoveBarButton profileId={profile.id} name={profile.display_name} follow />
+      </View>
       {/* Your name may be on its drinks: the credits open your page (find-yourself), for the likely person only (Q33). */}
       <SeeYourName bar={profile} originals={originals} card />
       {/* Opened from Setup's Find your bar, or a claim on its way (owner-setup call 3). */}

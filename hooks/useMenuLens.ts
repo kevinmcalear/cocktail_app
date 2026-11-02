@@ -68,7 +68,7 @@ export interface MenuLensData {
   costs: boolean;
   /** The average pour cost, "20%". */
   averageCost: string | null;
-  /** The list's rows (planned and waiting drinks too), for the menu team. */
+  /** The list's rows (planned and waiting drinks too), for the menu team and bartenders. */
   rows: ListRow[];
 }
 
@@ -87,7 +87,8 @@ export function useMenuLens(menu: MenuDetail | null | undefined): MenuLensData {
   const floor = lens !== 'guest' && lens !== 'home';
   const notes = useRowNotes(ids, barId, floor, (id) => glass.get(id) ?? null).data ?? {};
   const team = isMenuTeam(lens);
-  const rows = useListRows(team ? menu?.id : null).data ?? [];
+  // A bartender reads the rows too: their Swap and Take off are asks (Menu-l-ask).
+  const rows = useListRows(team || lens === 'bartender' ? menu?.id : null).data ?? [];
 
   // Allergens: every drink's for the floor; the guest's own matches for a guest who set some.
   const myAllergies = useMyAllergies().data ?? [];
