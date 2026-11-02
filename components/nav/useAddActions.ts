@@ -55,7 +55,7 @@ export function useAddActions(done: () => void) {
     },
     snap: () => void fromFiles(snapReadFiles),
     choose: () => void fromFiles(pickReadFiles),
-    /** Reads what's on the clipboard (iOS asks first, so it's only read on this tap). */
+    /** Reads what's on the clipboard (iOS asks first and Android announces it, so it's only read on this tap). */
     paste: async () => {
       const text = await readClipboard();
       if (text?.trim()) read(text.trim());
@@ -64,7 +64,7 @@ export function useAddActions(done: () => void) {
   };
 }
 
-/** What's on the clipboard, for Add to offer: the text, UNREAD_CLIP on iOS (unread until a tap), or null. */
+/** What's on the clipboard, for Add to offer: UNREAD_CLIP on phones (unread until a tap), the text on the web, or null. */
 export function useClipboardOffer() {
   const [clip, setClip] = useState<string | null>(null);
   useEffect(() => {
