@@ -6,6 +6,7 @@
 import type { QueryKey } from '@tanstack/react-query';
 
 import { BAR_WRITE } from '@/lib/offlineWrites';
+import type { RotaChange } from '@/lib/rota';
 import { supabase } from '@/lib/supabase';
 
 const check = <T extends { error: { message: string } | null }>(res: T) => {
@@ -86,6 +87,16 @@ async function sendBatch(w: BatchWrite) {
   return w.id;
 }
 
+export interface ShiftsWrite extends RotaChange {
+  barId: string;
+}
+
+/** The rota: rows by their phone-made ids, so a resend finds them there, and removals, which change nothing the second time. */
+async function sendShifts({ barId, rows, removed }: ShiftsWrite) {
+  if (rows.length) check(await supabase.from('shifts').upsert(rows.map((r) => ({ ...r, bar_id: barId })), { onConflict: 'id' }));
+  if (removed.length) check(await supabase.from('shifts').delete().eq('bar_id', barId).in('id', removed));
+}
+
 export const BAR_WRITES = {
   zoneCount: {
     key: [BAR_WRITE, 'zone-count'],
@@ -106,5 +117,10 @@ export const BAR_WRITES = {
     key: [BAR_WRITE, 'run-serves'],
     send: sendServes,
     refresh: (w: ServesWrite): QueryKey[] => [['run-sheet', w.menuId]],
+  },
+  shifts: {
+    key: [BAR_WRITE, 'shifts'],
+    send: sendShifts,
+    refresh: (w: ShiftsWrite): QueryKey[] => [['shifts', w.barId]],
   },
 } as const;

@@ -6,7 +6,7 @@ import { Caption, Display, DrinkDrawingFor, DsText, PressableScale, TextLink, us
 import { DrawingTrio } from '@/components/ds/DrawingTrio';
 import { trioLayout } from '@/components/ds/trioPlaces';
 import { IconSymbol } from '@/components/ui/icon-symbol';
-import { displayFaces, palateHues, radius, space } from '@/constants/tokens';
+import { displayFaces, font, palateHues, radius, space } from '@/constants/tokens';
 import { useItemSketch } from '@/hooks/useItemSketch';
 import { withAlpha } from '@/lib/color';
 import { liquidOf } from '@/lib/sketch/types';
@@ -26,13 +26,17 @@ export function TonightHead({ eyebrow }: { eyebrow: string }) {
   );
 }
 
-/** A section's small uppercase label, with an aside on the right ("14 you can make", "All"). */
+/**
+ * A section's label in sentence case, with an aside on the right ("14 you can
+ * make", "All"). The page's date line is its one capitals label (decided:
+ * one label per screen).
+ */
 export function TonightLabel({ title, aside, onAside }: { title: string; aside?: string | null; onAside?: () => void }) {
   return (
     <View style={styles.label}>
-      <Caption tone="muted" role="heading" style={styles.caps}>
+      <DsText variant="label" role="heading" aria-level={2} style={font.semiBold}>
         {title}
-      </Caption>
+      </DsText>
       {aside ? onAside ? <TextLink label={aside} onPress={onAside} /> : <Caption tone="muted">{aside}</Caption> : null}
     </View>
   );

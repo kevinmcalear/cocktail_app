@@ -139,7 +139,7 @@ function ProfilePage({ profileRef, checking }: { profileRef: string | string[] |
 
 /** Share profile, top right on a person's or a bar's page (ppl-person, ppl-bar-top). */
 function ShareProfile({ profile }: { profile: Profile }) {
-  const share = useShareLink(`${siteOrigin()}/p/${profile.handle}`, profile.display_name);
+  const share = useShareLink(`${siteOrigin()}/p/${profile.handle}`, profile.display_name, 'profile');
   return <GlassButton accessibilityLabel={profile.kind === 'person' ? 'Share profile' : 'Share'} icon="square.and.arrow.up" onPress={() => void share()} />;
 }
 

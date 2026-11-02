@@ -8,7 +8,7 @@ import { BackbarTheme, Body, Button, Caption, GlassButton, useBreakpoint, useDs,
 import { Crumbs } from '@/components/nav/PageFrame';
 import { DrawingBar } from '@/components/ds/DrawingBar';
 import { DRAWN_LIST_WINDOW } from '@/components/ds/SketchDrawing';
-import { space } from '@/constants/tokens';
+import { menuCover, space } from '@/constants/tokens';
 import { useActiveVenue } from '@/hooks/useActiveVenue';
 import { useIsWideWeb } from '@/hooks/useIsWideWeb';
 import { useEndedRuns, useListChanges } from '@/hooks/useLivingList';
@@ -189,7 +189,7 @@ function MenuPageBody({ menu, shelf, cover, now }: PageProps & { cover: string |
     { key: `h-${s.id}`, head: { name: s.name, count: s.rows.filter((r) => !r.struck).length } },
     ...s.rows.map((row) => ({ key: `${s.id}-${row.drink.id}${row.struck ? '-off' : ''}`, row, sectionId: s.id })),
   ]);
-  const column = { paddingHorizontal: gutter, maxWidth: wide ? 760 : undefined, width: '100%', alignSelf: sidebar ? 'flex-start' : 'center' } as const;
+  const column = { paddingHorizontal: gutter, maxWidth: wide ? menuCover.column : undefined, width: '100%', alignSelf: sidebar ? 'flex-start' : 'center' } as const;
   const bartender = lens.lens === 'bartender';
   // Waiting changes, Undo and Coming up show their buttons; any other row shows Swap and Take off once tapped.
   const alwaysActs = (id: string | undefined, row: PageRowView) => id === 'waiting' || id === 'coming' || !!row.struck;

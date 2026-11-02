@@ -1,21 +1,23 @@
-import { Stack } from 'expo-router';
+import { Stack, useRouter } from 'expo-router';
 import { useEffect, useRef, useState, type ComponentRef, type RefObject } from 'react';
 import { Keyboard, KeyboardAvoidingView, Platform, ScrollView, StyleSheet, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import type { SearchBarCommands } from 'react-native-screens';
 
-import { DockFade, useDs, useGutter } from '@/components/ds';
+import { DockFade, GlassButton, useDs, useGutter } from '@/components/ds';
 import { ScreenHeader, ScreenHeaderSpacer } from '@/components/nav/ScreenHeader';
-import { WEB_TAB_BAR_HEIGHT } from '@/components/nav/WebTabBar';
+import { WEB_TABS } from '@/components/nav/WebTabBar';
 import { layout, space } from '@/constants/tokens';
-import { useBottomSearchFocus } from '@/hooks/useBottomBar';
+import { SEARCH_TAB } from '@/hooks/useBottomBar';
 import { useKeyboardHeight, useWebKeyboardInset } from '@/hooks/useKeyboardInset';
+import { SEARCH_ANYTHING } from '@/lib/tabs';
 import type { SearchMine } from '@/hooks/useSearchMine';
+import { useSearchFrom } from '@/hooks/useSearchFrom';
 import { scopeOptions, type SearchScope, type SearchShow, type ShowCounts } from '@/lib/searchScope';
 
 import { CanMakeChip } from './CanMake';
 import { SearchField } from './SearchField';
-import { SearchBody, searchPlaceholder, type SearchArea } from './SearchPanel';
+import { SearchBody, type SearchArea } from './SearchPanel';
 import { ScopeToken, ShowChips } from './SearchParts';
 
 /** The search tab's state, shared by the wide web's page and the two bottom layouts. */
@@ -47,7 +49,7 @@ export interface SearchTabState {
  * screen's side rather than against an edge, with the results passing under it
  * (search-typing, decided 23 Oct 2026).
  */
-function PlaceRow({ query, scope, setScope, mine, area, show, setShow, counts }: Pick<SearchTabState, 'query' | 'scope' | 'setScope' | 'mine' | 'area' | 'show' | 'setShow' | 'counts'>) {
+export function PlaceRow({ query, scope, setScope, mine, area, show, setShow, counts }: Pick<SearchTabState, 'query' | 'scope' | 'setScope' | 'mine' | 'area' | 'show' | 'setShow' | 'counts'>) {
   const gutter = useGutter();
   // At a venue on Everywhere: Can make, between the place and the type chips; on, the type chips leave (QA Q37).
   const canMake = query && scope === 'everywhere' && !!mine.venueId;
@@ -63,7 +65,7 @@ function PlaceRow({ query, scope, setScope, mine, area, show, setShow, counts }:
 /** The place row's height: the 44-point token and chip track, and the gap to the field. */
 const PLACE_ROW = layout.minTapTarget + space.sm;
 
-const DISMISS = Platform.OS === 'ios' ? 'interactive' : 'on-drag';
+export const DISMISS = Platform.OS === 'ios' ? 'interactive' : 'on-drag';
 
 /**
  * iOS 26: the system's search tab. The screen carries a native search bar,
@@ -102,7 +104,7 @@ export function SystemBottomSearch({ query, setQuery, scope, setScope, mine, are
           title: '',
           headerSearchBarOptions: {
             ref: bar,
-            placeholder: searchPlaceholder(scope, mine, area),
+            placeholder: SEARCH_ANYTHING,
             autoCapitalize: 'none',
             tintColor: ds.accentText,
             hideNavigationBar: false,
@@ -154,12 +156,14 @@ export function SystemBottomSearch({ query, setQuery, scope, setScope, mine, are
 const SYSTEM_FIELD = 64;
 
 /**
- * Android, phone web and iOS before 26: the field floats at the bottom in glass, with
- * the place row over it; recents and results
- * scroll above and under it (search-start, search-typing). While you type it rides on the
- * keyboard and takes the tab bar's place (Android's keyboard covers the bar;
- * phone web hides its bar); with the keyboard down it sits just above the
- * tabs. The round x empties it and puts the keyboard away.
+ * Phone web and iOS before 26: the field floats at the bottom in glass, with
+ * the place row over it; recents and results scroll above and under it
+ * (search-start, search-typing). While you type it rides on the keyboard.
+ * The round x empties it and puts the keyboard away.
+ * Before iOS 26 this is the search tab, with the tab's title row and the tab
+ * bar under the field. On phone web it's the /search page over the tabs: as
+ * Prod-phone draws search, no top bar, and the tab you came from waits as a
+ * small circle beside the field, to go back to it. Android's is TopSearch.tsx.
  */
 export function BottomSearch({ query, setQuery, scope, setScope, mine, area, onShowOnMap, focused, show, setShow, counts, setCounts }: SearchTabState) {
   const ds = useDs();
@@ -171,23 +175,15 @@ export function BottomSearch({ query, setQuery, scope, setScope, mine, area, onS
   const [dockHeight, setDockHeight] = useState(layout.minTapTarget + space.lg);
   const dock = useRef<ComponentRef<typeof View>>(null);
   useKeepFieldFocus(dock);
-  // Phone web: while the field has focus, it takes the tab bar's place.
-  useEffect(() => {
-    if (Platform.OS !== 'web') return;
-    useBottomSearchFocus.setState({ focused: focused && fieldFocused });
-    return () => useBottomSearchFocus.setState({ focused: false });
-  }, [focused, fieldFocused]);
   // Room under the field: the keyboard (KeyboardAvoidingView adds it on native),
-  // or else the tab bar. iOS's floating bar is in the bottom safe area; Android's
-  // sits below the screen; the web's pill floats over it.
+  // or else iOS's floating tab bar (in the bottom safe area), or the page's bottom edge.
   const under = Platform.select({
-    web: fieldFocused ? webKeyboard : insets.bottom + space.md + WEB_TAB_BAR_HEIGHT,
-    ios: typing ? 0 : insets.bottom,
-    default: 0,
+    web: fieldFocused ? webKeyboard : insets.bottom + space.sm,
+    default: typing ? 0 : insets.bottom,
   });
   return (
     <KeyboardAvoidingView behavior={Platform.OS === 'ios' ? 'padding' : 'height'} style={[styles.screen, { backgroundColor: ds.c.ground }]}>
-      <Stack.Screen options={{ headerShown: false, headerSearchBarOptions: undefined }} />
+      {SEARCH_TAB ? <Stack.Screen options={{ headerShown: false, headerSearchBarOptions: undefined }} /> : null}
       {/* Its own box above the keyboard's padding, so the dock pins to the results' bottom edge. */}
       <View style={styles.screen}>
         <ScrollView
@@ -196,11 +192,11 @@ export function BottomSearch({ query, setQuery, scope, setScope, mine, area, onS
           keyboardDismissMode={DISMISS}
           // The web has no drag dismissal: blur the field when the results move.
           onScrollBeginDrag={Platform.OS === 'web' ? Keyboard.dismiss : undefined}
-          // The last rows scroll clear of the dock floating over them.
-          contentContainerStyle={{ paddingHorizontal: gutter, paddingBottom: dockHeight + space.lg, gap: space.lg }}
+          // The last rows scroll clear of the dock floating over them; the web page starts under the status bar.
+          contentContainerStyle={{ paddingHorizontal: gutter, paddingTop: Platform.OS === 'web' ? insets.top + space.lg : 0, paddingBottom: dockHeight + space.lg, gap: space.lg }}
         >
           {/* The tab's title row, as every tab has it. */}
-          <ScreenHeaderSpacer title="Search" />
+          {SEARCH_TAB ? <ScreenHeaderSpacer title="Search" /> : null}
           <SearchBody query={query} scope={scope} onScope={setScope} mine={mine} area={area} onShowOnMap={onShowOnMap} show={show} onShow={setShow} onCounts={setCounts} typeAhead={setQuery} />
         </ScrollView>
         <View
@@ -210,14 +206,34 @@ export function BottomSearch({ query, setQuery, scope, setScope, mine, area, onS
         >
           <DockFade />
           <PlaceRow query={query} scope={scope} setScope={setScope} mine={mine} area={area} show={show} setShow={setShow} counts={counts} />
-          <View style={{ paddingHorizontal: gutter }}>
-            <SearchField query={query} onQuery={setQuery} placeholder={searchPlaceholder(scope, mine, area)} autoFocus={focused} cancel glass onFocusChange={setFieldFocused} />
+          <View style={[styles.fieldRow, { paddingHorizontal: gutter }]}>
+            {Platform.OS === 'web' ? <BackToTab /> : null}
+            <View style={styles.field}>
+              <SearchField query={query} onQuery={setQuery} placeholder={SEARCH_ANYTHING} autoFocus={focused} cancel glass onFocusChange={setFieldFocused} />
+            </View>
           </View>
         </View>
       </View>
     </KeyboardAvoidingView>
   );
 }
+
+/**
+ * Phone web's way back from the search page: the tab you came from, as a small
+ * glass circle left of the field in the accent (Prod-phone's search, the tab
+ * bar folded down beside the field as iOS 26 does).
+ */
+function BackToTab() {
+  const ds = useDs();
+  const router = useRouter();
+  const from = useSearchFrom((s) => s.from);
+  const tab = WEB_TABS.find((t) => t.name === from) ?? WEB_TABS[0];
+  const back = () => (router.canGoBack() ? router.back() : router.navigate(tab.path));
+  return <GlassButton icon={tab.icon} color={ds.accentText} size={FIELD} accessibilityLabel={`Back to ${tab.label}`} onPress={back} />;
+}
+
+/** The glass field's height (SearchField), which the circle beside it matches. */
+const FIELD = layout.minTapTarget + space.xs;
 
 /**
  * Phone web: a press on the dock's chips or its place token keeps the focus
@@ -243,6 +259,8 @@ const styles = StyleSheet.create({
   dock: { position: 'absolute', left: 0, right: 0, bottom: 0, pointerEvents: 'box-none', paddingTop: space.lg, gap: space.sm },
   systemDock: { position: 'absolute', top: 0, left: 0, right: 0, bottom: 0, justifyContent: 'flex-end', pointerEvents: 'box-none' },
   systemRow: { paddingTop: space.lg, pointerEvents: 'box-none' },
+  fieldRow: { flexDirection: 'row', alignItems: 'center', gap: space.sm },
+  field: { flex: 1, minWidth: 0 },
   placeRow: { flexGrow: 0 },
   placeChips: { flexDirection: 'row', alignItems: 'center', gap: space.sm },
 });
