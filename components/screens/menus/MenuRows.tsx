@@ -4,7 +4,7 @@ import { StyleSheet, View } from 'react-native';
 
 import { Caption, DrinkImage, DsText, Headline, PressableScale, Tag, useDs } from '@/components/ds';
 import { IconSymbol } from '@/components/ui/icon-symbol';
-import { displayFaces, displayName, font, radius, space, STATUS } from '@/constants/tokens';
+import { displayFaces, displayName, font, menuBandHeight, radius, space, STATUS } from '@/constants/tokens';
 import { readableAccent } from '@/lib/color';
 import { comingUpLine, draftLine, homeMenuLine, menuDateLine, menuStatus, plural } from '@/lib/menus';
 import type { MenuPicture, MenuSummary } from '@/types/menus';
@@ -93,7 +93,7 @@ export function MenuCardFrame({ label, onPress, name, coverUrl, coverPosition, p
     <PressableScale role="link" accessibilityLabel={label} onPress={onPress} style={styles.card}>
       {coverUrl || !pictures.length ? (
         <View style={styles.cover}>
-          <MenuVisual name={name} coverUrl={coverUrl} coverPosition={coverPosition} pictures={pictures} height={190} />
+          <MenuVisual name={name} coverUrl={coverUrl} coverPosition={coverPosition} pictures={pictures} height={menuBandHeight} />
         </View>
       ) : (
         <MenuBand ids={pictures.slice(0, 3).map((p) => p.id)} />

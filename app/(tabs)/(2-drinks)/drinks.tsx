@@ -1,4 +1,4 @@
-import { NoDrinkPicked } from '@/components/nav/DrinksSplit';
+import { NoDrinkPicked } from '@/components/nav/NoDrinkPicked';
 import { MountOnFocus } from '@/components/nav/MountOnFocus';
 import { LibraryScreen } from '@/components/screens/LibraryScreen';
 import { HomeDrinks } from '@/components/screens/drinks/HomeDrinks';

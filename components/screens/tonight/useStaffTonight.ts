@@ -74,6 +74,9 @@ export function useStaffTonight(barId: string) {
   const enough = prepData
     ? enoughRows(Object.keys(prepData.houseMade), prep?.make ?? [], prepData.onHand, (id) => lineNames.get(id), (id) => formatQuantity(prepData.onHand[id]))
     : [];
+  // For the handover's chips and its Log batch (Handover.tsx): house-made, and an ingredient's name.
+  const houseMadeIds = Object.keys(prepData?.houseMade ?? {});
+  const lineName = (id: string) => lineNames.get(id);
   const all = blocks.flatMap((b) => b.sections.flatMap((s) => s.drinks.map((d) => ({ drink: d, list: b.menu.name }))));
   const off: TonightRow[] = offTonight(
     all.map((a) => a.drink),
@@ -149,6 +152,9 @@ export function useStaffTonight(barId: string) {
     houseMade,
     enough,
     batchOf,
+    houseMadeIds,
+    lineName,
+    date,
     off,
     service,
     learn,

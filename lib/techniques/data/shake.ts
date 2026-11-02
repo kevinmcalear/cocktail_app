@@ -1,0 +1,101 @@
+import { src } from '../sources';
+import type { Technique } from '../types';
+
+/**
+ * Shake and stir (Kept-learn, "Dilution, dry shakes, the whip"): the ways of
+ * chilling and watering a drink in the tin or glass. All methods, none made
+ * in house. The reverse dry shake stays under Foam, where the foam
+ * is the point.
+ */
+export const SHAKE: Technique[] = [
+  {
+    id: 'shake-on-ice',
+    name: 'Shake on ice',
+    group: 'shake',
+    method: true,
+    also: ['hard shake', 'shaken', 'dilution'],
+    summary: 'Chill and water a drink with juice, egg or cream in it, and mix it hard.',
+    why: 'Ice melts as it chills the drink, so the shake sets both the cold and the water. Shaking adds more water than stirring (about 20 to 25% of the drink against 15 to 20%), and most of it arrives in the first 12 seconds or so.',
+    time: '1 min',
+    totalMinutes: 1,
+    steps: [
+      { text: 'Build the drink in the small tin, then fill the tin with cold, dry ice.' },
+      { text: 'Seal the tins and shake hard until the tin frosts over. About 12 seconds is enough: a longer shake adds little.', timer: 12 },
+      { text: 'Strain into the glass, through a fine strainer too if there is pulp or ice chips to catch.' },
+    ],
+    equipment: [],
+    helpful: ['strainers'],
+    vegan: true,
+    watch: ['Wet ice from a machine waters a drink down more than dry ice straight from the freezer.'],
+    grade: 'B',
+    sources: [src('diffordsShake', 'B'), src('diffordsWater', 'B'), src('deathCoShakeStir', 'B')],
+  },
+  {
+    id: 'stir-on-ice',
+    name: 'Stir on ice',
+    group: 'shake',
+    method: true,
+    also: ['stirred', 'stirring', 'dilution'],
+    summary: 'Chill and water a drink made only of spirits, vermouth and bitters, and keep it clear.',
+    why: 'Stirring chills and dilutes more gently than shaking (about 15 to 20% water against 20 to 25%) and adds no air, so the drink stays clear and silky.',
+    time: '1 min',
+    totalMinutes: 1,
+    steps: [
+      { text: 'Build the drink in a mixing glass, then fill it with cold, dry ice.' },
+      { text: 'Stir with a bar spoon, back of the spoon against the glass, until the glass is cold to the touch. Roughly 15 to 20 seconds.', timer: 20 },
+      { text: 'Taste a drop from the spoon: it should be cold, round and not watery.' },
+      { text: 'Strain into a chilled glass.' },
+    ],
+    equipment: [],
+    vegan: true,
+    watch: ['The time depends on the ice and the drink: taste it. Stir a little less for a drink served over ice, which keeps diluting in the glass.'],
+    grade: 'B',
+    sources: [src('bolsStir', 'B'), src('deathCoShakeStir', 'B')],
+  },
+  {
+    id: 'dry-shake',
+    name: 'Dry shake',
+    group: 'shake',
+    method: true,
+    also: ['shake without ice', 'egg white sour'],
+    summary: 'Shake without ice first to whip air into egg white or aquafaba, then shake again on ice.',
+    why: 'Without ice in the way, the foamer whips freely. The second shake on ice then chills and waters the drink.',
+    time: '1 min',
+    totalMinutes: 1,
+    steps: [
+      { text: 'Build the drink with its foamer in the tin, with no ice.' },
+      { text: 'Seal and shake hard for 15 to 20 seconds, until the egg is frothy.', timer: 15 },
+      { text: 'Add ice, seal and shake again until the tin frosts.', timer: 12 },
+      { text: 'Strain into the glass and let the foam settle a few seconds before garnishing.' },
+    ],
+    equipment: [],
+    vegan: false,
+    allergens: ['Egg (with egg white)'],
+    watch: ['Pasteurised whites are the safer default for egg.', 'Fat kills a foam: no cream, coconut or butter-washed spirit in the same drink.'],
+    swap: 'The reverse dry shake (ice first, then without) gives a bigger head: see Foam.',
+    grade: 'B',
+    sources: [src('punchDryShake', 'B'), src('totcShake', 'B')],
+  },
+  {
+    id: 'whip-shake',
+    name: 'Whip shake',
+    group: 'shake',
+    method: true,
+    also: ['short shake', 'crushed ice', 'mai tai', 'ramos gin fizz'],
+    summary: 'A short, jerky shake with very little ice, for a frothy drink served over crushed ice.',
+    why: 'With only a little ice there is more air in the tin, so the drink froths, and the ice melts away fast: it chills and waters the drink just enough to pour over quick-melting crushed ice.',
+    time: '1 min',
+    totalMinutes: 1,
+    steps: [
+      { text: 'Build the drink in the tin and add just a few pieces of crushed ice (or one large cube).' },
+      { text: 'Shake with a quick, jerky motion until the ice has melted away.', timer: 6 },
+      { text: 'Pour into the glass over fresh crushed ice, or over no ice for a fizz.' },
+      { text: 'Garnish.' },
+    ],
+    equipment: [],
+    vegan: true,
+    watch: ['Made for crushed ice or no ice: for a drink over cubes, shake on ice instead.', 'With egg white, the same short shake gives a head in less time than a dry shake.'],
+    grade: 'B',
+    sources: [src('punchWhipShake', 'B'), src('tastingWhipShake', 'B')],
+  },
+];

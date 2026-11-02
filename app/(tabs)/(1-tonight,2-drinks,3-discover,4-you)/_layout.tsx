@@ -1,7 +1,7 @@
 import { Stack, useSegments } from 'expo-router';
 import { Platform, StyleSheet, View } from 'react-native';
 
-import { AddFab } from '@/components/nav/AddButton';
+import { AddFab } from '@/components/nav/AddFab';
 import { DrinksList } from '@/components/nav/DrinksSplit';
 import { useDrinksSplit } from '@/hooks/useDrinksSplit';
 
