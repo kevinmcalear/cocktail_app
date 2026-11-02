@@ -5349,6 +5349,8 @@ export type Database = {
           profile_pin: number | null
           rank_key: number
           ranked_as_item_id: string
+          reasons: string[]
+          room_reasons: string[]
           says_where: boolean
           sentiment: Database["public"]["Enums"]["rank_sentiment"]
           user_id: string
@@ -5363,6 +5365,8 @@ export type Database = {
           profile_pin?: number | null
           rank_key: number
           ranked_as_item_id: string
+          reasons?: string[]
+          room_reasons?: string[]
           says_where?: boolean
           sentiment: Database["public"]["Enums"]["rank_sentiment"]
           user_id?: string
@@ -5377,6 +5381,8 @@ export type Database = {
           profile_pin?: number | null
           rank_key?: number
           ranked_as_item_id?: string
+          reasons?: string[]
+          room_reasons?: string[]
           says_where?: boolean
           sentiment?: Database["public"]["Enums"]["rank_sentiment"]
           user_id?: string

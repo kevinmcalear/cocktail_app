@@ -210,6 +210,9 @@ export const displayName = {
   page: { fontSize: 46, lineHeight: 52, letterSpacing: 0 },
 } as const;
 
+/** A score set as the moment's one big figure: where a rank landed (Prod-rank-A "9.0", 96 on phones). */
+export const scoreFigure = { fontSize: 96, lineHeight: 108 } as const;
+
 /** The smallest text the app sets, in points (check:design holds every size to it). */
 export const MIN_FONT_SIZE = 13;
 

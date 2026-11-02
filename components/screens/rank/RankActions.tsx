@@ -1,5 +1,5 @@
 import { useRouter } from 'expo-router';
-import { useState } from 'react';
+import { lazy, Suspense, useState } from 'react';
 
 import { GlassButton } from '@/components/ds';
 import { useSignedIn } from '@/ctx/AuthContext';
@@ -9,7 +9,9 @@ import { rankedAs as rankedAsOf } from '@/lib/ranking';
 
 import { useAgeGate } from '../safety/AgeGate';
 import { OnProfileButton } from './OnProfileSheet';
-import { RankSheet } from './RankSheet';
+
+// The sheet loads on the first tap, so the drink, bar and Discover pages don't carry it.
+const RankSheet = lazy(() => import('./RankSheet').then((m) => ({ default: m.RankSheet })));
 
 interface RankItem {
   id: string;
@@ -54,24 +56,15 @@ interface RankFlowProps extends RankActionsProps {
  * once someone taps Rank (after the age check), not before.
  */
 export function RankFlow({ item, picture, atBar = null, onClose }: RankFlowProps) {
-  const router = useRouter();
   const { data: target } = useRankTarget(item.id);
-  const { data: ownBar } = useBarProfile(item.bar_id, signatureBarOf(target));
+  const { data: ownBar, isLoading: barLoading } = useBarProfile(item.bar_id, signatureBarOf(target));
   const rankedAs = target ? rankedAsOf(target) : null;
   const { data: list, isError: listFailed } = useMyRankList(rankedAs?.id);
-  if (!rankedAs) return null;
+  // Wait for the drink's bar, or a quick tap would put it at home.
+  if (!rankedAs || barLoading) return null;
   return (
-    <RankSheet
-      drink={{ id: item.id, name: item.name, picture }}
-      rankedAs={rankedAs}
-      ownBar={ownBar ?? atBar}
-      list={list}
-      listFailed={listFailed}
-      onClose={onClose}
-      onSeeRankings={() => {
-        onClose();
-        router.push(`/rankings/${item.id}`);
-      }}
-    />
+    <Suspense fallback={null}>
+      <RankSheet drink={{ id: item.id, name: item.name, picture }} rankedAs={rankedAs} venue={ownBar ?? atBar} list={list} listFailed={listFailed} onClose={onClose} />
+    </Suspense>
   );
 }
