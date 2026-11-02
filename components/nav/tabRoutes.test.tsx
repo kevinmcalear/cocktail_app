@@ -39,7 +39,10 @@ function open(url: string) {
       '(tabs)/(2-drinks)/drinks': page('drinks'),
       '(tabs)/(3-discover)/discover': page('discover'),
       '(tabs)/(4-you)/you': page('you'),
+      '(tabs)/(search)/_layout': () => <Stack screenOptions={{ headerShown: false }} />,
       '(tabs)/(search)/index': page('search'),
+      '(tabs)/(search)/cocktail/[id]/index': page('drink'),
+      '(tabs)/(search)/beer/[id]/index': page('beer'),
     },
     { initialUrl: url },
   );
@@ -116,4 +119,26 @@ it('pushes a beer and the bottle in it on the same tab, and Back steps through t
   expect(r.getPathname()).toBe('/beer/1');
   await act(async () => router.back());
   expect(r.getPathname()).toBe('/drinks');
+});
+
+// iPhone's search tab ((search), a tab of its own): a result opens on that tab's stack,
+// so Back returns to the results rather than leaving them behind on another tab.
+it("opens a drink from iPhone's search tab on the search tab", async () => {
+  const r = await open('/drinks');
+  await act(async () => router.navigate('/(tabs)/(search)' as never));
+  expect(r.getSegments()).toEqual(['(tabs)', '(search)']);
+  await act(async () => router.push('/cocktail/1'));
+  expect(r.getSegments()).toEqual(['(tabs)', '(search)', 'cocktail', '[id]']);
+  await act(async () => router.back());
+  expect(r.getSegments()).toEqual(['(tabs)', '(search)']);
+});
+
+// Beer, wine and ingredient pages have the same second address under (search), so their results stay there too.
+it("opens a beer from iPhone's search tab on the search tab", async () => {
+  const r = await open('/drinks');
+  await act(async () => router.navigate('/(tabs)/(search)' as never));
+  await act(async () => router.push('/beer/1'));
+  expect(r.getSegments()).toEqual(['(tabs)', '(search)', 'beer', '[id]']);
+  await act(async () => router.back());
+  expect(r.getSegments()).toEqual(['(tabs)', '(search)']);
 });

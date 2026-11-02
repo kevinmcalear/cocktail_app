@@ -84,11 +84,6 @@ export function DrinkArt({ itemId, sketch, label, size, pour }: { itemId: string
   return sketch ? <DrinkDrawing inputs={sketch} seed={itemId} size="hero" staff={staff} pour={pour} label={label} /> : <DrinkDrawingFor itemId={itemId} size="hero" staff={staff} pour={pour} label={label} />;
 }
 
-/** A drawing made for `size`, shown at the docked glyph's size in the bar. */
-export function DockGlyph({ art, size }: { art: ReactNode; size: number }) {
-  return <View style={[styles.glyph, { width: size, height: size, transform: [{ scale: DOCKED / size }] }]}>{art}</View>;
-}
-
 /** Holds that room in the scroll. */
 export function DrawingSpace({ top, size }: { top: number; size: number }) {
   return <View style={{ height: drawingRoom(top, size) }} />;
@@ -97,5 +92,4 @@ export function DrawingSpace({ top, size }: { top: number; size: number }) {
 const styles = StyleSheet.create({
   sky: { position: 'absolute', top: 0, left: 0, right: 0, pointerEvents: 'none' },
   dock: { position: 'absolute', top: 0, left: 0, transformOrigin: 'left top', pointerEvents: 'none' },
-  glyph: { transformOrigin: 'left top', pointerEvents: 'none' },
 });
