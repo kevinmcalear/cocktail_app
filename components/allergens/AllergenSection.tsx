@@ -8,6 +8,7 @@ import { useActiveVenue } from '@/hooks/useActiveVenue';
 import { useDrinkAllergens, useItemAllergens, useSetItemAllergens, type AllergenDeclaration } from '@/hooks/useAllergens';
 import { useCapabilities } from '@/hooks/useCapabilities';
 import { useMode } from '@/hooks/useMode';
+import { useRoleAt } from '@/hooks/useViewAs';
 import { ALLERGENS, allergenLabel, type Allergen } from '@/lib/allergens';
 import { checkedLine, viaLine } from '@/lib/allergenWords';
 
@@ -80,9 +81,11 @@ function Declared({ itemId, canEditItem, barId, barName }: AllergenSectionProps)
   const venueId = barId ?? (mode === 'home' ? null : (active?.id ?? null));
   const venueName = barId ? barName : active?.name;
   const { data: capabilities } = useCapabilities(venueId);
+  const { role, previewing } = useRoleAt(venueId);
   // In a venue, the venue's own declaration is what gets edited; with no venue, the catalogue's.
   const scope = venueId;
-  const canEdit = scope ? !!capabilities?.includes('edit_drinks') : canEditItem;
+  // The edit_drinks permission there; under View as, the previewed built-in role (as useItemEditAccess): a Bartender reads it.
+  const canEdit = scope ? (!previewing && capabilities ? capabilities.includes('edit_drinks') : role > 30) : canEditItem;
   const { data, isPending } = useItemAllergens(itemId, venueId);
   const save = useSetItemAllergens(itemId, scope);
   if (isPending || !data) return <Body tone="muted">Loading.</Body>;
