@@ -19,7 +19,8 @@ type Auth = { loading: boolean; user: { id: string } | null; session: { user: { 
 let mockAuth: Auth = { loading: true, user: null, session: null };
 
 jest.mock('@/ctx/AuthContext', () => ({ useAuth: () => mockAuth }));
-jest.mock('@/lib/deviceStore', () => ({ deviceStore: { removeItem: async () => {} } }));
+const mockRemoved: string[] = [];
+jest.mock('@/lib/deviceStore', () => ({ deviceStore: { removeItem: async (key: string) => void mockRemoved.push(key) } }));
 jest.mock('@/lib/specBookFile', () => ({ clearSavedSpecBooks: async () => {} }));
 // The real persister, over mockStore, throttled to 50 ms instead of 5 s.
 jest.mock('@/lib/react-query', () => {
@@ -110,6 +111,12 @@ test('opened signed out, auth settling before the saved cache loads: the previou
   expect(queryClient.getQueryData(['bars', 'u1'])).toBeUndefined();
   expect(savedKeys() ?? []).not.toContain('["bars","u1"]');
   await unmount();
+});
+
+test("opened signed out: the signed-out guest's allergies stay, an account's copy goes", async () => {
+  await clearUserData();
+  expect(mockRemoved).toContain('account-allergies');
+  expect(mockRemoved).not.toContain('guest-allergies');
 });
 
 test('signing out while a save is under way: the save does not write the old cache back', async () => {

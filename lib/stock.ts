@@ -82,16 +82,30 @@ export function withBatches(rows: OnHandRow[], batches: readonly Batch[]): Recor
   return out;
 }
 
+const madeDay = (last: Pick<Batch, 'madeAt'>) => new Date(last.madeAt).toLocaleDateString('en-GB', { day: 'numeric', month: 'short' });
+
+/** What's on hand. Batches (a recipe with no yield) read as the Makes menu says them: "½ batch", "2 batches". */
+const haveWords = (q: Quantity) => (q.unit === 'batch' ? (q.value === 0.5 ? '½ batch' : `${Number(q.value.toFixed(1))} ${q.value > 1 ? 'batches' : 'batch'}`) : formatQuantity(q));
+
+/**
+ * A house-made row in Behind the bar (boards Draw-scroll, Desk-page): when it
+ * was last made and what's on hand, "Made 30 Oct · 800 ml left". Either half
+ * alone when that's all there is; null with neither.
+ */
+export function madeLine(last: Pick<Batch, 'madeAt'> | undefined, onHand: Quantity | undefined): string | null {
+  const made = last ? `Made ${madeDay(last)}` : null;
+  const left = onHand ? (onHand.value > 0 ? `${haveWords(onHand)} left` : 'None left') : null;
+  return [made, left].filter(Boolean).join(' · ') || null;
+}
+
 /**
  * The house-made page's On hand row (board Item-page, Behind the bar): what's
  * on hand, then when it was last made, "800 ml · made 30 Oct", "None · made
  * 30 Oct". Either half alone when that's all there is; null with neither.
  */
 export function onHandLine(last: Pick<Batch, 'madeAt'> | undefined, onHand: Quantity | undefined): string | null {
-  // Batches (a recipe with no yield) read as the Makes menu says them: "½ batch", "2 batches".
-  const batch = onHand?.unit === 'batch' ? (onHand.value === 0.5 ? '½ batch' : `${Number(onHand.value.toFixed(1))} ${onHand.value > 1 ? 'batches' : 'batch'}`) : null;
-  const have = onHand ? (onHand.value > 0 ? (batch ?? formatQuantity(onHand)) : 'None') : null;
-  const made = last ? `made ${new Date(last.madeAt).toLocaleDateString('en-GB', { day: 'numeric', month: 'short' })}` : null;
+  const have = onHand ? (onHand.value > 0 ? haveWords(onHand) : 'None') : null;
+  const made = last ? `made ${madeDay(last)}` : null;
   const line = [have, made].filter(Boolean).join(' · ');
   return line ? line[0].toUpperCase() + line.slice(1) : null;
 }
