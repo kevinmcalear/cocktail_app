@@ -17,7 +17,7 @@ import { backWord } from '@/lib/tabs';
 import { COLUMNS_FROM, DrinkColumns } from './DrinkColumns';
 import { FADE, phoneHeroHeight } from './DrinkHero';
 import { DockedDrawing, DockGlyph, DOCKED, DrawingSpace, DrinkSky, drawingTop } from './DrawingHero';
-import { NATIVE_DOCK_LEFT, useItemHeader, type Controls } from './ItemHeader';
+import { iosBarRoom, IosBarName, NATIVE_DOCK_LEFT, useItemHeader, type Controls } from './ItemHeader';
 import { backWidth, BarBacking, PageControls } from './PageControls';
 import { TitleOnPhoto } from './ItemTitle';
 import { PhotoMirror } from './PhotoMirror';
@@ -113,7 +113,8 @@ export function ItemShell({ name, pane, photo, art, size, liquid, title, action,
   const underNativeBar = (
     <>
       <BarBacking height={barHeight} scrollY={scrollY} tuck={tuck} />
-      {photo ? null : dock({ dockLeft: NATIVE_DOCK_LEFT, dockTop: (top + barHeight - DOCKED) / 2, handOff: true })}
+      {photo ? null : dock({ dockLeft: NATIVE_DOCK_LEFT, dockTop: (top + barHeight - DOCKED) / 2, handOff: Platform.OS === 'android' })}
+      {Platform.OS === 'ios' ? <IosBarName name={name} left={NATIVE_DOCK_LEFT + (photo ? 0 : DOCKED + space.sm)} right={space.lg + iosBarRoom(controls)} top={top} height={barHeight - top} scrollY={scrollY} tuck={tuck} /> : null}
     </>
   );
 
@@ -195,7 +196,8 @@ function PageFab({ scrollY, bottom, ...fab }: NonNullable<ItemShellProps['fab']>
       if (now !== was) scheduleOnRN(setOpen, now);
     },
   );
-  return <ExtendedFab {...fab} icon="checkmark" open={open} style={{ bottom: bottom + space.lg }} />;
+  // `bottom` already holds the 16 dp gap (useTabBarInset, or the pane's inset + space.lg): no second one.
+  return <ExtendedFab {...fab} icon="checkmark" open={open} style={{ bottom }} />;
 }
 
 const styles = StyleSheet.create({
