@@ -11,7 +11,7 @@ import { isHexColor } from './color';
 import { foldName } from './discover';
 import type { MapPin } from './discoverMap';
 import { matchWhy, toMatch, type DrinkMatch } from './discoverMatch';
-import { kindLabel, SPIRITS, STYLES } from './drinkStyles';
+import { SPIRITS, STYLES } from './drinkStyles';
 import { noteDimension } from './flavor';
 import { menuOrder, runDates, searchMenuTag } from './menuEditions';
 import type { Area, DiscoverRow } from './nearMe';
@@ -195,13 +195,6 @@ export function kindParams(kinds: readonly string[]): { p_styles: string[] | nul
   };
 }
 
-/** What the picked filters are called in a heading: "Drinks", "Martinis", "Martinis & Gin", "Drinks, 3 filters". */
-export function kindsTitle(kinds: readonly string[]): string {
-  if (!kinds.length) return 'Drinks';
-  if (kinds.length > 2) return `Drinks, ${kinds.length} filters`;
-  return kinds.map(kindLabel).join(' & ');
-}
-
 /** Great-circle distance in km. */
 export function distanceKm(a: { latitude: number; longitude: number }, b: { latitude: number; longitude: number }): number {
   const rad = Math.PI / 180;
@@ -275,18 +268,6 @@ export function findBars(bars: readonly DiscoverBar[], search: string): Discover
     .map((x) => x.b);
 }
 
-/**
- * Bars a search hits, for Discover's "Bars near you" while searching: by name
- * first (findBars' order), then the open bars pouring the most matching
- * drinks. `bars` is discover_bars with the search, so `drinks` counts matches.
- */
-export function barsMatching(bars: readonly DiscoverBar[], search: string, max = 10): DiscoverBar[] {
-  const open = bars.filter((b) => !b.closed);
-  const named = findBars(open, search);
-  const pour = open.filter((b) => b.drinks > 0 && !named.includes(b)).sort((a, b) => b.drinks - a.drinks || a.name.localeCompare(b.name));
-  return [...named, ...pour].slice(0, max);
-}
-
 export function pinOf(b: DiscoverBar, drinks: number): MapPin | null {
   if (b.latitude === null || b.longitude === null) return null;
   return {
@@ -303,32 +284,6 @@ export function pinOf(b: DiscoverBar, drinks: number): MapPin | null {
     rankers: 0,
     drinks,
   };
-}
-
-/** One pin per open bar with matching drinks (its `drinks`), labelled with how many, most first; each bar once. */
-export function barPins(bars: readonly DiscoverBar[]): MapPin[] {
-  const seen = new Set<string>();
-  const pins: MapPin[] = [];
-  for (const b of bars) {
-    if (b.closed || !b.drinks || seen.has(b.id)) continue;
-    seen.add(b.id);
-    const pin = pinOf(b, b.drinks);
-    if (pin) pins.push(pin);
-  }
-  return pins.sort((a, b) => (b.drinks ?? 0) - (a.drinks ?? 0));
-}
-
-/** One pin per bar among these drinks, labelled with how many of them it pours. */
-function drinkPins(drinks: readonly DiscoverDrink[], bars: ReadonlyMap<string, DiscoverBar>): MapPin[] {
-  const counts = new Map<string, number>();
-  for (const d of drinks) counts.set(d.barId, (counts.get(d.barId) ?? 0) + 1);
-  return [...counts]
-    .flatMap(([id, count]) => {
-      const b = bars.get(id);
-      const pin = b ? pinOf(b, count) : null;
-      return pin ? [pin] : [];
-    })
-    .sort((a, b) => (b.drinks ?? 0) - (a.drinks ?? 0));
 }
 
 // --- "Best Martini": every martini, scored where people have ranked it ---
@@ -372,63 +327,14 @@ export function venueScores(ranked: readonly DiscoverRow[]): Record<string, BarS
   return out;
 }
 
-/** Pins in Top bars' order (`order`: the viewer's loved bars, then the most relevant), from the area's early rows. */
-export function withBarOrder(pins: readonly MapPin[], early: readonly DiscoverRow[]): MapPin[] {
-  const order = new Map(early.map((r, i) => [r.venue_profile_id, i]));
-  return pins.map((p) => (order.has(p.id) ? { ...p, order: order.get(p.id) } : p));
-}
-
-/** The drinks layer's pins with their bar's score, which the pin then shows (b02); bars without one stay dots. */
-export function withBarScores(pins: readonly MapPin[], bars: Readonly<Record<string, BarScore>>): MapPin[] {
-  return pins.map((p) => (bars[p.id] ? { ...p, score: bars[p.id].score, rankers: bars[p.id].rankers } : p));
-}
-
 /** Scored drinks first, best first; the rest stay in the order they came. */
 export function byScore(drinks: readonly DiscoverDrink[], drinkScores: Readonly<Record<string, number>>): DiscoverDrink[] {
   return [...drinks].sort((a, b) => (drinkScores[b.id] ?? -1) - (drinkScores[a.id] ?? -1));
 }
 
-/** One pin per bar that pours the drink: its score when it has one, else just the bar. Scored bars first. */
-export function scorePins(drinks: readonly DiscoverDrink[], bars: ReadonlyMap<string, DiscoverBar>, barScores: Readonly<Record<string, BarScore>>): MapPin[] {
-  return drinkPins(drinks, bars)
-    .map(({ drinks: count, ...pin }) => ({ ...pin, score: barScores[pin.id]?.score ?? null, rankers: barScores[pin.id]?.rankers ?? 0, matches: count }))
-    .sort((a, b) => (b.score ?? -1) - (a.score ?? -1));
-}
-
-/** Pins for closed bars, faded and labelled Closed. */
-export function closedPins(bars: readonly DiscoverBar[]): MapPin[] {
-  return bars.flatMap((b) =>
-    b.latitude === null || b.longitude === null
-      ? []
-      : [{ id: b.id, handle: b.handle, name: b.name, logo: b.logo, brand: b.brand, place: [b.locality, b.city].filter(Boolean).join(', '), latitude: b.latitude, longitude: b.longitude, score: null, position: null, rankers: 0, closed: closedLabel(b.closedYear) }]
-  );
-}
-
 /** "3 drinks", "1 drink". */
 export function drinkCount(n: number): string {
   return `${n} ${n === 1 ? 'drink' : 'drinks'}`;
-}
-
-/** The search's count, "14 drinks at 9 bars near you", once there is one (disc-desk-search). */
-export function resultsCaption(totals: { drinks: number; bars: number } | null | undefined, where: string): string {
-  return totals?.drinks ? `${drinkCount(totals.drinks)} at ${barCount(totals.bars)} ${where}` : '';
-}
-
-/** "1 bar", "9 bars". */
-export function barCount(n: number): string {
-  return `${n} ${n === 1 ? 'bar' : 'bars'}`;
-}
-
-/**
- * What the phone sheet's line says beside its title (disc-map-sheet, approved
- * 24 Oct): "229 bars" browsing (the pins), "31 at 24 bars" for a style's
- * list, "14 drinks at 9 bars" for a search; from the server's totals, or
- * nothing until they're in.
- */
-export function sheetCount({ list, totals, pins }: { list: 'browse' | 'style' | 'search'; totals?: { drinks: number; bars: number } | null; pins: number }): string {
-  if (list === 'browse') return pins ? barCount(pins) : '';
-  if (!totals?.drinks) return '';
-  return `${list === 'search' ? drinkCount(totals.drinks) : totals.drinks} at ${barCount(totals.bars)}`;
 }
 
 /** A bar row's drinks in search: "14 drinks on now" when some are on, else how many match ("3 drinks"), else nothing. */

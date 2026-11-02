@@ -82,7 +82,7 @@ export function MenuEditionScreen({ profileRef, editionId }: { profileRef: strin
         onNow={now ? { name: now.name, itemIds: new Set(now.drinks.map((d) => d.id)) } : null}
         onToNow={now ? () => router.replace(`/p/${bar.handle || bar.id}/menus/${now.id}` as Href) : undefined}
         onBack={back}
-        onShare={() => void shareOrCopy(`${siteOrigin()}${barHref}/menus/${edition.id}`, edition.name)}
+        onShare={() => void shareOrCopy(`${siteOrigin()}${barHref}/menus/${edition.id}`, edition.name, 'menu')}
         rowPress={(row) => (readable.has(row.drink.id) ? () => router.push(drinkPageHref(row.drink.id, signedIn) as Href) : null)}
         under={
           <View style={styles.under}>

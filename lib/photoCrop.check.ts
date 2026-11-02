@@ -1,7 +1,7 @@
 // Checks for lib/photoCrop.ts. Run: npm run test:unit
 import assert from 'node:assert/strict';
 
-import { coverScale, cropRect, panLimit } from './photoCrop';
+import { centredCrop, coverScale, cropRect, panLimit } from './photoCrop';
 
 const frame = { width: 400, height: 500 };
 
@@ -26,5 +26,19 @@ assert.equal(cropRect(wide, frame, { zoom: 0.2, x: 0, y: 0 }).height, 3000, 'zoo
 
 // No overhang, no movement.
 assert.equal(panLimit(100, 200, 1), 0);
+
+// A menu cover (a 390-wide phone: 390 by 470). iOS hands back the square it cropped: full height, sides trimmed, centred.
+const cover = { width: 390, height: 470 };
+assert.deepEqual(centredCrop({ width: 1170, height: 1170 }, cover), { originX: 100, originY: 0, width: 971, height: 1170 });
+// The web's whole landscape photo: full height, centred.
+assert.deepEqual(centredCrop({ width: 4000, height: 3000 }, cover), { originX: 756, originY: 0, width: 2489, height: 3000 });
+// A tall one: full width, centred top to bottom.
+assert.deepEqual(centredCrop({ width: 1000, height: 3000 }, cover), { originX: 0, originY: 898, width: 1000, height: 1205 });
+// Android already cropped it to the shape (to the pixel's rounding): left alone.
+assert.equal(centredCrop({ width: 1170, height: 1410 }, cover), null);
+// A wide screen's cover is the 760 column by 470.
+assert.equal(centredCrop({ width: 1520, height: 940 }, { width: 760, height: 470 }), null);
+// No size from the picker: nothing to cut.
+assert.equal(centredCrop({ width: 0, height: 0 }, cover), null);
 
 console.log('photoCrop checks passed');

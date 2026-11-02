@@ -6,6 +6,26 @@ import Animated, { interpolate, useAnimatedStyle, type SharedValue } from 'react
 import { DsText, GlassButton, useDs, useGutter } from '@/components/ds';
 import { displayFaces, layout, space, type BackbarScheme } from '@/constants/tokens';
 
+/** How long Back runs: its circle, or the pill with where it goes (desktop board's measure). */
+export const backWidth = (label?: string) => (label ? Math.round(46 + label.length * 8.2) : layout.minTapTarget);
+
+/** Room for whatever sits on the bar's right: round buttons, and Edit's wider pill. */
+export function barRoom({ save, onShare, onEdit, more }: Pick<PageControlsProps, 'save' | 'onShare' | 'onEdit' | 'more'>) {
+  return [save, onShare, more].filter(Boolean).length * (layout.minTapTarget + space.sm) + (onEdit ? EDIT_PILL + space.sm : 0);
+}
+
+/** The small title once the big one (a display line, about 64) has gone under the bar. */
+export function useSmallTitle(scrollY: SharedValue<number>, tuck: number) {
+  return useAnimatedStyle(() => ({ opacity: interpolate(scrollY.get(), [tuck + space.xl, tuck + space.xxxl + space.sm], [0, 1], 'clamp') }));
+}
+
+/** The page's ground fading in behind the bar, solid by the time the first line reaches it. */
+export function BarBacking({ height, scrollY, tuck }: { height: number; scrollY: SharedValue<number>; tuck: number }) {
+  const ds = useDs();
+  const backing = useAnimatedStyle(() => ({ opacity: interpolate(scrollY.get(), [tuck - space.xxxl, tuck], [0, 1], 'clamp') }));
+  return <Animated.View style={[styles.backing, { height, backgroundColor: ds.c.ground, borderBottomColor: ds.c.line }, backing]} />;
+}
+
 interface PageControlsProps {
   /** The glass's scheme. Left out: the page's own (a photo page already takes the photo's). */
   over?: BackbarScheme;
@@ -37,24 +57,20 @@ interface PageControlsProps {
  * The drink and item pages' top bar (boards Draw-scroll, Photo-scroll): glass
  * Back on the left, Share and Edit on the right. As the big title passes
  * under it, a backing in the page's ground fades in and the small title with
- * it. Nothing else: no study pile, no role switcher, no More.
+ * it. Nothing else: no study pile, no role switcher, no More. The web and a
+ * wide iPad draw it here; phones have the same in the system's bar (ItemHeader).
  */
 export function PageControls({ over, top, scrollY, tuck, title, titleInset = 0, noBack, backLabel, save, onShare, onEdit, editLabel = 'Edit', more, children }: PageControlsProps) {
   const ds = useDs();
   const router = useRouter();
   const gutter = useGutter();
   const barHeight = top + space.sm * 2 + layout.minTapTarget;
-  // Room for whatever sits on the right: round buttons, and Edit's wider pill.
-  const round = [save, onShare, more].filter(Boolean).length;
-  const rightRoom = round * (layout.minTapTarget + space.sm) + (onEdit ? EDIT_PILL + space.sm : 0);
-  const backing = useAnimatedStyle(() => ({ opacity: interpolate(scrollY.get(), [tuck - space.xxxl, tuck], [0, 1], 'clamp') }));
-  // The small title once the big one (a display line, about 64) has gone under the bar.
-  const small = useAnimatedStyle(() => ({ opacity: interpolate(scrollY.get(), [tuck + space.xl, tuck + space.xxxl + space.sm], [0, 1], 'clamp') }));
+  const small = useSmallTitle(scrollY, tuck);
   const back = noBack ? (
     <View />
   ) : (
     <GlassButton
-      accessibilityLabel={backLabel ?? 'Back'}
+      accessibilityLabel={backLabel && backLabel !== 'Back' ? `Back to ${backLabel}` : 'Back'}
       icon="chevron.left"
       label={backLabel}
       scheme={over}
@@ -63,9 +79,9 @@ export function PageControls({ over, top, scrollY, tuck, title, titleInset = 0, 
   );
   return (
     <>
-      <Animated.View style={[styles.backing, { height: barHeight, backgroundColor: ds.c.ground, borderBottomColor: ds.c.line }, backing]} />
+      <BarBacking height={barHeight} scrollY={scrollY} tuck={tuck} />
       {children}
-      <Animated.View style={[styles.title, { top: top + space.sm, height: layout.minTapTarget, left: gutter + layout.minTapTarget + space.sm + titleInset, right: gutter + rightRoom }, small]} aria-hidden>
+      <Animated.View style={[styles.title, { top: top + space.sm, height: layout.minTapTarget, left: gutter + backWidth(backLabel) + space.sm + titleInset, right: gutter + barRoom({ save, onShare, onEdit, more }) }, small]} aria-hidden>
         <DsText variant="headline" numberOfLines={1} style={{ fontFamily: displayFaces[ds.displayFace].regular }}>
           {title}
         </DsText>

@@ -42,6 +42,10 @@ export interface DrinkSectionsInput {
   onGlass: () => void;
   onBatch?: () => void;
   onRank?: () => void;
+  /** I made it: home, on a drink whose amounts they see (board Miss-made). */
+  onMade?: () => void;
+  /** How often they've logged it: Made ×n, under the button. */
+  madeTimes?: number;
   canEdit: boolean;
   /** "Photo by Jo", when someone's photo leads the hero. */
   photoCredit: string | null;
@@ -64,7 +68,7 @@ export function useDrinkSections(p: DrinkSectionsInput) {
   const { data: runs = [] } = useDrinkMenuRuns(live ? item.id : null);
   const description = item.description && pageShowsDescriptions(lock?.bar.visibility) ? item.description : null;
   // A bar's published drink keeps its spec back: its names alone, as a guest reads them.
-  const lockedLines: SpecLine[] | null = lock ? (lock.names ?? []).map((n, i) => ({ ...BLANK, key: `${i}`, ingredient: n.brand ? `${n.brand} ${n.name}` : n.name })) : null;
+  const lockedLines: SpecLine[] | null = lock ? (lock.names ?? []).map((n, i) => ({ ...BLANK, key: `${i}`, ingredient: n.name })) : null;
   const team = onTeam(viewer) && !!item.bar_id && live;
 
   // A bar's drink that came off every menu says so at the top (Menu-p-left); its team know.
@@ -109,13 +113,27 @@ export function useDrinkSections(p: DrinkSectionsInput) {
     </>
   ) : null;
 
+  const madeCount = p.madeTimes ? (
+    <Caption tone="muted" style={styles.madeCount}>
+      {`Made ×${p.madeTimes}`}
+    </Caption>
+  ) : null;
+
   return {
     title,
     // Guests and the floor: the allergy line, what it tastes like, how it meets your palate.
     lead: names && live ? <NamesBlock itemId={item.id} name={item.name} guest={viewer === 'guest'} tastes={description} atBar={!!item.bar_id} /> : null,
     spec,
-    // The one prominent action: Rank it for a guest. The floor and bartenders have none; Edit is in the toolbar.
+    // The one prominent action for a guest. The floor and bartenders have none; Edit is in the toolbar.
     action: viewer === 'guest' && p.onRank ? <Button label="Rank it" size="lg" onPress={p.onRank} accessibilityHint={`Rank ${item.name} against others you've had`} /> : null,
+    // At home, the end of the recipe: the guest's Rank it has a twin here. Android's phone page moves the button to its FAB and keeps the count.
+    made: p.onMade ? (
+      <View style={styles.made}>
+        <Button label="I made it" variant="ink" size="lg" onPress={p.onMade} accessibilityLabel={`I made ${item.name}`} />
+        {madeCount}
+      </View>
+    ) : null,
+    madeCount: p.onMade ? madeCount : null,
     notes,
     bar:
       team && viewer !== 'floor' && item.bar_id ? (
@@ -145,4 +163,6 @@ const BLANK: Omit<SpecLine, 'key' | 'ingredient'> = { amount: null, ingredientId
 
 const styles = StyleSheet.create({
   block: { gap: space.md },
+  made: { gap: space.sm },
+  madeCount: { textAlign: 'center' },
 });

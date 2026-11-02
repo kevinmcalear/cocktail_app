@@ -1,6 +1,6 @@
 import { getLocales } from 'expo-localization';
 import { useRouter } from 'expo-router';
-import { isValidElement, useEffect, useMemo, type ReactNode } from 'react';
+import { isValidElement, use, useEffect, useMemo, type ReactNode } from 'react';
 import { StyleSheet, View } from 'react-native';
 
 import { Button, Caption, RowScore } from '@/components/ds';
@@ -39,8 +39,9 @@ import type { SearchItem } from '@/types/search';
 import { CanMakeContext, CanMakeEmpty } from './CanMake';
 import { BrowseChips, ClassicRow, StyleCard } from './ClassicRow';
 import { NearResults } from './NearResults';
-import { BarResultRow, PersonResultRow, ResultGroup, ResultRow } from './ResultRows';
+import { BarResultRow, DRAWN_STATES, DrawnSearch, PersonResultRow, ResultGroup, ResultRow } from './ResultRows';
 import { Completions, TopHit } from './SearchParts';
+import { drawnGroups, SearchLoading, SearchMore, SearchNoMatch } from './SearchStates';
 
 const ANYWHERE: Area = { kind: 'anywhere' };
 const NO_IDS: string[] = [];
@@ -71,8 +72,6 @@ interface PublicResultsProps {
   typeAhead?: (query: string) => void;
   /** Discover: shown when this search finds nothing. */
   onAddBar?: () => void;
-  /** Discover: hovering a bar or its drink opens that bar on the map. */
-  onShowBar?: (barId: string | null) => void;
   /** Discover: a city the search names moves the area there. Elsewhere it opens Discover on it. */
   onPlace?: (city: City) => void;
   /** The place searched first found nothing (MineResults): its card leads, and Did you mean takes its title, add and drinks. */
@@ -87,8 +86,9 @@ interface PublicResultsProps {
  * ends with its score (b02) and lights the searched word. Bars' drinks need
  * an account; the rest is public.
  */
-export function PublicResults({ query, area, kinds = [], onKind, onEverywhere, mine, show, canMake: atVenue, onShow, onCounts, typeAhead, onAddBar, onShowBar, onPlace, head }: PublicResultsProps) {
+export function PublicResults({ query, area, kinds = [], onKind, onEverywhere, mine, show, canMake: atVenue, onShow, onCounts, typeAhead, onAddBar, onPlace, head }: PublicResultsProps) {
   const router = useRouter();
+  const drawn = use(DrawnSearch);
   const signedIn = useSignedIn();
   const q = query.trim();
   const everywhere = !area;
@@ -120,10 +120,7 @@ export function PublicResults({ query, area, kinds = [], onKind, onEverywhere, m
     return (publicBars ?? []).map((b) => ({ id: b.id, handle: '', name: b.display_name, logo: null, locality: b.locality, city: b.city, countryCode: b.country_code, latitude: null, longitude: null, closed: !!b.is_closed, closedYear: b.closed_year ?? null, drinks: 0 }));
   }, [signedIn, area, searchedBars, results.bars, publicBars, q]);
   // ponytail: past 100 bars (four pages of rows) the tags stop; a longer list would page these too.
-  const { data: waiting } = useWaiting(
-    useSettledIds(bars.slice(0, 100).map((b) => b.id)),
-    useSettledIds((people ?? []).map((p) => p.id))
-  );
+  const { data: waiting } = useWaiting(useSettledIds(bars.slice(0, 100).map((b) => b.id)), useSettledIds((people ?? []).map((p) => p.id)));
   const classics = useMemo(() => (everywhere && classicList ? findDrinks(classicList, q) : []), [everywhere, classicList, q]);
   const ingredients = useMemo(() => (everywhere && ingredientHits ? findDrinks(ingredientHits, q) : []), [everywhere, ingredientHits, q]);
   // A bar's copy of a classic in these results folds into it ("served at 7 bars"); its variations gather under it.
@@ -158,14 +155,14 @@ export function PublicResults({ query, area, kinds = [], onKind, onEverywhere, m
   const away = (b: DiscoverBar) => (area?.kind === 'point' && b.latitude !== null && b.longitude !== null ? formatDistance(distanceKm(area, { latitude: b.latitude, longitude: b.longitude }), miles) : null);
 
   const drinkGroup = (label: string, list: typeof drinks) => (
-    <ResultGroup key={label} label={label} items={list} render={(d) => <DrinkAtBarRow key={d.id} drink={d} scores={scores} query={q} matchLook={look} everywhere={everywhere && !onKind} onShowBar={onShowBar} />} />
+    <ResultGroup key={label} label={label} items={list} render={(d) => <DrinkAtBarRow key={d.id} drink={d} scores={scores} query={q} matchLook={look} everywhere={everywhere && !onKind} />} />
   );
   const barGroup = (
     <ResultGroup
       key="bars"
       label={`Bars ${area ? where : ''}`.trim()}
       items={bars}
-      render={(b) => <BarResultRow key={b.id} bar={b} score={scores.bars[b.id]?.score} away={away(b)} waiting={waiting?.[b.id]} query={q} matchLook={look} onShowBar={onShowBar} />}
+      render={(b) => <BarResultRow key={b.id} bar={b} score={scores.bars[b.id]?.score} away={away(b)} waiting={waiting?.[b.id]} query={q} matchLook={look} />}
     />
   );
   const placeGroup = (
@@ -186,20 +183,13 @@ export function PublicResults({ query, area, kinds = [], onKind, onEverywhere, m
       )}
     />
   );
-  const peopleGroup = (
-    <ResultGroup
-      key="people"
-      label="People"
-      items={people ?? []}
-      render={(p) => <PersonResultRow key={p.id} person={p} waiting={waiting?.[p.id]} query={q} matchLook={look} />}
-    />
-  );
+  const peopleGroup = <ResultGroup key="people" label="People" items={people ?? []} render={(p) => <PersonResultRow key={p.id} person={p} waiting={waiting?.[p.id]} query={q} matchLook={look} />} />;
   const classicGroup = (
     <ResultGroup
       key="classics"
       label="Classics"
       items={only(top ? classics.filter((c) => c !== top) : classics)}
-      render={(d) => <ClassicRow key={d.id} classic={d} line={lines?.[d.id]} served={servedBy[d.id]} variations={variations[d.id]} matches={matches} score={ownScores?.[d.id]} scores={scores} query={q} matchLook={look} onShowBar={onShowBar} />}
+      render={(d) => <ClassicRow key={d.id} classic={d} line={lines?.[d.id]} served={servedBy[d.id]} variations={variations[d.id]} matches={matches} score={ownScores?.[d.id]} scores={scores} query={q} matchLook={look} />}
     />
   );
   const yoursGroup = (
@@ -231,7 +221,14 @@ export function PublicResults({ query, area, kinds = [], onKind, onEverywhere, m
     <ResultGroup key="ingredients" label="Ingredients" items={ingredients} render={(i) => <ResultRow key={i.id} title={i.name} ingredient={{ id: i.id }} query={q} matchLook={look} onPress={() => router.push(itemHref('Ingredient', i.id) as never)} />} />
   );
 
-  const miss = signedIn ? <>{<Caption tone="muted">{results.isLoading ? 'Searching…' : `Nothing ${where} called “${q}”.`}</Caption>}{!results.isLoading && onAddBar ? <AddBarPrompt onPress={onAddBar} /> : null}</> : null;
+  // Phones draw nothing found and loading (Sta-discover); the web says it. A missing bar can be added under either, but Android's drawn search.
+  const said = drawn || (DRAWN_STATES && signedIn) ? results.isLoading ? <SearchLoading /> : <SearchNoMatch query={q} mine={mine} /> : signedIn ? <Caption tone="muted">{results.isLoading ? 'Searching…' : `Nothing ${where} called “${q}”.`}</Caption> : null;
+  const miss = (
+    <>
+      {said}
+      {!drawn && signedIn && !results.isLoading && onAddBar ? <AddBarPrompt onPress={onAddBar} /> : null}
+    </>
+  );
   // Each door's order, as its board draws it.
   let groups: ReactNode[];
   if (onKind && area) {
@@ -246,14 +243,16 @@ export function PublicResults({ query, area, kinds = [], onKind, onEverywhere, m
   }
 
   // A bar named what's typed ("Black Pearl") leads, ahead of drinks that only mention it; at home, right after your own drinks.
-  if (bars[0] && foldName(bars[0].name).startsWith(foldName(q))) {
+  const barLeads = !!bars[0] && foldName(bars[0].name).startsWith(foldName(q));
+  if (barLeads) {
     const rest = groups.filter((g) => g !== barGroup && g !== yoursGroup);
     groups = groups.includes(yoursGroup) ? [yoursGroup, barGroup, ...rest] : [barGroup, ...rest];
   }
 
   // The type chips narrow the groups to one kind.
   const kindOf: Record<string, 'bars' | 'people' | 'ingredients'> = { bars: 'bars', people: 'people', ingredients: 'ingredients' };
-  const shown = groups.filter((g) => shows(show, (isValidElement(g) && g.key ? kindOf[g.key] : undefined) ?? 'drinks'));
+  const kept = groups.filter((g) => shows(show, (isValidElement(g) && g.key ? kindOf[g.key] : undefined) ?? 'drinks'));
+  const shown = drawn && !onKind ? drawnGroups(kept, barLeads) : kept;
 
   return (
     <CanMakeContext value={canMake ?? null}>
@@ -278,7 +277,7 @@ export function PublicResults({ query, area, kinds = [], onKind, onEverywhere, m
         {/* "martini" offers the Martinis style first on Discover; elsewhere a Browse line with the style and the ingredient. */}
         {onKind && style ? (
           <StyleCard label={style.label} count={strong.length} where={where} takesIn={styleTakesIn(style.id)} drawingId={pick?.id} onPress={() => onKind(style.id)} />
-        ) : everywhere && show !== 'canmake' ? (
+        ) : everywhere && show !== 'canmake' && !drawn ? (
           <BrowseChips style={style} ingredient={ingredients.find((i) => foldName(i.name).startsWith(foldName(q)))} />
         ) : null}
         {/* A spirit or a tasting note the search names becomes a filter on Discover. */}
@@ -288,6 +287,7 @@ export function PublicResults({ query, area, kinds = [], onKind, onEverywhere, m
         {shown}
         {/* Did you mean (1B), or the close names last (1C). While the search is out, nothing is asked yet. */}
         {results.isLoading && !found ? miss : <NearResults query={q} found={found} shown={[...drinks, ...bars, ...(people ?? []), ...classics, ...ingredients, ...yours].map((d) => d.id)} yours={head?.yours ?? (everywhere && atHome ? catalog.items : undefined)} yoursCaption={head?.yoursCaption} classics={everywhere ? classicList : undefined} server={{ area: area ?? ANYWHERE, kinds: everywhere ? NEAR_ALL : NEAR_AREA }} title={head?.title ?? `Nothing ${where} called “${q}”`} add={head?.add} matchLook={look} show={show} miss={<>{head?.card}{miss}</>} lead={head?.card} />}
+        {drawn && found ? <SearchMore query={q} mine={mine} /> : null}
         {area && onEverywhere ? <Button label={`Search everywhere for “${q}”`} variant="secondary" onPress={onEverywhere} /> : null}
       </View>
     </CanMakeContext>
