@@ -8183,6 +8183,16 @@ export type Database = {
           name: string
         }[]
       }
+      invite_profile_to_bar: {
+        Args: {
+          p_bar_id: string
+          p_note?: string
+          p_profile_id: string
+          p_role_id?: string
+          p_role_level: number
+        }
+        Returns: boolean
+      }
       invite_to_role: {
         Args: {
           p_email: string
