@@ -1,13 +1,11 @@
 import { useRouter } from 'expo-router';
-import { useState } from 'react';
 import { ScrollView, StyleSheet, View } from 'react-native';
 
-import { Body, Button, Caption, Headline, Surface, Tag, useDs, useGutter } from '@/components/ds';
-import { ScreenHeader } from '@/components/nav/ScreenHeader';
-import { useTabBarInset } from '@/components/nav/WebTabBar';
+import { Body, Button, Caption, Headline, Surface, useDs, useGutter } from '@/components/ds';
+import { NativeHeader, NativeTitle, useHeaderScroll } from '@/components/nav/NativeHeader';
 import { radius, space } from '@/constants/tokens';
 import { useStudyDecks, type Deck } from '@/hooks/useStudyDecks';
-import { knownCount, streak } from '@/lib/study';
+import { knownCount } from '@/lib/study';
 import { useStudyProgress } from '@/store/useStudyProgress';
 
 function DeckCard({ deck, primary }: { deck: Deck; primary: boolean }) {
@@ -46,28 +44,23 @@ function DeckCard({ deck, primary }: { deck: Deck; primary: boolean }) {
 /**
  * Study: learn the venue's drinks as flashcards, weakest first. Each role
  * studies what it can see: the spec on the back is masked like everywhere
- * else.
+ * else. No streaks (decision no-streaks): what you know, never how many days
+ * in a row.
  */
 export function StudyScreen() {
   const ds = useDs();
   const gutter = useGutter();
-  const bottom = useTabBarInset();
+  const scroll = useHeaderScroll();
   const { decks, isLoading } = useStudyDecks();
-  const days = useStudyProgress((s) => s.days);
-  const [today] = useState(() => new Date());
-  const run = streak(days, today);
   const firstWithCards = decks.find((d) => d.cardIds.length)?.id;
 
   return (
+    // Pushed on a tab: the stack's header (NativeHeader) with Back, and the page's own title under it.
     <View style={[styles.screen, { backgroundColor: ds.c.ground }]}>
-      <ScrollView contentContainerStyle={{ paddingBottom: bottom }}>
-        <ScreenHeader title="Study" display back />
+      <NativeHeader title="Study" scroll={scroll} />
+      <ScrollView {...scroll.props} contentContainerStyle={{ paddingBottom: scroll.bottom }}>
         <View style={[styles.body, { paddingHorizontal: gutter }]}>
-          {run > 0 ? (
-            <Tag label={`${run}-day streak`} tone="accent" />
-          ) : (
-            <Caption tone="muted">Study a few cards today to start a streak.</Caption>
-          )}
+          <NativeTitle title="Study" />
           {isLoading ? <Caption tone="muted">Loading your decks…</Caption> : null}
           {decks.map((d) => (
             <DeckCard key={d.id} deck={d} primary={d.id === firstWithCards} />
@@ -80,7 +73,7 @@ export function StudyScreen() {
 
 const styles = StyleSheet.create({
   screen: { flex: 1 },
-  body: { gap: space.lg, maxWidth: 760, width: '100%' },
+  body: { gap: space.lg, maxWidth: 760, width: '100%', paddingTop: space.sm },
   deck: { gap: space.sm },
   deckHead: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'baseline', gap: space.md },
   bar: { flexDirection: 'row', height: 6, borderRadius: radius.pill, overflow: 'hidden' },

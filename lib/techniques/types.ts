@@ -9,15 +9,17 @@
  *      starting point to test, never as the answer
  */
 
+import type { SourceKey } from './sourceBook';
+
 export type Grade = 'A' | 'B' | 'C';
 
+/** A citation: which source (its name and link are in sourceBook.ts) and how far to trust it here. */
 export interface Source {
-  name: string;
-  url: string;
+  key: SourceKey;
   grade: Grade;
 }
 
-export type TechniqueGroup = 'foam' | 'clarify' | 'wash' | 'infuse' | 'syrup' | 'texture' | 'carbonate' | 'cold' | 'preserve' | 'distil' | 'cook' | 'garnish' | 'age';
+export type TechniqueGroup = 'shake' | 'foam' | 'clarify' | 'wash' | 'infuse' | 'syrup' | 'texture' | 'carbonate' | 'cold' | 'preserve' | 'distil' | 'cook' | 'garnish' | 'age';
 
 /**
  * What a technique starts from, the thing it changes: a spirit to wash or
