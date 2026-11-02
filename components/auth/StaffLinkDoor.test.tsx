@@ -20,7 +20,8 @@ describe('StaffLinkDoor, ask to join', () => {
   it('says the team turned them down last time (board Keep-phone join, step 6)', async () => {
     mockMine = { data: { created_at: '2026-11-01T19:00:00Z', declined_at: '2026-11-01T19:30:00Z' }, isPending: false, isError: false };
     await door();
-    expect(screen.getByText('The team said no last time. You can ask again.')).toBeTruthy();
-    expect(screen.getByText('Ask to join')).toBeTruthy();
+    expect(screen.getByText('The team said no last time.')).toBeTruthy();
+    expect(screen.queryByText('Ask to join')).toBeNull();
+    expect(screen.getByText('Done')).toBeTruthy();
   });
 });
