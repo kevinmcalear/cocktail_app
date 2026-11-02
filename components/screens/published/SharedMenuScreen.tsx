@@ -16,7 +16,7 @@ import { siteOrigin } from '@/lib/venueLink';
 import type { MenuDetail, MenuDrink } from '@/types/menus';
 
 import { GuestMenuPage } from '../menus/page/GuestMenuPage';
-import { ReportSheet } from '../safety/ReportSheet';
+import { ReportSheet } from '../safety/ReportSheetLazy';
 import { loadFailure, PublicMissing } from './PublicShell';
 
 /** A friend is a guest with nothing to add: useMenuLens's reads are all a bar's, and stay off this public page. */
