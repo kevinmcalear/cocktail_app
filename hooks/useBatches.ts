@@ -56,5 +56,11 @@ export function useLogBatch(barId: string) {
     locationId: input.locationId ?? null,
     note: input.note ?? null,
   });
-  return { ...mutation, mutate: (input: Parameters<typeof withId>[0]) => mutation.mutate(withId(input)) };
+  // It returns the batch it logs, so its label can open at once: router.push(labelHref(batch)).
+  const mutate = (input: Parameters<typeof withId>[0]): BatchWrite => {
+    const batch = withId(input);
+    mutation.mutate(batch);
+    return batch;
+  };
+  return { ...mutation, mutate };
 }
