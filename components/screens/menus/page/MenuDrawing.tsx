@@ -1,7 +1,7 @@
 import { Image } from 'expo-image';
 import { Platform, StyleSheet, View } from 'react-native';
 
-import { DrinkDrawing, DrinkImage, useDs, type DrawingSize } from '@/components/ds';
+import { DrinkDrawing, DrinkImage, isRowSize, useDs, type DrawingSize } from '@/components/ds';
 import { sceneFor } from '@/components/ds/SketchDrawing';
 import { drawing, radius } from '@/constants/tokens';
 import { useItemSketch } from '@/hooks/useItemSketch';
@@ -46,8 +46,8 @@ export function MenuDrawing({ itemId, size, ink, fallback, bare }: { itemId: str
     );
   }
   if (ink === 'pencil') {
-    const paper = !bare && size === 'row' && ds.scheme !== 'dark' ? { backgroundColor: ds.c.paper, borderRadius: radius.control } : null;
-    const uri = pencilUri(sceneFor(inputs, itemId, size === 'row' ? 'thumb' : 'full'), ds.scheme === 'dark');
+    const paper = !bare && isRowSize(size) && ds.scheme !== 'dark' ? { backgroundColor: ds.c.paper, borderRadius: radius.control } : null;
+    const uri = pencilUri(sceneFor(inputs, itemId, isRowSize(size) ? 'thumb' : 'full'), ds.scheme === 'dark');
     return (
       <View style={[{ width: px, height: px, overflow: 'hidden' }, paper]} aria-hidden>
         <Image source={{ uri }} style={{ width: px, height: px }} contentFit="contain" cachePolicy="memory" accessible={false} />
@@ -56,7 +56,7 @@ export function MenuDrawing({ itemId, size, ink, fallback, bare }: { itemId: str
   }
   return (
     <View style={ink === 'faded' ? styles.faded : undefined} aria-hidden>
-      <DrinkDrawing inputs={inputs} seed={itemId} size={size} staff={size === 'hero'} pour={size !== 'row' && ink === 'colour'} bare={bare} />
+      <DrinkDrawing inputs={inputs} seed={itemId} size={size} staff={size === 'hero'} pour={!isRowSize(size) && ink === 'colour'} bare={bare} />
     </View>
   );
 }

@@ -4,45 +4,47 @@ import { StyleSheet, View } from 'react-native';
 import { DsText, PopoverMenu, PressableScale, Segmented, usePopover, useDs } from '@/components/ds';
 import { IconSymbol } from '@/components/ui/icon-symbol';
 import { font, layout, radius, space } from '@/constants/tokens';
-import { MAKES, SPEC_VIEWS, type Makes, type SpecView } from '@/lib/specView';
+import { SPEC_VIEWS, type SpecView } from '@/lib/specView';
 
-interface SpecControlsProps {
+export interface SpecControlsProps {
   view: SpecView;
   onView: (view: SpecView) => void;
-  makes: Makes;
-  onMakes: (makes: Makes) => void;
-  /** "A batch…": opens the Batch sheet. Left out where a batch makes no sense (nothing measured). */
-  onBatch?: () => void;
+  /** After "Makes" on the pill: "1" for a drink, "1 L" for a house-made. */
+  makes: string;
+  /** The menu's sizes ("Makes 2", "Makes 750 ml"); the picked one is checked. */
+  sizes: { key: string; label: string }[];
+  picked: string;
+  onPick: (key: string) => void;
+  /** Their own group under the sizes: "A batch…" (the Batch sheet); a house-made's ways into Make mode. */
+  more?: { label: string; onPress: () => void }[];
 }
 
 /**
  * Where "Spec" was: the Ingredients | Steps switch, and beside it the Makes
- * pill (Makes 1, 2, 3, A batch…). Shown only to people who see amounts; the
- * caller decides that (useSpecAccess). Boards Decided-who-bartender,
- * -bartender-menu and -bartender-2 on the 2027 canvas.
+ * pill (Makes 1, 2, 3, A batch…; a house-made's Makes 1 L ⌄). Shown only to
+ * people who see amounts; the caller decides that (useSpecAccess). Boards
+ * Decided-who-bartender, -bartender-menu and -bartender-2, Item-page.
  */
-export function SpecControls({ view, onView, makes, onMakes, onBatch }: SpecControlsProps) {
+export function SpecControls({ view, onView, makes, sizes, picked, onPick, more }: SpecControlsProps) {
   const ds = useDs();
   const pill = useRef<ComponentRef<typeof View>>(null);
   const menu = usePopover();
-  const pick = (n: Makes) => () => {
-    onMakes(n);
+  const pick = (key: string) => () => {
+    onPick(key);
     menu.close();
   };
   const sections = [
-    { items: MAKES.map((n) => ({ label: `Makes ${n}`, checked: n === makes, onPress: pick(n) })) },
-    ...(onBatch
+    { items: sizes.map((s) => ({ label: s.label, checked: s.key === picked, onPress: pick(s.key) })) },
+    ...(more?.length
       ? [
           {
-            items: [
-              {
-                label: 'A batch…',
-                onPress: () => {
-                  menu.close();
-                  onBatch();
-                },
+            items: more.map((m) => ({
+              label: m.label,
+              onPress: () => {
+                menu.close();
+                m.onPress();
               },
-            ],
+            })),
           },
         ]
       : []),

@@ -35,6 +35,8 @@ export function useSearchMine() {
     defaultScope: (venue ? 'mine' : 'everywhere') as SearchScope,
     /** May add a drink here when nothing matches: Drink Creator and up at a venue, anyone signed in at home. */
     canAdd: venue ? !!capabilities?.includes('edit_drinks') : signedIn,
+    /** May log a batch of house-made: who preps or keeps the specs at a venue (Tonight's Before doors). */
+    canPrep: !!venue && !!capabilities?.some((c) => c === 'prep' || c === 'specs'),
     /** Drinks the venue's search leaves out: R&D trials on no menu. Item ids. */
     hiddenIds,
   };
