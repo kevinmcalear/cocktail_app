@@ -1,7 +1,7 @@
 import { useRouter, type Href } from 'expo-router';
 import { StyleSheet, View } from 'react-native';
 
-import { Body, Caption, DrinkDrawingFor, DsText, PencilState, PressableScale, useDs } from '@/components/ds';
+import { Body, Caption, DrinkDrawingFor, DsText, PencilState, PressableScale, Tag, useDs } from '@/components/ds';
 import { IconSymbol } from '@/components/ui/icon-symbol';
 import { TonightSetupBanner } from '@/components/screens/venueSetup/SetupBanner';
 import { TonightWeek } from '@/components/screens/week/TonightWeek';
@@ -10,7 +10,9 @@ import { categoryOf, type TonightBlock } from '@/hooks/useTonight';
 import { itemHref } from '@/lib/itemRoutes';
 import { plural } from '@/lib/menus';
 
-import { BeforeDoors, NeedsYou, OnShift } from './BeforeDoors';
+import type { NightPhase } from '@/lib/nightPhase';
+
+import { BeforeDoors, NeedsYou, OffTonight, OnShift } from './BeforeDoors';
 import { HeroTrio, ListHead, NoteCard, TonightSection } from './TonightParts';
 import type { useStaffTonight } from './useStaffTonight';
 
@@ -74,30 +76,91 @@ function DrinkGrid({ block }: { block: TonightBlock }) {
   );
 }
 
-/** Before doors, Needs you (admins), Learn, and the week: the column beside the lists when wide. */
-export function StaffSide({ t, barId }: { t: Staff; barId: string }) {
+type Part = 'service' | 'off' | 'doors' | 'needs' | 'learn' | 'shift' | 'week';
+
+/**
+ * Tonight by the hour (Loop-tonight, decided 1 Nov): before doors, the work
+ * to do before opening; during service, the list as it goes out, what's off
+ * and who's on; after close, tomorrow's prep and rota. The lists lead before
+ * doors and during service, and step aside after close.
+ */
+const ORDER: Record<NightPhase, readonly Part[]> = {
+  before: ['off', 'doors', 'needs', 'learn', 'shift', 'week'],
+  service: ['service', 'off', 'shift', 'week'],
+  after: ['doors', 'shift', 'learn', 'week'],
+};
+
+/** Whether the night shows its lists first (not after close). */
+export const showsLists = (phase: NightPhase) => phase !== 'after';
+
+/** The sections after the lists, in the night's order: the column beside the lists when wide. */
+export function StaffSide({ t, barId, wide }: { t: Staff; barId: string; wide: boolean }) {
+  const parts = ORDER[t.phase].filter((p) => !(wide && p === 'service'));
+  const after = t.phase === 'after';
   const router = useRouter();
   const openLearn = () => router.push('/learn' as Href);
   return (
     <View style={styles.side}>
-      <BeforeDoors t={t} barId={barId} />
-      <NeedsYou t={t} />
-      {/* All opens Learn (Kept-learn): techniques, kit and pairings. Admins see Needs you here instead (Prod-today-staff), so Learn only with something new. */}
-      {t.learn.length || !t.admin ? (
-        <TonightSection title="Learn" aside="All" onAside={openLearn}>
-          {t.learn.length ? (
-            <View role="list">
-              {t.learn.map((row, i) => (
-                <LearnRow key={`${row.id}-${i}`} {...row} first={i === 0} />
-              ))}
-            </View>
-          ) : (
-            <NoteCard icon="book" text="Techniques, kit and pairings" onPress={openLearn} />
-          )}
-        </TonightSection>
-      ) : null}
-      <OnShift t={t} />
-      <TonightWeek barId={barId} />
+      {after ? <TonightSetupBanner barId={barId} /> : null}
+      {parts.map((p) => {
+        switch (p) {
+          case 'service':
+            return <ServiceRows key={p} t={t} />;
+          case 'off':
+            return <OffTonight key={p} t={t} />;
+          case 'doors':
+            return <BeforeDoors key={p} t={t} barId={barId} title={after ? 'Before doors tomorrow' : undefined} />;
+          case 'needs':
+            return <NeedsYou key={p} t={t} />;
+          case 'learn':
+            // All opens Learn (Kept-learn): techniques, kit and pairings. Admins see Needs you here instead (Prod-today-staff), so Learn only with something new.
+            return t.learn.length || !t.admin ? (
+              <TonightSection key={p} title="Learn" aside="All" onAside={openLearn}>
+                {t.learn.length ? (
+                  <View role="list">
+                    {t.learn.map((row, i) => (
+                      <LearnRow key={`${row.id}-${i}`} {...row} first={i === 0} />
+                    ))}
+                  </View>
+                ) : (
+                  <NoteCard icon="book" text="Techniques, kit and pairings" onPress={openLearn} />
+                )}
+              </TonightSection>
+            ) : null;
+          case 'shift':
+            return after && t.tomorrow ? <OnShift key={p} t={{ ...t, onShift: t.tomorrow.onShift }} title={t.tomorrow.night} /> : <OnShift key={p} t={t} />;
+          case 'week':
+            return <TonightWeek key={p} barId={barId} />;
+        }
+      })}
+    </View>
+  );
+}
+
+/** During service, the lead list's drinks as they go out: "Rocks · Large cube", what to tell guests, Off. */
+function ServiceRows({ t }: { t: Staff }) {
+  const ds = useDs();
+  const router = useRouter();
+  if (!t.service.length) return null;
+  return (
+    <View role="list">
+      {t.service.map((d, i) => (
+        <PressableScale key={d.id} role="link" accessibilityLabel={[d.name, d.sub].filter(Boolean).join('. ')} onPress={() => router.push(itemHref(categoryOf(d.kind), d.id) as Href)} style={[styles.learn, { borderTopColor: i ? ds.c.line : 'transparent' }]}>
+          <DrinkDrawingFor itemId={d.id} size="row" pour={false} />
+          <View style={styles.flex}>
+            <DsText variant="headline" numberOfLines={1} style={{ fontFamily: displayFaces[ds.displayFace].regular }}>
+              {d.name}
+            </DsText>
+            {d.sub ? (
+              <Caption tone="muted" numberOfLines={1}>
+                {d.sub}
+              </Caption>
+            ) : null}
+          </View>
+          {d.off ? <Tag label="Off" tone="warning" /> : null}
+          <IconSymbol name="chevron.right" size={16} color={ds.c.muted} />
+        </PressableScale>
+      ))}
     </View>
   );
 }

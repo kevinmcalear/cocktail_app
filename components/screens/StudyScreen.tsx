@@ -2,8 +2,7 @@ import { useRouter } from 'expo-router';
 import { ScrollView, StyleSheet, View } from 'react-native';
 
 import { Body, Button, Caption, Headline, Surface, useDs, useGutter } from '@/components/ds';
-import { ScreenHeader } from '@/components/nav/ScreenHeader';
-import { useTabBarInset } from '@/components/nav/WebTabBar';
+import { NativeHeader, NativeTitle, useHeaderScroll } from '@/components/nav/NativeHeader';
 import { radius, space } from '@/constants/tokens';
 import { useStudyDecks, type Deck } from '@/hooks/useStudyDecks';
 import { knownCount } from '@/lib/study';
@@ -51,15 +50,17 @@ function DeckCard({ deck, primary }: { deck: Deck; primary: boolean }) {
 export function StudyScreen() {
   const ds = useDs();
   const gutter = useGutter();
-  const bottom = useTabBarInset();
+  const scroll = useHeaderScroll();
   const { decks, isLoading } = useStudyDecks();
   const firstWithCards = decks.find((d) => d.cardIds.length)?.id;
 
   return (
+    // Pushed on a tab: the stack's header (NativeHeader) with Back, and the page's own title under it.
     <View style={[styles.screen, { backgroundColor: ds.c.ground }]}>
-      <ScrollView contentContainerStyle={{ paddingBottom: bottom }}>
-        <ScreenHeader title="Study" display back />
+      <NativeHeader title="Study" scroll={scroll} />
+      <ScrollView {...scroll.props} contentContainerStyle={{ paddingBottom: scroll.bottom }}>
         <View style={[styles.body, { paddingHorizontal: gutter }]}>
+          <NativeTitle title="Study" />
           {isLoading ? <Caption tone="muted">Loading your decks…</Caption> : null}
           {decks.map((d) => (
             <DeckCard key={d.id} deck={d} primary={d.id === firstWithCards} />
@@ -72,7 +73,7 @@ export function StudyScreen() {
 
 const styles = StyleSheet.create({
   screen: { flex: 1 },
-  body: { gap: space.lg, maxWidth: 760, width: '100%' },
+  body: { gap: space.lg, maxWidth: 760, width: '100%', paddingTop: space.sm },
   deck: { gap: space.sm },
   deckHead: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'baseline', gap: space.md },
   bar: { flexDirection: 'row', height: 6, borderRadius: radius.pill, overflow: 'hidden' },
