@@ -92,8 +92,9 @@ export const queryClient = new QueryClient({
         }
         
         try {
-          const burnt = require('burnt');
-          burnt.toast({
+          // lib/systemToast: burnt, which the web loads on the first toast.
+          const { toast } = require('@/lib/systemToast');
+          toast({
             title: 'Error',
             message: message,
             preset: 'error',
