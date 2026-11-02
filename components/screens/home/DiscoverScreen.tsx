@@ -17,6 +17,7 @@ import { useBarCities } from '@/hooks/useDiscover';
 import { useDiscoverArea } from '@/hooks/useDiscoverArea';
 import { BEST_ROWS, useAreaBars, useBestNear, useNewMenus, useOpenClock } from '@/hooks/useDiscoverHome';
 import { useIsWideWeb } from '@/hooks/useIsWideWeb';
+import { useLovedBars } from '@/hooks/useKept';
 import { usePublishSearchArea } from '@/hooks/useSearchFrom';
 import { mapCaption, placeName } from '@/lib/discoverHome';
 import { STYLES } from '@/lib/drinkStyles';
@@ -49,6 +50,8 @@ export function DiscoverScreen() {
   const split = mapAvailable && breakpoint !== 'phone';
   const column = usePageColumn('text');
   const offline = useNetInfo().isConnected === false;
+  // Online, this saves the bars you love to the phone, so offline Discover lists them (Sta-discover).
+  useLovedBars();
   const { area, onArea, onCity, preferNear, near, onNearMe, locating, note } = useDiscoverArea();
   // Search's style chips open Discover on a style (/discover?kind=negroni).
   const { kind } = useLocalSearchParams<{ kind?: string }>();
