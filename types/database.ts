@@ -1717,6 +1717,59 @@ export type Database = {
           },
         ]
       }
+      handover_notes: {
+        Row: {
+          bar_id: string
+          broken: string | null
+          broken_photo: string | null
+          close_date: string
+          created_at: string
+          id: string
+          note: string | null
+          prep: string | null
+          ran_out: string[]
+          read_at: string | null
+          user_id: string
+          written_at: string | null
+        }
+        Insert: {
+          bar_id: string
+          broken?: string | null
+          broken_photo?: string | null
+          close_date: string
+          created_at?: string
+          id?: string
+          note?: string | null
+          prep?: string | null
+          ran_out?: string[]
+          read_at?: string | null
+          user_id?: string
+          written_at?: string | null
+        }
+        Update: {
+          bar_id?: string
+          broken?: string | null
+          broken_photo?: string | null
+          close_date?: string
+          created_at?: string
+          id?: string
+          note?: string | null
+          prep?: string | null
+          ran_out?: string[]
+          read_at?: string | null
+          user_id?: string
+          written_at?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "handover_notes_bar_id_fkey"
+            columns: ["bar_id"]
+            isOneToOne: false
+            referencedRelation: "bars"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       hidden_bars: {
         Row: {
           hidden_at: string
@@ -7587,7 +7640,7 @@ export type Database = {
         }[]
       }
       friends_ranks: {
-        Args: { p_limit?: number }
+        Args: { p_item_id?: string; p_limit?: number }
         Returns: {
           avatar_url: string
           best_in_family: boolean

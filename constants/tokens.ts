@@ -182,6 +182,8 @@ export type DisplayFace = keyof typeof displayFaces;
 export const displayName = {
   row: { fontSize: 22, lineHeight: 26 },
   card: { fontSize: 24, lineHeight: 28 },
+  /** At the top of Android's drink and item pages (And-page). */
+  page: { fontSize: 46, lineHeight: 52, letterSpacing: 0 },
 } as const;
 
 /** The smallest text the app sets, in points (check:design holds every size to it). */
@@ -288,6 +290,13 @@ export const springs = {
  * under that a drawing is a smudge).
  */
 export const drawing = { hero: 280, heroStaff: 180, middle: 206, tile: 160, menuRow: 64, row: 56 } as const;
+
+/**
+ * A menu page's cover photo: it runs 470 down from the top of the screen
+ * (Menu-g-photo-dark), across the page's column (760 at most on a wide
+ * screen). The cover picker crops to this shape.
+ */
+export const menuCover = { height: 470, column: 760 } as const;
 
 /** A menu card's band of drawings or cover on a list of menus (Menu-shelf). */
 export const menuBandHeight = 176;

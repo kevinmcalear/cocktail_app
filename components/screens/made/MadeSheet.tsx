@@ -1,7 +1,7 @@
 import { useState } from 'react';
 import { StyleSheet, View } from 'react-native';
 
-import { Body, Button, Caption, DateField, DsText, Field } from '@/components/ds';
+import { Body, Caption, DateField, DsText, Field } from '@/components/ds';
 import { Choice, MenuSheet } from '@/components/screens/menus/MenuSheet';
 import { font, space } from '@/constants/tokens';
 import { useLogMade } from '@/hooks/useMade';
@@ -118,14 +118,11 @@ export function MadeSheet({ item, ingredients, lines = [], barName, onClose }: M
       visible
       onClose={onClose}
       title={item.name}
-      subtitle={barName ? `Your version of ${barName}'s` : 'Your version'}
-      footer={
-        <View style={styles.footer}>
-          <ShowOnProfile on={shown} onChange={setShown} />
-          <Button label={saving ? 'Saving…' : 'Save'} size="lg" onPress={submit} disabled={saving} />
-        </View>
-      }
+      check={{ label: saving ? 'Saving…' : 'Save', onPress: submit, disabled: saving }}
     >
+      <Body tone="muted" style={styles.version}>
+        {barName ? `Your version of ${barName}'s` : 'Your version'}
+      </Body>
       {barEntry ? (
         <>
           <DsText style={styles.strong}>{`Next to the one you had at ${barEntry.venue?.display_name ?? 'the bar'} (${formatScore(barEntry.score)})`}</DsText>
@@ -160,15 +157,16 @@ export function MadeSheet({ item, ingredients, lines = [], barName, onClose }: M
           />
         </View>
       </View>
+      <ShowOnProfile on={shown} onChange={setShown} />
       {error ? <Body tone="accent">{error}</Body> : null}
     </MenuSheet>
   );
 }
 
 const styles = StyleSheet.create({
+  version: { textAlign: 'center' },
   wrap: { flexDirection: 'row', flexWrap: 'wrap', gap: space.sm },
   strong: { ...font.semiBold },
   noteRow: { flexDirection: 'row', alignItems: 'flex-start', gap: space.md },
   flex: { flex: 1, minWidth: 0 },
-  footer: { gap: space.sm },
 });

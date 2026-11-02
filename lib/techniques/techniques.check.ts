@@ -7,6 +7,7 @@ import {
   canMake, EQUIPMENT, equipmentMatches, formatDose, groupForAction, GROUPS, scaleParts, searchTechniques, technicalIngredientFor,
   TECHNICAL_INGREDIENTS, techniqueById, TECHNIQUES, unlocks,
 } from './index';
+import { sourceOf } from './sourceBook';
 
 const near = (a: number, b: number) => assert.ok(Math.abs(a - b) < 0.02, `expected ${b}, got ${a}`);
 
@@ -61,7 +62,7 @@ for (const i of TECHNICAL_INGREDIENTS) for (const t of i.techniques) assert.ok(t
 // Every source is a link, and nothing anywhere uses an em dash.
 const text = JSON.stringify([TECHNIQUES, EQUIPMENT, TECHNICAL_INGREDIENTS]);
 assert.ok(!text.includes('\u2014'), 'no em dashes in the library');
-for (const t of [...TECHNIQUES, ...TECHNICAL_INGREDIENTS]) for (const s of t.sources) assert.match(s.url, /^https?:\/\//);
+for (const t of [...TECHNIQUES, ...TECHNICAL_INGREDIENTS]) for (const s of t.sources) assert.match(sourceOf(s).url, /^https?:\/\//);
 for (const e of [...EQUIPMENT, ...TECHNICAL_INGREDIENTS]) {
   if (e.id !== 'aquafaba') assert.ok(e.buy?.length, `${e.id} says where to buy it`); // aquafaba comes from a tin of chickpeas
   for (const b of e.buy ?? []) assert.ok(/^https:\/\/[^?#]+$/.test(b.url), `${e.id} buy link is https with no tracking query: ${b.url}`);
