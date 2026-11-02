@@ -14,6 +14,7 @@ import { hadStats } from '@/lib/hadDrinks';
 import { pickedShown, profileLine } from '@/lib/profiles';
 import { siteOrigin } from '@/lib/venueLink';
 
+import { YouPeople } from '../people/YouPeople';
 import { TasteCard } from '../taste/TasteCard';
 import { CreditsToCheckCard } from './CreditsToCheck';
 import { MyJobRequests } from './JobRequests';
@@ -56,7 +57,7 @@ function You() {
   const claim = useMyPersonClaim().data;
   const waiting = !profile && claim?.status === 'pending' ? claim : null;
   const confirmer = useProfile(waiting?.confirm_bar ?? null).data?.display_name;
-  const share = useShareLink(`${siteOrigin()}/p/${profile?.handle ?? ''}`, name);
+  const share = useShareLink(`${siteOrigin()}/p/${profile?.handle ?? ''}`, name, 'profile');
 
   const drinks = had.data ?? [];
   const stats = hadStats(drinks);
@@ -113,6 +114,8 @@ function You() {
           </Stats>
 
           {profile ? <YourBarCard positions={positions} headlineId={profile.headlinePositionId} /> : null}
+
+          <YouPeople />
 
           <TasteCard />
 

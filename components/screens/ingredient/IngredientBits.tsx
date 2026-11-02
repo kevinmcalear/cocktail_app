@@ -1,13 +1,10 @@
 import { useRouter } from 'expo-router';
-import { Platform, StyleSheet, View } from 'react-native';
+import { StyleSheet, View } from 'react-native';
 
-import { Button, Caption, IngredientDrawing, PressableScale, Tag, useDs } from '@/components/ds';
-import { MenuSheet } from '@/components/screens/menus/MenuSheet';
-import { RowDivider, SettingsRow } from '@/components/screens/settings/SettingsParts';
+import { Caption, IngredientDrawing, PressableScale, Tag, useDs } from '@/components/ds';
 import { IconSymbol } from '@/components/ui/icon-symbol';
 import { radius, space } from '@/constants/tokens';
 import type { ItemPrep } from '@/hooks/usePrepCard';
-import { formatQuantity, toQuantity } from '@/lib/quantity';
 import { leadTimeLabel, shelfLifeLabel } from '@/lib/scale';
 import { groupForAction } from '@/lib/techniques';
 
@@ -68,58 +65,19 @@ export function IngredientTags({ isPrep, actions, venueName, shared, mine, role,
   );
 }
 
-/** Makes, keeps, store, takes: what you check before you start a batch. */
+/** Keeps, store, takes: what you check before you start a batch. What it makes is the recipe's Makes pill (Item-page). */
 export function prepFacts(prep: ItemPrep | null | undefined): Fact[] {
   if (!prep) return [];
-  const y = toQuantity(prep.yield_amount, prep.yield_unit);
   return [
-    y && { label: 'Makes', value: formatQuantity(y) },
     shelfLifeLabel(prep.shelf_life_hours) && { label: 'Keeps', value: shelfLifeLabel(prep.shelf_life_hours)! },
-    // The tile says where ("Fridge"); the label and Where it lives carry the rest ("sealed bottle").
-    prep.storage && { label: 'Store', value: prep.storage.split(/[,;(]/)[0].trim() || prep.storage },
+    // A short note reads whole ("Fridge, sealed", Desk-item-ginger); a long one says where, and the label and Where it lives carry the rest.
+    prep.storage && { label: 'Store', value: prep.storage.length <= 24 ? prep.storage : prep.storage.split(/[,;(]/)[0].trim() || prep.storage },
     leadTimeLabel(prep.lead_time_minutes, prep.lead_time_note) && { label: 'Takes', value: leadTimeLabel(prep.lead_time_minutes, prep.lead_time_note)! },
   ].filter((f): f is Fact => !!f);
-}
-
-/** Pinned under a phone page: Make the size picked ("Make 1.1 L"), and a jump to the drinks it goes in. */
-export function MakeBar({ bottom, onMake, makes, drinks, onDrinks }: { bottom: number; onMake: () => void; makes: string | null; drinks: number; onDrinks: () => void }) {
-  const ds = useDs();
-  return (
-    <View style={[styles.bar, { paddingBottom: bottom + space.md, backgroundColor: ds.c.ground, borderTopColor: ds.c.line }]}>
-      <Button label={makes ? `Make ${makes}` : 'Make'} icon="play.fill" size="lg" onPress={onMake} style={styles.make} />
-      {drinks ? <Button label={`In ${drinks} ${drinks === 1 ? 'drink' : 'drinks'}`} variant="secondary" size="lg" onPress={onDrinks} /> : null}
-    </View>
-  );
-}
-
-/** The More (three dots) sheet: edit, print, proof, make your own. */
-export function MoreSheet({ name, actions, onClose }: { name: string; actions: { label: string; onPress: () => void }[]; onClose: () => void }) {
-  return (
-    <MenuSheet visible onClose={onClose} title={name}>
-      <View>
-        {actions.map((a, i) => (
-          <View key={a.label}>
-            {i > 0 ? <RowDivider /> : null}
-            <SettingsRow
-              label={a.label}
-              role="button"
-              onPress={() => {
-                onClose();
-                // iOS won't present a modal while another is still going away.
-                setTimeout(a.onPress, Platform.OS === 'ios' ? 450 : 0);
-              }}
-            />
-          </View>
-        ))}
-      </View>
-    </MenuSheet>
-  );
 }
 
 const styles = StyleSheet.create({
   hero: { width: '100%', alignItems: 'center' },
   tags: { flexDirection: 'row', flexWrap: 'wrap', alignItems: 'center', gap: space.xs },
   techTag: { flexDirection: 'row', alignItems: 'center', gap: 2, minHeight: 24, paddingHorizontal: space.sm + 2, borderRadius: radius.pill },
-  bar: { position: 'absolute', left: 0, right: 0, bottom: 0, flexDirection: 'row', gap: space.sm, paddingHorizontal: space.lg, paddingTop: space.md, borderTopWidth: StyleSheet.hairlineWidth },
-  make: { flex: 1 },
 });

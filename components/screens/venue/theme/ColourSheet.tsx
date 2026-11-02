@@ -53,7 +53,7 @@ export function ColourSheet({ visible, onClose, accent, ground, logoUrl, logo, o
     setSource(accent && !logo.colours.includes(accent) && !BAR_COLOURS.some((c) => c.hex === accent) ? 'own' : 'logo');
   };
   return (
-    <Sheet visible={visible} onClose={onClose} onShow={reset} accessibilityLabel="Colour" kind="flow" keyboard ground phoneFull dirty={chosen !== accent}>
+    <Sheet visible={visible} onClose={onClose} onShow={reset} accessibilityLabel="Colour" kind="flow" keyboard ground fullAtPhoneWidth dirty={chosen !== accent}>
       <BrandProvider accent={chosen ?? undefined}>
         <FlowHead title="Colour" canDone={!!chosen} onDone={() => chosen && onUse(chosen)} />
       </BrandProvider>

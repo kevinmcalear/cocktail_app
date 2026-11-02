@@ -1,16 +1,16 @@
 /**
- * Discover's map: pins from ranked rows, fitting the camera to them, and
- * turning what the map shows into a "search this area" point. Pure; checked
- * by lib/discoverMap.check.ts. The map views are components/screens/home/DiscoverMap
+ * Discover's map: how pins look and which are drawn, and fitting the camera
+ * to them. Pure; checked by lib/discoverMap.check.ts. The map views are components/screens/home/DiscoverMap
  * (MapLibre on every platform: GL JS on web, MapLibre Native on iOS and Android).
  */
 import type { CircleLayerSpecification, FilterSpecification, GeoJSONSourceSpecification, StyleSpecification } from 'maplibre-gl';
 
 import { backbar, space, type, type DisplayFace } from '../constants/tokens';
 import { withAlpha } from './color';
+import { themeColours } from './theme';
 import { pinName } from './discoverMatch';
 import { formatScore } from './ranking';
-import { roundCoord, type Area, type DiscoverRow } from './nearMe';
+import type { Area } from './nearMe';
 
 /**
  * OpenFreeMap: free, no key, OpenStreetMap data. Muted base maps so the pins
@@ -80,27 +80,15 @@ export interface MapPin {
   image?: string | null;
   /** While searching: its best match only mentions the word, so the pin is faded. */
   weak?: boolean;
+  /** Discover's map (Prod-discover): the bar's mark, its logo or letter on its colour, not a score. The screen's own colours and display face. */
+  mark?: { edge: string; ink: string; family: string };
+  /** A marked pin writes the bar's name beside it. */
+  named?: boolean;
 }
 
-/** Pins for the rows that have coordinates: ranked first, then early. */
-export function pinsFrom(rows: { ranked: DiscoverRow[]; early: DiscoverRow[] } | undefined): MapPin[] {
-  if (!rows) return [];
-  return [...rows.ranked, ...rows.early]
-    .filter((r) => r.latitude !== null && r.longitude !== null)
-    .map((r, i) => ({
-      id: r.venue_profile_id,
-      handle: r.handle,
-      name: r.display_name,
-      logo: r.avatar_url ?? null,
-      place: [r.locality, r.city].filter(Boolean).join(', '),
-      latitude: r.latitude!,
-      longitude: r.longitude!,
-      score: r.is_early ? null : r.score,
-      position: r.is_early ? null : r.position,
-      rankers: r.rankers,
-      order: r.is_early ? i : undefined,
-    }));
-}
+/** A marked pin's size, and its letter's (Prod-discover). */
+const MARK = 32;
+const MARK_LETTER = 17;
 
 /**
  * What's written on a pin: the bar's score (b02); while searching, how many
@@ -174,7 +162,7 @@ export function pinsToDraw(pins: readonly MapPin[], view: MapView | null, select
   // the map all dots. Until then the bars in view with a logo fill the rest, the logo in the score's place:
   // in Top bars' order (loved, then most relevant), then the busiest.
   const known = open
-    .filter((p) => p.score === null && p.logo)
+    .filter((p) => p.score === null && (p.logo || p.mark))
     .sort((a, b) => (a.order ?? Infinity) - (b.order ?? Infinity) || (b.drinks ?? b.matches ?? 0) - (a.drinks ?? a.matches ?? 0))
     .slice(0, BEST_PINS - best.length);
   return [...always, ...[...best, ...known].filter((p) => !always.includes(p))];
@@ -257,35 +245,6 @@ export const CLOSE_ZOOM = 16;
 /** The wide web map's zoom buttons (discoverMapDom.ts), so Find me can sit under them. */
 export const ZOOM_BUTTON = 40;
 
-/** A camera on one bar, close enough that its pin writes the name. */
-export function cameraOn(at: { latitude: number; longitude: number }): Camera {
-  return { latitude: at.latitude, longitude: at.longitude, zoom: CLOSE_ZOOM };
-}
-
-/** What the map shows: the last refit (`fit`), the bar a list row is resting on (`focus`), and the camera given (`at`). */
-export interface MapAim {
-  fit: Camera | null;
-  focus: Camera | null;
-  at: Camera | null;
-}
-
-/**
- * The camera is whichever came last, a refit or a new hover, so a hover ending
- * never snaps the map back. `fresh`: a new hover moved it (the map's moves
- * start again from there, so the fly isn't taken for the person panning).
- */
-export function aimAfter(prev: MapAim, fit: Camera | null, focus: Camera | null): MapAim & { fresh: boolean } {
-  const fresh = !!focus && focus !== prev.focus;
-  return { fit, focus, at: fresh ? focus : prev.fit !== fit ? fit : prev.at, fresh };
-}
-
-let barHover: ReturnType<typeof setTimeout> | undefined;
-/** Rest the pointer before a list row moves the map. Leaving cancels it. ponytail: one timer, one Discover screen. */
-export function armBarHover(barId: string | null, go: (id: string) => void, ms = 400): void {
-  clearTimeout(barHover);
-  barHover = barId ? setTimeout(() => go(barId), ms) : undefined;
-}
-
 /**
  * How a pin looks on either map (disc-map, disc-map-opt-c): the score in mono
  * on a dark pill with a soft ring and shadow, or a dot while early; while
@@ -318,11 +277,39 @@ export function pinLook(pin: MapPin, selected: boolean, accent: { fill: string; 
   const height = marked ? logoSize + 2 * space.xs : pin.top ? (big ? 48 : 40) : big ? 36 : label ? 30 : logo ? logoSize + 4 : 18;
   // Scores in tabular figures, names in the system font (disc-desk-search).
   const font: 'semiBold' | 'medium' | 'figuresMedium' = named ? (big ? 'semiBold' : 'medium') : 'figuresMedium';
+  if (pin.mark && !pin.top && !pin.closed) {
+    // The bar's own button colour and the ink on it (lib/theme, the one rule for a bar's colour).
+    const brand = pin.brand ? themeColours(pin.brand.accent, backbar.light.ground, false) : null;
+    const own = brand ? { fill: brand.fill, text: brand.onFill } : null;
+    return {
+      label: pin.logo ? '' : (pin.name.trim()[0] ?? '?').toUpperCase(),
+      logo: pin.logo,
+      logoSize: MARK - 4,
+      font,
+      family: pin.mark.family,
+      fontSize: MARK_LETTER,
+      minWidth: MARK,
+      height: MARK,
+      paddingLeft: 0,
+      paddingRight: 0,
+      gap: 0,
+      borderWidth: 2,
+      borderColor: selected ? accent.fill : pin.mark.edge,
+      backgroundColor: own?.fill ?? accent.fill,
+      boxShadow: `0 3px 10px ${withAlpha(backbar.dark.ground, 0.18)}`,
+      color: own?.text ?? accent.text,
+      opacity: 1,
+      zIndex: selected ? 300 : pin.named ? 2 : 1,
+      beside: pin.named || selected ? { name: pin.name, ink: pin.mark.ink, halo: pin.mark.edge } : null,
+    };
+  }
   return {
     label,
     logo,
     logoSize,
     font,
+    family: null,
+    beside: null,
     fontSize: big ? type.label.fontSize : type.caption.fontSize,
     minWidth: big && !named ? 56 : label ? 44 : height,
     height,
@@ -362,20 +349,6 @@ export function viewportFrom(center: { lat: number; lng: number }, [west, south,
   return { latitude: center.lat, longitude: center.lng, latitudeDelta: north - south, longitudeDelta: east - west, zoom };
 }
 
-/**
- * Whether the map has moved far enough from where its results are for (the
- * last search, or the camera that fit them) to search again: half a zoom
- * step, or a sixth of the view across. Smaller nudges keep the list as it is.
- * No `from` (nothing fit yet) counts any move.
- */
-export function movedFrom(from: Camera | null, v: Viewport): boolean {
-  if (!from) return true;
-  if (Math.abs(v.zoom - from.zoom) >= 0.5) return true;
-  // Across the antimeridian, 179 to -179 is two degrees, not 358.
-  const dLng = ((v.longitude - from.longitude + 540) % 360) - 180;
-  return Math.abs(v.latitude - from.latitude) > Math.abs(v.latitudeDelta) / 6 || Math.abs(dLng) > Math.abs(v.longitudeDelta) / 6;
-}
-
 const KM_PER_DEG = 111.045;
 
 /** A camera that shows every pin with some room around it; a sensible city view for one pin; null for none. */
@@ -392,54 +365,23 @@ export function cameraFor(pins: readonly Pick<MapPin, 'latitude' | 'longitude'>[
   return { latitude, longitude, zoom: Math.round(zoom * 10) / 10 };
 }
 
-/**
- * Near me opens on the person's own neighbourhood (about 2 km across a
- * phone), not the whole 10 km the list covers; they zoom out for more.
- * Several bars within a short walk opens at street level instead, on them.
- */
+/** Near me opens on the person's own neighbourhood (about 2 km across a phone), not the whole 10 km the list covers; they zoom out for more. */
 const NEAR_ME_ZOOM = 13.5;
-const CROWD_KM = 1;
-const CROWD_BARS = 6;
-
-/** True when enough bars sit within a kilometre to open near-me at street level. ponytail: a walking-radius count, not a density grid; raise CROWD_BARS if a small town opens too tight. */
-function crowded(area: { latitude: number; longitude: number }, bars: readonly { latitude: number | null; longitude: number | null }[]): boolean {
-  const cos = Math.cos((area.latitude * Math.PI) / 180);
-  const limit = CROWD_KM * CROWD_KM;
-  let n = 0;
-  for (const b of bars) {
-    if (b.latitude === null || b.longitude === null) continue;
-    const dLat = (b.latitude - area.latitude) * KM_PER_DEG;
-    const dLng = (b.longitude - area.longitude) * KM_PER_DEG * cos;
-    if (dLat * dLat + dLng * dLng <= limit && ++n >= CROWD_BARS) return true;
-  }
-  return false;
-}
 
 /**
- * A camera for an area: near me, the person's neighbourhood (street level when it's crowded), centred on
- * them (`me`) once found, as the area is snapped to about 1 km and kept until a 2 km walk (useDiscoverArea);
- * a map area, its whole circle; null for a city or anywhere.
+ * A camera for an area: near me, the person's neighbourhood, centred on them
+ * (`me`) once found, as the area is snapped to about 1 km and kept until a 2 km
+ * walk (useDiscoverArea); a map area, its whole circle; null for a city or anywhere.
  */
-export function cameraForArea(area: Area, around: readonly { latitude: number | null; longitude: number | null }[] = [], me?: { latitude: number; longitude: number } | null): Camera | null {
+export function cameraForArea(area: Area, me?: { latitude: number; longitude: number } | null): Camera | null {
   if (area.kind !== 'point') return null;
   if (area.source === 'me') {
     const at = me ?? area;
-    return { latitude: at.latitude, longitude: at.longitude, zoom: crowded(at, around) ? CLOSE_ZOOM : NEAR_ME_ZOOM };
+    return { latitude: at.latitude, longitude: at.longitude, zoom: NEAR_ME_ZOOM };
   }
   const dLat = area.radiusKm / KM_PER_DEG;
   return cameraFor([
     { latitude: area.latitude - dLat, longitude: area.longitude },
     { latitude: area.latitude + dLat, longitude: area.longitude },
   ]);
-}
-
-/**
- * "Search this area": the circle that covers what the map shows (half its
- * diagonal), as a Discover area. Kept between 0.5 and 200 km, as the RPCs do.
- */
-export function areaFromViewport(v: Viewport): Extract<Area, { kind: 'point' }> {
-  const halfLatKm = (Math.abs(v.latitudeDelta) * KM_PER_DEG) / 2;
-  const halfLngKm = (Math.abs(v.longitudeDelta) * KM_PER_DEG * Math.cos((v.latitude * Math.PI) / 180)) / 2;
-  const radiusKm = Math.min(Math.max(Math.hypot(halfLatKm, halfLngKm), 0.5), 200);
-  return { kind: 'point', latitude: roundCoord(v.latitude), longitude: roundCoord(v.longitude), radiusKm: Math.round(radiusKm * 10) / 10, source: 'map' };
 }

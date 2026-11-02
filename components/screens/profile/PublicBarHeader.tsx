@@ -71,7 +71,7 @@ export function PublicBarActions({ profile, signedIn = false }: { profile: Profi
   const share = async () => {
     const url = `${siteOrigin()}/p/${profile.handle}`;
     try {
-      setCopied((await shareLink(url, profile.display_name)) === 'copied');
+      setCopied((await shareLink(url, profile.display_name, 'bar')) === 'copied');
     } catch {
       // The browser refused the clipboard too: show the link to copy by hand, not nothing.
       setCopied(false);
@@ -83,9 +83,9 @@ export function PublicBarActions({ profile, signedIn = false }: { profile: Profi
   return (
     <View style={[styles.actions, wide ? styles.wrap : null]}>
       {signedIn ? (
-        <LoveBarButton profileId={profile.id} name={profile.display_name} labelled />
+        <LoveBarButton profileId={profile.id} name={profile.display_name} follow />
       ) : (
-        <Button label="Love" icon="heart" variant="secondary" accessibilityHint={`Sign in to love ${profile.display_name}`} onPress={signIn} style={grow} />
+        <Button label="Follow" icon="plus" variant="secondary" accessibilityHint={`Sign in to follow ${profile.display_name}`} onPress={signIn} style={grow} />
       )}
       <Button label={copied ? 'Link copied' : 'Share'} icon="square.and.arrow.up" variant="secondary" onPress={() => void share()} style={grow} />
       {signedIn ? (

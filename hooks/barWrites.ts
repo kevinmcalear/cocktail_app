@@ -6,6 +6,7 @@
 import type { QueryKey } from '@tanstack/react-query';
 
 import { BAR_WRITE } from '@/lib/offlineWrites';
+import type { RotaChange } from '@/lib/rota';
 import { supabase } from '@/lib/supabase';
 
 const check = <T extends { error: { message: string } | null }>(res: T) => {
@@ -63,6 +64,58 @@ async function sendServes({ menuDrinkIds, serves }: ServesWrite) {
   check(await supabase.from('menu_drinks').update({ serves }).in('id', menuDrinkIds));
 }
 
+export interface BatchWrite {
+  /** Made on the phone, so a resend finds the row there. */
+  id: string;
+  barId: string;
+  itemId: string;
+  amount: number;
+  unit: string;
+  madeAt: string;
+  madeBy: string | null;
+  locationId: string | null;
+  note: string | null;
+}
+
+/** One batch of house-made (Log batch), skipped if already there. */
+async function sendBatch(w: BatchWrite) {
+  check(
+    await supabase
+      .from('batch_logs')
+      .upsert({ id: w.id, bar_id: w.barId, item_id: w.itemId, amount: w.amount, unit: w.unit, made_at: w.madeAt, made_by: w.madeBy, location_id: w.locationId, note: w.note }, { onConflict: 'id', ignoreDuplicates: true })
+  );
+  return w.id;
+}
+
+export interface ShiftsWrite extends RotaChange {
+  barId: string;
+}
+
+/** The rota: rows by their phone-made ids, so a resend finds them there, and removals, which change nothing the second time. */
+async function sendShifts({ barId, rows, removed }: ShiftsWrite) {
+  if (rows.length) check(await supabase.from('shifts').upsert(rows.map((r) => ({ ...r, bar_id: barId })), { onConflict: 'id' }));
+  if (removed.length) check(await supabase.from('shifts').delete().eq('bar_id', barId).in('id', removed));
+}
+
+export interface HandoverWrite {
+  barId: string;
+  /** The service day of the close (YYYY-MM-DD). */
+  closeDate: string;
+  userId: string;
+  /** What they wrote; left out when only marking the note read. */
+  words?: { ranOut: string[]; note: string | null; prep: string | null; broken: string | null; brokenPhoto: string | null; writtenAt: string };
+  readAt: string;
+}
+
+/** What someone wrote, as handover_notes columns (also the page's at-once copy, hooks/useHandover.ts). */
+export const handoverColumns = (words: HandoverWrite['words']) =>
+  words ? { ran_out: words.ranOut, note: words.note, prep: words.prep, broken: words.broken, broken_photo: words.brokenPhoto, written_at: words.writtenAt } : {};
+
+/** A person's row for a close (the handover note), by bar, day and person, so sending twice is the same. */
+async function sendHandover(w: HandoverWrite) {
+  check(await supabase.from('handover_notes').upsert({ bar_id: w.barId, close_date: w.closeDate, user_id: w.userId, read_at: w.readAt, ...handoverColumns(w.words) }, { onConflict: 'bar_id,close_date,user_id' }));
+}
+
 export const BAR_WRITES = {
   zoneCount: {
     key: [BAR_WRITE, 'zone-count'],
@@ -74,9 +127,24 @@ export const BAR_WRITES = {
     send: sendSwaps,
     refresh: (w: SwapsWrite): QueryKey[] => [['run-sheet', w.menuId]],
   },
+  batch: {
+    key: [BAR_WRITE, 'batch'],
+    send: sendBatch,
+    refresh: (w: BatchWrite): QueryKey[] => [['batch-logs', w.barId], ['prep-data']],
+  },
   serves: {
     key: [BAR_WRITE, 'run-serves'],
     send: sendServes,
     refresh: (w: ServesWrite): QueryKey[] => [['run-sheet', w.menuId]],
+  },
+  shifts: {
+    key: [BAR_WRITE, 'shifts'],
+    send: sendShifts,
+    refresh: (w: ShiftsWrite): QueryKey[] => [['shifts', w.barId]],
+  },
+  handover: {
+    key: [BAR_WRITE, 'handover'],
+    send: sendHandover,
+    refresh: (w: HandoverWrite): QueryKey[] => [['handover', w.barId]],
   },
 } as const;

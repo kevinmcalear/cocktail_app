@@ -1,20 +1,21 @@
 import { createContext, use, useEffect, useEffectEvent, useRef, useState } from 'react';
 import { Modal, Pressable, StyleSheet, useWindowDimensions, View } from 'react-native';
 
-import { layout } from '@/constants/tokens';
-
 import { useReducedMotion } from '@/hooks/useReducedMotion';
 
 import { useDiscardGuard } from './discardGuard';
 import type { SheetProps } from './Sheet';
 import { sheetFrame } from './sheetFrame';
 import { useDs } from './theme';
+import { ToastHost } from './Toast';
 import { EASE_IN, EASE_OUT, webMotion } from './webMotion';
 import { attachSheetDrag } from './webSheetDrag';
 
 /** As on native: in over about 200 ms easing out, out over 180 ms easing in. */
 const IN_MS = 200;
 const OUT_MS = 180;
+/** Below this the window is a phone's: a sheet that asks for it takes the whole window. */
+const PHONE_WIDTH = 600;
 
 const CloseContext = createContext<(() => void) | null>(null);
 
@@ -31,11 +32,9 @@ export function useSheetClose(): () => void {
  * load Reanimated or Gesture Handler. A finger drags it down to close it
  * (webSheetDrag), as on native.
  */
-export function Sheet({ visible, onClose, accessibilityLabel, children, style, ground, header, onShow, onDismiss, kind, dirty, phoneFull }: SheetProps) {
+export function Sheet({ visible, onClose, accessibilityLabel, children, style, ground, header, onShow, onDismiss, kind, dirty, fullAtPhoneWidth }: SheetProps) {
   const ds = useDs();
-  // At phone width a sheet that asks for it fills the window, as the phone's own sheet does.
-  const { width } = useWindowDimensions();
-  const full = !!phoneFull && width < layout.breakpoints.tablet;
+  const full = useWindowDimensions().width < PHONE_WIDTH && !!fullAtPhoneWidth;
   const reduceMotion = useReducedMotion();
   // Gone once it has faded out: the Modal stays up until then.
   const [gone, setGone] = useState(!visible);
@@ -114,7 +113,7 @@ export function Sheet({ visible, onClose, accessibilityLabel, children, style, g
         <View style={[StyleSheet.absoluteFill, { backgroundColor: ds.c.scrim }, fade, opacity]}>
           <Pressable accessibilityLabel="Close" style={StyleSheet.absoluteFill} onPress={close} />
         </View>
-        <View style={[styles.place, sheetFrame.scrim, full && sheetFrame.fullScrim]}>
+        <View style={[styles.place, sheetFrame.scrim, full ? styles.bare : null]}>
           <View
             ref={dragRef}
             role="dialog"
@@ -126,7 +125,7 @@ export function Sheet({ visible, onClose, accessibilityLabel, children, style, g
               sheetFrame.panel,
               { backgroundColor: ground ? ds.c.ground : ds.c.surface, borderColor: ds.c.lineStrong },
               style,
-              full && sheetFrame.full,
+              full ? styles.full : null,
               fade,
               opacity,
             ]}
@@ -136,6 +135,8 @@ export function Sheet({ visible, onClose, accessibilityLabel, children, style, g
           </View>
         </View>
       </CloseContext>
+      {/* The dialog sits over the page: a toast shown from it draws here, on top. */}
+      <ToastHost />
     </Modal>
   );
 }
@@ -145,4 +146,6 @@ const styles = StyleSheet.create({
   panel: { width: '100%', maxWidth: 560, maxHeight: '86%', overflow: 'hidden' },
   // A whole flow (Add, Rank it, Theme): the same dialog, a little wider and taller.
   flow: { maxWidth: 680, maxHeight: '92%' },
+  bare: { padding: 0 },
+  full: { maxWidth: '100%', height: '100%', maxHeight: '100%', borderWidth: 0, borderTopLeftRadius: 0, borderTopRightRadius: 0, borderBottomLeftRadius: 0, borderBottomRightRadius: 0 },
 });

@@ -64,7 +64,7 @@ export function StarterShelf({ pantry, onShelf, oneAway, ready, bottles, bottom,
   return (
     <View style={styles.screen}>
       <ScrollView contentContainerStyle={{ paddingHorizontal: gutter, paddingBottom: bottom + 96, maxWidth: 760, width: '100%' }} keyboardShouldPersistTaps="handled">
-        <ScreenHeaderSpacer title="My Bar" />
+        <ScreenHeaderSpacer title="My Bar" back />
         <View style={styles.section}>
           <Body tone="muted">Tap what’s on your shelf. We’ll show only drinks you can actually make.</Body>
           <View style={[styles.find, { backgroundColor: ds.c.raised, borderColor: ds.c.line }]}>

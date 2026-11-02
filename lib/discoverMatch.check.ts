@@ -4,7 +4,7 @@ import assert from 'node:assert/strict';
 
 import type { MapPin } from './discoverMap';
 import { pinDescription, pinLook } from './discoverMap';
-import { barSearchHref, classicSummary, isStrong, searchTitle, matchWhy, namePins, pinName, snippet, toMatch } from './discoverMatch';
+import { barSearchHref, isStrong, matchWhy, namePins, pinName, snippet, toMatch } from './discoverMatch';
 
 // Rows: an older server sends no match; an unknown kind is ignored.
 assert.equal(toMatch(undefined, undefined), null);
@@ -68,14 +68,5 @@ assert.equal(pinLook(pictured[1], true, accent).opacity, 1, 'selected never fade
 // The bar's page opens on the search.
 assert.equal(barSearchHref('little.rye', ' dirty martini '), '/p/little.rye?q=dirty%20martini');
 assert.equal(barSearchHref('little.rye', ''), '/p/little.rye');
-
-// Classic or variation, by bar: a bar pouring both counts as the classic.
-const versions = [{ id: '1', barId: 'a' }, { id: '2', barId: 'a' }, { id: '3', barId: 'b' }, { id: '4', barId: 'c' }, { id: '5', barId: 'd' }];
-const verdicts = { '1': { spec_match: 'same' }, '2': { spec_match: 'variation' }, '3': { spec_match: 'variation' }, '4': { spec_match: 'same' }, '5': { spec_match: 'riff' } };
-assert.equal(classicSummary(versions, verdicts, 'near you'), '2 bars near you pour the classic, 1 pours a variation');
-assert.equal(classicSummary(versions.slice(2, 3), verdicts, 'in Melbourne'), '1 bar in Melbourne pours a variation');
-assert.equal(classicSummary(versions, {}, 'near you'), null);
-assert.equal(searchTitle('martini'), 'Martinis and more');
-assert.equal(searchTitle(' smoke '), '“smoke”');
 
 console.log('discoverMatch checks passed');

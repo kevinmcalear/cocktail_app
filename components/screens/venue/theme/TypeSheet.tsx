@@ -66,7 +66,7 @@ export function TypeSheet({ visible, onClose, look, value, onUse }: Props) {
   const note = <Caption tone="muted">{NAMES_NOTE}</Caption>;
 
   return (
-    <Sheet visible={visible} onClose={onClose} onShow={() => setFace(value)} accessibilityLabel="Type" kind="flow" ground phoneFull dirty={face !== value} style={kind === 'wide' ? styles.wide : undefined}>
+    <Sheet visible={visible} onClose={onClose} onShow={() => setFace(value)} accessibilityLabel="Type" kind="flow" ground fullAtPhoneWidth dirty={face !== value} style={kind === 'wide' ? styles.wide : undefined}>
       {/* The one prominent action, and the chosen face's ring, in the bar's colour. */}
       <BrandProvider accent={accent}>
         {kind === 'wide' ? (

@@ -11,6 +11,7 @@ import { useDiscardGuard } from './discardGuard';
 import { dragShade, STRETCH } from './sheetDrag';
 import { sheetFrame, sheetIsDialog } from './sheetFrame';
 import { useDs } from './theme';
+import { ToastHost } from './Toast';
 import { SheetScrollContext, slideAway, useSheetDrag } from './useSheetDrag';
 
 /** The backdrop fades on its own, about 200 ms, easing out; it never moves with the sheet. */
@@ -54,8 +55,6 @@ export interface SheetProps {
    * "Discard changes?" first, and it stays open unless they say Discard.
    */
   dirty?: boolean;
-  /** The web at phone width: fill the window, as the phone's own sheet does, instead of a dialog in the middle (the theme's Type and Colour). */
-  phoneFull?: boolean;
   /**
    * small (the default): our sheet, for pickers, menus and short forms.
    * flow: a whole flow (Add, Rank it, Theme). The system's own sheet on
@@ -64,6 +63,8 @@ export interface SheetProps {
    * centred dialog on the web, a little wider. Decision sheets: mixed.
    */
   kind?: 'small' | 'flow';
+  /** The web at phone width: the whole window, as the phone's own sheet does, not a dialog (Sheet.web; the theme's Type and Colour). */
+  fullAtPhoneWidth?: boolean;
 }
 
 /**
@@ -119,6 +120,8 @@ function FlowSheet({ visible, onClose, accessibilityLabel, children, style, grou
             body
           )}
         </CloseContext>
+        {/* The sheet is a window over the app: a toast shown from it draws here, on top. */}
+        <ToastHost />
       </GestureHandlerRootView>
     </Modal>
   );
@@ -255,6 +258,7 @@ function SmallSheet({ visible, onClose, accessibilityLabel, children, style, gro
             <View style={placed}>{dragged}</View>
           )}
         </CloseContext>
+        <ToastHost />
       </GestureHandlerRootView>
     </Modal>
   );

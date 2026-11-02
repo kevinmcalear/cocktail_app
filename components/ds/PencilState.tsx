@@ -1,16 +1,15 @@
 import { Image } from 'expo-image';
-import { useEffect } from 'react';
 import { StyleSheet, View } from 'react-native';
-import Animated, { useAnimatedStyle, useReducedMotion, useSharedValue, withRepeat, withTiming } from 'react-native-reanimated';
 
 import { SKETCH_SAMPLES } from '@/constants/sketch';
-import { drawing, pulse, space } from '@/constants/tokens';
+import { drawing, space } from '@/constants/tokens';
 import { CHALK, mapScene, pencilOnly } from '@/lib/sketch/passes';
 import type { Scene } from '@/lib/sketch/scene';
 import { sceneToSvg } from '@/lib/sketch/svg';
 import { readSketchInputs, type SketchInputs } from '@/lib/sketch/types';
 
 import { Button } from './Button';
+import { Pulse } from './Pulse';
 import { Body, Caption, Headline } from './Text';
 import { sceneFor } from './SketchDrawing';
 import { useDs } from './theme';
@@ -59,13 +58,8 @@ export interface PencilStateProps {
  */
 export function PencilState({ kind, title, detail, action, inputs = EMPTY_GLASS, seed = 'pencil-state', compact }: PencilStateProps) {
   const ds = useDs();
-  const reduceMotion = useReducedMotion();
-  const breathe = kind === 'loading' && !reduceMotion;
-  const opacity = useSharedValue(1);
-  useEffect(() => {
-    if (breathe) opacity.set(withRepeat(withTiming(pulse.low, { duration: pulse.ms }), -1, true));
-  }, [breathe, opacity]);
-  const breathing = useAnimatedStyle(() => ({ opacity: opacity.get() }));
+  // Loading breathes (Pulse holds still with Reduce Motion, and is CSS on the web).
+  const Drawing = kind === 'loading' ? Pulse : View;
   const px = compact ? drawing.row : drawing.tile;
   const uri = pencilUri(sceneFor(inputs, seed, compact ? 'thumb' : 'full'), ds.scheme === 'dark');
   const words = detail ?? (kind === 'offline' ? 'Saved on this phone' : undefined);
@@ -77,9 +71,9 @@ export function PencilState({ kind, title, detail, action, inputs = EMPTY_GLASS,
       aria-busy={kind === 'loading'}
       aria-live={kind === 'error' ? 'assertive' : 'polite'}
     >
-      <Animated.View aria-hidden style={[{ width: px, height: px }, breathing]}>
+      <Drawing aria-hidden style={{ width: px, height: px }}>
         <Image source={{ uri }} style={StyleSheet.absoluteFill} contentFit="contain" cachePolicy="memory" accessible={false} />
-      </Animated.View>
+      </Drawing>
       <View style={compact ? styles.wordsRow : styles.words}>
         <Heading style={compact ? null : styles.centre}>{title}</Heading>
         {words ? (

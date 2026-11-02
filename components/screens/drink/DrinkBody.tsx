@@ -5,47 +5,28 @@ import { space } from '@/constants/tokens';
 import type { DrinkSections } from './DrinkSections';
 
 /**
- * The drink page's sections on a phone, in two parts (13 Oct, with Eddie at
- * Caretaker's Cottage): first, just enough to make the drink, then "More
- * about this drink" for everything else. The name, credit and spec (with
- * method, glass, ice and garnish) sit close together, so on a 390 x 844 phone
- * a four to six line spec fits on the first screen with the picture. A short
- * description follows the spec; at home the journey strip (I made it) does
- * too, and on a venue's team the floor's talking points, since below
- * Bartender they stand in for the spec.
+ * The drink page's blocks in one column, in the board's fixed order (canvas
+ * GWBCX, Decided-who-*): the name, what a guest or the floor reads first, the
+ * spec, I made it at the end of the recipe, the one action, notes, the bar's
+ * own rows, its menus and the story.
+ * Each block is already empty for anyone it isn't for.
  */
-export function DrinkBody({ sections: s, home }: { sections: DrinkSections; home: boolean }) {
+export function DrinkBody({ sections: s, title = true }: { sections: DrinkSections; title?: boolean }) {
   return (
     <View style={styles.body}>
-      <View style={styles.make}>
-        {s.header}
-        {s.spec}
-      </View>
-      {s.intro}
-      {s.kit}
-      {s.journey}
-      {s.myNote}
-      {s.floor}
-      {s.moreHeading}
-      {s.standing}
-      {s.banner}
-      {s.description}
-      {s.facts}
-      {s.allergens}
-      {s.flavor}
-      {s.servedAt}
+      {title ? s.title : null}
+      {s.lead}
+      {s.spec}
+      {s.made}
+      {s.action}
+      {s.notes}
+      {s.bar}
       {s.menus}
-      {home ? null : s.photos}
-      {s.history}
-      {s.cost}
-      {s.backstory}
-      {home ? s.photos : null}
-      {s.publish}
+      {s.story}
     </View>
   );
 }
 
 const styles = StyleSheet.create({
   body: { gap: space.xl },
-  make: { gap: space.md },
 });
