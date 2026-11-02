@@ -13,8 +13,8 @@ import { backWord } from '@/lib/tabs';
 
 import { COLUMNS_FROM, DrinkColumns } from './DrinkColumns';
 import { phoneHeroHeight } from './DrinkHero';
-import { DockedDrawing, DockGlyph, DOCKED, DrawingSpace, DrinkSky, drawingRoom } from './DrawingHero';
-import { NATIVE_DOCK_LEFT, useItemHeader, type Controls } from './ItemHeader';
+import { DockedDrawing, DOCKED, DrawingSpace, DrinkSky, drawingRoom } from './DrawingHero';
+import { iosBarRoom, IosBarName, NATIVE_DOCK_LEFT, useItemHeader, type Controls } from './ItemHeader';
 import { MATERIAL_DOCK, MaterialBar, MaterialPage, useItemTones } from './MaterialBar';
 import { backWidth, BarBacking, PageControls } from './PageControls';
 import { PhotoMirror } from './PhotoMirror';
@@ -74,7 +74,7 @@ export function ItemShell({ name, pane, photo, art, size, liquid, title, action,
   const nativeBar = Platform.OS === 'ios' && !columns && !pane;
   // A pane (the Library beside its list, the editor's preview) keeps the drawn controls.
   const materialBar = Platform.OS === 'android' && !columns && !pane;
-  useItemHeader({ name, on: nativeBar, pane, glyph: photo ? null : <DockGlyph art={art(false)} size={size} />, scrollY, tuck, controls });
+  useItemHeader({ name, on: nativeBar, pane, controls });
   const barHeight = use(HeaderHeightContext) ?? 0;
   // Where it goes, from the page under this one, where there's room for a label (desktop boards).
   const under = use(HeaderBackContext)?.title;
@@ -89,7 +89,8 @@ export function ItemShell({ name, pane, photo, art, size, liquid, title, action,
   const underNativeBar = (
     <>
       <BarBacking height={barHeight} scrollY={scrollY} tuck={tuck} />
-      {photo ? null : dock({ dockLeft: NATIVE_DOCK_LEFT, dockTop: (top + barHeight - DOCKED) / 2, handOff: true })}
+      {photo ? null : dock({ dockLeft: NATIVE_DOCK_LEFT, dockTop: (top + barHeight - DOCKED) / 2 })}
+      <IosBarName name={name} left={NATIVE_DOCK_LEFT + (photo ? 0 : DOCKED + space.sm)} right={space.lg + iosBarRoom(controls)} top={top} height={barHeight - top} scrollY={scrollY} tuck={tuck} />
     </>
   );
 
@@ -163,7 +164,8 @@ function PageFab({ scrollY, bottom, ...fab }: NonNullable<ItemShellProps['fab']>
     },
   );
   const tones = useItemTones();
-  return <ExtendedFab {...fab} open={open} colors={tones ? { fill: tones.fab, text: tones.onFab } : undefined} style={{ bottom: bottom + space.lg }} />;
+  // `bottom` already holds the 16 dp gap (useTabBarInset, or the pane's inset + space.lg): no second one.
+  return <ExtendedFab {...fab} open={open} colors={tones ? { fill: tones.fab, text: tones.onFab } : undefined} style={{ bottom }} />;
 }
 
 /** Room under the page's last line for the FAB: 56 and its margins. */
