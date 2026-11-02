@@ -33,6 +33,7 @@ export { IngredientDrawing, useIngredientColour } from './IngredientDrawing';
 export { EquipmentDrawing } from './EquipmentDrawing';
 export { sheetFrame, sheetIsDialog } from './sheetFrame';
 export { Sheet, useSheetClose, type SheetProps } from './Sheet';
+export { FlowHead, type FlowHeadProps } from './FlowHead';
 export { MatchText, RowScore, scoreWords, type MatchTextProps, type RowScoreProps } from './RowScore';
 export { SheetScrollView } from './SheetScrollView';
 export { dragDismissesKeyboard } from './keyboardDrag';
