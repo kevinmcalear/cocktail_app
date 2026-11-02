@@ -15,7 +15,7 @@ import { useDrinkLines } from '@/hooks/useDrinkLines';
 import { useMyBar } from '@/hooks/useHomeBar';
 import { useMyHadDrinks } from '@/hooks/useRankings';
 import { useOpenSearch } from '@/hooks/useSearchFrom';
-import { homeReach, needLine } from '@/lib/collectionStages';
+import { homeReach, needLine } from '@/lib/shelfReach';
 import { HOME_CAPSULES, HOME_CHIPS, homeCapsule, homeRows, type HomeCapsule, type HomeChip } from '@/lib/drinksTab';
 import { ingredientLine, sentenceLine } from '@/lib/menus';
 

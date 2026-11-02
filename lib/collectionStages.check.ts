@@ -1,6 +1,7 @@
 import assert from 'node:assert/strict';
 
-import { beatCount, beenBars, dayShort, gapLabel, hadOutRows, homeReach, hoursText, lovedLine, madeRows, menuRowShelf, nearestFirst, nextBottle, toMakeGroups, wantCamera, wantLine, wantPins, type HadMemory, type WantBar } from './collectionStages';
+import { beatCount, beenBars, dayShort, gapLabel, hadOutRows, hoursText, lovedLine, madeRows, nearestFirst, nextBottle, toMakeGroups, wantCamera, wantLine, wantPins, type HadMemory, type WantBar } from './collectionStages';
+import { homeReach, menuRowShelf } from './shelfReach';
 import { cameraFor } from './discoverMap';
 import type { HadDrink } from './hadDrinks';
 

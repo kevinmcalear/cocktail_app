@@ -1,22 +1,29 @@
 // A guest's own allergies and the allergen lines guests read
 // (20261204400000_takeovers_and_allergens.sql). The allergies stay private:
-// on the account (user_prefs, its owner's alone) or, signed out, on this
-// phone; matching happens here, so they are never sent in a request.
-import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
+// on the account (user_prefs, its owner's alone) or on this phone; matching
+// happens here, so they are never sent in a request.
+import { useQuery, useQueryClient } from '@tanstack/react-query';
 
 import { useUserId } from '@/ctx/AuthContext';
 import type { Allergen, GuestDrinkAllergens } from '@/lib/allergens';
+import { viewerScoped } from '@/lib/authCache';
 import { deviceStore } from '@/lib/deviceStore';
+import { ACCOUNT_ALLERGIES_KEY, allergyCopy, allergyCopyFor, GUEST_ALLERGIES_KEY, mergeAllergies, myAllergiesKey as myKey } from '@/lib/myAllergies';
 import { supabase } from '@/lib/supabase';
 
-const DEVICE_KEY = 'guest-allergies';
-const myKey = (userId: string | null) => ['my-allergies', userId ?? 'device'] as const;
+
+async function guestList(): Promise<Allergen[] | null> {
+  const raw = await deviceStore.getItem(GUEST_ALLERGIES_KEY);
+  return raw ? (JSON.parse(raw) as Allergen[]) : null;
+}
 
 /** Every allergen of these drinks (up to 200), the unchecked count and the bar's check date; signed out too. */
 export function useGuestDrinkAllergens(itemIds: readonly string[]) {
   const ids = [...new Set(itemIds)].sort();
+  const viewer = viewerScoped(useUserId());
   return useQuery({
-    queryKey: ['guest-drink-allergens', ids],
+    queryKey: ['guest-drink-allergens', ids, viewer.key],
+    meta: viewer.meta,
     enabled: ids.length > 0,
     staleTime: 60_000,
     queryFn: async (): Promise<Map<string, GuestDrinkAllergens>> => {
@@ -32,58 +39,40 @@ export function useGuestDrinkAllergens(itemIds: readonly string[]) {
   });
 }
 
-/** The guest's allergies: their account's when signed in, else this phone's. */
+/**
+ * The guest's allergies: their account's when signed in, else this phone's.
+ * Null: never set. Signing in brings the phone's list to the account, added
+ * to what's there rather than losing either. Signed in, the phone keeps a
+ * copy, so the warning still shows with no signal behind a bar.
+ */
 export function useMyAllergies() {
   const userId = useUserId();
+  const client = useQueryClient();
+  const viewer = viewerScoped(userId);
   return useQuery({
-    queryKey: myKey(userId),
-    queryFn: async (): Promise<Allergen[]> => {
-      if (!userId) return JSON.parse((await deviceStore.getItem(DEVICE_KEY)) ?? '[]') as Allergen[];
+    queryKey: myKey(viewer.key),
+    meta: viewer.meta,
+    queryFn: async (): Promise<Allergen[] | null> => {
+      const guest = await guestList();
+      if (!userId) return guest;
       const { data, error } = await supabase.from('user_prefs').select('allergies').maybeSingle();
-      if (error) throw error;
-      if (data?.allergies) return data.allergies as Allergen[];
-      // First time signed in: bring this phone's list to the account.
-      const local = JSON.parse((await deviceStore.getItem(DEVICE_KEY)) ?? '[]') as Allergen[];
-      if (local.length) {
-        const saved = await supabase.from('user_prefs').upsert({ user_id: userId, allergies: local });
-        if (saved.error) throw saved.error;
-        await deviceStore.removeItem(DEVICE_KEY);
+      // No signal: the phone's lists, rather than no warning at all.
+      if (error) {
+        const kept = mergeAllergies(allergyCopyFor(await deviceStore.getItem(ACCOUNT_ALLERGIES_KEY), userId), guest);
+        if (kept) return kept;
+        throw error;
       }
-      return local;
+      const mine = mergeAllergies(data?.allergies as Allergen[] | null | undefined, guest);
+      if (guest && mine) {
+        // If this fails the phone's list stays, and the next read tries again.
+        const saved = await supabase.from('user_prefs').upsert({ user_id: userId, allergies: mine });
+        if (!saved.error) {
+          await deviceStore.removeItem(GUEST_ALLERGIES_KEY);
+          client.removeQueries({ queryKey: myKey(viewerScoped(null).key), exact: true });
+        }
+      }
+      if (mine) await deviceStore.setItem(ACCOUNT_ALLERGIES_KEY, allergyCopy(userId, mine));
+      return mine;
     },
-  });
-}
-
-export function useSaveMyAllergies() {
-  const userId = useUserId();
-  const client = useQueryClient();
-  return useMutation({
-    mutationFn: async (allergies: Allergen[]) => {
-      if (!userId) return deviceStore.setItem(DEVICE_KEY, JSON.stringify(allergies));
-      const { error } = await supabase.from('user_prefs').upsert({ user_id: userId, allergies });
-      if (error) throw error;
-    },
-    onSuccess: () => client.invalidateQueries({ queryKey: myKey(userId) }),
-    onError: () => {},
-  });
-}
-
-/** The bar checks a drink's allergen list now (or clears its check). The server stamps who, when and what. */
-export function useCheckDrinkAllergens(itemId: string) {
-  const client = useQueryClient();
-  return useMutation({
-    mutationFn: async (checked: boolean) => {
-      const { error } = await supabase
-        .from('items')
-        .update({ allergens_checked_at: checked ? new Date().toISOString() : null })
-        .eq('id', itemId);
-      if (error) throw error;
-    },
-    onSuccess: () =>
-      Promise.all([
-        client.invalidateQueries({ queryKey: ['drink-allergens', itemId] }),
-        client.invalidateQueries({ queryKey: ['guest-drink-allergens'] }),
-      ]),
-    onError: () => {},
   });
 }

@@ -6,7 +6,8 @@ import { Body, Caption, DrinkImage, DsText, PressableScale, RowScore, Spec, scor
 import { DrinkRow } from '@/components/screens/DrinkRow';
 import { IconSymbol } from '@/components/ui/icon-symbol';
 import { space } from '@/constants/tokens';
-import { dayShort, needLine, type HadOutRow, type HadSort, type HadStatus } from '@/lib/collectionStages';
+import { dayShort, type HadOutRow, type HadSort, type HadStatus } from '@/lib/collectionStages';
+import { needLine } from '@/lib/shelfReach';
 import { itemHref } from '@/lib/itemRoutes';
 import { formatScore } from '@/lib/ranking';
 

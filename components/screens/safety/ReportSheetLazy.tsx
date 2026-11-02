@@ -1,2 +1,2 @@
-/** The report sheet, loaded with the page on native (see ReportSheetLazy.web.tsx). */
+/** The report sheet loads with the screen on native (see ReportSheetLazy.web.tsx). */
 export { ReportSheet } from './ReportSheet';

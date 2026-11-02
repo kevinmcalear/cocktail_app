@@ -4,11 +4,11 @@ import {
     ThemeProvider,
 } from "expo-router/react-navigation";
 import { PersistQueryClientProvider } from '@tanstack/react-query-persist-client';
-import { Toaster } from 'burnt/web';
 import { Stack, usePathname, useRouter, useSegments } from "expo-router";
 import { loadAsync, useFonts } from 'expo-font';
 import { Observe, ObserveRoot, useObserve } from 'expo-observe';
 import { WebHead } from '@/components/WebHead';
+import { WebToaster } from '@/components/WebToaster';
 import { StatusBar } from "expo-status-bar";
 import { GestureRoot } from '@/components/ds/GestureRoot';
 import { useEffect } from "react";
@@ -17,7 +17,6 @@ import '@/lib/reanimatedSetup';
 
 import { DialogHost } from '@/components/DialogHost';
 import { ToastHost } from '@/components/ds/Toast';
-import { useTabBarClearance } from '@/components/nav/WebTabBar';
 import { APP_FONTS, FIRST_PAINT_FONTS, LATER_FONTS } from '@/components/ds/fonts';
 import { ObservabilityProvider } from '@/components/ObservabilityProvider';
 import { OfflineBanner } from '@/components/OfflineBanner';
@@ -81,6 +80,8 @@ function RootLayoutNav() {
     // releases (/r/<id>), public profiles (/p/<handle>), shared home menus
     // (/m/<id>) and public events (/e/<id>) are public.
     if (segments[0] === 'legal' || segments[0] === 'support' || segments[0] === 'v' || segments[0] === 'dev' || segments[0] === 'd' || segments[0] === 'r' || segments[0] === 'p' || segments[0] === 'm' || segments[0] === 'e') return;
+    // Your allergies are kept on this phone until you sign in (Loop-allergy, At a table, signed out).
+    if (segments[0] === 'settings' && (segments as string[])[1] === 'allergies') return;
     // Signed out, a drink opens as its public card (/d/<id>), which asks you to sign in for the rest.
     const drink = !session && /^\/cocktail\/([^/]+)$/.exec(pathname);
     if (drink) return router.replace(`/d/${drink[1]}`);
@@ -139,6 +140,7 @@ function RootLayoutNav() {
             <Stack.Screen name="e/[id]" options={{ headerShown: false }} />
             <Stack.Screen name="week/index" options={{ headerShown: false }} />
             <Stack.Screen name="week/review" options={{ headerShown: false }} />
+            <Stack.Screen name="shelf" options={{ headerShown: false }} />
             <Stack.Screen name="add-cocktail" options={{ presentation: "modal", headerShown: false }} />
             <Stack.Screen name="add-ingredient" options={{ presentation: "modal", headerShown: false }} />
             <Stack.Screen name="make-recipe" options={{ presentation: "modal", headerShown: false }} />
@@ -238,11 +240,6 @@ function useWebThemeChrome(scheme: 'light' | 'dark') {
   }, [scheme]);
 }
 
-/** The toast, over the tab bar where one shows. */
-function Toasts() {
-  return <ToastHost above={useTabBarClearance()} />;
-}
-
 function RootLayout() {
   const colorScheme = useColorScheme();
   useWebThemeChrome(colorScheme);
@@ -272,8 +269,8 @@ function RootLayout() {
           </ObservabilityProvider>
         </AuthProvider>
         <DialogHost />
-        <Toasts />
-        {Platform.OS === 'web' ? <Toaster /> : null}
+        <ToastHost />
+        <WebToaster />
       </GestureRoot>
     </PersistQueryClientProvider>
   );

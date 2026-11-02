@@ -8,7 +8,7 @@
  * and Batch can never disagree.
  */
 
-import { formatVolume, isGarnishUnit, leaveOutFor } from '@/lib/batch';
+import { formatVolume, isGarnishLine, leaveOutFor } from '@/lib/batch';
 import { barMl, lineAmount } from '@/lib/drinkMath';
 import { byPart, type MakingPart } from '@/lib/drinkParts';
 import { BATCHED_STYLES } from '@/lib/libraryFilters';
@@ -78,7 +78,7 @@ function toServiceLine(line: SpecLine): ServiceLine {
     // In ml like the spec above it (board drink-phone-venue): 2 oz reads 60 ml; dashes and counts as written.
     amount: line.amount === null ? '' : (lineAmount(line, 'ml') ?? line.amount),
     guessed: line.atService === null,
-    garnish: isGarnishUnit(line.unit),
+    garnish: isGarnishLine(line),
   };
 }
 

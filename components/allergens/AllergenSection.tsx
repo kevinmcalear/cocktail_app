@@ -8,7 +8,9 @@ import { useActiveVenue } from '@/hooks/useActiveVenue';
 import { useDrinkAllergens, useItemAllergens, useSetItemAllergens, type AllergenDeclaration } from '@/hooks/useAllergens';
 import { useCapabilities } from '@/hooks/useCapabilities';
 import { useMode } from '@/hooks/useMode';
-import { ALLERGENS, allergenLabel, checkedLine, viaLine, type Allergen } from '@/lib/allergens';
+import { useRoleAt } from '@/hooks/useViewAs';
+import { ALLERGENS, allergenLabel, type Allergen } from '@/lib/allergens';
+import { checkedLine, viaLine } from '@/lib/allergenWords';
 
 interface AllergenSectionProps {
   itemId: string;
@@ -16,6 +18,9 @@ interface AllergenSectionProps {
   houseMade: boolean;
   /** The viewer can edit the item itself (the catalogue's declaration). */
   canEditItem: boolean;
+  /** Declare for this bar, not the active venue: the check sheet, on a drink of any bar you're on. */
+  barId?: string;
+  barName?: string | null;
 }
 
 /**
@@ -70,20 +75,24 @@ function RolledUp({ itemId }: { itemId: string }) {
   );
 }
 
-function Declared({ itemId, canEditItem }: AllergenSectionProps) {
+function Declared({ itemId, canEditItem, barId, barName }: AllergenSectionProps) {
   const { active } = useActiveVenue();
-  const venueId = useMode().mode === 'home' ? null : (active?.id ?? null);
+  const mode = useMode().mode;
+  const venueId = barId ?? (mode === 'home' ? null : (active?.id ?? null));
+  const venueName = barId ? barName : active?.name;
   const { data: capabilities } = useCapabilities(venueId);
+  const { role, previewing } = useRoleAt(venueId);
   // In a venue, the venue's own declaration is what gets edited; with no venue, the catalogue's.
   const scope = venueId;
-  const canEdit = scope ? !!capabilities?.includes('edit_drinks') : canEditItem;
+  // The edit_drinks permission there; under View as, the previewed built-in role (as useItemEditAccess): a Bartender reads it.
+  const canEdit = scope ? (!previewing && capabilities ? capabilities.includes('edit_drinks') : role > 30) : canEditItem;
   const { data, isPending } = useItemAllergens(itemId, venueId);
   const save = useSetItemAllergens(itemId, scope);
   if (isPending || !data) return <Body tone="muted">Loading.</Body>;
 
   const own = scope ? data.bar : data.catalogue;
   const shown: AllergenDeclaration | null = own ?? data.catalogue;
-  const source = own ? (scope ? `Checked by ${active?.name ?? 'this venue'}` : 'Checked') : shown ? 'From the catalogue' : null;
+  const source = own ? (scope ? `Checked by ${venueName ?? 'this venue'}` : 'Checked') : shown ? 'From the catalogue' : null;
   const current = save.isPending && save.variables ? save.variables : (shown?.allergens ?? []);
   const toggle = (key: Allergen) => save.mutate(current.includes(key) ? current.filter((k) => k !== key) : [...current, key]);
 
@@ -108,7 +117,7 @@ function Declared({ itemId, canEditItem }: AllergenSectionProps) {
     <View style={styles.list}>
       <Body tone="muted">
         {scope
-          ? `Tick what's on the label of the one ${active?.name ?? 'the venue'} buys. Saving marks it checked here.`
+          ? `Tick what's on the label of the one ${venueName ?? 'the venue'} buys. Saving marks it checked here.`
           : "Tick what's on the label or the supplier's sheet. Saving marks it checked."}
       </Body>
       <View style={styles.tags} role="group" accessibilityLabel="Allergens in this ingredient">
