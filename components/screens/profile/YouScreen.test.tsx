@@ -2,6 +2,7 @@ import { fireEvent, screen } from '@testing-library/react-native';
 
 import { renderWithProviders } from '@/jest.setup';
 import type { MyProfile } from '@/hooks/useMyProfile';
+import { SEARCH_TAB_HREF } from '@/hooks/useSearchFrom';
 import type { HadDrink } from '@/lib/hadDrinks';
 
 import { YouScreen } from './YouScreen';
@@ -89,7 +90,7 @@ describe('YouScreen', () => {
     expect(screen.getByText(/Open a drink you’ve had and tap Rank it/)).toBeTruthy();
 
     await fireEvent.press(screen.getByRole('button', { name: 'Find a drink' }));
-    expect(mockNavigate).toHaveBeenCalledWith('/search');
+    expect(mockNavigate).toHaveBeenCalledWith(SEARCH_TAB_HREF);
     await fireEvent.press(screen.getByRole('button', { name: 'Make a public profile' }));
     expect(mockPush).toHaveBeenCalledWith('/settings/profile');
   });
