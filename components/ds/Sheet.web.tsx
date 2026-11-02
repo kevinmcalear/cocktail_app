@@ -1,10 +1,11 @@
-import { createContext, use, useEffect, useEffectEvent, useRef, useState } from 'react';
+import { useEffect, useEffectEvent, useRef, useState } from 'react';
 import { Modal, Pressable, StyleSheet, useWindowDimensions, View } from 'react-native';
 
 import { useReducedMotion } from '@/hooks/useReducedMotion';
 
 import { useDiscardGuard } from './discardGuard';
 import type { SheetProps } from './Sheet';
+import { CloseContext } from './sheetClose';
 import { sheetFrame } from './sheetFrame';
 import { useDs } from './theme';
 import { ToastHost } from './Toast';
@@ -17,14 +18,7 @@ const OUT_MS = 180;
 /** Below this the window is a phone's: a sheet that asks for it takes the whole window. */
 const PHONE_WIDTH = 600;
 
-const CloseContext = createContext<(() => void) | null>(null);
-
-/** Inside a Sheet: close it the way the backdrop does, fading out before onClose. */
-export function useSheetClose(): () => void {
-  const close = use(CloseContext);
-  if (!close) throw new Error('useSheetClose is for buttons inside a Sheet');
-  return close;
-}
+export { useSheetClose } from './sheetClose';
 
 /**
  * The web's Sheet: the same dialog in the middle of the window over the same
