@@ -11,6 +11,7 @@ import { dragShade, STRETCH } from './sheetDrag';
 import { sheetFrame, sheetIsDialog } from './sheetFrame';
 import { SheetGrow } from './SheetGrow';
 import { useDs } from './theme';
+import { ToastHost } from './Toast';
 import { SheetScrollContext, slideAway, useSheetDrag } from './useSheetDrag';
 
 /** The backdrop fades on its own, about 200 ms, easing out; it never moves with the sheet. */
@@ -65,6 +66,8 @@ export interface SheetProps {
   from?: { x: number; y: number; width: number; height: number } | null;
   /** Phones: a card inset from the edges with every corner round (Prod-add-B), not edge to edge. */
   floating?: boolean;
+  /** The web at phone width: the whole window, not a dialog (Sheet.web). */
+  fullAtPhoneWidth?: boolean;
 }
 
 /**
@@ -117,6 +120,8 @@ function FlowSheet({ visible, onClose, accessibilityLabel, children, style, grou
             body
           )}
         </CloseContext>
+        {/* The sheet is a window over the app: a toast shown from it draws here, on top. */}
+        <ToastHost />
       </GestureHandlerRootView>
     </Modal>
   );
@@ -263,6 +268,7 @@ function SmallSheet({ visible, onClose, accessibilityLabel, children, style, gro
             <View style={placed}>{dragged}</View>
           )}
         </CloseContext>
+        <ToastHost />
       </GestureHandlerRootView>
     </Modal>
   );

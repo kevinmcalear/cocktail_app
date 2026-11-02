@@ -1,5 +1,5 @@
 import type { ReactNode } from 'react';
-import { StyleSheet, View } from 'react-native';
+import { Platform, StyleSheet, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import { Caption, dragDismissesKeyboard, DsText, GlassButton, Headline, PressableScale, Sheet, sheetIsDialog, SheetScrollView, Title, useDs, useSheetClose, type IconName } from '@/components/ds';
@@ -23,6 +23,12 @@ interface MenuSheetProps {
   footer?: ReactNode;
   /** Called once the sheet is on screen. */
   onShow?: () => void;
+  /**
+   * A whole form on its own sheet: the X (Android's back arrow), the title in
+   * the middle and a round check that saves. A centred dialog on the web, the
+   * whole window at phone width.
+   */
+  check?: { label: string; onPress: () => void; disabled?: boolean };
   /** A form's header: Cancel, the title in the middle, and Save, in place of the title and X. */
   save?: { label: string; onPress: () => void; disabled?: boolean };
   /** The form header (Cancel and the title) with no Save: a step of a form whose own button saves. */
@@ -45,7 +51,7 @@ interface MenuSheetProps {
  * A titled sheet with a scrolling body and an optional footer, on the app's
  * one Sheet (components/ds/Sheet): springs up on phones, a dialog on the web.
  */
-export function MenuSheet({ visible, onClose, title, subtitle, eyebrow, leading, aside, children, footer, onShow, save, plain, form, list, done, kind }: MenuSheetProps) {
+export function MenuSheet({ visible, onClose, title, subtitle, eyebrow, leading, aside, children, footer, onShow, check, save, plain, form, list, done, kind }: MenuSheetProps) {
   const ds = useDs();
   const insets = useSafeAreaInsets();
   return (
@@ -55,12 +61,15 @@ export function MenuSheet({ visible, onClose, title, subtitle, eyebrow, leading,
       onClose={onClose}
       onShow={onShow}
       accessibilityLabel={title}
-      kind={kind}
+      kind={check ? 'flow' : kind}
+      fullAtPhoneWidth={!!check}
       keyboard
       keyboardOffset={footer ? -insets.bottom : 0}
-      style={sheetIsDialog ? styles.dialog : undefined}
+      style={sheetIsDialog ? [styles.dialog, check ? styles.checkDialog : null] : undefined}
       header={
-        save || form ? (
+        check ? (
+          <CheckHeader title={title} check={check} />
+        ) : save || form ? (
           <FormHeader title={title} save={save} />
         ) : (
           <View style={[styles.header, aside ? styles.centred : null]}>
@@ -103,6 +112,23 @@ function SheetCloseButton({ done }: { done?: boolean }) {
   const close = useSheetClose();
   // A round glass button, as the canvas draws a sheet's close.
   return <GlassButton icon={done ? 'checkmark' : 'xmark'} accessibilityLabel={done ? 'Done' : 'Close'} onPress={close} />;
+}
+
+/** The X or back arrow, the title in the middle, and the round check that saves. */
+function CheckHeader({ title, check }: { title: string; check: NonNullable<MenuSheetProps['check']> }) {
+  const ds = useDs();
+  const close = useSheetClose();
+  return (
+    <View style={[styles.header, styles.form, styles.checkHeader]}>
+      <GlassButton icon={Platform.OS === 'android' ? 'chevron.left' : 'xmark'} accessibilityLabel={Platform.OS === 'android' ? 'Back' : 'Close'} onPress={close} />
+      <DsText role="heading" numberOfLines={1} style={[styles.formTitle, { ...font.semiBold }]}>
+        {title}
+      </DsText>
+      <PressableScale role="button" accessibilityLabel={check.label} onPress={check.onPress} disabled={check.disabled} style={[styles.check, { backgroundColor: ds.accentFill.fill }, check.disabled && styles.disabled]}>
+        <IconSymbol name="checkmark" size={18} color={ds.accentFill.text} />
+      </PressableScale>
+    </View>
+  );
 }
 
 /** Cancel (closes the way a drag does), the title, and Save. */
@@ -218,6 +244,9 @@ const styles = StyleSheet.create({
   header: { flexDirection: 'row', alignItems: 'flex-start', gap: space.md, paddingHorizontal: space.xl, paddingTop: space.md },
   centred: { alignItems: 'center' },
   form: { alignItems: 'center', paddingHorizontal: space.md },
+  checkHeader: { paddingHorizontal: space.lg },
+  checkDialog: { maxWidth: 520 },
+  check: { width: layout.minTapTarget, height: layout.minTapTarget, borderRadius: radius.pill, alignItems: 'center', justifyContent: 'center' },
   formButton: { minWidth: 72, minHeight: layout.minTapTarget, justifyContent: 'center', paddingHorizontal: space.sm },
   formSave: { alignItems: 'flex-end' },
   formTitle: { flex: 1, textAlign: 'center' },
