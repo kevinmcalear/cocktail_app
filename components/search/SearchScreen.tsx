@@ -91,7 +91,7 @@ function useSearchTabState(): SearchTabState {
   const carriedScope = hydrated ? params.scope : undefined;
   const everywhere = carriedScope === 'everywhere' ? 'everywhere' : null;
   // A door's search (Discover's pill, My Bar's "Search every drink for “rye”", hooks/useSearchFrom.ts), taken once.
-  const { from, area, showOnMap, start: opened } = useSearchFrom();
+  const { from, area, start: opened } = useSearchFrom();
   const [query, setQuery] = useState(opened?.query ?? q ?? '');
   const [carried, setCarried] = useState(`${q}|${carriedScope}`);
   const [picked, pickScope] = useState<SearchScope | null>(opened ? opened.scope : everywhere);
@@ -148,6 +148,5 @@ function useSearchTabState(): SearchTabState {
   const onDiscover = (useSegments() as string[])[1] === '(3-discover)';
   const toDiscover = () => (onDiscover ? router.dismissTo('/discover') : router.navigate('/discover'));
   const lent = area && { ...area, onKind: (k: string) => (area.onKind(k), toDiscover()), onPlace: (c: City) => (area.onPlace(c), toDiscover()) };
-  const onShowOnMap = showOnMap ? () => (showOnMap(query), toDiscover()) : undefined;
-  return { query, setQuery, scope, setScope, mine, area: lent, onShowOnMap, focused, carried: written, show, setShow, counts, setCounts };
+  return { query, setQuery, scope, setScope, mine, area: lent, focused, carried: written, show, setShow, counts, setCounts };
 }
