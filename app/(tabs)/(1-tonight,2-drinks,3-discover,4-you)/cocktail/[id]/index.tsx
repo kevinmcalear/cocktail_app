@@ -4,7 +4,6 @@ import React, { lazy, Suspense, useState } from "react";
 import { useSignedIn } from "@/ctx/AuthContext";
 import { useCocktail } from "@/hooks/useCocktails";
 import { useBesideList } from "@/hooks/useDrinksSplit";
-import { useStudyPile } from "@/hooks/useStudyPile";
 import { recentEntry, useTrackRecent } from "@/hooks/useTrackRecent";
 import { useItemEditAccess } from "@/hooks/useViewAs";
 import { heroPicture } from "@/lib/itemImages";
@@ -23,8 +22,6 @@ export { BatchSheet } from "@/components/screens/batch/BatchSheet";
 
 export default function CocktailDetailsScreen() {
     const { id, batch } = useLocalSearchParams<{ id: string; batch?: string }>();
-
-    const { toggleStudyPile, isInStudyPile } = useStudyPile();
     const signedIn = useSignedIn();
     const router = useRouter();
     // Beside Drinks' list on a desktop the pane is too narrow for the editor and its preview: it opens full width, as the tablet's pane does.
@@ -63,13 +60,9 @@ export default function CocktailDetailsScreen() {
         return cocktail ? (
             <DrinkScreen
                 item={cocktail}
-                inStudyPile={isInStudyPile(cocktail.id)}
-                onToggleStudyPile={() => toggleStudyPile(cocktail.id)}
                 canEdit={editAccess === "edit"}
                 adminFix={editAccess === "admin"}
                 onEdit={() => editOn()}
-                onFit={() => editOn("fit")}
-                onPhotos={() => editOn("photos")}
                 openBatch={batch === "1"}
             />
         ) : (

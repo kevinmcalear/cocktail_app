@@ -61,6 +61,27 @@ tell an agent in Kevin's GitHub session from Kevin, so these rules are the guard
 Merging a migration with the label applies it to production, so an agent that
 is unsure the approval covers this PR at this head asks Kevin instead.
 
+### Kevin's standing decision (1 Nov 2026)
+
+Kevin answered this himself on 1 Nov 2026, for the 2027 ship work. It replaces
+the per-PR rule above for these steps only, once tests pass:
+
+- **Merging.** One merge-owner session merges PRs that are green and touch
+  nothing gated, after CI, `/code-review` and the board comparison.
+- **Additive migrations.** A migration that only adds new tables and columns,
+  with RLS on new tables, may take the label without a per-PR ask. The agent
+  still posts the audit comment, citing this decision and the head it covers.
+- **Edge function deploys** by hand, without a per-PR ask.
+
+Still his, one PR at a time under the rules above: RLS on existing tables, auth,
+`lib/roles.ts`, migrations that drop or rewrite data, and App Store and Play
+submission. So is any other blast-radius path this decision doesn't name, such
+as `vercel.json`, `eas.json` and CI config: put it in its own small PR and leave
+it unmerged. A migration that adds anything else is not covered; ask him.
+
+The gate itself did not change: `change-policy.yml` still requires the label, and
+this section does not alter what CI checks.
+
 ## Migration headers
 
 Before a migration merges, remove any line in its header comment that says it

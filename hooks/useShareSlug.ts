@@ -1,6 +1,8 @@
 import { useQuery } from '@tanstack/react-query';
 
 import { useSignedIn } from '@/ctx/AuthContext';
+import { track } from '@/lib/analytics';
+import { noteDoor } from '@/lib/analyticsDoor';
 import { isShareSlug, isUuid, type ShareKind } from '@/lib/menuPreview';
 import { supabase } from '@/lib/supabase';
 
@@ -39,9 +41,47 @@ export function useShareSlug(kind: ShareKind, id: string | null | undefined, ena
  * says Not available.
  */
 export async function resolveShareKey(kind: ShareKind, key: string): Promise<string | null> {
+  countOpen(kind, key);
   if (isUuid(key)) return key;
   if (!isShareSlug(key)) return null;
   const { data, error } = await supabase.rpc('share_target', { p_kind: kind, p_slug: key });
   if (error) throw error;
   return isUuid(data as string | null) ? (data as string) : null;
+}
+
+// Links opened this app session: each counts once, however often its page refetches.
+const opened = new Set<string>();
+// ponytail: only the first link page of an app session is a table open, as a
+// visitor tapping a drink on a shared menu lands on /d/ too. A link opened
+// later into a running app isn't counted; a launch-URL check would catch it.
+let landed = false;
+
+/**
+ * Count a shared link's open for its bar ("Shared links this week" on
+ * Tonight). Fire and forget: the database ignores anything that isn't
+ * public, and a failed count never stops the page.
+ */
+function countOpen(kind: ShareKind, key: string) {
+  const k = `${kind}:${key.toLowerCase()}`;
+  if (opened.has(k)) return;
+  opened.add(k);
+  if (!landed) {
+    landed = true;
+    track('table_opened', { kind: kind === 'm' ? 'menu' : 'drink' });
+    noteDoor(kind === 'm' ? 'table' : 'shared');
+  }
+  void supabase.rpc('record_share_open', { p_kind: kind, p_key: key }).then(() => undefined, () => undefined);
+}
+
+/** How many times a bar's shared drinks and menus were opened since a time (its own Menus people only; null for anyone else). */
+export function useBarShareOpens(barId: string | null | undefined, sinceIso: string) {
+  return useQuery({
+    queryKey: ['bar-share-opens', barId, sinceIso],
+    enabled: !!barId,
+    queryFn: async (): Promise<number | null> => {
+      const { data, error } = await supabase.rpc('bar_share_opens', { p_bar: barId!, p_since: sinceIso });
+      if (error) throw error;
+      return data;
+    },
+  });
 }

@@ -5,7 +5,7 @@ import { DsText, SpecRow, useDs } from '@/components/ds';
 import { font, space } from '@/constants/tokens';
 import { useSpecAccess } from '@/hooks/useSpecAccess';
 import type { SpecLevels, SpecLine } from '@/lib/spec';
-import { scaledAmount, serveLine, specGroups, type Makes } from '@/lib/specView';
+import { MAKES, scaledAmount, serveLine, specGroups, type Makes } from '@/lib/specView';
 import { useSettingsStore } from '@/store/useSettingsStore';
 import { useSpecView } from '@/store/useSpecViewStore';
 
@@ -27,6 +27,8 @@ export interface SpecCardProps {
   preview?: { role: number; levels: SpecLevels };
   /** A line's name was tapped: its ingredient or house-made page. */
   onLine?: (line: SpecLine) => void;
+  /** The floor's serve line: "Goes out: rocks, candied ginger" (board Decided-who-floor). */
+  goesOut?: boolean;
 }
 
 /**
@@ -36,7 +38,7 @@ export interface SpecCardProps {
  * names only (a guest, the floor): what's in it by name and the serve line,
  * with no toggle and no hint at what's held back; nothing at all: the serve line.
  */
-export function SpecCard({ itemId, barId, lines, maker, verb = null, serve = [], onBatch, preview, onLine }: SpecCardProps) {
+export function SpecCard({ itemId, barId, lines, maker, verb = null, serve = [], onBatch, preview, onLine, goesOut }: SpecCardProps) {
   const { access } = useSpecAccess(itemId, barId, preview);
   const [view, setView] = useSpecView(maker);
   // Never saved: every page opens at Makes 1 (a Makes 3 carried onto the next drink is a mis-pour).
@@ -64,7 +66,7 @@ export function SpecCard({ itemId, barId, lines, maker, verb = null, serve = [],
 
   return (
     <View style={styles.card}>
-      {measured ? <SpecControls view={view} onView={setView} makes={makes} onMakes={setMakes} onBatch={onBatch} /> : null}
+      {measured ? <SpecControls view={view} onView={setView} makes={String(makes)} sizes={SIZES} picked={String(makes)} onPick={(k) => setMakes(Number(k) as Makes)} more={onBatch ? [{ label: 'A batch…', onPress: onBatch }] : undefined} /> : null}
       {access.names ? (
         measured && view === 'steps' ? (
           <View style={styles.groups}>
@@ -79,12 +81,14 @@ export function SpecCard({ itemId, barId, lines, maker, verb = null, serve = [],
           <View>{lines.map((l) => row(l))}</View>
         )
       ) : null}
-      {served ? <ServeLine text={served} /> : null}
+      {served ? <ServeLine text={goesOut ? `Goes out: ${served.toLowerCase()}` : served} /> : null}
     </View>
   );
 }
 
-function GroupHead({ number, title }: { number: string | null; title: string }) {
+const SIZES = MAKES.map((n) => ({ key: String(n), label: `Makes ${n}` }));
+
+export function GroupHead({ number, title, aside }: { number: string | null; title: string; aside?: string | null }) {
   const ds = useDs();
   return (
     <View style={styles.head} role="heading" aria-level={3}>
@@ -96,6 +100,11 @@ function GroupHead({ number, title }: { number: string | null; title: string }) 
       <DsText variant="label" color={ds.accentText} style={font.semiBold}>
         {title}
       </DsText>
+      {aside ? (
+        <DsText variant="caption" tone="muted">
+          {aside}
+        </DsText>
+      ) : null}
     </View>
   );
 }

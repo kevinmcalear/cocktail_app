@@ -489,6 +489,74 @@ export type Database = {
         }
         Relationships: []
       }
+      batch_logs: {
+        Row: {
+          amount: number
+          bar_id: string
+          created_at: string
+          id: string
+          item_id: string
+          location_id: string | null
+          made_at: string
+          made_by: string | null
+          note: string | null
+          unit: string
+        }
+        Insert: {
+          amount: number
+          bar_id: string
+          created_at?: string
+          id?: string
+          item_id: string
+          location_id?: string | null
+          made_at?: string
+          made_by?: string | null
+          note?: string | null
+          unit: string
+        }
+        Update: {
+          amount?: number
+          bar_id?: string
+          created_at?: string
+          id?: string
+          item_id?: string
+          location_id?: string | null
+          made_at?: string
+          made_by?: string | null
+          note?: string | null
+          unit?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "batch_logs_bar_id_fkey"
+            columns: ["bar_id"]
+            isOneToOne: false
+            referencedRelation: "bars"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "batch_logs_item_id_fkey"
+            columns: ["item_id"]
+            isOneToOne: false
+            referencedRelation: "app_item_presentation"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "batch_logs_item_id_fkey"
+            columns: ["item_id"]
+            isOneToOne: false
+            referencedRelation: "items"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "batch_logs_location_id_fkey"
+            columns: ["location_id"]
+            isOneToOne: false
+            referencedRelation: "item_locations"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       bring_in_batches: {
         Row: {
           bar_id: string | null
@@ -1466,6 +1534,24 @@ export type Database = {
           },
         ]
       }
+      follows: {
+        Row: {
+          created_at: string
+          followee_id: string
+          follower_id: string
+        }
+        Insert: {
+          created_at?: string
+          followee_id: string
+          follower_id?: string
+        }
+        Update: {
+          created_at?: string
+          followee_id?: string
+          follower_id?: string
+        }
+        Relationships: []
+      }
       glass_models: {
         Row: {
           aliases: string[]
@@ -1627,6 +1713,59 @@ export type Database = {
             columns: ["model_id"]
             isOneToOne: false
             referencedRelation: "glass_models"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      handover_notes: {
+        Row: {
+          bar_id: string
+          broken: string | null
+          broken_photo: string | null
+          close_date: string
+          created_at: string
+          id: string
+          note: string | null
+          prep: string | null
+          ran_out: string[]
+          read_at: string | null
+          user_id: string
+          written_at: string | null
+        }
+        Insert: {
+          bar_id: string
+          broken?: string | null
+          broken_photo?: string | null
+          close_date: string
+          created_at?: string
+          id?: string
+          note?: string | null
+          prep?: string | null
+          ran_out?: string[]
+          read_at?: string | null
+          user_id?: string
+          written_at?: string | null
+        }
+        Update: {
+          bar_id?: string
+          broken?: string | null
+          broken_photo?: string | null
+          close_date?: string
+          created_at?: string
+          id?: string
+          note?: string | null
+          prep?: string | null
+          ran_out?: string[]
+          read_at?: string | null
+          user_id?: string
+          written_at?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "handover_notes_bar_id_fkey"
+            columns: ["bar_id"]
+            isOneToOne: false
+            referencedRelation: "bars"
             referencedColumns: ["id"]
           },
         ]
@@ -5382,6 +5521,53 @@ export type Database = {
           },
         ]
       }
+      shifts: {
+        Row: {
+          bar_id: string
+          closes: boolean
+          created_at: string
+          created_by: string | null
+          ends_at: string
+          id: string
+          note: string | null
+          opens: boolean
+          starts_at: string
+          user_id: string
+        }
+        Insert: {
+          bar_id: string
+          closes?: boolean
+          created_at?: string
+          created_by?: string | null
+          ends_at: string
+          id?: string
+          note?: string | null
+          opens?: boolean
+          starts_at: string
+          user_id: string
+        }
+        Update: {
+          bar_id?: string
+          closes?: boolean
+          created_at?: string
+          created_by?: string | null
+          ends_at?: string
+          id?: string
+          note?: string | null
+          opens?: boolean
+          starts_at?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "shifts_bar_id_fkey"
+            columns: ["bar_id"]
+            isOneToOne: false
+            referencedRelation: "bars"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       shopping_list_items: {
         Row: {
           added_at: string
@@ -6928,6 +7114,10 @@ export type Database = {
         }[]
       }
       bar_claim_verified: { Args: { p_bar_id: string }; Returns: boolean }
+      bar_share_opens: {
+        Args: { p_bar: string; p_since: string }
+        Returns: number
+      }
       bar_week: {
         Args: { p_bar_id: string; p_days?: number; p_from: string }
         Returns: {
@@ -7444,6 +7634,22 @@ export type Database = {
           spicy: number
           strong: number
           sweet: number
+        }[]
+      }
+      friends_ranks: {
+        Args: { p_item_id?: string; p_limit?: number }
+        Returns: {
+          avatar_url: string
+          best_in_family: boolean
+          created_at: string
+          display_name: string
+          drink_family: string
+          entry_id: string
+          item_id: string
+          name: string
+          profile_id: string
+          score: number
+          venue_name: string
         }[]
       }
       get_bar_classics: {
@@ -8049,6 +8255,10 @@ export type Database = {
           isOneToOne: true
           isSetofReturn: true
         }
+      }
+      record_share_open: {
+        Args: { p_key: string; p_kind: string }
+        Returns: undefined
       }
       refresh_my_profile_photo: { Args: never; Returns: undefined }
       refund_ai_quota: {
