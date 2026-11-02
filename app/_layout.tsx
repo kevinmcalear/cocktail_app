@@ -4,11 +4,11 @@ import {
     ThemeProvider,
 } from "expo-router/react-navigation";
 import { PersistQueryClientProvider } from '@tanstack/react-query-persist-client';
-import { Toaster } from 'burnt/web';
 import { Stack, usePathname, useRouter, useSegments } from "expo-router";
 import { loadAsync, useFonts } from 'expo-font';
 import { Observe, ObserveRoot, useObserve } from 'expo-observe';
 import { WebHead } from '@/components/WebHead';
+import { WebToaster } from '@/components/WebToaster';
 import { StatusBar } from "expo-status-bar";
 import { GestureRoot } from '@/components/ds/GestureRoot';
 import { useEffect } from "react";
@@ -185,6 +185,8 @@ function RootLayoutNav() {
             <Stack.Screen name="p/[id]/claim" options={{ headerShown: false }} />
             <Stack.Screen name="p/[id]/bottles" options={{ headerShown: false }} />
             <Stack.Screen name="credits-to-check" options={{ headerShown: false }} />
+            <Stack.Screen name="people/index" options={{ headerShown: false }} />
+            <Stack.Screen name="people/find" options={{ headerShown: false }} />
             <Stack.Screen name="taste" options={{ headerShown: false }} />
             <Stack.Screen name="support" options={{ headerShown: false, title: "Support" }} />
             <Stack.Screen name="history" options={{ headerShown: false, title: "Cocktail history" }} />
@@ -269,7 +271,7 @@ function RootLayout() {
         </AuthProvider>
         <DialogHost />
         <ToastHost />
-        {Platform.OS === 'web' ? <Toaster /> : null}
+        <WebToaster />
       </GestureRoot>
     </PersistQueryClientProvider>
   );

@@ -14,7 +14,7 @@ import { useEffectiveRole } from '@/hooks/useViewAs';
 import { withAlpha } from '@/lib/color';
 import { askedBy, deleteDay } from '@/lib/venueDelete';
 
-import { DeleteVenueSheet } from './DeleteVenueSheet';
+import { DeleteVenueSheet } from './DeleteVenueSheetLazy';
 
 const ADMIN = 40;
 
