@@ -2,7 +2,7 @@ import AsyncStorage from '@react-native-async-storage/async-storage';
 import { create } from 'zustand';
 import { createJSONStorage, persist } from 'zustand/middleware';
 
-import { rememberSearch } from '@/lib/searchScope';
+import { rememberSearch } from '@/lib/recentSearches';
 
 type RecentSearches = {
   /** What you searched, newest first (search2, Recent). */
