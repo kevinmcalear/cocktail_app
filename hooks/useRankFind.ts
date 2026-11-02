@@ -1,7 +1,7 @@
 import { keepPreviousData, useQuery } from '@tanstack/react-query';
 
 import { useDiscoverBars, useDiscoverList } from '@/hooks/useDiscoverDrinks';
-import { drinkRuns } from '@/hooks/useRankIt';
+import { drinkRuns } from '@/hooks/drinkRuns';
 import { findDrinks, namedFirst } from '@/lib/discover';
 import { nearMeArea, type Area } from '@/lib/nearMe';
 import { menusOnNow } from '@/lib/rankIt';

@@ -1,6 +1,7 @@
 import { useQuery } from '@tanstack/react-query';
 
 import { useUserId } from '@/ctx/AuthContext';
+import { drinkRuns } from '@/hooks/drinkRuns';
 import { useLovedBars } from '@/hooks/useKept';
 import { HAD_COLUMNS, withPublishedItems } from '@/hooks/useRankings';
 import { toHadDrink, type HadDrink, type HadRow } from '@/lib/hadDrinks';
@@ -16,14 +17,6 @@ import { supabase } from '@/lib/supabase';
 
 /** How many of your newest wants the suggestion looks through. */
 const WANTS_READ = 50;
-
-/** The menus these drinks are on (drink_list_dates), as plain rows. */
-export async function drinkRuns(ids: string[]): Promise<DrinkRun[]> {
-  if (!ids.length) return [];
-  const { data, error } = await supabase.rpc('drink_list_dates', { p_item_ids: ids });
-  if (error) throw error;
-  return (data ?? []).map((r) => ({ item_id: r.item_id, profile_id: r.profile_id, edition_name: r.edition_name, is_current: r.is_current }));
-}
 
 /** What the suggestion is picked from: your newest wants not yet had, the menus they're on, and those bars' names. Plain JSON. */
 interface SuggestionData {

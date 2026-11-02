@@ -17,7 +17,7 @@ import { plural } from '@/lib/menus';
 import { anywhereRows } from '@/lib/rankIt';
 
 import { RankBarList } from './RankBarList';
-import { RankRow } from './RankFindParts';
+import { RankRow } from './RankRow';
 
 /** A drink picked to rank, and the bar it was had at (null: at home, or a bar the app doesn't list). */
 export interface RankPick {

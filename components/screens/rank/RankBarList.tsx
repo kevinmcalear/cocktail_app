@@ -11,7 +11,7 @@ import { useMyHadDrinks } from '@/hooks/useRankings';
 import { findDrinks } from '@/lib/discover';
 import { beforeLine, latestByDrink } from '@/lib/rankIt';
 
-import { RankRow } from './RankFindParts';
+import { RankRow } from './RankRow';
 import type { RankPick } from './RankFindSheet';
 
 /**
