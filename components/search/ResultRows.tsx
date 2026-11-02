@@ -1,6 +1,6 @@
 import { useRouter } from 'expo-router';
 import { createContext, use, useState, type ReactNode } from 'react';
-import { StyleSheet, View } from 'react-native';
+import { Platform, StyleSheet, View } from 'react-native';
 
 import { Body, Caption, DsText, Headline, IngredientThumb, MatchText, PressableScale, RowScore, scoreWords, Tag, useDs, type IconName, type MatchTextProps } from '@/components/ds';
 import { BarMark, type BarBrand } from '@/components/screens/home/BarMark';
@@ -107,7 +107,7 @@ const place = (b: DiscoverBar) => [b.locality, b.city].filter(Boolean).join(', '
  * when it shut, so nobody plans a night around it. With `waiting`, what is
  * credited there and "Not claimed yet" (find-yourself).
  */
-export function BarResultRow({ bar, score, away, waiting, query, matchLook, onShowBar }: { bar: DiscoverBar; score?: number; away?: string | null; waiting?: Waiting; query?: string; matchLook?: MatchTextProps['look']; /** Hovering opens this bar on the map. */ onShowBar?: (barId: string | null) => void }) {
+export function BarResultRow({ bar, score, away, waiting, query, matchLook }: { bar: DiscoverBar; score?: number; away?: string | null; waiting?: Waiting; query?: string; matchLook?: MatchTextProps['look']; }) {
   const router = useRouter();
   // "Fitzroy · 14 drinks on now" (nav-search-home).
   const caption = [bar.locality || bar.city, away, barDrinksLine(bar)].filter(Boolean).join(' · ') || place(bar) || undefined;
@@ -127,8 +127,6 @@ export function BarResultRow({ bar, score, away, waiting, query, matchLook, onSh
       matchLook={matchLook}
       label={said ? [bar.name, badge, caption, line, said].filter(Boolean).join('. ') : undefined}
       onPress={() => router.push(`/p/${bar.handle || bar.id}`)}
-      onHoverIn={onShowBar ? () => onShowBar(bar.id) : undefined}
-      onHoverOut={onShowBar ? () => onShowBar(null) : undefined}
     />
   );
 }
@@ -181,8 +179,11 @@ interface ResultGroupProps<T> {
 /** Android's open search (TopSearch.tsx), which draws its results its own way (Miss-search-and). */
 export const DrawnSearch = createContext(false);
 
-/** "Search everywhere for “negroni”" in the ⌘K palette: a slim outlined row with a globe, one the arrow keys reach. */
-export function EverywhereRow({ label, onPress }: { label: string; onPress: () => void }) {
+/** The phones' search: nothing found is a drawing, and loading is rows in outline (Sta-discover, Miss-search-and). The web keeps its words. */
+export const DRAWN_STATES = Platform.OS !== 'web';
+
+/** "Search everywhere for “negroni”" in the ⌘K palette: a slim outlined row with a globe (or `icon`), one the arrow keys reach. */
+export function EverywhereRow({ label, icon = 'globe', onPress }: { label: string; icon?: IconName; onPress: () => void }) {
   const ds = useDs();
   const nav = useSearchNavRow();
   return (
@@ -193,7 +194,7 @@ export function EverywhereRow({ label, onPress }: { label: string; onPress: () =
       nativeID={nav.nativeID}
       style={[styles.everywhere, { borderColor: ds.c.lineStrong }, nav.active && { backgroundColor: withAlpha(ds.accentText, 0.14) }]}
     >
-      <IconSymbol name="globe" size={16} color={ds.c.muted} />
+      <IconSymbol name={icon} size={16} color={ds.c.muted} />
       <Caption style={[styles.moreText, styles.shrink]} numberOfLines={1}>
         {label}
       </Caption>
