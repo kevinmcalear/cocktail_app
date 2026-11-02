@@ -99,6 +99,24 @@ describe('follows', () => {
     assert.equal((await users.stranger.client.rpc('friends_ranks', { p_limit: 10 })).data?.length ?? 0, 0, 'no follows, no ranks');
   });
 
+  test('friends_ranks for one drink: every friend who shares a rank of it, dated or not', async () => {
+    const forSour = async () => (await users.me.client.rpc('friends_ranks', { p_limit: 50, p_item_id: ids.sour })).data ?? [];
+    const rows = await forSour();
+    assert.deepEqual(rows.map((r) => [r.profile_id, r.item_id]), [[ids.sam, ids.sour]], 'only that drink, and the private profile shares nothing');
+    assert.equal(rows[0].best_in_family, true, 'best of the family still looks at all their drinks');
+    await db.query('UPDATE public.profiles SET shows_dates = false WHERE id = $1', [ids.sam]);
+    try {
+      const recent = (await users.me.client.rpc('friends_ranks', { p_limit: 50 })).data ?? [];
+      assert.equal(recent.filter((r) => r.profile_id === ids.sam).length, 0, 'no date, not recent');
+      const undated = await forSour();
+      assert.equal(undated.length, 1, 'a rank without its date still counts for the drink');
+      assert.equal(undated[0].created_at, null);
+    } finally {
+      await db.query('UPDATE public.profiles SET shows_dates = true WHERE id = $1', [ids.sam]);
+    }
+    assert.equal((await users.stranger.client.rpc('friends_ranks', { p_limit: 10, p_item_id: ids.sour })).data?.length ?? 0, 0, 'no follows, no ranks');
+  });
+
   test('you unfollow your own follow only', async () => {
     await users.sam.client.from('follows').delete().eq('follower_id', users.me.id);
     assert.equal((await users.me.client.from('follows').select('followee_id')).data?.length, 2, 'Sam can’t remove my follow');

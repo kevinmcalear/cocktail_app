@@ -78,7 +78,7 @@ function EventPage({ id }: { id: string }) {
   const link = `${siteOrigin()}/e/${event.id}`;
   const share = async () => {
     try {
-      setShared((await shareLink(link, event.name)) === 'copied' ? 'copied' : null);
+      setShared((await shareLink(link, event.name, 'event')) === 'copied' ? 'copied' : null);
     } catch {
       setShared('failed');
     }

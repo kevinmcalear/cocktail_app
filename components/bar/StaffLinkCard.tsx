@@ -28,7 +28,7 @@ export function StaffLinkCard({ barId, slug, venueName, canEdit }: { barId: stri
   const share = async () => {
     if (!url) return;
     try {
-      if ((await shareLink(url, `${venueName} staff app`, { copy: true })) === 'copied') Burnt.toast({ title: 'Link copied', preset: 'done', duration: 2 });
+      if ((await shareLink(url, `${venueName} staff app`, 'staff_link', { copy: true })) === 'copied') Burnt.toast({ title: 'Link copied', preset: 'done', duration: 2 });
     } catch {
       // The browser can refuse clipboard access; show the link to copy by hand.
       showMessage("Couldn't copy the link", url);
