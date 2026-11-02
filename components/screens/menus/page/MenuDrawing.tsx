@@ -1,9 +1,10 @@
 import { Image } from 'expo-image';
 import { Platform, StyleSheet, View } from 'react-native';
+import Svg, { Path } from 'react-native-svg';
 
 import { DrinkDrawing, DrinkImage, isRowSize, useDs, type DrawingSize } from '@/components/ds';
 import { sceneFor } from '@/components/ds/SketchDrawing';
-import { CustomIcon } from '@/components/ui/CustomIcons';
+import { ICON_STROKE } from '@/components/ui/glyphs';
 import { drawing, radius } from '@/constants/tokens';
 import { useItemSketch } from '@/hooks/useItemSketch';
 import { isPrivateDrink } from '@/lib/menus';
@@ -44,7 +45,10 @@ export function MenuDrawing({ itemId, size, ink, fallback, bare }: { itemId: str
   if (kept) {
     return (
       <View style={[styles.kept, { width: px, height: px, backgroundColor: ds.c.paper }]} aria-hidden>
-        <CustomIcon name="Martini" size={Math.round(px * 0.55)} color={ds.c.sketchInk} />
+        {/* CustomIcons' Martini, drawn here: the whole icon set would ride in every menu page's chunk (B12). */}
+        <Svg width={Math.round(px * 0.55)} height={Math.round(px * 0.55)} viewBox="0 0 24 24">
+          <Path d="M2 5 L12 15 L22 5 Z M12 15 L12 22 M8 22 L16 22 M16 7 L12 12" stroke={ds.c.sketchInk} strokeWidth={ICON_STROKE} strokeLinecap="round" strokeLinejoin="round" fill="none" />
+        </Svg>
       </View>
     );
   }
