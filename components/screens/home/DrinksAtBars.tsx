@@ -8,7 +8,7 @@ import { DiscoverShelves } from '@/components/screens/home/DiscoverShelves';
 import type { MapLayer } from '@/components/screens/home/DiscoverControls';
 import { TopBarsShelf } from '@/components/screens/home/TopBars';
 import { ListNote } from '@/components/screens/rankings/RankingLists';
-import { LinkRow } from '@/components/techniques/bits';
+import { LinkRow } from '@/components/techniques/LinkRow';
 import { space } from '@/constants/tokens';
 import { useBestDrink, useRowScores } from '@/hooks/useBestDrink';
 import { useDiscoverList } from '@/hooks/useDiscoverDrinks';

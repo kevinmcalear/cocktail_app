@@ -5,9 +5,11 @@ import { Linking, StyleSheet, View } from 'react-native';
 import { Body, Caption, Headline, PressableScale, Surface, Tag, TextLink, useDs } from '@/components/ds';
 import { RowDivider } from '@/components/screens/settings/SettingsParts';
 import { IconSymbol } from '@/components/ui/icon-symbol';
-import { font, layout, radius, space } from '@/constants/tokens';
+import { font, layout, space } from '@/constants/tokens';
 import { missingKit, type BuyAudience, type BuyLink, type Grade, type Source, type Technique } from '@/lib/techniques';
 import { useAppMode, type AppMode } from '@/store/useAppMode';
+
+export { LinkRow } from './LinkRow';
 
 const GRADE: Record<Grade, { label: string; long: string }> = {
   A: { label: 'Well tested', long: 'A primary or tested source' },
@@ -104,22 +106,6 @@ export function TechniqueRow({ t, kit }: { t: Technique; kit: ReadonlySet<string
   );
 }
 
-/** A tappable row that opens another screen in the library, or `onPress` (a sheet over this one). */
-export function LinkRow({ title, detail, href, icon, onPress }: { title: string; detail?: string; href: string; icon?: Parameters<typeof IconSymbol>[0]['name']; onPress?: () => void }) {
-  const ds = useDs();
-  const router = useRouter();
-  return (
-    <PressableScale role="link" accessibilityLabel={detail ? `${title}. ${detail}` : title} onPress={onPress ?? (() => router.push(href as never))} style={[styles.card, { backgroundColor: ds.c.surface }]}>
-      {icon ? <IconSymbol name={icon} size={20} color={ds.c.ink} /> : null}
-      <View style={styles.flex}>
-        <Headline>{title}</Headline>
-        {detail ? <Caption tone="muted">{detail}</Caption> : null}
-      </View>
-      <IconSymbol name="chevron.right" size={16} color={ds.c.muted} />
-    </PressableScale>
-  );
-}
-
 /** Where a number came from, opening the page. */
 export function SourceList({ sources }: { sources: Source[] }) {
   const ds = useDs();
@@ -189,7 +175,6 @@ const styles = StyleSheet.create({
   label: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', gap: space.md },
   eyebrow: { ...font.figures, letterSpacing: 1 },
   row: { flexDirection: 'row', alignItems: 'center', gap: space.md, paddingVertical: space.md, borderBottomWidth: StyleSheet.hairlineWidth },
-  card: { flexDirection: 'row', alignItems: 'center', gap: space.md, minHeight: layout.minTapTarget + space.md, padding: space.md, borderRadius: radius.card, borderCurve: 'continuous' },
   source: { flexDirection: 'row', alignItems: 'center', gap: space.md, minHeight: layout.minTapTarget, paddingVertical: space.sm, borderBottomWidth: StyleSheet.hairlineWidth },
   notes: { gap: space.sm },
   note: { flexDirection: 'row', gap: space.sm, alignItems: 'flex-start' },
