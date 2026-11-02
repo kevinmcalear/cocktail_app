@@ -129,7 +129,7 @@ function RankingsPage({ rankedAs, home }: RankingsScreenProps) {
           icon="square.and.arrow.up"
           label="Share"
           accessibilityLabel={myBest ? `Share your top three ${plural(rankedAs.name)}` : `Share the best ${rankedAs.name}`}
-          onPress={() => (myBest ? router.push(`/share/poster?list=${rankedAs.id}`) : void shareOrCopy(`${siteOrigin()}/rankings/${rankedAs.id}`, `Best ${rankedAs.name}`))}
+          onPress={() => (myBest ? router.push(`/share/poster?list=${rankedAs.id}`) : void shareOrCopy(`${siteOrigin()}/rankings/${rankedAs.id}`, `Best ${rankedAs.name}`, 'ranking'))}
         />
       </View>
     </View>
