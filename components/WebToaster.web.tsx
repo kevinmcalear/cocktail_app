@@ -1,9 +1,9 @@
 import { lazy, Suspense } from 'react';
 
-// burnt's Toaster is sonner (about 10 KB brotli): it loads straight after the
-// first render instead of with every page, and toasts load on the first one
-// (lib/systemToast.web.ts).
-const Toaster = lazy(() => import('burnt/web').then((m) => ({ default: m.Toaster })));
+// burnt and its Toaster are sonner (about 7 KB brotli): they load straight
+// after the first render instead of with every page. Toasts made before then
+// wait for it (lib/systemToast.web.ts).
+const Toaster = lazy(() => import('./ListeningToaster.web').then((m) => ({ default: m.ListeningToaster })));
 
 /** Where web toasts show. */
 export function WebToaster() {
