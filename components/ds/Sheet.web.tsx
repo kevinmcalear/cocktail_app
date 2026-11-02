@@ -6,6 +6,7 @@ import { useReducedMotion } from '@/hooks/useReducedMotion';
 import type { SheetProps } from './Sheet';
 import { sheetFrame } from './sheetFrame';
 import { useDs } from './theme';
+import { ToastHost } from './Toast';
 import { EASE_IN, EASE_OUT, webMotion } from './webMotion';
 import { attachSheetDrag } from './webSheetDrag';
 
@@ -119,6 +120,8 @@ export function Sheet({ visible, onClose, accessibilityLabel, children, style, g
           </View>
         </View>
       </CloseContext>
+      {/* The dialog sits over the page: a toast shown from it draws here, on top. */}
+      <ToastHost />
     </Modal>
   );
 }

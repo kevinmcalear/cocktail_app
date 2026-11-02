@@ -164,7 +164,7 @@ function HandoverSheets({ s }: { s: HandoverState }) {
         }}
         {...view}
       />
-      {writing ? <HandoverWriteSheet h={h} closeDate={writing} night={nightOf(s, h, writing)} houseMade={s.t.houseMadeIds.flatMap((id) => s.t.lineName(id) ?? [])} onLeave={(words) => leaveWords(writing, words)} onClose={() => s.setWriting(null)} /> : null}
+      {writing ? <HandoverWriteSheet h={h} barId={barId} closeDate={writing} night={nightOf(s, h, writing)} houseMade={s.t.houseMadeIds.flatMap((id) => s.t.lineName(id) ?? [])} onLeave={(words) => leaveWords(writing, words)} onClose={() => s.setWriting(null)} /> : null}
     </>
   );
 }

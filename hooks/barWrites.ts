@@ -103,13 +103,13 @@ export interface HandoverWrite {
   closeDate: string;
   userId: string;
   /** What they wrote; left out when only marking the note read. */
-  words?: { ranOut: string[]; note: string | null; prep: string | null; broken: string | null; writtenAt: string };
+  words?: { ranOut: string[]; note: string | null; prep: string | null; broken: string | null; brokenPhoto: string | null; writtenAt: string };
   readAt: string;
 }
 
 /** What someone wrote, as handover_notes columns (also the page's at-once copy, hooks/useHandover.ts). */
 export const handoverColumns = (words: HandoverWrite['words']) =>
-  words ? { ran_out: words.ranOut, note: words.note, prep: words.prep, broken: words.broken, written_at: words.writtenAt } : {};
+  words ? { ran_out: words.ranOut, note: words.note, prep: words.prep, broken: words.broken, broken_photo: words.brokenPhoto, written_at: words.writtenAt } : {};
 
 /** A person's row for a close (the handover note), by bar, day and person, so sending twice is the same. */
 async function sendHandover(w: HandoverWrite) {

@@ -3,17 +3,21 @@ import { StyleSheet, View } from 'react-native';
 
 import { Caption, Display, DsText, GlassButton, PressableScale, Tag, useDs, type TagTone } from '@/components/ds';
 import { DrinkHero } from '@/components/screens/drink/DrinkHero';
-import { font, radius, space } from '@/constants/tokens';
+import { PhotoMirror } from '@/components/screens/drink/PhotoMirror';
+import { font, menuCover, radius, space } from '@/constants/tokens';
 
 import { MenuSky, MenuTrio } from './MenuBand';
 import type { MenuInk } from './MenuDrawing';
 
 const HERO_H = 300;
+/** A cover photo runs 470 down from the top of the screen, the name under it (Menu-g-photo-dark). */
+const PHOTO_H = menuCover.height;
 const TONE: Record<'green' | 'amber' | 'quiet', TagTone> = { green: 'success', amber: 'warning', quiet: 'default' };
 
 interface MenuPageHeadProps {
   /** The drinks drawn at the top: the menu's first three. */
   heroIds: string[];
+  /** A menu that's on or coming up, at a bar, with a cover: the photo leads, and decides light or dark (MenuScreen). */
   coverUrl: string | null;
   name: string;
   ink: MenuInk;
@@ -44,27 +48,29 @@ interface MenuPageHeadProps {
  */
 export function MenuPageHead({ heroIds, coverUrl, name, ink, quiet, tag, eyebrow, description, onBack, onShare, onEdit, pill, bleed, top = 0, children }: MenuPageHeadProps) {
   const ds = useDs();
-  const photo = !!coverUrl && ink === 'colour';
+  const photo = !!coverUrl;
   const drawn = !photo && heroIds.length > 0;
   return (
     <View>
       {photo ? (
         <View style={{ marginHorizontal: -bleed }}>
-          <DrinkHero name={name} pictures={[{ url: coverUrl, isSketch: false, isOutdated: false }]} glass={null} height={420} fade />
+          {/* The photo flipped and blurred runs on under the list, as on a drink's photo page. */}
+          <PhotoMirror url={coverUrl} top={PHOTO_H - space.xxxl} />
+          <DrinkHero name={name} pictures={[{ url: coverUrl, isSketch: false, isOutdated: false }]} glass={null} height={PHOTO_H} fade />
         </View>
       ) : drawn ? (
         <View style={{ height: HERO_H + top, marginHorizontal: -bleed, overflow: 'hidden' }}>
           {quiet ? null : <MenuSky ids={heroIds} fade />}
-          <MenuTrio ids={heroIds} ink={ink} top={64 + top} />
+          <MenuTrio ids={heroIds} ink={ink} top={42 + top} />
         </View>
       ) : (
         <View style={{ height: 112 + top }} />
       )}
       <View style={[styles.bar, { top: top + space.lg }]}>
-        {onBack ? <GlassButton icon="chevron.left" accessibilityLabel="Back" onPress={onBack} onMedia={photo} /> : <View />}
+        {onBack ? <GlassButton icon="chevron.left" accessibilityLabel="Back" onPress={onBack} onMedia={photo && ds.scheme === 'dark'} /> : <View />}
         <View style={styles.barEnd}>
-          {onEdit ? <GlassButton icon="pencil" accessibilityLabel="Edit" onPress={onEdit} onMedia={photo} /> : null}
-          {onShare ? <GlassButton icon="square.and.arrow.up" accessibilityLabel="Share" onPress={onShare} onMedia={photo} /> : null}
+          {onEdit ? <GlassButton icon="pencil" accessibilityLabel="Edit" onPress={onEdit} onMedia={photo && ds.scheme === 'dark'} /> : null}
+          {onShare ? <GlassButton icon="square.and.arrow.up" accessibilityLabel="Share" onPress={onShare} onMedia={photo && ds.scheme === 'dark'} /> : null}
           {pill ? (
             <PressableScale role="button" accessibilityLabel={pill.label} onPress={pill.onPress} style={[styles.pill, { backgroundColor: ds.c.ink }]}>
               <DsText variant="label" color={ds.c.ground} style={font.semiBold}>
@@ -74,7 +80,7 @@ export function MenuPageHead({ heroIds, coverUrl, name, ink, quiet, tag, eyebrow
           ) : null}
         </View>
       </View>
-      <View style={[styles.title, photo && { marginTop: -space.xxxl }]}>
+      <View style={[styles.title, photo && { marginTop: space.lg }]}>
         <View style={styles.eyebrowRow}>
           {tag ? <Tag label={tag.label} tone={TONE[tag.tone]} /> : null}
           <Caption tone="muted" style={[styles.caps, styles.eyebrow]} numberOfLines={2}>

@@ -1721,6 +1721,7 @@ export type Database = {
         Row: {
           bar_id: string
           broken: string | null
+          broken_photo: string | null
           close_date: string
           created_at: string
           id: string
@@ -1734,6 +1735,7 @@ export type Database = {
         Insert: {
           bar_id: string
           broken?: string | null
+          broken_photo?: string | null
           close_date: string
           created_at?: string
           id?: string
@@ -1747,6 +1749,7 @@ export type Database = {
         Update: {
           bar_id?: string
           broken?: string | null
+          broken_photo?: string | null
           close_date?: string
           created_at?: string
           id?: string
@@ -7634,7 +7637,7 @@ export type Database = {
         }[]
       }
       friends_ranks: {
-        Args: { p_limit?: number }
+        Args: { p_item_id?: string; p_limit?: number }
         Returns: {
           avatar_url: string
           best_in_family: boolean
