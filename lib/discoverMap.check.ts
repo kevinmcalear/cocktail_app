@@ -1,25 +1,14 @@
 // Checks for lib/discoverMap.ts. Run: npm run test:unit
 import assert from 'node:assert/strict';
 
-import { AREA_ZOOM, CLOSE_ZOOM, readableLabels, areaFromViewport, areaLabel, areasFrom, aimAfter, armBarHover, BEST_PINS, cameraFor, cameraForArea, cameraOn, dotsOf, MAX_AREAS, pinLabel, pinLook, pinsFrom, pinsToDraw, movedFrom, viewportFrom, type MapView } from './discoverMap';
-import type { DiscoverRow } from './nearMe';
+import { AREA_ZOOM, CLOSE_ZOOM, readableLabels, areaLabel, areasFrom, BEST_PINS, cameraFor, cameraForArea, dotsOf, MAX_AREAS, pinLabel, pinLook, pinsToDraw, viewportFrom, type MapPin, type MapView } from './discoverMap';
 
-const row = (over: Partial<DiscoverRow>): DiscoverRow => ({
-  position: null, venue_profile_id: 'x', handle: 'x', display_name: 'X', locality: 'Brunswick', city: 'Melbourne',
-  latitude: -37.8, longitude: 144.96, distance_km: null, score: null, rankers: 3, is_early: true, ...over,
+const pin = (over: Partial<MapPin>): MapPin => ({
+  id: 'x', handle: 'x', name: 'X', logo: null, place: 'Brunswick, Melbourne', latitude: -37.8, longitude: 144.96, score: null, position: null, rankers: 3, ...over,
 });
-
-// --- pins: ranked then early, rows without coordinates left off ---
-const pins = pinsFrom({
-  ranked: [row({ venue_profile_id: 'a', position: 1, score: 9.14, is_early: false, avatar_url: 'https://x/a.png' })],
-  early: [row({ venue_profile_id: 'b' }), row({ venue_profile_id: 'c', latitude: null, longitude: null })],
-});
-assert.deepEqual(pins.map((p) => [p.id, p.position, p.score]), [['a', 1, 9.14], ['b', null, null]]);
-assert.equal(pins[0].place, 'Brunswick, Melbourne');
-assert.deepEqual(pins.map((p) => p.logo), ['https://x/a.png', null]);
+const pins = [pin({ id: 'a', position: 1, score: 9.14, logo: 'https://x/a.png' }), pin({ id: 'b' })];
 assert.equal(pinLabel(pins[0]), '9.1');
 assert.equal(pinLabel(pins[1]), '');
-assert.deepEqual(pinsFrom(undefined), []);
 
 // --- pin look: a scored pill, an early dot, the accent when selected ---
 const accent = { fill: '#D0643B', text: '#FFFFFF' };
@@ -54,6 +43,18 @@ assert.equal(pinLook(pins[0], true, accent, CLOSE_ZOOM).label, `9.1 · ${pins[0]
 assert.equal(pinLook({ ...logoPin, name: 'The Exceptionally Long Bar Name' }, true, accent, 17).label.length, 18, 'long names cut as drink names are');
 assert.equal(pinLook({ ...pins[0], top: 'Dirty Martini' }, false, accent, CLOSE_ZOOM).label, 'Dirty Martini', 'searching: the drink, not the bar');
 
+// --- Discover's map: a bar's mark on its colour, its name beside it when named, no score ---
+const mark = { edge: '#111111', ink: '#EEEEEE', family: 'Serif' };
+const marked = pin({ name: 'little rye', score: 9.1, mark, brand: { accent: '#D0643B', face: 'fraunces' } });
+assert.equal(pinLook(marked, false, accent).label, 'L', 'its letter, not its score');
+assert.equal(pinLook(marked, false, accent).family, 'Serif');
+assert.equal(pinLook(marked, false, accent).borderColor, '#111111');
+assert.equal(pinLook(marked, false, accent).beside, null);
+assert.equal(pinLook({ ...marked, named: true }, false, accent).beside?.name, 'little rye');
+assert.equal(pinLook(marked, true, accent).beside?.name, 'little rye', 'the row in hand names its bar');
+assert.equal(pinLook(pin({ logo: 'https://x/l.png', mark }), false, accent).label, '', 'a logo says it');
+assert.equal(pinLook({ ...marked, closed: 'Closed 2019' }, false, accent).family, null, 'a closed bar is not marked');
+
 // --- the dark map's street names are readable; the light one is left as it is ---
 const style = { version: 8, sources: {}, layers: [{ id: 'highway_name_other', type: 'symbol', source: 's', layout: { 'text-size': 10 }, paint: { 'text-color': 'rgba(80, 78, 78, 1)' } }, { id: 'water', type: 'fill', source: 's' }] } as Parameters<typeof readableLabels>[0];
 const road = readableLabels(style, 'dark').layers[0] as { paint: Record<string, unknown> };
@@ -71,7 +72,6 @@ assert.equal(cameraFor([]), null);
 const one = cameraFor([{ latitude: 40.72, longitude: -73.99 }])!;
 assert.deepEqual([one.latitude, one.longitude], [40.72, -73.99]);
 assert.ok(one.zoom >= 13 && one.zoom <= 15, `one pin shows its neighbourhood, got ${one.zoom}`);
-assert.deepEqual(cameraOn({ latitude: 40.72, longitude: -73.99 }), { latitude: 40.72, longitude: -73.99, zoom: CLOSE_ZOOM });
 const manhattan = cameraFor([{ latitude: 40.70, longitude: -74.01 }, { latitude: 40.74, longitude: -73.96 }])!;
 assert.ok(manhattan.zoom > 11 && manhattan.zoom < 13.5, `a few km across, got ${manhattan.zoom}`);
 const world = cameraFor([{ latitude: 40.7, longitude: -74 }, { latitude: -37.8, longitude: 144.96 }])!;
@@ -84,35 +84,11 @@ assert.ok(empty.zoom > 9 && empty.zoom < 12, `a 20 km circle, got ${empty.zoom}`
 const near = cameraForArea({ kind: 'point', latitude: 40.72, longitude: -73.99, radiusKm: 10, source: 'me' })!;
 assert.deepEqual([near.latitude, near.longitude], [40.72, -73.99]);
 assert.ok(near.zoom >= 13 && near.zoom <= 15, `near me shows the neighbourhood, got ${near.zoom}`);
-const walk = Array.from({ length: 6 }, (_, i) => ({ latitude: 40.72 + i * 0.001, longitude: -73.99 }));
-assert.equal(cameraForArea({ kind: 'point', latitude: 40.72, longitude: -73.99, radiusKm: 10, source: 'me' }, walk)!.zoom, CLOSE_ZOOM);
-assert.equal(cameraForArea({ kind: 'point', latitude: 40.72, longitude: -73.99, radiusKm: 10, source: 'me' }, walk.slice(0, 5))!.zoom, near.zoom);
 assert.equal(cameraForArea({ kind: 'anywhere' }), null);
-// Found, near me centres on the person, not the snapped area a kilometre off; crowded counts around them.
+// Found, near me centres on the person, not the snapped area a kilometre off.
 const me = { latitude: 40.7261, longitude: -73.9807 };
-assert.deepEqual(cameraForArea({ kind: 'point', latitude: 40.72, longitude: -73.99, radiusKm: 10, source: 'me' }, [], me), { ...me, zoom: near.zoom });
-assert.equal(cameraForArea({ kind: 'point', latitude: 40.72, longitude: -73.99, radiusKm: 10, source: 'me' }, walk, me)!.zoom, near.zoom);
-assert.equal(cameraForArea({ kind: 'point', latitude: 40.72, longitude: -73.99, radiusKm: 10, source: 'map' }, [], me)!.latitude, empty.latitude);
-
-// --- search this area: half the diagonal, rounded, clamped ---
-const area = areaFromViewport({ latitude: 40.7209, longitude: -73.988, latitudeDelta: 0.1, longitudeDelta: 0.1, zoom: 11 });
-assert.deepEqual([area.latitude, area.longitude, area.source], [40.721, -73.988, 'map']);
-// 5.55 km up, 4.21 km across (longitude shrinks at 40.7 N): 6.97 km.
-assert.equal(area.radiusKm, 7);
-assert.equal(areaFromViewport({ latitude: 0, longitude: 0, latitudeDelta: 0.0001, longitudeDelta: 0.0001, zoom: 20 }).radiusKm, 0.5);
-assert.equal(areaFromViewport({ latitude: 0, longitude: 0, latitudeDelta: 90, longitudeDelta: 180, zoom: 1 }).radiusKm, 200);
-
-// --- the list follows the map: half a zoom step or a sixth of the view, not a nudge ---
-const view = { latitude: 40.72, longitude: -73.99, latitudeDelta: 0.06, longitudeDelta: 0.04, zoom: 13 };
-const at = { latitude: 40.72, longitude: -73.99, zoom: 13 };
-assert.equal(movedFrom(null, view), true, 'nothing fit yet: any move');
-assert.equal(movedFrom(at, view), false);
-assert.equal(movedFrom(at, { ...view, latitude: 40.725 }), false, 'a nudge');
-assert.equal(movedFrom(at, { ...view, latitude: 40.735 }), true, 'a quarter of the view up');
-assert.equal(movedFrom(at, { ...view, longitude: -73.98 }), true, 'a quarter of the view across');
-assert.equal(movedFrom(at, { ...view, zoom: 13.3 }), false, 'a little pinch');
-assert.equal(movedFrom(at, { ...view, zoom: 12.4 }), true, 'zoomed out');
-assert.equal(movedFrom({ ...at, longitude: 179.999 }, { ...view, longitude: -179.999 }), false, 'across the antimeridian is close');
+assert.deepEqual(cameraForArea({ kind: 'point', latitude: 40.72, longitude: -73.99, radiusKm: 10, source: 'me' }, me), { ...me, zoom: near.zoom });
+assert.equal(cameraForArea({ kind: 'point', latitude: 40.72, longitude: -73.99, radiusKm: 10, source: 'map' }, me)!.latitude, empty.latitude);
 
 console.log('discoverMap: ok');
 
@@ -151,10 +127,10 @@ assert.deepEqual(known.map((p) => p.drinks), [399, 397, 395, 393, 391, 389, 387,
 // On Top bars (loved, then most relevant): that order wins over drink counts, and the rest follow, busiest first.
 const ordered = pinsToDraw(early.map((p) => (p.id === 'g1' ? { ...p, order: 1 } : p.id === 'g3' ? { ...p, order: 0 } : p)), wide, null);
 assert.deepEqual(ordered.slice(0, 3).map((p) => p.id), ['g3', 'g1', 'g399']);
-assert.deepEqual(pinsFrom({ ranked: [row({ venue_profile_id: 'a', position: 1, score: 9, is_early: false })], early: [row({ venue_profile_id: 'b' }), row({ venue_profile_id: 'c' })] }).map((p) => p.order), [undefined, 1, 2]);
 assert.equal(pinLook(known[0], false, accent).logo, known[0].logo);
 assert.equal(pinLook(known[0], false, accent).height, 40);
 assert.equal(pinLook(known[0], false, accent).label, '');
+assert.equal(pinsToDraw([pin({ id: 'm', mark })], null, null).length, 1, 'a marked bar is a pin with no logo');
 // Scored bars come first; logos only fill what's left.
 const mixed = pinsToDraw(early.map((p, i) => (i < 3 ? { ...p, score: 8 } : p)), wide, null);
 assert.deepEqual(mixed.slice(0, 3).map((p) => p.score), [8, 8, 8]);
@@ -188,30 +164,3 @@ assert.equal(areasFrom(Array.from({ length: 100 }, (_, i) => cluster(i, 5, 2)), 
 assert.deepEqual(areasFrom([cluster(1, 9, 2)], { bounds: [5, 5, 6, 6], zoom: 9 }), [], 'out of view');
 assert.deepEqual(areasFrom([cluster(1, 9, 2)], { bounds: [0, 0, 3, 3], zoom: AREA_ZOOM }), [], 'up close there are no areas');
 assert.equal(areasFrom([cluster(1, 9, 2)], { bounds: [0, 0, 3, 3], zoom: AREA_ZOOM - 1 }).length, 1);
-
-// --- the camera: the last of a refit and a hovered bar; a hover ending never snaps back ---
-const fitA = cameraOn({ latitude: 1, longitude: 1 });
-const barB = cameraOn({ latitude: 2, longitude: 2 });
-const fitC = cameraOn({ latitude: 3, longitude: 3 });
-const hoverB = aimAfter({ fit: fitA, focus: null, at: fitA }, fitA, barB);
-assert.equal(hoverB.at, barB, 'resting on a row flies to its bar');
-assert.ok(hoverB.fresh, 'and the map moves start again from there');
-const left = aimAfter(hoverB, fitA, null);
-assert.equal(left.at, barB, 'the hover ending leaves the map where it is');
-assert.ok(!left.fresh);
-assert.equal(aimAfter(hoverB, fitC, barB).at, fitC, 'a refit after the hover wins');
-assert.equal(aimAfter(left, fitA, barB).at, barB, 'the same bar again, after leaving, is a new hover');
-
-const hovered: string[] = [];
-const pause = (ms: number) => new Promise((resolve) => setTimeout(resolve, ms));
-void (async () => {
-  armBarHover('a', (id) => hovered.push(id), 20);
-  armBarHover('b', (id) => hovered.push(id), 20);
-  armBarHover(null, (id) => hovered.push(id), 20);
-  await pause(40);
-  assert.deepEqual(hovered, [], 'leaving, or moving on, cancels the map move');
-  const rested: string[] = [];
-  armBarHover('c', (id) => rested.push(id), 20);
-  await pause(40);
-  assert.deepEqual(rested, ['c'], 'a rested pointer moves the map');
-})();

@@ -1,8 +1,12 @@
 import type { ReactNode } from 'react';
 import { StyleSheet, View } from 'react-native';
 
-import { Body, Caption, Display, useDs } from '@/components/ds';
-import { displayFaces, space } from '@/constants/tokens';
+import { Caption, Display } from '@/components/ds';
+import { space } from '@/constants/tokens';
+
+import { ItalicLine } from './ItalicLine';
+
+export { ItalicLine, useItalic } from './ItalicLine';
 
 /**
  * The name block every drink and item page opens with (boards Decided-who-*,
@@ -23,16 +27,6 @@ export function ItemTitle({ eyebrow, name, credit, children }: { eyebrow: string
       {children}
     </View>
   );
-}
-
-/** A line in the name's italic: the maker and where it's from, whose recipe it is. */
-export function ItalicLine({ text }: { text: string }) {
-  return <Body tone="muted" style={useItalic()}>{text}</Body>;
-}
-
-/** The display face's italic, for text set under the name. */
-export function useItalic() {
-  return { fontFamily: displayFaces[useDs().displayFace].italic };
 }
 
 const styles = StyleSheet.create({

@@ -106,7 +106,7 @@ export function SharedMenuScreen({ id }: { id: string }) {
         eyebrow={[`${owner.name}’s menu`, data.menuDate ? menuNight(data.menuDate) : null].filter(Boolean).join(' · ')}
         onBack={null}
         label={{ text: 'Cocktail', onPress: () => router.push('/') }}
-        onShare={() => void shareOrCopy(`${siteOrigin()}/m/${id}`, data.name)}
+        onShare={() => void shareOrCopy(`${siteOrigin()}/m/${id}`, data.name, 'menu')}
         rowPress={(row) => (isPrivateDrink(row.drink.id) ? null : () => router.push(drinkPageHref(row.drink.id, signedIn) as Href))}
         after={`${owner.name}’s own recipes stay private: you see what is in each drink, not the amounts. Open in Cocktail to keep this menu.`}
         footer={

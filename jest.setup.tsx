@@ -11,6 +11,8 @@ jest.mock('react-native-reanimated', () => ({ ...jest.requireActual('react-nativ
 jest.mock('@react-native-async-storage/async-storage', () =>
   jest.requireActual('@react-native-async-storage/async-storage/jest/async-storage-mock')
 );
+// Ships untranspiled ESM over a native module, and every share button reaches it through lib/shareLink.
+jest.mock('burnt', () => ({ toast: jest.fn(), alert: jest.fn() }));
 // Gives useSafeAreaInsets() zero insets without a SafeAreaProvider (expo-router adds one in the app).
 jest.mock('react-native-safe-area-context', () =>
   jest.requireActual<{ default: object }>('react-native-safe-area-context/jest/mock').default

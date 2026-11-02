@@ -1,4 +1,4 @@
-import { useRouter } from 'expo-router';
+import { useRouter, useSegments } from 'expo-router';
 import { ScrollView, StyleSheet, View } from 'react-native';
 
 import { BarAssignmentAccordion } from '@/components/BarAssignmentAccordion';
@@ -111,6 +111,8 @@ export function SameNameNotice({ name, barId, rows, aliases, excludeId, generic,
   onGeneric: (generic: Pick) => void;
 }) {
   const router = useRouter();
+  // Add and the edit route are root modals; item pages push on a tab under them, so the modal closes first.
+  const inModal = (useSegments() as string[])[0] !== '(tabs)';
   const same = sameIngredient(name, rows, aliases);
   const match = same && same.id !== excludeId ? same : null;
   // A new one also asks the database for names spelled close (useNearIngredients); a saved one only checks the list, so its own name never nags.
@@ -128,7 +130,7 @@ export function SameNameNotice({ name, barId, rows, aliases, excludeId, generic,
             : `Use it, or keep this as your own version: a kind of ${label}.`}
         </Caption>
         <View style={styles.links}>
-          <TextLink label={`Open ${label}`} onPress={() => router.push(`/ingredient/${shown.id}`)} />
+          <TextLink label={`Open ${label}`} onPress={() => (inModal && router.dismiss(), router.push(`/ingredient/${shown.id}`))} />
           <TextLink label={`Make this a kind of ${label}`} onPress={() => onGeneric({ id: shown.id, name: label })} />
         </View>
       </Surface>

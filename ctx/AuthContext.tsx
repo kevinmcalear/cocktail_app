@@ -1,5 +1,4 @@
-import { track } from '@/lib/analytics';
-import { isFirstSignIn, type AuthProblem } from '@/lib/authCode';
+import type { AuthProblem } from '@/lib/authCode';
 import { getAuthRedirectTo } from '@/lib/authRedirect';
 import type { FeatureNewsSeen } from '@/lib/featureNews';
 import { forgetStoredSession, readStoredUser, supabase } from '@/lib/supabase';
@@ -177,7 +176,8 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   };
 
   const verifyCode = async (email: string, code: string) => {
-    let { data, error } = await supabase.auth.verifyOtp({ email, token: code, type: 'email' });
+    // A new account's sign_up is sent from components/Analytics.tsx, which sees link sign-ins too.
+    let { error } = await supabase.auth.verifyOtp({ email, token: code, type: 'email' });
     // App Review can't receive our emails: its one account types a fixed code
     // instead, which review-sign-in swaps for a one-time link token. Anyone
     // else keeps the wrong-code answer the emailed code gave.
@@ -193,10 +193,9 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       if (review?.token_hash) {
         // 'email' takes both kinds the function can hand back: a magic link
         // token, or a sign-up one when it just made the account.
-        ({ data, error } = await supabase.auth.verifyOtp({ token_hash: review.token_hash, type: 'email' }));
+        ({ error } = await supabase.auth.verifyOtp({ token_hash: review.token_hash, type: 'email' }));
       }
     }
-    if (!error && data.user && isFirstSignIn(data.user)) track('sign_up');
     return { error: asProblem(error) };
   };
 
