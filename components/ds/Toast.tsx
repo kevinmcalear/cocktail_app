@@ -37,14 +37,25 @@ export function useToast() {
 }
 
 /**
- * The toast itself, mounted once at the root: a glass pill floating above the
+ * The toast itself, mounted at the root and in each Sheet: a glass pill floating above the
  * bottom edge (bottom centre on the web), announced politely (an error as an
  * alert), gone after five
  * seconds (an error stays), a swipe or a tap. With Reduce Motion on it fades instead of
  * springing up.
  */
+let nextHost = 1;
+
 export function ToastHost() {
-  const toast = useToastStore((s) => s.toast);
+  // Mounted at the root and inside every Sheet: the newest host draws, so a
+  // toast shown from an open sheet lands on top of it, not under its window.
+  const [host] = useState(() => nextHost++);
+  useEffect(() => {
+    useToastStore.getState().addHost(host);
+    return () => useToastStore.getState().removeHost(host);
+  }, [host]);
+  const top = useToastStore((s) => s.hosts[s.hosts.length - 1] === host);
+  const stored = useToastStore((s) => s.toast);
+  const toast = top ? stored : null;
   // Kept while it slides away, after the store has moved on.
   const [shown, setShown] = useState<Toast | null>(null);
   if (toast && toast !== shown) setShown(toast);

@@ -14,8 +14,7 @@ import type { SpecLevels, SpecLine } from '@/lib/spec';
 import { lineRole } from '@/lib/specLines';
 import type { DatabaseItem } from '@/types/types';
 
-import { GuestAllergens } from '@/components/allergens/GuestAllergens';
-import { TeamAllergens } from '@/components/allergens/TeamAllergens';
+import { GuestAllergens, TeamAllergens } from '@/components/allergens/DrinkAllergensLazy';
 
 import { AllergyLine } from './AllergyLine';
 import { ApprovalNotice } from './ApprovalNotice';
