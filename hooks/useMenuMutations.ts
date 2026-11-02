@@ -3,6 +3,7 @@ import { decode } from 'base64-arraybuffer';
 import * as ImagePicker from 'expo-image-picker';
 import { useWindowDimensions } from 'react-native';
 
+import { canCropPhotos, cropPhoto } from '@/components/drink/drinkImages';
 import { menuCover } from '@/constants/tokens';
 import { useUserId } from '@/ctx/AuthContext';
 import { dropdownKeys } from '@/hooks/useDropdowns';
@@ -13,6 +14,7 @@ import { allRows } from '@/lib/allRows';
 import { savePayload, type EditSection, type MenuLayout } from '@/lib/menuLayout';
 import { normalizeAllowedTypes } from '@/lib/sectionAllowedTypes';
 import { uriToBase64 } from '@/lib/imageBase64';
+import { centredCrop } from '@/lib/photoCrop';
 import { supabase, UPLOAD_CACHE_SECONDS } from '@/lib/supabase';
 import type { Database } from '@/types/db';
 import type { MenuDrink } from '@/types/menus';
@@ -325,12 +327,16 @@ export function useMenuLibrary(barId: string | null | undefined, enabled = true)
  */
 export function usePickMenuCover(menuId: string) {
   const { width } = useWindowDimensions();
-  const aspect: [number, number] = [Math.round(Math.min(width, menuCover.column)), menuCover.height];
+  const frame = { width: Math.round(Math.min(width, menuCover.column)), height: menuCover.height };
   return useMutation({
     mutationFn: async (): Promise<string | null> => {
-      const result = await ImagePicker.launchImageLibraryAsync({ mediaTypes: ['images'], allowsEditing: true, aspect, quality: 0.85 });
+      const result = await ImagePicker.launchImageLibraryAsync({ mediaTypes: ['images'], allowsEditing: true, aspect: [frame.width, frame.height], quality: 0.85 });
       if (result.canceled || !result.assets?.length) return null;
-      return uploadMenuCover(result.assets[0].uri, menuId);
+      const photo = result.assets[0];
+      // `aspect` holds on Android only: iOS's editor hands back a square, the web the whole photo. Cut those to the hero, centred.
+      const rect = centredCrop(photo, frame);
+      const uri = rect && canCropPhotos() ? await cropPhoto(photo.uri, rect, false) : photo.uri;
+      return uploadMenuCover(uri, menuId);
     },
     onError: () => {},
   });
