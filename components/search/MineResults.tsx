@@ -1,5 +1,5 @@
 import { useRouter } from 'expo-router';
-import { useEffect, useMemo, type ReactNode } from 'react';
+import { use, useEffect, useMemo, type ReactNode } from 'react';
 import { StyleSheet, View } from 'react-native';
 
 import { Button, Caption, RowScore, scoreWords } from '@/components/ds';
@@ -22,8 +22,9 @@ import type { SearchItem } from '@/types/search';
 
 import { PublicResults } from './PublicResults';
 import { NearResults } from './NearResults';
-import { EverywhereRow, MissCard, PersonResultRow, ResultGroup, ResultRow } from './ResultRows';
+import { DrawnSearch, EverywhereRow, MissCard, PersonResultRow, ResultGroup, ResultRow } from './ResultRows';
 import { Completions, TopHit } from './SearchParts';
+import { SearchLoading, SearchMore } from './SearchStates';
 
 interface MineResultsProps {
   query: string;
@@ -57,6 +58,7 @@ export const specLine = (i: SearchItem) =>
  */
 export function MineResults({ query, mine, onEverywhere, commands, palette, show, onCounts, typeAhead }: MineResultsProps) {
   const router = useRouter();
+  const drawn = use(DrawnSearch);
   const { items: catalog, isLoading } = useSearchCatalog(mine.contextIds);
   const items = useMemo(() => {
     const hidden = new Set(mine.hiddenIds);
@@ -85,7 +87,7 @@ export function MineResults({ query, mine, onEverywhere, commands, palette, show
   }, [countKey, onCounts]);
 
   if (!found) {
-    if (isLoading) return <Caption tone="muted">Searching…</Caption>;
+    if (isLoading) return drawn ? <SearchLoading /> : <Caption tone="muted">Searching…</Caption>;
     const where = mine.venueId ? mine.label : 'your drinks';
     const add = () => router.push(newDrinkHref(capitalize(q), mine.venueId) as never);
     const title = `Nothing ${mine.venueId ? `at ${mine.label}` : 'in your drinks'} called “${q}”`;
@@ -100,7 +102,7 @@ export function MineResults({ query, mine, onEverywhere, commands, palette, show
           onCounts={onCounts}
           head={{
             title,
-            card: <MissCard title={title} detail="Here’s what everywhere else has." action={mine.canAdd ? { label: `Add ${capitalize(q)} to ${where}`, onPress: add } : undefined} />,
+            card: drawn ? null : <MissCard title={title} detail="Here’s what everywhere else has." action={mine.canAdd ? { label: `Add ${capitalize(q)} to ${where}`, onPress: add } : undefined} />,
             add: mine.canAdd ? { label: `add ${capitalize(q)}`, onPress: add } : undefined,
             yours: items,
             yoursCaption: mine.label,
@@ -113,7 +115,7 @@ export function MineResults({ query, mine, onEverywhere, commands, palette, show
 
   const label = `Search everywhere for “${q}”`;
   const shownIds = [...groups.drinks, ...groups.ingredients].map((i) => i.id);
-  const everywhere = palette ? <EverywhereRow label={label} onPress={onEverywhere} /> : <Button label={label} variant="secondary" onPress={onEverywhere} />;
+  const everywhere = drawn ? <SearchMore query={q} mine={mine} onEverywhere={onEverywhere} /> : palette ? <EverywhereRow label={label} onPress={onEverywhere} /> : <Button label={label} variant="secondary" onPress={onEverywhere} />;
   const drinkRow = (i: SearchItem) => {
     const why = i.isDraft ? { caption: 'Draft' } : drinkFacts(i.id, i.category ?? 'Cocktail', facts);
     const score = i.isDraft ? undefined : scores?.[i.id];
@@ -154,7 +156,7 @@ export function MineResults({ query, mine, onEverywhere, commands, palette, show
       {shows(show, 'drinks') ? <ResultGroup label="Drinks" items={drinks} render={drinkRow} /> : null}
       {shows(show, 'ingredients') ? (
         <ResultGroup
-          label="Ingredients"
+          label={drawn ? 'Bottles' : 'Ingredients'}
           items={groups.ingredients}
           render={(i) => <ResultRow key={i.id} title={i.name} caption={i.isDraft ? 'Draft' : ingredientFacts(i.id, facts)} ingredient={{ id: i.isDraft ? null : i.id }} query={q} onPress={() => open(i)} />}
         />
