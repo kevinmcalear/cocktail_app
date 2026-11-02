@@ -1,4 +1,4 @@
-import * as Device from 'expo-device';
+import * as Device from '@/lib/realDevice';
 import { useState, type ReactNode } from 'react';
 import { ActivityIndicator, Platform, StyleSheet, View } from 'react-native';
 
