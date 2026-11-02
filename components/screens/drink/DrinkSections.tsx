@@ -9,6 +9,7 @@ import { useDrinkMenuRuns } from '@/hooks/useProfiles';
 import type { GlassFillResult } from '@/hooks/useGlassFill';
 import type { SpecLock } from '@/hooks/useSpecLock';
 import { makesIt, namesOnly, onTeam, type DrinkViewer } from '@/lib/drinkViewer';
+import { leftTheMenu } from '@/lib/menuEditions';
 import { pageShowsDescriptions } from '@/lib/pageVisibility';
 import type { SpecLevels, SpecLine } from '@/lib/spec';
 import { lineRole } from '@/lib/specLines';
@@ -78,8 +79,10 @@ export function useDrinkSections(p: DrinkSectionsInput) {
     : null;
   const team = onTeam(viewer) && !!item.bar_id && live;
 
+  // A bar's drink that came off every menu says so at the top (Menu-p-left); its team know.
+  const eyebrow = item.bar_id && !onTeam(viewer) && leftTheMenu(runs) ? `${runs[0].barName} · Past menus` : p.eyebrow;
   const title = (
-    <ItemTitle eyebrow={p.eyebrow} name={item.name} credit={live ? <DrinkCredit itemId={item.id} italic /> : null}>
+    <ItemTitle eyebrow={eyebrow} name={item.name} credit={live ? <DrinkCredit itemId={item.id} italic /> : null}>
       {p.photoCredit ? <Caption tone="muted">{p.photoCredit}</Caption> : null}
       {/* Waiting on a Drink Creator's OK: its team sees it here. */}
       {team ? <ApprovalNotice itemId={item.id} /> : null}
