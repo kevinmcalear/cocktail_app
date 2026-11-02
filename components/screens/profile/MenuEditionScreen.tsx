@@ -1,4 +1,5 @@
-import { Redirect, useNavigation, useRouter, type Href } from 'expo-router';
+import { Redirect, useIsFocused, useNavigation, useRouter, type Href } from 'expo-router';
+import { StatusBar } from 'expo-status-bar';
 import { type ComponentProps } from 'react';
 import { Linking, StyleSheet, View } from 'react-native';
 
@@ -101,8 +102,11 @@ export function MenuEditionScreen({ profileRef, editionId }: { profileRef: strin
 function BarGuestMenuPage(props: Omit<ComponentProps<typeof GuestMenuPage>, 'lens'>) {
   // The cover photo sets light or dark for the page (Menu-g-photo-dark, Menu-g-photo-bright).
   const tone = usePhotoTone(props.menu.coverUrl);
+  const focused = useIsFocused();
   return (
     <BackbarTheme scheme={props.menu.coverUrl ? tone : undefined}>
+      {/* The clock and battery follow the page's tone, not the phone's (iOS and Android); only while it's on top, as the staff menu does. */}
+      {props.menu.coverUrl && focused ? <StatusBar style={tone === 'dark' ? 'light' : 'dark'} /> : null}
       <GuestMenuPage {...props} lens={useMenuLens(props.menu)} />
     </BackbarTheme>
   );
