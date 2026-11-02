@@ -4,6 +4,8 @@ import { DsText, Headline, PressableScale, useDs } from '@/components/ds';
 import { IconSymbol } from '@/components/ui/icon-symbol';
 import { radius, space } from '@/constants/tokens';
 
+import { useTile } from './MaterialBar';
+
 export interface GroupRow {
   key: string;
   label: string;
@@ -20,13 +22,14 @@ export interface GroupRow {
  */
 export function RowGroup({ title, rows }: { title: string; rows: GroupRow[] }) {
   const ds = useDs();
+  const tile = useTile();
   if (!rows.length) return null;
   return (
     <View style={styles.group}>
       <Headline role="heading" aria-level={2}>
         {title}
       </Headline>
-      <View style={[styles.card, { backgroundColor: ds.c.raised }]}>
+      <View style={tile ? styles.tiles : [styles.card, { backgroundColor: ds.c.raised }]}>
         {rows.map((r, i) => {
           const inner = (
             <>
@@ -41,9 +44,9 @@ export function RowGroup({ title, rows }: { title: string; rows: GroupRow[] }) {
               {r.onPress && Platform.OS !== 'android' ? <IconSymbol name="chevron.right" size={14} color={ds.c.muted} /> : null}
             </>
           );
-          const line = i ? { borderTopWidth: StyleSheet.hairlineWidth, borderTopColor: ds.c.line } : null;
+          const line = tile ? tile(i, rows.length) : i ? { borderTopWidth: StyleSheet.hairlineWidth, borderTopColor: ds.c.line } : null;
           return r.onPress ? (
-            <PressableScale key={r.key} role="button" accessibilityLabel={[r.label, r.value].filter(Boolean).join(', ')} onPress={r.onPress} style={[styles.row, line]}>
+            <PressableScale key={r.key} role="button" accessibilityLabel={[r.label, r.value].filter(Boolean).join(', ')} onPress={r.onPress} android_ripple={{ color: ds.c.line }} style={[styles.row, line]}>
               {inner}
             </PressableScale>
           ) : (
@@ -60,6 +63,7 @@ export function RowGroup({ title, rows }: { title: string; rows: GroupRow[] }) {
 const styles = StyleSheet.create({
   group: { gap: space.sm + 2 },
   card: { borderRadius: radius.card - space.xs, borderCurve: 'continuous', overflow: 'hidden' },
+  tiles: { gap: 2 },
   row: { flexDirection: 'row', alignItems: 'center', gap: space.sm, paddingVertical: space.md + 2, paddingHorizontal: space.lg },
   label: { flexShrink: 1 },
   value: { flex: 1 },

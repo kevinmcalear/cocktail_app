@@ -1,55 +1,54 @@
-import type { ImageSourcePropType } from 'react-native';
+import { Platform, type ImageSourcePropType } from 'react-native';
 
 /**
  * The native tab bars' icons: the app's own drawings (components/ui/glyphs.ts),
- * white on clear so the system tints them, off and on (the on one fills at 22%).
- * Drawn by scripts/nav-tab-icons.ts; run it after changing a tab's glyph.
- * Static requires: Metro bundles only what it can see.
+ * white on clear so the system tints them. Selected tabs are the same outline,
+ * in the selected colour (Prod-phone); Android's selected Drinks fills its
+ * bowl (Kept-glyph). Drawn by scripts/nav-tab-icons.ts; run it after changing
+ * a tab's glyph. Static requires: Metro bundles only what it can see.
  */
 
-type TabImage = { default: ImageSourcePropType; selected: ImageSourcePropType };
+const DRINKS: ImageSourcePropType = require('@/assets/images/tabs/drinks.png');
 
 export const TAB_IMAGES = {
-  drinks: { default: require('@/assets/images/tabs/drinks.png'), selected: require('@/assets/images/tabs/drinks-on.png') },
-  discover: { default: require('@/assets/images/tabs/discover.png'), selected: require('@/assets/images/tabs/discover-on.png') },
-  you: { default: require('@/assets/images/tabs/you.png'), selected: require('@/assets/images/tabs/you-on.png') },
-  search: { default: require('@/assets/images/tabs/search.png'), selected: require('@/assets/images/tabs/search-on.png') },
-} satisfies Record<string, TabImage>;
+  drinks: Platform.OS === 'android' ? { default: DRINKS, selected: require('@/assets/images/tabs/drinks-on.png') as ImageSourcePropType } : DRINKS,
+  discover: require('@/assets/images/tabs/discover.png') as ImageSourcePropType,
+  you: require('@/assets/images/tabs/you.png') as ImageSourcePropType,
+};
 
 /** Tonight's page for each day of the month, which turns over at 6am (hooks/useServiceDay.ts). */
-const DAYS: TabImage[] = [
-  { default: require('@/assets/images/tabs/tonight/1.png'), selected: require('@/assets/images/tabs/tonight/1-on.png') },
-  { default: require('@/assets/images/tabs/tonight/2.png'), selected: require('@/assets/images/tabs/tonight/2-on.png') },
-  { default: require('@/assets/images/tabs/tonight/3.png'), selected: require('@/assets/images/tabs/tonight/3-on.png') },
-  { default: require('@/assets/images/tabs/tonight/4.png'), selected: require('@/assets/images/tabs/tonight/4-on.png') },
-  { default: require('@/assets/images/tabs/tonight/5.png'), selected: require('@/assets/images/tabs/tonight/5-on.png') },
-  { default: require('@/assets/images/tabs/tonight/6.png'), selected: require('@/assets/images/tabs/tonight/6-on.png') },
-  { default: require('@/assets/images/tabs/tonight/7.png'), selected: require('@/assets/images/tabs/tonight/7-on.png') },
-  { default: require('@/assets/images/tabs/tonight/8.png'), selected: require('@/assets/images/tabs/tonight/8-on.png') },
-  { default: require('@/assets/images/tabs/tonight/9.png'), selected: require('@/assets/images/tabs/tonight/9-on.png') },
-  { default: require('@/assets/images/tabs/tonight/10.png'), selected: require('@/assets/images/tabs/tonight/10-on.png') },
-  { default: require('@/assets/images/tabs/tonight/11.png'), selected: require('@/assets/images/tabs/tonight/11-on.png') },
-  { default: require('@/assets/images/tabs/tonight/12.png'), selected: require('@/assets/images/tabs/tonight/12-on.png') },
-  { default: require('@/assets/images/tabs/tonight/13.png'), selected: require('@/assets/images/tabs/tonight/13-on.png') },
-  { default: require('@/assets/images/tabs/tonight/14.png'), selected: require('@/assets/images/tabs/tonight/14-on.png') },
-  { default: require('@/assets/images/tabs/tonight/15.png'), selected: require('@/assets/images/tabs/tonight/15-on.png') },
-  { default: require('@/assets/images/tabs/tonight/16.png'), selected: require('@/assets/images/tabs/tonight/16-on.png') },
-  { default: require('@/assets/images/tabs/tonight/17.png'), selected: require('@/assets/images/tabs/tonight/17-on.png') },
-  { default: require('@/assets/images/tabs/tonight/18.png'), selected: require('@/assets/images/tabs/tonight/18-on.png') },
-  { default: require('@/assets/images/tabs/tonight/19.png'), selected: require('@/assets/images/tabs/tonight/19-on.png') },
-  { default: require('@/assets/images/tabs/tonight/20.png'), selected: require('@/assets/images/tabs/tonight/20-on.png') },
-  { default: require('@/assets/images/tabs/tonight/21.png'), selected: require('@/assets/images/tabs/tonight/21-on.png') },
-  { default: require('@/assets/images/tabs/tonight/22.png'), selected: require('@/assets/images/tabs/tonight/22-on.png') },
-  { default: require('@/assets/images/tabs/tonight/23.png'), selected: require('@/assets/images/tabs/tonight/23-on.png') },
-  { default: require('@/assets/images/tabs/tonight/24.png'), selected: require('@/assets/images/tabs/tonight/24-on.png') },
-  { default: require('@/assets/images/tabs/tonight/25.png'), selected: require('@/assets/images/tabs/tonight/25-on.png') },
-  { default: require('@/assets/images/tabs/tonight/26.png'), selected: require('@/assets/images/tabs/tonight/26-on.png') },
-  { default: require('@/assets/images/tabs/tonight/27.png'), selected: require('@/assets/images/tabs/tonight/27-on.png') },
-  { default: require('@/assets/images/tabs/tonight/28.png'), selected: require('@/assets/images/tabs/tonight/28-on.png') },
-  { default: require('@/assets/images/tabs/tonight/29.png'), selected: require('@/assets/images/tabs/tonight/29-on.png') },
-  { default: require('@/assets/images/tabs/tonight/30.png'), selected: require('@/assets/images/tabs/tonight/30-on.png') },
-  { default: require('@/assets/images/tabs/tonight/31.png'), selected: require('@/assets/images/tabs/tonight/31-on.png') },
+const DAYS: ImageSourcePropType[] = [
+  require('@/assets/images/tabs/tonight/1.png'),
+  require('@/assets/images/tabs/tonight/2.png'),
+  require('@/assets/images/tabs/tonight/3.png'),
+  require('@/assets/images/tabs/tonight/4.png'),
+  require('@/assets/images/tabs/tonight/5.png'),
+  require('@/assets/images/tabs/tonight/6.png'),
+  require('@/assets/images/tabs/tonight/7.png'),
+  require('@/assets/images/tabs/tonight/8.png'),
+  require('@/assets/images/tabs/tonight/9.png'),
+  require('@/assets/images/tabs/tonight/10.png'),
+  require('@/assets/images/tabs/tonight/11.png'),
+  require('@/assets/images/tabs/tonight/12.png'),
+  require('@/assets/images/tabs/tonight/13.png'),
+  require('@/assets/images/tabs/tonight/14.png'),
+  require('@/assets/images/tabs/tonight/15.png'),
+  require('@/assets/images/tabs/tonight/16.png'),
+  require('@/assets/images/tabs/tonight/17.png'),
+  require('@/assets/images/tabs/tonight/18.png'),
+  require('@/assets/images/tabs/tonight/19.png'),
+  require('@/assets/images/tabs/tonight/20.png'),
+  require('@/assets/images/tabs/tonight/21.png'),
+  require('@/assets/images/tabs/tonight/22.png'),
+  require('@/assets/images/tabs/tonight/23.png'),
+  require('@/assets/images/tabs/tonight/24.png'),
+  require('@/assets/images/tabs/tonight/25.png'),
+  require('@/assets/images/tabs/tonight/26.png'),
+  require('@/assets/images/tabs/tonight/27.png'),
+  require('@/assets/images/tabs/tonight/28.png'),
+  require('@/assets/images/tabs/tonight/29.png'),
+  require('@/assets/images/tabs/tonight/30.png'),
+  require('@/assets/images/tabs/tonight/31.png'),
 ];
 
-/** Tonight's tab for a day of the month (1 to 31). */
-export const tonightImage = (day: number): TabImage => DAYS[day - 1];
+export const tonightImage = (day: number): ImageSourcePropType => DAYS[day - 1];
