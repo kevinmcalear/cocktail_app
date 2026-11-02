@@ -78,7 +78,7 @@ export function YourBarCard({ positions, headlineId = null }: { positions: Posit
   const onTeam = !!venueId && myVenues.some((m) => m.bar_id === venueId);
   const asked = useMyJoinRequest(venueId).data;
   const ask = useAskToJoin();
-  const share = useShareLink(`${siteOrigin()}/p/${bar?.handle || bar?.id}/claim`, `Claim ${bar?.display_name ?? 'the bar'} on Cocktail`);
+  const share = useShareLink(`${siteOrigin()}/p/${bar?.handle || bar?.id}/claim`, `Claim ${bar?.display_name ?? 'the bar'} on Cocktail`, 'claim');
   if (!job || !bar || bar.kind !== 'bar' || onTeam) return null;
   const name = bar.display_name;
 

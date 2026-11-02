@@ -5,12 +5,12 @@ import { Platform, StyleSheet, useWindowDimensions, View } from 'react-native';
 import Animated, { interpolate, useAnimatedReaction, useAnimatedStyle, type SharedValue } from 'react-native-reanimated';
 import { scheduleOnRN } from 'react-native-worklets';
 
-import { BackbarTheme, DsText, PressableScale, useDs } from '@/components/ds';
+import { BackbarTheme, Button, DsText, PressableScale, useDs } from '@/components/ds';
 import { IconSymbol } from '@/components/ui/icon-symbol';
 import { displayFaces, layout, space } from '@/constants/tokens';
 
 import { DOCK_SCROLL, DOCKED, dockFade } from './DrawingHero';
-import { barRoom, useSmallTitle, type PageControls } from './PageControls';
+import { useSmallTitle, type PageControls } from './PageControls';
 
 export type Controls = Pick<ComponentProps<typeof PageControls>, 'save' | 'onShare' | 'onEdit' | 'editLabel' | 'more'>;
 
@@ -36,12 +36,12 @@ interface ItemHeaderProps {
  * system's Back, then the dock glyph and the small title, then the page's
  * tools. The bar floats, so the page runs under it as drawn.
  *
- * iOS can't draw this with a title view: its title is always centred, and the
- * board puts the glyph beside Back. So they sit in a left bar item beside the
- * back button (headerBackVisible), with the shared glass off. On Android the
- * Material bar's title does the job. A bar item can't grow out of the page, so
- * the big drawing stays over the page until it reaches this spot, and the two
- * cross-fade over the last points of the Dock (dockFade).
+ * iOS can't draw this in the bar: its title is always centred, and a left bar
+ * item wide enough for a name pushes the right items into the system's
+ * overflow, where More disappears. So on iOS the page draws the glyph and the
+ * small title under the clear bar (IosBarName) and the bar holds only Back and
+ * the tools. On Android the Material bar's title does the job, and the big
+ * drawing cross-fades into its glyph over the last points of the Dock (dockFade).
  *
  * Every page sets `title` whatever the platform: it's what Back says on the
  * page above this one.
@@ -65,7 +65,7 @@ export function useItemHeader({ name, on, pane, glyph, scrollY, smallAt, control
     latest.current = controls;
   });
   const { save, onShare, onEdit, editLabel, more } = controls;
-  const room = Platform.OS === 'android' ? androidRoom(controls) : barRoom(controls);
+  const room = androidRoom(controls);
   const docked = !!glyph;
   // ponytail: a node's identity changes every render, so More is compared by its plain props. A More whose only change is a closure keeps the old one.
   const moreKey = isValidElement<Record<string, unknown>>(more) ? Object.values(more.props).filter((v) => typeof v !== 'function' && typeof v !== 'object').join('|') : !!more;
@@ -93,8 +93,7 @@ export function useItemHeader({ name, on, pane, glyph, scrollY, smallAt, control
             // The page draws the board's own backing once it slides under the bar, not iOS 26's edge blur over the sky.
             scrollEdgeEffects: { top: 'hidden' },
             headerTitle: () => <View />,
-            unstable_headerLeftItems: () => [{ type: 'custom', element: <>{title}</>, hidesSharedBackground: true }],
-            unstable_headerRightItems: () => rightItems(tools, ds.c.ink, ds.c.ground, theme),
+            unstable_headerRightItems: () => rightItems(tools, ds.c.ink, theme),
           }
         : { ...shared, headerTitle: () => title, headerRight: () => theme(<RightIcons controls={tools} />) };
     navigation.setOptions(options);
@@ -108,8 +107,26 @@ export function useItemHeader({ name, on, pane, glyph, scrollY, smallAt, control
   }, [navigation, pane]);
 }
 
-/** iOS's right side: real bar buttons, each in its own glass as the board draws them, Edit filled in the ink. */
-function rightItems({ save, onShare, onEdit, editLabel = 'Edit', more }: Controls, ink: string, ground: string, theme: (node: ReactNode) => ReactNode): NativeStackHeaderItem[] {
+/** The room the bar's tools take on iOS, for IosBarName: glass circles and Edit's pill, each with its gap. */
+export function iosBarRoom({ save, onShare, onEdit, more }: Controls) {
+  return [save, onShare, more].filter(Boolean).length * (layout.minTapTarget + IOS_ITEM_GAP) + (onEdit ? IOS_EDIT + IOS_ITEM_GAP : 0);
+}
+
+/** The small title on iOS: in the page, under the clear bar, so it can't take room from the bar's items. */
+export function IosBarName({ name, left, right, top, height, scrollY, tuck }: { name: string; left: number; right: number; top: number; height: number; scrollY: SharedValue<number>; tuck: number }) {
+  const ds = useDs();
+  const small = useSmallTitle(scrollY, tuck);
+  return (
+    <Animated.View style={[styles.iosName, { left, right, top, height }, small]} aria-hidden>
+      <DsText variant="headline" numberOfLines={1} style={{ fontFamily: displayFaces[ds.displayFace].regular }}>
+        {name}
+      </DsText>
+    </Animated.View>
+  );
+}
+
+/** iOS's right side: real bar buttons, each in its own glass as the board draws them, and Edit filled in the ink. */
+function rightItems({ save, onShare, onEdit, editLabel = 'Edit', more }: Controls, ink: string, theme: (node: ReactNode) => ReactNode): NativeStackHeaderItem[] {
   const items: NativeStackHeaderItem[] = [];
   if (save) {
     const glyph = save.icon === 'heart' ? 'heart' : 'bookmark';
@@ -123,7 +140,9 @@ function rightItems({ save, onShare, onEdit, editLabel = 'Edit', more }: Control
     });
   }
   if (onShare) items.push({ type: 'button', label: 'Share', icon: { type: 'sfSymbol', name: 'square.and.arrow.up' }, tintColor: ink, sharesBackground: false, onPress: onShare });
-  if (onEdit) items.push({ type: 'button', label: 'Edit', accessibilityLabel: editLabel, variant: 'prominent', tintColor: ink, labelStyle: { color: ground }, sharesBackground: false, onPress: onEdit });
+  // Our own ink pill, not a 'prominent' bar button: on iOS 26 that one's label came out mid-grey (about 3:1)
+  // whatever labelStyle says. The ink Button's label is the ground, 16:1 or better in both schemes.
+  if (onEdit) items.push({ type: 'custom', element: <>{theme(<Button label="Edit" accessibilityLabel={editLabel} variant="ink" size="sm" onPress={onEdit} />)}</>, hidesSharedBackground: true });
   // Its own sheet and button: a custom item, the button drawing its glass.
   if (more) items.push({ type: 'custom', element: <>{theme(more)}</>, hidesSharedBackground: true });
   return items;
@@ -181,6 +200,9 @@ function BarTitle({ name, width, glyph, docked, scrollY, smallAt }: { name: stri
   );
 }
 
+/** iOS 26's gap between separate glass items, and Edit's prominent pill. */
+const IOS_ITEM_GAP = space.sm;
+const IOS_EDIT = 64;
 const ICON = layout.minTapTarget + space.xs;
 /** "Edit" in the caption face with its padding. */
 const EDIT_TEXT = 64;
@@ -189,6 +211,7 @@ const styles = StyleSheet.create({
   title: { flexDirection: 'row', alignItems: 'center', gap: space.sm },
   glyph: { width: DOCKED, height: DOCKED },
   name: { flex: 1 },
+  iosName: { position: 'absolute', justifyContent: 'center', pointerEvents: 'none' },
   right: { flexDirection: 'row', alignItems: 'center' },
   icon: { width: ICON, height: ICON, alignItems: 'center', justifyContent: 'center' },
   edit: { height: space.xl + space.lg, minWidth: EDIT_TEXT, alignItems: 'center', justifyContent: 'center', paddingHorizontal: space.lg },

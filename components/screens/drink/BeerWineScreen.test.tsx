@@ -1,4 +1,5 @@
-import { act, screen } from '@testing-library/react-native';
+import { act, fireEvent, screen } from '@testing-library/react-native';
+import { Fragment, type ReactNode } from 'react';
 import 'react-native-gesture-handler/jestSetup';
 
 import { renderWithProviders } from '@/jest.setup';
@@ -10,7 +11,7 @@ jest.mock('burnt', () => ({ toast: jest.fn() }));
 
 const mockPush = jest.fn();
 // The page's tools sit in the native bar, so they arrive as the stack's options.
-const mockOptions: { unstable_headerRightItems?: () => { label?: string; accessibilityLabel?: string; onPress?: () => void }[] } = {};
+const mockOptions: { unstable_headerRightItems?: () => { type: string; label?: string; accessibilityLabel?: string; onPress?: () => void; element?: ReactNode }[] } = {};
 const mockToggleFavorite = jest.fn();
 const lager = {
   id: 'b1',
@@ -31,6 +32,7 @@ jest.mock('expo-router', () => ({
   useNavigation: () => ({ setOptions: (o: object) => Object.assign(mockOptions, o) }),
   useIsFocused: () => true,
   Redirect: () => null,
+  useSegments: () => [],
 }));
 jest.mock('@/hooks/useShareSlug', () => ({ useShareSlug: () => ({ data: 'little-rye-lager' }) }));
 jest.mock('@/hooks/useBeers', () => ({ useBeer: (id: string) => ({ data: id === 'b1' ? lager : undefined, isPending: false, error: null, refetch: jest.fn() }) }));
@@ -58,6 +60,9 @@ test('a beer reads like a drink page: its style, maker, then tastes and the fact
   const barItem = (name: string) => mockOptions.unstable_headerRightItems?.().find((i) => (i.accessibilityLabel ?? i.label) === name);
   await act(async () => barItem('Add to favorites')?.onPress?.());
   expect(mockToggleFavorite).toHaveBeenCalledWith('beer-b1');
-  await act(async () => barItem('Edit beer')?.onPress?.());
+  // Edit is the board's ink pill, a custom item: render the bar's custom items and press it.
+  const custom = mockOptions.unstable_headerRightItems?.().filter((i) => i.type === 'custom') ?? [];
+  await renderWithProviders(<>{custom.map((i, n) => <Fragment key={n}>{i.element}</Fragment>)}</>);
+  fireEvent.press(screen.getByLabelText('Edit beer'));
   expect(mockPush).toHaveBeenCalledWith('/beer/beer-b1/edit');
 });
