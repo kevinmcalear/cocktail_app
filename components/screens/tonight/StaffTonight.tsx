@@ -13,6 +13,7 @@ import { plural } from '@/lib/menus';
 import type { NightPhase } from '@/lib/nightPhase';
 
 import { BeforeDoors, NeedsYou, OffTonight, OnShift } from './BeforeDoors';
+import type { NightHandover } from './NightHandover';
 import { HeroTrio, ListHead, NoteCard, TonightSection } from './TonightParts';
 import type { useStaffTonight } from './useStaffTonight';
 
@@ -76,7 +77,7 @@ function DrinkGrid({ block }: { block: TonightBlock }) {
   );
 }
 
-type Part = 'service' | 'off' | 'doors' | 'needs' | 'learn' | 'shift' | 'week';
+type Part = 'leave' | 'service' | 'off' | 'doors' | 'needs' | 'learn' | 'shift' | 'handover' | 'week';
 
 /**
  * Tonight by the hour (Loop-tonight, decided 1 Nov): before doors, the work
@@ -85,16 +86,16 @@ type Part = 'service' | 'off' | 'doors' | 'needs' | 'learn' | 'shift' | 'week';
  * doors and during service, and step aside after close.
  */
 const ORDER: Record<NightPhase, readonly Part[]> = {
-  before: ['off', 'doors', 'needs', 'learn', 'shift', 'week'],
-  service: ['service', 'off', 'shift', 'week'],
-  after: ['doors', 'shift', 'learn', 'week'],
+  before: ['off', 'doors', 'needs', 'learn', 'shift', 'handover', 'week'],
+  service: ['service', 'off', 'shift', 'handover', 'week'],
+  after: ['leave', 'doors', 'shift', 'learn', 'week'],
 };
 
 /** Whether the night shows its lists first (not after close). */
 export const showsLists = (phase: NightPhase) => phase !== 'after';
 
 /** The sections after the lists, in the night's order: the column beside the lists when wide. */
-export function StaffSide({ t, barId, wide }: { t: Staff; barId: string; wide: boolean }) {
+export function StaffSide({ t, barId, wide, handover }: { t: Staff; barId: string; wide: boolean; handover: NightHandover }) {
   const parts = ORDER[t.phase].filter((p) => !(wide && p === 'service'));
   const after = t.phase === 'after';
   const router = useRouter();
@@ -104,6 +105,10 @@ export function StaffSide({ t, barId, wide }: { t: Staff; barId: string; wide: b
       {after ? <TonightSetupBanner barId={barId} /> : null}
       {parts.map((p) => {
         switch (p) {
+          case 'leave':
+            return <View key={p}>{handover.leave}</View>;
+          case 'handover':
+            return <View key={p}>{handover.section}</View>;
           case 'service':
             return <ServiceRows key={p} t={t} />;
           case 'off':
