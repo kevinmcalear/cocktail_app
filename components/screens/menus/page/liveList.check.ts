@@ -45,6 +45,18 @@ assert.deepEqual(out.lead?.rows[0].acts?.map((a) => a.kind), ['approve', 'turnDo
 assert.equal(out.main[0].rows.length, 0);
 assert.equal(out.coming?.rows[0].flag?.label, '11-06');
 
+// Taken off, put back and taken off again today (an approved ask after an Undo): one struck row, the latest run's.
+out = liveList({
+  ...base,
+  sections: [{ id: 's', name: 'Shaken', rows: [view('daiquiri')] }],
+  rows: [row('daiquiri')],
+  ended: [{ ...ended('jack'), cameOff: '2026-11-01T17:00:00Z', wentOn: '2026-11-01T16:30:00Z' }, ended('jack')],
+  endedDrinks: new Map([['jack', drink('jack')]]),
+  may: true,
+});
+assert.deepEqual(out.main[0].rows.map((r) => [r.drink.id, !!r.struck]), [['daiquiri', false], ['jack', true]]);
+assert.equal(out.main[0].rows[1].line, 'Off today · its run is kept: 11-01 to 11-01');
+
 // Back on after Undo: no struck row.
 out = liveList({ ...base, sections: [{ id: 's', name: 'Shaken', rows: [view('jack')] }], rows: [row('jack')], ended: [ended('jack')], endedDrinks: new Map([['jack', drink('jack')]]), may: true });
 assert.equal(out.main[0].rows.length, 1);

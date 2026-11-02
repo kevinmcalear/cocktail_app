@@ -1,4 +1,4 @@
-import { useRouter, type Href } from 'expo-router';
+import { useRouter, useSitemap, type Href, type SitemapType } from 'expo-router';
 import { useState } from 'react';
 import { Alert, FlatList, Platform, StyleSheet, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
@@ -23,6 +23,11 @@ import { DailyChangesSheet, DailyDaySheet, DailyNoteSheet } from './DailySheets'
 import { MenuPageGroup } from './MenuPageGroup';
 import { MenuPageHead } from './MenuPageHead';
 import { MenuPageRow, type PageRowView } from './MenuPageRow';
+
+// ponytail: the print set's route (/print/sheet, Bet-print) comes with #1101, on another stack.
+// Until it is in the app the Print entry stays hidden instead of opening Page not found.
+// Once #1101 is on main, drop this and show the entry always.
+const hasRoute = (node: SitemapType | null, file: string): boolean => !!node && (node.contextKey.endsWith(file) || node.children.some((c) => hasRoute(c, file)));
 
 type Item = { key: string; head?: { name: string; count: number }; row?: DailyRow; on?: boolean };
 
@@ -109,7 +114,8 @@ function DailyBody({ menu }: { menu: MenuDetail }) {
         { label: 'Another day', value: [dayText(yesterday), list.yesterdayCount === null ? null : `${list.yesterdayCount} ${list.yesterdayCount === 1 ? 'drink' : 'drinks'}`].filter(Boolean).join(' · '), onPress: () => setSheet('day') },
       ]
     : [];
-  const print = () => go(`/print/list?menu=${menu.id}&print=1`);
+  const print = () => go(`/print/sheet?kind=list&menu=${menu.id}&print=1`);
+  const printable = hasRoute(useSitemap(), 'print/sheet.tsx');
   const android = Platform.OS === 'android';
   const column = { paddingHorizontal: gutter, maxWidth: wide ? 760 : undefined, width: '100%', alignSelf: sidebar ? 'flex-start' : 'center' } as const;
 
@@ -167,10 +173,10 @@ function DailyBody({ menu }: { menu: MenuDetail }) {
         }
         ListFooterComponent={staff ? undefined : <Caption tone="muted" style={[column, styles.after]}>{DAILY_AFTER}</Caption>}
       />
-      {staff && android ? <ExtendedFab label="Print tonight’s list" icon="printer" onPress={print} style={{ bottom: insets.bottom + space.lg }} /> : null}
-      {staff && !android ? (
+      {staff && android && printable ? <ExtendedFab label="Print tonight’s list" icon="printer" onPress={print} style={{ bottom: insets.bottom + space.lg }} /> : null}
+      {staff && !android && (printable || may) ? (
         <View style={[styles.bottom, { paddingBottom: insets.bottom + space.md, paddingHorizontal: gutter, backgroundColor: ds.c.ground }]}>
-          <Button label="Print tonight’s list" variant="ink" size="lg" onPress={print} style={[styles.print, { maxWidth: wide ? 520 : undefined }]} />
+          {printable ? <Button label="Print tonight’s list" variant="ink" size="lg" onPress={print} style={[styles.print, { maxWidth: wide ? 520 : undefined }]} /> : null}
           {may ? (
             <Caption tone="muted" align="center">
               Each switch saves as you go

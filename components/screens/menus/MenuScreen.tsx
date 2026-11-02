@@ -1,4 +1,5 @@
-import { useRouter, type Href } from 'expo-router';
+import { useIsFocused, useRouter, type Href } from 'expo-router';
+import { StatusBar } from 'expo-status-bar';
 import { useState } from 'react';
 import { Alert, FlatList, StyleSheet, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
@@ -94,11 +95,13 @@ function MenuPage(props: PageProps) {
   const [now] = useState(() => Date.now());
   const status = menuStatus(props.menu, now);
   const cover = props.menu.barId && status !== 'draft' && status !== 'previous' ? props.menu.coverUrl : null;
-  const tone = usePhotoTone(cover);
+  const [tone, focused] = [usePhotoTone(cover), useIsFocused()];
   // A daily list that's on is Tonight (Menu-l-tonight-*); its draft and past runs read as menus.
   if (props.menu.listType === 'daily' && status === 'on') return <DailyListPage menu={props.menu} />;
   return (
     <BackbarTheme scheme={cover ? tone : undefined}>
+      {/* The page's tone can differ from the phone's, so the clock and battery follow the page; only while it's on top, or a page pushed over it keeps this style. */}
+      {cover && focused ? <StatusBar style={tone === 'dark' ? 'light' : 'dark'} /> : null}
       <MenuPageBody {...props} cover={cover} now={now} />
     </BackbarTheme>
   );
