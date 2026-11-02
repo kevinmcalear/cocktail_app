@@ -43,8 +43,9 @@ export function HomeTonight() {
     <View style={styles.stack}>
       <RankIt />
       <ThisWeek week={week} />
-      {/* Friends' ranks lead (Kept-follow); following nobody yet, the prompt comes after the shelf. */}
+      {/* Kept-follow order: Rank it, This week, Friends (or its prompt), shelf, One bottle away. */}
       <Friends ranks={friends.ranks} />
+      {friends.followsNobody ? <FriendsPrompt /> : null}
       {tiles.length ? (
         <TonightSection title="From your shelf" aside={`${drinks.canMake.length} you can make`} onAside={openShelf}>
           <Tiles>
@@ -54,7 +55,6 @@ export function HomeTonight() {
           </Tiles>
         </TonightSection>
       ) : null}
-      {friends.followsNobody ? <FriendsPrompt /> : null}
       {away && awayLine ? (
         <TonightSection title="One bottle away">
           <NoteCard icon="place.mybar" text={awayLine} onPress={() => router.push(itemHref('Ingredient', away.bottles[0].id) as Href)} />
