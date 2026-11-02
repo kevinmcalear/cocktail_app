@@ -21,6 +21,7 @@ export { ReviewMark, ReviewRow, TextLink, type ReviewChoice, type ReviewState } 
 export { Segmented } from './Segmented';
 export { SpecRow, type SpecRowProps } from './SpecRow';
 export { BreakpointOverride, Surface, useBreakpoint, useGutter, type Breakpoint } from './Surface';
+export { ExtendedFab, type FabIcon } from './ExtendedFab';
 export { Switch } from './Switch';
 export { Tag, type TagTone } from './Tag';
 export { ToastHost, useToast } from './Toast';
@@ -28,7 +29,7 @@ export { TimeField, TimeGrid, TimeRange } from './TimeField';
 export { Body, Caption, Display, DsText, Headline, Spec, Title, type DsTextProps } from './Text';
 export { BackbarTheme, BrandProvider, useDs, type Ds } from './theme';
 export { useDisplayFaces, useLoadedFace } from './faces';
-export { IngredientDrawing } from './IngredientDrawing';
+export { IngredientDrawing, useIngredientColour } from './IngredientDrawing';
 export { EquipmentDrawing } from './EquipmentDrawing';
 export { sheetFrame, sheetIsDialog } from './sheetFrame';
 export { Sheet, useSheetClose, type SheetProps } from './Sheet';
