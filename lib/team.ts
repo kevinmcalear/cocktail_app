@@ -165,10 +165,57 @@ export const INVITE_ROLES: { level: number; detail: string }[] = [
   { level: TEAM_MANAGE, detail: 'Everything, including the team' },
 ];
 
-/** The invite button: "Email Sam an invite", by first name once there is one. */
-export function inviteButtonLabel(name: string): string {
-  const first = name.trim().split(/\s+/)[0];
-  return first ? `Email ${first} an invite` : 'Email an invite';
+/** One row of the invite sheet's As list: a built-in role by its level, or one of the bar's own roles by its id. */
+export interface InviteRoleOption {
+  key: string;
+  label: string;
+  detail: string;
+  level: number;
+  /** Set for a bar's own role (venue_roles.id); null for a built-in one. */
+  roleId: string | null;
+}
+
+/** The built-in roles in the order the board lists them: Bartender, Drink Creator, Employee, then Admin last. */
+const AS_ORDER = [30, 35, 20];
+
+/**
+ * The As list on Invite > By email (Kept-team): the built-in roles up to the
+ * inviter's ceiling, with the bar's own roles (a takeover bartender and the
+ * like) before Admin. A role that has ended, and an Admin-level role, are
+ * left out: invite_to_role refuses both, and an Admin is invited by level.
+ */
+export function inviteRoleOptions(
+  ceiling: number,
+  matrix: { role_id: string | null; name: string | null; base_level: number; ends_at: string | null }[] | undefined,
+  now: number = Date.now(),
+): InviteRoleOption[] {
+  const built = (level: number): InviteRoleOption => ({
+    key: `level:${level}`,
+    label: roleLabel(level),
+    detail: INVITE_ROLES.find((r) => r.level === level)!.detail,
+    level,
+    roleId: null,
+  });
+  const own = (matrix ?? [])
+    .filter((r) => r.role_id && r.name && r.base_level < TEAM_MANAGE && r.base_level <= ceiling && (!r.ends_at || Date.parse(r.ends_at) > now))
+    .map((r): InviteRoleOption => {
+      const until = r.ends_at ? new Date(r.ends_at) : null;
+      const base = INVITE_ROLES.find((b) => b.level === r.base_level)?.detail ?? 'Menus and where things live';
+      return {
+        key: `role:${r.role_id}`,
+        label: r.name!,
+        detail: until ? `${base}, until ${until.getDate()} ${MONTHS[until.getMonth()]}` : base,
+        level: r.base_level,
+        roleId: r.role_id,
+      };
+    })
+    .sort((a, b) => a.label.localeCompare(b.label));
+  return [...AS_ORDER.filter((l) => l <= ceiling).map(built), ...own, ...(TEAM_MANAGE <= ceiling ? [built(TEAM_MANAGE)] : [])];
+}
+
+/** Whether what's typed is an email (one @ with something either side), as add_user_to_bar_by_email reads it. */
+export function looksLikeEmail(text: string): boolean {
+  return /^[^@\s]+@[^@\s]+$/.test(text.trim());
 }
 
 /**

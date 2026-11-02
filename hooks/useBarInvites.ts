@@ -13,6 +13,8 @@ export interface BarInvite {
   bar_id: string;
   email: string;
   role_level: number;
+  /** The bar's own role it invites onto (venue_roles.id), when it isn't one of the built-in levels. */
+  venue_role_id: string | null;
   /** What the admin called them, if anything. */
   name: string | null;
   /** A line just for them, under the welcome message in their email. */
@@ -20,7 +22,7 @@ export interface BarInvite {
   created_at: string;
 }
 
-const COLUMNS = 'id, bar_id, email, role_level, name, note, created_at';
+const COLUMNS = 'id, bar_id, email, role_level, venue_role_id, name, note, created_at';
 
 /** One of the signed-in person's own invites, with the venue it's for (my_bar_invites). */
 export interface MyInvite {
