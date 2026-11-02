@@ -1,6 +1,6 @@
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { FAVORITES_KEY } from '@/hooks/useFavorites';
-import { ACCOUNT_ALLERGIES_KEY } from '@/hooks/useGuestAllergies';
+import { ACCOUNT_ALLERGIES_KEY } from '@/lib/myAllergies';
 import { STUDY_PILE_KEY } from '@/hooks/useStudyPile';
 import { AI_CONSENT_KEY } from '@/lib/aiConsent';
 import { dropUnsentWrites, isUserQuery } from '@/lib/authCache';

@@ -1,4 +1,4 @@
-import * as Device from 'expo-device';
+import * as Device from '@/lib/realDevice';
 import { Alert, Platform, StyleSheet, View } from 'react-native';
 
 import { Body, Button, Caption, IngredientThumb, Surface } from '@/components/ds';

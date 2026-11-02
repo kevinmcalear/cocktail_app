@@ -3,7 +3,7 @@ import { useState } from 'react';
 import { StyleSheet, View } from 'react-native';
 
 import { Body, Button, Display, Headline, PressableScale, Surface, Tag, useBreakpoint, useDs } from '@/components/ds';
-import { GuestAllergens } from '@/components/allergens/DrinkAllergensLazy';
+import { AllergyLine, GuestAllergens } from '@/components/allergens/DrinkAllergensLazy';
 import { UserAvatar } from '@/components/ui/UserAvatar';
 import { radius, space } from '@/constants/tokens';
 import { useSignedIn } from '@/ctx/AuthContext';
@@ -15,7 +15,6 @@ import { hadOnLine } from '@/lib/collection';
 import type { ItemPicture } from '@/lib/itemImages';
 import { createdByLine, drinkKicker } from '@/lib/publicDrink';
 
-import { AllergyLine } from '../drink/AllergyLine';
 import { RankFlow } from '../rank/RankActions';
 import { useAgeGate } from '../safety/AgeGate';
 import { ReportAction } from '../safety/ReportSheet';
