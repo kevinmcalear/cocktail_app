@@ -8,7 +8,8 @@ import { partWeight } from '../supabase/functions/_shared/flavor';
 import { colorRuleFor } from '../supabase/functions/_shared/sketchRules';
 
 import { parseHex } from './color';
-import { prepAmounts, type PrepDraft } from './prepKinds';
+import type { PrepDraft } from './prepKinds';
+import { prepAmounts } from './prepMath';
 
 export interface PrepShare {
   key: string;

@@ -149,6 +149,7 @@ export const DRINK_PAGE_COLUMNS = `
         unit,
         preparation_notes,
         is_float,
+        is_garnish,
         at_service,
         display_ingredient_id,
         display_ingredient (

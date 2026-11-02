@@ -8,7 +8,7 @@ import { font, radius, space } from '@/constants/tokens';
 import { fileTitle, tally, waitingFor, whenWords } from '@/lib/importReview';
 import { useBringIn } from '@/store/useBringIn';
 
-import { ProgressLine } from './ReviewParts';
+import { ProgressLine } from './ProgressLine';
 
 /**
  * Where you pick a big import up (board eddie-oct22-wave2, Fix 11, top of the

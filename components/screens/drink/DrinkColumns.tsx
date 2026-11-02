@@ -3,6 +3,8 @@ import { ScrollView, StyleSheet, View } from 'react-native';
 
 import { layout, space } from '@/constants/tokens';
 
+import { PhotoEdge } from './PhotoMirror';
+
 /** The pane's width from which the page splits in two (desktop board: 1200 up, less the sidebar). */
 export const COLUMNS_FROM = 900;
 /** The left column: the drawing at up to 400, the name under it. */
@@ -17,7 +19,7 @@ interface DrinkColumnsProps {
   behind?: ReactNode;
   /** The spec and the rest. */
   children: ReactNode;
-  /** A photo fills its column edge to edge; a drawing sits in the gutter. */
+  /** A photo fills its panel edge to edge and fades into the mirror behind the spec; a drawing sits in the gutter. */
   photo?: boolean;
   top: number;
   gutter: number;
@@ -36,7 +38,10 @@ export function DrinkColumns({ side, behind, children, photo, top, gutter }: Dri
   return (
     <View style={styles.row}>
       {behind}
-      <View style={[styles.side, photo ? styles.photo : { paddingTop: bar, paddingLeft: gutter }]}>{side}</View>
+      <View style={[styles.side, photo ? styles.photo : { paddingTop: bar, paddingLeft: gutter }]}>
+        {side}
+        {photo ? <PhotoEdge /> : null}
+      </View>
       <ScrollView style={styles.flex} contentContainerStyle={{ paddingTop: bar + space.lg, paddingBottom: space.xxxl, paddingHorizontal: gutter + space.lg }}>
         <View style={styles.text}>{children}</View>
       </ScrollView>
@@ -47,7 +52,7 @@ export function DrinkColumns({ side, behind, children, photo, top, gutter }: Dri
 const styles = StyleSheet.create({
   row: { flex: 1, flexDirection: 'row' },
   side: { width: SIDE, gap: space.lg },
-  photo: { width: SIDE + space.xxxl, overflow: 'hidden' },
+  photo: { width: layout.photoPanel, overflow: 'hidden' },
   flex: { flex: 1 },
   text: { maxWidth: TEXT, width: '100%' },
 });
