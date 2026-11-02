@@ -4,8 +4,8 @@ import { AccessibilityInfo, Animated, PanResponder, Platform, StyleSheet, View }
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import { IconSymbol } from '@/components/ui/icon-symbol';
-import { font, layout, radius, space, springs } from '@/constants/tokens';
-import { withAlpha } from '@/lib/color';
+import { font, layout, radius, space, springs, STATUS } from '@/constants/tokens';
+import { toastWarnInk, withAlpha } from '@/lib/color';
 import { useToastStore, type Toast } from '@/store/useToastStore';
 
 import { GlassSurface } from './Glass';
@@ -20,7 +20,8 @@ const NATIVE = Platform.OS !== 'web';
 /**
  * Shows a toast from anywhere (board KittyDone): a title, a line under it and
  * one action, like Undo. The action takes this screen's accent. A new toast
- * replaces the one showing.
+ * replaces the one showing. A save or change that was refused passes
+ * `tone: 'error'`, so it never wears the success tick.
  */
 export function useToast() {
   const ds = useDs();
@@ -28,7 +29,7 @@ export function useToast() {
   const hide = useToastStore((s) => s.hide);
   return {
     show: (toast: Omit<Toast, 'id' | 'accent'>) => {
-      if (NATIVE) void Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
+      if (NATIVE) void Haptics.notificationAsync(toast.tone === 'error' ? Haptics.NotificationFeedbackType.Error : Haptics.NotificationFeedbackType.Success);
       return show({ ...toast, accent: ds.accentText });
     },
     hide,
@@ -36,13 +37,25 @@ export function useToast() {
 }
 
 /**
- * The toast itself, mounted once at the root: a glass pill floating above the
- * bottom edge (bottom centre on the web), announced politely, gone after five
- * seconds, a swipe or a tap. With Reduce Motion on it fades instead of
+ * The toast itself, mounted at the root and in each Sheet: a glass pill floating above the
+ * bottom edge (bottom centre on the web), announced politely (an error as an
+ * alert), gone after five
+ * seconds (an error stays), a swipe or a tap. With Reduce Motion on it fades instead of
  * springing up.
  */
+let nextHost = 1;
+
 export function ToastHost() {
-  const toast = useToastStore((s) => s.toast);
+  // Mounted at the root and inside every Sheet: the newest host draws, so a
+  // toast shown from an open sheet lands on top of it, not under its window.
+  const [host] = useState(() => nextHost++);
+  useEffect(() => {
+    useToastStore.getState().addHost(host);
+    return () => useToastStore.getState().removeHost(host);
+  }, [host]);
+  const top = useToastStore((s) => s.hosts[s.hosts.length - 1] === host);
+  const stored = useToastStore((s) => s.toast);
+  const toast = top ? stored : null;
   // Kept while it slides away, after the store has moved on.
   const [shown, setShown] = useState<Toast | null>(null);
   if (toast && toast !== shown) setShown(toast);
@@ -78,7 +91,8 @@ export function ToastHost() {
   useEffect(() => {
     if (toast) {
       drag.setValue({ x: 0, y: 0 });
-      const t = setTimeout(() => useToastStore.getState().hide(toast.id), SHOW_MS);
+      // A refused save stays until it is tapped, swiped away or replaced (board Sta-errors draws it as a prompt that stays).
+      const t = toast.tone === 'error' ? undefined : setTimeout(() => useToastStore.getState().hide(toast.id), SHOW_MS);
       const enter = still
         ? Animated.timing(move, {
             toValue: 1,
@@ -108,6 +122,9 @@ function ToastPill({ toast, move, drag, still, handlers }: { toast: Toast; move:
   const ds = useDs();
   const insets = useSafeAreaInsets();
   const hide = () => useToastStore.getState().hide(toast.id);
+  const error = toast.tone === 'error';
+  // The board's warn look: the amber triangle, on an amber wash.
+  const amber = toastWarnInk(STATUS.warning, ds.c.raised, ds.c.ground).ink;
   const rise = still ? 0 : move.interpolate({ inputRange: [0, 1], outputRange: [space.xxl, 0] });
   return (
     <View pointerEvents="box-none" style={[styles.layer, { bottom: insets.bottom + space.lg + (toast.lift ?? 0) }]}>
@@ -124,8 +141,9 @@ function ToastPill({ toast, move, drag, still, handlers }: { toast: Toast; move:
         {/* Thicker than a glass button: words sit on it, so what scrolls behind must not read through. */}
         <GlassSurface style={styles.pill}>
           <View style={[styles.fill, { backgroundColor: withAlpha(ds.c.raised, 0.85) }]}>
-            <PressableScale role="status" aria-live="polite" accessibilityLabel={[toast.title, toast.detail].filter(Boolean).join('. ')} accessibilityHint="Closes it" haptic={false} onPress={hide} style={styles.body}>
-              <IconSymbol name="checkmark" size={16} color={toast.accent ?? ds.accentText} />
+            {error ? <View pointerEvents="none" style={[StyleSheet.absoluteFill, { backgroundColor: withAlpha(STATUS.warning, 0.16) }]} /> : null}
+            <PressableScale role={error ? 'alert' : 'status'} aria-live={error ? 'assertive' : 'polite'} accessibilityLabel={[toast.title, toast.detail].filter(Boolean).join('. ')} accessibilityHint="Closes it" haptic={false} onPress={hide} style={styles.body}>
+              <IconSymbol name={error ? 'exclamationmark.triangle' : 'checkmark'} size={error ? 18 : 16} color={error ? amber : (toast.accent ?? ds.accentText)} />
               <View style={styles.text}>
                 <DsText variant="label" numberOfLines={2} style={styles.title}>
                   {toast.title}
