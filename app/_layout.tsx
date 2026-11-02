@@ -4,11 +4,11 @@ import {
     ThemeProvider,
 } from "expo-router/react-navigation";
 import { PersistQueryClientProvider } from '@tanstack/react-query-persist-client';
-import { Toaster } from 'burnt/web';
 import { Stack, usePathname, useRouter, useSegments } from "expo-router";
 import { loadAsync, useFonts } from 'expo-font';
 import { Observe, ObserveRoot, useObserve } from 'expo-observe';
 import { WebHead } from '@/components/WebHead';
+import { WebToaster } from '@/components/WebToaster';
 import { StatusBar } from "expo-status-bar";
 import { GestureRoot } from '@/components/ds/GestureRoot';
 import { useEffect } from "react";
@@ -268,7 +268,7 @@ function RootLayout() {
         </AuthProvider>
         <DialogHost />
         <ToastHost />
-        {Platform.OS === 'web' ? <Toaster /> : null}
+        <WebToaster />
       </GestureRoot>
     </PersistQueryClientProvider>
   );
