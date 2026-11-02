@@ -42,10 +42,10 @@ const PHONE_HERO = 300;
  * how it's made in small sheets; photos, story and team notes. Replaces the
  * old editor form (decided 15 Oct 2026). Drafts open the same page (DraftEditScreen).
  */
-export function DrinkEditScreen({ id, onExit, openOn }: { id: string; onExit: () => void; openOn?: OpenOn }) {
+export function DrinkEditScreen({ id, onExit, openOn, inSheet }: { id: string; onExit: () => void; openOn?: OpenOn; inSheet?: boolean }) {
   return (
     <EditBrand barId={useCocktail(id).data?.bar_id}>
-      <SavedDrinkEdit id={id} onExit={onExit} openOn={openOn} />
+      <SavedDrinkEdit id={id} onExit={onExit} openOn={openOn} inSheet={inSheet} />
     </EditBrand>
   );
 }
@@ -66,12 +66,13 @@ export function EditBrand({ barId, children }: { barId: string | null | undefine
 /** The sheet editing opens on: Fit it to the glass, or the photos (the drink page's Photos button). */
 export type OpenOn = 'fit' | 'photos';
 
-function SavedDrinkEdit({ id, onExit, openOn }: { id: string; onExit: () => void; openOn?: OpenOn }) {
-  return <EditPage editor={useCocktailEditor(id)} id={id} onExit={onExit} openOn={openOn} />;
+function SavedDrinkEdit({ id, onExit, openOn, inSheet }: { id: string; onExit: () => void; openOn?: OpenOn; inSheet?: boolean }) {
+  return <EditPage editor={useCocktailEditor(id)} id={id} onExit={onExit} openOn={openOn} inSheet={inSheet} />;
 }
 
 /** The page for a saved drink (`id`) or a draft (`id` null): a draft's Done keeps it a draft, and More publishes it. `openOn` opens on one of its sheets. */
-export function EditPage({ editor, id, onExit, openOn }: { editor: DrinkEditor; id: string | null; onExit: () => void; openOn?: OpenOn }) {
+/** `inSheet`: on iOS this route is a modal sheet, which starts below the status bar. */
+export function EditPage({ editor, id, onExit, openOn, inSheet }: { editor: DrinkEditor; id: string | null; onExit: () => void; openOn?: OpenOn; inSheet?: boolean }) {
   const ds = useDs();
   const router = useRouter();
   const insets = useSafeAreaInsets();
@@ -80,7 +81,7 @@ export function EditPage({ editor, id, onExit, openOn }: { editor: DrinkEditor; 
   // A wide desktop window: the finished drink on a phone, on the right (dec-23).
   const roomy = useWindowDimensions().width >= PREVIEW_ROOM;
   // The drink page opens as a page sheet on iOS, which starts below the status bar (as DrinkScreen).
-  const top = Platform.OS === 'ios' ? space.sm : insets.top;
+  const top = inSheet && Platform.OS === 'ios' ? space.sm : insets.top;
   const cocktail = useCocktail(id ?? undefined).data;
   const fill = useDraftGlassFill(editor, cocktail);
   const draft = 'draftId' in editor ? editor : null;
