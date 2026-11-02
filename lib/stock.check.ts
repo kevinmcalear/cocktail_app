@@ -70,4 +70,5 @@ console.log('stock: ok');
   assert.equal(madeLine(undefined, ml(1500)), '1.5 L left');
   assert.equal(madeLine(undefined, ml(0)), 'None left');
   assert.equal(madeLine(undefined, undefined), null);
+  assert.equal(madeLine(undefined, { kind: 'count', value: 2, unit: 'batch' }), '2 batches left');
 }

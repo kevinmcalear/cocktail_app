@@ -10,7 +10,7 @@ import { useDrinkAllergens } from '@/hooks/useAllergens';
 import { useToolsFor } from '@/hooks/useBarKit';
 import { useMyProfile } from '@/hooks/useMyProfile';
 import { useLearnYield, type PrepCardData } from '@/hooks/usePrepCard';
-import { prepAllergenNames } from '@/lib/allergens';
+import { prepAllergenNames } from '@/lib/allergenWords';
 import { initials, stepParts, timerFromText, useByDate } from '@/lib/makeSteps';
 import { siteOrigin } from '@/lib/venueLink';
 import { toQuantity } from '@/lib/quantity';

@@ -29,7 +29,7 @@ const BACK = 48;
  * search view, with the bottom nav bar put away (AppTabs.tsx). One pill holds
  * Back, the field, Clear, the camera and the place; results scroll below.
  */
-export function TopSearch({ query, setQuery, scope, setScope, mine, area, onShowOnMap, focused }: SearchTabState) {
+export function TopSearch({ query, setQuery, scope, setScope, mine, area, focused }: SearchTabState) {
   const ds = useDs();
   const roles = useMaterialRoles();
   const gutter = useGutter();
@@ -91,7 +91,7 @@ export function TopSearch({ query, setQuery, scope, setScope, mine, area, onShow
         contentContainerStyle={{ paddingHorizontal: gutter, paddingTop: space.md, paddingBottom: Math.max(keyboard, insets.bottom) + space.lg, gap: space.lg }}
       >
         <DrawnSearch value>
-          <SearchBody query={query} scope={scope} onScope={setScope} mine={mine} area={area} onShowOnMap={onShowOnMap} typeAhead={setQuery} />
+          <SearchBody query={query} scope={scope} onScope={setScope} mine={mine} area={area} typeAhead={setQuery} />
         </DrawnSearch>
       </ScrollView>
     </View>

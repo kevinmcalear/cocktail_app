@@ -1,7 +1,7 @@
 import { useState } from 'react';
 
 import { useDrinkAllergens } from '@/hooks/useAllergens';
-import { fromStaff } from '@/lib/allergens';
+import { fromStaff } from '@/lib/allergenWords';
 import type { SpecLine } from '@/lib/spec';
 
 import { AllergenCheckSheet } from './AllergenCheckSheet';

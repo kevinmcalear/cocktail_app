@@ -159,23 +159,11 @@ function RootLayoutNav() {
               options={{ presentation: "modal", headerShown: false }}
             />
             <Stack.Screen
-              name="beer/[id]/index"
-              options={{ presentation: "modal", headerShown: false }}
-            />
-            <Stack.Screen
               name="beer/[id]/edit"
               options={{ presentation: "modal", headerShown: false }}
             />
             <Stack.Screen
-              name="wine/[id]/index"
-              options={{ presentation: "modal", headerShown: false }}
-            />
-            <Stack.Screen
               name="wine/[id]/edit"
-              options={{ presentation: "modal", headerShown: false }}
-            />
-            <Stack.Screen
-              name="ingredient/[id]/index"
               options={{ presentation: "modal", headerShown: false }}
             />
             <Stack.Screen
@@ -187,8 +175,7 @@ function RootLayoutNav() {
               name="ingredient/[id]/make"
               options={{ presentation: "fullScreenModal", headerShown: false, gestureEnabled: false }}
             />
-            {/* Redesign routes. Declared here because on iOS, a screen pushed over a modal
-                (the drink or ingredient page) ignores headerShown set from inside it. */}
+            {/* Declared here because on iOS, a screen pushed over a modal ignores headerShown set from inside it. */}
             <Stack.Screen name="back-bar" options={{ headerShown: false }} />
             <Stack.Screen name="team" options={{ headerShown: false }} />
             <Stack.Screen name="bring-in/index" options={{ headerShown: false }} />

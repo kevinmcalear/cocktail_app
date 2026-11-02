@@ -4,7 +4,8 @@ import assert from 'node:assert/strict';
 
 import { isGarnishLine } from './batch';
 import { specLines } from './spec';
-import { defaultSpecView, garnishLabel, garnishNames, goesOutLine, lineRole, methodLine, methodVerb, pickSpecView, scaledAmount, serveLine, snapToJigger, specGroups } from './specView';
+import { garnishLabel, garnishNames, goesOutLine, lineRole, methodLine } from './specLines';
+import { defaultSpecView, methodVerb, pickSpecView, scaledAmount, serveLine, snapToJigger, specGroups } from './specView';
 
 // Who is looking decides the default; a person's own pick sticks over it.
 assert.equal(defaultSpecView(true), 'steps');

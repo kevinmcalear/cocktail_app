@@ -10,7 +10,7 @@ import { LoveBarButton } from '@/components/screens/kept/LoveBarButton';
 import { space } from '@/constants/tokens';
 import type { AreaRanking, RankEntry } from '@/hooks/useRankings';
 import { useBarVersions } from '@/hooks/useSpecMatches';
-import { formatDistance, rankedCount, usesMiles, type DiscoverRow } from '@/lib/nearMe';
+import { formatDistance, usesMiles } from '@/lib/nearMe';
 import { dayOf, formatScore, type Sentiment } from '@/lib/ranking';
 
 const BAND: Record<Sentiment, string> = { loved: 'Loved', fine: 'Fine', disliked: "Didn't like" };
@@ -118,7 +118,7 @@ type AreaRow = AreaRanking & { distance_km?: number | null; avatar_url?: string 
  * classic spec" or what its variation changes; other lists lead with the logo.
  * `love`: each bar's heart at the end of its row (signed in).
  */
-export function AreaRankList({ rows, classicId, scoreDetail = (r) => `${r.rankers} ranked`, love = false, onShowBar }: { rows: AreaRow[]; classicId?: string; scoreDetail?: (r: AreaRow) => string; love?: boolean; /** Hovering a row opens that bar on the map. */ onShowBar?: (barId: string | null) => void }) {
+export function AreaRankList({ rows, classicId, scoreDetail = (r) => `${r.rankers} ranked`, love = false }: { rows: AreaRow[]; classicId?: string; scoreDetail?: (r: AreaRow) => string; love?: boolean; }) {
   const router = useRouter();
   const pours = useBarVersions(classicId, rows.map((r) => r.venue_profile_id));
   return (
@@ -137,48 +137,10 @@ export function AreaRankList({ rows, classicId, scoreDetail = (r) => `${r.ranker
             barId={r.venue_profile_id}
             drinkId={classicId ? (pour?.itemId ?? classicId) : undefined}
             onPress={() => router.push(`/p/${r.handle || r.venue_profile_id}`)}
-            onHoverIn={onShowBar ? () => onShowBar(r.venue_profile_id) : undefined}
-            onHoverOut={onShowBar ? () => onShowBar(null) : undefined}
             end={love ? <LoveBarButton profileId={r.venue_profile_id} name={r.display_name} /> : undefined}
           />
         );
       })}
-    </View>
-  );
-}
-
-/**
- * Early: bars people have started ranking, below the minimum. No position
- * and no score, only how many people, so nothing reads as a verdict (or
- * gives away a few people's private rankings). `love`: each bar's heart.
- */
-export function EarlyList({ rows, love = false, onShowBar }: { rows: DiscoverRow[]; love?: boolean; /** Hovering a row opens that bar on the map. */ onShowBar?: (barId: string | null) => void }) {
-  const ds = useDs();
-  const router = useRouter();
-  return (
-    <View>
-      {rows.map((r) => (
-        <View key={r.venue_profile_id} style={[styles.row, { borderBottomColor: ds.c.line }]}>
-          <PressableScale
-            role="link"
-            accessibilityLabel={[`${r.display_name}, ${placeOf(r)}`, rankedCount(r.rankers)].filter(Boolean).join('. ')}
-            onPress={() => router.push(`/p/${r.handle || r.venue_profile_id}`)}
-            onHoverIn={onShowBar ? () => onShowBar(r.venue_profile_id) : undefined}
-            onHoverOut={onShowBar ? () => onShowBar(null) : undefined}
-            style={styles.link}
-          >
-            <BarMark logoUrl={r.avatar_url} name={r.display_name} profileId={r.venue_profile_id} size={LOGO} />
-            <View style={styles.flex}>
-              <Headline numberOfLines={1}>{r.display_name}</Headline>
-              <Caption tone="muted" numberOfLines={1}>
-                {placeOf(r)}
-              </Caption>
-            </View>
-            {r.rankers ? <Caption tone="muted">{rankedCount(r.rankers)}</Caption> : null}
-          </PressableScale>
-          {love ? <LoveBarButton profileId={r.venue_profile_id} name={r.display_name} /> : null}
-        </View>
-      ))}
     </View>
   );
 }

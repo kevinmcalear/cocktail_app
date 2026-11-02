@@ -8,7 +8,8 @@ import { useActiveVenue } from '@/hooks/useActiveVenue';
 import { useDrinkAllergens, useItemAllergens, useSetItemAllergens, type AllergenDeclaration } from '@/hooks/useAllergens';
 import { useCapabilities } from '@/hooks/useCapabilities';
 import { useMode } from '@/hooks/useMode';
-import { ALLERGENS, allergenLabel, checkedLine, viaLine, type Allergen } from '@/lib/allergens';
+import { ALLERGENS, allergenLabel, type Allergen } from '@/lib/allergens';
+import { checkedLine, viaLine } from '@/lib/allergenWords';
 
 interface AllergenSectionProps {
   itemId: string;

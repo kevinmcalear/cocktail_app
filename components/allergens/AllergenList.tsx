@@ -4,7 +4,7 @@ import { Caption, DsText, PressableScale, useDs } from '@/components/ds';
 import { IconSymbol } from '@/components/ui/icon-symbol';
 import { font, layout, radius, space, STATUS } from '@/constants/tokens';
 import { withAlpha } from '@/lib/color';
-import { allergenFooter, allergenRows, type AllergenRead } from '@/lib/allergens';
+import { allergenFooter, allergenRows, type AllergenRead } from '@/lib/allergenWords';
 
 interface AllergenListProps {
   read: AllergenRead;

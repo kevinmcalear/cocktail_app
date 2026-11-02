@@ -1,13 +1,16 @@
 import { StyleSheet, View } from 'react-native';
 
-import { DsText, useDs } from '@/components/ds';
+import { DsText, PressableScale, useDs } from '@/components/ds';
 import { IconSymbol } from '@/components/ui/icon-symbol';
 import { radius, space, STATUS } from '@/constants/tokens';
 import { useDrinkAllergens } from '@/hooks/useAllergens';
 import { useGuestDrinkAllergens, useMyAllergies } from '@/hooks/useGuestAllergies';
 import { withAlpha } from '@/lib/color';
-import { allergyMatches, allergyWarning, containsLine } from '@/lib/allergens';
+import { allergyMatches } from '@/lib/allergens';
+import { allergyWarning, containsLine } from '@/lib/allergenWords';
 import { veganWord, withVegan } from '@/lib/dietary';
+
+import { useItemTones } from './MaterialBar';
 
 /**
  * One line, first on the page (boards Decided-who-floor, -guest-hit,
@@ -19,21 +22,23 @@ import { veganWord, withVegan } from '@/lib/dietary';
  * the Allergens section under the spec. Their list never leaves the phone:
  * matching happens here.
  */
-export function AllergyLine({ itemId, guest, ingredients = [] }: { itemId: string; guest: boolean; ingredients?: readonly (string | null)[] }) {
-  return guest ? <GuestLine itemId={itemId} /> : <FloorLine itemId={itemId} ingredients={ingredients} />;
+export function AllergyLine({ itemId, guest, ingredients, onPress }: { itemId: string; guest: boolean; ingredients?: readonly (string | null)[]; onPress?: () => void }) {
+  return guest ? <GuestLine itemId={itemId} /> : <FloorLine itemId={itemId} ingredients={ingredients} onPress={onPress} />;
 }
 
-/** The floor's line, vegan on it from the spec's names: "No allergens · not vegan (honey)". */
-function FloorLine({ itemId, ingredients }: { itemId: string; ingredients: readonly (string | null)[] }) {
+/** The floor's line. With the recipe's names, vegan rides on it (boards Decided-who-floor, Item-page house-made staff: "No allergens · not vegan (honey)"); `onPress` opens the full list. */
+function FloorLine({ itemId, ingredients, onPress }: { itemId: string; ingredients?: readonly (string | null)[]; onPress?: () => void }) {
   const { data } = useDrinkAllergens(itemId);
   // Nothing to declare yet (a beer, or a drink with no spec): no line, rather than a line about nothing.
   if (!data || (data.lines === 0 && !data.allergens.length)) return null;
-  const vegan = veganWord(
-    ingredients,
-    data.allergens.map((a) => a.allergen),
-    data.unchecked === 0,
-  );
-  return <AllergyBox title={withVegan(containsLine(data), vegan)} />;
+  const vegan = ingredients
+    ? veganWord(
+        ingredients,
+        data.allergens.map((a) => a.allergen),
+        data.unchecked === 0,
+      )
+    : null;
+  return <AllergyBox title={withVegan(containsLine(data), vegan)} onPress={onPress} />;
 }
 
 function GuestLine({ itemId }: { itemId: string }) {
@@ -45,12 +50,16 @@ function GuestLine({ itemId }: { itemId: string }) {
 }
 
 /** The tinted line with the warning triangle: the floor's allergens, or a guest's match (hit). */
-export function AllergyBox({ title, body, aside, hit }: { title: string; body?: string; aside?: string; hit?: boolean }) {
+export function AllergyBox({ title, body, aside, hit, onPress }: { title: string; body?: string; aside?: string; hit?: boolean; onPress?: () => void }) {
   const ds = useDs();
-  const ink = hit && ds.scheme === 'dark' ? STATUS.warning : ds.c.ink;
+  // Android's tonal card (And-who-floor, -guest-hit): the page's tone, or the error colours on a match.
+  const tones = useItemTones();
+  const ink = hit ? (tones?.warn.ink ?? (ds.scheme === 'dark' ? STATUS.warning : ds.c.ink)) : ds.c.ink;
+  const fill = tones ? (hit ? tones.warn.fill : tones.card) : hit ? withAlpha(STATUS.danger, ds.scheme === 'dark' ? 0.22 : 0.12) : ds.c.raised;
+  const Box = onPress ? PressableScale : View;
   return (
-    <View role={hit ? 'alert' : 'note'} style={[styles.line, { backgroundColor: hit ? withAlpha(STATUS.danger, ds.scheme === 'dark' ? 0.22 : 0.12) : ds.c.raised }]}>
-      <IconSymbol name="exclamationmark.triangle" size={18} color={ink} />
+    <Box role={hit ? 'alert' : onPress ? 'button' : 'note'} accessibilityHint={onPress ? 'Opens the allergens' : undefined} onPress={onPress} style={[styles.line, tones ? styles.card : null, { backgroundColor: fill }]}>
+      <IconSymbol name="exclamationmark.triangle" size={tones ? 20 : 18} color={ink} />
       <View style={styles.text}>
         <DsText variant="label" color={ink} style={styles.title}>
           {title}
@@ -66,12 +75,14 @@ export function AllergyBox({ title, body, aside, hit }: { title: string; body?: 
           {aside}
         </DsText>
       ) : null}
-    </View>
+      {onPress && !tones ? <IconSymbol name="chevron.right" size={14} color={ds.c.muted} /> : null}
+    </Box>
   );
 }
 
 const styles = StyleSheet.create({
   line: { flexDirection: 'row', alignItems: 'center', gap: space.sm + 2, paddingVertical: space.md, paddingHorizontal: space.md + 2, borderRadius: radius.control + 2, borderCurve: 'continuous' },
+  card: { gap: space.md, paddingHorizontal: space.lg, borderRadius: space.lg },
   text: { flex: 1, gap: 2 },
   title: { fontWeight: '600' },
 });

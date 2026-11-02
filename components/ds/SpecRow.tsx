@@ -1,5 +1,6 @@
-import { StyleSheet, View } from 'react-native';
+import { Platform, StyleSheet, View } from 'react-native';
 
+import { IconSymbol } from '@/components/ui/icon-symbol';
 import { space, type } from '@/constants/tokens';
 
 import { IngredientThumb } from './IngredientThumb';
@@ -43,6 +44,8 @@ export interface SpecRowProps {
   /** Less padding above and below (the drink page, where the whole spec fits on the first screen). */
   dense?: boolean;
   onPress?: () => void;
+  /** It opens a page of its own (a house-made inside a house-made: "Its own recipe: tap it"): a chevron at the end. Android rows ripple instead, as its lists do. */
+  chevron?: boolean;
   /** Tapping the amount alone: the conversions sheet. */
   onPressAmount?: () => void;
   /**
@@ -59,7 +62,7 @@ export interface SpecRowProps {
  * When the amount has its own action, the line splits into two sibling
  * controls (amount, then ingredient) so no button sits inside another.
  */
-export function SpecRow({ amount, unit, ingredient, ingredientId, houseMade, optional, floated, note, flag: flagged, listed, role, detail, scale = 1, dense, onPress, onPressAmount, alignAmount }: SpecRowProps) {
+export function SpecRow({ amount, unit, ingredient, ingredientId, houseMade, optional, floated, note, flag: flagged, listed, role, detail, scale = 1, dense, onPress, onPressAmount, alignAmount, chevron }: SpecRowProps) {
   const ds = useDs();
   const flag = listed ? 'On your list' : flagged;
   const big = (t: Sized) => scaled(t, scale);
@@ -99,12 +102,19 @@ export function SpecRow({ amount, unit, ingredient, ingredientId, houseMade, opt
     </>
   );
   const pictured = ingredientId !== undefined;
+  const more = chevron && Platform.OS !== 'android' ? <IconSymbol name="chevron.right" size={14} color={ds.c.muted} style={styles.chevron} /> : null;
   // The drawing ends the line, against the margin, so amounts and names line up on the left (Eddie E42).
   const name = pictured ? (
     <>
       <View style={styles.text}>{text}</View>
       <IngredientThumb id={ingredientId} name={ingredient} size={36 * scale} />
+      {more}
     </>
+  ) : more ? (
+    <View style={styles.pictured}>
+      <View style={styles.text}>{text}</View>
+      {more}
+    </View>
   ) : (
     text
   );
@@ -174,4 +184,5 @@ const styles = StyleSheet.create({
   pictured: { flexDirection: 'row', alignItems: 'flex-start', gap: space.md },
   text: { flex: 1, gap: space.xs },
   tags: { flexDirection: 'row', gap: space.xs, marginTop: space.xs },
+  chevron: { alignSelf: 'center' },
 });

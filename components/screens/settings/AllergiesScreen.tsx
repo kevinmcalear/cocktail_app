@@ -10,7 +10,8 @@ import { IconSymbol } from '@/components/ui/icon-symbol';
 import { radius, space } from '@/constants/tokens';
 import { useSignedIn } from '@/ctx/AuthContext';
 import { useMyAllergies, useSaveMyAllergies } from '@/hooks/useGuestAllergies';
-import { ALLERGENS, allergyMatches, allergyWarning, type Allergen, type AllergenRead } from '@/lib/allergens';
+import { ALLERGENS, allergyMatches, type Allergen } from '@/lib/allergens';
+import { allergyWarning, type AllergenRead } from '@/lib/allergenWords';
 
 /**
  * Settings › Allergies (board Loop-allergy, "Your allergies"; desktop

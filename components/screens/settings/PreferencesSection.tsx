@@ -4,7 +4,7 @@ import { Platform } from 'react-native';
 
 import { ChoiceChips, ControlRow, RowDivider, SelectRow, SettingsRow, SettingsSection, SwitchRow } from '@/components/screens/settings/SettingsParts';
 import { useMyAllergies } from '@/hooks/useGuestAllergies';
-import { myAllergiesLine } from '@/lib/allergens';
+import { myAllergiesLine } from '@/lib/allergenWords';
 import { hasAiConsent, setAiConsent } from '@/lib/aiConsent';
 import { appIconChoices, currentAppIcon, setAppIcon } from '@/lib/appIcon';
 import { useMaxRealRole, useViewAs } from '@/hooks/useViewAs';
