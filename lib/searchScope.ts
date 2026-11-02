@@ -116,12 +116,3 @@ export function completions(names: readonly string[], query: string, max = 2): s
   }
   return out.sort((a, b) => a.length - b.length).slice(0, max);
 }
-
-const RECENT_SEARCHES = 8;
-
-/** Keeps a word you searched: newest first, once, however it was typed. A letter isn't a search yet. */
-export function rememberSearch(terms: readonly string[], term: string): string[] {
-  const word = term.trim();
-  if (word.length < 2) return [...terms];
-  return [word, ...terms.filter((t) => t.toLowerCase() !== word.toLowerCase())].slice(0, RECENT_SEARCHES);
-}
