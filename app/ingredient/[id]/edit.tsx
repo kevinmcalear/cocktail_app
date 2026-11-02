@@ -1,6 +1,6 @@
 import { useLocalSearchParams, useRouter } from "expo-router";
 
-import { IngredientEditScreen } from "@/components/screens/ingredient/edit/IngredientEditScreen";
+import { IngredientEditScreen } from "@/components/screens/drink/edit/EditRoutesLazy";
 
 /**
  * /ingredient/<id>/edit: the ingredient page in editing, for links (Edit
