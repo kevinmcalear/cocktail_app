@@ -1,13 +1,14 @@
 import { useState } from 'react';
 import { StyleSheet, View } from 'react-native';
 
-import { Body, Button, Chip, Field, GlassButton, Sheet, SheetScrollView, Title } from '@/components/ds';
+import { Body, Button, Chip, Field, GlassButton, Sheet, SheetScrollView, Title, useToast } from '@/components/ds';
 import { space } from '@/constants/tokens';
 import type { HandoverWrite } from '@/hooks/barWrites';
 import type { useHandover } from '@/hooks/useHandover';
+import { useAddHandoverPhoto } from '@/hooks/useHandoverPhoto';
 import { names, ranOutChoices } from '@/lib/handover';
 
-import { HandoverMessage } from './HandoverNote';
+import { HandoverMessage, HandoverPhoto } from './HandoverNote';
 import { TonightLabel } from './TonightParts';
 
 type Handover = ReturnType<typeof useHandover>;
@@ -15,28 +16,37 @@ type Words = NonNullable<HandoverWrite['words']>;
 
 /**
  * Leave the handover (Loop-handover, "Leave it, at close"): what ran out (tap
- * what's listed, or write anything else), what to prep, anything broken. One
+ * what's listed, or write anything else), what to prep, anything broken,
+ * with a photo. One
  * note per close: a second closer's part adds to the first's. It sends with
  * no signal later, like the bar's other writes.
  * Mounted when opened, so it starts from what you left last time.
- * ponytail: no photo of what's broken yet; a picture needs a place to store
- * it that the bar's people can read (a storage policy, Kevin's to approve).
+ * A photo of what's broken uploads when picked (it needs signal), into the
+ * private handover bucket.
  */
-export function HandoverWriteSheet({ h, closeDate, night, houseMade, onLeave, onClose }: { h: Handover; closeDate: string; night: string; houseMade: readonly string[]; onLeave: (words: Words) => void; onClose: () => void }) {
+export function HandoverWriteSheet({ h, barId, closeDate, night, houseMade, onLeave, onClose }: { h: Handover; barId: string; closeDate: string; night: string; houseMade: readonly string[]; onLeave: (words: Words) => void; onClose: () => void }) {
   const others = h.rows.filter((r) => r.close_date === closeDate && r.written_at && r.user_id !== h.me).sort((a, b) => a.written_at!.localeCompare(b.written_at!));
   const own = h.rows.find((r) => r.close_date === closeDate && r.user_id === h.me && r.written_at);
   const [picked, setPicked] = useState<string[]>(own?.ran_out ?? []);
   const [note, setNote] = useState(own?.note ?? '');
   const [prep, setPrep] = useState(own?.prep ?? '');
   const [broken, setBroken] = useState(own?.broken ?? '');
+  const [photo, setPhoto] = useState<string | null>(own?.broken_photo ?? null);
+  const addPhoto = useAddHandoverPhoto(barId);
+  const toast = useToast();
+  const pickPhoto = (): void =>
+    addPhoto.mutate(undefined, {
+      onSuccess: (path) => path && setPhoto(path),
+      onError: (e) => toast.show({ title: 'The photo didn’t upload', detail: e.message, tone: 'error', action: { label: 'Try again', onPress: pickPhoto } }),
+    });
   const lately = h.rows.filter((r) => r.close_date !== closeDate).flatMap((r) => r.ran_out);
   const choices = ranOutChoices(houseMade, lately, picked);
-  const empty = !picked.length && !note.trim() && !prep.trim() && !broken.trim();
+  const empty = !picked.length && !note.trim() && !prep.trim() && !broken.trim() && !photo;
   const toggle = (name: string) => setPicked((list) => (list.includes(name) ? list.filter((n) => n !== name) : [...list, name]));
   const clean = (text: string) => text.trim() || null;
 
   const leave = () => {
-    onLeave({ ranOut: picked, note: clean(note), prep: clean(prep), broken: clean(broken), writtenAt: new Date().toISOString() });
+    onLeave({ ranOut: picked, note: clean(note), prep: clean(prep), broken: clean(broken), brokenPhoto: photo, writtenAt: new Date().toISOString() });
     onClose();
   };
 
@@ -89,6 +99,16 @@ export function HandoverWriteSheet({ h, closeDate, night, houseMade, onLeave, on
           <View style={styles.group}>
             <TonightLabel title="Anything broken" />
             <Field label="Anything broken" hideLabel placeholder="Ice well drains slowly" value={broken} onChangeText={setBroken} multiline maxLength={1000} />
+            {photo ? (
+              <View style={styles.photo}>
+                <HandoverPhoto path={photo} />
+                <Button label="Remove the photo" size="sm" variant="secondary" onPress={() => setPhoto(null)} />
+              </View>
+            ) : (
+              <View style={styles.photoAct}>
+                <Button label={addPhoto.isPending ? 'Adding the photo…' : 'Add a photo'} size="sm" variant="secondary" disabled={addPhoto.isPending} onPress={pickPhoto} />
+              </View>
+            )}
           </View>
         </View>
       </SheetScrollView>
@@ -103,5 +123,7 @@ const styles = StyleSheet.create({
   form: { gap: space.xl, paddingBottom: space.xxl },
   group: { gap: space.sm },
   chips: { flexDirection: 'row', flexWrap: 'wrap', gap: space.sm },
+  photo: { gap: space.sm, alignItems: 'flex-start' },
+  photoAct: { flexDirection: 'row' },
   flex: { flex: 1, minWidth: 0 },
 });

@@ -1,3 +1,4 @@
+import { Image } from 'expo-image';
 import { StyleSheet, View } from 'react-native';
 
 import { Body, Button, Caption, DsText, GlassButton, Sheet, SheetScrollView, Surface, Title, useDs, type IconName } from '@/components/ds';
@@ -5,6 +6,7 @@ import { RowDivider } from '@/components/screens/settings/SettingsParts';
 import { IconSymbol } from '@/components/ui/icon-symbol';
 import { radius, space } from '@/constants/tokens';
 import type { useHandover } from '@/hooks/useHandover';
+import { useHandoverPhoto } from '@/hooks/useHandoverPhoto';
 import type { HandoverLine, HandoverRow } from '@/lib/handover';
 
 import { TonightSection } from './TonightParts';
@@ -37,9 +39,9 @@ export function HandoverMessage({ row, name }: { row: HandoverRow; name: string 
 }
 
 /** A group of the note's lines: an icon, the thing, a line under it, and Log batch where there is one. Not links. */
-function Group({ title, icon, rows, action }: { title: string; icon: IconName; rows: HandoverLine[]; action?: (line: HandoverLine) => React.ReactNode }) {
+function Group({ title, icon, rows, action, children }: { title: string; icon: IconName; rows: HandoverLine[]; action?: (line: HandoverLine) => React.ReactNode; children?: React.ReactNode }) {
   const ds = useDs();
-  if (!rows.length) return null;
+  if (!rows.length && !children) return null;
   return (
     <TonightSection title={title}>
       <Surface style={styles.card}>
@@ -57,6 +59,7 @@ function Group({ title, icon, rows, action }: { title: string; icon: IconName; r
           </View>
         ))}
       </Surface>
+      {children}
     </TonightSection>
   );
 }
@@ -87,7 +90,9 @@ export function HandoverView({ h, onGotIt, onAdd, logBatch, ranOutSub, forNight 
           return log ? <Button label="Log batch" size="sm" variant="secondary" accessibilityLabel={`Log a batch of ${line.name}`} onPress={log} /> : null;
         }}
       />
-      <Group title="Anything broken" icon="exclamationmark.circle" rows={note.broken} />
+      <Group title="Anything broken" icon="exclamationmark.circle" rows={note.broken}>
+        {note.photos.length ? note.photos.map((p) => <HandoverPhoto key={p} path={p} />) : null}
+      </Group>
       <View style={styles.acts}>
         {h.unread ? <Button label="Got it" onPress={onGotIt} expanded /> : <Button label="Add to it" variant="secondary" onPress={onAdd} expanded />}
         {h.readBy ? (
@@ -96,6 +101,17 @@ export function HandoverView({ h, onGotIt, onAdd, logBatch, ranOutSub, forNight 
           </Caption>
         ) : null}
       </View>
+    </View>
+  );
+}
+
+/** A photo of what's broken, from the private handover bucket. */
+export function HandoverPhoto({ path }: { path: string }) {
+  const ds = useDs();
+  const url = useHandoverPhoto(path).data;
+  return (
+    <View role="img" aria-label="Photo of what's broken" style={[styles.photo, { backgroundColor: ds.c.raised }]}>
+      {url ? <Image source={{ uri: url }} style={StyleSheet.absoluteFill} contentFit="cover" /> : null}
     </View>
   );
 }
@@ -137,5 +153,6 @@ const styles = StyleSheet.create({
   // The phone gutter on every platform: the Sheet itself brings no inset.
   sheet: { paddingHorizontal: space.lg },
   sheetHead: { flexDirection: 'row', alignItems: 'center', gap: space.md, paddingVertical: space.md },
+  photo: { width: '100%', maxWidth: 360, aspectRatio: 4 / 3, borderRadius: radius.card, borderCurve: 'continuous', overflow: 'hidden' },
   flex: { flex: 1, minWidth: 0 },
 });

@@ -22,7 +22,7 @@ export function useHandoverRows(barId: string | null, tonight: string | null) {
       since.setDate(since.getDate() - DAYS);
       const { data, error } = await supabase
         .from('handover_notes')
-        .select('close_date, user_id, ran_out, note, prep, broken, written_at, read_at')
+        .select('close_date, user_id, ran_out, note, prep, broken, broken_photo, written_at, read_at')
         .eq('bar_id', barId!)
         .gte('close_date', toDay(since))
         .lte('close_date', tonight!)
