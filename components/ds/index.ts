@@ -3,7 +3,7 @@
 export { Button, type ButtonProps, type IconName } from './Button';
 export { Chip } from './Chip';
 export { DrinkImage, type DrinkImageProps } from './DrinkImage';
-export { DateField } from './DateField';
+export { DateField, DayGrid } from './DateField';
 export { Field, FieldButton, MULTILINE_MAX } from './Field';
 export { DockFade } from './DockFade';
 export { GlassButton, GlassSurface } from './Glass';
@@ -14,6 +14,7 @@ export { SketchTintPicker } from './SketchTintPicker';
 export { LockedSection } from './LockedSection';
 export { LogoImage, type LogoImageProps } from './LogoImage';
 export { PalateFlower } from './PalateFlower';
+export { PickerPanel } from './PickerField';
 export { PopoverMenu, usePopover, type Anchor, type PopoverItem, type PopoverSection } from './PopoverMenu';
 export { PressableScale } from './PressableScale';
 export { ReviewMark, ReviewRow, TextLink, type ReviewChoice, type ReviewState } from './ReviewRow';
@@ -23,7 +24,7 @@ export { BreakpointOverride, Surface, useBreakpoint, useGutter, type Breakpoint 
 export { Switch } from './Switch';
 export { Tag, type TagTone } from './Tag';
 export { ToastHost, useToast } from './Toast';
-export { TimeField, TimeRange } from './TimeField';
+export { TimeField, TimeGrid, TimeRange } from './TimeField';
 export { Body, Caption, Display, DsText, Headline, Spec, Title, type DsTextProps } from './Text';
 export { BackbarTheme, BrandProvider, useDs, type Ds } from './theme';
 export { useDisplayFaces, useLoadedFace } from './faces';

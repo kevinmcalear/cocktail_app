@@ -1,5 +1,6 @@
 import assert from 'node:assert/strict';
 import { completions, groupCatalog, groupLabel, moreCount, moreLabel, PER_GROUP, scopeOptions, showOptions, shows, startScope } from './searchScope';
+import { rememberSearch } from './recentSearches';
 import type { SearchItem } from '@/types/search';
 
 // "All 30" when a tap shows the rest, else a page at a time; nothing once all show.
@@ -76,3 +77,8 @@ assert.equal(shows('drinks', 'menus'), false);
 assert.equal(shows('canmake', 'drinks'), true);
 assert.equal(shows('canmake', 'bars'), false);
 assert.equal(shows('canmake', 'people'), false);
+
+// Recent searches: newest first, once whatever the case, no single letters, eight at most.
+assert.deepEqual(rememberSearch(['negroni', 'amaro'], ' Negroni '), ['Negroni', 'amaro']);
+assert.deepEqual(rememberSearch(['amaro'], 'n'), ['amaro']);
+assert.equal(rememberSearch(['a1', 'a2', 'a3', 'a4', 'a5', 'a6', 'a7', 'a8'], 'mezcal').length, 8);
