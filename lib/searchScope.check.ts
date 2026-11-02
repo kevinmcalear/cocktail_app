@@ -1,5 +1,6 @@
 import assert from 'node:assert/strict';
-import { completions, groupCatalog, groupLabel, moreCount, moreLabel, PER_GROUP, rememberSearch, scopeOptions, showOptions, shows, startScope } from './searchScope';
+import { completions, groupCatalog, groupLabel, moreCount, moreLabel, PER_GROUP, scopeOptions, showOptions, shows, startScope } from './searchScope';
+import { rememberSearch } from './recentSearches';
 import type { SearchItem } from '@/types/search';
 
 // "All 30" when a tap shows the rest, else a page at a time; nothing once all show.

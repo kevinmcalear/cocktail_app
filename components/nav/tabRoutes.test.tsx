@@ -37,7 +37,9 @@ function open(url: string) {
       '(tabs)/(2-drinks)/drinks': page('drinks'),
       '(tabs)/(3-discover)/discover': page('discover'),
       '(tabs)/(4-you)/you': page('you'),
+      '(tabs)/(search)/_layout': () => <Stack screenOptions={{ headerShown: false }} />,
       '(tabs)/(search)/index': page('search'),
+      '(tabs)/(search)/cocktail/[id]/index': page('drink'),
     },
     { initialUrl: url },
   );
@@ -102,4 +104,16 @@ it("returns Discover's search to its map", async () => {
   expect(r.getSegments()).toEqual(['(tabs)', '(3-discover)', 'search']);
   await act(async () => router.dismissTo('/discover'));
   expect(r.getSegments()).toEqual(['(tabs)', '(3-discover)', 'discover']);
+});
+
+// iPhone's search tab ((search), a tab of its own): a result opens on that tab's stack,
+// so Back returns to the results rather than leaving them behind on another tab.
+it("opens a drink from iPhone's search tab on the search tab", async () => {
+  const r = await open('/drinks');
+  await act(async () => router.navigate('/(tabs)/(search)' as never));
+  expect(r.getSegments()).toEqual(['(tabs)', '(search)']);
+  await act(async () => router.push('/cocktail/1'));
+  expect(r.getSegments()).toEqual(['(tabs)', '(search)', 'cocktail', '[id]']);
+  await act(async () => router.back());
+  expect(r.getSegments()).toEqual(['(tabs)', '(search)']);
 });
