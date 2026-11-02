@@ -1,22 +1,10 @@
-import { useMemo, useState, type ReactNode } from 'react';
-import { Platform, StyleSheet, View } from 'react-native';
+import { useState, type ReactNode } from 'react';
 
-import { GlassButton, Title, useToast } from '@/components/ds';
-import { space } from '@/constants/tokens';
-import type { HandoverWrite } from '@/hooks/barWrites';
-import { useHandover, useSaveHandover } from '@/hooks/useHandover';
-import { useSpecBook } from '@/hooks/useSpecBook';
-import { ranOutLine } from '@/lib/handover';
-import { nextNight } from '@/lib/nightPhase';
-import { recipeNames } from '@/lib/tonight';
+import { useHandoverRows } from '@/hooks/useHandoverRows';
+import { toDay } from '@/lib/collection';
 
-import { useLogNow } from './BeforeDoors';
-import { HandoverCard, HandoverSection, LeaveHandover } from './Handover';
-import { HandoverSheet, HandoverView, HandoverWriteSheet } from './HandoverLazy';
+import { HandoverPart } from './HandoverPartsLazy';
 import type { useStaffTonight } from './useStaffTonight';
-
-type Staff = ReturnType<typeof useStaffTonight>;
-type Words = NonNullable<HandoverWrite['words']>;
 
 export interface NightHandover {
   /** On top of Tonight until read. */
@@ -31,90 +19,43 @@ export interface NightHandover {
   sheets: ReactNode;
 }
 
-const weekday = (d: Date) => d.toLocaleDateString(undefined, { weekday: 'long' });
+/** What the handover's parts share: the night and which of the note is open. Each part reads the note itself (useHandover). */
+export interface HandoverState {
+  t: ReturnType<typeof useStaffTonight>;
+  barId: string;
+  wide: boolean;
+  reading: boolean;
+  setReading: (on: boolean) => void;
+  /** The close being written for, or null. */
+  writing: string | null;
+  setWriting: (closeDate: string | null) => void;
+  /** iOS shows one sheet at a time: the writing sheet waits for the note's to go. */
+  next: string | null;
+  setNext: (closeDate: string | null) => void;
+}
 
 /**
  * Tonight's handover (Loop-handover): the note from the last close on top
  * until read, Got it, Add to it, and Leave the handover after close. On
  * phones the note opens in a sheet; wide, beside Tonight (Loop-tonight-desk).
+ * Only the week's rows and what's open live here: a part renders once there
+ * is a note (or an error) to show, and on the web loads then
+ * (HandoverPartsLazy.web.tsx), so Tonight's first load carries none of it.
  */
-export function useNightHandover(t: Staff, barId: string, wide: boolean): NightHandover {
-  const h = useHandover(barId, t.date);
-  const save = useSaveHandover(barId);
-  const toast = useToast();
-  const logNow = useLogNow(t, barId);
+export function useNightHandover(t: HandoverState['t'], barId: string, wide: boolean): NightHandover {
+  const rows = useHandoverRows(barId, t.date ? toDay(t.date) : null);
   const [reading, setReading] = useState(false);
   const [writing, setWriting] = useState<string | null>(null);
-  // iOS shows one sheet at a time: the writing sheet waits for the note's to go.
   const [next, setNext] = useState<string | null>(null);
-
-  const logBatch = (name: string) => {
-    const id = t.houseMadeId(name);
-    return id ? logNow(id, name) : null;
-  };
-  // Tonight's close is for whoever opens tomorrow; the last close's was for whoever opens today.
-  const night = (close: string) => (t.date ? (close === h.tonight ? nextNight(t.date) : weekday(t.date)) : 'the next shift');
-  // Saved here, not in the writing sheet: the sheet closes at once, and a failed send still needs somewhere to say so.
-  const leaveWords = (closeDate: string, words: Words) => {
-    if (!h.me) return;
-    save.mutate({ barId, closeDate, userId: h.me, readAt: words.writtenAt, words }, { onError: (e) => toast.show({ title: 'The handover didn’t save', detail: e.message }) });
-    toast.show({ title: `Handover left for ${night(closeDate)}` });
-  };
-  const gotIt = () => {
-    if (h.last && h.me) save.mutate({ barId, closeDate: h.last.closeDate, userId: h.me, readAt: new Date().toISOString() });
-    setReading(false);
-  };
-  const add = () => {
-    if (!h.last) return;
-    setReading(false);
-    if (Platform.OS === 'ios' && !wide) setNext(h.last.closeDate);
-    else setWriting(h.last.closeDate);
-  };
-  // What ran out, against tonight's lists: "Last Word is off until it comes". The spec book is on the phone already.
-  const book = useSpecBook(h.last ? barId : null).data;
-  const onTonight = useMemo(() => {
-    const ids = new Set(t.blocks.flatMap((b) => b.sections.flatMap((s) => s.drinks.map((d) => d.id))));
-    return (book?.items ?? []).filter((i) => ids.has(i.id)).map((i) => ({ name: i.name, uses: recipeNames(i.recipes).flatMap((l) => (l.ingredient ? [l.ingredient] : [])) }));
-  }, [book, t.blocks]);
-  const view = { h, onGotIt: gotIt, onAdd: add, logBatch, ranOutSub: (item: string) => ranOutLine(item, onTonight), forNight: h.last ? night(h.last.closeDate) : undefined };
-
+  const s: HandoverState = { t, barId, wide, reading, setReading, writing, setWriting, next, setNext };
+  const any = !!rows.data?.length || rows.isError;
   return {
     // Wide, the note open beside Tonight replaces its card.
-    card: wide && reading ? null : <HandoverCard h={h} onRead={() => setReading(true)} />,
-    section: <HandoverSection h={h} onOpen={() => setReading(true)} />,
+    card: any && !(wide && reading) ? <HandoverPart which="card" s={s} /> : null,
+    section: any ? <HandoverPart which="section" s={s} /> : null,
     // Not while loading: the sheet starts from what you left, so it waits for it.
-    leave: h.tonight && !h.isLoading ? <LeaveHandover h={h} night={night(h.tonight)} onWrite={() => setWriting(h.tonight)} /> : null,
-    pane:
-      wide && reading && h.last ? (
-        <View role="region" aria-label="Handover" style={styles.pane}>
-          <View style={styles.head}>
-            <Title role="heading" style={styles.flex}>
-              Handover
-            </Title>
-            <GlassButton accessibilityLabel="Close" icon="xmark" onPress={() => setReading(false)} />
-          </View>
-          <HandoverView {...view} />
-        </View>
-      ) : null,
-    sheets: (
-      <>
-        <HandoverSheet
-          visible={reading && !wide}
-          onClose={() => setReading(false)}
-          onDismiss={() => {
-            if (next) setWriting(next);
-            setNext(null);
-          }}
-          {...view}
-        />
-        {writing ? <HandoverWriteSheet h={h} closeDate={writing} night={night(writing)} houseMade={t.houseMadeNames} onLeave={(words) => leaveWords(writing, words)} onClose={() => setWriting(null)} /> : null}
-      </>
-    ),
+    leave: t.date && !rows.isLoading ? <HandoverPart which="leave" s={s} /> : null,
+    pane: wide && reading ? <HandoverPart which="pane" s={s} /> : null,
+    sheets: <HandoverPart which="sheets" s={s} />,
   };
 }
-
-const styles = StyleSheet.create({
-  pane: { gap: space.lg, paddingTop: space.xl },
-  head: { flexDirection: 'row', alignItems: 'center', gap: space.md },
-  flex: { flex: 1, minWidth: 0 },
-});
