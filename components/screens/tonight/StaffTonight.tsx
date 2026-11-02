@@ -14,7 +14,7 @@ import type { NightPhase } from '@/lib/nightPhase';
 
 import { BeforeDoors, NeedsYou, OffTonight, OnShift } from './BeforeDoors';
 import type { NightHandover } from './NightHandover';
-import { HeroTrio, ListHead, TonightSection } from './TonightParts';
+import { HeroTrio, ListHead, NoteCard, TonightSection } from './TonightParts';
 import type { useStaffTonight } from './useStaffTonight';
 
 type Staff = ReturnType<typeof useStaffTonight>;
@@ -98,6 +98,8 @@ export const showsLists = (phase: NightPhase) => phase !== 'after';
 export function StaffSide({ t, barId, wide, handover }: { t: Staff; barId: string; wide: boolean; handover: NightHandover }) {
   const parts = ORDER[t.phase].filter((p) => !(wide && p === 'service'));
   const after = t.phase === 'after';
+  const router = useRouter();
+  const openLearn = () => router.push('/learn' as Href);
   return (
     <View style={styles.side}>
       {after ? <TonightSetupBanner barId={barId} /> : null}
@@ -116,13 +118,18 @@ export function StaffSide({ t, barId, wide, handover }: { t: Staff; barId: strin
           case 'needs':
             return <NeedsYou key={p} t={t} />;
           case 'learn':
-            return t.learn.length ? (
-              <TonightSection key={p} title="Learn" aside={`${t.learn.length} to read`}>
-                <View role="list">
-                  {t.learn.map((row, i) => (
-                    <LearnRow key={`${row.id}-${i}`} {...row} first={i === 0} />
-                  ))}
-                </View>
+            // All opens Learn (Kept-learn): techniques, kit and pairings. Admins see Needs you here instead (Prod-today-staff), so Learn only with something new.
+            return t.learn.length || !t.admin ? (
+              <TonightSection key={p} title="Learn" aside="All" onAside={openLearn}>
+                {t.learn.length ? (
+                  <View role="list">
+                    {t.learn.map((row, i) => (
+                      <LearnRow key={`${row.id}-${i}`} {...row} first={i === 0} />
+                    ))}
+                  </View>
+                ) : (
+                  <NoteCard icon="book" text="Techniques, kit and pairings" onPress={openLearn} />
+                )}
               </TonightSection>
             ) : null;
           case 'shift':

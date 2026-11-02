@@ -91,6 +91,14 @@
       "destination": "/settings/bar/[id]"
     },
     {
+      "source": "/team/:userId",
+      "destination": "/team/[userId]"
+    },
+    {
+      "source": "/settings/bar/:id/roles/:role",
+      "destination": "/settings/bar/[id]/roles/[role]"
+    },
+    {
       "source": "/settings/bar/:id/features",
       "destination": "/settings/bar/[id]/features"
     },

@@ -17,6 +17,7 @@ import { GARNISH } from './data/garnish';
 import { INFUSE } from './data/infuse';
 import { LAB } from './data/lab';
 import { CARBONATE, COLD, DISTIL, PRESERVE } from './data/more';
+import { SHAKE } from './data/shake';
 import { SYRUP } from './data/syrup';
 import { TEXTURE } from './data/texture';
 import { equipmentById } from './equipment';
@@ -27,15 +28,16 @@ export { EQUIPMENT, EQUIPMENT_KINDS, equipmentById, equipmentMatches, TIER_LABEL
 export { technicalIngredientFor, TECHNICAL_INGREDIENTS, type TechnicalIngredient } from './ingredients';
 
 export const GROUPS: { id: TechniqueGroup; name: string; blurb: string; icon: IconName }[] = [
-  { id: 'foam', name: 'Foams and airs', blurb: 'Shaken heads, siphon foams, airs', icon: 'sparkles' },
-  { id: 'clarify', name: 'Clarify', blurb: 'Agar, gelatin, centrifuge', icon: 'drop.fill' },
+  { id: 'shake', name: 'Shake and stir', blurb: 'Dilution, dry shakes, the whip', icon: 'wineglass' },
+  { id: 'foam', name: 'Foam', blurb: 'Egg white, aquafaba, foamer drops', icon: 'sparkles' },
+  { id: 'clarify', name: 'Clarify', blurb: 'Milk punch, agar, the centrifuge', icon: 'drop.fill' },
   { id: 'wash', name: 'Wash', blurb: 'Milk punch, fat washing', icon: 'mug.fill' },
-  { id: 'infuse', name: 'Infuse', blurb: 'Nitrous, sous vide, cold, tinctures', icon: 'leaf.fill' },
+  { id: 'infuse', name: 'Infuse and smoke', blurb: 'Sous vide, fat-wash, a smoking gun', icon: 'leaf.fill' },
   { id: 'syrup', name: 'Syrups, cordials and acids', blurb: 'By weight, oleo, super juice, falernum, nut milks', icon: 'flask' },
   { id: 'texture', name: 'Texture and body', blurb: 'Body, suspension, spheres, jellies, powders', icon: 'circle.lefthalf.filled' },
   { id: 'carbonate', name: 'Carbonate', blurb: 'CO2 rig and siphon', icon: 'arrow.up' },
   { id: 'cold', name: 'Cold, ice and batching', blurb: 'Clear ice, freezer batches, slush machines, dry ice', icon: 'snowflake' },
-  { id: 'preserve', name: 'Ferment, pickle and dry', blurb: 'Koji, ginger bug, preserved lemons, vinegar, smoke', icon: 'sun.max.fill' },
+  { id: 'preserve', name: 'Ferment and preserve', blurb: 'Shrubs, oleo, cordials', icon: 'sun.max.fill' },
   { id: 'cook', name: 'Heat and cook', blurb: 'Microwave, pressure cooker, caramel, char, nixtamal', icon: 'thermometer.medium' },
   { id: 'garnish', name: 'Garnish', blurb: 'Candied peel, sugar glass, pâte de fruit, rims', icon: 'scissors' },
   { id: 'age', name: 'Age and wood', blurb: 'Barrels, oak, house liqueurs', icon: 'clock' },
@@ -43,7 +45,7 @@ export const GROUPS: { id: TechniqueGroup; name: string; blurb: string; icon: Ic
 ];
 
 export const TECHNIQUES: Technique[] = [
-  ...FOAM, ...CLARIFY, ...WASH, ...INFUSE, ...SYRUP, ...TEXTURE, ...CARBONATE, ...COLD, ...PRESERVE, ...DISTIL,
+  ...SHAKE, ...FOAM, ...CLARIFY, ...WASH, ...INFUSE, ...SYRUP, ...TEXTURE, ...CARBONATE, ...COLD, ...PRESERVE, ...DISTIL,
   ...LAB, ...FERMENT, ...COOK, ...GARNISH, ...AGE, ...KITCHEN,
 ];
 

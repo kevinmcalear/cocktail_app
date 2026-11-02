@@ -2,7 +2,7 @@ import { useRouter } from 'expo-router';
 import { StyleSheet, View } from 'react-native';
 
 import { Body, Caption, DsText, PressableScale, Surface, useDs } from '@/components/ds';
-import { TechniquePage } from '@/components/techniques/TechniquePage';
+import { LEARN_CRUMBS, TechniquePage } from '@/components/techniques/TechniquePage';
 import { font, radius, space } from '@/constants/tokens';
 import { useKit } from '@/hooks/useKit';
 import { canMake, EQUIPMENT, TECHNIQUES, TIER_LABEL, unlocks, type Equipment } from '@/lib/techniques';
@@ -15,6 +15,7 @@ export function EquipmentScreen() {
   return (
     <TechniquePage
       title="My kit"
+      crumbs={LEARN_CRUMBS}
       intro={<Body tone="muted">Tell us what you have. Pots, jars, strainers, a fridge and a freezer are taken as given. Techniques that need something else move to the end.</Body>}
     >
       {/* The count on an ink card, the number big (prep-tech-kit). */}
