@@ -5,7 +5,7 @@ import { Platform, StyleSheet, useWindowDimensions, View } from 'react-native';
 import Animated, { interpolate, useAnimatedReaction, useAnimatedStyle, type SharedValue } from 'react-native-reanimated';
 import { scheduleOnRN } from 'react-native-worklets';
 
-import { BackbarTheme, DsText, PressableScale, useDs } from '@/components/ds';
+import { BackbarTheme, Button, DsText, PressableScale, useDs } from '@/components/ds';
 import { IconSymbol } from '@/components/ui/icon-symbol';
 import { displayFaces, layout, space } from '@/constants/tokens';
 
@@ -92,12 +92,12 @@ export function useItemHeader({ name, on, pane, glyph, scrollY, tuck, controls }
             // The page draws the board's own backing once it slides under the bar, not iOS 26's edge blur over the sky.
             scrollEdgeEffects: { top: 'hidden' },
             headerTitle: () => <View />,
-            unstable_headerRightItems: () => rightItems(tools, ds.c.ink, ds.c.ground, theme),
+            unstable_headerRightItems: () => rightItems(tools, ds.c.ink, theme),
           }
         : { ...shared, headerTitle: () => title, headerRight: () => theme(<RightIcons controls={tools} />) };
     navigation.setOptions(options);
     // eslint-disable-next-line react-hooks/exhaustive-deps -- by value: see `latest` and `moreKey`; glyph joins with docking.
-  }, [navigation, pane, on, name, docking, docked, windowWidth, room, tuck, scrollY, ds.scheme, ds.c.ink, ds.c.ground, save?.saved, save?.icon, save?.label[0], save?.label[1], !!onShare, !!onEdit, editLabel, moreKey]);
+  }, [navigation, pane, on, name, docking, docked, windowWidth, room, tuck, scrollY, ds.scheme, ds.c.ink, save?.saved, save?.icon, save?.label[0], save?.label[1], !!onShare, !!onEdit, editLabel, moreKey]);
 
   // Editing in place takes over the same screen: it draws its own top, so the bar goes with this page.
   useLayoutEffect(() => {
@@ -124,8 +124,8 @@ export function IosBarName({ name, left, right, top, height, scrollY, tuck }: { 
   );
 }
 
-/** iOS's right side: real bar buttons, each in its own glass as the board draws them, Edit filled in the ink. */
-function rightItems({ save, onShare, onEdit, editLabel = 'Edit', more }: Controls, ink: string, ground: string, theme: (node: ReactNode) => ReactNode): NativeStackHeaderItem[] {
+/** iOS's right side: real bar buttons, each in its own glass as the board draws them, and Edit filled in the ink. */
+function rightItems({ save, onShare, onEdit, editLabel = 'Edit', more }: Controls, ink: string, theme: (node: ReactNode) => ReactNode): NativeStackHeaderItem[] {
   const items: NativeStackHeaderItem[] = [];
   if (save) {
     const glyph = save.icon === 'heart' ? 'heart' : 'bookmark';
@@ -139,7 +139,9 @@ function rightItems({ save, onShare, onEdit, editLabel = 'Edit', more }: Control
     });
   }
   if (onShare) items.push({ type: 'button', label: 'Share', icon: { type: 'sfSymbol', name: 'square.and.arrow.up' }, tintColor: ink, sharesBackground: false, onPress: onShare });
-  if (onEdit) items.push({ type: 'button', label: 'Edit', accessibilityLabel: editLabel, variant: 'prominent', tintColor: ink, labelStyle: { color: ground }, sharesBackground: false, onPress: onEdit });
+  // Our own ink pill, not a 'prominent' bar button: on iOS 26 that one's label came out mid-grey (about 3:1)
+  // whatever labelStyle says. The ink Button's label is the ground, 16:1 or better in both schemes.
+  if (onEdit) items.push({ type: 'custom', element: <>{theme(<Button label="Edit" accessibilityLabel={editLabel} variant="ink" size="sm" onPress={onEdit} />)}</>, hidesSharedBackground: true });
   // Its own sheet and button: a custom item, the button drawing its glass.
   if (more) items.push({ type: 'custom', element: <>{theme(more)}</>, hidesSharedBackground: true });
   return items;
