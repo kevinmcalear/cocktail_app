@@ -291,12 +291,23 @@ export const springs = {
 } as const;
 
 /**
- * A drink's drawing at three sizes, in points (decision drawing-sizes,
+ * A drink's drawing at its sizes, in points (decision drawing-sizes,
  * components/ds/DrinkDrawing): a guest's hero (260 to 300), a staff page's
- * smaller hero so the spec stays above the fold, a tile, and a row (56 or
- * more: under that a drawing is a smudge).
+ * smaller hero so the spec stays above the fold, the larger middle of a
+ * menu's three (Menu-page), a tile, a menu page's row, and a row (56 or more:
+ * under that a drawing is a smudge).
  */
-export const drawing = { hero: 280, heroStaff: 180, tile: 160, row: 56 } as const;
+export const drawing = { hero: 280, heroStaff: 180, middle: 206, tile: 160, menuRow: 64, row: 56 } as const;
+
+/**
+ * A menu page's cover photo: it runs 470 down from the top of the screen
+ * (Menu-g-photo-dark), across the page's column (760 at most on a wide
+ * screen). The cover picker crops to this shape.
+ */
+export const menuCover = { height: 470, column: 760 } as const;
+
+/** A menu card's band of drawings or cover on a list of menus (Menu-shelf). */
+export const menuBandHeight = 176;
 
 /** How the colour pours into a drawing as it appears: fills the glass bottom up, after a beat. Reduce Motion skips it. */
 export const pour = { delay: 200, ms: 1100 } as const;

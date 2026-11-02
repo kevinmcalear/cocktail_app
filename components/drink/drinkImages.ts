@@ -11,7 +11,7 @@ import { canUseCamera } from '@/lib/photoAccess';
 import { readPhotoPixels } from '@/lib/photoPixels';
 import { supabase, UPLOAD_CACHE_SECONDS } from '@/lib/supabase';
 import { offerCutout } from '@/store/useCutoutOffer';
-import { LAYOUT_WIDTH, readPhotoLayout } from '@/supabase/functions/_shared/photoLayout';
+import { LAYOUT_WIDTH, readPhotoLayout, shrinkForLayout } from '@/supabase/functions/_shared/photoLayout';
 import type { Insert, Json } from '@/types/db';
 
 /**
@@ -107,9 +107,11 @@ async function sizedCopies(uri: string, png: boolean): Promise<Sized | null> {
  * failing the photo: without it the page is dark with the title under the photo.
  */
 async function photoLayoutOf(uri: string): Promise<{ brightness: number; text_zone: Json } | null> {
-  const pixels = await readPhotoPixels(uri, { width: LAYOUT_WIDTH }).catch(() => null);
+  // Read taller than needed, then shrunk to LAYOUT_WIDTH as the backfill does, so a tall photo still reads at the full width.
+  const pixels = await readPhotoPixels(uri, LAYOUT_WIDTH * 2).catch(() => null);
   if (!pixels) return null;
-  const { brightness, textZone } = readPhotoLayout(pixels.rgba, pixels.width, pixels.height);
+  const small = shrinkForLayout(pixels.data, pixels.width, pixels.data.length / 4 / pixels.width);
+  const { brightness, textZone } = readPhotoLayout(small.rgba, small.width, small.height);
   return { brightness, text_zone: textZone ? { ...textZone } : null };
 }
 
@@ -146,7 +148,7 @@ export async function uploadDrinkPhoto(uri: string, folder: string): Promise<{ i
   const layout = original === 'png' ? null : await photoLayoutOf(sized?.page ?? uri);
   const insert = (row: Insert<'images'>) => supabase.from('images').insert(row).select('id').single();
   let saved = await insert({ url, ...size, ...layout });
-  // Before the photo-layout migration (20261206000000) is in, those columns aren't there yet: the photo still saves.
+  // Before the photo-layout migration (20261206150000) is in, those columns aren't there yet: the photo still saves.
   if (saved.error && layout && /brightness|text_zone/.test(saved.error.message)) saved = await insert({ url, ...size });
   if (saved.error || !saved.data) return null;
   return { id: saved.data.id, url };

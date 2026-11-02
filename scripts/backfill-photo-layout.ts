@@ -1,5 +1,5 @@
 // Reads brightness and quiet room (images.brightness, text_zone,
-// 20261206000000) for photos from before the scan at upload, with the same
+// 20261206150000) for photos from before the scan at upload, with the same
 // reading the phone does (supabase/functions/_shared/photoLayout.ts). Writes
 // nothing else, and skips drawings and cut-outs: they sit on paper.
 //
