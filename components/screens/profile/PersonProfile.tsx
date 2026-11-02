@@ -87,7 +87,7 @@ export function PersonProfile({ profile, columns }: { profile: Profile; columns:
   // Following (Kept-follow): their page's owner, and whether you follow each other. Never on your own page.
   const ownerId = useProfileUserId(mine ? null : profile.id).data ?? null;
   const follow = useFollow(ownerId, profile.display_name);
-  const share = useShareLink(`${siteOrigin()}/p/${profile.handle}`, profile.display_name);
+  const share = useShareLink(`${siteOrigin()}/p/${profile.handle}`, profile.display_name, 'profile');
   const families = Object.fromEntries(Object.entries(useItemFamilies((had.data ?? []).map((d) => d.itemId)).data ?? {}).map(([id, f]) => [id, familyName(f)]));
   const favourite = favouriteFamily((had.data ?? []).map((d) => families[d.itemId]));
   const keeps = !mine && profile.had_mode === 'none';

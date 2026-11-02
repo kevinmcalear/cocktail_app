@@ -1,6 +1,6 @@
 import { useLocalSearchParams, useRouter } from "expo-router";
 
-import { DrinkEditScreen } from "@/components/screens/drink/edit/DrinkEditScreen";
+import { DrinkEditScreen } from "@/components/screens/drink/edit/EditRoutesLazy";
 
 /**
  * /cocktail/<id>/edit: the drink page in editing, for the Library's drink pane
@@ -14,5 +14,5 @@ export default function EditCocktailScreen() {
         if (router.canGoBack()) router.back();
         else router.replace(`/cocktail/${id}`);
     };
-    return <DrinkEditScreen id={id} onExit={exit} openOn={fit === "1" ? "fit" : photos === "1" ? "photos" : undefined} />;
+    return <DrinkEditScreen id={id} onExit={exit} openOn={fit === "1" ? "fit" : photos === "1" ? "photos" : undefined} inSheet />;
 }

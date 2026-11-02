@@ -4,11 +4,11 @@ import {
     ThemeProvider,
 } from "expo-router/react-navigation";
 import { PersistQueryClientProvider } from '@tanstack/react-query-persist-client';
-import { Toaster } from 'burnt/web';
 import { Stack, usePathname, useRouter, useSegments } from "expo-router";
 import { loadAsync, useFonts } from 'expo-font';
 import { Observe, ObserveRoot, useObserve } from 'expo-observe';
 import { WebHead } from '@/components/WebHead';
+import { WebToaster } from '@/components/WebToaster';
 import { StatusBar } from "expo-status-bar";
 import { GestureRoot } from '@/components/ds/GestureRoot';
 import { useEffect } from "react";
@@ -80,6 +80,8 @@ function RootLayoutNav() {
     // releases (/r/<id>), public profiles (/p/<handle>), shared home menus
     // (/m/<id>) and public events (/e/<id>) are public.
     if (segments[0] === 'legal' || segments[0] === 'support' || segments[0] === 'v' || segments[0] === 'dev' || segments[0] === 'd' || segments[0] === 'r' || segments[0] === 'p' || segments[0] === 'm' || segments[0] === 'e') return;
+    // Your allergies are kept on this phone until you sign in (Loop-allergy, At a table, signed out).
+    if (segments[0] === 'settings' && (segments as string[])[1] === 'allergies') return;
     // Signed out, a drink opens as its public card (/d/<id>), which asks you to sign in for the rest.
     const drink = !session && /^\/cocktail\/([^/]+)$/.exec(pathname);
     if (drink) return router.replace(`/d/${drink[1]}`);
@@ -157,23 +159,11 @@ function RootLayoutNav() {
               options={{ presentation: "modal", headerShown: false }}
             />
             <Stack.Screen
-              name="beer/[id]/index"
-              options={{ presentation: "modal", headerShown: false }}
-            />
-            <Stack.Screen
               name="beer/[id]/edit"
               options={{ presentation: "modal", headerShown: false }}
             />
             <Stack.Screen
-              name="wine/[id]/index"
-              options={{ presentation: "modal", headerShown: false }}
-            />
-            <Stack.Screen
               name="wine/[id]/edit"
-              options={{ presentation: "modal", headerShown: false }}
-            />
-            <Stack.Screen
-              name="ingredient/[id]/index"
               options={{ presentation: "modal", headerShown: false }}
             />
             <Stack.Screen
@@ -185,8 +175,7 @@ function RootLayoutNav() {
               name="ingredient/[id]/make"
               options={{ presentation: "fullScreenModal", headerShown: false, gestureEnabled: false }}
             />
-            {/* Redesign routes. Declared here because on iOS, a screen pushed over a modal
-                (the drink or ingredient page) ignores headerShown set from inside it. */}
+            {/* Declared here because on iOS, a screen pushed over a modal ignores headerShown set from inside it. */}
             <Stack.Screen name="back-bar" options={{ headerShown: false }} />
             <Stack.Screen name="team" options={{ headerShown: false }} />
             <Stack.Screen name="bring-in/index" options={{ headerShown: false }} />
@@ -281,7 +270,7 @@ function RootLayout() {
         </AuthProvider>
         <DialogHost />
         <ToastHost />
-        {Platform.OS === 'web' ? <Toaster /> : null}
+        <WebToaster />
       </GestureRoot>
     </PersistQueryClientProvider>
   );

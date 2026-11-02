@@ -4,21 +4,9 @@ import { useUserId } from '@/ctx/AuthContext';
 import { chunk } from '@/lib/commandSearchGrid';
 import { supabase } from '@/lib/supabase';
 import type { Row } from '@/types/db';
+import { followsKey } from '@/hooks/useFriendsRanks';
 
-export interface FriendRank {
-  profileId: string;
-  displayName: string;
-  avatarUrl: string | null;
-  entryId: string;
-  itemId: string | null;
-  name: string;
-  venueName: string | null;
-  score: number;
-  createdAt: string;
-  drinkFamily: string | null;
-  /** Now their top drink of its family. */
-  bestInFamily: boolean;
-}
+export { useFollowing, useFriendsRanks, type FriendRank } from '@/hooks/useFriendsRanks';
 
 /** A person you follow, who follows you, or one you found: their public page as a row. */
 export interface FollowPerson {
@@ -51,22 +39,7 @@ export const toPerson = (r: PersonRow): FollowPerson => ({
   hadMode: r.had_mode,
 });
 
-const followsKey = (userId: string | null) => ['follows', userId];
 const followersKey = (userId: string | null) => ['followers', userId];
-
-/** The people you follow (their user ids), newest first. */
-export function useFollowing() {
-  const userId = useUserId();
-  return useQuery({
-    queryKey: followsKey(userId),
-    enabled: !!userId,
-    queryFn: async (): Promise<string[]> => {
-      const { data, error } = await supabase.from('follows').select('followee_id').eq('follower_id', userId!).order('created_at', { ascending: false });
-      if (error) throw error;
-      return (data ?? []).map((r) => r.followee_id);
-    },
-  });
-}
 
 /** The people who follow you (their user ids), newest first. Only you see these (follows_select). */
 export function useFollowers() {
@@ -109,32 +82,6 @@ export function useSetFollow() {
     onSettled: () => {
       void queryClient.invalidateQueries({ queryKey: followsKey(userId) });
       void queryClient.invalidateQueries({ queryKey: ['friends-ranks'] });
-    },
-  });
-}
-
-/** Recent ranks by people you follow, newest first, as each of them shares them (friends_ranks). */
-export function useFriendsRanks(limit = 5) {
-  const userId = useUserId();
-  return useQuery({
-    queryKey: ['friends-ranks', userId, limit],
-    enabled: !!userId,
-    queryFn: async (): Promise<FriendRank[]> => {
-      const { data, error } = await supabase.rpc('friends_ranks', { p_limit: limit });
-      if (error) throw error;
-      return (data ?? []).map((r) => ({
-        profileId: r.profile_id,
-        displayName: r.display_name,
-        avatarUrl: r.avatar_url,
-        entryId: r.entry_id,
-        itemId: r.item_id,
-        name: r.name,
-        venueName: r.venue_name,
-        score: Number(r.score),
-        createdAt: r.created_at,
-        drinkFamily: r.drink_family,
-        bestInFamily: r.best_in_family,
-      }));
     },
   });
 }

@@ -9,9 +9,11 @@ import { WebTabBar } from './WebTabBar';
 
 /**
  * The tabs drawn in JS: all of the web (NativeTabs has no web implementation),
- * and a native iPad wide enough for the side nav. The same four tabs and
- * Search as the phone: phone-width web gets the glass tab bar; wide screens
- * hide the bar and use the side nav in the root layout.
+ * and a native iPad wide enough for the side nav. The same four tabs as the
+ * phone: phone-width web gets the glass tab bar with its search circle, which
+ * pushes /search on the tab's stack; wide screens hide the bar, use the side
+ * nav in the root layout and search in the ⌘K palette. iOS's search tab,
+ * (search), has no place here.
  */
 export function JsTabs() {
   const isWideWeb = useIsWideWeb();
@@ -23,7 +25,7 @@ export function JsTabs() {
         {TABS.map((t) => (
           <Tabs.Screen key={t.name} name={t.route} options={{ title: t.label }} />
         ))}
-        <Tabs.Screen name="search" options={{ title: 'Search' }} />
+        <Tabs.Screen name="(search)" options={{ href: null }} />
       </Tabs>
     </VenueBrandProvider>
   );

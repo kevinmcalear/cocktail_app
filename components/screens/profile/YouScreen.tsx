@@ -57,7 +57,7 @@ function You() {
   const claim = useMyPersonClaim().data;
   const waiting = !profile && claim?.status === 'pending' ? claim : null;
   const confirmer = useProfile(waiting?.confirm_bar ?? null).data?.display_name;
-  const share = useShareLink(`${siteOrigin()}/p/${profile?.handle ?? ''}`, name);
+  const share = useShareLink(`${siteOrigin()}/p/${profile?.handle ?? ''}`, name, 'profile');
 
   const drinks = had.data ?? [];
   const stats = hadStats(drinks);

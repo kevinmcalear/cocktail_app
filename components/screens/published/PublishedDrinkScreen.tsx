@@ -3,12 +3,14 @@ import { useState } from 'react';
 import { StyleSheet, View } from 'react-native';
 
 import { Body, Button, Display, Headline, PressableScale, Surface, Tag, useBreakpoint, useDs } from '@/components/ds';
+import { AllergyLine, GuestAllergens } from '@/components/allergens/DrinkAllergensLazy';
 import { UserAvatar } from '@/components/ui/UserAvatar';
 import { radius, space } from '@/constants/tokens';
 import { useSignedIn } from '@/ctx/AuthContext';
 import { useCollection, type CollectedDrink } from '@/hooks/useCollection';
 import { usePublicDrinkMore } from '@/hooks/usePublicDrink';
 import { usePublishedDrink, type BarCredit } from '@/hooks/usePublished';
+import { noteRankedSignedOut } from '@/lib/analyticsDoor';
 import { hadOnLine } from '@/lib/collection';
 import type { ItemPicture } from '@/lib/itemImages';
 import { createdByLine, drinkKicker } from '@/lib/publicDrink';
@@ -65,7 +67,11 @@ function PublicActions({ id, name, barId, picture, releaseId }: { id: string; na
         variant="secondary"
         style={styles.action}
         accessibilityHint={`Ranks ${name} against others you've had`}
-        onPress={() => (signedIn ? ageGate.gate(() => setRanking(true)) : router.push('/auth/login'))}
+        onPress={() => {
+          if (signedIn) return ageGate.gate(() => setRanking(true));
+          noteRankedSignedOut();
+          router.push('/auth/login');
+        }}
       />
       {ranking ? <RankFlow item={{ id, name, bar_id: barId }} picture={picture} onClose={() => setRanking(false)} /> : null}
       {ageGate.sheet}
@@ -131,6 +137,8 @@ export function PublishedDrinkScreen({ id, releaseId }: { /** The drink's id, or
       </Kicker>
       <Display>{drink.name}</Display>
       {credit ? <CreditCard line={credit} who={more?.creator ?? venue} /> : null}
+      {/* A bar's drink: the guest's allergy warning, signed out too (Loop-allergy). */}
+      {drink.barId ? <AllergyLine itemId={drink.id} guest /> : null}
       {drink.description ? (
         <Body tone="muted" style={styles.description}>
           {drink.description}
@@ -145,6 +153,7 @@ export function PublishedDrinkScreen({ id, releaseId }: { /** The drink's id, or
     <View style={[styles.aside, wide && styles.asideWide]}>
       {more ? <PublicWhereToDrink rankedAs={more.rankedAs} venue={venue} /> : null}
       <PublicSpec page={data} barClaimed={!!venue?.is_claimed} classic={classic} />
+      {drink.barId ? <GuestAllergens itemId={drink.id} barName={barName} /> : null}
     </View>
   );
 

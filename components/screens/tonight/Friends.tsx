@@ -5,7 +5,7 @@ import { Body, Button, Caption, DsText, PressableScale, Surface, useDs } from '@
 import { IconSymbol } from '@/components/ui/icon-symbol';
 import { UserAvatar } from '@/components/ui/UserAvatar';
 import { displayFaces, radius, space } from '@/constants/tokens';
-import { useFollowing, useFriendsRanks, type FriendRank } from '@/hooks/useFollows';
+import { useFollowing, useFriendsRanks, type FriendRank } from '@/hooks/useFriendsRanks';
 import { friendRankLines } from '@/lib/follows';
 import { itemHref } from '@/lib/itemRoutes';
 import { formatScore } from '@/lib/ranking';

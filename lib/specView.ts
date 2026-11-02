@@ -5,7 +5,7 @@
  * that land on a jigger's marks once they are scaled or converted.
  */
 
-import { isGarnishUnit } from '@/lib/batch';
+import { isGarnishLine } from '@/lib/batch';
 import { barMl, convertLine, density, ML_PER_OZ, type MassUnit } from '@/lib/drinkMath';
 import type { SpecLine } from '@/lib/spec';
 import { amountText } from '@/lib/units';
@@ -77,20 +77,18 @@ export interface SpecGroup {
   /** "Shake", "Float", "Part 2"; null when the drink is one group with no method to name. */
   title: string | null;
   lines: SpecLine[];
-  /** Garnish rows carry their tag instead of a heading. */
-  tag?: 'Garnish';
 }
 
 /**
  * Steps view: the ruled rows split where the drink has stages, in making order.
  * A drink made in parts gets a group per part; otherwise the main pour (titled
  * by its method: Shake, Stir, Build), then anything floated on top. A garnish
- * isn't a step: its rows come last, tagged, under no heading. A simple drink is
+ * isn't a step: its rows come last under no heading, each saying "garnish" (lineRole). A simple drink is
  * one group, so it reads like a spec sheet.
  */
 export function specGroups(lines: SpecLine[], verb: string | null = null): SpecGroup[] {
-  const garnish = lines.filter((l) => isGarnishUnit(l.unit));
-  const rest = lines.filter((l) => !isGarnishUnit(l.unit));
+  const garnish = lines.filter(isGarnishLine);
+  const rest = lines.filter((l) => !isGarnishLine(l));
   const parts = [...new Set(rest.map((l) => l.part ?? 1))].sort((a, b) => a - b);
   const titled: { key: string; title: string | null; lines: SpecLine[] }[] =
     parts.length > 1
@@ -100,7 +98,7 @@ export function specGroups(lines: SpecLine[], verb: string | null = null): SpecG
           { key: 'float', title: 'Float', lines: rest.filter((l) => l.float) },
         ];
   const groups: SpecGroup[] = titled.filter((g) => g.lines.length).map((g, i) => ({ ...g, number: String(i + 1) }));
-  if (garnish.length) groups.push({ key: 'garnish', number: null, title: null, lines: garnish, tag: 'Garnish' });
+  if (garnish.length) groups.push({ key: 'garnish', number: null, title: null, lines: garnish });
   return groups;
 }
 
