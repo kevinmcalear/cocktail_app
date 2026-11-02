@@ -1,16 +1,12 @@
-import { createContext, use, type ReactNode } from 'react';
+import type { ReactNode } from 'react';
 import { StyleSheet, View } from 'react-native';
 
-import { Body, Caption, Display, useDs } from '@/components/ds';
-import { backbar, displayFaces, space } from '@/constants/tokens';
-import { withAlpha } from '@/lib/color';
+import { Caption, Display } from '@/components/ds';
+import { space } from '@/constants/tokens';
 
-/** True inside a title set on a dark photo on the desktop: its lines take the board's soft shadow. */
-export const TitleOnPhoto = createContext(false);
-const SHADOW = { textShadowColor: withAlpha(backbar.dark.ground, 0.35), textShadowOffset: { width: 0, height: 1 }, textShadowRadius: space.xl };
+import { ItalicLine, useTitleShadow } from './ItalicLine';
 
-/** The shadow for a line of the title, where it's on a photo (board Desk-photo-side-dark). */
-export const useTitleShadow = () => (use(TitleOnPhoto) ? SHADOW : null);
+export { ItalicLine, TitleOnPhoto, useItalic, useTitleShadow } from './ItalicLine';
 
 /**
  * The name block every drink and item page opens with (boards Decided-who-*,
@@ -32,16 +28,6 @@ export function ItemTitle({ eyebrow, name, credit, children }: { eyebrow: string
       {children}
     </View>
   );
-}
-
-/** A line in the name's italic: the maker and where it's from, whose recipe it is. */
-export function ItalicLine({ text }: { text: string }) {
-  return <Body tone="muted" style={[useItalic(), useTitleShadow()]}>{text}</Body>;
-}
-
-/** The display face's italic, for text set under the name. */
-export function useItalic() {
-  return { fontFamily: displayFaces[useDs().displayFace].italic };
 }
 
 const styles = StyleSheet.create({

@@ -7,7 +7,7 @@ import Animated, { useAnimatedReaction, useAnimatedScrollHandler, useSharedValue
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { scheduleOnRN } from 'react-native-worklets';
 
-import { ExtendedFab, useDs, useGutter } from '@/components/ds';
+import { ExtendedFab, useDs, useGutter, type FabIcon } from '@/components/ds';
 import { useTabBarInset } from '@/components/nav/WebTabBar';
 import { layout, space } from '@/constants/tokens';
 import { useIsWideWeb } from '@/hooks/useIsWideWeb';
@@ -16,8 +16,9 @@ import { backWord } from '@/lib/tabs';
 
 import { COLUMNS_FROM, DrinkColumns } from './DrinkColumns';
 import { FADE, phoneHeroHeight } from './DrinkHero';
-import { DockedDrawing, DockGlyph, DOCKED, DrawingSpace, DrinkSky, drawingTop } from './DrawingHero';
+import { DockedDrawing, DOCKED, DrawingSpace, DrinkSky, drawingRoom } from './DrawingHero';
 import { iosBarRoom, IosBarName, NATIVE_DOCK_LEFT, useItemHeader, type Controls } from './ItemHeader';
+import { MATERIAL_DOCK, MaterialBar, MaterialPage, useItemTones } from './MaterialBar';
 import { backWidth, BarBacking, PageControls } from './PageControls';
 import { TitleOnPhoto } from './ItemTitle';
 import { PhotoMirror } from './PhotoMirror';
@@ -46,7 +47,7 @@ interface ItemShellProps {
   body: (columns: boolean, titled: boolean) => ReactNode;
   controls: Controls;
   /** Android's phone page: the one main action as the extended FAB. The body drops its button (`columns` stays inline). */
-  fab?: { label: string; accessibilityLabel: string; onPress: () => void } | null;
+  fab?: { label: string; accessibilityLabel: string; icon: FabIcon; onPress: () => void } | null;
   /** Sheets the page opens. */
   children?: ReactNode;
 }
@@ -73,7 +74,7 @@ export function ItemShell({ name, pane, photo, art, size, liquid, title, action,
   const columns = !pane && width >= COLUMNS_FROM;
   const scrollY = useSharedValue(0);
   const onScroll = useAnimatedScrollHandler((e) => scrollY.set(e.contentOffset.y));
-  const heroHeight = photo ? phoneHeroHeight(width, height, top) : drawingTop(top) + size + space.lg;
+  const heroHeight = photo ? phoneHeroHeight(width, height, top) : drawingRoom(top, size);
   // Up to 400 on a wide screen, shrinking with a short window down to 220, so the side never scrolls.
   const wideSize = Math.min(400, Math.max(220, height - 440));
   const bar = top + layout.minTapTarget + space.sm * 2;
@@ -96,9 +97,11 @@ export function ItemShell({ name, pane, photo, art, size, liquid, title, action,
   const onTitleLayout = (e: LayoutChangeEvent) => setMeasured(e.nativeEvent.layout.height);
   // Only the page in front sets the system bars: one under a pushed page or in another tab stays mounted.
   const focused = useIsFocused();
-  // Phones have the system's bar. The web and a wide iPad's two columns draw theirs (PageControls).
-  const nativeBar = Platform.OS !== 'web' && !columns && !pane;
-  useItemHeader({ name, on: nativeBar, pane, glyph: photo ? null : <DockGlyph art={art(false)} size={size} />, scrollY, smallAt, controls });
+  // iPhones have the system's bar, Android phones the Material one. The web and two columns draw theirs (PageControls).
+  const nativeBar = Platform.OS === 'ios' && !columns && !pane;
+  // A pane (the Library beside its list, the editor's preview) keeps the drawn controls.
+  const materialBar = Platform.OS === 'android' && !columns && !pane;
+  useItemHeader({ name, on: nativeBar, pane, controls });
   const barHeight = use(HeaderHeightContext) ?? 0;
   // Where it goes, from the page under this one, where there's room for a label (desktop boards).
   const under = use(HeaderBackContext)?.title;
@@ -113,12 +116,12 @@ export function ItemShell({ name, pane, photo, art, size, liquid, title, action,
   const underNativeBar = (
     <>
       <BarBacking height={barHeight} scrollY={scrollY} tuck={tuck} />
-      {photo ? null : dock({ dockLeft: NATIVE_DOCK_LEFT, dockTop: (top + barHeight - DOCKED) / 2, handOff: Platform.OS === 'android' })}
-      {Platform.OS === 'ios' ? <IosBarName name={name} left={NATIVE_DOCK_LEFT + (photo ? 0 : DOCKED + space.sm)} right={space.lg + iosBarRoom(controls)} top={top} height={barHeight - top} scrollY={scrollY} tuck={tuck} /> : null}
+      {photo ? null : dock({ dockLeft: NATIVE_DOCK_LEFT, dockTop: (top + barHeight - DOCKED) / 2 })}
+      <IosBarName name={name} left={NATIVE_DOCK_LEFT + (photo ? 0 : DOCKED + space.sm)} right={space.lg + iosBarRoom(controls)} top={top} height={barHeight - top} scrollY={scrollY} tuck={tuck} />
     </>
   );
 
-  return (
+  const page = (
     <View style={[styles.screen, { backgroundColor: ds.c.ground }]} onLayout={(e) => setWidth(e.nativeEvent.layout.width)}>
       {/* The photo decides the system bars too, not the phone's mode (board And-photo-bright). */}
       {photo && !pane && focused ? <StatusBar style={ds.scheme === 'dark' ? 'light' : 'dark'} /> : null}
@@ -165,7 +168,7 @@ export function ItemShell({ name, pane, photo, art, size, liquid, title, action,
         </>
       ) : (
         <>
-          <Animated.ScrollView onScroll={onScroll} scrollEventThrottle={16} contentContainerStyle={[styles.column, { paddingBottom: bottom + space.xxl }]}>
+          <Animated.ScrollView onScroll={onScroll} scrollEventThrottle={16} contentContainerStyle={[styles.column, { paddingBottom: bottom + space.xxl + (fab ? FAB_ROOM : 0) }]}>
             {photo ? <PhotoMirror key={String(photo.url)} url={photo.url} top={heroHeight} /> : <DrinkSky liquid={liquid} />}
             {photo ? photo.hero(heroHeight, true) : <DrawingSpace top={top} size={size} />}
             {spot === null ? null : (
@@ -175,17 +178,25 @@ export function ItemShell({ name, pane, photo, art, size, liquid, title, action,
             )}
             <View style={{ paddingHorizontal: gutter, marginTop: !photo ? 0 : spot !== null ? space.lg : photo.credit ? -space.sm : -space.xxl }}>{body(false, spot === null)}</View>
           </Animated.ScrollView>
-          {nativeBar ? underNativeBar : drawnBar(true)}
+          {materialBar ? (
+            <MaterialBar name={name} top={top} photo={!!photo} hero={heroHeight} width={width} scrollY={scrollY} smallAt={spot === null ? undefined : smallAt} noBack={pane} controls={controls} drawing={photo ? null : dock({ dockLeft: MATERIAL_DOCK.left, dockTop: top + MATERIAL_DOCK.top })} />
+          ) : nativeBar ? (
+            underNativeBar
+          ) : (
+            drawnBar(true)
+          )}
           {fab ? <PageFab {...fab} scrollY={scrollY} bottom={bottom} /> : null}
         </>
       )}
       {children}
     </View>
   );
+  return (
+    <MaterialPage liquid={liquid} photo={!!photo} bar={materialBar} glide={materialBar && !photo ? { scrollY, top: heroHeight, left: Math.max(0, (width - COLUMN) / 2) + gutter, width: Math.min(width, COLUMN) - gutter * 2 } : null}>
+      {page}
+    </MaterialPage>
+  );
 }
-
-/** The phone page's widest column (desktop board: up to 680, from 768 to the split). */
-const COLUMN = 680;
 
 /** The extended FAB, shrinking to a round one once the page moves (board And-page). */
 function PageFab({ scrollY, bottom, ...fab }: NonNullable<ItemShellProps['fab']> & { scrollY: SharedValue<number>; bottom: number }) {
@@ -196,9 +207,15 @@ function PageFab({ scrollY, bottom, ...fab }: NonNullable<ItemShellProps['fab']>
       if (now !== was) scheduleOnRN(setOpen, now);
     },
   );
+  const tones = useItemTones();
   // `bottom` already holds the 16 dp gap (useTabBarInset, or the pane's inset + space.lg): no second one.
-  return <ExtendedFab {...fab} icon="checkmark" open={open} style={{ bottom }} />;
+  return <ExtendedFab {...fab} open={open} colors={tones ? { fill: tones.fab, text: tones.onFab } : undefined} style={{ bottom }} />;
 }
+
+/** Room under the page's last line for the FAB: 56 and its margins. */
+const FAB_ROOM = 88;
+/** The phone page in a wider column from 768 to the split (desktop board). */
+const COLUMN = 680;
 
 const styles = StyleSheet.create({
   screen: { flex: 1 },
