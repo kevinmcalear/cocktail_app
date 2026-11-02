@@ -1,6 +1,6 @@
 import type { ReactNode } from 'react';
 
-import { useBarGlassware } from '@/hooks/useBarGlassware';
+import { useBarGlassware } from '@/hooks/useBarGlassList';
 
 import { DrawingGlassesContext } from './drawingGlasses';
 
