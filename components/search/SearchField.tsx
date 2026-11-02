@@ -4,6 +4,7 @@ import { Platform, StyleSheet, TextInput, View, type StyleProp, type ViewStyle }
 import { Button, Caption, GlassSurface, PressableScale, useDs } from '@/components/ds';
 import { IconSymbol } from '@/components/ui/icon-symbol';
 import { font, layout, radius, space, type } from '@/constants/tokens';
+import { useBringIn } from '@/store/useBringIn';
 
 interface SearchFieldProps {
   query: string;
@@ -14,8 +15,6 @@ interface SearchFieldProps {
   onSubmit?: () => void;
   /** Shows Done beside the field (sheets), or the esc key cap inside it (the ⌘K palette, with `keys`). */
   onDone?: () => void;
-  /** In place of Done, a small text button (Discover's sheet says Cancel: only Return or Show on the map keeps the search). */
-  doneLabel?: string;
   /** The ⌘K palette: an esc key cap at the field's end in place of Done. */
   keys?: boolean;
   /** The search tab: a round close button beside the field while it's in use, which empties it and puts the keyboard away. */
@@ -24,8 +23,8 @@ interface SearchFieldProps {
   onFocusChange?: (focused: boolean) => void;
   /** Floating over the results (the bottom search): the field and its close button are glass. */
   glass?: boolean;
-  /** The ⌘K palette: where it searches, at the field's end before esc (nav-search-desk-preview). */
-  place?: ReactNode;
+  /** The camera at the field's end, into Bring in: snap a menu or a bottle (Prod-phone). Only with a session, as Bring in mounts with one. */
+  camera?: boolean;
 }
 
 /** A keyboard key, as the palette's hints draw it: "esc", "tab", "↵". */
@@ -43,7 +42,7 @@ export function KeyCap({ label }: { label: string }) {
  * something's typed. With `keys` (the ⌘K palette) it's the card's borderless
  * header instead, with the esc key at its end (nav-search-desk-palette).
  */
-export function SearchField({ query, onQuery, placeholder, autoFocus, onSubmit, onDone, doneLabel, keys, cancel, onFocusChange, glass, place }: SearchFieldProps) {
+export function SearchField({ query, onQuery, placeholder, autoFocus, onSubmit, onDone, keys, cancel, onFocusChange, glass, camera }: SearchFieldProps) {
   const ds = useDs();
   const input = useRef<ComponentRef<typeof TextInput>>(null);
   const [focused, setFocused] = useState(false);
@@ -73,6 +72,8 @@ export function SearchField({ query, onQuery, placeholder, autoFocus, onSubmit, 
           onChangeText={onQuery}
           placeholder={placeholder}
           placeholderTextColor={ds.c.muted}
+          // The web focuses at once too, so ⌘K then typing straight away keeps its first letters.
+          autoFocus={Platform.OS === 'web' && autoFocus}
           autoCorrect={false}
           autoCapitalize="none"
           returnKeyType="search"
@@ -101,14 +102,18 @@ export function SearchField({ query, onQuery, placeholder, autoFocus, onSubmit, 
             <IconSymbol name="xmark.circle.fill" size={22} color={ds.c.muted} />
           </PressableScale>
         ) : null}
-        {place}
+        {camera ? (
+          <PressableScale role="button" accessibilityLabel="Snap a menu or bottle" onPress={() => useBringIn.getState().openSheet()} style={styles.clear}>
+            <IconSymbol name="camera" size={22} color={ds.c.muted} />
+          </PressableScale>
+        ) : null}
         {keys && onDone ? (
           <PressableScale accessibilityLabel="Close the search (Escape)" onPress={onDone} style={styles.esc}>
             <KeyCap label="esc" />
           </PressableScale>
         ) : null}
       </FieldShell>
-      {onDone && !keys ? <Button label={doneLabel ?? 'Done'} variant="ghost" size={doneLabel ? 'sm' : 'md'} onPress={onDone} /> : null}
+      {onDone && !keys ? <Button label="Done" variant="ghost" onPress={onDone} /> : null}
       {/* On the web the field blurs before the press lands: with nothing typed that's all Cancel would do anyway. */}
       {cancel && (focused || query) ? (
         <PressableScale role="button" accessibilityLabel="Cancel the search" onPress={cancelSearch} style={glass ? null : [styles.cancel, styles.cancelRing, { backgroundColor: ds.c.raised, borderColor: ds.c.lineStrong }]}>

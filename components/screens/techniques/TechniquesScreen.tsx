@@ -6,7 +6,7 @@ import { Body, Button, Caption, Chip, PressableScale, Spec, Surface, useDs } fro
 import { FoamPicker } from '@/components/techniques/FoamPicker';
 import { LinkRow, Section, TechniqueRow } from '@/components/techniques/bits';
 import { usePageFrame } from '@/components/nav/PageFrame';
-import { TechniquePage } from '@/components/techniques/TechniquePage';
+import { LEARN_CRUMBS, TechniquePage } from '@/components/techniques/TechniquePage';
 import { TechniqueSheet } from '@/components/techniques/TechniqueSheet';
 import { IconSymbol } from '@/components/ui/icon-symbol';
 import { font, layout, radius, space, type } from '@/constants/tokens';
@@ -25,9 +25,10 @@ const FILTERS: { value: Filter; label: string; test: (t: Technique, kit: Readonl
 /**
  * The technique library: one row per group, searchable, and filtered by the
  * kit you have. `group` opens straight into one group (a prep card's
- * "Clarify" tag lands here); `foam` opens Foam from anything over it.
+ * "Clarify" tag lands here); `foam` opens Foam from anything over it;
+ * `search` opens with the field focused (Learn's Search).
  */
-export function TechniquesScreen({ group, foam = false }: { group?: string; foam?: boolean }) {
+export function TechniquesScreen({ group, foam = false, search = false }: { group?: string; foam?: boolean; search?: boolean }) {
   const ds = useDs();
   const router = useRouter();
   const kit = useKitHere();
@@ -51,6 +52,7 @@ export function TechniquesScreen({ group, foam = false }: { group?: string; foam
       title={only ? only.name : 'Techniques'}
       intro={<Body tone="muted">{only ? only.blurb : 'How to make anything behind the bar: steps, doses scaled to your batch, the kit, and where each number comes from.'}</Body>}
       footer={<KitBar tools={kit.size} />}
+      crumbs={only ? [...LEARN_CRUMBS, { label: 'Techniques', href: '/techniques' }] : LEARN_CRUMBS}
     >
       <View style={styles.tools}>
         <View style={[styles.search, { backgroundColor: ds.c.surface, borderColor: ds.c.line }]}>
@@ -62,6 +64,7 @@ export function TechniquesScreen({ group, foam = false }: { group?: string; foam
             placeholderTextColor={ds.c.muted}
             aria-label="Search techniques"
             autoCorrect={false}
+            autoFocus={search}
             style={[styles.input, type.body, { ...font.regular, color: ds.c.ink }]}
           />
         </View>

@@ -1,3 +1,4 @@
+import type { SharedWhat } from '@/lib/analytics';
 import { shareOrCopy } from '@/lib/shareLink';
 
 /**
@@ -5,6 +6,6 @@ import { shareOrCopy } from '@/lib/shareLink';
  * the browser refuses the clipboard too, it shows the link to copy by hand
  * (Eddie, build 51: before, nothing happened at all).
  */
-export function useShareLink(url: string, title: string) {
-  return () => shareOrCopy(url, title);
+export function useShareLink(url: string, title: string, what: SharedWhat) {
+  return () => shareOrCopy(url, title, what);
 }

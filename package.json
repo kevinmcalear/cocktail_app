@@ -13,6 +13,7 @@
     "typecheck": "tsc --noEmit",
     "sentry:sourcemaps": "sentry-expo-upload-sourcemaps dist",
     "test:unit": "node scripts/run-checks.mjs && node --test \"scripts/__tests__/*.test.mjs\"",
+    "analytics:capture": "node scripts/analytics-capture.mjs",
     "check:design": "node --no-warnings=ExperimentalWarning scripts/design-ratchet.mjs",
     "check:budgets": "node --no-warnings=ExperimentalWarning scripts/budgets.mjs",
     "test:jest": "jest",

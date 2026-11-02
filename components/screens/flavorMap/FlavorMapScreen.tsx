@@ -62,7 +62,7 @@ function FlavorMapPage() {
   const allNamed = picked.length > 0 && pickedNames.every((n) => n !== '…');
   const title = `What goes with ${pickedNames.join(' and ')}`;
   useTrackRecent(allNamed, allNamed ? { kind: 'flavor', id: picked.join(','), title, subtitle: 'Flavor map', href } : null);
-  const share = () => void shareOrCopy(`${siteOrigin()}${href}`, title, title);
+  const share = () => void shareOrCopy(`${siteOrigin()}${href}`, title, 'flavour', title);
 
   const start = () => {
     const place = wizardPlace(venue?.id ?? null);
