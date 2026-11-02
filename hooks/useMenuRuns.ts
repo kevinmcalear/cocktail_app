@@ -79,21 +79,31 @@ export function useMenuRuns(itemIds: readonly string[]) {
 }
 
 /**
- * The drinks on a menu edition with their ingredients and pictures, for
- * signed-in readers. Signed out, a bar's own drinks aren't readable, so the
- * menu shows their names (lib/menuEditions editionMenuDrinks).
+ * The drinks on a menu edition with what's in each and their pictures. Signed
+ * in, what the reader can open; for everyone, a bar's published drinks, with
+ * their ingredients by name (never amounts). A drink left out shows its name
+ * and price, and opens nothing (lib/menuEditions editionMenuDrinks).
  */
 export function useMenuEditionDrinks(drinks: MenuEditionDrink[]) {
   const userId = useUserId();
   const ids = drinks.map((d) => d.id);
   return useQuery({
     queryKey: ['menu-edition-drinks', ids, userId],
-    enabled: !!userId && ids.length > 0,
+    enabled: ids.length > 0,
     queryFn: async (): Promise<MenuDrink[]> => {
-      const { data, error } = await supabase.from('items').select(MENU_DRINK_COLUMNS).in('id', ids);
-      if (error) throw error;
-      // ponytail: supabase-js can't type an embed on items' own foreign keys ("more than one relationship"), so the row is cast; hint it as items!<fk> to drop this.
-      return ((data ?? []) as unknown as MenuItemRow[]).map((row) => toMenuDrink(row)).filter((d): d is MenuDrink => !!d);
+      let own: MenuDrink[] = [];
+      if (userId) {
+        const { data, error } = await supabase.from('items').select(MENU_DRINK_COLUMNS).in('id', ids);
+        if (error) throw error;
+        // ponytail: supabase-js can't type an embed on items' own foreign keys ("more than one relationship"), so the row is cast; hint it as items!<fk> to drop this.
+        own = ((data ?? []) as unknown as MenuItemRow[]).map((row) => toMenuDrink(row)).filter((d): d is MenuDrink => !!d);
+      }
+      const read = new Set(own.map((d) => d.id));
+      const rest = ids.filter((id) => !read.has(id));
+      if (!rest.length) return own;
+      // Loaded here, not imported: this file rides on every page's first load (hooks/publishedMenuDrinks.ts).
+      const { publishedMenuDrinks } = await import('@/hooks/publishedMenuDrinks');
+      return [...own, ...(await publishedMenuDrinks(rest))];
     },
   });
 }

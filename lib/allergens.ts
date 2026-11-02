@@ -59,50 +59,29 @@ export interface AllergyMatch {
 /**
  * The guest's own allergies found in a drink (guest-allergies): only on a
  * drink the bar has checked, warnings only (never a reassuring tick), naming
- * the top ingredient it comes through. Null when the bar hasn't checked it,
+ * every top ingredient it comes through. Null when the bar hasn't checked it,
  * so the page says Ask your bartender.
  */
 export function allergyMatches(mine: readonly string[], drink: Pick<GuestDrinkAllergens, 'allergens' | 'checked_at'>): AllergyMatch[] | null {
   if (!drink.checked_at) return null;
   return drink.allergens
     .filter((a) => mine.includes(a.allergen))
-    .map((a) => ({ allergen: a.allergen, ingredient: a.via.find((path) => path.length > 0)?.[0] ?? null }));
+    .flatMap((a): AllergyMatch[] => {
+      const tops = [...new Set(a.via.map((path) => path[0]).filter(Boolean))];
+      return tops.length ? tops.map((ingredient) => ({ allergen: a.allergen, ingredient })) : [{ allergen: a.allergen, ingredient: null }];
+    });
 }
 
 export function allergenLabel(key: string): string {
   return ALLERGENS.find((a) => a.key === key)?.label ?? key;
 }
 
-/** "eggs and sulphites", "milk, eggs and sulphites". Lower case for mid-sentence. */
-export function listAllergens(keys: readonly string[]): string {
-  const names = keys.map((k) => allergenLabel(k).toLowerCase());
+export function andList(names: readonly string[]): string {
   if (names.length < 2) return names[0] ?? '';
   return `${names.slice(0, -1).join(', ')} and ${names[names.length - 1]}`;
 }
 
-/**
- * The one line a server reads out: "Contains eggs and sulphites." Unchecked
- * ingredients are never hidden behind a clean bill.
- */
-export function containsLine(d: DrinkAllergens | null | undefined): string {
-  if (!d || d.lines === 0) return 'No spec yet, so nothing to declare.';
-  const contains = d.allergens.length ? `Contains ${listAllergens(d.allergens.map((a) => a.allergen))}.` : 'No allergens declared.';
-  if (d.unchecked === 0) return contains;
-  const n = d.unchecked === 1 ? '1 ingredient' : `${d.unchecked} ingredients`;
-  return `${contains} ${n} not checked yet.`;
-}
-
-/** "via Raspberry syrup, in Egg white" for one path, or "" when every name is hidden. */
-export function viaLine(path: string[]): string {
-  if (!path.length) return '';
-  return `via ${path.join(', in ')}`;
-}
-
-/** "Checked 24 Sep" or "Not checked yet". */
-export function checkedLine(checkedAt: string | null | undefined, now = new Date()): string {
-  if (!checkedAt) return 'Not checked yet';
-  const at = new Date(checkedAt);
-  const sameYear = at.getFullYear() === now.getFullYear();
-  const date = at.toLocaleDateString('en-GB', { day: 'numeric', month: 'short', ...(sameYear ? {} : { year: 'numeric' }) });
-  return `Checked ${date}`;
+/** "eggs and sulphites", "milk, eggs and sulphites". Lower case for mid-sentence. */
+export function listAllergens(keys: readonly string[]): string {
+  return andList(keys.map((k) => allergenLabel(k).toLowerCase()));
 }

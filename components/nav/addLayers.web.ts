@@ -4,4 +4,3 @@ import { lazy } from 'react';
 const layer = () => import('./addLayersAll');
 export const AddSheet = lazy(() => layer().then((m) => ({ default: m.AddSheet })));
 export const AddFabMenu = lazy(() => layer().then((m) => ({ default: m.AddFabMenu })));
-export const CreateSheet = lazy(() => layer().then((m) => ({ default: m.CreateSheet })));

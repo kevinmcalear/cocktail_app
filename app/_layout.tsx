@@ -4,11 +4,11 @@ import {
     ThemeProvider,
 } from "expo-router/react-navigation";
 import { PersistQueryClientProvider } from '@tanstack/react-query-persist-client';
-import { Toaster } from 'burnt/web';
 import { Stack, usePathname, useRouter, useSegments } from "expo-router";
 import { loadAsync, useFonts } from 'expo-font';
 import { Observe, ObserveRoot, useObserve } from 'expo-observe';
 import { WebHead } from '@/components/WebHead';
+import { WebToaster } from '@/components/WebToaster';
 import { StatusBar } from "expo-status-bar";
 import { GestureRoot } from '@/components/ds/GestureRoot';
 import { useEffect } from "react";
@@ -80,6 +80,8 @@ function RootLayoutNav() {
     // releases (/r/<id>), public profiles (/p/<handle>), shared home menus
     // (/m/<id>) and public events (/e/<id>) are public.
     if (segments[0] === 'legal' || segments[0] === 'support' || segments[0] === 'v' || segments[0] === 'dev' || segments[0] === 'd' || segments[0] === 'r' || segments[0] === 'p' || segments[0] === 'm' || segments[0] === 'e') return;
+    // Your allergies are kept on this phone until you sign in (Loop-allergy, At a table, signed out).
+    if (segments[0] === 'settings' && (segments as string[])[1] === 'allergies') return;
     // Signed out, a drink opens as its public card (/d/<id>), which asks you to sign in for the rest.
     const drink = !session && /^\/cocktail\/([^/]+)$/.exec(pathname);
     if (drink) return router.replace(`/d/${drink[1]}`);
@@ -184,6 +186,8 @@ function RootLayoutNav() {
             <Stack.Screen name="p/[id]/claim" options={{ headerShown: false }} />
             <Stack.Screen name="p/[id]/bottles" options={{ headerShown: false }} />
             <Stack.Screen name="credits-to-check" options={{ headerShown: false }} />
+            <Stack.Screen name="people/index" options={{ headerShown: false }} />
+            <Stack.Screen name="people/find" options={{ headerShown: false }} />
             <Stack.Screen name="taste" options={{ headerShown: false }} />
             <Stack.Screen name="support" options={{ headerShown: false, title: "Support" }} />
             <Stack.Screen name="history" options={{ headerShown: false, title: "Cocktail history" }} />
@@ -266,7 +270,7 @@ function RootLayout() {
         </AuthProvider>
         <DialogHost />
         <ToastHost />
-        {Platform.OS === 'web' ? <Toaster /> : null}
+        <WebToaster />
       </GestureRoot>
     </PersistQueryClientProvider>
   );
