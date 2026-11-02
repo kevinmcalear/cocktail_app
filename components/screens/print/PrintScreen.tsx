@@ -131,3 +131,6 @@ const styles = StyleSheet.create({
   deskPad: { padding: space.xl, gap: space.lg },
   center: { alignItems: 'center' },
 });
+
+// Re-exported so /print and /print/sheet load one shared chunk instead of two copies of the same pages (B12).
+export { PrintPreview } from './PrintPreview';

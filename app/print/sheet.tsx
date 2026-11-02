@@ -5,7 +5,7 @@ import { isSheetKind, SHEETS } from '@/components/screens/print/sheets';
 import { WebHead } from '@/components/WebHead';
 
 // The screen loads with this route only, so its imports don't count toward the every-page chunk (B13).
-const PrintPreview = lazy(() => import('@/components/screens/print/PrintPreview').then((m) => ({ default: m.PrintPreview })));
+const PrintPreview = lazy(() => import('@/components/screens/print/PrintScreen').then((m) => ({ default: m.PrintPreview })));
 
 /** One sheet of the print set to look at and print: `/print/sheet?kind=<list|run|spec|study|table|poster>&menu=<id>`, `&print=1` to print at once. */
 export default function PrintSheetRoute() {
