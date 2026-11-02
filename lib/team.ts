@@ -104,8 +104,8 @@ const FLOOR_SEES: Record<number, string> = { 20: 'menus and allergens', 10: 'the
  * The line under a teammate's name (Kept-team): their role, then "until Fri
  * 7 Nov" for a guest, "on shift tonight", or what a floor role sees.
  */
-export function teamLine(p: TeamPerson, group: TeamGroupKey, onShift: boolean, ends: string | null): string {
-  const role = memberRoleName(p);
+export function teamLine(p: TeamPerson, group: TeamGroupKey, onShift: boolean, ends: string | null, owner = false): string {
+  const role = owner ? 'Owner' : memberRoleName(p);
   if (group === 'guests' && ends) return onShift ? `On shift tonight · until ${ends}` : `${role} · until ${ends}`;
   if (onShift) return `${role} · on shift tonight`;
   if (group === 'floor' && !p.venue_role_name?.trim() && FLOOR_SEES[p.role_level]) return `${role} · ${FLOOR_SEES[p.role_level]}`;

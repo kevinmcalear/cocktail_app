@@ -48,6 +48,7 @@ jest.mock('@/hooks/useStaffLink', () => ({
 jest.mock('@/hooks/useTeam', () => ({
   ...jest.requireActual('@/hooks/useTeam'),
   useOnShiftTonight: () => new Set(['jo']),
+  useBarOwner: () => ({ data: null }),
   useMemberStats: () => ({ credited: 4, onList: { name: 'Autumn', count: 2 }, nextShift: null, loading: false, failed: false }),
   useMemberPosition: () => ({ data: { id: 'pos', is_hidden: false } }),
   useSetPositionShown: () => ({ mutate: mockShown, isPending: false, error: null }),
