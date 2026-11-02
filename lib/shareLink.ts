@@ -1,8 +1,8 @@
-import * as Burnt from 'burnt';
 import { Platform, Share, type ShareContent } from 'react-native';
 
 import { track, type SharedWhat } from '@/lib/analytics';
 import { showMessage } from '@/lib/dialogs';
+import { toast } from '@/lib/systemToast';
 import { siteOrigin } from '@/lib/venueLink';
 
 /**
@@ -69,7 +69,7 @@ export async function shareLink(url: string, title: string, what: SharedWhat, { 
  */
 export async function shareOrCopy(url: string, title: string, what: SharedWhat, lead?: string): Promise<void> {
   try {
-    if ((await shareLink(url, title, what, { lead })) === 'copied') Burnt.toast({ title: 'Link copied', preset: 'done', duration: 2 });
+    if ((await shareLink(url, title, what, { lead })) === 'copied') toast({ title: 'Link copied', preset: 'done', duration: 2 });
   } catch {
     showMessage("Couldn't share the link", url);
   }
@@ -90,7 +90,7 @@ export async function shareText(text: string, title: string, what: SharedWhat): 
     }
     await navigator.clipboard.writeText(text);
     track('shared', { what, how: 'clipboard' });
-    Burnt.toast({ title: 'Copied', preset: 'done', duration: 2 });
+    toast({ title: 'Copied', preset: 'done', duration: 2 });
   } catch (e) {
     if (e instanceof Error && e.name === 'AbortError') return;
     showMessage("Couldn't share it", text);

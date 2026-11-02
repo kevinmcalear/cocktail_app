@@ -83,9 +83,9 @@ export function PublicBarActions({ profile, signedIn = false }: { profile: Profi
   return (
     <View style={[styles.actions, wide ? styles.wrap : null]}>
       {signedIn ? (
-        <LoveBarButton profileId={profile.id} name={profile.display_name} labelled />
+        <LoveBarButton profileId={profile.id} name={profile.display_name} follow />
       ) : (
-        <Button label="Love" icon="heart" variant="secondary" accessibilityHint={`Sign in to love ${profile.display_name}`} onPress={signIn} style={grow} />
+        <Button label="Follow" icon="plus" variant="secondary" accessibilityHint={`Sign in to follow ${profile.display_name}`} onPress={signIn} style={grow} />
       )}
       <Button label={copied ? 'Link copied' : 'Share'} icon="square.and.arrow.up" variant="secondary" onPress={() => void share()} style={grow} />
       {signedIn ? (
