@@ -11,9 +11,9 @@ import { IconSymbol } from '@/components/ui/icon-symbol';
 import { radius, space, STATUS } from '@/constants/tokens';
 import { useActiveVenue } from '@/hooks/useActiveVenue';
 import { useNewStaffLink, useSaveStaffLink, useStaffLink } from '@/hooks/useStaffLink';
-import { showMessage } from '@/lib/dialogs';
+import { writeClipboard } from '@/lib/clipboardPeek';
 import { roleLabel } from '@/lib/roles';
-import { shareLink } from '@/lib/shareLink';
+import { shareOrCopy } from '@/lib/shareLink';
 import { INVITE_ROLES, TEAM_MANAGE } from '@/lib/team';
 import { venueStaffUrl } from '@/lib/venueLink';
 
@@ -41,13 +41,16 @@ export function StaffLinkTab({ barId, barName, ceiling, admin }: { barId: string
   if (link.error || !data) return <Body tone="muted" role="alert">Couldn’t load the staff link. Check your connection and try again.</Body>;
 
   const url = data.token ? venueStaffUrl(data.slug, data.token) : null;
+  const title = `${barName} staff app`;
+  // Copy copies, on a phone too; where it can't (no clipboard module, a refusing browser) the share sheet or the link to copy by hand.
   const copy = async () => {
     if (!url) return;
-    try {
-      if ((await shareLink(url, `${barName} staff app`, { copy: true })) === 'copied') Burnt.toast({ title: 'Link copied', preset: 'done', duration: 2 });
-    } catch {
-      showMessage('Couldn’t copy the link', url);
-    }
+    if (await writeClipboard(url)) Burnt.toast({ title: 'Link copied', preset: 'done', duration: 2 });
+    else await shareOrCopy(url, title);
+  };
+  // Share the link opens the share sheet (the browser's on the web, where there is one).
+  const share = () => {
+    if (url) void shareOrCopy(url, title);
   };
   const roles = INVITE_ROLES.filter((r) => r.level < TEAM_MANAGE && r.level <= ceiling);
   const failed = save.error ?? renew.error;
@@ -100,7 +103,7 @@ export function StaffLinkTab({ barId, barName, ceiling, admin }: { barId: string
         </View>
       ) : null}
       {problem}
-      {url ? <Button label="Share the link" icon="square.and.arrow.up" size="lg" variant="ink" onPress={() => void copy()} /> : null}
+      {url ? <Button label="Share the link" icon="square.and.arrow.up" size="lg" variant="ink" onPress={share} /> : null}
       <Caption tone="muted">Anyone with the link can ask to join. Turn it off in Bar settings.</Caption>
       {url && admin && !renewing ? <TextLink label="New link" accessibilityHint="Replaces the link and its code. The old one stops working." onPress={() => setRenewing(true)} /> : null}
       {url && admin && renewing ? (

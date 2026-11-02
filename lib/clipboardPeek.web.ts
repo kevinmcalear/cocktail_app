@@ -21,3 +21,13 @@ export const UNREAD_CLIP = '\u0000unread';
 export async function readClipboard(): Promise<string | null> {
   return peekClipboard();
 }
+
+/** Puts text on the clipboard. False when the browser refuses. */
+export async function writeClipboard(text: string): Promise<boolean> {
+  try {
+    await navigator.clipboard.writeText(text);
+    return true;
+  } catch {
+    return false;
+  }
+}
