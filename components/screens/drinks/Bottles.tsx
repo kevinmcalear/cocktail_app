@@ -116,7 +116,7 @@ export function ToOrder({ barId }: { barId: string }) {
   return (
     <View style={styles.order}>
       <ListGroup>
-        <ListRow first icon="doc.text" title="To order" detail={sub} end={<Button label="Export" size="sm" variant="secondary" accessibilityLabel="Export the order" onPress={() => void shareText(orderText(order), 'To order')} />} />
+        <ListRow first icon="doc.text" title="To order" detail={sub} end={<Button label="Export" size="sm" variant="secondary" accessibilityLabel="Export the order" onPress={() => void shareText(orderText(order), 'To order', 'order')} />} />
       </ListGroup>
     </View>
   );

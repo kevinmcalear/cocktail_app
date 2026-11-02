@@ -14,7 +14,7 @@ export type AnalyticsProps = Record<string, boolean | number | string | null>;
 export type Door = 'table' | 'shared' | 'rank' | 'invite';
 
 /** What was handed on (lib/shareLink.ts). */
-export type SharedWhat = 'drink' | 'menu' | 'profile' | 'bar' | 'claim' | 'event' | 'calendar' | 'staff_link' | 'flavour' | 'batch' | 'guest_credit';
+export type SharedWhat = 'drink' | 'menu' | 'profile' | 'bar' | 'claim' | 'event' | 'calendar' | 'staff_link' | 'flavour' | 'batch' | 'guest_credit' | 'order';
 
 /** Every event we send, with the properties it may carry. */
 export interface AnalyticsEvents {
