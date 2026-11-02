@@ -108,6 +108,7 @@ export function HandoverSheet({ visible, onClose, onDismiss, ...view }: { visibl
       onClose={onClose}
       onDismiss={onDismiss}
       accessibilityLabel="Handover"
+      style={styles.sheet}
       header={
         <View style={styles.sheetHead}>
           <Title role="heading" style={styles.flex}>
@@ -133,6 +134,8 @@ const styles = StyleSheet.create({
   mark: { width: 30, height: 30, borderRadius: radius.pill, alignItems: 'center', justifyContent: 'center' },
   line: { flexDirection: 'row', alignItems: 'center', gap: space.md, paddingVertical: space.md },
   acts: { gap: space.md },
-  sheetHead: { flexDirection: 'row', alignItems: 'center', gap: space.md },
+  // The phone gutter on every platform: the Sheet itself brings no inset.
+  sheet: { paddingHorizontal: space.lg },
+  sheetHead: { flexDirection: 'row', alignItems: 'center', gap: space.md, paddingVertical: space.md },
   flex: { flex: 1, minWidth: 0 },
 });
