@@ -12,6 +12,7 @@ import { mapAvailable } from '@/components/screens/home/DiscoverMap';
 import { BestNear, DeskChips, DiscoverLoading, DiscoverOffline, MapCard, NewMenus, PHONE_NAMES } from '@/components/screens/home/DiscoverParts';
 import { placeSections } from '@/components/screens/home/DiscoverPlace';
 import { TonightHead } from '@/components/screens/tonight/TonightParts';
+import { LinkRow } from '@/components/techniques/LinkRow';
 import { space } from '@/constants/tokens';
 import { useBarCities } from '@/hooks/useDiscover';
 import { useDiscoverArea } from '@/hooks/useDiscoverArea';
@@ -98,6 +99,9 @@ export function DiscoverScreen() {
   const onAll = best.classicId ? () => router.push(`/rankings/${best.classicId}` as Href) : undefined;
   const bestList = <BestNear label={label} classic={best.style.classics[0] ?? ''} where={where} rows={rows} limit={limit} state={best.isLoading ? 'loading' : best.error ? 'error' : undefined} onRetry={() => void best.refetch()} onAll={onAll} highlight={split ? (hover ?? rows[0]?.barId ?? null) : null} onHover={split ? setHover : undefined} />;
 
+  // Learn (Kept-learn, "Learn, from Discover"): techniques, kit and pairings, under the lists.
+  const learn = <LinkRow title="Learn" detail="Techniques, kit and pairings" href="/learn" icon="book" />;
+
   const body = offline ? (
     <DiscoverOffline />
   ) : nearby.error && !nearby.bars.length ? (
@@ -112,12 +116,14 @@ export function DiscoverScreen() {
     <View style={styles.body}>
       <DeskChips openOnly={openOnly} onOpenOnly={setOpenOnly} styleId={styleId} onStyle={setStyleId} late={late} onLate={setLate} />
       {bestList}
+      {learn}
     </View>
   ) : (
     <View style={styles.body}>
       <MapCard bars={nearby.bars} named={named.slice(0, PHONE_NAMES)} area={area} me={me} caption={mapCaption(open, nearby.total, area)} />
       {bestList}
       <NewMenus menus={menus.menus} />
+      {learn}
     </View>
   );
 

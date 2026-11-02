@@ -1,4 +1,4 @@
-import { isDevice } from '@/lib/realDevice';
+import * as Device from '@/lib/realDevice';
 import { Image } from 'expo-image';
 import { useRef, type ComponentRef } from 'react';
 import { Alert, Platform, StyleSheet, View } from 'react-native';
@@ -18,7 +18,7 @@ interface MenuPhotosProps {
 }
 
 // The simulator has no camera, and launching it there crashes the app.
-export const CAMERA = Platform.OS !== 'web' && isDevice;
+export const CAMERA = Platform.OS !== 'web' && Device.isDevice;
 
 /**
  * Adds pages: `snap` takes one with the camera where there is one (Snap the

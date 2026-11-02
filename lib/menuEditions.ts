@@ -1,5 +1,5 @@
 import { plural } from '@/lib/menus';
-import type { MenuDrink } from '@/types/menus';
+import type { MenuDetail, MenuDrink } from '@/types/menus';
 
 /** A cocktail on a menu edition: the bar's own drink, not a bare name. */
 export interface MenuEditionDrink {
@@ -8,6 +8,8 @@ export interface MenuEditionDrink {
   /** A venue's own menu: the price it prints (its own for the drink, else the drink's), as typed, and the menu section it sits in. */
   price?: string | null;
   section?: string | null;
+  /** A venue menu's drink taken off for tonight only (guests read "Not tonight"). */
+  off_tonight?: boolean;
 }
 
 /**
@@ -30,6 +32,8 @@ export interface MenuEdition {
   source_url: string | null;
   /** The venue's own menu, not a researched one. Not savable to a Collection yet. */
   from_venue?: boolean;
+  /** A venue menu's cover photo. */
+  cover_url?: string | null;
 }
 
 /**
@@ -68,7 +72,7 @@ export function runDates(r: MenuRunRow): MenuDates {
 
 /** A bar's drink whose every menu has come off is tagged "Past menu" (never "sold out"). */
 export function withPastMenuTag(tags: string[], runs: MenuDates[]): string[] {
-  return runs.length && runs.every((r) => menuState(r) === 'past') ? [...tags, 'Past menu'] : tags;
+  return leftTheMenu(runs) ? [...tags, 'Past menu'] : tags;
 }
 
 export function menuState(d: MenuDates): MenuState {
@@ -162,6 +166,42 @@ export function editionSections(edition: Pick<MenuEdition, 'id' | 'drinks'>, dri
     section.drinks.push(drinks[i]);
   });
   return sections;
+}
+
+/** The drink has been on menus, and none of them is on now (Menu-p-left). */
+export function leftTheMenu(runs: readonly MenuDates[]): boolean {
+  return runs.length > 0 && runs.every((r) => menuState(r) === 'past');
+}
+
+/**
+ * An edition as a menu, so a guest reads it on the menu page. `barId`: the
+ * bar's venue, or its profile for a bar nobody runs here yet (a researched
+ * menu is still a bar's menu, never a home one).
+ */
+export function editionMenu(edition: MenuEdition, sections: { id: string; name: string; drinks: MenuDrink[] }[], barId: string): MenuDetail {
+  const iso = (y: number | null, m: number | null) => (y ? new Date(Date.UTC(y, (m ?? 1) - 1, 1)).toISOString() : null);
+  return {
+    id: edition.id,
+    name: edition.name,
+    barId,
+    createdBy: null,
+    // The photo leads a menu that's on; a past one is drawn (as on the team's page).
+    coverUrl: edition.from_venue && edition.is_current ? (edition.cover_url ?? null) : null,
+    coverPosition: 50,
+    startsAt: iso(edition.year, edition.month),
+    endsAt: iso(edition.end_year, edition.end_month),
+    createdAt: iso(edition.year, edition.month) ?? '',
+    updatedAt: iso(edition.year, edition.month) ?? '',
+    menuDate: null,
+    guestCount: null,
+    sharedAt: null,
+    kind: 'menu',
+    description: edition.theme,
+    plannedStartsAt: null,
+    plannedEndsAt: null,
+    hiddenAt: null,
+    sections: sections.map((s) => ({ ...s, minItems: 0, maxItems: null, allowedTypes: [] })),
+  };
 }
 
 /**

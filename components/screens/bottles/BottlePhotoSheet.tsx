@@ -1,4 +1,4 @@
-import { isDevice } from '@/lib/realDevice';
+import * as Device from '@/lib/realDevice';
 import { useState } from 'react';
 import { Platform, StyleSheet, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
@@ -28,7 +28,7 @@ export function BottlePhotoSheet({ visible, target, onClose }: BottlePhotoSheetP
   const start = useStartBringIn();
   const [error, setError] = useState<string | null>(null);
   // The simulator has no camera, and launching it there crashes the app.
-  const camera = Platform.OS !== 'web' && isDevice;
+  const camera = Platform.OS !== 'web' && Device.isDevice;
   const where = target.kind === 'home' ? 'your shelf' : `${target.name}’s ingredients`;
   const barId = target.kind === 'venue' && target.canEdit ? target.barId : null;
 
