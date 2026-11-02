@@ -8,11 +8,13 @@ import { DockFade, GlassButton, useDs, useGutter } from '@/components/ds';
 import { ScreenHeader, ScreenHeaderSpacer } from '@/components/nav/ScreenHeader';
 import { WEB_TABS } from '@/components/nav/WebTabBar';
 import { layout, space } from '@/constants/tokens';
+import { useAuth } from '@/ctx/AuthContext';
 import { SEARCH_TAB } from '@/hooks/useBottomBar';
 import { useKeyboardHeight, useWebKeyboardInset } from '@/hooks/useKeyboardInset';
 import { SEARCH_ANYTHING } from '@/lib/tabs';
 import type { SearchMine } from '@/hooks/useSearchMine';
 import { useSearchFrom } from '@/hooks/useSearchFrom';
+import { useBringIn } from '@/store/useBringIn';
 import { scopeOptions, type SearchScope, type SearchShow, type ShowCounts } from '@/lib/searchScope';
 
 import { CanMakeChip } from './CanMake';
@@ -38,8 +40,6 @@ export interface SearchTabState {
   setCounts: (counts: ShowCounts) => void;
   /** Discover's area, when the search was opened from Discover. */
   area?: SearchArea | null;
-  /** Searching Discover's area: show the results on its map. */
-  onShowOnMap?: () => void;
 }
 
 /**
@@ -47,14 +47,17 @@ export interface SearchTabState {
  * venue or your drinks, This area from Discover, and Everywhere), then the
  * type chips once you type. One glass row, edge to edge, so it scrolls off the
  * screen's side rather than against an edge, with the results passing under it
- * (search-typing, decided 23 Oct 2026).
+ * (search-typing, decided 23 Oct 2026). `camera`: iOS 26's system field
+ * can't hold the camera, so it leads this row instead.
  */
-export function PlaceRow({ query, scope, setScope, mine, area, show, setShow, counts }: Pick<SearchTabState, 'query' | 'scope' | 'setScope' | 'mine' | 'area' | 'show' | 'setShow' | 'counts'>) {
+export function PlaceRow({ query, scope, setScope, mine, area, show, setShow, counts, camera }: Pick<SearchTabState, 'query' | 'scope' | 'setScope' | 'mine' | 'area' | 'show' | 'setShow' | 'counts'> & { camera?: boolean }) {
   const gutter = useGutter();
+  const ds = useDs();
   // At a venue on Everywhere: Can make, between the place and the type chips; on, the type chips leave (QA Q37).
   const canMake = query && scope === 'everywhere' && !!mine.venueId;
   return (
     <ScrollView horizontal showsHorizontalScrollIndicator={false} keyboardShouldPersistTaps="handled" style={styles.placeRow} contentContainerStyle={[styles.placeChips, { paddingHorizontal: gutter }]}>
+      {camera ? <GlassButton icon="camera" color={ds.c.ink} size={layout.minTapTarget} accessibilityLabel="Snap a menu or bottle" onPress={() => useBringIn.getState().openSheet()} /> : null}
       <ScopeToken options={scopeOptions(mine.label, area?.label ?? null)} scope={scope} onScope={setScope} />
       {canMake ? <CanMakeChip show={show} onShow={setShow} count={counts.canmake} /> : null}
       {query && show !== 'canmake' ? <ShowChips show={show} onShow={setShow} counts={counts} /> : null}
@@ -76,11 +79,13 @@ export const DISMISS = Platform.OS === 'ios' ? 'interactive' : 'on-drag';
  * scroll above and under them; dragging them pulls the keyboard down with
  * your finger.
  */
-export function SystemBottomSearch({ query, setQuery, scope, setScope, mine, area, onShowOnMap, focused, carried, show, setShow, counts, setCounts }: SearchTabState) {
+export function SystemBottomSearch({ query, setQuery, scope, setScope, mine, area, focused, carried, show, setShow, counts, setCounts }: SearchTabState) {
   const ds = useDs();
   const gutter = useGutter();
   const insets = useSafeAreaInsets();
   const bar = useRef<SearchBarCommands>(null);
+  // Bring in mounts with a session (app/_layout.tsx), so the camera does too.
+  const { session } = useAuth();
   const keyboard = useKeyboardHeight();
   // Keyboard up every time the tab opens, as in today's search. The bar mounts with the header, a beat later.
   useEffect(() => {
@@ -130,7 +135,6 @@ export function SystemBottomSearch({ query, setQuery, scope, setScope, mine, are
           onScope={setScope}
           mine={mine}
           area={area}
-          onShowOnMap={onShowOnMap}
           show={show}
           onShow={setShow}
           onCounts={setCounts}
@@ -144,7 +148,7 @@ export function SystemBottomSearch({ query, setQuery, scope, setScope, mine, are
       <KeyboardAvoidingView behavior="padding" style={styles.systemDock}>
         <View style={[styles.systemRow, { paddingBottom: keyboard ? SYSTEM_FIELD : insets.bottom }]}>
           <DockFade />
-          <PlaceRow query={query} scope={scope} setScope={setScope} mine={mine} area={area} show={show} setShow={setShow} counts={counts} />
+          <PlaceRow query={query} scope={scope} setScope={setScope} mine={mine} area={area} show={show} setShow={setShow} counts={counts} camera={!!session} />
         </View>
       </KeyboardAvoidingView>
     </View>
@@ -165,13 +169,14 @@ const SYSTEM_FIELD = 64;
  * Prod-phone draws search, no top bar, and the tab you came from waits as a
  * small circle beside the field, to go back to it. Android's is TopSearch.tsx.
  */
-export function BottomSearch({ query, setQuery, scope, setScope, mine, area, onShowOnMap, focused, show, setShow, counts, setCounts }: SearchTabState) {
+export function BottomSearch({ query, setQuery, scope, setScope, mine, area, focused, show, setShow, counts, setCounts }: SearchTabState) {
   const ds = useDs();
   const gutter = useGutter();
   const insets = useSafeAreaInsets();
   const typing = useKeyboardHeight() > 0;
   const webKeyboard = useWebKeyboardInset();
   const [fieldFocused, setFieldFocused] = useState(false);
+  const { session } = useAuth();
   const [dockHeight, setDockHeight] = useState(layout.minTapTarget + space.lg);
   const dock = useRef<ComponentRef<typeof View>>(null);
   useKeepFieldFocus(dock);
@@ -197,7 +202,7 @@ export function BottomSearch({ query, setQuery, scope, setScope, mine, area, onS
         >
           {/* The tab's title row, as every tab has it. */}
           {SEARCH_TAB ? <ScreenHeaderSpacer title="Search" /> : null}
-          <SearchBody query={query} scope={scope} onScope={setScope} mine={mine} area={area} onShowOnMap={onShowOnMap} show={show} onShow={setShow} onCounts={setCounts} typeAhead={setQuery} />
+          <SearchBody query={query} scope={scope} onScope={setScope} mine={mine} area={area} show={show} onShow={setShow} onCounts={setCounts} typeAhead={setQuery} />
         </ScrollView>
         <View
           ref={dock}
@@ -209,7 +214,7 @@ export function BottomSearch({ query, setQuery, scope, setScope, mine, area, onS
           <View style={[styles.fieldRow, { paddingHorizontal: gutter }]}>
             {Platform.OS === 'web' ? <BackToTab /> : null}
             <View style={styles.field}>
-              <SearchField query={query} onQuery={setQuery} placeholder={SEARCH_ANYTHING} autoFocus={focused} cancel glass onFocusChange={setFieldFocused} />
+              <SearchField query={query} onQuery={setQuery} placeholder={SEARCH_ANYTHING} autoFocus={focused} cancel glass camera={!!session} onFocusChange={setFieldFocused} />
             </View>
           </View>
         </View>

@@ -35,9 +35,10 @@ import { VenueSwitcher } from './VenueSwitcher';
  * and the +, or the row under Android's search bar, and the title becomes a
  * heading only screen readers hear (Discover's search pill). `add={false}`:
  * the + steps aside, so the middle has the room (Discover's pill while it
- * holds a search).
+ * holds a search). `place={false}`: no place button on an iPhone's row
+ * (Discover: only Near me, Prod-discover); Android keeps the place in its search bar.
  */
-export function ScreenHeader({ title, display, actions, center, add = true, back }: { title?: string; display?: boolean; actions?: ReactNode; center?: ReactNode; add?: boolean; back?: boolean }) {
+export function ScreenHeader({ title, display, actions, center, add = true, back, place = true }: { title?: string; display?: boolean; actions?: ReactNode; center?: ReactNode; add?: boolean; back?: boolean; place?: boolean }) {
   const router = useRouter();
   const insets = useSafeAreaInsets();
   const gutter = useGutter();
@@ -71,7 +72,7 @@ export function ScreenHeader({ title, display, actions, center, add = true, back
   }
   const goBack = () => (router.canGoBack() ? router.back() : router.navigate('/'));
   const android = Platform.OS === 'android';
-  const start = back ? <GlassButton icon="chevron.left" accessibilityLabel="Back" onPress={goBack} /> : android ? <VenueSwitcher size={ANDROID_MARK} chevron={false} /> : <VenueSwitcher />;
+  const start = back ? <GlassButton icon="chevron.left" accessibilityLabel="Back" onPress={goBack} /> : android ? <VenueSwitcher size={ANDROID_MARK} chevron={false} /> : place ? <VenueSwitcher /> : null;
   const heading = title ? (
     <Title aria-level={1} numberOfLines={1} style={center ? styles.readerOnly : styles.title}>
       {title}
