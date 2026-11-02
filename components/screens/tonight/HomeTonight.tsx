@@ -17,7 +17,7 @@ import { bestAway, oneBottleLine, shelfTiles } from '@/lib/tonight';
 import { byDay, detailLine, itemDay, shortDay, upcoming, type WeekItem } from '@/lib/week';
 
 import { Friends, FriendsPrompt, useFriends } from './Friends';
-import { RankIt } from './RankIt';
+import { RankIt } from './RankItLazy';
 import { DrinkTile, NoteCard, TonightSection } from './TonightParts';
 
 /** How many of the week's things sit under the strip. */

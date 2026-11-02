@@ -1,14 +1,14 @@
 import { lazy, Suspense, useEffect, useState } from 'react';
 import { StyleSheet, View } from 'react-native';
 
-import { RankCameraButton, RankField, RankLabel } from '@/components/screens/rank/RankFindParts';
+import { RankField, RankLabel } from '@/components/screens/rank/RankFindParts';
 import type { RankItStart } from '@/components/screens/rank/RankItFlow';
 import { space } from '@/constants/tokens';
 import { useRankReturn } from '@/store/useRankReturn';
 
-// The camera and the row under the field load after Tonight, in one chunk; the find and rank sheets on the first tap.
-const RankItRow = lazy(() => import('./RankItRow').then((m) => ({ default: m.RankItRow })));
-const RankCamera = lazy(() => import('./RankItRow').then((m) => ({ default: m.RankCamera })));
+import { RankCamera, RankItRow } from './RankItRow';
+
+// On the web all of Rank it loads after Tonight (RankItLazy.web.tsx); the find and rank sheets wait for the first tap.
 const RankItFlow = lazy(() => import('@/components/screens/rank/RankItFlow').then((m) => ({ default: m.RankItFlow })));
 
 /**
@@ -35,15 +35,9 @@ export function RankIt() {
       <RankLabel>Had a drink? Rank it</RankLabel>
       <RankField
         onPress={find}
-        camera={
-          <Suspense fallback={<RankCameraButton />}>
-            <RankCamera />
-          </Suspense>
-        }
+        camera={<RankCamera />}
       />
-      <Suspense fallback={null}>
-        <RankItRow onStart={begin} />
-      </Suspense>
+      <RankItRow onStart={begin} />
       {open ? (
         <Suspense fallback={null}>
           <RankItFlow key={open.key} start={open.start} onClose={() => setOpen(null)} />
