@@ -6,6 +6,7 @@ import { Body, Button, Caption, DrinkImage, Headline, PressableScale, Spec, Tag,
 import { radius, space } from '@/constants/tokens';
 import { useSignedIn } from '@/ctx/AuthContext';
 import { useBarTopDrinks } from '@/hooks/useRankings';
+import { noteRankedSignedOut } from '@/lib/analyticsDoor';
 import { pastMenuLabel, splitTopDrinks, topDrinkCaption, topDrinkLabel, type BarTopDrink } from '@/lib/barTopDrinks';
 import { drinkPageHref } from '@/lib/itemRoutes';
 import { MIN_RANKERS, formatScore } from '@/lib/ranking';
@@ -39,7 +40,11 @@ export function BarRankings({ bar }: BarRankingsProps) {
   if (isLoading || !data) return <Caption tone="muted">Loading top drinks…</Caption>;
 
   const { scored, early } = splitTopDrinks(data);
-  const startRanking = () => (signedIn ? ageGate.gate(() => setPicking(true)) : router.push('/auth/login'));
+  const startRanking = () => {
+    if (signedIn) return ageGate.gate(() => setPicking(true));
+    noteRankedSignedOut();
+    router.push('/auth/login');
+  };
   const pick = (d: BarTopDrink) => {
     setPicking(false);
     if (Platform.OS === 'ios') picked.current = d;

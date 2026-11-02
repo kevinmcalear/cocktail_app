@@ -1,5 +1,5 @@
 import { useLocalSearchParams, useRouter } from 'expo-router';
-import { Platform, ScrollView, Share, StyleSheet, View } from 'react-native';
+import { Platform, ScrollView, StyleSheet, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import { BackbarTheme, Body, BrandProvider, Button, Caption, DsText, LogoImage, useDs, useGutter } from '@/components/ds';
@@ -8,6 +8,7 @@ import { displayFaces, font, radius, space } from '@/constants/tokens';
 import { useActiveVenue, type Venue } from '@/hooks/useActiveVenue';
 import { useMenu } from '@/hooks/useMenus';
 import { cardWhen, menuAsText } from '@/lib/menus';
+import { shareText } from '@/lib/shareLink';
 import type { MenuSectionDetail } from '@/types/menus';
 
 import { MenuSections, type CardPictures } from './MenuSections';
@@ -123,7 +124,7 @@ function CardBody({ menuId, venue }: { menuId: string; venue: Venue | null }) {
     if (!menu) return;
     if (web) window.print();
     // ponytail: on a phone it shares the menu as text; the printed card (web) carries the QR codes.
-    else void Share.share({ message: menuAsText(menu, venue?.name) });
+    else void shareText(menuAsText(menu, venue?.name), menu.name, 'menu');
   };
   return (
     // Paper, the sketches' own ground, so they sit on the page instead of in boxes.

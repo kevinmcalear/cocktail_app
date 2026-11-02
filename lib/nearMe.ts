@@ -21,15 +21,6 @@ export function areaLabel(area: Area): string {
 }
 
 /**
- * What Discover's search field searches, in the place pill's words: "Search near you", "Search Melbourne",
- * "Search this area", "Search anywhere". `preferNear`: still finding the person, so the pill already says Near me.
- */
-export function searchHere(area: Area, preferNear = false): string {
-  if (area.kind === 'anywhere' && preferNear) return 'Search near you';
-  return `Search ${areaLabel(area).replace(/^in /, '')}`;
-}
-
-/**
  * ~110 m. Coordinates are rounded before they leave the device: enough for
  * a 10 km search, and nothing finer about where someone is standing.
  */
@@ -120,13 +111,6 @@ export function peopleCount(n: number): string {
 /** "3 people ranked"; null for a bar nobody has ranked, which says nothing about ranking. */
 export function rankedCount(n: number): string | null {
   return n ? `${peopleCount(n)} ranked` : null;
-}
-
-/** The note over early bars: some people ranking them, or nobody yet. */
-export function earlyNote(early: readonly DiscoverRow[], minRankers: number): string {
-  return early.some((r) => r.rankers > 0)
-    ? `Nothing here has ${minRankers} rankers yet, so there are no scores. The bars people have started ranking come first.`
-    : `Nobody has ranked a drink at these bars yet. A bar gets a score once ${minRankers} people rank drinks there.`;
 }
 
 // --- Adding a bar from an address search ---

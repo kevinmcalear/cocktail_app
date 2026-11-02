@@ -128,35 +128,3 @@ export function barSearchHref(ref: string, search: string): string {
   const q = search.trim();
   return q ? `/p/${ref}?q=${encodeURIComponent(q)}` : `/p/${ref}`;
 }
-
-/**
- * "5 bars near you pour the classic, 2 pour a variation" (disc-search-map):
- * by bar, a bar with the classic's own spec counts as pouring the classic
- * even if it also pours a variation. Null when no bar pours either.
- */
-export function classicSummary(drinks: readonly { id: string; barId: string }[], verdicts: Readonly<Record<string, { spec_match: string }>>, where: string): string | null {
-  const classic = new Set<string>();
-  const variation = new Set<string>();
-  for (const d of drinks) {
-    const v = verdicts[d.id]?.spec_match;
-    if (v === 'same') classic.add(d.barId);
-    else if (v === 'variation') variation.add(d.barId);
-  }
-  for (const b of classic) variation.delete(b);
-  const bars = (n: number) => `${n} ${n === 1 ? 'bar' : 'bars'}`;
-  const pour = (n: number) => (n === 1 ? 'pours' : 'pour');
-  if (classic.size && variation.size) return `${bars(classic.size)} ${where} ${pour(classic.size)} the classic, ${variation.size} ${pour(variation.size)} a variation`;
-  if (classic.size) return `${bars(classic.size)} ${where} ${pour(classic.size)} the classic`;
-  if (variation.size) return `${bars(variation.size)} ${where} ${pour(variation.size)} a variation`;
-  return null;
-}
-
-/**
- * The searched results' heading (disc-search-map): "Martinis and more" when
- * the search names a style, else the search itself in quotes.
- */
-export function searchTitle(search: string): string {
-  const q = foldName(search);
-  const style = q ? STYLES.find((s) => s.name?.test(q)) : undefined;
-  return style ? `${style.label} and more` : `“${search.trim()}”`;
-}

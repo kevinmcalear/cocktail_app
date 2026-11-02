@@ -67,10 +67,13 @@ const EYE = 'M2 12s3.6-7 10-7 10 7 10 7-3.6 7-10 7S2 12 2 12z';
 const HOURGLASS = 'M6.5 3.5h11M6.5 20.5h11M8 3.5c0 4.5 8 4.5 8 8.5s-8 4-8 8.5M16 3.5c0 4.5-8 4.5-8 8.5s8 4 8 8.5';
 const CARD_BACK = 'M8 4.5h10.5a1.5 1.5 0 0 1 1.5 1.5v10';
 const CARD = R(4, 8, 12.5, 12.5, 1.5);
+/** The Drinks tab's glass (Kept-glyph): an outline in every bar; `on` is Android's selected tab, the bowl filled, the stem and foot still lines. */
+const GLASS_BOWL = 'M5 4.5h14L12 12.5z';
 
 const G = {
   // --- the shell's places (nav-icons board) ---
   'place.tonight': { ...CAL, day: true },
+  'place.drinks': { d: GLASS_BOWL + 'M12 12.5V19.5M8 20h8', f: GLASS_BOWL, solid: true },
   'place.library': { d: SPEC_BOOK + 'M5.5 18.5a2 2 0 0 1 2-2h11M9 8h6l-3 3.2zM12 11.2v2.6M10.5 13.8h3', f: SPEC_BOOK },
   'place.menus': { d: MENU_CARD + 'M9.5 7.5h5M8.5 11.5h7M8.5 14.5h7M8.5 17.5h4', f: MENU_CARD },
   'place.prep': { d: 'M5.5 4.5h13v2.5h-13z' + TUB + 'M9 12.5h6v3H9z', f: TUB },
@@ -97,8 +100,10 @@ const G = {
   'arrow.up': { d: 'M12 19V5M5.5 11.5L12 5l6.5 6.5' },
   'arrow.down': { d: 'M12 5v14M5.5 12.5L12 19l6.5-6.5' },
   'arrow.up.right': { d: 'M7 17L17 7M8.5 7H17v8.5' },
+  'arrow.up.left': { d: 'M18 18L7 7M7 15V7h8' },
   'arrow.up.to.line': { d: 'M5 4h14M12 20V8.5M6.5 14L12 8.5l5.5 5.5' },
   'arrow.up.and.down': { d: 'M8 4v16M4.5 7.5L8 4l3.5 3.5M16 20V4M12.5 16.5L16 20l3.5-3.5' },
+  'arrow.left.arrow.right': { d: 'M7 7h12M15 3l4 4-4 4M17 17H5M9 13l-4 4 4 4' },
   'arrow.left.and.right': { d: 'M3 12h18M6.5 8.5L3 12l3.5 3.5M17.5 8.5L21 12l-3.5 3.5' },
   'arrow.turn.down.right': { d: 'M4.5 4v7a4 4 0 0 0 4 4h11M15.5 11l4 4-4 4' },
   'arrow.uturn.backward': { d: 'M9 14L4.5 9.5 9 5M4.5 9.5h10a5 5 0 0 1 0 10H11' },
@@ -131,6 +136,8 @@ const G = {
   mic: { d: 'M12 15a3 3 0 0 0 3-3V6a3 3 0 0 0-6 0v6a3 3 0 0 0 3 3zM6 11a6 6 0 0 0 12 0M12 17v4', f: 'M12 15a3 3 0 0 0 3-3V6a3 3 0 0 0-6 0v6a3 3 0 0 0 3 3z' },
   trash: { d: 'M4 6.5h16M18 6.5v12a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2v-12M9 6.5V5a1.5 1.5 0 0 1 1.5-1.5h3A1.5 1.5 0 0 1 15 5v1.5M10 11v5.5M14 11v5.5' },
   'square.and.arrow.up': { d: 'M5 12v6.5a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2V12M16 7l-4-4-4 4M12 3v12' },
+  /** Android's Share (And-page). */
+  'share.nodes': { d: `${C(18, 5, 2.6)}${C(6, 12, 2.6)}${C(18, 19, 2.6)}M8.3 10.7l7.4-4.2M8.3 13.3l7.4 4.2` },
   'square.and.arrow.down': { d: 'M12 3v11M7.5 9.5L12 14l4.5-4.5M4 15v3a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-3' },
   'doc.on.doc': { d: R(8.5, 8.5, 12, 12, 2) + 'M15.5 5.5V5a1.5 1.5 0 0 0-1.5-1.5H5A1.5 1.5 0 0 0 3.5 5v9A1.5 1.5 0 0 0 5 15.5h.5', f: R(8.5, 8.5, 12, 12, 2) },
   'square.on.square': { d: R(8.5, 8.5, 12, 12, 2) + 'M15.5 5.5V5a1.5 1.5 0 0 0-1.5-1.5H5A1.5 1.5 0 0 0 3.5 5v9A1.5 1.5 0 0 0 5 15.5h.5', f: R(8.5, 8.5, 12, 12, 2) },
