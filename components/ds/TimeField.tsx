@@ -29,7 +29,7 @@ const MINUTES = [0, 15, 30, 45];
 const rows = <T,>(list: T[], size: number) => Array.from({ length: Math.ceil(list.length / size) }, (_, i) => list.slice(i * size, i * size + size));
 
 /** The hours and minutes a time is picked from. Picking the minutes finishes (`onPicked`). */
-function TimeGrid({ value, onChange, onPicked }: { value: string; onChange: (time: string) => void; onPicked: () => void }) {
+export function TimeGrid({ value, onChange, onPicked }: { value: string; onChange: (time: string) => void; onPicked: () => void }) {
   const time = parseTime(value);
   // The half of the day to show hours from, before an hour is picked.
   const [pmFallback, setPmFallback] = useState(true);
