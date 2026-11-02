@@ -1,12 +1,13 @@
-import { createContext, use, useEffect, useEffectEvent, useState, type ReactNode } from 'react';
+import { useEffect, useEffectEvent, useState, type ReactNode } from 'react';
 import { KeyboardAvoidingView, Modal, Platform, Pressable, StyleSheet, useWindowDimensions, View, type ColorValue, type StyleProp, type ViewStyle } from 'react-native';
 import { GestureDetector, GestureHandlerRootView } from 'react-native-gesture-handler';
-import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import Animated, { Easing, useAnimatedStyle, useReducedMotion, useSharedValue, withSpring, withTiming } from 'react-native-reanimated';
 import { scheduleOnRN } from 'react-native-worklets';
 
 import { radius, space, springs } from '@/constants/tokens';
 
+import { FlowSheet } from './FlowSheet';
+import { CloseContext } from './sheetClose';
 import { dragShade, STRETCH } from './sheetDrag';
 import { sheetFrame, sheetIsDialog } from './sheetFrame';
 import { useDs } from './theme';
@@ -17,17 +18,7 @@ import { SheetScrollContext, slideAway, useSheetDrag } from './useSheetDrag';
 const FADE_IN = { duration: 200, easing: Easing.out(Easing.cubic) };
 const FADE_OUT = { duration: 180, easing: Easing.in(Easing.cubic) };
 
-const CloseContext = createContext<(() => void) | null>(null);
-
-/**
- * Inside a Sheet: close it the way the backdrop does, animating out before
- * onClose. For the sheet's own X and Cancel buttons.
- */
-export function useSheetClose(): () => void {
-  const close = use(CloseContext);
-  if (!close) throw new Error('useSheetClose is for buttons inside a Sheet');
-  return close;
-}
+export { useSheetClose } from './sheetClose';
 
 export interface SheetProps {
   visible: boolean;
@@ -51,11 +42,20 @@ export interface SheetProps {
   /**
    * small (the default): our sheet, for pickers, menus and short forms.
    * flow: a whole flow (Add, Rank it, Theme). The system's own sheet on
-   * phones: iOS's page sheet (its glass, grabber and swipe to close) and a
-   * full-screen dialog on Android, which brings its own back. The same
-   * centred dialog on the web, a little wider. Decision sheets: mixed.
+   * phones: SwiftUI's sheet on iOS (its glass, grabber, swipe to close and
+   * detents) and a full-screen dialog on Android, which brings its own back.
+   * The same centred dialog on the web, a little wider. Head it with
+   * FlowHead. Decision sheets: mixed.
    */
   kind?: 'small' | 'flow';
+  /**
+   * A flow on iOS: rest part-way, at this share of the screen's height (0.3
+   * to 0.9), as the first step of Add and Rank it is drawn; it can still be
+   * pulled up to full. Drop it for the next step and the sheet grows to full
+   * height. Android's flow is full screen and the web's a dialog, so only
+   * iOS reads it.
+   */
+  part?: number;
   /** The web at phone width: the whole window, not a dialog (Sheet.web). */
   fullAtPhoneWidth?: boolean;
 }
@@ -72,49 +72,6 @@ export interface SheetProps {
  */
 export function Sheet(props: SheetProps) {
   return props.kind === 'flow' && !sheetIsDialog ? <FlowSheet {...props} /> : <SmallSheet {...props} />;
-}
-
-/**
- * A whole flow in the system's sheet: no drag or backdrop of ours, the
- * platform draws and dismisses it. Its X and Cancel still close it with
- * useSheetClose(); a swipe down (iOS) or back (Android) calls onClose.
- */
-function FlowSheet({ visible, onClose, accessibilityLabel, children, style, ground, header, keyboard, keyboardOffset = 0, onShow, onDismiss }: SheetProps) {
-  const ds = useDs();
-  const insets = useSafeAreaInsets();
-  const android = Platform.OS === 'android';
-  const body = (
-    <View role="dialog" aria-label={accessibilityLabel} style={[styles.flex, style]}>
-      {header}
-      {children}
-    </View>
-  );
-  return (
-    <Modal
-      visible={visible}
-      animationType="slide"
-      presentationStyle={android ? 'fullScreen' : 'pageSheet'}
-      statusBarTranslucent={android}
-      navigationBarTranslucent={android}
-      onRequestClose={onClose}
-      onShow={onShow}
-      onDismiss={onDismiss}
-    >
-      <GestureHandlerRootView style={[styles.flex, { backgroundColor: ground ? ds.c.ground : ds.c.surface, paddingTop: android ? insets.top : 0, paddingBottom: android ? insets.bottom : 0 }]}>
-        <CloseContext value={onClose}>
-          {keyboard ? (
-            <KeyboardAvoidingView behavior={Platform.select({ ios: 'padding', android: 'height' })} keyboardVerticalOffset={keyboardOffset} style={styles.flex}>
-              {body}
-            </KeyboardAvoidingView>
-          ) : (
-            body
-          )}
-        </CloseContext>
-        {/* The sheet is a window over the app: a toast shown from it draws here, on top. */}
-        <ToastHost />
-      </GestureHandlerRootView>
-    </Modal>
-  );
 }
 
 function SmallSheet({ visible, onClose, accessibilityLabel, children, style, ground, header, keyboard, keyboardOffset = 0, onShow, onDismiss }: SheetProps) {

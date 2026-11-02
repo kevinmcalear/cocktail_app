@@ -187,6 +187,21 @@ export const displayFaces = {
 
 export type DisplayFace = keyof typeof displayFaces;
 
+const DISPLAY_FAMILIES = new Set<string>(Object.values(fontFamilies));
+
+/**
+ * The weight a text style needs when its caller swapped a display face into a
+ * system variant (a name set in the bar's face on a Headline or Caption). The
+ * faces are single-weight files, and on Android a 500 or 600 weight left on
+ * one measures the line narrower than it draws, so the last word drops out of
+ * sight ("House drink" read "House"). Undefined when nothing needs resetting:
+ * the family is the system font, or the caller set its own weight.
+ * Checked by components/ds/faceWeight.check.ts.
+ */
+export function faceWeightReset(fontFamily: unknown, fontWeight: unknown): { fontWeight: '400' } | undefined {
+  return typeof fontFamily === 'string' && DISPLAY_FAMILIES.has(fontFamily) && fontWeight === undefined ? { fontWeight: '400' } : undefined;
+}
+
 /** Names set in the display face on rows (22/26) and on a menu's card (24/28), as the canvas draws them. */
 export const displayName = {
   row: { fontSize: 22, lineHeight: 26 },
@@ -235,6 +250,14 @@ export const layout = {
   minTapTarget: 44,
   /** Desktop's phone previews of a drink page: about an iPhone's width, in points. */
   phoneFrame: 390,
+  /**
+   * The phone photo hero's height, as a share of the screen under the status
+   * bar. 0.3 is Eddie's (asked twice, 13 and 27 Oct); the boards draw 585 of
+   * 844, which is 0.675 here. This one number changes it.
+   */
+  photoHero: 0.3,
+  /** The photo beside the spec, from the split up (board Desk-photo-side-*). */
+  photoPanel: 500,
   /**
    * How wide a page's column grows. Pages sit left, next to the sidebar
    * (components/nav/Page.tsx): text for lists and forms, wide for plans and grids.
