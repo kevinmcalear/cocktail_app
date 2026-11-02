@@ -184,7 +184,7 @@ function GuestView({ items, from, barId, barName }: { items: WeekItem[]; from: D
   const copy = async () => {
     if (!feed) return;
     try {
-      setCopied((await shareLink(feed, `This week at ${barName ?? 'your bar'}`, { copy: true })) === 'copied' ? 'copied' : null);
+      setCopied((await shareLink(feed, `This week at ${barName ?? 'your bar'}`, 'calendar', { copy: true })) === 'copied' ? 'copied' : null);
     } catch {
       setCopied('failed');
     }

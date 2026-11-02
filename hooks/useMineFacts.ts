@@ -10,8 +10,9 @@ import type { SearchItem } from '@/types/search';
  * What the venue's search rows need to say why each is here: its menus, its
  * staff list, which drinks use each ingredient and which are house preps
  * (lib/searchCaptions.ts). The same cached queries the Library reads.
+ * `prepItems`: those house preps as rows, shared ones its drinks use too (the Library's Preps).
  */
-export function useMineFacts(venueId: string | null, items: readonly SearchItem[]): MineFacts {
+export function useMineFacts(venueId: string | null, items: readonly SearchItem[]): MineFacts & { prepItems: SearchItem[] } {
   const { data: menus } = useVenueMenus(venueId);
   const { data: staff } = useStaffList(venueId);
   const published = useMemo(() => items.filter((i) => !i.isDraft), [items]);
@@ -36,6 +37,7 @@ export function useMineFacts(venueId: string | null, items: readonly SearchItem[
       unranked: (staff ?? []).filter((p) => p.rank === null).map((p) => p.itemId),
       usedIn,
       preps: new Set(shelves.preps.map((p) => p.id)),
+      prepItems: shelves.preps,
     };
   }, [menus, staff, published, shelves, venueId, now]);
 }

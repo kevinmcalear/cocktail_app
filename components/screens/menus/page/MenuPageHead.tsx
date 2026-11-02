@@ -4,14 +4,14 @@ import { StyleSheet, View } from 'react-native';
 import { Caption, Display, DsText, GlassButton, PressableScale, Tag, useBreakpoint, useDs, type TagTone } from '@/components/ds';
 import { DrinkHero } from '@/components/screens/drink/DrinkHero';
 import { PhotoMirror } from '@/components/screens/drink/PhotoMirror';
-import { font, radius, space } from '@/constants/tokens';
+import { font, menuCover, radius, space } from '@/constants/tokens';
 
 import { MenuSky, MenuTrio } from './MenuBand';
 import type { MenuInk } from './MenuDrawing';
 
 const HERO_H = 300;
 /** A cover photo runs 470 down from the top of the screen, the name under it (Menu-g-photo-dark). */
-const PHOTO_H = 470;
+const PHOTO_H = menuCover.height;
 const TONE: Record<'green' | 'amber' | 'quiet', TagTone> = { green: 'success', amber: 'warning', quiet: 'default' };
 
 interface MenuPageHeadProps {

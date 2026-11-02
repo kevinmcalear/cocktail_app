@@ -22,7 +22,7 @@ import { formatScore } from '@/lib/ranking';
 
 import { BarMark } from './BarMark';
 import { BarTopDrinks } from './BarTopDrinks';
-import { TileGrid } from './DiscoverShelves';
+import { TileGrid } from './TileGrid';
 import { DrinkHero } from './DrinkHero';
 import { NextMatch } from './NextMatch';
 
