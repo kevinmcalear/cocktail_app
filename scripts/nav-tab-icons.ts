@@ -1,8 +1,9 @@
 // Draws the native tab bars' icons from the app's icon set (components/ui/glyphs.ts),
-// so iOS and Android show the same drawings as the web and the nav-icons board.
-// White on clear at 96 px (24 pt at @4x), so the tab bar tints them, an off and an
-// on image per tab (on adds the fill at 22%), and Tonight's page for each day of
-// the month. Run from the repo root after changing a tab's glyph:
+// so iOS and Android show the same drawings as the web and the Kept-glyph board.
+// White on clear at 96 px (24 pt at @4x), so the tab bar tints them: an outline per
+// tab, whether selected or not (Prod-phone), Android's selected Drinks with its bowl
+// filled (Kept-glyph), and Tonight's page for each day of the month. Run from the
+// repo root after changing a tab's glyph:
 //   npx tsx scripts/nav-tab-icons.ts
 // ponytail: renders with @resvg/resvg-wasm and draws the date with
 // @shuding/opentype.js, both installed by @vercel/og; add them as devDependencies
@@ -20,13 +21,12 @@ const require = createRequire(import.meta.url);
 const OUT = 'assets/images/tabs';
 const PX = 96;
 
-/** The tab bar's tabs (lib/tabs.ts; Tonight is the calendar page below), and Android's Search item.
- * ponytail: Drinks shows the Library's book until a Drinks glyph is drawn. */
+/** The tab bar's tabs (lib/tabs.ts; Tonight is the calendar page below). Search has no image: iOS draws its own
+ * magnifying glass on the search circle, and Android's search is the bar on top of the page, not a tab. */
 export const TAB_GLYPHS = {
-  drinks: 'place.library',
+  drinks: 'place.drinks',
   discover: 'place.discover',
   you: 'place.you',
-  search: 'magnifyingglass',
 } as const satisfies Record<string, GlyphName>;
 
 /** The date as a path (the wasm renderer draws no text): Geist SemiBold, centred, baseline at 18. */
@@ -42,6 +42,9 @@ function svg(name: GlyphName, on: boolean, day?: number) {
   return `<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24">${fill}${line}${date}</svg>`;
 }
 
+/** The one tab with a selected image of its own, on Android (components/nav/tabImages.ts). */
+const SELECTED: readonly (keyof typeof TAB_GLYPHS)[] = ['drinks'];
+
 async function main() {
   await initWasm(readFileSync(require.resolve('@resvg/resvg-wasm/index_bg.wasm')));
   const ttf = readFileSync(require.resolve('@expo-google-fonts/geist/600SemiBold/Geist_600SemiBold.ttf'));
@@ -52,12 +55,9 @@ async function main() {
   mkdirSync(`${OUT}/tonight`, { recursive: true });
   for (const [tab, name] of Object.entries(TAB_GLYPHS)) {
     writeFileSync(`${OUT}/${tab}@4x.png`, png(svg(name, false)));
-    if (GLYPHS[name].f) writeFileSync(`${OUT}/${tab}-on@4x.png`, png(svg(name, true)));
   }
-  for (let day = 1; day <= 31; day++) {
-    writeFileSync(`${OUT}/tonight/${day}@4x.png`, png(svg('place.tonight', false, day)));
-    writeFileSync(`${OUT}/tonight/${day}-on@4x.png`, png(svg('place.tonight', true, day)));
-  }
+  for (const tab of SELECTED) writeFileSync(`${OUT}/${tab}-on@4x.png`, png(svg(TAB_GLYPHS[tab], true)));
+  for (let day = 1; day <= 31; day++) writeFileSync(`${OUT}/tonight/${day}@4x.png`, png(svg('place.tonight', false, day)));
   console.log(`Wrote ${OUT}`);
 }
 
