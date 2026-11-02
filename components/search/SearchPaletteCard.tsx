@@ -85,7 +85,7 @@ function Palette() {
   const fromPath = useRef(pathname);
   useEffect(() => {
     if (pathname === fromPath.current) return;
-    // A /search link opens the palette as it moves to the first tab (app/(tabs)/search): that move keeps it.
+    // A /search link opens the palette as it steps back off the /search page (SearchScreen.tsx HandOff): that move keeps it.
     if (fromPath.current === '/search') fromPath.current = pathname;
     else setOpen(false);
   }, [pathname, setOpen]);

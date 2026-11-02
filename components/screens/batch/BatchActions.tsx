@@ -53,7 +53,7 @@ export function BatchActions({ name, barId, canPrep, making, onMake, onDilution,
             />
           ) : null
         ) : (
-          <Button label="Share" variant="secondary" onPress={() => void shareText(text, `${name} batch`)} style={styles.share} />
+          <Button label="Share" variant="secondary" onPress={() => void shareText(text, `${name} batch`, 'batch')} style={styles.share} />
         )}
         {/* At home, Make it takes the room Share leaves, so its label never clips in a dialog (board drink-sheet-batch-home). */}
         <Button label={make} variant={making ? 'secondary' : 'primary'} onPress={onMake} style={[styles.flex, styles.tight]} />
