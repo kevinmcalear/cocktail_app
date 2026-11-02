@@ -12,8 +12,12 @@ import { makesIt, namesOnly, onTeam, type DrinkViewer } from '@/lib/drinkViewer'
 import { leftTheMenu } from '@/lib/menuEditions';
 import { pageShowsDescriptions } from '@/lib/pageVisibility';
 import type { SpecLevels, SpecLine } from '@/lib/spec';
+import { lineRole } from '@/lib/specLines';
 import type { DatabaseItem } from '@/types/types';
 
+import { GuestAllergens, TeamAllergens } from '@/components/allergens/DrinkAllergensLazy';
+
+import { AllergyLine } from './AllergyLine';
 import { ApprovalNotice } from './ApprovalNotice';
 import { BarRows } from './BarRows';
 import { Backstory } from './Backstory';
@@ -36,6 +40,8 @@ export interface DrinkSectionsInput {
   lines: SpecLine[];
   /** The method as a step's name ("Shake"). */
   verb: string | null;
+  /** The drink's method names, for the method line ("double strain"). */
+  methods: readonly string[];
   /** The glass and ice, for the serve line. */
   serve: (string | null | undefined)[];
   fill: GlassFillResult | null;
@@ -66,7 +72,9 @@ export function useDrinkSections(p: DrinkSectionsInput) {
   const { data: runs = [] } = useDrinkMenuRuns(live ? item.id : null);
   const description = item.description && pageShowsDescriptions(lock?.bar.visibility) ? item.description : null;
   // A bar's published drink keeps its spec back: its names alone, as a guest reads them.
-  const lockedLines: SpecLine[] | null = lock ? (lock.names ?? []).map((n, i) => ({ ...BLANK, key: `${i}`, ingredient: n.name })) : null;
+  const lockedLines: SpecLine[] | null = lock
+    ? (lock.names ?? []).map((n, i) => ({ ...BLANK, key: `${i}`, ingredient: n.name, ...(n.garnish !== undefined ? { garnish: n.garnish } : {}) }))
+    : null;
   const team = onTeam(viewer) && !!item.bar_id && live;
 
   // A bar's drink that came off every menu says so at the top (Menu-p-left); its team know.
@@ -81,7 +89,7 @@ export function useDrinkSections(p: DrinkSectionsInput) {
   const spec = lockedLines ? (
     <View>
       {lockedLines.map((l) => (
-        <SpecRow key={l.key} amount="" dense ingredient={l.ingredient ?? ''} />
+        <SpecRow key={l.key} amount="" dense ingredient={l.ingredient ?? ''} role={lineRole(l, 'names')} />
       ))}
     </View>
   ) : (
@@ -91,6 +99,7 @@ export function useDrinkSections(p: DrinkSectionsInput) {
       lines={lines}
       maker={makesIt(viewer)}
       verb={p.verb}
+      methods={p.methods}
       serve={p.serve}
       onBatch={p.onBatch}
       preview={preview}
@@ -105,7 +114,7 @@ export function useDrinkSections(p: DrinkSectionsInput) {
   const notes = live ? (
     <>
       {drinkNotes ? <Body>{drinkNotes}</Body> : null}
-      {viewer === 'floor' && item.bar_id ? <ForTheFloor itemId={item.id} barId={item.bar_id} ingredients={lines.map((l) => l.ingredient)} /> : null}
+      {viewer === 'floor' && item.bar_id ? <ForTheFloor itemId={item.id} barId={item.bar_id} /> : null}
       {signedIn ? <MyNote itemId={item.id} name={item.name} /> : null}
     </>
   ) : null;
@@ -119,8 +128,21 @@ export function useDrinkSections(p: DrinkSectionsInput) {
   return {
     title,
     // Guests and the floor: the allergy line, what it tastes like, how it meets your palate.
-    lead: names && live ? <NamesBlock itemId={item.id} name={item.name} guest={viewer === 'guest'} tastes={description} atBar={!!item.bar_id} /> : null,
+    lead:
+      names && live ? (
+        <NamesBlock itemId={item.id} name={item.name} guest={viewer === 'guest'} tastes={description} ingredients={(lockedLines ?? lines).map((l) => l.ingredient)} />
+      ) : viewer === 'public' && live && item.bar_id ? (
+        // A bar's drink read in full by someone not on its team: their allergy warning first, as a guest's (Loop-allergy, A match).
+        <AllergyLine itemId={item.id} guest />
+      ) : null,
     spec,
+    // Under the spec: every allergen, the unchecked count and the bar's check (Loop-allergy). The floor reads its line above instead.
+    allergens:
+      !live || !item.bar_id || viewer === 'floor' ? null : team ? (
+        <TeamAllergens itemId={item.id} name={item.name} barId={item.bar_id} barName={p.barName} canCheck={p.canEdit} lines={lines} />
+      ) : (
+        <GuestAllergens itemId={item.id} barName={p.barName} />
+      ),
     // The one prominent action for a guest. The floor and bartenders have none; Edit is in the toolbar.
     action: viewer === 'guest' && p.onRank ? <Button label="Rank it" size="lg" onPress={p.onRank} accessibilityHint={`Rank ${item.name} against others you've had`} /> : null,
     // At home, the end of the recipe: the guest's Rank it has a twin here. Android's phone page moves the button to its FAB and keeps the count.
