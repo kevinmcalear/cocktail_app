@@ -2,7 +2,7 @@ import { Image } from 'expo-image';
 import { StyleSheet, View, type StyleProp, type ViewStyle } from 'react-native';
 
 import { useLogoEdge } from '@/lib/logoEdge';
-import { LOGO_INSET } from '@/lib/logoPins';
+import { LOGO_INSET } from '@/lib/logoInset';
 
 export interface LogoImageProps {
   uri: string;

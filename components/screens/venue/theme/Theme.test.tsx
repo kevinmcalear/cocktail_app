@@ -1,4 +1,5 @@
 import { act, fireEvent, screen } from '@testing-library/react-native';
+import type { ReactNode } from 'react';
 import { Alert, type AlertButton } from 'react-native';
 
 import { renderWithProviders } from '@/jest.setup';
@@ -9,6 +10,31 @@ import { ThemePreview } from './ThemePreview';
 import type { ThemePartProps } from './ThemeSections';
 import { TypeSheet } from './TypeSheet';
 
+// SwiftUI's sheet, as far as the flow sees it: content while presented, and a dismiss once it has gone.
+jest.mock('@expo/ui/swift-ui', () => {
+  const { useEffect, useRef } = jest.requireActual<typeof import('react')>('react');
+  const pass = ({ children }: { children?: ReactNode }) => children;
+  return {
+    Host: pass,
+    RNHostView: pass,
+    Group: pass,
+    BottomSheet: ({ children, isPresented, onDismiss }: { children?: ReactNode; isPresented: boolean; onDismiss: () => void }) => {
+      const was = useRef(isPresented);
+      useEffect(() => {
+        if (was.current && !isPresented) onDismiss();
+        was.current = isPresented;
+      }, [isPresented, onDismiss]);
+      return isPresented ? children : null;
+    },
+  };
+});
+jest.mock('@expo/ui/swift-ui/modifiers', () => ({
+  presentationDetents: () => ({}),
+  presentationDragIndicator: () => ({}),
+  presentationBackground: () => ({}),
+  preferredColorScheme: () => ({}),
+  interactiveDismissDisabled: () => ({}),
+}));
 jest.mock('@/hooks/useVenueBrand', () => ({ pickPhotoColours: jest.fn() }));
 jest.mock('@/hooks/useLogoColours', () => ({ useLogoColours: (_url: string | null, known: string[]) => ({ colours: known, pins: [], aspect: 1 }) }));
 

@@ -1,3 +1,5 @@
+import { LOGO_INSET } from './logoInset';
+
 /**
  * Where each of a logo's colours sits in it (canvas Theme-flow-3: "pins where
  * each colour sits on the logo"), read from a small copy of the logo's pixels
@@ -107,9 +109,6 @@ export function pinsFromPixels(rgba: ArrayLike<number>, width: number, height: n
     return [{ hex, x: ((best % width) + 0.5) / width, y: (Math.floor(best / width) + 0.5) / height, share: n / drawn, exact: `#${most.toString(16).padStart(6, '0').toUpperCase()}` }];
   });
 }
-
-/** An opaque logo sits in this share of its tile, as the home-screen icon does (LogoImage, venue-app). */
-export const LOGO_INSET = 0.8;
 
 /** Where a logo image of this aspect (width over height) is drawn in a LogoImage tile `size` square, by its edge (LogoImage). */
 export function logoRect(edge: 'solid' | 'clear' | 'busy' | null, size: number, aspect: number): { left: number; top: number; width: number; height: number } {
