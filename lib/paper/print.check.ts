@@ -133,4 +133,7 @@ assert.ok(html.includes('size: 8.5in 11in'));
 assert.ok(html.includes('Run &lt;sheet&gt;'));
 assert.ok(pagesHtml([png], 'a4', 'A4').includes('size: 8.27in 11.69in'));
 
+// A picture never fills its sheet exactly: iOS would spill a sliver onto a second page.
+assert.ok(pagesHtml([png], 'label', 'Label').includes('height: calc(1.26in - 4px)'));
+
 console.log('print checks passed');
