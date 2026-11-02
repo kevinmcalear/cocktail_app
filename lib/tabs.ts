@@ -59,3 +59,12 @@ export function backWord(title: string | undefined): string {
   // An untitled page has only its route name ('prep'): say it as a word.
   return PAGE_WORDS[title] ?? title[0].toUpperCase() + title.slice(1);
 }
+
+/**
+ * Android shows its nav bar on top-level screens only (Material; And-who-guest-hit,
+ * Miss-made): a tab's first page. A pushed page (a drink, an ingredient, Prep) and
+ * search hide it. `segments` is useSegments(): ['(tabs)', '(2-drinks)', 'drinks'].
+ */
+export function androidBarShown(segments: readonly string[]): boolean {
+  return segments[0] === '(tabs)' && [undefined, 'drinks', 'discover', 'you'].includes(segments[2]);
+}

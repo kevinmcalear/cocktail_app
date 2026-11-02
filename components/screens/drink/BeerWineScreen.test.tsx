@@ -31,6 +31,7 @@ jest.mock('expo-router', () => ({
   useRouter: () => ({ push: mockPush, back: jest.fn(), replace: jest.fn(), canGoBack: () => true }),
   useNavigation: () => ({ setOptions: (o: object) => Object.assign(mockOptions, o) }),
   Redirect: () => null,
+  useSegments: () => [],
 }));
 jest.mock('@/hooks/useShareSlug', () => ({ useShareSlug: () => ({ data: 'little-rye-lager' }) }));
 jest.mock('@/hooks/useBeers', () => ({ useBeer: (id: string) => ({ data: id === 'b1' ? lager : undefined, isPending: false, error: null, refetch: jest.fn() }) }));
