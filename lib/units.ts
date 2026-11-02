@@ -99,3 +99,12 @@ export function followBarUnit(s: { units: string | null; checked: boolean }, bar
 export function savedUnit(unit: string | null | undefined): string | null {
   return unit && unit !== DEFAULT_UNIT ? unit : null;
 }
+
+/** "a large cube", "a spear", but "cubes" and "crushed": a lone piece takes "a", plurals and loose ice don't. */
+export const overIce = (name: string) => {
+  const n = name.trim().toLowerCase();
+  return /^(large cube|big cube|cube|spear|sphere|block|ball)$/.test(n) ? `a ${n}` : n;
+};
+
+/** "Grated nutmeg": the garnish grated over the top, its name kept lower case after. */
+export const grated = (name: string) => `Grated ${name.charAt(0).toLowerCase()}${name.slice(1)}`;

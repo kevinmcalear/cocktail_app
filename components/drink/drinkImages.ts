@@ -8,8 +8,11 @@ import { imageExtFromUri, uriToBase64 } from '@/lib/imageBase64';
 import { isHeroLink } from '@/lib/itemImages';
 import { pageCopyPath } from '@/lib/thumbnails';
 import { canUseCamera } from '@/lib/photoAccess';
+import { readPhotoPixels } from '@/lib/photoPixels';
 import { supabase, UPLOAD_CACHE_SECONDS } from '@/lib/supabase';
 import { offerCutout } from '@/store/useCutoutOffer';
+import { LAYOUT_WIDTH, readPhotoLayout, shrinkForLayout } from '@/supabase/functions/_shared/photoLayout';
+import type { Insert, Json } from '@/types/db';
 
 /**
  * `cutout`: a venue's drink photo, so offer to lift the drink off its background (store/useCutoutOffer). `square`: crop 1:1 (an ingredient's photo), not 4:5.
@@ -98,6 +101,20 @@ async function sizedCopies(uri: string, png: boolean): Promise<Sized | null> {
   return { kept: kept.uri, page: page.uri, width: kept.width, height: kept.height, thumbhash };
 }
 
+/**
+ * How the photo lays out its page (images.brightness, text_zone): read here,
+ * not by the worker, so the page is right the first time it opens. Never
+ * failing the photo: without it the page is dark with the title under the photo.
+ */
+async function photoLayoutOf(uri: string): Promise<{ brightness: number; text_zone: Json } | null> {
+  // Read taller than needed, then shrunk to LAYOUT_WIDTH as the backfill does, so a tall photo still reads at the full width.
+  const pixels = await readPhotoPixels(uri, LAYOUT_WIDTH * 2).catch(() => null);
+  if (!pixels) return null;
+  const small = shrinkForLayout(pixels.data, pixels.width, pixels.data.length / 4 / pixels.width);
+  const { brightness, textZone } = readPhotoLayout(small.rgba, small.width, small.height);
+  return { brightness, text_zone: textZone ? { ...textZone } : null };
+}
+
 async function uploadFile(path: string, uri: string, ext: string) {
   return supabase.storage.from('drinks').upload(path, decode(await uriToBase64(uri)), {
     contentType: `image/${ext === 'jpg' ? 'jpeg' : ext}`,
@@ -127,10 +144,12 @@ export async function uploadDrinkPhoto(uri: string, folder: string): Promise<{ i
   const { data: publicUrlData } = supabase.storage.from('drinks').getPublicUrl(fileName);
   const url = publicUrlData.publicUrl;
   const size = sized ? { width: sized.width, height: sized.height, ...(pageUp && sized.thumbhash ? { thumbhash: sized.thumbhash } : {}) } : {};
-  const insert = (row: { url: string; width?: number; height?: number; thumbhash?: string }) => supabase.from('images').insert(row).select('id').single();
-  let saved = await insert({ url, ...size });
-  // Before the image-sizes migration (20261204100000) is in, those columns aren't there yet: the photo still saves.
-  if (saved.error && sized && /thumbhash|width|height/.test(saved.error.message)) saved = await insert({ url });
+  // A cut-out sits on the drawing paper: nothing of it decides the page.
+  const layout = original === 'png' ? null : await photoLayoutOf(sized?.page ?? uri);
+  const insert = (row: Insert<'images'>) => supabase.from('images').insert(row).select('id').single();
+  let saved = await insert({ url, ...size, ...layout });
+  // Before the photo-layout migration (20261206150000) is in, those columns aren't there yet: the photo still saves.
+  if (saved.error && layout && /brightness|text_zone/.test(saved.error.message)) saved = await insert({ url, ...size });
   if (saved.error || !saved.data) return null;
   return { id: saved.data.id, url };
 }
