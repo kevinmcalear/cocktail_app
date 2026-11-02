@@ -93,5 +93,6 @@ test('signing in here, by code or link, is noted once', async () => {
   mockAuth = { session: { user: { id: 'user-1' } }, loading: false };
   await view.rerender(<Analytics apiKey="k" host="h" />);
   expect(noteSignIn).toHaveBeenCalledTimes(1);
+  expect(noteSignIn).toHaveBeenCalledWith({ id: 'user-1' });
   expect(mockClient.identify).toHaveBeenCalledWith('user-1');
 });
