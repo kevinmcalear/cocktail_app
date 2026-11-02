@@ -24,7 +24,7 @@ test('Android gets the link once, in the message text', () => {
 
 test('shareLink opens the share sheet once with that payload', async () => {
   const share = jest.spyOn(Share, 'share').mockResolvedValue({ action: 'sharedAction', activityType: undefined });
-  await expect(shareLink(url, 'Saturday at home')).resolves.toBe('shared');
+  await expect(shareLink(url, 'Saturday at home', 'menu')).resolves.toBe('shared');
   expect(share).toHaveBeenCalledTimes(1);
   expect(share).toHaveBeenCalledWith({ url, title: 'Saturday at home' });
   share.mockRestore();
