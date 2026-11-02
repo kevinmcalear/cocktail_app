@@ -2,10 +2,13 @@ import { useState } from 'react';
 import { StyleSheet } from 'react-native';
 
 import { Button, PressableScale, useDs } from '@/components/ds';
+import { useFabUnderToast } from '@/components/ds/Toast';
+import { material } from '@/constants/material';
 import { IconSymbol } from '@/components/ui/icon-symbol';
 import { layout, radius, space } from '@/constants/tokens';
 
 import { CreateSheet } from './CreateSheet';
+import { useTabBarClearance } from './WebTabBar';
 
 const LABEL = 'Add: a drink, a bottle, something you make, beer, wine, a menu, or bring something in';
 
@@ -53,6 +56,8 @@ export function DeskAddButton() {
 export function AddFab() {
   const ds = useDs();
   const add = useAdd();
+  // It floats 16 over the docked tab bar; the toast goes above it.
+  useFabUnderToast(useTabBarClearance() + space.lg + material.fab);
   return (
     <>
       <PressableScale role="button" accessibilityLabel="Add" onPress={add.open} style={[styles.fab, { backgroundColor: ds.accentFill.fill }]}>
@@ -67,5 +72,5 @@ const SIZE = 32;
 const styles = StyleSheet.create({
   circle: { width: SIZE, height: SIZE, borderRadius: radius.pill, alignItems: 'center', justifyContent: 'center' },
   // Material 3's FAB: 56 square, 16 in from the edges, a level-3 shadow.
-  fab: { position: 'absolute', right: space.lg, bottom: space.lg, width: 56, height: 56, borderRadius: radius.control + 4, alignItems: 'center', justifyContent: 'center', elevation: 3 },
+  fab: { position: 'absolute', right: space.lg, bottom: space.lg, width: material.fab, height: material.fab, borderRadius: radius.control + 4, alignItems: 'center', justifyContent: 'center', elevation: 3 },
 });

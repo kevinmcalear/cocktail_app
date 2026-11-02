@@ -21,6 +21,9 @@ export interface Toast {
 
 interface ToastState {
   toast: Toast | null;
+  /** Android: how far the top of the FAB on screen is from the screen's bottom edge, 0 with none. The toast sits above it, as Material's snackbar does. */
+  fabTop: number;
+  setFabTop: (top: number) => void;
   show: (toast: Omit<Toast, 'id'>) => number;
   hide: (id?: number) => void;
 }
@@ -30,6 +33,8 @@ let next = 1;
 /** The one toast on screen (components/ds/Toast.tsx draws it). A new one replaces the last. */
 export const useToastStore = create<ToastState>((set, get) => ({
   toast: null,
+  fabTop: 0,
+  setFabTop: (fabTop) => set({ fabTop }),
   show: (toast) => {
     const id = next++;
     set({ toast: { ...toast, id } });
