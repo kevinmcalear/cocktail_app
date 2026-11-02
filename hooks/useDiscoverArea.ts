@@ -7,7 +7,6 @@ import { useNearMe, type NearMe } from '@/hooks/useNearMe';
 import type { City } from '@/lib/discover';
 import { distanceKm } from '@/lib/discoverDrinks';
 import { nearMeArea, type Area } from '@/lib/nearMe';
-import { useFirstOpen } from '@/store/useFirstOpen';
 import { useLastPlace } from '@/store/useLastPlace';
 
 const ANYWHERE: Area = { kind: 'anywhere' };
@@ -16,8 +15,8 @@ const ANYWHERE: Area = { kind: 'anywhere' };
 const STAY_KM = 2;
 
 /**
- * Discover's "where". It never asks for location by itself (Q2, 26 Oct): the
- * location card does (FirstCards.tsx). Already allowed, it opens near the
+ * Discover's "where". It never asks for location by itself (Q2, 26 Oct): Near
+ * me does. Already allowed, it opens near the
  * last place this device was found (store/useLastPlace.ts) at once, gets a
  * fresh position quietly, and moves only if that is more than STAY_KM away
  * (so the same query, and its cache, carry on). With no place yet it waits
@@ -54,10 +53,8 @@ export function useDiscoverArea() {
     },
     [clearPlace]
   );
-  const markCityPicked = useFirstOpen((s) => s.markCityPicked);
   const onArea = (next: Area) => {
     touched.current = true;
-    if (next.kind === 'city') markCityPicked();
     setPreferNear(next.kind === 'point' && next.source === 'me');
     setArea(next);
   };
@@ -76,10 +73,6 @@ export function useDiscoverArea() {
     touched.current = true;
     setPreferNear(true);
     void locate().then(place);
-  };
-  /** Going to the map from Anywhere: near me, as the map is about here. */
-  const nearIfAnywhere = () => {
-    if (area.kind === 'anywhere') onNearMe();
   };
 
   // Storage still loading when Discover opened: open near the last place once it's in.
@@ -102,7 +95,7 @@ export function useDiscoverArea() {
   }, [access, near.status, locate, place]);
 
   // Once Discover is on screen: allowed, find the person without a word; not, show anywhere and
-  // leave the asking to the card. The tab mounts on its first focus (MountOnFocus), and this
+  // leave the asking to Near me. The tab mounts on its first focus (MountOnFocus), and this
   // guards anywhere else it's rendered off screen.
   const onScreen = usePathname() === '/discover';
   const asked = useRef(false);
@@ -134,6 +127,7 @@ export function useDiscoverArea() {
   const locating = area.kind === 'anywhere' && preferNear && (near.status === 'idle' || near.status === 'locating');
   // "Finding where you are" only while there's nothing to show yet; a refresh near the last place is quiet.
   const usingLast = near.status === 'unavailable' && area.kind === 'point' && area.source === 'me';
-  const note = near.status === 'locating' && !locating ? null : areaStatus(near, usingLast);
-  return { area, onArea, onCity, preferNear, near, access, onNearMe, nearIfAnywhere, locating, note };
+  // A city picked is where Discover looks: nothing to say about location.
+  const note = area.kind === 'city' || (near.status === 'locating' && !locating) ? null : areaStatus(near, usingLast);
+  return { area, onArea, onCity, preferNear, near, onNearMe, locating, note };
 }

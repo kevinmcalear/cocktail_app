@@ -11,6 +11,9 @@ import { lazy } from 'react';
  * covers the load. Native keeps them static (SearchTabRoutes.tsx).
  */
 export const SearchTabDrink = lazy(() => import('@/app/(tabs)/(1-tonight,2-drinks,3-discover,4-you)/cocktail/[id]'));
+export const SearchTabBeer = lazy(() => import('@/app/(tabs)/(1-tonight,2-drinks,3-discover,4-you)/beer/[id]'));
+export const SearchTabWine = lazy(() => import('@/app/(tabs)/(1-tonight,2-drinks,3-discover,4-you)/wine/[id]'));
+export const SearchTabIngredient = lazy(() => import('@/app/(tabs)/(1-tonight,2-drinks,3-discover,4-you)/ingredient/[id]'));
 
 const LazySearchScreen = lazy(() => import('@/components/search/SearchScreen').then((m) => ({ default: m.SearchScreen })));
 

@@ -1,10 +1,34 @@
-import { act, fireEvent, screen } from '@testing-library/react-native';
+import { act, fireEvent, screen, within } from '@testing-library/react-native';
+import { View } from 'react-native';
 
 import { ToastHost } from '@/components/ds/Toast';
 import { renderWithProviders } from '@/jest.setup';
 import { useToastStore } from '@/store/useToastStore';
 
 afterEach(() => useToastStore.getState().hide());
+
+test('a toast shown from an open sheet draws once, in the sheet, and at the root after it closes', async () => {
+  const App = ({ sheet }: { sheet: boolean }) => (
+    <>
+      <View testID="root">
+        <ToastHost />
+      </View>
+      {sheet ? (
+        <View testID="sheet">
+          <ToastHost />
+        </View>
+      ) : null}
+    </>
+  );
+  const { rerender } = await renderWithProviders(<App sheet />);
+  await act(async () => {
+    useToastStore.getState().show({ title: 'The photo didn’t upload', tone: 'error' });
+  });
+  expect(screen.getAllByText('The photo didn’t upload')).toHaveLength(1);
+  expect(within(screen.getByTestId('sheet')).getByText('The photo didn’t upload')).toBeTruthy();
+  await act(async () => rerender(<App sheet={false} />));
+  expect(within(screen.getByTestId('root')).getByText('The photo didn’t upload')).toBeTruthy();
+});
 
 test('a toast says what happened, is announced, and its action runs once and closes it', async () => {
   const undo = jest.fn();

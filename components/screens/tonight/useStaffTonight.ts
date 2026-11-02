@@ -82,6 +82,9 @@ export function useStaffTonight(barId: string) {
   const enough = prepData
     ? enoughRows(Object.keys(prepData.houseMade), prep?.make ?? [], prepData.onHand, (id) => lineNames.get(id), (id) => formatQuantity(prepData.onHand[id]))
     : [];
+  // For the handover's chips and its Log batch (Handover.tsx): house-made, and an ingredient's name.
+  const houseMadeIds = Object.keys(prepData?.houseMade ?? {});
+  const lineName = (id: string) => lineNames.get(id);
   /** A house-made's batch, for a one-tap Log batch; null when its recipe doesn't say what it makes. */
   const batchOf = (id: string) => {
     const hm = prepData?.houseMade[id];
@@ -163,6 +166,9 @@ export function useStaffTonight(barId: string) {
     houseMade,
     enough,
     batchOf,
+    houseMadeIds,
+    lineName,
+    date,
     off,
     service,
     learn,
