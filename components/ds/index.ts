@@ -39,4 +39,8 @@ export { SheetScrollView } from './SheetScrollView';
 export { dragDismissesKeyboard } from './keyboardDrag';
 export { HidingHeadScroll } from './HidingHeadScroll';
 export { DrinkDrawing, DrinkDrawingFor, isRowSize, type DrawingSize, type DrinkDrawingProps } from './DrinkDrawing';
+export { DrawingBar } from './DrawingBar';
+export { useDrawingGlasses } from './drawingGlasses';
+export { DrawingTrio } from './DrawingTrio';
+export { trioLayout, trioPlaces, type TrioLayout, type TrioPlace } from './trioPlaces';
 export { PencilState, type PencilStateKind, type PencilStateProps } from './PencilState';

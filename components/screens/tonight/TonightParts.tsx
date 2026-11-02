@@ -3,6 +3,8 @@ import type { ReactNode } from 'react';
 import { StyleSheet, View } from 'react-native';
 
 import { Caption, Display, DrinkDrawingFor, DsText, PressableScale, TextLink, useDs, type IconName } from '@/components/ds';
+import { DrawingTrio } from '@/components/ds/DrawingTrio';
+import { trioLayout } from '@/components/ds/trioPlaces';
 import { IconSymbol } from '@/components/ui/icon-symbol';
 import { displayFaces, font, palateHues, radius, space } from '@/constants/tokens';
 import { useItemSketch } from '@/hooks/useItemSketch';
@@ -76,23 +78,14 @@ export function TonightSky({ ids }: { ids: readonly string[] }) {
   );
 }
 
-/** Three drinks from the list on now, the middle one larger (staff Tonight's hero). */
+/** Staff Tonight's hero draws the canvas's trio smaller (Prod-today-staff: 131, 169, 131). */
+const HERO = trioLayout(0.82);
+
+/** Three drinks from the list on now, the middle one larger, higher and in front (staff Tonight's hero). */
 export function HeroTrio({ ids, label, onPress }: { ids: readonly string[]; label: string; onPress: () => void }) {
-  const [left, middle, right] = ids;
   return (
     <PressableScale role="link" accessibilityLabel={label} onPress={onPress} style={styles.trio}>
-      {/* All three on the sky (hero size, no paper), the outer two smaller and tucked in. */}
-      {left ? (
-        <View style={styles.side}>
-          <DrinkDrawingFor itemId={left} size="hero" staff />
-        </View>
-      ) : null}
-      {middle ? <DrinkDrawingFor itemId={middle} size="hero" staff /> : null}
-      {right ? (
-        <View style={styles.side}>
-          <DrinkDrawingFor itemId={right} size="hero" staff />
-        </View>
-      ) : null}
+      <DrawingTrio ids={ids.slice(0, 3)} layout={HERO} draw={(id, size) => <DrinkDrawingFor itemId={id} size={size} />} />
     </PressableScale>
   );
 }
@@ -167,9 +160,8 @@ const styles = StyleSheet.create({
   caps: { textTransform: 'uppercase', letterSpacing: 1.2 },
   label: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', gap: space.md },
   sky: { position: 'absolute', left: 0, right: 0, top: 0, height: SKY },
-  // The drawings carry their own air above the glass, so the trio tucks up under the title.
-  trio: { flexDirection: 'row', alignItems: 'flex-end', justifyContent: 'center', marginTop: -space.xxxl, paddingBottom: space.md },
-  side: { width: 96, alignItems: 'center', transform: [{ scale: 0.72 }], transformOrigin: 'bottom' },
+  // The board's hero block: 196 tall, the trio at its top.
+  trio: { height: 196, alignItems: 'center' },
   listHead: { gap: space.xs, alignSelf: 'flex-start' },
   listName: { flexDirection: 'row', alignItems: 'center', gap: space.sm },
   tile: { width: 132, gap: space.xs },
