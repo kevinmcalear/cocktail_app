@@ -13,7 +13,8 @@ import { plural } from '@/lib/menus';
 import type { NightPhase } from '@/lib/nightPhase';
 
 import { BeforeDoors, NeedsYou, OffTonight, OnShift } from './BeforeDoors';
-import { HeroTrio, ListHead, TonightSection } from './TonightParts';
+import type { NightHandover } from './NightHandover';
+import { HeroTrio, ListHead, NoteCard, TonightSection } from './TonightParts';
 import type { useStaffTonight } from './useStaffTonight';
 
 type Staff = ReturnType<typeof useStaffTonight>;
@@ -76,7 +77,7 @@ function DrinkGrid({ block }: { block: TonightBlock }) {
   );
 }
 
-type Part = 'service' | 'off' | 'doors' | 'needs' | 'learn' | 'shift' | 'week';
+type Part = 'leave' | 'service' | 'off' | 'doors' | 'needs' | 'learn' | 'shift' | 'handover' | 'week';
 
 /**
  * Tonight by the hour (Loop-tonight, decided 1 Nov): before doors, the work
@@ -85,23 +86,29 @@ type Part = 'service' | 'off' | 'doors' | 'needs' | 'learn' | 'shift' | 'week';
  * doors and during service, and step aside after close.
  */
 const ORDER: Record<NightPhase, readonly Part[]> = {
-  before: ['off', 'doors', 'needs', 'learn', 'shift', 'week'],
-  service: ['service', 'off', 'shift', 'week'],
-  after: ['doors', 'shift', 'learn', 'week'],
+  before: ['off', 'doors', 'needs', 'learn', 'shift', 'handover', 'week'],
+  service: ['service', 'off', 'shift', 'handover', 'week'],
+  after: ['leave', 'doors', 'shift', 'learn', 'week'],
 };
 
 /** Whether the night shows its lists first (not after close). */
 export const showsLists = (phase: NightPhase) => phase !== 'after';
 
 /** The sections after the lists, in the night's order: the column beside the lists when wide. */
-export function StaffSide({ t, barId, wide }: { t: Staff; barId: string; wide: boolean }) {
+export function StaffSide({ t, barId, wide, handover }: { t: Staff; barId: string; wide: boolean; handover: NightHandover }) {
   const parts = ORDER[t.phase].filter((p) => !(wide && p === 'service'));
   const after = t.phase === 'after';
+  const router = useRouter();
+  const openLearn = () => router.push('/learn' as Href);
   return (
     <View style={styles.side}>
       {after ? <TonightSetupBanner barId={barId} /> : null}
       {parts.map((p) => {
         switch (p) {
+          case 'leave':
+            return <View key={p}>{handover.leave}</View>;
+          case 'handover':
+            return <View key={p}>{handover.section}</View>;
           case 'service':
             return <ServiceRows key={p} t={t} />;
           case 'off':
@@ -111,13 +118,18 @@ export function StaffSide({ t, barId, wide }: { t: Staff; barId: string; wide: b
           case 'needs':
             return <NeedsYou key={p} t={t} />;
           case 'learn':
-            return t.learn.length ? (
-              <TonightSection key={p} title="Learn" aside={`${t.learn.length} to read`}>
-                <View role="list">
-                  {t.learn.map((row, i) => (
-                    <LearnRow key={`${row.id}-${i}`} {...row} first={i === 0} />
-                  ))}
-                </View>
+            // All opens Learn (Kept-learn): techniques, kit and pairings. Admins see Needs you here instead (Prod-today-staff), so Learn only with something new.
+            return t.learn.length || !t.admin ? (
+              <TonightSection key={p} title="Learn" aside="All" onAside={openLearn}>
+                {t.learn.length ? (
+                  <View role="list">
+                    {t.learn.map((row, i) => (
+                      <LearnRow key={`${row.id}-${i}`} {...row} first={i === 0} />
+                    ))}
+                  </View>
+                ) : (
+                  <NoteCard icon="book" text="Techniques, kit and pairings" onPress={openLearn} />
+                )}
               </TonightSection>
             ) : null;
           case 'shift':
