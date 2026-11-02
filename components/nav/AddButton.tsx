@@ -5,7 +5,7 @@ import { Button, PressableScale, useDs } from '@/components/ds';
 import { IconSymbol } from '@/components/ui/icon-symbol';
 import { layout, radius, space } from '@/constants/tokens';
 
-import { CreateSheet } from './CreateSheet';
+import { CreateSheet } from './CreateSheetLazy';
 
 const LABEL = 'Add: a drink, a bottle, something you make, beer, wine, a menu, or bring something in';
 

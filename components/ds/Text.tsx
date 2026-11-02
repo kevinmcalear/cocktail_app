@@ -1,6 +1,6 @@
-import { Platform, Text as RNText, type TextProps, type TextStyle } from 'react-native';
+import { Platform, Text as RNText, StyleSheet, type TextProps, type TextStyle } from 'react-native';
 
-import { displayFaces, font, textSlack, type, type TypeStyle } from '@/constants/tokens';
+import { displayFaces, faceWeightReset, font, textSlack, type, type TypeStyle } from '@/constants/tokens';
 
 import { useDs } from './theme';
 
@@ -53,6 +53,9 @@ export function DsText({ variant = 'body', tone = 'ink', italic, color, align, s
     accent: ds.accentText,
     onAccent: ds.accentFill.text,
   }[tone];
+  // A caller that sets a display face on a system variant gets the face's own weight.
+  const own = isDisplay ? undefined : StyleSheet.flatten(style);
+  const weightReset = own ? faceWeightReset(own.fontFamily, own.fontWeight) : undefined;
   return (
     <RNText
       {...rest}
@@ -60,6 +63,7 @@ export function DsText({ variant = 'body', tone = 'ink', italic, color, align, s
         type[variant],
         SLACK,
         faceStyle,
+        weightReset,
         { color: color ?? toneColor, textAlign: align },
         style,
       ]}

@@ -75,7 +75,8 @@ const BAR_ML_PER_OZ = 30;
 const GRAMS: Record<string, number> = { g: 1, kg: 1000 };
 const DASH_UNITS = new Set(['dash', 'dashes', 'drop', 'drops']);
 // A finish (a spray, a rinse, a float) is counted and done at the station too, never bottled.
-const GARNISH_UNITS = new Set(['each', 'pinch', 'sprig', 'leaf', 'peel', 'twist', 'discard', 'wheel', 'slice', 'cube', 'wedge', 'rim', 'spray', 'rinse', 'float', 'grated']);
+// The same list is app_recipe_presentation.is_garnish's and public_drink_ingredients' (20261206495000; lib/batch.check.ts keeps them equal).
+export const GARNISH_UNITS = new Set(['each', 'pinch', 'sprig', 'leaf', 'peel', 'twist', 'discard', 'wheel', 'slice', 'cube', 'wedge', 'rim', 'spray', 'rinse', 'float', 'grated']);
 // Drops of an oil go on top of each serve; saline and tincture drops go in the bottle.
 const OIL = /\boil\b/i;
 // A count with no unit ("1 Lemon twist"): the name says it's a garnish.
@@ -103,6 +104,15 @@ export function classifyMethod(names: readonly string[]): BatchMethod {
 /** A count unit (twist, wheel, each): a garnish, never a liquid. */
 export function isGarnishUnit(unit: string | null | undefined): boolean {
   return GARNISH_UNITS.has((unit ?? '').toLowerCase());
+}
+
+/**
+ * A garnish line: a count unit (a twist, a sprig, grated nutmeg). An egg
+ * white counted "1 each" goes in the drink, so it isn't one (Eddie tf-064).
+ */
+export function isGarnishLine(l: { unit: string | null | undefined; ingredient: string | null | undefined; garnish?: boolean }): boolean {
+  // The server's word where the unit is masked (names only), else the unit.
+  return (l.garnish ?? isGarnishUnit(l.unit)) && !/\begg/i.test(l.ingredient ?? '');
 }
 
 /** The guess from the name and unit, for lines nobody has decided yet. */

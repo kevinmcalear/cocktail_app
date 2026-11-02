@@ -1995,6 +1995,7 @@ export type Database = {
       }
       images: {
         Row: {
+          brightness: number | null
           created_at: string
           credit: string | null
           height: number | null
@@ -2003,11 +2004,13 @@ export type Database = {
           palette: Json | null
           source_url: string | null
           spec_fingerprint: string | null
+          text_zone: Json | null
           thumbhash: string | null
           url: string
           width: number | null
         }
         Insert: {
+          brightness?: number | null
           created_at?: string
           credit?: string | null
           height?: number | null
@@ -2016,11 +2019,13 @@ export type Database = {
           palette?: Json | null
           source_url?: string | null
           spec_fingerprint?: string | null
+          text_zone?: Json | null
           thumbhash?: string | null
           url: string
           width?: number | null
         }
         Update: {
+          brightness?: number | null
           created_at?: string
           credit?: string | null
           height?: number | null
@@ -2029,6 +2034,7 @@ export type Database = {
           palette?: Json | null
           source_url?: string | null
           spec_fingerprint?: string | null
+          text_zone?: Json | null
           thumbhash?: string | null
           url?: string
           width?: number | null
@@ -3966,6 +3972,91 @@ export type Database = {
           },
         ]
       }
+      menu_drink_asks: {
+        Row: {
+          asked_at: string | null
+          at: string | null
+          created_at: string
+          created_by: string
+          id: string
+          item_id: string | null
+          menu_id: string
+          menu_section_id: string | null
+          note: string | null
+          off_item_id: string | null
+          price: string | null
+        }
+        Insert: {
+          asked_at?: string | null
+          at?: string | null
+          created_at?: string
+          created_by?: string
+          id?: string
+          item_id?: string | null
+          menu_id: string
+          menu_section_id?: string | null
+          note?: string | null
+          off_item_id?: string | null
+          price?: string | null
+        }
+        Update: {
+          asked_at?: string | null
+          at?: string | null
+          created_at?: string
+          created_by?: string
+          id?: string
+          item_id?: string | null
+          menu_id?: string
+          menu_section_id?: string | null
+          note?: string | null
+          off_item_id?: string | null
+          price?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "menu_drink_asks_item_id_fkey"
+            columns: ["item_id"]
+            isOneToOne: false
+            referencedRelation: "app_item_presentation"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "menu_drink_asks_item_id_fkey"
+            columns: ["item_id"]
+            isOneToOne: false
+            referencedRelation: "items"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "menu_drink_asks_menu_id_fkey"
+            columns: ["menu_id"]
+            isOneToOne: false
+            referencedRelation: "menus"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "menu_drink_asks_menu_section_id_fkey"
+            columns: ["menu_section_id"]
+            isOneToOne: false
+            referencedRelation: "menu_sections"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "menu_drink_asks_off_item_id_fkey"
+            columns: ["off_item_id"]
+            isOneToOne: false
+            referencedRelation: "app_item_presentation"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "menu_drink_asks_off_item_id_fkey"
+            columns: ["off_item_id"]
+            isOneToOne: false
+            referencedRelation: "items"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       menu_drinks: {
         Row: {
           added_by: string | null
@@ -4150,6 +4241,124 @@ export type Database = {
             columns: ["replaces_item_id"]
             isOneToOne: false
             referencedRelation: "items"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      menu_list_notices: {
+        Row: {
+          at: string
+          created_at: string
+          id: string
+          item_id: string
+          kind: string
+          menu_id: string
+          to_item_id: string | null
+          told_by: string
+        }
+        Insert: {
+          at?: string
+          created_at?: string
+          id?: string
+          item_id: string
+          kind: string
+          menu_id: string
+          to_item_id?: string | null
+          told_by?: string
+        }
+        Update: {
+          at?: string
+          created_at?: string
+          id?: string
+          item_id?: string
+          kind?: string
+          menu_id?: string
+          to_item_id?: string | null
+          told_by?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "menu_list_notices_item_id_fkey"
+            columns: ["item_id"]
+            isOneToOne: false
+            referencedRelation: "app_item_presentation"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "menu_list_notices_item_id_fkey"
+            columns: ["item_id"]
+            isOneToOne: false
+            referencedRelation: "items"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "menu_list_notices_menu_id_fkey"
+            columns: ["menu_id"]
+            isOneToOne: false
+            referencedRelation: "menus"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "menu_list_notices_to_item_id_fkey"
+            columns: ["to_item_id"]
+            isOneToOne: false
+            referencedRelation: "app_item_presentation"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "menu_list_notices_to_item_id_fkey"
+            columns: ["to_item_id"]
+            isOneToOne: false
+            referencedRelation: "items"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      menu_off_tonight: {
+        Row: {
+          created_at: string
+          id: string
+          item_id: string
+          menu_id: string
+          set_by: string
+          until: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          item_id: string
+          menu_id: string
+          set_by?: string
+          until: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          item_id?: string
+          menu_id?: string
+          set_by?: string
+          until?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "menu_off_tonight_item_id_fkey"
+            columns: ["item_id"]
+            isOneToOne: false
+            referencedRelation: "app_item_presentation"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "menu_off_tonight_item_id_fkey"
+            columns: ["item_id"]
+            isOneToOne: false
+            referencedRelation: "items"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "menu_off_tonight_menu_id_fkey"
+            columns: ["menu_id"]
+            isOneToOne: false
+            referencedRelation: "menus"
             referencedColumns: ["id"]
           },
         ]
@@ -6570,6 +6779,7 @@ export type Database = {
           id: string | null
           ingredient_item_id: string | null
           is_float: boolean | null
+          is_garnish: boolean | null
           is_optional: boolean | null
           parent_ingredient_id: string | null
           part: number | null
@@ -7739,16 +7949,19 @@ export type Database = {
       get_menu_editions: {
         Args: { p_profile_id: string }
         Returns: {
+          cover_url: string
           drinks: Json
           end_month: number
           end_year: number
           from_venue: boolean
           id: string
           is_current: boolean
+          list_type: string
           month: number
           name: string
           source_url: string
           theme: string
+          written_at: string
           year: number
         }[]
       }
@@ -8204,6 +8417,7 @@ export type Database = {
         Args: { p_item_ids: string[] }
         Returns: {
           brand: boolean
+          garnish: boolean
           item_id: string
           name: string
           sort_order: number

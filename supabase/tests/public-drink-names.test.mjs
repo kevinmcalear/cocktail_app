@@ -71,8 +71,10 @@ test('signed out, a description-only drink names its shared ingredients, with no
     [`Gin ${run}`, 'House ingredient', `Vermouth ${run}`],
     "a bar's bottle is named by its generic, so the brand stays with the bar; its house prep is a House ingredient line (20261024200000)"
   );
-  assert.deepEqual(Object.keys(rows[0]).sort(), ['brand', 'item_id', 'name', 'sort_order']);
+  // garnish (20261206495000) is only a yes or no: no amount, unit or note comes with it.
+  for (const row of rows) assert.deepEqual(Object.keys(row).sort(), ['brand', 'garnish', 'item_id', 'name', 'sort_order']);
   assert.deepEqual(rows.map((r) => r.brand), [false, false, false], 'none is a product');
+  assert.deepEqual(rows.map((r) => r.garnish), [false, false, false], 'every line is in ml, so none is a garnish');
 });
 
 test("a bar's house prep stays unnamed, as House ingredient", async () => {
