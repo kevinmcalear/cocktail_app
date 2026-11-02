@@ -10,7 +10,7 @@ import { normalizeAllowedTypes, type SectionDrinkType } from '@/lib/sectionAllow
 import { supabase } from '@/lib/supabase';
 import type { MenuDetail, MenuDrink, MenuSummary } from '@/types/menus';
 
-const MENU_COLUMNS = 'id, name, bar_id, created_by, cover_url, cover_position, starts_at, ends_at, created_at, menu_date, guest_count, shared_at, kind, updated_at, description, planned_starts_at, planned_ends_at';
+const MENU_COLUMNS = 'id, name, bar_id, created_by, cover_url, cover_position, starts_at, ends_at, created_at, menu_date, guest_count, shared_at, kind, updated_at, description, planned_starts_at, planned_ends_at, hidden_at';
 
 interface MenuRow {
   id: string;
@@ -30,6 +30,7 @@ interface MenuRow {
   description: string | null;
   planned_starts_at: string | null;
   planned_ends_at: string | null;
+  hidden_at: string | null;
 }
 
 const one = <T,>(v: T | T[] | null | undefined): T | null => (Array.isArray(v) ? (v[0] ?? null) : (v ?? null));
@@ -53,6 +54,7 @@ function toSummaryBase(row: MenuRow) {
     description: row.description ?? null,
     plannedStartsAt: row.planned_starts_at ?? null,
     plannedEndsAt: row.planned_ends_at ?? null,
+    hiddenAt: row.hidden_at ?? null,
   };
 }
 
@@ -62,9 +64,9 @@ export const MENU_PICTURES = 4;
 /** Query keys, for invalidating after a write. */
 export const menuKeys = {
   all: ['menus-v2'] as const,
-  // 'venue-5': summaries gained updatedAt, description, the plan and shortSections, so a persisted older list isn't read back.
+  // 'venue-6': summaries gained updatedAt, description, the plan, shortSections and hiddenAt, so a persisted older list isn't read back.
   // Bump PERSISTED_KEYS (lib/queryCachePersist.ts) with it; lib/queryKeys.check.ts fails otherwise.
-  venue: (barId: string | null, userId: string | null) => ['menus-v2', 'venue-5', barId, userId] as const,
+  venue: (barId: string | null, userId: string | null) => ['menus-v2', 'venue-6', barId, userId] as const,
   detail: (menuId: string) => ['menus-v2', 'detail', menuId] as const,
 };
 

@@ -44,3 +44,12 @@ export function searchBarLabel(segments: readonly string[]): string {
 export function tabOfGroup(group: string | undefined): TabName | null {
   return TABS.find((t) => t.route === group)?.name ?? null;
 }
+
+/**
+ * Android shows its nav bar on top-level screens only (Material; And-who-guest-hit,
+ * Miss-made): a tab's first page. A pushed page (a drink, an ingredient, Prep) and
+ * search hide it. `segments` is useSegments(): ['(tabs)', '(2-drinks)', 'drinks'].
+ */
+export function androidBarShown(segments: readonly string[]): boolean {
+  return segments[0] === '(tabs)' && [undefined, 'drinks', 'discover', 'you'].includes(segments[2]);
+}

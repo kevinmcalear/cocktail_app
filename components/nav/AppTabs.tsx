@@ -7,7 +7,7 @@ import { useIsWideWeb } from '@/hooks/useIsWideWeb';
 import { useTrackTab } from '@/hooks/useSearchFrom';
 import { useServiceDay } from '@/hooks/useServiceDay';
 import { withAlpha } from '@/lib/color';
-import { TABS } from '@/lib/tabs';
+import { androidBarShown, TABS } from '@/lib/tabs';
 
 import { JsTabs } from './JsTabs';
 import { useMaterialRoles } from './material';
@@ -27,7 +27,8 @@ import { VenueBrandProvider } from './VenueBrandProvider';
  * Android has exactly four tabs: its search is the bar on top of the page,
  * which pushes /search on the tab's own stack, since a tab with no item in the
  * bar can't be navigated to. Open, Material's search view takes the whole
- * screen, so the nav bar steps aside (Miss-search-and).
+ * screen, so the nav bar steps aside (Miss-search-and). It also steps aside on
+ * every pushed page, a drink or an ingredient (androidBarShown, lib/tabs.ts).
  * Tonight is a calendar page showing the date, which turns over at 6am.
  * The icons are the app's own (components/nav/tabImages.ts), template images
  * the system tints, so the glass and Material bars stay the system's.
@@ -52,7 +53,7 @@ function Tabs() {
   const ds = useDs();
   const day = useServiceDay() ?? 1;
   const roles = useMaterialRoles();
-  const page = (useSegments() as string[])[2];
+  const segments = useSegments() as string[];
   // The search circle starts on the tab it was opened from (hooks/useSearchFrom.ts).
   useTrackTab();
   // Android's Material 3 bar in our colours (Prod-and): ink icons and labels, the indicator pill
@@ -65,13 +66,15 @@ function Tabs() {
     labelStyle: { default: { color: ds.c.ink, fontWeight: '500' }, selected: { color: roles.onIndicator, fontWeight: '600' } },
   } as const;
   // Android's Material bar hides unselected labels past three tabs; "labeled" keeps every tab named.
+  // `hidden` on Android relies on patches/expo-router+58.0.25.patch: unpatched, hiding the bar
+  // remounts every tab's pages, so the search lost what was typed and every tab its place.
   return (
     <NativeTabs
       tintColor={Platform.OS === 'android' ? roles.onIndicator : ds.accentText}
       badgeBackgroundColor={ds.accentFill.fill}
       minimizeBehavior="onScrollDown"
       labelVisibilityMode="labeled"
-      hidden={Platform.OS === 'android' && page === 'search'}
+      hidden={Platform.OS === 'android' && !androidBarShown(segments)}
       {...(Platform.OS === 'android' ? material : null)}
     >
       {TABS.map((t) => (
