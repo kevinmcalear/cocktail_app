@@ -33,6 +33,8 @@ interface PageControlsProps {
   scrollY: SharedValue<number>;
   /** The scroll offset where the page's first line reaches the bar: the backing is solid by then, the small title follows. */
   tuck: number;
+  /** Where the small title starts instead, when the big one is in the photo and leaves sooner. */
+  smallAt?: number;
   /** The small title in the bar. */
   title: string;
   /** Room on the title's left: a docked drawing sits there. */
@@ -60,12 +62,12 @@ interface PageControlsProps {
  * it. Nothing else: no study pile, no role switcher, no More. The web and a
  * wide iPad draw it here; phones have the same in the system's bar (ItemHeader).
  */
-export function PageControls({ over, top, scrollY, tuck, title, titleInset = 0, noBack, backLabel, save, onShare, onEdit, editLabel = 'Edit', more, children }: PageControlsProps) {
+export function PageControls({ over, top, scrollY, tuck, smallAt = tuck, title, titleInset = 0, noBack, backLabel, save, onShare, onEdit, editLabel = 'Edit', more, children }: PageControlsProps) {
   const ds = useDs();
   const router = useRouter();
   const gutter = useGutter();
   const barHeight = top + space.sm * 2 + layout.minTapTarget;
-  const small = useSmallTitle(scrollY, tuck);
+  const small = useSmallTitle(scrollY, smallAt);
   const back = noBack ? (
     <View />
   ) : (
