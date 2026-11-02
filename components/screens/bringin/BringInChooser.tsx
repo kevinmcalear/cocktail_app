@@ -1,4 +1,4 @@
-import { isDevice } from '@/lib/realDevice';
+import * as Device from '@/lib/realDevice';
 import { useRouter, type Href } from 'expo-router';
 import { useEffect, useState } from 'react';
 import { Platform, StyleSheet, View } from 'react-native';
@@ -69,7 +69,7 @@ export function BringInChooser({ onClose }: { onClose?: () => void }) {
   const [clip, setClip] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
   // The simulator has no camera, and launching it there crashes the app.
-  const camera = Platform.OS === 'web' || isDevice;
+  const camera = Platform.OS === 'web' || Device.isDevice;
 
   useEffect(() => {
     let live = true;
