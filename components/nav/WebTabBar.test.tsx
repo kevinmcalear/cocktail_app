@@ -7,8 +7,10 @@ import { renderWithProviders } from '@/jest.setup';
 import { WebTabBar } from './WebTabBar';
 
 jest.mock('@/hooks/useIsWideWeb', () => ({ useIsWideWeb: () => false }));
+const mockOpenSearch = jest.fn();
+jest.mock('@/hooks/useSearchFrom', () => ({ useOpenSearch: () => mockOpenSearch }));
 
-const names = ['(1-tonight)', '(2-drinks)', '(3-discover)', '(4-you)', 'search'];
+const names = ['(1-tonight)', '(2-drinks)', '(3-discover)', '(4-you)'];
 const navigateToTab = jest.fn();
 const props = {
   state: { index: 0, routes: names.map((name) => ({ key: name, name })) },
@@ -29,7 +31,7 @@ test('the four tabs and the search circle, the same for everyone', async () => {
   await fireEvent.press(screen.getByRole('tab', { name: 'Drinks' }));
   expect(navigateToTab).toHaveBeenLastCalledWith('(2-drinks)');
   await fireEvent.press(screen.getByRole('button', { name: 'Search' }));
-  expect(navigateToTab).toHaveBeenLastCalledWith('search');
+  expect(mockOpenSearch).toHaveBeenCalled();
 });
 
 test('while the bottom search field has focus, the bar steps aside for it', async () => {

@@ -1,6 +1,6 @@
 import { useLocalSearchParams, useRouter } from "expo-router";
 
-import { DrinkEditScreen } from "@/components/screens/drink/edit/DrinkEditScreen";
+import { DrinkEditScreen } from "@/components/screens/drink/edit/EditRoutesLazy";
 
 /**
  * /cocktail/<id>/edit: the drink page in editing, for the Library's drink pane

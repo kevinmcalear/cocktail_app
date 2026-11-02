@@ -19,9 +19,10 @@ export function switcherLabel(home: boolean, venue: Venue | null, canSwitch = tr
  * The logo in the corner of every phone screen: the venue's mark (or the
  * house at home) and a small chevron, no name. Tapping it opens the venue
  * menu: switch to home or another venue, or go to one of this venue's places.
- * The tablet rail uses the same button.
+ * The tablet rail uses the same button. `chevron={false}`: Android's search
+ * bar draws the mark on its own (Prod-and).
  */
-export function VenueSwitcher({ size = 32 }: { size?: number }) {
+export function VenueSwitcher({ size = 32, chevron = true }: { size?: number; chevron?: boolean }) {
   const ds = useDs();
   const { active, venues } = useActiveVenue();
   const home = useMode().mode === 'home';
@@ -30,7 +31,7 @@ export function VenueSwitcher({ size = 32 }: { size?: number }) {
     <>
       <PressableScale role="button" onPress={() => setOpen(true)} accessibilityLabel={switcherLabel(home, active, venues.length > 0)} style={styles.chip}>
         {home ? <HomeMark size={size} /> : <VenueMark venue={active} size={size} />}
-        <IconSymbol name="chevron.down" size={12} color={ds.c.muted} />
+        {chevron ? <IconSymbol name="chevron.down" size={12} color={ds.c.muted} /> : null}
       </PressableScale>
       {open ? <VenueMenuSheet onClose={() => setOpen(false)} /> : null}
     </>

@@ -27,7 +27,29 @@ export const TABS: readonly Tab[] = [
   { name: 'you', label: 'You', path: '/you', route: '(4-you)' },
 ];
 
+/** "Search your drinks" opens search on your drinks, whatever the tab would start on. */
+export const YOUR_DRINKS = 'Search your drinks';
+
+/** What a phone's search field says before you type (search2). */
+export const SEARCH_ANYTHING = 'Search or add anything';
+
+/** What Android's search bar says on each page (Prod-and): what search starts on from there. */
+export function searchBarLabel(segments: readonly string[]): string {
+  if (segments.includes('(3-discover)')) return 'Search bars, drinks, bottles';
+  if (segments.includes('(2-drinks)') || segments.includes('shelf')) return YOUR_DRINKS;
+  return SEARCH_ANYTHING;
+}
+
 /** The tab a route group belongs to ('(2-drinks)' to 'drinks'), or null for search and pages outside the tabs. */
 export function tabOfGroup(group: string | undefined): TabName | null {
   return TABS.find((t) => t.route === group)?.name ?? null;
+}
+
+/**
+ * Android shows its nav bar on top-level screens only (Material; And-who-guest-hit,
+ * Miss-made): a tab's first page. A pushed page (a drink, an ingredient, Prep) and
+ * search hide it. `segments` is useSegments(): ['(tabs)', '(2-drinks)', 'drinks'].
+ */
+export function androidBarShown(segments: readonly string[]): boolean {
+  return segments[0] === '(tabs)' && [undefined, 'drinks', 'discover', 'you'].includes(segments[2]);
 }

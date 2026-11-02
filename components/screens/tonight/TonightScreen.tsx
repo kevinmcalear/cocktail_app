@@ -13,7 +13,7 @@ import { useServiceDate } from '@/hooks/useServiceDay';
 import { tonightEyebrow } from '@/lib/tonight';
 
 import { HomeTonight } from './HomeTonight';
-import { NoVenue, StaffLists, StaffSide } from './StaffTonight';
+import { NoVenue, showsLists, StaffLists, StaffSide } from './StaffTonight';
 import { TonightHead, TonightSky } from './TonightParts';
 import { useStaffTonight } from './useStaffTonight';
 
@@ -22,9 +22,10 @@ const SIDE = 340;
 
 /**
  * Tonight, the first tab (decided 31 Oct 2026, renamed 1 Nov): one column,
- * nothing to set up. At a bar, the lists on now, Before doors (house-made
- * short for tonight, drinks coming off), Needs you for admins, Learn and the
- * week. At home, the week at bars you love, what your shelf makes and the
+ * nothing to set up. At a bar, ordered by the hour (Loop-tonight): the lists
+ * on now, Off tonight, Before doors (house-made short for tonight), Needs you
+ * for admins, Learn and On shift before doors; the list as it goes out during
+ * service; tomorrow's prep and rota after close. At home, the week at bars you love, what your shelf makes and the
  * one bottle worth buying. Wide web puts the bar's side in its own column.
  */
 export function TonightScreen() {
@@ -62,21 +63,22 @@ function Frame({ sky, eyebrow, children }: { sky: readonly string[]; eyebrow: st
 function StaffPage({ barId }: { barId: string }) {
   const t = useStaffTonight(barId);
   const wide = useIsWideWeb();
+  const lists = showsLists(t.phase);
   return (
     <Frame sky={t.heroIds} eyebrow={t.eyebrow}>
-      {wide ? (
+      {wide && lists ? (
         <View style={styles.columns}>
           <View style={styles.main}>
             <StaffLists t={t} barId={barId} wide />
           </View>
           <View style={styles.side}>
-            <StaffSide t={t} barId={barId} />
+            <StaffSide t={t} barId={barId} wide />
           </View>
         </View>
       ) : (
         <View style={styles.stack}>
-          <StaffLists t={t} barId={barId} wide={false} />
-          <StaffSide t={t} barId={barId} />
+          {lists ? <StaffLists t={t} barId={barId} wide={false} /> : null}
+          <StaffSide t={t} barId={barId} wide={false} />
         </View>
       )}
     </Frame>
