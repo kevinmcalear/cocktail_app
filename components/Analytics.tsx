@@ -1,6 +1,6 @@
 import { useSegments } from 'expo-router';
 import { PostHogProvider, usePostHog, type PostHogCustomAppProperties } from 'posthog-react-native';
-import { useEffect, useRef } from 'react';
+import { useEffect, useEffectEvent, useRef } from 'react';
 import { Platform } from 'react-native';
 
 import { useAuth } from '@/ctx/AuthContext';
@@ -20,6 +20,9 @@ function AnalyticsIdentity() {
   const { session, loading } = useAuth();
   const userId = loading ? undefined : (session?.user.id ?? null);
   const before = useRef<string | null | undefined>(undefined);
+  const signedIn = useEffectEvent(() => {
+    if (session) noteSignIn(session.user);
+  });
   useEffect(() => {
     if (userId === undefined) return;
     const wasSignedOut = before.current === null;
@@ -27,7 +30,7 @@ function AnalyticsIdentity() {
     if (userId) {
       posthog.identify(userId);
       // Signing in here and now, not a launch with a saved session.
-      if (wasSignedOut) noteSignIn();
+      if (wasSignedOut) signedIn();
       return;
     }
     let current = true;
