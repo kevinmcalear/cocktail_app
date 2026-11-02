@@ -1,11 +1,14 @@
+import { useNetInfo } from '@react-native-community/netinfo';
 import { useRouter } from 'expo-router';
 import { use, useDeferredValue, useState, type ReactNode } from 'react';
 import { Platform, StyleSheet, View } from 'react-native';
 
-import { Body, Button, Caption, Chip, useDs, useGutter } from '@/components/ds';
+import { Body, Caption, Chip, useDs, useGutter } from '@/components/ds';
 import { IconSymbol } from '@/components/ui/icon-symbol';
 import { DrinkRow } from '@/components/screens/DrinkRow';
+import { AddBarSheet } from '@/components/screens/home/AddBar';
 import { space } from '@/constants/tokens';
+import { useAuth } from '@/ctx/AuthContext';
 import { useActiveVenue } from '@/hooks/useActiveVenue';
 import { useDrafts } from '@/hooks/useDrafts';
 import { useMineFacts } from '@/hooks/useMineFacts';
@@ -25,8 +28,9 @@ import { MineResults } from './MineResults';
 import { PublicResults } from './PublicResults';
 import { DrawnSearch, ResultGroup, ResultRow } from './ResultRows';
 import { ScopeSwitch } from './ScopeSwitch';
-import { KeyCap, SearchField } from './SearchField';
-import { ScopeToken, StyleTiles } from './SearchParts';
+import { SearchField } from './SearchField';
+import { SearchOffline } from './SearchOffline';
+import { StyleTiles } from './SearchParts';
 import { RecentSearches } from './RecentSearches';
 
 const NO_ITEMS: SearchItem[] = [];
@@ -53,7 +57,7 @@ interface HeadProps {
   onDone?: () => void;
   /** Return in the field; Done (onDone) when not given. */
   onSubmit?: () => void;
-  /** The ⌘K palette: the place menu and the esc key cap at the field's end (nav-search-desk-preview). */
+  /** The ⌘K palette: "Search or add" with the esc key cap at the field's end (Prod-desk-cmdk). */
   keys?: boolean;
 }
 
@@ -71,11 +75,10 @@ export function SearchHead({ query, onQuery, scope, onScope, mine, area, autoFoc
   const options = scopeOptions(mine.label, area?.label ?? null);
   const placeholder = searchPlaceholder(scope, mine, area);
   if (keys) {
-    // The palette: the place at the field's end, as phones have it over theirs (q03, nav-search-desk-preview).
-    const place = <ScopeToken options={options} scope={scope} onScope={onScope} hint={<TabHint />} />;
+    // The palette searches where you are and adds there; "Search everywhere" at the results' end widens it.
     return (
       <View style={styles.head}>
-        <SearchField query={query} onQuery={onQuery} placeholder={placeholder} autoFocus={autoFocus} onSubmit={onSubmit ?? onDone} onDone={onDone} keys place={place} />
+        <SearchField query={query} onQuery={onQuery} placeholder="Search or add" autoFocus={autoFocus} onSubmit={onSubmit ?? onDone} onDone={onDone} keys />
         <View style={[styles.rule, { marginHorizontal: -gutter, backgroundColor: ds.c.line }]} />
       </View>
     );
@@ -88,16 +91,6 @@ export function SearchHead({ query, onQuery, scope, onScope, mine, area, autoFoc
   );
 }
 
-/** Under the palette's place menu: "tab moves to the next place". */
-function TabHint() {
-  return (
-    <>
-      <KeyCap label="tab" />
-      <Caption tone="muted">moves to the next place</Caption>
-    </>
-  );
-}
-
 interface BodyProps {
   query: string;
   scope: SearchScope;
@@ -106,7 +99,7 @@ interface BodyProps {
   area?: SearchArea | null;
   /** The palette closes itself when a jump stays on the same page (Library to a Library filter). */
   onJump?: () => void;
-  /** Rows of the door's own (⌘K's Commands group, Pick for me): with Techniques and History while nothing is typed, after the results once something is. */
+  /** Rows of the door's own (⌘K's Pick for me): with Techniques and History while nothing is typed, after the results once something is. */
   commands?: ReactNode;
   /** The ⌘K palette: "Search everywhere for …" is a slim row there, not a button (nav-search-desk-palette). */
   palette?: boolean;
@@ -117,21 +110,24 @@ interface BodyProps {
   onCounts?: (counts: ShowCounts) => void;
   /** The search tab: suggestions finish the typed word, a Top hit leads, and Browse by style waits before typing. */
   typeAhead?: (query: string) => void;
-  /** Discover: add a bar when this search finds nothing. */
-  onAddBar?: () => void;
-  /** Discover: hovering a result opens its bar on the map. */
-  onShowBar?: (barId: string | null) => void;
-  /** The search tab, searching Discover's area: "Show on the map" after the results (search-starts-here). */
-  onShowOnMap?: () => void;
 }
 
 /** What the search finds in its scope, or what was opened lately while nothing is typed. */
-export function SearchBody({ query: typed, scope, onScope, mine, area, onJump, commands, palette, show, onShow, onCounts, typeAhead, onAddBar, onShowBar, onShowOnMap }: BodyProps) {
+export function SearchBody({ query: typed, scope, onScope, mine, area, onJump, commands, palette, show, onShow, onCounts, typeAhead }: BodyProps) {
+  const router = useRouter();
+  const signedIn = !!useAuth().user;
+  const [adding, setAdding] = useState(false);
+  const openBar = (ref: string) => {
+    setAdding(false);
+    router.push(`/p/${ref}`);
+  };
   // The field never waits on the results: they catch up with the typing when there's time (a letter typed meanwhile starts them again).
   const query = useDeferredValue(typed);
   // Android's search has no suggestions or Top hit (Miss-search-and): its Recent still fills the field.
   const ahead = use(DrawnSearch) ? undefined : typeAhead;
+  const offline = useNetInfo().isConnected === false;
   if (!typed.trim() || !query.trim()) return <Recent scope={scope} mine={mine} onJump={onJump} commands={commands} onTerm={typeAhead} />;
+  if (offline) return <SearchOffline query={query} mine={mine} />;
   if (scope === 'mine') return <MineResults query={query} mine={mine} onEverywhere={() => onScope('everywhere')} commands={commands} palette={palette} show={show} onCounts={onCounts} typeAhead={ahead} />;
   return (
     <>
@@ -148,15 +144,10 @@ export function SearchBody({ query: typed, scope, onScope, mine, area, onJump, c
         onShow={onShow}
         onCounts={onCounts}
         typeAhead={ahead}
-        onAddBar={onAddBar}
-        onShowBar={onShowBar}
+        onAddBar={signedIn ? () => setAdding(true) : undefined}
       />
-      {scope === 'area' && onShowOnMap ? (
-        <View style={styles.mapButton}>
-          <Button label="Show on the map" icon="map.fill" variant="secondary" onPress={onShowOnMap} />
-        </View>
-      ) : null}
       {commands}
+      {adding ? <AddBarSheet onClose={() => setAdding(false)} onAdded={(v) => openBar(v.handle)} onOpenExisting={openBar} /> : null}
     </>
   );
 }
@@ -285,7 +276,6 @@ const styles = StyleSheet.create({
   head: { gap: space.md },
   // The palette's line under its field, edge to edge across the card.
   rule: { height: StyleSheet.hairlineWidth },
-  mapButton: { alignSelf: 'flex-start' },
   empty: { gap: space.lg },
   jumps: { gap: space.sm },
   chips: { flexDirection: 'row', flexWrap: 'wrap', gap: space.sm },

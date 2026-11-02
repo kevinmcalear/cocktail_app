@@ -11,5 +11,5 @@ export default function EditIngredientScreen() {
     const { id } = useLocalSearchParams<{ id: string }>();
     const router = useRouter();
     const close = () => (router.canGoBack() ? router.back() : router.replace(`/ingredient/${id}`));
-    return <IngredientEditScreen id={id} onExit={close} />;
+    return <IngredientEditScreen id={id} onExit={close} inSheet />;
 }
