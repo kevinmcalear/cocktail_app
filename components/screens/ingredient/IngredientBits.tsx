@@ -5,7 +5,6 @@ import { Caption, IngredientDrawing, PressableScale, Tag, useDs } from '@/compon
 import { IconSymbol } from '@/components/ui/icon-symbol';
 import { radius, space } from '@/constants/tokens';
 import type { ItemPrep } from '@/hooks/usePrepCard';
-import { formatQuantity, toQuantity } from '@/lib/quantity';
 import { leadTimeLabel, shelfLifeLabel } from '@/lib/scale';
 import { groupForAction } from '@/lib/techniques';
 
@@ -66,15 +65,13 @@ export function IngredientTags({ isPrep, actions, venueName, shared, mine, role,
   );
 }
 
-/** Makes, keeps, store, takes: what you check before you start a batch. */
+/** Keeps, store, takes: what you check before you start a batch. What it makes is the recipe's Makes pill (Item-page). */
 export function prepFacts(prep: ItemPrep | null | undefined): Fact[] {
   if (!prep) return [];
-  const y = toQuantity(prep.yield_amount, prep.yield_unit);
   return [
-    y && { label: 'Makes', value: formatQuantity(y) },
     shelfLifeLabel(prep.shelf_life_hours) && { label: 'Keeps', value: shelfLifeLabel(prep.shelf_life_hours)! },
-    // The tile says where ("Fridge"); the label and Where it lives carry the rest ("sealed bottle").
-    prep.storage && { label: 'Store', value: prep.storage.split(/[,;(]/)[0].trim() || prep.storage },
+    // A short note reads whole ("Fridge, sealed", Desk-item-ginger); a long one says where, and the label and Where it lives carry the rest.
+    prep.storage && { label: 'Store', value: prep.storage.length <= 24 ? prep.storage : prep.storage.split(/[,;(]/)[0].trim() || prep.storage },
     leadTimeLabel(prep.lead_time_minutes, prep.lead_time_note) && { label: 'Takes', value: leadTimeLabel(prep.lead_time_minutes, prep.lead_time_note)! },
   ].filter((f): f is Fact => !!f);
 }
