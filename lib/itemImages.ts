@@ -1,4 +1,7 @@
+import { asTextZone, type TextZone } from '@/supabase/functions/_shared/photoLayout';
 import type { Json } from '@/types/db';
+
+export type { TextZone };
 
 /** item_images.angle. Hero pictures lead the drink; the rest are service photos. */
 export type ImageAngle = 'hero' | 'side' | 'top' | 'garnish' | 'handoff';
@@ -17,7 +20,7 @@ export interface ItemImageLink {
   is_generated?: boolean | null;
   outdated_since?: string | null;
   /** palette is jsonb: the colours as "#rrggbb", [] for none, null until worked out. */
-  images?: { url?: string | null; credit?: string | null; source_url?: string | null; palette?: Json | null; thumbhash?: string | null } | null;
+  images?: { url?: string | null; credit?: string | null; source_url?: string | null; palette?: Json | null; thumbhash?: string | null; brightness?: number | null; text_zone?: Json | null; width?: number | null; height?: number | null } | null;
 }
 
 export interface ItemPicture {
@@ -31,7 +34,16 @@ export interface ItemPicture {
   palette?: string[] | null;
   /** Its ThumbHash (images.thumbhash), where the query read it: painted while it loads; set once its smaller copies exist. */
   thumbhash?: string | null;
+  /** How light it is (images.brightness, L* 0 to 1), once read: a bright photo makes a light page. */
+  brightness?: number | null;
+  /** Its quiet room for the title (images.text_zone), where the scan found some. */
+  textZone?: TextZone | null;
+  /** Its width over its height (images.width, height), where the query read them. */
+  aspect?: number | null;
 }
+
+/** From this lightness up, a photo is bright and makes a light page (boards Decided-photo-bright, Desk-photo-side-bright). */
+export const LIGHT_PHOTO = 0.6;
 
 /**
  * Whether a picture is a PNG: a cut-out (the drink lifted off its background,
@@ -43,9 +55,14 @@ export function isPng(url: string | number | null | undefined): boolean {
   return typeof url === 'string' && /\.png(\?|$)/i.test(url);
 }
 
-/** Glass over a picture: dark on a photo, light on paper (a drawing or a cut-out), and light on no picture at all. */
-export function glassOver(picture: { url: string | number; isSketch: boolean } | null | undefined): 'dark' | 'light' {
-  return picture && !picture.isSketch && !isPng(picture.url) ? 'dark' : 'light';
+/**
+ * Glass over a picture, and the page under it: a photo decides (light from
+ * LIGHT_PHOTO, dark below it and until it's been read), paper is light (a
+ * drawing or a cut-out), and so is no picture at all.
+ */
+export function glassOver(picture: { url: string | number; isSketch: boolean; brightness?: number | null } | null | undefined): 'dark' | 'light' {
+  if (!picture || picture.isSketch || isPng(picture.url)) return 'light';
+  return (picture.brightness ?? 0) >= LIGHT_PHOTO ? 'light' : 'dark';
 }
 
 /** Whether a link is one of the item's hero pictures (not a service angle). */
@@ -81,6 +98,9 @@ export function toPicture(link: ItemImageLink): ItemPicture {
     sourceUrl: link.images!.source_url ?? null,
     palette: Array.isArray(link.images!.palette) ? link.images!.palette.filter((c) => typeof c === 'string') : null,
     thumbhash: link.images!.thumbhash ?? null,
+    brightness: link.images!.brightness ?? null,
+    textZone: asTextZone(link.images!.text_zone),
+    aspect: link.images!.width && link.images!.height ? link.images!.width / link.images!.height : null,
   };
 }
 
