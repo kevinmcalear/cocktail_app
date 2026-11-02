@@ -1,5 +1,4 @@
 import { usePublishedDrink } from '@/hooks/usePublished';
-import { useStudyPile } from '@/hooks/useStudyPile';
 import { recentEntry, useTrackRecent } from '@/hooks/useTrackRecent';
 import { visitorDrink } from '@/lib/visitorDrink';
 
@@ -14,7 +13,6 @@ import { DrinkScreen } from './DrinkScreen';
  */
 export function VisitorDrink({ id }: { id: string }) {
   const query = usePublishedDrink(id);
-  const { toggleStudyPile, isInStudyPile } = useStudyPile();
   const drink = query.data?.drink;
   useTrackRecent(!!drink, drink ? recentEntry('cocktail', drink.id, drink.name, { imageUrl: drink.imageUrl, barId: drink.barId }) : null);
   if (query.isPending) return <DrinkLoading seed={null} />;
@@ -25,11 +23,8 @@ export function VisitorDrink({ id }: { id: string }) {
     <DrinkScreen
       item={item}
       visitorLock={lock}
-      inStudyPile={isInStudyPile(item.id)}
-      onToggleStudyPile={() => toggleStudyPile(item.id)}
       canEdit={false}
       onEdit={() => {}}
-      sheet
     />
   );
 }

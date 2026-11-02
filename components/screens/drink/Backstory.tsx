@@ -75,6 +75,8 @@ interface BackstoryProps {
   onRiff?: (() => void) | null;
   /** A catalog classic's written history (its notes), folded to one line until opened. */
   story?: string | null;
+  /** The heading; null leaves it to the block above (the drink page's The story). */
+  title?: string | null;
 }
 
 /**
@@ -84,7 +86,7 @@ interface BackstoryProps {
  * One fact per row, each a tap from the whole story. Hidden when there's
  * nothing to tell.
  */
-export function Backstory({ itemId, lines = [], classicName, onRiff = null, story = null }: BackstoryProps) {
+export function Backstory({ itemId, lines = [], classicName, onRiff = null, story = null, title = 'Backstory' }: BackstoryProps) {
   const ds = useDs();
   const router = useRouter();
   const { data } = useLineage(itemId);
@@ -116,7 +118,7 @@ export function Backstory({ itemId, lines = [], classicName, onRiff = null, stor
 
   return (
     <View style={styles.section}>
-      <Headline role="heading">Backstory</Headline>
+      {title ? <Headline role="heading">{title}</Headline> : null}
       {classicName ? <Caption tone="muted">{`From the classic ${classicName}: family, riffs and credit.`}</Caption> : null}
       <View style={[styles.list, { borderBottomColor: ds.c.line }]}>
         {steps.length ? (

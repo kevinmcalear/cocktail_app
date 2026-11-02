@@ -1,3 +1,4 @@
+import type { ReactNode } from 'react';
 import { StyleSheet, View, type StyleProp, type ViewStyle } from 'react-native';
 
 import { pulse as PULSE } from '@/constants/tokens';
@@ -16,7 +17,11 @@ const styles = StyleSheet.create({
 });
 
 /** The web's Pulse: a CSS keyframe, no Reanimated. */
-export function Pulse({ style }: { style?: StyleProp<ViewStyle> }) {
+export function Pulse({ style, children }: { style?: StyleProp<ViewStyle>; children?: ReactNode }) {
   const reduceMotion = useReducedMotion();
-  return <View aria-hidden style={[style, !reduceMotion && styles.breathe]} />;
+  return (
+    <View aria-hidden style={[style, !reduceMotion && styles.breathe]}>
+      {children}
+    </View>
+  );
 }

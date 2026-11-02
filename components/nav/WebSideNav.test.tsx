@@ -62,7 +62,7 @@ test('venue mode lists search, the four tabs and the venue pages, marking the cu
 
   // The four tabs and History, the venue's Menus, Prep, Study and Glassware, then the Venue section and you at the foot.
   // Every person and role has the same tabs (tabs A, 31 Oct); the back bar is parked.
-  expect(links()).toEqual(['Tonight', 'Drinks', 'Discover', 'History', 'You', 'Menus', 'Prep', 'Study', 'Glassware', 'My team', 'Theme', 'Roles and access', 'Venue settings', 'You: Kevin M., Admin at Caretakers']);
+  expect(links()).toEqual(['Tonight', 'Drinks', 'Discover', 'History', 'You', 'Menus', 'Prep', 'Study', 'Glassware', 'My team', 'Rota', 'Theme', 'Roles and access', 'Venue settings', 'You: Kevin M., Admin at Caretakers']);
   expect(screen.getByText('this week list')).toBeTruthy();
   expect(screen.getByRole('link', { name: 'Drinks', selected: true })).toBeTruthy();
   expect(screen.getByRole('link', { name: 'Tonight', selected: false })).toBeTruthy();

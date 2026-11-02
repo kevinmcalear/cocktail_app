@@ -9,6 +9,7 @@ import { useSpecMatches } from '@/hooks/useSpecMatches';
 import { creditHint, creditLabel, nameCredit, type CreditStatus } from '@/lib/lineage';
 
 import { CoCreatorAnswers } from './CoCreatorAnswers';
+import { useItalic } from './ItemTitle';
 
 /** Credit status as a word, with what it means for screen readers. Colour is never the only signal. */
 export function CreditTag({ status }: { status: CreditStatus | null }) {
@@ -28,9 +29,11 @@ export function CreditTag({ status }: { status: CreditStatus | null }) {
  * link to drinks and profiles. A bar's copy of a classic poured to the same
  * spec keeps the classic's credit (board drink-phone-barcopy): Little Rye's
  * Penicillin is still Sam Ross's. Nothing when the drink has no credit or parent.
+ * `italic`: the 2027 page's line under the name, in the name's italic, no picture.
  */
-export function DrinkCredit({ itemId }: { itemId: string }) {
+export function DrinkCredit({ itemId, italic }: { itemId: string; italic?: boolean }) {
   const router = useRouter();
+  const italicFace = useItalic();
   const { data: own } = useDrinkCredit(itemId);
   const classicId = own?.based_on_kind === 'riff' && own.based_on?.is_catalog ? own.based_on.id : null;
   // The same key and ids as ClassicNote, so the page asks once.
@@ -51,13 +54,13 @@ export function DrinkCredit({ itemId }: { itemId: string }) {
   return (
     <View style={styles.stack}>
       <View style={styles.row}>
-        {who ? (
+        {who && !italic ? (
           <View aria-hidden>
             <UserAvatar uri={who.avatar_url} name={who.display_name} size={28} />
           </View>
         ) : null}
         {/* The status rides at the end of the line as a word, so a long credit keeps the full width. */}
-        <Body tone="muted" style={styles.flex} accessibilityHint={creditHint(drink.credit_status) ?? undefined}>
+        <Body tone="muted" style={[styles.flex, italic ? italicFace : null]} accessibilityHint={creditHint(drink.credit_status) ?? undefined}>
           {parts.map((p, i) =>
             p.profileId || p.drinkId ? (
               <DsText

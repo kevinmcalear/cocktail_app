@@ -105,6 +105,11 @@ export function useToolsFor(barId: string | null, venueName: string | null): { l
  * against it; a recipe being made uses useMakingKit.
  */
 export function useKitHere(): ReadonlySet<string> {
+  return useShelfHere().kit;
+}
+
+/** useKitHere, and whether it's the bar's list and not your own, so a page can say whose it means. */
+export function useShelfHere(): { kit: ReadonlySet<string>; bar: boolean } {
   const { active } = useActiveVenue();
   const venue = useMode().mode === 'venue' ? active : null;
   const rows = useBarKit(venue?.id ?? null).data;
@@ -112,7 +117,7 @@ export function useKitHere(): ReadonlySet<string> {
   return useMemo(() => {
     const ours = (rows ?? []).flatMap((r) => (r.key ? [r.key] : []));
     // A venue with no tools listed (or still loading) isn't checked against: your own kit stands in, as the kit check skips it.
-    return venue && ours.length ? new Set(ours) : home;
+    return venue && ours.length ? { kit: new Set(ours), bar: true } : { kit: home, bar: false };
   }, [venue, rows, home]);
 }
 
