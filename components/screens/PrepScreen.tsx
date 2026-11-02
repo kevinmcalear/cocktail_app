@@ -3,9 +3,8 @@ import { ScrollView, StyleSheet, View } from 'react-native';
 
 import { Body, Button, Caption, LockedSection, Segmented, useDs, useGutter } from '@/components/ds';
 import { ToolsSheet } from '@/components/tools/ToolsSheet';
-import { ScreenHeader } from '@/components/nav/ScreenHeader';
+import { NativeHeader, NativeTitle, useHeaderScroll } from '@/components/nav/NativeHeader';
 import { BackBarLink } from '@/components/backbar/BackBarLink';
-import { useTabBarInset } from '@/components/nav/WebTabBar';
 import { CountScreen } from '@/components/screens/prep/CountScreen';
 import { EventSheet } from '@/components/screens/week/EventSheet';
 import { PrepLists } from '@/components/screens/prep/PrepLists';
@@ -43,7 +42,7 @@ const DRINKS_PER_GUEST = 2;
 export function PrepScreen() {
   const ds = useDs();
   const gutter = useGutter();
-  const bottom = useTabBarInset();
+  const scroll = useHeaderScroll();
   const { active } = useActiveVenue();
   const barId = active?.id ?? null;
   const caps = useCapabilities(barId);
@@ -113,12 +112,12 @@ export function PrepScreen() {
     );
 
   return (
-    // Wrapped so NativeTabs doesn't also inset the ScrollView: ScreenHeader
-    // handles the top safe area itself, the same as on Tonight and Library.
+    // Pushed on a tab: the stack's header (NativeHeader) with Back, and the page's own title under it.
     <View style={[styles.screen, { backgroundColor: ds.c.ground }]}>
-      <ScrollView contentContainerStyle={{ paddingBottom: bottom }}>
-        <ScreenHeader title="Prep" display back />
+      <NativeHeader title="Prep" scroll={scroll} />
+      <ScrollView {...scroll.props} contentContainerStyle={{ paddingBottom: scroll.bottom }}>
         <View style={[styles.body, { paddingHorizontal: gutter }]}>
+          <NativeTitle title="Prep" />
           <View style={styles.links}>
             <BackBarLink />
             <Button label="Tools" icon="percent" variant="secondary" onPress={() => setTools(true)} />
@@ -140,6 +139,6 @@ export function PrepScreen() {
 
 const styles = StyleSheet.create({
   screen: { flex: 1 },
-  body: { gap: space.lg, maxWidth: 760, width: '100%' },
+  body: { gap: space.lg, maxWidth: 760, width: '100%', paddingTop: space.sm },
   links: { flexDirection: 'row', flexWrap: 'wrap', gap: space.sm },
 });

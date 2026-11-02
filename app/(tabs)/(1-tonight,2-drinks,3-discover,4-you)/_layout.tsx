@@ -29,7 +29,8 @@ export const unstable_settings = {
   '4-you': { anchor: 'you' },
 };
 
-const ROOTS = [undefined, 'drinks', 'discover', 'you'];
+/** The first pages with Android's Add on them (Prod-and); Discover and You have none. */
+const FAB_PAGES = [undefined, 'drinks'];
 
 /** `segment`: which tab's stack this is ('(2-drinks)'), from expo-router, as the folder is shared. */
 export default function TabStack({ segment }: { segment?: string }) {
@@ -45,8 +46,8 @@ export default function TabStack({ segment }: { segment?: string }) {
       <View style={styles.fill}>
         <Stack screenOptions={{ headerShown: false }} />
       </View>
-      {/* Android's Add floats on each tab's first page (AddButton.tsx); iOS and the web have the + in the header. */}
-      {Platform.OS === 'android' && ROOTS.includes(page) ? <AddFab /> : null}
+      {/* Android's Add floats on Tonight and Drinks (AddButton.tsx); iOS and the web have the + in the header. */}
+      {Platform.OS === 'android' && FAB_PAGES.includes(page) ? <AddFab /> : null}
     </View>
   );
 }
