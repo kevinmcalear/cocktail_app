@@ -1,8 +1,10 @@
 import { useState } from 'react';
 
 import { useToast } from '@/components/ds';
-import { useListChanges, useMayChangeList, type EndedRun, type ListRow } from '@/hooks/useLivingList';
+import { useAskChanges, useSetOffTonight, useTellTeam, type Tell } from '@/hooks/useListAsks';
+import { useBarClock, useListChanges, useMayChangeList, type EndedRun, type ListRow } from '@/hooks/useLivingList';
 import { useMenuLibrary } from '@/hooks/useMenuMutations';
+import { afterTonight } from '@/lib/barHours';
 import type { MenuDetail, MenuDrink } from '@/types/menus';
 
 import { AddDrinkSheet } from '../AddDrinkSheet';
@@ -19,15 +21,22 @@ export interface ChangeTarget {
 
 /**
  * The acts on a living list's rows that need no sheet (decision page, swap
- * and approval-states; Menu-l-approve, Menu-l-swapped): Approve, Turn down
- * or Withdraw a change waiting, take back a swap done today, keep a drink
- * planned to come off. A change by someone who may not change the list waits
- * for approval; the database decides.
+ * and approval-states; Menu-l-approve, Menu-l-ask, Menu-l-swapped):
+ * Approve, Turn down or Withdraw a change waiting, Ask to put a draft on,
+ * take back a swap done today, keep a drink planned to come off, Off tonight
+ * and Back on. A bartender's changes are asks; a change by someone else who
+ * may not change the list waits for approval; the database decides.
  */
-export function useRowActs(menuId: string, rows: ListRow[]) {
+export function useRowActs(menu: { id: string; barId: string | null }, rows: ListRow[], bartender: boolean) {
+  const menuId = menu.id;
   const toast = useToast();
   const changes = useListChanges(menuId);
-  const may = useMayChangeList(menuId).data;
+  const asks = useAskChanges(menuId, menu.barId);
+  const tellTeam = useTellTeam(menuId, menu.barId);
+  const offTonight = useSetOffTonight(menu.barId ?? '');
+  const clock = useBarClock(menu.barId).data;
+  const may = useMayChangeList(bartender ? null : menuId).data;
+  const failed = (e: Error) => toast.show({ title: e.message || 'Couldn’t change the list. Try again.' });
   // Each write is sent through `attempt`, so a refused one can be sent again with the same values.
   type Opts = { onSuccess: () => void; onError: (e: Error) => void };
   const attempt = (send: (o: Opts) => void, onSuccess: () => void) => {
@@ -35,12 +44,35 @@ export function useRowActs(menuId: string, rows: ListRow[]) {
     go();
   };
   const said = (title: string) => () => toast.show({ title: may === false ? `${title}: waiting for approval` : title });
+  const tell = (changes: Tell[]) => tellTeam.mutate(changes);
   return {
-    may,
-    busy: changes.swap.isPending || changes.takeOff.isPending,
+    may: bartender ? false : may,
+    bartender,
+    busy: changes.swap.isPending || changes.takeOff.isPending || asks.create.isPending,
     act(kind: ActKind, view: PageRowView, sectionId: string) {
       const row = view.listRow;
       const name = view.drink.name;
+      const ask = view.ask;
+      if (ask) {
+        if (kind === 'ask') asks.ask.mutate(ask.id, { onSuccess: () => toast.show({ title: `Asked to put ${name} on` }), onError: failed });
+        if (kind === 'withdraw') asks.drop.mutate(ask.id, { onSuccess: () => toast.show({ title: 'Withdrawn' }), onError: failed });
+        if (kind === 'turnDown') asks.drop.mutate(ask.id, { onSuccess: () => toast.show({ title: `${name} turned down` }), onError: failed });
+        if (kind === 'approve') asks.approve.mutate({ ask, rows, sectionId: ask.sectionId ?? row?.sectionId ?? null }, { onSuccess: said(`${name} approved`), onError: failed });
+        return;
+      }
+      if (kind === 'offTonight') {
+        if (!menu.barId) return;
+        offTonight.set(menuId, view.drink.id, afterTonight(clock?.hours, new Date(), clock?.timezone).toISOString());
+        tell([{ itemId: view.drink.id, kind: 'off_tonight' }]);
+        toast.show({ title: `${name} off tonight` });
+        return;
+      }
+      if (kind === 'backOn' && view.offTonight) {
+        offTonight.clear(view.offTonight);
+        tell([{ itemId: view.drink.id, kind: 'back' }]);
+        toast.show({ title: `${name} back on` });
+        return;
+      }
       if (kind === 'undo' && !row) {
         // Taken off today with nothing in its place: it goes back on, at the end of its section.
         attempt((o) => changes.add.mutate({ sectionId, itemId: view.drink.id, sortOrder: 999 }, o), said(`${name} is back`));
@@ -57,17 +89,30 @@ export function useRowActs(menuId: string, rows: ListRow[]) {
         else attempt((o) => changes.turnDown.mutate({ rowId: row.id, waiting: row.state === 'coming' ? 'on' : 'off' }, o), said(`${name} kept as it was`));
       }
     },
-    confirm(target: ChangeTarget, to: MenuDrink | null, at: string | null, done: () => void) {
+    /** The sheet's change: straight on (and told to the team when the switch is on), or a bartender's ask (a draft when `draft`). */
+    confirm(target: ChangeTarget, to: MenuDrink | null, at: string | null, opts: { tell: boolean; draft: boolean }, done: () => void) {
       const row = target.view.listRow;
       if (!row) return;
       const when = at ? 'from ' + new Date(at).toLocaleDateString(undefined, { weekday: 'short', day: 'numeric', month: 'short' }) : 'now';
       const name = target.view.drink.name;
-      const ok = (title: string) => () => {
+      const ok = (title: string, told: Tell | null) => () => {
+        // Told only when it's on: a change waiting for approval isn't one yet.
+        if (told && opts.tell && may !== false) tell([told]);
         said(title)();
         done();
       };
-      if (target.kind === 'swap' && to) attempt((o) => changes.swap.mutate({ rowId: row.id, itemId: to.id, at }, o), ok(`${to.name} on, ${name} off ${when}`));
-      if (target.kind === 'takeOff') attempt((o) => changes.takeOff.mutate({ rowId: row.id, at }, o), ok(`${name} off ${when}`));
+      if (bartender) {
+        const fine = () => {
+          toast.show({ title: opts.draft ? 'Kept as a draft. Only you see it.' : 'Asked. It waits for approval.' });
+          done();
+        };
+        if (target.kind === 'swap' && !to) return;
+        asks.create.mutate({ itemId: to?.id ?? null, offItemId: row.itemId, sectionId: row.sectionId, at, asked: !opts.draft }, { onSuccess: fine, onError: failed });
+        return;
+      }
+      if (target.kind === 'swap' && to)
+        attempt((o) => changes.swap.mutate({ rowId: row.id, itemId: to.id, at }, o), ok(`${to.name} on, ${name} off ${when}`, { itemId: row.itemId, kind: 'swap', toItemId: to.id, at }));
+      if (target.kind === 'takeOff') attempt((o) => changes.takeOff.mutate({ rowId: row.id, at }, o), ok(`${name} off ${when}`, { itemId: row.itemId, kind: 'off', at }));
     },
   };
 }
@@ -110,7 +155,8 @@ export function RowChanges({ menu, target, ended, acts, onClose }: { menu: MenuD
       found={found}
       onFind={() => setFinding(true)}
       busy={acts.busy}
-      onConfirm={(to, at) => acts.confirm(target, to, at, onClose)}
+      asking={acts.bartender}
+      onConfirm={(to, at, opts) => acts.confirm(target, to, at, opts, onClose)}
       onClose={onClose}
     />
   );
