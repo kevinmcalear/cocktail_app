@@ -45,6 +45,8 @@ interface Input {
   toBuy: number | null;
   day: (iso: string) => string;
   now: number;
+  /** Drinks off for tonight only (the floor and guests read "Not tonight"; the team's live list draws its own). */
+  offTonight?: ReadonlySet<string>;
 }
 
 /** On the bar page, Shown or Hidden: tapping it flips the menu's hidden_at. */
@@ -56,7 +58,7 @@ function replacesLine(onNow: { name: string; endsAt: string | null }, goesOn: st
   return last ? `${onNow.name}, on ${day(last)}` : onNow.name;
 }
 
-export function menuPageModel({ menu, status, lens: L, venueName, onNow, newIds, shelf, toBuy, day, now }: Input): MenuPageModel {
+export function menuPageModel({ menu, status, lens: L, venueName, onNow, newIds, shelf, toBuy, day, now, offTonight }: Input): MenuPageModel {
   const { lens } = L;
   // An undated home menu is an idea, not a draft: it isn't published, so it's never pencil.
   const draft = status === 'draft' && !!menu.barId;
@@ -164,6 +166,8 @@ export function menuPageModel({ menu, status, lens: L, venueName, onNow, newIds,
       const row = team ? stateOf.get(`${s.id}:${d.id}`) : undefined;
       const mark = row ? rowStateMark(row.state, row.onFrom, row.offAt, day) : null;
       if (mark) flag = { label: mark, tone: row!.state.startsWith('waiting') ? 'amber' : 'quiet' };
+      const notTonight = !team && !past && !!offTonight?.has(d.id);
+      if (notTonight) flag = { label: 'Not tonight', tone: 'quiet' };
       return {
         drink: d,
         line: lens === 'bartender' && notes?.method ? notes.method : d.line,
@@ -174,6 +178,7 @@ export function menuPageModel({ menu, status, lens: L, venueName, onNow, newIds,
         chips: lens === 'employee' ? allergenChips(L.allergens.get(d.id), L.allergens.size > 0) : null,
         talkingPoint: lens === 'employee' ? (notes?.talkingPoint ?? null) : null,
         ink,
+        faded: notTonight || undefined,
       };
     }),
   }));
