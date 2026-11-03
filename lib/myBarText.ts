@@ -10,6 +10,11 @@ export function barSubtitle(ready: number, preps: number): string {
   return parts.join(' · ');
 }
 
+/** The shelf's note in Drinks (Prod-phone shelf): "23 bottles · 14 drinks you can make tonight". */
+export function shelfNote(bottles: number, ready: number): string {
+  return `${plural(bottles, 'bottle')} · ${ready ? `${plural(ready, 'drink')} you can make tonight` : 'nothing ready yet'}`;
+}
+
 /** The desktop header's line: "4 bottles · 6 in the fridge · 2 on the lab shelf · 2 made in-house · 3 pieces of kit". */
 export function shelfCountsLine(c: { bottles: number; fridge: number; lab: number; preps: number; kit: number }): string {
   return [

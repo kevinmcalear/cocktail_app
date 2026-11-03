@@ -51,6 +51,8 @@ interface MenuPageRowProps {
   onAct?: (kind: ActKind) => void;
   /** The chevron that says the row opens in place (a bartender's spec). */
   chevron?: boolean;
+  /** In place of the price, beside the row and not inside its tap: the daily list's switch (Menu-l-tonight-staff). */
+  trailing?: React.ReactNode;
   children?: React.ReactNode;
 }
 
@@ -61,7 +63,7 @@ interface MenuPageRowProps {
  * spec in place, the menu team's on a live list its Swap and Take off
  * (Menu-l-swap).
  */
-export function MenuPageRow({ row, onPress, open, showActs, onAct, chevron, children }: MenuPageRowProps) {
+export function MenuPageRow({ row, onPress, open, showActs, onAct, chevron, trailing, children }: MenuPageRowProps) {
   const ds = useDs();
   const amber = readableAccent(STATUS.warning, ds.c.ground);
   const green = readableAccent(STATUS.success, ds.c.ground);
@@ -72,7 +74,8 @@ export function MenuPageRow({ row, onPress, open, showActs, onAct, chevron, chil
   const acts = showActs && row.acts?.length ? row.acts : null;
   return (
     <View style={[styles.wrap, { borderTopColor: ds.c.lineStrong }]}>
-      <PressableScale role={onPress ? 'button' : undefined} aria-expanded={open} accessibilityLabel={label} onPress={onPress} disabled={!onPress} style={styles.row}>
+      <View style={trailing ? styles.withTrailing : undefined}>
+        <PressableScale role={onPress ? 'button' : undefined} aria-expanded={open} accessibilityLabel={label} onPress={onPress} disabled={!onPress} style={[styles.row, trailing ? styles.grow : null]}>
         <View style={row.struck ? styles.struckPic : undefined}>
           <MenuDrawing itemId={drink.id} size="menuRow" ink={row.ink} fallback={{ imageUrl: drink.imageUrl, glass: drink.glass }} />
         </View>
@@ -115,7 +118,7 @@ export function MenuPageRow({ row, onPress, open, showActs, onAct, chevron, chil
             </DsText>
           ) : null}
         </View>
-        <View style={styles.end}>
+        <View style={[styles.end, trailing ? styles.none : null]}>
           {row.end ? (
             <DsText variant="label" color={tone[row.endTone]} style={font.figuresMedium}>
               {row.end}
@@ -128,7 +131,9 @@ export function MenuPageRow({ row, onPress, open, showActs, onAct, chevron, chil
           ) : null}
           {chevron ? <IconSymbol name={open ? 'chevron.up' : 'chevron.down'} size={14} color={ds.c.muted} /> : null}
         </View>
-      </PressableScale>
+        </PressableScale>
+        {trailing ? <View style={styles.trailing}>{trailing}</View> : null}
+      </View>
       {acts ? (
         <View style={styles.acts}>
           {acts.map((a, i) => {
@@ -168,6 +173,10 @@ const styles = StyleSheet.create({
   chips: { flexDirection: 'row', flexWrap: 'wrap', gap: space.xs, marginTop: space.xs },
   chip: { paddingHorizontal: space.xs + 2, paddingVertical: 1, borderRadius: radius.mark },
   end: { alignItems: 'flex-end', gap: 2, minWidth: 44 },
+  none: { display: 'none' },
+  withTrailing: { flexDirection: 'row', alignItems: 'center', gap: space.md },
+  grow: { flex: 1 },
+  trailing: { paddingVertical: space.md },
   acts: { flexDirection: 'row', flexWrap: 'wrap', gap: space.sm, paddingLeft: 56 + space.md, paddingBottom: space.md },
   act: { minHeight: 36, paddingHorizontal: space.md + 2, borderRadius: radius.pill, alignItems: 'center', justifyContent: 'center' },
 });

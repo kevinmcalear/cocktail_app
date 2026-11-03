@@ -6,6 +6,7 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import { BackbarTheme, Body, Button, Caption, GlassButton, useBreakpoint, useDs, useGutter } from '@/components/ds';
 import { Crumbs } from '@/components/nav/PageFrame';
+import { DrawingBar } from '@/components/ds/DrawingBar';
 import { DRAWN_LIST_WINDOW } from '@/components/ds/SketchDrawing';
 import { menuCover, space } from '@/constants/tokens';
 import { useActiveVenue } from '@/hooks/useActiveVenue';
@@ -31,6 +32,7 @@ import { menuDrinkHref } from './MenuSections';
 import { SectionHead } from './SectionHead';
 import { MenuMoreSheet } from './MenuMoreSheet';
 import { ShareMenuSheet } from './ShareMenuSheet';
+import { DailyListPage } from './page/DailyListPage';
 import { MenuPageBanner, MenuPageGroup } from './page/MenuPageGroup';
 import { MenuPageHead } from './page/MenuPageHead';
 import { MenuPageRow, type PageRowView } from './page/MenuPageRow';
@@ -65,8 +67,8 @@ export function MenuScreen({ menuId }: { menuId: string }) {
       </View>
     );
   }
-  // Only a home menu reads your shelf (Ready, Need limes, the shopping list).
-  return menu.barId ? <MenuPage menu={menu} shelf={null} /> : <HomeMenuPage menu={menu} />;
+  // Only a home menu reads your shelf; drinks draw in the bar's glassware (a home menu's in stock glasses).
+  return <DrawingBar barId={menu.barId}>{menu.barId ? <MenuPage menu={menu} shelf={null} /> : <HomeMenuPage menu={menu} />}</DrawingBar>;
 }
 
 function HomeMenuPage({ menu }: { menu: MenuDetail }) {
@@ -85,17 +87,15 @@ function HomeMenuPage({ menu }: { menu: MenuDetail }) {
 
 type PageProps = { menu: MenuDetail; shelf: { match: ShelfMatch; toShopping: () => void; toBuy: number | null } | null };
 
-/**
- * A bar's menu that's on or coming up leads with its cover photo when it has
- * one, and the photo decides light or dark for the whole page (Menu-g-photo-dark,
- * Menu-g-photo-bright). Drafts, past menus and home menus are drawn.
- */
+// A bar's menu that's on or coming up leads with its cover photo, which sets light or dark
+// for the page (Menu-g-photo-dark, Menu-g-photo-bright). Drafts, past and home menus are drawn.
 function MenuPage(props: PageProps) {
   const [now] = useState(() => Date.now());
   const status = menuStatus(props.menu, now);
   const cover = props.menu.barId && status !== 'draft' && status !== 'previous' ? props.menu.coverUrl : null;
-  const tone = usePhotoTone(cover);
-  const focused = useIsFocused();
+  const [tone, focused] = [usePhotoTone(cover), useIsFocused()];
+  // A daily list that's on is Tonight (Menu-l-tonight-*); its draft and past runs read as menus.
+  if (props.menu.listType === 'daily' && status === 'on') return <DailyListPage menu={props.menu} />;
   return (
     <BackbarTheme scheme={cover ? tone : undefined}>
       {/* The page's tone can differ from the phone's, so the clock and battery follow the page; only while it's on top, or a page pushed over it keeps this style. */}

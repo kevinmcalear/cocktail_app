@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, type ReactNode } from 'react';
 import { ScrollView, StyleSheet, View } from 'react-native';
 
 import { Body, Button, Caption, Chip, FieldButton, Headline, IngredientDrawing, PressableScale, Surface, useDs, useGutter } from '@/components/ds';
@@ -16,6 +16,8 @@ import type { AwayGroup } from './MakeRows';
 const KITCHEN = ['Lemons', 'Limes', 'Oranges', 'Sugar', 'Eggs', 'Soda water'];
 
 interface StarterShelfProps {
+  /** Drinks' head, in place of My Bar's title (MyBarScreen). */
+  head?: ReactNode;
   /** The staples the catalog has, by name (usePantryItems). */
   pantry: { name: string; id: string }[];
   onShelf: Set<string>;
@@ -39,7 +41,7 @@ interface StarterShelfProps {
  * the drinks as you go. Nothing is saved until you tick it. Show me opens the
  * whole of My Bar.
  */
-export function StarterShelf({ pantry, onShelf, oneAway, ready, bottles, bottom, onToggle, onAdd, onSearch, onSnap, onShowMe }: StarterShelfProps) {
+export function StarterShelf({ head, pantry, onShelf, oneAway, ready, bottles, bottom, onToggle, onAdd, onSearch, onSnap, onShowMe }: StarterShelfProps) {
   const ds = useDs();
   const gutter = useGutter();
   const cols = useTileCols();
@@ -64,7 +66,7 @@ export function StarterShelf({ pantry, onShelf, oneAway, ready, bottles, bottom,
   return (
     <View style={styles.screen}>
       <ScrollView contentContainerStyle={{ paddingHorizontal: gutter, paddingBottom: bottom + 96, maxWidth: 760, width: '100%' }} keyboardShouldPersistTaps="handled">
-        <ScreenHeaderSpacer title="My Bar" back />
+        {head ?? <ScreenHeaderSpacer title="My Bar" back />}
         <View style={styles.section}>
           <Body tone="muted">Tap what’s on your shelf. We’ll show only drinks you can actually make.</Body>
           <View style={[styles.find, { backgroundColor: ds.c.raised, borderColor: ds.c.line }]}>

@@ -10,6 +10,7 @@ import { capitalizeFirst } from '@/lib/stringUtils';
 import type { CatalogIngredient } from './IngredientSearch';
 import type { TrailItem } from './Trail';
 import { PrepBuilder } from './prep/PrepBuilder';
+import { NestedPrep } from './prep/NestedPrep';
 import { PrepCard } from './prep/PrepCard';
 
 interface MakePrepArgs {
@@ -18,7 +19,7 @@ interface MakePrepArgs {
   ingredients: readonly CatalogIngredient[];
   aliases: readonly IngredientAlias[];
   /** On the desktop page: the card opens under its line; `onOpen` says which recipe is open (null when none), for the page's rail. */
-  inlinePrep?: { venueName: string | null; onOpen?: (making: string | null) => void };
+  inlinePrep?: { venueName: string | null; onOpen?: (making: string | null) => void; /** The draft page: the recipe on its own page over the drink (NestedPrep), not under its line. */ page?: boolean };
   add: (pick: WizardPick, prep?: PrepDraft, later?: boolean, pour?: TypedPour) => WizardLine;
   change: (key: string, c: Partial<WizardLine>) => void;
   /** The venue the drink is for, whose Kit How? is checked against; null at home. */
@@ -106,8 +107,8 @@ export function useMakePrep({ draft, set, ingredients, aliases, inlinePrep, add,
       put({ ...prep, at: undefined }, name, false);
     },
     // Left for now (make-anything-steps-3, step 9): what's done goes on the line, a recipe to finish. A finished recipe opened again stays as it was.
-    // Make it house on a bottle: leaving keeps the bottle, as it was.
-    onLater: replacing || (editingPrep && !editingPrep.at) ? undefined : (prep: PrepDraft, name: string) => put(prep, name, true),
+    // Make it house on a bottle: leaving keeps the bottle, as it was. A line that's only a name has no bottle to go back to.
+    onLater: (replacing && (line?.id || line?.bottle)) || (editingPrep && !editingPrep.at) ? undefined : (prep: PrepDraft, name: string) => put(prep, name, true),
   };
 
   return {
@@ -120,7 +121,7 @@ export function useMakePrep({ draft, set, ingredients, aliases, inlinePrep, add,
     /** Make it house: the bottle line becomes a prep by this technique, the bottle its base; `ask` opens on What is it to check it first. */
     house: (l: WizardLine, name: string, technique: string, ask?: boolean) => setMaking({ name, key: l.key, replace: true, technique, base: { id: l.id, name: l.name }, first: ask }),
     /** The card under this line, when its prep is being written on the desktop page. */
-    card: (key: string) => (inlinePrep && makingName && key === editingKey ? <PrepCard key={key} name={makingName} drinkName={drinkName} venueName={inlinePrep.venueName} {...props} /> : null),
-    builder: inlinePrep ? null : <PrepBuilder name={makingName} drinkName={drinkName} {...props} />,
+    card: (key: string) => (inlinePrep && !inlinePrep.page && makingName && key === editingKey ? <PrepCard key={key} name={makingName} drinkName={drinkName} venueName={inlinePrep.venueName} {...props} /> : null),
+    builder: !inlinePrep ? <PrepBuilder name={makingName} drinkName={drinkName} {...props} /> : inlinePrep.page && open && makingName ? <NestedPrep name={makingName} drinkName={drinkName} venueName={inlinePrep.venueName} {...props} /> : null,
   };
 }

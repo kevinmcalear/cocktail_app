@@ -7,7 +7,7 @@ import { layout, space, STATUS } from '@/constants/tokens';
 import { useSignedIn } from '@/ctx/AuthContext';
 import { readableAccent } from '@/lib/color';
 
-import { ReportSheet } from '../safety/ReportSheet';
+import { ReportSheet } from '../safety/ReportSheetLazy';
 import { BarButton } from './MaterialBar';
 
 interface DrinkMoreMenuProps {

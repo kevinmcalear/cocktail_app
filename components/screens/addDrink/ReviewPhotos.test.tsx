@@ -1,90 +1,44 @@
-import { fireEvent, screen, within } from '@testing-library/react-native';
-import { useState } from 'react';
-import { Text } from 'react-native';
+import { fireEvent, screen } from '@testing-library/react-native';
 
 import { renderWithProviders } from '@/jest.setup';
-import { EMPTY_DRAFT, type WizardDraft } from '@/lib/drinkWizard';
-import type { AnglePhotos } from '@/lib/photoAngles';
+import type { SketchInputs } from '@/lib/sketch/types';
 
-import { StartPhotos } from './ReviewPhotos';
-import { ReviewStep } from './ReviewStep';
+import { DraftPhotos, DrawingChoice } from './ReviewPhotos';
 
-const mockPick = jest.fn();
-jest.mock('@/components/drink/drinkImages', () => ({ pickDrinkPhotos: (o: unknown) => mockPick(o) }));
+let mockCaps: string[] = ['photos'];
+jest.mock('@/components/drink/drinkImages', () => ({ pickDrinkPhotos: jest.fn() }));
 jest.mock('@/components/drink/CutoutOfferHost', () => ({ CutoutOfferHost: () => null }));
 jest.mock('@/components/ds/SketchDrawing', () => ({ SketchDrawing: () => null }));
-jest.mock('@/hooks/useCapabilities', () => ({ useCapabilities: () => ({ data: ['photos'] }) }));
-jest.mock('@/hooks/usePublishing', () => ({ useBarPublishing: () => ({ data: undefined }) }));
-jest.mock('@/hooks/useMyProfile', () => ({ useMyProfile: () => ({ data: null }) }));
-jest.mock('@/hooks/useDiscover', () => ({ useDrinkLists: () => ({ data: [] }) }));
+jest.mock('@/hooks/useCapabilities', () => ({ useCapabilities: () => ({ data: mockCaps }) }));
 
-let latest: AnglePhotos = {};
-function Start() {
-  const [photos, setPhotos] = useState<AnglePhotos>({});
-  const onChange = (next: AnglePhotos) => {
-    latest = next;
-    setPhotos(next);
-  };
-  return <StartPhotos photos={photos} onChange={onChange} barId="little-rye" />;
-}
+const photos = (barId: string | null) => <DraftPhotos barId={barId} photos={{}} onChange={jest.fn()} sketch={{} as SketchInputs} seed="new-drink" />;
 
-describe('StartPhotos (E26)', () => {
-  beforeEach(() => (latest = {}));
-
-  test('Add photos picks several at once, then Which is which? gives each its angle', async () => {
-    mockPick.mockResolvedValueOnce(['a.jpg', 'b.jpg', 'c.jpg']);
-    await renderWithProviders(<Start />);
-    await fireEvent.press(screen.getByRole('button', { name: 'Add photos, several at once' }));
-    expect(mockPick).toHaveBeenLastCalledWith({ cutout: true, several: 5 });
-    // The first picked starts as the Hero.
-    expect(latest).toEqual({ hero: 'a.jpg', side: 'b.jpg', top: 'c.jpg' });
-    expect(await screen.findByText('3 photos picked. Give each its angle; the Hero leads the drink’s page.')).toBeTruthy();
-
-    // Making photo 3 the Hero swaps it with photo 1: one angle each.
-    const third = screen.getByLabelText('Which angle is photo 3');
-    await fireEvent.press(within(third).getByRole('radio', { name: 'Hero' }));
-    expect(latest).toEqual({ hero: 'c.jpg', side: 'b.jpg', top: 'a.jpg' });
-    // A free angle just moves it.
-    await fireEvent.press(within(screen.getByLabelText('Which angle is photo 2')).getByRole('radio', { name: 'Close up' }));
-    expect(latest).toEqual({ hero: 'c.jpg', garnish: 'b.jpg', top: 'a.jpg' });
-
-    // Add more asks only for the angles left.
-    mockPick.mockResolvedValueOnce(['d.jpg']);
-    await fireEvent.press(screen.getByRole('button', { name: 'Add more' }));
-    expect(mockPick).toHaveBeenLastCalledWith({ cutout: true, several: 2 });
-    expect(latest.side).toBe('d.jpg');
-    expect(screen.getByLabelText('Which angle is photo 4')).toBeTruthy();
-  });
-
-  test('one photo is the Hero, with no question', async () => {
-    mockPick.mockResolvedValueOnce(['a.jpg']);
-    await renderWithProviders(<Start />);
-    await fireEvent.press(screen.getByRole('button', { name: 'Add photos, several at once' }));
-    expect(latest).toEqual({ hero: 'a.jpg' });
-    expect(screen.queryByText(/photos? picked/)).toBeNull();
-    expect(screen.getByText('PHOTOS · 1')).toBeTruthy();
-  });
-});
-
-describe('ReviewStep (E25, Q15)', () => {
-  const draft: WizardDraft = { ...EMPTY_DRAFT, name: 'Ash Garden' };
-  const review = (barId: string | null) => (
-    <ReviewStep draft={draft} set={jest.fn()} onJump={jest.fn()} barId={barId} venueName="Little Rye" hasProfile barVariants={[]} cost={barId ? <Text>COST CARD</Text> : undefined} />
-  );
-
-  test('at a venue the cost comes last, after every answer', async () => {
-    await renderWithProviders(review('little-rye'));
-    const page = JSON.stringify(screen.toJSON());
-    const cost = page.indexOf('COST CARD');
-    expect(cost).toBeGreaterThan(page.indexOf('Who sees it'));
-    expect(cost).toBeLessThan(page.indexOf('You can change any of it on the drink’s page.'));
+describe('the draft page’s photos (E25, Q15)', () => {
+  test('at a venue, the slots for those who may add photos', async () => {
+    mockCaps = ['photos'];
+    await renderWithProviders(photos('little-rye'));
     expect(screen.getByRole('button', { name: 'Add a side photo' })).toBeTruthy();
   });
 
+  test('at a venue, nothing for anyone else', async () => {
+    mockCaps = [];
+    await renderWithProviders(photos('little-rye'));
+    expect(screen.queryByText('PHOTOS')).toBeNull();
+    expect(screen.queryByRole('button', { name: 'Add a side photo' })).toBeNull();
+  });
+
   test('at home one photo, the one that leads the page', async () => {
-    await renderWithProviders(review(null));
+    await renderWithProviders(photos(null));
     expect(screen.getByRole('button', { name: 'Add a photo: it leads the drink page' })).toBeTruthy();
     expect(screen.getByText('It leads the drink’s page. Add more angles there.')).toBeTruthy();
     expect(screen.queryByRole('button', { name: 'Add a side photo' })).toBeNull();
   });
+});
+
+test('with a hero photo the drawing is removed to start, Keep it in one tap (call B, 26 Oct)', async () => {
+  const onChange = jest.fn();
+  await renderWithProviders(<DrawingChoice kept={false} onChange={onChange} />);
+  expect(screen.getByText('Drawing removed')).toBeTruthy();
+  await fireEvent.press(screen.getByRole('button', { name: 'Keep the drawing, after the photos' }));
+  expect(onChange).toHaveBeenCalledWith(true);
 });

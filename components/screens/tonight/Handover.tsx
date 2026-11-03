@@ -2,6 +2,7 @@ import { useMemo } from 'react';
 import { Platform, StyleSheet, View } from 'react-native';
 
 import { Button, Caption, DsText, GlassButton, Surface, Title, useDs, useToast, type IconName } from '@/components/ds';
+import { useLogBatchNow } from '@/components/screens/prep/LogBatchButton';
 import { SettingsRow } from '@/components/screens/settings/SettingsParts';
 import { IconSymbol } from '@/components/ui/icon-symbol';
 import { font, radius, space } from '@/constants/tokens';
@@ -12,7 +13,6 @@ import { names, ranOutLine, summary, type HandoverNote } from '@/lib/handover';
 import { nextNight } from '@/lib/nightPhase';
 import { recipeNames } from '@/lib/tonight';
 
-import { useLogNow } from './BeforeDoors';
 import { HandoverSheet, HandoverView, HandoverWriteSheet } from './HandoverLazy';
 import type { HandoverState } from './NightHandover';
 import { TonightSection } from './TonightParts';
@@ -98,10 +98,10 @@ function LeaveHandover({ s }: { s: HandoverState }) {
 function useView(s: HandoverState, h: Handover) {
   const { t, barId, wide } = s;
   const save = useSaveHandover(barId);
-  const logNow = useLogNow(t, barId);
+  const logNow = useLogBatchNow(barId);
   const logBatch = (name: string) => {
     const id = t.houseMadeIds.find((i) => t.lineName(i)?.toLowerCase() === name.trim().toLowerCase());
-    return id ? logNow(id, name) : null;
+    return id ? logNow(id, name, t.batchOf(id)) : null;
   };
   const onGotIt = () => {
     if (h.last && h.me) save.mutate({ barId, closeDate: h.last.closeDate, userId: h.me, readAt: new Date().toISOString() });

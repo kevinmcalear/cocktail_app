@@ -1,6 +1,6 @@
 import type { StyleProp, ViewStyle } from 'react-native';
 
-export type FabIcon = 'plus' | 'checkmark' | 'rank';
+export type FabIcon = 'plus' | 'checkmark' | 'rank' | 'printer';
 
 export interface ExtendedFabProps {
   label: string;
