@@ -1,14 +1,6 @@
 import assert from 'node:assert/strict';
 import { MutationObserver, onlineManager, QueryClient, QueryObserver } from '@tanstack/react-query';
-import { cacheActionOnAuth, isStaleSessionLog, isUserQuery, resetUserQueries, storedSessionUser, viewerScoped } from './authCache';
-
-// --- a stale saved session is a quiet sign-out, not an error on screen ---
-const authError = (message: string, code?: string) => Object.assign(new Error(message), { name: 'AuthApiError', code });
-assert.equal(isStaleSessionLog([authError('Invalid Refresh Token: Refresh Token Not Found', 'refresh_token_not_found')]), true);
-assert.equal(isStaleSessionLog([authError('Refresh token is not valid')]), true);
-assert.equal(isStaleSessionLog([authError('Email rate limit exceeded', 'over_email_send_rate_limit')]), false);
-assert.equal(isStaleSessionLog([new Error('Invalid Refresh Token')]), false, 'only auth-js errors');
-assert.equal(isStaleSessionLog(['Mutation error:', authError('x', 'refresh_token_not_found')]), false);
+import { cacheActionOnAuth, isUserQuery, resetUserQueries, storedSessionUser, viewerScoped } from './authCache';
 
 // --- what happens when auth settles ---
 assert.equal(cacheActionOnAuth(undefined, null), 'clear', 'opened signed out');

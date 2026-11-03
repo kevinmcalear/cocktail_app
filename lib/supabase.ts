@@ -1,8 +1,8 @@
 import { createClient, type User } from '@supabase/supabase-js';
 import * as SecureStore from 'expo-secure-store';
-import { LogBox, Platform } from 'react-native';
+import { Platform } from 'react-native';
 
-import { isStaleSessionLog, storedSessionUser } from '@/lib/authCache';
+import { storedSessionUser } from '@/lib/authCache';
 import type { Database, Json } from '@/types/db';
 
 // Return the write promises: auth-js awaits them before announcing SIGNED_IN,
@@ -69,20 +69,6 @@ export const UPLOAD_CACHE_SECONDS = '31536000';
  * say Json; the SQL that builds it is the contract.
  */
 export const jsonAs = <T>(value: Json): T => value as unknown as T;
-
-// A saved session whose refresh token was rejected: auth-js signs out and logs
-// it with console.error, which dev builds show as a red toast on Sign in. It's
-// an expected sign-out (Sign in is the answer), so it isn't logged; every
-// other error still is. LogBox is told too, for a log that reaches it first.
-const quiet = console as Console & { staleSessionQuiet?: boolean };
-if (!quiet.staleSessionQuiet) {
-  quiet.staleSessionQuiet = true; // once: Fast Refresh re-runs this module
-  const logError = console.error;
-  console.error = (...args: unknown[]) => {
-    if (!isStaleSessionLog(args)) logError(...args);
-  };
-}
-LogBox.ignoreLogs([/Invalid Refresh Token/]);
 
 export const supabase = createClient<Database>(supabaseUrl, supabaseAnonKey, {
   auth: {
