@@ -36,7 +36,6 @@ export function EditCredits({ itemId }: { itemId: string }) {
         disabled={save.isPending}
         onAdd={(p: CreditPick) => apply(editorAdd(saved, p))}
         onRemove={(p: CreditPick) => apply(editorRemove(saved, p))}
-        headline
       />
       {save.error ? <Caption tone="accent">{`Couldn't save who made it: ${save.error.message}`}</Caption> : null}
     </View>

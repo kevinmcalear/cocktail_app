@@ -1,7 +1,7 @@
 import { useState } from 'react';
 import { Platform, StyleSheet, TextInput, View } from 'react-native';
 
-import { Body, Button, Caption, DsText, Headline, useDs } from '@/components/ds';
+import { Body, Button, Caption, DsText, useDs } from '@/components/ds';
 import { IconSymbol } from '@/components/ui/icon-symbol';
 import { Skeleton } from '@/components/ui/Skeleton';
 import { font, radius, space, type } from '@/constants/tokens';
@@ -9,6 +9,7 @@ import type { useCocktailEditor } from '@/hooks/useCocktailEditor';
 import { methodVerb } from '@/lib/specView';
 import { ASIDE_MAX, draftSteps, noteLeft, NOTE_MAX, type StepWords } from '@/lib/stepNotes';
 
+import { Eyebrow } from '../../addDrink/WizardChrome';
 import { GrowingField } from './EditParts';
 
 const NO_OUTLINE = Platform.OS === 'web' ? ({ outlineStyle: 'none' } as object) : null;
@@ -37,7 +38,7 @@ export function EditStepNotes({ editor, known = [] }: { editor: Editor; /** The 
   return (
     <View style={styles.section}>
       <View style={styles.headRow}>
-        <Headline role="heading">Steps</Headline>
+        <Eyebrow>Steps</Eyebrow>
         <Caption tone="muted">Shown in Steps</Caption>
       </View>
       {editor.stepNotesStatus === 'loading' ? <StepsLoading /> : null}
@@ -159,7 +160,7 @@ function StepsFailed({ onRetry }: { onRetry: () => void }) {
 
 const styles = StyleSheet.create({
   section: { gap: space.lg },
-  headRow: { flexDirection: 'row', alignItems: 'baseline', justifyContent: 'space-between' },
+  headRow: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', marginBottom: -space.md },
   head: { flexDirection: 'row', alignItems: 'baseline', gap: space.sm, minHeight: 44, paddingTop: space.lg, paddingBottom: 7 },
   aside: { ...type.label, ...font.regular, flex: 1, minWidth: 0, padding: 0 },
   hint: { flex: 1, minWidth: 0 },

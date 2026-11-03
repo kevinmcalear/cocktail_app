@@ -76,7 +76,7 @@ export function EditBottomBar({ onLine, lineHint = 'Add a line to the spec', onS
   );
 }
 
-export type MoreChoice = 'publish' | 'photos' | 'access' | 'calc' | 'discard' | 'delete';
+export type MoreChoice = 'publish' | 'photos' | 'colour' | 'access' | 'calc' | 'discard' | 'delete';
 
 /** A part of the editor headed as the add-drink step that asks it ("INGREDIENTS", "What goes in?"), so editing reads as adding does (Eddie, tf-070). */
 export function StepHead({ step, eyebrow }: { step: WizardStep; /** Several steps in one part: "Method, glass, ice". */ eyebrow?: string }) {
@@ -89,7 +89,7 @@ export function StepHead({ step, eyebrow }: { step: WizardStep; /** Several step
 }
 
 /** Editing's More: photos in order, who can see the spec, discard the changes, delete the drink. A draft can also be published. */
-export function EditMoreMenu({ open, onClose, canDelete, dirty, draft, calc, onPick, noun = 'drink', photosLabel = 'Photos' }: { open: boolean; onClose: () => void; canDelete: boolean; dirty: boolean; draft?: boolean; /** The ingredient calculator, for a drink's phone footer (which has no tool bar). */ calc?: boolean; onPick: (c: MoreChoice) => void; /** What's edited: "drink", "beer", "wine" or "ingredient". */ noun?: string; /** An ingredient has one picture: "Its picture". */ photosLabel?: string }) {
+export function EditMoreMenu({ open, onClose, canDelete, dirty, draft, calc, onPick, noun = 'drink', photosLabel = 'Photos', colour }: { open: boolean; onClose: () => void; canDelete: boolean; dirty: boolean; draft?: boolean; /** The ingredient calculator, for a drink's phone footer (which has no tool bar). */ calc?: boolean; onPick: (c: MoreChoice) => void; /** What's edited: "drink", "beer", "wine" or "ingredient". */ noun?: string; /** An ingredient has one picture: "Its picture". */ photosLabel?: string; /** A saved drink's drawing colour: Miss-steps draws no hero while editing, so it lives here with the photos. */ colour?: boolean }) {
   // What to open once the menu has gone: two sheets never stack.
   const then = useRef<MoreChoice | null>(null);
   const run = () => {
@@ -110,6 +110,7 @@ export function EditMoreMenu({ open, onClose, canDelete, dirty, draft, calc, onP
     >
       {draft ? <MoreRow icon="paperplane.fill" label={`Publish ${noun}`} onPick={() => (then.current = 'publish')} /> : null}
       <MoreRow icon="photo" label={photosLabel} onPick={() => (then.current = 'photos')} />
+      {colour ? <MoreRow icon="paintpalette.fill" label="Drawing colour" onPick={() => (then.current = 'colour')} /> : null}
       <MoreRow icon="lock.shield.fill" label={accessTitle(noun)} onPick={() => (then.current = 'access')} />
       {calc ? <MoreRow icon="percent" label="Ingredient calculator" onPick={() => (then.current = 'calc')} /> : null}
       {dirty ? <MoreRow icon="arrow.uturn.backward" label="Discard changes" onPick={() => (then.current = 'discard')} /> : null}

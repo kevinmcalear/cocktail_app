@@ -11,7 +11,7 @@ import { findByName } from '@/lib/drinkMethods';
 import { iceBuildLine, saysMore } from '@/lib/iceBuild';
 
 import type { DrinkEditor as Editor } from './EditParts';
-import { StepHead } from './EditParts';
+import { Eyebrow } from '../../addDrink/WizardChrome';
 import { GlassPickSheet } from './GlassPickSheet';
 import { IceBuildSheet } from './IceBuildSheet';
 type Option = { id: string; name: string; ice_kind?: string | null };
@@ -23,13 +23,12 @@ type Category = SpecCategory | 'methodIce';
 type IceEditor = Extract<Editor, { setIceBuild: unknown }>;
 const iceEditor = (editor: Editor): IceEditor | null => ('setIceBuild' in editor ? editor : null);
 
-// In adding a drink's order (method, glass, ice), so editing feels the same (Eddie, tf-070).
+// As "How it goes out" draws them (Miss-steps): method, glass, the ice it's served on; then the ice it's made with (#697) and its family.
 const ROWS: { category: Category; label: string; empty: string }[] = [
   { category: 'method', label: 'Method', empty: 'Shake, stir, build…' },
-  // The ice it's made with (#697): this editor only.
-  { category: 'methodIce', label: 'Ice (made with)', empty: 'Shaken with, stirred over…' },
   { category: 'glassware', label: 'Glass', empty: 'Pick a glass' },
-  { category: 'ice', label: 'Ice (served on)', empty: 'No ice set' },
+  { category: 'ice', label: 'Ice', empty: 'No ice set' },
+  { category: 'methodIce', label: 'Made with ice', empty: 'Shaken with, stirred over…' },
   { category: 'family', label: 'Family', empty: 'Sour, highball…' },
 ];
 
@@ -68,7 +67,7 @@ export function MadeList({ editor, itemId }: { editor: Editor; itemId: string | 
   const rows = ROWS.filter((r) => (r.category !== 'methodIce' || ice) && (r.category !== 'method' || !parted?.parts));
   return (
     <View style={styles.section}>
-      <StepHead step="method" eyebrow="Method, glass, ice" />
+      <Eyebrow>How it goes out</Eyebrow>
       <View style={[styles.group, { backgroundColor: ds.c.surface }]}>
         {rows.map((r, i) => {
           const value = valueOf(editor, r.category, optionsOf(editor, r.category));
