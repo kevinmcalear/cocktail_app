@@ -136,7 +136,7 @@ export function LibraryScreen({ beside = false }: { beside?: boolean }) {
   const shown = inView.filter((i) => !q || matchesQuery(i, q)).sort((a, b) => a.name.localeCompare(b.name));
   const shownIds = useMemo(() => shown.map((i) => i.id), [shown]);
   const { data: classicList } = useDrinkLists(!!q);
-  const { glassName, lineOf } = useTileLines({ show, rndMenus: byMenu.rndMenus, prepLine: (id) => prepFacts[id]?.line ?? null, needsOf: kit.needsOf });
+  const { lineOf } = useTileLines({ show, rndMenus: byMenu.rndMenus, prepLine: (id) => prepFacts[id]?.line ?? null, needsOf: kit.needsOf });
   const count = (value: Show) => (value === 'staff' ? classicRows(staff.data ?? [], linked.data ?? []).length : lists[value].length);
   const groups = filterGroups(!!activeId, canCost);
   const pick = (value: Show) => setView({ show: value, menu: undefined, kind: undefined });
@@ -151,7 +151,6 @@ export function LibraryScreen({ beside = false }: { beside?: boolean }) {
   const plainName = (n: string) => n.replace(/ menu$/i, '');
   const nextLine = next?.startsAt ? `${plainName(next.name)} on ${new Date(next.startsAt).toLocaleDateString(undefined, { day: 'numeric', month: 'short' })}` : null;
   const listBottom = bottom;
-  const content = { paddingHorizontal: gutter, paddingBottom: listBottom, gap: space.lg };
   const label = views.find((f) => f.value === show)?.label ?? 'All';
   const header = (
     <View style={styles.header}>
