@@ -1,4 +1,5 @@
 import { FontDisplay, type FontSource } from 'expo-font';
+import { Platform } from 'react-native';
 
 import {
   BricolageGrotesque_600SemiBold,
@@ -26,13 +27,16 @@ export const FIRST_PAINT_FONTS = {
   [fontFamilies.name]: swap(Redaction_400Regular),
 };
 
-/** The rest: Redaction's italic and bold, and the venue faces most venues use. */
+const FRAUNCES = { [fontFamilies.fraunces]: swap(Fraunces_400Regular), [fontFamilies.frauncesItalic]: swap(Fraunces_400Regular_Italic) };
+const BRICOLAGE = { [fontFamilies.bricolage]: swap(BricolageGrotesque_600SemiBold) };
+/** On the web, a venue face loads only when a venue on screen uses it (as the faces below), not on every page. */
+const web = Platform.OS === 'web';
+
+/** The rest: Redaction's italic and bold, and on native the two venue faces most venues use. */
 export const LATER_FONTS = {
   [fontFamilies.nameItalic]: swap(Redaction_400Regular_Italic),
   [fontFamilies.nameBold]: swap(Redaction_700Bold),
-  [fontFamilies.fraunces]: swap(Fraunces_400Regular),
-  [fontFamilies.frauncesItalic]: swap(Fraunces_400Regular_Italic),
-  [fontFamilies.bricolage]: swap(BricolageGrotesque_600SemiBold),
+  ...(web ? {} : { ...FRAUNCES, ...BRICOLAGE }),
 };
 
 export const APP_FONTS = { ...FIRST_PAINT_FONTS, ...LATER_FONTS };
@@ -43,6 +47,7 @@ export const APP_FONTS = { ...FIRST_PAINT_FONTS, ...LATER_FONTS };
  * loads them.
  */
 export const LAZY_FACE_FONTS: Partial<Record<DisplayFace, Record<string, FontSource>>> = {
+  ...(web ? { fraunces: FRAUNCES, bricolage: BRICOLAGE } : {}),
   playfair: { [fontFamilies.playfair]: swap(PlayfairDisplay_400Regular), [fontFamilies.playfairItalic]: swap(PlayfairDisplay_400Regular_Italic) },
   josefin: { [fontFamilies.josefin]: swap(JosefinSans_600SemiBold) },
   tenor: { [fontFamilies.tenor]: swap(TenorSans_400Regular) },
