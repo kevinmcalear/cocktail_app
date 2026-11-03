@@ -1,10 +1,9 @@
 import { useState } from 'react';
 import { StyleSheet, View } from 'react-native';
 
-import { Body, Button, Caption, Field, GlassButton, Headline, useDs } from '@/components/ds';
+import { Body, Button, Caption, Field, Headline, useDs } from '@/components/ds';
 import { Choice, MenuSheet } from '@/components/screens/menus/MenuSheet';
 import { space } from '@/constants/tokens';
-import { useSignedIn } from '@/ctx/AuthContext';
 import { useFileReport, useMyOpenReport } from '@/hooks/useSafety';
 import { REPORT_REASONS, type ReportReason, type ReportTarget } from '@/lib/safety';
 
@@ -13,7 +12,7 @@ export interface ReportChoice {
   target: ReportTarget;
 }
 
-interface ReportSheetProps {
+export interface ReportSheetProps {
   onClose: () => void;
   /** What's reported, in words: "@jo", "Owl Sour", "Night Owl's martini". */
   subject: string;
@@ -113,19 +112,6 @@ export function ReportSheet({ onClose, subject, targets }: ReportSheetProps) {
     <MenuSheet visible onClose={onClose} title={title} footer={footer}>
       {body}
     </MenuSheet>
-  );
-}
-
-/** A "Report" pill that opens the sheet. Signed in only: reports need an account. */
-export function ReportAction({ subject, targets, onMedia }: { subject: string; targets: ReportChoice[]; onMedia?: boolean }) {
-  const signedIn = useSignedIn();
-  const [open, setOpen] = useState(false);
-  if (!signedIn || !targets.length) return null;
-  return (
-    <>
-      <GlassButton accessibilityLabel={`Report ${subject}`} label="Report" icon="flag" onMedia={onMedia} onPress={() => setOpen(true)} />
-      {open ? <ReportSheet subject={subject} targets={targets} onClose={() => setOpen(false)} /> : null}
-    </>
   );
 }
 

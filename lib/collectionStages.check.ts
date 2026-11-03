@@ -1,6 +1,6 @@
 import assert from 'node:assert/strict';
 
-import { beatCount, beenBars, dayShort, gapLabel, hadOutRows, madeRows, nearestFirst, nextBottle, toMakeGroups, wantCamera, wantPins, type HadMemory, type WantBar } from './collectionStages';
+import { beatCount, beenBars, dayShort, gapLabel, hadOutRows, hoursText, lovedLine, madeRows, nearestFirst, nextBottle, toMakeGroups, wantCamera, wantLine, wantPins, type HadMemory, type WantBar } from './collectionStages';
 import { homeReach, menuRowShelf } from './shelfReach';
 import { cameraFor } from './discoverMap';
 import type { HadDrink } from './hadDrinks';
@@ -121,3 +121,16 @@ assert.deepEqual(wantPins([near, far, nowhere]).map((p) => [p.id, p.handle, p.sc
 assert.deepEqual(wantCamera([near, far]), cameraFor(wantPins([near])));
 assert.deepEqual(wantCamera([want('a', 900, [1, 1]), want('b', null, [2, 2])]), cameraFor([{ latitude: 1, longitude: 1 }, { latitude: 2, longitude: 2 }]));
 assert.equal(wantCamera([nowhere]), null);
+
+// --- Your bars' lines ---
+assert.equal(hoursText({ open: true, detail: 'until 1am' }), 'Open until 1am');
+assert.equal(hoursText({ open: false, detail: 'opens 5pm Thu' }), 'Opens 5pm Thu');
+assert.equal(hoursText({ open: false, detail: null }), 'Closed');
+assert.equal(lovedLine({ work: true, news: 'Winter menu is on', hours: null, away: '0.5 mi' }), 'Where you work');
+assert.equal(lovedLine({ work: false, news: 'Winter menu is on', hours: { open: true, text: 'Open now' }, away: '0.5 mi' }), 'Winter menu is on · 0.5 mi');
+assert.equal(lovedLine({ work: false, news: null, hours: { open: true, text: 'Open until 4' }, away: '1.1 mi' }), 'Open until 4 · 1.1 mi');
+assert.equal(lovedLine({ work: false, news: null, hours: null, away: null }), null);
+const wanted = { away: '1.2 mi', place: 'Brooklyn', why: 'Autumn on now' };
+assert.equal(wantLine({ ...wanted, hours: { open: true, text: 'Open now' } }), '1.2 mi · Autumn on now');
+assert.equal(wantLine({ ...wanted, hours: { open: false, text: 'Opens 5pm Thu' } }), '1.2 mi · Opens 5pm Thu');
+assert.equal(wantLine({ away: null, place: 'Brooklyn', why: null, hours: null }), 'Brooklyn');

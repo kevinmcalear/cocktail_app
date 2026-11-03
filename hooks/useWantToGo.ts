@@ -3,12 +3,14 @@ import { useState, useSyncExternalStore } from 'react';
 
 import { useCollection } from '@/hooks/useCollection';
 import { useVenueScores } from '@/hooks/useDiscover';
-import { useWantBars, type KeptBar } from '@/hooks/useKept';
+import { useLovedBars, useWantBars, type KeptBar, type LovedBar } from '@/hooks/useKept';
 import { useMyHadDrinks } from '@/hooks/useRankings';
 import { hoursStatus } from '@/lib/barHours';
-import { beenBars, type WantBar } from '@/lib/collectionStages';
+import { barNews } from '@/lib/collectionMenus';
+import { beenBars, hoursText, lovedLine, type WantBar } from '@/lib/collectionStages';
 import { distanceKm } from '@/lib/discoverDrinks';
 import { formatDistance, usesMiles } from '@/lib/nearMe';
+import { RELEASES_SHOWN } from '@/lib/releases';
 import { useLastPlace } from '@/store/useLastPlace';
 
 /** Why a bar is on your list: the drinks you saved from it, else what it's pouring now. */
@@ -17,17 +19,11 @@ function whyLine(bar: KeptBar, saved: number): string | null {
   return bar.currentMenu ? `${bar.currentMenu.name} on now` : null;
 }
 
-/** "Open until 1am", "Opens 5pm Thu", "Closed". */
-function hoursText(s: { open: boolean; detail: string | null }): string {
-  if (s.open) return s.detail ? `Open ${s.detail}` : 'Open now';
-  return s.detail ? s.detail.charAt(0).toUpperCase() + s.detail.slice(1) : 'Closed';
-}
-
 /**
  * Want to go (board home-collection-bars): the bars you want to go to
  * (want_list) and haven't had a drink at yet, each with how far (from where near me last found you),
- * tonight's hours, why it's here and everyone's score. Collection's Bars
- * lists them; Discover's map pins them (/discover?list=want).
+ * tonight's hours, why it's here and everyone's score. Your bars lists them;
+ * Discover's map pins them (/discover?list=want).
  */
 export function useWantToGo(): { want: WantBar[]; isLoading: boolean; error: Error | null } {
   const { data: wanted = [], isLoading, error } = useWantBars();
@@ -65,4 +61,32 @@ export function useWantToGo(): { want: WantBar[]; isLoading: boolean; error: Err
   });
   // Loading until the bars you've been to and where you were are known: before that, Want to go holds the wrong bars and no distances.
   return { want, isLoading: isLoading || hadQuery.isLoading || !placeReady, error };
+}
+
+export interface LovedRow {
+  bar: LovedBar;
+  /** "Where you work", "Winter menu is on · 0.5 mi", "Open until 4 · 1.1 mi". */
+  line: string | null;
+}
+
+/** Your bars' Loved list (Kept-you-bars): each bar with what's new there and how far. `workIds`: bars you're on the team of. */
+export function useLovedRows(workIds: ReadonlySet<string>): { rows: LovedRow[]; isLoading: boolean; error: Error | null } {
+  const { data: loved = [], isLoading, error } = useLovedBars();
+  const place = useLastPlace((s) => s.place);
+  const [now] = useState(() => Date.now());
+  const miles = usesMiles(getLocales()[0]);
+  const rows = loved.map((bar) => {
+    const at = bar.latitude != null && bar.longitude != null ? { latitude: bar.latitude, longitude: bar.longitude } : null;
+    const status = hoursStatus(bar.hours, new Date(now), bar.timezone);
+    return {
+      bar,
+      line: lovedLine({
+        work: workIds.has(bar.id),
+        news: barNews(bar.currentMenu, RELEASES_SHOWN && bar.latestRelease ? { name: bar.latestRelease.name, date: bar.latestRelease.date } : null)?.text ?? null,
+        hours: status ? { open: status.open, text: hoursText(status) } : null,
+        away: place && at ? formatDistance(distanceKm(place, at), miles) : null,
+      }),
+    };
+  });
+  return { rows, isLoading, error };
 }

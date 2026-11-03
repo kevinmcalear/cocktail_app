@@ -17,6 +17,7 @@ import { snapReadFiles, sourcesFromFiles } from '@/lib/readAnything';
 import { askToNudge } from '@/lib/readyNudge';
 import { useAppMode } from '@/store/useAppMode';
 import { useBringIn, type BringInJob } from '@/store/useBringIn';
+import { useRankReturn } from '@/store/useRankReturn';
 import { slotStart } from '@/lib/wizardSlots';
 import { draftSlot, freeNameSlot, useDrinkWizardStore, wizardPlace } from '@/store/useDrinkWizardStore';
 
@@ -95,6 +96,9 @@ export function BringInFlow() {
     useBringIn.getState().setForeground(true);
     return () => {
       useBringIn.getState().setForeground(false);
+      // Left with nothing reading or saved: a Rank it that sent the menu here opens again. (Reading in the background keeps waiting.)
+      const { job: left } = useBringIn.getState();
+      if (!left || left.status === 'failed') useRankReturn.getState().back();
       // Left without Finish later (back, a link): what's left still waits, from the card.
       useBringIn.getState().setReviewing(null);
     };
@@ -147,16 +151,16 @@ export function BringInFlow() {
       void askToNudge();
       leave();
     };
-    // Bottles can be searched for by name instead, where they're added by hand: My Bar's search, or the venue's new bottle.
+    // Bottles can be searched for by name instead, where they're added by hand: the shelf's search, or the venue's new bottle.
     const bottles = job.reading?.kind === 'bottles' ? job.reading.bottles : null;
     const searchInstead = () => {
       useBringIn.getState().clear();
       const name = bottles?.[0]?.name;
       if (job.barId) router.replace({ pathname: '/add-ingredient', params: { barId: job.barId, ...(name ? { name } : {}) } });
       else {
-        // Your own shelf: My Bar is a home-mode tab, so a staffer snapping from a venue goes home for it.
+        // Your own shelf is home Drinks' Shelf, so a staffer snapping from a venue goes home for it.
         useAppMode.getState().setMode('home');
-        router.replace({ pathname: '/', params: { add: 'bottles' } });
+        router.replace({ pathname: '/drinks', params: { tab: 'shelf', add: 'bottles' } });
       }
     };
     return <ReadingScreen job={job} onClose={cancel} onBackground={background} onReady={() => setCheckedId(job.id)} onSearch={bottles ? searchInstead : undefined} />;
@@ -176,6 +180,7 @@ export function BringInFlow() {
     save.mutate(input, {
       onSuccess: (done) => {
         useBringIn.getState().setDone(done);
+        useRankReturn.getState().saved(done.menuId);
         useBringIn.getState().clear(true);
         router.replace((done.batchId ? `/bring-in/done?batch=${done.batchId}` : '/bring-in/done') as Href);
       },

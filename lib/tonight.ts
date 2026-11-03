@@ -2,7 +2,7 @@
 // 2026): what the staff page says before doors and what the home page says
 // about the shelf. Plain functions so tonight.check.ts can hold them.
 
-import { isGarnishUnit } from './batch';
+import { isGarnishUnit } from './garnish';
 import type { MakeLine } from './prep';
 import { resolvePresentationIngredient, sortRecipesByOrder } from './recipeUtils';
 import type { PresentationRecipe } from './spec';

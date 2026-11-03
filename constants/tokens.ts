@@ -251,6 +251,8 @@ export const layout = {
   breakpoints: { tablet: 768, desktop: 1200 },
   gutter: { phone: 16, tablet: 24, desktop: 32 },
   minTapTarget: 44,
+  /** Android's FAB (Material 3): 56 dp tall, plain or extended, and the plain one as wide. */
+  fab: 56,
   /** Desktop's phone previews of a drink page: about an iPhone's width, in points. */
   phoneFrame: 390,
   /**
