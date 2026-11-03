@@ -1,12 +1,14 @@
-import { useNavigation } from 'expo-router';
+import { router, useNavigation, useSegments, type Href } from 'expo-router';
 import type { NativeStackHeaderItem, NativeStackNavigationOptions } from 'expo-router/native-stack';
 import { isValidElement, useLayoutEffect, useRef, type ComponentProps, type ReactNode } from 'react';
 import { StyleSheet, View } from 'react-native';
 import Animated, { type SharedValue } from 'react-native-reanimated';
 
 import { BackbarTheme, Button, DsText, useDs } from '@/components/ds';
-import { displayFaces, layout, space } from '@/constants/tokens';
+import { displayFaces, space } from '@/constants/tokens';
+import { TABS } from '@/lib/tabs';
 
+import { BarButton } from './MaterialBar';
 import { useSmallTitle, type PageControls } from './PageControls';
 
 export type Controls = Pick<ComponentProps<typeof PageControls>, 'save' | 'onShare' | 'onEdit' | 'editLabel' | 'more'>;
@@ -24,15 +26,15 @@ interface ItemHeaderProps {
 }
 
 /**
- * The native bar on drink and item pages (boards Decided-scroll-dock-*): the
- * system's Back, then the dock glyph and the small title, then the page's
- * tools. The bar floats, so the page runs under it as drawn.
+ * The native bar on drink and item pages (boards Decided-scroll-dock-*): Back
+ * (the board's glass circle), then the dock glyph and the small title, then
+ * the page's one … (ItemMoreMenu). The bar floats, so the page runs under it as drawn.
  *
  * iOS can't draw this in the bar: its title is always centred, and a left bar
  * item wide enough for a name pushes the right items into the system's
  * overflow, where More disappears. So on iOS the page draws the glyph and the
  * small title under the clear bar (IosBarName) and the bar holds only Back and
- * the tools. Android draws its own bar (MaterialBar).
+ * the …. Android draws its own bar (MaterialBar).
  *
  * Every page sets `title` whatever the platform: it's what Back says on the
  * page above this one.
@@ -40,6 +42,12 @@ interface ItemHeaderProps {
 export function useItemHeader({ name, on, pane, controls }: ItemHeaderProps) {
   const navigation = useNavigation();
   const ds = useDs();
+  // Back is the board's own glass circle, always (Kevin, 3 Nov: "there is no back button"). The system's Back is
+  // drawn only when the stack has a page under this one, and a shared page can open at the bottom of its tab's
+  // stack (a cold link opens in Tonight's group, lib/tabs.ts; a restored app). With nothing under it, Back goes to
+  // the tab's first page. The edge swipe still goes back where there is somewhere to go.
+  const group = (useSegments() as string[])[1];
+  const home = TABS.find((t) => t.route === group)?.path ?? '/';
 
   // setOptions renders the stack, and so this page: options change only with what they show, and tap through to the latest handlers.
   const latest = useRef(controls);
@@ -68,8 +76,8 @@ export function useItemHeader({ name, on, pane, controls }: ItemHeaderProps) {
           headerShadowVisible: false,
           headerTintColor: ds.c.ink,
           title: name,
-          headerBackVisible: true,
-          headerBackButtonDisplayMode: 'minimal',
+          headerBackVisible: false,
+          headerLeft: () => theme(<BarButton accessibilityLabel="Back" icon="chevron.left" onPress={() => (navigation.canGoBack() ? navigation.goBack() : router.replace(home as Href))} />),
           headerUserInterfaceStyle: ds.scheme,
           // The page draws the board's own backing once it slides under the bar, not iOS 26's edge blur over the sky.
           scrollEdgeEffects: { top: 'hidden' },
@@ -78,7 +86,7 @@ export function useItemHeader({ name, on, pane, controls }: ItemHeaderProps) {
         };
     navigation.setOptions(options);
     // eslint-disable-next-line react-hooks/exhaustive-deps -- by value: see `latest` and `moreKey`.
-  }, [navigation, pane, on, name, ds.scheme, ds.c.ink, save?.saved, save?.icon, save?.label[0], save?.label[1], !!onShare, !!onEdit, editLabel, moreKey]);
+  }, [navigation, pane, on, home, name, ds.scheme, ds.c.ink, save?.saved, save?.icon, save?.label[0], save?.label[1], !!onShare, !!onEdit, editLabel, moreKey]);
 
   // Editing in place takes over the same screen: it draws its own top, so the bar goes with this page.
   useLayoutEffect(() => {
@@ -87,9 +95,14 @@ export function useItemHeader({ name, on, pane, controls }: ItemHeaderProps) {
   }, [navigation, pane]);
 }
 
-/** The room the bar's tools take on iOS, for IosBarName: glass circles and Edit's pill, each with its gap. */
+/**
+ * The room the bar's tools take on iOS, for IosBarName: the bar's edge, the
+ * glass circles and Edit's pill, each with its gap, and a gap before the
+ * first, so the title is cut before it reaches them. iOS 26's circles are
+ * 48 across, 14 apart (measured on an iPhone, Kevin, 3 Nov).
+ */
 export function iosBarRoom({ save, onShare, onEdit, more }: Controls) {
-  return [save, onShare, more].filter(Boolean).length * (layout.minTapTarget + IOS_ITEM_GAP) + (onEdit ? IOS_EDIT + IOS_ITEM_GAP : 0);
+  return IOS_EDGE + [save, onShare, more].filter(Boolean).length * (IOS_ITEM + IOS_ITEM_GAP) + (onEdit ? IOS_EDIT + IOS_ITEM_GAP : 0);
 }
 
 /** The small title on iOS: in the page, under the clear bar, so it can't take room from the bar's items. */
@@ -128,8 +141,10 @@ function rightItems({ save, onShare, onEdit, editLabel = 'Edit', more }: Control
   return items;
 }
 
-/** iOS 26's gap between separate glass items, and Edit's prominent pill. */
-const IOS_ITEM_GAP = space.sm;
+/** iOS 26's bar: its edge inset, a glass item and the gap between two, and Edit's pill. */
+const IOS_EDGE = space.lg;
+const IOS_ITEM = 48;
+const IOS_ITEM_GAP = 14;
 const IOS_EDIT = 64;
 
 const styles = StyleSheet.create({

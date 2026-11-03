@@ -155,7 +155,7 @@ function BeerWinePage({ kind, item, favorite, onToggleFavorite, canEdit, onEdit 
           {staff ? <RowGroup title="Pour it" rows={pourIt} /> : null}
         </View>
       )}
-      controls={{
+      actions={{
         save: { saved: favorite, onToggle: onToggleFavorite, label: ['Add to favorites', 'Remove from favorites'], icon: 'heart' },
         onShare: () => void shareOrCopy(drinkUrl(slug ?? item.id), item.name, 'drink'),
         onEdit: canEdit ? onEdit : undefined,

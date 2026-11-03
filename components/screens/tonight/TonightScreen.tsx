@@ -1,6 +1,7 @@
-import { ScrollView, StyleSheet, View } from 'react-native';
+import { StyleSheet, View } from 'react-native';
+import Animated, { useAnimatedScrollHandler, useSharedValue } from 'react-native-reanimated';
 
-import { PencilState, useDs } from '@/components/ds';
+import { PencilState, ScrollSky, useDs } from '@/components/ds';
 import { ScreenHeader } from '@/components/nav/ScreenHeader';
 import { usePageColumn } from '@/components/nav/Page';
 import { useTabBarInset } from '@/components/nav/WebTabBar';
@@ -49,16 +50,21 @@ function Frame({ sky, eyebrow, children }: { sky: readonly string[]; eyebrow: st
   const bottom = useTabBarInset();
   const wide = useIsWideWeb();
   const column = usePageColumn(wide ? 'wide' : 'text');
+  const scrollY = useSharedValue(0);
+  const onScroll = useAnimatedScrollHandler((e) => scrollY.set(e.contentOffset.y));
   return (
     <View style={[styles.screen, { backgroundColor: ds.c.ground }]}>
-      <ScrollView contentContainerStyle={{ paddingBottom: bottom }}>
+      {/* Behind the scroll view, so a pull past the top shows more sky (ScrollSky). */}
+      <ScrollSky scrollY={scrollY} cap={<TonightSky ids={sky} cap />}>
         <TonightSky ids={sky} />
+      </ScrollSky>
+      <Animated.ScrollView onScroll={onScroll} scrollEventThrottle={16} contentContainerStyle={{ paddingBottom: bottom }}>
         <ScreenHeader />
         <View style={[column, styles.body]}>
           <TonightHead eyebrow={eyebrow} />
           {children}
         </View>
-      </ScrollView>
+      </Animated.ScrollView>
     </View>
   );
 }

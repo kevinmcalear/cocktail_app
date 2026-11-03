@@ -56,9 +56,10 @@ function useDrinkTint(itemId: string): string | null {
 
 /**
  * The sky over the top of the page: the hero drinks' colours left to right,
- * fading into the ground. Behind everything; it scrolls with the page.
+ * fading into the ground. Behind the page in a ScrollSky; it scrolls with the page.
  */
-export function TonightSky({ ids }: { ids: readonly string[] }) {
+/** `cap`: its top edge only, unfaded, for ScrollSky's pull. */
+export function TonightSky({ ids, cap }: { ids: readonly string[]; cap?: boolean }) {
   const ds = useDs();
   const a = useDrinkTint(ids[0] ?? '');
   const b = useDrinkTint(ids[1] ?? '');
@@ -68,9 +69,9 @@ export function TonightSky({ ids }: { ids: readonly string[] }) {
   const strength = ds.scheme === 'dark' ? 0.22 : 0.16;
   const colors = (tints.length === 1 ? [tints[0], tints[0]] : tints).map((t) => withAlpha(t, strength)) as [string, string, ...string[]];
   return (
-    <View pointerEvents="none" style={styles.sky}>
+    <View pointerEvents="none" style={[styles.sky, cap && { backgroundColor: ds.c.ground }]}>
       <LinearGradient colors={colors} start={{ x: 0, y: 0 }} end={{ x: 1, y: 0 }} style={StyleSheet.absoluteFill} />
-      <LinearGradient colors={[withAlpha(ds.c.ground, 0), ds.c.ground]} style={StyleSheet.absoluteFill} />
+      {cap ? null : <LinearGradient colors={[withAlpha(ds.c.ground, 0), ds.c.ground]} style={StyleSheet.absoluteFill} />}
     </View>
   );
 }

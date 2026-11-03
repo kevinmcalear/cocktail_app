@@ -190,7 +190,7 @@ function IngredientPage({ ingredient, lines, drinks, bottles, pictures: batchPic
       action={action}
       body={body}
       fab={fab}
-      controls={{
+      actions={{
         save: { saved: onShelf, onToggle: toggleShelf, label: ['Save to your bar', 'Take off your bar'] },
         onShare: () => void shareOrCopy(ingredientUrl(ingredient.id), ingredient.name, 'ingredient'),
         onEdit: offerEdit ? onEdit : undefined,

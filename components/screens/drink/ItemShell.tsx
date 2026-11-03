@@ -7,7 +7,7 @@ import Animated, { useAnimatedReaction, useAnimatedScrollHandler, useSharedValue
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { scheduleOnRN } from 'react-native-worklets';
 
-import { ExtendedFab, useDs, useGutter, type FabIcon } from '@/components/ds';
+import { ExtendedFab, ScrollSky, useDs, useGutter, type FabIcon } from '@/components/ds';
 import { useFabUnderToast } from '@/components/ds/Toast';
 import { useTabBarInset } from '@/components/nav/WebTabBar';
 import { layout, space } from '@/constants/tokens';
@@ -17,8 +17,9 @@ import { backWord } from '@/lib/tabs';
 
 import { COLUMNS_FROM, DrinkColumns } from './DrinkColumns';
 import { FADE, phoneHeroHeight } from './DrinkHero';
-import { DockedDrawing, DOCKED, DrawingSpace, DrinkSky, drawingRoom } from './DrawingHero';
+import { DockedDrawing, DOCKED, DrawingSpace, DrinkSky, DrinkSkyCap, drawingRoom } from './DrawingHero';
 import { iosBarRoom, IosBarName, NATIVE_DOCK_LEFT, useItemHeader, type Controls } from './ItemHeader';
+import { ItemMoreMenu, type ItemActions } from './ItemMoreMenu';
 import { MATERIAL_DOCK, MaterialBar, MaterialPage, useItemTones } from './MaterialBar';
 import { backWidth, BarBacking, PageControls } from './PageControls';
 import { TitleOnPhoto } from './ItemTitle';
@@ -46,7 +47,8 @@ interface ItemShellProps {
   action: ReactNode;
   /** The blocks. `columns`: beside the sticky side, which holds the action. `titled`: the title is the body's to show. */
   body: (columns: boolean, titled: boolean) => ReactNode;
-  controls: Controls;
+  /** What the viewer can do here: all of it sits under the bar's one … (Kevin, 3 Nov). */
+  actions: ItemActions;
   /** Android's phone page: the one main action as the extended FAB. The body drops its button (`columns` stays inline). */
   fab?: { label: string; accessibilityLabel: string; icon: FabIcon; onPress: () => void } | null;
   /** Sheets the page opens. */
@@ -60,7 +62,7 @@ interface ItemShellProps {
  * drawing sits on its sky and docks into the bar. From 900 points of pane the
  * picture, name and one action stay put on the left and the rest scrolls.
  */
-export function ItemShell({ name, pane, photo, art, size, liquid, title, action, body, controls, fab, children }: ItemShellProps) {
+export function ItemShell({ name, pane, photo, art, size, liquid, title, action, body, actions, fab, children }: ItemShellProps) {
   const ds = useDs();
   const gutter = useGutter();
   const insets = useSafeAreaInsets();
@@ -104,6 +106,9 @@ export function ItemShell({ name, pane, photo, art, size, liquid, title, action,
   const nativeBar = Platform.OS === 'ios' && !columns && !pane;
   // A pane (the Library beside its list, the editor's preview) keeps the drawn controls.
   const materialBar = Platform.OS === 'android' && !columns && !pane;
+  // One button on the right, …, holding Edit, Save, Share and the rest, in every bar (iOS's, Android's, the web's). `k` is what it shows, for iOS's bar to compare.
+  const k = [!!actions.onEdit, actions.editLabel, actions.save?.saved, actions.save?.label[0], !!actions.onShare, !!actions.report, !!actions.adminFix].join('|');
+  const controls: Controls = { more: <ItemMoreMenu name={name} k={k} {...actions} /> };
   useItemHeader({ name, on: nativeBar, pane, controls });
   const barHeight = use(HeaderHeightContext) ?? 0;
   // Where it goes, from the page under this one, where there's room for a label (desktop boards).
@@ -120,7 +125,7 @@ export function ItemShell({ name, pane, photo, art, size, liquid, title, action,
     <>
       <BarBacking height={barHeight} scrollY={scrollY} tuck={tuck} />
       {photo ? null : dock({ dockLeft: NATIVE_DOCK_LEFT, dockTop: (top + barHeight - DOCKED) / 2 })}
-      <IosBarName name={name} left={NATIVE_DOCK_LEFT + (photo ? 0 : DOCKED + space.sm)} right={space.lg + iosBarRoom(controls)} top={top} height={barHeight - top} scrollY={scrollY} tuck={smallAt} />
+      <IosBarName name={name} left={NATIVE_DOCK_LEFT + (photo ? 0 : DOCKED + space.sm)} right={iosBarRoom(controls) + space.sm} top={top} height={barHeight - top} scrollY={scrollY} tuck={smallAt} />
     </>
   );
 
@@ -174,8 +179,14 @@ export function ItemShell({ name, pane, photo, art, size, liquid, title, action,
         </>
       ) : (
         <>
+          {/* Behind the scroll view, so a pull past the top shows more sky (ScrollSky). */}
+          {photo ? null : (
+            <ScrollSky scrollY={scrollY} cap={<DrinkSkyCap liquid={liquid} />}>
+              <DrinkSky liquid={liquid} />
+            </ScrollSky>
+          )}
           <Animated.ScrollView onScroll={onScroll} scrollEventThrottle={16} contentContainerStyle={[styles.column, { paddingBottom: bottom + space.xxl + (fab ? FAB_ROOM : 0) }]}>
-            {photo ? <PhotoMirror key={String(photo.url)} url={photo.url} top={heroHeight} /> : <DrinkSky liquid={liquid} />}
+            {photo ? <PhotoMirror key={String(photo.url)} url={photo.url} top={heroHeight} /> : null}
             {photo ? photo.hero(heroHeight, true) : <DrawingSpace top={top} size={size} onReplay={replay} />}
             {spot === null ? null : (
               <View onLayout={onTitleLayout} style={[styles.photoTitle, inPhoto, { top: spot + space.lg, left: gutter, right: gutter }]}>
