@@ -24,7 +24,7 @@ import { LibraryEmpty } from '@/components/screens/library/LibraryEmpty';
 import { LibraryPanes } from '@/components/screens/library/LibraryPanes';
 import { NearResults } from '@/components/search/NearResults';
 import { SearchField } from '@/components/search/SearchField';
-import { SwapSheet } from '@/components/screens/library/SwapSheet';
+import { SwapSheet } from '@/components/screens/library/SwapSheetLazy';
 import { space } from '@/constants/tokens';
 import { useOpenSearch } from '@/hooks/useSearchFrom';
 import { useDrinkLists } from '@/hooks/useDiscover';

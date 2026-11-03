@@ -9,7 +9,7 @@ import { useLoveBar, useLovedBars } from '@/hooks/useKept';
 import { withAlpha } from '@/lib/color';
 
 import { useAgeGate } from '../safety/AgeGate';
-import { LoveAlertsSheet } from './LoveAlertsSheet';
+import { LoveAlertsSheet } from './LoveAlertsSheetLazy';
 
 /**
  * The heart on a bar's page: keeps the bar in Collection's Bars. Loving it

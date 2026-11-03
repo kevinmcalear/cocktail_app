@@ -3,7 +3,7 @@ import { useState } from 'react';
 import { StyleSheet, View } from 'react-native';
 
 import { Button, Caption, Tag, sheetIsDialog, useBreakpoint } from '@/components/ds';
-import { ClaimDialog } from '@/components/screens/claim/ClaimDialog';
+import { ClaimDialog } from '@/components/screens/claim/ClaimDialogLazy';
 import { space } from '@/constants/tokens';
 import { useAuth } from '@/ctx/AuthContext';
 import { useMyClaims, type Profile } from '@/hooks/useProfiles';
