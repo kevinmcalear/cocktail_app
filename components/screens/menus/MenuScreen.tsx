@@ -294,6 +294,6 @@ const styles = StyleSheet.create({
   missing: { gap: space.lg },
   head: { gap: space.lg, paddingBottom: space.lg },
   sectionHead: { paddingTop: space.xl, paddingBottom: space.sm },
-    bottom: { position: 'absolute', left: 0, right: 0, bottom: 0, paddingTop: space.md, gap: space.sm, alignItems: 'center' },
+  bottom: { position: 'absolute', left: 0, right: 0, bottom: 0, paddingTop: space.md, gap: space.sm, alignItems: 'center' },
   publish: { alignSelf: 'stretch' },
 });
