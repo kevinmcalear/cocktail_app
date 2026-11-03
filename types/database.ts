@@ -440,6 +440,7 @@ export type Database = {
           short_name: string | null
           show_spec_changes: boolean
           slug: string
+          spec_unit: string
           staff_link_approve: boolean
           staff_link_on: boolean
           staff_link_role: number
@@ -477,6 +478,7 @@ export type Database = {
           short_name?: string | null
           show_spec_changes?: boolean
           slug: string
+          spec_unit?: string
           staff_link_approve?: boolean
           staff_link_on?: boolean
           staff_link_role?: number
@@ -514,6 +516,7 @@ export type Database = {
           short_name?: string | null
           show_spec_changes?: boolean
           slug?: string
+          spec_unit?: string
           staff_link_approve?: boolean
           staff_link_on?: boolean
           staff_link_role?: number
@@ -1199,6 +1202,42 @@ export type Database = {
             columns: ["rank_entry_id"]
             isOneToOne: false
             referencedRelation: "rank_entry_scores"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      drink_step_notes: {
+        Row: {
+          aside: string | null
+          item_id: string
+          note: string | null
+          step_key: string
+        }
+        Insert: {
+          aside?: string | null
+          item_id: string
+          note?: string | null
+          step_key: string
+        }
+        Update: {
+          aside?: string | null
+          item_id?: string
+          note?: string | null
+          step_key?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "drink_step_notes_item_id_fkey"
+            columns: ["item_id"]
+            isOneToOne: false
+            referencedRelation: "app_item_presentation"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "drink_step_notes_item_id_fkey"
+            columns: ["item_id"]
+            isOneToOne: false
+            referencedRelation: "items"
             referencedColumns: ["id"]
           },
         ]
@@ -4629,6 +4668,7 @@ export type Database = {
           bar_id: string | null
           change_level: number | null
           change_role_id: string | null
+          cover_credit: string | null
           cover_position: number | null
           cover_url: string | null
           created_at: string
@@ -4657,6 +4697,7 @@ export type Database = {
           bar_id?: string | null
           change_level?: number | null
           change_role_id?: string | null
+          cover_credit?: string | null
           cover_position?: number | null
           cover_url?: string | null
           created_at?: string
@@ -4685,6 +4726,7 @@ export type Database = {
           bar_id?: string | null
           change_level?: number | null
           change_role_id?: string | null
+          cover_credit?: string | null
           cover_position?: number | null
           cover_url?: string | null
           created_at?: string
@@ -6354,18 +6396,21 @@ export type Database = {
       user_prefs: {
         Row: {
           allergies: Database["public"]["Enums"]["allergen"][] | null
+          spec_view: string | null
           taste_answers: Json | null
           user_id: string
           view_as_role_level: number | null
         }
         Insert: {
           allergies?: Database["public"]["Enums"]["allergen"][] | null
+          spec_view?: string | null
           taste_answers?: Json | null
           user_id: string
           view_as_role_level?: number | null
         }
         Update: {
           allergies?: Database["public"]["Enums"]["allergen"][] | null
+          spec_view?: string | null
           taste_answers?: Json | null
           user_id?: string
           view_as_role_level?: number | null
@@ -7549,6 +7594,7 @@ export type Database = {
           short_name: string | null
           show_spec_changes: boolean
           slug: string
+          spec_unit: string
           staff_link_approve: boolean
           staff_link_on: boolean
           staff_link_role: number
@@ -7888,6 +7934,14 @@ export type Database = {
           sweet: number
         }[]
       }
+      follow_people: {
+        Args: never
+        Returns: {
+          avatar_url: string
+          display_name: string
+          user_id: string
+        }[]
+      }
       friends_ranks: {
         Args: { p_item_id?: string; p_limit?: number }
         Returns: {
@@ -7949,7 +8003,9 @@ export type Database = {
       get_drink_photos: {
         Args: { p_item_id: string; p_limit?: number }
         Returns: {
+          brightness: number
           created_at: string
+          height: number
           id: string
           image_url: string
           is_mine: boolean
@@ -7957,6 +8013,8 @@ export type Database = {
           poster_handle: string
           poster_name: string
           score: number
+          text_zone: Json
+          width: number
         }[]
       }
       get_drink_rankings: {
@@ -8697,6 +8755,7 @@ export type Database = {
       }
       save_menu: {
         Args: {
+          p_cover_credit?: string
           p_cover_position: number
           p_cover_url: string
           p_menu_id: string
@@ -9018,6 +9077,7 @@ export type Database = {
           p_prep: number
           p_primary_color?: string
           p_secondary_color?: string
+          p_spec_unit?: string
           p_specific: number
           p_visibility: number
         }
@@ -9050,6 +9110,7 @@ export type Database = {
           short_name: string | null
           show_spec_changes: boolean
           slug: string
+          spec_unit: string
           staff_link_approve: boolean
           staff_link_on: boolean
           staff_link_role: number

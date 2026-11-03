@@ -3,6 +3,7 @@
 import type { ItemImageLink } from '@/lib/itemImages';
 import type { Enum, Row } from '@/types/db';
 import type { StoredPart } from '@/lib/drinkParts';
+import type { StepNote } from '@/lib/stepNotes';
 
 export type ItemDomain = Enum<'item_domain'>;
 export type EntityType = Enum<'entity_type'>;
@@ -56,6 +57,8 @@ export type DatabaseItem = Row<'app_item_presentation'> &
         ice?: DatabaseItem | null;
         /** Made in parts: the parts' names and joins (lib/drinkParts.ts), read from items, not in app_item_presentation. */
         madeInParts?: StoredPart[] | null;
+        /** The words on the drink's steps (drink_step_notes), for those who may read its spec. */
+        step_notes?: StepNote[] | null;
     };
 
 /** A spec line as app_recipe_presentation shows it: amounts and ingredients the reader may not see are null. */

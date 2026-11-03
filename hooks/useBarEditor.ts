@@ -37,7 +37,7 @@ export async function uploadLogo(barId: string, base64: string) {
     });
 }
 
-type Form = Record<'name' | 'visibilityLevel' | 'genericLevel' | 'specificLevel' | 'measurementLevel' | 'prepLevel', string>;
+type Form = Record<'name' | 'visibilityLevel' | 'genericLevel' | 'specificLevel' | 'measurementLevel' | 'prepLevel' | 'unit', string>;
 
 function formFromBar(bar: {
     name: string;
@@ -46,6 +46,7 @@ function formFromBar(bar: {
     default_specific_brand_level: number;
     default_measurement_level: number;
     default_prep_level: number;
+    spec_unit: string;
 }): Form {
     return {
         name: bar.name,
@@ -54,6 +55,7 @@ function formFromBar(bar: {
         specificLevel: String(bar.default_specific_brand_level),
         measurementLevel: String(bar.default_measurement_level),
         prepLevel: String(bar.default_prep_level),
+        unit: bar.spec_unit,
     };
 }
 
@@ -67,6 +69,7 @@ function patchBarCaches(
         default_specific_brand_level: number;
         default_measurement_level: number;
         default_prep_level: number;
+        spec_unit?: string;
     },
 ) {
     queryClient.setQueryData(['bar', barId], (current: any) => {
@@ -79,8 +82,10 @@ function patchBarCaches(
         return current.map((row: any) => {
             if (row.bar_id !== barId) return row;
             const bars = row.bars;
-            if (Array.isArray(bars)) return { ...row, bars: [{ ...bars[0], name: patch.name }] };
-            return { ...row, bars: { ...bars, name: patch.name } };
+            // The venue's name, and its unit, which everyone here follows (useBarUnitSync).
+            const own = { name: patch.name, ...(patch.spec_unit ? { spec_unit: patch.spec_unit } : {}) };
+            if (Array.isArray(bars)) return { ...row, bars: [{ ...bars[0], ...own }] };
+            return { ...row, bars: { ...bars, ...own } };
         });
     });
 }
@@ -119,29 +124,32 @@ export function useBarEditor(barId: string) {
             showAlert('Cannot save', 'Venue name is required.');
             return false;
         }
-        const levels = {
+        const values = {
             default_visibility_level: parseInt(form.visibilityLevel, 10),
             default_generic_ingredient_level: parseInt(form.genericLevel, 10),
             default_specific_brand_level: parseInt(form.specificLevel, 10),
             default_measurement_level: parseInt(form.measurementLevel, 10),
             default_prep_level: parseInt(form.prepLevel, 10),
+            // Only when changed here, so saving a new name can't put back the unit someone else just set.
+            ...(draft.unit ? { spec_unit: draft.unit } : {}),
         };
         setSaving(true);
         try {
             const { error } = await supabase.rpc('update_bar_settings', {
                 p_bar_id: barId,
                 p_name: form.name.trim(),
-                p_visibility: levels.default_visibility_level,
-                p_generic: levels.default_generic_ingredient_level,
-                p_specific: levels.default_specific_brand_level,
-                p_measurement: levels.default_measurement_level,
-                p_prep: levels.default_prep_level,
+                p_visibility: values.default_visibility_level,
+                p_generic: values.default_generic_ingredient_level,
+                p_specific: values.default_specific_brand_level,
+                p_measurement: values.default_measurement_level,
+                p_prep: values.default_prep_level,
                 p_logo_url: bar.logo_url ?? null,
                 p_primary_color: bar.primary_color ?? null,
                 p_secondary_color: bar.secondary_color ?? null,
+                p_spec_unit: values.spec_unit,
             });
             if (error) throw error;
-            patchBarCaches(queryClient, barId, { name: form.name.trim(), ...levels });
+            patchBarCaches(queryClient, barId, { name: form.name.trim(), ...values });
             setDraft({});
             return true;
         } catch (err: any) {
@@ -172,6 +180,9 @@ export function useBarEditor(barId: string) {
         setMeasurementLevel: setter('measurementLevel'),
         prepLevel: form?.prepLevel ?? '40',
         setPrepLevel: setter('prepLevel'),
+        /** The unit everyone here reads specs and starts new lines in (bars.spec_unit), unless they pick their own. */
+        unit: form?.unit ?? 'ml',
+        setUnit: setter('unit'),
         isDirty,
         handleSave,
         discardChanges,

@@ -12,11 +12,11 @@ import { drinkRecipe } from '@/lib/readBatch';
 import { draftSketchInputs } from '@/lib/sketch/draft';
 import type { SketchInputs } from '@/lib/sketch/types';
 import type { RecipeReading } from '@/supabase/functions/_shared/anythingRead';
-import { useSettingsStore } from '@/store/useSettingsStore';
+import { useUnits } from '@/store/useSettingsStore';
 
 /** Turns a checked recipe into the drink to save: the wizard draft, its preps, and the drawing it was checked with. */
 export function useRecipeMaker(data: MatchData) {
-  const usual = useSettingsStore((s) => s.defaultUnit) || 'ml';
+  const usual = useUnits().unit;
   const { methods, glasses } = useSpecCatalog();
   const ice = (useDropdowns().data?.iceTypes ?? []).flatMap((i: { id: string; name: string | null }) => (i.name ? [{ id: i.id, name: i.name }] : []));
   // The bar's own glass drawings, as the wizard draws with.

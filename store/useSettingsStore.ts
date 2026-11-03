@@ -1,5 +1,5 @@
 import type { MapsApp } from '@/lib/directions';
-import { DEFAULT_UNIT } from '@/lib/units';
+import { DEFAULT_UNIT, followBarUnit, savedUnit } from '@/lib/units';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { create } from 'zustand';
 import { createJSONStorage, persist } from 'zustand/middleware';
@@ -14,7 +14,7 @@ export const THEME_MODES: { id: ThemeMode; label: string }[] = [
     { id: 'dark', label: 'Dark' },
 ];
 
-/** Preferred default for new recipe lines. */
+/** The Units choices: a person's own, and a bar's (bars.spec_unit). */
 export const DEFAULT_UNIT_OPTIONS: { id: string; label: string }[] = [
     { id: 'ml', label: 'ml' },
     { id: 'oz', label: 'oz' },
@@ -22,32 +22,34 @@ export const DEFAULT_UNIT_OPTIONS: { id: string; label: string }[] = [
     { id: 'g', label: 'g' },
 ];
 
-/**
- * The one Units setting (Settings › Preferences, decided 10 Oct): new recipe
- * lines start in it, and drink pages read specs in it. cl has no spec
- * conversion yet, so specs read in ml then.
- *
- * ponytail: two fields kept in step by both setters, so the drink page's
- * switch and Settings stay one choice without touching the spec reader;
- * fold them into one `units` field when the spec reader learns cl.
- */
+/** cl has no spec conversion yet, so specs in cl read in ml. */
 export function specUnitFor(unit: string): SpecUnit {
     return unit === 'g' || unit === 'oz' ? unit : 'ml';
 }
 
 interface SettingsState {
     themeMode: ThemeMode;
-    /** Units: ml, oz, cl or g. New recipe lines start in it. */
-    defaultUnit: string;
-    /** How a spec reads on the drink page (Units, with cl read as ml). */
-    specUnit: SpecUnit;
-    /** The drink page's switch: changes Units too. */
-    setSpecUnit: (unit: SpecUnit) => void;
+    /**
+     * Your own Units (Settings › Preferences, decided 10 Oct): new recipe
+     * lines start in it, and drink pages read specs in it. Null follows the
+     * unit of the bar you work at (barUnit), and with no bar, ml (Kevin, 1 Nov 2026).
+     */
+    units: string | null;
+    /** Your own unit, or null to follow your bar's. The drink page's switch sets it too. */
+    setUnits: (unit: string | null) => void;
+    /**
+     * The unit of the bar you work at (bars.spec_unit), kept by
+     * useBarUnitSync; null with no bar. Saved, so a cold start reads it
+     * before the bars arrive.
+     */
+    barUnit: string | null;
+    setBarUnit: (unit: string | null) => void;
+    /** False for a unit saved before bars had one, until lib/units followBarUnit has looked at it. */
+    unitsChecked: boolean;
     /** This device's freezer, in °C, for the Batch sheet's "will it freeze" check. */
     freezerC: number;
     setFreezerC: (c: number) => void;
     setThemeMode: (mode: ThemeMode) => void;
-    setDefaultUnit: (unit: string) => void;
     /** iPhone: the maps app Directions goes straight to ("Remember my choice"); null asks each time. */
     directionsApp: MapsApp | null;
     setDirectionsApp: (app: MapsApp | null) => void;
@@ -56,17 +58,31 @@ interface SettingsState {
     skipGlassPrompt: (key: string) => void;
 }
 
+/** Version 0 kept the unit twice (defaultUnit, specUnit), always set. It becomes your own (lib/units savedUnit), checked against your bar's once that's known. */
+function migrateSettings(saved: unknown): Partial<SettingsState> {
+    const old = { ...((saved ?? {}) as Partial<SettingsState> & { defaultUnit?: string; specUnit?: string }) };
+    const units = savedUnit(old.defaultUnit) ?? savedUnit(old.specUnit);
+    delete old.defaultUnit;
+    delete old.specUnit;
+    return { ...old, units, unitsChecked: !units };
+}
+
 export const useSettingsStore = create<SettingsState>()(
     persist(
         (set) => ({
             themeMode: 'system',
-            defaultUnit: DEFAULT_UNIT,
-            specUnit: 'ml',
-            setSpecUnit: (unit) => set({ specUnit: unit, defaultUnit: unit }),
+            units: null,
+            setUnits: (unit) => set({ units: unit, unitsChecked: true }),
+            barUnit: null,
+            setBarUnit: (unit) =>
+                set((s) => {
+                    const next = followBarUnit({ units: s.units, checked: s.unitsChecked }, unit);
+                    return { barUnit: unit, units: next.units, unitsChecked: next.checked };
+                }),
+            unitsChecked: true,
             freezerC: -18,
             setFreezerC: (c) => set({ freezerC: c }),
             setThemeMode: (mode) => set({ themeMode: mode }),
-            setDefaultUnit: (unit) => set({ defaultUnit: unit, specUnit: specUnitFor(unit) }),
             directionsApp: null,
             setDirectionsApp: (app) => set({ directionsApp: app }),
             glassesNotNow: [],
@@ -75,11 +91,24 @@ export const useSettingsStore = create<SettingsState>()(
         {
             name: 'settings-storage',
             storage: createJSONStorage(() => AsyncStorage),
+            version: 1,
+            migrate: (saved) => migrateSettings(saved) as SettingsState,
         }
     )
 );
 
+/** The unit you read and write in: your own, else your bar's, else ml. */
+export function unitIn(s: Pick<SettingsState, 'units' | 'barUnit'>): string {
+    return s.units ?? s.barUnit ?? DEFAULT_UNIT;
+}
+
+/** Your unit, and the unit specs read in (cl reads as ml). */
+export function useUnits(): { unit: string; specUnit: SpecUnit } {
+    const unit = useSettingsStore(unitIn);
+    return { unit, specUnit: specUnitFor(unit) };
+}
+
 /** Read preferred unit outside React (merge, handoff defaults). */
 export function getPreferredUnit(): string {
-    return useSettingsStore.getState().defaultUnit || DEFAULT_UNIT;
+    return unitIn(useSettingsStore.getState());
 }

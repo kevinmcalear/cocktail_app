@@ -47,6 +47,8 @@ export function mapPresentationRecipeToEditItem(
             ...item,
             preparation_notes: recipe.preparation_notes || '',
             is_optional: recipe.is_optional || false,
+            // Kept, or a save from the editor sends every line back unfloated.
+            is_float: !!recipe.is_float,
         };
     }
 

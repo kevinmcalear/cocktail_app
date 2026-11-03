@@ -10,7 +10,7 @@ import { MENU_DRINK_COLUMNS, menuKeys, publishedMenuDrink, toMenuDrink, type Men
 import { fetchPublished } from '@/hooks/usePublished';
 import { fetchShareSlug, shareSlugKey } from '@/hooks/useShareSlug';
 import { allRows } from '@/lib/allRows';
-import { savePayload, type EditSection, type MenuLayout } from '@/lib/menuLayout';
+import { creditOf, savePayload, type EditSection, type MenuLayout } from '@/lib/menuLayout';
 import { normalizeAllowedTypes } from '@/lib/sectionAllowedTypes';
 import { uriToBase64 } from '@/lib/imageBase64';
 import { centredCrop } from '@/lib/photoCrop';
@@ -59,7 +59,7 @@ function useInvalidateMenus() {
     ]);
 }
 
-/** Saves a menu's name, cover and whole layout in one transaction (save_menu). */
+/** Saves a menu's name, cover, cover credit and whole layout in one transaction (save_menu). */
 export function useSaveMenu(menuId: string) {
   const invalidate = useInvalidateMenus();
   return useMutation({
@@ -70,6 +70,9 @@ export function useSaveMenu(menuId: string) {
         p_cover_url: layout.coverUrl,
         p_cover_position: layout.coverPosition,
         p_sections: savePayload(layout),
+        // Only when the editor says the credit changed ('' for none). Left out, it stays,
+        // and a new cover drops the old one in the database.
+        p_cover_credit: layout.coverCredit === undefined ? undefined : (creditOf(layout) ?? ''),
       }),
     onSuccess: invalidate,
     onError: () => {},
@@ -99,6 +102,7 @@ export function useCreateMenu() {
           created_by: userId,
           cover_url: layout.coverUrl,
           cover_position: layout.coverPosition,
+          cover_credit: creditOf(layout),
           menu_date: night?.menuDate ?? null,
           guest_count: night?.guestCount ?? null,
           // A venue draft's planned dates (New menu's third step): not live.

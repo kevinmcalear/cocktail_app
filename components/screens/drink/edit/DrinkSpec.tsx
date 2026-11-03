@@ -7,6 +7,7 @@ import { font, layout, radius, space, type } from '@/constants/tokens';
 import { withAlpha } from '@/lib/color';
 import { addPart, linePart, MAX_PARTS, movePart, PART_JOINS, partMethodsSaid, removePart, type DraftPart } from '@/lib/drinkParts';
 import { toLine } from '@/lib/recipeItem';
+import { moveStepDraft } from '@/lib/stepNotes';
 
 import { EditLines } from './EditLines';
 import { MoreRow, type DrinkEditor } from './EditParts';
@@ -41,6 +42,13 @@ export function DrinkSpec({ editor, ...lines }: LinesProps & { editor: DrinkEdit
   if (!ed || !parts) return <><EditLines {...lines} items={editor.recipeItems} onChange={editor.setRecipeItems} /></>;
 
   const label = (at: number) => parts[at]?.name.trim() || `Part ${at + 1}`;
+  // A part moved or removed: its step's words go with it (lib/stepNotes moveStepDraft). `order` is the new parts as old positions.
+  const reorder = (next: DraftPart[], order: number[]) => {
+    ed.setStepNotes(moveStepDraft(ed.stepNotes, order, parts.length));
+    ed.setParts(next);
+  };
+  const positions = parts.map((_, i) => i);
+  const swapped = (at: number, to: number) => positions.map((i) => (i === at ? to : i === to ? at : i));
   const change = (at: number, patch: Partial<DraftPart>) => ed.setParts(parts.map((p, i) => (i === at ? { ...p, ...patch } : p)));
   const linesIn = (at: number) => editor.recipeItems.filter((item, i) => linePart(parts, toLine(item, i).key, false) === at + 1).map((l) => l.name);
   const open = sheet ? parts[sheet.at] : undefined;
@@ -94,8 +102,11 @@ export function DrinkSpec({ editor, ...lines }: LinesProps & { editor: DrinkEdit
           onClose={() => setSheet({ ...sheet, shown: false })}
           onGone={() => setSheet(null)}
           onRename={() => names.current[sheet.at]?.focus()}
-          onMove={(by) => ed.setParts(movePart(parts, sheet.at, by))}
-          onRemove={() => ed.setParts(removePart(parts, sheet.at))}
+          onMove={(by) => {
+            const to = sheet.at + by;
+            if (to >= 0 && to < parts.length) reorder(movePart(parts, sheet.at, by), swapped(sheet.at, to));
+          }}
+          onRemove={() => reorder(removePart(parts, sheet.at), positions.filter((i) => i !== sheet.at))}
           onOff={() => ed.setMadeInParts(false)}
           fresh={!!open.fresh}
           onFresh={(fresh) => ed.setParts(parts.map((p, i) => (i === sheet.at ? { ...p, fresh } : p)))}
