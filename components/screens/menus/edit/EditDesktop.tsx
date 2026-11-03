@@ -59,7 +59,7 @@ export function EditDesktop(props: EditViewProps) {
         <View ref={moreButton} collapsable={false}>
           <GlassButton icon="ellipsis" accessibilityLabel={`More for ${menu.name || 'this menu'}: save layout for next time, duplicate`} onPress={() => more.open(moreButton.current)} />
         </View>
-        <EditTools {...props} addTo={editor.section(editor.targetKey)?.key} />
+        <EditTools {...props} addTo={(editor.section(editor.targetKey) ?? editor.layout.sections[0])?.key} />
       </View>
       <View style={styles.columns}>
         <EditLibrary editor={editor} drag={drag} venueName={look.venueName} />
@@ -184,7 +184,7 @@ function EditChecks({ editor, look, dated, onOpen }: Pick<EditViewProps, 'editor
         done={dated}
         label={dated ? `${editor.status === 'on' ? 'On' : 'Goes on'} ${look.goesOn}` : 'Pick the dates'}
         note={replaces ? `Replaces ${replaces}` : dated ? undefined : 'It goes on at the start of that day.'}
-        onPress={dated && !look.canDate ? undefined : () => onOpen({ kind: 'dates' })}
+        onPress={look.canDate || look.canEnd ? () => onOpen({ kind: 'dates' }) : undefined}
       />
     </>
   );

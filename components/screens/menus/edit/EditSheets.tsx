@@ -75,6 +75,7 @@ export function EditSheets({ editor }: { editor: LayoutEditor }) {
             barId: editor.menu.barId,
             plannedStartsAt: editor.menu.plannedStartsAt,
             plannedEndsAt: editor.menu.plannedEndsAt,
+            startsAt: editor.menu.startsAt,
             endsAt: editor.menu.endsAt,
             coverUrl: editor.layout.coverUrl,
             coverPosition: editor.layout.coverPosition,

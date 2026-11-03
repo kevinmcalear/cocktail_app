@@ -50,7 +50,8 @@ const sec = (id: string, minItems: number, drinks: MenuDrink[]) => ({ id, name: 
 const opened = (sections: ReturnType<typeof sec>[]) => layoutFromMenu({ name: 'Autumn', coverUrl: null, coverPosition: 50, sections }).sections.map((s) => s.key);
 assert.deepEqual(opened([sec('Drinks', 0, []), sec('Stirred', 1, [drink('martini')])]), ['Stirred'], 'the empty catch-all goes');
 assert.deepEqual(opened([sec('Stirred', 1, [drink('martini')]), sec('Shaken', 1, [])]), ['Stirred', 'Shaken'], 'a section still to fill stays');
-assert.deepEqual(opened([sec('Drinks', 0, []), sec('Wine', 0, [])]), ['Drinks', 'Wine'], 'a menu with nothing anywhere keeps its sections');
+assert.deepEqual(opened([sec('Stirred', 1, [drink('martini')]), sec('Wine', 0, [])]), ['Stirred', 'Wine'], 'an empty section someone made stays (save_menu would delete it)');
+assert.deepEqual(opened([sec('Drinks', 0, [])]), ['Drinks'], 'a menu with only the catch-all keeps it');
 
 // --- adding respects the section ---
 assert.equal(cannotAdd(stirred(base), drink('martini')), 'Already in Stirred');

@@ -144,9 +144,11 @@ export function useScheduleMenu() {
       await rpc('schedule_menu', { p_menu_id: menuId, p_starts_at: startsAt, p_replace_menu_ids: replaceIds });
       if (!endsAt) return;
       const { error } = await supabase.from('menus').update({ ends_at: endsAt }).eq('id', menuId);
-      if (error) throw readable(error);
+      // The menu is on by now; say so rather than ask for a second go-live.
+      if (error) throw new Error('It’s on, but its end date didn’t save. Set it again in Ends.');
     },
-    onSuccess: invalidate,
+    // Settled, not success: a failed end write still leaves the menu on.
+    onSettled: invalidate,
     onError: () => {},
   });
 }

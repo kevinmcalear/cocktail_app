@@ -85,7 +85,7 @@ export const lastDay = (endsAt: string) => new Date(Date.parse(endsAt) - 1);
 export function EndsSheet({ editor, onClose }: { editor: LayoutEditor; onClose: () => void }) {
   const { menu } = editor;
   const set = useSetMenuEnd();
-  const end = menu.endsAt ?? menu.plannedEndsAt;
+  const end = menu.startsAt ? menu.endsAt : menu.plannedEndsAt;
   const [day, setDay] = useState(end ? ymd(lastDay(end)) : '');
   const [error, setError] = useState<string | null>(null);
   const start = menu.startsAt ?? menu.plannedStartsAt;

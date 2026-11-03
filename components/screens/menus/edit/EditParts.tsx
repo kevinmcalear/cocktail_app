@@ -28,7 +28,7 @@ export function editLook(editor: LayoutEditor, venueName: string | null) {
   const home = !menu.barId;
   const ink: MenuInk = status === 'draft' && !home ? 'pencil' : status === 'previous' ? 'faded' : 'colour';
   const start = menu.startsAt ?? menu.plannedStartsAt;
-  const end = menu.endsAt ?? menu.plannedEndsAt;
+  const end = menu.startsAt ? menu.endsAt : menu.plannedEndsAt; // a dated menu's end is ends_at only
   const since = status === 'on' && menu.startsAt ? `since ${day(menu.startsAt)}` : null;
   // Dates open the go-live step while it can still move: a draft's, or one coming up.
   const canDate = !home && (status === 'draft' || status === 'upcoming');
