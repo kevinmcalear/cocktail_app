@@ -28,6 +28,7 @@ build(['still-loading']);
 const saved = dehydrate(client, { shouldDehydrateQuery: shouldPersistQuery }).queries.map((q) => q.queryHash);
 assert.deepEqual(saved.sort(), [
   '["bars","u1"]',
+  '["item-sketch","c1"]', // drawing inputs: small, and what Tonight and a menu draw from
   '["menus-v2","venue-7","b1","u1"]',
   '["profile","mine","u1"]',
 ], 'only the first screen goes in the row; persist false always wins');
@@ -37,7 +38,7 @@ assert.equal(home(['dropdowns_v7', 'specs'], true), 'file', 'meta.persist true i
 assert.equal(home(['bars', 'u1'], true), 'row', 'the first screen stays in the row, marked or not');
 assert.equal(home(['cocktail', 'c1', null], false), null, 'persist false always wins');
 assert.equal(home(['spec-book', 'b1', null], false), null, 'a spec book is its own file (lib/specBookFile.ts)');
-assert.equal(home(['item-sketch', 'c1']), null);
+assert.equal(home(['item-sketch', 'c1']), 'row', 'drawing inputs are saved in the row, so drawings show at once after a launch');
 
 // --- file names ---
 assert.equal(fileNameFor('["cocktail","c1",null]'), fileNameFor('["cocktail","c1",null]'), 'stable');
