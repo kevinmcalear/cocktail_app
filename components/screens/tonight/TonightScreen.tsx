@@ -1,4 +1,4 @@
-import { ScrollView, StyleSheet, View } from 'react-native';
+import { StyleSheet, View } from 'react-native';
 
 import { PencilState, useDs } from '@/components/ds';
 import { ScreenHeader } from '@/components/nav/ScreenHeader';
@@ -16,6 +16,7 @@ import { HomeTonight } from './HomeTonight';
 import { useNightHandover } from './NightHandover';
 import { NoVenue, showsLists, StaffLists, StaffSide } from './StaffTonight';
 import { TonightHead, TonightSky } from './TonightParts';
+import { TonightScroll } from './TonightScroll';
 import { useStaffTonight } from './useStaffTonight';
 
 /** The column beside the lists on wide web (Prod-desk-today). */
@@ -51,14 +52,13 @@ function Frame({ sky, eyebrow, children }: { sky: readonly string[]; eyebrow: st
   const column = usePageColumn(wide ? 'wide' : 'text');
   return (
     <View style={[styles.screen, { backgroundColor: ds.c.ground }]}>
-      <ScrollView contentContainerStyle={{ paddingBottom: bottom }}>
-        <TonightSky ids={sky} />
+      <TonightScroll sky={<TonightSky ids={sky} />} cap={<TonightSky ids={sky} cap />} contentContainerStyle={{ paddingBottom: bottom }}>
         <ScreenHeader />
         <View style={[column, styles.body]}>
           <TonightHead eyebrow={eyebrow} />
           {children}
         </View>
-      </ScrollView>
+      </TonightScroll>
     </View>
   );
 }

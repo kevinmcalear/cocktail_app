@@ -3,6 +3,7 @@ import { lazy, Suspense, useState } from "react";
 import { View } from "react-native";
 
 import { BackbarTheme, Body, Button, useDs } from "@/components/ds";
+import { LoadingBar } from "@/components/screens/drink/LoadingBar";
 import { IngredientScreen } from "@/components/screens/ingredient/IngredientScreen";
 import type { PrepLine } from "@/components/screens/ingredient/HouseMadeRecipe";
 import { space } from "@/constants/tokens";
@@ -46,6 +47,7 @@ export default function IngredientDetailScreen() {
                     onRetry={error ? () => void refetch() : undefined}
                     loading={isPending}
                 />
+                <LoadingBar />
             </BackbarTheme>
         );
     }
