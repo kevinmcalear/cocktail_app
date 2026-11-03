@@ -126,6 +126,7 @@ const grp = (...actions: ModelGroupRow['action'][]): ModelGroupRow[] => actions.
 const all = grp('dates', 'costing', 'runSheet', 'barPage', 'end');
 assert.deepEqual(splitGroup(all, false, true).map((g) => g.map((r) => r.action)), [['dates', 'costing', 'barPage', 'end'], ['runSheet']]);
 assert.deepEqual(splitGroup(all, true, true).map((g) => g.map((r) => r.action)), [['dates', 'costing'], ['runSheet', 'barPage', 'end']]);
-assert.deepEqual(splitGroup(all, false, false)[1], []); // a creator's Run sheet stays where Menu-page draws it
+assert.deepEqual(splitGroup(all, false, false)[1], []); // a creator's Run sheet stays where Menu-page draws it, until the list is living
+assert.deepEqual(splitGroup(all, true, false)[1].map((r) => r.action), ['runSheet', 'barPage', 'end']);
 
 console.log('liveList ok');
