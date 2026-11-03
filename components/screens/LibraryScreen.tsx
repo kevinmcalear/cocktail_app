@@ -148,7 +148,8 @@ export function LibraryScreen({ beside = false }: { beside?: boolean }) {
   const grouped = groupMenus(here, now);
   const current = grouped.on[0];
   const next = grouped.upcoming[0];
-  const nextLine = next?.startsAt ? `${next.name} on ${new Date(next.startsAt).toLocaleDateString(undefined, { day: 'numeric', month: 'short' })}` : null;
+  const plainName = (n: string) => n.replace(/ menu$/i, '');
+  const nextLine = next?.startsAt ? `${plainName(next.name)} on ${new Date(next.startsAt).toLocaleDateString(undefined, { day: 'numeric', month: 'short' })}` : null;
   const listBottom = bottom;
   const content = { paddingHorizontal: gutter, paddingBottom: listBottom, gap: space.lg };
   const label = views.find((f) => f.value === show)?.label ?? 'All';
@@ -163,7 +164,7 @@ export function LibraryScreen({ beside = false }: { beside?: boolean }) {
       />
       {show === 'all' && current && !q ? (
         <OnNowCard
-          name={current.name}
+          name={plainName(current.name)}
           since={menuDateLine(current, now, undefined, true)}
           line={[`${new Set(current.itemIds).size} drinks`, nextLine].filter(Boolean).join(' · ')}
           ids={[...new Set(current.itemIds)]}

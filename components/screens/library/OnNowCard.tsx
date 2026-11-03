@@ -19,7 +19,7 @@ export function OnNowCard({ name, since, line, ids, onPress }: { name: string; s
           {eyebrow}
         </Caption>
         <View style={styles.name}>
-          <DsText variant="title" numberOfLines={1} style={{ fontFamily: displayFaces[ds.displayFace].regular }}>
+          <DsText variant="title" numberOfLines={1} style={{ fontFamily: displayFaces[ds.displayFace].regular, flexShrink: 1 }}>
             {name}
           </DsText>
           <IconSymbol name="chevron.right" size={16} color={ds.c.ink} />
@@ -39,10 +39,10 @@ export function OnNowCard({ name, since, line, ids, onPress }: { name: string; s
 
 const styles = StyleSheet.create({
   card: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', gap: space.md, padding: space.lg, minHeight: 120, borderRadius: radius.card, borderWidth: StyleSheet.hairlineWidth, overflow: 'hidden' },
-  text: { flexShrink: 1, gap: space.xs },
+  text: { flex: 1, minWidth: 0, gap: space.xs },
   caps: { textTransform: 'uppercase', letterSpacing: 1.2 },
-  name: { flexDirection: 'row', alignItems: 'center', gap: space.xs },
+  name: { flexDirection: 'row', alignItems: 'center', gap: space.xs, flexShrink: 1 },
   trio: { flexDirection: 'row', alignItems: 'flex-end', flexShrink: 0 },
-  pic: { marginLeft: -space.md },
+  pic: { marginLeft: -space.lg },
   mid: { marginBottom: space.md },
 });
