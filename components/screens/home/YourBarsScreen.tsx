@@ -1,5 +1,5 @@
 import { useLocalSearchParams, useRouter, type Href } from 'expo-router';
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { StyleSheet, View } from 'react-native';
 
 import { Body, Caption, GlassButton, PencilState, PressableScale, useDs } from '@/components/ds';
@@ -13,12 +13,14 @@ import { useLovedRows, useWantToGo } from '@/hooks/useWantToGo';
 import { nearestFirst, wantCamera, wantLine, wantPins, type WantBar } from '@/lib/collectionStages';
 import { readableAccent } from '@/lib/color';
 import { confirmedJob } from '@/lib/profiles';
+import { whenIdle } from '@/lib/idleQueue';
 import { useLastPlace } from '@/store/useLastPlace';
 
 import { YouPage } from '../profile/YouPage';
 import { BarMark } from './BarMark';
 import { DiscoverMap, mapAvailable } from './DiscoverMap';
 import { GoogleImportSheet } from './GoogleImport';
+import { WantToGoMap } from './WantToGoMapLazy';
 
 type Tab = 'loved' | 'want';
 const TABS = [
@@ -132,6 +134,8 @@ function WantCard({ rows }: { rows: WantBar[] }) {
   const place = useLastPlace((s) => s.place);
   const [camera] = useState(() => wantCamera(rows));
   const open = rows.filter((b) => b.hours?.open).length;
+  // The map this card opens loads on its own on the web: start it now, while the card shows.
+  useEffect(() => whenIdle(WantToGoMap.preload), []);
   return (
     <PressableScale role="link" accessibilityLabel="See your Want to go bars on the map" onPress={() => router.navigate('/discover?list=want')} style={[styles.map, { backgroundColor: ds.c.surface }]}>
       <View pointerEvents="none" style={StyleSheet.absoluteFill}>
