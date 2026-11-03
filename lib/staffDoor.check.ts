@@ -1,6 +1,6 @@
 import assert from 'node:assert/strict';
 
-import { doorLines, doorState } from './staffDoor';
+import { doorLines, doorState, staffLinkHref } from './staffDoor';
 
 // Which door: the link's settings, then their ask.
 assert.equal(doorState({ linkOn: true, approve: true, asked: false }), 'ask');
@@ -57,3 +57,11 @@ assert.equal(doorState({ linkOn: false, approve: true, asked: false, declined: t
 const no = doorLines('declined', base);
 assert.equal(no.note, 'The team said no last time.');
 assert.deepEqual([no.primary, no.secondary], ['Done', 'Use a different account']);
+
+// A pasted staff link opens the door; the team link (no secret) and other text do not.
+assert.equal(staffLinkHref('https://babyvom.it/v/caretakers?join=abc123'), '/v/caretakers?join=abc123');
+assert.equal(staffLinkHref('  https://example.com/v/pale-moth?x=1&join=t%2Bk  '), '/v/pale-moth?join=t%2Bk');
+assert.equal(staffLinkHref('https://babyvom.it/v/caretakers'), '/v/caretakers', 'a plain venue link opens the venue page');
+assert.equal(staffLinkHref('see https://babyvom.it/v/caretakers?join=abc and more'), null, 'only the link, nothing around it');
+assert.equal(staffLinkHref('https://babyvom.it/v/caretakers?join='), null, 'an empty secret is no link');
+assert.equal(staffLinkHref('a negroni recipe'), null);

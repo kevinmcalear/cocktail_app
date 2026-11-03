@@ -7,7 +7,7 @@ import { useMode } from '@/hooks/useMode';
  * Drinks at a venue on a desktop (the sidebar, from 1200): the list stays on
  * the left and the picked drink opens beside it at its own URL
  * (/cocktail/<id>), the list beside the page the 2027 canvas draws from 1200.
- * The tablet (768 to 1199) keeps its own two panes (LibraryPanes, ?pick=);
+ * The tablet (768 to 1199) keeps its own two panes (DrinksPanes, ?pick=);
  * phones never split. Home's Drinks is Collection, drawn as a full-width table.
  */
 export function useDrinksSplit(): boolean {
@@ -44,3 +44,4 @@ export function useOpenBeside(): { picked: string | null; open: (href: string) =
   };
   return { picked, open };
 }
+

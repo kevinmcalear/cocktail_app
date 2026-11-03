@@ -1,77 +1,78 @@
 /**
- * "Set up Little Rye" (owner-setup step 5, calls 6 to 8): the checklist that
- * replaces What next. It stays on top of the bar until each row is done or
- * skipped, and every row's screen comes back to it. Whether a row is done
- * comes from the bar's own data; skips are kept with the setup on the device.
- * Checked by lib/setupChecklist.check.ts.
+ * "Set up Little Rye" (board Kept-onboard, "Owner, after the three steps"):
+ * the owner's checklist once the bar is found, claimed and has tonight's
+ * menu. Eight rows; the rest can wait. Each row opens its screen and comes
+ * back here. Whether a row is done comes from the bar's own data; skips are
+ * kept with the setup on the device. Checked by lib/setupChecklist.check.ts.
  */
 
 import { faceFromDb } from './brand';
 
-// `next` is the wide web's Next card for the row that's next (owner-setup step 5): Kit's is the board's, the rest OK'd 26 Oct.
+// `line` is the row's muted line until it's done (the board's, where it draws one).
 export const CHECKLIST_ROWS = [
-  { key: 'bar', title: 'Basic information', line: 'Where, how it looks, who sees it', next: 'Where and when, how it looks, and who sees your page. Stop at any step and pick it up here.' },
-  // Kit is one row (call 8): the glasses, and ice and tools for venues with Advanced options on (jam dec-24).
-  { key: 'kit', title: 'Kit', line: 'The glasses you pour into', next: 'Say “a coupe” and move on; the real model is optional. Ice and tools are there too, if you want them.' },
-  { key: 'bottles', title: 'Bottles', line: 'What’s on your shelves', next: 'Tap what’s on your shelves: a brand, or just the kind of bottle.' },
-  { key: 'menu', title: 'First menu', line: 'Start your own, or bring one in', next: 'Start your own menu, or bring in the one you have now.' },
-  // Done once the Library has the bar's own drinks, however they came: an import counts (E31).
-  { key: 'drinks', title: 'First drinks', line: 'Your house recipes, in the Library', next: 'Your house recipes in the Library: bring them in, or start from a classic.' },
-  { key: 'team', title: 'Your team', line: 'Invite who works here', next: 'Each person gets one email in your bar’s look, with your welcome.' },
+  { key: 'claim', title: 'Claim it', line: 'A call to the bar’s listed number' },
+  { key: 'menu', title: 'Tonight’s menu', line: 'A photo of the one you have' },
+  { key: 'place', title: 'Where and when', line: 'Your address and hours' },
+  { key: 'glass', title: 'Glassware from your drinks', line: '2 minutes' },
+  { key: 'team', title: 'Invite your team', line: 'One link for everyone' },
+  { key: 'visibility', title: 'Who sees your page', line: 'Menu, for now' },
+  { key: 'theme', title: 'Theme', line: 'Your colour and your type' },
+  // Optional: it never holds the checklist open.
+  { key: 'calendars', title: 'Calendars', line: 'Optional' },
 ] as const;
+
+const OPTIONAL: readonly string[] = ['calendars'];
 
 export type ChecklistKey = (typeof CHECKLIST_ROWS)[number]['key'];
 export type RowState = 'done' | 'now' | 'todo' | 'skipped';
 
 export interface Checklist {
-  rows: { key: ChecklistKey; title: string; line: string; next: string; state: RowState }[];
+  rows: { key: ChecklistKey; title: string; line: string; state: RowState }[];
   done: number;
   total: number;
-  /** The first row neither done nor skipped: the one with Continue. */
+  /** The first row neither done nor skipped. */
   next: ChecklistKey | null;
-  /** Every row done or skipped: the checklist leaves the top of the bar. */
+  /** Every row that isn't optional done or skipped: the checklist leaves the top of the bar. */
   finished: boolean;
 }
 
 /** Where each row stands, the first open one being "now". */
 export function checklist(done: Readonly<Record<ChecklistKey, boolean>>, skipped: readonly string[] = []): Checklist {
-  const next = CHECKLIST_ROWS.find((r) => !done[r.key] && !skipped.includes(r.key))?.key ?? null;
-  const rows = CHECKLIST_ROWS.map((r) => ({ ...r, state: (done[r.key] ? 'done' : r.key === next ? 'now' : skipped.includes(r.key) ? 'skipped' : 'todo') as RowState }));
+  const open = (key: ChecklistKey) => !done[key] && !skipped.includes(key);
+  const next = CHECKLIST_ROWS.find((r) => open(r.key))?.key ?? null;
+  const rows = CHECKLIST_ROWS.map((r) => ({ key: r.key, title: r.title, line: r.line, state: (done[r.key] ? 'done' : r.key === next ? 'now' : skipped.includes(r.key) ? 'skipped' : 'todo') as RowState }));
   const count = rows.filter((r) => r.state === 'done').length;
-  return { rows, done: count, total: rows.length, next, finished: next === null };
+  return { rows, done: count, total: rows.length, next, finished: CHECKLIST_ROWS.every((r) => OPTIONAL.includes(r.key) || !open(r.key)) };
 }
 
-/** "2 glasses, 1 ice, 3 tools so far": what the Kit row has, the empty ones left out. */
+/** "Owner · 3 of 8 done": over the title. */
+export const checklistEyebrow = (list: Pick<Checklist, 'done' | 'total'>) => `Owner · ${list.done} of ${list.total} done`;
+
+/** "Winter · 4 drinks": the menu row once there's one. */
+export function menuNote(menu: { name: string; itemIds: readonly unknown[] } | undefined): string | undefined {
+  if (!menu) return undefined;
+  const n = menu.itemIds.length;
+  return n ? `${menu.name} · ${n} ${n === 1 ? 'drink' : 'drinks'}` : menu.name;
+}
+
+/** "2 glasses, 1 ice, 3 tools so far": what the glassware row has, the empty ones left out. */
 export function kitNote(glasses: number, ice: number, tools: number): string | undefined {
   const parts = [glasses ? `${glasses} ${glasses === 1 ? 'glass' : 'glasses'}` : null, ice ? `${ice} ice` : null, tools ? `${tools} ${tools === 1 ? 'tool' : 'tools'}` : null].filter(Boolean);
   return parts.length ? `${parts.join(', ')} so far` : undefined;
 }
 
-/** "18 in your Library, 28 still to check": the bar's drinks, and what's left of an import it started. */
-export function drinksNote(inLibrary: number, toCheck: number): string | undefined {
-  const parts = [inLibrary ? `${inLibrary} in your Library` : null, toCheck ? `${toCheck} still to check` : null].filter(Boolean);
-  return parts.length ? parts.join(', ') : undefined;
-}
-
-const WORDS = ['None', 'One', 'Two', 'Three', 'Four', 'Five', 'Six'];
-
-/** "Three of six done. Each one brings you back here." */
-export function checklistIntro(list: Pick<Checklist, 'done' | 'total'>): string {
-  const of = WORDS[list.total]?.toLowerCase() ?? String(list.total);
-  const head = list.done === 0 ? `${WORDS[list.total] ?? list.total} things to set up.` : `${WORDS[list.done] ?? list.done} of ${of} done.`;
-  return `${head} Each one brings you back here.`;
-}
-
-/** Your bar is done once venue setup got past who sees what (the summary, or those three steps). */
-export function barSetUp(run: { done: readonly string[]; finished: boolean } | undefined): boolean {
-  return !!run && (run.finished || ['place', 'look', 'visibility'].every((s) => run.done.includes(s)));
-}
+/**
+ * A venue setup step passed on this device, or setup gone through (a step it
+ * skipped is changed in Venue settings). A venue with no setup here was set
+ * up elsewhere, so its steps count as done.
+ */
+export const setupStepDone = (run: { done: readonly string[]; finished?: boolean } | undefined, step: string) => !run || !!run.finished || run.done.includes(step);
 
 /**
- * Whether the bar has a look for Your team's invite to wear (invite-team-last,
- * call 2): How it looks finished in venue setup, or a logo, a colour or a
- * font other than the app's. Every bar has a font (Instrument Serif unless
- * picked), so the font alone only counts once it's changed.
+ * Whether the bar has a look of its own (Theme, and Your team's invite wears
+ * it: invite-team-last, call 2): How it looks finished in venue setup, or a
+ * logo, a colour or a font other than the app's. Every bar has a font
+ * (Instrument Serif unless picked), so the font alone only counts once it's changed.
  */
 export function lookSet(brand: { logo_url: string | null; primary_color: string | null; display_face: string | null }, run?: { done: readonly string[] }): boolean {
   return !!run?.done.includes('look') || !!brand.logo_url || !!brand.primary_color || faceFromDb(brand.display_face) !== 'redaction';

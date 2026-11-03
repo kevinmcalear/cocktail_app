@@ -8,7 +8,7 @@ import { withAlpha } from '@/lib/color';
 import type { IconName } from './Button';
 import { PressableScale } from './PressableScale';
 import { Pulse } from './Pulse';
-import { TextLink } from './ReviewRow';
+import { TextLink } from './TextLink';
 import { Body, Caption, DsText } from './Text';
 import { useDs } from './theme';
 

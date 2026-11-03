@@ -6,7 +6,7 @@ import { IconSymbol } from '@/components/ui/icon-symbol';
 import { font, layout, radius, space } from '@/constants/tokens';
 import { bottleAmounts, drinkMl } from '@/lib/batchLines';
 import { amountLabel, type WizardLine } from '@/lib/drinkWizard';
-import { yieldText } from '@/lib/libraryFilters';
+import { yieldText } from '@/lib/drinksFilters';
 import type { ReadFile } from '@/lib/readAnything';
 import type { ReadBatch as Batch } from '@/supabase/functions/_shared/anythingRead';
 

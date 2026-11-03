@@ -1,5 +1,5 @@
 import { kindLabel, spiritsOf, stylesOf } from './drinkStyles';
-import type { Show } from './libraryFilters';
+import type { Show } from './drinksFilters';
 import { labelDate, useByDate as keepsUntil } from './makeSteps';
 import { plural } from './menus';
 import type { BuyLine } from './prep';

@@ -14,7 +14,7 @@ import { ClaimApproved, ClaimPending } from './ClaimStatus';
 
 /**
  * "Claim this page" for a bar: pick how we check it's yours, do it, then
- * wait (or, for a strong work email, it's yours on the spot). Shows where a
+ * wait for a moderator to approve it. Shows where a
  * claim stands when you come back: waiting, approved, or turned down with
  * the moderator's reason.
  */

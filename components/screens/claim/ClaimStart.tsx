@@ -5,7 +5,7 @@ import { Body, Button, Caption, Headline, Segmented, Surface, Title, useDs } fro
 import { font, space } from '@/constants/tokens';
 import { useAuth } from '@/ctx/AuthContext';
 import { useActiveVenue } from '@/hooks/useActiveVenue';
-import { useStartBarClaim } from '@/hooks/useBarClaims';
+import { useClaimPending, useStartBarClaim } from '@/hooks/useBarClaims';
 import { useBarFacts } from '@/hooks/useBarFacts';
 import type { Profile, ProfileClaim } from '@/hooks/useProfiles';
 import { BAR_CLAIM_METHODS, claimProblem, newClaimCode, type BarClaimMethod, type TypedDetails } from '@/lib/claimVerification';
@@ -25,11 +25,12 @@ export function ClaimStart({ profile, declined }: { profile: Profile; declined: 
   const [typed, setTyped] = useState<TypedDetails>({});
   const pagePhone = useBarFacts(profile.kind === 'bar' ? profile.id : null).data?.phone ?? null;
   const details = methodDetails(profile, user?.email_confirmed_at ? user.email : null, typed, pagePhone);
-  // From a bar's page the quickest way that works is picked first (an instant work email); setup leads with Instagram (b19).
+  // From a bar's page the quickest way that works is picked first (a work email); setup leads with Instagram (b19).
   const [method, setMethod] = useState<BarClaimMethod>(() => (details.email.available ? 'email' : (BAR_CLAIM_METHODS.find((m) => details[m].available) ?? BAR_CLAIM_METHODS[0])));
   const [code] = useState(() => newClaimCode());
   const [venue, setVenue] = useState(NEW_VENUE);
   const start = useStartBarClaim();
+  const othersWaiting = useClaimPending(profile.id).data ?? false;
   const name = profile.display_name;
 
   const submit = () => start.mutate({ profileId: profile.id, method, barId: venue === NEW_VENUE ? null : venue, note: '', code, typed });
@@ -58,6 +59,8 @@ export function ClaimStart({ profile, declined }: { profile: Profile; declined: 
         </Surface>
       ) : null}
 
+      {othersWaiting ? <Caption tone="muted">Someone has already sent a claim on this page. Send yours too: a moderator checks both and picks.</Caption> : null}
+
       <ClaimMethods profile={profile} details={details} method={method} code={code} typed={typed} disabled={start.isPending} onPick={pick} onType={setTyped} />
 
       {/* An Admin of a venue with no page yet can link that venue instead of making a new one. */}
@@ -79,7 +82,7 @@ export function ClaimStart({ profile, declined }: { profile: Profile; declined: 
           {claimProblem(start.error)}
         </Caption>
       ) : null}
-      <Button label={start.isPending ? 'Sending…' : method === 'email' && details.email.instant ? `Claim ${name}` : 'Send claim'} size="lg" disabled={start.isPending || !details[method].available} onPress={submit} />
+      <Button label={start.isPending ? 'Sending…' : 'Send claim'} size="lg" disabled={start.isPending || !details[method].available} onPress={submit} />
     </View>
   );
 }

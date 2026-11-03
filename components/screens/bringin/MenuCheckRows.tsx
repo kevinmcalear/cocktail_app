@@ -1,6 +1,7 @@
 import { StyleSheet, View } from 'react-native';
 
-import { Body, Caption, ReviewMark, ReviewRow, Spec, useDs } from '@/components/ds';
+import { Body, Caption, Spec, useDs } from '@/components/ds';
+import { ReviewMark, ReviewRow } from '@/components/ds/ReviewRow';
 import { radius, space } from '@/constants/tokens';
 import { ingredientState, type MatchData, type MenuRow } from '@/lib/bringInMatch';
 import type { ReadFile } from '@/lib/readAnything';
