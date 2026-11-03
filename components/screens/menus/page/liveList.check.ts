@@ -5,6 +5,7 @@ import type { EndedRun, ListRow } from '@/hooks/useLivingList';
 import type { MenuDrink } from '@/types/menus';
 
 import { liveList, runRange } from './liveList';
+import { splitGroup, type ModelGroupRow } from './menuPageModel';
 import type { PageRowView } from './MenuPageRow';
 
 const drink = (id: string): MenuDrink => ({ id, name: id, kind: 'cocktail', line: '', price: null, imageUrl: null, isSketch: false, glass: null });
@@ -119,5 +120,13 @@ assert.deepEqual(out.main[0].rows[1].acts?.map((a) => a.label), ['Swap', 'Take o
 assert.equal(runRange('2026-09-01', '2026-09-30'), new Date(2026, 8, 1).toLocaleDateString(undefined, { day: 'numeric', month: 'short' }).startsWith('1') ? '1 to 30 Sep' : 'Sep 1 to 30');
 assert.ok(runRange('2026-10-01', '2026-11-01', true).endsWith(' 2026'));
 assert.ok(!runRange('2026-11-01T15:00:00Z', '2026-11-01T18:00:00Z').includes(' to ')); // On and off the same day: one date
+
+// Rows the board keeps off the top go after the drinks: an Admin's Run sheet, and on a living list the bar page and End too.
+const grp = (...actions: ModelGroupRow['action'][]): ModelGroupRow[] => actions.map((action) => ({ label: String(action), value: '', action }));
+const all = grp('dates', 'costing', 'runSheet', 'barPage', 'end');
+assert.deepEqual(splitGroup(all, false, true).map((g) => g.map((r) => r.action)), [['dates', 'costing', 'barPage', 'end'], ['runSheet']]);
+assert.deepEqual(splitGroup(all, true, true).map((g) => g.map((r) => r.action)), [['dates', 'costing'], ['runSheet', 'barPage', 'end']]);
+assert.deepEqual(splitGroup(all, false, false)[1], []); // a creator's Run sheet stays where Menu-page draws it, until the list is living
+assert.deepEqual(splitGroup(all, true, false)[1].map((r) => r.action), ['runSheet', 'barPage', 'end']);
 
 console.log('liveList ok');

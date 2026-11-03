@@ -33,10 +33,10 @@ import { SectionHead } from './SectionHead';
 import { MenuMoreSheet } from './MenuMoreSheet';
 import { ShareMenuSheet } from './ShareMenuSheet';
 import { DailyListPage } from './page/DailyListPage';
-import { MenuPageBanner, MenuPageGroup } from './page/MenuPageGroup';
+import { MenuPageAfter, MenuPageBanner, MenuPageGroup } from './page/MenuPageGroup';
 import { MenuPageHead } from './page/MenuPageHead';
 import { MenuPageRow, type PageRowView } from './page/MenuPageRow';
-import { menuPageModel, type GroupAction } from './page/menuPageModel';
+import { menuPageModel, splitGroup, type GroupAction } from './page/menuPageModel';
 import { MenuSpecInPlace } from './page/MenuSpecInPlace';
 import { RowChanges, useRowActs, type ChangeTarget } from './page/RowChanges';
 import { useLiveSections } from './page/useLiveSections';
@@ -194,6 +194,8 @@ function MenuPageBody({ menu, shelf, cover, now }: PageProps & { cover: string |
     // A drink can be in two asks, or an ask and a waiting row: the ask keys it.
     ...s.rows.map((row) => ({ key: `${s.id}-${row.ask ? `${row.ask.id}-` : ''}${row.drink.id}${row.struck ? '-off' : ''}`, row, sectionId: s.id })),
   ]);
+  const [topRows, afterRows] = splitGroup(model.group, living, lens.lens === 'admin');
+  const withPress = <R extends { action: GroupAction }>(r: R) => ({ ...r, onPress: r.action ? actions[r.action] : undefined });
   const column = { paddingHorizontal: gutter, maxWidth: wide ? menuCover.column : undefined, width: '100%', alignSelf: sidebar ? 'flex-start' : 'center' } as const;
   // Waiting changes, Undo, Back on and Coming up show their buttons; any other row shows Swap and Take off once tapped.
   const alwaysActs = (id: string | undefined, row: PageRowView) => id === 'waiting' || id === 'coming' || !!row.struck || !!row.offTonight;
@@ -259,16 +261,16 @@ function MenuPageBody({ menu, shelf, cover, now }: PageProps & { cover: string |
             {acts.may === false && (changeable || (bartender && current)) ? <MenuPageBanner text="Your changes wait for approval" aside={listView.approvedBy} warn={false} /> : null}
             <MenuPageGroup
               rows={[
-                ...model.group.slice(0, 1),
+                ...topRows.slice(0, 1),
                 ...(listView.lastChange ? [{ label: 'Last change', value: listView.lastChange, action: null }] : []),
                 ...(listView.toldAt ? [{ label: 'Team', value: listView.toldAt, action: null }] : []),
-                ...model.group.slice(1),
-              ].map((r) => ({ ...r, onPress: r.action ? actions[r.action] : undefined }))}
+                ...topRows.slice(1),
+              ].map(withPress)}
             />
             {!drinks.length ? <Body tone="muted">No drinks on this menu yet.</Body> : null}
           </View>
         }
-        ListFooterComponent={model.after ? <Caption tone="muted" style={[column, styles.after]}>{model.after}</Caption> : undefined}
+        ListFooterComponent={afterRows.length || model.after ? <MenuPageAfter rows={afterRows.map(withPress)} note={model.after} style={column} /> : undefined}
       />
       {draft && team ? (
         <View style={[styles.bottom, { paddingBottom: insets.bottom + space.md, paddingHorizontal: gutter, backgroundColor: ds.c.ground }]}>
@@ -292,7 +294,6 @@ const styles = StyleSheet.create({
   missing: { gap: space.lg },
   head: { gap: space.lg, paddingBottom: space.lg },
   sectionHead: { paddingTop: space.xl, paddingBottom: space.sm },
-  after: { paddingTop: space.xl },
   bottom: { position: 'absolute', left: 0, right: 0, bottom: 0, paddingTop: space.md, gap: space.sm, alignItems: 'center' },
   publish: { alignSelf: 'stretch' },
 });
