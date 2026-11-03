@@ -10,7 +10,8 @@ import { glassOver, pictureLabel, pictureTag } from '@/lib/itemImages';
 import type { SketchInputs } from '@/lib/sketch/types';
 
 import { PicturePager } from './PicturePager';
-import { PictureViewer, type ShownPicture } from './PictureViewer';
+import type { ShownPicture } from './PictureViewer';
+import { PictureViewer } from './PictureViewerLazy';
 
 interface DrinkHeroProps {
   name: string;

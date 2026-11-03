@@ -21,7 +21,12 @@ config.resolver.resolveRequest = (context, moduleName, platform, ...args) => {
       type: 'sourceFile',
     };
   }
-  
+  // The web never opens a Realtime channel: a stand-in keeps the Realtime client
+  // and its socket out of every page's first load (lib/realtimeStub.ts).
+  if (platform === 'web' && moduleName === '@supabase/realtime-js') {
+    return { filePath: path.resolve(__dirname, 'lib/realtimeStub.ts'), type: 'sourceFile' };
+  }
+
   if (originalResolveRequest) {
     return originalResolveRequest(context, moduleName, platform, ...args);
   }
