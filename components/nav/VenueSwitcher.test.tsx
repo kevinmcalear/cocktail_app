@@ -26,6 +26,9 @@ jest.mock('@/components/ds/usePopover', () => {
   };
 });
 
+let mockClip: string | null = null;
+jest.mock('@/lib/clipboardPeek', () => ({ readClipboard: async () => mockClip }));
+
 beforeEach(() => {
   mockMode = 'venue';
   mockVenues = [mockVenue, mockOther];
@@ -37,7 +40,7 @@ const items = () => screen.getAllByRole('menuitem').map((el) => el.props.accessi
 test('the mark opens your places: each venue with the one you are in checked, then Home', async () => {
   await renderWithProviders(<VenueSwitcher />);
   await fireEvent.press(screen.getByRole('button', { name: 'Venue: Little Rye. Switch' }));
-  expect(items()).toEqual(['Little Rye, picked', 'Pale Moth', 'Home']);
+  expect(items()).toEqual(['Little Rye, picked', 'Pale Moth', 'Home', 'Join a bar with a link']);
   expect(screen.getByText('Admin')).toBeTruthy();
   expect(screen.getByText('Your shelf and menus')).toBeTruthy();
   await fireEvent.press(screen.getByRole('menuitem', { name: 'Pale Moth' }));
@@ -49,7 +52,7 @@ test('Home is picked at home, and a pick switches mode', async () => {
   mockMode = 'home';
   await renderWithProviders(<VenueSwitcher />);
   await fireEvent.press(screen.getByRole('button', { name: 'Home bar. Switch' }));
-  expect(items()).toEqual(['Little Rye', 'Pale Moth', 'Home, picked']);
+  expect(items()).toEqual(['Little Rye', 'Pale Moth', 'Home, picked', 'Join a bar with a link']);
   await fireEvent.press(screen.getByRole('menuitem', { name: 'Little Rye' }));
   expect(mockEnterVenue).toHaveBeenLastCalledWith('rye');
 });
@@ -59,7 +62,15 @@ test('with no venues the menu is Home and "Run a bar? Set it up"', async () => {
   mockVenues = [];
   await renderWithProviders(<VenueSwitcher />);
   await fireEvent.press(screen.getByRole('button', { name: 'Home bar. Switch' }));
-  expect(items()).toEqual(['Home, picked', 'Run a bar? Set it up']);
+  expect(items()).toEqual(['Home, picked', 'Join a bar with a link', 'Run a bar? Set it up']);
   await fireEvent.press(screen.getByRole('menuitem', { name: 'Run a bar? Set it up' }));
   expect(mockPush).toHaveBeenLastCalledWith('/venue-setup?step=find');
+});
+
+test('Join a bar with a link opens the join door from the staff link you copied', async () => {
+  mockClip = 'https://babyvom.it/v/pale-moth?join=abc';
+  await renderWithProviders(<VenueSwitcher />);
+  await fireEvent.press(screen.getByRole('button', { name: 'Venue: Little Rye. Switch' }));
+  await fireEvent.press(screen.getByRole('menuitem', { name: 'Join a bar with a link' }));
+  expect(mockPush).toHaveBeenLastCalledWith('/v/pale-moth?join=abc');
 });

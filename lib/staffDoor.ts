@@ -109,3 +109,12 @@ export function doorLines(
     noteIcon: 'person.2',
   };
 }
+
+/**
+ * The way into the door from a pasted staff link (the shape venueStaffUrl makes, from any origin): the app's own
+ * /v/<slug>?join=<secret> route, or null when the text is not one.
+ */
+export function staffLinkHref(text: string): string | null {
+  const m = /\/v\/([^/?#\s]+)\?(?:[^#\s]*&)?join=([^&#\s]+)/.exec(text.trim());
+  return m ? `/v/${m[1]}?join=${m[2]}` : null;
+}

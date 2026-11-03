@@ -6,6 +6,9 @@ import { PopoverMenu, type PopoverSection } from '@/components/ds/PopoverMenu';
 import { usePopover } from '@/components/ds/usePopover';
 import { useDs } from '@/components/ds';
 import { IconSymbol } from '@/components/ui/icon-symbol';
+import { useToast } from '@/components/ds/Toast';
+import { readClipboard } from '@/lib/clipboardPeek';
+import { staffLinkHref } from '@/lib/staffDoor';
 import { useActiveVenue } from '@/hooks/useActiveVenue';
 import { useMode } from '@/hooks/useMode';
 import { roleLabel } from '@/lib/roles';
@@ -49,9 +52,20 @@ export function VenueMenu({ target, onClose }: { target: { current: ComponentRef
       { label: 'Home', detail: 'Your shelf and menus', checked: home, trailing: <HomeMark size={30} />, onPress: () => switchTo('home') },
     ],
   };
+  const toast = useToast();
+  // The join door's own entry is a staff link (/v/<slug>?join=<secret>): read the one you copied and open it.
+  const join = async () => {
+    const href = staffLinkHref((await readClipboard()) ?? '');
+    if (href) router.push(href as never);
+    else toast.show({ title: 'Copy the staff link first', tone: 'error' });
+  };
   const setUp = !isLoading && !venues.length;
-  const sections = setUp
-    ? [places, { items: [{ label: 'Run a bar? Set it up', trailing: <IconSymbol name="building.2" size={20} color={ds.c.ink} />, onPress: () => router.push((started ?? '/venue-setup?step=find') as never) }] }]
-    : [places];
+  const more: PopoverSection = {
+    items: [
+      { label: 'Join a bar with a link', trailing: <IconSymbol name="link" size={20} color={ds.c.ink} />, onPress: () => void join() },
+      ...(setUp ? [{ label: 'Run a bar? Set it up', trailing: <IconSymbol name="building.2" size={20} color={ds.c.ink} />, onPress: () => router.push((started ?? '/venue-setup?step=find') as never) }] : []),
+    ],
+  };
+  const sections = [places, more];
   return <PopoverMenu anchor={popover.anchor} label="Your places" sections={sections} onClose={close} />;
 }
