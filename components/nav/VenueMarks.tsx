@@ -2,20 +2,16 @@ import { useRouter } from 'expo-router';
 import { StyleSheet, Text, View } from 'react-native';
 
 import { LogoImage, useDisplayFaces, useDs } from '@/components/ds';
-import { SceneSvg } from '@/components/ds/SketchDrawing';
-import { useScene } from '@/components/ds/useScene';
 import { IconSymbol } from '@/components/ui/icon-symbol';
 import { DEFAULT_ACCENT, type DisplayFace } from '@/constants/tokens';
 import { useActiveVenue, type Venue } from '@/hooks/useActiveVenue';
 import { useMode } from '@/hooks/useMode';
 import { iconFill } from '@/lib/brandColours';
 import { initials } from '@/lib/collectionMenus';
-import { paintRingMark } from '@/lib/sketch/ringMark';
-import type { Scene } from '@/lib/sketch/scene';
 import { themeColours } from '@/lib/theme';
 
-// One painting per bar and colour pair; a person sees a handful of bars.
-const rings = new Map<string, Scene>();
+import { RingScene } from './RingSceneLazy';
+
 /** Below this a mark has room for one letter, not two. */
 const TWO_LETTERS = 40;
 
@@ -37,14 +33,11 @@ export function RingMark({ id, name, accent, face, size }: { id: string; name: s
   const ds = useDs();
   const t = themeColours(accent ?? DEFAULT_ACCENT, ds.c.ground, ds.scheme === 'dark');
   const family = useDisplayFaces([face]);
-  const scene = useScene(rings, `${id}|${t.onFill}`, false, () => paintRingMark(t.onFill, t.onFill, id));
   const letters = size >= TWO_LETTERS ? initials(name) : initials(name).slice(0, 1);
   const fontSize = size * (letters.length > 1 ? 0.3 : 0.4);
   return (
     <View aria-hidden style={[styles.initial, { width: size, height: size, borderRadius: size * 0.28, backgroundColor: t.fill }]}>
-      <View style={StyleSheet.absoluteFill}>
-        <SceneSvg scene={scene} bare />
-      </View>
+      <RingScene id={id} color={t.onFill} />
       <Text allowFontScaling={false} style={{ fontFamily: family(face), color: t.onFill, fontSize, lineHeight: fontSize * 1.25 }}>
         {letters}
       </Text>

@@ -4,8 +4,9 @@
  * as drawn and decided (Kevin, 31 Oct: guard rails as drawn). In OKLCH, so a
  * colour keeps its hue while its lightness moves; contrast is WCAG 2.2.
  *
- * The rails fix a colour rather than refuse it, and say what moved in one
- * plain line: the button is held 2:1 off the page with a cream or ink label
+ * The rails fix a colour rather than refuse it, and say what moved (`moved`;
+ * lib/themeRails words it for the owner, so the words load with the Theme
+ * screens, not with every page): the button is held 2:1 off the page with a cream or ink label
  * at 4.5:1, text in the colour gets its own shade at 4.5:1 per mode, neon is
  * capped at chroma 0.2 for the button, a grey colour gives ink buttons (cream
  * at night). Grounds stay lib/palette's neutralsFrom, the "quiet grounds" rail.
@@ -27,6 +28,8 @@ const OFF_PAGE = 2;
 
 export const GREY_CHROMA = GREY;
 
+export type Moved = 'bright' | 'lift' | 'deepen' | 'cream' | 'ink' | 'text';
+
 export interface ThemeColours {
   /** The one main button. */
   fill: string;
@@ -34,12 +37,8 @@ export interface ThemeColours {
   onFill: string;
   /** The colour as text (links, what's selected): 4.5:1 on the ground. */
   text: string;
-  /** What the rails moved, in plain words, for the owner. */
-  notes: string[];
-  fillRatio: number;
-  textRatio: number;
-  /** The button against the page. */
-  offPage: number;
+  /** What the rails moved (lib/themeRails words each). */
+  moved: Moved[];
 }
 
 /** The lightness nearest `l0` that gives `target`:1 on `bg`: darker on paper, lighter at night. */
@@ -53,27 +52,27 @@ const cache = new Map<string, ThemeColours>();
 
 /**
  * Every colour a page needs from the bar's one colour, for one mode, on that
- * mode's ground (lib/palette neutralsFor). `name` is the colour's plain name
- * for the notes ("Rust"). Remembered, since every themed control asks.
+ * mode's ground (lib/palette neutralsFor). Remembered, since every themed
+ * control asks.
  */
-export function themeColours(seed: string, ground: string, dark: boolean, name = 'Your colour'): ThemeColours {
-  const key = `${seed}|${ground}|${dark ? 1 : 0}|${name}`;
+export function themeColours(seed: string, ground: string, dark: boolean): ThemeColours {
+  const key = `${seed}|${ground}|${dark ? 1 : 0}`;
   const hit = cache.get(key);
   if (hit) return hit;
-  const out = computeTheme(seed, ground, dark, name);
+  const out = computeTheme(seed, ground, dark);
   if (cache.size > 200) cache.clear();
   cache.set(key, out);
   return out;
 }
 
-function computeTheme(seed: string, ground: string, dark: boolean, name: string): ThemeColours {
+function computeTheme(seed: string, ground: string, dark: boolean): ThemeColours {
   const s = toLch(seed);
   const grey = s.c < GREY;
   const h = s.h;
-  const notes: string[] = [];
+  const moved: Moved[] = [];
   let fl = s.l;
   const fc = Math.min(s.c, MAX_FILL_CHROMA);
-  if (s.c > MAX_FILL_CHROMA) notes.push(`Toned down: ${name} is brighter than a screen shows well, so its strongest chroma is kept for the button only.`);
+  if (s.c > MAX_FILL_CHROMA) moved.push('bright');
   let fill: string;
   let onFill: string;
   if (grey) {
@@ -88,7 +87,7 @@ function computeTheme(seed: string, ground: string, dark: boolean, name: string)
       fl += dark ? 0.01 : -0.01;
       fill = fromLch(fl, fc, h);
     }
-    if (k > 1) notes.push(dark ? 'Lifted a step in dark mode so the button still shows on the night page.' : 'Deepened a step so the button still shows on the paper.');
+    if (k > 1) moved.push(dark ? 'lift' : 'deepen');
     // Then the label: cream if a small nudge makes it 4.5:1, else ink.
     const need = (label: string, darker: boolean) => {
       let l = fl;
@@ -99,11 +98,11 @@ function computeTheme(seed: string, ground: string, dark: boolean, name: string)
     const li = need(INK, false);
     if (Math.abs(lc - fl) <= 0.09 || Math.abs(lc - fl) <= Math.abs(li - fl)) {
       onFill = CREAM;
-      if (lc !== fl) notes.push('Button a touch deeper so its cream label reads at 4.5:1.');
+      if (lc !== fl) moved.push('cream');
       fl = lc;
     } else {
       onFill = INK;
-      if (li !== fl) notes.push('Button a touch lighter so its dark label reads at 4.5:1.');
+      if (li !== fl) moved.push('ink');
       fl = li;
     }
     fill = fromLch(fl, fc, h);
@@ -111,8 +110,7 @@ function computeTheme(seed: string, ground: string, dark: boolean, name: string)
   // The colour as text: its own shade, 4.5:1 on the ground.
   const tc = Math.min(s.c, MAX_TEXT_CHROMA);
   const tl = grey ? (dark ? 0.95 : 0.22) : shade(s.l, tc, h, ground, LABEL, !dark);
-  const word = name.toLowerCase();
-  if (!grey && Math.abs(tl - s.l) > 0.04) notes.push(dark ? `Text in ${word} is a shade lighter in dark mode, so it reads at 4.5:1.` : `Text in ${word} is a shade darker on paper, so it reads at 4.5:1.`);
+  if (!grey && Math.abs(tl - s.l) > 0.04) moved.push('text');
   const text = fromLch(tl, grey ? 0 : tc, h);
-  return { fill, onFill, text, notes, fillRatio: contrast(fill, onFill), textRatio: contrast(text, ground), offPage: contrast(fill, ground) };
+  return { fill, onFill, text, moved };
 }

@@ -122,20 +122,6 @@ export const posterPaper = { day: '#F3E6DA', night: '#241D18', panel: '#F6E7DA',
 /** The accent when there's no venue brand: bar-light amber. */
 export const DEFAULT_ACCENT = '#E4B062';
 
-/**
- * The six colours a bar can start from when it has no logo to take one from:
- * colours from a bar, not an app builder's defaults (Kevin, 31 Oct, themes-flow
- * "bar presets"). The background is picked on its own (lib/palette).
- */
-export const BAR_COLOURS = [
-  { name: 'Campari red', hex: '#C41E2A' },
-  { name: 'Vermouth oxblood', hex: '#6B1F2A' },
-  { name: 'Brass', hex: '#B08D3C' },
-  { name: 'Absinthe green', hex: '#7F9F2F' },
-  { name: 'Ink navy', hex: '#1F2D4A' },
-  { name: 'Copper', hex: '#B87333' },
-] as const;
-
 /** Two made-up venues, for the gallery and tests. Real venues come from `bars`. */
 export const SAMPLE_BRANDS = {
   littleRye: { name: 'Little Rye', accent: '#D0643B', displayFace: 'redaction' as const },
@@ -186,21 +172,21 @@ export const font: Record<'regular' | 'medium' | 'semiBold' | 'figures' | 'figur
  * Tavern, Modern, Poster and Sign. All but Redaction load only when a venue
  * uses them (components/ds/faces.ts). `scale` sets each at the same visual
  * height as Redaction; `spacing` is letter spacing in em; `upper` faces are
- * set in capitals. Faces with no italic of their own stay upright.
+ * set in capitals (their names and credits: constants/faceInfo). Faces with no italic of their own stay upright.
  * `ascender` and `descent` are per em, measured with fontTools from the files
  * the app ships (Redaction from assets/fonts/redaction): the hhea descent, and
  * the tallest of d h k l f b and the capitals A H E I T, italic included.
  * nameStyle gives a name the line height they need.
  */
 export const displayFaces = {
-  redaction: { label: 'Redaction', by: 'MCKL', style: 'Default', regular: fontFamilies.name, italic: fontFamilies.nameItalic, scale: 1, spacing: 0, upper: false, ascender: 0.725, descent: 0.3 },
-  newsreader: { label: 'Newsreader', by: 'Production Type', style: 'Book', regular: fontFamilies.newsreader, italic: fontFamilies.newsreaderItalic, scale: 0.92, spacing: 0, upper: false, ascender: 0.715, descent: 0.265 },
-  fell: { label: 'IM Fell English', by: 'Igino Marini', style: 'Worn', regular: fontFamilies.fell, italic: fontFamilies.fellItalic, scale: 0.95, spacing: 0, upper: false, ascender: 0.752, descent: 0.363 },
-  imbue: { label: 'Imbue', by: 'Tyler Finck', style: 'Deco', regular: fontFamilies.imbue, italic: fontFamilies.imbue, scale: 1.08, spacing: 0, upper: false, ascender: 0.755, descent: 0.25 },
-  besley: { label: 'Besley', by: 'Owen Earl', style: 'Tavern', regular: fontFamilies.besley, italic: fontFamilies.besleyItalic, scale: 0.8, spacing: 0, upper: false, ascender: 0.791, descent: 0.425 },
-  bricolage: { label: 'Bricolage Grotesque', by: 'Mathieu Triay', style: 'Modern', regular: fontFamilies.bricolage, italic: fontFamilies.bricolage, scale: 0.84, spacing: -0.025, upper: false, ascender: 0.712, descent: 0.27 },
-  belleza: { label: 'Belleza', by: 'Eduardo Tunni', style: 'Poster', regular: fontFamilies.belleza, italic: fontFamilies.belleza, scale: 0.72, spacing: 0.04, upper: true, ascender: 0.692, descent: 0.224 },
-  shoulders: { label: 'Big Shoulders', by: 'Patric King', style: 'Sign', regular: fontFamilies.shoulders, italic: fontFamilies.shoulders, scale: 1.05, spacing: 0.01, upper: true, ascender: 0.81, descent: 0.214 },
+  redaction: { regular: fontFamilies.name, italic: fontFamilies.nameItalic, scale: 1, spacing: 0, upper: false, ascender: 0.725, descent: 0.3 },
+  newsreader: { regular: fontFamilies.newsreader, italic: fontFamilies.newsreaderItalic, scale: 0.92, spacing: 0, upper: false, ascender: 0.715, descent: 0.265 },
+  fell: { regular: fontFamilies.fell, italic: fontFamilies.fellItalic, scale: 0.95, spacing: 0, upper: false, ascender: 0.752, descent: 0.363 },
+  imbue: { regular: fontFamilies.imbue, italic: fontFamilies.imbue, scale: 1.08, spacing: 0, upper: false, ascender: 0.755, descent: 0.25 },
+  besley: { regular: fontFamilies.besley, italic: fontFamilies.besleyItalic, scale: 0.8, spacing: 0, upper: false, ascender: 0.791, descent: 0.425 },
+  bricolage: { regular: fontFamilies.bricolage, italic: fontFamilies.bricolage, scale: 0.84, spacing: -0.025, upper: false, ascender: 0.712, descent: 0.27 },
+  belleza: { regular: fontFamilies.belleza, italic: fontFamilies.belleza, scale: 0.72, spacing: 0.04, upper: true, ascender: 0.692, descent: 0.224 },
+  shoulders: { regular: fontFamilies.shoulders, italic: fontFamilies.shoulders, scale: 1.05, spacing: 0.01, upper: true, ascender: 0.81, descent: 0.214 },
 } as const;
 
 export type DisplayFace = keyof typeof displayFaces;

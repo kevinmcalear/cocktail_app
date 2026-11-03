@@ -3,11 +3,13 @@
 // Run: npm run test:unit
 import assert from 'node:assert/strict';
 
+import { faceInfo } from '../../constants/faceInfo';
 import { displayFaces, faceWeightReset, fontFamilies, systemFont } from '../../constants/tokens';
 
-for (const face of Object.values(displayFaces)) {
-  assert.deepEqual(faceWeightReset(face.regular, undefined), { fontWeight: '400' }, face.label);
-  assert.deepEqual(faceWeightReset(face.italic, undefined), { fontWeight: '400' }, `${face.label} italic`);
+for (const [key, face] of Object.entries(displayFaces)) {
+  const label = faceInfo[key as keyof typeof faceInfo].label;
+  assert.deepEqual(faceWeightReset(face.regular, undefined), { fontWeight: '400' }, label);
+  assert.deepEqual(faceWeightReset(face.italic, undefined), { fontWeight: '400' }, `${label} italic`);
 }
 assert.deepEqual(faceWeightReset(fontFamilies.nameBold, undefined), { fontWeight: '400' });
 // The system font keeps the variant's weight.

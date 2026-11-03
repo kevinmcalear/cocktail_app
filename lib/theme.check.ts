@@ -2,7 +2,8 @@
 // Run: npm run test:unit
 import assert from 'node:assert/strict';
 
-import { BAR_COLOURS, DEFAULT_ACCENT } from '@/constants/tokens';
+import { BAR_COLOURS } from '@/constants/barColours';
+import { DEFAULT_ACCENT } from '@/constants/tokens';
 
 import { contrast } from './color';
 import { groundTintFor, neutralsFor, toLch } from './palette';
@@ -18,10 +19,12 @@ for (const [name, hex] of seeds) {
     const tint = groundTintFor(hex, g);
     for (const dark of [false, true]) {
       const ground = neutralsFor(dark ? 'dark' : 'light', tint).ground;
-      const t = themeColours(hex, ground, dark, name);
+      const t = themeColours(hex, ground, dark);
       const where = `${name} ${g} ${dark ? 'dark' : 'light'}`;
-      assert.ok(t.fillRatio >= 4.5, `${where}: label ${t.fillRatio.toFixed(2)}`);
-      assert.ok(t.textRatio >= 4.5, `${where}: text ${t.textRatio.toFixed(2)}`);
+      const fillRatio = contrast(t.fill, t.onFill);
+      const textRatio = contrast(t.text, ground);
+      assert.ok(fillRatio >= 4.5, `${where}: label ${fillRatio.toFixed(2)}`);
+      assert.ok(textRatio >= 4.5, `${where}: text ${textRatio.toFixed(2)}`);
       // The button keeps at most the neon cap of chroma.
       if (!isGrey(hex)) assert.ok(toLch(t.fill).c <= 0.205, `${where}: chroma ${toLch(t.fill).c.toFixed(3)}`);
     }
@@ -48,7 +51,7 @@ assert.ok(toLch(ink.light.fill).l < 0.3 && toLch(ink.dark.fill).l > 0.9);
 
 // A navy that's smart on paper is lifted at night until the button shows.
 const navy = themeFor('#1F2D4A', null, 'Ink navy');
-assert.ok(navy.dark.notes.some((n) => n.startsWith('Lifted a step')), navy.dark.notes.join(' | '));
+assert.ok(navy.notes.some((n) => n.startsWith('Lifted a step')), navy.notes.join(' | '));
 
 // Something is always said under the picker: what moved, or that nothing had to.
 assert.ok(themeFor('#B87333', groundTintFor('#B87333', 'hint'), 'Copper').notes.length >= 1);

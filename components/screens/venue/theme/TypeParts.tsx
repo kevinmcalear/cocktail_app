@@ -4,6 +4,7 @@ import { Platform, StyleSheet, View, type TextStyle } from 'react-native';
 import { Caption, DsText, PressableScale, Spec, useDs } from '@/components/ds';
 import { VenueMark } from '@/components/nav/VenueMarks';
 import { IconSymbol } from '@/components/ui/icon-symbol';
+import { faceInfo } from '@/constants/faceInfo';
 import { displayFaces, displayName, font, radius, space, type, type DisplayFace } from '@/constants/tokens';
 import { tonalFor } from '@/lib/themeRails';
 
@@ -11,7 +12,7 @@ import type { BrandLook } from '../BrandPreview';
 
 export const FACES = Object.keys(displayFaces) as DisplayFace[];
 /** The styles in order, each with the kind of bar it's for (canvas Theme-type). One face each (Kevin, 31 Oct). */
-export const STYLES = [...new Set(FACES.map((f) => displayFaces[f].style))];
+export const STYLES = [...new Set(FACES.map((f) => faceInfo[f].style))];
 export const MOOD: Record<string, string> = {
   Default: 'The app’s own face. Pick nothing and this is it.',
   Book: 'Neighbourhood bars, wine bars, a good list. Quiet and bookish.',
@@ -68,7 +69,7 @@ function useFocusRing() {
 export function Card({ look, face, set, wide }: { look: BrandLook; face: DisplayFace; set: SetFace; wide?: boolean }) {
   const ds = useDs();
   return (
-    <View role="img" aria-label={`Preview: ${look.name} in ${displayFaces[face].label}`} style={[styles.card, wide && styles.cardWide, { backgroundColor: ds.c.surface, borderColor: ds.c.line }]}>
+    <View role="img" aria-label={`Preview: ${look.name} in ${faceInfo[face].label}`} style={[styles.card, wide && styles.cardWide, { backgroundColor: ds.c.surface, borderColor: ds.c.line }]}>
       <View style={styles.cardHead}>
         <VenueMark venue={{ ...look, displayFace: face, roleLevel: 40 }} size={40} />
         <DsText variant={wide ? 'display' : 'title'} numberOfLines={1} style={[styles.flex, set(face, wide ? type.display : type.title)]}>{look.name}</DsText>
@@ -97,11 +98,11 @@ export function StyleChips({ look, face, accent, set, onPick }: { look: PickerLo
   const focus = useFocusRing();
   const android = look === 'android';
   const tonal = tonalFor(accent, ds.scheme === 'dark');
-  const style = displayFaces[face].style;
+  const style = faceInfo[face].style;
   return (
     <View role="radiogroup" aria-label="Style" style={styles.chips}>
       {STYLES.map((s, i) => {
-        const lead = FACES.find((f) => displayFaces[f].style === s)!;
+        const lead = FACES.find((f) => faceInfo[f].style === s)!;
         const on = s === style;
         const ink = android ? (on ? tonal.ink : ds.c.ink) : on ? ds.c.ground : ds.c.ink;
         const f = focus(s);
@@ -110,13 +111,13 @@ export function StyleChips({ look, face, accent, set, onPick }: { look: PickerLo
             key={s}
             role="radio"
             aria-checked={on}
-            accessibilityLabel={`${s}, ${displayFaces[lead].label}`}
+            accessibilityLabel={`${s}, ${faceInfo[lead].label}`}
             onPress={() => onPick(lead)}
             focusable={web ? on : undefined}
             onFocus={f.onFocus}
             onBlur={f.onBlur}
             // @ts-expect-error onKeyDown is web-only (react-native-web)
-            onKeyDown={arrowKeys(i, STYLES.length, (j) => onPick(FACES.find((x) => displayFaces[x].style === STYLES[j])!))}
+            onKeyDown={arrowKeys(i, STYLES.length, (j) => onPick(FACES.find((x) => faceInfo[x].style === STYLES[j])!))}
             hitSlop={android ? space.sm : undefined}
             style={[
               android ? styles.m3Chip : styles.chip,
@@ -139,7 +140,7 @@ export function StyleChips({ look, face, accent, set, onPick }: { look: PickerLo
 export function FaceTiles({ look, face, set, onPick }: { look: PickerLook; face: DisplayFace; set: SetFace; onPick: (f: DisplayFace) => void }) {
   const ds = useDs();
   const focus = useFocusRing();
-  const inStyle = FACES.filter((f) => displayFaces[f].style === displayFaces[face].style);
+  const inStyle = FACES.filter((f) => faceInfo[f].style === faceInfo[face].style);
   // Empty places keep a lone tile a quarter of the row, as the board's four.
   const spare = (4 - (inStyle.length % 4)) % 4;
   return (
@@ -152,7 +153,7 @@ export function FaceTiles({ look, face, set, onPick }: { look: PickerLook; face:
             key={f}
             role="radio"
             aria-checked={on}
-            accessibilityLabel={`${displayFaces[f].label}, ${i + 1} of ${inStyle.length}`}
+            accessibilityLabel={`${faceInfo[f].label}, ${i + 1} of ${inStyle.length}`}
             onPress={() => onPick(f)}
             focusable={web ? on : undefined}
             onFocus={ring.onFocus}
@@ -167,7 +168,7 @@ export function FaceTiles({ look, face, set, onPick }: { look: PickerLook; face:
             ]}
           >
             <DsText variant="body" style={set(f, type.title)}>Aa</DsText>
-            <Caption color={on ? ds.accentText : ds.c.muted} numberOfLines={2} align="center" style={on ? styles.strong : styles.medium}>{displayFaces[f].label}</Caption>
+            <Caption color={on ? ds.accentText : ds.c.muted} numberOfLines={2} align="center" style={on ? styles.strong : styles.medium}>{faceInfo[f].label}</Caption>
           </PressableScale>
         );
       })}
@@ -180,7 +181,7 @@ export function FaceTiles({ look, face, set, onPick }: { look: PickerLook; face:
 
 /** Which face is chosen, and where it sits in its style when there are several (the board's "1 of 4"). */
 export function faceCount(face: DisplayFace): string {
-  const inStyle = FACES.filter((f) => displayFaces[f].style === displayFaces[face].style);
+  const inStyle = FACES.filter((f) => faceInfo[f].style === faceInfo[face].style);
   return inStyle.length > 1 ? `${inStyle.indexOf(face) + 1} of ${inStyle.length}` : '';
 }
 
@@ -189,8 +190,8 @@ export function FaceHead({ face, wide }: { face: DisplayFace; wide?: boolean }) 
   return (
     <View style={[styles.head, wide && styles.headWide]}>
       <DsText variant="body" style={styles.flex}>
-        <DsText variant="body" style={styles.strong}>{displayFaces[face].label}</DsText>
-        <DsText variant="body" tone="muted">{` · ${displayFaces[face].by}`}</DsText>
+        <DsText variant="body" style={styles.strong}>{faceInfo[face].label}</DsText>
+        <DsText variant="body" tone="muted">{` · ${faceInfo[face].by}`}</DsText>
       </DsText>
       <Caption tone="muted">{faceCount(face)}</Caption>
     </View>

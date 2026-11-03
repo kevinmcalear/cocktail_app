@@ -6,7 +6,7 @@ import { space, type DisplayFace } from '@/constants/tokens';
 import type { VenueBrandRow } from '@/hooks/useVenueBrand';
 import { normalizeHex, usableGroundTint } from '@/lib/brand';
 import { colourName } from '@/lib/brandColours';
-import { palettesFor, type Palette } from '@/lib/palette';
+import { palettesFor, type Palette } from '@/lib/palettes';
 
 import { ColourPicker } from './BrandColours';
 import { IconChoices, type IconBackground } from './BrandIcon';

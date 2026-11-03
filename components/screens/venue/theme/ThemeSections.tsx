@@ -5,12 +5,14 @@ import { Body, Button, Caption, DsText, PressableScale, Segmented, Sheet, SheetS
 import { VenueMark } from '@/components/nav/VenueMarks';
 import { ControlRow, RowDivider, SettingsRow, SettingsSection } from '@/components/screens/settings/SettingsParts';
 import { IconSymbol } from '@/components/ui/icon-symbol';
-import { BAR_COLOURS, DEFAULT_ACCENT, displayFaces, nameStyle, radius, space, type } from '@/constants/tokens';
+import { faceInfo } from '@/constants/faceInfo';
+import { DEFAULT_ACCENT, nameStyle, radius, space, type } from '@/constants/tokens';
 import { useLogoColours } from '@/hooks/useLogoColours';
 import { pickPhotoColours, type VenueBrandRow } from '@/hooks/useVenueBrand';
 import { normalizeHex } from '@/lib/brand';
 import { colourName } from '@/lib/brandColours';
 import { groundOf, groundTintFor, type Ground } from '@/lib/palette';
+import { BAR_COLOURS } from '@/constants/barColours';
 
 import { IconPart, logoColoursFor, SHORT_NAME_MAX, type BrandDraftState } from '../BrandForm';
 import type { BrandLook } from '../BrandPreview';
@@ -96,7 +98,7 @@ export function ColourSection(props: ThemePartProps) {
 export function useTypePart({ draft, set, look }: ThemePartProps) {
   const [open, setOpen] = useState(false);
   const family = useDisplayFaces([draft.face]);
-  const f = displayFaces[draft.face];
+  const f = faceInfo[draft.face];
   return {
     nameStyle: { ...nameStyle(draft.face, type.title), fontFamily: family(draft.face) },
     line: `${f.style} · ${f.label} · ${f.by}`,

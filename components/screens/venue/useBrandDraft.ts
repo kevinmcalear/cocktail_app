@@ -1,7 +1,7 @@
 import { useState } from 'react';
 
 import { useLoadedFace, useToast } from '@/components/ds';
-import { displayFaces } from '@/constants/tokens';
+import { faceInfo } from '@/constants/faceInfo';
 import { pickBrandImage, removeLogoBackground, useSaveVenueBrand, type VenueBrandRow } from '@/hooks/useVenueBrand';
 import { brandProblems, faceFromDb, faceToSave, normalizeHex, usableGroundTint } from '@/lib/brand';
 
@@ -96,7 +96,7 @@ export function useBrandDraft(row: VenueBrandRow, canEdit: boolean) {
     }
     const kept = faceFromDb(row.display_face);
     set('face')(kept);
-    setMessage(`${displayFaces[draft.face].label} isn’t available for venues yet, so ${row.name} keeps ${displayFaces[kept].label}. Everything else is saved.`);
+    setMessage(`${faceInfo[draft.face].label} isn’t available for venues yet, so ${row.name} keeps ${faceInfo[kept].label}. Everything else is saved.`);
   };
 
   const discard = () => {

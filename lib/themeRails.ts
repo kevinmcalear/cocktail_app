@@ -1,19 +1,48 @@
+import { contrast } from '@/lib/color';
 import { fromLch, neutralsFor, toLch } from '@/lib/palette';
-import { GREY_CHROMA as GREY, themeColours, type ThemeColours } from '@/lib/theme';
+import { GREY_CHROMA as GREY, themeColours, type Moved, type ThemeColours } from '@/lib/theme';
 
 /** True for a colour with no hue to speak of (black, white, greys). */
 export const isGrey = (hex: string) => toLch(hex).c < GREY;
 
+/** What the rails moved, in plain words for the owner; `name` is the colour's ("Rust"). */
+function noteFor(m: Moved, name: string, dark: boolean): string {
+  const word = name.toLowerCase();
+  switch (m) {
+    case 'bright': return `Toned down: ${name} is brighter than a screen shows well, so its strongest chroma is kept for the button only.`;
+    case 'lift': return 'Lifted a step in dark mode so the button still shows on the night page.';
+    case 'deepen': return 'Deepened a step so the button still shows on the paper.';
+    case 'cream': return 'Button a touch deeper so its cream label reads at 4.5:1.';
+    case 'ink': return 'Button a touch lighter so its dark label reads at 4.5:1.';
+    case 'text': return dark ? `Text in ${word} is a shade lighter in dark mode, so it reads at 4.5:1.` : `Text in ${word} is a shade darker on paper, so it reads at 4.5:1.`;
+  }
+}
+
+/** A mode's colours with how they read (contrast ratios, for the picker; not worked out on every page). */
+export type ThemeLook = ThemeColours & {
+  /** The label on the button. */
+  fillRatio: number;
+  /** The colour as text on the ground. */
+  textRatio: number;
+  /** The button against the page. */
+  offPage: number;
+};
+
+function look(t: ThemeColours, ground: string): ThemeLook {
+  return { ...t, fillRatio: contrast(t.fill, t.onFill), textRatio: contrast(t.text, ground), offPage: contrast(t.fill, ground) };
+}
 
 /**
  * A colour and its saved ground tint in both modes, and what the rails moved
  * in either, once each (the drawn line when nothing had to move).
  */
-export function themeFor(accent: string, tint: string | null, name: string): { light: ThemeColours; dark: ThemeColours; notes: string[] } {
-  const light = themeColours(accent, neutralsFor('light', tint).ground, false, name);
-  const dark = themeColours(accent, neutralsFor('dark', tint).ground, true, name);
-  const all = [...new Set([...light.notes, ...dark.notes])];
-  return { light, dark, notes: all.length ? all : ['Reads at 4.5:1 or better in both modes, as picked.'] };
+export function themeFor(accent: string, tint: string | null, name: string): { light: ThemeLook; dark: ThemeLook; notes: string[] } {
+  const lightGround = neutralsFor('light', tint).ground;
+  const darkGround = neutralsFor('dark', tint).ground;
+  const light = themeColours(accent, lightGround, false);
+  const dark = themeColours(accent, darkGround, true);
+  const all = [...new Set([...light.moved.map((m) => noteFor(m, name, false)), ...dark.moved.map((m) => noteFor(m, name, true))])];
+  return { light: look(light, lightGround), dark: look(dark, darkGround), notes: all.length ? all : ['Reads at 4.5:1 or better in both modes, as picked.'] };
 }
 
 /**

@@ -3,7 +3,7 @@ import { useEffect, useSyncExternalStore } from 'react';
 
 import { displayFaces, type DisplayFace } from '@/constants/tokens';
 
-import { LAZY_FACE_FONTS } from './fonts';
+import { faceFonts } from './faceFonts';
 
 /**
  * The lazy display faces that have finished loading, as ",imbue,besley,".
@@ -23,23 +23,24 @@ const serverSnapshot = () => ',';
 
 /** True when a face can be drawn now: always for the faces loaded at start, else once its files are in. */
 export function faceReady(face: DisplayFace, done: string): boolean {
-  return !LAZY_FACE_FONTS[face] || done.includes(`,${face},`);
+  // Redaction is the app's own, loaded at start; every other face loads on demand.
+  return face === 'redaction' || done.includes(`,${face},`);
 }
 
 /** Loads a lazy face once. A failure (offline) leaves it unloaded, so its text stays in Redaction. */
 export function loadFace(face: DisplayFace): Promise<void> {
-  const fonts = LAZY_FACE_FONTS[face];
-  if (!fonts || faceReady(face, loaded)) return Promise.resolve();
+  if (faceReady(face, loaded)) return Promise.resolve();
   const running = pending.get(face);
   if (running) return running;
-  const load = loadAsync(fonts)
+  const load = faceFonts(face)
+    .then((fonts) => fonts && loadAsync(fonts))
     .then(() => {
       loaded = `${loaded}${face},`;
       listeners.forEach((l) => l());
     })
     .catch((e: unknown) => {
       pending.delete(face);
-      console.warn(`The ${displayFaces[face].label} font didn't load`, e);
+      console.warn(`The ${face} font didn't load`, e);
     });
   pending.set(face, load);
   return load;

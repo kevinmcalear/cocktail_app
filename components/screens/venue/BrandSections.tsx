@@ -5,6 +5,7 @@ import { StyleSheet, View } from 'react-native';
 import { Body, Button, Caption, DsText, LogoImage, PressableScale, useDisplayFaces, useDs } from '@/components/ds';
 import { VenueMark } from '@/components/nav/VenueMarks';
 import { IconSymbol } from '@/components/ui/icon-symbol';
+import { faceInfo } from '@/constants/faceInfo';
 import { backbar, displayFaces, nameStyle, radius, space, type, type DisplayFace } from '@/constants/tokens';
 import { useLogoEdge } from '@/lib/logoEdge';
 import { logoWithBackground } from '@/supabase/functions/_shared/logoEdge';
@@ -117,7 +118,7 @@ export function FaceChoices({ name, value, onChange, setup, list }: { name: stri
             key={face}
             role="radio"
             aria-checked={selected}
-            accessibilityLabel={displayFaces[face].label}
+            accessibilityLabel={faceInfo[face].label}
             onPress={() => onChange(face)}
             style={[styles.face, list && styles.faceRow, { borderColor: selected ? ds.c.ink : ds.c.line, borderWidth: selected ? 2 : 1, backgroundColor: ds.c.ground }]}
           >
@@ -129,7 +130,7 @@ export function FaceChoices({ name, value, onChange, setup, list }: { name: stri
             <DsText variant="headline" numberOfLines={1} style={[styles.sample, nameStyle(face, SAMPLE), { fontFamily: family(face) }]}>
               {name}
             </DsText>
-            <Caption tone="muted">{displayFaces[face].label}</Caption>
+            <Caption tone="muted">{faceInfo[face].label}</Caption>
           </PressableScale>
         );
       })}

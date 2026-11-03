@@ -6,7 +6,8 @@ import { backbar } from '@/constants/tokens';
 
 import { usableGroundTint } from './brand';
 import { contrast } from './color';
-import { fromLch, groundOf, groundTintFor, neutralsFor, PALETTES, palettesFor, toLch } from './palette';
+import { fromLch, groundOf, groundTintFor, neutralsFor, toLch } from './palette';
+import { PALETTES, palettesFor } from './palettes';
 
 // The round trip through OKLCH lands on the same hex.
 for (const hex of ['#E4B062', '#D0643B', '#0E0D0C', '#FFFFFF', '#3FB0A2']) {

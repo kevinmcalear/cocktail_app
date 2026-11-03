@@ -2,7 +2,8 @@ import { useEffect, useState } from 'react';
 import { Platform, StyleSheet, View } from 'react-native';
 
 import { BrandProvider, Caption, Sheet, SheetScrollView, useBreakpoint, useDisplayFaces, useSheetClose } from '@/components/ds';
-import { DEFAULT_ACCENT, displayFaces, font, nameStyle, space, type DisplayFace } from '@/constants/tokens';
+import { faceInfo } from '@/constants/faceInfo';
+import { DEFAULT_ACCENT, font, nameStyle, space, type DisplayFace } from '@/constants/tokens';
 import { useDialogStore } from '@/store/useDialogStore';
 
 import type { BrandLook } from '../BrandPreview';
@@ -61,7 +62,7 @@ export function TypeSheet({ visible, onClose, look, value, onUse }: Props) {
     </BrandProvider>
   );
   const chips = <StyleChips look={kind} accent={accent} {...parts} />;
-  const mood = <Caption tone="muted">{MOOD[displayFaces[face].style]}</Caption>;
+  const mood = <Caption tone="muted">{MOOD[faceInfo[face].style]}</Caption>;
   const tiles = <FaceTiles look={kind} {...parts} />;
   const note = <Caption tone="muted">{NAMES_NOTE}</Caption>;
 
@@ -95,7 +96,7 @@ export function TypeSheet({ visible, onClose, look, value, onUse }: Props) {
               <GroupLabel label="Style" />
               {chips}
               {mood}
-              <GroupLabel label="Face" detail={[displayFaces[face].label, faceCount(face)].filter(Boolean).join(' · ')} />
+              <GroupLabel label="Face" detail={[faceInfo[face].label, faceCount(face)].filter(Boolean).join(' · ')} />
               {tiles}
               {note}
             </SheetScrollView>

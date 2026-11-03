@@ -5,7 +5,7 @@
  * built from that hex's hue and strength in OKLCH, so cards, lines and text
  * all follow it. No tint keeps the app's own Back Bar colours.
  */
-import { backbar, BAR_COLOURS, type BackbarColors, type BackbarScheme } from '@/constants/tokens';
+import { backbar, type BackbarColors, type BackbarScheme } from '@/constants/tokens';
 import { parseHex, toHex, withAlpha } from '@/lib/color';
 
 export type Ground = 'neutral' | 'hint' | 'rich';
@@ -131,28 +131,4 @@ export function neutralsFrom(tint: string): Record<BackbarScheme, BackbarColors>
 /** The colours for a scheme: Back Bar's own, or built from the venue's tint. */
 export function neutralsFor(scheme: BackbarScheme, tint: string | null | undefined): BackbarColors {
   return tint ? neutralsFrom(tint)[scheme] : backbar[scheme];
-}
-
-export interface Palette {
-  name: string;
-  accent: string;
-  ground: Ground;
-}
-
-/** The six bar colours a venue starts from when it has no logo, each with A hint. */
-export const PALETTES: Palette[] = BAR_COLOURS.map((c) => ({ name: c.name, accent: c.hex, ground: 'hint' }));
-
-/**
- * The palettes to offer: the logo's colours first, each with A hint, then
- * the bar colours until there are six. `name` names a colour (lib/brandColours).
- */
-export function palettesFor(logoColours: string[], name: (hex: string) => string): Palette[] {
-  const seen = new Set<string>();
-  const out: Palette[] = [];
-  for (const p of [...logoColours.map((hex) => ({ name: name(hex), accent: hex.toUpperCase(), ground: 'hint' as const })), ...PALETTES]) {
-    if (seen.has(p.accent) || out.length === 6) continue;
-    seen.add(p.accent);
-    out.push(p);
-  }
-  return out;
 }

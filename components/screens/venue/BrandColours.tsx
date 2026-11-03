@@ -6,7 +6,8 @@ import { ColourWheel } from '@/components/ds/ColourWheelLazy';
 import { DEFAULT_ACCENT, font, radius, space } from '@/constants/tokens';
 import { normalizeHex } from '@/lib/brand';
 import { colourName } from '@/lib/brandColours';
-import { groundOf, groundTintFor, neutralsFor, type Ground, type Palette } from '@/lib/palette';
+import { groundOf, groundTintFor, neutralsFor, type Ground } from '@/lib/palette';
+import type { Palette } from '@/lib/palettes';
 import { themeFor } from '@/lib/themeRails';
 
 const GROUNDS: { id: Ground; label: string; note: string }[] = [

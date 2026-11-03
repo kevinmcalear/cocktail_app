@@ -5,7 +5,7 @@ import { BrandProvider, Caption, DsText, Field, LogoImage, PressableScale, Segme
 import { ColourWheel } from '@/components/ds/ColourWheelLazy';
 import { SectionHeading, SettingsRow } from '@/components/screens/settings/SettingsParts';
 import { IconSymbol } from '@/components/ui/icon-symbol';
-import { BAR_COLOURS, backbar, font, radius, space } from '@/constants/tokens';
+import { backbar, font, radius, space } from '@/constants/tokens';
 import type { LogoColours } from '@/hooks/useLogoColours';
 import { normalizeHex } from '@/lib/brand';
 import { withAlpha } from '@/lib/color';
@@ -13,6 +13,7 @@ import { colourName } from '@/lib/brandColours';
 import { useLogoEdge } from '@/lib/logoEdge';
 import { logoRect } from '@/lib/logoPins';
 import { groundTintFor, neutralsFor, type Ground } from '@/lib/palette';
+import { BAR_COLOURS } from '@/constants/barColours';
 import { isGrey, notForButton, themeFor } from '@/lib/themeRails';
 
 import { FlowHead } from './FlowHead';
