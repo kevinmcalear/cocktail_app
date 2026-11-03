@@ -98,7 +98,7 @@ export function EditPage({ editor, id, onExit, openOn, inSheet }: { editor: Drin
   const backBar = useBackBarIds(editor.barId || null, ingredients);
   const latest = useLatestVersion(id && !draft ? id : null).data;
   // The page's eyebrow: what Done makes of it (Miss-steps "Editing · saves as version 3"; a draft or a first save "new drink").
-  const saves = !id || draft ? 'Editing · new drink' : latest ? `Editing · saves as version ${latest.version + 1}` : 'Editing';
+  const saves = !id || draft ? 'Editing · new drink' : latest !== undefined ? `Editing · saves as version ${(latest?.version ?? 0) + 1}` : 'Editing';
 
   // Bumped by the Garnish row: the cursor goes to the spec's Add field.
   const [addLine, setAddLine] = useState(0);
