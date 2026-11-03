@@ -7,7 +7,7 @@ import { paintSketch } from '@/lib/sketch/paint';
 import { nightScene } from '@/lib/sketch/passes';
 import type { Scene, SceneEl } from '@/lib/sketch/scene';
 import { sceneToSvg } from '@/lib/sketch/svg';
-import { liquidOf, type SketchInputs } from '@/lib/sketch/types';
+import { isBareGlass, liquidOf, type SketchInputs } from '@/lib/sketch/types';
 
 import { inBarGlassCached } from '@/lib/sketch/barGlass';
 
@@ -126,9 +126,7 @@ export const SketchDrawing = memo(function SketchDrawing({ inputs: stored, seed,
 const nights = new WeakMap<Scene, Scene>();
 export function nightOf(scene: Scene, inputs: SketchInputs): Scene {
   let out = nights.get(scene);
-  const { hex, alpha } = liquidOf(inputs);
-  // alpha 0 or the bare glass's 0.05: no drink in the glass yet.
-  if (!out) nights.set(scene, (out = nightScene(scene, hex, alpha <= 0.05)));
+  if (!out) nights.set(scene, (out = nightScene(scene, liquidOf(inputs).hex, isBareGlass(inputs))));
   return out;
 }
 

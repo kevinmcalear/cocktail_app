@@ -88,7 +88,7 @@ const CHALK_WEIGHT: Partial<Record<StageName, number>> = { glass: 0.72, ice: 1.1
  * ice and highlights become a lighter patch of the drink, and the searching
  * smudges and shadows go (on black they read as fog and mould). `liquid` is
  * the drink's colour (lib/sketch/types liquidOf). `bare`: a glass with no
- * drink in it (isBareGlass): its pencil is all there is, so the chalk is
+ * drink in it (types isBareGlass): its pencil is all there is, so the chalk is
  * full strength and a little heavier, to read on the night tile.
  */
 export function nightScene(scene: Scene, liquid: string, bare = false): Scene {
