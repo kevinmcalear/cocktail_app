@@ -55,6 +55,7 @@ function Swatch({ name, color }: { name: string; color: string }) {
 const TYPE_SAMPLES: Record<TypeStyle, string> = {
   display: 'Penicillin',
   head: 'Tonight',
+  listHead: 'Autumn',
   title: 'Autumn menu',
   headline: 'Bartender notes',
   body: 'Shake hard with ice and strain over a large cube.',

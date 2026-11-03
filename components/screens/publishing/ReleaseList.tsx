@@ -6,6 +6,7 @@ import { Body, Button, Caption, Headline, PressableScale, useDs } from '@/compon
 import { space } from '@/constants/tokens';
 import { useVenueReleases } from '@/hooks/useReleases';
 import { dayStart, RELEASE_STATUS_LABEL, releaseStatus, RELEASES_SHOWN } from '@/lib/releases';
+import { dayMonth } from '@/lib/dayMonth';
 
 export const releaseHref = (barId: string, id: string) => `/settings/bar/${barId}/releases/${id}` as Href;
 
@@ -27,7 +28,8 @@ function Releases({ barId }: { barId: string }) {
       {isLoading ? <Caption tone="muted">Loading releases…</Caption> : null}
       <View role="list">
         {releases.map((r) => {
-          const date = dayStart(r.releaseDate)?.toLocaleDateString(undefined, { day: 'numeric', month: 'short', year: 'numeric' }) ?? r.releaseDate;
+          const start = dayStart(r.releaseDate);
+          const date = start ? dayMonth(start, { month: 'short', year: 'numeric' }) : r.releaseDate;
           const summary = `${date} · ${RELEASE_STATUS_LABEL[releaseStatus(r, now)]} · ${r.itemIds.length} ${r.itemIds.length === 1 ? 'drink' : 'drinks'}`;
           return (
             <PressableScale

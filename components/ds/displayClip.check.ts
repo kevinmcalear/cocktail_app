@@ -18,7 +18,7 @@ import { displayFaces, displayName, NAME_ROOM, nameStyle, type, type DisplayFace
 // headlines (rows, tiles) and the menu row and card names. Display, title,
 // row and card set the face through nameStyle, at its scale; headline-sized
 // names take the face as it comes.
-const SIZES = { display: type.display, head: type.head, title: type.title, headline: type.headline, row: displayName.row, card: displayName.card };
+const SIZES = { display: type.display, head: type.head, listHead: type.listHead, title: type.title, headline: type.headline, row: displayName.row, card: displayName.card };
 
 for (const [variant, size] of Object.entries(SIZES)) {
   for (const [face, m] of Object.entries(displayFaces)) {

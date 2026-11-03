@@ -11,6 +11,7 @@ import { AddDrinkSheet } from '../AddDrinkSheet';
 import { LiveChangeSheet } from './LiveChangeSheet';
 import type { ActKind } from './liveList';
 import type { PageRowView } from './MenuPageRow';
+import { dayMonth } from '@/lib/dayMonth';
 
 /** A Swap or Take off being set up in its sheet. */
 export interface ChangeTarget {
@@ -95,7 +96,7 @@ export function useRowActs(menu: { id: string; barId: string | null }, rows: Lis
     confirm(target: ChangeTarget, to: MenuDrink | null, at: string | null, opts: { tell: boolean; draft: boolean }, done: () => void) {
       const row = target.view.listRow;
       if (!row) return;
-      const when = at ? 'from ' + new Date(at).toLocaleDateString(undefined, { weekday: 'short', day: 'numeric', month: 'short' }) : 'now';
+      const when = at ? 'from ' + dayMonth(new Date(at), { weekday: 'short', month: 'short' }) : 'now';
       const name = target.view.drink.name;
       const ok = (title: string, told: Tell | null) => () => {
         // Told only when it's on: a change waiting for approval isn't one yet.

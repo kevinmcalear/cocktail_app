@@ -3,11 +3,12 @@ import { StyleSheet, View } from 'react-native';
 import { Caption, DsText, GlassButton, PressableScale, useDs } from '@/components/ds';
 import { radius, space } from '@/constants/tokens';
 import type { VenueEvent } from '@/hooks/useEvents';
+import { dayMonth } from '@/lib/dayMonth';
 
 export type PrepSource = { kind: 'tonight' } | { kind: 'event'; event: VenueEvent };
 
 function shortDate(iso: string): string {
-  return new Date(iso).toLocaleDateString(undefined, { weekday: 'short', day: 'numeric', month: 'short' });
+  return dayMonth(new Date(iso), { weekday: 'short', month: 'short' });
 }
 
 function Chip({ label, selected, onPress }: { label: string; selected: boolean; onPress: () => void }) {

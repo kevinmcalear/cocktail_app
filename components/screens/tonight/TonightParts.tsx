@@ -85,7 +85,7 @@ export function ListHead({ eyebrow, name, onPress }: { eyebrow: string; name: st
         {eyebrow}
       </Caption>
       <View style={styles.listName}>
-        <DsText variant="title" style={{ fontFamily: displayFaces[ds.displayFace].regular }} numberOfLines={1}>
+        <DsText variant="listHead" style={{ fontFamily: displayFaces[ds.displayFace].regular }} numberOfLines={1}>
           {name}
         </DsText>
         <IconSymbol name="chevron.down" size={18} color={ds.c.ink} />

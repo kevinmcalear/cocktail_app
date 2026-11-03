@@ -11,6 +11,7 @@ import type { MenuDetail, MenuSummary } from '@/types/menus';
 import { AnswerRow } from '../addDrink/ReviewStep';
 import { Choice, MenuSheet } from './MenuSheet';
 import { CardHeader, MonoLabel, ReadyChecks } from './ReviewParts';
+import { dayMonth } from '@/lib/dayMonth';
 
 type When = 'now' | 'tomorrow' | 'date';
 
@@ -58,7 +59,7 @@ export function GoLiveSheet({ visible, onClose, menu, others, onDone }: GoLiveSh
   const ready = menuReadiness(menu);
   const itemIds = menu.sections.flatMap((s) => s.drinks.map((d) => d.id));
   const start = startFor(when, date, now);
-  const dateLabel = start?.toLocaleDateString(undefined, { weekday: 'short', day: 'numeric', month: 'short' });
+  const dateLabel = (start ? dayMonth(start, { weekday: 'short', month: 'short' }) : undefined);
   const badDate = when === 'date' && !start;
   const drinks = menu.sections.flatMap((s) => s.drinks);
   const whenLabel = when === 'now' ? 'Now' : start ? `${when === 'tomorrow' ? 'Tomorrow, ' : ''}${dateLabel}` : 'Pick a day';

@@ -1,3 +1,4 @@
+import { dayMonth } from './dayMonth';
 /**
  * Words for following people (Kept-follow, Kept-people): the Follow button's
  * label, when a rank happened ("tonight", "Tuesday"), the Friends and Lately
@@ -26,7 +27,7 @@ export function rankWhen(at: string, now: Date, locale?: string): string {
   if (days <= 0) return hour >= 17 || hour < 6 ? 'tonight' : 'today';
   if (days === 1) return 'yesterday';
   if (days < 7) return then.toLocaleDateString(locale, { weekday: 'long' });
-  return then.toLocaleDateString(locale, { day: 'numeric', month: 'short' });
+  return dayMonth(then, { month: 'short' }, locale);
 }
 
 /** A night runs till 6am: a 1:30am rank belongs to the evening before. */

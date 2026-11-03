@@ -12,4 +12,7 @@ for (const locale of ['en-US', 'en-GB', 'en-AU']) {
 assert.equal(dayMonth(d, { month: 'long' }, 'ru'), '3 ноября');
 assert.match(dayMonth(d, { month: 'long' }, 'ar-EG'), /٣/);
 assert.equal(dayMonth(new Date(2025, 10, 3), { weekday: 'short', month: 'short', year: 'numeric' }, 'en-US'), 'Mon 3 Nov 2025');
+assert.equal(dayMonth(d, { weekday: 'long', month: 'long', year: 'numeric' }, 'en-US'), 'Tuesday 3 November 2026');
+assert.equal(dayMonth(d, { weekday: 'short', month: 'short', time: true }, 'en-US'), 'Tue 3 Nov, 8:00 PM');
+assert.equal(dayMonth(new Date(Date.UTC(2026, 10, 3, 12)), { month: 'short', timeZone: 'UTC' }, 'en-US'), '3 Nov');
 console.log('dayMonth: day before month in every locale');

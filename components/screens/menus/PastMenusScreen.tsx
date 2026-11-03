@@ -15,8 +15,9 @@ import type { MenuSummary } from '@/types/menus';
 
 import { menuHref } from './MenuRows';
 import { MenuStrip } from './page/MenuBand';
+import { dayMonth } from '@/lib/dayMonth';
 
-const short = (iso: string) => new Date(iso).toLocaleDateString(undefined, { day: 'numeric', month: 'short' });
+const short = (iso: string) => dayMonth(new Date(iso), { month: 'short' });
 
 /** "1 to 30 Sep", "On now" (with "from 1 Oct" in its line). */
 function datesOf(m: MenuSummary, on: boolean): string {

@@ -20,6 +20,7 @@ import { MakerDetailsEditor } from './MakerDetailsEditor';
 import { PageVisibilityChoice } from './PageVisibilityChoice';
 import { PublishChoice } from './PublishChoice';
 import { ReleaseList } from './ReleaseList';
+import { dayMonth } from '@/lib/dayMonth';
 
 /** The bar’s Instagram, on the public page. Only someone who can publish here can change it. */
 function InstagramEditor({ profileId, initial }: { profileId: string; initial: string }) {
@@ -271,8 +272,7 @@ function PublishingPage({ barId }: { barId: string }) {
 /** The line under the choice: the 30-day rule, and when the next change opens if it's waiting. */
 function changeNote(changedAt: string | null): string {
   const next = nextPageChange(changedAt);
-  const when = next ? ` Your next change opens ${next.toLocaleDateString(undefined, { day: 'numeric', month: 'long' })}.` : '';
-  return `Any single drink can still be kept private from its own page. You can change this once every 30 days.${when}`;
+  return `Any single drink can still be kept private from its own page. You can change this once every 30 days.${next ? ` Your next change opens ${dayMonth(next, { month: 'long' })}.` : ''}`;
 }
 
 const styles = StyleSheet.create({

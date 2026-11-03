@@ -9,6 +9,7 @@ import type { EndedRun, ListRow } from '@/hooks/useLivingList';
 import type { MenuDrink } from '@/types/menus';
 
 import type { PageRowView } from './MenuPageRow';
+import { dayMonth } from '@/lib/dayMonth';
 
 export type ActKind = 'swap' | 'takeOff' | 'offTonight' | 'backOn' | 'approve' | 'turnDown' | 'undo' | 'keep' | 'ask' | 'withdraw';
 export interface Act {
@@ -61,11 +62,10 @@ export function runRange(from: string, to: string, year = false): string {
   const at = (s: string) => new Date(s.length === 10 ? `${s}T00:00` : s);
   const a = at(from);
   const b = at(to);
-  const short = (d: Date) => d.toLocaleDateString(undefined, { day: 'numeric', month: 'short' });
+  const short = (d: Date) => dayMonth(d, { month: 'short' });
   const oneMonth = a.getMonth() === b.getMonth() && a.getFullYear() === b.getFullYear();
   if (a.getFullYear() !== b.getFullYear()) return `${short(a)} ${a.getFullYear()} to ${short(b)}${year ? ` ${b.getFullYear()}` : ''}`;
-  const dayFirst = /^\d/.test(short(a));
-  const range = oneMonth && a.getDate() === b.getDate() ? short(a) : !oneMonth ? `${short(a)} to ${short(b)}` : dayFirst ? `${a.getDate()} to ${short(b)}` : `${short(a)} to ${b.getDate()}`;
+  const range = oneMonth && a.getDate() === b.getDate() ? short(a) : !oneMonth ? `${short(a)} to ${short(b)}` : `${a.getDate()} to ${short(b)}`;
   return year ? `${range} ${b.getFullYear()}` : range;
 }
 

@@ -13,12 +13,13 @@ import { MenuPageBanner } from './MenuPageGroup';
 import { MenuPageHead } from './MenuPageHead';
 import { MenuPageRow, type PageRowView } from './MenuPageRow';
 import { menuPageModel, type MenuPageModel } from './menuPageModel';
+import { dayMonth } from '@/lib/dayMonth';
 
 type Item = { key: string; head?: { name: string; count: number }; row?: PageRowView };
 
 const COLUMN = 760;
 
-const day = (iso: string) => new Date(iso).toLocaleDateString(undefined, { weekday: 'short', day: 'numeric', month: 'short' });
+const day = (iso: string) => dayMonth(new Date(iso), { weekday: 'short', month: 'short' });
 
 /**
  * A menu for someone with no job at the bar: a guest on a bar's public link,

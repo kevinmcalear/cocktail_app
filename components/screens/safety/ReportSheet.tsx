@@ -6,6 +6,7 @@ import { Choice, MenuSheet } from '@/components/screens/menus/MenuSheet';
 import { space } from '@/constants/tokens';
 import { useFileReport, useMyOpenReport } from '@/hooks/useSafety';
 import { REPORT_REASONS, type ReportReason, type ReportTarget } from '@/lib/safety';
+import { dayMonth } from '@/lib/dayMonth';
 
 export interface ReportChoice {
   label: string;
@@ -20,7 +21,6 @@ export interface ReportSheetProps {
   targets: ReportChoice[];
 }
 
-const DAY = new Intl.DateTimeFormat(undefined, { day: 'numeric', month: 'long' });
 
 /**
  * Report something: which one (when there's a choice), why, optional
@@ -64,7 +64,7 @@ export function ReportSheet({ onClose, subject, targets }: ReportSheetProps) {
     body = (
       <>
         <Headline role="heading">You’ve already reported this</Headline>
-        <Body>{`You sent a report on ${DAY.format(new Date(existing.created_at))}. A moderator will look at it; there's no need to send another.`}</Body>
+        <Body>{`You sent a report on ${dayMonth(new Date(existing.created_at), { month: 'long' })}. A moderator will look at it; there's no need to send another.`}</Body>
       </>
     );
     footer = <Button label="Close" variant="secondary" onPress={onClose} />;
