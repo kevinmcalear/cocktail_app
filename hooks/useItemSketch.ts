@@ -9,7 +9,8 @@ import { supabase } from '@/lib/supabase';
 // written by hand until types/ is regenerated.
 
 const CHUNK = 100;
-let pending: { ids: Set<string>; result: Promise<Map<string, SketchInputs | null>> } | null = null;
+type Result = Map<string, SketchInputs | null>;
+let pending: { ids: Set<string>; result: Promise<Result> } | null = null;
 
 async function fetchMany(all: string[]): Promise<Map<string, SketchInputs | null>> {
   const out = new Map<string, SketchInputs | null>();
@@ -17,8 +18,8 @@ async function fetchMany(all: string[]): Promise<Map<string, SketchInputs | null
   const ids = askableIds(all);
   for (let i = 0; i < ids.length; i += CHUNK) {
     const { data, error } = await supabase.from('item_sketches').select('item_id, inputs').in('item_id', ids.slice(i, i + CHUNK));
-    // Decorative: signed out, or not readable, the drink falls back to its glass icon.
-    if (error) continue;
+    // A failed read is an error, never a cached null: the cache is saved between launches, and offline would overwrite good drawings.
+    if (error) throw error;
     for (const row of (data ?? []) as { item_id: string; inputs: unknown }[]) out.set(row.item_id, readSketchInputs(row.inputs));
   }
   return out;
@@ -28,10 +29,10 @@ async function fetchMany(all: string[]): Promise<Map<string, SketchInputs | null
 function load(id: string): Promise<SketchInputs | null> {
   if (!pending) {
     const ids = new Set<string>();
-    const result = new Promise<Map<string, SketchInputs | null>>((resolve) => {
+    const result = new Promise<Result>((resolve, reject) => {
       setTimeout(() => {
         pending = null;
-        fetchMany([...ids]).then(resolve, () => resolve(new Map()));
+        fetchMany([...ids]).then(resolve, reject);
       }, 16);
     });
     pending = { ids, result };

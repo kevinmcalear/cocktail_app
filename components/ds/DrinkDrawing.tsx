@@ -93,13 +93,16 @@ export function DrinkDrawing({ inputs, seed, size, staff, pour = !isRowSize(size
   const thumb = isRowSize(size);
   // A hero paints now; lists and grids paint in coming idle slices, the bare glass showing until then.
   const lazy = size !== 'hero';
-  const [painted, setPainted] = useState<{ inputs: SketchInputs; layers: Layers } | null>(null);
-  const ready = peek(inputs, seed, thumb, night, pour) ?? (painted?.inputs === inputs ? painted.layers : null);
+  // The idle job builds into the cache and bumps this to re-render; `ready` is always read from the cache, so a scheme switch can't show the old one.
+  const [, built] = useState(0);
+  const ready = peek(inputs, seed, thumb, night, pour) ?? null;
   useEffect(() => {
     if (ready || !lazy) return;
     let live = true;
     whenIdle(() => {
-      if (live) setPainted({ inputs, layers: build(inputs, seed, thumb, night, pour) });
+      if (!live) return;
+      build(inputs, seed, thumb, night, pour);
+      built((n) => n + 1);
     });
     return () => {
       live = false;
