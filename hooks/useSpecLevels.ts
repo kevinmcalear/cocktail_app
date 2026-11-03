@@ -1,5 +1,7 @@
 import { useQuery } from '@tanstack/react-query';
 
+import { recentItemFlags } from '@/hooks/itemFlags';
+import { roleMatrixQuery } from '@/hooks/useCapabilities';
 import { specLevelsFrom, type SpecLevels } from '@/lib/spec';
 import { supabase } from '@/lib/supabase';
 
@@ -14,13 +16,13 @@ export function useSpecLevels(itemId: string | null | undefined, barId: string |
     queryKey: ['spec-levels', itemId, barId],
     enabled: !!itemId && !!barId,
     staleTime: 5 * 60_000,
-    queryFn: async (): Promise<SpecLevels | null> => {
-      const [matrix, item] = await Promise.all([
-        supabase.rpc('get_venue_role_matrix', { p_bar_id: barId! }),
-        supabase.from('items').select('spec_hidden').eq('id', itemId!).maybeSingle(),
+    queryFn: async ({ client }): Promise<SpecLevels | null> => {
+      // The matrix is shared with the page's other role reads; the flag usually came with the drink.
+      const flags = recentItemFlags(client, itemId!);
+      const [rows, item] = await Promise.all([
+        client.fetchQuery(roleMatrixQuery(barId!)),
+        flags !== undefined ? { data: flags } : supabase.from('items').select('spec_hidden').eq('id', itemId!).maybeSingle(),
       ]);
-      if (matrix.error) throw matrix.error;
-      const rows = (matrix.data as { role_id: string | null; base_level: number; capabilities: string[] }[] | null) ?? [];
       if (!rows.length) return null;
       // ponytail: if the item row isn't readable at this role, it reads as not hidden; the server still hides it.
       return specLevelsFrom(rows, item.data?.spec_hidden ?? false);

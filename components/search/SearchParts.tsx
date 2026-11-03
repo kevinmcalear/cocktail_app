@@ -2,7 +2,8 @@ import { useRouter } from 'expo-router';
 import { useRef, type ComponentRef } from 'react';
 import { StyleSheet, View } from 'react-native';
 
-import { Caption, Chip, DrinkImage, DsText, GlassSurface, Headline, MatchText, PopoverMenu, PressableScale, RowScore, scoreWords, useDs, usePopover } from '@/components/ds';
+import { Caption, Chip, DrinkImage, DsText, GlassSurface, Headline, MatchText, PressableScale, RowScore, scoreWords, useDs } from '@/components/ds';
+import { PopoverMenu, usePopover } from '@/components/ds/PopoverMenu';
 import { IconSymbol } from '@/components/ui/icon-symbol';
 import { font, layout, radius, space } from '@/constants/tokens';
 import { useDrinkLists } from '@/hooks/useDiscover';

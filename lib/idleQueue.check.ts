@@ -61,5 +61,21 @@ void (async () => {
   assert.equal(capped, 1);
   client.clear();
 
+  // quietMs: a second wave of queries right after the first holds it back.
+  const waves = new QueryClient();
+  let later = 0;
+  afterFirstData(waves, () => later++, 60_000, 30);
+  await waves.fetchQuery({ queryKey: ['who'], queryFn: async () => 1 });
+  let second!: (v: number) => void;
+  const wave = waves.fetchQuery({ queryKey: ['bar'], queryFn: () => new Promise<number>((r) => (second = r)) });
+  await new Promise((r) => setTimeout(r, 40));
+  assert.equal(later, 0, 'not while the second wave fetches');
+  second(2);
+  await wave;
+  assert.equal(later, 0, 'not the moment it settles');
+  await new Promise((r) => setTimeout(r, 50));
+  assert.equal(later, 1, 'once the network has been quiet');
+  waves.clear();
+
   console.log('idleQueue: ok');
 })();

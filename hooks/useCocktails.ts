@@ -4,6 +4,7 @@ import { useItemEditAccess, useViewAs } from '@/hooks/useViewAs';
 import { allRowsById, byName } from '@/lib/allRows';
 import { CATALOG_RANGES } from '@/lib/matchCatalog';
 import { venueListOptions } from '@/lib/queryDefaults';
+import { ITEM_FLAG_COLUMNS, keepItemFlags } from '@/hooks/itemFlags';
 import { supabase } from '@/lib/supabase';
 import { resolvePresentationIngredient, sortRecipesByOrder } from '@/lib/recipeUtils';
 import type { Update } from '@/types/db';
@@ -222,7 +223,8 @@ export function cocktailQuery(id: string | string[] | undefined, viewAsRoleLevel
             
             const cocktailId = Array.isArray(id) ? id[0] : id;
             // ponytail: made in parts reads items itself, beside the page's view; someone who can't read the items row sees one list. Into app_item_presentation once its other changes land.
-            const partsRead = supabase.from('items').select('parts').eq('id', cocktailId).maybeSingle();
+            // The same read brings the flags the approval notice and spec levels need, so they don't ask again (hooks/itemFlags.ts).
+            const flagsRead = supabase.from('items').select(ITEM_FLAG_COLUMNS).eq('id', cocktailId).maybeSingle();
 
             const { data, error } = await supabase
                 .from('app_item_presentation')
@@ -231,7 +233,10 @@ export function cocktailQuery(id: string | string[] | undefined, viewAsRoleLevel
                 .single();
 
             if (error) throw error;
-            return toDrinkPage(data, client.getQueryData<SpecLists>(dropdownKeys.specs), (await partsRead).data?.parts);
+            const flags = await flagsRead;
+            // A failed read isn't kept: the approval notice and spec levels then read for themselves.
+            if (!flags.error) keepItemFlags(client, cocktailId, flags.data);
+            return toDrinkPage(data, client.getQueryData<SpecLists>(dropdownKeys.specs), flags.data?.parts);
         },
         enabled: !!id,
     });

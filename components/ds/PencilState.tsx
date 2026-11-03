@@ -91,6 +91,13 @@ export function PencilState({ kind, title, detail, action, inputs = EMPTY_GLASS,
   );
 }
 
+/** A drink drawn in pencil only (the draft page's hero): its glass, ice and garnish, no colour yet. */
+export function PencilDrawing({ inputs, seed, size }: { inputs: SketchInputs; seed: string; size: number }) {
+  const ds = useDs();
+  const uri = pencilUri(sceneFor(inputs, seed, 'full'), ds.scheme === 'dark');
+  return <Image source={{ uri }} style={{ width: size, height: size }} contentFit="contain" cachePolicy="memory" accessible={false} aria-hidden />;
+}
+
 const styles = StyleSheet.create({
   column: { alignItems: 'center', gap: space.md, paddingVertical: space.xl },
   row: { flexDirection: 'row', alignItems: 'center', gap: space.md, paddingVertical: space.sm },
