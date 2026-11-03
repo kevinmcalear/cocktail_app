@@ -43,6 +43,8 @@ interface MenuPageHeadProps {
   bleed: number;
   /** The status bar's height: the sky runs up under it. */
   top?: number;
+  /** Over the foot of the cover or drawings: the editor's Change cover and Remove (Menu-who-creator-edit). */
+  over?: ReactNode;
   children?: ReactNode;
 }
 
@@ -51,13 +53,14 @@ interface MenuPageHeadProps {
  * cover photo, or nothing yet), glass Back and Share, then the tag and
  * eyebrow, the name and its line (Menu-page).
  */
-export function MenuPageHead({ heroIds, coverUrl, coverCredit, name, ink, quiet, tag, eyebrow, description, onBack, onShare, onEdit, pill, label, bleed, top = 0, children }: MenuPageHeadProps) {
+export function MenuPageHead({ heroIds, coverUrl, coverCredit, name, ink, quiet, tag, eyebrow, description, onBack, onShare, onEdit, pill, label, bleed, top = 0, over, children }: MenuPageHeadProps) {
   const ds = useDs();
   const wide = useBreakpoint() !== 'phone';
   const photo = !!coverUrl;
   const drawn = !photo && heroIds.length > 0;
   return (
     <View>
+      <View>
       {photo ? (
         <Suspense fallback={<View style={{ height: PHOTO_H }} />}>
           <MenuCover url={coverUrl} name={name} height={PHOTO_H} bleed={bleed} />
@@ -75,6 +78,8 @@ export function MenuPageHead({ heroIds, coverUrl, coverCredit, name, ink, quiet,
       ) : (
         <View style={{ height: 112 + top }} />
       )}
+      {over ? <View style={styles.over}>{over}</View> : null}
+      </View>
       <View style={[styles.bar, { top: top + space.lg }]}>
         {onBack ? <GlassButton icon="chevron.left" accessibilityLabel="Back" onPress={onBack} onMedia={photo && ds.scheme === 'dark'} /> : label ? (
           <PressableScale role="link" accessibilityLabel={label.text} onPress={label.onPress}>
@@ -119,6 +124,7 @@ export function MenuPageHead({ heroIds, coverUrl, coverCredit, name, ink, quiet,
 const styles = StyleSheet.create({
   credit: { position: 'absolute', top: PHOTO_H - space.xl, right: 0, maxWidth: '60%' },
   creditOn: { top: PHOTO_H - space.xxxl - space.lg, paddingHorizontal: space.sm, paddingVertical: space.xs / 2, borderRadius: radius.control },
+  over: { position: 'absolute', left: 0, bottom: space.md, flexDirection: 'row', gap: space.sm },
   bar: { position: 'absolute', top: space.lg, left: 0, right: 0, flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' },
   barEnd: { flexDirection: 'row', gap: space.sm, alignItems: 'center' },
   pill: { minHeight: 44, paddingHorizontal: space.lg, borderRadius: radius.pill, alignItems: 'center', justifyContent: 'center' },

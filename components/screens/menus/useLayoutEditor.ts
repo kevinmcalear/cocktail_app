@@ -8,7 +8,6 @@ import { useBarDrinks } from '@/hooks/useHomeBar';
 import { useMenuLibrary, usePickMenuCover, useSaveMenu } from '@/hooks/useMenuMutations';
 import { useVenueMenus } from '@/hooks/useMenus';
 import { confirmDiscardChanges } from '@/lib/dialogs';
-import { useDeleteDrink } from '@/components/screens/drink/useDeleteDrink';
 import {
   addDrink,
   addSection,
@@ -18,7 +17,6 @@ import {
   layoutProblem,
   moveDrink,
   moveSection,
-  moveToSection,
   dropDrink,
   removeDrink,
   setDrinkPrice,
@@ -34,7 +32,7 @@ import { applyMenuPaste, type PlacedGroup } from '@/lib/paste';
 import { useMenuDrinkHandoff } from '@/store/useMenuDrinkHandoff';
 import type { MenuDetail, MenuDrink } from '@/types/menus';
 
-export type EditorSheet = { kind: 'add'; key: string } | { kind: 'section'; key: string } | { kind: 'paste'; key: string | null } | { kind: 'golive' } | { kind: 'share' } | null;
+export type EditorSheet = { kind: 'add'; key: string } | { kind: 'section'; key: string } | { kind: 'paste'; key: string | null } | { kind: 'golive' } | { kind: 'night' } | null;
 
 /** How long after the last change the builder saves (b27: no save button). */
 const AUTOSAVE_MS = 800;
@@ -50,7 +48,6 @@ export function useLayoutEditor(menu: MenuDetail, { paste = false }: { paste?: b
   const [saved, setSaved] = useState<MenuLayout>(layout);
   // New menu's "Paste a list" opens the builder on the paste sheet.
   const [sheet, setSheet] = useState<EditorSheet>(paste ? { kind: 'paste', key: null } : null);
-  const [targetKey, setTargetKey] = useState<string | null>(layout.sections[0]?.key ?? null);
   const [error, setError] = useState<string | null>(null);
   // The cover's own problem, shown on the cover: it never holds up saving the rest.
   const [coverError, setCoverError] = useState<string | null>(null);
@@ -67,7 +64,6 @@ export function useLayoutEditor(menu: MenuDetail, { paste = false }: { paste?: b
   const refetchLibrary = libraryQuery.refetch;
   const { data: venueMenus = [] } = useVenueMenus(menu.barId);
   const toast = useToast();
-  const deleteForGood = useDeleteDrink();
   // The handoff below subscribes once; it reads these as they are now.
   const latest = useRef({ toast, router, name: menu.name });
   useEffect(() => {
@@ -96,11 +92,7 @@ export function useLayoutEditor(menu: MenuDetail, { paste = false }: { paste?: b
   );
 
   const status = menuStatus(menu, now);
-  // Drinks deleted from a row while their toast is up: off the rows, but saved where they were
-  // until the delete goes, so closing the app or leaving first loses no menu place (useDeleteDrink).
-  const [pending, setPending] = useState<{ key: string; at: number; drink: MenuDrink }[]>([]);
-  const outgoing = pending.reduceRight((l, p) => addDrink(l, p.key, p.drink, p.at), layout);
-  const changed = layoutChanged(outgoing, saved);
+  const changed = layoutChanged(layout, saved);
   const groups = groupMenus(venueMenus.filter((m) => m.barId === menu.barId && m.id !== menu.id), now);
   // A venue's drinks already on (or going on) another of its menus. Home nights don't share drinks out like that.
   const others = menu.barId ? [...groups.on, ...groups.upcoming] : [];
@@ -128,7 +120,7 @@ export function useLayoutEditor(menu: MenuDetail, { paste = false }: { paste?: b
     }
     if (!changed) return true;
     // What this save writes: edits made while it's on the way save after it.
-    const snapshot = outgoing;
+    const snapshot = layout;
     try {
       // The credit only when it changed, so an editor opened from older data can't clear someone's credit.
       await saveLayout(creditOf(snapshot) === creditOf(saved) ? { ...snapshot, coverCredit: undefined } : snapshot);
@@ -142,7 +134,7 @@ export function useLayoutEditor(menu: MenuDetail, { paste = false }: { paste?: b
       setError(e instanceof Error ? e.message : 'Couldn’t save. Your changes are still here; try again.');
       return false;
     }
-  }, [layout, outgoing, saved, changed, saveLayout, savePrices]);
+  }, [layout, saved, changed, saveLayout, savePrices]);
 
   // Autosave: a moment after the last change, one save at a time. A layout that
   // can't be saved (a section with no name), or a save that failed (a price
@@ -168,8 +160,6 @@ export function useLayoutEditor(menu: MenuDetail, { paste = false }: { paste?: b
     others,
     sheet,
     setSheet,
-    targetKey,
-    setTargetKey,
     section,
     coverBusy: cover.isPending,
     coverError,
@@ -177,36 +167,14 @@ export function useLayoutEditor(menu: MenuDetail, { paste = false }: { paste?: b
     /** "Photo by": who took the cover photo. */
     setCoverCredit: (credit: string) => edit({ ...layout, coverCredit: credit }),
     add: (key: string, drink: MenuDrink) => edit(addDrink(layout, key, drink)),
-    /** Added from the library: says so, with Undo (which takes back only that drink). */
-    addWithUndo: (key: string, drink: MenuDrink) => {
-      edit(addDrink(layout, key, drink));
-      const into = section(key)?.name ?? 'the menu';
-      toast.show({ title: `${drink.name} added to ${into}`, action: { label: 'Undo', onPress: () => setLayout((l) => removeDrink(l, key, drink.id)) } });
-    },
     made,
     remove: (key: string, drinkId: string) => edit(removeDrink(layout, key, drinkId)),
-    /** Delete drink from a row's ...: off the rows now, deleted (with its menu places) once its toast goes; Undo puts it back where it was. */
-    deleteDrink: (drink: MenuDrink) => {
-      const places = layout.sections.flatMap((s) => {
-        const at = s.drinks.findIndex((d) => d.id === drink.id);
-        return at < 0 ? [] : [{ key: s.key, at, drink: s.drinks[at] }];
-      });
-      edit(places.reduce((l, p) => removeDrink(l, p.key, drink.id), layout));
-      setPending((p) => [...p, ...places]);
-      deleteForGood({
-        id: drink.id,
-        name: drink.name,
-        onUndo: () => setLayout((l) => places.reduce((m, p) => addDrink(m, p.key, p.drink, p.at), l)),
-        onGone: () => setPending((p) => p.filter((x) => !places.includes(x))),
-      });
-    },
     // From the layout as it is when React applies them, so the phone's Done can set both prices at once.
     setPrice: (drinkId: string, price: string | null) => update((l) => setDrinkPrice(l, drinkId, price)),
     /** This menu's own price for the drink; null goes back to the drink's. */
     setMenuPrice: (drinkId: string, price: string | null) => update((l) => setMenuPrice(l, drinkId, price)),
     reorder: (key: string, drinks: MenuDrink[]) => edit(setDrinks(layout, key, drinks)),
     move: (key: string, from: number, to: number) => edit(moveDrink(layout, key, from, to)),
-    moveTo: (fromKey: string, drinkId: string, toKey: string) => edit(moveToSection(layout, fromKey, drinkId, toKey)),
     drop: (drink: MenuDrink, fromKey: string | null, toKey: string, index: number) => edit(dropDrink(layout, drink, fromKey, toKey, index)),
     addSection: () => {
       const next = addSection(layout);
@@ -234,10 +202,6 @@ export function useLayoutEditor(menu: MenuDetail, { paste = false }: { paste?: b
     persist,
     goLive: async () => {
       if (await persist()) setSheet({ kind: 'golive' });
-    },
-    /** A home menu: save what's changed, then the share step (it shares the saved menu). */
-    share: async () => {
-      if (await persist()) setSheet({ kind: 'share' });
     },
     // Saves what's left first; only asks when that can't be saved.
     leave: async () => {

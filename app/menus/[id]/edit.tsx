@@ -1,10 +1,10 @@
 import { Stack, useLocalSearchParams } from 'expo-router';
 
 import { VenueBrandProvider } from '@/components/nav/VenueBrandProvider';
-import { MenuEditorScreen } from '@/components/screens/menus/MenuEditorScreen';
+import { MenuEditScreen } from '@/components/screens/menus/edit/MenuEditScreen';
 import { WebHead } from '@/components/WebHead';
 
-/** Editing a menu. */
+/** Editing a menu in place. */
 export default function MenuEditRoute() {
   const { id } = useLocalSearchParams<{ id: string }>();
   return (
@@ -13,7 +13,7 @@ export default function MenuEditRoute() {
       <WebHead>
         <title>Edit menu</title>
       </WebHead>
-      <MenuEditorScreen menuId={id} />
+      <MenuEditScreen menuId={id} />
     </VenueBrandProvider>
   );
 }

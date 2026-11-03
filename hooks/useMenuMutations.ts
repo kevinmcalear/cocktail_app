@@ -219,34 +219,6 @@ export function useDeleteMenu() {
   });
 }
 
-/** Keeps a menu's sections as a layout for next time (a menu template). */
-export function useSaveLayout() {
-  const queryClient = useQueryClient();
-  const userId = useUserId();
-  return useMutation({
-    mutationFn: async ({ name, sections }: { name: string; sections: EditSection[] }) => {
-      const { data, error } = await supabase.from('menu_templates').insert({ name: name.trim(), created_by: userId }).select('id').single();
-      if (error) throw readable(error);
-      const { error: sectionsError } = await supabase.from('template_sections').insert(
-        sections.map((s, i) => ({
-          template_id: data.id,
-          name: s.name.trim(),
-          sort_order: i,
-          min_items: s.minItems,
-          max_items: s.maxItems,
-          allowed_types: s.allowedTypes,
-        }))
-      );
-      if (sectionsError) {
-        await supabase.from('menu_templates').delete().eq('id', data.id);
-        throw readable(sectionsError);
-      }
-    },
-    onSuccess: () => queryClient.invalidateQueries({ queryKey: ['menu-layouts'] }),
-    onError: () => {},
-  });
-}
-
 export interface MenuLayoutTemplate {
   id: string;
   name: string;
