@@ -11,6 +11,7 @@ import { sceneToSvg } from '@/lib/sketch/svg';
 import { liquidOf, type SketchInputs } from '@/lib/sketch/types';
 
 import { useDrawingGlasses } from './drawingGlasses';
+import { pencilScene } from './PencilState';
 import { defsFor, draw, nightOf, SceneSvg, sceneFor, type SketchDetail } from './SketchDrawing';
 import { useDs } from './theme';
 
@@ -172,12 +173,17 @@ function lengthOf(scene: Scene) {
 }
 
 // One object per drawing's content, so a caller that builds its inputs afresh each render (beer and wine's
-// savedSketch) keeps one scene, and the drawing doesn't start over on every render. Holds the last few.
+// savedSketch, the draft) keeps one scene, and the drawing doesn't start over on every render. Holds the
+// last few used: a hit moves to the back, so the drawing on screen is never the one that goes.
 const canon = new Map<string, SketchInputs>();
 function sameInputs(inputs: SketchInputs): SketchInputs {
   const key = JSON.stringify(inputs);
   const had = canon.get(key);
-  if (had) return had;
+  if (had) {
+    canon.delete(key);
+    canon.set(key, had);
+    return had;
+  }
   canon.set(key, inputs);
   if (canon.size > 32) canon.delete(canon.keys().next().value!);
   return inputs;
@@ -260,6 +266,8 @@ export interface AnimatedSketchProps {
   delay?: number;
   /** At night, the drink's soft glow behind it (the drink page's hero, as DrinkDrawing draws it). */
   glow?: boolean;
+  /** Pencil only, no colour yet (the draft page, as PencilDrawing draws it). */
+  pencil?: boolean;
 }
 
 /**
@@ -268,13 +276,13 @@ export interface AnimatedSketchProps {
  * Ends on exactly the still drawing (SketchDrawing). Reduced motion shows it
  * finished. One at a time: a list of these would cost too much.
  */
-export const AnimatedSketch = memo(function AnimatedSketch({ inputs: stored, seed, detail = 'full', play = 0, delay = 0, glow = false }: AnimatedSketchProps) {
+export const AnimatedSketch = memo(function AnimatedSketch({ inputs: stored, seed, detail = 'full', play = 0, delay = 0, glow = false, pencil = false }: AnimatedSketchProps) {
   // No card behind it (decision chrome): at night it's painted for night, as the still drawing is.
   const night = useDs().scheme === 'dark';
   const inputs = inBarGlassCached(sameInputs(stored), useDrawingGlasses());
   const scene = sceneFor(inputs, seed, detail, true);
-  const shown = night ? nightOf(scene, liquidOf(inputs).hex) : scene;
-  return <AnimatedScene scene={shown} play={play} delay={delay} glow={night && glow ? glowUri(shown) : null} />;
+  const shown = pencil ? pencilScene(scene, night) : night ? nightOf(scene, liquidOf(inputs).hex) : scene;
+  return <AnimatedScene scene={shown} play={play} delay={delay} glow={night && glow && !pencil ? glowUri(shown) : null} />;
 });
 
 const styles = StyleSheet.create({
