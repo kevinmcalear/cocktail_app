@@ -157,7 +157,7 @@ function Page({ item, canEdit, adminFix = false, onEdit, pane, openBatch, visito
       name={item.name}
       pane={pane}
       photo={photos ? { url: photos[0].url, rooms: photoRooms(photos), credit: !!photoCredit || photos.some((p) => !!p.credit), hero: (h, fade) => <DrinkHero name={item.name} pictures={photos} glass={glass?.icon_key || glass?.name || null} itemId={item.id} palette={photos[0].palette} height={h} fade={fade} credit={photoCredit} /> } : null}
-      art={(pour) => <DrinkArt itemId={item.id} sketch={preview?.sketch} label={`Drawing of ${item.name}`} size={size} pour={pour} />}
+      art={(play) => <DrinkArt itemId={item.id} sketch={preview?.sketch} label={`Drawing of ${item.name}`} size={size} play={play} />}
       size={size}
       liquid={liquid}
       title={sections.title}

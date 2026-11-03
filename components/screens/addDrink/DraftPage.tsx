@@ -3,7 +3,7 @@ import { useRef, type ComponentRef, type ReactNode } from 'react';
 import { ScrollView, StyleSheet, View, type TextInput } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
-import { Caption, GlassButton, PencilDrawing, PressableScale, TextLink, useBreakpoint, useDs, useGutter } from '@/components/ds';
+import { Caption, GlassButton, PressableScale, TextLink, useBreakpoint, useDs, useGutter } from '@/components/ds';
 import { FormScrollContainer } from '@/components/recipe/FormScrollContainer';
 import { IconSymbol } from '@/components/ui/icon-symbol';
 import { WebHead } from '@/components/WebHead';
@@ -16,6 +16,7 @@ import { withAlpha } from '@/lib/color';
 
 import type { DrinkDeskProps } from './DrinkDesk';
 import { deskSketch } from './DrinkDeskRail';
+import { DraftDrawing } from './DraftDrawing';
 import { DraftLine } from './DraftLine';
 import { DraftRows } from './DraftRows';
 import { IngredientsStep } from './IngredientsStep';
@@ -90,7 +91,7 @@ export function DraftPage({ lead, ...p }: DrinkDeskProps & { lead?: ReactNode })
                     {/* The sky (Prod-add-flow 3): the drink's own colour, fading into the page. */}
                     <LinearGradient colors={[withAlpha(sky, ds.scheme === 'dark' ? 0.3 : 0.2), withAlpha(sky, ds.scheme === 'dark' ? 0.16 : 0.1)]} start={{ x: 0, y: 0 }} end={{ x: 1, y: 0 }} style={StyleSheet.absoluteFill} />
                     <LinearGradient colors={[withAlpha(ds.c.ground, 0), ds.c.ground]} locations={[0.35, 1]} style={StyleSheet.absoluteFill} />
-                    <PencilDrawing inputs={inputs} seed={draft.id ?? 'new-drink'} size={HERO} />
+                    <DraftDrawing inputs={inputs} seed={draft.id ?? 'new-drink'} size={HERO} />
                   </View>
                 )}
                 <View style={[styles.body, { paddingHorizontal: gutter }, over ? styles.bodyOver : null]}>
