@@ -1,5 +1,4 @@
 import { useRouter, type Href } from 'expo-router';
-import { useState } from 'react';
 import { StyleSheet, useWindowDimensions, View } from 'react-native';
 
 import { Body, Caption, DrinkDrawingFor, DsText, PencilState, PressableScale, Tag, useDs } from '@/components/ds';
@@ -67,22 +66,17 @@ function DrinkGrid({ block }: { block: TonightBlock }) {
   const ds = useDs();
   const router = useRouter();
   const columns = useWindowDimensions().width < TWO_COLUMNS ? 2 : 4;
-  // Cells get real widths from the grid's own: a percentage of an unsized row left them at zero on the web.
-  const [width, setWidth] = useState(0);
-  const cell = Math.floor(width / columns);
   const drinks = block.sections.flatMap((s) => s.drinks);
   return (
-    <View role="list" onLayout={(e) => setWidth(e.nativeEvent.layout.width)} style={[styles.grid, { borderTopColor: ds.c.line }]}>
-      {cell
-        ? drinks.map((d) => (
-            <PressableScale key={d.rowId} role="link" accessibilityLabel={d.name} onPress={() => router.push(itemHref(categoryOf(d.kind), d.id) as Href)} style={[styles.cell, { width: cell, borderBottomColor: ds.c.line }]}>
+    <View role="list" style={[styles.grid, { borderTopColor: ds.c.line }]}>
+      {drinks.map((d) => (
+            <PressableScale key={d.rowId} role="link" accessibilityLabel={d.name} onPress={() => router.push(itemHref(categoryOf(d.kind), d.id) as Href)} style={[styles.cell, { width: `${100 / columns}%`, borderBottomColor: ds.c.line }]}>
               <DrinkDrawingFor itemId={d.id} size="row" pour={false} />
               <DsText variant="headline" style={[styles.flex, { fontFamily: displayFaces[ds.displayFace].regular }]}>
                 {d.name}
               </DsText>
             </PressableScale>
-          ))
-        : null}
+      ))}
     </View>
   );
 }
@@ -207,7 +201,8 @@ const styles = StyleSheet.create({
   stack: { gap: space.md },
   side: { gap: space.xl },
   card: { paddingVertical: space.xs, paddingHorizontal: space.lg, overflow: 'hidden' },
-  grid: { alignSelf: 'stretch', flexDirection: 'row', flexWrap: 'wrap', borderTopWidth: StyleSheet.hairlineWidth, marginTop: space.sm },
+  // width: '100%' gives the percentage cells a real width to divide on the web.
+  grid: { width: '100%', alignSelf: 'stretch', flexDirection: 'row', flexWrap: 'wrap', borderTopWidth: StyleSheet.hairlineWidth, marginTop: space.sm },
   cell: { flexDirection: 'row', alignItems: 'center', gap: space.sm, paddingVertical: space.sm, borderBottomWidth: StyleSheet.hairlineWidth },
   learn: { flexDirection: 'row', alignItems: 'center', gap: space.md, paddingVertical: space.sm, borderTopWidth: StyleSheet.hairlineWidth },
   flex: { flex: 1, minWidth: 0 },
