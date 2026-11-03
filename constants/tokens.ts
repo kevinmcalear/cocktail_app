@@ -244,12 +244,14 @@ export const scoreFigure = { fontSize: 96, lineHeight: 108 } as const;
 export const MIN_FONT_SIZE = 13;
 
 /**
- * Seven text styles. Nothing below 13. Display and title leave room above the
- * ascenders: iOS bottom-aligns a line set tighter than its font, so a
+ * Eight text styles. Nothing below 13. Display, head and title leave room
+ * above the ascenders: iOS bottom-aligns a line set tighter than its font, so a
  * lineHeight of 1 cuts the tops off. Checked by components/ds/displayClip.check.ts.
  */
 export const type = {
   display: { fontSize: 56, lineHeight: 64, letterSpacing: -1 },
+  /** A main tab's name at the top of its page (Tonight, Drinks, Discover, You), 40 as the Prod-* boards set it. */
+  head: { fontSize: 40, lineHeight: 46, letterSpacing: -0.4 },
   title: { fontSize: 34, lineHeight: 38, letterSpacing: -0.4 },
   headline: { fontSize: 20, lineHeight: 26, letterSpacing: -0.2 },
   body: { fontSize: 17, lineHeight: 24, letterSpacing: 0 },

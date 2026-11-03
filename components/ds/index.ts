@@ -24,7 +24,7 @@ export { ExtendedFab, type FabIcon } from './ExtendedFab';
 export { Switch } from './Switch';
 export { Tag, type TagTone } from './Tag';
 export { ToastHost, useToast } from './Toast';
-export { Body, Caption, Display, DsText, Headline, Spec, Title, type DsTextProps } from './Text';
+export { Body, Caption, Display, DsText, Head, Headline, Spec, Title, type DsTextProps } from './Text';
 export { BackbarTheme, BrandProvider, useDs, type Ds } from './theme';
 export { loadFace, useDisplayFaces, useLoadedFace } from './faces';
 export { IngredientDrawing, useIngredientColour } from './IngredientDrawing';

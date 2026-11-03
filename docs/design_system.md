@@ -29,12 +29,16 @@ The written rules behind the Back Bar look. What each screen should be is drawn 
 | Style | Size | Face |
 |---|---|---|
 | Display (drink name on its page) | 56 | Redaction, or the venue's face |
+| Head (a main tab's name: Tonight, Drinks, Discover, You) | 40 | Display face |
 | Title (screen titles) | 34 | Display face |
-| Headline | 20 | Geist 600 |
-| Body | 17 | Geist 400 |
-| Spec (measurements) | 17 | Geist Mono 500, tabular numbers |
-| Label (chips, scope and tab labels, doses, compact `sm` buttons) | 15 | Geist 500 |
-| Caption | 13 | Geist 500 |
+| Headline | 20 | System 600 |
+| Body | 17 | System 400 |
+| Spec (measurements) | 17 | System 500, tabular numbers |
+| Label (chips, scope and tab labels, doses, compact `sm` buttons) | 15 | System 500 |
+| Caption | 13 | System 500 |
+
+- Faces (Kevin, 31 Oct 2026): Redaction (or the venue's face) for names, the system font (SF, Roboto, system UI) for everything else, no mono. The canvas still draws its placeholders (Instrument Serif, Geist, Geist Mono): match its sizes, weights and spacing, not those faces.
+- Dates put the day before the month in every locale ("Tuesday 3 November", "since 1 Oct"): use `dayMonth` (`lib/dayMonth.ts`), not `toLocaleDateString`'s own order.
 
 - Nothing below 13 pt. Uppercase labels get letter spacing and still stay at 13 or more.
 - Where the canvas draws 15 px (a chip, a scope or tab label, a dose, a compact button), use `variant="label"` (15/20), not 13 or 17. A dose keeps its mono face on top of it.

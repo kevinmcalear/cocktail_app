@@ -21,6 +21,7 @@ assert.deepEqual(off.map((d) => d.id), ['b'], 'only a take-off before 6am counts
 assert.equal(tonightEyebrow(now, 'opens 6pm', 'en-GB'), 'Sunday 1 November · doors at 6pm');
 assert.equal(tonightEyebrow(now, 'opens 6pm Thu', 'en-GB'), 'Sunday 1 November', 'doors another day are not tonight');
 assert.equal(tonightEyebrow(now, null, 'en-GB'), 'Sunday 1 November');
+assert.equal(tonightEyebrow(now, null, 'en-US'), 'Sunday 1 November', 'the boards\' order in en-US too, not "Sunday, November 1"');
 
 assert.equal(prepLine({ have: 'have 200 ml', needed: '600 ml', forDrinks: ['Jack Rose'] }), 'Low · 200 ml left, Jack Rose needs it');
 assert.equal(prepLine({ have: null, needed: '1.5 L', forDrinks: ['back to par', 'Daiquiri'] }), 'Make 1.5 L · Daiquiri needs it');

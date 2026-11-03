@@ -16,8 +16,8 @@ export interface DsTextProps extends TextProps {
   align?: 'left' | 'center' | 'right';
 }
 
-// Everything but display and title is the system font; spec amounts in tabular figures.
-const FACE: Record<Exclude<TypeStyle, 'display' | 'title'>, TextStyle> = {
+// Everything but display, head and title is the system font; spec amounts in tabular figures.
+const FACE: Record<Exclude<TypeStyle, 'display' | 'head' | 'title'>, TextStyle> = {
   headline: font.semiBold,
   body: font.regular,
   spec: font.figuresMedium,
@@ -37,14 +37,14 @@ const FACE: Record<Exclude<TypeStyle, 'display' | 'title'>, TextStyle> = {
 const SLACK = Platform.OS === 'ios' ? { paddingBottom: textSlack } : null;
 
 /**
- * Text in one of the seven Back Bar styles. Display and title set names, in
+ * Text in one of the eight Back Bar styles. Display, head and title set names, in
  * the venue's face or the app's own (Redaction); everything else is the
  * system font, so every venue stays legible.
  * Scales with the person's text size setting (Dynamic Type) by default.
  */
 export function DsText({ variant = 'body', tone = 'ink', italic, color, align, style, ...rest }: DsTextProps) {
   const ds = useDs();
-  const isDisplay = variant === 'display' || variant === 'title';
+  const isDisplay = variant === 'display' || variant === 'head' || variant === 'title';
   // A bar's face sits at Redaction's height, with its own spacing and capitals.
   const faceStyle = isDisplay ? nameStyle(ds.displayFace, type[variant], italic) : FACE[variant];
   const toneColor = {
@@ -73,6 +73,8 @@ export function DsText({ variant = 'body', tone = 'ink', italic, color, align, s
 
 type Named = Omit<DsTextProps, 'variant'>;
 export const Display = (p: Named) => <DsText variant="display" role="heading" {...p} />;
+/** A main tab's name at the top of its page. */
+export const Head = (p: Named) => <DsText variant="head" role="heading" {...p} />;
 export const Title = (p: Named) => <DsText variant="title" role="heading" {...p} />;
 export const Headline = (p: Named) => <DsText variant="headline" {...p} />;
 export const Body = (p: Named) => <DsText variant="body" {...p} />;
