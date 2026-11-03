@@ -4629,6 +4629,7 @@ export type Database = {
           bar_id: string | null
           change_level: number | null
           change_role_id: string | null
+          cover_credit: string | null
           cover_position: number | null
           cover_url: string | null
           created_at: string
@@ -4657,6 +4658,7 @@ export type Database = {
           bar_id?: string | null
           change_level?: number | null
           change_role_id?: string | null
+          cover_credit?: string | null
           cover_position?: number | null
           cover_url?: string | null
           created_at?: string
@@ -4685,6 +4687,7 @@ export type Database = {
           bar_id?: string | null
           change_level?: number | null
           change_role_id?: string | null
+          cover_credit?: string | null
           cover_position?: number | null
           cover_url?: string | null
           created_at?: string
@@ -7888,6 +7891,14 @@ export type Database = {
           sweet: number
         }[]
       }
+      follow_people: {
+        Args: never
+        Returns: {
+          avatar_url: string
+          display_name: string
+          user_id: string
+        }[]
+      }
       friends_ranks: {
         Args: { p_item_id?: string; p_limit?: number }
         Returns: {
@@ -8701,6 +8712,7 @@ export type Database = {
       }
       save_menu: {
         Args: {
+          p_cover_credit?: string
           p_cover_position: number
           p_cover_url: string
           p_menu_id: string

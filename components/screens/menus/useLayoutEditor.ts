@@ -13,6 +13,7 @@ import {
   addDrink,
   addSection,
   layoutChanged,
+  creditOf,
   layoutFromMenu,
   layoutProblem,
   moveDrink,
@@ -129,7 +130,8 @@ export function useLayoutEditor(menu: MenuDetail, { paste = false }: { paste?: b
     // What this save writes: edits made while it's on the way save after it.
     const snapshot = outgoing;
     try {
-      await saveLayout(snapshot);
+      // The credit only when it changed, so an editor opened from older data can't clear someone's credit.
+      await saveLayout(creditOf(snapshot) === creditOf(saved) ? { ...snapshot, coverCredit: undefined } : snapshot);
       // Prices are the drinks' own: written once the menu holds them.
       if (Object.keys(snapshot.prices ?? {}).length) await savePrices(snapshot.prices!);
       setSaved({ ...snapshot, prices: {} });
@@ -140,7 +142,7 @@ export function useLayoutEditor(menu: MenuDetail, { paste = false }: { paste?: b
       setError(e instanceof Error ? e.message : 'Couldn’t save. Your changes are still here; try again.');
       return false;
     }
-  }, [layout, outgoing, changed, saveLayout, savePrices]);
+  }, [layout, outgoing, saved, changed, saveLayout, savePrices]);
 
   // Autosave: a moment after the last change, one save at a time. A layout that
   // can't be saved (a section with no name), or a save that failed (a price
@@ -172,6 +174,8 @@ export function useLayoutEditor(menu: MenuDetail, { paste = false }: { paste?: b
     coverBusy: cover.isPending,
     coverError,
     rename: (name: string) => edit({ ...layout, name }),
+    /** "Photo by": who took the cover photo. */
+    setCoverCredit: (credit: string) => edit({ ...layout, coverCredit: credit }),
     add: (key: string, drink: MenuDrink) => edit(addDrink(layout, key, drink)),
     /** Added from the library: says so, with Undo (which takes back only that drink). */
     addWithUndo: (key: string, drink: MenuDrink) => {
@@ -217,14 +221,15 @@ export function useLayoutEditor(menu: MenuDetail, { paste = false }: { paste?: b
       setCoverError(null);
       try {
         const url = await cover.mutateAsync();
-        if (url) update((l) => ({ ...l, coverUrl: url, coverPosition: 50 }));
+        // A new photo is someone else's until said otherwise.
+        if (url) update((l) => ({ ...l, coverUrl: url, coverPosition: 50, coverCredit: null }));
       } catch {
         setCoverError('Didn’t upload. Try again.');
       }
     },
     removeCover: () => {
       setCoverError(null);
-      edit({ ...layout, coverUrl: null });
+      edit({ ...layout, coverUrl: null, coverCredit: null });
     },
     persist,
     goLive: async () => {
