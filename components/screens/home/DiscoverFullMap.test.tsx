@@ -7,7 +7,7 @@ import type { Area } from '@/lib/nearMe';
 import { DiscoverFullMap } from './DiscoverFullMap';
 
 jest.mock('expo-router', () => ({ useRouter: () => ({ push: jest.fn() }) }));
-jest.mock('@/components/nav/WebTabBar', () => ({ useTabBarInset: () => 0 }));
+jest.mock('@/components/nav/WebTabBar', () => ({ useTabBarTop: () => 0 }));
 jest.mock('@/components/screens/home/SelectedBar', () => {
   const { Text } = jest.requireActual<typeof import('react-native')>('react-native');
   return { SelectedBar: ({ pin }: { pin: { name: string } }) => <Text>{`card ${pin.name}`}</Text> };
@@ -75,4 +75,14 @@ it('goes back to the list', async () => {
   await fireEvent.press(screen.getByLabelText('Show the list'));
   await fireEvent.press(screen.getByLabelText('Back to the list'));
   expect(onClose).toHaveBeenCalledTimes(2);
+});
+
+it('moves to a city once its bars arrive, if the map has not been moved', async () => {
+  const city: Area = { kind: 'city', city: 'New York', country_code: 'US', label: 'New York' };
+  const props = { named: [], area: city, me: null, title: 'New York', caption: '', onArea: jest.fn(), onClose: jest.fn() };
+  const view = await renderWithProviders(<DiscoverFullMap {...props} bars={[]} />);
+  const world = mockCamera;
+  await view.rerender(<DiscoverFullMap {...props} bars={[bar]} />);
+  expect(mockCamera).not.toEqual(world);
+  expect(mockCamera).toEqual(expect.objectContaining({ latitude: bar.latitude, longitude: bar.longitude }));
 });

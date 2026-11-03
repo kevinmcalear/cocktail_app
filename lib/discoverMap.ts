@@ -346,7 +346,8 @@ export interface Camera {
 
 /** A viewport from a map's centre and its [west, south, east, north] bounds, as MapLibre reports them. */
 export function viewportFrom(center: { lat: number; lng: number }, [west, south, east, north]: readonly [number, number, number, number], zoom: number): Viewport {
-  return { latitude: center.lat, longitude: center.lng, latitudeDelta: north - south, longitudeDelta: east - west, zoom };
+  // Across the antimeridian native MapLibre reports east < west (179 to -179): the span is 2 degrees, not -358.
+  return { latitude: center.lat, longitude: center.lng, latitudeDelta: north - south, longitudeDelta: east >= west ? east - west : east - west + 360, zoom };
 }
 
 const KM_PER_DEG = 111.045;

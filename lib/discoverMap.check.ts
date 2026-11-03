@@ -181,3 +181,6 @@ assert.equal(areasFrom(Array.from({ length: 100 }, (_, i) => cluster(i, 5, 2)), 
 assert.deepEqual(areasFrom([cluster(1, 9, 2)], { bounds: [5, 5, 6, 6], zoom: 9 }), [], 'out of view');
 assert.deepEqual(areasFrom([cluster(1, 9, 2)], { bounds: [0, 0, 3, 3], zoom: AREA_ZOOM }), [], 'up close there are no areas');
 assert.equal(areasFrom([cluster(1, 9, 2)], { bounds: [0, 0, 3, 3], zoom: AREA_ZOOM - 1 }).length, 1);
+
+// Across the antimeridian (native MapLibre reports east < west) the span is the short way round.
+assert.equal(Math.round(viewportFrom({ lat: -17, lng: 180 }, [179, -18, -179, -16], 8).longitudeDelta), 2);

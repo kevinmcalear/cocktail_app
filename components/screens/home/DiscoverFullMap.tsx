@@ -3,7 +3,7 @@ import { StyleSheet, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import { Body, Caption, GlassButton, GlassSurface, PressableScale, Sheet, useDs, useGutter } from '@/components/ds';
-import { useTabBarInset } from '@/components/nav/WebTabBar';
+import { useTabBarTop } from '@/components/nav/WebTabBar';
 import { IconSymbol } from '@/components/ui/icon-symbol';
 import { layout, radius, space } from '@/constants/tokens';
 import type { MapBar } from '@/hooks/useDiscoverHome';
@@ -49,15 +49,21 @@ export function DiscoverFullMap({ bars, named, area, me, title, caption, start =
   const ds = useDs();
   const gutter = useGutter();
   const insets = useSafeAreaInsets();
-  const bottom = useTabBarInset();
+  const bottom = useTabBarTop();
   const pins = useBarPins(bars, named);
-  // Opens where the card was looking (or where this area was searched); after that the person moves it, never a refit.
-  const [camera] = useState<Camera | null>(() => start ?? cameraForArea(area, me) ?? cameraFor(pins));
-  const [from, setFrom] = useState<Camera | null>(camera);
+  // Opens on the area as the card fits it (or where this area was searched), not on the card's own pan.
+  const fit = start ?? cameraForArea(area, me) ?? cameraFor(pins);
+  const [camera, setCamera] = useState<Camera | null>(fit);
+  const [from, setFrom] = useState<Camera | null>(fit);
   const [view, setView] = useState<Viewport | null>(null);
   const [pickedId, setPickedId] = useState<string | null>(null);
   const picked = pins.find((p) => p.id === pickedId) ?? null;
   const offer = view && movedFrom(from, view) ? view : null;
+  // A city's bars, or my place, arriving after it opened: follow them until the person moves the map, then never refit.
+  if (!offer && (fit?.latitude !== camera?.latitude || fit?.longitude !== camera?.longitude || fit?.zoom !== camera?.zoom)) {
+    setCamera(fit);
+    setFrom(fit);
+  }
 
   const searchHere = () => {
     if (!offer) return;

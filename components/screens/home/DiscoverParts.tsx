@@ -67,8 +67,9 @@ export function MapCard({ bars, named, area, me, caption, selectedId = null, pan
         {mapAvailable ? (
           <DiscoverMap pins={pins} me={me} selectedId={selectedId} onSelect={open} onViewportChange={noop} camera={camera} scheme={ds.scheme} accent={ds.accentFill} compact={!pane} style={StyleSheet.absoluteFill} />
         ) : null}
+        {/* A tap on the caption opens the map too; screen readers get the one Open the map button beside it, and the caption as status. */}
         {caption ? (
-          <PressableScale role={onExpand ? 'button' : undefined} accessibilityLabel={onExpand ? `${caption}. Open the map` : undefined} onPress={onExpand} disabled={!onExpand} style={styles.caption}>
+          <PressableScale accessible={false} focusable={false} onPress={onExpand} disabled={!onExpand} style={styles.caption}>
             <GlassSurface style={styles.captionGlass}>
               <DsText variant="label" role="status">
                 {caption}

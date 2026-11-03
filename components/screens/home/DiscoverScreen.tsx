@@ -88,6 +88,15 @@ export function DiscoverScreen() {
   const eyebrow = `${placeName(area, nearby.bars)}${open ? ' · open now' : ''}`;
   const caption = mapCaption(open, nearby.total, area);
   const fullMap = full && !split && !offline;
+  // Offline or wide, the full map goes; it doesn't come back on its own when that passes.
+  if (full && (split || offline)) setFull(false);
+  const listRef = useRef<ComponentRef<typeof ScrollView>>(null);
+  // On the web aria-hidden alone leaves the list's links in the tab order under the map; inert takes them out.
+  useEffect(() => {
+    if (Platform.OS !== 'web') return;
+    const node = listRef.current?.getScrollableNode() as { toggleAttribute?: (name: string, on: boolean) => void } | null;
+    node?.toggleAttribute?.('inert', fullMap);
+  }, [fullMap]);
   // The full map's code (web) loads once the card is up, so Open the map opens at once.
   useEffect(() => {
     if (!split) whenIdle(DiscoverFullMap.preload);
@@ -144,7 +153,7 @@ export function DiscoverScreen() {
   // Near me on an iPhone's (and phone web's) top row; Android's top is its search bar, and the desktop draws none.
   const nearMe = Platform.OS === 'android' || wideWeb ? undefined : <GlassButton icon="location" accessibilityLabel="Near me" onPress={onNearMe} />;
   const list = (
-    <ScrollView aria-hidden={fullMap} style={split ? { width: DESK_LIST + space.xxxl * 2, flexGrow: 0 } : undefined} contentContainerStyle={{ paddingBottom: bottom }}>
+    <ScrollView ref={listRef} aria-hidden={fullMap} style={split ? { width: DESK_LIST + space.xxxl * 2, flexGrow: 0 } : undefined} contentContainerStyle={{ paddingBottom: bottom }}>
       <ScreenHeader place={false} add={false} actions={nearMe} />
       <View style={[split ? styles.deskColumn : column, styles.page]}>
         <View ref={head} collapsable={false}>
