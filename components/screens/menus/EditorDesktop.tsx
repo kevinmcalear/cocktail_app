@@ -14,7 +14,7 @@ import { cannotAdd, copySections, filterLibrary, groupLibrary, libraryNote, name
 
 import { LibraryGroupHead, LibraryRow } from './AddDrinkSheet';
 import { MakeFromSearch, useMakeDrink } from './MakeFromSearch';
-import { EDITOR_STATUS, EditorSections, MenuCoverEdit, MenuNameInput, NextStep, SaveLine, useHomeMenu } from './EditorParts';
+import { CoverCreditField, EDITOR_STATUS, EditorSections, MenuCoverEdit, MenuNameInput, NextStep, SaveLine, useHomeMenu } from './EditorParts';
 import { GuestPreview } from './GuestPreview';
 import { Check, MonoLabel, ReadyChecks, type CheckTarget } from './ReviewParts';
 import { Choice, MenuSheet } from './MenuSheet';
@@ -170,6 +170,7 @@ function Inspector({ editor, venueName }: { editor: LayoutEditor; venueName: str
           note={coverUrl ? (venueName ? `For ${venueName}` : 'Just yours') : 'Drawn from your drinks until you add a photo'}
           action={<MenuCoverEdit editor={editor} height={96} />}
         />
+        <CoverCreditField editor={editor} />
       </View>
     </ScrollView>
   );

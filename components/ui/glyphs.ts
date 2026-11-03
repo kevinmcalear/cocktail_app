@@ -128,7 +128,10 @@ const G = {
   'xmark.circle.fill': filled({ d: RING + 'M9 9l6 6M15 9l-6 6', f: RING }),
   checkmark: { d: 'M4.5 12.5l4.5 4.5L19.5 6.5' },
   jigger: { d: 'M7 3.5h10l-3.5 8.5h-3zM10.5 12h3l3.5 8.5H7z' },
+  'checkmark.circle': { d: RING + 'M8 12.3l2.8 2.8L16.2 9.7', f: RING },
   'checkmark.circle.fill': filled({ d: RING + 'M8 12.3l2.8 2.8L16.2 9.7', f: RING }),
+  // A step still to do (the first round, Set up <bar>): the ring the done tick sits in.
+  circle: { d: RING, f: RING },
   'checkmark.seal.fill': filled({
     d: 'M12 3l2.3 1.6 2.8-.1.9 2.7 2.3 1.6-.9 2.7.9 2.7-2.3 1.6-.9 2.7-2.8-.1L12 21l-2.3-1.6-2.8.1-.9-2.7-2.3-1.6.9-2.7-.9-2.7 2.3-1.6.9-2.7 2.8.1zM9 12l2 2 4-4',
     f: 'M12 3l2.3 1.6 2.8-.1.9 2.7 2.3 1.6-.9 2.7.9 2.7-2.3 1.6-.9 2.7-2.8-.1L12 21l-2.3-1.6-2.8.1-.9-2.7-2.3-1.6.9-2.7-.9-2.7 2.3-1.6.9-2.7 2.8.1z',
@@ -166,11 +169,14 @@ const G = {
   person: { d: PERSON, f: C(12, 8, 3.8) },
   'person.crop.circle': { d: YOU, f: C(12, 12, 8.5) },
   'person.circle.fill': filled({ d: YOU, f: C(12, 12, 8.5) }),
+  'person.2': { d: TEAM, f: C(9, 8, 3) },
   'person.2.fill': filled({ d: TEAM, f: C(9, 8, 3) }),
   'person.badge.plus': { d: C(9.5, 8, 3.8) + 'M3 20.5v-1a4.5 4.5 0 0 1 4.5-4.5h4a4.5 4.5 0 0 1 4.5 4.5v1M19 8v6M16 11h6', f: C(9.5, 8, 3.8) },
   'person.badge.minus': { d: C(9.5, 8, 3.8) + 'M3 20.5v-1a4.5 4.5 0 0 1 4.5-4.5h4a4.5 4.5 0 0 1 4.5 4.5v1M16 11h6', f: C(9.5, 8, 3.8) },
   envelope: { d: R(3, 5, 18, 14, 2) + 'M3.5 6.5l8.5 6.5 8.5-6.5', f: R(3, 5, 18, 14, 2) },
   'bubble.left': { d: BUBBLE, f: BUBBLE },
+  // The phone in your hand (Add it to your home screen); `phone` is a call.
+  iphone: { d: R(6.5, 2.5, 11, 19, 2.5) + 'M11 18.5h2', f: R(6.5, 2.5, 11, 19, 2.5) },
   phone: { d: 'M20.5 16.4v2.6a1.8 1.8 0 0 1-2 1.8 17.6 17.6 0 0 1-7.7-2.7 17.3 17.3 0 0 1-5.3-5.3A17.6 17.6 0 0 1 2.8 5.1 1.8 1.8 0 0 1 4.6 3.1h2.6a1.8 1.8 0 0 1 1.8 1.5c.1.9.4 1.7.6 2.5a1.8 1.8 0 0 1-.4 1.9L8.1 10.1a14.2 14.2 0 0 0 5.3 5.3l1.1-1.1a1.8 1.8 0 0 1 1.9-.4c.8.3 1.6.5 2.5.6a1.8 1.8 0 0 1 1.6 1.9z' },
   globe: { d: RING + 'M3 12h18M12 3a13.5 13.5 0 0 1 3.6 9 13.5 13.5 0 0 1-3.6 9 13.5 13.5 0 0 1-3.6-9A13.5 13.5 0 0 1 12 3z', f: RING },
   instagram: { d: R(3.5, 3.5, 17, 17, 5) + C(12, 12, 4) + 'M17.2 6.8h.01' },
