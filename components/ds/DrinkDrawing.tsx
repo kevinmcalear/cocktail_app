@@ -58,6 +58,11 @@ const peek = (inputs: SketchInputs, seed: string, thumb: boolean, night: boolean
 // The bare glass every drawing shows until its own is ready (the board's drawn glass, never a blank hole).
 const BARE = bareGlassSketch('Coupe');
 
+/** The bare glass at a drawing's size, for a place with no drawing (yet): never a blank hole. */
+export function BareGlass({ size, bare }: Pick<DrinkDrawingProps, 'size' | 'bare'>) {
+  return <DrinkDrawing inputs={BARE} seed="bare" size={size} pour={false} bare={bare} />;
+}
+
 export interface DrinkDrawingProps {
   inputs: SketchInputs;
   /** What makes it this drink's drawing: its id. */

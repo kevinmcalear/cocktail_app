@@ -2,6 +2,7 @@ import { Image } from 'expo-image';
 import { Platform, StyleSheet, View } from 'react-native';
 import Svg, { Path } from 'react-native-svg';
 
+import { BareGlass } from '@/components/ds/DrinkDrawing';
 import { DrinkDrawing, DrinkImage, isRowSize, useDs, type DrawingSize } from '@/components/ds';
 import { sceneFor } from '@/components/ds/SketchDrawing';
 import { ICON_STROKE } from '@/components/ui/glyphs';
@@ -53,7 +54,7 @@ export function MenuDrawing({ itemId, size, ink, fallback, bare }: { itemId: str
     );
   }
   if (!inputs) {
-    if (!fallback) return <View style={{ width: px, height: px }} />;
+    if (!fallback) return <BareGlass size={size} bare={bare} />;
     return (
       <View style={{ width: px }} aria-hidden>
         <DrinkImage thumb source={fallback.imageUrl} glass={fallback.glass} itemId={itemId} accessibilityLabel="" radius="control" />
