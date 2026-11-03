@@ -592,11 +592,9 @@ export function useSetFillLevel() {
     },
     onMutate: async ({ itemId, level }) => {
       await client.cancelQueries({ queryKey: key });
-      const before = client.getQueriesData<Omit<ShelfItem, 'uses' | 'section'>[]>({ queryKey: key });
       client.setQueriesData<Omit<ShelfItem, 'uses' | 'section'>[]>({ queryKey: key }, (rows) => rows?.map((r) => (r.id === itemId ? { ...r, fillLevel: level } : r)));
-      return { before };
     },
-    onError: (_e, _v, ctx) => ctx?.before.forEach(([k, data]) => client.setQueryData(k, data)),
+    // A failed write is put right by the refetch below, so one bottle's failure can't undo another's change.
     onSettled: () => client.invalidateQueries({ queryKey: key }),
   });
 }
