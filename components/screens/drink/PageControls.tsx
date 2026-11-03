@@ -1,10 +1,11 @@
-import { useRouter } from 'expo-router';
 import type { ReactNode } from 'react';
 import { StyleSheet, View } from 'react-native';
 import Animated, { interpolate, useAnimatedStyle, type SharedValue } from 'react-native-reanimated';
 
 import { DsText, GlassButton, useDs, useGutter } from '@/components/ds';
 import { displayFaces, layout, space, type BackbarScheme } from '@/constants/tokens';
+
+import { useItemBack } from './useItemBack';
 
 /** How long Back runs: its circle, or the pill with where it goes (desktop board's measure). */
 export const backWidth = (label?: string) => (label ? Math.round(46 + label.length * 8.2) : layout.minTapTarget);
@@ -25,7 +26,7 @@ export function BarBacking({ height, scrollY, tuck }: { height: number; scrollY:
   // None while the page is pulled past its top: the sky shows through there (ScrollSky).
   const backing = useAnimatedStyle(() => {
     const y = scrollY.get();
-    return { opacity: y <= 0 ? 0 : interpolate(y, [tuck - space.xxxl, tuck], [0, 1], 'clamp') };
+    return { opacity: y < 0 ? 0 : interpolate(y, [tuck - space.xxxl, tuck], [0, 1], 'clamp') };
   });
   return <Animated.View style={[styles.backing, { height, backgroundColor: ds.c.ground, borderBottomColor: ds.c.line }, backing]} />;
 }
@@ -68,7 +69,7 @@ interface PageControlsProps {
  */
 export function PageControls({ over, top, scrollY, tuck, smallAt = tuck, title, titleInset = 0, noBack, backLabel, save, onShare, onEdit, editLabel = 'Edit', more, children }: PageControlsProps) {
   const ds = useDs();
-  const router = useRouter();
+  const goBack = useItemBack();
   const gutter = useGutter();
   const barHeight = top + space.sm * 2 + layout.minTapTarget;
   const small = useSmallTitle(scrollY, smallAt);
@@ -80,7 +81,7 @@ export function PageControls({ over, top, scrollY, tuck, smallAt = tuck, title, 
       icon="chevron.left"
       label={backLabel}
       scheme={over}
-      onPress={() => (router.canGoBack() ? router.back() : router.replace('/'))}
+      onPress={goBack}
     />
   );
   return (

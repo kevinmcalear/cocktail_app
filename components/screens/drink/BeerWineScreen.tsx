@@ -158,6 +158,7 @@ function BeerWinePage({ kind, item, favorite, onToggleFavorite, canEdit, onEdit 
       actions={{
         save: { saved: favorite, onToggle: onToggleFavorite, label: ['Add to favorites', 'Remove from favorites'], icon: 'heart' },
         onShare: () => void shareOrCopy(drinkUrl(slug ?? item.id), item.name, 'drink'),
+        report: { itemId: item.id },
         onEdit: canEdit ? onEdit : undefined,
         editLabel: `Edit ${kind}`,
       }}

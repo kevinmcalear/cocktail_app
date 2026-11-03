@@ -1,9 +1,6 @@
 import { StyleSheet, View } from 'react-native';
-import Animated, { useAnimatedScrollHandler, useSharedValue } from 'react-native-reanimated';
 
 import { PencilState, useDs } from '@/components/ds';
-// By path, not the ds barrel: its Reanimated would land in the web's every-page chunk (check-web-chunks).
-import { ScrollSky } from '@/components/ds/ScrollSky';
 import { ScreenHeader } from '@/components/nav/ScreenHeader';
 import { usePageColumn } from '@/components/nav/Page';
 import { useTabBarInset } from '@/components/nav/WebTabBar';
@@ -19,6 +16,7 @@ import { HomeTonight } from './HomeTonight';
 import { useNightHandover } from './NightHandover';
 import { NoVenue, showsLists, StaffLists, StaffSide } from './StaffTonight';
 import { TonightHead, TonightSky } from './TonightParts';
+import { TonightScroll } from './TonightScroll';
 import { useStaffTonight } from './useStaffTonight';
 
 /** The column beside the lists on wide web (Prod-desk-today). */
@@ -52,21 +50,15 @@ function Frame({ sky, eyebrow, children }: { sky: readonly string[]; eyebrow: st
   const bottom = useTabBarInset();
   const wide = useIsWideWeb();
   const column = usePageColumn(wide ? 'wide' : 'text');
-  const scrollY = useSharedValue(0);
-  const onScroll = useAnimatedScrollHandler((e) => scrollY.set(e.contentOffset.y));
   return (
     <View style={[styles.screen, { backgroundColor: ds.c.ground }]}>
-      {/* Behind the scroll view, so a pull past the top shows more sky (ScrollSky). */}
-      <ScrollSky scrollY={scrollY} cap={<TonightSky ids={sky} cap />}>
-        <TonightSky ids={sky} />
-      </ScrollSky>
-      <Animated.ScrollView onScroll={onScroll} scrollEventThrottle={16} contentContainerStyle={{ paddingBottom: bottom }}>
+      <TonightScroll sky={<TonightSky ids={sky} />} cap={<TonightSky ids={sky} cap />} contentContainerStyle={{ paddingBottom: bottom }}>
         <ScreenHeader />
         <View style={[column, styles.body]}>
           <TonightHead eyebrow={eyebrow} />
           {children}
         </View>
-      </Animated.ScrollView>
+      </TonightScroll>
     </View>
   );
 }

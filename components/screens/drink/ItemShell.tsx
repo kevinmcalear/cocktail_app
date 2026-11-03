@@ -1,7 +1,7 @@
 import { useIsFocused } from 'expo-router';
 import { HeaderBackContext, HeaderHeightContext } from 'expo-router/react-navigation';
 import { StatusBar } from 'expo-status-bar';
-import { use, useState, type ReactNode } from 'react';
+import { use, useLayoutEffect, useRef, useState, type ReactNode } from 'react';
 import { Platform, Pressable, StyleSheet, useWindowDimensions, View, type LayoutChangeEvent } from 'react-native';
 import Animated, { useAnimatedReaction, useAnimatedScrollHandler, useSharedValue, type SharedValue } from 'react-native-reanimated';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
@@ -108,8 +108,20 @@ export function ItemShell({ name, pane, photo, art, size, liquid, title, action,
   // A pane (the Library beside its list, the editor's preview) keeps the drawn controls.
   const materialBar = Platform.OS === 'android' && !columns && !pane;
   // One button on the right, …, holding Edit, Save, Share and the rest, in every bar (iOS's, Android's, the web's). `k` is what it shows, for iOS's bar to compare.
-  const k = [!!actions.onEdit, actions.editLabel, actions.save?.saved, actions.save?.label[0], !!actions.onShare, !!actions.report, !!actions.adminFix].join('|');
-  const controls: Controls = { more: <ItemMoreMenu name={name} k={k} {...actions} /> };
+  // iOS's bar draws it again only when `k` changes, so its taps go through `live` to the latest handlers (a slug or a user that loads later).
+  const live = useRef(actions);
+  useLayoutEffect(() => {
+    live.current = actions;
+  });
+  const k = [!!actions.onEdit, actions.editLabel, actions.save?.saved, actions.save?.label[0], actions.save?.icon, !!actions.onShare, actions.report?.itemId, !!actions.adminFix].join('|');
+  const relayed: ItemActions = {
+    ...actions,
+    onEdit: actions.onEdit && (() => live.current.onEdit?.()),
+    onShare: actions.onShare && (() => live.current.onShare?.()),
+    adminFix: actions.adminFix && (() => live.current.adminFix?.()),
+    save: actions.save && { ...actions.save, onToggle: () => live.current.save?.onToggle() },
+  };
+  const controls: Controls = { more: <ItemMoreMenu name={name} k={k} {...relayed} /> };
   useItemHeader({ name, on: nativeBar, pane, controls });
   const barHeight = use(HeaderHeightContext) ?? 0;
   // Where it goes, from the page under this one, where there's room for a label (desktop boards).

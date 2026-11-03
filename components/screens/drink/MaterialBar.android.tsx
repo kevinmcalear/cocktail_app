@@ -1,4 +1,3 @@
-import { useRouter } from 'expo-router';
 import { StatusBar } from 'expo-status-bar';
 import { createContext, use, useMemo, useState, type ComponentProps, type ReactNode } from 'react';
 import { Pressable, StyleSheet, View } from 'react-native';
@@ -12,6 +11,7 @@ import { withAlpha } from '@/lib/color';
 import { itemTones, photoTones, type Tones } from '@/lib/tones';
 
 import { DOCKED } from './DrawingHero';
+import { useItemBack } from './useItemBack';
 import type { Controls } from './ItemHeader';
 
 /** Where the bar's glyph lands beside Back (And-page: 36 dp at 56, centred in the bar). */
@@ -140,7 +140,7 @@ interface MaterialBarProps {
  */
 export function MaterialBar({ name, top, photo, hero, width, scrollY, smallAt, noBack, controls, drawing }: MaterialBarProps) {
   const ds = useDs();
-  const router = useRouter();
+  const back = useItemBack();
   const tones = useItemTones();
   const { save, onShare, onEdit, editLabel = 'Edit', more } = controls;
   const room = [save, onShare, more].filter(Boolean).length * material.iconButton + (onEdit ? EDIT_WIDTH : 0) + material.barInset;
@@ -162,7 +162,7 @@ export function MaterialBar({ name, top, photo, hero, width, scrollY, smallAt, n
       {photo ? <PhotoTitle name={name} top={smallTop} width={width - PHOTO_TITLE_LEFT - room} tuck={smallAt ?? tuck} scrollY={scrollY} /> : <GlideTitle name={name} top={top} smallTop={smallTop} room={width - TITLE_LEFT - room} />}
       <View style={[styles.row, { top }]}>
         <Circle value={circle}>
-          {noBack ? <View /> : <BarIcon label="Back" icon="arrow.left" onPress={() => (router.canGoBack() ? router.back() : router.replace('/'))} />}
+          {noBack ? <View /> : <BarIcon label="Back" icon="arrow.left" onPress={back} />}
           <View style={styles.tools}>
             {save ? <BarIcon label={save.label[save.saved ? 1 : 0]} icon={save.icon === 'heart' ? (save.saved ? 'heart.fill' : 'heart') : save.saved ? 'bookmark.fill' : 'bookmark'} onPress={save.onToggle} /> : null}
             {onEdit ? (

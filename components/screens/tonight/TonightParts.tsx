@@ -57,8 +57,8 @@ function useDrinkTint(itemId: string): string | null {
 /**
  * The sky over the top of the page: the hero drinks' colours left to right,
  * fading into the ground. Behind the page in a ScrollSky; it scrolls with the page.
+ * `cap`: its top edge only, unfaded, for ScrollSky's pull.
  */
-/** `cap`: its top edge only, unfaded, for ScrollSky's pull. */
 export function TonightSky({ ids, cap }: { ids: readonly string[]; cap?: boolean }) {
   const ds = useDs();
   const a = useDrinkTint(ids[0] ?? '');

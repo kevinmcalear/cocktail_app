@@ -7,7 +7,7 @@ import { drinkSeed, seedDrink } from '@/lib/drinkSeeds';
 import { DrinkLoading } from './DrinkLoading';
 import { ItemLoading } from './LoadingBar';
 
-const mockOptions: { headerShown?: boolean; headerLeft?: () => unknown } = {};
+const mockOptions: { headerShown?: boolean; unstable_headerLeftItems?: () => unknown[] } = {};
 jest.mock('expo-router', () => ({
   useNavigation: () => ({ setOptions: (o: object) => Object.assign(mockOptions, o), canGoBack: () => false }),
   useSegments: () => [],
@@ -40,5 +40,5 @@ test('with no row, just the page ground', async () => {
 test('Back shows while it loads (Kevin, 3 Nov)', async () => {
   await renderWithProviders(<ItemLoading seed={null} />);
   expect(mockOptions.headerShown).toBe(true);
-  expect(mockOptions.headerLeft).toBeDefined();
+  expect(mockOptions.unstable_headerLeftItems?.()).toHaveLength(1);
 });

@@ -29,9 +29,9 @@ export interface ItemActions {
  * Report and Fix as admin, whichever the viewer has, for every role, on every
  * page with the shared header (drink, beer, wine, bottle, house-made). View as
  * lives in Settings (no role switcher on pages, 29 Oct). Nothing when there's
- * nothing to put in it.
+ * nothing to put in it. `k`: what it shows, as plain words, so iOS's bar
+ * (ItemHeader) knows when to draw it again.
  */
-/** `k`: what it shows, as plain words, so iOS's bar (ItemHeader) knows when to draw it again. */
 export function ItemMoreMenu({ name, onEdit, editLabel = 'Edit', save, onShare, report, adminFix, scheme }: ItemActions & { name: string; scheme?: 'light' | 'dark'; k?: string }) {
   const signedIn = useSignedIn();
   const [open, setOpen] = useState(false);

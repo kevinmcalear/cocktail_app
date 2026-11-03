@@ -1,4 +1,4 @@
-import { router, useNavigation, useSegments, type Href } from 'expo-router';
+import { useNavigation } from 'expo-router';
 import type { NativeStackHeaderItem, NativeStackNavigationOptions } from 'expo-router/native-stack';
 import { isValidElement, useLayoutEffect, useRef, type ComponentProps, type ReactNode } from 'react';
 import { StyleSheet, View } from 'react-native';
@@ -6,10 +6,10 @@ import Animated, { type SharedValue } from 'react-native-reanimated';
 
 import { BackbarTheme, Button, DsText, useDs } from '@/components/ds';
 import { displayFaces, space } from '@/constants/tokens';
-import { TABS } from '@/lib/tabs';
 
 import { BarButton } from './MaterialBar';
 import { useSmallTitle, type PageControls } from './PageControls';
+import { useItemBack } from './useItemBack';
 
 export type Controls = Pick<ComponentProps<typeof PageControls>, 'save' | 'onShare' | 'onEdit' | 'editLabel' | 'more'>;
 
@@ -42,17 +42,16 @@ interface ItemHeaderProps {
 export function useItemHeader({ name, on, pane, controls }: ItemHeaderProps) {
   const navigation = useNavigation();
   const ds = useDs();
-  // Back is the board's own glass circle, always (Kevin, 3 Nov: "there is no back button"). The system's Back is
-  // drawn only when the stack has a page under this one, and a shared page can open at the bottom of its tab's
-  // stack (a cold link opens in Tonight's group, lib/tabs.ts; a restored app). With nothing under it, Back goes to
-  // the tab's first page. The edge swipe still goes back where there is somewhere to go.
-  const group = (useSegments() as string[])[1];
-  const home = TABS.find((t) => t.route === group)?.path ?? '/';
+  // Back is the board's own glass circle, always (Kevin, 3 Nov: "there is no back button"): the system's is drawn
+  // only when the stack has a page under this one (useItemBack). The edge swipe still goes back where it can.
+  const back = useItemBack();
+  const latestBack = useRef(back);
 
   // setOptions renders the stack, and so this page: options change only with what they show, and tap through to the latest handlers.
   const latest = useRef(controls);
   useLayoutEffect(() => {
     latest.current = controls;
+    latestBack.current = back;
   });
   const { save, onShare, onEdit, editLabel, more } = controls;
   // ponytail: a node's identity changes every render, so More is compared by its plain props. A More whose only change is a closure keeps the old one.
@@ -77,7 +76,8 @@ export function useItemHeader({ name, on, pane, controls }: ItemHeaderProps) {
           headerTintColor: ds.c.ink,
           title: name,
           headerBackVisible: false,
-          headerLeft: () => theme(<BarButton accessibilityLabel="Back" icon="chevron.left" onPress={() => (navigation.canGoBack() ? navigation.goBack() : router.replace(home as Href))} />),
+          // An item, not headerLeft: iOS 26 puts a headerLeft in its own glass, around the button's glass.
+          unstable_headerLeftItems: () => [{ type: 'custom', element: <>{theme(<BarButton accessibilityLabel="Back" icon="chevron.left" onPress={() => latestBack.current()} />)}</>, hidesSharedBackground: true }],
           headerUserInterfaceStyle: ds.scheme,
           // The page draws the board's own backing once it slides under the bar, not iOS 26's edge blur over the sky.
           scrollEdgeEffects: { top: 'hidden' },
@@ -86,7 +86,7 @@ export function useItemHeader({ name, on, pane, controls }: ItemHeaderProps) {
         };
     navigation.setOptions(options);
     // eslint-disable-next-line react-hooks/exhaustive-deps -- by value: see `latest` and `moreKey`.
-  }, [navigation, pane, on, home, name, ds.scheme, ds.c.ink, save?.saved, save?.icon, save?.label[0], save?.label[1], !!onShare, !!onEdit, editLabel, moreKey]);
+  }, [navigation, pane, on, name, ds.scheme, ds.c.ink, save?.saved, save?.icon, save?.label[0], save?.label[1], !!onShare, !!onEdit, editLabel, moreKey]);
 
   // Editing in place takes over the same screen: it draws its own top, so the bar goes with this page.
   useLayoutEffect(() => {
