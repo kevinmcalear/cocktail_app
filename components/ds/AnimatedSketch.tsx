@@ -8,7 +8,7 @@ import { boundsOf, GLASS_BANDS, type Scene, type SceneEl } from '@/lib/sketch/sc
 import { inBarGlassCached } from '@/lib/sketch/barGlass';
 import { glowScene } from '@/lib/sketch/passes';
 import { sceneToSvg } from '@/lib/sketch/svg';
-import { liquidOf, type SketchInputs } from '@/lib/sketch/types';
+import type { SketchInputs } from '@/lib/sketch/types';
 
 import { useDrawingGlasses } from './drawingGlasses';
 import { pencilScene } from './PencilState';
@@ -281,7 +281,7 @@ export const AnimatedSketch = memo(function AnimatedSketch({ inputs: stored, see
   const night = useDs().scheme === 'dark';
   const inputs = inBarGlassCached(sameInputs(stored), useDrawingGlasses());
   const scene = sceneFor(inputs, seed, detail, true);
-  const shown = pencil ? pencilScene(scene, night) : night ? nightOf(scene, liquidOf(inputs).hex) : scene;
+  const shown = pencil ? pencilScene(scene, night) : night ? nightOf(scene, inputs) : scene;
   return <AnimatedScene scene={shown} play={play} delay={delay} glow={night && glow && !pencil ? glowUri(shown) : null} />;
 });
 
