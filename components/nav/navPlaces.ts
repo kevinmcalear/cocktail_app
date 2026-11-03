@@ -121,11 +121,12 @@ export function useSideNotes(venueId: string | null): SideNotes {
   const on = useMemo(() => (venueId ? groupMenus((menus ?? []).filter((m) => m.barId === venueId), now).on : []), [menus, venueId, now]);
   const caps = useCapabilities(venueId).data;
   const canPrep = !!venueId && Array.isArray(caps) && (caps.includes('prep') || caps.includes('specs'));
-  const prepData = usePrepData(canPrep ? venueId : null, on.map((m) => m.id)).data;
-  const low = useMemo(
-    () => (prepData ? buildPrepList({ ...prepData, servesPerDrink: DEFAULT_SERVES, startsAt: tonightAt6(), now: new Date(now) }).make.length : 0),
-    [prepData, now]
-  );
+  // The count only: five minutes fresh, no refetch on focus, and the same query Tonight and Prep read, so a cold page adds nothing it hasn't asked for.
+  const low =
+    usePrepData(canPrep ? venueId : null, on.map((m) => m.id), {
+      staleTime: 5 * 60_000,
+      select: (d) => buildPrepList({ ...d, servesPerDrink: DEFAULT_SERVES, startsAt: tonightAt6(), now: new Date(now) }).make.length,
+    }).data ?? 0;
   const shelf = useShelf().data?.length;
   return {
     // One menu running is named, as the board draws it ("Autumn, on now"); several are counted.

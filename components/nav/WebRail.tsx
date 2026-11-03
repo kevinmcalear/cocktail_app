@@ -5,10 +5,10 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { DsText, GlassButton, PressableScale, useDs } from '@/components/ds';
 import { IconSymbol } from '@/components/ui/icon-symbol';
 import { CurrentUserAvatar, useUserDisplayName } from '@/components/ui/UserAvatar';
-import { font, layout, radius, space } from '@/constants/tokens';
+import { font, layout, radius, space, STATUS } from '@/constants/tokens';
 import { WEB_RAIL_WIDTH } from '@/hooks/useIsWideWeb';
 import { currentProps } from '@/lib/a11yState';
-import { withAlpha } from '@/lib/color';
+import { readableAccent, withAlpha } from '@/lib/color';
 import { roleLabel } from '@/lib/roles';
 import { footerLine, shortPersonName } from '@/lib/shellNav';
 
@@ -16,9 +16,10 @@ import { useNavPlaces, useSideNotes, type Place } from './navPlaces';
 import { VenueSwitcher } from './VenueSwitcher';
 import type { SideNavProps } from './WebSideNav';
 
-function RailItem({ place, note, current, onPress }: { place: Place; note?: string; current: boolean; onPress: () => void }) {
+function RailItem({ place, note, warn, current, onPress }: { place: Place; note?: string; warn?: boolean; current: boolean; onPress: () => void }) {
   const ds = useDs();
   const color = current ? ds.accentText : ds.c.muted;
+  const warnInk = readableAccent(STATUS.warning, ds.c.ground);
   return (
     <PressableScale
       role="link"
@@ -33,6 +34,7 @@ function RailItem({ place, note, current, onPress }: { place: Place; note?: stri
       <DsText variant="caption" color={color} numberOfLines={1} align="center" style={[styles.label, current && styles.strong]}>
         {place.short ?? place.label}
       </DsText>
+      {warn ? <View style={[styles.dot, { backgroundColor: warnInk }]} /> : null}
     </PressableScale>
   );
 }
@@ -67,7 +69,7 @@ export function WebRail({ current, go, searching, onSearch, onNew }: SideNavProp
           group.length ? (
             <View key={i} style={[styles.group, i > 0 && { borderTopWidth: StyleSheet.hairlineWidth, borderTopColor: ds.c.line }]}>
               {group.map((p) => (
-                <RailItem key={p.key} place={p} note={notes[p.key]?.text} current={current === p.key} onPress={() => go(p)} />
+                <RailItem key={p.key} place={p} note={notes[p.key]?.text} warn={notes[p.key]?.warn} current={current === p.key} onPress={() => go(p)} />
               ))}
             </View>
           ) : null
@@ -103,6 +105,8 @@ const styles = StyleSheet.create({
   // A tab the venue just switched on: the phone bar's dot, by the icon's top right.
   // The board sets these 13/16 with no tracking, so a semibold Collection still fits the 64.
   label: { lineHeight: 16, letterSpacing: 0 },
+  // "1 low" on House-made, drawn as the board's amber mark by the icon.
+  dot: { position: 'absolute', top: 6, right: 14, width: 8, height: 8, borderRadius: radius.pill },
   strong: { ...font.semiBold },
   new: { width: layout.minTapTarget, height: layout.minTapTarget, marginTop: space.sm, borderRadius: radius.pill, borderWidth: 1, alignItems: 'center', justifyContent: 'center' },
   you: { marginTop: 'auto', minWidth: layout.minTapTarget, minHeight: layout.minTapTarget, alignItems: 'center', justifyContent: 'center' },
