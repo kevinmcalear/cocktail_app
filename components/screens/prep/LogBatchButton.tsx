@@ -2,7 +2,7 @@ import { useRouter, type Href } from 'expo-router';
 
 import { Button, useToast } from '@/components/ds';
 import { useLogBatch } from '@/hooks/useBatches';
-import { itemHref } from '@/lib/itemRoutes';
+import { itemHref, labelHref } from '@/lib/itemRoutes';
 import { formatQuantity, toQuantity } from '@/lib/quantity';
 
 /**
@@ -16,9 +16,9 @@ export function useLogBatchNow(barId: string) {
   const logBatch = useLogBatch(barId);
   return (id: string, name: string, batch: { amount: number; unit: string } | null) => () => {
     if (!batch) return router.push(itemHref('Ingredient', id) as Href);
-    logBatch.mutate({ itemId: id, ...batch });
+    const logged = logBatch.mutate({ itemId: id, ...batch });
     const q = toQuantity(batch.amount, batch.unit);
-    toast.show({ title: `Logged ${q ? formatQuantity(q) : `${batch.amount} ${batch.unit}`} of ${name}` });
+    toast.show({ title: `Logged ${q ? formatQuantity(q) : `${batch.amount} ${batch.unit}`} of ${name}`, action: { label: 'Label it', onPress: () => router.push(labelHref(logged) as Href) } });
   };
 }
 
