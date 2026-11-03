@@ -67,6 +67,7 @@ const styles = StyleSheet.create({
   row: { flexDirection: 'row', alignItems: 'center', gap: space.sm, paddingVertical: space.md + 2, paddingHorizontal: space.lg },
   label: { flexShrink: 1 },
   value: { flex: 1 },
+  chevron: { alignSelf: 'center' },
   fact: { flexDirection: 'row', alignItems: 'baseline', justifyContent: 'space-between', gap: space.md, paddingVertical: space.sm + 3, borderTopWidth: StyleSheet.hairlineWidth },
 });
 
@@ -88,7 +89,7 @@ export function FactRows({ rows }: { rows: { label: string; value: string; onPre
             <DsText variant="body" align="right" style={styles.value}>
               {r.value}
             </DsText>
-            {r.onPress && Platform.OS !== 'android' ? <IconSymbol name="chevron.right" size={14} color={ds.c.muted} /> : null}
+            {r.onPress ? <IconSymbol name="chevron.right" size={14} color={ds.c.muted} style={styles.chevron} /> : null}
           </>
         );
         const style = [styles.fact, { borderTopColor: ds.c.line }];
