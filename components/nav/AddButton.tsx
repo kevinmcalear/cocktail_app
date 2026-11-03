@@ -1,30 +1,76 @@
-import { useState } from 'react';
-import { StyleSheet } from 'react-native';
+import { Suspense, useRef, useState, type ComponentRef } from 'react';
+import { StyleSheet, useWindowDimensions, View } from 'react-native';
 
 import { Button, PressableScale, useDs } from '@/components/ds';
+import { useFabUnderToast } from '@/components/ds/Toast';
 import { IconSymbol } from '@/components/ui/icon-symbol';
-import { layout, radius, space } from '@/constants/tokens';
+import { layout, radius, space, STATUS } from '@/constants/tokens';
+import { mix, withAlpha } from '@/lib/color';
 
+import type { FabFrame } from './AddFabMenu';
+import type { Frame } from './AddSheet';
+import { AddFabMenu, AddSheet } from './addLayers';
 import { CreateSheet } from './CreateSheetLazy';
+import { useTabBarClearance } from './WebTabBar';
 
-const LABEL = 'Add: a drink, a bottle, something you make, beer, wine, a menu, or bring something in';
+const LABEL = 'Add: name a drink, paste a link, describe it, or snap a menu, bottle or recipe';
 
-/** Add opens the New sheet over the page you're on (it stands in for the Add sheet the Add lane draws). */
+/**
+ * Add over the page you're on, and from its last row the New sheet (a
+ * bottle, beer, wine, a house-made or a menu). `onClose` once both have gone.
+ */
+export function AddSheets({ onClose, listen, from }: { onClose: () => void; listen?: boolean; from?: Frame | null }) {
+  const [open, setOpen] = useState<'add' | 'more'>('add');
+  const [shown, setShown] = useState(true);
+  // The second sheet waits for the first to have animated out.
+  const more = () => {
+    setShown(false);
+    setTimeout(() => {
+      setOpen('more');
+      setShown(true);
+    }, 350);
+  };
+  return <Suspense fallback={null}>{open === 'add' ? <AddSheet visible={shown} onClose={onClose} onMore={more} listen={listen} from={from} /> : <CreateSheet visible onClose={onClose} />}</Suspense>;
+}
+
+/** Add's sheets, opened by a button. Android's FAB opens its FAB menu first (AddFab). */
 function useAdd() {
-  const [open, setOpen] = useState(false);
-  const sheet = open ? <CreateSheet visible onClose={() => setOpen(false)} /> : null;
-  return { open: () => setOpen(true), sheet };
+  const [open, setOpen] = useState<{ say: boolean; from: Frame | null } | null>(null);
+  return {
+    open: (say = false, from: Frame | null = null) => setOpen({ say, from }),
+    sheet: open ? <AddSheets onClose={() => setOpen(null)} listen={open.say} from={open.from} /> : null,
+  };
 }
 
 /** The + at the top right of a tab's first page on iOS and phone-width web: a filled circle in the venue's accent. */
 export function AddButton() {
   const ds = useDs();
   const add = useAdd();
+  const ref = useRef<ComponentRef<typeof View>>(null);
+  const [pressed, setPressed] = useState(false);
+  // Add grows out of the + (Prod-motion-sheet): where the + is, then open.
+  const open = () => {
+    const el = ref.current;
+    if (!el) return add.open();
+    el.measureInWindow((x: number, y: number, width: number, height: number) => add.open(false, { x, y, width, height }));
+  };
   return (
     <>
-      <PressableScale role="button" accessibilityLabel={LABEL} onPress={add.open} hitSlop={(layout.minTapTarget - SIZE) / 2} style={[styles.circle, { backgroundColor: ds.accentFill.fill }]}>
-        <IconSymbol name="plus" size={18} color={ds.accentFill.text} />
-      </PressableScale>
+      <View ref={ref}>
+        {/* Prod-motion-sheet step 1: an amber ring while it's pressed. */}
+        {pressed ? <View style={[styles.ring, { backgroundColor: withAlpha(STATUS.warning, ds.scheme === 'dark' ? 0.16 : 0.3) }]} /> : null}
+        <PressableScale
+          role="button"
+          accessibilityLabel={LABEL}
+          onPress={open}
+          onPressIn={() => setPressed(true)}
+          onPressOut={() => setPressed(false)}
+          hitSlop={(layout.minTapTarget - SIZE) / 2}
+          style={[styles.circle, { backgroundColor: ds.accentFill.fill }]}
+        >
+          <IconSymbol name="plus" size={18} color={ds.accentFill.text} />
+        </PressableScale>
+      </View>
       {add.sheet}
     </>
   );
@@ -39,33 +85,63 @@ export function DeskAddButton() {
   const add = useAdd();
   return (
     <>
-      <Button label="Add" icon="plus" size="sm" accessibilityLabel={LABEL} onPress={add.open} />
+      <Button label="Add" icon="plus" size="sm" accessibilityLabel={LABEL} onPress={() => add.open()} />
       {add.sheet}
     </>
   );
 }
 
 /**
- * Android's Add: Material 3's plain 56 dp FAB, a plus and no label, at the
- * bottom right of Tonight and Drinks (Prod-and, Kevin's B2, 1 Nov 2026). It
- * opens the New sheet until the Add lane draws its FAB menu.
+ * Android's Add: a plain Material 3 FAB, just the +, at the bottom right of a
+ * tab's first page, over the bottom bar (Kevin's pick, android-add-fab; board
+ * Prod-and). It opens the FAB menu (AddFabMenu), whose Type a drink opens the Add sheet.
  */
 export function AddFab() {
   const ds = useDs();
   const add = useAdd();
+  // It floats 16 over the docked tab bar; the toast goes above it.
+  useFabUnderToast(useTabBarClearance() + space.lg + layout.fab);
+  const window = useWindowDimensions();
+  const ref = useRef<ComponentRef<typeof View>>(null);
+  const [menu, setMenu] = useState<FabFrame | null>(null);
+  // The menu's tonal colour, solid over the page: our palette in Material's roles.
+  const tonal = mix(ds.accentFill.fill, ds.c.ground, ds.scheme === 'dark' ? 0.68 : 0.72);
+  const openMenu = () =>
+    ref.current?.measureInWindow((x: number, y: number, w: number, h: number) => setMenu({ right: window.width - x - w, bottom: window.height - y - h }));
   return (
     <>
-      <PressableScale role="button" accessibilityLabel="Add" onPress={add.open} style={[styles.fab, { backgroundColor: ds.accentFill.fill }]}>
-        <IconSymbol name="plus" size={24} color={ds.accentFill.text} />
-      </PressableScale>
+      <View ref={ref} style={styles.fabSpot}>
+        <PressableScale role="button" aria-expanded={!!menu} accessibilityLabel={LABEL} onPress={openMenu} style={[styles.fab, { backgroundColor: tonal }]}>
+          <IconSymbol name="plus" size={24} color={ds.c.ink} />
+        </PressableScale>
+      </View>
+      {menu ? (
+        <Suspense fallback={null}>
+          <AddFabMenu
+            frame={menu}
+            onClose={() => setMenu(null)}
+            onType={() => {
+              setMenu(null);
+              add.open();
+            }}
+            onSay={() => {
+              setMenu(null);
+              add.open(true);
+            }}
+          />
+        </Suspense>
+      ) : null}
       {add.sheet}
     </>
   );
 }
 
 const SIZE = 32;
+const RING = 6;
 const styles = StyleSheet.create({
   circle: { width: SIZE, height: SIZE, borderRadius: radius.pill, alignItems: 'center', justifyContent: 'center' },
-  // Material 3's FAB: 56 square, 16 in from the edges, a level-3 shadow.
-  fab: { position: 'absolute', right: space.lg, bottom: space.lg, width: 56, height: 56, borderRadius: radius.control + 4, alignItems: 'center', justifyContent: 'center', elevation: 3 },
+  ring: { position: 'absolute', top: -RING, right: -RING, bottom: -RING, left: -RING, borderRadius: radius.pill },
+  // Material 3's FAB: 56 square, corners of 16, 16 in from the edges, a level-3 shadow.
+  fabSpot: { position: 'absolute', right: space.lg, bottom: space.lg },
+  fab: { width: layout.fab, height: layout.fab, borderRadius: radius.control + 4, alignItems: 'center', justifyContent: 'center', elevation: 3 },
 });

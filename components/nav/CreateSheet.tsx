@@ -7,13 +7,10 @@ import { CustomIcon } from '@/components/ui/CustomIcons';
 import { IconSymbol } from '@/components/ui/icon-symbol';
 import { font, radius, space } from '@/constants/tokens';
 import { useCapabilities, useCapabilityOpensAt } from '@/hooks/useCapabilities';
-import { useDrafts } from '@/hooks/useDrafts';
 import { useMode } from '@/hooks/useMode';
 import { useSearchMine } from '@/hooks/useSearchMine';
 import { roleLabel } from '@/lib/roles';
-import { useBringIn } from '@/store/useBringIn';
 
-import { NewDrafts } from './NewDrafts';
 import { HomeMark } from './VenueMarks';
 
 // What New starts, as the board orders it (make-anything-steps-1, step 1), and where each is made.
@@ -64,16 +61,15 @@ function LockedRow({ barId }: { barId: string }) {
 }
 
 /**
- * New: what you left half made at the top (Drafts), then start a menu, a
- * drink, something you make, a bottle you buy, a beer or a wine, or carry on
- * with an older draft.
+ * New: start a menu, a drink, something you make, a bottle you buy, a beer
+ * or a wine, from Add's "A bottle, beer, wine, a house-made or a menu" (Add
+ * itself takes names, links, photos and what you left unfinished).
  * The subtitle says where it's made. A dialog on desktop, like every other sheet.
  */
 export function CreateSheet({ visible, onClose }: { visible: boolean; onClose: () => void }) {
   const ds = useDs();
   const router = useRouter();
   const { setMode } = useMode();
-  const { drafts } = useDrafts();
   // At a venue, what you make is the venue's (it used to save to your home bar).
   // Without the right to add drinks there, those rows lock, with a way to make your own at home.
   const { venueId, canAdd, label: venueName } = useSearchMine();
@@ -96,32 +92,10 @@ export function CreateSheet({ visible, onClose }: { visible: boolean; onClose: (
   return (
     <MenuSheet visible={visible} onClose={onClose} title="New" subtitle={subtitle} plain>
       <View>
-        <NewDrafts
-          barId={venueId ?? null}
-          onOpen={(params) => {
-            onClose();
-            router.push({ pathname: '/add-cocktail', params });
-          }}
-          onImport={() => go('/bring-in')}
-        />
         {locked && venueId ? <LockedRow barId={venueId} /> : null}
         {made.map((c) => (
           <Row key={c.label} label={c.label} hint={venueId ? c.hint : c.homeHint} icon={c.symbol ? <IconSymbol name={c.symbol} size={20} color={ds.c.ink} /> : <CustomIcon name={c.icon} size={22} color={ds.c.ink} />} onPress={() => go(hrefOf(c))} />
         ))}
-        <Row
-          label="Bring in"
-          hint="Snap, drop or paste a menu, recipes or bottles"
-          icon={<IconSymbol name="square.and.arrow.down" size={20} color={ds.c.ink} />}
-          onPress={() => {
-            onClose();
-            // Its own sheet, over the screen you were on, once this one has gone.
-            setTimeout(() => useBringIn.getState().openSheet(), 350);
-          }}
-        />
-        {/* Drafts the older editors kept in the account; what's half made here is listed at the top. */}
-        {drafts.length ? (
-          <Row label="Drafts" hint="Pick up where you left off" icon={<IconSymbol name="doc.text" size={20} color={ds.c.ink} />} trailing={<Caption tone="muted">{drafts.length}</Caption>} onPress={() => go('/drafts')} />
-        ) : null}
         {locked ? (
           <PressableScale role="link" accessibilityLabel="Make your own drink in your home bar" onPress={makeAtHome} style={styles.home}>
             <HomeMark size={24} />

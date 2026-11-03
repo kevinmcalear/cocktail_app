@@ -3,7 +3,7 @@ import assert from 'node:assert/strict';
 import { toDay } from '@/lib/collection';
 import type { MenuSectionDetail, MenuSummary } from '@/types/menus';
 
-import { bandLoopJump, bothPrices, printedPrice, cardWhen, EMPTY_PLAN, previewSections, isSouthern, menuNameIdeas, nextMondays, savedLine, seasonOf, nightLine, venuePlan, comingUpLine, sectionLine, draftLine, dotLine, editedWhen, isOneNightMenu, isOneNightRun, previousLine, groupMenus, homeMenuLine, homeNight, homeNightTag, ingredientLine, menuAsText, readingName, sentenceLine, menuDateLine, menuReadiness, menuStatus, newDrinkCount, newDrinkIds, sectionRule, tonightLine } from './menus';
+import { bandLoopJump, bothPrices, printedPrice, cardWhen, EMPTY_PLAN, previewSections, isSouthern, menuNameIdeas, nextMondays, savedLine, seasonOf, nightLine, venuePlan, comingUpLine, sectionLine, draftLine, dotLine, editedWhen, isOneNightMenu, isOneNightRun, previousLine, groupMenus, homeMenuLine, homeNight, homeNightTag, ingredientLine, menuAsText, readingName, sentenceLine, menuDateLine, menuReadiness, menuStatus, newDrinkCount, newDrinkIds, sectionRule, tonightLine, namesLine } from './menus';
 
 const now = Date.parse('2026-09-25T18:00:00Z');
 const d = (iso: string) => new Date(iso).toISOString();
@@ -280,3 +280,8 @@ assert.equal(bandLoopJump(1450, 100, 7, 4), -700, 'the far end');
 assert.equal(bandLoopJump(300, 100, 7, 4), 700, 'before the first: the last again');
 assert.equal(bandLoopJump(0, 100, 7, 4), 700);
 assert.equal(bandLoopJump(399.5, 100, 7, 4), 0, 'a fraction off a snap point is still the first');
+
+// You's Loved row: the first two names, then how many more.
+assert.equal(namesLine([]), null);
+assert.equal(namesLine(['Little Rye', 'Pale Moth']), 'Little Rye and Pale Moth');
+assert.equal(namesLine(['Little Rye', 'Pale Moth', 'Bellamy', 'Omakase']), 'Little Rye, Pale Moth and 2 more');

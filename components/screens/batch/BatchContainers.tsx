@@ -1,7 +1,7 @@
 import { useState, type ReactNode } from 'react';
-import { Platform, StyleSheet, View } from 'react-native';
+import { StyleSheet, View } from 'react-native';
 
-import { Body, Caption, Chip, DsText, PressableScale, TextLink, useDs } from '@/components/ds';
+import { Body, Caption, Chip, DsText, PressableScale, useDs } from '@/components/ds';
 import { IconSymbol } from '@/components/ui/icon-symbol';
 import { font, layout, radius, space } from '@/constants/tokens';
 import { useBarKit } from '@/hooks/useBarKit';
@@ -10,8 +10,9 @@ import { CONTAINERS, containerText, keepsLabel, ownContainer, pickContainer, TON
 import { initials } from '@/lib/makeSteps';
 import { siteOrigin } from '@/lib/venueLink';
 
-import { LabelCard, shareLabel, type BatchLabel } from '../make/MakeLabel';
+import type { BatchLabel } from '../make/MakeLabel';
 import { BatchRow, Choice } from './BatchParts';
+import { DrawnLabel } from './DrawnLabel';
 
 const FRESH = [
   { value: 'ahead', label: 'Made ahead' },
@@ -107,15 +108,9 @@ export function UseBy({ hours, onChange }: { hours: number | null; onChange: (h:
   return <Changeable text={expiresText(hours, new Date()) ?? 'no use-by'} label="Use by" options={choices} value={hours} onChange={onChange} show={keepsLabel} />;
 }
 
-/** The label for a container while it's made, with print (web) or share (phone). */
+/** The label for a container while it's made, with Print or share label. */
 export function LabelBlock({ label }: { label: BatchLabel | null }) {
-  if (!label) return null;
-  return (
-    <View style={styles.label}>
-      <LabelCard label={label} />
-      <TextLink label={Platform.OS === 'web' ? 'Print label ›' : 'Share label ›'} onPress={() => void shareLabel(label)} />
-    </View>
-  );
+  return label ? <DrawnLabel label={label} /> : null;
 }
 
 /**
@@ -209,7 +204,6 @@ const styles = StyleSheet.create({
   chips: { flexDirection: 'row', flexWrap: 'wrap', alignItems: 'center', gap: space.sm },
   chip: { ...font.figures, paddingHorizontal: space.sm + 2, paddingVertical: space.xs, borderRadius: radius.pill, overflow: 'hidden' },
   choices: { flexDirection: 'row', flexWrap: 'wrap', gap: space.sm },
-  label: { gap: space.sm, paddingTop: space.md },
   order: { gap: 0 },
   step: { flexDirection: 'row', alignItems: 'flex-start', gap: space.md, paddingVertical: space.sm, borderBottomWidth: StyleSheet.hairlineWidth },
   stepN: { width: 20, paddingTop: 2 },

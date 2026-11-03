@@ -1,5 +1,5 @@
 diff --git a/node_modules/@expo/metro-config/build/serializer/chunking/createLegacyChunkingStrategy.js b/node_modules/@expo/metro-config/build/serializer/chunking/createLegacyChunkingStrategy.js
-index 2e3ff4b..bf495fd 100644
+index 2e3ff4b..a86816a 100644
 --- a/node_modules/@expo/metro-config/build/serializer/chunking/createLegacyChunkingStrategy.js
 +++ b/node_modules/@expo/metro-config/build/serializer/chunking/createLegacyChunkingStrategy.js
 @@ -8,6 +8,12 @@ Object.defineProperty(exports, "createLegacyChunkingStrategy", {
@@ -15,7 +15,7 @@ index 2e3ff4b..bf495fd 100644
  function _isResolvedDependency() {
      const data = require("@expo/metro/metro/lib/isResolvedDependency");
      _isResolvedDependency = function() {
-@@ -118,25 +124,43 @@ function removeEntryDepsFromAsyncChunks(entryChunk, chunks) {
+@@ -118,25 +124,57 @@ function removeEntryDepsFromAsyncChunks(entryChunk, chunks) {
          }
      }
  }
@@ -27,6 +27,16 @@ index 2e3ff4b..bf495fd 100644
 +// Metro's define() skips a module id it already has, so a copy loaded twice runs
 +// once. Checked by scripts/commonChunk.check.ts.
 +const COMMON_CHUNK_MIN_USERS = 20; // about a fifth of the routes: rarer modules ship with their routes, which are prefetched after the first screen's data (lib/prefetchRoutes.web.ts)
++// Modules that go to the common chunk whenever two routes use them, whatever the count.
++// ponytail: the 20-route threshold is a cliff. The technique data (~110 KB) sits near it,
++// and losing one route that reaches it copies it into every other user (25 chunks,
++// +2.7 MB of web JS). Listed here so it stays in one place on purpose; the upgrade
++// is a shared chunk per group of routes (Expo's granular chunking) instead of a list.
++const ALWAYS_COMMON = [
++    'lib/techniques/index.ts',
++    'lib/techniques/data/',
++    'components/search/NearPicks.tsx'
++];
  function extractCommonChunk(chunks, graph, options, strategy) {
 -    const toCompare = [
 +    const path = require("path");
@@ -64,9 +74,13 @@ index 2e3ff4b..bf495fd 100644
 +            if (root) onEveryPage.add(dep);
          }
      }
++    const listed = (dep)=>{
++        const rel = path.relative(options.projectRoot, dep.path).split(path.sep).join('/');
++        return ALWAYS_COMMON.some((p)=>p.endsWith('/') ? rel.startsWith(p) : rel === p);
++    };
 +    const commonDependencies = new Set();
 +    for (const [dep, count] of users){
-+        if (count >= COMMON_CHUNK_MIN_USERS || count >= 2 && onEveryPage.has(dep)) commonDependencies.add(dep);
++        if (count >= COMMON_CHUNK_MIN_USERS || count >= 2 && (onEveryPage.has(dep) || listed(dep))) commonDependencies.add(dep);
 +    }
 +    for (const chunk of asyncChunks){
 +        for (const dep of commonDependencies)chunk.deps.delete(dep);

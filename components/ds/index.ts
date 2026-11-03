@@ -28,7 +28,7 @@ export { ToastHost, useToast } from './Toast';
 export { TimeField, TimeGrid, TimeRange } from './TimeField';
 export { Body, Caption, Display, DsText, Headline, Spec, Title, type DsTextProps } from './Text';
 export { BackbarTheme, BrandProvider, useDs, type Ds } from './theme';
-export { useDisplayFaces, useLoadedFace } from './faces';
+export { loadFace, useDisplayFaces, useLoadedFace } from './faces';
 export { IngredientDrawing, useIngredientColour } from './IngredientDrawing';
 export { EquipmentDrawing } from './EquipmentDrawing';
 export { sheetFrame, sheetIsDialog } from './sheetFrame';
@@ -38,5 +38,5 @@ export { MatchText, RowScore, scoreWords, type MatchTextProps, type RowScoreProp
 export { SheetScrollView } from './SheetScrollView';
 export { dragDismissesKeyboard } from './keyboardDrag';
 export { HidingHeadScroll } from './HidingHeadScroll';
-export { DrinkDrawing, DrinkDrawingFor, isRowSize, type DrawingSize, type DrinkDrawingProps } from './DrinkDrawing';
-export { PencilState, type PencilStateKind, type PencilStateProps } from './PencilState';
+export { DrinkDrawing, DrinkDrawingFor, drawingUri, isRowSize, type DrawingSize, type DrinkDrawingProps } from './DrinkDrawing';
+export { PencilDrawing, PencilState, type PencilStateKind, type PencilStateProps } from './PencilState';

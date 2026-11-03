@@ -8,14 +8,12 @@ import { Body, Caption, DrinkImage, DsText, Headline, PressableScale, Spec, useD
 import { BarMark } from '@/components/screens/home/BarMark';
 import { LoveBarButton } from '@/components/screens/kept/LoveBarButton';
 import { space } from '@/constants/tokens';
-import type { AreaRanking, RankEntry } from '@/hooks/useRankings';
+import type { AreaRanking } from '@/hooks/useRankings';
 import { useBarVersions } from '@/hooks/useSpecMatches';
 import { formatDistance, usesMiles } from '@/lib/nearMe';
-import { dayOf, formatScore, type Sentiment } from '@/lib/ranking';
+import { formatScore } from '@/lib/ranking';
 
-const BAND: Record<Sentiment, string> = { loved: 'Loved', fine: 'Fine', disliked: "Didn't like" };
 const LOGO = 40;
-const MONTH_YEAR = new Intl.DateTimeFormat(undefined, { month: 'short', year: 'numeric' });
 
 interface RowProps {
   position: number;
@@ -73,29 +71,6 @@ export function RankRow({ position, title, detail, score, scoreDetail, logo, bar
     <View style={[styles.row, { borderBottomColor: ds.c.line }]}>
       {row}
       {end}
-    </View>
-  );
-}
-
-/** My list for a drink, best first, with a heading at each band. */
-export function MyRankList({ entries, listName }: { entries: RankEntry[]; listName: string }) {
-  return (
-    <View>
-      {entries.map((e, i) => {
-        const where = e.venue ? [e.venue.display_name, e.venue.locality].filter(Boolean).join(', ') : 'Home';
-        const title = e.item?.name && e.item.name !== listName ? e.item.name : where;
-        const detail = [title === where ? null : where, e.had_on ? MONTH_YEAR.format(dayOf(e.had_on)) : null].filter(Boolean).join(' · ');
-        return (
-          <View key={e.id}>
-            {i === 0 || entries[i - 1].sentiment !== e.sentiment ? (
-              <Caption tone="muted" style={styles.band}>
-                {BAND[e.sentiment]}
-              </Caption>
-            ) : null}
-            <RankRow position={i + 1} title={title} detail={detail || 'Ranked'} score={e.score} />
-          </View>
-        );
-      })}
     </View>
   );
 }
@@ -162,6 +137,5 @@ const styles = StyleSheet.create({
   position: { minWidth: space.xl, textAlign: 'center' },
   flex: { flex: 1, minWidth: 0 },
   score: { alignItems: 'flex-end' },
-  band: { marginTop: space.lg, textTransform: 'uppercase', letterSpacing: 1.2 },
   note: { paddingVertical: space.md },
 });

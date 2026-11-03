@@ -15,12 +15,11 @@ import { useEffect } from "react";
 import { backbar } from "@/constants/tokens";
 import '@/lib/reanimatedSetup';
 
-import { DialogHost } from '@/components/DialogHost';
+import { DialogHost, ViewAsBanner } from '@/components/nav/RootHosts';
 import { ToastHost } from '@/components/ds/Toast';
 import { APP_FONTS, FIRST_PAINT_FONTS, LATER_FONTS } from '@/components/ds/fonts';
 import { ObservabilityProvider } from '@/components/ObservabilityProvider';
 import { OfflineBanner } from '@/components/OfflineBanner';
-import { ViewAsBanner } from '@/components/ViewAsBanner';
 import { AuthProvider, useAuth } from "@/ctx/AuthContext";
 import { BarUnitSync } from '@/hooks/useBarUnitSync';
 import { useColorScheme } from "@/hooks/use-color-scheme";
@@ -177,6 +176,10 @@ function RootLayoutNav() {
               name="ingredient/[id]/make"
               options={{ presentation: "fullScreenModal", headerShown: false, gestureEnabled: false }}
             />
+            <Stack.Screen name="share/poster" options={{ presentation: "modal", headerShown: false }} />
+            <Stack.Screen name="print/index" options={{ presentation: "modal", headerShown: false }} />
+            <Stack.Screen name="print/sheet" options={{ headerShown: false }} />
+            <Stack.Screen name="label/index" options={{ presentation: "modal", headerShown: false }} />
             {/* Declared here because on iOS, a screen pushed over a modal ignores headerShown set from inside it. */}
             <Stack.Screen name="back-bar" options={{ headerShown: false }} />
             <Stack.Screen name="team/index" options={{ headerShown: false }} />
@@ -257,13 +260,21 @@ function RootLayout() {
   const [fontsLoaded] = useFonts(Platform.OS === 'web' ? FIRST_PAINT_FONTS : APP_FONTS);
   useEffect(() => {
     if (Platform.OS !== 'web') return;
-    // ~0.75 MB of faces the first screen rarely needs, and the main screens'
-    // code: after its data, so a slow connection fetches that first (RAIL
-    // load). Text uses a fallback till then.
-    return afterFirstData(queryClient, () => {
-      loadAsync(LATER_FONTS).catch((e) => console.warn('Fonts failed to load', e));
-      void prefetchRoutes();
-    });
+    // Redaction's italic and bold, and the main screens' code: once the first
+    // screen's data is in and the network has been quiet for a second, so a
+    // slow connection fetches that first (RAIL load). Starting at 4 s whatever
+    // the data was doing put a megabyte of code beside Discover's requests.
+    // Text uses a fallback till then. A screen with nothing to fetch starts them at 4 s.
+    return afterFirstData(
+      queryClient,
+      () => {
+        loadAsync(LATER_FONTS).catch((e) => console.warn('Fonts failed to load', e));
+        void prefetchRoutes();
+      },
+      15_000,
+      1_000,
+      4_000
+    );
   }, []);
   if (!fontsLoaded && Platform.OS !== 'web') { return null; }
   return (

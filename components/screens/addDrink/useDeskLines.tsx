@@ -109,20 +109,20 @@ export function useDeskLines({ draft, set, barId, venueName, ingredients, coreId
 
 /**
  * The same venue parts on a phone (m01, decided 24 Oct 2026): a new bottle's
- * card under its line on the ingredients step, and what it costs on review.
- * Prep or Costs see the new bottle's card; Costs see prices.
- * Null `barId` (at home, or the desktop page, which has its own) turns it off.
+ * card under its line, what each pour costs, and the cost card with the price
+ * and GP at the end of the draft page. Prep or Costs see the new bottle's
+ * card; Costs see prices. Null `barId` (at home) turns it off.
  */
 export function useVenueLines(args: Omit<DeskLinesArgs, 'canBuy' | 'canCost' | 'currency'>) {
   const { canBuy, canCost } = venueParts(args.barId, useCapabilities(args.barId).data);
   const pricing = usePricingSettings(canCost ? args.barId : null).data ?? null;
   const currency = useShownCurrency(args.barId, canCost);
-  // On review the card isn't on screen, so nothing reads "adding".
+  // The cost card sits at the page's end, away from the bottle's, so nothing reads "adding".
   const { costLines, lineDetail, lineBelow, onNewBottle } = useDeskLines({ ...args, canBuy, canCost, currency, adding: false });
   return {
     /** For IngredientsStep. */
     lines: { lineDetail, lineBelow, onNewBottle },
-    /** For review: the cost card, with the price and GP. */
+    /** The cost card, with the price and GP. */
     cost: canCost ? <DeskCost lines={costLines} pricing={pricing} currency={currency} price={args.draft.price ?? ''} onPrice={(price) => args.set({ price })} /> : null,
   };
 }

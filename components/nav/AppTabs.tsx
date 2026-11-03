@@ -21,7 +21,7 @@ import { VenueBrandProvider } from './VenueBrandProvider';
  * with the venue's accent. Each tab holds its own stack
  * (app/(tabs)/(1-tonight,2-drinks,3-discover,4-you)/_layout.tsx). The place
  * button and the + sit in each page's header (ScreenHeader.tsx); Android's
- * Add is the extended FAB. Web uses JsTabs.tsx.
+ * Add is the plain FAB. Web uses JsTabs.tsx.
  * Search (Prod-nav-A, Prod-and): iOS has the system's search circle beside the
  * tabs, a real search tab ((tabs)/(search)) that turns the bar into the field.
  * Android has exactly four tabs: its search is the bar on top of the page,

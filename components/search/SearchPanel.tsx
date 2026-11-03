@@ -154,11 +154,11 @@ export function SearchBody({ query: typed, scope, onScope, mine, area, onJump, c
 
 const KIND_LABEL: Record<RecentActivity['kind'], string> = { cocktail: 'Cocktail', beer: 'Beer', wine: 'Wine', ingredient: 'Ingredient', menu: 'Menu', bar: 'Bar', flavor: 'Flavor map' };
 const JUMPS = [
-  { label: 'Classics', href: '/library?show=staff', icon: 'star' },
-  { label: 'On menu now', href: '/library?show=on-menu', icon: 'list.bullet' },
-  { label: 'Old drinks', href: '/library?show=past', icon: 'clock' },
+  { label: 'Classics', href: '/drinks?show=staff', icon: 'star' },
+  { label: 'On menu now', href: '/drinks?show=on-menu', icon: 'list.bullet' },
+  { label: 'Old drinks', href: '/drinks?show=past', icon: 'clock' },
   { label: 'Drafts', href: '/drafts', icon: 'pencil' },
-  { label: 'Ingredients', href: '/library?show=ingredients', icon: 'drop.fill' },
+  { label: 'Ingredients', href: '/drinks?show=ingredients', icon: 'drop.fill' },
 ] as const;
 
 /** The ways in that aren't a search: the flavor map, the history and the techniques (prep-flavor-entry), each when it's switched on. */

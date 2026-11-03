@@ -7,21 +7,24 @@ import { askedAgo } from '@/lib/team';
  * Miss-door, Miss-door-desk): ask to join, asked, join straight in when
  * nobody approves, and link off.
  */
-export type DoorState = 'ask' | 'asked' | 'join' | 'off';
+export type DoorState = 'ask' | 'asked' | 'join' | 'off' | 'declined';
 
 export interface DoorFacts {
   linkOn: boolean;
   approve: boolean;
   /** Their ask, waiting (declined asks don't count: the door lets them try, and says no). */
   asked: boolean;
+  /** Their last ask was turned down. The server refuses another ask, so the door doesn't offer one. */
+  declined?: boolean;
 }
 
 /**
  * A waiting ask still stands when the link goes off (an Admin can still say
  * yes), but not once approval is off: then they can just join.
  */
-export function doorState({ linkOn, approve, asked }: DoorFacts): DoorState {
+export function doorState({ linkOn, approve, asked, declined }: DoorFacts): DoorState {
   if (!linkOn) return asked ? 'asked' : 'off';
+  if (declined && !asked) return 'declined';
   if (!approve) return 'join';
   return asked ? 'asked' : 'ask';
 }
@@ -62,6 +65,17 @@ export function doorLines(
       secondary: null,
       note: null,
       noteIcon: 'person.2',
+    };
+  }
+  if (state === 'declined') {
+    // Board Keep-phone join, step 6, without its "ask again": the server refuses a second ask (gated, not built).
+    return {
+      title: `Join ${x.bar}`,
+      body: `${signedIn} Ask someone on the team to invite you by email.`,
+      primary: 'Done',
+      secondary: 'Use a different account',
+      note: 'The team said no last time.',
+      noteIcon: 'clock',
     };
   }
   if (state === 'asked') {

@@ -9,7 +9,8 @@ import { BatchSheet } from './BatchSheet';
 
 jest.mock('@/components/tools/ToolsSheet', () => ({ ToolsSheet: () => null }));
 jest.mock('@/lib/shareLink', () => ({ shareText: jest.fn() }));
-jest.mock('@/hooks/useBatchPrep', () => ({ useShelfLives: () => ({ data: {} }), useSaveBatchAsPrep: () => ({ mutateAsync: jest.fn(), isPending: false, error: null }) }));
+jest.mock('@/hooks/useBatchPrep', () => ({ useSaveBatchAsPrep: () => ({ mutateAsync: jest.fn(), isPending: false, error: null }) }));
+jest.mock('@/hooks/useShelfLives', () => ({ useShelfLives: () => ({ data: {} }) }));
 jest.mock('expo-router', () => ({ useRouter: () => ({ push: jest.fn() }) }));
 jest.mock('@/hooks/useBarKit', () => ({ useBarKit: () => ({ data: [] }) }));
 jest.mock('@/hooks/useMyProfile', () => ({ useMyProfile: () => ({ data: { displayName: 'Eddie Kim' } }) }));
@@ -162,7 +163,8 @@ test('make now: a tick list and a label for each container', async () => {
   await fireEvent.press(screen.getByRole('checkbox', { name: '360 ml, Cream' }));
   expect(screen.getByRole('checkbox', { name: '360 ml, Cream', checked: true })).toBeTruthy();
   expect(screen.getByRole('checkbox', { name: '480 ml, Irish whiskey' })).toBeTruthy();
-  expect(screen.getAllByText(/^Irish Coffee · The (coffee|cream)$/)).toHaveLength(2);
+  // The drawn label reads out as one picture: its lines in its name.
+  expect(screen.getAllByLabelText(/^Label: Irish Coffee · The (coffee|cream), MADE /)).toHaveLength(2);
 });
 
 test('at home, tick as I go makes every line part by part, the float last', async () => {

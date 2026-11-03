@@ -22,9 +22,11 @@ const NOTE_MS = 10000;
 export interface LineStock {
   /** The bottle button for a line, or null for juice, garnish, water, a house prep or a batch. */
   toggle: (line: WizardLine) => ReactNode;
-  /** Under the lines: the hint, and the note with Undo unless it's pinned. */
+  /** Under the lines: the hint, and the note with Undo (the desktop page, where every line shows its bottle). */
   footer: ReactNode;
-  /** The note with Undo, for the wizard's pinned footer (`pinned`); null otherwise. */
+  /** The hint alone: the draft page says it under an open line, the only place its bottle shows. */
+  hint: ReactNode;
+  /** The note with Undo alone. */
   note: ReactNode;
   /** The venue's back bar as item ids, for the ingredient search (hooks/useBackBar useBackBarIds). */
   backBar: ReadonlySet<string>;
@@ -50,8 +52,6 @@ interface LineStockOptions {
   drinkName: string;
   ingredients: readonly CatalogIngredient[];
   lines: readonly WizardLine[];
-  /** The note goes just above the pinned Skip and Next (a phone), not under the lines (the desktop page). */
-  pinned?: boolean;
 }
 
 /**
@@ -60,7 +60,7 @@ interface LineStockOptions {
  * so, with Undo. Never a question or a step. People whose role can't place
  * items see the state, but it doesn't switch.
  */
-export function useLineStock({ barId, venueName, drinkName, ingredients, lines, pinned }: LineStockOptions): LineStock {
+export function useLineStock({ barId, venueName, drinkName, ingredients, lines }: LineStockOptions): LineStock {
   const ds = useDs();
   const [note, setNote] = useExpiring<Note>(NOTE_MS);
 
@@ -124,7 +124,7 @@ export function useLineStock({ barId, venueName, drinkName, ingredients, lines, 
       ) : null}
     </View>
   ) : null;
-  return pinned ? { toggle, footer: hint, note: bar, backBar: ids } : { toggle, footer: hint || bar ? <>{hint}{bar}</> : null, note: null, backBar: ids };
+  return { toggle, footer: hint || bar ? <>{hint}{bar}</> : null, hint, note: bar, backBar: ids };
 }
 
 interface StockButtonProps {
