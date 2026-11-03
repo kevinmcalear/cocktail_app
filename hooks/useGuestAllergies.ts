@@ -27,9 +27,15 @@ export function useGuestDrinkAllergens(itemIds: readonly string[]) {
     enabled: ids.length > 0,
     staleTime: 60_000,
     queryFn: async (): Promise<Map<string, GuestDrinkAllergens>> => {
-      const { data, error } = await supabase.rpc('guest_drink_allergens', { p_item_ids: ids.slice(0, 200) });
-      if (error) throw error;
-      return new Map(((data ?? []) as unknown as GuestDrinkAllergens[]).map((d) => [d.item_id, d]));
+      // The function reads 200 ids at a time: ask in batches so no drink goes without its allergens.
+      const batches = Array.from({ length: Math.ceil(ids.length / 200) }, (_, n) => ids.slice(n * 200, n * 200 + 200));
+      const results = await Promise.all(batches.map((p_item_ids) => supabase.rpc('guest_drink_allergens', { p_item_ids })));
+      const rows: GuestDrinkAllergens[] = [];
+      for (const { data, error } of results) {
+        if (error) throw error;
+        rows.push(...((data ?? []) as unknown as GuestDrinkAllergens[]));
+      }
+      return new Map(rows.map((d) => [d.item_id, d]));
     },
   });
 }

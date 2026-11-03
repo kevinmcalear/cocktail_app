@@ -12,8 +12,8 @@ import { useSearchCatalog } from '@/hooks/useSearchCatalog';
 import { heroPicture } from '@/lib/itemImages';
 import { fallbackGlass, itemHref, type ItemCategory } from '@/lib/itemRoutes';
 import { venueContextIds } from '@/lib/barContextFilter';
-import { menuDrinks, itemIdOf } from '@/lib/libraryFilters';
-import { menuDateLine } from '@/lib/menus';
+import { itemIdOf } from '@/lib/libraryFilters';
+import { groupMenus, menuDateLine } from '@/lib/menus';
 
 /**
  * Drinks' right side on a desktop while no drink is picked: the menu on now
@@ -29,9 +29,10 @@ export function OnNowPane() {
   const beside = useOpenBeside();
   const [now] = useState(() => Date.now());
   const here = useMemo(() => (menus ?? []).filter((m) => m.barId === activeId), [menus, activeId]);
-  const on = menuDrinks(here, now, null).onMenus[0];
-  const current = on ? here.find((m) => m.id === on.id) : undefined;
-  const ids = new Set(on?.itemIds ?? []);
+  // The same menu the list's card names.
+  const current = groupMenus(here, now).on[0];
+  const on = current;
+  const ids = new Set(current?.itemIds ?? []);
   const rows = items.filter((i) => !i.isDraft && ids.has(itemIdOf(i.id))).sort((a, b) => a.name.localeCompare(b.name));
   if (!on || !current) {
     return (

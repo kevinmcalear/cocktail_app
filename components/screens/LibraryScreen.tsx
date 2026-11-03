@@ -215,6 +215,7 @@ export function LibraryScreen({ beside = false }: { beside?: boolean }) {
           <Caption tone="muted">Swapping a bottle opens at Drink Creator.</Caption>
         )
       ) : null}
+      {staffView && active && canEdit ? <MatchClassicsNudge barId={active.id} /> : null}
       {staffView ? null : <TonightLabel title={`${label} ${q ? `${shown.length} of ${inView.length}` : inView.length}`} aside="A to Z" />}
     </View>
   );
