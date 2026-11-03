@@ -41,7 +41,7 @@ export interface SpecRowProps {
   detail?: string;
   /** Service mode reads bigger (1.25). */
   scale?: number;
-  /** Less padding above and below (the drink page, where the whole spec fits on the first screen). */
+  /** Less padding above and below (study cards, where the whole spec fits on one screen; the drink page's spec takes the boards' full rows). */
   dense?: boolean;
   onPress?: () => void;
   /** It opens a page of its own (a house-made inside a house-made: "Its own recipe: tap it"): a chevron at the end. Android rows ripple instead, as its lists do. */
@@ -56,7 +56,7 @@ export interface SpecRowProps {
 }
 
 /** The amount column's width at scale 1: a step's note lines up with the names after it (SpecCard). Wide enough for "1 ½ barspoons" at the figure's size. */
-export const SPEC_AMOUNT_WIDTH = 96;
+export const SPEC_AMOUNT_WIDTH = 108;
 
 /**
  * One line of a spec, readable across the bar: the amount in its own column,

@@ -13,6 +13,7 @@ import type { PublishedDrinkPage } from '@/hooks/usePublished';
 import { partSentence } from '@/lib/drinkParts';
 import { ingredientsLine } from '@/lib/publicDrink';
 import { specLines } from '@/lib/spec';
+import { splitAmount } from '@/lib/specLines';
 
 import { Kicker } from './PublicChrome';
 import { PublicSpecChanges } from './PublicSpecChanges';
@@ -77,17 +78,21 @@ export function PublicSpec({
       <Facts page={page} columns={2} />
       <Caption tone="muted">{`As ${who} shares it: the ingredients, not the brands.`}</Caption>
       <View>
-        {lines.map((l) => (
-          <SpecRow
-            key={l.key}
-            amount={l.amount ?? ''}
-            alignAmount={measured}
-            ingredient={l.ingredient ?? 'House ingredient'}
-            // No drawing on a spec line, as Decided-who-public draws it.
-            optional={l.optional}
-            floated={l.float}
-          />
-        ))}
+        {lines.map((l) => {
+          const amount = splitAmount(l.amount ?? '');
+          return (
+            <SpecRow
+              key={l.key}
+              amount={amount.value}
+              unit={amount.unit || undefined}
+              alignAmount={measured}
+              ingredient={l.ingredient ?? 'House ingredient'}
+              // No drawing on a spec line, as Decided-who-public draws it.
+              optional={l.optional}
+              floated={l.float}
+            />
+          );
+        })}
       </View>
       <PublicParts page={page} />
       <PublicSpecChanges itemId={drink.id} who={who} />

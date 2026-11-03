@@ -60,7 +60,7 @@ export function SegmentedCapsule<T extends string>({ options, value, onChange, a
 const styles = StyleSheet.create({
   capsule: { flexDirection: 'row', gap: 2, padding: 3, borderRadius: radius.card - space.xs },
   connected: { padding: 0 },
-  hug: { alignSelf: 'flex-start', borderRadius: radius.pill },
+  hug: { borderRadius: radius.pill },
   fill: { flex: 1, minWidth: 0 },
   hugItem: { paddingHorizontal: space.md + 2, borderRadius: radius.pill },
   capsuleItem: { minHeight: layout.minTapTarget - 6, flexDirection: 'row', gap: space.xs + 2, alignItems: 'center', justifyContent: 'center', paddingHorizontal: space.xs, borderRadius: radius.control + 3 },
