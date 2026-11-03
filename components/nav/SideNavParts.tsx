@@ -78,18 +78,20 @@ export function PlaceHeading({ children, mark }: { children: ReactNode; mark: st
   const { button, open, expanded, menu } = useVenueMenu();
   return (
     <>
-      <View ref={button} collapsable={false}>
-        <PressableScale role="button" aria-expanded={expanded} accessibilityLabel={`${children}. Switch place`} onPress={open} style={styles.headingRow}>
-          <View style={[styles.headingMark, { backgroundColor: withAlpha(ds.accentText, 0.2) }]}>
-            <DsText variant="caption" color={ds.accentText} aria-hidden>
-              {mark.charAt(0).toUpperCase()}
-            </DsText>
-          </View>
-          <DsText variant="caption" tone="muted" role="heading" numberOfLines={1} style={styles.heading}>
-            {children}
+      {/* The heading is text outside the button; the button is laid over the whole row and takes its name from it. */}
+      <View ref={button} collapsable={false} style={styles.headingRow}>
+        <PressableScale role="button" aria-expanded={expanded} accessibilityLabel={`${children}. Switch place`} onPress={open} style={StyleSheet.absoluteFill} />
+        <View pointerEvents="none" style={[styles.headingMark, { backgroundColor: withAlpha(ds.accentText, 0.2) }]}>
+          <DsText variant="caption" color={ds.accentText} aria-hidden>
+            {mark.charAt(0).toUpperCase()}
           </DsText>
+        </View>
+        <DsText variant="caption" tone="muted" role="heading" aria-level={2} numberOfLines={1} pointerEvents="none" style={styles.heading}>
+          {children}
+        </DsText>
+        <View pointerEvents="none">
           <IconSymbol name="chevron.down" size={10} color={ds.c.muted} />
-        </PressableScale>
+        </View>
       </View>
       {menu}
     </>
