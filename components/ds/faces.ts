@@ -24,7 +24,8 @@ const serverSnapshot = () => ',';
 /** True when a face can be drawn now: always for the faces loaded at start, else once its files are in. */
 export function faceReady(face: DisplayFace, done: string): boolean {
   // Instrument Serif is the app's own, loaded at start; every other face loads on demand.
-  return face === 'instrument' || done.includes(`,${face},`);
+  // A face the app no longer ships (Redaction, saved before 3 Nov 2026) never counts as ready.
+  return face === 'instrument' || (face in displayFaces && done.includes(`,${face},`));
 }
 
 /** Loads a lazy face once. A failure (offline) leaves it unloaded, so its text stays in Instrument Serif. */
