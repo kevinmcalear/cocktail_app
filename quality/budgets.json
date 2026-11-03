@@ -110,7 +110,7 @@
       "measuredBy": "scripts/budgets.mjs in build:web (CI): webJs is every JavaScript file in the web export, raw bytes. Each route chunk carries its own copy of code fewer than 20 routes share, so a change to shared code counts once per route: hence `noise` of 512 KB (about 1%). The iOS Hermes bundle (14.0 to 14.7 MB in builds 44 to 52, by hand) and the store downloads are not measured in CI: they need `expo export -p ios` and EAS builds.",
       "noise": 524288,
       "current": {
-        "webJs": 41982936
+        "webJs": 39610278
       }
     },
     {
@@ -122,13 +122,13 @@
       "measuredBy": "scripts/budgets.mjs in build:web (CI): first-load JS per page, the app's scripts in its exported HTML, brotli quality 11, in bytes (KB is 1024). A page fails when it gets worse than `current` by more than `noise`, not for being over `limit`: the gap is reported. App pages are the four tabs' first pages. LCP, INP and CLS are not measured yet (Lighthouse CI and field data).",
       "noise": 2048,
       "current": {
-        "/d/[id]": 652579,
-        "/m/[id]": 637947,
-        "/p/[id]": 766383,
-        "/": 695089,
-        "/drinks": 794436,
-        "/discover": 850651,
-        "/you": 659101
+        "/d/[id]": 648304,
+        "/m/[id]": 629402,
+        "/p/[id]": 762314,
+        "/": 687087,
+        "/drinks": 775881,
+        "/discover": 846136,
+        "/you": 650745
       },
       "limit": {
         "/d/[id]": 307200,

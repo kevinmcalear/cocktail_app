@@ -19,6 +19,8 @@ export interface MenuSummary {
   createdBy: string | null;
   coverUrl: string | null;
   coverPosition: number;
+  /** Who took the cover photo ("Photo: Jess Rowe"); none on older reads. */
+  coverCredit?: string | null;
   startsAt: string | null;
   endsAt: string | null;
   createdAt: string;

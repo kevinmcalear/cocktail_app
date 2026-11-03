@@ -230,6 +230,23 @@ export function inviteEmail(input: {
   });
 }
 
+/**
+ * To someone who asked to join through the staff link, once an Admin says
+ * yes (the door's "We'll tell you when you're in"). The link opens tonight's
+ * menu from then on, so the button is the link.
+ */
+export function joinedEmail(input: { bar: BarLook; role: string; linkUrl: string }): EmailContent {
+  const { bar } = input;
+  return barEmail(bar, `You're on ${bar.name}'s team`, {
+    preheader: `You're in, as ${article(input.role)}.`,
+    title: `You're on ${bar.name}'s team`,
+    lead: `An Admin added you as ${article(input.role)}. You'll see tonight's menu, the specs and the prep list.`,
+    button: { label: `Open ${bar.name}`, url: input.linkUrl },
+    small: "The staff link you asked from. It opens the menu on now.",
+    foot: `Sent with Cocktail for ${bar.name}, because you asked to join its team.`,
+  });
+}
+
 /** "Tue 3 Nov", as the app's banner says it (lib/venueDelete deleteDay), in UTC. */
 export function deleteDay(iso: string): string {
   // From the parts: Deno's ICU puts a comma after the weekday, Node's doesn't.

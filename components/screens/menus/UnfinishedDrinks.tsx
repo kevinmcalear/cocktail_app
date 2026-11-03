@@ -5,7 +5,7 @@ import { Caption, DsText, PressableScale, useDs } from '@/components/ds';
 import { IconSymbol } from '@/components/ui/icon-symbol';
 import { layout, radius, space } from '@/constants/tokens';
 import { hasContent } from '@/lib/drinkWizard';
-import { recipesToFinish } from '@/lib/prepKinds';
+import { recipesToFinish } from '@/lib/prepMath';
 import { sectionSlots, useDrinkWizardStore, wizardPlace } from '@/store/useDrinkWizardStore';
 
 /**
