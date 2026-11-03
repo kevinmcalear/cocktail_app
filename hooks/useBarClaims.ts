@@ -74,7 +74,12 @@ export function useWithdrawClaim() {
       if (error) throw error;
       if (!data?.length) throw new Error('That claim has already been checked, so it can’t be withdrawn.');
     },
-    onSuccess: () => qc.invalidateQueries({ queryKey: ['profile-claims'] }),
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: ['profile-claims'] });
+      // A page hidden for the claim shows again, and nothing waits on it now.
+      qc.invalidateQueries({ queryKey: ['claim-pending'] });
+      qc.invalidateQueries({ queryKey: ['profile'] });
+    },
     onError: () => {},
   });
 }

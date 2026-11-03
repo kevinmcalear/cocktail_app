@@ -208,6 +208,32 @@ describe('a bar the claimant added themselves', () => {
     assert.equal((await page('Wick')).is_public, true);
   });
 
+  test('hidden by its creator\'s claim, it shows again once every waiting claim has gone', async () => {
+    const { data: added, error } = await users.adder.client.rpc('add_venue', {
+      p_name: `Ember Two ${run}`, p_address_line: '3 Test Lane', p_city: 'Testville', p_country_code: 'AU',
+      p_latitude: -37.6 + Math.random() / 100, p_longitude: 144.7 + Math.random() / 100, p_postcode: '3000', p_region: 'VIC', p_locality: 'Testville',
+    });
+    assert.ifError(error);
+    pages.EmberTwo = added.id;
+    const other = await users.stranger.client.rpc('start_bar_claim', { p_profile_id: added.id, p_method: 'instagram', p_instagram: `embertwo${run}` });
+    assert.ifError(other.error);
+    const own = await users.adder.client.rpc('start_bar_claim', { p_profile_id: added.id, p_method: 'instagram', p_instagram: `embertwo${run}` });
+    assert.ifError(own.error);
+    assert.equal((await page('EmberTwo')).is_public, false);
+    await db.query("UPDATE public.profile_claims SET status = 'rejected' WHERE id = $1", [own.data.id]);
+    assert.equal((await page('EmberTwo')).is_public, false, 'still hidden while another claim waits');
+    await users.stranger.client.from('profile_claims').delete().eq('id', other.data.id);
+    assert.equal((await page('EmberTwo')).is_public, true, 'shown once none waits');
+  });
+
+  test('a claim never opens a page a moderator took down', async () => {
+    await barPage('TakenDown', { instagram: `down${run}`, is_public: false });
+    await db.query('UPDATE public.profiles SET moderated_at = now() WHERE id = $1', [pages.TakenDown]);
+    await users.stranger.client.rpc('start_bar_claim', { p_profile_id: pages.TakenDown, p_method: 'instagram' });
+    const read = await users.stranger.client.from('profiles').select('id').eq('id', pages.TakenDown);
+    assert.equal(read.data?.length ?? 0, 0);
+  });
+
   test("someone else's claim never hides a known bar", async () => {
     await barPage('Known', { instagram: `known${run}` });
     const { data, error } = await users.second.client.rpc('start_bar_claim', { p_profile_id: pages.Known, p_method: 'instagram' });

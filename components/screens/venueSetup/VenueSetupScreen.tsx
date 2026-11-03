@@ -180,7 +180,7 @@ export function VenueSetupScreen() {
       {screen === 'claim' && profileId ? (
         <SetupClaimStep
           profileId={profileId}
-          barId={barId}
+          ensureVenue={ensureVenue}
           held={run?.held}
           venueError={createVenue.error?.message ?? null}
           afterSend={afterSend}

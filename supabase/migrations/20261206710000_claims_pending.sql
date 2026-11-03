@@ -21,8 +21,9 @@
 --      before the claim (private.show_page_after_claim).
 --   3. bar_claim_pending(): whether anyone has a claim waiting on a page, so
 --      the page's claim button can say so. Yes or no, nothing about who.
---   4. guard_bar_page_visibility: who sees a bar's page can only change on a
---      venue that has a page, that is once its claim is approved. Moderators
+--   4. guard_bar_page_visibility: who sees a page can only change on a
+--      venue that has a page (bar, maker or supplier), that is once its
+--      claim is approved. Moderators
 --      and approval itself (run as the moderator) are unaffected.
 -- Nothing here changes or removes existing rows.
 
@@ -170,9 +171,13 @@ CREATE FUNCTION "private"."show_page_after_claim"() RETURNS "trigger"
     SET "search_path" TO ''
     AS $$
 BEGIN
-    UPDATE public.profiles SET is_public = true
-    WHERE id = OLD.profile_id AND NOT is_public AND moderated_at IS NULL
-      AND NOT EXISTS (SELECT 1 FROM public.profile_claims c WHERE c.profile_id = OLD.profile_id AND c.status = 'pending' AND c.id <> OLD.id);
+    -- Whichever waiting claim leaves last: the page shows once none waits, if a claim hid it.
+    IF (OLD.evidence ->> 'hid_page') = 'true'
+       OR EXISTS (SELECT 1 FROM public.profile_claims c WHERE c.profile_id = OLD.profile_id AND (c.evidence ->> 'hid_page') = 'true') THEN
+        UPDATE public.profiles SET is_public = true
+        WHERE id = OLD.profile_id AND NOT is_public AND moderated_at IS NULL AND bar_id IS NULL
+          AND NOT EXISTS (SELECT 1 FROM public.profile_claims c WHERE c.profile_id = OLD.profile_id AND c.status = 'pending' AND c.id <> OLD.id);
+    END IF;
     RETURN NULL;
 END;
 $$;
@@ -180,25 +185,26 @@ REVOKE EXECUTE ON FUNCTION "private"."show_page_after_claim"() FROM PUBLIC, "ano
 
 CREATE TRIGGER "show_page_after_claim_withdrawn" AFTER DELETE ON "public"."profile_claims"
     FOR EACH ROW
-    WHEN (OLD.status = 'pending' AND (OLD.evidence ->> 'hid_page') = 'true')
+    WHEN (OLD.status = 'pending')
     EXECUTE FUNCTION "private"."show_page_after_claim"();
 
 CREATE TRIGGER "show_page_after_claim_declined" AFTER UPDATE OF "status" ON "public"."profile_claims"
     FOR EACH ROW
-    WHEN (OLD.status = 'pending' AND NEW.status = 'rejected' AND (OLD.evidence ->> 'hid_page') = 'true')
+    WHEN (OLD.status = 'pending' AND NEW.status = 'rejected')
     EXECUTE FUNCTION "private"."show_page_after_claim"();
 
 -- --- Reading a page with a claim waiting ---
 
--- Pages the caller may read because of a pending claim: their own claims, or
--- every pending one for a moderator. Definer, so the profiles policy below
--- doesn't loop through profile_claims' own policies.
+-- Pages the caller may read because a pending claim hid them: their own
+-- claims, or every one for a moderator. Only pages start_bar_claim hid, never
+-- one a moderator took down. Definer, so the profiles policy below doesn't
+-- loop through profile_claims' own policies.
 CREATE FUNCTION "private"."pending_claim_profile_ids"() RETURNS SETOF "uuid"
     LANGUAGE "sql" STABLE SECURITY DEFINER
     SET "search_path" TO ''
     AS $$
-  SELECT c.profile_id FROM public.profile_claims c
-  WHERE c.status = 'pending'
+  SELECT c.profile_id FROM public.profile_claims c JOIN public.profiles p ON p.id = c.profile_id
+  WHERE c.status = 'pending' AND (c.evidence ->> 'hid_page') = 'true' AND p.moderated_at IS NULL
     AND (c.user_id = auth.uid() OR EXISTS (SELECT 1 FROM private.app_admins aa WHERE aa.user_id = auth.uid()));
 $$;
 REVOKE EXECUTE ON FUNCTION "private"."pending_claim_profile_ids"() FROM PUBLIC, "anon";
@@ -274,7 +280,7 @@ BEGIN
             UPDATE public.bars SET page_visibility = v_visibility WHERE id = v_bar_id;
         END IF;
         UPDATE public.profiles SET bar_id = v_bar_id, claimed_at = now(),
-            is_public = CASE WHEN (v_claim.evidence ->> 'hid_page')::boolean THEN true ELSE is_public END
+            is_public = CASE WHEN (v_claim.evidence ->> 'hid_page')::boolean AND moderated_at IS NULL THEN true ELSE is_public END
         WHERE id = v_profile.id RETURNING * INTO v_profile;
 
         -- Settings kept on the claim. save_claim_setup checked them; if the
@@ -351,7 +357,7 @@ BEGIN
     IF NEW.id NOT IN (SELECT private.bars_with_capability('publish')) THEN
         RAISE EXCEPTION 'Changing who sees the bar''s page needs the publish permission.' USING ERRCODE = '42501';
     END IF;
-    IF NOT EXISTS (SELECT 1 FROM public.profiles p WHERE p.bar_id = NEW.id AND p.kind = 'bar') THEN
+    IF NOT EXISTS (SELECT 1 FROM public.profiles p WHERE p.bar_id = NEW.id) THEN
         RAISE EXCEPTION 'Who sees the page opens once your claim on it is approved.' USING ERRCODE = '42501';
     END IF;
     IF NEW.page_visibility = 'private' AND NOT public.bar_claim_verified(NEW.id) THEN
