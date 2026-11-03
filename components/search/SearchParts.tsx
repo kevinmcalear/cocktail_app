@@ -5,7 +5,7 @@ import { StyleSheet, View } from 'react-native';
 import { Caption, Chip, DrinkImage, DsText, GlassSurface, Headline, MatchText, PressableScale, RowScore, scoreWords, useDs } from '@/components/ds';
 import { PopoverMenu, usePopover } from '@/components/ds/PopoverMenu';
 import { IconSymbol } from '@/components/ui/icon-symbol';
-import { font, layout, radius, space } from '@/constants/tokens';
+import { displayFaces, font, layout, radius, space } from '@/constants/tokens';
 import { useDrinkLists } from '@/hooks/useDiscover';
 import { withAlpha } from '@/lib/color';
 import { foldName } from '@/lib/discover';
@@ -92,7 +92,7 @@ interface TopHitProps {
   /** Its ingredients, in spec order. */
   line?: string;
   score?: number;
-  query: string;
+  query?: string;
   onPress: () => void;
 }
 
@@ -115,7 +115,7 @@ export function TopHit({ name, itemId, imageUrl, glass, caption, line, score, qu
           <DrinkImage thumb sketchDetail="thumb" source={imageUrl} glass={glass} itemId={itemId} accessibilityLabel={name} radius="control" />
         </View>
         <View style={styles.flex}>
-          <Headline numberOfLines={2}>
+          <Headline numberOfLines={2} style={{ fontFamily: displayFaces[ds.displayFace].regular }}>
             <MatchText text={name} query={query} />
           </Headline>
           {caption ? <Caption tone="muted">{caption}</Caption> : null}

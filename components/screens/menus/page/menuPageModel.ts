@@ -49,6 +49,16 @@ interface Input {
   offTonight?: ReadonlySet<string>;
 }
 
+/**
+ * Rows the board doesn't draw above the drinks go after them, so the first drink isn't pushed down the page:
+ * an Admin's Run sheet (Menu-who-admin draws On, Costing, bar page, End), and on a living list (Menu-l-*, which
+ * draws On, Last change, Team, Costing) the run sheet, bar page and End.
+ */
+export function splitGroup(rows: ModelGroupRow[], living: boolean, admin: boolean): [top: ModelGroupRow[], after: ModelGroupRow[]] {
+  const low = (r: ModelGroupRow) => (r.action === 'runSheet' ? admin || living : living && (r.action === 'barPage' || r.action === 'end'));
+  return [rows.filter((r) => !low(r)), rows.filter(low)];
+}
+
 /** On the bar page, Shown or Hidden: tapping it flips the menu's hidden_at. */
 const barPageRow = (menu: MenuDetail): ModelGroupRow => ({ label: 'On the bar page', value: menu.hiddenAt ? 'Hidden' : 'Shown', action: 'barPage' });
 
