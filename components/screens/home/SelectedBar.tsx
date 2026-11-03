@@ -199,9 +199,10 @@ const styles = StyleSheet.create({
   card: { gap: space.sm },
   // disc-desk-browse: the surface with a stronger edge, 14 by 16 inside.
   picked: { borderWidth: 1, paddingVertical: space.md + 2, paddingHorizontal: space.lg, gap: space.sm + 2 },
-  cardRow: { flex: 1, flexDirection: 'row', alignItems: 'center', gap: space.md },
-  // A wrapped name is taller than the mark: top-align them.
-  barHead: { alignItems: 'flex-start' },
+  // No flex here: in a sheet's auto-height column, flex: 1 rows collapse to nothing on iOS and Android (the name vanished).
+  cardRow: { flexDirection: 'row', alignItems: 'center', gap: space.md },
+  // The bar's own part of the row takes the width beside Love and Maps; a wrapped name is taller than the mark: top-align them.
+  barHead: { flex: 1, minWidth: 0, alignItems: 'flex-start' },
   // The same room above the drinks as below them.
   drinks: { marginVertical: space.sm },
   // The count beside the buttons, as drawn; in a narrow column the buttons drop under it together rather than leaving Open bar alone.

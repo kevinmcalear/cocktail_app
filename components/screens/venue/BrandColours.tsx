@@ -59,7 +59,8 @@ export function ColourPicker({ accent, tint, palettes, onChange }: { accent: str
                   <View key={i} style={[styles.bar, { backgroundColor: c }]} />
                 ))}
               </View>
-              <Body color={look.ink} numberOfLines={1} style={styles.bold}>{p.name}</Body>
+              {/* Two lines: "Campari red" wraps whole at a phone's three across instead of cutting to "Campari...". */}
+              <Body color={look.ink} numberOfLines={2} style={styles.bold}>{p.name}</Body>
             </PressableScale>
           );
         })}

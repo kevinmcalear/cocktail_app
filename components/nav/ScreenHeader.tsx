@@ -7,7 +7,7 @@ import { Display, GlassButton, Title, useBreakpoint, useGutter } from '@/compone
 import { space } from '@/constants/tokens';
 import { useIsWideWeb } from '@/hooks/useIsWideWeb';
 
-import { VenueDeleteBanner } from '@/components/screens/venue/DeleteVenue';
+import { VenueDeleteBanner } from '@/components/screens/venue/VenueDeleteBannerLazy';
 
 import { AddButton, DeskAddButton } from './AddButton';
 import { SearchBar } from './SearchBar';

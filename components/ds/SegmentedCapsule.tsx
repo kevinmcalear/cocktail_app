@@ -16,6 +16,8 @@ interface SegmentedCapsuleProps<T extends string> {
   accessibilityLabel: string;
   /** As wide as its labels, a pill (the drink page's Ingredients | Steps); left out, it fills its row. */
   hug?: boolean;
+  /** Segments take the width of their words, the rest shared out: for labels of unequal length (Full, Half left, Running low). */
+  byWords?: boolean;
 }
 
 /**
@@ -24,7 +26,7 @@ interface SegmentedCapsuleProps<T extends string> {
  * Android (Prod-and): connected buttons, the pick a full pill with a check.
  * Apart from Segmented so the pages without one don't load it.
  */
-export function SegmentedCapsule<T extends string>({ options, value, onChange, accessibilityLabel, hug }: SegmentedCapsuleProps<T>) {
+export function SegmentedCapsule<T extends string>({ options, value, onChange, accessibilityLabel, hug, byWords }: SegmentedCapsuleProps<T>) {
   const ds = useDs();
   const android = Platform.OS === 'android';
   const dark = ds.scheme === 'dark';
@@ -42,7 +44,7 @@ export function SegmentedCapsule<T extends string>({ options, value, onChange, a
             aria-selected={selected}
             accessibilityLabel={o.label}
             onPress={() => onChange(o.value)}
-            style={[styles.capsuleItem, hug ? styles.hugItem : styles.fill, android ? (selected ? styles.connectedOn : styles.connectedItem) : null, { backgroundColor: fill }, selected && !android && !dark ? { boxShadow: `0 1px 4px ${withAlpha(ds.c.ink, 0.1)}` } : null]}
+            style={[styles.capsuleItem, hug ? styles.hugItem : byWords ? styles.byWords : styles.fill, android ? (selected ? styles.connectedOn : styles.connectedItem) : null, { backgroundColor: fill }, selected && !android && !dark ? { boxShadow: `0 1px 4px ${withAlpha(ds.c.ink, 0.1)}` } : null]}
           >
             {android && selected ? <IconSymbol name="checkmark" size={15} color={ds.c.ink} /> : null}
             <DsText variant="body" numberOfLines={1} style={[styles.small, selected ? font.semiBold : font.medium]}>
@@ -62,6 +64,7 @@ const styles = StyleSheet.create({
   fill: { flex: 1, minWidth: 0 },
   hugItem: { paddingHorizontal: space.md + 2, borderRadius: radius.pill },
   capsuleItem: { minHeight: layout.minTapTarget - 6, flexDirection: 'row', gap: space.xs + 2, alignItems: 'center', justifyContent: 'center', paddingHorizontal: space.xs, borderRadius: radius.control + 3 },
+  byWords: { flexBasis: 'auto', flexGrow: 1, flexShrink: 1, minWidth: 0 },
   connectedItem: { minHeight: layout.minTapTarget, borderRadius: space.sm },
   connectedOn: { minHeight: layout.minTapTarget, borderRadius: radius.card - 2 },
   // The control's labels a step under body, as drawn (15 on 24).
