@@ -6,6 +6,7 @@ import { Body, DsText } from '@/components/ds';
 import { space } from '@/constants/tokens';
 import { useClosestClassic } from '@/hooks/useClosestClassic';
 import { usePairings } from '@/hooks/usePairings';
+import { useVenueFeature } from '@/hooks/useVenueFeatures';
 import { balanceOf, fixesFor } from '@/lib/balance';
 import { withArticle, type SpecIngredient } from '@/lib/closestClassic';
 import { amountOf, type WizardLine, type WizardPick } from '@/lib/drinkWizard';
@@ -24,6 +25,7 @@ const listNames = (names: string[]) => (names.length < 3 ? names.join(' and ') :
  */
 export function GoesWith({ lines, onAdd, fallback, after, away, onAway }: { lines: readonly WizardLine[]; onAdd: (pick: WizardPick) => void; fallback: ReactNode; after?: ReactNode; /** Put away for this draft (draft.putAway). */ away?: boolean; onAway?: () => void }) {
   const router = useRouter();
+  const flavorMap = useVenueFeature('flavorMap');
   const known = lines.filter((l): l is WizardLine & { id: string } => !!l.id);
   const { data: pairs = [] } = usePairings(
     known.map((l) => l.id),
@@ -48,15 +50,17 @@ export function GoesWith({ lines, onAdd, fallback, after, away, onAway }: { line
         onDismiss={onAway}
         chips={fresh.map((p) => ({ label: p.name, onPress: () => onAdd({ id: p.id, name: p.name }), accessibilityLabel: `Add ${p.name}. In drinks with ${names.map((n, i) => `${n} ${p.together[i] ?? 0} times`).join(', ')}` }))}
       >
-        <DsText
-          variant="caption"
-          tone="accent"
-          role="link"
-          style={styles.more}
-          onPress={() => router.push({ pathname: '/flavor-map', params: { with: known.map((l) => l.id).join(',') } })}
-        >
-          Explore more on the flavor map
-        </DsText>
+        {flavorMap ? (
+          <DsText
+            variant="caption"
+            tone="accent"
+            role="link"
+            style={styles.more}
+            onPress={() => router.push({ pathname: '/flavor-map', params: { with: known.map((l) => l.id).join(',') } })}
+          >
+            Explore more on the flavor map
+          </DsText>
+        ) : null}
       </Prompt>
       {after}
     </View>

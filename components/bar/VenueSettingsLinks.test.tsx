@@ -14,6 +14,8 @@ jest.mock('@/hooks/useBarGlassware', () => ({ useBarGlassware: () => ({ data: mo
 jest.mock('@/hooks/useBarKit', () => ({ useBarKit: () => ({ data: mockKit }) }));
 jest.mock('@/hooks/useVenueIce', () => ({ useVenueIce: () => ({ data: mockIce }) }));
 jest.mock('@/hooks/useCapabilities', () => ({ useCapabilities: () => ({ data: mockCaps }) }));
+let mockAdvanced = true;
+jest.mock('@/hooks/useVenueFeatures', () => ({ useBarFeature: (_b: string, key: string) => key === 'advanced' && mockAdvanced, useBarFeatures: () => () => false }));
 jest.mock('@/hooks/useVenueSuppliers', () => ({ useVenueSuppliers: (barId: string | null) => ({ data: barId ? [{}, {}] : undefined }) }));
 
 test('the Glassware row says how many glasses the venue has', async () => {
@@ -39,6 +41,14 @@ test('Kit counts the ice and the tools', async () => {
   await renderWithProviders(<VenueKitLinks barId="b" />);
   expect(screen.getByText('1 kind')).toBeTruthy();
   expect(screen.getByText('2 tools')).toBeTruthy();
+});
+
+test('Ice and Tools are Advanced options: off, Kit is the glasses', async () => {
+  mockAdvanced = false;
+  await renderWithProviders(<VenueKitLinks barId="b" />);
+  expect(screen.queryByText('Ice')).toBeNull();
+  expect(screen.queryByText('Tools')).toBeNull();
+  mockAdvanced = true;
 });
 
 test('Buying is only for people with Prep or Costs', async () => {

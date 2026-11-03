@@ -17,6 +17,22 @@ jest.mock('burnt', () => ({ toast: jest.fn(), alert: jest.fn() }));
 jest.mock('react-native-safe-area-context', () =>
   jest.requireActual<{ default: object }>('react-native-safe-area-context/jest/mock').default
 );
+// The venue feature switches (hooks/useVenueFeatures.ts) read Supabase through a query, and most
+// screen tests render without a QueryClient: every section shows, as on main before a bar picks,
+// except Advanced options (off by default) and the back bar map (parked, lib/backBar.ts).
+// hooks/useVenueFeatures.test.tsx tests the real hook; a test can mock it again to switch some off.
+jest.mock('@/hooks/useVenueFeatures', () => {
+  const has = (key: string) => key !== 'advanced' && key !== 'backBar';
+  return {
+    venueFeaturesKey: (barId: string | null) => ['venue-features', barId],
+    useVenueFeatures: () => ({ ready: true, on: [], has, home: '/' }),
+    useVenueFeature: has,
+    useBackBarShown: () => false,
+    useBarFeature: (_barId: unknown, key: string) => has(key),
+    useBarFeatures: () => has,
+    useSetVenueFeature: () => ({ features: [], set: jest.fn(), error: null }),
+  };
+});
 
 // Gesture-handler's root view, as app/_layout.tsx has it: gesture-handler 3
 // requires one around every GestureDetector (edit mode's drag handles).

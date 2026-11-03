@@ -11,6 +11,7 @@ import type { StepPart } from '@/lib/makeSteps';
 import type { ScaledLine } from '@/lib/scale';
 
 import { weighHint, type KitItem } from './makeLogic';
+import { useVenueFeature } from '@/hooks/useVenueFeatures';
 
 /** Make, second screen: everything out on the bench, ticked off as it comes out, and the kit to get out with it. */
 export function MakeGather({ lines, got, onToggle, kit, missing }: {
@@ -23,6 +24,8 @@ export function MakeGather({ lines, got, onToggle, kit, missing }: {
 }) {
   const ds = useDs();
   const router = useRouter();
+  // Its kit and technique pages are the Techniques switch's (lib/venueFeatures.ts).
+  const techniques = useVenueFeature('techniques');
   // Two or more things that can go on the scale: tare between them (prep-make-gather).
   const weighed = lines.filter((l) => /\b(k?g)$/.test(l.scaled) || !!weighHint(l)).length;
   return (
@@ -59,7 +62,7 @@ export function MakeGather({ lines, got, onToggle, kit, missing }: {
       <Caption tone="muted" role="heading" style={styles.eyebrow}>KIT</Caption>
       <View style={styles.kit}>
         {kit.map((k) =>
-          k.equipment ? (
+          k.equipment && techniques ? (
             <Chip key={k.name} label={k.name} selected={false} onPress={() => router.push(`/equipment/${k.equipment}` as never)} accessibilityLabel={`${k.name}, opens the kit page`} />
           ) : (
             <View key={k.name} style={[styles.kitItem, { backgroundColor: ds.c.raised }]}>
