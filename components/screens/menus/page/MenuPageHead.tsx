@@ -1,7 +1,7 @@
 import { lazy, Suspense, type ReactNode } from 'react';
 import { StyleSheet, View } from 'react-native';
 
-import { Caption, Display, DsText, GlassButton, PressableScale, Tag, useDs, type TagTone } from '@/components/ds';
+import { Caption, Display, DsText, GlassButton, PressableScale, Tag, useBreakpoint, useDs, type TagTone } from '@/components/ds';
 import { font, menuCover, radius, space } from '@/constants/tokens';
 
 import { MenuSky, MenuTrio } from './MenuBand';
@@ -20,6 +20,8 @@ interface MenuPageHeadProps {
   heroIds: string[];
   /** A menu that's on or coming up, at a bar, with a cover: the photo leads, and decides light or dark (MenuScreen). */
   coverUrl: string | null;
+  /** Who took the cover photo: "Photo: Jess Rowe" under it on phones, on it on the wide web (Miss-cover-credit). */
+  coverCredit?: string | null;
   name: string;
   ink: MenuInk;
   /** Drafts, past menus: no sky. */
@@ -49,8 +51,9 @@ interface MenuPageHeadProps {
  * cover photo, or nothing yet), glass Back and Share, then the tag and
  * eyebrow, the name and its line (Menu-page).
  */
-export function MenuPageHead({ heroIds, coverUrl, name, ink, quiet, tag, eyebrow, description, onBack, onShare, onEdit, pill, label, bleed, top = 0, children }: MenuPageHeadProps) {
+export function MenuPageHead({ heroIds, coverUrl, coverCredit, name, ink, quiet, tag, eyebrow, description, onBack, onShare, onEdit, pill, label, bleed, top = 0, children }: MenuPageHeadProps) {
   const ds = useDs();
+  const wide = useBreakpoint() !== 'phone';
   const photo = !!coverUrl;
   const drawn = !photo && heroIds.length > 0;
   return (
@@ -58,6 +61,11 @@ export function MenuPageHead({ heroIds, coverUrl, name, ink, quiet, tag, eyebrow
       {photo ? (
         <Suspense fallback={<View style={{ height: PHOTO_H }} />}>
           <MenuCover url={coverUrl} name={name} height={PHOTO_H} bleed={bleed} />
+          {coverCredit ? (
+            <View style={[styles.credit, wide && [styles.creditOn, { backgroundColor: ds.c.scrim }]]}>
+              <Caption tone="muted" numberOfLines={1}>{`Photo: ${coverCredit}`}</Caption>
+            </View>
+          ) : null}
         </Suspense>
       ) : drawn ? (
         <View style={{ height: HERO_H + top, marginHorizontal: -bleed, overflow: 'hidden' }}>
@@ -109,6 +117,8 @@ export function MenuPageHead({ heroIds, coverUrl, name, ink, quiet, tag, eyebrow
 }
 
 const styles = StyleSheet.create({
+  credit: { position: 'absolute', top: PHOTO_H - space.xl, right: 0, maxWidth: '60%' },
+  creditOn: { top: PHOTO_H - space.xxxl - space.lg, paddingHorizontal: space.sm, paddingVertical: space.xs / 2, borderRadius: radius.control },
   bar: { position: 'absolute', top: space.lg, left: 0, right: 0, flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' },
   barEnd: { flexDirection: 'row', gap: space.sm, alignItems: 'center' },
   pill: { minHeight: 44, paddingHorizontal: space.lg, borderRadius: radius.pill, alignItems: 'center', justifyContent: 'center' },

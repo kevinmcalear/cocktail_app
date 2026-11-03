@@ -177,7 +177,8 @@ function RootLayoutNav() {
             />
             {/* Declared here because on iOS, a screen pushed over a modal ignores headerShown set from inside it. */}
             <Stack.Screen name="back-bar" options={{ headerShown: false }} />
-            <Stack.Screen name="team" options={{ headerShown: false }} />
+            <Stack.Screen name="team/index" options={{ headerShown: false }} />
+            <Stack.Screen name="team/[userId]" options={{ headerShown: false }} />
             <Stack.Screen name="bring-in/index" options={{ headerShown: false }} />
             <Stack.Screen name="bring-in/done" options={{ headerShown: false }} />
             <Stack.Screen name="drafts" options={{ headerShown: false }} />
@@ -195,6 +196,8 @@ function RootLayoutNav() {
             <Stack.Screen name="settings/bar/[id]/index" options={{ headerShown: false }} />
             <Stack.Screen name="settings/bar/[id]/brand" options={{ headerShown: false }} />
             <Stack.Screen name="settings/bar/[id]/theme" options={{ headerShown: false }} />
+            <Stack.Screen name="settings/bar/[id]/roles/index" options={{ headerShown: false }} />
+            <Stack.Screen name="settings/bar/[id]/roles/[role]" options={{ headerShown: false }} />
             <Stack.Screen name="p/review-claims" options={{ headerShown: false }} />
             <Stack.Screen name="p/review-photos" options={{ headerShown: false }} />
             <Stack.Screen name="rankings/[itemId]" options={{ headerShown: false }} />

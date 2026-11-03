@@ -328,6 +328,32 @@ export type Database = {
           },
         ]
       }
+      bar_staff_links: {
+        Row: {
+          bar_id: string
+          made_at: string
+          token: string
+        }
+        Insert: {
+          bar_id: string
+          made_at?: string
+          token?: string
+        }
+        Update: {
+          bar_id?: string
+          made_at?: string
+          token?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "bar_staff_links_bar_id_fkey"
+            columns: ["bar_id"]
+            isOneToOne: true
+            referencedRelation: "bars"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       bar_zones: {
         Row: {
           bar_id: string
@@ -414,6 +440,9 @@ export type Database = {
           short_name: string | null
           show_spec_changes: boolean
           slug: string
+          staff_link_approve: boolean
+          staff_link_on: boolean
+          staff_link_role: number
           target_gp: number | null
           tax_rate: number
           timezone: string | null
@@ -448,6 +477,9 @@ export type Database = {
           short_name?: string | null
           show_spec_changes?: boolean
           slug: string
+          staff_link_approve?: boolean
+          staff_link_on?: boolean
+          staff_link_role?: number
           target_gp?: number | null
           tax_rate?: number
           timezone?: string | null
@@ -482,6 +514,9 @@ export type Database = {
           short_name?: string | null
           show_spec_changes?: boolean
           slug?: string
+          staff_link_approve?: boolean
+          staff_link_on?: boolean
+          staff_link_role?: number
           target_gp?: number | null
           tax_rate?: number
           timezone?: string | null
@@ -4594,6 +4629,7 @@ export type Database = {
           bar_id: string | null
           change_level: number | null
           change_role_id: string | null
+          cover_credit: string | null
           cover_position: number | null
           cover_url: string | null
           created_at: string
@@ -4622,6 +4658,7 @@ export type Database = {
           bar_id?: string | null
           change_level?: number | null
           change_role_id?: string | null
+          cover_credit?: string | null
           cover_position?: number | null
           cover_url?: string | null
           created_at?: string
@@ -4650,6 +4687,7 @@ export type Database = {
           bar_id?: string | null
           change_level?: number | null
           change_role_id?: string | null
+          cover_credit?: string | null
           cover_position?: number | null
           cover_url?: string | null
           created_at?: string
@@ -6437,6 +6475,7 @@ export type Database = {
           declined_at: string | null
           id: string
           user_id: string
+          via_link: boolean
         }
         Insert: {
           bar_id: string
@@ -6444,6 +6483,7 @@ export type Database = {
           declined_at?: string | null
           id?: string
           user_id?: string
+          via_link?: boolean
         }
         Update: {
           bar_id?: string
@@ -6451,6 +6491,7 @@ export type Database = {
           declined_at?: string | null
           id?: string
           user_id?: string
+          via_link?: boolean
         }
         Relationships: [
           {
@@ -7324,6 +7365,7 @@ export type Database = {
         }[]
       }
       bar_claim_verified: { Args: { p_bar_id: string }; Returns: boolean }
+      bar_owner: { Args: { p_bar_id: string }; Returns: string }
       bar_share_opens: {
         Args: { p_bar: string; p_since: string }
         Returns: number
@@ -7510,6 +7552,9 @@ export type Database = {
           short_name: string | null
           show_spec_changes: boolean
           slug: string
+          staff_link_approve: boolean
+          staff_link_on: boolean
+          staff_link_role: number
           target_gp: number | null
           tax_rate: number
           timezone: string | null
@@ -7846,6 +7891,14 @@ export type Database = {
           sweet: number
         }[]
       }
+      follow_people: {
+        Args: never
+        Returns: {
+          avatar_url: string
+          display_name: string
+          user_id: string
+        }[]
+      }
       friends_ranks: {
         Args: { p_item_id?: string; p_limit?: number }
         Returns: {
@@ -8152,6 +8205,16 @@ export type Database = {
           name: string
         }[]
       }
+      invite_profile_to_bar: {
+        Args: {
+          p_bar_id: string
+          p_note?: string
+          p_profile_id: string
+          p_role_id?: string
+          p_role_level: number
+        }
+        Returns: boolean
+      }
       invite_to_role: {
         Args: {
           p_email: string
@@ -8163,6 +8226,7 @@ export type Database = {
       }
       is_card_public: { Args: { p_item_id: string }; Returns: boolean }
       is_spec_locked: { Args: { p_item_id: string }; Returns: boolean }
+      join_by_staff_link: { Args: { p_token: string }; Returns: string }
       join_requests: {
         Args: { p_bar_id: string }
         Returns: {
@@ -8172,6 +8236,7 @@ export type Database = {
           name: string
           profile_handle: string
           user_id: string
+          via_link: boolean
         }[]
       }
       list_on_day: {
@@ -8365,6 +8430,7 @@ export type Database = {
         }[]
       }
       near_score: { Args: { p_name: string; p_query: string }; Returns: number }
+      new_staff_link: { Args: { p_bar_id: string }; Returns: string }
       next_pair_notes: {
         Args: { p_limit?: number }
         Returns: {
@@ -8518,6 +8584,7 @@ export type Database = {
           declined_at: string | null
           id: string
           user_id: string
+          via_link: boolean
         }
         SetofOptions: {
           from: "*"
@@ -8645,6 +8712,7 @@ export type Database = {
       }
       save_menu: {
         Args: {
+          p_cover_credit?: string
           p_cover_position: number
           p_cover_url: string
           p_menu_id: string
@@ -8842,6 +8910,18 @@ export type Database = {
           spec_match: string
         }[]
       }
+      staff_link_door: {
+        Args: { p_token: string }
+        Returns: {
+          admin_count: number
+          admin_name: string
+          approve: boolean
+          bar_id: string
+          join_role: number
+          link_on: boolean
+          me: string
+        }[]
+      }
       start_bar_claim: {
         Args: {
           p_bar_id?: string
@@ -8930,6 +9010,7 @@ export type Database = {
         Args: { p_at?: string; p_item_id: string; p_row_id: string }
         Returns: string
       }
+      take_back_join_request: { Args: { p_bar_id: string }; Returns: undefined }
       take_invite_email_slot: {
         Args: { p_bar_id: string; p_email: string; p_sender: string }
         Returns: string
@@ -8985,6 +9066,9 @@ export type Database = {
           short_name: string | null
           show_spec_changes: boolean
           slug: string
+          staff_link_approve: boolean
+          staff_link_on: boolean
+          staff_link_role: number
           target_gp: number | null
           tax_rate: number
           timezone: string | null

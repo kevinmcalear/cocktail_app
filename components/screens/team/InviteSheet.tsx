@@ -1,18 +1,20 @@
 import { useRef, useState, type ComponentRef } from 'react';
 import { StyleSheet, View, type TextInput } from 'react-native';
 
-import { Body, Button, Caption, Field } from '@/components/ds';
+import { Body, Button, Caption, Chip, Field, PressableScale, Segmented } from '@/components/ds';
 import { Choice, MenuSheet } from '@/components/screens/menus/MenuSheet';
 import { space } from '@/constants/tokens';
 import { useSetMemberRole } from '@/hooks/useBarDetail';
-import { useSaveWelcomeMessage, useSenderName, useSendInviteEmail, useWelcomeMessage } from '@/hooks/useBarInvites';
+import { useInviteProfile, useSaveWelcomeMessage, useSendInviteEmail, useWelcomeMessage } from '@/hooks/useBarInvites';
+import { usePublicPeople } from '@/hooks/useProfiles';
+import { useInviteToRole } from '@/hooks/useTakeover';
+import { useRoleMatrix } from '@/hooks/useVenueRoles';
 import { plainDbMessage } from '@/lib/dbError';
 import { confirmAsync } from '@/lib/dialogs';
 import { focusInModal, MODAL_AUTOFOCUS } from '@/lib/modalAutoFocus';
-import { roleLabel } from '@/lib/roles';
-import { INVITE_ROLES, inviteButtonLabel, NOTE_MAX, TEAM_MANAGE, welcomeSuggestion } from '@/lib/team';
+import { inviteRoleOptions, looksLikeEmail, TEAM_MANAGE, welcomeSuggestion } from '@/lib/team';
 
-import { InvitePreview } from './InvitePreview';
+import { StaffLinkTab } from './StaffLinkTab';
 
 /** What happened, for the Team screen to say once the sheet closes. */
 export interface InviteNote {
@@ -35,68 +37,97 @@ interface InviteSheetProps {
 const BARTENDER = 30;
 
 /**
- * Invite someone to the venue: their name, email, what they can do, and a
- * note just for them under the welcome message (invite-team-last, step 6).
- * Saves the invite (add_user_to_bar_by_email), then emails it
- * (send-bar-invite). An email that's already on the team just gets the new
- * role. An Admin's first invite saves the suggested welcome message too, as
- * Your team would have.
+ * Invite to the venue (Kept-team): the Staff link tab, or By email as the
+ * board draws it: one "Name or email" field, an As list of the bar's own roles
+ * (its custom ones too) and Send invite. An email stands alone. A name finds
+ * the people already on the app (usePublicPeople: public person pages only,
+ * the search the app's pickers use, no emails); picking one invites that page
+ * (invite_profile_to_bar looks the email up, so the sender never has it).
+ * When it finds nobody, an email is asked for. Otherwise the invite is saved
+ * by add_user_to_bar_by_email for a built-in role or invite_to_role for a
+ * custom one, then emailed (send-bar-invite). Someone already on the team just
+ * gets the new built-in role. An Admin's first invite saves the suggested
+ * welcome message too, as Your team would have.
  */
 export function InviteSheet({ visible, onClose, barId, barName, ceiling, admin, onDone }: InviteSheetProps) {
   const add = useSetMemberRole(barId);
+  const addToRole = useInviteToRole();
+  const addPerson = useInviteProfile(barId);
   const send = useSendInviteEmail(barId);
   const saved = useWelcomeMessage(barId);
   const saveWelcome = useSaveWelcomeMessage(barId);
-  const sender = useSenderName();
-  // Until it's read, nothing: the preview never promises a welcome the email won't carry.
+  const matrix = useRoleMatrix(barId);
+  // Until it's read, nothing: the email never promises a welcome it won't carry.
   const welcome = saved.isSuccess ? (saved.data ?? (admin ? welcomeSuggestion(barName) : '')) : '';
-  const [name, setName] = useState('');
+  const [tab, setTab] = useState<'link' | 'email'>('link');
+  const [who, setWho] = useState('');
   const [email, setEmail] = useState('');
-  const [note, setNote] = useState('');
-  const [previewing, setPreviewing] = useState(false);
-  const [picked, setRole] = useState(BARTENDER);
-  // The ceiling can drop once the inviter's permissions load, so the pick follows it down.
-  const role = Math.min(picked, ceiling);
+  const [picked, setPicked] = useState(`level:${BARTENDER}`);
+  const [person, setPerson] = useState<{ id: string; name: string } | null>(null);
+  const [elsewhere, setElsewhere] = useState(false);
   const [problem, setProblem] = useState<string | null>(null);
-  const nameRef = useRef<ComponentRef<typeof TextInput>>(null);
-  const emailRef = useRef<ComponentRef<typeof TextInput>>(null);
-  const busy = add.isPending || send.isPending;
-  const roles = INVITE_ROLES.filter((r) => r.level <= ceiling);
+  const whoRef = useRef<ComponentRef<typeof TextInput>>(null);
+  const busy = add.isPending || addToRole.isPending || addPerson.isPending || send.isPending;
+  const roles = inviteRoleOptions(ceiling, matrix.data);
+  // The ceiling can drop once the inviter's permissions load, or a role can end, so the pick follows what's offered.
+  const role = roles.find((r) => r.key === picked) ?? roles.find((r) => r.level === BARTENDER) ?? roles[0];
+  // An email stands alone; a name asks for one.
+  const typed = who.trim();
+  const byEmail = looksLikeEmail(typed);
+  const name = byEmail ? '' : typed;
+  const to = (byEmail ? typed : email.trim()).toLowerCase();
+  // People already on the app by that name (an account each); none asks for an email.
+  const search = usePublicPeople(name && !person ? name : '');
+  const found = (search.data ?? []).filter((p) => p.is_claimed).slice(0, 5);
+  const searching = !!name && !person && name.length >= 2 && search.isFetching;
+  const askEmail = !!name && !person && !searching && (elsewhere || found.length === 0);
 
-  const finish = (note: InviteNote) => {
-    setName('');
-    setEmail('');
-    setNote('');
-    setPreviewing(false);
-    setProblem(null);
-    onDone(note);
+  const close = () => {
+    setTab('link');
     onClose();
   };
 
+  const finish = (note: InviteNote) => {
+    setWho('');
+    setEmail('');
+    setPerson(null);
+    setElsewhere(false);
+    setProblem(null);
+    onDone(note);
+    close();
+  };
+
   const submit = async () => {
-    const to = email.trim().toLowerCase();
-    if (!to) return setProblem('Add their email.');
-    const who = name.trim() || to;
-    if (role === TEAM_MANAGE) {
+    if (!typed) return setProblem('Add a name or an email.');
+    if (searching) return setProblem('Still looking for them on the app. One moment.');
+    if (!person && !to) {
+      setElsewhere(true);
+      return setProblem(`Add ${name.split(/\s+/)[0]}’s email.`);
+    }
+    if (!role) return setProblem('Pick what they can do.');
+    const label = person?.name || name || to;
+    if (role.level === TEAM_MANAGE) {
       const ok = await confirmAsync({
-        title: `Make ${who} an Admin?`,
+        title: `Make ${label} an Admin?`,
         message: 'Admins can change the venue and everyone’s role, including yours.',
         confirmText: 'Make Admin',
       });
       if (!ok) return;
     }
     setProblem(null);
-    let invited: boolean;
+    let invited = true;
     try {
       if (saved.isSuccess && saved.data === null && admin) await saveWelcome.mutateAsync(welcome);
-      invited = await add.mutateAsync({ email: to, roleLevel: role, name, note });
+      if (person) invited = await addPerson.mutateAsync({ profileId: person.id, roleLevel: role.level, roleId: role.roleId });
+      else if (role.roleId) await addToRole.mutateAsync({ email: to, roleId: role.roleId, name });
+      else invited = await add.mutateAsync({ email: to, roleLevel: role.level, name });
     } catch (e) {
       return setProblem(plainDbMessage(e) ?? 'Couldn’t save that. Check your connection and try again.');
     }
-    if (!invited) return finish({ text: `${to} is already on the team. They’re ${roleLabel(role)} now.` });
+    if (!invited) return finish({ text: `${label} is already on the team. They’re ${role.label} now.` });
     try {
-      await send.mutateAsync(to);
-      finish({ text: `Invite emailed to ${who}.` });
+      await send.mutateAsync(person ? { profileId: person.id } : to);
+      finish({ text: `Invite emailed to ${label}.` });
     } catch (e) {
       const why = e instanceof Error ? e.message : 'no reason given';
       finish({ text: `The invite is saved, but the email didn’t send (${why}). They can still join from your staff link.`, failed: true });
@@ -106,64 +137,88 @@ export function InviteSheet({ visible, onClose, barId, barName, ceiling, admin, 
   return (
     <MenuSheet
       visible={visible}
-      onClose={onClose}
+      onClose={close}
       title={`Invite to ${barName}`}
-      onShow={MODAL_AUTOFOCUS ? undefined : () => focusInModal(nameRef)}
-      footer={
-        <View style={styles.footer}>
-          <Button label={busy ? 'Sending…' : inviteButtonLabel(name)} size="lg" onPress={submit} disabled={busy} />
-          <Button label={previewing ? 'Hide the email' : 'Preview the email'} variant="ghost" onPress={() => setPreviewing((on) => !on)} />
-        </View>
-      }
+      onShow={MODAL_AUTOFOCUS || tab === 'link' ? undefined : () => focusInModal(whoRef)}
+      footer={tab === 'link' ? undefined : <Button label={busy ? 'Sending…' : 'Send invite'} size="lg" onPress={submit} disabled={busy || searching} />}
     >
-      {/* iOS offers a contact's name and email (textContentType); autoComplete stays off so a browser doesn't fill in your own. */}
-      <Field
-        ref={nameRef}
-        label="Name"
-        value={name}
-        onChangeText={setName}
-        placeholder="Sam Okafor"
-        autoComplete="off"
-        textContentType="name"
-        autoCapitalize="words"
-        returnKeyType="next"
-        submitBehavior="submit"
-        onSubmitEditing={() => emailRef.current?.focus()}
-        maxLength={80}
-        autoFocus={MODAL_AUTOFOCUS}
+      <Segmented
+        accessibilityLabel="How to invite"
+        variant="pill"
+        stretch
+        value={tab}
+        onChange={setTab}
+        options={[{ value: 'link', label: 'Staff link' }, { value: 'email', label: 'By email' }]}
       />
-      <Field
-        ref={emailRef}
-        label="Email"
-        value={email}
-        onChangeText={setEmail}
-        placeholder="sam@example.com"
-        autoComplete="off"
-        textContentType="emailAddress"
-        autoCapitalize="none"
-        autoCorrect={false}
-        keyboardType="email-address"
-        returnKeyType="done"
-      />
-      <Caption tone="muted">What they can do</Caption>
-      <View role="radiogroup" accessibilityLabel="What they can do" style={styles.list}>
-        {roles.map((r) => (
-          <Choice key={r.level} label={roleLabel(r.level)} detail={r.detail} selected={role === r.level} onPress={() => setRole(r.level)} />
-        ))}
-      </View>
-      <Field
-        label={`A note just for ${name.trim().split(/\s+/)[0] || 'them'} (optional)`}
-        value={note}
-        onChangeText={setNote}
-        minLines={3}
-        maxLength={NOTE_MAX}
-        hint={welcome ? 'Goes under your welcome message.' : undefined}
-      />
-      {previewing ? <InvitePreview barId={barId} barName={barName} roleLevel={role} sender={sender} welcome={welcome} note={note} /> : null}
-      {problem ? (
-        <Body tone="accent" role="alert">
-          {problem}
-        </Body>
+      {tab === 'link' ? <StaffLinkTab barId={barId} barName={barName} ceiling={ceiling} admin={admin} /> : null}
+      {tab === 'email' ? (
+        <>
+          {/* autoComplete stays off so a browser doesn't fill in your own email. */}
+          <Field
+            ref={whoRef}
+            label="Name or email"
+            value={who}
+            onChangeText={(text) => {
+              setWho(text);
+              setPerson(null);
+              setElsewhere(false);
+            }}
+            placeholder="Sam Okafor, or sam@example.com"
+            autoComplete="off"
+            autoCapitalize="none"
+            autoCorrect={false}
+            returnKeyType="done"
+            maxLength={120}
+            autoFocus={MODAL_AUTOFOCUS && tab === 'email'}
+          />
+          {person ? (
+            <View style={styles.picked}>
+              <Body style={styles.pickedName}>{person.name} is on the app, so the invite also waits for them there.</Body>
+              <PressableScale role="button" accessibilityLabel={`Not ${person.name}`} onPress={() => setPerson(null)} style={styles.change}>
+                <Caption tone="accent">Change</Caption>
+              </PressableScale>
+            </View>
+          ) : found.length ? (
+            <View role="group" accessibilityLabel="On the app" style={styles.found}>
+              <Caption tone="muted">On the app</Caption>
+              <View style={styles.chips}>
+                {found.map((p) => (
+                  <Chip key={p.id} selected={false} label={p.current_bar ? `${p.display_name}, ${p.current_bar}` : p.city ? `${p.display_name}, ${p.city}` : p.display_name} onPress={() => setPerson({ id: p.id, name: p.display_name })} />
+                ))}
+              </View>
+              {elsewhere ? null : (
+                <PressableScale role="button" accessibilityLabel="None of these" onPress={() => setElsewhere(true)} style={styles.change}>
+                  <Caption tone="accent">None of these? Use their email</Caption>
+                </PressableScale>
+              )}
+            </View>
+          ) : null}
+          {askEmail ? (
+            <Field
+              label={`${name.split(/\s+/)[0]}’s email`}
+              value={email}
+              onChangeText={setEmail}
+              placeholder="sam@example.com"
+              autoComplete="off"
+              textContentType="emailAddress"
+              autoCapitalize="none"
+              autoCorrect={false}
+              keyboardType="email-address"
+              returnKeyType="done"
+            />
+          ) : null}
+          <Caption tone="muted">As</Caption>
+          <View role="radiogroup" accessibilityLabel="As" style={styles.list}>
+            {roles.map((r) => (
+              <Choice key={r.key} label={r.label} detail={r.detail} selected={role?.key === r.key} onPress={() => setPicked(r.key)} />
+            ))}
+          </View>
+          {problem ? (
+            <Body tone="accent" role="alert">
+              {problem}
+            </Body>
+          ) : null}
+        </>
       ) : null}
     </MenuSheet>
   );
@@ -171,5 +226,9 @@ export function InviteSheet({ visible, onClose, barId, barName, ceiling, admin, 
 
 const styles = StyleSheet.create({
   list: { gap: space.sm },
-  footer: { gap: space.sm },
+  found: { gap: space.sm },
+  chips: { flexDirection: 'row', flexWrap: 'wrap', gap: space.sm },
+  picked: { flexDirection: 'row', alignItems: 'center', gap: space.md },
+  pickedName: { flex: 1 },
+  change: { minHeight: 44, justifyContent: 'center' },
 });

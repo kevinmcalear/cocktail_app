@@ -1,6 +1,6 @@
 import assert from 'node:assert/strict';
 
-import { accentOf, barSender, deleteDay, groundOf, initial, inviteEmail, textOn, venueDeleteEmail } from '../supabase/functions/_shared/barEmail';
+import { accentOf, barSender, deleteDay, groundOf, initial, inviteEmail, joinedEmail, textOn, venueDeleteEmail } from '../supabase/functions/_shared/barEmail';
 
 const bar = { name: 'Little Rye', logoUrl: null, color: '#D0643B', face: 'newsreader' };
 
@@ -55,3 +55,10 @@ assert.match(gone.html, /Little Rye goes on Tue 3 Nov/);
 assert.match(gone.html, /Undo, keep Little Rye/);
 assert.match(gone.text, /https:\/\/babyvom\.it\/settings\/bar\/b1/);
 assert.equal(venueDeleteEmail({ bar, askedBy: null, deletesAt: '2026-11-03T12:00:00Z', undoUrl: 'https://babyvom.it/x' }).subject, 'An Admin asked to delete Little Rye');
+
+// An Admin said yes to an ask through the staff link: the bar's look, the role, the link.
+const joined = joinedEmail({ bar, role: 'Employee', linkUrl: 'https://babyvom.it/v/little-rye' });
+assert.equal(joined.subject, "You're on Little Rye's team");
+assert.match(joined.html, /as an Employee/);
+assert.match(joined.html, /href="https:\/\/babyvom\.it\/v\/little-rye"/);
+assert.match(joined.text, /Open Little Rye: https:\/\/babyvom\.it\/v\/little-rye/);

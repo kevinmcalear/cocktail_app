@@ -10,7 +10,7 @@ import { normalizeAllowedTypes, type SectionDrinkType } from '@/lib/sectionAllow
 import { supabase } from '@/lib/supabase';
 import type { MenuDetail, MenuDrink, MenuSummary } from '@/types/menus';
 
-const MENU_COLUMNS = 'id, name, bar_id, created_by, cover_url, cover_position, starts_at, ends_at, created_at, menu_date, guest_count, shared_at, kind, updated_at, description, planned_starts_at, planned_ends_at, hidden_at';
+const MENU_COLUMNS = 'id, name, bar_id, created_by, cover_url, cover_position, cover_credit, starts_at, ends_at, created_at, menu_date, guest_count, shared_at, kind, updated_at, description, planned_starts_at, planned_ends_at, hidden_at';
 
 interface MenuRow {
   id: string;
@@ -19,6 +19,8 @@ interface MenuRow {
   created_by: string | null;
   cover_url: string | null;
   cover_position: number | null;
+  /** Older cached rows have none. */
+  cover_credit?: string | null;
   starts_at: string | null;
   ends_at: string | null;
   created_at: string;
@@ -43,6 +45,7 @@ function toSummaryBase(row: MenuRow) {
     createdBy: row.created_by,
     coverUrl: row.cover_url,
     coverPosition: row.cover_position ?? 50,
+    coverCredit: row.cover_credit ?? null,
     startsAt: row.starts_at,
     endsAt: row.ends_at,
     createdAt: row.created_at,
@@ -64,9 +67,9 @@ export const MENU_PICTURES = 4;
 /** Query keys, for invalidating after a write. */
 export const menuKeys = {
   all: ['menus-v2'] as const,
-  // 'venue-6': summaries gained updatedAt, description, the plan, shortSections and hiddenAt, so a persisted older list isn't read back.
+  // 'venue-7': summaries gained updatedAt, description, the plan, shortSections, hiddenAt and coverCredit, so a persisted older list isn't read back.
   // Bump PERSISTED_KEYS (lib/queryCachePersist.ts) with it; lib/queryKeys.check.ts fails otherwise.
-  venue: (barId: string | null, userId: string | null) => ['menus-v2', 'venue-6', barId, userId] as const,
+  venue: (barId: string | null, userId: string | null) => ['menus-v2', 'venue-7', barId, userId] as const,
   detail: (menuId: string) => ['menus-v2', 'detail', menuId] as const,
 };
 
