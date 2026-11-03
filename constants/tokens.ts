@@ -110,6 +110,13 @@ export const partyHues = ['#D0643B', '#8FB3E8', '#9CC9A0', '#C9A0DC', '#E8C25A',
 /** The printed run sheet: black on white, whatever the theme (run sheet board "Sheet"). */
 export const printPaper = { paper: '#FFFFFF', ink: '#1A1714', muted: '#555049', rule: '#C9C2B6', hairline: '#E6E0D6' } as const;
 
+/**
+ * What leaves the app as a picture (lib/paper, Bet-poster): the warm paper a
+ * top three sits on by day and its night ground, the light panel a bar's
+ * drinks are drawn on, and the cream ink on a bar's colour.
+ */
+export const posterPaper = { day: '#F3E6DA', night: '#241D18', panel: '#F6E7DA', cream: '#FFF6EE' } as const;
+
 /** The accent when there's no venue brand: bar-light amber. */
 export const DEFAULT_ACCENT = '#E4B062';
 
@@ -137,7 +144,9 @@ export const SAMPLE_BRANDS = {
  * Type (decided 31 Oct 2026): Redaction for names, the system font (SF,
  * Roboto, system UI on the web) for everything else, tabular figures for
  * amounts. No mono, nothing under 13. These are the only font families the
- * app sets (npm run check:design).
+ * app sets (npm run check:design). Paper is the one exception: what prints
+ * (lib/paper) sets labels, caps and amounts in the platform's typewriter
+ * face (components/paper/PaperPage), as Bet-labels and Bet-print draw them.
  */
 
 /** Registered font family names (components/ds/fonts.ts). */
@@ -240,6 +249,9 @@ export const displayName = {
   page: { fontSize: 46, lineHeight: 52, letterSpacing: 0 },
 } as const;
 
+/** A score set as the moment's one big figure: where a rank landed (Prod-rank-A "9.0", 96 on phones). */
+export const scoreFigure = { fontSize: 96, lineHeight: 108 } as const;
+
 /** The smallest text the app sets, in points (check:design holds every size to it). */
 export const MIN_FONT_SIZE = 13;
 
@@ -281,6 +293,8 @@ export const layout = {
   breakpoints: { tablet: 768, desktop: 1200 },
   gutter: { phone: 16, tablet: 24, desktop: 32 },
   minTapTarget: 44,
+  /** Android's FAB (Material 3): 56 dp tall, plain or extended, and the plain one as wide. */
+  fab: 56,
   /** Desktop's phone previews of a drink page: about an iPhone's width, in points. */
   phoneFrame: 390,
   /**

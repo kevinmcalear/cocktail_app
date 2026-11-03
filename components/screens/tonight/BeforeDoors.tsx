@@ -1,16 +1,15 @@
 import { useRouter, type Href } from 'expo-router';
 import { StyleSheet, View } from 'react-native';
 
-import { Button, Caption, DsText, PressableScale, Surface, useDs, useToast } from '@/components/ds';
+import { Caption, DsText, PressableScale, Surface, useDs } from '@/components/ds';
 import { RowDivider, SettingsRow } from '@/components/screens/settings/SettingsParts';
 import { IconSymbol } from '@/components/ui/icon-symbol';
 import { radius, space } from '@/constants/tokens';
-import { useLogBatch } from '@/hooks/useBatches';
+import { LogBatchButton } from '@/components/screens/prep/LogBatchButton';
 import { categoryOf } from '@/hooks/useTonight';
 import { itemHref } from '@/lib/itemRoutes';
 import { withAlpha } from '@/lib/color';
 import { plural } from '@/lib/menus';
-import { formatQuantity, toQuantity } from '@/lib/quantity';
 import { offAtLine, prepLine } from '@/lib/tonight';
 
 import { TonightSection } from './TonightParts';
@@ -20,32 +19,26 @@ type Staff = ReturnType<typeof useStaffTonight>;
 
 /**
  * Before doors (Prod-today-staff, Loop-tonight): house-made that's low for
- * tonight with Log batch, then what's counted or logged and enough; only once
- * the bar counts. After close it's Before doors tomorrow.
- * Log batch logs one batch of the recipe at once (it waits on the phone with
- * no signal); a recipe that doesn't say what it makes opens its page instead.
+ * tonight with Log batch (LogBatchButton), then what's counted or logged and
+ * enough; only once the bar counts. After close it's Before doors tomorrow.
  */
 export function BeforeDoors({ t, barId, title = 'Before doors' }: { t: Staff; barId: string; title?: string }) {
   const router = useRouter();
-  const logNow = useLogNow(t, barId);
   const go = (href: string) => () => router.push(href as Href);
   const shown = t.canPrep && t.counted;
   const make = shown ? (t.make ?? []).slice(0, 3) : [];
   const enough = shown ? t.enough.slice(0, 3) : [];
   const rows = [
-    ...make.map((line) => {
-      const log = logNow(line.id, line.name);
-      return (
-        <SettingsRow
-          key={line.id}
-          icon="drop.fill"
-          label={line.name}
-          detail={prepLine(line)}
-          onPress={go(itemHref('Ingredient', line.id))}
-          trailing={<Button label="Log batch" size="sm" variant="secondary" accessibilityLabel={`Log a batch of ${line.name}`} onPress={log} />}
-        />
-      );
-    }),
+    ...make.map((line) => (
+      <SettingsRow
+        key={line.id}
+        icon="drop.fill"
+        label={line.name}
+        detail={prepLine(line)}
+        onPress={go(itemHref('Ingredient', line.id))}
+        trailing={<LogBatchButton barId={barId} id={line.id} name={line.name} batch={t.batchOf(line.id)} />}
+      />
+    )),
     ...enough.map((row) => <SettingsRow key={row.id} icon="drop.fill" label={row.name} detail={row.sub} onPress={go(itemHref('Ingredient', row.id))} />),
   ];
   if (!rows.length) return null;
@@ -61,24 +54,6 @@ export function BeforeDoors({ t, barId, title = 'Before doors' }: { t: Staff; ba
       </Surface>
     </TonightSection>
   );
-}
-
-/**
- * Log batch at one tap: one batch of the recipe, with a toast; a recipe that
- * doesn't say what it makes opens its page instead. Before doors and the
- * handover's What to prep share it.
- */
-export function useLogNow(t: Staff, barId: string) {
-  const router = useRouter();
-  const toast = useToast();
-  const logBatch = useLogBatch(barId);
-  return (id: string, name: string) => () => {
-    const batch = t.batchOf(id);
-    if (!batch) return router.push(itemHref('Ingredient', id) as Href);
-    logBatch.mutate({ itemId: id, ...batch });
-    const q = toQuantity(batch.amount, batch.unit);
-    toast.show({ title: `Logged ${q ? formatQuantity(q) : `${batch.amount} ${batch.unit}`} of ${name}` });
-  };
 }
 
 /** Off tonight (Loop-tonight): drinks on the lists that come off before the night is out, and when. */

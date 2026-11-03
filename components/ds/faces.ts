@@ -27,7 +27,7 @@ export function faceReady(face: DisplayFace, done: string): boolean {
 }
 
 /** Loads a lazy face once. A failure (offline) leaves it unloaded, so its text stays in Redaction. */
-function loadFace(face: DisplayFace): Promise<void> {
+export function loadFace(face: DisplayFace): Promise<void> {
   const fonts = LAZY_FACE_FONTS[face];
   if (!fonts || faceReady(face, loaded)) return Promise.resolve();
   const running = pending.get(face);

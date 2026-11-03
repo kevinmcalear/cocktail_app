@@ -54,6 +54,11 @@ export function creditNames(credits: readonly ItemCredit[] | null | undefined): 
     .map((c) => c.name!);
 }
 
+/** One maker's name for a row or a poster ("Jo Park"): the lead creator with a page, else the first named one. */
+export function makerName(credits: readonly ItemCredit[] | null | undefined): string | null {
+  return leadCredit(credits)?.profile?.display_name ?? creditNames(credits)[0] ?? null;
+}
+
 /** A co-creator's answer as the credit reads it: waiting, said no, or yes (a moderator's check or a dispute still shows it). */
 export function coAnswer(status: CreditState): 'pending' | 'accepted' | 'declined' {
   return status === 'pending' || status === 'declined' ? status : 'accepted';

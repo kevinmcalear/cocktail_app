@@ -28,7 +28,7 @@ export function WhatPeopleSeeScreen() {
       title="What people see"
       intro="One choice per section, and you can still show or hide any single one. These save as you change them."
       backTo="/settings/profile"
-      action={<Button label="Preview" variant="secondary" accessibilityHint="Opens You, your profile as people see it" onPress={() => router.push('/you')} />}
+      action={<Button label="Preview" variant="secondary" accessibilityHint="Opens your profile as people see it" onPress={() => router.push(data ? (`/p/${data.handle}` as Href) : '/you')} />}
     >
       {data ? <SharingChoices profile={data} /> : <Body tone="muted">{isPending ? 'Loading…' : 'Make your public profile first.'}</Body>}
     </SafetyPage>
@@ -69,7 +69,7 @@ export function SharingChoices({ profile }: { profile: MyProfile }) {
               {mode !== 'none' ? (
                 <TextLink
                   label={mode === 'all' ? 'Hide some' : 'Choose'}
-                  onPress={() => router.push((section === 'awards' ? '/you' : `/settings/profile-picks?section=${section}`) as Href)}
+                  onPress={() => router.push((section === 'awards' ? '/settings/profile' : `/settings/profile-picks?section=${section}`) as Href)}
                 />
               ) : null}
             </View>

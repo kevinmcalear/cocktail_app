@@ -3,7 +3,6 @@ import { StyleSheet, View } from 'react-native';
 
 import { Caption, PressableScale } from '@/components/ds';
 import { font, layout, space } from '@/constants/tokens';
-import { useMenuSectionPlace } from '@/hooks/useDrinkDesk';
 
 /** One level of what's being made, from the menu down; `onPress` goes up to it. The last is where you are. */
 export interface TrailItem {
@@ -51,12 +50,6 @@ export function Trail({ items, color }: { items: readonly TrailItem[]; color?: s
 export function drinkTrail(name: string, { menu, venueName, onClose }: { menu: string | null; venueName: string | null; onClose: () => void }): TrailItem[] | undefined {
   const named = name.trim();
   return named ? [{ label: menu ?? venueName ?? 'Your drinks', onPress: onClose }, { label: named }] : undefined;
-}
-
-/** A drink's trail and the menu it's for, read from the menu section it was started from. */
-export function useDrinkTrail(name: string, { menuSectionId, venueName, onClose }: { menuSectionId: string | null | undefined; venueName: string | null; onClose: () => void }) {
-  const menu = useMenuSectionPlace(menuSectionId).data?.menu ?? null;
-  return { menu, trail: drinkTrail(name, { menu, venueName, onClose }) };
 }
 
 /**

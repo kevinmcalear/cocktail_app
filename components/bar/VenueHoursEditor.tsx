@@ -2,7 +2,8 @@ import { useRouter, type Href } from 'expo-router';
 import { useState } from 'react';
 import { StyleSheet, View } from 'react-native';
 
-import { Body, Button, Caption, Chip, Field, TextLink, TimeField } from '@/components/ds';
+import { Body, Button, Caption, Chip, Field, TextLink } from '@/components/ds';
+import { TimeField } from '@/components/ds/TimeField';
 import { RowDivider, SettingsSection } from '@/components/screens/settings/SettingsParts';
 import { space, STATUS } from '@/constants/tokens';
 import { useBarFacts, useSaveBarFacts, type BarFacts } from '@/hooks/useBarFacts';

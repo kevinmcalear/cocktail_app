@@ -1,7 +1,8 @@
 import { useRef, type ComponentRef } from 'react';
 import { ActivityIndicator, StyleSheet, View } from 'react-native';
 
-import { Body, Button, Caption, PopoverMenu, useBreakpoint, useDs, usePopover, type PopoverSection } from '@/components/ds';
+import { Body, Button, Caption, useBreakpoint, useDs } from '@/components/ds';
+import { PopoverMenu, usePopover, type PopoverSection } from '@/components/ds/PopoverMenu';
 import { IngredientPhoto } from '@/components/ds/IngredientDrawing';
 import { IconSymbol } from '@/components/ui/icon-symbol';
 import { font, radius, space } from '@/constants/tokens';

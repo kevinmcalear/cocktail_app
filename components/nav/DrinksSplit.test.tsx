@@ -25,6 +25,10 @@ jest.mock('@/hooks/useIsWideWeb', () => ({
 jest.mock('@/hooks/useMode', () => ({ useMode: () => ({ mode: mockMode, setMode: jest.fn() }) }));
 jest.mock('@/components/screens/venue/DeleteVenue', () => ({ VenueDeleteBanner: () => null }));
 // The New sheet's lists read Supabase; the sheet itself is what's checked here.
+// Add reads where things land and the clipboard; the sheet itself is what's checked here.
+jest.mock('@/hooks/useBringInPlace', () => ({ useBringInPlace: () => ({ barId: null, venueName: null, heldBack: null, loading: false }) }));
+jest.mock('@/lib/clipboardPeek', () => ({ UNREAD_CLIP: '\u0000unread', peekClipboard: async () => null, readClipboard: async () => null }));
+jest.mock('@/hooks/useDrinkDesk', () => ({ useMenuSectionPlace: () => ({ data: undefined }) }));
 jest.mock('@/hooks/useDrafts', () => ({ useDrafts: () => ({ drafts: [] }) }));
 jest.mock('@/hooks/useCapabilities', () => ({ useCapabilities: () => ({ data: [] }), useCapabilityOpensAt: () => ({ data: 35 }) }));
 jest.mock('@/hooks/useSearchMine', () => ({ useSearchMine: () => ({ venueId: null, canAdd: true, label: 'Your drinks' }) }));
@@ -54,9 +58,9 @@ jest.mock('@/components/nav/RootLazy', () => {
   const { LibraryScreen } = jest.requireMock<typeof import('@/components/screens/LibraryScreen')>('@/components/screens/LibraryScreen');
   return { LibraryBeside: () => <LibraryScreen beside /> };
 });
-jest.mock('@/components/screens/home/CollectionScreen', () => {
+jest.mock('@/components/screens/drinks/HomeDrinks', () => {
   const { Text } = jest.requireActual<typeof import('react-native')>('react-native');
-  return { CollectionScreen: () => <Text>collection</Text> };
+  return { HomeDrinks: () => <Text>home drinks</Text> };
 });
 
 const SHARED = '(tabs)/(1-tonight,2-drinks,3-discover,4-you)';
@@ -141,10 +145,10 @@ test('below 1200, Drinks stays one column', async () => {
   expect(screen.queryByText(/list beside/)).toBeNull();
 });
 
-test('at home, Drinks is Collection, one column', async () => {
+test('at home, Drinks is your drinks, shelf and menus, one column', async () => {
   mockMode = 'home';
   await open('/drinks');
-  expect(screen.getByText('collection')).toBeTruthy();
+  expect(screen.getByText('home drinks')).toBeTruthy();
   expect(screen.queryByText(/list beside/)).toBeNull();
 });
 
@@ -162,14 +166,14 @@ test('only a drink page counts as the drink in the pane', () => {
   expect(drinkInPane('/drinks')).toBeNull();
 });
 
-test('from 1200 the top row ends in + Add, which opens the New sheet', async () => {
+test('from 1200 the top row ends in + Add, which opens Add', async () => {
   await renderWithProviders(
     <BreakpointOverride value="desktop">
       <ScreenHeader />
     </BreakpointOverride>,
   );
-  await fireEvent.press(screen.getByRole('button', { name: /^Add: a drink/ }));
-  expect(screen.getByRole('link', { name: /^Drink\./ })).toBeTruthy();
+  await fireEvent.press(screen.getByRole('button', { name: /^Add: name a drink/ }));
+  expect(await screen.findByLabelText('Name a drink, paste a link, or describe it')).toBeTruthy();
 });
 
 test('the list beside a drink (a tablet layout) leaves Add to the page', async () => {
@@ -178,5 +182,5 @@ test('the list beside a drink (a tablet layout) leaves Add to the page', async (
       <ScreenHeader />
     </BreakpointOverride>,
   );
-  expect(screen.queryByRole('button', { name: /^Add: a drink/ })).toBeNull();
+  expect(screen.queryByRole('button', { name: /^Add: name a drink/ })).toBeNull();
 });

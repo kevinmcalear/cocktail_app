@@ -28,8 +28,8 @@ jest.mock('@/hooks/useBarInvites', () => ({ useBarInvites: () => ({ data: mockIn
 jest.mock('@/hooks/useHomeBar', () => ({ useShelf: () => ({ data: ['a', 'b', 'c', 'd'] }), useBarDrinks: () => ({ canMake: new Array(7).fill({}) }) }));
 jest.mock('@/hooks/useWeek', () => ({ useBarWeek: () => ({ data: [] }), useMyWeek: () => ({ data: undefined }), useWeekStart: () => new Date(2026, 9, 10) }));
 // Jest's views never measure, so the Switch menu opens at a made-up place.
-jest.mock('@/components/ds', () => {
-  const actual = jest.requireActual<typeof import('@/components/ds')>('@/components/ds');
+jest.mock('@/components/ds/PopoverMenu', () => {
+  const actual = jest.requireActual<typeof import('@/components/ds/PopoverMenu')>('@/components/ds/PopoverMenu');
   const { useState } = jest.requireActual<typeof import('react')>('react');
   return {
     ...actual,

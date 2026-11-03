@@ -1,6 +1,6 @@
 import assert from 'node:assert/strict';
 
-import { barsCrediting, DEFAULT_IDENTITY, jobYears, modeSummary, pickedShown, profileLine, taglineProblem, personTabs, type ShareMode, groupMenuCredits, handleFromName, personSearchFilter, instagramProblem, normalizeHandle, normalizeInstagram, parseProfileRef, profileDraftErrors, profileLinks, profileQueryShows, type MenuDrinkRow } from './profiles';
+import { barsCrediting, DEFAULT_IDENTITY, jobYears, modeSummary, pickedShown, profileLine, taglineProblem, personTabs, type ShareMode, groupMenuCredits, handleFromName, personSearchFilter, instagramProblem, normalizeHandle, normalizeInstagram, parseProfileRef, profileDraftErrors, profileLinks, profileQueryShows, type MenuDrinkRow, youLine } from './profiles';
 
 // Ids and handles, with or without the @; junk never reaches a query.
 assert.deepEqual(parseProfileRef('3F2504E0-4F89-41D3-9A0C-0305E82C3301'), { id: '3f2504e0-4f89-41d3-9a0c-0305e82c3301' });
@@ -156,3 +156,9 @@ assert.equal(jobYears({ is_current: false, start_year: 2019, end_year: 2023 }), 
 assert.equal(jobYears({ is_current: false, start_year: 2021, end_year: 2021 }), '2021');
 assert.equal(jobYears({ is_current: false, start_year: null, end_year: 2018 }), 'Until 2018');
 console.log('profiles: job years ok');
+
+// You's line under the name: the job first, else where you are and how you drink.
+assert.equal(youLine({ line: 'Bartender at Caretaker’s', since: 2025, city: 'New York', taste: 'Bitter' }), 'Bartender at Caretaker’s · since 2025');
+assert.equal(youLine({ line: 'Home bartender', since: null, city: 'New York', taste: null }), 'Home bartender');
+assert.equal(youLine({ line: null, since: null, city: 'New York', taste: 'Bitter and smoky' }), 'New York · drinks mostly bitter and smoky');
+assert.equal(youLine({ line: null, since: null, city: null, taste: null }), null);

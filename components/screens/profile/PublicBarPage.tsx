@@ -3,6 +3,7 @@ import { useState, type ReactNode } from 'react';
 import { StyleSheet, View } from 'react-native';
 
 import { Body, Button, Caption, Headline, Segmented, useBreakpoint } from '@/components/ds';
+import { DrawingBar } from '@/components/ds/DrawingBar';
 import { BarWeek, BarWeekLine } from '@/components/screens/week/BarWeek';
 import { WebHead } from '@/components/WebHead';
 import { space } from '@/constants/tokens';
@@ -54,7 +55,16 @@ const FIRST_AWARDS = 4;
  * work, your drinks here over Top drinks, a search's matches under the name.
  * A phone signed in has its own page with tabs (BarProfile).
  */
-export function PublicBarPage({ profile, signedIn = false }: { profile: Profile; signedIn?: boolean }) {
+/** A bar's public page, every drink on it drawn in the bar's own glassware. */
+export function PublicBarPage(props: { profile: Profile; signedIn?: boolean }) {
+  return (
+    <DrawingBar barId={props.profile.bar_id}>
+      <BarPage {...props} />
+    </DrawingBar>
+  );
+}
+
+function BarPage({ profile, signedIn = false }: { profile: Profile; signedIn?: boolean }) {
   const wide = useBreakpoint() !== 'phone';
   const here = useYouHere(profile.id);
   const searched = !!useLocalSearchParams<{ q?: string }>().q;

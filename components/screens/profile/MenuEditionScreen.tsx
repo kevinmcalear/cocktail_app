@@ -1,6 +1,6 @@
 import { Redirect, useIsFocused, useNavigation, useRouter, type Href } from 'expo-router';
 import { StatusBar } from 'expo-status-bar';
-import { type ComponentProps } from 'react';
+import { useState, type ComponentProps } from 'react';
 import { Linking, StyleSheet, View } from 'react-native';
 
 import { BackbarTheme, Button, PressableScale, Tag } from '@/components/ds';
@@ -12,6 +12,7 @@ import { useMenuLens } from '@/hooks/useMenuLens';
 import { usePhotoTone } from '@/hooks/usePhotoTone';
 import { useMenuEditionDrinks, useMenuEditions, useProfile } from '@/hooks/useProfiles';
 import { drinkPageHref } from '@/lib/itemRoutes';
+import { barDay, clockAt, DAILY_AFTER, dailyLead, dayText } from '@/lib/dailyList';
 import { editionDates, editionMenu, editionMenuDrinks, editionSections, menuRange, menuState } from '@/lib/menuEditions';
 import { screenBelow } from '@/lib/screenBelow';
 import { shareOrCopy } from '@/lib/shareLink';
@@ -38,6 +39,8 @@ export function MenuEditionScreen({ profileRef, editionId }: { profileRef: strin
   const editions = useMenuEditions(profile.data?.id);
   const edition = editions.data?.find((e) => e.id === editionId);
   const loaded = useMenuEditionDrinks(edition?.drinks ?? []);
+  // ponytail: a guest's own day, not the bar's (get_menu_editions doesn't send the bar's time zone).
+  const [today] = useState(() => barDay(Date.now()));
   if (!profile.data || !edition) return <PublicMissing loading={profile.isPending || (!!profile.data && editions.isPending)} what="menu" failed={loadFailure(profile, editions)} />;
 
   const bar = profile.data;
@@ -62,6 +65,8 @@ export function MenuEditionScreen({ profileRef, editionId }: { profileRef: strin
     else router.push(barHref);
   };
   const menu = editionMenu(edition, editionSections(edition, drinks), bar.bar_id ?? bar.id);
+  // Tonight, the bar's daily list (Menu-l-tonight): today's date, when it was written, the new drinks marked.
+  const daily = edition.list_type === 'daily' && !past;
 
   return (
     <>
@@ -72,7 +77,10 @@ export function MenuEditionScreen({ profileRef, editionId }: { profileRef: strin
         menu={menu}
         status={past ? 'previous' : 'on'}
         offTonight={new Set(edition.drinks.filter((d) => d.off_tonight).map((d) => d.id))}
-        eyebrow={[bar.display_name, menuRange(dates)].filter(Boolean).join(' · ')}
+        eyebrow={[bar.display_name, daily ? dayText(today) : menuRange(dates)].filter(Boolean).join(' · ')}
+        description={daily ? (edition.written_at ? dailyLead(edition.written_at, (iso) => clockAt(iso)) : 'Today’s list') : undefined}
+        fresh={daily ? new Set(edition.drinks.filter((d) => d.new_today).map((d) => d.id)) : undefined}
+        after={daily ? DAILY_AFTER : undefined}
         onNow={now ? { name: now.name, itemIds: new Set(now.drinks.map((d) => d.id)) } : null}
         onToNow={now ? () => router.replace(`/p/${bar.handle || bar.id}/menus/${now.id}` as Href) : undefined}
         onBack={back}

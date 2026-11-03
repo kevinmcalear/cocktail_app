@@ -1,5 +1,6 @@
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 
+import { forgetItemFlags, recentItemFlags } from '@/hooks/itemFlags';
 import { useUserId } from '@/ctx/AuthContext';
 import { supabase } from '@/lib/supabase';
 
@@ -28,8 +29,10 @@ export function useDrinkApproval(itemId: string | null | undefined) {
     queryKey: ['drink-approval', itemId],
     enabled: !!itemId,
     staleTime: 30_000,
-    queryFn: async (): Promise<{ waiting: boolean; createdBy: string | null; barId: string | null } | null> => {
-      const { data, error } = await supabase.from('items').select('awaiting_approval, created_by, bar_id').eq('id', itemId!).maybeSingle();
+    queryFn: async ({ client }): Promise<{ waiting: boolean; createdBy: string | null; barId: string | null } | null> => {
+      // Usually read with the drink page already (hooks/itemFlags.ts).
+      const flags = recentItemFlags(client, itemId!);
+      const { data, error } = flags !== undefined ? { data: flags, error: null } : await supabase.from('items').select('awaiting_approval, created_by, bar_id').eq('id', itemId!).maybeSingle();
       if (error) throw error;
       return data ? { waiting: data.awaiting_approval, createdBy: data.created_by, barId: data.bar_id } : null;
     },
@@ -44,7 +47,10 @@ export function useApproveDrink() {
       const { error } = await supabase.from('items').update({ awaiting_approval: false }).eq('id', itemId);
       if (error) throw error;
     },
-    onSuccess: (_, itemId) => client.invalidateQueries({ queryKey: ['drink-approval', itemId] }),
+    onSuccess: (_, itemId) => {
+      forgetItemFlags(client, itemId);
+      return client.invalidateQueries({ queryKey: ['drink-approval', itemId] });
+    },
     onError: () => {},
   });
 }

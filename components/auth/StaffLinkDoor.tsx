@@ -39,7 +39,7 @@ export function StaffLinkDoor({ token, barId, brand, onJoined, fallback }: { tok
     );
   }
   const ask = mine.data && !mine.data.declined_at ? mine.data : null;
-  const state = doorState({ linkOn: !!d?.link_on, approve: d?.approve ?? true, asked: !!ask });
+  const state = doorState({ linkOn: !!d?.link_on, approve: d?.approve ?? true, asked: !!ask, declined: !!mine.data?.declined_at });
   const lines = doorLines(state, { bar: brand.name, me: d?.me ?? null, admin: d?.admin_name ?? null, admins: d?.admin_count ?? 0, role: d?.join_role ?? null, askedAt: ask?.created_at ?? null, now });
   const busy = join.isPending || takeBack.isPending;
   const asking = state === 'ask' || state === 'join';

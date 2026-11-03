@@ -1,5 +1,6 @@
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 
+import { roleMatrixQuery } from '@/hooks/useCapabilities';
 import { toCapability, withToggle, type DrinkType } from '@/lib/roleMatrix';
 import { supabase } from '@/lib/supabase';
 
@@ -25,16 +26,7 @@ export interface RoleMatrixRow {
 
 /** The five base levels and the venue's own roles, for members of the venue. */
 export function useRoleMatrix(barId: string | null | undefined) {
-  return useQuery({
-    queryKey: ['role-matrix', barId],
-    enabled: !!barId,
-    staleTime: 60_000,
-    queryFn: async (): Promise<RoleMatrixRow[]> => {
-      const { data, error } = await supabase.rpc('get_venue_role_matrix', { p_bar_id: barId! });
-      if (error) throw error;
-      return (data as RoleMatrixRow[] | null) ?? [];
-    },
-  });
+  return useQuery({ ...roleMatrixQuery(barId ?? ''), enabled: !!barId });
 }
 
 /** What a venue role is made of, for New role and Edit role. */

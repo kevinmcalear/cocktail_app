@@ -1,7 +1,8 @@
 import { useRef, type ComponentRef } from 'react';
 import { StyleSheet, View } from 'react-native';
 
-import { DsText, PopoverMenu, PressableScale, Segmented, usePopover, useDs } from '@/components/ds';
+import { DsText, PressableScale, Segmented, useDs } from '@/components/ds';
+import { PopoverMenu, usePopover } from '@/components/ds/PopoverMenu';
 import { IconSymbol } from '@/components/ui/icon-symbol';
 import { font, layout, radius, space } from '@/constants/tokens';
 import { SPEC_VIEWS, type SpecView } from '@/lib/specView';

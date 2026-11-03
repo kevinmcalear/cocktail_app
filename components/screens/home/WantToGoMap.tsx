@@ -24,12 +24,12 @@ const barKey = (b: WantBar) => b.id;
 const noMove = () => {};
 
 /**
- * Collection > Bars > See them on the map (board home-collection-bars, step 3):
+ * Your bars > the small map (Kept-you-bars; board home-collection-bars, step 3):
  * Discover's map with only your Want to go bars, nearest first, so you can see
  * where they are and pick one for tonight. It opens on the ones near you (all
  * of them when none are); pins carry everyone's score and a tapped one shows
  * Discover's bar card. Phones: the map full screen with the rows in a sheet;
- * wide screens: the rows beside it, as Discover lays out. Back goes to Collection.
+ * wide screens: the rows beside it, as Discover lays out. Back goes to Your bars.
  */
 export function WantToGoMap() {
   const ds = useDs();
@@ -53,10 +53,10 @@ export function WantToGoMap() {
   const open = rows.filter((b) => b.hours?.open).length;
   const count = `${rows.length} ${rows.length === 1 ? 'bar' : 'bars'}`;
   const caption = [count, open ? `${open} open now` : null].filter(Boolean).join(' · ');
-  // Back to Collection, leaving Discover as everyone else sees it.
+  // Back to Your bars, leaving Discover as everyone else sees it.
   const back = () => {
     router.setParams({ list: undefined });
-    router.navigate('/drinks');
+    router.navigate('/your-bars?tab=want');
   };
   const onSelect = (id: string | null) => {
     setPickedId(id);
@@ -78,10 +78,10 @@ export function WantToGoMap() {
     return (
       <View style={[styles.screen, styles.row, { backgroundColor: ds.c.ground }]}>
         <ScrollView style={{ width: breakpoint === 'desktop' ? third : 420, flexGrow: 0 }} contentContainerStyle={{ paddingHorizontal: gutter, paddingTop: insets.top + space.lg, paddingBottom: bottom }}>
-          <PressableScale role="link" accessibilityLabel="Back to Collection" onPress={back} style={styles.backLink} hitSlop={4}>
+          <PressableScale role="link" accessibilityLabel="Back to Your bars" onPress={back} style={styles.backLink} hitSlop={4}>
             <IconSymbol name="chevron.left" size={16} color={ds.accentText} />
             <DsText variant="body" color={ds.accentText}>
-              Collection
+              Your bars
             </DsText>
           </PressableScale>
           <Display aria-level={1}>Want to go</Display>
@@ -105,7 +105,7 @@ export function WantToGoMap() {
           {/* As on Discover's map: with a bar open, the pill is its back arrow and name. */}
           <PressableScale
             role={picked ? 'button' : 'link'}
-            accessibilityLabel={picked ? 'Back to Want to go' : 'Back to Collection'}
+            accessibilityLabel={picked ? 'Back to Want to go' : 'Back to Your bars'}
             onPress={picked ? () => setPickedId(null) : back}
             style={styles.backButton}
             hitSlop={4}

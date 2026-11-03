@@ -1,7 +1,8 @@
 import { useState } from 'react';
 import { StyleSheet, View } from 'react-native';
 
-import { Body, Button, Caption, DsText, PressableScale, TextLink, TimeRange, useDs } from '@/components/ds';
+import { Body, Button, Caption, DsText, PressableScale, TextLink, useDs } from '@/components/ds';
+import { TimeRange } from '@/components/ds/TimeField';
 import { MenuSheet } from '@/components/screens/menus/MenuSheet';
 import { RadioPill } from '@/components/screens/publishing/RadioCard';
 import { IconSymbol } from '@/components/ui/icon-symbol';

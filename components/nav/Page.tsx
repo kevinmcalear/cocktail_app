@@ -1,35 +1,18 @@
 import type { ReactNode } from 'react';
-import { StyleSheet, View, useWindowDimensions, type ViewStyle } from 'react-native';
+import { StyleSheet, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import { Body, Caption, Display, GlassButton, PressableScale, Title, useDs, useGutter } from '@/components/ds';
 import { IconSymbol } from '@/components/ui/icon-symbol';
 import { layout, space } from '@/constants/tokens';
-import { useIsWideWeb, useWebNavWidth } from '@/hooks/useIsWideWeb';
+import { useIsWideWeb } from '@/hooks/useIsWideWeb';
 
 import { Crumbs, type Crumb } from './PageFrame';
+import { useColumnRightPad, type ColumnWidth } from './pageColumn';
 import { ScreenHeader } from './ScreenHeader';
 
-type ColumnWidth = 'text' | 'wide' | 'full';
-
-/**
- * The column a page's scroll content sits in: the gutter either side, and on
- * wide screens a maximum width, left-aligned next to the sidebar so every page
- * starts at the same edge. 'full' is for grids that use the whole width.
- *
- * The cap is right padding rather than maxWidth, so a list's rows can still
- * scroll from the window's right edge.
- */
-export function usePageColumn(width: ColumnWidth = 'text'): ViewStyle {
-  const gutter = useGutter();
-  return { width: '100%', paddingLeft: gutter, paddingRight: useColumnRightPad(width) };
-}
-
-function useColumnRightPad(width: ColumnWidth): number {
-  const gutter = useGutter();
-  const page = useWindowDimensions().width - useWebNavWidth();
-  return width === 'full' ? gutter : Math.max(gutter, page - layout.page[width] + gutter);
-}
+// Its own file so a page that only needs the column doesn't load the header's code.
+export { usePageColumn } from './pageColumn';
 
 /**
  * The top of a page: the logo / New / You row (or, on a phone, a back button

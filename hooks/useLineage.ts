@@ -1,7 +1,7 @@
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 
-import { sortRiffs, styleChain, walkAncestors, type CreditStatus, type DrinkStyle, type LineageDrink } from '@/lib/lineage';
-import { supabase } from '@/lib/supabase';
+import { sortRiffs, styleChain, type CreditStatus, type DrinkStyle, type LineageDrink } from '@/lib/lineage';
+import { jsonAs, supabase } from '@/lib/supabase';
 import { coAnswer, creditNames, leadCredit, type CreditEdit, type ItemCredit } from '@/lib/whoMadeIt';
 
 // The credits aren't in app_item_presentation, so these read items and
@@ -65,12 +65,6 @@ export function asLineage<T extends LineageRow>(row: T): T & LineageDrink {
   };
 }
 
-async function fetchDrink(id: string): Promise<LineageItem | null> {
-  const { data, error } = await supabase.from('items').select(LINEAGE_COLUMNS).eq('id', id).maybeSingle();
-  if (error) throw error;
-  return data ? asLineage(data as LineageRow) : null;
-}
-
 /**
  * Drinks based on this one as `kind`, best-credited first, up to `limit`. A
  * credit's status is in item_credits, which can't order the drinks, so the
@@ -109,38 +103,41 @@ export interface Lineage {
   riffs: LineageItem[];
 }
 
+/** drink_lineage's answer: each drink in LINEAGE_COLUMNS' shape. */
+interface LineageRpc {
+  drink: LineageRow | null;
+  ancestors: LineageRow[];
+  classics: LineageRow[];
+  riffs: LineageRow[];
+  /** Every historic style when the oldest drink comes from one, else none. */
+  styles: DrinkStyle[];
+}
+
 /**
  * A drink's family: its credit, what it's a riff of up to the first classic,
- * the styles above that, and what came from it. Drinks the reader can't see
- * are left out.
- * ponytail: one query per ancestor (lines are up to about 8 deep); a recursive
- * RPC is the upgrade if that gets slow.
+ * the styles above that, and what came from it, in one request
+ * (public.drink_lineage, which reads as the caller, so drinks the reader
+ * can't see are left out). It used to take 5 to 16 requests a page.
  */
 export function useLineage(itemId: string | null | undefined) {
   return useQuery({
     queryKey: ['lineage', itemId],
-    // Only a real uuid reaches the queries (dev ids like "dev" would 400).
+    // Only a real uuid reaches the server (dev ids like "dev" would 400).
     enabled: !!itemId && UUID.test(itemId),
     queryFn: async (): Promise<Lineage> => {
-      // Apart, so a classic's bar versions (the Negroni has hundreds) never
-      // crowd its child classics out of the row limit.
-      // ponytail: the 100 best-credited versions; page them if a list needs more.
-      const [drink, kids, riffs] = await Promise.all([
-        fetchDrink(itemId!),
-        supabase.from('items').select(LINEAGE_COLUMNS).eq('based_on_id', itemId!).eq('based_on_kind', 'descends').limit(500),
-        fetchBasedOn(itemId!, 'riff', 100),
-      ]);
-      if (kids.error) throw kids.error;
-      // Every drink up the line came from fetchDrink.
-      const ancestors = drink ? ((await walkAncestors(drink, fetchDrink)) as LineageItem[]) : [];
+      const { data, error } = await supabase.rpc('drink_lineage', { p_item_id: itemId! });
+      if (error) throw error;
+      const res = jsonAs<LineageRpc>(data);
+      const drink = res.drink ? asLineage(res.drink) : null;
+      const ancestors = drink ? res.ancestors.map(asLineage) : [];
       const oldest = ancestors[0] ?? drink;
-      const styles = oldest?.based_on_style_id ? styleChain(oldest.based_on_style_id, await fetchStyles()) : [];
       return {
         drink,
         ancestors,
-        styles,
-        classics: ((kids.data ?? []) as unknown as LineageRow[]).map(asLineage).sort((a, b) => (a.origin_year ?? 9999) - (b.origin_year ?? 9999)),
-        riffs,
+        styles: oldest?.based_on_style_id ? styleChain(oldest.based_on_style_id, res.styles) : [],
+        classics: res.classics.map(asLineage).sort((a, b) => (a.origin_year ?? 9999) - (b.origin_year ?? 9999)),
+        // The 100 best-credited versions, sure ones first; page them if a list needs more.
+        riffs: sortRiffs(res.riffs.map(asLineage)).slice(0, 100),
       };
     },
   });

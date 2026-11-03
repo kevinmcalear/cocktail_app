@@ -4,6 +4,7 @@ import Animated, { useAnimatedStyle, useSharedValue, withTiming } from 'react-na
 
 import { Body, Caption, useDs } from '@/components/ds';
 import { backbar, font, radius, space } from '@/constants/tokens';
+import { withAlpha } from '@/lib/color';
 
 /** The tag's point, down at the card. */
 const TAIL = 7;
@@ -39,7 +40,26 @@ export function CombineTag({ pair, title = 'Let go to make it in-house' }: { pai
   );
 }
 
+/** What's over a held line: letting go combines it (`combineWith`, that line's name), or moves it to another part. */
+export function HeldTag({ name, lifted, combineWith, moveTo }: { name: string; lifted?: boolean; combineWith?: string | null; moveTo?: string | null }) {
+  if (!lifted) return null;
+  return combineWith ? <CombineTag pair={`${name} + ${combineWith}`} /> : moveTo ? <CombineTag title={`Move to ${moveTo}`} /> : null;
+}
+
+/** A spec line while one is held: its card, and the line it would combine with, lit up. Open or closed, a line looks the same. */
+export function useHeldStyle(lifted?: boolean, combineWith?: string | null, dropTarget?: string | null) {
+  const ds = useDs();
+  return [
+    lifted ? [styles.lifted, { backgroundColor: ds.c.raised, borderColor: combineWith ? ds.accentText : ds.c.lineStrong }] : null,
+    dropTarget ? [styles.target, { borderColor: ds.accentText, backgroundColor: withAlpha(ds.accentText, 0.1) }] : null,
+  ];
+}
+
 const styles = StyleSheet.create({
+  // Being dragged: a card of its own, a little in from the edges, with a line round it (the accent when letting go combines).
+  lifted: { borderWidth: 1.5, borderBottomWidth: 1.5, borderRadius: radius.control, marginHorizontal: space.sm, paddingVertical: space.sm, paddingHorizontal: space.sm, alignSelf: 'stretch', shadowColor: backbar.dark.ground, shadowOffset: { width: 0, height: 14 }, shadowOpacity: 0.45, shadowRadius: 22, elevation: 8 },
+  // Lit up to drop on, as drawn: a dashed accent edge a little wider than the row.
+  target: { borderWidth: 1.5, borderStyle: 'dashed', borderRadius: radius.control, marginHorizontal: -space.sm, paddingHorizontal: space.sm },
   wrap: { position: 'absolute', left: 0, right: 0, bottom: '100%', marginBottom: space.xs, alignItems: 'center', pointerEvents: 'none' },
   tag: { maxWidth: '100%', borderRadius: radius.control, paddingHorizontal: space.md, paddingVertical: space.sm, shadowColor: backbar.dark.ground, shadowOffset: { width: 0, height: 10 }, shadowOpacity: 0.4, shadowRadius: 18, elevation: 10 },
   strong: { ...font.semiBold },

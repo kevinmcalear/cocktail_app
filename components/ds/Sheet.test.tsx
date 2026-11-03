@@ -175,3 +175,21 @@ test('with nothing changed it closes without asking', async () => {
   expect(onClose).toHaveBeenCalledTimes(1);
   alert.mockRestore();
 });
+
+test('from a button it grows out of a card; with Reduce Motion it just shows', async () => {
+  const from = { x: 340, y: 60, width: 32, height: 32 };
+  const open = () =>
+    renderWithProviders(
+      <Sheet visible accessibilityLabel="Add" onClose={() => {}} from={from}>
+        <Text>Inside</Text>
+      </Sheet>,
+    );
+  const view = await open();
+  expect(screen.getByTestId('sheet-grow', { includeHiddenElements: true })).toBeTruthy();
+  await view.unmount();
+  const motion = jest.spyOn(jest.requireMock<typeof import('react-native-reanimated')>('react-native-reanimated'), 'useReducedMotion').mockReturnValue(true);
+  await open();
+  expect(screen.getByText('Inside')).toBeTruthy();
+  expect(screen.queryByTestId('sheet-grow', { includeHiddenElements: true })).toBeNull();
+  motion.mockRestore();
+});
