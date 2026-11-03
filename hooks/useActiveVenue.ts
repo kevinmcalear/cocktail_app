@@ -20,6 +20,8 @@ export interface Venue {
   /** The home-screen icon's background (Brand), which an opaque logo's mark sits on too; null for the logo's own colour. */
   iconBackground?: IconBackground | null;
   roleLevel: number;
+  /** The unit its people read specs and start new lines in (bars.spec_unit), unless they pick their own. None on a made-up venue (brand and invite previews). */
+  unit?: string;
 }
 
 /**
@@ -56,6 +58,7 @@ export function useActiveVenue() {
         groundTint: usableGroundTint(bar.ground_tint),
         iconBackground: bar.icon_background === 'accent' || bar.icon_background === 'ground' || bar.icon_background === 'cream' ? bar.icon_background : null,
         roleLevel: row.role_level ?? 0,
+        unit: bar.spec_unit,
       });
     }
     return out.sort((a, b) => a.name.localeCompare(b.name));

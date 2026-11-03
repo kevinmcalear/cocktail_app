@@ -25,7 +25,8 @@ export function useBars() {
                         secondary_color,
                         display_face,
                         ground_tint,
-                        icon_background
+                        icon_background,
+                        spec_unit
                     )
                 `)
                 .eq('user_id', userId!);

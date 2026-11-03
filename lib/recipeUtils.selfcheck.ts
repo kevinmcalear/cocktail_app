@@ -47,5 +47,7 @@ const edit = mapPresentationRecipeToEditItem(rawRow, { includeCocktailFields: tr
 assert.equal(edit.ingredient_id, "ing-5");
 assert.equal(edit.amount, "2");
 assert.equal((edit as any).preparation_notes, "shake hard");
+assert.equal((edit as any).is_float, false);
+assert.equal((mapPresentationRecipeToEditItem({ ...rawRow, is_float: true }, { includeCocktailFields: true }) as any).is_float, true, "a float stays a float in the editor");
 
 console.log("recipeUtils.selfcheck: ok");
