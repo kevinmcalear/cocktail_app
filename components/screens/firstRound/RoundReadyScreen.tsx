@@ -3,7 +3,8 @@ import { ScrollView, StyleSheet, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import { BackbarTheme, Body, Button, Display, useDs, useGutter } from '@/components/ds';
-import { HeroTrio, TonightSky } from '@/components/screens/tonight/TonightParts';
+import { HeroTrio } from '@/components/screens/tonight/HeroTrio';
+import { TonightSky } from '@/components/screens/tonight/TonightParts';
 import { WebHead } from '@/components/WebHead';
 import { space } from '@/constants/tokens';
 import { useActiveVenue } from '@/hooks/useActiveVenue';
