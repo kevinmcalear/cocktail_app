@@ -1,9 +1,7 @@
 import { useRouter, type Href } from 'expo-router';
 import { StyleSheet, View } from 'react-native';
 
-import { Surface } from '@/components/ds';
-import { RowDivider, SettingsRow } from '@/components/screens/settings/SettingsParts';
-import { TonightLabel } from '@/components/screens/tonight/TonightParts';
+import { ListGroup, ListRow, SectionLabel } from '@/components/ds/ListGroup';
 import { space } from '@/constants/tokens';
 import { useFollowers, useFollowing, usePeopleByUser } from '@/hooks/useFollows';
 import { namesLine } from '@/lib/follows';
@@ -25,17 +23,15 @@ export function YouPeople() {
     : 'Nobody yet';
   return (
     <View style={styles.section}>
-      <TonightLabel title="People" aside="Find people" onAside={() => router.push('/people/find' as Href)} />
-      <Surface style={styles.card}>
-        <SettingsRow icon="person.2.fill" label="Following" detail={followingLine ?? undefined} value={following ? String(following.length) : undefined} onPress={() => router.push('/people' as Href)} />
-        <RowDivider />
-        <SettingsRow icon="person.badge.plus" label="Followers" detail="Only you see these" value={followers ? String(followers.length) : undefined} onPress={() => router.push('/people?tab=followers' as Href)} />
-      </Surface>
+      <SectionLabel title="People" aside="Find people" onAside={() => router.push('/people/find' as Href)} />
+      <ListGroup>
+        <ListRow first icon="person.2.fill" title="Following" detail={followingLine} value={following ? String(following.length) : undefined} onPress={() => router.push('/people' as Href)} />
+        <ListRow icon="person.badge.plus" title="Followers" detail="Only you see these" value={followers ? String(followers.length) : undefined} onPress={() => router.push('/people?tab=followers' as Href)} />
+      </ListGroup>
     </View>
   );
 }
 
 const styles = StyleSheet.create({
-  section: { gap: space.sm },
-  card: { paddingVertical: space.xs },
+  section: { gap: space.md },
 });

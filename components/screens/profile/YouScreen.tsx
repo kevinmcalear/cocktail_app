@@ -6,7 +6,7 @@ import { BackbarTheme, Caption, PencilState, PressableScale, Title, useDs } from
 import { ListGroup, ListNote, ListRow, SectionLabel } from '@/components/ds/ListGroup';
 import { usePageColumn } from '@/components/nav/pageColumn';
 import { useTabBarInset } from '@/components/nav/WebTabBar';
-import { CurrentUserAvatar, useUserDisplayName } from '@/components/ui/UserAvatar';
+import { useUserDisplayName } from '@/components/ui/UserAvatar';
 import { WebHead } from '@/components/WebHead';
 import { space } from '@/constants/tokens';
 import { useCollection } from '@/hooks/useCollection';
@@ -26,7 +26,7 @@ import { headlineJob, profileLine, youLine } from '@/lib/profiles';
 import { YouPeople } from '../people/YouPeople';
 import { CreditsToCheckCard } from './CreditsToCheck';
 import { MyJobRequests } from './JobRequests';
-import { BestRows, YouStats, YouTop } from './YouParts';
+import { BestRows, YouAvatar, YouStats, YouTop } from './YouParts';
 import { YouEmpty, YouError, YouLoading, YouOffline } from './YouStates';
 import { ItsYou, YourBarCard } from './YourBarCard';
 
@@ -122,7 +122,7 @@ function You() {
         <View style={[column, styles.body]}>
           {profile ? <ItsYou drinks={madeCount} waiting={waitingCredits} /> : null}
           <View style={styles.identity}>
-            <CurrentUserAvatar size={84} />
+            <YouAvatar name={name} size={84} />
             <Title aria-level={1} align="center">
               {name}
             </Title>
@@ -169,8 +169,6 @@ function You() {
             </ListGroup>
           </View>
 
-          <YouPeople />
-
           <View style={styles.section}>
             <SectionLabel title="Your best" />
             {best.length ? (
@@ -179,6 +177,8 @@ function You() {
               <PencilState compact kind="empty" title="No ranks yet" detail="Rank your first drink tonight and your list starts here." action={{ label: 'Rank a drink', onPress: () => openSearch() }} />
             )}
           </View>
+
+          <YouPeople />
 
           <View style={styles.section}>
             <SectionLabel title="Your taste" />

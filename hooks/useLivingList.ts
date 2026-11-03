@@ -169,6 +169,12 @@ export async function check<T extends { error: { message: string } | null }>(res
   return out;
 }
 
+/** An add that finds the drink already on the list is done, not an error (unique violation, 23505). */
+async function addOnce(res: PromiseLike<{ error: { message: string; code?: string } | null }>): Promise<void> {
+  const out = await res;
+  if (out.error && out.error.code !== '23505') throw new Error(out.error.message);
+}
+
 /** Said when the database refused a change without an error (row-level security): the list may not be the caller's to change any more. */
 export const NOT_CHANGED = 'Couldn’t change the list. It may not be yours to change now.';
 
@@ -198,7 +204,7 @@ export function useListChanges(menuId: string) {
     }),
     add: useMutation({
       mutationFn: async (p: { sectionId: string; itemId: string; sortOrder: number; at?: string | null; slotName?: string | null }) =>
-        void (await check(
+        addOnce(
           supabase.from('menu_drinks').insert({
             menu_id: menuId,
             menu_section_id: p.sectionId,
@@ -207,7 +213,7 @@ export function useListChanges(menuId: string) {
             on_from: p.at ?? null,
             slot_name: p.slotName ?? null,
           })
-        )),
+        ),
       ...opts,
     }),
     /**
@@ -223,7 +229,7 @@ export function useListChanges(menuId: string) {
           await changed(supabase.from('menu_drinks').update({ off_at: null }).eq('id', replaced.id).select('id'));
           return;
         }
-        await check(
+        await addOnce(
           supabase.from('menu_drinks').insert({
             menu_id: menuId,
             menu_section_id: swappedIn.sectionId,
