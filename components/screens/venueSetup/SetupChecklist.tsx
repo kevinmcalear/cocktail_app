@@ -71,7 +71,7 @@ export function SetupChecklist({ barId, name, footer }: { barId: string; name: s
   if (at === 'bottles') return <BrandsStep barId={barId} name={name} step={step('bottles')} onBack={back} onNext={back} onSkip={() => (skip('bottles'), back())} />;
   if (at === 'fromDrinks') return <FromDrinksStep barId={barId} pageId={pageId} name={name} onBack={back} />;
   if (at === 'menu') {
-    return <MenuStep barId={barId} step={step('menu')} onBack={back} onDone={back} onSkip={() => (skip('menu'), back())} onBringIn={() => open('/bring-in')} onMade={(id) => open(`/menus/${id}/edit`)} />;
+    return <MenuStep barId={barId} step={step('menu')} onBack={back} onDone={back} onSkip={() => (skip('menu'), back())} onBringIn={() => open(`/bring-in?step=${encodeURIComponent(step('menu'))}`)} onMade={(id) => open(`/menus/${id}/edit`)} />;
   }
   // Done on How it looks counts as set even when they kept the app's look, so Your team stops asking.
   // Only on this device's run: making one here would put the checklist back on a venue set up elsewhere.

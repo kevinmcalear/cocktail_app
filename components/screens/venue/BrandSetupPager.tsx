@@ -132,7 +132,8 @@ export function SetupLook({ row, look, draft, set, suggested, busy, problems, me
 
       <View style={[styles.card, { backgroundColor: ds.c.surface, borderColor: ds.c.line }]}>
         <View style={styles.head}>
-          <SectionHeading>{`${at + 1} of ${PARTS.length} · ${PARTS[at]}`}</SectionHeading>
+          {/* The part's name alone: the dots show where it is, and the header's "Step 2 of 3" is the only count. */}
+          <SectionHeading>{PARTS[at]}</SectionHeading>
           <View style={styles.dots} aria-hidden>
             {PARTS.map((p, i) => (
               <View key={p} style={[styles.dot, { backgroundColor: i === at ? ds.accentText : ds.c.lineStrong }, i === at && styles.dotOn]} />

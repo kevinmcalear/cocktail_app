@@ -1,4 +1,4 @@
-import { useRouter, type Href } from 'expo-router';
+import { useLocalSearchParams, useRouter, type Href } from 'expo-router';
 import { useEffect, useState } from 'react';
 import { ActivityIndicator, Platform, ScrollView, StyleSheet, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
@@ -15,6 +15,7 @@ import { startReview } from '@/lib/importReview';
 import { listenBringIn, takeBringIn } from '@/lib/bringInHandoff';
 import { snapReadFiles, sourcesFromFiles } from '@/lib/readAnything';
 import { askToNudge } from '@/lib/readyNudge';
+import { SafetyPage } from '@/components/screens/safety/SafetyPage';
 import { useAppMode } from '@/store/useAppMode';
 import { useBringIn, type BringInJob } from '@/store/useBringIn';
 import { useRankReturn } from '@/store/useRankReturn';
@@ -51,6 +52,8 @@ const reviewName = (job: BringInJob) => job.source.name ?? job.source.files.find
 export function BringInFlow() {
   const ds = useDs();
   const router = useRouter();
+  // Opened from venue setup's first menu: its "Set up Little Rye · First menu" line, kept over the ways in.
+  const { step } = useLocalSearchParams<{ step?: string }>();
   const gutter = useGutter();
   const insets = useSafeAreaInsets();
   const place = useBringInPlace();
@@ -135,6 +138,14 @@ export function BringInFlow() {
       );
     }
     return desk ? <ImportReviewDesk id={reviewing.id} data={data} onFinishLater={finishLater} /> : <ImportReview id={reviewing.id} data={data} onFinishLater={finishLater} />;
+  }
+  if (!job && step) {
+    return (
+      <SafetyPage title="Upload a menu" intro="A photo, a PDF, a link or pasted text. We read it, you check it." topLabel={step} onBack={leave}>
+        <ResumeCard barId={place.barId} here />
+        <BringInChooser menu />
+      </SafetyPage>
+    );
   }
   if (!job) {
     return (
