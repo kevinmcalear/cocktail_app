@@ -17,7 +17,7 @@ export function PickBottle({ barId, bottle, onPick }: { barId: string; bottle: B
     <>
       <Field label={`Search for what replaces ${bottle.name}`} hideLabel icon="magnifyingglass" value={query} onChangeText={setQuery} placeholder={bottle.name} autoCapitalize="none" autoCorrect={false} />
       <BottleOptions label={`What replaces ${bottle.name}`} barId={barId} options={options} pickedId={null} onPick={(o) => (o ? onPick(o) : undefined)} />
-      {options.none ? <Body tone="muted">{`Nothing called “${query.trim()}”. Add it to the library first, then come back.`}</Body> : null}
+      {options.none ? <Body tone="muted">{`Nothing called “${query.trim()}”. Add it to Drinks first, then come back.`}</Body> : null}
     </>
   );
 }

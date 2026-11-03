@@ -1,4 +1,4 @@
-import { useLocalSearchParams, useRouter, type Href } from 'expo-router';
+import { useLocalSearchParams, usePathname, useRouter, type Href } from 'expo-router';
 import { lazy, Suspense, type ReactElement } from 'react';
 import { FlatList, StyleSheet, View } from 'react-native';
 
@@ -7,6 +7,7 @@ import { DrinkListRow, type DrinkListRowProps } from '@/components/screens/drink
 import { DrinkLoading } from '@/components/screens/drink/DrinkLoading';
 import { layout, space } from '@/constants/tokens';
 import { useCocktail } from '@/hooks/useCocktails';
+import { useDrinksFirstRow } from '@/components/screens/drinks/firstRow';
 import { useOpenBeside } from '@/hooks/useDrinksSplit';
 import { useItemEditAccess } from '@/hooks/useViewAs';
 import { itemHref, type ItemCategory } from '@/lib/itemRoutes';
@@ -18,7 +19,7 @@ const DrinkScreen = lazy(() => import('@/components/screens/drink/DrinkScreen').
 
 
 /** The picked drink's page, beside the list. Opening it full (or editing) goes to its own page. */
-function DrinkPane({ id }: { id: string }) {
+export function DrinkPane({ id }: { id: string }) {
   const router = useRouter();
   const query = useCocktail(id, { seeded: true });
   const drink = query.isPlaceholderData ? undefined : query.data;
@@ -38,7 +39,7 @@ function DrinkPane({ id }: { id: string }) {
 }
 
 /** Not a drink (an ingredient, a beer): its name and a way to its own page. */
-function OtherPane({ item }: { item: SearchItem }) {
+export function OtherPane({ item }: { item: SearchItem }) {
   const router = useRouter();
   return (
     <View style={styles.other}>
@@ -57,14 +58,19 @@ function OtherPane({ item }: { item: SearchItem }) {
  *
  * `routed` (a desktop, hooks/useDrinksSplit.ts; Sta-capsules-desk): the list
  * alone, in its column beside the Drinks stack; a drink opens there at its
- * own URL (/cocktail/<id>) and its row stays lit.
+ * own URL (/cocktail/<id>) and its row stays lit. At /drinks the stack shows
+ * the list's first row (components/nav/NoDrinkPicked.tsx, useDrinksFirstRow), so that
+ * one is lit.
  */
-export function LibraryPanes({ items, rowOf, header, empty, footer, routed = false }: { items: SearchItem[]; rowOf: (item: SearchItem) => Omit<DrinkListRowProps, 'onPress' | 'picked'>; header: ReactElement; empty: ReactElement | null; footer?: ReactElement | null; routed?: boolean }) {
+export function DrinksPanes({ items, rowOf, header, empty, footer, routed = false }: { items: SearchItem[]; rowOf: (item: SearchItem) => Omit<DrinkListRowProps, 'onPress' | 'picked'>; header: ReactElement; empty: ReactElement | null; footer?: ReactElement | null; routed?: boolean }) {
   const ds = useDs();
   const router = useRouter();
   const { pick } = useLocalSearchParams<{ pick?: string }>();
   const beside = useOpenBeside();
-  const picked = routed ? (items.find((i) => i.id === beside.picked) ?? null) : (items.find((i) => i.id === pick) ?? items[0] ?? null);
+  const atRoot = usePathname() === '/drinks';
+  const rootId = useDrinksFirstRow((s) => s.item?.id ?? null);
+  const shownId = beside.picked ?? (atRoot ? rootId : null);
+  const picked = routed ? (items.find((i) => i.id === shownId) ?? null) : (items.find((i) => i.id === pick) ?? items[0] ?? null);
   const list = (
     <FlatList
       style={routed ? styles.fill : [styles.list, { borderRightColor: ds.c.line }]}

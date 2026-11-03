@@ -21,7 +21,7 @@ import { useVenueSetup } from '@/store/useVenueSetup';
  * "Set up <bar>" for a venue set up on this device (lib/setupChecklist.ts):
  * each row's state from the bar's data, a note for what's there, and Skip.
  * A venue with no setup on this device (Venue settings' Setup checklist) was
- * set up elsewhere, so Your bar counts as done. The top of Library and the
+ * set up elsewhere, so Your bar counts as done. The top of Drinks and the
  * sidebar mount it only for a venue with a run (useSetupRun).
  */
 export function useSetupChecklist(barId: string) {
@@ -37,7 +37,7 @@ export function useSetupChecklist(barId: string) {
   const menus = useVenueMenus(barId);
   const invites = useBarInvites(barId);
   const members = useBarMembers(barId);
-  // The Library's own query for the bar's drinks (venue only), so it's loaded once for both.
+  // Drinks' own query for the bar's drinks (venue only), so it's loaded once for both.
   const drinks = useCocktails([barId]);
   // A big import this person left part way (Fix 11): what's still to check is kept on the device.
   const userId = useUserId();
@@ -47,14 +47,14 @@ export function useSetupChecklist(barId: string) {
   const groups = groupMenus(menus.data ?? [], now);
   const current = [...groups.on, ...groups.upcoming, ...groups.draft];
   const withDrinks = current.find((m) => m.itemIds.length > 0);
-  const inLibrary = drinks.data?.length ?? 0;
+  const inDrinks = drinks.data?.length ?? 0;
   const counted = review ? tally(review) : null;
   const toCheck = counted ? counted.total - counted.checked : 0;
   const glasses = (onPage.data?.length ?? 0) + heldNotOnPage(held, onPage.data ?? []).length;
   const bottles = stock.data?.length ?? 0;
   const team = (invites.data?.length ?? 0) + Math.max(0, (members.data?.length ?? 1) - 1);
   const list: Checklist = checklist(
-    { bar: run ? barSetUp(run) : true, kit: glasses + ice + tools > 0, bottles: bottles > 0, menu: current.length > 0, drinks: inLibrary > 0 || !!withDrinks, team: team > 0 },
+    { bar: run ? barSetUp(run) : true, kit: glasses + ice + tools > 0, bottles: bottles > 0, menu: current.length > 0, drinks: inDrinks > 0 || !!withDrinks, team: team > 0 },
     // A run from before 26 Oct that passed venue setup's old team step with nobody invited: still skipped, so a finished checklist stays finished.
     [...(run?.skipped ?? []), ...((run?.done as readonly string[] | undefined)?.includes('team') ? ['team'] : [])]
   );
@@ -62,7 +62,7 @@ export function useSetupChecklist(barId: string) {
     kit: kitNote(glasses, ice, tools),
     bottles: bottles ? `${bottles} on your shelves` : undefined,
     menu: current[0]?.name,
-    drinks: drinksNote(inLibrary, toCheck),
+    drinks: drinksNote(inDrinks, toCheck),
     team: team ? `${team} invited` : undefined,
   };
   return {
@@ -71,7 +71,7 @@ export function useSetupChecklist(barId: string) {
     notes,
     /** With no drinks yet, the menu First drinks opens: the one with drinks, else the newest. */
     menuId: (withDrinks ?? current[0])?.id ?? null,
-    inLibrary,
+    inDrinks,
     /** An import left part way: First drinks carries on with it. */
     reviewId: review?.id ?? null,
     loading: onPage.isLoading || iceList.isLoading || toolList.isLoading || stock.isLoading || menus.isLoading || drinks.isLoading || invites.isLoading || members.isLoading,

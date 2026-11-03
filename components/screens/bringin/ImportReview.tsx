@@ -22,9 +22,9 @@ import { useSteadySketch } from './useRecipeMaker';
 
 /** What a drink that can't be approved again says about itself. */
 export function markNote(mark: string | null, unsure: boolean): string | null {
-  if (unsure) return 'This one was saving when the app closed. Check your Library for it before adding it again.';
-  if (mark === 'saving') return 'Saving to your Library…';
-  if (mark === 'approved') return 'Approved. It’s in your Library.';
+  if (unsure) return 'This one was saving when the app closed. Check your drinks for it before adding it again.';
+  if (mark === 'saving') return 'Saving to your drinks…';
+  if (mark === 'approved') return 'Approved. It’s in your drinks.';
   return null;
 }
 
