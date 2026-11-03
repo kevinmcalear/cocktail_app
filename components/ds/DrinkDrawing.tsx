@@ -122,7 +122,7 @@ function ById({ itemId, bare, ...rest }: ForProps) {
   const sketch = useItemSketch(itemId);
   if (sketch.data) return <DrinkDrawing inputs={sketch.data} seed={itemId} {...rest} />;
   // A drink with no drawing inputs (beer, wine, not drawn yet): its bare glass, as DrinkImage shows, so a tile is never an empty box.
-  return bare && !sketch.isPending ? <DrinkDrawing inputs={bareGlassSketch(null)} seed="Coupe" {...rest} /> : null;
+  return bare && sketch.isSuccess ? <DrinkDrawing inputs={bareGlassSketch(null)} seed="Coupe" {...rest} /> : null;
 }
 
 const styles = StyleSheet.create({

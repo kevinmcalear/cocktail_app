@@ -127,7 +127,7 @@ export function useBestNear(area: Area, styleId: string, enabled: boolean) {
 /** New menus: what's on now at the nearest bars, newest first. One call for all of them. */
 export function useNewMenus(bars: readonly DiscoverBar[], now: Date) {
   const near = bars.slice(0, MENU_BARS);
-  const ids = near.map((b) => b.id);
+  const ids = near.map((b) => b.id).sort();
   const query = useQuery({
     queryKey: ['new-menus', ids],
     enabled: ids.length > 0,

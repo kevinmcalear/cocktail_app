@@ -91,14 +91,14 @@ export interface NewMenu {
   sub: string;
 }
 
+/** What a New menus tile reads of a menu. */
+export type NewMenuSource = Pick<MenuEdition, 'id' | 'name' | 'year' | 'month' | 'is_current' | 'drinks'>;
+
 /**
  * New menus: the menus on now at the nearby bars, newest first. Menus are
  * known to the month, so a tile says the month it went on only when that's
  * this month.
  */
-/** What a New menus tile reads of a menu. */
-export type NewMenuSource = Pick<MenuEdition, 'id' | 'name' | 'year' | 'month' | 'is_current' | 'drinks'>;
-
 export function newMenus(bars: readonly { barId: string; barName: string; editions: readonly NewMenuSource[] }[], now: Date, limit = 6): NewMenu[] {
   const on = bars.flatMap((b) => b.editions.filter((e) => e.is_current).map((e) => ({ e, b })));
   on.sort((x, y) => y.e.year - x.e.year || (y.e.month ?? 0) - (x.e.month ?? 0) || x.e.name.localeCompare(y.e.name));
