@@ -61,5 +61,7 @@ assert.deepEqual([no.primary, no.secondary], ['Done', 'Use a different account']
 // A pasted staff link opens the door; the team link (no secret) and other text do not.
 assert.equal(staffLinkHref('https://babyvom.it/v/caretakers?join=abc123'), '/v/caretakers?join=abc123');
 assert.equal(staffLinkHref('  https://example.com/v/pale-moth?x=1&join=t%2Bk  '), '/v/pale-moth?join=t%2Bk');
-assert.equal(staffLinkHref('https://babyvom.it/v/caretakers'), null);
+assert.equal(staffLinkHref('https://babyvom.it/v/caretakers'), '/v/caretakers', 'a plain venue link opens the venue page');
+assert.equal(staffLinkHref('see https://babyvom.it/v/caretakers?join=abc and more'), null, 'only the link, nothing around it');
+assert.equal(staffLinkHref('https://babyvom.it/v/caretakers?join='), null, 'an empty secret is no link');
 assert.equal(staffLinkHref('a negroni recipe'), null);

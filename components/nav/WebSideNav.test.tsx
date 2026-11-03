@@ -85,7 +85,8 @@ test('the two group headings are where you switch place; no mark row tops the si
   // Board C7/C8: the bar's heading and Home's open the places menu (VenueSwitcher's, tested on its own).
   expect(screen.getByRole('button', { name: 'Caretakers. Switch place' })).toBeTruthy();
   expect(screen.getByRole('button', { name: 'Home. Switch place' })).toBeTruthy();
-  expect(screen.getAllByRole('heading').length).toBe(2);
+  // Search is the first control: nothing (no mark, no switcher) sits above it.
+  expect(screen.getAllByRole('button')[0].props.accessibilityLabel).toBe('Search');
   expect(screen.queryByRole('radio', { name: 'Pale Moth, Bartender' })).toBeNull();
 });
 

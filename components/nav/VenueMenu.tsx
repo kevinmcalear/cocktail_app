@@ -57,7 +57,7 @@ export function VenueMenu({ target, onClose }: { target: { current: ComponentRef
   const join = async () => {
     const href = staffLinkHref((await readClipboard()) ?? '');
     if (href) router.push(href as never);
-    else toast.show({ title: 'Copy the staff link first', tone: 'error' });
+    else toast.show({ title: 'Copy the bar’s staff link, then tap again', tone: 'error' });
   };
   const setUp = !isLoading && !venues.length;
   const more: PopoverSection = {

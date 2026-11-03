@@ -112,9 +112,11 @@ export function doorLines(
 
 /**
  * The way into the door from a pasted staff link (the shape venueStaffUrl makes, from any origin): the app's own
- * /v/<slug>?join=<secret> route, or null when the text is not one.
+ * /v/<slug>?join=<secret> route. A venue's plain link (no secret) opens /v/<slug>, which is the team's own way in
+ * (the page says so). Anything else, or text with more than the link in it, is null.
  */
 export function staffLinkHref(text: string): string | null {
-  const m = /\/v\/([^/?#\s]+)\?(?:[^#\s]*&)?join=([^&#\s]+)/.exec(text.trim());
-  return m ? `/v/${m[1]}?join=${m[2]}` : null;
+  const m = /^(?:https?:\/\/[^/\s]+)?\/v\/([^/?#\s]+)(?:\?(?:[^#\s]*&)?join=([^&#\s]+)[^#\s]*)?$/.exec(text.trim());
+  if (!m) return null;
+  return m[2] ? `/v/${m[1]}?join=${m[2]}` : `/v/${m[1]}`;
 }
