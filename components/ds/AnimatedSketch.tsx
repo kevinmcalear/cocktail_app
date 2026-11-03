@@ -171,6 +171,18 @@ function lengthOf(scene: Scene) {
   return fizzy ? Math.max(TOTAL, BEATS.fizz.at + BEATS.fizz.dur + BUBBLE_MS * BUBBLE_LOOPS) : TOTAL;
 }
 
+// One object per drawing's content, so a caller that builds its inputs afresh each render (beer and wine's
+// savedSketch) keeps one scene, and the drawing doesn't start over on every render. Holds the last few.
+const canon = new Map<string, SketchInputs>();
+function sameInputs(inputs: SketchInputs): SketchInputs {
+  const key = JSON.stringify(inputs);
+  const had = canon.get(key);
+  if (had) return had;
+  canon.set(key, inputs);
+  if (canon.size > 32) canon.delete(canon.keys().next().value!);
+  return inputs;
+}
+
 // Night's soft glow of the drink behind the drawing (as DrinkDrawing paints it), one picture per night scene.
 const glows = new WeakMap<Scene, string>();
 function glowUri(night: Scene): string {
@@ -190,6 +202,9 @@ function Glow({ uri, side, t }: { uri: string; side: number; t?: SharedValue<num
   );
 }
 
+/** How long the still drawing sits under the finished layers before they go: time for its picture to decode. */
+const HANDOVER_MS = 400;
+
 const AnimatedScene = memo(function AnimatedScene({ scene, play, delay, glow }: { scene: Scene; play: number; delay: number; glow: string | null }) {
   const u = useId().replace(/[^A-Za-z0-9]/g, '');
   const reduceMotion = useReducedMotion();
@@ -197,8 +212,9 @@ const AnimatedScene = memo(function AnimatedScene({ scene, play, delay, glow }: 
   const bubble = useSharedValue(0);
   // The layers are placed in points, so they wait for the frame's size: blank paper is the first frame anyway.
   const [frame, setFrame] = useState<{ w: number; h: number } | null>(null);
-  // The way out if a layout never comes: the still drawing once the animation would have ended.
-  const [settled, setSettled] = useState<{ scene: Scene; play: number } | null>(null);
+  // Once it has played: the still drawing (one picture on iOS and Android) comes in under the layers, then the
+  // layers go, so a page at rest holds one image, not dozens of moving SVG views. Also the way out if a layout never comes.
+  const [settled, setSettled] = useState<{ scene: Scene; play: number; gone: boolean } | null>(null);
   useEffect(() => {
     if (reduceMotion) return;
     t.set(0);
@@ -209,25 +225,26 @@ const AnimatedScene = memo(function AnimatedScene({ scene, play, delay, glow }: 
       withRepeat(withTiming(1, { duration: BUBBLE_MS, easing: Easing.out(Easing.quad) }), BUBBLE_LOOPS, false),
       withTiming(0, { duration: 0 }),
     ));
-    const done = setTimeout(() => setSettled({ scene, play }), delay + lengthOf(scene) + 100);
-    return () => clearTimeout(done);
+    const end = delay + lengthOf(scene) + 100;
+    const still = setTimeout(() => setSettled({ scene, play, gone: false }), end);
+    const gone = setTimeout(() => setSettled({ scene, play, gone: true }), end + HANDOVER_MS);
+    return () => {
+      clearTimeout(still);
+      clearTimeout(gone);
+    };
   }, [scene, play, delay, reduceMotion, t, bubble]);
   const side = frame ? Math.min(frame.w, frame.h) : 0;
   const place: Place | null = frame && side ? { k: side / scene.size, x: (frame.w - side) / 2, y: (frame.h - side) / 2 } : null;
-  if (reduceMotion || (!place && settled?.scene === scene && settled.play === play)) {
-    return (
-      <>
-        {glow ? <Glow uri={glow} side={side} /> : null}
-        <SceneSvg scene={scene} bare />
-      </>
-    );
-  }
+  const done = settled?.scene === scene && settled.play === play ? settled : null;
+  const still = reduceMotion || !!done;
+  const layers = reduceMotion || done?.gone ? null : place;
   const flat = scene.els.filter((el) => el.k !== 'stage');
   return (
     <View style={styles.fill} onLayout={(e) => setFrame({ w: e.nativeEvent.layout.width, h: e.nativeEvent.layout.height })} aria-hidden>
-      {place && glow ? <Glow uri={glow} side={side} t={t} /> : null}
-      {place && flat.length ? <Piece els={flat} u={u} place={place} size={scene.size} /> : null}
-      {place ? scene.els.map((el, i) => (el.k === 'stage' ? <StageLayer key={i} el={el} size={scene.size} t={t} bubble={bubble} place={place} u={u} /> : null)) : null}
+      {glow && (still || place) ? <Glow uri={glow} side={side} t={still ? undefined : t} /> : null}
+      {still ? <SceneSvg scene={scene} bare /> : null}
+      {layers && flat.length ? <Piece els={flat} u={u} place={layers} size={scene.size} /> : null}
+      {layers ? scene.els.map((el, i) => (el.k === 'stage' ? <StageLayer key={i} el={el} size={scene.size} t={t} bubble={bubble} place={layers} u={u} /> : null)) : null}
     </View>
   );
 });
@@ -254,7 +271,7 @@ export interface AnimatedSketchProps {
 export const AnimatedSketch = memo(function AnimatedSketch({ inputs: stored, seed, detail = 'full', play = 0, delay = 0, glow = false }: AnimatedSketchProps) {
   // No card behind it (decision chrome): at night it's painted for night, as the still drawing is.
   const night = useDs().scheme === 'dark';
-  const inputs = inBarGlassCached(stored, useDrawingGlasses());
+  const inputs = inBarGlassCached(sameInputs(stored), useDrawingGlasses());
   const scene = sceneFor(inputs, seed, detail, true);
   const shown = night ? nightOf(scene, liquidOf(inputs).hex) : scene;
   return <AnimatedScene scene={shown} play={play} delay={delay} glow={night && glow ? glowUri(shown) : null} />;

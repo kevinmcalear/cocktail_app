@@ -108,7 +108,8 @@ function Stored(props: ArtProps) {
   const stored = useItemSketch(props.itemId);
   if (stored.data) return <Staged inputs={stored.data} {...props} />;
   // It draws from blank paper, so blank paper while the drawing loads: the bare glass first would draw that glass twice.
-  if (stored.isPending) return <View style={{ width: props.size, height: props.size }} role="img" aria-label={props.label} />;
+  // Only while it's being fetched: offline (a paused query) shows the bare glass.
+  if (stored.isLoading) return <View style={{ width: props.size, height: props.size }} role="img" aria-label={props.label} />;
   // No drawing yet: the bare glass, still.
   return <DrinkDrawingFor itemId={props.itemId} size="hero" staff={props.size === drawing.heroStaff} label={props.label} />;
 }
