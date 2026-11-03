@@ -38,7 +38,7 @@ export function EditStepNotes({ editor, known = [] }: { editor: Editor; /** The 
   return (
     <View style={styles.section}>
       <View style={styles.headRow}>
-        <Eyebrow>Steps</Eyebrow>
+        <Eyebrow heading>Steps</Eyebrow>
         <Caption tone="muted">Shown in Steps</Caption>
       </View>
       {editor.stepNotesStatus === 'loading' ? <StepsLoading /> : null}

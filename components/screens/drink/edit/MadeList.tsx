@@ -5,7 +5,7 @@ import { Body, Button, Caption, Headline, PressableScale, Sheet, Switch, useDs }
 import { IconSymbol } from '@/components/ui/icon-symbol';
 import { font, layout, radius, space, type } from '@/constants/tokens';
 import type { SpecCategory } from '@/hooks/useCocktailEditor';
-import { isGarnishLine } from '@/lib/batch';
+import { isGarnishUnit } from '@/lib/garnish';
 import { COMMON_METHODS, iceLine } from '@/lib/drinkWizard';
 import { showMessage } from '@/lib/dialogs';
 import { findByName } from '@/lib/drinkMethods';
@@ -37,9 +37,9 @@ const ROWS: { category: Category; label: string; empty: string }[] = [
 const optionsOf = (editor: Editor, category: Category): Option[] =>
   ({ glassware: editor.glassware, ice: editor.iceTypes, methodIce: editor.iceTypes, method: editor.methods, family: editor.families, garnish: [] })[category] as Option[];
 
-/** The garnish row's words: the spec's garnish lines, by the page's rule (lib/batch isGarnishLine). */
+/** The garnish row's words: the spec's garnish lines, by the page's rule (lib/batch isGarnishLine's rule, from the small lib/garnish). */
 export const garnishNames = (items: readonly { name: string; unit?: string | null }[]) =>
-  items.filter((l) => isGarnishLine({ unit: l.unit?.trim() || null, ingredient: l.name })).map((l) => l.name).join(', ');
+  items.filter((l) => isGarnishUnit(l.unit?.trim() || null) && !/\begg/i.test(l.name)).map((l) => l.name).join(', ');
 
 /** New's methods with no row yet (Churn, Eddie tf-061), made when picked. A one-word one is there already when a row starts like it ("Shaken" for Shake). */
 const NEW = 'new:';
@@ -76,7 +76,7 @@ export function MadeList({ editor, itemId, onGarnish }: { editor: Editor; itemId
   const rows = ROWS.filter((r) => (r.category !== 'methodIce' || ice) && (r.category !== 'method' || !parted?.parts));
   return (
     <View style={styles.section}>
-      <Eyebrow>How it goes out</Eyebrow>
+      <Eyebrow heading>How it goes out</Eyebrow>
       <View style={[styles.group, { backgroundColor: ds.c.surface }]}>
         {rows.map((r, i) => {
           const value = valueOf(editor, r.category, optionsOf(editor, r.category));
@@ -92,7 +92,7 @@ export function MadeList({ editor, itemId, onGarnish }: { editor: Editor; itemId
               ) : null}
               <PressableScale
                 role="button"
-                accessibilityLabel={`${r.label}: ${value || 'not set'}. Change it`}
+                accessibilityLabel={r.category === 'garnish' ? `Garnish: ${value || 'none yet'}. Add one in the spec` : `${r.label}: ${value || 'not set'}. Change it`}
                 onPress={() => (r.category === 'garnish' ? onGarnish() : setOpen(r.category))}
                 style={[styles.row, i < rows.length - 1 && { borderBottomColor: ds.c.line, borderBottomWidth: StyleSheet.hairlineWidth }]}
               >
