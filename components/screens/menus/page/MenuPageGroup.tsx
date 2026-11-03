@@ -42,12 +42,11 @@ export function MenuPageGroup({ rows }: { rows: GroupRow[] }) {
   );
 }
 
-/** After the drinks: the rows the board keeps off the top (an Admin's Run sheet, bar page and End), then a quiet note. */
-export function MenuPageAfter({ rows, note, style }: { rows: GroupRow[]; note: string | null; style: StyleProp<ViewStyle> }) {
+/** After the drinks, a quiet note ("Prices are left off past menus"). Nothing else goes under the drinks. */
+export function MenuPageAfter({ note, style }: { note: string; style: StyleProp<ViewStyle> }) {
   return (
     <View style={[style, styles.after]}>
-      <MenuPageGroup rows={rows} />
-      {note ? <Caption tone="muted">{note}</Caption> : null}
+      <Caption tone="muted">{note}</Caption>
     </View>
   );
 }
@@ -78,7 +77,7 @@ export function MenuPageBanner({ text, aside, warn, onPress }: { text: string; a
 }
 
 const styles = StyleSheet.create({
-  after: { paddingTop: space.xl, gap: space.lg },
+  after: { paddingTop: space.xl },
   group: { borderRadius: radius.control, overflow: 'hidden', borderCurve: 'continuous' },
   row: { flexDirection: 'row', alignItems: 'center', gap: space.sm, paddingHorizontal: space.md, minHeight: 48, paddingVertical: space.sm },
   label: { flex: 1 },

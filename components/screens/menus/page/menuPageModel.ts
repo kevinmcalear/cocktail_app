@@ -50,13 +50,20 @@ interface Input {
 }
 
 /**
- * Rows the board doesn't draw above the drinks go after them, so the first drink isn't pushed down the page:
- * an Admin's Run sheet (Menu-who-admin draws On, Costing, bar page, End), and on a living list (Menu-l-*, which
- * draws On, Last change, Team, Costing) the run sheet, bar page and End.
+ * The group block holds only the rows the board draws for the person looking; the rest go into the More sheet
+ * (opened from On), never under the drinks: an Admin's Run sheet (Menu-who-admin draws On, Costing, bar page,
+ * End), and on a living list (Menu-l-*, which draws On, Last change, Team, Costing) the run sheet, bar page and End.
  */
-export function splitGroup(rows: ModelGroupRow[], living: boolean, admin: boolean): [top: ModelGroupRow[], after: ModelGroupRow[]] {
-  const low = (r: ModelGroupRow) => (r.action === 'runSheet' ? admin || living : living && (r.action === 'barPage' || r.action === 'end'));
-  return [rows.filter((r) => !low(r)), rows.filter(low)];
+export function splitGroup(rows: ModelGroupRow[], living: boolean, admin: boolean): [top: ModelGroupRow[], more: ModelGroupRow[]] {
+  const off = (r: ModelGroupRow) => (r.action === 'runSheet' ? admin || living : living && (r.action === 'barPage' || r.action === 'end'));
+  return [rows.filter((r) => !off(r)), rows.filter(off)];
+}
+
+/** Those rows as More's buttons. End is More's own Take it off now; the bar page row says what tapping it does. */
+export function moreExtras(rows: ModelGroupRow[], menu: Pick<MenuDetail, 'hiddenAt'>, actions: Record<Exclude<GroupAction, null>, () => void>): { label: string; onPress: () => void }[] {
+  return rows
+    .filter((r) => r.action && r.action !== 'end')
+    .map((r) => ({ label: r.action === 'barPage' ? (menu.hiddenAt ? 'Show on the bar page' : 'Hide from the bar page') : r.label, onPress: actions[r.action!] }));
 }
 
 /** On the bar page, Shown or Hidden: tapping it flips the menu's hidden_at. */
@@ -122,7 +129,7 @@ export function menuPageModel({ menu, status, lens: L, venueName, onNow, newIds,
   } else if (lens === 'bartender' && !past) {
     group = [
       { label: 'House-made for this menu', value: 'Prep list', action: 'prep' },
-      { label: 'Also makes', value: 'What else we make', action: 'offMenu' },
+      { label: 'Off the menu', value: 'What else we make', action: 'offMenu' },
     ];
   } else if (team && !past) {
     const on = status === 'on' ? [dates ?? 'on now', menu.endsAt ? `ends ${day(menu.endsAt)}` : 'no end date'].join(' · ') : (dates ?? 'No date');

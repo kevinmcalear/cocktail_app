@@ -2,7 +2,7 @@ import { lazy, Suspense, type ReactNode } from 'react';
 import { StyleSheet, View } from 'react-native';
 
 import { Caption, Display, DsText, GlassButton, PressableScale, Tag, useBreakpoint, useDs, type TagTone } from '@/components/ds';
-import { font, menuCover, radius, space } from '@/constants/tokens';
+import { displayFaces, font, menuCover, radius, space } from '@/constants/tokens';
 
 import { MenuSky, MenuTrio } from './MenuBandLazy';
 import type { MenuInk } from './MenuDrawing';
@@ -106,7 +106,8 @@ export function MenuPageHead({ heroIds, coverUrl, coverCredit, name, ink, quiet,
         </View>
         <Display>{name}</Display>
         {description ? (
-          <DsText variant="headline" italic tone="muted">
+          // The menu's line in the display face's italic, under its name (Menu-page).
+          <DsText variant="headline" tone="muted" style={[font.regular, { fontFamily: displayFaces[ds.displayFace].italic }]}>
             {description}
           </DsText>
         ) : null}

@@ -11,6 +11,7 @@ import { DrinkLoading, DrinkScreen } from "@/components/screens/drink/DrinkScree
 import type { OpenOn } from "@/components/screens/drink/edit/DrinkEditScreen";
 import { CouldNotLoad } from "@/components/screens/safety/NotAvailable";
 import { VisitorDrink } from "@/components/screens/drink/VisitorDrink";
+import { InMenu } from "@/components/screens/menus/pager/InMenu";
 
 // Editing in place only loads when someone edits, which keeps its gesture code off the web's first load.
 const DrinkEditScreen = lazy(() => import("@/components/screens/drink/edit/DrinkEditScreen").then((m) => ({ default: m.DrinkEditScreen })));
@@ -20,7 +21,17 @@ const DrinkEditScreen = lazy(() => import("@/components/screens/drink/edit/Drink
 export { DrinkScreen };
 export { BatchSheet } from "@/components/screens/batch/BatchSheet";
 
-export default function CocktailDetailsScreen() {
+// Opened from a menu (?menu=), the page carries the menu's pager (Menu-pager).
+export default function CocktailDetailsRoute() {
+    const { id } = useLocalSearchParams<{ id: string }>();
+    return (
+        <InMenu itemId={id}>
+            <CocktailDetailsScreen />
+        </InMenu>
+    );
+}
+
+function CocktailDetailsScreen() {
     const { id, batch } = useLocalSearchParams<{ id: string; batch?: string }>();
     const signedIn = useSignedIn();
     const router = useRouter();

@@ -1,7 +1,7 @@
 import { useIsFocused, useRouter, type Href } from 'expo-router';
 import { StatusBar } from 'expo-status-bar';
-import { useState } from 'react';
-import { Alert, FlatList, StyleSheet, View } from 'react-native';
+import { lazy, Suspense, useState } from 'react';
+import { FlatList, StyleSheet, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import { BackbarTheme, Body, Button, Caption, GlassButton, useBreakpoint, useDs, useGutter } from '@/components/ds';
@@ -12,15 +12,15 @@ import { menuCover, space } from '@/constants/tokens';
 import { useActiveVenue } from '@/hooks/useActiveVenue';
 import { useIsWideWeb } from '@/hooks/useIsWideWeb';
 import { useOffTonight } from '@/hooks/useListAsks';
-import { useEndedRuns, useListChanges } from '@/hooks/useLivingList';
+import { useEndedRuns } from '@/hooks/useLivingList';
 import { useMenuLens } from '@/hooks/useMenuLens';
-import { useEndMenu } from '@/hooks/useMenuMutations';
+import { useMenuPager } from '@/hooks/useMenuPager';
 import { useMenu, useVenueMenus } from '@/hooks/useMenus';
 import { useMyBar } from '@/hooks/useHomeBar';
 import { usePhotoTone } from '@/hooks/usePhotoTone';
 import { useShoppingEdit } from '@/hooks/useShoppingList';
-import { confirmAsync } from '@/lib/dialogs';
 import { isLivingList } from '@/lib/menuLens';
+import { inMenuQuery } from '@/lib/menuPager';
 import { isOneNightMenu, menuStatus, newDrinkIds } from '@/lib/menus';
 import { menuShopping } from '@/lib/shoppingList';
 import type { ShelfMatch } from '@/lib/shelfReach';
@@ -36,10 +36,14 @@ import { DailyListPage } from './page/DailyListPage';
 import { MenuPageAfter, MenuPageBanner, MenuPageGroup } from './page/MenuPageGroup';
 import { MenuPageHead } from './page/MenuPageHead';
 import { MenuPageRow, type PageRowView } from './page/MenuPageRow';
-import { menuPageModel, splitGroup, type GroupAction } from './page/menuPageModel';
+import { moreExtras, menuPageModel, splitGroup, type GroupAction } from './page/menuPageModel';
 import { MenuSpecInPlace } from './page/MenuSpecInPlace';
 import { RowChanges, useRowActs, type ChangeTarget } from './page/RowChanges';
 import { useLiveSections } from './page/useLiveSections';
+import { useMenuPageActions, type PageSheet } from './page/useMenuPageActions';
+
+// The desktop's drink beside the menu loads with it, not with every menu page (Menu-desk).
+const MenuDrinkPane = lazy(() => import('./pager/MenuDrinkPane').then((m) => ({ default: m.MenuDrinkPane })));
 
 const day = (iso: string) => new Date(iso).toLocaleDateString(undefined, { weekday: 'short', day: 'numeric', month: 'short' });
 
@@ -113,15 +117,13 @@ function MenuPageBody({ menu, shelf, cover, now }: PageProps & { cover: string |
   const wide = useBreakpoint() !== 'phone';
   const sidebar = useIsWideWeb();
   const { venues } = useActiveVenue();
-  const [sheet, setSheet] = useState<'more' | 'night' | 'share' | 'publish' | null>(null);
+  const [sheet, setSheet] = useState<PageSheet>(null);
   const [open, setOpen] = useState<string | null>(null);
   const [changing, setChanging] = useState<ChangeTarget | null>(null);
   const lens = useMenuLens(menu);
-  const hide = useListChanges(menu.id).hide;
   // Only drinks that left after it went on: edits to a draft don't make it a living list.
   const ended = useEndedRuns(lens.lens === 'creator' || lens.lens === 'admin' ? menu.id : null).data ?? [];
   const endedRuns = menu.startsAt ? ended.filter((r) => Date.parse(r.cameOff) > Date.parse(menu.startsAt!)).length : 0;
-  const end = useEndMenu();
   const { data: venueMenus = [] } = useVenueMenus(menu.barId);
   const back = () => (router.canGoBack() ? router.back() : router.replace('/menus/all'));
 
@@ -147,131 +149,125 @@ function MenuPageBody({ menu, shelf, cover, now }: PageProps & { cover: string |
   const team = lens.lens === 'creator' || lens.lens === 'admin';
   const home = !menu.barId;
   const draft = status === 'draft';
-  const go = (href: string) => router.push(href as Href);
-  // A drink opens in its menu: the drink page shows "Autumn · 4 of 8" and pages through it.
-  const openDrink = (row: PageRowView) => go(`${menuDrinkHref(row.drink)}?menu=${menu.id}`);
-  const failed = (message: string) => Alert.alert(message);
-  const endMenu = async () => {
-    // A list still to come has nothing to end: it goes back to being a draft (as in More).
-    const ok = await confirmAsync(
-      status === 'upcoming'
-        ? { title: `Unschedule ${menu.name}?`, message: 'It goes back to being a draft.', confirmText: 'Unschedule' }
-        : { title: `End ${menu.name}?`, message: 'It moves to Past. You can put it on again later.', confirmText: 'End it' },
-    );
-    if (!ok) return;
-    try {
-      await end.mutateAsync(menu.id);
-    } catch {
-      failed('That didn’t work. Try again.');
-    }
-  };
+  const { actions, go } = useMenuPageActions({ menu, status, liveId: live?.id ?? null, setSheet, toShopping: shelf?.toShopping });
+  // The desktop (Menu-desk): the chosen drink opens beside the menu. Elsewhere it opens in its menu, with "Autumn · 4 of 8" and the pager.
+  const [picked, setPicked] = useState<string | null>(null);
+  const besideId = sidebar ? (picked ?? drinks.find((d) => d.kind === 'cocktail')?.id ?? null) : null;
+  const place = useMenuPager(besideId ? menu.id : null, null, besideId ?? '');
+  const openDrink = (row: PageRowView) => (sidebar && row.drink.kind === 'cocktail' ? setPicked(row.drink.id) : go(`${menuDrinkHref(row.drink)}?${inMenuQuery(menu.id)}`));
   const share = () => (lens.lens === 'home' || isOneNightMenu(menu) ? setSheet('share') : go(`/menus/${menu.id}/card`));
-
-  const actions: Record<Exclude<GroupAction, null>, () => void> = {
-    dates: () => setSheet('more'),
-    end: () => void endMenu(),
-    barPage: () => hide.mutate(!menu.hiddenAt, { onError: () => failed('That didn’t work. Try again.') }),
-    costing: () => go(`/menus/${menu.id}/costing`),
-    runSheet: () => go(`/menus/${menu.id}/run-sheet`),
-    prep: () => go('/prep'),
-    offMenu: () => go('/off-menu'),
-    publish: () => setSheet('publish'),
-    replaces: () => (live ? go(`/menus/${live.id}`) : undefined),
-    night: () => setSheet('night'),
-    shopping: () => shelf?.toShopping(),
-  };
 
   // A list that's on, or coming up: its drinks change one at a time, on the row (Menu-l-swap); a bartender asks (Menu-l-ask).
   const bartender = lens.lens === 'bartender';
   const current = !!menu.barId && (status === 'on' || status === 'upcoming');
   const changeable = team && current;
-  const living = changeable && isLivingList(lens.rows, menu.startsAt, endedRuns);
+  const livingList = current && isLivingList(lens.rows, menu.startsAt, endedRuns);
+  const living = changeable && livingList;
   const acts = useRowActs(menu, lens.rows, bartender);
   const listView = useLiveSections({ menu, sections: model.sections, rows: lens.rows, may: acts.may ?? false, on: changeable || (bartender && current), bartender, living, now });
-  const shown = [...(listView.lead ? [listView.lead] : []), ...listView.main, ...(listView.coming ? [listView.coming] : [])];
+  // A section with nothing in it isn't drawn (the editor still shows it, to fill).
+  const shown = [...(listView.lead ? [listView.lead] : []), ...listView.main, ...(listView.coming ? [listView.coming] : [])].filter((s) => s.rows.length);
   const items: Item[] = shown.flatMap((s) => [
     { key: `h-${s.id}`, head: { name: s.name, count: s.rows.filter((r) => !r.struck).length } },
     // A drink can be in two asks, or an ask and a waiting row: the ask keys it.
     ...s.rows.map((row) => ({ key: `${s.id}-${row.ask ? `${row.ask.id}-` : ''}${row.drink.id}${row.struck ? '-off' : ''}`, row, sectionId: s.id })),
   ]);
-  const [topRows, afterRows] = splitGroup(model.group, living, lens.lens === 'admin');
+  // Rows the board doesn't draw on this page (an Admin's Run sheet; a living list's run sheet and bar page) are in More, never piled under the drinks.
+  const [topRows, moreRows] = splitGroup(model.group, living, lens.lens === 'admin');
   const withPress = <R extends { action: GroupAction }>(r: R) => ({ ...r, onPress: r.action ? actions[r.action] : undefined });
   const column = { paddingHorizontal: gutter, maxWidth: wide ? menuCover.column : undefined, width: '100%', alignSelf: sidebar ? 'flex-start' : 'center' } as const;
-  // Waiting changes, Undo, Back on and Coming up show their buttons; any other row shows Swap and Take off once tapped.
+  // Waiting changes, Undo, Back on and Coming up show their buttons; any other row shows Swap and Take off once held.
   const alwaysActs = (id: string | undefined, row: PageRowView) => id === 'waiting' || id === 'coming' || !!row.struck || !!row.offTonight;
+  const toggle = (key: string) => setOpen((o) => (o === key ? null : key));
+
+  const list = (
+    <FlatList
+      // A menu can run to dozens of drinks: rows mount as they scroll into view.
+      data={items}
+      keyExtractor={(i) => i.key}
+      windowSize={DRAWN_LIST_WINDOW}
+      style={styles.screen}
+      contentContainerStyle={{ paddingBottom: insets.bottom + (draft && team ? 140 : space.xxxl) }}
+      renderItem={({ item }) => (
+        <View style={column}>
+          {item.head ? (
+            <View style={styles.sectionHead}>
+              <SectionHead name={item.head.name} count={item.head.count} />
+            </View>
+          ) : item.row ? (
+            <MenuPageRow
+              row={item.row}
+              picked={besideId === item.row.drink.id}
+              open={bartender || changeable ? open === item.key : undefined}
+              chevron={bartender}
+              showActs={(changeable || (bartender && current)) && (open === item.key || alwaysActs(item.sectionId, item.row))}
+              onAct={(kind) =>
+                kind === 'swap' || kind === 'takeOff'
+                  ? setChanging({ kind, view: item.row!, sectionId: item.row!.listRow?.sectionId ?? item.sectionId! })
+                  : acts.act(kind, item.row!, item.sectionId!)
+              }
+              // Every row opens its drink (Menu-drink); a bartender's opens the spec in place first (Menu-who-bartender).
+              onPress={() => (bartender ? toggle(item.key) : openDrink(item.row!))}
+              // On a live list the menu team hold a drink for Swap and Take off (Menu-l-swap).
+              onLongPress={changeable && item.row.acts?.length && !alwaysActs(item.sectionId, item.row) ? () => toggle(item.key) : undefined}
+            >
+              {bartender && open === item.key ? <MenuSpecInPlace itemId={item.row.drink.id} barId={menu.barId} onOpen={() => openDrink(item.row!)} /> : null}
+            </MenuPageRow>
+          ) : null}
+        </View>
+      )}
+      ListHeaderComponent={
+        <View style={[column, styles.head]}>
+          {sidebar ? <Crumbs trail={[home ? { label: 'Drinks', href: '/drinks' } : { label: 'Menus', href: '/menus/all' }]} /> : null}
+          <MenuPageHead
+            heroIds={drinks.slice(0, 3).map((d) => d.id)}
+            coverUrl={cover}
+            coverCredit={cover ? menu.coverCredit : null}
+            name={menu.name}
+            ink={model.ink}
+            quiet={model.quiet}
+            tag={model.tag}
+            eyebrow={model.eyebrow}
+            description={menu.description}
+            onBack={sidebar ? null : back}
+            onShare={lens.lens === 'home' ? null : share}
+            // Edit is the one action for the menu team; a draft's is Publish and a home menu's Share, so theirs is a glass pencil.
+            onEdit={(team && draft) || lens.lens === 'home' ? () => go(`/menus/${menu.id}/edit`) : null}
+            pill={lens.lens === 'home' ? { label: 'Share', onPress: share } : team && !draft && status !== 'previous' ? { label: 'Edit', onPress: () => go(`/menus/${menu.id}/edit`) } : null}
+            bleed={gutter}
+            top={sidebar ? 0 : insets.top}
+          />
+          {model.banner ? (
+            <MenuPageBanner text={model.banner.text} aside={model.banner.aside} warn={model.banner.warn} onPress={model.banner.toNow && live ? () => go(`/menus/${live.id}`) : undefined} />
+          ) : null}
+          {/* Only while their own changes wait (Menu-l-ask); a living list draws no group for a bartender. */}
+          {acts.may === false && listView.lead?.rows.length ? <MenuPageBanner text="Your changes wait for approval" aside={listView.approvedBy} warn={false} /> : null}
+          <MenuPageGroup
+            rows={(bartender && livingList
+              ? []
+              : [
+                  ...topRows.slice(0, 1),
+                  ...(team && listView.lastChange ? [{ label: 'Last change', value: listView.lastChange, action: null }] : []),
+                  ...(team && listView.toldAt ? [{ label: 'Team', value: listView.toldAt, action: null }] : []),
+                  ...topRows.slice(1),
+                ]
+            ).map(withPress)}
+          />
+          {!drinks.length ? <Body tone="muted">No drinks on this menu yet.</Body> : null}
+        </View>
+      }
+      ListFooterComponent={model.after ? <MenuPageAfter note={model.after} style={column} /> : undefined}
+    />
+  );
 
   return (
-    <View style={[styles.screen, { backgroundColor: ds.c.ground }]}>
-      <FlatList
-        // A menu can run to dozens of drinks: rows mount as they scroll into view.
-        data={items}
-        keyExtractor={(i) => i.key}
-        windowSize={DRAWN_LIST_WINDOW}
-        contentContainerStyle={{ paddingBottom: insets.bottom + (draft && team ? 140 : space.xxxl) }}
-        renderItem={({ item }) => (
-          <View style={column}>
-            {item.head ? (
-              <View style={styles.sectionHead}>
-                <SectionHead name={item.head.name} count={item.head.count} />
-              </View>
-            ) : item.row ? (
-              <MenuPageRow
-                row={item.row}
-                open={bartender || changeable ? open === item.key : undefined}
-                chevron={bartender}
-                showActs={(changeable || (bartender && current)) && (open === item.key || alwaysActs(item.sectionId, item.row))}
-                onAct={(kind) =>
-                  kind === 'swap' || kind === 'takeOff'
-                    ? setChanging({ kind, view: item.row!, sectionId: item.row!.listRow?.sectionId ?? item.sectionId! })
-                    : acts.act(kind, item.row!, item.sectionId!)
-                }
-                onPress={() =>
-                  bartender || (changeable && item.row!.acts?.length && !alwaysActs(item.sectionId, item.row!)) ? setOpen((o) => (o === item.key ? null : item.key)) : openDrink(item.row!)
-                }
-              >
-                {bartender && open === item.key ? <MenuSpecInPlace itemId={item.row.drink.id} barId={menu.barId} onOpen={() => openDrink(item.row!)} /> : null}
-              </MenuPageRow>
-            ) : null}
-          </View>
-        )}
-        ListHeaderComponent={
-          <View style={[column, styles.head]}>
-            {sidebar ? <Crumbs trail={[home ? { label: 'Drinks', href: '/drinks' } : { label: 'Menus', href: '/menus/all' }]} /> : null}
-            <MenuPageHead
-              heroIds={drinks.slice(0, 3).map((d) => d.id)}
-              coverUrl={cover}
-              coverCredit={cover ? menu.coverCredit : null}
-              name={menu.name}
-              ink={model.ink}
-              quiet={model.quiet}
-              tag={model.tag}
-              eyebrow={model.eyebrow}
-              description={menu.description}
-              onBack={sidebar ? null : back}
-              onShare={lens.lens === 'home' ? null : share}
-              // Edit is the one action for the menu team; a draft's is Publish and a home menu's Share, so theirs is a glass pencil.
-              onEdit={(team && draft) || lens.lens === 'home' ? () => go(`/menus/${menu.id}/edit`) : null}
-              pill={lens.lens === 'home' ? { label: 'Share', onPress: share } : team && !draft && status !== 'previous' && !living ? { label: 'Edit', onPress: () => go(`/menus/${menu.id}/edit`) } : null}
-              bleed={gutter}
-              top={sidebar ? 0 : insets.top}
-            />
-            {model.banner ? (
-              <MenuPageBanner text={model.banner.text} aside={model.banner.aside} warn={model.banner.warn} onPress={model.banner.toNow && live ? () => go(`/menus/${live.id}`) : undefined} />
-            ) : null}
-            {acts.may === false && (changeable || (bartender && current)) ? <MenuPageBanner text="Your changes wait for approval" aside={listView.approvedBy} warn={false} /> : null}
-            <MenuPageGroup
-              rows={[
-                ...topRows.slice(0, 1),
-                ...(listView.lastChange ? [{ label: 'Last change', value: listView.lastChange, action: null }] : []),
-                ...(listView.toldAt ? [{ label: 'Team', value: listView.toldAt, action: null }] : []),
-                ...topRows.slice(1),
-              ].map(withPress)}
-            />
-            {!drinks.length ? <Body tone="muted">No drinks on this menu yet.</Body> : null}
-          </View>
-        }
-        ListFooterComponent={afterRows.length || model.after ? <MenuPageAfter rows={afterRows.map(withPress)} note={model.after} style={column} /> : undefined}
-      />
+    <View style={[styles.screen, sidebar && styles.split, { backgroundColor: ds.c.ground }]}>
+      {list}
+      {besideId ? (
+        <Suspense fallback={null}>
+          <MenuDrinkPane itemId={besideId} place={place} onPick={setPicked} />
+        </Suspense>
+      ) : null}
       {draft && team ? (
         <View style={[styles.bottom, { paddingBottom: insets.bottom + space.md, paddingHorizontal: gutter, backgroundColor: ds.c.ground }]}>
           <Button label="Publish" variant="ink" size="lg" onPress={() => setSheet('publish')} style={styles.publish} />
@@ -283,7 +279,9 @@ function MenuPageBody({ menu, shelf, cover, now }: PageProps & { cover: string |
       {changing ? <RowChanges menu={menu} target={changing} ended={listView.ended} acts={acts} onClose={() => setChanging(null)} /> : null}
       {sheet === 'night' ? <HomeNightSheet menu={menu} onClose={() => setSheet(null)} /> : null}
       {sheet === 'share' ? <ShareMenuSheet menu={menu} onClose={() => setSheet(null)} /> : null}
-      {sheet === 'more' ? <MenuMoreSheet menu={menu} status={status} visible onClose={() => setSheet(null)} onNight={home ? () => setSheet('night') : undefined} onEdit={living ? () => go(`/menus/${menu.id}/edit`) : undefined} /> : null}
+      {sheet === 'more' ? (
+        <MenuMoreSheet menu={menu} status={status} visible onClose={() => setSheet(null)} onNight={home ? () => setSheet('night') : undefined} extras={moreExtras(moreRows, menu, actions)} />
+      ) : null}
       {sheet === 'publish' ? <GoLiveSheet visible menu={menu} others={others} onClose={() => setSheet(null)} onDone={() => setSheet(null)} /> : null}
     </View>
   );
@@ -291,6 +289,7 @@ function MenuPageBody({ menu, shelf, cover, now }: PageProps & { cover: string |
 
 const styles = StyleSheet.create({
   screen: { flex: 1 },
+  split: { flexDirection: 'row' },
   missing: { gap: space.lg },
   head: { gap: space.lg, paddingBottom: space.lg },
   sectionHead: { paddingTop: space.xl, paddingBottom: space.sm },

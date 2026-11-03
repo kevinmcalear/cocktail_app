@@ -44,6 +44,10 @@ interface MenuPageRowProps {
   row: PageRowView;
   /** Nothing to open: the row stays a plain row (a drink kept private). */
   onPress?: () => void;
+  /** The menu team on a live list: holding a drink shows its Swap and Take off (Menu-l-swap), as a tap opens it. */
+  onLongPress?: () => void;
+  /** The drink open beside the menu on a desktop (Menu-desk): the row sits on a soft fill. */
+  picked?: boolean;
   /** A bartender's spec, or the menu team's actions, open under the row. */
   open?: boolean;
   /** Show the row's acts (a tapped row on a live list, or a change waiting). */
@@ -63,7 +67,7 @@ interface MenuPageRowProps {
  * spec in place, the menu team's on a live list its Swap and Take off
  * (Menu-l-swap).
  */
-export function MenuPageRow({ row, onPress, open, showActs, onAct, chevron, trailing, children }: MenuPageRowProps) {
+export function MenuPageRow({ row, onPress, onLongPress, picked, open, showActs, onAct, chevron, trailing, children }: MenuPageRowProps) {
   const ds = useDs();
   const amber = readableAccent(STATUS.warning, ds.c.ground);
   const green = readableAccent(STATUS.success, ds.c.ground);
@@ -75,7 +79,17 @@ export function MenuPageRow({ row, onPress, open, showActs, onAct, chevron, trai
   return (
     <View style={[styles.wrap, { borderTopColor: ds.c.lineStrong }]}>
       <View style={trailing ? styles.withTrailing : undefined}>
-        <PressableScale role={onPress ? 'button' : undefined} aria-expanded={open} accessibilityLabel={label} onPress={onPress} disabled={!onPress} style={[styles.row, trailing ? styles.grow : null]}>
+        <PressableScale
+          role={onPress ? 'button' : undefined}
+          aria-expanded={open}
+          aria-current={picked || undefined}
+          accessibilityLabel={label}
+          accessibilityHint={onLongPress ? 'Hold for Swap and Take off' : undefined}
+          onPress={onPress}
+          onLongPress={onLongPress}
+          disabled={!onPress}
+          style={[styles.row, trailing ? styles.grow : null, picked && [styles.picked, { backgroundColor: ds.c.raised }]]}
+        >
         <View style={row.struck ? styles.struckPic : undefined}>
           <MenuDrawing itemId={drink.id} size="menuRow" ink={row.ink} fallback={{ imageUrl: drink.imageUrl, glass: drink.glass }} />
         </View>
@@ -166,6 +180,7 @@ const styles = StyleSheet.create({
   text: { flex: 1, gap: 2 },
   nameRow: { flexDirection: 'row', alignItems: 'center', gap: space.sm, flexWrap: 'wrap' },
   name: { flexShrink: 1 },
+  picked: { borderRadius: radius.control, marginHorizontal: -space.sm, paddingHorizontal: space.sm },
   struck: { textDecorationLine: 'line-through' },
   struckPic: { opacity: 0.5 },
   flag: { paddingHorizontal: space.xs + 2, paddingVertical: 1, borderRadius: radius.mark },

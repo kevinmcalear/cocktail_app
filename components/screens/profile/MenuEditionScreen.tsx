@@ -13,6 +13,7 @@ import { usePhotoTone } from '@/hooks/usePhotoTone';
 import { useMenuEditionDrinks, useMenuEditions, useProfile } from '@/hooks/useProfiles';
 import { drinkPageHref } from '@/lib/itemRoutes';
 import { barDay, clockAt, DAILY_AFTER, dailyLead, dayText } from '@/lib/dailyList';
+import { inMenuQuery } from '@/lib/menuPager';
 import { editionDates, editionMenu, editionMenuDrinks, editionSections, menuRange, menuState } from '@/lib/menuEditions';
 import { screenBelow } from '@/lib/screenBelow';
 import { shareOrCopy } from '@/lib/shareLink';
@@ -85,7 +86,8 @@ export function MenuEditionScreen({ profileRef, editionId }: { profileRef: strin
         onToNow={now ? () => router.replace(`/p/${bar.handle || bar.id}/menus/${now.id}` as Href) : undefined}
         onBack={back}
         onShare={() => void shareOrCopy(`${siteOrigin()}${barHref}/menus/${edition.id}`, edition.name, 'menu')}
-        rowPress={(row) => (readable.has(row.drink.id) ? () => router.push(drinkPageHref(row.drink.id, signedIn) as Href) : null)}
+        // The drink opens in its menu: "Autumn · 4 of 8" and the pager (Menu-pager).
+        rowPress={(row) => (readable.has(row.drink.id) ? () => router.push(`${drinkPageHref(row.drink.id, signedIn)}?${inMenuQuery(edition.id, bar.handle || bar.id)}` as Href) : null)}
         under={
           <View style={styles.under}>
             <PressableScale role="link" accessibilityLabel={`From ${bar.display_name}, open their profile`} onPress={toBar} style={styles.start}>
