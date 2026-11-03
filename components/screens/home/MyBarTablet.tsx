@@ -1,4 +1,4 @@
-import type { ReactElement } from 'react';
+import type { ReactElement, ReactNode } from 'react';
 import { FlatList, ScrollView, StyleSheet, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
@@ -28,6 +28,8 @@ interface TabletProps<R extends { key: string }> {
   onAdd: (section: ShelfSection) => void;
   /** Clear of the tab bar. */
   bottom: number;
+  /** Drinks' head, in place of My Bar's title (MyBarScreen). */
+  head?: ReactNode;
 }
 
 /**
@@ -37,13 +39,13 @@ interface TabletProps<R extends { key: string }> {
  * top with the best few drinks, then the cards. A card opens its section as
  * the phone list.
  */
-export function TabletOverview<R extends { key: string }>({ portrait, counts, note, error, cards, makeRows, renderRow, onOpen, onAdd, bottom }: TabletProps<R>) {
+export function TabletOverview<R extends { key: string }>({ head: top, portrait, counts, note, error, cards, makeRows, renderRow, onOpen, onAdd, bottom }: TabletProps<R>) {
   const ds = useDs();
   const gutter = useGutter();
   const insets = useSafeAreaInsets();
   const head = (
     <View style={styles.head}>
-      <ScreenHeaderSpacer title="My Bar" back />
+      {top ?? <ScreenHeaderSpacer title="My Bar" back />}
       <Caption tone="muted">{note ?? shelfCountsLine(counts)}</Caption>
       {error ? <Body tone="muted">Couldn’t load your bar. Try again in a moment.</Body> : null}
     </View>

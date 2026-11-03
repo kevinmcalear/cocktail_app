@@ -32,7 +32,7 @@ export const SCHEMES = [
 
 const TABS: { label: string; icon: IconName }[] = [
   { label: 'Tonight', icon: 'place.tonight' },
-  { label: 'Library', icon: 'place.library' },
+  { label: 'Drinks', icon: 'place.library' },
   { label: 'Discover', icon: 'place.discover' },
 ];
 

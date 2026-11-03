@@ -2,7 +2,7 @@ import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 
 import { useAuth } from '@/ctx/AuthContext';
 import type { BarGlass, BarGlassInput } from '@/hooks/useBarGlassware';
-import { removeGlassPhoto } from '@/hooks/useGlassDrawing';
+import { removeGlassPhoto } from '@/hooks/glassPhotoBucket';
 import { GLASS_MODEL_SELECT } from '@/hooks/useGlassModels';
 import type { VenueIce, VenueIceChange } from '@/hooks/useVenueIce';
 import type { SketchGlass } from '@/lib/sketch/types';

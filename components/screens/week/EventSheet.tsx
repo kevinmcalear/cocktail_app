@@ -2,7 +2,8 @@ import { useRouter, type Href } from 'expo-router';
 import { useState } from 'react';
 import { StyleSheet, View } from 'react-native';
 
-import { Caption, Chip, DateField, DsText, Field, PressableScale, Segmented, TimeField, useDs } from '@/components/ds';
+import { Caption, Chip, DateField, DsText, Field, PressableScale, Segmented, useDs } from '@/components/ds';
+import { TimeField } from '@/components/ds/TimeField';
 import { Choice, MenuSheet } from '@/components/screens/menus/MenuSheet';
 import { SwitchRow } from '@/components/screens/settings/SettingsParts';
 import { radius, space } from '@/constants/tokens';

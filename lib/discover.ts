@@ -85,3 +85,12 @@ export function findCities(cities: readonly City[], search: string, limit = 3): 
   const words = q.length < 3 ? [] : cities.filter((c) => !starts.includes(c) && foldName(c.city).split(' ').some((w) => w.startsWith(q)));
   return [...starts, ...words].slice(0, limit);
 }
+
+/**
+ * What was typed is a drink's name here, so rows named it go first (starting
+ * with it, then containing it), ahead of ones that matched on an ingredient.
+ */
+export function namedFirst<T extends { name: string }>(rows: readonly T[], typed: string): T[] {
+  const named = findDrinks(rows, typed);
+  return [...named, ...rows.filter((r) => !named.includes(r))];
+}

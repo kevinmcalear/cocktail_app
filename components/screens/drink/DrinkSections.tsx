@@ -1,7 +1,8 @@
 import { useRouter, type Href } from 'expo-router';
 import { StyleSheet, View } from 'react-native';
 
-import { Body, Button, Caption, Headline, SpecRow } from '@/components/ds';
+import { Body, Button, Caption, Headline } from '@/components/ds';
+import { SpecRow } from '@/components/ds/SpecRow';
 import { space } from '@/constants/tokens';
 import { useSignedIn } from '@/ctx/AuthContext';
 import { useLineage } from '@/hooks/useLineage';

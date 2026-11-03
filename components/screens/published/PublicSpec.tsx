@@ -2,7 +2,8 @@ import { useRouter } from 'expo-router';
 import type { ReactNode } from 'react';
 import { StyleSheet, View } from 'react-native';
 
-import { Body, Button, Caption, Headline, SpecRow, Surface, useBreakpoint, useDs } from '@/components/ds';
+import { Body, Button, Caption, Headline, Surface, useBreakpoint, useDs } from '@/components/ds';
+import { SpecRow } from '@/components/ds/SpecRow';
 import { DrinkFacts, type Fact } from '@/components/screens/drink/DrinkFacts';
 import { PartsList } from '@/components/screens/drink/DrinkParts';
 import { IconSymbol } from '@/components/ui/icon-symbol';

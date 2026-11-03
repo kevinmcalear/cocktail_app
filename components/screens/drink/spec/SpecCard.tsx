@@ -1,7 +1,8 @@
 import { useState } from 'react';
 import { StyleSheet, View } from 'react-native';
 
-import { DsText, SPEC_AMOUNT_WIDTH, SpecRow, useDs } from '@/components/ds';
+import { DsText, useDs } from '@/components/ds';
+import { SPEC_AMOUNT_WIDTH, SpecRow } from '@/components/ds/SpecRow';
 import { font, space } from '@/constants/tokens';
 import { useSpecAccess } from '@/hooks/useSpecAccess';
 import { useSpecView } from '@/hooks/useSpecView';

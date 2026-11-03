@@ -58,9 +58,9 @@ jest.mock('@/components/nav/RootLazy', () => {
   const { LibraryScreen } = jest.requireMock<typeof import('@/components/screens/LibraryScreen')>('@/components/screens/LibraryScreen');
   return { LibraryBeside: () => <LibraryScreen beside /> };
 });
-jest.mock('@/components/screens/home/CollectionScreen', () => {
+jest.mock('@/components/screens/drinks/HomeDrinks', () => {
   const { Text } = jest.requireActual<typeof import('react-native')>('react-native');
-  return { CollectionScreen: () => <Text>collection</Text> };
+  return { HomeDrinks: () => <Text>home drinks</Text> };
 });
 
 const SHARED = '(tabs)/(1-tonight,2-drinks,3-discover,4-you)';
@@ -145,10 +145,10 @@ test('below 1200, Drinks stays one column', async () => {
   expect(screen.queryByText(/list beside/)).toBeNull();
 });
 
-test('at home, Drinks is Collection, one column', async () => {
+test('at home, Drinks is your drinks, shelf and menus, one column', async () => {
   mockMode = 'home';
   await open('/drinks');
-  expect(screen.getByText('collection')).toBeTruthy();
+  expect(screen.getByText('home drinks')).toBeTruthy();
   expect(screen.queryByText(/list beside/)).toBeNull();
 });
 

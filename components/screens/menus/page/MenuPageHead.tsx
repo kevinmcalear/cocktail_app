@@ -4,7 +4,7 @@ import { StyleSheet, View } from 'react-native';
 import { Caption, Display, DsText, GlassButton, PressableScale, Tag, useBreakpoint, useDs, type TagTone } from '@/components/ds';
 import { font, menuCover, radius, space } from '@/constants/tokens';
 
-import { MenuSky, MenuTrio } from './MenuBand';
+import { MenuSky, MenuTrio } from './MenuBandLazy';
 import type { MenuInk } from './MenuDrawing';
 
 // The drink page's hero and its viewer load only for a menu with a cover: a home menu never has one.

@@ -10,7 +10,7 @@ import { heroPicture } from '@/lib/itemImages';
 import { entryLine } from '@/lib/rankResult';
 import { formatScore, MIN_RANKERS, plural } from '@/lib/ranking';
 
-import { ReportAction } from '../safety/ReportSheet';
+import { ReportAction } from '../safety/ReportAction';
 import { ListNote } from './RankingLists';
 import { BlockLabel, ScoreRow } from './ScoreRows';
 

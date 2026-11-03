@@ -18,6 +18,11 @@
 import { VOLUME_ML } from '@/lib/quantity';
 import type { SpecLine } from '@/lib/spec';
 
+import { GARNISH_UNITS, isGarnishUnit } from './garnish';
+
+// Their home is lib/garnish.ts, small so Tonight's lines don't load the batch maths.
+export { GARNISH_UNITS, isGarnishUnit };
+
 export type BatchMethod = 'stirred' | 'shaken' | 'built' | 'unknown';
 export type VolumeUnit = 'ml' | 'oz';
 export type BottleSize = 700 | 750 | 1000;
@@ -75,8 +80,6 @@ const BAR_ML_PER_OZ = 30;
 const GRAMS: Record<string, number> = { g: 1, kg: 1000 };
 const DASH_UNITS = new Set(['dash', 'dashes', 'drop', 'drops']);
 // A finish (a spray, a rinse, a float) is counted and done at the station too, never bottled.
-// The same list is app_recipe_presentation.is_garnish's and public_drink_ingredients' (20261206495000; lib/batch.check.ts keeps them equal).
-export const GARNISH_UNITS = new Set(['each', 'pinch', 'sprig', 'leaf', 'peel', 'twist', 'discard', 'wheel', 'slice', 'cube', 'wedge', 'rim', 'spray', 'rinse', 'float', 'grated']);
 // Drops of an oil go on top of each serve; saline and tincture drops go in the bottle.
 const OIL = /\boil\b/i;
 // A count with no unit ("1 Lemon twist"): the name says it's a garnish.
@@ -99,11 +102,6 @@ export function classifyMethod(names: readonly string[]): BatchMethod {
   if (/stir/.test(all)) return 'stirred';
   if (/buil/.test(all)) return 'built';
   return 'unknown';
-}
-
-/** A count unit (twist, wheel, each): a garnish, never a liquid. */
-export function isGarnishUnit(unit: string | null | undefined): boolean {
-  return GARNISH_UNITS.has((unit ?? '').toLowerCase());
 }
 
 /**
