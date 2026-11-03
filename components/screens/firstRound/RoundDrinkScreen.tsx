@@ -14,7 +14,7 @@ import { useSpecAccess } from '@/hooks/useSpecAccess';
 import { useStaffRound } from '@/hooks/useStaffRound';
 import { specLines, type PresentationRecipe } from '@/lib/spec';
 import { scaledAmount } from '@/lib/specView';
-import { useSettingsStore } from '@/store/useSettingsStore';
+import { useUnits } from '@/store/useSettingsStore';
 
 import { RoundNote } from './StepGroup';
 
@@ -41,7 +41,7 @@ function OneDrink({ id }: { id: string }) {
   const r = useStaffRound(barId);
   const item = useCocktail(id).data;
   const { access } = useSpecAccess(id, barId);
-  const unit = useSettingsStore((s) => s.specUnit);
+  const { specUnit: unit } = useUnits();
   const liquid = useSkyColour(id);
   const at = r.ids.indexOf(id);
   const drink = r.drinks[at] ?? null;
