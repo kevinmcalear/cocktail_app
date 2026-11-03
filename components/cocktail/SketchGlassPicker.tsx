@@ -1,6 +1,7 @@
 import { StyleSheet, View } from 'react-native';
 
-import { Button, Caption, GlassVariantPicker } from '@/components/ds';
+import { Button, Caption } from '@/components/ds';
+import { GlassVariantPicker } from '@/components/ds/GlassVariantPicker';
 import { space } from '@/constants/tokens';
 import { barGlassFor, useBarGlassware } from '@/hooks/useBarGlassware';
 import { useItemSketch } from '@/hooks/useItemSketch';

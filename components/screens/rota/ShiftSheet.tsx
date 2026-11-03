@@ -1,7 +1,9 @@
 import { useState, type ReactNode } from 'react';
 import { StyleSheet, View } from 'react-native';
 
-import { Caption, DayGrid, dragDismissesKeyboard, Field, FlowHead, PickerPanel, Sheet, SheetScrollView, Surface, TimeGrid, useDs, useSheetClose } from '@/components/ds';
+import { Caption, DayGrid, dragDismissesKeyboard, Field, PickerPanel, Sheet, SheetScrollView, Surface, useDs, useSheetClose } from '@/components/ds';
+import { FlowHead } from '@/components/ds/FlowHead';
+import { TimeGrid } from '@/components/ds/TimeField';
 import { RowDivider, SettingsRow, SwitchRow } from '@/components/screens/settings/SettingsParts';
 import { IconSymbol } from '@/components/ui/icon-symbol';
 import { space } from '@/constants/tokens';

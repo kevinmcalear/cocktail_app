@@ -1,4 +1,4 @@
-import type { PopoverSection } from '@/components/ds';
+import type { PopoverSection } from '@/components/ds/PopoverMenu';
 import { NEAR_ME_KM, type Area } from '@/lib/nearMe';
 
 /** Where Discover looks, in the places menu's words. */

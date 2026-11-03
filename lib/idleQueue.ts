@@ -45,27 +45,42 @@ type Fetching = { isFetching: () => number; getQueryCache: () => { subscribe: (l
 /**
  * Runs `run` once the first screen's queries have fetched and settled (or
  * after `maxMs`), so a download that can wait (the fonts later screens use)
- * doesn't share a slow connection with the first screen's data. Returns a
- * cancel.
+ * doesn't share a slow connection with the first screen's data. `quietMs`:
+ * nothing fetching for that long first, since a screen's queries come in
+ * waves (who you are, then your bar, then its drinks) with gaps between.
+ * A screen that fetches nothing (all from the saved cache) still runs it
+ * after `idleMs`. Returns a cancel.
  */
-export function afterFirstData(client: Fetching, run: () => void, maxMs = 4000): () => void {
+export function afterFirstData(client: Fetching, run: () => void, maxMs = 4000, quietMs = 0, idleMs = maxMs): () => void {
   let fetched = false;
   let done = false;
+  let quiet: ReturnType<typeof setTimeout> | undefined;
   const finish = () => {
     if (done) return;
     done = true;
     unsubscribe();
     clearTimeout(timer);
+    clearTimeout(idle);
+    clearTimeout(quiet);
     run();
   };
   const timer = setTimeout(finish, maxMs);
+  const idle = setTimeout(() => !fetched && finish(), idleMs);
   const unsubscribe = client.getQueryCache().subscribe(() => {
-    if (client.isFetching() > 0) fetched = true;
-    else if (fetched) finish();
+    if (client.isFetching() > 0) {
+      fetched = true;
+      clearTimeout(quiet);
+      quiet = undefined;
+    } else if (fetched && !quiet) {
+      if (quietMs > 0) quiet = setTimeout(() => (client.isFetching() > 0 ? (quiet = undefined) : finish()), quietMs);
+      else finish();
+    }
   });
   return () => {
     done = true;
     unsubscribe();
     clearTimeout(timer);
+    clearTimeout(idle);
+    clearTimeout(quiet);
   };
 }
