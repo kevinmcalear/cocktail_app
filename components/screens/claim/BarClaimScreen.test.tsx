@@ -25,6 +25,7 @@ const page = {
   is_closed: false,
 };
 let mockPage: typeof page = page;
+let mockOthersWaiting = false;
 
 jest.mock('expo-router', () => ({ useRouter: () => ({ replace: jest.fn(), push: jest.fn(), back: jest.fn(), canGoBack: () => false }) }));
 jest.mock('@/ctx/AuthContext', () => jest.requireActual('@/jest.authMock').mockAuthContext(() => ({ user: { id: 'me', email: mockEmail, email_confirmed_at: '2026-10-01' } })));
@@ -36,6 +37,7 @@ jest.mock('@/hooks/useProfiles', () => ({
 jest.mock('@/hooks/useBarFacts', () => ({ useBarFacts: () => ({ data: { phone: mockPhone } }) }));
 jest.mock('@/hooks/useBarClaims', () => ({
   useStartBarClaim: () => ({ mutate: mockStart, reset: jest.fn(), isPending: false, error: null }),
+  useClaimPending: () => ({ data: mockOthersWaiting }),
   useWithdrawClaim: () => ({ mutate: mockWithdraw, isPending: false, error: null }),
 }));
 
@@ -47,18 +49,29 @@ beforeEach(() => {
   mockVenues = [];
   mockPhone = '(03) 9000 0000';
   mockPage = page;
+  mockOthersWaiting = false;
   mockStart.mockReset();
   mockWithdraw.mockReset();
 });
 
-test('a work email at the bar’s own site claims it on the spot', async () => {
+test('a work email at the bar’s own site is the quickest way, and still only sends a claim', async () => {
   await renderWithProviders(<BarClaimScreen profileRef="pale.moth" />);
   expect(screen.getByText('Prove it’s yours')).toBeTruthy();
   expect(screen.getByRole('radio', { name: /^Work email/ })).toBeChecked();
-  expect(screen.getByText('Instant')).toBeTruthy();
+  expect(screen.getByText('Quickest')).toBeTruthy();
+  expect(screen.queryByText('Instant')).toBeNull();
   expect(screen.getByText(/Up to 3 claims a day/)).toBeTruthy();
-  await fireEvent.press(screen.getByRole('button', { name: 'Claim Pale Moth' }));
+  expect(screen.queryByRole('button', { name: 'Claim Pale Moth' })).toBeNull();
+  await fireEvent.press(screen.getByRole('button', { name: 'Send claim' }));
   expect(mockStart).toHaveBeenCalledWith(expect.objectContaining({ profileId: 'p1', method: 'email', barId: null, note: '' }));
+});
+
+test('someone else’s waiting claim is shown, and another can still be sent', async () => {
+  mockOthersWaiting = true;
+  await renderWithProviders(<BarClaimScreen profileRef="pale.moth" />);
+  expect(screen.getByText(/Someone has already sent a claim on this page/)).toBeTruthy();
+  await fireEvent.press(screen.getByRole('button', { name: 'Send claim' }));
+  expect(mockStart).toHaveBeenCalled();
 });
 
 test('an email elsewhere can’t be used, so Instagram is picked and shows the code before sending', async () => {
@@ -105,7 +118,7 @@ test('an Admin can link a venue they run instead of making one', async () => {
   await renderWithProviders(<BarClaimScreen profileRef="pale.moth" />);
   expect(screen.queryByText('Not mine')).toBeNull();
   await fireEvent.press(screen.getByText('Little Rye'));
-  await fireEvent.press(screen.getByRole('button', { name: 'Claim Pale Moth' }));
+  await fireEvent.press(screen.getByRole('button', { name: 'Send claim' }));
   expect(mockStart).toHaveBeenCalledWith(expect.objectContaining({ barId: 'v1' }));
 });
 
@@ -114,7 +127,7 @@ test('a turned-down claim shows the moderator’s reason and lets them try again
   await renderWithProviders(<BarClaimScreen profileRef="pale.moth" />);
   expect(screen.getByText('Your last claim wasn’t approved')).toBeTruthy();
   expect(screen.getByText('The bio code was missing.')).toBeTruthy();
-  expect(screen.getByRole('button', { name: 'Claim Pale Moth' })).toBeTruthy();
+  expect(screen.getByRole('button', { name: 'Send claim' })).toBeTruthy();
 });
 
 test('a pending Instagram claim shows its code and can be withdrawn', async () => {

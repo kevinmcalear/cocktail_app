@@ -59,7 +59,7 @@ export function methodDetails(profile: Profile, email: string | null | undefined
               ? `You signed in with an address at ${check.domain}, the ${place}’s own website.`
               : `You signed in at ${check.domain}. A moderator checks it, because ${REVIEW_REASON[check.reason]}.`,
       instant: check.ok === 'instant' && !!profile.website,
-      ask: profile.website ? null : { field: 'website', label: `The ${place}’s website`, placeholder: 'harbourroom.com', hint: 'Only a website already on the page is instant.', keyboard: 'url' },
+      ask: profile.website ? null : { field: 'website', label: `The ${place}’s website`, placeholder: 'harbourroom.com', hint: 'A website already on the page is quickest to check.', keyboard: 'url' },
     },
     instagram: {
       available: !!handle,
@@ -88,7 +88,8 @@ const ICONS: Record<BarClaimMethod, IconName> = { email: 'envelope', instagram: 
 
 /** How fast each way is, as the pill on its card. */
 function speed(method: BarClaimMethod, d: MethodDetail): string | null {
-  if (method === 'email') return d.instant ? 'Instant' : 'About a day';
+  // Every claim waits for a person now (20261206710000); a strong work email is just the quickest to check.
+  if (method === 'email') return d.instant ? 'Quickest' : 'About a day';
   if (method === 'instagram') return 'About a day';
   return 'Slowest';
 }

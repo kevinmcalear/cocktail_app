@@ -58,7 +58,7 @@ test("Q33: an unclaimed bar's More leads with Is this your bar? and Worked here?
   expect(mockSetParams).toHaveBeenCalledWith({ tab: 'people' });
   await fireEvent.press(screen.getByRole('button', { name: /^More for @little-rye: claim/ }));
   await fireEvent.press(screen.getByRole('button', { name: 'Is this your bar? Claim Little Rye and set it up' }));
-  expect(mockPush).toHaveBeenCalledWith('/venue-setup?claim=b1');
+  expect(mockPush).toHaveBeenCalledWith('/p/b1/claim');
 });
 
 test("Q33: an unclaimed person's More asks Is this you?, which opens the claim sheet; not once a claim is sent", async () => {
