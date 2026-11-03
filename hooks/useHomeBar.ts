@@ -8,6 +8,7 @@ import { useDropdowns } from '@/hooks/useDropdowns';
 import { withNear, type MaybeNear } from '@/hooks/useSearchNear';
 import { chunk } from '@/lib/commandSearchGrid';
 import { likeExactly, searchByName } from '@/lib/drinkWizard';
+import { LAB_NAMES } from '@/lib/techniques/labNames';
 import { barSection, type BarSection } from '@/lib/barSections';
 import { kindsCovered } from '@/lib/myBarAdd';
 import { heroPicture, type ItemImageLink } from '@/lib/itemImages';
@@ -15,7 +16,6 @@ import { sortMatches, type MatchRow } from '@/lib/barMatches';
 import { specNoteText, type ServedBar } from '@/lib/servedAt';
 import { capitalizeFirst } from '@/lib/stringUtils';
 import { PANTRY, PANTRY_WATER } from '@/lib/pantry';
-import { TECHNICAL_INGREDIENTS } from '@/lib/techniques/ingredients';
 import { supabase } from '@/lib/supabase';
 
 export interface BarItem {
@@ -160,7 +160,7 @@ async function searchBar(query: string): Promise<FoundItem[]> {
     const like = likeExactly(query);
     // A lab ingredient goes by several names ("pectinex" is "Pectinase" in the catalog): look for them all.
     const q = query.toLowerCase();
-    const aliases = TECHNICAL_INGREDIENTS.find((t) => t.names.some((n) => n.startsWith(q)))?.names.filter((n) => !n.includes(q)) ?? [];
+    const aliases = Object.values(LAB_NAMES).find((names) => names.some((n) => n.startsWith(q)))?.filter((n) => !n.includes(q)) ?? [];
     const [starts, has, also] = await Promise.all([
       read(`${like}%`, 50),
       read(`%${like}%`, 150),

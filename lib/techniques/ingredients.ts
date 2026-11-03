@@ -1,3 +1,4 @@
+import { LAB_NAMES, LAB_TITLES } from './labNames';
 import { src } from './sources';
 import type { BuyLink, Grade, Source } from './types';
 
@@ -26,7 +27,7 @@ export interface TechnicalIngredient {
 
 export const TECHNICAL_INGREDIENTS: TechnicalIngredient[] = [
   {
-    id: 'xanthan', name: 'Xanthan gum', names: ['xanthan', 'xanthan gum'], vegan: true, perTsp: 3.5,
+    id: 'xanthan', name: LAB_TITLES['xanthan'], names: LAB_NAMES['xanthan'], vegan: true, perTsp: 3.5,
     what: 'Thickens hot or cold with no heating. A trace adds body; a little more holds things in suspension.',
     alcohol: 'Fine up to about 60%',
     jobs: [
@@ -46,7 +47,7 @@ export const TECHNICAL_INGREDIENTS: TechnicalIngredient[] = [
     ],
   },
   {
-    id: 'agar', name: 'Agar', names: ['agar', 'agar agar', 'agar-agar'], vegan: true, perTsp: 2.4,
+    id: 'agar', name: LAB_TITLES['agar'], names: LAB_NAMES['agar'], vegan: true, perTsp: 2.4,
     what: 'A seaweed gel that sets fast and holds up to heat. The quick way to clarify juice.',
     alcohol: 'Tolerates alcohol, acid and sugar',
     jobs: [
@@ -65,7 +66,7 @@ export const TECHNICAL_INGREDIENTS: TechnicalIngredient[] = [
     ],
   },
   {
-    id: 'gelatin', name: 'Gelatin', names: ['gelatin', 'gelatine', 'leaf gelatin', 'gelatin sheets'], vegan: false,
+    id: 'gelatin', name: LAB_TITLES['gelatin'], names: LAB_NAMES['gelatin'], vegan: false,
     what: 'An animal gel that melts in the mouth. Clarifies by freeze-thaw and holds siphon foams.',
     alcohol: 'Up to about 40%; needs more as alcohol rises',
     jobs: [
@@ -85,7 +86,7 @@ export const TECHNICAL_INGREDIENTS: TechnicalIngredient[] = [
     ],
   },
   {
-    id: 'methylcellulose', name: 'Methylcellulose', names: ['methylcellulose', 'methyl cellulose', 'methocel', 'methocel f50', 'methylcellulose f50'], vegan: true, perTsp: 1.3,
+    id: 'methylcellulose', name: LAB_TITLES['methylcellulose'], names: LAB_NAMES['methylcellulose'], vegan: true, perTsp: 1.3,
     what: 'A plant-based foamer and thickener. The base of vegan foams and foaming sour syrups.',
     jobs: [
       { job: 'Sour syrup (foams on one shake)', dose: '0.5% of the syrup', grade: 'B' },
@@ -102,7 +103,7 @@ export const TECHNICAL_INGREDIENTS: TechnicalIngredient[] = [
     ],
   },
   {
-    id: 'gellan', name: 'Gellan', names: ['gellan', 'gellan gum', 'low acyl gellan', 'high acyl gellan', 'gellan f'], vegan: true, perTsp: 1.9,
+    id: 'gellan', name: LAB_TITLES['gellan'], names: LAB_NAMES['gellan'], vegan: true, perTsp: 1.9,
     what: 'Makes fluid gels that hold garnishes mid-glass, and firm, clear gels.',
     alcohol: 'Won’t dissolve in alcohol; hydrate in water first',
     jobs: [
@@ -119,7 +120,7 @@ export const TECHNICAL_INGREDIENTS: TechnicalIngredient[] = [
     ],
   },
   {
-    id: 'alginate', name: 'Sodium alginate', names: ['sodium alginate', 'alginate'], vegan: true, perTsp: 3.5,
+    id: 'alginate', name: LAB_TITLES['alginate'], names: LAB_NAMES['alginate'], vegan: true, perTsp: 3.5,
     what: 'Forms a skin with calcium: spheres and caviar.',
     jobs: [
       { job: 'Reverse spheres bath', dose: '0.5 to 0.7%', grade: 'A' },
@@ -136,7 +137,7 @@ export const TECHNICAL_INGREDIENTS: TechnicalIngredient[] = [
     ],
   },
   {
-    id: 'calcium', name: 'Calcium lactate', names: ['calcium lactate', 'calcium chloride', 'calcium lactate gluconate'], vegan: true,
+    id: 'calcium', name: LAB_TITLES['calcium'], names: LAB_NAMES['calcium'], vegan: true,
     what: 'The calcium that sets alginate.',
     jobs: [
       { job: 'In the liquid, for reverse spheres', dose: '1 to 2% lactate', grade: 'A' },
@@ -154,7 +155,7 @@ export const TECHNICAL_INGREDIENTS: TechnicalIngredient[] = [
     ],
   },
   {
-    id: 'lecithin', name: 'Soy lecithin', names: ['soy lecithin', 'lecithin', 'sunflower lecithin'], vegan: true, allergens: ['Soy (sunflower avoids it)'],
+    id: 'lecithin', name: LAB_TITLES['lecithin'], names: LAB_NAMES['lecithin'], vegan: true, allergens: ['Soy (sunflower avoids it)'],
     what: 'Makes light, short-lived airs on thin liquids.',
     alcohol: 'Weak in strong alcohol',
     jobs: [{ job: 'Air', dose: '0.3 to 0.8%', grade: 'A' }],
@@ -168,7 +169,7 @@ export const TECHNICAL_INGREDIENTS: TechnicalIngredient[] = [
     ],
   },
   {
-    id: 'versawhip', name: 'Versawhip', names: ['versawhip', 'versawhip 600k'], vegan: true, allergens: ['Soy'],
+    id: 'versawhip', name: LAB_TITLES['versawhip'], names: LAB_NAMES['versawhip'], vegan: true, allergens: ['Soy'],
     what: 'A soy protein foamer, about twice as airy as egg white and very acid tolerant.',
     alcohol: 'Weakens as alcohol rises',
     jobs: [
@@ -185,7 +186,7 @@ export const TECHNICAL_INGREDIENTS: TechnicalIngredient[] = [
     ],
   },
   {
-    id: 'aquafaba', name: 'Aquafaba', names: ['aquafaba', 'chickpea water'], vegan: true, allergens: ['Chickpea'],
+    id: 'aquafaba', name: LAB_TITLES['aquafaba'], names: LAB_NAMES['aquafaba'], vegan: true, allergens: ['Chickpea'],
     what: 'The liquid from a tin of chickpeas: a vegan egg white for sours.',
     jobs: [{ job: 'Sour foam', dose: '22 to 30 ml per drink', grade: 'B' }],
     mix: 'Shake it in, reverse dry shake. Freeze extra in 30 ml portions.',
@@ -194,7 +195,7 @@ export const TECHNICAL_INGREDIENTS: TechnicalIngredient[] = [
     sources: [src('punchFoamers', 'B')],
   },
   {
-    id: 'quillaja', name: 'Foamer drops (quillaja)', names: ['foamer', 'cocktail foamer', 'quillaja', 'instafoam', 'wonderfoam', 'ripples foamer'], vegan: true,
+    id: 'quillaja', name: LAB_TITLES['quillaja'], names: LAB_NAMES['quillaja'], vegan: true,
     what: 'A few drops of tree-bark saponin give a vegan sour its head.',
     alcohol: 'Fine with alcohol and acid',
     jobs: [{ job: 'Sour foam', dose: '2 to 6 drops (start with 3)', grade: 'B' }],
@@ -209,7 +210,7 @@ export const TECHNICAL_INGREDIENTS: TechnicalIngredient[] = [
     ],
   },
   {
-    id: 'gum-arabic', name: 'Gum arabic', names: ['gum arabic', 'acacia gum', 'gum acacia'], vegan: true,
+    id: 'gum-arabic', name: LAB_TITLES['gum-arabic'], names: LAB_NAMES['gum-arabic'], vegan: true,
     what: 'Gives gomme syrup its silky body; stable from very acid to neutral.',
     alcohol: 'Won’t dissolve in alcohol or fat',
     jobs: [{ job: 'Gomme syrup', dose: 'About 10% of the syrup', grade: 'B' }],
@@ -223,7 +224,7 @@ export const TECHNICAL_INGREDIENTS: TechnicalIngredient[] = [
     ],
   },
   {
-    id: 'pectinase', name: 'Pectinex Ultra SP-L', names: ['pectinex', 'pectinex ultra sp-l', 'pectinase', 'pectic enzyme'], vegan: true,
+    id: 'pectinase', name: LAB_TITLES['pectinase'], names: LAB_NAMES['pectinase'], vegan: true,
     what: 'An enzyme that breaks down pectin so fruit can be spun or settled clear.',
     jobs: [{ job: 'Before centrifuging fruit', dose: '2 g per kg (2 ml per litre of juice)', grade: 'A' }],
     mix: 'Stir in and rest 20 to 30 minutes.',
@@ -237,7 +238,7 @@ export const TECHNICAL_INGREDIENTS: TechnicalIngredient[] = [
     ],
   },
   {
-    id: 'maltodextrin', name: 'Tapioca maltodextrin', names: ['tapioca maltodextrin', 'n-zorbit', 'maltodextrin'], vegan: true,
+    id: 'maltodextrin', name: LAB_TITLES['maltodextrin'], names: LAB_NAMES['maltodextrin'], vegan: true,
     what: 'Turns fats into powders.',
     jobs: [{ job: 'Fat powder', dose: '40% to 60% fat, by weight', grade: 'B' }],
     mix: 'Whisk into melted fat, then sieve.',
@@ -250,7 +251,7 @@ export const TECHNICAL_INGREDIENTS: TechnicalIngredient[] = [
     ],
   },
   {
-    id: 'citric', name: 'Citric acid', names: ['citric acid'], vegan: true,
+    id: 'citric', name: LAB_TITLES['citric'], names: LAB_NAMES['citric'], vegan: true,
     what: 'Lemon’s main acid. With malic, it turns other juices lime-sharp.',
     jobs: [
       { job: 'Orange to lime', dose: '3.2 g citric + 2 g malic per 100 ml', grade: 'B' },
@@ -266,7 +267,7 @@ export const TECHNICAL_INGREDIENTS: TechnicalIngredient[] = [
     ],
   },
   {
-    id: 'malic', name: 'Malic acid', names: ['malic acid'], vegan: true,
+    id: 'malic', name: LAB_TITLES['malic'], names: LAB_NAMES['malic'], vegan: true,
     what: 'Apple’s acid, the green, lingering sharpness in lime.',
     jobs: [{ job: 'Orange to lime', dose: '2 g per 100 ml with 3.2 g citric', grade: 'B' }],
     mix: 'Dissolves straight into juice or water.',
@@ -279,7 +280,7 @@ export const TECHNICAL_INGREDIENTS: TechnicalIngredient[] = [
     ],
   },
   {
-    id: 'sodium-citrate', name: 'Sodium citrate', names: ['sodium citrate', 'trisodium citrate'], vegan: true,
+    id: 'sodium-citrate', name: LAB_TITLES['sodium-citrate'], names: LAB_NAMES['sodium-citrate'], vegan: true,
     what: 'Tames calcium and acidity so gels and spheres set.',
     jobs: [{ job: 'With gellan', dose: '0.1 to 0.3%', grade: 'A' }],
     mix: 'Dissolve with the gum.',
@@ -291,7 +292,7 @@ export const TECHNICAL_INGREDIENTS: TechnicalIngredient[] = [
     ],
   },
   {
-    id: 'glycerin', name: 'Glycerin', names: ['glycerin', 'glycerine', 'glycerol', 'vegetable glycerin'], vegan: true,
+    id: 'glycerin', name: LAB_TITLES['glycerin'], names: LAB_NAMES['glycerin'], vegan: true,
     what: 'Adds body with little sweetness.',
     jobs: [{ job: 'Body in liqueurs', dose: 'Up to about 1.5% by volume', grade: 'C' }],
     mix: 'Mixes freely.',
@@ -305,7 +306,7 @@ export const TECHNICAL_INGREDIENTS: TechnicalIngredient[] = [
     ],
   },
   {
-    id: 'sucro', name: 'Sucrose esters', names: ['sucrose esters', 'sucrose ester', 'sucro', 'sucro emul'], vegan: true,
+    id: 'sucro', name: LAB_TITLES['sucro'], names: LAB_NAMES['sucro'], vegan: true,
     what: 'Sugar bonded to fatty acids: makes airs and foams that hold up in strong spirit, where lecithin gives out.',
     alcohol: 'Works in straight spirit',
     jobs: [
@@ -322,7 +323,7 @@ export const TECHNICAL_INGREDIENTS: TechnicalIngredient[] = [
     ],
   },
   {
-    id: 'kieselsol-chitosan', name: 'Kieselsol and chitosan', names: ['kieselsol', 'chitosan', 'kieselsol and chitosan', 'super-kleer', 'super kleer'], vegan: true, allergens: ['Shellfish (in most chitosan; fungal chitosan avoids it)'],
+    id: 'kieselsol-chitosan', name: LAB_TITLES['kieselsol-chitosan'], names: LAB_NAMES['kieselsol-chitosan'], vegan: true, allergens: ['Shellfish (in most chitosan; fungal chitosan avoids it)'],
     what: 'Two wine finings with opposite charges that clump what the enzyme can’t, so lime and lemon spin clear.',
     jobs: [{ job: 'Lime or lemon before centrifuging', dose: '2 ml kieselsol, 2 ml chitosan, 2 ml kieselsol per litre, 15 minutes apart', grade: 'B' }],
     mix: 'Stir each in gently. Powdered chitosan is made into a solution first: 5 g blended into 400 ml water with 100 ml white vinegar, kept cold.',
@@ -339,7 +340,7 @@ export const TECHNICAL_INGREDIENTS: TechnicalIngredient[] = [
     ],
   },
   {
-    id: 'isomalt', name: 'Isomalt', names: ['isomalt', 'isomalt crystals'], vegan: true,
+    id: 'isomalt', name: LAB_TITLES['isomalt'], names: LAB_NAMES['isomalt'], vegan: true,
     what: 'A sugar alcohol that melts clear and stays clear: the sugar glass in pastry and on cocktail rims.',
     jobs: [{ job: 'Sugar glass and shards', dose: 'On its own, melted to 165 to 185 °C', grade: 'B' }],
     mix: 'Melt it dry, with no water, and add colour once it’s liquid. It doesn’t brown until about 190 °C.',
@@ -353,7 +354,7 @@ export const TECHNICAL_INGREDIENTS: TechnicalIngredient[] = [
     ],
   },
   {
-    id: 'pectin', name: 'HM pectin', names: ['pectin', 'hm pectin', 'high methoxyl pectin', 'yellow pectin', 'apple pectin', 'rapid set pectin'], vegan: true,
+    id: 'pectin', name: LAB_TITLES['pectin'], names: LAB_NAMES['pectin'], vegan: true,
     what: 'The fruit gel behind pâte de fruit. High-methoxyl pectin only sets with lots of sugar and acid.',
     jobs: [{ job: 'Pâte de fruit', dose: '2.5% of the purée, cooked to 107 °C (75 °Brix)', grade: 'A' }],
     mix: 'Mix it with five to ten times its weight of sugar, whisk into boiling purée, and add the acid last: it sets within minutes.',
@@ -363,7 +364,7 @@ export const TECHNICAL_INGREDIENTS: TechnicalIngredient[] = [
     buy: [{ name: 'Rapid Set HM pectin, Modernist Pantry', url: 'https://modernistpantry.com/products/rapid-set-high-methoxyl-hm-pectin.html' }],
   },
   {
-    id: 'cal', name: 'Calcium hydroxide (cal)', names: ['calcium hydroxide', 'cal', 'pickling lime', 'slaked lime', 'food grade lime'], vegan: true,
+    id: 'cal', name: LAB_TITLES['cal'], names: LAB_NAMES['cal'], vegan: true,
     what: 'The alkali that turns field corn into nixtamal and masa.',
     jobs: [{ job: 'Nixtamal', dose: '1% of the dry corn’s weight', grade: 'A' }],
     mix: 'Stir it into warm water in a non-reactive bowl to a smooth slurry, then add it to the corn.',
@@ -377,7 +378,7 @@ export const TECHNICAL_INGREDIENTS: TechnicalIngredient[] = [
     ],
   },
   {
-    id: 'koji', name: 'Rice koji', names: ['rice koji', 'koji', 'dried rice koji', 'koji rice'], vegan: true,
+    id: 'koji', name: LAB_TITLES['koji'], names: LAB_NAMES['koji'], vegan: true,
     what: 'Rice grown with koji mould, whose enzymes turn starch into sugar: the start of amazake, miso and sake.',
     jobs: [{ job: 'Amazake', dose: '1 part koji to 1 or 2 parts water, held at 55 to 60 °C', grade: 'B' }],
     mix: 'Break up dried koji and mix it into water already at 60 °C. Above 70 °C the enzymes die.',
@@ -389,7 +390,7 @@ export const TECHNICAL_INGREDIENTS: TechnicalIngredient[] = [
     ],
   },
   {
-    id: 'kefir-grains', name: 'Water kefir grains', names: ['water kefir grains', 'kefir grains', 'tibicos'], vegan: true,
+    id: 'kefir-grains', name: LAB_TITLES['kefir-grains'], names: LAB_NAMES['kefir-grains'], vegan: true,
     what: 'A living culture of bacteria and yeast that ferments sugar water into water kefir. It grows, so you only buy it once.',
     jobs: [{ job: 'Water kefir', dose: 'About 2 tbsp per litre of 5% sugar water', grade: 'B' }],
     mix: 'Rehydrate dried grains in sugar water first. Use plastic or steel strainers and chlorine-free water.',

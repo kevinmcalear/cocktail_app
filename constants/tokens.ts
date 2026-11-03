@@ -163,16 +163,18 @@ export const fontFamilies = {
 export const systemFont = fontFamilies.sans;
 
 /** Geist at the app's weights; `figures` for amounts, so columns line up. Spread into a style. */
-export const font: Record<'regular' | 'medium' | 'semiBold' | 'figures' | 'figuresMedium', TextStyle> = {
+export const font: Record<'regular' | 'medium' | 'semiBold' | 'figures' | 'figuresMedium' | 'mono', TextStyle> = {
   regular: { fontFamily: fontFamilies.sans },
   medium: { fontFamily: fontFamilies.sansMedium },
   semiBold: { fontFamily: fontFamilies.sansSemiBold },
   figures: { fontFamily: fontFamilies.sans, fontVariant: ['tabular-nums'] },
   figuresMedium: { fontFamily: fontFamilies.sansMedium, fontVariant: ['tabular-nums'] },
+  /** Geist Mono: eyebrows, labels in capitals, and figures that set in columns. */
+  mono: { fontFamily: fontFamilies.monoMedium },
 };
 
 /** Eyebrows and labels set in capitals: Geist Mono (components/ds/Text). */
-export const monoFont: TextStyle = { fontFamily: fontFamilies.monoMedium };
+export const monoFont: TextStyle = font.mono;
 
 /**
  * The faces names can be set in (Kevin, 31 Oct 2026: one per style on the

@@ -1,5 +1,5 @@
 import { kindWords } from './ingredientNames';
-import { TECHNICAL_INGREDIENTS } from './techniques/ingredients';
+import { LAB_TITLES } from './techniques/labNames';
 
 /**
  * One opening of Add to your bar (wave 2, Q8 and Q7): it shows only what
@@ -23,7 +23,7 @@ export const IDEAS: Record<IdeaTab, readonly string[]> = {
   all: ['Gin', 'Lemon', 'Simple Syrup', 'Campari', 'Lime', 'Sweet Vermouth', 'Angostura Bitters', 'Sugar', 'Rye Whiskey', 'Egg', 'Soda Water', 'Mezcal'],
   bottles: ['Gin', 'Campari', 'Sweet Vermouth', 'Angostura Bitters', 'Rye Whiskey', 'Bourbon', 'White Rum', 'Tequila', 'Mezcal', 'Vodka', 'Dry Vermouth', 'Aperol'],
   fridge: ['Lemon', 'Lime', 'Orange', 'Grapefruit', 'Sugar', 'Honey', 'Egg', 'Soda Water', 'Mint', 'Tonic Water', 'Heavy Cream', 'Pineapple'],
-  lab: TECHNICAL_INGREDIENTS.map((t) => t.name.replace(/ \(.*\)$/, '')),
+  lab: Object.values(LAB_TITLES).map((n) => n.replace(/ \(.*\)$/, '')),
   preps: ['Simple Syrup', 'Rich Simple Syrup', 'Saline', 'Lime Cordial', 'Oleo Saccharum', 'Orgeat', 'Grenadine', 'Honey Syrup'],
 };
 
