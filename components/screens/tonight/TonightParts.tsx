@@ -4,7 +4,7 @@ import { StyleSheet, View } from 'react-native';
 
 import { Caption, Display, DrinkDrawingFor, DsText, PressableScale, TextLink, useDs, type IconName } from '@/components/ds';
 import { IconSymbol } from '@/components/ui/icon-symbol';
-import { displayFaces, font, palateHues, radius, space } from '@/constants/tokens';
+import { displayFaces, palateHues, radius, space } from '@/constants/tokens';
 import { useItemSketch } from '@/hooks/useItemSketch';
 import { withAlpha } from '@/lib/color';
 import { liquidOf } from '@/lib/sketch/types';
@@ -34,16 +34,15 @@ export function TonightHead({ eyebrow, title = 'Tonight', onEyebrow, eyebrowLabe
 }
 
 /**
- * A section's label in sentence case, with an aside on the right ("14 you can
- * make", "All"). The page's date line is its one capitals label (decided:
- * one label per screen).
+ * A section's head: the small letter-spaced capitals eyebrow of Prod-nav-A and
+ * Prod-desk-today, with an aside on the right ("14 you can make", "All").
  */
 export function TonightLabel({ title, aside, onAside }: { title: string; aside?: string | null; onAside?: () => void }) {
   return (
     <View style={styles.label}>
-      <DsText variant="label" role="heading" aria-level={2} style={font.semiBold}>
+      <Caption tone="muted" role="heading" aria-level={2} style={styles.caps}>
         {title}
-      </DsText>
+      </Caption>
       {aside ? onAside ? <TextLink label={aside} onPress={onAside} /> : <Caption tone="muted">{aside}</Caption> : null}
     </View>
   );
@@ -142,7 +141,7 @@ export function DrinkTile({ id, name, status, ready, wide, onPress }: { id: stri
 export function NoteCard({ icon, text, onPress }: { icon: IconName; text: string; onPress: () => void }) {
   const ds = useDs();
   return (
-    <PressableScale role="link" accessibilityLabel={text} onPress={onPress} style={[styles.note, { backgroundColor: ds.c.raised }]}>
+    <PressableScale role="link" accessibilityLabel={text} onPress={onPress} style={[styles.note, { backgroundColor: ds.c.surface }]}>
       <IconSymbol name={icon} size={20} color={ds.c.ink} />
       <DsText variant="body" style={styles.flex}>
         {text}

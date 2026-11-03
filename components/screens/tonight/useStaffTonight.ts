@@ -41,7 +41,16 @@ const HOUR = 3_600_000;
  * Prep, Study and the menus page share these queries.
  */
 export function useStaffTonight(barId: string) {
-  const { menus, blocks, isLoading } = useTonight(barId);
+  const { menus, blocks: listed, isLoading } = useTonight(barId);
+  // A drink listed twice on a menu shows and counts once: its first place wins (so rows key by drink id).
+  const blocks = useMemo(
+    () =>
+      listed.map((b) => {
+        const seen = new Set<string>();
+        return { ...b, sections: b.sections.map((s) => ({ ...s, drinks: s.drinks.filter((d) => !seen.has(d.id) && !!seen.add(d.id)) })).filter((s) => s.drinks.length) };
+      }),
+    [listed]
+  );
   const date = useServiceDate();
   const hydrated = useIsHydrated();
   // The tab stays mounted all night: the clock moves on so doors, Off tonight and what's next stay true.

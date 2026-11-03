@@ -131,7 +131,7 @@ function NewListCard({ item, from }: { item: WeekItem; from: Date }) {
   const eyebrow = [item.barName, `goes on ${shortDay(itemDay(item), from).toLowerCase()}`].filter(Boolean).join(' · ');
   const count = item.drinkCount ?? ids.length;
   return (
-    <PressableScale role="link" accessibilityLabel={`${item.name}. ${eyebrow}`} onPress={() => router.push(weekHref(item, false))} style={[styles.card, { backgroundColor: ds.c.raised }]}>
+    <PressableScale role="link" accessibilityLabel={`${item.name}. ${eyebrow}`} onPress={() => router.push(weekHref(item, false))} style={[styles.card, { backgroundColor: ds.c.surface }]}>
       <View style={styles.cardArt}>
         {ids.map((id) => (
           <DrinkDrawingFor key={id} itemId={id} size="row" pour={false} />
