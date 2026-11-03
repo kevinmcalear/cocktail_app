@@ -1,5 +1,5 @@
 import { useRouter, type Href } from 'expo-router';
-import { lazy, Suspense, useEffect, useState } from 'react';
+import { useEffect, useState } from 'react';
 import { Platform, ScrollView, StyleSheet, View } from 'react-native';
 
 import { Body, Button, Caption, DsText, PressableScale, useDs } from '@/components/ds';
@@ -14,8 +14,9 @@ import { useSignedIn } from '@/ctx/AuthContext';
 import { useAgeGate } from '../../safety/AgeGate';
 import { MenuDrawing } from '../page/MenuDrawing';
 
-// Rank it's sheets come when someone ranks, not with every drink the pane shows (B12).
-const RankFlow = lazy(() => import('../../rank/RankActions').then((m) => ({ default: m.RankFlow })));
+// The pane itself loads lazily with the desktop's menu page (MenuScreen), so Rank it's sheets come in that chunk. A lazy import here
+// split them into a chunk shared with the public drink page, adding to its first load (B13 /d/[id]).
+import { RankFlow } from '../../rank/RankActions';
 
 /**
  * The desktop's menu page (2027 canvas, Menu-desk): the chosen drink beside
@@ -106,11 +107,7 @@ export function MenuDrinkPane({ drink, barName, place, onPick }: { drink: MenuDr
           <Caption style={font.semiBold}>Open the drink ›</Caption>
         </PressableScale>
       </ScrollView>
-      {ranking ? (
-        <Suspense fallback={null}>
-          <RankFlow item={{ id: drink.id, name: drink.name, bar_id: item?.bar_id ?? null }} picture={null} onClose={() => setRanking(false)} />
-        </Suspense>
-      ) : null}
+      {ranking ? <RankFlow item={{ id: drink.id, name: drink.name, bar_id: item?.bar_id ?? null }} picture={null} onClose={() => setRanking(false)} /> : null}
       {ageGate.sheet}
     </View>
   );
