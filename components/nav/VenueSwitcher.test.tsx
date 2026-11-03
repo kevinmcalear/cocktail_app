@@ -38,7 +38,7 @@ beforeEach(() => {
 const items = () => screen.getAllByRole('menuitem').map((el) => el.props.accessibilityLabel);
 
 test('the mark opens your places: each venue with the one you are in checked, then Home', async () => {
-  await renderWithProviders(<VenueSwitcher />);
+  await renderWithProviders(<VenueSwitcher flat />);
   await fireEvent.press(screen.getByRole('button', { name: 'Venue: Little Rye. Switch' }));
   expect(items()).toEqual(['Little Rye, picked', 'Pale Moth', 'Home', 'Join a bar with a link']);
   expect(screen.getByText('Admin')).toBeTruthy();
@@ -50,7 +50,7 @@ test('the mark opens your places: each venue with the one you are in checked, th
 
 test('Home is picked at home, and a pick switches mode', async () => {
   mockMode = 'home';
-  await renderWithProviders(<VenueSwitcher />);
+  await renderWithProviders(<VenueSwitcher flat />);
   await fireEvent.press(screen.getByRole('button', { name: 'Home bar. Switch' }));
   expect(items()).toEqual(['Little Rye', 'Pale Moth', 'Home, picked', 'Join a bar with a link']);
   await fireEvent.press(screen.getByRole('menuitem', { name: 'Little Rye' }));
@@ -60,7 +60,7 @@ test('Home is picked at home, and a pick switches mode', async () => {
 test('with no venues the menu is Home and "Run a bar? Set it up"', async () => {
   mockMode = 'home';
   mockVenues = [];
-  await renderWithProviders(<VenueSwitcher />);
+  await renderWithProviders(<VenueSwitcher flat />);
   await fireEvent.press(screen.getByRole('button', { name: 'Home bar. Switch' }));
   expect(items()).toEqual(['Home, picked', 'Join a bar with a link', 'Run a bar? Set it up']);
   await fireEvent.press(screen.getByRole('menuitem', { name: 'Run a bar? Set it up' }));
@@ -69,7 +69,7 @@ test('with no venues the menu is Home and "Run a bar? Set it up"', async () => {
 
 test('Join a bar with a link opens the join door from the staff link you copied', async () => {
   mockClip = 'https://babyvom.it/v/pale-moth?join=abc';
-  await renderWithProviders(<VenueSwitcher />);
+  await renderWithProviders(<VenueSwitcher flat />);
   await fireEvent.press(screen.getByRole('button', { name: 'Venue: Little Rye. Switch' }));
   await fireEvent.press(screen.getByRole('menuitem', { name: 'Join a bar with a link' }));
   expect(mockPush).toHaveBeenLastCalledWith('/v/pale-moth?join=abc');

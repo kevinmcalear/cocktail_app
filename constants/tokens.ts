@@ -132,7 +132,8 @@ export const SAMPLE_BRANDS = {
  * Type (Kevin, 3 Nov 2026: "the board's fonts"; it replaced the 31 Oct pick of
  * Redaction and the system font): Instrument Serif for names and titles,
  * Geist for body text, Geist Mono for eyebrows and labels in capitals,
- * tabular figures for amounts. Nothing under 13. These are the only font
+ * tabular figures for amounts. The drink editor's figures set in Geist Mono
+ * too (Miss-steps). Nothing under 13. These are the only font
  * families the app sets (npm run check:design). Paper is the one exception:
  * what prints (lib/paper) sets labels, caps and amounts in the platform's
  * typewriter face (components/paper/PaperPage), as Bet-labels and Bet-print draw them.
@@ -162,19 +163,24 @@ export const fontFamilies = {
 /** The body face (Geist), for the few places that set a family outside a text style (chart labels). */
 export const systemFont = fontFamilies.sans;
 
+/** The typewriter face, for paper only (components/paper/PaperPage): the platform's own mono, so nothing loads. */
+export const typewriterFont = process.env.EXPO_OS === 'ios' ? 'Menlo' : process.env.EXPO_OS === 'android' ? 'monospace' : 'ui-monospace, Menlo, Consolas, monospace';
+
 /** Geist at the app's weights; `figures` for amounts, so columns line up. Spread into a style. */
-export const font: Record<'regular' | 'medium' | 'semiBold' | 'figures' | 'figuresMedium' | 'mono', TextStyle> = {
+export const font: Record<'regular' | 'medium' | 'semiBold' | 'figures' | 'figuresMedium' | 'mono' | 'monoMedium', TextStyle> = {
   regular: { fontFamily: fontFamilies.sans },
   medium: { fontFamily: fontFamilies.sansMedium },
   semiBold: { fontFamily: fontFamilies.sansSemiBold },
   figures: { fontFamily: fontFamilies.sans, fontVariant: ['tabular-nums'] },
   figuresMedium: { fontFamily: fontFamilies.sansMedium, fontVariant: ['tabular-nums'] },
-  /** Geist Mono: eyebrows, labels in capitals, and figures that set in columns. */
-  mono: { fontFamily: fontFamilies.monoMedium },
+  /** Geist Mono: the drink editor's figures and units (Miss-steps). */
+  mono: { fontFamily: fontFamilies.mono },
+  /** Geist Mono medium: eyebrows, labels in capitals, the editor's amounts. */
+  monoMedium: { fontFamily: fontFamilies.monoMedium },
 };
 
 /** Eyebrows and labels set in capitals: Geist Mono (components/ds/Text). */
-export const monoFont: TextStyle = font.mono;
+export const monoFont: TextStyle = font.monoMedium;
 
 /**
  * The faces names can be set in (Kevin, 31 Oct 2026: one per style on the

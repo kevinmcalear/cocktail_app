@@ -1,5 +1,5 @@
 import assert from 'node:assert/strict';
-import { splitAmount } from './specLines';
+import { splitAmount } from './splitAmount';
 import { amountText, DEFAULT_UNIT, followBarUnit, isKnownUnit, overIce, savedUnit, unitLabel, RECIPE_UNITS } from './units';
 
 assert.equal(DEFAULT_UNIT, 'ml');

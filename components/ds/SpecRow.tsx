@@ -1,7 +1,8 @@
 import { Platform, StyleSheet, View } from 'react-native';
 
 import { IconSymbol } from '@/components/ui/icon-symbol';
-import { space, type } from '@/constants/tokens';
+import { font, space, type } from '@/constants/tokens';
+import { splitAmount } from '@/lib/splitAmount';
 
 import { IngredientThumb } from './IngredientThumb';
 import { PressableScale } from './PressableScale';
@@ -41,7 +42,7 @@ export interface SpecRowProps {
   detail?: string;
   /** Service mode reads bigger (1.25). */
   scale?: number;
-  /** Less padding above and below (the drink page, where the whole spec fits on the first screen). */
+  /** Less padding above and below (study cards, where the whole spec fits on one screen; the drink page's spec takes the boards' full rows). */
   dense?: boolean;
   onPress?: () => void;
   /** It opens a page of its own (a house-made inside a house-made: "Its own recipe: tap it"): a chevron at the end. Android rows ripple instead, as its lists do. */
@@ -55,12 +56,15 @@ export interface SpecRowProps {
   alignAmount?: boolean;
 }
 
-/** The amount column's width at scale 1: a step's note lines up with the names after it (SpecCard). */
-export const SPEC_AMOUNT_WIDTH = 96;
+/** The amount column's width at scale 1: a step's note lines up with the names after it (SpecCard). Wide enough for "1 ½ barspoons" at the figure's size. */
+export const SPEC_AMOUNT_WIDTH = 108;
 
 /**
- * One line of a spec, readable across the bar: the amount in its own aligned
- * column in ink (the board sets it dark), then the ingredient, then its drawing at the right edge.
+ * One line of a spec, readable across the bar: the amount in its own column,
+ * set big and dark and lined up on the right with its unit small beside it
+ * ("60 ml", every spec board), then the ingredient. A line given an
+ * `ingredientId` also draws the ingredient at the right edge (lists that
+ * want it; the drink and item pages' specs leave it out, as drawn).
  *
  * When the amount has its own action, the line splits into two sibling
  * controls (amount, then ingredient) so no button sits inside another.
@@ -153,13 +157,17 @@ export function SpecRow({ amount, unit, ingredient, ingredientId, houseMade, opt
 }
 
 type Sized = { fontSize: number; lineHeight: number };
+/** The amount's figure at headline size (20, the type scale's step nearest the boards' 22), on the body's line height so the name beside it lines up. Word amounts (Top, Rinse) read the same. */
+const FIGURE: Sized = { fontSize: type.headline.fontSize, lineHeight: type.body.lineHeight };
 /** A text style scaled for service mode (1.25); nothing at 1. */
 const scaled = (t: Sized, scale: number) => (scale === 1 ? undefined : { fontSize: t.fontSize * scale, lineHeight: t.lineHeight * scale });
 
-/** The number in the spec's figures, its unit (when given apart) smaller and muted. */
+/** The number in the spec's figures, big and on the right of its column; its unit (when given apart) smaller and muted. */
 function Amount({ text, unit, scale, style }: { text: string; unit?: string; scale: number; style?: { width: number } }) {
+  // Given whole ("22.5 ml", the public page and study cards), the unit is split off here.
+  if (unit === undefined) ({ value: text, unit } = splitAmount(text));
   return (
-    <Spec style={[style, scaled(type.spec, scale)]}>
+    <Spec style={[style, styles.amount, styles.figure, scaled(FIGURE, scale)]}>
       {text}
       {unit ? (
         <Caption tone="muted" style={scaled(type.caption, scale)}>
@@ -171,6 +179,8 @@ function Amount({ text, unit, scale, style }: { text: string; unit?: string; sca
 }
 
 const styles = StyleSheet.create({
+  amount: { textAlign: 'right' },
+  figure: { ...FIGURE, ...font.semiBold, fontVariant: ['tabular-nums'] },
   nameLine: { flexDirection: 'row', alignItems: 'baseline', gap: space.sm },
   grow: { flex: 1 },
   roleRight: { flexShrink: 0 },
