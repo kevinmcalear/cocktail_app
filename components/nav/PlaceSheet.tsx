@@ -7,7 +7,6 @@ import { PopoverMenu, usePopover } from '@/components/ds/PopoverMenu';
 import { MenuSheet } from '@/components/screens/menus/MenuSheet';
 import { IconSymbol } from '@/components/ui/icon-symbol';
 import { font, layout, radius, space } from '@/constants/tokens';
-import { useActiveVenue } from '@/hooks/useActiveVenue';
 import { useMode } from '@/hooks/useMode';
 import { roleLabel } from '@/lib/roles';
 
@@ -109,16 +108,16 @@ const SLOP = (layout.minTapTarget - 32) / 2;
  */
 export function PlaceSheet({ onClose }: { onClose: () => void }) {
   const router = useRouter();
-  const home = useMode().mode === 'home';
-  const { active } = useActiveVenue();
-  const { venue, places, more } = useSidePlaces();
-  const notes = useSideNotes(venue?.id ?? null);
+  const { mode, setMode } = useMode();
+  const { venue: here, places, more } = useSidePlaces();
+  const notes = useSideNotes(here?.id ?? null);
   const go = (p: Place) => {
     onClose();
+    // As the sidebar does: Home's Menus is the menus page in home mode, and someone on no bar's team may still be in venue mode.
+    if (p.key === 'home-menus' && mode !== 'home') setMode('home');
     if (p.tab) router.navigate(p.path as Href);
     else router.push(p.path as Href);
   };
-  const here = home ? null : (venue ?? active);
   return (
     <MenuSheet
       visible
