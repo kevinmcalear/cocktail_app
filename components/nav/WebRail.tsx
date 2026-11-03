@@ -1,14 +1,14 @@
 import { useRouter } from 'expo-router';
-import { ScrollView, StyleSheet, View } from 'react-native';
+import { StyleSheet, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import { DsText, GlassButton, PressableScale, useDs } from '@/components/ds';
 import { IconSymbol } from '@/components/ui/icon-symbol';
 import { CurrentUserAvatar, useUserDisplayName } from '@/components/ui/UserAvatar';
-import { font, layout, radius, space, STATUS } from '@/constants/tokens';
+import { font, layout, radius, space } from '@/constants/tokens';
 import { WEB_RAIL_WIDTH } from '@/hooks/useIsWideWeb';
 import { currentProps } from '@/lib/a11yState';
-import { readableAccent, withAlpha } from '@/lib/color';
+import { withAlpha } from '@/lib/color';
 import { roleLabel } from '@/lib/roles';
 import { footerLine, shortPersonName } from '@/lib/shellNav';
 
@@ -16,7 +16,7 @@ import { useNavPlaces, useSideNotes, type Place } from './navPlaces';
 import { VenueSwitcher } from './VenueSwitcher';
 import type { SideNavProps } from './WebSideNav';
 
-function RailItem({ place, note, warn, current, onPress }: { place: Place; note?: string; warn?: boolean; current: boolean; onPress: () => void }) {
+function RailItem({ place, note, current, onPress }: { place: Place; note?: string; current: boolean; onPress: () => void }) {
   const ds = useDs();
   const color = current ? ds.accentText : ds.c.muted;
   return (
@@ -33,7 +33,6 @@ function RailItem({ place, note, warn, current, onPress }: { place: Place; note?
       <DsText variant="caption" color={color} numberOfLines={1} align="center" style={[styles.label, current && styles.strong]}>
         {place.short ?? place.label}
       </DsText>
-      {warn ? <View style={[styles.dot, { backgroundColor: readableAccent(STATUS.warning, ds.c.ground) }]} /> : null}
     </PressableScale>
   );
 }
@@ -63,17 +62,17 @@ export function WebRail({ current, go, searching, onSearch, onNew }: SideNavProp
         <GlassButton icon="magnifyingglass" accessibilityLabel="Search" color={searching ? ds.accentText : undefined} onPress={onSearch} />
       </View>
       {/* Three groups, as the sidebar: tabs, the bar's, Home's. A short window scrolls them. */}
-      <ScrollView style={styles.scroll} contentContainerStyle={styles.items} showsVerticalScrollIndicator={false}>
+      <View style={[styles.items, styles.scroll]}>
         {[tabs, bar, homePlaces].map((group, i) =>
           group.length ? (
             <View key={i} style={[styles.group, i > 0 && { borderTopWidth: StyleSheet.hairlineWidth, borderTopColor: ds.c.line }]}>
               {group.map((p) => (
-                <RailItem key={p.key} place={p} note={notes[p.key]?.text} warn={notes[p.key]?.warn} current={current === p.key} onPress={() => go(p)} />
+                <RailItem key={p.key} place={p} note={notes[p.key]?.text} current={current === p.key} onPress={() => go(p)} />
               ))}
             </View>
           ) : null
         )}
-      </ScrollView>
+      </View>
       <PressableScale accessibilityLabel="New" onPress={onNew} style={[styles.new, { borderColor: ds.c.lineStrong }]}>
         <IconSymbol name="plus" size={18} color={ds.c.ink} />
       </PressableScale>
@@ -94,10 +93,10 @@ const styles = StyleSheet.create({
   // The board's chevron (12) and its gap (4): the mark itself lands on the centre line.
   mark: { marginLeft: 16 },
   search: { marginVertical: space.sm },
-  scroll: { flexGrow: 0, flexShrink: 1, minHeight: 0 },
+  // On a short window the groups scroll (the web's overflow) so New and you stay put.
+  scroll: { flexGrow: 0, flexShrink: 1, minHeight: 0, overflow: 'scroll' },
   items: { alignItems: 'center', gap: space.xs },
   group: { alignItems: 'center', gap: space.xs, paddingTop: space.xs, width: 64 },
-  dot: { position: 'absolute', top: 6, right: 12, width: 8, height: 8, borderRadius: radius.pill },
   item: { width: 64, minHeight: 56, alignItems: 'center', justifyContent: 'center', gap: 2, borderRadius: radius.control + 2 },
   // The board's 22 box draws a smaller glyph than Feather's: a 20 Feather icon matches its size and stroke.
   icon: { width: 22, height: 22, alignItems: 'center', justifyContent: 'center' },

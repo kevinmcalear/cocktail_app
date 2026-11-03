@@ -149,6 +149,13 @@ export function VenueSettingsLinks({ barId }: { barId: string }) {
           <RowDivider />
         </>
       )}
+      {/* Parked with the back bar (lib/backBar.ts); its sidebar row moved here. */}
+      {BACK_BAR_SHOWN && !round ? (
+        <>
+          <SettingsRow icon="place.backbar" label="Back bar" detail="Stock, par levels and what to order" onPress={() => router.push('/back-bar' as Href)} />
+          <RowDivider />
+        </>
+      ) : null}
       <SettingsRow icon="calendar" label="Calendars" detail="Calendars that bring events into This week" onPress={go('calendars')} />
       <RowDivider />
       <SettingsRow icon="drop.fill" label="Dilution" detail="How much water each method adds" onPress={go('dilution')} />
