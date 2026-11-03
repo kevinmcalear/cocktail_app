@@ -3,7 +3,7 @@ import { MIN_RANKERS } from './ranking';
 /**
  * The score ladder's floors, one config for the app (Loop-ladder, Red-score,
  * Loop-reasons, Kept-score). The database has the same numbers in
- * private.score_floor (20261206210000_score_recency.sql); scoreLadder.check.ts
+ * private.score_floor (20261206730000_score_recency.sql); scoreLadder.check.ts
  * keeps the two in step.
  *
  * Only people (20, MIN_RANKERS) is set. barRanks (50 ranks for a bar's drinks

@@ -1,6 +1,6 @@
 // Score recency, a new spec's new score, the bar score, what guests say and
-// the want swipe (supabase/migrations/20261206210000_score_recency.sql,
-// 20261206220000_want_passes.sql). Local stack only: `npm run test:security`.
+// the want swipe (supabase/migrations/20261206730000_score_recency.sql,
+// 20261206740000_want_passes.sql). Local stack only: `npm run test:security`.
 import assert from 'node:assert/strict';
 import { execSync } from 'node:child_process';
 import { randomUUID } from 'node:crypto';
