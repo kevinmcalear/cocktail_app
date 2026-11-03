@@ -10,7 +10,7 @@ import { QUICK_QUESTIONS, tasteHeadline, type Taste } from '@/lib/flavor';
 import { MEASURE_UNITS, handleError, nameError, type MeasureUnit } from '@/lib/onboarding';
 import { convertPour } from '@/lib/drinkWizard';
 import { handleFromName } from '@/lib/profiles';
-import { useSettingsStore } from '@/store/useSettingsStore';
+import { specUnitFor, useSettingsStore, useUnits } from '@/store/useSettingsStore';
 
 import { SetupFooter, SetupPage } from './SetupPage';
 
@@ -121,19 +121,22 @@ function UnitTile({ label, selected, onPress }: { label: string; selected: boole
 
 /**
  * ml, oz or g for new specs and reading. Joined from an invite, it's the last
- * step before the app, starting on the venue's own unit (canvas make-onboarding-invite-units).
+ * step before the app, starting on the venue's own unit (bars.spec_unit,
+ * canvas make-onboarding-invite-units): kept, they follow the venue's unit;
+ * another pick is their own.
  */
 export function UnitsStep({ onDone, pending, error, joined = null }: { onDone: () => void; pending: boolean; error?: string; joined?: { barId: string; name: string } | null }) {
-  const specUnit = useSettingsStore((s) => s.specUnit);
-  const setSpecUnit = useSettingsStore((s) => s.setSpecUnit);
-  const setDefaultUnit = useSettingsStore((s) => s.setDefaultUnit);
+  const mine = useUnits().specUnit;
+  const setUnits = useSettingsStore((s) => s.setUnits);
   const venueUnit = useVenueSpecUnit(joined?.barId ?? null).data ?? null;
+  // A venue in cl reads in ml, so its tile is ml.
+  const venueTile = joined && venueUnit ? specUnitFor(venueUnit) : null;
   const [picked, setUnit] = useState<MeasureUnit | null>(null);
-  const unit = picked ?? (joined && venueUnit ? venueUnit : specUnit);
+  const unit = picked ?? venueTile ?? mine;
 
   const save = () => {
-    setSpecUnit(unit);
-    setDefaultUnit(unit);
+    // Left as it opened, nothing is picked: they go on following their bar.
+    if (picked) setUnits(picked === venueTile ? null : picked);
     onDone();
   };
 

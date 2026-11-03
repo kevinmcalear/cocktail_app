@@ -26,9 +26,11 @@ export function defaultSpecView(maker: boolean): SpecView {
 }
 
 /** A person's own pick wins over their default; nobody picked yet reads the default. */
-export function pickSpecView(saved: Record<string, SpecView>, person: string, maker: boolean): SpecView {
-  return saved[person] ?? defaultSpecView(maker);
+export function pickSpecView(saved: SpecView | null | undefined, maker: boolean): SpecView {
+  return saved ?? defaultSpecView(maker);
 }
+
+export const isSpecView = (v: unknown): v is SpecView => v === 'ingredients' || v === 'steps';
 
 /** Makes on the page (Kevin trimmed it to these, plus A batch, which opens the Batch sheet). Never saved: every page opens at 1. */
 export const MAKES = [1, 2, 3] as const;
@@ -70,13 +72,19 @@ export function scaledAmount(line: SpecLine, makes: number, to: MassUnit): strin
   return snapped >= 1000 ? `${trim(snapped / 1000)} L` : `${trim(snapped)} ml`;
 }
 
-export interface SpecGroup {
+/** What a step is worked out from: a line's unit, float and part. */
+export type StepLine = Pick<SpecLine, 'unit' | 'ingredient' | 'garnish' | 'float' | 'part'>;
+
+export interface SpecGroup<L extends StepLine = SpecLine> {
+  /** main (the first pour, or the first part), float, part-2 on, garnish: drink_step_notes.step_key. */
   key: string;
   /** "1", "2": numbered in making order; null for the garnish rows at the end, which sit under no heading. */
   number: string | null;
-  /** "Shake", "Float", "Part 2"; null when the drink is one group with no method to name. */
+  /** "Shake", "Float", a part's own name ("Part 2" when it has none); null when the drink is one group with no method to name. */
   title: string | null;
-  lines: SpecLine[];
+  lines: L[];
+  /** Garnish rows carry their tag instead of a heading. */
+  tag?: 'Garnish';
 }
 
 /**
@@ -86,19 +94,20 @@ export interface SpecGroup {
  * isn't a step: its rows come last under no heading, each saying "garnish" (lineRole). A simple drink is
  * one group, so it reads like a spec sheet.
  */
-export function specGroups(lines: SpecLine[], verb: string | null = null): SpecGroup[] {
-  const garnish = lines.filter(isGarnishLine);
+export function specGroups<L extends StepLine>(lines: L[], verb: string | null = null, partNames: readonly (string | null | undefined)[] = []): SpecGroup<L>[] {
+  const garnish = lines.filter((l) => isGarnishLine(l));
   const rest = lines.filter((l) => !isGarnishLine(l));
   const parts = [...new Set(rest.map((l) => l.part ?? 1))].sort((a, b) => a - b);
-  const titled: { key: string; title: string | null; lines: SpecLine[] }[] =
+  // Part 1 keeps the key of the first pour, so its words stay when a drink goes into parts or out of them. Keyed by the part's own number, not its place in this list, so a part with no lines here doesn't pass its words on.
+  const titled: { key: string; title: string | null; lines: L[] }[] =
     parts.length > 1
-      ? parts.map((p) => ({ key: `part-${p}`, title: p === parts[0] && verb ? verb : `Part ${p}`, lines: rest.filter((l) => (l.part ?? 1) === p) }))
+      ? parts.map((p) => ({ key: p === 1 ? 'main' : `part-${p}`, title: p === parts[0] && verb ? verb : partNames[p - 1]?.trim() || `Part ${p}`, lines: rest.filter((l) => (l.part ?? 1) === p) }))
       : [
           { key: 'main', title: verb, lines: rest.filter((l) => !l.float) },
           { key: 'float', title: 'Float', lines: rest.filter((l) => l.float) },
         ];
-  const groups: SpecGroup[] = titled.filter((g) => g.lines.length).map((g, i) => ({ ...g, number: String(i + 1) }));
-  if (garnish.length) groups.push({ key: 'garnish', number: null, title: null, lines: garnish });
+  const groups: SpecGroup<L>[] = titled.filter((g) => g.lines.length).map((g, i) => ({ ...g, number: String(i + 1) }));
+  if (garnish.length) groups.push({ key: 'garnish', number: null, title: null, lines: garnish, tag: 'Garnish' });
   return groups;
 }
 

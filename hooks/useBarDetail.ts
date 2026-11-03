@@ -42,6 +42,7 @@ export function useBarDetail(barId: string) {
                         default_specific_brand_level,
                         default_measurement_level,
                         default_prep_level,
+                        spec_unit,
                         created_at
                     `)
                     .eq('id', barId)
