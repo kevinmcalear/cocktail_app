@@ -19,7 +19,7 @@ import { useVenueSetup } from '@/store/useVenueSetup';
  * data, the line under it, and Skip. A venue with no setup on this device
  * (Venue settings' Setup checklist) was set up elsewhere, so Where and when
  * counts as done. The top of Library and the sidebar mount it only for a
- * venue with a run (useSetupRun).
+ * venue with a run (SetupBanner).
  */
 export function useSetupChecklist(barId: string) {
   const run = useVenueSetup((s) => s.runs[barId]);
@@ -80,6 +80,3 @@ export function useSetupChecklist(barId: string) {
     skip: (key: ChecklistKey) => save(barId, { skipped: [...new Set([...(run?.skipped ?? []), key])] }),
   };
 }
-
-/** The venue's setup run on this device, if it has one: whether "Set up <bar>" can show. */
-export const useSetupRun = (barId: string | null | undefined) => useVenueSetup((s) => (barId ? s.runs[barId] : undefined));

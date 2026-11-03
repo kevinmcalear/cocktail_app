@@ -7,7 +7,6 @@ import { font, layout, radius, space } from '@/constants/tokens';
 import { useActiveVenue } from '@/hooks/useActiveVenue';
 import { useBarInvites } from '@/hooks/useBarInvites';
 import { useIsWideWeb } from '@/hooks/useIsWideWeb';
-import { useSetupRun } from '@/hooks/useSetupChecklist';
 import { useVenueClaim, useVenuePage } from '@/hooks/useVenueSetup';
 import { onItsWay } from '@/lib/venueSetup';
 import { useVenueSetup } from '@/store/useVenueSetup';
@@ -70,6 +69,9 @@ export function TonightSetupBanner({ barId }: { barId: string }) {
   const count = onItsWay({ claim: claim.data?.status === 'pending' ? 'pending' : 'none', invites: invites.length });
   return <SetupBanner count={count} onPress={() => router.push(`/venue-setup?bar=${barId}` as Href)} />;
 }
+
+/** The setup run for a venue, read from the store so the banner doesn't pull in the checklist's hooks (they load lazily with the card). */
+const useSetupRun = (barId: string | null | undefined) => useVenueSetup((s) => (barId ? s.runs[barId] : undefined));
 
 /**
  * The top of Library: on a phone, "Set up <bar>" while its checklist isn't
