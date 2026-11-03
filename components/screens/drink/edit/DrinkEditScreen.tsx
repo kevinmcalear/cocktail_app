@@ -100,6 +100,8 @@ export function EditPage({ editor, id, onExit, openOn, inSheet }: { editor: Drin
   // The page's eyebrow: what Done makes of it (Miss-steps "Editing · saves as version 3"; a draft or a first save "new drink").
   const saves = !id || draft ? 'Editing · new drink' : latest ? `Editing · saves as version ${latest.version + 1}` : 'Editing';
 
+  // Bumped by the Garnish row: the cursor goes to the spec's Add field.
+  const [addLine, setAddLine] = useState(0);
   const [sheet, setSheet] = useState<MoreChoice | VenueSheet | 'calc' | 'more' | 'colour' | 'fit' | null>(openOn ?? null);
   // For the floor, Service and Price: saved with Done, next to the editor's own changes.
   const venueEdits = useRef<PendingEdits | null>(null);
@@ -161,7 +163,6 @@ export function EditPage({ editor, id, onExit, openOn, inSheet }: { editor: Drin
         accessibilityLabel="Drink name"
         style={[styles.name, NO_OUTLINE, { color: ds.c.ink, fontFamily: displayFaces[ds.displayFace].regular }]}
       />
-      <TextInput value={editor.origin} onChangeText={editor.setOrigin} placeholder="Where it’s from: a bar, a year" placeholderTextColor={ds.c.muted} accessibilityLabel="Origin" style={[styles.origin, NO_OUTLINE, { color: ds.c.muted }]} />
     </View>
   );
   const servicePhotos = cocktail && id ? <ShotList itemId={id} barId={cocktail.bar_id ?? null} links={cocktail.item_images as ItemImageLink[] | undefined} /> : null;
@@ -176,11 +177,17 @@ export function EditPage({ editor, id, onExit, openOn, inSheet }: { editor: Drin
         loading={!editor.dropdowns?.ingredients}
         bar={editor.barId ? { id: editor.barId, name: venueName ?? '' } : null}
         backBar={editor.barId ? backBar : undefined}
+        focus={addLine}
       />
       {cocktail ? <FitGlassEdit editor={editor} item={cocktail} result={fill} open={sheet === 'fit'} onOpen={() => setSheet('fit')} onClose={() => setSheet(null)} /> : null}
-      <MadeList editor={editor} itemId={id} />
+      <MadeList editor={editor} itemId={id} onGarnish={() => setAddLine((n) => n + 1)} />
       {'setStepNote' in editor ? <EditStepNotes editor={editor} known={cocktail?.item_methods} /> : null}
       {id ? <EditCredits itemId={id} /> : null}
+      {/* Not drawn on Miss-steps: the credit line under the name on the page, kept with who made it. */}
+      <View style={styles.section}>
+        <Headline role="heading">Where it’s from</Headline>
+        <TextInput value={editor.origin} onChangeText={editor.setOrigin} placeholder="A bar, a year" placeholderTextColor={ds.c.muted} accessibilityLabel="Where it’s from" style={fieldBox} />
+      </View>
       <View style={styles.section}>
         <Headline role="heading">Story</Headline>
         <GrowingField minHeight={96} value={editor.description} onChangeText={editor.setDescription} placeholder="Where it comes from, what it tastes like" placeholderTextColor={ds.c.muted} accessibilityLabel="Story" style={fieldBox} />
@@ -241,7 +248,6 @@ const styles = StyleSheet.create({
   screen: { flex: 1 },
   phoneBody: { gap: space.xl },
   name: { ...type.title, paddingVertical: space.xs },
-  origin: { ...type.label, ...font.regular },
   round: { width: layout.minTapTarget, height: layout.minTapTarget, borderRadius: radius.pill, alignItems: 'center', justifyContent: 'center' },
   section: { gap: space.sm },
   headRow: { flexDirection: 'row', alignItems: 'baseline', justifyContent: 'space-between' },
