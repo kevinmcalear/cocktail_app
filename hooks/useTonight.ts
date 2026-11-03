@@ -21,6 +21,8 @@ export interface TonightRow extends MenuDrink {
   isNew: boolean;
   /** A planned take-off (menu_drinks.off_at): Tonight says when it comes off. */
   offAt: string | null;
+  /** The menu_drinks row, so a drink listed twice keeps distinct keys. Rows saved before it existed fall back to the drink's id. */
+  rowId: string;
 }
 
 /** One menu that's on, with its sections in running order. */
@@ -64,9 +66,9 @@ export function useTonight(venueId: string | null) {
               .sort((a, b) => Number(a.sort_order ?? 0) - Number(b.sort_order ?? 0))
               .map((d) => {
                 const item = Array.isArray(d.item) ? d.item[0] : d.item;
-                return item ? { ...toMenuDrink(item, d.price ?? null), offAt: d.off_at ?? null } : null;
+                return item ? { ...toMenuDrink(item, d.price ?? null), offAt: d.off_at ?? null, rowId: d.id ?? item.id } : null;
               })
-              .filter((d): d is MenuDrink & { offAt: string | null } => !!d)
+              .filter((d): d is MenuDrink & { offAt: string | null; rowId: string } => !!d)
               .map((d) => ({ ...d, isNew: fresh.has(d.id) })),
           }))
           .filter((s) => s.drinks.length);

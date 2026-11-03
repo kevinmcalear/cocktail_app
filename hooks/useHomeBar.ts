@@ -1,6 +1,7 @@
 import { keepPreviousData, useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { useMemo } from 'react';
 
+import { useSignedIn } from '@/ctx/AuthContext';
 import { useDebounced } from '@/hooks/useDiscover';
 import { ensureIngredient } from '@/hooks/useCreateIngredient';
 import { useDropdowns } from '@/hooks/useDropdowns';
@@ -351,9 +352,10 @@ async function readItems(ids: string[], select = ITEM_SELECT): Promise<ItemRow[]
 
 /** What the shelf makes, and what one or two more bottles would unlock, worked out on the server (my_bar_drinks). */
 function useMatches(enabled = true) {
+  const signedIn = useSignedIn();
   return useQuery({
     queryKey: [...SHELF_KEY, 'matches', 2],
-    enabled,
+    enabled: enabled && signedIn,
     queryFn: async (): Promise<MatchRow[]> => {
       const rows: MatchRow[] = [];
       for (;;) {
@@ -372,8 +374,10 @@ function useMatches(enabled = true) {
  * Bar's "Make first". Under the shelf's key, so a shelf change refreshes it.
  */
 export function useMadePreps() {
+  const signedIn = useSignedIn();
   return useQuery({
     queryKey: [...SHELF_KEY, 'preps'],
+    enabled: signedIn,
     queryFn: async (): Promise<MadePrep[]> => {
       const { data, error } = await supabase.rpc('my_bar_preps');
       if (error) throw error;
@@ -387,8 +391,10 @@ export function useMadePreps() {
  * Make first's "One thing short". Under the shelf's key, so a shelf change refreshes it.
  */
 export function useShortPreps() {
+  const signedIn = useSignedIn();
   return useQuery({
     queryKey: [...SHELF_KEY, 'preps-short'],
+    enabled: signedIn,
     queryFn: async (): Promise<ShortPrep[]> => {
       const { data, error } = await supabase.rpc('my_bar_preps_short');
       if (error) throw error;
