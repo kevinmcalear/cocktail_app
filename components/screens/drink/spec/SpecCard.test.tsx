@@ -1,11 +1,10 @@
+import AsyncStorage from '@react-native-async-storage/async-storage';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { fireEvent, screen, waitFor } from '@testing-library/react-native';
 
 import { SAMPLE_LEVELS, sampleDrink } from '@/components/ds/gallery/drinkSample';
 import { renderWithProviders } from '@/jest.setup';
 import { specLines, type PresentationRecipe } from '@/lib/spec';
-
-import { useSpecViewStore } from '@/store/useSpecViewStore';
 
 import { SpecCard } from './SpecCard';
 
@@ -28,8 +27,9 @@ test('a bartender opens in Steps, grouped by step, with Makes', async () => {
 test('switching to Ingredients sticks for this person', async () => {
   await renderWithProviders(card(30, true));
   fireEvent.press(screen.getByRole('tab', { name: 'Ingredients' }));
-  expect(useSpecViewStore.getState().views['']).toBe('ingredients');
   await waitFor(() => expect(screen.getByRole('tab', { name: 'Ingredients' })).toBeSelected());
+  // Signed out, the pick stays on this device.
+  await waitFor(async () => expect(JSON.parse((await AsyncStorage.getItem('spec-view')) ?? '{}').state.views['']).toBe('ingredients'));
   expect(screen.queryByText('Shake')).toBeNull();
 });
 

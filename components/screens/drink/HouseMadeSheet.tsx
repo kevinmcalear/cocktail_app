@@ -9,7 +9,7 @@ import { keepsFor } from '@/lib/batchPrep';
 import { lineAmount } from '@/lib/drinkMath';
 import { leadLine, servesPerBatch } from '@/lib/houseMade';
 import { specLines, type PresentationRecipe, type SpecLine } from '@/lib/spec';
-import { useSettingsStore } from '@/store/useSettingsStore';
+import { useUnits } from '@/store/useSettingsStore';
 
 /**
  * A house-made spec line, opened in place (board drink-sheet-housemade): what
@@ -36,7 +36,7 @@ function HouseMadeBody({ line }: { line: SpecLine }) {
   const prep = card?.prep ?? null;
   // The spec's own unit switch: read in ml on the drink, read in ml here. Weighed
   // lines stay in grams: 900 g of sugar is not 900 ml.
-  const unit = useSettingsStore((s) => s.specUnit);
+  const unit = useUnits().specUnit;
   const recipe = specLines(data?.recipe as PresentationRecipe[] | undefined);
   const recipeAmount = (r: SpecLine) => (/^k?g$/i.test(r.unit ?? '') ? r.amount : lineAmount(r, unit));
   const batch = servesPerBatch(prep?.yield_amount ?? null, prep?.yield_unit ?? null, line.ml);
