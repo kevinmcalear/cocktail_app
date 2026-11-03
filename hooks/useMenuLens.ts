@@ -11,7 +11,7 @@ import { useMenuCosting } from '@/hooks/useMenuCosting';
 import { usePricingSettings } from '@/hooks/usePricingSettings';
 import { useUserId } from '@/ctx/AuthContext';
 import { useViewAs } from '@/hooks/useViewAs';
-import { useBarFeature } from '@/hooks/useVenueFeatures';
+import { useBarFeature } from '@/hooks/useBarFeature';
 import { allergenLabel, allergyMatches, type GuestDrinkAllergens } from '@/lib/allergens';
 import { margin } from '@/lib/costing';
 import { isMenuTeam, menuLens, methodLine, type MenuLens } from '@/lib/menuLens';

@@ -6,8 +6,8 @@ import { RowDivider, SwitchRow } from '@/components/screens/settings/SettingsPar
 import { IconSymbol } from '@/components/ui/icon-symbol';
 import { layout, radius, space } from '@/constants/tokens';
 import { useIsWideWeb } from '@/hooks/useIsWideWeb';
-import { useSetVenueFeature } from '@/hooks/useVenueFeatures';
-import { SWITCHES } from '@/lib/venueFeatures';
+import { useSetVenueFeature } from '@/hooks/useSetVenueFeature';
+import { SWITCHES } from '@/lib/venueFeatureList';
 
 type Feature = (typeof SWITCHES)[number];
 

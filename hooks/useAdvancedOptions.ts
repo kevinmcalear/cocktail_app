@@ -7,12 +7,17 @@ import { supabase } from '@/lib/supabase';
  * it in the drink editor, and Ice and Tools in setup. Off unless the venue's
  * Admin turns it on in Features. Its home is bars.advanced_options
  * (20261204300000_one_home.sql), which old builds' 'advanced' key in
- * enabled_features stays in step with. Read and written only through
- * hooks/useVenueFeatures.ts, with the other switches.
+ * enabled_features stays in step with. Read through hooks/useBarFeature.ts
+ * (or Kit), and written by Features (hooks/useSetVenueFeature.ts) and Kit.
  */
 const advancedKey = (barId: string | null) => ['venue-advanced', barId] as const;
 
 export function useBarAdvanced(barId: string | null | undefined): boolean {
+  return useBarAdvancedState(barId) ?? false;
+}
+
+/** The switch, or undefined until it loads. */
+export function useBarAdvancedState(barId: string | null | undefined): boolean | undefined {
   const id = barId ?? null;
   const { data } = useQuery({
     queryKey: advancedKey(id),
@@ -24,7 +29,7 @@ export function useBarAdvanced(barId: string | null | undefined): boolean {
       return row?.advanced_options ?? false;
     },
   });
-  return data ?? false;
+  return data;
 }
 
 /** Turns a venue's Advanced options on or off. Only its Admins can (bars_update). */

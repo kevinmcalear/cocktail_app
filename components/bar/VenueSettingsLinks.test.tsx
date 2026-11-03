@@ -15,7 +15,7 @@ jest.mock('@/hooks/useBarKit', () => ({ useBarKit: () => ({ data: mockKit }) }))
 jest.mock('@/hooks/useVenueIce', () => ({ useVenueIce: () => ({ data: mockIce }) }));
 jest.mock('@/hooks/useCapabilities', () => ({ useCapabilities: () => ({ data: mockCaps }) }));
 let mockAdvanced = true;
-jest.mock('@/hooks/useVenueFeatures', () => ({ useBarFeature: (_b: string, key: string) => key === 'advanced' && mockAdvanced, useBarFeatures: () => () => false }));
+jest.mock('@/hooks/useBarFeature', () => ({ useBarFeature: (_b: string, key: string) => key === 'advanced' && mockAdvanced, useBarFeatures: () => () => false }));
 jest.mock('@/hooks/useVenueSuppliers', () => ({ useVenueSuppliers: (barId: string | null) => ({ data: barId ? [{}, {}] : undefined }) }));
 
 test('the Glassware row says how many glasses the venue has', async () => {

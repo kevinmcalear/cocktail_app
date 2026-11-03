@@ -14,7 +14,7 @@ import { useCapabilities } from '@/hooks/useCapabilities';
 import { useDropdowns } from '@/hooks/useDropdowns';
 import { glassModelSize } from '@/hooks/useGlassModels';
 import { useIsWideWeb } from '@/hooks/useIsWideWeb';
-import { useBarFeature } from '@/hooks/useVenueFeatures';
+import { useBarFeature } from '@/hooks/useBarFeature';
 import { GLASS_TYPE_LABEL, glassCapacity } from '@/lib/glassware';
 import { kitLine, kitSourceLine } from '@/lib/venueKit';
 import { useVenueSetup } from '@/store/useVenueSetup';

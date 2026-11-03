@@ -2,7 +2,7 @@ import { VenueFeatures } from '@/components/bar/VenueFeatures';
 import { Body } from '@/components/ds';
 import { useActiveVenue } from '@/hooks/useActiveVenue';
 import { useEffectiveRole } from '@/hooks/useViewAs';
-import { canSwitchFeatures } from '@/lib/venueFeatures';
+import { canSwitchFeatures } from '@/lib/venueFeatureList';
 
 import { VenueSubPage } from './VenueSubPage';
 

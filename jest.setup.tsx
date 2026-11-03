@@ -27,12 +27,14 @@ jest.mock('@/hooks/useVenueFeatures', () => {
     venueFeaturesKey: (barId: string | null) => ['venue-features', barId],
     useVenueFeatures: () => ({ ready: true, on: [], has, home: '/' }),
     useVenueFeature: has,
-    useBackBarShown: () => false,
-    useBarFeature: (_barId: unknown, key: string) => has(key),
-    useBarFeatures: () => has,
-    useSetVenueFeature: () => ({ features: [], set: jest.fn(), error: null }),
   };
 });
+jest.mock('@/hooks/useBackBarShown', () => ({ useBackBarShown: () => false }));
+jest.mock('@/hooks/useBarFeature', () => {
+  const has = (key: string) => key !== 'advanced' && key !== 'backBar';
+  return { useBarFeature: (_barId: unknown, key: string) => has(key), useBarFeatures: () => has };
+});
+jest.mock('@/hooks/useSetVenueFeature', () => ({ useSetVenueFeature: () => ({ features: [], set: jest.fn(), error: null }) }));
 
 // Gesture-handler's root view, as app/_layout.tsx has it: gesture-handler 3
 // requires one around every GestureDetector (edit mode's drag handles).

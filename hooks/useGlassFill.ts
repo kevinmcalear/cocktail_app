@@ -3,7 +3,7 @@ import { useMemo } from 'react';
 import { barGlassFor, useBarGlassware, type BarGlass } from '@/hooks/useBarGlassware';
 import { useDilutionDefaults } from '@/hooks/useDrinkMath';
 import { useDropdowns } from '@/hooks/useDropdowns';
-import { useBarFeature } from '@/hooks/useVenueFeatures';
+import { useBarFeature } from '@/hooks/useBarFeature';
 import { classifyMethod } from '@/lib/batch';
 import { orderedMethodIds } from '@/lib/drinkMethods';
 import { fitToWashLine, glassFill, washLine, type Fill, type FillLine, type Fitted, type WashLine } from '@/lib/glassFill';

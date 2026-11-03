@@ -8,8 +8,8 @@ import { KitToolsScreen } from '@/components/screens/venue/KitToolsScreen';
 import { SettingsSection, SwitchRow } from '@/components/screens/settings/SettingsParts';
 import { SubPageInline } from '@/components/screens/venue/VenueSubPage';
 import { useIsWideWeb } from '@/hooks/useIsWideWeb';
-import { useSetVenueFeature } from '@/hooks/useVenueFeatures';
-import { VENUE_FEATURES } from '@/lib/venueFeatures';
+import { useBarAdvanced, useSetBarAdvanced } from '@/hooks/useAdvancedOptions';
+import { featureSaveMessage, VENUE_FEATURES } from '@/lib/venueFeatureList';
 
 import { GlassesStep } from './GlassesStep';
 
@@ -31,8 +31,9 @@ const TABS: { value: KitKind; label: string }[] = [
 export function KitStep({ barId, pageId, name, step, onBack, onDone }: { barId: string; pageId: string | null; name: string; step: string; onBack: () => void; onDone: () => void }) {
   const chrome = useSetupChrome();
   const wide = useIsWideWeb();
-  const { features, set, error } = useSetVenueFeature(barId);
-  const advanced = features.includes('advanced');
+  const advanced = useBarAdvanced(barId);
+  const setAdvanced = useSetBarAdvanced(barId);
+  const error = setAdvanced.error ? featureSaveMessage(setAdvanced.error as { code?: string }) : null;
   const [picked, setTab] = useState<KitKind>('glassware');
   const tab = advanced ? picked : 'glassware';
   // A phone names the tab; a wide screen names the place, as the board draws them.
@@ -49,7 +50,7 @@ export function KitStep({ barId, pageId, name, step, onBack, onDone }: { barId: 
         )}
         {tab === 'glassware' ? (
           <SettingsSection note="Most bars start without them. Change it any time in Features.">
-            <SwitchRow label={ADVANCED.label} detail={ADVANCED.detail} value={advanced} onValueChange={(on) => set('advanced', on)} />
+            <SwitchRow label={ADVANCED.label} detail={ADVANCED.detail} value={advanced} onValueChange={(on) => setAdvanced.mutate(on)} />
           </SettingsSection>
         ) : null}
         {error ? (

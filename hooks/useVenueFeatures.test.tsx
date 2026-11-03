@@ -2,10 +2,12 @@ import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { renderHook, waitFor } from '@testing-library/react-native';
 import type { ReactNode } from 'react';
 
-import { useSetVenueFeature, useVenueFeatures, venueFeaturesKey } from '@/hooks/useVenueFeatures';
+import { useSetVenueFeature } from '@/hooks/useSetVenueFeature';
+import { useVenueFeatures, venueFeaturesKey } from '@/hooks/useVenueFeatures';
 
 // jest.setup.tsx stands in for this hook everywhere else.
 jest.unmock('@/hooks/useVenueFeatures');
+jest.unmock('@/hooks/useSetVenueFeature');
 
 type Result = { data: unknown; error: { code: string } | null };
 let mockRead: Result = { data: null, error: null };

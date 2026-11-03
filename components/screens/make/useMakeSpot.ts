@@ -2,7 +2,7 @@ import { useActiveVenue } from '@/hooks/useActiveVenue';
 import { useBarZones, useItemLocations } from '@/hooks/useBackBar';
 import { useCapabilities } from '@/hooks/useCapabilities';
 import { useMode } from '@/hooks/useMode';
-import { useBackBarShown } from '@/hooks/useVenueFeatures';
+import { useBackBarShown } from '@/hooks/useBackBarShown';
 import { locationLine } from '@/lib/backBar';
 
 /**

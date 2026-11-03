@@ -13,7 +13,7 @@ import type { useIngredientDraftEditor } from '@/hooks/useIngredientEditor';
 import { useIngredient } from '@/hooks/useIngredients';
 import { useMode } from '@/hooks/useMode';
 import { useHoldUpdates } from '@/hooks/useOtaUpdates';
-import { useBackBarShown } from '@/hooks/useVenueFeatures';
+import { useBackBarShown } from '@/hooks/useBackBarShown';
 import { confirmAsync } from '@/lib/dialogs';
 import { ingredientHeroPictures, shownIngredientPicture } from '@/lib/ingredientPicture';
 import { orderedPictures } from '@/lib/itemImages';

@@ -1,5 +1,6 @@
-import { useSegments } from 'expo-router';
+import { router, usePathname, useSegments } from 'expo-router';
 import { NativeTabs } from 'expo-router/native-tabs';
+import { useEffect, useState } from 'react';
 import { Platform, View } from 'react-native';
 
 import { useDs } from '@/components/ds';
@@ -60,6 +61,15 @@ function Tabs() {
   const features = useVenueFeatures();
   // The search circle starts on the tab it was opened from (hooks/useSearchFrom.ts).
   useTrackTab();
+  // Tonight off: there is no Tonight tab, so a page that landed in its stack (the app opening on /,
+  // or a shared page opened cold, which resolves into (1-tonight), lib/tabs.ts) would show with no
+  // tab bar. It moves to the same page on Drinks' stack. ponytail: drops the query string; keep it if a
+  // shared page ever needs one on a cold link.
+  const pathname = usePathname();
+  const offTonight = features.ready && !features.has('tonight') && segments[1] === '(1-tonight)';
+  useEffect(() => {
+    if (offTonight) router.replace(pathname === '/' ? '/drinks' : (`/(tabs)/(2-drinks)${pathname}` as never));
+  }, [offTonight, pathname]);
   // Android's Material 3 bar in our colours (Prod-and): ink icons and labels, the indicator pill
   // and an ink ripple. iOS keeps the system's Liquid Glass untouched.
   const material = {
@@ -69,8 +79,11 @@ function Tabs() {
     iconColor: { default: ds.c.ink, selected: roles.onIndicator },
     labelStyle: { default: { color: ds.c.ink, fontWeight: '500' }, selected: { color: roles.onIndicator, fontWeight: '600' } },
   } as const;
-  // Wait for the venue's switches (a moment, on a first launch) rather than show Tonight and take it away.
-  if (!features.ready) return <View style={{ flex: 1, backgroundColor: ds.c.ground }} />;
+  // Wait for the venue's switches on a first launch rather than show Tonight and take it away. Only
+  // the first time: unmounting the tabs later (a new venue loading) would lose every tab's place.
+  const [shown, setShown] = useState(false);
+  if (features.ready && !shown) setShown(true);
+  if (!shown && !features.ready) return <View style={{ flex: 1, backgroundColor: ds.c.ground }} />;
   // Android's Material bar hides unselected labels past three tabs; "labeled" keeps every tab named.
   // `hidden` on Android relies on patches/expo-router+58.0.25.patch: unpatched, hiding the bar
   // remounts every tab's pages, so the search lost what was typed and every tab its place.
@@ -83,8 +96,8 @@ function Tabs() {
       hidden={Platform.OS === 'android' && !androidBarShown(segments)}
       {...(Platform.OS === 'android' ? material : null)}
     >
-      {/* A venue with Tonight off has no Tonight tab at all (lib/venueFeatures.ts): a hidden first
-          trigger still opened on its blank page on iOS. */}
+      {/* A venue with Tonight off has no Tonight tab (lib/venueFeatures.ts). Not `hidden`: a hidden
+          tab that is picked draws a blank screen with no bar on iOS. */}
       {shownTabs(features.has).map((t) => (
         <NativeTabs.Trigger key={t.name} name={t.route}>
           <NativeTabs.Trigger.Icon src={IMAGES[t.name] ?? tonightImage(day)} renderingMode="template" />

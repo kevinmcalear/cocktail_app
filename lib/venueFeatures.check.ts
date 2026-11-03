@@ -4,20 +4,8 @@ import assert from 'node:assert/strict';
 import { globSync, readdirSync, readFileSync } from 'node:fs';
 
 import { shownTabs, TABS } from './tabs';
-import {
-  ALWAYS_ON,
-  featureAtHome,
-  featureSaveMessage,
-  featureShown,
-  isMissingColumn,
-  parseFeatures,
-  readFeatures,
-  SWITCHES,
-  VENUE_FEATURES,
-  venueHome,
-  withFeature,
-  type VenueFeatureKey,
-} from './venueFeatures';
+import { featureSaveMessage, SWITCHES, VENUE_FEATURES, withFeature } from './venueFeatureList';
+import { ALWAYS_ON, featureAtHome, featureShown, isMissingColumn, parseFeatures, readFeatures, venueHome, type VenueFeatureKey } from './venueFeatures';
 
 const on = (...keys: VenueFeatureKey[]) => (k: VenueFeatureKey) => keys.includes(k);
 
@@ -69,6 +57,7 @@ const ENTRY: Record<VenueFeatureKey, readonly string[]> = {
     'app/week/review.tsx',
     'components/bar/VenueSettingsLinks.tsx',
     'components/screens/menus/MenusScreen.tsx',
+    'app/settings/bar/[id]/calendars.tsx',
   ],
   backBar: [
     'app/back-bar.tsx',
@@ -99,12 +88,13 @@ const ENTRY: Record<VenueFeatureKey, readonly string[]> = {
     'components/screens/make/MakeSteps.tsx',
   ],
   libraryExtras: ['components/screens/drinks/useStaffDrinks.ts', 'components/search/SearchPanel.tsx'],
-  advanced: ['components/bar/VenueSettingsLinks.tsx', 'components/screens/venueSetup/KitStep.tsx', 'components/screens/venue/GlasswareScreen.tsx', 'hooks/useGlassFill.ts'],
+  advanced: ['app/settings/bar/[id]/ice.tsx', 'app/settings/bar/[id]/tools.tsx', 'components/bar/VenueSettingsLinks.tsx', 'components/screens/venueSetup/KitStep.tsx', 'components/screens/venue/GlasswareScreen.tsx', 'hooks/useGlassFill.ts'],
 };
 
 const asks = (text: string, key: VenueFeatureKey) =>
   new RegExp(`\\b(useVenueFeature|has|includes)\\(\\s*'${key}'|useBarFeature\\([^,)]*,\\s*'${key}'|feature(="|: ')${key}['"]`).test(text) ||
   (key === 'backBar' && /useBackBarShown\(\)/.test(text)) ||
+  (key === 'advanced' && /useBarAdvanced\(/.test(text)) ||
   // The tab lists ask through shownTabs/useWebTabs.
   (key === 'tonight' && /\b(useWebTabs|shownTabs)\(/.test(text));
 for (const f of VENUE_FEATURES) {

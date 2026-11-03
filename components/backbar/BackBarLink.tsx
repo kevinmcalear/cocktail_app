@@ -3,7 +3,7 @@ import { StyleSheet } from 'react-native';
 
 import { Button } from '@/components/ds';
 import { useIsWideWeb } from '@/hooks/useIsWideWeb';
-import { useBackBarShown } from '@/hooks/useVenueFeatures';
+import { useBackBarShown } from '@/hooks/useBackBarShown';
 
 /**
  * The way into the back bar map on phones (from Prep). Wide web has it in the

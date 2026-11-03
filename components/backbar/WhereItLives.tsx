@@ -10,7 +10,7 @@ import { useCapabilities, useCapabilityOpensAt } from '@/hooks/useCapabilities';
 import { useMode } from '@/hooks/useMode';
 import { useStockOnHand } from '@/hooks/useStockCounts';
 import { formatPar, locationLine } from '@/lib/backBar';
-import { useBackBarShown } from '@/hooks/useVenueFeatures';
+import { useBackBarShown } from '@/hooks/useBackBarShown';
 import { withAlpha } from '@/lib/color';
 import { roleLabel } from '@/lib/roles';
 

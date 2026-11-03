@@ -13,10 +13,10 @@ import { useBarPublishing } from '@/hooks/usePublishing';
 import { useVenueSuppliers } from '@/hooks/useVenueSuppliers';
 import { useRoleMatrix } from '@/hooks/useVenueRoles';
 import { PAGE_COPY } from '@/lib/pageVisibility';
-import { useBarFeature, useBarFeatures } from '@/hooks/useVenueFeatures';
+import { useBarFeature, useBarFeatures } from '@/hooks/useBarFeature';
 import { useCanManageStaff, useEffectiveRole } from '@/hooks/useViewAs';
 import { BACK_BAR_SHOWN } from '@/lib/backBar';
-import { canSwitchFeatures, SWITCHES } from '@/lib/venueFeatures';
+import { canSwitchFeatures, SWITCHES } from '@/lib/venueFeatureList';
 
 const plural = (n: number, one: string, many = `${one}s`) => `${n} ${n === 1 ? one : many}`;
 

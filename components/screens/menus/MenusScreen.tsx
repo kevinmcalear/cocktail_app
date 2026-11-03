@@ -59,7 +59,7 @@ export function MenusScreen() {
               {(barId ? (active?.name ?? '') : 'At home').toUpperCase()}
             </Caption>
           }
-          onBack={() => (router.canGoBack() ? router.back() : router.navigate(barId ? '/' : '/drinks'))}
+          onBack={() => (router.canGoBack() ? router.back() : router.navigate(barId && tonight ? '/' : '/drinks'))}
           backLabel={barId ? `Back to ${first}` : 'Back'}
           backText={barId ? first : 'Drinks'}
           crumbs={[barId && tonight ? { label: first, href: '/' } : { label: 'Drinks', href: '/drinks' }]}
