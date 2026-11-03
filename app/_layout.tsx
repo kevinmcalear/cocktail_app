@@ -176,6 +176,10 @@ function RootLayoutNav() {
               name="ingredient/[id]/make"
               options={{ presentation: "fullScreenModal", headerShown: false, gestureEnabled: false }}
             />
+            <Stack.Screen name="share/poster" options={{ presentation: "modal", headerShown: false }} />
+            <Stack.Screen name="print/index" options={{ presentation: "modal", headerShown: false }} />
+            <Stack.Screen name="print/sheet" options={{ headerShown: false }} />
+            <Stack.Screen name="label/index" options={{ presentation: "modal", headerShown: false }} />
             {/* Declared here because on iOS, a screen pushed over a modal ignores headerShown set from inside it. */}
             <Stack.Screen name="back-bar" options={{ headerShown: false }} />
             <Stack.Screen name="team/index" options={{ headerShown: false }} />
