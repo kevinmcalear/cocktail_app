@@ -45,6 +45,13 @@ const base: MenuLayout = layoutFromMenu({
 });
 const stirred = (l: MenuLayout) => l.sections.find((s) => s.key === 's1')!;
 
+// --- an empty catch-all section stays out of the editor ---
+const sec = (id: string, minItems: number, drinks: MenuDrink[]) => ({ id, name: id, minItems, maxItems: null, allowedTypes: ['cocktail' as const], drinks });
+const opened = (sections: ReturnType<typeof sec>[]) => layoutFromMenu({ name: 'Autumn', coverUrl: null, coverPosition: 50, sections }).sections.map((s) => s.key);
+assert.deepEqual(opened([sec('Drinks', 0, []), sec('Stirred', 1, [drink('martini')])]), ['Stirred'], 'the empty catch-all goes');
+assert.deepEqual(opened([sec('Stirred', 1, [drink('martini')]), sec('Shaken', 1, [])]), ['Stirred', 'Shaken'], 'a section still to fill stays');
+assert.deepEqual(opened([sec('Drinks', 0, []), sec('Wine', 0, [])]), ['Drinks', 'Wine'], 'a menu with nothing anywhere keeps its sections');
+
 // --- adding respects the section ---
 assert.equal(cannotAdd(stirred(base), drink('martini')), 'Already in Stirred');
 assert.equal(cannotAdd(stirred(base), drink('lager', 'beer')), 'Stirred doesn’t take beer');

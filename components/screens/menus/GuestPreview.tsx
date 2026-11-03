@@ -13,9 +13,11 @@ import type { LayoutEditor } from './useLayoutEditor';
 import { MonoLabel } from './ReviewParts';
 
 /**
- * What guests see, live: the guest card set from the menu as it stands in
- * the editor (unsaved changes too), on paper with each drink's sketch. Like
- * the add-drink wizard's drawing, it gives a small pour bounce when a drink lands.
+ * What guests see, live: the top of the guest card set from the menu as it
+ * stands in the editor (unsaved changes too), on paper, its names only and
+ * cut off below the first drinks (Miss-cover-credit-desk); Open the card
+ * shows all of it. Like the add-drink wizard's drawing, it gives a small
+ * pour bounce when a drink lands.
  */
 export function GuestPreview({ editor, venue }: { editor: LayoutEditor; venue: Venue | null }) {
   const router = useRouter();
@@ -34,7 +36,7 @@ export function GuestPreview({ editor, venue }: { editor: LayoutEditor; venue: V
         <BackbarTheme scheme="light">
           <BrandProvider accent={venue?.accent ?? undefined}>
             <Paper count={count}>
-              <GuestCardContent name={editor.layout.name.trim() || 'Menu'} when={cardWhen(editor.menu)} venue={venue} sections={sections} pictures="above" compact />
+              <GuestCardContent name={editor.layout.name.trim() || 'Menu'} when={cardWhen(editor.menu)} venue={venue} sections={sections} pictures="none" compact />
             </Paper>
           </BrandProvider>
         </BackbarTheme>
@@ -59,7 +61,7 @@ export function usePourBounce(count: number) {
 function Paper({ count, children }: { count: number; children: ReactNode }) {
   const ds = useDs();
   return (
-    <View style={[styles.paper, { backgroundColor: ds.c.paper }]}>
+    <View style={[styles.paper, count ? styles.peek : null, { backgroundColor: ds.c.paper }]}>
       {children}
       {count ? null : <Body tone="muted">Add drinks and they show up here, the way guests will see them.</Body>}
     </View>
@@ -70,4 +72,6 @@ const styles = StyleSheet.create({
   wrap: { gap: space.sm },
   head: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', gap: space.sm },
   paper: { borderRadius: radius.card, borderCurve: 'continuous', paddingVertical: space.xl, paddingHorizontal: space.md, gap: space.md, alignItems: 'center' },
+  // The board's peek: the card's head and its first drinks.
+  peek: { maxHeight: 196, overflow: 'hidden' },
 });

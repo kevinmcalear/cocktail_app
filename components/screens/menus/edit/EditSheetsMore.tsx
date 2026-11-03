@@ -2,7 +2,8 @@ import { useRouter } from 'expo-router';
 import { useState } from 'react';
 import { StyleSheet, View } from 'react-native';
 
-import { Body, Caption, DateField, PressableScale, useDs, type IconName } from '@/components/ds';
+import { Body, Caption, DateField, PressableScale, useDs, useToast, type IconName } from '@/components/ds';
+import { PopoverMenu, type Anchor } from '@/components/ds/PopoverMenu';
 import { IconSymbol } from '@/components/ui/icon-symbol';
 import { radius, space, STATUS } from '@/constants/tokens';
 import { useCanDeleteDrink } from '@/hooks/useCocktails';
@@ -117,48 +118,55 @@ export function EndsSheet({ editor, onClose }: { editor: LayoutEditor; onClose: 
   );
 }
 
-/** Desktop's ...: keep this layout for next time (a menu template), or copy the menu as a new draft. */
-export function EditMoreSheet({ editor, onClose }: { editor: LayoutEditor; onClose: () => void }) {
+/**
+ * The desktop editor's ... (Miss-cover-credit-desk): a menu hung from the
+ * button, Save layout for next time and Duplicate, with what saving a layout
+ * keeps under them. A home menu has no layouts, so only Duplicate.
+ */
+export function EditMoreMenu({ editor, anchor, onClose }: { editor: LayoutEditor; anchor: Anchor | null; onClose: () => void }) {
+  const ds = useDs();
   const router = useRouter();
+  const toast = useToast();
   const saveLayout = useSaveLayout();
   const create = useCreateMenu();
   const home = !editor.menu.barId;
-  const [done, setDone] = useState(false);
-  const [error, setError] = useState<string | null>(null);
   const keepLayout = async () => {
-    setError(null);
     try {
       await saveLayout.mutateAsync({ name: `${editor.layout.name.trim()} layout`, sections: editor.layout.sections });
-      setDone(true);
+      toast.show({ title: 'Layout saved for your next menu' });
     } catch (e) {
-      setError(e instanceof Error ? e.message : 'Couldn’t save the layout.');
+      toast.show({ title: e instanceof Error ? e.message : 'Couldn’t save the layout.' });
     }
   };
   const duplicate = async () => {
-    setError(null);
     try {
       const { layout: l } = editor;
       const id = await create.mutateAsync({ barId: editor.menu.barId, layout: { ...l, name: `${l.name} copy`, sections: copySections(l.sections, true) } });
-      onClose();
       router.replace(`/menus/${id}/edit`);
     } catch (e) {
-      setError(e instanceof Error ? e.message : 'Couldn’t copy the menu.');
+      toast.show({ title: e instanceof Error ? e.message : 'Couldn’t copy the menu.' });
     }
   };
+  const icon = (name: IconName) => (
+    <View style={[styles.icon, { backgroundColor: ds.c.raised }]}>
+      <IconSymbol name={name} size={16} color={ds.c.ink} />
+    </View>
+  );
   return (
-    <MenuSheet visible onClose={onClose} title={editor.layout.name || 'Menu'} plain>
-      <View>
-        {home ? null : (
-          <Action icon="rectangle.stack" label={done ? 'Layout saved' : saveLayout.isPending ? 'Saving…' : 'Save layout for next time'} onPress={keepLayout} disabled={done || saveLayout.isPending} />
-        )}
-        <Action icon="doc.on.doc" label={create.isPending ? 'Copying…' : 'Duplicate'} onPress={duplicate} disabled={create.isPending} />
-      </View>
-      {error ? (
-        <Caption tone="accent" role="alert">
-          {error}
-        </Caption>
-      ) : null}
-    </MenuSheet>
+    <PopoverMenu
+      anchor={anchor}
+      label={`More for ${editor.layout.name || 'this menu'}`}
+      onClose={onClose}
+      sections={[
+        {
+          items: [
+            ...(home ? [] : [{ label: 'Save layout for next time', leading: icon('rectangle.stack'), onPress: () => void keepLayout() }]),
+            { label: 'Duplicate', leading: icon('doc.on.doc'), onPress: () => void duplicate() },
+          ],
+        },
+      ]}
+      footer={home ? undefined : <Caption tone="muted">Save layout keeps the sections and their rules, to start the next menu from.</Caption>}
+    />
   );
 }
 

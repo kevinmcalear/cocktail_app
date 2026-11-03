@@ -1,12 +1,14 @@
 import { useRouter } from 'expo-router';
-import { useState } from 'react';
+import { useRef, useState, type ComponentRef } from 'react';
 import { ScrollView, StyleSheet, TextInput, useWindowDimensions, View } from 'react-native';
 
 import { Caption, DsText, Field, GlassButton, Tag, useDs, type TagTone } from '@/components/ds';
+import { usePopover } from '@/components/ds/PopoverMenu';
 import { FormScrollContainer } from '@/components/recipe/FormScrollContainer';
 import { displayFaces, font, layout, radius, space, type } from '@/constants/tokens';
 import { useActiveVenue } from '@/hooks/useActiveVenue';
 import { itemHref } from '@/lib/itemRoutes';
+import { menuReadiness, menuStatus, plural } from '@/lib/menus';
 
 import { MenuVisual } from '../MenuVisual';
 import { Check, MonoLabel, ReadyChecks, type CheckTarget } from '../ReviewParts';
@@ -14,7 +16,7 @@ import { useMenuDrag } from '../useMenuDrag';
 import { GuestPreview } from '../GuestPreview';
 import { CoverButtons, EditAfter, EditGroup, EditSections } from './EditParts';
 import { EditLibrary } from './EditLibrary';
-import { EditMoreSheet } from './EditSheetsMore';
+import { EditMoreMenu } from './EditSheetsMore';
 import { EditTools, SaveLine, saveProblem } from './EditTools';
 import type { EditViewProps } from './MenuEditScreen';
 
@@ -36,7 +38,8 @@ export function EditDesktop(props: EditViewProps) {
   const [root, drag] = useMenuDrag(editor);
   const { layout: menu } = editor;
   const problem = saveProblem(editor);
-  const [more, setMore] = useState(false);
+  const more = usePopover();
+  const moreButton = useRef<ComponentRef<typeof View>>(null);
   // Library, menu and aside: two columns of drinks only when the menu has room for them.
   const twoUp = useWindowDimensions().width >= 1600;
   return (
@@ -53,7 +56,9 @@ export function EditDesktop(props: EditViewProps) {
         ) : (
           <SaveLine editor={editor} />
         )}
-        <GlassButton icon="ellipsis" accessibilityLabel={`More for ${menu.name || 'this menu'}: save layout for next time, duplicate`} onPress={() => setMore(true)} />
+        <View ref={moreButton} collapsable={false}>
+          <GlassButton icon="ellipsis" accessibilityLabel={`More for ${menu.name || 'this menu'}: save layout for next time, duplicate`} onPress={() => more.open(moreButton.current)} />
+        </View>
         <EditTools {...props} addTo={editor.section(editor.targetKey)?.key} />
       </View>
       <View style={styles.columns}>
@@ -91,7 +96,7 @@ export function EditDesktop(props: EditViewProps) {
         </FormScrollContainer>
         <Aside {...{ editor, look, onDates }} />
       </View>
-      {more ? <EditMoreSheet editor={editor} onClose={() => setMore(false)} /> : null}
+      <EditMoreMenu editor={editor} anchor={more.anchor} onClose={more.close} />
     </View>
   );
 }
@@ -122,7 +127,7 @@ function Aside({ editor, look, onDates }: Pick<EditViewProps, 'editor' | 'look' 
       <GuestPreview editor={editor} venue={venue} />
       <MonoLabel>{look.home ? 'Before you share' : 'Before it goes on'}</MonoLabel>
       <View>
-        <ReadyChecks sections={sections} home={look.home} dated={look.home ? undefined : dated} onOpen={open} />
+        {look.home ? <ReadyChecks sections={sections} home dated={undefined} onOpen={open} /> : <EditChecks editor={editor} look={look} dated={dated} onOpen={open} />}
         <Check done={!!coverUrl} label={coverUrl ? 'Cover photo' : 'Cover'} note={coverUrl ? (look.venueName ? `For ${look.venueName}` : 'Just yours') : 'Drawn from your drinks until you add a photo'} />
         <View style={[styles.cover, { backgroundColor: ds.c.raised }]}>
           <MenuVisual name={name || 'Menu'} coverUrl={coverUrl} coverPosition={coverPosition} pictures={sections.flatMap((s) => s.drinks)} height={96} />
@@ -145,6 +150,43 @@ function Aside({ editor, look, onDates }: Pick<EditViewProps, 'editor' | 'look' 
         ) : null}
       </View>
     </ScrollView>
+  );
+}
+
+/**
+ * "Before it goes on" as Miss-cover-credit-desk draws it, done: the drinks
+ * with their prices and what each section holds, then when it goes on and
+ * what it replaces. A section short of its rule or a drink with no price
+ * shows instead, and opens what it names. Photos are the drink pages' job,
+ * so the editor doesn't count them.
+ */
+function EditChecks({ editor, look, dated, onOpen }: Pick<EditViewProps, 'editor' | 'look'> & { dated: boolean; onOpen: (t: CheckTarget) => void }) {
+  const { sections } = editor.layout;
+  const ready = menuReadiness({ sections });
+  const count = sections.reduce((n, x) => n + x.drinks.length, 0);
+  const rules = [
+    ...ready.short.map((x) => ({ name: x.name, label: `${x.name} needs ${plural(x.needed, 'more drink')}` })),
+    ...ready.over.map((x) => ({ name: x.name, label: `${x.name} has ${plural(x.extra, 'drink')} too many` })),
+  ];
+  const [now] = useState(() => Date.now());
+  const replaces = editor.status === 'on' ? null : editor.others.find((m) => menuStatus(m, now) === 'on')?.name;
+  return (
+    <>
+      {!count ? <Check label="Add some drinks first" /> : null}
+      {rules.map((r) => (
+        <Check key={r.label} label={r.label} onPress={() => onOpen({ kind: 'section', name: r.name })} />
+      ))}
+      {count > 0 && ready.noPrice.length > 0 ? <Check label={`${plural(ready.noPrice.length, 'drink')} with no price`} onPress={() => onOpen({ kind: 'drink', name: ready.noPrice[0] })} /> : null}
+      {count > 0 && !rules.length && !ready.noPrice.length ? (
+        <Check done label={`${plural(count, 'drink')}, each with a price`} note={sections.filter((x) => x.drinks.length).map((x) => `${x.name} ${x.drinks.length}`).join(' · ')} />
+      ) : null}
+      <Check
+        done={dated}
+        label={dated ? `${editor.status === 'on' ? 'On' : 'Goes on'} ${look.goesOn}` : 'Pick the dates'}
+        note={replaces ? `Replaces ${replaces}` : dated ? undefined : 'It goes on at the start of that day.'}
+        onPress={dated && !look.canDate ? undefined : () => onOpen({ kind: 'dates' })}
+      />
+    </>
   );
 }
 

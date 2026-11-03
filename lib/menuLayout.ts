@@ -39,13 +39,22 @@ export interface MenuLayout {
 let counter = 0;
 const newKey = () => `new-${Date.now().toString(36)}-${(counter++).toString(36)}`;
 
+/**
+ * The editor's start from a saved menu. A section with no drinks and nothing
+ * it must hold is left out when the menu has others: the database's catch-all
+ * "Drinks" (menu_drinks_fill_section makes it for a drink added with no
+ * section) stays behind empty once its drinks move, and the page never shows
+ * it (#1149 review). A section still to fill stays, and so does every
+ * section of a menu with nothing in any.
+ */
 export function layoutFromMenu(menu: Pick<MenuDetail, 'name' | 'coverUrl' | 'coverPosition' | 'coverCredit' | 'sections'>): MenuLayout {
+  const kept = menu.sections.filter((s) => s.drinks.length > 0 || s.minItems > 0);
   return {
     name: menu.name,
     coverUrl: menu.coverUrl,
     coverPosition: menu.coverPosition,
     coverCredit: menu.coverCredit ?? null,
-    sections: menu.sections.map((s) => ({ key: s.id, id: s.id, name: s.name, minItems: s.minItems, maxItems: s.maxItems, allowedTypes: s.allowedTypes, drinks: s.drinks })),
+    sections: (kept.length ? kept : menu.sections).map((s) => ({ key: s.id, id: s.id, name: s.name, minItems: s.minItems, maxItems: s.maxItems, allowedTypes: s.allowedTypes, drinks: s.drinks })),
   };
 }
 
