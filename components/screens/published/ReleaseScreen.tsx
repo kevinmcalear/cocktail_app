@@ -9,7 +9,7 @@ import { useRelease } from '@/hooks/usePublished';
 import { dayLabel } from '@/lib/collection';
 import { plural } from '@/lib/menus';
 
-import { ReportAction } from '../safety/ReportSheet';
+import { ReportAction } from '../safety/ReportAction';
 import { CollectButton } from './CollectButton';
 import { BarLink } from './PublishedDrinkScreen';
 import { loadFailure, PublicMissing, PublicShell } from './PublicShell';

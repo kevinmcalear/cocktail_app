@@ -18,6 +18,7 @@ interface SegmentedProps<T extends string> {
    * the same track with the picked one filled in ink (the drink page's Spec |
    * Service | Backstory on desktop). quiet: the small switch inside a sheet
    * (New event's Add one | From a calendar link), caption text on a raised pick.
+   * The page's own switch (Drinks, House-made, Bottles) is SegmentedCapsule.
    */
   variant?: 'underline' | 'pill' | 'ink' | 'quiet';
   /** Segments share the full width instead of hugging their labels. Underlined, that's a bar page's tabs: 15 on 20, centred (ppl-bar-top). */

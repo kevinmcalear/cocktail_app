@@ -12,6 +12,7 @@ const ICONS: Record<FabIcon, number> = {
   plus: require('@/assets/icons/android/add.xml'),
   checkmark: require('@/assets/icons/android/check.xml'),
   rank: require('@/assets/icons/android/leaderboard.xml'),
+  printer: require('@/assets/icons/android/print.xml'),
 };
 
 /**

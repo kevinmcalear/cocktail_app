@@ -14,7 +14,6 @@ import { homeReach, type HomeReach, type ShelfMatch } from './shelfReach';
 import type { AwayGroup } from './toMake';
 
 export type DrinkStage = 'had' | 'make' | 'made';
-export type BarStage = 'want' | 'been';
 
 /** "+0.3", "−0.7", "0.0": your version's score against the bar's. */
 export function gapLabel(you: number, bar: number): string {
@@ -214,6 +213,23 @@ export interface WantBar {
   hours: { open: boolean; text: string } | null;
   why: string | null;
   everyone: number | null;
+}
+
+/** "Open until 1am", "Opens 5pm Thu", "Closed". */
+export function hoursText(s: { open: boolean; detail: string | null }): string {
+  if (s.open) return s.detail ? `Open ${s.detail}` : 'Open now';
+  return s.detail ? s.detail.charAt(0).toUpperCase() + s.detail.slice(1) : 'Closed';
+}
+
+/** A Loved row's line (Kept-you-bars): where you work, or what's new there, else its hours, then how far. */
+export function lovedLine({ work, news, hours, away }: { work: boolean; news: string | null; hours: { open: boolean; text: string } | null; away: string | null }): string | null {
+  if (work) return 'Where you work';
+  return [news ?? hours?.text, away].filter(Boolean).join(' · ') || null;
+}
+
+/** A Want to go row's line: how far, then why it's here while it's open (Open sits at the row's end), or when it opens. */
+export function wantLine(b: Pick<WantBar, 'away' | 'place' | 'hours' | 'why'>): string | null {
+  return [b.away ?? b.place, b.hours && !b.hours.open ? b.hours.text : b.why].filter(Boolean).join(' · ') || null;
 }
 
 /** How near a Want to go bar must be for the map to open on it (board home-collection-bars, step 3). */

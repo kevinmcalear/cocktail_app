@@ -3,16 +3,18 @@ import { Image } from 'expo-image';
 import { useContext, useEffect, useState } from 'react';
 import { StyleSheet, View } from 'react-native';
 
-import { drawing, radius } from '@/constants/tokens';
+import { drawing } from '@/constants/tokens';
 import { useItemSketch } from '@/hooks/useItemSketch';
 import { useReducedMotion } from '@/hooks/useReducedMotion';
 import { whenIdle } from '@/lib/idleQueue';
+import { inBarGlassCached } from '@/lib/sketch/barGlass';
 import { bareGlassSketch } from '@/lib/sketch/draft';
 import { glowScene, nightScene, onlyStages, withoutStages } from '@/lib/sketch/passes';
 import type { Scene } from '@/lib/sketch/scene';
 import { sceneToSvg } from '@/lib/sketch/svg';
 import { liquidOf, type SketchInputs } from '@/lib/sketch/types';
 
+import { useDrawingGlasses } from './drawingGlasses';
 import { PourLevel } from './PourLevel';
 import { sceneFor } from './SketchDrawing';
 import { useDs } from './theme';
@@ -59,8 +61,13 @@ const peek = (inputs: SketchInputs, seed: string, thumb: boolean, night: boolean
 const BARE = bareGlassSketch('Coupe');
 
 /** The bare glass at a drawing's size, for a place with no drawing (yet): never a blank hole. */
-export function BareGlass({ size, bare }: Pick<DrinkDrawingProps, 'size' | 'bare'>) {
-  return <DrinkDrawing inputs={BARE} seed="bare" size={size} pour={false} bare={bare} />;
+export function BareGlass({ size }: Pick<DrinkDrawingProps, 'size'>) {
+  return <DrinkDrawing inputs={BARE} seed="bare" size={size} pour={false} />;
+}
+
+/** A drink's whole drawing as an SVG data URI, by day or painted for night: what a poster or a printed page draws (components/paper). */
+export function drawingUri(inputs: SketchInputs, seed: string, night: boolean): string {
+  return build(inputs, seed, false, night, false).whole;
 }
 
 export interface DrinkDrawingProps {
@@ -75,19 +82,19 @@ export interface DrinkDrawingProps {
   pour?: boolean;
   /** Read out ("Drawing of a Negroni on the rocks"); left out, the drawing is decorative. */
   label?: string;
-  /** A row or tile without its square of paper, for drawings set together on a sky (a menu's band). */
-  bare?: boolean;
 }
 
 /**
  * A drink's drawing at one of its sizes, from one painted scene
- * (lib/sketch), in the glass its bar uses (item_sketches already carries the
- * bar's glassware). Light: on the house paper. Dark: painted for night
- * (chalk pencil, the drink lit, a soft glow of the drink behind it). The
- * colour pours in from the bottom of the glass when it appears.
+ * (lib/sketch), in the glass of the bar it's shown at (DrawingBar; its own
+ * bar's glassware comes in item_sketches). Light: the pencil on the page
+ * itself, no card behind it (decision chrome). Dark: painted for night (chalk
+ * pencil, the drink lit, a soft glow of the drink behind it). The colour pours
+ * in from the bottom of the glass when it appears.
  */
-export function DrinkDrawing({ inputs, seed, size, staff, pour = !isRowSize(size), label, bare }: DrinkDrawingProps) {
+export function DrinkDrawing({ inputs: stored, seed, size, staff, pour = !isRowSize(size), label }: DrinkDrawingProps) {
   const ds = useDs();
+  const inputs = inBarGlassCached(stored, useDrawingGlasses());
   const night = ds.scheme === 'dark';
   const px = size === 'hero' ? (staff ? drawing.heroStaff : drawing.hero) : drawing[size];
   const thumb = isRowSize(size);
@@ -113,12 +120,7 @@ export function DrinkDrawing({ inputs, seed, size, staff, pour = !isRowSize(size
   const reduceMotion = useReducedMotion();
   const moving = pour && !reduceMotion;
 
-  const frame = [
-    styles.frame,
-    { width: px, height: px },
-    // A row or tile sits on its own square of paper by day; a hero sits on the page (its sky).
-    !night && !bare && size !== 'hero' ? { backgroundColor: ds.c.paper, borderRadius: isRowSize(size) ? radius.control : radius.card } : null,
-  ];
+  const frame = [styles.frame, { width: px, height: px }];
   const picture = (source: string) => <Image source={{ uri: source }} style={[styles.square, { width: px, height: px }]} contentFit="contain" cachePolicy="memory" accessible={false} />;
   return (
     <View style={frame} {...(label ? { role: 'img' as const, 'aria-label': label } : { 'aria-hidden': true })}>

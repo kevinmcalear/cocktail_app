@@ -4,9 +4,11 @@ import Animated, { Easing, useAnimatedStyle, useReducedMotion, useSharedValue, w
 import Svg, { Defs } from 'react-native-svg';
 
 import { boundsOf, GLASS_BANDS, type Scene, type SceneEl } from '@/lib/sketch/scene';
-import type { SketchInputs } from '@/lib/sketch/types';
+import { inBarGlassCached } from '@/lib/sketch/barGlass';
+import { liquidOf, type SketchInputs } from '@/lib/sketch/types';
 
-import { defsFor, draw, SceneSvg, sceneFor, type SketchDetail } from './SketchDrawing';
+import { useDrawingGlasses } from './drawingGlasses';
+import { defsFor, draw, nightOf, SceneSvg, sceneFor, type SketchDetail } from './SketchDrawing';
 import { useDs } from './theme';
 
 type Stage = Extract<SceneEl, { k: 'stage' }>;
@@ -164,7 +166,6 @@ function lengthOf(scene: Scene) {
 }
 
 const AnimatedScene = memo(function AnimatedScene({ scene, play, delay }: { scene: Scene; play: number; delay: number }) {
-  const ds = useDs();
   const u = useId().replace(/[^A-Za-z0-9]/g, '');
   const reduceMotion = useReducedMotion();
   const t = useSharedValue(reduceMotion ? 1 : 0);
@@ -188,10 +189,10 @@ const AnimatedScene = memo(function AnimatedScene({ scene, play, delay }: { scen
   }, [scene, play, delay, reduceMotion, t, bubble]);
   const side = frame ? Math.min(frame.w, frame.h) : 0;
   const place: Place | null = frame && side ? { k: side / scene.size, x: (frame.w - side) / 2, y: (frame.h - side) / 2 } : null;
-  if (reduceMotion || (!place && settled?.scene === scene && settled.play === play)) return <SceneSvg scene={scene} />;
+  if (reduceMotion || (!place && settled?.scene === scene && settled.play === play)) return <SceneSvg scene={scene} bare />;
   const flat = scene.els.filter((el) => el.k !== 'stage');
   return (
-    <View style={[styles.fill, { backgroundColor: ds.c.paper }]} onLayout={(e) => setFrame({ w: e.nativeEvent.layout.width, h: e.nativeEvent.layout.height })} aria-hidden>
+    <View style={styles.fill} onLayout={(e) => setFrame({ w: e.nativeEvent.layout.width, h: e.nativeEvent.layout.height })} aria-hidden>
       {place && flat.length ? <Piece els={flat} u={u} place={place} size={scene.size} /> : null}
       {place ? scene.els.map((el, i) => (el.k === 'stage' ? <StageLayer key={i} el={el} size={scene.size} t={t} bubble={bubble} place={place} u={u} /> : null)) : null}
     </View>
@@ -215,8 +216,12 @@ export interface AnimatedSketchProps {
  * Ends on exactly the still drawing (SketchDrawing). Reduced motion shows it
  * finished. One at a time: a list of these would cost too much.
  */
-export const AnimatedSketch = memo(function AnimatedSketch({ inputs, seed, detail = 'full', play = 0, delay = 0 }: AnimatedSketchProps) {
-  return <AnimatedScene scene={sceneFor(inputs, seed, detail, true)} play={play} delay={delay} />;
+export const AnimatedSketch = memo(function AnimatedSketch({ inputs: stored, seed, detail = 'full', play = 0, delay = 0 }: AnimatedSketchProps) {
+  // No card behind it (decision chrome): at night it's painted for night, as the still drawing is.
+  const night = useDs().scheme === 'dark';
+  const inputs = inBarGlassCached(stored, useDrawingGlasses());
+  const scene = sceneFor(inputs, seed, detail, true);
+  return <AnimatedScene scene={night ? nightOf(scene, liquidOf(inputs).hex) : scene} play={play} delay={delay} />;
 });
 
 const styles = StyleSheet.create({

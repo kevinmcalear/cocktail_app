@@ -5,7 +5,7 @@ import { useState } from 'react';
 export type LibraryView = { show?: string; menu?: string; kind?: string };
 
 /**
- * Which view of Library is up (?show=, ?menu=, ?kind=). It lives in the URL,
+ * Which view of the Drinks tab is up (?show=, ?menu=, ?kind=). It lives in the URL,
  * so a link opens the same view. Beside a drink on a desktop (`beside`,
  * hooks/useDrinksSplit.ts) the URL is the drink's (/cocktail/<id>), so the
  * list holds its view itself, starting from the link it opened on, and keeps

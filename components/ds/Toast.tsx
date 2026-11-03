@@ -37,15 +37,31 @@ export function useToast() {
 }
 
 /**
+ * Android: a FAB on screen says where its top is (dp from the screen's bottom
+ * edge), so the toast sits above it, as Material's snackbar does. Only while
+ * `top` is a number: a FAB on a page under a pushed one passes null.
+ */
+export function useFabUnderToast(top: number | null) {
+  const setFabTop = useToastStore((s) => s.setFabTop);
+  useEffect(() => {
+    if (Platform.OS !== 'android' || top == null) return;
+    setFabTop(top);
+    return () => setFabTop(0);
+  }, [top, setFabTop]);
+}
+
+/**
  * The toast itself, mounted at the root and in each Sheet: a glass pill floating above the
- * bottom edge (bottom centre on the web), announced politely (an error as an
+ * bottom edge, or above the tab bar where one shows (`above`, from
+ * useTabBarClearance, the root's), and on Android above a FAB on screen; bottom centre on the web,
+ * announced politely (an error as an
  * alert), gone after five
  * seconds (an error stays), a swipe or a tap. With Reduce Motion on it fades instead of
  * springing up.
  */
 let nextHost = 1;
 
-export function ToastHost() {
+export function ToastHost({ above = 0 }: { above?: number }) {
   // Mounted at the root and inside every Sheet: the newest host draws, so a
   // toast shown from an open sheet lands on top of it, not under its window.
   const [host] = useState(() => nextHost++);
@@ -115,19 +131,20 @@ export function ToastHost() {
   }, [toast, still, move, drag]);
 
   if (!shown) return null;
-  return <ToastPill toast={shown} move={move} drag={drag} still={still} handlers={pan.panHandlers} />;
+  return <ToastPill toast={shown} move={move} drag={drag} still={still} handlers={pan.panHandlers} above={above} />;
 }
 
-function ToastPill({ toast, move, drag, still, handlers }: { toast: Toast; move: Animated.Value; drag: Animated.ValueXY; still: boolean; handlers: object }) {
+function ToastPill({ toast, move, drag, still, handlers, above }: { toast: Toast; move: Animated.Value; drag: Animated.ValueXY; still: boolean; handlers: object; above: number }) {
   const ds = useDs();
   const insets = useSafeAreaInsets();
+  const fabTop = useToastStore((s) => s.fabTop);
   const hide = () => useToastStore.getState().hide(toast.id);
   const error = toast.tone === 'error';
   // The board's warn look: the amber triangle, on an amber wash.
   const amber = toastWarnInk(STATUS.warning, ds.c.raised, ds.c.ground).ink;
   const rise = still ? 0 : move.interpolate({ inputRange: [0, 1], outputRange: [space.xxl, 0] });
   return (
-    <View pointerEvents="box-none" style={[styles.layer, { bottom: insets.bottom + space.lg + (toast.lift ?? 0) }]}>
+    <View pointerEvents="box-none" style={[styles.layer, { bottom: Math.max(above || insets.bottom, fabTop) + space.lg + (toast.lift ?? 0) }]}>
       <Animated.View
         {...handlers}
         style={[

@@ -10,7 +10,7 @@ import { useAddComment, useDeleteComment, useItemComments } from '@/hooks/useVer
 import { useEffectiveRole } from '@/hooks/useViewAs';
 import { plainDbMessage } from '@/lib/dbError';
 
-import { ReportAction } from '../safety/ReportSheet';
+import { ReportAction } from '../safety/ReportAction';
 
 interface TeamNotesProps {
   itemId: string;

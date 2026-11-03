@@ -32,6 +32,10 @@ jest.mock('@/components/nav/VenueSwitcher', () => {
   const { Text } = jest.requireActual<typeof import('react-native')>('react-native');
   return { VenueSwitcher: () => <Text>venue switcher</Text> };
 });
+// Add reads where things land and the clipboard; the sheet itself is what's checked here.
+jest.mock('@/hooks/useBringInPlace', () => ({ useBringInPlace: () => ({ barId: null, venueName: null, heldBack: null, loading: false }) }));
+jest.mock('@/lib/clipboardPeek', () => ({ UNREAD_CLIP: '\u0000unread', peekClipboard: async () => null, readClipboard: async () => null }));
+jest.mock('@/hooks/useDrinkDesk', () => ({ useMenuSectionPlace: () => ({ data: undefined }) }));
 jest.mock('@/hooks/useDrafts', () => ({ useDrafts: () => ({ drafts: [{ id: 'd1' }, { id: 'd2' }] }) }));
 jest.mock('@/hooks/useCapabilities', () => ({ useCapabilities: () => ({ data: ['edit_drinks'] }), useCapabilityOpensAt: () => ({ data: 35 }) }));
 jest.mock('@/hooks/useSearchMine', () => ({ useSearchMine: () => ({ venueId: 'caretakers', canAdd: true, label: 'Caretakers' }) }));
@@ -151,7 +155,7 @@ test('Search opens the search over the current page instead of leaving it', asyn
   expect(screen.getByRole('button', { name: 'Search', selected: true })).toBeTruthy();
 });
 
-test('New opens the create sheet with the draft count, and each choice goes where it is made', async () => {
+test('New opens Add with the drafts to pick up, and its last row the other starts, made where you are', async () => {
   mockMode = 'venue';
   mockPathname = '/';
   let onKey: (e: Partial<KeyboardEvent>) => void = () => {};
@@ -160,30 +164,31 @@ test('New opens the create sheet with the draft count, and each choice goes wher
   await renderWithProviders(<WebSideNav />);
 
   await pressN();
-  expect(screen.getByText('2')).toBeTruthy();
-  expect(screen.getByText('Made at Caretakers, for its library')).toBeTruthy();
+  expect(await screen.findByLabelText('Name a drink, paste a link, or describe it')).toBeTruthy();
+  await fireEvent.press(screen.getByRole('link', { name: 'Drafts. 2 from the older editor' }));
+  expect(mockPush).toHaveBeenLastCalledWith('/drafts');
+
+  await pressN();
+  await fireEvent.press(await screen.findByRole('button', { name: /^Something else/ }));
+  expect(await screen.findByText('Made at Caretakers, for its library')).toBeTruthy();
   await fireEvent.press(screen.getByRole('link', { name: 'Something you make. A batch, syrup, infusion, cordial: anything with a recipe' }));
   // Made at the venue you're in, not your home bar.
   expect(mockPush).toHaveBeenLastCalledWith('/make-recipe?barId=caretakers');
-
-  await pressN();
-  await fireEvent.press(screen.getByRole('link', { name: 'Drafts. Pick up where you left off' }));
-  expect(mockPush).toHaveBeenLastCalledWith('/drafts');
 });
 
-
-test('N toggles the create sheet, but not while typing in a field', async () => {
+test('N toggles Add, but not while typing in a field', async () => {
   // Jest runs without a DOM, so hand the sidebar a document that keeps its key listener.
   let onKey: (e: Partial<KeyboardEvent>) => void = () => {};
   (globalThis as { document?: unknown }).document = { addEventListener: (_: string, fn: typeof onKey) => (onKey = fn), removeEventListener: () => {} };
   const press = (target: { tagName: string }) => act(() => onKey({ key: 'n', target: target as unknown as EventTarget, preventDefault: () => {} }));
+  const field = () => screen.queryByLabelText('Name a drink, paste a link, or describe it');
   await renderWithProviders(<WebSideNav />);
   await press({ tagName: 'INPUT' });
-  expect(screen.queryByText('2')).toBeNull();
+  expect(field()).toBeNull();
   await press({ tagName: 'BODY' });
-  expect(screen.getByText('2')).toBeTruthy();
+  expect(await screen.findByLabelText('Name a drink, paste a link, or describe it')).toBeTruthy();
   await press({ tagName: 'BODY' });
-  expect(screen.queryByText('2')).toBeNull();
+  expect(field()).toBeNull();
 });
 
 test('⇧⌘8 opens the eight ball over the page on the web, closing the search', async () => {
