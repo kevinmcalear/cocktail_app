@@ -59,13 +59,13 @@ function LinkRow({ label, detail, onPress }: { label: string; detail?: string; o
  * Paste; what's on the clipboard, ready to use; type a drink yourself; and
  * the last bring-in. The sheet and the empty /bring-in page both show it.
  */
-export function BringInChooser({ onClose, menu }: { onClose?: () => void; /** Opened for a first menu (venue setup): the page around it has the title, and what's given is read as a menu. */ menu?: boolean }) {
+export function BringInChooser({ onClose, menu, paste = false }: { onClose?: () => void; /** Opened for a first menu (venue setup): the page around it has the title, and what's given is read as a menu. */ menu?: boolean; /** Open on Paste (Tonight's menu's Paste). */ paste?: boolean }) {
   const ds = useDs();
   const router = useRouter();
   const place = useBringInPlace();
   const start = useStartBringIn();
   const last = useLastBringIn(place.barId).data ?? null;
-  const [pasting, setPasting] = useState(false);
+  const [pasting, setPasting] = useState(paste);
   const [text, setText] = useState('');
   const [clip, setClip] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);

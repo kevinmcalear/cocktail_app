@@ -1,6 +1,5 @@
 import { StyleSheet, View } from 'react-native';
 
-import { Button } from '@/components/ds';
 import { VenueMark } from '@/components/nav/VenueMarks';
 import type { Venue } from '@/hooks/useActiveVenue';
 import { space } from '@/constants/tokens';
@@ -17,12 +16,12 @@ export function DoneMark({ venue }: { venue: Venue }) {
 }
 
 /**
- * The end of venue setup: "Set up <bar>" (owner-setup step 5), the checklist
- * that then stays on top of the bar until it's done, and Open <bar>.
+ * The end of venue setup: "Set up <bar>" (board Kept-onboard), the checklist
+ * that then stays on top of the bar until it's done. Its back opens the bar.
  */
 export function DoneStep({ barId, name, onOpen }: { barId: string; name: string; onOpen: () => void }) {
   const bar = name || 'your bar';
-  return <SetupChecklist barId={barId} name={bar} footer={<Button label={`Open ${bar}`} size="lg" variant="secondary" onPress={onOpen} />} />;
+  return <SetupChecklist barId={barId} name={bar} onBack={onOpen} backLabel={`Open ${bar}`} />;
 }
 
 const styles = StyleSheet.create({
