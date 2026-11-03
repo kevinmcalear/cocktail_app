@@ -6,7 +6,7 @@ import { Platform, StyleSheet, View, type NativeScrollEvent, type NativeSyntheti
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import { Display, DsText, GlassButton, useDs, useGutter } from '@/components/ds';
-import { VenueDeleteBanner } from '@/components/screens/venue/DeleteVenue';
+import { VenueDeleteBanner } from '@/components/screens/venue/VenueDeleteBannerLazy';
 import { font, layout, space } from '@/constants/tokens';
 
 import { useIsWideWeb } from '@/hooks/useIsWideWeb';

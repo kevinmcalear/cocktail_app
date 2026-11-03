@@ -167,7 +167,7 @@ export function SharedDrinks({ name, tab, shared, signedIn, drinks, bars, failed
       <View style={styles.section}>
         <Body tone="muted">{KEPT[tab]}</Body>
         <View style={styles.chips}>
-          <Button label="See them on You" variant="secondary" onPress={() => router.push('/you')} />
+          <Button label="See them on You" variant="secondary" onPress={() => router.push('/your-drinks')} />
           <Button label="Profile settings" variant="ghost" onPress={() => router.push('/settings/profile')} />
         </View>
       </View>

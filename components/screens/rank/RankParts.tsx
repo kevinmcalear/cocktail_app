@@ -1,144 +1,115 @@
-import { useState } from 'react';
-import { StyleSheet, TextInput, View } from 'react-native';
+import * as Haptics from 'expo-haptics';
+import { Platform, StyleSheet, View } from 'react-native';
 
-import { Body, Button, Caption, Chip, DrinkImage, PressableScale, useDs } from '@/components/ds';
-import { AddBarForm } from '@/components/screens/home/AddBar';
-import { NearPicks, splitNear } from '@/components/search/NearPicks';
-import { font, layout, radius, space, type } from '@/constants/tokens';
-import { usePublicBars, type RankVenue } from '@/hooks/useRankings';
+import { Body, Button, Caption, Chip, DrinkImage, DsText, PressableScale, useDs } from '@/components/ds';
+import { displayName, font, layout, radius, space } from '@/constants/tokens';
 import type { ItemPicture } from '@/lib/itemImages';
+import type { Reason } from '@/lib/rankResult';
 import type { Sentiment } from '@/lib/ranking';
 
-const SENTIMENT_LABEL: Record<Sentiment, string> = { loved: 'Loved it', fine: 'It was fine', disliked: "Didn't like it" };
-
-export function sentimentLabel(s: Sentiment): string {
-  return SENTIMENT_LABEL[s];
+/** A tick of haptics on every pick (Prod-rank-A): an answer, a pair, a reason. */
+export function tick() {
+  if (Platform.OS !== 'web') void Haptics.selectionAsync();
 }
 
-/** "How was it?": the first answer, which picks the score band. */
-export function SentimentPicker({ onPick }: { onPick: (s: Sentiment) => void }) {
-  const ds = useDs();
+const ANSWERS: { sentiment: Sentiment; label: string }[] = [
+  { sentiment: 'loved', label: 'I liked it' },
+  { sentiment: 'fine', label: 'It was fine' },
+  { sentiment: 'disliked', label: 'Not for me' },
+];
+
+/** "How was it?": the first answer, which picks the score band. The first is the filled one, as drawn. */
+export function SentimentButtons({ onPick }: { onPick: (s: Sentiment) => void }) {
   return (
-    <View style={styles.stack}>
-      {(Object.keys(SENTIMENT_LABEL) as Sentiment[]).map((s) => (
-        <PressableScale key={s} accessibilityLabel={SENTIMENT_LABEL[s]} onPress={() => onPick(s)} style={[styles.answer, { backgroundColor: ds.c.raised }]}>
-          <Body style={styles.strong}>{SENTIMENT_LABEL[s]}</Body>
-        </PressableScale>
+    <View style={styles.answers}>
+      {ANSWERS.map((a, i) => (
+        <Button key={a.sentiment} label={a.label} variant={i === 0 ? 'ink' : 'secondary'} size="lg" onPress={() => onPick(a.sentiment)} />
       ))}
     </View>
   );
 }
 
-/**
- * "Where did you have it?": the drink's own bar (if it has a public profile),
- * at home, or another public bar found by name. `null` is at home.
- */
-export function WherePicker({ ownBar, value, onChange }: { ownBar: RankVenue | null; value: RankVenue | null; onChange: (v: RankVenue | null) => void }) {
-  const ds = useDs();
-  const [searching, setSearching] = useState(false);
-  const [search, setSearch] = useState('');
-  const [adding, setAdding] = useState(false);
-  const [plain, near] = splitNear(usePublicBars(search, { near: true }).data ?? []);
-  const other = value && value.id !== ownBar?.id ? value : null;
-  const pickChip = (v: RankVenue) => (
-    <Chip
-      key={v.id}
-      label={v.locality ? `${v.display_name}, ${v.locality}` : v.display_name}
-      selected={value?.id === v.id}
-      onPress={() => {
-        onChange(v);
-        setSearching(false);
-        setSearch('');
-      }}
-    />
-  );
-  return (
-    <View style={styles.where}>
-      <Caption tone="muted">Where did you have it?</Caption>
-      <View style={styles.chips}>
-        <View role="radiogroup" accessibilityLabel="Where did you have it?" style={styles.chips}>
-          {ownBar ? <Chip label={`At ${ownBar.display_name}`} selected={value?.id === ownBar.id} onPress={() => onChange(ownBar)} /> : null}
-          <Chip label="At home" selected={value === null} onPress={() => onChange(null)} />
-          {other ? <Chip label={`At ${other.display_name}`} selected onPress={() => onChange(other)} /> : null}
-        </View>
-        <PressableScale aria-expanded={searching} accessibilityLabel="Another bar" onPress={() => setSearching(!searching)} style={[styles.chip, { backgroundColor: ds.c.raised }]}>
-          <Caption>Another bar</Caption>
-        </PressableScale>
-      </View>
-      {searching ? (
-        <View style={styles.where}>
-          <TextInput
-            value={search}
-            onChangeText={setSearch}
-            placeholder="Search bars by name"
-            placeholderTextColor={ds.c.muted}
-            accessibilityLabel="Search bars by name"
-            autoFocus
-            autoCorrect={false}
-            style={[styles.input, { color: ds.c.ink, backgroundColor: ds.c.raised }]}
-          />
-          <View style={styles.chips}>
-            {plain.map(pickChip)}
-            {search.trim().length >= 2 && !plain.length && !near.length ? <Caption tone="muted">No public bars match.</Caption> : null}
-          </View>
-          <NearPicks found={plain.length > 0} near={near} no="No, it’s somewhere else" render={pickChip} rowStyle={styles.chips}>
-            {search.trim().length >= 2 && !adding ? <Button label="Not here? Add it" icon="plus" variant="ghost" onPress={() => setAdding(true)} /> : null}
-          </NearPicks>
-          {adding ? (
-            <AddBarForm
-              initialName={search.trim()}
-              onCancel={() => setAdding(false)}
-              onAdded={(v) => {
-                onChange(v);
-                setAdding(false);
-                setSearching(false);
-                setSearch('');
-              }}
-            />
-          ) : null}
-        </View>
-      ) : null}
-    </View>
-  );
-}
-
-export interface VsSide {
-  title: string;
-  /** The drink's own name, for screen readers. */
-  name: string;
-  detail: string;
+export interface PairSide {
+  /** "Tonight", "In August". */
+  when: string;
+  /** Where it was had: the bar's name, or Home. */
+  where: string;
+  /** "Negroni", "Negroni · your 8.4". */
+  sub: string;
   picture: ItemPicture | null;
-  /** The drink's id: with no picture, its drawn sketch. */
-  itemId?: string | null;
+  itemId: string;
 }
 
-/** One side of "Which was better?". The whole card is the answer. */
-export function VsCard({ side, onPress, height }: { side: VsSide; onPress: () => void; height: number }) {
+/** One side of "Which was better?": the whole card is the answer. */
+function PairCard({ side, onPress }: { side: PairSide; onPress: () => void }) {
   const ds = useDs();
   return (
-    <PressableScale accessibilityLabel={`${side.title}, ${side.name}: ${side.detail}`} onPress={onPress} style={[styles.card, { height, borderColor: ds.c.lineStrong }]}>
-      <DrinkImage thumb source={side.picture?.url} generated={side.picture?.isSketch} itemId={side.itemId} accessibilityLabel={side.name} radius={0} style={styles.fill} />
-      <View style={[styles.label, { backgroundColor: ds.c.surface }]}>
-        <Body style={styles.strong} numberOfLines={1}>
-          {side.title}
-        </Body>
-        <Caption tone="muted" numberOfLines={1}>
-          {side.detail}
+    <PressableScale accessibilityLabel={`${side.when}, ${side.where}, ${side.sub}`} onPress={onPress} style={[styles.card, { backgroundColor: ds.c.raised, borderColor: ds.c.line }]}>
+      <DrinkImage thumb source={side.picture?.url} generated={side.picture?.isSketch} itemId={side.itemId} accessibilityLabel="" radius="control" style={styles.picture} />
+      <View style={styles.cardText}>
+        <Caption tone="muted" style={styles.caps} numberOfLines={1}>
+          {side.when}
+        </Caption>
+        <DsText variant="title" numberOfLines={2} style={displayName.card}>
+          {side.where}
+        </DsText>
+        <Caption tone="muted" numberOfLines={2}>
+          {side.sub}
         </Caption>
       </View>
     </PressableScale>
   );
 }
 
+/** The two drinks side by side with "or" between them, then Too close to call. */
+export function Pair({ left, right, onPick, height }: { left: PairSide; right: PairSide; onPick: (side: 'new' | 'old' | 'tie') => void; height: number }) {
+  const ds = useDs();
+  return (
+    <View style={styles.pairBlock}>
+      <View style={[styles.pair, { height }]}>
+        <PairCard side={left} onPress={() => onPick('new')} />
+        <PairCard side={right} onPress={() => onPick('old')} />
+        <View style={styles.orWrap} pointerEvents="none">
+          <View style={[styles.or, { backgroundColor: ds.c.ground, borderColor: ds.c.lineStrong }]}>
+            <Caption tone="muted" italic>
+              or
+            </Caption>
+          </View>
+        </View>
+      </View>
+      <PressableScale accessibilityLabel="Too close to call" onPress={() => onPick('tie')} style={styles.tie}>
+        <Body color={ds.accentText} style={styles.tieText}>
+          Too close to call
+        </Body>
+      </PressableScale>
+    </View>
+  );
+}
+
+/** A row of reasons to tick. `max` caps how many can be on; past it, taps on the rest do nothing. */
+export function ReasonChips({ reasons, picked, label, onToggle }: { reasons: readonly Reason[]; picked: readonly string[]; label: string; onToggle: (key: string) => void }) {
+  return (
+    <View role="group" aria-label={label} style={styles.chips}>
+      {reasons.map((r) => (
+        <Chip key={r.key} multi quiet label={r.label} selected={picked.includes(r.key)} onPress={() => onToggle(r.key)} />
+      ))}
+    </View>
+  );
+}
+
+const CORNER = radius.card;
+
 const styles = StyleSheet.create({
-  stack: { gap: space.sm },
-  answer: { minHeight: 56, borderRadius: radius.card, borderCurve: 'continuous', paddingHorizontal: space.xl, justifyContent: 'center' },
-  strong: { ...font.semiBold },
-  where: { gap: space.sm },
-  chips: { flexDirection: 'row', flexWrap: 'wrap', gap: space.sm, alignItems: 'center' },
-  chip: { minHeight: layout.minTapTarget, paddingHorizontal: space.lg, borderRadius: radius.pill, justifyContent: 'center' },
-  input: { ...type.body, ...font.regular, minHeight: layout.minTapTarget, paddingHorizontal: space.lg, borderRadius: radius.control },
-  card: { borderRadius: radius.card, borderCurve: 'continuous', borderWidth: 1.5, overflow: 'hidden' },
-  fill: { position: 'absolute', top: 0, left: 0, width: '100%', height: '100%' },
-  label: { position: 'absolute', left: space.sm, right: space.sm, bottom: space.sm, borderRadius: radius.control, borderCurve: 'continuous', paddingHorizontal: space.md, paddingVertical: space.sm },
+  answers: { gap: space.sm },
+  pairBlock: { gap: space.md },
+  pair: { flexDirection: 'row', gap: space.sm },
+  card: { flex: 1, minWidth: 0, borderRadius: CORNER, borderCurve: 'continuous', borderWidth: StyleSheet.hairlineWidth, overflow: 'hidden', padding: space.sm },
+  picture: { flex: 1, width: '100%' },
+  cardText: { paddingHorizontal: space.sm, paddingTop: space.md, paddingBottom: space.sm, gap: 2 },
+  caps: { textTransform: 'uppercase', letterSpacing: 1.2 },
+  orWrap: { ...StyleSheet.absoluteFill, alignItems: 'center', justifyContent: 'center' },
+  or: { width: 32, height: 32, borderRadius: radius.pill, borderWidth: StyleSheet.hairlineWidth, alignItems: 'center', justifyContent: 'center' },
+  tie: { alignSelf: 'center', minHeight: layout.minTapTarget, justifyContent: 'center', paddingHorizontal: space.lg },
+  tieText: { ...font.semiBold },
+  chips: { flexDirection: 'row', flexWrap: 'wrap', gap: space.sm },
 });
