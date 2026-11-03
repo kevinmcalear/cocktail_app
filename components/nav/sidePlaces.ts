@@ -27,8 +27,9 @@ export interface Place extends NavMatch {
 }
 
 /**
- * The sidebar and rail's rows, as board Prod-desk (C7) draws them: the four tabs, the bar's group (its Menus,
- * House-made, Team, Bar settings), then Home's Shelf and Menus. Everything else (Study, Glassware, Back bar, Rota,
+ * The sidebar and rail's rows, as board Prod-desk (C7) draws them: the four tabs, then the group of the one place
+ * you're in: at a bar, its Menus, House-made, Team and Bar settings; at home, Shelf and Menus. Never both: you switch
+ * place from the group's chip (the places menu, board C8). Everything else (Study, Glassware, Back bar, Rota,
  * Brand, Roles, This week, History) opens from Bar settings, Tonight and Search (components/bar/VenueSettingsLinks.tsx).
  * The first round holds House-made, Team and Home's Menus back until it's over (lib/firstRound.ts).
  */
@@ -53,12 +54,12 @@ export function useSidePlaces() {
           { key: 'venue-settings', label: 'Bar settings', short: 'Settings', icon: 'place.settings', path: settings, prefix: settings },
         ]
       : [];
-  // Home's Menus is the same page as the bar's (it shows your own menus in home mode), so it switches mode first.
-  const homePlaces: Place[] = [
+  // Home's Menus is the bar's page in home mode, where it shows your own menus.
+  const home: Place[] = [
     { key: 'shelf', label: 'Shelf', icon: 'place.mybar', path: '/shelf' },
     ...(round ? [] : [{ key: 'home-menus', label: 'Menus', icon: 'place.menus', path: '/menus/all', prefix: '/menus' } as Place]),
   ];
-  return { venue, tabs, bar, homePlaces };
+  return { venue, tabs, places: venue ? bar : home };
 }
 
 /** What the bar's rows say at their right (board Prod-desk): the menu on now, how much house-made is low, the shelf's count. */

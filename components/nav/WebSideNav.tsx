@@ -6,7 +6,6 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useDs } from '@/components/ds';
 import { space } from '@/constants/tokens';
 import { useWebNav, WEB_SIDEBAR_WIDTH } from '@/hooks/useIsWideWeb';
-import { useMode } from '@/hooks/useMode';
 import { isDesktopShell } from '@/lib/desktopShell';
 import { isEightBallKey } from '@/lib/eightBallKey';
 import { useEightBallStore } from '@/store/useEightBallStore';
@@ -52,7 +51,6 @@ export function WebSideNav() {
 function SideNav() {
   const router = useRouter();
   const pathname = usePathname();
-  const { setMode } = useMode();
   const nav = useWebNav();
   const places = useSidePlaces();
   const [creating, setCreating] = useState(false);
@@ -60,7 +58,7 @@ function SideNav() {
   const setSearching = useSearchPalette((s) => s.setOpen);
 
   // A page that isn't a row (a drink, the add wizard) keeps the row it came from lit.
-  const rows = [...places.tabs, ...places.bar, ...places.homePlaces];
+  const rows = [...places.tabs, ...places.places];
   const [last, setLast] = useState<string | null>(null);
   // Opened cold (a link or a refresh), there's no row it came from: the tab its stack is in is lit.
   const tab = tabOfGroup((useSegments() as string[])[1]);
@@ -93,11 +91,7 @@ function SideNav() {
 
   const props: SideNavProps = {
     current,
-    go: (p) => {
-      // Home's Menus is the menus page in home mode: from a bar it switches first.
-      if (p.key === 'home-menus') setMode('home');
-      return p.tab ? router.navigate(p.path as Href) : router.push(p.path as Href);
-    },
+    go: (p) => (p.tab ? router.navigate(p.path as Href) : router.push(p.path as Href)),
     searching,
     onSearch: () => setSearching(true),
     onNew: () => setCreating(true),
@@ -112,9 +106,9 @@ function SideNav() {
 
 /**
  * The desktop sidebar, as board Prod-desk (C7) draws it: Search (⌘K), the
- * four tabs, the bar's group (its Menus, House-made, Team, Bar settings), then
- * Home (Shelf, Menus), and you at the foot. The two group headings are where you
- * switch place. Everything else (Study, Glassware, Back bar, Rota, Brand, Roles
+ * four tabs, the group of the place you're in under its chip (at a bar its
+ * Menus, House-made, Team, Bar settings; at home Shelf and Menus), and you at
+ * the foot. The chip is where you switch place (C8). Everything else (Study, Glassware, Back bar, Rota, Brand, Roles
  * and access) opens from Bar settings or Tonight. Add is the + Add top right of
  * the page (DeskAddButton) and the N key. Pages need no header row of their own.
  */
@@ -122,7 +116,7 @@ function Sidebar({ current, go, searching, onSearch }: SideNavProps) {
   const ds = useDs();
   // An iPad's status bar and home indicator; 0 on the web.
   const insets = useSafeAreaInsets();
-  const { venue, tabs, bar, homePlaces } = useSidePlaces();
+  const { venue, tabs, places } = useSidePlaces();
   const notes = useSideNotes(venue?.id ?? null);
   const name = useUserDisplayName();
   const row = (p: Place) => {
@@ -137,15 +131,10 @@ function Sidebar({ current, go, searching, onSearch }: SideNavProps) {
       <SetupNav />
       <NavRow label="Search" icon="magnifyingglass" role="button" look="filled" hint={keys ? (isApplePlatform() ? '⌘K' : 'Ctrl K') : undefined} current={searching} onPress={onSearch} />
       {tabs.map(row)}
-      {venue && bar.length ? (
-        <>
-          <PlaceHeading mark={venue.name}>{venue.name}</PlaceHeading>
-          {bar.map(row)}
-        </>
-      ) : null}
+      {/* Only the place you're in: the chip switches to the others. */}
+      <PlaceHeading mark={venue?.name ?? name}>{venue?.name ?? 'Home'}</PlaceHeading>
+      {places.map(row)}
       {venue ? <RoundNav /> : null}
-      <PlaceHeading mark={name}>Home</PlaceHeading>
-      {homePlaces.map(row)}
       <YouFooter venue={venue} />
     </View>
   );

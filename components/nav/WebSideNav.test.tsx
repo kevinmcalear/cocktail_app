@@ -59,9 +59,9 @@ test('venue mode lists search, the four tabs and the venue pages, marking the cu
   mockPathname = '/drinks';
   await renderWithProviders(<WebSideNav />);
 
-  // Board Prod-desk: the four tabs, the bar's group (the menu on now, House-made, Team, Bar settings), Home's Shelf and Menus, and you at the foot.
-  // Every person and role has the same tabs (tabs A, 31 Oct); the rest opens from Bar settings.
-  expect(links()).toEqual(['Tonight', 'Drinks', 'Discover', 'You', 'Autumn, on now', 'House-made', 'Team', 'Bar settings', 'Shelf, 3', 'Menus', 'You: Kevin M., Admin at Caretakers']);
+  // Board Prod-desk: the four tabs, the bar's group (the menu on now, House-made, Team, Bar settings), and you at the foot.
+  // Only the place you're in: no Home group under the bar's. Every person and role has the same tabs (tabs A, 31 Oct).
+  expect(links()).toEqual(['Tonight', 'Drinks', 'Discover', 'You', 'Autumn, on now', 'House-made', 'Team', 'Bar settings', 'You: Kevin M., Admin at Caretakers']);
   expect(screen.getByRole('link', { name: 'Drinks', selected: true })).toBeTruthy();
   expect(screen.getByRole('link', { name: 'Tonight', selected: false })).toBeTruthy();
 
@@ -71,20 +71,16 @@ test('venue mode lists search, the four tabs and the venue pages, marking the cu
   expect(mockPush).toHaveBeenLastCalledWith('/menus/all');
   await fireEvent.press(screen.getByRole('link', { name: 'Bar settings' }));
   expect(mockPush).toHaveBeenLastCalledWith('/settings/bar/caretakers');
-  // Home's Menus is the same page in home mode, so a bar switches first.
-  await fireEvent.press(screen.getByRole('link', { name: 'Menus' }));
-  expect(mockSetMode).toHaveBeenLastCalledWith('home');
-  expect(mockPush).toHaveBeenLastCalledWith('/menus/all');
   // You is a tab, and the foot opens it too.
   await fireEvent.press(screen.getByRole('link', { name: 'You: Kevin M., Admin at Caretakers' }));
   expect(mockNavigate).toHaveBeenLastCalledWith('/you');
 });
 
-test('the two group headings are where you switch place; no mark row tops the sidebar', async () => {
+test('the place chip is where you switch place; no mark row tops the sidebar', async () => {
   await renderWithProviders(<WebSideNav />);
-  // Board C7/C8: the bar's heading and Home's open the places menu (VenueSwitcher's, tested on its own).
+  // Board C7/C8: the one chip, the bar's, opens the places menu (VenueSwitcher's, tested on its own). Home is in that menu, not under the bar.
   expect(screen.getByRole('button', { name: 'Caretakers. Switch place' })).toBeTruthy();
-  expect(screen.getByRole('button', { name: 'Home. Switch place' })).toBeTruthy();
+  expect(screen.queryByRole('button', { name: 'Home. Switch place' })).toBeNull();
   // Search is the first control: nothing (no mark, no switcher) sits above it.
   expect(screen.getAllByRole('button')[0].props.accessibilityLabel).toBe('Search');
   expect(screen.queryByRole('radio', { name: 'Pale Moth, Bartender' })).toBeNull();
@@ -136,8 +132,12 @@ test('home mode lists the same four tabs and navigates to their routes', async (
   mockPathname = '/discover';
   await renderWithProviders(<WebSideNav />);
 
-  // No bar group at home: Home's Shelf and Menus; the foot says your shelf.
+  // No bar group at home: Home's Shelf and Menus under the Home chip; the foot says your shelf.
   expect(links()).toEqual(['Tonight', 'Drinks', 'Discover', 'You', 'Shelf, 3', 'Menus', 'You: Kevin M., Home bar · 3 bottles']);
+  expect(screen.getByRole('button', { name: 'Home. Switch place' })).toBeTruthy();
+  expect(screen.queryByRole('button', { name: 'Caretakers. Switch place' })).toBeNull();
+  await fireEvent.press(screen.getByRole('link', { name: 'Menus' }));
+  expect(mockPush).toHaveBeenLastCalledWith('/menus/all');
   expect(screen.getByRole('link', { name: 'Discover', selected: true })).toBeTruthy();
 
   await fireEvent.press(screen.getByRole('link', { name: 'Discover' }));
