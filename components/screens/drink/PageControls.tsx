@@ -3,8 +3,8 @@ import type { ReactNode } from 'react';
 import { StyleSheet, View } from 'react-native';
 import Animated, { interpolate, useAnimatedStyle, type SharedValue } from 'react-native-reanimated';
 
-import { DsText, GlassButton, useDs, useGutter } from '@/components/ds';
-import { displayFaces, layout, space, type BackbarScheme } from '@/constants/tokens';
+import { DsText, GlassButton, PressableScale, useDs, useGutter } from '@/components/ds';
+import { backbar, displayFaces, font, layout, radius, space, type BackbarScheme } from '@/constants/tokens';
 
 /** How long Back runs: its circle, or the pill with where it goes (desktop board's measure). */
 export const backWidth = (label?: string) => (label ? Math.round(46 + label.length * 8.2) : layout.minTapTarget);
@@ -100,11 +100,25 @@ export function PageControls({ over, top, scrollY, tuck, smallAt = tuck, title, 
             />
           ) : null}
           {onShare ? <GlassButton accessibilityLabel="Share" icon="square.and.arrow.up" scheme={over} onPress={onShare} /> : null}
-          {onEdit ? <GlassButton accessibilityLabel={editLabel} label="Edit" scheme={over} onPress={onEdit} /> : null}
+          {onEdit ? <EditPill label={editLabel} scheme={over} onPress={onEdit} /> : null}
           {more}
         </View>
       </View>
     </>
+  );
+}
+
+/** Edit, the page's one filled control: an ink pill (Decided-who-creator, Desk-who-creator), as the phone's header draws it (ItemHeader). */
+function EditPill({ label, scheme, onPress }: { label: string; scheme?: BackbarScheme; onPress: () => void }) {
+  const ds = useDs();
+  const ink = scheme ? backbar[scheme].ink : ds.c.ink;
+  const ground = scheme ? backbar[scheme].ground : ds.c.ground;
+  return (
+    <PressableScale role="button" accessibilityLabel={label} onPress={onPress} hitSlop={4} style={[styles.edit, { backgroundColor: ink }]}>
+      <DsText variant="label" color={ground} style={font.semiBold}>
+        Edit
+      </DsText>
+    </PressableScale>
   );
 }
 
@@ -116,4 +130,5 @@ const styles = StyleSheet.create({
   title: { position: 'absolute', justifyContent: 'center', pointerEvents: 'none' },
   row: { position: 'absolute', flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', gap: space.sm },
   right: { flexDirection: 'row', gap: space.sm },
+  edit: { height: layout.minTapTarget, paddingHorizontal: space.lg + 2, borderRadius: radius.pill, alignItems: 'center', justifyContent: 'center' },
 });

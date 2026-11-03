@@ -1,7 +1,7 @@
 import { Platform, StyleSheet, View } from 'react-native';
 
 import { IconSymbol } from '@/components/ui/icon-symbol';
-import { space, type } from '@/constants/tokens';
+import { font, space, type } from '@/constants/tokens';
 
 import { IngredientThumb } from './IngredientThumb';
 import { PressableScale } from './PressableScale';
@@ -55,12 +55,15 @@ export interface SpecRowProps {
   alignAmount?: boolean;
 }
 
-/** The amount column's width at scale 1: a step's note lines up with the names after it (SpecCard). */
-export const SPEC_AMOUNT_WIDTH = 96;
+/** The amount column's width at scale 1: a step's note lines up with the names after it (SpecCard). Every spec board sets it at about 76. */
+export const SPEC_AMOUNT_WIDTH = 80;
 
 /**
- * One line of a spec, readable across the bar: the amount in its own aligned
- * column in ink (the board sets it dark), then the ingredient, then its drawing at the right edge.
+ * One line of a spec, readable across the bar: the amount in its own column,
+ * set big and dark and lined up on the right with its unit small beside it
+ * ("60 ml", every spec board), then the ingredient. A line given an
+ * `ingredientId` also draws the ingredient at the right edge (lists that
+ * want it; the drink and item pages' specs leave it out, as drawn).
  *
  * When the amount has its own action, the line splits into two sibling
  * controls (amount, then ingredient) so no button sits inside another.
@@ -156,10 +159,10 @@ type Sized = { fontSize: number; lineHeight: number };
 /** A text style scaled for service mode (1.25); nothing at 1. */
 const scaled = (t: Sized, scale: number) => (scale === 1 ? undefined : { fontSize: t.fontSize * scale, lineHeight: t.lineHeight * scale });
 
-/** The number in the spec's figures, its unit (when given apart) smaller and muted. */
+/** The number in the spec's figures, big and on the right of its column; its unit (when given apart) smaller and muted. */
 function Amount({ text, unit, scale, style }: { text: string; unit?: string; scale: number; style?: { width: number } }) {
   return (
-    <Spec style={[style, scaled(type.spec, scale)]}>
+    <Spec style={[style, styles.amount, unit ? styles.figure : null, scaled(unit ? { fontSize: type.headline.fontSize, lineHeight: type.body.lineHeight } : type.spec, scale)]}>
       {text}
       {unit ? (
         <Caption tone="muted" style={scaled(type.caption, scale)}>
@@ -171,6 +174,9 @@ function Amount({ text, unit, scale, style }: { text: string; unit?: string; sca
 }
 
 const styles = StyleSheet.create({
+  amount: { textAlign: 'right' },
+  // The number apart from its unit reads at headline size (the boards' 22), on the body's line height so the name beside it lines up.
+  figure: { fontSize: type.headline.fontSize, lineHeight: type.body.lineHeight, ...font.semiBold, fontVariant: ['tabular-nums'] },
   nameLine: { flexDirection: 'row', alignItems: 'baseline', gap: space.sm },
   grow: { flex: 1 },
   roleRight: { flexShrink: 0 },

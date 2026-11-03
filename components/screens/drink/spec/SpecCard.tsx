@@ -74,9 +74,8 @@ export function SpecCard({ itemId, barId, lines, maker, verb = null, methods = [
         amount={amount.value}
         unit={amount.unit || undefined}
         alignAmount={measured}
-        dense
+        // No drawing at the line's end: the spec boards set amounts and names alone (a tap still opens the ingredient).
         ingredient={l.ingredient ?? 'Ingredient'}
-        ingredientId={l.ingredient ? l.ingredientId : undefined}
         role={lineRole(l, layout, underFloat)}
         note={access.prep ? (l.note ?? undefined) : undefined}
         onPress={onLine && l.ingredientId ? () => onLine(l) : undefined}
