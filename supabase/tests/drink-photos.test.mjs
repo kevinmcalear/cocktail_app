@@ -123,6 +123,24 @@ describe('posting a photo', () => {
     assert.ok((await photos(users.poster.client)).every((p) => p.is_mine));
   });
 
+  test('each photo comes with how it lays out the page (20261206410000)', async () => {
+    const zone = { top: 0.05, bottom: 0.4, light: 0.2 };
+    const imageId = await image(users.poster.client, 'laid-out');
+    await db.query('UPDATE public.images SET brightness = 0.82, text_zone = $2, width = 1200, height = 1500 WHERE id = $1', [imageId, zone]);
+    const laid = await post(users.poster.client, { item_id: ids.classic, image_id: imageId });
+    assert.ifError(laid.error);
+    try {
+      const row = (await photos(users.reader.client)).find((p) => p.id === laid.data.id);
+      assert.ok(Math.abs(row.brightness - 0.82) < 1e-6);
+      assert.deepEqual(row.text_zone, zone);
+      assert.deepEqual([row.width, row.height], [1200, 1500]);
+      const plain = (await photos(users.reader.client)).find((p) => p.id === ids.plain);
+      assert.deepEqual([plain.brightness, plain.text_zone], [null, null], 'not read yet: null');
+    } finally {
+      await db.query('DELETE FROM public.drink_photos WHERE id = $1', [laid.data.id]);
+    }
+  });
+
   test('a score only comes from your own ranking of this drink', async () => {
     const theirs = await post(users.poster.client, { item_id: ids.classic, image_id: await image(users.poster.client, 'theirs'), rank_entry_id: ids.readerEntry });
     assert.ok(theirs.error, "someone else's ranking is refused");

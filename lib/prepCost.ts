@@ -8,7 +8,8 @@
  */
 import { lineCostMinor, type PackPrice } from './costing';
 import { density } from './drinkMath';
-import { prepAmounts, prepYield, type PrepDraft } from './prepKinds';
+import type { PrepDraft } from './prepKinds';
+import { prepAmounts, prepYield } from './prepMath';
 
 /** Free in a batch: tap water costs nothing, so it never holds a prep's cost back. */
 const FREE = /^(tap )?water$/i;

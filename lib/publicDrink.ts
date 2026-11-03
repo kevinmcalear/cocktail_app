@@ -68,7 +68,7 @@ export function makerLabel(p: Pick<PublicProfile, 'kind' | 'handle' | 'display_n
 export interface IngredientName {
   name: string;
   brand: boolean;
-  /** A garnish (public_drink_ingredients from 20261206010000; absent before it). */
+  /** A garnish (public_drink_ingredients from 20261206495000; absent before it). */
   garnish?: boolean;
 }
 

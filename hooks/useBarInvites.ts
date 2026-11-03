@@ -13,6 +13,8 @@ export interface BarInvite {
   bar_id: string;
   email: string;
   role_level: number;
+  /** The bar's own role it invites onto (venue_roles.id), when it isn't one of the built-in levels. */
+  venue_role_id: string | null;
   /** What the admin called them, if anything. */
   name: string | null;
   /** A line just for them, under the welcome message in their email. */
@@ -20,7 +22,7 @@ export interface BarInvite {
   created_at: string;
 }
 
-const COLUMNS = 'id, bar_id, email, role_level, name, note, created_at';
+const COLUMNS = 'id, bar_id, email, role_level, venue_role_id, name, note, created_at';
 
 /** One of the signed-in person's own invites, with the venue it's for (my_bar_invites). */
 export interface MyInvite {
@@ -149,15 +151,50 @@ export function useSaveWelcomeMessage(barId: string) {
   });
 }
 
+/** Who an invite email goes to: an email, or a person's page when they were found by name (their email stays on the server). */
+export type InviteTarget = string | { profileId: string };
+
 /**
  * Emails an invite that already exists (send-bar-invite): one email in the
  * venue's look with its welcome message and the person's note, account or not.
  */
 export function useSendInviteEmail(barId: string) {
   return useMutation({
-    mutationFn: (email: string) =>
-      invokeFunction<{ sent: boolean }>('send-bar-invite', { bar_id: barId, email: email.trim().toLowerCase(), site: getAuthSite() }),
+    mutationFn: (to: InviteTarget) =>
+      invokeFunction<{ sent: boolean }>('send-bar-invite', {
+        bar_id: barId,
+        ...(typeof to === 'string' ? { email: to.trim().toLowerCase() } : { profile_id: to.profileId }),
+        site: getAuthSite(),
+      }),
     onSuccess: () => track('invite_sent'),
+    onError: () => {},
+  });
+}
+
+/**
+ * Invites a person found by name (invite_profile_to_bar): the database looks
+ * up their email, so the sender never has it. Resolves to true when it made an
+ * invite, false when they were already on the team and just got the new
+ * built-in role. `roleId` puts them on one of the bar's own roles.
+ */
+export function useInviteProfile(barId: string) {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: async (p: { profileId: string; roleLevel: number; roleId?: string | null }): Promise<boolean> => {
+      const { data, error } = await supabase.rpc('invite_profile_to_bar', {
+        p_profile_id: p.profileId,
+        p_bar_id: barId,
+        p_role_level: p.roleLevel,
+        ...(p.roleId ? { p_role_id: p.roleId } : {}),
+      });
+      if (error) throw error;
+      return data === true;
+    },
+    onSuccess: async () => {
+      await queryClient.invalidateQueries({ queryKey: ['bar', barId] });
+      await queryClient.invalidateQueries({ queryKey: ['bar-members', barId] });
+      await queryClient.invalidateQueries({ queryKey: ['bar-invites', barId] });
+    },
     onError: () => {},
   });
 }
