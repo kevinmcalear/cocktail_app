@@ -12,6 +12,11 @@ export type Sentiment = 'loved' | 'fine' | 'disliked';
 
 export const SENTIMENTS: readonly Sentiment[] = ['loved', 'fine', 'disliked'];
 
+/** The best of someone's list (best first already), for their poster: a drink they disliked is never one of them. */
+export function topThree<T extends { sentiment: Sentiment }>(entries: readonly T[]): T[] {
+  return entries.filter((e) => e.sentiment !== 'disliked').slice(0, 3);
+}
+
 /** "Which was better?": the new drink, the one it's compared with, or too close to call. */
 export type Answer = 'new' | 'old' | 'tie';
 

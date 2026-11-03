@@ -92,10 +92,11 @@ export function MineResults({ query, mine, onEverywhere, commands, palette, show
     if (countKey) onCounts?.(JSON.parse(countKey) as ShowCounts);
   }, [countKey, onCounts]);
 
+  const add = () => router.push(newDrinkHref(capitalize(q), mine.venueId) as never);
+
   if (!found) {
     if (isLoading) return drawn || DRAWN_STATES ? <SearchLoading /> : <Caption tone="muted">Searching…</Caption>;
     const where = mine.venueId ? mine.label : 'your drinks';
-    const add = () => router.push(newDrinkHref(capitalize(q), mine.venueId) as never);
     const title = `Nothing ${mine.venueId ? `at ${mine.label}` : 'in your drinks'} called “${q}”`;
     return (
       <View style={styles.results}>
@@ -178,6 +179,8 @@ export function MineResults({ query, mine, onEverywhere, commands, palette, show
       <NearResults query={q} found={found} shown={shownIds} yours={items} yoursCaption={mine.label} title="" miss={null} show={show} />
       {commands}
       {everywhere}
+      {/* The results end with Add "what you typed" (Prod-phone search, Add B), unless that drink is already here. */}
+      {mine.canAdd && !palette && shows(show, 'drinks') && !groups.drinks.some((i) => foldName(i.name) === foldName(q)) ? <ResultRow title={`Add “${capitalize(q)}” as a new drink`} icon="plus" accentIcon onPress={add} /> : null}
     </View>
   );
 }

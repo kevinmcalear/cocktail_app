@@ -5,12 +5,14 @@ import { IconSymbol } from '@/components/ui/icon-symbol';
 import { font, layout, radius, space, type } from '@/constants/tokens';
 import { labelDate } from '@/lib/makeSteps';
 
-import { LabelCard, type BatchLabel } from './MakeLabel';
+import { LabelCard, type BatchLabel, type useLabelPrint } from './MakeLabel';
 
-export { copyForTape, shareLabel, type BatchLabel } from './MakeLabel';
+export { copyForTape, useLabelPrint, type BatchLabel } from './MakeLabel';
 
 interface MakeDoneProps {
   label: BatchLabel;
+  /** Where the label is drawn, for Print or share label (useLabelPrint). */
+  printing: ReturnType<typeof useLabelPrint>;
   /** Where it goes: its back bar spot ("Fridge 2 · top shelf"), else the prep's storage word. */
   goesIn: string | null;
   /** "It made": typed by whoever made it; the yield learns from it. Null when the prep has no volume or weight yield. */
@@ -21,7 +23,7 @@ interface MakeDoneProps {
 }
 
 /** Make, last screen: when it was made, when to use it by, where it goes, and the label to stick on it. */
-export function MakeDone({ label, goesIn, made, onMade, madeUnit, onClose }: MakeDoneProps) {
+export function MakeDone({ label, printing, goesIn, made, onMade, madeUnit, onClose }: MakeDoneProps) {
   const ds = useDs();
   return (
     <View style={styles.stack}>
@@ -55,7 +57,7 @@ export function MakeDone({ label, goesIn, made, onMade, madeUnit, onClose }: Mak
       </Surface>
       {made !== null ? <Caption tone="muted">{'Came out more or less? Change "It made" and the recipe\'s yield learns from it.'}</Caption> : null}
       <Caption tone="muted" role="heading" style={styles.eyebrow}>LABEL</Caption>
-      <LabelCard label={label} />
+      <LabelCard label={label} pageRef={printing.ref} onPainted={printing.onPainted} />
     </View>
   );
 }

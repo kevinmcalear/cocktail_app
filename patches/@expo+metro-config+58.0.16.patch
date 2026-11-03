@@ -1,5 +1,5 @@
 diff --git a/node_modules/@expo/metro-config/build/serializer/chunking/createLegacyChunkingStrategy.js b/node_modules/@expo/metro-config/build/serializer/chunking/createLegacyChunkingStrategy.js
-index 2e3ff4b..6468d4f 100644
+index 2e3ff4b..a86816a 100644
 --- a/node_modules/@expo/metro-config/build/serializer/chunking/createLegacyChunkingStrategy.js
 +++ b/node_modules/@expo/metro-config/build/serializer/chunking/createLegacyChunkingStrategy.js
 @@ -8,6 +8,12 @@ Object.defineProperty(exports, "createLegacyChunkingStrategy", {
@@ -15,7 +15,7 @@ index 2e3ff4b..6468d4f 100644
  function _isResolvedDependency() {
      const data = require("@expo/metro/metro/lib/isResolvedDependency");
      _isResolvedDependency = function() {
-@@ -118,25 +124,56 @@ function removeEntryDepsFromAsyncChunks(entryChunk, chunks) {
+@@ -118,25 +124,57 @@ function removeEntryDepsFromAsyncChunks(entryChunk, chunks) {
          }
      }
  }
@@ -34,7 +34,8 @@ index 2e3ff4b..6468d4f 100644
 +// is a shared chunk per group of routes (Expo's granular chunking) instead of a list.
 +const ALWAYS_COMMON = [
 +    'lib/techniques/index.ts',
-+    'lib/techniques/data/'
++    'lib/techniques/data/',
++    'components/search/NearPicks.tsx'
 +];
  function extractCommonChunk(chunks, graph, options, strategy) {
 -    const toCompare = [

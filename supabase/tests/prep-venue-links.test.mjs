@@ -38,6 +38,10 @@ const kindOf = (id) => db.query('SELECT generic_id FROM public.items WHERE id = 
 const jobs = () => db.query('SELECT count(*)::int AS n FROM private.item_flavor_jobs').then((r) => r.rows[0].n);
 const inTransaction = async (fn) => {
   await db.query('BEGIN');
+  // The local flavour worker (cron, every 30 s) finishes and deletes jobs while
+  // a test runs, so the queue count can drop under us. Hold other writers off
+  // the queue until the rollback: the count then moves only if we queue a job.
+  await db.query('LOCK TABLE private.item_flavor_jobs IN EXCLUSIVE MODE');
   try {
     await fn();
   } finally {
