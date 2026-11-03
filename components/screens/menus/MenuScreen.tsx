@@ -67,8 +67,7 @@ export function MenuScreen({ menuId }: { menuId: string }) {
       </View>
     );
   }
-  // Only a home menu reads your shelf (Ready, Need limes, the shopping list).
-  // Every drink on it drawn in the bar's own glassware; a home menu in stock glasses.
+  // Only a home menu reads your shelf; drinks draw in the bar's glassware (a home menu's in stock glasses).
   return <DrawingBar barId={menu.barId}>{menu.barId ? <MenuPage menu={menu} shelf={null} /> : <HomeMenuPage menu={menu} />}</DrawingBar>;
 }
 
@@ -88,11 +87,8 @@ function HomeMenuPage({ menu }: { menu: MenuDetail }) {
 
 type PageProps = { menu: MenuDetail; shelf: { match: ShelfMatch; toShopping: () => void; toBuy: number | null } | null };
 
-/**
- * A bar's menu that's on or coming up leads with its cover photo when it has
- * one, and the photo decides light or dark for the whole page (Menu-g-photo-dark,
- * Menu-g-photo-bright). Drafts, past menus and home menus are drawn.
- */
+// A bar's menu that's on or coming up leads with its cover photo, which sets light or dark
+// for the page (Menu-g-photo-dark, Menu-g-photo-bright). Drafts, past and home menus are drawn.
 function MenuPage(props: PageProps) {
   const [now] = useState(() => Date.now());
   const status = menuStatus(props.menu, now);
