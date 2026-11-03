@@ -27,9 +27,14 @@ export function useGuestDrinkAllergens(itemIds: readonly string[]) {
     enabled: ids.length > 0,
     staleTime: 60_000,
     queryFn: async (): Promise<Map<string, GuestDrinkAllergens>> => {
-      const { data, error } = await supabase.rpc('guest_drink_allergens', { p_item_ids: ids.slice(0, 200) });
-      if (error) throw error;
-      return new Map(((data ?? []) as unknown as GuestDrinkAllergens[]).map((d) => [d.item_id, d]));
+      // The function takes 200 ids at a time.
+      const out = new Map<string, GuestDrinkAllergens>();
+      for (let i = 0; i < ids.length; i += 200) {
+        const { data, error } = await supabase.rpc('guest_drink_allergens', { p_item_ids: ids.slice(i, i + 200) });
+        if (error) throw error;
+        for (const d of (data ?? []) as unknown as GuestDrinkAllergens[]) out.set(d.item_id, d);
+      }
+      return out;
     },
   });
 }

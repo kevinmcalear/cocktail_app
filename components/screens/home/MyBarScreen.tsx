@@ -1,5 +1,5 @@
 import { useLocalSearchParams, useRouter } from 'expo-router';
-import { useEffect, useState } from 'react';
+import { useEffect, useState, type ReactNode } from 'react';
 import { FlatList, StyleSheet, useWindowDimensions, View } from 'react-native';
 
 import { Body, Caption, dragDismissesKeyboard, Title, useBreakpoint, useDs, useGutter } from '@/components/ds';
@@ -9,7 +9,8 @@ import { space } from '@/constants/tokens';
 import { useAuthIdentity } from '@/ctx/AuthContext';
 import type { BarItem, ShelfItem } from '@/hooks/useHomeBar';
 import { MAKE_PAGE, makeTab, myBarRows, pairDrinks, pickSection, type DrinkPair, type MakeTab, type MyBarRow, type ShelfSection } from '@/lib/myBarRows';
-import { barSubtitle, shelfCountsLine } from '@/lib/myBarText';
+import { ListNote } from '@/components/ds/ListGroup';
+import { barSubtitle, shelfCountsLine, shelfNote } from '@/lib/myBarText';
 import type { ShelfSort } from '@/lib/pantry';
 
 import { BottlePhotoSheet } from '../bottles/BottlePhotoSheet';
@@ -37,9 +38,11 @@ type ListRow = Row | DrinkPair<Row>;
  * and what those make now or with one more bottle. Nothing the shelf isn't
  * close to: the rest of the drinks are in Search. One virtualized list
  * (lib/myBarRows.ts), so a long shelf or hundreds of drinks only mount what's
- * on screen. An empty shelf starts with the starter (StarterShelf).
+ * on screen. An empty shelf starts with the starter (StarterShelf). It is
+ * Drinks' Shelf at home (Prod-phone shelf): `head` is Drinks' head and
+ * capsule, in place of My Bar's own title, with the shelf's note under it.
  */
-export function MyBarScreen() {
+export function MyBarScreen({ head }: { head?: ReactNode }) {
   const ds = useDs();
   const gutter = useGutter();
   const bottom = useTabBarInset();
@@ -141,9 +144,9 @@ export function MyBarScreen() {
       case 'top':
         return split ? null : (
           <View>
-            <ScreenHeaderSpacer title="My Bar" actions={<ShoppingBasket />} back />
+            {head ?? <ScreenHeaderSpacer title="My Bar" actions={<ShoppingBasket />} back />}
             <View style={styles.top}>
-              <Caption tone="muted">{bar.isLoading ? 'Checking your shelf…' : barSubtitle(bar.canMake.length, toMake.length)}</Caption>
+              {head && !bar.isLoading ? <ListNote icon="place.backbar" text={shelfNote(m.bottles.length, bar.canMake.length)} /> : <Caption tone="muted">{bar.isLoading ? 'Checking your shelf…' : barSubtitle(bar.canMake.length, toMake.length)}</Caption>}
               {bar.error ? <Body tone="muted">Couldn’t load your bar. Try again in a moment.</Body> : null}
             </View>
             <ToBuyStrip />
@@ -226,7 +229,7 @@ export function MyBarScreen() {
   if (started && !leftStarter) {
     return (
       <View style={[styles.screen, { backgroundColor: ds.c.ground }]}>
-        <StarterShelf pantry={m.pantry} onShelf={bar.shelfIds} oneAway={bar.oneAway} ready={bar.canMake.length} bottles={m.bottles.length} bottom={bottom} onToggle={(id, on) => (on ? addIds(id) : removeId(id))} onAdd={addIds} onSearch={() => setAdding('bottles')} onSnap={() => setSnapping(true)} onShowMe={() => setLeftStarter(true)} />
+        <StarterShelf head={head} pantry={m.pantry} onShelf={bar.shelfIds} oneAway={bar.oneAway} ready={bar.canMake.length} bottles={m.bottles.length} bottom={bottom} onToggle={(id, on) => (on ? addIds(id) : removeId(id))} onAdd={addIds} onSearch={() => setAdding('bottles')} onSnap={() => setSnapping(true)} onShowMe={() => setLeftStarter(true)} />
         {sheets}
       </View>
     );
@@ -237,6 +240,7 @@ export function MyBarScreen() {
       <View style={[styles.screen, { backgroundColor: ds.c.ground }]}>
         {overview && cut >= 0 ? (
           <TabletOverview
+            head={head}
             portrait={portrait}
             counts={counts}
             note={bar.isLoading ? 'Checking your shelf…' : null}
@@ -252,10 +256,10 @@ export function MyBarScreen() {
         ) : split ? (
           <>
             {/* The list is a column here (shopping desk-mybar), so no basket. */}
-            <ScreenHeader back />
+            {head ? null : <ScreenHeader back />}
             <View style={[styles.deskHead, { paddingHorizontal: gutter }]}>
               <View style={styles.deskTitle}>
-                <Title>My Bar</Title>
+                {head ?? <Title>My Bar</Title>}
                 <Caption tone="muted">{shelfCountsLine(counts)}</Caption>
               </View>
               <SectionChips sections={m.filled} counts={counts} picked={showing} onPick={(s) => setShow(pickSection(showing, s))} multi />

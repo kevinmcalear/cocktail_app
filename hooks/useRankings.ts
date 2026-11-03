@@ -102,7 +102,7 @@ export function useMyRankList(rankedAsItemId: string | null | undefined) {
   });
 }
 
-const HAD_COLUMNS = `
+export const HAD_COLUMNS = `
   id, item_id, sentiment, had_on, created_at, score,
   item:items!item_id ( name, item_images ( angle, sort_order, is_generated, images ( url ) ) ),
   list:items!ranked_as_item_id ( name ),

@@ -7,6 +7,8 @@ import type { GlassOutline } from '@/lib/sketch/outline';
 import type { SketchGlass } from '@/lib/sketch/types';
 import { supabase } from '@/lib/supabase';
 
+import { GLASS_MODEL_SELECT } from './glassModelSelect';
+
 // Real glasses you can buy (glass_models, supabase/migrations/20261026100000_glass_models.sql):
 // a maker's model and size, a kind of a catalog shape, drawn as one of our
 // glass variants. Row shapes are written by hand until types/ is regenerated.
@@ -33,8 +35,8 @@ export interface GlassModel {
   outline?: GlassOutline | null;
 }
 
-export const GLASS_MODEL_SELECT =
-  'id, maker_profile_id, shape_item_id, glass, variant, name, series, designer, model_code, capacity_ml, height_mm, rim_mm, material, product_url, outline, maker:profiles!glass_models_maker_profile_id_fkey(handle, display_name)';
+// Its home is hooks/glassModelSelect.ts: a bar's glassware reads it on every drawing inside the bar (DrawingBar), without this file's search.
+export { GLASS_MODEL_SELECT };
 
 /** How many glasses a search returns at most. */
 export const GLASS_SEARCH_LIMIT = 40;

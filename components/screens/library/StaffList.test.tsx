@@ -1,4 +1,4 @@
-import { fireEvent, screen } from '@testing-library/react-native';
+import { act, fireEvent, screen } from '@testing-library/react-native';
 
 import { renderWithProviders } from '@/jest.setup';
 
@@ -12,7 +12,23 @@ let mockLinked: { id: string; name: string; classicName: string }[] = [];
 const onNow = new Set(['d1']);
 const past = new Set(['paloma']);
 
-jest.mock('expo-router', () => ({ useRouter: () => ({ push: jest.fn() }) }));
+// The real list, with its last props kept so a test can drop rows on it.
+type MockRow = { itemId: string };
+const mockList: { props: { data: MockRow[]; onDragEnd: (e: { data: MockRow[]; from: number; to: number }) => void }; orders: string[] } = { props: { data: [], onDragEnd: () => {} }, orders: [] };
+jest.mock('react-native-draggable-flatlist', () => {
+  const real = jest.requireActual('react-native-draggable-flatlist');
+  const { createElement, forwardRef } = jest.requireActual('react');
+  return {
+    ...real,
+    __esModule: true,
+    default: forwardRef((props: typeof mockList.props, ref: unknown) => {
+      mockList.props = props;
+      mockList.orders.push(props.data.map((r) => r.itemId).join());
+      return createElement(real.default, { ...props, ref });
+    }),
+  };
+});
+jest.mock('expo-router',() => ({ useRouter: () => ({ push: jest.fn() }) }));
 jest.mock('@/hooks/useDiscover', () => ({
   useDrinkLists: () => ({ data: [{ id: 'catalog-daiquiri', name: 'Daiquiri' }] }),
 }));
@@ -96,4 +112,22 @@ test('every other drink linked to a classic sits under Not ranked yet, and ranki
     itemIds: [...ranked, 'americano'],
     join: [{ itemId: 'americano', rank: null, name: 'Americano', classicName: 'Americano', imageUrl: null }],
   });
+});
+
+test('a drop that leaves the ranking as it was saves nothing and puts the rows back', async () => {
+  mockLinked = [
+    { id: 'daiquiri', name: 'House Daiquiri', classicName: 'Daiquiri' },
+    { id: 'americano', name: 'Americano', classicName: 'Americano' },
+  ];
+  await show(true);
+  const ids = () => mockList.props.data.map((r) => r.itemId);
+  const before = ids();
+  const rows = mockList.props.data;
+  // Under the line, Americano dropped below House Daiquiri: the ranking is the same.
+  const swapped = [...rows.slice(0, -2), rows[rows.length - 1], rows[rows.length - 2]];
+  await act(async () => mockList.props.onDragEnd({ data: swapped, from: rows.length - 2, to: rows.length - 1 }));
+  expect(mockMutate).not.toHaveBeenCalled();
+  await act(async () => new Promise((r) => requestAnimationFrame(() => r(null))));
+  // The list keeps rows where they were dropped until its data's order changes: it gets the drop, then the saved order.
+  expect(mockList.orders.slice(-2)).toEqual([swapped.map((r) => r.itemId).join(), before.join()]);
 });
