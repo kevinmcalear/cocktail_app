@@ -15,7 +15,8 @@ import type { NightPhase } from '@/lib/nightPhase';
 
 import { BeforeDoors, NeedsYou, OffTonight, OnShift } from './BeforeDoors';
 import type { NightHandover } from './NightHandover';
-import { HeroTrio, ListHead, NoteCard, TonightSection } from './TonightParts';
+import { HeroTrio } from './HeroTrio';
+import { ListHead, NoteCard, TonightSection } from './TonightParts';
 import type { useStaffTonight } from './useStaffTonight';
 
 type Staff = ReturnType<typeof useStaffTonight>;

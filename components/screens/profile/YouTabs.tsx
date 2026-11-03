@@ -2,7 +2,8 @@ import { useRouter, type Href } from 'expo-router';
 import { useState, type ReactNode } from 'react';
 import { StyleSheet, View } from 'react-native';
 
-import { Body, Button, Caption, Chip, DrinkImage, Segmented, TextLink } from '@/components/ds';
+import { Body, Button, Caption, Chip, DrinkImage, TextLink } from '@/components/ds';
+import { SegmentedCapsule } from '@/components/ds/SegmentedCapsule';
 import { UserAvatar } from '@/components/ui/UserAvatar';
 import { space } from '@/constants/tokens';
 import type { MyProfile } from '@/hooks/useMyProfile';
@@ -145,7 +146,7 @@ export function YouTabs({ initial, profile, drinks, made, loading, failed }: { i
 
   return (
     <View style={styles.section}>
-      <Segmented accessibilityLabel="Your drinks" variant="capsule" options={TABS} value={tab} onChange={setTab} />
+      <SegmentedCapsule accessibilityLabel="Your drinks" options={TABS} value={tab} onChange={setTab} />
       {profile && rows.length ? <ModeLine mode={mode} shown={shownCount} total={rows.length} onChange={() => router.push('/settings/profile-sharing' as Href)} /> : null}
       {tab === 'had' && hasDates(drinks) ? (
         <View role="radiogroup" accessibilityLabel="Sort" style={styles.chips}>

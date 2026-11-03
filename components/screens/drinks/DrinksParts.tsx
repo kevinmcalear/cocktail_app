@@ -1,7 +1,8 @@
 import type { ReactNode } from 'react';
 import { StyleSheet, View } from 'react-native';
 
-import { Caption, Display, DrinkImage, DsText, IngredientThumb, PencilState, PressableScale, Segmented, Tag, useDs } from '@/components/ds';
+import { Caption, Display, DrinkImage, DsText, IngredientThumb, PencilState, PressableScale, Tag, useDs } from '@/components/ds';
+import { SegmentedCapsule } from '@/components/ds/SegmentedCapsule';
 import { DrinkDrawing } from '@/components/ds/DrinkDrawing';
 import { OutlineRows, RowName, SavedChip } from '@/components/ds/ListGroup';
 import { ScreenHeader } from '@/components/nav/ScreenHeader';
@@ -45,7 +46,7 @@ export function DrinksHead<T extends string>({
         <Display aria-level={1}>Drinks</Display>
       </View>
       {offline ? <SavedChip text={offline} /> : null}
-      <Segmented variant="capsule" options={capsules} value={value} onChange={onChange} accessibilityLabel={capsules.map((c) => c.label).join(', ')} />
+      <SegmentedCapsule options={capsules} value={value} onChange={onChange} accessibilityLabel={capsules.map((c) => c.label).join(', ')} />
     </View>
   );
 }

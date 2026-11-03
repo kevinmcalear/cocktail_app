@@ -1,6 +1,7 @@
 import { useQuery } from '@tanstack/react-query';
 
-import { GLASS_MODEL_SELECT, type GlassModel } from '@/hooks/useGlassModels';
+import { GLASS_MODEL_SELECT } from '@/hooks/glassModelSelect';
+import type { GlassModel } from '@/hooks/useGlassModels';
 import type { GlassOutline } from '@/lib/sketch/outline';
 import type { SketchGlass } from '@/lib/sketch/types';
 import { supabase } from '@/lib/supabase';

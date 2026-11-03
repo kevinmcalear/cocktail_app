@@ -3,8 +3,6 @@ import type { ReactNode } from 'react';
 import { StyleSheet, View } from 'react-native';
 
 import { Caption, Display, DrinkDrawingFor, DsText, PressableScale, TextLink, useDs, type IconName } from '@/components/ds';
-import { DrawingTrio } from '@/components/ds/DrawingTrio';
-import { trioLayout } from '@/components/ds/trioPlaces';
 import { IconSymbol } from '@/components/ui/icon-symbol';
 import { displayFaces, font, palateHues, radius, space } from '@/constants/tokens';
 import { useItemSketch } from '@/hooks/useItemSketch';
@@ -78,18 +76,6 @@ export function TonightSky({ ids }: { ids: readonly string[] }) {
   );
 }
 
-/** Staff Tonight's hero draws the canvas's trio smaller (Prod-today-staff: 131, 169, 131). */
-const HERO = trioLayout(0.82);
-
-/** Three drinks from the list on now, the middle one larger, higher and in front (staff Tonight's hero). */
-export function HeroTrio({ ids, label, onPress }: { ids: readonly string[]; label: string; onPress: () => void }) {
-  return (
-    <PressableScale role="link" accessibilityLabel={label} onPress={onPress} style={styles.trio}>
-      <DrawingTrio ids={ids.slice(0, 3)} layout={HERO} draw={(id, size) => <DrinkDrawingFor itemId={id} size={size} />} />
-    </PressableScale>
-  );
-}
-
 /** A list's name under its eyebrow, with a chevron: tap opens the list. */
 export function ListHead({ eyebrow, name, onPress }: { eyebrow: string; name: string; onPress: () => void }) {
   const ds = useDs();
@@ -160,8 +146,6 @@ const styles = StyleSheet.create({
   caps: { textTransform: 'uppercase', letterSpacing: 1.2 },
   label: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', gap: space.md },
   sky: { position: 'absolute', left: 0, right: 0, top: 0, height: SKY },
-  // The board's hero block: 196 tall, the trio at its top.
-  trio: { height: 196, alignItems: 'center' },
   listHead: { gap: space.xs, alignSelf: 'flex-start' },
   listName: { flexDirection: 'row', alignItems: 'center', gap: space.sm },
   tile: { width: 132, gap: space.xs },

@@ -2,7 +2,8 @@ import { useLocalSearchParams, useRouter, type Href } from 'expo-router';
 import { useState } from 'react';
 import { StyleSheet, View } from 'react-native';
 
-import { Body, Caption, GlassButton, PencilState, PressableScale, Segmented, useDs } from '@/components/ds';
+import { Body, Caption, GlassButton, PencilState, PressableScale, useDs } from '@/components/ds';
+import { SegmentedCapsule } from '@/components/ds/SegmentedCapsule';
 import { ListNote, OutlineRows, RowName } from '@/components/ds/ListGroup';
 import { IconSymbol } from '@/components/ui/icon-symbol';
 import { radius, space, STATUS } from '@/constants/tokens';
@@ -39,7 +40,7 @@ export function YourBarsScreen() {
   const [importing, setImporting] = useState(false);
   return (
     <YouPage title="Your bars" actions={<GlassButton icon="square.and.arrow.down" accessibilityLabel="Bring in from Google Maps" onPress={() => setImporting(true)} />}>
-      <Segmented variant="capsule" options={TABS} value={tab} onChange={setTab} accessibilityLabel="Your bars" />
+      <SegmentedCapsule options={TABS} value={tab} onChange={setTab} accessibilityLabel="Your bars" />
       {tab === 'loved' ? <Loved /> : <Want />}
       <GoogleImportSheet visible={importing} onClose={() => setImporting(false)} />
     </YouPage>

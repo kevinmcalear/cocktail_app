@@ -1,4 +1,4 @@
-import * as Device from 'expo-device';
+import * as Device from '@/lib/realDevice';
 import { Platform } from 'react-native';
 
 import { useToast } from '@/components/ds';
