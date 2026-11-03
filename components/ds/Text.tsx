@@ -55,7 +55,7 @@ export function DsText({ variant = 'body', tone = 'ink', italic, color, align, s
   // A caller that sets a display face on a system variant gets the face's own weight.
   const own = isDisplay ? undefined : StyleSheet.flatten(style);
   // Eyebrows and labels set in capitals are Geist Mono, wherever a screen asks for the capitals.
-  const faceStyle = isDisplay ? nameStyle(ds.displayFace, type[variant], italic) : own?.textTransform === 'uppercase' ? monoFont : FACE[variant];
+  const faceStyle = isDisplay ? nameStyle(ds.displayFace, type[variant], italic) : own?.textTransform === 'uppercase' && (variant === 'caption' || variant === 'label') ? monoFont : FACE[variant];
   const weightReset = own ? faceWeightReset(own.fontFamily, own.fontWeight) : undefined;
   return (
     <RNText

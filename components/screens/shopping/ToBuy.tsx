@@ -3,7 +3,7 @@ import { ScrollView, StyleSheet, View } from 'react-native';
 
 import { Button, Caption, DsText, IngredientThumb, PressableScale, Tag, useDs } from '@/components/ds';
 import { IconSymbol } from '@/components/ui/icon-symbol';
-import { layout, radius, space } from '@/constants/tokens';
+import { font, layout, radius, space } from '@/constants/tokens';
 import { useMyBar } from '@/hooks/useHomeBar';
 import { useShoppingEdit, useShoppingList } from '@/hooks/useShoppingList';
 import { listOpens } from '@/lib/shoppingList';
@@ -93,7 +93,7 @@ const styles = StyleSheet.create({
   basketHit: { width: layout.minTapTarget, height: layout.minTapTarget, alignItems: 'center', justifyContent: 'center' },
   basket: { width: 36, height: 36, borderRadius: radius.pill, alignItems: 'center', justifyContent: 'center' },
   badge: { position: 'absolute', top: 2, right: 0, minWidth: 18, height: 18, paddingHorizontal: 5, borderRadius: radius.pill, alignItems: 'center', justifyContent: 'center' },
-  badgeText: { fontWeight: '600' },
+  badgeText: { ...font.semiBold },
   strip: { gap: space.md, marginTop: space.lg, padding: space.lg, borderRadius: radius.card, borderWidth: 1 },
   stripHead: { flexDirection: 'row', alignItems: 'center', gap: space.sm },
   grow: { flex: 1, minWidth: 0, gap: 1 },
