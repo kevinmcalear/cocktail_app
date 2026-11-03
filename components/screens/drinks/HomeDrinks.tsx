@@ -8,7 +8,7 @@ import { Caption, Chip, PencilState, useDs, useGutter } from '@/components/ds';
 import { usePageColumn } from '@/components/nav/pageColumn';
 import { useTabBarInset } from '@/components/nav/WebTabBar';
 import { WebHead } from '@/components/WebHead';
-import { FilterRow } from '@/components/screens/library/LibraryChips';
+import { FilterRow } from '@/components/screens/drinks/FilterRow';
 import { space } from '@/constants/tokens';
 import { useCollection } from '@/hooks/useCollection';
 import { useDrinkLines } from '@/hooks/useDrinkLines';

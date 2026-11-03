@@ -3,14 +3,14 @@ import { StyleSheet, View } from 'react-native';
 
 import { Button, Chip } from '@/components/ds';
 import { ListGroup, ListRow } from '@/components/ds/ListGroup';
-import { FilterRow } from '@/components/screens/library/LibraryChips';
+import { FilterRow } from '@/components/screens/drinks/FilterRow';
 import { space } from '@/constants/tokens';
 import { useItemLocations } from '@/hooks/useBackBar';
 import { useStockOnHand } from '@/hooks/useStockCounts';
 import { useTonight } from '@/hooks/useTonight';
 import { useTonightPrep } from '@/hooks/useTonightPrep';
 import { bottleKind, bottleLine, countText, isLow, orderSummary, orderText } from '@/lib/drinksTab';
-import type { Show } from '@/lib/libraryFilters';
+import type { Show } from '@/lib/drinksFilters';
 import { shareText } from '@/lib/shareLink';
 import { onHandByItem, parByItem } from '@/lib/stock';
 import type { SearchItem } from '@/types/search';

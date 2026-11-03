@@ -2,7 +2,7 @@ import assert from 'node:assert/strict';
 
 import type { MenuSummary } from '@/types/menus';
 
-import { filterGroups, methodWord, isGarnishLine, itemIdOf, menuDrinks, menuState, parseShow, prepGroup, tileLine, venueShelves, yieldText } from './libraryFilters';
+import { filterGroups, methodWord, isGarnishLine, itemIdOf, menuDrinks, menuState, parseShow, prepGroup, tileLine, venueShelves, yieldText } from './drinksFilters';
 
 assert.equal(parseShow(undefined, true), 'all');
 assert.equal(parseShow('staff', true), 'staff');

@@ -1,7 +1,7 @@
 import { useMemo, useState } from 'react';
 
-import { useTileLines } from '@/components/screens/library/useTileLines';
-import { useLibraryView } from '@/components/screens/library/useLibraryView';
+import { useRowLines } from '@/components/screens/drinks/useRowLines';
+import { useDrinksView } from '@/components/screens/drinks/useDrinksView';
 import { useActiveVenue } from '@/hooks/useActiveVenue';
 import { useCapabilities } from '@/hooks/useCapabilities';
 import { useGuestDrinkAllergens } from '@/hooks/useGuestAllergies';
@@ -15,7 +15,7 @@ import { usePrepFacts, useVenueShelves } from '@/hooks/useVenueShelves';
 import { venueContextIds } from '@/lib/barContextFilter';
 import { CAPSULE_SHOW, capsuleChips, capsuleOf, onNowSub, serviceTag, type StaffCapsule } from '@/lib/drinksTab';
 import type { ItemCategory } from '@/lib/itemRoutes';
-import { BATCHED_STYLES, DRINK_CATEGORIES, filterGroups, itemIdOf, menuDrinks, parseShow, PREP_GROUPS, TYPE_FILTERS, type Show } from '@/lib/libraryFilters';
+import { BATCHED_STYLES, DRINK_CATEGORIES, filterGroups, itemIdOf, menuDrinks, parseShow, PREP_GROUPS, TYPE_FILTERS, type Show } from '@/lib/drinksFilters';
 import { groupMenus, menuDateLine } from '@/lib/menus';
 import { classicRows } from '@/lib/staffList';
 import { offTonight } from '@/lib/tonight';
@@ -23,15 +23,15 @@ import type { SearchItem } from '@/types/search';
 
 /**
  * The Drinks tab's data at a bar (Prod-phone drinks, staff): the bar's spec
- * book in every view (?show=, lib/libraryFilters.ts) under its capsule, the
+ * book in every view (?show=, lib/drinksFilters.ts) under its capsule, the
  * menu on now for the On now card, each row's line and tag (Off tonight, an
  * allergen that changes the serve), and the counts for the chips. `beside`:
- * the list beside a drink on a desktop holds its own view (useLibraryView).
+ * the list beside a drink on a desktop holds its own view (useDrinksView).
  */
 export function useStaffDrinks(beside: boolean) {
   const { active, isLoading: venuesLoading } = useActiveVenue();
   const activeId = active?.id ?? null;
-  const { view: params, setView } = useLibraryView(beside);
+  const { view: params, setView } = useDrinksView(beside);
   const show = parseShow(params.show, !!activeId || venuesLoading);
   const capsule = capsuleOf(show);
   const contextIds = useMemo(() => venueContextIds(activeId, venuesLoading), [activeId, venuesLoading]);
@@ -91,7 +91,7 @@ export function useStaffDrinks(beside: boolean) {
   const prepKinds = PREP_GROUPS.map((g) => ({ ...g, count: lists.preps.filter((p) => prepFacts[p.id]?.group === g.group).length })).filter((g) => g.count);
   const kind = show === 'preps' ? prepKinds.find((g) => g.value === params.kind) : undefined;
   const inView = lists[show].filter((i) => !kind || prepFacts[i.id]?.group === kind.group);
-  const { lineOf } = useTileLines({ show, rndMenus: byMenu.rndMenus, prepLine: (id) => prepFacts[id]?.line ?? null, needsOf: kit.needsOf });
+  const { lineOf } = useRowLines({ show, rndMenus: byMenu.rndMenus, prepLine: (id) => prepFacts[id]?.line ?? null, needsOf: kit.needsOf });
   const count = (value: Show) => (value === 'staff' ? classicRows(staff.data ?? [], linked.data ?? []).length : lists[value].length);
   const groups = filterGroups(!!activeId, canCost);
 

@@ -181,7 +181,9 @@ export function myBarRows<B extends ShelfBottle, D extends Drink, G extends Grou
   const picked = (s.show ?? []).filter((k) => sizes[k] > 0);
   const on = (k: ShelfSection) => !picked.length || picked.includes(k);
   if (SHELF_SECTIONS.filter((k) => sizes[k] > 0).length > 1) rows.push({ kind: 'filters', key: 'filters' });
-  const extras = (['lab', 'preps', 'kit'] as const).filter((k) => more[k] > 0 && on(k));
+  // Made at home straight under the bottles, as the Drinks board's Shelf draws them (Prod-phone shelf); then the rest.
+  const extras = (['lab', 'kit'] as const).filter((k) => more[k] > 0 && on(k));
+  const madeHere = more.preps > 0 && on('preps');
   if (s.bottles.length && on('bottles')) {
     const arranged = arrangeShelf(s.bottles, s.sort, s.query);
     const cols = Math.max(1, s.cols);
@@ -211,6 +213,7 @@ export function myBarRows<B extends ShelfBottle, D extends Drink, G extends Grou
     flush();
     rows.push({ kind: 'shelf-foot', key: 'shelf-foot', found: arranged.length, foldable: !searching && !picked.length && arranged.length > fold });
   }
+  if (madeHere) rows.push({ kind: 'preps', key: 'preps' });
   if (on('fridge')) rows.push({ kind: 'pantry', key: 'pantry' });
   for (const k of extras) rows.push({ kind: k, key: k });
   const empty = (['lab', 'preps', 'kit'] as const).filter((k) => !more[k]);

@@ -129,7 +129,9 @@ function IngredientPage({ ingredient, lines, drinks, bottles, pictures: batchPic
   // A technical ingredient (xanthan) reads like the technique library, with where to buy it.
   const technical = !isPrep && !!technicalIngredientFor(ingredient.name);
   const bottleTiles = useBottleTiles(ingredient);
-  const facts = (isPrep ? prepFacts(prep) : bottleTiles).map((f) => ({ label: f.label, value: String(f.value) }));
+  // A bottle's Kind of is the third fact, linking up the family (board Item-page).
+  const kindFact = !isPrep && bottleTiles.length && ingredient.generic ? [{ label: 'Kind of', value: ingredient.generic.name, onPress: () => router.push(`/ingredient/${ingredient.generic!.id}` as never) }] : [];
+  const facts = [...(isPrep ? prepFacts(prep) : bottleTiles), ...kindFact].map((f) => ({ ...f, value: String(f.value) }));
   if (scanned) facts.unshift(...scannedFacts(scanned, scanned.madeBy ? makers[scanned.madeBy] : undefined, prep?.shelf_life_hours ?? null, drinks));
   // Anyone who can read a prep's recipe can edit it: when other drinks use it, or it isn't
   // theirs to change, the editor asks at Save (prep-prep-edit-shared, AskAtSave).
@@ -147,7 +149,7 @@ function IngredientPage({ ingredient, lines, drinks, bottles, pictures: batchPic
   const eyebrow = scanned ? 'House-made · scanned from a label' : isPrep ? ['House-made', prep?.actions?.[0]].filter(Boolean).join(' · ') : (ingredient.generic?.name ?? (ingredient.ingredient_role === 'product' ? 'Bottle' : 'Ingredient'));
   // One action at most: Log batch, for whoever can read the recipe.
   const logLabel = `Log batch · ${size.makes}`;
-  const action = showRecipe ? <Button label={logLabel} size="lg" onPress={log} /> : null;
+  const action = showRecipe ? <Button label={logLabel} variant="ink" size="lg" onPress={log} /> : null;
   // On an Android phone it's the extended FAB (And-item-house-creator-*).
   const fab = showRecipe && Platform.OS === 'android' ? ({ label: 'Log batch', accessibilityLabel: logLabel, icon: 'plus', onPress: log } as const) : null;
 
@@ -165,7 +167,7 @@ function IngredientPage({ ingredient, lines, drinks, bottles, pictures: batchPic
       {team ? <BehindTheBar item={ingredient} names={lines.map((l) => l.name)} drinks={drinks} used={used} from={from} canEditItem={canEdit} houseMade={lines.length > 0} /> : null}
       {isPrep || technical ? null : <WhereItLives itemId={ingredient.id} itemName={ingredient.name} readOnly={offerEdit} />}
       {technical ? null : <ForTheBar item={ingredient} houseMade={lines.length > 0} canEditItem={canEdit} whereRow={isPrep} editable={offerEdit} allergensRow={!team || !lines.length} />}
-      <AroundIt ingredient={ingredient} bottles={bottles} isPrep={isPrep} />
+      <AroundIt ingredient={ingredient} bottles={bottles} isPrep={isPrep} kindInFacts={kindFact.length > 0} />
       {/* Goes with: kept and redrawn by the Learning lane (board Kept-pairings). */}
       <PairsWith itemId={ingredient.id} name={ingredient.name} />
       {technical ? <WhereToBuy name={ingredient.name} /> : null}

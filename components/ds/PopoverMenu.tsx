@@ -1,5 +1,5 @@
-import { useEffect, useState, type ComponentRef, type ReactNode } from 'react';
-import { Keyboard, Modal, Platform, Pressable, ScrollView, StyleSheet, useWindowDimensions, View } from 'react-native';
+import { useEffect, type ReactNode } from 'react';
+import { Modal, Platform, Pressable, ScrollView, StyleSheet, useWindowDimensions, View } from 'react-native';
 
 import { IconSymbol } from '@/components/ui/icon-symbol';
 import { font, layout, radius, space } from '@/constants/tokens';
@@ -11,13 +11,9 @@ import { PressableScale } from './PressableScale';
 import { Body, Caption } from './Text';
 import { useDs } from './theme';
 
-/** Where the button that opens the menu sits in the window. */
-export interface Anchor {
-  x: number;
-  y: number;
-  width: number;
-  height: number;
-}
+import type { Anchor } from './usePopover';
+
+export { usePopover, type Anchor } from './usePopover';
 
 export interface PopoverItem {
   label: string;
@@ -29,6 +25,8 @@ export interface PopoverItem {
   checked?: boolean;
   /** A picture before the label: a venue's mark in the venue menu's Switch. */
   leading?: ReactNode;
+  /** A picture after the label: the venue menu's mark at the row's right (board C8). */
+  trailing?: ReactNode;
   onPress: () => void;
 }
 
@@ -142,6 +140,7 @@ function Row({ item, onClose }: { item: PopoverItem; onClose: () => void }) {
         <Body>{item.label}</Body>
         {item.detail ? <Caption tone="muted">{item.detail}</Caption> : null}
       </View>
+      {item.trailing}
       {item.count == null ? null : (
         <Body color={ds.c.muted} style={styles.count}>
           {item.count}
@@ -149,27 +148,6 @@ function Row({ item, onClose }: { item: PopoverItem; onClose: () => void }) {
       )}
     </PressableScale>
   );
-}
-
-/** Open and close a PopoverMenu from a button: measure the button, then hang the menu from it. */
-export function usePopover() {
-  const [anchor, setAnchor] = useState<Anchor | null>(null);
-  const open = (target: ComponentRef<typeof View> | null) => {
-    // Open at once, unseen, then place it when the measure comes back. The menu
-    // takes the focus, so a keyboard that's up goes down first and the button
-    // (a search field's place token) moves with it: measure once it has.
-    // ponytail: a fixed wait for the keyboard; listen for keyboardDidHide if it ever lands early.
-    const web = Platform.OS === 'web' && typeof document !== 'undefined';
-    const typing = web ? document.activeElement instanceof HTMLInputElement : Keyboard.isVisible();
-    if (web && typing) (document.activeElement as HTMLElement).blur();
-    else Keyboard.dismiss();
-    setAnchor({ x: 0, y: 0, width: 0, height: 0 });
-    // Only while it's still open: a tap outside during the wait has closed it.
-    const measure = () => target?.measureInWindow((x: number, y: number, width: number, height: number) => setAnchor((was) => (was ? { x, y, width, height } : null)));
-    if (typing) setTimeout(measure, 320);
-    else measure();
-  };
-  return { anchor, open, close: () => setAnchor(null) };
 }
 
 const styles = StyleSheet.create({

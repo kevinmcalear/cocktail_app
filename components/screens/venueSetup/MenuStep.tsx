@@ -27,14 +27,14 @@ function ClassicRow({ classic, ticked, have, onToggle }: { classic: DrinkList; t
       aria-checked={on}
       aria-disabled={have}
       disabled={have}
-      accessibilityLabel={have ? `${classic.name}, already in your Library` : classic.name}
+      accessibilityLabel={have ? `${classic.name}, already in your drinks` : classic.name}
       onPress={onToggle}
       style={[styles.row, { borderBottomColor: ds.c.line }]}
     >
       <DrinkImage itemId={classic.id} accessibilityLabel={classic.name} radius="control" thumb sketchDetail="thumb" style={styles.drawing} />
       <View style={styles.flex}>
         <Body numberOfLines={1}>{classic.name}</Body>
-        {have ? <Caption tone="muted">In your Library</Caption> : null}
+        {have ? <Caption tone="muted">In your drinks</Caption> : null}
       </View>
       <View style={[styles.box, on ? { backgroundColor: have ? ds.c.lineStrong : ds.accentFill.fill } : { borderColor: ds.c.lineStrong, borderWidth: 2 }]}>
         {on ? <IconSymbol name="checkmark" size={14} color={have ? ds.c.ink : ds.accentFill.text} /> : null}
