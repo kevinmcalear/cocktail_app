@@ -10,7 +10,7 @@ import { useDrinkOnMenu } from '@/hooks/useDrinkOnMenu';
 import type { GlassFillResult } from '@/hooks/useGlassFill';
 import { usePricingSettings } from '@/hooks/usePricing';
 import { useStockOnHand } from '@/hooks/useStockCounts';
-import { useItemVersions } from '@/hooks/useVersions';
+import { useLatestVersion } from '@/hooks/useVersions';
 import { formatPct, margin } from '@/lib/costing';
 import { fillWords } from '@/lib/glassFill';
 import { formatMoney, priceMinor } from '@/lib/money';
@@ -47,7 +47,7 @@ export function BarRows({ item, barId, barName, lines, fill, onGlass, creator, c
   const router = useRouter();
   const [open, setOpen] = useState<'history' | 'cost' | null>(null);
   const caps = useCapabilities(barId).data ?? [];
-  const latest = useItemVersions(item.id, caps.includes('specs')).data?.[0];
+  const latest = useLatestVersion(item.id, caps.includes('specs')).data;
   const costs = creator && caps.includes('costs');
   const { data: cost } = useDrinkCost(item.id, barId, costs);
   const { data: pricing } = usePricingSettings(costs ? barId : null);

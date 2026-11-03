@@ -15,7 +15,7 @@ import { useShareSlug } from '@/hooks/useShareSlug';
 import { useSpecAccess } from '@/hooks/useSpecAccess';
 import { useSpecLock, type SpecLock } from '@/hooks/useSpecLock';
 import { useTeamRole } from '@/hooks/useTeamRole';
-import { useItemVersions } from '@/hooks/useVersions';
+import { useLatestVersion } from '@/hooks/useVersions';
 import { useEffectiveRole } from '@/hooks/useViewAs';
 import { makingParts } from '@/lib/drinkParts';
 import { heroPictures } from '@/lib/drinkPhotos';
@@ -108,7 +108,7 @@ function Page({ item, canEdit, adminFix = false, onEdit, pane, openBatch, visito
   const [batchOpen, setBatchOpen] = useState(!!openBatch);
   const [glassOpen, setGlassOpen] = useState(false);
   const caps = useCapabilities(onTeam(viewer) && !preview ? item.bar_id : null).data ?? [];
-  const version = useItemVersions(item.id, caps.includes('specs')).data?.[0]?.version;
+  const version = useLatestVersion(item.id, caps.includes('specs')).data?.version;
   const venue = useActiveVenue().venues.find((v) => v.id === item.bar_id);
   const profile = useBarProfile(preview || venue ? null : item.bar_id).data;
   const barName = lock?.bar.name ?? venue?.name ?? profile?.display_name ?? null;
