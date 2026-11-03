@@ -12,8 +12,10 @@ import { isUnclaimed, useMyClaims, useMyPersonClaim, type Profile } from '@/hook
 import { useMyBlocks, useProfileUserId, useSetBlocked } from '@/hooks/useSafety';
 import { needsOnboarding } from '@/lib/onboarding';
 import { parseProfileRef } from '@/lib/profiles';
+import { siteOrigin } from '@/lib/venueLink';
 
 import { claimBar } from '../profile/ClaimProfile';
+import { useShareLink } from '../profile/useShareLink';
 
 import { useHideBarToggle } from '../kept/useHideBarToggle';
 
@@ -22,12 +24,14 @@ import { ReportSheet } from './ReportSheetLazy';
 export const BLOCK_EFFECT = 'You won’t see each other’s drinks, rankings or profile. They aren’t told you blocked them.';
 
 /**
- * "More" on someone else's profile: report it, and for a person, block
- * them; for a bar, hide it from your Discover. Signed in only. Bars can be
+ * "More" on someone else's profile: Share (`share`), report it, and for a
+ * person, block them; for a bar, hide it from your Discover. Share lives in
+ * here, not beside it (Kevin's C12, 3 Nov); where there's no More (signed
+ * out, your own page, a private one) Share is the one button. Signed in only. Bars can be
  * reported but not blocked: blocks are between people. The claim prompts
  * lead it (Q33, approved 26 Oct 2026), so the page itself stays quiet.
  */
-export function ProfileSafety({ profile }: { profile: Profile }) {
+export function ProfileSafety({ profile, share }: { profile: Profile; share?: boolean }) {
   const { user } = useAuth();
   const myId = user?.id ?? null;
   const [sheet, setSheet] = useState<'menu' | 'report' | 'block' | 'claim' | null>(null);
@@ -35,18 +39,31 @@ export function ProfileSafety({ profile }: { profile: Profile }) {
   const { data: userId } = useProfileUserId(profile.kind === 'person' ? profile.id : null);
   const setBlocked = useSetBlocked();
   const hiding = useHideBarToggle(profile.id, profile.display_name);
+  const shareIt = useShareLink(`${siteOrigin()}/p/${profile.handle}`, profile.display_name, 'profile');
+  const shareLabel = profile.kind === 'person' ? 'Share profile' : 'Share';
   // Not on my own profile, or on a private one (only its owners see those).
-  if (!myId || userId === myId || !profile.is_public) return null;
+  if (!myId || userId === myId || !profile.is_public) return share ? <GlassButton accessibilityLabel={shareLabel} icon="square.and.arrow.up" onPress={() => void shareIt()} /> : null;
   const name = `@${profile.handle}`;
   const canBlock = profile.kind === 'person' && !!userId;
   const bar = profile.kind === 'bar';
-  const does = [claims.length ? 'claim' : null, bar ? (hiding.hidden ? 'show in Discover' : 'hide from Discover') : null, 'report', canBlock ? 'block' : null].filter(Boolean).join(', ');
+  const does = [share ? 'share' : null, claims.length ? 'claim' : null, bar ? (hiding.hidden ? 'show in Discover' : 'hide from Discover') : null, 'report', canBlock ? 'block' : null].filter(Boolean).join(', ');
 
   return (
     <>
       <GlassButton accessibilityLabel={`More for ${name}: ${does}`} icon="ellipsis" onPress={() => setSheet('menu')} />
       {sheet === 'menu' ? (
         <MenuSheet visible onClose={() => setSheet(null)} title={profile.display_name} subtitle={name}>
+          {share ? (
+            <Button
+              label={shareLabel}
+              icon="square.and.arrow.up"
+              variant="secondary"
+              onPress={() => {
+                setSheet(null);
+                void shareIt();
+              }}
+            />
+          ) : null}
           {claims.length ? <View>{claims.map((c) => <ClaimRow key={c.label} {...c} />)}</View> : null}
           {bar ? (
             <Button

@@ -248,10 +248,9 @@ function MenuPageBody({ menu, shelf, cover, now }: PageProps & { cover: string |
               eyebrow={model.eyebrow}
               description={menu.description}
               onBack={sidebar ? null : back}
-              onShare={lens.lens === 'home' ? null : share}
-              // Edit is the one action for the menu team; a draft's is Publish and a home menu's Share, so theirs is a glass pencil.
-              onEdit={(team && draft) || lens.lens === 'home' ? () => go(`/menus/${menu.id}/edit`) : null}
-              pill={lens.lens === 'home' ? { label: 'Share', onPress: share } : team && !draft && status !== 'previous' && !living ? { label: 'Edit', onPress: () => go(`/menus/${menu.id}/edit`) } : null}
+              onShare={share}
+              // Edit, in the …: for a home menu, and for the menu team on a draft or a menu that's on or coming up.
+              onEdit={lens.lens === 'home' || (team && (draft || (status !== 'previous' && !living))) ? () => go(`/menus/${menu.id}/edit`) : null}
               bleed={gutter}
               top={sidebar ? 0 : insets.top}
             />

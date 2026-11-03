@@ -197,7 +197,8 @@ function IngredientPage({ ingredient, lines, drinks, bottles, pictures: batchPic
         save: { saved: onShelf, onToggle: toggleShelf, label: ['Save to your bar', 'Take off your bar'] },
         onShare: () => void shareOrCopy(ingredientUrl(ingredient.id), ingredient.name, 'ingredient'),
         flavorMap: paired ? () => router.push({ pathname: '/flavor-map', params: { with: ingredient.id } }) : undefined,
-        report: { itemId: ingredient.id },
+        // Not for the bar's own team (View as applied): they fix it, they don't report it.
+        report: ingredient.bar_id && venueRole >= 20 ? null : { itemId: ingredient.id },
         onEdit: offerEdit ? onEdit : undefined,
         editLabel: `Edit ${ingredient.name}`,
       }}

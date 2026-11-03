@@ -132,7 +132,6 @@ export function GuestMenuPage({
               onBack={onBack}
               onShare={onShare}
               label={label}
-              pill={null}
               bleed={wide ? Math.max(gutter, (width - COLUMN) / 2 + gutter) : gutter}
               top={insets.top}
             />

@@ -2,8 +2,9 @@ import { useRouter, type Href } from 'expo-router';
 import { useState } from 'react';
 import { Alert, Linking, Platform, ScrollView, StyleSheet, View } from 'react-native';
 
-import { Body, BrandProvider, Button, Caption, DsText, GlassButton, PressableScale, TextLink, useDisplayFaces, useDs } from '@/components/ds';
+import { Body, BrandProvider, Button, Caption, DsText, PressableScale, TextLink, useDisplayFaces, useDs } from '@/components/ds';
 import { PageHeader, usePageColumn } from '@/components/nav/Page';
+import { ItemMoreMenu } from '@/components/screens/drink/ItemMoreMenu';
 import { font, radius, space } from '@/constants/tokens';
 import { useCapabilities } from '@/hooks/useCapabilities';
 import { useVenueMenus } from '@/hooks/useMenus';
@@ -109,10 +110,8 @@ function EventPage({ id }: { id: string }) {
             </View>
           }
           action={
-            <View style={styles.top}>
-              {canEdit && draft.data ? <Button label="Edit" variant="secondary" icon="pencil" onPress={() => setEditing(true)} /> : null}
-              <GlassButton icon="square.and.arrow.up" accessibilityLabel={shared === 'copied' ? 'Link copied' : 'Share'} onPress={share} />
-            </View>
+            // Edit and Share in the one … (Kevin's C12, 3 Nov: "All into the dot menu").
+            <ItemMoreMenu name={event.name} onEdit={canEdit && draft.data ? () => setEditing(true) : undefined} editLabel={`Edit ${event.name}`} onShare={() => void share()} />
           }
         />
         <Body style={styles.when}>{[day, timeLine(event)].filter(Boolean).join(' · ')}</Body>
@@ -183,7 +182,6 @@ const styles = StyleSheet.create({
   screen: { flex: 1 },
   body: { gap: space.sm, paddingBottom: space.xxxl },
   above: { gap: space.sm },
-  top: { flexDirection: 'row', alignItems: 'center', gap: space.sm },
   when: { ...font.semiBold },
   flex: { flex: 1 },
   marks: { flexDirection: 'row' },

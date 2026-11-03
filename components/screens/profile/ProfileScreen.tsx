@@ -7,10 +7,9 @@ import { BackbarTheme, Body, Caption, GlassButton, useBreakpoint, useDs, useGutt
 import { layout, space } from '@/constants/tokens';
 import { useSignedIn } from '@/ctx/AuthContext';
 import { useLikelyPerson } from '@/hooks/useLikelyClaimer';
-import { isUnclaimed, useProfile, type Profile } from '@/hooks/useProfiles';
+import { isUnclaimed, useProfile } from '@/hooks/useProfiles';
 import { recentEntry, useTrackRecent } from '@/hooks/useTrackRecent';
 import { saveClaimReturn } from '@/lib/claimReturn';
-import { siteOrigin } from '@/lib/venueLink';
 
 import { PublicPage } from '../published/PublicChrome';
 import { SignInCard } from '../published/SignInCard';
@@ -22,7 +21,6 @@ import { PublicBarPage } from './PublicBarPage';
 import { SupplierProfile } from './SupplierProfile';
 import { ThisIsMe } from './ThisIsMe';
 import { UnclaimedPerson } from './UnclaimedPerson';
-import { useShareLink } from './useShareLink';
 
 /**
  * A public profile: a person or a bar, the same kind of page (a maker's has
@@ -79,10 +77,9 @@ function ProfilePage({ profileRef, checking }: { profileRef: string | string[] |
       />
       {profile && !gated && !wideBar ? (
         <View style={styles.right}>
-          {/* A claimed person's Share sits beside Follow under their name (Kept-follow); More stays here. */}
-          {profile.kind === 'person' && !unclaimedPerson ? null : <ShareProfile profile={profile} />}
-          {/* A bar's Follow sits under its name (Prod-bar), not up here; Hide is in More (disc-hide-bar). */}
-          <ProfileSafety profile={profile} />
+          {/* A claimed person's Share sits beside Follow under their name (Kept-follow); everyone else's is in More (C12).
+              A bar's Follow sits under its name (Prod-bar), not up here; Hide is in More (disc-hide-bar). */}
+          <ProfileSafety profile={profile} share={profile.kind !== 'person' || unclaimedPerson} />
         </View>
       ) : null}
     </View>
@@ -134,12 +131,6 @@ function ProfilePage({ profileRef, checking }: { profileRef: string | string[] |
       {claimHere && profile ? <ThisIsMe profile={profile} pinned quiet={!likely} /> : null}
     </View>
   );
-}
-
-/** Share profile, top right on a person's or a bar's page (ppl-person, ppl-bar-top). */
-function ShareProfile({ profile }: { profile: Profile }) {
-  const share = useShareLink(`${siteOrigin()}/p/${profile.handle}`, profile.display_name, 'profile');
-  return <GlassButton accessibilityLabel={profile.kind === 'person' ? 'Share profile' : 'Share'} icon="square.and.arrow.up" onPress={() => void share()} />;
 }
 
 /** Room under the page for the pinned This is me and Not me. */
