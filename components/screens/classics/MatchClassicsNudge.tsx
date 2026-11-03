@@ -5,7 +5,7 @@ import { Body, Button, Caption, useDs } from '@/components/ds';
 import { radius, space } from '@/constants/tokens';
 import { useClassicSuggestions } from '@/hooks/useClassics';
 
-/** In Library, for editors: how many drinks look like classics but aren't linked yet. Hidden when none. */
+/** In Drinks (under the list), for editors: how many drinks look like classics but aren't linked yet. Hidden when none. */
 export function MatchClassicsNudge({ barId }: { barId: string }) {
   const ds = useDs();
   const router = useRouter();

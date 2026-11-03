@@ -11,7 +11,7 @@
 import { formatVolume, isGarnishLine, leaveOutFor } from '@/lib/batch';
 import { barMl, lineAmount } from '@/lib/drinkMath';
 import { byPart, type MakingPart } from '@/lib/drinkParts';
-import { BATCHED_STYLES } from '@/lib/libraryFilters';
+import { BATCHED_STYLES } from '@/lib/drinksFilters';
 import { toQuantity } from '@/lib/quantity';
 import type { SpecLine } from '@/lib/spec';
 
