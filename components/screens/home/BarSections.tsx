@@ -20,17 +20,20 @@ export type Jumpable = BarSection | 'kit';
 /** A shelf tile's tap, when My Bar opens the bottle sheet over itself instead of the ingredient page. */
 export const OpenShelfItem = createContext<((item: ShelfItem) => void) | null>(null);
 
-/** A section's title and count, with its actions on the right (a sort, Edit), icons all, and its note under them. */
-export function SectionHead({ section, count, children }: { section: Jumpable; count?: number; children?: ReactNode }) {
+/**
+ * A section's title as the Drinks board labels the Shelf's sections (small
+ * caps, "SPIRITS", "MADE AT HOME"), with its actions on the right (a sort,
+ * Edit), icons all, and its note under them.
+ */
+export function SectionHead({ section, children }: { section: Jumpable; children?: ReactNode }) {
   const note = SECTIONS[section].note;
   return (
     <View style={styles.headBlock}>
       <View style={styles.head}>
         <View style={styles.title}>
-          <Headline role="heading" numberOfLines={1}>
+          <Caption tone="muted" role="heading" numberOfLines={1} style={styles.caps}>
             {SECTIONS[section].title}
-          </Headline>
-          {count ? <Caption tone="muted">{count}</Caption> : null}
+          </Caption>
         </View>
         {children}
       </View>
@@ -130,7 +133,7 @@ interface TileSectionProps {
 export function LabSection({ items, prepUses, cols, editing, onEdit, onAdd, onRemove, style }: TileSectionProps & { prepUses: Record<string, number> }) {
   return (
     <View style={[styles.section, style]}>
-      <SectionHead section="lab" count={items.length}>
+      <SectionHead section="lab">
         <SectionActions section="lab" editing={editing} onEdit={onEdit} canEdit={items.length > 0} />
       </SectionHead>
       <TileGrid cols={cols}>
@@ -147,7 +150,7 @@ export function LabSection({ items, prepUses, cols, editing, onEdit, onAdd, onRe
 export function PrepsSection({ items, keeps, cols, editing, onEdit, onAdd, onRemove, style }: TileSectionProps & { keeps: Record<string, number | null | undefined> }) {
   return (
     <View style={[styles.section, style]}>
-      <SectionHead section="preps" count={items.length}>
+      <SectionHead section="preps">
         <SectionActions section="preps" editing={editing} onEdit={onEdit} canEdit={items.length > 0} />
       </SectionHead>
       <TileGrid cols={cols}>
@@ -179,7 +182,7 @@ export function KitSection({ owned, opens, cols, editing, onEdit, onToggle, onAd
   const ideas = KIT_SUGGESTIONS.filter((id) => !owned.includes(id)).slice(0, room).flatMap((id) => equipmentById(id) ?? []);
   return (
     <View style={[styles.section, style]}>
-      <SectionHead section="kit" count={kit.length}>
+      <SectionHead section="kit">
         <SectionActions section="kit" editing={editing} onEdit={onEdit} canEdit={kit.length > 0} />
       </SectionHead>
       <TileGrid cols={cols}>
@@ -246,6 +249,7 @@ const styles = StyleSheet.create({
   headBlock: { gap: 2 },
   head: { flexDirection: 'row', alignItems: 'center', gap: space.xs },
   title: { flex: 1, flexDirection: 'row', alignItems: 'baseline', gap: space.sm, minWidth: 0 },
+  caps: { textTransform: 'uppercase', letterSpacing: 1.2 },
   chipsScroll: { flexGrow: 0 },
   chips: { flexDirection: 'row', gap: space.sm },
   wrap: { flexWrap: 'wrap' },

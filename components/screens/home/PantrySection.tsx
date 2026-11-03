@@ -47,7 +47,7 @@ export function PantrySection({ items, extras, shelf, onShelf, cols, editing, on
 
   return (
     <View style={[styles.section, style]}>
-      <SectionHead section="fridge" count={count}>
+      <SectionHead section="fridge">
         <SectionActions section="fridge" editing={editing} onEdit={onEdit} canEdit={count > 0} />
       </SectionHead>
       <TileGrid cols={cols}>

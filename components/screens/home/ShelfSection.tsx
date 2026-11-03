@@ -42,7 +42,7 @@ export function ShelfHead({ count, sort, onSort, query, onQuery, editing, onEdit
   const current = SORTS.find((s) => s.value === sort)?.label ?? 'Newest';
   return (
     <View style={styles.section}>
-      <SectionHead section="bottles" count={count}>
+      <SectionHead section="bottles">
         {count > 1 && !editing ? (
           <SectionIcon icon="arrow.up.and.down" color={sort === 'newest' ? undefined : ds.accentText} accessibilityLabel={`Sort bottles, now ${current}`} onPress={() => setSorting(true)} />
         ) : null}
