@@ -49,3 +49,11 @@ assert.equal(doorLines('asked', { ...base, askedAt: '2026-11-01T19:59:30Z' }).no
 // Their link was replaced while they wait: the ask stands, its role isn't known.
 assert.equal(doorLines('asked', { ...base, role: null }).note, 'Asked 20 minutes ago.');
 assert.equal(doorLines('off', { ...base, admin: null, role: null }).title, 'This link is off');
+
+// Asked before and the team said no: it says so and offers no ask the server would refuse.
+assert.equal(doorState({ linkOn: true, approve: true, asked: false, declined: true }), 'declined');
+assert.equal(doorState({ linkOn: true, approve: false, asked: false, declined: true }), 'declined', 'the server refuses before it checks approval');
+assert.equal(doorState({ linkOn: false, approve: true, asked: false, declined: true }), 'off');
+const no = doorLines('declined', base);
+assert.equal(no.note, 'The team said no last time.');
+assert.deepEqual([no.primary, no.secondary], ['Done', 'Use a different account']);
