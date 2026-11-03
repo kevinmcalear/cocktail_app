@@ -7,7 +7,7 @@ import { space } from '@/constants/tokens';
 import type { PrepStep } from '@/hooks/usePrepCard';
 import type { BatchSize } from '@/lib/prepParts';
 import { sourceSite } from '@/lib/prepMath';
-import { splitAmount } from '@/lib/specLines';
+import { splitAmount } from '@/lib/splitAmount';
 import { prepStepGroups } from '@/lib/prepSteps';
 import { scaleRecipe, type RecipeLine } from '@/lib/scale';
 import { useSpecView } from '@/hooks/useSpecView';
