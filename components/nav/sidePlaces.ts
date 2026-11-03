@@ -8,7 +8,8 @@ import { useVenueMenus } from '@/hooks/useMenus';
 import { usePrepData } from '@/hooks/usePrepList';
 import { useShelf } from '@/hooks/useHomeBar';
 import { useMode } from '@/hooks/useMode';
-import { useVenueFeature } from '@/hooks/useVenueFeatures';
+import { useBackBarShown } from '@/hooks/useBackBarShown';
+import { useVenueFeatures } from '@/hooks/useVenueFeatures';
 import { useEffectiveRole } from '@/hooks/useViewAs';
 import type { NavMatch } from '@/lib/shellNav';
 import { groupMenus } from '@/lib/menus';
@@ -17,7 +18,7 @@ import { canSeeTeam } from '@/lib/team';
 
 import { useWebTabs } from './WebTabBar';
 
-/** A row of the desktop sidebar or the tablet rail. */
+/** A row of the desktop sidebar, the tablet rail or the phone's place sheet. */
 export interface Place extends NavMatch {
   label: string;
   icon: IconName;
@@ -27,12 +28,17 @@ export interface Place extends NavMatch {
   short?: string;
 }
 
+/** Settings: the last row of the phone's place sheet, under You (the sidebar has its You footer instead). */
+export const SETTINGS_PLACE: Place = { key: 'settings', label: 'Settings', icon: 'place.settings', path: '/settings' };
+
 /**
- * The sidebar and rail's rows, as board Prod-desk (C7) draws them: the four tabs, then the group of the one place
- * you're in: at a bar, its Menus, House-made, Team and Bar settings; at home, Shelf and Menus. Never both: you switch
- * place from the group's chip (the places menu, board C8). Everything else (Study, Glassware, Back bar, Rota,
- * Brand, Roles, This week, History) opens from Bar settings, Tonight and Search (components/bar/VenueSettingsLinks.tsx).
- * The first round holds House-made, Team and Home's Menus back until it's over (lib/firstRound.ts).
+ * Every place the shell links to, for the one place you're in. `places` is that place's group, as board Prod-desk
+ * (C7) draws the sidebar: at a bar, its Menus, House-made, Team and Bar settings; at home, Shelf and Menus. Never
+ * both: you switch place from the group's chip (the places menu, board C8). `more` is the rest of a bar's pages
+ * (Study, Back bar, Glassware, This week, Rota, Theme, Roles and access): the phone's place sheet lists them under
+ * `places` (board C8, Kevin 3 Nov 2026); on wide screens they open from Bar settings, Tonight and Search
+ * (components/bar/VenueSettingsLinks.tsx). Each waits for the bar's section switch (lib/venueFeatures.ts) and your
+ * capabilities. The first round holds everything but Menus and Bar settings back until it's over (lib/firstRound.ts).
  */
 export function useSidePlaces() {
   const { mode } = useMode();
@@ -40,8 +46,11 @@ export function useSidePlaces() {
   const role = useEffectiveRole(active?.id ?? null);
   const { active: round, hidden } = useFirstRound();
   // House-made opens the prep list: the Prep switch's (lib/venueFeatures.ts).
-  const prep = useVenueFeature('prep');
+  const { has } = useVenueFeatures();
+  const backBar = useBackBarShown();
   const venue = mode === 'home' ? null : active;
+  // Theme is for the people who can change it: Admins, the brand permission (Kevin, 31 Oct).
+  const canTheme = (useCapabilities(venue?.id).data ?? []).includes('brand');
   // Home when you chose it, or when you're on no bar's team. While a bar is still loading, no group yet, so the chip never shows the wrong place.
   const atHome = mode === 'home' || (!venue && !isLoading);
   const settings = venue ? `/settings/bar/${venue.id}` : null;
@@ -53,7 +62,7 @@ export function useSidePlaces() {
       ? [
           // Menus waits for its step in the first round.
           ...(hidden.includes('menus') ? [] : [{ key: 'menus', label: 'Menus', icon: 'place.menus', path: '/menus/all', prefix: '/menus' } as Place]),
-          ...(round || !prep ? [] : [{ key: 'prep', label: 'House-made', short: 'House', icon: 'flask', path: '/prep' } as Place]),
+          ...(round || !has('prep') ? [] : [{ key: 'prep', label: 'House-made', short: 'House', icon: 'flask', path: '/prep' } as Place]),
           // The Team row stays lit on the rota (/team/rota).
           ...(canSeeTeam(role) && !round ? [{ key: 'team', label: 'Team', icon: 'place.team', path: '/team', prefix: '/team' } as Place] : []),
           { key: 'venue-settings', label: 'Bar settings', short: 'Settings', icon: 'place.settings', path: settings, prefix: settings },
@@ -64,7 +73,22 @@ export function useSidePlaces() {
     { key: 'shelf', label: 'Shelf', icon: 'place.mybar', path: '/shelf' },
     ...(round ? [] : [{ key: 'home-menus', label: 'Menus', icon: 'place.menus', path: '/menus/all', prefix: '/menus' } as Place]),
   ];
-  return { venue, atHome, tabs, places: venue ? bar : atHome ? home : [] };
+  const more: Place[] =
+    venue && settings && !round
+      ? [
+          ...(has('study') ? [{ key: 'study', label: 'Study', icon: 'place.study', path: '/test' } as Place] : []),
+          ...(backBar ? [{ key: 'back-bar', label: 'Back bar', icon: 'place.backbar', path: '/back-bar' } as Place] : []),
+          // Glassware is a working page, not a setting (Eddie, 29 Oct 2026): Kit's page, with its glasses' own pages under it.
+          { key: 'glassware', label: 'Glassware', icon: 'wineglass', path: `${settings}/glassware`, prefix: `${settings}/kit/glassware` },
+          // This week lives with Tonight: its switch takes both (app/week/index.tsx).
+          ...(has('tonight') ? [{ key: 'week', label: 'This week', icon: 'place.week', path: '/week' } as Place] : []),
+          // The rota: everyone at the bar reads it.
+          { key: 'rota', label: 'Rota', icon: 'calendar', path: '/team/rota' },
+          ...(canTheme ? [{ key: 'theme', label: 'Theme', icon: 'place.theme', path: `${settings}/theme` } as Place] : []),
+          { key: 'roles', label: 'Roles and access', icon: 'place.roles', path: `${settings}/roles` },
+        ]
+      : [];
+  return { venue, atHome, tabs, places: venue ? bar : atHome ? home : [], more };
 }
 
 /** What the bar's rows say at their right (board Prod-desk): the menu on now, how much house-made is low, the shelf's count. */
@@ -72,8 +96,8 @@ export type SideNotes = Record<string, { text: string; warn?: boolean; label?: s
 
 /**
  * The notes beside the sidebar's rows: "on now" for the menu running, "1 low" for house-made short for tonight (the
- * Prep list's own rule, shared queries with Tonight and Prep), and how many bottles are on the shelf. Only the
- * sidebar and rail ask, so the phone's venue menu never pays for them.
+ * Prep list's own rule, shared queries with Tonight and Prep), and how many bottles are on the shelf. The sidebar
+ * and rail ask, and the phone's place sheet once it's opened, so a phone's header never pays for them.
  */
 export function useSideNotes(venueId: string | null): SideNotes {
   const menus = useVenueMenus(venueId).data;
