@@ -12,7 +12,9 @@ import { useCocktail } from '@/hooks/useCocktails';
 import { useOpenBeside } from '@/hooks/useDrinksSplit';
 import { useItemScores } from '@/hooks/useFlavor';
 import { useGuestDrinkAllergens } from '@/hooks/useGuestAllergies';
-import { useTonight } from '@/hooks/useTonight';
+import { useOffTonight } from '@/hooks/useLivingList';
+import { useVenueMenus } from '@/hooks/useMenus';
+import { groupMenus } from '@/lib/menus';
 import { useMineFacts } from '@/hooks/useMineFacts';
 import { useItemEditAccess } from '@/hooks/useViewAs';
 import { withAlpha } from '@/lib/color';
@@ -83,9 +85,10 @@ export function LibraryPanes({ venueId, items, lineOf, header, empty, footer, ro
   const facts = useMineFacts(venueId, items);
   const { data: scores } = useItemScores(items.filter((i) => i.category === 'Cocktail').map((i) => i.id));
   // Pills (Prod-drinks): "Egg" on a drink with egg in it, "Off tonight" once its take-off time has passed.
-  const { blocks } = useTonight(venueId);
+  const { data: venueMenus } = useVenueMenus(venueId);
   const [now] = useState(() => Date.now());
-  const off = new Set(blocks.flatMap((b) => b.sections.flatMap((s) => s.drinks)).filter((d) => d.offAt && Date.parse(d.offAt) <= now).map((d) => d.id));
+  const onNow = groupMenus((venueMenus ?? []).filter((m) => m.barId === venueId), now).on.map((m) => m.id);
+  const off = new Set(useOffTonight(onNow).data);
   const allergens = useGuestDrinkAllergens(venueId ? items.filter((i) => i.category === 'Cocktail').map((i) => i.id) : []).data;
   // A drink says how it's made ("Dry shake · Coupe", Prod-drinks), with a pill when it's an old drink; without a line, why it's here.
   const why = (i: SearchItem): { caption?: string; tag?: string; tagTone?: TagTone } => {

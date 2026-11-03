@@ -77,6 +77,31 @@ export function useListRows(menuId: string | null | undefined) {
   });
 }
 
+/**
+ * Drinks taken off the menus on now in the last 12 hours and not back on
+ * (Prod-drinks' "Off tonight" pill). A row past its take-off time is deleted
+ * and kept in menu_drinks_removed, so that is where they are read.
+ * ponytail: 12 hours stands for "tonight"; the bar's own clock (useBarClock) would be exact.
+ */
+export function useOffTonight(menuIds: string[]) {
+  const key = [...menuIds].sort();
+  return useQuery({
+    queryKey: ['living-list', 'off-tonight', key],
+    enabled: key.length > 0,
+    queryFn: async (): Promise<string[]> => {
+      const since = new Date(Date.now() - 12 * 3600_000).toISOString();
+      const [gone, pouring] = await Promise.all([
+        supabase.from('menu_drinks_removed').select('item_id').in('menu_id', key).gte('came_off', since),
+        supabase.from('menu_drinks').select('item_id').in('menu_id', key),
+      ]);
+      if (gone.error) throw gone.error;
+      if (pouring.error) throw pouring.error;
+      const on = new Set((pouring.data ?? []).map((r) => r.item_id));
+      return [...new Set((gone.data ?? []).map((r) => r.item_id).filter((id) => !on.has(id)))];
+    },
+  });
+}
+
 /** The runs on this list that ended, latest first. */
 export function useEndedRuns(menuId: string | null | undefined) {
   return useQuery({

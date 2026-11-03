@@ -13,6 +13,7 @@ import { FirstRoundCard, RoundOpened } from '@/components/screens/firstRound/Fir
 import { FilterRow } from '@/components/screens/library/LibraryChips';
 import { useTileLines } from '@/components/screens/library/useTileLines';
 import { LibraryHead, SEGMENT_HOME, segmentOf } from '@/components/screens/library/LibraryHead';
+import { LibraryViewButton, SEGMENT_VIEWS } from '@/components/screens/library/LibraryViewButton';
 import { OnNowCard } from '@/components/screens/library/OnNowCard';
 import { TonightLabel } from '@/components/screens/tonight/TonightParts';
 import { LibraryEmpty } from '@/components/screens/library/LibraryEmpty';
@@ -137,6 +138,9 @@ export function LibraryScreen({ beside = false }: { beside?: boolean }) {
   const pick = (value: Show) => setView({ show: value, menu: undefined, kind: undefined });
   const staffView = show === 'staff' && !!activeId;
   const segment = activeId ? segmentOf(show) : null;
+  // The views behind the header's button: this segment's own, those the venue has (the picked one always shows).
+  const count = (value: Show) => (value === 'staff' ? null : lists[value].length);
+  const views = (segment ? groups.flat().filter((f) => SEGMENT_VIEWS[segment].includes(f.value)) : groups.flat()).filter((f) => f.value === show || f.value === 'all' || f.value === 'staff' || (count(f.value) ?? 1) > 0);
   // The menu on now, and the next one up.
   const grouped = groupMenus(here, now);
   const current = grouped.on[0];
@@ -153,6 +157,7 @@ export function LibraryScreen({ beside = false }: { beside?: boolean }) {
         segment={segment}
         onSegment={(s) => pick(SEGMENT_HOME[s])}
         find={phone || staffView ? undefined : <SearchField query={find} onQuery={setFind} placeholder="Find in Library" />}
+        filter={<LibraryViewButton views={views} show={show} count={count} onPick={pick} />}
       />
       {show === 'all' && current && !q ? (
         <OnNowCard

@@ -19,11 +19,11 @@ const SEGMENTS = [
  * over "Drinks" in the display face, then the Drinks / House-made / Bottles
  * switch. `find` is wide screens' find field, in the header row.
  */
-export function LibraryHead({ gutter, eyebrow, segment, onSegment, find }: { gutter: number; eyebrow: string; segment: LibrarySegment | null; onSegment: (s: LibrarySegment) => void; find?: ReactNode }) {
+export function LibraryHead({ gutter, eyebrow, segment, onSegment, find, filter }: { gutter: number; eyebrow: string; segment: LibrarySegment | null; onSegment: (s: LibrarySegment) => void; find?: ReactNode; filter?: ReactNode }) {
   return (
     <View style={{ gap: space.md }}>
       <View style={{ marginLeft: -gutter, marginRight: -gutter }}>
-        <ScreenHeader actions={find} />
+        <ScreenHeader actions={find || filter ? <View style={{ flexDirection: 'row', alignItems: 'center', gap: space.sm }}>{find}{filter}</View> : undefined} />
       </View>
       <TonightHead eyebrow={eyebrow} title="Drinks" />
       {segment ? <Segmented variant="ink" stretch options={SEGMENTS} value={segment} onChange={onSegment} accessibilityLabel="Drinks" /> : null}
