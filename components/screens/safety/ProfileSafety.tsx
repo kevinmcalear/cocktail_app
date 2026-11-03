@@ -3,7 +3,7 @@ import { useState, type ReactNode } from 'react';
 import { StyleSheet, View } from 'react-native';
 
 import { Body, Button, Caption, GlassButton, Headline, PressableScale, sheetIsDialog, useBreakpoint, useDs, type IconName } from '@/components/ds';
-import { ClaimDialog } from '@/components/screens/claim/ClaimDialog';
+import { ClaimDialog } from '@/components/screens/claim/ClaimDialogLazy';
 import { MenuSheet } from '@/components/screens/menus/MenuSheet';
 import { IconSymbol } from '@/components/ui/icon-symbol';
 import { space } from '@/constants/tokens';

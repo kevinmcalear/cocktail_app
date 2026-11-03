@@ -30,7 +30,9 @@ export function UnclaimedPerson({ profile }: { profile: Profile }) {
   const place = [bar, profile.locality || profile.city].filter(Boolean).join(', ');
   const { drinks, bars, menus } = made.stats;
   const about = (
-    <View style={styles.column}>
+    // The column's flexBasis is a width in the wide row; in the phone's
+    // vertical stack it would pin the height and let a long bio spill.
+    <View style={wide ? styles.column : styles.body}>
       <View style={styles.header}>
         <UserAvatar uri={profile.avatar_url} name={profile.display_name} size={64} />
         <View style={styles.name}>

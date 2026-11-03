@@ -3,7 +3,7 @@ import { useState } from 'react';
 import { StyleSheet, View } from 'react-native';
 
 import { Button, Caption, Tag, sheetIsDialog, useBreakpoint } from '@/components/ds';
-import { ClaimDialog } from '@/components/screens/claim/ClaimDialog';
+import { ClaimDialog } from '@/components/screens/claim/ClaimDialogLazy';
 import { space } from '@/constants/tokens';
 import { useAuth } from '@/ctx/AuthContext';
 import { useMyClaims, type Profile } from '@/hooks/useProfiles';
@@ -52,7 +52,7 @@ export function ClaimProfile({ profile, label = 'Claim this profile' }: { profil
         variant="secondary"
         icon="checkmark"
         accessibilityHint="Prove you work here and take over this page"
-        // A bar's claim is step 2 of venue setup (b03), which carries on while it's checked. A maker's stays on its own screen.
+        // A bar's claim opens its claim screen: a pending claim only, no venue until it's approved (Kevin, 3 Nov 2026).
         onPress={() => (userId && profile.kind === 'bar' ? claimBar(router, profile.id, needsOnboarding(user?.user_metadata)) : open())}
       />
       {claimDialog}
@@ -61,13 +61,14 @@ export function ClaimProfile({ profile, label = 'Claim this profile' }: { profil
 }
 
 /**
- * A bar's claim: venue setup at its claim step. Venue setup can't open during
- * Setup, so from there it goes back to Setup with the bar (?run=), which ends
- * Setup and opens it.
+ * A bar's claim: its claim screen, which sends a pending claim and makes
+ * nothing else. The venue is made, with the claimant as its Admin, when a
+ * moderator approves it (Kevin, 3 Nov 2026); venue setup comes after that.
+ * During Setup it still goes back to Setup with the bar (?run=).
  */
 export function claimBar(router: ReturnType<typeof useRouter>, profileId: string, inSetup: boolean) {
   if (inSetup) router.dismissTo(`/onboarding?run=${profileId}` as Href);
-  else router.push(`/venue-setup?claim=${profileId}` as Href);
+  else router.push(`/p/${profileId}/claim` as Href);
 }
 
 const styles = StyleSheet.create({

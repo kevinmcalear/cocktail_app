@@ -26,7 +26,10 @@ export interface ClaimEvidence {
   email_domain?: string | null;
   site_host?: string | null;
   matches?: boolean;
+  /** Always false now: nothing is approved on the spot (20261206710000). */
   auto?: boolean;
+  /** A work email at the page's own website: the quickest claim to check. */
+  strong_match?: boolean;
   review_reason?: ReviewReason | null;
   /** An Instagram claim checked by a message from the bar's account, not its bio (20261014900000). */
   instagram_dm?: boolean;

@@ -52,7 +52,8 @@ test('setting up a bar: find it and open its page, or add it, and venue setup ta
   // Kept so bar pages know who works in bars (Q33).
   expect(mockSaveAnswer).toHaveBeenCalledWith('owner');
   expect(screen.getByText('Find your bar')).toBeTruthy();
-  expect(screen.getByText('Step 3 of 4')).toBeTruthy();
+  // Find your bar has no count, like venue setup (the owner's steps after it aren't known yet).
+  expect(screen.queryByText(/^Step \d of \d$/)).toBeNull();
 
   await fireEvent.changeText(screen.getByLabelText('Bar name or street'), 'Little Rye');
   await fireEvent.press(screen.getByRole('link', { name: /^Little Rye\. Not claimed yet\. 214 Smith St, Fitzroy · on Cocktail, 12 drinks/ }));
@@ -60,7 +61,7 @@ test('setting up a bar: find it and open its page, or add it, and venue setup ta
 
   await fireEvent.press(screen.getByRole('link', { name: /My bar isn’t here/ }));
   expect(screen.getByText('Add your bar')).toBeTruthy();
-  expect(screen.getByText('Step 4 of 4')).toBeTruthy();
+  expect(screen.queryByText(/^Step \d of \d$/)).toBeNull();
   expect(screen.getByText('Adding Little Rye')).toBeTruthy();
   await fireEvent.press(screen.getByRole('button', { name: 'Set it up' }));
   expect(mockSaveName).toHaveBeenCalledWith({ name: 'Jo Juniper', handle: 'jo.juniper', profileId: null }, expect.anything());
