@@ -6,6 +6,7 @@ import { retryDelay, retryQuery } from './queryRetry';
 for (const e of [{ status: 401 }, { status: 403 }, { status: 404 }, { code: 'PGRST116' }, { code: 'PGRST301' }, { code: '42501' }, { code: '23505' }]) {
   assert.equal(retryQuery(0, e), false, JSON.stringify(e));
 }
+assert.equal(retryQuery(0, { code: '40001' }), true);
 // Overload: once.
 for (const e of [{ status: 544 }, { status: 503 }, { code: '57014' }, { message: 'canceling statement due to statement timeout' }, { message: 'Request timed out' }]) {
   assert.equal(retryQuery(0, e), true, JSON.stringify(e));

@@ -14,8 +14,9 @@ const SLOW = /timeout|timed out|canceling statement|out of memory|too many conne
 export function isFinalFailure(error: unknown): boolean {
   const e = (error ?? {}) as Failure;
   if (typeof e.status === 'number' && e.status >= 400 && e.status < 500 && e.status !== 408 && e.status !== 429) return true;
-  // PGRST* (PostgREST) and 4xxxx / 2xxxx SQLSTATE classes (auth, permission, constraint) are answers.
-  return typeof e.code === 'string' && /^(PGRST|2|4)/.test(e.code) && e.code !== '57014';
+  // PGRST* (PostgREST) and SQLSTATE classes 2x and 4x (auth, permission, constraint, missing) are answers;
+  // class 40 (serialization failure, deadlock) clears by itself.
+  return typeof e.code === 'string' && /^(PGRST|2|4)/.test(e.code) && !e.code.startsWith('40');
 }
 
 /** Overload signs: timeouts, 5xx (544 is Supabase's), statement timeout (SQLSTATE 57014). */
