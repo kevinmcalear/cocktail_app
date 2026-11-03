@@ -102,7 +102,7 @@ beforeEach(() => {
   jest.clearAllMocks();
   mockMatch = null;
   useDrinkWizardStore.setState({ kept: {} });
-  useSettingsStore.setState({ defaultUnit: 'ml' });
+  useSettingsStore.setState({ units: 'ml' });
 });
 
 test('at home the prompt is your own drink (Q14b): what it is and when you saved it, and a version is of yours', async () => {
