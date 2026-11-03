@@ -49,6 +49,13 @@ export function DrinkSky({ liquid, tall }: { liquid: string | null; tall?: boole
   return <LinearGradient colors={sky.colors} locations={sky.stops.map((s) => s / height) as [number, number, number]} style={[styles.sky, { height }]} />;
 }
 
+/** The sky's top edge, for ScrollSky's pull: its first colour. */
+export function DrinkSkyCap({ liquid }: { liquid: string | null }) {
+  const ds = useDs();
+  if (!liquid) return null;
+  return <View style={[StyleSheet.absoluteFill, { backgroundColor: drinkSky(liquid, ds.scheme, ds.c.ground).colors[0] }]} />;
+}
+
 /** A drink's liquid colour for its sky: the drawing's own (a preview's, else the stored one). */
 export function useSkyColour(itemId: string | null, sketch?: SketchInputs | null): string | null {
   const stored = useItemSketch(sketch ? null : itemId).data;

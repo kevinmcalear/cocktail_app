@@ -8,13 +8,14 @@ import { useVenueMenus } from '@/hooks/useMenus';
 import { usePrepData } from '@/hooks/usePrepList';
 import { useShelf } from '@/hooks/useHomeBar';
 import { useMode } from '@/hooks/useMode';
+import { useVenueFeature } from '@/hooks/useVenueFeatures';
 import { useEffectiveRole } from '@/hooks/useViewAs';
 import type { NavMatch } from '@/lib/shellNav';
 import { groupMenus } from '@/lib/menus';
 import { buildPrepList, DEFAULT_SERVES, tonightAt6 } from '@/lib/prep';
 import { canSeeTeam } from '@/lib/team';
 
-import { WEB_TABS } from './WebTabBar';
+import { useWebTabs } from './WebTabBar';
 
 /** A row of the desktop sidebar or the tablet rail. */
 export interface Place extends NavMatch {
@@ -38,19 +39,21 @@ export function useSidePlaces() {
   const { active, isLoading } = useActiveVenue();
   const role = useEffectiveRole(active?.id ?? null);
   const { active: round, hidden } = useFirstRound();
+  // House-made opens the prep list: the Prep switch's (lib/venueFeatures.ts).
+  const prep = useVenueFeature('prep');
   const venue = mode === 'home' ? null : active;
   // Home when you chose it, or when you're on no bar's team. While a bar is still loading, no group yet, so the chip never shows the wrong place.
   const atHome = mode === 'home' || (!venue && !isLoading);
   const settings = venue ? `/settings/bar/${venue.id}` : null;
 
-  // The four tabs, the same in both modes.
-  const tabs: Place[] = WEB_TABS.map((t) => ({ key: t.name, label: t.label, icon: t.icon, path: t.path, tab: true }));
+  // The four tabs, without Tonight at a venue that hasn't switched it on.
+  const tabs: Place[] = useWebTabs().map((t) => ({ key: t.name, label: t.label, icon: t.icon, path: t.path, tab: true }));
   const bar: Place[] =
     venue && settings
       ? [
           // Menus waits for its step in the first round.
           ...(hidden.includes('menus') ? [] : [{ key: 'menus', label: 'Menus', icon: 'place.menus', path: '/menus/all', prefix: '/menus' } as Place]),
-          ...(round ? [] : [{ key: 'prep', label: 'House-made', short: 'House', icon: 'flask', path: '/prep' } as Place]),
+          ...(round || !prep ? [] : [{ key: 'prep', label: 'House-made', short: 'House', icon: 'flask', path: '/prep' } as Place]),
           // The Team row stays lit on the rota (/team/rota).
           ...(canSeeTeam(role) && !round ? [{ key: 'team', label: 'Team', icon: 'place.team', path: '/team', prefix: '/team' } as Place] : []),
           { key: 'venue-settings', label: 'Bar settings', short: 'Settings', icon: 'place.settings', path: settings, prefix: settings },

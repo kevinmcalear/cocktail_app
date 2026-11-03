@@ -1,6 +1,6 @@
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 
-import { readFound, SHELF_KEY, useShelfEdit } from '@/hooks/useHomeBar';
+import { readFound, SHELF_KEY, useSetFillLevel, useShelfEdit, type FillLevel } from '@/hooks/useHomeBar';
 import { barSection } from '@/lib/barSections';
 import type { ShoppingRow, ShoppingSource } from '@/lib/shoppingList';
 import { supabase } from '@/lib/supabase';
@@ -185,4 +185,25 @@ export function useShoppingEdit() {
   });
 
   return { add, tick, clear, remove, retag };
+}
+
+/**
+ * How much is left in a bottle, as one control: Running low also puts it on the
+ * shopping list, and moving off Running low takes it off again (the list's
+ * running_low flag, until the list reads fill_level itself).
+ */
+export function useChooseFillLevel(item: { id: string; name: string; fillLevel?: FillLevel | null }) {
+  const rows = useShoppingList().data ?? [];
+  const edit = useShoppingEdit();
+  const setLevel = useSetFillLevel();
+  const low = rows.find((r) => r.itemId === item.id && r.source === 'running_low' && !r.gotAt);
+  // A bottle already marked running low on the list, before levels, reads as Running low.
+  const level = item.fillLevel ?? (low ? 'low' : null);
+  const choose = (next: FillLevel) => {
+    const to = next === level ? null : next;
+    setLevel.mutate({ itemId: item.id, level: to });
+    if (to === 'low') edit.add.mutate([{ itemId: item.id, name: item.name, source: 'running_low' }]);
+    else if (low) edit.remove.mutate(low.id);
+  };
+  return { level, choose };
 }

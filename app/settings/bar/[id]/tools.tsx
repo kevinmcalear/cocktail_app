@@ -1,5 +1,6 @@
 import { Stack, useLocalSearchParams } from 'expo-router';
 
+import { BarFeatureGate } from '@/components/bar/BarFeatureGate';
 import { VenueBrandProvider } from '@/components/nav/VenueBrandProvider';
 import { KitToolsScreen } from '@/components/screens/venue/KitToolsScreen';
 
@@ -9,7 +10,11 @@ export default function ToolsRoute() {
   return (
     <VenueBrandProvider barId={id}>
       <Stack.Screen options={{ headerShown: false }} />
-      {id ? <KitToolsScreen barId={id} /> : null}
+      {id ? (
+        <BarFeatureGate barId={id} feature="advanced">
+          <KitToolsScreen barId={id} />
+        </BarFeatureGate>
+      ) : null}
     </VenueBrandProvider>
   );
 }

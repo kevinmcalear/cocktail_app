@@ -41,6 +41,12 @@ jest.mock('@/hooks/useSearchMine', () => ({ useSearchMine: () => ({ venueId: 'ca
 // The notes beside the rows: one menu on now, no house-made low.
 jest.mock('@/hooks/useMenus', () => ({ useVenueMenus: () => ({ data: [{ id: 'm1', name: 'Autumn', barId: 'caretakers', kind: 'menu', startsAt: '2020-01-01T00:00:00Z', endsAt: null, itemIds: [] }] }) }));
 jest.mock('@/hooks/usePrepList', () => ({ usePrepData: () => ({ data: undefined }) }));
+// The venue's switches (lib/venueFeatures.ts): all on unless a test turns some off.
+let mockOff: string[] = [];
+jest.mock('@/hooks/useVenueFeatures', () => ({
+  useVenueFeatures: () => ({ ready: true, on: [], has: (k: string) => !mockOff.includes(k), home: mockOff.includes('tonight') ? '/drinks' : '/' }),
+  useVenueFeature: (k: string) => !mockOff.includes(k),
+}));
 const mockPush = jest.fn();
 
 // The keyboard test lends the sidebar a document; take it back once every render has unmounted.
@@ -54,9 +60,17 @@ beforeEach(() => {
   mockRole = 40;
   mockCaps = ['edit_drinks', 'brand'];
   mockMode = 'venue';
+  mockOff = [];
   mockActive = mockVenue;
   mockLoading = false;
   mockSetMode.mockClear();
+});
+
+test('a venue with Tonight and Prep switched off: three tabs and no House-made, nothing in their place', async () => {
+  mockPathname = '/drinks';
+  mockOff = ['tonight', 'prep'];
+  await renderWithProviders(<WebSideNav />);
+  expect(links()).toEqual(['Drinks', 'Discover', 'You', 'Autumn, on now', 'Team', 'Bar settings', 'You: Kevin M., Admin at Caretakers']);
 });
 
 test('venue mode lists search, the four tabs and the venue pages, marking the current one', async () => {
