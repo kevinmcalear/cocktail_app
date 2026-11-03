@@ -1,4 +1,3 @@
-import { Image } from 'expo-image';
 import { memo, useEffect, useId, useState, type ComponentProps } from 'react';
 import { PixelRatio, StyleSheet, View } from 'react-native';
 import Animated, { Easing, useAnimatedStyle, useReducedMotion, useSharedValue, withDelay, withRepeat, withSequence, withTiming, type SharedValue } from 'react-native-reanimated';
@@ -6,11 +5,11 @@ import Svg, { Defs } from 'react-native-svg';
 
 import { boundsOf, GLASS_BANDS, type Scene, type SceneEl } from '@/lib/sketch/scene';
 import { inBarGlassCached } from '@/lib/sketch/barGlass';
-import { glowScene } from '@/lib/sketch/passes';
-import { sceneToSvg } from '@/lib/sketch/svg';
+import { GLOW_STAGES } from '@/lib/sketch/passes';
 import type { SketchInputs } from '@/lib/sketch/types';
 
 import { useDrawingGlasses } from './drawingGlasses';
+import { Glow, glowUris, type GlowTimes, type GlowUris } from './SketchGlow';
 import { pencilScene } from './PencilState';
 import { defsFor, draw, nightOf, SceneSvg, sceneFor, type SketchDetail } from './SketchDrawing';
 import { useDs } from './theme';
@@ -35,6 +34,11 @@ const BEATS: Record<Stage['name'], Beat> = {
   finish: { at: 2850, dur: 450, move: 'fade' },
 };
 const TOTAL = 3400;
+// A part's glow comes up as the part does: the drink over its spread, the garnish in the first third of its landing (as the garnish itself).
+const GLOW_TIMES = Object.fromEntries(GLOW_STAGES.map((s) => {
+  const { at, dur, move } = BEATS[s];
+  return [s, { from: at / TOTAL, to: (at + (move === 'land' ? dur / 3 : dur)) / TOTAL }];
+})) as GlowTimes;
 /** Each band of the glass's pencil fades in over this share of the glass's time; they start one after another, rim first. */
 const BAND_SHARE = 0.25;
 const BUBBLE_MS = 1500;
@@ -189,29 +193,10 @@ function sameInputs(inputs: SketchInputs): SketchInputs {
   return inputs;
 }
 
-// Night's soft glow of the drink behind the drawing (as DrinkDrawing paints it), one picture per night scene.
-const glows = new WeakMap<Scene, string>();
-function glowUri(night: Scene): string {
-  let out = glows.get(night);
-  if (!out) glows.set(night, (out = `data:image/svg+xml;base64,${btoa(sceneToSvg(glowScene(night)))}`));
-  return out;
-}
-
-/** The glow, coming up with the drink as it spreads in (`t` absent: there already). */
-function Glow({ uri, side, t }: { uri: string; side: number; t?: SharedValue<number> }) {
-  const { at, dur } = BEATS.liquid;
-  const style = useAnimatedStyle(() => ({ opacity: t ? Math.min(1, Math.max(0, (t.get() * TOTAL - at) / dur)) : 1 }));
-  return (
-    <Animated.View testID="stage-glow" style={[styles.fill, style]}>
-      <Image source={{ uri }} style={[styles.fill, styles.glow]} blurRadius={Math.max(4, side / 12)} contentFit="contain" cachePolicy="memory" accessible={false} />
-    </Animated.View>
-  );
-}
-
 /** How long the still drawing sits under the finished layers before they go: time for its picture to decode. */
 const HANDOVER_MS = 400;
 
-const AnimatedScene = memo(function AnimatedScene({ scene, play, delay, glow }: { scene: Scene; play: number; delay: number; glow: string | null }) {
+const AnimatedScene = memo(function AnimatedScene({ scene, play, delay, glow }: { scene: Scene; play: number; delay: number; glow: GlowUris | null }) {
   const u = useId().replace(/[^A-Za-z0-9]/g, '');
   const reduceMotion = useReducedMotion();
   const t = useSharedValue(reduceMotion ? 1 : 0);
@@ -247,7 +232,7 @@ const AnimatedScene = memo(function AnimatedScene({ scene, play, delay, glow }: 
   const flat = scene.els.filter((el) => el.k !== 'stage');
   return (
     <View style={styles.fill} onLayout={(e) => setFrame({ w: e.nativeEvent.layout.width, h: e.nativeEvent.layout.height })} aria-hidden>
-      {glow && (still || place) ? <Glow uri={glow} side={side} t={still ? undefined : t} /> : null}
+      {glow && (still || place) ? <Glow glow={glow} side={side} t={still ? undefined : t} times={GLOW_TIMES} /> : null}
       {still ? <SceneSvg scene={scene} bare /> : null}
       {layers && flat.length ? <Piece els={flat} u={u} place={layers} size={scene.size} /> : null}
       {layers ? scene.els.map((el, i) => (el.k === 'stage' ? <StageLayer key={i} el={el} size={scene.size} t={t} bubble={bubble} place={layers} u={u} /> : null)) : null}
@@ -282,10 +267,9 @@ export const AnimatedSketch = memo(function AnimatedSketch({ inputs: stored, see
   const inputs = inBarGlassCached(sameInputs(stored), useDrawingGlasses());
   const scene = sceneFor(inputs, seed, detail, true);
   const shown = pencil ? pencilScene(scene, night) : night ? nightOf(scene, inputs) : scene;
-  return <AnimatedScene scene={shown} play={play} delay={delay} glow={night && glow && !pencil ? glowUri(shown) : null} />;
+  return <AnimatedScene scene={shown} play={play} delay={delay} glow={night && glow && !pencil ? glowUris(shown) : null} />;
 });
 
 const styles = StyleSheet.create({
   fill: { position: 'absolute', top: 0, left: 0, width: '100%', height: '100%' },
-  glow: { opacity: 0.5 },
 });
