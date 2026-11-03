@@ -10,10 +10,8 @@ import { useItemBack } from './useItemBack';
 /** How long Back runs: its circle, or the pill with where it goes (desktop board's measure). */
 export const backWidth = (label?: string) => (label ? Math.round(46 + label.length * 8.2) : layout.minTapTarget);
 
-/** Room for whatever sits on the bar's right: round buttons, and Edit's wider pill. */
-export function barRoom({ save, onShare, onEdit, more }: Pick<PageControlsProps, 'save' | 'onShare' | 'onEdit' | 'more'>) {
-  return [save, onShare, more].filter(Boolean).length * (layout.minTapTarget + space.sm) + (onEdit ? EDIT_PILL + space.sm : 0);
-}
+/** Room for what sits on the bar's right: the one … and its gap. */
+const barRoom = (more: ReactNode) => (more ? layout.minTapTarget + space.sm : 0);
 
 /** The small title once the big one (a display line, about 64) has gone under the bar. */
 export function useSmallTitle(scrollY: SharedValue<number>, tuck: number) {
@@ -48,13 +46,7 @@ interface PageControlsProps {
   noBack?: boolean;
   /** A pointer has room for a label (desktop board: "Back says where it goes"). */
   backLabel?: string;
-  /** To make, for people who don't make it at a bar (Kevin, 29 Oct: Save and Share as toolbar icons). */
-  save?: { saved: boolean; onToggle: () => void; label: [string, string]; icon?: 'bookmark' | 'heart' } | null;
-  onShare?: () => void;
-  /** Drink Creator and Admin: Edit, the one labelled control. */
-  onEdit?: () => void;
-  editLabel?: string;
-  /** The one … (ItemMoreMenu): Edit, Save, Share, Report, Fix as admin. Item pages pass only this (Kevin, 3 Nov). */
+  /** The one … (ItemMoreMenu): Edit, Save, Share and the rest are in it, never beside it (Kevin, 3 Nov, and C12). */
   more?: ReactNode;
   /** Between the bar's backing and the buttons: the docked drawing. */
   children?: ReactNode;
@@ -62,12 +54,12 @@ interface PageControlsProps {
 
 /**
  * The drink and item pages' top bar (boards Draw-scroll, Photo-scroll): glass
- * Back on the left, Share and Edit on the right. As the big title passes
+ * Back on the left, the one … on the right. As the big title passes
  * under it, a backing in the page's ground fades in and the small title with
  * it. Nothing else: no study pile, no role switcher, no More. The web and a
  * wide iPad draw it here; phones have the same in the system's bar (ItemHeader).
  */
-export function PageControls({ over, top, scrollY, tuck, smallAt = tuck, title, titleInset = 0, noBack, backLabel, save, onShare, onEdit, editLabel = 'Edit', more, children }: PageControlsProps) {
+export function PageControls({ over, top, scrollY, tuck, smallAt = tuck, title, titleInset = 0, noBack, backLabel, more, children }: PageControlsProps) {
   const ds = useDs();
   const goBack = useItemBack();
   const gutter = useGutter();
@@ -88,37 +80,21 @@ export function PageControls({ over, top, scrollY, tuck, smallAt = tuck, title, 
     <>
       <BarBacking height={barHeight} scrollY={scrollY} tuck={tuck} />
       {children}
-      <Animated.View style={[styles.title, { top: top + space.sm, height: layout.minTapTarget, left: gutter + backWidth(backLabel) + space.sm + titleInset, right: gutter + barRoom({ save, onShare, onEdit, more }) }, small]} aria-hidden>
+      <Animated.View style={[styles.title, { top: top + space.sm, height: layout.minTapTarget, left: gutter + backWidth(backLabel) + space.sm + titleInset, right: gutter + barRoom(more) }, small]} aria-hidden>
         <DsText variant="headline" numberOfLines={1} style={{ fontFamily: displayFaces[ds.displayFace].regular }}>
           {title}
         </DsText>
       </Animated.View>
       <View style={[styles.row, { top: top + space.sm, left: gutter, right: gutter }]}>
         {back}
-        <View style={styles.right}>
-          {save ? (
-            <GlassButton
-              accessibilityLabel={save.label[save.saved ? 1 : 0]}
-              icon={save.icon === 'heart' ? (save.saved ? 'heart.fill' : 'heart') : save.saved ? 'bookmark.fill' : 'bookmark'}
-              scheme={over}
-              onPress={save.onToggle}
-            />
-          ) : null}
-          {onShare ? <GlassButton accessibilityLabel="Share" icon="square.and.arrow.up" scheme={over} onPress={onShare} /> : null}
-          {onEdit ? <GlassButton accessibilityLabel={editLabel} label="Edit" scheme={over} onPress={onEdit} /> : null}
-          {more}
-        </View>
+        {more}
       </View>
     </>
   );
 }
 
-/** About the width of the labelled Edit pill. */
-const EDIT_PILL = 72;
-
 const styles = StyleSheet.create({
   backing: { position: 'absolute', top: 0, left: 0, right: 0, borderBottomWidth: StyleSheet.hairlineWidth, pointerEvents: 'none' },
   title: { position: 'absolute', justifyContent: 'center', pointerEvents: 'none' },
   row: { position: 'absolute', flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', gap: space.sm },
-  right: { flexDirection: 'row', gap: space.sm },
 });

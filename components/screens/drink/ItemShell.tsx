@@ -113,11 +113,12 @@ export function ItemShell({ name, pane, photo, art, size, liquid, title, action,
   useLayoutEffect(() => {
     live.current = actions;
   });
-  const k = [!!actions.onEdit, actions.editLabel, actions.save?.saved, actions.save?.label[0], actions.save?.icon, !!actions.onShare, actions.report?.itemId, !!actions.adminFix].join('|');
+  const k = [!!actions.onEdit, actions.editLabel, actions.save?.saved, actions.save?.label[0], actions.save?.icon, !!actions.onShare, !!actions.flavorMap, actions.report?.itemId, !!actions.adminFix].join('|');
   const relayed: ItemActions = {
     ...actions,
     onEdit: actions.onEdit && (() => live.current.onEdit?.()),
     onShare: actions.onShare && (() => live.current.onShare?.()),
+    flavorMap: actions.flavorMap && (() => live.current.flavorMap?.()),
     adminFix: actions.adminFix && (() => live.current.adminFix?.()),
     save: actions.save && { ...actions.save, onToggle: () => live.current.save?.onToggle() },
   };

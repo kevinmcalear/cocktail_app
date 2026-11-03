@@ -3,10 +3,10 @@ import { createContext, use, useMemo, useState, type ComponentProps, type ReactN
 import { Pressable, StyleSheet, View } from 'react-native';
 import Animated, { interpolate, useAnimatedStyle, type SharedValue } from 'react-native-reanimated';
 
-import { DsText, GlassButton, PressableScale, useDs } from '@/components/ds';
+import { DsText, GlassButton, useDs } from '@/components/ds';
 import { IconSymbol } from '@/components/ui/icon-symbol';
 import { material } from '@/constants/material';
-import { displayFaces, displayName, font, radius, space } from '@/constants/tokens';
+import { displayFaces, displayName, radius, space } from '@/constants/tokens';
 import { withAlpha } from '@/lib/color';
 import { itemTones, photoTones, type Tones } from '@/lib/tones';
 
@@ -21,8 +21,6 @@ const TITLE_LEFT = MATERIAL_DOCK.left + DOCKED + space.md;
 /** Where a photo page's name sits, with no glyph (And-photo). */
 const PHOTO_TITLE_LEFT = material.barInset + material.iconButton + space.sm;
 const TITLE_SCALE = displayName.row.fontSize / displayName.page.fontSize;
-/** "Edit" with its pencil, its padding and the gap after it. */
-const EDIT_WIDTH = 92;
 
 /** The fill comes in as the body nears the bar: on And-page (hero 350) that is 200 to 280. */
 const FILL_EARLY = 50;
@@ -129,7 +127,8 @@ interface MaterialBarProps {
 
 /**
  * Android's top app bar on drink and item pages (boards And-page, And-photo,
- * And-scroll-glide-*): 64 dp, plain icon Back and Share, a tonal Edit. On a
+ * And-scroll-glide-*): 64 dp, plain icon Back and the one overflow (Edit,
+ * Save and Share are in it: Kevin's C12, 3 Nov). On a
  * drawing's page the bar stays clear while the drawing and the name fold into
  * it, then fills. On a photo the icons sit in 40 dp tonal circles until the
  * bar fills, and the small name fades in.
@@ -142,8 +141,8 @@ export function MaterialBar({ name, top, photo, hero, width, scrollY, smallAt, n
   const ds = useDs();
   const back = useItemBack();
   const tones = useItemTones();
-  const { save, onShare, onEdit, editLabel = 'Edit', more } = controls;
-  const room = [save, onShare, more].filter(Boolean).length * material.iconButton + (onEdit ? EDIT_WIDTH : 0) + material.barInset;
+  const { more } = controls;
+  const room = (more ? material.iconButton : 0) + material.barInset;
   // A photo page fills when its first line reaches the bar: the body rides up over the hero by space.xxl.
   const tuck = hero - space.xxl - top - material.bar;
   // A drawing's page fills as its body nears the bar, whatever the drawing's size.
@@ -163,19 +162,7 @@ export function MaterialBar({ name, top, photo, hero, width, scrollY, smallAt, n
       <View style={[styles.row, { top }]}>
         <Circle value={circle}>
           {noBack ? <View /> : <BarIcon label="Back" icon="arrow.left" onPress={back} />}
-          <View style={styles.tools}>
-            {save ? <BarIcon label={save.label[save.saved ? 1 : 0]} icon={save.icon === 'heart' ? (save.saved ? 'heart.fill' : 'heart') : save.saved ? 'bookmark.fill' : 'bookmark'} onPress={save.onToggle} /> : null}
-            {onEdit ? (
-              <PressableScale accessibilityLabel={editLabel} onPress={onEdit} style={[styles.edit, { backgroundColor: tones.tonal }]}>
-                <IconSymbol name="pencil" size={18} color={ds.c.ink} />
-                <DsText color={ds.c.ink} style={styles.label}>
-                  Edit
-                </DsText>
-              </PressableScale>
-            ) : null}
-            {onShare ? <BarIcon label="Share" icon="share.nodes" onPress={onShare} /> : null}
-            {more}
-          </View>
+          {more}
         </Circle>
       </View>
     </>
@@ -266,11 +253,8 @@ const styles = StyleSheet.create({
   fill: { position: 'absolute', top: 0, left: 0, right: 0, pointerEvents: 'none' },
   over: { position: 'absolute', top: 0, left: 0, right: 0, bottom: 0, pointerEvents: 'none' },
   row: { position: 'absolute', left: material.barInset, right: material.barInset, height: material.bar, flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between' },
-  tools: { flexDirection: 'row', alignItems: 'center' },
   icon: { width: material.iconButton, height: material.iconButton, alignItems: 'center', justifyContent: 'center' },
   circle: { position: 'absolute', width: material.control, height: material.control, borderRadius: radius.pill },
-  edit: { height: material.control, marginRight: material.barInset, paddingLeft: space.md, paddingRight: space.lg, borderRadius: radius.pill, flexDirection: 'row', alignItems: 'center', gap: space.sm },
-  label: { ...material.label, ...font.medium },
   riding: { position: 'absolute', top: 0, left: 0, transformOrigin: 'left top' },
   small: { position: 'absolute', pointerEvents: 'none' },
 });

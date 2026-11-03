@@ -15,6 +15,7 @@ import { useCapabilities } from '@/hooks/useCapabilities';
 import { useShelf, useShelfEdit } from '@/hooks/useHomeBar';
 import type { IngredientBottle } from '@/hooks/useIngredients';
 import { useMode } from '@/hooks/useMode';
+import { usePairings } from '@/hooks/usePairings';
 import { useItemPrep, usePrepSources, usePrepUsedIn } from '@/hooks/usePrepCard';
 import { useEffectiveRole } from '@/hooks/useViewAs';
 import { labelDate, useByDate as expiry } from '@/lib/makeSteps';
@@ -99,6 +100,8 @@ function IngredientPage({ ingredient, lines, drinks, bottles, pictures: batchPic
   const shelfEdit = useShelfEdit();
   const onShelf = !!shelf?.includes(ingredient.id);
   const toggleShelf = () => (!userId ? router.push('/auth/login') : onShelf ? shelfEdit.remove.mutate(ingredient.id) : shelfEdit.add.mutate(ingredient.id));
+  // Pairs with's own query: with pairings there's a map to open, from the … (Kevin's C12, 3 Nov).
+  const paired = (usePairings([ingredient.id], { limit: 8 }).data?.length ?? 0) > 0;
 
   const prep = card?.prep ?? null;
   // Opened from a label's code (Bet-labels "Scanned: its page"): that batch's day, use-by and where it goes, first.
@@ -193,6 +196,7 @@ function IngredientPage({ ingredient, lines, drinks, bottles, pictures: batchPic
       actions={{
         save: { saved: onShelf, onToggle: toggleShelf, label: ['Save to your bar', 'Take off your bar'] },
         onShare: () => void shareOrCopy(ingredientUrl(ingredient.id), ingredient.name, 'ingredient'),
+        flavorMap: paired ? () => router.push({ pathname: '/flavor-map', params: { with: ingredient.id } }) : undefined,
         report: { itemId: ingredient.id },
         onEdit: offerEdit ? onEdit : undefined,
         editLabel: `Edit ${ingredient.name}`,
