@@ -60,7 +60,7 @@ export const SPEC_AMOUNT_WIDTH = 96;
 
 /**
  * One line of a spec, readable across the bar: the amount in its own aligned
- * column in the accent, then the ingredient, then its drawing at the right edge.
+ * column in ink (the board sets it dark), then the ingredient, then its drawing at the right edge.
  *
  * When the amount has its own action, the line splits into two sibling
  * controls (amount, then ingredient) so no button sits inside another.
@@ -159,7 +159,7 @@ const scaled = (t: Sized, scale: number) => (scale === 1 ? undefined : { fontSiz
 /** The number in the spec's figures, its unit (when given apart) smaller and muted. */
 function Amount({ text, unit, scale, style }: { text: string; unit?: string; scale: number; style?: { width: number } }) {
   return (
-    <Spec tone="accent" style={[style, scaled(type.spec, scale)]}>
+    <Spec style={[style, scaled(type.spec, scale)]}>
       {text}
       {unit ? (
         <Caption tone="muted" style={scaled(type.caption, scale)}>
