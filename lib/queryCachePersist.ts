@@ -32,6 +32,8 @@ export const PERSISTED_KEYS: readonly (readonly string[])[] = [
   ['drafts'],
   ['home-bar'],
   ['drink-lists'],
+  // Drawing inputs (hooks/useItemSketch.ts): a few hundred bytes a drink, so Tonight and a menu draw at once after a launch. Largest-first dropping keeps them last to go when the row is full.
+  ['item-sketch'],
   ['bar-cities'],
   ['discover-top-bars'],
   ['flavor-baseline'],

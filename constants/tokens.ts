@@ -22,6 +22,7 @@ export const backbar = {
     glassBorder: 'rgba(255, 255, 255, 0.14)',
     scrim: 'rgba(14, 13, 12, 0.62)',
     paper: '#EFE9DD', // behind house-style sketches, in both themes
+    tilePaper: '#2A2622', // behind small drawings painted for night (ingredient thumbnails), so a tile is not a cream square on black
     sketchInk: '#3B342C',
   },
   light: {
@@ -37,6 +38,7 @@ export const backbar = {
     glassBorder: 'rgba(0, 0, 0, 0.07)',
     scrim: 'rgba(246, 243, 238, 0.72)',
     paper: '#EFE9DD',
+    tilePaper: '#EFE9DD',
     sketchInk: '#3B342C',
   },
 } as const;

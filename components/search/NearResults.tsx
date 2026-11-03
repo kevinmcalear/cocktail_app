@@ -37,8 +37,6 @@ interface NearResultsProps {
   title: string;
   /** What nothing found shows when nothing is close either (and after a plain "No"). */
   miss: ReactNode;
-  /** Above a saved spelling's results: the place's own miss card, with its add. */
-  lead?: ReactNode;
   /** "No": the place's own add, "add Salty Boy". Without it "No" leaves the miss. */
   add?: { label: string; onPress: () => void };
   matchLook?: MatchTextProps['look'];
@@ -54,7 +52,7 @@ interface NearResultsProps {
  * close" (1B). Something found: the close names come last, "Spelled
  * differently" (1C).
  */
-export function NearResults({ query, found, shown, yours, yoursCaption = 'Yours', classics, server, title, miss, lead, add, matchLook, show }: NearResultsProps) {
+export function NearResults({ query, found, shown, yours, yoursCaption = 'Yours', classics, server, title, miss, add, matchLook, show }: NearResultsProps) {
   const router = useRouter();
   const signedIn = useSignedIn();
   const save = useSaveSpelling();
@@ -91,6 +89,7 @@ export function NearResults({ query, found, shown, yours, yoursCaption = 'Yours'
         imageUrl={h.imageUrl}
         glass={null}
         caption={caption}
+        displayName
         trailing={<RowScore score={score} />}
         label={said ? [h.name, caption, said].filter(Boolean).join('. ') : undefined}
         onPress={() => open(h)}
@@ -114,7 +113,6 @@ export function NearResults({ query, found, shown, yours, yoursCaption = 'Yours'
   if (view.kind === 'known') {
     return (
       <View style={styles.groups}>
-        {lead}
         <ResultGroup label={`Also spelled “${q}”`} items={view.known} render={(h) => row(h)} />
         <ResultGroup label="Also close" items={view.also} render={(h) => row(h)} />
       </View>
@@ -142,7 +140,7 @@ export function NearResults({ query, found, shown, yours, yoursCaption = 'Yours'
   );
 }
 
-/** The miss card's look (MissCard), asking about one row. */
+/** The Did you mean card, asking about one row. */
 function AskCard({ title, name, best, children }: { title: string; name: string; best: ReactNode; children: ReactNode }) {
   const ds = useDs();
   return (
