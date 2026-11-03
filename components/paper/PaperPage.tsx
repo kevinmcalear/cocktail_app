@@ -6,7 +6,7 @@ import { toQR } from 'toqr';
 
 import { drawingUri, loadFace, useDisplayFaces } from '@/components/ds';
 import { qrPath } from '@/components/screens/make/makeLogic';
-import { font, monoFont, type DisplayFace } from '@/constants/tokens';
+import { font, typewriterFont, type DisplayFace } from '@/constants/tokens';
 import type { PaperEl, PaperPage as Page } from '@/lib/paper/page';
 import type { SketchInputs } from '@/lib/sketch/types';
 
@@ -92,7 +92,7 @@ function PaperThing({ el, unit, uri, onArrive, family }: { el: PaperEl; unit: nu
   }
   const size = el.size * unit;
   const weight = WEIGHT[el.weight ?? '400'];
-  const type = el.face === 'display' ? { fontFamily: family } : el.face === 'mono' ? { fontFamily: monoFont, fontWeight: weight.fontWeight } : weight;
+  const type = el.face === 'display' ? { fontFamily: family } : el.face === 'mono' ? { fontFamily: typewriterFont, fontWeight: weight.fontWeight } : weight;
   return (
     <Text
       aria-hidden

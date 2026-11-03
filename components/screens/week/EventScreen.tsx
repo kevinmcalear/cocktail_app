@@ -21,6 +21,7 @@ import { EventDrinks } from './EventDrinks';
 import { EventSheet } from './EventSheet';
 import { EventStaff } from './EventStaff';
 import { useDotColor } from './WeekParts';
+import { dayMonth } from '@/lib/dayMonth';
 
 /**
  * One event, as guests see it: the bars, when, whether the house menu is still
@@ -70,7 +71,7 @@ function EventPage({ id }: { id: string }) {
   }
 
   const starts = new Date(event.startsAt);
-  const short = starts.toLocaleDateString(undefined, { weekday: 'short', day: 'numeric', month: 'short' });
+  const short = dayMonth(starts, { weekday: 'short', month: 'short' });
   const day = starts.toDateString() === new Date(now).toDateString() ? `Tonight, ${short}` : short;
   const place = [event.barName ? `At ${event.barName}` : null, event.ticketUrl ? null : 'walk-ins only', event.houseMenuOn === false ? 'house menu off' : 'house menu still on', event.isPublic ? null : 'team only']
     .filter(Boolean)

@@ -76,7 +76,7 @@ export function trailInto(items: readonly TrailItem[], leave: () => void, here: 
 const styles = StyleSheet.create({
   trail: { flexDirection: 'row', flexWrap: 'wrap', alignItems: 'center', columnGap: space.xs + 2 },
   mono: { ...font.figuresMedium },
-  here: { ...font.figuresMedium, fontWeight: '600' },
+  here: { ...font.semiBold, fontVariant: ['tabular-nums'] },
   sep: { opacity: 0.6 },
   link: { minHeight: layout.minTapTarget, justifyContent: 'center' },
 });

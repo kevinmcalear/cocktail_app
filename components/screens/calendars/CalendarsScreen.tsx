@@ -16,6 +16,7 @@ import { useBarProfile } from '@/hooks/useRankings';
 import { useCalendarSources, useRemoveCalendar } from '@/hooks/useWeek';
 import { shareLink } from '@/lib/shareLink';
 import { siteOrigin } from '@/lib/venueLink';
+import { dayMonth } from '@/lib/dayMonth';
 
 const host = (url: string) => {
   try {
@@ -26,7 +27,7 @@ const host = (url: string) => {
 };
 const ago = (iso: string) => {
   const minutes = Math.round((Date.now() - Date.parse(iso)) / 60000);
-  return minutes < 60 ? `${Math.max(minutes, 1)} min ago` : minutes < 48 * 60 ? `${Math.round(minutes / 60)} h ago` : new Date(iso).toLocaleDateString();
+  return minutes < 60 ? `${Math.max(minutes, 1)} min ago` : minutes < 48 * 60 ? `${Math.round(minutes / 60)} h ago` : dayMonth(new Date(iso), { month: 'short', year: 'numeric' });
 };
 
 /**

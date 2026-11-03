@@ -11,17 +11,17 @@ for (const face of faces) assert.equal(faceFromDb(faceToDb(face)), face);
 assert.deepEqual(faces.slice(1).map(faceToDb), ['newsreader', 'im_fell_english', 'imbue', 'besley', 'bricolage_grotesque', 'belleza', 'big_shoulders']);
 // The faces bars picked before the theme faces draw as the nearest one now (Kevin, 31 Oct).
 assert.deepEqual(['fraunces', 'playfair_display', 'josefin_sans', 'tenor_sans'].map(faceFromDb), ['newsreader', 'imbue', 'bricolage', 'belleza']);
-assert.equal(faceFromDb('constructor'), 'redaction');
+assert.equal(faceFromDb('constructor'), 'instrument');
 // Saving other fields keeps an old face as stored; picking a face saves the new one.
 assert.equal(faceToSave('newsreader', 'fraunces'), 'fraunces');
 assert.equal(faceToSave('besley', 'fraunces'), 'besley');
-assert.equal(faceFromDb(null), 'redaction');
-assert.equal(faceFromDb('something-new'), 'redaction');
+assert.equal(faceFromDb(null), 'instrument');
+assert.equal(faceFromDb('something-new'), 'instrument');
 // A face from a newer build is kept when someone saves other fields here, and replaced when they pick one.
-assert.equal(faceToSave('redaction', 'something-new'), 'something-new');
+assert.equal(faceToSave('instrument', 'something-new'), 'something-new');
 assert.equal(faceToSave('newsreader', 'something-new'), 'newsreader');
 assert.equal(faceToSave('fell', 'instrument_serif'), 'im_fell_english');
-assert.equal(faceToSave('redaction', null), 'instrument_serif');
+assert.equal(faceToSave('instrument', null), 'instrument_serif');
 // The error PostgREST returns for an enum value the database doesn't have yet.
 assert.equal(isUnknownFaceError({ code: '22P02', message: 'invalid input value for enum venue_display_face: "tenor_sans"' }), true);
 assert.equal(isUnknownFaceError({ code: '22P02', message: 'invalid input syntax for type uuid' }), false);

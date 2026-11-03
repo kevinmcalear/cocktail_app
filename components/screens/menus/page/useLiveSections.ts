@@ -11,8 +11,9 @@ import { useMenuLibrary } from '@/hooks/useMenuMutations';
 import type { MenuDetail } from '@/types/menus';
 
 import { liveList, type LiveSection } from './liveList';
+import { dayMonth } from '@/lib/dayMonth';
 
-const day = (iso: string) => new Date(iso).toLocaleDateString(undefined, { day: 'numeric', month: 'short' });
+const day = (iso: string) => dayMonth(new Date(iso), { month: 'short' });
 const time = (iso: string) => new Date(iso).toLocaleTimeString(undefined, { hour: 'numeric', minute: '2-digit' });
 const CREATOR = ROLE_LEVELS.find((r) => r.label === 'Drink Creator')!.level;
 

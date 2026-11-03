@@ -2,7 +2,7 @@ import { useState, type ReactNode } from 'react';
 import { StyleSheet, View } from 'react-native';
 
 import { Body, Button, Caption, Chip, Display, DsText, Segmented, TextLink, Title, useToast } from '@/components/ds';
-import { space } from '@/constants/tokens';
+import { font, space } from '@/constants/tokens';
 import { useFinishedBottles, useMyBar } from '@/hooks/useHomeBar';
 import { useBoughtBefore, useShoppingEdit, useShoppingList, type ShoppingAdd as Add } from '@/hooks/useShoppingList';
 import { gotLine, listOpens, opensWith, shoppingGroups, shoppingSummary, shoppingText, whyLine, type ShoppingMode, type ShoppingRow } from '@/lib/shoppingList';
@@ -150,7 +150,7 @@ const styles = StyleSheet.create({
   top: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', gap: space.sm, minHeight: 44 },
   title: { gap: 2, flexShrink: 1 },
   groupHead: { flexDirection: 'row', alignItems: 'center', gap: space.sm, minHeight: 32 },
-  bold: { fontWeight: '600' },
+  bold: { ...font.semiBold },
   grow: { flex: 1 },
   before: { gap: space.sm },
   chips: { flexDirection: 'row', flexWrap: 'wrap', gap: space.sm },

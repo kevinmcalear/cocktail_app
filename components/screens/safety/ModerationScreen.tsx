@@ -9,6 +9,7 @@ import { hideTarget, useIsModerator, useReportQueue, useResolveReport, useSetCon
 import { reasonLabel } from '@/lib/safety';
 
 import { SafetyPage } from './SafetyPage';
+import { dayMonth } from '@/lib/dayMonth';
 
 const LISTS = [
   { value: 'open', label: 'Open' },
@@ -16,7 +17,6 @@ const LISTS = [
 ] as const;
 
 const KIND: Record<QueuedReport['target_kind'], string> = { profile: 'Profile', item: 'Drink', release: 'Release', comment: 'Comment', ranking: 'Ranking', photo: 'Photo' };
-const WHEN = new Intl.DateTimeFormat(undefined, { day: 'numeric', month: 'short', hour: 'numeric', minute: '2-digit' });
 
 /**
  * Settings › Reports, for moderators (catalog admins): open reports oldest
@@ -94,7 +94,7 @@ function ReportCard({ report: r }: { report: QueuedReport }) {
         <Headline>{what}</Headline>
         {r.photo_url ? <DrinkImage source={r.photo_url} accessibilityLabel={`The reported photo of ${what}`} aspectRatio={1} radius="control" style={styles.photo} /> : null}
         {r.target_detail ? <Caption tone="muted">{r.target_kind === 'profile' || r.target_kind === 'photo' ? r.target_detail : `${r.target_kind === 'ranking' ? 'At' : 'From'} ${r.target_detail}`}</Caption> : null}
-        <Caption tone="muted">{`Reported ${WHEN.format(new Date(r.created_at))}`}</Caption>
+        <Caption tone="muted">{`Reported ${dayMonth(new Date(r.created_at), { month: 'short', time: true })}`}</Caption>
         {r.details ? <Body>{`“${r.details}”`}</Body> : <Caption tone="muted">No details given.</Caption>}
         {r.resolution ? <Body tone="muted">{`Note: ${r.resolution}`}</Body> : null}
         {open ? (

@@ -18,7 +18,7 @@ import { displayFaces, displayName, NAME_ROOM, nameStyle, type, type DisplayFace
 // headlines (rows, tiles) and the menu row and card names. Display, title,
 // row and card set the face through nameStyle, at its scale; headline-sized
 // names take the face as it comes.
-const SIZES = { display: type.display, title: type.title, headline: type.headline, row: displayName.row, card: displayName.card };
+const SIZES = { display: type.display, head: type.head, listHead: type.listHead, title: type.title, headline: type.headline, row: displayName.row, card: displayName.card };
 
 for (const [variant, size] of Object.entries(SIZES)) {
   for (const [face, m] of Object.entries(displayFaces)) {
@@ -33,7 +33,7 @@ for (const [variant, size] of Object.entries(SIZES)) {
 // every other face keeps the size's own line.
 assert.equal(displayFaces.imbue.scale, 1.08);
 assert.equal(nameStyle('imbue', type.title).lineHeight, 39);
-assert.equal(nameStyle('redaction', type.title).lineHeight, type.title.lineHeight);
+assert.equal(nameStyle('instrument', type.title).lineHeight, type.title.lineHeight);
 for (const face of Object.keys(displayFaces) as DisplayFace[]) {
   if (face !== 'imbue') assert.equal(nameStyle(face, type.title).lineHeight, type.title.lineHeight, `${face} keeps the title's line`);
 }

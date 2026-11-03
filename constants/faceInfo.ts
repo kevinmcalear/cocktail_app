@@ -7,7 +7,7 @@ import type { DisplayFace } from './tokens';
  * Theme screens only.
  */
 export const faceInfo: Record<DisplayFace, { label: string; by: string; style: string }> = {
-  redaction: { label: 'Redaction', by: 'MCKL', style: 'Default' },
+  instrument: { label: 'Instrument Serif', by: 'Rodrigo Fuenzalida', style: 'Default' },
   newsreader: { label: 'Newsreader', by: 'Production Type', style: 'Book' },
   fell: { label: 'IM Fell English', by: 'Igino Marini', style: 'Worn' },
   imbue: { label: 'Imbue', by: 'Tyler Finck', style: 'Deco' },

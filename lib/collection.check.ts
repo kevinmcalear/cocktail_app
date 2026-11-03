@@ -30,7 +30,7 @@ assert.equal(parseDay(''), null);
 
 // --- labels: a day, not an instant; the year only when it isn't this year ---
 assert.equal(dayLabel('2026-09-27', now, 'en-GB'), 'Sun 27 Sept');
-assert.equal(dayLabel('2025-12-31', now, 'en-GB'), 'Wed, 31 Dec 2025');
+assert.equal(dayLabel('2025-12-31', now, 'en-GB'), 'Wed 31 Dec 2025');
 assert.equal(hadOnLine('2026-09-27', now, 'en-GB'), 'You had it on Sun 27 Sept');
 assert.equal(hadOnLine(null, now), null);
 

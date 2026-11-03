@@ -2,7 +2,7 @@ import { StyleSheet, View } from 'react-native';
 
 import { DsText, PressableScale, useDs } from '@/components/ds';
 import { IconSymbol } from '@/components/ui/icon-symbol';
-import { radius, space, STATUS } from '@/constants/tokens';
+import { font, radius, space, STATUS } from '@/constants/tokens';
 import { useDrinkAllergens } from '@/hooks/useAllergens';
 import { useGuestDrinkAllergens, useMyAllergies } from '@/hooks/useGuestAllergies';
 import { withAlpha } from '@/lib/color';
@@ -84,5 +84,5 @@ const styles = StyleSheet.create({
   line: { flexDirection: 'row', alignItems: 'center', gap: space.sm + 2, paddingVertical: space.md, paddingHorizontal: space.md + 2, borderRadius: radius.control + 2, borderCurve: 'continuous' },
   card: { gap: space.md, paddingHorizontal: space.lg, borderRadius: space.lg },
   text: { flex: 1, gap: 2 },
-  title: { fontWeight: '600' },
+  title: { ...font.semiBold },
 });

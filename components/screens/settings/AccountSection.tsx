@@ -15,6 +15,7 @@ import { saveAnalyticsChoice } from '@/lib/analyticsChoice';
 import { confirmAsync, showMessage } from '@/lib/dialogs';
 import { invokeFunction } from '@/lib/invokeFunction';
 import { supabase } from '@/lib/supabase';
+import { dayMonth } from '@/lib/dayMonth';
 
 /**
  * Turns usage analytics off or on for this device. Hidden in builds without
@@ -126,7 +127,7 @@ export function AppVersion() {
   if (Platform.OS === 'web') return null;
   const build = Application.nativeBuildVersion ? ` (${Application.nativeBuildVersion})` : '';
   const runtime = Updates.runtimeVersion ? ` · runtime ${Updates.runtimeVersion}` : '';
-  const created = Updates.createdAt?.toLocaleString(undefined, { day: 'numeric', month: 'short', year: 'numeric', hour: '2-digit', minute: '2-digit' });
+  const created = (Updates.createdAt ? dayMonth(Updates.createdAt, { month: 'short', year: 'numeric', time: true }) : undefined);
   const update = Updates.isEmbeddedLaunch || !Updates.updateId ? 'built in' : [Updates.updateId.slice(0, 8), created].filter(Boolean).join(', ');
   return (
     <Caption tone="muted" selectable style={styles.version}>

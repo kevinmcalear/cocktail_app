@@ -40,9 +40,9 @@ import { menuPageModel, splitGroup, type GroupAction } from './page/menuPageMode
 import { MenuSpecInPlace } from './page/MenuSpecInPlace';
 import { RowChanges, useRowActs, type ChangeTarget } from './page/RowChanges';
 import { useLiveSections } from './page/useLiveSections';
+import { dayMonth } from '@/lib/dayMonth';
 
-const day = (iso: string) => new Date(iso).toLocaleDateString(undefined, { weekday: 'short', day: 'numeric', month: 'short' });
-
+const day = (iso: string) => dayMonth(new Date(iso), { weekday: 'short', month: 'short' });
 type Item = { key: string; head?: { name: string; count: number }; row?: PageRowView; sectionId?: string };
 
 /**

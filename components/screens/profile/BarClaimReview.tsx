@@ -6,6 +6,7 @@ import { radius, space } from '@/constants/tokens';
 import type { ClaimForReview, ClaimReview } from '@/hooks/useProfiles';
 import { METHOD_COPY, REVIEW_REASON, claimantWho, pageInstagram, siteHost, spacedCode, worksHereLine, type BarClaimMethod } from '@/lib/claimVerification';
 import { instagramUrl } from '@/lib/profiles';
+import { dayMonth } from '@/lib/dayMonth';
 
 /** One fact, label over value. */
 function Fact({ label, children }: { label: string; children: ReactNode }) {
@@ -96,7 +97,7 @@ export function BarClaimCard({ claim, busy, onOpen, onReview }: { claim: ClaimFo
           {page?.is_closed ? <Tag label="Closed" /> : null}
         </View>
         <Caption tone="muted">
-          {`${new Date(claim.created_at).toLocaleDateString()} · ${person ? 'a person’s page' : claim.bar ? `links their venue ${claim.bar.name}` : 'makes a new venue'}`}
+          {`${dayMonth(new Date(claim.created_at), { month: 'short', year: 'numeric' })} · ${person ? 'a person’s page' : claim.bar ? `links their venue ${claim.bar.name}` : 'makes a new venue'}`}
         </Caption>
 
         <View style={[styles.columns, wide && styles.columnsWide]}>
