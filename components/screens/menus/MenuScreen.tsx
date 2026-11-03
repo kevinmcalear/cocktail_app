@@ -242,6 +242,7 @@ function MenuPageBody({ menu, shelf, cover, now }: PageProps & { cover: string |
             <MenuPageHead
               heroIds={drinks.slice(0, 3).map((d) => d.id)}
               coverUrl={cover}
+              coverCredit={cover ? menu.coverCredit : null}
               name={menu.name}
               ink={model.ink}
               quiet={model.quiet}

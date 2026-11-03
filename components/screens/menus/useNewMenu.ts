@@ -109,7 +109,7 @@ export function useNewMenu({ menus, now, onClose }: { menus: MenuSummary[]; now:
     }
     if (start.kind === 'copy') {
       if (!source) return (setError('Still loading that menu. Try again in a moment.'), false);
-      made = { name, coverUrl: source.coverUrl, coverPosition: source.coverPosition, sections: copySections(source.sections, true) };
+      made = { name, coverUrl: source.coverUrl, coverPosition: source.coverPosition, coverCredit: source.coverCredit ?? null, sections: copySections(source.sections, true) };
     } else if (layout?.sections.length) {
       made = { ...made, sections: copySections(layout.sections, false) };
     } else if (start.kind === 'paste' && pasted?.length) {
