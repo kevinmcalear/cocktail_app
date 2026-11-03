@@ -5,7 +5,7 @@ The first journeys on a phone (Kevin, 1 Nov 2026: Maestro, on EAS later). Three 
 | Flow | What it checks |
 |---|---|
 | `tabs.yaml` | The four tabs (Tonight, Drinks, Discover, You) show, and each opens as the selected tab. |
-| `open-drink.yaml` | Drinks: open a drink from the venue's library, Close it, and land back on the list. |
+| `open-drink.yaml` | Drinks: open a drink from the venue's Drinks list, Close it, and land back on the list. |
 | `android-back.yaml` | Android only: Back leaves a drink page and closes the New sheet without leaving the app, and leaves the app from Tonight's first page. |
 
 `subflows/start.yaml` opens the app (on your Metro server, for a dev build) and signs in the local demo user when it's signed out.

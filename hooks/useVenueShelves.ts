@@ -3,7 +3,7 @@ import { useMemo } from 'react';
 
 import { useIngredientsById, useVenueIngredients } from '@/hooks/useDropdowns';
 import { byName } from '@/lib/allRows';
-import { prepGroup, tileLine, venueShelves, yieldText, type PrepGroup } from '@/lib/libraryFilters';
+import { prepGroup, tileLine, venueShelves, yieldText, type PrepGroup } from '@/lib/drinksFilters';
 import { shelfLifeLabel } from '@/lib/scale';
 import { supabase } from '@/lib/supabase';
 import type { SearchItem } from '@/types/search';

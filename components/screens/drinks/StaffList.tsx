@@ -9,7 +9,7 @@ import { useDrinkLists } from '@/hooks/useDiscover';
 import { useBarRiffs, useStaffList, useStaffListEdit, type StaffPick } from '@/hooks/useStaffList';
 import { plainDbMessage } from '@/lib/dbError';
 import { itemHref } from '@/lib/itemRoutes';
-import { menuState } from '@/lib/libraryFilters';
+import { menuState } from '@/lib/drinksFilters';
 import { candidatesFor, classicRows, CUTS, moved, NOT_RANKED, ranked, rankedAbove, STAFF_LIST_MAX, staffOrder, unranked, type ClassicRow } from '@/lib/staffList';
 
 import { StaffRow } from './StaffRow';

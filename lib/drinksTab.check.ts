@@ -2,7 +2,7 @@
 import assert from 'node:assert/strict';
 
 import { bottleKind, bottleLine, capsuleChips, capsuleOf, countText, fridgeRows, homeCapsule, homeRows, homeStyle, isLow, lowLine, onNowSub, orderSummary, orderText, serviceTag } from './drinksTab';
-import { filterGroups } from './libraryFilters';
+import { filterGroups } from './drinksFilters';
 
 // Capsules: House-made is Preps; Bottles everything bought; the rest is Drinks.
 assert.equal(capsuleOf('preps'), 'house');

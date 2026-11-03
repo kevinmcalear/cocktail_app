@@ -28,6 +28,8 @@ interface Props {
   isPrep?: boolean;
   /** More rows from elsewhere (Swap for). */
   extra?: ReactNode;
+  /** Kind of is already a fact row up top (a bottle's page, board Item-page). */
+  kindInFacts?: boolean;
 }
 
 const FIRST = 12;
@@ -58,21 +60,22 @@ export function useBottleTiles(b: { id: string; ingredient_role?: string | null;
  * it for, and the bottles you can buy that are a kind of it. Nothing shows
  * when there's nothing to say.
  */
-export function AroundIt({ ingredient, bottles: allBottles, isPrep, extra }: Props) {
+export function AroundIt({ ingredient, bottles: allBottles, isPrep, extra, kindInFacts }: Props) {
   const [all, setAll] = useState(false);
   const { data: ratio } = usePrepRatio(isPrep ? ingredient.generic?.id : null);
   const bottle = ingredient.ingredient_role === 'product' && !!ingredient.id;
   const { data: swaps = [] } = useSwapFor(bottle ? ingredient.id! : null, ingredient.generic?.id);
   // A prep's Around it is what it's a kind of, and nothing else (prep-prep-phone).
   const bottles = isPrep ? [] : allBottles;
-  if (!bottle && !ingredient.generic && !ingredient.madeFrom && !bottles.length && !extra) return null;
+  const kind = ingredient.generic && !kindInFacts ? ingredient.generic : null;
+  if (!bottle && !kind && !ingredient.madeFrom && !bottles.length && !extra) return null;
   const shown = all ? bottles : bottles.slice(0, FIRST);
 
   return (
     <View style={styles.section}>
       <Headline role="heading">Around it</Headline>
       <View>
-        {ingredient.generic ? <LinkRow lead="Kind of" item={ingredient.generic} value={ratio ?? undefined} /> : null}
+        {kind ? <LinkRow lead="Kind of" item={kind} value={ratio ?? undefined} /> : null}
         {ingredient.madeFrom ? <LinkRow lead="Made from" item={ingredient.madeFrom} /> : null}
         {swaps.length && ingredient.generic ? <LinkRow lead="Swap for" item={{ id: ingredient.generic.id, name: swaps.map((x) => x.name).join(', ') }} /> : null}
         {extra}

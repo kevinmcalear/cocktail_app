@@ -6,7 +6,7 @@ import { Caption, DsText, EquipmentThumb, IngredientThumb, PressableScale, useDs
 import { IconSymbol } from '@/components/ui/icon-symbol';
 import { font, radius, space } from '@/constants/tokens';
 import type { ShelfItem } from '@/hooks/useHomeBar';
-import { SECTIONS } from '@/lib/barSections';
+import { SECTIONS } from '@/lib/barSectionWords';
 import { cardFit, type ShelfSection } from '@/lib/myBarRows';
 import { PANTRY, PANTRY_WATER } from '@/lib/pantry';
 import { equipmentById } from '@/lib/techniques';

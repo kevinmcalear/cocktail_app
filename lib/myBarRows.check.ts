@@ -13,6 +13,8 @@ assert.deepEqual(kinds(myBarRows({ bottles: [], sort: 'newest', query: '', shelf
 const full = myBarRows({ bottles: [bottle(1)], sort: 'newest', query: '', shelfOpen: false, cols: 3, more: { lab: 3, preps: 0, kit: 2 }, make: null });
 assert.deepEqual(kinds(full), ['top', 'filters', 'shelf-head', 'bottles', 'shelf-foot', 'pantry', 'lab', 'kit', 'folds']);
 assert.deepEqual(full.at(-1), { kind: 'folds', key: 'folds', empty: ['preps'] });
+// Made at home comes straight under the bottles, as the Drinks board's Shelf draws them, before the fridge and the rest.
+assert.deepEqual(kinds(myBarRows({ bottles: [bottle(1)], sort: 'newest', query: '', shelfOpen: false, cols: 3, more: { lab: 3, preps: 2, kit: 2 }, make: null })), ['top', 'filters', 'shelf-head', 'bottles', 'shelf-foot', 'preps', 'pantry', 'lab', 'kit']);
 assert.equal(new Set(full.map((r) => r.key)).size, full.length);
 // One section with anything in it has nothing to filter.
 assert.ok(!kinds(myBarRows({ bottles: [bottle(1)], sort: 'newest', query: '', shelfOpen: false, cols: 3, make: null })).includes('filters'));

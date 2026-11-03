@@ -109,7 +109,7 @@ function GlassBody({ itemId, name, glass, iceName, serveMl, icePerServeG, editin
               {setSize.error ? <Caption tone="accent">{"Couldn't save the glass. Check your connection and try again."}</Caption> : null}
             </>
           ) : (
-            <Caption tone="muted">Whoever looks after this glass in the Library sets its capacity.</Caption>
+            <Caption tone="muted">Whoever looks after this glass at the bar sets its capacity.</Caption>
           )}
         </View>
       ) : (
