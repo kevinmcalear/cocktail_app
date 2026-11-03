@@ -1,14 +1,15 @@
 import { useState } from 'react';
 import { StyleSheet, View } from 'react-native';
 
-import { DsText, SpecRow, useDs } from '@/components/ds';
+import { DsText, SPEC_AMOUNT_WIDTH, SpecRow, useDs } from '@/components/ds';
 import { font, space } from '@/constants/tokens';
 import { useSpecAccess } from '@/hooks/useSpecAccess';
+import { useSpecView } from '@/hooks/useSpecView';
 import type { SpecLevels, SpecLine } from '@/lib/spec';
+import type { StepNote } from '@/lib/stepNotes';
 import { garnishNames, goesOutLine, lineRole, methodLine, splitAmount, type SpecLayout } from '@/lib/specLines';
 import { MAKES, scaledAmount, serveLine, specGroups, type Makes } from '@/lib/specView';
-import { useSettingsStore } from '@/store/useSettingsStore';
-import { useSpecView } from '@/store/useSpecViewStore';
+import { useUnits } from '@/store/useSettingsStore';
 
 import { SpecControls } from './SpecControls';
 
@@ -32,6 +33,10 @@ export interface SpecCardProps {
   onLine?: (line: SpecLine) => void;
   /** The floor's serve line: "Goes out: rocks, candied ginger" (board Decided-who-floor). */
   goesOut?: boolean;
+  /** The words the drink's editors put on its steps: an aside by a step's name, a note under its lines (Steps only). */
+  stepNotes?: readonly StepNote[] | null;
+  /** Made in parts: each part's own name, in order, for its step. */
+  partNames?: readonly (string | null | undefined)[];
 }
 
 /**
@@ -47,13 +52,13 @@ export interface SpecCardProps {
  * served with its garnish. No toggle and no hint at what's held back;
  * nothing at all: the serve line.
  */
-export function SpecCard({ itemId, barId, lines, maker, verb = null, methods = [], serve = [], onBatch, preview, onLine, goesOut }: SpecCardProps) {
+export function SpecCard({ itemId, barId, lines, maker, verb = null, methods = [], serve = [], onBatch, preview, onLine, goesOut, stepNotes, partNames }: SpecCardProps) {
   const { access } = useSpecAccess(itemId, barId, preview);
   const [view, setView] = useSpecView(maker);
   // Never saved: every page opens at Makes 1 (a Makes 3 carried onto the next drink is a mis-pour).
   const [makes, setMakes] = useState<Makes>(1);
-  // ponytail: the person's own unit only. #1063 (bar units, waiting on Kevin) makes the bar's unit the default here; take its line when it lands.
-  const unit = useSettingsStore((s) => s.specUnit);
+  // Your own unit, else your bar's (bars.spec_unit), else ml.
+  const unit = useUnits().specUnit;
   const measured = access.amounts && lines.some((l) => l.value !== null);
   const layout: SpecLayout = !access.names || !measured ? 'names' : view === 'steps' ? 'steps' : 'rows';
   const [glass, ice] = serve;
@@ -96,12 +101,17 @@ export function SpecCard({ itemId, barId, lines, maker, verb = null, methods = [
       {access.names ? (
         layout === 'steps' ? (
           <View style={styles.groups}>
-            {specGroups(lines, verb).map((g) => (
-              <View key={g.key}>
-                {g.title ? <GroupHead number={g.number} title={g.title} /> : null}
-                {g.lines.map((l) => row(l, g.key === 'float'))}
-              </View>
-            ))}
+            {specGroups(lines, verb, partNames).map((g) => {
+              const words = stepNotes?.find((n) => n.step_key === g.key);
+              const aside = g.title ? words?.aside : null;
+              return (
+                <View key={g.key}>
+                  {g.title ? <GroupHead number={g.number} title={g.title} aside={aside} /> : null}
+                  {g.lines.map((l) => row(l, g.key === 'float'))}
+                  {words?.note ? <StepNoteLine text={words.note} /> : null}
+                </View>
+              );
+            })}
           </View>
         ) : (
           <View>{lines.map((l) => row(l))}</View>
@@ -127,11 +137,20 @@ export function GroupHead({ number, title, aside }: { number: string | null; tit
         {title}
       </DsText>
       {aside ? (
-        <DsText variant="caption" tone="muted">
+        <DsText variant="label" tone="muted" style={styles.aside}>
           {aside}
         </DsText>
       ) : null}
     </View>
+  );
+}
+
+/** The note under a step's lines, lined up with the names (boards Decided-spec-groups, who-bartender). */
+function StepNoteLine({ text }: { text: string }) {
+  return (
+    <DsText variant="label" tone="muted" style={styles.note}>
+      {text}
+    </DsText>
   );
 }
 
@@ -148,4 +167,7 @@ const styles = StyleSheet.create({
   card: { gap: space.md },
   groups: { gap: space.md },
   head: { flexDirection: 'row', alignItems: 'baseline', gap: space.sm, paddingBottom: space.xs },
+  aside: { flexShrink: 1 },
+  // The last line's rule sits above it.
+  note: { paddingTop: space.sm, paddingLeft: SPEC_AMOUNT_WIDTH + space.md },
 });

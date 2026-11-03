@@ -127,6 +127,7 @@ const G = {
   xmark: { d: 'M6 6l12 12M18 6L6 18' },
   'xmark.circle.fill': filled({ d: RING + 'M9 9l6 6M15 9l-6 6', f: RING }),
   checkmark: { d: 'M4.5 12.5l4.5 4.5L19.5 6.5' },
+  jigger: { d: 'M7 3.5h10l-3.5 8.5h-3zM10.5 12h3l3.5 8.5H7z' },
   'checkmark.circle': { d: RING + 'M8 12.3l2.8 2.8L16.2 9.7', f: RING },
   'checkmark.circle.fill': filled({ d: RING + 'M8 12.3l2.8 2.8L16.2 9.7', f: RING }),
   // A step still to do (the first round, Set up <bar>): the ring the done tick sits in.

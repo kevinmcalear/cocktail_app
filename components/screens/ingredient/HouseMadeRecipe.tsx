@@ -8,7 +8,7 @@ import type { BatchSize } from '@/lib/prepParts';
 import { sourceSite } from '@/lib/prepMath';
 import { prepStepGroups } from '@/lib/prepSteps';
 import { scaleRecipe, type RecipeLine } from '@/lib/scale';
-import { useSpecView } from '@/store/useSpecViewStore';
+import { useSpecView } from '@/hooks/useSpecView';
 
 import { SpecControls } from '../drink/spec/SpecControls';
 import { GroupHead } from '../drink/spec/SpecCard';

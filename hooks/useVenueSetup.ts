@@ -5,6 +5,8 @@ import { pickerResult, usePickerTerm } from '@/hooks/useDiscover';
 import { CLAIM_COLUMNS, changedProfiles, type ProfileClaim } from '@/hooks/useProfiles';
 import { withNear, type MaybeNear } from '@/hooks/useSearchNear';
 import { supabase } from '@/lib/supabase';
+import { DEFAULT_UNIT } from '@/lib/units';
+import { getPreferredUnit } from '@/store/useSettingsStore';
 import type { HeldSetup } from '@/store/useVenueSetup';
 
 /** A bar page on the Find your bar step, with what the card shows. */
@@ -129,7 +131,11 @@ export function useCreateSetupVenue() {
         p_prep: 40,
       });
       if (error) throw error;
-      return (data as { id: string }).id;
+      const id = (data as { id: string }).id;
+      // A new venue starts on its owner's unit. It's made by now, so a miss here leaves ml, which they can change in its settings.
+      const unit = getPreferredUnit();
+      if (unit !== DEFAULT_UNIT) await supabase.from('bars').update({ spec_unit: unit }).eq('id', id);
+      return id;
     },
     onSuccess: () => qc.invalidateQueries({ queryKey: ['bars'] }),
     onError: () => {},

@@ -104,6 +104,8 @@ export function useDrinkSections(p: DrinkSectionsInput) {
       onBatch={p.onBatch}
       preview={preview}
       goesOut={viewer === 'floor'}
+      stepNotes={item.step_notes}
+      partNames={item.madeInParts?.map((part) => part.name)}
       onLine={live ? (l) => router.push(`/ingredient/${l.ingredientId}` as Href) : undefined}
     />
   );
