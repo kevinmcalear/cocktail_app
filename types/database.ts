@@ -7629,6 +7629,17 @@ export type Database = {
           named_at: string
         }[]
       }
+      current_menus_of_bars: {
+        Args: { p_profile_ids: string[] }
+        Returns: {
+          drinks: Json
+          id: string
+          month: number
+          name: string
+          profile_id: string
+          year: number
+        }[]
+      }
       decline_profile_position: { Args: { p_id: string }; Returns: undefined }
       decline_shared_glass: {
         Args: { p_note: string; p_share_id: string }
