@@ -34,7 +34,7 @@ test('an unclaimed bar: I run it, or send it to whoever does', async () => {
   await renderWithProviders(<YourBarCard positions={[job]} />);
   expect(screen.getByText('Pale Moth isn’t claimed yet')).toBeTruthy();
   await fireEvent.press(screen.getByRole('button', { name: 'I run Pale Moth' }));
-  expect(mockPush).toHaveBeenCalledWith('/venue-setup?claim=moth');
+  expect(mockPush).toHaveBeenCalledWith('/p/moth/claim');
   expect(screen.getByRole('button', { name: 'Send it to whoever does' })).toBeTruthy();
 });
 

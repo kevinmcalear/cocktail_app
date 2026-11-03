@@ -54,12 +54,12 @@ test('everyone else: nothing under the name (Q33: the claim is in More and at th
   expect(screen.queryByText(/your bar/)).toBeNull();
 });
 
-test('the end line: Claim this page runs venue setup, Find your name opens People', async () => {
+test('the end line: Claim this page opens the claim screen, Find your name opens People', async () => {
   const onFind = jest.fn();
   await renderWithProviders(<ClaimLine profile={rye} onFind={onFind} />);
   expect(screen.getByText('Run Little Rye or work there?')).toBeTruthy();
   await fireEvent.press(screen.getByLabelText('Claim this page'));
-  expect(mockPush).toHaveBeenCalledWith('/venue-setup?claim=lr');
+  expect(mockPush).toHaveBeenCalledWith('/p/lr/claim');
   await fireEvent.press(screen.getByLabelText('Find your name'));
   expect(onFind).toHaveBeenCalled();
 });
@@ -76,6 +76,10 @@ test('the end line: a claimed bar has the staff door instead of the claim; its t
   await renderWithProviders(<ClaimLine profile={claimed} />);
   expect(screen.getByText('You asked to join.')).toBeTruthy();
   mockVenues = [{ id: 'v1' }];
+  await renderWithProviders(<ClaimLine profile={claimed} onFind={jest.fn()} />);
+  expect(screen.queryByText('Work here?')).toBeNull();
+  // The claimant just approved, before their venues reload.
+  [mockVenues, mockClaims] = [[], [{ status: 'approved' }]];
   await renderWithProviders(<ClaimLine profile={claimed} onFind={jest.fn()} />);
   expect(screen.queryByText('Work here?')).toBeNull();
 });

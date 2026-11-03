@@ -62,7 +62,7 @@ export function BarClaimCard({ profile }: { profile: Profile }) {
 /**
  * The claim prompts' quiet line at the very end of a bar's page (Q33 B,
  * approved 26 Oct 2026): "Run Pale Moth or work there? Claim this page · Find
- * your name". Claim runs venue setup for the bar; Find your name (`onFind`,
+ * your name". Claim opens the bar's claim screen; Find your name (`onFind`,
  * a phone's People tab) is for anyone who hasn't claimed a person's page.
  * A waiting claim is noted, and the claim stays open to others. Once a claim
  * is approved, the staff door takes its place: "Work here? Ask to join".
@@ -77,8 +77,10 @@ export function ClaimLine({ profile, onFind }: { profile: Profile; onFind?: () =
   const canClaim = isUnclaimed(profile) && claims?.[0]?.status !== 'pending';
   const waiting = useClaimPending(canClaim ? profile.id : null).data ?? false;
   const canFind = !!onFind && !!user && !isPending && !person;
-  const door = !!user && !!profile.bar_id && !onTeam;
-  if (onTeam) return null;
+  // Their own approved claim counts as the team before the venue list catches up.
+  const mine = onTeam || claims?.[0]?.status === 'approved';
+  const door = !!user && !!profile.bar_id && !mine;
+  if (mine) return null;
   if (door) return <StaffDoor profile={profile} barId={profile.bar_id!} onFind={canFind ? onFind : undefined} />;
   if (!canClaim && !canFind) return null;
   const name = profile.display_name;
@@ -87,7 +89,7 @@ export function ClaimLine({ profile, onFind }: { profile: Profile; onFind?: () =
   return (
     <View style={styles.line}>
       <Caption tone="muted">{ask}</Caption>
-      {canClaim ? <TextLink label="Claim this page" accessibilityHint="Set it up and prove it’s yours" onPress={claim} /> : null}
+      {canClaim ? <TextLink label="Claim this page" accessibilityHint="Prove it’s yours" onPress={claim} /> : null}
       {canClaim && waiting ? <Caption tone="muted">(a claim is waiting)</Caption> : null}
       {canClaim && canFind ? <Caption tone="muted">·</Caption> : null}
       {canFind ? <TextLink label="Find your name" accessibilityHint="Opens the people listed here" onPress={onFind} /> : null}
