@@ -11,7 +11,7 @@ Before the drop, for every section:
 
 - `bar_off_menu` (a view over `bar_also_makes` for old builds): drop the view.
 - `bars.default_generic_ingredient_level`, `default_specific_brand_level`, `default_measurement_level`, `default_prep_level`, and `items.override_generic_ingredient_level`, `override_specific_brand_level`, `override_measurement_level`, `override_prep_level`: nothing reads them. Drop with the `spec_hidden_from_levels` trigger, and change `create_new_bar` and `update_bar_settings` to stop taking them. `default_visibility_level` and `override_visibility_level` stay (whether a drink is listed).
-- `bars.enabled_features` and `public.venue_feature_events`: drop with the `advanced_options_sync` trigger, `set_venue_feature` and `private.record_venue_feature_events`; `bars.advanced_options` is the home.
+- Cancelled (3 Nov 2026, Kevin): `bars.enabled_features`, `public.venue_feature_events`, `set_venue_feature` and `private.record_venue_feature_events` stay. The venue feature switches came back (`lib/venueFeatures.ts`) and read and write them. Only the `'advanced'` key in `enabled_features` is an old field: `bars.advanced_options` is its home. The drop PR stops the `advanced_options_sync` trigger, removes `'advanced'` from every row's `enabled_features` and from the `bars_enabled_features_known` CHECK, and leaves the column.
 - `menu_drink_runs` (a view, research history only): `drink_list_dates` replaced it (`20261203100000`). Drop it, and edit `supabase/tests/menu-dates.test.mjs` and `db-indexes.test.mjs`, which read it.
 - `events.guest_role_id` (never read; a takeover's guest role lives on `menus.change_role_id`, `20261204400000`).
 

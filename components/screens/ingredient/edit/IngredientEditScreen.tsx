@@ -13,6 +13,7 @@ import type { useIngredientDraftEditor } from '@/hooks/useIngredientEditor';
 import { useIngredient } from '@/hooks/useIngredients';
 import { useMode } from '@/hooks/useMode';
 import { useHoldUpdates } from '@/hooks/useOtaUpdates';
+import { useBackBarShown } from '@/hooks/useBackBarShown';
 import { confirmAsync } from '@/lib/dialogs';
 import { ingredientHeroPictures, shownIngredientPicture } from '@/lib/ingredientPicture';
 import { orderedPictures } from '@/lib/itemImages';
@@ -83,6 +84,7 @@ function Page({ edit, savedId, onExit, inSheet }: { edit: IngredientEdit; savedI
   const name = form.name || data?.ingredient?.name || 'Ingredient';
   const calc = usePrepCalc({ name: form.name, catalog: editor.catalog, recipe: lines, barId: form.barId, saveDraft: editor.saveDraft, onApply: editor.setRecipeItems });
   const giveItASpot = useGiveItASpot(selfId, name);
+  const backBar = useBackBarShown();
 
   const allowExit = useLeaveGuard(edit.dirty);
   const finish = async () => {
@@ -156,7 +158,8 @@ function Page({ edit, savedId, onExit, inSheet }: { edit: IngredientEdit; savedI
   const body = <EditBody edit={edit} savedId={savedId} isPrep={isPrep} wide={wide} venueName={venues.find((v) => v.id === form.barId)?.name ?? null} used={data?.usedIn?.length ?? 0} spiritTags={spiritTags} onSheet={setSheet} selfId={selfId} focus={focus} />;
   const toolbar = <EditToolbar canUndo={history.canUndo} canRedo={history.canRedo} onUndo={history.undo} onRedo={history.redo} changes={history.changes} onDone={done} saving={edit.saving} wide={wide} media={pictures?.length ? 'photo' : 'paper'} more={wide ? <GlassButton accessibilityLabel="More" icon="ellipsis" onPress={() => setSheet('more')} /> : undefined} />;
   const trail: Crumb[] = home ? [{ label: 'Tonight', href: '/' }] : [{ label: 'Drinks', href: '/drinks' }, { label: isPrep ? 'House-made' : 'Ingredients', href: '/drinks' }];
-  const canSpot = !!savedId && !home;
+  // Give it a spot opens the back bar map: parked or switched off, no spot (lib/venueFeatures.ts).
+  const canSpot = !!savedId && !home && backBar;
 
   return (
     <View style={[styles.screen, { backgroundColor: ds.c.ground }]}>

@@ -1,7 +1,10 @@
+import type { VenueFeatureKey } from '@/lib/venueFeatures';
+
 /**
- * The four tabs: Tonight, Drinks, Discover and You, the same for every person
- * and role (tabs A, decided 31 Oct 2026). The mode changes what a tab shows,
- * never which tabs there are. Search sits beside them (the circle on iOS and
+ * The four tabs: Tonight, Drinks, Discover and You (tabs A, decided 31 Oct
+ * 2026). The mode changes what a tab shows; the one tab that can leave is
+ * Tonight, at a venue that hasn't switched it on (lib/venueFeatures.ts), and
+ * then the app opens on Drinks. Search sits beside them (the circle on iOS and
  * phone-width web, the top search bar on Android, ⌘K on wide web).
  */
 
@@ -26,6 +29,11 @@ export const TABS: readonly Tab[] = [
   { name: 'discover', label: 'Discover', path: '/discover', route: '(3-discover)' },
   { name: 'you', label: 'You', path: '/you', route: '(4-you)' },
 ];
+
+/** The tabs shown where you are: all four, or three when Tonight is switched off (hooks/useVenueFeatures.ts `has`). */
+export function shownTabs(has: (key: VenueFeatureKey) => boolean): readonly Tab[] {
+  return has('tonight') ? TABS : TABS.filter((t) => t.name !== 'tonight');
+}
 
 /** "Search your drinks" opens search on your drinks, whatever the tab would start on. */
 export const YOUR_DRINKS = 'Search your drinks';
