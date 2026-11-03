@@ -84,10 +84,11 @@ export function useSetItemAllergens(itemId: string, barId: string | null) {
     onSuccess: () => {
       void queryClient.invalidateQueries({ queryKey: ['item-allergens', itemId] });
       void queryClient.invalidateQueries({ queryKey: ['drink-allergens'] });
+      void queryClient.invalidateQueries({ queryKey: ['line-allergens'] });
+      void queryClient.invalidateQueries({ queryKey: ['guest-drink-allergens'] });
     },
   });
 }
-
 /**
  * A drink's allergens, rolled up from its recipe on the server, with the
  * ingredient path masked like the spec. Null when the drink can't be opened.

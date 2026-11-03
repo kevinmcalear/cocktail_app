@@ -5,7 +5,7 @@ import { Caption, DsText, SpecRow, TextLink } from '@/components/ds';
 import { space } from '@/constants/tokens';
 import type { PrepStep } from '@/hooks/usePrepCard';
 import type { BatchSize } from '@/lib/prepParts';
-import { sourceSite } from '@/lib/prepKinds';
+import { sourceSite } from '@/lib/prepMath';
 import { prepStepGroups } from '@/lib/prepSteps';
 import { scaleRecipe, type RecipeLine } from '@/lib/scale';
 import { useSpecView } from '@/store/useSpecViewStore';

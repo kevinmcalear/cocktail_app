@@ -16,7 +16,7 @@ export interface CapabilityRow {
   label: string;
   /** The words after "plus" or "no" in a role's summary: "house-made recipes". */
   short: string;
-  /** The words after "can now" in the Undo toast: "invite and manage staff". */
+  /** The words after "can now" in the Undo toast: "invite and manage the team". */
   can: string;
   detail?: string;
 }
@@ -37,17 +37,17 @@ export const CAPABILITY_GROUPS: { title: string; rows: CapabilityRow[] }[] = [
     title: 'Making',
     rows: [
       { id: 'edit_drinks', label: 'Create and edit drinks', short: 'drink edits', can: 'create and edit drinks' },
-      { id: 'prep', label: 'Prep list and orders', short: 'prep', can: 'do the prep list and orders', detail: 'Also places items on the back bar' },
+      { id: 'prep', label: 'Prep list and batches', short: 'prep', can: 'do the prep list and orders', detail: 'Also places items on the back bar' },
       { id: 'photos', label: 'Take and replace photos', short: 'photos', can: 'take and replace photos' },
       { id: 'menus', label: 'Build menus and events', short: 'menus', can: 'build menus and events' },
     ],
   },
   {
-    title: 'Running the venue',
+    title: 'Running the bar',
     rows: [
-      { id: 'publish', label: 'Publish to the public app', short: 'publishing', can: 'publish to the public app' },
-      { id: 'staff', label: 'Invite and manage staff', short: 'staff', can: 'invite and manage staff' },
-      { id: 'brand', label: 'Edit brand', short: 'brand', can: 'edit brand' },
+      { id: 'publish', label: 'Publish to the public', short: 'publishing', can: 'publish to the public' },
+      { id: 'staff', label: 'Invite and manage the team', short: 'the team', can: 'invite and manage the team' },
+      { id: 'brand', label: 'Theme', short: 'the theme', can: 'change the theme' },
     ],
   },
 ];
@@ -106,7 +106,7 @@ export function isChangedBuiltIn(column: MatrixColumn): boolean {
   return column.role_id === null && column.granted.length + column.revoked.length > 0;
 }
 
-/** The Undo toast: "Head bartender can now invite and manage staff". */
+/** The Undo toast: "Head bartender can now invite and manage the team". */
 export function toggleLine(roleName: string, capability: string, on: boolean): string {
   const words = ROWS.find((r) => r.id === capability)?.can ?? capability;
   return `${roleName} ${on ? 'can now' : 'can no longer'} ${words}`;
@@ -206,6 +206,35 @@ export function roleSummary(role: Pick<MatrixColumn, 'base_level' | 'granted' | 
   if (role.granted.length) parts.push(`plus ${list(role.granted)}`);
   if (role.revoked.length) parts.push(`no ${list(role.revoked)}`);
   return parts.join(', ');
+}
+
+/** What a built-in role does, in the board's words (Kept-team, Roles). */
+const BUILT_IN_LINES: Record<number, string> = {
+  40: 'Everything, including the team and publishing',
+  35: 'Bartender, plus writing and editing drinks',
+  30: 'Menu, specs, house-made, prep, photos',
+  20: 'Menu, talking points and allergens',
+  10: 'The menu only',
+};
+
+/**
+ * A role's line on the Roles list: a built-in role's own words ("changed
+ * here" once a venue changes it), or for a venue's role where it starts and
+ * what's different, and when it ends: "Bartender, plus the team and
+ * publishing", "Bartender, no photos, until Fri 7 Nov".
+ */
+export function rolesListLine(role: Pick<MatrixColumn, 'role_id' | 'base_level' | 'granted' | 'revoked' | 'ends_at'>): string {
+  if (!role.role_id) {
+    const own = BUILT_IN_LINES[role.base_level] ?? roleLabel(role.base_level);
+    return role.granted.length + role.revoked.length ? `${own}, changed here` : own;
+  }
+  const parts = [roleLabel(role.base_level)];
+  if (role.granted.length) parts.push(`plus ${list(role.granted)}`);
+  if (role.revoked.length) parts.push(`no ${list(role.revoked)}`);
+  const ends = endsLabel(role.ends_at);
+  if (ends) parts.push(`until ${ends}`);
+  // A role that changes nothing still says where it comes from.
+  return parts.length === 1 ? `Same as ${parts[0]}` : parts.join(', ');
 }
 
 /** The words under a column's name: "Built in", "Yours · from Employee", "Yours · ends Mon 12 Oct". Never a level number. */

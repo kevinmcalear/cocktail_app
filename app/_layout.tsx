@@ -80,6 +80,8 @@ function RootLayoutNav() {
     // releases (/r/<id>), public profiles (/p/<handle>), shared home menus
     // (/m/<id>) and public events (/e/<id>) are public.
     if (segments[0] === 'legal' || segments[0] === 'support' || segments[0] === 'v' || segments[0] === 'dev' || segments[0] === 'd' || segments[0] === 'r' || segments[0] === 'p' || segments[0] === 'm' || segments[0] === 'e') return;
+    // Your allergies are kept on this phone until you sign in (Loop-allergy, At a table, signed out).
+    if (segments[0] === 'settings' && (segments as string[])[1] === 'allergies') return;
     // Signed out, a drink opens as its public card (/d/<id>), which asks you to sign in for the rest.
     const drink = !session && /^\/cocktail\/([^/]+)$/.exec(pathname);
     if (drink) return router.replace(`/d/${drink[1]}`);
@@ -175,7 +177,8 @@ function RootLayoutNav() {
             />
             {/* Declared here because on iOS, a screen pushed over a modal ignores headerShown set from inside it. */}
             <Stack.Screen name="back-bar" options={{ headerShown: false }} />
-            <Stack.Screen name="team" options={{ headerShown: false }} />
+            <Stack.Screen name="team/index" options={{ headerShown: false }} />
+            <Stack.Screen name="team/[userId]" options={{ headerShown: false }} />
             <Stack.Screen name="bring-in/index" options={{ headerShown: false }} />
             <Stack.Screen name="bring-in/done" options={{ headerShown: false }} />
             <Stack.Screen name="drafts" options={{ headerShown: false }} />
@@ -195,6 +198,8 @@ function RootLayoutNav() {
             <Stack.Screen name="settings/index" options={{ headerShown: false, title: "Settings" }} />
             <Stack.Screen name="settings/bar/[id]/index" options={{ headerShown: false }} />
             <Stack.Screen name="settings/bar/[id]/brand" options={{ headerShown: false }} />
+            <Stack.Screen name="settings/bar/[id]/roles/index" options={{ headerShown: false }} />
+            <Stack.Screen name="settings/bar/[id]/roles/[role]" options={{ headerShown: false }} />
             <Stack.Screen name="p/review-claims" options={{ headerShown: false }} />
             <Stack.Screen name="p/review-photos" options={{ headerShown: false }} />
             <Stack.Screen name="rankings/[itemId]" options={{ headerShown: false }} />

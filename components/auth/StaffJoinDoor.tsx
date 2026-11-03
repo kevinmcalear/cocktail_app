@@ -1,11 +1,12 @@
 import { LinearGradient } from 'expo-linear-gradient';
+import type { ReactNode } from 'react';
 import { Platform, ScrollView, StyleSheet, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import type { AuthBrand } from '@/components/auth/AuthShell';
-import { BackbarTheme, Body, Button, Display, DsText, LogoImage, useDs, useGutter } from '@/components/ds';
+import { BackbarTheme, Body, Button, Caption, Display, DsText, LogoImage, useDs, useGutter, type IconName } from '@/components/ds';
 import { RoundNote } from '@/components/screens/firstRound/StepGroup';
-import { space } from '@/constants/tokens';
+import { space, STATUS } from '@/constants/tokens';
 import { withAlpha } from '@/lib/color';
 
 const CREST = 68;
@@ -32,18 +33,44 @@ export function joinLines(bar: string, web: boolean) {
  * same code, so the second only changes the words on the next step.
  */
 export function StaffJoinDoor({ brand, onContinue }: { brand: AuthBrand; onContinue: (returning: boolean) => void }) {
+  const copy = joinLines(brand.name, Platform.OS === 'web');
+  return (
+    <DoorPage brand={brand} title={copy.title} body={copy.body} note={{ icon: Platform.OS === 'web' ? 'iphone' : 'person.2', text: copy.note }}>
+      <Button label="Continue with email" icon="envelope" variant="ink" size="lg" onPress={() => onContinue(false)} />
+      <Button label="I already have an account" variant="plain" onPress={() => onContinue(true)} />
+    </DoorPage>
+  );
+}
+
+export interface DoorPageProps {
+  brand: AuthBrand;
+  title: string;
+  body: string;
+  /** The buttons, main one first. */
+  children: ReactNode;
+  /** Under the buttons: an error, read out when it appears. */
+  alert?: string | null;
+  note?: { icon: IconName; text: string } | null;
+}
+
+/**
+ * The door's page: the bar's colour fading into the ground, its crest, a
+ * title and what it means, the buttons, then a note. In a column in the
+ * middle on a wide screen (Miss-door-desk). The signed-out door and the
+ * signed-in one (StaffLinkDoor) both use it.
+ */
+export function DoorPage(props: DoorPageProps) {
   return (
     <BackbarTheme>
-      <Door brand={brand} onContinue={onContinue} />
+      <Door {...props} />
     </BackbarTheme>
   );
 }
 
-function Door({ brand, onContinue }: { brand: AuthBrand; onContinue: (returning: boolean) => void }) {
+function Door({ brand, title, body, children, alert, note }: DoorPageProps) {
   const ds = useDs();
   const gutter = useGutter();
   const insets = useSafeAreaInsets();
-  const copy = joinLines(brand.name, Platform.OS === 'web');
   const tint = withAlpha(ds.accentFill.fill, ds.scheme === 'dark' ? 0.24 : 0.16);
   return (
     <View style={[styles.fill, { backgroundColor: ds.c.ground }]}>
@@ -52,14 +79,16 @@ function Door({ brand, onContinue }: { brand: AuthBrand; onContinue: (returning:
         <View style={styles.column}>
           <Crest brand={brand} />
           <View style={styles.head}>
-            <Display>{copy.title}</Display>
-            <Body tone="muted">{copy.body}</Body>
+            <Display>{title}</Display>
+            <Body tone="muted">{body}</Body>
           </View>
-          <View style={styles.buttons}>
-            <Button label="Continue with email" icon="envelope" variant="ink" size="lg" onPress={() => onContinue(false)} />
-            <Button label="I already have an account" variant="plain" onPress={() => onContinue(true)} />
-          </View>
-          <RoundNote icon={Platform.OS === 'web' ? 'iphone' : 'person.2'} text={copy.note} />
+          <View style={styles.buttons}>{children}</View>
+          {alert ? (
+            <Caption color={STATUS.danger} role="alert">
+              {alert}
+            </Caption>
+          ) : null}
+          {note ? <RoundNote icon={note.icon} text={note.text} /> : null}
         </View>
       </ScrollView>
     </View>

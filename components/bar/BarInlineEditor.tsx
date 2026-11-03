@@ -97,7 +97,7 @@ function BarEditorBody({ barId, onClose, onChromeState, embedded = false }: BarI
 
             <VenueBasics editor={editor} barId={barId} />
             <VenueHoursEditor barId={barId} canEdit={editor.canEdit} />
-            {editor.slug ? <StaffLinkCard slug={editor.slug} venueName={editor.name || 'your venue'} /> : null}
+            {editor.slug ? <StaffLinkCard barId={barId} slug={editor.slug} venueName={editor.name || 'your venue'} canEdit={editor.canEdit} /> : null}
 
             <SettingsSection title="Who sees what" note="The lowest role that sees each part of a drink, unless the drink sets its own. Only your team: the public is under Publishing.">
                 {disclosure.map(([label, detail, value, setValue], i) => (
