@@ -6,7 +6,8 @@ import { BAR_COLOURS, DEFAULT_ACCENT } from '@/constants/tokens';
 
 import { contrast } from './color';
 import { groundTintFor, neutralsFor, toLch } from './palette';
-import { isGrey, notForButton, themeColours, themeFor, tonalFor } from './theme';
+import { themeColours } from './theme';
+import { isGrey, notForButton, themeFor, tonalFor } from './themeRails';
 
 const canvas = { Rust: '#D0643B', Lavender: '#B9A8F5', 'Neon green': '#39FF14', Ink: '#1E1B17' };
 const seeds: [string, string][] = [...Object.entries(canvas), ['Amber', DEFAULT_ACCENT], ...BAR_COLOURS.map((c): [string, string] => [c.name, c.hex])];

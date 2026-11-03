@@ -90,7 +90,7 @@ test('Theme is only there for people who can change it (Admins, the brand permis
   mockPathname = '/drinks';
   await renderWithProviders(<WebSideNav />);
   expect(links()).not.toContain('Theme');
-  expect(links()).toContain('Venue settings');
+  expect(links()).toContain('Bar settings');
 });
 
 test('the top of the sidebar is one mark with a chevron (the switcher), never a row of venues', async () => {

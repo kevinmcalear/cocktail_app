@@ -5,7 +5,7 @@ import { Caption, DsText, PressableScale, Spec, useDs } from '@/components/ds';
 import { VenueMark } from '@/components/nav/VenueMarks';
 import { IconSymbol } from '@/components/ui/icon-symbol';
 import { displayFaces, displayName, font, radius, space, type, type DisplayFace } from '@/constants/tokens';
-import { tonalFor } from '@/lib/theme';
+import { tonalFor } from '@/lib/themeRails';
 
 import type { BrandLook } from '../BrandPreview';
 

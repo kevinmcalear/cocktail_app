@@ -13,7 +13,7 @@ import { colourName } from '@/lib/brandColours';
 import { useLogoEdge } from '@/lib/logoEdge';
 import { logoRect } from '@/lib/logoPins';
 import { groundTintFor, neutralsFor, type Ground } from '@/lib/palette';
-import { isGrey, notForButton, themeFor } from '@/lib/theme';
+import { isGrey, notForButton, themeFor } from '@/lib/themeRails';
 
 import { FlowHead } from './FlowHead';
 

@@ -7,7 +7,7 @@ import { DEFAULT_ACCENT, font, radius, space } from '@/constants/tokens';
 import { normalizeHex } from '@/lib/brand';
 import { colourName } from '@/lib/brandColours';
 import { groundOf, groundTintFor, neutralsFor, type Ground, type Palette } from '@/lib/palette';
-import { themeFor } from '@/lib/theme';
+import { themeFor } from '@/lib/themeRails';
 
 const GROUNDS: { id: Ground; label: string; note: string }[] = [
   { id: 'neutral', label: 'Neutral', note: 'Warm grey' },
