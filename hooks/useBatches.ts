@@ -2,8 +2,10 @@ import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 
 import { useAuth } from '@/ctx/AuthContext';
 import { BAR_WRITES, type BatchWrite } from '@/hooks/barWrites';
+import { useBarMembers } from '@/hooks/useBarDetail';
 import { newDraftId } from '@/lib/drinkWizard';
 import { supabase } from '@/lib/supabase';
+import type { FridgeBatch } from '@/lib/paper/label';
 import type { Batch } from '@/lib/stock';
 
 /** How far back batches are read: older ones sit under a count by then. ponytail: read per item since its last count if a bar goes weeks between counts. */
@@ -26,6 +28,58 @@ export function useBatchLogs(barId: string | null | undefined) {
       return (data ?? []).map((r) => ({ id: r.id, itemId: r.item_id, amount: Number(r.amount), unit: r.unit, madeAt: r.made_at, madeBy: r.made_by }));
     },
   });
+}
+
+/** One batch (batch_logs), for its label and the page its label's code opens; null when it's gone or not the reader's. */
+export function useBatch(batchId: string | null | undefined) {
+  return useQuery({
+    queryKey: ['batch-log', batchId],
+    enabled: !!batchId,
+    queryFn: async (): Promise<(Batch & { barId: string }) | null> => {
+      const { data, error } = await supabase.from('batch_logs').select('id, bar_id, item_id, amount, unit, made_at, made_by').eq('id', batchId!).maybeSingle();
+      if (error) throw error;
+      return data ? { id: data.id, barId: data.bar_id, itemId: data.item_id, amount: Number(data.amount), unit: data.unit, madeAt: data.made_at, madeBy: data.made_by } : null;
+    },
+  });
+}
+
+/** A bar's batches with each house-made's name and how long it keeps, for In the fridge (Bet-labels). */
+export function useFridge(barId: string | null | undefined) {
+  return useQuery({
+    queryKey: ['fridge', barId],
+    enabled: !!barId,
+    queryFn: async (): Promise<FridgeBatch[]> => {
+      const since = new Date(Date.now() - BATCH_DAYS * 86_400_000).toISOString();
+      const { data, error } = await supabase
+        .from('batch_logs')
+        .select('id, item_id, amount, unit, made_at, made_by, item:items!batch_logs_item_id_fkey(name, prep:item_prep(shelf_life_hours))')
+        .eq('bar_id', barId!)
+        .gte('made_at', since)
+        .order('made_at', { ascending: false });
+      if (error) throw error;
+      return (data ?? []).map((r) => ({
+        id: r.id,
+        itemId: r.item_id,
+        amount: Number(r.amount),
+        unit: r.unit,
+        madeAt: r.made_at,
+        madeBy: r.made_by,
+        name: r.item?.name ?? 'House-made',
+        shelfLifeHours: r.item?.prep?.shelf_life_hours ?? null,
+      }));
+    },
+  });
+}
+
+/** The team's first names by user id, for who made a batch ("Fri 31 Oct · Theo"). */
+export function useMakerNames(barId: string | null | undefined): Record<string, string> {
+  const { data } = useBarMembers(barId ?? null);
+  const names: Record<string, string> = {};
+  for (const m of data ?? []) {
+    const first = m.display_name?.trim().split(/\s+/)[0];
+    if (first) names[m.user_id] = first;
+  }
+  return names;
 }
 
 /**

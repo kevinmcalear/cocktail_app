@@ -15,12 +15,11 @@ import { useEffect } from "react";
 import { backbar } from "@/constants/tokens";
 import '@/lib/reanimatedSetup';
 
-import { DialogHost } from '@/components/DialogHost';
+import { DialogHost, ViewAsBanner } from '@/components/nav/RootHosts';
 import { ToastHost } from '@/components/ds/Toast';
 import { APP_FONTS, FIRST_PAINT_FONTS, LATER_FONTS } from '@/components/ds/fonts';
 import { ObservabilityProvider } from '@/components/ObservabilityProvider';
 import { OfflineBanner } from '@/components/OfflineBanner';
-import { ViewAsBanner } from '@/components/ViewAsBanner';
 import { AuthProvider, useAuth } from "@/ctx/AuthContext";
 import { BarUnitSync } from '@/hooks/useBarUnitSync';
 import { useColorScheme } from "@/hooks/use-color-scheme";
@@ -177,6 +176,10 @@ function RootLayoutNav() {
               name="ingredient/[id]/make"
               options={{ presentation: "fullScreenModal", headerShown: false, gestureEnabled: false }}
             />
+            <Stack.Screen name="share/poster" options={{ presentation: "modal", headerShown: false }} />
+            <Stack.Screen name="print/index" options={{ presentation: "modal", headerShown: false }} />
+            <Stack.Screen name="print/sheet" options={{ headerShown: false }} />
+            <Stack.Screen name="label/index" options={{ presentation: "modal", headerShown: false }} />
             {/* Declared here because on iOS, a screen pushed over a modal ignores headerShown set from inside it. */}
             <Stack.Screen name="back-bar" options={{ headerShown: false }} />
             <Stack.Screen name="team/index" options={{ headerShown: false }} />
