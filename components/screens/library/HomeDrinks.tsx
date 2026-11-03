@@ -4,8 +4,8 @@ import { ScrollView, StyleSheet, View } from 'react-native';
 import { Segmented, useBreakpoint, useDs, useGutter } from '@/components/ds';
 import { ScreenHeader } from '@/components/nav/ScreenHeader';
 import { useTabBarInset } from '@/components/nav/WebTabBar';
+import { HomeDrinkList } from './HomeDrinkList';
 import { HomeShelf } from './HomeShelf';
-import { CollectionDrinks } from '@/components/screens/home/CollectionDrinks';
 import { TonightHead } from '@/components/screens/tonight/TonightParts';
 import { space } from '@/constants/tokens';
 
@@ -23,8 +23,7 @@ const TABS = [
 
 /**
  * Drinks in home mode (board Prod-drinks, Home): your name for the place over
- * "Drinks", then Drinks / Shelf / Menus. Drinks is what you keep (had out, to
- * make, made); Shelf your bottles; Menus the ones you build for nights in.
+ * "Drinks", then Drinks / Shelf / Menus. Drinks is what you can make, saved and ranked; Shelf your bottles; Menus the ones you build for nights in.
  * Bars you want to go to stay a fourth switch until the board says where they live.
  */
 export function HomeDrinks() {
@@ -44,7 +43,7 @@ export function HomeDrinks() {
           <View style={desk ? styles.tabs : null}>
             <Segmented variant="ink" stretch options={TABS} value={tab} onChange={setTab} accessibilityLabel="Drinks" />
           </View>
-          {tab === 'drinks' ? <View style={desk ? styles.table : null}><CollectionDrinks /></View> : null}
+          {tab === 'drinks' ? <View style={desk ? styles.table : null}><HomeDrinkList /></View> : null}
           <Suspense fallback={null}>
             {tab === 'shelf' ? <View style={desk ? styles.table : null}><HomeShelf /></View> : null}
             {tab === 'menus' ? <HomeMenus /> : null}

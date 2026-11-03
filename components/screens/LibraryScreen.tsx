@@ -12,7 +12,7 @@ import { LibrarySetup } from '@/components/screens/venueSetup/SetupBanner';
 import { FirstRoundCard, RoundOpened } from '@/components/screens/firstRound/FirstRoundCard';
 import { FilterRow } from '@/components/screens/library/LibraryChips';
 import { useTileLines } from '@/components/screens/library/useTileLines';
-import { LibraryHead, SEGMENT_HOME, SEGMENT_VIEWS, segmentOf } from '@/components/screens/library/LibraryHead';
+import { LibraryHead, SEGMENT_HOME, segmentOf } from '@/components/screens/library/LibraryHead';
 import { OnNowCard } from '@/components/screens/library/OnNowCard';
 import { TonightLabel } from '@/components/screens/tonight/TonightParts';
 import { LibraryEmpty } from '@/components/screens/library/LibraryEmpty';
@@ -137,13 +137,10 @@ export function LibraryScreen({ beside = false }: { beside?: boolean }) {
   const shownIds = useMemo(() => shown.map((i) => i.id), [shown]);
   const { data: classicList } = useDrinkLists(!!q);
   const { lineOf } = useTileLines({ show, rndMenus: byMenu.rndMenus, prepLine: (id) => prepFacts[id]?.line ?? null, needsOf: kit.needsOf });
-  const count = (value: Show) => (value === 'staff' ? classicRows(staff.data ?? [], linked.data ?? []).length : lists[value].length);
   const groups = filterGroups(!!activeId, canCost);
   const pick = (value: Show) => setView({ show: value, menu: undefined, kind: undefined });
   const staffView = show === 'staff' && !!activeId;
   const segment = activeId ? segmentOf(show) : null;
-  // The views under the switch: this segment's own, those the venue has (the picked one always shows).
-  const views = (segment ? groups.flat().filter((f) => SEGMENT_VIEWS[segment].includes(f.value)) : groups.flat()).filter((f) => f.value === show || count(f.value) > 0 || f.value === 'all' || f.value === 'staff');
   // The menu on now, and the next one up.
   const grouped = groupMenus(here, now);
   const current = grouped.on[0];
@@ -151,7 +148,7 @@ export function LibraryScreen({ beside = false }: { beside?: boolean }) {
   const plainName = (n: string) => n.replace(/ menu$/i, '');
   const nextLine = next?.startsAt ? `${plainName(next.name)} on ${new Date(next.startsAt).toLocaleDateString(undefined, { day: 'numeric', month: 'short' })}` : null;
   const listBottom = bottom;
-  const label = views.find((f) => f.value === show)?.label ?? 'All';
+  const label = groups.flat().find((f) => f.value === show)?.label ?? 'All';
   const header = (
     <View style={styles.header}>
       <LibraryHead
@@ -172,9 +169,6 @@ export function LibraryScreen({ beside = false }: { beside?: boolean }) {
       ) : null}
       {activeId ? (<><ResumeCard barId={activeId} /><LibrarySetup barId={activeId} /></>) : null}
       <FirstRoundCard />
-      {views.length > 1 ? (
-        <FilterRow label="Show" gutter={gutter} whole={breakpoint === 'desktop'} groups={[views.map((f) => <Chip key={f.value} look="outline" label={f.label} count={String(count(f.value))} selected={show === f.value} onPress={() => pick(f.value)} />)]} />
-      ) : null}
       {show === 'on-menu' && byMenu.onMenus.length > 1 ? (
         <FilterRow
           label="Which menu"

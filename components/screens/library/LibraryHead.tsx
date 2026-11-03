@@ -36,9 +36,3 @@ export function segmentOf(show: Show): LibrarySegment {
   return show === 'preps' || show === 'garnishes' ? 'house' : show === 'bottles' || show === 'ingredients' || show === 'needs-price' ? 'bottles' : 'drinks';
 }
 export const SEGMENT_HOME: Record<LibrarySegment, Show> = { drinks: 'all', house: 'preps', bottles: 'bottles' };
-/** The views under each segment's switch. */
-export const SEGMENT_VIEWS: Record<LibrarySegment, Show[]> = {
-  drinks: ['all', 'on-menu', 'staff', 'past', 'rnd', 'batched', 'cocktails', 'beer', 'wine', 'ready', 'needs'],
-  house: ['preps', 'garnishes'],
-  bottles: ['bottles', 'ingredients', 'needs-price'],
-};

@@ -1,8 +1,8 @@
 import { useLocalSearchParams, useRouter, type Href } from 'expo-router';
-import { lazy, Suspense, type ReactElement } from 'react';
+import { lazy, Suspense, useState, type ReactElement } from 'react';
 import { FlatList, StyleSheet, View } from 'react-native';
 
-import { Body, Button, Display, RowScore, scoreWords, useDs, useGutter } from '@/components/ds';
+import { Body, Button, type TagTone, Display, RowScore, scoreWords, useDs, useGutter } from '@/components/ds';
 import { DRAWN_LIST_WINDOW } from '@/components/ds/SketchDrawing';
 import { useTabBarInset } from '@/components/nav/WebTabBar';
 import { DrinkRow } from '@/components/screens/DrinkRow';
@@ -11,6 +11,8 @@ import { layout, radius, space } from '@/constants/tokens';
 import { useCocktail } from '@/hooks/useCocktails';
 import { useOpenBeside } from '@/hooks/useDrinksSplit';
 import { useItemScores } from '@/hooks/useFlavor';
+import { useGuestDrinkAllergens } from '@/hooks/useGuestAllergies';
+import { useTonight } from '@/hooks/useTonight';
 import { useMineFacts } from '@/hooks/useMineFacts';
 import { useItemEditAccess } from '@/hooks/useViewAs';
 import { withAlpha } from '@/lib/color';
@@ -80,11 +82,18 @@ export function LibraryPanes({ venueId, items, lineOf, header, empty, footer, ro
   const picked = routed ? (items.find((i) => i.id === beside.picked) ?? null) : (items.find((i) => i.id === pick) ?? items[0] ?? null);
   const facts = useMineFacts(venueId, items);
   const { data: scores } = useItemScores(items.filter((i) => i.category === 'Cocktail').map((i) => i.id));
+  // Pills (Prod-drinks): "Egg" on a drink with egg in it, "Off tonight" once its take-off time has passed.
+  const { blocks } = useTonight(venueId);
+  const [now] = useState(() => Date.now());
+  const off = new Set(blocks.flatMap((b) => b.sections.flatMap((s) => s.drinks)).filter((d) => d.offAt && Date.parse(d.offAt) <= now).map((d) => d.id));
+  const allergens = useGuestDrinkAllergens(venueId ? items.filter((i) => i.category === 'Cocktail').map((i) => i.id) : []).data;
   // A drink says how it's made ("Dry shake · Coupe", Prod-drinks), with a pill when it's an old drink; without a line, why it's here.
-  const why = (i: SearchItem): { caption?: string; tag?: string } => {
+  const why = (i: SearchItem): { caption?: string; tag?: string; tagTone?: TagTone } => {
     const line = lineOf?.(i) ?? undefined;
     if (!venueId || i.category !== 'Cocktail') return { caption: line ?? i.category ?? undefined };
     const f = drinkFacts(i.id, i.category, facts, true);
+    if (off.has(i.id)) return { caption: line ?? f.caption, tag: 'Off tonight' };
+    if (allergens?.get(i.id)?.allergens.some((a) => a.allergen === 'eggs')) return { caption: line ?? f.caption, tag: 'Egg', tagTone: 'warning' };
     return { caption: line ?? f.caption, tag: f.tag };
   };
   const list = (
@@ -99,7 +108,7 @@ export function LibraryPanes({ venueId, items, lineOf, header, empty, footer, ro
       ListEmptyComponent={empty ?? undefined}
       ListFooterComponent={footer ?? undefined}
       renderItem={({ item }) => {
-        const { caption, tag } = why(item);
+        const { caption, tag, tagTone } = why(item);
         const score = scores?.[item.id];
         const said = scoreWords(score);
         return (
@@ -111,6 +120,7 @@ export function LibraryPanes({ venueId, items, lineOf, header, empty, footer, ro
               itemId={item.id}
               caption={caption}
               tag={tag}
+              tagTone={tagTone}
               trailing={<RowScore score={score} />}
               label={said ? [item.name, caption, tag, said].filter(Boolean).join('. ') : undefined}
               onPress={() => (plain ? router.push(itemHref(item.category as ItemCategory, item.id) as never) : routed ? beside.open(itemHref(item.category as ItemCategory, item.id)) : router.setParams({ pick: item.id }))}
