@@ -46,6 +46,11 @@ function layersOf(scene: Scene, night: boolean, liquid: string): Layers {
   return layers;
 }
 
+/** A drink's whole drawing as an SVG data URI, by day or painted for night: what a poster or a printed page draws (components/paper). */
+export function drawingUri(inputs: SketchInputs, seed: string, night: boolean): string {
+  return layersOf(sceneFor(inputs, seed, 'full'), night, liquidOf(inputs).hex).whole;
+}
+
 export interface DrinkDrawingProps {
   inputs: SketchInputs;
   /** What makes it this drink's drawing: its id. */

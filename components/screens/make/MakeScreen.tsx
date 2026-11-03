@@ -16,7 +16,7 @@ import { siteOrigin } from '@/lib/venueLink';
 import { toQuantity } from '@/lib/quantity';
 import { factorForLine, scaledYield, scaleRecipe, type RecipeLine } from '@/lib/scale';
 
-import { copyForTape, MakeDone, shareLabel, type BatchLabel } from './MakeDone';
+import { copyForTape, MakeDone, useLabelPrint, type BatchLabel } from './MakeDone';
 import { BATCHES, FILLS, MakeHowMuch, type MakeMode } from './MakeHowMuch';
 import { makeKit, missingKit, splitHint } from './makeLogic';
 import { MakeGather, MakeStep } from './MakeSteps';
@@ -78,11 +78,15 @@ function Make({ itemId, name, recipe, card, startFactor, startMode, canLearn, ki
   const [made, setMade] = useState<string | null>(null);
   const [madeAt] = useState(() => new Date());
   const [copied, setCopied] = useState(false);
+  const printing = useLabelPrint();
   const spot = useMakeSpot(itemId);
   const learn = useLearnYield(itemId);
   const tools = useToolsFor(kitVenue?.id ?? null, kitVenue?.name ?? null);
   const me = useMyProfile().data;
-  const allergens = useDrinkAllergens(itemId).data;
+  const allergensRead = useDrinkAllergens(itemId);
+  const allergens = allergensRead.data;
+  // A food label never prints while its allergens are still on their way.
+  const allergensWait = allergensRead.isPending && !allergensRead.error;
 
   const line = recipe.find((l) => l.id === haveLine) ?? null;
   // "What I have" opens on the line's own amount: one batch.
@@ -159,7 +163,7 @@ function Make({ itemId, name, recipe, card, startFactor, startMode, canLearn, ki
     const { main, hint } = splitHint(s.body);
     screen = <MakeStep index={at} total={n} name={name} size={makes} parts={stepParts(main, named)} hint={hint} timer={timer} next={at + 1 < n ? steps[at + 1].body : null} />;
   } else {
-    screen = <MakeDone label={label} goesIn={spot ?? prep?.storage ?? null} made={yieldQ ? madeValue : null} onMade={setMade} madeUnit={yieldQ?.unit ?? null} onClose={close} />;
+    screen = <MakeDone label={label} printing={printing} goesIn={spot ?? prep?.storage ?? null} made={yieldQ ? madeValue : null} onMade={setMade} madeUnit={yieldQ?.unit ?? null} onClose={close} />;
   }
 
   // Gather and each step: the bar along the top (none on "How much?" or the label, as drawn).
@@ -212,7 +216,7 @@ function Make({ itemId, name, recipe, card, startFactor, startMode, canLearn, ki
           </View>
         ) : (
           <>
-            <Button label="Print or share label" variant="ink" size="lg" onPress={() => void shareLabel(label)} />
+            <Button label="Print or share label" variant="ink" size="lg" disabled={!printing.painted || allergensWait} onPress={() => void printing.print(label)} />
             <View style={styles.footerRow}>
               <Button
                 label={copied ? 'Copied' : 'Copy for tape'}

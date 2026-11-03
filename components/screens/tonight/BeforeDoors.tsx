@@ -7,7 +7,7 @@ import { IconSymbol } from '@/components/ui/icon-symbol';
 import { radius, space } from '@/constants/tokens';
 import { useLogBatch } from '@/hooks/useBatches';
 import { categoryOf } from '@/hooks/useTonight';
-import { itemHref } from '@/lib/itemRoutes';
+import { itemHref, labelHref } from '@/lib/itemRoutes';
 import { withAlpha } from '@/lib/color';
 import { plural } from '@/lib/menus';
 import { formatQuantity, toQuantity } from '@/lib/quantity';
@@ -75,9 +75,10 @@ export function useLogNow(t: Staff, barId: string) {
   return (id: string, name: string) => () => {
     const batch = t.batchOf(id);
     if (!batch) return router.push(itemHref('Ingredient', id) as Href);
-    logBatch.mutate({ itemId: id, ...batch });
+    const logged = logBatch.mutate({ itemId: id, ...batch });
     const q = toQuantity(batch.amount, batch.unit);
-    toast.show({ title: `Logged ${q ? formatQuantity(q) : `${batch.amount} ${batch.unit}`} of ${name}` });
+    // Bet-labels: a batch logged gets its label (Made. Label it.), which draws before the batch has sent.
+    toast.show({ title: `Logged ${q ? formatQuantity(q) : `${batch.amount} ${batch.unit}`} of ${name}`, action: { label: 'Label it', onPress: () => router.push(labelHref(logged) as Href) } });
   };
 }
 

@@ -8,7 +8,7 @@ import { radius, space, springs } from '@/constants/tokens';
 import type { Venue } from '@/hooks/useActiveVenue';
 import { cardWhen } from '@/lib/menus';
 
-import { GuestCardContent } from './MenuCardScreen';
+import { GuestCardContent } from './GuestCardContent';
 import type { LayoutEditor } from './useLayoutEditor';
 import { MonoLabel } from './ReviewParts';
 
