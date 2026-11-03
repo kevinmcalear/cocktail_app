@@ -15,6 +15,7 @@ import { useMode } from '@/hooks/useMode';
 import { roleLabel } from '@/lib/roles';
 
 import { MenuGroupList } from './MenuGroupList';
+import { MenuRowFrame } from './MenuRows';
 import { NewMenuSheet } from './NewMenuSheet';
 
 /**
@@ -83,6 +84,8 @@ export function MenusScreen() {
           pastShown={PAST_SHOWN}
           onAllPast={() => router.push('/menus/past')}
         />
+        {/* Every drink the bar has listed, with its runs and Bring back (Menu-l-drinks). */}
+        {barId && canBuild && menus.length ? <MenuRowFrame ruled label="Our drinks" onPress={() => router.push('/menus/drinks')} thumb={null} name="Our drinks" line="Every drink with its runs; past ones can come back" /> : null}
       </ScrollView>
       {creating && canCreate ? <NewMenuSheet visible onClose={() => setCreating(false)} menus={menus} now={now} /> : null}
     </View>

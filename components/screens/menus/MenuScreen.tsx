@@ -38,6 +38,7 @@ import { MenuDeskColumns } from './desk/MenuDesk';
 import { MenuPageRow, type PageRowView } from './page/MenuPageRow';
 import { moreExtras, menuPageModel, splitGroup, type GroupAction } from './page/menuPageModel';
 import { MenuSpecInPlace, OpenDrinkLink } from './page/MenuSpecInPlace';
+import { ChangeLog } from './page/LiveChangeSheet';
 import { RowChanges, useRowActs, type ChangeTarget } from './page/RowChanges';
 import { useLiveSections } from './page/useLiveSections';
 import { useMenuPageActions, type PageSheet } from './page/useMenuPageActions';
@@ -244,7 +245,10 @@ function MenuPageBody({ menu, shelf, cover, now }: PageProps & { cover: string |
   return (
     <View style={[styles.screen, sidebar && styles.split, { backgroundColor: ds.c.ground }]}>
       {list}
-      {besideId ? (
+      {/* The desktop's Swap and Take off open beside the list, over the change log (Menu-l-desk). */}
+      {sidebar && changing ? (
+        <RowChanges menu={menu} target={changing} ended={listView.ended} acts={acts} onClose={() => setChanging(null)} pane={{ after: <ChangeLog menuName={menu.name} changes={listView.changes} /> }} />
+      ) : besideId ? (
         <Suspense fallback={null}>
           <MenuDrinkPane drink={drinks.find((d) => d.id === besideId)!} barName={venues.find((v) => v.id === menu.barId)?.name ?? null} place={place} onPick={(id) => drinks.find((d) => d.id === id && openDrink(d))} />
         </Suspense>
@@ -257,7 +261,7 @@ function MenuPageBody({ menu, shelf, cover, now }: PageProps & { cover: string |
           </Caption>
         </View>
       ) : null}
-      {changing ? <RowChanges menu={menu} target={changing} ended={listView.ended} acts={acts} onClose={() => setChanging(null)} /> : null}
+      {changing && !sidebar ? <RowChanges menu={menu} target={changing} ended={listView.ended} acts={acts} onClose={() => setChanging(null)} /> : null}
       {sheet === 'night' ? <HomeNightSheet menu={menu} onClose={() => setSheet(null)} /> : null}
       {sheet === 'share' ? <ShareMenuSheet menu={menu} onClose={() => setSheet(null)} /> : null}
       {sheet === 'more' ? (

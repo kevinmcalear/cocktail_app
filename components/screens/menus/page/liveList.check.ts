@@ -72,6 +72,8 @@ out = liveList({
   may: true,
 });
 assert.equal(out.lastChange, 'today 4pm · bees for jack');
+// The desktop's change log has it once (the swapped-out drink reads with its swap), dated.
+assert.deepEqual(out.changes.map((c) => [c.when, c.text]), [['today 4pm', 'bees for jack']]);
 
 // A drink put on as the menu was set up (before it went on) isn't a change: no Last change yet.
 out = liveList({ ...base, sections: [{ id: 's', name: 'Shaken', rows: [view('bees')] }], rows: [row('bees', { onFrom: '2026-09-30T16:00:00Z' })], ended: [], endedDrinks: new Map(), may: true });

@@ -8,7 +8,7 @@ import { afterTonight } from '@/lib/barHours';
 import type { MenuDetail, MenuDrink } from '@/types/menus';
 
 import { AddDrinkSheet } from '../AddDrinkSheet';
-import { LiveChangeSheet } from './LiveChangeSheet';
+import { LiveChangeSheet, type LiveChangeSheetProps } from './LiveChangeSheet';
 import type { ActKind } from './liveList';
 import type { PageRowView } from './MenuPageRow';
 
@@ -120,7 +120,7 @@ export function useRowActs(menu: { id: string; barId: string | null }, rows: Lis
 }
 
 /** The Swap or Take off sheet for one row, with Find a drink opening the whole picker. */
-export function RowChanges({ menu, target, ended, acts, onClose }: { menu: MenuDetail; target: ChangeTarget; ended: EndedRun[]; acts: ReturnType<typeof useRowActs>; onClose: () => void }) {
+export function RowChanges({ menu, target, ended, acts, onClose, pane }: { menu: MenuDetail; target: ChangeTarget; ended: EndedRun[]; acts: ReturnType<typeof useRowActs>; onClose: () => void; pane?: LiveChangeSheetProps['pane'] }) {
   const [finding, setFinding] = useState(false);
   const [found, setFound] = useState<MenuDrink | null>(null);
   const library = useMenuLibrary(menu.barId, finding).data ?? [];
@@ -160,6 +160,7 @@ export function RowChanges({ menu, target, ended, acts, onClose }: { menu: MenuD
       asking={acts.bartender}
       onConfirm={(to, at, opts) => acts.confirm(target, to, at, opts, onClose)}
       onClose={onClose}
+      pane={pane}
     />
   );
 }
