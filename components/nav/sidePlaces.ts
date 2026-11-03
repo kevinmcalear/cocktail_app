@@ -13,11 +13,10 @@ import type { NavMatch } from '@/lib/shellNav';
 import { groupMenus } from '@/lib/menus';
 import { buildPrepList, DEFAULT_SERVES, tonightAt6 } from '@/lib/prep';
 import { canSeeTeam } from '@/lib/team';
-import { BACK_BAR_SHOWN } from '@/lib/backBar';
 
 import { WEB_TABS } from './WebTabBar';
 
-/** A place the shell links to: the sidebar, the tablet rail and the phone's venue menu share these. */
+/** A row of the desktop sidebar or the tablet rail. */
 export interface Place extends NavMatch {
   label: string;
   icon: IconName;
@@ -27,69 +26,27 @@ export interface Place extends NavMatch {
   short?: string;
 }
 
-/** Menus: a page, opened from Tonight, Drinks, the venue menu and the sidebar. */
-export const MENUS_PLACE: Place = { key: 'menus', label: 'Menus', icon: 'place.menus', path: '/menus/all', prefix: '/menus' };
-
 /**
- * Where the shell can take you, for the mode you're in: the four tabs, the
- * venue's working pages (Menus, Glassware),
- * and its Venue section (My team, Rota, Theme, Roles and access, Venue settings).
- * History and This week are null during the first round.
+ * The sidebar and rail's rows, as board Prod-desk (C7) draws them: the four tabs, the bar's group (its Menus,
+ * House-made, Team, Bar settings), then Home's Shelf and Menus. Everything else (Study, Glassware, Back bar, Rota,
+ * Brand, Roles, This week, History) opens from Bar settings, Tonight and Search (components/bar/VenueSettingsLinks.tsx).
+ * The first round holds House-made, Team and Home's Menus back until it's over (lib/firstRound.ts).
  */
-export function useNavPlaces() {
+export function useSidePlaces() {
   const { mode } = useMode();
   const { active } = useActiveVenue();
   const role = useEffectiveRole(active?.id ?? null);
-  // The first round keeps the venue's places to Venue settings until it's over (lib/firstRound.ts).
   const { active: round, hidden } = useFirstRound();
-  const home = mode === 'home';
-  const venue = home ? null : active;
-  const canTheme = (useCapabilities(venue?.id).data ?? []).includes('brand');
+  const venue = mode === 'home' ? null : active;
+  const settings = venue ? `/settings/bar/${venue.id}` : null;
 
   // The four tabs, the same in both modes.
   const tabs: Place[] = WEB_TABS.map((t) => ({ key: t.name, label: t.label, icon: t.icon, path: t.path, tab: true }));
-  const settings = venue ? `/settings/bar/${venue.id}` : null;
-  const work: Place[] =
-    venue && settings && !round
-      ? [
-          // Prep and Study fold into Tonight later; till then they open from here and Tonight.
-          { key: 'prep', label: 'Prep', icon: 'place.prep', path: '/prep' },
-          { key: 'study', label: 'Study', icon: 'place.study', path: '/test' },
-          ...(BACK_BAR_SHOWN ? [{ key: 'back-bar', label: 'Back bar', icon: 'place.backbar', path: '/back-bar' } as Place] : []),
-          // Glassware is a working page, not a setting (Eddie, 29 Oct 2026): Kit's page, with its glasses' own pages under it.
-          { key: 'glassware', label: 'Glassware', icon: 'wineglass', path: `${settings}/glassware`, prefix: `${settings}/kit/glassware` },
-        ]
-      : [];
-  const venuePlaces: Place[] =
-    venue && settings
-      ? [
-          ...(canSeeTeam(role) && !round ? [{ key: 'team', label: 'My team', icon: 'place.team', path: '/team' } as Place] : []),
-          // The rota: everyone at the bar reads it.
-          ...(round ? [] : [{ key: 'rota', label: 'Rota', icon: 'calendar', path: '/team/rota' } as Place]),
-          ...(round
-            ? []
-            : [
-                // Theme is for the people who can change it: Admins, the brand permission (Kevin, 31 Oct).
-                ...(canTheme ? [{ key: 'theme', label: 'Theme', icon: 'place.theme', path: `${settings}/theme` } as Place] : []),
-                { key: 'roles', label: 'Roles and access', icon: 'place.roles', path: `${settings}/roles` } as Place,
-              ]),
-          { key: 'venue-settings', label: 'Venue settings', icon: 'place.settings', path: settings, prefix: settings },
-        ]
-      : [];
-  // History sits under Discover in the sidebar (decided on the canvas), in both modes.
-  const history: Place | null = !round ? { key: 'history', label: 'History', icon: 'place.history', path: '/history' } : null;
-  // This week: the venue's week, or at home the bars you love and your dated menus. The sidebar lists it itself (WeekNav).
-  const week: Place | null = !round ? { key: 'week', label: 'This week', icon: 'place.week', path: '/week' } : null;
-  // Menus waits for its step in the first round (lib/firstRound.ts).
-  const menus: Place | null = venue && !hidden.includes('menus') ? MENUS_PLACE : null;
-
-  // The sidebar and rail's groups, as board Prod-desk draws them: the bar's Menus, House-made, Team and Bar settings,
-  // then Home's Shelf and Menus. Everything else (Study, Glassware, Rota, Brand, Roles, This week, History) opens from
-  // Bar settings, Tonight and Search (components/bar/VenueSettingsLinks.tsx).
   const bar: Place[] =
     venue && settings
       ? [
-          ...(menus ? [menus] : []),
+          // Menus waits for its step in the first round.
+          ...(hidden.includes('menus') ? [] : [{ key: 'menus', label: 'Menus', icon: 'place.menus', path: '/menus/all', prefix: '/menus' } as Place]),
           ...(round ? [] : [{ key: 'prep', label: 'House-made', short: 'House', icon: 'flask', path: '/prep' } as Place]),
           // The Team row stays lit on the rota (/team/rota).
           ...(canSeeTeam(role) && !round ? [{ key: 'team', label: 'Team', icon: 'place.team', path: '/team', prefix: '/team' } as Place] : []),
@@ -101,7 +58,7 @@ export function useNavPlaces() {
     { key: 'shelf', label: 'Shelf', icon: 'place.mybar', path: '/shelf' },
     ...(round ? [] : [{ key: 'home-menus', label: 'Menus', icon: 'place.menus', path: '/menus/all', prefix: '/menus' } as Place]),
   ];
-  return { home, venue, tabs, menus, work, venuePlaces, history, week, bar, homePlaces };
+  return { venue, tabs, bar, homePlaces };
 }
 
 /** What the bar's rows say at their right (board Prod-desk): the menu on now, how much house-made is low, the shelf's count. */
