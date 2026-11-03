@@ -1,6 +1,6 @@
 // The Back Bar design system. Redesigned screens build from these; see
 // docs/design_system.md and the gallery at /dev/gallery.
-// PopoverMenu, SpecRow, TimeField, FlowHead, GlassVariantPicker and
+// PopoverMenu, SpecRow, TimeField, ReviewRow, FlowHead, GlassVariantPicker and
 // SketchTintPicker are imported from their own files: each is on fewer than 20
 // routes, and anything exported here sits in the web chunk every page loads.
 export { Button, type ButtonProps, type IconName } from './Button';
@@ -17,8 +17,8 @@ export { LogoImage, type LogoImageProps } from './LogoImage';
 export { PalateFlower } from './PalateFlower';
 export { PickerPanel } from './PickerField';
 export { PressableScale } from './PressableScale';
-export { ReviewMark, ReviewRow, TextLink, type ReviewChoice, type ReviewState } from './ReviewRow';
 export { Segmented } from './Segmented';
+export { TextLink } from './TextLink';
 export { BreakpointOverride, Surface, useBreakpoint, useGutter, type Breakpoint } from './Surface';
 export { ExtendedFab, type FabIcon } from './ExtendedFab';
 export { Switch } from './Switch';
@@ -28,7 +28,7 @@ export { Body, Caption, Display, DsText, Headline, Spec, Title, type DsTextProps
 export { BackbarTheme, BrandProvider, useDs, type Ds } from './theme';
 export { loadFace, useDisplayFaces, useLoadedFace } from './faces';
 export { IngredientDrawing, useIngredientColour } from './IngredientDrawing';
-export { EquipmentDrawing } from './EquipmentDrawing';
+export { EquipmentDrawing } from './EquipmentDrawingLazy';
 export { sheetFrame, sheetIsDialog } from './sheetFrame';
 export { Sheet, useSheetClose, type SheetProps } from './Sheet';
 export { MatchText, RowScore, scoreWords, type MatchTextProps, type RowScoreProps } from './RowScore';

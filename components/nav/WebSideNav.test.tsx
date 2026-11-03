@@ -28,10 +28,6 @@ let mockRole = 40;
 jest.mock('@/hooks/useViewAs', () => ({ useEffectiveRole: () => mockRole, useCanManageStaff: () => mockRole >= 40 }));
 // These read the signed-in person's venues from Supabase; the nav doesn't need them here.
 jest.mock('@/components/nav/VenueBrandProvider', () => ({ VenueBrandProvider: ({ children }: { children: unknown }) => children }));
-jest.mock('@/components/nav/VenueSwitcher', () => {
-  const { Text } = jest.requireActual<typeof import('react-native')>('react-native');
-  return { VenueSwitcher: () => <Text>venue switcher</Text> };
-});
 // Add reads where things land and the clipboard; the sheet itself is what's checked here.
 jest.mock('@/hooks/useBringInPlace', () => ({ useBringInPlace: () => ({ barId: null, venueName: null, heldBack: null, loading: false }) }));
 jest.mock('@/lib/clipboardPeek', () => ({ UNREAD_CLIP: '\u0000unread', peekClipboard: async () => null, readClipboard: async () => null }));
@@ -66,7 +62,6 @@ test('venue mode lists search, the four tabs and the venue pages, marking the cu
   // Board Prod-desk: the four tabs, the bar's group (the menu on now, House-made, Team, Bar settings), Home's Shelf and Menus, and you at the foot.
   // Every person and role has the same tabs (tabs A, 31 Oct); the rest opens from Bar settings.
   expect(links()).toEqual(['Tonight', 'Drinks', 'Discover', 'You', 'Autumn, on now', 'House-made', 'Team', 'Bar settings', 'Shelf, 3', 'Menus', 'You: Kevin M., Admin at Caretakers']);
-  expect(screen.getAllByRole('heading').map((h) => h.props.children)).toEqual(['Caretakers', 'Home']);
   expect(screen.getByRole('link', { name: 'Drinks', selected: true })).toBeTruthy();
   expect(screen.getByRole('link', { name: 'Tonight', selected: false })).toBeTruthy();
 
@@ -85,20 +80,14 @@ test('venue mode lists search, the four tabs and the venue pages, marking the cu
   expect(mockNavigate).toHaveBeenLastCalledWith('/you');
 });
 
-test('Theme is only there for people who can change it (Admins, the brand permission)', async () => {
-  mockCaps = ['edit_drinks'];
-  mockPathname = '/drinks';
+test('the two group headings are where you switch place; no mark row tops the sidebar', async () => {
   await renderWithProviders(<WebSideNav />);
-  expect(links()).not.toContain('Theme');
-  expect(links()).toContain('Bar settings');
-});
-
-test('the top of the sidebar is one mark with a chevron (the switcher), never a row of venues', async () => {
-  await renderWithProviders(<WebSideNav />);
-  // Kevin, 13 Oct: one mark with an arrow that opens the venue menu (VenueSwitcher, tested on its own).
-  expect(screen.getByText('venue switcher')).toBeTruthy();
+  // Board C7/C8: the bar's heading and Home's open the places menu (VenueSwitcher's, tested on its own).
+  expect(screen.getByRole('button', { name: 'Caretakers. Switch place' })).toBeTruthy();
+  expect(screen.getByRole('button', { name: 'Home. Switch place' })).toBeTruthy();
+  // Search is the first control: nothing (no mark, no switcher) sits above it.
+  expect(screen.getAllByRole('button')[0].props.accessibilityLabel).toBe('Search');
   expect(screen.queryByRole('radio', { name: 'Pale Moth, Bartender' })).toBeNull();
-  expect(screen.queryByRole('radio', { name: 'Home bar' })).toBeNull();
 });
 
 test('a drink opened cold lights the tab its stack is in', async () => {

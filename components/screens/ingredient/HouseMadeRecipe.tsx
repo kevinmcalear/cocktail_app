@@ -1,18 +1,19 @@
 import { useRouter } from 'expo-router';
 import { Linking, StyleSheet, View } from 'react-native';
 
-import { Caption, DsText, TextLink } from '@/components/ds';
+import { Caption, TextLink } from '@/components/ds';
 import { SpecRow } from '@/components/ds/SpecRow';
 import { space } from '@/constants/tokens';
 import type { PrepStep } from '@/hooks/usePrepCard';
 import type { BatchSize } from '@/lib/prepParts';
 import { sourceSite } from '@/lib/prepMath';
+import { splitAmount } from '@/lib/specLines';
 import { prepStepGroups } from '@/lib/prepSteps';
 import { scaleRecipe, type RecipeLine } from '@/lib/scale';
 import { useSpecView } from '@/hooks/useSpecView';
 
 import { SpecControls } from '../drink/spec/SpecControls';
-import { GroupHead } from '../drink/spec/SpecCard';
+import { GroupHead, StepNoteLine } from '../drink/spec/SpecCard';
 
 export interface PrepLine extends RecipeLine {
   ingredientId: string | null;
@@ -52,14 +53,17 @@ export function HouseMadeRecipe({ itemId, lines, steps, sizes, size, onSize, onM
 
   const row = (l: PrepLine & { i: number }) => {
     const nested = l.houseMade && !!l.ingredientId;
+    // The number in the spec's figures and its unit set smaller beside it (every spec board).
+    const amount = splitAmount(scaled[l.i].scaled);
+    // No picture on the line: Item-page draws name, amount and (for a house-made inside) a chevron.
     return (
       <SpecRow
         key={l.id}
-        amount={scaled[l.i].scaled}
+        amount={amount.value}
+        unit={amount.unit || undefined}
         alignAmount={measured}
         dense
         ingredient={l.name}
-        ingredientId={l.ingredientId}
         houseMade={l.houseMade}
         optional={l.optional}
         note={l.note ?? undefined}
@@ -91,11 +95,7 @@ export function HouseMadeRecipe({ itemId, lines, steps, sizes, size, onSize, onM
             <View key={g.key}>
               {g.title ? <GroupHead number={g.number} title={g.title} aside={g.aside} /> : null}
               {g.lines.map(row)}
-              {g.note ? (
-                <DsText variant="label" tone="muted" style={styles.note}>
-                  {g.note}
-                </DsText>
-              ) : null}
+              {g.note ? <StepNoteLine text={g.note} /> : null}
             </View>
           ))}
         </View>
@@ -117,6 +117,5 @@ export function HouseMadeRecipe({ itemId, lines, steps, sizes, size, onSize, onM
 const styles = StyleSheet.create({
   card: { gap: space.md },
   groups: { gap: space.lg },
-  note: { paddingTop: space.sm },
   sources: { flexDirection: 'row', flexWrap: 'wrap', alignItems: 'center', columnGap: space.md },
 });

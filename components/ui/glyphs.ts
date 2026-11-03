@@ -208,6 +208,7 @@ const G = {
   'dollarsign.circle.fill': filled({ d: RING + 'M14.8 8.8h-3.6a1.8 1.8 0 0 0 0 3.6h1.6a1.8 1.8 0 0 1 0 3.6H9.2M12 7v1.8M12 16v1.5', f: RING }),
   trophy: { d: 'M7.5 4h9v5a4.5 4.5 0 0 1-9 0zM7.5 6H5a2.5 2.5 0 0 0 2.5 4.5M16.5 6H19a2.5 2.5 0 0 1-2.5 4.5M12 13.5v3.5M8.5 20.5h7M9.5 20.5c0-2 1-3.5 2.5-3.5s2.5 1.5 2.5 3.5', f: 'M7.5 4h9v5a4.5 4.5 0 0 1-9 0z' },
   star: { d: STAR, f: STAR },
+  'chart.bar': { d: 'M4 20h16M7 16v-4M12 16V7M17 16v-7' },
   heart: { d: HEART, f: HEART },
   'heart.fill': { d: HEART, f: HEART, solid: true, on: true },
   bookmark: { d: MARK, f: MARK },
