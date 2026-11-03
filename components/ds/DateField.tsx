@@ -10,6 +10,7 @@ import { PickerCell, PickerField, pickerStyles } from './PickerField';
 import { PressableScale } from './PressableScale';
 import { Caption, DsText } from './Text';
 import { useDs } from './theme';
+import { dayMonth } from '@/lib/dayMonth';
 
 interface DateFieldProps {
   label: string;
@@ -108,7 +109,7 @@ function MonthArrow({ back, disabled, onPress }: { back?: boolean; disabled: boo
 
 function Day({ day, selected, today, disabled, onPress }: { day: string; selected: boolean; today: boolean; disabled: boolean; onPress: () => void }) {
   const [y, m, d] = day.split('-').map(Number);
-  const name = new Date(y, m - 1, d).toLocaleDateString(undefined, { weekday: 'long', day: 'numeric', month: 'long', year: 'numeric' });
+  const name = dayMonth(new Date(y, m - 1, d), { weekday: 'long', month: 'long', year: 'numeric' });
   return <PickerCell label={String(d)} accessibilityLabel={today ? `Today, ${name}` : name} selected={selected} marked={today} disabled={disabled} onPress={onPress} />;
 }
 

@@ -21,7 +21,7 @@ export function VenueMark({ venue, size = 32 }: { venue: Venue | null; size?: nu
   if (venue?.logoUrl) {
     return <LogoImage uri={venue.logoUrl} size={size} radius={radius} fill={logoFill(venue)} />;
   }
-  return <RingMark id={venue?.id ?? 'app'} name={venue?.name ?? '·'} accent={venue?.accent ?? null} face={venue?.displayFace ?? 'redaction'} size={size} />;
+  return <RingMark id={venue?.id ?? 'app'} name={venue?.name ?? '·'} accent={venue?.accent ?? null} face={venue?.displayFace ?? 'instrument'} size={size} />;
 }
 
 /**

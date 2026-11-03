@@ -13,6 +13,7 @@ import type { MenuDrink } from '@/types/menus';
 import { MenuSheet } from '../MenuSheet';
 import { runRange } from './liveList';
 import { MenuDrawing } from './MenuDrawing';
+import { dayMonth } from '@/lib/dayMonth';
 
 export type When = 'now' | 'tonight' | 'date';
 export const WHENS = [
@@ -71,7 +72,7 @@ export function LiveChangeSheet({ kind, drink, where, barId, wentOn, onFind, fou
   const offers = [...(found ? [found] : []), ...past.map((p) => p.drink).filter((d) => d.id !== found?.id && d.id !== drink.id)].slice(0, 3);
   const [picked, setPicked] = useState<string | null>(found?.id ?? null);
   const to = offers.find((d) => d.id === (picked ?? found?.id)) ?? null;
-  const label = { now: 'now', tonight: 'after tonight', date: `on ${new Date(`${day}T00:00`).toLocaleDateString(undefined, { day: 'numeric', month: 'short' })}` }[when];
+  const label = { now: 'now', tonight: 'after tonight', date: `on ${dayMonth(new Date(`${day}T00:00`), { month: 'short' })}` }[when];
   const cta = `${asking ? 'Ask to ' : ''}${kind === 'swap' ? (asking ? 'swap' : 'Swap') : asking ? 'take off' : 'Take off'} ${label}`;
   const price = to ? printedPrice(to) : null;
   const note =

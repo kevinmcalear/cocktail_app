@@ -23,11 +23,12 @@ const serverSnapshot = () => ',';
 
 /** True when a face can be drawn now: always for the faces loaded at start, else once its files are in. */
 export function faceReady(face: DisplayFace, done: string): boolean {
-  // Redaction is the app's own, loaded at start; every other face loads on demand.
-  return face === 'redaction' || done.includes(`,${face},`);
+  // Instrument Serif is the app's own, loaded at start; every other face loads on demand.
+  // A face the app no longer ships (Redaction, saved before 3 Nov 2026) never counts as ready.
+  return face === 'instrument' || (face in displayFaces && done.includes(`,${face},`));
 }
 
-/** Loads a lazy face once. A failure (offline) leaves it unloaded, so its text stays in Redaction. */
+/** Loads a lazy face once. A failure (offline) leaves it unloaded, so its text stays in Instrument Serif. */
 export function loadFace(face: DisplayFace): Promise<void> {
   if (faceReady(face, loaded)) return Promise.resolve();
   const running = pending.get(face);
@@ -48,7 +49,7 @@ export function loadFace(face: DisplayFace): Promise<void> {
 
 /**
  * Fetches the given display faces if they aren't in yet, and returns a lookup
- * for their font family: the face itself once it has loaded, Redaction
+ * for their font family: the face itself once it has loaded, Instrument Serif
  * until then. Venues not using a lazy face never download it.
  */
 export function useDisplayFaces(faces: readonly (DisplayFace | null | undefined)[]): (face: DisplayFace, style?: 'regular' | 'italic') => string {
@@ -57,15 +58,15 @@ export function useDisplayFaces(faces: readonly (DisplayFace | null | undefined)
   useEffect(() => {
     if (missing) missing.split(',').forEach((f) => void loadFace(f as DisplayFace));
   }, [missing]);
-  return (face, style = 'regular') => displayFaces[faceReady(face, done) ? face : 'redaction'][style];
+  return (face, style = 'regular') => displayFaces[faceReady(face, done) ? face : 'instrument'][style];
 }
 
-/** The face to draw with now: the one asked for once it has loaded, else Redaction. */
+/** The face to draw with now: the one asked for once it has loaded, else Instrument Serif. */
 export function useLoadedFace(face: DisplayFace): DisplayFace {
   const done = useSyncExternalStore(subscribe, snapshot, serverSnapshot);
   const ready = faceReady(face, done);
   useEffect(() => {
     if (!ready) void loadFace(face);
   }, [face, ready]);
-  return ready ? face : 'redaction';
+  return ready ? face : 'instrument';
 }

@@ -24,7 +24,7 @@ import { ingredientHeroPictures, shownIngredientPicture, type IngredientPicture 
 import { readNoteRecipe } from '@/lib/noteRecipe';
 import { batchSizes } from '@/lib/prepParts';
 import { ingredientUrl, shareOrCopy } from '@/lib/shareLink';
-import { technicalIngredientFor } from '@/lib/techniques';
+import { isLabName } from '@/lib/techniques/labNames';
 
 import { DrinkHero } from '../drink/DrinkHero';
 import { ItemShell } from '../drink/ItemShell';
@@ -132,7 +132,7 @@ function IngredientPage({ ingredient, lines, drinks, bottles, pictures: batchPic
   // The bar's team (Employee and up) get the allergen line and Behind the bar; everyone else the lists as before.
   const team = isPrep && !!ingredient.bar_id && venueRole >= 20;
   // A technical ingredient (xanthan) reads like the technique library, with where to buy it.
-  const technical = !isPrep && !!technicalIngredientFor(ingredient.name);
+  const technical = !isPrep && isLabName(ingredient.name);
   const bottleTiles = useBottleTiles(ingredient);
   // A bottle's Kind of is the third fact, linking up the family (board Item-page).
   const kindFact = !isPrep && bottleTiles.length && ingredient.generic ? [{ label: 'Kind of', value: ingredient.generic.name, onPress: () => router.push(`/ingredient/${ingredient.generic!.id}` as never) }] : [];

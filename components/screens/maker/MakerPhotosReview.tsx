@@ -8,6 +8,7 @@ import { WebHead } from '@/components/WebHead';
 import { layout, radius, space } from '@/constants/tokens';
 import { useCheckMakerPhoto, useMakerPhotosWaiting, type WaitingMakerPhoto } from '@/hooks/useMakerPhotos';
 import { itemHref } from '@/lib/itemRoutes';
+import { dayMonth } from '@/lib/dayMonth';
 
 /**
  * Moderators' list of bottle photos waiting for a check: a maker team's
@@ -75,7 +76,7 @@ function PhotoCard({ photo, busy, onBottle, onMaker, onCheck }: { photo: Waiting
           <IngredientPhoto url={photo.url} />
         </View>
         <View style={styles.words}>
-          <Caption tone="muted">{new Date(photo.added_at).toLocaleDateString()}</Caption>
+          <Caption tone="muted">{dayMonth(new Date(photo.added_at), { month: 'short', year: 'numeric' })}</Caption>
           <Button label={photo.name} variant="ghost" size="sm" accessibilityHint="Opens the bottle" onPress={onBottle} />
           <Button label={`From ${photo.maker_name}`} variant="ghost" size="sm" accessibilityHint="Opens the maker's page" onPress={onMaker} />
           <View style={styles.actions}>

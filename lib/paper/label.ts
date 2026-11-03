@@ -147,5 +147,5 @@ export function prepLabel(l: BatchLabel): PaperPage {
   if (rest) els.push(line(rest, 94, 12, P.muted));
   els.push(line(dayWord(l.made), 140, 11, P.muted));
   els.push({ k: 'code', x: w - 92, y: 26, s: 76, url: l.url, color: P.ink });
-  return { w, h, ground: P.paper, displayFace: 'redaction', els, alt: `Label: ${labelText(l).replace(/\n/g, ', ')}. ${dayWord(l.made)}'s colour. A code that opens its page.` };
+  return { w, h, ground: P.paper, displayFace: 'instrument', els, alt: `Label: ${labelText(l).replace(/\n/g, ', ')}. ${dayWord(l.made)}'s colour. A code that opens its page.` };
 }

@@ -7,7 +7,7 @@ import { DrinkRow } from '@/components/screens/DrinkRow';
 import { MadeSheet } from '@/components/screens/made/MadeSheet';
 import { useAgeGate } from '@/components/screens/safety/AgeGate';
 import { IconSymbol } from '@/components/ui/icon-symbol';
-import { radius, space } from '@/constants/tokens';
+import { font, radius, space } from '@/constants/tokens';
 import type { CollectedDrink } from '@/hooks/useCollection';
 import { useShelfEdit } from '@/hooks/useHomeBar';
 import { nextBottle, toMakeGroups } from '@/lib/collectionStages';
@@ -139,7 +139,7 @@ const styles = StyleSheet.create({
   card: { gap: space.sm + 2, padding: space.md + 2, borderRadius: radius.card, borderWidth: 1 },
   cardDesk: { padding: space.lg },
   cardTop: { flexDirection: 'row', alignItems: 'center', gap: space.md },
-  groupTitle: { fontWeight: '600' },
+  groupTitle: { ...font.semiBold },
   status: { flexDirection: 'row', alignItems: 'center', gap: 4 },
   shrink: { flexShrink: 1 },
   drink: { flexDirection: 'row', alignItems: 'center', gap: space.md },

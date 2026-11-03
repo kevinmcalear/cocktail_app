@@ -10,7 +10,7 @@ import { neutralsFrom } from '@/lib/palette';
 /** The app's display faces and their venue_display_face values in the database. */
 const FACE_TO_DB = {
   // Every venue starts on instrument_serif (the column's default), so it reads as no pick: the app's own face.
-  redaction: 'instrument_serif',
+  instrument: 'instrument_serif',
   newsreader: 'newsreader',
   fell: 'im_fell_english',
   imbue: 'imbue',
@@ -34,9 +34,9 @@ const OLD_FACES = new Map<string, DisplayFace>([
   ['tenor_sans', 'belleza'],
 ]);
 
-/** A face this app doesn't know (a newer one) shows as the app's own, Redaction. */
+/** A face this app doesn't know (a newer one) shows as the app's own, Instrument Serif. */
 export function faceFromDb(value: string | null | undefined): DisplayFace {
-  return (Object.keys(FACE_TO_DB) as DisplayFace[]).find((f) => FACE_TO_DB[f] === value) ?? OLD_FACES.get(value ?? '') ?? 'redaction';
+  return (Object.keys(FACE_TO_DB) as DisplayFace[]).find((f) => FACE_TO_DB[f] === value) ?? OLD_FACES.get(value ?? '') ?? 'instrument';
 }
 
 export function faceToDb(face: DisplayFace): DbDisplayFace {

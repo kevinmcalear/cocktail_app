@@ -1,5 +1,6 @@
 import { dayLabel, parseDay, toDay } from '@/lib/collection';
 import type { MenuDetail, MenuDrink, MenuSectionDetail, MenuStatus, MenuSummary } from '@/types/menus';
+import { dayMonth } from './dayMonth';
 
 type Dated = Pick<MenuSummary, 'startsAt' | 'endsAt'> & Partial<Pick<MenuSummary, 'menuDate' | 'barId'>>;
 
@@ -53,11 +54,11 @@ export function groupMenus<T extends MenuSummary>(menus: T[], now: number): Menu
 }
 
 function day(iso: string, locale?: string): string {
-  return new Date(iso).toLocaleDateString(locale, { weekday: 'short', day: 'numeric', month: 'short' });
+  return dayMonth(new Date(iso), { weekday: 'short', month: 'short' }, locale);
 }
 
 function shortDay(iso: string, locale?: string): string {
-  return new Date(iso).toLocaleDateString(locale, { day: 'numeric', month: 'short' });
+  return dayMonth(new Date(iso), { month: 'short' }, locale);
 }
 
 /**
@@ -220,7 +221,7 @@ export function newDrinkCount(itemIds: string[], others: { itemIds: string[] }[]
 
 /** Tonight's line: "Thu 25 Sep · Autumn menu · 8 drinks", or "Thu 25 Sep · 2 menus on · 12 drinks". */
 export function tonightLine(date: Date, menus: { name: string }[], drinks: number, locale?: string): string {
-  const day = date.toLocaleDateString(locale, { weekday: 'short', day: 'numeric', month: 'short' });
+  const day = dayMonth(date, { weekday: 'short', month: 'short' }, locale);
   if (!menus.length) return day;
   return [day, menus.length === 1 ? menus[0].name : `${menus.length} menus on`, plural(drinks, 'drink')].join(' · ');
 }
@@ -293,7 +294,7 @@ export function editedWhen(updatedAt: string, now: number, locale?: string): str
   if (days <= 0) return 'edited today';
   if (days === 1) return 'edited yesterday';
   if (days < 7) return `edited ${days} days ago`;
-  return `edited ${at.toLocaleDateString(locale, { day: 'numeric', month: 'short' })}`;
+  return `edited ${dayMonth(at, { month: 'short' }, locale)}`;
 }
 
 /** A draft's amber line: what's missing, then when it was edited. "1 section short · edited yesterday". */
@@ -324,7 +325,7 @@ export function comingUpLine(menu: Pick<MenuSummary, 'startsAt' | 'endsAt' | 'me
 /** A past menu's line, in mono at the row's end: "3 Jun to 31 Aug · 10", a home night "27 Nov 2025 · 5". */
 export function previousLine(menu: Pick<MenuSummary, 'startsAt' | 'endsAt' | 'itemIds'> & { menuDate?: string | null }, locale?: string): string {
   // A home night is a day, read as local midnight; it carries its year, as past nights run back further.
-  const night = menu.menuDate && !menu.endsAt ? new Date(`${menu.menuDate}T00:00:00`).toLocaleDateString(locale, { day: 'numeric', month: 'short', year: 'numeric' }) : null;
+  const night = menu.menuDate && !menu.endsAt ? dayMonth(new Date(`${menu.menuDate}T00:00:00`), { month: 'short', year: 'numeric' }, locale) : null;
   const dates = night ?? (menu.endsAt ? (menu.startsAt ? `${shortDay(menu.startsAt, locale)} to ${shortDay(menu.endsAt, locale)}` : `off ${shortDay(menu.endsAt, locale)}`) : null);
   return [dates, String(new Set(menu.itemIds).size)].filter(Boolean).join(' · ');
 }
@@ -338,8 +339,8 @@ export function cardWhen(menu: Pick<MenuSummary, 'startsAt' | 'endsAt' | 'menuDa
   const ends = menu.startsAt ? menu.endsAt : (menu.plannedEndsAt ?? null);
   // A home menu's date names its night, whenever it was shared (its start).
   const night = menu.menuDate ? `${menu.menuDate}T00:00:00` : starts && isOneNightRun(starts, ends) ? starts : null;
-  if (night) return new Date(night).toLocaleDateString(locale, { weekday: 'long', day: 'numeric', month: 'long' });
-  return starts ? `From ${new Date(starts).toLocaleDateString(locale, { weekday: 'short', day: 'numeric', month: 'long' })}` : null;
+  if (night) return dayMonth(new Date(night), { weekday: 'long', month: 'long' }, locale);
+  return starts ? `From ${dayMonth(new Date(starts), { weekday: 'short', month: 'long' }, locale)}` : null;
 }
 
 /** A venue draft's planned dates as New menu's third step picks them (b23). */
@@ -372,7 +373,7 @@ export function venuePlan(draft: PlanDraft): { plannedStartsAt: string | null; p
 /** "Friday 31 October, from 6 pm": a one-night menu's night, as the share review says it. */
 export function nightLine(startsAt: string, locale?: string): string {
   const d = new Date(startsAt);
-  const day = d.toLocaleDateString(locale, { weekday: 'long', day: 'numeric', month: 'long' });
+  const day = dayMonth(d, { weekday: 'long', month: 'long' }, locale);
   const time = d.toLocaleTimeString(locale, { hour: 'numeric', minute: d.getMinutes() ? '2-digit' : undefined }).replace(/\s?([AP])M$/i, (_, x: string) => ` ${x.toLowerCase()}m`);
   return `${day}, from ${time}`;
 }

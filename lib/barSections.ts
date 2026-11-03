@@ -3,7 +3,7 @@
 // equipment list (lib/techniques/equipment.ts), not catalog items, so it
 // never comes through here.
 
-import { technicalIngredientFor } from './techniques/ingredients';
+import { isLabName } from './techniques/labNames';
 
 export type BarSection = 'bottles' | 'fridge' | 'lab' | 'preps';
 
@@ -30,7 +30,7 @@ export interface Sortable {
 export function barSection({ name, kind, role, abv, hasRecipe }: Sortable): BarSection {
   const names = [name, kind ?? ''].map((n) => n.toLowerCase());
   if (role === 'prep' || (role !== 'product' && (hasRecipe || MADE.test(names[0])))) return 'preps';
-  if (technicalIngredientFor(name) || names.some((n) => LAB.test(n))) return 'lab';
+  if (isLabName(name) || names.some((n) => LAB.test(n))) return 'lab';
   if (abv && abv > 0) return 'bottles';
   if (MIXER.test(names[0]) || /\bsour mixer\b/.test(names[1])) return 'fridge';
   if (names.some((n) => ALCOHOL.test(n)) || role === 'product') return 'bottles';

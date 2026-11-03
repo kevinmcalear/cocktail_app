@@ -4,7 +4,8 @@ import { StyleSheet, View } from 'react-native';
 import { Body, Caption, DsText, Headline, PressableScale, Surface, Tag, useDs } from '@/components/ds';
 import { font, layout, radius, space } from '@/constants/tokens';
 import { doseLine } from '@/lib/doseLine';
-import { technicalIngredientFor, techniqueById } from '@/lib/techniques';
+import { techniqueById } from '@/lib/techniques';
+import { technicalIngredientFor } from '@/lib/techniques/ingredients';
 
 import { BuyList, GradeTag } from './bits';
 import { useVenueFeature } from '@/hooks/useVenueFeatures';

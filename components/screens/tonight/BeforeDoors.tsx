@@ -14,6 +14,7 @@ import { offAtLine, prepLine } from '@/lib/tonight';
 
 import { TonightSection } from './TonightParts';
 import type { useStaffTonight } from './useStaffTonight';
+import { dayMonth } from '@/lib/dayMonth';
 
 type Staff = ReturnType<typeof useStaffTonight>;
 
@@ -86,7 +87,7 @@ export function NeedsYou({ t }: { t: Staff }) {
       <SettingsRow
         key="next"
         icon="doc.text"
-        label={`${t.next.name} goes on ${t.next.startsAt ? new Date(t.next.startsAt).toLocaleDateString(undefined, { day: 'numeric', month: 'short' }) : 'soon'}`}
+        label={`${t.next.name} goes on ${t.next.startsAt ? dayMonth(new Date(t.next.startsAt), { month: 'short' }) : 'soon'}`}
         trailing={
           t.nextUnpriced ? (
             <View style={styles.end}>

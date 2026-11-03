@@ -128,7 +128,7 @@ assert.deepEqual(out.main[0].rows[0].acts?.map((a) => a.kind), ['backOn']);
 assert.deepEqual(out.main[0].rows[1].acts?.map((a) => a.label), ['Swap', 'Take off', 'Off tonight']);
 
 // Dates on a run, from a date column or a timestamp.
-assert.equal(runRange('2026-09-01', '2026-09-30'), new Date(2026, 8, 1).toLocaleDateString(undefined, { day: 'numeric', month: 'short' }).startsWith('1') ? '1 to 30 Sep' : 'Sep 1 to 30');
+assert.equal(runRange('2026-09-01', '2026-09-30'), '1 to 30 Sep');
 assert.ok(runRange('2026-10-01', '2026-11-01', true).endsWith(' 2026'));
 assert.ok(!runRange('2026-11-01T15:00:00Z', '2026-11-01T18:00:00Z').includes(' to ')); // On and off the same day: one date
 

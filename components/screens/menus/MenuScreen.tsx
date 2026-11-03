@@ -41,13 +41,13 @@ import { MenuSpecInPlace, OpenDrinkLink } from './page/MenuSpecInPlace';
 import { ChangeLog } from './page/LiveChangeSheet';
 import { RowChanges, useRowActs, type ChangeTarget } from './page/RowChanges';
 import { useLiveSections } from './page/useLiveSections';
+import { dayMonth } from '@/lib/dayMonth';
 import { useMenuPageActions, type PageSheet } from './page/useMenuPageActions';
 
 // The desktop's drink beside the menu loads with it, not with every menu page (Menu-desk).
 const MenuDrinkPane = lazy(() => import('./pager/MenuDrinkPane').then((m) => ({ default: m.MenuDrinkPane })));
 
-const day = (iso: string) => new Date(iso).toLocaleDateString(undefined, { weekday: 'short', day: 'numeric', month: 'short' });
-
+const day = (iso: string) => dayMonth(new Date(iso), { weekday: 'short', month: 'short' });
 type Item = { key: string; head?: { name: string; count: number }; row?: PageRowView; sectionId?: string };
 
 /**

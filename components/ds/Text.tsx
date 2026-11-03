@@ -1,6 +1,6 @@
 import { Platform, Text as RNText, StyleSheet, type TextProps, type TextStyle } from 'react-native';
 
-import { faceWeightReset, font, nameStyle, textSlack, type, type TypeStyle } from '@/constants/tokens';
+import { faceWeightReset, font, monoFont, nameStyle, textSlack, type, type TypeStyle } from '@/constants/tokens';
 
 import { useDs } from './theme';
 
@@ -16,8 +16,8 @@ export interface DsTextProps extends TextProps {
   align?: 'left' | 'center' | 'right';
 }
 
-// Everything but display and title is the system font; spec amounts in tabular figures.
-const FACE: Record<Exclude<TypeStyle, 'display' | 'title'>, TextStyle> = {
+// Everything but display, head and title is Geist; spec amounts in tabular figures.
+const FACE: Record<Exclude<TypeStyle, 'display' | 'head' | 'listHead' | 'title'>, TextStyle> = {
   headline: font.semiBold,
   body: font.regular,
   spec: font.figuresMedium,
@@ -37,16 +37,15 @@ const FACE: Record<Exclude<TypeStyle, 'display' | 'title'>, TextStyle> = {
 const SLACK = Platform.OS === 'ios' ? { paddingBottom: textSlack } : null;
 
 /**
- * Text in one of the seven Back Bar styles. Display and title set names, in
- * the venue's face or the app's own (Redaction); everything else is the
- * system font, so every venue stays legible.
+ * Text in one of the nine Back Bar styles. Display, head, listHead and title set names, in
+ * the venue's face or the app's own (Instrument Serif); everything else is
+ * Geist (Geist Mono in capitals), so every venue stays legible.
  * Scales with the person's text size setting (Dynamic Type) by default.
  */
 export function DsText({ variant = 'body', tone = 'ink', italic, color, align, style, ...rest }: DsTextProps) {
   const ds = useDs();
-  const isDisplay = variant === 'display' || variant === 'title';
-  // A bar's face sits at Redaction's height, with its own spacing and capitals.
-  const faceStyle = isDisplay ? nameStyle(ds.displayFace, type[variant], italic) : FACE[variant];
+  const isDisplay = variant === 'display' || variant === 'head' || variant === 'listHead' || variant === 'title';
+  // A bar's face sits at Instrument Serif's height, with its own spacing and capitals.
   const toneColor = {
     ink: ds.c.ink,
     muted: ds.c.muted,
@@ -55,6 +54,8 @@ export function DsText({ variant = 'body', tone = 'ink', italic, color, align, s
   }[tone];
   // A caller that sets a display face on a system variant gets the face's own weight.
   const own = isDisplay ? undefined : StyleSheet.flatten(style);
+  // Eyebrows and labels set in capitals are Geist Mono, wherever a screen asks for the capitals.
+  const faceStyle = isDisplay ? nameStyle(ds.displayFace, type[variant], italic) : own?.textTransform === 'uppercase' && (variant === 'caption' || variant === 'label') ? monoFont : FACE[variant];
   const weightReset = own ? faceWeightReset(own.fontFamily, own.fontWeight) : undefined;
   return (
     <RNText
@@ -73,6 +74,8 @@ export function DsText({ variant = 'body', tone = 'ink', italic, color, align, s
 
 type Named = Omit<DsTextProps, 'variant'>;
 export const Display = (p: Named) => <DsText variant="display" role="heading" {...p} />;
+/** A main tab's name at the top of its page. */
+export const Head = (p: Named) => <DsText variant="head" role="heading" {...p} />;
 export const Title = (p: Named) => <DsText variant="title" role="heading" {...p} />;
 export const Headline = (p: Named) => <DsText variant="headline" {...p} />;
 export const Body = (p: Named) => <DsText variant="body" {...p} />;
