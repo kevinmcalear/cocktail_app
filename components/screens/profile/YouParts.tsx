@@ -4,9 +4,11 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import { Caption, DrinkImage, DsText, GlassButton, PressableScale, useDs, useGutter } from '@/components/ds';
 import { RowName } from '@/components/ds/ListGroup';
+import { CurrentUserAvatar, initialsFor } from '@/components/ui/UserAvatar';
 import { displayFaces, space } from '@/constants/tokens';
 import { whereLine, type HadDrink } from '@/lib/hadDrinks';
 import { formatScore } from '@/lib/ranking';
+import { useAuth } from '@/ctx/AuthContext';
 
 import { TabHeader } from './TabHeader';
 
@@ -30,6 +32,20 @@ export function YouTop({ place = false }: { place?: boolean }) {
   );
   if (!place && Platform.OS !== 'android') return gear;
   return <TabHeader fallback={gear} add={false} actions={<SettingsGear />} />;
+}
+
+/** Your disc: your photo, else a warm tan disc with your initial in the serif (Prod-you). */
+export function YouAvatar({ name, size }: { name: string; size: number }) {
+  const ds = useDs();
+  const { user } = useAuth();
+  if (user?.user_metadata?.avatar_url) return <CurrentUserAvatar size={size} />;
+  return (
+    <View aria-hidden style={[styles.disc, { width: size, height: size, borderRadius: size / 2, backgroundColor: ds.c.paper }]}>
+      <DsText variant="display" allowFontScaling={false} style={{ fontFamily: displayFaces[ds.displayFace].regular, color: ds.c.sketchInk }}>
+        {initialsFor(name, user?.email).slice(0, 1)}
+      </DsText>
+    </View>
+  );
 }
 
 /** "48 ranked", "12 bars loved", "9 made by you", side by side with a hairline between (Prod-you). */
@@ -99,6 +115,7 @@ export function BestRows({ drinks }: { drinks: readonly HadDrink[] }) {
 
 const styles = StyleSheet.create({
   top: { alignItems: 'flex-end' },
+  disc: { alignItems: 'center', justifyContent: 'center' },
   stats: { flexDirection: 'row' },
   stat: { flex: 1, gap: space.xs, paddingHorizontal: space.sm },
   best: { gap: space.xs },
