@@ -39,6 +39,21 @@ export function isCleanText(text: string): boolean {
   return rows.every((row) => row.split(/\s+/).length <= 8 && !(row.length > 30 && PROSE.test(row)));
 }
 
+// A drink line ending in its price: "Pork Fat Mezcal - mezcal, pork fat, lime 19", "Negroni $16".
+const PRICED = /[a-z].*\s[$£€]?\d{1,3}(?:[.,]\d{2})?$/i;
+
+/**
+ * Pasted text that reads as a menu: two or more drink lines ending in a
+ * price (or a "menu" heading over one), and no spec lines ("45 calvados").
+ * Said before it's read ("Looks like a menu"), and read as a menu.
+ */
+export function looksLikeMenu(text: string): boolean {
+  const rows = text.split('\n').map((r) => r.trim()).filter(Boolean);
+  if (!rows.length || isLink(text) || parseBringIn(text, 'drinks').some((block) => block.lines.length)) return false;
+  const priced = rows.filter((row) => PRICED.test(row)).length;
+  return priced >= 2 || (priced >= 1 && /\bmenu\b/i.test(rows[0]));
+}
+
 const NOTE_KEYS: [RegExp, 'method' | 'glass' | 'ice' | 'garnish'][] = [
   [/^(shaken|shake|stirred|stir|built|build|blended|blend|thrown|swizzled|churned|churn|whip(?:ped)?)\.?$/i, 'method'],
   [/^ice:\s*/i, 'ice'],

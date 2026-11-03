@@ -83,3 +83,17 @@ export function resetUserQueries(client: QueryClient): Promise<void> {
 export function viewerScoped(userId: string | null | undefined): { key: string; meta: { public: boolean } } {
   return { key: userId ?? 'signed-out', meta: { public: !userId } };
 }
+
+const GONE = ['refresh_token_not_found', 'refresh_token_already_used', 'session_not_found', 'session_expired'];
+
+/**
+ * Whether these (a log's or a toast's arguments) are auth-js's answer to a
+ * rejected saved session ("Invalid Refresh Token", "Refresh token is not
+ * valid"). auth-js has then deleted the session and signed out, so it's an
+ * expected sign-out, not an error to show: Sign in says what to do.
+ */
+export function isStaleSessionLog(args: readonly unknown[]): boolean {
+  const e = args[0] as { name?: unknown; code?: unknown; message?: unknown } | null;
+  if (!e || typeof e !== 'object' || e.name !== 'AuthApiError') return false;
+  return GONE.includes(String(e.code)) || /refresh token/i.test(String(e.message));
+}

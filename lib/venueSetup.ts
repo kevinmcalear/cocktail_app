@@ -130,3 +130,8 @@ export function normalizeWebsite(typed: string): string | null {
   if (!t) return null;
   return /^https?:\/\//i.test(t) ? t : `https://${t}`;
 }
+
+/** A saved website as people read it: "https://www.cocktailomakase.com/" → "cocktailomakase.com". The link keeps the full URL. */
+export function websiteLabel(url: string): string {
+  return url.trim().replace(/^https?:\/\//i, '').replace(/^www\./i, '').replace(/[?#].*$/, '').replace(/\/+$/, '');
+}
