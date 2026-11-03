@@ -8,7 +8,7 @@ import { BackbarTheme, Body, Button, Caption, GlassButton, useBreakpoint, useDs,
 import { Crumbs } from '@/components/nav/PageFrame';
 import { DrawingBar } from '@/components/ds/DrawingBar';
 import { DRAWN_LIST_WINDOW } from '@/components/ds/SketchDrawing';
-import { menuCover, space } from '@/constants/tokens';
+import { layout, menuCover, space } from '@/constants/tokens';
 import { useActiveVenue } from '@/hooks/useActiveVenue';
 import { useIsWideWeb } from '@/hooks/useIsWideWeb';
 import { useOffTonight } from '@/hooks/useListAsks';
@@ -24,7 +24,7 @@ import { inMenuQuery } from '@/lib/menuPager';
 import { isOneNightMenu, menuStatus, newDrinkIds } from '@/lib/menus';
 import { menuShopping } from '@/lib/shoppingList';
 import type { ShelfMatch } from '@/lib/shelfReach';
-import type { MenuDetail } from '@/types/menus';
+import type { MenuDetail, MenuDrink } from '@/types/menus';
 
 import { GoLiveSheet } from './GoLiveSheet';
 import { HomeNightSheet } from './HomeNight';
@@ -150,11 +150,11 @@ function MenuPageBody({ menu, shelf, cover, now }: PageProps & { cover: string |
   const home = !menu.barId;
   const draft = status === 'draft';
   const { actions, go } = useMenuPageActions({ menu, status, liveId: live?.id ?? null, setSheet, toShopping: shelf?.toShopping });
-  // The desktop (Menu-desk): the chosen drink opens beside the menu. Elsewhere it opens in its menu, with "Autumn · 4 of 8" and the pager.
+  // The desktop (Menu-desk): a chosen cocktail opens beside the menu (a beer or wine on its own page). Elsewhere it opens in its menu, with "Autumn · 4 of 8" and the pager.
   const [picked, setPicked] = useState<string | null>(null);
-  const besideId = sidebar ? (picked ?? drinks.find((d) => d.kind === 'cocktail')?.id ?? null) : null;
+  const besideId = sidebar ? ((picked && drinks.some((d) => d.id === picked) ? picked : null) ?? drinks.find((d) => d.kind === 'cocktail')?.id ?? null) : null;
   const place = useMenuPager(besideId ? menu.id : null, null, besideId ?? '');
-  const openDrink = (row: PageRowView) => (sidebar && row.drink.kind === 'cocktail' ? setPicked(row.drink.id) : go(`${menuDrinkHref(row.drink)}?${inMenuQuery(menu.id)}`));
+  const openDrink = (d: MenuDrink) => (sidebar && d.kind === 'cocktail' ? setPicked(d.id) : go(`${menuDrinkHref(d)}?${inMenuQuery(menu.id)}`));
   const share = () => (lens.lens === 'home' || isOneNightMenu(menu) ? setSheet('share') : go(`/menus/${menu.id}/card`));
 
   // A list that's on, or coming up: its drinks change one at a time, on the row (Menu-l-swap); a bartender asks (Menu-l-ask).
@@ -207,11 +207,11 @@ function MenuPageBody({ menu, shelf, cover, now }: PageProps & { cover: string |
                   : acts.act(kind, item.row!, item.sectionId!)
               }
               // Every row opens its drink (Menu-drink); a bartender's opens the spec in place first (Menu-who-bartender).
-              onPress={() => (bartender ? toggle(item.key) : openDrink(item.row!))}
+              onPress={() => (bartender ? toggle(item.key) : openDrink(item.row!.drink))}
               // On a live list the menu team hold a drink for Swap and Take off (Menu-l-swap).
               onLongPress={changeable && item.row.acts?.length && !alwaysActs(item.sectionId, item.row) ? () => toggle(item.key) : undefined}
             >
-              {bartender && open === item.key ? <MenuSpecInPlace itemId={item.row.drink.id} barId={menu.barId} onOpen={() => openDrink(item.row!)} /> : null}
+              {bartender && open === item.key ? <MenuSpecInPlace itemId={item.row.drink.id} barId={menu.barId} onOpen={() => openDrink(item.row!.drink)} /> : null}
             </MenuPageRow>
           ) : null}
         </View>
@@ -265,11 +265,11 @@ function MenuPageBody({ menu, shelf, cover, now }: PageProps & { cover: string |
       {list}
       {besideId ? (
         <Suspense fallback={null}>
-          <MenuDrinkPane itemId={besideId} place={place} onPick={setPicked} />
+          <MenuDrinkPane itemId={besideId} place={place} onPick={(id) => drinks.find((d) => d.id === id && openDrink(d))} />
         </Suspense>
       ) : null}
       {draft && team ? (
-        <View style={[styles.bottom, { paddingBottom: insets.bottom + space.md, paddingHorizontal: gutter, backgroundColor: ds.c.ground }]}>
+        <View style={[styles.bottom, sidebar && styles.bottomBeside, { paddingBottom: insets.bottom + space.md, paddingHorizontal: gutter, backgroundColor: ds.c.ground }]}>
           <Button label="Publish" variant="ink" size="lg" onPress={() => setSheet('publish')} style={styles.publish} />
           <Caption tone="muted" align="center">
             Only your team can see a draft
@@ -294,5 +294,6 @@ const styles = StyleSheet.create({
   head: { gap: space.lg, paddingBottom: space.lg },
   sectionHead: { paddingTop: space.xl, paddingBottom: space.sm },
   bottom: { position: 'absolute', left: 0, right: 0, bottom: 0, paddingTop: space.md, gap: space.sm, alignItems: 'center' },
+  bottomBeside: { right: layout.listPaneDesk + 60 },
   publish: { alignSelf: 'stretch' },
 });

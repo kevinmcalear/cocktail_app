@@ -1,92 +1,70 @@
-import { useRouter, type Href } from 'expo-router';
-import { useEffect, type ReactNode } from 'react';
+import { useEffect } from 'react';
 import { Platform, StyleSheet, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import { Caption, DsText, GlassSurface, PressableScale, useDs } from '@/components/ds';
 import { useTabBarTop } from '@/components/nav/WebTabBar';
 import { font, radius, space } from '@/constants/tokens';
-import { useSignedIn } from '@/ctx/AuthContext';
-import { useMenuPager } from '@/hooks/useMenuPager';
-import { drinkPageHref, itemHref } from '@/lib/itemRoutes';
-import { inMenuQuery, type PagerDrink } from '@/lib/menuPager';
-
-import { PagerSwipe } from './PagerSwipe';
+import { useMenuPagerNav } from '@/hooks/useMenuPager';
+import type { PagerDrink } from '@/lib/menuPager';
 
 // Past this many the dots are too small to count: the label above already says "4 of 20".
 const MAX_DOTS = 12;
-const KIND = { cocktail: 'Cocktail', beer: 'Beer', wine: 'Wine' } as const;
 
 /**
  * A drink page read inside a menu (2027 canvas, Menu-pager, Menu-in-draw):
  * the drink page itself is unchanged, with "Autumn · 4 of 8" at the top and a
  * glass bar at the foot, ‹ the drink before, a dot for each drink, the next ›.
- * A swipe across the page goes to the next or the one before (phones), as do
- * the arrow keys on the web. Paging replaces the page, so Back still returns
- * to the menu. InMenu shows it only inside a menu (?menu=).
+ * The arrow keys page on the web (a swipe on phones, PagerSwipe). InMenu
+ * lays it over the drink page, only inside a menu (?menu=).
  */
-export function MenuPager({ menuId, bar, itemId, children }: { menuId: string; bar: string | null; itemId: string; children: ReactNode }) {
+export function MenuPager({ menuId, bar, itemId }: { menuId: string; bar: string | null; itemId: string }) {
   const ds = useDs();
-  const router = useRouter();
   const insets = useSafeAreaInsets();
   const bottom = useTabBarTop() + space.md;
-  const signedIn = useSignedIn();
-  const place = useMenuPager(menuId, bar, itemId);
-
-  const href = (d: PagerDrink) => {
-    const page = d.kind && d.kind !== 'cocktail' ? itemHref(KIND[d.kind as keyof typeof KIND], d.id) : drinkPageHref(d.id, signedIn);
-    return `${page}?${inMenuQuery(menuId, bar)}` as Href;
-  };
-  const go = (d: PagerDrink | null | undefined) => {
-    if (d) router.replace(href(d));
-  };
+  const { place, go } = useMenuPagerNav(menuId, bar, itemId);
   const prev = place?.prev ?? null;
   const next = place?.next ?? null;
 
-  // The web: ← and → page through the menu, unless someone is typing.
+  // The web: ← and → page through the menu, unless someone is typing or a sheet or dialog is open over the page.
   useEffect(() => {
     if (Platform.OS !== 'web' || !place) return;
     const onKey = (e: KeyboardEvent) => {
       const t = e.target as HTMLElement | null;
       if (e.metaKey || e.ctrlKey || e.altKey || (t && (t.isContentEditable || /^(INPUT|TEXTAREA|SELECT)$/.test(t.tagName)))) return;
-      if (e.key === 'ArrowRight' && next) router.replace(href(next));
-      if (e.key === 'ArrowLeft' && prev) router.replace(href(prev));
+      if (document.querySelector('[role="dialog"], [aria-modal="true"]')) return;
+      if (e.key === 'ArrowRight') go(next);
+      if (e.key === 'ArrowLeft') go(prev);
     };
     window.addEventListener('keydown', onKey);
     return () => window.removeEventListener('keydown', onKey);
   });
 
+  if (!place) return null;
   return (
-    <View style={styles.fill}>
-      <PagerSwipe enabled={!!place} onNext={() => go(next)} onPrev={() => go(prev)}>
-        {children}
-      </PagerSwipe>
-      {place ? (
-        <>
-          {/* Under the glass buttons, clear of Save, Share and More, over the top of the sky. */}
-          <View pointerEvents="none" style={[styles.label, { top: insets.top + space.lg + 44 + space.md }]}>
-            <Caption tone="muted" style={styles.caps}>
-              {place.label.toUpperCase()}
-            </Caption>
-          </View>
-          <View style={[styles.foot, { bottom }]} pointerEvents="box-none">
-            <GlassSurface style={styles.bar} interactive>
-              <View role="navigation" aria-label="Drinks on this menu" style={styles.nav}>
-                <PagerEnd drink={prev} dir="prev" onPress={() => go(prev)} />
-                {place.total <= MAX_DOTS ? (
-                  <View style={styles.dots} aria-hidden>
-                    {Array.from({ length: place.total }, (_, i) => (
-                      <View key={i} style={[styles.dot, { backgroundColor: i === place.index ? ds.c.ink : ds.c.lineStrong }]} />
-                    ))}
-                  </View>
-                ) : null}
-                <PagerEnd drink={next} dir="next" onPress={() => go(next)} />
+    <>
+      {/* Under the glass buttons, clear of Save, Share and More, over the top of the sky. */}
+      <View pointerEvents="none" style={[styles.label, { top: insets.top + space.lg + 44 + space.md }]}>
+        <Caption tone="muted" style={styles.caps}>
+          {place.label.toUpperCase()}
+        </Caption>
+      </View>
+      <View style={[styles.foot, { bottom }]} pointerEvents="box-none">
+        <GlassSurface style={styles.bar} interactive>
+          <View role="navigation" aria-label="Drinks on this menu" style={styles.nav}>
+            <PagerEnd drink={prev} dir="prev" onPress={() => go(prev)} />
+            {place.total <= MAX_DOTS ? (
+              <View style={styles.dots} aria-hidden>
+                {Array.from({ length: place.total }, (_, i) => (
+                  <View key={i} style={[styles.dot, { backgroundColor: i === place.index ? ds.c.ink : ds.c.lineStrong }]} />
+                ))}
               </View>
-            </GlassSurface>
+            ) : null}
+            <PagerEnd drink={next} dir="next" onPress={() => go(next)} />
           </View>
-        </>
-      ) : null}
-    </View>
+        </GlassSurface>
+      </View>
+    </>
   );
 }
 
@@ -103,7 +81,6 @@ function PagerEnd({ drink, dir, onPress }: { drink: PagerDrink | null; dir: 'pre
 }
 
 const styles = StyleSheet.create({
-  fill: { flex: 1 },
   label: { position: 'absolute', left: space.lg, right: space.lg, alignItems: 'center' },
   caps: { letterSpacing: 1.5, ...font.medium },
   foot: { position: 'absolute', left: space.lg, right: space.lg, alignItems: 'center' },

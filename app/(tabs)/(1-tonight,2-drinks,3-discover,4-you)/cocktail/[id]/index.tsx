@@ -21,17 +21,7 @@ const DrinkEditScreen = lazy(() => import("@/components/screens/drink/edit/Drink
 export { DrinkScreen };
 export { BatchSheet } from "@/components/screens/batch/BatchSheet";
 
-// Opened from a menu (?menu=), the page carries the menu's pager (Menu-pager).
-export default function CocktailDetailsRoute() {
-    const { id } = useLocalSearchParams<{ id: string }>();
-    return (
-        <InMenu itemId={id}>
-            <CocktailDetailsScreen />
-        </InMenu>
-    );
-}
-
-function CocktailDetailsScreen() {
+export default function CocktailDetailsScreen() {
     const { id, batch } = useLocalSearchParams<{ id: string; batch?: string }>();
     const signedIn = useSignedIn();
     const router = useRouter();
@@ -67,17 +57,22 @@ function CocktailDetailsScreen() {
     if ((error as { code?: string } | null)?.code === "PGRST116") return signedIn ? <VisitorDrink id={id as string} /> : <Redirect href={`/d/${id}`} />;
     if (error) return <CouldNotLoad what="drink" failed={{ retry: () => void refetch() }} />;
     // The drink page reads it; Edit turns the same page into editing in place (DrinkEditScreen).
+    // Opened from a menu (?menu=), the page carries the menu's pager (Menu-pager); editing doesn't, so a swipe can't page away from it.
     if (!isEditing) {
-        return cocktail ? (
-            <DrinkScreen
-                item={cocktail}
-                canEdit={editAccess === "edit"}
-                adminFix={editAccess === "admin"}
-                onEdit={() => editOn()}
-                openBatch={batch === "1"}
-            />
-        ) : (
-            <DrinkLoading seed={query.isPlaceholderData ? query.data : null} />
+        return (
+            <InMenu itemId={id}>
+                {cocktail ? (
+                    <DrinkScreen
+                        item={cocktail}
+                        canEdit={editAccess === "edit"}
+                        adminFix={editAccess === "admin"}
+                        onEdit={() => editOn()}
+                        openBatch={batch === "1"}
+                    />
+                ) : (
+                    <DrinkLoading seed={query.isPlaceholderData ? query.data : null} />
+                )}
+            </InMenu>
         );
     }
 

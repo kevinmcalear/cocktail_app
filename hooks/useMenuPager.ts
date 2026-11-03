@@ -1,7 +1,13 @@
+import { useRouter, type Href } from 'expo-router';
+
+import { useSignedIn } from '@/ctx/AuthContext';
 import { useMenuEditionDrinks, useMenuEditions } from '@/hooks/useMenuRuns';
 import { useMenu } from '@/hooks/useMenus';
 import { useProfile } from '@/hooks/useProfiles';
-import { pagerPlace, type PagerDrink, type PagerPlace } from '@/lib/menuPager';
+import { drinkPageHref, itemHref } from '@/lib/itemRoutes';
+import { inMenuQuery, pagerPlace, type PagerDrink, type PagerPlace } from '@/lib/menuPager';
+
+const KIND = { cocktail: 'Cocktail', beer: 'Beer', wine: 'Wine' } as const;
 
 /**
  * Where a drink sits on the menu it was opened from (Menu-pager): the menu the
@@ -29,4 +35,21 @@ export function useMenuPager(menuId: string | null, bar: string | null, itemId: 
   const menu = team.data;
   if (!menu) return null;
   return pagerPlace(menu.name, menu.sections.flatMap((s) => s.drinks.map((d) => ({ id: d.id, name: d.name, kind: d.kind }))), itemId);
+}
+
+/**
+ * The pager's place on the menu and a `go` that pages to a drink in it. Paging
+ * replaces the page, so Back still returns to the menu.
+ */
+export function useMenuPagerNav(menuId: string, bar: string | null, itemId: string) {
+  const router = useRouter();
+  const signedIn = useSignedIn();
+  const place = useMenuPager(menuId, bar, itemId);
+  const go = (d: PagerDrink | null | undefined) => {
+    if (!d) return;
+    // A cocktail's page is /d/<id> signed out; a beer or wine has its own.
+    const page = d.kind && d.kind !== 'cocktail' ? itemHref(KIND[d.kind as keyof typeof KIND], d.id) : drinkPageHref(d.id, signedIn);
+    router.replace(`${page}?${inMenuQuery(menuId, bar)}` as Href);
+  };
+  return { place, go };
 }
