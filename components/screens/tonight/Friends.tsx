@@ -49,7 +49,7 @@ export function FriendsPrompt() {
   const router = useRouter();
   return (
     <TonightSection title="Friends">
-      <Surface raised style={styles.prompt}>
+      <Surface style={styles.prompt}>
         <View style={[styles.icon, { backgroundColor: ds.c.ground }]}>
           <IconSymbol name="person.badge.plus" size={20} color={ds.c.ink} />
         </View>
