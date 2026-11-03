@@ -10,6 +10,7 @@ import { IconSymbol } from '@/components/ui/icon-symbol';
 import { displayFaces, palateHues, radius, space } from '@/constants/tokens';
 import { useShelfHere } from '@/hooks/useBarKit';
 import { useCoreIngredients, usePairings } from '@/hooks/usePairings';
+import { useVenueFeature } from '@/hooks/useVenueFeatures';
 import { EQUIPMENT, GROUPS, TECHNIQUES } from '@/lib/techniques';
 import { kitPicks, pairLine, pickOfDay, type KitPick } from '@/lib/techniques/learn';
 
@@ -77,6 +78,7 @@ function KitRow({ pick, shelf, onPress }: { pick: KitPick; shelf: string; onPres
 /** Today's pairing from the flavour map ("Campari goes with Grapefruit in 38 drinks."), Map opening it there. */
 function PairNote() {
   const ds = useDs();
+  const flavorMap = useVenueFeature('flavorMap');
   const router = useRouter();
   const [today] = useState(() => new Date());
   const core = useCoreIngredients().data ?? [];
@@ -84,6 +86,8 @@ function PairNote() {
   const top = usePairings(from ? [from.id] : [], { limit: 1 }).data?.[0];
   const text = from && top ? pairLine(from.name, top.name, top.together[0] ?? top.drinks) : 'What goes with what, counted from every drink we know.';
   const href = from && top ? `/flavor-map?with=${from.id}` : '/flavor-map';
+  // The flavor map is its own switch (lib/venueFeatures.ts).
+  if (!flavorMap) return null;
   return (
     <PressableScale role="link" accessibilityLabel={`${text} Opens the flavour map`} onPress={() => router.push(href as Href)} style={[styles.note, { backgroundColor: ds.c.raised }]}>
       <IconSymbol name="leaf.fill" size={20} color={ds.c.ink} />

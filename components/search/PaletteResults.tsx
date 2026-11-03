@@ -7,6 +7,7 @@ import { IconSymbol } from '@/components/ui/icon-symbol';
 import { layout, radius, space } from '@/constants/tokens';
 import { useMineFacts } from '@/hooks/useMineFacts';
 import type { SearchMine } from '@/hooks/useSearchMine';
+import { useVenueFeature } from '@/hooks/useVenueFeatures';
 import { foldName } from '@/lib/discover';
 import { newDrinkHref } from '@/lib/itemRoutes';
 import { openSearchItem } from '@/lib/openSearchItem';
@@ -116,7 +117,9 @@ export function PaletteResults({ query: typed, mine, onEverywhere }: { query: st
   // The house-mades its drinks use, shared ones too, as the Library's Preps shelf has them.
   const preps = useMemo(() => facts.prepItems.filter((p) => foldName(p.name).includes(foldName(q))), [facts.prepItems, q]);
   const ingredients = [...preps, ...groups.ingredients.filter((i) => !preps.some((p) => p.id === i.id))];
-  const learn = useMemo(() => searchTechniques(q).slice(0, LEARN), [q]);
+  // Techniques, at a venue that switched them on (lib/venueFeatures.ts).
+  const techniques = useVenueFeature('techniques');
+  const learn = useMemo(() => (techniques ? searchTechniques(q).slice(0, LEARN) : []), [q, techniques]);
   const open = (item: SearchItem) => openSearchItem(item, (href) => router.push(href as never));
   const made = madeFirst({ drinks: groups.drinks, ingredients }, q);
   const batch = mine.canPrep ? (preps[0] ?? null) : null;
