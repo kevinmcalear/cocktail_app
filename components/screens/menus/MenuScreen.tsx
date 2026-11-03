@@ -160,7 +160,7 @@ function MenuPageBody({ menu, shelf, cover, now }: PageProps & { cover: string |
   const openDrink = (d: MenuDrink) => (sidebar && d.kind === 'cocktail' ? setPicked(d.id) : go(`${menuDrinkHref(d)}?${inMenuQuery(menu.id)}`));
   const share = () => (lens.lens === 'home' || isOneNightMenu(menu) ? setSheet('share') : go(`/menus/${menu.id}/card`));
   const edit = () => go(`/menus/${menu.id}/edit`);
-  const barTools = menuBarTools({ home: lens.lens === 'home', team, draft, past: status === 'previous', onShare: share, onEdit: edit });
+  const barTools = menuBarTools({ home: lens.lens === 'home', team, draft, past: status === 'previous', onShare: share, onEdit: edit, onMore: () => setSheet('more') });
 
   // A list that's on, or coming up: its drinks change one at a time, on the row (Menu-l-swap); a bartender asks (Menu-l-ask).
   const bartender = lens.lens === 'bartender';
@@ -277,7 +277,7 @@ function MenuPageBody({ menu, shelf, cover, now }: PageProps & { cover: string |
       {sheet === 'night' ? <HomeNightSheet menu={menu} onClose={() => setSheet(null)} /> : null}
       {sheet === 'share' ? <ShareMenuSheet menu={menu} onClose={() => setSheet(null)} /> : null}
       {sheet === 'more' ? (
-        <MenuMoreSheet menu={menu} status={status} visible onClose={() => setSheet(null)} onNight={home ? () => setSheet('night') : undefined} extras={moreExtras(moreRows, menu, actions)} />
+        <MenuMoreSheet menu={menu} status={status} visible onClose={() => setSheet(null)} onNight={home ? () => setSheet('night') : undefined} extras={[...(home ? [{ label: 'Edit', onPress: edit }] : []), ...moreExtras(moreRows, menu, actions)]} />
       ) : null}
       {sheet === 'publish' ? <GoLiveSheet visible menu={menu} others={others} onClose={() => setSheet(null)} onDone={() => setSheet(null)} /> : null}
     </View>

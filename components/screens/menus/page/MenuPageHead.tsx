@@ -38,6 +38,7 @@ interface MenuPageHeadProps {
   onEdit?: (() => void) | null;
   /** The one prominent action at the top: Edit, or Share on a home menu. */
   pill: { label: string; onPress: () => void } | null;
+  onMore?: (() => void) | null;
   /** In Back's place on a page with no way back (a friend's shared menu): it goes home. */
   label?: { text: string; onPress: () => void };
   /** The page's side margin: the hero runs out to the edges. */
@@ -54,7 +55,7 @@ interface MenuPageHeadProps {
  * cover photo, or nothing yet), glass Back and Share, then the tag and
  * eyebrow, the name and its line (Menu-page).
  */
-export function MenuPageHead({ heroIds, coverUrl, coverCredit, name, ink, quiet, tag, eyebrow, description, onBack, onShare, onEdit, pill, label, bleed, top = 0, pinned, children }: MenuPageHeadProps) {
+export function MenuPageHead({ heroIds, coverUrl, coverCredit, name, ink, quiet, tag, eyebrow, description, onBack, onShare, onEdit, pill, onMore, label, bleed, top = 0, pinned, children }: MenuPageHeadProps) {
   const ds = useDs();
   const wide = useBreakpoint() !== 'phone';
   const photo = !!coverUrl;
@@ -81,7 +82,7 @@ export function MenuPageHead({ heroIds, coverUrl, coverCredit, name, ink, quiet,
       {/* Pinned: the page draws the bar over its scroll instead, so Back stays put (MenuScreen). */}
       {pinned ? null : (
         <View style={[styles.bar, { marginHorizontal: 0 }]}>
-          <MenuTopBar onBack={onBack} label={label} onShare={onShare} onEdit={onEdit} pill={pill} onMedia={photo && ds.scheme === 'dark'} top={top} />
+          <MenuTopBar onBack={onBack} label={label} onShare={onShare} onEdit={onEdit} pill={pill} onMore={onMore} onMedia={photo && ds.scheme === 'dark'} top={top} />
         </View>
       )}
       <View style={[styles.title, photo && { marginTop: space.lg }]}>

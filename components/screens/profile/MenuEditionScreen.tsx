@@ -17,8 +17,10 @@ import { editionDates, editionMenu, editionMenuDrinks, editionSections, menuRang
 import { screenBelow } from '@/lib/screenBelow';
 import { shareOrCopy } from '@/lib/shareLink';
 import { siteOrigin } from '@/lib/venueLink';
+import type { MenuDrink } from '@/types/menus';
 
 import { GuestMenuPage } from '../menus/page/GuestMenuPage';
+import { NotPublishedSheet } from '../menus/page/NotPublishedSheet';
 import { loadFailure, PublicMissing } from '../published/PublicShell';
 
 /**
@@ -40,6 +42,8 @@ export function MenuEditionScreen({ profileRef, editionId }: { profileRef: strin
   const loaded = useMenuEditionDrinks(edition?.drinks ?? []);
   // ponytail: a guest's own day, not the bar's (get_menu_editions doesn't send the bar's time zone).
   const [today] = useState(() => barDay(Date.now()));
+  // A drink the bar hasn't published: a small card instead of a page (Kevin, 3 Nov).
+  const [notYet, setNotYet] = useState<MenuDrink | null>(null);
   if (!profile.data || !edition) return <PublicMissing loading={profile.isPending || (!!profile.data && editions.isPending)} what="menu" failed={loadFailure(profile, editions)} />;
 
   const bar = profile.data;
@@ -78,7 +82,7 @@ export function MenuEditionScreen({ profileRef, editionId }: { profileRef: strin
         onBack={back}
         onShare={() => void shareOrCopy(`${siteOrigin()}${barHref}/menus/${edition.id}`, edition.name, 'menu')}
         // The drink opens in its menu: "Autumn · 4 of 8" and the pager (Menu-pager).
-        rowPress={(row) => (readable.has(row.drink.id) ? () => router.push(`${drinkPageHref(row.drink.id, signedIn)}?${inMenuQuery(edition.id, bar.handle || bar.id)}` as Href) : null)}
+        rowPress={(row) => (readable.has(row.drink.id) ? () => router.push(`${drinkPageHref(row.drink.id, signedIn)}?${inMenuQuery(edition.id, bar.handle || bar.id)}` as Href) : () => setNotYet(row.drink))}
         footer={
           source ? (
             <View style={styles.start}>
@@ -87,6 +91,7 @@ export function MenuEditionScreen({ profileRef, editionId }: { profileRef: strin
           ) : null
         }
       />
+      {notYet ? <NotPublishedSheet drink={notYet} barName={bar.display_name ?? edition.name} onClose={() => setNotYet(null)} /> : null}
     </>
   );
 }

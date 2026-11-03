@@ -9,6 +9,8 @@ export interface MenuBarTools {
   onEdit?: (() => void) | null;
   /** The one prominent action at the top: Edit, or Share on a home menu. */
   pill: { label: string; onPress: () => void } | null;
+  /** A home menu's …: Edit and the rest are in its sheet (Kevin, 3 Nov, as the item pages' header). */
+  onMore?: (() => void) | null;
 }
 
 interface MenuTopBarProps extends MenuBarTools {
@@ -29,7 +31,7 @@ interface MenuTopBarProps extends MenuBarTools {
  * item pages do, #1164); scrolled past the hero it takes a backing and the
  * menu's name.
  */
-export function MenuTopBar({ onBack, label, onShare, onEdit, pill, onMedia, collapsed, top }: MenuTopBarProps) {
+export function MenuTopBar({ onBack, label, onShare, onEdit, pill, onMore, onMedia, collapsed, top }: MenuTopBarProps) {
   const ds = useDs();
   return (
     <View pointerEvents="box-none" style={[styles.wrap, { paddingTop: top + space.lg }, collapsed ? [styles.backed, { backgroundColor: ds.c.ground, borderBottomColor: ds.c.line }] : null]}>
@@ -53,6 +55,7 @@ export function MenuTopBar({ onBack, label, onShare, onEdit, pill, onMedia, coll
       </View>
       <View style={styles.end}>
         {onEdit ? <GlassButton icon="pencil" accessibilityLabel="Edit" onPress={onEdit} onMedia={onMedia} /> : null}
+        {onMore ? <GlassButton icon="ellipsis" accessibilityLabel="More" onPress={onMore} onMedia={onMedia} /> : null}
         {onShare ? <GlassButton icon="square.and.arrow.up" accessibilityLabel="Share" onPress={onShare} onMedia={onMedia} /> : null}
         {pill ? (
           <PressableScale role="button" accessibilityLabel={pill.label} onPress={pill.onPress} style={[styles.pill, { backgroundColor: ds.c.ink }]}>

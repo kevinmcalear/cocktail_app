@@ -66,11 +66,13 @@ export function MenuScreenHead({ menu, model, desk, cover, home, team, draft, pa
   );
 }
 
-/** The phone bar's right side: Share, and Edit as the menu team's one action; a draft's is Publish and a home menu's Share, so theirs is a glass pencil. */
-export function menuBarTools({ home, team, draft, past, onShare, onEdit }: Pick<Props, 'home' | 'team' | 'draft' | 'past' | 'onShare' | 'onEdit'>): MenuBarTools {
+/** The phone bar's right side: Share, and Edit as the menu team's one action; a draft's is Publish, so its Edit is a glass pencil; a home menu's is Share, with Edit in its …. */
+export function menuBarTools({ home, team, draft, past, onShare, onEdit, onMore }: Pick<Props, 'home' | 'team' | 'draft' | 'past' | 'onShare' | 'onEdit'> & { onMore?: () => void }): MenuBarTools {
   return {
     onShare: home ? null : onShare,
-    onEdit: (team && draft) || home ? onEdit : null,
+    // A home menu's Edit is in its … (Kevin, 3 Nov).
+    onEdit: team && draft ? onEdit : null,
+    onMore: home ? onMore : null,
     pill: home ? { label: 'Share', onPress: onShare } : team && !draft && !past ? { label: 'Edit', onPress: onEdit } : null,
   };
 }
