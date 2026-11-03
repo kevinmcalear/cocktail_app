@@ -33,7 +33,7 @@ const BLURBS: Record<AddFilter, string> = {
   kit: SECTIONS.kit.blurb,
 };
 /** The title says where it was opened. */
-const TITLES: Record<AddFilter, string> = { all: 'Add to your bar', bottles: 'Add bottles', fridge: 'Add to the fridge', lab: 'Add to the lab', preps: 'Add house-made', kit: 'Add kit' };
+const TITLES: Record<AddFilter, string> = { all: 'Add to your bar', bottles: 'Add bottles', fridge: 'Add to the fridge', lab: 'Add to the lab', preps: 'Add something made at home', kit: 'Add kit' };
 const ORDER: BarSection[] = ['bottles', 'fridge', 'lab', 'preps'];
 
 interface AddToBarSheetProps {
@@ -205,7 +205,7 @@ export function AddToBarSheet({ visible, filter, onFilter, onShelf, covered, cou
                 <KitResults query={typed} cols={cols} shown={shown} onToggled={(id, name, on) => setSession((s) => tick(s, id, name, on))} />
               ) : !typed ? (
                 <View style={styles.group}>
-                  <Eyebrow>{filter === 'all' ? 'Most used in drinks' : `Common ${SECTIONS[filter].short.toLowerCase()}`}</Eyebrow>
+                  <Eyebrow>{filter === 'all' ? 'Most used in drinks' : filter === 'preps' ? 'Often made at home' : `Common ${SECTIONS[filter].short.toLowerCase()}`}</Eyebrow>
                   <TileGrid cols={cols}>
                     {tiles.map((item) => {
                       const on = tileHas(item.id);
@@ -246,7 +246,7 @@ export function AddToBarSheet({ visible, filter, onFilter, onShelf, covered, cou
                     <View key={g.section}>
                       {filter === 'all' ? (
                         <View style={styles.heading}>
-                          <Eyebrow>{SECTIONS[g.section].title}</Eyebrow>
+                          <Eyebrow>{SECTIONS[g.section].short}</Eyebrow>
                         </View>
                       ) : null}
                       {g.section === 'bottles' && kind ? (

@@ -3,6 +3,7 @@ import { createContext, use, type ReactNode } from 'react';
 import { ScrollView, StyleSheet, View, type StyleProp, type ViewStyle } from 'react-native';
 
 import { Caption, Chip, EquipmentDrawing, EquipmentThumb, Headline, IngredientDrawing, IngredientThumb, PressableScale, useBreakpoint, useDs, type IconName } from '@/components/ds';
+import { SectionLabel } from '@/components/ds/ListGroup';
 import { IconSymbol } from '@/components/ui/icon-symbol';
 import { layout, radius, space } from '@/constants/tokens';
 import type { ShelfItem } from '@/hooks/useHomeBar';
@@ -31,9 +32,7 @@ export function SectionHead({ section, children }: { section: Jumpable; children
     <View style={styles.headBlock}>
       <View style={styles.head}>
         <View style={styles.title}>
-          <Caption tone="muted" role="heading" numberOfLines={1} style={styles.caps}>
-            {SECTIONS[section].title}
-          </Caption>
+          <SectionLabel title={SECTIONS[section].title} />
         </View>
         {children}
       </View>
@@ -249,7 +248,6 @@ const styles = StyleSheet.create({
   headBlock: { gap: 2 },
   head: { flexDirection: 'row', alignItems: 'center', gap: space.xs },
   title: { flex: 1, flexDirection: 'row', alignItems: 'baseline', gap: space.sm, minWidth: 0 },
-  caps: { textTransform: 'uppercase', letterSpacing: 1.2 },
   chipsScroll: { flexGrow: 0 },
   chips: { flexDirection: 'row', gap: space.sm },
   wrap: { flexWrap: 'wrap' },

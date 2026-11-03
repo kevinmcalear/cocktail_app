@@ -85,11 +85,14 @@ export function StaffDrinks({ beside = false }: { beside?: boolean }) {
   const shownIds = shown.map((i) => i.id);
   const { data: classicList } = useDrinkLists(!!q);
   const staffView = show === 'staff' && !!activeId;
-  // Beside the stack, /drinks shows this list's first row (none for Classics, whose order is its own).
-  const first = staffView ? null : (shown[0] ?? null);
-  const loaded = !d.isLoading;
+  // Beside the stack, /drinks shows this list's first row (none for Classics, whose order is its own), A to Z
+  // before any search, so typing doesn't swap the page on every key; the list lights it only while it's shown.
+  const first = staffView ? null : (inView.reduce<SearchItem | null>((a, i) => (!a || i.name.localeCompare(a.name) < 0 ? i : a), null));
+  const loaded = !d.isLoading && !!activeId;
   useEffect(() => {
-    if (beside) useDrinksFirstRow.setState({ item: first, ready: loaded });
+    if (!beside) return;
+    useDrinksFirstRow.setState({ item: first, ready: loaded });
+    return () => useDrinksFirstRow.setState({ item: null, ready: false });
   }, [beside, first, loaded]);
   const nothing = !d.isLoading && !d.lists[CAPSULE_SHOW[capsule]].length && (capsule !== 'bottles' || !d.lists.garnishes.length);
   const label = [...d.chips.flat(), { value: 'preps', label: 'House-made' }, { value: 'bottles', label: 'Bottles' }].find((f) => f.value === show)?.label ?? 'All';

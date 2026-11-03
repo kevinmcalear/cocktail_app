@@ -7,7 +7,7 @@ import { DrinkListRow, type DrinkListRowProps } from '@/components/screens/drink
 import { DrinkLoading } from '@/components/screens/drink/DrinkLoading';
 import { layout, space } from '@/constants/tokens';
 import { useCocktail } from '@/hooks/useCocktails';
-import { useOpenBeside } from '@/hooks/useDrinksSplit';
+import { useDrinksFirstRow, useOpenBeside } from '@/hooks/useDrinksSplit';
 import { useItemEditAccess } from '@/hooks/useViewAs';
 import { itemHref, type ItemCategory } from '@/lib/itemRoutes';
 import type { SearchItem } from '@/types/search';
@@ -67,8 +67,9 @@ export function DrinksPanes({ items, rowOf, header, empty, footer, routed = fals
   const { pick } = useLocalSearchParams<{ pick?: string }>();
   const beside = useOpenBeside();
   const atRoot = usePathname() === '/drinks';
-  const first = items[0] ?? null;
-  const picked = routed ? (items.find((i) => i.id === beside.picked) ?? (atRoot ? first : null)) : (items.find((i) => i.id === pick) ?? first);
+  const rootId = useDrinksFirstRow((s) => s.item?.id ?? null);
+  const shownId = beside.picked ?? (atRoot ? rootId : null);
+  const picked = routed ? (items.find((i) => i.id === shownId) ?? null) : (items.find((i) => i.id === pick) ?? items[0] ?? null);
   const list = (
     <FlatList
       style={routed ? styles.fill : [styles.list, { borderRightColor: ds.c.line }]}
