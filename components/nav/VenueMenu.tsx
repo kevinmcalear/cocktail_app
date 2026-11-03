@@ -24,7 +24,9 @@ export function VenueMenu({ target, onClose }: { target: { current: ComponentRef
   // Opened from the button it hangs from: measure it once, on mount.
   const popover = usePopover();
   const { open } = popover;
-  useEffect(() => open(target.current), []); // eslint-disable-line react-hooks/exhaustive-deps
+  useEffect(() => {
+    open(target.current);
+  }, []); // eslint-disable-line react-hooks/exhaustive-deps
   const close = () => {
     popover.close();
     onClose();

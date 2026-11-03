@@ -85,7 +85,7 @@ export function PlaceHeading({ children, mark }: { children: ReactNode; mark: st
               {mark.charAt(0).toUpperCase()}
             </DsText>
           </View>
-          <DsText variant="caption" tone="muted" numberOfLines={1} style={styles.heading}>
+          <DsText variant="caption" tone="muted" role="heading" numberOfLines={1} style={styles.heading}>
             {children}
           </DsText>
           <IconSymbol name="chevron.down" size={10} color={ds.c.muted} />
@@ -130,7 +130,7 @@ const styles = StyleSheet.create({
   label: { flex: 1 },
   strong: { ...font.semiBold },
   kbd: { ...font.figuresMedium, paddingHorizontal: 6, paddingVertical: 2, borderRadius: radius.mark, overflow: 'hidden' },
-  headingRow: { flexDirection: 'row', alignItems: 'center', gap: space.sm, marginTop: space.lg, marginBottom: space.xs, marginHorizontal: space.md },
+  headingRow: { flexDirection: 'row', alignItems: 'center', minHeight: 36, gap: space.sm, marginTop: space.lg, marginBottom: space.xs, marginHorizontal: space.md },
   headingMark: { width: 20, height: 20, borderRadius: radius.pill, alignItems: 'center', justifyContent: 'center' },
   heading: { ...font.medium, flexShrink: 1 },
   footer: { marginTop: 'auto', flexDirection: 'row', alignItems: 'center', gap: space.sm, paddingTop: space.md, paddingHorizontal: space.sm, paddingBottom: space.xs, borderTopWidth: StyleSheet.hairlineWidth },

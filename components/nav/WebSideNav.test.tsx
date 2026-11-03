@@ -62,7 +62,7 @@ test('venue mode lists search, the four tabs and the venue pages, marking the cu
   // Board Prod-desk: the four tabs, the bar's group (the menu on now, House-made, Team, Bar settings), Home's Shelf and Menus, and you at the foot.
   // Every person and role has the same tabs (tabs A, 31 Oct); the rest opens from Bar settings.
   expect(links()).toEqual(['Tonight', 'Drinks', 'Discover', 'You', 'Autumn, on now', 'House-made', 'Team', 'Bar settings', 'Shelf, 3', 'Menus', 'You: Kevin M., Admin at Caretakers']);
-    expect(screen.getByRole('link', { name: 'Drinks', selected: true })).toBeTruthy();
+  expect(screen.getByRole('link', { name: 'Drinks', selected: true })).toBeTruthy();
   expect(screen.getByRole('link', { name: 'Tonight', selected: false })).toBeTruthy();
 
   await fireEvent.press(screen.getByRole('link', { name: 'House-made' }));
@@ -85,7 +85,7 @@ test('the two group headings are where you switch place; no mark row tops the si
   // Board C7/C8: the bar's heading and Home's open the places menu (VenueSwitcher's, tested on its own).
   expect(screen.getByRole('button', { name: 'Caretakers. Switch place' })).toBeTruthy();
   expect(screen.getByRole('button', { name: 'Home. Switch place' })).toBeTruthy();
-  expect(screen.queryByText('venue switcher')).toBeNull();
+  expect(screen.getAllByRole('heading').length).toBe(2);
   expect(screen.queryByRole('radio', { name: 'Pale Moth, Bartender' })).toBeNull();
 });
 
