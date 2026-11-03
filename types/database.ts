@@ -8286,6 +8286,7 @@ export type Database = {
         Returns: undefined
       }
       is_card_public: { Args: { p_item_id: string }; Returns: boolean }
+      is_on_shown_menu: { Args: { p_item_id: string }; Returns: boolean }
       is_spec_locked: { Args: { p_item_id: string }; Returns: boolean }
       join_by_staff_link: { Args: { p_token: string }; Returns: string }
       join_requests: {
