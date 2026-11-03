@@ -147,9 +147,9 @@ export function OnNowCard({ eyebrow, name, sub, ids, onPress }: { eyebrow: strin
   return (
     <PressableScale role="link" accessibilityLabel={`${name}. ${eyebrow}. ${sub}. Opens the menu.`} onPress={onPress} style={[styles.onNow, { backgroundColor: tint ? withAlpha(tint, ds.scheme === 'dark' ? 0.24 : 0.16) : ds.c.surface }]}>
       <View style={styles.onNowWords}>
-        <View style={styles.live}>
+        <View style={[styles.live, styles.onNowEyebrow]}>
           <View style={[styles.dot, { backgroundColor: palateHues[ds.scheme].green }]} />
-          <Caption tone="muted" style={styles.caps} numberOfLines={1}>
+          <Caption tone="muted" style={styles.caps} numberOfLines={2}>
             {eyebrow}
           </Caption>
         </View>
@@ -201,7 +201,7 @@ export function DrinksLoading() {
 const styles = StyleSheet.create({
   head: { gap: space.md, paddingBottom: space.sm },
   // The name sits 18 above the capsules, as Prod-drinks draws it (the head's gap and this).
-  title: { gap: space.xs, paddingBottom: space.xs },
+  title: { gap: space.xs, paddingBottom: space.xs + 2 },
   caps: { textTransform: 'uppercase', letterSpacing: 1.2 },
   rows: { gap: space.xs },
   row: { flexDirection: 'row', alignItems: 'center', gap: space.md, minHeight: 64, borderRadius: radius.control, paddingHorizontal: space.sm, marginHorizontal: -space.sm },
@@ -210,8 +210,9 @@ const styles = StyleSheet.create({
   words: { flex: 1, minWidth: 0, gap: 2 },
   end: { textAlign: 'right' },
   onNow: { flexDirection: 'row', alignItems: 'center', minHeight: 168, borderRadius: radius.card + space.xs, borderCurve: 'continuous', overflow: 'hidden', padding: space.lg + 2 },
-  // The eyebrow runs the card's width on one line, as Prod-drinks draws it; the name and its line keep left of the drawings.
+  // The eyebrow runs wider than the name so "On now · since 1 Oct" stays on one line, as Prod-drinks draws it; the name and its line keep left of the drawings.
   onNowWords: { flex: 1, minWidth: 0, gap: space.xs, zIndex: 1 },
+  onNowEyebrow: { maxWidth: '72%' },
   onNowName: { maxWidth: '55%' },
   live: { flexDirection: 'row', alignItems: 'flex-start', gap: space.xs + 2 },
   dot: { width: 8, height: 8, marginTop: 5, borderRadius: radius.pill },

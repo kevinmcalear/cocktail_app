@@ -325,7 +325,7 @@ export function comingUpLine(menu: Pick<MenuSummary, 'startsAt' | 'endsAt' | 'me
 /** A past menu's line, in mono at the row's end: "3 Jun to 31 Aug · 10", a home night "27 Nov 2025 · 5". */
 export function previousLine(menu: Pick<MenuSummary, 'startsAt' | 'endsAt' | 'itemIds'> & { menuDate?: string | null }, locale?: string): string {
   // A home night is a day, read as local midnight; it carries its year, as past nights run back further.
-  const night = menu.menuDate && !menu.endsAt ? new Date(`${menu.menuDate}T00:00:00`).toLocaleDateString(locale, { day: 'numeric', month: 'short', year: 'numeric' }) : null;
+  const night = menu.menuDate && !menu.endsAt ? dayMonth(new Date(`${menu.menuDate}T00:00:00`), { month: 'short', year: 'numeric' }, locale) : null;
   const dates = night ?? (menu.endsAt ? (menu.startsAt ? `${shortDay(menu.startsAt, locale)} to ${shortDay(menu.endsAt, locale)}` : `off ${shortDay(menu.endsAt, locale)}`) : null);
   return [dates, String(new Set(menu.itemIds).size)].filter(Boolean).join(' · ');
 }

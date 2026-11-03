@@ -38,7 +38,7 @@ The written rules behind the Back Bar look. What each screen should be is drawn 
 | Caption | 13 | System 500 |
 
 - Faces (Kevin, 31 Oct 2026): Redaction (or the venue's face) for names, the system font (SF, Roboto, system UI) for everything else, no mono. The canvas still draws its placeholders (Instrument Serif, Geist, Geist Mono): match its sizes, weights and spacing, not those faces.
-- Dates put the day before the month in every locale ("Tuesday 3 November", "since 1 Oct"): use `dayMonth` (`lib/dayMonth.ts`), not `toLocaleDateString`'s own order.
+- Dates put the day before the month in every locale ("Tuesday 3 November", "since 1 Oct"): new code uses `dayMonth` (`lib/dayMonth.ts`), not `toLocaleDateString`'s own order. Tonight, Drinks and the menu lines use it; older screens still to move are listed in the PR that added it.
 
 - Nothing below 13 pt. Uppercase labels get letter spacing and still stay at 13 or more.
 - Where the canvas draws 15 px (a chip, a scope or tab label, a dose, a compact button), use `variant="label"` (15/20), not 13 or 17. A dose keeps its mono face on top of it.
