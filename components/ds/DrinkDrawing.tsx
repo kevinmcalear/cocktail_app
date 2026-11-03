@@ -8,10 +8,10 @@ import { useItemSketch } from '@/hooks/useItemSketch';
 import { useReducedMotion } from '@/hooks/useReducedMotion';
 import { whenIdle } from '@/lib/idleQueue';
 import { inBarGlassCached } from '@/lib/sketch/barGlass';
-import { bareGlassSketch } from '@/lib/sketch/draft';
 import { glowScene, nightScene, onlyStages, withoutStages } from '@/lib/sketch/passes';
 import type { Scene } from '@/lib/sketch/scene';
 import { sceneToSvg } from '@/lib/sketch/svg';
+import { BARE_GLASS } from '@/lib/sketch/bareGlass';
 import { liquidOf, type SketchInputs } from '@/lib/sketch/types';
 
 import { useDrawingGlasses } from './drawingGlasses';
@@ -58,7 +58,7 @@ function build(inputs: SketchInputs, seed: string, thumb: boolean, night: boolea
 const peek = (inputs: SketchInputs, seed: string, thumb: boolean, night: boolean, pour: boolean) => cache.get(inputs)?.get(keyOf(seed, thumb, night, pour));
 
 // The bare glass every drawing shows until its own is ready (the board's drawn glass, never a blank hole).
-const BARE = bareGlassSketch('Coupe');
+const BARE = BARE_GLASS;
 
 /** The bare glass at a drawing's size, for a place with no drawing (yet): never a blank hole. */
 export function BareGlass({ size }: Pick<DrinkDrawingProps, 'size'>) {
