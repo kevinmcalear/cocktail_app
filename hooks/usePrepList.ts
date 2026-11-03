@@ -120,11 +120,19 @@ export async function purchasingFor(barId: string, itemIds: string[]): Promise<R
  * time, a few levels deep), and how the bar buys the rest. Masked by role on
  * the server like every recipe read.
  */
-export function usePrepData(barId: string | null | undefined, menuIds: string[]) {
+export function usePrepData<T = PrepData>(
+  barId: string | null | undefined,
+  menuIds: string[],
+  /** The side nav's House-made count: a long staleTime and a select that returns one number, so it adds no requests of its own. */
+  options?: { staleTime?: number; select?: (data: PrepData) => T }
+) {
   const key = [...menuIds].sort();
   return useQuery({
     queryKey: ['prep-data', barId, key],
     enabled: !!barId && key.length > 0,
+    staleTime: options?.staleTime,
+    select: options?.select,
+    refetchOnWindowFocus: options ? false : undefined,
     queryFn: async (): Promise<PrepData> => {
       const { data: menuRows, error: menuError } = await supabase
         .from('menu_drinks')
