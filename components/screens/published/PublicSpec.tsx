@@ -13,7 +13,7 @@ import type { PublishedDrinkPage } from '@/hooks/usePublished';
 import { partSentence } from '@/lib/drinkParts';
 import { ingredientsLine } from '@/lib/publicDrink';
 import { specLines } from '@/lib/spec';
-import { splitAmount } from '@/lib/specLines';
+import { splitAmount } from '@/lib/splitAmount';
 
 import { Kicker } from './PublicChrome';
 import { PublicSpecChanges } from './PublicSpecChanges';

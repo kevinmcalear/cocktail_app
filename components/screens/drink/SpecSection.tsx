@@ -15,7 +15,7 @@ import { useItemEditAccess } from '@/hooks/useViewAs';
 import { withAlpha } from '@/lib/color';
 import { roleLabel } from '@/lib/roles';
 import { lineAmount } from '@/lib/drinkMath';
-import { splitAmount } from '@/lib/specLines';
+import { splitAmount } from '@/lib/splitAmount';
 import { ratio, specLines, type PresentationRecipe, type SpecLevels } from '@/lib/spec';
 import { useSettingsStore, useUnits } from '@/store/useSettingsStore';
 
