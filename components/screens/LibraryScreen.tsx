@@ -1,68 +1,62 @@
+import { useNetInfo } from '@react-native-community/netinfo';
+import { useQueryClient } from '@tanstack/react-query';
 import { useRouter } from 'expo-router';
-import { lazy, Suspense, useMemo, useState } from 'react';
+import { lazy, Suspense, useState } from 'react';
 import { FlatList, StyleSheet, View } from 'react-native';
 
-import { Button, Caption, Chip, useBreakpoint, useDs, useGutter } from '@/components/ds';
-import { PageHeader } from '@/components/nav/Page';
+import { Button, Caption, Chip, PencilState, useBreakpoint, useDs, useGutter } from '@/components/ds';
+import { SectionLabel } from '@/components/ds/ListGroup';
 import { useTabBarInset } from '@/components/nav/WebTabBar';
+import { WebHead } from '@/components/WebHead';
 import { useWebNav } from '@/hooks/useIsWideWeb';
 import { DRAWN_LIST_WINDOW } from '@/components/ds/SketchDrawing';
 import { BottlePhotoSheet } from '@/components/screens/bottles/BottlePhotoSheet';
 import { MatchClassicsNudge } from '@/components/screens/classics/MatchClassicsNudge';
 import { ResumeCard } from '@/components/screens/bringin/ResumeCard';
+import { BottleChips, bottlesFor, ToOrder, useBottleFacts } from '@/components/screens/drinks/Bottles';
+import { DrinkListRow, DrinksHead, DrinksLoading, OnNowCard } from '@/components/screens/drinks/DrinksParts';
+import { HouseMadeTop } from '@/components/screens/drinks/HouseMade';
+import { useStaffDrinks } from '@/components/screens/drinks/useStaffDrinks';
 import { LibrarySetup } from '@/components/screens/venueSetup/SetupBanner';
 import { FirstRoundCard, RoundOpened } from '@/components/screens/firstRound/FirstRoundCard';
 import { FilterRow } from '@/components/screens/library/LibraryChips';
-import { useTileLines } from '@/components/screens/library/useTileLines';
-import { FILTER_DOCK, FilterDock, PinnedTitle, type FilterSet } from '@/components/screens/library/LibraryFilters';
 import { LibraryEmpty } from '@/components/screens/library/LibraryEmpty';
 import { LibraryPanes } from '@/components/screens/library/LibraryPanes';
-import { LibraryTile } from '@/components/screens/library/LibraryTile';
-import { useLibraryView } from '@/components/screens/library/useLibraryView';
 import { NearResults } from '@/components/search/NearResults';
 import { SearchField } from '@/components/search/SearchField';
 import { SwapSheet } from '@/components/screens/library/SwapSheet';
-import { layout, space } from '@/constants/tokens';
-import { useActiveVenue } from '@/hooks/useActiveVenue';
+import { space } from '@/constants/tokens';
 import { useOpenSearch } from '@/hooks/useSearchFrom';
-import { useCapabilities } from '@/hooks/useCapabilities';
 import { useDrinkLists } from '@/hooks/useDiscover';
-import { useKitShelves } from '@/hooks/useKitCheck';
-import { useVenueMenus } from '@/hooks/useMenus';
-import { usePricedItemIds } from '@/hooks/usePricing';
-import { useSearchCatalog } from '@/hooks/useSearchCatalog';
-import { useBarRiffs, useStaffList } from '@/hooks/useStaffList';
-import { venueContextIds } from '@/lib/barContextFilter';
+import { usePrefetchCocktail } from '@/hooks/useCocktails';
+import { CAPSULE_SHOW, STAFF_CAPSULES } from '@/lib/drinksTab';
 import { itemHref, newDrinkHref, type ItemCategory } from '@/lib/itemRoutes';
-import { classicRows } from '@/lib/staffList';
 import { capitalize } from '@/lib/stringUtils';
 import { matchesQuery } from '@/lib/publicDrinks';
-import { BATCHED_STYLES, DRINK_CATEGORIES, filterGroups, itemIdOf, menuDrinks, parseShow, PREP_GROUPS, splitFilters, TYPE_FILTERS, type Show } from '@/lib/libraryFilters';
-import { usePrepFacts, useVenueShelves } from '@/hooks/useVenueShelves';
-import { usePrefetchCocktail } from '@/hooks/useCocktails';
+import type { SearchItem } from '@/types/search';
 
-// The staff list drags to reorder, with gesture and animation code the rest of the
-// Library doesn't need: it loads when Classics is picked.
+// The staff list drags to reorder, with gesture and animation code the rest of
+// Drinks doesn't need: it loads when Classics is picked.
 const StaffList = lazy(() => import('@/components/screens/library/StaffList').then((m) => ({ default: m.StaffList })));
 
-const COLUMNS = { phone: 2, tablet: 3, desktop: 5 } as const;
 const NO_IDS: string[] = [];
 const EVERYWHERE = { area: { kind: 'anywhere' }, kinds: ['drink', 'bar', 'person', 'ingredient'] } as const;
 
 /**
- * Library: the venue's spec book. All its drinks, Classics (the staff list,
- * ranked, with cut lines), what's on the menu now (one menu or every one
- * that's on), Old drinks (on past menus), beer and wine. With More library
- * filters on, R&D and the shelves too: drinks poured from a batch, preps,
- * garnishes and bottles. Without a venue, each type on its own. The filter lives
- * in the URL (?show=staff&menu=<id>), so a link opens the same view. Drinks
- * without a photo still get a proper tile, never someone else's photo.
- * `beside`: the list in its column beside the Drinks stack on a desktop
+ * The Drinks tab at a bar (Prod-phone drinks, Sta-drinks, Sta-capsules): the
+ * bar's name over Drinks, the capsule (Drinks, House-made, Bottles), then
+ * under Drinks the menu on now and the views (All, On menu, Classics, Old
+ * drinks, R&D...), under House-made what's low and what's in the fridge,
+ * under Bottles the kinds, counts and the order; then the rows, A to Z, each
+ * a drawing, its name and line, a tag and a chevron. The view lives in the
+ * URL (?show=staff&menu=<id>), so a link opens the same view. `beside`: the
+ * list in its column beside the Drinks stack on a desktop
  * (components/nav/DrinksSplit.tsx), where a drink opens at its own URL.
  */
 export function LibraryScreen({ beside = false }: { beside?: boolean }) {
   const ds = useDs();
   const router = useRouter();
+  const client = useQueryClient();
   // The palette on wide screens, the search tab on phones (q01).
   const openSearch = useOpenSearch();
   const prefetch = usePrefetchCocktail();
@@ -72,210 +66,116 @@ export function LibraryScreen({ beside = false }: { beside?: boolean }) {
   // A tablet beside the rail: the list and the picked drink side by side. A desktop: the list, with the drink beside it.
   const nav = useWebNav();
   const panes = beside || nav === 'rail';
-  // The venue in the header, not the old sidebar's multi-select contexts.
-  const { active, isLoading: venuesLoading } = useActiveVenue();
-  const activeId = active?.id ?? null;
-  const { view: params, setView } = useLibraryView(beside);
-  const show = parseShow(params.show, !!activeId || venuesLoading);
-  const contextIds = useMemo(() => venueContextIds(activeId, venuesLoading), [activeId, venuesLoading]);
-  const { items, isLoading } = useSearchCatalog(contextIds);
-  const { data: capabilities, isLoading: capsLoading } = useCapabilities(activeId);
-  const canCost = !!capabilities?.includes('costs');
-  const canEdit = !!capabilities?.includes('edit_drinks');
-  const canOrder = !!capabilities?.includes('menus');
+  const offline = useNetInfo().isConnected === false;
+  const d = useStaffDrinks(beside);
+  const { active, activeId, show, capsule, params, setView } = d;
+  const canEdit = !!d.capabilities?.includes('edit_drinks');
+  const canOrder = !!d.capabilities?.includes('menus');
   const [swap, setSwap] = useState(false);
   const [snapping, setSnapping] = useState(false);
-  // Phones: four filters and a filter button in a glass dock above the tabs, no find field; the search circle opens on the venue.
-  // Wider screens keep Find in Library in the header, narrowing the list in place (lib-filters-proposal).
+  // Phones search from the search circle; wider screens narrow the list in place.
   const phone = breakpoint === 'phone';
   const [find, setFind] = useState('');
   const q = phone ? '' : find.trim().toLowerCase();
-  // Scrolled past the title, a phone pins a small one to the top (titleEnd: where the title ends in the list).
-  const [titleEnd, setTitleEnd] = useState(0);
-  const [pinned, setPinned] = useState(false);
-  const onScrollY = (y: number) => setPinned(phone && !!titleEnd && y > titleEnd - layout.minTapTarget);
-  // A new view opens at its top (Classics is its own list), so the title unpins.
-  const [pinnedShow, setPinnedShow] = useState(show);
-  if (pinnedShow !== show) {
-    setPinnedShow(show);
-    setPinned(false);
-  }
-  const { data: pricedIds } = usePricedItemIds(activeId, canCost);
-  const { data: menus } = useVenueMenus(activeId);
-  const staff = useStaffList(activeId);
-  const linked = useBarRiffs(activeId);
-  const [now] = useState(() => Date.now());
-
-  const published = useMemo(() => items.filter((i) => !i.isDraft), [items]);
-  const shelves = useVenueShelves(activeId, published);
-  const prepFacts = usePrepFacts(shelves.preps);
-  const kit = useKitShelves(activeId, published);
-  const byMenu = useMemo(
-    () => menuDrinks((menus ?? []).filter((m) => m.barId === activeId), now, params.menu ?? null),
-    [menus, activeId, now, params.menu]
-  );
-  const lists = useMemo(() => {
-    const priced = new Set(pricedIds ?? []);
-    const inSet = (ids: string[]) => {
-      const set = new Set(ids);
-      return published.filter((i) => set.has(itemIdOf(i.id)));
-    };
-    const rnd = new Set(byMenu.rnd);
-    const out: Record<Show, typeof published> = {
-      // R&D (trials, a flight's control) has its own filter, out of All.
-      all: published.filter((i) => i.category && DRINK_CATEGORIES.includes(i.category as ItemCategory) && !rnd.has(itemIdOf(i.id))),
-      rnd: inSet(byMenu.rnd),
-      'on-menu': inSet(byMenu.on),
-      staff: [],
-      past: inSet(byMenu.past),
-      cocktails: [],
-      ingredients: [],
-      beer: [],
-      wine: [],
-      'needs-price': canCost ? published.filter((i) => i.category === 'Ingredient' && !priced.has(i.id)) : [],
-      batched: published.filter((i) => i.category === 'Cocktail' && BATCHED_STYLES.includes(i.serviceStyle ?? '')),
-      ...shelves,
-      ready: kit.ready.filter((i) => !rnd.has(itemIdOf(i.id))),
-      needs: kit.needs.filter((i) => !rnd.has(itemIdOf(i.id))),
-    };
-    // Cocktails are All's cocktails: R&D trials stay out here too.
-    for (const f of TYPE_FILTERS) out[f.value] = published.filter((i) => i.category === f.category && !rnd.has(itemIdOf(i.id)));
-    return out;
-  }, [published, pricedIds, canCost, byMenu, shelves, kit]);
-  const onNow = useMemo(() => new Set(byMenu.onNow), [byMenu]);
-  const past = useMemo(() => new Set(byMenu.past), [byMenu]);
-  // Preps by what was done to them (Syrups, Cordials...): the groups this venue has.
-  const prepKinds = PREP_GROUPS.map((g) => ({ ...g, count: lists.preps.filter((p) => prepFacts[p.id]?.group === g.group).length })).filter((g) => g.count);
-  const kind = show === 'preps' ? prepKinds.find((g) => g.value === params.kind) : undefined;
-  const inView = lists[show].filter((i) => !kind || prepFacts[i.id]?.group === kind.group);
+  const bottles = useBottleFacts(activeId, d.published);
+  const inView = show === 'bottles' ? bottlesFor(d.inView, params.kind, bottles.low) : d.inView;
   const shown = inView.filter((i) => !q || matchesQuery(i, q)).sort((a, b) => a.name.localeCompare(b.name));
-  const shownIds = useMemo(() => shown.map((i) => i.id), [shown]);
+  const shownIds = shown.map((i) => i.id);
   const { data: classicList } = useDrinkLists(!!q);
-  const { glassName, lineOf } = useTileLines({ show, rndMenus: byMenu.rndMenus, prepLine: (id) => prepFacts[id]?.line ?? null, needsOf: kit.needsOf });
-  const count = (value: Show) => (value === 'staff' ? classicRows(staff.data ?? [], linked.data ?? []).length : lists[value].length);
-  const groups = filterGroups(!!activeId, canCost);
-  const pick = (value: Show) => setView({ show: value, menu: undefined, kind: undefined });
-  const filterSet: FilterSet = { ...splitFilters(groups), show, count, onPick: pick, nothing: !isLoading && !staff.isLoading && !linked.isLoading && groups.flat().every((f) => count(f.value) === 0) };
-  const columns = COLUMNS[breakpoint];
   const staffView = show === 'staff' && !!activeId;
-  // The last tiles scroll clear of the phone's filter dock.
-  const listBottom = bottom + (phone ? FILTER_DOCK : 0);
-  const content = { paddingHorizontal: gutter, paddingBottom: listBottom, gap: space.lg };
+  const nothing = !d.isLoading && !d.lists[CAPSULE_SHOW[capsule]].length && (capsule !== 'bottles' || !d.lists.garnishes.length);
+  const label = [...d.chips.flat(), { value: 'preps', label: 'House-made' }, { value: 'bottles', label: 'Bottles' }].find((f) => f.value === show)?.label ?? 'All';
+  const rowOf = (item: SearchItem) => {
+    const category = item.category as ItemCategory;
+    const facts = show === 'bottles' ? bottles.row(item) : { line: d.lineOf(item), tag: category === 'Ingredient' ? null : d.tagOf(item) };
+    return { itemId: item.id, name: item.name, ingredient: category === 'Ingredient', onPressIn: category === 'Cocktail' ? () => prefetch(item.id, { name: item.name, item_images: item.item_images }) : undefined, ...facts };
+  };
+  const chip = (f: { value: typeof show; label: string }) => <Chip key={f.value} label={f.label} count={String(d.count(f.value))} selected={show === f.value} onPress={() => d.pick(f.value)} />;
+  const which = (title: string, all: string, picks: readonly { id: string; name: string; itemIds: string[] }[]) => (
+    <FilterRow label={title} gutter={gutter} groups={[[<Chip key="all" label={all} selected={!picks.some((m) => m.id === params.menu)} onPress={() => setView({ menu: undefined })} />, ...picks.map((m) => <Chip key={m.id} label={m.name} count={m.itemIds.length} selected={params.menu === m.id} onPress={() => setView({ menu: m.id })} />)]]} />
+  );
+
   const header = (
     <View style={styles.header}>
-      <View onLayout={(e) => setTitleEnd(e.nativeEvent.layout.y + e.nativeEvent.layout.height)}>
-        <PageHeader title="Library" width="full" display action={phone || staffView ? undefined : <SearchField query={find} onQuery={setFind} placeholder="Find in Library" />} />
-      </View>
+      <WebHead>
+        <title>Drinks</title>
+      </WebHead>
+      <DrinksHead eyebrow={active?.name ?? ' '} capsules={STAFF_CAPSULES} value={capsule} onChange={d.pickCapsule} offline={offline ? 'Whole spec book on this phone' : null} bleed={panes ? space.xl : gutter} />
+      {!phone && !staffView ? <SearchField query={find} onQuery={setFind} placeholder="Search your drinks" /> : null}
       {activeId ? (<><ResumeCard barId={activeId} /><LibrarySetup barId={activeId} /></>) : null}
       <FirstRoundCard />
-      {active && canEdit ? <MatchClassicsNudge barId={active.id} /> : null}
-      {phone ? null : (
-        <FilterRow label="Show" gutter={gutter} whole={breakpoint === 'desktop'} groups={groups.map((g) => g.map((f) => <Chip key={f.value} look="outline" label={f.label} count={String(count(f.value))} selected={show === f.value} onPress={() => pick(f.value)} />))} />
-      )}
-      {show === 'on-menu' && byMenu.onMenus.length > 1 ? (
-        <FilterRow
-          label="Which menu"
-          gutter={gutter}
-          groups={[[
-            <Chip look="outline" key="all" label="Every menu on now" selected={!byMenu.onMenus.some((m) => m.id === params.menu)} onPress={() => setView({ menu: undefined })} />,
-            ...byMenu.onMenus.map((m) => <Chip look="outline" key={m.id} label={m.name} count={m.itemIds.length} selected={params.menu === m.id} onPress={() => setView({ menu: m.id })} />),
-          ]]}
-        />
+      {active && canEdit && capsule === 'drinks' ? <MatchClassicsNudge barId={active.id} /> : null}
+      {capsule === 'drinks' && show === 'all' && d.card ? <OnNowCard {...d.card} onPress={() => router.push(`/menus/${d.card!.id}` as never)} /> : null}
+      {nothing ? null : capsule === 'drinks' ? (
+        <FilterRow label="Show" gutter={gutter} whole={breakpoint === 'desktop'} groups={d.chips.map((g) => g.map(chip))} />
+      ) : capsule === 'bottles' ? (
+        <BottleChips bottles={d.lists.bottles} kind={params.kind} low={bottles.low} others={d.chips.flat().filter((f) => f.value !== 'bottles')} show={show} count={d.count} gutter={gutter} whole={breakpoint === 'desktop'} onKind={(kind) => setView({ show: 'bottles', kind, menu: undefined })} onShow={d.pick} />
       ) : null}
-      {show === 'on-menu' && !byMenu.onMenus.length && menus ? <Caption tone="muted">No menu is on right now. Menus are built and scheduled in Menus.</Caption> : null}
-      {show === 'past' ? <Caption tone="muted">Drinks from menus that have finished, and aren’t on one now.</Caption> : null}
-      {show === 'rnd' && byMenu.rndMenus.length > 1 ? (
-        <FilterRow
-          label="Which collection"
-          gutter={gutter}
-          groups={[[
-            <Chip look="outline" key="all" label="Every R&D drink" selected={!byMenu.rndMenus.some((m) => m.id === params.menu)} onPress={() => setView({ menu: undefined })} />,
-            ...byMenu.rndMenus.map((m) => <Chip look="outline" key={m.id} label={m.name} count={m.itemIds.length} selected={params.menu === m.id} onPress={() => setView({ menu: m.id })} />),
-          ]]}
-        />
-      ) : null}
+      {show === 'on-menu' && d.byMenu.onMenus.length > 1 ? which('Which menu', 'Every menu on now', d.byMenu.onMenus) : null}
+      {show === 'on-menu' && !d.byMenu.onMenus.length && d.menus ? <Caption tone="muted">No menu is on right now. Menus are built and scheduled in Menus.</Caption> : null}
+      {show === 'rnd' && d.byMenu.rndMenus.length > 1 ? which('Which collection', 'Every R&D drink', d.byMenu.rndMenus) : null}
       {show === 'rnd' ? <Caption tone="muted">Trials, flights and assignments: drinks on an R&D collection and on no menu. They stay out of All and out of staff search.</Caption> : null}
-      {show === 'preps' && prepKinds.length ? (
-        <FilterRow
-          label="Which house-made"
-          gutter={gutter}
-          groups={[[
-            <Chip look="outline" key="all" label="All house-made" count={lists.preps.length} selected={!kind} onPress={() => setView({ kind: undefined })} />,
-            ...prepKinds.map((g) => <Chip look="outline" key={g.value} label={g.label} count={g.count} selected={kind?.value === g.value} onPress={() => setView({ kind: g.value })} />),
-          ]]}
-        />
+      {capsule === 'house' && activeId ? <HouseMadeTop barId={activeId} nameOf={(id) => d.lists.preps.find((p) => p.id === id)?.name ?? null} /> : null}
+      {show === 'preps' && d.prepKinds.length ? (
+        <FilterRow label="Which house-made" gutter={gutter} groups={[[<Chip key="all" label="All" count={d.lists.preps.length} selected={!d.kind} onPress={() => setView({ kind: undefined })} />, ...d.prepKinds.map((g) => <Chip key={g.value} label={g.label} count={g.count} selected={d.kind?.value === g.value} onPress={() => setView({ kind: g.value })} />)]]} />
       ) : null}
-      {show === 'preps' ? <Caption tone="muted">What the bar makes in house. Each one has its lines, steps, yield, storage and allergens.</Caption> : null}
-      {show === 'batched' ? <Caption tone="muted">Drinks served bottled, carbonated, on draught or from a batch made ahead.</Caption> : null}
-      {show === 'bottles' && activeId ? (
-        canEdit ? (
-          <View style={styles.actions}>
-            <Button label="Snap a bottle" icon="camera.fill" variant="secondary" onPress={() => setSnapping(true)} />
-            <Button label="Swap a bottle" variant="secondary" onPress={() => setSwap(true)} />
-          </View>
-        ) : capsLoading ? null : (
-          <Caption tone="muted">Swapping a bottle opens at Drink Creator.</Caption>
-        )
-      ) : null}
-      {q && !staffView && shown.length ? <Caption tone="muted">{`${shown.length} of ${inView.length}`}</Caption> : null}
+      {!staffView && shown.length ? <SectionLabel title={`${q ? `${shown.length} of` : label} ${inView.length}`} aside="A to Z" /> : null}
     </View>
   );
 
   const found = find.trim();
   // Did you mean (whole-app canvas, Search page): nothing here asks about the closest name, here or everywhere; "No" adds it here.
   const ask = <NearResults query={found} found={0} shown={NO_IDS} yours={inView} yoursCaption="Here" classics={classicList} server={EVERYWHERE} title={`Nothing here called “${found}”`} miss={<Caption tone="muted">{`Nothing here called “${found}”.`}</Caption>} add={canEdit ? { label: `add ${capitalize(found)}`, onPress: () => router.push(newDrinkHref(capitalize(found), activeId) as never) } : undefined} />;
-  const empty = venuesLoading || isLoading ? null : q ? ask : <LibraryEmpty barId={activeId} noDrinks={!published.length} canAdd={canEdit} />;
-  // Past this list: the one search, everywhere, with what was typed.
-  const foot = q ? (
+  const failed = !!d.error && !d.published.length;
+  const empty = failed ? (
+    <PencilState kind="error" title="Drinks didn’t load" detail="The connection dropped halfway." action={{ label: 'Try again', onPress: () => void client.refetchQueries({ type: 'active' }) }} />
+  ) : d.isLoading ? (
+    <DrinksLoading />
+  ) : q ? (
+    ask
+  ) : (
+    <LibraryEmpty barId={activeId} capsule={capsule} nothing={nothing} canAdd={canEdit} onSnapBottles={() => setSnapping(true)} />
+  );
+  // Past the list: Bottles' order and its own tools, the one search everywhere with what was typed, and offline, that search still works.
+  const foot = (
     <View style={styles.foot}>
-      {shown.length ? <NearResults query={found} found={shown.length} shown={shownIds} yours={inView} yoursCaption="Here" title="" miss={null} /> : null}
-      <Button label={`Search everywhere for “${found}”`} icon="magnifyingglass" variant="secondary" onPress={() => openSearch({ query: found, scope: 'everywhere' })} />
+      {capsule === 'bottles' && activeId && !nothing ? <ToOrder barId={activeId} /> : null}
+      {show === 'bottles' && activeId && canEdit ? (
+        <View style={styles.actions}>
+          <Button label="Snap a bottle" icon="camera.fill" variant="secondary" onPress={() => setSnapping(true)} />
+          <Button label="Swap a bottle" variant="secondary" onPress={() => setSwap(true)} />
+        </View>
+      ) : null}
+      {q && shown.length ? <NearResults query={found} found={shown.length} shown={shownIds} yours={inView} yoursCaption="Here" title="" miss={null} /> : null}
+      {q ? <Button label={`Search everywhere for “${found}”`} icon="magnifyingglass" variant="secondary" onPress={() => openSearch({ query: found, scope: 'everywhere' })} /> : null}
+      {offline && shown.length ? <Caption tone="muted">Search works offline too.</Caption> : null}
     </View>
-  ) : null;
+  );
+  const listBottom = { paddingHorizontal: gutter, paddingBottom: bottom };
 
   return (
     <View style={[styles.screen, { backgroundColor: ds.c.ground }]}>
       {panes && !staffView ? (
-        <LibraryPanes venueId={activeId} items={shown} lineOf={lineOf} header={header} empty={empty} footer={foot} routed={beside} />
+        <LibraryPanes items={shown} rowOf={rowOf} header={header} empty={empty} footer={foot} routed={beside} />
       ) : staffView && activeId ? (
         // The staff list drags to reorder, so it is the scroll view itself.
-        <Suspense fallback={<FlatList data={[]} renderItem={() => null} ListHeaderComponent={header} contentContainerStyle={{ paddingHorizontal: gutter, paddingBottom: listBottom }} />}>
-          <StaffList barId={activeId} canEdit={canOrder} onNow={onNow} past={past} header={header} onScrollOffset={onScrollY} contentContainerStyle={{ paddingHorizontal: gutter, paddingBottom: listBottom }} />
+        <Suspense fallback={<FlatList data={[]} renderItem={() => null} ListHeaderComponent={header} contentContainerStyle={listBottom} />}>
+          <StaffList barId={activeId} canEdit={canOrder} onNow={d.onNow} past={d.past} header={header} contentContainerStyle={listBottom} />
         </Suspense>
       ) : (
         <FlatList
-          key={columns}
           data={shown}
-          numColumns={columns}
-          // Rows, not tiles: a screen's worth first. The defaults (10 rows, 21
-          // screens) drew every drink on open, which froze iOS for seconds.
-          initialNumToRender={4}
+          // A screen's worth first: the defaults drew every drink on open, which froze iOS for seconds.
+          initialNumToRender={10}
           windowSize={DRAWN_LIST_WINDOW}
           keyExtractor={(i) => i.id}
-          columnWrapperStyle={{ gap: space.md }}
-          contentContainerStyle={content}
+          contentContainerStyle={[listBottom, styles.list]}
           ListHeaderComponent={header}
-          onScroll={(e) => onScrollY(e.nativeEvent.contentOffset.y)}
-          scrollEventThrottle={32}
-          renderItem={({ item }) => {
-            const category = item.category as ItemCategory;
-            return (
-              <LibraryTile
-                item={item}
-                line={lineOf(item)}
-                glassName={glassName(item)}
-                width={`${100 / columns}%`}
-                onPressIn={category === 'Cocktail' ? () => prefetch(item.id, { name: item.name, item_images: item.item_images }) : undefined}
-                onPress={() => router.push(itemHref(category, item.id) as never)}
-              />
-            );
-          }}
-          ListEmptyComponent={empty ?? undefined}
-          ListFooterComponent={foot ?? undefined}
+          renderItem={({ item }) => <DrinkListRow {...rowOf(item)} onPress={() => router.push(itemHref(item.category as ItemCategory, item.id) as never)} />}
+          ListEmptyComponent={empty}
+          ListFooterComponent={foot}
         />
       )}
-      {pinned ? <PinnedTitle /> : null}
-      {phone ? <FilterDock set={filterSet} /> : null}
       <RoundOpened />
       {swap && activeId ? <SwapSheet barId={activeId} onClose={() => setSwap(false)} /> : null}
       {active ? <BottlePhotoSheet visible={snapping} target={{ kind: 'venue', barId: active.id, name: active.name, canEdit }} onClose={() => setSnapping(false)} /> : null}
@@ -286,6 +186,7 @@ export function LibraryScreen({ beside = false }: { beside?: boolean }) {
 const styles = StyleSheet.create({
   screen: { flex: 1 },
   header: { gap: space.md, paddingBottom: space.sm },
+  list: { gap: space.xs },
   actions: { flexDirection: 'row', flexWrap: 'wrap', gap: space.sm },
-  foot: { paddingTop: space.md, alignItems: 'flex-start' },
+  foot: { paddingTop: space.md, gap: space.md, alignItems: 'flex-start' },
 });

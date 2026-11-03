@@ -2,11 +2,9 @@ import { useRouter, type Href } from 'expo-router';
 import { StyleSheet, View } from 'react-native';
 
 import { Body, Caption, DsText, PressableScale, Spec, useBreakpoint, useDs } from '@/components/ds';
-import { IconSymbol } from '@/components/ui/icon-symbol';
 import { space } from '@/constants/tokens';
 import { useBarTopDrinks } from '@/hooks/useRankings';
-import type { BarNews } from '@/lib/collectionMenus';
-import { dayShort, type BeenBar, type WantBar } from '@/lib/collectionStages';
+import type { WantBar } from '@/lib/collectionStages';
 import { formatScore } from '@/lib/ranking';
 
 import { BarMark } from './BarMark';
@@ -21,74 +19,6 @@ function Score({ score, detail }: { score: number | null; detail: string | null 
       <Spec>{score !== null ? formatScore(score) : ''}</Spec>
       {detail ? <Caption tone="muted">{detail}</Caption> : null}
     </View>
-  );
-}
-
-/** Been (board home-collection-bars, step 2): your score for the bar beside everyone's, drinks had, your best there, last time. */
-export function BeenRow({ bar, loved, news, everyone, now }: { bar: BeenBar; loved: boolean; news: BarNews | null; everyone: number | null; now: number }) {
-  const ds = useDs();
-  const router = useRouter();
-  const desk = useBreakpoint() === 'desktop';
-  const v = bar.venue;
-  const count = `${bar.drinks} ${bar.drinks === 1 ? 'drink' : 'drinks'}`;
-  const last = bar.last ? dayShort(bar.last, now) : null;
-  const label = [v.name, loved ? 'loved' : null, v.place, `your score ${formatScore(bar.yours)} over ${count}`, everyone !== null ? `everyone ${formatScore(everyone)}` : null, `best ${bar.best.name} ${formatScore(bar.best.score)}`, last ? `last ${last}` : null, news?.text]
-    .filter(Boolean)
-    .join('. ');
-  const name = (
-    <View style={styles.nameLine}>
-      <DsText variant="headline" numberOfLines={1} style={styles.shrink}>
-        {v.name}
-      </DsText>
-      {loved ? <IconSymbol name="heart.fill" size={13} color={ds.accentText} /> : null}
-    </View>
-  );
-  if (desk) {
-    return (
-      <PressableScale role="link" accessibilityLabel={label} onPress={() => router.push(barHref(v))} style={[stageStyles.tableRow, { borderBottomColor: ds.c.line }]}>
-        <View style={[stageStyles.grow, styles.bar]}>
-          <BarMark name={v.name} logoUrl={v.avatarUrl} profileId={v.id} size={48} />
-          <View style={stageStyles.grow}>
-            {name}
-            <Caption tone="muted" numberOfLines={1}>
-              {v.place}
-              {news ? <Caption color={ds.accentText}>{`${v.place ? ' · ' : ''}${news.text}`}</Caption> : null}
-            </Caption>
-          </View>
-        </View>
-        <Body style={styles.drinks}>{count}</Body>
-        <Body numberOfLines={1} style={styles.best}>
-          {bar.best.name} <Spec tone="muted">{formatScore(bar.best.score)}</Spec>
-        </Body>
-        <Body tone="muted" style={styles.last}>
-          {last ?? ''}
-        </Body>
-        <Spec style={styles.num}>{formatScore(bar.yours)}</Spec>
-        <Spec tone="muted" style={styles.numWide}>
-          {everyone !== null ? formatScore(everyone) : ''}
-        </Spec>
-      </PressableScale>
-    );
-  }
-  return (
-    <PressableScale role="link" accessibilityLabel={label} onPress={() => router.push(barHref(v))} style={[styles.row, { borderBottomColor: ds.c.line }]}>
-      <BarMark name={v.name} logoUrl={v.avatarUrl} profileId={v.id} size={52} />
-      <View style={stageStyles.grow}>
-        {name}
-        <Caption tone="muted" numberOfLines={1}>
-          {[count, last].filter(Boolean).join(' · ')}
-        </Caption>
-        <Caption numberOfLines={1}>
-          Best: {bar.best.name} <Caption style={styles.mono}>{formatScore(bar.best.score)}</Caption>
-        </Caption>
-        {news ? (
-          <Caption color={ds.accentText} numberOfLines={1}>
-            {news.text}
-          </Caption>
-        ) : null}
-      </View>
-      <Score score={bar.yours} detail={everyone !== null ? `all ${formatScore(everyone)}` : null} />
-    </PressableScale>
   );
 }
 
@@ -156,15 +86,8 @@ export function WantRow({ bar, compact = false }: { bar: WantBar; compact?: bool
 
 const styles = StyleSheet.create({
   row: { flexDirection: 'row', alignItems: 'center', gap: space.md, paddingVertical: space.md, borderBottomWidth: StyleSheet.hairlineWidth },
-  nameLine: { flexDirection: 'row', alignItems: 'center', gap: space.xs + 2 },
-  shrink: { flexShrink: 1 },
   bar: { flexDirection: 'row', alignItems: 'center', gap: space.md },
   score: { alignItems: 'flex-end', minWidth: 64 },
-  mono: { fontVariant: ['tabular-nums'] },
-  drinks: { width: 150 },
-  best: { width: 220 },
-  last: { width: 100 },
-  num: { width: 70, textAlign: 'right' },
   numWide: { width: 80, textAlign: 'right' },
   away: { width: 90 },
   hours: { width: 150 },

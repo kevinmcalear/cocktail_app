@@ -5,7 +5,7 @@ import { methodWord, tileLine, type Show } from '@/lib/libraryFilters';
 import type { SearchItem } from '@/types/search';
 
 /**
- * A Library tile's second line: "Stirred · Coupe"; R&D adds the collection;
+ * A Drinks row's second line: "Stirred · Coupe"; R&D adds the collection;
  * beer and wine say what they are; preps what was done, yield and keeps;
  * Needs something says what's missing ("Needs a sphere", the kit check).
  */

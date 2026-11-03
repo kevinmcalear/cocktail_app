@@ -7,7 +7,7 @@ import { radius, space } from '@/constants/tokens';
 import { useMenuEditions, useProfileAwards } from '@/hooks/useProfiles';
 import { awardInitials, groupAwards } from '@/lib/awards';
 
-import { ReportSheet } from '../safety/ReportSheet';
+import { ReportSheet } from '../safety/ReportSheetLazy';
 import { AWARD_LOGOS } from './awardLogos';
 import { PublicMenus } from './PublicMenus';
 

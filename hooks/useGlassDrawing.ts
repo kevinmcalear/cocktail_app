@@ -1,5 +1,6 @@
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 
+import { BUCKET, removeGlassPhoto } from '@/hooks/glassPhotoBucket';
 import { newDraftId } from '@/lib/drinkWizard';
 import { readSketchInputs, type SketchInputs } from '@/lib/sketch/types';
 import { supabase } from '@/lib/supabase';
@@ -9,7 +10,7 @@ import { supabase } from '@/lib/supabase';
 // glass-photos bucket (Open decisions d57), and sharing it with the catalog
 // (d56, d58), which the Cocktail team checks first.
 
-const BUCKET = 'glass-photos';
+export { removeGlassPhoto };
 
 /** Where a glass's photo goes: under the venue's page, or the person's own folder at home. */
 export const photoFolder = (where: { pageId: string } | { userId: string }) => ('pageId' in where ? `bar/${where.pageId}` : `home/${where.userId}`);
@@ -20,15 +21,6 @@ export async function uploadGlassPhoto(folder: string, jpeg: ArrayBuffer): Promi
   const { error } = await supabase.storage.from(BUCKET).upload(path, jpeg, { contentType: 'image/jpeg', upsert: false });
   if (error) throw error;
   return path;
-}
-
-/** Takes a photo out of the bucket. A file left behind is only clutter, so a failure is let go. */
-export async function removeGlassPhoto(path: string | null | undefined) {
-  if (path)
-    await supabase.storage
-      .from(BUCKET)
-      .remove([path])
-      .catch(() => {});
 }
 
 /** A short-lived link to a kept photo, for its venue's staff or its owner. */

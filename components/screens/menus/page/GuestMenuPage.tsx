@@ -39,6 +39,8 @@ export function GuestMenuPage({
   label,
   rowPress,
   after,
+  description,
+  fresh,
   under,
   footer,
   offTonight,
@@ -59,6 +61,10 @@ export function GuestMenuPage({
   rowPress: (row: PageRowView) => (() => void) | null;
   /** The page's closing note, in place of the model's. */
   after?: string;
+  /** The line under the name, in place of the menu's own (a daily list's "Today’s list, written at 4:10pm"). */
+  description?: string;
+  /** Drinks marked New (a daily list's drinks on for the first time tonight). */
+  fresh?: ReadonlySet<string>;
   /** Under the name, above the drinks. */
   under?: ReactNode;
   footer?: ReactNode;
@@ -87,7 +93,7 @@ export function GuestMenuPage({
   });
   const items: Item[] = model.sections.flatMap((s) => [
     { key: `h-${s.id}`, head: { name: s.name, count: s.rows.length } },
-    ...s.rows.map((row, i) => ({ key: `${s.id}-${row.drink.id}-${i}`, row })),
+    ...s.rows.map((row, i) => ({ key: `${s.id}-${row.drink.id}-${i}`, row: fresh?.has(row.drink.id) && !row.flag ? { ...row, flag: { label: 'New', tone: 'green' as const } } : row })),
   ]);
   // The drinks the reader can open: one kept to the team has no drawing they can read.
   const hero = model.sections.flatMap((s) => s.rows).filter((row) => rowPress(row)).slice(0, 3).map((row) => row.drink.id);
@@ -122,7 +128,7 @@ export function GuestMenuPage({
               quiet={model.quiet}
               tag={model.tag}
               eyebrow={eyebrow}
-              description={menu.description}
+              description={description ?? menu.description}
               onBack={onBack}
               onShare={onShare}
               label={label}
