@@ -2,6 +2,7 @@ import { Platform, StyleSheet, View } from 'react-native';
 
 import { IconSymbol } from '@/components/ui/icon-symbol';
 import { font, space, type } from '@/constants/tokens';
+import { splitAmount } from '@/lib/splitAmount';
 
 import { IngredientThumb } from './IngredientThumb';
 import { PressableScale } from './PressableScale';
@@ -163,6 +164,8 @@ const scaled = (t: Sized, scale: number) => (scale === 1 ? undefined : { fontSiz
 
 /** The number in the spec's figures, big and on the right of its column; its unit (when given apart) smaller and muted. */
 function Amount({ text, unit, scale, style }: { text: string; unit?: string; scale: number; style?: { width: number } }) {
+  // Given whole ("22.5 ml", the public page and study cards), the unit is split off here.
+  if (unit === undefined) ({ value: text, unit } = splitAmount(text));
   return (
     <Spec style={[style, styles.amount, styles.figure, scaled(FIGURE, scale)]}>
       {text}

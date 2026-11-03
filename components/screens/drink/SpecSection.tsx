@@ -15,7 +15,6 @@ import { useItemEditAccess } from '@/hooks/useViewAs';
 import { withAlpha } from '@/lib/color';
 import { roleLabel } from '@/lib/roles';
 import { lineAmount } from '@/lib/drinkMath';
-import { splitAmount } from '@/lib/specLines';
 import { ratio, specLines, type PresentationRecipe, type SpecLevels } from '@/lib/spec';
 import { useSettingsStore, useUnits } from '@/store/useSettingsStore';
 
@@ -122,29 +121,25 @@ export function SpecSection({ itemId, barId, recipes, preview, heading = 'Spec',
       </View>
       {shares ? <RatioBar shares={shares} /> : null}
       <View>
-        {lines.map((l) => {
-          const amount = splitAmount(access.amounts ? (lineAmount(l, unit) ?? '') : '');
-          return (
-            <SpecRow
-              key={l.key}
-              amount={amount.value}
-              unit={amount.unit || undefined}
-              alignAmount={measured}
-              dense
-              ingredient={l.ingredient ?? 'Hidden ingredient'}
-              ingredientId={l.ingredient ? l.ingredientId : undefined}
-              optional={l.optional}
-              floated={l.float}
-              houseMade={l.houseMade}
-              note={l.note ?? undefined}
-              flag={missing.includes(l.key) ? 'Not on your shelf' : undefined}
-              listed={listed.includes(l.key)}
-              // The amount opens the conversions; the rest of the line opens the ingredient.
-              onPressAmount={access.amounts && l.value !== null && !preview ? () => setConvert({ value: l.value!, unit: l.unit ?? 'ml', name: l.ingredient, abv: l.abv, density: l.density }) : undefined}
-              onPress={l.ingredientId && !preview ? () => open(l) : undefined}
-            />
-          );
-        })}
+        {lines.map((l) => (
+          <SpecRow
+            key={l.key}
+            amount={access.amounts ? (lineAmount(l, unit) ?? '') : ''}
+            alignAmount={measured}
+            dense
+            ingredient={l.ingredient ?? 'Hidden ingredient'}
+            ingredientId={l.ingredient ? l.ingredientId : undefined}
+            optional={l.optional}
+            floated={l.float}
+            houseMade={l.houseMade}
+            note={l.note ?? undefined}
+            flag={missing.includes(l.key) ? 'Not on your shelf' : undefined}
+            listed={listed.includes(l.key)}
+            // The amount opens the conversions; the rest of the line opens the ingredient.
+            onPressAmount={access.amounts && l.value !== null && !preview ? () => setConvert({ value: l.value!, unit: l.unit ?? 'ml', name: l.ingredient, abv: l.abv, density: l.density }) : undefined}
+            onPress={l.ingredientId && !preview ? () => open(l) : undefined}
+          />
+        ))}
       </View>
       {/* Not yours to fix: one way to change it, as your own riff (board create-eddie-oct16). */}
       {riff && !canEdit && !preview ? (

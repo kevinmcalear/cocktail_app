@@ -8,7 +8,8 @@ import { useSpecAccess } from '@/hooks/useSpecAccess';
 import { useSpecView } from '@/hooks/useSpecView';
 import type { SpecLevels, SpecLine } from '@/lib/spec';
 import type { StepNote } from '@/lib/stepNotes';
-import { garnishNames, goesOutLine, lineRole, methodLine, splitAmount, type SpecLayout } from '@/lib/specLines';
+import { garnishNames, goesOutLine, lineRole, methodLine, type SpecLayout } from '@/lib/specLines';
+import { splitAmount } from '@/lib/splitAmount';
 import { MAKES, scaledAmount, serveLine, specGroups, type Makes } from '@/lib/specView';
 import { useUnits } from '@/store/useSettingsStore';
 
