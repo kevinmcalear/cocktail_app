@@ -35,7 +35,7 @@ import { TeamStep } from './TeamStep';
  * here with a tick. Your team waits for How it looks, so the invite email
  * wears the bar's logo, colour and font (invite-team-last, call 2): until
  * the look is set it opens How it looks first, then goes on to the team.
- * The end of venue setup, the top of Library on a phone,
+ * The end of venue setup, the top of Drinks on a phone,
  * the first row of the sidebar on a desktop, and Venue settings' Setup.
  */
 export function SetupChecklist({ barId, name, footer }: { barId: string; name: string; footer?: ReactNode }) {
@@ -48,7 +48,7 @@ export function SetupChecklist({ barId, name, footer }: { barId: string; name: s
   const pageId = useBarPageId(barId).data ?? null;
   // Glasses picked before the page was checked go onto it once it is.
   useFlushHeldGlasses(barId);
-  const { list, notes, menuId, inLibrary, reviewId, loading, skip, run } = useSetupChecklist(barId);
+  const { list, notes, menuId, inDrinks, reviewId, loading, skip, run } = useSetupChecklist(barId);
   // Only Prep adds to the Kit: nobody else loads what the drinks name (Kit and ice, step 12).
   const prep = (useCapabilities(barId).data ?? []).includes('prep');
   const fromDrinks = fromDrinksCount(useKitFromDrinks(prep ? barId : null), pageId);
@@ -119,12 +119,12 @@ export function SetupChecklist({ barId, name, footer }: { barId: string; name: s
     kit: () => setAt('kit'),
     bottles: () => setAt('bottles'),
     menu: () => setAt('menu'),
-    // The import still to check, carried on; else the drinks in the Library; else a menu to put some on.
+    // The import still to check, carried on; else the drinks in Drinks; else a menu to put some on.
     drinks: () => {
       if (reviewId) {
         useBringIn.getState().setReviewing(reviewId);
         open('/bring-in');
-      } else if (inLibrary) {
+      } else if (inDrinks) {
         enterVenue(barId);
         router.navigate('/drinks');
       } else if (menuId) open(`/menus/${menuId}/edit`);

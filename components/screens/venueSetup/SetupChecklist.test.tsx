@@ -9,7 +9,7 @@ const [mockPush, mockNavigate, mockSkip, mockSetReviewing, mockStart] = [jest.fn
 let mockRun: { finished: boolean; done: string[] } | undefined = { finished: true, done: [] };
 const BARE = { logo_url: null, primary_color: null, display_face: 'instrument_serif' };
 let mockBrand: typeof BARE | { logo_url: null; primary_color: string; display_face: string } = BARE;
-let mockDrinks: { inLibrary: number; reviewId: string | null } = { inLibrary: 0, reviewId: null };
+let mockDrinks: { inDrinks: number; reviewId: string | null } = { inDrinks: 0, reviewId: null };
 
 jest.mock('expo-router', () => ({ useRouter: () => ({ push: mockPush, navigate: mockNavigate }) }));
 jest.mock('@/components/screens/firstRound/FirstCocktailChoices', () => {
@@ -87,7 +87,7 @@ beforeEach(() => {
   mockRun = { finished: true, done: [] };
   mockBrand = BARE;
   mockBrandLoading = false;
-  mockDrinks = { inLibrary: 0, reviewId: null };
+  mockDrinks = { inDrinks: 0, reviewId: null };
   for (const m of [mockPush, mockNavigate, mockSkip, mockSetReviewing, mockStart]) m.mockReset();
 });
 
@@ -125,7 +125,7 @@ test('setup not through yet: Basic information picks venue setup up', async () =
 });
 
 test('First drinks (E31): an import left part way carries on', async () => {
-  mockDrinks = { inLibrary: 18, reviewId: 'r1' };
+  mockDrinks = { inDrinks: 18, reviewId: 'r1' };
   await renderWithProviders(<SetupChecklist barId="b1" name="Little Rye" />);
   await fireEvent.press(screen.getByRole('button', { name: 'First drinks, todo' }));
   expect(mockSetReviewing).toHaveBeenCalledWith('r1');
@@ -133,7 +133,7 @@ test('First drinks (E31): an import left part way carries on', async () => {
 });
 
 test('First drinks (E31): with nothing left to check, the drinks in Drinks', async () => {
-  mockDrinks = { inLibrary: 18, reviewId: null };
+  mockDrinks = { inDrinks: 18, reviewId: null };
   await renderWithProviders(<SetupChecklist barId="b1" name="Little Rye" />);
   await fireEvent.press(screen.getByRole('button', { name: 'First drinks, todo' }));
   expect(mockNavigate).toHaveBeenLastCalledWith('/drinks');

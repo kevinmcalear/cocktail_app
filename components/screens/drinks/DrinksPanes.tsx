@@ -58,16 +58,17 @@ export function OtherPane({ item }: { item: SearchItem }) {
  * `routed` (a desktop, hooks/useDrinksSplit.ts; Sta-capsules-desk): the list
  * alone, in its column beside the Drinks stack; a drink opens there at its
  * own URL (/cocktail/<id>) and its row stays lit. At /drinks the stack shows
- * the list's first row (components/nav/NoDrinkPicked.tsx), so that one is lit
- * while the list isn't `filtered` by what's typed in its search.
+ * the list's first row (components/nav/NoDrinkPicked.tsx, useDrinksFirstRow), so that
+ * one is lit.
  */
-export function DrinksPanes({ items, rowOf, header, empty, footer, routed = false, filtered = false }: { items: SearchItem[]; rowOf: (item: SearchItem) => Omit<DrinkListRowProps, 'onPress' | 'picked'>; header: ReactElement; empty: ReactElement | null; footer?: ReactElement | null; routed?: boolean; filtered?: boolean }) {
+export function DrinksPanes({ items, rowOf, header, empty, footer, routed = false }: { items: SearchItem[]; rowOf: (item: SearchItem) => Omit<DrinkListRowProps, 'onPress' | 'picked'>; header: ReactElement; empty: ReactElement | null; footer?: ReactElement | null; routed?: boolean }) {
   const ds = useDs();
   const router = useRouter();
   const { pick } = useLocalSearchParams<{ pick?: string }>();
   const beside = useOpenBeside();
   const atRoot = usePathname() === '/drinks';
-  const picked = routed ? (items.find((i) => i.id === beside.picked) ?? (atRoot && !filtered ? (items[0] ?? null) : null)) : (items.find((i) => i.id === pick) ?? items[0] ?? null);
+  const first = items[0] ?? null;
+  const picked = routed ? (items.find((i) => i.id === beside.picked) ?? (atRoot ? first : null)) : (items.find((i) => i.id === pick) ?? first);
   const list = (
     <FlatList
       style={routed ? styles.fill : [styles.list, { borderRightColor: ds.c.line }]}

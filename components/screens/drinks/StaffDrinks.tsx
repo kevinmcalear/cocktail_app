@@ -1,7 +1,7 @@
 import { useNetInfo } from '@react-native-community/netinfo';
 import { useQueryClient } from '@tanstack/react-query';
 import { useRouter } from 'expo-router';
-import { lazy, Suspense, useState } from 'react';
+import { lazy, Suspense, useEffect, useState } from 'react';
 import { FlatList, StyleSheet, View } from 'react-native';
 
 import { Button, Caption, Chip, PencilState, useBreakpoint, useDs, useGutter } from '@/components/ds';
@@ -17,7 +17,7 @@ import { BottleChips, bottlesFor, ToOrder, useBottleFacts } from '@/components/s
 import { DrinkListRow, DrinksHead, DrinksLoading, OnNowCard } from '@/components/screens/drinks/DrinksParts';
 import { HouseMadeTop } from '@/components/screens/drinks/HouseMade';
 import { useStaffDrinks } from '@/components/screens/drinks/useStaffDrinks';
-import { LibrarySetup } from '@/components/screens/venueSetup/SetupBanner';
+import { DrinksSetup } from '@/components/screens/venueSetup/SetupBanner';
 import { FirstRoundCard, RoundOpened } from '@/components/screens/firstRound/FirstRoundCard';
 import { FilterRow } from '@/components/screens/drinks/FilterRow';
 import { DrinksEmpty } from '@/components/screens/drinks/DrinksEmpty';
@@ -26,6 +26,7 @@ import { NearResults } from '@/components/search/NearResults';
 import { SearchField } from '@/components/search/SearchField';
 import { SwapSheet } from '@/components/screens/drinks/SwapSheet';
 import { space } from '@/constants/tokens';
+import { useDrinksFirstRow } from '@/hooks/useDrinksSplit';
 import { useOpenSearch } from '@/hooks/useSearchFrom';
 import { useDrinkLists } from '@/hooks/useDiscover';
 import { usePrefetchCocktail } from '@/hooks/useCocktails';
@@ -83,6 +84,12 @@ export function StaffDrinks({ beside = false }: { beside?: boolean }) {
   const shownIds = shown.map((i) => i.id);
   const { data: classicList } = useDrinkLists(!!q);
   const staffView = show === 'staff' && !!activeId;
+  // Beside the stack, /drinks shows this list's first row (none for Classics, whose order is its own).
+  const first = staffView ? null : (shown[0] ?? null);
+  const loaded = !d.isLoading;
+  useEffect(() => {
+    if (beside) useDrinksFirstRow.setState({ item: first, ready: loaded });
+  }, [beside, first, loaded]);
   const nothing = !d.isLoading && !d.lists[CAPSULE_SHOW[capsule]].length && (capsule !== 'bottles' || !d.lists.garnishes.length);
   const label = [...d.chips.flat(), { value: 'preps', label: 'House-made' }, { value: 'bottles', label: 'Bottles' }].find((f) => f.value === show)?.label ?? 'All';
   const rowOf = (item: SearchItem) => {
@@ -104,7 +111,7 @@ export function StaffDrinks({ beside = false }: { beside?: boolean }) {
       </WebHead>
       <DrinksHead eyebrow={active?.name ?? ' '} capsules={STAFF_CAPSULES} value={capsule} onChange={d.pickCapsule} offline={offline ? 'Whole spec book on this phone' : null} bleed={panes ? space.xl : gutter} />
       {!phone && !staffView ? <SearchField query={find} onQuery={setFind} placeholder="Search your drinks" /> : null}
-      {activeId ? (<><ResumeCard barId={activeId} /><LibrarySetup barId={activeId} /></>) : null}
+      {activeId ? (<><ResumeCard barId={activeId} /><DrinksSetup barId={activeId} /></>) : null}
       <FirstRoundCard />
       {staffView ? nudge : null}
       {capsule === 'drinks' && show === 'all' && d.card ? <OnNowCard {...d.card} onPress={() => router.push(`/menus/${d.card!.id}` as never)} /> : null}
@@ -142,7 +149,7 @@ export function StaffDrinks({ beside = false }: { beside?: boolean }) {
   const foot = (
     <View style={styles.foot}>
       {capsule === 'bottles' && activeId && !nothing ? <ToOrder barId={activeId} /> : null}
-      {nudge && !staffView && !q ? <View style={styles.wide}>{nudge}</View> : null}
+      {nudge && !staffView ? <View style={styles.wide}>{nudge}</View> : null}
       {show === 'bottles' && activeId && canEdit ? (
         <View style={styles.actions}>
           <Button label="Snap a bottle" icon="camera.fill" variant="secondary" onPress={() => setSnapping(true)} />
@@ -159,7 +166,7 @@ export function StaffDrinks({ beside = false }: { beside?: boolean }) {
   return (
     <View style={[styles.screen, { backgroundColor: ds.c.ground }]}>
       {panes && !staffView ? (
-        <DrinksPanes items={shown} rowOf={rowOf} header={header} empty={empty} footer={foot} routed={beside} filtered={!!q} />
+        <DrinksPanes items={shown} rowOf={rowOf} header={header} empty={empty} footer={foot} routed={beside} />
       ) : staffView && activeId ? (
         // The staff list drags to reorder, so it is the scroll view itself.
         <Suspense fallback={<FlatList data={[]} renderItem={() => null} ListHeaderComponent={header} contentContainerStyle={listBottom} />}>

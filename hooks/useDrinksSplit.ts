@@ -1,7 +1,9 @@
 import { usePathname, useRouter, useSegments, type Href } from 'expo-router';
+import { create } from 'zustand';
 
 import { useWebNav } from '@/hooks/useIsWideWeb';
 import { useMode } from '@/hooks/useMode';
+import type { SearchItem } from '@/types/search';
 
 /**
  * Drinks at a venue on a desktop (the sidebar, from 1200): the list stays on
@@ -44,3 +46,12 @@ export function useOpenBeside(): { picked: string | null; open: (href: string) =
   };
   return { picked, open };
 }
+
+/**
+ * The first row of Drinks' list beside the stack on a desktop, as the list
+ * shows it (its view, its search), for /drinks to show beside it
+ * (components/nav/NoDrinkPicked.tsx) until a row is picked. The list is its
+ * only writer, so the page and the lit row can't disagree. `ready` is false
+ * until the list has loaded, so the page doesn't say "Pick a drink" while it does.
+ */
+export const useDrinksFirstRow = create<{ item: SearchItem | null; ready: boolean }>(() => ({ item: null, ready: false }));
