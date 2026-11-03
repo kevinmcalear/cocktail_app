@@ -1,16 +1,17 @@
 import { QueryClientContext } from '@tanstack/react-query';
 import { Image } from 'expo-image';
-import { useContext } from 'react';
+import { useContext, useEffect, useState } from 'react';
 import { StyleSheet, View } from 'react-native';
 
 import { drawing } from '@/constants/tokens';
 import { useItemSketch } from '@/hooks/useItemSketch';
 import { useReducedMotion } from '@/hooks/useReducedMotion';
+import { whenIdle } from '@/lib/idleQueue';
 import { inBarGlassCached } from '@/lib/sketch/barGlass';
-import { bareGlassSketch } from '@/lib/sketch/draft';
 import { glowScene, nightScene, onlyStages, withoutStages } from '@/lib/sketch/passes';
 import type { Scene } from '@/lib/sketch/scene';
 import { sceneToSvg } from '@/lib/sketch/svg';
+import { BARE_GLASS } from '@/lib/sketch/bareGlass';
 import { liquidOf, type SketchInputs } from '@/lib/sketch/types';
 
 import { useDrawingGlasses } from './drawingGlasses';
@@ -34,24 +35,39 @@ interface Layers {
 
 const uri = (scene: Scene) => `data:image/svg+xml;base64,${btoa(sceneToSvg(scene))}`;
 
-// Built once per painted scene and scheme, then reused while the scene is (sceneFor keeps it per drink).
-const cache = new WeakMap<Scene, Map<string, Layers>>();
-function layersOf(scene: Scene, night: boolean, liquid: string): Layers {
-  let byMode = cache.get(scene);
-  if (!byMode) cache.set(scene, (byMode = new Map()));
-  const key = night ? 'night' : 'day';
-  let layers = byMode.get(key);
+// Built once per drink, size and scheme, then reused (TanStack Query keeps the inputs object stable until the row changes).
+const cache = new WeakMap<SketchInputs, Map<string, Layers>>();
+const keyOf = (seed: string, thumb: boolean, night: boolean, pour: boolean) => `${seed}|${thumb ? 't' : 'f'}|${night ? 'n' : 'd'}|${pour ? 'p' : 'w'}`;
+function build(inputs: SketchInputs, seed: string, thumb: boolean, night: boolean, pour: boolean): Layers {
+  let byKey = cache.get(inputs);
+  if (!byKey) cache.set(inputs, (byKey = new Map()));
+  const key = keyOf(seed, thumb, night, pour);
+  let layers = byKey.get(key);
   if (!layers) {
-    const painted = night ? nightScene(scene, liquid) : scene;
-    layers = { whole: uri(painted), liquid: uri(onlyStages(painted, POURED)), rest: uri(withoutStages(painted, POURED)), glow: night ? uri(glowScene(painted)) : null };
-    byMode.set(key, layers);
+    const scene = sceneFor(inputs, seed, thumb ? 'thumb' : 'full');
+    const painted = night ? nightScene(scene, liquidOf(inputs).hex) : scene;
+    const glow = night ? uri(glowScene(painted)) : null;
+    // A drawing that doesn't pour is one picture; only a pouring one needs the liquid apart from the pencil.
+    layers = pour
+      ? { whole: '', liquid: uri(onlyStages(painted, POURED)), rest: uri(withoutStages(painted, POURED)), glow }
+      : { whole: uri(painted), liquid: '', rest: '', glow };
+    byKey.set(key, layers);
   }
   return layers;
+}
+const peek = (inputs: SketchInputs, seed: string, thumb: boolean, night: boolean, pour: boolean) => cache.get(inputs)?.get(keyOf(seed, thumb, night, pour));
+
+// The bare glass every drawing shows until its own is ready (the board's drawn glass, never a blank hole).
+const BARE = BARE_GLASS;
+
+/** The bare glass at a drawing's size, for a place with no drawing (yet): never a blank hole. */
+export function BareGlass({ size }: Pick<DrinkDrawingProps, 'size'>) {
+  return <DrinkDrawing inputs={BARE} seed="bare" size={size} pour={false} />;
 }
 
 /** A drink's whole drawing as an SVG data URI, by day or painted for night: what a poster or a printed page draws (components/paper). */
 export function drawingUri(inputs: SketchInputs, seed: string, night: boolean): string {
-  return layersOf(sceneFor(inputs, seed, 'full'), night, liquidOf(inputs).hex).whole;
+  return build(inputs, seed, false, night, false).whole;
 }
 
 export interface DrinkDrawingProps {
@@ -81,8 +97,26 @@ export function DrinkDrawing({ inputs: stored, seed, size, staff, pour = !isRowS
   const inputs = inBarGlassCached(stored, useDrawingGlasses());
   const night = ds.scheme === 'dark';
   const px = size === 'hero' ? (staff ? drawing.heroStaff : drawing.hero) : drawing[size];
-  const scene = sceneFor(inputs, seed, isRowSize(size) ? 'thumb' : 'full');
-  const layers = layersOf(scene, night, liquidOf(inputs).hex);
+  const thumb = isRowSize(size);
+  // A hero paints now; lists and grids paint in coming idle slices, the bare glass showing until then.
+  const lazy = size !== 'hero';
+  // The idle job builds into the cache and bumps this to re-render; `ready` is always read from the cache, so a scheme switch can't show the old one.
+  const [, built] = useState(0);
+  const ready = peek(inputs, seed, thumb, night, pour) ?? null;
+  useEffect(() => {
+    if (ready || !lazy) return;
+    let live = true;
+    whenIdle(() => {
+      if (!live) return;
+      build(inputs, seed, thumb, night, pour);
+      built((n) => n + 1);
+    });
+    return () => {
+      live = false;
+    };
+  }, [ready, lazy, inputs, seed, thumb, night, pour]);
+  const layers = ready ?? (lazy ? build(BARE, 'bare', thumb, night, false) : build(inputs, seed, thumb, night, pour));
+  const showPour = pour && (!lazy || !!ready);
   const reduceMotion = useReducedMotion();
   const moving = pour && !reduceMotion;
 
@@ -93,7 +127,7 @@ export function DrinkDrawing({ inputs: stored, seed, size, staff, pour = !isRowS
       {layers.glow ? (
         <Image source={{ uri: layers.glow }} style={[StyleSheet.absoluteFill, styles.glow]} blurRadius={Math.max(4, px / 12)} contentFit="contain" cachePolicy="memory" accessible={false} />
       ) : null}
-      {pour ? (
+      {showPour ? (
         <>
           {/* The liquid, under the pencil, revealed from the bottom of the glass up. */}
           <PourLevel moving={moving}>{picture(layers.liquid)}</PourLevel>
@@ -106,23 +140,16 @@ export function DrinkDrawing({ inputs: stored, seed, size, staff, pour = !isRowS
   );
 }
 
-type ForProps = Omit<DrinkDrawingProps, 'inputs' | 'seed'> & {
-  itemId: string;
-  /** With no drawing to show, the bare glass instead of nothing. */
-  bare?: boolean;
-};
-
-/** The same, by drink id: its drawing inputs from item_sketches. Nothing until they arrive, or outside a query client (the gallery). */
-export function DrinkDrawingFor({ itemId, ...rest }: ForProps) {
+/** The same, by drink id: its drawing inputs from item_sketches. The bare glass until they arrive (saved between launches); nothing outside a query client (the gallery). */
+export function DrinkDrawingFor({ itemId, ...rest }: Omit<DrinkDrawingProps, 'inputs' | 'seed'> & { itemId: string }) {
   const client = useContext(QueryClientContext);
   return client ? <ById itemId={itemId} {...rest} /> : null;
 }
 
-function ById({ itemId, bare, ...rest }: ForProps) {
-  const sketch = useItemSketch(itemId);
-  if (sketch.data) return <DrinkDrawing inputs={sketch.data} seed={itemId} {...rest} />;
-  // A drink with no drawing inputs (beer, wine, not drawn yet): its bare glass, as DrinkImage shows, so a tile is never an empty box.
-  return bare && sketch.isSuccess ? <DrinkDrawing inputs={bareGlassSketch(null)} seed="Coupe" {...rest} /> : null;
+function ById({ itemId, ...rest }: Omit<DrinkDrawingProps, 'inputs' | 'seed'> & { itemId: string }) {
+  const inputs = useItemSketch(itemId).data;
+  // Until they arrive: the bare glass on its paper, no pour (the real one pours when it lands).
+  return inputs ? <DrinkDrawing inputs={inputs} seed={itemId} {...rest} /> : <DrinkDrawing inputs={BARE} seed="bare" {...rest} pour={false} />;
 }
 
 const styles = StyleSheet.create({
