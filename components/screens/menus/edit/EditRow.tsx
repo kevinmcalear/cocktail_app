@@ -6,7 +6,7 @@ import { Caption, Headline, PressableScale, Tag, useDs } from '@/components/ds';
 import { dragGripStyle } from '@/components/recipe/FormScrollContainer';
 import { IconSymbol } from '@/components/ui/icon-symbol';
 import { displayFaces, font, layout, radius, space } from '@/constants/tokens';
-import { bothPrices, formatPrice, printedPrice } from '@/lib/menus';
+import { formatPrice, printedPrice } from '@/lib/menus';
 import type { MenuDrink } from '@/types/menus';
 
 import { MenuDrawing, type MenuInk } from '../page/MenuDrawing';
@@ -52,7 +52,8 @@ export function DropSlot() {
 /**
  * A drink on the menu being edited in place (Menu-who-creator-edit): the
  * page's ruled row with a handle on the left, its drawing, name and line, the
- * price in a box, and a round minus that takes it off this menu. The handle
+ * price in a box (filled on a phone, white beside the library, as drawn; its drink and menu prices, and the other menus it's on,
+ * open under the row), and a round minus that takes it off this menu. The handle
  * drags it; on the web its arrow keys move it too. Tapping the drink opens its
  * menu (RowMenuSheet).
  */
@@ -62,7 +63,6 @@ export function EditRow({ drink, index: i, count, ink, isNew, active, drag, onRe
   const [open, setPricing] = useState(false);
   const price = pricing ? printedPrice(drink) : null;
   const own = !!formatPrice(drink.menuPrice);
-  const both = pricing ? bothPrices(drink) : null;
   const onKeyDown = (e: { key: string; preventDefault: () => void }) => {
     const to = e.key === 'ArrowUp' ? i - 1 : e.key === 'ArrowDown' ? i + 1 : null;
     if (to === null) return;
@@ -105,11 +105,6 @@ export function EditRow({ drink, index: i, count, ink, isNew, active, drag, onRe
                 {drink.line}
               </Caption>
             ) : null}
-            {both || (alsoOn && pricing) ? (
-              <Caption tone="accent" numberOfLines={2}>
-                {[both, alsoOn && pricing ? `also on ${alsoOn}` : null].filter(Boolean).join(' · ')}
-              </Caption>
-            ) : null}
           </View>
           </PressableScale>
           {pricing ? (
@@ -117,9 +112,9 @@ export function EditRow({ drink, index: i, count, ink, isNew, active, drag, onRe
               accessibilityLabel={price ? `${drink.name}: price ${price}${own ? ' on this menu' : ''}. Change it` : `Add a price for ${drink.name}`}
               aria-expanded={open}
               onPress={() => setPricing((p) => !p)}
-              style={[styles.price, { borderColor: open ? ds.c.ink : ds.c.lineStrong, backgroundColor: ds.c.surface }]}
+              style={[styles.price, { borderColor: open ? ds.c.ink : ds.c.line, backgroundColor: dnd ? ds.c.surface : ds.c.raised }]}
             >
-              <Caption color={price ? (own ? ds.accentText : ds.c.ink) : ds.c.muted} style={font.figuresMedium} numberOfLines={1}>
+              <Caption color={price ? ds.c.ink : ds.c.muted} style={font.figuresMedium} numberOfLines={1}>
                 {price ?? '–'}
               </Caption>
             </PressableScale>
