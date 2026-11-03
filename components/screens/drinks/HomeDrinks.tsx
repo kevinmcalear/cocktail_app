@@ -22,7 +22,7 @@ import { ingredientLine, sentenceLine } from '@/lib/menus';
 import { DrinkListRow, DrinksHead, DrinksLoading } from './DrinksParts';
 
 // The shelf (My Bar) and the menus each load when their capsule is picked.
-const Shelf = lazy(() => import('@/components/screens/home/MyBarScreen').then((m) => ({ default: m.MyBarScreen })));
+const Shelf = lazy(() => import('./HomeMenus').then((m) => ({ default: m.MyBarScreen })));
 const Menus = lazy(() => import('./HomeMenus').then((m) => ({ default: m.HomeMenus })));
 
 /** What each chip says with nothing in it, and where it sends you. */

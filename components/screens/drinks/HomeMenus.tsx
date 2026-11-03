@@ -9,6 +9,8 @@ import { CollectionSavedMenus } from '@/components/screens/home/CollectionSavedM
 import { layout, space } from '@/constants/tokens';
 import { useMyBar } from '@/hooks/useHomeBar';
 
+// One lazy chunk for the shelf and the menus: the two share their data hooks, so apart each would carry its own copy on the web.
+export { MyBarScreen } from '@/components/screens/home/MyBarScreen';
 /**
  * Home Drinks' Menus (Prod-phone drinks, home; boards home-collection-menus
  * and -desktop-menus): the menus you build for nights in, in the Menus
