@@ -8,6 +8,7 @@ import { font, radius, space } from '@/constants/tokens';
 import type { ShelfItem } from '@/hooks/useHomeBar';
 import { SECTIONS } from '@/lib/barSectionWords';
 import { cardFit, type ShelfSection } from '@/lib/myBarRows';
+import { FILL_LABEL } from '@/lib/myBarText';
 import { PANTRY, PANTRY_WATER } from '@/lib/pantry';
 import { equipmentById } from '@/lib/techniques';
 
@@ -22,6 +23,8 @@ interface CardTile {
   key: string;
   name: string;
   picture: ReactNode;
+  /** How much is left, when the person said (Full, Half left, Running low). */
+  sub?: string;
   onPress: () => void;
 }
 
@@ -89,6 +92,11 @@ function SectionCard({ card, onOpen, onAdd }: { card: SectionCardData; onOpen: (
             <Caption numberOfLines={nameLines(t.name)} style={styles.name}>
               {t.name}
             </Caption>
+            {t.sub ? (
+              <Caption tone="muted" numberOfLines={1} style={styles.name}>
+                {t.sub}
+              </Caption>
+            ) : null}
           </PressableScale>
         ))}
         {ideas.map((t) => (
@@ -133,7 +141,7 @@ export function useSectionCards({ on, bottles, pantry, fridge, lab, preps, owned
 }): SectionCardData[] {
   const router = useRouter();
   if (!on) return [];
-  const shelfTile = (item: ShelfItem, name = item.name): CardTile => ({ key: item.id, name, picture: <IngredientThumb id={item.id} name={item.name} size={TILE} />, onPress: () => onItem(item) });
+  const shelfTile = (item: ShelfItem, name = item.name): CardTile => ({ key: item.id, name, picture: <IngredientThumb id={item.id} name={item.name} size={TILE} />, sub: item.fillLevel ? FILL_LABEL[item.fillLevel] : undefined, onPress: () => onItem(item) });
   // The staples you keep, as the fridge section lists them, then anything else you've added.
   const ids = new Map(pantry.map((p) => [p.name, p.id]));
   const byId = new Map(shelf.map((s) => [s.id, s]));

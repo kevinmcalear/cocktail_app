@@ -1912,16 +1912,19 @@ export type Database = {
       home_bar_items: {
         Row: {
           added_at: string
+          fill_level: string | null
           item_id: string
           user_id: string
         }
         Insert: {
           added_at?: string
+          fill_level?: string | null
           item_id: string
           user_id?: string
         }
         Update: {
           added_at?: string
+          fill_level?: string | null
           item_id?: string
           user_id?: string
         }

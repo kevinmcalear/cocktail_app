@@ -3,12 +3,13 @@ import { useState } from 'react';
 import { ScrollView, StyleSheet, View } from 'react-native';
 
 import { Body, Button, Caption, Headline, IngredientDrawing, IngredientThumb, PressableScale, Sheet, Tag, TextLink, Title, useDs } from '@/components/ds';
+import { SegmentedCapsule } from '@/components/ds/SegmentedCapsule';
 import { font, layout, radius, space } from '@/constants/tokens';
 import { useItemFlavor } from '@/hooks/useFlavor';
-import { useBottleFacts, useFinishedBottles, type BarItem, type FinishedBottle, type ShelfItem } from '@/hooks/useHomeBar';
+import { useBottleFacts, useFinishedBottles, useSetFillLevel, type BarItem, type FillLevel, type FinishedBottle, type ShelfItem } from '@/hooks/useHomeBar';
 import { NOTE_KINDS, NOTE_MIN, noteWord } from '@/lib/flavor';
 import { itemHref } from '@/lib/itemRoutes';
-import { lastedLine } from '@/lib/myBarText';
+import { FILL_LABEL, lastedLine } from '@/lib/myBarText';
 
 import { BottleShopping } from '../shopping/BottleShopping';
 
@@ -28,6 +29,8 @@ interface BottleSheetProps {
   onFinish: (id: string) => void;
   onClose: () => void;
 }
+
+const FILLS = (Object.keys(FILL_LABEL) as FillLevel[]).map((value) => ({ value, label: FILL_LABEL[value] }));
 
 const day = (iso: string, year = false) => new Date(iso).toLocaleDateString('en-GB', { day: 'numeric', month: 'short', ...(year ? { year: 'numeric' } : {}) });
 
@@ -63,6 +66,9 @@ function Bottle({ item, shelf, canMake, oneAway, onAdd, onFinish, onOld, onPage 
   const facts = useBottleFacts(item.id).data;
   const flavor = useItemFlavor(item.id).data;
   const finished = useFinishedBottles().data ?? [];
+  const setLevel = useSetFillLevel();
+  // The sheet holds the tile as it was tapped; the shelf has the level as it is now.
+  const level = shelf.find((s) => s.id === item.id)?.fillLevel ?? null;
   const mine = finished.filter((f) => f.itemId === item.id);
   const names = new Map(shelf.map((s) => [s.id, s.role === 'generic' ? s.name.toLowerCase() : s.name]));
   const uses = (d: BarItem) => d.shelfUses?.includes(item.id);
@@ -110,6 +116,17 @@ function Bottle({ item, shelf, canMake, oneAway, onAdd, onFinish, onOld, onPage 
           {rows.length < 3 ? Array.from({ length: 3 - rows.length }, (_, i) => <View key={i} style={styles.fact} />) : null}
         </View>
       ) : null}
+      {/* How much is left (Drinks board): a tap on the pick again says nothing. */}
+      <View style={styles.block}>
+        <Headline role="heading">How much is left</Headline>
+        <SegmentedCapsule
+          accessibilityLabel="How much is left"
+          byWords
+          options={FILLS}
+          value={level ?? ('' as FillLevel)}
+          onChange={(next) => setLevel.mutate({ itemId: item.id, level: next === level ? null : next })}
+        />
+      </View>
       {tastes.length ? (
         <View style={styles.block}>
           <Headline role="heading">Tastes like</Headline>
