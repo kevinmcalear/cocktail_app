@@ -82,7 +82,7 @@ const both = draftSketchInputs({ ...spritz, lines: [...spritzLines, { name: 'Lem
 assert.equal(both.garnish, 'olive', 'a real garnish line still draws beside a discard');
 
 // A drink with no drawing yet shows its bare glass, by name or icon key: no liquid, ice or garnish (i-glass-pic).
-assert.deepEqual(BARE_GLASS, bareGlassSketch('Coupe'));
+assert.deepEqual(BARE_GLASS, readSketchInputs(bareGlassSketch('Coupe')));
 const martini = bareGlassSketch('Martini');
 assert.equal(martini.glass, 'martini');
 assert.equal(bareGlassSketch('Nick & Nora').glass, 'nick');
