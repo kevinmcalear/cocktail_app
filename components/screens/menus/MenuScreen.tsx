@@ -33,7 +33,8 @@ import { MenuMoreSheet } from './MenuMoreSheet';
 import { ShareMenuSheet } from './ShareMenuSheet';
 import { DailyListPage } from './page/DailyListPage';
 import { MenuPageAfter, MenuPageBanner, MenuPageGroup } from './page/MenuPageGroup';
-import { MenuScreenHead } from './page/MenuScreenHead';
+import { menuBarTools, MenuScreenHead } from './page/MenuScreenHead';
+import { MenuTopBar } from './page/MenuTopBar';
 import { MenuDeskColumns } from './desk/MenuDesk';
 import { MenuPageRow, type PageRowView } from './page/MenuPageRow';
 import { moreExtras, menuPageModel, splitGroup, type GroupAction } from './page/menuPageModel';
@@ -127,6 +128,7 @@ function MenuPageBody({ menu, shelf, cover, now }: PageProps & { cover: string |
   const endedRuns = menu.startsAt ? ended.filter((r) => Date.parse(r.cameOff) > Date.parse(menu.startsAt!)).length : 0;
   const { data: venueMenus = [] } = useVenueMenus(menu.barId);
   const back = () => (router.canGoBack() ? router.back() : router.replace('/menus/all'));
+  const [collapsed, setCollapsed] = useState(false);
 
   const status = menuStatus(menu, now);
   const others = venueMenus.filter((m) => m.barId === menu.barId && m.id !== menu.id);
@@ -157,6 +159,8 @@ function MenuPageBody({ menu, shelf, cover, now }: PageProps & { cover: string |
   const place = useMenuPager(besideId ? menu.id : null, null, besideId ?? '');
   const openDrink = (d: MenuDrink) => (sidebar && d.kind === 'cocktail' ? setPicked(d.id) : go(`${menuDrinkHref(d)}?${inMenuQuery(menu.id)}`));
   const share = () => (lens.lens === 'home' || isOneNightMenu(menu) ? setSheet('share') : go(`/menus/${menu.id}/card`));
+  const edit = () => go(`/menus/${menu.id}/edit`);
+  const barTools = menuBarTools({ home: lens.lens === 'home', team, draft, past: status === 'previous', onShare: share, onEdit: edit });
 
   // A list that's on, or coming up: its drinks change one at a time, on the row (Menu-l-swap); a bartender asks (Menu-l-ask).
   const bartender = lens.lens === 'bartender';
@@ -213,11 +217,13 @@ function MenuPageBody({ menu, shelf, cover, now }: PageProps & { cover: string |
       keyExtractor={(i) => i.key}
       windowSize={DRAWN_LIST_WINDOW}
       style={styles.screen}
+      onScroll={sidebar ? undefined : (e) => setCollapsed(e.nativeEvent.contentOffset.y > COLLAPSE_AT)}
+      scrollEventThrottle={32}
       contentContainerStyle={{ paddingBottom: insets.bottom + (draft && team ? 140 : space.xxxl) }}
       renderItem={({ item }) => <View style={column}>{rowOf(item)}</View>}
       ListHeaderComponent={
         <View style={[column, styles.head]}>
-          <MenuScreenHead menu={menu} model={model} desk={sidebar} cover={cover} home={lens.lens === 'home'} team={team} draft={draft} past={status === 'previous'} gutter={gutter} top={sidebar ? 0 : insets.top} onBack={back} onShare={share} onEdit={() => go(`/menus/${menu.id}/edit`)} />
+          <MenuScreenHead menu={menu} model={model} desk={sidebar} cover={cover} home={lens.lens === 'home'} team={team} draft={draft} past={status === 'previous'} gutter={gutter} top={sidebar ? 0 : insets.top} onBack={back} onShare={share} onEdit={edit} pinned={!sidebar} />
           {model.banner ? (
             <MenuPageBanner text={model.banner.text} aside={model.banner.aside} warn={model.banner.warn} onPress={model.banner.toNow && live ? () => go(`/menus/${live.id}`) : undefined} />
           ) : null}
@@ -245,6 +251,12 @@ function MenuPageBody({ menu, shelf, cover, now }: PageProps & { cover: string |
   return (
     <View style={[styles.screen, sidebar && styles.split, { backgroundColor: ds.c.ground }]}>
       {list}
+      {/* Back stays put on a phone, the page scrolling under it; past the hero the bar takes a backing and the name (Kevin, 3 Nov; #1164). */}
+      {sidebar ? null : (
+        <View pointerEvents="box-none" style={[styles.pinned, { paddingHorizontal: gutter }]}>
+          <MenuTopBar onBack={back} {...barTools} onMedia={!!cover && ds.scheme === 'dark' && !collapsed} collapsed={collapsed ? { title: menu.name } : null} top={insets.top} />
+        </View>
+      )}
       {/* The desktop's Swap and Take off open beside the list, over the change log (Menu-l-desk). */}
       {sidebar && changing ? (
         <RowChanges menu={menu} target={changing} ended={listView.ended} acts={acts} onClose={() => setChanging(null)} pane={{ after: <ChangeLog menuName={menu.name} changes={listView.changes} /> }} />
@@ -272,8 +284,10 @@ function MenuPageBody({ menu, shelf, cover, now }: PageProps & { cover: string |
   );
 }
 
+const COLLAPSE_AT = 200;
 const styles = StyleSheet.create({
   screen: { flex: 1 },
+  pinned: { position: 'absolute', top: 0, left: 0, right: 0 },
   split: { flexDirection: 'row' },
   missing: { gap: space.lg },
   head: { gap: space.lg, paddingBottom: space.lg },

@@ -3,6 +3,7 @@ import type { MenuDetail } from '@/types/menus';
 import { MenuDeskHead } from '../desk/MenuDesk';
 import { MenuPageHead } from './MenuPageHead';
 import type { MenuPageModel } from './menuPageModel';
+import type { MenuBarTools } from './MenuTopBar';
 
 interface Props {
   menu: MenuDetail;
@@ -20,10 +21,12 @@ interface Props {
   onBack: () => void;
   onShare: () => void;
   onEdit: () => void;
+  /** The phone's bar is pinned over the page's scroll (MenuScreen), so the head draws none. */
+  pinned?: boolean;
 }
 
 /** The top of the menu page: the phone's (Menu-page) or the desktop's (Menu-desk), with the actions each draws. */
-export function MenuScreenHead({ menu, model, desk, cover, home, team, draft, past, gutter, top, onBack, onShare, onEdit }: Props) {
+export function MenuScreenHead({ menu, model, desk, cover, home, team, draft, past, gutter, top, onBack, onShare, onEdit, pinned }: Props) {
   const heroIds = menu.sections.flatMap((s) => s.drinks).slice(0, 3).map((d) => d.id);
   if (desk) {
     // The top right: Share, and Edit for the menu team; a home menu's one action is Share.
@@ -55,12 +58,19 @@ export function MenuScreenHead({ menu, model, desk, cover, home, team, draft, pa
       eyebrow={model.eyebrow}
       description={menu.description}
       onBack={onBack}
-      onShare={home ? null : onShare}
-      // Edit is the one action for the menu team; a draft's is Publish and a home menu's Share, so theirs is a glass pencil.
-      onEdit={(team && draft) || home ? onEdit : null}
-      pill={home ? { label: 'Share', onPress: onShare } : team && !draft && !past ? { label: 'Edit', onPress: onEdit } : null}
+      {...menuBarTools({ home, team, draft, past, onShare, onEdit })}
+      pinned={pinned}
       bleed={gutter}
       top={top}
     />
   );
+}
+
+/** The phone bar's right side: Share, and Edit as the menu team's one action; a draft's is Publish and a home menu's Share, so theirs is a glass pencil. */
+export function menuBarTools({ home, team, draft, past, onShare, onEdit }: Pick<Props, 'home' | 'team' | 'draft' | 'past' | 'onShare' | 'onEdit'>): MenuBarTools {
+  return {
+    onShare: home ? null : onShare,
+    onEdit: (team && draft) || home ? onEdit : null,
+    pill: home ? { label: 'Share', onPress: onShare } : team && !draft && !past ? { label: 'Edit', onPress: onEdit } : null,
+  };
 }
