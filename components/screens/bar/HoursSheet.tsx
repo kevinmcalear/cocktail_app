@@ -8,7 +8,7 @@ import type { BarFacts } from '@/hooks/useBarFacts';
 import { hoursSource, hoursStatus, weekRows } from '@/lib/barHours';
 import { readableAccent } from '@/lib/color';
 
-import { ReportSheet } from '../safety/ReportSheet';
+import { ReportSheet } from '../safety/ReportSheetLazy';
 
 /**
  * This week's hours (ppl-bar-hours-sheet): open now or not, each day with

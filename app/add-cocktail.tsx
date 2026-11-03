@@ -57,7 +57,7 @@ export default function AddCocktailScreen() {
                             // Only if it's still to check there: a drink is never counted twice.
                             useBringIn.getState().editReview(review, (r) => (canCheck(r, Number(drink)) ? approved(r, Number(drink), made, new Date().toISOString()) : r));
                         } else if (menuSectionId || back === "1") goBack();
-                        else if (round === "1") router.replace("/library");
+                        else if (round === "1") router.replace("/drinks");
                         else router.replace(`/cocktail/${id}`);
                     }}
                 />

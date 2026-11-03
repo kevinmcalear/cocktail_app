@@ -17,7 +17,7 @@ import { createdByLine, drinkKicker } from '@/lib/publicDrink';
 
 import { RankFlow } from '../rank/RankActions';
 import { useAgeGate } from '../safety/AgeGate';
-import { ReportAction } from '../safety/ReportSheet';
+import { ReportAction } from '../safety/ReportAction';
 import { CollectButton } from './CollectButton';
 import { MemorySheet } from './MemorySheet';
 import { Kicker, PublicPage, SignInBand } from './PublicChrome';
