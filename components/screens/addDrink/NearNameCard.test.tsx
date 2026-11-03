@@ -41,8 +41,7 @@ beforeEach(() => jest.clearAllMocks());
 test('asks "Is it the Salti Boi from Pale Moth?"; Yes opens it and keeps the spelling', async () => {
   await renderWithProviders(<Card />);
   expect(screen.getByText('Is it the Salti Boi from Pale Moth?')).toBeTruthy();
-  expect(screen.getByText('Pale Moth · Collingwood · Riff on a Margarita')).toBeTruthy();
-  expect(screen.getByText('Spelled close to yours. A different drink keeps your name as you typed it.')).toBeTruthy();
+  expect(screen.getByText('Pale Moth · Collingwood · Riff on a Margarita. Spelled close to yours. A different drink keeps your name as you typed it.')).toBeTruthy();
   await fireEvent.press(screen.getByRole('button', { name: /^Open Pale Moth’s Salti Boi/ }));
   expect(mockSave).toHaveBeenCalledWith({ itemId: 'pm-salti', typed: 'Salty Boy' });
   expect(mockPush).toHaveBeenCalledWith('/cocktail/pm-salti');

@@ -257,13 +257,21 @@ function RootLayout() {
   const [fontsLoaded] = useFonts(Platform.OS === 'web' ? FIRST_PAINT_FONTS : APP_FONTS);
   useEffect(() => {
     if (Platform.OS !== 'web') return;
-    // ~0.75 MB of faces the first screen rarely needs, and the main screens'
-    // code: after its data, so a slow connection fetches that first (RAIL
-    // load). Text uses a fallback till then.
-    return afterFirstData(queryClient, () => {
-      loadAsync(LATER_FONTS).catch((e) => console.warn('Fonts failed to load', e));
-      void prefetchRoutes();
-    });
+    // Redaction's italic and bold, and the main screens' code: once the first
+    // screen's data is in and the network has been quiet for a second, so a
+    // slow connection fetches that first (RAIL load). Starting at 4 s whatever
+    // the data was doing put a megabyte of code beside Discover's requests.
+    // Text uses a fallback till then. A screen with nothing to fetch starts them at 4 s.
+    return afterFirstData(
+      queryClient,
+      () => {
+        loadAsync(LATER_FONTS).catch((e) => console.warn('Fonts failed to load', e));
+        void prefetchRoutes();
+      },
+      15_000,
+      1_000,
+      4_000
+    );
   }, []);
   if (!fontsLoaded && Platform.OS !== 'web') { return null; }
   return (

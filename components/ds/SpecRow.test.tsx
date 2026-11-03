@@ -1,6 +1,7 @@
 import { fireEvent, screen, within } from '@testing-library/react-native';
 
-import { BackbarTheme, SpecRow } from '@/components/ds';
+import { BackbarTheme } from '@/components/ds';
+import { SpecRow } from '@/components/ds/SpecRow';
 import { renderWithProviders } from '@/jest.setup';
 
 const label = (el: { props: { accessibilityLabel?: string; 'aria-label'?: string } }) => el.props.accessibilityLabel ?? el.props['aria-label'];

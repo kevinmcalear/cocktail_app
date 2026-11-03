@@ -1,6 +1,7 @@
 import { StyleSheet, TextInput, View } from 'react-native';
 
-import { Caption, Field, GlassVariantPicker, PressableScale, useDs } from '@/components/ds';
+import { Caption, Field, PressableScale, useDs } from '@/components/ds';
+import { GlassVariantPicker } from '@/components/ds/GlassVariantPicker';
 import { IconSymbol } from '@/components/ui/icon-symbol';
 import { displayFaces, layout, radius, space, type } from '@/constants/tokens';
 import {

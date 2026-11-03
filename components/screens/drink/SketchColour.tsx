@@ -1,7 +1,8 @@
 import { useState } from 'react';
 import { StyleSheet, View } from 'react-native';
 
-import { BackbarTheme, BrandProvider, Button, Caption, Sheet, SheetScrollView, SketchTintPicker, Title, useSheetClose } from '@/components/ds';
+import { BackbarTheme, BrandProvider, Button, Caption, Sheet, SheetScrollView, Title, useSheetClose } from '@/components/ds';
+import { SketchTintPicker } from '@/components/ds/SketchTintPicker';
 import { space } from '@/constants/tokens';
 import { useItemSketch } from '@/hooks/useItemSketch';
 import { useSetSketchTint } from '@/hooks/useSketchTint';

@@ -1,7 +1,8 @@
 import { useRef, type ComponentRef, type ReactNode } from 'react';
 import { StyleSheet, View } from 'react-native';
 
-import { Body, Button, Caption, DsText, PopoverMenu, PressableScale, Tag, Title, useDs, usePopover } from '@/components/ds';
+import { Body, Button, Caption, DsText, PressableScale, Tag, Title, useDs } from '@/components/ds';
+import { PopoverMenu, usePopover } from '@/components/ds/PopoverMenu';
 import { IconSymbol } from '@/components/ui/icon-symbol';
 import { UserAvatar } from '@/components/ui/UserAvatar';
 import { displayFaces, radius, space, STATUS } from '@/constants/tokens';

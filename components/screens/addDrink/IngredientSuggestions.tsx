@@ -16,6 +16,10 @@ interface IngredientSuggestionsProps extends StepProps {
   poured: readonly WizardLine[];
   ingredients: readonly CatalogIngredient[];
   onAdd: (pick: WizardPick) => void;
+  /** The name already is a classic, with its own card: no list of others to start from. */
+  classicShown?: boolean;
+  /** Puts a prompt away for this draft (draft.putAway). */
+  onAway?: (prompt: string) => void;
 }
 
 /**
@@ -23,7 +27,7 @@ interface IngredientSuggestionsProps extends StepProps {
  * common ones as quick adds until something does), the classic it's close
  * to, and, with nothing in it yet, a classic to start from.
  */
-export function IngredientSuggestions({ draft, set, poured, ingredients, onAdd }: IngredientSuggestionsProps) {
+export function IngredientSuggestions({ draft, set, poured, ingredients, onAdd, classicShown, onAway }: IngredientSuggestionsProps) {
   const has = (name: string) => poured.some((l) => l.name.trim().toLowerCase() === name.toLowerCase());
   const quick = COMMON_INGREDIENTS.filter((n) => !has(n)).slice(0, QUICK);
   // Its generic's id (Mezcal's is Agave Spirit), for matching classics.
@@ -33,16 +37,21 @@ export function IngredientSuggestions({ draft, set, poured, ingredients, onAdd }
       <GoesWith
         lines={poured}
         onAdd={onAdd}
+        away={draft.putAway?.includes('goes-with')}
+        onAway={onAway ? () => onAway('goes-with') : undefined}
         fallback={
-          <View role="group" accessibilityLabel="Quick adds" style={styles.chips}>
-            {quick.map((n) => (
-              <WizardChip key={n} label={n} add kind="button" onPress={() => onAdd(pickByName(n, ingredients))} />
-            ))}
-          </View>
+          // An empty spec offers a classic to start from instead.
+          draft.lines.length ? (
+            <View role="group" accessibilityLabel="Quick adds" style={styles.chips}>
+              {quick.map((n) => (
+                <WizardChip key={n} label={n} add kind="button" onPress={() => onAdd(pickByName(n, ingredients))} />
+              ))}
+            </View>
+          ) : null
         }
         after={<CloseToClassic ingredients={poured.flatMap((l) => (l.id ? [{ id: l.id, generic: genericOf(l.id) }] : []))} riffOf={draft.riffOf} onRiff={(riffOf) => set({ riffOf })} />}
       />
-      {draft.lines.length ? null : <StartFromClassic set={set} />}
+      {draft.lines.length || classicShown ? null : <StartFromClassic set={set} />}
     </>
   );
 }

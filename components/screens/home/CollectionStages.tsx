@@ -1,7 +1,8 @@
 import { Fragment, useRef, type ComponentRef, type ReactNode } from 'react';
 import { StyleSheet, View } from 'react-native';
 
-import { Caption, Chip, DsText, PopoverMenu, PressableScale, Title, useBreakpoint, useDs, usePopover } from '@/components/ds';
+import { Caption, Chip, DsText, PressableScale, Title, useBreakpoint, useDs } from '@/components/ds';
+import { PopoverMenu, usePopover } from '@/components/ds/PopoverMenu';
 import { IconSymbol } from '@/components/ui/icon-symbol';
 import { radius, space } from '@/constants/tokens';
 import { withAlpha } from '@/lib/color';
