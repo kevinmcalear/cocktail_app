@@ -8,7 +8,7 @@ for (const e of [{ status: 401 }, { status: 403 }, { status: 404 }, { code: 'PGR
 }
 assert.equal(retryQuery(0, { code: '40001' }), true);
 // Overload: once.
-for (const e of [{ status: 544 }, { status: 503 }, { code: '57014' }, { message: 'canceling statement due to statement timeout' }, { message: 'Request timed out' }]) {
+for (const e of [{ status: 544 }, { status: 503 }, { code: '57014' }, { code: 'PGRST000' }, { code: 'PGRST003' }, { message: 'canceling statement due to statement timeout' }, { message: 'Request timed out' }]) {
   assert.equal(retryQuery(0, e), true, JSON.stringify(e));
   assert.equal(retryQuery(1, e), false, JSON.stringify(e));
 }
