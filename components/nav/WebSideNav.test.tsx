@@ -21,7 +21,9 @@ jest.mock('@/hooks/useMode', () => ({ useMode: () => ({ mode: mockMode, setMode:
 const mockVenue = { id: 'caretakers', name: 'Caretakers', logoUrl: null, accent: null, displayFace: 'redaction', groundTint: null, roleLevel: 40 };
 
 const mockOther = { ...mockVenue, id: 'pale', name: 'Pale Moth', roleLevel: 30 };
-jest.mock('@/hooks/useActiveVenue', () => ({ useActiveVenue: () => ({ active: mockVenue, venues: [mockVenue, mockOther], enterVenue: mockEnterVenue }) }));
+let mockActive: typeof mockVenue | null = mockVenue;
+let mockLoading = false;
+jest.mock('@/hooks/useActiveVenue', () => ({ useActiveVenue: () => ({ active: mockActive, venues: mockActive ? [mockVenue, mockOther] : [], enterVenue: mockEnterVenue, isLoading: mockLoading }) }));
 jest.mock('@/hooks/useHomeBar', () => ({ useShelf: () => ({ data: ['a', 'b', 'c'] }) }));
 jest.mock('@/components/ui/UserAvatar', () => ({ CurrentUserAvatar: () => null, useUserDisplayName: () => 'Kevin McAlear' }));
 let mockRole = 40;
@@ -52,6 +54,9 @@ beforeEach(() => {
   mockRole = 40;
   mockCaps = ['edit_drinks', 'brand'];
   mockMode = 'venue';
+  mockActive = mockVenue;
+  mockLoading = false;
+  mockSetMode.mockClear();
 });
 
 test('venue mode lists search, the four tabs and the venue pages, marking the current one', async () => {
@@ -84,6 +89,23 @@ test('the place chip is where you switch place; no mark row tops the sidebar', a
   // Search is the first control: nothing (no mark, no switcher) sits above it.
   expect(screen.getAllByRole('button')[0].props.accessibilityLabel).toBe('Search');
   expect(screen.queryByRole('radio', { name: 'Pale Moth, Bartender' })).toBeNull();
+});
+
+test("on no bar's team, Home is the place even in venue mode; its Menus switches to home first", async () => {
+  mockActive = null;
+  await renderWithProviders(<WebSideNav />);
+  expect(links()).toEqual(['Tonight', 'Drinks', 'Discover', 'You', 'Shelf, 3', 'Menus', 'You: Kevin M., Home bar · 3 bottles']);
+  await fireEvent.press(screen.getByRole('link', { name: 'Menus' }));
+  expect(mockSetMode).toHaveBeenLastCalledWith('home');
+});
+
+test('while the bar is loading, no place chip or group shows, so it never names the wrong place', async () => {
+  mockActive = null;
+  mockLoading = true;
+  await renderWithProviders(<WebSideNav />);
+  expect(screen.queryByRole('button', { name: /Switch place/ })).toBeNull();
+  expect(links().slice(0, 4)).toEqual(['Tonight', 'Drinks', 'Discover', 'You']);
+  expect(screen.queryByRole('link', { name: /Shelf/ })).toBeNull();
 });
 
 test('a drink opened cold lights the tab its stack is in', async () => {
@@ -138,6 +160,7 @@ test('home mode lists the same four tabs and navigates to their routes', async (
   expect(screen.queryByRole('button', { name: 'Caretakers. Switch place' })).toBeNull();
   await fireEvent.press(screen.getByRole('link', { name: 'Menus' }));
   expect(mockPush).toHaveBeenLastCalledWith('/menus/all');
+  expect(mockSetMode).not.toHaveBeenCalled();
   expect(screen.getByRole('link', { name: 'Discover', selected: true })).toBeTruthy();
 
   await fireEvent.press(screen.getByRole('link', { name: 'Discover' }));

@@ -35,10 +35,12 @@ export interface Place extends NavMatch {
  */
 export function useSidePlaces() {
   const { mode } = useMode();
-  const { active } = useActiveVenue();
+  const { active, isLoading } = useActiveVenue();
   const role = useEffectiveRole(active?.id ?? null);
   const { active: round, hidden } = useFirstRound();
   const venue = mode === 'home' ? null : active;
+  // Home when you chose it, or when you're on no bar's team. While a bar is still loading, no group yet, so the chip never shows the wrong place.
+  const atHome = mode === 'home' || (!venue && !isLoading);
   const settings = venue ? `/settings/bar/${venue.id}` : null;
 
   // The four tabs, the same in both modes.
@@ -59,7 +61,7 @@ export function useSidePlaces() {
     { key: 'shelf', label: 'Shelf', icon: 'place.mybar', path: '/shelf' },
     ...(round ? [] : [{ key: 'home-menus', label: 'Menus', icon: 'place.menus', path: '/menus/all', prefix: '/menus' } as Place]),
   ];
-  return { venue, tabs, places: venue ? bar : home };
+  return { venue, atHome, tabs, places: venue ? bar : atHome ? home : [] };
 }
 
 /** What the bar's rows say at their right (board Prod-desk): the menu on now, how much house-made is low, the shelf's count. */

@@ -6,6 +6,7 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useDs } from '@/components/ds';
 import { space } from '@/constants/tokens';
 import { useWebNav, WEB_SIDEBAR_WIDTH } from '@/hooks/useIsWideWeb';
+import { useMode } from '@/hooks/useMode';
 import { isDesktopShell } from '@/lib/desktopShell';
 import { isEightBallKey } from '@/lib/eightBallKey';
 import { useEightBallStore } from '@/store/useEightBallStore';
@@ -51,6 +52,7 @@ export function WebSideNav() {
 function SideNav() {
   const router = useRouter();
   const pathname = usePathname();
+  const { mode, setMode } = useMode();
   const nav = useWebNav();
   const places = useSidePlaces();
   const [creating, setCreating] = useState(false);
@@ -91,7 +93,11 @@ function SideNav() {
 
   const props: SideNavProps = {
     current,
-    go: (p) => (p.tab ? router.navigate(p.path as Href) : router.push(p.path as Href)),
+    go: (p) => {
+      // Home's Menus is the menus page in home mode: someone on no bar's team may still be in venue mode.
+      if (p.key === 'home-menus' && mode !== 'home') setMode('home');
+      return p.tab ? router.navigate(p.path as Href) : router.push(p.path as Href);
+    },
     searching,
     onSearch: () => setSearching(true),
     onNew: () => setCreating(true),
@@ -116,7 +122,7 @@ function Sidebar({ current, go, searching, onSearch }: SideNavProps) {
   const ds = useDs();
   // An iPad's status bar and home indicator; 0 on the web.
   const insets = useSafeAreaInsets();
-  const { venue, tabs, places } = useSidePlaces();
+  const { venue, atHome, tabs, places } = useSidePlaces();
   const notes = useSideNotes(venue?.id ?? null);
   const name = useUserDisplayName();
   const row = (p: Place) => {
@@ -132,7 +138,7 @@ function Sidebar({ current, go, searching, onSearch }: SideNavProps) {
       <NavRow label="Search" icon="magnifyingglass" role="button" look="filled" hint={keys ? (isApplePlatform() ? '⌘K' : 'Ctrl K') : undefined} current={searching} onPress={onSearch} />
       {tabs.map(row)}
       {/* Only the place you're in: the chip switches to the others. */}
-      <PlaceHeading mark={venue?.name ?? name}>{venue?.name ?? 'Home'}</PlaceHeading>
+      {venue ? <PlaceHeading mark={venue.name}>{venue.name}</PlaceHeading> : atHome ? <PlaceHeading mark={name}>Home</PlaceHeading> : null}
       {places.map(row)}
       {venue ? <RoundNav /> : null}
       <YouFooter venue={venue} />
