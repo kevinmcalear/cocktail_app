@@ -42,7 +42,9 @@ export async function readClipboardAny(): Promise<{ text: string } | { image: { 
         const kind = item.types.find((t) => t.startsWith('image/'));
         if (kind) return { image: { uri: URL.createObjectURL(await item.getType(kind)), mimeType: kind } };
       }
-      return null;
+      // read() is missing in some browsers and refuses some clips: try plain text.
+      const plain = await navigator.clipboard?.readText?.();
+      return plain?.trim() ? { text: plain.trim() } : null;
     }
     const text = await readClipboard();
     if (text) return { text };
@@ -50,7 +52,13 @@ export async function readClipboardAny(): Promise<{ text: string } | { image: { 
     const image = await clipboard.getImageAsync({ format: 'jpeg', jpegQuality: 0.7 });
     return image ? { image: { uri: image.data, mimeType: 'image/jpeg' } } : null;
   } catch {
-    return null;
+    if (Platform.OS !== 'web') return null;
+    try {
+      const plain = (await navigator.clipboard?.readText?.())?.trim();
+      return plain ? { text: plain } : null;
+    } catch {
+      return null;
+    }
   }
 }
 

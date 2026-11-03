@@ -38,7 +38,10 @@ export function LiveCamera({ ref, torch, onState }: { ref: Ref<LiveCameraHandle>
         const granted = before.granted || (ask && before.canAskAgain && (await Camera.requestCameraPermissionsAsync()).granted);
         if (!live) return;
         if (granted) setAllowed(true);
-        else told.current('off', false);
+        else {
+          setAllowed(false);
+          told.current('off', false);
+        }
       } catch {
         if (live) told.current('failed', false);
       }
@@ -56,7 +59,7 @@ export function LiveCamera({ ref, torch, onState }: { ref: Ref<LiveCameraHandle>
 
   useImperativeHandle(ref, () => ({
     snap: async () => {
-      const picture = await view.current?.takePictureAsync({ quality: 0.5 });
+      const picture = await view.current?.takePictureAsync({ quality: 0.8 });
       return picture ? { uri: picture.uri, mimeType: 'image/jpeg' } : null;
     },
   }));
