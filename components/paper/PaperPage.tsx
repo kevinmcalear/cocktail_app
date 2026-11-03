@@ -1,13 +1,18 @@
 import { Image } from 'expo-image';
 import { useEffect, useState, type ComponentRef, type Ref } from 'react';
-import { StyleSheet, Text, View } from 'react-native';
+import { Platform, StyleSheet, Text, View } from 'react-native';
+import Svg, { Path } from 'react-native-svg';
+import { toQR } from 'toqr';
 
 import { drawingUri, loadFace, useDisplayFaces } from '@/components/ds';
+import { qrPath } from '@/components/screens/make/makeLogic';
 import { font, type DisplayFace } from '@/constants/tokens';
 import type { PaperEl, PaperPage as Page } from '@/lib/paper/page';
 import type { SketchInputs } from '@/lib/sketch/types';
 
 const WEIGHT = { '400': font.regular, '500': font.medium, '600': font.semiBold } as const;
+// The typewriter face, for paper only (constants/tokens type note): the platform's own, so nothing loads.
+const MONO = Platform.select({ ios: 'Menlo', android: 'monospace', default: 'ui-monospace, Menlo, Consolas, monospace' });
 // Room above the ascenders, so iOS doesn't cut the tops off a display line (displayClip.check.ts).
 const LEADING = 1.25;
 
@@ -70,7 +75,16 @@ export function PaperPage({ page, unit, sketches, ref, onPainted }: PaperPagePro
 
 function PaperThing({ el, unit, uri, onArrive, family }: { el: PaperEl; unit: number; uri: string | null; onArrive: (uri: string) => void; family: string }) {
   if (el.k === 'box') {
-    return <View aria-hidden style={[styles.at, { left: el.x * unit, top: el.y * unit, width: el.w * unit, height: el.h * unit, backgroundColor: el.fill, borderRadius: (el.r ?? 0) * unit }]} />;
+    const edge = el.stroke ? { borderWidth: Math.max(StyleSheet.hairlineWidth, unit), borderColor: el.stroke } : null;
+    return <View aria-hidden style={[styles.at, edge, { left: el.x * unit, top: el.y * unit, width: el.w * unit, height: el.h * unit, backgroundColor: el.fill, borderRadius: (el.r ?? 0) * unit }]} />;
+  }
+  if (el.k === 'code') {
+    const { d, size } = qrPath(toQR(el.url));
+    return (
+      <Svg aria-hidden width={el.s * unit} height={el.s * unit} viewBox={`0 0 ${size} ${size}`} style={[styles.at, { left: el.x * unit, top: el.y * unit }]}>
+        <Path d={d} fill={el.color} />
+      </Svg>
+    );
   }
   if (el.k === 'drawing') {
     if (!uri) return null;
@@ -79,7 +93,8 @@ function PaperThing({ el, unit, uri, onArrive, family }: { el: PaperEl; unit: nu
     return <Image source={{ uri }} style={[styles.at, box]} contentFit="contain" cachePolicy="memory" loading="eager" accessible={false} onLoad={() => onArrive(uri)} onError={() => onArrive(uri)} />;
   }
   const size = el.size * unit;
-  const type = el.face === 'display' ? { fontFamily: family } : WEIGHT[el.weight ?? '400'];
+  const weight = WEIGHT[el.weight ?? '400'];
+  const type = el.face === 'display' ? { fontFamily: family } : el.face === 'mono' ? { fontFamily: MONO, fontWeight: weight.fontWeight } : weight;
   return (
     <Text
       aria-hidden

@@ -88,7 +88,7 @@ export const TIERS: Record<'static' | 'catalog' | 'public' | 'user' | 'live', { 
 const HOURLY: Key[] = [['bars'], ['viewAs'], ['venue-brand'], ['age-check'], ['am-i-moderator'], ['profile', 'mine'], ['drink-lists'], ['bar-cities'], ['discover-top-bars']];
 
 /** Saved by `meta: { persist: true }` rather than a key prefix, so in a file each. */
-const META_PERSISTED: Key[] = [[D, 'specs'], [D, 'current_menu_drinks'], ['discover-list'], ['discover-bars'], ['loved-bars']];
+const META_PERSISTED: Key[] = [[D, 'specs'], [D, 'current_menu_drinks'], ['discover-list'], ['discover-bars'], ['discover-area-bars'], ['loved-bars']];
 
 /**
  * Each prefix's options, merged across tiers, shorter prefixes first:

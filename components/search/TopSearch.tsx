@@ -3,7 +3,8 @@ import { useEffect, useRef, type ComponentRef } from 'react';
 import { ScrollView, StyleSheet, TextInput, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
-import { PopoverMenu, PressableScale, useDs, useGutter, usePopover } from '@/components/ds';
+import { PressableScale, useDs, useGutter } from '@/components/ds';
+import { PopoverMenu, usePopover } from '@/components/ds/PopoverMenu';
 import { useMaterialRoles } from '@/components/nav/material';
 import { HomeMark, VenueMark } from '@/components/nav/VenueMarks';
 import { IconSymbol } from '@/components/ui/icon-symbol';

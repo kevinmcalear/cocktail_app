@@ -22,6 +22,7 @@ export const backbar = {
     glassBorder: 'rgba(255, 255, 255, 0.14)',
     scrim: 'rgba(14, 13, 12, 0.62)',
     paper: '#EFE9DD', // behind house-style sketches, in both themes
+    tilePaper: '#2A2622', // behind small drawings painted for night (ingredient thumbnails), so a tile is not a cream square on black
     sketchInk: '#3B342C',
   },
   light: {
@@ -37,6 +38,7 @@ export const backbar = {
     glassBorder: 'rgba(0, 0, 0, 0.07)',
     scrim: 'rgba(246, 243, 238, 0.72)',
     paper: '#EFE9DD',
+    tilePaper: '#EFE9DD',
     sketchInk: '#3B342C',
   },
 } as const;
@@ -120,27 +122,19 @@ export const posterPaper = { day: '#F3E6DA', night: '#241D18', panel: '#F6E7DA',
 /** The accent when there's no venue brand: bar-light amber. */
 export const DEFAULT_ACCENT = '#E4B062';
 
-/** The six palettes a venue starts from on Brand when it has no logo: a colour and a background (lib/palette). */
-export const BRAND_PALETTES = [
-  { name: 'Amber', accent: DEFAULT_ACCENT, ground: 'hint' },
-  { name: 'Rust', accent: '#D0643B', ground: 'hint' },
-  { name: 'Rose', accent: '#E07A8E', ground: 'rich' },
-  { name: 'Violet', accent: '#9C86F0', ground: 'hint' },
-  { name: 'Blue', accent: '#4F8FE0', ground: 'hint' },
-  { name: 'Teal', accent: '#3FB0A2', ground: 'rich' },
-] as const;
-
 /** Two made-up venues, for the gallery and tests. Real venues come from `bars`. */
 export const SAMPLE_BRANDS = {
   littleRye: { name: 'Little Rye', accent: '#D0643B', displayFace: 'redaction' as const },
-  paleMoth: { name: 'Pale Moth', accent: '#B9A8F5', displayFace: 'fraunces' as const },
+  paleMoth: { name: 'Pale Moth', accent: '#B9A8F5', displayFace: 'imbue' as const },
 };
 
 /**
  * Type (decided 31 Oct 2026): Redaction for names, the system font (SF,
  * Roboto, system UI on the web) for everything else, tabular figures for
  * amounts. No mono, nothing under 13. These are the only font families the
- * app sets (npm run check:design).
+ * app sets (npm run check:design). Paper is the one exception: what prints
+ * (lib/paper) sets labels, caps and amounts in the platform's typewriter
+ * face (components/paper/PaperPage), as Bet-labels and Bet-print draw them.
  */
 
 /** Registered font family names (components/ds/fonts.ts). */
@@ -148,13 +142,16 @@ export const fontFamilies = {
   name: 'Redaction',
   nameItalic: 'RedactionItalic',
   nameBold: 'RedactionBold',
-  fraunces: 'Fraunces',
-  frauncesItalic: 'FrauncesItalic',
+  newsreader: 'Newsreader',
+  newsreaderItalic: 'NewsreaderItalic',
+  fell: 'IMFellEnglish',
+  fellItalic: 'IMFellEnglishItalic',
+  imbue: 'Imbue',
+  besley: 'Besley',
+  besleyItalic: 'BesleyItalic',
   bricolage: 'BricolageGrotesque',
-  playfair: 'PlayfairDisplay',
-  playfairItalic: 'PlayfairDisplayItalic',
-  josefin: 'JosefinSans',
-  tenor: 'TenorSans',
+  belleza: 'Belleza',
+  shoulders: 'BigShoulders',
 } as const;
 
 /** The system font: React Native maps 'System' to SF on iOS and system UI on the web; Android falls back to Roboto. */
@@ -170,20 +167,67 @@ export const font: Record<'regular' | 'medium' | 'semiBold' | 'figures' | 'figur
 };
 
 /**
- * The faces names can be set in: the app's own (Redaction), then the faces a
- * venue can pick, serifs then sans. The last three load only when a venue
- * uses them (components/ds/faces.ts).
+ * The faces names can be set in (Kevin, 31 Oct 2026: one per style on the
+ * type picker, all SIL OFL): the app's own (Redaction), then Book, Worn, Deco,
+ * Tavern, Modern, Poster and Sign. All but Redaction load only when a venue
+ * uses them (components/ds/faces.ts). `scale` sets each at the same visual
+ * height as Redaction; `spacing` is letter spacing in em; `upper` faces are
+ * set in capitals (their names and credits: constants/faceInfo). Faces with no italic of their own stay upright.
+ * `ascender` and `descent` are per em, measured with fontTools from the files
+ * the app ships (Redaction from assets/fonts/redaction): the hhea descent, and
+ * the tallest of d h k l f b and the capitals A H E I T, italic included.
+ * nameStyle gives a name the line height they need.
  */
 export const displayFaces = {
-  redaction: { label: 'Redaction', regular: fontFamilies.name, italic: fontFamilies.nameItalic },
-  fraunces: { label: 'Fraunces', regular: fontFamilies.fraunces, italic: fontFamilies.frauncesItalic },
-  playfair: { label: 'Playfair Display', regular: fontFamilies.playfair, italic: fontFamilies.playfairItalic },
-  bricolage: { label: 'Bricolage Grotesque', regular: fontFamilies.bricolage, italic: fontFamilies.bricolage },
-  josefin: { label: 'Josefin Sans', regular: fontFamilies.josefin, italic: fontFamilies.josefin },
-  tenor: { label: 'Tenor Sans', regular: fontFamilies.tenor, italic: fontFamilies.tenor },
+  redaction: { regular: fontFamilies.name, italic: fontFamilies.nameItalic, scale: 1, spacing: 0, upper: false, ascender: 0.725, descent: 0.3 },
+  newsreader: { regular: fontFamilies.newsreader, italic: fontFamilies.newsreaderItalic, scale: 0.92, spacing: 0, upper: false, ascender: 0.715, descent: 0.265 },
+  fell: { regular: fontFamilies.fell, italic: fontFamilies.fellItalic, scale: 0.95, spacing: 0, upper: false, ascender: 0.752, descent: 0.363 },
+  imbue: { regular: fontFamilies.imbue, italic: fontFamilies.imbue, scale: 1.08, spacing: 0, upper: false, ascender: 0.755, descent: 0.25 },
+  besley: { regular: fontFamilies.besley, italic: fontFamilies.besleyItalic, scale: 0.8, spacing: 0, upper: false, ascender: 0.791, descent: 0.425 },
+  bricolage: { regular: fontFamilies.bricolage, italic: fontFamilies.bricolage, scale: 0.84, spacing: -0.025, upper: false, ascender: 0.712, descent: 0.27 },
+  belleza: { regular: fontFamilies.belleza, italic: fontFamilies.belleza, scale: 0.72, spacing: 0.04, upper: true, ascender: 0.692, descent: 0.224 },
+  shoulders: { regular: fontFamilies.shoulders, italic: fontFamilies.shoulders, scale: 1.05, spacing: 0.01, upper: true, ascender: 0.81, descent: 0.214 },
 } as const;
 
 export type DisplayFace = keyof typeof displayFaces;
+
+/** Points a name's line keeps above its tallest letters (components/ds/displayClip.check.ts). */
+export const NAME_ROOM = 1;
+
+/**
+ * A name set in a face at a size: the face, scaled to sit at Redaction's
+ * height, with its letter spacing and capitals. The line height is the
+ * size's own, or taller where the face needs it: iOS sits a line set tighter
+ * than its font one descent above its foot and cuts off whatever reaches past
+ * the top, so the line keeps NAME_ROOM above the face's tallest letters
+ * (Imbue's titles at its 1.08 scale, for one).
+ */
+export function nameStyle(face: DisplayFace, size: { fontSize: number; lineHeight: number }, italic = false): TextStyle {
+  const f = displayFaces[face];
+  const fontSize = Math.round(size.fontSize * f.scale);
+  return {
+    fontFamily: italic ? f.italic : f.regular,
+    fontSize,
+    lineHeight: Math.max(size.lineHeight, Math.ceil(fontSize * (f.ascender + f.descent) + NAME_ROOM)),
+    ...(f.spacing ? { letterSpacing: f.spacing * fontSize } : null),
+    ...(f.upper ? { textTransform: 'uppercase' } : null),
+  };
+}
+
+const DISPLAY_FAMILIES = new Set<string>(Object.values(fontFamilies));
+
+/**
+ * The weight a text style needs when its caller swapped a display face into a
+ * system variant (a name set in the bar's face on a Headline or Caption). The
+ * faces are single-weight files, and on Android a 500 or 600 weight left on
+ * one measures the line narrower than it draws, so the last word drops out of
+ * sight ("House drink" read "House"). Undefined when nothing needs resetting:
+ * the family is the system font, or the caller set its own weight.
+ * Checked by components/ds/faceWeight.check.ts.
+ */
+export function faceWeightReset(fontFamily: unknown, fontWeight: unknown): { fontWeight: '400' } | undefined {
+  return typeof fontFamily === 'string' && DISPLAY_FAMILIES.has(fontFamily) && fontWeight === undefined ? { fontWeight: '400' } : undefined;
+}
 
 /** Names set in the display face on rows (22/26) and on a menu's card (24/28), as the canvas draws them. */
 export const displayName = {
@@ -224,8 +268,11 @@ export type TypeStyle = keyof typeof type;
  */
 export const textSlack = 0.01;
 
-/** `mark`: shapes drawn inside a card that can be only a few points tall, like zones on the back bar plan. */
-export const radius = { mark: 4, control: 12, card: 22, sheet: 36, pill: 999 } as const;
+/**
+ * `mark`: shapes drawn inside a card that can be only a few points tall, like
+ * zones on the back bar plan. `chip`: Material 3 filter chips on Android (8dp).
+ */
+export const radius = { mark: 4, chip: 8, control: 12, card: 22, sheet: 36, pill: 999 } as const;
 
 /** 4-point grid. */
 export const space = { xs: 4, sm: 8, md: 12, lg: 16, xl: 24, xxl: 32, xxxl: 48 } as const;
@@ -234,8 +281,18 @@ export const layout = {
   breakpoints: { tablet: 768, desktop: 1200 },
   gutter: { phone: 16, tablet: 24, desktop: 32 },
   minTapTarget: 44,
+  /** Android's FAB (Material 3): 56 dp tall, plain or extended, and the plain one as wide. */
+  fab: 56,
   /** Desktop's phone previews of a drink page: about an iPhone's width, in points. */
   phoneFrame: 390,
+  /**
+   * The phone photo hero's height, as a share of the screen under the status
+   * bar. 0.3 is Eddie's (asked twice, 13 and 27 Oct); the boards draw 585 of
+   * 844, which is 0.675 here. This one number changes it.
+   */
+  photoHero: 0.3,
+  /** The photo beside the spec, from the split up (board Desk-photo-side-*). */
+  photoPanel: 500,
   /**
    * How wide a page's column grows. Pages sit left, next to the sidebar
    * (components/nav/Page.tsx): text for lists and forms, wide for plans and grids.

@@ -86,7 +86,7 @@ const G = {
   'place.collection': { d: MARK + 'M9.8 7.5h4.4L12 9.9zM12 9.9v2', f: MARK },
   'place.you': { d: YOU, f: C(12, 12, 8.5) },
   'place.team': { d: TEAM, f: C(9, 8, 3) },
-  'place.brand': { d: PALETTE + 'M8 11.5h.01M10.5 7.8h.01M14.8 7.8h.01', f: PALETTE },
+  'place.theme': { d: PALETTE + 'M8 11.5h.01M10.5 7.8h.01M14.8 7.8h.01', f: PALETTE },
   'place.roles': { d: C(8, 15.5, 3.8) + 'M10.8 12.8L19.5 4M16.5 7l2.2 2.2M14 9.5l1.8 1.8', f: C(8, 15.5, 3.8) },
   'place.settings': { d: SLIDERS, f: C(15, 7, 2.5) + C(9, 17, 2.5) },
 
@@ -127,12 +127,17 @@ const G = {
   xmark: { d: 'M6 6l12 12M18 6L6 18' },
   'xmark.circle.fill': filled({ d: RING + 'M9 9l6 6M15 9l-6 6', f: RING }),
   checkmark: { d: 'M4.5 12.5l4.5 4.5L19.5 6.5' },
+  jigger: { d: 'M7 3.5h10l-3.5 8.5h-3zM10.5 12h3l3.5 8.5H7z' },
+  'checkmark.circle': { d: RING + 'M8 12.3l2.8 2.8L16.2 9.7', f: RING },
   'checkmark.circle.fill': filled({ d: RING + 'M8 12.3l2.8 2.8L16.2 9.7', f: RING }),
+  // A step still to do (the first round, Set up <bar>): the ring the done tick sits in.
+  circle: { d: RING, f: RING },
   'checkmark.seal.fill': filled({
     d: 'M12 3l2.3 1.6 2.8-.1.9 2.7 2.3 1.6-.9 2.7.9 2.7-2.3 1.6-.9 2.7-2.8-.1L12 21l-2.3-1.6-2.8.1-.9-2.7-2.3-1.6.9-2.7-.9-2.7 2.3-1.6.9-2.7 2.8.1zM9 12l2 2 4-4',
     f: 'M12 3l2.3 1.6 2.8-.1.9 2.7 2.3 1.6-.9 2.7.9 2.7-2.3 1.6-.9 2.7-2.8-.1L12 21l-2.3-1.6-2.8.1-.9-2.7-2.3-1.6.9-2.7-.9-2.7 2.3-1.6.9-2.7 2.8.1z',
   }),
   pencil: { d: 'M16.5 4a2.5 2.5 0 0 1 3.5 3.5L8 19.5l-4.5 1 1-4.5z', f: 'M16.5 4a2.5 2.5 0 0 1 3.5 3.5L8 19.5l-4.5 1 1-4.5z' },
+  mic: { d: 'M12 15a3 3 0 0 0 3-3V6a3 3 0 0 0-6 0v6a3 3 0 0 0 3 3zM6 11a6 6 0 0 0 12 0M12 17v4', f: 'M12 15a3 3 0 0 0 3-3V6a3 3 0 0 0-6 0v6a3 3 0 0 0 3 3z' },
   trash: { d: 'M4 6.5h16M18 6.5v12a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2v-12M9 6.5V5a1.5 1.5 0 0 1 1.5-1.5h3A1.5 1.5 0 0 1 15 5v1.5M10 11v5.5M14 11v5.5' },
   'square.and.arrow.up': { d: 'M5 12v6.5a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2V12M16 7l-4-4-4 4M12 3v12' },
   /** Android's Share (And-page). */
@@ -148,6 +153,8 @@ const G = {
   'play.fill': filled({ d: 'M7 4.5l12 7.5-12 7.5z', f: 'M7 4.5l12 7.5-12 7.5z' }),
   'paperplane.fill': filled({ d: 'M20.5 3.5L10.5 13.5M20.5 3.5l-6 17-4-7-7-4z', f: 'M20.5 3.5l-6 17-4-7-7-4z' }),
   printer: { d: 'M6.5 8.5v-5h11v5' + PRINTER + R(6.5, 13.5, 11, 7, 1), f: R(6.5, 13.5, 11, 7, 1) },
+  // A code: three corner squares and a few modules (the print set's table cards, Bet-print).
+  qrcode: { d: R(3.5, 3.5, 7, 7, 1.2) + R(13.5, 3.5, 7, 7, 1.2) + R(3.5, 13.5, 7, 7, 1.2) + 'M14 14h2.5v2.5H14zM18 18h2.5v2.5H18zM18 14h2.5M14 19.5h1.5', f: R(3.5, 3.5, 7, 7, 1.2) },
   scissors: { d: C(6.5, 6.5, 2.8) + C(6.5, 17.5, 2.8) + 'M19.5 4.5L8.6 15.4M14.3 14.3l5.2 5.2M8.6 8.6L12 12' },
   'hand.tap': { d: 'M4 4l6.5 15.5 2.3-6.7 6.7-2.3zM13 13l6 6' },
   'chevron.left.forwardslash.chevron.right': { d: 'M16 17.5l5.5-5.5L16 6.5M8 6.5L2.5 12 8 17.5' },
@@ -165,11 +172,14 @@ const G = {
   person: { d: PERSON, f: C(12, 8, 3.8) },
   'person.crop.circle': { d: YOU, f: C(12, 12, 8.5) },
   'person.circle.fill': filled({ d: YOU, f: C(12, 12, 8.5) }),
+  'person.2': { d: TEAM, f: C(9, 8, 3) },
   'person.2.fill': filled({ d: TEAM, f: C(9, 8, 3) }),
   'person.badge.plus': { d: C(9.5, 8, 3.8) + 'M3 20.5v-1a4.5 4.5 0 0 1 4.5-4.5h4a4.5 4.5 0 0 1 4.5 4.5v1M19 8v6M16 11h6', f: C(9.5, 8, 3.8) },
   'person.badge.minus': { d: C(9.5, 8, 3.8) + 'M3 20.5v-1a4.5 4.5 0 0 1 4.5-4.5h4a4.5 4.5 0 0 1 4.5 4.5v1M16 11h6', f: C(9.5, 8, 3.8) },
   envelope: { d: R(3, 5, 18, 14, 2) + 'M3.5 6.5l8.5 6.5 8.5-6.5', f: R(3, 5, 18, 14, 2) },
   'bubble.left': { d: BUBBLE, f: BUBBLE },
+  // The phone in your hand (Add it to your home screen); `phone` is a call.
+  iphone: { d: R(6.5, 2.5, 11, 19, 2.5) + 'M11 18.5h2', f: R(6.5, 2.5, 11, 19, 2.5) },
   phone: { d: 'M20.5 16.4v2.6a1.8 1.8 0 0 1-2 1.8 17.6 17.6 0 0 1-7.7-2.7 17.3 17.3 0 0 1-5.3-5.3A17.6 17.6 0 0 1 2.8 5.1 1.8 1.8 0 0 1 4.6 3.1h2.6a1.8 1.8 0 0 1 1.8 1.5c.1.9.4 1.7.6 2.5a1.8 1.8 0 0 1-.4 1.9L8.1 10.1a14.2 14.2 0 0 0 5.3 5.3l1.1-1.1a1.8 1.8 0 0 1 1.9-.4c.8.3 1.6.5 2.5.6a1.8 1.8 0 0 1 1.6 1.9z' },
   globe: { d: RING + 'M3 12h18M12 3a13.5 13.5 0 0 1 3.6 9 13.5 13.5 0 0 1-3.6 9 13.5 13.5 0 0 1-3.6-9A13.5 13.5 0 0 1 12 3z', f: RING },
   instagram: { d: R(3.5, 3.5, 17, 17, 5) + C(12, 12, 4) + 'M17.2 6.8h.01' },
@@ -198,6 +208,7 @@ const G = {
   'dollarsign.circle.fill': filled({ d: RING + 'M14.8 8.8h-3.6a1.8 1.8 0 0 0 0 3.6h1.6a1.8 1.8 0 0 1 0 3.6H9.2M12 7v1.8M12 16v1.5', f: RING }),
   trophy: { d: 'M7.5 4h9v5a4.5 4.5 0 0 1-9 0zM7.5 6H5a2.5 2.5 0 0 0 2.5 4.5M16.5 6H19a2.5 2.5 0 0 1-2.5 4.5M12 13.5v3.5M8.5 20.5h7M9.5 20.5c0-2 1-3.5 2.5-3.5s2.5 1.5 2.5 3.5', f: 'M7.5 4h9v5a4.5 4.5 0 0 1-9 0z' },
   star: { d: STAR, f: STAR },
+  'chart.bar': { d: 'M4 20h16M7 16v-4M12 16V7M17 16v-7' },
   heart: { d: HEART, f: HEART },
   'heart.fill': { d: HEART, f: HEART, solid: true, on: true },
   bookmark: { d: MARK, f: MARK },
@@ -220,6 +231,9 @@ const G = {
   camera: { d: CAMERA + C(12, 13.5, 3.5), f: C(12, 13.5, 3.5) },
   'camera.fill': filled({ d: CAMERA + C(12, 13.5, 3.5), f: CAMERA }),
   photo: { d: PHOTO + C(9, 9, 1.5) + 'M20.5 15l-5-5L4.5 20.5', f: PHOTO },
+  // The viewfinder's Flash (Prod-add-flow); filled while the torch is on.
+  bolt: { d: 'M13 2.5L5 13.5h6l-1 8 8-11h-6z', f: 'M13 2.5L5 13.5h6l-1 8 8-11h-6z' },
+  'bolt.fill': filled({ d: 'M13 2.5L5 13.5h6l-1 8 8-11h-6z', f: 'M13 2.5L5 13.5h6l-1 8 8-11h-6z' }),
   // Two corners of a frame, crossed: cropping a photo.
   crop: { d: 'M6.5 2.5v13a2 2 0 0 0 2 2h13M2.5 6.5h13a2 2 0 0 1 2 2v13' },
   doc: { d: DOC + 'M14 3v5h5M9 13h6M9 17h4', f: DOC },

@@ -7,7 +7,7 @@ import { Display, GlassButton, Title, useBreakpoint, useGutter } from '@/compone
 import { space } from '@/constants/tokens';
 import { useIsWideWeb } from '@/hooks/useIsWideWeb';
 
-import { VenueDeleteBanner } from '@/components/screens/venue/DeleteVenue';
+import { VenueDeleteBanner } from '@/components/screens/venue/VenueDeleteBannerLazy';
 
 import { AddButton, DeskAddButton } from './AddButton';
 import { SearchBar } from './SearchBar';
@@ -18,7 +18,7 @@ import { VenueSwitcher } from './VenueSwitcher';
  * place button (switch between your bars and home) with the page's title
  * beside it on the left, the page's tools and the + (Add) on the right. You
  * is a tab, so there's no avatar. Android has no + here: its Add is the
- * extended FAB (AddButton.tsx), and its top row is the search bar (Prod-and),
+ * plain FAB (AddButton.tsx), and its top row is the search bar (Prod-and),
  * with the camera and the place at its end; the title sits under it.
  * The bar opens the /search page over the tabs: Android has no Search tab.
  *

@@ -1,6 +1,7 @@
 import { fireEvent, screen } from '@testing-library/react-native';
 
-import { BackbarTheme, ReviewRow } from '@/components/ds';
+import { BackbarTheme } from '@/components/ds';
+import { ReviewRow } from '@/components/ds/ReviewRow';
 import { renderWithProviders } from '@/jest.setup';
 
 test('a pick shows its choices as a named radio group and reports the one chosen', async () => {

@@ -10,7 +10,7 @@ import { useProfileAwards, useSetAwardPick } from '@/hooks/useProfiles';
 import { awardInitials, sortAwards, type Award } from '@/lib/awards';
 import { pickedShown, type ShareMode } from '@/lib/profiles';
 
-import { AddAwardSheet } from './AddAwardSheet';
+import { AddAwardSheet } from './AddAwardSheetLazy';
 import { AWARD_LOGOS } from './awardLogos';
 import { ModeLine } from './ModeLine';
 
@@ -52,7 +52,7 @@ export function PersonAwards({ profileId }: { profileId: string }) {
 }
 
 /**
- * Your awards on You (ppl-you): the same rows with an eye on each, Not
+ * Your awards in Settings > Profile (ppl-you): the same rows with an eye on each, Not
  * confirmed yet on one you sent until we check it, Only you on a hidden one,
  * and Add an award.
  */

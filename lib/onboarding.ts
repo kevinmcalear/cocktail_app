@@ -91,17 +91,24 @@ export function inviteStepLabel(step: OnboardingStep): string | null {
  * otherwise the shorter way (home cooks skip the career steps; once they say
  * yes the career steps count). Bring in shows the bar alone (its title says
  * "Last step"). The invited path counts its own three, the third being the app.
+ * "Is this you?" shares the name's number, and the owner's Find your bar has
+ * none (venue setup counts from there), so a count never jumps mid-path.
  */
 export function stepProgress(step: OnboardingStep, joined = false, trail: readonly OnboardingStep[] = [], choice: StepChoice = 'no'): { at: number; of: number; label: string | null } | null {
   if (joined) {
     const at = INVITE_STEPS.indexOf(step);
     return at < 0 ? null : { at: at + 1, of: INVITE_STEP_NAMES.length, label: `Step ${at + 1} of ${INVITE_STEP_NAMES.length}` };
   }
-  if (step === 'invite') return null;
-  const behind = trail.filter((s) => s !== 'invite').length;
+  // Finding or adding their bar starts the bar's own setup, which (like venue
+  // setup's Find your bar) shows no count: its steps are counted from there.
+  if (step === 'invite' || step === 'bar' || step === 'addbar') return null;
+  // "Is this you?" only shows when a page could be theirs, so it shares the
+  // name's number: no total that grows by one when it appears.
+  // The name is always step 1, also when a taken handle sends them back to it.
+  const behind = step === 'name' ? 0 : trail.filter((s) => s !== 'invite' && s !== 'you').length;
   let ahead = 0;
   for (let s: OnboardingStep | 'done' = nextStep(step, choice); s !== 'done'; s = nextStep(s)) ahead += 1;
-  const at = behind + 1;
+  const at = step === 'you' ? Math.max(behind, 1) : behind + 1;
   const of = at + ahead;
   return { at, of, label: step === 'bring' ? null : `Step ${at} of ${of}` };
 }
@@ -137,13 +144,6 @@ export function jobYears(job: { start_year?: number | null; end_year?: number | 
  * one. Guest, Employee and Admin are access levels, not jobs. They can change
  * it on their profile.
  */
-/** The unit a venue mostly writes its specs in, oz or ml, from its recipe lines' units; null with none (or a tie). */
-export function majorityUnit(units: (string | null)[]): 'oz' | 'ml' | null {
-  const oz = units.filter((u) => u === 'oz').length;
-  const ml = units.filter((u) => u === 'ml').length;
-  return oz === ml ? null : oz > ml ? 'oz' : 'ml';
-}
-
 export function inviteJobTitle(roleLevel: number): string {
   if (roleLevel === 30) return 'Bartender';
   if (roleLevel === 35) return 'Drink Creator';

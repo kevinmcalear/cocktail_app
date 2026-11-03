@@ -12,7 +12,7 @@ import { addressLine, awayFrom, walkTime } from '@/lib/directions';
 import { usesMiles } from '@/lib/nearMe';
 
 import { DirectionsButton, type DirectionsTarget } from './Directions';
-import { HoursSheet } from './HoursSheet';
+import { HoursSheet } from './HoursSheetLazy';
 
 type Point = { latitude: number; longitude: number } | null | undefined;
 

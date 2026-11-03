@@ -63,4 +63,5 @@ assert.equal(inviteRowError({ email: 'sam@' }), 'That email doesn’t look right
 assert.equal(inviteRowError({ email: ' sam@example.com ' }), null);
 assert.equal(normalizeWebsite('littlerye.com.au'), 'https://littlerye.com.au');
 assert.equal(normalizeWebsite('http://x.com'), 'http://x.com');
+// Shown as a domain that wraps cleanly; the path stays when there is one.
 assert.equal(normalizeWebsite('  '), null);

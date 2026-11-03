@@ -10,7 +10,7 @@ export interface CurrentSectionRow {
   menu_id: string;
   name: string;
   sort_order: number | null;
-  menu_drinks: { sort_order: number | null; price?: string | null; off_at?: string | null; item: MenuItemRow | MenuItemRow[] | null }[] | null;
+  menu_drinks: { id?: string; sort_order: number | null; price?: string | null; off_at?: string | null; item: MenuItemRow | MenuItemRow[] | null }[] | null;
 }
 
 /**
@@ -30,7 +30,7 @@ export function useCurrentMenuDrinks(menuIds: string[]) {
       const [waiting, onFrom] = onNowFilters();
       const { data, error } = await supabase
         .from('menu_sections')
-        .select(`id, menu_id, name, sort_order, menu_drinks(sort_order, price, off_at, ${MENU_DRINK_ITEM})`)
+        .select(`id, menu_id, name, sort_order, menu_drinks(id, sort_order, price, off_at, ${MENU_DRINK_ITEM})`)
         .in('menu_id', key)
         .or(waiting, { referencedTable: 'menu_drinks' })
         .or(onFrom, { referencedTable: 'menu_drinks' })

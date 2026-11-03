@@ -38,12 +38,19 @@ const BODY_FONT = "-apple-system,BlinkMacSystemFont,'Segoe UI',Helvetica,Arial,s
 // `italic`: the app has an italic for it; the others stay upright, as the app draws them.
 const FACES: Record<string, { family: string; fallback: string; italic: boolean }> = {
   instrument_serif: { family: "Instrument Serif", fallback: "Georgia,'Times New Roman',serif", italic: true },
-  fraunces: { family: "Fraunces", fallback: "Georgia,'Times New Roman',serif", italic: true },
-  playfair_display: { family: "Playfair Display", fallback: "Georgia,'Times New Roman',serif", italic: true },
+  newsreader: { family: "Newsreader", fallback: "Georgia,'Times New Roman',serif", italic: true },
+  im_fell_english: { family: "IM Fell English", fallback: "Georgia,'Times New Roman',serif", italic: true },
+  imbue: { family: "Imbue", fallback: "Georgia,'Times New Roman',serif", italic: false },
+  besley: { family: "Besley", fallback: "Georgia,'Times New Roman',serif", italic: true },
   bricolage_grotesque: { family: "Bricolage Grotesque", fallback: "Helvetica,Arial,sans-serif", italic: false },
-  josefin_sans: { family: "Josefin Sans", fallback: "Helvetica,Arial,sans-serif", italic: false },
-  tenor_sans: { family: "Tenor Sans", fallback: "Helvetica,Arial,sans-serif", italic: false },
+  belleza: { family: "Belleza", fallback: "Helvetica,Arial,sans-serif", italic: false },
+  big_shoulders: { family: "Big Shoulders", fallback: "Impact,Helvetica,Arial,sans-serif", italic: false },
 };
+// The faces bars picked before the theme faces, drawn as the nearest one now, as the app does (lib/brand.ts OLD_FACES).
+FACES.fraunces = FACES.newsreader;
+FACES.playfair_display = FACES.imbue;
+FACES.josefin_sans = FACES.bricolage_grotesque;
+FACES.tenor_sans = FACES.belleza;
 
 export function escapeHtml(value: string): string {
   return value.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;").replace(/"/g, "&quot;").replace(/'/g, "&#39;");
@@ -227,6 +234,23 @@ export function inviteEmail(input: {
     button: { label: `Join ${bar.name}`, url: input.joinUrl },
     small: "Open it on the phone or computer you'll use. The button signs you in for an hour; after that it asks for your email and sends a code.",
     foot: `Sent with Cocktail for ${bar.name}. Not you? Ignore it: nobody joins without your email.`,
+  });
+}
+
+/**
+ * To someone who asked to join through the staff link, once an Admin says
+ * yes (the door's "We'll tell you when you're in"). The link opens tonight's
+ * menu from then on, so the button is the link.
+ */
+export function joinedEmail(input: { bar: BarLook; role: string; linkUrl: string }): EmailContent {
+  const { bar } = input;
+  return barEmail(bar, `You're on ${bar.name}'s team`, {
+    preheader: `You're in, as ${article(input.role)}.`,
+    title: `You're on ${bar.name}'s team`,
+    lead: `An Admin added you as ${article(input.role)}. You'll see tonight's menu, the specs and the prep list.`,
+    button: { label: `Open ${bar.name}`, url: input.linkUrl },
+    small: "The staff link you asked from. It opens the menu on now.",
+    foot: `Sent with Cocktail for ${bar.name}, because you asked to join its team.`,
   });
 }
 

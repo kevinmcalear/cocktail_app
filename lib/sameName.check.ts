@@ -2,7 +2,7 @@
 import assert from 'node:assert/strict';
 
 import { EMPTY_DRAFT } from './drinkWizard';
-import { creditWaits, nameKey, nameLike, nameWaits, ontoBarLines, sameName, sheetWaits, specDifferences, stepWaits, storedLine, versionHeading, versionName } from './sameName';
+import { creditWaits, nameKey, nameLike, nameWaits, ontoBarLines, sameName, sheetWaits, specDifferences, stepWaits, storedLine, versionName } from './sameName';
 
 // --- names ---
 assert.equal(nameKey('  Vieux Carré (Ours) '), 'vieux carre ours');
@@ -53,8 +53,6 @@ assert.ok(stepWaits('review', draft, null, null, true));
 assert.ok(!stepWaits('method', draft, null, null, true));
 assert.ok(!stepWaits('review', draft, null, null, false));
 
-assert.deepEqual(versionHeading({ sameAs: version }), { eyebrow: 'Version of Little Rye’s Negroni', title: 'What’s different about this one?' });
-assert.equal(versionHeading({ sameAs: different }), null);
 
 // --- comparing specs ---
 const line = (id: string | null, name: string, amount: string, unit: string) => ({ id, name, amount, unit });

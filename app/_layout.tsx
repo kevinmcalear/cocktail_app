@@ -4,24 +4,25 @@ import {
     ThemeProvider,
 } from "expo-router/react-navigation";
 import { PersistQueryClientProvider } from '@tanstack/react-query-persist-client';
-import { Toaster } from 'burnt/web';
 import { Stack, usePathname, useRouter, useSegments } from "expo-router";
 import { loadAsync, useFonts } from 'expo-font';
 import { Observe, ObserveRoot, useObserve } from 'expo-observe';
 import { WebHead } from '@/components/WebHead';
+import { WebToaster } from '@/components/WebToaster';
 import { StatusBar } from "expo-status-bar";
 import { GestureRoot } from '@/components/ds/GestureRoot';
 import { useEffect } from "react";
 import { backbar } from "@/constants/tokens";
 import '@/lib/reanimatedSetup';
+import { useReducedMotion } from '@/hooks/useReducedMotion';
 
-import { DialogHost } from '@/components/DialogHost';
+import { DialogHost, ViewAsBanner } from '@/components/nav/RootHosts';
 import { ToastHost } from '@/components/ds/Toast';
 import { APP_FONTS, FIRST_PAINT_FONTS, LATER_FONTS } from '@/components/ds/fonts';
 import { ObservabilityProvider } from '@/components/ObservabilityProvider';
 import { OfflineBanner } from '@/components/OfflineBanner';
-import { ViewAsBanner } from '@/components/ViewAsBanner';
 import { AuthProvider, useAuth } from "@/ctx/AuthContext";
+import { BarUnitSync } from '@/hooks/useBarUnitSync';
 import { useColorScheme } from "@/hooks/use-color-scheme";
 import { useIsWideWeb } from '@/hooks/useIsWideWeb';
 import { useHoldUpdates, useOtaUpdates } from '@/hooks/useOtaUpdates';
@@ -54,6 +55,7 @@ export const unstable_settings = {
 
 function RootLayoutNav() {
   const colorScheme = useColorScheme();
+  const reduceMotion = useReducedMotion();
   const { session, user, loading } = useAuth();
   const segments = useSegments();
   const pathname = usePathname();
@@ -80,6 +82,8 @@ function RootLayoutNav() {
     // releases (/r/<id>), public profiles (/p/<handle>), shared home menus
     // (/m/<id>) and public events (/e/<id>) are public.
     if (segments[0] === 'legal' || segments[0] === 'support' || segments[0] === 'v' || segments[0] === 'dev' || segments[0] === 'd' || segments[0] === 'r' || segments[0] === 'p' || segments[0] === 'm' || segments[0] === 'e') return;
+    // Your allergies are kept on this phone until you sign in (Loop-allergy, At a table, signed out).
+    if (segments[0] === 'settings' && (segments as string[])[1] === 'allergies') return;
     // Signed out, a drink opens as its public card (/d/<id>), which asks you to sign in for the rest.
     const drink = !session && /^\/cocktail\/([^/]+)$/.exec(pathname);
     if (drink) return router.replace(`/d/${drink[1]}`);
@@ -106,7 +110,7 @@ function RootLayoutNav() {
   // The menu builder fills the whole width (its library, the menu and the guest card), as
   // drawn, and the printable guest card and run sheet are bare pages.
   const building = segments[0] === 'menus' && (['edit', 'card'].includes((segments as string[])[2]) || (segments as string[])[3] === 'print');
-  const showWebSidebar = isWideWeb && !!user && segments[0] !== 'auth' && segments[0] !== 'v' && segments[0] !== 'onboarding' && segments[0] !== 'venue-setup' && !building;
+  const showWebSidebar = isWideWeb && !!user && segments[0] !== 'auth' && segments[0] !== 'v' && segments[0] !== 'onboarding' && segments[0] !== 'venue-setup' && segments[0] !== 'snap' && !building;
 
   return (
     <ThemeProvider value={colorScheme === "dark" ? DarkTheme : DefaultTheme}>
@@ -125,6 +129,7 @@ function RootLayoutNav() {
           }
         `}} />
       )}
+      <BarUnitSync />
       <View style={{ flex: 1, flexDirection: 'row' }}>
         {showWebSidebar ? <SideNav /> : null}
         <View style={{ flex: 1, minWidth: 0 }}>
@@ -138,7 +143,6 @@ function RootLayoutNav() {
             <Stack.Screen name="e/[id]" options={{ headerShown: false }} />
             <Stack.Screen name="week/index" options={{ headerShown: false }} />
             <Stack.Screen name="week/review" options={{ headerShown: false }} />
-            <Stack.Screen name="shelf" options={{ headerShown: false }} />
             <Stack.Screen name="add-cocktail" options={{ presentation: "modal", headerShown: false }} />
             <Stack.Screen name="add-ingredient" options={{ presentation: "modal", headerShown: false }} />
             <Stack.Screen name="make-recipe" options={{ presentation: "modal", headerShown: false }} />
@@ -174,9 +178,15 @@ function RootLayoutNav() {
               options={{ presentation: "fullScreenModal", headerShown: false, gestureEnabled: false }}
             />
             <Stack.Screen name="share/poster" options={{ presentation: "modal", headerShown: false }} />
+            <Stack.Screen name="print/index" options={{ presentation: "modal", headerShown: false }} />
+            <Stack.Screen name="print/sheet" options={{ headerShown: false }} />
+            <Stack.Screen name="label/index" options={{ presentation: "modal", headerShown: false }} />
             {/* Declared here because on iOS, a screen pushed over a modal ignores headerShown set from inside it. */}
             <Stack.Screen name="back-bar" options={{ headerShown: false }} />
-            <Stack.Screen name="team" options={{ headerShown: false }} />
+            <Stack.Screen name="team/index" options={{ headerShown: false }} />
+            <Stack.Screen name="team/[userId]" options={{ headerShown: false }} />
+            {/* Add's viewfinder: the whole screen, no swipe away mid-shot; a fade under Reduce Motion. */}
+            <Stack.Screen name="snap" options={{ presentation: "fullScreenModal", headerShown: false, gestureEnabled: false, animation: reduceMotion ? "fade" : "slide_from_bottom" }} />
             <Stack.Screen name="bring-in/index" options={{ headerShown: false }} />
             <Stack.Screen name="bring-in/done" options={{ headerShown: false }} />
             <Stack.Screen name="drafts" options={{ headerShown: false }} />
@@ -185,12 +195,17 @@ function RootLayoutNav() {
             <Stack.Screen name="p/[id]/claim" options={{ headerShown: false }} />
             <Stack.Screen name="p/[id]/bottles" options={{ headerShown: false }} />
             <Stack.Screen name="credits-to-check" options={{ headerShown: false }} />
+            <Stack.Screen name="people/index" options={{ headerShown: false }} />
+            <Stack.Screen name="people/find" options={{ headerShown: false }} />
             <Stack.Screen name="taste" options={{ headerShown: false }} />
             <Stack.Screen name="support" options={{ headerShown: false, title: "Support" }} />
             <Stack.Screen name="history" options={{ headerShown: false, title: "Cocktail history" }} />
             <Stack.Screen name="settings/index" options={{ headerShown: false, title: "Settings" }} />
             <Stack.Screen name="settings/bar/[id]/index" options={{ headerShown: false }} />
             <Stack.Screen name="settings/bar/[id]/brand" options={{ headerShown: false }} />
+            <Stack.Screen name="settings/bar/[id]/theme" options={{ headerShown: false }} />
+            <Stack.Screen name="settings/bar/[id]/roles/index" options={{ headerShown: false }} />
+            <Stack.Screen name="settings/bar/[id]/roles/[role]" options={{ headerShown: false }} />
             <Stack.Screen name="p/review-claims" options={{ headerShown: false }} />
             <Stack.Screen name="p/review-photos" options={{ headerShown: false }} />
             <Stack.Screen name="rankings/[itemId]" options={{ headerShown: false }} />
@@ -246,13 +261,21 @@ function RootLayout() {
   const [fontsLoaded] = useFonts(Platform.OS === 'web' ? FIRST_PAINT_FONTS : APP_FONTS);
   useEffect(() => {
     if (Platform.OS !== 'web') return;
-    // ~0.75 MB of faces the first screen rarely needs, and the main screens'
-    // code: after its data, so a slow connection fetches that first (RAIL
-    // load). Text uses a fallback till then.
-    return afterFirstData(queryClient, () => {
-      loadAsync(LATER_FONTS).catch((e) => console.warn('Fonts failed to load', e));
-      void prefetchRoutes();
-    });
+    // Redaction's italic and bold, and the main screens' code: once the first
+    // screen's data is in and the network has been quiet for a second, so a
+    // slow connection fetches that first (RAIL load). Starting at 4 s whatever
+    // the data was doing put a megabyte of code beside Discover's requests.
+    // Text uses a fallback till then. A screen with nothing to fetch starts them at 4 s.
+    return afterFirstData(
+      queryClient,
+      () => {
+        loadAsync(LATER_FONTS).catch((e) => console.warn('Fonts failed to load', e));
+        void prefetchRoutes();
+      },
+      15_000,
+      1_000,
+      4_000
+    );
   }, []);
   if (!fontsLoaded && Platform.OS !== 'web') { return null; }
   return (
@@ -267,7 +290,7 @@ function RootLayout() {
         </AuthProvider>
         <DialogHost />
         <ToastHost />
-        {Platform.OS === 'web' ? <Toaster /> : null}
+        <WebToaster />
       </GestureRoot>
     </PersistQueryClientProvider>
   );

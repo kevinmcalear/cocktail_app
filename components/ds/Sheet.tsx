@@ -1,14 +1,17 @@
-import { createContext, use, useEffect, useEffectEvent, useState, type ReactNode } from 'react';
+import { useEffect, useEffectEvent, useState, type ReactNode } from 'react';
 import { KeyboardAvoidingView, Modal, Platform, Pressable, StyleSheet, useWindowDimensions, View, type ColorValue, type StyleProp, type ViewStyle } from 'react-native';
 import { GestureDetector, GestureHandlerRootView } from 'react-native-gesture-handler';
-import { useSafeAreaInsets } from 'react-native-safe-area-context';
-import Animated, { Easing, useAnimatedStyle, useReducedMotion, useSharedValue, withSpring, withTiming } from 'react-native-reanimated';
+import Animated, { Easing, Extrapolation, interpolate, useAnimatedStyle, useReducedMotion, useSharedValue, withSpring, withTiming } from 'react-native-reanimated';
 import { scheduleOnRN } from 'react-native-worklets';
 
 import { radius, space, springs } from '@/constants/tokens';
 
+import { useDiscardGuard } from './discardGuard';
+import { FlowSheet } from './FlowSheet';
+import { CloseContext } from './sheetClose';
 import { dragShade, STRETCH } from './sheetDrag';
 import { sheetFrame, sheetIsDialog } from './sheetFrame';
+import { SheetGrow } from './SheetGrow';
 import { useDs } from './theme';
 import { ToastHost } from './Toast';
 import { SheetScrollContext, slideAway, useSheetDrag } from './useSheetDrag';
@@ -17,17 +20,9 @@ import { SheetScrollContext, slideAway, useSheetDrag } from './useSheetDrag';
 const FADE_IN = { duration: 200, easing: Easing.out(Easing.cubic) };
 const FADE_OUT = { duration: 180, easing: Easing.in(Easing.cubic) };
 
-const CloseContext = createContext<(() => void) | null>(null);
+export { useSheetClose } from './sheetClose';
 
-/**
- * Inside a Sheet: close it the way the backdrop does, animating out before
- * onClose. For the sheet's own X and Cancel buttons.
- */
-export function useSheetClose(): () => void {
-  const close = use(CloseContext);
-  if (!close) throw new Error('useSheetClose is for buttons inside a Sheet');
-  return close;
-}
+const FLOATING_RADIUS = radius.sheet + 4;
 
 export interface SheetProps {
   visible: boolean;
@@ -49,14 +44,36 @@ export interface SheetProps {
   /** iOS: once the sheet is fully gone (to open another modal after it). */
   onDismiss?: () => void;
   /**
+   * Unsaved changes in it: closing it any way but the caller's own Done (a
+   * swipe or drag down, the backdrop, back, Escape, its X or Cancel) asks
+   * "Discard changes?" first, and it stays open unless they say Discard.
+   */
+  dirty?: boolean;
+  /**
    * small (the default): our sheet, for pickers, menus and short forms.
    * flow: a whole flow (Add, Rank it, Theme). The system's own sheet on
-   * phones: iOS's page sheet (its glass, grabber and swipe to close) and a
-   * full-screen dialog on Android, which brings its own back. The same
-   * centred dialog on the web, a little wider. Decision sheets: mixed.
+   * phones: SwiftUI's sheet on iOS (its glass, grabber, swipe to close and
+   * detents) and a full-screen dialog on Android, which brings its own back.
+   * The same centred dialog on the web, a little wider. Head it with
+   * FlowHead. Decision sheets: mixed.
    */
   kind?: 'small' | 'flow';
-  /** The web at phone width: the whole window, not a dialog (Sheet.web). */
+  /**
+   * A flow on iOS: rest part-way, at this share of the screen's height (0.3
+   * to 0.9), as the first step of Add and Rank it is drawn; it can still be
+   * pulled up to full. Drop it for the next step and the sheet grows to full
+   * height. Android's flow is full screen and the web's a dialog, so only
+   * iOS reads it.
+   */
+  part?: number;
+  /**
+   * Phones: grow out of the + that opened it (its frame in the window, from
+   * measureInWindow), as Add does (Prod-motion-sheet). With Reduce Motion it fades.
+   */
+  from?: { x: number; y: number; width: number; height: number } | null;
+  /** Phones: a card inset from the edges with every corner round (Prod-add-B), not edge to edge. */
+  floating?: boolean;
+  /** The web at phone width: the whole window, as the phone's own sheet does, not a dialog (Sheet.web; the theme's Type and Colour). */
   fullAtPhoneWidth?: boolean;
 }
 
@@ -74,61 +91,23 @@ export function Sheet(props: SheetProps) {
   return props.kind === 'flow' && !sheetIsDialog ? <FlowSheet {...props} /> : <SmallSheet {...props} />;
 }
 
-/**
- * A whole flow in the system's sheet: no drag or backdrop of ours, the
- * platform draws and dismisses it. Its X and Cancel still close it with
- * useSheetClose(); a swipe down (iOS) or back (Android) calls onClose.
- */
-function FlowSheet({ visible, onClose, accessibilityLabel, children, style, ground, header, keyboard, keyboardOffset = 0, onShow, onDismiss }: SheetProps) {
-  const ds = useDs();
-  const insets = useSafeAreaInsets();
-  const android = Platform.OS === 'android';
-  const body = (
-    <View role="dialog" aria-label={accessibilityLabel} style={[styles.flex, style]}>
-      {header}
-      {children}
-    </View>
-  );
-  return (
-    <Modal
-      visible={visible}
-      animationType="slide"
-      presentationStyle={android ? 'fullScreen' : 'pageSheet'}
-      statusBarTranslucent={android}
-      navigationBarTranslucent={android}
-      onRequestClose={onClose}
-      onShow={onShow}
-      onDismiss={onDismiss}
-    >
-      <GestureHandlerRootView style={[styles.flex, { backgroundColor: ground ? ds.c.ground : ds.c.surface, paddingTop: android ? insets.top : 0, paddingBottom: android ? insets.bottom : 0 }]}>
-        <CloseContext value={onClose}>
-          {keyboard ? (
-            <KeyboardAvoidingView behavior={Platform.select({ ios: 'padding', android: 'height' })} keyboardVerticalOffset={keyboardOffset} style={styles.flex}>
-              {body}
-            </KeyboardAvoidingView>
-          ) : (
-            body
-          )}
-        </CloseContext>
-        {/* The sheet is a window over the app: a toast shown from it draws here, on top. */}
-        <ToastHost />
-      </GestureHandlerRootView>
-    </Modal>
-  );
-}
-
-function SmallSheet({ visible, onClose, accessibilityLabel, children, style, ground, header, keyboard, keyboardOffset = 0, onShow, onDismiss }: SheetProps) {
+function SmallSheet({ visible, onClose, accessibilityLabel, children, style, ground, header, keyboard, keyboardOffset = 0, onShow, onDismiss, dirty, from, floating }: SheetProps) {
   const ds = useDs();
   const reduceMotion = useReducedMotion();
-  const slide = !sheetIsDialog && !reduceMotion;
-  const { height: windowHeight } = useWindowDimensions();
+  const grow = !!from && !sheetIsDialog && !reduceMotion;
+  const slide = !sheetIsDialog && !reduceMotion && !grow;
+  const { height: windowHeight, width: windowWidth } = useWindowDimensions();
+  const inset = floating && !sheetIsDialog ? space.sm : 0;
+  // 0 at the button, 1 where it sits; and how big it is, once laid out.
+  const grown = useSharedValue(grow ? 0 : 1);
+  const box = useSharedValue({ w: 0, h: 0 });
   // Gone once it has animated out: the Modal stays up until then.
   const [gone, setGone] = useState(!visible);
   if (visible && gone) setGone(false);
 
   const backdrop = useSharedValue(0);
   const offset = useSharedValue(slide ? windowHeight : 0);
-  const opacity = useSharedValue(slide ? 1 : 0);
+  const opacity = useSharedValue(slide || grow ? 1 : 0);
   // How far it's pulled down from where it sits; leaving slides this off screen.
   const drag = useSharedValue(0);
 
@@ -140,7 +119,7 @@ function SmallSheet({ visible, onClose, accessibilityLabel, children, style, gro
       if (finished) scheduleOnRN(then);
     };
     backdrop.set(withTiming(0, FADE_OUT));
-    if (slide) slideAway(drag, windowHeight, velocity, done);
+    if (slide || grow) slideAway(drag, windowHeight, velocity, done);
     else opacity.set(withTiming(0, FADE_OUT, done));
   };
 
@@ -149,13 +128,18 @@ function SmallSheet({ visible, onClose, accessibilityLabel, children, style, gro
     setGone(true);
     onClose();
   };
-  const dismiss = () => leave(closed);
+  const guard = useDiscardGuard(dirty);
+  const dismiss = () => guard(() => leave(closed));
   const { height, pan, scroll } = useSheetDrag({
     drag,
     enabled: !sheetIsDialog,
     onClose: (velocity) => {
       'worklet';
-      leave(closed, velocity);
+      // Unsaved changes: back up into place, then ask.
+      if (dirty) {
+        drag.set(withSpring(0, springs.glide));
+        scheduleOnRN(dismiss);
+      } else leave(closed, velocity);
     },
   });
 
@@ -165,12 +149,16 @@ function SmallSheet({ visible, onClose, accessibilityLabel, children, style, gro
     offset.set(offset.get() + drag.get());
     drag.set(0);
     backdrop.set(withTiming(1, FADE_IN));
-    if (slide) offset.set(withSpring(0, springs.glide));
+    if (grow) {
+      offset.set(0);
+      grown.set(0);
+      grown.set(withSpring(1, springs.glide));
+    } else if (slide) offset.set(withSpring(0, springs.glide));
     else {
       offset.set(0);
       opacity.set(withTiming(1, FADE_IN));
     }
-  }, [visible, gone, slide, backdrop, offset, opacity, drag]);
+  }, [visible, gone, slide, grow, grown, backdrop, offset, opacity, drag]);
 
   // The parent closed it (a Save, a Cancel): out, then the Modal goes.
   const hide = useEffectEvent(() => leave(() => setGone(true)));
@@ -180,7 +168,8 @@ function SmallSheet({ visible, onClose, accessibilityLabel, children, style, gro
 
   // The backdrop lightens as the sheet is pulled down; it still never moves.
   const backdropStyle = useAnimatedStyle(() => ({ opacity: backdrop.get() * dragShade(drag.get(), height.get()) }));
-  const panelStyle = useAnimatedStyle(() => ({ opacity: opacity.get(), transform: [{ translateY: offset.get() + drag.get() }] }));
+  // Growing, the card below stands in for the panel until it has nearly arrived.
+  const panelStyle = useAnimatedStyle(() => ({ opacity: opacity.get() * interpolate(grown.get(), [0.7, 1], [0, 1], Extrapolation.CLAMP), transform: [{ translateY: offset.get() + drag.get() }] }));
 
   const placed = [styles.place, sheetFrame.scrim];
   // The caller's own colour and width, if it set them (RN 0.88 types flatten only for animated styles).
@@ -193,10 +182,14 @@ function SmallSheet({ visible, onClose, accessibilityLabel, children, style, gro
       aria-label={accessibilityLabel}
       accessibilityViewIsModal
       onAccessibilityEscape={dismiss}
-      onLayout={(e) => height.set(e.nativeEvent.layout.height)}
+      onLayout={(e) => {
+        height.set(e.nativeEvent.layout.height);
+        box.set({ w: e.nativeEvent.layout.width, h: e.nativeEvent.layout.height });
+      }}
       style={[
         styles.panel,
         sheetIsDialog ? styles.dialog : styles.sheet,
+        inset ? [styles.floating, { marginBottom: inset, width: windowWidth - inset * 2 }] : null,
         sheetFrame.panel,
         { backgroundColor: fill, borderColor: ds.c.lineStrong },
         style,
@@ -217,8 +210,8 @@ function SmallSheet({ visible, onClose, accessibilityLabel, children, style, gro
 
   // Phones: a drag anywhere on the panel moves it. Just below the screen's
   // edge, moving with it, the sheet's colour carries on: what shows when it's pulled up past the top.
-  const dragged = sheetIsDialog ? (
-    panel
+  const dragged = sheetIsDialog || inset ? (
+    sheetIsDialog ? panel : <GestureDetector gesture={pan}>{panel}</GestureDetector>
   ) : (
     <>
       <Animated.View style={[styles.stretch, { backgroundColor: fill, maxWidth: own?.maxWidth ?? styles.panel.maxWidth }, panelStyle]} />
@@ -234,6 +227,7 @@ function SmallSheet({ visible, onClose, accessibilityLabel, children, style, gro
           <Animated.View style={[StyleSheet.absoluteFill, { backgroundColor: ds.c.scrim }, backdropStyle]}>
             <Pressable accessibilityLabel="Close" style={StyleSheet.absoluteFill} onPress={dismiss} />
           </Animated.View>
+          {grow && from ? <SheetGrow from={from} grown={grown} size={box} opacity={opacity} drag={drag} bottom={inset} corner={inset ? FLOATING_RADIUS : radius.sheet} fill={fill} /> : null}
           {keyboard ? (
             // Web gets no behaviour: there the dialog sits in the middle anyway.
             <KeyboardAvoidingView behavior={Platform.select({ ios: 'padding', android: 'height' })} keyboardVerticalOffset={keyboardOffset} style={placed}>
@@ -260,6 +254,8 @@ const styles = StyleSheet.create({
     borderCurve: 'continuous',
     borderTopWidth: StyleSheet.hairlineWidth,
   },
+  // Every corner the same: per-corner radii win over borderRadius, so the sheet's top ones are reset too.
+  floating: { borderRadius: FLOATING_RADIUS, borderTopLeftRadius: FLOATING_RADIUS, borderTopRightRadius: FLOATING_RADIUS, borderCurve: 'continuous', borderWidth: StyleSheet.hairlineWidth },
   stretch: { position: 'absolute', bottom: -STRETCH, alignSelf: 'center', width: '100%', height: STRETCH },
   dialog: { maxHeight: '86%' },
   handle: { paddingTop: space.sm },

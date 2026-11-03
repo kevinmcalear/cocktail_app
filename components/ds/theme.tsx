@@ -1,9 +1,10 @@
 import { createContext, useContext, useMemo, type ReactNode } from 'react';
 
-import { backbar, DEFAULT_ACCENT, type BackbarColors, type BackbarScheme, type DisplayFace } from '@/constants/tokens';
+import { DEFAULT_ACCENT, type BackbarColors, type BackbarScheme, type DisplayFace } from '@/constants/tokens';
 import { useColorScheme } from '@/hooks/use-color-scheme';
-import { accentFill, readableAccent } from '@/lib/color';
+import { useMoreContrast } from '@/hooks/useMoreContrast';
 import { neutralsFor } from '@/lib/palette';
+import { themeColours } from '@/lib/theme';
 
 import { useLoadedFace } from './faces';
 
@@ -18,7 +19,8 @@ const BrandContext = createContext<Brand>({ accent: DEFAULT_ACCENT, displayFace:
 const SchemeContext = createContext<BackbarScheme | null>(null);
 
 /** The active venue's accent and display face. Step 2 feeds this from `bars`. */
-export function BrandProvider({ accent, displayFace, groundTint, children }: Partial<Brand> & { children: ReactNode }) {
+/** `groundTint` null is no tint (a preview of Neutral); left out, it's the parent's. */
+export function BrandProvider({ accent, displayFace, groundTint, children }: Partial<Omit<Brand, 'groundTint'>> & { groundTint?: string | null; children: ReactNode }) {
   const parent = useContext(BrandContext);
   // A face that loads on demand shows as Redaction until its file is in.
   const face = useLoadedFace(displayFace ?? parent.displayFace);
@@ -26,7 +28,7 @@ export function BrandProvider({ accent, displayFace, groundTint, children }: Par
     () => ({
       accent: accent ?? parent.accent,
       displayFace: face,
-      groundTint: groundTint ?? parent.groundTint,
+      groundTint: groundTint === undefined ? parent.groundTint : (groundTint ?? undefined),
     }),
     [accent, face, groundTint, parent]
   );
@@ -55,15 +57,18 @@ export function useDs(): Ds {
   const appScheme = useColorScheme();
   const scheme = useContext(SchemeContext) ?? appScheme;
   const { accent, displayFace, groundTint } = useContext(BrandContext);
+  const moreContrast = useMoreContrast();
   return useMemo(() => {
     const c = neutralsFor(scheme, groundTint);
+    // The guard rails (lib/theme): the button held off the page with a label that reads, text in its own shade.
+    const t = themeColours(accent, c.ground, scheme === 'dark');
     return {
       scheme,
       c,
-      accentText: readableAccent(accent, c.ground),
-      // Button text is whichever ink reads better on the accent (Kevin, 28 Oct: no hand pick).
-      accentFill: accentFill(accent, backbar.dark.ground, backbar.light.surface),
+      // Increase Contrast overrides the bar: buttons and its text go ink (canvas th-n-guard).
+      accentText: moreContrast ? c.ink : t.text,
+      accentFill: moreContrast ? { fill: c.ink, text: c.ground } : { fill: t.fill, text: t.onFill },
       displayFace,
     };
-  }, [scheme, accent, displayFace, groundTint]);
+  }, [scheme, accent, displayFace, groundTint, moreContrast]);
 }

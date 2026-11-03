@@ -13,9 +13,13 @@ export function siteOrigin(): string {
   return SITE_URL;
 }
 
-/** The link a venue shares with its staff: sign in and install the venue's own app. */
-export function venueStaffUrl(slug: string): string {
-  return `${siteOrigin()}/v/${slug}`;
+/**
+ * The link a venue shares with its staff: the venue's page with the staff
+ * link's secret (bar_staff_links.token). Only the secret lets someone ask or
+ * join; the team already on it opens /v/<slug> and goes straight in.
+ */
+export function venueStaffUrl(slug: string, token: string): string {
+  return `${siteOrigin()}/v/${slug}?join=${encodeURIComponent(token)}`;
 }
 
 /** The venue's install manifest, served by the venue-app edge function. */

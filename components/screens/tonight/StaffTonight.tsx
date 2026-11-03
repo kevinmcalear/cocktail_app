@@ -1,7 +1,8 @@
 import { useRouter, type Href } from 'expo-router';
-import { StyleSheet, View } from 'react-native';
+import { StyleSheet, useWindowDimensions, View } from 'react-native';
 
 import { Body, Caption, DrinkDrawingFor, DsText, PencilState, PressableScale, Tag, useDs } from '@/components/ds';
+import { DrawingBar } from '@/components/ds/DrawingBar';
 import { IconSymbol } from '@/components/ui/icon-symbol';
 import { TonightSetupBanner } from '@/components/screens/venueSetup/SetupBanner';
 import { TonightWeek } from '@/components/screens/week/TonightWeek';
@@ -14,7 +15,8 @@ import type { NightPhase } from '@/lib/nightPhase';
 
 import { BeforeDoors, NeedsYou, OffTonight, OnShift } from './BeforeDoors';
 import type { NightHandover } from './NightHandover';
-import { HeroTrio, ListHead, NoteCard, TonightSection } from './TonightParts';
+import { HeroTrio } from './HeroTrio';
+import { ListHead, NoteCard, TonightSection } from './TonightParts';
 import type { useStaffTonight } from './useStaffTonight';
 
 type Staff = ReturnType<typeof useStaffTonight>;
@@ -46,32 +48,38 @@ export function StaffLists({ t, barId, wide }: { t: Staff; barId: string; wide: 
   const { lead } = t;
   const open = (id: string) => router.push(listHref(id));
   return (
-    <View style={styles.stack}>
-      <TonightSetupBanner barId={barId} />
-      <HeroTrio ids={t.heroIds} label={`${lead.menu.name}, on now. Opens the list.`} onPress={() => open(lead.menu.id)} />
-      <ListHead eyebrow={`On the menu · ${plural(drinkCount(lead), 'drink')}`} name={lead.menu.name} onPress={() => open(lead.menu.id)} />
-      {wide ? <DrinkGrid block={lead} /> : null}
-      {t.blocks.slice(1).map((b) => (
-        <ListHead key={b.menu.id} eyebrow={`Also on · ${plural(drinkCount(b), 'drink')}`} name={b.menu.name} onPress={() => open(b.menu.id)} />
-      ))}
-    </View>
+    <DrawingBar barId={barId}>
+      <View style={styles.stack}>
+        <TonightSetupBanner barId={barId} />
+        <HeroTrio ids={t.heroIds} label={`${lead.menu.name}, on now. Opens the list.`} onPress={() => open(lead.menu.id)} />
+        <ListHead eyebrow={`On the menu · ${plural(drinkCount(lead), 'drink')}`} name={lead.menu.name} onPress={() => open(lead.menu.id)} />
+        {wide ? <DrinkGrid block={lead} /> : null}
+        {t.blocks.slice(1).map((b) => (
+          <ListHead key={b.menu.id} eyebrow={`Also on · ${plural(drinkCount(b), 'drink')}`} name={b.menu.name} onPress={() => open(b.menu.id)} />
+        ))}
+      </View>
+    </DrawingBar>
   );
 }
 
-/** The lead list's drinks, four to a row, each a small drawing and its name (Prod-desk). */
+/** Below this window width the grid drops to two columns (Prod-desk-today: the side column leaves less room). */
+const TWO_COLUMNS = 1100;
+
+/** The lead list's drinks, four to a row (two below 1100 px), each a small drawing and its name, which wraps rather than cuts off (Prod-desk-today). */
 function DrinkGrid({ block }: { block: TonightBlock }) {
   const ds = useDs();
   const router = useRouter();
+  const columns = useWindowDimensions().width < TWO_COLUMNS ? 2 : 4;
   const drinks = block.sections.flatMap((s) => s.drinks);
   return (
     <View role="list" style={[styles.grid, { borderTopColor: ds.c.line }]}>
       {drinks.map((d) => (
-        <PressableScale key={d.id} role="link" accessibilityLabel={d.name} onPress={() => router.push(itemHref(categoryOf(d.kind), d.id) as Href)} style={[styles.cell, { borderBottomColor: ds.c.line }]}>
-          <DrinkDrawingFor itemId={d.id} size="row" pour={false} />
-          <DsText variant="headline" numberOfLines={1} style={[styles.flex, { fontFamily: displayFaces[ds.displayFace].regular }]}>
-            {d.name}
-          </DsText>
-        </PressableScale>
+            <PressableScale key={d.rowId} role="link" accessibilityLabel={d.name} onPress={() => router.push(itemHref(categoryOf(d.kind), d.id) as Href)} style={[styles.cell, { width: `${100 / columns}%`, borderBottomColor: ds.c.line }]}>
+              <DrinkDrawingFor itemId={d.id} size="row" pour={false} />
+              <DsText variant="headline" style={[styles.flex, { fontFamily: displayFaces[ds.displayFace].regular }]}>
+                {d.name}
+              </DsText>
+            </PressableScale>
       ))}
     </View>
   );
@@ -150,7 +158,7 @@ function ServiceRows({ t }: { t: Staff }) {
   return (
     <View role="list">
       {t.service.map((d, i) => (
-        <PressableScale key={d.id} role="link" accessibilityLabel={[d.name, d.sub].filter(Boolean).join('. ')} onPress={() => router.push(itemHref(categoryOf(d.kind), d.id) as Href)} style={[styles.learn, { borderTopColor: i ? ds.c.line : 'transparent' }]}>
+        <PressableScale key={d.rowId} role="link" accessibilityLabel={[d.name, d.sub].filter(Boolean).join('. ')} onPress={() => router.push(itemHref(categoryOf(d.kind), d.id) as Href)} style={[styles.learn, { borderTopColor: i ? ds.c.line : 'transparent' }]}>
           <DrinkDrawingFor itemId={d.id} size="row" pour={false} />
           <View style={styles.flex}>
             <DsText variant="headline" numberOfLines={1} style={{ fontFamily: displayFaces[ds.displayFace].regular }}>
@@ -197,8 +205,9 @@ const styles = StyleSheet.create({
   stack: { gap: space.md },
   side: { gap: space.xl },
   card: { paddingVertical: space.xs, paddingHorizontal: space.lg, overflow: 'hidden' },
-  grid: { flexDirection: 'row', flexWrap: 'wrap', borderTopWidth: StyleSheet.hairlineWidth, marginTop: space.sm },
-  cell: { width: '25%', flexDirection: 'row', alignItems: 'center', gap: space.sm, paddingVertical: space.sm, borderBottomWidth: StyleSheet.hairlineWidth },
+  // width: '100%' gives the percentage cells a real width to divide on the web.
+  grid: { width: '100%', alignSelf: 'stretch', flexDirection: 'row', flexWrap: 'wrap', borderTopWidth: StyleSheet.hairlineWidth, marginTop: space.sm },
+  cell: { flexDirection: 'row', alignItems: 'center', gap: space.sm, paddingVertical: space.sm, borderBottomWidth: StyleSheet.hairlineWidth },
   learn: { flexDirection: 'row', alignItems: 'center', gap: space.md, paddingVertical: space.sm, borderTopWidth: StyleSheet.hairlineWidth },
   flex: { flex: 1, minWidth: 0 },
 });

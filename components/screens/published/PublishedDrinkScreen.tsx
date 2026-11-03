@@ -3,6 +3,7 @@ import { useState } from 'react';
 import { StyleSheet, View } from 'react-native';
 
 import { Body, Button, Display, Headline, PressableScale, Surface, Tag, useBreakpoint, useDs } from '@/components/ds';
+import { AllergyLine, GuestAllergens } from '@/components/allergens/DrinkAllergensLazy';
 import { UserAvatar } from '@/components/ui/UserAvatar';
 import { radius, space } from '@/constants/tokens';
 import { useSignedIn } from '@/ctx/AuthContext';
@@ -16,7 +17,7 @@ import { createdByLine, drinkKicker } from '@/lib/publicDrink';
 
 import { RankFlow } from '../rank/RankActions';
 import { useAgeGate } from '../safety/AgeGate';
-import { ReportAction } from '../safety/ReportSheet';
+import { ReportAction } from '../safety/ReportAction';
 import { CollectButton } from './CollectButton';
 import { MemorySheet } from './MemorySheet';
 import { Kicker, PublicPage, SignInBand } from './PublicChrome';
@@ -116,7 +117,7 @@ export function PublishedDrinkScreen({ id, releaseId }: { /** The drink's id, or
 
   const pictureColumn = (
     <View style={[styles.pictureColumn, wide && styles.pictureWide]}>
-      <PublicPicture name={drink.name} imageUrl={drink.imageUrl} generated={drink.imageIsGenerated} itemId={drink.id} glass={data.glass?.iconKey ?? data.glass?.name} />
+      <PublicPicture name={drink.name} imageUrl={drink.imageUrl} generated={drink.imageIsGenerated} itemId={drink.id} glass={data.glass?.iconKey ?? data.glass?.name} animate />
       {wide ? <PublicActions id={drink.id} name={drink.name} barId={drink.barId} picture={picture} releaseId={releaseId} /> : null}
     </View>
   );
@@ -136,6 +137,8 @@ export function PublishedDrinkScreen({ id, releaseId }: { /** The drink's id, or
       </Kicker>
       <Display>{drink.name}</Display>
       {credit ? <CreditCard line={credit} who={more?.creator ?? venue} /> : null}
+      {/* A bar's drink: the guest's allergy warning, signed out too (Loop-allergy). */}
+      {drink.barId ? <AllergyLine itemId={drink.id} guest /> : null}
       {drink.description ? (
         <Body tone="muted" style={styles.description}>
           {drink.description}
@@ -150,6 +153,7 @@ export function PublishedDrinkScreen({ id, releaseId }: { /** The drink's id, or
     <View style={[styles.aside, wide && styles.asideWide]}>
       {more ? <PublicWhereToDrink rankedAs={more.rankedAs} venue={venue} /> : null}
       <PublicSpec page={data} barClaimed={!!venue?.is_claimed} classic={classic} />
+      {drink.barId ? <GuestAllergens itemId={drink.id} barName={barName} /> : null}
     </View>
   );
 

@@ -1,0 +1,204 @@
+import { useRouter } from 'expo-router';
+import { useMemo, useState, type ReactElement } from 'react';
+import { StyleSheet, View, type StyleProp, type ViewStyle } from 'react-native';
+import DraggableFlatList, { type RenderItemParams } from 'react-native-draggable-flatlist';
+
+import { Body, Button, Caption, Field, useDs } from '@/components/ds';
+import { font, space } from '@/constants/tokens';
+import { useDrinkLists } from '@/hooks/useDiscover';
+import { useBarRiffs, useStaffList, useStaffListEdit, type StaffPick } from '@/hooks/useStaffList';
+import { plainDbMessage } from '@/lib/dbError';
+import { itemHref } from '@/lib/itemRoutes';
+import { menuState } from '@/lib/drinksFilters';
+import { candidatesFor, classicRows, CUTS, moved, NOT_RANKED, ranked, rankedAbove, STAFF_LIST_MAX, staffOrder, unranked, type ClassicRow } from '@/lib/staffList';
+
+import { StaffRow } from './StaffRow';
+import { usePrefetchCocktail } from '@/hooks/useCocktails';
+
+const NO_PICKS: StaffPick[] = [];
+/** The "Not ranked yet" line, as a row of the dragged list: drag a drink above it to rank it. */
+type Row = ClassicRow | { itemId: typeof NOT_RANKED };
+const LINE: Row = { itemId: NOT_RANKED };
+/** Rows in the first paint: a phone screen under the header (plus the Not ranked line). */
+const FIRST_PAINT = 12;
+
+/**
+ * Classics in Drinks: the staff list, the drinks everyone here should know, most
+ * important first, ranked to 50, with cut lines after 10 and 20, then every other
+ * drink here linked to a classic under Not ranked yet (E50). Everyone at the venue reads it; Drink
+ * Creators and up drag to reorder, add and remove (bar_also_makes, "Also makes", through
+ * set_staff_list_order). It is the screen's scroll view, with the screen's
+ * header above it: nested in another scroll view, its drag gesture takes
+ * every vertical swipe on Android and the page stops scrolling.
+ */
+export function StaffList({ barId, canEdit, onNow, past, header, contentContainerStyle }: {
+  barId: string;
+  canEdit: boolean;
+  onNow: ReadonlySet<string>;
+  past: ReadonlySet<string>;
+  /** The screen above the list (Drinks' head and chips). */
+  header?: ReactElement;
+  contentContainerStyle?: StyleProp<ViewStyle>;
+}) {
+  const router = useRouter();
+  const prefetch = usePrefetchCocktail();
+  const picks = useStaffList(barId);
+  const [adding, setAdding] = useState(false);
+  const riffs = useBarRiffs(barId);
+  const catalog = useDrinkLists();
+  const edit = useStaffListEdit(barId);
+  const [query, setQuery] = useState('');
+
+  const rows = picks.data ?? NO_PICKS;
+  const order = staffOrder(classicRows(rows, riffs.data ?? []));
+  const ids = order.ranked.map((p) => p.itemId);
+  const taken = useMemo(() => new Set(rows.map((p) => p.itemId)), [rows]);
+  const results = useMemo(
+    () => (adding ? candidatesFor(riffs.data ?? [], catalog.data ?? [], query, taken) : []),
+    [adding, riffs.data, catalog.data, query, taken],
+  );
+  const full = ids.length >= STAFF_LIST_MAX;
+  // A linked drink ranked from under the line joins the staff list first.
+  const reorder = (itemIds: string[] | null) => {
+    if (!itemIds) return;
+    const join = order.unranked.filter((r) => !r.onList && itemIds.includes(r.itemId)).map(({ onList: _, ...pick }) => pick);
+    edit.mutate(join.length ? { op: 'order', itemIds, join } : { op: 'order', itemIds });
+  };
+  // Ranked, the Not ranked line, then the rest: one list, so a Not ranked drink drags into the ranking.
+  const saved: Row[] = order.unranked.length ? [...order.ranked, LINE, ...order.unranked] : order.ranked;
+  // A drop that leaves the ranking as it was (a move under the line, which stays A to Z) saves nothing,
+  // and the list only lets go of where it dropped the rows when their order changes: show the drop
+  // for one render, then the saved order again, so the rows go back where they were.
+  const [held, setHeld] = useState<Row[] | null>(null);
+  const data = held ?? saved;
+  const dropped = (rows: Row[]) => {
+    const next = rankedAbove(rows.map((r) => r.itemId));
+    if (next.join() !== ids.join()) return reorder(next);
+    setHeld(rows);
+    requestAnimationFrame(() => setHeld(null));
+  };
+  const remove = (pick: ClassicRow) => {
+    // Close the gap first, so the places stay 1, 2, 3.
+    if (pick.rank != null) reorder(unranked(ids, pick.itemId));
+    edit.mutate({ op: 'remove', itemId: pick.itemId });
+  };
+  const row = (pick: ClassicRow, place: number | null) => ({
+    pick,
+    place,
+    status: menuState(pick.itemId, onNow, past),
+    canEdit,
+    onOpen: () => router.push(itemHref('Cocktail', pick.itemId) as never),
+    onPressIn: () => prefetch(pick.itemId, { name: pick.name, imageUrl: pick.imageUrl }),
+    // A drink here only because it's linked to a classic stays while it's linked.
+    onRemove: pick.onList ? () => remove(pick) : undefined,
+  });
+
+  const renderItem = ({ item, drag, isActive, getIndex }: RenderItemParams<Row>) => {
+    if (!('name' in item)) return <CutLine label={`Not ranked yet · ${order.unranked.length}`} quiet />;
+    const i = getIndex() ?? 0;
+    if (i > ids.length) {
+      return <StaffRow {...row(item, null)} active={isActive} drag={drag} onRank={full ? undefined : () => reorder(ranked(ids, item.itemId))} />;
+    }
+    const cut = CUTS.find((c) => c === i + 1);
+    return (
+      <View>
+        <StaffRow
+          {...row(item, i + 1)}
+          active={isActive}
+          drag={drag}
+          onMove={(by) => reorder(moved(ids, item.itemId, by))}
+          first={i === 0}
+          last={i === ids.length - 1}
+          onUnrank={() => reorder(unranked(ids, item.itemId))}
+        />
+        {cut && !isActive ? <CutLine label={`Top ${cut}`} /> : null}
+      </View>
+    );
+  };
+
+  const top = (
+    <View style={styles.top}>
+      {header}
+      <Body tone="muted">The drinks everyone here should know, most important first, then every other drink linked to a classic.</Body>
+      {picks.isLoading ? <Caption tone="muted">Loading the classics…</Caption> : null}
+      {picks.error ? <Body tone="muted">Couldn’t load the classics. Check your connection and try again.</Body> : null}
+      {edit.error ? <Caption>{plainDbMessage(edit.error) ?? 'Couldn’t save that. Check your connection and try again.'}</Caption> : null}
+      {picks.data && riffs.data && !data.length ? <Body tone="muted">No classics yet. Link a drink to a classic and it shows here.</Body> : null}
+    </View>
+  );
+  const bottom = (
+    <View style={styles.list}>
+      {canEdit ? (
+        <View style={styles.add}>
+          <Caption tone="muted">{`Up to ${STAFF_LIST_MAX} drinks. ${ids.length} ranked.`}</Caption>
+          {adding ? (
+            <>
+              <Field label="Add a classic or your take on one" value={query} onChangeText={setQuery} placeholder="Martini, Negroni" autoCapitalize="none" autoCorrect={false} />
+              {results.map((c) => (
+                <View key={c.id} style={styles.result}>
+                  <View style={styles.flex}>
+                    <Body>{c.name}</Body>
+                    {c.classicName && c.classicName !== c.name ? <Caption tone="muted">{c.classicName}</Caption> : null}
+                  </View>
+                  <Button label="Add" variant="secondary" onPress={() => edit.mutate({ op: 'add', itemId: c.id }, { onSuccess: () => setQuery('') })} />
+                </View>
+              ))}
+              {query.trim() && !results.length ? <Caption tone="muted">Nothing matches that yet. Link a drink to a classic first, or search the classic’s name.</Caption> : null}
+            </>
+          ) : (
+            <Button label="Add a drink" icon="plus" variant="secondary" onPress={() => setAdding(true)} style={styles.start} />
+          )}
+        </View>
+      ) : null}
+    </View>
+  );
+
+  return (
+    <DraggableFlatList
+      data={data}
+      keyExtractor={(p) => p.itemId}
+      renderItem={renderItem}
+      onDragEnd={({ data: rows }) => dropped(rows)}
+      ListHeaderComponent={top}
+      ListFooterComponent={bottom}
+      contentContainerStyle={contentContainerStyle}
+      // The list's wrapper must fill the screen, or on web it grows to its
+      // content and the screen clips it, so it never scrolls.
+      containerStyle={styles.fill}
+      // The first screen paints, the rest mount in one batch right after, and the
+      // default window (21 screens) keeps them all mounted, so a drag never lands
+      // on an unrendered row. ponytail: fine for a bar's few hundred linked drinks;
+      // past that, page the Not ranked yet rows.
+      initialNumToRender={FIRST_PAINT + 1}
+      maxToRenderPerBatch={Math.max(STAFF_LIST_MAX, data.length)}
+      activationDistance={10}
+    />
+  );
+}
+
+/** "TOP 10" with a rule after it, in the accent: where the ranking is cut. */
+function CutLine({ label, quiet }: { label: string; quiet?: boolean }) {
+  const ds = useDs();
+  const color = quiet ? ds.c.muted : ds.accentText;
+  return (
+    <View style={styles.cut} role="heading" aria-label={label}>
+      <Caption color={color} style={styles.cutText}>
+        {label.toUpperCase()}
+      </Caption>
+      <View style={[styles.rule, { backgroundColor: color, opacity: 0.4 }]} />
+    </View>
+  );
+}
+
+const styles = StyleSheet.create({
+  fill: { flex: 1 },
+  list: { gap: space.xs },
+  top: { gap: space.md, paddingBottom: space.sm },
+  cut: { flexDirection: 'row', alignItems: 'center', gap: space.sm, marginVertical: space.sm },
+  cutText: { ...font.semiBold, letterSpacing: 0.6 },
+  rule: { flex: 1, height: StyleSheet.hairlineWidth },
+  add: { gap: space.sm, paddingTop: space.md },
+  result: { flexDirection: 'row', alignItems: 'center', gap: space.md },
+  flex: { flex: 1, gap: space.xs },
+  start: { alignSelf: 'flex-start' },
+});

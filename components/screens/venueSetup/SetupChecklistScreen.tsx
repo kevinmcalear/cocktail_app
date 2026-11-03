@@ -20,11 +20,11 @@ export function SetupChecklistScreen({ barId }: { barId: string }) {
   const back = () => (router.canGoBack() ? router.back() : router.replace('/' as Href));
   // Wide web has no Back: the sidebar is the way around (owner-setup step 5).
   return (
-    <SetupChromeProvider value={{ title: '', onBack: wide ? undefined : back }}>
+    <SetupChromeProvider value={{ title: '' }}>
       <WebHead>
         <title>{`Set up ${name}`}</title>
       </WebHead>
-      <SetupChecklist barId={barId} name={name} />
+      <SetupChecklist barId={barId} name={name} onBack={wide ? undefined : back} />
     </SetupChromeProvider>
   );
 }

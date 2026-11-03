@@ -13,7 +13,7 @@ import type { SearchMine } from '@/hooks/useSearchMine';
 import { foldName } from '@/lib/discover';
 import { heroPicture } from '@/lib/itemImages';
 import { fallbackGlass, newDrinkHref, type ItemCategory } from '@/lib/itemRoutes';
-import { itemIdOf } from '@/lib/libraryFilters';
+import { itemIdOf } from '@/lib/drinksFilters';
 import { openSearchItem } from '@/lib/openSearchItem';
 import { drinkFacts, ingredientFacts, menuFacts } from '@/lib/searchCaptions';
 import { completions, groupCatalog, shows, type SearchShow, type ShowCounts } from '@/lib/searchScope';
@@ -22,7 +22,7 @@ import type { SearchItem } from '@/types/search';
 
 import { PublicResults } from './PublicResults';
 import { NearResults } from './NearResults';
-import { DRAWN_STATES, DrawnSearch, EverywhereRow, MissCard, PersonResultRow, ResultGroup, ResultRow } from './ResultRows';
+import { DRAWN_STATES, DrawnSearch, EverywhereRow, PersonResultRow, ResultGroup, ResultRow } from './ResultRows';
 import { Completions, TopHit } from './SearchParts';
 import { SearchLoading, SearchMore } from './SearchStates';
 
@@ -92,11 +92,12 @@ export function MineResults({ query, mine, onEverywhere, commands, palette, show
     if (countKey) onCounts?.(JSON.parse(countKey) as ShowCounts);
   }, [countKey, onCounts]);
 
+  const add = () => router.push(newDrinkHref(capitalize(q), mine.venueId) as never);
+
   if (!found) {
     if (isLoading) return drawn || DRAWN_STATES ? <SearchLoading /> : <Caption tone="muted">Searching…</Caption>;
-    const where = mine.venueId ? mine.label : 'your drinks';
-    const add = () => router.push(newDrinkHref(capitalize(q), mine.venueId) as never);
     const title = `Nothing ${mine.venueId ? `at ${mine.label}` : 'in your drinks'} called “${q}”`;
+    const missed = `${title}. Here’s what everywhere else has.`;
     return (
       <View style={styles.results}>
         {/* Everywhere's results follow; with nothing there either, this card becomes Did you mean. */}
@@ -108,7 +109,8 @@ export function MineResults({ query, mine, onEverywhere, commands, palette, show
           onCounts={onCounts}
           head={{
             title,
-            card: drawn ? null : <MissCard title={title} detail="Here’s what everywhere else has." action={mine.canAdd ? { label: `Add ${capitalize(q)} to ${where}`, onPress: add } : undefined} />,
+            // After the results, a quiet row as the board draws it: "+ Add “negr” as a new drink", with what was missed under it.
+            card: drawn ? null : mine.canAdd ? <ResultRow title={`Add “${capitalize(q)}” as a new drink`} caption={missed} icon="plus" accentIcon onPress={add} /> : <Caption tone="muted">{missed}</Caption>,
             add: mine.canAdd ? { label: `add ${capitalize(q)}`, onPress: add } : undefined,
             yours: items,
             yoursCaption: mine.label,
@@ -135,7 +137,7 @@ export function MineResults({ query, mine, onEverywhere, commands, palette, show
         glass={fallbackGlass(i.category as ItemCategory)}
         caption={why.caption}
         tag={why.tag}
-        query={q}
+        displayName
         trailing={<RowScore score={score} />}
         label={said ? [i.name, why.caption, why.tag, said].filter(Boolean).join('. ') : undefined}
         onPress={() => open(i)}
@@ -155,7 +157,6 @@ export function MineResults({ query, mine, onEverywhere, commands, palette, show
           caption={top.isDraft ? 'Draft' : drinkFacts(top.id, top.category ?? 'Cocktail', facts).caption}
           line={specLine(top) || undefined}
           score={top.isDraft ? undefined : scores?.[top.id]}
-          query={q}
           onPress={() => open(top)}
         />
       ) : null}
@@ -164,20 +165,22 @@ export function MineResults({ query, mine, onEverywhere, commands, palette, show
         <ResultGroup
           label={drawn ? 'Bottles' : 'Ingredients'}
           items={groups.ingredients}
-          render={(i) => <ResultRow key={i.id} title={i.name} caption={i.isDraft ? 'Draft' : ingredientFacts(i.id, facts)} ingredient={{ id: i.isDraft ? null : i.id }} query={q} onPress={() => open(i)} />}
+          render={(i) => <ResultRow key={i.id} title={i.name} caption={i.isDraft ? 'Draft' : ingredientFacts(i.id, facts)} ingredient={{ id: i.isDraft ? null : i.id }} onPress={() => open(i)} />}
         />
       ) : null}
       {shows(show, 'menus') ? (
         <ResultGroup
           label="Menus"
           items={groups.menus}
-          render={(i) => <ResultRow key={i.id} title={i.name} caption={i.isDraft ? 'Draft' : menuFacts(i.id.replace(/^menu-/, ''), drinkIds, facts)} icon="list.bullet" query={q} onPress={() => open(i)} />}
+          render={(i) => <ResultRow key={i.id} title={i.name} caption={i.isDraft ? 'Draft' : menuFacts(i.id.replace(/^menu-/, ''), drinkIds, facts)} icon="list.bullet" onPress={() => open(i)} />}
         />
       ) : null}
-      {shows(show, 'people') ? <ResultGroup label="People" items={people} render={(p) => <PersonResultRow key={p.id} person={p} waiting={waiting?.[p.id]} query={q} />} /> : null}
+      {shows(show, 'people') ? <ResultGroup label="People" items={people} render={(p) => <PersonResultRow key={p.id} person={p} waiting={waiting?.[p.id]} />} /> : null}
       <NearResults query={q} found={found} shown={shownIds} yours={items} yoursCaption={mine.label} title="" miss={null} show={show} />
       {commands}
       {everywhere}
+      {/* The results end with Add "what you typed" (Prod-phone search, Add B), unless that drink is already here. */}
+      {mine.canAdd && !palette && shows(show, 'drinks') && !groups.drinks.some((i) => foldName(i.name) === foldName(q)) ? <ResultRow title={`Add “${capitalize(q)}” as a new drink`} icon="plus" accentIcon onPress={add} /> : null}
     </View>
   );
 }

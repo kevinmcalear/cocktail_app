@@ -10,43 +10,10 @@ import { averageScore } from './collectionMenus';
 import { cameraFor, type Camera, type MapPin } from './discoverMap';
 import type { HadDrink, HadVenue } from './hadDrinks';
 import type { MadeTally } from './madeIt';
+import { homeReach, type HomeReach, type ShelfMatch } from './shelfReach';
 import type { AwayGroup } from './toMake';
 
 export type DrinkStage = 'had' | 'make' | 'made';
-export type BarStage = 'want' | 'been';
-
-/** What the shelf says about a drink: makeable, one or two bottles off (which), or further. */
-export interface ShelfMatch {
-  canMakeIds: ReadonlySet<string>;
-  oneAway: readonly AwayGroup[];
-  twoAway: readonly AwayGroup[];
-}
-
-export type HomeReach = { kind: 'ready' } | { kind: 'one' | 'two'; need: string[] } | { kind: 'far' };
-
-export function homeReach(itemId: string | null, shelf: ShelfMatch): HomeReach {
-  if (!itemId) return { kind: 'far' };
-  if (shelf.canMakeIds.has(itemId)) return { kind: 'ready' };
-  for (const kind of ['one', 'two'] as const) {
-    const group = (kind === 'one' ? shelf.oneAway : shelf.twoAway).find((g) => g.drinks.some((d) => d.id === itemId));
-    if (group) return { kind, need: group.bottles.map((b) => b.name) };
-  }
-  return { kind: 'far' };
-}
-
-/** "Need Cynar", "Need Campari and pineapple juice". */
-export const needLine = (need: readonly string[]) => `Need ${need.join(' and ')}`;
-
-/**
- * The end of a home menu's drink row (menus-one-look, BandMenu): "Ready", or
- * "Need 1" / "Need 2" and which bottles. Nothing when the shelf is further off.
- */
-export function menuRowShelf(itemId: string, shelf: ShelfMatch): { label: string; ready: boolean; need: string[] } | null {
-  const reach = homeReach(itemId, shelf);
-  if (reach.kind === 'ready') return { label: 'Ready', ready: true, need: [] };
-  if (reach.kind === 'far' || !reach.need.length) return null;
-  return { label: `Need ${reach.need.length}`, ready: false, need: reach.need };
-}
 
 /** "+0.3", "−0.7", "0.0": your version's score against the bar's. */
 export function gapLabel(you: number, bar: number): string {
@@ -246,6 +213,23 @@ export interface WantBar {
   hours: { open: boolean; text: string } | null;
   why: string | null;
   everyone: number | null;
+}
+
+/** "Open until 1am", "Opens 5pm Thu", "Closed". */
+export function hoursText(s: { open: boolean; detail: string | null }): string {
+  if (s.open) return s.detail ? `Open ${s.detail}` : 'Open now';
+  return s.detail ? s.detail.charAt(0).toUpperCase() + s.detail.slice(1) : 'Closed';
+}
+
+/** A Loved row's line (Kept-you-bars): where you work, or what's new there, else its hours, then how far. */
+export function lovedLine({ work, news, hours, away }: { work: boolean; news: string | null; hours: { open: boolean; text: string } | null; away: string | null }): string | null {
+  if (work) return 'Where you work';
+  return [news ?? hours?.text, away].filter(Boolean).join(' · ') || null;
+}
+
+/** A Want to go row's line: how far, then why it's here while it's open (Open sits at the row's end), or when it opens. */
+export function wantLine(b: Pick<WantBar, 'away' | 'place' | 'hours' | 'why'>): string | null {
+  return [b.away ?? b.place, b.hours && !b.hours.open ? b.hours.text : b.why].filter(Boolean).join(' · ') || null;
 }
 
 /** How near a Want to go bar must be for the map to open on it (board home-collection-bars, step 3). */

@@ -26,7 +26,7 @@ import type { SearchItem } from '@/types/search';
 
 import { MineResults } from './MineResults';
 import { PublicResults } from './PublicResults';
-import { DrawnSearch, ResultGroup, ResultRow } from './ResultRows';
+import { DrawnSearch, ResultGroup, ResultRow, SearchLook } from './ResultRows';
 import { ScopeSwitch } from './ScopeSwitch';
 import { SearchField } from './SearchField';
 import { SearchOffline } from './SearchOffline';
@@ -113,7 +113,7 @@ interface BodyProps {
 }
 
 /** What the search finds in its scope, or what was opened lately while nothing is typed. */
-export function SearchBody({ query: typed, scope, onScope, mine, area, onJump, commands, palette, show, onShow, onCounts, typeAhead }: BodyProps) {
+function SearchBodyInner({ query: typed, scope, onScope, mine, area, onJump, commands, palette, show, onShow, onCounts, typeAhead }: BodyProps) {
   const router = useRouter();
   const signedIn = !!useAuth().user;
   const [adding, setAdding] = useState(false);
@@ -152,13 +152,22 @@ export function SearchBody({ query: typed, scope, onScope, mine, area, onJump, c
   );
 }
 
+/** The search's results: its rows and headings take the boards' look (SearchLook). */
+export function SearchBody(props: BodyProps) {
+  return (
+    <SearchLook value>
+      <SearchBodyInner {...props} />
+    </SearchLook>
+  );
+}
+
 const KIND_LABEL: Record<RecentActivity['kind'], string> = { cocktail: 'Cocktail', beer: 'Beer', wine: 'Wine', ingredient: 'Ingredient', menu: 'Menu', bar: 'Bar', flavor: 'Flavor map' };
 const JUMPS = [
-  { label: 'Classics', href: '/library?show=staff', icon: 'star' },
-  { label: 'On menu now', href: '/library?show=on-menu', icon: 'list.bullet' },
-  { label: 'Old drinks', href: '/library?show=past', icon: 'clock' },
+  { label: 'Classics', href: '/drinks?show=staff', icon: 'star' },
+  { label: 'On menu now', href: '/drinks?show=on-menu', icon: 'list.bullet' },
+  { label: 'Old drinks', href: '/drinks?show=past', icon: 'clock' },
   { label: 'Drafts', href: '/drafts', icon: 'pencil' },
-  { label: 'Ingredients', href: '/library?show=ingredients', icon: 'drop.fill' },
+  { label: 'Ingredients', href: '/drinks?show=ingredients', icon: 'drop.fill' },
 ] as const;
 
 /** The ways in that aren't a search: the flavor map, the history and the techniques (prep-flavor-entry), each when it's switched on. */
@@ -213,7 +222,7 @@ function Recent({ scope, mine, onJump, commands, onTerm }: { scope: SearchScope;
         render={(r) => {
           const x = browse && Platform.OS !== 'android' ? <IconSymbol name="chevron.right" size={16} color={ds.c.muted} /> : undefined;
           return drink(r.kind) ? (
-            <DrinkRow key={`${r.kind}-${r.id}`} name={r.title} itemId={r.id} imageUrl={r.imageUrl ?? null} glass={fallbackGlass(r.kind === 'beer' ? 'Beer' : r.kind === 'wine' ? 'Wine' : 'Cocktail')} caption={caption(r)} trailing={x} onPress={() => open(r)} />
+            <DrinkRow key={`${r.kind}-${r.id}`} name={r.title} itemId={r.id} imageUrl={r.imageUrl ?? null} glass={fallbackGlass(r.kind === 'beer' ? 'Beer' : r.kind === 'wine' ? 'Wine' : 'Cocktail')} caption={caption(r)} displayName trailing={x} onPress={() => open(r)} />
           ) : (
             <ResultRow
               key={`${r.kind}-${r.id}`}

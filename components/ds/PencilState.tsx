@@ -19,18 +19,26 @@ export type PencilStateKind = 'empty' | 'loading' | 'error' | 'offline';
 // An empty coupe: what an empty shelf or menu draws when the caller has nothing of its own.
 const EMPTY_GLASS = readSketchInputs({ v: 2, glass: 'coupe', ice: 'none', method: 'stir', liquid: { hex: SKETCH_SAMPLES.martini, alpha: 0.2 } }) as SketchInputs;
 
-const pictures = new WeakMap<Scene, Map<string, string>>();
-function pencilUri(scene: Scene, night: boolean): string {
-  let byMode = pictures.get(scene);
-  if (!byMode) pictures.set(scene, (byMode = new Map()));
+const pencils = new WeakMap<Scene, Map<string, Scene>>();
+/** A scene in pencil only (no colour yet), chalk at night: the draft's drawing, still or drawn as you watch (AnimatedSketch `pencil`). */
+export function pencilScene(scene: Scene, night: boolean): Scene {
+  let byMode = pencils.get(scene);
+  if (!byMode) pencils.set(scene, (byMode = new Map()));
   const key = night ? 'night' : 'day';
   let out = byMode.get(key);
   if (!out) {
     const pencil = pencilOnly(scene);
     // At night the pencil is chalk.
-    const shown = night ? mapScene(pencil, (el) => (el.k === 'stroke' ? { ...el, color: CHALK } : el)) : pencil;
-    byMode.set(key, (out = `data:image/svg+xml;base64,${btoa(sceneToSvg(shown))}`));
+    byMode.set(key, (out = night ? mapScene(pencil, (el) => (el.k === 'stroke' ? { ...el, color: CHALK } : el)) : pencil));
   }
+  return out;
+}
+
+const pictures = new WeakMap<Scene, string>();
+function pencilUri(scene: Scene, night: boolean): string {
+  const shown = pencilScene(scene, night);
+  let out = pictures.get(shown);
+  if (!out) pictures.set(shown, (out = `data:image/svg+xml;base64,${btoa(sceneToSvg(shown))}`));
   return out;
 }
 
@@ -89,6 +97,13 @@ export function PencilState({ kind, title, detail, action, inputs = EMPTY_GLASS,
       </View>
     </View>
   );
+}
+
+/** A drink drawn in pencil only (the draft page's hero): its glass, ice and garnish, no colour yet. */
+export function PencilDrawing({ inputs, seed, size }: { inputs: SketchInputs; seed: string; size: number }) {
+  const ds = useDs();
+  const uri = pencilUri(sceneFor(inputs, seed, 'full'), ds.scheme === 'dark');
+  return <Image source={{ uri }} style={{ width: size, height: size }} contentFit="contain" cachePolicy="memory" accessible={false} aria-hidden />;
 }
 
 const styles = StyleSheet.create({

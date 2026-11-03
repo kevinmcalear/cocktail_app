@@ -26,12 +26,14 @@ export const PERSISTED_KEYS: readonly (readonly string[])[] = [
   ['am-i-moderator'],
   ['profile', 'mine'],
   // Tonight's and the Menus tab's list (hooks/useMenus.ts menuKeys.venue).
-  ['menus-v2', 'venue-6'],
+  ['menus-v2', 'venue-7'],
   // The Library's menus and your drafts, so it paints from the saved cache.
   [DROPDOWNS_QUERY_KEY[0], 'menus'],
   ['drafts'],
   ['home-bar'],
   ['drink-lists'],
+  // Drawing inputs (hooks/useItemSketch.ts): a few hundred bytes a drink, so Tonight and a menu draw at once after a launch. Largest-first dropping keeps them last to go when the row is full.
+  ['item-sketch'],
   ['bar-cities'],
   ['discover-top-bars'],
   ['flavor-baseline'],

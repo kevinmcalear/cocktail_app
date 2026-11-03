@@ -23,7 +23,7 @@ interface ClassicRowProps {
   matches?: Record<string, SpecMatchRow>;
   score?: number;
   scores?: DrinkScores;
-  query: string;
+  query?: string;
   matchLook?: MatchTextProps['look'];
 }
 
@@ -48,6 +48,7 @@ export function ClassicRow({ classic, line, served, variations = [], matches, sc
         imageUrl={classic.imageUrl}
         glass={null}
         caption={caption}
+        displayName
         query={query}
         matchLook={matchLook}
         trailing={<RowScore score={score} />}

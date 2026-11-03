@@ -1,15 +1,15 @@
-import { Image } from 'expo-image';
 import { useState } from 'react';
 import { StyleSheet, View } from 'react-native';
 
-import { BackbarTheme, BrandProvider, Caption, DrinkImage, DsText, PressableScale, Tag, Title, useBreakpoint, useDs, type IconName } from '@/components/ds';
+import { BackbarTheme, BrandProvider, Caption, DrinkImage, DsText, PressableScale, Tag, Title, useDs, type IconName } from '@/components/ds';
 import { VenueMark } from '@/components/nav/VenueMarks';
 import { IconSymbol } from '@/components/ui/icon-symbol';
-import { type DisplayFace, displayFaces, font, layout, radius, space } from '@/constants/tokens';
+import { type DisplayFace, displayFaces, font, radius, space } from '@/constants/tokens';
 import { BRAND_SAMPLE as SAMPLE } from '@/lib/brandSample';
 import { withAlpha } from '@/lib/color';
 
-import { IconTile, type IconBackground } from './BrandIcon';
+import type { IconBackground } from './BrandIcon';
+import { tonightLine } from '@/lib/menus';
 
 export interface BrandLook {
   id: string;
@@ -32,7 +32,7 @@ export const SCHEMES = [
 
 const TABS: { label: string; icon: IconName }[] = [
   { label: 'Tonight', icon: 'place.tonight' },
-  { label: 'Library', icon: 'place.library' },
+  { label: 'Drinks', icon: 'place.library' },
   { label: 'Discover', icon: 'place.discover' },
 ];
 
@@ -54,7 +54,7 @@ export function MiniScreen({ look, compact }: { look: BrandLook; compact?: boole
       </View>
       <View>
         <Title numberOfLines={1}>Tonight</Title>
-        <Caption tone="muted" numberOfLines={1}>Thu 9 Oct · Autumn menu · 8 drinks</Caption>
+        <Caption tone="muted" numberOfLines={1}>{tonightLine(new Date(), [{ name: 'Autumn menu' }], 8)}</Caption>
       </View>
       <View style={[styles.banner, { backgroundColor: ds.c.raised }]}>
         <Caption style={styles.flex}>2 new drinks go on at 6.</Caption>
@@ -101,96 +101,27 @@ export function MiniScreen({ look, compact }: { look: BrandLook; compact?: boole
   );
 }
 
-/** The home-screen icon as a phone shows it, with the short name under it, and what it is. */
-function HomeIcon({ look }: { look: BrandLook }) {
-  const ds = useDs();
-  const src = look.iconUrl ?? look.logoUrl;
-  return (
-    <View style={[styles.iconCard, { backgroundColor: ds.c.surface, borderColor: ds.c.line }]}>
-      <View style={styles.icon}>
-        {look.iconBackground && !look.iconUrl ? (
-          <IconTile bg={look.iconBackground} look={look} size={44} />
-        ) : src ? (
-          <Image source={{ uri: src }} style={styles.iconTile} contentFit="cover" accessibilityIgnoresInvertColors />
-        ) : (
-          <VenueMark venue={{ ...look, roleLevel: 40 }} size={44} />
-        )}
-        <Caption numberOfLines={1} color={ds.c.ink}>
-          {look.shortName.trim() || look.name}
-        </Caption>
-      </View>
-      <Caption tone="muted" style={styles.flex}>
-        How it sits on a phone’s home screen once staff add your staff link.
-      </Caption>
-    </View>
-  );
-}
-
 /**
- * The live preview on the brand screen: the draft brand in light and dark
- * (one at a time on phones), plus the home-screen icon. `stacked` puts the
- * two schemes one above the other, for a narrow side column.
+ * Venue setup's live preview (canvas make-venue-look): Tonight in the draft
+ * look, one scheme at a time, with Dark and Light as chips under it.
  */
-export function BrandPreview({ look, stacked = false, setup = false }: { look: BrandLook; stacked?: boolean; setup?: boolean }) {
-  const notPhone = useBreakpoint() !== 'phone';
-  // Venue setup's Look step: one phone at a time, Dark and Light as chips under it, no home-screen icon (canvas make-venue-look).
-  const wide = notPhone && !setup;
-  // Phones show one scheme at a time, so the controls stay close to the preview.
+export function BrandPreview({ look }: { look: BrandLook }) {
   const [only, setOnly] = useState<'light' | 'dark'>('dark');
-  const brand = { accent: look.accent ?? undefined, displayFace: look.displayFace, groundTint: look.groundTint ?? undefined };
-  const schemes = wide ? (['dark', 'light'] as const) : [only];
   return (
     <View aria-label="Live preview" style={styles.wrap}>
-      {wide || setup ? null : <SchemeSwitch value={only} onChange={setOnly} />}
-      <View style={[styles.schemes, wide && !stacked && styles.schemesWide]}>
-        {schemes.map((scheme) => (
-          <BackbarTheme key={scheme} scheme={scheme}>
-            <BrandProvider {...brand}>
-              <View style={styles.flex}>
-                {wide ? <Caption tone="muted">{scheme === 'light' ? 'Light' : 'Dark'}</Caption> : null}
-                <View role="img" aria-label={`Tonight at ${look.name} in ${scheme} mode, with the new brand`}>
-                  <MiniScreen look={look} />
-                </View>
-              </View>
-            </BrandProvider>
-          </BackbarTheme>
+      <BackbarTheme scheme={only}>
+        <BrandProvider accent={look.accent ?? undefined} displayFace={look.displayFace} groundTint={look.groundTint}>
+          <View role="img" aria-label={`Tonight at ${look.name} in ${only} mode, with the new theme`}>
+            <MiniScreen look={look} />
+          </View>
+        </BrandProvider>
+      </BackbarTheme>
+      <View role="radiogroup" accessibilityLabel="Preview scheme" style={styles.chips}>
+        {SCHEMES.map((o) => (
+          <SchemeChip key={o.value} label={o.label} selected={only === o.value} onPress={() => setOnly(o.value)} />
         ))}
       </View>
-      {setup ? (
-        <>
-          <View role="radiogroup" accessibilityLabel="Preview scheme" style={styles.chips}>
-            {SCHEMES.map((o) => (
-              <SchemeChip key={o.value} label={o.label} selected={only === o.value} onPress={() => setOnly(o.value)} />
-            ))}
-          </View>
-          <Caption tone="muted">Tonight, as your staff will see it. Changes as you pick.</Caption>
-        </>
-      ) : (
-        <HomeIcon look={look} />
-      )}
-    </View>
-  );
-}
-
-/** Dark | Light, a segmented pill (phones show one scheme at a time). */
-function SchemeSwitch({ value, onChange }: { value: 'dark' | 'light'; onChange: (v: 'dark' | 'light') => void }) {
-  const ds = useDs();
-  return (
-    <View role="radiogroup" accessibilityLabel="Preview scheme" style={[styles.switch, { backgroundColor: ds.c.surface, borderColor: ds.c.line }]}>
-      {SCHEMES.map((o) => (
-        <PressableScale
-          key={o.value}
-          role="radio"
-          aria-checked={value === o.value}
-          accessibilityLabel={o.label}
-          onPress={() => onChange(o.value)}
-          style={[styles.switchItem, value === o.value && { backgroundColor: ds.c.ink }]}
-        >
-          <Caption color={value === o.value ? ds.c.ground : ds.c.ink} style={styles.tabLabel}>
-            {o.label}
-          </Caption>
-        </PressableScale>
-      ))}
+      <Caption tone="muted">Tonight, as your staff will see it. Changes as you pick.</Caption>
     </View>
   );
 }
@@ -216,12 +147,10 @@ export function SchemeChip({ label, selected, onPress }: { label: string; select
 
 const styles = StyleSheet.create({
   wrap: { gap: space.lg },
+  flex: { flex: 1, gap: space.xs },
   chips: { flexDirection: 'row', gap: space.sm },
   scheme: { minHeight: 40, minWidth: 64, paddingHorizontal: space.md, borderRadius: radius.pill, borderWidth: 1, alignItems: 'center', justifyContent: 'center' },
   picked: { ...font.semiBold },
-  schemes: { gap: space.md },
-  schemesWide: { flexDirection: 'row' },
-  flex: { flex: 1, gap: space.xs },
   screen: { gap: space.sm, padding: space.md, borderRadius: radius.sheet - space.md, borderCurve: 'continuous', borderWidth: 1 },
   header: { flexDirection: 'row', alignItems: 'center', gap: space.xs },
   round: { width: 28, height: 28, borderRadius: radius.pill, borderWidth: 1, alignItems: 'center', justifyContent: 'center' },
@@ -229,15 +158,12 @@ const styles = StyleSheet.create({
   tab: { alignItems: 'center', gap: 2, paddingVertical: space.xs, paddingHorizontal: space.sm, borderRadius: radius.pill },
   tabLabel: { ...font.medium },
   search: { width: 44, height: 44, borderRadius: radius.pill, borderWidth: 1, alignItems: 'center', justifyContent: 'center' },
-  switch: { flexDirection: 'row', padding: space.xs, borderRadius: radius.pill, borderWidth: 1 },
-  switchItem: { flex: 1, minHeight: layout.minTapTarget - space.sm, justifyContent: 'center', alignItems: 'center', paddingHorizontal: space.lg, borderRadius: radius.pill },
   banner: { flexDirection: 'row', alignItems: 'center', gap: space.sm, padding: space.sm, borderRadius: radius.control },
   cta: { paddingHorizontal: space.md, paddingVertical: space.xs, borderRadius: radius.pill },
   drink: { flexDirection: 'row', alignItems: 'center', gap: space.sm },
   tile: { width: 40 },
   nameRow: { flexDirection: 'row', alignItems: 'center', gap: space.xs },
   tabs: { flexDirection: 'row', alignItems: 'center', gap: space.sm, paddingTop: space.sm },
-  iconCard: { flexDirection: 'row', alignItems: 'center', gap: space.md, padding: space.md, borderRadius: radius.card, borderWidth: 1 },
-  icon: { alignItems: 'center', gap: space.xs, width: 64 },
-  iconTile: { width: 44, height: 44, borderRadius: radius.control },
 });
+
+/** Today as Tonight's header writes it ("Tue 3 Nov"), so the sample never shows a stale date. */

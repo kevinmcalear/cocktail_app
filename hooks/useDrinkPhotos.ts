@@ -2,10 +2,13 @@ import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 
 import { uploadDrinkPhoto } from '@/components/drink/drinkImages';
 import { useUserId } from '@/ctx/AuthContext';
+import type { ItemPicture } from '@/lib/itemImages';
 import { supabase } from '@/lib/supabase';
+import { asTextZone } from '@/supabase/functions/_shared/photoLayout';
+import type { Json } from '@/types/db';
 
-/** Someone's photo of a drink, as get_drink_photos() returns it. */
-export interface DrinkPhoto {
+/** Someone's photo of a drink, as get_drink_photos() returns it, with how it lays out the page (brightness, textZone, aspect). */
+export interface DrinkPhoto extends Pick<ItemPicture, 'brightness' | 'textZone' | 'aspect'> {
   id: string;
   imageUrl: string;
   createdAt: string;
@@ -24,6 +27,10 @@ interface Row {
   poster_handle: string | null;
   poster_name: string | null;
   score: number | string | null;
+  brightness: number | null;
+  text_zone: Json | null;
+  width: number | null;
+  height: number | null;
 }
 
 const key = (itemId: string, userId: string | null) => ['drink-photos', itemId, userId];
@@ -47,6 +54,9 @@ export function useDrinkPhotos(itemId: string | null | undefined) {
         isMine: r.is_mine,
         poster: r.poster_handle && r.poster_name ? { handle: r.poster_handle, name: r.poster_name } : null,
         score: r.score == null ? null : Number(r.score),
+        brightness: r.brightness ?? null,
+        textZone: asTextZone(r.text_zone),
+        aspect: r.width && r.height ? r.width / r.height : null,
       }));
     },
   });

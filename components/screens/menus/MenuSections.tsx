@@ -3,8 +3,8 @@ import type { ReactNode } from 'react';
 import { StyleSheet, View } from 'react-native';
 
 import { Caption, DrinkImage, DsText, Headline, PressableScale, Spec, useDs } from '@/components/ds';
-import { displayFaces, displayName, font, space } from '@/constants/tokens';
-import type { ShelfMatch } from '@/lib/collectionStages';
+import { displayFaces, displayName, font, nameStyle, space } from '@/constants/tokens';
+import type { ShelfMatch } from '@/lib/shelfReach';
 import { drinkIdFromHref, itemHref, type ItemCategory } from '@/lib/itemRoutes';
 import { printedPrice } from '@/lib/menus';
 import type { SketchInputs } from '@/lib/sketch/types';
@@ -14,6 +14,7 @@ import { siteOrigin } from '@/lib/venueLink';
 
 import { DrinkCode } from './DrinkCode';
 import { RowEnd, rowEndLabel } from './RowEnd';
+import { SectionHead } from './SectionHead';
 
 const CATEGORY: Record<MenuDrink['kind'], ItemCategory> = { cocktail: 'Cocktail', beer: 'Beer', wine: 'Wine' };
 
@@ -76,7 +77,7 @@ function DrinkLine({ drink, centered, card = false, isNew = false, code = false 
             {drink.name}
           </DsText>
         ) : (
-          <Headline numberOfLines={2} style={[styles.shrink, displayName.row, { fontFamily: displayFaces[ds.displayFace].regular }]}>
+          <Headline numberOfLines={2} style={[styles.shrink, nameStyle(ds.displayFace, displayName.row)]}>
             {drink.name}
           </Headline>
         )}
@@ -115,23 +116,6 @@ interface MenuSectionsProps {
   codes?: boolean;
   /** The printed card's foot: beside the drawings note, at the right ("Scan a code ..."). */
   foot?: ReactNode;
-}
-
-/** A section's name, small in capitals, with how many drinks it has on the page. Centred, with no count, on the card. */
-export function SectionHead({ name, count }: { name: string; count: number | null }) {
-  const page = count !== null;
-  return (
-    <View style={[styles.sectionHead, !page && styles.sectionHeadCentered]}>
-      <Caption tone="muted" role="heading" style={[styles.sectionTitle, page && styles.mono]}>
-        {name.toUpperCase()}
-      </Caption>
-      {page ? (
-        <Caption tone="muted" style={styles.mono}>
-          {count}
-        </Caption>
-      ) : null}
-    </View>
-  );
 }
 
 /** Where a page row opens by default: the drink's own page. */
@@ -272,9 +256,6 @@ const styles = StyleSheet.create({
   sections: { gap: space.xl },
   section: { gap: space.xs },
   pageRow: { paddingTop: space.xs },
-  sectionHead: { flexDirection: 'row', justifyContent: 'space-between' },
-  sectionHeadCentered: { justifyContent: 'center' },
-  sectionTitle: { letterSpacing: 1.5 },
   row: { flexDirection: 'row', alignItems: 'center', gap: space.md, paddingVertical: space.md, borderBottomWidth: StyleSheet.hairlineWidth },
   cardRow: { paddingVertical: space.xs },
   cardGrid: { flexDirection: 'row', flexWrap: 'wrap', justifyContent: 'center', rowGap: space.xl, paddingTop: space.sm },

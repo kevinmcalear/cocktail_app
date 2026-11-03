@@ -7,7 +7,7 @@ const rows: NavMatch[] = [
   { key: 'index', path: '/' },
   { key: 'library', path: '/library' },
   { key: 'menus', path: '/menus/all', prefix: '/menus' },
-  { key: 'brand', path: '/settings/bar/b1/brand' },
+  { key: 'theme', path: '/settings/bar/b1/theme' },
   { key: 'venue', path: '/settings/bar/b1' },
 ];
 
@@ -17,8 +17,8 @@ assert.equal(navCurrent('/library', rows, 'index'), 'library');
 assert.equal(navCurrent('/menus/abc/edit', rows, null), 'menus');
 assert.equal(navCurrent('/menus', rows, null), 'menus');
 assert.equal(navCurrent('/menusx', rows, null), null);
-// Brand is its own row, not Venue settings.
-assert.equal(navCurrent('/settings/bar/b1/brand', rows, null), 'brand');
+// Theme is its own row, not Venue settings.
+assert.equal(navCurrent('/settings/bar/b1/theme', rows, null), 'theme');
 assert.equal(navCurrent('/settings/bar/b1', rows, null), 'venue');
 // The add wizard keeps Library lit; a stale key from the other mode doesn't stick.
 assert.equal(navCurrent('/add-cocktail', rows, 'library'), 'library');

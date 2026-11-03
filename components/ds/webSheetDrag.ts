@@ -20,7 +20,7 @@ const SPEED_MS = 80;
  * owns the panel's own transition (its fade). `close(ms)` takes over once the
  * sheet is on its way out.
  */
-export function attachSheetDrag(panel: HTMLElement, close: (leaveMs: number) => void, reduceMotion: () => boolean): () => void {
+export function attachSheetDrag(panel: HTMLElement, close: (leaveMs: number) => void, reduceMotion: () => boolean, held?: () => boolean): () => void {
   let y0 = 0;
   let x0 = 0;
   // Where the drag counted from (null: not dragging), and the recent samples for its speed.
@@ -75,7 +75,8 @@ export function attachSheetDrag(panel: HTMLElement, close: (leaveMs: number) => 
     const velocity = last.t > first.t ? ((last.y - first.y) / (last.t - first.t)) * 1000 : 0;
     anchor = null;
     const height = panel.getBoundingClientRect().height;
-    if (dragCloses(d, velocity, height)) {
+    // held(): the sheet has unsaved changes, so it settles back and asks first.
+    if (dragCloses(d, velocity, height) && !held?.()) {
       const ms = reduceMotion() ? 0 : leaveDuration(window.innerHeight - d, velocity);
       move(window.innerHeight, ms, EASE_IN);
       close(ms);

@@ -1,9 +1,11 @@
-import { createContext, use, useEffect, useEffectEvent, useRef, useState } from 'react';
+import { useEffect, useEffectEvent, useRef, useState } from 'react';
 import { Modal, Pressable, StyleSheet, useWindowDimensions, View } from 'react-native';
 
 import { useReducedMotion } from '@/hooks/useReducedMotion';
 
+import { useDiscardGuard } from './discardGuard';
 import type { SheetProps } from './Sheet';
+import { CloseContext } from './sheetClose';
 import { sheetFrame } from './sheetFrame';
 import { useDs } from './theme';
 import { ToastHost } from './Toast';
@@ -16,14 +18,7 @@ const OUT_MS = 180;
 /** Below this the window is a phone's: a sheet that asks for it takes the whole window. */
 const PHONE_WIDTH = 600;
 
-const CloseContext = createContext<(() => void) | null>(null);
-
-/** Inside a Sheet: close it the way the backdrop does, fading out before onClose. */
-export function useSheetClose(): () => void {
-  const close = use(CloseContext);
-  if (!close) throw new Error('useSheetClose is for buttons inside a Sheet');
-  return close;
-}
+export { useSheetClose } from './sheetClose';
 
 /**
  * The web's Sheet: the same dialog in the middle of the window over the same
@@ -31,7 +26,7 @@ export function useSheetClose(): () => void {
  * load Reanimated or Gesture Handler. A finger drags it down to close it
  * (webSheetDrag), as on native.
  */
-export function Sheet({ visible, onClose, accessibilityLabel, children, style, ground, header, onShow, onDismiss, kind, fullAtPhoneWidth }: SheetProps) {
+export function Sheet({ visible, onClose, accessibilityLabel, children, style, ground, header, onShow, onDismiss, kind, dirty, fullAtPhoneWidth }: SheetProps) {
   const ds = useDs();
   const full = useWindowDimensions().width < PHONE_WIDTH && !!fullAtPhoneWidth;
   const reduceMotion = useReducedMotion();
@@ -60,15 +55,29 @@ export function Sheet({ visible, onClose, accessibilityLabel, children, style, g
       onClose();
     }, leaveMs);
   };
-  const close = () => dismiss();
+  const guard = useDiscardGuard(dirty);
+  const close = () => guard(() => dismiss());
+  // Unsaved changes: a drag that would close it settles back and asks instead.
+  const held = () => {
+    if (!dirty) return false;
+    close();
+    return true;
+  };
   // The drag attaches once per panel and reads these when a finger lets go.
-  const latest = useRef({ dismiss, reduceMotion });
+  const latest = useRef({ dismiss, reduceMotion, held });
   useEffect(() => {
-    latest.current = { dismiss, reduceMotion };
+    latest.current = { dismiss, reduceMotion, held };
   });
   const dragRef = (el: React.ComponentRef<typeof View> | null) =>
     // ponytail: on web a React Native view is a DOM element, which RN's types don't describe.
-    el ? attachSheetDrag(el as unknown as HTMLElement, (ms) => latest.current.dismiss(ms), () => latest.current.reduceMotion) : undefined;
+    el
+      ? attachSheetDrag(
+          el as unknown as HTMLElement,
+          (ms) => latest.current.dismiss(ms),
+          () => latest.current.reduceMotion,
+          () => latest.current.held(),
+        )
+      : undefined;
 
   useEffect(() => {
     if (!visible || gone) return;

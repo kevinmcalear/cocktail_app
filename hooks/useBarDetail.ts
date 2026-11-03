@@ -42,11 +42,12 @@ export function useBarDetail(barId: string) {
                         default_specific_brand_level,
                         default_measurement_level,
                         default_prep_level,
+                        spec_unit,
                         created_at
                     `)
                     .eq('id', barId)
                     .single(),
-                // Just the number, for "View in Library": the drinks Library's All shows.
+                // Just the number, for "View in Drinks": the drinks All shows in Drinks.
                 supabase
                     .from('items')
                     .select('id', { count: 'exact', head: true })

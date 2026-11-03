@@ -1,4 +1,4 @@
-import { StyleSheet, View } from 'react-native';
+import { StyleSheet, View, type StyleProp, type ViewStyle } from 'react-native';
 
 import { Body, Caption, DsText, PressableScale, useDs } from '@/components/ds';
 import { IconSymbol } from '@/components/ui/icon-symbol';
@@ -42,6 +42,16 @@ export function MenuPageGroup({ rows }: { rows: GroupRow[] }) {
   );
 }
 
+/** After the drinks: the rows the board keeps off the top (an Admin's Run sheet, bar page and End), then a quiet note. */
+export function MenuPageAfter({ rows, note, style }: { rows: GroupRow[]; note: string | null; style: StyleProp<ViewStyle> }) {
+  return (
+    <View style={[style, styles.after]}>
+      <MenuPageGroup rows={rows} />
+      {note ? <Caption tone="muted">{note}</Caption> : null}
+    </View>
+  );
+}
+
 /** One line above the drinks: a guest's allergy ("Egg in 1 drink · Clover Club") or a past menu's "This menu has ended". */
 export function MenuPageBanner({ text, aside, warn, onPress }: { text: string; aside: string | null; warn: boolean; onPress?: () => void }) {
   const ds = useDs();
@@ -68,6 +78,7 @@ export function MenuPageBanner({ text, aside, warn, onPress }: { text: string; a
 }
 
 const styles = StyleSheet.create({
+  after: { paddingTop: space.xl, gap: space.lg },
   group: { borderRadius: radius.control, overflow: 'hidden', borderCurve: 'continuous' },
   row: { flexDirection: 'row', alignItems: 'center', gap: space.sm, paddingHorizontal: space.md, minHeight: 48, paddingVertical: space.sm },
   label: { flex: 1 },

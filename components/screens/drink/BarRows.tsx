@@ -3,17 +3,20 @@ import { useState } from 'react';
 import { View } from 'react-native';
 
 import { space } from '@/constants/tokens';
+import { useBatchLogs } from '@/hooks/useBatches';
 import { useCapabilities } from '@/hooks/useCapabilities';
 import { useDrinkCost } from '@/hooks/useDrinkCost';
 import { useDrinkOnMenu } from '@/hooks/useDrinkOnMenu';
 import type { GlassFillResult } from '@/hooks/useGlassFill';
 import { usePricingSettings } from '@/hooks/usePricing';
-import { useItemVersions } from '@/hooks/useVersions';
+import { useStockOnHand } from '@/hooks/useStockCounts';
+import { useLatestVersion } from '@/hooks/useVersions';
 import { formatPct, margin } from '@/lib/costing';
 import { fillWords } from '@/lib/glassFill';
 import { formatMoney, priceMinor } from '@/lib/money';
 import type { SpecLine } from '@/lib/spec';
 import { versionLine } from '@/lib/specDiff';
+import { madeLine, withBatches } from '@/lib/stock';
 import type { DatabaseItem } from '@/types/types';
 
 import { MenuSheet } from '../menus/MenuSheet';
@@ -44,16 +47,26 @@ export function BarRows({ item, barId, barName, lines, fill, onGlass, creator, c
   const router = useRouter();
   const [open, setOpen] = useState<'history' | 'cost' | null>(null);
   const caps = useCapabilities(barId).data ?? [];
-  const latest = useItemVersions(item.id, caps.includes('specs')).data?.[0];
+  const latest = useLatestVersion(item.id, caps.includes('specs')).data;
   const costs = creator && caps.includes('costs');
   const { data: cost } = useDrinkCost(item.id, barId, costs);
   const { data: pricing } = usePricingSettings(costs ? barId : null);
   const { data: onMenu } = useDrinkOnMenu(item.id, barId);
+  const house = lines.filter((l) => l.houseMade && l.ingredientId);
+  // Each house-made part: when it was made and what's on hand.
+  // ponytail: on hand is the last count plus batches since (lib/stock withBatches), nothing poured is taken off, and batches reach back 14 days (BATCH_DAYS). Upgrade: subtract pours once service logs them.
+  const { data: batches = [] } = useBatchLogs(house.length ? barId : null);
+  const { data: counted = [] } = useStockOnHand(barId, house.length > 0);
+  const onHand = withBatches(counted, batches);
 
   const behind: GroupRow[] = [
-    ...lines
-      .filter((l) => l.houseMade && l.ingredientId)
-      .map((l) => ({ key: `prep-${l.key}`, label: l.ingredient ?? 'House-made', value: 'House-made', onPress: () => router.push(`/ingredient/${l.ingredientId}` as Href) })),
+    ...house.map((l) => ({
+      key: `prep-${l.key}`,
+      label: l.ingredient ?? 'House-made',
+      // batches come newest first.
+      value: madeLine(batches.find((b) => b.itemId === l.ingredientId), onHand[l.ingredientId!]) ?? 'House-made',
+      onPress: () => router.push(`/ingredient/${l.ingredientId}` as Href),
+    })),
     ...(fill ? [{ key: 'fill', label: 'Fill line', value: fillWords(fill.fill), onPress: onGlass }] : []),
     ...(latest ? [{ key: 'changes', label: 'Spec changes', value: `Version ${latest.version} · ${versionLine(latest.created_at, latest.created_by_name)}`, onPress: () => setOpen('history') }] : []),
   ];

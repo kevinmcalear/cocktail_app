@@ -13,7 +13,7 @@ import { MIN_RANKERS, formatScore } from '@/lib/ranking';
 
 import { RankFlow } from '../rank/RankActions';
 import { useAgeGate } from '../safety/AgeGate';
-import { RankPickSheet } from './RankPickSheet';
+import { RankPickSheet } from './RankPickSheetLazy';
 
 interface BarRankingsProps {
   bar: { id: string; display_name: string; locality: string | null; city: string | null; country_code: string | null; is_closed: boolean };

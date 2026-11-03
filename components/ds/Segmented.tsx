@@ -18,6 +18,7 @@ interface SegmentedProps<T extends string> {
    * the same track with the picked one filled in ink (the drink page's Spec |
    * Service | Backstory on desktop). quiet: the small switch inside a sheet
    * (New event's Add one | From a calendar link), caption text on a raised pick.
+   * The page's own switch (Drinks, House-made, Bottles) is SegmentedCapsule.
    */
   variant?: 'underline' | 'pill' | 'ink' | 'quiet';
   /** Segments share the full width instead of hugging their labels. Underlined, that's a bar page's tabs: 15 on 20, centred (ppl-bar-top). */
@@ -74,7 +75,8 @@ const styles = StyleSheet.create({
   bar: { flexDirection: 'row', gap: space.xl, borderBottomWidth: StyleSheet.hairlineWidth },
   tab: { minHeight: layout.minTapTarget, justifyContent: 'center', borderBottomWidth: 2, marginBottom: -1 },
   barStretch: { gap: 0 },
-  tabStretch: { flex: 1, minWidth: 0, alignItems: 'center' },
+  // Each tab as wide as its label plus an equal share of what's left: long labels ("Past menus") get the room, not a quarter each.
+  tabStretch: { flexGrow: 1, flexShrink: 1, flexBasis: 'auto', minWidth: 0, alignItems: 'center', paddingHorizontal: space.xs },
   track: { flexDirection: 'row', gap: space.xs, padding: space.xs - 1, borderRadius: radius.pill, borderWidth: StyleSheet.hairlineWidth },
   hug: { alignSelf: 'flex-start' },
   box: { borderRadius: radius.control },

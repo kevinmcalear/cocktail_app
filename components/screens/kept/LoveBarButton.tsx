@@ -9,7 +9,7 @@ import { useLoveBar, useLovedBars } from '@/hooks/useKept';
 import { withAlpha } from '@/lib/color';
 
 import { useAgeGate } from '../safety/AgeGate';
-import { LoveAlertsSheet } from './LoveAlertsSheet';
+import { LoveAlertsSheet } from './LoveAlertsSheetLazy';
 
 /**
  * The heart on a bar's page: keeps the bar in Collection's Bars. Loving it
@@ -17,8 +17,10 @@ import { LoveAlertsSheet } from './LoveAlertsSheet';
  * same choice, with Stop loving. Signed in only; loving a bar needs a
  * confirmed age, like the rest of Collection.
  * `labelled` and loved, it's the accent-tinted "Loved" pill with a filled heart (ppl-bar-top).
+ * `follow`: the bar page's Follow / Following chip (Prod-bar). Same loved bar, one fact;
+ * which word the app keeps is Kevin's call.
  */
-export function LoveBarButton({ profileId, name, labelled = false }: { profileId: string; name: string; labelled?: boolean }) {
+export function LoveBarButton({ profileId, name, labelled = false, follow = false }: { profileId: string; name: string; labelled?: boolean; follow?: boolean }) {
   const ds = useDs();
   const signedIn = useSignedIn();
   const loved = useLovedBars().data?.some((b) => b.id === profileId) ?? false;
@@ -28,7 +30,13 @@ export function LoveBarButton({ profileId, name, labelled = false }: { profileId
   if (!signedIn) return null;
   // While the change saves, show where it's going.
   const on = love.isPending && love.variables ? love.variables.love : loved;
-  const label = on ? `You love ${name}: choose what it tells you, or stop loving it` : `Love ${name}: keep it in your Collection`;
+  const label = follow
+    ? on
+      ? `You follow ${name}: choose what it tells you, or stop following it`
+      : `Follow ${name}: its new menus and events can reach you`
+    : on
+      ? `You love ${name}: choose what it tells you, or stop loving it`
+      : `Love ${name}: keep it in your Collection`;
   // Loving asks what it may tell you about (week-love-alerts); tapping Loved opens the same choice, with Stop loving.
   const toggle = () =>
     on
@@ -37,6 +45,14 @@ export function LoveBarButton({ profileId, name, labelled = false }: { profileId
           love.mutate({ profileId, love: true });
           setAsking(true);
         });
+  if (follow)
+    return (
+      <>
+        <Button label={on ? 'Following' : 'Follow'} icon={on ? 'checkmark' : 'plus'} variant="secondary" dense aria-pressed={on} accessibilityLabel={label} onPress={toggle} style={styles.love} />
+        {age.sheet}
+        {asking ? <LoveAlertsSheet visible follow profileId={profileId} name={name} onClose={() => setAsking(false)} /> : null}
+      </>
+    );
   return (
     <>
       {on && labelled ? (

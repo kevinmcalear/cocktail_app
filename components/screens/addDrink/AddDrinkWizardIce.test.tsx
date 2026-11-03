@@ -52,7 +52,7 @@ jest.mock('@/hooks/useSameNameDrink', () => ({ useSameNameDrink: () => ({ data: 
 jest.mock('@/hooks/useKit', () => ({ useKit: () => ({ owned: [], kit: new Set(), toggle: jest.fn() }) }));
 jest.mock('@/hooks/useBarKit', () => ({ useMakingKit: () => ({ kit: new Set(), where: 'My Bar', add: jest.fn() }) }));
 jest.mock('@/hooks/useDrinkDesk', () => ({ ...jest.requireActual('@/hooks/useDrinkDesk'), useMenuSectionPlace: () => ({ data: undefined }) }));
-// A venue's suppliers and costs (m01) read their own hooks; these tests are about the steps.
+// A venue's suppliers and costs (m01) read their own hooks; these tests are about the draft page.
 jest.mock('./useDeskLines', () => ({ ...jest.requireActual('./useDeskLines'), useVenueLines: () => ({ lines: {}, cost: null }) }));
 beforeEach(() => {
   mockCreate.mockReset();
@@ -62,19 +62,21 @@ beforeEach(() => {
   mockVenueIce = [];
   mockClosest = null;
   useDrinkWizardStore.setState({ kept: {} });
-  useSettingsStore.setState({ defaultUnit: 'ml' });
+  useSettingsStore.setState({ units: 'ml' });
 });
 // iOS draws the screen after its first layout (the keyboard offset needs it).
 const laidOut = () => fireEvent(screen.getByTestId('add-drink'), 'layout', { persist: () => {}, nativeEvent: { layout: { x: 0, y: 0, width: 390, height: 800 } } });
-// The wave 2 ice and method steps (Q21 + E24, Q20b): Shaken with under the method, the ice picked straight away.
+// A row on the draft page opens its sheet ("Ice: not added").
+const row = (name: string) => fireEvent.press(screen.getByRole('button', { name: new RegExp(`^${name}: `) }));
+// The wave 2 Ice and Method sheets (Q21 + E24, Q20b): Shaken with under the method, the ice picked straight away.
 describe('AddDrinkWizard ice and method', () => {
-  test('the ice is picked straight away, and whole builds are in Add extra ice', async () => {
+  test('the ice sheet picks the ice straight away, and whole builds are in Add extra ice', async () => {
     mockVenueIce = [{ name: 'Shaved', shape: 'shaved', draw_as: null }, { name: 'Large cube', shape: 'large', draw_as: null }];
     useDrinkWizardStore.getState().patch('bar-1', { name: 'Julep' });
-    useDrinkWizardStore.getState().setStep('bar-1', 'ice');
     await renderWithProviders(<AddDrinkWizard barId="bar-1" onClose={jest.fn()} onSaved={mockSaved} />);
     await laidOut();
-    // No One kind or quick builds on the step (Q21 + E24): the ice is picked straight away.
+    await row('Ice');
+    // No One kind or quick builds in the sheet (Q21 + E24): the ice is picked straight away.
     expect(screen.queryByRole('radio', { name: 'One kind' })).toBeNull();
     // Cubes start at 3, and the quick builds are in Add extra ice.
     await fireEvent.press(screen.getByRole('radio', { name: 'Cubes' }));
@@ -88,25 +90,29 @@ describe('AddDrinkWizard ice and method', () => {
 
   test('No ice says it is served up, and the drink keeps the plain name (Kevin, 26 Oct)', async () => {
     useDrinkWizardStore.getState().patch('bar-1', { name: 'Martini' });
-    useDrinkWizardStore.getState().setStep('bar-1', 'ice');
     await renderWithProviders(<AddDrinkWizard barId="bar-1" onClose={jest.fn()} onSaved={mockSaved} />);
     await laidOut();
+    await row('Ice');
     await fireEvent.press(screen.getByRole('radio', { name: 'No ice (served up)' }));
     expect(useDrinkWizardStore.getState().kept['bar-1'].draft.ice).toEqual(expect.objectContaining({ name: 'No ice' }));
   });
 
-  test('the method says what it is shaken with, from the venue’s cubes, and not for a built drink', async () => {
+  test('the method sheet says what it is shaken with, from the venue’s cubes, and not for a built drink', async () => {
     mockVenueIce = [{ name: 'Large cube', shape: 'large', draw_as: null }, { name: 'Hosh cubes', shape: 'cubes', draw_as: null }];
     useDrinkWizardStore.getState().patch('bar-1', { name: 'Daiquiri', methods: [{ id: null, name: 'Shake' }] });
-    useDrinkWizardStore.getState().setStep('bar-1', 'method');
     await renderWithProviders(<AddDrinkWizard barId="bar-1" onClose={jest.fn()} onSaved={mockSaved} />);
     await laidOut();
-    expect(screen.getByText('Shaken with hosh cubes')).toBeTruthy();
+    expect(screen.getByRole('button', { name: 'Method: Shake' })).toBeTruthy();
+    // The Ice row says it too.
+    expect(screen.getByRole('button', { name: 'Ice: Shaken with hosh cubes' })).toBeTruthy();
+    await row('Method');
+    expect(screen.getAllByText('Shaken with hosh cubes')).toHaveLength(2);
     expect(screen.getByRole('button', { name: 'Change what it’s shaken with' })).toBeTruthy();
     await fireEvent.press(screen.getByRole('checkbox', { name: 'Shake' }));
     await fireEvent.press(screen.getByRole('checkbox', { name: 'Build' }));
     expect(screen.queryByText(/shaken with/i)).toBeNull();
-    // The whisk is in Air and texture, and takes no ice.
+    // The whisk is under More, and takes no ice.
+    await fireEvent.press(screen.getByRole('button', { name: 'More' }));
     await fireEvent.press(screen.getByRole('checkbox', { name: 'Whip (whisk or frother)' }));
     expect(screen.queryByText(/with hosh cubes/i)).toBeNull();
   });
@@ -117,9 +123,9 @@ describe('AddDrinkWizard ice and method', () => {
       lines: [{ key: 'w', id: null, name: 'Irish whiskey', amount: '40', unit: 'ml' }, { key: 'c', id: null, name: 'Cream', amount: '30', unit: 'ml' }],
       methods: [{ id: 'm-build', name: 'Build' }],
     });
-    useDrinkWizardStore.getState().setStep('home', 'method');
     await renderWithProviders(<AddDrinkWizard onClose={jest.fn()} onSaved={mockSaved} />);
     await laidOut();
+    await row('Method');
     await fireEvent(screen.getByRole('switch', { name: 'Made in parts' }), 'valueChange', true);
     const parts = () => useDrinkWizardStore.getState().kept.home.draft.parts ?? [];
     expect(parts().map((p) => p.lines)).toEqual([['w', 'c'], []]);

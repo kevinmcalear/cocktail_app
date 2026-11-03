@@ -16,7 +16,8 @@ import { plural } from '@/lib/menus';
 import { bestAway, oneBottleLine, shelfTiles } from '@/lib/tonight';
 import { byDay, detailLine, itemDay, shortDay, upcoming, type WeekItem } from '@/lib/week';
 
-import { Friends } from './Friends';
+import { Friends, FriendsPrompt, useFriends } from './Friends';
+import { RankIt } from './RankItLazy';
 import { DrinkTile, NoteCard, TonightSection } from './TonightParts';
 
 /** How many of the week's things sit under the strip. */
@@ -24,8 +25,9 @@ const WEEK_ROWS = 3;
 
 /**
  * Tonight at home (Prod-today-home, with This week on top, Kept-events opt
- * B): the week at the bars you love, what your shelf makes, the one bottle
- * worth buying, and a new list from a bar you love. No feed of strangers.
+ * B), led by "Had a drink? Rank it" (Loop-rank): the week at the bars you
+ * love, what your shelf makes, the one bottle worth buying, and a new list
+ * from a bar you love. No feed of strangers.
  */
 export function HomeTonight() {
   const router = useRouter();
@@ -33,12 +35,17 @@ export function HomeTonight() {
   const tiles = shelfTiles(drinks.canMake, drinks.oneAway);
   const away = bestAway(drinks.oneAway);
   const awayLine = away ? oneBottleLine(away.bottles, away.drinks) : null;
-  const openShelf = () => router.push('/shelf');
+  const openShelf = () => router.push('/drinks?tab=shelf');
   const week = useHomeWeek();
+  const friends = useFriends();
   const nothing = !drinks.isLoading && !tiles.length && !week.card && !week.rows.length;
   return (
     <View style={styles.stack}>
+      <RankIt />
       <ThisWeek week={week} />
+      {/* Kept-follow order: Rank it, This week, Friends (or its prompt), shelf, One bottle away. */}
+      <Friends ranks={friends.ranks} />
+      {friends.followsNobody ? <FriendsPrompt /> : null}
       {tiles.length ? (
         <TonightSection title="From your shelf" aside={`${drinks.canMake.length} you can make`} onAside={openShelf}>
           <Tiles>
@@ -58,7 +65,6 @@ export function HomeTonight() {
           <NewListCard item={week.card} from={week.from} />
         </TonightSection>
       ) : null}
-      <Friends />
       {nothing ? (
         <PencilState
           kind="empty"
@@ -128,7 +134,7 @@ function NewListCard({ item, from }: { item: WeekItem; from: Date }) {
   const eyebrow = [item.barName, `goes on ${shortDay(itemDay(item), from).toLowerCase()}`].filter(Boolean).join(' · ');
   const count = item.drinkCount ?? ids.length;
   return (
-    <PressableScale role="link" accessibilityLabel={`${item.name}. ${eyebrow}`} onPress={() => router.push(weekHref(item, false))} style={[styles.card, { backgroundColor: ds.c.raised }]}>
+    <PressableScale role="link" accessibilityLabel={`${item.name}. ${eyebrow}`} onPress={() => router.push(weekHref(item, false))} style={[styles.card, { backgroundColor: ds.c.surface }]}>
       <View style={styles.cardArt}>
         {ids.map((id) => (
           <DrinkDrawingFor key={id} itemId={id} size="row" pour={false} />

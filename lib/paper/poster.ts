@@ -8,8 +8,8 @@
 
 import { BRAND } from '@/constants/brand';
 import { backbar, posterPaper, type DisplayFace } from '@/constants/tokens';
-import { accentFill, contrast } from '@/lib/color';
 import { plural } from '@/lib/ranking';
+import { themeColours } from '@/lib/theme';
 
 import { fitSize, POSTER_SIZES, type PaperDrawing, type PaperEl, type PaperPage, type PosterSize } from './page';
 
@@ -58,20 +58,24 @@ const CLUSTERS: { dx: number; dy: number; s: number }[][] = [
 /** A menu's poster: its first three drawn drinks together on the panel, then its name, then (on a story) its drinks. */
 export function menuPoster(input: MenuPosterInput, size: PosterSize): PaperPage {
   const { w, h } = POSTER_SIZES[size];
-  const story = size === 'story';
-  // Cream on the bar's colour as drawn, the colour deepened until it reads; a light colour (amber) takes dark ink instead.
+  // A story and the printed poster list the drinks; a square has no room.
+  const story = size !== 'square';
+  // The bar's button colour and the ink on it (lib/theme, the one rule for a bar's colour), on the poster's paper.
   const palette = input.accent
-    ? accentFill(input.accent, backbar.light.ink, posterPaper.cream, contrast(input.accent, posterPaper.cream) >= 3 ? 'light' : undefined)
+    ? (({ fill, onFill }) => ({ fill, text: onFill }))(themeColours(input.accent, posterPaper.cream, false))
     : { fill: posterPaper[input.scheme === 'dark' ? 'night' : 'day'], text: backbar[input.scheme].ink };
   const ink = palette.text;
   const els: PaperEl[] = [];
 
-  const panelH = story ? 270 : 200;
+  // Letter and A4 are shorter than a story for their width: a lower panel, and the drinks in two columns.
+  const letter = size === 'letter' || size === 'a4';
+  const panelH = letter ? 196 : story ? 270 : 200;
   const drawn = input.drinks.filter((d) => d.drawn).slice(0, 3);
   // With nothing drawn yet there's no panel: an empty one reads as broken, so the words sit higher up instead.
   if (drawn.length) els.push({ k: 'box', x: GUTTER, y: GUTTER, w: w - 2 * GUTTER, h: panelH, fill: posterPaper.panel, r: 16 });
   // The panel is light in both themes, so the drawings are painted by day.
-  const k = story ? 1.05 : 1;
+  // Letter's lower panel (196) takes the cluster a little smaller than its 200, so nothing crosses the panel's edge.
+  const k = letter ? 0.95 : story ? 1.05 : 1;
   const lift = GUTTER + (panelH - 200 * k) / 2;
   // In the cluster's order: the last one is drawn on top.
   const order = drawn.length === 3 ? [drawn[0], drawn[2], drawn[1]] : drawn;
@@ -89,14 +93,23 @@ export function menuPoster(input: MenuPosterInput, size: PosterSize): PaperPage 
   y += titleSize * 1.15 + 18;
 
   if (story) {
-    const LINE = 30;
-    const room = Math.max(0, Math.floor((h - 30 - 24 - y) / LINE));
+    const LINE = letter ? 26 : 30;
+    const cols = letter ? 2 : 1;
+    const colW = (w - 2 * GUTTER) / cols;
     const names = input.drinks.map((d) => d.name);
-    const shown = names.length > room ? names.slice(0, Math.max(0, room - 1)) : names;
-    shown.forEach((n, i) => els.push({ k: 'text', x: GUTTER, y: y + i * LINE, w: w - 2 * GUTTER, t: n, size: fitSize(n, 21, w - 2 * GUTTER), face: 'display', color: ink, align: 'center' }));
+    const lines = Math.max(0, Math.floor((h - 30 - 24 - y) / LINE));
+    // A list too long for the page keeps its last line for "and N more".
+    const room = names.length > lines * cols ? Math.max(0, lines - 1) * cols : lines * cols;
+    const shown = names.slice(0, room);
+    const rows = Math.ceil(shown.length / cols);
+    // Down the first column, then the second: the menu's order reads top to bottom.
+    shown.forEach((n, i) => {
+      const x = GUTTER + Math.floor(i / rows) * colW;
+      els.push({ k: 'text', x, y: y + (i % rows) * LINE, w: colW, t: n, size: fitSize(n, letter ? 18 : 21, colW - 8), face: 'display', color: ink, align: 'center' });
+    });
     const more = names.length - shown.length;
-    if (more > 0 && room > 0) {
-      els.push({ k: 'text', x: GUTTER, y: y + shown.length * LINE + 4, w: w - 2 * GUTTER, t: `and ${more} more`, size: 15, face: 'system', color: ink, align: 'center' });
+    if (more > 0 && lines > 0) {
+      els.push({ k: 'text', x: GUTTER, y: y + rows * LINE + 4, w: w - 2 * GUTTER, t: `and ${more} more`, size: 15, face: 'system', color: ink, align: 'center' });
     }
   }
 

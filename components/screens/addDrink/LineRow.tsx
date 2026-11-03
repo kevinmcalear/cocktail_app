@@ -3,14 +3,13 @@ import { Platform, StyleSheet, TextInput, View } from 'react-native';
 
 import { Body, Caption, DsText, IngredientThumb, PressableScale, useBreakpoint, useDs } from '@/components/ds';
 import { IconSymbol } from '@/components/ui/icon-symbol';
-import { backbar, font, layout, radius, space, type } from '@/constants/tokens';
-import { withAlpha } from '@/lib/color';
+import { font, layout, radius, space, type } from '@/constants/tokens';
 import { convertPour, FINISH_UNITS, QUICK_UNITS, stepAmount, type WizardLine } from '@/lib/drinkWizard';
 import { prepSummary, toFinishSummary } from '@/lib/prepKinds';
 import { tidyAmount } from '@/lib/specDefaults';
 import { techniqueById } from '@/lib/techniques';
 
-import { CombineTag } from './CombineTag';
+import { HeldTag, useHeldStyle } from './CombineTag';
 import { LineGrip } from './DragRow';
 import { WizardChip } from './WizardChrome';
 
@@ -62,6 +61,7 @@ interface LineRowProps {
  */
 export function LineRow({ line, onChange, onRemove, onSwap, onEditPrep, units: unitList = LINE_UNITS, detail, below, grip, onMove, lifted, dropTarget, combineWith, moveTo, stock }: LineRowProps) {
   const ds = useDs();
+  const held = useHeldStyle(lifted, combineWith, dropTarget);
   // A phone stacks the name over the controls. Explicit, not flexWrap: Yoga on iOS shrank the name to "Rye wh…" beside them instead of wrapping (Eddie, 16 Oct).
   // So does a narrow column (the desktop page's spec, an ingredient's recipe beside its method), where the controls left the name a few letters.
   const [narrow, setNarrow] = useState(false);
@@ -95,9 +95,9 @@ export function LineRow({ line, onChange, onRemove, onSwap, onEditPrep, units: u
     <View
       role="listitem"
       onLayout={(e) => !lifted && setNarrow(e.nativeEvent.layout.width < NARROW)}
-      style={[styles.wrap, { borderBottomColor: ds.c.line }, lifted ? [styles.lifted, { backgroundColor: ds.c.raised, borderColor: combineWith ? ds.accentText : ds.c.lineStrong }] : null, dropTarget ? [styles.target, { borderColor: ds.accentText, backgroundColor: withAlpha(ds.accentText, 0.1) }] : null]}
+      style={[styles.wrap, { borderBottomColor: ds.c.line }, held]}
     >
-      {lifted && combineWith ? <CombineTag pair={`${line.name} + ${combineWith}`} /> : lifted && moveTo ? <CombineTag title={`Move to ${moveTo}`} /> : null}
+      <HeldTag name={line.name} lifted={lifted} combineWith={combineWith} moveTo={moveTo} />
       <View style={styles.row}>
         {grip?.(<LineGrip name={line.name} onMove={onMove} />)}
         <IngredientThumb id={line.id} name={line.name} size={lifted ? 32 : 40} />
@@ -262,8 +262,6 @@ const styles = StyleSheet.create({
   link: { minHeight: layout.minTapTarget, justifyContent: 'center' },
   note: { minHeight: layout.minTapTarget, marginLeft: 40 + space.md, borderWidth: 1, borderRadius: radius.control, paddingHorizontal: space.md },
   wrap: { paddingVertical: space.md, gap: space.md, borderBottomWidth: StyleSheet.hairlineWidth },
-  // Lit up to drop on, as drawn: a dashed accent edge a little wider than the row.
-  target: { borderWidth: 1.5, borderStyle: 'dashed', borderRadius: radius.control, marginHorizontal: -space.sm, paddingHorizontal: space.sm },
   row: { flexDirection: 'row', alignItems: 'flex-start', gap: space.md },
   // The name and the controls: two lines on a phone, one on a wider screen.
   main: { flex: 1, flexDirection: 'row', alignItems: 'center', gap: space.md },
@@ -273,8 +271,6 @@ const styles = StyleSheet.create({
   name: { minHeight: layout.minTapTarget, justifyContent: 'center' },
   prepName: { flexDirection: 'row', alignItems: 'center', gap: space.sm },
   flex: { flex: 1, minWidth: 0 },
-  // Being dragged: a card of its own, a little in from the edges, with a line round it (the accent when letting go combines).
-  lifted: { borderWidth: 1.5, borderBottomWidth: 1.5, borderRadius: radius.control, marginHorizontal: space.sm, paddingVertical: space.sm, paddingHorizontal: space.sm, alignSelf: 'stretch', shadowColor: backbar.dark.ground, shadowOffset: { width: 0, height: 14 }, shadowOpacity: 0.45, shadowRadius: 22, elevation: 8 },
   nameStacked: { flex: 1, minHeight: layout.minTapTarget, justifyContent: 'center' },
   controls: { flexDirection: 'row', alignItems: 'center', gap: space.sm },
   stepper: { flexDirection: 'row', alignItems: 'center', borderRadius: radius.pill, height: layout.minTapTarget },

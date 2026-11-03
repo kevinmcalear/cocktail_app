@@ -53,7 +53,7 @@ jest.mock('@/hooks/useSameNameDrink', () => ({ useSameNameDrink: () => ({ data: 
 jest.mock('@/hooks/useKit', () => ({ useKit: () => ({ owned: [], kit: new Set(), toggle: jest.fn() }) }));
 jest.mock('@/hooks/useBarKit', () => ({ useMakingKit: () => ({ kit: new Set(), where: 'My Bar', add: jest.fn() }) }));
 jest.mock('@/hooks/useDrinkDesk', () => ({ ...jest.requireActual('@/hooks/useDrinkDesk'), useMenuSectionPlace: () => ({ data: undefined }) }));
-// A venue's suppliers and costs (m01) read their own hooks; these tests are about the steps.
+// A venue's suppliers and costs (m01) read their own hooks; these tests are about the draft page.
 jest.mock('./useDeskLines', () => ({ ...jest.requireActual('./useDeskLines'), useVenueLines: () => ({ lines: {}, cost: null }) }));
 beforeEach(() => {
   mockCreate.mockReset();
@@ -63,7 +63,7 @@ beforeEach(() => {
   mockVenueIce = [];
   mockClosest = null;
   useDrinkWizardStore.setState({ kept: {} });
-  useSettingsStore.setState({ defaultUnit: 'ml' });
+  useSettingsStore.setState({ units: 'ml' });
 });
 // iOS draws the screen after its first layout (the keyboard offset needs it).
 const laidOut = () => fireEvent(screen.getByTestId('add-drink'), 'layout', { persist: () => {}, nativeEvent: { layout: { x: 0, y: 0, width: 390, height: 800 } } });
@@ -71,7 +71,7 @@ const laidOut = () => fireEvent(screen.getByTestId('add-drink'), 'layout', { per
 const imported = { ...EMPTY_DRAFT, name: 'Feijoa Smash', lines: [{ key: 'k1', id: null, name: 'Feijoa', amount: '30', unit: 'ml' }] };
 
 describe('AddDrinkWizard from an import', () => {
-  test('opens at the first step with no "Picked up where you left off"', async () => {
+  test('opens the draft with no "Picked up where you left off"', async () => {
     useDrinkWizardStore.getState().begin('bar-1|review:r1#0', imported);
     await renderWithProviders(<AddDrinkWizard barId="bar-1" imported review="r1#0" onClose={jest.fn()} onSaved={mockSaved} />);
     await laidOut();
@@ -92,7 +92,6 @@ describe('AddDrinkWizard from an import', () => {
     expect(screen.getByLabelText('Name').props.value).toBe('Feijoa Smash');
     const kept = useDrinkWizardStore.getState().kept[slot];
     expect(kept.draft.lines).toEqual(imported.lines);
-    expect(kept.step).toBe('name');
     expect(kept.start?.name).toBe('Feijoa Smash');
   });
 

@@ -8,6 +8,7 @@ import * as TabStack from '@/app/(tabs)/(1-tonight,2-drinks,3-discover,4-you)/_l
 import DrinksTab from '@/app/(tabs)/(2-drinks)/drinks';
 import { BreakpointOverride } from '@/components/ds';
 import { renderWithProviders } from '@/jest.setup';
+import { useDrinksFirstRow } from '@/components/screens/drinks/firstRow';
 import { drinkInPane } from '@/hooks/useDrinksSplit';
 import { TABS } from '@/lib/tabs';
 
@@ -25,17 +26,21 @@ jest.mock('@/hooks/useIsWideWeb', () => ({
 jest.mock('@/hooks/useMode', () => ({ useMode: () => ({ mode: mockMode, setMode: jest.fn() }) }));
 jest.mock('@/components/screens/venue/DeleteVenue', () => ({ VenueDeleteBanner: () => null }));
 // The New sheet's lists read Supabase; the sheet itself is what's checked here.
+// Add reads where things land and the clipboard; the sheet itself is what's checked here.
+jest.mock('@/hooks/useBringInPlace', () => ({ useBringInPlace: () => ({ barId: null, venueName: null, heldBack: null, loading: false }) }));
+jest.mock('@/lib/clipboardPeek', () => ({ UNREAD_CLIP: '\u0000unread', peekClipboard: async () => null, readClipboard: async () => null }));
+jest.mock('@/hooks/useDrinkDesk', () => ({ useMenuSectionPlace: () => ({ data: undefined }) }));
 jest.mock('@/hooks/useDrafts', () => ({ useDrafts: () => ({ drafts: [] }) }));
 jest.mock('@/hooks/useCapabilities', () => ({ useCapabilities: () => ({ data: [] }), useCapabilityOpensAt: () => ({ data: 35 }) }));
 jest.mock('@/hooks/useSearchMine', () => ({ useSearchMine: () => ({ venueId: null, canAdd: true, label: 'Your drinks' }) }));
 
-// The library stands in as two rows that open as its rows do (useOpenBeside), and counts its mounts.
+// The list stands in as two rows that open as its rows do (useOpenBeside), and counts its mounts.
 let mockMounts = 0;
-jest.mock('@/components/screens/LibraryScreen', () => {
+jest.mock('@/components/screens/drinks/StaffDrinks', () => {
   const { useEffect } = jest.requireActual<typeof import('react')>('react');
   const { Pressable, Text, View } = jest.requireActual<typeof import('react-native')>('react-native');
   const { useOpenBeside } = jest.requireActual<typeof import('@/hooks/useDrinksSplit')>('@/hooks/useDrinksSplit');
-  function LibraryScreen({ beside }: { beside?: boolean }) {
+  function StaffDrinks({ beside }: { beside?: boolean }) {
     useEffect(() => void (mockMounts += 1), []);
     const { picked, open } = useOpenBeside();
     return (
@@ -47,16 +52,21 @@ jest.mock('@/components/screens/LibraryScreen', () => {
       </View>
     );
   }
-  return { LibraryScreen };
+  return { StaffDrinks };
 });
-// The real one lazy-loads the library, which Jest can't; it is the same screen.
+// The real one lazy-loads the list, which Jest can't; it is the same screen.
 jest.mock('@/components/nav/RootLazy', () => {
-  const { LibraryScreen } = jest.requireMock<typeof import('@/components/screens/LibraryScreen')>('@/components/screens/LibraryScreen');
-  return { LibraryBeside: () => <LibraryScreen beside /> };
+  const { StaffDrinks } = jest.requireMock<typeof import('@/components/screens/drinks/StaffDrinks')>('@/components/screens/drinks/StaffDrinks');
+  return { DrinksBeside: () => <StaffDrinks beside /> };
 });
-jest.mock('@/components/screens/home/CollectionScreen', () => {
+// Drinks' first page on a desktop shows the list's first row (useDrinksFirstRow): a drink as its pane, here a stand-in.
+jest.mock('@/components/screens/drinks/DrinksPanes', () => {
   const { Text } = jest.requireActual<typeof import('react-native')>('react-native');
-  return { CollectionScreen: () => <Text>collection</Text> };
+  return { DrinkPane: ({ id }: { id: string }) => <Text>{`pane ${id}`}</Text>, OtherPane: ({ item }: { item: { name: string } }) => <Text>{`other ${item.name}`}</Text> };
+});
+jest.mock('@/components/screens/drinks/HomeDrinks', () => {
+  const { Text } = jest.requireActual<typeof import('react-native')>('react-native');
+  return { HomeDrinks: () => <Text>home drinks</Text> };
 });
 
 const SHARED = '(tabs)/(1-tonight,2-drinks,3-discover,4-you)';
@@ -98,6 +108,7 @@ beforeEach(() => {
   mockNav = 'sidebar';
   mockMode = 'venue';
   mockMounts = 0;
+  useDrinksFirstRow.setState({ item: null, ready: true });
 });
 
 test('from 1200 at a venue, a drink opens beside the list at its own URL, and Back closes it', async () => {
@@ -121,6 +132,17 @@ test('from 1200 at a venue, a drink opens beside the list at its own URL, and Ba
   expect(mockMounts).toBe(1);
 });
 
+test('from 1200, Drinks opens on the list\'s first row rather than a blank page, and says nothing while the list loads', async () => {
+  useDrinksFirstRow.setState({ item: null, ready: false });
+  await open('/drinks');
+  expect(await screen.findByText('list beside, none picked')).toBeTruthy();
+  expect(screen.queryByText('Pick a drink to see it here.')).toBeNull();
+  await act(async () => useDrinksFirstRow.setState({ item: { id: 'b', name: 'Bolo Tie', category: 'Cocktail' } as never, ready: true }));
+  expect(screen.getByText('pane b')).toBeTruthy();
+  await act(async () => useDrinksFirstRow.setState({ item: { id: 'g', name: 'Gin', category: 'Ingredient' } as never, ready: true }));
+  expect(screen.getByText('other Gin')).toBeTruthy();
+});
+
 test('another page on the Drinks stack takes the width, and the list comes back with Back', async () => {
   await open('/drinks');
   await screen.findByText('list beside, none picked');
@@ -141,10 +163,10 @@ test('below 1200, Drinks stays one column', async () => {
   expect(screen.queryByText(/list beside/)).toBeNull();
 });
 
-test('at home, Drinks is Collection, one column', async () => {
+test('at home, Drinks is your drinks, shelf and menus, one column', async () => {
   mockMode = 'home';
   await open('/drinks');
-  expect(screen.getByText('collection')).toBeTruthy();
+  expect(screen.getByText('home drinks')).toBeTruthy();
   expect(screen.queryByText(/list beside/)).toBeNull();
 });
 
@@ -162,14 +184,14 @@ test('only a drink page counts as the drink in the pane', () => {
   expect(drinkInPane('/drinks')).toBeNull();
 });
 
-test('from 1200 the top row ends in + Add, which opens the New sheet', async () => {
+test('from 1200 the top row ends in + Add, which opens Add', async () => {
   await renderWithProviders(
     <BreakpointOverride value="desktop">
       <ScreenHeader />
     </BreakpointOverride>,
   );
-  await fireEvent.press(screen.getByRole('button', { name: /^Add: a drink/ }));
-  expect(screen.getByRole('link', { name: /^Drink\./ })).toBeTruthy();
+  await fireEvent.press(screen.getByRole('button', { name: /^Add: name a drink/ }));
+  expect(await screen.findByLabelText('Name a drink, paste a link, or describe it')).toBeTruthy();
 });
 
 test('the list beside a drink (a tablet layout) leaves Add to the page', async () => {
@@ -178,5 +200,5 @@ test('the list beside a drink (a tablet layout) leaves Add to the page', async (
       <ScreenHeader />
     </BreakpointOverride>,
   );
-  expect(screen.queryByRole('button', { name: /^Add: a drink/ })).toBeNull();
+  expect(screen.queryByRole('button', { name: /^Add: name a drink/ })).toBeNull();
 });

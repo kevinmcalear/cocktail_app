@@ -1,4 +1,4 @@
-import { useRouter, type Href } from 'expo-router';
+import { useLocalSearchParams, useRouter, type Href } from 'expo-router';
 import { useEffect, useState } from 'react';
 import { ActivityIndicator, Platform, ScrollView, StyleSheet, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
@@ -17,11 +17,13 @@ import { snapReadFiles, sourcesFromFiles } from '@/lib/readAnything';
 import { askToNudge } from '@/lib/readyNudge';
 import { useAppMode } from '@/store/useAppMode';
 import { useBringIn, type BringInJob } from '@/store/useBringIn';
+import { useRankReturn } from '@/store/useRankReturn';
 import { slotStart } from '@/lib/wizardSlots';
 import { draftSlot, freeNameSlot, useDrinkWizardStore, wizardPlace } from '@/store/useDrinkWizardStore';
 
 import { BottlesCheck } from './BottlesCheck';
 import { BringInChooser } from './BringInChooser';
+import { FirstMenu } from './FirstMenu';
 import { ImportReview } from './ImportReview';
 import { ImportReviewDesk } from './ImportReviewDesk';
 import { MenuCheck } from './MenuCheck';
@@ -50,6 +52,8 @@ const reviewName = (job: BringInJob) => job.source.name ?? job.source.files.find
 export function BringInFlow() {
   const ds = useDs();
   const router = useRouter();
+  // Opened from the owner's first menu: its "Set up Little Rye · Tonight's menu" line, kept over the ways in.
+  const { step } = useLocalSearchParams<{ step?: string }>();
   const gutter = useGutter();
   const insets = useSafeAreaInsets();
   const place = useBringInPlace();
@@ -95,6 +99,9 @@ export function BringInFlow() {
     useBringIn.getState().setForeground(true);
     return () => {
       useBringIn.getState().setForeground(false);
+      // Left with nothing reading or saved: a Rank it that sent the menu here opens again. (Reading in the background keeps waiting.)
+      const { job: left } = useBringIn.getState();
+      if (!left || left.status === 'failed') useRankReturn.getState().back();
       // Left without Finish later (back, a link): what's left still waits, from the card.
       useBringIn.getState().setReviewing(null);
     };
@@ -132,6 +139,10 @@ export function BringInFlow() {
     }
     return desk ? <ImportReviewDesk id={reviewing.id} data={data} onFinishLater={finishLater} /> : <ImportReview id={reviewing.id} data={data} onFinishLater={finishLater} />;
   }
+  // The owner's first menu (venue setup): the camera, until what it took is read and matched; a failed read goes to Reading's retry.
+  if (step && (!job || (job.hint === 'menu' && job.barId === place.barId && !checking && job.status !== 'failed' && (job.status === 'reading' || !!data)))) {
+    return <FirstMenu step={step} barId={place.barId} job={job} data={data} onClose={job ? cancel : leave} onReady={() => job && setCheckedId(job.id)} />;
+  }
   if (!job) {
     return (
       <ScrollView style={{ backgroundColor: ds.c.ground }} contentContainerStyle={[styles.page, { paddingTop: insets.top + space.sm, paddingHorizontal: gutter, paddingBottom: insets.bottom + space.xl }]}>
@@ -147,16 +158,16 @@ export function BringInFlow() {
       void askToNudge();
       leave();
     };
-    // Bottles can be searched for by name instead, where they're added by hand: My Bar's search, or the venue's new bottle.
+    // Bottles can be searched for by name instead, where they're added by hand: the shelf's search, or the venue's new bottle.
     const bottles = job.reading?.kind === 'bottles' ? job.reading.bottles : null;
     const searchInstead = () => {
       useBringIn.getState().clear();
       const name = bottles?.[0]?.name;
       if (job.barId) router.replace({ pathname: '/add-ingredient', params: { barId: job.barId, ...(name ? { name } : {}) } });
       else {
-        // Your own shelf: My Bar is a home-mode tab, so a staffer snapping from a venue goes home for it.
+        // Your own shelf is home Drinks' Shelf, so a staffer snapping from a venue goes home for it.
         useAppMode.getState().setMode('home');
-        router.replace({ pathname: '/', params: { add: 'bottles' } });
+        router.replace({ pathname: '/drinks', params: { tab: 'shelf', add: 'bottles' } });
       }
     };
     return <ReadingScreen job={job} onClose={cancel} onBackground={background} onReady={() => setCheckedId(job.id)} onSearch={bottles ? searchInstead : undefined} />;
@@ -176,6 +187,7 @@ export function BringInFlow() {
     save.mutate(input, {
       onSuccess: (done) => {
         useBringIn.getState().setDone(done);
+        useRankReturn.getState().saved(done.menuId);
         useBringIn.getState().clear(true);
         router.replace((done.batchId ? `/bring-in/done?batch=${done.batchId}` : '/bring-in/done') as Href);
       },

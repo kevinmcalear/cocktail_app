@@ -6,7 +6,9 @@ import { ColourWheel } from '@/components/ds/ColourWheelLazy';
 import { DEFAULT_ACCENT, font, radius, space } from '@/constants/tokens';
 import { normalizeHex } from '@/lib/brand';
 import { colourName } from '@/lib/brandColours';
-import { groundOf, groundTintFor, neutralsFor, shadeNotes, type Ground, type Palette } from '@/lib/palette';
+import { groundOf, groundTintFor, neutralsFor, type Ground } from '@/lib/palette';
+import type { Palette } from '@/lib/palettes';
+import { themeFor } from '@/lib/themeRails';
 
 const GROUNDS: { id: Ground; label: string; note: string }[] = [
   { id: 'neutral', label: 'Neutral', note: 'Warm grey' },
@@ -57,13 +59,14 @@ export function ColourPicker({ accent, tint, palettes, onChange }: { accent: str
                   <View key={i} style={[styles.bar, { backgroundColor: c }]} />
                 ))}
               </View>
-              <Body color={look.ink} numberOfLines={1} style={styles.bold}>{p.name}</Body>
+              {/* Two lines: "Campari red" wraps whole at a phone's three across instead of cutting to "Campari...". */}
+              <Body color={look.ink} numberOfLines={2} style={styles.bold}>{p.name}</Body>
             </PressableScale>
           );
         })}
       </View>
 
-      {picked ? (
+      {picked || !accent ? (
         <Button label="Make your own colour" icon="plus" variant="secondary" onPress={() => setSheet(true)} />
       ) : (
         <PressableScale
@@ -108,7 +111,7 @@ export function ColourPicker({ accent, tint, palettes, onChange }: { accent: str
       </View>
       {grounds.length === 1 ? <Caption tone="muted">Greys keep a neutral background. Pick a colour to tint it.</Caption> : null}
       {ground ? null : <Caption tone="muted">Your background is an older tint. Pick one of these to change it.</Caption>}
-      {shadeNotes(current, tint, name).map((n) => (
+      {themeFor(current, tint, name).notes.map((n) => (
         <Caption key={n} tone="muted">{n}</Caption>
       ))}
 

@@ -31,6 +31,7 @@ export function contrast(a: string, b: string): number {
   return (hi + 0.05) / (lo + 0.05);
 }
 
+/** `hex` moved `amount` (0 to 1) of the way toward `toward`. */
 export function mix(hex: string, toward: string, amount: number): string {
   const a = parseHex(hex);
   const b = parseHex(toward);
@@ -65,25 +66,6 @@ export function readableAccent(accent: string, ground: string): string {
     out = mix(accent, towardWhite ? '#FFFFFF' : '#000000', step * 0.05);
   }
   return out;
-}
-
-/**
- * A button fill in the venue's accent, and the text to put on it. Uses
- * whichever ink reads better (or the venue's `prefer`red one when it reads);
- * if neither reaches 4.5:1 (mid-tone accents), the fill is deepened until the
- * light ink does.
- */
-export function accentFill(accent: string, darkInk: string, lightInk: string, prefer?: 'dark' | 'light'): { fill: string; text: string } {
-  const best = (fill: string) => (contrast(fill, darkInk) >= contrast(fill, lightInk) ? darkInk : lightInk);
-  let fill = toHex(parseHex(accent));
-  // The venue's pick (brand "Text on accent") wins whenever it reads; a light
-  // pick deepens the fill below until it does, a dark one that can't falls back.
-  if (prefer === 'dark' && contrast(fill, darkInk) >= AA) return { fill, text: darkInk };
-  if (prefer !== 'light' && contrast(fill, best(fill)) >= AA) return { fill, text: best(fill) };
-  for (let step = 1; step <= 20 && contrast(fill, lightInk) < AA; step++) {
-    fill = mix(accent, '#000000', step * 0.05);
-  }
-  return { fill, text: lightInk };
 }
 
 /** The colour as rgba at the given opacity, for tints behind text in that colour. */

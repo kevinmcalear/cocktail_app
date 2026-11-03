@@ -163,10 +163,28 @@ function useInvalidateList(menuId: string) {
     ]);
 }
 
-async function check<T extends { error: { message: string } | null }>(res: PromiseLike<T>): Promise<T> {
+export async function check<T extends { error: { message: string } | null }>(res: PromiseLike<T>): Promise<T> {
   const out = await res;
   if (out.error) throw new Error(out.error.message);
   return out;
+}
+
+/** An add that finds the drink already on the list is done, not an error (unique violation, 23505). */
+async function addOnce(res: PromiseLike<{ error: { message: string; code?: string } | null }>): Promise<void> {
+  const out = await res;
+  if (out.error && out.error.code !== '23505') throw new Error(out.error.message);
+}
+
+/** Said when the database refused a change without an error (row-level security): the list may not be the caller's to change any more. */
+export const NOT_CHANGED = 'Couldn’t change the list. It may not be yours to change now.';
+
+/**
+ * An update or delete that RLS refuses changes no rows and returns no error,
+ * so each one asks for the ids it changed and fails when there are none.
+ */
+async function changed(res: PromiseLike<{ data: unknown[] | null; error: { message: string } | null }>): Promise<void> {
+  const { data } = await check(res);
+  if (!data?.length) throw new Error(NOT_CHANGED);
 }
 
 /** The changes on a list's rows. `at` null: now; an ISO date: from then (the next service). */
@@ -181,12 +199,12 @@ export function useListChanges(menuId: string) {
     }),
     takeOff: useMutation({
       mutationFn: async ({ rowId, at = null }: { rowId: string; at?: string | null }) =>
-        void (await check(supabase.from('menu_drinks').update({ off_at: at ?? new Date().toISOString() }).eq('id', rowId))),
+        changed(supabase.from('menu_drinks').update({ off_at: at ?? new Date().toISOString() }).eq('id', rowId).select('id')),
       ...opts,
     }),
     add: useMutation({
       mutationFn: async (p: { sectionId: string; itemId: string; sortOrder: number; at?: string | null; slotName?: string | null }) =>
-        void (await check(
+        addOnce(
           supabase.from('menu_drinks').insert({
             menu_id: menuId,
             menu_section_id: p.sectionId,
@@ -195,7 +213,7 @@ export function useListChanges(menuId: string) {
             on_from: p.at ?? null,
             slot_name: p.slotName ?? null,
           })
-        )),
+        ),
       ...opts,
     }),
     /**
@@ -206,12 +224,12 @@ export function useListChanges(menuId: string) {
     undoSwap: useMutation({
       mutationFn: async ({ swappedIn, replaced }: { swappedIn: ListRow; replaced: ListRow | null }) => {
         if (!swappedIn.replacesItemId) throw new Error('That drink wasn’t swapped in.');
-        await check(supabase.from('menu_drinks').delete().eq('id', swappedIn.id));
+        await changed(supabase.from('menu_drinks').delete().eq('id', swappedIn.id).select('id'));
         if (replaced) {
-          await check(supabase.from('menu_drinks').update({ off_at: null }).eq('id', replaced.id));
+          await changed(supabase.from('menu_drinks').update({ off_at: null }).eq('id', replaced.id).select('id'));
           return;
         }
-        await check(
+        await addOnce(
           supabase.from('menu_drinks').insert({
             menu_id: menuId,
             menu_section_id: swappedIn.sectionId,
@@ -225,57 +243,36 @@ export function useListChanges(menuId: string) {
     }),
     /** Approves a waiting change (only someone who may change the list). */
     approve: useMutation({
-      mutationFn: async (rowId: string) => void (await check(supabase.from('menu_drinks').update({ waiting: null }).eq('id', rowId))),
+      mutationFn: async (rowId: string) => changed(supabase.from('menu_drinks').update({ waiting: null }).eq('id', rowId).select('id')),
       ...opts,
     }),
     /** Turns down a waiting change: an add goes, a take-off is withdrawn. */
     turnDown: useMutation({
       mutationFn: async ({ rowId, waiting }: { rowId: string; waiting: 'on' | 'off' }) =>
-        void (await check(
-          waiting === 'on' ? supabase.from('menu_drinks').delete().eq('id', rowId) : supabase.from('menu_drinks').update({ off_at: null }).eq('id', rowId)
-        )),
+        changed(
+          waiting === 'on'
+            ? supabase.from('menu_drinks').delete().eq('id', rowId).select('id')
+            : supabase.from('menu_drinks').update({ off_at: null }).eq('id', rowId).select('id')
+        ),
       ...opts,
     }),
     /** Shares a planned drink with the whole bar to learn (or stops sharing it). */
     shareDrink: useMutation({
       mutationFn: async ({ rowId, shared }: { rowId: string; shared: boolean }) =>
-        void (await check(supabase.from('menu_drinks').update({ team_shared_at: shared ? new Date().toISOString() : null }).eq('id', rowId))),
+        changed(supabase.from('menu_drinks').update({ team_shared_at: shared ? new Date().toISOString() : null }).eq('id', rowId).select('id')),
       ...opts,
     }),
     /** Shares a list that hasn't started with the whole bar (or stops sharing it). */
     shareList: useMutation({
       mutationFn: async (shared: boolean) =>
-        void (await check(supabase.from('menus').update({ team_shared_at: shared ? new Date().toISOString() : null }).eq('id', menuId))),
+        changed(supabase.from('menus').update({ team_shared_at: shared ? new Date().toISOString() : null }).eq('id', menuId).select('id')),
       ...opts,
     }),
     /** Hides a list that ran from the bar page and drink pages (it is never deleted). */
     hide: useMutation({
       mutationFn: async (hidden: boolean) =>
-        void (await check(supabase.from('menus').update({ hidden_at: hidden ? new Date().toISOString() : null }).eq('id', menuId))),
+        changed(supabase.from('menus').update({ hidden_at: hidden ? new Date().toISOString() : null }).eq('id', menuId).select('id')),
       ...opts,
     }),
   };
-}
-
-/** A daily list's day: who wrote it and the names printed on it. */
-export function useMenuDay(menuId: string | null | undefined, day: string | null | undefined) {
-  return useQuery({
-    queryKey: ['living-list', menuId ?? '', 'menu-day', day ?? ''],
-    enabled: !!menuId && !!day,
-    queryFn: async () => {
-      const { data, error } = await supabase.from('menu_days').select('id, written_by, names, note').eq('menu_id', menuId!).eq('day', day!).maybeSingle();
-      if (error) throw error;
-      return data;
-    },
-  });
-}
-
-export function useSaveMenuDay(menuId: string) {
-  const client = useQueryClient();
-  return useMutation({
-    mutationFn: async ({ day, writtenBy, names, note }: { day: string; writtenBy: string; names: string | null; note: string | null }) =>
-      void (await check(supabase.from('menu_days').upsert({ menu_id: menuId, day, written_by: writtenBy, names, note }, { onConflict: 'menu_id,day' }))),
-    onSuccess: () => client.invalidateQueries({ queryKey: ['living-list', menuId] }),
-    onError: () => {},
-  });
 }

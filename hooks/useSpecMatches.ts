@@ -1,5 +1,6 @@
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 
+import { useSignedIn } from '@/ctx/AuthContext';
 import { versionLabel, type SpecNote } from '@/lib/servedAt';
 import { supabase } from '@/lib/supabase';
 
@@ -33,9 +34,10 @@ function idsKey(ids: string[]): string {
  * `key` names the set (a classic's id, a search) for the cache.
  */
 export function useSpecMatches(key: string | undefined, ids: string[]) {
+  const signedIn = useSignedIn();
   return useQuery({
     queryKey: ['spec-matches', key, idsKey(ids)],
-    enabled: !!key && ids.length > 0,
+    enabled: signedIn && !!key && ids.length > 0,
     // ponytail: the function reads 500 drinks a call; past that, the first 500's verdicts.
     queryFn: async (): Promise<Record<string, SpecMatchRow>> => Object.fromEntries((await fetchSpecMatches(ids)).map((r) => [r.item_id, r])),
   });
@@ -62,9 +64,10 @@ function askBatched(id: string): Promise<SpecMatchRow | null> {
 
 /** What a bar's drink is to its classic ("the classic spec", or what its variation changes), for a row. */
 export function useVersionLabel(itemId: string | undefined) {
+  const signedIn = useSignedIn();
   const { data } = useQuery({
     queryKey: ['spec-match', itemId],
-    enabled: !!itemId,
+    enabled: signedIn && !!itemId,
     queryFn: () => askBatched(itemId!),
   });
   return versionLabel(data);
@@ -77,9 +80,10 @@ export function useVersionLabel(itemId: string | undefined) {
  * that drink, even if it also pours a variation.
  */
 export function useBarVersions(classicId: string | undefined, profileIds: string[]) {
+  const signedIn = useSignedIn();
   const { data } = useQuery({
     queryKey: ['bar-version-labels', classicId, idsKey(profileIds)],
-    enabled: !!classicId && profileIds.length > 0,
+    enabled: signedIn && !!classicId && profileIds.length > 0,
     queryFn: async (): Promise<Record<string, { itemId: string; label: string | null }>> => {
       const { data: versions, error } = await supabase
         .from('items')

@@ -11,7 +11,7 @@ import { menuPoster, topThreePoster } from './poster';
 const texts = (p: PaperPage) => p.els.filter((e): e is PaperText => e.k === 'text');
 const drawings = (p: PaperPage) => p.els.filter((e) => e.k === 'drawing');
 const inside = (p: PaperPage) =>
-  p.els.every((e) => e.x >= -1 && e.y >= 0 && (e.k === 'drawing' ? e.x + e.s <= p.w + 1 && e.y + e.s <= p.h : e.k === 'box' ? e.x + e.w <= p.w && e.y + e.h <= p.h : e.y + e.size <= p.h));
+  p.els.every((e) => e.x >= -1 && e.y >= 0 && (e.k === 'drawing' || e.k === 'code' ? e.x + e.s <= p.w + 1 && e.y + e.s <= p.h : e.k === 'box' ? e.x + e.w <= p.w && e.y + e.h <= p.h : e.y + e.size <= p.h));
 
 const winter = {
   name: 'Winter',
@@ -24,7 +24,7 @@ const winter = {
     { id: 'ss', name: 'Smoke Signal', drawn: true },
   ],
   accent: '#D0643B',
-  face: 'fraunces' as const,
+  face: 'newsreader' as const,
   scheme: 'light' as const,
 };
 
@@ -36,12 +36,11 @@ for (const [size, { w, h }] of Object.entries(POSTER_SIZES)) {
   assert.ok(inside(page), `${size}: everything sits on the page`);
   // The first three drinks with drawings, the middle one drawn last (on top).
   assert.deepEqual(drawings(page).map((d) => d.k === 'drawing' && d.itemId), ['of', 'pn', 'jr']);
-  assert.equal(page.displayFace, 'fraunces');
+  assert.equal(page.displayFace, 'newsreader');
   // The app's name at the foot comes from constants/brand.ts, never typed in.
   assert.equal(texts(page).at(-1)?.t, BRAND.productName.toLowerCase());
-  // Cream ink reads on the bar's colour, deepened from #D0643B as drawn.
-  assert.ok(contrast(page.ground, posterPaper.cream) >= 4.5);
-  assert.ok(texts(page).every((t) => t.color === posterPaper.cream));
+  // The ink reads on the bar's button colour (lib/theme), from #D0643B as drawn.
+  assert.ok(texts(page).every((t) => contrast(page.ground, t.color) >= 4.5));
 }
 
 // A story lists the drinks; a square has no room.

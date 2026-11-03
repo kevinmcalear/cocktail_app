@@ -3,14 +3,15 @@ import { useState } from 'react';
 import { Pressable, StyleSheet, View } from 'react-native';
 
 import { Caption, DrinkImage, GlassButton, GlassSurface, Tag, useDs } from '@/components/ds';
-import { backbar, space } from '@/constants/tokens';
+import { backbar, layout, space } from '@/constants/tokens';
 import { useItemSketch } from '@/hooks/useItemSketch';
 import { withAlpha } from '@/lib/color';
-import { pictureLabel, pictureTag } from '@/lib/itemImages';
+import { glassOver, pictureLabel, pictureTag } from '@/lib/itemImages';
 import type { SketchInputs } from '@/lib/sketch/types';
 
 import { PicturePager } from './PicturePager';
-import { PictureViewer, type ShownPicture } from './PictureViewer';
+import type { ShownPicture } from './PictureViewer';
+import { PictureViewer } from './PictureViewerLazy';
 
 interface DrinkHeroProps {
   name: string;
@@ -30,22 +31,25 @@ interface DrinkHeroProps {
   sketch?: SketchInputs | null;
   /** People who can edit it: a Photos button beside the count, to add, crop and choose the main photo (Eddie, 29 Oct). */
   onPhotos?: () => void;
+  /** The lead photo's line ("Photo: Jo"): under the photo on a phone, on it on the desktop. */
+  credit?: string | null;
 }
 
 /**
- * The phone hero's height: 30% of the screen below the status bar
- * (239 on a 390 x 844 phone). It was 22% so more of the spec fit on the first
- * screen (13 Oct), but the name kept covering the foot of the drink (27 Oct).
- * The page and its loading state share it.
+ * The phone hero's height: layout.photoHero of the screen below the status bar
+ * (239 at 0.3 on a 390 x 844 phone), at most the board's 2:3 frame. It was 22%
+ * so more of the spec fit on the first screen (13 Oct), but the name kept
+ * covering the foot of the drink (27 Oct). The page and its loading state share it.
  */
 export function phoneHeroHeight(width: number, height: number, top: number) {
-  return top + Math.min(width, (height - top) * 0.3);
+  // Whole points: a fraction leaves the hero's backing as a hairline at its foot.
+  return Math.round(top + Math.min(width * 1.5, (height - top) * layout.photoHero));
 }
 
 /** How far the page body rides up over the hero on phones (DrinkScreen, BeerWineScreen, DrinkLoading). */
 const OVERLAP = space.xxl;
 /** The fade into the page: a short band at the foot of the picture, not a third of it. */
-const FADE = OVERLAP + space.xxxl;
+export const FADE = OVERLAP + space.xxxl;
 /** Ground's alpha along the fade, eased so it melts in rather than starting as a hard shelf. */
 const EASE = [0, 0.08, 0.3, 0.65, 1];
 
@@ -66,7 +70,7 @@ function fadeStops(height: number, ground: string, glow: string | null) {
  * ground; with one, the drink's own colour glows through (docs/design_system.md,
  * "Drink field").
  */
-export function DrinkHero({ name, pictures, glass, itemId, palette, height, fade, onColour, sketch, onPhotos }: DrinkHeroProps) {
+export function DrinkHero({ name, pictures, glass, itemId, palette, height, fade, onColour, sketch, onPhotos, credit }: DrinkHeroProps) {
   const ds = useDs();
   const [index, setIndex] = useState(0);
   const [viewing, setViewing] = useState(false);
@@ -76,7 +80,9 @@ export function DrinkHero({ name, pictures, glass, itemId, palette, height, fade
   const total = pictures.length;
   const shown = pictures[Math.min(index, total - 1)];
   const tag = pictureTag(shown);
-  // Clear of the fade (the page body overlaps the bottom of the hero on phones).
+  // Each photo's own line; the first can be someone else's, written out by heroPictures.
+  const line = index === 0 && credit ? credit : shown?.credit ? `Photo: ${shown.credit}` : null;
+  // Clear of the fade (the page body overlaps the bottom of the hero on phones) and the credit under the photo.
   const bottom = fade ? OVERLAP + space.md : space.lg;
   // A drawing is square and scales to the hero's height: on phones, stop it above the name so its foot shows.
   const drawn = fade ? height - OVERLAP : height;
@@ -133,6 +139,12 @@ export function DrinkHero({ name, pictures, glass, itemId, palette, height, fade
           {onPhotos ? <GlassButton accessibilityLabel={total ? `Photos, ${total}: add, crop or choose the main one` : 'Add a photo'} icon="camera" label={total ? 'Photos' : 'Add a photo'} onMedia onPress={onPhotos} /> : null}
         </View>
       ) : null}
+      {line ? (
+        // On the photo it takes the photo's ink, whatever the page's scheme (a beer page in light mode can lead with a dark photo).
+        <Caption color={fade ? ds.c.muted : backbar[glassOver(shown)].ink} numberOfLines={1} style={fade ? styles.creditUnder : styles.creditOn}>
+          {line}
+        </Caption>
+      ) : null}
       {onColour && total === 0 && itemId ? <ColourButton itemId={itemId} name={name} bottom={bottom} onPress={onColour} /> : null}
       <PictureViewer pictures={pictures} name={name} open={viewing} startIndex={index} onClose={() => setViewing(false)} />
     </View>
@@ -152,9 +164,14 @@ function ColourButton({ itemId, name, bottom, onPress }: { itemId: string; name:
 const styles = StyleSheet.create({
   fill: { width: '100%' },
   page: { flex: 1 },
-  overlay: { position: 'absolute', top: 0, left: 0, right: 0, bottom: 0, pointerEvents: 'none' },
+  // A point past the foot: a gradient's last row blends with what's under it, and that showed as a hairline.
+  overlay: { position: 'absolute', top: 0, left: 0, right: 0, bottom: -1, pointerEvents: 'none' },
   badges: { position: 'absolute', right: space.lg, flexDirection: 'row', alignItems: 'center', gap: space.sm, pointerEvents: 'box-none' },
   marks: { flexDirection: 'row', alignItems: 'center', gap: space.sm, pointerEvents: 'none' },
   colour: { position: 'absolute', left: space.lg },
+  // Low in the fade, where a mid-tone photo has gone (boards Decided-photo-*); beside the eyebrow when the title sits under the photo.
+  creditUnder: { position: 'absolute', right: space.xl, bottom: space.lg, maxWidth: '55%', pointerEvents: 'none' },
+  // On the photo at its foot (board Desk-photo-side-*).
+  creditOn: { position: 'absolute', left: space.xl, bottom: space.lg, pointerEvents: 'none' },
   count: { paddingHorizontal: space.md, paddingVertical: space.xs },
 });

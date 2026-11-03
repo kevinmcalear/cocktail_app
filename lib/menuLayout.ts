@@ -25,6 +25,8 @@ export interface MenuLayout {
   name: string;
   coverUrl: string | null;
   coverPosition: number;
+  /** Who took the cover photo ("Photo by"); saved beside save_menu. */
+  coverCredit?: string | null;
   sections: EditSection[];
   /**
    * Prices changed in the builder and not saved yet, by drink id. A price is
@@ -37,11 +39,12 @@ export interface MenuLayout {
 let counter = 0;
 const newKey = () => `new-${Date.now().toString(36)}-${(counter++).toString(36)}`;
 
-export function layoutFromMenu(menu: Pick<MenuDetail, 'name' | 'coverUrl' | 'coverPosition' | 'sections'>): MenuLayout {
+export function layoutFromMenu(menu: Pick<MenuDetail, 'name' | 'coverUrl' | 'coverPosition' | 'coverCredit' | 'sections'>): MenuLayout {
   return {
     name: menu.name,
     coverUrl: menu.coverUrl,
     coverPosition: menu.coverPosition,
+    coverCredit: menu.coverCredit ?? null,
     sections: menu.sections.map((s) => ({ key: s.id, id: s.id, name: s.name, minItems: s.minItems, maxItems: s.maxItems, allowedTypes: s.allowedTypes, drinks: s.drinks })),
   };
 }
@@ -190,12 +193,16 @@ export function savePayload(layout: MenuLayout) {
   }));
 }
 
+/** The credit as saved: trimmed, and none when it's empty. */
+export const creditOf = (l: Pick<MenuLayout, 'coverCredit'>): string | null => l.coverCredit?.trim().slice(0, 80) || null;
+
 /** Whether anything would be saved: compares what save_menu() would write. */
 export function layoutChanged(a: MenuLayout, b: MenuLayout): boolean {
   return (
     a.name.trim() !== b.name.trim() ||
     a.coverUrl !== b.coverUrl ||
     a.coverPosition !== b.coverPosition ||
+    creditOf(a) !== creditOf(b) ||
     JSON.stringify(savePayload(a)) !== JSON.stringify(savePayload(b)) ||
     JSON.stringify(a.prices ?? {}) !== JSON.stringify(b.prices ?? {})
   );

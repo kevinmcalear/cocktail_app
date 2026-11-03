@@ -15,12 +15,10 @@ import type { DraftLook } from '@/lib/sketch/draft';
 import type { PublishMode } from '@/lib/publishing';
 import type { SameAs } from '@/lib/sameName';
 import { tidyAmount } from '@/lib/specDefaults';
-import { amountText } from '@/lib/units';
+import { amountText, grated, overIce } from '@/lib/units';
 
 export const WIZARD_STEPS = ['name', 'ingredients', 'method', 'glass', 'ice', 'garnish', 'credits', 'notes', 'publish', 'review'] as const;
 export type WizardStep = (typeof WIZARD_STEPS)[number];
-/** The steps the progress counts ("2 of 9"); the review after them isn't one. */
-export const COUNTED_STEPS = WIZARD_STEPS.length - 1;
 
 export const STEP_COPY: Record<WizardStep, { title: string; short: string; intro?: string; optional: boolean }> = {
   name: { title: 'What’s it called?', short: 'Name', optional: false },
@@ -165,6 +163,8 @@ export interface WizardDraft {
   photos?: Partial<Record<ImageAngle, string>>;
   /** Keep it: with a hero photo the drawing stays on the drink's page, after the photos. Unset, the photo replaces it (E26, items.show_sketch). */
   keepDrawing?: boolean;
+  /** Prompts put away on the draft page (Prompt's X), so one isn't asked twice; a balance prompt by what it said, so a new gap still shows. */
+  putAway?: string[];
   /** The drink's price at a venue, as typed (items.price: "19.50", "MP"), set on the desktop page beside the cost; blank leaves it for later. */
   price?: string;
 }
@@ -433,11 +433,6 @@ export function draftIceLine(d: WizardDraft): string {
   return made + iceBuildLine(d.iceBuild);
 }
 
-/** "a large cube", "a spear", but "cubes" and "crushed": a lone piece takes "a", plurals and loose ice don't. */
-const overIce = (name: string) => {
-  const n = name.trim().toLowerCase();
-  return /^(large cube|big cube|cube|spear|sphere|block|ball)$/.test(n) ? `a ${n}` : n;
-};
 
 /** A garnish chip: the spec line it adds. */
 export interface GarnishChip {
@@ -538,9 +533,6 @@ export function finishLabel(l: Pick<WizardLine, 'name' | 'amount' | 'unit'>): st
   if (l.unit === 'each' || !l.unit) return a && a !== '1' ? `${a} ${l.name}` : l.name;
   return a ? `${amountText(a, l.unit)} ${l.name}` : `${l.name}, ${l.unit}`;
 }
-
-/** "Grated nutmeg": the garnish grated over the top, its name kept lower case after. */
-export const grated = (name: string) => `Grated ${name.charAt(0).toLowerCase()}${name.slice(1)}`;
 
 // The amounts a stepper walks through, by unit: the measures bartenders pour.
 const LADDERS: Record<string, number[]> = {

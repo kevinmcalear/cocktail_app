@@ -1,4 +1,4 @@
-import * as Device from 'expo-device';
+import * as Device from '@/lib/realDevice';
 import { useRouter, type Href } from 'expo-router';
 import { useEffect, useState } from 'react';
 import { Platform, StyleSheet, View } from 'react-native';
@@ -8,7 +8,7 @@ import { IconSymbol } from '@/components/ui/icon-symbol';
 import { font, radius, space } from '@/constants/tokens';
 import { useBringInPlace } from '@/hooks/useBringInPlace';
 import { useLastBringIn } from '@/hooks/useBringInBatches';
-import { isCleanText, isLink, localReading } from '@/lib/bringIn';
+import { isCleanText, isLink, localReading, looksLikeMenu } from '@/lib/bringIn';
 import { lastTimeLine } from '@/lib/bringInBatch';
 import { peekClipboard, readClipboard, UNREAD_CLIP } from '@/lib/clipboardPeek';
 import { withAlpha } from '@/lib/color';
@@ -20,6 +20,7 @@ import { useStartBringIn } from './useStartBringIn';
 /** "Looks like a recipe": what pasted text seems to be, said before it's read. */
 function looksLikeText(text: string): string {
   if (isLink(text)) return 'Looks like a link';
+  if (looksLikeMenu(text)) return 'Looks like a menu';
   // Shorthand specs ("45 calvados, 15 pear") are read by AI, but they're still a recipe.
   if (!isCleanText(text)) return /\d+\s*[a-zA-Z]/.test(text) && text.split('\n').length <= 12 ? 'Looks like a recipe' : 'Looks like text to read';
   const reading = localReading(text);
@@ -32,7 +33,7 @@ function Tile({ icon, label, sub, onPress }: { icon: IconName; label: string; su
   return (
     <PressableScale role="button" accessibilityLabel={`${label}. ${sub}`} onPress={onPress} style={[styles.tile, { backgroundColor: ds.c.raised, borderColor: ds.c.lineStrong }]}>
       <IconSymbol name={icon} size={26} color={ds.accentText} />
-      <View>
+      <View style={styles.tileText}>
         <Body style={styles.semibold}>{label}</Body>
         <Caption tone="muted">{sub}</Caption>
       </View>
@@ -58,13 +59,13 @@ function LinkRow({ label, detail, onPress }: { label: string; detail?: string; o
  * Paste; what's on the clipboard, ready to use; type a drink yourself; and
  * the last bring-in. The sheet and the empty /bring-in page both show it.
  */
-export function BringInChooser({ onClose }: { onClose?: () => void }) {
+export function BringInChooser({ onClose, menu, paste = false }: { onClose?: () => void; /** Opened for a first menu (venue setup): the page around it has the title, and what's given is read as a menu. */ menu?: boolean; /** Open on Paste (Tonight's menu's Paste). */ paste?: boolean }) {
   const ds = useDs();
   const router = useRouter();
   const place = useBringInPlace();
   const start = useStartBringIn();
   const last = useLastBringIn(place.barId).data ?? null;
-  const [pasting, setPasting] = useState(false);
+  const [pasting, setPasting] = useState(paste);
   const [text, setText] = useState('');
   const [clip, setClip] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
@@ -83,13 +84,13 @@ export function BringInChooser({ onClose }: { onClose?: () => void }) {
     setError(null);
     try {
       const files = await get();
-      if (files.length) start(await sourcesFromFiles(files), { barId: place.barId });
+      if (files.length) start(await sourcesFromFiles(files), { barId: place.barId, hint: menu ? 'menu' : null });
     } catch (e) {
       setError(e instanceof Error ? e.message : 'Couldn’t open your photos.');
     }
   };
   const fromText = (value: string) => {
-    if (value.trim()) start([{ files: [], text: value, url: null }], { barId: place.barId });
+    if (value.trim()) start([{ files: [], text: value, url: null }], { barId: place.barId, hint: menu || looksLikeMenu(value) ? 'menu' : null });
   };
   const go = (href: string) => {
     useBringIn.getState().closeSheet();
@@ -101,7 +102,7 @@ export function BringInChooser({ onClose }: { onClose?: () => void }) {
     return (
       <View style={styles.stack}>
         <Title>Paste</Title>
-        <Field label="Text or a link" value={text} onChangeText={setText} minLines={6} autoFocus placeholder={'Orchard Fizz\n45 calvados, 15 pear liqueur\n20 lemon, 15 honey 2:1, top soda'} />
+        <Field label="Text or a link" value={text} onChangeText={setText} minLines={6} autoFocus placeholder={menu ? 'Winter menu\nSmoke Signal - mezcal, Aperol, lime 18\nHot Toddy - rye, honey-ginger, lemon 15' : 'Orchard Fizz\n45 calvados, 15 pear liqueur\n20 lemon, 15 honey 2:1, top soda'} />
         {text.trim() ? <Caption tone="muted">{looksLikeText(text)}</Caption> : null}
         <View style={styles.row}>
           <Button label="Back" variant="secondary" onPress={() => setPasting(false)} style={styles.flex} />
@@ -113,13 +114,16 @@ export function BringInChooser({ onClose }: { onClose?: () => void }) {
 
   return (
     <View style={styles.stack}>
-      <View style={styles.head}>
-        <Title>Bring in</Title>
-        <Body tone="muted">A menu, a recipe, a spec sheet, a shelf of bottles. Give it to us and we’ll work out what it is.</Body>
-        {place.heldBack ? <Caption tone="muted">{`It comes into your home bar. Adding to ${place.heldBack} opens at Drink Creator.`}</Caption> : null}
-      </View>
+      {/* For a first menu the page around it has the title; only the held-back note stays. */}
+      {menu && !place.heldBack ? null : (
+        <View style={styles.head}>
+          {menu ? null : <Title>Bring in</Title>}
+          {menu ? null : <Body tone="muted">A menu, a recipe, a spec sheet, a shelf of bottles. Give it to us and we’ll work out what it is.</Body>}
+          {place.heldBack ? <Caption tone="muted">{`It comes into your home bar. Adding to ${place.heldBack} opens at Drink Creator.`}</Caption> : null}
+        </View>
+      )}
       <View style={styles.tiles}>
-        {camera ? <Tile icon="camera" label="Snap" sub="Pages or a shelf" onPress={() => void fromFiles(snapReadFiles)} /> : null}
+        {camera ? <Tile icon="camera" label="Snap" sub={menu ? 'The menu’s pages' : 'Pages or a shelf'} onPress={() => void fromFiles(snapReadFiles)} /> : null}
         <Tile icon="photo" label="Photos, files" sub="PDF, screenshots" onPress={() => void fromFiles(pickReadFiles)} />
         <Tile icon="doc.on.clipboard" label="Paste" sub="Text or a link" onPress={() => setPasting(true)} />
       </View>
@@ -138,7 +142,7 @@ export function BringInChooser({ onClose }: { onClose?: () => void }) {
         <LinkRow label="Type a drink yourself" onPress={() => go(place.barId ? `/add-cocktail?barId=${place.barId}` : '/add-cocktail')} />
         {last ? <LinkRow label="Last time:" detail={lastTimeLine(last)} onPress={() => go(`/bring-in/done?batch=${last.id}`)} /> : null}
       </View>
-      <Caption tone="muted">Photos and PDFs are read by AI. Clean text is read on your phone. You check everything before it saves.</Caption>
+      <Caption tone="muted">Photos, PDFs and most pasted text are read by AI. A clean spec or list is read on your phone. You check everything before it saves.</Caption>
     </View>
   );
 }
@@ -147,8 +151,9 @@ const styles = StyleSheet.create({
   stack: { gap: space.xl - 4 },
   head: { gap: space.xs + 2 },
   tiles: { flexDirection: 'row', gap: space.sm },
-  tile: { flex: 1, minWidth: 0, minHeight: 112, paddingVertical: space.md, paddingHorizontal: space.sm, borderRadius: radius.control + 4, borderWidth: 1, justifyContent: 'space-between' },
+  tile: { flex: 1, minWidth: 0, minHeight: 112, paddingVertical: space.md, paddingHorizontal: space.sm, borderRadius: radius.control + 4, borderWidth: 1, gap: space.sm },
   semibold: { ...font.medium },
+  tileText: { gap: 2 },
   clip: { borderWidth: 1, borderStyle: 'dashed', borderRadius: radius.control + 4, paddingVertical: space.md + 2, paddingHorizontal: space.lg, gap: space.sm + 2 },
   clipHead: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', gap: space.sm },
   mono: { ...font.figures, letterSpacing: 0.5 },

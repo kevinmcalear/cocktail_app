@@ -11,7 +11,7 @@ import { useBringIn, type BringInJob } from '@/store/useBringIn';
  */
 export function useStartBringIn() {
   const router = useRouter();
-  return (sources: ReadSource[], options: { barId: string | null; hint?: ReadKind | null; as?: ReadKind | null; menu?: BringInJob['menu'] }) => {
+  return (sources: ReadSource[], options: { barId: string | null; hint?: ReadKind | null; as?: ReadKind | null; menu?: BringInJob['menu']; /** Swap the page it's on (the viewfinder) for Reading. */ replace?: boolean }) => {
     if (!sources.length) return;
     const store = useBringIn.getState();
     if (store.job && store.job.status !== 'failed') store.enqueue(sources);
@@ -21,7 +21,12 @@ export function useStartBringIn() {
       store.enqueue(rest);
     }
     store.closeSheet();
-    // Already on /bring-in (it marks itself foreground): it shows the new job.
-    if (!store.foreground) router.push('/bring-in' as Href);
+    // Already on /bring-in (it marks itself foreground): it shows the new job. From a page over it (the viewfinder), back to it.
+    if (store.foreground) {
+      if (options.replace) router.back();
+      return;
+    }
+    if (options.replace) router.replace('/bring-in' as Href);
+    else router.push('/bring-in' as Href);
   };
 }

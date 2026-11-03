@@ -4,10 +4,14 @@ import { Platform, StyleSheet } from 'react-native';
 import Svg, { ClipPath, Defs, Ellipse, G, LinearGradient, Path, RadialGradient, Rect, Stop } from 'react-native-svg';
 
 import { paintSketch } from '@/lib/sketch/paint';
+import { nightScene } from '@/lib/sketch/passes';
 import type { Scene, SceneEl } from '@/lib/sketch/scene';
 import { sceneToSvg } from '@/lib/sketch/svg';
-import type { SketchInputs } from '@/lib/sketch/types';
+import { isBareGlass, liquidOf, type SketchInputs } from '@/lib/sketch/types';
 
+import { inBarGlassCached } from '@/lib/sketch/barGlass';
+
+import { useDrawingGlasses } from './drawingGlasses';
 import { useDs } from './theme';
 import { useScene } from './useScene';
 
@@ -106,13 +110,25 @@ export interface SketchDrawingProps {
 
 /**
  * A drink drawn from its drawing inputs: a rough graphite-and-watercolour
- * sketch on the house paper, fitted inside its frame. Decorative: the frame around
- * it carries the label.
+ * sketch fitted inside its frame, on whatever is behind it, with no card of
+ * paper (decision chrome). Dark: painted for night, as DrinkDrawing paints it
+ * (chalk pencil, the drink lit). Decorative: the frame around it carries the
+ * label.
  */
-export const SketchDrawing = memo(function SketchDrawing({ inputs, seed, detail = 'full', lazy = detail === 'thumb' }: SketchDrawingProps) {
+export const SketchDrawing = memo(function SketchDrawing({ inputs: stored, seed, detail = 'full', lazy = detail === 'thumb' }: SketchDrawingProps) {
+  const night = useDs().scheme === 'dark';
+  const inputs = inBarGlassCached(stored, useDrawingGlasses());
   const scene = useScene(scenesOf(inputs), `${seed}|${detail}|false`, lazy, () => paintSketch(inputs, { seed, detail, bands: false }));
-  return <SceneSvg scene={scene} />;
+  return <SceneSvg scene={night ? nightOf(scene, inputs) : scene} bare />;
 });
+
+// The night painting of a scene, made once while the scene is.
+const nights = new WeakMap<Scene, Scene>();
+export function nightOf(scene: Scene, inputs: SketchInputs): Scene {
+  let out = nights.get(scene);
+  if (!out) nights.set(scene, (out = nightScene(scene, liquidOf(inputs).hex, isBareGlass(inputs))));
+  return out;
+}
 
 // One picture per scene and paper colour: the scene written as an SVG document
 // (lib/sketch/svg.ts) in a data URL, built once and kept while the scene is.

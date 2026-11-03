@@ -79,3 +79,32 @@ export function unitOnlyText(unit: string | null | undefined): string | null {
   const u = (unit ?? '').trim();
   return ONE_WORD.has(u) ? u[0].toUpperCase() + u.slice(1) : null;
 }
+
+/**
+ * A person's Units when their bar's unit (bars.spec_unit) becomes known. A
+ * unit saved before bars had one (`checked` false) is looked at once: the
+ * same as the bar's, it was the bar's all along and follows the bar from
+ * then on (null); a different one stays theirs.
+ */
+export function followBarUnit(s: { units: string | null; checked: boolean }, barUnit: string | null): { units: string | null; checked: boolean } {
+  if (s.checked || !barUnit) return s;
+  return { units: s.units === barUnit ? null : s.units, checked: true };
+}
+
+/**
+ * A unit saved before bars had one. ml was what everyone started on, picked or
+ * not, so it can't say the person chose it: it follows their bar like an unset
+ * Units, or that bar's own unit could never reach them. Anything else they picked.
+ */
+export function savedUnit(unit: string | null | undefined): string | null {
+  return unit && unit !== DEFAULT_UNIT ? unit : null;
+}
+
+/** "a large cube", "a spear", but "cubes" and "crushed": a lone piece takes "a", plurals and loose ice don't. */
+export const overIce = (name: string) => {
+  const n = name.trim().toLowerCase();
+  return /^(large cube|big cube|cube|spear|sphere|block|ball)$/.test(n) ? `a ${n}` : n;
+};
+
+/** "Grated nutmeg": the garnish grated over the top, its name kept lower case after. */
+export const grated = (name: string) => `Grated ${name.charAt(0).toLowerCase()}${name.slice(1)}`;

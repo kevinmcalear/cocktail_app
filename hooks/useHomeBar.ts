@@ -1,6 +1,7 @@
 import { keepPreviousData, useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { useMemo } from 'react';
 
+import { useSignedIn } from '@/ctx/AuthContext';
 import { useDebounced } from '@/hooks/useDiscover';
 import { ensureIngredient } from '@/hooks/useCreateIngredient';
 import { useDropdowns } from '@/hooks/useDropdowns';
@@ -85,11 +86,15 @@ export interface ShelfItem extends BarItem {
   hasRecipe?: boolean;
   /** When it went on the shelf (for a house prep: when you made it). */
   addedAt?: string | null;
+  /** How much is left, as the person said (Drinks board: Full, Half left, Running low); null when they haven't. */
+  fillLevel?: FillLevel | null;
   /** Where My Bar lists it. */
   section: BarSection;
   /** A bottle (`product`): the kinds it's a bottle of, its own and that one's ("London dry gin", "Gin"), as ids. */
   kindIds?: string[];
 }
+
+export type FillLevel = 'full' | 'half' | 'low';
 
 /** A search result for the add sheet, with the section it goes in and what it is ("Liqueur", "Italy"). */
 export interface FoundItem extends BarItem {
@@ -351,9 +356,10 @@ async function readItems(ids: string[], select = ITEM_SELECT): Promise<ItemRow[]
 
 /** What the shelf makes, and what one or two more bottles would unlock, worked out on the server (my_bar_drinks). */
 function useMatches(enabled = true) {
+  const signedIn = useSignedIn();
   return useQuery({
     queryKey: [...SHELF_KEY, 'matches', 2],
-    enabled,
+    enabled: enabled && signedIn,
     queryFn: async (): Promise<MatchRow[]> => {
       const rows: MatchRow[] = [];
       for (;;) {
@@ -372,8 +378,10 @@ function useMatches(enabled = true) {
  * Bar's "Make first". Under the shelf's key, so a shelf change refreshes it.
  */
 export function useMadePreps() {
+  const signedIn = useSignedIn();
   return useQuery({
     queryKey: [...SHELF_KEY, 'preps'],
+    enabled: signedIn,
     queryFn: async (): Promise<MadePrep[]> => {
       const { data, error } = await supabase.rpc('my_bar_preps');
       if (error) throw error;
@@ -387,8 +395,10 @@ export function useMadePreps() {
  * Make first's "One thing short". Under the shelf's key, so a shelf change refreshes it.
  */
 export function useShortPreps() {
+  const signedIn = useSignedIn();
   return useQuery({
     queryKey: [...SHELF_KEY, 'preps-short'],
+    enabled: signedIn,
     queryFn: async (): Promise<ShortPrep[]> => {
       const { data, error } = await supabase.rpc('my_bar_preps_short');
       if (error) throw error;
@@ -542,10 +552,11 @@ export function useBarDrinks(enabled = true) {
 async function readShelf(ids: string[]): Promise<Omit<ShelfItem, 'uses' | 'section'>[]> {
   const [rows, added] = await Promise.all([
     readItems(ids, SHELF_SELECT),
-    supabase.from('home_bar_items').select('item_id, added_at'),
+    supabase.from('home_bar_items').select('item_id, added_at, fill_level'),
   ]);
   if (added.error) throw added.error;
-  const addedAt = new Map((added.data ?? []).map((r: { item_id: string; added_at: string }) => [r.item_id, r.added_at]));
+  const addedAt = new Map((added.data ?? []).map((r) => [r.item_id, r.added_at]));
+  const fills = new Map((added.data ?? []).map((r) => [r.item_id, r.fill_level as FillLevel | null]));
   const kindIds = [...new Set(rows.map((r) => r.generic_id).filter((id): id is string => !!id))];
   const kindRows = kindIds.length ? await readItems(kindIds, 'id, name, generic_id') : [];
   const kinds = new Map(kindRows.map((k) => [k.id, k.name]));
@@ -566,7 +577,26 @@ async function readShelf(ids: string[]): Promise<Omit<ShelfItem, 'uses' | 'secti
     role: r.ingredient_role ?? null,
     hasRecipe: !!r.recipes?.length,
     addedAt: addedAt.get(r.id) ?? null,
+    fillLevel: fills.get(r.id) ?? null,
   }));
+}
+
+/** Say how much is left in a bottle (null clears it). The tiles and the bottle sheet change at once. */
+export function useSetFillLevel() {
+  const client = useQueryClient();
+  const key = [...SHELF_KEY, 'items'];
+  return useMutation({
+    mutationFn: async ({ itemId, level }: { itemId: string; level: FillLevel | null }) => {
+      const { error } = await supabase.from('home_bar_items').update({ fill_level: level }).eq('item_id', itemId);
+      if (error) throw error;
+    },
+    onMutate: async ({ itemId, level }) => {
+      await client.cancelQueries({ queryKey: key });
+      client.setQueriesData<Omit<ShelfItem, 'uses' | 'section'>[]>({ queryKey: key }, (rows) => rows?.map((r) => (r.id === itemId ? { ...r, fillLevel: level } : r)));
+    },
+    // A failed write is put right by the refetch below, so one bottle's failure can't undo another's change.
+    onSettled: () => client.invalidateQueries({ queryKey: key }),
+  });
 }
 
 /** My Bar: the shelf, what it makes, and what one more bottle would unlock. */

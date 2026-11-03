@@ -15,12 +15,13 @@ import { useShareSlug } from '@/hooks/useShareSlug';
 import { useSpecAccess } from '@/hooks/useSpecAccess';
 import { useSpecLock, type SpecLock } from '@/hooks/useSpecLock';
 import { useTeamRole } from '@/hooks/useTeamRole';
-import { useItemVersions } from '@/hooks/useVersions';
+import { useLatestVersion } from '@/hooks/useVersions';
 import { useEffectiveRole } from '@/hooks/useViewAs';
 import { makingParts } from '@/lib/drinkParts';
 import { heroPictures } from '@/lib/drinkPhotos';
 import { drinkViewer, makesIt, onTeam } from '@/lib/drinkViewer';
 import { glassOver, orderedPictures, type ItemImageLink, type ItemPicture } from '@/lib/itemImages';
+import { photoRooms } from '@/lib/photoTitle';
 import { drinkUrl, shareOrCopy } from '@/lib/shareLink';
 import { specLines, type PresentationRecipe, type SpecLevels } from '@/lib/spec';
 import { methodVerb } from '@/lib/specView';
@@ -107,7 +108,7 @@ function Page({ item, canEdit, adminFix = false, onEdit, pane, openBatch, visito
   const [batchOpen, setBatchOpen] = useState(!!openBatch);
   const [glassOpen, setGlassOpen] = useState(false);
   const caps = useCapabilities(onTeam(viewer) && !preview ? item.bar_id : null).data ?? [];
-  const version = useItemVersions(item.id, caps.includes('specs')).data?.[0]?.version;
+  const version = useLatestVersion(item.id, caps.includes('specs')).data?.version;
   const venue = useActiveVenue().venues.find((v) => v.id === item.bar_id);
   const profile = useBarProfile(preview || venue ? null : item.bar_id).data;
   const barName = lock?.bar.name ?? venue?.name ?? profile?.display_name ?? null;
@@ -135,6 +136,7 @@ function Page({ item, canEdit, adminFix = false, onEdit, pane, openBatch, visito
     lock,
     lines,
     verb: methodVerb(methods),
+    methods,
     serve: [glass?.name, ice?.name],
     fill,
     onGlass: () => setGlassOpen(true),
@@ -143,7 +145,6 @@ function Page({ item, canEdit, adminFix = false, onEdit, pane, openBatch, visito
     onMade: preview || lock || !home || !access.amounts ? undefined : actions.made,
     madeTimes: actions.madeTimes,
     canEdit,
-    photoCredit,
   });
 
   // Android's one main action is the extended FAB (And-who-guest, Miss-made).
@@ -155,13 +156,13 @@ function Page({ item, canEdit, adminFix = false, onEdit, pane, openBatch, visito
     <ItemShell
       name={item.name}
       pane={pane}
-      photo={photos ? { url: photos[0].url, hero: (h, fade) => <DrinkHero name={item.name} pictures={photos} glass={glass?.icon_key || glass?.name || null} itemId={item.id} palette={photos[0].palette} height={h} fade={fade} /> } : null}
-      art={(pour) => <DrinkArt itemId={item.id} sketch={preview?.sketch} label={`Drawing of ${item.name}`} size={size} pour={pour} />}
+      photo={photos ? { url: photos[0].url, rooms: photoRooms(photos), credit: !!photoCredit || photos.some((p) => !!p.credit), hero: (h, fade) => <DrinkHero name={item.name} pictures={photos} glass={glass?.icon_key || glass?.name || null} itemId={item.id} palette={photos[0].palette} height={h} fade={fade} credit={photoCredit} /> } : null}
+      art={(play) => <DrinkArt itemId={item.id} sketch={preview?.sketch} label={`Drawing of ${item.name}`} size={size} play={play} />}
       size={size}
       liquid={liquid}
       title={sections.title}
       action={sections.action}
-      body={(columns) => <DrinkBody sections={{ ...sections, action: columns || fab ? null : sections.action, made: fab && !columns ? sections.madeCount : sections.made }} title={!columns} />}
+      body={(columns, titled) => <DrinkBody sections={{ ...sections, action: columns || fab ? null : sections.action, made: fab && !columns ? sections.madeCount : sections.made }} title={titled} />}
       fab={fab}
       controls={{
         save: bookmark ? { saved: toMake.saved, onToggle: toMake.toggle, label: ['Add to To make', 'Remove from To make'] } : null,

@@ -119,6 +119,8 @@ interface MaterialBarProps {
   /** The page's own width (a pane can be narrower than the window). */
   width: number;
   scrollY: SharedValue<number>;
+  /** Where the small name starts when the big one is in the photo and leaves sooner. */
+  smallAt?: number;
   noBack?: boolean;
   controls: Controls;
   /** The drawing on its way into the bar. */
@@ -136,7 +138,7 @@ interface MaterialBarProps {
  * flexible top app bar yet (And-kit-hybrid, Kevin's pick). Swap to Compose's
  * when @expo/ui ships one.
  */
-export function MaterialBar({ name, top, photo, hero, width, scrollY, noBack, controls, drawing }: MaterialBarProps) {
+export function MaterialBar({ name, top, photo, hero, width, scrollY, smallAt, noBack, controls, drawing }: MaterialBarProps) {
   const ds = useDs();
   const router = useRouter();
   const tones = useItemTones();
@@ -157,7 +159,7 @@ export function MaterialBar({ name, top, photo, hero, width, scrollY, noBack, co
       <StatusBar style={ds.scheme === 'dark' ? 'light' : 'dark'} />
       <Animated.View style={[styles.fill, { height: top + material.bar, backgroundColor: tones.bar }, fill]} />
       {drawing}
-      {photo ? <PhotoTitle name={name} top={smallTop} width={width - PHOTO_TITLE_LEFT - room} tuck={tuck} scrollY={scrollY} /> : <GlideTitle name={name} top={top} smallTop={smallTop} room={width - TITLE_LEFT - room} />}
+      {photo ? <PhotoTitle name={name} top={smallTop} width={width - PHOTO_TITLE_LEFT - room} tuck={smallAt ?? tuck} scrollY={scrollY} /> : <GlideTitle name={name} top={top} smallTop={smallTop} room={width - TITLE_LEFT - room} />}
       <View style={[styles.row, { top }]}>
         <Circle value={circle}>
           {noBack ? <View /> : <BarIcon label="Back" icon="arrow.left" onPress={() => (router.canGoBack() ? router.back() : router.replace('/'))} />}

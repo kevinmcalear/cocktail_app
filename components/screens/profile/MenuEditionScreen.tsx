@@ -1,37 +1,58 @@
-import { useNavigation, useRouter } from 'expo-router';
+import { Redirect, useIsFocused, useNavigation, useRouter, type Href } from 'expo-router';
+import { StatusBar } from 'expo-status-bar';
+import { useState, type ComponentProps } from 'react';
 import { Linking, StyleSheet, View } from 'react-native';
 
-import { Body, Button, Caption, Display, PressableScale, Tag } from '@/components/ds';
+import { BackbarTheme, Button, PressableScale, Tag } from '@/components/ds';
+import { WebHead } from '@/components/WebHead';
+import { space } from '@/constants/tokens';
+import { useSignedIn } from '@/ctx/AuthContext';
+import { useActiveVenue } from '@/hooks/useActiveVenue';
+import { useMenuLens } from '@/hooks/useMenuLens';
+import { usePhotoTone } from '@/hooks/usePhotoTone';
 import { useMenuEditionDrinks, useMenuEditions, useProfile } from '@/hooks/useProfiles';
-import { editionDates, editionMenuDrinks, editionSections, menuRange, menuState } from '@/lib/menuEditions';
-import { plural } from '@/lib/menus';
+import { drinkPageHref } from '@/lib/itemRoutes';
+import { barDay, clockAt, DAILY_AFTER, dailyLead, dayText } from '@/lib/dailyList';
+import { editionDates, editionMenu, editionMenuDrinks, editionSections, menuRange, menuState } from '@/lib/menuEditions';
 import { screenBelow } from '@/lib/screenBelow';
+import { shareOrCopy } from '@/lib/shareLink';
+import { siteOrigin } from '@/lib/venueLink';
 
 import { SaveMenuButton } from '../kept/SaveMenuButton';
-import { MenuSections } from '../menus/MenuSections';
-import { loadFailure, PublicMissing, PublicShell } from '../published/PublicShell';
+import { GuestMenuPage } from '../menus/page/GuestMenuPage';
+import { loadFailure, PublicMissing } from '../published/PublicShell';
 
 /**
- * One menu a bar put out, set like the printed menu: a researched one, or the
- * venue's own menu on now or ended, in its sections with its prices. A drink
- * the reader can open links to it; signed out, or a bar's drink kept to its
- * team, the menu shows its name (and price).
+ * One menu a bar put out, on the menu page: a researched one, or the venue's
+ * own menu on now or ended, in its sections with its prices (Menu-who-guest,
+ * Menu-p-page; past menus leave prices off). Signed out too: a published drink
+ * shows what's in it and opens its public page; a bar's drink kept to its team
+ * shows its name and price. The bar's own team get the menu page they work
+ * from, with its layers.
  */
 export function MenuEditionScreen({ profileRef, editionId }: { profileRef: string; editionId: string }) {
   const router = useRouter();
   const navigation = useNavigation();
+  const signedIn = useSignedIn();
+  const { venues } = useActiveVenue();
   const profile = useProfile(profileRef);
   const editions = useMenuEditions(profile.data?.id);
   const edition = editions.data?.find((e) => e.id === editionId);
   const loaded = useMenuEditionDrinks(edition?.drinks ?? []);
+  // ponytail: a guest's own day, not the bar's (get_menu_editions doesn't send the bar's time zone).
+  const [today] = useState(() => barDay(Date.now()));
   if (!profile.data || !edition) return <PublicMissing loading={profile.isPending || (!!profile.data && editions.isPending)} what="menu" failed={loadFailure(profile, editions)} />;
 
   const bar = profile.data;
+  // The bar's own team go to the menu page they work from (/menus/[id]), with its layers.
+  if (edition.from_venue && venues.some((v) => v.id === bar.bar_id)) return <Redirect href={`/menus/${edition.id}` as Href} />;
+
   const readable = new Set((loaded.data ?? []).map((d) => d.id));
   const drinks = editionMenuDrinks(edition.drinks, loaded.data ?? []);
-  const cover = drinks.find((d) => d.imageUrl && !d.isSketch)?.imageUrl ?? null;
   const source = edition.source_url;
   const dates = editionDates(edition);
+  const past = menuState(dates) === 'past';
+  const now = past ? (editions.data ?? []).find((e) => e.is_current) : undefined;
   const barHref = `/p/${bar.handle || bar.id}` as const;
   const below = () => screenBelow(navigation.getState(), { id: profileRef, edition: editionId });
   // Nothing under it (opened from a link): Back goes to the bar's page.
@@ -43,31 +64,63 @@ export function MenuEditionScreen({ profileRef, editionId }: { profileRef: strin
     if (under?.name === 'p/[id]/index' && typeof id === 'string' && [bar.id, bar.handle, profileRef].includes(id)) router.back();
     else router.push(barHref);
   };
+  const menu = editionMenu(edition, editionSections(edition, drinks), bar.bar_id ?? bar.id);
+  // Tonight, the bar's daily list (Menu-l-tonight): today's date, when it was written, the new drinks marked.
+  const daily = edition.list_type === 'daily' && !past;
 
   return (
-    <PublicShell title={edition.name} imageUrl={cover} onBack={back}>
-      <PressableScale role="link" accessibilityLabel={`From ${bar.display_name}, open their profile`} onPress={toBar} style={styles.start}>
-        <Tag label={`From ${bar.display_name}`} tone="accent" />
-      </PressableScale>
-      {menuState(dates) === 'past' ? <Tag label="Past menu" style={styles.start} /> : null}
-      <Display>{edition.name}</Display>
-      <Caption tone="muted">{[menuRange(dates), drinks.length ? plural(drinks.length, 'drink') : null].filter(Boolean).join(' · ')}</Caption>
-      {edition.theme ? <Body tone="muted">{edition.theme}</Body> : null}
-      <SaveMenuButton editionId={edition.id} drinkIds={edition.drinks.map((d) => d.id)} fromVenue={edition.from_venue} />
-      {drinks.length ? (
-        <MenuSections sections={editionSections(edition, drinks)} variant="page" hrefFor={(d) => (readable.has(d.id) ? `/cocktail/${d.id}` : null)} />
-      ) : (
-        <Body tone="muted">The drinks on this menu aren’t listed yet.</Body>
-      )}
-      {source ? (
-        <View style={styles.start}>
-          <Button label="Where this menu comes from" variant="secondary" onPress={() => void Linking.openURL(source)} />
-        </View>
-      ) : null}
-    </PublicShell>
+    <>
+      <WebHead>
+        <title>{edition.name}</title>
+      </WebHead>
+      <BarGuestMenuPage
+        menu={menu}
+        status={past ? 'previous' : 'on'}
+        offTonight={new Set(edition.drinks.filter((d) => d.off_tonight).map((d) => d.id))}
+        eyebrow={[bar.display_name, daily ? dayText(today) : menuRange(dates)].filter(Boolean).join(' · ')}
+        description={daily ? (edition.written_at ? dailyLead(edition.written_at, (iso) => clockAt(iso)) : 'Today’s list') : undefined}
+        fresh={daily ? new Set(edition.drinks.filter((d) => d.new_today).map((d) => d.id)) : undefined}
+        after={daily ? DAILY_AFTER : undefined}
+        onNow={now ? { name: now.name, itemIds: new Set(now.drinks.map((d) => d.id)) } : null}
+        onToNow={now ? () => router.replace(`/p/${bar.handle || bar.id}/menus/${now.id}` as Href) : undefined}
+        onBack={back}
+        onShare={() => void shareOrCopy(`${siteOrigin()}${barHref}/menus/${edition.id}`, edition.name, 'menu')}
+        rowPress={(row) => (readable.has(row.drink.id) ? () => router.push(drinkPageHref(row.drink.id, signedIn) as Href) : null)}
+        under={
+          <View style={styles.under}>
+            <PressableScale role="link" accessibilityLabel={`From ${bar.display_name}, open their profile`} onPress={toBar} style={styles.start}>
+              <Tag label={`From ${bar.display_name}`} tone="accent" />
+            </PressableScale>
+            <SaveMenuButton editionId={edition.id} drinkIds={edition.drinks.map((d) => d.id)} fromVenue={edition.from_venue} />
+          </View>
+        }
+        footer={
+          source ? (
+            <View style={styles.start}>
+              <Button label="Where this menu comes from" variant="secondary" onPress={() => void Linking.openURL(source)} />
+            </View>
+          ) : null
+        }
+      />
+    </>
+  );
+}
+
+/** A bar's menu marks the drinks with the guest's own allergies. */
+function BarGuestMenuPage(props: Omit<ComponentProps<typeof GuestMenuPage>, 'lens'>) {
+  // The cover photo sets light or dark for the page (Menu-g-photo-dark, Menu-g-photo-bright).
+  const tone = usePhotoTone(props.menu.coverUrl);
+  const focused = useIsFocused();
+  return (
+    <BackbarTheme scheme={props.menu.coverUrl ? tone : undefined}>
+      {/* The clock and battery follow the page's tone, not the phone's (iOS and Android); only while it's on top, as the staff menu does. */}
+      {props.menu.coverUrl && focused ? <StatusBar style={tone === 'dark' ? 'light' : 'dark'} /> : null}
+      <GuestMenuPage {...props} lens={useMenuLens(props.menu)} />
+    </BackbarTheme>
   );
 }
 
 const styles = StyleSheet.create({
   start: { alignSelf: 'flex-start' },
+  under: { gap: space.sm },
 });

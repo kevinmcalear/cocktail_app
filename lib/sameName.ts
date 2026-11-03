@@ -80,13 +80,6 @@ export function stepWaits(step: WizardStep, draft: WizardDraft, atBar: { id: str
   return false;
 }
 
-/** The name step's heading while it asks for a version's word; null keeps the usual one. */
-export function versionHeading(draft: Pick<WizardDraft, 'sameAs'>): { eyebrow: string; title: string } | null {
-  const same = draft.sameAs;
-  if (same?.as !== 'version') return null;
-  return { eyebrow: `Version of ${theirs(same.bar, same.name)}`, title: 'What’s different about this one?' };
-}
-
 // --- comparing a sheet's spec with the bar's ---
 
 export interface SpecLine {

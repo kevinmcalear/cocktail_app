@@ -2,7 +2,6 @@ import { Redirect, useLocalSearchParams, useRouter } from 'expo-router';
 import { StyleSheet, View } from 'react-native';
 
 import { BackbarTheme, Body, BrandProvider } from '@/components/ds';
-import { DrinkDrawing } from '@/components/ds/DrinkDrawing';
 import { CouldNotLoad, NotAvailable } from '@/components/screens/safety/NotAvailable';
 import { space } from '@/constants/tokens';
 import { useActiveVenue } from '@/hooks/useActiveVenue';
@@ -16,14 +15,15 @@ import { useCanEditItem, useEffectiveRole } from '@/hooks/useViewAs';
 import { savedSketch } from '@/lib/beerWineWizard';
 import { formatAbv } from '@/lib/drinkMath';
 import { bareItemId, DRINK_KINDS, type DrinkKind } from '@/lib/drinkKinds';
-import { heroPicture, orderedPictures, type ItemImageLink } from '@/lib/itemImages';
+import { glassOver, heroPicture, orderedPictures, type ItemImageLink } from '@/lib/itemImages';
+import { photoRooms } from '@/lib/photoTitle';
 import { drinkUrl, shareOrCopy } from '@/lib/shareLink';
 import { liquidOf } from '@/lib/sketch/types';
 
 import { AllergyLine } from './AllergyLine';
 import { ApprovalNotice } from './ApprovalNotice';
 import { DrinkHero } from './DrinkHero';
-import { drawingSize } from './DrawingHero';
+import { DrinkArt, drawingSize } from './DrawingHero';
 import { DrinkLoading } from './DrinkLoading';
 import { ItemShell } from './ItemShell';
 import { ItemTitle } from './ItemTitle';
@@ -58,8 +58,10 @@ export function BeerWineScreen({ kind: kindName }: { kind: DrinkKind }) {
   }
   // Favourites keep the prefixed id they always had.
   const key = `${kind.kind}-${item.id}`;
+  const photo = orderedPictures(item.item_images as ItemImageLink[] | undefined).find((p) => !p.isSketch);
   return (
-    <BeerWineBrand barId={item.bar_id}>
+    // A photo decides light or dark for the whole page, as on a cocktail's (DrinkScreen).
+    <BeerWineBrand barId={item.bar_id} scheme={photo ? glassOver(photo) : undefined}>
       <BeerWinePage
         kind={kindName}
         item={item}
@@ -73,10 +75,10 @@ export function BeerWineScreen({ kind: kindName }: { kind: DrinkKind }) {
 }
 
 /** The drink page's theme, in the colours of the venue it belongs to (as DrinkScreen). */
-function BeerWineBrand({ barId, children }: { barId: string | null; children: React.ReactNode }) {
+function BeerWineBrand({ barId, scheme, children }: { barId: string | null; scheme?: 'light' | 'dark'; children: React.ReactNode }) {
   const venue = useActiveVenue().venues.find((v) => v.id === barId);
   return (
-    <BackbarTheme>
+    <BackbarTheme scheme={scheme}>
       <BrandProvider accent={venue?.accent ?? undefined} displayFace={venue?.displayFace}>
         {children}
       </BrandProvider>
@@ -135,15 +137,15 @@ function BeerWinePage({ kind, item, favorite, onToggleFavorite, canEdit, onEdit 
   return (
     <ItemShell
       name={item.name}
-      photo={pictures[0] ? { url: pictures[0].url, hero: (h, fade) => <DrinkHero name={item.name} pictures={pictures} glass={null} itemId={item.id} palette={pictures[0].palette} height={h} fade={fade} /> } : null}
-      art={(pour) => <DrinkDrawing inputs={sketch} seed={item.id} size="hero" staff={staff} pour={pour} label={`Drawing of ${item.name}`} />}
+      photo={pictures[0] ? { url: pictures[0].url, rooms: photoRooms(pictures), credit: pictures.some((p) => !!p.credit), hero: (h, fade) => <DrinkHero name={item.name} pictures={pictures} glass={null} itemId={item.id} palette={pictures[0].palette} height={h} fade={fade} /> } : null}
+      art={(play) => <DrinkArt itemId={item.id} sketch={sketch} label={`Drawing of ${item.name}`} size={size} play={play} />}
       size={size}
       liquid={liquidOf(sketch).hex}
       title={title}
       action={null}
-      body={(columns) => (
+      body={(_, titled) => (
         <View style={styles.body}>
-          {columns ? null : title}
+          {titled ? title : null}
           {item.description ? <Body>{item.description}</Body> : null}
           {staff ? null : <PalateFit itemId={item.id} name={item.name} />}
           <FactRows rows={facts} />

@@ -1,6 +1,6 @@
-import { Platform, Text as RNText, type TextProps, type TextStyle } from 'react-native';
+import { Platform, Text as RNText, StyleSheet, type TextProps, type TextStyle } from 'react-native';
 
-import { displayFaces, font, textSlack, type, type TypeStyle } from '@/constants/tokens';
+import { faceWeightReset, font, nameStyle, textSlack, type, type TypeStyle } from '@/constants/tokens';
 
 import { useDs } from './theme';
 
@@ -45,14 +45,17 @@ const SLACK = Platform.OS === 'ios' ? { paddingBottom: textSlack } : null;
 export function DsText({ variant = 'body', tone = 'ink', italic, color, align, style, ...rest }: DsTextProps) {
   const ds = useDs();
   const isDisplay = variant === 'display' || variant === 'title';
-  const face = displayFaces[ds.displayFace];
-  const faceStyle = isDisplay ? { fontFamily: italic ? face.italic : face.regular } : FACE[variant];
+  // A bar's face sits at Redaction's height, with its own spacing and capitals.
+  const faceStyle = isDisplay ? nameStyle(ds.displayFace, type[variant], italic) : FACE[variant];
   const toneColor = {
     ink: ds.c.ink,
     muted: ds.c.muted,
     accent: ds.accentText,
     onAccent: ds.accentFill.text,
   }[tone];
+  // A caller that sets a display face on a system variant gets the face's own weight.
+  const own = isDisplay ? undefined : StyleSheet.flatten(style);
+  const weightReset = own ? faceWeightReset(own.fontFamily, own.fontWeight) : undefined;
   return (
     <RNText
       {...rest}
@@ -60,6 +63,7 @@ export function DsText({ variant = 'body', tone = 'ink', italic, color, align, s
         type[variant],
         SLACK,
         faceStyle,
+        weightReset,
         { color: color ?? toneColor, textAlign: align },
         style,
       ]}

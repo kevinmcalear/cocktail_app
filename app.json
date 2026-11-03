@@ -16,8 +16,6 @@
       },
       "predictiveBackGestureEnabled": true,
       "blockedPermissions": [
-        "android.permission.CAMERA",
-        "android.permission.RECORD_AUDIO",
         "android.permission.SYSTEM_ALERT_WINDOW",
         "android.permission.WRITE_EXTERNAL_STORAGE",
         "android.permission.READ_MEDIA_IMAGES",
@@ -47,8 +45,8 @@
         "expo-image-picker",
         {
           "photosPermission": "Allow $(PRODUCT_NAME) to use your photos so you can add pictures of drinks, menus, venue logos and your profile.",
-          "cameraPermission": "Allow $(PRODUCT_NAME) to use the camera so you can photograph drinks for your team.",
-          "microphonePermission": false
+          "cameraPermission": "$(PRODUCT_NAME) uses the camera to photograph drinks, and to read a menu, bottle or recipe you point it at.",
+          "microphonePermission": "$(PRODUCT_NAME) uses the microphone when you tap the mic to say a drink."
         }
       ],
       [
