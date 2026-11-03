@@ -6,12 +6,13 @@ import { Body, Button, Caption, DsText, PressableScale, useDs } from '@/componen
 import { displayFaces, font, layout, space } from '@/constants/tokens';
 import { useCocktail } from '@/hooks/useCocktails';
 import { printedPrice } from '@/lib/menus';
-import type { PagerPlace } from '@/lib/menuPager';
+import { inMenuQuery, type PagerPlace } from '@/lib/menuPager';
 import type { MenuDrink } from '@/types/menus';
 
 import { useSignedIn } from '@/ctx/AuthContext';
 
 import { useAgeGate } from '../../safety/AgeGate';
+import { menuDrinkHref } from '../MenuSections';
 import { MenuDrawing } from '../page/MenuDrawing';
 
 // The pane itself loads lazily with the desktop's menu page (MenuScreen), so Rank it's sheets come in that chunk. A lazy import here
@@ -25,7 +26,7 @@ import { RankFlow } from '../../rank/RankActions';
  * it, the price and how it's served, and Rank it; the drink's own page is a
  * link away.
  */
-export function MenuDrinkPane({ drink, barName, place, onPick }: { drink: MenuDrink; barName: string | null; place: PagerPlace | null; onPick: (id: string) => void }) {
+export function MenuDrinkPane({ drink, menuId, barName, place, onPick }: { drink: MenuDrink; menuId: string; barName: string | null; place: PagerPlace | null; onPick: (id: string) => void }) {
   const ds = useDs();
   const router = useRouter();
   const query = useCocktail(drink.id, { seeded: true });
@@ -103,7 +104,7 @@ export function MenuDrinkPane({ drink, barName, place, onPick }: { drink: MenuDr
           <View style={[styles.fact, styles.rule, { borderTopColor: ds.c.line }]} />
         </View>
         <Button label="Rank it" variant="ink" size="lg" onPress={rank} accessibilityHint={`Rank ${drink.name} against others you've had`} />
-        <PressableScale role="link" accessibilityLabel={`Open ${drink.name}`} onPress={() => router.push(`/cocktail/${drink.id}` as Href)} style={styles.open}>
+        <PressableScale role="link" accessibilityLabel={`Open ${drink.name}`} onPress={() => router.push(`${menuDrinkHref(drink)}?${inMenuQuery(menuId)}` as Href)} style={styles.open}>
           <Caption style={font.semiBold}>Open the drink ›</Caption>
         </PressableScale>
       </ScrollView>

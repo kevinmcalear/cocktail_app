@@ -256,13 +256,13 @@ export function liveList({ sections, sectionIds, rows, ended, endedDrinks, may, 
         return { at: r.onFrom!, text: `${nameOfDrink(r.itemId) ?? 'A drink'} ${out ? `for ${out}` : 'on'}`, by: nameOf(r.addedBy) };
       }),
     // A drink swapped out reads with the one that took its place, above.
-    ...ended.filter((e) => !swappedIn(e)).map((e) => ({ at: e.cameOff, text: `${endedDrinks.get(e.itemId)?.name ?? 'A drink'} off, ran ${day(e.wentOn)} to ${day(e.cameOff)}`, by: nameOf(e.takenOffBy) })),
+    ...ended.filter((e) => !swappedIn(e)).map((e) => ({ at: e.cameOff, text: `${endedDrinks.get(e.itemId)?.name ?? 'A drink'} off`, ran: `ran ${day(e.wentOn)} to ${day(e.cameOff)}`, by: nameOf(e.takenOffBy) })),
   ]
     // Drinks put on as the menu was set up aren't a change: only what changed after it went on (Menu-who-admin draws no Last change until then).
     .filter((c) => !listStart || Date.parse(c.at) > Date.parse(listStart))
     .sort((a, b) => b.at.localeCompare(a.at));
   const last = changes[0];
-  const lastChange = last ? `${sameDay(last.at, now) ? `today ${time(last.at)}` : day(last.at)} · ${last.text.replace(/, ran .*$/, '')}` : null;
+  const lastChange = last ? `${sameDay(last.at, now) ? `today ${time(last.at)}` : day(last.at)} · ${last.text}` : null;
 
   return {
     lead: lead.length ? { id: 'waiting', name: may && !bartender ? 'Waiting for you' : 'Your changes', rows: lead } : null,
@@ -270,6 +270,6 @@ export function liveList({ sections, sectionIds, rows, ended, endedDrinks, may, 
     coming: coming.length ? { id: 'coming', name: 'Coming up', rows: coming } : null,
     lastChange,
     // Every change since it went on, newest first: the desktop's change log beside a swap (Menu-l-desk).
-    changes: changes.map((c) => ({ ...c, when: sameDay(c.at, now) ? `today ${time(c.at)}` : day(c.at) })),
+    changes: changes.map((c) => ({ ...c, text: 'ran' in c && c.ran ? `${c.text}, ${c.ran}` : c.text, when: sameDay(c.at, now) ? `today ${time(c.at)}` : day(c.at) })),
   };
 }

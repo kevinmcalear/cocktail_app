@@ -208,7 +208,7 @@ function MenuPageBody({ menu, shelf, cover, now }: PageProps & { cover: string |
 
   const list = (
     <FlatList
-      // A menu can run to dozens of drinks: rows mount as they scroll into view.
+      // A menu can run to dozens of drinks: rows mount as they scroll into view. ponytail: the desktop's two columns (Menu-desk) render in the header, not windowed; a menu past ~60 drinks wants a windowed grid.
       data={sidebar ? [] : items}
       keyExtractor={(i) => i.key}
       windowSize={DRAWN_LIST_WINDOW}
@@ -250,11 +250,11 @@ function MenuPageBody({ menu, shelf, cover, now }: PageProps & { cover: string |
         <RowChanges menu={menu} target={changing} ended={listView.ended} acts={acts} onClose={() => setChanging(null)} pane={{ after: <ChangeLog menuName={menu.name} changes={listView.changes} /> }} />
       ) : besideId ? (
         <Suspense fallback={null}>
-          <MenuDrinkPane drink={drinks.find((d) => d.id === besideId)!} barName={venues.find((v) => v.id === menu.barId)?.name ?? null} place={place} onPick={(id) => drinks.find((d) => d.id === id && openDrink(d))} />
+          <MenuDrinkPane drink={drinks.find((d) => d.id === besideId)!} barName={venues.find((v) => v.id === menu.barId)?.name ?? null} place={place} menuId={menu.id} onPick={(id) => { const d = drinks.find((x) => x.id === id); if (d) openDrink(d); }} />
         </Suspense>
       ) : null}
       {draft && team ? (
-        <View style={[styles.bottom, sidebar && styles.bottomBeside, { paddingBottom: insets.bottom + space.md, paddingHorizontal: gutter, backgroundColor: ds.c.ground }]}>
+        <View style={[styles.bottom, (besideId || changing) && sidebar && styles.bottomBeside, { paddingBottom: insets.bottom + space.md, paddingHorizontal: gutter, backgroundColor: ds.c.ground }]}>
           <Button label="Publish" variant="ink" size="lg" onPress={() => setSheet('publish')} style={styles.publish} />
           <Caption tone="muted" align="center">
             Only your team can see a draft
