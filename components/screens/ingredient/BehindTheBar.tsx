@@ -7,6 +7,7 @@ import { space } from '@/constants/tokens';
 import { useBatchLogs } from '@/hooks/useBatches';
 import type { PrepUsedIn } from '@/hooks/usePrepCard';
 import { useStockOnHand } from '@/hooks/useStockCounts';
+import { useVenueFeature } from '@/hooks/useVenueFeatures';
 import { formatQuantity, toQuantity } from '@/lib/quantity';
 import { onHandLine, withBatches } from '@/lib/stock';
 
@@ -60,8 +61,10 @@ export function BehindTheBar({ item, names, drinks, used, from, canEditItem, hou
     ...drinks.map((d) => ({ key: d.id, value: d.name, href: `/cocktail/${d.id}` })),
   ];
   const shown = all || uses.length <= FIRST + 1 ? uses : uses.slice(0, FIRST);
+  const prepOn = useVenueFeature('prep');
   const rows: GroupRow[] = [
-    ...(item.bar_id ? [{ key: 'on-hand', label: 'On hand', value: onHand ?? 'Not counted yet', onPress: () => router.push('/prep' as never) }] : []),
+    // On hand opens the prep list, with Prep switched on; the count shows either way.
+    ...(item.bar_id ? [{ key: 'on-hand', label: 'On hand', value: onHand ?? 'Not counted yet', onPress: prepOn ? () => router.push('/prep' as never) : undefined }] : []),
     ...shown.map((u, i) => ({ key: u.key, label: i ? '' : 'Used in', value: u.value, onPress: () => router.push(u.href as never) })),
     ...(shown.length < uses.length ? [{ key: 'all', label: '', value: `See all ${uses.length}`, onPress: () => setAll(true) }] : []),
   ];

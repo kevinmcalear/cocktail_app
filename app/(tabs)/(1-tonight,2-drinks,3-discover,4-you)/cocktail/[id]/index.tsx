@@ -7,7 +7,8 @@ import { useBesideList } from "@/hooks/useDrinksSplit";
 import { recentEntry, useTrackRecent } from "@/hooks/useTrackRecent";
 import { useItemEditAccess } from "@/hooks/useViewAs";
 import { heroPicture } from "@/lib/itemImages";
-import { DrinkLoading, DrinkScreen } from "@/components/screens/drink/DrinkScreen";
+import { DrinkScreen } from "@/components/screens/drink/DrinkScreen";
+import { ItemLoading } from "@/components/screens/drink/LoadingBar";
 import type { OpenOn } from "@/components/screens/drink/edit/DrinkEditScreen";
 import { CouldNotLoad } from "@/components/screens/safety/NotAvailable";
 import { VisitorDrink } from "@/components/screens/drink/VisitorDrink";
@@ -76,7 +77,7 @@ export default function CocktailDetailsScreen() {
                         openBatch={batch === "1"}
                     />
                 ) : (
-                    <DrinkLoading seed={query.isPlaceholderData ? query.data : null} />
+                    <ItemLoading seed={query.isPlaceholderData ? query.data : null} />
                 )}
             </InMenu>
         );

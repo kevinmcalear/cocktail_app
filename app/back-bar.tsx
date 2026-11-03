@@ -4,6 +4,7 @@ import { VenueBrandProvider } from '@/components/nav/VenueBrandProvider';
 import { BackBarScreen } from '@/components/screens/BackBarScreen';
 import { WebHead } from '@/components/WebHead';
 import { useMode } from '@/hooks/useMode';
+import { FeatureGate } from '@/components/nav/FeatureGate';
 
 /**
  * The back bar map. `?place=<item id>&name=<item name>` opens it
@@ -16,12 +17,14 @@ export default function BackBar() {
   const { mode } = useMode();
   if (mode === 'home') return <Redirect href="/discover" />;
   return (
-    <VenueBrandProvider>
-      <Stack.Screen options={{ headerShown: false, title: 'Back bar' }} />
-      <WebHead>
-        <title>Back bar</title>
-      </WebHead>
-      <BackBarScreen placeItem={place && name ? { id: place, name } : undefined} />
-    </VenueBrandProvider>
+    <FeatureGate feature="backBar">
+      <VenueBrandProvider>
+        <Stack.Screen options={{ headerShown: false, title: 'Back bar' }} />
+        <WebHead>
+          <title>Back bar</title>
+        </WebHead>
+        <BackBarScreen placeItem={place && name ? { id: place, name } : undefined} />
+      </VenueBrandProvider>
+    </FeatureGate>
   );
 }

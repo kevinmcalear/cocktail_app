@@ -16,6 +16,7 @@ import { useTonight, type TonightRow } from '@/hooks/useTonight';
 import { useTonightPrep } from '@/hooks/useTonightPrep';
 import { useVenueProfileId } from '@/hooks/useVenueRoles';
 import { useCanManageStaff, useEffectiveRole } from '@/hooks/useViewAs';
+import { useVenueFeature } from '@/hooks/useVenueFeatures';
 import { hoursStatus } from '@/lib/barHours';
 import { groupMenus, printedPrice } from '@/lib/menus';
 import { allergenLabel } from '@/lib/allergens';
@@ -39,6 +40,7 @@ const HOUR = 3_600_000;
  * Prep, Study and the menus page share these queries.
  */
 export function useStaffTonight(barId: string) {
+  const study = useVenueFeature('study');
   const { menus, blocks: listed, isLoading } = useTonight(barId);
   // A drink listed twice on a menu shows and counts once: its first row wins (rows key by their menu_drinks id).
   const blocks = useMemo(
@@ -117,8 +119,9 @@ export function useStaffTonight(barId: string) {
     const gone = offAt != null && Date.parse(offAt) <= now.getTime();
     return { id: d.id, rowId: d.rowId, kind: d.kind, name: d.name, off: gone, sub: gone ? 'Off tonight' : serveLine([served.get(d.id), word, offAt && offAtLine(offAt).replace(/^C/, 'c')]) };
   });
+  // The run-through opens Study's card for it, with Study switched on.
   const learn = [
-    ...fresh.map(({ drink, list }) => ({ id: drink.id, kind: drink.kind, name: drink.name, sub: `New on ${list} · a ${runThroughMinutes(drink.line)}-minute run-through`, href: `/study/tonight?drink=${drink.id}` })),
+    ...fresh.map(({ drink, list }) => ({ id: drink.id, kind: drink.kind, name: drink.name, sub: `New on ${list} · a ${runThroughMinutes(drink.line)}-minute run-through`, href: study ? `/study/tonight?drink=${drink.id}` : null })),
     ...(talk ? [{ ...talk, kind: once.find((a) => a.drink.id === talk.id)!.drink.kind, href: null }] : []),
   ];
 

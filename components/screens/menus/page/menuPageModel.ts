@@ -128,7 +128,7 @@ export function menuPageModel({ menu, status, lens: L, venueName, onNow, newIds,
     ];
   } else if (lens === 'bartender' && !past) {
     group = [
-      { label: 'House-made for this menu', value: 'Prep list', action: 'prep' },
+      ...(L.prep ? [{ label: 'House-made for this menu', value: 'Prep list', action: 'prep' as const }] : []),
       { label: 'Off the menu', value: 'What else we make', action: 'offMenu' },
     ];
   } else if (team && !past) {
