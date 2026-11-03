@@ -183,7 +183,9 @@ function You() {
           <View style={styles.section}>
             <SectionLabel title="Your taste" />
             <ListGroup>
-              <ListRow first title={headline ?? 'Not set yet'} detail={!headline ? 'Tell us what you like' : ranked ? `From your ${plural(ranked, 'rank')}` : 'From your answers'} onPress={push('/taste')} />
+              <ListRow first icon="chart.bar" title={headline ?? 'Not set yet'} detail={!headline ? 'Tell us what you like' : ranked ? `From your ${plural(ranked, 'rank')}` : 'From your answers'} onPress={push('/taste')} />
+              <ListRow icon="star" title="Credits" detail={madeCount ? `${plural(madeCount, 'drink')} ${madeCount === 1 ? 'names' : 'name'} you as their maker` : 'None yet'} onPress={push('/your-drinks?tab=originals')} />
+              <ListRow icon="calendar" title="Drinks you’ve had" value={String(ranked)} onPress={push('/your-drinks')} />
             </ListGroup>
           </View>
 
@@ -191,8 +193,6 @@ function You() {
             <SectionLabel title="Kept" />
             <ListGroup>
               <ListRow first icon="bookmark" title="Saved drinks" value={String(saved)} onPress={push('/saved')} />
-              <ListRow icon="wineglass" title="Drinks you’ve had" value={String(ranked)} onPress={push('/your-drinks')} />
-              {madeCount ? <ListRow icon="person" title="Credits" detail={`${plural(madeCount, 'drink')} ${madeCount === 1 ? 'names' : 'name'} you as their maker`} onPress={push('/your-drinks?tab=originals')} /> : null}
             </ListGroup>
           </View>
         </View>

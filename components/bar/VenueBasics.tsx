@@ -18,14 +18,14 @@ const LOGO = 32;
  * The venue's name, its unit (bars.spec_unit: everyone here reads specs and
  * starts new lines in it unless they pick their own; Admins change it, board
  * Sta-units), its Theme for Admins (colour, type, logo and icon; canvas
- * Theme-flow-1), and its drinks in the Library, which switches the app to this venue.
+ * Theme-flow-1), and its drinks in the Drinks tab, which switches the app to this venue.
  */
 export function VenueBasics({ editor, barId }: { editor: Editor; barId: string }) {
   const router = useRouter();
   const { enterVenue } = useActiveVenue();
   const canTheme = (useCapabilities(barId).data ?? []).includes('brand');
   const drinks = `${editor.drinkCount} ${editor.drinkCount === 1 ? 'drink' : 'drinks'}`;
-  const openLibrary = () => {
+  const openDrinks = () => {
     enterVenue(barId);
     router.navigate('/drinks');
   };
@@ -57,7 +57,7 @@ export function VenueBasics({ editor, barId }: { editor: Editor; barId: string }
         </>
       ) : null}
       <RowDivider />
-      <SettingsRow label="View in Library" detail={drinks} icon="book" onPress={openLibrary} />
+      <SettingsRow label="View in Drinks" detail={drinks} icon="book" onPress={openDrinks} />
     </SettingsSection>
   );
 }

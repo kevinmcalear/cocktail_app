@@ -51,7 +51,7 @@ export function CreditsStep({ draft, set, venueName, ingredients, match, onRenam
           {elsewhere ? (
             <>
               <PlacePick draft={draft} set={set} label="Where’s it from?" match={match} onRename={onRename} search={search} id="from" />
-              {fromOver ? null : <Caption tone="muted">{`It’s saved to ${venueName}’s library, credited to the bar it came from.`}</Caption>}
+              {fromOver ? null : <Caption tone="muted">{`It’s saved to ${venueName}’s drinks, credited to the bar it came from.`}</Caption>}
             </>
           ) : (
             <Caption tone="muted">{`Yes is picked for you when you add a drink as ${venueName}.`}</Caption>

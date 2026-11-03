@@ -4,7 +4,7 @@ import { BreakpointOverride, useDs } from '@/components/ds';
 import { layout } from '@/constants/tokens';
 
 import { MountOnFocus } from './MountOnFocus';
-import { LibraryBeside } from './RootLazy';
+import { DrinksBeside } from './RootLazy';
 
 /**
  * Drinks' list on a desktop (hooks/useDrinksSplit.ts): a column beside the
@@ -19,7 +19,7 @@ export function DrinksList({ shown }: { shown: boolean }) {
     <View style={[styles.column, { borderRightColor: ds.c.line }, shown ? null : styles.hidden]}>
       <BreakpointOverride value="tablet">
         <MountOnFocus>
-          <LibraryBeside />
+          <DrinksBeside />
         </MountOnFocus>
       </BreakpointOverride>
     </View>

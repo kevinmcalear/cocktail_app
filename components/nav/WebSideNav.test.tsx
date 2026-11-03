@@ -170,7 +170,7 @@ test('New opens Add with the drafts to pick up, and its last row the other start
 
   await pressN();
   await fireEvent.press(await screen.findByRole('button', { name: /^Something else/ }));
-  expect(await screen.findByText('Made at Caretakers, for its library')).toBeTruthy();
+  expect(await screen.findByText('Made at Caretakers, for its drinks')).toBeTruthy();
   await fireEvent.press(screen.getByRole('link', { name: 'Something you make. A batch, syrup, infusion, cordial: anything with a recipe' }));
   // Made at the venue you're in, not your home bar.
   expect(mockPush).toHaveBeenLastCalledWith('/make-recipe?barId=caretakers');
