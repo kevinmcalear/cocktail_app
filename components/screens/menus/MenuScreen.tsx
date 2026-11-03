@@ -253,8 +253,8 @@ function MenuPageBody({ menu, shelf, cover, now }: PageProps & { cover: string |
       {list}
       {/* Back stays put on a phone, the page scrolling under it; past the hero the bar takes a backing and the name (Kevin, 3 Nov; #1164). */}
       {sidebar ? null : (
-        <View pointerEvents="box-none" style={[styles.pinned, { paddingHorizontal: gutter }]}>
-          <MenuTopBar onBack={back} {...barTools} onMedia={!!cover && ds.scheme === 'dark' && !collapsed} collapsed={collapsed ? { title: menu.name } : null} top={insets.top} />
+        <View pointerEvents="box-none" style={styles.pinned}>
+          <MenuTopBar onBack={back} {...barTools} onMedia={!!cover && ds.scheme === 'dark' && !collapsed} collapsed={collapsed ? { title: menu.name } : null} top={insets.top} gutter={gutter} />
         </View>
       )}
       {/* The desktop's Swap and Take off open beside the list, over the change log (Menu-l-desk). */}
