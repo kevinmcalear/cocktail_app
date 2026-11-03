@@ -116,6 +116,8 @@ const G = {
   'line.horizontal.3': { d: 'M4 6.5h16M4 12h16M4 17.5h16' },
   'line.3.horizontal.decrease': { d: 'M4 6.5h16M7 12h10M10 17.5h4' },
   ellipsis: { d: C(5.5, 12, 1.1) + C(12, 12, 1.1) + C(18.5, 12, 1.1), f: C(5.5, 12, 1.1) + C(12, 12, 1.1) + C(18.5, 12, 1.1), solid: true, on: true },
+  // Android's overflow: the same three dots, stacked (IconSymbol swaps it in for `ellipsis` there).
+  'ellipsis.vertical': { d: C(12, 5.5, 1.1) + C(12, 12, 1.1) + C(12, 18.5, 1.1), f: C(12, 5.5, 1.1) + C(12, 12, 1.1) + C(12, 18.5, 1.1), solid: true, on: true },
   'circle.grid.3x3.fill': { d: '', f: C(9, 6, 1.6) + C(15, 6, 1.6) + C(9, 12, 1.6) + C(15, 12, 1.6) + C(9, 18, 1.6) + C(15, 18, 1.6), solid: true, on: true },
 
   // --- doing things ---

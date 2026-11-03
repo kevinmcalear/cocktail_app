@@ -1,7 +1,8 @@
-import type { ReactNode } from 'react';
+import { use, type ReactNode } from 'react';
 import { StyleSheet, View } from 'react-native';
 
 import { Body, Button, Caption, PressableScale, Surface, Title, useDs } from '@/components/ds';
+import { KitItemMore } from '@/components/screens/kit/KitPage';
 import { SectionHeading } from '@/components/screens/settings/SettingsParts';
 import { space } from '@/constants/tokens';
 import { confirmAsync } from '@/lib/dialogs';
@@ -22,8 +23,6 @@ export interface KitItemPageProps {
   facts: KitFact[];
   /** How it connects: an ice's recipe, a glass's drinks, what needs a tool. */
   children?: ReactNode;
-  /** Opens the Add sheet from its first question. */
-  onEdit?: () => void;
   /** Takes it off the kit, after a confirm. */
   onRemove?: () => void;
   removing?: boolean;
@@ -38,10 +37,11 @@ export interface KitItemPageProps {
 /**
  * One thing in the kit, opened (Kit and ice, step 2): the same page for a
  * glass, an ice or a tool. The drawing, a few facts you can change, how it
- * connects, and Remove from Kit.
+ * connects, and Remove from Kit. Edit is in its … (KitPage).
  */
-export function KitItemPage({ kind, name, thumb, facts, children, onEdit, onRemove, removing, error, showTitle, notice }: KitItemPageProps) {
+export function KitItemPage({ kind, name, thumb, facts, children, onRemove, removing, error, showTitle, notice }: KitItemPageProps) {
   const ds = useDs();
+  const more = use(KitItemMore);
   const remove = async () => {
     if (await confirmAsync({ title: `Remove ${name}?`, message: 'It comes off the venue’s kit.', confirmText: 'Remove', destructive: true })) onRemove?.();
   };
@@ -54,7 +54,7 @@ export function KitItemPage({ kind, name, thumb, facts, children, onEdit, onRemo
           <Caption tone="muted">{kind}</Caption>
           {showTitle ? <Title role="heading">{name}</Title> : null}
         </View>
-        {onEdit ? <Button label="Edit" variant="ghost" size="sm" accessibilityLabel={`Edit ${name}`} onPress={onEdit} /> : null}
+        {more}
       </View>
       {facts.length ? (
         <Surface style={styles.card}>
