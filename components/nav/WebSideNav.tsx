@@ -19,7 +19,7 @@ import { WeekNav } from '@/components/screens/week/WeekNav';
 import { RoundNav } from '@/components/screens/firstRound/RoundElsewhere';
 import { SetupNav } from '@/components/screens/venueSetup/SetupBanner';
 
-import { CreateSheet } from './CreateSheetLazy';
+import { AddSheets } from './AddButton';
 import { useNavPlaces, type Place } from './navPlaces';
 import { MarksRow, NavHeading, NavRow, YouFooter } from './SideNavParts';
 import { VenueBrandProvider } from './VenueBrandProvider';
@@ -98,7 +98,7 @@ function SideNav() {
   return (
     <>
       {nav === 'rail' ? <WebRail {...props} /> : <Sidebar {...props} />}
-      {creating ? <CreateSheet visible onClose={() => setCreating(false)} /> : null}
+      {creating ? <AddSheets onClose={() => setCreating(false)} /> : null}
     </>
   );
 }

@@ -1,7 +1,7 @@
 // Checks the sheet's drag numbers (sheetDrag.ts). Run: npm run test:unit
 import assert from 'node:assert/strict';
 
-import { dragCloses, dragShade, FLICK, leaveDuration, rubberBand, STRETCH } from './sheetDrag';
+import { dragCloses, dragShade, FLICK, growFrame, leaveDuration, rubberBand, STRETCH } from './sheetDrag';
 
 const H = 600;
 // Pulled a quarter of the way and let go: closes. Less: springs back.
@@ -33,3 +33,11 @@ assert.equal(dragShade(-20, H), 1);
 assert.equal(dragShade(H * 2, H), 0);
 
 console.log('sheetDrag: closes on a long pull or a flick, leaves at finger speed, rubber-bands up');
+
+// Add grows from the + (Prod-motion-sheet): the button's circle, the board's card
+// under the + on the way, then exactly the sheet.
+const plus = { x: 342, y: 58, width: 32, height: 32 };
+const sheet = { x: 8, y: 220, width: 374, height: 616 };
+assert.deepEqual(growFrame(plus, sheet, 40, 390, 844, 0), { left: 342, top: 58, width: 32, height: 32, borderRadius: 16 });
+assert.deepEqual(growFrame(plus, sheet, 40, 390, 844, 0.55), { left: 150, top: 58, width: 224, height: 180, borderRadius: 34 });
+assert.deepEqual(growFrame(plus, sheet, 40, 390, 844, 1), { left: 8, top: 220, width: 374, height: 616, borderRadius: 40 });
