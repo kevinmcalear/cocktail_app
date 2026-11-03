@@ -82,7 +82,7 @@ export function EditLibrary({ editor, drag, venueName }: { editor: LayoutEditor;
             </>
           ) : undefined
         }
-        ListEmptyComponent={target && !missing ? <Body tone="muted">No drinks that fit {target.name}.</Body> : undefined}
+        ListEmptyComponent={target && !missing ? <Body tone="muted">No drinks that fit {target.name || 'Untitled'}.</Body> : undefined}
         renderItem={({ item: d }) =>
           target ? (
             <View {...(drag.on ? dragSource(d.id) : {})} style={drag.on && grab}>
@@ -91,7 +91,7 @@ export function EditLibrary({ editor, drag, venueName }: { editor: LayoutEditor;
           ) : null
         }
       />
-      <Caption tone="muted">{drag.on ? 'Click + or drag a drink onto any section.' : `Tap + to add to ${target?.name ?? 'the section'}.`} Not here? Type its name to make it.</Caption>
+      <Caption tone="muted">{drag.on ? 'Click + or drag a drink onto any section.' : `Tap + to add to ${target?.name || 'Untitled'}.`} Not here? Type its name to make it.</Caption>
     </View>
   );
 }

@@ -37,9 +37,10 @@ export function SaveLine({ editor }: { editor: LayoutEditor }) {
 }
 
 /** The editor's tools (Menu-who-creator-edit's toolbar): Add drink, Section, Dates (Night at home, then Share), and Done in ink. */
-export function EditTools({ editor, look, onDates, done }: EditViewProps) {
+export function EditTools({ editor, look, onDates, done, addTo }: EditViewProps & { addTo?: string | null }) {
   const ds = useDs();
-  const target = addTarget(editor);
+  // Desktop: the section picked in the library's Add to; else the first one short of its rule.
+  const target = addTo ?? addTarget(editor);
   return (
     <>
       <Tool label="Add drink" hint="Add a drink to the menu" onPress={target ? () => editor.setSheet({ kind: 'add', key: target }) : undefined} />

@@ -18,9 +18,10 @@ export interface RowPricing {
 
 /**
  * A row's price edit, under the row: the drink's price, a suggested one when it
- * has a cost and none (step 6), and this menu's own price (step 5). Done
- * saves both; Clear empties this menu's price when it has one, else the
- * drink's.
+ * has a cost and none (step 6), and this menu's own price (step 5). Each
+ * keystroke goes into the layout (autosave waits for a pause), so leaving the
+ * editor right after typing still saves it; Done closes the box. Clear empties
+ * this menu's price when it has one, else the drink's.
  */
 export function PriceEditor({ drink, alsoOn, pricing, onClose }: { drink: MenuDrink; alsoOn?: string; pricing: RowPricing; onClose: () => void }) {
   const ds = useDs();
@@ -37,7 +38,10 @@ export function PriceEditor({ drink, alsoOn, pricing, onClose }: { drink: MenuDr
       <Field
         label={`${drink.name}’s price`}
         value={draft}
-        onChangeText={setDraft}
+        onChangeText={(text) => {
+          setDraft(text);
+          pricing.onPrice(text);
+        }}
         placeholder="12.00 or MP"
         hint={`Every menu with this drink prints it, unless the menu has its own.${alsoOn ? ` Also on ${alsoOn}.` : ''}`}
         autoFocus={!drink.menuPrice}
@@ -48,14 +52,20 @@ export function PriceEditor({ drink, alsoOn, pricing, onClose }: { drink: MenuDr
         <View style={[styles.suggest, { backgroundColor: ds.c.surface, borderColor: ds.c.line }]}>
           <Body>{`Costs ${suggested.cost}. ${suggested.money} clears ${suggested.wants}.`}</Body>
           <View style={styles.actions}>
-            <Button label={`Use ${suggested.money}`} variant="secondary" size="md" onPress={() => setDraft(suggested.text)} />
+            <Button label={`Use ${suggested.money}`} variant="secondary" size="md" onPress={() => {
+              setDraft(suggested.text);
+              pricing.onPrice(suggested.text);
+            }} />
           </View>
         </View>
       ) : null}
       <Field
         label={`On ${pricing.menuName} only`}
         value={menuDraft}
-        onChangeText={setMenuDraft}
+        onChangeText={(text) => {
+          setMenuDraft(text);
+          pricing.onMenuPrice(text);
+        }}
         placeholder={formatPrice(draft) ?? 'Price'}
         hint={`Empty: ${pricing.menuName} prints ${formatPrice(draft) ?? 'no price'}.`}
         autoFocus={!!drink.menuPrice}

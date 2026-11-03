@@ -74,6 +74,8 @@ export function EditSheets({ editor }: { editor: LayoutEditor }) {
             name: editor.layout.name,
             barId: editor.menu.barId,
             plannedStartsAt: editor.menu.plannedStartsAt,
+            plannedEndsAt: editor.menu.plannedEndsAt,
+            endsAt: editor.menu.endsAt,
             coverUrl: editor.layout.coverUrl,
             coverPosition: editor.layout.coverPosition,
             sections: editor.layout.sections.map((s) => ({ ...s, id: s.id ?? s.key })),

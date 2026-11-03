@@ -17,7 +17,7 @@ type When = 'now' | 'tomorrow' | 'date';
 interface GoLiveSheetProps {
   visible: boolean;
   onClose: () => void;
-  menu: Pick<MenuDetail, 'id' | 'name' | 'barId' | 'sections' | 'coverUrl' | 'coverPosition'> & Partial<Pick<MenuDetail, 'plannedStartsAt'>>;
+  menu: Pick<MenuDetail, 'id' | 'name' | 'barId' | 'sections' | 'coverUrl' | 'coverPosition'> & Partial<Pick<MenuDetail, 'plannedStartsAt' | 'plannedEndsAt' | 'endsAt'>>;
   /** The venue's other menus that are on now or coming up: the ones this can replace. */
   others: MenuSummary[];
   onDone: () => void;
@@ -60,6 +60,9 @@ export function GoLiveSheet({ visible, onClose, menu, others, onDone }: GoLiveSh
   const start = startFor(when, date, now);
   const dateLabel = start?.toLocaleDateString(undefined, { weekday: 'short', day: 'numeric', month: 'short' });
   const badDate = when === 'date' && !start;
+  // The end it already has (a draft's plan, or Ends in the editor) stays, if it's after the start.
+  const end = menu.endsAt ?? menu.plannedEndsAt ?? null;
+  const endsAt = end && Date.parse(end) > (start?.getTime() ?? now) ? end : null;
   const drinks = menu.sections.flatMap((s) => s.drinks);
   const whenLabel = when === 'now' ? 'Now' : start ? `${when === 'tomorrow' ? 'Tomorrow, ' : ''}${dateLabel}` : 'Pick a day';
   const offLabel = replaceIds.length
@@ -71,7 +74,7 @@ export function GoLiveSheet({ visible, onClose, menu, others, onDone }: GoLiveSh
     if (badDate) return setError('Pick a day.');
     setError(null);
     try {
-      await schedule.mutateAsync({ menuId: menu.id, startsAt: start?.toISOString() ?? null, replaceIds });
+      await schedule.mutateAsync({ menuId: menu.id, startsAt: start?.toISOString() ?? null, replaceIds, endsAt });
       onDone();
     } catch (e) {
       setError(e instanceof Error ? e.message : 'Couldn’t put the menu on. Try again.');

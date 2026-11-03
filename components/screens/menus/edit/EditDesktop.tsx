@@ -54,7 +54,7 @@ export function EditDesktop(props: EditViewProps) {
           <SaveLine editor={editor} />
         )}
         <GlassButton icon="ellipsis" accessibilityLabel={`More for ${menu.name || 'this menu'}: save layout for next time, duplicate`} onPress={() => setMore(true)} />
-        <EditTools {...props} />
+        <EditTools {...props} addTo={editor.section(editor.targetKey)?.key} />
       </View>
       <View style={styles.columns}>
         <EditLibrary editor={editor} drag={drag} venueName={look.venueName} />

@@ -151,16 +151,15 @@ export function EditSections({ editor, ink, drag, width }: { editor: LayoutEdito
 
 /**
  * After the sections, in the page's grouped rows: the run sheet (saved first,
- * so every drink is on it) and the guest card. A home menu has neither.
+ * so every drink is on it) and the guest card. A home menu has no run sheet.
  */
 export function EditAfter({ editor }: { editor: LayoutEditor }) {
   const router = useRouter();
-  if (!editor.menu.barId) return null;
   const go = (path: string) => async () => {
     if (await editor.persist()) router.push(`/menus/${editor.menu.id}/${path}` as Href);
   };
   const rows = [
-    ...(editor.layout.sections.some((s) => s.drinks.length) ? [{ label: 'Run sheet', value: 'Serves, swaps, who brings what', onPress: go('run-sheet') }] : []),
+    ...(editor.menu.barId && editor.layout.sections.some((s) => s.drinks.length) ? [{ label: 'Run sheet', value: 'Serves, swaps, who brings what', onPress: go('run-sheet') }] : []),
     { label: 'Guest card', value: 'What guests see', onPress: go('card') },
   ];
   return (
