@@ -1,13 +1,15 @@
 import { useState } from 'react';
 import { StyleSheet, View } from 'react-native';
 
-import { Body, Button, Caption, Field, Headline, useDs } from '@/components/ds';
+import { Body, Button, Caption, Field, useDs } from '@/components/ds';
 import { radius, space } from '@/constants/tokens';
 import { useCapabilities } from '@/hooks/useCapabilities';
 import { useDrinkCost } from '@/hooks/useDrinkCost';
 import { usePricingSettings } from '@/hooks/usePricing';
 import { formatPct, margin, priceForTarget } from '@/lib/costing';
 import { formatMoney, priceMinor, priceText } from '@/lib/money';
+
+import { Eyebrow } from '../../addDrink/WizardChrome';
 
 interface EditPriceProps {
   itemId: string;
@@ -45,7 +47,7 @@ export function EditPrice({ itemId, barId, value, onChange }: EditPriceProps) {
 
   return (
     <View style={styles.section}>
-      <Headline role="heading">Price</Headline>
+      <Eyebrow heading>Price</Eyebrow>
       <Field label={`Price (${currency})`} value={value} onChangeText={onChange} placeholder="12.00 or MP" hint="As the menu prints it. Every menu with this drink shows it; blank clears it." />
       <Caption tone="muted">{makes}</Caption>
       {known ? (

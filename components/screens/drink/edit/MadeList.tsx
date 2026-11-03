@@ -5,13 +5,14 @@ import { Body, Button, Caption, Headline, PressableScale, Sheet, Switch, useDs }
 import { IconSymbol } from '@/components/ui/icon-symbol';
 import { font, layout, radius, space, type } from '@/constants/tokens';
 import type { SpecCategory } from '@/hooks/useCocktailEditor';
+import { isGarnishUnit } from '@/lib/garnish';
 import { COMMON_METHODS, iceLine } from '@/lib/drinkWizard';
 import { showMessage } from '@/lib/dialogs';
 import { findByName } from '@/lib/drinkMethods';
 import { iceBuildLine, saysMore } from '@/lib/iceBuild';
 
 import type { DrinkEditor as Editor } from './EditParts';
-import { StepHead } from './EditParts';
+import { Eyebrow } from '../../addDrink/WizardChrome';
 import { GlassPickSheet } from './GlassPickSheet';
 import { IceBuildSheet } from './IceBuildSheet';
 type Option = { id: string; name: string; ice_kind?: string | null };
@@ -19,22 +20,26 @@ type Option = { id: string; name: string; ice_kind?: string | null };
 const SHEET_PAD = { paddingHorizontal: space.xl, paddingBottom: space.xxl };
 const NO_OUTLINE = Platform.OS === 'web' ? ({ outlineStyle: 'none' } as object) : null;
 
-type Category = SpecCategory | 'methodIce';
+type Category = SpecCategory | 'methodIce' | 'garnish';
 type IceEditor = Extract<Editor, { setIceBuild: unknown }>;
 const iceEditor = (editor: Editor): IceEditor | null => ('setIceBuild' in editor ? editor : null);
 
-// In adding a drink's order (method, glass, ice), so editing feels the same (Eddie, tf-070).
+// As "How it goes out" draws them (Miss-steps): method, glass, the ice it's served on, the garnish; then the ice it's made with (#697) and its family.
 const ROWS: { category: Category; label: string; empty: string }[] = [
   { category: 'method', label: 'Method', empty: 'Shake, stir, build…' },
-  // The ice it's made with (#697): this editor only.
-  { category: 'methodIce', label: 'Ice (made with)', empty: 'Shaken with, stirred over…' },
   { category: 'glassware', label: 'Glass', empty: 'Pick a glass' },
-  { category: 'ice', label: 'Ice (served on)', empty: 'No ice set' },
+  { category: 'ice', label: 'Ice', empty: 'No ice set' },
+  { category: 'garnish', label: 'Garnish', empty: 'Add a garnish' },
+  { category: 'methodIce', label: 'Made with ice', empty: 'Shaken with, stirred over…' },
   { category: 'family', label: 'Family', empty: 'Sour, highball…' },
 ];
 
 const optionsOf = (editor: Editor, category: Category): Option[] =>
-  ({ glassware: editor.glassware, ice: editor.iceTypes, methodIce: editor.iceTypes, method: editor.methods, family: editor.families })[category] as Option[];
+  ({ glassware: editor.glassware, ice: editor.iceTypes, methodIce: editor.iceTypes, method: editor.methods, family: editor.families, garnish: [] })[category] as Option[];
+
+/** The garnish row's words: the spec's garnish lines, by the page's rule (lib/batch isGarnishLine's rule, from the small lib/garnish). */
+export const garnishNames = (items: readonly { name: string; unit?: string | null }[]) =>
+  items.filter((l) => isGarnishUnit(l.unit?.trim() || null) && !/\begg/i.test(l.name)).map((l) => l.name).join(', ');
 
 /** New's methods with no row yet (Churn, Eddie tf-061), made when picked. A one-word one is there already when a row starts like it ("Shaken" for Shake). */
 const NEW = 'new:';
@@ -44,6 +49,7 @@ const unmadeMethods = (rows: Option[]): Option[] =>
 const methodNames = (editor: Editor) => editor.methodIds.map((id) => (editor.methods as Option[]).find((m) => m.id === id)?.name).filter((n): n is string => !!n);
 
 const valueOf = (editor: Editor, category: Category, options: Option[]) => {
+  if (category === 'garnish') return garnishNames(editor.recipeItems);
   if (category === 'glassware' && 'glassModel' in editor && editor.glassModel) return editor.glassModel.name;
   const ice = iceEditor(editor);
   const nameOf = (id: string) => options.find((o) => o.id === id)?.name ?? '';
@@ -59,8 +65,10 @@ const valueOf = (editor: Editor, category: Category, options: Option[]) => {
  * sheet to pick it. Replaces the old strip of plus signs. A saved drink
  * has the Made in parts switch too; while it's on it takes the Method
  * row's place, and each part has its own method (drink-edit-parts).
+ * The garnish is a line of the spec, so its row names the garnish lines and
+ * `onGarnish` takes the cursor to the spec's Add field.
  */
-export function MadeList({ editor, itemId }: { editor: Editor; itemId: string | null }) {
+export function MadeList({ editor, itemId, onGarnish }: { editor: Editor; itemId: string | null; onGarnish: () => void }) {
   const ds = useDs();
   const [open, setOpen] = useState<Category | null>(null);
   const ice = iceEditor(editor);
@@ -68,7 +76,7 @@ export function MadeList({ editor, itemId }: { editor: Editor; itemId: string | 
   const rows = ROWS.filter((r) => (r.category !== 'methodIce' || ice) && (r.category !== 'method' || !parted?.parts));
   return (
     <View style={styles.section}>
-      <StepHead step="method" eyebrow="Method, glass, ice" />
+      <Eyebrow heading>How it goes out</Eyebrow>
       <View style={[styles.group, { backgroundColor: ds.c.surface }]}>
         {rows.map((r, i) => {
           const value = valueOf(editor, r.category, optionsOf(editor, r.category));
@@ -84,8 +92,8 @@ export function MadeList({ editor, itemId }: { editor: Editor; itemId: string | 
               ) : null}
               <PressableScale
                 role="button"
-                accessibilityLabel={`${r.label}: ${value || 'not set'}. Change it`}
-                onPress={() => setOpen(r.category)}
+                accessibilityLabel={r.category === 'garnish' ? `Garnish: ${value || 'none yet'}. Add one in the spec` : `${r.label}: ${value || 'not set'}. Change it`}
+                onPress={() => (r.category === 'garnish' ? onGarnish() : setOpen(r.category))}
                 style={[styles.row, i < rows.length - 1 && { borderBottomColor: ds.c.line, borderBottomWidth: StyleSheet.hairlineWidth }]}
               >
                 <Body tone="muted" style={styles.label}>
@@ -112,7 +120,7 @@ export function MadeList({ editor, itemId }: { editor: Editor; itemId: string | 
           madeWithId={ice.methodIceId}
           onClose={() => setOpen(null)}
         />
-      ) : open ? (
+      ) : open && open !== 'garnish' ? (
         <PickSheet editor={editor} category={open} label={ROWS.find((r) => r.category === open)?.label ?? ''} onClose={() => setOpen(null)} />
       ) : null}
     </View>
@@ -124,7 +132,7 @@ export function MadeList({ editor, itemId }: { editor: Editor; itemId: string | 
  * (methods take several), or add a new one by name. `part`: one part's
  * methods in a drink made in parts, with its own title (drink-edit-parts).
  */
-export function PickSheet({ editor, category, label, onClose, part }: { editor: Editor; category: Category; label: string; onClose: () => void; part?: { title: string; ids: string[]; toggle: (id: string, name: string) => void } }) {
+export function PickSheet({ editor, category, label, onClose, part }: { editor: Editor; category: Exclude<Category, 'garnish'>; label: string; onClose: () => void; part?: { title: string; ids: string[]; toggle: (id: string, name: string) => void } }) {
   const ds = useDs();
   const [adding, setAdding] = useState('');
   const multi = category === 'method';

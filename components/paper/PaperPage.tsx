@@ -1,18 +1,16 @@
 import { Image } from 'expo-image';
 import { useEffect, useState, type ComponentRef, type Ref } from 'react';
-import { Platform, StyleSheet, Text, View } from 'react-native';
+import { StyleSheet, Text, View } from 'react-native';
 import Svg, { Path } from 'react-native-svg';
 import { toQR } from 'toqr';
 
 import { drawingUri, loadFace, useDisplayFaces } from '@/components/ds';
 import { qrPath } from '@/components/screens/make/makeLogic';
-import { font, type DisplayFace } from '@/constants/tokens';
+import { font, monoFont, type DisplayFace } from '@/constants/tokens';
 import type { PaperEl, PaperPage as Page } from '@/lib/paper/page';
 import type { SketchInputs } from '@/lib/sketch/types';
 
 const WEIGHT = { '400': font.regular, '500': font.medium, '600': font.semiBold } as const;
-// The typewriter face, for paper only (constants/tokens type note): the platform's own, so nothing loads.
-const MONO = Platform.select({ ios: 'Menlo', android: 'monospace', default: 'ui-monospace, Menlo, Consolas, monospace' });
 // Room above the ascenders, so iOS doesn't cut the tops off a display line (displayClip.check.ts).
 const LEADING = 1.25;
 
@@ -94,7 +92,7 @@ function PaperThing({ el, unit, uri, onArrive, family }: { el: PaperEl; unit: nu
   }
   const size = el.size * unit;
   const weight = WEIGHT[el.weight ?? '400'];
-  const type = el.face === 'display' ? { fontFamily: family } : el.face === 'mono' ? { fontFamily: MONO, fontWeight: weight.fontWeight } : weight;
+  const type = el.face === 'display' ? { fontFamily: family } : el.face === 'mono' ? { fontFamily: monoFont, fontWeight: weight.fontWeight } : weight;
   return (
     <Text
       aria-hidden
