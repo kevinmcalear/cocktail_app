@@ -28,19 +28,22 @@ export interface Place extends NavMatch {
 }
 
 /**
- * The sidebar and rail's rows, as board Prod-desk (C7) draws them: the four tabs, the bar's group (its Menus,
- * House-made, Team, Bar settings), then Home's Shelf and Menus. Everything else (Study, Glassware, Back bar, Rota,
+ * The sidebar and rail's rows, as board Prod-desk (C7) draws them: the four tabs, then the group of the one place
+ * you're in: at a bar, its Menus, House-made, Team and Bar settings; at home, Shelf and Menus. Never both: you switch
+ * place from the group's chip (the places menu, board C8). Everything else (Study, Glassware, Back bar, Rota,
  * Brand, Roles, This week, History) opens from Bar settings, Tonight and Search (components/bar/VenueSettingsLinks.tsx).
  * The first round holds House-made, Team and Home's Menus back until it's over (lib/firstRound.ts).
  */
 export function useSidePlaces() {
   const { mode } = useMode();
-  const { active } = useActiveVenue();
+  const { active, isLoading } = useActiveVenue();
   const role = useEffectiveRole(active?.id ?? null);
   const { active: round, hidden } = useFirstRound();
   // House-made opens the prep list: the Prep switch's (lib/venueFeatures.ts).
   const prep = useVenueFeature('prep');
   const venue = mode === 'home' ? null : active;
+  // Home when you chose it, or when you're on no bar's team. While a bar is still loading, no group yet, so the chip never shows the wrong place.
+  const atHome = mode === 'home' || (!venue && !isLoading);
   const settings = venue ? `/settings/bar/${venue.id}` : null;
 
   // The four tabs, without Tonight at a venue that hasn't switched it on.
@@ -56,12 +59,12 @@ export function useSidePlaces() {
           { key: 'venue-settings', label: 'Bar settings', short: 'Settings', icon: 'place.settings', path: settings, prefix: settings },
         ]
       : [];
-  // Home's Menus is the same page as the bar's (it shows your own menus in home mode), so it switches mode first.
-  const homePlaces: Place[] = [
+  // Home's Menus is the bar's page in home mode, where it shows your own menus.
+  const home: Place[] = [
     { key: 'shelf', label: 'Shelf', icon: 'place.mybar', path: '/shelf' },
     ...(round ? [] : [{ key: 'home-menus', label: 'Menus', icon: 'place.menus', path: '/menus/all', prefix: '/menus' } as Place]),
   ];
-  return { venue, tabs, bar, homePlaces };
+  return { venue, atHome, tabs, places: venue ? bar : atHome ? home : [] };
 }
 
 /** What the bar's rows say at their right (board Prod-desk): the menu on now, how much house-made is low, the shelf's count. */
