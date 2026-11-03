@@ -37,6 +37,12 @@ for (const el of leaves(night)) {
 assert.ok(leaves(onlyStages(night, ['liquid'])).length > 0, 'the drink survives the night pass');
 assert.ok(leaves(glowScene(night)).length > 0, 'the glow has the drink in it');
 
+// A bare glass has only its pencil: at night its chalk is stronger and heavier than a drawn drink's, and light is untouched.
+const inkOf = (sc: typeof scene) => leaves(sc).filter((el) => el.k === 'stroke').reduce((sum, el) => sum + (el.k === 'stroke' ? el.o * el.w : 0), 0);
+const pencilScene = pencilOnly(scene);
+assert.ok(inkOf(nightScene(pencilScene, negroni.liquid.hex, true)) > inkOf(nightScene(pencilScene, negroni.liquid.hex)) * 1.5, 'bare chalk reads stronger');
+assert.ok(leaves(nightScene(pencilScene, negroni.liquid.hex, true)).every((el) => el.k !== 'stroke' || el.o <= 1), 'chalk opacity stays within 1');
+
 // OKLCH round trip.
 for (const hex of ['#9f363b', '#caa26b', '#efe9dd', '#000000', '#ffffff']) assert.equal(lchToHex(hexToLch(hex)), hex);
 

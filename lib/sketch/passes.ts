@@ -87,15 +87,18 @@ const CHALK_WEIGHT: Partial<Record<StageName, number>> = { glass: 0.72, ice: 1.1
  * pencil turns to chalk, the drink is lifted with a lit rim at its fill line,
  * ice and highlights become a lighter patch of the drink, and the searching
  * smudges and shadows go (on black they read as fog and mould). `liquid` is
- * the drink's colour (lib/sketch/types liquidOf).
+ * the drink's colour (lib/sketch/types liquidOf). `bare`: a glass with no
+ * drink in it (isBareGlass): its pencil is all there is, so the chalk is
+ * full strength and a little heavier, to read on the night tile.
  */
-export function nightScene(scene: Scene, liquid: string): Scene {
+export function nightScene(scene: Scene, liquid: string, bare = false): Scene {
   const frost = mix(lift(liquid), SKETCH.white, 0.55);
   return mapScene(scene, (el, stage) => {
     switch (el.k) {
       case 'stroke':
         if (!dark(el.color)) return { ...el, color: lift(el.color) };
-        return { ...el, color: CHALK, o: Math.min(1, el.o * (CHALK_WEIGHT[stage ?? 'glass'] ?? 0.85)) };
+        // A bare glass's chalk is stronger and heavier than a drawn drink's: its pencil is all there is.
+        return { ...el, color: CHALK, o: Math.min(1, el.o * (CHALK_WEIGHT[stage ?? 'glass'] ?? 0.85) * (bare ? 2.6 : 1)), w: el.w * (bare ? 1.7 : 1) };
       case 'soft':
         // Searching smudges and cast shadows: gone.
         return stage === 'search' || dark(el.color) || paperLike(el.color) ? null : { ...el, color: lift(el.color) };

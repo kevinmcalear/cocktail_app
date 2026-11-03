@@ -119,14 +119,16 @@ export const SketchDrawing = memo(function SketchDrawing({ inputs: stored, seed,
   const night = useDs().scheme === 'dark';
   const inputs = inBarGlassCached(stored, useDrawingGlasses());
   const scene = useScene(scenesOf(inputs), `${seed}|${detail}|false`, lazy, () => paintSketch(inputs, { seed, detail, bands: false }));
-  return <SceneSvg scene={night ? nightOf(scene, liquidOf(inputs).hex) : scene} bare />;
+  return <SceneSvg scene={night ? nightOf(scene, inputs) : scene} bare />;
 });
 
 // The night painting of a scene, made once while the scene is.
 const nights = new WeakMap<Scene, Scene>();
-export function nightOf(scene: Scene, liquid: string): Scene {
+export function nightOf(scene: Scene, inputs: SketchInputs): Scene {
   let out = nights.get(scene);
-  if (!out) nights.set(scene, (out = nightScene(scene, liquid)));
+  const { hex, alpha } = liquidOf(inputs);
+  // alpha 0 or the bare glass's 0.05: no drink in the glass yet.
+  if (!out) nights.set(scene, (out = nightScene(scene, hex, alpha <= 0.05)));
   return out;
 }
 

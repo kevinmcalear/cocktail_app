@@ -5,7 +5,7 @@ import Svg, { Defs } from 'react-native-svg';
 
 import { boundsOf, GLASS_BANDS, type Scene, type SceneEl } from '@/lib/sketch/scene';
 import { inBarGlassCached } from '@/lib/sketch/barGlass';
-import { liquidOf, type SketchInputs } from '@/lib/sketch/types';
+import type { SketchInputs } from '@/lib/sketch/types';
 
 import { useDrawingGlasses } from './drawingGlasses';
 import { defsFor, draw, nightOf, SceneSvg, sceneFor, type SketchDetail } from './SketchDrawing';
@@ -221,7 +221,7 @@ export const AnimatedSketch = memo(function AnimatedSketch({ inputs: stored, see
   const night = useDs().scheme === 'dark';
   const inputs = inBarGlassCached(stored, useDrawingGlasses());
   const scene = sceneFor(inputs, seed, detail, true);
-  return <AnimatedScene scene={night ? nightOf(scene, liquidOf(inputs).hex) : scene} play={play} delay={delay} />;
+  return <AnimatedScene scene={night ? nightOf(scene, inputs) : scene} play={play} delay={delay} />;
 });
 
 const styles = StyleSheet.create({
