@@ -24,7 +24,7 @@ import { AllergyLine } from './AllergyLine';
 import { ApprovalNotice } from './ApprovalNotice';
 import { DrinkHero } from './DrinkHero';
 import { DrinkArt, drawingSize } from './DrawingHero';
-import { DrinkLoading } from './DrinkLoading';
+import { ItemLoading } from './LoadingBar';
 import { ItemShell } from './ItemShell';
 import { ItemTitle } from './ItemTitle';
 import { PalateFit } from './NamesBlock';
@@ -48,7 +48,7 @@ export function BeerWineScreen({ kind: kindName }: { kind: DrinkKind }) {
 
   // Not yours to read (another bar's drink): its public page, if it's published.
   if ((error as { code?: string } | null)?.code === 'PGRST116' && safeId) return <Redirect href={`/d/${safeId}`} />;
-  if (isPending) return <DrinkLoading />;
+  if (isPending) return <ItemLoading />;
   if (!item) {
     return (
       <BackbarTheme>

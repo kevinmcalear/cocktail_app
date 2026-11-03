@@ -7,7 +7,8 @@ import Animated, { useAnimatedReaction, useAnimatedScrollHandler, useSharedValue
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { scheduleOnRN } from 'react-native-worklets';
 
-import { ExtendedFab, ScrollSky, useDs, useGutter, type FabIcon } from '@/components/ds';
+import { ExtendedFab, useDs, useGutter, type FabIcon } from '@/components/ds';
+import { ScrollSky } from '@/components/ds/ScrollSky';
 import { useFabUnderToast } from '@/components/ds/Toast';
 import { useTabBarInset } from '@/components/nav/WebTabBar';
 import { layout, space } from '@/constants/tokens';

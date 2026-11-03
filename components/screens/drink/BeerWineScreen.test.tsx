@@ -1,10 +1,11 @@
-import { act, fireEvent, screen } from '@testing-library/react-native';
-import { Fragment, type ReactNode } from 'react';
+import { act, screen } from '@testing-library/react-native';
+import { Fragment, type ReactElement, type ReactNode } from 'react';
 import 'react-native-gesture-handler/jestSetup';
 
 import { renderWithProviders } from '@/jest.setup';
 
 import { BeerWineScreen } from './BeerWineScreen';
+import type { ItemActions } from './ItemMoreMenu';
 
 // burnt ships untranspiled ESM; the toast isn't what's tested here.
 jest.mock('burnt', () => ({ toast: jest.fn() }));
@@ -56,13 +57,16 @@ test('a beer reads like a drink page: its style, maker, then tastes and the fact
   expect(screen.getByText('Crisp and bready.')).toBeTruthy();
   expect(screen.getByText('Pour it in the pint, not the stein.')).toBeTruthy();
 
-  // Favourites keep the prefixed id they always had; Edit opens its edit page.
-  const barItem = (name: string) => mockOptions.unstable_headerRightItems?.().find((i) => (i.accessibilityLabel ?? i.label) === name);
-  await act(async () => barItem('Add to favorites')?.onPress?.());
+  // The bar's one item is the … (Kevin, 3 Nov): Edit, Save and Share live in it.
+  const items = mockOptions.unstable_headerRightItems?.() ?? [];
+  expect(items).toHaveLength(1);
+  await renderWithProviders(<>{items.map((i, n) => <Fragment key={n}>{i.element}</Fragment>)}</>);
+  expect(screen.getByLabelText('More: edit beer, add to favorites, share')).toBeTruthy();
+  // Favourites keep the prefixed id they always had; Edit opens its edit page. The bar's item is <><Theme><ItemMoreMenu /></Theme></>.
+  type Wraps<T> = ReactElement<{ children: T }>;
+  const actions = (items[0].element as Wraps<Wraps<ReactElement<ItemActions>>>).props.children.props.children.props;
+  act(() => actions.save?.onToggle());
   expect(mockToggleFavorite).toHaveBeenCalledWith('beer-b1');
-  // Edit is the board's ink pill, a custom item: render the bar's custom items and press it.
-  const custom = mockOptions.unstable_headerRightItems?.().filter((i) => i.type === 'custom') ?? [];
-  await renderWithProviders(<>{custom.map((i, n) => <Fragment key={n}>{i.element}</Fragment>)}</>);
-  fireEvent.press(screen.getByLabelText('Edit beer'));
+  act(() => actions.onEdit?.());
   expect(mockPush).toHaveBeenCalledWith('/beer/beer-b1/edit');
 });

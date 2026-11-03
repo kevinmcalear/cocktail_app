@@ -1,7 +1,9 @@
 import { StyleSheet, View } from 'react-native';
 import Animated, { useAnimatedScrollHandler, useSharedValue } from 'react-native-reanimated';
 
-import { PencilState, ScrollSky, useDs } from '@/components/ds';
+import { PencilState, useDs } from '@/components/ds';
+// By path, not the ds barrel: its Reanimated would land in the web's every-page chunk (check-web-chunks).
+import { ScrollSky } from '@/components/ds/ScrollSky';
 import { ScreenHeader } from '@/components/nav/ScreenHeader';
 import { usePageColumn } from '@/components/nav/Page';
 import { useTabBarInset } from '@/components/nav/WebTabBar';
