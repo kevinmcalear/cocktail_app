@@ -3,7 +3,8 @@ import { useState, type ReactNode } from 'react';
 import { ScrollView, StyleSheet, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
-import { BackbarTheme, BrandProvider, Button, GlassButton, Headline, PencilState, PressableScale, TextLink, useDs, useGutter } from '@/components/ds';
+import { BackbarTheme, BrandProvider, Button, GlassButton, Headline, PressableScale, TextLink, useDs, useGutter } from '@/components/ds';
+import { PencilState } from '@/components/ds/PencilState';
 import { copyForTape, LabelCard, useLabelPrint } from '@/components/screens/make/MakeLabel';
 import { IconSymbol } from '@/components/ui/icon-symbol';
 import { layout, radius, space } from '@/constants/tokens';

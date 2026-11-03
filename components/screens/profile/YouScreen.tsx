@@ -2,7 +2,8 @@ import { useNetInfo } from '@react-native-community/netinfo';
 import { useRouter, type Href } from 'expo-router';
 import { ScrollView, StyleSheet, View } from 'react-native';
 
-import { BackbarTheme, Caption, PencilState, PressableScale, Title, useDs } from '@/components/ds';
+import { BackbarTheme, Caption, PressableScale, Title, useDs } from '@/components/ds';
+import { PencilState } from '@/components/ds/PencilState';
 import { ListGroup, ListNote, ListRow, SectionLabel } from '@/components/ds/ListGroup';
 import { usePageColumn } from '@/components/nav/pageColumn';
 import { useTabBarInset } from '@/components/nav/WebTabBar';

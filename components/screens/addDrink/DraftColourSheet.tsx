@@ -1,7 +1,8 @@
 import type { ComponentProps } from 'react';
 import { StyleSheet } from 'react-native';
 
-import { Button, Caption, Headline, Sheet, SheetScrollView, SketchTintPicker, useSheetClose } from '@/components/ds';
+import { Button, Caption, Headline, Sheet, SheetScrollView, useSheetClose } from '@/components/ds';
+import { SketchTintPicker } from '@/components/ds/SketchTintPicker';
 import { space } from '@/constants/tokens';
 import { usePhotoColours } from '@/hooks/useSketchTint';
 import type { SketchInputs } from '@/lib/sketch/types';

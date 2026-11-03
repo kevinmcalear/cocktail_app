@@ -3,7 +3,8 @@ import { useState } from 'react';
 import { Alert, FlatList, Platform, StyleSheet, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
-import { BackbarTheme, Body, Button, Caption, ExtendedFab, PencilState, Switch, useBreakpoint, useDs, useGutter } from '@/components/ds';
+import { BackbarTheme, Body, Button, Caption, ExtendedFab, Switch, useBreakpoint, useDs, useGutter } from '@/components/ds';
+import { PencilState } from '@/components/ds/PencilState';
 import { Crumbs } from '@/components/nav/PageFrame';
 import { DRAWN_LIST_WINDOW } from '@/components/ds/SketchDrawing';
 import { space } from '@/constants/tokens';

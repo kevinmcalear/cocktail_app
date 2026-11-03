@@ -3,7 +3,9 @@ import { useLocalSearchParams, useRouter, type Href } from 'expo-router';
 import { useMemo, useRef, useState, type ComponentRef } from 'react';
 import { Platform, ScrollView, StyleSheet, View } from 'react-native';
 
-import { GlassButton, PencilState, PopoverMenu, useBreakpoint, useDs, usePopover } from '@/components/ds';
+import { GlassButton, useBreakpoint, useDs } from '@/components/ds';
+import { PencilState } from '@/components/ds/PencilState';
+import { PopoverMenu, usePopover } from '@/components/ds/PopoverMenu';
 import { usePageColumn } from '@/components/nav/Page';
 import { ScreenHeader } from '@/components/nav/ScreenHeader';
 import { useTabBarInset } from '@/components/nav/WebTabBar';

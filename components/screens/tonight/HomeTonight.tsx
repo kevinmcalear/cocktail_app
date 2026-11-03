@@ -1,7 +1,8 @@
 import { useRouter, type Href } from 'expo-router';
 import { ScrollView, StyleSheet, View } from 'react-native';
 
-import { Caption, DrinkDrawingFor, DsText, PencilState, PressableScale, useDs, useGutter } from '@/components/ds';
+import { Caption, DrinkDrawingFor, DsText, PressableScale, useDs, useGutter } from '@/components/ds';
+import { PencilState } from '@/components/ds/PencilState';
 import { BarMark } from '@/components/screens/home/BarMark';
 import { WeekRibbon, weekHref } from '@/components/screens/week/WeekParts';
 import { IconSymbol } from '@/components/ui/icon-symbol';

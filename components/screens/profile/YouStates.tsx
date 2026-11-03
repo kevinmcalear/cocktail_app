@@ -1,7 +1,8 @@
 import type { ReactNode } from 'react';
 import { ScrollView, StyleSheet, View } from 'react-native';
 
-import { Caption, Display, PencilState, useDs } from '@/components/ds';
+import { Caption, Display, useDs } from '@/components/ds';
+import { PencilState } from '@/components/ds/PencilState';
 import { ListNote, OutlineRows, SavedChip, SectionLabel } from '@/components/ds/ListGroup';
 import { usePageColumn } from '@/components/nav/pageColumn';
 import { useTabBarInset } from '@/components/nav/WebTabBar';

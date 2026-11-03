@@ -3,7 +3,8 @@ import { useRouter, type Href } from 'expo-router';
 import { useMemo, useState } from 'react';
 import { ScrollView, StyleSheet, View } from 'react-native';
 
-import { Caption, Chip, DrinkImage, DsText, GlassSurface, Headline, PencilState, PressableScale, useBreakpoint, useDs } from '@/components/ds';
+import { Caption, Chip, DrinkImage, DsText, GlassSurface, Headline, PressableScale, useBreakpoint, useDs } from '@/components/ds';
+import { PencilState } from '@/components/ds/PencilState';
 import { BarMark } from '@/components/screens/home/BarMark';
 import { DiscoverMap, mapAvailable } from '@/components/screens/home/DiscoverMap';
 import { MapCredit } from '@/components/screens/home/MapCredit';

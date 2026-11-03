@@ -3,7 +3,8 @@ import { useState } from 'react';
 import { ScrollView, StyleSheet, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
-import { BackbarTheme, Button, Caption, GlassButton, Headline, PencilState, Surface, useDs, useGutter } from '@/components/ds';
+import { BackbarTheme, Button, Caption, GlassButton, Headline, Surface, useDs, useGutter } from '@/components/ds';
+import { PencilState } from '@/components/ds/PencilState';
 import { Crumbs } from '@/components/nav/PageFrame';
 import { RowDivider, SettingsRow } from '@/components/screens/settings/SettingsParts';
 import { layout, space } from '@/constants/tokens';
