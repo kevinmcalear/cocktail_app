@@ -142,6 +142,7 @@ export function BringInFlow() {
   if (!job && step) {
     return (
       <SafetyPage title="Upload a menu" intro="A photo, a PDF, a link or pasted text. We read it, you check it." topLabel={step} onBack={leave}>
+        <ResumeCard barId={place.barId} here />
         <BringInChooser menu />
       </SafetyPage>
     );

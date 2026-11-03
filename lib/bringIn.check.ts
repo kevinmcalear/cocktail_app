@@ -15,7 +15,10 @@ assert.equal(isCleanText('   '), false);
 
 // --- A pasted menu reads as a menu, not a recipe ---
 assert.equal(looksLikeMenu('Autumn Menu\nHojicha Espresso Martini - vodka, hojicha, coffee liqueur 18\nPork Fat Mezcal - mezcal, pork fat, lime 19'), true);
-assert.equal(looksLikeMenu('Negroni - 16\nMartinez - 17'), true);
+assert.equal(looksLikeMenu('Negroni - $16\nMartinez - 17.00'), true);
+// Bare numbers with no heading could be a spec's amounts.
+assert.equal(looksLikeMenu('Daiquiri\nrum 60\nlime 25\nsugar 15'), false);
+assert.equal(looksLikeMenu('Negroni\nGin 30\nCampari 30\nVermouth 30'), false);
 assert.equal(looksLikeMenu('Winter menu\nHot Toddy $15'), true);
 assert.equal(looksLikeMenu('Orchard Fizz\n45 calvados, 15 pear liqueur\n20 lemon, 15 honey 2:1, top soda'), false);
 assert.equal(looksLikeMenu('Orchard Fizz\n45 ml calvados\n15 ml pear liqueur'), false);

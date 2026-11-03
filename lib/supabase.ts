@@ -74,11 +74,15 @@ export const jsonAs = <T>(value: Json): T => value as unknown as T;
 // it with console.error, which dev builds show as a red toast on Sign in. It's
 // an expected sign-out (Sign in is the answer), so it isn't logged; every
 // other error still is. LogBox is told too, for a log that reaches it first.
-const logError = console.error;
-console.error = (...args: unknown[]) => {
-  if (!isStaleSessionLog(args)) logError(...args);
-};
-LogBox.ignoreLogs([/refresh token/i]);
+const quiet = console as Console & { staleSessionQuiet?: boolean };
+if (!quiet.staleSessionQuiet) {
+  quiet.staleSessionQuiet = true; // once: Fast Refresh re-runs this module
+  const logError = console.error;
+  console.error = (...args: unknown[]) => {
+    if (!isStaleSessionLog(args)) logError(...args);
+  };
+}
+LogBox.ignoreLogs([/Invalid Refresh Token/]);
 
 export const supabase = createClient<Database>(supabaseUrl, supabaseAnonKey, {
   auth: {

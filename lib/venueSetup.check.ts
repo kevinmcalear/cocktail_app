@@ -1,7 +1,7 @@
 // Checks for lib/venueSetup.ts (venue setup, b03 and b19). Run: npm run test:unit
 import assert from 'node:assert/strict';
 
-import { inviteRowError, namesLine, nextScreen, normalizeWebsite, onItsWay, openRun, previousScreen, resumeScreen, sendInvitesLabel, startedSetup, venueProgress, websiteLabel } from './venueSetup';
+import { inviteRowError, namesLine, nextScreen, normalizeWebsite, onItsWay, openRun, previousScreen, resumeScreen, sendInvitesLabel, startedSetup, venueProgress } from './venueSetup';
 
 // Intro, finding the bar, four steps, the checklist. No role step and no Bring in (owner-setup call 4); proving it's yours is the checklist's card (E32), and its screen comes back there.
 assert.equal(nextScreen('intro'), 'find');
@@ -64,6 +64,4 @@ assert.equal(inviteRowError({ email: ' sam@example.com ' }), null);
 assert.equal(normalizeWebsite('littlerye.com.au'), 'https://littlerye.com.au');
 assert.equal(normalizeWebsite('http://x.com'), 'http://x.com');
 // Shown as a domain that wraps cleanly; the path stays when there is one.
-assert.equal(websiteLabel('https://www.cocktailomakase.com/'), 'cocktailomakase.com');
-assert.equal(websiteLabel('http://bar.example/menu/?utm=x'), 'bar.example/menu');
 assert.equal(normalizeWebsite('  '), null);

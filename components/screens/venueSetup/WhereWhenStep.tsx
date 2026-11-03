@@ -17,7 +17,8 @@ import { countryName } from '@/lib/countries';
 import { weekGroups } from '@/lib/hoursWeek';
 import { currencyFor, currencyLabel } from '@/lib/money';
 import { instagramProblem, normalizeInstagram } from '@/lib/profiles';
-import { normalizeWebsite, websiteLabel } from '@/lib/venueSetup';
+import { sourceSite } from '@/lib/prepMath';
+import { normalizeWebsite } from '@/lib/venueSetup';
 import type { HeldSetup } from '@/store/useVenueSetup';
 
 import { CurrencyPicker } from './CurrencyPicker';
@@ -228,7 +229,7 @@ export function WhereWhenStep({ profileId, barId, name, claim, writable, held: k
         <Body tone={phone ? 'ink' : 'muted'}>{phone ?? 'Not added yet'}</Body>
       </FactRow>
       <FactRow icon="globe" label="Website" canEdit editing={editing === 'website'} onEdit={() => setEditing('website')} editor={<TextEditor label="Website" initial={website ?? ''} keyboard="url" onSave={(v) => save({ website: normalizeWebsite(v) }, 'instagram')} onCancel={() => setEditing(null)} />}>
-        <Body tone={website ? 'ink' : 'muted'}>{website ? websiteLabel(website) : 'Not added yet'}</Body>
+        <Body tone={website ? 'ink' : 'muted'}>{website ? sourceSite(website) : 'Not added yet'}</Body>
       </FactRow>
       <View style={styles.fact}>
         <View style={styles.factTop}>

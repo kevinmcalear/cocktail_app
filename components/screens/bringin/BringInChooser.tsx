@@ -114,15 +114,16 @@ export function BringInChooser({ onClose, menu }: { onClose?: () => void; /** Op
 
   return (
     <View style={styles.stack}>
-      {menu ? null : (
+      {/* For a first menu the page around it has the title; only the held-back note stays. */}
+      {menu && !place.heldBack ? null : (
         <View style={styles.head}>
-          <Title>Bring in</Title>
-          <Body tone="muted">A menu, a recipe, a spec sheet, a shelf of bottles. Give it to us and we’ll work out what it is.</Body>
+          {menu ? null : <Title>Bring in</Title>}
+          {menu ? null : <Body tone="muted">A menu, a recipe, a spec sheet, a shelf of bottles. Give it to us and we’ll work out what it is.</Body>}
           {place.heldBack ? <Caption tone="muted">{`It comes into your home bar. Adding to ${place.heldBack} opens at Drink Creator.`}</Caption> : null}
         </View>
       )}
       <View style={styles.tiles}>
-        {camera ? <Tile icon="camera" label="Snap" sub="Pages or a shelf" onPress={() => void fromFiles(snapReadFiles)} /> : null}
+        {camera ? <Tile icon="camera" label="Snap" sub={menu ? 'The menu’s pages' : 'Pages or a shelf'} onPress={() => void fromFiles(snapReadFiles)} /> : null}
         <Tile icon="photo" label="Photos, files" sub="PDF, screenshots" onPress={() => void fromFiles(pickReadFiles)} />
         <Tile icon="doc.on.clipboard" label="Paste" sub="Text or a link" onPress={() => setPasting(true)} />
       </View>

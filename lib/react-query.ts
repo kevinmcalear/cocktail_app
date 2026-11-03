@@ -6,7 +6,6 @@ import Constants from 'expo-constants';
 import { dehydrate, focusManager, type Mutation, MutationCache, type QueryKey, notifyManager, onlineManager, QueryCache, QueryClient } from '@tanstack/react-query';
 import { AppState, Platform } from 'react-native';
 
-import { isStaleSessionLog } from '@/lib/authCache';
 import { coalesceTimer } from '@/lib/coalesceTimer';
 import { fileStore } from '@/lib/fileStore';
 import {
@@ -88,8 +87,6 @@ export const queryClient = new QueryClient({
       retry: 0,
       // Global error handler for all mutations using Burnt
       onError: (error) => {
-        // A write cut off by a rejected saved session: auth-js has signed out, and Sign in says what to do.
-        if (isStaleSessionLog([error])) return;
         let message = 'An unexpected error occurred.';
         if (error instanceof Error) {
             message = error.message;

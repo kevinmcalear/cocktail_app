@@ -9,6 +9,7 @@ import { BRAND_SAMPLE as SAMPLE } from '@/lib/brandSample';
 import { withAlpha } from '@/lib/color';
 
 import type { IconBackground } from './BrandIcon';
+import { tonightLine } from '@/lib/menus';
 
 export interface BrandLook {
   id: string;
@@ -53,7 +54,7 @@ export function MiniScreen({ look, compact }: { look: BrandLook; compact?: boole
       </View>
       <View>
         <Title numberOfLines={1}>Tonight</Title>
-        <Caption tone="muted" numberOfLines={1}>{`${today()} · Autumn menu · 8 drinks`}</Caption>
+        <Caption tone="muted" numberOfLines={1}>{tonightLine(new Date(), [{ name: 'Autumn menu' }], 8)}</Caption>
       </View>
       <View style={[styles.banner, { backgroundColor: ds.c.raised }]}>
         <Caption style={styles.flex}>2 new drinks go on at 6.</Caption>
@@ -166,4 +167,3 @@ const styles = StyleSheet.create({
 });
 
 /** Today as Tonight's header writes it ("Tue 3 Nov"), so the sample never shows a stale date. */
-const today = () => new Date().toLocaleDateString('en-GB', { weekday: 'short', day: 'numeric', month: 'short' });
