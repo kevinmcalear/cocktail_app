@@ -1,6 +1,7 @@
 import { useRouter, type Href } from 'expo-router';
 import { Alert } from 'react-native';
 
+import { useBarFeature } from '@/hooks/useBarFeature';
 import { useListChanges } from '@/hooks/useLivingList';
 import { useEndMenu } from '@/hooks/useMenuMutations';
 import { confirmAsync } from '@/lib/dialogs';
@@ -19,6 +20,8 @@ export function useMenuPageActions({ menu, status, liveId, setSheet, toShopping 
   const router = useRouter();
   const end = useEndMenu();
   const hide = useListChanges(menu.id).hide;
+  // The prep row is drawn only with Prep on (menuPageModel); its link asks too.
+  const prepOn = useBarFeature(menu.barId, 'prep');
   const go = (href: string) => router.push(href as Href);
   const failed = (message: string) => Alert.alert(message);
   const endMenu = async () => {
@@ -41,7 +44,7 @@ export function useMenuPageActions({ menu, status, liveId, setSheet, toShopping 
     barPage: () => hide.mutate(!menu.hiddenAt, { onError: () => failed('That didn’t work. Try again.') }),
     costing: () => go(`/menus/${menu.id}/costing`),
     runSheet: () => go(`/menus/${menu.id}/run-sheet`),
-    prep: () => go('/prep'),
+    prep: () => (prepOn ? go('/prep') : undefined),
     offMenu: () => go('/off-menu'),
     publish: () => setSheet('publish'),
     replaces: () => (liveId ? go(`/menus/${liveId}`) : undefined),
