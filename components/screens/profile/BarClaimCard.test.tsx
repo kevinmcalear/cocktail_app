@@ -11,6 +11,9 @@ let mockClaims: { status: string }[] = [];
 let mockMeta: { onboarded?: boolean } = {};
 let mockPerson: { id: string } | null = null;
 let mockVenues: { id: string }[] = [];
+let mockOthersWaiting = false;
+let mockAsked: { declined_at: string | null } | null = null;
+const mockAsk = jest.fn();
 
 jest.mock('expo-router', () => ({
   useRouter: () => ({ push: mockPush, back: mockBack, dismissTo: mockDismissTo, canGoBack: () => true }),
@@ -23,12 +26,17 @@ jest.mock('@/hooks/useProfiles', () => ({
   useMyPersonClaim: () => ({ data: mockPerson, isPending: false }),
 }));
 jest.mock('@/hooks/useActiveVenue', () => ({ useActiveVenue: () => ({ venues: mockVenues }) }));
+jest.mock('@/hooks/useBarClaims', () => ({ useClaimPending: () => ({ data: mockOthersWaiting }) }));
+jest.mock('@/hooks/useJoinRequests', () => ({
+  useMyJoinRequest: () => ({ data: mockAsked }),
+  useAskToJoin: () => ({ mutate: mockAsk, isPending: false, error: null }),
+}));
 
 const rye = { id: 'lr', display_name: 'Little Rye', is_claimed: false } as unknown as Profile;
 
 beforeEach(() => {
-  [mockParams, mockClaims, mockMeta, mockPerson, mockVenues] = [{}, [], {}, null, []];
-  for (const m of [mockPush, mockBack, mockDismissTo]) m.mockReset();
+  [mockParams, mockClaims, mockMeta, mockPerson, mockVenues, mockOthersWaiting, mockAsked] = [{}, [], {}, null, [], false, null];
+  for (const m of [mockPush, mockBack, mockDismissTo, mockAsk]) m.mockReset();
 });
 
 test('from Setup’s Find your bar: the full card; Claim goes back to Setup with the bar, Not mine back to the search', async () => {
@@ -56,23 +64,33 @@ test('the end line: Claim this page runs venue setup, Find your name opens Peopl
   expect(onFind).toHaveBeenCalled();
 });
 
-test('the end line: a claimed bar asks only who worked there; its team and people with a page see none', async () => {
+test('the end line: a claimed bar has the staff door instead of the claim; its team sees none', async () => {
   const claimed = { ...rye, is_claimed: true, bar_id: 'v1' } as unknown as Profile;
   await renderWithProviders(<ClaimLine profile={claimed} onFind={jest.fn()} />);
-  expect(screen.getByText('Worked at Little Rye?')).toBeTruthy();
+  expect(screen.getByText('Work here?')).toBeTruthy();
   expect(screen.queryByLabelText('Claim this page')).toBeNull();
+  expect(screen.getByLabelText('Find your name')).toBeTruthy();
+  await fireEvent.press(screen.getByLabelText('Ask to join'));
+  expect(mockAsk).toHaveBeenCalledWith('lr');
+  mockAsked = { declined_at: null };
+  await renderWithProviders(<ClaimLine profile={claimed} />);
+  expect(screen.getByText('You asked to join.')).toBeTruthy();
   mockVenues = [{ id: 'v1' }];
   await renderWithProviders(<ClaimLine profile={claimed} onFind={jest.fn()} />);
-  expect(screen.queryByText('Worked at Little Rye?')).toBeNull();
-  [mockVenues, mockPerson] = [[], { id: 'mine' }];
-  await renderWithProviders(<ClaimLine profile={claimed} onFind={jest.fn()} />);
-  expect(screen.queryByText('Worked at Little Rye?')).toBeNull();
+  expect(screen.queryByText('Work here?')).toBeNull();
+});
+
+test('the end line: someone else’s waiting claim is noted and the claim stays open', async () => {
+  mockOthersWaiting = true;
+  await renderWithProviders(<ClaimLine profile={rye} />);
+  expect(screen.getByText('(a claim is waiting)')).toBeTruthy();
+  expect(screen.getByLabelText('Claim this page')).toBeTruthy();
 });
 
 test('a claim sent says so', async () => {
   mockClaims = [{ status: 'pending' }];
   await renderWithProviders(<BarClaimCard profile={rye} />);
-  expect(screen.getByText('Your claim is being checked.')).toBeTruthy();
+  expect(screen.getByText('Claim sent, waiting for approval.')).toBeTruthy();
 });
 
 test('a claimed bar has no claim', async () => {

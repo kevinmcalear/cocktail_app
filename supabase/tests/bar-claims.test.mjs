@@ -1,6 +1,7 @@
 // Bar claim verification: a bar proves it's theirs by its own email domain,
 // a code in its Instagram bio, or a code read out on a call, and approval
-// makes a venue with the claimant as Admin and the page at Menu (20261024200000)
+// makes a venue with the claimant as Admin and the page at Menu (20261024200000).
+// Nothing is approved on the spot (20261206710000)
 // (supabase/migrations/20261007220000_bar_claim_verification.sql).
 // Runs against the local stack only: `npm run test:security`.
 import assert from 'node:assert/strict';
@@ -83,15 +84,19 @@ after(async () => {
 });
 
 describe('bar claim verification', () => {
-  test('an email at the bar\'s own website domain claims the page on the spot, at Menu, with the claimant as Admin', async () => {
+  test('an email at the bar\'s own website domain waits for a moderator, then the page is theirs at Menu, with the claimant as Admin', async () => {
     const { data, error } = await claim('owner', 'Moth', 'email', { p_note: 'Jo, bar manager' });
     assert.ifError(error);
-    assert.equal(data.status, 'approved');
+    // Every claim waits for a person (20261206710000).
+    assert.equal(data.status, 'pending');
+    assert.equal((await pageRow('Moth')).bar_id, null, 'no venue until it is approved');
     assert.equal(data.method, 'email');
     assert.equal(data.code, null);
     assert.equal(data.evidence.email_domain, DOMAIN, 'the domain is kept');
     assert.ok(!JSON.stringify(data.evidence).includes(`jo-${run}`), 'the address itself is not');
-    assert.equal(data.evidence.auto, true);
+    assert.equal(data.evidence.strong_match, true);
+    const approved = await users.moderator.client.rpc('approve_profile_claim', { p_claim_id: data.id });
+    assert.ifError(approved.error);
 
     const page = await pageRow('Moth');
     assert.ok(page.bar_id, 'the page has a venue');

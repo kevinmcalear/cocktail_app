@@ -22,7 +22,7 @@ function WhileYouWait({ name }: { name: string }) {
       <Surface style={styles.status}>
         <IconSymbol name="clock" size={20} color={ds.accentText} />
         <View style={styles.flex}>
-          <Body style={styles.strong}>A person checks claims, usually within a day.</Body>
+          <Body style={styles.strong}>Claim sent, waiting for approval. A person checks claims, usually within a day.</Body>
           <Caption tone="muted">{`Your team can use everything meanwhile. What you set up goes on ${name}’s public page once it’s approved.`}</Caption>
         </View>
       </Surface>
@@ -32,10 +32,11 @@ function WhileYouWait({ name }: { name: string }) {
 
 interface Props {
   profileId: string;
-  ensureVenue: () => Promise<string>;
+  /** The venue setup already made, if any: the claim links it on approval. With none, approval makes one. */
+  barId: string | null;
   /** Typed in step 3: fills the ways that need the bar's Instagram, website or phone (#714). */
   held: HeldSetup | undefined;
-  /** Making the venue failed (Keep it private makes it too). */
+  /** Making the venue failed (Keep it private makes it). */
   venueError: string | null;
   /** Puts what setup held onto the claim once it exists. */
   afterSend: (claim: ProfileClaim) => Promise<void>;
@@ -46,12 +47,13 @@ interface Props {
 
 /**
  * Step 8, the last: prove the bar is yours (Eddie call, 22 Oct). Sending
- * claims the page for the venue setup made (you its Admin); what setup held
+ * makes a pending claim only, never a venue (Kevin, 3 Nov 2026): on approval
+ * the venue setup made is linked to the page, or one is made then; what setup held
  * goes onto the claim and on the page once a person checks it (b19). The
  * code shows before anything is sent. Keeping it private is a real choice:
  * the venue works for the team, and the page stays as it was.
  */
-export function SetupClaimStep({ profileId, ensureVenue, held, venueError, afterSend, onDone, onKeepPrivate }: Props) {
+export function SetupClaimStep({ profileId, barId, held, venueError, afterSend, onDone, onKeepPrivate }: Props) {
   const { user } = useAuth();
   const profile = useProfile(profileId).data;
   const claims = useMyClaims(profileId).data;
@@ -91,7 +93,6 @@ export function SetupClaimStep({ profileId, ensureVenue, held, venueError, after
     setProblem(null);
     setBusy(true);
     try {
-      const barId = await ensureVenue();
       const claim = await start.mutateAsync({ profileId, method: chosen, barId, note: '', code, typed });
       setSent(claim);
       try {
