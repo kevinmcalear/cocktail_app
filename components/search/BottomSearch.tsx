@@ -8,7 +8,6 @@ import { DockFade, GlassButton, useDs, useGutter } from '@/components/ds';
 import { ScreenHeader, ScreenHeaderSpacer } from '@/components/nav/ScreenHeader';
 import { WEB_TABS } from '@/components/nav/WebTabBar';
 import { layout, space } from '@/constants/tokens';
-import { withAlpha } from '@/lib/color';
 import { useAuth } from '@/ctx/AuthContext';
 import { SEARCH_TAB } from '@/hooks/useBottomBar';
 import { useKeyboardHeight, useWebKeyboardInset } from '@/hooks/useKeyboardInset';
@@ -46,7 +45,7 @@ export interface SearchTabState {
 /**
  * Over the bottom field: where it searches ("Little Rye ⌄", a menu of the
  * venue or your drinks, This area from Discover, and Everywhere), then the
- * type chips once you type. One glass row, edge to edge, so it scrolls off the
+ * type chips once you type. One row on a band of the ground, edge to edge, so it scrolls off the
  * screen's side rather than against an edge, with the results passing under it
  * (search-typing, decided 23 Oct 2026). `camera`: iOS 26's system field
  * can't hold the camera, so it leads this row instead.
@@ -57,7 +56,7 @@ export function PlaceRow({ query, scope, setScope, mine, area, show, setShow, co
   // At a venue on Everywhere: Can make, between the place and the type chips; on, the type chips leave (QA Q37).
   const canMake = query && scope === 'everywhere' && !!mine.venueId;
   return (
-    <ScrollView horizontal showsHorizontalScrollIndicator={false} keyboardShouldPersistTaps="handled" style={[styles.placeRow, { backgroundColor: withAlpha(ds.c.ground, 0.94) }]} contentContainerStyle={[styles.placeChips, { paddingHorizontal: gutter }]}>
+    <ScrollView horizontal showsHorizontalScrollIndicator={false} keyboardShouldPersistTaps="handled" style={[styles.placeRow, { backgroundColor: ds.c.ground }]} contentContainerStyle={[styles.placeChips, { paddingHorizontal: gutter }]}>
       {camera ? <GlassButton icon="camera" color={ds.c.ink} size={layout.minTapTarget} accessibilityLabel="Snap a menu or bottle" onPress={() => useBringIn.getState().openSheet()} /> : null}
       <ScopeToken options={scopeOptions(mine.label, area?.label ?? null)} scope={scope} onScope={setScope} />
       {canMake ? <CanMakeChip show={show} onShow={setShow} count={counts.canmake} /> : null}

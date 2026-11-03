@@ -51,6 +51,7 @@ export function ResultRow({ title, caption, icon, accentIcon, avatar, ingredient
   const ds = useDs();
   // In the ⌘K palette: the row the arrow keys are on, which Return opens.
   const nav = useSearchNavRow();
+  const look = use(SearchLook);
   return (
     <PressableScale
       role="link"
@@ -74,7 +75,7 @@ export function ResultRow({ title, caption, icon, accentIcon, avatar, ingredient
       <View style={styles.text}>
         {/* The name wins: a tag that doesn't fit beside it goes under it. */}
         <View style={styles.titleRow}>
-          <Headline numberOfLines={1} style={[styles.title, { fontFamily: displayFaces[ds.displayFace].regular }, icon === 'plus' && { color: ds.accentText }]}>
+          <Headline numberOfLines={1} style={[styles.title, look && { fontFamily: displayFaces[ds.displayFace].regular }, look && icon === 'plus' && { color: ds.accentText }]}>
             <MatchText text={title} query={query} look={matchLook} />
           </Headline>
           {badge ? <Tag label={badge} /> : null}
@@ -176,6 +177,9 @@ interface ResultGroupProps<T> {
   action?: { label: string; onPress: () => void };
 }
 
+/** Inside the search's results: rows name in the display face and headings are plain (Prod-discover, Search · typing). Onboarding and Drafts keep their own look. */
+export const SearchLook = createContext(false);
+
 /** Android's open search (TopSearch.tsx), which draws its results its own way (Miss-search-and). */
 export const DrawnSearch = createContext(false);
 
@@ -217,7 +221,7 @@ function MoreLink({ label, onPress }: { label: string; onPress: () => void }) {
 /** "Drinks": the first few, then the rest behind "All 12", a page at a time. Nothing when empty. */
 export function ResultGroup<T>({ label, counted = true, plain, items, render, action }: ResultGroupProps<T>) {
   const ds = useDs();
-  const drawn = use(DrawnSearch);
+  const plainHeads = use(DrawnSearch) || use(SearchLook);
   const [count, setCount] = useState(PER_GROUP);
   if (!items.length) return null;
   const shown = items.slice(0, count);
@@ -225,7 +229,7 @@ export function ResultGroup<T>({ label, counted = true, plain, items, render, ac
   return (
     <View style={styles.group}>
       <View style={label ? styles.head : styles.noHead}>
-        {plain || drawn ? (
+        {plain || plainHeads ? (
           // The search boards' heading: "Drinks", plain and muted (Prod-discover, Search · typing).
           <DsText variant="label" role="heading" color={ds.c.muted} style={styles.plainHead}>
             {label}

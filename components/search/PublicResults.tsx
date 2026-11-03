@@ -155,10 +155,10 @@ export function PublicResults({ query, area, kinds = [], onKind, onEverywhere, m
   const away = (b: DiscoverBar) => (area?.kind === 'point' && b.latitude !== null && b.longitude !== null ? formatDistance(distanceKm(area, { latitude: b.latitude, longitude: b.longitude }), miles) : null);
 
   const drinkGroup = (label: string, list: typeof drinks) => (
-    <ResultGroup plain key={label} label={label} items={list} render={(d) => <DrinkAtBarRow key={d.id} drink={d} scores={scores} query={lit} matchLook={look} everywhere={everywhere && !onKind} />} />
+    <ResultGroup key={label} label={label} items={list} render={(d) => <DrinkAtBarRow key={d.id} drink={d} scores={scores} query={lit} matchLook={look} everywhere={everywhere && !onKind} />} />
   );
   const barGroup = (
-    <ResultGroup plain
+    <ResultGroup
       key="bars"
       label={`Bars ${area ? where : ''}`.trim()}
       items={bars}
@@ -166,7 +166,7 @@ export function PublicResults({ query, area, kinds = [], onKind, onEverywhere, m
     />
   );
   const placeGroup = (
-    <ResultGroup plain
+    <ResultGroup
       key="places"
       label="Places"
       items={places}
@@ -183,9 +183,9 @@ export function PublicResults({ query, area, kinds = [], onKind, onEverywhere, m
       )}
     />
   );
-  const peopleGroup = <ResultGroup plain key="people" label="People" items={people ?? []} render={(p) => <PersonResultRow key={p.id} person={p} waiting={waiting?.[p.id]} query={lit} matchLook={look} />} />;
+  const peopleGroup = <ResultGroup key="people" label="People" items={people ?? []} render={(p) => <PersonResultRow key={p.id} person={p} waiting={waiting?.[p.id]} query={lit} matchLook={look} />} />;
   const classicGroup = (
-    <ResultGroup plain
+    <ResultGroup
       key="classics"
       label="Classics"
       items={only(top ? classics.filter((c) => c !== top) : classics)}
@@ -193,7 +193,7 @@ export function PublicResults({ query, area, kinds = [], onKind, onEverywhere, m
     />
   );
   const yoursGroup = (
-    <ResultGroup plain
+    <ResultGroup
       key="yours"
       label="Your drinks"
       items={yours}
@@ -217,7 +217,7 @@ export function PublicResults({ query, area, kinds = [], onKind, onEverywhere, m
   );
   const alsoGroup = drinkGroup(`Also mentions “${q}”`, weak);
   const ingredientGroup = (
-    <ResultGroup plain key="ingredients" label="Ingredients" items={ingredients} render={(i) => <ResultRow key={i.id} title={i.name} ingredient={{ id: i.id }} query={lit} matchLook={look} onPress={() => router.push(itemHref('Ingredient', i.id) as never)} />} />
+    <ResultGroup key="ingredients" label="Ingredients" items={ingredients} render={(i) => <ResultRow key={i.id} title={i.name} ingredient={{ id: i.id }} query={lit} matchLook={look} onPress={() => router.push(itemHref('Ingredient', i.id) as never)} />} />
   );
 
   // Phones draw nothing found and loading (Sta-discover); the web says it. A missing bar can be added under either, but Android's drawn search.
@@ -278,13 +278,13 @@ export function PublicResults({ query, area, kinds = [], onKind, onEverywhere, m
           <BrowseChips style={style} ingredient={ingredients.find((i) => foldName(i.name).startsWith(foldName(q)))} />
         ) : null}
         {/* A spirit or a tasting note the search names becomes a filter on Discover. */}
-        <ResultGroup plain label="Filter by" items={onKind ? named.filter((k) => k !== style) : []} render={(k) => <ResultRow key={k.id} title={k.label} caption={kindCaption(k.id)} icon="line.3.horizontal.decrease" onPress={() => onKind?.(k.id)} />} />
+        <ResultGroup label="Filter by" items={onKind ? named.filter((k) => k !== style) : []} render={(k) => <ResultRow key={k.id} title={k.label} caption={kindCaption(k.id)} icon="line.3.horizontal.decrease" onPress={() => onKind?.(k.id)} />} />
         {!signedIn ? <ListNote>Sign in to search the drinks bars pour.</ListNote> : null}
         {show === 'canmake' && canMakeCount === 0 ? <CanMakeEmpty venue={mine?.label ?? 'This bar'} drinks={drinks.length + classics.length} query={q} onShowAll={() => onShow?.('all')} /> : null}
         {shown}
-        {head && (found || results.isLoading) ? head.card : null}
+        {head && found ? head.card : null}
         {/* Did you mean (1B), or the close names last (1C). While the search is out, nothing is asked yet. */}
-        {results.isLoading && !found ? miss : <NearResults query={q} found={found} shown={[...drinks, ...bars, ...(people ?? []), ...classics, ...ingredients, ...yours].map((d) => d.id)} yours={head?.yours ?? (everywhere && atHome ? catalog.items : undefined)} yoursCaption={head?.yoursCaption} classics={everywhere ? classicList : undefined} server={{ area: area ?? ANYWHERE, kinds: everywhere ? NEAR_ALL : NEAR_AREA }} title={head?.title ?? `Nothing ${where} called “${q}”`} add={head?.add} matchLook={look} show={show} miss={<>{head?.card}{miss}</>} lead={head?.card} />}
+        {results.isLoading && !found ? miss : <NearResults query={q} found={found} shown={[...drinks, ...bars, ...(people ?? []), ...classics, ...ingredients, ...yours].map((d) => d.id)} yours={head?.yours ?? (everywhere && atHome ? catalog.items : undefined)} yoursCaption={head?.yoursCaption} classics={everywhere ? classicList : undefined} server={{ area: area ?? ANYWHERE, kinds: everywhere ? NEAR_ALL : NEAR_AREA }} title={head?.title ?? `Nothing ${where} called “${q}”`} add={head?.add} matchLook={look} show={show} miss={<>{head?.card}{miss}</>} />}
         {drawn && found ? <SearchMore query={q} mine={mine} /> : null}
         {area && onEverywhere ? <Button label={`Search everywhere for “${q}”`} variant="secondary" onPress={onEverywhere} /> : null}
       </View>

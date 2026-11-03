@@ -97,6 +97,7 @@ export function MineResults({ query, mine, onEverywhere, commands, palette, show
   if (!found) {
     if (isLoading) return drawn || DRAWN_STATES ? <SearchLoading /> : <Caption tone="muted">Searching…</Caption>;
     const title = `Nothing ${mine.venueId ? `at ${mine.label}` : 'in your drinks'} called “${q}”`;
+    const missed = `${title}. Here’s what everywhere else has.`;
     return (
       <View style={styles.results}>
         {/* Everywhere's results follow; with nothing there either, this card becomes Did you mean. */}
@@ -109,7 +110,7 @@ export function MineResults({ query, mine, onEverywhere, commands, palette, show
           head={{
             title,
             // After the results, a quiet row as the board draws it: "+ Add “negr” as a new drink", with what was missed under it.
-            card: drawn ? null : mine.canAdd ? <ResultRow title={`Add “${capitalize(q)}” as a new drink`} caption={`${title}. Here’s what everywhere else has.`} icon="plus" accentIcon onPress={add} /> : <Caption tone="muted">{`${title}. Here’s what everywhere else has.`}</Caption>,
+            card: drawn ? null : mine.canAdd ? <ResultRow title={`Add “${capitalize(q)}” as a new drink`} caption={missed} icon="plus" accentIcon onPress={add} /> : <Caption tone="muted">{missed}</Caption>,
             add: mine.canAdd ? { label: `add ${capitalize(q)}`, onPress: add } : undefined,
             yours: items,
             yoursCaption: mine.label,
@@ -159,22 +160,22 @@ export function MineResults({ query, mine, onEverywhere, commands, palette, show
           onPress={() => open(top)}
         />
       ) : null}
-      {shows(show, 'drinks') ? <ResultGroup plain label="Drinks" items={drinks} render={drinkRow} /> : null}
+      {shows(show, 'drinks') ? <ResultGroup label="Drinks" items={drinks} render={drinkRow} /> : null}
       {shows(show, 'ingredients') ? (
-        <ResultGroup plain
+        <ResultGroup
           label={drawn ? 'Bottles' : 'Ingredients'}
           items={groups.ingredients}
           render={(i) => <ResultRow key={i.id} title={i.name} caption={i.isDraft ? 'Draft' : ingredientFacts(i.id, facts)} ingredient={{ id: i.isDraft ? null : i.id }} onPress={() => open(i)} />}
         />
       ) : null}
       {shows(show, 'menus') ? (
-        <ResultGroup plain
+        <ResultGroup
           label="Menus"
           items={groups.menus}
           render={(i) => <ResultRow key={i.id} title={i.name} caption={i.isDraft ? 'Draft' : menuFacts(i.id.replace(/^menu-/, ''), drinkIds, facts)} icon="list.bullet" onPress={() => open(i)} />}
         />
       ) : null}
-      {shows(show, 'people') ? <ResultGroup plain label="People" items={people} render={(p) => <PersonResultRow key={p.id} person={p} waiting={waiting?.[p.id]} />} /> : null}
+      {shows(show, 'people') ? <ResultGroup label="People" items={people} render={(p) => <PersonResultRow key={p.id} person={p} waiting={waiting?.[p.id]} />} /> : null}
       <NearResults query={q} found={found} shown={shownIds} yours={items} yoursCaption={mine.label} title="" miss={null} show={show} />
       {commands}
       {everywhere}

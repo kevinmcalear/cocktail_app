@@ -26,7 +26,7 @@ import type { SearchItem } from '@/types/search';
 
 import { MineResults } from './MineResults';
 import { PublicResults } from './PublicResults';
-import { DrawnSearch, ResultGroup, ResultRow } from './ResultRows';
+import { DrawnSearch, ResultGroup, ResultRow, SearchLook } from './ResultRows';
 import { ScopeSwitch } from './ScopeSwitch';
 import { SearchField } from './SearchField';
 import { SearchOffline } from './SearchOffline';
@@ -113,7 +113,7 @@ interface BodyProps {
 }
 
 /** What the search finds in its scope, or what was opened lately while nothing is typed. */
-export function SearchBody({ query: typed, scope, onScope, mine, area, onJump, commands, palette, show, onShow, onCounts, typeAhead }: BodyProps) {
+function SearchBodyInner({ query: typed, scope, onScope, mine, area, onJump, commands, palette, show, onShow, onCounts, typeAhead }: BodyProps) {
   const router = useRouter();
   const signedIn = !!useAuth().user;
   const [adding, setAdding] = useState(false);
@@ -149,6 +149,15 @@ export function SearchBody({ query: typed, scope, onScope, mine, area, onJump, c
       {commands}
       {adding ? <AddBarSheet onClose={() => setAdding(false)} onAdded={(v) => openBar(v.handle)} onOpenExisting={openBar} /> : null}
     </>
+  );
+}
+
+/** The search's results: its rows and headings take the boards' look (SearchLook). */
+export function SearchBody(props: BodyProps) {
+  return (
+    <SearchLook value>
+      <SearchBodyInner {...props} />
+    </SearchLook>
   );
 }
 
@@ -205,7 +214,8 @@ function Recent({ scope, mine, onJump, commands, onTerm }: { scope: SearchScope;
       {onTerm && terms.length ? <RecentSearches terms={terms} onPick={onTerm} onClear={clearAll} /> : null}
       <ResultGroup
         label={browse ? 'Opened lately' : 'Recent'}
-        plain
+        plain={browse}
+        counted={!browse}
         items={recent}
         // The palette keeps its rows bare: the arrow keys walk them.
         action={browse && !terms.length ? { label: 'Clear', onPress: clearAll } : undefined}
