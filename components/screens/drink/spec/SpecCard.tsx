@@ -147,7 +147,7 @@ export function GroupHead({ number, title, aside }: { number: string | null; tit
 }
 
 /** The note under a step's lines, lined up with the names (boards Decided-spec-groups, who-bartender). */
-function StepNoteLine({ text }: { text: string }) {
+export function StepNoteLine({ text }: { text: string }) {
   return (
     <DsText variant="label" tone="muted" style={styles.note}>
       {text}
