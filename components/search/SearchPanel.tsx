@@ -205,15 +205,14 @@ function Recent({ scope, mine, onJump, commands, onTerm }: { scope: SearchScope;
       {onTerm && terms.length ? <RecentSearches terms={terms} onPick={onTerm} onClear={clearAll} /> : null}
       <ResultGroup
         label={browse ? 'Opened lately' : 'Recent'}
-        plain={browse}
-        counted={!browse}
+        plain
         items={recent}
         // The palette keeps its rows bare: the arrow keys walk them.
         action={browse && !terms.length ? { label: 'Clear', onPress: clearAll } : undefined}
         render={(r) => {
           const x = browse && Platform.OS !== 'android' ? <IconSymbol name="chevron.right" size={16} color={ds.c.muted} /> : undefined;
           return drink(r.kind) ? (
-            <DrinkRow key={`${r.kind}-${r.id}`} name={r.title} itemId={r.id} imageUrl={r.imageUrl ?? null} glass={fallbackGlass(r.kind === 'beer' ? 'Beer' : r.kind === 'wine' ? 'Wine' : 'Cocktail')} caption={caption(r)} trailing={x} onPress={() => open(r)} />
+            <DrinkRow key={`${r.kind}-${r.id}`} name={r.title} itemId={r.id} imageUrl={r.imageUrl ?? null} glass={fallbackGlass(r.kind === 'beer' ? 'Beer' : r.kind === 'wine' ? 'Wine' : 'Cocktail')} caption={caption(r)} displayName trailing={x} onPress={() => open(r)} />
           ) : (
             <ResultRow
               key={`${r.kind}-${r.id}`}

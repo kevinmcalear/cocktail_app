@@ -91,6 +91,7 @@ export function NearResults({ query, found, shown, yours, yoursCaption = 'Yours'
         imageUrl={h.imageUrl}
         glass={null}
         caption={caption}
+        displayName
         trailing={<RowScore score={score} />}
         label={said ? [h.name, caption, said].filter(Boolean).join('. ') : undefined}
         onPress={() => open(h)}
@@ -110,13 +111,13 @@ export function NearResults({ query, found, shown, yours, yoursCaption = 'Yours'
   );
 
   if (view.kind === 'none') return found ? null : <>{miss}</>;
-  if (view.kind === 'listed') return <ResultGroup label="Spelled differently" items={view.hits} render={(h) => row(h)} />;
+  if (view.kind === 'listed') return <ResultGroup plain label="Spelled differently" items={view.hits} render={(h) => row(h)} />;
   if (view.kind === 'known') {
     return (
       <View style={styles.groups}>
         {lead}
-        <ResultGroup label={`Also spelled “${q}”`} items={view.known} render={(h) => row(h)} />
-        <ResultGroup label="Also close" items={view.also} render={(h) => row(h)} />
+        <ResultGroup plain label={`Also spelled “${q}”`} items={view.known} render={(h) => row(h)} />
+        <ResultGroup plain label="Also close" items={view.also} render={(h) => row(h)} />
       </View>
     );
   }
@@ -137,12 +138,12 @@ export function NearResults({ query, found, shown, yours, yoursCaption = 'Yours'
         </View>
         {spellingFor ? <Caption tone="muted">{`Yes keeps “${q}” as another spelling, so it finds ${best.name} next time.`}</Caption> : null}
       </AskCard>
-      <ResultGroup label="Also close" items={view.also} render={(h) => row(h)} />
+      <ResultGroup plain label="Also close" items={view.also} render={(h) => row(h)} />
     </View>
   );
 }
 
-/** The miss card's look (MissCard), asking about one row. */
+/** The Did you mean card, asking about one row. */
 function AskCard({ title, name, best, children }: { title: string; name: string; best: ReactNode; children: ReactNode }) {
   const ds = useDs();
   return (

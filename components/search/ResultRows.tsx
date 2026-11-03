@@ -7,7 +7,7 @@ import { BarMark, type BarBrand } from '@/components/screens/home/BarMark';
 import { IconSymbol } from '@/components/ui/icon-symbol';
 import { UserAvatar } from '@/components/ui/UserAvatar';
 import type { PublicPerson } from '@/hooks/useProfiles';
-import { font, layout, radius, space } from '@/constants/tokens';
+import { displayFaces, font, layout, radius, space } from '@/constants/tokens';
 import { withAlpha } from '@/lib/color';
 import { barDrinksLine, closedLabel, type DiscoverBar } from '@/lib/discoverDrinks';
 import { waitingLine, type Waiting } from '@/lib/findYourself';
@@ -74,7 +74,7 @@ export function ResultRow({ title, caption, icon, accentIcon, avatar, ingredient
       <View style={styles.text}>
         {/* The name wins: a tag that doesn't fit beside it goes under it. */}
         <View style={styles.titleRow}>
-          <Headline numberOfLines={1} style={styles.title}>
+          <Headline numberOfLines={1} style={[styles.title, { fontFamily: displayFaces[ds.displayFace].regular }, icon === 'plus' && { color: ds.accentText }]}>
             <MatchText text={title} query={query} look={matchLook} />
           </Headline>
           {badge ? <Tag label={badge} /> : null}
@@ -168,7 +168,7 @@ interface ResultGroupProps<T> {
   label: string;
   /** False when the label already says how many ("Everywhere has 1 classic"). */
   counted?: boolean;
-  /** The heading in plain words rather than small capitals, as the open search draws it. An empty label has no heading. */
+  /** The heading in plain words rather than small capitals, as the search boards draw it. An empty label has no heading. */
   plain?: boolean;
   items: readonly T[];
   render: (item: T) => ReactNode;
@@ -203,35 +203,6 @@ export function EverywhereRow({ label, icon = 'globe', onPress }: { label: strin
   );
 }
 
-/**
- * "Nothing at Little Rye called “paloma”": one quiet card with what to do
- * about it, so the results from everywhere can follow right under it (search-miss).
- */
-export function MissCard({ title, detail, action }: { title: string; detail: string; action?: { label: string; onPress: () => void } }) {
-  const ds = useDs();
-  return (
-    <View style={[styles.miss, { backgroundColor: ds.c.raised }]}>
-      <View style={[styles.missIcon, { backgroundColor: ds.c.ground }]}>
-        <IconSymbol name="magnifyingglass" size={20} color={ds.c.muted} />
-      </View>
-      <View style={styles.missText}>
-        <Body role="heading" style={styles.missTitle}>
-          {title}
-        </Body>
-        <Caption tone="muted">{detail}</Caption>
-        {action ? (
-          <PressableScale role="button" accessibilityLabel={action.label} onPress={action.onPress} style={[styles.missAction, { borderColor: ds.c.lineStrong }]}>
-            <IconSymbol name="plus" size={16} color={ds.accentText} />
-            <DsText variant="label" style={styles.moreText}>
-              {action.label}
-            </DsText>
-          </PressableScale>
-        ) : null}
-      </View>
-    </View>
-  );
-}
-
 /** "All 18 ›": flush left, ink, with a chevron, as the search boards draw it. */
 function MoreLink({ label, onPress }: { label: string; onPress: () => void }) {
   const ds = useDs();
@@ -243,8 +214,9 @@ function MoreLink({ label, onPress }: { label: string; onPress: () => void }) {
   );
 }
 
-/** "Drinks · 12": the first few, then the rest behind "All 12", a page at a time. Nothing when empty. */
+/** "Drinks": the first few, then the rest behind "All 12", a page at a time. Nothing when empty. */
 export function ResultGroup<T>({ label, counted = true, plain, items, render, action }: ResultGroupProps<T>) {
+  const ds = useDs();
   const drawn = use(DrawnSearch);
   const [count, setCount] = useState(PER_GROUP);
   if (!items.length) return null;
@@ -253,7 +225,16 @@ export function ResultGroup<T>({ label, counted = true, plain, items, render, ac
   return (
     <View style={styles.group}>
       <View style={label ? styles.head : styles.noHead}>
-        {plain || drawn ? <DsText variant="label" role="heading" style={styles.plainHead}>{label}</DsText> : <Caption tone="muted" role="heading" style={styles.cap}>{counted ? groupLabel(label, items.length) : label}</Caption>}
+        {plain || drawn ? (
+          // The search boards' heading: "Drinks", plain and muted (Prod-discover, Search · typing).
+          <DsText variant="label" role="heading" color={ds.c.muted} style={styles.plainHead}>
+            {label}
+          </DsText>
+        ) : (
+          <Caption tone="muted" role="heading" style={styles.cap}>
+            {counted ? groupLabel(label, items.length) : label}
+          </Caption>
+        )}
         {action ? (
           <PressableScale role="button" accessibilityLabel={action.label} onPress={action.onPress} style={styles.headAction}>
             <DsText variant="label" style={styles.moreText}>
@@ -286,10 +267,5 @@ const styles = StyleSheet.create({
   plainHead: { ...font.semiBold },
   more: { alignSelf: 'flex-start', flexDirection: 'row', alignItems: 'center', gap: space.xs, minHeight: layout.minTapTarget },
   moreText: { ...font.medium },
-  miss: { flexDirection: 'row', alignItems: 'flex-start', gap: space.md, padding: space.md, borderRadius: radius.card, borderCurve: 'continuous' },
-  missIcon: { width: 40, height: 40, borderRadius: radius.pill, alignItems: 'center', justifyContent: 'center' },
-  missText: { flex: 1, minWidth: 0, gap: space.xs },
-  missTitle: { ...font.semiBold },
-  missAction: { alignSelf: 'flex-start', flexDirection: 'row', alignItems: 'center', gap: space.xs, minHeight: 40, marginTop: space.xs, paddingHorizontal: space.md, borderWidth: 1, borderRadius: radius.pill },
   everywhere: { flexDirection: 'row', alignItems: 'center', gap: space.sm, minHeight: layout.minTapTarget, paddingHorizontal: space.md, borderWidth: 1, borderRadius: radius.control },
 });

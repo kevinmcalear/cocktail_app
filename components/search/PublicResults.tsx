@@ -93,8 +93,8 @@ export function PublicResults({ query, area, kinds = [], onKind, onEverywhere, m
   const q = query.trim();
   const everywhere = !area;
   const where = areaLabel(area ?? ANYWHERE);
-  // Discover lights the word with a tint; the search page in the accent.
-  const look = onKind ? 'tint' : 'accent';
+  // Only Discover lights the typed word; the search page draws plain names (Search · typing).
+  const [look, lit] = onKind ? (['tint', q] as const) : [undefined, undefined];
   const atHome = !mine?.venueId;
   const results = useDiscoverResults({ kinds: [...kinds], search: q, area: area ?? ANYWHERE });
   // The search page's bar rows count what the search matched and what's on now ("Fitzroy · 14 drinks on now").
@@ -155,18 +155,18 @@ export function PublicResults({ query, area, kinds = [], onKind, onEverywhere, m
   const away = (b: DiscoverBar) => (area?.kind === 'point' && b.latitude !== null && b.longitude !== null ? formatDistance(distanceKm(area, { latitude: b.latitude, longitude: b.longitude }), miles) : null);
 
   const drinkGroup = (label: string, list: typeof drinks) => (
-    <ResultGroup key={label} label={label} items={list} render={(d) => <DrinkAtBarRow key={d.id} drink={d} scores={scores} query={q} matchLook={look} everywhere={everywhere && !onKind} />} />
+    <ResultGroup plain key={label} label={label} items={list} render={(d) => <DrinkAtBarRow key={d.id} drink={d} scores={scores} query={lit} matchLook={look} everywhere={everywhere && !onKind} />} />
   );
   const barGroup = (
-    <ResultGroup
+    <ResultGroup plain
       key="bars"
       label={`Bars ${area ? where : ''}`.trim()}
       items={bars}
-      render={(b) => <BarResultRow key={b.id} bar={b} score={scores.bars[b.id]?.score} away={away(b)} waiting={waiting?.[b.id]} query={q} matchLook={look} />}
+      render={(b) => <BarResultRow key={b.id} bar={b} score={scores.bars[b.id]?.score} away={away(b)} waiting={waiting?.[b.id]} query={lit} matchLook={look} />}
     />
   );
   const placeGroup = (
-    <ResultGroup
+    <ResultGroup plain
       key="places"
       label="Places"
       items={places}
@@ -176,24 +176,24 @@ export function PublicResults({ query, area, kinds = [], onKind, onEverywhere, m
           title={c.label}
           caption={`${countryName(c.country_code)} · ${c.bars} ${c.bars === 1 ? 'bar' : 'bars'}`}
           icon="mappin.and.ellipse"
-          query={q}
+          query={lit}
           matchLook={look}
           onPress={() => openPlace(c)}
         />
       )}
     />
   );
-  const peopleGroup = <ResultGroup key="people" label="People" items={people ?? []} render={(p) => <PersonResultRow key={p.id} person={p} waiting={waiting?.[p.id]} query={q} matchLook={look} />} />;
+  const peopleGroup = <ResultGroup plain key="people" label="People" items={people ?? []} render={(p) => <PersonResultRow key={p.id} person={p} waiting={waiting?.[p.id]} query={lit} matchLook={look} />} />;
   const classicGroup = (
-    <ResultGroup
+    <ResultGroup plain
       key="classics"
       label="Classics"
       items={only(top ? classics.filter((c) => c !== top) : classics)}
-      render={(d) => <ClassicRow key={d.id} classic={d} line={lines?.[d.id]} served={servedBy[d.id]} variations={variations[d.id]} matches={matches} score={ownScores?.[d.id]} scores={scores} query={q} matchLook={look} />}
+      render={(d) => <ClassicRow key={d.id} classic={d} line={lines?.[d.id]} served={servedBy[d.id]} variations={variations[d.id]} matches={matches} score={ownScores?.[d.id]} scores={scores} query={lit} matchLook={look} />}
     />
   );
   const yoursGroup = (
-    <ResultGroup
+    <ResultGroup plain
       key="yours"
       label="Your drinks"
       items={yours}
@@ -207,8 +207,7 @@ export function PublicResults({ query, area, kinds = [], onKind, onEverywhere, m
             imageUrl={i.image?.uri ?? heroPicture(i.item_images)?.url ?? null}
             glass={fallbackGlass(i.category as ItemCategory)}
             caption={[i.isDraft ? 'Draft' : 'Yours', line || null].filter(Boolean).join(' · ')}
-            query={q}
-            matchLook={look}
+            displayName
             trailing={<RowScore score={ownScores?.[i.id]} />}
             onPress={() => openSearchItem(i, (href) => router.push(href as never))}
           />
@@ -218,7 +217,7 @@ export function PublicResults({ query, area, kinds = [], onKind, onEverywhere, m
   );
   const alsoGroup = drinkGroup(`Also mentions “${q}”`, weak);
   const ingredientGroup = (
-    <ResultGroup key="ingredients" label="Ingredients" items={ingredients} render={(i) => <ResultRow key={i.id} title={i.name} ingredient={{ id: i.id }} query={q} matchLook={look} onPress={() => router.push(itemHref('Ingredient', i.id) as never)} />} />
+    <ResultGroup plain key="ingredients" label="Ingredients" items={ingredients} render={(i) => <ResultRow key={i.id} title={i.name} ingredient={{ id: i.id }} query={lit} matchLook={look} onPress={() => router.push(itemHref('Ingredient', i.id) as never)} />} />
   );
 
   // Phones draw nothing found and loading (Sta-discover); the web says it. A missing bar can be added under either, but Android's drawn search.
@@ -258,7 +257,6 @@ export function PublicResults({ query, area, kinds = [], onKind, onEverywhere, m
     <CanMakeContext value={canMake ?? null}>
       <View style={styles.results}>
         {typeAhead ? <Completions query={q} names={finish} onPick={typeAhead} /> : null}
-        {head && (found || results.isLoading) ? head.card : null}
         {/* A place the search names leads everything, as a map search reads it. */}
         {shows(show, 'bars') ? placeGroup : null}
         {top ? (
@@ -270,7 +268,6 @@ export function PublicResults({ query, area, kinds = [], onKind, onEverywhere, m
             caption={['Classic', servedBy[top.id]?.length ? `served at ${servedBy[top.id].length} ${servedBy[top.id].length === 1 ? 'bar' : 'bars'}` : null].filter(Boolean).join(' · ')}
             line={lines?.[top.id]}
             score={ownScores?.[top.id]}
-            query={q}
             onPress={() => router.push(itemHref('Cocktail', top.id) as never)}
           />
         ) : null}
@@ -281,10 +278,11 @@ export function PublicResults({ query, area, kinds = [], onKind, onEverywhere, m
           <BrowseChips style={style} ingredient={ingredients.find((i) => foldName(i.name).startsWith(foldName(q)))} />
         ) : null}
         {/* A spirit or a tasting note the search names becomes a filter on Discover. */}
-        <ResultGroup label="Filter by" items={onKind ? named.filter((k) => k !== style) : []} render={(k) => <ResultRow key={k.id} title={k.label} caption={kindCaption(k.id)} icon="line.3.horizontal.decrease" onPress={() => onKind?.(k.id)} />} />
+        <ResultGroup plain label="Filter by" items={onKind ? named.filter((k) => k !== style) : []} render={(k) => <ResultRow key={k.id} title={k.label} caption={kindCaption(k.id)} icon="line.3.horizontal.decrease" onPress={() => onKind?.(k.id)} />} />
         {!signedIn ? <ListNote>Sign in to search the drinks bars pour.</ListNote> : null}
         {show === 'canmake' && canMakeCount === 0 ? <CanMakeEmpty venue={mine?.label ?? 'This bar'} drinks={drinks.length + classics.length} query={q} onShowAll={() => onShow?.('all')} /> : null}
         {shown}
+        {head && (found || results.isLoading) ? head.card : null}
         {/* Did you mean (1B), or the close names last (1C). While the search is out, nothing is asked yet. */}
         {results.isLoading && !found ? miss : <NearResults query={q} found={found} shown={[...drinks, ...bars, ...(people ?? []), ...classics, ...ingredients, ...yours].map((d) => d.id)} yours={head?.yours ?? (everywhere && atHome ? catalog.items : undefined)} yoursCaption={head?.yoursCaption} classics={everywhere ? classicList : undefined} server={{ area: area ?? ANYWHERE, kinds: everywhere ? NEAR_ALL : NEAR_AREA }} title={head?.title ?? `Nothing ${where} called “${q}”`} add={head?.add} matchLook={look} show={show} miss={<>{head?.card}{miss}</>} lead={head?.card} />}
         {drawn && found ? <SearchMore query={q} mine={mine} /> : null}
