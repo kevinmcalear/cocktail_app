@@ -1,6 +1,5 @@
 import { Redirect, useLocalSearchParams, useRouter } from 'expo-router';
-import { Platform, StyleSheet, View } from 'react-native';
-import { useSafeAreaInsets } from 'react-native-safe-area-context';
+import { StyleSheet, View } from 'react-native';
 
 import { BackbarTheme, Body, BrandProvider } from '@/components/ds';
 import { DrinkDrawing } from '@/components/ds/DrinkDrawing';
@@ -10,13 +9,16 @@ import { useActiveVenue } from '@/hooks/useActiveVenue';
 import { useDropdowns } from '@/hooks/useDropdowns';
 import { useFavorites } from '@/hooks/useFavorites';
 import { useMode } from '@/hooks/useMode';
+import { useShareSlug } from '@/hooks/useShareSlug';
 import { useTeamRole } from '@/hooks/useTeamRole';
 import { recentEntry, useTrackRecent } from '@/hooks/useTrackRecent';
 import { useCanEditItem, useEffectiveRole } from '@/hooks/useViewAs';
 import { savedSketch } from '@/lib/beerWineWizard';
 import { formatAbv } from '@/lib/drinkMath';
 import { bareItemId, DRINK_KINDS, type DrinkKind } from '@/lib/drinkKinds';
-import { heroPicture, orderedPictures, type ItemImageLink } from '@/lib/itemImages';
+import { glassOver, heroPicture, orderedPictures, type ItemImageLink } from '@/lib/itemImages';
+import { photoRooms } from '@/lib/photoTitle';
+import { drinkUrl, shareOrCopy } from '@/lib/shareLink';
 import { liquidOf } from '@/lib/sketch/types';
 
 import { AllergyLine } from './AllergyLine';
@@ -57,8 +59,10 @@ export function BeerWineScreen({ kind: kindName }: { kind: DrinkKind }) {
   }
   // Favourites keep the prefixed id they always had.
   const key = `${kind.kind}-${item.id}`;
+  const photo = orderedPictures(item.item_images as ItemImageLink[] | undefined).find((p) => !p.isSketch);
   return (
-    <BeerWineBrand barId={item.bar_id}>
+    // A photo decides light or dark for the whole page, as on a cocktail's (DrinkScreen).
+    <BeerWineBrand barId={item.bar_id} scheme={photo ? glassOver(photo) : undefined}>
       <BeerWinePage
         kind={kindName}
         item={item}
@@ -72,10 +76,10 @@ export function BeerWineScreen({ kind: kindName }: { kind: DrinkKind }) {
 }
 
 /** The drink page's theme, in the colours of the venue it belongs to (as DrinkScreen). */
-function BeerWineBrand({ barId, children }: { barId: string | null; children: React.ReactNode }) {
+function BeerWineBrand({ barId, scheme, children }: { barId: string | null; scheme?: 'light' | 'dark'; children: React.ReactNode }) {
   const venue = useActiveVenue().venues.find((v) => v.id === barId);
   return (
-    <BackbarTheme>
+    <BackbarTheme scheme={scheme}>
       <BrandProvider accent={venue?.accent ?? undefined} displayFace={venue?.displayFace}>
         {children}
       </BrandProvider>
@@ -100,9 +104,6 @@ interface BeerWinePageProps {
  * add wizard drew it.
  */
 function BeerWinePage({ kind, item, favorite, onToggleFavorite, canEdit, onEdit }: BeerWinePageProps) {
-  const insets = useSafeAreaInsets();
-  // A modal: an iOS page sheet starts below the status bar, but the insets still count it.
-  const top = Platform.OS === 'ios' ? space.sm : insets.top;
   const { data: dropdowns } = useDropdowns();
   const home = useMode().mode === 'home';
   const teamRole = useTeamRole(item.bar_id);
@@ -130,22 +131,22 @@ function BeerWinePage({ kind, item, favorite, onToggleFavorite, canEdit, onEdit 
   if (item.serve_ml) pourIt.push({ key: 'pour', label: 'Pour', value: `${item.serve_ml} ml` });
   const label = DRINK_KINDS[kind].label;
   const size = drawingSize(staff);
+  const slug = useShareSlug('d', item.id).data;
 
   const title = <ItemTitle eyebrow={[label, tags[0]].filter(Boolean).join(' · ')} name={item.name} credit={[item.brand_maker, item.origin].filter(Boolean).join(', ') || null} />;
 
   return (
     <ItemShell
       name={item.name}
-      top={top}
-      photo={pictures[0] ? { url: pictures[0].url, hero: (h, fade) => <DrinkHero name={item.name} pictures={pictures} glass={null} itemId={item.id} palette={pictures[0].palette} height={h} fade={fade} /> } : null}
-      art={<DrinkDrawing inputs={sketch} seed={item.id} size="hero" staff={staff} label={`Drawing of ${item.name}`} />}
+      photo={pictures[0] ? { url: pictures[0].url, rooms: photoRooms(pictures), credit: pictures.some((p) => !!p.credit), hero: (h, fade) => <DrinkHero name={item.name} pictures={pictures} glass={null} itemId={item.id} palette={pictures[0].palette} height={h} fade={fade} /> } : null}
+      art={(pour) => <DrinkDrawing inputs={sketch} seed={item.id} size="hero" staff={staff} pour={pour} label={`Drawing of ${item.name}`} />}
       size={size}
       liquid={liquidOf(sketch).hex}
       title={title}
       action={null}
-      body={(columns) => (
+      body={(_, titled) => (
         <View style={styles.body}>
-          {columns ? null : title}
+          {titled ? title : null}
           {item.description ? <Body>{item.description}</Body> : null}
           {staff ? null : <PalateFit itemId={item.id} name={item.name} />}
           <FactRows rows={facts} />
@@ -157,6 +158,7 @@ function BeerWinePage({ kind, item, favorite, onToggleFavorite, canEdit, onEdit 
       )}
       controls={{
         save: { saved: favorite, onToggle: onToggleFavorite, label: ['Add to favorites', 'Remove from favorites'], icon: 'heart' },
+        onShare: () => void shareOrCopy(drinkUrl(slug ?? item.id), item.name, 'drink'),
         onEdit: canEdit ? onEdit : undefined,
         editLabel: `Edit ${kind}`,
       }}

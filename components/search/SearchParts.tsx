@@ -1,10 +1,11 @@
 import { useRouter } from 'expo-router';
-import { useRef, type ComponentRef, type ReactNode } from 'react';
+import { useRef, type ComponentRef } from 'react';
 import { StyleSheet, View } from 'react-native';
 
-import { Caption, Chip, DrinkImage, DsText, GlassSurface, Headline, MatchText, PopoverMenu, PressableScale, RowScore, scoreWords, useDs, usePopover } from '@/components/ds';
+import { Caption, Chip, DrinkImage, DsText, GlassSurface, Headline, MatchText, PressableScale, RowScore, scoreWords, useDs } from '@/components/ds';
+import { PopoverMenu, usePopover } from '@/components/ds/PopoverMenu';
 import { IconSymbol } from '@/components/ui/icon-symbol';
-import { font, layout, radius, space } from '@/constants/tokens';
+import { displayFaces, font, layout, radius, space } from '@/constants/tokens';
 import { useDrinkLists } from '@/hooks/useDiscover';
 import { withAlpha } from '@/lib/color';
 import { foldName } from '@/lib/discover';
@@ -17,9 +18,9 @@ import { CanMakeTag } from './CanMake';
  * "Little Rye ⌄": where the search looks, in glass at the head of the row over
  * the bottom field. A tap opens the places as a menu (search-starts-here):
  * the venue or your drinks, This area from Discover, and Everywhere. The ⌘K
- * palette has the same token at the end of its field (q03, decided 24 Oct 2026).
+ * palette has none: it searches where you are (Prod-desk-cmdk).
  */
-export function ScopeToken({ options, scope, onScope, hint }: { options: { value: SearchScope; label: string; detail?: string }[]; scope: SearchScope; onScope: (scope: SearchScope) => void; hint?: ReactNode }) {
+export function ScopeToken({ options, scope, onScope }: { options: { value: SearchScope; label: string; detail?: string }[]; scope: SearchScope; onScope: (scope: SearchScope) => void }) {
   const ds = useDs();
   const menu = usePopover();
   const token = useRef<ComponentRef<typeof View>>(null);
@@ -35,7 +36,7 @@ export function ScopeToken({ options, scope, onScope, hint }: { options: { value
           <IconSymbol name="chevron.down" size={12} color={ds.accentText} />
         </GlassSurface>
       </PressableScale>
-      <PopoverMenu anchor={menu.anchor} label="Where to search" onClose={menu.close} sections={[{ title: 'Search in', items }]} footer={hint} />
+      <PopoverMenu anchor={menu.anchor} label="Where to search" onClose={menu.close} sections={[{ title: 'Search in', items }]} />
     </View>
   );
 }
@@ -91,7 +92,7 @@ interface TopHitProps {
   /** Its ingredients, in spec order. */
   line?: string;
   score?: number;
-  query: string;
+  query?: string;
   onPress: () => void;
 }
 
@@ -114,7 +115,7 @@ export function TopHit({ name, itemId, imageUrl, glass, caption, line, score, qu
           <DrinkImage thumb sketchDetail="thumb" source={imageUrl} glass={glass} itemId={itemId} accessibilityLabel={name} radius="control" />
         </View>
         <View style={styles.flex}>
-          <Headline numberOfLines={2}>
+          <Headline numberOfLines={2} style={{ fontFamily: displayFaces[ds.displayFace].regular }}>
             <MatchText text={name} query={query} />
           </Headline>
           {caption ? <Caption tone="muted">{caption}</Caption> : null}

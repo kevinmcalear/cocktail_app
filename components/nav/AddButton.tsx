@@ -2,13 +2,16 @@ import { Suspense, useRef, useState, type ComponentRef } from 'react';
 import { StyleSheet, useWindowDimensions, View } from 'react-native';
 
 import { Button, PressableScale, useDs } from '@/components/ds';
+import { useFabUnderToast } from '@/components/ds/Toast';
 import { IconSymbol } from '@/components/ui/icon-symbol';
 import { layout, radius, space, STATUS } from '@/constants/tokens';
 import { mix, withAlpha } from '@/lib/color';
 
 import type { FabFrame } from './AddFabMenu';
 import type { Frame } from './AddSheet';
-import { AddFabMenu, AddSheet, CreateSheet } from './addLayers';
+import { AddFabMenu, AddSheet } from './addLayers';
+import { CreateSheet } from './CreateSheetLazy';
+import { useTabBarClearance } from './WebTabBar';
 
 const LABEL = 'Add: name a drink, paste a link, describe it, or snap a menu, bottle or recipe';
 
@@ -96,6 +99,8 @@ export function DeskAddButton() {
 export function AddFab() {
   const ds = useDs();
   const add = useAdd();
+  // It floats 16 over the docked tab bar; the toast goes above it.
+  useFabUnderToast(useTabBarClearance() + space.lg + layout.fab);
   const window = useWindowDimensions();
   const ref = useRef<ComponentRef<typeof View>>(null);
   const [menu, setMenu] = useState<FabFrame | null>(null);
@@ -138,5 +143,5 @@ const styles = StyleSheet.create({
   ring: { position: 'absolute', top: -RING, right: -RING, bottom: -RING, left: -RING, borderRadius: radius.pill },
   // Material 3's FAB: 56 square, corners of 16, 16 in from the edges, a level-3 shadow.
   fabSpot: { position: 'absolute', right: space.lg, bottom: space.lg },
-  fab: { width: 56, height: 56, borderRadius: radius.control + 4, alignItems: 'center', justifyContent: 'center', elevation: 3 },
+  fab: { width: layout.fab, height: layout.fab, borderRadius: radius.control + 4, alignItems: 'center', justifyContent: 'center', elevation: 3 },
 });

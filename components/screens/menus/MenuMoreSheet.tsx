@@ -57,7 +57,7 @@ export function MenuMoreSheet({ menu, status, visible, onClose, onNight, onEdit 
     run(async () => {
       const id = await create.mutateAsync({
         barId: menu.barId,
-        layout: { name: `${menu.name} copy`, coverUrl: menu.coverUrl, coverPosition: menu.coverPosition, sections: copySections(menu.sections, true) },
+        layout: { name: `${menu.name} copy`, coverUrl: menu.coverUrl, coverPosition: menu.coverPosition, coverCredit: menu.coverCredit ?? null, sections: copySections(menu.sections, true) },
       });
       onClose();
       router.push(`/menus/${id}/edit`);

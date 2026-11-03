@@ -328,6 +328,32 @@ export type Database = {
           },
         ]
       }
+      bar_staff_links: {
+        Row: {
+          bar_id: string
+          made_at: string
+          token: string
+        }
+        Insert: {
+          bar_id: string
+          made_at?: string
+          token?: string
+        }
+        Update: {
+          bar_id?: string
+          made_at?: string
+          token?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "bar_staff_links_bar_id_fkey"
+            columns: ["bar_id"]
+            isOneToOne: true
+            referencedRelation: "bars"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       bar_zones: {
         Row: {
           bar_id: string
@@ -414,6 +440,10 @@ export type Database = {
           short_name: string | null
           show_spec_changes: boolean
           slug: string
+          spec_unit: string
+          staff_link_approve: boolean
+          staff_link_on: boolean
+          staff_link_role: number
           target_gp: number | null
           tax_rate: number
           timezone: string | null
@@ -448,6 +478,10 @@ export type Database = {
           short_name?: string | null
           show_spec_changes?: boolean
           slug: string
+          spec_unit?: string
+          staff_link_approve?: boolean
+          staff_link_on?: boolean
+          staff_link_role?: number
           target_gp?: number | null
           tax_rate?: number
           timezone?: string | null
@@ -482,6 +516,10 @@ export type Database = {
           short_name?: string | null
           show_spec_changes?: boolean
           slug?: string
+          spec_unit?: string
+          staff_link_approve?: boolean
+          staff_link_on?: boolean
+          staff_link_role?: number
           target_gp?: number | null
           tax_rate?: number
           timezone?: string | null
@@ -1168,6 +1206,42 @@ export type Database = {
           },
         ]
       }
+      drink_step_notes: {
+        Row: {
+          aside: string | null
+          item_id: string
+          note: string | null
+          step_key: string
+        }
+        Insert: {
+          aside?: string | null
+          item_id: string
+          note?: string | null
+          step_key: string
+        }
+        Update: {
+          aside?: string | null
+          item_id?: string
+          note?: string | null
+          step_key?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "drink_step_notes_item_id_fkey"
+            columns: ["item_id"]
+            isOneToOne: false
+            referencedRelation: "app_item_presentation"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "drink_step_notes_item_id_fkey"
+            columns: ["item_id"]
+            isOneToOne: false
+            referencedRelation: "items"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       drink_styles: {
         Row: {
           created_at: string
@@ -1717,6 +1791,59 @@ export type Database = {
           },
         ]
       }
+      handover_notes: {
+        Row: {
+          bar_id: string
+          broken: string | null
+          broken_photo: string | null
+          close_date: string
+          created_at: string
+          id: string
+          note: string | null
+          prep: string | null
+          ran_out: string[]
+          read_at: string | null
+          user_id: string
+          written_at: string | null
+        }
+        Insert: {
+          bar_id: string
+          broken?: string | null
+          broken_photo?: string | null
+          close_date: string
+          created_at?: string
+          id?: string
+          note?: string | null
+          prep?: string | null
+          ran_out?: string[]
+          read_at?: string | null
+          user_id?: string
+          written_at?: string | null
+        }
+        Update: {
+          bar_id?: string
+          broken?: string | null
+          broken_photo?: string | null
+          close_date?: string
+          created_at?: string
+          id?: string
+          note?: string | null
+          prep?: string | null
+          ran_out?: string[]
+          read_at?: string | null
+          user_id?: string
+          written_at?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "handover_notes_bar_id_fkey"
+            columns: ["bar_id"]
+            isOneToOne: false
+            referencedRelation: "bars"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       hidden_bars: {
         Row: {
           hidden_at: string
@@ -1942,6 +2069,7 @@ export type Database = {
       }
       images: {
         Row: {
+          brightness: number | null
           created_at: string
           credit: string | null
           height: number | null
@@ -1950,11 +2078,13 @@ export type Database = {
           palette: Json | null
           source_url: string | null
           spec_fingerprint: string | null
+          text_zone: Json | null
           thumbhash: string | null
           url: string
           width: number | null
         }
         Insert: {
+          brightness?: number | null
           created_at?: string
           credit?: string | null
           height?: number | null
@@ -1963,11 +2093,13 @@ export type Database = {
           palette?: Json | null
           source_url?: string | null
           spec_fingerprint?: string | null
+          text_zone?: Json | null
           thumbhash?: string | null
           url: string
           width?: number | null
         }
         Update: {
+          brightness?: number | null
           created_at?: string
           credit?: string | null
           height?: number | null
@@ -1976,6 +2108,7 @@ export type Database = {
           palette?: Json | null
           source_url?: string | null
           spec_fingerprint?: string | null
+          text_zone?: Json | null
           thumbhash?: string | null
           url?: string
           width?: number | null
@@ -3913,6 +4046,91 @@ export type Database = {
           },
         ]
       }
+      menu_drink_asks: {
+        Row: {
+          asked_at: string | null
+          at: string | null
+          created_at: string
+          created_by: string
+          id: string
+          item_id: string | null
+          menu_id: string
+          menu_section_id: string | null
+          note: string | null
+          off_item_id: string | null
+          price: string | null
+        }
+        Insert: {
+          asked_at?: string | null
+          at?: string | null
+          created_at?: string
+          created_by?: string
+          id?: string
+          item_id?: string | null
+          menu_id: string
+          menu_section_id?: string | null
+          note?: string | null
+          off_item_id?: string | null
+          price?: string | null
+        }
+        Update: {
+          asked_at?: string | null
+          at?: string | null
+          created_at?: string
+          created_by?: string
+          id?: string
+          item_id?: string | null
+          menu_id?: string
+          menu_section_id?: string | null
+          note?: string | null
+          off_item_id?: string | null
+          price?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "menu_drink_asks_item_id_fkey"
+            columns: ["item_id"]
+            isOneToOne: false
+            referencedRelation: "app_item_presentation"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "menu_drink_asks_item_id_fkey"
+            columns: ["item_id"]
+            isOneToOne: false
+            referencedRelation: "items"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "menu_drink_asks_menu_id_fkey"
+            columns: ["menu_id"]
+            isOneToOne: false
+            referencedRelation: "menus"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "menu_drink_asks_menu_section_id_fkey"
+            columns: ["menu_section_id"]
+            isOneToOne: false
+            referencedRelation: "menu_sections"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "menu_drink_asks_off_item_id_fkey"
+            columns: ["off_item_id"]
+            isOneToOne: false
+            referencedRelation: "app_item_presentation"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "menu_drink_asks_off_item_id_fkey"
+            columns: ["off_item_id"]
+            isOneToOne: false
+            referencedRelation: "items"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       menu_drinks: {
         Row: {
           added_by: string | null
@@ -4097,6 +4315,124 @@ export type Database = {
             columns: ["replaces_item_id"]
             isOneToOne: false
             referencedRelation: "items"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      menu_list_notices: {
+        Row: {
+          at: string
+          created_at: string
+          id: string
+          item_id: string
+          kind: string
+          menu_id: string
+          to_item_id: string | null
+          told_by: string
+        }
+        Insert: {
+          at?: string
+          created_at?: string
+          id?: string
+          item_id: string
+          kind: string
+          menu_id: string
+          to_item_id?: string | null
+          told_by?: string
+        }
+        Update: {
+          at?: string
+          created_at?: string
+          id?: string
+          item_id?: string
+          kind?: string
+          menu_id?: string
+          to_item_id?: string | null
+          told_by?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "menu_list_notices_item_id_fkey"
+            columns: ["item_id"]
+            isOneToOne: false
+            referencedRelation: "app_item_presentation"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "menu_list_notices_item_id_fkey"
+            columns: ["item_id"]
+            isOneToOne: false
+            referencedRelation: "items"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "menu_list_notices_menu_id_fkey"
+            columns: ["menu_id"]
+            isOneToOne: false
+            referencedRelation: "menus"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "menu_list_notices_to_item_id_fkey"
+            columns: ["to_item_id"]
+            isOneToOne: false
+            referencedRelation: "app_item_presentation"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "menu_list_notices_to_item_id_fkey"
+            columns: ["to_item_id"]
+            isOneToOne: false
+            referencedRelation: "items"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      menu_off_tonight: {
+        Row: {
+          created_at: string
+          id: string
+          item_id: string
+          menu_id: string
+          set_by: string
+          until: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          item_id: string
+          menu_id: string
+          set_by?: string
+          until: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          item_id?: string
+          menu_id?: string
+          set_by?: string
+          until?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "menu_off_tonight_item_id_fkey"
+            columns: ["item_id"]
+            isOneToOne: false
+            referencedRelation: "app_item_presentation"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "menu_off_tonight_item_id_fkey"
+            columns: ["item_id"]
+            isOneToOne: false
+            referencedRelation: "items"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "menu_off_tonight_menu_id_fkey"
+            columns: ["menu_id"]
+            isOneToOne: false
+            referencedRelation: "menus"
             referencedColumns: ["id"]
           },
         ]
@@ -4332,6 +4668,7 @@ export type Database = {
           bar_id: string | null
           change_level: number | null
           change_role_id: string | null
+          cover_credit: string | null
           cover_position: number | null
           cover_url: string | null
           created_at: string
@@ -4360,6 +4697,7 @@ export type Database = {
           bar_id?: string | null
           change_level?: number | null
           change_role_id?: string | null
+          cover_credit?: string | null
           cover_position?: number | null
           cover_url?: string | null
           created_at?: string
@@ -4388,6 +4726,7 @@ export type Database = {
           bar_id?: string | null
           change_level?: number | null
           change_role_id?: string | null
+          cover_credit?: string | null
           cover_position?: number | null
           cover_url?: string | null
           created_at?: string
@@ -5087,6 +5426,8 @@ export type Database = {
           profile_pin: number | null
           rank_key: number
           ranked_as_item_id: string
+          reasons: string[]
+          room_reasons: string[]
           says_where: boolean
           sentiment: Database["public"]["Enums"]["rank_sentiment"]
           user_id: string
@@ -5101,6 +5442,8 @@ export type Database = {
           profile_pin?: number | null
           rank_key: number
           ranked_as_item_id: string
+          reasons?: string[]
+          room_reasons?: string[]
           says_where?: boolean
           sentiment: Database["public"]["Enums"]["rank_sentiment"]
           user_id?: string
@@ -5115,6 +5458,8 @@ export type Database = {
           profile_pin?: number | null
           rank_key?: number
           ranked_as_item_id?: string
+          reasons?: string[]
+          room_reasons?: string[]
           says_where?: boolean
           sentiment?: Database["public"]["Enums"]["rank_sentiment"]
           user_id?: string
@@ -6057,18 +6402,21 @@ export type Database = {
       user_prefs: {
         Row: {
           allergies: Database["public"]["Enums"]["allergen"][] | null
+          spec_view: string | null
           taste_answers: Json | null
           user_id: string
           view_as_role_level: number | null
         }
         Insert: {
           allergies?: Database["public"]["Enums"]["allergen"][] | null
+          spec_view?: string | null
           taste_answers?: Json | null
           user_id: string
           view_as_role_level?: number | null
         }
         Update: {
           allergies?: Database["public"]["Enums"]["allergen"][] | null
+          spec_view?: string | null
           taste_answers?: Json | null
           user_id?: string
           view_as_role_level?: number | null
@@ -6175,6 +6523,7 @@ export type Database = {
           declined_at: string | null
           id: string
           user_id: string
+          via_link: boolean
         }
         Insert: {
           bar_id: string
@@ -6182,6 +6531,7 @@ export type Database = {
           declined_at?: string | null
           id?: string
           user_id?: string
+          via_link?: boolean
         }
         Update: {
           bar_id?: string
@@ -6189,6 +6539,7 @@ export type Database = {
           declined_at?: string | null
           id?: string
           user_id?: string
+          via_link?: boolean
         }
         Relationships: [
           {
@@ -6517,6 +6868,7 @@ export type Database = {
           id: string | null
           ingredient_item_id: string | null
           is_float: boolean | null
+          is_garnish: boolean | null
           is_optional: boolean | null
           parent_ingredient_id: string | null
           part: number | null
@@ -7061,6 +7413,7 @@ export type Database = {
         }[]
       }
       bar_claim_verified: { Args: { p_bar_id: string }; Returns: boolean }
+      bar_owner: { Args: { p_bar_id: string }; Returns: string }
       bar_share_opens: {
         Args: { p_bar: string; p_since: string }
         Returns: number
@@ -7247,6 +7600,10 @@ export type Database = {
           short_name: string | null
           show_spec_changes: boolean
           slug: string
+          spec_unit: string
+          staff_link_approve: boolean
+          staff_link_on: boolean
+          staff_link_role: number
           target_gp: number | null
           tax_rate: number
           timezone: string | null
@@ -7545,6 +7902,7 @@ export type Database = {
       }
       drink_allergens: { Args: { p_item_id: string }; Returns: Json }
       drink_cost: { Args: { p_bar: string; p_item: string }; Returns: Json }
+      drink_lineage: { Args: { p_item_id: string }; Returns: Json }
       drink_list_dates: {
         Args: { p_item_ids: string[] }
         Returns: {
@@ -7583,8 +7941,16 @@ export type Database = {
           sweet: number
         }[]
       }
+      follow_people: {
+        Args: never
+        Returns: {
+          avatar_url: string
+          display_name: string
+          user_id: string
+        }[]
+      }
       friends_ranks: {
-        Args: { p_limit?: number }
+        Args: { p_item_id?: string; p_limit?: number }
         Returns: {
           avatar_url: string
           best_in_family: boolean
@@ -7644,7 +8010,9 @@ export type Database = {
       get_drink_photos: {
         Args: { p_item_id: string; p_limit?: number }
         Returns: {
+          brightness: number
           created_at: string
+          height: number
           id: string
           image_url: string
           is_mine: boolean
@@ -7652,6 +8020,8 @@ export type Database = {
           poster_handle: string
           poster_name: string
           score: number
+          text_zone: Json
+          width: number
         }[]
       }
       get_drink_rankings: {
@@ -7686,16 +8056,19 @@ export type Database = {
       get_menu_editions: {
         Args: { p_profile_id: string }
         Returns: {
+          cover_url: string
           drinks: Json
           end_month: number
           end_year: number
           from_venue: boolean
           id: string
           is_current: boolean
+          list_type: string
           month: number
           name: string
           source_url: string
           theme: string
+          written_at: string
           year: number
         }[]
       }
@@ -7882,6 +8255,16 @@ export type Database = {
           name: string
         }[]
       }
+      invite_profile_to_bar: {
+        Args: {
+          p_bar_id: string
+          p_note?: string
+          p_profile_id: string
+          p_role_id?: string
+          p_role_level: number
+        }
+        Returns: boolean
+      }
       invite_to_role: {
         Args: {
           p_email: string
@@ -7893,6 +8276,7 @@ export type Database = {
       }
       is_card_public: { Args: { p_item_id: string }; Returns: boolean }
       is_spec_locked: { Args: { p_item_id: string }; Returns: boolean }
+      join_by_staff_link: { Args: { p_token: string }; Returns: string }
       join_requests: {
         Args: { p_bar_id: string }
         Returns: {
@@ -7902,6 +8286,7 @@ export type Database = {
           name: string
           profile_handle: string
           user_id: string
+          via_link: boolean
         }[]
       }
       list_on_day: {
@@ -8095,6 +8480,7 @@ export type Database = {
         }[]
       }
       near_score: { Args: { p_name: string; p_query: string }; Returns: number }
+      new_staff_link: { Args: { p_bar_id: string }; Returns: string }
       next_pair_notes: {
         Args: { p_limit?: number }
         Returns: {
@@ -8151,6 +8537,7 @@ export type Database = {
         Args: { p_item_ids: string[] }
         Returns: {
           brand: boolean
+          garnish: boolean
           item_id: string
           name: string
           sort_order: number
@@ -8247,6 +8634,7 @@ export type Database = {
           declined_at: string | null
           id: string
           user_id: string
+          via_link: boolean
         }
         SetofOptions: {
           from: "*"
@@ -8374,6 +8762,7 @@ export type Database = {
       }
       save_menu: {
         Args: {
+          p_cover_credit?: string
           p_cover_position: number
           p_cover_url: string
           p_menu_id: string
@@ -8571,6 +8960,18 @@ export type Database = {
           spec_match: string
         }[]
       }
+      staff_link_door: {
+        Args: { p_token: string }
+        Returns: {
+          admin_count: number
+          admin_name: string
+          approve: boolean
+          bar_id: string
+          join_role: number
+          link_on: boolean
+          me: string
+        }[]
+      }
       start_bar_claim: {
         Args: {
           p_bar_id?: string
@@ -8659,6 +9060,7 @@ export type Database = {
         Args: { p_at?: string; p_item_id: string; p_row_id: string }
         Returns: string
       }
+      take_back_join_request: { Args: { p_bar_id: string }; Returns: undefined }
       take_invite_email_slot: {
         Args: { p_bar_id: string; p_email: string; p_sender: string }
         Returns: string
@@ -8682,6 +9084,7 @@ export type Database = {
           p_prep: number
           p_primary_color?: string
           p_secondary_color?: string
+          p_spec_unit?: string
           p_specific: number
           p_visibility: number
         }
@@ -8714,6 +9117,10 @@ export type Database = {
           short_name: string | null
           show_spec_changes: boolean
           slug: string
+          spec_unit: string
+          staff_link_approve: boolean
+          staff_link_on: boolean
+          staff_link_role: number
           target_gp: number | null
           tax_rate: number
           timezone: string | null

@@ -6,6 +6,7 @@ import { SKETCH_SAMPLES } from '@/constants/sketch';
 import { space } from '@/constants/tokens';
 import { specLines, type PresentationRecipe } from '@/lib/spec';
 import { methodVerb } from '@/lib/specView';
+import type { StepNote } from '@/lib/stepNotes';
 import { readSketchInputs, type SketchInputs } from '@/lib/sketch/types';
 
 import { Button } from '../Button';
@@ -15,8 +16,15 @@ import { Caption } from '../Text';
 import { useToast } from '../Toast';
 import { SAMPLE_LEVELS, sampleDrink } from './drinkSample';
 
-const SERVE = ['Rocks', 'Large cube', 'Candied ginger'];
-const VERB = methodVerb(['Shaken']);
+// The words drawn on Decided-spec-groups-penicillin.
+const STEP_NOTES: StepNote[] = [
+  { step_key: 'main', aside: 'hard, with ice', note: 'Strain over one large cube in a rocks glass.' },
+  { step_key: 'float', aside: null, note: 'Over the back of a bar spoon, so it sits on top.' },
+  { step_key: 'garnish', aside: null, note: 'On a pick, resting across the rim.' },
+];
+const SERVE = ['Rocks', 'Large cube'];
+const METHODS = ['Shaken'];
+const VERB = methodVerb(METHODS);
 
 /** The same Penicillin as each role sees it (masked as app_recipe_presentation masks it). */
 const linesFor = (role: number) => specLines(sampleDrink(role).recipes as PresentationRecipe[] | undefined);
@@ -28,11 +36,11 @@ export function SpecPieces() {
   return (
     <View style={styles.stack}>
       <Caption tone="muted">Bartender: Steps first, Makes 1, 2, 3 or A batch</Caption>
-      <SpecCard itemId="sample-penicillin" barId="sample-venue" lines={linesFor(30)} maker verb={VERB} serve={SERVE} onBatch={batch} preview={{ role: 30, levels: SAMPLE_LEVELS }} />
+      <SpecCard itemId="sample-penicillin" barId="sample-venue" lines={linesFor(30)} maker verb={VERB} methods={METHODS} serve={SERVE} onBatch={batch} preview={{ role: 30, levels: SAMPLE_LEVELS }} stepNotes={STEP_NOTES} />
       <Caption tone="muted">Anyone, a public spec: Ingredients first</Caption>
-      <SpecCard itemId="sample-classic" barId={null} lines={linesFor(40)} maker={false} verb={VERB} serve={SERVE} onBatch={batch} />
+      <SpecCard itemId="sample-classic" barId={null} lines={linesFor(40)} maker={false} verb={VERB} methods={METHODS} serve={SERVE} onBatch={batch} />
       <Caption tone="muted">Employee (floor): what&apos;s in it by name, no toggle</Caption>
-      <SpecCard itemId="sample-penicillin" barId="sample-venue" lines={linesFor(20)} maker={false} verb={VERB} serve={['Goes out: rocks, ginger on the rim']} preview={{ role: 20, levels: SAMPLE_LEVELS }} />
+      <SpecCard itemId="sample-penicillin" barId="sample-venue" lines={linesFor(20)} maker={false} verb={VERB} serve={SERVE} goesOut preview={{ role: 20, levels: SAMPLE_LEVELS }} />
     </View>
   );
 }

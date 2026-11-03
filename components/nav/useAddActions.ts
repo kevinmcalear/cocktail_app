@@ -71,7 +71,7 @@ export function useAddActions(done: () => void, { replace = false }: { replace?:
     choose: () => void fromFiles(pickReadFiles),
     /** Reads a photo the viewfinder took. */
     photo: (file: ReadFile) => fromFiles(async () => [file]),
-    /** Reads what's on the clipboard: text, or a picture when there's no text (iOS asks first, so it's only read on this tap). */
+    /** Reads what's on the clipboard: text, or a picture when there's no text (iOS asks first and Android announces it, so it's only read on this tap). */
     paste: async () => {
       const clip = await readClipboardAny();
       if (!clip) return setError('Nothing copied yet.');
@@ -81,7 +81,7 @@ export function useAddActions(done: () => void, { replace = false }: { replace?:
   };
 }
 
-/** What's on the clipboard, for Add to offer: the text, UNREAD_CLIP on iOS (unread until a tap), or null. */
+/** What's on the clipboard, for Add to offer: UNREAD_CLIP on phones (unread until a tap), the text on the web, or null. */
 export function useClipboardOffer() {
   const [clip, setClip] = useState<string | null>(null);
   useEffect(() => {

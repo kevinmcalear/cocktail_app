@@ -1,8 +1,10 @@
 import { LinearGradient } from 'expo-linear-gradient';
 import { StyleSheet, View } from 'react-native';
 
-import { useDs, type DrawingSize } from '@/components/ds';
-import { drawing, radius, space } from '@/constants/tokens';
+import { useDs } from '@/components/ds';
+import { DrawingTrio } from '@/components/ds/DrawingTrio';
+import type { TrioLayout } from '@/components/ds/trioPlaces';
+import { drawing, menuBandHeight, radius, space } from '@/constants/tokens';
 import { useItemSketch } from '@/hooks/useItemSketch';
 import { withAlpha } from '@/lib/color';
 import { liquidOf } from '@/lib/sketch/types';
@@ -27,27 +29,24 @@ export function MenuSky({ ids, fade }: { ids: string[]; fade: boolean }) {
   );
 }
 
-/** Up to three drawings together, overlapping, the middle of three higher and in front. */
-export function MenuTrio({ ids, ink, size = 'hero', top = 64 }: { ids: string[]; ink: MenuInk; size?: DrawingSize; top?: number }) {
-  const px = size === 'hero' ? drawing.heroStaff : drawing[size];
-  const raised = (i: number) => ids.length === 3 && i === 1;
+/** Menu-shelf's card draws its trio smaller and tighter: 140, 168, 140. */
+const BAND: TrioLayout = { x: [0, 86, 180], y: [20, 0, 20], s: [140, 168, 140] };
+
+/** A menu's drinks drawn together (DrawingTrio): the page's hero, or a card's band. */
+export function MenuTrio({ ids, ink, layout = 'hero', top = 64 }: { ids: string[]; ink: MenuInk; layout?: 'hero' | 'band'; top?: number }) {
   return (
-    <View style={[styles.trio, { paddingTop: top }]} aria-hidden>
-      {ids.map((id, i) => (
-        <View key={id} style={{ marginHorizontal: -px / 6, zIndex: raised(i) ? 1 : 0, marginTop: raised(i) ? 0 : px / 6 }}>
-          <MenuDrawing itemId={id} size={size} ink={ink} bare />
-        </View>
-      ))}
+    <View style={[styles.trio, { paddingTop: top }]}>
+      <DrawingTrio ids={ids.slice(0, 3)} layout={layout === 'band' ? BAND : undefined} draw={(id, size) => <MenuDrawing itemId={id} size={size} ink={ink} />} />
     </View>
   );
 }
 
 /** The on-now menu on a list: its drinks drawn together on their sky, in a rounded band (Menu-shelf). */
-export function MenuBand({ ids, height = 190 }: { ids: string[]; height?: number }) {
+export function MenuBand({ ids, height = menuBandHeight }: { ids: string[]; height?: number }) {
   return (
     <View style={[styles.band, { height }]}>
       <MenuSky ids={ids} fade={false} />
-      <MenuTrio ids={ids} ink="colour" size="tile" top={space.lg} />
+      <MenuTrio ids={ids} ink="colour" layout="band" top={6} />
     </View>
   );
 }
@@ -59,7 +58,7 @@ export function MenuStrip({ ids, ink, wide }: { ids: string[]; ink: MenuInk; wid
       {ids.slice(0, wide ? 4 : 3).map((id, i) => (
         <View key={id} style={wide ? styles.timeline : { marginLeft: i ? -drawing.row / 2 : 0 }}>
           <View style={wide ? styles.timelineScale : undefined}>
-            <MenuDrawing itemId={id} size="row" ink={ink} bare />
+            <MenuDrawing itemId={id} size="row" ink={ink} />
           </View>
         </View>
       ))}
@@ -68,7 +67,7 @@ export function MenuStrip({ ids, ink, wide }: { ids: string[]; ink: MenuInk; wid
 }
 
 const styles = StyleSheet.create({
-  trio: { ...StyleSheet.absoluteFill, flexDirection: 'row', justifyContent: 'center', alignItems: 'flex-start' },
+  trio: { ...StyleSheet.absoluteFill, alignItems: 'center' },
   band: { borderRadius: radius.card, overflow: 'hidden', borderCurve: 'continuous' },
   strip: { flexDirection: 'row', width: 96, height: drawing.row, alignItems: 'center', justifyContent: 'center' },
   wide: { flexDirection: 'row', gap: space.xs },

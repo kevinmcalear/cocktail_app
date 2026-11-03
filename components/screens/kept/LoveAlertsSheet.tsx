@@ -20,8 +20,9 @@ const choiceLabel = (v: LoveAlerts) => ALERT_CHOICES.find((c) => c.value === v)?
 /**
  * After loving a bar (or tapping Loved): what it may tell you about, at most
  * one alert a day, Done, and Stop loving. The bar stays in This week either way.
+ * On a bar's own page it says follow (Prod-bar's Follow): the same loved bar, one fact.
  */
-export function LoveAlertsSheet({ visible, profileId, name, onClose }: { visible: boolean; profileId: string; name: string; onClose: () => void }) {
+export function LoveAlertsSheet({ visible, profileId, name, onClose, follow = false }: { visible: boolean; profileId: string; name: string; onClose: () => void; follow?: boolean }) {
   const love = useLoveBar();
   const setAlerts = useSetLoveAlerts();
   const loved = useLovedBars().data?.find((b) => b.id === profileId);
@@ -30,12 +31,12 @@ export function LoveAlertsSheet({ visible, profileId, name, onClose }: { visible
     <MenuSheet
       visible={visible}
       onClose={onClose}
-      title={`You love ${name}`}
+      title={follow ? `You follow ${name}` : `You love ${name}`}
       footer={
         <View style={styles.footer}>
           <Button label="Done" size="lg" onPress={onClose} />
           <Button
-            label={`Stop loving ${name}`}
+            label={follow ? `Stop following ${name}` : `Stop loving ${name}`}
             variant="ghost"
             onPress={() => {
               love.mutate({ profileId, love: false });

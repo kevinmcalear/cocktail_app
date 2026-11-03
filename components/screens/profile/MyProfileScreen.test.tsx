@@ -11,6 +11,8 @@ const mockSaveSharing = jest.fn();
 let mockProfile: MyProfile | null = null;
 let mockSaveError: Error | null = null;
 
+jest.mock('./useShareLink', () => ({ useShareLink: () => jest.fn() }));
+jest.mock('./PersonAwards', () => ({ MyAwards: () => null }));
 jest.mock('expo-router', () => ({ useRouter: () => ({ push: mockPush, replace: jest.fn(), back: jest.fn(), canGoBack: () => true }) }));
 jest.mock('@/ctx/AuthContext', () => ({ useAuth: () => ({ user: { id: 'me', user_metadata: { full_name: 'Jo Juniper' } }, loading: false }) }));
 jest.mock('@/components/ui/UserAvatar', () => ({ CurrentUserAvatar: () => null }));
@@ -66,7 +68,7 @@ describe('MyProfileScreen', () => {
     await fireEvent.press(screen.getByRole('link', { name: /^What people see/ }));
     expect(mockPush).toHaveBeenCalledWith('/settings/profile-sharing');
     await fireEvent.press(screen.getByLabelText('Preview'));
-    expect(mockPush).toHaveBeenCalledWith('/you');
+    expect(mockPush).toHaveBeenCalledWith(`/p/${mockProfile!.handle}`);
   });
 
   test('Who can see it saves straight away', async () => {

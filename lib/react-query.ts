@@ -18,6 +18,7 @@ import {
   shouldPersistQuery,
 } from '@/lib/queryCachePersist';
 import { BASE, KEEP, queryDefaults } from '@/lib/queryDefaults';
+import { retryDelay, retryQuery } from '@/lib/queryRetry';
 import { retryBarWrite } from '@/lib/offlineWrites';
 import { loadSavedSpecBooks } from '@/lib/specBookFile';
 
@@ -71,11 +72,11 @@ export const queryClient = new QueryClient({
       // (queryFiles) behind the bar; the refresh then waits for signal.
       networkMode: 'offlineFirst',
       persister: queryFiles.persisterFn,
-      // "No rows" (PostgREST's PGRST116 from .single()) is an answer, not a
-      // glitch: a drink that's private, hidden or gone won't appear on a
-      // retry, and retrying only keeps a blank page up before the not
-      // available one.
-      retry: (failures, error) => (error as { code?: string } | null)?.code !== 'PGRST116' && failures < 2,
+      // Never retry an answer (4xx, PostgREST codes such as PGRST116 "no rows");
+      // retry overload (timeouts, 5xx, 544) once, with backoff and jitter, so a
+      // struggling database isn't hit again at once (lib/queryRetry.ts).
+      retry: retryQuery,
+      retryDelay: (failures: number) => retryDelay(failures),
       // 5 minutes fresh, 30 in memory unused, and no refetch on returning to the
       // app; per-user and live data opt back in by tier (lib/queryDefaults.ts).
       ...BASE,
@@ -92,8 +93,9 @@ export const queryClient = new QueryClient({
         }
         
         try {
-          const burnt = require('burnt');
-          burnt.toast({
+          // lib/systemToast: burnt, which the web loads on the first toast.
+          const { toast } = require('@/lib/systemToast');
+          toast({
             title: 'Error',
             message: message,
             preset: 'error',

@@ -12,7 +12,6 @@ import { recentEntry, useTrackRecent } from '@/hooks/useTrackRecent';
 import { saveClaimReturn } from '@/lib/claimReturn';
 import { siteOrigin } from '@/lib/venueLink';
 
-import { LoveBarButton } from '../kept/LoveBarButton';
 import { PublicPage } from '../published/PublicChrome';
 import { SignInCard } from '../published/SignInCard';
 import { BlockedProfileNote, ProfileSafety } from '../safety/ProfileSafety';
@@ -80,9 +79,9 @@ function ProfilePage({ profileRef, checking }: { profileRef: string | string[] |
       />
       {profile && !gated && !wideBar ? (
         <View style={styles.right}>
-          <ShareProfile profile={profile} />
-          {/* A bar's Love sits beside Share (ppl-bar-top); Hide is in More (disc-hide-bar). */}
-          {profile.kind === 'bar' ? <LoveBarButton profileId={profile.id} name={profile.display_name} labelled /> : null}
+          {/* A claimed person's Share sits beside Follow under their name (Kept-follow); More stays here. */}
+          {profile.kind === 'person' && !unclaimedPerson ? null : <ShareProfile profile={profile} />}
+          {/* A bar's Follow sits under its name (Prod-bar), not up here; Hide is in More (disc-hide-bar). */}
           <ProfileSafety profile={profile} />
         </View>
       ) : null}
@@ -139,7 +138,7 @@ function ProfilePage({ profileRef, checking }: { profileRef: string | string[] |
 
 /** Share profile, top right on a person's or a bar's page (ppl-person, ppl-bar-top). */
 function ShareProfile({ profile }: { profile: Profile }) {
-  const share = useShareLink(`${siteOrigin()}/p/${profile.handle}`, profile.display_name);
+  const share = useShareLink(`${siteOrigin()}/p/${profile.handle}`, profile.display_name, 'profile');
   return <GlassButton accessibilityLabel={profile.kind === 'person' ? 'Share profile' : 'Share'} icon="square.and.arrow.up" onPress={() => void share()} />;
 }
 

@@ -8,14 +8,12 @@ import { Body, Caption, DrinkImage, DsText, Headline, PressableScale, Spec, useD
 import { BarMark } from '@/components/screens/home/BarMark';
 import { LoveBarButton } from '@/components/screens/kept/LoveBarButton';
 import { space } from '@/constants/tokens';
-import type { AreaRanking, RankEntry } from '@/hooks/useRankings';
+import type { AreaRanking } from '@/hooks/useRankings';
 import { useBarVersions } from '@/hooks/useSpecMatches';
-import { formatDistance, rankedCount, usesMiles, type DiscoverRow } from '@/lib/nearMe';
-import { dayOf, formatScore, type Sentiment } from '@/lib/ranking';
+import { formatDistance, usesMiles } from '@/lib/nearMe';
+import { formatScore } from '@/lib/ranking';
 
-const BAND: Record<Sentiment, string> = { loved: 'Loved', fine: 'Fine', disliked: "Didn't like" };
 const LOGO = 40;
-const MONTH_YEAR = new Intl.DateTimeFormat(undefined, { month: 'short', year: 'numeric' });
 
 interface RowProps {
   position: number;
@@ -77,29 +75,6 @@ export function RankRow({ position, title, detail, score, scoreDetail, logo, bar
   );
 }
 
-/** My list for a drink, best first, with a heading at each band. */
-export function MyRankList({ entries, listName }: { entries: RankEntry[]; listName: string }) {
-  return (
-    <View>
-      {entries.map((e, i) => {
-        const where = e.venue ? [e.venue.display_name, e.venue.locality].filter(Boolean).join(', ') : 'Home';
-        const title = e.item?.name && e.item.name !== listName ? e.item.name : where;
-        const detail = [title === where ? null : where, e.had_on ? MONTH_YEAR.format(dayOf(e.had_on)) : null].filter(Boolean).join(' · ');
-        return (
-          <View key={e.id}>
-            {i === 0 || entries[i - 1].sentiment !== e.sentiment ? (
-              <Caption tone="muted" style={styles.band}>
-                {BAND[e.sentiment]}
-              </Caption>
-            ) : null}
-            <RankRow position={i + 1} title={title} detail={detail || 'Ranked'} score={e.score} />
-          </View>
-        );
-      })}
-    </View>
-  );
-}
-
 // Read after data loads, so never during the static web render.
 const imperial = () => usesMiles(getLocales()[0]);
 
@@ -118,7 +93,7 @@ type AreaRow = AreaRanking & { distance_km?: number | null; avatar_url?: string 
  * classic spec" or what its variation changes; other lists lead with the logo.
  * `love`: each bar's heart at the end of its row (signed in).
  */
-export function AreaRankList({ rows, classicId, scoreDetail = (r) => `${r.rankers} ranked`, love = false, onShowBar }: { rows: AreaRow[]; classicId?: string; scoreDetail?: (r: AreaRow) => string; love?: boolean; /** Hovering a row opens that bar on the map. */ onShowBar?: (barId: string | null) => void }) {
+export function AreaRankList({ rows, classicId, scoreDetail = (r) => `${r.rankers} ranked`, love = false }: { rows: AreaRow[]; classicId?: string; scoreDetail?: (r: AreaRow) => string; love?: boolean; }) {
   const router = useRouter();
   const pours = useBarVersions(classicId, rows.map((r) => r.venue_profile_id));
   return (
@@ -137,48 +112,10 @@ export function AreaRankList({ rows, classicId, scoreDetail = (r) => `${r.ranker
             barId={r.venue_profile_id}
             drinkId={classicId ? (pour?.itemId ?? classicId) : undefined}
             onPress={() => router.push(`/p/${r.handle || r.venue_profile_id}`)}
-            onHoverIn={onShowBar ? () => onShowBar(r.venue_profile_id) : undefined}
-            onHoverOut={onShowBar ? () => onShowBar(null) : undefined}
             end={love ? <LoveBarButton profileId={r.venue_profile_id} name={r.display_name} /> : undefined}
           />
         );
       })}
-    </View>
-  );
-}
-
-/**
- * Early: bars people have started ranking, below the minimum. No position
- * and no score, only how many people, so nothing reads as a verdict (or
- * gives away a few people's private rankings). `love`: each bar's heart.
- */
-export function EarlyList({ rows, love = false, onShowBar }: { rows: DiscoverRow[]; love?: boolean; /** Hovering a row opens that bar on the map. */ onShowBar?: (barId: string | null) => void }) {
-  const ds = useDs();
-  const router = useRouter();
-  return (
-    <View>
-      {rows.map((r) => (
-        <View key={r.venue_profile_id} style={[styles.row, { borderBottomColor: ds.c.line }]}>
-          <PressableScale
-            role="link"
-            accessibilityLabel={[`${r.display_name}, ${placeOf(r)}`, rankedCount(r.rankers)].filter(Boolean).join('. ')}
-            onPress={() => router.push(`/p/${r.handle || r.venue_profile_id}`)}
-            onHoverIn={onShowBar ? () => onShowBar(r.venue_profile_id) : undefined}
-            onHoverOut={onShowBar ? () => onShowBar(null) : undefined}
-            style={styles.link}
-          >
-            <BarMark logoUrl={r.avatar_url} name={r.display_name} profileId={r.venue_profile_id} size={LOGO} />
-            <View style={styles.flex}>
-              <Headline numberOfLines={1}>{r.display_name}</Headline>
-              <Caption tone="muted" numberOfLines={1}>
-                {placeOf(r)}
-              </Caption>
-            </View>
-            {r.rankers ? <Caption tone="muted">{rankedCount(r.rankers)}</Caption> : null}
-          </PressableScale>
-          {love ? <LoveBarButton profileId={r.venue_profile_id} name={r.display_name} /> : null}
-        </View>
-      ))}
     </View>
   );
 }
@@ -200,6 +137,5 @@ const styles = StyleSheet.create({
   position: { minWidth: space.xl, textAlign: 'center' },
   flex: { flex: 1, minWidth: 0 },
   score: { alignItems: 'flex-end' },
-  band: { marginTop: space.lg, textTransform: 'uppercase', letterSpacing: 1.2 },
   note: { paddingVertical: space.md },
 });

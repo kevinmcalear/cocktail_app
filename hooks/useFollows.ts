@@ -1,40 +1,64 @@
-import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
+import { keepPreviousData, useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 
 import { useUserId } from '@/ctx/AuthContext';
+import { chunk } from '@/lib/commandSearchGrid';
 import { supabase } from '@/lib/supabase';
+import type { Row } from '@/types/db';
+import { followsKey } from '@/hooks/useFriendsRanks';
 
-export interface FriendRank {
+export { useFollowing, useFriendsRanks, type FriendRank } from '@/hooks/useFriendsRanks';
+
+/** A person you follow, who follows you, or one you found: their public page as a row. */
+export interface FollowPerson {
   profileId: string;
-  displayName: string;
-  avatarUrl: string | null;
-  entryId: string;
-  itemId: string | null;
+  userId: string | null;
+  handle: string;
   name: string;
-  venueName: string | null;
-  score: number;
-  createdAt: string;
-  drinkFamily: string | null;
-  /** Now their top drink of its family. */
-  bestInFamily: boolean;
+  avatarUrl: string | null;
+  /** "New York", when they show their city. */
+  place: string | null;
+  tagline: string | null;
+  headlinePositionId: string | null;
+  /** How much of what they've had they show ('none' keeps their ranks to themselves). */
+  hadMode: string;
 }
 
-const followsKey = (userId: string | null) => ['follows', userId];
+export const PERSON_COLUMNS = 'id, user_id, handle, display_name, avatar_url, locality, city, shows_city, tagline, headline_position_id, had_mode';
 
-/** The people you follow (their user ids). */
-export function useFollowing() {
+type PersonRow = Pick<Row<'profiles'>, 'id' | 'user_id' | 'handle' | 'display_name' | 'avatar_url' | 'locality' | 'city' | 'shows_city' | 'tagline' | 'headline_position_id' | 'had_mode'>;
+
+export const toPerson = (r: PersonRow): FollowPerson => ({
+  profileId: r.id,
+  userId: r.user_id,
+  handle: r.handle,
+  name: r.display_name,
+  avatarUrl: r.avatar_url,
+  place: r.shows_city ? r.city || r.locality : null,
+  tagline: r.tagline,
+  headlinePositionId: r.headline_position_id,
+  hadMode: r.had_mode,
+});
+
+const followersKey = (userId: string | null) => ['followers', userId];
+
+/** The people who follow you (their user ids), newest first. Only you see these (follows_select). */
+export function useFollowers() {
   const userId = useUserId();
   return useQuery({
-    queryKey: followsKey(userId),
+    queryKey: followersKey(userId),
     enabled: !!userId,
     queryFn: async (): Promise<string[]> => {
-      const { data, error } = await supabase.from('follows').select('followee_id').eq('follower_id', userId!);
+      const { data, error } = await supabase.from('follows').select('follower_id').eq('followee_id', userId!).order('created_at', { ascending: false });
       if (error) throw error;
-      return (data ?? []).map((r) => r.followee_id);
+      return (data ?? []).map((r) => r.follower_id);
     },
   });
 }
 
-/** Follow or stop following someone (by user id). */
+/**
+ * Follow or stop following someone (by user id). The button flips at once
+ * (the list is changed in the cache first) and flips back if it fails.
+ */
 export function useSetFollow() {
   const userId = useUserId();
   const queryClient = useQueryClient();
@@ -45,6 +69,16 @@ export function useSetFollow() {
         : await supabase.from('follows').delete().eq('follower_id', userId!).eq('followee_id', followeeId);
       if (res.error) throw res.error;
     },
+    onMutate: async ({ followeeId, on }) => {
+      await queryClient.cancelQueries({ queryKey: followsKey(userId) });
+      const before = queryClient.getQueryData<string[]>(followsKey(userId));
+      const rest = (before ?? []).filter((id) => id !== followeeId);
+      queryClient.setQueryData<string[]>(followsKey(userId), on ? [followeeId, ...rest] : rest);
+      return { before };
+    },
+    onError: (_e, _v, ctx) => {
+      if (ctx) queryClient.setQueryData(followsKey(userId), ctx.before);
+    },
     onSettled: () => {
       void queryClient.invalidateQueries({ queryKey: followsKey(userId) });
       void queryClient.invalidateQueries({ queryKey: ['friends-ranks'] });
@@ -52,28 +86,88 @@ export function useSetFollow() {
   });
 }
 
-/** Recent ranks by people you follow, newest first, as each of them shares them (friends_ranks). */
-export function useFriendsRanks(limit = 5) {
+/** Someone who follows you, page or not: the name they gave (null when none) and their own picture. */
+export interface FollowName {
+  name: string | null;
+  avatarUrl: string | null;
+}
+
+/**
+ * Names and pictures of the people who follow you, with a public page or not
+ * (follow_people): Followers names them instead of counting them. Never the
+ * people you follow, never anything from an email, nobody blocked. Keyed on
+ * your followers, so a new one is named once they show.
+ */
+export function useFollowNames(followerIds: readonly string[] | undefined) {
   const userId = useUserId();
   return useQuery({
-    queryKey: ['friends-ranks', userId, limit],
-    enabled: !!userId,
-    queryFn: async (): Promise<FriendRank[]> => {
-      const { data, error } = await supabase.rpc('friends_ranks', { p_limit: limit });
+    queryKey: ['follow-names', userId, followerIds ?? []],
+    enabled: !!userId && !!followerIds?.length,
+    placeholderData: keepPreviousData,
+    queryFn: async (): Promise<Record<string, FollowName>> => {
+      const { data, error } = await supabase.rpc('follow_people');
       if (error) throw error;
-      return (data ?? []).map((r) => ({
-        profileId: r.profile_id,
-        displayName: r.display_name,
-        avatarUrl: r.avatar_url,
-        entryId: r.entry_id,
-        itemId: r.item_id,
-        name: r.name,
-        venueName: r.venue_name,
-        score: Number(r.score),
-        createdAt: r.created_at,
-        drinkFamily: r.drink_family,
-        bestInFamily: r.best_in_family,
-      }));
+      return Object.fromEntries((data ?? []).map((r) => [r.user_id, { name: r.display_name, avatarUrl: r.avatar_url }]));
+    },
+  });
+}
+
+/** Who owns a person's page (null for a page made from menus that nobody has claimed). */
+export function useProfileUserId(profileId: string | null | undefined) {
+  return useQuery({
+    queryKey: ['profile-user', profileId],
+    enabled: !!profileId,
+    queryFn: async (): Promise<string | null> => {
+      const { data, error } = await supabase.from('profiles').select('user_id').eq('id', profileId!).maybeSingle();
+      if (error) throw error;
+      return data?.user_id ?? null;
+    },
+  });
+}
+
+/**
+ * The public pages of these people, in the order given. Someone with no
+ * public page (private, or never made one) can't be read here, so they're
+ * left out; the caller counts them from the ids.
+ */
+export function usePeopleByUser(userIds: readonly string[] | undefined) {
+  const ids = userIds ?? [];
+  return useQuery({
+    // In the order given (newest follow first), so a re-follow moves them back to the top.
+    queryKey: ['follow-people', ids],
+    enabled: ids.length > 0,
+    // Following or unfollowing changes the ids: keep the list on screen while it refetches.
+    placeholderData: keepPreviousData,
+    queryFn: async (): Promise<FollowPerson[]> => {
+      // ponytail: every page at once, 150 ids a request (the URL limit); People has no paging yet.
+      const pages = await Promise.all(
+        chunk([...ids], 150).map(async (batch) => {
+          const { data, error } = await supabase.from('profiles').select(PERSON_COLUMNS).eq('kind', 'person').in('user_id', batch);
+          if (error) throw error;
+          return data ?? [];
+        }),
+      );
+      const byUser = new Map(pages.flat().map((r) => [r.user_id, toPerson(r)]));
+      return ids.flatMap((id) => byUser.get(id) ?? []);
+    },
+  });
+}
+
+/** Each drink's family (items.drink_family as written; familyName gives one name each), by id, for the ones you may read. */
+export function useItemFamilies(itemIds: readonly string[]) {
+  const ids = [...new Set(itemIds)].sort();
+  return useQuery({
+    queryKey: ['item-families', ids],
+    enabled: ids.length > 0,
+    queryFn: async (): Promise<Record<string, string | null>> => {
+      const pages = await Promise.all(
+        chunk(ids, 150).map(async (batch) => {
+          const { data, error } = await supabase.from('items').select('id, drink_family').in('id', batch);
+          if (error) throw error;
+          return data ?? [];
+        }),
+      );
+      return Object.fromEntries(pages.flat().map((r) => [r.id, r.drink_family]));
     },
   });
 }

@@ -39,7 +39,7 @@ export function useSpecLock(item: { id: string; bar_id?: string | null; origin_b
       const p = profile.data as { id: string; handle: string; display_name: string; is_claimed: boolean; page_visibility: PageVisibility | null };
       return {
         bar: { id: p.id, handle: p.handle, name: p.display_name, isClaimed: p.is_claimed, visibility: p.page_visibility },
-        names: ((names.data ?? []) as IngredientName[]).map(({ name, brand }) => ({ name, brand })),
+        names: ((names.data ?? []) as IngredientName[]).map(({ name, brand, garnish }) => ({ name, brand, ...(typeof garnish === 'boolean' ? { garnish } : {}) })),
       };
     },
   });

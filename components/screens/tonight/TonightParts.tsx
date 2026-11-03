@@ -12,23 +12,35 @@ import { liquidOf } from '@/lib/sketch/types';
 /** How far down the sky reaches before it is the page's ground. */
 const SKY = 440;
 
-/** The page's date line in small capitals, and Tonight in the display face (Prod-today boards). */
-export function TonightHead({ eyebrow }: { eyebrow: string }) {
+/** The page's date line in small capitals, and Tonight in the display face (Prod-today boards); Discover's head too. */
+export function TonightHead({ eyebrow, title = 'Tonight', onEyebrow, eyebrowLabel }: { eyebrow: string; title?: string; onEyebrow?: () => void; eyebrowLabel?: string }) {
+  const line = (
+    <Caption tone="muted" style={styles.caps}>
+      {eyebrow || ' '}
+    </Caption>
+  );
   return (
     <View style={styles.head}>
-      <Caption tone="muted" style={styles.caps}>
-        {eyebrow || ' '}
-      </Caption>
-      <Display aria-level={1}>Tonight</Display>
+      {onEyebrow ? (
+        <PressableScale role="button" accessibilityLabel={eyebrowLabel} onPress={onEyebrow}>
+          {line}
+        </PressableScale>
+      ) : (
+        line
+      )}
+      <Display aria-level={1}>{title}</Display>
     </View>
   );
 }
 
-/** A section's small uppercase label, with an aside on the right ("14 you can make", "All"). */
+/**
+ * A section's head: the small letter-spaced capitals eyebrow of Prod-nav-A and
+ * Prod-desk-today, with an aside on the right ("14 you can make", "All").
+ */
 export function TonightLabel({ title, aside, onAside }: { title: string; aside?: string | null; onAside?: () => void }) {
   return (
     <View style={styles.label}>
-      <Caption tone="muted" role="heading" style={styles.caps}>
+      <Caption tone="muted" role="heading" aria-level={2} style={styles.caps}>
         {title}
       </Caption>
       {aside ? onAside ? <TextLink label={aside} onPress={onAside} /> : <Caption tone="muted">{aside}</Caption> : null}
@@ -63,27 +75,6 @@ export function TonightSky({ ids }: { ids: readonly string[] }) {
   );
 }
 
-/** Three drinks from the list on now, the middle one larger (staff Tonight's hero). */
-export function HeroTrio({ ids, label, onPress }: { ids: readonly string[]; label: string; onPress: () => void }) {
-  const [left, middle, right] = ids;
-  return (
-    <PressableScale role="link" accessibilityLabel={label} onPress={onPress} style={styles.trio}>
-      {/* All three on the sky (hero size, no paper), the outer two smaller and tucked in. */}
-      {left ? (
-        <View style={styles.side}>
-          <DrinkDrawingFor itemId={left} size="hero" staff />
-        </View>
-      ) : null}
-      {middle ? <DrinkDrawingFor itemId={middle} size="hero" staff /> : null}
-      {right ? (
-        <View style={styles.side}>
-          <DrinkDrawingFor itemId={right} size="hero" staff />
-        </View>
-      ) : null}
-    </PressableScale>
-  );
-}
-
 /** A list's name under its eyebrow, with a chevron: tap opens the list. */
 export function ListHead({ eyebrow, name, onPress }: { eyebrow: string; name: string; onPress: () => void }) {
   const ds = useDs();
@@ -102,20 +93,25 @@ export function ListHead({ eyebrow, name, onPress }: { eyebrow: string; name: st
   );
 }
 
-/** A drink tile: its drawing on its own colour, the name in the display face, Ready or Need limes under it. */
-export function DrinkTile({ id, name, status, ready, onPress }: { id: string; name: string; status: string; ready: boolean; onPress: () => void }) {
+/**
+ * A drink tile: its drawing on its own colour, the name in the display face, Ready or Need limes under it.
+ * Without `ready` the line is muted (Discover's New menus: the menu's name and its bar, a little wider and shorter).
+ */
+export function DrinkTile({ id, name, status, ready, wide, onPress }: { id: string; name: string; status: string; ready?: boolean; wide?: boolean; onPress: () => void }) {
   const ds = useDs();
   const tint = useDrinkTint(id);
   const hues = palateHues[ds.scheme];
   return (
-    <PressableScale role="link" accessibilityLabel={`${name}. ${status}`} onPress={onPress} style={styles.tile}>
-      <View style={[styles.tileArt, { backgroundColor: tint ? withAlpha(tint, ds.scheme === 'dark' ? 0.28 : 0.2) : ds.c.raised }]}>
+    <PressableScale role="link" accessibilityLabel={`${name}. ${status}`} onPress={onPress} style={[styles.tile, wide ? styles.tileWide : null]}>
+      <View style={[styles.tileArt, wide ? styles.tileArtShort : null, { backgroundColor: tint ? withAlpha(tint, ds.scheme === 'dark' ? 0.28 : 0.2) : ds.c.raised }]}>
         <DrinkDrawingFor itemId={id} size="tile" pour={false} />
       </View>
       <DsText variant="headline" numberOfLines={1} style={{ fontFamily: displayFaces[ds.displayFace].regular }}>
         {name}
       </DsText>
-      <Caption color={ready ? hues.green : ds.accentText}>{status}</Caption>
+      <Caption color={ready === undefined ? ds.c.muted : ready ? hues.green : ds.accentText} numberOfLines={1}>
+        {status}
+      </Caption>
     </PressableScale>
   );
 }
@@ -124,7 +120,7 @@ export function DrinkTile({ id, name, status, ready, onPress }: { id: string; na
 export function NoteCard({ icon, text, onPress }: { icon: IconName; text: string; onPress: () => void }) {
   const ds = useDs();
   return (
-    <PressableScale role="link" accessibilityLabel={text} onPress={onPress} style={[styles.note, { backgroundColor: ds.c.raised }]}>
+    <PressableScale role="link" accessibilityLabel={text} onPress={onPress} style={[styles.note, { backgroundColor: ds.c.surface }]}>
       <IconSymbol name={icon} size={20} color={ds.c.ink} />
       <DsText variant="body" style={styles.flex}>
         {text}
@@ -149,12 +145,12 @@ const styles = StyleSheet.create({
   caps: { textTransform: 'uppercase', letterSpacing: 1.2 },
   label: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', gap: space.md },
   sky: { position: 'absolute', left: 0, right: 0, top: 0, height: SKY },
-  // The drawings carry their own air above the glass, so the trio tucks up under the title.
-  trio: { flexDirection: 'row', alignItems: 'flex-end', justifyContent: 'center', marginTop: -space.xxxl, paddingBottom: space.md },
-  side: { width: 96, alignItems: 'center', transform: [{ scale: 0.72 }], transformOrigin: 'bottom' },
   listHead: { gap: space.xs, alignSelf: 'flex-start' },
   listName: { flexDirection: 'row', alignItems: 'center', gap: space.sm },
   tile: { width: 132, gap: space.xs },
+  // New menus' tiles, as Prod-discover draws them: 150 wide, the picture 120 tall.
+  tileWide: { width: 150 },
+  tileArtShort: { height: 120 },
   tileArt: { height: 148, borderRadius: radius.card, borderCurve: 'continuous', alignItems: 'center', justifyContent: 'flex-end', overflow: 'hidden' },
   note: { flexDirection: 'row', alignItems: 'center', gap: space.md, padding: space.lg, borderRadius: radius.card, borderCurve: 'continuous' },
   flex: { flex: 1, minWidth: 0 },

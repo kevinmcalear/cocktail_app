@@ -1,7 +1,7 @@
 import { useState } from 'react';
 import { StyleSheet, View } from 'react-native';
 
-import { Body, Button, Caption, DateField, Headline, PressableScale, Segmented, useDs } from '@/components/ds';
+import { Body, Button, Caption, DateField, Headline, PressableScale, Segmented, Switch, useDs } from '@/components/ds';
 import { IconSymbol } from '@/components/ui/icon-symbol';
 import { displayFaces, font, radius, space } from '@/constants/tokens';
 import { useBarClock } from '@/hooks/useLivingList';
@@ -44,20 +44,24 @@ interface LiveChangeSheetProps {
   /** A drink picked with Find a drink, offered first. */
   found?: MenuDrink | null;
   busy: boolean;
-  onConfirm: (to: MenuDrink | null, at: string | null) => void;
+  /** A bartender's sheet: the change is an ask (or a draft only they see), and the menu team tell the team when they approve. */
+  asking?: boolean;
+  onConfirm: (to: MenuDrink | null, at: string | null, opts: { tell: boolean; draft: boolean }) => void;
   onClose: () => void;
 }
 
 /**
  * One change to a list that's on (Menu-l-swap-sheet): what comes off keeps
  * its run; for a swap, what goes on instead (drinks that were on before
- * first, then Find a drink); and when, now, after tonight or on a date.
+ * first, then Find a drink); when, now, after tonight or on a date; and Tell
+ * the team, on by default. A bartender asks instead (Menu-l-ask).
  */
-export function LiveChangeSheet({ kind, drink, where, barId, wentOn, onFind, found, busy, onConfirm, onClose }: LiveChangeSheetProps) {
+export function LiveChangeSheet({ kind, drink, where, barId, wentOn, onFind, found, busy, asking = false, onConfirm, onClose }: LiveChangeSheetProps) {
   const ds = useDs();
   const [now] = useState(() => Date.now());
   const [when, setWhen] = useState<When>('now');
   const [day, setDay] = useState(() => ymd(new Date(now + 2 * 86_400_000)));
+  const [tell, setTell] = useState(true);
   const past = useRepertoire(kind === 'swap' ? barId : null).past;
   const barClock = useBarClock(barId);
   const clock = barClock.data;
@@ -66,9 +70,18 @@ export function LiveChangeSheet({ kind, drink, where, barId, wentOn, onFind, fou
   const [picked, setPicked] = useState<string | null>(found?.id ?? null);
   const to = offers.find((d) => d.id === (picked ?? found?.id)) ?? null;
   const label = { now: 'now', tonight: 'after tonight', date: `on ${new Date(`${day}T00:00`).toLocaleDateString(undefined, { day: 'numeric', month: 'short' })}` }[when];
-  const cta = kind === 'swap' ? `Swap ${label}` : `Take off ${label}`;
+  const cta = `${asking ? 'Ask to ' : ''}${kind === 'swap' ? (asking ? 'swap' : 'Swap') : asking ? 'take off' : 'Take off'} ${label}`;
   const price = to ? printedPrice(to) : null;
-  const note = kind === 'swap' ? (to ? `${to.name} goes in its place${price ? ` at ${price}` : ''}. Undo from the list today.` : 'Pick what goes on instead.') : 'Undo from the list today.';
+  const note =
+    kind === 'swap' && !to
+      ? 'Pick what goes on instead.'
+      : asking
+        ? `It waits for approval, and ${drink.name} stays on until then.`
+        : kind === 'swap'
+          ? `${to!.name} goes in its place${price ? ` at ${price}` : ''}. Undo from the list today.`
+          : 'Undo from the list today.';
+  const confirm = (draft: boolean) => onConfirm(kind === 'swap' ? to : null, at, { tell: tell && !asking, draft });
+  const blocked = busy || (kind === 'swap' && !to) || (when === 'tonight' && barClock.isLoading);
   const pastOf = (id: string) => past.find((p) => p.drink.id === id);
   const run = wentOn ? `: ${runRange(wentOn, at ?? new Date(now).toISOString(), true)}` : '';
 
@@ -80,7 +93,8 @@ export function LiveChangeSheet({ kind, drink, where, barId, wentOn, onFind, fou
       title={kind === 'swap' ? `Swap ${drink.name}` : `Take off ${drink.name}`}
       footer={
         <View style={styles.footer}>
-          <Button label={busy ? 'Saving…' : cta} variant="ink" size="lg" disabled={busy || (kind === 'swap' && !to) || (when === 'tonight' && barClock.isLoading)} onPress={() => onConfirm(kind === 'swap' ? to : null, at)} style={styles.stretch} />
+          <Button label={busy ? 'Saving…' : cta} variant="ink" size="lg" disabled={blocked} onPress={() => confirm(false)} style={styles.stretch} />
+          {asking ? <Button label="Keep as a draft" variant="ghost" disabled={blocked} onPress={() => confirm(true)} style={styles.stretch} /> : null}
           <Caption tone="muted" align="center">
             {note}
           </Caption>
@@ -105,7 +119,7 @@ export function LiveChangeSheet({ kind, drink, where, barId, wentOn, onFind, fou
               const meta = [before ? `Past · last on ${lastOn}` : 'Not on a list yet', printedPrice(d) ?? 'no price yet'].join(' · ');
               return (
                 <PressableScale key={d.id} role="radio" aria-checked={on} accessibilityLabel={d.name} onPress={() => setPicked(d.id)} style={[styles.pick, { borderTopColor: ds.c.lineStrong }]}>
-                  <MenuDrawing itemId={d.id} size="row" ink="colour" bare fallback={{ imageUrl: d.imageUrl, glass: d.glass }} />
+                  <MenuDrawing itemId={d.id} size="row" ink="colour" fallback={{ imageUrl: d.imageUrl, glass: d.glass }} />
                   <View style={styles.grow}>
                     <Headline style={{ fontFamily: displayFaces[ds.displayFace].regular }}>{d.name}</Headline>
                     <Caption tone="muted">{meta}</Caption>
@@ -127,6 +141,12 @@ export function LiveChangeSheet({ kind, drink, where, barId, wentOn, onFind, fou
         ) : null}
         <Segmented options={WHENS} value={when} onChange={setWhen} accessibilityLabel="When" variant="pill" stretch />
         {when === 'date' ? <DateField label="On" value={day} onChange={setDay} min={ymd(new Date(now + 86_400_000))} /> : null}
+        {asking ? null : (
+          <View style={[styles.tell, { backgroundColor: ds.c.raised }]}>
+            <Body style={styles.grow}>Tell the team</Body>
+            <Switch value={tell} onValueChange={setTell} label="Tell the team" />
+          </View>
+        )}
       </View>
     </MenuSheet>
   );
@@ -142,5 +162,6 @@ const styles = StyleSheet.create({
   dot: { width: 10, height: 10, borderRadius: radius.pill },
   search: { width: 56, height: 56, borderRadius: radius.pill, alignItems: 'center', justifyContent: 'center' },
   footer: { gap: space.sm, alignItems: 'center' },
+  tell: { flexDirection: 'row', alignItems: 'center', gap: space.md, paddingHorizontal: space.lg, paddingVertical: space.sm, borderRadius: radius.card },
   stretch: { alignSelf: 'stretch' },
 });

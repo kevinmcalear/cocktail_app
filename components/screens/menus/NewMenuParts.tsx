@@ -1,6 +1,7 @@
 import { StyleSheet, View } from 'react-native';
 
-import { Caption, DateField, DrinkImage, DsText, PressableScale, Segmented, TimeField, useDs } from '@/components/ds';
+import { Caption, DateField, DrinkImage, DsText, PressableScale, Segmented, useDs } from '@/components/ds';
+import { TimeField } from '@/components/ds/TimeField';
 import { IconSymbol } from '@/components/ui/icon-symbol';
 import { displayFaces, font, layout, radius, space, type } from '@/constants/tokens';
 import { withAlpha } from '@/lib/color';

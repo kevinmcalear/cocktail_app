@@ -1,6 +1,6 @@
 import type { ComponentProps } from 'react';
 
-import { SketchTintPicker } from '@/components/ds';
+import { SketchTintPicker } from '@/components/ds/SketchTintPicker';
 import { usePhotoColours } from '@/hooks/useSketchTint';
 
 /**

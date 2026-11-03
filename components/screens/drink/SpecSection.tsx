@@ -2,7 +2,8 @@ import { useRouter } from 'expo-router';
 import { useState, type ReactNode } from 'react';
 import { StyleSheet, View } from 'react-native';
 
-import { Body, Button, Caption, Headline, LockedSection, SpecRow, useDs } from '@/components/ds';
+import { Body, Button, Caption, Headline, LockedSection, useDs } from '@/components/ds';
+import { SpecRow } from '@/components/ds/SpecRow';
 import { radius, space } from '@/constants/tokens';
 import { Choice } from '@/components/screens/batch/BatchParts';
 import { HouseMadeSheet } from './HouseMadeSheet';
@@ -15,7 +16,7 @@ import { withAlpha } from '@/lib/color';
 import { roleLabel } from '@/lib/roles';
 import { lineAmount } from '@/lib/drinkMath';
 import { ratio, specLines, type PresentationRecipe, type SpecLevels } from '@/lib/spec';
-import { useSettingsStore, type SpecUnit } from '@/store/useSettingsStore';
+import { useSettingsStore, useUnits } from '@/store/useSettingsStore';
 
 const UNITS = [
   { value: 'g', label: 'g' },
@@ -70,10 +71,9 @@ export function SpecSection({ itemId, barId, recipes, preview, heading = 'Spec',
   // The same rule as the drink page's Batch and the server's view: levels, moved by the role's specs grant or revoke.
   const { access, levels } = useSpecAccess(itemId, barId, preview);
   const lines = specLines(recipes);
-  // Remembered per person: the unit the amounts read in.
-  const specUnit = useSettingsStore((s) => s.specUnit);
-  const setSpecUnit = useSettingsStore((s) => s.setSpecUnit);
-  const unit: SpecUnit = specUnit;
+  // Remembered per person: the unit the amounts read in (yours, else your bar's). Switching it here makes it yours.
+  const unit = useUnits().specUnit;
+  const setUnits = useSettingsStore((s) => s.setUnits);
   const [convert, setConvert] = useState<ToolsSheetProps['amount']>(null);
   // A house-made line opens in place (board drink-sheet-housemade); anything else goes to its page.
   const [houseLine, setHouseLine] = useState<(typeof lines)[number] | null>(null);
@@ -117,7 +117,7 @@ export function SpecSection({ itemId, barId, recipes, preview, heading = 'Spec',
           <SpecMarks marks={marks} />
           {caption ? <Caption tone="muted">{caption}</Caption> : null}
         </View>
-        {measured ? <Choice label="Read the amounts in" options={UNITS} value={unit} onChange={setSpecUnit} /> : null}
+        {measured ? <Choice label="Read the amounts in" options={UNITS} value={unit} onChange={(u) => u !== unit && setUnits(u)} /> : null}
       </View>
       {shares ? <RatioBar shares={shares} /> : null}
       <View>

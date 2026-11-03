@@ -1,8 +1,7 @@
 // What a menu page shows, from the menu, where it is in its life and who is
 // looking (2027 canvas, Menu-page): kept pure so the screen only wires taps.
 import type { MenuLensData } from '@/hooks/useMenuLens';
-import type { ShelfMatch } from '@/lib/collectionStages';
-import { menuRowShelf } from '@/lib/collectionStages';
+import { menuRowShelf, type ShelfMatch } from '@/lib/shelfReach';
 import { allergenChips, allergensTonight, allergyLine, isMenuTeam, isStaffLens, rowStateMark } from '@/lib/menuLens';
 import { homeMenuLine, menuDateLine, plural, printedPrice } from '@/lib/menus';
 import type { MenuDetail, MenuStatus } from '@/types/menus';
@@ -46,6 +45,18 @@ interface Input {
   toBuy: number | null;
   day: (iso: string) => string;
   now: number;
+  /** Drinks off for tonight only (the floor and guests read "Not tonight"; the team's live list draws its own). */
+  offTonight?: ReadonlySet<string>;
+}
+
+/**
+ * Rows the board doesn't draw above the drinks go after them, so the first drink isn't pushed down the page:
+ * an Admin's Run sheet (Menu-who-admin draws On, Costing, bar page, End), and on a living list (Menu-l-*, which
+ * draws On, Last change, Team, Costing) the run sheet, bar page and End.
+ */
+export function splitGroup(rows: ModelGroupRow[], living: boolean, admin: boolean): [top: ModelGroupRow[], after: ModelGroupRow[]] {
+  const low = (r: ModelGroupRow) => (r.action === 'runSheet' ? admin || living : living && (r.action === 'barPage' || r.action === 'end'));
+  return [rows.filter((r) => !low(r)), rows.filter(low)];
 }
 
 /** On the bar page, Shown or Hidden: tapping it flips the menu's hidden_at. */
@@ -57,7 +68,7 @@ function replacesLine(onNow: { name: string; endsAt: string | null }, goesOn: st
   return last ? `${onNow.name}, on ${day(last)}` : onNow.name;
 }
 
-export function menuPageModel({ menu, status, lens: L, venueName, onNow, newIds, shelf, toBuy, day, now }: Input): MenuPageModel {
+export function menuPageModel({ menu, status, lens: L, venueName, onNow, newIds, shelf, toBuy, day, now, offTonight }: Input): MenuPageModel {
   const { lens } = L;
   // An undated home menu is an idea, not a draft: it isn't published, so it's never pencil.
   const draft = status === 'draft' && !!menu.barId;
@@ -165,6 +176,8 @@ export function menuPageModel({ menu, status, lens: L, venueName, onNow, newIds,
       const row = team ? stateOf.get(`${s.id}:${d.id}`) : undefined;
       const mark = row ? rowStateMark(row.state, row.onFrom, row.offAt, day) : null;
       if (mark) flag = { label: mark, tone: row!.state.startsWith('waiting') ? 'amber' : 'quiet' };
+      const notTonight = !team && !past && !!offTonight?.has(d.id);
+      if (notTonight) flag = { label: 'Not tonight', tone: 'quiet' };
       return {
         drink: d,
         line: lens === 'bartender' && notes?.method ? notes.method : d.line,
@@ -175,6 +188,7 @@ export function menuPageModel({ menu, status, lens: L, venueName, onNow, newIds,
         chips: lens === 'employee' ? allergenChips(L.allergens.get(d.id), L.allergens.size > 0) : null,
         talkingPoint: lens === 'employee' ? (notes?.talkingPoint ?? null) : null,
         ink,
+        faded: notTonight || undefined,
       };
     }),
   }));

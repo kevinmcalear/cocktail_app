@@ -25,7 +25,7 @@ assert.deepEqual(opts(['cocktail', 'id', null]), { staleTime: 10 * MIN, gcTime: 
 assert.deepEqual(opts(['bars', 'u1']), { staleTime: 60 * MIN, gcTime: KEEP, focus: true });
 assert.deepEqual(opts(['profile', 'mine', 'u1']), { staleTime: 60 * MIN, gcTime: KEEP, focus: true });
 assert.deepEqual(opts(['profile', { id: 'p' }, 'u1']), { staleTime: 10 * MIN, gcTime: GC_TIME, focus: false });
-assert.deepEqual(opts(['menus-v2', 'venue-6', 'b1']), { staleTime: 15 * MIN, gcTime: KEEP, focus: true });
+assert.deepEqual(opts(['menus-v2', 'venue-7', 'b1']), { staleTime: 15 * MIN, gcTime: KEEP, focus: true });
 assert.deepEqual(opts(['menus-v2', 'detail', 'm1']), { staleTime: 15 * MIN, gcTime: GC_TIME, focus: true });
 assert.deepEqual(opts(['dropdowns_v7', 'current_menu_drinks', 'with-glass', ['m']]), { staleTime: 15 * MIN, gcTime: KEEP, focus: true });
 // Live: half a minute, refetched on return.
@@ -36,6 +36,8 @@ assert.deepEqual(opts(['profile-claims', 'pending']), { staleTime: 30_000, gcTim
 assert.deepEqual(opts(['discover-list', 'x']), { staleTime: 5 * MIN, gcTime: KEEP, focus: false });
 assert.deepEqual(opts(['discover-rankings', 'x']), { staleTime: 5 * MIN, gcTime: GC_TIME, focus: false });
 assert.deepEqual(opts(['bar-cities']), { staleTime: 60 * MIN, gcTime: KEEP, focus: false });
+// Bars you love: saved in a file, so offline Discover lists them; kept as long.
+assert.equal(opts(['loved-bars', 'u1']).gcTime, KEEP);
 
 // Every saved prefix is kept as long as the saved cache.
 for (const key of PERSISTED_KEYS) assert.equal(opts([...key, 'x']).gcTime, KEEP, key.join('/'));

@@ -1,9 +1,14 @@
+import { useRouter } from 'expo-router';
 import { useEffect, useState } from 'react';
 import { Platform } from 'react-native';
 
-import { ChoiceChips, ControlRow, RowDivider, SelectRow, SettingsSection, SwitchRow } from '@/components/screens/settings/SettingsParts';
+import { ChoiceChips, ControlRow, RowDivider, SelectRow, SettingsRow, SettingsSection, SwitchRow } from '@/components/screens/settings/SettingsParts';
+import { UnitsRow } from '@/components/screens/settings/UnitsRow';
+import { useMyAllergies } from '@/hooks/useGuestAllergies';
+import { myAllergiesLine } from '@/lib/allergenWords';
 import { hasAiConsent, setAiConsent } from '@/lib/aiConsent';
 import { appIconChoices, currentAppIcon, setAppIcon } from '@/lib/appIcon';
+import { useActiveVenue } from '@/hooks/useActiveVenue';
 import { useMaxRealRole, useViewAs } from '@/hooks/useViewAs';
 import { roleLabel, viewAsOptions } from '@/lib/roles';
 import type { MapsApp } from '@/lib/directions';
@@ -18,9 +23,16 @@ const DIRECTIONS_OPTIONS = [
 
 /** How the app looks and behaves. Everything saves as it changes: View as to the account, the rest to this device. */
 export function PreferencesSection() {
-  const { themeMode, setThemeMode, defaultUnit, setDefaultUnit, directionsApp, setDirectionsApp } = useSettingsStore();
+  const { themeMode, setThemeMode, units, setUnits, directionsApp, setDirectionsApp } = useSettingsStore();
+  // Your bar's unit (bars.spec_unit) is the default; picking one of your own wins over it.
+  const active = useActiveVenue().active;
+  const bar = active?.unit ? { name: active.name, unit: active.unit } : null;
+  // ml, oz and cl as drawn; grams stay for someone already on them.
+  const ownUnits = DEFAULT_UNIT_OPTIONS.filter((o) => o.id !== 'g' || units === 'g');
   const { viewAsRoleLevel, setViewAsRoleLevel, isSaving: viewAsSaving } = useViewAs();
   const maxRealRole = useMaxRealRole();
+  const router = useRouter();
+  const allergies = useMyAllergies();
   const viewAsChoices = viewAsOptions(maxRealRole);
   // "We ask once. Change it any time in Settings." (Bring in's AI OK.)
   const [ai, setAi] = useState(false);
@@ -41,9 +53,16 @@ export function PreferencesSection() {
         <ChoiceChips label="Appearance" options={THEME_MODES} value={themeMode} onChange={setThemeMode} />
       </ControlRow>
       <RowDivider />
-      <ControlRow label="Units" detail="Specs on drink pages, and new recipe lines">
-        <ChoiceChips label="Units" options={DEFAULT_UNIT_OPTIONS} value={defaultUnit} onChange={setDefaultUnit} />
-      </ControlRow>
+      <UnitsRow
+        intro={bar ? 'Yours wins over the bar’s, on every drink you open.' : undefined}
+        options={bar ? [{ id: 'bar', label: 'Like my bar', sub: `${bar.name} uses ${bar.unit}` }, ...ownUnits] : ownUnits}
+        value={units ?? (bar ? 'bar' : 'ml')}
+        unit={units ?? bar?.unit ?? 'ml'}
+        onChange={(id) => setUnits(id === 'bar' ? null : id)}
+      />
+      <RowDivider />
+      {/* Private: on your account and this phone (Keep-phone Settings, Loop-allergy). */}
+      <SettingsRow label="Allergies" value={allergies.isError ? 'Couldn’t load' : allergies.data !== undefined ? myAllergiesLine(allergies.data) : undefined} onPress={() => router.push('/settings/allergies')} />
       <RowDivider />
       <SwitchRow
         label="Read with AI"

@@ -11,7 +11,7 @@ export function DraftEditScreen({ draftId, barId, initialName, onExit }: { draft
   const editor = useCocktailDraftEditor({ draftId, barId, initialName });
   return (
     <EditBrand barId={editor.barId}>
-      <EditPage editor={editor} id={null} onExit={onExit} />
+      <EditPage editor={editor} id={null} onExit={onExit} inSheet />
     </EditBrand>
   );
 }

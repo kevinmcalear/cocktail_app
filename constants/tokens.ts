@@ -22,6 +22,7 @@ export const backbar = {
     glassBorder: 'rgba(255, 255, 255, 0.14)',
     scrim: 'rgba(14, 13, 12, 0.62)',
     paper: '#EFE9DD', // behind house-style sketches, in both themes
+    tilePaper: '#2A2622', // behind small drawings painted for night (ingredient thumbnails), so a tile is not a cream square on black
     sketchInk: '#3B342C',
   },
   light: {
@@ -37,6 +38,7 @@ export const backbar = {
     glassBorder: 'rgba(0, 0, 0, 0.07)',
     scrim: 'rgba(246, 243, 238, 0.72)',
     paper: '#EFE9DD',
+    tilePaper: '#EFE9DD',
     sketchInk: '#3B342C',
   },
 } as const;
@@ -110,6 +112,13 @@ export const partyHues = ['#D0643B', '#8FB3E8', '#9CC9A0', '#C9A0DC', '#E8C25A',
 /** The printed run sheet: black on white, whatever the theme (run sheet board "Sheet"). */
 export const printPaper = { paper: '#FFFFFF', ink: '#1A1714', muted: '#555049', rule: '#C9C2B6', hairline: '#E6E0D6' } as const;
 
+/**
+ * What leaves the app as a picture (lib/paper, Bet-poster): the warm paper a
+ * top three sits on by day and its night ground, the light panel a bar's
+ * drinks are drawn on, and the cream ink on a bar's colour.
+ */
+export const posterPaper = { day: '#F3E6DA', night: '#241D18', panel: '#F6E7DA', cream: '#FFF6EE' } as const;
+
 /** The accent when there's no venue brand: bar-light amber. */
 export const DEFAULT_ACCENT = '#E4B062';
 
@@ -133,7 +142,9 @@ export const SAMPLE_BRANDS = {
  * Type (decided 31 Oct 2026): Redaction for names, the system font (SF,
  * Roboto, system UI on the web) for everything else, tabular figures for
  * amounts. No mono, nothing under 13. These are the only font families the
- * app sets (npm run check:design).
+ * app sets (npm run check:design). Paper is the one exception: what prints
+ * (lib/paper) sets labels, caps and amounts in the platform's typewriter
+ * face (components/paper/PaperPage), as Bet-labels and Bet-print draw them.
  */
 
 /** Registered font family names (components/ds/fonts.ts). */
@@ -178,11 +189,31 @@ export const displayFaces = {
 
 export type DisplayFace = keyof typeof displayFaces;
 
+const DISPLAY_FAMILIES = new Set<string>(Object.values(fontFamilies));
+
+/**
+ * The weight a text style needs when its caller swapped a display face into a
+ * system variant (a name set in the bar's face on a Headline or Caption). The
+ * faces are single-weight files, and on Android a 500 or 600 weight left on
+ * one measures the line narrower than it draws, so the last word drops out of
+ * sight ("House drink" read "House"). Undefined when nothing needs resetting:
+ * the family is the system font, or the caller set its own weight.
+ * Checked by components/ds/faceWeight.check.ts.
+ */
+export function faceWeightReset(fontFamily: unknown, fontWeight: unknown): { fontWeight: '400' } | undefined {
+  return typeof fontFamily === 'string' && DISPLAY_FAMILIES.has(fontFamily) && fontWeight === undefined ? { fontWeight: '400' } : undefined;
+}
+
 /** Names set in the display face on rows (22/26) and on a menu's card (24/28), as the canvas draws them. */
 export const displayName = {
   row: { fontSize: 22, lineHeight: 26 },
   card: { fontSize: 24, lineHeight: 28 },
+  /** At the top of Android's drink and item pages (And-page). */
+  page: { fontSize: 46, lineHeight: 52, letterSpacing: 0 },
 } as const;
+
+/** A score set as the moment's one big figure: where a rank landed (Prod-rank-A "9.0", 96 on phones). */
+export const scoreFigure = { fontSize: 96, lineHeight: 108 } as const;
 
 /** The smallest text the app sets, in points (check:design holds every size to it). */
 export const MIN_FONT_SIZE = 13;
@@ -222,8 +253,18 @@ export const layout = {
   breakpoints: { tablet: 768, desktop: 1200 },
   gutter: { phone: 16, tablet: 24, desktop: 32 },
   minTapTarget: 44,
+  /** Android's FAB (Material 3): 56 dp tall, plain or extended, and the plain one as wide. */
+  fab: 56,
   /** Desktop's phone previews of a drink page: about an iPhone's width, in points. */
   phoneFrame: 390,
+  /**
+   * The phone photo hero's height, as a share of the screen under the status
+   * bar. 0.3 is Eddie's (asked twice, 13 and 27 Oct); the boards draw 585 of
+   * 844, which is 0.675 here. This one number changes it.
+   */
+  photoHero: 0.3,
+  /** The photo beside the spec, from the split up (board Desk-photo-side-*). */
+  photoPanel: 500,
   /**
    * How wide a page's column grows. Pages sit left, next to the sidebar
    * (components/nav/Page.tsx): text for lists and forms, wide for plans and grids.
@@ -281,12 +322,23 @@ export const springs = {
 } as const;
 
 /**
- * A drink's drawing at three sizes, in points (decision drawing-sizes,
+ * A drink's drawing at its sizes, in points (decision drawing-sizes,
  * components/ds/DrinkDrawing): a guest's hero (260 to 300), a staff page's
- * smaller hero so the spec stays above the fold, a tile, and a row (56 or
- * more: under that a drawing is a smudge).
+ * smaller hero so the spec stays above the fold, the larger middle of a
+ * menu's three (Menu-page), a tile, a menu page's row, and a row (56 or more:
+ * under that a drawing is a smudge).
  */
-export const drawing = { hero: 280, heroStaff: 180, tile: 160, row: 56 } as const;
+export const drawing = { hero: 280, heroStaff: 180, middle: 206, tile: 160, menuRow: 64, row: 56 } as const;
+
+/**
+ * A menu page's cover photo: it runs 470 down from the top of the screen
+ * (Menu-g-photo-dark), across the page's column (760 at most on a wide
+ * screen). The cover picker crops to this shape.
+ */
+export const menuCover = { height: 470, column: 760 } as const;
+
+/** A menu card's band of drawings or cover on a list of menus (Menu-shelf). */
+export const menuBandHeight = 176;
 
 /** How the colour pours into a drawing as it appears: fills the glass bottom up, after a beat. Reduce Motion skips it. */
 export const pour = { delay: 200, ms: 1100 } as const;

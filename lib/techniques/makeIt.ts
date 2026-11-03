@@ -4,7 +4,7 @@
  * would make it. Choosing one gives the new ingredient a prep card: its
  * action tag, how long it takes, and the steps with the amounts for a batch.
  */
-import { guessKind } from '../prepKinds';
+import { guessKind } from '../prepMath';
 import type { PREP_ACTIONS } from '../scale';
 import { formatDose, scaleParts, techniqueById, TECHNIQUES } from './index';
 import type { BaseKind, Technique, TechniqueGroup } from './types';
@@ -172,7 +172,7 @@ const BY_ID: Record<string, PrepAction> = {
   smoke: 'Smoke', tincture: 'Tincture', 'infused-oil': 'Oil', 'microwave-infusion': 'Infuse', 'fruit-leather': 'Dehydrate',
 };
 const BY_GROUP: Record<TechniqueGroup, PrepAction> = {
-  foam: 'Foam', clarify: 'Clarify', wash: 'Fat wash', infuse: 'Infuse', syrup: 'Syrup', texture: 'Mix',
+  shake: 'Mix', foam: 'Foam', clarify: 'Clarify', wash: 'Fat wash', infuse: 'Infuse', syrup: 'Syrup', texture: 'Mix',
   carbonate: 'Carbonate', cold: 'Freeze', preserve: 'Ferment', distil: 'Distil', cook: 'Cook', garnish: 'Mix', age: 'Age',
 };
 

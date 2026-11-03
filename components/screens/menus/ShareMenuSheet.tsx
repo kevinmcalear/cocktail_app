@@ -2,8 +2,9 @@ import { useRouter } from 'expo-router';
 import { useState } from 'react';
 import { StyleSheet, View } from 'react-native';
 
-import { Body, Button } from '@/components/ds';
-import { space } from '@/constants/tokens';
+import { Body, Button, Caption, DsText, PressableScale, useDs } from '@/components/ds';
+import { IconSymbol } from '@/components/ui/icon-symbol';
+import { font, layout, space } from '@/constants/tokens';
 import { useActiveVenue } from '@/hooks/useActiveVenue';
 import { useShareMenu } from '@/hooks/useMenuMutations';
 import { useShareSlug } from '@/hooks/useShareSlug';
@@ -15,7 +16,7 @@ import type { MenuDetail } from '@/types/menus';
 import { AnswerRow } from '../addDrink/ReviewStep';
 import type { CardPictures } from './MenuSections';
 import { Choice, MenuSheet } from './MenuSheet';
-import { CardHeader, MonoLabel } from './ReviewParts';
+import { CardHeader } from './ReviewParts';
 
 // The server's refusal when you have no public profile yet (guard_menu_share).
 const NEEDS_PROFILE = /public profile/;
@@ -37,6 +38,7 @@ type SharedMenu = Pick<MenuDetail, 'id' | 'name' | 'sharedAt'> &
  * the link shows drinks that are already public, the rest as "House drink".
  */
 export function ShareMenuSheet({ menu, onClose }: { menu: SharedMenu; onClose: () => void }) {
+  const ds = useDs();
   const router = useRouter();
   const share = useShareMenu();
   const { venues } = useActiveVenue();
@@ -77,7 +79,7 @@ export function ShareMenuSheet({ menu, onClose }: { menu: SharedMenu; onClose: (
     }
     setError(null);
     try {
-      setCopied((await shareLink(link, menu.name, { copy: true })) === 'copied');
+      setCopied((await shareLink(link, menu.name, 'menu', { copy: true })) === 'copied');
     } catch {
       // The browser can refuse clipboard access; the link is on screen to copy by hand.
       setError('Couldn’t copy the link. Select it above and copy it yourself.');
@@ -102,7 +104,9 @@ export function ShareMenuSheet({ menu, onClose }: { menu: SharedMenu; onClose: (
       }
     >
       <CardHeader name={menu.name} when={cardWhen(dated)} coverUrl={menu.coverUrl ?? null} coverPosition={menu.coverPosition} drinks={drinks} onOpenCard={() => go(card)} />
-      <MonoLabel>Ready to share?</MonoLabel>
+      <DsText variant="label" role="heading" style={styles.ready}>
+        Ready to share?
+      </DsText>
       <View role="list">
         <AnswerRow label="Name" value={menu.name} onPress={edit} />
         {drinks.length ? <AnswerRow label="Drinks" value={drinks.map((d) => d.name).join(', ')} onPress={edit} /> : null}
@@ -124,6 +128,14 @@ export function ShareMenuSheet({ menu, onClose }: { menu: SharedMenu; onClose: (
         />
         {menu.sharedAt ? <AnswerRow label="Link" value={url} /> : null}
       </View>
+      {/* The menu as a picture for a story or a post (Bet-poster, Miss-poster); sharing it publishes nothing. */}
+      <PressableScale role="button" onPress={() => go(`/share/poster?menu=${menu.id}`)} style={[styles.poster, { borderBottomColor: ds.c.line }]}>
+        <IconSymbol name="photo" size={20} color={ds.accentText} />
+        <View style={styles.posterText}>
+          <Body>Share as a poster</Body>
+          <Caption tone="muted">{`A picture for a story or a post${venue ? `, in ${venue.name}’s colour` : ''}`}</Caption>
+        </View>
+      </PressableScale>
       {menu.sharedAt ? <Button label="Stop sharing" icon="xmark" variant="ghost" onPress={() => void setShared(false)} disabled={share.isPending} /> : null}
       {error ? <Body tone="accent">{error}</Body> : null}
       {error && NEEDS_PROFILE.test(error) ? <Button label="Set up your public profile" icon="person.crop.circle" variant="secondary" onPress={() => go('/settings/profile')} /> : null}
@@ -135,4 +147,7 @@ const styles = StyleSheet.create({
   footer: { flexDirection: 'row', gap: space.md },
   flex: { flex: 1 },
   choices: { flexDirection: 'row', flexWrap: 'wrap', gap: space.sm, paddingVertical: space.md },
+  ready: { ...font.semiBold, paddingTop: space.xl, paddingBottom: space.sm },
+  poster: { flexDirection: 'row', alignItems: 'center', gap: space.md, minHeight: layout.minTapTarget, marginTop: space.md, paddingVertical: space.md, borderBottomWidth: StyleSheet.hairlineWidth },
+  posterText: { flex: 1, gap: 2 },
 });

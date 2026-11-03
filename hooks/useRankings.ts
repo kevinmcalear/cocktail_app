@@ -102,7 +102,7 @@ export function useMyRankList(rankedAsItemId: string | null | undefined) {
   });
 }
 
-const HAD_COLUMNS = `
+export const HAD_COLUMNS = `
   id, item_id, sentiment, had_on, created_at, score,
   item:items!item_id ( name, item_images ( angle, sort_order, is_generated, images ( url ) ) ),
   list:items!ranked_as_item_id ( name ),
@@ -405,6 +405,9 @@ export interface NewRankEntry {
   sentiment: Sentiment;
   rank_key: number;
   had_on: string;
+  /** Re-ranking clears the last rank's reasons: they belong to the rank they were given with. */
+  reasons?: string[];
+  room_reasons?: string[];
 }
 
 /** Add an entry to my list, or move one I'd ranked before (same id). */
@@ -412,7 +415,8 @@ export function useAddRankEntry() {
   const qc = useQueryClient();
   return useMutation({
     mutationFn: async (entry: NewRankEntry): Promise<{ id: string }> => {
-      const { data, error } = await supabase.from('rank_entries').upsert(entry).select('id').single();
+      // A new rank starts with no reasons: a re-rank from any sheet clears the old one's, which RankResult then sets.
+      const { data, error } = await supabase.from('rank_entries').upsert({ reasons: [], room_reasons: [], ...entry }).select('id').single();
       if (error) throw error;
       return data as { id: string };
     },
@@ -458,7 +462,7 @@ export interface AreaRanking {
 }
 
 /** The area filters for a scope around a place. Null when the place doesn't say. */
-export function areaFor(place: Pick<RankVenue, 'postcode' | 'city' | 'country_code'>, scope: RankScope) {
+export function areaFor(place: Pick<RankVenue, 'postcode' | 'city' | 'country_code'>, scope: RankScope): Record<string, string> | null {
   if (scope === 'postcode') return place.postcode && place.country_code ? { p_postcode: place.postcode, p_country_code: place.country_code } : null;
   if (scope === 'city') return place.city && place.country_code ? { p_city: place.city, p_country_code: place.country_code } : null;
   return place.country_code ? { p_country_code: place.country_code } : null;

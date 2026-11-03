@@ -7,7 +7,7 @@ import { previewItem } from '@/lib/editPreview';
 import type { SketchInputs } from '@/lib/sketch/types';
 import type { DatabaseItem } from '@/types/types';
 
-import { DrinkScreen } from '../DrinkScreen';
+import { DrinkScreen } from '../DrinkScreenLazy';
 import type { DrinkEditor } from './EditParts';
 
 const PHONE_WIDTH = layout.phoneFrame;

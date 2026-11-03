@@ -1,5 +1,6 @@
-import { useQuery } from '@tanstack/react-query';
+import { useQueries, useQuery } from '@tanstack/react-query';
 
+import { askableIds } from '@/lib/sketch/sketchIds';
 import { readSketchInputs, type SketchInputs } from '@/lib/sketch/types';
 import { supabase } from '@/lib/supabase';
 
@@ -8,14 +9,17 @@ import { supabase } from '@/lib/supabase';
 // written by hand until types/ is regenerated.
 
 const CHUNK = 100;
-let pending: { ids: Set<string>; result: Promise<Map<string, SketchInputs | null>> } | null = null;
+type Result = Map<string, SketchInputs | null>;
+let pending: { ids: Set<string>; result: Promise<Result> } | null = null;
 
-async function fetchMany(ids: string[]): Promise<Map<string, SketchInputs | null>> {
+async function fetchMany(all: string[]): Promise<Map<string, SketchInputs | null>> {
   const out = new Map<string, SketchInputs | null>();
+  // Beer and wine ids aren't uuids and would fail the whole batch; they have no drawing row (null).
+  const ids = askableIds(all);
   for (let i = 0; i < ids.length; i += CHUNK) {
     const { data, error } = await supabase.from('item_sketches').select('item_id, inputs').in('item_id', ids.slice(i, i + CHUNK));
-    // Decorative: signed out, or not readable, the drink falls back to its glass icon.
-    if (error) continue;
+    // A failed read is an error, never a cached null: the cache is saved between launches, and offline would overwrite good drawings.
+    if (error) throw error;
     for (const row of (data ?? []) as { item_id: string; inputs: unknown }[]) out.set(row.item_id, readSketchInputs(row.inputs));
   }
   return out;
@@ -25,10 +29,10 @@ async function fetchMany(ids: string[]): Promise<Map<string, SketchInputs | null
 function load(id: string): Promise<SketchInputs | null> {
   if (!pending) {
     const ids = new Set<string>();
-    const result = new Promise<Map<string, SketchInputs | null>>((resolve) => {
+    const result = new Promise<Result>((resolve, reject) => {
       setTimeout(() => {
         pending = null;
-        fetchMany([...ids]).then(resolve, () => resolve(new Map()));
+        fetchMany([...ids]).then(resolve, reject);
       }, 16);
     });
     pending = { ids, result };
@@ -44,5 +48,20 @@ export function useItemSketch(itemId: string | null | undefined) {
     enabled: !!itemId,
     staleTime: 10 * 60_000,
     queryFn: () => load(itemId!),
+  });
+}
+
+/**
+ * Several drinks' drawing inputs at once (a poster's drinks), by id, from the
+ * same cache and request as useItemSketch. `ready` once every one has come
+ * back, with or without a drawing.
+ */
+export function useItemSketches(itemIds: readonly string[]) {
+  return useQueries({
+    queries: itemIds.map((id) => ({ queryKey: ['item-sketch', id], staleTime: 10 * 60_000, queryFn: () => load(id) })),
+    combine: (results) => ({
+      byId: Object.fromEntries(itemIds.map((id, i) => [id, results[i]?.data ?? null])) as Record<string, SketchInputs | null>,
+      ready: results.every((r) => !r.isPending),
+    }),
   });
 }

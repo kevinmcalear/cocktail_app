@@ -3,30 +3,13 @@ import { StyleSheet, View } from 'react-native';
 import { Caption, DsText, PressableScale, useDs } from '@/components/ds';
 import { IconSymbol } from '@/components/ui/icon-symbol';
 import { font, palateHues, radius, space } from '@/constants/tokens';
-import { withAlpha } from '@/lib/color';
-import type { DrinkMark, Tally } from '@/lib/importReview';
+import type { DrinkMark } from '@/lib/importReview';
 import type { ReadFile } from '@/lib/readAnything';
 import type { RecipeReading } from '@/supabase/functions/_shared/anythingRead';
 
 import { MonoLabel } from './CheckParts';
 import { SourceCrop } from './PagePicture';
 import { amountShown } from './RecipeSpec';
-
-/** The bar that counts checked out of total, and the words beside it. */
-export function ProgressLine({ t, words }: { t: Tally; words: string }) {
-  const ds = useDs();
-  const share = t.total ? Math.round((t.checked / t.total) * 100) : 0;
-  return (
-    <View style={styles.progress}>
-      <View role="progressbar" aria-label={words} aria-valuemin={0} aria-valuemax={100} aria-valuenow={share} style={[styles.track, { backgroundColor: withAlpha(ds.c.ink, 0.12) }]}>
-        <View style={[styles.fill, { width: `${share}%`, backgroundColor: ds.accentText }]} />
-      </View>
-      <Caption tone="muted" numberOfLines={1} style={styles.mono}>
-        {words}
-      </Caption>
-    </View>
-  );
-}
 
 /** "Not a drink? Take it out" (board w2-import-review E20): a quiet line under the drink's name. */
 export function TakeOutLine({ onPress }: { onPress: () => void }) {
@@ -104,10 +87,6 @@ export function FilePart({ recipe, files, usual, onLook }: { recipe: RecipeReadi
 }
 
 const styles = StyleSheet.create({
-  progress: { flexDirection: 'row', alignItems: 'center', gap: space.md },
-  track: { flex: 1, height: 6, borderRadius: radius.mark, overflow: 'hidden' },
-  fill: { height: 6, borderRadius: radius.mark },
-  mono: { ...font.figures },
   takeOut: { flexDirection: 'row', alignItems: 'center', gap: space.xs + 2, alignSelf: 'flex-start' },
   takeOutButton: { minHeight: 44, justifyContent: 'center', paddingHorizontal: 2 },
   bold: { ...font.semiBold },

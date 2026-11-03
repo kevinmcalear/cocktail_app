@@ -67,10 +67,13 @@ const EYE = 'M2 12s3.6-7 10-7 10 7 10 7-3.6 7-10 7S2 12 2 12z';
 const HOURGLASS = 'M6.5 3.5h11M6.5 20.5h11M8 3.5c0 4.5 8 4.5 8 8.5s-8 4-8 8.5M16 3.5c0 4.5-8 4.5-8 8.5s8 4 8 8.5';
 const CARD_BACK = 'M8 4.5h10.5a1.5 1.5 0 0 1 1.5 1.5v10';
 const CARD = R(4, 8, 12.5, 12.5, 1.5);
+/** The Drinks tab's glass (Kept-glyph): an outline in every bar; `on` is Android's selected tab, the bowl filled, the stem and foot still lines. */
+const GLASS_BOWL = 'M5 4.5h14L12 12.5z';
 
 const G = {
   // --- the shell's places (nav-icons board) ---
   'place.tonight': { ...CAL, day: true },
+  'place.drinks': { d: GLASS_BOWL + 'M12 12.5V19.5M8 20h8', f: GLASS_BOWL, solid: true },
   'place.library': { d: SPEC_BOOK + 'M5.5 18.5a2 2 0 0 1 2-2h11M9 8h6l-3 3.2zM12 11.2v2.6M10.5 13.8h3', f: SPEC_BOOK },
   'place.menus': { d: MENU_CARD + 'M9.5 7.5h5M8.5 11.5h7M8.5 14.5h7M8.5 17.5h4', f: MENU_CARD },
   'place.prep': { d: 'M5.5 4.5h13v2.5h-13z' + TUB + 'M9 12.5h6v3H9z', f: TUB },
@@ -97,8 +100,10 @@ const G = {
   'arrow.up': { d: 'M12 19V5M5.5 11.5L12 5l6.5 6.5' },
   'arrow.down': { d: 'M12 5v14M5.5 12.5L12 19l6.5-6.5' },
   'arrow.up.right': { d: 'M7 17L17 7M8.5 7H17v8.5' },
+  'arrow.up.left': { d: 'M18 18L7 7M7 15V7h8' },
   'arrow.up.to.line': { d: 'M5 4h14M12 20V8.5M6.5 14L12 8.5l5.5 5.5' },
   'arrow.up.and.down': { d: 'M8 4v16M4.5 7.5L8 4l3.5 3.5M16 20V4M12.5 16.5L16 20l3.5-3.5' },
+  'arrow.left.arrow.right': { d: 'M7 7h12M15 3l4 4-4 4M17 17H5M9 13l-4 4 4 4' },
   'arrow.left.and.right': { d: 'M3 12h18M6.5 8.5L3 12l3.5 3.5M17.5 8.5L21 12l-3.5 3.5' },
   'arrow.turn.down.right': { d: 'M4.5 4v7a4 4 0 0 0 4 4h11M15.5 11l4 4-4 4' },
   'arrow.uturn.backward': { d: 'M9 14L4.5 9.5 9 5M4.5 9.5h10a5 5 0 0 1 0 10H11' },
@@ -122,7 +127,11 @@ const G = {
   xmark: { d: 'M6 6l12 12M18 6L6 18' },
   'xmark.circle.fill': filled({ d: RING + 'M9 9l6 6M15 9l-6 6', f: RING }),
   checkmark: { d: 'M4.5 12.5l4.5 4.5L19.5 6.5' },
+  jigger: { d: 'M7 3.5h10l-3.5 8.5h-3zM10.5 12h3l3.5 8.5H7z' },
+  'checkmark.circle': { d: RING + 'M8 12.3l2.8 2.8L16.2 9.7', f: RING },
   'checkmark.circle.fill': filled({ d: RING + 'M8 12.3l2.8 2.8L16.2 9.7', f: RING }),
+  // A step still to do (the first round, Set up <bar>): the ring the done tick sits in.
+  circle: { d: RING, f: RING },
   'checkmark.seal.fill': filled({
     d: 'M12 3l2.3 1.6 2.8-.1.9 2.7 2.3 1.6-.9 2.7.9 2.7-2.3 1.6-.9 2.7-2.8-.1L12 21l-2.3-1.6-2.8.1-.9-2.7-2.3-1.6.9-2.7-.9-2.7 2.3-1.6.9-2.7 2.8.1zM9 12l2 2 4-4',
     f: 'M12 3l2.3 1.6 2.8-.1.9 2.7 2.3 1.6-.9 2.7.9 2.7-2.3 1.6-.9 2.7-2.8-.1L12 21l-2.3-1.6-2.8.1-.9-2.7-2.3-1.6.9-2.7-.9-2.7 2.3-1.6.9-2.7 2.8.1z',
@@ -131,6 +140,8 @@ const G = {
   mic: { d: 'M12 15a3 3 0 0 0 3-3V6a3 3 0 0 0-6 0v6a3 3 0 0 0 3 3zM6 11a6 6 0 0 0 12 0M12 17v4', f: 'M12 15a3 3 0 0 0 3-3V6a3 3 0 0 0-6 0v6a3 3 0 0 0 3 3z' },
   trash: { d: 'M4 6.5h16M18 6.5v12a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2v-12M9 6.5V5a1.5 1.5 0 0 1 1.5-1.5h3A1.5 1.5 0 0 1 15 5v1.5M10 11v5.5M14 11v5.5' },
   'square.and.arrow.up': { d: 'M5 12v6.5a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2V12M16 7l-4-4-4 4M12 3v12' },
+  /** Android's Share (And-page). */
+  'share.nodes': { d: `${C(18, 5, 2.6)}${C(6, 12, 2.6)}${C(18, 19, 2.6)}M8.3 10.7l7.4-4.2M8.3 13.3l7.4 4.2` },
   'square.and.arrow.down': { d: 'M12 3v11M7.5 9.5L12 14l4.5-4.5M4 15v3a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-3' },
   'doc.on.doc': { d: R(8.5, 8.5, 12, 12, 2) + 'M15.5 5.5V5a1.5 1.5 0 0 0-1.5-1.5H5A1.5 1.5 0 0 0 3.5 5v9A1.5 1.5 0 0 0 5 15.5h.5', f: R(8.5, 8.5, 12, 12, 2) },
   'square.on.square': { d: R(8.5, 8.5, 12, 12, 2) + 'M15.5 5.5V5a1.5 1.5 0 0 0-1.5-1.5H5A1.5 1.5 0 0 0 3.5 5v9A1.5 1.5 0 0 0 5 15.5h.5', f: R(8.5, 8.5, 12, 12, 2) },
@@ -142,6 +153,8 @@ const G = {
   'play.fill': filled({ d: 'M7 4.5l12 7.5-12 7.5z', f: 'M7 4.5l12 7.5-12 7.5z' }),
   'paperplane.fill': filled({ d: 'M20.5 3.5L10.5 13.5M20.5 3.5l-6 17-4-7-7-4z', f: 'M20.5 3.5l-6 17-4-7-7-4z' }),
   printer: { d: 'M6.5 8.5v-5h11v5' + PRINTER + R(6.5, 13.5, 11, 7, 1), f: R(6.5, 13.5, 11, 7, 1) },
+  // A code: three corner squares and a few modules (the print set's table cards, Bet-print).
+  qrcode: { d: R(3.5, 3.5, 7, 7, 1.2) + R(13.5, 3.5, 7, 7, 1.2) + R(3.5, 13.5, 7, 7, 1.2) + 'M14 14h2.5v2.5H14zM18 18h2.5v2.5H18zM18 14h2.5M14 19.5h1.5', f: R(3.5, 3.5, 7, 7, 1.2) },
   scissors: { d: C(6.5, 6.5, 2.8) + C(6.5, 17.5, 2.8) + 'M19.5 4.5L8.6 15.4M14.3 14.3l5.2 5.2M8.6 8.6L12 12' },
   'hand.tap': { d: 'M4 4l6.5 15.5 2.3-6.7 6.7-2.3zM13 13l6 6' },
   'chevron.left.forwardslash.chevron.right': { d: 'M16 17.5l5.5-5.5L16 6.5M8 6.5L2.5 12 8 17.5' },
@@ -159,11 +172,14 @@ const G = {
   person: { d: PERSON, f: C(12, 8, 3.8) },
   'person.crop.circle': { d: YOU, f: C(12, 12, 8.5) },
   'person.circle.fill': filled({ d: YOU, f: C(12, 12, 8.5) }),
+  'person.2': { d: TEAM, f: C(9, 8, 3) },
   'person.2.fill': filled({ d: TEAM, f: C(9, 8, 3) }),
   'person.badge.plus': { d: C(9.5, 8, 3.8) + 'M3 20.5v-1a4.5 4.5 0 0 1 4.5-4.5h4a4.5 4.5 0 0 1 4.5 4.5v1M19 8v6M16 11h6', f: C(9.5, 8, 3.8) },
   'person.badge.minus': { d: C(9.5, 8, 3.8) + 'M3 20.5v-1a4.5 4.5 0 0 1 4.5-4.5h4a4.5 4.5 0 0 1 4.5 4.5v1M16 11h6', f: C(9.5, 8, 3.8) },
   envelope: { d: R(3, 5, 18, 14, 2) + 'M3.5 6.5l8.5 6.5 8.5-6.5', f: R(3, 5, 18, 14, 2) },
   'bubble.left': { d: BUBBLE, f: BUBBLE },
+  // The phone in your hand (Add it to your home screen); `phone` is a call.
+  iphone: { d: R(6.5, 2.5, 11, 19, 2.5) + 'M11 18.5h2', f: R(6.5, 2.5, 11, 19, 2.5) },
   phone: { d: 'M20.5 16.4v2.6a1.8 1.8 0 0 1-2 1.8 17.6 17.6 0 0 1-7.7-2.7 17.3 17.3 0 0 1-5.3-5.3A17.6 17.6 0 0 1 2.8 5.1 1.8 1.8 0 0 1 4.6 3.1h2.6a1.8 1.8 0 0 1 1.8 1.5c.1.9.4 1.7.6 2.5a1.8 1.8 0 0 1-.4 1.9L8.1 10.1a14.2 14.2 0 0 0 5.3 5.3l1.1-1.1a1.8 1.8 0 0 1 1.9-.4c.8.3 1.6.5 2.5.6a1.8 1.8 0 0 1 1.6 1.9z' },
   globe: { d: RING + 'M3 12h18M12 3a13.5 13.5 0 0 1 3.6 9 13.5 13.5 0 0 1-3.6 9 13.5 13.5 0 0 1-3.6-9A13.5 13.5 0 0 1 12 3z', f: RING },
   instagram: { d: R(3.5, 3.5, 17, 17, 5) + C(12, 12, 4) + 'M17.2 6.8h.01' },

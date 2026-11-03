@@ -1,5 +1,6 @@
 import { useQuery } from '@tanstack/react-query';
 
+import { retryQuery } from '@/lib/queryRetry';
 import { supabase } from '@/lib/supabase';
 import { byDrink, type VenueCanMake } from '@/lib/venueCanMake';
 
@@ -22,7 +23,7 @@ export function useVenueCanMake(venueId: string | null | undefined, drinkIds: re
     enabled: !!venueId && ids.length > 0,
     staleTime: 60 * 1000,
     // Not the venue's staff (42501): asking again won't change that.
-    retry: (count, error) => (error as { code?: string }).code !== '42501' && count < 3,
+    retry: retryQuery,
     queryFn: async (): Promise<Record<string, VenueCanMake>> => {
       const pages = [];
       for (let i = 0; i < ids.length; i += PAGE) pages.push(ids.slice(i, i + PAGE));

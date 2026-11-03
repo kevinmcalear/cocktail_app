@@ -18,7 +18,8 @@
       "blockedPermissions": [
         "android.permission.SYSTEM_ALERT_WINDOW",
         "android.permission.WRITE_EXTERNAL_STORAGE",
-        "android.permission.READ_MEDIA_IMAGES"
+        "android.permission.READ_MEDIA_IMAGES",
+        "android.permission.READ_MEDIA_VISUAL_USER_SELECTED"
       ]
     },
     "web": {
@@ -46,6 +47,15 @@
           "photosPermission": "Allow $(PRODUCT_NAME) to use your photos so you can add pictures of drinks, menus, venue logos and your profile.",
           "cameraPermission": "$(PRODUCT_NAME) uses the camera to photograph drinks, and to read a menu, bottle or recipe you point it at.",
           "microphonePermission": "$(PRODUCT_NAME) uses the microphone when you tap the mic to say a drink."
+        }
+      ],
+      [
+        "expo-media-library",
+        {
+          "photosPermission": "Allow $(PRODUCT_NAME) to use your photos so you can add pictures of drinks, menus, venue logos and your profile.",
+          "savePhotosPermission": "Allow $(PRODUCT_NAME) to save the posters you make to your photos.",
+          "isAccessMediaLocationEnabled": false,
+          "granularPermissions": []
         }
       ],
       [

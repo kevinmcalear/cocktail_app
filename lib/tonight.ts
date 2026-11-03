@@ -2,7 +2,10 @@
 // 2026): what the staff page says before doors and what the home page says
 // about the shelf. Plain functions so tonight.check.ts can hold them.
 
+import { isGarnishUnit } from './garnish';
 import type { MakeLine } from './prep';
+import { resolvePresentationIngredient, sortRecipesByOrder } from './recipeUtils';
+import type { PresentationRecipe } from './spec';
 
 /** The service day ends at 6 the next morning (as useServiceDate counts it). */
 export function serviceEnd(now: Date): Date {
@@ -17,6 +20,28 @@ export function offTonight<T extends { offAt: string | null }>(drinks: readonly 
   const end = serviceEnd(now).getTime();
   return drinks.filter((d) => d.offAt != null && Date.parse(d.offAt) <= end);
 }
+
+/**
+ * The drink's garnishes for the service line, in spec order: count-unit lines
+ * (a twist, a sprig), not an egg white counted "1 each".
+ * ponytail: lane D2 (relaunch/d2-spec) adds garnishNames() to lib/specView.ts,
+ * which also says "expressed and discarded" and "grated"; switch to it once it lands.
+ */
+export function garnishOf(lines: readonly { ingredient: string | null; unit: string | null | undefined }[]): string[] {
+  return lines.filter((l) => l.ingredient && isGarnishUnit(l.unit) && !/\begg/i.test(l.ingredient)).map((l) => l.ingredient!);
+}
+
+/**
+ * A drink's lines as names and units, in spec order: what Tonight reads from
+ * the spec book without lib/spec's amounts (that stays out of the home page's
+ * first load).
+ */
+export function recipeNames(recipes: readonly PresentationRecipe[] | null | undefined): { ingredient: string | null; unit: string | null }[] {
+  return sortRecipesByOrder([...(recipes ?? [])]).map((r) => ({ ingredient: (resolvePresentationIngredient(r) as { name?: string } | null)?.name ?? null, unit: r.unit ?? null }));
+}
+
+/** "Comes off at 11pm". */
+export const offAtLine = (offAt: string | null) => (offAt ? `Comes off at ${new Date(offAt).toLocaleTimeString(undefined, { hour: 'numeric', minute: '2-digit' })}` : 'Off tonight');
 
 /** "Saturday 1 November", and "doors at 6pm" while the bar is closed and opens later today. */
 export function tonightEyebrow(date: Date, opens: string | null, locale?: string): string {
@@ -96,17 +121,24 @@ export function talkThrough(
   allergens: (id: string) => { allergen: string; via: string[][] }[] | undefined,
   label: (key: string) => string
 ): { id: string; name: string; sub: string } | null {
-  const rank = (key: string) => (TALK_FIRST.includes(key) ? TALK_FIRST.indexOf(key) : TALK_FIRST.length);
   let best: { id: string; name: string; sub: string; rank: number } | null = null;
   for (const d of drinks) {
-    for (const a of allergens(d.id) ?? []) {
-      const r = rank(a.allergen);
-      if (best && best.rank <= r) continue;
-      const via = a.via[0]?.[a.via[0].length - 1];
-      best = { id: d.id, name: d.name, sub: `${via ?? label(a.allergen)}: what to tell guests`, rank: r };
-    }
+    const talk = talkAbout(allergens(d.id), label);
+    if (talk && (!best || talk.rank < best.rank)) best = { id: d.id, name: d.name, sub: `${talk.word}: what to tell guests`, rank: talk.rank };
   }
   return best && { id: best.id, name: best.name, sub: best.sub };
+}
+
+/** One drink's allergen worth a word at the table, by what it comes through ("Raw egg white"), eggs and milk first. */
+export function talkAbout(allergens: readonly { allergen: string; via: string[][] }[] | undefined, label: (key: string) => string): { word: string; rank: number } | null {
+  const rank = (key: string) => (TALK_FIRST.includes(key) ? TALK_FIRST.indexOf(key) : TALK_FIRST.length);
+  let best: { word: string; rank: number } | null = null;
+  for (const a of allergens ?? []) {
+    const r = rank(a.allergen);
+    if (best && best.rank <= r) continue;
+    best = { word: a.via[0]?.[a.via[0].length - 1] ?? label(a.allergen), rank: r };
+  }
+  return best;
 }
 
 /** House-made used tonight that needs no batch: "1.2 L · enough for tonight" rows, for what has been counted or logged. */
@@ -145,5 +177,6 @@ export function onShiftLine(
   const opener = shifts.find((s) => s.opens);
   const closer = shifts.find((s) => s.closes);
   const parts = [opener ? `${call(opener.user_id)} open${opener.user_id === me ? '' : 's'}` : null, closer ? `${call(closer.user_id)} close${closer.user_id === me ? '' : 's'}` : null].filter(Boolean);
-  return { names: names.charAt(0).toUpperCase() + names.slice(1), sub: parts.length ? parts.join(' · ') : null };
+  const sentence = (text: string) => text.charAt(0).toUpperCase() + text.slice(1);
+  return { names: sentence(names), sub: parts.length ? sentence(parts.join(' · ')) : null };
 }

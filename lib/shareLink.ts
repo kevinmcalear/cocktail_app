@@ -1,7 +1,8 @@
-import * as Burnt from 'burnt';
 import { Platform, Share, type ShareContent } from 'react-native';
 
+import { track, type SharedWhat } from '@/lib/analytics';
 import { showMessage } from '@/lib/dialogs';
+import { toast } from '@/lib/systemToast';
 import { siteOrigin } from '@/lib/venueLink';
 
 /**
@@ -10,6 +11,11 @@ import { siteOrigin } from '@/lib/venueLink';
  */
 export function drinkUrl(slugOrId: string): string {
   return `${siteOrigin()}/d/${slugOrId}`;
+}
+
+/** A bottle's or house-made thing's link: its page in the app (they have no public page), a sign-in for the rest. */
+export function ingredientUrl(id: string): string {
+  return `${siteOrigin()}/ingredient/${id}`;
 }
 
 /**
@@ -28,19 +34,24 @@ export function linkShareContent(os: typeof Platform.OS, url: string, title: str
  * browser has one, unless `copy` asks for the clipboard), else the clipboard.
  * Says which happened so the button can read "Copied". Throws when the
  * browser refuses both, so the caller can show the link to copy by hand.
- * `lead` is text that goes before the link ("What goes with gin").
+ * `lead` is text that goes before the link ("What goes with gin"). `what` is
+ * the label on the shared event; closing the sheet without sending isn't one.
+ * Android can't tell: its sheet always answers sharedAction, so there a
+ * shared event is the sheet opened, not something sent.
  *
  * ponytail: no expo-clipboard, so native always shares; the share sheet has
  * Copy. Add expo-clipboard if a native "Copy" button is ever drawn.
  */
-export async function shareLink(url: string, title: string, { copy = false, lead }: { copy?: boolean; lead?: string } = {}): Promise<'shared' | 'copied'> {
+export async function shareLink(url: string, title: string, what: SharedWhat, { copy = false, lead }: { copy?: boolean; lead?: string } = {}): Promise<'shared' | 'copied'> {
   if (Platform.OS !== 'web') {
-    await Share.share(linkShareContent(Platform.OS, url, title, lead));
+    const { action } = await Share.share(linkShareContent(Platform.OS, url, title, lead));
+    if (action !== Share.dismissedAction) track('shared', { what, how: 'sheet' });
     return 'shared';
   }
   if (!copy && typeof navigator.share === 'function') {
     try {
       await navigator.share(lead ? { url, title, text: lead } : { url, title });
+      track('shared', { what, how: 'sheet' });
       return 'shared';
     } catch (e) {
       // Closing the sheet isn't a failure; anything else falls through to the clipboard.
@@ -48,6 +59,7 @@ export async function shareLink(url: string, title: string, { copy = false, lead
     }
   }
   await navigator.clipboard.writeText(url);
+  track('shared', { what, how: 'clipboard' });
   return 'copied';
 }
 
@@ -55,27 +67,30 @@ export async function shareLink(url: string, title: string, { copy = false, lead
  * Share a link the plain way: the share sheet, or the clipboard with a toast.
  * Shows the link to copy by hand when even that is refused.
  */
-export async function shareOrCopy(url: string, title: string, lead?: string): Promise<void> {
+export async function shareOrCopy(url: string, title: string, what: SharedWhat, lead?: string): Promise<void> {
   try {
-    if ((await shareLink(url, title, { lead })) === 'copied') Burnt.toast({ title: 'Link copied', preset: 'done', duration: 2 });
+    if ((await shareLink(url, title, what, { lead })) === 'copied') toast({ title: 'Link copied', preset: 'done', duration: 2 });
   } catch {
     showMessage("Couldn't share the link", url);
   }
 }
 
 /** Share some text (a batch to make): the share sheet, or the clipboard on the web. */
-export async function shareText(text: string, title: string): Promise<void> {
+export async function shareText(text: string, title: string, what: SharedWhat): Promise<void> {
   try {
     if (Platform.OS !== 'web') {
-      await Share.share({ message: text, title });
+      const { action } = await Share.share({ message: text, title });
+      if (action !== Share.dismissedAction) track('shared', { what, how: 'sheet' });
       return;
     }
     if (typeof navigator !== 'undefined' && typeof navigator.share === 'function') {
       await navigator.share({ text, title });
+      track('shared', { what, how: 'sheet' });
       return;
     }
     await navigator.clipboard.writeText(text);
-    Burnt.toast({ title: 'Copied', preset: 'done', duration: 2 });
+    track('shared', { what, how: 'clipboard' });
+    toast({ title: 'Copied', preset: 'done', duration: 2 });
   } catch (e) {
     if (e instanceof Error && e.name === 'AbortError') return;
     showMessage("Couldn't share it", text);
