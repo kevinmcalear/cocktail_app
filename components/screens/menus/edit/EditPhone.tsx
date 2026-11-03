@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { StyleSheet, View } from 'react-native';
+import { StyleSheet, View, type NativeScrollEvent, type NativeSyntheticEvent } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import { Caption, GlassSurface, useBreakpoint, useDs, useGutter } from '@/components/ds';
@@ -27,13 +27,20 @@ export function EditPhone(props: EditViewProps) {
   const wide = useBreakpoint() !== 'phone';
   const [barHeight, setBarHeight] = useState(58);
   const [collapsed, setCollapsed] = useState(false);
+  const track = (e: NativeSyntheticEvent<NativeScrollEvent>) => setCollapsed(e.nativeEvent.contentOffset.y > COLLAPSE_AT);
   const { layout: menu } = editor;
   const drinks = menu.sections.flatMap((s) => s.drinks);
   const problem = saveProblem(editor);
   const column = { paddingHorizontal: gutter, maxWidth: wide ? menuCover.column : undefined, width: '100%', alignSelf: 'center' } as const;
   return (
     <View style={[styles.screen, { backgroundColor: ds.c.ground }]}>
-      <FormScrollContainer onScroll={(e) => setCollapsed(e.nativeEvent.contentOffset.y > COLLAPSE_AT)} scrollEventThrottle={32} contentContainerStyle={{ paddingBottom: insets.bottom + barHeight + space.xxl }}>
+      <FormScrollContainer
+        // ponytail: on a phone the drag lists' container keeps onScroll for itself, so the bar changes when a scroll settles; a live change wants the container's scroll offset (outerScrollOffset).
+        onScroll={track}
+        onScrollEndDrag={track}
+        onMomentumScrollEnd={track}
+        scrollEventThrottle={32}
+        contentContainerStyle={{ paddingBottom: insets.bottom + barHeight + space.xxl }}>
         <View style={[column, styles.head]}>
           <MenuPageHead
             heroIds={drinks.slice(0, 3).map((d) => d.id)}
@@ -59,8 +66,8 @@ export function EditPhone(props: EditViewProps) {
           <EditAfter editor={editor} />
         </View>
       </FormScrollContainer>
-      <View pointerEvents="box-none" style={[styles.pinned, { paddingHorizontal: gutter }]}>
-        <MenuTopBar onBack={editor.leave} onShare={null} pill={null} onMedia={!!menu.coverUrl && ds.scheme === 'dark' && !collapsed} collapsed={collapsed ? { title: menu.name.trim() || 'Untitled menu' } : null} top={insets.top} />
+      <View pointerEvents="box-none" style={styles.pinned}>
+        <MenuTopBar onBack={editor.leave} onShare={null} pill={null} onMedia={!!menu.coverUrl && ds.scheme === 'dark' && !collapsed} collapsed={collapsed ? { title: menu.name.trim() || 'Untitled menu' } : null} top={insets.top} gutter={gutter} />
       </View>
       <View onLayout={(e) => setBarHeight(e.nativeEvent.layout.height)} style={[styles.dock, { left: gutter, right: gutter, bottom: insets.bottom + space.lg }]}>
         {problem ? (

@@ -22,6 +22,8 @@ interface MenuTopBarProps extends MenuBarTools {
   /** Scrolled past the top (the collapsed header): the bar gets the page's ground and the menu's name beside Back. */
   collapsed?: { title: string } | null;
   top: number;
+  /** Pinned over a page: the page's side margin, so the backing runs to the screen's edges. */
+  gutter?: number;
 }
 
 /**
@@ -31,10 +33,10 @@ interface MenuTopBarProps extends MenuBarTools {
  * item pages do, #1164); scrolled past the hero it takes a backing and the
  * menu's name.
  */
-export function MenuTopBar({ onBack, label, onShare, onEdit, pill, onMore, onMedia, collapsed, top }: MenuTopBarProps) {
+export function MenuTopBar({ onBack, label, onShare, onEdit, pill, onMore, onMedia, collapsed, top, gutter = 0 }: MenuTopBarProps) {
   const ds = useDs();
   return (
-    <View pointerEvents="box-none" style={[styles.wrap, { paddingTop: top + space.lg }, collapsed ? [styles.backed, { backgroundColor: ds.c.ground, borderBottomColor: ds.c.line }] : null]}>
+    <View pointerEvents="box-none" style={[styles.wrap, { paddingTop: top + space.lg, paddingHorizontal: gutter }, collapsed ? [styles.backed, { backgroundColor: ds.c.ground, borderBottomColor: ds.c.line }] : null]}>
       {onBack ? (
         <GlassButton icon="chevron.left" accessibilityLabel="Back" onPress={onBack} onMedia={onMedia} />
       ) : label ? (
