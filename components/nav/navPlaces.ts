@@ -123,8 +123,8 @@ export function useSideNotes(venueId: string | null): SideNotes {
   const canPrep = !!venueId && Array.isArray(caps) && (caps.includes('prep') || caps.includes('specs'));
   const prepData = usePrepData(canPrep ? venueId : null, on.map((m) => m.id)).data;
   const low = useMemo(
-    () => (prepData ? buildPrepList({ ...prepData, servesPerDrink: DEFAULT_SERVES, startsAt: tonightAt6(), now: new Date() }).make.length : 0),
-    [prepData]
+    () => (prepData ? buildPrepList({ ...prepData, servesPerDrink: DEFAULT_SERVES, startsAt: tonightAt6(), now: new Date(now) }).make.length : 0),
+    [prepData, now]
   );
   const shelf = useShelf().data?.length;
   return {
