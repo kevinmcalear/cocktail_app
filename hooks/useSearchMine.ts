@@ -6,7 +6,7 @@ import { useCapabilities } from '@/hooks/useCapabilities';
 import { useVenueMenus } from '@/hooks/useMenus';
 import { useMode } from '@/hooks/useMode';
 import { PERSONAL_CONTEXT, venueContextIds } from '@/lib/barContextFilter';
-import { menuDrinks } from '@/lib/libraryFilters';
+import { menuDrinks } from '@/lib/drinksFilters';
 import type { SearchScope } from '@/lib/searchScope';
 
 /**

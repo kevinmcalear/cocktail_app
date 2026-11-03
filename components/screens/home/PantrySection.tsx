@@ -3,7 +3,7 @@ import { StyleSheet, View, type StyleProp, type ViewStyle } from 'react-native';
 import { Button, IngredientDrawing } from '@/components/ds';
 import { space } from '@/constants/tokens';
 import type { ShelfItem } from '@/hooks/useHomeBar';
-import { SECTIONS } from '@/lib/barSections';
+import { SECTIONS } from '@/lib/barSectionWords';
 import { PANTRY, PANTRY_WATER } from '@/lib/pantry';
 
 import { SectionActions, SectionHead, ShelfTile } from './BarSections';
@@ -47,7 +47,7 @@ export function PantrySection({ items, extras, shelf, onShelf, cols, editing, on
 
   return (
     <View style={[styles.section, style]}>
-      <SectionHead section="fridge" count={count}>
+      <SectionHead section="fridge">
         <SectionActions section="fridge" editing={editing} onEdit={onEdit} canEdit={count > 0} />
       </SectionHead>
       <TileGrid cols={cols}>

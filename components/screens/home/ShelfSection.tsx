@@ -5,7 +5,7 @@ import { Body, Button, Caption, Chip, Field, useDs } from '@/components/ds';
 import { MenuSheet } from '@/components/screens/menus/MenuSheet';
 import { space } from '@/constants/tokens';
 import type { ShelfItem } from '@/hooks/useHomeBar';
-import { SECTIONS } from '@/lib/barSections';
+import { SECTIONS } from '@/lib/barSectionWords';
 import type { ShelfSort } from '@/lib/pantry';
 
 import { SectionActions, SectionHead, SectionIcon, ShelfTile } from './BarSections';
@@ -42,7 +42,7 @@ export function ShelfHead({ count, sort, onSort, query, onQuery, editing, onEdit
   const current = SORTS.find((s) => s.value === sort)?.label ?? 'Newest';
   return (
     <View style={styles.section}>
-      <SectionHead section="bottles" count={count}>
+      <SectionHead section="bottles">
         {count > 1 && !editing ? (
           <SectionIcon icon="arrow.up.and.down" color={sort === 'newest' ? undefined : ds.accentText} accessibilityLabel={`Sort bottles, now ${current}`} onPress={() => setSorting(true)} />
         ) : null}

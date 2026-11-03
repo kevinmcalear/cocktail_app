@@ -15,7 +15,7 @@ import { useBringIn } from '@/store/useBringIn';
  * (`onSnapBottles`); with no right to add, just the line. An Admin alone on
  * the team is asked to invite people. A filter that matches nothing says so.
  */
-export function LibraryEmpty({ barId, capsule, nothing, canAdd, onSnapBottles }: { barId: string | null; capsule: StaffCapsule; nothing: boolean; canAdd: boolean; onSnapBottles: () => void }) {
+export function DrinksEmpty({ barId, capsule, nothing, canAdd, onSnapBottles }: { barId: string | null; capsule: StaffCapsule; nothing: boolean; canAdd: boolean; onSnapBottles: () => void }) {
   const router = useRouter();
   const { alone } = useTeamCard(barId);
   const openTeam = useOpenTeam();

@@ -79,7 +79,7 @@ export function CreateSheet({ visible, onClose }: { visible: boolean; onClose: (
   const locked = known && !!venueId && !canAdd;
   const made = CREATE.filter((c) => !c.atVenue || canAdd);
   const hrefOf = (c: (typeof CREATE)[number]) => (c.atVenue && venueId ? `${c.href}?barId=${venueId}` : c.href);
-  const subtitle = !venueId ? 'In your home bar' : canAdd ? `Made at ${venueName}, for its library` : `Made at ${venueName}`;
+  const subtitle = !venueId ? 'In your home bar' : canAdd ? `Made at ${venueName}, for its drinks` : `Made at ${venueName}`;
   const go = (href: string) => {
     onClose();
     router.push(href as Href);

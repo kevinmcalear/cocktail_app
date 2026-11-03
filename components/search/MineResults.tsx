@@ -13,7 +13,7 @@ import type { SearchMine } from '@/hooks/useSearchMine';
 import { foldName } from '@/lib/discover';
 import { heroPicture } from '@/lib/itemImages';
 import { fallbackGlass, newDrinkHref, type ItemCategory } from '@/lib/itemRoutes';
-import { itemIdOf } from '@/lib/libraryFilters';
+import { itemIdOf } from '@/lib/drinksFilters';
 import { openSearchItem } from '@/lib/openSearchItem';
 import { drinkFacts, ingredientFacts, menuFacts } from '@/lib/searchCaptions';
 import { completions, groupCatalog, shows, type SearchShow, type ShowCounts } from '@/lib/searchScope';
