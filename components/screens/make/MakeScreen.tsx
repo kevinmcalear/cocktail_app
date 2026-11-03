@@ -10,7 +10,7 @@ import { useDrinkAllergens } from '@/hooks/useAllergens';
 import { useToolsFor } from '@/hooks/useBarKit';
 import { useMyProfile } from '@/hooks/useMyProfile';
 import { useLearnYield, type PrepCardData } from '@/hooks/usePrepCard';
-import { allergenLabel } from '@/lib/allergens';
+import { prepAllergenNames } from '@/lib/allergenWords';
 import { initials, stepParts, timerFromText, useByDate } from '@/lib/makeSteps';
 import { siteOrigin } from '@/lib/venueLink';
 import { toQuantity } from '@/lib/quantity';
@@ -111,7 +111,7 @@ function Make({ itemId, name, recipe, card, startFactor, startMode, canLearn, ki
     by: initials(me?.displayName),
     amount: makes,
     storage: prep?.storage ?? null,
-    allergens: allergens ? (allergens.allergens.length ? allergens.allergens.map((a) => allergenLabel(a.allergen)).join(', ') : 'No allergens') : '',
+    allergens: prepAllergenNames(allergens),
     url: `${siteOrigin()}/ingredient/${itemId}`,
   };
   const container = mode === 'fill' ? (FILLS.find((x) => x.ml === fill)?.container ?? null) : null;

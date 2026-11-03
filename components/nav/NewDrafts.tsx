@@ -6,7 +6,7 @@ import { useAuth, useUserId } from '@/ctx/AuthContext';
 import { useMenuSectionPlace } from '@/hooks/useDrinkDesk';
 import { COUNTED_STEPS, hasContent, WIZARD_STEPS, type WizardDraft, type WizardStep } from '@/lib/drinkWizard';
 import { fileTitle, tally, waitingFor, type ImportReview } from '@/lib/importReview';
-import { recipesToFinish } from '@/lib/prepKinds';
+import { recipesToFinish } from '@/lib/prepMath';
 import { slotStart } from '@/lib/wizardSlots';
 import { useBringIn } from '@/store/useBringIn';
 import { useDraftSyncStore } from '@/store/useDraftSyncStore';

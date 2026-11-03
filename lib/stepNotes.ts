@@ -38,6 +38,7 @@ export function draftSteps(items: readonly SortableRecipeItem[], parts: readonly
     // Trimmed as the page's lines are (lib/spec.ts), so both find the same garnish.
     unit: item.unit?.trim() || null,
     name: item.name,
+    ingredient: item.name,
     float: !!item.is_float,
     part: parts ? linePart(parts, toLine(item, i).key, false) : 1,
   }));
