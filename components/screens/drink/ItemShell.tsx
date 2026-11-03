@@ -2,7 +2,7 @@ import { useIsFocused } from 'expo-router';
 import { HeaderBackContext, HeaderHeightContext } from 'expo-router/react-navigation';
 import { StatusBar } from 'expo-status-bar';
 import { use, useState, type ReactNode } from 'react';
-import { Platform, StyleSheet, useWindowDimensions, View, type LayoutChangeEvent } from 'react-native';
+import { Platform, Pressable, StyleSheet, useWindowDimensions, View, type LayoutChangeEvent } from 'react-native';
 import Animated, { useAnimatedReaction, useAnimatedScrollHandler, useSharedValue, type SharedValue } from 'react-native-reanimated';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { scheduleOnRN } from 'react-native-worklets';
@@ -35,8 +35,8 @@ interface ItemShellProps {
    * photographer's line sits at the hero's foot, so the page starts under it.
    */
   photo: { url: string | number; hero: (height: number, fade: boolean) => ReactNode; rooms?: PhotoRoom[]; credit?: boolean } | null;
-  /** The drawing, drawn at `size`. `pour` off for its still copy in the bar. */
-  art: (pour?: boolean) => ReactNode;
+  /** The drawing, drawn at `size`, in front of you: again each time `play` changes (a tap on it). */
+  art: (play: number) => ReactNode;
   size: number;
   /** The sky's colour: the drink's liquid, the beer's, the syrup's. */
   liquid: string | null;
@@ -74,6 +74,8 @@ export function ItemShell({ name, pane, photo, art, size, liquid, title, action,
   const [width, setWidth] = useState(windowWidth);
   const columns = !pane && width >= COLUMNS_FROM;
   const scrollY = useSharedValue(0);
+  const [play, setPlay] = useState(0);
+  const replay = () => setPlay((n) => n + 1);
   const onScroll = useAnimatedScrollHandler((e) => scrollY.set(e.contentOffset.y));
   const heroHeight = photo ? phoneHeroHeight(width, height, top) : drawingRoom(top, size);
   // Up to 400 on a wide screen, shrinking with a short window down to 220, so the side never scrolls.
@@ -107,7 +109,7 @@ export function ItemShell({ name, pane, photo, art, size, liquid, title, action,
   // Where it goes, from the page under this one, where there's room for a label (desktop boards).
   const under = use(HeaderBackContext)?.title;
   const backLabel = columns || (Platform.OS === 'web' && wide) ? backWord(under) : undefined;
-  const dock = (over: { dockLeft: number; dockTop: number; handOff?: boolean }) => <DockedDrawing art={art()} size={size} top={top} width={width} scrollY={scrollY} {...over} />;
+  const dock = (over: { dockLeft: number; dockTop: number; handOff?: boolean }) => <DockedDrawing art={art(play)} size={size} top={top} width={width} scrollY={scrollY} {...over} />;
   const drawnBar = (phone: boolean) => (
     <PageControls top={top} scrollY={scrollY} tuck={phone ? tuck : Number.MAX_SAFE_INTEGER} smallAt={phone ? smallAt : Number.MAX_SAFE_INTEGER} title={phone ? name : ''} titleInset={photo || !phone ? 0 : DOCKED + space.sm} noBack={pane} backLabel={backLabel} {...controls}>
       {!photo && phone ? dock({ dockLeft: gutter + backWidth(backLabel) + space.sm, dockTop: top + space.sm + (layout.minTapTarget - DOCKED) / 2 }) : null}
@@ -149,7 +151,10 @@ export function ItemShell({ name, pane, photo, art, size, liquid, title, action,
               ) : (
                 <>
                   <View style={[styles.centre, { height: wideSize }]}>
-                    <View style={{ transform: [{ scale: wideSize / size }], transformOrigin: 'center top' }}>{art()}</View>
+                    {/* A toy, not a control: screen readers get the picture's label from the drawing. */}
+                    <Pressable onPress={replay} accessible={false} style={{ transform: [{ scale: wideSize / size }], transformOrigin: 'center top' }}>
+                      {art(play)}
+                    </Pressable>
                   </View>
                   {title}
                   {action}
@@ -171,7 +176,7 @@ export function ItemShell({ name, pane, photo, art, size, liquid, title, action,
         <>
           <Animated.ScrollView onScroll={onScroll} scrollEventThrottle={16} contentContainerStyle={[styles.column, { paddingBottom: bottom + space.xxl + (fab ? FAB_ROOM : 0) }]}>
             {photo ? <PhotoMirror key={String(photo.url)} url={photo.url} top={heroHeight} /> : <DrinkSky liquid={liquid} />}
-            {photo ? photo.hero(heroHeight, true) : <DrawingSpace top={top} size={size} />}
+            {photo ? photo.hero(heroHeight, true) : <DrawingSpace top={top} size={size} onReplay={replay} />}
             {spot === null ? null : (
               <View onLayout={onTitleLayout} style={[styles.photoTitle, inPhoto, { top: spot + space.lg, left: gutter, right: gutter }]}>
                 {title}

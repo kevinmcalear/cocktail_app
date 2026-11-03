@@ -1,7 +1,8 @@
 import { useState } from 'react';
 import { StyleSheet, View } from 'react-native';
 
-import { Button, Caption, ReviewRow } from '@/components/ds';
+import { Button, Caption } from '@/components/ds';
+import { ReviewRow } from '@/components/ds/ReviewRow';
 import { MenuSheet } from '@/components/screens/menus/MenuSheet';
 import { space } from '@/constants/tokens';
 import { isPrepName, prepRatio } from '@/lib/bringIn';

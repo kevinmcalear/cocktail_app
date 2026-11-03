@@ -1,4 +1,4 @@
-import { useRouter, type Href } from 'expo-router';
+import { useLocalSearchParams, useRouter, type Href } from 'expo-router';
 import { useEffect, useState } from 'react';
 import { ActivityIndicator, Platform, ScrollView, StyleSheet, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
@@ -23,6 +23,7 @@ import { draftSlot, freeNameSlot, useDrinkWizardStore, wizardPlace } from '@/sto
 
 import { BottlesCheck } from './BottlesCheck';
 import { BringInChooser } from './BringInChooser';
+import { FirstMenu } from './FirstMenu';
 import { ImportReview } from './ImportReview';
 import { ImportReviewDesk } from './ImportReviewDesk';
 import { MenuCheck } from './MenuCheck';
@@ -51,6 +52,8 @@ const reviewName = (job: BringInJob) => job.source.name ?? job.source.files.find
 export function BringInFlow() {
   const ds = useDs();
   const router = useRouter();
+  // Opened from the owner's first menu: its "Set up Little Rye · Tonight's menu" line, kept over the ways in.
+  const { step } = useLocalSearchParams<{ step?: string }>();
   const gutter = useGutter();
   const insets = useSafeAreaInsets();
   const place = useBringInPlace();
@@ -135,6 +138,10 @@ export function BringInFlow() {
       );
     }
     return desk ? <ImportReviewDesk id={reviewing.id} data={data} onFinishLater={finishLater} /> : <ImportReview id={reviewing.id} data={data} onFinishLater={finishLater} />;
+  }
+  // The owner's first menu (venue setup): the camera, until what it took is read and matched; a failed read goes to Reading's retry.
+  if (step && (!job || (job.hint === 'menu' && job.barId === place.barId && !checking && job.status !== 'failed' && (job.status === 'reading' || !!data)))) {
+    return <FirstMenu step={step} barId={place.barId} job={job} data={data} onClose={job ? cancel : leave} onReady={() => job && setCheckedId(job.id)} />;
   }
   if (!job) {
     return (

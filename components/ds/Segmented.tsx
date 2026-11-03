@@ -75,7 +75,8 @@ const styles = StyleSheet.create({
   bar: { flexDirection: 'row', gap: space.xl, borderBottomWidth: StyleSheet.hairlineWidth },
   tab: { minHeight: layout.minTapTarget, justifyContent: 'center', borderBottomWidth: 2, marginBottom: -1 },
   barStretch: { gap: 0 },
-  tabStretch: { flex: 1, minWidth: 0, alignItems: 'center' },
+  // Each tab as wide as its label plus an equal share of what's left: long labels ("Past menus") get the room, not a quarter each.
+  tabStretch: { flexGrow: 1, flexShrink: 1, flexBasis: 'auto', minWidth: 0, alignItems: 'center', paddingHorizontal: space.xs },
   track: { flexDirection: 'row', gap: space.xs, padding: space.xs - 1, borderRadius: radius.pill, borderWidth: StyleSheet.hairlineWidth },
   hug: { alignSelf: 'flex-start' },
   box: { borderRadius: radius.control },

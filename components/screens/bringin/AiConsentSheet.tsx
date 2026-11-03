@@ -8,11 +8,13 @@ import { IconSymbol } from '@/components/ui/icon-symbol';
 import { radius, space } from '@/constants/tokens';
 import { useAiConsentAsk } from '@/lib/aiConsent';
 
-const PROMISES = ['We send the page, not your account or contacts.', 'Google doesn’t keep it or train on it.', 'We ask once. Change it any time in Settings.'];
+// ponytail: "Google doesn't keep it or train on it" is left out until the Gemini API tier in use is confirmed to promise that.
+const PROMISES = ['We send only what you give us to read, not your account or contacts.', 'We ask once. Change it any time in Settings.'];
 
 /**
- * "Read it with AI?": the one OK before the first photo or PDF goes to
- * Google's Gemini (canvas make-bringin-consent). Clean pasted text never asks.
+ * "Read it with AI?": the one OK before the first photo, PDF, link or
+ * pasted text goes to Google's Gemini (canvas make-bringin-consent). It can
+ * open for any of them, so it names none first. Clean text never asks.
  * Mounted once; ensureAiConsent opens it.
  */
 export function AiConsentSheet() {
@@ -42,11 +44,11 @@ export function AiConsentSheet() {
       <View style={[styles.body, { paddingBottom: insets.bottom + space.xl }]}>
         <View style={styles.head}>
           <Caption tone="muted" style={styles.eyebrow}>
-            BEFORE THE FIRST PHOTO
+            BEFORE WE SEND ANYTHING
           </Caption>
           <Title>Read it with AI?</Title>
         </View>
-        <Body tone="muted">Photos and PDFs are read by Google’s Gemini, then you check every line before anything saves. Clean text you paste is read on your phone and never sent.</Body>
+        <Body tone="muted">Photos, PDFs, links and pasted text we can’t read on your phone go to Google’s Gemini to be read. You check every line before anything saves. A clean spec or list you paste is read on your phone and never sent.</Body>
         <View style={[styles.promises, { backgroundColor: ds.c.raised }]}>
           {PROMISES.map((line) => (
             <View key={line} style={styles.promise}>

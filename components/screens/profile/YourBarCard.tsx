@@ -90,7 +90,7 @@ export function YourBarCard({ positions, headlineId = null }: { positions: Posit
     body = 'Whoever runs it can claim it. Then your drinks show on its menus with you as the maker, and the team gets the venue app.';
     actions = (
       <View style={styles.actions}>
-        <Button label={`I run ${name}`} onPress={() => router.push(`/venue-setup?claim=${bar.id}` as Href)} />
+        <Button label={`I run ${name}`} onPress={() => router.push(`/p/${bar.id}/claim` as Href)} />
         <Button label="Send it to whoever does" variant="secondary" icon="square.and.arrow.up" onPress={() => void share()} />
       </View>
     );

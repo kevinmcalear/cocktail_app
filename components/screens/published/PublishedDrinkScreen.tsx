@@ -117,7 +117,7 @@ export function PublishedDrinkScreen({ id, releaseId }: { /** The drink's id, or
 
   const pictureColumn = (
     <View style={[styles.pictureColumn, wide && styles.pictureWide]}>
-      <PublicPicture name={drink.name} imageUrl={drink.imageUrl} generated={drink.imageIsGenerated} itemId={drink.id} glass={data.glass?.iconKey ?? data.glass?.name} />
+      <PublicPicture name={drink.name} imageUrl={drink.imageUrl} generated={drink.imageIsGenerated} itemId={drink.id} glass={data.glass?.iconKey ?? data.glass?.name} animate />
       {wide ? <PublicActions id={drink.id} name={drink.name} barId={drink.barId} picture={picture} releaseId={releaseId} /> : null}
     </View>
   );
