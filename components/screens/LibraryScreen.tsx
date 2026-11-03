@@ -3,10 +3,8 @@ import { lazy, Suspense, useMemo, useState } from 'react';
 import { FlatList, StyleSheet, View } from 'react-native';
 
 import { Button, Caption, Chip, useBreakpoint, useDs, useGutter } from '@/components/ds';
-import { PageHeader } from '@/components/nav/Page';
 import { useTabBarInset } from '@/components/nav/WebTabBar';
 import { useWebNav } from '@/hooks/useIsWideWeb';
-import { DRAWN_LIST_WINDOW } from '@/components/ds/SketchDrawing';
 import { BottlePhotoSheet } from '@/components/screens/bottles/BottlePhotoSheet';
 import { MatchClassicsNudge } from '@/components/screens/classics/MatchClassicsNudge';
 import { ResumeCard } from '@/components/screens/bringin/ResumeCard';
@@ -14,15 +12,16 @@ import { LibrarySetup } from '@/components/screens/venueSetup/SetupBanner';
 import { FirstRoundCard, RoundOpened } from '@/components/screens/firstRound/FirstRoundCard';
 import { FilterRow } from '@/components/screens/library/LibraryChips';
 import { useTileLines } from '@/components/screens/library/useTileLines';
-import { FILTER_DOCK, FilterDock, PinnedTitle, type FilterSet } from '@/components/screens/library/LibraryFilters';
+import { LibraryHead, SEGMENT_HOME, SEGMENT_VIEWS, segmentOf } from '@/components/screens/library/LibraryHead';
+import { OnNowCard } from '@/components/screens/library/OnNowCard';
+import { TonightLabel } from '@/components/screens/tonight/TonightParts';
 import { LibraryEmpty } from '@/components/screens/library/LibraryEmpty';
 import { LibraryPanes } from '@/components/screens/library/LibraryPanes';
-import { LibraryTile } from '@/components/screens/library/LibraryTile';
 import { useLibraryView } from '@/components/screens/library/useLibraryView';
 import { NearResults } from '@/components/search/NearResults';
 import { SearchField } from '@/components/search/SearchField';
 import { SwapSheet } from '@/components/screens/library/SwapSheet';
-import { layout, space } from '@/constants/tokens';
+import { space } from '@/constants/tokens';
 import { useActiveVenue } from '@/hooks/useActiveVenue';
 import { useOpenSearch } from '@/hooks/useSearchFrom';
 import { useCapabilities } from '@/hooks/useCapabilities';
@@ -33,30 +32,30 @@ import { usePricedItemIds } from '@/hooks/usePricing';
 import { useSearchCatalog } from '@/hooks/useSearchCatalog';
 import { useBarRiffs, useStaffList } from '@/hooks/useStaffList';
 import { venueContextIds } from '@/lib/barContextFilter';
-import { itemHref, newDrinkHref, type ItemCategory } from '@/lib/itemRoutes';
+import { newDrinkHref, type ItemCategory } from '@/lib/itemRoutes';
+import { groupMenus, menuDateLine } from '@/lib/menus';
 import { classicRows } from '@/lib/staffList';
 import { capitalize } from '@/lib/stringUtils';
 import { matchesQuery } from '@/lib/publicDrinks';
-import { BATCHED_STYLES, DRINK_CATEGORIES, filterGroups, itemIdOf, menuDrinks, parseShow, PREP_GROUPS, splitFilters, TYPE_FILTERS, type Show } from '@/lib/libraryFilters';
+import { BATCHED_STYLES, DRINK_CATEGORIES, filterGroups, itemIdOf, menuDrinks, parseShow, PREP_GROUPS, TYPE_FILTERS, type Show } from '@/lib/libraryFilters';
 import { usePrepFacts, useVenueShelves } from '@/hooks/useVenueShelves';
-import { usePrefetchCocktail } from '@/hooks/useCocktails';
 
 // The staff list drags to reorder, with gesture and animation code the rest of the
 // Library doesn't need: it loads when Classics is picked.
 const StaffList = lazy(() => import('@/components/screens/library/StaffList').then((m) => ({ default: m.StaffList })));
 
-const COLUMNS = { phone: 2, tablet: 3, desktop: 5 } as const;
 const NO_IDS: string[] = [];
 const EVERYWHERE = { area: { kind: 'anywhere' }, kinds: ['drink', 'bar', 'person', 'ingredient'] } as const;
 
 /**
- * Library: the venue's spec book. All its drinks, Classics (the staff list,
- * ranked, with cut lines), what's on the menu now (one menu or every one
- * that's on), Old drinks (on past menus), beer and wine. With More library
- * filters on, R&D and the shelves too: drinks poured from a batch, preps,
- * garnishes and bottles. Without a venue, each type on its own. The filter lives
- * in the URL (?show=staff&menu=<id>), so a link opens the same view. Drinks
- * without a photo still get a proper tile, never someone else's photo.
+ * Drinks at a venue: the venue's spec book (board Prod-drinks). The bar's name
+ * over "Drinks", a Drinks / House-made / Bottles switch, the menu on now as a
+ * card, then the list as rows ("All 48 · A to Z"), each with its drawing and
+ * how it's made. Under the switch a row of views (On menu, Classics, Old
+ * drinks, R&D, Batched, Beer, Wine, the kit check) narrows the list; House-made
+ * has its kinds, Bottles its Ingredients and Needs a price. The view lives in
+ * the URL (?show=staff&menu=<id>), so a link opens the same view. Classics is
+ * the staff list, ranked, with cut lines. Without a venue, each type on its own.
  * `beside`: the list in its column beside the Drinks stack on a desktop
  * (components/nav/DrinksSplit.tsx), where a drink opens at its own URL.
  */
@@ -65,7 +64,6 @@ export function LibraryScreen({ beside = false }: { beside?: boolean }) {
   const router = useRouter();
   // The palette on wide screens, the search tab on phones (q01).
   const openSearch = useOpenSearch();
-  const prefetch = usePrefetchCocktail();
   const gutter = useGutter();
   const breakpoint = useBreakpoint();
   const bottom = useTabBarInset();
@@ -85,21 +83,10 @@ export function LibraryScreen({ beside = false }: { beside?: boolean }) {
   const canOrder = !!capabilities?.includes('menus');
   const [swap, setSwap] = useState(false);
   const [snapping, setSnapping] = useState(false);
-  // Phones: four filters and a filter button in a glass dock above the tabs, no find field; the search circle opens on the venue.
-  // Wider screens keep Find in Library in the header, narrowing the list in place (lib-filters-proposal).
+  // Wide screens keep Find in Library in the header, narrowing the list in place; a phone's search circle opens on the venue.
   const phone = breakpoint === 'phone';
   const [find, setFind] = useState('');
   const q = phone ? '' : find.trim().toLowerCase();
-  // Scrolled past the title, a phone pins a small one to the top (titleEnd: where the title ends in the list).
-  const [titleEnd, setTitleEnd] = useState(0);
-  const [pinned, setPinned] = useState(false);
-  const onScrollY = (y: number) => setPinned(phone && !!titleEnd && y > titleEnd - layout.minTapTarget);
-  // A new view opens at its top (Classics is its own list), so the title unpins.
-  const [pinnedShow, setPinnedShow] = useState(show);
-  if (pinnedShow !== show) {
-    setPinnedShow(show);
-    setPinned(false);
-  }
   const { data: pricedIds } = usePricedItemIds(activeId, canCost);
   const { data: menus } = useVenueMenus(activeId);
   const staff = useStaffList(activeId);
@@ -110,10 +97,8 @@ export function LibraryScreen({ beside = false }: { beside?: boolean }) {
   const shelves = useVenueShelves(activeId, published);
   const prepFacts = usePrepFacts(shelves.preps);
   const kit = useKitShelves(activeId, published);
-  const byMenu = useMemo(
-    () => menuDrinks((menus ?? []).filter((m) => m.barId === activeId), now, params.menu ?? null),
-    [menus, activeId, now, params.menu]
-  );
+  const here = useMemo(() => (menus ?? []).filter((m) => m.barId === activeId), [menus, activeId]);
+  const byMenu = useMemo(() => menuDrinks(here, now, params.menu ?? null), [here, now, params.menu]);
   const lists = useMemo(() => {
     const priced = new Set(pricedIds ?? []);
     const inSet = (ids: string[]) => {
@@ -155,23 +140,41 @@ export function LibraryScreen({ beside = false }: { beside?: boolean }) {
   const count = (value: Show) => (value === 'staff' ? classicRows(staff.data ?? [], linked.data ?? []).length : lists[value].length);
   const groups = filterGroups(!!activeId, canCost);
   const pick = (value: Show) => setView({ show: value, menu: undefined, kind: undefined });
-  const filterSet: FilterSet = { ...splitFilters(groups), show, count, onPick: pick, nothing: !isLoading && !staff.isLoading && !linked.isLoading && groups.flat().every((f) => count(f.value) === 0) };
-  const columns = COLUMNS[breakpoint];
   const staffView = show === 'staff' && !!activeId;
-  // The last tiles scroll clear of the phone's filter dock.
-  const listBottom = bottom + (phone ? FILTER_DOCK : 0);
+  const segment = activeId ? segmentOf(show) : null;
+  // The views under the switch: this segment's own, those the venue has (the picked one always shows).
+  const views = (segment ? groups.flat().filter((f) => SEGMENT_VIEWS[segment].includes(f.value)) : groups.flat()).filter((f) => f.value === show || count(f.value) > 0 || f.value === 'all' || f.value === 'staff');
+  // The menu on now, and the next one up.
+  const grouped = groupMenus(here, now);
+  const current = grouped.on[0];
+  const next = grouped.upcoming[0];
+  const nextLine = next?.startsAt ? `${next.name} on ${new Date(next.startsAt).toLocaleDateString(undefined, { day: 'numeric', month: 'short' })}` : null;
+  const listBottom = bottom;
   const content = { paddingHorizontal: gutter, paddingBottom: listBottom, gap: space.lg };
+  const label = views.find((f) => f.value === show)?.label ?? 'All';
   const header = (
     <View style={styles.header}>
-      <View onLayout={(e) => setTitleEnd(e.nativeEvent.layout.y + e.nativeEvent.layout.height)}>
-        <PageHeader title="Library" width="full" display action={phone || staffView ? undefined : <SearchField query={find} onQuery={setFind} placeholder="Find in Library" />} />
-      </View>
+      <LibraryHead
+        gutter={gutter}
+        eyebrow={active?.name ?? ''}
+        segment={segment}
+        onSegment={(s) => pick(SEGMENT_HOME[s])}
+        find={phone || staffView ? undefined : <SearchField query={find} onQuery={setFind} placeholder="Find in Library" />}
+      />
+      {show === 'all' && current && !q ? (
+        <OnNowCard
+          name={current.name}
+          since={menuDateLine(current, now, undefined, true)}
+          line={[`${new Set(current.itemIds).size} drinks`, nextLine].filter(Boolean).join(' · ')}
+          ids={[...new Set(current.itemIds)]}
+          onPress={() => router.push(`/menus/${current.id}` as never)}
+        />
+      ) : null}
       {activeId ? (<><ResumeCard barId={activeId} /><LibrarySetup barId={activeId} /></>) : null}
       <FirstRoundCard />
-      {active && canEdit ? <MatchClassicsNudge barId={active.id} /> : null}
-      {phone ? null : (
-        <FilterRow label="Show" gutter={gutter} whole={breakpoint === 'desktop'} groups={groups.map((g) => g.map((f) => <Chip key={f.value} look="outline" label={f.label} count={String(count(f.value))} selected={show === f.value} onPress={() => pick(f.value)} />))} />
-      )}
+      {views.length > 1 ? (
+        <FilterRow label="Show" gutter={gutter} whole={breakpoint === 'desktop'} groups={[views.map((f) => <Chip key={f.value} look="outline" label={f.label} count={String(count(f.value))} selected={show === f.value} onPress={() => pick(f.value)} />)]} />
+      ) : null}
       {show === 'on-menu' && byMenu.onMenus.length > 1 ? (
         <FilterRow
           label="Which menu"
@@ -217,7 +220,7 @@ export function LibraryScreen({ beside = false }: { beside?: boolean }) {
           <Caption tone="muted">Swapping a bottle opens at Drink Creator.</Caption>
         )
       ) : null}
-      {q && !staffView && shown.length ? <Caption tone="muted">{`${shown.length} of ${inView.length}`}</Caption> : null}
+      {staffView ? null : <TonightLabel title={`${label} ${q ? `${shown.length} of ${inView.length}` : inView.length}`} aside="A to Z" />}
     </View>
   );
 
@@ -225,57 +228,25 @@ export function LibraryScreen({ beside = false }: { beside?: boolean }) {
   // Did you mean (whole-app canvas, Search page): nothing here asks about the closest name, here or everywhere; "No" adds it here.
   const ask = <NearResults query={found} found={0} shown={NO_IDS} yours={inView} yoursCaption="Here" classics={classicList} server={EVERYWHERE} title={`Nothing here called “${found}”`} miss={<Caption tone="muted">{`Nothing here called “${found}”.`}</Caption>} add={canEdit ? { label: `add ${capitalize(found)}`, onPress: () => router.push(newDrinkHref(capitalize(found), activeId) as never) } : undefined} />;
   const empty = venuesLoading || isLoading ? null : q ? ask : <LibraryEmpty barId={activeId} noDrinks={!published.length} canAdd={canEdit} />;
-  // Past this list: the one search, everywhere, with what was typed.
-  const foot = q ? (
+  // Past this list: the one search, everywhere, with what was typed; the nudge to match classics, last.
+  const foot = q || (active && canEdit) ? (
     <View style={styles.foot}>
-      {shown.length ? <NearResults query={found} found={shown.length} shown={shownIds} yours={inView} yoursCaption="Here" title="" miss={null} /> : null}
-      <Button label={`Search everywhere for “${found}”`} icon="magnifyingglass" variant="secondary" onPress={() => openSearch({ query: found, scope: 'everywhere' })} />
+      {q && shown.length ? <NearResults query={found} found={shown.length} shown={shownIds} yours={inView} yoursCaption="Here" title="" miss={null} /> : null}
+      {q ? <Button label={`Search everywhere for “${found}”`} icon="magnifyingglass" variant="secondary" onPress={() => openSearch({ query: found, scope: 'everywhere' })} /> : null}
+      {active && canEdit ? <MatchClassicsNudge barId={active.id} /> : null}
     </View>
   ) : null;
 
   return (
     <View style={[styles.screen, { backgroundColor: ds.c.ground }]}>
-      {panes && !staffView ? (
-        <LibraryPanes venueId={activeId} items={shown} lineOf={lineOf} header={header} empty={empty} footer={foot} routed={beside} />
-      ) : staffView && activeId ? (
+      {staffView && activeId ? (
         // The staff list drags to reorder, so it is the scroll view itself.
         <Suspense fallback={<FlatList data={[]} renderItem={() => null} ListHeaderComponent={header} contentContainerStyle={{ paddingHorizontal: gutter, paddingBottom: listBottom }} />}>
-          <StaffList barId={activeId} canEdit={canOrder} onNow={onNow} past={past} header={header} onScrollOffset={onScrollY} contentContainerStyle={{ paddingHorizontal: gutter, paddingBottom: listBottom }} />
+          <StaffList barId={activeId} canEdit={canOrder} onNow={onNow} past={past} header={header} contentContainerStyle={{ paddingHorizontal: gutter, paddingBottom: listBottom }} />
         </Suspense>
       ) : (
-        <FlatList
-          key={columns}
-          data={shown}
-          numColumns={columns}
-          // Rows, not tiles: a screen's worth first. The defaults (10 rows, 21
-          // screens) drew every drink on open, which froze iOS for seconds.
-          initialNumToRender={4}
-          windowSize={DRAWN_LIST_WINDOW}
-          keyExtractor={(i) => i.id}
-          columnWrapperStyle={{ gap: space.md }}
-          contentContainerStyle={content}
-          ListHeaderComponent={header}
-          onScroll={(e) => onScrollY(e.nativeEvent.contentOffset.y)}
-          scrollEventThrottle={32}
-          renderItem={({ item }) => {
-            const category = item.category as ItemCategory;
-            return (
-              <LibraryTile
-                item={item}
-                line={lineOf(item)}
-                glassName={glassName(item)}
-                width={`${100 / columns}%`}
-                onPressIn={category === 'Cocktail' ? () => prefetch(item.id, { name: item.name, item_images: item.item_images }) : undefined}
-                onPress={() => router.push(itemHref(category, item.id) as never)}
-              />
-            );
-          }}
-          ListEmptyComponent={empty ?? undefined}
-          ListFooterComponent={foot ?? undefined}
-        />
+        <LibraryPanes venueId={activeId} items={shown} lineOf={lineOf} header={header} empty={empty} footer={foot} routed={beside} plain={!panes} />
       )}
-      {pinned ? <PinnedTitle /> : null}
-      {phone ? <FilterDock set={filterSet} /> : null}
       <RoundOpened />
       {swap && activeId ? <SwapSheet barId={activeId} onClose={() => setSwap(false)} /> : null}
       {active ? <BottlePhotoSheet visible={snapping} target={{ kind: 'venue', barId: active.id, name: active.name, canEdit }} onClose={() => setSnapping(false)} /> : null}
@@ -287,5 +258,5 @@ const styles = StyleSheet.create({
   screen: { flex: 1 },
   header: { gap: space.md, paddingBottom: space.sm },
   actions: { flexDirection: 'row', flexWrap: 'wrap', gap: space.sm },
-  foot: { paddingTop: space.md, alignItems: 'flex-start' },
+  foot: { paddingTop: space.md, alignItems: 'flex-start', gap: space.md },
 });

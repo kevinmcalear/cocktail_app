@@ -2,7 +2,9 @@ import { useLocalSearchParams, useRouter, type Href } from 'expo-router';
 import { lazy, Suspense, type ReactElement } from 'react';
 import { FlatList, StyleSheet, View } from 'react-native';
 
-import { Body, Button, Display, RowScore, scoreWords, useDs } from '@/components/ds';
+import { Body, Button, Display, RowScore, scoreWords, useDs, useGutter } from '@/components/ds';
+import { DRAWN_LIST_WINDOW } from '@/components/ds/SketchDrawing';
+import { useTabBarInset } from '@/components/nav/WebTabBar';
 import { DrinkRow } from '@/components/screens/DrinkRow';
 import { DrinkLoading } from '@/components/screens/drink/DrinkLoading';
 import { layout, radius, space } from '@/constants/tokens';
@@ -64,21 +66,33 @@ function OtherPane({ item }: { item: SearchItem }) {
  * `routed` (a desktop, hooks/useDrinksSplit.ts): the list alone, in its column
  * beside the Drinks stack; a drink opens there at its own URL (/cocktail/<id>)
  * and its row stays lit.
+ *
+ * `plain` (a phone): the list alone, a row opening its drink's own page.
  */
-export function LibraryPanes({ venueId, items, lineOf, header, empty, footer, routed = false }: { venueId: string | null; items: SearchItem[]; lineOf?: (item: SearchItem) => string | null; header: ReactElement; empty: ReactElement | null; footer?: ReactElement | null; routed?: boolean }) {
+export function LibraryPanes({ venueId, items, lineOf, header, empty, footer, routed = false, plain = false }: { venueId: string | null; items: SearchItem[]; lineOf?: (item: SearchItem) => string | null; header: ReactElement; empty: ReactElement | null; footer?: ReactElement | null; routed?: boolean; plain?: boolean }) {
   const ds = useDs();
   const router = useRouter();
   const { pick } = useLocalSearchParams<{ pick?: string }>();
   const beside = useOpenBeside();
+  const gutter = useGutter();
+  const bottom = useTabBarInset();
+  const listOnly = routed || plain;
   const picked = routed ? (items.find((i) => i.id === beside.picked) ?? null) : (items.find((i) => i.id === pick) ?? items[0] ?? null);
   const facts = useMineFacts(venueId, items);
   const { data: scores } = useItemScores(items.filter((i) => i.category === 'Cocktail').map((i) => i.id));
-  // Drinks at a venue say why they're here; elsewhere (and other kinds) keep the tile's line.
-  const why = (i: SearchItem) => (venueId && i.category === 'Cocktail' ? drinkFacts(i.id, i.category, facts, true) : { caption: lineOf?.(i) ?? i.category ?? undefined, tag: undefined });
+  // A drink says how it's made ("Dry shake · Coupe", Prod-drinks), with a pill when it's an old drink; without a line, why it's here.
+  const why = (i: SearchItem): { caption?: string; tag?: string } => {
+    const line = lineOf?.(i) ?? undefined;
+    if (!venueId || i.category !== 'Cocktail') return { caption: line ?? i.category ?? undefined };
+    const f = drinkFacts(i.id, i.category, facts, true);
+    return { caption: line ?? f.caption, tag: f.tag };
+  };
   const list = (
     <FlatList
-      style={routed ? styles.fill : [styles.list, { borderRightColor: ds.c.line }]}
-      contentContainerStyle={styles.listBody}
+      style={listOnly ? styles.fill : [styles.list, { borderRightColor: ds.c.line }]}
+      contentContainerStyle={plain ? [styles.listBody, { paddingHorizontal: gutter, paddingBottom: bottom + space.xl }] : styles.listBody}
+      initialNumToRender={12}
+      windowSize={DRAWN_LIST_WINDOW}
       data={items}
       keyExtractor={(i) => i.id}
       ListHeaderComponent={header}
@@ -89,7 +103,7 @@ export function LibraryPanes({ venueId, items, lineOf, header, empty, footer, ro
         const score = scores?.[item.id];
         const said = scoreWords(score);
         return (
-          <View style={[styles.pick, item.id === picked?.id && { backgroundColor: withAlpha(ds.accentText, 0.12) }]}>
+          <View style={[styles.pick, !plain && item.id === picked?.id && { backgroundColor: withAlpha(ds.accentText, 0.12) }]}>
             <DrinkRow
               name={item.name}
               imageUrl={heroPicture(item.item_images ?? [])?.url ?? null}
@@ -99,14 +113,14 @@ export function LibraryPanes({ venueId, items, lineOf, header, empty, footer, ro
               tag={tag}
               trailing={<RowScore score={score} />}
               label={said ? [item.name, caption, tag, said].filter(Boolean).join('. ') : undefined}
-              onPress={() => (routed ? beside.open(itemHref(item.category as ItemCategory, item.id)) : router.setParams({ pick: item.id }))}
+              onPress={() => (plain ? router.push(itemHref(item.category as ItemCategory, item.id) as never) : routed ? beside.open(itemHref(item.category as ItemCategory, item.id)) : router.setParams({ pick: item.id }))}
             />
           </View>
         );
       }}
     />
   );
-  if (routed) return list;
+  if (listOnly) return list;
   return (
     <View style={styles.row}>
       {list}
