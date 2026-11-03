@@ -55,8 +55,8 @@ export interface SpecRowProps {
   alignAmount?: boolean;
 }
 
-/** The amount column's width at scale 1: a step's note lines up with the names after it (SpecCard). Every spec board sets it at about 76. */
-export const SPEC_AMOUNT_WIDTH = 80;
+/** The amount column's width at scale 1: a step's note lines up with the names after it (SpecCard). Wide enough for "1 ½ barspoons" at the figure's size. */
+export const SPEC_AMOUNT_WIDTH = 96;
 
 /**
  * One line of a spec, readable across the bar: the amount in its own column,
@@ -156,13 +156,15 @@ export function SpecRow({ amount, unit, ingredient, ingredientId, houseMade, opt
 }
 
 type Sized = { fontSize: number; lineHeight: number };
+/** The amount's figure at headline size (20, the type scale's step nearest the boards' 22), on the body's line height so the name beside it lines up. Word amounts (Top, Rinse) read the same. */
+const FIGURE: Sized = { fontSize: type.headline.fontSize, lineHeight: type.body.lineHeight };
 /** A text style scaled for service mode (1.25); nothing at 1. */
 const scaled = (t: Sized, scale: number) => (scale === 1 ? undefined : { fontSize: t.fontSize * scale, lineHeight: t.lineHeight * scale });
 
 /** The number in the spec's figures, big and on the right of its column; its unit (when given apart) smaller and muted. */
 function Amount({ text, unit, scale, style }: { text: string; unit?: string; scale: number; style?: { width: number } }) {
   return (
-    <Spec style={[style, styles.amount, unit ? styles.figure : null, scaled(unit ? { fontSize: type.headline.fontSize, lineHeight: type.body.lineHeight } : type.spec, scale)]}>
+    <Spec style={[style, styles.amount, styles.figure, scaled(FIGURE, scale)]}>
       {text}
       {unit ? (
         <Caption tone="muted" style={scaled(type.caption, scale)}>
@@ -175,8 +177,7 @@ function Amount({ text, unit, scale, style }: { text: string; unit?: string; sca
 
 const styles = StyleSheet.create({
   amount: { textAlign: 'right' },
-  // The number apart from its unit reads at headline size (the boards' 22), on the body's line height so the name beside it lines up.
-  figure: { fontSize: type.headline.fontSize, lineHeight: type.body.lineHeight, ...font.semiBold, fontVariant: ['tabular-nums'] },
+  figure: { ...FIGURE, ...font.semiBold, fontVariant: ['tabular-nums'] },
   nameLine: { flexDirection: 'row', alignItems: 'baseline', gap: space.sm },
   grow: { flex: 1 },
   roleRight: { flexShrink: 0 },
