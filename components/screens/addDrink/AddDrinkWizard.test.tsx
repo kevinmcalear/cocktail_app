@@ -62,7 +62,7 @@ beforeEach(() => {
   mockVenueIce = [];
   mockClosest = null;
   useDrinkWizardStore.setState({ kept: {} });
-  useSettingsStore.setState({ defaultUnit: 'ml' });
+  useSettingsStore.setState({ units: 'ml' });
 });
 // iOS draws the screen after its first layout (the keyboard offset needs it).
 const laidOut = () => fireEvent(screen.getByTestId('add-drink'), 'layout', { persist: () => {}, nativeEvent: { layout: { x: 0, y: 0, width: 390, height: 800 } } });

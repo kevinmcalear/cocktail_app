@@ -1,6 +1,6 @@
 import assert from 'node:assert/strict';
 import { splitAmount } from './specLines';
-import { amountText, DEFAULT_UNIT, isKnownUnit, overIce, unitLabel, RECIPE_UNITS } from './units';
+import { amountText, DEFAULT_UNIT, followBarUnit, isKnownUnit, overIce, savedUnit, unitLabel, RECIPE_UNITS } from './units';
 
 assert.equal(DEFAULT_UNIT, 'ml');
 assert.ok(RECIPE_UNITS.some((u) => u.value === 'ml'));
@@ -38,3 +38,15 @@ assert.equal(overIce('Large cube'), 'a large cube');
 assert.equal(overIce('Crushed'), 'crushed');
 
 console.log('units.check.ts: ok');
+
+// A unit saved before bars had one follows the bar only when it is the bar's; a picked one, or one already checked, stays.
+assert.deepEqual(followBarUnit({ units: 'oz', checked: false }, 'oz'), { units: null, checked: true });
+assert.deepEqual(followBarUnit({ units: 'ml', checked: false }, 'oz'), { units: 'ml', checked: true });
+assert.deepEqual(followBarUnit({ units: 'oz', checked: false }, null), { units: 'oz', checked: false });
+assert.deepEqual(followBarUnit({ units: 'oz', checked: true }, 'oz'), { units: 'oz', checked: true });
+assert.deepEqual(followBarUnit({ units: null, checked: true }, 'cl'), { units: null, checked: true });
+
+// ml is where everyone started, so only another unit counts as picked.
+assert.equal(savedUnit('ml'), null);
+assert.equal(savedUnit('oz'), 'oz');
+assert.equal(savedUnit(undefined), null);
