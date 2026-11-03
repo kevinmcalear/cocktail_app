@@ -15,7 +15,6 @@ import { startReview } from '@/lib/importReview';
 import { listenBringIn, takeBringIn } from '@/lib/bringInHandoff';
 import { snapReadFiles, sourcesFromFiles } from '@/lib/readAnything';
 import { askToNudge } from '@/lib/readyNudge';
-import { SafetyPage } from '@/components/screens/safety/SafetyPage';
 import { useAppMode } from '@/store/useAppMode';
 import { useBringIn, type BringInJob } from '@/store/useBringIn';
 import { useRankReturn } from '@/store/useRankReturn';
@@ -24,6 +23,7 @@ import { draftSlot, freeNameSlot, useDrinkWizardStore, wizardPlace } from '@/sto
 
 import { BottlesCheck } from './BottlesCheck';
 import { BringInChooser } from './BringInChooser';
+import { FirstMenu } from './FirstMenu';
 import { ImportReview } from './ImportReview';
 import { ImportReviewDesk } from './ImportReviewDesk';
 import { MenuCheck } from './MenuCheck';
@@ -52,7 +52,7 @@ const reviewName = (job: BringInJob) => job.source.name ?? job.source.files.find
 export function BringInFlow() {
   const ds = useDs();
   const router = useRouter();
-  // Opened from venue setup's first menu: its "Set up Little Rye · First menu" line, kept over the ways in.
+  // Opened from the owner's first menu: its "Set up Little Rye · Tonight's menu" line, kept over the ways in.
   const { step } = useLocalSearchParams<{ step?: string }>();
   const gutter = useGutter();
   const insets = useSafeAreaInsets();
@@ -139,13 +139,9 @@ export function BringInFlow() {
     }
     return desk ? <ImportReviewDesk id={reviewing.id} data={data} onFinishLater={finishLater} /> : <ImportReview id={reviewing.id} data={data} onFinishLater={finishLater} />;
   }
-  if (!job && step) {
-    return (
-      <SafetyPage title="Upload a menu" intro="A photo, a PDF, a link or pasted text. We read it, you check it." topLabel={step} onBack={leave}>
-        <ResumeCard barId={place.barId} here />
-        <BringInChooser menu />
-      </SafetyPage>
-    );
+  // The owner's first menu (venue setup): the camera, until what it took is read and matched; a failed read goes to Reading's retry.
+  if (step && (!job || (job.hint === 'menu' && job.barId === place.barId && !checking && job.status !== 'failed' && (job.status === 'reading' || !!data)))) {
+    return <FirstMenu step={step} barId={place.barId} job={job} data={data} onClose={job ? cancel : leave} onReady={() => job && setCheckedId(job.id)} />;
   }
   if (!job) {
     return (
