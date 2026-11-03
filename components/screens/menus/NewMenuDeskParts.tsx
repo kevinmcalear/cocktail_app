@@ -11,7 +11,7 @@ import { menuStatus, plural, previewSections } from '@/lib/menus';
 import type { MenuPhoto } from '@/lib/readMenu';
 import type { MenuSectionDetail, MenuSummary } from '@/types/menus';
 
-import { GuestCardContent } from './MenuCardScreen';
+import { GuestCardContent } from './GuestCardContent';
 import { MenuVisual } from './MenuVisual';
 import type { Start } from './useNewMenu';
 

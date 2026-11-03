@@ -1,4 +1,4 @@
-import { useQuery } from '@tanstack/react-query';
+import { useQueries, useQuery } from '@tanstack/react-query';
 
 import { readSketchInputs, type SketchInputs } from '@/lib/sketch/types';
 import { supabase } from '@/lib/supabase';
@@ -44,5 +44,20 @@ export function useItemSketch(itemId: string | null | undefined) {
     enabled: !!itemId,
     staleTime: 10 * 60_000,
     queryFn: () => load(itemId!),
+  });
+}
+
+/**
+ * Several drinks' drawing inputs at once (a poster's drinks), by id, from the
+ * same cache and request as useItemSketch. `ready` once every one has come
+ * back, with or without a drawing.
+ */
+export function useItemSketches(itemIds: readonly string[]) {
+  return useQueries({
+    queries: itemIds.map((id) => ({ queryKey: ['item-sketch', id], staleTime: 10 * 60_000, queryFn: () => load(id) })),
+    combine: (results) => ({
+      byId: Object.fromEntries(itemIds.map((id, i) => [id, results[i]?.data ?? null])) as Record<string, SketchInputs | null>,
+      ready: results.every((r) => !r.isPending),
+    }),
   });
 }

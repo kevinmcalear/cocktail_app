@@ -162,7 +162,8 @@ test('make now: a tick list and a label for each container', async () => {
   await fireEvent.press(screen.getByRole('checkbox', { name: '360 ml, Cream' }));
   expect(screen.getByRole('checkbox', { name: '360 ml, Cream', checked: true })).toBeTruthy();
   expect(screen.getByRole('checkbox', { name: '480 ml, Irish whiskey' })).toBeTruthy();
-  expect(screen.getAllByText(/^Irish Coffee · The (coffee|cream)$/)).toHaveLength(2);
+  // The drawn label reads out as one picture: its lines in its name.
+  expect(screen.getAllByLabelText(/^Label: Irish Coffee · The (coffee|cream), MADE /)).toHaveLength(2);
 });
 
 test('at home, tick as I go makes every line part by part, the float last', async () => {
