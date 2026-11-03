@@ -7,6 +7,7 @@ import { drawing } from '@/constants/tokens';
 import { useItemSketch } from '@/hooks/useItemSketch';
 import { useReducedMotion } from '@/hooks/useReducedMotion';
 import { inBarGlassCached } from '@/lib/sketch/barGlass';
+import { bareGlassSketch } from '@/lib/sketch/draft';
 import { glowScene, nightScene, onlyStages, withoutStages } from '@/lib/sketch/passes';
 import type { Scene } from '@/lib/sketch/scene';
 import { sceneToSvg } from '@/lib/sketch/svg';
@@ -105,15 +106,23 @@ export function DrinkDrawing({ inputs: stored, seed, size, staff, pour = !isRowS
   );
 }
 
+type ForProps = Omit<DrinkDrawingProps, 'inputs' | 'seed'> & {
+  itemId: string;
+  /** With no drawing to show, the bare glass instead of nothing. */
+  bare?: boolean;
+};
+
 /** The same, by drink id: its drawing inputs from item_sketches. Nothing until they arrive, or outside a query client (the gallery). */
-export function DrinkDrawingFor({ itemId, ...rest }: Omit<DrinkDrawingProps, 'inputs' | 'seed'> & { itemId: string }) {
+export function DrinkDrawingFor({ itemId, ...rest }: ForProps) {
   const client = useContext(QueryClientContext);
   return client ? <ById itemId={itemId} {...rest} /> : null;
 }
 
-function ById({ itemId, ...rest }: Omit<DrinkDrawingProps, 'inputs' | 'seed'> & { itemId: string }) {
-  const inputs = useItemSketch(itemId).data;
-  return inputs ? <DrinkDrawing inputs={inputs} seed={itemId} {...rest} /> : null;
+function ById({ itemId, bare, ...rest }: ForProps) {
+  const sketch = useItemSketch(itemId);
+  if (sketch.data) return <DrinkDrawing inputs={sketch.data} seed={itemId} {...rest} />;
+  // A drink with no drawing inputs (beer, wine, not drawn yet): its bare glass, as DrinkImage shows, so a tile is never an empty box.
+  return bare && !sketch.isPending ? <DrinkDrawing inputs={bareGlassSketch(null)} seed="Coupe" {...rest} /> : null;
 }
 
 const styles = StyleSheet.create({

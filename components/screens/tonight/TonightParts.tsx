@@ -104,7 +104,7 @@ export function DrinkTile({ id, name, status, ready, wide, onPress }: { id: stri
   return (
     <PressableScale role="link" accessibilityLabel={`${name}. ${status}`} onPress={onPress} style={[styles.tile, wide ? styles.tileWide : null]}>
       <View style={[styles.tileArt, wide ? styles.tileArtShort : null, { backgroundColor: tint ? withAlpha(tint, ds.scheme === 'dark' ? 0.28 : 0.2) : ds.c.raised }]}>
-        <DrinkDrawingFor itemId={id} size="tile" pour={false} />
+        <DrinkDrawingFor itemId={id} size="tile" pour={false} bare />
       </View>
       <DsText variant="headline" numberOfLines={1} style={{ fontFamily: displayFaces[ds.displayFace].regular }}>
         {name}

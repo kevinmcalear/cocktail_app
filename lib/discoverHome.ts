@@ -96,10 +96,13 @@ export interface NewMenu {
  * known to the month, so a tile says the month it went on only when that's
  * this month.
  */
-export function newMenus(bars: readonly { barId: string; barName: string; editions: readonly MenuEdition[] }[], now: Date, limit = 6): NewMenu[] {
+/** What a New menus tile reads of a menu. */
+export type NewMenuSource = Pick<MenuEdition, 'id' | 'name' | 'year' | 'month' | 'is_current' | 'drinks'>;
+
+export function newMenus(bars: readonly { barId: string; barName: string; editions: readonly NewMenuSource[] }[], now: Date, limit = 6): NewMenu[] {
   const on = bars.flatMap((b) => b.editions.filter((e) => e.is_current).map((e) => ({ e, b })));
   on.sort((x, y) => y.e.year - x.e.year || (y.e.month ?? 0) - (x.e.month ?? 0) || x.e.name.localeCompare(y.e.name));
-  const thisMonth = (e: MenuEdition) => e.year === now.getFullYear() && e.month === now.getMonth() + 1;
+  const thisMonth = (e: NewMenuSource) => e.year === now.getFullYear() && e.month === now.getMonth() + 1;
   return on.slice(0, limit).map(({ e, b }) => ({
     id: e.id,
     name: e.name,

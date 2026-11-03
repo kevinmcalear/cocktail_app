@@ -1,4 +1,4 @@
-import { keepPreviousData, useQueries, useQuery } from '@tanstack/react-query';
+import { keepPreviousData, useQuery } from '@tanstack/react-query';
 import { useFocusEffect } from 'expo-router';
 import { useCallback, useEffect, useMemo, useState } from 'react';
 import { AppState } from 'react-native';
@@ -6,20 +6,20 @@ import { AppState } from 'react-native';
 import { useAuth } from '@/ctx/AuthContext';
 import { useDiscoverRankings, useDrinkPick } from '@/hooks/useDiscover';
 import { useDiscoverList } from '@/hooks/useDiscoverDrinks';
-import { menuEditionsQuery } from '@/hooks/useMenuRuns';
 import { parseHours, type WeekHours } from '@/lib/barHours';
-import { closesLate, newMenus, openNow, bestRows } from '@/lib/discoverHome';
+import { closesLate, newMenus, openNow, bestRows, type NewMenuSource } from '@/lib/discoverHome';
 import { pickFilter, toDiscoverBar, type DiscoverBar } from '@/lib/discoverDrinks';
 import { STYLES } from '@/lib/drinkStyles';
 import { areaParams, type Area } from '@/lib/nearMe';
-import { supabase } from '@/lib/supabase';
+import type { MenuEditionDrink } from '@/lib/menuEditions';
+import { jsonAs, supabase } from '@/lib/supabase';
 
 /**
  * Bars the map draws and asks hours for: discover_bars' order (by id).
  * ponytail: "open" and "late" only know these 60, and a ranked bar past them counts as hours unknown. Upgrade: discover_bars returning hours.
  */
 const MAP_BARS = 60;
-/** The nearby bars whose menus New menus reads (a get_menu_editions call each, shared with their pages). */
+/** The nearby bars whose menus New menus reads (one current_menus_of_bars call for all). */
 const MENU_BARS = 8;
 /** Ranked rows: three on phones (Prod-discover), four on the desktop (Prod-desk-discover). */
 export const BEST_ROWS = { phone: 3, desk: 4 } as const;
@@ -124,11 +124,23 @@ export function useBestNear(area: Area, styleId: string, enabled: boolean) {
   return { style, classicId: pick?.id ?? null, rows, isLoading: enabled && !!pick && rankings.isPending, error: rankings.error, refetch: rankings.refetch };
 }
 
-/** New menus: what's on now at the nearest bars, newest first. */
+/** New menus: what's on now at the nearest bars, newest first. One call for all of them. */
 export function useNewMenus(bars: readonly DiscoverBar[], now: Date) {
   const near = bars.slice(0, MENU_BARS);
-  const results = useQueries({ queries: near.map((b) => ({ ...menuEditionsQuery(b.id), staleTime: 60 * 60 * 1000 })) });
+  const ids = near.map((b) => b.id);
+  const query = useQuery({
+    queryKey: ['new-menus', ids],
+    enabled: ids.length > 0,
+    staleTime: 60 * 60 * 1000,
+    queryFn: async (): Promise<Record<string, NewMenuSource[]>> => {
+      const { data, error } = await supabase.rpc('current_menus_of_bars', { p_profile_ids: ids });
+      if (error) throw error;
+      const byBar: Record<string, NewMenuSource[]> = {};
+      for (const m of data ?? []) (byBar[m.profile_id] ??= []).push({ id: m.id, name: m.name, year: m.year, month: m.month, is_current: true, drinks: jsonAs<MenuEditionDrink[]>(m.drinks) });
+      return byBar;
+    },
+  });
   // A few bars' menus: cheap enough to sort on each render.
-  const menus = newMenus(near.map((b, i) => ({ barId: b.id, barName: b.name, editions: results[i]?.data ?? [] })), now);
-  return { menus, isLoading: results.some((r) => r.isPending) };
+  const menus = newMenus(near.map((b) => ({ barId: b.id, barName: b.name, editions: query.data?.[b.id] ?? [] })), now);
+  return { menus, isLoading: ids.length > 0 && query.isPending };
 }
