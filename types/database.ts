@@ -2034,6 +2034,7 @@ export type Database = {
       }
       images: {
         Row: {
+          brightness: number | null
           created_at: string
           credit: string | null
           height: number | null
@@ -2042,11 +2043,13 @@ export type Database = {
           palette: Json | null
           source_url: string | null
           spec_fingerprint: string | null
+          text_zone: Json | null
           thumbhash: string | null
           url: string
           width: number | null
         }
         Insert: {
+          brightness?: number | null
           created_at?: string
           credit?: string | null
           height?: number | null
@@ -2055,11 +2058,13 @@ export type Database = {
           palette?: Json | null
           source_url?: string | null
           spec_fingerprint?: string | null
+          text_zone?: Json | null
           thumbhash?: string | null
           url: string
           width?: number | null
         }
         Update: {
+          brightness?: number | null
           created_at?: string
           credit?: string | null
           height?: number | null
@@ -2068,6 +2073,7 @@ export type Database = {
           palette?: Json | null
           source_url?: string | null
           spec_fingerprint?: string | null
+          text_zone?: Json | null
           thumbhash?: string | null
           url?: string
           width?: number | null
@@ -6815,6 +6821,7 @@ export type Database = {
           id: string | null
           ingredient_item_id: string | null
           is_float: boolean | null
+          is_garnish: boolean | null
           is_optional: boolean | null
           parent_ingredient_id: string | null
           part: number | null
@@ -7943,7 +7950,9 @@ export type Database = {
       get_drink_photos: {
         Args: { p_item_id: string; p_limit?: number }
         Returns: {
+          brightness: number
           created_at: string
+          height: number
           id: string
           image_url: string
           is_mine: boolean
@@ -7951,6 +7960,8 @@ export type Database = {
           poster_handle: string
           poster_name: string
           score: number
+          text_zone: Json
+          width: number
         }[]
       }
       get_drink_rankings: {
@@ -8453,6 +8464,7 @@ export type Database = {
         Args: { p_item_ids: string[] }
         Returns: {
           brand: boolean
+          garnish: boolean
           item_id: string
           name: string
           sort_order: number

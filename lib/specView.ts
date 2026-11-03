@@ -5,7 +5,7 @@
  * that land on a jigger's marks once they are scaled or converted.
  */
 
-import { isGarnishUnit } from '@/lib/batch';
+import { isGarnishLine } from '@/lib/batch';
 import { barMl, convertLine, density, ML_PER_OZ, type MassUnit } from '@/lib/drinkMath';
 import type { SpecLine } from '@/lib/spec';
 import { amountText } from '@/lib/units';
@@ -73,7 +73,7 @@ export function scaledAmount(line: SpecLine, makes: number, to: MassUnit): strin
 }
 
 /** What a step is worked out from: a line's unit, float and part. */
-export type StepLine = Pick<SpecLine, 'unit' | 'float' | 'part'>;
+export type StepLine = Pick<SpecLine, 'unit' | 'ingredient' | 'garnish' | 'float' | 'part'>;
 
 export interface SpecGroup<L extends StepLine = SpecLine> {
   /** main (the first pour, or the first part), float, part-2 on, garnish: drink_step_notes.step_key. */
@@ -91,12 +91,12 @@ export interface SpecGroup<L extends StepLine = SpecLine> {
  * Steps view: the ruled rows split where the drink has stages, in making order.
  * A drink made in parts gets a group per part; otherwise the main pour (titled
  * by its method: Shake, Stir, Build), then anything floated on top. A garnish
- * isn't a step: its rows come last, tagged, under no heading. A simple drink is
+ * isn't a step: its rows come last under no heading, each saying "garnish" (lineRole). A simple drink is
  * one group, so it reads like a spec sheet.
  */
 export function specGroups<L extends StepLine>(lines: L[], verb: string | null = null, partNames: readonly (string | null | undefined)[] = []): SpecGroup<L>[] {
-  const garnish = lines.filter((l) => isGarnishUnit(l.unit));
-  const rest = lines.filter((l) => !isGarnishUnit(l.unit));
+  const garnish = lines.filter((l) => isGarnishLine(l));
+  const rest = lines.filter((l) => !isGarnishLine(l));
   const parts = [...new Set(rest.map((l) => l.part ?? 1))].sort((a, b) => a - b);
   // Part 1 keeps the key of the first pour, so its words stay when a drink goes into parts or out of them. Keyed by the part's own number, not its place in this list, so a part with no lines here doesn't pass its words on.
   const titled: { key: string; title: string | null; lines: L[] }[] =

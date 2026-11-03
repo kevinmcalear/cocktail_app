@@ -1,7 +1,8 @@
 import assert from 'node:assert/strict';
 
 import { emptySummary } from '@/lib/bringInBatch';
-import { approved, canCheck, fileTitle, isFinished, keepFiles, nextOpen, putBack, rematch, setMark, settle, startReview, takeOut, tally, tallyLine, waitingFor, whenWords, type ImportReview } from '@/lib/importReview';
+import { approved, canCheck, fileTitle, isFinished, keepFiles, nextOpen, putBack, setMark, settle, startReview, takeOut, tally, tallyLine, waitingFor, whenWords, type ImportReview } from '@/lib/importReview';
+import { rematch } from '@/lib/importRematch';
 import type { RecipeReading } from '@/supabase/functions/_shared/anythingRead';
 
 const recipe = (name: string): RecipeReading => ({ name, by: null, lines: [], method: null, glass: null, ice: null, garnish: null, notes: null });

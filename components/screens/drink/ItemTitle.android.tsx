@@ -5,10 +5,10 @@ import Animated, { interpolate, useAnimatedStyle } from 'react-native-reanimated
 import { Caption, Display } from '@/components/ds';
 import { displayName, space } from '@/constants/tokens';
 
-import { ItalicLine } from './ItalicLine';
+import { ItalicLine, useTitleShadow } from './ItalicLine';
 import { useTitleGlide } from './MaterialBar.android';
 
-export { ItalicLine, useItalic } from './ItalicLine';
+export { ItalicLine, TitleOnPhoto, useItalic, useTitleShadow } from './ItalicLine';
 
 /**
  * Android's name block, at the board's size. On a drawing's page the name
@@ -18,19 +18,20 @@ export { ItalicLine, useItalic } from './ItalicLine';
  */
 export function ItemTitle({ eyebrow, name, credit, children }: { eyebrow: string | null; name: string; credit?: ReactNode; children?: ReactNode }) {
   const glide = useTitleGlide();
+  const shadow = useTitleShadow();
   const scrollY = glide?.scrollY;
   const side = useAnimatedStyle(() => ({ opacity: scrollY ? interpolate(scrollY.get(), [30, 120], [1, 0], 'clamp') : 1 }));
   return (
     <View style={styles.title}>
       {eyebrow ? (
         <Animated.View style={side}>
-          <Caption tone="muted" style={styles.eyebrow}>
+          <Caption tone="muted" style={[styles.eyebrow, shadow]}>
             {eyebrow}
           </Caption>
         </Animated.View>
       ) : null}
       <View onLayout={(e) => glide?.setTop(e.nativeEvent.layout.y)}>
-        <Display style={[displayName.page, glide?.ready ? styles.handedOver : null]} onTextLayout={(e) => glide?.setLines(e.nativeEvent.lines.length, Math.max(...e.nativeEvent.lines.map((l) => l.width)))}>
+        <Display style={[displayName.page, shadow, glide?.ready ? styles.handedOver : null]} onTextLayout={(e) => glide?.setLines(e.nativeEvent.lines.length, Math.max(...e.nativeEvent.lines.map((l) => l.width)))}>
           {name}
         </Display>
       </View>
