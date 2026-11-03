@@ -16,8 +16,6 @@ export { useVenueBrand, type VenueBrandRow } from './useVenueBrandRow';
 
 export type VenueBrandPatch = Partial<Omit<VenueBrandRow, 'id' | 'name' | 'slug' | 'display_face'> & { display_face: Enum<'venue_display_face'> }>;
 
-
-
 /**
  * Save brand fields. Only venue admins can update a bar (the bars_update
  * policy), and the database checks the tint and short name again. If the

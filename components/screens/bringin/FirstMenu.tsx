@@ -35,5 +35,5 @@ export function FirstMenu({ step, barId, job, data, onClose, onReady }: { step: 
       </SetupChromeProvider>
     );
   }
-  return <MenuCamera barId={barId} job={job} data={data} onClose={onClose} onReady={onReady} onPaste={() => setWay('paste')} onType={() => setWay('type')} />;
+  return <MenuCamera barId={barId} job={job} data={data} onClose={onClose} onReady={onReady} onPaste={() => setWay('paste')} onType={barId ? () => setWay('type') : undefined} />;
 }

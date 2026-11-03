@@ -60,7 +60,8 @@ export function useSetupChecklist(barId: string) {
       calendars: (calendars.data?.length ?? 0) > 0,
     },
     // A run from before 26 Oct that passed venue setup's old team step with nobody invited: still skipped.
-    [...(run?.skipped ?? []), ...((run?.done as readonly string[] | undefined)?.includes('team') ? ['team'] : [])]
+    // A Kit skipped on the old checklist is Glassware's.
+    [...(run?.skipped ?? []).map((k) => (k === 'kit' ? 'glass' : k)), ...((run?.done as readonly string[] | undefined)?.includes('team') ? ['team'] : [])]
   );
   const notes: Partial<Record<ChecklistKey, string>> = {
     claim: status === 'pending' && !page.data ? 'We’re checking it’s yours' : undefined,
@@ -73,7 +74,7 @@ export function useSetupChecklist(barId: string) {
     list,
     notes,
     looks,
-    loading: onPage.isLoading || iceList.isLoading || toolList.isLoading || menus.isLoading || invites.isLoading || members.isLoading || claim.isLoading || page.isLoading || brand.isLoading,
+    loading: onPage.isLoading || iceList.isLoading || toolList.isLoading || menus.isLoading || invites.isLoading || members.isLoading || claim.isLoading || page.isLoading || brand.isLoading || calendars.isLoading,
     skip: (key: ChecklistKey) => save(barId, { skipped: [...new Set([...(run?.skipped ?? []), key])] }),
   };
 }

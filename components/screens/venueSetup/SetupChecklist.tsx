@@ -29,7 +29,7 @@ import { TeamStep } from './TeamStep';
  * "Set up Little Rye" (board Kept-onboard, "Owner, after the three steps"):
  * Owner · 3 of 8 done, the title, "The rest can wait", and eight rows, a
  * ring until done and a green Done after. Each row opens its screen:
- * Glassware and the team here in place, the rest as their own pages, and
+ * Glassware, Theme and the team here in place, the rest as their own pages, and
  * Tonight's menu straight into the camera. Your team waits for the bar's look,
  * so the invite wears it (invite-team-last, call 2). The end of venue setup,
  * the top of Drinks on a phone, the sidebar on a desktop, and Venue settings.
@@ -50,7 +50,7 @@ export function SetupChecklist({ barId, name, onBack, backLabel = 'Back' }: { ba
   // Only Prep adds to the Kit from the drinks (Kit and ice, step 12).
   const prep = (useCapabilities(barId).data ?? []).includes('prep');
   const fromDrinks = fromDrinksCount(useKitFromDrinks(prep ? barId : null), pageId);
-  const [at, setAt] = useState<'kit' | 'fromDrinks' | 'look' | 'team' | null>(null);
+  const [at, setAt] = useState<'kit' | 'fromDrinks' | 'look' | 'theme' | 'team' | null>(null);
   const back = () => setAt(null);
   const step = (key: ChecklistKey) => `Set up ${name} · ${list.rows.find((r) => r.key === key)?.title ?? ''}`;
   const go = (href: string) => router.push(href as Href);
@@ -60,13 +60,14 @@ export function SetupChecklist({ barId, name, onBack, backLabel = 'Back' }: { ba
   if (at === 'fromDrinks') return <FromDrinksStep barId={barId} pageId={pageId} name={name} onBack={back} />;
   // Done on How it looks counts as set even when they kept the app's look, so Your team stops asking.
   // Only on this device's run: making one here would put the checklist back on a venue set up elsewhere.
+  // Theme opens the same look, here, so Done ticks it even when they keep the app's look.
   const lookedAt = () => {
     if (run) markDone(barId, 'look');
-    setAt('team');
+    setAt(at === 'look' ? 'team' : null);
   };
-  if (at === 'look') {
+  if (at === 'look' || at === 'theme') {
     return (
-      <SetupChromeProvider value={{ ...chrome, ...setupCopy('look', name), title: `How ${name} looks`, mark: <LookFirstNote />, onBack: back }}>
+      <SetupChromeProvider value={{ ...chrome, ...setupCopy('look', name), title: `How ${name} looks`, mark: at === 'look' ? <LookFirstNote /> : undefined, onBack: back }}>
         <BrandSetup
           barId={barId}
           setup={{
@@ -75,7 +76,7 @@ export function SetupChecklist({ barId, name, onBack, backLabel = 'Back' }: { ba
               page?.next ? (
                 <StepFooter skip="Back" onSkip={page.at === 0 ? back : page.onBack} label={`Next: ${page.next}`} onPress={page.onNext} />
               ) : (
-                <SetupFooter label="Done, on to your team" pending={saving} disabled={!ok} onPress={() => save(lookedAt)} />
+                <SetupFooter label={at === 'look' ? 'Done, on to your team' : 'Done'} pending={saving} disabled={!ok} onPress={() => save(lookedAt)} />
               ),
           }}
         />
@@ -110,7 +111,7 @@ export function SetupChecklist({ barId, name, onBack, backLabel = 'Back' }: { ba
     glass: () => setAt(fromDrinks ? 'fromDrinks' : 'kit'),
     team: () => setAt(looks ? 'team' : 'look'),
     visibility: () => go(`/settings/bar/${barId}/publishing`),
-    theme: () => go(`/settings/bar/${barId}/theme`),
+    theme: () => setAt('theme'),
     calendars: () => go(`/settings/bar/${barId}/calendars`),
   };
   const rows: StepRowData[] = list.rows.map((r) => {

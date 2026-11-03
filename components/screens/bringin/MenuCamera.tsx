@@ -22,6 +22,7 @@ const SHOW_FOUND_MS = 1200;
 /** "Found 4 drinks": the menu's drinks once read. */
 function foundLine(job: BringInJob, data: MatchData | null): string {
   if (job.status !== 'ready' || !job.reading || !data) return 'Reading your menu';
+  if (job.reading.kind !== 'menu') return 'Read';
   const n = menuRows(job.reading, data.library, {}).length;
   return `Found ${n} ${n === 1 ? 'drink' : 'drinks'}`;
 }
@@ -35,7 +36,7 @@ function foundLine(job: BringInJob, data: MatchData | null): string {
  * snap, not live in the viewfinder; live outlining needs on-device text
  * recognition, a native module this app doesn't have.
  */
-export function MenuCamera(props: { barId: string | null; job: BringInJob | null; data: MatchData | null; onClose: () => void; onReady: () => void; onPaste: () => void; onType: () => void }) {
+export function MenuCamera(props: { barId: string | null; job: BringInJob | null; data: MatchData | null; onClose: () => void; onReady: () => void; onPaste: () => void; onType?: () => void }) {
   return (
     <BackbarTheme scheme="dark">
       <Finder {...props} />
@@ -43,7 +44,7 @@ export function MenuCamera(props: { barId: string | null; job: BringInJob | null
   );
 }
 
-function Finder({ barId, job, data, onClose, onReady, onPaste, onType }: { barId: string | null; job: BringInJob | null; data: MatchData | null; onClose: () => void; onReady: () => void; onPaste: () => void; onType: () => void }) {
+function Finder({ barId, job, data, onClose, onReady, onPaste, onType }: { barId: string | null; job: BringInJob | null; data: MatchData | null; onClose: () => void; onReady: () => void; onPaste: () => void; onType?: () => void }) {
   const ds = useDs();
   const insets = useSafeAreaInsets();
   const { width, height } = useWindowDimensions();
@@ -61,11 +62,11 @@ function Finder({ barId, job, data, onClose, onReady, onPaste, onType }: { barId
     setTaking(true);
     setError(null);
     try {
-      const file = await camera.current?.snap();
-      if (file) await read([file]);
-      else setError('Couldn’t take the photo. Try again.');
-    } catch {
-      setError('Couldn’t take the photo. Try again.');
+      const file = await camera.current?.snap().catch(() => null);
+      if (!file) return setError('Couldn’t take the photo. Try again.');
+      await read([file]);
+    } catch (e) {
+      setError(e instanceof Error ? e.message : 'Couldn’t read the photo. Try Photos instead.');
     } finally {
       setTaking(false);
     }
@@ -148,7 +149,7 @@ function Finder({ barId, job, data, onClose, onReady, onPaste, onType }: { barId
             <View style={styles.ways}>
               <GlassButton icon="photo" label="Photos" accessibilityLabel="Choose photos of your menu" onPress={() => void choose()} />
               <GlassButton icon="doc.on.clipboard" label="Paste" accessibilityLabel="Paste your menu" onPress={onPaste} />
-              <GlassButton icon="pencil" label="Type" accessibilityLabel="Type your menu" onPress={onType} />
+              {onType ? <GlassButton icon="pencil" label="Type" accessibilityLabel="Type your menu" onPress={onType} /> : null}
             </View>
           </View>
         )}

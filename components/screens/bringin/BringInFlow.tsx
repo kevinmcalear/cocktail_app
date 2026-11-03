@@ -140,7 +140,7 @@ export function BringInFlow() {
     return desk ? <ImportReviewDesk id={reviewing.id} data={data} onFinishLater={finishLater} /> : <ImportReview id={reviewing.id} data={data} onFinishLater={finishLater} />;
   }
   // The owner's first menu (venue setup): the camera, until what it took is read and matched; a failed read goes to Reading's retry.
-  if (step && (!job || (!checking && job.status !== 'failed' && (job.status === 'reading' || !!data)))) {
+  if (step && (!job || (job.hint === 'menu' && job.barId === place.barId && !checking && job.status !== 'failed' && (job.status === 'reading' || !!data)))) {
     return <FirstMenu step={step} barId={place.barId} job={job} data={data} onClose={job ? cancel : leave} onReady={() => job && setCheckedId(job.id)} />;
   }
   if (!job) {

@@ -36,6 +36,7 @@ assert.equal(menuNote({ name: 'Winter', itemIds: [] }), 'Winter');
 assert.equal(setupStepDone(undefined, 'place'), true);
 assert.equal(setupStepDone({ done: ['find'] }, 'place'), false);
 assert.equal(setupStepDone({ done: ['find', 'place'] }, 'place'), true);
+assert.equal(setupStepDone({ done: ['find'], finished: true }, 'visibility'), true);
 
 // The glassware row's note: glasses, ice and tools, the empty ones left out.
 assert.equal(kitNote(0, 0, 0), undefined);

@@ -236,7 +236,6 @@ export function useDeleteEvent() {
 
 // --- Calendar links (20261012610000_calendar_sources.sql, the sync-calendar function) ---
 
-
 export interface FoundEvent {
   uid: string;
   name: string;
@@ -250,7 +249,6 @@ export interface FoundEvent {
 
 /** webcal:// is https:// for us. */
 export const calendarUrl = (raw: string) => raw.trim().replace(/^webcals?:\/\//i, 'https://');
-
 
 /** What a calendar link holds over the next month, nothing saved. */
 export function usePreviewCalendar() {

@@ -62,10 +62,11 @@ export function kitNote(glasses: number, ice: number, tools: number): string | u
 }
 
 /**
- * A venue setup step passed on this device. A venue with no setup here was
- * set up elsewhere, so its steps count as done.
+ * A venue setup step passed on this device, or setup gone through (a step it
+ * skipped is changed in Venue settings). A venue with no setup here was set
+ * up elsewhere, so its steps count as done.
  */
-export const setupStepDone = (run: { done: readonly string[]; finished?: boolean } | undefined, step: string) => !run || run.done.includes(step);
+export const setupStepDone = (run: { done: readonly string[]; finished?: boolean } | undefined, step: string) => !run || !!run.finished || run.done.includes(step);
 
 /**
  * Whether the bar has a look of its own (Theme, and Your team's invite wears

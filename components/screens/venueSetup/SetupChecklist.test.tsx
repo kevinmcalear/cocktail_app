@@ -90,8 +90,6 @@ test('each row opens its screen', async () => {
   expect(mockPush).toHaveBeenLastCalledWith('/settings/bar/b1');
   await open('Who sees your page, Menu, for now');
   expect(mockPush).toHaveBeenLastCalledWith('/settings/bar/b1/publishing');
-  await open('Theme, Your colour and your type');
-  expect(mockPush).toHaveBeenLastCalledWith('/settings/bar/b1/theme');
   await open('Calendars, Optional');
   expect(mockPush).toHaveBeenLastCalledWith('/settings/bar/b1/calendars');
 });
@@ -118,6 +116,14 @@ test('Your team waits for the look: it opens How it looks first, then the team',
   expect(screen.getByText('Your team’s invite wears this: the logo, colour and font go into every email.')).toBeTruthy();
   await fireEvent.press(screen.getByText('Done, on to your team'));
   expect(screen.getByText('Team step')).toBeTruthy();
+});
+
+test('Theme opens How it looks here, and Done comes back', async () => {
+  await renderWithProviders(<SetupChecklist barId="b1" name="Little Rye" />);
+  await fireEvent.press(screen.getByRole('button', { name: 'Theme, Your colour and your type' }));
+  expect(screen.queryByText('Your team’s invite wears this: the logo, colour and font go into every email.')).toBeNull();
+  await fireEvent.press(screen.getByText('Done'));
+  expect(screen.getByText('OWNER · 3 OF 8 DONE')).toBeTruthy();
 });
 
 test('with a look set, Your team goes straight to the invites', async () => {
