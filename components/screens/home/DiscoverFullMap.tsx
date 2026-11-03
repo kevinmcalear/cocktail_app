@@ -99,8 +99,10 @@ export function DiscoverFullMap({ bars, named, area, me, title, caption, start =
           <MapCredit />
         </GlassSurface>
       </View>
-      <Sheet visible={!!picked} onClose={() => setPickedId(null)} accessibilityLabel={picked?.name ?? 'Bar'} floating>
-        {picked ? <SelectedBar key={picked.id} variant="sheet" pin={picked} drinks={[]} area={area} me={me} onClose={() => setPickedId(null)} /> : null}
+      <Sheet visible={!!picked} onClose={() => setPickedId(null)} accessibilityLabel={picked?.name ?? 'Bar'}>
+        <View style={[styles.sheet, { paddingBottom: insets.bottom + space.xl }]}>
+          {picked ? <SelectedBar key={picked.id} variant="sheet" pin={picked} drinks={[]} area={area} me={me} onClose={() => setPickedId(null)} /> : null}
+        </View>
       </Sheet>
     </View>
   );
@@ -116,4 +118,6 @@ const styles = StyleSheet.create({
   center: { alignItems: 'center' },
   foot: { position: 'absolute', alignItems: 'center', gap: space.sm },
   credit: { borderRadius: radius.pill, paddingHorizontal: space.md, paddingVertical: space.xs },
+  // As other sheets pad theirs (Projects): room round the bar's card, and the home indicator's below it.
+  sheet: { paddingHorizontal: space.xl, paddingTop: space.md },
 });
