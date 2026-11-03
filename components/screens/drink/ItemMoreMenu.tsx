@@ -18,21 +18,26 @@ export interface ItemActions {
   /** To make, favourites or your bar, for people who keep it. */
   save?: { saved: boolean; onToggle: () => void; label: [string, string]; icon?: 'bookmark' | 'heart' } | null;
   onShare?: () => void;
+  /** An ingredient with pairings: its flavor map (board Keep-phone, Campari; in here by Kevin's C12, 3 Nov). */
+  flavorMap?: () => void;
   /** Something people posted: Report, for people who can't edit it (App Store 1.2). */
   report?: { itemId: string } | null;
   /** A catalog admin on someone else's drink: Fix as admin opens the editor. */
   adminFix?: () => void;
 }
 
+/** Whether More would hold anything, so a bar with nothing in it keeps no room for it. */
+export const hasMore = (a: ItemActions, signedIn: boolean) => !!(a.onEdit || a.save || a.onShare || a.flavorMap || a.adminFix || (a.report && signedIn));
+
 /**
  * The page's one button on the right, …, and its sheet: Edit, Save, Share,
- * Report and Fix as admin, whichever the viewer has, for every role, on every
+ * the flavor map, Report and Fix as admin, whichever the viewer has, for every role, on every
  * page with the shared header (drink, beer, wine, bottle, house-made). View as
  * lives in Settings (no role switcher on pages, 29 Oct). Nothing when there's
  * nothing to put in it. `k`: what it shows, as plain words, so iOS's bar
  * (ItemHeader) knows when to draw it again.
  */
-export function ItemMoreMenu({ name, onEdit, editLabel = 'Edit', save, onShare, report, adminFix, scheme }: ItemActions & { name: string; scheme?: 'light' | 'dark'; k?: string }) {
+export function ItemMoreMenu({ name, onEdit, editLabel = 'Edit', save, onShare, flavorMap, report, adminFix, scheme }: ItemActions & { name: string; scheme?: 'light' | 'dark'; k?: string }) {
   const signedIn = useSignedIn();
   const [open, setOpen] = useState(false);
   // What to open once the menu has gone: two sheets never stack. A ref, since the sheet's close was made before the tap.
@@ -44,6 +49,7 @@ export function ItemMoreMenu({ name, onEdit, editLabel = 'Edit', save, onShare, 
     ...(onEdit ? [{ key: 'edit', icon: 'pencil' as IconName, label: editLabel, onPick: onEdit }] : []),
     ...(save ? [{ key: 'save', icon: (save.saved ? `${glyph}.fill` : glyph) as IconName, label: save.label[save.saved ? 1 : 0], onPick: save.onToggle }] : []),
     ...(onShare ? [{ key: 'share', icon: 'square.and.arrow.up' as IconName, label: 'Share', onPick: onShare }] : []),
+    ...(flavorMap ? [{ key: 'map', icon: 'target' as IconName, label: 'Flavor map', onPick: flavorMap }] : []),
     ...(canReport ? [{ key: 'report', icon: 'flag' as IconName, label: `Report ${name}`, onPick: () => setReporting(true) }] : []),
     ...(adminFix ? [{ key: 'fix', icon: 'lock.shield.fill' as IconName, label: 'Fix as admin', onPick: adminFix }] : []),
   ];

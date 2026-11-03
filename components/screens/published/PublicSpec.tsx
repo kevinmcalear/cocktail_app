@@ -83,7 +83,7 @@ export function PublicSpec({
             amount={l.amount ?? ''}
             alignAmount={measured}
             ingredient={l.ingredient ?? 'House ingredient'}
-            ingredientId={l.ingredient ? l.ingredientId : undefined}
+            // No drawing on a spec line, as Decided-who-public draws it.
             optional={l.optional}
             floated={l.float}
           />

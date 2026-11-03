@@ -131,7 +131,7 @@ export const SAMPLE_BRANDS = {
 /**
  * Type (decided 31 Oct 2026): Redaction for names, the system font (SF,
  * Roboto, system UI on the web) for everything else, tabular figures for
- * amounts. No mono, nothing under 13. These are the only font families the
+ * amounts. Mono only for the drink editor's figures and paper (below). Nothing under 13. These are the only font families the
  * app sets (npm run check:design). Paper is the one exception: what prints
  * (lib/paper) sets labels, caps and amounts in the platform's typewriter
  * face (components/paper/PaperPage), as Bet-labels and Bet-print draw them.
@@ -157,13 +157,24 @@ export const fontFamilies = {
 /** The system font: React Native maps 'System' to SF on iOS and system UI on the web; Android falls back to Roboto. */
 export const systemFont = 'System';
 
-/** The system font at the app's weights; `figures` for amounts, so columns line up. Spread into a style. */
-export const font: Record<'regular' | 'medium' | 'semiBold' | 'figures' | 'figuresMedium', TextStyle> = {
+/**
+ * The typewriter face: the platform's own mono, so nothing loads. Paper sets
+ * its labels in it (components/paper/PaperPage) and the drink editor sets
+ * its figures in it, as Miss-steps draws them in Geist Mono (Kevin, 3 Nov
+ * 2026: mono as drawn). The boards' Geist is a placeholder for the system font
+ * (#1169), so this follows whatever face Kevin picks for the board's mono.
+ */
+export const monoFont = process.env.EXPO_OS === 'ios' ? 'Menlo' : process.env.EXPO_OS === 'android' ? 'monospace' : 'ui-monospace, Menlo, Consolas, monospace';
+
+/** The system font at the app's weights; `figures` for amounts, so columns line up; `mono` for the editor's figures. Spread into a style. */
+export const font: Record<'regular' | 'medium' | 'semiBold' | 'figures' | 'figuresMedium' | 'mono' | 'monoMedium', TextStyle> = {
   regular: { fontFamily: systemFont, fontWeight: '400' },
   medium: { fontFamily: systemFont, fontWeight: '500' },
   semiBold: { fontFamily: systemFont, fontWeight: '600' },
   figures: { fontFamily: systemFont, fontWeight: '400', fontVariant: ['tabular-nums'] },
   figuresMedium: { fontFamily: systemFont, fontWeight: '500', fontVariant: ['tabular-nums'] },
+  mono: { fontFamily: monoFont, fontWeight: '400' },
+  monoMedium: { fontFamily: monoFont, fontWeight: '500' },
 };
 
 /**

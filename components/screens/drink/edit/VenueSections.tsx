@@ -20,6 +20,7 @@ import { EMPTY_SERVICE_NOTES, handoffSteps, handoffText, MAX_HANDOFF_STEPS, type
 import { specLines, type PresentationRecipe } from '@/lib/spec';
 import type { DatabaseItem } from '@/types/types';
 
+import { Eyebrow } from '../../addDrink/WizardChrome';
 import { PublishSection } from '../../publishing/PublishSection';
 import { ClassicLink } from '../ClassicLink';
 import { GlassSheet } from '../GlassSheet';
@@ -115,7 +116,7 @@ function Sections({ item, onPending, sheet: open, onSheet: setOpen, servicePhoto
       {barId ? (
         <View style={styles.section}>
           <View style={styles.headRow}>
-            <Headline role="heading">For the floor</Headline>
+            <Eyebrow heading>For the floor</Eyebrow>
             <Caption tone="muted">Staff only</Caption>
           </View>
           <Field label="Talking point" value={talkingPoint} onChangeText={setTalkingPoint} placeholder="A line or two the floor can say" minLines={3} maxLength={1000} />
@@ -125,14 +126,14 @@ function Sections({ item, onPending, sheet: open, onSheet: setOpen, servicePhoto
       ) : null}
       {dietary ? (
         <View style={styles.section}>
-          <Headline role="heading">Dietary notes</Headline>
+          <Eyebrow heading>Dietary notes</Eyebrow>
           <Body>{dietary}</Body>
           <Caption tone="muted">Worked out from the spec, so it changes when the spec does.</Caption>
         </View>
       ) : null}
       {barId ? (
         <View style={styles.section}>
-          <Headline role="heading">Service</Headline>
+          <Eyebrow heading>Service</Eyebrow>
           {lines.length ? (
             <>
               <Caption tone="muted">How it goes out</Caption>
@@ -186,7 +187,7 @@ function LinkedTo({ item, onOpen }: { item: DatabaseItem; onOpen: (sheet: VenueS
   if (!rows.length) return null;
   return (
     <View style={styles.section}>
-      <Headline role="heading">Linked to</Headline>
+      <Eyebrow heading>Linked to</Eyebrow>
       <Rows rows={rows} />
     </View>
   );

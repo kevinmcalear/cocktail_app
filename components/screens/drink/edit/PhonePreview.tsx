@@ -12,8 +12,8 @@ import type { DrinkEditor } from './EditParts';
 
 const PHONE_WIDTH = layout.phoneFrame;
 const PHONE_HEIGHT = 780;
-/** How wide the window must be for the preview to sit beside the hero card (400) and a form of at least 480. */
-export const PREVIEW_ROOM = 400 + 480 + PHONE_WIDTH + space.xxl * 4;
+/** How wide the window must be for the preview to sit beside an editor of at least 560 (Miss-steps-desk draws it at 640) and the sidebar. */
+export const PREVIEW_ROOM = 240 + 560 + PHONE_WIDTH + space.xxl * 3;
 // Everything shows: the preview is the finished page as its team reads it (the role levels are what the page masks by).
 const OPEN = { role: 40, levels: { generic: 0, brand: 0, measurement: 0, prep: 0 } };
 // The web keeps it in view while the form scrolls past.

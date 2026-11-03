@@ -71,7 +71,7 @@ const ENTRY: Record<VenueFeatureKey, readonly string[]> = {
   prep: ['app/(tabs)/(1-tonight,2-drinks,3-discover,4-you)/prep.tsx', 'components/nav/sidePlaces.ts', 'hooks/useMenuLens.ts', 'components/screens/ingredient/BehindTheBar.tsx'],
   study: ['app/(tabs)/(1-tonight,2-drinks,3-discover,4-you)/test.tsx', 'app/study/[deck].tsx', 'components/bar/VenueSettingsLinks.tsx', 'components/screens/tonight/useStaffTonight.ts'],
   history: ['app/history.tsx', 'components/search/SearchPanel.tsx', 'components/screens/drink/Backstory.tsx'],
-  flavorMap: ['app/flavor-map.tsx', 'components/search/SearchPanel.tsx', 'components/screens/learn/LearnScreen.tsx', 'components/screens/pairings/PairsWith.tsx', 'components/screens/addDrink/GoesWith.tsx'],
+  flavorMap: ['app/flavor-map.tsx', 'components/search/SearchPanel.tsx', 'components/screens/learn/LearnScreen.tsx', 'components/screens/pairings/PairsWith.tsx', 'components/screens/addDrink/GoesWith.tsx', 'components/screens/ingredient/IngredientScreen.tsx'],
   techniques: [
     'app/(tabs)/(1-tonight,2-drinks,3-discover,4-you)/learn.tsx',
     'app/(tabs)/(1-tonight,2-drinks,3-discover,4-you)/techniques/index.tsx',

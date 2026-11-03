@@ -53,6 +53,7 @@ export function HomeGlasswareScreen({ openId }: { openId?: string | null }) {
         openName={opened ? glassName(opened) : null}
         loading={isLoading}
         failed={!!error}
+        onEdit={opened ? change(0) : undefined}
         list={
           error ? (
             <Body tone="muted">Couldn’t load your glassware. Check your connection and try again.</Body>
@@ -83,7 +84,6 @@ export function HomeGlasswareScreen({ openId }: { openId?: string | null }) {
                 { label: 'Where it comes from', value: glassFrom(opened) || 'Not said yet', onChange: change(1) },
                 { label: 'How many', value: opened.count ? String(opened.count) : 'Not said yet', onChange: change(2) },
               ]}
-              onEdit={change(0)}
               onRemove={() => remove.mutate(opened.id, { onSuccess: close })}
               removing={remove.isPending}
               error={remove.error || save.error ? FAILED : null}
@@ -143,6 +143,7 @@ export function HomeIceScreen({ openId }: { openId?: string | null }) {
         openName={opened?.name}
         loading={isLoading}
         failed={!!error}
+        onEdit={opened ? () => setSheet({ ice: opened, startAt: 0 }) : undefined}
         list={
           error ? (
             <Body tone="muted">Couldn’t load your ice. Check your connection and try again.</Body>
@@ -173,7 +174,6 @@ export function HomeIceScreen({ openId }: { openId?: string | null }) {
                 { label: 'Looks like', value: iceLooksLine(opened), onChange: () => setSheet({ ice: opened, startAt: 0 }) },
                 { label: 'Where it comes from', value: iceFrom(opened) || 'Not said yet', onChange: () => setSheet({ ice: opened, startAt: 1 }) },
               ]}
-              onEdit={() => setSheet({ ice: opened, startAt: 0 })}
               onRemove={() => remove.mutate(opened.id, { onSuccess: close })}
               removing={remove.isPending}
               error={remove.error ? FAILED : null}

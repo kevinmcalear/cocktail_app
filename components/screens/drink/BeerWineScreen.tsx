@@ -158,7 +158,8 @@ function BeerWinePage({ kind, item, favorite, onToggleFavorite, canEdit, onEdit 
       actions={{
         save: { saved: favorite, onToggle: onToggleFavorite, label: ['Add to favorites', 'Remove from favorites'], icon: 'heart' },
         onShare: () => void shareOrCopy(drinkUrl(slug ?? item.id), item.name, 'drink'),
-        report: { itemId: item.id },
+        // Not for the bar's own team (View as applied): they fix it, they don't report it.
+        report: teamRole !== null && viewing >= 20 ? null : { itemId: item.id },
         onEdit: canEdit ? onEdit : undefined,
         editLabel: `Edit ${kind}`,
       }}
