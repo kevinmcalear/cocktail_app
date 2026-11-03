@@ -17,17 +17,20 @@ export interface EditToolbarProps {
   wide?: boolean;
   /** Desktop's header: the More button, before Done. */
   more?: React.ReactNode;
-  /** What the phone's glass sits on: the cream sketch paper (light glass) or a photo (dark). */
-  media?: 'paper' | 'photo';
+  /** What the phone's glass sits on: the cream sketch paper (light glass) or a photo (dark). `page`: no hero (Miss-steps), round buttons on the page itself. */
+  media?: 'paper' | 'photo' | 'page';
+  /** Desktop's header in place of the "Editing" badge: where you are (Miss-steps-desk, "Bar › Drinks › Penicillin › Editing"). */
+  crumb?: string;
 }
 
-function HistoryButtons({ canUndo, canRedo, onUndo, onRedo, ink }: Pick<EditToolbarProps, 'canUndo' | 'canRedo' | 'onUndo' | 'onRedo'> & { ink: string }) {
+function HistoryButtons({ canUndo, canRedo, onUndo, onRedo, ink, round }: Pick<EditToolbarProps, 'canUndo' | 'canRedo' | 'onUndo' | 'onRedo'> & { ink: string; /** Each its own disc on the page (Miss-steps). */ round?: string }) {
+  const disc = round ? [styles.disc, { backgroundColor: round }] : null;
   return (
     <>
-      <PressableScale role="button" accessibilityLabel="Undo" aria-disabled={!canUndo} disabled={!canUndo} onPress={onUndo} style={[styles.icon, !canUndo && styles.off]}>
+      <PressableScale role="button" accessibilityLabel="Undo" aria-disabled={!canUndo} disabled={!canUndo} onPress={onUndo} style={[styles.icon, disc, !canUndo && styles.off]}>
         <IconSymbol name="arrow.uturn.backward" size={20} color={ink} />
       </PressableScale>
-      <PressableScale role="button" accessibilityLabel="Redo" aria-disabled={!canRedo} disabled={!canRedo} onPress={onRedo} style={[styles.icon, !canRedo && styles.off]}>
+      <PressableScale role="button" accessibilityLabel="Redo" aria-disabled={!canRedo} disabled={!canRedo} onPress={onRedo} style={[styles.icon, disc, !canRedo && styles.off]}>
         <IconSymbol name="arrow.uturn.backward" size={20} color={ink} style={styles.flip} />
       </PressableScale>
     </>
@@ -41,8 +44,8 @@ function HistoryButtons({ canUndo, canRedo, onUndo, onRedo, ink }: Pick<EditTool
  */
 export function EditToolbar(props: EditToolbarProps) {
   const ds = useDs();
-  const { onDone, saving, wide, more, media = 'photo', changes = 0 } = props;
-  const scheme = media === 'paper' ? 'light' : 'dark';
+  const { onDone, saving, wide, more, media = 'photo', changes = 0, crumb } = props;
+  const scheme = media === 'photo' ? 'dark' : 'light';
   const ink = backbar[scheme].ink;
   const done = (
     <PressableScale
@@ -72,13 +75,32 @@ export function EditToolbar(props: EditToolbarProps) {
   if (wide) {
     return (
       <View style={styles.wideRow}>
-        <View style={[styles.badge, { backgroundColor: ds.c.raised }]}>
-          <Caption tone="muted">{changes ? `Editing · ${changes} ${changes === 1 ? 'change' : 'changes'}` : 'Editing'}</Caption>
-        </View>
+        {crumb ? (
+          <Caption tone="muted" numberOfLines={1} style={styles.crumb}>
+            {crumb}
+          </Caption>
+        ) : (
+          <View style={[styles.badge, { backgroundColor: ds.c.raised }]}>
+            <Caption tone="muted">{changes ? `Editing · ${changes} ${changes === 1 ? 'change' : 'changes'}` : 'Editing'}</Caption>
+          </View>
+        )}
         <View style={styles.push} />
         <HistoryButtons {...props} ink={ds.c.ink} />
         {more}
         {done}
+      </View>
+    );
+  }
+  if (media === 'page') {
+    return (
+      <View style={styles.phoneRow}>
+        <View style={styles.pair}>
+          <HistoryButtons {...props} ink={ds.c.ink} round={ds.c.surface} />
+        </View>
+        <View style={styles.pair}>
+          {more}
+          {done}
+        </View>
       </View>
     );
   }
@@ -102,6 +124,9 @@ const styles = StyleSheet.create({
   pill: { flexDirection: 'row', borderRadius: radius.pill, paddingHorizontal: space.xs },
   badgeGlass: { borderRadius: radius.pill, paddingHorizontal: space.md, paddingVertical: space.xs + 2 },
   icon: { width: layout.minTapTarget, height: layout.minTapTarget, alignItems: 'center', justifyContent: 'center' },
+  disc: { borderRadius: radius.pill },
+  pair: { flexDirection: 'row', alignItems: 'center', gap: space.sm },
+  crumb: { flexShrink: 1 },
   off: { opacity: 0.4 },
   flip: { transform: [{ scaleX: -1 }] },
   doneRound: { width: 48, height: 48, borderRadius: radius.pill, alignItems: 'center', justifyContent: 'center' },

@@ -8,6 +8,7 @@ import { EMPTY_DRAFT, type WizardDraft } from '@/lib/drinkWizard';
 import type { IngredientAlias } from '@/lib/ingredientNames';
 import { fromLine, toLine, type EditLine, type SortableRecipeItem } from '@/lib/recipeItem';
 
+import { DraftLine } from '../../addDrink/DraftLine';
 import { IngredientsStep } from '../../addDrink/IngredientsStep';
 import type { CatalogIngredient } from '../../addDrink/IngredientSearch';
 
@@ -45,7 +46,9 @@ interface EditLinesProps {
  * the making flow's own list, the one New uses (IngredientsStep), over the
  * editor's rows. In a drink, holding one line over another combines them and
  * opens the House-made steps; a line made here saves the way New saves it
- * (hooks/specLineSave).
+ * (hooks/specLineSave). A drink's lines read as Miss-steps draws them: ruled
+ * "60 ml Blended scotch" with no heading over them, each opening its editor
+ * when tapped (the draft page's DraftLine).
  */
 export function EditLines({ items, onChange, name, ingredients, aliases, coreIds, loading, backBar, bar, forDrink = true, title = 'Spec', aside, note, focus, parts, onParts, partHead, footer }: EditLinesProps) {
   const ds = useDs();
@@ -56,18 +59,21 @@ export function EditLines({ items, onChange, name, ingredients, aliases, coreIds
     if (change.parts && onParts) onParts(change.parts);
     if (change.lines) onChange(orderByPart(change.parts ?? parted, (change.lines as EditLine[]).map(fromLine)));
   };
+  const headed = !forDrink || parted || aside;
   return (
     <View style={styles.section}>
-      <View style={styles.head}>
-        <Headline role="heading">{title}</Headline>
-        {parted ? (
-          <View style={[styles.pill, { backgroundColor: ds.c.raised }]}>
-            <Caption>{`${parted.length} parts`}</Caption>
-          </View>
-        ) : aside ? (
-          <Caption tone="muted">{aside}</Caption>
-        ) : null}
-      </View>
+      {headed ? (
+        <View style={styles.head}>
+          <Headline role="heading">{title}</Headline>
+          {parted ? (
+            <View style={[styles.pill, { backgroundColor: ds.c.raised }]}>
+              <Caption>{`${parted.length} parts`}</Caption>
+            </View>
+          ) : aside ? (
+            <Caption tone="muted">{aside}</Caption>
+          ) : null}
+        </View>
+      ) : null}
       <IngredientsStep
         draft={draft}
         set={set}
@@ -83,6 +89,7 @@ export function EditLines({ items, onChange, name, ingredients, aliases, coreIds
         trail={[{ label: name }]}
         focus={focus}
         partHead={parted ? partHead : undefined}
+        renderLine={forDrink ? (line, row, lineParts) => <DraftLine {...lineParts} line={line} row={row} /> : undefined}
       />
       {parted ? footer : null}
       {parted ? <Caption tone="muted">{`Hold a line${Platform.OS === 'web' ? ' by its grip' : ''} and move it into another part. Over a line, it combines.`}</Caption> : null}

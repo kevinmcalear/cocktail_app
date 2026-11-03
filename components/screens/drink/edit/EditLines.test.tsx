@@ -28,17 +28,21 @@ const render = (onChange: jest.Mock, forDrink = true) =>
 describe('EditLines', () => {
   test("a drink's spec is the making flow's list: lines combine, and New's suggestions stay in New", async () => {
     await render(jest.fn());
-    expect(screen.getByText('Spec')).toBeTruthy();
+    // Ruled lines with no heading (Miss-steps); a tap opens the line's editor.
+    expect(screen.queryByText('Spec')).toBeNull();
+    await fireEvent.press(screen.getByRole('button', { name: '60 ml Blended Scotch. Edit' }));
     expect(screen.getByLabelText('Amount of Blended Scotch')).toBeTruthy();
     expect(screen.getByText('Hold a line and move it over another. Let go to combine them; move away to just reorder.')).toBeTruthy();
     expect(screen.queryByText('Paste a whole spec')).toBeNull();
-    // A saved note shows as the line's note.
+    // A saved note shows as the line's note, once the line is open.
+    await fireEvent.press(screen.getByRole('button', { name: '7.5 ml Islay Scotch. Edit' }));
     expect(screen.getByDisplayValue('floated on top')).toBeTruthy();
   });
 
   test('an edit keeps each saved row, its note and whether it is optional', async () => {
     const onChange = jest.fn();
     await render(onChange);
+    await fireEvent.press(screen.getByRole('button', { name: '60 ml Blended Scotch. Edit' }));
     await fireEvent.press(screen.getByRole('button', { name: 'More Blended Scotch' }));
     const items = onChange.mock.calls.at(-1)[0] as SortableRecipeItem[];
     expect(items[0]).toMatchObject({ id: 'row1', ingredient_id: 'scotch', unit: 'ml' });
