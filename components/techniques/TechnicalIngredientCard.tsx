@@ -7,6 +7,7 @@ import { doseLine } from '@/lib/doseLine';
 import { technicalIngredientFor, techniqueById } from '@/lib/techniques';
 
 import { BuyList, GradeTag } from './bits';
+import { useVenueFeature } from '@/hooks/useVenueFeatures';
 
 /**
  * On a technical ingredient's page (xanthan, agar, lecithin...): what it does,
@@ -17,6 +18,8 @@ import { BuyList, GradeTag } from './bits';
 export function TechnicalIngredientCard({ name }: { name: string }) {
   const ds = useDs();
   const router = useRouter();
+  // Its kit and technique pages are the Techniques switch's (lib/venueFeatures.ts).
+  const techniques = useVenueFeature('techniques');
   const t = technicalIngredientFor(name);
   if (!t) return null;
   const facts = [t.vegan ? 'Vegan' : 'Not vegan', t.alcohol, ...(t.allergens ?? [])].filter((f): f is string => !!f);
@@ -61,6 +64,7 @@ export function TechnicalIngredientCard({ name }: { name: string }) {
       <View style={styles.tags}>
         {t.techniques.map((id) => {
           const tech = techniqueById(id);
+          if (tech && !techniques) return <Caption key={id} tone="muted" numberOfLines={1}>{tech.name}</Caption>;
           return tech ? (
             <PressableScale key={id} role="link" accessibilityLabel={`How to: ${tech.name}`} onPress={() => router.push(`/techniques/${id}` as never)} style={[styles.link, { backgroundColor: ds.c.raised }]}>
               <Caption numberOfLines={1}>{tech.name}</Caption>

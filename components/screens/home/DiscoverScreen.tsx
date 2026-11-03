@@ -10,7 +10,7 @@ import { ScreenHeader } from '@/components/nav/ScreenHeader';
 import { useTabBarInset } from '@/components/nav/WebTabBar';
 import { AreaNote } from '@/components/screens/home/DiscoverArea';
 import { DiscoverFullMap } from '@/components/screens/home/DiscoverFullMapLazy';
-import { mapAvailable } from '@/components/screens/home/DiscoverMap';
+import { mapAvailable } from '@/components/screens/home/DiscoverMapLazy';
 import { BestNear, DeskChips, DiscoverLoading, DiscoverOffline, MapCard, NewMenus, PHONE_NAMES } from '@/components/screens/home/DiscoverParts';
 import { placeSections } from '@/components/screens/home/DiscoverPlace';
 import { TonightHead } from '@/components/screens/tonight/TonightParts';
@@ -22,6 +22,7 @@ import { BEST_ROWS, useAreaBars, useBestNear, useNewMenus, useOpenClock } from '
 import { useIsWideWeb } from '@/hooks/useIsWideWeb';
 import { useLovedBars } from '@/hooks/useKept';
 import { usePublishSearchArea } from '@/hooks/useSearchFrom';
+import { useVenueFeature } from '@/hooks/useVenueFeatures';
 import { mapCaption, placeName } from '@/lib/discoverHome';
 import { STYLES } from '@/lib/drinkStyles';
 import type { Camera } from '@/lib/discoverMap';
@@ -118,12 +119,14 @@ export function DiscoverScreen() {
   });
 
   const where = areaLabel(area);
+  const techniques = useVenueFeature('techniques');
   const label = `Best ${best.style.label} ${area.kind === 'point' && area.source === 'me' ? 'near you' : where}`;
   const onAll = best.classicId ? () => router.push(`/rankings/${best.classicId}` as Href) : undefined;
   const bestList = <BestNear label={label} classic={best.style.classics[0] ?? ''} where={where} rows={rows} limit={limit} state={best.isLoading ? 'loading' : best.error ? 'error' : undefined} onRetry={() => void best.refetch()} onAll={onAll} highlight={split ? (hover ?? rows[0]?.barId ?? null) : null} onHover={split ? setHover : undefined} />;
 
   // Learn (Kept-learn, "Learn, from Discover"): techniques, kit and pairings, under the lists.
-  const learn = <LinkRow title="Learn" detail="Techniques, kit and pairings" href="/learn" icon="book" />;
+  // At a venue, only with Techniques switched on (lib/venueFeatures.ts).
+  const learn = techniques ? <LinkRow title="Learn" detail="Techniques, kit and pairings" href="/learn" icon="book" /> : null;
 
   const body = offline ? (
     <DiscoverOffline />

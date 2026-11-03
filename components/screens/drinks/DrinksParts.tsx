@@ -17,7 +17,8 @@ import { liquidOf } from '@/lib/sketch/types';
  * The Drinks tab's head (Prod-phone drinks, Sta-drinks): the tab's own top
  * row (the place button and Add; Android's search bar), the bar's name (or
  * Home) over Drinks, the capsule, and with no signal "Whole spec book on this
- * phone" under it. `bleed`: the list's side padding, which the top row runs past.
+ * phone" under it; no capsule when there's only one (a bar without More drink
+ * filters, lib/venueFeatures.ts). `bleed`: the list's side padding, which the top row runs past.
  */
 export function DrinksHead<T extends string>({
   eyebrow,
@@ -46,7 +47,7 @@ export function DrinksHead<T extends string>({
         <Display aria-level={1}>Drinks</Display>
       </View>
       {offline ? <SavedChip text={offline} /> : null}
-      <SegmentedCapsule options={capsules} value={value} onChange={onChange} accessibilityLabel={capsules.map((c) => c.label).join(', ')} />
+      {capsules.length > 1 ? <SegmentedCapsule options={capsules} value={value} onChange={onChange} accessibilityLabel={capsules.map((c) => c.label).join(', ')} /> : null}
     </View>
   );
 }
