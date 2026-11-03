@@ -54,9 +54,13 @@ jest.mock('@/components/nav/RootLazy', () => {
   const { LibraryScreen } = jest.requireMock<typeof import('@/components/screens/LibraryScreen')>('@/components/screens/LibraryScreen');
   return { LibraryBeside: () => <LibraryScreen beside /> };
 });
-jest.mock('@/components/screens/home/CollectionScreen', () => {
+jest.mock('@/components/screens/library/OnNowPane', () => {
+  const { Text } = require('react-native');
+  return { OnNowPane: () => <Text>Pick a drink to see it here.</Text> };
+});
+jest.mock('@/components/screens/library/HomeDrinks', () => {
   const { Text } = jest.requireActual<typeof import('react-native')>('react-native');
-  return { CollectionScreen: () => <Text>collection</Text> };
+  return { HomeDrinks: () => <Text>collection</Text> };
 });
 
 const SHARED = '(tabs)/(1-tonight,2-drinks,3-discover,4-you)';
