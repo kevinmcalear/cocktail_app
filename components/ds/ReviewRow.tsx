@@ -8,6 +8,7 @@ import { withAlpha } from '@/lib/color';
 import { Chip } from './Chip';
 import { PressableScale } from './PressableScale';
 import { Body, Caption, DsText, Spec } from './Text';
+import { TextLink } from './TextLink';
 import { useDs } from './theme';
 
 /**
@@ -53,26 +54,6 @@ interface ReviewRowProps {
   mutedTitle?: boolean;
   /** Anything the row still needs under it, like the ingredients of a new drink. */
   children?: ReactNode;
-}
-
-/** A text action, in the venue's accent unless `tone` says ink ("Add another page", "Finish"), at least 44 tall. */
-export function TextLink({ label, onPress, accessibilityHint, tone = 'accent', disabled }: {
-  label: string;
-  onPress: () => void;
-  accessibilityHint?: string;
-  /** `ink` where the screen's one accent is already spoken for (a menu's Guest card beside Go live). */
-  tone?: 'accent' | 'ink';
-  /** Shown muted and not pressable (Email us instead while a note is sending). */
-  disabled?: boolean;
-}) {
-  const ds = useDs();
-  return (
-    <PressableScale accessibilityLabel={label} accessibilityHint={accessibilityHint} onPress={onPress} disabled={disabled} aria-disabled={disabled || undefined} style={styles.link}>
-      <DsText variant="body" color={disabled ? ds.c.muted : tone === 'ink' ? ds.c.ink : ds.accentText}>
-        {label}
-      </DsText>
-    </PressableScale>
-  );
 }
 
 /** The state's mark (docs/design_system.md): have is an ink tick on a faint ink circle; new, the only one in the accent, a dashed plus. */
@@ -188,5 +169,4 @@ const styles = StyleSheet.create({
   choices: { flexDirection: 'row', flexWrap: 'wrap', gap: space.sm, paddingLeft: MARK + space.md },
   choicesUnder: { paddingLeft: 70 },
   under: { gap: space.sm, paddingLeft: MARK + space.md },
-  link: { minHeight: 44, minWidth: 44, justifyContent: 'center', alignSelf: 'flex-start' },
 });

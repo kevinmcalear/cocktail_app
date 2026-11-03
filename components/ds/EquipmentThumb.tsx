@@ -2,7 +2,7 @@ import { StyleSheet, View } from 'react-native';
 
 import { radius } from '@/constants/tokens';
 
-import { EquipmentDrawing } from './EquipmentDrawing';
+import { EquipmentDrawing } from './EquipmentDrawingLazy';
 
 /**
  * A small picture of a piece of bar kit for lists and tiles: its drawing on

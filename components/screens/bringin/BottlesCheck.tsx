@@ -2,7 +2,8 @@ import { useMemo, useState } from 'react';
 import { ScrollView, StyleSheet, useWindowDimensions, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
-import { Button, Caption, DsText, Field, ReviewRow, TextLink, Title, useDs, useGutter } from '@/components/ds';
+import { Button, Caption, DsText, Field, TextLink, Title, useDs, useGutter } from '@/components/ds';
+import { ReviewRow } from '@/components/ds/ReviewRow';
 import { radius, space } from '@/constants/tokens';
 import { useBringInMatchData } from '@/hooks/useBringInMatchData';
 import type { VenueBottle } from '@/hooks/useBulk';
