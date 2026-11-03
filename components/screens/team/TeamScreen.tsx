@@ -63,7 +63,7 @@ export function TeamScreen() {
   const inviting = asked && looks;
   const startInvite = () => {
     if (looks) setInviting(true);
-    else if (brand.data) router.push(`/settings/bar/${active!.id}/brand` as Href);
+    else if (brand.data) router.push(`/settings/bar/${active!.id}/theme` as Href);
   };
   // On a desktop someone is always open beside the list: the one picked, else the first the manager can open.
   const admin = role >= TEAM_MANAGE;

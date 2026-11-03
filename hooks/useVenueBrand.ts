@@ -3,6 +3,7 @@ import * as ImagePicker from 'expo-image-picker';
 
 import { extractColors, uploadLogo } from '@/hooks/useBarEditor';
 import { isUnknownFaceError } from '@/lib/brand';
+import { extractBrandColorsFromUri } from '@/lib/extractBrandColors';
 import { uriToBase64 } from '@/lib/imageBase64';
 import { invokeFunction } from '@/lib/invokeFunction';
 import { supabase } from '@/lib/supabase';
@@ -15,7 +16,7 @@ export interface VenueBrandRow {
   logo_url: string | null;
   primary_color: string | null;
   secondary_color: string | null;
-  /** A venue_display_face value; one this build doesn't know reads as Instrument Serif (lib/brand faceFromDb). */
+  /** A venue_display_face value; one this build doesn't know reads as Redaction, an older one as the nearest face (lib/brand faceFromDb). */
   display_face: string;
   ground_tint: string | null;
   short_name: string | null;
@@ -91,13 +92,29 @@ export async function pickBrandImage(barId: string, withColors: boolean): Promis
   if (result.canceled || !result.assets?.length) return null;
   const uri = result.assets[0].uri;
   const base64 = await uriToBase64(uri);
-  const [upload, found] = await Promise.all([
+  // One request: the upload answers with the logo's colours too. Read them on the device where it can (the web),
+  // and never let a colour read that fails lose the upload (it used to send the same photo twice, and either failing lost both).
+  const [upload, local] = await Promise.all([
     uploadLogo(barId, base64),
-    withColors ? extractColors(barId, uri, base64) : Promise.resolve(null),
+    withColors ? extractBrandColorsFromUri(uri).catch(() => null) : Promise.resolve(null),
   ]);
-  if (!upload.imageUrl) throw new Error('The image didn’t upload. Try again.');
+  if (!upload?.imageUrl) throw new Error('The image didn’t upload. Try again.');
+  const found = withColors ? (local ?? upload) : null;
   const colors = [found?.primaryColor, found?.secondaryColor].filter((c): c is string => !!c);
   return { url: upload.imageUrl, colors };
+}
+
+/**
+ * A photo of the room (the bar top, the neon sign), for a logo with no colour
+ * in it (canvas Theme-flow-mono): its colours only. Nothing is kept: the
+ * function only reads the colours (extract_only).
+ */
+export async function pickPhotoColours(barId: string): Promise<string[] | null> {
+  const result = await ImagePicker.launchImageLibraryAsync({ mediaTypes: ['images'], quality: 0.8 });
+  if (result.canceled || !result.assets?.length) return null;
+  const uri = result.assets[0].uri;
+  const found = await extractColors(barId, uri, await uriToBase64(uri));
+  return [found?.primaryColor, found?.secondaryColor].filter((c): c is string => !!c).map((c) => c.toUpperCase());
 }
 
 /** What Remove background gives: the new logo and its original, or that the server can't do it yet. */

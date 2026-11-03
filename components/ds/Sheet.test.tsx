@@ -1,6 +1,6 @@
 import { act, fireEvent, screen } from '@testing-library/react-native';
 import { useState } from 'react';
-import { Pressable, Text } from 'react-native';
+import { Alert, Pressable, Text, type AlertButton } from 'react-native';
 import { State } from 'react-native-gesture-handler';
 import { fireGestureHandler, getByGestureTestId } from 'react-native-gesture-handler/jest-utils';
 
@@ -19,7 +19,7 @@ function Done() {
   );
 }
 
-function Host({ onClose = () => {} }: { onClose?: () => void }) {
+function Host({ onClose = () => {}, dirty }: { onClose?: () => void; dirty?: boolean }) {
   const [open, setOpen] = useState(true);
   return (
     <>
@@ -28,6 +28,7 @@ function Host({ onClose = () => {} }: { onClose?: () => void }) {
       <Sheet
         visible={open}
         accessibilityLabel="Test sheet"
+        dirty={dirty}
         onClose={() => {
           onClose();
           setOpen(false);
@@ -121,6 +122,58 @@ test('outside a sheet, SheetScrollView is a plain scroll view', async () => {
     </SheetScrollView>,
   );
   expect(screen.getByText('Loose')).toBeTruthy();
+});
+
+// Unsaved changes (the theme's Type and Colour): every way out but Done asks first.
+function answer(alert: jest.SpyInstance, text: 'Discard' | 'Cancel') {
+  const buttons = alert.mock.calls[alert.mock.calls.length - 1][2] as AlertButton[];
+  return act(async () => buttons.find((b) => b.text === text)?.onPress?.());
+}
+
+test('with unsaved changes the backdrop asks first, and Discard closes it', async () => {
+  const alert = jest.spyOn(Alert, 'alert').mockImplementation(() => {});
+  const onClose = jest.fn();
+  await renderWithProviders(<Host onClose={onClose} dirty />);
+  await fireEvent.press(screen.getByLabelText('Close'));
+  expect(alert).toHaveBeenCalledTimes(1);
+  expect(alert.mock.calls[0][0]).toBe('Discard changes?');
+  expect(onClose).not.toHaveBeenCalled();
+  expect(screen.getByText('Inside')).toBeTruthy();
+  await answer(alert, 'Discard');
+  expect(onClose).toHaveBeenCalledTimes(1);
+  expect(screen.queryByText('Inside')).toBeNull();
+  alert.mockRestore();
+});
+
+test('with unsaved changes a pull down settles back and asks; Cancel keeps it open', async () => {
+  const alert = jest.spyOn(Alert, 'alert').mockImplementation(() => {});
+  const onClose = jest.fn();
+  await renderWithProviders(<Host onClose={onClose} dirty />);
+  await pull(300, 0);
+  expect(alert).toHaveBeenCalledTimes(1);
+  await answer(alert, 'Cancel');
+  expect(onClose).not.toHaveBeenCalled();
+  expect(screen.getByText('Inside')).toBeTruthy();
+  alert.mockRestore();
+});
+
+test('a second close while it asks does not ask again', async () => {
+  const alert = jest.spyOn(Alert, 'alert').mockImplementation(() => {});
+  await renderWithProviders(<Host dirty />);
+  await fireEvent.press(screen.getByLabelText('Close'));
+  await fireEvent.press(screen.getByRole('button', { name: 'Done' }));
+  expect(alert).toHaveBeenCalledTimes(1);
+  alert.mockRestore();
+});
+
+test('with nothing changed it closes without asking', async () => {
+  const alert = jest.spyOn(Alert, 'alert').mockImplementation(() => {});
+  const onClose = jest.fn();
+  await renderWithProviders(<Host onClose={onClose} dirty={false} />);
+  await fireEvent.press(screen.getByLabelText('Close'));
+  expect(alert).not.toHaveBeenCalled();
+  expect(onClose).toHaveBeenCalledTimes(1);
+  alert.mockRestore();
 });
 
 test('from a button it grows out of a card; with Reduce Motion it just shows', async () => {

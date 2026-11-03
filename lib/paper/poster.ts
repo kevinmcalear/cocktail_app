@@ -8,8 +8,8 @@
 
 import { BRAND } from '@/constants/brand';
 import { backbar, posterPaper, type DisplayFace } from '@/constants/tokens';
-import { accentFill, contrast } from '@/lib/color';
 import { plural } from '@/lib/ranking';
+import { themeColours } from '@/lib/theme';
 
 import { fitSize, POSTER_SIZES, type PaperDrawing, type PaperEl, type PaperPage, type PosterSize } from './page';
 
@@ -60,9 +60,9 @@ export function menuPoster(input: MenuPosterInput, size: PosterSize): PaperPage 
   const { w, h } = POSTER_SIZES[size];
   // A story and the printed poster list the drinks; a square has no room.
   const story = size !== 'square';
-  // Cream on the bar's colour as drawn, the colour deepened until it reads; a light colour (amber) takes dark ink instead.
+  // The bar's button colour and the ink on it (lib/theme, the one rule for a bar's colour), on the poster's paper.
   const palette = input.accent
-    ? accentFill(input.accent, backbar.light.ink, posterPaper.cream, contrast(input.accent, posterPaper.cream) >= 3 ? 'light' : undefined)
+    ? (({ fill, onFill }) => ({ fill, text: onFill }))(themeColours(input.accent, posterPaper.cream, false))
     : { fill: posterPaper[input.scheme === 'dark' ? 'night' : 'day'], text: backbar[input.scheme].ink };
   const ink = palette.text;
   const els: PaperEl[] = [];

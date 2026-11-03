@@ -1,5 +1,5 @@
 import { BottomSheet, Group, Host, RNHostView } from '@expo/ui/swift-ui';
-import { preferredColorScheme, presentationBackground, presentationDetents, presentationDragIndicator } from '@expo/ui/swift-ui/modifiers';
+import { interactiveDismissDisabled, preferredColorScheme, presentationBackground, presentationDetents, presentationDragIndicator } from '@expo/ui/swift-ui/modifiers';
 import { useEffect, useEffectEvent, useRef, useState } from 'react';
 import { StyleSheet, View } from 'react-native';
 import { GestureHandlerRootView } from 'react-native-gesture-handler';
@@ -7,6 +7,7 @@ import { GestureHandlerRootView } from 'react-native-gesture-handler';
 import { space } from '@/constants/tokens';
 
 import { flowDetents } from './flowDetents';
+import { useDiscardGuard } from './discardGuard';
 import type { SheetProps } from './Sheet';
 import { CloseContext } from './sheetClose';
 import { useDs } from './theme';
@@ -27,7 +28,7 @@ const PRESENT_MS = 350;
  * the system's: SwiftUI lifts the sheet's content over it, so `keyboard` and
  * `keyboardOffset` have nothing to do here.
  */
-export function FlowSheet({ visible, onClose, accessibilityLabel, children, style, ground, header, onShow, onDismiss, part }: SheetProps) {
+export function FlowSheet({ visible, onClose, accessibilityLabel, children, style, ground, header, onShow, onDismiss, part, dirty }: SheetProps) {
   const ds = useDs();
   const fill = ground ? ds.c.ground : ds.c.surface;
   const { detents, rest } = flowDetents(part);
@@ -58,6 +59,9 @@ export function FlowSheet({ visible, onClose, accessibilityLabel, children, styl
   useEffect(() => {
     if (visible) ours.current = false;
   }, [visible]);
+  // Unsaved changes: a swipe down is held off (interactiveDismissDisabled) and the flow's own X asks "Discard changes?" first.
+  const guard = useDiscardGuard(dirty);
+  const guardedClose = () => guard(close);
 
   return (
     <Host style={styles.host} pointerEvents="none">
@@ -80,13 +84,14 @@ export function FlowSheet({ visible, onClose, accessibilityLabel, children, styl
             presentationDragIndicator('visible'),
             presentationBackground(fill),
             preferredColorScheme(ds.scheme),
+            interactiveDismissDisabled(!!dirty),
           ]}
         >
           <RNHostView>
             {/* The grabber is drawn over the top of the content: the head starts below it. */}
             <GestureHandlerRootView style={[styles.flex, styles.grabber, { backgroundColor: fill }]}>
               <Shown onShow={onShow} />
-              <CloseContext value={close}>
+              <CloseContext value={guardedClose}>
                 <View role="dialog" aria-label={accessibilityLabel} style={[styles.flex, style]}>
                   {header}
                   {children}

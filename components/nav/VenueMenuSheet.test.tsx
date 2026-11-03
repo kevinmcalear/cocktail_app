@@ -40,6 +40,8 @@ jest.mock('@/components/ds/PopoverMenu', () => {
   };
 });
 jest.mock('@/hooks/useCollection', () => ({ useCollection: () => ({ data: { drinks: new Array(12).fill({}) } }) }));
+// An Admin: the brand permission brings Theme.
+jest.mock('@/hooks/useCapabilities', () => ({ useCapabilities: () => ({ data: ['brand'] }) }));
 
 beforeEach(() => {
   mockMode = 'venue';
@@ -68,7 +70,7 @@ test('at a venue: titled with it, its working pages first, then Venue and You', 
     'This week',
     'My team. 9 people',
     'Rota',
-    'Brand',
+    'Theme',
     'Roles and access',
     'Venue settings',
     'Settings',

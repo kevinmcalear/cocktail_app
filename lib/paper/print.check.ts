@@ -16,7 +16,7 @@ const inside = (p: PaperPage) =>
 const texts = (p: PaperPage) => p.els.filter((e): e is PaperText => e.k === 'text').map((e) => e.t);
 const codes = (p: PaperPage) => p.els.filter((e): e is PaperCode => e.k === 'code');
 
-const bar: PrintBar = { name: 'Little Rye', accent: '#E8C547', face: 'fraunces' };
+const bar: PrintBar = { name: 'Little Rye', accent: '#E8C547', face: 'newsreader' };
 const drink = (i: number): PrintDrink => ({
   id: `d${i}`,
   name: `Drink ${i}`,
@@ -89,7 +89,7 @@ assert.deepEqual(parseTables('patio'), []);
 assert.equal(parseTables('999').length, 200, 'at most 200 cards');
 
 // The printed poster: the drawings stay on the panel, and a long menu's "and N more" stays above the foot.
-const poster = menuPoster({ name: 'Everything', eyebrow: 'Little Rye', drinks: Array.from({ length: 40 }, (_, i) => ({ id: `d${i}`, name: `Drink ${i}`, drawn: i < 3 })), accent: '#D0643B', face: 'fraunces', scheme: 'light' }, 'letter');
+const poster = menuPoster({ name: 'Everything', eyebrow: 'Little Rye', drinks: Array.from({ length: 40 }, (_, i) => ({ id: `d${i}`, name: `Drink ${i}`, drawn: i < 3 })), accent: '#D0643B', face: 'newsreader', scheme: 'light' }, 'letter');
 const panel = poster.els.find((e): e is PaperBox => e.k === 'box' && e.r === 16)!;
 for (const e of poster.els) if (e.k === 'drawing') assert.ok(e.y >= panel.y && e.y + e.s <= panel.y + panel.h + 1, 'drawings sit inside the panel');
 const more = poster.els.find((e): e is PaperText => e.k === 'text' && e.t.startsWith('and '))!;

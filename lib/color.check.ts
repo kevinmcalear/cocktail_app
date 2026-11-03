@@ -3,7 +3,7 @@
 import assert from 'node:assert/strict';
 
 import { backbar, DEFAULT_ACCENT, SAMPLE_BRANDS } from '../constants/tokens';
-import { accentFill, contrast, hexToHsv, hsvToHex, isHexColor, parseHex, readableAccent, withAlpha } from './color';
+import { contrast, hexToHsv, hsvToHex, isHexColor, parseHex, readableAccent, withAlpha } from './color';
 
 assert.deepEqual(parseHex('#fff'), [255, 255, 255]);
 assert.equal(Math.round(contrast('#000000', '#FFFFFF')), 21);
@@ -16,15 +16,12 @@ for (const scheme of ['dark', 'light'] as const) {
   assert.ok(contrast(c.muted, c.surface) >= 4.5, `${scheme} muted on surface`);
 }
 
-// Every accent, adjusted, reads as text on both grounds, and text on an accent
-// fill always reads.
+// Every accent, adjusted, reads as text on both grounds (buttons: lib/theme.check.ts).
 for (const accent of [DEFAULT_ACCENT, SAMPLE_BRANDS.littleRye.accent, SAMPLE_BRANDS.paleMoth.accent, '#FFFF00', '#101010', '#777777', '#E5484D', '#0D74CE']) {
   for (const scheme of ['dark', 'light'] as const) {
     const { ground } = backbar[scheme];
     const readable = readableAccent(accent, ground);
     assert.ok(contrast(readable, ground) >= 4.5, `${accent} on ${scheme}: ${readable}`);
-    const { fill, text } = accentFill(accent, backbar.dark.ground, backbar.light.surface);
-    assert.ok(contrast(text, fill) >= 4.5, `text on ${accent}: ${contrast(text, fill).toFixed(2)}`);
   }
 }
 
@@ -32,29 +29,12 @@ for (const accent of [DEFAULT_ACCENT, SAMPLE_BRANDS.littleRye.accent, SAMPLE_BRA
 assert.equal(readableAccent('#E4B062', backbar.dark.ground), '#E4B062');
 
 
-// A fill that already works is used as is.
-assert.equal(accentFill('#E4B062', backbar.dark.ground, backbar.light.surface).fill, '#E4B062');
-
 assert.equal(withAlpha('#D0643B', 0.2), 'rgba(208, 100, 59, 0.2)');
 
 assert.ok(isHexColor('#D0643B') && isHexColor('#fff'));
 assert.ok(!isHexColor('red') && !isHexColor(null) && !isHexColor('#12345'));
 
 console.log('color: ok');
-
-// A venue's pick for text on accent wins when it reads, else the safe fallback.
-{
-  const cream = backbar.dark.ink;
-  const ink = backbar.dark.ground;
-  // Rust reads with ink; asking for ink keeps the fill.
-  assert.deepEqual(accentFill('#D0643B', ink, cream, 'dark'), { fill: '#D0643B', text: ink });
-  // Asking for cream on rust deepens the fill until cream passes 4.5:1.
-  const deep = accentFill('#D0643B', ink, cream, 'light');
-  assert.equal(deep.text, cream);
-  assert.ok(contrast(deep.fill, cream) >= 4.5);
-  // Ink on a dark accent can't read: the fallback picks cream.
-  assert.equal(accentFill('#241C17', ink, cream, 'dark').text, cream);
-}
 
 // HSV round trips, for the custom colour wheel.
 assert.equal(hsvToHex(0, 1, 1), '#FF0000');

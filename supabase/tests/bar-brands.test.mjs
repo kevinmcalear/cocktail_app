@@ -54,7 +54,7 @@ before(async () => {
       secondary_color: '#123456',
       ground_tint: '#141018',
       short_name: 'Brand',
-      display_face: 'fraunces',
+      display_face: 'besley',
       icon_url: `https://example.test/brand-icon-${run}.png`,
       tax_rate: 10,
       target_gp: 75,
@@ -89,7 +89,7 @@ describe('bar_brands', () => {
       logo_url: `https://example.test/brand-logo-${run}.png`,
       primary_color: '#D0643B',
       accent_light_color: brand.accent_light_color,
-      display_face: 'fraunces',
+      display_face: 'besley',
       short_name: 'Brand',
     });
     assert.match(brand.accent_light_color, /^#[0-9a-f]{6}$/i, 'the readable shade the database works out');

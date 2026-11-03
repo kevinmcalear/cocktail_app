@@ -1,290 +1,83 @@
-import { useRouter, type Href } from 'expo-router';
-import { useState, type ReactNode } from 'react';
-import { Platform, ScrollView, StyleSheet, View, type ViewStyle } from 'react-native';
-import { useSafeAreaInsets } from 'react-native-safe-area-context';
+import type { ReactNode } from 'react';
+import { Platform, StyleSheet, View, type ViewStyle } from 'react-native';
 
-import { Body, Button, Caption, useBreakpoint, useDs, useGutter, useLoadedFace } from '@/components/ds';
-import { SubPageHead, usePageFrame } from '@/components/nav/PageFrame';
+import { Body, Caption } from '@/components/ds';
+import { usePageFrame } from '@/components/nav/PageFrame';
 import { SetupPage } from '@/components/screens/onboarding/SetupPage';
-import { SectionHeading, UnsavedBar } from '@/components/screens/settings/SettingsParts';
-import { WebHead } from '@/components/WebHead';
-import { displayFaces, space } from '@/constants/tokens';
-import { useCapabilities } from '@/hooks/useCapabilities';
-import { useViewAs } from '@/hooks/useViewAs';
-import { pickBrandImage, removeLogoBackground, useSaveVenueBrand, useVenueBrand, type VenueBrandRow } from '@/hooks/useVenueBrand';
-import { brandProblems, faceFromDb, faceToSave, normalizeHex, usableGroundTint } from '@/lib/brand';
-import { confirmDiscardChanges } from '@/lib/dialogs';
+import { SectionHeading } from '@/components/screens/settings/SettingsParts';
+import { space } from '@/constants/tokens';
+import { useVenueBrand, type VenueBrandRow } from '@/hooks/useVenueBrand';
 
-import { BrandForm, type BrandDraftState } from './BrandForm';
+import { BrandForm } from './BrandForm';
 import { BrandPreview } from './BrandPreview';
 import { SetupLook, type LookPage } from './BrandSetupPager';
+import { useBrandDraft } from './useBrandDraft';
 
-const PREVIEW_WIDTH = 300;
 /** Venue setup's preview column on wide web: one phone (canvas make-venue-desktop). */
 const SETUP_PREVIEW_WIDTH = 260;
-/** Preview as staff shows the app as a Bartender sees it. */
-const STAFF_PREVIEW = 30;
 // The preview column stays in view while the settings beside it scroll (web).
 // ponytail: position sticky is web-only CSS that RN's ViewStyle doesn't list.
 const sticky = Platform.OS === 'web' ? ({ position: 'sticky', top: space.lg } as unknown as ViewStyle) : null;
-
-function draftFrom(row: VenueBrandRow): BrandDraftState {
-  return {
-    logoUrl: row.logo_url,
-    iconUrl: row.icon_url,
-    accent: row.primary_color ?? '',
-    face: faceFromDb(row.display_face),
-    tint: row.ground_tint ?? '',
-    shortName: row.short_name ?? '',
-    iconBackground: row.icon_background,
-  };
-}
 
 /** Venue setup's Look step (canvas make-venue-look): this editor, saved by the step's Continue. On a phone, `page` walks its parts (E34). */
 export interface BrandSetupMode {
   footer: (s: { save: (then: () => void) => void; saving: boolean; ok: boolean; page?: LookPage }) => ReactNode;
 }
 
-function BrandEditor({ row, canEdit, header, setup }: { row: VenueBrandRow; canEdit: boolean; header: (dirty: boolean) => ReactNode; setup?: BrandSetupMode }) {
-  const insets = useSafeAreaInsets();
-  const gutter = useGutter();
-  // In setup the preview sits above the settings on phones, and beside them on wide web (canvas make-venue-desktop).
-  const frameText = usePageFrame('text');
-  const notPhone = useBreakpoint() !== 'phone';
-  const wide = setup ? frameText.wide : notPhone;
-  const frame = usePageFrame(wide && !setup ? 'wide' : 'text');
-  const [draft, setDraft] = useState(() => draftFrom(row));
-  const set = <K extends keyof BrandDraftState>(key: K) => (value: BrandDraftState[K]) => setDraft((d) => ({ ...d, [key]: value }));
-  const [suggested, setSuggested] = useState<string[]>([]);
-  const [busy, setBusy] = useState<'logo' | 'icon' | 'background' | null>(null);
-  const [message, setMessage] = useState<string | null>(null);
-  const save = useSaveVenueBrand(row.id);
+/**
+ * The Look step's editor: the preview above the settings on phones, beside
+ * them on wide web (canvas make-venue-desktop). Settings › Theme is
+ * components/screens/venue/theme/ThemeScreen.
+ */
+function BrandEditor({ row, setup }: { row: VenueBrandRow; setup: BrandSetupMode }) {
+  const frame = usePageFrame('text');
+  const d = useBrandDraft(row, true);
+  const saveThen = (then: () => void) => (d.changed ? d.save.mutate(d.patch, { onSuccess: d.saved('', then), onError: (e) => d.setMessage(e.message) }) : then());
 
-  const problems = brandProblems({ accent: draft.accent, groundTint: draft.tint, shortName: draft.shortName });
-  const patch = {
-    logo_url: draft.logoUrl,
-    icon_url: draft.iconUrl,
-    primary_color: normalizeHex(draft.accent),
-    display_face: faceToSave(draft.face, row.display_face),
-    ground_tint: normalizeHex(draft.tint),
-    short_name: draft.shortName.trim() || null,
-    icon_background: draft.iconBackground,
-  };
-  const changed = canEdit && (Object.keys(patch) as (keyof typeof patch)[]).some((k) => (patch[k] ?? null) !== (row[k] ?? null));
-
-  const upload = async (kind: 'logo' | 'icon') => {
-    setBusy(kind);
-    setMessage(null);
-    try {
-      const picked = await pickBrandImage(row.id, kind === 'logo');
-      if (!picked) return;
-      if (kind === 'logo') {
-        set('logoUrl')(picked.url);
-        setSuggested(picked.colors.map((c) => c.toUpperCase()));
-      } else set('iconUrl')(picked.url);
-    } catch (e) {
-      setMessage(e instanceof Error ? e.message : 'The image didn’t upload. Try again.');
-    } finally {
-      setBusy(null);
-    }
-  };
-
-  const removeBackground = async () => {
-    if (!draft.logoUrl) return;
-    setBusy('background');
-    setMessage(null);
-    try {
-      const done = await removeLogoBackground(row.id, draft.logoUrl);
-      if (done === 'unavailable') setMessage('Background removal arrives with the next update. For now, upload a PNG with a transparent background.');
-      else {
-        set('logoUrl')(done.url);
-        setMessage('Background removed. Check it on dark and light above, then save.');
-      }
-    } catch (e) {
-      setMessage(e instanceof Error ? e.message : 'Couldn’t remove the background. Try again.');
-    } finally {
-      setBusy(null);
-    }
-  };
-
-  const shownFace = useLoadedFace(draft.face);
-  // Saved, except a face the database doesn't have yet: the venue keeps its own,
-  // the picker goes back to it, and setup stays on this step so the note is read.
-  const saved = (done: string, then?: () => void) => (r: { faceKept: boolean }) => {
-    if (!r.faceKept) {
-      if (done) setMessage(done);
-      then?.();
-      return;
-    }
-    const kept = faceFromDb(row.display_face);
-    set('face')(kept);
-    setMessage(`${displayFaces[draft.face].label} isn’t available for venues yet, so ${row.name} keeps ${displayFaces[kept].label}. Everything else is saved.`);
-  };
-
-  const accent = normalizeHex(draft.accent);
-  const look = {
-    id: row.id,
-    name: row.name,
-    logoUrl: draft.logoUrl,
-    iconUrl: draft.iconUrl,
-    shortName: draft.shortName,
-    accent,
-    // A face that loads on demand previews in Instrument Serif until its file is in.
-    displayFace: shownFace,
-    groundTint: usableGroundTint(normalizeHex(draft.tint)),
-    iconBackground: draft.iconBackground,
-  };
-
-  const settings = (
-    <View style={styles.form} pointerEvents={canEdit ? 'auto' : 'none'} aria-disabled={!canEdit}>
-      <BrandForm
-        row={row}
-        draft={draft}
-        set={set}
-        suggested={suggested}
-        busy={busy}
-        problems={problems}
-        onUpload={(kind) => void upload(kind)}
-        onRemoveBackground={() => void removeBackground()}
-        setup={!!setup}
-      />
-      {message ? <Caption role="status">{message}</Caption> : null}
-    </View>
-  );
-
-  const preview = setup ? (
-    <View style={[styles.preview, wide && styles.setupSide, wide && sticky]}>
-      {/* Said on phones too, where it sits above the settings and changes as they do (E7). */}
-      <SectionHeading>Preview</SectionHeading>
-      <BrandPreview look={look} setup />
-    </View>
-  ) : (
-    <View style={[styles.preview, wide && styles.previewSide, wide && sticky]}>
-      {/* A phone's Dark | Light switch says what it is. */}
-      {wide ? <SectionHeading>Live preview</SectionHeading> : null}
-      <BrandPreview look={look} stacked={wide} />
-    </View>
-  );
-
-  if (setup) {
-    const ok = Object.keys(problems).length === 0 && !busy;
-    const saveThen = (then: () => void) => (changed ? save.mutate(patch, { onSuccess: saved('', then), onError: (e) => setMessage(e.message) }) : then());
-    if (!wide) {
-      return (
-        <SetupLook
-          {...{ row, look, draft, set, suggested, busy, problems, message }}
-          onUpload={() => void upload('logo')}
-          onRemoveBackground={() => void removeBackground()}
-          footer={(page) => setup.footer({ save: saveThen, saving: save.isPending, ok, page })}
-        />
-      );
-    }
+  if (!frame.wide) {
     return (
-      <SetupPage footer={setup.footer({ save: saveThen, saving: save.isPending, ok })}>
-        <View style={[styles.columns, styles.columnsWide]}>
-          {settings}
-          {preview}
-        </View>
-      </SetupPage>
+      <SetupLook
+        {...{ row, look: d.look, draft: d.draft, set: d.set, suggested: d.suggested, busy: d.busy, problems: d.problems, message: d.message }}
+        onUpload={() => void d.upload('logo')}
+        onRemoveBackground={() => void d.removeBackground()}
+        footer={(page) => setup.footer({ save: saveThen, saving: d.save.isPending, ok: d.ok, page })}
+      />
     );
   }
-
   return (
-    <View style={styles.screen}>
-      <ScrollView
-        style={styles.screen}
-        keyboardShouldPersistTaps="handled"
-        contentContainerStyle={{ paddingHorizontal: gutter, paddingTop: frame.top, paddingBottom: insets.bottom + space.xxxl }}
-      >
-        <View style={[frame.column, styles.page]}>
-          {header(changed)}
-          {canEdit ? null : <Body tone="muted">Only people who can edit the brand change it.</Body>}
-          <View style={[styles.columns, wide && styles.columnsWide]}>
-            {wide ? null : preview}
-            {settings}
-            {wide ? preview : null}
-          </View>
+    <SetupPage footer={setup.footer({ save: saveThen, saving: d.save.isPending, ok: d.ok })}>
+      <View style={styles.columns}>
+        <View style={styles.form}>
+          <BrandForm
+            row={row}
+            draft={d.draft}
+            set={d.set}
+            suggested={d.suggested}
+            busy={d.busy}
+            problems={d.problems}
+            onUpload={(kind) => void d.upload(kind)}
+            onRemoveBackground={() => void d.removeBackground()}
+          />
+          {d.message ? <Caption role="status">{d.message}</Caption> : null}
         </View>
-      </ScrollView>
-      {changed ? (
-        <UnsavedBar
-          maxWidth={frame.column.maxWidth as number}
-          saving={save.isPending}
-          canSave={Object.keys(problems).length === 0 && !busy}
-          onDiscard={() => {
-            setDraft(draftFrom(row));
-            setSuggested([]);
-            setMessage(null);
-          }}
-          onSave={() => save.mutate(patch, { onSuccess: saved('Saved. Everyone at the venue sees it next time the app loads.'), onError: (e) => setMessage(e.message) })}
-        />
-      ) : null}
-    </View>
+        <View style={[styles.preview, sticky]}>
+          <SectionHeading>Preview</SectionHeading>
+          <BrandPreview look={d.look} />
+        </View>
+      </View>
+    </SetupPage>
   );
 }
 
-/** The Look step of venue setup: the brand editor without the page around it or the home-screen icon (that stays on Brand). */
+/** The Look step of venue setup: the theme editor without the page around it or the home-screen icon (that stays on Theme). */
 export function BrandSetup({ barId, setup }: { barId: string; setup: BrandSetupMode }) {
   const brand = useVenueBrand(barId);
-  if (!brand.data) return <SetupPage>{brand.error ? <Body tone="muted">Couldn’t load this venue’s brand. Try again in a moment.</Body> : null}</SetupPage>;
-  return <BrandEditor key={brand.data.id} row={brand.data} canEdit header={() => null} setup={setup} />;
-}
-
-/** Brand settings for a venue, with a live preview. People with the edit brand permission edit; others can look. */
-export function BrandScreen({ barId }: { barId: string }) {
-  const ds = useDs();
-  const router = useRouter();
-  const gutter = useGutter();
-  const frame = usePageFrame('text');
-  const brand = useVenueBrand(barId);
-  const capabilities = useCapabilities(barId);
-  const canEdit = (capabilities.data ?? []).includes('brand');
-
-  // Wide web: the "Venue settings" crumb over the title instead of Back (the sidebar is there).
-  const { setViewAsRoleLevel, isSaving } = useViewAs();
-  // Preview as staff: the app as a Bartender sees it, with the banner to come back.
-  const previewAsStaff = async () => {
-    await setViewAsRoleLevel(STAFF_PREVIEW);
-    router.navigate('/');
-  };
-  const header = (dirty: boolean) => (
-    <SubPageHead
-      title="Brand"
-      subtitle={brand.data ? `${brand.data.name} · seen by everyone at the venue` : ' '}
-      crumbs={[{ label: 'Venue settings', href: `/settings/bar/${barId}` as Href }]}
-      trailing={canEdit && !dirty ? <Button label="Preview as staff" icon="eye" variant="secondary" disabled={isSaving} onPress={() => void previewAsStaff()} /> : null}
-      onBack={async () => {
-        if (!(await confirmDiscardChanges(dirty))) return;
-        if (router.canGoBack()) router.back();
-        else router.replace('/settings' as never);
-      }}
-    />
-  );
-
-  return (
-    <View style={[styles.screen, { backgroundColor: ds.c.ground }]}>
-      <WebHead>
-        <title>Brand</title>
-      </WebHead>
-      {brand.data ? (
-        <BrandEditor key={brand.data.id} row={brand.data} canEdit={canEdit} header={header} />
-      ) : (
-        <View style={[frame.column, styles.page, { paddingHorizontal: gutter, paddingTop: frame.top }]}>
-          {header(false)}
-          {brand.error ? <Body tone="muted">Couldn’t load this venue’s brand. Try again in a moment.</Body> : null}
-        </View>
-      )}
-    </View>
-  );
+  if (!brand.data) return <SetupPage>{brand.error ? <Body tone="muted">Couldn’t load this venue’s theme. Try again in a moment.</Body> : null}</SetupPage>;
+  return <BrandEditor key={brand.data.id} row={brand.data} setup={setup} />;
 }
 
 const styles = StyleSheet.create({
-  screen: { flex: 1 },
-  page: { gap: space.xl },
-  columns: { gap: space.xl },
-  columnsWide: { flexDirection: 'row', alignItems: 'flex-start' },
+  columns: { gap: space.xl, flexDirection: 'row', alignItems: 'flex-start' },
   form: { flex: 1, gap: space.xl, minWidth: 0 },
-  preview: { gap: space.sm },
-  previewSide: { width: PREVIEW_WIDTH },
-  setupSide: { width: SETUP_PREVIEW_WIDTH },
+  preview: { gap: space.sm, width: SETUP_PREVIEW_WIDTH },
 });

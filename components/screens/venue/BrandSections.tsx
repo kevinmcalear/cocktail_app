@@ -5,13 +5,16 @@ import { StyleSheet, View } from 'react-native';
 import { Body, Button, Caption, DsText, LogoImage, PressableScale, useDisplayFaces, useDs } from '@/components/ds';
 import { VenueMark } from '@/components/nav/VenueMarks';
 import { IconSymbol } from '@/components/ui/icon-symbol';
-import { backbar, displayFaces, radius, space, type, type DisplayFace } from '@/constants/tokens';
+import { faceInfo } from '@/constants/faceInfo';
+import { backbar, displayFaces, nameStyle, radius, space, type, type DisplayFace } from '@/constants/tokens';
 import { useLogoEdge } from '@/lib/logoEdge';
 import { logoWithBackground } from '@/supabase/functions/_shared/logoEdge';
 
 const LOGO = 56;
 const COMPARE = 72;
 const FACES = Object.keys(displayFaces) as DisplayFace[];
+/** The sample's size before each face's scale (tools-brand-desktop). */
+const SAMPLE = { fontSize: type.headline.fontSize * 1.6, lineHeight: 36 };
 
 /** "little-rye-logo.png" from the stored URL, without the query string. */
 function fileName(url: string): string {
@@ -100,16 +103,6 @@ function BeforeAfter({ before, after }: { before: string; after: string }) {
   );
 }
 
-/** How each face sets the sample, as tools-brand-desktop draws them: Fraunces in its italic, the wide sans a step smaller. */
-const FACE_SAMPLE: Record<DisplayFace, { italic?: boolean; scale?: number }> = {
-  redaction: {},
-  fraunces: { italic: true },
-  playfair: {},
-  bricolage: { scale: 28 / 32 },
-  josefin: { scale: 28 / 32 },
-  tenor: { scale: 28 / 32 },
-};
-
 /** The display faces side by side, each a card with the venue's name set large in it; the picked one is ringed in ink with a tick. */
 /** `setup`: venue setup's Look step (canvas make-venue-look), which draws the same cards; `list`: one a row, its phone pager (E34). */
 export function FaceChoices({ name, value, onChange, setup, list }: { name: string; value: DisplayFace; onChange: (face: DisplayFace) => void; setup?: boolean; list?: boolean }) {
@@ -120,13 +113,12 @@ export function FaceChoices({ name, value, onChange, setup, list }: { name: stri
     <View role="radiogroup" accessibilityLabel="Font" style={[styles.faces, setup && styles.bare]}>
       {FACES.map((face) => {
         const selected = face === value;
-        const look = FACE_SAMPLE[face];
         return (
           <PressableScale
             key={face}
             role="radio"
             aria-checked={selected}
-            accessibilityLabel={displayFaces[face].label}
+            accessibilityLabel={faceInfo[face].label}
             onPress={() => onChange(face)}
             style={[styles.face, list && styles.faceRow, { borderColor: selected ? ds.c.ink : ds.c.line, borderWidth: selected ? 2 : 1, backgroundColor: ds.c.ground }]}
           >
@@ -135,14 +127,10 @@ export function FaceChoices({ name, value, onChange, setup, list }: { name: stri
                 <IconSymbol name="checkmark" size={16} color={ds.c.ink} />
               </View>
             ) : null}
-            <DsText
-              variant="headline"
-              numberOfLines={1}
-              style={[styles.sample, look.scale ? { fontSize: styles.sample.fontSize * look.scale } : null, { fontFamily: family(face, look.italic ? 'italic' : 'regular') }]}
-            >
+            <DsText variant="headline" numberOfLines={1} style={[styles.sample, nameStyle(face, SAMPLE), { fontFamily: family(face) }]}>
               {name}
             </DsText>
-            <Caption tone="muted">{displayFaces[face].label}</Caption>
+            <Caption tone="muted">{faceInfo[face].label}</Caption>
           </PressableScale>
         );
       })}
@@ -165,6 +153,6 @@ const styles = StyleSheet.create({
   face: { flexGrow: 1, flexShrink: 1, flexBasis: 160, minWidth: 0, gap: space.sm, padding: space.lg, borderRadius: radius.control + 4, borderCurve: 'continuous' },
   faceRow: { flexBasis: '100%' },
   tick: { position: 'absolute', top: space.md, right: space.md },
-  sample: { fontSize: type.headline.fontSize * 1.6, lineHeight: 36, paddingRight: space.lg },
+  sample: { paddingRight: space.lg },
   bare: { paddingVertical: 0 },
 });

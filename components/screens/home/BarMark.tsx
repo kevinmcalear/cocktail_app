@@ -1,11 +1,11 @@
 import { StyleSheet, Text, View } from 'react-native';
 
 import { LogoImage, useDisplayFaces, useDs } from '@/components/ds';
-import { backbar, type DisplayFace } from '@/constants/tokens';
+import type { DisplayFace } from '@/constants/tokens';
 import { useBarBrand } from '@/hooks/useBarBrands';
 import { markBrand } from '@/lib/brand';
-import { accentFill, readableAccent } from '@/lib/color';
 import { initials } from '@/lib/collectionMenus';
+import { themeColours } from '@/lib/theme';
 
 /** A bar's own look: its accent and display face, and a ground behind its initials (else the app's). */
 export interface BarBrand {
@@ -35,8 +35,9 @@ export function BarMark({ name, logoUrl, size, brand, filled, neutral, letter, p
   const round = { width: size, height: size, borderRadius: size / 2 };
   if (logo) return <LogoImage uri={logo} size={size} radius={size / 2} />;
   // The bar's accent made readable on this ground, and its fill with the ink that reads on it.
-  const accent = own ? readableAccent(own.accent, ds.c.ground) : ds.accentText;
-  const fill = own ? accentFill(own.accent, backbar.dark.ground, backbar.light.surface) : ds.accentFill;
+  const ownTheme = own ? themeColours(own.accent, ds.c.ground, ds.scheme === 'dark') : null;
+  const accent = ownTheme ? ownTheme.text : ds.accentText;
+  const fill = ownTheme ? { fill: ownTheme.fill, text: ownTheme.onFill } : ds.accentFill;
   const face = family(own?.face ?? ds.displayFace);
   const look = filled
     ? { backgroundColor: fill.fill, color: fill.text, borderColor: 'transparent' }

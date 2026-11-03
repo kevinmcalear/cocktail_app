@@ -37,7 +37,8 @@ jest.mock('@/hooks/useBringInPlace', () => ({ useBringInPlace: () => ({ barId: n
 jest.mock('@/lib/clipboardPeek', () => ({ UNREAD_CLIP: '\u0000unread', peekClipboard: async () => null, readClipboard: async () => null }));
 jest.mock('@/hooks/useDrinkDesk', () => ({ useMenuSectionPlace: () => ({ data: undefined }) }));
 jest.mock('@/hooks/useDrafts', () => ({ useDrafts: () => ({ drafts: [{ id: 'd1' }, { id: 'd2' }] }) }));
-jest.mock('@/hooks/useCapabilities', () => ({ useCapabilities: () => ({ data: ['edit_drinks'] }), useCapabilityOpensAt: () => ({ data: 35 }) }));
+let mockCaps = ['edit_drinks', 'brand'];
+jest.mock('@/hooks/useCapabilities', () => ({ useCapabilities: () => ({ data: mockCaps }), useCapabilityOpensAt: () => ({ data: 35 }) }));
 jest.mock('@/hooks/useSearchMine', () => ({ useSearchMine: () => ({ venueId: 'caretakers', canAdd: true, label: 'Caretakers' }) }));
 // The notes beside the rows: one menu on now, no house-made low.
 jest.mock('@/hooks/useMenus', () => ({ useVenueMenus: () => ({ data: [{ id: 'm1', name: 'Autumn', barId: 'caretakers', kind: 'menu', startsAt: '2020-01-01T00:00:00Z', endsAt: null, itemIds: [] }] }) }));
@@ -53,6 +54,7 @@ beforeEach(() => {
   mockNavigate.mockClear();
   mockPush.mockClear();
   mockRole = 40;
+  mockCaps = ['edit_drinks', 'brand'];
   mockMode = 'venue';
 });
 
@@ -81,6 +83,14 @@ test('venue mode lists search, the four tabs and the venue pages, marking the cu
   // You is a tab, and the foot opens it too.
   await fireEvent.press(screen.getByRole('link', { name: 'You: Kevin M., Admin at Caretakers' }));
   expect(mockNavigate).toHaveBeenLastCalledWith('/you');
+});
+
+test('Theme is only there for people who can change it (Admins, the brand permission)', async () => {
+  mockCaps = ['edit_drinks'];
+  mockPathname = '/drinks';
+  await renderWithProviders(<WebSideNav />);
+  expect(links()).not.toContain('Theme');
+  expect(links()).toContain('Bar settings');
 });
 
 test('the top of the sidebar is one mark with a chevron (the switcher), never a row of venues', async () => {

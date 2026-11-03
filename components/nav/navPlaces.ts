@@ -33,7 +33,7 @@ export const MENUS_PLACE: Place = { key: 'menus', label: 'Menus', icon: 'place.m
 /**
  * Where the shell can take you, for the mode you're in: the four tabs, the
  * venue's working pages (Menus, Glassware),
- * and its Venue section (My team, Rota, Brand, Roles and access, Venue settings).
+ * and its Venue section (My team, Rota, Theme, Roles and access, Venue settings).
  * History and This week are null during the first round.
  */
 export function useNavPlaces() {
@@ -44,6 +44,7 @@ export function useNavPlaces() {
   const { active: round, hidden } = useFirstRound();
   const home = mode === 'home';
   const venue = home ? null : active;
+  const canTheme = (useCapabilities(venue?.id).data ?? []).includes('brand');
 
   // The four tabs, the same in both modes.
   const tabs: Place[] = WEB_TABS.map((t) => ({ key: t.name, label: t.label, icon: t.icon, path: t.path, tab: true }));
@@ -68,7 +69,8 @@ export function useNavPlaces() {
           ...(round
             ? []
             : [
-                { key: 'brand', label: 'Brand', icon: 'place.brand', path: `${settings}/brand` } as Place,
+                // Theme is for the people who can change it: Admins, the brand permission (Kevin, 31 Oct).
+                ...(canTheme ? [{ key: 'theme', label: 'Theme', icon: 'place.theme', path: `${settings}/theme` } as Place] : []),
                 { key: 'roles', label: 'Roles and access', icon: 'place.roles', path: `${settings}/roles` } as Place,
               ]),
           { key: 'venue-settings', label: 'Venue settings', icon: 'place.settings', path: settings, prefix: settings },

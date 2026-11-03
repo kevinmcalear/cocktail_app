@@ -1,15 +1,7 @@
-import { Stack, useLocalSearchParams } from 'expo-router';
+import { Redirect, useLocalSearchParams, type Href } from 'expo-router';
 
-import { VenueBrandProvider } from '@/components/nav/VenueBrandProvider';
-import { BrandScreen } from '@/components/screens/venue/BrandScreen';
-
-/** A venue's brand: logo, accent, display face, dark ground, home-screen icon. */
-export default function VenueBrand() {
+/** Brand is called Theme now (Kevin, 31 Oct); old links and bookmarks land there. */
+export default function VenueBrandRedirect() {
   const { id } = useLocalSearchParams<{ id: string }>();
-  return (
-    <VenueBrandProvider barId={id}>
-      <Stack.Screen options={{ headerShown: false, title: 'Brand' }} />
-      {id ? <BrandScreen barId={id} /> : null}
-    </VenueBrandProvider>
-  );
+  return <Redirect href={`/settings/bar/${id}/theme` as Href} />;
 }

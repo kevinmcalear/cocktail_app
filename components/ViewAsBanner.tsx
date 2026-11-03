@@ -9,7 +9,7 @@ import { roleLabel } from '@/lib/roles';
 
 /**
  * "Viewing as Bartender" with Exit, over every screen while View as is on
- * (Settings › Preferences, or Brand › Preview as staff). A status, so screen
+ * (Settings › Preferences). A status, so screen
  * readers announce it when it appears. On the web it takes its own band at
  * the top and pushes the page down, so it never covers a page's back button
  * or title (tools-settings-viewas-phone); native floats it under the notch.
