@@ -1,4 +1,4 @@
-import { ReviewRow } from '@/components/ds';
+import { ReviewRow } from '@/components/ds/ReviewRow';
 import type { PasteRow } from '@/lib/paste';
 
 interface PhotoRowProps {
