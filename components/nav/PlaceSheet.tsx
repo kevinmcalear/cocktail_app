@@ -7,10 +7,12 @@ import { PopoverMenu, usePopover } from '@/components/ds/PopoverMenu';
 import { MenuSheet } from '@/components/screens/menus/MenuSheet';
 import { IconSymbol } from '@/components/ui/icon-symbol';
 import { font, layout, radius, space } from '@/constants/tokens';
+import { RoundPlacesNote, RoundSheetBlock } from '@/components/screens/firstRound/RoundElsewhere';
 import { useMode } from '@/hooks/useMode';
 import { roleLabel } from '@/lib/roles';
 
 import { SETTINGS_PLACE, useSideNotes, useSidePlaces, type Place, type SideNotes } from './sidePlaces';
+import { useTeamCard } from './TeamCard';
 import { usePlaceSections } from './VenueMenu';
 import { HomeMark, VenueMark } from './VenueMarks';
 
@@ -103,14 +105,19 @@ const SLOP = (layout.minTapTarget - 32) / 2;
  * The phone's place sheet, opened from the mark at the top left (board Prod-place, C8): titled with where you are
  * (the bar and your role, or Home) with Switch beside the X, then every page of that place from useSidePlaces, the
  * one list the desktop sidebar reads. At a bar: the sidebar's group (Menus, House-made, Team, Bar settings), then the
- * rest of its pages under More (Study, Back bar, Glassware, This week, Rota, Theme, Roles and access), each behind
- * its section switch and your capabilities; at home, Shelf and Menus. Settings last, under You.
+ * rest of its pages under More (Study, Glassware, This week, Rota, Theme, Roles and access), each behind
+ * its section switch and your capabilities; at home, Shelf and Menus. Settings last, under You. An Admin alone on the team gets Invite on Team;
+ * in the first round, the round's card sits on top and a note under the places says the rest open as you go.
  */
 export function PlaceSheet({ onClose }: { onClose: () => void }) {
   const router = useRouter();
   const { mode, setMode } = useMode();
-  const { venue: here, places, more } = useSidePlaces();
-  const notes = useSideNotes(here?.id ?? null);
+  const { venue: here, places: listed, more } = useSidePlaces();
+  const sideNotes = useSideNotes(here?.id ?? null);
+  // An Admin alone on the team gets Invite on Team, which opens its invite sheet.
+  const alone = useTeamCard(here?.id ?? null).alone;
+  const notes: SideNotes = alone ? { ...sideNotes, team: { text: 'Invite' } } : sideNotes;
+  const places = alone ? listed.map((p) => (p.key === 'team' ? { ...p, path: '/team?invite=1' } : p)) : listed;
   const go = (p: Place) => {
     onClose();
     // As the sidebar does: Home's Menus is the menus page in home mode, and someone on no bar's team may still be in venue mode.
@@ -128,7 +135,9 @@ export function PlaceSheet({ onClose }: { onClose: () => void }) {
       aside={<SwitchButton onPicked={onClose} />}
       plain
     >
+      <RoundSheetBlock onClose={onClose} />
       <Group label={here ? `At ${here.name}` : 'At home'} places={places} notes={notes} onGo={go} />
+      <RoundPlacesNote />
       <Group heading="More" label={here ? `More at ${here.name}` : 'More'} places={more} notes={notes} onGo={go} />
       <Group heading="You" label="You" places={[SETTINGS_PLACE]} notes={notes} onGo={go} />
     </MenuSheet>

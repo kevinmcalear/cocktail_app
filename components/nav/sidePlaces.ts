@@ -35,7 +35,7 @@ export const SETTINGS_PLACE: Place = { key: 'settings', label: 'Settings', icon:
  * Every place the shell links to, for the one place you're in. `places` is that place's group, as board Prod-desk
  * (C7) draws the sidebar: at a bar, its Menus, House-made, Team and Bar settings; at home, Shelf and Menus. Never
  * both: you switch place from the group's chip (the places menu, board C8). `more` is the rest of a bar's pages
- * (Study, Back bar, Glassware, This week, Rota, Theme, Roles and access): the phone's place sheet lists them under
+ * (Study, Glassware, This week, Rota, Theme, Roles and access): the phone's place sheet lists them under
  * `places` (board C8, Kevin 3 Nov 2026); on wide screens they open from Bar settings, Tonight and Search
  * (components/bar/VenueSettingsLinks.tsx). Each waits for the bar's section switch (lib/venueFeatures.ts) and your
  * capabilities. The first round holds everything but Menus and Bar settings back until it's over (lib/firstRound.ts).
@@ -78,6 +78,7 @@ export function useSidePlaces() {
     venue && settings && !round
       ? [
           ...(has('study') ? [{ key: 'study', label: 'Study', icon: 'place.study', path: '/test' } as Place] : []),
+          // Back bar stays hidden everywhere while BACK_BAR_SHOWN is off (Kevin, 3 Nov 2026), whatever the bar's switch says.
           ...(backBar ? [{ key: 'back-bar', label: 'Back bar', icon: 'place.backbar', path: '/back-bar' } as Place] : []),
           // Glassware is a working page, not a setting (Eddie, 29 Oct 2026): Kit's page, with its glasses' own pages under it.
           { key: 'glassware', label: 'Glassware', icon: 'wineglass', path: `${settings}/glassware`, prefix: `${settings}/kit/glassware` },

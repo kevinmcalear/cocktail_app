@@ -27,6 +27,25 @@ jest.mock('@/hooks/useVenueFeatures', () => ({
   useVenueFeatures: () => ({ ready: true, has: (k: string) => !mockOff.includes(k), home: '/' }),
   useVenueFeature: (k: string) => !mockOff.includes(k),
 }));
+// The real one: Back bar stays hidden while BACK_BAR_SHOWN is off, even with the bar's switch on.
+jest.mock('@/hooks/useBackBarShown', () => jest.requireActual('@/hooks/useBackBarShown'));
+jest.mock('@/components/screens/firstRound/FirstCocktailChoices', () => ({ useStartFirstCocktail: () => jest.fn() }));
+let mockRoundOn = false;
+const mockShowEverything = jest.fn();
+jest.mock('@/hooks/useFirstRound', () => ({
+  useFirstRound: () => ({
+    active: mockRoundOn,
+    hidden: [],
+    current: mockRoundOn ? { key: 'menu_live', title: 'Put your first menu on' } : null,
+    doneCount: 1,
+    total: 4,
+    showEverything: mockShowEverything,
+    venue: null,
+    done: jest.fn(),
+  }),
+}));
+let mockAlone = false;
+jest.mock('./TeamCard', () => ({ useTeamCard: () => ({ alone: mockAlone }) }));
 // Jest's views never measure, so the Switch menu opens at a made-up place.
 jest.mock('@/components/ds/usePopover', () => {
   const { useState } = jest.requireActual<typeof import('react')>('react');
@@ -43,6 +62,8 @@ beforeEach(() => {
   mockRole = 40;
   mockCaps = ['brand', 'prep'];
   mockOff = [];
+  mockAlone = false;
+  mockRoundOn = false;
   jest.clearAllMocks();
 });
 
@@ -81,4 +102,22 @@ test('Switch inside the sheet lists your places and switches', async () => {
   expect(screen.getAllByRole('menuitem').map((el) => el.props.accessibilityLabel)).toEqual(['Little Rye, picked', 'Pale Moth', 'Home', 'Join a bar with a link']);
   await fireEvent.press(screen.getByRole('menuitem', { name: 'Pale Moth' }));
   expect(mockEnterVenue).toHaveBeenLastCalledWith('pale');
+});
+
+test('an Admin alone on the team: Team says Invite and opens the invite sheet; Back bar stays hidden though its switch is on', async () => {
+  mockAlone = true;
+  await open('Venue: Little Rye. Switch');
+  expect(links()).not.toContain('Back bar');
+  await fireEvent.press(screen.getByRole('link', { name: 'Team. Invite' }));
+  expect(mockPush).toHaveBeenLastCalledWith('/team?invite=1');
+});
+
+test('in the first round: its card on top, only Menus and Bar settings, and the note that the rest open as you go', async () => {
+  mockRoundOn = true;
+  await open('Venue: Little Rye. Switch');
+  expect(screen.getByText('Next: put your first menu on')).toBeTruthy();
+  expect(links()).toEqual(['Menus. Autumn, on now', 'Bar settings', 'Settings']);
+  expect(screen.getByText(/open as you go/)).toBeTruthy();
+  await fireEvent.press(screen.getByRole('button', { name: 'Show me everything' }));
+  expect(mockShowEverything).toHaveBeenCalled();
 });
