@@ -9,6 +9,8 @@ import { WebTabBar } from './WebTabBar';
 jest.mock('@/hooks/useIsWideWeb', () => ({ useIsWideWeb: () => false }));
 const mockOpenSearch = jest.fn();
 jest.mock('@/hooks/useSearchFrom', () => ({ useOpenSearch: () => mockOpenSearch }));
+let mockTonight = true;
+jest.mock('@/hooks/useVenueFeatures', () => ({ useVenueFeatures: () => ({ ready: true, has: (k: string) => k !== 'tonight' || mockTonight }) }));
 
 const names = ['(1-tonight)', '(2-drinks)', '(3-discover)', '(4-you)'];
 const navigateToTab = jest.fn();
@@ -19,11 +21,19 @@ const props = {
 } as unknown as BottomTabBarProps;
 
 afterEach(() => {
+  mockTonight = true;
   navigateToTab.mockClear();
   useBottomSearchFocus.setState({ focused: false });
 });
 
-test('the four tabs and the search circle, the same for everyone', async () => {
+test('a venue with Tonight switched off: three tabs, Drinks first, no empty slot', async () => {
+  mockTonight = false;
+  await renderWithProviders(<WebTabBar {...{ ...props, state: { ...props.state, index: 1 } }} />);
+  expect(screen.getAllByRole('tab').map((t) => t.props.accessibilityLabel)).toEqual(['Drinks', 'Discover', 'You']);
+  expect(screen.getByRole('tab', { name: 'Drinks', selected: true })).toBeTruthy();
+});
+
+test('the four tabs and the search circle, with Tonight switched on', async () => {
   await renderWithProviders(<WebTabBar {...props} />);
   expect(screen.getAllByRole('tab').map((t) => t.props.accessibilityLabel)).toEqual(['Tonight', 'Drinks', 'Discover', 'You']);
   expect(screen.getByRole('tab', { name: 'Tonight', selected: true })).toBeTruthy();

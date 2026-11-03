@@ -3,7 +3,7 @@ import { useMemo } from 'react';
 import { barGlassFor, useBarGlassware, type BarGlass } from '@/hooks/useBarGlassware';
 import { useDilutionDefaults } from '@/hooks/useDrinkMath';
 import { useDropdowns } from '@/hooks/useDropdowns';
-import { useBarAdvanced } from '@/hooks/useAdvancedOptions';
+import { useBarFeature } from '@/hooks/useBarFeature';
 import { classifyMethod } from '@/lib/batch';
 import { orderedMethodIds } from '@/lib/drinkMethods';
 import { fitToWashLine, glassFill, washLine, type Fill, type FillLine, type Fitted, type WashLine } from '@/lib/glassFill';
@@ -50,7 +50,7 @@ export function useGlassFill(drink: FillDrink | null): GlassFillResult | null {
   const barId = drink?.barId ?? null;
   const { data: glasses } = useBarGlassware(barId);
   const { data: defaults } = useDilutionDefaults(barId);
-  const advanced = useBarAdvanced(barId);
+  const advanced = useBarFeature(barId, 'advanced');
   return useMemo(() => {
     // Wait for the venue's dilution too, or the house rule shows first and the note flickers.
     if (!advanced || !barId || !drink || !glasses || !dropdowns || !defaults) return null;

@@ -11,6 +11,7 @@ import { useMenuCosting } from '@/hooks/useMenuCosting';
 import { usePricingSettings } from '@/hooks/usePricingSettings';
 import { useUserId } from '@/ctx/AuthContext';
 import { useViewAs } from '@/hooks/useViewAs';
+import { useBarFeature } from '@/hooks/useBarFeature';
 import { allergenLabel, allergyMatches, type GuestDrinkAllergens } from '@/lib/allergens';
 import { margin } from '@/lib/costing';
 import { isMenuTeam, menuLens, methodLine, type MenuLens } from '@/lib/menuLens';
@@ -70,6 +71,8 @@ export interface MenuLensData {
   averageCost: string | null;
   /** The list's rows (planned and waiting drinks too), for the menu team and bartenders. */
   rows: ListRow[];
+  /** The bar has Prep switched on (lib/venueFeatures.ts): the page links its prep list. */
+  prep: boolean;
 }
 
 /** Everything one menu page needs beyond the menu itself, for whoever is looking. */
@@ -120,7 +123,8 @@ export function useMenuLens(menu: MenuDetail | null | undefined): MenuLensData {
   }
   const averageCost = pcts.length ? `${Math.round(pcts.reduce((a, b) => a + b, 0) / pcts.length)}%` : null;
 
-  return { lens, notes, allergens, mine, cost, costs, averageCost, rows };
+  const prep = useBarFeature(barId, 'prep');
+  return { lens, notes, allergens, mine, cost, costs, averageCost, rows, prep };
 }
 
 /** "Egg" for a guest's row mark, the short form of the label. */

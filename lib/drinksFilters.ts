@@ -53,10 +53,22 @@ export const DRINK_CATEGORIES: readonly ItemCategory[] = ['Cocktail', 'Beer', 'W
 
 const SHOWS = new Set<string>([...LIST_FILTERS, ...SHELF_FILTERS, ...TYPE_FILTERS, NEEDS_PRICE, ...KIT_FILTERS].map((f) => f.value));
 
-/** The filter in the URL, or All. The old Off menu screen arrives as ?show=staff. */
-export function parseShow(param: string | string[] | undefined, atVenue: boolean): Show {
+/**
+ * The views past All, On menu, Classics, Old drinks, the kit check, Beer and
+ * Wine: a venue shows them once it switches on More drink filters (the
+ * libraryExtras feature, lib/venueFeatures.ts). With them go the House-made
+ * and Bottles capsules, which hold nothing else.
+ */
+export const EXTRA_FILTERS: ReadonlySet<Show> = new Set<Show>(['rnd', 'batched', 'preps', 'garnishes', 'bottles', 'cocktails', 'ingredients', 'needs-price']);
+
+/**
+ * The filter in the URL, or All. The old Off menu screen arrives as ?show=staff.
+ * At a venue without the extras, theirs fall back to All.
+ */
+export function parseShow(param: string | string[] | undefined, atVenue: boolean, extras = true): Show {
   const value = Array.isArray(param) ? param[0] : param;
   const show = value && SHOWS.has(value) ? (value as Show) : 'all';
+  if (atVenue && !extras && EXTRA_FILTERS.has(show)) return 'all';
   // Without a venue there are no menus, staff list or shelves.
   if (!atVenue && (LIST_FILTERS.some((f) => f.value === show) || show === 'batched')) return 'cocktails';
   if (!atVenue && SHELF_FILTERS.some((f) => f.value === show)) return 'ingredients';
@@ -168,12 +180,15 @@ export function venueShelves(
  * The groups of the chip rows, in order (desktop draws a thin line between
  * them; lib/drinksTab.ts sorts them under their capsules). A venue starts with All, On menu, Classics, Old drinks (the phone's
  * order, decided 24 Oct 2026), R&D, the shelves, the kit check, then
- * Cocktails, Beer, Wine and Needs a price.
+ * Cocktails, Beer, Wine and Needs a price. `extras` off (a venue without More
+ * drink filters) leaves out EXTRA_FILTERS.
  */
-export function filterGroups(atVenue: boolean, canCost: boolean): { value: Show; label: string }[][] {
+export function filterGroups(atVenue: boolean, canCost: boolean, extras = true): { value: Show; label: string }[][] {
   const types = atVenue ? TYPE_FILTERS.filter((f) => f.value !== 'ingredients') : TYPE_FILTERS;
   const groups = atVenue ? [LIST_FILTERS, SHELF_FILTERS, KIT_FILTERS] : [];
-  return [...groups, [...types, ...(canCost ? [NEEDS_PRICE] : [])]];
+  const all = [...groups, [...types, ...(canCost ? [NEEDS_PRICE] : [])]];
+  if (!atVenue || extras) return all;
+  return all.map((g) => g.filter((f) => !EXTRA_FILTERS.has(f.value))).filter((g) => g.length);
 }
 
 /** "Stirred · Coupe", "Stirred · Martini · Martini flight", "Beer · Pint": a tile's second line. */

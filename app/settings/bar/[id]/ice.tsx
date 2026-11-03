@@ -1,5 +1,6 @@
 import { Stack, useLocalSearchParams } from 'expo-router';
 
+import { BarFeatureGate } from '@/components/bar/BarFeatureGate';
 import { VenueBrandProvider } from '@/components/nav/VenueBrandProvider';
 import { KitIceScreen } from '@/components/screens/venue/KitIceScreen';
 
@@ -9,7 +10,11 @@ export default function IceRoute() {
   return (
     <VenueBrandProvider barId={id}>
       <Stack.Screen options={{ headerShown: false }} />
-      {id ? <KitIceScreen barId={id} /> : null}
+      {id ? (
+        <BarFeatureGate barId={id} feature="advanced">
+          <KitIceScreen barId={id} />
+        </BarFeatureGate>
+      ) : null}
     </VenueBrandProvider>
   );
 }

@@ -1,7 +1,15 @@
-import { Redirect, useLocalSearchParams } from 'expo-router';
+import { Stack, useLocalSearchParams } from 'expo-router';
 
-/** Old links to a venue's Features: the switches are gone (31 Oct), so open the venue's settings. */
+import { VenueBrandProvider } from '@/components/nav/VenueBrandProvider';
+import { FeaturesScreen } from '@/components/screens/venue/FeaturesScreen';
+
+/** A venue's Features: the sections its team sees, opened from Bar settings. */
 export default function FeaturesRoute() {
   const { id } = useLocalSearchParams<{ id: string }>();
-  return <Redirect href={{ pathname: '/settings/bar/[id]', params: { id } }} />;
+  return (
+    <VenueBrandProvider barId={id}>
+      <Stack.Screen options={{ headerShown: false }} />
+      {id ? <FeaturesScreen barId={id} /> : null}
+    </VenueBrandProvider>
+  );
 }

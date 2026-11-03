@@ -39,6 +39,12 @@ jest.mock('@/hooks/useSearchMine', () => ({ useSearchMine: () => ({ venueId: 'ca
 // The notes beside the rows: one menu on now, no house-made low.
 jest.mock('@/hooks/useMenus', () => ({ useVenueMenus: () => ({ data: [{ id: 'm1', name: 'Autumn', barId: 'caretakers', kind: 'menu', startsAt: '2020-01-01T00:00:00Z', endsAt: null, itemIds: [] }] }) }));
 jest.mock('@/hooks/usePrepList', () => ({ usePrepData: () => ({ data: undefined }) }));
+// The venue's switches (lib/venueFeatures.ts): all on unless a test turns some off.
+let mockOff: string[] = [];
+jest.mock('@/hooks/useVenueFeatures', () => ({
+  useVenueFeatures: () => ({ ready: true, on: [], has: (k: string) => !mockOff.includes(k), home: mockOff.includes('tonight') ? '/drinks' : '/' }),
+  useVenueFeature: (k: string) => !mockOff.includes(k),
+}));
 const mockPush = jest.fn();
 
 // The keyboard test lends the sidebar a document; take it back once every render has unmounted.
@@ -52,6 +58,14 @@ beforeEach(() => {
   mockRole = 40;
   mockCaps = ['edit_drinks', 'brand'];
   mockMode = 'venue';
+  mockOff = [];
+});
+
+test('a venue with Tonight and Prep switched off: three tabs and no House-made, nothing in their place', async () => {
+  mockPathname = '/drinks';
+  mockOff = ['tonight', 'prep'];
+  await renderWithProviders(<WebSideNav />);
+  expect(links()).toEqual(['Drinks', 'Discover', 'You', 'Autumn, on now', 'Team', 'Bar settings', 'Shelf, 3', 'Menus', 'You: Kevin M., Admin at Caretakers']);
 });
 
 test('venue mode lists search, the four tabs and the venue pages, marking the current one', async () => {
@@ -60,7 +74,7 @@ test('venue mode lists search, the four tabs and the venue pages, marking the cu
   await renderWithProviders(<WebSideNav />);
 
   // Board Prod-desk: the four tabs, the bar's group (the menu on now, House-made, Team, Bar settings), Home's Shelf and Menus, and you at the foot.
-  // Every person and role has the same tabs (tabs A, 31 Oct); the rest opens from Bar settings.
+  // Every role has the same tabs (tabs A, 31 Oct); a venue's switches can take Tonight out (below). The rest opens from Bar settings.
   expect(links()).toEqual(['Tonight', 'Drinks', 'Discover', 'You', 'Autumn, on now', 'House-made', 'Team', 'Bar settings', 'Shelf, 3', 'Menus', 'You: Kevin M., Admin at Caretakers']);
   expect(screen.getByRole('link', { name: 'Drinks', selected: true })).toBeTruthy();
   expect(screen.getByRole('link', { name: 'Tonight', selected: false })).toBeTruthy();
