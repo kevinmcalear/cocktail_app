@@ -52,10 +52,12 @@ interface Input {
 /**
  * The group block holds only the rows the board draws for the person looking; the rest go into the More sheet
  * (opened from On), never under the drinks: an Admin's Run sheet (Menu-who-admin draws On, Costing, bar page,
- * End), and on a living list (Menu-l-*, which draws On, Last change, Team, Costing) the run sheet, bar page and End.
+ * End), and on a living list (Menu-l-*, which draws On, Last change, Team, Costing) the run sheet and End. An Admin's
+ * bar page row stays on the page either way: Menu-who-admin draws it under Costing (board note: the Creator's page plus
+ * On the bar page and End this menu).
  */
 export function splitGroup(rows: ModelGroupRow[], living: boolean, admin: boolean): [top: ModelGroupRow[], more: ModelGroupRow[]] {
-  const off = (r: ModelGroupRow) => (r.action === 'runSheet' ? admin || living : living && (r.action === 'barPage' || r.action === 'end'));
+  const off = (r: ModelGroupRow) => (r.action === 'runSheet' ? admin || living : living && r.action === 'end');
   return [rows.filter((r) => !off(r)), rows.filter(off)];
 }
 

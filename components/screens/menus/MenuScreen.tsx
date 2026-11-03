@@ -177,7 +177,7 @@ function MenuPageBody({ menu, shelf, cover, now }: PageProps & { cover: string |
     // A drink can be in two asks, or an ask and a waiting row: the ask keys it.
     ...s.rows.map((row) => ({ key: `${s.id}-${row.ask ? `${row.ask.id}-` : ''}${row.drink.id}${row.struck ? '-off' : ''}`, row, sectionId: s.id })),
   ]);
-  // Rows the board doesn't draw on this page (an Admin's Run sheet; a living list's run sheet and bar page) are in More, never piled under the drinks.
+  // Rows the board doesn't draw on this page (an Admin's Run sheet; a living list's run sheet and End) are in More, never piled under the drinks.
   const [topRows, moreRows] = splitGroup(model.group, living, lens.lens === 'admin');
   const withPress = <R extends { action: GroupAction }>(r: R) => ({ ...r, onPress: r.action ? actions[r.action] : undefined });
   const column = { paddingHorizontal: gutter, maxWidth: wide ? menuCover.column : undefined, width: '100%', alignSelf: sidebar ? 'flex-start' : 'center' } as const;
