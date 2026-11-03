@@ -70,7 +70,8 @@ export function useSidePlaces() {
       : [];
   // Home's Menus is the bar's page in home mode, where it shows your own menus.
   const home: Place[] = [
-    { key: 'shelf', label: 'Shelf', icon: 'place.mybar', path: '/shelf' },
+    // The shelf is Drinks' Shelf capsule at home (app/bar.tsx); there is no /shelf route.
+    { key: 'shelf', label: 'Shelf', icon: 'place.mybar', path: '/drinks?tab=shelf', tab: true },
     ...(round ? [] : [{ key: 'home-menus', label: 'Menus', icon: 'place.menus', path: '/menus/all', prefix: '/menus' } as Place]),
   ];
   const more: Place[] =

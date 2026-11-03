@@ -23,7 +23,8 @@ function PlaceRow({ place, value, warn, first, onPress }: { place: Place; value:
       <IconSymbol name={place.icon} size={20} color={ds.accentText} />
       {/* The hairline starts after the icon, as grouped lists draw it. */}
       <View style={[styles.rowBody, !first && { borderTopColor: ds.c.line, borderTopWidth: StyleSheet.hairlineWidth }]}>
-        <Body numberOfLines={1} style={styles.label}>
+        {/* The name never gives way to its note: a long menu name shortens instead. */}
+        <Body numberOfLines={1} style={value ? styles.named : styles.label}>
           {place.label}
         </Body>
         {value ? (
@@ -140,7 +141,8 @@ const styles = StyleSheet.create({
   row: { flexDirection: 'row', alignItems: 'center', gap: space.md, paddingLeft: space.lg },
   rowBody: { flex: 1, flexDirection: 'row', alignItems: 'center', gap: space.sm, minHeight: 52, paddingRight: space.md },
   label: { flex: 1 },
-  value: { flexShrink: 1 },
+  named: { flexShrink: 0 },
+  value: { flex: 1, textAlign: 'right' },
   // Its heading sits close to its group.
   section: { gap: space.sm },
   heading: { ...font.medium, marginLeft: space.xs },
