@@ -1,5 +1,5 @@
 import { useRouter, type Href } from 'expo-router';
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { ScrollView, StyleSheet, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
@@ -9,6 +9,7 @@ import { font, radius, space } from '@/constants/tokens';
 import { useUndoBringIn } from '@/hooks/useBringInBatches';
 import { canUndo, fromLine, type BatchSummary } from '@/lib/bringInBatch';
 import { useBringIn } from '@/store/useBringIn';
+import { useRankReturn } from '@/store/useRankReturn';
 
 /** What Brought in shows: a saved batch, or a save that couldn't be recorded as one. */
 export interface BroughtInView {
@@ -78,14 +79,27 @@ export function BroughtIn({ view }: { view: BroughtInView }) {
   const next = () => {
     if (useBringIn.getState().next(view.barId)) router.replace('/bring-in' as Href);
   };
+  // Came from Rank it's Snap the menu: the way back to pick the drink had leads (unless more are queued to check).
+  const ranking = useRankReturn((r) => r.ret?.phase === 'saved');
+  // Left another way (Open the menu, Done): Rank it isn't waiting any more.
+  useEffect(() => () => useRankReturn.getState().drop(), []);
   const primary = queue.length
     ? { label: `Check the next one${queue[0].name ? ` (${queue[0].name})` : ''}`, onPress: next }
-    : view.menuId
+    : ranking && view.menuId && !undone
+      ? {
+          label: 'Rank a drink from it',
+          onPress: () => {
+            useRankReturn.getState().resume();
+            // Back to the Tonight that started it (its Rank it is waiting there), not a second one.
+            router.dismissTo('/' as Href);
+          },
+        }
+      : view.menuId
       ? { label: 'Open the menu', onPress: () => go(`/menus/${view.menuId}/edit`) }
       : view.drinkIds.length === 1
         ? { label: 'Open the drink', onPress: () => go(`/cocktail/${view.drinkIds[0]}`) }
         : s.kind === 'bottles' && !view.barId
-          ? { label: 'Open My Bar', onPress: () => router.replace('/' as Href) }
+          ? { label: 'Open your shelf', onPress: () => router.replace('/drinks?tab=shelf' as Href) }
           : { label: 'Done', onPress: () => router.replace('/' as Href) };
 
   return (

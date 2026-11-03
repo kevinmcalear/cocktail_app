@@ -2,6 +2,7 @@ import { useRouter, type Href } from 'expo-router';
 import { StyleSheet, useWindowDimensions, View } from 'react-native';
 
 import { Body, Caption, DrinkDrawingFor, DsText, PencilState, PressableScale, Tag, useDs } from '@/components/ds';
+import { DrawingBar } from '@/components/ds/DrawingBar';
 import { IconSymbol } from '@/components/ui/icon-symbol';
 import { TonightSetupBanner } from '@/components/screens/venueSetup/SetupBanner';
 import { TonightWeek } from '@/components/screens/week/TonightWeek';
@@ -14,7 +15,8 @@ import type { NightPhase } from '@/lib/nightPhase';
 
 import { BeforeDoors, NeedsYou, OffTonight, OnShift } from './BeforeDoors';
 import type { NightHandover } from './NightHandover';
-import { HeroTrio, ListHead, NoteCard, TonightSection } from './TonightParts';
+import { HeroTrio } from './HeroTrio';
+import { ListHead, NoteCard, TonightSection } from './TonightParts';
 import type { useStaffTonight } from './useStaffTonight';
 
 type Staff = ReturnType<typeof useStaffTonight>;
@@ -46,15 +48,17 @@ export function StaffLists({ t, barId, wide }: { t: Staff; barId: string; wide: 
   const { lead } = t;
   const open = (id: string) => router.push(listHref(id));
   return (
-    <View style={styles.stack}>
-      <TonightSetupBanner barId={barId} />
-      <HeroTrio ids={t.heroIds} label={`${lead.menu.name}, on now. Opens the list.`} onPress={() => open(lead.menu.id)} />
-      <ListHead eyebrow={`On the menu · ${plural(drinkCount(lead), 'drink')}`} name={lead.menu.name} onPress={() => open(lead.menu.id)} />
-      {wide ? <DrinkGrid block={lead} /> : null}
-      {t.blocks.slice(1).map((b) => (
-        <ListHead key={b.menu.id} eyebrow={`Also on · ${plural(drinkCount(b), 'drink')}`} name={b.menu.name} onPress={() => open(b.menu.id)} />
-      ))}
-    </View>
+    <DrawingBar barId={barId}>
+      <View style={styles.stack}>
+        <TonightSetupBanner barId={barId} />
+        <HeroTrio ids={t.heroIds} label={`${lead.menu.name}, on now. Opens the list.`} onPress={() => open(lead.menu.id)} />
+        <ListHead eyebrow={`On the menu · ${plural(drinkCount(lead), 'drink')}`} name={lead.menu.name} onPress={() => open(lead.menu.id)} />
+        {wide ? <DrinkGrid block={lead} /> : null}
+        {t.blocks.slice(1).map((b) => (
+          <ListHead key={b.menu.id} eyebrow={`Also on · ${plural(drinkCount(b), 'drink')}`} name={b.menu.name} onPress={() => open(b.menu.id)} />
+        ))}
+      </View>
+    </DrawingBar>
   );
 }
 

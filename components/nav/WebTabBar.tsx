@@ -51,6 +51,25 @@ export function useTabBarTop() {
 }
 
 /**
+ * For what floats over every screen from the root (the toast): how far the top
+ * of the tab bar is from the screen's bottom edge, or 0 where no bar shows
+ * (outside the tabs, wide web, Android's pushed pages, the web's /search page).
+ * ponytail: the native bars don't report their frames; iOS's is the UIKit bar's
+ * 49 over the home indicator and Android's the Material bar's 80. Read them if
+ * NativeTabs ever exposes them.
+ */
+export function useTabBarClearance(): number {
+  const bottom = useSafeAreaInsets().bottom;
+  const wide = useIsWideWeb();
+  const segments = useSegments() as string[];
+  const searching = useBottomSearchFocus((s) => s.focused);
+  if (segments[0] !== '(tabs)') return 0;
+  if (Platform.OS === 'web') return wide || searching || segments[2] === 'search' ? 0 : bottom + space.md + WEB_TAB_BAR_HEIGHT;
+  if (Platform.OS === 'android') return androidBarShown(segments) ? bottom + 80 : 0;
+  return bottom + 49;
+}
+
+/**
  * The pill's sides and corners, for things that match it: the board's (12 in
  * from the screen's sides, 64 tall) on the web, and the iOS 26 system bar's
  * (21 in, about 62 tall, measured on an iPhone 17 Pro).

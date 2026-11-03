@@ -16,7 +16,7 @@ export type Door = 'table' | 'shared' | 'rank' | 'invite';
 export type SignUpSource = Door | 'direct';
 
 /** What was handed on (lib/shareLink.ts). */
-export type SharedWhat = 'drink' | 'menu' | 'profile' | 'bar' | 'claim' | 'event' | 'calendar' | 'staff_link' | 'flavour' | 'batch' | 'guest_credit' | 'ingredient' | 'ranking';
+export type SharedWhat = 'drink' | 'menu' | 'profile' | 'bar' | 'claim' | 'event' | 'calendar' | 'staff_link' | 'flavour' | 'batch' | 'guest_credit' | 'ingredient' | 'order' | 'ranking';
 
 /** Every event we send, with the properties it may carry. */
 export interface AnalyticsEvents {

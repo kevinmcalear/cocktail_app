@@ -58,7 +58,8 @@ export interface DrinkImageProps {
 /**
  * A drink's picture. Never falls back to another drink's photo: with no image
  * yet, it shows a sketch drawn from the drink's own spec (glass, colour, ice,
- * foam, garnish), or until that exists, its bare glass on the house paper.
+ * foam, garnish), or until that exists, its bare glass. A photo sits in its
+ * frame; a drawing has no card behind it (decision chrome).
  */
 export function DrinkImage({ source, generated, glass, itemId, accessibilityLabel, aspectRatio = 1, radius = 'card', style, ingredient, thumb = false, animate, sketchDetail, placeholderColor, priority, sketch, thumbhash }: DrinkImageProps) {
   const ds = useDs();
@@ -71,7 +72,7 @@ export function DrinkImage({ source, generated, glass, itemId, accessibilityLabe
   const [noCopy, setNoCopy] = useState<string | null>(null);
   const copy = typeof uri === 'string' && noCopy !== uri ? copyToTry(uri, size, !!thumbhash) : null;
   const shown = copy ?? uri;
-  // A cut-out sits on the drawn paper, as a sketch does, not on its own colour, which it would vanish into.
+  // A cut-out sits on the house paper, not on its own colour, which it would vanish into.
   const cutout = isPng(uri);
   // No drawing yet (or still loading): the bare glass, drawn as the drawings are, not a small line icon (i-glass-pic).
   const bare = useMemo(() => bareGlassSketch(glass), [glass]);
@@ -85,7 +86,7 @@ export function DrinkImage({ source, generated, glass, itemId, accessibilityLabe
       accessible
       role="img"
       accessibilityLabel={ingredient ? accessibilityLabel : uri ? (generated ? `${accessibilityLabel}, sketch` : accessibilityLabel) : `${accessibilityLabel}, no photo yet`}
-      style={[styles.frame, { aspectRatio: aspectRatio || undefined, borderRadius, backgroundColor: (uri && !cutout && placeholderColor) || ds.c.paper }, style]}
+      style={[styles.frame, { aspectRatio: aspectRatio || undefined, borderRadius, backgroundColor: uri ? (!cutout && placeholderColor) || ds.c.paper : undefined }, style]}
     >
       {ingredient ? (
         <IngredientDrawing id={ingredient.id} name={ingredient.name} lazy={thumb} />

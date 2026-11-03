@@ -1,7 +1,9 @@
 import { LinearGradient } from 'expo-linear-gradient';
 import { StyleSheet, View } from 'react-native';
 
-import { useDs, type DrawingSize } from '@/components/ds';
+import { useDs } from '@/components/ds';
+import { DrawingTrio } from '@/components/ds/DrawingTrio';
+import type { TrioLayout } from '@/components/ds/trioPlaces';
 import { drawing, menuBandHeight, radius, space } from '@/constants/tokens';
 import { useItemSketch } from '@/hooks/useItemSketch';
 import { withAlpha } from '@/lib/color';
@@ -27,46 +29,14 @@ export function MenuSky({ ids, fade }: { ids: string[]; fade: boolean }) {
   );
 }
 
-/**
- * Where a menu's three drawings sit, in points from the group's top left:
- * the middle one larger, higher and in front (Menu-page draws 160, 206, 160;
- * Menu-shelf's card 140, 168, 140).
- */
-const TRIO = {
-  hero: { x: [0, 88, 222], y: [50, 0, 50], s: [drawing.tile, drawing.middle, drawing.tile] },
-  band: { x: [0, 86, 180], y: [20, 0, 20], s: [140, 168, 140] },
-} as const;
-export type TrioLayout = keyof typeof TRIO;
+/** Menu-shelf's card draws its trio smaller and tighter: 140, 168, 140. */
+const BAND: TrioLayout = { x: [0, 86, 180], y: [20, 0, 20], s: [140, 168, 140] };
 
-/** The size each place is drawn at; a smaller place shows that drawing scaled down. */
-const DRAWN: readonly DrawingSize[] = ['tile', 'middle', 'tile'];
-
-/** Up to three drawings together, overlapping, the middle of three larger, higher and in front. */
-export function MenuTrio({ ids, ink, layout = 'hero', top = 64 }: { ids: string[]; ink: MenuInk; layout?: TrioLayout; top?: number }) {
-  const t = TRIO[layout];
-  const shown = ids.slice(0, 3);
-  // One drink takes the middle place; two take the outer ones, closer together.
-  const places = shown.length === 3 ? [0, 1, 2] : shown.length === 2 ? [0, 2] : [1];
-  const xs = shown.length === 3 ? places.map((p) => t.x[p]) : shown.length === 2 ? [0, t.s[0] * 0.55] : [0];
-  const ys = places.map((p) => (shown.length === 3 ? t.y[p] : 0));
-  const width = Math.max(...places.map((p, i) => xs[i] + t.s[p]));
-  const height = Math.max(...places.map((p, i) => ys[i] + t.s[p]));
+/** A menu's drinks drawn together (DrawingTrio): the page's hero, or a card's band. */
+export function MenuTrio({ ids, ink, layout = 'hero', top = 64 }: { ids: string[]; ink: MenuInk; layout?: 'hero' | 'band'; top?: number }) {
   return (
-    <View style={[styles.trio, { paddingTop: top }]} aria-hidden>
-      <View style={{ width, height }}>
-        {shown.map((id, i) => {
-          const s = t.s[places[i]];
-          const size = DRAWN[places[i]];
-          const px = drawing[size as 'tile' | 'middle'];
-          return (
-            <View key={id} style={[styles.place, { left: xs[i], top: ys[i], width: s, height: s, zIndex: places[i] === 1 ? 1 : 0 }]}>
-              <View style={s === px ? undefined : { transform: [{ scale: s / px }] }}>
-                <MenuDrawing itemId={id} size={size} ink={ink} bare />
-              </View>
-            </View>
-          );
-        })}
-      </View>
+    <View style={[styles.trio, { paddingTop: top }]}>
+      <DrawingTrio ids={ids.slice(0, 3)} layout={layout === 'band' ? BAND : undefined} draw={(id, size) => <MenuDrawing itemId={id} size={size} ink={ink} />} />
     </View>
   );
 }
@@ -88,7 +58,7 @@ export function MenuStrip({ ids, ink, wide }: { ids: string[]; ink: MenuInk; wid
       {ids.slice(0, wide ? 4 : 3).map((id, i) => (
         <View key={id} style={wide ? styles.timeline : { marginLeft: i ? -drawing.row / 2 : 0 }}>
           <View style={wide ? styles.timelineScale : undefined}>
-            <MenuDrawing itemId={id} size="row" ink={ink} bare />
+            <MenuDrawing itemId={id} size="row" ink={ink} />
           </View>
         </View>
       ))}
@@ -98,7 +68,6 @@ export function MenuStrip({ ids, ink, wide }: { ids: string[]; ink: MenuInk; wid
 
 const styles = StyleSheet.create({
   trio: { ...StyleSheet.absoluteFill, alignItems: 'center' },
-  place: { position: 'absolute', alignItems: 'center', justifyContent: 'center' },
   band: { borderRadius: radius.card, overflow: 'hidden', borderCurve: 'continuous' },
   strip: { flexDirection: 'row', width: 96, height: drawing.row, alignItems: 'center', justifyContent: 'center' },
   wide: { flexDirection: 'row', gap: space.xs },

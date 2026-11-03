@@ -1,10 +1,12 @@
 // Checks for lib/myBarText.ts (My Bar's tile, row and card lines). Run: npm run test:unit
 import assert from 'node:assert/strict';
 
-import { barSubtitle, footLine, foundLine, groupLine, keepsFor, lastedLine, needsLine, pairName, prepMeta, shelfCountsLine, sourceCaption, prepUseBy, shortBottle, tickNames, usesLine } from './myBarText';
+import { barSubtitle, footLine, foundLine, groupLine, keepsFor, lastedLine, needsLine, pairName, prepMeta, shelfCountsLine, sourceCaption, prepUseBy, shelfNote, shortBottle, tickNames, usesLine } from './myBarText';
 
 assert.equal(barSubtitle(7, 2), '7 drinks ready · 2 house-made ingredients you can make now');
 assert.equal(barSubtitle(1, 0), '1 drink ready');
+assert.equal(shelfNote(23, 14), '23 bottles · 14 drinks you can make tonight');
+assert.equal(shelfNote(1, 0), '1 bottle · nothing ready yet');
 assert.equal(barSubtitle(0, 1), 'Nothing ready yet · 1 house-made ingredient you can make now');
 
 assert.equal(shelfCountsLine({ bottles: 4, fridge: 6, lab: 2, preps: 2, kit: 3 }), '4 bottles · 6 in the fridge · 2 on the lab shelf · 2 house-made · 3 pieces of kit');
