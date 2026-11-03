@@ -1,6 +1,6 @@
 import assert from 'node:assert/strict';
 
-import { boxRect, cropLayout, foundLine, isCleanText, isPrepName, localReading, looksLike, prepRatio, readingName, readingSteps, readingPages, shelfOrder, stepsDone, stripWindow } from './bringIn';
+import { boxRect, cropLayout, foundLine, isCleanText, isPrepName, localReading, looksLike, looksLikeMenu, prepRatio, readingName, readingSteps, readingPages, shelfOrder, stepsDone, stripWindow } from './bringIn';
 
 // Bring in reads clean text on the phone, says what it's doing while the
 // reader works, and crops the printed line beside each row.
@@ -12,6 +12,17 @@ assert.equal(isCleanText('Campari\nRittenhouse Rye\nLillet Blanc'), true);
 assert.equal(isCleanText('Shake the gin and the lemon with ice until cold, then strain into a coupe.'), false);
 assert.equal(isCleanText('https://punchdrink.com/recipes/negroni/'), false);
 assert.equal(isCleanText('   '), false);
+
+// --- A pasted menu reads as a menu, not a recipe ---
+assert.equal(looksLikeMenu('Autumn Menu\nHojicha Espresso Martini - vodka, hojicha, coffee liqueur 18\nPork Fat Mezcal - mezcal, pork fat, lime 19'), true);
+assert.equal(looksLikeMenu('Negroni - $16\nMartinez - 17.00'), true);
+// Bare numbers with no heading could be a spec's amounts.
+assert.equal(looksLikeMenu('Daiquiri\nrum 60\nlime 25\nsugar 15'), false);
+assert.equal(looksLikeMenu('Negroni\nGin 30\nCampari 30\nVermouth 30'), false);
+assert.equal(looksLikeMenu('Winter menu\nHot Toddy $15'), true);
+assert.equal(looksLikeMenu('Orchard Fizz\n45 calvados, 15 pear liqueur\n20 lemon, 15 honey 2:1, top soda'), false);
+assert.equal(looksLikeMenu('Orchard Fizz\n45 ml calvados\n15 ml pear liqueur'), false);
+assert.equal(looksLikeMenu('Campari\nRittenhouse Rye\nLillet Blanc'), false);
 
 const recipe = localReading('Orchard Fizz\n45 ml calvados\n1/2 oz pear liqueur\n- soda\nTop with soda water\nShaken\nGarnish: lemon twist\nBy Little Rye\nServe cold');
 assert.equal(recipe.kind, 'recipes');

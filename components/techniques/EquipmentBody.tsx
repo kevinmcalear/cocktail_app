@@ -2,6 +2,7 @@ import { useState } from 'react';
 import { Linking, StyleSheet, View } from 'react-native';
 
 import { Body, Button, Caption, EquipmentDrawing, useDs } from '@/components/ds';
+import { preloadEquipmentDrawing } from '@/components/ds/EquipmentDrawingLazy';
 import { SettingsRow, SwitchRow } from '@/components/screens/settings/SettingsParts';
 import { BuyList, Group, Section, shopsFor, TechniqueRow, ValueRow } from '@/components/techniques/bits';
 import { LearnHead } from '@/components/techniques/TechniquePage';
@@ -9,6 +10,9 @@ import { radius } from '@/constants/tokens';
 import { useKit } from '@/hooks/useKit';
 import { techniquesUsing, TIER_LABEL, type Equipment } from '@/lib/techniques';
 import { useAppMode } from '@/store/useAppMode';
+
+// A kit page's main picture: start loading the painter with the page's code (web), not at its first render.
+if (typeof window !== 'undefined') void preloadEquipmentDrawing();
 
 /** The tool drawn over its name: on a card (Kept-learn, A piece of equipment), `plain` on the ground (A technique). */
 export function EquipmentArt({ id, plain }: { id: string; plain?: boolean }) {

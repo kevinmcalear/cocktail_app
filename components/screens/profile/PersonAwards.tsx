@@ -10,7 +10,7 @@ import { useProfileAwards, useSetAwardPick } from '@/hooks/useProfiles';
 import { awardInitials, sortAwards, type Award } from '@/lib/awards';
 import { pickedShown, type ShareMode } from '@/lib/profiles';
 
-import { AddAwardSheet } from './AddAwardSheet';
+import { AddAwardSheet } from './AddAwardSheetLazy';
 import { AWARD_LOGOS } from './awardLogos';
 import { ModeLine } from './ModeLine';
 

@@ -3,7 +3,7 @@ import { useState } from 'react';
 import { StyleSheet, View } from 'react-native';
 
 import { DiscoverScreen } from '@/components/screens/home/DiscoverScreen';
-import { WantToGoMap } from '@/components/screens/home/WantToGoMap';
+import { WantToGoMap } from '@/components/screens/home/WantToGoMapLazy';
 import { MountOnFocus } from '@/components/nav/MountOnFocus';
 import { useRoundVisit } from '@/hooks/useFirstRound';
 

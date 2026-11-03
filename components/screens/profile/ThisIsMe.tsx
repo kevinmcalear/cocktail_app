@@ -8,7 +8,7 @@ import { radius, space } from '@/constants/tokens';
 import { useMyClaims, type Profile } from '@/hooks/useProfiles';
 
 import { useMadeBy } from './MadeBy';
-import { PersonClaimSheet } from './PersonClaimSheet';
+import { PersonClaimSheet } from './PersonClaimSheetLazy';
 
 /**
  * "This is me" / "Not me" on an unclaimed person's page (find-yourself step

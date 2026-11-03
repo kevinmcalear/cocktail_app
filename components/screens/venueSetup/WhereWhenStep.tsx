@@ -17,6 +17,7 @@ import { countryName } from '@/lib/countries';
 import { weekGroups } from '@/lib/hoursWeek';
 import { currencyFor, currencyLabel } from '@/lib/money';
 import { instagramProblem, normalizeInstagram } from '@/lib/profiles';
+import { sourceSite } from '@/lib/prepMath';
 import { normalizeWebsite } from '@/lib/venueSetup';
 import type { HeldSetup } from '@/store/useVenueSetup';
 
@@ -133,7 +134,8 @@ export function WhereWhenStep({ profileId, barId, name, claim, writable, held: k
   const [checked, setChecked] = useState(false);
   const fromCountry = currencyFor({ country });
   const currency = picked ?? currencyFor({ set: setCurrency, country, device: getLocales()[0]?.currencyCode });
-  const place = [facts?.locality ?? facts?.city, country ? countryName(country) : null].filter(Boolean).join(', ');
+  // The currency comes from the country, so name the city, not the neighbourhood.
+  const place = [facts?.city ?? facts?.locality, country ? countryName(country) : null].filter(Boolean).join(', ');
   const fromPhone = !picked && currency !== null && currency !== setCurrency && !fromCountry;
   const currencySource = picked ? null : currency === setCurrency && setCurrency ? 'Set in Venue settings › Pricing' : fromCountry ? `From the address${place ? `: ${place}` : ''}` : fromPhone ? 'From this phone, as there’s no address. Check it’s right.' : null;
   const finish = () => onDone(currency && currency !== setCurrency ? currency : null);
@@ -171,7 +173,8 @@ export function WhereWhenStep({ profileId, barId, name, claim, writable, held: k
     onHold({ instagram: normalizeInstagram(ig) || null });
     finish();
   };
-  const address = facts ? [facts.address_line, facts.locality ?? facts.city].filter(Boolean).join(', ') : '';
+  // "217 Eldridge Street, Lower East Side, New York": the neighbourhood and the city, once each.
+  const address = facts ? [...new Set([facts.address_line, facts.locality, facts.city].filter(Boolean))].join(', ') : '';
 
   return (
     <SetupPage footer={<SetupFooter label="Looks right" pending={saveInstagram.isPending || making} onPress={looksRight} skipLabel="Skip" onSkip={() => onDone(null)} />}>
@@ -226,7 +229,7 @@ export function WhereWhenStep({ profileId, barId, name, claim, writable, held: k
         <Body tone={phone ? 'ink' : 'muted'}>{phone ?? 'Not added yet'}</Body>
       </FactRow>
       <FactRow icon="globe" label="Website" canEdit editing={editing === 'website'} onEdit={() => setEditing('website')} editor={<TextEditor label="Website" initial={website ?? ''} keyboard="url" onSave={(v) => save({ website: normalizeWebsite(v) }, 'instagram')} onCancel={() => setEditing(null)} />}>
-        <Body tone={website ? 'ink' : 'muted'}>{website ?? 'Not added yet'}</Body>
+        <Body tone={website ? 'ink' : 'muted'}>{website ? sourceSite(website) : 'Not added yet'}</Body>
       </FactRow>
       <View style={styles.fact}>
         <View style={styles.factTop}>
