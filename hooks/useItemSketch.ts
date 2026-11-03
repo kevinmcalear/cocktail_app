@@ -1,5 +1,6 @@
 import { useQuery } from '@tanstack/react-query';
 
+import { askableIds } from '@/lib/sketch/sketchIds';
 import { readSketchInputs, type SketchInputs } from '@/lib/sketch/types';
 import { supabase } from '@/lib/supabase';
 
@@ -10,8 +11,10 @@ import { supabase } from '@/lib/supabase';
 const CHUNK = 100;
 let pending: { ids: Set<string>; result: Promise<Map<string, SketchInputs | null>> } | null = null;
 
-async function fetchMany(ids: string[]): Promise<Map<string, SketchInputs | null>> {
+async function fetchMany(all: string[]): Promise<Map<string, SketchInputs | null>> {
   const out = new Map<string, SketchInputs | null>();
+  // Beer and wine ids aren't uuids and would fail the whole batch; they have no drawing row (null).
+  const ids = askableIds(all);
   for (let i = 0; i < ids.length; i += CHUNK) {
     const { data, error } = await supabase.from('item_sketches').select('item_id, inputs').in('item_id', ids.slice(i, i + CHUNK));
     // Decorative: signed out, or not readable, the drink falls back to its glass icon.
