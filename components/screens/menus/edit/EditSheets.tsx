@@ -17,7 +17,7 @@ export function EditSheets({ editor }: { editor: LayoutEditor }) {
         <PasteMenuSheet
           into={section}
           library={editor.library}
-          already={editor.layout.sections[editor.layout.sections.length - 1]?.drinks.map((drink) => drink.id)}
+          already={(section ?? editor.layout.sections[editor.layout.sections.length - 1])?.drinks.map((drink) => drink.id)}
           onClose={close}
           onApply={(groups) => editor.applyPaste(sheet.key, groups)}
         />

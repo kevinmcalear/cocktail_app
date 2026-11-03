@@ -124,7 +124,8 @@ export function MenuPageHead({ heroIds, coverUrl, coverCredit, name, ink, quiet,
 const styles = StyleSheet.create({
   credit: { position: 'absolute', top: PHOTO_H - space.xl, right: 0, maxWidth: '60%' },
   creditOn: { top: PHOTO_H - space.xxxl - space.lg, paddingHorizontal: space.sm, paddingVertical: space.xs / 2, borderRadius: radius.control },
-  over: { position: 'absolute', left: 0, bottom: space.md, flexDirection: 'row', gap: space.sm },
+  // Above the phone's credit line, which sits at the cover's foot on the right.
+  over: { position: 'absolute', left: 0, bottom: space.xxxl, flexDirection: 'row', gap: space.sm },
   bar: { position: 'absolute', top: space.lg, left: 0, right: 0, flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' },
   barEnd: { flexDirection: 'row', gap: space.sm, alignItems: 'center' },
   pill: { minHeight: 44, paddingHorizontal: space.lg, borderRadius: radius.pill, alignItems: 'center', justifyContent: 'center' },

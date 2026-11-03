@@ -1,7 +1,7 @@
 import { useRouter } from 'expo-router';
 import { ScrollView, StyleSheet, TextInput, View } from 'react-native';
 
-import { Caption, DsText, Field, PressableScale, Tag, useDs, type TagTone } from '@/components/ds';
+import { Caption, DsText, Field, GlassButton, Tag, useDs, type TagTone } from '@/components/ds';
 import { FormScrollContainer } from '@/components/recipe/FormScrollContainer';
 import { displayFaces, font, layout, radius, space, type } from '@/constants/tokens';
 import { itemHref } from '@/lib/itemRoutes';
@@ -9,8 +9,8 @@ import { itemHref } from '@/lib/itemRoutes';
 import { MenuVisual } from '../MenuVisual';
 import { Check, MonoLabel, ReadyChecks, type CheckTarget } from '../ReviewParts';
 import { useMenuDrag } from '../useMenuDrag';
-import { addTarget, CoverButtons, EditSections } from './EditParts';
-import { Tool } from './EditPhone';
+import { CoverButtons, EditSections } from './EditParts';
+import { EditTools, saveProblem } from './EditTools';
 import type { EditViewProps } from './MenuEditScreen';
 
 const TONE: Record<'green' | 'amber' | 'quiet', TagTone> = { green: 'success', amber: 'warning', quiet: 'default' };
@@ -23,30 +23,25 @@ const ASIDE = 380;
  * cover with Change and Remove, and Photo by. On the web, rows drag between
  * sections (useMenuDrag).
  */
-export function EditDesktop({ editor, look, onDates, done }: EditViewProps) {
+export function EditDesktop(props: EditViewProps) {
+  const { editor, look, onDates } = props;
   const ds = useDs();
   const [root, drag] = useMenuDrag(editor);
   const { layout: menu } = editor;
-  const target = addTarget(editor);
+  const problem = saveProblem(editor);
   return (
     <View ref={root} style={[styles.screen, { backgroundColor: ds.c.ground }]}>
       <View style={[styles.top, { borderBottomColor: ds.c.lineStrong }]}>
+        <GlassButton icon="chevron.left" accessibilityLabel="Back to the menu" onPress={editor.leave} />
         <DsText variant="label" style={[font.semiBold, styles.flex]} numberOfLines={1}>
           {`Editing ${menu.name.trim() || 'a menu'}`}
         </DsText>
-        {editor.error ? (
+        {problem ? (
           <Caption tone="accent" role="alert" numberOfLines={2} style={styles.error}>
-            {editor.error}
+            {`Not saved: ${problem}`}
           </Caption>
         ) : null}
-        <Tool label="Add drink" hint="Add a drink to the menu" onPress={target ? () => editor.setSheet({ kind: 'add', key: target }) : undefined} />
-        <Tool label="Section" hint="Add a section" onPress={editor.addSection} />
-        {onDates ? <Tool label={look.home ? 'Night' : 'Dates'} hint={look.home ? 'The night and who’s coming' : 'When it goes on'} onPress={onDates} /> : null}
-        <PressableScale role="button" accessibilityLabel={editor.saving ? 'Saving' : 'Done editing'} disabled={editor.saving} onPress={done} style={[styles.done, { backgroundColor: ds.c.ink }]}>
-          <DsText variant="label" color={ds.c.ground} style={font.semiBold}>
-            Done
-          </DsText>
-        </PressableScale>
+        <EditTools {...props} />
       </View>
       <View style={styles.columns}>
         <FormScrollContainer style={styles.flex} contentContainerStyle={styles.main}>
@@ -137,7 +132,6 @@ const styles = StyleSheet.create({
   flex: { flex: 1, minWidth: 0 },
   top: { flexDirection: 'row', alignItems: 'center', gap: space.md, minHeight: 64, paddingHorizontal: space.xl, borderBottomWidth: StyleSheet.hairlineWidth },
   error: { maxWidth: 360 },
-  done: { minHeight: 40, paddingHorizontal: space.lg, borderRadius: radius.pill, alignItems: 'center', justifyContent: 'center' },
   columns: { flex: 1, flexDirection: 'row', minHeight: 0 },
   main: { paddingTop: space.xxl, paddingLeft: space.xxxl, paddingRight: space.xxl, paddingBottom: space.xxxl },
   title: { gap: space.xs },

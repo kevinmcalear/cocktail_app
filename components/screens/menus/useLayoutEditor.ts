@@ -39,8 +39,8 @@ const AUTOSAVE_MS = 800;
 
 /**
  * Everything the menu editor does, for its phone and desktop layouts: the
- * layout being edited, saved on its own a moment after each change (a status
- * line says so), and what the sheets need.
+ * layout being edited, saved on its own a moment after each change (a problem
+ * that holds it up shows over the toolbar), and what the sheets need.
  */
 export function useLayoutEditor(menu: MenuDetail, { paste = false }: { paste?: boolean } = {}) {
   const router = useRouter();
@@ -51,7 +51,6 @@ export function useLayoutEditor(menu: MenuDetail, { paste = false }: { paste?: b
   const [error, setError] = useState<string | null>(null);
   // The cover's own problem, shown on the cover: it never holds up saving the rest.
   const [coverError, setCoverError] = useState<string | null>(null);
-  const [savedAt, setSavedAt] = useState<number | null>(null);
   const [now] = useState(() => Date.now());
   const save = useSaveMenu(menu.id);
   const prices = useSetDrinkPrices();
@@ -128,7 +127,6 @@ export function useLayoutEditor(menu: MenuDetail, { paste = false }: { paste?: b
       if (Object.keys(snapshot.prices ?? {}).length) await savePrices(snapshot.prices!);
       setSaved({ ...snapshot, prices: {} });
       setLayout((l) => (l.prices === snapshot.prices ? { ...l, prices: {} } : l));
-      setSavedAt(Date.now());
       return true;
     } catch (e) {
       setError(e instanceof Error ? e.message : 'Couldn’t save. Your changes are still here; try again.');
@@ -152,7 +150,6 @@ export function useLayoutEditor(menu: MenuDetail, { paste = false }: { paste?: b
     status,
     changed,
     saving,
-    savedAt,
     error,
     library,
     canMake,
