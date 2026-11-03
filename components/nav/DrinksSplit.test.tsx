@@ -8,7 +8,8 @@ import * as TabStack from '@/app/(tabs)/(1-tonight,2-drinks,3-discover,4-you)/_l
 import DrinksTab from '@/app/(tabs)/(2-drinks)/drinks';
 import { BreakpointOverride } from '@/components/ds';
 import { renderWithProviders } from '@/jest.setup';
-import { drinkInPane, useDrinksFirstRow } from '@/hooks/useDrinksSplit';
+import { useDrinksFirstRow } from '@/components/screens/drinks/firstRow';
+import { drinkInPane } from '@/hooks/useDrinksSplit';
 import { TABS } from '@/lib/tabs';
 
 import { ScreenHeader } from './ScreenHeader';

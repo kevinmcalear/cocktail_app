@@ -3,7 +3,7 @@ import { StyleSheet, View } from 'react-native';
 import { Body, useDs } from '@/components/ds';
 import { DrinkPane, OtherPane } from '@/components/screens/drinks/DrinksPanes';
 import { space } from '@/constants/tokens';
-import { useDrinksFirstRow } from '@/hooks/useDrinksSplit';
+import { useDrinksFirstRow } from '@/components/screens/drinks/firstRow';
 
 import { ScreenHeader } from './ScreenHeader';
 

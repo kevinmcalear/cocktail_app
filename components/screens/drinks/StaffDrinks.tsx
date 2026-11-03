@@ -25,7 +25,7 @@ import { DrinksPanes } from '@/components/screens/drinks/DrinksPanes';
 import { NearResults } from '@/components/search/NearResults';
 import { SearchField } from '@/components/search/SearchField';
 import { space } from '@/constants/tokens';
-import { useDrinksFirstRow } from '@/hooks/useDrinksSplit';
+import { useDrinksFirstRow } from '@/components/screens/drinks/firstRow';
 import { useOpenSearch } from '@/hooks/useSearchFrom';
 import { useDrinkLists } from '@/hooks/useDiscover';
 import { usePrefetchCocktail } from '@/hooks/useCocktails';

@@ -7,7 +7,8 @@ import { DrinkListRow, type DrinkListRowProps } from '@/components/screens/drink
 import { DrinkLoading } from '@/components/screens/drink/DrinkLoading';
 import { layout, space } from '@/constants/tokens';
 import { useCocktail } from '@/hooks/useCocktails';
-import { useDrinksFirstRow, useOpenBeside } from '@/hooks/useDrinksSplit';
+import { useDrinksFirstRow } from '@/components/screens/drinks/firstRow';
+import { useOpenBeside } from '@/hooks/useDrinksSplit';
 import { useItemEditAccess } from '@/hooks/useViewAs';
 import { itemHref, type ItemCategory } from '@/lib/itemRoutes';
 import type { SearchItem } from '@/types/search';
