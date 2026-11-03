@@ -8,11 +8,11 @@ import { withAlpha } from '@/lib/color';
 import { useAuth } from '@/ctx/AuthContext';
 import { useActiveVenue } from '@/hooks/useActiveVenue';
 import { useClaimPending } from '@/hooks/useBarClaims';
-import { useAskToJoin, useMyJoinRequest } from '@/hooks/useJoinRequests';
 import { isUnclaimed, useMyClaims, useMyPersonClaim, type Profile } from '@/hooks/useProfiles';
 import { needsOnboarding } from '@/lib/onboarding';
 
 import { claimBar } from './ClaimProfile';
+import { StaffDoor } from './StaffDoorLazy';
 
 /**
  * The claim on a bar page that isn't claimed yet, under its name and before
@@ -93,29 +93,6 @@ export function ClaimLine({ profile, onFind }: { profile: Profile; onFind?: () =
       {canClaim && waiting ? <Caption tone="muted">(a claim is waiting)</Caption> : null}
       {canClaim && canFind ? <Caption tone="muted">·</Caption> : null}
       {canFind ? <TextLink label="Find your name" accessibilityHint="Opens the people listed here" onPress={onFind} /> : null}
-    </View>
-  );
-}
-
-/** A claimed bar's page, for someone not on its team: "Work here? Ask to join", which its Admin answers. */
-function StaffDoor({ profile, barId, onFind }: { profile: Profile; barId: string; onFind?: () => void }) {
-  const asked = useMyJoinRequest(barId).data;
-  const ask = useAskToJoin();
-  return (
-    <View style={styles.line}>
-      <Caption tone="muted">Work here?</Caption>
-      {asked ? (
-        <Caption tone="muted">{asked.declined_at ? 'The team said no.' : 'You asked to join.'}</Caption>
-      ) : (
-        <TextLink label={ask.isPending ? 'Asking…' : 'Ask to join'} accessibilityHint={`Asks ${profile.display_name}’s Admin to add you to the team`} onPress={() => ask.mutate(profile.id)} />
-      )}
-      {onFind ? <Caption tone="muted">·</Caption> : null}
-      {onFind ? <TextLink label="Find your name" accessibilityHint="Opens the people listed here" onPress={onFind} /> : null}
-      {ask.error ? (
-        <Caption tone="accent" role="alert">
-          {ask.error.message}
-        </Caption>
-      ) : null}
     </View>
   );
 }
