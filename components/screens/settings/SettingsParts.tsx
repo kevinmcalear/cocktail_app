@@ -120,8 +120,15 @@ export function ChoiceChips<T extends string>({ label, options, value, onChange 
   );
 }
 
+/** One choice in a list; `sub` is a line under its name. */
+export interface Choice<T extends string> {
+  id: T;
+  label: string;
+  sub?: string;
+}
+
 /** A list of choices, one per row, with a tick on the chosen one. */
-export function ChoiceRows<T extends string>({ label, options, value, onChange, disabled }: { label: string; options: readonly { id: T; label: string }[]; value: T; onChange: (id: T) => void; disabled?: boolean }) {
+export function ChoiceRows<T extends string>({ label, options, value, onChange, disabled }: { label: string; options: readonly Choice<T>[]; value: T; onChange: (id: T) => void; disabled?: boolean }) {
   const ds = useDs();
   return (
     <View role="radiogroup" aria-label={label}>
@@ -139,7 +146,10 @@ export function ChoiceRows<T extends string>({ label, options, value, onChange, 
               onPress={() => onChange(o.id)}
               style={styles.row}
             >
-              <Body style={styles.rowText}>{o.label}</Body>
+              <View style={styles.rowText}>
+                <Body>{o.label}</Body>
+                {o.sub ? <Caption tone="muted">{o.sub}</Caption> : null}
+              </View>
               {selected ? <IconSymbol name="checkmark" size={18} color={ds.accentText} /> : null}
             </PressableScale>
           </View>

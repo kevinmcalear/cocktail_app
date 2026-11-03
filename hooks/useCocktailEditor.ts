@@ -17,6 +17,8 @@ import { fetchEditableRecipes } from "@/lib/editableRecipes";
 import { mapPresentationRecipeToEditItem } from "@/lib/recipeUtils";
 import { supabase } from "@/lib/supabase";
 import { saveDrinkSpec } from "@/hooks/useVersions";
+import { fetchStepNotes, saveStepNotes } from "@/hooks/useStepNotes";
+import { carryFloatWords, carryPartWords, draftSteps, stepDraft, stepNoteChanges, type StepDraft, type StepNote, type StepWords } from "@/lib/stepNotes";
 import { resolveEditItems } from "@/hooks/specLineSave";
 import { refreshIngredients } from "@/hooks/useDropdowns";
 import { showMessage } from "@/lib/dialogs";
@@ -80,6 +82,11 @@ export function useCocktailEditor(id: string, { enabled = true }: { enabled?: bo
     // Each method's name as loaded with the drink, for part 1 when parts are turned on (the shared list may not have it yet).
     const methodNames = useRef<Record<string, string>>({});
     const [localImages, setLocalImages] = useState<ImageItem[]>([]);
+    // The words on its steps (drink_step_notes): an aside by a step's name, a note under it. Null until read; a failed read saves none.
+    const [stepNotes, setStepNotesState] = useState<StepDraft>({});
+    const storedNotes = useRef<StepNote[] | null>(null);
+    // The Steps field opens only once they're read, so nothing is typed that a save would drop.
+    const [stepNotesStatus, setStepNotesStatus] = useState<"loading" | "failed" | "ready">("loading");
 
     const markDirty = useCallback(() => setIsDirty(true), []);
 
@@ -108,6 +115,25 @@ export function useCocktailEditor(id: string, { enabled = true }: { enabled?: bo
         setRecipeItems(items);
         markDirty();
     }, [markDirty]);
+
+    const setStepNotes = wrap(setStepNotesState);
+    /** Try again after a read that failed. Words already in this edit (kept offline) stay. */
+    const retryStepNotes = async () => {
+        setStepNotesStatus("loading");
+        try {
+            const rows = await fetchStepNotes(id);
+            storedNotes.current = rows;
+            setStepNotesState((prev) => ({ ...stepDraft(rows), ...prev }));
+            setStepNotesStatus("ready");
+        } catch {
+            setStepNotesStatus("failed");
+        }
+    };
+    /** One step's aside or note typed. */
+    const setStepNote = (key: string, patch: Partial<StepWords>) => {
+        setStepNotesState((prev) => ({ ...prev, [key]: { ...(prev[key] ?? { aside: "", note: "" }), ...patch } }));
+        markDirty();
+    };
 
     const setLocalImagesDirty = useCallback((images: ImageItem[] | ((prev: ImageItem[]) => ImageItem[])) => {
         setLocalImages(images);
@@ -143,6 +169,7 @@ export function useCocktailEditor(id: string, { enabled = true }: { enabled?: bo
         // presentation views: a save writes every field back, so masked values
         // would overwrite real ones. Saving waits until both have loaded.
         setRawLoaded(false);
+        setStepNotesStatus("loading");
         Promise.all([
             fetchEditableRecipes(id),
             supabase
@@ -154,8 +181,9 @@ export function useCocktailEditor(id: string, { enabled = true }: { enabled?: bo
                 )
                 .eq("id", id)
                 .single(),
+            fetchStepNotes(id).catch(() => null),
         ])
-            .then(([recipes, { data, error }]) => {
+            .then(([recipes, { data, error }, notesRead]) => {
                 if (error || !data) throw error ?? new Error("Cocktail not found");
                 // Keyed by row, so each part can name its lines.
                 const items = recipes.map((r: any) => ({
@@ -180,6 +208,9 @@ export function useCocktailEditor(id: string, { enabled = true }: { enabled?: bo
                 if (loaded) setMethodIds(orderedMethodIds(methodRows));
                 setPartsState(loaded);
                 setRecipeItems(orderByPart(loaded, items));
+                storedNotes.current = notesRead;
+                setStepNotesStatus(notesRead ? "ready" : "failed");
+                setStepNotesState(stepDraft(notesRead));
                 setBarId(data.bar_id);
                 setSketchVariant(data.sketch_variant ?? null);
                 setGlassModelState((data as unknown as { glass_model: GlassModel | null }).glass_model ?? null);
@@ -220,7 +251,7 @@ export function useCocktailEditor(id: string, { enabled = true }: { enabled?: bo
     const specForm = () => ({
         name, description, origin, notes, methodIds, glasswareId, familyId, iceId, methodIceId, iceBuild, iceTouched: iceTouched.current,
         sketchVariant, glassModel, barId, overrideVisibility, overrideGeneric, overrideSpecific, overrideMeasurement, overridePrep,
-        recipeItems, parts, localImages,
+        recipeItems, parts, localImages, stepNotes,
     });
     type SpecForm = ReturnType<typeof specForm>;
     const applyForm = (f: SpecForm) => {
@@ -230,17 +261,20 @@ export function useCocktailEditor(id: string, { enabled = true }: { enabled?: bo
         setOverrideVisibility(f.overrideVisibility); setOverrideGeneric(f.overrideGeneric); setOverrideSpecific(f.overrideSpecific);
         setOverrideMeasurement(f.overrideMeasurement); setOverridePrep(f.overridePrep); setRecipeItems(f.recipeItems); setPartsState(f.parts);
         setLocalImages(f.localImages);
+        // An edit kept before steps had words has none.
+        setStepNotesState(f.stepNotes ?? {});
         markDirty();
     };
-    // The spec as it loaded, for telling whether it changed under an edit kept offline.
+    // The spec as it loaded, for telling whether it changed under an edit kept offline. Not the step words: a read of them that failed once isn't a change.
     const loadedBase = useRef("");
+    const baseOf = ({ stepNotes: _words, ...form }: SpecForm) => specFingerprint(form);
     const keepOffline = () => {
         useOfflineEdits.getState().keep(id, { at: Date.now(), base: loadedBase.current, form: specForm() });
         showMessage("Kept on this phone", "There’s no signal, so your edit is saved here as a draft. Open this drink’s editor with signal and save to send it.");
     };
     useEffect(() => {
         if (!rawLoaded) return;
-        loadedBase.current = specFingerprint(specForm());
+        loadedBase.current = baseOf(specForm());
         const kept = useOfflineEdits.getState().edits[id];
         if (!kept) return;
         const when = new Date(kept.at).toLocaleString([], { weekday: "short", hour: "numeric", minute: "2-digit" });
@@ -394,6 +428,8 @@ export function useCocktailEditor(id: string, { enabled = true }: { enabled?: bo
             return setParts(startParts({ lines: recipeItems.map(toLine), methods: methodIds.map((mid) => ({ id: mid, name: named(mid) })) }));
         }
         if (parts) setMethodIds(idsOf(partsMethods(parts)));
+        // Each part's words go to the step its lines land in (lib/stepNotes carryPartWords).
+        if (parts) setStepNotes(carryPartWords(stepNotes, draftSteps(recipeItems, parts, null), draftSteps(recipeItems, null, null)));
         setPartsState(null);
         markDirty();
     };
@@ -490,11 +526,18 @@ export function useCocktailEditor(id: string, { enabled = true }: { enabled?: bo
                       ? { methodParts: methodIds.map(() => 1), parts: [] }
                       : undefined
             );
+            // The words on its steps, by the steps it has now: a step gone takes its words with it.
+            // A Float step gone because its lines moved into a part hands its words to that part's step.
+            const steps = draftSteps(ordered, parted, null);
+            const notesChanged = storedNotes.current && stepNoteChanges(storedNotes.current, carryFloatWords(stepNotes, steps), steps.map((g) => g.key));
+            if (notesChanged) await saveStepNotes(id, notesChanged.rows, notesChanged.gone);
             if (spec.created.length) void refreshIngredients(queryClient, spec.created);
             if (spec.warnings.length) showMessage("Saved", spec.warnings.join("\n\n"));
 
             await queryClient.invalidateQueries({ queryKey: ["cocktail", id] });
             await queryClient.invalidateQueries({ queryKey: ["cocktails"] });
+            // The venue's spec book holds a copy the drink page opens from (and the phone keeps it between launches); this save isn't a mutation, so nothing else refreshes it.
+            await queryClient.invalidateQueries({ queryKey: ["spec-book"] });
             // The database redraws it in the chosen glass as the row saves.
             await queryClient.invalidateQueries({ queryKey: ["item-sketch", id] });
             await queryClient.invalidateQueries({ queryKey: ["drink-glass-model", id] });
@@ -567,6 +610,11 @@ export function useCocktailEditor(id: string, { enabled = true }: { enabled?: bo
         setParts,
         setMadeInParts,
         togglePartMethod,
+        stepNotes,
+        stepNotesStatus,
+        retryStepNotes,
+        setStepNote,
+        setStepNotes,
         localImages,
         setLocalImages: setLocalImagesDirty,
         addImages,
