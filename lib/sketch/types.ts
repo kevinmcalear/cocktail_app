@@ -129,5 +129,8 @@ export function liquidOf(inputs: Pick<SketchInputs, 'liquid' | 'tint'>): SketchI
   return { hex: tint, alpha: tint === SKETCH_CLEAR_TINT ? 0.14 : Math.max(inputs.liquid.alpha, 0.75) };
 }
 
+/** A glass with no drink in it (BARE_GLASS, draft bareGlassSketch): the stored alpha, not liquidOf's, so a tint doesn't hide it. nightScene paints its pencil stronger. */
+export const isBareGlass = (inputs: Pick<SketchInputs, 'liquid' | 'tint'>) => inputs.liquid.alpha <= 0.05;
+
 /** The same drawing with another tint, or Auto (null): what the picker previews and the cache holds until the row comes back. */
 export const withTint = (inputs: SketchInputs, tint: string | null): SketchInputs => ({ ...inputs, tint });
