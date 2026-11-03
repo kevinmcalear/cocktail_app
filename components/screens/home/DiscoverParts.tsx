@@ -3,7 +3,7 @@ import { useRouter, type Href } from 'expo-router';
 import { useMemo, useState } from 'react';
 import { ScrollView, StyleSheet, View } from 'react-native';
 
-import { Caption, Chip, DrinkImage, DsText, GlassSurface, Headline, PencilState, PressableScale, useBreakpoint, useDs } from '@/components/ds';
+import { Caption, Chip, DrinkImage, DsText, GlassButton, GlassSurface, Headline, PencilState, PressableScale, useBreakpoint, useDs } from '@/components/ds';
 import { BarMark } from '@/components/screens/home/BarMark';
 import { DiscoverMap, mapAvailable } from '@/components/screens/home/DiscoverMap';
 import { MapCredit } from '@/components/screens/home/MapCredit';
@@ -27,17 +27,11 @@ const noop = () => {};
 /** How many bars the phone's map names (Prod-discover draws two). */
 export const PHONE_NAMES = 2;
 
-/**
- * The map: the area's bars as their marks, a tap opening the bar. On phones a
- * card in the page with "12 bars open near you" on glass (Prod-discover); on
- * the desktop the tall pane beside the list (Prod-desk-discover), where the
- * hovered row's bar stands out. Phones show the map's credit under the card.
- */
-export function MapCard({ bars, named, area, me, caption, selectedId = null, pane = false }: { bars: readonly MapBar[]; named: readonly string[]; area: Area; me: { latitude: number; longitude: number } | null; caption?: string; selectedId?: string | null; pane?: boolean }) {
+/** The area's bars as their marks on the map, the `named` ones (else the first two) with their names. */
+export function useBarPins(bars: readonly MapBar[], named: readonly string[]): MapPin[] {
   const ds = useDs();
-  const router = useRouter();
   const family = displayFaces[ds.displayFace].regular;
-  const pins = useMemo(() => {
+  return useMemo(() => {
     const mark = { edge: ds.c.ground, ink: ds.c.ink, family };
     const lead = named.length ? named : bars.slice(0, PHONE_NAMES).map((b) => b.id);
     return bars.flatMap((b) => {
@@ -47,6 +41,18 @@ export function MapCard({ bars, named, area, me, caption, selectedId = null, pan
       return { ...pin, mark, named: at >= 0, order: at >= 0 ? at : undefined };
     });
   }, [bars, named, ds.c.ground, ds.c.ink, family]);
+}
+
+/**
+ * The map: the area's bars as their marks, a tap opening the bar. On phones a
+ * card in the page with "12 bars open near you" on glass (Prod-discover); on
+ * the desktop the tall pane beside the list (Prod-desk-discover), where the
+ * hovered row's bar stands out. Phones show the map's credit under the card.
+ */
+export function MapCard({ bars, named, area, me, caption, selectedId = null, pane = false, onExpand }: { bars: readonly MapBar[]; named: readonly string[]; area: Area; me: { latitude: number; longitude: number } | null; caption?: string; selectedId?: string | null; pane?: boolean; /** Phones: the full map (DiscoverFullMap). */ onExpand?: () => void }) {
+  const ds = useDs();
+  const router = useRouter();
+  const pins = useBarPins(bars, named);
   // Near me opens on the neighbourhood, a city on its bars. A new camera object moves the map, so the same view keeps the object (hours or a hover can't undo a pan).
   const fit = cameraForArea(area, me) ?? cameraFor(pins);
   const [camera, setCamera] = useState(fit);
@@ -62,11 +68,18 @@ export function MapCard({ bars, named, area, me, caption, selectedId = null, pan
           <DiscoverMap pins={pins} me={me} selectedId={selectedId} onSelect={open} onViewportChange={noop} camera={camera} scheme={ds.scheme} accent={ds.accentFill} compact={!pane} style={StyleSheet.absoluteFill} />
         ) : null}
         {caption ? (
-          <GlassSurface style={styles.caption}>
-            <DsText variant="label" role="status">
-              {caption}
-            </DsText>
-          </GlassSurface>
+          <PressableScale role={onExpand ? 'button' : undefined} accessibilityLabel={onExpand ? `${caption}. Open the map` : undefined} onPress={onExpand} disabled={!onExpand} style={styles.caption}>
+            <GlassSurface style={styles.captionGlass}>
+              <DsText variant="label" role="status">
+                {caption}
+              </DsText>
+            </GlassSurface>
+          </PressableScale>
+        ) : null}
+        {onExpand ? (
+          <View style={styles.expand}>
+            <GlassButton icon="map.fill" accessibilityLabel="Open the map" onPress={onExpand} />
+          </View>
         ) : null}
       </View>
       {pane ? null : <MapCredit />}
@@ -246,7 +259,9 @@ const styles = StyleSheet.create({
   card: { height: 230, borderRadius: radius.card, borderCurve: 'continuous', overflow: 'hidden' },
   pane: { flex: 1, padding: space.xl },
   paneMap: { flex: 1, borderRadius: radius.card, borderCurve: 'continuous', overflow: 'hidden' },
-  caption: { position: 'absolute', left: space.md, bottom: space.md, borderRadius: radius.pill, paddingHorizontal: space.md, paddingVertical: space.sm },
+  caption: { position: 'absolute', left: space.md, bottom: space.md },
+  captionGlass: { borderRadius: radius.pill, paddingHorizontal: space.md, paddingVertical: space.sm },
+  expand: { position: 'absolute', top: space.md, right: space.md },
   row: { flexDirection: 'row', alignItems: 'center', gap: space.md, paddingVertical: space.sm + 2, borderBottomWidth: StyleSheet.hairlineWidth },
   // The desktop's hovered row, on a soft fill that reaches past the column (Prod-desk-discover's first row).
   lit: { borderRadius: radius.control, marginHorizontal: -space.sm, paddingHorizontal: space.sm },

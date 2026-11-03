@@ -1,6 +1,6 @@
 import { useNetInfo } from '@react-native-community/netinfo';
 import { useLocalSearchParams, useRouter, type Href } from 'expo-router';
-import { useMemo, useRef, useState, type ComponentRef } from 'react';
+import { useEffect, useMemo, useRef, useState, type ComponentRef } from 'react';
 import { Platform, ScrollView, StyleSheet, View } from 'react-native';
 
 import { GlassButton, PencilState, useBreakpoint, useDs } from '@/components/ds';
@@ -9,6 +9,7 @@ import { usePageColumn } from '@/components/nav/Page';
 import { ScreenHeader } from '@/components/nav/ScreenHeader';
 import { useTabBarInset } from '@/components/nav/WebTabBar';
 import { AreaNote } from '@/components/screens/home/DiscoverArea';
+import { DiscoverFullMap } from '@/components/screens/home/DiscoverFullMapLazy';
 import { mapAvailable } from '@/components/screens/home/DiscoverMap';
 import { BestNear, DeskChips, DiscoverLoading, DiscoverOffline, MapCard, NewMenus, PHONE_NAMES } from '@/components/screens/home/DiscoverParts';
 import { placeSections } from '@/components/screens/home/DiscoverPlace';
@@ -23,7 +24,9 @@ import { useLovedBars } from '@/hooks/useKept';
 import { usePublishSearchArea } from '@/hooks/useSearchFrom';
 import { mapCaption, placeName } from '@/lib/discoverHome';
 import { STYLES } from '@/lib/drinkStyles';
-import { areaLabel } from '@/lib/nearMe';
+import type { Camera } from '@/lib/discoverMap';
+import { whenIdle } from '@/lib/idleQueue';
+import { areaLabel, type Area } from '@/lib/nearMe';
 
 /** The desktop's list column (Prod-desk-discover: 470 wide, beside the map). */
 const DESK_LIST = 470;
@@ -61,6 +64,10 @@ export function DiscoverScreen() {
   const [openOnly, setOpenOnly] = useState(true);
   const [late, setLate] = useState(false);
   const [hover, setHover] = useState<string | null>(null);
+  // Phones: the map card opens the full map (DiscoverFullMap); its List goes back.
+  const [full, setFull] = useState(false);
+  // The area the full map last searched, and where the map was then, so it opens there again.
+  const [searched, setSearched] = useState<{ area: Area; at: Camera } | null>(null);
 
   const now = useOpenClock();
   const nearby = useAreaBars(area, locating, now);
@@ -79,6 +86,12 @@ export function DiscoverScreen() {
   const me = useMemo(() => (near.status === 'ready' ? { latitude: near.latitude, longitude: near.longitude } : null), [near]);
   const open = nearby.bars.filter((b) => b.open).length;
   const eyebrow = `${placeName(area, nearby.bars)}${open ? ' · open now' : ''}`;
+  const caption = mapCaption(open, nearby.total, area);
+  const fullMap = full && !split && !offline;
+  // The full map's code (web) loads once the card is up, so Open the map opens at once.
+  useEffect(() => {
+    if (!split) whenIdle(DiscoverFullMap.preload);
+  }, [split]);
 
   // The places menu, from the place line or the empty page's "Pick a city".
   const cities = useBarCities().data ?? [];
@@ -121,7 +134,7 @@ export function DiscoverScreen() {
     </View>
   ) : (
     <View style={styles.body}>
-      <MapCard bars={nearby.bars} named={named.slice(0, PHONE_NAMES)} area={area} me={me} caption={mapCaption(open, nearby.total, area)} />
+      <MapCard bars={nearby.bars} named={named.slice(0, PHONE_NAMES)} area={area} me={me} caption={caption} onExpand={mapAvailable ? () => setFull(true) : undefined} />
       {bestList}
       <NewMenus menus={menus.menus} />
       {learn}
@@ -131,7 +144,7 @@ export function DiscoverScreen() {
   // Near me on an iPhone's (and phone web's) top row; Android's top is its search bar, and the desktop draws none.
   const nearMe = Platform.OS === 'android' || wideWeb ? undefined : <GlassButton icon="location" accessibilityLabel="Near me" onPress={onNearMe} />;
   const list = (
-    <ScrollView style={split ? { width: DESK_LIST + space.xxxl * 2, flexGrow: 0 } : undefined} contentContainerStyle={{ paddingBottom: bottom }}>
+    <ScrollView aria-hidden={fullMap} style={split ? { width: DESK_LIST + space.xxxl * 2, flexGrow: 0 } : undefined} contentContainerStyle={{ paddingBottom: bottom }}>
       <ScreenHeader place={false} add={false} actions={nearMe} />
       <View style={[split ? styles.deskColumn : column, styles.page]}>
         <View ref={head} collapsable={false}>
@@ -145,6 +158,22 @@ export function DiscoverScreen() {
   return (
     <View style={[styles.screen, split ? styles.row : null, { backgroundColor: ds.c.ground }]}>
       {list}
+      {fullMap ? (
+        <DiscoverFullMap
+          bars={nearby.bars}
+          named={named.slice(0, PHONE_NAMES)}
+          area={area}
+          me={me}
+          title={placeName(area, nearby.bars)}
+          caption={caption}
+          start={searched?.area === area ? searched.at : null}
+          onArea={(next, at) => {
+            setSearched({ area: next, at });
+            onArea(next);
+          }}
+          onClose={() => setFull(false)}
+        />
+      ) : null}
       {split && !offline ? <MapCard pane bars={shown} named={named} area={area} me={me} selectedId={hover ?? rows[0]?.barId ?? null} /> : null}
       <PopoverMenu anchor={picker.anchor} label="Where to look" onClose={picker.close} sections={places} />
     </View>
