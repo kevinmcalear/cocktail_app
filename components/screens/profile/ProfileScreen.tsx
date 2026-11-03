@@ -16,12 +16,9 @@ import { PublicPage } from '../published/PublicChrome';
 import { SignInCard } from '../published/SignInCard';
 import { BlockedProfileNote, ProfileSafety } from '../safety/ProfileSafety';
 import { BarProfile } from './BarProfile';
-import { MakerProfile } from './MakerProfile';
-import { PersonProfile } from './PersonProfile';
 import { PublicBarPage } from './PublicBarPage';
-import { SupplierProfile } from './SupplierProfile';
+import { MakerProfile, PersonProfile, SupplierProfile, UnclaimedPerson } from './OtherProfilesLazy';
 import { ThisIsMe } from './ThisIsMe';
-import { UnclaimedPerson } from './UnclaimedPerson';
 import { useShareLink } from './useShareLink';
 
 /**

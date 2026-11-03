@@ -5,7 +5,7 @@ import { ScrollView, StyleSheet, View } from 'react-native';
 
 import { Caption, Chip, DrinkImage, DsText, GlassButton, GlassSurface, Headline, PencilState, PressableScale, useBreakpoint, useDs } from '@/components/ds';
 import { BarMark } from '@/components/screens/home/BarMark';
-import { DiscoverMap, mapAvailable } from '@/components/screens/home/DiscoverMap';
+import { DiscoverMap, mapAvailable } from '@/components/screens/home/DiscoverMapLazy';
 import { MapCredit } from '@/components/screens/home/MapCredit';
 import { OfflineNote, SavedChip } from '@/components/screens/home/OfflineParts';
 import { DrinkTile, TonightLabel } from '@/components/screens/tonight/TonightParts';
