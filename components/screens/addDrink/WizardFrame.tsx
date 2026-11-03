@@ -1,5 +1,5 @@
-import { createContext, useContext, useEffect, useRef, useState, type ComponentRef, type ReactNode } from 'react';
-import { BackHandler, Keyboard, KeyboardAvoidingView, Platform, ScrollView, StyleSheet, useWindowDimensions, View } from 'react-native';
+import { createContext, useContext, useEffect, useRef, useState, type ComponentRef, type ReactNode, type RefObject } from 'react';
+import { BackHandler, Keyboard, KeyboardAvoidingView, Platform, ScrollView, StyleSheet, useWindowDimensions, View, type NativeScrollEvent, type NativeSyntheticEvent } from 'react-native';
 import Animated, { useAnimatedStyle, useReducedMotion, useSharedValue, withSpring } from 'react-native-reanimated';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
@@ -36,6 +36,73 @@ export function useWizardTakeover() {
   return useContext(Takeover);
 }
 
+/** Around the search that takes the screen (the draft page's spec, not its sheets, whose searches stay in the sheet). */
+export const TakeoverProvider = Takeover.Provider;
+
+/**
+ * The takeover's state, for the screen that hides around the search: it opens
+ * at the top; closed, the page is back where it was, the new line above the
+ * field. Android's back closes a search first, then `onBack` (true when it
+ * handled it, false to leave).
+ */
+export function useSearchTakeover(scroller: RefObject<ComponentRef<typeof ScrollView> | null>, phone: boolean, onBack: () => boolean = () => false) {
+  const [on, setOn] = useState(false);
+  const scrolled = useRef(0);
+  const keptAt = useRef(0);
+  useEffect(() => scroller.current?.scrollTo?.({ y: on ? 0 : keptAt.current, animated: false }), [on, scroller]);
+  const set = (next: boolean) => {
+    if (next === on) return;
+    if (next) keptAt.current = scrolled.current;
+    else Keyboard.dismiss();
+    setOn(next);
+  };
+  useEffect(() => {
+    const sub = BackHandler.addEventListener('hardwareBackPress', () => {
+      if (!(on && phone)) return onBack();
+      set(false);
+      return true;
+    });
+    return () => sub.remove();
+  });
+  return {
+    /** Only a phone needs the room: wider screens show the field and its results with the keyboard up. */
+    over: phone && on,
+    takeover: phone ? { on, set } : null,
+    onScroll: (e: NativeSyntheticEvent<NativeScrollEvent>) => void (scrolled.current = e.nativeEvent.contentOffset.y),
+  };
+}
+
+/**
+ * A screen that stays above the keyboard. `children` gets the status bar it
+ * still has to clear. On iOS the screen is a page sheet that starts below the
+ * status bar: its gap to the window's top is both the inset it doesn't need
+ * and what KeyboardAvoidingView (which assumes it starts at the top) must
+ * add. A full-screen Modal (House-made over a drink) measures a hair short of
+ * the window (873.99994 of 874), so under a point is no gap: that screen
+ * still has the status bar to clear.
+ */
+export function KeyboardScreen({ testID, embedded, children }: { testID: string; embedded?: boolean; children: (statusBar: number) => ReactNode }) {
+  const ds = useDs();
+  const insets = useSafeAreaInsets();
+  const windowHeight = useWindowDimensions().height;
+  const [height, setHeight] = useState(0);
+  const gap = windowHeight - height;
+  const sheetGap = Platform.OS === 'ios' && !embedded && height && gap >= 1 ? gap : 0;
+  return (
+    <KeyboardAvoidingView
+      // Android draws edge to edge, so the window doesn't shrink for the keyboard: the screen does.
+      behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
+      keyboardVerticalOffset={sheetGap}
+      testID={testID}
+      onLayout={(e) => setHeight(e.nativeEvent.layout.height)}
+      style={[styles.screen, { backgroundColor: ds.c.ground }]}
+    >
+      {/* iOS: after the first layout, so a first field's autofocus meets the right keyboard offset. */}
+      {Platform.OS === 'ios' && !height ? null : children(sheetGap > 0 ? 0 : insets.top)}
+    </KeyboardAvoidingView>
+  );
+}
+
 export interface WizardFrameProps {
   testID: string;
   /** The browser tab's title. */
@@ -69,39 +136,14 @@ export interface WizardFrameProps {
  * and Next at its end.
  */
 export function WizardFrame({ testID, pageTitle, embedded, overNav, band, stepKey, direction, eyebrow, title, intro, aside, footer, onHardwareBack, children }: WizardFrameProps) {
-  const ds = useDs();
   const insets = useSafeAreaInsets();
   const gutter = useGutter();
   const breakpoint = useBreakpoint();
   // Beside the side nav on wide web the column sits left, next to it, never centred (b07).
   const besideNav = useIsWideWeb() && !embedded && !overNav;
-  const windowHeight = useWindowDimensions().height;
-  const [height, setHeight] = useState(0);
   // One scroll view for every step, so a new step (forward or back) opens at its top, not where the last one was left.
   const scroller = useRef<ComponentRef<typeof ScrollView>>(null);
   useEffect(() => scroller.current?.scrollTo({ y: 0, animated: false }), [stepKey]);
-
-  // A search taking over opens at the top; closed, the step is back where it was, the new line above the field.
-  const [takeover, setTakeover] = useState(false);
-  const scrolled = useRef(0);
-  const keptAt = useRef(0);
-  useEffect(() => scroller.current?.scrollTo({ y: takeover ? 0 : keptAt.current, animated: false }), [takeover]);
-  const startTakeover = (on: boolean) => {
-    if (on === takeover) return;
-    if (on) keptAt.current = scrolled.current;
-    else Keyboard.dismiss();
-    setTakeover(on);
-  };
-
-  useEffect(() => {
-    // Android's back closes a search first, then steps back.
-    const sub = BackHandler.addEventListener('hardwareBackPress', () => {
-      if (!(takeover && breakpoint === 'phone' && !embedded)) return onHardwareBack();
-      startTakeover(false);
-      return true;
-    });
-    return () => sub.remove();
-  });
 
   const [typing, setTyping] = useState(false);
   useEffect(() => {
@@ -117,34 +159,17 @@ export function WizardFrame({ testID, pageTitle, embedded, overNav, band, stepKe
   // A phone gets the paper band edge to edge; wider screens and the workspace a centred column.
   const column = breakpoint !== 'phone' || !!embedded;
   const page = breakpoint === 'desktop' && !embedded;
-  // On iOS the screen is a page sheet that starts below the status bar. Its gap
-  // to the window's top is both the inset it doesn't need and what
-  // KeyboardAvoidingView (which assumes it starts at the top) must add. A full-screen
-  // Modal (House-made over a drink) measures a hair short of the window (873.99994 of
-  // 874), so under a point is no gap: that screen still has the status bar to clear.
-  const gap = windowHeight - height;
-  const sheetGap = Platform.OS === 'ios' && !embedded && height && gap >= 1 ? gap : 0;
-  const statusBar = sheetGap > 0 ? 0 : insets.top;
+  const { over, takeover, onScroll } = useSearchTakeover(scroller, !column, onHardwareBack);
   const side = column ? 0 : gutter;
   const bottom = embedded ? space.lg : Math.max(insets.bottom, space.lg);
-  // Only a phone's step needs the room: wider screens show the field and its results with the keyboard up.
-  const over = !column && takeover;
 
   return (
-    <Takeover.Provider value={column ? null : { on: takeover, set: startTakeover }}>
-      <KeyboardAvoidingView
-        // Android draws edge to edge, so the window doesn't shrink for the keyboard: the screen does.
-        behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
-        keyboardVerticalOffset={sheetGap}
-        testID={testID}
-        onLayout={(e) => setHeight(e.nativeEvent.layout.height)}
-        style={[styles.screen, { backgroundColor: ds.c.ground }]}
-      >
-        <WebHead>
-          <title>{pageTitle}</title>
-        </WebHead>
-        {/* iOS: after the first layout, so a first field's autofocus meets the right keyboard offset. */}
-        {Platform.OS === 'ios' && !height ? null : (
+    <Takeover.Provider value={takeover}>
+      <WebHead>
+        <title>{pageTitle}</title>
+      </WebHead>
+      <KeyboardScreen testID={testID} embedded={embedded}>
+        {(statusBar) => (
           <View style={[styles.column, page && styles.pageColumn, besideNav && styles.left, column && !page && { paddingTop: embedded ? space.lg : statusBar + space.lg, paddingHorizontal: gutter }, over && { paddingTop: statusBar + space.sm }, { paddingBottom: page ? 0 : bottom }]}>
             {page ? (
               <ScrollView ref={scroller} keyboardShouldPersistTaps="handled" style={styles.flex} contentContainerStyle={[styles.page, { paddingHorizontal: gutter }]}>
@@ -162,7 +187,7 @@ export function WizardFrame({ testID, pageTitle, embedded, overNav, band, stepKe
                 <ScrollView
                   ref={scroller}
                   keyboardShouldPersistTaps="handled"
-                  onScroll={(e) => (scrolled.current = e.nativeEvent.contentOffset.y)}
+                  onScroll={onScroll}
                   scrollEventThrottle={32}
                   style={styles.flex}
                   contentContainerStyle={[styles.scroll, over && styles.over, { paddingHorizontal: side }]}
@@ -177,7 +202,7 @@ export function WizardFrame({ testID, pageTitle, embedded, overNav, band, stepKe
             )}
           </View>
         )}
-      </KeyboardAvoidingView>
+      </KeyboardScreen>
     </Takeover.Provider>
   );
 }
