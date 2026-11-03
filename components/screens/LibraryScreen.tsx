@@ -30,11 +30,9 @@ import { useKitShelves } from '@/hooks/useKitCheck';
 import { useVenueMenus } from '@/hooks/useMenus';
 import { usePricedItemIds } from '@/hooks/usePricing';
 import { useSearchCatalog } from '@/hooks/useSearchCatalog';
-import { useBarRiffs, useStaffList } from '@/hooks/useStaffList';
 import { venueContextIds } from '@/lib/barContextFilter';
 import { newDrinkHref, type ItemCategory } from '@/lib/itemRoutes';
 import { groupMenus, menuDateLine } from '@/lib/menus';
-import { classicRows } from '@/lib/staffList';
 import { capitalize } from '@/lib/stringUtils';
 import { matchesQuery } from '@/lib/publicDrinks';
 import { BATCHED_STYLES, DRINK_CATEGORIES, filterGroups, itemIdOf, menuDrinks, parseShow, PREP_GROUPS, TYPE_FILTERS, type Show } from '@/lib/libraryFilters';
@@ -89,8 +87,6 @@ export function LibraryScreen({ beside = false }: { beside?: boolean }) {
   const q = phone ? '' : find.trim().toLowerCase();
   const { data: pricedIds } = usePricedItemIds(activeId, canCost);
   const { data: menus } = useVenueMenus(activeId);
-  const staff = useStaffList(activeId);
-  const linked = useBarRiffs(activeId);
   const [now] = useState(() => Date.now());
 
   const published = useMemo(() => items.filter((i) => !i.isDraft), [items]);

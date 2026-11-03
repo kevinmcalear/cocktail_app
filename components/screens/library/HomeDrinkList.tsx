@@ -83,7 +83,7 @@ export function HomeDrinkList() {
               glass={e.glass}
               itemId={e.id}
               caption={tileLine(methodOf(e.id), glassOf(e.id)) ?? undefined}
-              trailing={e.right ? <Tag label={e.right.label} tone={e.right.tone} /> : undefined}
+              trailing={e.right ? <View style={styles.right}><Tag label={e.right.label} tone={e.right.tone} /></View> : undefined}
             />
           ))}
         </View>
@@ -98,4 +98,6 @@ export function HomeDrinkList() {
 
 const styles = StyleSheet.create({
   wrap: { gap: space.md },
+  // A long "Need aromatic bitters" gives way to the name.
+  right: { maxWidth: '42%', flexShrink: 1 },
 });
