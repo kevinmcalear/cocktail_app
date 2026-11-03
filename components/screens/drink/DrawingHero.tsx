@@ -1,13 +1,17 @@
 import { LinearGradient } from 'expo-linear-gradient';
-import type { ReactNode } from 'react';
-import { Platform, StyleSheet, View } from 'react-native';
+import { QueryClientContext } from '@tanstack/react-query';
+import { useContext, type ReactNode } from 'react';
+import { Platform, Pressable, StyleSheet, View } from 'react-native';
 import Animated, { interpolate, useAnimatedStyle, type SharedValue } from 'react-native-reanimated';
 
 import { useDs } from '@/components/ds';
+// The web loads it (and its Reanimated) when the hero first draws, not with every page.
+import { AnimatedSketch } from '@/components/ds/AnimatedSketchLazy';
 // By path, not the ds barrel: through the barrel its Reanimated pour lands in the web's every-page chunk (check-web-chunks).
 import { DrinkDrawing, DrinkDrawingFor } from '@/components/ds/DrinkDrawing';
 import { drawing, layout, space } from '@/constants/tokens';
 import { useItemSketch } from '@/hooks/useItemSketch';
+import { useReducedMotion } from '@/hooks/useReducedMotion';
 import { drinkSky } from '@/lib/sky';
 import { liquidOf, type SketchInputs } from '@/lib/sketch/types';
 
@@ -78,18 +82,63 @@ export function DockedDrawing({ art, size, top, width, dockLeft, dockTop, handOf
   return <Animated.View style={[styles.dock, { width: size, height: size }, style]}>{art}</Animated.View>;
 }
 
-/** A drink's drawing at the page's size: a preview's inputs, else its stored drawing. */
-export function DrinkArt({ itemId, sketch, label, size, pour }: { itemId: string; sketch?: SketchInputs | null; label: string; size: number; pour?: boolean }) {
-  const staff = size === drawing.heroStaff;
-  return sketch ? <DrinkDrawing inputs={sketch} seed={itemId} size="hero" staff={staff} pour={pour} label={label} /> : <DrinkDrawingFor itemId={itemId} size="hero" staff={staff} pour={pour} label={label} />;
+/**
+ * A drink's drawing at the page's size (a preview's inputs, else its stored
+ * drawing), made in front of you and again on each `play`: the pencil finds
+ * the glass rim first, the drink spreads in, ice drops, foam rises, the
+ * garnish lands, bubbles climb (AnimatedSketch). At night it's painted for
+ * night with the drink's glow, as the still drawing is. Reduce Motion: the
+ * still drawing.
+ */
+export function DrinkArt({ sketch, ...rest }: ArtProps & { sketch?: SketchInputs | null }) {
+  const client = useContext(QueryClientContext);
+  if (sketch) return <Staged inputs={sketch} {...rest} />;
+  // Outside a query client (isolated tests) there's no stored drawing to ask for.
+  return client ? <Stored {...rest} /> : null;
 }
 
-/** Holds that room in the scroll. */
-export function DrawingSpace({ top, size }: { top: number; size: number }) {
-  return <View style={{ height: drawingRoom(top, size) }} />;
+interface ArtProps {
+  itemId: string;
+  label: string;
+  size: number;
+  play: number;
+}
+
+function Stored(props: ArtProps) {
+  const stored = useItemSketch(props.itemId);
+  if (stored.data) return <Staged inputs={stored.data} {...props} />;
+  // It draws from blank paper, so blank paper while the drawing loads: the bare glass first would draw that glass twice.
+  // Only while it's being fetched: offline (a paused query) shows the bare glass.
+  if (stored.isLoading) return <View style={{ width: props.size, height: props.size }} role="img" aria-label={props.label} />;
+  // No drawing yet: the bare glass, still.
+  return <DrinkDrawingFor itemId={props.itemId} size="hero" staff={props.size === drawing.heroStaff} label={props.label} />;
+}
+
+function Staged({ inputs, itemId, label, size, play }: ArtProps & { inputs: SketchInputs }) {
+  const reduceMotion = useReducedMotion();
+  if (reduceMotion) return <DrinkDrawing inputs={inputs} seed={itemId} size="hero" staff={size === drawing.heroStaff} label={label} />;
+  return (
+    <View style={[styles.art, { width: size, height: size }]} role="img" aria-label={label}>
+      <AnimatedSketch inputs={inputs} seed={itemId} play={play} glow />
+    </View>
+  );
+}
+
+/**
+ * Holds that room in the scroll. The drawing floats over it and lets touches
+ * through, so a tap on it lands here and draws it again; a drag still scrolls.
+ */
+export function DrawingSpace({ top, size, onReplay }: { top: number; size: number; onReplay: () => void }) {
+  return (
+    <View style={{ height: drawingRoom(top, size), paddingTop: drawingTop(top), alignItems: 'center' }}>
+      {/* A toy, not a control: screen readers get the picture's label from the drawing. */}
+      <Pressable onPress={onReplay} accessible={false} style={{ width: size, height: size }} />
+    </View>
+  );
 }
 
 const styles = StyleSheet.create({
   sky: { position: 'absolute', top: 0, left: 0, right: 0, pointerEvents: 'none' },
   dock: { position: 'absolute', top: 0, left: 0, transformOrigin: 'left top', pointerEvents: 'none' },
+  art: { overflow: 'hidden' },
 });

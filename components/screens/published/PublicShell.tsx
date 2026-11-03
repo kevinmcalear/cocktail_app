@@ -43,10 +43,10 @@ export function PublicShell({ title, imageUrl, generated, glass, itemId, onBack,
   );
 }
 
-/** The picture card on the house paper: 380 tall beside a page, 220 above one on a phone. */
-export function PublicPicture({ name, imageUrl, generated, glass, itemId }: { name: string; imageUrl: string | null; generated?: boolean; glass?: string | null; itemId?: string | null }) {
+/** The picture card on the house paper: 380 tall beside a page, 220 above one on a phone. `animate`: a drink's drawing is drawn in front of you, again on a tap. */
+export function PublicPicture({ name, imageUrl, generated, glass, itemId, animate }: { name: string; imageUrl: string | null; generated?: boolean; glass?: string | null; itemId?: string | null; animate?: boolean }) {
   const wide = useBreakpoint() !== 'phone';
-  return <DrinkImage source={imageUrl} generated={generated} glass={glass} itemId={itemId} accessibilityLabel={name} aspectRatio={0} style={{ height: wide ? 380 : 220 }} priority="high" />;
+  return <DrinkImage source={imageUrl} generated={generated} glass={glass} itemId={itemId} accessibilityLabel={name} aspectRatio={0} style={{ height: wide ? 380 : 220 }} priority="high" animate={animate} />;
 }
 
 type Loadable = Pick<UseQueryResult, 'isError' | 'refetch'>;

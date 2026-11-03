@@ -28,7 +28,8 @@ function Loaded({ itemId, fallback, animate, detail = 'full', lazy }: DrawnSketc
   const [play, setPlay] = useState(0);
   if (person) return <Image source={{ uri: person }} style={styles.fill} contentFit="cover" transition={200} />;
   // The hero draws its drawing from blank: showing the bare glass while it loads would draw that glass twice.
-  if (!sketch) return animate && drawing.isPending ? null : <>{fallback}</>;
+  // Only while it's being fetched: offline (a paused query) shows the fallback.
+  if (!sketch) return animate && drawing.isLoading ? null : <>{fallback}</>;
   if (animate) {
     return (
       // A toy, not a control: screen readers get the picture's label from the frame.
