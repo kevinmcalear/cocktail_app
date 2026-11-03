@@ -1,4 +1,4 @@
-// A drink is on a menu once (20261206620000_menu_drinks_unique.sql): the
+// A drink is on a menu once (20261206660000_menu_drinks_unique.sql): the
 // unique index refuses a second live row, save_menu puts a drink sent twice on
 // the menu once, a swap back in (the old row ending) still works, and the
 // migration's delete keeps the earliest of a duplicate pair. Runs against the
@@ -23,7 +23,7 @@ if (!/^http:\/\/(127\.0\.0\.1|localhost)/.test(status.API_URL)) {
   throw new Error(`Refusing to run menu drink tests against a non-local API: ${status.API_URL}`);
 }
 
-const MIGRATION = readFileSync(new URL('../migrations/20261206620000_menu_drinks_unique.sql', import.meta.url), 'utf8');
+const MIGRATION = readFileSync(new URL('../migrations/20261206660000_menu_drinks_unique.sql', import.meta.url), 'utf8');
 const DEDUPE = MIGRATION.slice(MIGRATION.indexOf('DELETE FROM'), MIGRATION.indexOf('CREATE UNIQUE INDEX'));
 
 const run = randomUUID().slice(0, 8);
