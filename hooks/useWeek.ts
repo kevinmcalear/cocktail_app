@@ -8,6 +8,9 @@ import { invokeFunction } from '@/lib/invokeFunction';
 import { supabase } from '@/lib/supabase';
 import { toWeekItem, WEEK_DAYS, weekStart, withGuestColors, type BarPlace, type EventKind, type WeekItem, type WeekRow } from '@/lib/week';
 
+// Its own small file, so the owner's checklist doesn't load the week (B13).
+export { useCalendarSources, type CalendarSource } from './useCalendarSources';
+
 /**
  * This week (20261012600000_this_week.sql): a bar's week for its team or its
  * guests (bar_week), the week at home (my_week), and one event (week_event).
@@ -233,13 +236,6 @@ export function useDeleteEvent() {
 
 // --- Calendar links (20261012610000_calendar_sources.sql, the sync-calendar function) ---
 
-export interface CalendarSource {
-  id: string;
-  url: string;
-  starts_public: boolean;
-  last_synced_at: string | null;
-  last_error: string | null;
-}
 
 export interface FoundEvent {
   uid: string;
@@ -255,22 +251,6 @@ export interface FoundEvent {
 /** webcal:// is https:// for us. */
 export const calendarUrl = (raw: string) => raw.trim().replace(/^webcals?:\/\//i, 'https://');
 
-export function useCalendarSources(barId: string | null | undefined) {
-  const userId = useUserId();
-  return useQuery({
-    queryKey: ['week', 'calendars', barId, userId],
-    enabled: !!barId && !!userId,
-    queryFn: async (): Promise<CalendarSource[]> => {
-      const { data, error } = await supabase
-        .from('calendar_sources')
-        .select('id, url, starts_public, last_synced_at, last_error')
-        .eq('bar_id', barId!)
-        .order('created_at');
-      if (error) throw error;
-      return (data ?? []) as CalendarSource[];
-    },
-  });
-}
 
 /** What a calendar link holds over the next month, nothing saved. */
 export function usePreviewCalendar() {
