@@ -117,7 +117,7 @@ export function BringBackSheet({ entry, barId, barName, onClose }: { entry: Repe
             );
           })}
         </View>
-        <Segmented options={WHENS} value={when} onChange={setWhen} accessibilityLabel="When" variant="pill" stretch />
+        <Segmented options={WHENS} value={when} onChange={setWhen} accessibilityLabel="When" variant="pill" stretch="fit" />
         {when === 'date' ? <DateField label="On" value={day} onChange={setDay} min={ymd(new Date(now + 86_400_000))} /> : null}
         <View style={[styles.group, { backgroundColor: ds.c.raised }]}>
           <Line label="Onto" value={list && section ? `${list.name} · ${section.name}` : 'No list on now'} open={picking === 'list'} onPress={lists.length ? () => setPicking((p) => (p === 'list' ? null : 'list')) : undefined} />

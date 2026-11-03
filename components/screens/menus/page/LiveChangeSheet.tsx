@@ -136,7 +136,7 @@ export function LiveChangeSheet({ kind, drink, where, barId, wentOn, onFind, fou
           </PressableScale>
         </View>
       ) : null}
-      <Segmented options={WHENS} value={when} onChange={setWhen} accessibilityLabel="When" variant="pill" stretch />
+      <Segmented options={WHENS} value={when} onChange={setWhen} accessibilityLabel="When" variant="pill" stretch="fit" />
       {when === 'date' ? <DateField label="On" value={day} onChange={setDay} min={ymd(new Date(now + 86_400_000))} /> : null}
       {asking ? null : (
         <View style={[styles.tell, { backgroundColor: ds.c.raised }]}>
