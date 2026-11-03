@@ -33,7 +33,7 @@ for (const [variant, size] of Object.entries(SIZES)) {
 // every other face keeps the size's own line.
 assert.equal(displayFaces.imbue.scale, 1.08);
 assert.equal(nameStyle('imbue', type.title).lineHeight, 39);
-assert.equal(nameStyle('redaction', type.title).lineHeight, type.title.lineHeight);
+assert.equal(nameStyle('instrument', type.title).lineHeight, type.title.lineHeight);
 for (const face of Object.keys(displayFaces) as DisplayFace[]) {
   if (face !== 'imbue') assert.equal(nameStyle(face, type.title).lineHeight, type.title.lineHeight, `${face} keeps the title's line`);
 }

@@ -124,24 +124,29 @@ export const DEFAULT_ACCENT = '#E4B062';
 
 /** Two made-up venues, for the gallery and tests. Real venues come from `bars`. */
 export const SAMPLE_BRANDS = {
-  littleRye: { name: 'Little Rye', accent: '#D0643B', displayFace: 'redaction' as const },
+  littleRye: { name: 'Little Rye', accent: '#D0643B', displayFace: 'instrument' as const },
   paleMoth: { name: 'Pale Moth', accent: '#B9A8F5', displayFace: 'imbue' as const },
 };
 
 /**
- * Type (decided 31 Oct 2026): Redaction for names, the system font (SF,
- * Roboto, system UI on the web) for everything else, tabular figures for
- * amounts. No mono, nothing under 13. These are the only font families the
- * app sets (npm run check:design). Paper is the one exception: what prints
- * (lib/paper) sets labels, caps and amounts in the platform's typewriter
- * face (components/paper/PaperPage), as Bet-labels and Bet-print draw them.
+ * Type (Kevin, 3 Nov 2026: "the board's fonts"; it replaced the 31 Oct pick of
+ * Redaction and the system font): Instrument Serif for names and titles,
+ * Geist for body text, Geist Mono for eyebrows and labels in capitals,
+ * tabular figures for amounts. Nothing under 13. These are the only font
+ * families the app sets (npm run check:design). Paper is the one exception:
+ * what prints (lib/paper) sets labels, caps and amounts in the platform's
+ * typewriter face (components/paper/PaperPage), as Bet-labels and Bet-print draw them.
  */
 
-/** Registered font family names (components/ds/fonts.ts). */
+/** Registered font family names (components/ds/fonts.ts). One family per file: a custom face ignores fontWeight on Android. */
 export const fontFamilies = {
-  name: 'Redaction',
-  nameItalic: 'RedactionItalic',
-  nameBold: 'RedactionBold',
+  name: 'InstrumentSerif',
+  nameItalic: 'InstrumentSerifItalic',
+  sans: 'Geist',
+  sansMedium: 'GeistMedium',
+  sansSemiBold: 'GeistSemiBold',
+  mono: 'GeistMono',
+  monoMedium: 'GeistMonoMedium',
   newsreader: 'Newsreader',
   newsreaderItalic: 'NewsreaderItalic',
   fell: 'IMFellEnglish',
@@ -154,32 +159,35 @@ export const fontFamilies = {
   shoulders: 'BigShoulders',
 } as const;
 
-/** The system font: React Native maps 'System' to SF on iOS and system UI on the web; Android falls back to Roboto. */
-export const systemFont = 'System';
+/** The body face (Geist), for the few places that set a family outside a text style (chart labels). */
+export const systemFont = fontFamilies.sans;
 
-/** The system font at the app's weights; `figures` for amounts, so columns line up. Spread into a style. */
+/** Geist at the app's weights; `figures` for amounts, so columns line up. Spread into a style. */
 export const font: Record<'regular' | 'medium' | 'semiBold' | 'figures' | 'figuresMedium', TextStyle> = {
-  regular: { fontFamily: systemFont, fontWeight: '400' },
-  medium: { fontFamily: systemFont, fontWeight: '500' },
-  semiBold: { fontFamily: systemFont, fontWeight: '600' },
-  figures: { fontFamily: systemFont, fontWeight: '400', fontVariant: ['tabular-nums'] },
-  figuresMedium: { fontFamily: systemFont, fontWeight: '500', fontVariant: ['tabular-nums'] },
+  regular: { fontFamily: fontFamilies.sans },
+  medium: { fontFamily: fontFamilies.sansMedium },
+  semiBold: { fontFamily: fontFamilies.sansSemiBold },
+  figures: { fontFamily: fontFamilies.sans, fontVariant: ['tabular-nums'] },
+  figuresMedium: { fontFamily: fontFamilies.sansMedium, fontVariant: ['tabular-nums'] },
 };
+
+/** Eyebrows and labels set in capitals: Geist Mono (components/ds/Text). */
+export const monoFont: TextStyle = { fontFamily: fontFamilies.monoMedium };
 
 /**
  * The faces names can be set in (Kevin, 31 Oct 2026: one per style on the
- * type picker, all SIL OFL): the app's own (Redaction), then Book, Worn, Deco,
- * Tavern, Modern, Poster and Sign. All but Redaction load only when a venue
+ * type picker, all SIL OFL): the app's own (Instrument Serif), then Book, Worn, Deco,
+ * Tavern, Modern, Poster and Sign. All but Instrument Serif load only when a venue
  * uses them (components/ds/faces.ts). `scale` sets each at the same visual
- * height as Redaction; `spacing` is letter spacing in em; `upper` faces are
+ * height as Instrument Serif; `spacing` is letter spacing in em; `upper` faces are
  * set in capitals (their names and credits: constants/faceInfo). Faces with no italic of their own stay upright.
  * `ascender` and `descent` are per em, measured with fontTools from the files
- * the app ships (Redaction from assets/fonts/redaction): the hhea descent, and
+ * the app ships (Instrument Serif from @expo-google-fonts): the hhea descent, and
  * the tallest of d h k l f b and the capitals A H E I T, italic included.
  * nameStyle gives a name the line height they need.
  */
 export const displayFaces = {
-  redaction: { regular: fontFamilies.name, italic: fontFamilies.nameItalic, scale: 1, spacing: 0, upper: false, ascender: 0.725, descent: 0.3 },
+  instrument: { regular: fontFamilies.name, italic: fontFamilies.nameItalic, scale: 1, spacing: 0, upper: false, ascender: 0.748, descent: 0.31 },
   newsreader: { regular: fontFamilies.newsreader, italic: fontFamilies.newsreaderItalic, scale: 0.92, spacing: 0, upper: false, ascender: 0.715, descent: 0.265 },
   fell: { regular: fontFamilies.fell, italic: fontFamilies.fellItalic, scale: 0.95, spacing: 0, upper: false, ascender: 0.752, descent: 0.363 },
   imbue: { regular: fontFamilies.imbue, italic: fontFamilies.imbue, scale: 1.08, spacing: 0, upper: false, ascender: 0.755, descent: 0.25 },
@@ -195,7 +203,7 @@ export type DisplayFace = keyof typeof displayFaces;
 export const NAME_ROOM = 1;
 
 /**
- * A name set in a face at a size: the face, scaled to sit at Redaction's
+ * A name set in a face at a size: the face, scaled to sit at Instrument Serif's
  * height, with its letter spacing and capitals. The line height is the
  * size's own, or taller where the face needs it: iOS sits a line set tighter
  * than its font one descent above its foot and cuts off whatever reaches past
@@ -214,7 +222,7 @@ export function nameStyle(face: DisplayFace, size: { fontSize: number; lineHeigh
   };
 }
 
-const DISPLAY_FAMILIES = new Set<string>(Object.values(fontFamilies));
+const DISPLAY_FAMILIES = new Set<string>([fontFamilies.name, fontFamilies.nameItalic, fontFamilies.newsreader, fontFamilies.newsreaderItalic, fontFamilies.fell, fontFamilies.fellItalic, fontFamilies.imbue, fontFamilies.besley, fontFamilies.besleyItalic, fontFamilies.bricolage, fontFamilies.belleza, fontFamilies.shoulders]);
 
 /**
  * The weight a text style needs when its caller swapped a display face into a

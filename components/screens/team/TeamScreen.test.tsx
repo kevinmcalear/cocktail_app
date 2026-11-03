@@ -25,7 +25,7 @@ let mockParams: { invite?: string } = {};
 const mockPush = jest.fn();
 jest.mock('expo-router', () => ({ useRouter: () => ({ navigate: jest.fn(), push: mockPush, back: jest.fn(), canGoBack: () => false }), useLocalSearchParams: () => mockParams }));
 // A logo set: the look is done, so Invite isn't held back.
-let mockBrand: { logo_url: string | null; primary_color: string | null; display_face: string } = { logo_url: 'https://example.test/logo.png', primary_color: null, display_face: 'redaction' };
+let mockBrand: { logo_url: string | null; primary_color: string | null; display_face: string } = { logo_url: 'https://example.test/logo.png', primary_color: null, display_face: 'instrument' };
 jest.mock('@/hooks/useVenueBrand', () => ({ useVenueBrand: () => ({ data: mockBrand }) }));
 const mockSaveWelcome = jest.fn();
 let mockWelcome: string | null = null;
@@ -103,7 +103,7 @@ beforeEach(() => {
   mockSaveWelcome.mockReset();
   mockPush.mockReset();
   mockWelcome = null;
-  mockBrand = { logo_url: 'https://example.test/logo.png', primary_color: null, display_face: 'redaction' };
+  mockBrand = { logo_url: 'https://example.test/logo.png', primary_color: null, display_face: 'instrument' };
 });
 
 test('an admin invites by email and role from the sheet, and the invite is emailed', async () => {
@@ -215,7 +215,7 @@ test('an admin changes the welcome message once, from its row', async () => {
 });
 
 test('Invite waits for how the venue looks: until then it opens Theme', async () => {
-  mockBrand = { logo_url: null, primary_color: null, display_face: 'redaction' };
+  mockBrand = { logo_url: null, primary_color: null, display_face: 'instrument' };
   await renderWithProviders(<TeamScreen />);
   expect(screen.getByText('Set how Caretakers looks first: the invite wears its logo, colour and font.')).toBeTruthy();
   await fireEvent.press(screen.getByRole('button', { name: 'Invite someone' }));

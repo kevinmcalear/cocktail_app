@@ -38,7 +38,7 @@ jest.mock('@expo/ui/swift-ui/modifiers', () => ({
 jest.mock('@/hooks/useVenueBrand', () => ({ pickPhotoColours: jest.fn() }));
 jest.mock('@/hooks/useLogoColours', () => ({ useLogoColours: (_url: string | null, known: string[]) => ({ colours: known, pins: [], aspect: 1 }) }));
 
-const LOOK: BrandLook = { id: 'b1', name: 'Little Rye', logoUrl: null, iconUrl: null, shortName: 'Rye', accent: '#D0643B', displayFace: 'redaction', groundTint: null };
+const LOOK: BrandLook = { id: 'b1', name: 'Little Rye', logoUrl: null, iconUrl: null, shortName: 'Rye', accent: '#D0643B', displayFace: 'instrument', groundTint: null };
 
 function answer(alert: jest.SpyInstance, text: 'Discard' | 'Cancel') {
   const buttons = alert.mock.calls[alert.mock.calls.length - 1][2] as AlertButton[];
@@ -46,7 +46,7 @@ function answer(alert: jest.SpyInstance, text: 'Discard' | 'Cancel') {
 }
 
 describe('Type picker', () => {
-  const open = (onClose = jest.fn(), onUse = jest.fn()) => renderWithProviders(<TypeSheet visible look={LOOK} value="redaction" onClose={onClose} onUse={onUse} />);
+  const open = (onClose = jest.fn(), onUse = jest.fn()) => renderWithProviders(<TypeSheet visible look={LOOK} value="instrument" onClose={onClose} onUse={onUse} />);
 
   test('Done keeps the face picked', async () => {
     const onUse = jest.fn();
@@ -121,8 +121,8 @@ describe('A preview full size', () => {
 
 describe('Theme on Android', () => {
   const parts = (): ThemePartProps => ({
-    row: { id: 'b1', name: 'Little Rye', slug: 'little-rye', logo_url: null, primary_color: '#D0643B', secondary_color: null, display_face: 'redaction', ground_tint: null, short_name: 'Rye', icon_url: null, icon_background: null },
-    draft: { logoUrl: null, iconUrl: null, accent: '#D0643B', face: 'redaction', tint: '', shortName: 'Rye', iconBackground: null },
+    row: { id: 'b1', name: 'Little Rye', slug: 'little-rye', logo_url: null, primary_color: '#D0643B', secondary_color: null, display_face: 'instrument', ground_tint: null, short_name: 'Rye', icon_url: null, icon_background: null },
+    draft: { logoUrl: null, iconUrl: null, accent: '#D0643B', face: 'instrument', tint: '', shortName: 'Rye', iconBackground: null },
     set: () => () => {},
     suggested: [],
     busy: null,

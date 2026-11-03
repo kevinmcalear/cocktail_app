@@ -28,7 +28,7 @@ The written rules behind the Back Bar look. What each screen should be is drawn 
 
 | Style | Size | Face |
 |---|---|---|
-| Display (drink name on its page) | 56 | Redaction, or the venue's face |
+| Display (drink name on its page) | 56 | Instrument Serif, or the venue's face |
 | Head (a main tab's name: Tonight, Drinks, Discover, You) | 40 | Display face |
 | Title (screen titles) | 34 | Display face |
 | Headline | 20 | System 600 |
@@ -37,12 +37,12 @@ The written rules behind the Back Bar look. What each screen should be is drawn 
 | Label (chips, scope and tab labels, doses, compact `sm` buttons) | 15 | System 500 |
 | Caption | 13 | System 500 |
 
-- Faces (Kevin, 31 Oct 2026): Redaction (or the venue's face) for names, the system font (SF, Roboto, system UI) for everything else, no mono. The canvas still draws its placeholders (Instrument Serif, Geist, Geist Mono): match its sizes, weights and spacing, not those faces.
+- Faces (Kevin, 3 Nov 2026: "the board's fonts"): Instrument Serif (or the venue's face) for names and titles, Geist for body text, Geist Mono for eyebrows and labels set in capitals (`DsText` picks it for any non-name text with `textTransform: 'uppercase'`). This replaced the 31 Oct pick of Redaction and the system font. All three are SIL OFL, from `@expo-google-fonts`, loaded at runtime by `expo-font` (`components/ds/fonts.ts`; the web loads WOFF2 copies and Geist's semibold and the italic after first data). Redaction stays embedded in the native build (`app.json`) but nothing loads it. Sizes, weights and spacing are the canvas's.
 - Dates put the day before the month in every locale ("Tuesday 3 November", "since 1 Oct"): new code uses `dayMonth` (`lib/dayMonth.ts`), not `toLocaleDateString`'s own order. Tonight, Drinks and the menu lines use it; older screens still to move are listed in the PR that added it.
 
 - Nothing below 13 pt. Uppercase labels get letter spacing and still stay at 13 or more.
 - Where the canvas draws 15 px (a chip, a scope or tab label, a dose, a compact button), use `variant="label"` (15/20), not 13 or 17. A dose keeps its mono face on top of it.
-- Venue faces for names (Settings › Theme, one per style): Redaction (the app's own), Newsreader (Book), IM Fell English (Worn), Imbue (Deco), Besley (Tavern), Bricolage Grotesque (Modern), Belleza (Poster) and Big Shoulders (Sign), all SIL OFL. All but Redaction load only when a venue on screen uses one (`components/ds/faces.ts`); until then they draw in Redaction. Names take a face through `nameStyle` (its scale, spacing and capitals, and a line tall enough for its letters on iOS). A new face needs a `venue_display_face` value, its measured ascender and descent in `displayFaces` (`constants/tokens.ts`, checked by `components/ds/displayClip.check.ts`), and a WOFF2 for the web with its OFL text. Body and spec faces are fixed.
+- Venue faces for names (Settings › Theme, one per style): Instrument Serif (the app's own, the column's default `instrument_serif`), Newsreader (Book), IM Fell English (Worn), Imbue (Deco), Besley (Tavern), Bricolage Grotesque (Modern), Belleza (Poster) and Big Shoulders (Sign), all SIL OFL. All but Instrument Serif load only when a venue on screen uses one (`components/ds/faces.ts`); until then they draw in Instrument Serif. Names take a face through `nameStyle` (its scale, spacing and capitals, and a line tall enough for its letters on iOS). A new face needs a `venue_display_face` value, its measured ascender and descent in `displayFaces` (`constants/tokens.ts`, checked by `components/ds/displayClip.check.ts`), and a WOFF2 for the web with its OFL text. Body and spec faces are fixed.
 - Respect Dynamic Type: sizes scale, layouts wrap rather than clip.
 
 ## Shape and space
