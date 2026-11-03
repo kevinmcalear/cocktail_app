@@ -7412,6 +7412,7 @@ export type Database = {
           short_name: string
         }[]
       }
+      bar_claim_pending: { Args: { p_profile_id: string }; Returns: boolean }
       bar_claim_verified: { Args: { p_bar_id: string }; Returns: boolean }
       bar_owner: { Args: { p_bar_id: string }; Returns: string }
       bar_share_opens: {

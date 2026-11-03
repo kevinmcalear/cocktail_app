@@ -1,4 +1,4 @@
-import { useMutation, useQueryClient } from '@tanstack/react-query';
+import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 
 import { changedProfiles, type ClaimSetup, type ProfileClaim } from '@/hooks/useProfiles';
 import { track } from '@/lib/analytics';
@@ -19,9 +19,9 @@ export interface NewBarClaim {
 }
 
 /**
- * Starts a claim on an unclaimed bar page. A strong email match comes back
- * approved, with a new (or linked) venue; Instagram and phone claims come
- * back pending with their code.
+ * Starts a claim on an unclaimed bar page. Every claim comes back pending
+ * (20261206710000): no venue and no Admin until a moderator approves it, which
+ * makes the venue (or links the one chosen) with the claimant as its Admin.
  */
 export function useStartBarClaim() {
   const qc = useQueryClient();
@@ -43,14 +43,25 @@ export function useStartBarClaim() {
     onSuccess: (claim, { method }) => {
       track('claim_started', { method, approved: claim.status === 'approved' });
       qc.invalidateQueries({ queryKey: ['profile-claims'] });
-      if (claim.status === 'approved') {
-        // A new venue, and a page that's now theirs.
-        qc.invalidateQueries({ queryKey: ['bars'] });
-        qc.invalidateQueries(changedProfiles({ id: claim.profile_id }));
-      }
+      qc.invalidateQueries({ queryKey: ['claim-pending', claim.profile_id] });
+      // A page they added themselves goes hidden while the claim waits.
+      qc.invalidateQueries(changedProfiles({ id: claim.profile_id }));
     },
     // Shown inline on the claim screen, not as the global toast.
     onError: () => {},
+  });
+}
+
+/** Whether anyone has a claim waiting on this page (yes or no, nothing about who), for its claim button. */
+export function useClaimPending(profileId: string | null) {
+  return useQuery({
+    queryKey: ['claim-pending', profileId],
+    enabled: !!profileId,
+    queryFn: async (): Promise<boolean> => {
+      const { data, error } = await supabase.rpc('bar_claim_pending', { p_profile_id: profileId! });
+      if (error) throw error;
+      return !!data;
+    },
   });
 }
 
@@ -63,7 +74,12 @@ export function useWithdrawClaim() {
       if (error) throw error;
       if (!data?.length) throw new Error('That claim has already been checked, so it can’t be withdrawn.');
     },
-    onSuccess: () => qc.invalidateQueries({ queryKey: ['profile-claims'] }),
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: ['profile-claims'] });
+      // A page hidden for the claim shows again, and nothing waits on it now.
+      qc.invalidateQueries({ queryKey: ['claim-pending'] });
+      qc.invalidateQueries({ queryKey: ['profile'] });
+    },
     onError: () => {},
   });
 }
