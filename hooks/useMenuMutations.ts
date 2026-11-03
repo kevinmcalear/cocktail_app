@@ -143,6 +143,23 @@ export function useScheduleMenu() {
   });
 }
 
+/**
+ * When a menu comes off: a dated menu's ends_at, a draft's planned_ends_at (it
+ * goes on with its start). Null: no end date. The menu team may update its
+ * menus (menus_update); menus_dates_check refuses an end before the start.
+ */
+export function useSetMenuEnd() {
+  const invalidate = useInvalidateMenus();
+  return useMutation({
+    mutationFn: async ({ menuId, endsAt, dated }: { menuId: string; endsAt: string | null; dated: boolean }) => {
+      const { error } = await supabase.from('menus').update(dated ? { ends_at: endsAt } : { planned_ends_at: endsAt }).eq('id', menuId);
+      if (error) throw readable(error);
+    },
+    onSuccess: invalidate,
+    onError: () => {},
+  });
+}
+
 /** Takes a menu off now; one that hasn't started goes back to being a draft (end_menu). */
 export function useEndMenu() {
   const invalidate = useInvalidateMenus();
@@ -215,6 +232,34 @@ export function useDeleteMenu() {
       if (!count) throw new Error('You can’t delete this menu.');
     },
     onSuccess: invalidate,
+    onError: () => {},
+  });
+}
+
+/** Keeps a menu's sections as a layout for next time (a menu template). */
+export function useSaveLayout() {
+  const queryClient = useQueryClient();
+  const userId = useUserId();
+  return useMutation({
+    mutationFn: async ({ name, sections }: { name: string; sections: EditSection[] }) => {
+      const { data, error } = await supabase.from('menu_templates').insert({ name: name.trim(), created_by: userId }).select('id').single();
+      if (error) throw readable(error);
+      const { error: sectionsError } = await supabase.from('template_sections').insert(
+        sections.map((s, i) => ({
+          template_id: data.id,
+          name: s.name.trim(),
+          sort_order: i,
+          min_items: s.minItems,
+          max_items: s.maxItems,
+          allowed_types: s.allowedTypes,
+        }))
+      );
+      if (sectionsError) {
+        await supabase.from('menu_templates').delete().eq('id', data.id);
+        throw readable(sectionsError);
+      }
+    },
+    onSuccess: () => queryClient.invalidateQueries({ queryKey: ['menu-layouts'] }),
     onError: () => {},
   });
 }

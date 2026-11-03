@@ -64,9 +64,9 @@ export function useMenuDrag(editor: LayoutEditor): [root: React.RefObject<React.
     // react-native-web has no draggable prop: set it as the pointer goes down.
     const down = (e: PointerEvent) => {
       // A press in a row's price fields selects text; it never picks the row up.
-      if ((e.target as HTMLElement | null)?.closest?.('input, textarea')) return;
+      // A row picked up before stays draggable, so put it down again.
       const src = source(e);
-      if (src) src.draggable = true;
+      if (src) src.draggable = !(e.target as HTMLElement | null)?.closest?.('input, textarea');
     };
     const start = (e: DragEvent) => {
       const src = source(e);

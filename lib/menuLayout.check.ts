@@ -7,6 +7,7 @@ import {
   setMenuPrice,
   nameToMake,
   nearLibrary,
+  moveToSection,
   addDrink,
   dropDrink,
   addSection,
@@ -142,6 +143,11 @@ console.log('menuLayout: ok');
   const d = (id: string, kind: MenuDrink['kind'] = 'cocktail'): MenuDrink => ({ id, name: id, kind, line: '', price: null, imageUrl: null, isSketch: false, glass: null });
   const sec = (key: string, drinks: MenuDrink[], allowedTypes: MenuDrink['kind'][] = ['cocktail', 'beer', 'wine']) => ({ key, id: key, name: key, minItems: 0, maxItems: null, allowedTypes, drinks });
   const l = { name: 'M', coverUrl: null, coverPosition: 50, sections: [sec('a', [d('x'), d('y')]), sec('b', [d('z')]), sec('beer', [], ['beer'])] };
+  const moved = moveToSection(l, 'a', 'x', 'b');
+  assert.deepEqual(moved.sections.map((s) => s.drinks.map((x) => x.id)), [['y'], ['z', 'x'], []]);
+  assert.equal(moveToSection(l, 'a', 'x', 'beer'), l, 'a cocktail does not move into a beer-only section');
+  assert.equal(moveToSection(l, 'a', 'x', 'a'), l);
+
   // Drag and drop on desktop: the index counts the dragged row where it still sits.
   const ids = (m: MenuLayout) => m.sections.map((s) => s.drinks.map((x) => x.id));
   assert.deepEqual(ids(dropDrink(l, d('x'), 'a', 'b', 0)), [['y'], ['x', 'z'], []], 'into another section, at the drop line');

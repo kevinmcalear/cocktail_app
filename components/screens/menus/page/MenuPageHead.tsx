@@ -78,7 +78,8 @@ export function MenuPageHead({ heroIds, coverUrl, coverCredit, name, ink, quiet,
       ) : (
         <View style={{ height: 112 + top }} />
       )}
-      {over ? <View style={styles.over}>{over}</View> : null}
+      {/* With no cover or drawings the head is short: the buttons go under it, clear of Back. */}
+      {over ? <View style={photo || drawn ? styles.over : styles.under}>{over}</View> : null}
       </View>
       <View style={[styles.bar, { top: top + space.lg }]}>
         {onBack ? <GlassButton icon="chevron.left" accessibilityLabel="Back" onPress={onBack} onMedia={photo && ds.scheme === 'dark'} /> : label ? (
@@ -126,6 +127,7 @@ const styles = StyleSheet.create({
   creditOn: { top: PHOTO_H - space.xxxl - space.lg, paddingHorizontal: space.sm, paddingVertical: space.xs / 2, borderRadius: radius.control },
   // Above the phone's credit line, which sits at the cover's foot on the right.
   over: { position: 'absolute', left: 0, bottom: space.xxxl, flexDirection: 'row', gap: space.sm },
+  under: { flexDirection: 'row', gap: space.sm, marginBottom: space.md },
   bar: { position: 'absolute', top: space.lg, left: 0, right: 0, flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' },
   barEnd: { flexDirection: 'row', gap: space.sm, alignItems: 'center' },
   pill: { minHeight: 44, paddingHorizontal: space.lg, borderRadius: radius.pill, alignItems: 'center', justifyContent: 'center' },

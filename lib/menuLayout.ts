@@ -94,6 +94,15 @@ export function moveDrink(layout: MenuLayout, sectionKey: string, from: number, 
   });
 }
 
+/** Moves a drink to the end of another section (a builder row's "Move to another section"), when that section takes it. */
+export function moveToSection(layout: MenuLayout, fromKey: string, drinkId: string, toKey: string): MenuLayout {
+  const from = layout.sections.find((s) => s.key === fromKey);
+  const to = layout.sections.find((s) => s.key === toKey);
+  const drink = from?.drinks.find((d) => d.id === drinkId);
+  if (!from || !to || !drink || fromKey === toKey || cannotAdd(to, drink)) return layout;
+  return addDrink(removeDrink(layout, fromKey, drinkId), toKey, drink);
+}
+
 /**
  * Where a drag lands in the desktop builder: a library drink (fromKey null) or
  * a menu row goes into toKey before the row at index, counting the dragged row

@@ -13,6 +13,7 @@ import { EditSection } from './EditSection';
 const MockView = View;
 jest.mock('expo-image', () => ({ Image: () => <MockView /> }));
 const mockPush = jest.fn();
+const mockOpen = jest.fn();
 jest.mock('expo-router', () => ({ useRouter: () => ({ push: mockPush }) }));
 jest.mock('@/components/ds/DrawnSketch', () => ({ DrawnSketch: () => null }));
 jest.mock('@/hooks/useSuggestedPrice', () => ({ useSuggestedPrice: () => null }));
@@ -36,6 +37,7 @@ async function renderSection(over: Partial<Section> = {}, props: { onRemove?: je
       onRemove={props.onRemove ?? jest.fn()}
       onReorder={jest.fn()}
       onMove={onMove}
+      onOpen={mockOpen}
       pricing={props.priced ? () => ({ menuName: 'Autumn', barId: 'bar', onPrice: jest.fn(), onMenuPrice: jest.fn() }) : undefined}
       elsewhere={{}}
     />
@@ -70,6 +72,8 @@ test('each row has a minus that takes it off, the pencil opens the section, and 
   await fireEvent.press(screen.getByRole('button', { name: 'Stirred: rename, rules, move, paste a list' }));
   expect(onSettings).toHaveBeenCalled();
   expect(screen.getByText('New')).toBeTruthy();
+  await fireEvent.press(screen.getByRole('button', { name: 'Pellican: move, open, delete' }));
+  expect(mockOpen).toHaveBeenCalledWith(section.drinks[1]);
   expect(screen.queryByRole('button', { name: /price 12/ })).toBeNull();
 });
 

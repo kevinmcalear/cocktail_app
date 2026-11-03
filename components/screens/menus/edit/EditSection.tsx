@@ -29,6 +29,7 @@ interface EditSectionProps {
   onRemove: (drinkId: string) => void;
   onReorder: (drinks: MenuDrink[]) => void;
   onMove: (from: number, to: number) => void;
+  onOpen: (drink: MenuDrink) => void;
   /** A venue's menu: the price box changes the drink's own price and this menu's. */
   pricing?: (drink: MenuDrink) => RowPricing;
   elsewhere: Record<string, string>;
@@ -45,7 +46,7 @@ const List = supportsNestableDrag ? NestableDraggableFlatList : DraggableFlatLis
  * then "Add a drink to Stirred" (Menu-who-creator-edit). A section short of
  * its rule says so in amber under the name.
  */
-export function EditSection({ section, barId, ink, made, onSettings, onAdd, onRemove, onReorder, onMove, pricing, elsewhere, drag: web }: EditSectionProps) {
+export function EditSection({ section, barId, ink, made, onSettings, onAdd, onRemove, onReorder, onMove, onOpen, pricing, elsewhere, drag: web }: EditSectionProps) {
   const ds = useDs();
   const count = section.drinks.length;
   const line = sectionLine(section);
@@ -62,6 +63,7 @@ export function EditSection({ section, barId, ink, made, onSettings, onAdd, onRe
         drag={web ? noDrag : drag}
         onRemove={() => onRemove(item.id)}
         onMove={onMove}
+        onOpen={() => onOpen(item)}
         pricing={pricing?.(item)}
         alsoOn={elsewhere[item.id]}
         web={web ? { from: section.key, slot: web.at === i ? 'before' : web.at === count && i === count - 1 ? 'after' : null, dragging: web.dragging === item.id } : undefined}

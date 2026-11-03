@@ -3,9 +3,11 @@ import { GoLiveSheet } from '../GoLiveSheet';
 import { HomeNightSheet } from '../HomeNight';
 import { PasteMenuSheet } from '../PasteMenuSheet';
 import { SectionSheet } from '../SectionSheet';
+import { ShareMenuSheet } from '../ShareMenuSheet';
 import type { LayoutEditor } from '../useLayoutEditor';
+import { EndsSheet, RowMenuSheet } from './EditSheetsMore';
 
-/** The editor's sheets: add a drink, a section's name and rules, paste a list, the dates (go live), a home menu's night. */
+/** The editor's sheets: a row's menu, add a drink, a section's name and rules, paste a list, the dates (go live, Ends), a home menu's night and Share. */
 export function EditSheets({ editor }: { editor: LayoutEditor }) {
   const { sheet } = editor;
   const section = sheet && 'key' in sheet ? editor.section(sheet.key) : null;
@@ -47,6 +49,19 @@ export function EditSheets({ editor }: { editor: LayoutEditor }) {
           onRemove={() => editor.removeSection(section.key)}
         />
       ) : null;
+    case 'row': {
+      const drink = section?.drinks.find((d) => d.id === sheet.drinkId);
+      return drink ? <RowMenuSheet editor={editor} sectionKey={sheet.key} drink={drink} onClose={close} /> : null;
+    }
+    case 'ends':
+      return <EndsSheet editor={editor} onClose={close} />;
+    case 'share':
+      return (
+        <ShareMenuSheet
+          menu={{ ...editor.menu, name: editor.layout.name, coverUrl: editor.layout.coverUrl, coverPosition: editor.layout.coverPosition, sections: editor.layout.sections.map((s) => ({ ...s, id: s.id ?? s.key })) }}
+          onClose={close}
+        />
+      );
     case 'night':
       return <HomeNightSheet menu={editor.menu} onClose={close} />;
     case 'golive':

@@ -29,6 +29,8 @@ interface EditRowProps {
   drag: () => void;
   onRemove: () => void;
   onMove: (from: number, to: number) => void;
+  /** Tap the drink: its menu (Move to another section, Open the drink, Move to top, Delete drink). */
+  onOpen: () => void;
   /** A venue's row: its price box opens the drink's price and this menu's under it. A home menu has none. */
   pricing?: RowPricing;
   /** Another menu the drink is on. */
@@ -51,9 +53,10 @@ export function DropSlot() {
  * A drink on the menu being edited in place (Menu-who-creator-edit): the
  * page's ruled row with a handle on the left, its drawing, name and line, the
  * price in a box, and a round minus that takes it off this menu. The handle
- * drags it; on the web its arrow keys move it too.
+ * drags it; on the web its arrow keys move it too. Tapping the drink opens its
+ * menu (RowMenuSheet).
  */
-export function EditRow({ drink, index: i, count, ink, isNew, active, drag, onRemove, onMove, pricing, alsoOn, web: dnd }: EditRowProps) {
+export function EditRow({ drink, index: i, count, ink, isNew, active, drag, onRemove, onMove, onOpen, pricing, alsoOn, web: dnd }: EditRowProps) {
   const ds = useDs();
   const web = Platform.OS === 'web';
   const [open, setPricing] = useState(false);
@@ -88,6 +91,7 @@ export function EditRow({ drink, index: i, count, ink, isNew, active, drag, onRe
           >
             <IconSymbol name="line.3.horizontal" size={18} color={ds.c.muted} />
           </PressableScale>
+          <PressableScale role="button" accessibilityLabel={`${drink.name}: move, open, delete`} aria-haspopup="menu" onPress={onOpen} style={styles.body}>
           <MenuDrawing itemId={drink.id} size="row" ink={ink} fallback={{ imageUrl: drink.imageUrl, glass: drink.glass }} />
           <View style={styles.text}>
             <View style={styles.nameRow}>
@@ -107,6 +111,7 @@ export function EditRow({ drink, index: i, count, ink, isNew, active, drag, onRe
               </Caption>
             ) : null}
           </View>
+          </PressableScale>
           {pricing ? (
             <PressableScale
               accessibilityLabel={price ? `${drink.name}: price ${price}${own ? ' on this menu' : ''}. Change it` : `Add a price for ${drink.name}`}
@@ -138,6 +143,7 @@ const styles = StyleSheet.create({
   lifted: { borderRadius: radius.control, borderTopColor: 'transparent' },
   held: { opacity: 0.4 },
   handle: { width: HANDLE, height: layout.minTapTarget, marginRight: -space.xs, alignItems: 'center', justifyContent: 'center' },
+  body: { flex: 1, flexDirection: 'row', alignItems: 'center', gap: space.md, minWidth: 0 },
   text: { flex: 1, gap: 2, minWidth: 0 },
   nameRow: { flexDirection: 'row', alignItems: 'center', gap: space.sm, flexWrap: 'wrap' },
   name: { flexShrink: 1 },

@@ -7,7 +7,7 @@ import { FormScrollContainer } from '@/components/recipe/FormScrollContainer';
 import { menuCover, radius, space } from '@/constants/tokens';
 
 import { MenuPageHead } from '../page/MenuPageHead';
-import { CoverButtons, EditGroup, EditSections } from './EditParts';
+import { CoverButtons, EditAfter, EditGroup, EditSections } from './EditParts';
 import { EditTools, saveProblem } from './EditTools';
 import type { EditViewProps } from './MenuEditScreen';
 
@@ -52,6 +52,7 @@ export function EditPhone(props: EditViewProps) {
         </View>
         <View style={column}>
           <EditSections editor={editor} ink={look.ink} />
+          <EditAfter editor={editor} />
         </View>
       </FormScrollContainer>
       <View onLayout={(e) => setBarHeight(e.nativeEvent.layout.height)} style={[styles.dock, { left: gutter, right: gutter, bottom: insets.bottom + space.lg }]}>

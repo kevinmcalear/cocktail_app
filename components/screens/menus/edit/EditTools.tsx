@@ -1,6 +1,7 @@
-import { StyleSheet } from 'react-native';
+import { StyleSheet, View } from 'react-native';
 
-import { DsText, PressableScale, useDs } from '@/components/ds';
+import { Caption, DsText, PressableScale, useDs } from '@/components/ds';
+import { IconSymbol } from '@/components/ui/icon-symbol';
 import { font, layout, radius, space } from '@/constants/tokens';
 import { layoutProblem } from '@/lib/menuLayout';
 
@@ -16,7 +17,26 @@ export function saveProblem(editor: LayoutEditor): string | null {
   return editor.error ?? (editor.changed ? layoutProblem(editor.layout) : null);
 }
 
-/** The editor's tools (Menu-who-creator-edit's toolbar): Add drink, Section, Dates (Night at home), and Done in ink. */
+/** Where saving stands (it saves on its own, b27): "Saving…", "Saved", "Not saved" when it couldn't. */
+export function saveStatus(editor: LayoutEditor): { text: string; ok: boolean } {
+  if (editor.saving || (editor.changed && !editor.error)) return { text: 'Saving…', ok: true };
+  if (editor.changed) return { text: 'Not saved', ok: false };
+  return { text: editor.savedAt ? 'Saved just now' : 'Saved', ok: true };
+}
+
+/** The quiet line with a tick: where saving stands. */
+export function SaveLine({ editor }: { editor: LayoutEditor }) {
+  const ds = useDs();
+  const { text, ok } = saveStatus(editor);
+  return (
+    <View style={styles.saved} aria-live="polite">
+      {ok && text !== 'Saving…' ? <IconSymbol name="checkmark" size={14} color={ds.c.muted} /> : null}
+      <Caption tone={ok ? 'muted' : 'accent'}>{text}</Caption>
+    </View>
+  );
+}
+
+/** The editor's tools (Menu-who-creator-edit's toolbar): Add drink, Section, Dates (Night at home, then Share), and Done in ink. */
 export function EditTools({ editor, look, onDates, done }: EditViewProps) {
   const ds = useDs();
   const target = addTarget(editor);
@@ -25,9 +45,10 @@ export function EditTools({ editor, look, onDates, done }: EditViewProps) {
       <Tool label="Add drink" hint="Add a drink to the menu" onPress={target ? () => editor.setSheet({ kind: 'add', key: target }) : undefined} />
       <Tool label="Section" hint="Add a section" onPress={editor.addSection} />
       {onDates ? <Tool label={look.home ? 'Night' : 'Dates'} hint={look.home ? 'The night and who’s coming' : 'When it goes on'} onPress={onDates} /> : null}
-      <PressableScale role="button" accessibilityLabel={editor.saving ? 'Saving' : 'Done editing'} disabled={editor.saving} onPress={done} style={[styles.done, { backgroundColor: ds.c.ink }]}>
+      {look.home ? <Tool label="Share" hint="Share this menu" onPress={editor.saving ? undefined : () => void editor.share()} /> : null}
+      <PressableScale role="button" accessibilityLabel={editor.saving ? 'Saving' : 'Done editing'} disabled={editor.saving} onPress={done} style={[styles.done, { backgroundColor: ds.c.ink }, editor.saving && styles.off]}>
         <DsText variant="label" color={ds.c.ground} style={font.semiBold}>
-          Done
+          {editor.saving ? 'Saving…' : 'Done'}
         </DsText>
       </PressableScale>
     </>
@@ -48,4 +69,5 @@ const styles = StyleSheet.create({
   tool: { minHeight: layout.minTapTarget, paddingHorizontal: space.xs, justifyContent: 'center' },
   off: { opacity: 0.4 },
   done: { minHeight: layout.minTapTarget, paddingHorizontal: space.lg, borderRadius: radius.pill, alignItems: 'center', justifyContent: 'center' },
+  saved: { flexDirection: 'row', alignItems: 'center', gap: space.xs, minHeight: layout.minTapTarget },
 });
