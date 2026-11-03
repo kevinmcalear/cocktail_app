@@ -1140,6 +1140,39 @@ export type Database = {
           },
         ]
       }
+      drink_passes: {
+        Row: {
+          item_id: string
+          passed_at: string
+          user_id: string
+        }
+        Insert: {
+          item_id: string
+          passed_at?: string
+          user_id?: string
+        }
+        Update: {
+          item_id?: string
+          passed_at?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "drink_passes_item_id_fkey"
+            columns: ["item_id"]
+            isOneToOne: false
+            referencedRelation: "app_item_presentation"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "drink_passes_item_id_fkey"
+            columns: ["item_id"]
+            isOneToOne: false
+            referencedRelation: "items"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       drink_photos: {
         Row: {
           created_at: string
@@ -6409,6 +6442,7 @@ export type Database = {
           taste_answers: Json | null
           user_id: string
           view_as_role_level: number | null
+          want_alerts: boolean
         }
         Insert: {
           allergies?: Database["public"]["Enums"]["allergen"][] | null
@@ -6416,6 +6450,7 @@ export type Database = {
           taste_answers?: Json | null
           user_id: string
           view_as_role_level?: number | null
+          want_alerts?: boolean
         }
         Update: {
           allergies?: Database["public"]["Enums"]["allergen"][] | null
@@ -6423,6 +6458,7 @@ export type Database = {
           taste_answers?: Json | null
           user_id?: string
           view_as_role_level?: number | null
+          want_alerts?: boolean
         }
         Relationships: []
       }
@@ -7989,6 +8025,7 @@ export type Database = {
           sort_rank: number
         }[]
       }
+      get_bar_guest_says: { Args: { p_bar_id: string }; Returns: Json }
       get_bar_members: {
         Args: { p_bar_id: string }
         Returns: {
@@ -8004,6 +8041,7 @@ export type Database = {
           venue_role_name: string
         }[]
       }
+      get_bar_score: { Args: { p_profile_id: string }; Returns: Json }
       get_bar_top_drinks: {
         Args: { p_limit?: number; p_profile_id: string }
         Returns: {
@@ -8022,6 +8060,7 @@ export type Database = {
           score: number
         }[]
       }
+      get_drink_guest_says: { Args: { p_item_id: string }; Returns: Json }
       get_drink_photos: {
         Args: { p_item_id: string; p_limit?: number }
         Returns: {
@@ -8058,6 +8097,7 @@ export type Database = {
           venue_profile_id: string
         }[]
       }
+      get_drink_score: { Args: { p_item_id: string }; Returns: Json }
       get_item_flavor_spec: { Args: { p_item_id: string }; Returns: Json }
       get_item_scores: {
         Args: { p_item_ids: string[] }
@@ -8097,6 +8137,17 @@ export type Database = {
           display_name: string
           handle: string
           profile_id: string
+        }[]
+      }
+      get_my_drinks_guest_says: {
+        Args: never
+        Returns: {
+          floor: number
+          item_id: string
+          liked: number
+          name: string
+          rankers: number
+          reasons: Json
         }[]
       }
       get_pair_drinks: {
@@ -9182,6 +9233,14 @@ export type Database = {
         Returns: {
           item_id: string
           profile_id: string
+        }[]
+      }
+      want_deck: {
+        Args: { p_limit?: number }
+        Returns: {
+          description: string
+          item_id: string
+          name: string
         }[]
       }
       week_event: {
