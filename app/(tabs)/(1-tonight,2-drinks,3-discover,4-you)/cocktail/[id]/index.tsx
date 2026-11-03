@@ -53,8 +53,14 @@ export default function CocktailDetailsScreen() {
         setIsEditing(true);
     };
 
-    // Not yours to read (another bar's drink): signed in, the in-app page from what the bar published; else its public page.
-    if ((error as { code?: string } | null)?.code === "PGRST116") return signedIn ? <VisitorDrink id={id as string} /> : <Redirect href={`/d/${id}`} />;
+    // Not yours to read (another bar's drink): signed in, the in-app page from what the bar published (in its menu's pager when opened from one); else its public page.
+    if ((error as { code?: string } | null)?.code === "PGRST116") return signedIn ? (
+        <InMenu itemId={id}>
+            <VisitorDrink id={id as string} />
+        </InMenu>
+    ) : (
+        <Redirect href={`/d/${id}`} />
+    );
     if (error) return <CouldNotLoad what="drink" failed={{ retry: () => void refetch() }} />;
     // The drink page reads it; Edit turns the same page into editing in place (DrinkEditScreen).
     // Opened from a menu (?menu=), the page carries the menu's pager (Menu-pager); editing doesn't, so a swipe can't page away from it.

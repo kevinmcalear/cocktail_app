@@ -7,6 +7,7 @@ import { Body, Button, Caption, DsText, Field, GlassButton, Headline, PressableS
 import { PageHeader, usePageColumn } from '@/components/nav/Page';
 import { displayFaces, font, radius, space, STATUS } from '@/constants/tokens';
 import { useActiveVenue } from '@/hooks/useActiveVenue';
+import { useCapabilities } from '@/hooks/useCapabilities';
 import { useRepertoire } from '@/hooks/useRepertoire';
 import { readableAccent } from '@/lib/color';
 import type { RepertoireDrink } from '@/lib/repertoire';
@@ -34,6 +35,8 @@ export function OurDrinks() {
   const column = usePageColumn();
   const { active } = useActiveVenue();
   const barId = active?.id ?? null;
+  // Bring back writes to the live list: the menu team only (a bartender asks from the list itself, Menu-l-ask).
+  const canBuild = !!useCapabilities(barId).data?.includes('menus');
   const { past, onNow, isLoading, error } = useRepertoire(barId);
   const [show, setShow] = useState<Show>('all');
   const [finding, setFinding] = useState(false);
@@ -86,7 +89,7 @@ export function OurDrinks() {
           <View>
             <Head left="Off the list" right="Newest first" />
             {pastShown.map((r) => (
-              <Row key={r.drink.id} entry={r} onOpen={() => open(r.drink)} action={<Button label="Bring back" variant="secondary" size="sm" onPress={() => setBack(r)} accessibilityHint={`Puts ${r.drink.name} on a list again`} />} />
+              <Row key={r.drink.id} entry={r} onOpen={() => open(r.drink)} action={canBuild ? <Button label="Bring back" variant="secondary" size="sm" onPress={() => setBack(r)} accessibilityHint={`Puts ${r.drink.name} on a list again`} /> : null} />
             ))}
           </View>
         ) : null}
@@ -114,7 +117,7 @@ export function OurDrinks() {
           </View>
         ) : null}
       </ScrollView>
-      {back && barId ? <BringBackSheet entry={back} barId={barId} barName={active?.name ?? null} onClose={() => setBack(null)} /> : null}
+      {back && barId && canBuild ? <BringBackSheet entry={back} barId={barId} barName={active?.name ?? null} onClose={() => setBack(null)} /> : null}
     </View>
   );
 }

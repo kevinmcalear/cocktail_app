@@ -199,10 +199,10 @@ function MenuPageBody({ menu, shelf, cover, now }: PageProps & { cover: string |
             ? setChanging({ kind, view: item.row!, sectionId: item.row!.listRow?.sectionId ?? item.sectionId! })
             : acts.act(kind, item.row!, item.sectionId!)
         }
-        // A tap opens the drink (Menu-drink); a bartender's opens the spec in place, and on a live list the team's shows Swap and Take off (Menu-l-swap), each with the way on to the drink.
+        // A tap opens the drink (Menu-drink); a bartender's opens the spec in place, and on a live list the team's shows Swap and Take off (Menu-l-swap), each with the way on to the drink (on the desktop the pane is that way for a cocktail; a beer or wine keeps the link).
         onPress={() => (bartender || inPlace(item) ? (toggle(item.key), sidebar && item.row!.drink.kind === 'cocktail' && setPicked(item.row!.drink.id)) : openDrink(item.row!.drink))}
       >
-        {open !== item.key ? null : bartender ? <MenuSpecInPlace itemId={item.row.drink.id} barId={menu.barId} onOpen={() => openDrink(item.row!.drink)} /> : inPlace(item) && !sidebar ? <OpenDrinkLink onOpen={() => openDrink(item.row!.drink)} /> : null}
+        {open !== item.key ? null : bartender ? <MenuSpecInPlace itemId={item.row.drink.id} barId={menu.barId} onOpen={() => openDrink(item.row!.drink)} /> : inPlace(item) && (!sidebar || item.row.drink.kind !== 'cocktail') ? <OpenDrinkLink onOpen={() => openDrink(item.row!.drink)} /> : null}
       </MenuPageRow>
     ) : null;
 

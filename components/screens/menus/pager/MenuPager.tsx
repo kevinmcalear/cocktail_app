@@ -1,11 +1,10 @@
-import { useEffect } from 'react';
-import { Platform, StyleSheet, View } from 'react-native';
+import { StyleSheet, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import { Caption, DsText, GlassSurface, PressableScale, useDs } from '@/components/ds';
 import { useTabBarTop } from '@/components/nav/WebTabBar';
 import { font, radius, space } from '@/constants/tokens';
-import { useMenuPagerNav } from '@/hooks/useMenuPager';
+import { useMenuArrowKeys, useMenuPagerNav } from '@/hooks/useMenuPager';
 import type { PagerDrink } from '@/lib/menuPager';
 
 // Past this many the dots are too small to count: the label above already says "4 of 20".
@@ -26,19 +25,8 @@ export function MenuPager({ menuId, bar, itemId }: { menuId: string; bar: string
   const prev = place?.prev ?? null;
   const next = place?.next ?? null;
 
-  // The web: ← and → page through the menu, unless someone is typing or a sheet or dialog is open over the page.
-  useEffect(() => {
-    if (Platform.OS !== 'web' || !place) return;
-    const onKey = (e: KeyboardEvent) => {
-      const t = e.target as HTMLElement | null;
-      if (e.metaKey || e.ctrlKey || e.altKey || (t && (t.isContentEditable || /^(INPUT|TEXTAREA|SELECT)$/.test(t.tagName)))) return;
-      if (document.querySelector('[role="dialog"], [aria-modal="true"]')) return;
-      if (e.key === 'ArrowRight') go(next);
-      if (e.key === 'ArrowLeft') go(prev);
-    };
-    window.addEventListener('keydown', onKey);
-    return () => window.removeEventListener('keydown', onKey);
-  });
+  // The web: ← and → page through the menu.
+  useMenuArrowKeys(place ? () => go(prev) : null, place ? () => go(next) : null);
 
   if (!place) return null;
   return (

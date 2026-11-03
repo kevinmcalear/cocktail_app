@@ -1,4 +1,6 @@
-import { useRouter, type Href } from 'expo-router';
+import { useIsFocused, useRouter, type Href } from 'expo-router';
+import { useEffect, useEffectEvent } from 'react';
+import { Platform } from 'react-native';
 
 import { useSignedIn } from '@/ctx/AuthContext';
 import { useMenuEditionDrinks, useMenuEditions } from '@/hooks/useMenuRuns';
@@ -55,4 +57,25 @@ export function useMenuPagerNav(menuId: string, bar: string | null, itemId: stri
     router.replace(`${page}?${inMenuQuery(menuId, bar)}` as Href);
   };
   return { place, go };
+}
+
+/**
+ * The web's arrow keys page through a menu (the pager and the desktop pane):
+ * only on the screen that's showing (stacked screens stay mounted on the web),
+ * and not while someone is typing or a sheet or dialog is open.
+ */
+export function useMenuArrowKeys(onPrev: (() => void) | null, onNext: (() => void) | null) {
+  const focused = useIsFocused();
+  const onArrow = useEffectEvent((key: string) => (key === 'ArrowRight' ? onNext : key === 'ArrowLeft' ? onPrev : null)?.());
+  useEffect(() => {
+    if (Platform.OS !== 'web' || !focused) return;
+    const onKey = (e: KeyboardEvent) => {
+      const t = e.target as HTMLElement | null;
+      if (e.metaKey || e.ctrlKey || e.altKey || (t && (t.isContentEditable || /^(INPUT|TEXTAREA|SELECT)$/.test(t.tagName)))) return;
+      if (document.querySelector('[role="dialog"], [aria-modal="true"]')) return;
+      onArrow(e.key);
+    };
+    window.addEventListener('keydown', onKey);
+    return () => window.removeEventListener('keydown', onKey);
+  }, [focused]);
 }

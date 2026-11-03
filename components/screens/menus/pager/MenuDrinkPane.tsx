@@ -1,10 +1,11 @@
 import { useRouter, type Href } from 'expo-router';
-import { useEffect, useState } from 'react';
-import { Platform, ScrollView, StyleSheet, View } from 'react-native';
+import { useState } from 'react';
+import { ScrollView, StyleSheet, View } from 'react-native';
 
 import { Body, Button, Caption, DsText, PressableScale, useDs } from '@/components/ds';
 import { displayFaces, font, layout, space } from '@/constants/tokens';
 import { useCocktail } from '@/hooks/useCocktails';
+import { useMenuArrowKeys } from '@/hooks/useMenuPager';
 import { printedPrice } from '@/lib/menus';
 import { inMenuQuery, type PagerPlace } from '@/lib/menuPager';
 import type { MenuDrink } from '@/types/menus';
@@ -39,19 +40,8 @@ export function MenuDrinkPane({ drink, menuId, barName, place, onPick }: { drink
   const prev = place?.prev ?? null;
   const next = place?.next ?? null;
 
-  // ← and → step through the menu, unless someone is typing or a sheet or dialog is open.
-  useEffect(() => {
-    if (Platform.OS !== 'web') return;
-    const onKey = (e: KeyboardEvent) => {
-      const t = e.target as HTMLElement | null;
-      if (e.metaKey || e.ctrlKey || e.altKey || (t && (t.isContentEditable || /^(INPUT|TEXTAREA|SELECT)$/.test(t.tagName)))) return;
-      if (document.querySelector('[role="dialog"], [aria-modal="true"]')) return;
-      if (e.key === 'ArrowRight' && next) onPick(next.id);
-      if (e.key === 'ArrowLeft' && prev) onPick(prev.id);
-    };
-    window.addEventListener('keydown', onKey);
-    return () => window.removeEventListener('keydown', onKey);
-  });
+  // ← and → step through the menu.
+  useMenuArrowKeys(prev ? () => onPick(prev.id) : null, next ? () => onPick(next.id) : null);
 
   const served = [item?.glassware?.name, item?.ice?.name].filter(Boolean).join(', ');
   const price = printedPrice(drink);
