@@ -9,8 +9,8 @@ assert.equal(shelfNote(23, 14), '23 bottles · 14 drinks you can make tonight');
 assert.equal(shelfNote(1, 0), '1 bottle · nothing ready yet');
 assert.equal(barSubtitle(0, 1), 'Nothing ready yet · 1 house-made ingredient you can make now');
 
-assert.equal(shelfCountsLine({ bottles: 4, fridge: 6, lab: 2, preps: 2, kit: 3 }), '4 bottles · 6 in the fridge · 2 on the lab shelf · 2 house-made · 3 pieces of kit');
-assert.equal(shelfCountsLine({ bottles: 1, fridge: 0, lab: 0, preps: 1, kit: 1 }), '1 bottle · 1 house-made · 1 piece of kit');
+assert.equal(shelfCountsLine({ bottles: 4, fridge: 6, lab: 2, preps: 2, kit: 3 }), '4 bottles · 6 in the fridge · 2 on the lab shelf · 2 made at home · 3 pieces of kit');
+assert.equal(shelfCountsLine({ bottles: 1, fridge: 0, lab: 0, preps: 1, kit: 1 }), '1 bottle · 1 made at home · 1 piece of kit');
 
 assert.equal(keepsFor(24 * 14), '2 weeks');
 assert.equal(keepsFor(24 * 7), 'about a week');
@@ -57,7 +57,7 @@ assert.deepEqual(lastedLine(null, new Date().toISOString()), { bought: null, las
 assert.equal(foundLine({ section: 'bottles', kind: 'Liqueur', origin: 'Sicily, Italy' }), 'Liqueur · Italy');
 assert.equal(foundLine({ section: 'bottles', kind: 'London Dry Gin', origin: null }), 'London Dry Gin');
 assert.equal(foundLine({ section: 'fridge', kind: null, origin: null }), 'Fridge & pantry');
-assert.equal(foundLine({ section: 'preps', kind: 'Syrup', origin: null }), 'House-made');
+assert.equal(foundLine({ section: 'preps', kind: 'Syrup', origin: null }), 'Made at home');
 
 console.log('myBarText checks passed');
 

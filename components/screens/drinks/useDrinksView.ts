@@ -2,7 +2,7 @@ import { useGlobalSearchParams, useLocalSearchParams, usePathname, useRouter } f
 import { useState } from 'react';
 
 // A type, not an interface, so expo-router's params accept it.
-export type LibraryView = { show?: string; menu?: string; kind?: string };
+export type DrinksView = { show?: string; menu?: string; kind?: string };
 
 /**
  * Which view of the Drinks tab is up (?show=, ?menu=, ?kind=). It lives in the URL,
@@ -11,12 +11,12 @@ export type LibraryView = { show?: string; menu?: string; kind?: string };
  * list holds its view itself, starting from the link it opened on, and keeps
  * /drinks in step while no drink is open.
  */
-export function useLibraryView(beside: boolean): { view: LibraryView; setView: (next: LibraryView) => void } {
+export function useDrinksView(beside: boolean): { view: DrinksView; setView: (next: DrinksView) => void } {
   const router = useRouter();
   const pathname = usePathname();
-  const url = useLocalSearchParams<LibraryView>();
-  const opened = useGlobalSearchParams<LibraryView>();
-  const [held, setHeld] = useState<LibraryView>(() => ({ show: opened.show, menu: opened.menu, kind: opened.kind }));
+  const url = useLocalSearchParams<DrinksView>();
+  const opened = useGlobalSearchParams<DrinksView>();
+  const [held, setHeld] = useState<DrinksView>(() => ({ show: opened.show, menu: opened.menu, kind: opened.kind }));
   if (!beside) return { view: url, setView: (next) => router.setParams(next) };
   return {
     view: held,

@@ -12,7 +12,7 @@ const EightBallHost = lazy(() => import('@/components/screens/eightball/EightBal
 const ScreenshotReportHost = lazy(() => import('@/components/feedback/ScreenshotReport').then((m) => ({ default: m.ScreenshotReportHost })));
 const BringInHost = lazy(() => import('@/components/screens/bringin/BringInHost').then((m) => ({ default: m.BringInHost })));
 // Only a desktop at a venue draws it, beside the Drinks stack, so it loads with Drinks, not with every tab's stack.
-const LibraryScreen = lazy(() => import('@/components/screens/LibraryScreen').then((m) => ({ default: m.LibraryScreen })));
+const StaffDrinks = lazy(() => import('@/components/screens/drinks/StaffDrinks').then((m) => ({ default: m.StaffDrinks })));
 
 /** The wide web's side nav; its width is held while it loads, so nothing shifts. */
 export function SideNav() {
@@ -44,10 +44,10 @@ export function RootExtras({ palette, signedIn }: { palette: boolean; signedIn: 
 }
 
 /** Drinks' list in its column beside a drink on a desktop (DrinksSplit.tsx). */
-export function LibraryBeside() {
+export function DrinksBeside() {
   return (
     <Suspense fallback={null}>
-      <LibraryScreen beside />
+      <StaffDrinks beside />
     </Suspense>
   );
 }

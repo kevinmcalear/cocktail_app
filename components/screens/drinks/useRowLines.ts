@@ -1,7 +1,7 @@
 import { useMemo } from 'react';
 
 import { useDropdowns } from '@/hooks/useDropdowns';
-import { methodWord, tileLine, type Show } from '@/lib/libraryFilters';
+import { methodWord, tileLine, type Show } from '@/lib/drinksFilters';
 import type { SearchItem } from '@/types/search';
 
 /**
@@ -9,7 +9,7 @@ import type { SearchItem } from '@/types/search';
  * beer and wine say what they are; preps what was done, yield and keeps;
  * Needs something says what's missing ("Needs a sphere", the kit check).
  */
-export function useTileLines({ show, rndMenus, prepLine, needsOf }: {
+export function useRowLines({ show, rndMenus, prepLine, needsOf }: {
   show: Show;
   rndMenus: readonly { name: string; itemIds: readonly string[] }[];
   prepLine: (id: string) => string | null;

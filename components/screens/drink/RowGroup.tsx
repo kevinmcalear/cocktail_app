@@ -67,6 +67,7 @@ const styles = StyleSheet.create({
   row: { flexDirection: 'row', alignItems: 'center', gap: space.sm, paddingVertical: space.md + 2, paddingHorizontal: space.lg },
   label: { flexShrink: 1 },
   value: { flex: 1 },
+  chevron: { alignSelf: 'center' },
   fact: { flexDirection: 'row', alignItems: 'baseline', justifyContent: 'space-between', gap: space.md, paddingVertical: space.sm + 3, borderTopWidth: StyleSheet.hairlineWidth },
 });
 
@@ -74,21 +75,35 @@ const styles = StyleSheet.create({
  * The facts a menu gives, as ruled rows: label left, value right (board
  * Item-page: Strength, Pour, Served; Keeps, Store, Takes).
  */
-export function FactRows({ rows }: { rows: { label: string; value: string }[] }) {
+export function FactRows({ rows }: { rows: { label: string; value: string; onPress?: () => void }[] }) {
   const ds = useDs();
   if (!rows.length) return null;
   return (
     <View style={{ borderBottomWidth: StyleSheet.hairlineWidth, borderBottomColor: ds.c.line }}>
-      {rows.map((r) => (
-        <View key={r.label} accessible accessibilityLabel={`${r.label}: ${r.value}`} style={[styles.fact, { borderTopColor: ds.c.line }]}>
-          <DsText variant="body" tone="muted">
-            {r.label}
-          </DsText>
-          <DsText variant="body" align="right" style={styles.value}>
-            {r.value}
-          </DsText>
-        </View>
-      ))}
+      {rows.map((r) => {
+        const inner = (
+          <>
+            <DsText variant="body" tone="muted">
+              {r.label}
+            </DsText>
+            <DsText variant="body" align="right" style={styles.value}>
+              {r.value}
+            </DsText>
+            {r.onPress ? <IconSymbol name="chevron.right" size={14} color={ds.c.muted} style={styles.chevron} /> : null}
+          </>
+        );
+        const style = [styles.fact, { borderTopColor: ds.c.line }];
+        // A fact that opens a page (Kind of, Maker) is a link: the same row with a chevron.
+        return r.onPress ? (
+          <PressableScale key={r.label} role="link" accessibilityLabel={`${r.label}: ${r.value}, open`} onPress={r.onPress} style={style}>
+            {inner}
+          </PressableScale>
+        ) : (
+          <View key={r.label} accessible accessibilityLabel={`${r.label}: ${r.value}`} style={style}>
+            {inner}
+          </View>
+        );
+      })}
     </View>
   );
 }

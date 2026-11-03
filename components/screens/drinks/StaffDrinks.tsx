@@ -1,7 +1,7 @@
 import { useNetInfo } from '@react-native-community/netinfo';
 import { useQueryClient } from '@tanstack/react-query';
 import { useRouter } from 'expo-router';
-import { lazy, Suspense, useState } from 'react';
+import { lazy, Suspense, useEffect, useState } from 'react';
 import { FlatList, StyleSheet, View } from 'react-native';
 
 import { Button, Caption, Chip, PencilState, useBreakpoint, useDs, useGutter } from '@/components/ds';
@@ -17,15 +17,15 @@ import { BottleChips, bottlesFor, ToOrder, useBottleFacts } from '@/components/s
 import { DrinkListRow, DrinksHead, DrinksLoading, OnNowCard } from '@/components/screens/drinks/DrinksParts';
 import { HouseMadeTop } from '@/components/screens/drinks/HouseMade';
 import { useStaffDrinks } from '@/components/screens/drinks/useStaffDrinks';
-import { LibrarySetup } from '@/components/screens/venueSetup/SetupBanner';
+import { DrinksSetup } from '@/components/screens/venueSetup/SetupBanner';
 import { FirstRoundCard, RoundOpened } from '@/components/screens/firstRound/FirstRoundCard';
-import { FilterRow } from '@/components/screens/library/LibraryChips';
-import { LibraryEmpty } from '@/components/screens/library/LibraryEmpty';
-import { LibraryPanes } from '@/components/screens/library/LibraryPanes';
+import { FilterRow } from '@/components/screens/drinks/FilterRow';
+import { DrinksEmpty } from '@/components/screens/drinks/DrinksEmpty';
+import { DrinksPanes } from '@/components/screens/drinks/DrinksPanes';
 import { NearResults } from '@/components/search/NearResults';
 import { SearchField } from '@/components/search/SearchField';
-import { SwapSheet } from '@/components/screens/library/SwapSheet';
 import { space } from '@/constants/tokens';
+import { useDrinksFirstRow } from '@/components/screens/drinks/firstRow';
 import { useOpenSearch } from '@/hooks/useSearchFrom';
 import { useDrinkLists } from '@/hooks/useDiscover';
 import { usePrefetchCocktail } from '@/hooks/useCocktails';
@@ -37,7 +37,9 @@ import type { SearchItem } from '@/types/search';
 
 // The staff list drags to reorder, with gesture and animation code the rest of
 // Drinks doesn't need: it loads when Classics is picked.
-const StaffList = lazy(() => import('@/components/screens/library/StaffList').then((m) => ({ default: m.StaffList })));
+const StaffList = lazy(() => import('@/components/screens/drinks/StaffList').then((m) => ({ default: m.StaffList })));
+// Swap a bottle's sheet loads when it's first opened.
+const SwapSheet = lazy(() => import('@/components/screens/drinks/SwapSheet').then((m) => ({ default: m.SwapSheet })));
 
 const NO_IDS: string[] = [];
 const EVERYWHERE = { area: { kind: 'anywhere' }, kinds: ['drink', 'bar', 'person', 'ingredient'] } as const;
@@ -53,7 +55,7 @@ const EVERYWHERE = { area: { kind: 'anywhere' }, kinds: ['drink', 'bar', 'person
  * list in its column beside the Drinks stack on a desktop
  * (components/nav/DrinksSplit.tsx), where a drink opens at its own URL.
  */
-export function LibraryScreen({ beside = false }: { beside?: boolean }) {
+export function StaffDrinks({ beside = false }: { beside?: boolean }) {
   const ds = useDs();
   const router = useRouter();
   const client = useQueryClient();
@@ -83,6 +85,15 @@ export function LibraryScreen({ beside = false }: { beside?: boolean }) {
   const shownIds = shown.map((i) => i.id);
   const { data: classicList } = useDrinkLists(!!q);
   const staffView = show === 'staff' && !!activeId;
+  // Beside the stack, /drinks shows this list's first row (none for Classics, whose order is its own), A to Z
+  // before any search, so typing doesn't swap the page on every key; the list lights it only while it's shown.
+  const first = staffView ? null : (inView.reduce<SearchItem | null>((a, i) => (!a || i.name.localeCompare(a.name) < 0 ? i : a), null));
+  const loaded = !d.isLoading && !!activeId;
+  useEffect(() => {
+    if (!beside) return;
+    useDrinksFirstRow.setState({ item: first, ready: loaded });
+    return () => useDrinksFirstRow.setState({ item: null, ready: false });
+  }, [beside, first, loaded]);
   const nothing = !d.isLoading && !d.lists[CAPSULE_SHOW[capsule]].length && (capsule !== 'bottles' || !d.lists.garnishes.length);
   const label = [...d.chips.flat(), { value: 'preps', label: 'House-made' }, { value: 'bottles', label: 'Bottles' }].find((f) => f.value === show)?.label ?? 'All';
   const rowOf = (item: SearchItem) => {
@@ -95,6 +106,8 @@ export function LibraryScreen({ beside = false }: { beside?: boolean }) {
     <FilterRow label={title} gutter={gutter} groups={[[<Chip key="all" label={all} selected={!picks.some((m) => m.id === params.menu)} onPress={() => setView({ menu: undefined })} />, ...picks.map((m) => <Chip key={m.id} label={m.name} count={m.itemIds.length} selected={params.menu === m.id} onPress={() => setView({ menu: m.id })} />)]]} />
   );
 
+  // Not on the board: under the list, so the menu on now and the drinks come first; Classics (the staff list, which has no foot) keeps it on top.
+  const nudge = active && canEdit && capsule === 'drinks' ? <MatchClassicsNudge barId={active.id} /> : null;
   const header = (
     <View style={styles.header}>
       <WebHead>
@@ -102,9 +115,9 @@ export function LibraryScreen({ beside = false }: { beside?: boolean }) {
       </WebHead>
       <DrinksHead eyebrow={active?.name ?? ' '} capsules={STAFF_CAPSULES} value={capsule} onChange={d.pickCapsule} offline={offline ? 'Whole spec book on this phone' : null} bleed={panes ? space.xl : gutter} />
       {!phone && !staffView ? <SearchField query={find} onQuery={setFind} placeholder="Search your drinks" /> : null}
-      {activeId ? (<><ResumeCard barId={activeId} /><LibrarySetup barId={activeId} /></>) : null}
+      {activeId ? (<><ResumeCard barId={activeId} /><DrinksSetup barId={activeId} /></>) : null}
       <FirstRoundCard />
-      {active && canEdit && capsule === 'drinks' ? <MatchClassicsNudge barId={active.id} /> : null}
+      {staffView ? nudge : null}
       {capsule === 'drinks' && show === 'all' && d.card ? <OnNowCard {...d.card} onPress={() => router.push(`/menus/${d.card!.id}` as never)} /> : null}
       {nothing ? null : capsule === 'drinks' ? (
         <FilterRow label="Show" gutter={gutter} whole={breakpoint === 'desktop'} groups={d.chips.map((g) => g.map(chip))} />
@@ -134,12 +147,13 @@ export function LibraryScreen({ beside = false }: { beside?: boolean }) {
   ) : q ? (
     ask
   ) : (
-    <LibraryEmpty barId={activeId} capsule={capsule} nothing={nothing} canAdd={canEdit} onSnapBottles={() => setSnapping(true)} />
+    <DrinksEmpty barId={activeId} capsule={capsule} nothing={nothing} canAdd={canEdit} onSnapBottles={() => setSnapping(true)} />
   );
   // Past the list: Bottles' order and its own tools, the one search everywhere with what was typed, and offline, that search still works.
   const foot = (
     <View style={styles.foot}>
       {capsule === 'bottles' && activeId && !nothing ? <ToOrder barId={activeId} /> : null}
+      {nudge && !staffView ? <View style={styles.wide}>{nudge}</View> : null}
       {show === 'bottles' && activeId && canEdit ? (
         <View style={styles.actions}>
           <Button label="Snap a bottle" icon="camera.fill" variant="secondary" onPress={() => setSnapping(true)} />
@@ -156,7 +170,7 @@ export function LibraryScreen({ beside = false }: { beside?: boolean }) {
   return (
     <View style={[styles.screen, { backgroundColor: ds.c.ground }]}>
       {panes && !staffView ? (
-        <LibraryPanes items={shown} rowOf={rowOf} header={header} empty={empty} footer={foot} routed={beside} />
+        <DrinksPanes items={shown} rowOf={rowOf} header={header} empty={empty} footer={foot} routed={beside} />
       ) : staffView && activeId ? (
         // The staff list drags to reorder, so it is the scroll view itself.
         <Suspense fallback={<FlatList data={[]} renderItem={() => null} ListHeaderComponent={header} contentContainerStyle={listBottom} />}>
@@ -177,7 +191,11 @@ export function LibraryScreen({ beside = false }: { beside?: boolean }) {
         />
       )}
       <RoundOpened />
-      {swap && activeId ? <SwapSheet barId={activeId} onClose={() => setSwap(false)} /> : null}
+      {swap && activeId ? (
+        <Suspense fallback={null}>
+          <SwapSheet barId={activeId} onClose={() => setSwap(false)} />
+        </Suspense>
+      ) : null}
       {active ? <BottlePhotoSheet visible={snapping} target={{ kind: 'venue', barId: active.id, name: active.name, canEdit }} onClose={() => setSnapping(false)} /> : null}
     </View>
   );
@@ -189,4 +207,5 @@ const styles = StyleSheet.create({
   list: { gap: space.xs },
   actions: { flexDirection: 'row', flexWrap: 'wrap', gap: space.sm },
   foot: { paddingTop: space.md, gap: space.md, alignItems: 'flex-start' },
+  wide: { alignSelf: 'stretch' },
 });
