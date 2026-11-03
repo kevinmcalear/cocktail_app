@@ -23,7 +23,6 @@ export function useMenuPager(menuId: string | null, bar: string | null, itemId: 
   const profile = useProfile(bar);
   const editions = useMenuEditions(bar ? profile.data?.id : null);
   const edition = bar ? editions.data?.find((e) => e.id === menuId) : undefined;
-  // Only the drinks a guest can open (the same ones the guest menu lets them tap).
   // A guest pages only through the drinks they can open (the ones the guest menu lets them tap), counted among all it lists.
   const loaded = useMenuEditionDrinks(edition?.drinks ?? []);
   if (!menuId) return null;
@@ -52,8 +51,8 @@ export function useMenuPagerNav(menuId: string, bar: string | null, itemId: stri
   const place = useMenuPager(menuId, bar, itemId);
   const go = (d: PagerDrink | null | undefined) => {
     if (!d) return;
-    // A cocktail's page is /d/<id> signed out; a beer or wine has its own.
-    const page = d.kind && d.kind !== 'cocktail' ? itemHref(KIND[d.kind as keyof typeof KIND], d.id) : drinkPageHref(d.id, signedIn);
+    // A guest opens each drink as the guest menu's rows do (/d/<id> signed out); the team's beer or wine has its own page.
+    const page = !bar && d.kind && d.kind !== 'cocktail' ? itemHref(KIND[d.kind as keyof typeof KIND], d.id) : drinkPageHref(d.id, signedIn);
     router.replace(`${page}?${inMenuQuery(menuId, bar)}` as Href);
   };
   return { place, go };

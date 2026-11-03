@@ -13,13 +13,12 @@ import { useIsWideWeb } from '@/hooks/useIsWideWeb';
 import { useOffTonight } from '@/hooks/useListAsks';
 import { useEndedRuns } from '@/hooks/useLivingList';
 import { useMenuLens } from '@/hooks/useMenuLens';
-import { useMenuPager } from '@/hooks/useMenuPager';
 import { useMenu, useVenueMenus } from '@/hooks/useMenus';
 import { useMyBar } from '@/hooks/useHomeBar';
 import { usePhotoTone } from '@/hooks/usePhotoTone';
 import { useShoppingEdit } from '@/hooks/useShoppingList';
 import { isLivingList } from '@/lib/menuLens';
-import { inMenuQuery } from '@/lib/menuPager';
+import { inMenuQuery, pagerPlace } from '@/lib/menuPager';
 import { isOneNightMenu, menuStatus, newDrinkIds } from '@/lib/menus';
 import { menuShopping } from '@/lib/shoppingList';
 import type { ShelfMatch } from '@/lib/shelfReach';
@@ -156,7 +155,8 @@ function MenuPageBody({ menu, shelf, cover, now }: PageProps & { cover: string |
   // The desktop (Menu-desk): a chosen cocktail opens beside the menu (a beer or wine on its own page). Elsewhere it opens in its menu, with "Autumn · 4 of 8" and the pager.
   const [picked, setPicked] = useState<string | null>(null);
   const besideId = sidebar ? ((picked && drinks.some((d) => d.id === picked) ? picked : null) ?? drinks.find((d) => d.kind === 'cocktail')?.id ?? null) : null;
-  const place = useMenuPager(besideId ? menu.id : null, null, besideId ?? '');
+  // The pane steps through the cocktails it can show beside the list; a beer or wine opens its own page from its row.
+  const place = besideId ? pagerPlace(menu.name, menu.sections.flatMap((s) => s.drinks), besideId, (d) => d.kind === 'cocktail') : null;
   const openDrink = (d: MenuDrink) => (sidebar && d.kind === 'cocktail' ? setPicked(d.id) : go(`${menuDrinkHref(d)}?${inMenuQuery(menu.id)}`));
   const share = () => (lens.lens === 'home' || isOneNightMenu(menu) ? setSheet('share') : go(`/menus/${menu.id}/card`));
   const edit = () => go(`/menus/${menu.id}/edit`);
@@ -223,7 +223,7 @@ function MenuPageBody({ menu, shelf, cover, now }: PageProps & { cover: string |
       renderItem={({ item }) => <View style={column}>{rowOf(item)}</View>}
       ListHeaderComponent={
         <View style={[column, styles.head]}>
-          <MenuScreenHead menu={menu} model={model} desk={sidebar} cover={cover} home={lens.lens === 'home'} team={team} draft={draft} past={status === 'previous'} gutter={gutter} top={sidebar ? 0 : insets.top} onBack={back} onShare={share} onEdit={edit} pinned={!sidebar} />
+          <MenuScreenHead menu={menu} model={model} desk={sidebar} cover={cover} home={lens.lens === 'home'} team={team} draft={draft} past={status === 'previous'} gutter={gutter} top={sidebar ? 0 : insets.top} onBack={back} onShare={share} onEdit={edit} onMore={() => setSheet('more')} pinned={!sidebar} />
           {model.banner ? (
             <MenuPageBanner text={model.banner.text} aside={model.banner.aside} warn={model.banner.warn} onPress={model.banner.toNow && live ? () => go(`/menus/${live.id}`) : undefined} />
           ) : null}

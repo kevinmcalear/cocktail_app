@@ -5,6 +5,7 @@ import {
   Caption,
   Display,
   DsText,
+  GlassButton,
   PressableScale,
   Tag,
   useDs,
@@ -34,6 +35,8 @@ interface DeskHeadProps {
   description: string | null;
   /** The pills at the top right: Share, and Edit for the menu team. */
   pills: { label: string; onPress: () => void; ink?: boolean }[];
+  /** A home menu's …, before its Share (Menu-h-page): Edit and the rest are in its sheet. */
+  onMore?: () => void;
   /** The page's side margin: the sky runs out to the edges. */
   bleed: number;
 }
@@ -53,6 +56,7 @@ export function MenuDeskHead({
   name,
   description,
   pills,
+  onMore,
   bleed,
 }: DeskHeadProps) {
   const ds = useDs();
@@ -69,6 +73,7 @@ export function MenuDeskHead({
       <View style={styles.bar}>
         <Crumbs trail={[crumb]} />
         <View style={styles.pills}>
+          {onMore ? <GlassButton icon="ellipsis" accessibilityLabel="More" onPress={onMore} /> : null}
           {pills.map((p) => (
             <PressableScale
               key={p.label}

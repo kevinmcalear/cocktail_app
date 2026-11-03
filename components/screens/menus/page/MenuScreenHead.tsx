@@ -21,12 +21,14 @@ interface Props {
   onBack: () => void;
   onShare: () => void;
   onEdit: () => void;
+  /** A home menu's … (its Edit is in the sheet). */
+  onMore?: () => void;
   /** The phone's bar is pinned over the page's scroll (MenuScreen), so the head draws none. */
   pinned?: boolean;
 }
 
 /** The top of the menu page: the phone's (Menu-page) or the desktop's (Menu-desk), with the actions each draws. */
-export function MenuScreenHead({ menu, model, desk, cover, home, team, draft, past, gutter, top, onBack, onShare, onEdit, pinned }: Props) {
+export function MenuScreenHead({ menu, model, desk, cover, home, team, draft, past, gutter, top, onBack, onShare, onEdit, onMore, pinned }: Props) {
   const heroIds = menu.sections.flatMap((s) => s.drinks).slice(0, 3).map((d) => d.id);
   if (desk) {
     // The top right: Share, and Edit for the menu team; a home menu's one action is Share.
@@ -42,6 +44,7 @@ export function MenuScreenHead({ menu, model, desk, cover, home, team, draft, pa
         name={menu.name}
         description={menu.description}
         pills={pills}
+        onMore={home ? onMore : undefined}
         bleed={gutter}
       />
     );
@@ -58,7 +61,7 @@ export function MenuScreenHead({ menu, model, desk, cover, home, team, draft, pa
       eyebrow={model.eyebrow}
       description={menu.description}
       onBack={onBack}
-      {...menuBarTools({ home, team, draft, past, onShare, onEdit })}
+      {...menuBarTools({ home, team, draft, past, onShare, onEdit, onMore })}
       pinned={pinned}
       bleed={gutter}
       top={top}

@@ -48,7 +48,7 @@ export function OurDrinks() {
   const eyebrow = [active?.name, `${total} ${total === 1 ? 'drink' : 'drinks'}${firstOn ? ` since ${monthYear(firstOn)}` : ''}`].filter(Boolean).join(' · ');
   const pastShown = show === 'now' ? [] : past.filter(match);
   const nowAll = show === 'past' ? [] : onNow.filter(match);
-  const nowShown = show === 'all' && !q ? nowAll.slice(0, ON_NOW_SHOWN) : nowAll;
+  const nowShown = show === 'all' && !q.trim() ? nowAll.slice(0, ON_NOW_SHOWN) : nowAll;
   const rest = nowAll.length - nowShown.length;
   const open = (d: MenuDrink) => router.push(menuDrinkHref(d) as Href);
 

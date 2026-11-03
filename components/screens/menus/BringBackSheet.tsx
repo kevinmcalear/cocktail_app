@@ -18,9 +18,13 @@ export const monthYear = (iso: string) => new Date(`${iso.slice(0, 10)}T00:00`).
 
 /** "Cocktails · 1 Oct to 1 Nov 2026", or "Cocktails · since Mar 2025" while it's on. */
 export function runLine(d: ListDates) {
-  if (d.isCurrent) return `${d.listName} · since ${d.startsOn ? monthYear(d.startsOn) : 'now'}`;
-  if (d.startsOn && d.endsOn) return `${d.listName} · ${runRange(d.startsOn, d.endsOn, true)}`;
-  return d.listName;
+  const range = runSpan(d);
+  return range ? `${d.listName} · ${range}` : d.listName;
+}
+
+function runSpan(d: ListDates) {
+  if (d.isCurrent) return `since ${d.startsOn ? monthYear(d.startsOn) : 'now'}`;
+  return d.startsOn && d.endsOn ? runRange(d.startsOn, d.endsOn, true) : null;
 }
 
 const ORDINAL = ['first', 'second', 'third', 'fourth', 'fifth', 'sixth', 'seventh', 'eighth', 'ninth', 'tenth'];
@@ -47,7 +51,7 @@ export function BringBackSheet({ entry, barId, barName, onClose }: { entry: Repe
   const [sectionId, setSectionId] = useState<string | null>(null);
   // A section with drinks in it first: an empty one is often left over from setting the menu up.
   const section = sections.find((s) => s.id === sectionId) ?? sections.find((s) => s.drinks.length) ?? sections[0] ?? null;
-  const rows = (useListRows(list?.id).data ?? []).filter((r) => r.sectionId === section?.id && (r.state === 'on' || r.state === 'going'));
+  const rows = (useListRows(list?.id).data ?? []).filter((r) => r.sectionId === section?.id && r.state === 'on'); // a row already going has its swap
   const [replaces, setReplaces] = useState<string | null>(null);
   const out = rows.find((r) => r.id === replaces) ?? null;
   const nameOf = (itemId: string) => section?.drinks.find((d) => d.id === itemId)?.name ?? 'A drink';
@@ -108,11 +112,10 @@ export function BringBackSheet({ entry, barId, barName, onClose }: { entry: Repe
             {`Its runs at ${barName ?? 'the bar'}`}
           </Caption>
           {dates.map((d) => {
-            const [name, range] = runLine(d).split(' · ');
             return (
               <View key={`${d.listName}-${d.startsOn}`} style={[styles.run, { borderTopColor: ds.c.line }]}>
-                <Body style={styles.mono}>{range ?? ''}</Body>
-                <Body tone="muted">{name}</Body>
+                <Body style={styles.mono}>{runSpan(d) ?? ''}</Body>
+                <Body tone="muted">{d.listName}</Body>
               </View>
             );
           })}
