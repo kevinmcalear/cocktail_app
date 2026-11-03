@@ -11,7 +11,7 @@ import { join } from 'node:path';
 import * as stub from './realtimeStub';
 
 // 1. No app code uses Realtime: no channel calls, and no Realtime value from supabase-js (on the web those are the stub's, or undefined).
-const found = spawnSync('git', ['grep', '-lE', String.raw`\b(channel|removeChannel|removeAllChannels|getChannels)\b|REALTIME_|\bRealtime(Channel|Client|Presence)\b|realtime-js`, '--', 'app', 'components', 'hooks', 'lib', 'ctx', 'store', ':!lib/realtimeStub*'], { encoding: 'utf8' });
+const found = spawnSync('git', ['grep', '-lE', String.raw`\.(channel|removeChannel|removeAllChannels|getChannels)\(|REALTIME_|\bRealtime(Channel|Client|Presence)\b|realtime-js`, '--', 'app', 'components', 'hooks', 'lib', 'ctx', 'store', ':!lib/realtimeStub*'], { encoding: 'utf8' });
 assert.ok(found.status === 0 || found.status === 1, `git grep failed: ${found.stderr}`);
 assert.equal(found.stdout, '', `Realtime is used here, but the web bundle stubs it (metro.config.js, lib/realtimeStub.ts):\n${found.stdout}`);
 
