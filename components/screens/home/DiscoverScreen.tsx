@@ -10,7 +10,7 @@ import { ScreenHeader } from '@/components/nav/ScreenHeader';
 import { useTabBarInset } from '@/components/nav/WebTabBar';
 import { AreaNote } from '@/components/screens/home/DiscoverArea';
 import { DiscoverFullMap } from '@/components/screens/home/DiscoverFullMapLazy';
-import { mapAvailable } from '@/components/screens/home/DiscoverMap';
+import { mapAvailable } from '@/components/screens/home/DiscoverMapLazy';
 import { BestNear, DeskChips, DiscoverLoading, DiscoverOffline, MapCard, NewMenus, PHONE_NAMES } from '@/components/screens/home/DiscoverParts';
 import { placeSections } from '@/components/screens/home/DiscoverPlace';
 import { TonightHead } from '@/components/screens/tonight/TonightParts';
