@@ -34,3 +34,7 @@ test("the drink's own people get Edit there too, and no Report", async () => {
 test('nothing to hold, no button', async () => {
   expect(await moreLabel({ report: null })).toBeNull();
 });
+
+test("an ingredient with pairings has its flavor map there, not in the bar (Kevin's C12)", async () => {
+  expect(await moreLabel({ save, onShare: () => {}, flavorMap: () => {} })).toBe('More: add to to make, share, flavor map, report the pearl diver');
+});

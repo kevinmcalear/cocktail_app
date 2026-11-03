@@ -2,6 +2,7 @@ import { lazy, Suspense, type ReactNode } from 'react';
 import { StyleSheet, View } from 'react-native';
 
 import { Caption, Display, DsText, GlassButton, PressableScale, Tag, useBreakpoint, useDs, type TagTone } from '@/components/ds';
+import { ItemMoreMenu } from '@/components/screens/drink/ItemMoreMenu';
 import { font, menuCover, radius, space } from '@/constants/tokens';
 
 import { MenuSky, MenuTrio } from './MenuBandLazy';
@@ -32,11 +33,9 @@ interface MenuPageHeadProps {
   description: string | null;
   /** Back is hidden on the wide web, where the sidebar is the way around. */
   onBack: (() => void) | null;
+  /** Share and Edit sit in the page's one …, never beside it (Kevin's C12, 3 Nov: "All into the dot menu"). */
   onShare: (() => void) | null;
-  /** A glass pencil, when Edit isn't the page's one action (a draft, a home menu). */
   onEdit?: (() => void) | null;
-  /** The one prominent action at the top: Edit, or Share on a home menu. */
-  pill: { label: string; onPress: () => void } | null;
   /** In Back's place on a page with no way back (a friend's shared menu): it goes home. */
   label?: { text: string; onPress: () => void };
   /** The page's side margin: the hero runs out to the edges. */
@@ -48,10 +47,10 @@ interface MenuPageHeadProps {
 
 /**
  * The top of every menu page: its drinks drawn together on their sky (or the
- * cover photo, or nothing yet), glass Back and Share, then the tag and
+ * cover photo, or nothing yet), glass Back and the one … (Edit, Share), then the tag and
  * eyebrow, the name and its line (Menu-page).
  */
-export function MenuPageHead({ heroIds, coverUrl, coverCredit, name, ink, quiet, tag, eyebrow, description, onBack, onShare, onEdit, pill, label, bleed, top = 0, children }: MenuPageHeadProps) {
+export function MenuPageHead({ heroIds, coverUrl, coverCredit, name, ink, quiet, tag, eyebrow, description, onBack, onShare, onEdit, label, bleed, top = 0, children }: MenuPageHeadProps) {
   const ds = useDs();
   const wide = useBreakpoint() !== 'phone';
   const photo = !!coverUrl;
@@ -85,17 +84,7 @@ export function MenuPageHead({ heroIds, coverUrl, coverCredit, name, ink, quiet,
         ) : (
           <View />
         )}
-        <View style={styles.barEnd}>
-          {onEdit ? <GlassButton icon="pencil" accessibilityLabel="Edit" onPress={onEdit} onMedia={photo && ds.scheme === 'dark'} /> : null}
-          {onShare ? <GlassButton icon="square.and.arrow.up" accessibilityLabel="Share" onPress={onShare} onMedia={photo && ds.scheme === 'dark'} /> : null}
-          {pill ? (
-            <PressableScale role="button" accessibilityLabel={pill.label} onPress={pill.onPress} style={[styles.pill, { backgroundColor: ds.c.ink }]}>
-              <DsText variant="label" color={ds.c.ground} style={font.semiBold}>
-                {pill.label}
-              </DsText>
-            </PressableScale>
-          ) : null}
-        </View>
+        <ItemMoreMenu name={name} onEdit={onEdit ?? undefined} editLabel={`Edit ${name}`} onShare={onShare ?? undefined} scheme={photo && ds.scheme === 'dark' ? 'dark' : undefined} />
       </View>
       <View style={[styles.title, photo && { marginTop: space.lg }]}>
         <View style={styles.eyebrowRow}>
@@ -120,8 +109,6 @@ const styles = StyleSheet.create({
   credit: { position: 'absolute', top: PHOTO_H - space.xl, right: 0, maxWidth: '60%' },
   creditOn: { top: PHOTO_H - space.xxxl - space.lg, paddingHorizontal: space.sm, paddingVertical: space.xs / 2, borderRadius: radius.control },
   bar: { position: 'absolute', top: space.lg, left: 0, right: 0, flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' },
-  barEnd: { flexDirection: 'row', gap: space.sm, alignItems: 'center' },
-  pill: { minHeight: 44, paddingHorizontal: space.lg, borderRadius: radius.pill, alignItems: 'center', justifyContent: 'center' },
   title: { gap: space.xs },
   eyebrowRow: { flexDirection: 'row', alignItems: 'center', gap: space.sm, flexWrap: 'wrap' },
   caps: { letterSpacing: 1.2, ...font.medium },

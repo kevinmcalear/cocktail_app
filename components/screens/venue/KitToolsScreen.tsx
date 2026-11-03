@@ -58,6 +58,7 @@ export function KitToolsScreen({ barId, openId }: { barId: string; openId?: stri
         loading={isLoading}
         failed={!!error}
         list={list}
+        onEdit={opened && canEdit ? () => setSheet({ tool: opened, startAt: 0 }) : undefined}
         item={opened ? <ToolPage barId={barId} tool={opened} canEdit={canEdit} onChange={(startAt) => setSheet({ tool: opened, startAt })} /> : null}
       />
       <ToolSheet barId={barId} visible={!!sheet} tool={sheet?.tool} startAt={sheet?.startAt} onClose={() => setSheet(null)} />
@@ -94,7 +95,6 @@ function ToolPage({ barId, tool, canEdit, onChange }: { barId: string; tool: Kit
         { label: 'Where it is', value: [where(tool), tool.count ? `${tool.count} of them` : null].filter(Boolean).join(' · ') || 'Not said yet', onChange: change(2) },
         { label: 'Where it comes from', value: kitSourceLine(tool) || 'Not said yet', onChange: change(1) },
       ]}
-      onEdit={change(0)}
       onRemove={canEdit ? () => remove.mutate(tool.id, { onSuccess: close }) : undefined}
       removing={remove.isPending}
       error={remove.error ? 'Couldn’t remove it. Check your connection and try again.' : null}

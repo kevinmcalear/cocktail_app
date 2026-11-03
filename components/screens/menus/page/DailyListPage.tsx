@@ -155,7 +155,7 @@ function DailyBody({ menu }: { menu: MenuDetail }) {
               description={lead}
               onBack={sidebar ? null : back}
               onShare={() => go(`/menus/${menu.id}/card`)}
-              pill={team ? { label: 'Edit', onPress: () => go(`/menus/${menu.id}/edit`) } : null}
+              onEdit={team ? () => go(`/menus/${menu.id}/edit`) : null}
               bleed={gutter}
               top={sidebar ? 0 : insets.top}
             />

@@ -10,6 +10,8 @@ import { withAlpha } from '@/lib/color';
 interface MenuSheetProps {
   visible: boolean;
   onClose: () => void;
+  /** iOS: the sheet has gone, so a system sheet (Share) can open. */
+  onDismiss?: () => void;
   title: string;
   subtitle?: string;
   /** Small mono caps over the title ("WHERE IT LIVES · LITTLE RYE"), in place of a subtitle under it. */
@@ -51,7 +53,7 @@ interface MenuSheetProps {
  * A titled sheet with a scrolling body and an optional footer, on the app's
  * one Sheet (components/ds/Sheet): springs up on phones, a dialog on the web.
  */
-export function MenuSheet({ visible, onClose, title, subtitle, eyebrow, leading, aside, children, footer, onShow, check, save, plain, form, list, done, kind }: MenuSheetProps) {
+export function MenuSheet({ visible, onClose, onDismiss, title, subtitle, eyebrow, leading, aside, children, footer, onShow, check, save, plain, form, list, done, kind }: MenuSheetProps) {
   const ds = useDs();
   const insets = useSafeAreaInsets();
   return (
@@ -60,6 +62,7 @@ export function MenuSheet({ visible, onClose, title, subtitle, eyebrow, leading,
       visible={visible}
       onClose={onClose}
       onShow={onShow}
+      onDismiss={onDismiss}
       accessibilityLabel={title}
       kind={check ? 'flow' : kind}
       fullAtPhoneWidth={!!check}
