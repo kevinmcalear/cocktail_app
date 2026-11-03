@@ -4,6 +4,7 @@ import { RowDivider, SettingsRow, SettingsSection, SwitchRow } from '@/component
 import { ADVANCED_DETAIL, ADVANCED_LABEL } from '@/components/screens/venueSetup/KitStep';
 import { useBarAdvanced, useSetBarAdvanced } from '@/hooks/useAdvancedOptions';
 import { useBarGlassware } from '@/hooks/useBarGlassware';
+import { useFirstRound } from '@/hooks/useFirstRound';
 import { useBarKit } from '@/hooks/useBarKit';
 import { useVenueIce } from '@/hooks/useVenueIce';
 import { useBarInvites } from '@/hooks/useBarInvites';
@@ -32,6 +33,8 @@ function pricingValue(p: { currency: string | null; target_gp: number | null } |
  */
 export function VenueTeamLinks({ barId, barName }: { barId: string; barName: string }) {
   const router = useRouter();
+  // The first round keeps the venue's places to Venue settings until it's over (lib/firstRound.ts).
+  const { active: round } = useFirstRound();
   const manage = useCanManageStaff(barId);
   const members = useBarMembers(barId).data;
   const invites = useBarInvites(barId, manage).data ?? [];
@@ -41,6 +44,13 @@ export function VenueTeamLinks({ barId, barName }: { barId: string; barName: str
     <SettingsSection title="Team and roles">
       <SettingsRow icon="place.team" label="My team" detail={team} onPress={() => router.push('/team' as Href)} />
       <RowDivider />
+      {/* The sidebar's Rota row moved here (board Prod-desk): Team, Rota, Roles and access. */}
+      {round ? null : (
+        <>
+          <SettingsRow icon="calendar" label="Rota" detail="Who is on, and when" onPress={() => router.push('/team/rota' as Href)} />
+          <RowDivider />
+        </>
+      )}
       <SettingsRow
         icon="place.roles"
         label="Roles and access"
@@ -113,6 +123,7 @@ export function VenueBuyingLinks({ barId }: { barId: string }) {
 /** The rest of the venue settings that have screens of their own: publishing, calendars and dilution. */
 export function VenueSettingsLinks({ barId }: { barId: string }) {
   const router = useRouter();
+  const { active: round } = useFirstRound();
   const publishing = useBarPublishing(barId).data;
   // Admins only (level 40, lib/roles.ts): bars_update lets only them write it.
   const admin = useEffectiveRole(barId) >= 40;
@@ -131,6 +142,13 @@ export function VenueSettingsLinks({ barId }: { barId: string }) {
         onPress={go('publishing')}
       />
       <RowDivider />
+      {/* Study used to be a sidebar row; Tonight's "What's new to learn" opens it too. */}
+      {round ? null : (
+        <>
+          <SettingsRow icon="place.study" label="Study" detail="Quizzes on your drinks and specs" onPress={() => router.push('/test' as Href)} />
+          <RowDivider />
+        </>
+      )}
       <SettingsRow icon="calendar" label="Calendars" detail="Calendars that bring events into This week" onPress={go('calendars')} />
       <RowDivider />
       <SettingsRow icon="drop.fill" label="Dilution" detail="How much water each method adds" onPress={go('dilution')} />

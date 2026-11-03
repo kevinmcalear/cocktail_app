@@ -1,29 +1,29 @@
 import { useRouter } from 'expo-router';
-import { StyleSheet, View } from 'react-native';
+import { ScrollView, StyleSheet, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import { DsText, GlassButton, PressableScale, useDs } from '@/components/ds';
 import { IconSymbol } from '@/components/ui/icon-symbol';
 import { CurrentUserAvatar, useUserDisplayName } from '@/components/ui/UserAvatar';
-import { font, layout, radius, space } from '@/constants/tokens';
+import { font, layout, radius, space, STATUS } from '@/constants/tokens';
 import { WEB_RAIL_WIDTH } from '@/hooks/useIsWideWeb';
 import { currentProps } from '@/lib/a11yState';
-import { withAlpha } from '@/lib/color';
+import { readableAccent, withAlpha } from '@/lib/color';
 import { roleLabel } from '@/lib/roles';
 import { footerLine, shortPersonName } from '@/lib/shellNav';
 
-import { useNavPlaces, type Place } from './navPlaces';
+import { useNavPlaces, useSideNotes, type Place } from './navPlaces';
 import { VenueSwitcher } from './VenueSwitcher';
 import type { SideNavProps } from './WebSideNav';
 
-function RailItem({ place, current, onPress }: { place: Place; current: boolean; onPress: () => void }) {
+function RailItem({ place, note, warn, current, onPress }: { place: Place; note?: string; warn?: boolean; current: boolean; onPress: () => void }) {
   const ds = useDs();
   const color = current ? ds.accentText : ds.c.muted;
   return (
     <PressableScale
       role="link"
       {...currentProps(current)}
-      accessibilityLabel={place.label}
+      accessibilityLabel={[place.label, note].filter(Boolean).join(', ')}
       onPress={onPress}
       style={[styles.item, current && { backgroundColor: withAlpha(ds.accentText, 0.16) }]}
     >
@@ -31,8 +31,9 @@ function RailItem({ place, current, onPress }: { place: Place; current: boolean;
         <IconSymbol name={place.icon} size={20} color={color} />
       </View>
       <DsText variant="caption" color={color} numberOfLines={1} align="center" style={[styles.label, current && styles.strong]}>
-        {place.label}
+        {place.short ?? place.label}
       </DsText>
+      {warn ? <View style={[styles.dot, { backgroundColor: readableAccent(STATUS.warning, ds.c.ground) }]} /> : null}
     </PressableScale>
   );
 }
@@ -40,7 +41,7 @@ function RailItem({ place, current, onPress }: { place: Place; current: boolean;
 /**
  * The tablet rail (768 to 1199 wide), as canvas board nav-tablet draws it:
  * the logo (the venue menu, as on a phone), Search, the four tabs with
- * labels, the venue's Menus, Prep, Study and Back bar, New (an outlined circle), and you at the
+ * labels, the bar's Menus, House-made, Team and Bar settings, Home's Shelf and Menus (the sidebar's three groups, split by a hairline), New (an outlined circle), and you at the
  * foot. The page beside it gets the rest of the width.
  */
 export function WebRail({ current, go, searching, onSearch, onNew }: SideNavProps) {
@@ -48,7 +49,8 @@ export function WebRail({ current, go, searching, onSearch, onNew }: SideNavProp
   // An iPad's status bar and home indicator; 0 on the web.
   const insets = useSafeAreaInsets();
   const router = useRouter();
-  const { venue, tabs, menus, work } = useNavPlaces();
+  const { venue, tabs, bar, homePlaces } = useNavPlaces();
+  const notes = useSideNotes(venue?.id ?? null);
   const name = shortPersonName(useUserDisplayName());
   const line = footerLine(venue ? { name: venue.name, role: roleLabel(venue.roleLevel) } : null, null);
   return (
@@ -60,11 +62,18 @@ export function WebRail({ current, go, searching, onSearch, onNew }: SideNavProp
       <View style={styles.search}>
         <GlassButton icon="magnifyingglass" accessibilityLabel="Search" color={searching ? ds.accentText : undefined} onPress={onSearch} />
       </View>
-      <View style={styles.items}>
-        {[...tabs, ...(menus ? [menus] : []), ...work].map((p) => (
-          <RailItem key={p.key} place={p} current={current === p.key} onPress={() => go(p)} />
-        ))}
-      </View>
+      {/* Three groups, as the sidebar: tabs, the bar's, Home's. A short window scrolls them. */}
+      <ScrollView style={styles.scroll} contentContainerStyle={styles.items} showsVerticalScrollIndicator={false}>
+        {[tabs, bar, homePlaces].map((group, i) =>
+          group.length ? (
+            <View key={i} style={[styles.group, i > 0 && { borderTopWidth: StyleSheet.hairlineWidth, borderTopColor: ds.c.line }]}>
+              {group.map((p) => (
+                <RailItem key={p.key} place={p} note={notes[p.key]?.text} warn={notes[p.key]?.warn} current={current === p.key} onPress={() => go(p)} />
+              ))}
+            </View>
+          ) : null
+        )}
+      </ScrollView>
       <PressableScale accessibilityLabel="New" onPress={onNew} style={[styles.new, { borderColor: ds.c.lineStrong }]}>
         <IconSymbol name="plus" size={18} color={ds.c.ink} />
       </PressableScale>
@@ -85,7 +94,10 @@ const styles = StyleSheet.create({
   // The board's chevron (12) and its gap (4): the mark itself lands on the centre line.
   mark: { marginLeft: 16 },
   search: { marginVertical: space.sm },
+  scroll: { flexGrow: 0, flexShrink: 1, minHeight: 0 },
   items: { alignItems: 'center', gap: space.xs },
+  group: { alignItems: 'center', gap: space.xs, paddingTop: space.xs, width: 64 },
+  dot: { position: 'absolute', top: 6, right: 12, width: 8, height: 8, borderRadius: radius.pill },
   item: { width: 64, minHeight: 56, alignItems: 'center', justifyContent: 'center', gap: 2, borderRadius: radius.control + 2 },
   // The board's 22 box draws a smaller glyph than Feather's: a 20 Feather icon matches its size and stroke.
   icon: { width: 22, height: 22, alignItems: 'center', justifyContent: 'center' },
