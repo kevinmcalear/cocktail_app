@@ -8,7 +8,7 @@ import { BackbarTheme, Caption, PressableScale, TextLink, useDs, useGutter } fro
 import { IconSymbol } from '@/components/ui/icon-symbol';
 import { backbar, font, layout, radius, space } from '@/constants/tokens';
 
-import { EDITOR_STATUS, MenuCoverEdit, MenuNameInput, saveStatus } from './EditorParts';
+import { CoverCreditField, EDITOR_STATUS, MenuCoverEdit, MenuNameInput, saveStatus } from './EditorParts';
 import { usePourBounce } from './GuestPreview';
 import type { LayoutEditor } from './useLayoutEditor';
 
@@ -50,6 +50,7 @@ function Band({ editor }: { editor: LayoutEditor }) {
         <MenuCoverEdit editor={editor} height={128} />
       </Animated.View>
       <MenuNameInput editor={editor} />
+      <CoverCreditField editor={editor} />
     </View>
   );
 }

@@ -18,9 +18,10 @@ export interface ButtonProps {
    * primary: the one main action on a screen, in the venue's accent. ink: the
    * main action on light working screens (Make) or a card's own main action
    * (a project's Method), where the accent is spoken for. danger: removing or
-   * deleting, in status red.
+   * deleting, in status red. plain: a quiet second choice in the accent's
+   * ink, no fill or edge (the staff door's I already have an account).
    */
-  variant?: 'primary' | 'ink' | 'secondary' | 'ghost' | 'danger';
+  variant?: 'primary' | 'ink' | 'secondary' | 'ghost' | 'plain' | 'danger';
   /** sm: a compact pill (My Bar's Add both, a row action like "Unblock"), 36 tall with its tap area grown to 44, 15 pt label. */
   size?: 'sm' | 'md' | 'lg';
   /** Full height with a 15 pt semibold label, for three across a phone (a bar page's Directions, Call and Website, ppl-bar-top). */
@@ -39,7 +40,7 @@ export function Button({ label, onPress, variant = 'primary', size = 'md', dense
   const ds = useDs();
   const fill = variant === 'primary' ? ds.accentFill.fill : variant === 'ink' ? ds.c.ink : 'transparent';
   const danger = readableAccent(STATUS.danger, ds.c.ground);
-  const text = variant === 'primary' ? ds.accentFill.text : variant === 'ink' ? ds.c.ground : variant === 'danger' ? danger : ds.c.ink;
+  const text = variant === 'primary' ? ds.accentFill.text : variant === 'ink' ? ds.c.ground : variant === 'danger' ? danger : variant === 'plain' ? ds.accentText : ds.c.ink;
   const border = variant === 'secondary' ? ds.c.lineStrong : variant === 'danger' ? withAlpha(danger, 0.45) : variant === 'ink' ? ds.c.ink : 'transparent';
   return (
     <PressableScale

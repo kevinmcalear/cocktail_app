@@ -7,7 +7,7 @@ import {
   cell, columnCaption, dayOfEnd, endOfDay, endsLabel, isChangedBuiltIn, isLocked, limitTo, overridesFor, reachCeiling, ROLE_PRESETS, roleSummary, drinkTypesToSave, drinkTypesLine,
   isCapability, today, toCapability, toggleLine, withinReach, withToggle, type MatrixColumn,
 } from './roleMatrix';
-import { agoLabel, memberRoleName, memberSinceLine } from './team';
+import { agoLabel, memberRoleName } from './team';
 
 const base = (level: number, capabilities: string[]): MatrixColumn => ({
   role_id: null, name: null, base_level: level, ends_at: null, granted: [], revoked: [], capabilities,
@@ -51,7 +51,7 @@ assert.deepEqual(untapped[1].granted, ['house_made']);
 assert.deepEqual(withToggle(tapped, employee, 'specs', false)[0].granted, []);
 
 // The Undo toast, and the one lock.
-assert.equal(toggleLine('Head bartender', 'staff', true), 'Head bartender can now invite and manage staff');
+assert.equal(toggleLine('Head bartender', 'staff', true), 'Head bartender can now invite and manage the team');
 assert.equal(toggleLine('Guest', 'menu', false), 'Guest can no longer see the menu and descriptions');
 assert.ok(isLocked(admin, 'staff') && !isLocked(admin, 'brand') && !isLocked(employee, 'staff'));
 
@@ -88,15 +88,6 @@ for (const c of [employee, barback, base(35, [])]) assert.doesNotMatch(columnCap
 // Roster lines.
 assert.equal(memberRoleName({ role_level: 35, venue_role_name: 'Head bartender' }), 'Head bartender');
 assert.equal(memberRoleName({ role_level: 30, venue_role_name: null }), 'Bartender');
-assert.equal(
-  memberSinceLine({ role_level: 30, joined_at: '2026-03-03T10:00:00Z', role_since: '2026-06-01T10:00:00Z' }),
-  'Joined 3 Mar 2026 · Bartender since 1 Jun',
-);
-assert.equal(memberSinceLine({ role_level: 30, joined_at: '2026-03-03T10:00:00Z', role_since: '2026-03-03T11:00:00Z' }), 'Joined 3 Mar 2026');
-assert.equal(
-  memberSinceLine({ role_level: 20, venue_role_name: 'Barback', joined_at: '2025-12-01T10:00:00Z', role_since: '2026-01-05T10:00:00Z' }),
-  'Joined 1 Dec 2025 · Barback since 5 Jan 2026',
-);
 
 const now = Date.parse('2026-10-11T12:00:00Z');
 assert.equal(agoLabel('2026-10-11T08:00:00Z', now), 'today');

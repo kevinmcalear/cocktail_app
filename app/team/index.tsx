@@ -8,9 +8,9 @@ import { WebHead } from '@/components/WebHead';
 export default function TeamRoute() {
   return (
     <VenueBrandProvider>
-      <Stack.Screen options={{ headerShown: false, title: 'My team' }} />
+      <Stack.Screen options={{ headerShown: false, title: 'Team' }} />
       <WebHead>
-        <title>My team</title>
+        <title>Team</title>
       </WebHead>
       <TeamScreen />
     </VenueBrandProvider>

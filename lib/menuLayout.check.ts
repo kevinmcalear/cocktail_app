@@ -16,6 +16,7 @@ import {
   filterLibrary,
   groupLibrary,
   libraryNote,
+  creditOf,
   layoutChanged,
   layoutFromMenu,
   layoutProblem,
@@ -97,6 +98,10 @@ assert.equal(layoutChanged(base, { ...base }), false);
 assert.equal(layoutChanged(base, { ...base, name: 'Winter menu ' }), false, 'trailing spaces are not a change');
 assert.equal(layoutChanged(base, moveDrink(base, 's1', 0, 1)), true);
 assert.equal(layoutChanged(base, { ...base, coverUrl: 'https://x/y.jpg' }), true);
+assert.equal(layoutChanged(base, { ...base, coverCredit: 'Jess Rowe' }), true);
+assert.equal(layoutChanged(base, { ...base, coverCredit: '  ' }), false, 'a blank credit is no credit');
+assert.equal(creditOf({ ...base, coverCredit: ' Jess Rowe ' }), 'Jess Rowe');
+assert.equal(creditOf({ ...base, coverCredit: 'x'.repeat(90) })?.length, 80);
 
 // --- the add-a-drink list ---
 const library = [drink('Martini'), drink('Bolo Tie'), drink('Pilsner', 'beer'), drink('Champ Stamp')];

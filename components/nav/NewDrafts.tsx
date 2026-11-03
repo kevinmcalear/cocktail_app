@@ -9,7 +9,7 @@ import { useDrafts } from '@/hooks/useDrafts';
 import { useMenuSectionPlace } from '@/hooks/useDrinkDesk';
 import { hasContent, type WizardDraft } from '@/lib/drinkWizard';
 import { fileTitle, tally, waitingFor, whenWords } from '@/lib/importReview';
-import { recipesToFinish } from '@/lib/prepKinds';
+import { recipesToFinish } from '@/lib/prepMath';
 import { slotStart } from '@/lib/wizardSlots';
 import { useBringIn } from '@/store/useBringIn';
 import { useDraftSyncStore } from '@/store/useDraftSyncStore';

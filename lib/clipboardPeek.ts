@@ -32,3 +32,13 @@ export async function readClipboard(): Promise<string | null> {
     return null;
   }
 }
+
+/** Puts text on the clipboard. False when it can't: a build without the clipboard module (an older binary on an update). */
+export async function writeClipboard(text: string): Promise<boolean> {
+  if (!clipboard) return false;
+  try {
+    return await clipboard.setStringAsync(text);
+  } catch {
+    return false;
+  }
+}
