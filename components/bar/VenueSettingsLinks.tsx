@@ -1,8 +1,6 @@
 import { useRouter, type Href } from 'expo-router';
 
-import { RowDivider, SettingsRow, SettingsSection, SwitchRow } from '@/components/screens/settings/SettingsParts';
-import { ADVANCED_DETAIL, ADVANCED_LABEL } from '@/components/screens/venueSetup/KitStep';
-import { useBarAdvanced, useSetBarAdvanced } from '@/hooks/useAdvancedOptions';
+import { RowDivider, SettingsRow, SettingsSection } from '@/components/screens/settings/SettingsParts';
 import { useBarGlassware } from '@/hooks/useBarGlassware';
 import { useFirstRound } from '@/hooks/useFirstRound';
 import { useBarKit } from '@/hooks/useBarKit';
@@ -15,8 +13,10 @@ import { useBarPublishing } from '@/hooks/usePublishing';
 import { useVenueSuppliers } from '@/hooks/useVenueSuppliers';
 import { useRoleMatrix } from '@/hooks/useVenueRoles';
 import { PAGE_COPY } from '@/lib/pageVisibility';
+import { useBarFeature, useBarFeatures } from '@/hooks/useBarFeature';
 import { useCanManageStaff, useEffectiveRole } from '@/hooks/useViewAs';
 import { BACK_BAR_SHOWN } from '@/lib/backBar';
+import { canSwitchFeatures, SWITCH_KEYS } from '@/lib/venueFeatures';
 
 const plural = (n: number, one: string, many = `${one}s`) => `${n} ${n === 1 ? one : many}`;
 
@@ -63,13 +63,15 @@ export function VenueTeamLinks({ barId, barName }: { barId: string; barName: str
 
 /**
  * Kit: what drinks here are made with (glassware, ice, tools), with how many
- * of each. Anyone with Prep changes them; the whole team can look.
+ * of each. Anyone with Prep changes them; the whole team can look. Ice and
+ * Tools are Advanced options (lib/venueFeatures.ts).
  */
 export function VenueKitLinks({ barId }: { barId: string }) {
   const router = useRouter();
   const glasses = useBarGlassware(barId).data;
-  const ice = useVenueIce(barId).data?.length;
-  const tools = useBarKit(barId).data?.length;
+  const advanced = useBarFeature(barId, 'advanced');
+  const ice = useVenueIce(advanced ? barId : null).data?.length;
+  const tools = useBarKit(advanced ? barId : null).data?.length;
   const go = (page: string) => () => router.push(`/settings/bar/${barId}/${page}` as Href);
   return (
     <SettingsSection title="Kit" note="What drinks here are made with. Drawings, the drink wizard and Make mode use it. Anyone with Prep changes it.">
@@ -80,10 +82,14 @@ export function VenueKitLinks({ barId }: { barId: string }) {
         value={glasses ? plural(glasses.length, 'glass', 'glasses') : undefined}
         onPress={go('glassware')}
       />
-      <RowDivider />
-      <SettingsRow icon="snowflake" label="Ice" detail="What goes in the glass, and who brings it" value={ice == null ? undefined : plural(ice, 'kind')} onPress={go('ice')} />
-      <RowDivider />
-      <SettingsRow icon="hammer.fill" label="Tools" detail="Behind the bar and in the prep kitchen" value={tools == null ? undefined : plural(tools, 'tool')} onPress={go('tools')} />
+      {advanced ? (
+        <>
+          <RowDivider />
+          <SettingsRow icon="snowflake" label="Ice" detail="What goes in the glass, and who brings it" value={ice == null ? undefined : plural(ice, 'kind')} onPress={go('ice')} />
+          <RowDivider />
+          <SettingsRow icon="hammer.fill" label="Tools" detail="Behind the bar and in the prep kitchen" value={tools == null ? undefined : plural(tools, 'tool')} onPress={go('tools')} />
+        </>
+      ) : null}
     </SettingsSection>
   );
 }
@@ -96,14 +102,15 @@ export function VenueBuyingLinks({ barId }: { barId: string }) {
   const router = useRouter();
   const caps = useCapabilities(barId).data ?? [];
   const allowed = caps.includes('prep') || caps.includes('costs');
-  const suppliers = useVenueSuppliers(allowed && BACK_BAR_SHOWN ? barId : null).data;
+  const backBar = useBarFeature(barId, 'backBar') && BACK_BAR_SHOWN;
+  const suppliers = useVenueSuppliers(allowed && backBar ? barId : null).data;
   const pricing = usePricingSettings(barId).data;
   if (!allowed) return null;
   const go = (page: string) => () => router.push(`/settings/bar/${barId}/${page}` as Href);
   return (
     <SettingsSection title="Buying" note="Who you order from and what it costs. Only people with Prep or Costs see this.">
-      {/* Suppliers are parked with the back bar (lib/backBar.ts). */}
-      {BACK_BAR_SHOWN ? (
+      {/* Suppliers are parked with the back bar (lib/backBar.ts), and go with its switch. */}
+      {backBar ? (
         <>
           <SettingsRow
             icon="building.2.fill"
@@ -120,15 +127,16 @@ export function VenueBuyingLinks({ barId }: { barId: string }) {
   );
 }
 
-/** The rest of the venue settings that have screens of their own: publishing, calendars and dilution. */
+/** The rest of the venue settings that have screens of their own: Features, publishing, calendars and dilution. */
 export function VenueSettingsLinks({ barId }: { barId: string }) {
   const router = useRouter();
   const { active: round } = useFirstRound();
   const publishing = useBarPublishing(barId).data;
-  // Admins only (level 40, lib/roles.ts): bars_update lets only them write it.
-  const admin = useEffectiveRole(barId) >= 40;
-  const advanced = useBarAdvanced(barId);
-  const setAdvanced = useSetBarAdvanced(barId);
+  // Features is the Admins' (level 40, lib/roles.ts): bars_update lets only them write it.
+  const admin = canSwitchFeatures(useEffectiveRole(barId));
+  // Each link goes with its section's switch (lib/venueFeatures.ts).
+  const has = useBarFeatures(barId);
+  const on = SWITCH_KEYS.filter((k) => has(k)).length;
   const go = (page: string) => () => router.push(`/settings/bar/${barId}/${page}` as Href);
   return (
     <SettingsSection title="More settings">
@@ -142,29 +150,34 @@ export function VenueSettingsLinks({ barId }: { barId: string }) {
         onPress={go('publishing')}
       />
       <RowDivider />
+      {admin ? (
+        <>
+          <SettingsRow icon="switch.2" label="Features" detail="Tonight, Prep, Study and the rest: what your team sees" value={on ? `${on} of ${SWITCH_KEYS.length} on` : 'None on'} onPress={go('features')} />
+          <RowDivider />
+        </>
+      ) : null}
       {/* Study used to be a sidebar row; Tonight's "What's new to learn" opens it too. */}
-      {round ? null : (
+      {round || !has('study') ? null : (
         <>
           <SettingsRow icon="place.study" label="Study" detail="Quizzes on your drinks and specs" onPress={() => router.push('/test' as Href)} />
           <RowDivider />
         </>
       )}
       {/* Parked with the back bar (lib/backBar.ts); its sidebar row moved here. */}
-      {BACK_BAR_SHOWN && !round ? (
+      {BACK_BAR_SHOWN && has('backBar') && !round ? (
         <>
           <SettingsRow icon="place.backbar" label="Back bar" detail="Stock, par levels and what to order" onPress={() => router.push('/back-bar' as Href)} />
           <RowDivider />
         </>
       ) : null}
-      <SettingsRow icon="calendar" label="Calendars" detail="Calendars that bring events into This week" onPress={go('calendars')} />
-      <RowDivider />
-      <SettingsRow icon="drop.fill" label="Dilution" detail="How much water each method adds" onPress={go('dilution')} />
-      {admin ? (
+      {/* Calendars feed This week, which is Tonight's. */}
+      {has('tonight') ? (
         <>
+          <SettingsRow icon="calendar" label="Calendars" detail="Calendars that bring events into This week" onPress={go('calendars')} />
           <RowDivider />
-          <SwitchRow label={ADVANCED_LABEL} detail={ADVANCED_DETAIL} value={advanced} onValueChange={(on) => setAdvanced.mutate(on)} />
         </>
       ) : null}
+      <SettingsRow icon="drop.fill" label="Dilution" detail="How much water each method adds" onPress={go('dilution')} />
     </SettingsSection>
   );
 }

@@ -50,9 +50,8 @@ export const OLD_FIELDS: Record<string, string> = {
   // One had record and one Want list (20261204300000)
   collected_items: 'drinks_had (memories) and want_list (to make)',
   made_drinks: "drinks_had (source 'made')",
-  // Advanced options, the one venue switch kept (20261204300000)
-  enabled_features: 'bars.advanced_options',
-  venue_feature_events: 'nothing (the venue feature switches are gone)',
+  // Not old fields any more: the venue feature switches came back (3 Nov 2026), so
+  // bars.enabled_features and venue_feature_events stay (docs/one_home_drop.md).
   // Takeovers (20261204400000)
   guest_role_id: 'menus.change_role_id (the takeover list names its guest role)',
 };

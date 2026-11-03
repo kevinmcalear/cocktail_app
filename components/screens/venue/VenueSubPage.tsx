@@ -27,8 +27,8 @@ export const SubPageInline = createContext(false);
 
 /**
  * A page under a venue's settings (Ice, Tools, Suppliers): its title, the
- * "Venue settings" crumb, an intro and the content. Features sits beside
- * Venue settings in the menus, so it has no crumb (`crumb={false}`).
+ * "Venue settings" crumb, an intro and the content. A page beside Venue
+ * settings in the menus has no crumb (`crumb={false}`).
  */
 export function VenueSubPage(props: PageProps) {
   if (useContext(SubPageInline)) return props.children;

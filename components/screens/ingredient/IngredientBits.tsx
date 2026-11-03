@@ -5,6 +5,7 @@ import { Caption, IngredientDrawing, PressableScale, Tag, useDs } from '@/compon
 import { IconSymbol } from '@/components/ui/icon-symbol';
 import { radius, space } from '@/constants/tokens';
 import type { ItemPrep } from '@/hooks/usePrepCard';
+import { useVenueFeature } from '@/hooks/useVenueFeatures';
 import { leadTimeLabel, shelfLifeLabel } from '@/lib/scale';
 import { groupForAction } from '@/lib/techniques';
 
@@ -38,6 +39,8 @@ export function IngredientHero({ id, name, pictures, height, fade }: { id: strin
 export function IngredientTags({ isPrep, actions, venueName, shared, mine, role, technical }: { isPrep: boolean; actions: string[]; venueName: string | null; shared: boolean; mine: boolean; role: string | null; technical: boolean }) {
   const ds = useDs();
   const router = useRouter();
+  // The tags open the technique library, with Techniques switched on.
+  const techniques = useVenueFeature('techniques');
   const lead: { label: string; accent?: boolean }[] = isPrep
     ? [{ label: 'House-made', accent: true }]
     : [technical ? 'Technical ingredient' : role === 'product' ? 'Bottle' : role === 'generic' ? 'Style' : null].filter((t): t is string => !!t).map((label) => ({ label }));
@@ -50,7 +53,7 @@ export function IngredientTags({ isPrep, actions, venueName, shared, mine, role,
       ))}
       {isPrep
         ? actions.map((a) => {
-            const group = groupForAction(a);
+            const group = techniques ? groupForAction(a) : null;
             if (!group) return <Tag key={a} label={a} />;
             return (
               <PressableScale key={a} role="link" accessibilityLabel={`${a}: open the technique library`} onPress={() => router.push(`/techniques?group=${group}` as never)} style={[styles.techTag, { backgroundColor: ds.c.raised }]}>

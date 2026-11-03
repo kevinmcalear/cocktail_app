@@ -24,6 +24,12 @@ import { DrinkStep, MenuStep } from './WorkedSteps';
 import { YouStep } from './YouStep';
 import { COPY, HOME_BRING } from './onboardingCopy';
 
+/** The name setup saved on the account (full_name), or ''. */
+const savedName = (metadata: unknown) => {
+  const m = (metadata ?? {}) as { full_name?: unknown };
+  return typeof m.full_name === 'string' ? m.full_name.trim() : '';
+};
+
 type Resume = { chosen: OnboardingStep | null; trail: OnboardingStep[]; draft: { name: string; handle: string } | null; createdId: string | null; home: boolean };
 /**
  * Where setup was, by account. A page opened from Setup that Setup's guard
@@ -226,7 +232,8 @@ export function OnboardingScreen() {
           // A taken handle can come back while this step is still showing (the
           // invited path saves here), so remount it to show the handle field.
           key={handleTaken ? 'handle' : 'name'}
-          initialName={draft?.name || profile.data?.displayName || joined?.name || ''}
+          // The name typed before a reload is on the account (saveName), so a cold start keeps it.
+          initialName={draft?.name || profile.data?.displayName || joined?.name || savedName(user?.user_metadata)}
           forceHandle={handleTaken}
           invited={!!joined}
           job={joined?.bar_profile_id ? { bar: joined.bar_name, title: inviteJobTitle(joined.role_level) } : null}

@@ -7,7 +7,7 @@ import { paintSketch } from '@/lib/sketch/paint';
 import { nightScene } from '@/lib/sketch/passes';
 import type { Scene, SceneEl } from '@/lib/sketch/scene';
 import { sceneToSvg } from '@/lib/sketch/svg';
-import { liquidOf, type SketchInputs } from '@/lib/sketch/types';
+import { isBareGlass, liquidOf, type SketchInputs } from '@/lib/sketch/types';
 
 import { inBarGlassCached } from '@/lib/sketch/barGlass';
 
@@ -119,14 +119,14 @@ export const SketchDrawing = memo(function SketchDrawing({ inputs: stored, seed,
   const night = useDs().scheme === 'dark';
   const inputs = inBarGlassCached(stored, useDrawingGlasses());
   const scene = useScene(scenesOf(inputs), `${seed}|${detail}|false`, lazy, () => paintSketch(inputs, { seed, detail, bands: false }));
-  return <SceneSvg scene={night ? nightOf(scene, liquidOf(inputs).hex) : scene} bare />;
+  return <SceneSvg scene={night ? nightOf(scene, inputs) : scene} bare />;
 });
 
 // The night painting of a scene, made once while the scene is.
 const nights = new WeakMap<Scene, Scene>();
-export function nightOf(scene: Scene, liquid: string): Scene {
+export function nightOf(scene: Scene, inputs: SketchInputs): Scene {
   let out = nights.get(scene);
-  if (!out) nights.set(scene, (out = nightScene(scene, liquid)));
+  if (!out) nights.set(scene, (out = nightScene(scene, liquidOf(inputs).hex, isBareGlass(inputs))));
   return out;
 }
 

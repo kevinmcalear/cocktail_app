@@ -2,7 +2,6 @@ import { Redirect, useLocalSearchParams, useRouter } from 'expo-router';
 import { StyleSheet, View } from 'react-native';
 
 import { BackbarTheme, Body, BrandProvider } from '@/components/ds';
-import { DrinkDrawing } from '@/components/ds/DrinkDrawing';
 import { CouldNotLoad, NotAvailable } from '@/components/screens/safety/NotAvailable';
 import { space } from '@/constants/tokens';
 import { useActiveVenue } from '@/hooks/useActiveVenue';
@@ -24,8 +23,8 @@ import { liquidOf } from '@/lib/sketch/types';
 import { AllergyLine } from './AllergyLine';
 import { ApprovalNotice } from './ApprovalNotice';
 import { DrinkHero } from './DrinkHero';
-import { drawingSize } from './DrawingHero';
-import { DrinkLoading } from './DrinkLoading';
+import { DrinkArt, drawingSize } from './DrawingHero';
+import { ItemLoading } from './LoadingBar';
 import { ItemShell } from './ItemShell';
 import { ItemTitle } from './ItemTitle';
 import { PalateFit } from './NamesBlock';
@@ -49,7 +48,7 @@ export function BeerWineScreen({ kind: kindName }: { kind: DrinkKind }) {
 
   // Not yours to read (another bar's drink): its public page, if it's published.
   if ((error as { code?: string } | null)?.code === 'PGRST116' && safeId) return <Redirect href={`/d/${safeId}`} />;
-  if (isPending) return <DrinkLoading />;
+  if (isPending) return <ItemLoading />;
   if (!item) {
     return (
       <BackbarTheme>
@@ -139,7 +138,7 @@ function BeerWinePage({ kind, item, favorite, onToggleFavorite, canEdit, onEdit 
     <ItemShell
       name={item.name}
       photo={pictures[0] ? { url: pictures[0].url, rooms: photoRooms(pictures), credit: pictures.some((p) => !!p.credit), hero: (h, fade) => <DrinkHero name={item.name} pictures={pictures} glass={null} itemId={item.id} palette={pictures[0].palette} height={h} fade={fade} /> } : null}
-      art={(pour) => <DrinkDrawing inputs={sketch} seed={item.id} size="hero" staff={staff} pour={pour} label={`Drawing of ${item.name}`} />}
+      art={(play) => <DrinkArt itemId={item.id} sketch={sketch} label={`Drawing of ${item.name}`} size={size} play={play} />}
       size={size}
       liquid={liquidOf(sketch).hex}
       title={title}
@@ -156,9 +155,10 @@ function BeerWinePage({ kind, item, favorite, onToggleFavorite, canEdit, onEdit 
           {staff ? <RowGroup title="Pour it" rows={pourIt} /> : null}
         </View>
       )}
-      controls={{
+      actions={{
         save: { saved: favorite, onToggle: onToggleFavorite, label: ['Add to favorites', 'Remove from favorites'], icon: 'heart' },
         onShare: () => void shareOrCopy(drinkUrl(slug ?? item.id), item.name, 'drink'),
+        report: { itemId: item.id },
         onEdit: canEdit ? onEdit : undefined,
         editLabel: `Edit ${kind}`,
       }}

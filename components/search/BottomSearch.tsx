@@ -6,7 +6,7 @@ import type { SearchBarCommands } from 'react-native-screens';
 
 import { DockFade, GlassButton, useDs, useGutter } from '@/components/ds';
 import { ScreenHeader, ScreenHeaderSpacer } from '@/components/nav/ScreenHeader';
-import { WEB_TABS } from '@/components/nav/WebTabBar';
+import { useWebTabs } from '@/components/nav/WebTabBar';
 import { layout, space } from '@/constants/tokens';
 import { useAuth } from '@/ctx/AuthContext';
 import { SEARCH_TAB } from '@/hooks/useBottomBar';
@@ -232,7 +232,8 @@ function BackToTab() {
   const ds = useDs();
   const router = useRouter();
   const from = useSearchFrom((s) => s.from);
-  const tab = WEB_TABS.find((t) => t.name === from) ?? WEB_TABS[0];
+  const tabs = useWebTabs();
+  const tab = tabs.find((t) => t.name === from) ?? tabs[0];
   const back = () => (router.canGoBack() ? router.back() : router.navigate(tab.path));
   return <GlassButton icon={tab.icon} color={ds.accentText} size={FIELD} accessibilityLabel={`Back to ${tab.label}`} onPress={back} />;
 }

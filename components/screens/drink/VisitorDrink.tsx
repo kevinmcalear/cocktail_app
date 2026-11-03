@@ -3,7 +3,7 @@ import { recentEntry, useTrackRecent } from '@/hooks/useTrackRecent';
 import { visitorDrink } from '@/lib/visitorDrink';
 
 import { CouldNotLoad, NotAvailable } from '../safety/NotAvailable';
-import { DrinkLoading } from './DrinkLoading';
+import { ItemLoading } from './LoadingBar';
 import { DrinkScreen } from './DrinkScreen';
 
 /**
@@ -15,7 +15,7 @@ export function VisitorDrink({ id }: { id: string }) {
   const query = usePublishedDrink(id);
   const drink = query.data?.drink;
   useTrackRecent(!!drink, drink ? recentEntry('cocktail', drink.id, drink.name, { imageUrl: drink.imageUrl, barId: drink.barId }) : null);
-  if (query.isPending) return <DrinkLoading seed={null} />;
+  if (query.isPending) return <ItemLoading seed={null} />;
   if (query.error) return <CouldNotLoad what="drink" failed={{ retry: () => void query.refetch() }} />;
   if (!query.data) return <NotAvailable what="drink" />;
   const { item, lock } = visitorDrink(query.data);
