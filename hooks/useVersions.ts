@@ -31,6 +31,29 @@ export function useItemVersions(itemId: string | null | undefined, enabled = tru
 }
 
 /**
+ * Just a drink's latest version (its number, when and by whom), for the line
+ * that opens Spec changes: one small row, not every snapshot. Under
+ * ['item-versions', id], so whatever refreshes the versions refreshes it.
+ */
+export function useLatestVersion(itemId: string | null | undefined, enabled = true) {
+  return useQuery({
+    queryKey: ['item-versions', itemId, 'latest'],
+    enabled: !!itemId && enabled,
+    queryFn: async (): Promise<Pick<ItemVersion, 'version' | 'created_by_name' | 'created_at'> | null> => {
+      const { data, error } = await supabase
+        .from('item_versions')
+        .select('version, created_by_name, created_at')
+        .eq('item_id', itemId!)
+        .order('version', { ascending: false })
+        .limit(1)
+        .maybeSingle();
+      if (error) throw error;
+      return data;
+    },
+  });
+}
+
+/**
  * A drink's versions as someone outside its venue sees them, newest first:
  * only when the bar shows spec changes and the drink's spec is public, cut
  * down to what the public spec shows (no notes, no names). Empty otherwise.
