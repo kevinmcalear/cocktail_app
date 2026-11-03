@@ -13,7 +13,7 @@ import { readableAccent, withAlpha } from '@/lib/color';
 import { roleLabel } from '@/lib/roles';
 import { footerLine, shortPersonName } from '@/lib/shellNav';
 
-import { VenueSwitcher } from './VenueSwitcher';
+import { useVenueMenu } from './VenueSwitcher';
 
 /** A keyboard hint at the end of a row: ⌘K, N. */
 export function Kbd({ children }: { children: string }) {
@@ -69,35 +69,32 @@ export function NavRow({ label, icon, current, hint, badge, note, warn, role = '
   );
 }
 
-/** A sidebar section's heading, like "Home", with the board's small mark (a letter on a tint) when it has one. */
-export function NavHeading({ children, mark }: { children: ReactNode; mark?: string }) {
+/**
+ * A sidebar group's heading, with the board's small mark (a letter on a tint): the bar's name, or Home. It is also
+ * where you switch place (board C7/C8): tapping it hangs the places menu from the mark, as the phone's logo does.
+ */
+export function PlaceHeading({ children, mark }: { children: ReactNode; mark: string }) {
   const ds = useDs();
+  const { button, open, expanded, menu } = useVenueMenu();
   return (
-    <View style={styles.headingRow}>
-      {mark ? (
-        <View style={[styles.headingMark, { backgroundColor: withAlpha(ds.accentText, 0.2) }]}>
+    <>
+      {/* The heading is text outside the button; the button is laid over the whole row and takes its name from it. */}
+      <View ref={button} collapsable={false} style={styles.headingRow}>
+        <PressableScale role="button" aria-expanded={expanded} accessibilityLabel={`${children}. Switch place`} onPress={open} style={StyleSheet.absoluteFill} />
+        <View pointerEvents="none" style={[styles.headingMark, { backgroundColor: withAlpha(ds.accentText, 0.2) }]}>
           <DsText variant="caption" color={ds.accentText} aria-hidden>
             {mark.charAt(0).toUpperCase()}
           </DsText>
         </View>
-      ) : null}
-      <DsText variant="caption" tone="muted" role="heading" numberOfLines={1} style={styles.heading}>
-        {children}
-      </DsText>
-    </View>
-  );
-}
-
-/**
- * The top of the sidebar: where you are, one mark (the venue's, or the house
- * at home) and a chevron that opens the venue menu, the same switcher as the
- * phone header (Kevin, 13 Oct: one mark with an arrow, never a row of them).
- */
-export function MarksRow() {
-  return (
-    <View style={styles.marks}>
-      <VenueSwitcher />
-    </View>
+        <DsText variant="caption" tone="muted" role="heading" aria-level={2} numberOfLines={1} pointerEvents="none" style={styles.heading}>
+          {children}
+        </DsText>
+        <View pointerEvents="none">
+          <IconSymbol name="chevron.down" size={10} color={ds.c.muted} />
+        </View>
+      </View>
+      {menu}
+    </>
   );
 }
 
@@ -129,18 +126,15 @@ export function YouFooter({ venue }: { venue: Venue | null }) {
   );
 }
 
-const MARK = 32;
 const styles = StyleSheet.create({
   badge: { paddingHorizontal: space.sm, borderRadius: radius.pill, overflow: 'hidden' },
   row: { flexDirection: 'row', alignItems: 'center', gap: space.md, minHeight: 40, paddingHorizontal: space.md, borderRadius: radius.control },
   label: { flex: 1 },
   strong: { ...font.semiBold },
   kbd: { ...font.figuresMedium, paddingHorizontal: 6, paddingVertical: 2, borderRadius: radius.mark, overflow: 'hidden' },
-  headingRow: { flexDirection: 'row', alignItems: 'center', gap: space.sm, marginTop: space.lg, marginBottom: space.xs, marginHorizontal: space.md },
+  headingRow: { flexDirection: 'row', alignItems: 'center', minHeight: 36, gap: space.sm, marginTop: space.lg, marginBottom: space.xs, marginHorizontal: space.md },
   headingMark: { width: 20, height: 20, borderRadius: radius.pill, alignItems: 'center', justifyContent: 'center' },
   heading: { ...font.medium, flexShrink: 1 },
-  marks: { flexDirection: 'row', alignItems: 'center', paddingBottom: space.sm },
-  ring: { padding: 2, borderWidth: 2, borderRadius: MARK * 0.28 + 4 },
   footer: { marginTop: 'auto', flexDirection: 'row', alignItems: 'center', gap: space.sm, paddingTop: space.md, paddingHorizontal: space.sm, paddingBottom: space.xs, borderTopWidth: StyleSheet.hairlineWidth },
   footerText: { flex: 1, minWidth: 0 },
 });

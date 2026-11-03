@@ -12,7 +12,7 @@ import { readableAccent, withAlpha } from '@/lib/color';
 import { roleLabel } from '@/lib/roles';
 import { footerLine, shortPersonName } from '@/lib/shellNav';
 
-import { useNavPlaces, useSideNotes, type Place } from './navPlaces';
+import { useSidePlaces, useSideNotes, type Place } from './sidePlaces';
 import { VenueSwitcher } from './VenueSwitcher';
 import type { SideNavProps } from './WebSideNav';
 
@@ -50,7 +50,7 @@ export function WebRail({ current, go, searching, onSearch, onNew }: SideNavProp
   // An iPad's status bar and home indicator; 0 on the web.
   const insets = useSafeAreaInsets();
   const router = useRouter();
-  const { venue, tabs, bar, homePlaces } = useNavPlaces();
+  const { venue, tabs, bar, homePlaces } = useSidePlaces();
   const notes = useSideNotes(venue?.id ?? null);
   const name = shortPersonName(useUserDisplayName());
   const line = footerLine(venue ? { name: venue.name, role: roleLabel(venue.roleLevel) } : null, null);
@@ -58,7 +58,7 @@ export function WebRail({ current, go, searching, onSearch, onNew }: SideNavProp
     <View role="navigation" accessibilityLabel="Main" style={[styles.rail, { backgroundColor: ds.c.ground, borderRightColor: ds.c.line, paddingTop: insets.top + space.lg, paddingBottom: insets.bottom + space.lg }]}>
       {/* The mark sits on the rail's centre line, its chevron hanging to the right (canvas shell n4). */}
       <View style={styles.mark}>
-        <VenueSwitcher size={36} />
+        <VenueSwitcher size={36} flat />
       </View>
       <View style={styles.search}>
         <GlassButton icon="magnifyingglass" accessibilityLabel="Search" color={searching ? ds.accentText : undefined} onPress={onSearch} />
