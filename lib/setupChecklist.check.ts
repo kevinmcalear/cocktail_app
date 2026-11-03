@@ -39,8 +39,8 @@ assert.equal(kitNote(1, 2, 1), '1 glass, 2 ice, 1 tool so far');
 assert.equal(kitNote(0, 1, 3), '1 ice, 3 tools so far');
 
 // First drinks (E31): what's in the Library, and what an import still has to check.
-assert.equal(drinksNote(18, 28), '18 in your Library, 28 still to check');
-assert.equal(drinksNote(18, 0), '18 in your Library');
+assert.equal(drinksNote(18, 28), '18 in Drinks, 28 still to check');
+assert.equal(drinksNote(18, 0), '18 in Drinks');
 assert.equal(drinksNote(0, 46), '46 still to check');
 assert.equal(drinksNote(0, 0), undefined);
 

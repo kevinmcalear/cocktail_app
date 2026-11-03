@@ -132,7 +132,7 @@ test('First drinks (E31): an import left part way carries on', async () => {
   expect(mockPush).toHaveBeenLastCalledWith('/bring-in');
 });
 
-test('First drinks (E31): with nothing left to check, the drinks in the Library', async () => {
+test('First drinks (E31): with nothing left to check, the drinks in Drinks', async () => {
   mockDrinks = { inLibrary: 18, reviewId: null };
   await renderWithProviders(<SetupChecklist barId="b1" name="Little Rye" />);
   await fireEvent.press(screen.getByRole('button', { name: 'First drinks, todo' }));

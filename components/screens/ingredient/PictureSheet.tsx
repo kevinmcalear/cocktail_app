@@ -11,7 +11,7 @@ import type { IngredientPicture } from '@/lib/ingredientPicture';
 
 export type PictureChoice = { picture: IngredientPicture; photo: string | null };
 
-const WHERE = 'Shows on its page, in specs, in the Library and on your back bar.';
+const WHERE = 'Shows on its page, in specs, in Drinks and on your back bar.';
 const ART = 72;
 
 /**

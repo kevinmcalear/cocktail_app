@@ -120,7 +120,7 @@ test('on a laptop the list shows what was approved and skipped, with the count b
   expect(screen.getByText('Drink 3 of 3')).toBeTruthy();
   // Back to the approved one: it can't be approved or skipped again.
   await fireEvent.press(screen.getByRole('button', { name: 'Orchard Fizz, approved' }));
-  expect(screen.getByText('Approved. It’s in your Library.')).toBeTruthy();
+  expect(screen.getByText('Approved. It’s in your drinks.')).toBeTruthy();
   await fireEvent.press(screen.getByRole('button', { name: 'Approve and next' }));
   expect(mockSave).toHaveBeenCalledTimes(1);
 });

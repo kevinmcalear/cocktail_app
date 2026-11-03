@@ -35,11 +35,11 @@ jest.mock('@/hooks/useSearchMine', () => ({ useSearchMine: () => ({ venueId: nul
 
 // The library stands in as two rows that open as its rows do (useOpenBeside), and counts its mounts.
 let mockMounts = 0;
-jest.mock('@/components/screens/LibraryScreen', () => {
+jest.mock('@/components/screens/drinks/StaffDrinks', () => {
   const { useEffect } = jest.requireActual<typeof import('react')>('react');
   const { Pressable, Text, View } = jest.requireActual<typeof import('react-native')>('react-native');
   const { useOpenBeside } = jest.requireActual<typeof import('@/hooks/useDrinksSplit')>('@/hooks/useDrinksSplit');
-  function LibraryScreen({ beside }: { beside?: boolean }) {
+  function StaffDrinks({ beside }: { beside?: boolean }) {
     useEffect(() => void (mockMounts += 1), []);
     const { picked, open } = useOpenBeside();
     return (
@@ -51,12 +51,20 @@ jest.mock('@/components/screens/LibraryScreen', () => {
       </View>
     );
   }
-  return { LibraryScreen };
+  return { StaffDrinks };
 });
 // The real one lazy-loads the library, which Jest can't; it is the same screen.
 jest.mock('@/components/nav/RootLazy', () => {
-  const { LibraryScreen } = jest.requireMock<typeof import('@/components/screens/LibraryScreen')>('@/components/screens/LibraryScreen');
-  return { LibraryBeside: () => <LibraryScreen beside /> };
+  const { StaffDrinks } = jest.requireMock<typeof import('@/components/screens/drinks/StaffDrinks')>('@/components/screens/drinks/StaffDrinks');
+  return { DrinksBeside: () => <StaffDrinks beside /> };
+});
+// Drinks' first page on a desktop reads the list's view; it shows the first row (a drink as its pane) or waits for a pick.
+let mockView: { id: string; name: string; category: string }[] = [];
+jest.mock('@/components/screens/drinks/useStaffDrinks', () => ({ useStaffDrinks: () => ({ activeId: 'bar', published: [], show: 'all', params: {}, inView: mockView }) }));
+jest.mock('@/components/screens/drinks/Bottles', () => ({ useBottleFacts: () => ({ low: () => false }), bottlesFor: (items: unknown[]) => items }));
+jest.mock('@/components/screens/drinks/DrinksPanes', () => {
+  const { Text } = jest.requireActual<typeof import('react-native')>('react-native');
+  return { DrinkPane: ({ id }: { id: string }) => <Text>{`pane ${id}`}</Text>, OtherPane: ({ item }: { item: { name: string } }) => <Text>{`other ${item.name}`}</Text> };
 });
 jest.mock('@/components/screens/drinks/HomeDrinks', () => {
   const { Text } = jest.requireActual<typeof import('react-native')>('react-native');
@@ -102,6 +110,7 @@ beforeEach(() => {
   mockNav = 'sidebar';
   mockMode = 'venue';
   mockMounts = 0;
+  mockView = [];
 });
 
 test('from 1200 at a venue, a drink opens beside the list at its own URL, and Back closes it', async () => {
@@ -123,6 +132,16 @@ test('from 1200 at a venue, a drink opens beside the list at its own URL, and Ba
   expect(r.getPathname()).toBe('/drinks');
   expect(screen.getByText('list beside, none picked')).toBeTruthy();
   expect(mockMounts).toBe(1);
+});
+
+test('from 1200, Drinks opens on the list\'s first row (A to Z) rather than a blank page', async () => {
+  mockView = [
+    { id: 'n', name: 'Negroni', category: 'Cocktail' },
+    { id: 'b', name: 'Bolo Tie', category: 'Cocktail' },
+  ];
+  await open('/drinks');
+  expect(await screen.findByText('pane b')).toBeTruthy();
+  expect(screen.queryByText('Pick a drink to see it here.')).toBeNull();
 });
 
 test('another page on the Drinks stack takes the width, and the list comes back with Back', async () => {

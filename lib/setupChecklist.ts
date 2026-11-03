@@ -16,7 +16,7 @@ export const CHECKLIST_ROWS = [
   { key: 'bottles', title: 'Bottles', line: 'What’s on your shelves', next: 'Tap what’s on your shelves: a brand, or just the kind of bottle.' },
   { key: 'menu', title: 'First menu', line: 'Start your own, or bring one in', next: 'Start your own menu, or bring in the one you have now.' },
   // Done once the Library has the bar's own drinks, however they came: an import counts (E31).
-  { key: 'drinks', title: 'First drinks', line: 'Your house recipes, in the Library', next: 'Your house recipes in the Library: bring them in, or start from a classic.' },
+  { key: 'drinks', title: 'First drinks', line: 'Your house recipes, in Drinks', next: 'Your house recipes in Drinks: bring them in, or start from a classic.' },
   { key: 'team', title: 'Your team', line: 'Invite who works here', next: 'Each person gets one email in your bar’s look, with your welcome.' },
 ] as const;
 
@@ -47,9 +47,9 @@ export function kitNote(glasses: number, ice: number, tools: number): string | u
   return parts.length ? `${parts.join(', ')} so far` : undefined;
 }
 
-/** "18 in your Library, 28 still to check": the bar's drinks, and what's left of an import it started. */
+/** "18 in Drinks, 28 still to check": the bar's drinks, and what's left of an import it started. */
 export function drinksNote(inLibrary: number, toCheck: number): string | undefined {
-  const parts = [inLibrary ? `${inLibrary} in your Library` : null, toCheck ? `${toCheck} still to check` : null].filter(Boolean);
+  const parts = [inLibrary ? `${inLibrary} in Drinks` : null, toCheck ? `${toCheck} still to check` : null].filter(Boolean);
   return parts.length ? parts.join(', ') : undefined;
 }
 

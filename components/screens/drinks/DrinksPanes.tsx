@@ -1,4 +1,4 @@
-import { useLocalSearchParams, useRouter, type Href } from 'expo-router';
+import { useLocalSearchParams, usePathname, useRouter, type Href } from 'expo-router';
 import { lazy, Suspense, type ReactElement } from 'react';
 import { FlatList, StyleSheet, View } from 'react-native';
 
@@ -18,7 +18,7 @@ const DrinkScreen = lazy(() => import('@/components/screens/drink/DrinkScreen').
 
 
 /** The picked drink's page, beside the list. Opening it full (or editing) goes to its own page. */
-function DrinkPane({ id }: { id: string }) {
+export function DrinkPane({ id }: { id: string }) {
   const router = useRouter();
   const query = useCocktail(id, { seeded: true });
   const drink = query.isPlaceholderData ? undefined : query.data;
@@ -38,7 +38,7 @@ function DrinkPane({ id }: { id: string }) {
 }
 
 /** Not a drink (an ingredient, a beer): its name and a way to its own page. */
-function OtherPane({ item }: { item: SearchItem }) {
+export function OtherPane({ item }: { item: SearchItem }) {
   const router = useRouter();
   return (
     <View style={styles.other}>
@@ -57,14 +57,17 @@ function OtherPane({ item }: { item: SearchItem }) {
  *
  * `routed` (a desktop, hooks/useDrinksSplit.ts; Sta-capsules-desk): the list
  * alone, in its column beside the Drinks stack; a drink opens there at its
- * own URL (/cocktail/<id>) and its row stays lit.
+ * own URL (/cocktail/<id>) and its row stays lit. At /drinks the stack shows
+ * the list's first row (components/nav/NoDrinkPicked.tsx), so that one is lit
+ * while the list isn't `filtered` by what's typed in its search.
  */
-export function LibraryPanes({ items, rowOf, header, empty, footer, routed = false }: { items: SearchItem[]; rowOf: (item: SearchItem) => Omit<DrinkListRowProps, 'onPress' | 'picked'>; header: ReactElement; empty: ReactElement | null; footer?: ReactElement | null; routed?: boolean }) {
+export function DrinksPanes({ items, rowOf, header, empty, footer, routed = false, filtered = false }: { items: SearchItem[]; rowOf: (item: SearchItem) => Omit<DrinkListRowProps, 'onPress' | 'picked'>; header: ReactElement; empty: ReactElement | null; footer?: ReactElement | null; routed?: boolean; filtered?: boolean }) {
   const ds = useDs();
   const router = useRouter();
   const { pick } = useLocalSearchParams<{ pick?: string }>();
   const beside = useOpenBeside();
-  const picked = routed ? (items.find((i) => i.id === beside.picked) ?? null) : (items.find((i) => i.id === pick) ?? items[0] ?? null);
+  const atRoot = usePathname() === '/drinks';
+  const picked = routed ? (items.find((i) => i.id === beside.picked) ?? (atRoot && !filtered ? (items[0] ?? null) : null)) : (items.find((i) => i.id === pick) ?? items[0] ?? null);
   const list = (
     <FlatList
       style={routed ? styles.fill : [styles.list, { borderRightColor: ds.c.line }]}

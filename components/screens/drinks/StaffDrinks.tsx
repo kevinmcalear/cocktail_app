@@ -19,12 +19,12 @@ import { HouseMadeTop } from '@/components/screens/drinks/HouseMade';
 import { useStaffDrinks } from '@/components/screens/drinks/useStaffDrinks';
 import { LibrarySetup } from '@/components/screens/venueSetup/SetupBanner';
 import { FirstRoundCard, RoundOpened } from '@/components/screens/firstRound/FirstRoundCard';
-import { FilterRow } from '@/components/screens/library/LibraryChips';
-import { LibraryEmpty } from '@/components/screens/library/LibraryEmpty';
-import { LibraryPanes } from '@/components/screens/library/LibraryPanes';
+import { FilterRow } from '@/components/screens/drinks/FilterRow';
+import { DrinksEmpty } from '@/components/screens/drinks/DrinksEmpty';
+import { DrinksPanes } from '@/components/screens/drinks/DrinksPanes';
 import { NearResults } from '@/components/search/NearResults';
 import { SearchField } from '@/components/search/SearchField';
-import { SwapSheet } from '@/components/screens/library/SwapSheet';
+import { SwapSheet } from '@/components/screens/drinks/SwapSheet';
 import { space } from '@/constants/tokens';
 import { useOpenSearch } from '@/hooks/useSearchFrom';
 import { useDrinkLists } from '@/hooks/useDiscover';
@@ -37,7 +37,7 @@ import type { SearchItem } from '@/types/search';
 
 // The staff list drags to reorder, with gesture and animation code the rest of
 // Drinks doesn't need: it loads when Classics is picked.
-const StaffList = lazy(() => import('@/components/screens/library/StaffList').then((m) => ({ default: m.StaffList })));
+const StaffList = lazy(() => import('@/components/screens/drinks/StaffList').then((m) => ({ default: m.StaffList })));
 
 const NO_IDS: string[] = [];
 const EVERYWHERE = { area: { kind: 'anywhere' }, kinds: ['drink', 'bar', 'person', 'ingredient'] } as const;
@@ -53,7 +53,7 @@ const EVERYWHERE = { area: { kind: 'anywhere' }, kinds: ['drink', 'bar', 'person
  * list in its column beside the Drinks stack on a desktop
  * (components/nav/DrinksSplit.tsx), where a drink opens at its own URL.
  */
-export function LibraryScreen({ beside = false }: { beside?: boolean }) {
+export function StaffDrinks({ beside = false }: { beside?: boolean }) {
   const ds = useDs();
   const router = useRouter();
   const client = useQueryClient();
@@ -95,6 +95,8 @@ export function LibraryScreen({ beside = false }: { beside?: boolean }) {
     <FilterRow label={title} gutter={gutter} groups={[[<Chip key="all" label={all} selected={!picks.some((m) => m.id === params.menu)} onPress={() => setView({ menu: undefined })} />, ...picks.map((m) => <Chip key={m.id} label={m.name} count={m.itemIds.length} selected={params.menu === m.id} onPress={() => setView({ menu: m.id })} />)]]} />
   );
 
+  // Not on the board: under the list, so the menu on now and the drinks come first; Classics (the staff list, which has no foot) keeps it on top.
+  const nudge = active && canEdit && capsule === 'drinks' ? <MatchClassicsNudge barId={active.id} /> : null;
   const header = (
     <View style={styles.header}>
       <WebHead>
@@ -104,7 +106,7 @@ export function LibraryScreen({ beside = false }: { beside?: boolean }) {
       {!phone && !staffView ? <SearchField query={find} onQuery={setFind} placeholder="Search your drinks" /> : null}
       {activeId ? (<><ResumeCard barId={activeId} /><LibrarySetup barId={activeId} /></>) : null}
       <FirstRoundCard />
-      {active && canEdit && capsule === 'drinks' ? <MatchClassicsNudge barId={active.id} /> : null}
+      {staffView ? nudge : null}
       {capsule === 'drinks' && show === 'all' && d.card ? <OnNowCard {...d.card} onPress={() => router.push(`/menus/${d.card!.id}` as never)} /> : null}
       {nothing ? null : capsule === 'drinks' ? (
         <FilterRow label="Show" gutter={gutter} whole={breakpoint === 'desktop'} groups={d.chips.map((g) => g.map(chip))} />
@@ -134,12 +136,13 @@ export function LibraryScreen({ beside = false }: { beside?: boolean }) {
   ) : q ? (
     ask
   ) : (
-    <LibraryEmpty barId={activeId} capsule={capsule} nothing={nothing} canAdd={canEdit} onSnapBottles={() => setSnapping(true)} />
+    <DrinksEmpty barId={activeId} capsule={capsule} nothing={nothing} canAdd={canEdit} onSnapBottles={() => setSnapping(true)} />
   );
   // Past the list: Bottles' order and its own tools, the one search everywhere with what was typed, and offline, that search still works.
   const foot = (
     <View style={styles.foot}>
       {capsule === 'bottles' && activeId && !nothing ? <ToOrder barId={activeId} /> : null}
+      {nudge && !staffView && !q ? <View style={styles.wide}>{nudge}</View> : null}
       {show === 'bottles' && activeId && canEdit ? (
         <View style={styles.actions}>
           <Button label="Snap a bottle" icon="camera.fill" variant="secondary" onPress={() => setSnapping(true)} />
@@ -156,7 +159,7 @@ export function LibraryScreen({ beside = false }: { beside?: boolean }) {
   return (
     <View style={[styles.screen, { backgroundColor: ds.c.ground }]}>
       {panes && !staffView ? (
-        <LibraryPanes items={shown} rowOf={rowOf} header={header} empty={empty} footer={foot} routed={beside} />
+        <DrinksPanes items={shown} rowOf={rowOf} header={header} empty={empty} footer={foot} routed={beside} filtered={!!q} />
       ) : staffView && activeId ? (
         // The staff list drags to reorder, so it is the scroll view itself.
         <Suspense fallback={<FlatList data={[]} renderItem={() => null} ListHeaderComponent={header} contentContainerStyle={listBottom} />}>
@@ -189,4 +192,5 @@ const styles = StyleSheet.create({
   list: { gap: space.xs },
   actions: { flexDirection: 'row', flexWrap: 'wrap', gap: space.sm },
   foot: { paddingTop: space.md, gap: space.md, alignItems: 'flex-start' },
+  wide: { alignSelf: 'stretch' },
 });
