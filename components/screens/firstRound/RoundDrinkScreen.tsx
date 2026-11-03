@@ -2,9 +2,10 @@ import { useRouter, type Href } from 'expo-router';
 import { ScrollView, StyleSheet, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
-import { BackbarTheme, Body, Button, Caption, Display, DsText, GlassButton, PencilState, SpecRow, useDs, useGutter } from '@/components/ds';
+import { BackbarTheme, Body, Button, Caption, Display, DsText, GlassButton, PencilState, useDs, useGutter } from '@/components/ds';
 // By path, not the ds barrel (DrawingHero does the same): its Reanimated pour stays off the web's every-page chunk.
 import { DrinkDrawingFor } from '@/components/ds/DrinkDrawing';
+import { SpecRow } from '@/components/ds/SpecRow';
 import { DrinkSky, useSkyColour } from '@/components/screens/drink/DrinkSky';
 import { WebHead } from '@/components/WebHead';
 import { space } from '@/constants/tokens';

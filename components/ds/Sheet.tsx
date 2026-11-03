@@ -6,6 +6,7 @@ import { scheduleOnRN } from 'react-native-worklets';
 
 import { radius, space, springs } from '@/constants/tokens';
 
+import { useDiscardGuard } from './discardGuard';
 import { FlowSheet } from './FlowSheet';
 import { CloseContext } from './sheetClose';
 import { dragShade, STRETCH } from './sheetDrag';
@@ -43,6 +44,12 @@ export interface SheetProps {
   /** iOS: once the sheet is fully gone (to open another modal after it). */
   onDismiss?: () => void;
   /**
+   * Unsaved changes in it: closing it any way but the caller's own Done (a
+   * swipe or drag down, the backdrop, back, Escape, its X or Cancel) asks
+   * "Discard changes?" first, and it stays open unless they say Discard.
+   */
+  dirty?: boolean;
+  /**
    * small (the default): our sheet, for pickers, menus and short forms.
    * flow: a whole flow (Add, Rank it, Theme). The system's own sheet on
    * phones: SwiftUI's sheet on iOS (its glass, grabber, swipe to close and
@@ -66,7 +73,7 @@ export interface SheetProps {
   from?: { x: number; y: number; width: number; height: number } | null;
   /** Phones: a card inset from the edges with every corner round (Prod-add-B), not edge to edge. */
   floating?: boolean;
-  /** The web at phone width: the whole window, not a dialog (Sheet.web). */
+  /** The web at phone width: the whole window, as the phone's own sheet does, not a dialog (Sheet.web; the theme's Type and Colour). */
   fullAtPhoneWidth?: boolean;
 }
 
@@ -84,7 +91,7 @@ export function Sheet(props: SheetProps) {
   return props.kind === 'flow' && !sheetIsDialog ? <FlowSheet {...props} /> : <SmallSheet {...props} />;
 }
 
-function SmallSheet({ visible, onClose, accessibilityLabel, children, style, ground, header, keyboard, keyboardOffset = 0, onShow, onDismiss, from, floating }: SheetProps) {
+function SmallSheet({ visible, onClose, accessibilityLabel, children, style, ground, header, keyboard, keyboardOffset = 0, onShow, onDismiss, dirty, from, floating }: SheetProps) {
   const ds = useDs();
   const reduceMotion = useReducedMotion();
   const grow = !!from && !sheetIsDialog && !reduceMotion;
@@ -121,13 +128,18 @@ function SmallSheet({ visible, onClose, accessibilityLabel, children, style, gro
     setGone(true);
     onClose();
   };
-  const dismiss = () => leave(closed);
+  const guard = useDiscardGuard(dirty);
+  const dismiss = () => guard(() => leave(closed));
   const { height, pan, scroll } = useSheetDrag({
     drag,
     enabled: !sheetIsDialog,
     onClose: (velocity) => {
       'worklet';
-      leave(closed, velocity);
+      // Unsaved changes: back up into place, then ask.
+      if (dirty) {
+        drag.set(withSpring(0, springs.glide));
+        scheduleOnRN(dismiss);
+      } else leave(closed, velocity);
     },
   });
 

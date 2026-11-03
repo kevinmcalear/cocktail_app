@@ -137,7 +137,7 @@ assert.equal(barDrinksLine({ drinks: 0, onNow: null }), null);
 
 // A bar's venue brand from discover_bars: its accent and face for the monogram; none when it has no venue; not said by an older server.
 const barRow = (extra: Partial<BarRow>): BarRow => ({ id: 'lr', handle: 'lr', display_name: 'Little Rye', avatar_url: null, locality: null, city: null, country_code: null, latitude: null, longitude: null, is_closed: false, closed_year: null, drinks: 0, ...extra });
-assert.deepEqual(toDiscoverBar(barRow({ brand_accent: '#D0643B', brand_face: 'fraunces' })).brand, { accent: '#D0643B', face: 'fraunces' });
+assert.deepEqual(toDiscoverBar(barRow({ brand_accent: '#D0643B', brand_face: 'besley' })).brand, { accent: '#D0643B', face: 'besley' });
 assert.equal(toDiscoverBar(barRow({ brand_accent: null, brand_face: null })).brand, null);
 assert.equal(toDiscoverBar(barRow({})).brand, undefined);
 

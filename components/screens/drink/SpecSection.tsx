@@ -2,7 +2,8 @@ import { useRouter } from 'expo-router';
 import { useState, type ReactNode } from 'react';
 import { StyleSheet, View } from 'react-native';
 
-import { Body, Button, Caption, Headline, LockedSection, SpecRow, useDs } from '@/components/ds';
+import { Body, Button, Caption, Headline, LockedSection, useDs } from '@/components/ds';
+import { SpecRow } from '@/components/ds/SpecRow';
 import { radius, space } from '@/constants/tokens';
 import { Choice } from '@/components/screens/batch/BatchParts';
 import { HouseMadeSheet } from './HouseMadeSheet';

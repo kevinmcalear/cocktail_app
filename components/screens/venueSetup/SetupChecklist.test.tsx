@@ -4,14 +4,15 @@ import { renderWithProviders } from '@/jest.setup';
 
 import { SetupChecklist } from './SetupChecklist';
 
-const [mockPush, mockSkip] = [jest.fn(), jest.fn()];
+const [mockPush, mockSkip, mockEnter] = [jest.fn(), jest.fn(), jest.fn()];
 let mockRun: { finished: boolean; done: string[] } | undefined = { finished: true, done: [] };
 let mockLooks = false;
 let mockLoading = false;
-const DONE = { claim: true, menu: true, where: true, glassware: false, team: false, visibility: false, theme: false, calendars: false };
+const DONE = { claim: true, menu: true, place: true, glass: false, team: false, visibility: false, theme: false, calendars: false };
 
-jest.mock('expo-router', () => ({ useRouter: () => ({ push: mockPush, navigate: jest.fn() }) }));
-// The theme, opened from Theme or from Your team: a setup page whose footer saves and goes on.
+jest.mock('expo-router', () => ({ useRouter: () => ({ push: mockPush, replace: jest.fn() }) }));
+jest.mock('@/store/useAppMode', () => ({ useAppMode: (pick: (s: { enterVenue: typeof mockEnter }) => unknown) => pick({ enterVenue: mockEnter }) }));
+// How it looks, opened from Your team: a setup page whose footer saves and goes on.
 jest.mock('@/components/screens/venue/BrandScreen', () => {
   const { SetupPage } = jest.requireActual('@/components/screens/onboarding/SetupPage');
   return {
@@ -25,17 +26,12 @@ jest.mock('@/hooks/useSetupChecklist', () => ({
   useSetupChecklist: () => ({
     run: mockRun,
     list: jest.requireActual('@/lib/setupChecklist').checklist(DONE),
-    lines: { menu: 'Winter · 4 drinks', visibility: 'Menu, for now', claim: null, where: null },
-    menuId: 'm1',
+    notes: { menu: 'Winter · 4 drinks' },
     looks: mockLooks,
     loading: mockLoading,
     skip: mockSkip,
   }),
 }));
-jest.mock('./SetupChecklistParts', () => {
-  const { Text } = jest.requireActual('react-native');
-  return { LookFirstNote: () => <Text>Your team’s invite wears this</Text> };
-});
 // The steps it opens in place: each hands back with Done or Back.
 jest.mock('./KitStep', () => {
   const { Pressable, Text } = jest.requireActual('react-native');
@@ -49,7 +45,6 @@ jest.mock('./KitStep', () => {
     ),
   };
 });
-jest.mock('./MenuStep', () => ({ MenuStep: () => null }));
 jest.mock('@/hooks/useCapabilities', () => ({ useCapabilities: () => ({ data: [] }) }));
 jest.mock('@/hooks/useKitFromDrinks', () => ({ useKitFromDrinks: () => null }));
 jest.mock('./FromDrinksStep', () => ({ FromDrinksStep: () => null, fromDrinksCount: () => null }));
@@ -58,89 +53,88 @@ jest.mock('./TeamStep', () => {
   return { TeamStep: () => <Text>Team step</Text> };
 });
 
-const row = (title: string) => screen.getByRole('button', { name: new RegExp(`^${title}`) });
-
 beforeEach(() => {
   mockRun = { finished: true, done: [] };
   mockLooks = false;
   mockLoading = false;
-  for (const m of [mockPush, mockSkip]) m.mockReset();
+  for (const m of [mockPush, mockSkip, mockEnter]) m.mockReset();
 });
 
-test('the eight rows as drawn, three done; the glassware opens in place and comes back here', async () => {
+test('as drawn: Owner · 3 of 8 done, the title, the rest can wait, eight rows', async () => {
   await renderWithProviders(<SetupChecklist barId="b1" name="Little Rye" />);
-  expect(screen.getByText('Set up Little Rye')).toBeTruthy();
   expect(screen.getByText('OWNER · 3 OF 8 DONE')).toBeTruthy();
+  expect(screen.getByText('Set up Little Rye')).toBeTruthy();
   expect(screen.getByText('The rest can wait. Do them when you have a minute.')).toBeTruthy();
-  expect(row('Claim it').props.accessibilityLabel).toBe('Claim it, Done');
-  expect(row('Tonight’s menu').props.accessibilityLabel).toBe('Tonight’s menu, Winter · 4 drinks, Done');
-  expect(row('Where and when').props.accessibilityLabel).toBe('Where and when, Done');
-  for (const [title, line] of [
-    ['Glassware from your drinks', '2 minutes'],
-    ['Invite your team', 'One link for everyone'],
-    ['Who sees your page', 'Menu, for now'],
-    ['Theme', 'Your colour and your type'],
-    ['Calendars', 'Optional'],
-  ]) expect(row(title).props.accessibilityLabel).toBe(`${title}, ${line}`);
-  await fireEvent.press(row('Glassware from your drinks'));
-  expect(screen.getByText('Set up Little Rye · Glassware from your drinks')).toBeTruthy();
-  await fireEvent.press(screen.getByRole('button', { name: 'Back' }));
-  expect(mockSkip).not.toHaveBeenCalled();
-  // Done with no glasses leaves the row for later, and comes back here too.
-  await fireEvent.press(row('Glassware from your drinks'));
-  await fireEvent.press(screen.getByRole('button', { name: 'Done, back to setup' }));
-  expect(mockSkip).toHaveBeenCalledWith('glassware');
-  expect(row('Glassware from your drinks')).toBeTruthy();
+  for (const row of [
+    'Claim it, Done',
+    'Tonight’s menu, Winter · 4 drinks, Done',
+    'Where and when, Done',
+    'Glassware from your drinks, 2 minutes',
+    'Invite your team, One link for everyone',
+    'Who sees your page, Menu, for now',
+    'Theme, Your colour and your type',
+    'Calendars, Optional',
+  ])
+    expect(screen.getByRole('button', { name: row })).toBeTruthy();
 });
 
-test('the pages each row opens', async () => {
+test('each row opens its screen', async () => {
   await renderWithProviders(<SetupChecklist barId="b1" name="Little Rye" />);
-  await fireEvent.press(row('Claim it'));
+  const open = async (name: string) => fireEvent.press(screen.getByRole('button', { name }));
+  await open('Claim it, Done');
   expect(mockPush).toHaveBeenLastCalledWith('/venue-setup?bar=b1&step=claim');
-  await fireEvent.press(row('Tonight’s menu'));
-  expect(mockPush).toHaveBeenLastCalledWith('/menus/m1/edit');
-  await fireEvent.press(row('Where and when'));
+  await open('Tonight’s menu, Winter · 4 drinks, Done');
+  expect(mockEnter).toHaveBeenCalledWith('b1');
+  expect(mockPush).toHaveBeenLastCalledWith(`/bring-in?step=${encodeURIComponent('Set up Little Rye · Tonight’s menu')}`);
+  await open('Where and when, Done');
   expect(mockPush).toHaveBeenLastCalledWith('/settings/bar/b1');
-  await fireEvent.press(row('Who sees your page'));
+  await open('Who sees your page, Menu, for now');
   expect(mockPush).toHaveBeenLastCalledWith('/settings/bar/b1/publishing');
-  await fireEvent.press(row('Calendars'));
+  await open('Calendars, Optional');
   expect(mockPush).toHaveBeenLastCalledWith('/settings/bar/b1/calendars');
 });
 
-test('setup not through yet: Where and when picks venue setup up', async () => {
-  mockRun = { finished: false, done: ['find', 'place'] };
+test('Where and when not done yet on this device: venue setup picks it up', async () => {
+  mockRun = { finished: false, done: ['find'] };
   await renderWithProviders(<SetupChecklist barId="b1" name="Little Rye" />);
-  await fireEvent.press(row('Where and when'));
+  await fireEvent.press(screen.getByRole('button', { name: 'Where and when, Done' }));
   expect(mockPush).toHaveBeenLastCalledWith('/venue-setup?bar=b1');
 });
 
-test('Theme opens the look here, and Done comes back to the list', async () => {
+test('Glassware opens the Kit in place; Done with nothing leaves it for later', async () => {
   await renderWithProviders(<SetupChecklist barId="b1" name="Little Rye" />);
-  await fireEvent.press(row('Theme'));
-  expect(screen.queryByText('Your team’s invite wears this')).toBeNull();
-  await fireEvent.press(screen.getByText('Done'));
-  expect(screen.getByText('OWNER · 3 OF 8 DONE')).toBeTruthy();
+  await fireEvent.press(screen.getByRole('button', { name: 'Glassware from your drinks, 2 minutes' }));
+  expect(screen.getByText('Set up Little Rye · Glassware from your drinks')).toBeTruthy();
+  await fireEvent.press(screen.getByRole('button', { name: 'Done, back to setup' }));
+  expect(mockSkip).toHaveBeenCalledWith('glass');
+  expect(screen.getByText('Set up Little Rye')).toBeTruthy();
 });
 
-test('Your team waits for the theme: it opens the look first, then the team', async () => {
+test('Your team waits for the look: it opens How it looks first, then the team', async () => {
   await renderWithProviders(<SetupChecklist barId="b1" name="Little Rye" />);
-  await fireEvent.press(row('Invite your team'));
-  expect(screen.getByText('Your team’s invite wears this')).toBeTruthy();
-  expect(screen.getByText('How Little Rye looks')).toBeTruthy();
+  await fireEvent.press(screen.getByRole('button', { name: 'Invite your team, One link for everyone' }));
+  expect(screen.getByText('Your team’s invite wears this: the logo, colour and font go into every email.')).toBeTruthy();
   await fireEvent.press(screen.getByText('Done, on to your team'));
   expect(screen.getByText('Team step')).toBeTruthy();
+});
+
+test('Theme opens How it looks here, and Done comes back', async () => {
+  await renderWithProviders(<SetupChecklist barId="b1" name="Little Rye" />);
+  await fireEvent.press(screen.getByRole('button', { name: 'Theme, Your colour and your type' }));
+  expect(screen.queryByText('Your team’s invite wears this: the logo, colour and font go into every email.')).toBeNull();
+  await fireEvent.press(screen.getByText('Done'));
+  expect(screen.getByText('OWNER · 3 OF 8 DONE')).toBeTruthy();
 });
 
 test('with a look set, Your team goes straight to the invites', async () => {
   mockLooks = true;
   await renderWithProviders(<SetupChecklist barId="b1" name="Little Rye" />);
-  await fireEvent.press(row('Invite your team'));
+  await fireEvent.press(screen.getByRole('button', { name: 'Invite your team, One link for everyone' }));
   expect(screen.getByText('Team step')).toBeTruthy();
 });
 
-test('the rows wait for the bar to load, so Your team can\'t skip the gate', async () => {
+test('the rows wait for the data, so Your team can’t skip the gate', async () => {
   mockLoading = true;
   await renderWithProviders(<SetupChecklist barId="b1" name="Little Rye" />);
-  expect(screen.getByText('Loading…')).toBeTruthy();
-  expect(screen.queryByRole('button', { name: /^Invite your team/ })).toBeNull();
+  expect(screen.queryByRole('button', { name: 'Invite your team, One link for everyone' })).toBeNull();
 });

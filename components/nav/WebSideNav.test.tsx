@@ -28,21 +28,17 @@ let mockRole = 40;
 jest.mock('@/hooks/useViewAs', () => ({ useEffectiveRole: () => mockRole, useCanManageStaff: () => mockRole >= 40 }));
 // These read the signed-in person's venues from Supabase; the nav doesn't need them here.
 jest.mock('@/components/nav/VenueBrandProvider', () => ({ VenueBrandProvider: ({ children }: { children: unknown }) => children }));
-jest.mock('@/components/nav/VenueSwitcher', () => {
-  const { Text } = jest.requireActual<typeof import('react-native')>('react-native');
-  return { VenueSwitcher: () => <Text>venue switcher</Text> };
-});
 // Add reads where things land and the clipboard; the sheet itself is what's checked here.
 jest.mock('@/hooks/useBringInPlace', () => ({ useBringInPlace: () => ({ barId: null, venueName: null, heldBack: null, loading: false }) }));
 jest.mock('@/lib/clipboardPeek', () => ({ UNREAD_CLIP: '\u0000unread', peekClipboard: async () => null, readClipboard: async () => null }));
 jest.mock('@/hooks/useDrinkDesk', () => ({ useMenuSectionPlace: () => ({ data: undefined }) }));
 jest.mock('@/hooks/useDrafts', () => ({ useDrafts: () => ({ drafts: [{ id: 'd1' }, { id: 'd2' }] }) }));
-jest.mock('@/hooks/useCapabilities', () => ({ useCapabilities: () => ({ data: ['edit_drinks'] }), useCapabilityOpensAt: () => ({ data: 35 }) }));
+let mockCaps = ['edit_drinks', 'brand'];
+jest.mock('@/hooks/useCapabilities', () => ({ useCapabilities: () => ({ data: mockCaps }), useCapabilityOpensAt: () => ({ data: 35 }) }));
 jest.mock('@/hooks/useSearchMine', () => ({ useSearchMine: () => ({ venueId: 'caretakers', canAdd: true, label: 'Caretakers' }) }));
-jest.mock('@/components/screens/week/WeekNav', () => {
-  const { Text } = jest.requireActual<typeof import('react-native')>('react-native');
-  return { WeekNav: () => <Text>this week list</Text> };
-});
+// The notes beside the rows: one menu on now, no house-made low.
+jest.mock('@/hooks/useMenus', () => ({ useVenueMenus: () => ({ data: [{ id: 'm1', name: 'Autumn', barId: 'caretakers', kind: 'menu', startsAt: '2020-01-01T00:00:00Z', endsAt: null, itemIds: [] }] }) }));
+jest.mock('@/hooks/usePrepList', () => ({ usePrepData: () => ({ data: undefined }) }));
 const mockPush = jest.fn();
 
 // The keyboard test lends the sidebar a document; take it back once every render has unmounted.
@@ -54,6 +50,7 @@ beforeEach(() => {
   mockNavigate.mockClear();
   mockPush.mockClear();
   mockRole = 40;
+  mockCaps = ['edit_drinks', 'brand'];
   mockMode = 'venue';
 });
 
@@ -62,32 +59,35 @@ test('venue mode lists search, the four tabs and the venue pages, marking the cu
   mockPathname = '/drinks';
   await renderWithProviders(<WebSideNav />);
 
-  // The four tabs and History, the venue's Menus, Prep, Study and Glassware, then the Venue section and you at the foot.
-  // Every person and role has the same tabs (tabs A, 31 Oct); the back bar is parked.
-  expect(links()).toEqual(['Tonight', 'Drinks', 'Discover', 'History', 'You', 'Menus', 'Prep', 'Study', 'Glassware', 'My team', 'Rota', 'Brand', 'Roles and access', 'Venue settings', 'You: Kevin M., Admin at Caretakers']);
-  expect(screen.getByText('this week list')).toBeTruthy();
+  // Board Prod-desk: the four tabs, the bar's group (the menu on now, House-made, Team, Bar settings), Home's Shelf and Menus, and you at the foot.
+  // Every person and role has the same tabs (tabs A, 31 Oct); the rest opens from Bar settings.
+  expect(links()).toEqual(['Tonight', 'Drinks', 'Discover', 'You', 'Autumn, on now', 'House-made', 'Team', 'Bar settings', 'Shelf, 3', 'Menus', 'You: Kevin M., Admin at Caretakers']);
   expect(screen.getByRole('link', { name: 'Drinks', selected: true })).toBeTruthy();
   expect(screen.getByRole('link', { name: 'Tonight', selected: false })).toBeTruthy();
 
-  await fireEvent.press(screen.getByRole('link', { name: 'Glassware' }));
-  expect(mockPush).toHaveBeenLastCalledWith('/settings/bar/caretakers/glassware');
-  await fireEvent.press(screen.getByRole('link', { name: 'Menus' }));
+  await fireEvent.press(screen.getByRole('link', { name: 'House-made' }));
+  expect(mockPush).toHaveBeenLastCalledWith('/prep');
+  await fireEvent.press(screen.getByRole('link', { name: 'Autumn, on now' }));
   expect(mockPush).toHaveBeenLastCalledWith('/menus/all');
-  await fireEvent.press(screen.getByRole('link', { name: 'Brand' }));
-  expect(mockPush).toHaveBeenLastCalledWith('/settings/bar/caretakers/brand');
-  await fireEvent.press(screen.getByRole('link', { name: 'Venue settings' }));
+  await fireEvent.press(screen.getByRole('link', { name: 'Bar settings' }));
   expect(mockPush).toHaveBeenLastCalledWith('/settings/bar/caretakers');
+  // Home's Menus is the same page in home mode, so a bar switches first.
+  await fireEvent.press(screen.getByRole('link', { name: 'Menus' }));
+  expect(mockSetMode).toHaveBeenLastCalledWith('home');
+  expect(mockPush).toHaveBeenLastCalledWith('/menus/all');
   // You is a tab, and the foot opens it too.
   await fireEvent.press(screen.getByRole('link', { name: 'You: Kevin M., Admin at Caretakers' }));
   expect(mockNavigate).toHaveBeenLastCalledWith('/you');
 });
 
-test('the top of the sidebar is one mark with a chevron (the switcher), never a row of venues', async () => {
+test('the two group headings are where you switch place; no mark row tops the sidebar', async () => {
   await renderWithProviders(<WebSideNav />);
-  // Kevin, 13 Oct: one mark with an arrow that opens the venue menu (VenueSwitcher, tested on its own).
-  expect(screen.getByText('venue switcher')).toBeTruthy();
+  // Board C7/C8: the bar's heading and Home's open the places menu (VenueSwitcher's, tested on its own).
+  expect(screen.getByRole('button', { name: 'Caretakers. Switch place' })).toBeTruthy();
+  expect(screen.getByRole('button', { name: 'Home. Switch place' })).toBeTruthy();
+  // Search is the first control: nothing (no mark, no switcher) sits above it.
+  expect(screen.getAllByRole('button')[0].props.accessibilityLabel).toBe('Search');
   expect(screen.queryByRole('radio', { name: 'Pale Moth, Bartender' })).toBeNull();
-  expect(screen.queryByRole('radio', { name: 'Home bar' })).toBeNull();
 });
 
 test('a drink opened cold lights the tab its stack is in', async () => {
@@ -115,20 +115,20 @@ test('Menus stays marked on a menu page', async () => {
   mockMode = 'venue';
   mockPathname = '/menus/abc';
   await renderWithProviders(<WebSideNav />);
-  expect(screen.getByRole('link', { name: 'Menus', selected: true })).toBeTruthy();
+  expect(screen.getByRole('link', { name: 'Autumn, on now', selected: true })).toBeTruthy();
 });
 
 test('an employee opens My team from the sidebar', async () => {
   mockRole = 20;
   await renderWithProviders(<WebSideNav />);
-  await fireEvent.press(screen.getByRole('link', { name: 'My team' }));
+  await fireEvent.press(screen.getByRole('link', { name: 'Team' }));
   expect(mockPush).toHaveBeenLastCalledWith('/team');
 });
 
 test('a guest does not see My team', async () => {
   mockRole = 10;
   await renderWithProviders(<WebSideNav />);
-  expect(screen.queryByRole('link', { name: 'My team' })).toBeNull();
+  expect(screen.queryByRole('link', { name: 'Team' })).toBeNull();
 });
 
 test('home mode lists the same four tabs and navigates to their routes', async () => {
@@ -136,8 +136,8 @@ test('home mode lists the same four tabs and navigates to their routes', async (
   mockPathname = '/discover';
   await renderWithProviders(<WebSideNav />);
 
-  // No Venue section at home; the foot says your shelf.
-  expect(links()).toEqual(['Tonight', 'Drinks', 'Discover', 'History', 'You', 'You: Kevin M., Home bar · 3 bottles']);
+  // No bar group at home: Home's Shelf and Menus; the foot says your shelf.
+  expect(links()).toEqual(['Tonight', 'Drinks', 'Discover', 'You', 'Shelf, 3', 'Menus', 'You: Kevin M., Home bar · 3 bottles']);
   expect(screen.getByRole('link', { name: 'Discover', selected: true })).toBeTruthy();
 
   await fireEvent.press(screen.getByRole('link', { name: 'Discover' }));
@@ -170,7 +170,7 @@ test('New opens Add with the drafts to pick up, and its last row the other start
 
   await pressN();
   await fireEvent.press(await screen.findByRole('button', { name: /^Something else/ }));
-  expect(await screen.findByText('Made at Caretakers, for its library')).toBeTruthy();
+  expect(await screen.findByText('Made at Caretakers, for its drinks')).toBeTruthy();
   await fireEvent.press(screen.getByRole('link', { name: 'Something you make. A batch, syrup, infusion, cordial: anything with a recipe' }));
   // Made at the venue you're in, not your home bar.
   expect(mockPush).toHaveBeenLastCalledWith('/make-recipe?barId=caretakers');

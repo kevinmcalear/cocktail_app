@@ -16,7 +16,7 @@ import { useLastPlace } from '@/store/useLastPlace';
 
 import { directionsTarget } from '../bar/BarFactLines';
 import { useDirections } from '../bar/Directions';
-import { HoursSheet } from '../bar/HoursSheet';
+import { HoursSheet } from '../bar/HoursSheetLazy';
 
 const SHORT_DATE = new Intl.DateTimeFormat('en-AU', { day: 'numeric', month: 'short' });
 

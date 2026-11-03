@@ -3,7 +3,7 @@ import type { ReactNode } from 'react';
 import { StyleSheet, View } from 'react-native';
 
 import { Caption, DrinkImage, DsText, Headline, PressableScale, Spec, useDs } from '@/components/ds';
-import { displayFaces, displayName, font, space } from '@/constants/tokens';
+import { displayFaces, displayName, font, nameStyle, space } from '@/constants/tokens';
 import type { ShelfMatch } from '@/lib/shelfReach';
 import { drinkIdFromHref, itemHref, type ItemCategory } from '@/lib/itemRoutes';
 import { printedPrice } from '@/lib/menus';
@@ -77,7 +77,7 @@ function DrinkLine({ drink, centered, card = false, isNew = false, code = false 
             {drink.name}
           </DsText>
         ) : (
-          <Headline numberOfLines={2} style={[styles.shrink, displayName.row, { fontFamily: displayFaces[ds.displayFace].regular }]}>
+          <Headline numberOfLines={2} style={[styles.shrink, nameStyle(ds.displayFace, displayName.row)]}>
             {drink.name}
           </Headline>
         )}

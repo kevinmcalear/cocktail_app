@@ -5,8 +5,8 @@
  * built from that hex's hue and strength in OKLCH, so cards, lines and text
  * all follow it. No tint keeps the app's own Back Bar colours.
  */
-import { backbar, BRAND_PALETTES, type BackbarColors, type BackbarScheme } from '@/constants/tokens';
-import { parseHex, readableAccent, toHex, withAlpha } from '@/lib/color';
+import { backbar, type BackbarColors, type BackbarScheme } from '@/constants/tokens';
+import { parseHex, toHex, withAlpha } from '@/lib/color';
 
 export type Ground = 'neutral' | 'hint' | 'rich';
 
@@ -131,37 +131,4 @@ export function neutralsFrom(tint: string): Record<BackbarScheme, BackbarColors>
 /** The colours for a scheme: Back Bar's own, or built from the venue's tint. */
 export function neutralsFor(scheme: BackbarScheme, tint: string | null | undefined): BackbarColors {
   return tint ? neutralsFrom(tint)[scheme] : backbar[scheme];
-}
-
-export interface Palette {
-  name: string;
-  accent: string;
-  ground: Ground;
-}
-
-/** The six palettes a venue starts from when it has no logo. */
-export const PALETTES: Palette[] = [...BRAND_PALETTES];
-
-/**
- * The palettes to offer: the logo's colours first, each with A hint, then
- * the standard ones until there are six. `name` names a colour (lib/brandColours).
- */
-export function palettesFor(logoColours: string[], name: (hex: string) => string): Palette[] {
-  const seen = new Set<string>();
-  const out: Palette[] = [];
-  for (const p of [...logoColours.map((hex) => ({ name: name(hex), accent: hex.toUpperCase(), ground: 'hint' as const })), ...PALETTES]) {
-    if (seen.has(p.accent) || out.length === 6) continue;
-    seen.add(p.accent);
-    out.push(p);
-  }
-  return out;
-}
-
-/** The plain notes under the colours: only when a mode shifts the colour so text stays readable. */
-export function shadeNotes(accent: string, tint: string | null, name: string): string[] {
-  const out: string[] = [];
-  const word = name.toLowerCase();
-  if (readableAccent(accent, neutralsFor('light', tint).ground) !== toHex(parseHex(accent))) out.push(`Light mode uses a deeper ${word} for text, so it stays readable.`);
-  if (readableAccent(accent, neutralsFor('dark', tint).ground) !== toHex(parseHex(accent))) out.push(`Dark mode uses a lighter ${word} for text, so it stays readable.`);
-  return out;
 }

@@ -10,7 +10,7 @@
 import type { SearchItem } from '@/types/search';
 
 import { itemHref } from './itemRoutes';
-import { itemIdOf } from './libraryFilters';
+import { itemIdOf } from './drinksFilters';
 import { nearest, nearMatcher, nearReason } from './nearName';
 import { sameName } from './sameName';
 import { searchItemHref } from './openSearchItem';

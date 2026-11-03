@@ -1,8 +1,4 @@
-import {
-    DarkTheme,
-    DefaultTheme,
-    ThemeProvider,
-} from "expo-router/react-navigation";
+import { DarkTheme, DefaultTheme, ThemeProvider } from "expo-router/react-navigation";
 import { PersistQueryClientProvider } from '@tanstack/react-query-persist-client';
 import { Stack, usePathname, useRouter, useSegments } from "expo-router";
 import { loadAsync, useFonts } from 'expo-font';
@@ -14,6 +10,7 @@ import { GestureRoot } from '@/components/ds/GestureRoot';
 import { useEffect } from "react";
 import { backbar } from "@/constants/tokens";
 import '@/lib/reanimatedSetup';
+import { useReducedMotion } from '@/hooks/useReducedMotion';
 
 import { DialogHost, ViewAsBanner } from '@/components/nav/RootHosts';
 import { ToastHost } from '@/components/ds/Toast';
@@ -54,6 +51,7 @@ export const unstable_settings = {
 
 function RootLayoutNav() {
   const colorScheme = useColorScheme();
+  const reduceMotion = useReducedMotion();
   const { session, user, loading } = useAuth();
   const segments = useSegments();
   const pathname = usePathname();
@@ -108,7 +106,7 @@ function RootLayoutNav() {
   // The menu builder fills the whole width (its library, the menu and the guest card), as
   // drawn, and the printable guest card and run sheet are bare pages.
   const building = segments[0] === 'menus' && (['edit', 'card'].includes((segments as string[])[2]) || (segments as string[])[3] === 'print');
-  const showWebSidebar = isWideWeb && !!user && segments[0] !== 'auth' && segments[0] !== 'v' && segments[0] !== 'onboarding' && segments[0] !== 'venue-setup' && !building;
+  const showWebSidebar = isWideWeb && !!user && segments[0] !== 'auth' && segments[0] !== 'v' && segments[0] !== 'onboarding' && segments[0] !== 'venue-setup' && segments[0] !== 'snap' && !building;
 
   return (
     <ThemeProvider value={colorScheme === "dark" ? DarkTheme : DefaultTheme}>
@@ -141,7 +139,6 @@ function RootLayoutNav() {
             <Stack.Screen name="e/[id]" options={{ headerShown: false }} />
             <Stack.Screen name="week/index" options={{ headerShown: false }} />
             <Stack.Screen name="week/review" options={{ headerShown: false }} />
-            <Stack.Screen name="shelf" options={{ headerShown: false }} />
             <Stack.Screen name="add-cocktail" options={{ presentation: "modal", headerShown: false }} />
             <Stack.Screen name="add-ingredient" options={{ presentation: "modal", headerShown: false }} />
             <Stack.Screen name="make-recipe" options={{ presentation: "modal", headerShown: false }} />
@@ -184,6 +181,8 @@ function RootLayoutNav() {
             <Stack.Screen name="back-bar" options={{ headerShown: false }} />
             <Stack.Screen name="team/index" options={{ headerShown: false }} />
             <Stack.Screen name="team/[userId]" options={{ headerShown: false }} />
+            {/* Add's viewfinder: the whole screen, no swipe away mid-shot; a fade under Reduce Motion. */}
+            <Stack.Screen name="snap" options={{ presentation: "fullScreenModal", headerShown: false, gestureEnabled: false, animation: reduceMotion ? "fade" : "slide_from_bottom" }} />
             <Stack.Screen name="bring-in/index" options={{ headerShown: false }} />
             <Stack.Screen name="bring-in/done" options={{ headerShown: false }} />
             <Stack.Screen name="drafts" options={{ headerShown: false }} />
@@ -203,6 +202,7 @@ function RootLayoutNav() {
             <Stack.Screen name="settings/index" options={{ headerShown: false, title: "Settings" }} />
             <Stack.Screen name="settings/bar/[id]/index" options={{ headerShown: false }} />
             <Stack.Screen name="settings/bar/[id]/brand" options={{ headerShown: false }} />
+            <Stack.Screen name="settings/bar/[id]/theme" options={{ headerShown: false }} />
             <Stack.Screen name="settings/bar/[id]/roles/index" options={{ headerShown: false }} />
             <Stack.Screen name="settings/bar/[id]/roles/[role]" options={{ headerShown: false }} />
             <Stack.Screen name="p/review-claims" options={{ headerShown: false }} />

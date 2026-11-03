@@ -3,6 +3,7 @@ import { Modal, Pressable, StyleSheet, useWindowDimensions, View } from 'react-n
 
 import { useReducedMotion } from '@/hooks/useReducedMotion';
 
+import { useDiscardGuard } from './discardGuard';
 import type { SheetProps } from './Sheet';
 import { CloseContext } from './sheetClose';
 import { sheetFrame } from './sheetFrame';
@@ -25,7 +26,7 @@ export { useSheetClose } from './sheetClose';
  * load Reanimated or Gesture Handler. A finger drags it down to close it
  * (webSheetDrag), as on native.
  */
-export function Sheet({ visible, onClose, accessibilityLabel, children, style, ground, header, onShow, onDismiss, kind, fullAtPhoneWidth }: SheetProps) {
+export function Sheet({ visible, onClose, accessibilityLabel, children, style, ground, header, onShow, onDismiss, kind, dirty, fullAtPhoneWidth }: SheetProps) {
   const ds = useDs();
   const full = useWindowDimensions().width < PHONE_WIDTH && !!fullAtPhoneWidth;
   const reduceMotion = useReducedMotion();
@@ -54,15 +55,29 @@ export function Sheet({ visible, onClose, accessibilityLabel, children, style, g
       onClose();
     }, leaveMs);
   };
-  const close = () => dismiss();
+  const guard = useDiscardGuard(dirty);
+  const close = () => guard(() => dismiss());
+  // Unsaved changes: a drag that would close it settles back and asks instead.
+  const held = () => {
+    if (!dirty) return false;
+    close();
+    return true;
+  };
   // The drag attaches once per panel and reads these when a finger lets go.
-  const latest = useRef({ dismiss, reduceMotion });
+  const latest = useRef({ dismiss, reduceMotion, held });
   useEffect(() => {
-    latest.current = { dismiss, reduceMotion };
+    latest.current = { dismiss, reduceMotion, held };
   });
   const dragRef = (el: React.ComponentRef<typeof View> | null) =>
     // ponytail: on web a React Native view is a DOM element, which RN's types don't describe.
-    el ? attachSheetDrag(el as unknown as HTMLElement, (ms) => latest.current.dismiss(ms), () => latest.current.reduceMotion) : undefined;
+    el
+      ? attachSheetDrag(
+          el as unknown as HTMLElement,
+          (ms) => latest.current.dismiss(ms),
+          () => latest.current.reduceMotion,
+          () => latest.current.held(),
+        )
+      : undefined;
 
   useEffect(() => {
     if (!visible || gone) return;

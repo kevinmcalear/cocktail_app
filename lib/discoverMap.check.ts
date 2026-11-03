@@ -45,7 +45,7 @@ assert.equal(pinLook({ ...pins[0], top: 'Dirty Martini' }, false, accent, CLOSE_
 
 // --- Discover's map: a bar's mark on its colour, its name beside it when named, no score ---
 const mark = { edge: '#111111', ink: '#EEEEEE', family: 'Serif' };
-const marked = pin({ name: 'little rye', score: 9.1, mark, brand: { accent: '#D0643B', face: 'fraunces' } });
+const marked = pin({ name: 'little rye', score: 9.1, mark, brand: { accent: '#D0643B', face: 'besley' } });
 assert.equal(pinLook(marked, false, accent).label, 'L', 'its letter, not its score');
 assert.equal(pinLook(marked, false, accent).family, 'Serif');
 assert.equal(pinLook(marked, false, accent).borderColor, '#111111');

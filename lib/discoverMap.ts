@@ -6,7 +6,8 @@
 import type { CircleLayerSpecification, FilterSpecification, GeoJSONSourceSpecification, StyleSpecification } from 'maplibre-gl';
 
 import { backbar, space, type, type DisplayFace } from '../constants/tokens';
-import { accentFill, withAlpha } from './color';
+import { withAlpha } from './color';
+import { themeColours } from './theme';
 import { pinName } from './discoverMatch';
 import { formatScore } from './ranking';
 import type { Area } from './nearMe';
@@ -277,7 +278,9 @@ export function pinLook(pin: MapPin, selected: boolean, accent: { fill: string; 
   // Scores in tabular figures, names in the system font (disc-desk-search).
   const font: 'semiBold' | 'medium' | 'figuresMedium' = named ? (big ? 'semiBold' : 'medium') : 'figuresMedium';
   if (pin.mark && !pin.top && !pin.closed) {
-    const own = pin.brand ? accentFill(pin.brand.accent, backbar.dark.ground, backbar.light.surface) : null;
+    // The bar's own button colour and the ink on it (lib/theme, the one rule for a bar's colour).
+    const brand = pin.brand ? themeColours(pin.brand.accent, backbar.light.ground, false) : null;
+    const own = brand ? { fill: brand.fill, text: brand.onFill } : null;
     return {
       label: pin.logo ? '' : (pin.name.trim()[0] ?? '?').toUpperCase(),
       logo: pin.logo,

@@ -68,22 +68,31 @@ export function useDictation(onText: (text: string, final: boolean) => void) {
   });
   const heard = (text: string, final: boolean) => said.current(text, final);
 
+  // The one native recogniser is shared: its events reach every mounted hook, so each takes only its own
+  // (Add's sheet closing aborts, which would otherwise show an error on the viewfinder opening under it).
+  const mine = useRef(false);
   useEffect(() => {
     if (!native) return;
     const subs = [
       native.addListener('result', (e) => {
         const text = e.results?.[0]?.transcript;
-        if (text) heard(text, !!e.isFinal);
+        if (mine.current && text) heard(text, !!e.isFinal);
       }),
-      native.addListener('end', () => setListening(false)),
+      native.addListener('end', () => {
+        if (!mine.current) return;
+        mine.current = false;
+        setListening(false);
+      }),
       native.addListener('error', () => {
+        if (!mine.current) return;
+        mine.current = false;
         setListening(false);
         setError(NOT_HEARD);
       }),
     ];
     return () => {
       subs.forEach((s) => s.remove());
-      native.abort();
+      if (mine.current) native.abort();
     };
   }, []);
   useEffect(() => () => web.current?.stop(), []);
@@ -95,6 +104,7 @@ export function useDictation(onText: (text: string, final: boolean) => void) {
         const allowed = await native.requestPermissionsAsync();
         if (gone.current) return;
         if (!allowed.granted) return setError('Turn on the microphone and speech recognition in Settings.');
+        mine.current = true;
         native.start({ lang: 'en-US', interimResults: true, continuous: false });
         setListening(true);
       } catch {

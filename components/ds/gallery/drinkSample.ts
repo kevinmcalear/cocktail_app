@@ -1,3 +1,5 @@
+import { SKETCH_SAMPLES } from '@/constants/sketch';
+import type { SketchInputs } from '@/lib/sketch/types';
 import type { PresentationRecipe, SpecLevels } from '@/lib/spec';
 import type { DatabaseItem } from '@/types/types';
 
@@ -7,6 +9,12 @@ export { IMAGES as SAMPLE_IMAGES } from './samples';
 // masks it for each role. The spec is the widely published Penicillin.
 
 export const SAMPLE_LEVELS: SpecLevels = { generic: 20, brand: 30, measurement: 30, prep: 40 };
+
+/** The Penicillin's drawing: on a big rock, a lemon peel, so the hero has every stage to draw in. */
+export const SAMPLE_SKETCH: SketchInputs = {
+  v: 2, glass: 'rocks', ice: 'large', method: 'shake', liquid: { hex: SKETCH_SAMPLES.brandy, alpha: 0.8 }, foam: null, float: null, bleed: null,
+  fizz: false, garnish: 'lemon_peel', from: { glass: 'rules', ice: 'rules', method: 'rules', liquid: 'rules', garnish: 'rules' }, coverage: 1, variant: null,
+};
 
 const ROWS = [
   { id: 'r1', brand: 'Monkey Shoulder', generic: 'Blended Scotch', amount: 60, unit: 'ml', abv: 40, note: null },

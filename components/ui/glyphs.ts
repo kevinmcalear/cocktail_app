@@ -86,7 +86,7 @@ const G = {
   'place.collection': { d: MARK + 'M9.8 7.5h4.4L12 9.9zM12 9.9v2', f: MARK },
   'place.you': { d: YOU, f: C(12, 12, 8.5) },
   'place.team': { d: TEAM, f: C(9, 8, 3) },
-  'place.brand': { d: PALETTE + 'M8 11.5h.01M10.5 7.8h.01M14.8 7.8h.01', f: PALETTE },
+  'place.theme': { d: PALETTE + 'M8 11.5h.01M10.5 7.8h.01M14.8 7.8h.01', f: PALETTE },
   'place.roles': { d: C(8, 15.5, 3.8) + 'M10.8 12.8L19.5 4M16.5 7l2.2 2.2M14 9.5l1.8 1.8', f: C(8, 15.5, 3.8) },
   'place.settings': { d: SLIDERS, f: C(15, 7, 2.5) + C(9, 17, 2.5) },
 
@@ -208,6 +208,7 @@ const G = {
   'dollarsign.circle.fill': filled({ d: RING + 'M14.8 8.8h-3.6a1.8 1.8 0 0 0 0 3.6h1.6a1.8 1.8 0 0 1 0 3.6H9.2M12 7v1.8M12 16v1.5', f: RING }),
   trophy: { d: 'M7.5 4h9v5a4.5 4.5 0 0 1-9 0zM7.5 6H5a2.5 2.5 0 0 0 2.5 4.5M16.5 6H19a2.5 2.5 0 0 1-2.5 4.5M12 13.5v3.5M8.5 20.5h7M9.5 20.5c0-2 1-3.5 2.5-3.5s2.5 1.5 2.5 3.5', f: 'M7.5 4h9v5a4.5 4.5 0 0 1-9 0z' },
   star: { d: STAR, f: STAR },
+  'chart.bar': { d: 'M4 20h16M7 16v-4M12 16V7M17 16v-7' },
   heart: { d: HEART, f: HEART },
   'heart.fill': { d: HEART, f: HEART, solid: true, on: true },
   bookmark: { d: MARK, f: MARK },
@@ -230,6 +231,9 @@ const G = {
   camera: { d: CAMERA + C(12, 13.5, 3.5), f: C(12, 13.5, 3.5) },
   'camera.fill': filled({ d: CAMERA + C(12, 13.5, 3.5), f: CAMERA }),
   photo: { d: PHOTO + C(9, 9, 1.5) + 'M20.5 15l-5-5L4.5 20.5', f: PHOTO },
+  // The viewfinder's Flash (Prod-add-flow); filled while the torch is on.
+  bolt: { d: 'M13 2.5L5 13.5h6l-1 8 8-11h-6z', f: 'M13 2.5L5 13.5h6l-1 8 8-11h-6z' },
+  'bolt.fill': filled({ d: 'M13 2.5L5 13.5h6l-1 8 8-11h-6z', f: 'M13 2.5L5 13.5h6l-1 8 8-11h-6z' }),
   // Two corners of a frame, crossed: cropping a photo.
   crop: { d: 'M6.5 2.5v13a2 2 0 0 0 2 2h13M2.5 6.5h13a2 2 0 0 1 2 2v13' },
   doc: { d: DOC + 'M14 3v5h5M9 13h6M9 17h4', f: DOC },

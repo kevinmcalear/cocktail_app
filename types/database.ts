@@ -7412,6 +7412,7 @@ export type Database = {
           short_name: string
         }[]
       }
+      bar_claim_pending: { Args: { p_profile_id: string }; Returns: boolean }
       bar_claim_verified: { Args: { p_bar_id: string }; Returns: boolean }
       bar_owner: { Args: { p_bar_id: string }; Returns: string }
       bar_share_opens: {
@@ -7627,6 +7628,17 @@ export type Database = {
           item_type: Database["public"]["Enums"]["entity_type"]
           name: string
           named_at: string
+        }[]
+      }
+      current_menus_of_bars: {
+        Args: { p_profile_ids: string[] }
+        Returns: {
+          drinks: Json
+          id: string
+          month: number
+          name: string
+          profile_id: string
+          year: number
         }[]
       }
       decline_profile_position: { Args: { p_id: string }; Returns: undefined }
@@ -8275,6 +8287,7 @@ export type Database = {
         Returns: undefined
       }
       is_card_public: { Args: { p_item_id: string }; Returns: boolean }
+      is_on_shown_menu: { Args: { p_item_id: string }; Returns: boolean }
       is_spec_locked: { Args: { p_item_id: string }; Returns: boolean }
       join_by_staff_link: { Args: { p_token: string }; Returns: string }
       join_requests: {
@@ -9324,6 +9337,12 @@ export type Database = {
         | "playfair_display"
         | "josefin_sans"
         | "tenor_sans"
+        | "newsreader"
+        | "im_fell_english"
+        | "imbue"
+        | "besley"
+        | "belleza"
+        | "big_shoulders"
     }
     CompositeTypes: {
       [_ in never]: never
@@ -9552,6 +9571,12 @@ export const Constants = {
         "playfair_display",
         "josefin_sans",
         "tenor_sans",
+        "newsreader",
+        "im_fell_english",
+        "imbue",
+        "besley",
+        "belleza",
+        "big_shoulders",
       ],
     },
   },

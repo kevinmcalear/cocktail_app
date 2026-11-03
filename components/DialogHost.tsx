@@ -1,5 +1,5 @@
 import { useEffect } from 'react';
-import { Platform, Pressable, StyleSheet, View } from 'react-native';
+import { Modal, Platform, Pressable, StyleSheet, View } from 'react-native';
 import type { AlertButton } from 'react-native';
 
 import { Body, Button, Headline, useDs } from '@/components/ds';
@@ -12,12 +12,19 @@ import { type Dialog, useDialogStore } from '@/store/useDialogStore';
  * queued dialog as a card in the middle of the window, dressed as the app's
  * web sheets are (Sheet.web.tsx): the scrim fading in, the raised surface, ds
  * Buttons. Escape or a click outside cancels, Enter confirms.
- * Not built on Sheet: its Modal would take Escape as well, running Cancel twice.
+ * In a Modal of its own, so it opens over a sheet that asked it (Discard
+ * changes?): the app's root sits under every Modal on the web. Not built on
+ * Sheet, and its Modal has no onRequestClose: that would take Escape as well,
+ * running Cancel twice.
  */
 export function DialogHost() {
   const dialog = useDialogStore((s) => s.queue[0]);
   if (Platform.OS !== 'web' || !dialog) return null;
-  return <DialogCard key={dialog.id} dialog={dialog} />;
+  return (
+    <Modal visible transparent animationType="none">
+      <DialogCard key={dialog.id} dialog={dialog} />
+    </Modal>
+  );
 }
 
 function DialogCard({ dialog }: { dialog: Dialog }) {

@@ -22,6 +22,7 @@ const files = globSync('{app,components}/**/*.tsx').filter((f) => !f.endsWith('.
 const source = (f: string) => readFileSync(f, 'utf8');
 
 const docked = files
+  // A phone-only file (.native, .android, .ios) never reaches the web.
   .filter((f) => !/\.(native|android|ios)\.tsx$/.test(f) && !existsSync(f.replace(/\.tsx$/, '.web.tsx')))
   .filter((f) => /borderTopLeftRadius/.test(source(f)) && !/sheetFrame|sheetIsDialog/.test(source(f)));
 assert.deepEqual(docked, [], `Bottom sheets on the web: place these with sheetFrame (components/ds/sheetFrame.ts):\n  ${docked.join('\n  ')}`);

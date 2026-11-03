@@ -45,7 +45,7 @@ export function ClaimPending({ claim, profile }: { claim: ProfileClaim; profile:
 
   return (
     <View style={styles.page} role="status">
-      <Tag label="Waiting for a check" tone="warning" style={styles.hug} />
+      <Tag label="Claim sent, waiting for approval" tone="warning" style={styles.hug} />
       <Title>{title}</Title>
       <Body tone="muted">{text}</Body>
       {claim.code ? <CodeCard code={claim.code} /> : null}

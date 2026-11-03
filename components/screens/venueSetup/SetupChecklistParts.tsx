@@ -7,7 +7,7 @@ import { useVenueClaim, useVenuePage } from '@/hooks/useVenueSetup';
 import { withAlpha } from '@/lib/color';
 
 /**
- * Where proving it's yours stands, beside held glassware: waiting, with the
+ * Where proving it's yours stands, under the checklist: waiting, with the
  * claim being checked, or a way to do it now. Nothing once the page is theirs.
  */
 export function ClaimNote({ barId }: { barId: string }) {

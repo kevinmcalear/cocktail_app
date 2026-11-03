@@ -10,6 +10,9 @@ import brand from './constants/brand.json';
  * bar-branded store build would override these values and be published from
  * the bar's own developer accounts.
  */
+// iOS shows this when the camera is first asked for (Snap, a drink's photo, a bottle, a glass).
+const CAMERA_USE = '$(PRODUCT_NAME) uses the camera to photograph drinks, and to read a menu, bottle or recipe you point it at.';
+
 const APP = {
   name: brand.productName,
   /** Permanent once the first build is uploaded to App Store Connect / Play. */
@@ -100,6 +103,18 @@ export default ({ config }: ConfigContext): ExpoConfig => {
           microphonePermission: '$(PRODUCT_NAME) uses the microphone when you tap the mic to say a drink.',
           speechRecognitionPermission: '$(PRODUCT_NAME) turns what you say into text when you tap the mic to add a drink.',
           androidSpeechServicePackages: ['com.google.android.googlequicksearchbox'],
+        },
+      ],
+      // Add's viewfinder (Prod-add-flow): the live camera. One camera line for
+      // iOS, the same as expo-image-picker's in app.json (both set it). The
+      // mic line repeats speech recognition's, or this plugin would drop it.
+      [
+        'expo-camera',
+        {
+          cameraPermission: CAMERA_USE,
+          microphonePermission: '$(PRODUCT_NAME) uses the microphone when you tap the mic to say a drink.',
+          recordAudioAndroid: false,
+          barcodeScannerEnabled: false,
         },
       ],
       // The app icons people can pick in Settings (dec-28). iOS and Android

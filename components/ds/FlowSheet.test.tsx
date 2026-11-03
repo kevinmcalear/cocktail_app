@@ -31,9 +31,10 @@ jest.mock('@expo/ui/swift-ui/modifiers', () => ({
   presentationDragIndicator: () => ({}),
   presentationBackground: () => ({}),
   preferredColorScheme: () => ({}),
+  interactiveDismissDisabled: (disabled: boolean) => ({ dismissDisabled: disabled }),
 }));
 
-function Flow({ onClose }: { onClose: () => void }) {
+function Flow({ onClose, dirty }: { onClose: () => void; dirty?: boolean }) {
   const [open, setOpen] = useState(true);
   const [step, setStep] = useState(1);
   return (
@@ -42,6 +43,7 @@ function Flow({ onClose }: { onClose: () => void }) {
       <Sheet
         visible={open}
         kind="flow"
+        dirty={dirty}
         part={step === 1 ? 0.6 : undefined}
         accessibilityLabel="Rank it"
         onClose={() => {
@@ -98,4 +100,9 @@ test('closed by its parent (a Save), it goes without calling onClose', async () 
   await act(() => sheet.change!(false));
   await act(() => sheet.dismiss!());
   expect(onClose).not.toHaveBeenCalled();
+});
+
+test('with unsaved changes a swipe down is held off', async () => {
+  await renderWithProviders(<Flow onClose={() => {}} dirty />);
+  expect(sheet.modifiers).toContainEqual({ dismissDisabled: true });
 });

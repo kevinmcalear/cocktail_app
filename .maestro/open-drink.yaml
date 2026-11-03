@@ -1,10 +1,10 @@
-# Drinks: open a drink from the venue's library, close it, and land back on the list.
+# Drinks: open a drink from the venue's Drinks list, close it, and land back on the list.
 appId: com.kevinmcalear.cocktail.dev
 name: Open a drink and go back
 ---
 - runFlow: subflows/start.yaml
 - tapOn: "Drinks"
-# Each library tile reads "<name>, <line>, open" (components/screens/library/LibraryTile.tsx).
+# Each Drinks row reads "<name>, <line>, open" (DrinkListRow in components/screens/drinks/DrinksParts.tsx).
 - tapOn:
     text: ".*, open"
     index: 0

@@ -12,7 +12,9 @@ import { join } from 'node:path';
 // This links every prebuilt module's ExpoModulesCore imports against the core
 // we ship, so the next one fails here instead of on a phone.
 // ponytail: needs an nm that reads arm64 Mach-O (Xcode's, or llvm-nm); it skips
-// where there is none. Unpin expo-print when we move to a newer expo-modules-core.
+// where there is none. Unpin expo-print and expo-camera (58.0.13 and 58.0.14 need
+// AnyModule._classTypes, missing from core 58.0.24; pinned to 58.0.12) when we
+// move to a newer expo-modules-core.
 
 // GNU nm (Linux's default) runs but can't read Mach-O, so each candidate is
 // tried on the core binary below. Ubuntu keeps llvm-nm under /usr/lib/llvm-N.

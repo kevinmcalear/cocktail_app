@@ -14,7 +14,7 @@ import { useVenueSetup } from '@/store/useVenueSetup';
 import { ChecklistCard, SetupNavRow } from './SetupChecklistNavLazy';
 
 /**
- * "Setup: 3 things on their way · See": the banner on Tonight (or Library,
+ * "Setup: 3 things on their way · See": the banner on Tonight (or Drinks,
  * with Tonight off) until venue setup is finished (b03). Kept private, it stays to offer proving it's yours (prove).
  */
 export function SetupBanner({ count, prove, onPress }: { count: number; prove?: boolean; onPress?: () => void }) {
@@ -47,7 +47,7 @@ export function SetupBanner({ count, prove, onPress }: { count: number; prove?: 
 
 /**
  * The Setup banner for a venue set up on this device, on its first tab
- * (Tonight, or Library for the many venues with Tonight off): while setup isn't
+ * (Tonight, or Drinks for the many venues with Tonight off): while setup isn't
  * finished it opens where it left off; finished but kept private (no claim,
  * no page), it opens the claim.
  */
@@ -74,11 +74,11 @@ export function TonightSetupBanner({ barId }: { barId: string }) {
 const useSetupRun = (barId: string | null | undefined) => useVenueSetup((s) => (barId ? s.runs[barId] : undefined));
 
 /**
- * The top of Library: on a phone, "Set up <bar>" while its checklist isn't
+ * The top of Drinks: on a phone, "Set up <bar>" while its checklist isn't
  * done (owner-setup call 6; the sidebar has it on a desktop). The Setup
  * banner itself is on Tonight.
  */
-export function LibrarySetup({ barId }: { barId: string }) {
+export function DrinksSetup({ barId }: { barId: string }) {
   const run = useSetupRun(barId);
   const wide = useIsWideWeb();
   return run && !wide ? <ChecklistCard barId={barId} /> : null;

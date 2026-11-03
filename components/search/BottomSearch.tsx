@@ -45,7 +45,7 @@ export interface SearchTabState {
 /**
  * Over the bottom field: where it searches ("Little Rye ⌄", a menu of the
  * venue or your drinks, This area from Discover, and Everywhere), then the
- * type chips once you type. One glass row, edge to edge, so it scrolls off the
+ * type chips once you type. One row on a band of the ground, edge to edge, so it scrolls off the
  * screen's side rather than against an edge, with the results passing under it
  * (search-typing, decided 23 Oct 2026). `camera`: iOS 26's system field
  * can't hold the camera, so it leads this row instead.
@@ -56,7 +56,7 @@ export function PlaceRow({ query, scope, setScope, mine, area, show, setShow, co
   // At a venue on Everywhere: Can make, between the place and the type chips; on, the type chips leave (QA Q37).
   const canMake = query && scope === 'everywhere' && !!mine.venueId;
   return (
-    <ScrollView horizontal showsHorizontalScrollIndicator={false} keyboardShouldPersistTaps="handled" style={styles.placeRow} contentContainerStyle={[styles.placeChips, { paddingHorizontal: gutter }]}>
+    <ScrollView horizontal showsHorizontalScrollIndicator={false} keyboardShouldPersistTaps="handled" style={[styles.placeRow, { backgroundColor: ds.c.ground }]} contentContainerStyle={[styles.placeChips, { paddingHorizontal: gutter }]}>
       {camera ? <GlassButton icon="camera" color={ds.c.ink} size={layout.minTapTarget} accessibilityLabel="Snap a menu or bottle" onPress={() => useBringIn.getState().openSheet()} /> : null}
       <ScopeToken options={scopeOptions(mine.label, area?.label ?? null)} scope={scope} onScope={setScope} />
       {canMake ? <CanMakeChip show={show} onShow={setShow} count={counts.canmake} /> : null}
@@ -198,7 +198,7 @@ export function BottomSearch({ query, setQuery, scope, setScope, mine, area, foc
           // The web has no drag dismissal: blur the field when the results move.
           onScrollBeginDrag={Platform.OS === 'web' ? Keyboard.dismiss : undefined}
           // The last rows scroll clear of the dock floating over them; the web page starts under the status bar.
-          contentContainerStyle={{ paddingHorizontal: gutter, paddingTop: Platform.OS === 'web' ? insets.top + space.lg : 0, paddingBottom: dockHeight + space.lg, gap: space.lg }}
+          contentContainerStyle={{ paddingHorizontal: gutter, paddingTop: Platform.OS === 'web' ? Math.max(insets.top, space.xl) + space.lg : 0, paddingBottom: dockHeight + space.lg, gap: space.lg }}
         >
           {/* The tab's title row, as every tab has it. */}
           {SEARCH_TAB ? <ScreenHeaderSpacer title="Search" /> : null}
@@ -266,6 +266,7 @@ const styles = StyleSheet.create({
   systemRow: { paddingTop: space.lg, pointerEvents: 'box-none' },
   fieldRow: { flexDirection: 'row', alignItems: 'center', gap: space.sm },
   field: { flex: 1, minWidth: 0 },
+  // A band of the ground behind the chips, so rows passing under them don't read through (Search · typing).
   placeRow: { flexGrow: 0 },
-  placeChips: { flexDirection: 'row', alignItems: 'center', gap: space.sm },
+  placeChips: { flexDirection: 'row', alignItems: 'center', gap: space.sm, paddingVertical: space.xs },
 });

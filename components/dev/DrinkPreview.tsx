@@ -5,7 +5,7 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import { BackbarTheme, Caption, PressableScale, useDs } from '@/components/ds';
 import { BATCH_SAMPLES, batchSampleLines, type BatchSampleKey } from '@/components/ds/gallery/batchSamples';
-import { SAMPLE_IMAGES, SAMPLE_LEVELS, sampleDrink } from '@/components/ds/gallery/drinkSample';
+import { SAMPLE_IMAGES, SAMPLE_LEVELS, SAMPLE_SKETCH, sampleDrink } from '@/components/ds/gallery/drinkSample';
 import { radius, space } from '@/constants/tokens';
 import { useIsHydrated } from '@/hooks/useIsHydrated';
 import { roleLabel, ROLE_LEVELS } from '@/lib/roles';
@@ -34,9 +34,10 @@ export default function DrinkPreview() {
 }
 
 function Preview() {
-  const params = useLocalSearchParams<{ batch?: string }>();
+  const params = useLocalSearchParams<{ batch?: string; photo?: string }>();
   const [role, setRole] = useState(30);
-  const [photo, setPhoto] = useState(true);
+  // ?photo=0 opens on the drawing (a check that can't tap the chip).
+  const [photo, setPhoto] = useState(params.photo !== '0');
   const [batch, setBatch] = useState<BatchSampleKey | null>(params.batch && params.batch in BATCH_SAMPLES ? (params.batch as BatchSampleKey) : null);
   if (batch) {
     return (
@@ -70,7 +71,7 @@ function Preview() {
         item={sampleDrink(role)}
         canEdit={false}
         onEdit={() => {}}
-        preview={{ heroSource: photo ? SAMPLE_IMAGES.photo : null, role, levels: SAMPLE_LEVELS }}
+        preview={{ heroSource: photo ? SAMPLE_IMAGES.photo : null, sketch: SAMPLE_SKETCH, role, levels: SAMPLE_LEVELS }}
       />
       <BackbarTheme>
         <RoleBar role={role} setRole={setRole}>

@@ -6,7 +6,7 @@ import { BackbarTheme, Caption, PencilState, PressableScale, Title, useDs } from
 import { ListGroup, ListNote, ListRow, SectionLabel } from '@/components/ds/ListGroup';
 import { usePageColumn } from '@/components/nav/pageColumn';
 import { useTabBarInset } from '@/components/nav/WebTabBar';
-import { CurrentUserAvatar, useUserDisplayName } from '@/components/ui/UserAvatar';
+import { useUserDisplayName } from '@/components/ui/UserAvatar';
 import { WebHead } from '@/components/WebHead';
 import { space } from '@/constants/tokens';
 import { useCollection } from '@/hooks/useCollection';
@@ -26,7 +26,7 @@ import { headlineJob, profileLine, youLine } from '@/lib/profiles';
 import { YouPeople } from '../people/YouPeople';
 import { CreditsToCheckCard } from './CreditsToCheck';
 import { MyJobRequests } from './JobRequests';
-import { BestRows, YouStats, YouTop } from './YouParts';
+import { BestRows, YouAvatar, YouStats, YouTop } from './YouParts';
 import { YouEmpty, YouError, YouLoading, YouOffline } from './YouStates';
 import { ItsYou, YourBarCard } from './YourBarCard';
 
@@ -122,7 +122,7 @@ function You() {
         <View style={[column, styles.body]}>
           {profile ? <ItsYou drinks={madeCount} waiting={waitingCredits} /> : null}
           <View style={styles.identity}>
-            <CurrentUserAvatar size={84} />
+            <YouAvatar name={name} size={84} />
             <Title aria-level={1} align="center">
               {name}
             </Title>
@@ -169,8 +169,6 @@ function You() {
             </ListGroup>
           </View>
 
-          <YouPeople />
-
           <View style={styles.section}>
             <SectionLabel title="Your best" />
             {best.length ? (
@@ -180,10 +178,14 @@ function You() {
             )}
           </View>
 
+          <YouPeople />
+
           <View style={styles.section}>
             <SectionLabel title="Your taste" />
             <ListGroup>
-              <ListRow first title={headline ?? 'Not set yet'} detail={!headline ? 'Tell us what you like' : ranked ? `From your ${plural(ranked, 'rank')}` : 'From your answers'} onPress={push('/taste')} />
+              <ListRow first icon="chart.bar" title={headline ?? 'Not set yet'} detail={!headline ? 'Tell us what you like' : ranked ? `From your ${plural(ranked, 'rank')}` : 'From your answers'} onPress={push('/taste')} />
+              <ListRow icon="star" title="Credits" detail={madeCount ? `${plural(madeCount, 'drink')} ${madeCount === 1 ? 'names' : 'name'} you as their maker` : 'None yet'} onPress={push('/your-drinks?tab=originals')} />
+              <ListRow icon="calendar" title="Drinks you’ve had" value={String(ranked)} onPress={push('/your-drinks')} />
             </ListGroup>
           </View>
 
@@ -191,8 +193,6 @@ function You() {
             <SectionLabel title="Kept" />
             <ListGroup>
               <ListRow first icon="bookmark" title="Saved drinks" value={String(saved)} onPress={push('/saved')} />
-              <ListRow icon="wineglass" title="Drinks you’ve had" value={String(ranked)} onPress={push('/your-drinks')} />
-              {madeCount ? <ListRow icon="person" title="Credits" detail={`${plural(madeCount, 'drink')} ${madeCount === 1 ? 'names' : 'name'} you as their maker`} onPress={push('/your-drinks?tab=originals')} /> : null}
             </ListGroup>
           </View>
         </View>

@@ -1,7 +1,8 @@
 import { useState } from 'react';
 import { StyleSheet, View } from 'react-native';
 
-import { DsText, SPEC_AMOUNT_WIDTH, SpecRow, useDs } from '@/components/ds';
+import { DsText, useDs } from '@/components/ds';
+import { SPEC_AMOUNT_WIDTH, SpecRow } from '@/components/ds/SpecRow';
 import { font, space } from '@/constants/tokens';
 import { useSpecAccess } from '@/hooks/useSpecAccess';
 import { useSpecView } from '@/hooks/useSpecView';
@@ -146,7 +147,7 @@ export function GroupHead({ number, title, aside }: { number: string | null; tit
 }
 
 /** The note under a step's lines, lined up with the names (boards Decided-spec-groups, who-bartender). */
-function StepNoteLine({ text }: { text: string }) {
+export function StepNoteLine({ text }: { text: string }) {
   return (
     <DsText variant="label" tone="muted" style={styles.note}>
       {text}
