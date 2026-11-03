@@ -2,8 +2,7 @@ import { useRouter, type Href } from 'expo-router';
 import { ScrollView, StyleSheet, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
-import { BackbarTheme, BrandProvider, Caption, GlassButton, Surface, useDs, useGutter } from '@/components/ds';
-import { PencilState } from '@/components/ds/PencilState';
+import { BackbarTheme, BrandProvider, Caption, GlassButton, PencilState, Surface, useDs, useGutter } from '@/components/ds';
 import { ItemTitle } from '@/components/screens/drink/ItemTitle';
 import { RowDivider, SettingsRow } from '@/components/screens/settings/SettingsParts';
 import { IconSymbol } from '@/components/ui/icon-symbol';

@@ -2,8 +2,7 @@ import { useLocalSearchParams, useRouter, type Href } from 'expo-router';
 import { useState } from 'react';
 import { StyleSheet, View } from 'react-native';
 
-import { Body, Caption, GlassButton, PressableScale, useDs } from '@/components/ds';
-import { PencilState } from '@/components/ds/PencilState';
+import { Body, Caption, GlassButton, PencilState, PressableScale, useDs } from '@/components/ds';
 import { SegmentedCapsule } from '@/components/ds/SegmentedCapsule';
 import { ListNote, OutlineRows, RowName } from '@/components/ds/ListGroup';
 import { IconSymbol } from '@/components/ui/icon-symbol';

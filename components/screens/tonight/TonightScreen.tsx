@@ -1,7 +1,6 @@
 import { ScrollView, StyleSheet, View } from 'react-native';
 
-import { useDs } from '@/components/ds';
-import { PencilState } from '@/components/ds/PencilState';
+import { PencilState, useDs } from '@/components/ds';
 import { ScreenHeader } from '@/components/nav/ScreenHeader';
 import { usePageColumn } from '@/components/nav/Page';
 import { useTabBarInset } from '@/components/nav/WebTabBar';

@@ -4,8 +4,7 @@ import { useEffect, useRef, useState, type ComponentRef } from 'react';
 import { PixelRatio, Platform, StyleSheet, useWindowDimensions, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
-import { BackbarTheme, Button, GlassButton, Headline, Segmented, useDs, useGutter } from '@/components/ds';
-import { PencilState } from '@/components/ds/PencilState';
+import { BackbarTheme, Button, GlassButton, Headline, PencilState, Segmented, useDs, useGutter } from '@/components/ds';
 import { PaperPage } from '@/components/paper/PaperPage';
 import { layout, radius, space } from '@/constants/tokens';
 import { showMessage } from '@/lib/dialogs';

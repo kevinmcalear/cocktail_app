@@ -4,8 +4,7 @@ import { useRouter } from 'expo-router';
 import { lazy, Suspense, useState } from 'react';
 import { FlatList, StyleSheet, View } from 'react-native';
 
-import { Button, Caption, Chip, useBreakpoint, useDs, useGutter } from '@/components/ds';
-import { PencilState } from '@/components/ds/PencilState';
+import { Button, Caption, Chip, PencilState, useBreakpoint, useDs, useGutter } from '@/components/ds';
 import { SectionLabel } from '@/components/ds/ListGroup';
 import { useTabBarInset } from '@/components/nav/WebTabBar';
 import { WebHead } from '@/components/WebHead';

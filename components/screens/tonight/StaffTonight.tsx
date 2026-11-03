@@ -1,8 +1,7 @@
 import { useRouter, type Href } from 'expo-router';
 import { StyleSheet, View } from 'react-native';
 
-import { Body, Caption, DrinkDrawingFor, DsText, PressableScale, Tag, useDs } from '@/components/ds';
-import { PencilState } from '@/components/ds/PencilState';
+import { Body, Caption, DrinkDrawingFor, DsText, PencilState, PressableScale, Tag, useDs } from '@/components/ds';
 import { DrawingBar } from '@/components/ds/DrawingBar';
 import { IconSymbol } from '@/components/ui/icon-symbol';
 import { TonightSetupBanner } from '@/components/screens/venueSetup/SetupBanner';

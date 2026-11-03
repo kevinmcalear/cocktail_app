@@ -4,8 +4,7 @@ import { useQueryClient } from '@tanstack/react-query';
 import { lazy, Suspense, useState, type ReactNode } from 'react';
 import { FlatList, ScrollView, StyleSheet, View } from 'react-native';
 
-import { Caption, Chip, useDs, useGutter } from '@/components/ds';
-import { PencilState } from '@/components/ds/PencilState';
+import { Caption, Chip, PencilState, useDs, useGutter } from '@/components/ds';
 import { usePageColumn } from '@/components/nav/pageColumn';
 import { useTabBarInset } from '@/components/nav/WebTabBar';
 import { WebHead } from '@/components/WebHead';

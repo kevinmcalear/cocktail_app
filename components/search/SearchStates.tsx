@@ -2,8 +2,7 @@ import { useRouter } from 'expo-router';
 import { cloneElement, isValidElement, type ComponentProps, type ReactNode } from 'react';
 import { StyleSheet, View } from 'react-native';
 
-import { DsText, PressableScale, useDs } from '@/components/ds';
-import { PencilState } from '@/components/ds/PencilState';
+import { DsText, PencilState, PressableScale, useDs } from '@/components/ds';
 import { IconSymbol } from '@/components/ui/icon-symbol';
 import { layout, radius, space } from '@/constants/tokens';
 import type { SearchMine } from '@/hooks/useSearchMine';

@@ -1,8 +1,7 @@
 import { useCallback, useMemo, useRef, useState, type ComponentRef } from 'react';
 import { Pressable, StyleSheet, View } from 'react-native';
 
-import { Caption, Field, useDs, useToast } from '@/components/ds';
-import { PencilState } from '@/components/ds/PencilState';
+import { Caption, Field, PencilState, useDs, useToast } from '@/components/ds';
 import { PaperStack } from '@/components/paper/PaperStack';
 import { MenuSheet } from '@/components/screens/menus/MenuSheet';
 import { RowDivider, SettingsRow } from '@/components/screens/settings/SettingsParts';

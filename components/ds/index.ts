@@ -1,9 +1,8 @@
 // The Back Bar design system. Redesigned screens build from these; see
 // docs/design_system.md and the gallery at /dev/gallery.
-// Pieces only a few screens use (PopoverMenu, SpecRow, TimeField, PencilState,
-// FlowHead, GlassVariantPicker, SketchTintPicker) are imported from their own
-// files, not from here: every screen that imports this file carries all of it,
-// so on the web it sits in the chunk every page loads.
+// PopoverMenu, SpecRow, TimeField, FlowHead, GlassVariantPicker and
+// SketchTintPicker are imported from their own files: each is on fewer than 20
+// routes, and anything exported here sits in the web chunk every page loads.
 export { Button, type ButtonProps, type IconName } from './Button';
 export { Chip } from './Chip';
 export { DrinkImage, type DrinkImageProps } from './DrinkImage';
@@ -37,3 +36,4 @@ export { SheetScrollView } from './SheetScrollView';
 export { dragDismissesKeyboard } from './keyboardDrag';
 export { HidingHeadScroll } from './HidingHeadScroll';
 export { DrinkDrawing, DrinkDrawingFor, drawingUri, isRowSize, type DrawingSize, type DrinkDrawingProps } from './DrinkDrawing';
+export { PencilState, type PencilStateKind, type PencilStateProps } from './PencilState';

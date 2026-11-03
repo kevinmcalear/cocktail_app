@@ -1,8 +1,7 @@
 import type { ReactNode } from 'react';
 import { StyleSheet, View } from 'react-native';
 
-import { Caption, Display, DrinkImage, DsText, IngredientThumb, PressableScale, Tag, useDs } from '@/components/ds';
-import { PencilState } from '@/components/ds/PencilState';
+import { Caption, Display, DrinkImage, DsText, IngredientThumb, PencilState, PressableScale, Tag, useDs } from '@/components/ds';
 import { SegmentedCapsule } from '@/components/ds/SegmentedCapsule';
 import { DrinkDrawing } from '@/components/ds/DrinkDrawing';
 import { OutlineRows, RowName, SavedChip } from '@/components/ds/ListGroup';
