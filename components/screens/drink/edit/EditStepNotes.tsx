@@ -26,7 +26,9 @@ type Step = ReturnType<typeof draftSteps>[number];
  * it with an aside beside the name, a line of what's in it, and a note under
  * that. A garnish has a note and no aside. With no method to name it, the
  * first step says how to name it. Its steps are the page's, from the lines and
- * parts as they stand.
+ * parts as they stand. Each step's name is an eyebrow-weight head, as the
+ * boards draw it: Kevin chose that over Eddie's question headings (tf-070) on
+ * 3 Nov 2026.
  */
 export function EditStepNotes({ editor, known = [] }: { editor: Editor; /** The drink's methods as it loaded, named before the full list of methods is in. */ known?: readonly { method_item_id: string; method?: { name: string } | null }[] }) {
   const named = new Map([...known.map((m) => [m.method_item_id, m.method?.name ?? ''] as const), ...editor.methods.map((m) => [m.id, m.name] as const)]);
@@ -58,10 +60,10 @@ function StepField({ step, words, onChange }: { step: Step; words?: StepWords; o
   const left = noteLeft(note);
   const onNote = focus === 'note';
   const asideOn = focus === 'aside';
-  // iOS and the web: a card. Android: Material's outlined field, its label on the edge once there are words.
+  // A hairline box, not filled (Kevin, 3 Nov). Android: Material's outlined field, its label on the edge once there are words.
   const edge = onNote ? (ANDROID ? 2 : 1.5) : ANDROID ? 1 : StyleSheet.hairlineWidth;
   const box = {
-    backgroundColor: ANDROID ? 'transparent' : ds.c.surface,
+    backgroundColor: 'transparent',
     borderColor: onNote ? ds.accentText : ANDROID ? ds.c.faint : ds.c.line,
     borderWidth: edge,
     padding: BOX_INSET - edge,
@@ -70,7 +72,7 @@ function StepField({ step, words, onChange }: { step: Step; words?: StepWords; o
     <View>
       <View style={[styles.head, { borderBottomColor: asideOn ? ds.accentText : ds.c.line, borderBottomWidth: asideOn ? 1.5 : StyleSheet.hairlineWidth }]}>
         {step.number ? (
-          <DsText variant="label" color={ds.accentText} style={font.figuresMedium}>
+          <DsText variant="label" color={ds.accentText} style={font.monoMedium}>
             {step.number}
           </DsText>
         ) : null}

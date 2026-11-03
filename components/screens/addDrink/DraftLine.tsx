@@ -137,9 +137,9 @@ const styles = StyleSheet.create({
   row: { flexDirection: 'row', alignItems: 'center' },
   line: { flex: 1, minWidth: 0, flexDirection: 'row', alignItems: 'center', gap: space.md, minHeight: 50 },
   amount: { width: AMOUNT, flexDirection: 'row', alignItems: 'baseline', justifyContent: 'flex-end', gap: 3 },
-  // The spec boards' big figure (Miss-steps, Decided-who-creator), as the drink page's SpecRow sets it.
-  figure: { fontSize: type.headline.fontSize, lineHeight: type.body.lineHeight, ...font.semiBold, fontVariant: ['tabular-nums'] },
-  unit: { ...font.figures },
+  // The spec boards' big figure in the mono face (Miss-steps, Kevin 3 Nov: mono as drawn).
+  figure: { fontSize: type.headline.fontSize, lineHeight: type.body.lineHeight, ...font.monoMedium },
+  unit: { ...font.mono },
   name: { flex: 1, minWidth: 0 },
   flag: { borderRadius: radius.control - 2, paddingHorizontal: space.sm + 1, paddingVertical: space.xs + 2 },
   bold: { ...font.semiBold },

@@ -3,10 +3,11 @@ import { useEffect, useRef, useState, type ReactNode } from 'react';
 import { Platform, StyleSheet, TextInput, useWindowDimensions, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
-import { BackbarTheme, BrandProvider, Button, Caption, GlassButton, Headline, PressableScale, useBreakpoint, useDs, useGutter } from '@/components/ds';
+import { BackbarTheme, BrandProvider, Button, Caption, GlassButton, PressableScale, useBreakpoint, useDs, useGutter } from '@/components/ds';
 import { FormScrollContainer } from '@/components/recipe/FormScrollContainer';
 import { ToolsSheet } from '@/components/tools/ToolsSheet';
 import { IconSymbol } from '@/components/ui/icon-symbol';
+import { Skeleton, SkeletonLines } from '@/components/ui/Skeleton';
 import { displayFaces, font, layout, radius, space, type } from '@/constants/tokens';
 import { useActiveVenue } from '@/hooks/useActiveVenue';
 import { useBackBarIds } from '@/hooks/useBackBar';
@@ -70,7 +71,24 @@ export function EditBrand({ barId, children }: { barId: string | null | undefine
 export type OpenOn = 'fit' | 'photos';
 
 function SavedDrinkEdit({ id, onExit, openOn, inSheet }: { id: string; onExit: () => void; openOn?: OpenOn; inSheet?: boolean }) {
-  return <EditPage editor={useCocktailEditor(id)} id={id} onExit={onExit} openOn={openOn} inSheet={inSheet} />;
+  const editor = useCocktailEditor(id);
+  // A cold load or reload opens this route before the drink (or, on the web, the route's id) has arrived: the page waits, as it would show an empty "New drink" form.
+  if (!id || editor.loading) return <EditLoading />;
+  return <EditPage editor={editor} id={id} onExit={onExit} openOn={openOn} inSheet={inSheet} />;
+}
+
+/** The shape of the page while the drink comes in (Miss-steps-cases "Loading"). */
+function EditLoading() {
+  const ds = useDs();
+  const insets = useSafeAreaInsets();
+  const gutter = useGutter();
+  return (
+    <View role="progressbar" aria-label="Loading the drink" style={[styles.screen, { backgroundColor: ds.c.ground, paddingTop: insets.top + space.xl, paddingHorizontal: gutter, gap: space.lg }]}>
+      <Skeleton width={160} height={14} />
+      <Skeleton width="60%" height={40} />
+      <SkeletonLines lines={5} lineHeight={22} />
+    </View>
+  );
 }
 
 /** The page for a saved drink (`id`) or a draft (`id` null): a draft's Done keeps it a draft, and More publishes it. `openOn` opens on one of its sheets. */
@@ -186,16 +204,16 @@ export function EditPage({ editor, id, onExit, openOn, inSheet }: { editor: Drin
       {id ? <EditCredits itemId={id} /> : null}
       {/* Not drawn on Miss-steps: the credit line under the name on the page, kept with who made it. */}
       <View style={styles.section}>
-        <Headline role="heading">Where it’s from</Headline>
+        <Eyebrow heading>Where it’s from</Eyebrow>
         <TextInput value={editor.origin} onChangeText={editor.setOrigin} placeholder="A bar, a year" placeholderTextColor={ds.c.muted} accessibilityLabel="Where it’s from" style={fieldBox} />
       </View>
       <View style={styles.section}>
-        <Headline role="heading">Story</Headline>
+        <Eyebrow heading>Story</Eyebrow>
         <GrowingField minHeight={96} value={editor.description} onChangeText={editor.setDescription} placeholder="Where it comes from, what it tastes like" placeholderTextColor={ds.c.muted} accessibilityLabel="Story" style={fieldBox} />
       </View>
       <View style={styles.section}>
         <View style={styles.headRow}>
-          <Headline role="heading">Notes for the team</Headline>
+          <Eyebrow heading>Notes for the team</Eyebrow>
           <Caption tone="muted">Staff only</Caption>
         </View>
         <GrowingField minHeight={96} value={editor.notes} onChangeText={editor.setNotes} placeholder="Tricks, swaps, what guests ask" placeholderTextColor={ds.c.muted} accessibilityLabel="Notes for the team" style={fieldBox} />
