@@ -20,10 +20,10 @@ import { RoundNav } from '@/components/screens/firstRound/RoundElsewhere';
 import { SetupNav } from '@/components/screens/venueSetup/SetupBanner';
 
 import { AddSheets } from './AddButton';
-import { useNavPlaces, useSideNotes, type Place } from './navPlaces';
+import { useSidePlaces, useSideNotes, type Place } from './sidePlaces';
 import { useUserDisplayName } from '@/components/ui/UserAvatar';
 
-import { MarksRow, NavHeading, NavRow, YouFooter } from './SideNavParts';
+import { NavRow, PlaceHeading, YouFooter } from './SideNavParts';
 import { VenueBrandProvider } from './VenueBrandProvider';
 import { WebRail } from './WebRail';
 
@@ -54,7 +54,7 @@ function SideNav() {
   const pathname = usePathname();
   const { setMode } = useMode();
   const nav = useWebNav();
-  const places = useNavPlaces();
+  const places = useSidePlaces();
   const [creating, setCreating] = useState(false);
   const searching = useSearchPalette((s) => s.open);
   const setSearching = useSearchPalette((s) => s.setOpen);
@@ -111,17 +111,18 @@ function SideNav() {
 }
 
 /**
- * The desktop sidebar, as board Prod-desk draws it: the marks, Search (⌘K), the
+ * The desktop sidebar, as board Prod-desk (C7) draws it: Search (⌘K), the
  * four tabs, the bar's group (its Menus, House-made, Team, Bar settings), then
- * Home (Shelf, Menus), and you at the foot. Everything else (Study, Glassware,
- * Rota, Brand, Roles and access) opens from Bar settings or Tonight. New is the
- * + Add top right (and the N key). Pages need no header row of their own.
+ * Home (Shelf, Menus), and you at the foot. The two group headings are where you
+ * switch place. Everything else (Study, Glassware, Back bar, Rota, Brand, Roles
+ * and access) opens from Bar settings or Tonight. Add is the + Add top right of
+ * the page (DeskAddButton) and the N key. Pages need no header row of their own.
  */
 function Sidebar({ current, go, searching, onSearch }: SideNavProps) {
   const ds = useDs();
   // An iPad's status bar and home indicator; 0 on the web.
   const insets = useSafeAreaInsets();
-  const { venue, tabs, bar, homePlaces } = useNavPlaces();
+  const { venue, tabs, bar, homePlaces } = useSidePlaces();
   const notes = useSideNotes(venue?.id ?? null);
   const name = useUserDisplayName();
   const row = (p: Place) => {
@@ -132,19 +133,18 @@ function Sidebar({ current, go, searching, onSearch }: SideNavProps) {
   const keys = Platform.OS === 'web';
   return (
     <View role="navigation" accessibilityLabel="Main" style={[styles.nav, { backgroundColor: ds.c.ground, borderRightColor: ds.c.line, paddingTop: insets.top + space.lg, paddingBottom: insets.bottom + space.lg }]}>
-      <MarksRow />
       {/* "Set up <bar>" first, until it's done (owner-setup call 6). */}
       <SetupNav />
       <NavRow label="Search" icon="magnifyingglass" role="button" look="filled" hint={keys ? (isApplePlatform() ? '⌘K' : 'Ctrl K') : undefined} current={searching} onPress={onSearch} />
       {tabs.map(row)}
       {venue && bar.length ? (
         <>
-          <NavHeading mark={venue.name}>{venue.name}</NavHeading>
+          <PlaceHeading mark={venue.name}>{venue.name}</PlaceHeading>
           {bar.map(row)}
         </>
       ) : null}
       {venue ? <RoundNav /> : null}
-      <NavHeading mark={name}>Home</NavHeading>
+      <PlaceHeading mark={name}>Home</PlaceHeading>
       {homePlaces.map(row)}
       <YouFooter venue={venue} />
     </View>
