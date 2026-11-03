@@ -1,7 +1,7 @@
 // Checks for lib/discoverMap.ts. Run: npm run test:unit
 import assert from 'node:assert/strict';
 
-import { AREA_ZOOM, CLOSE_ZOOM, readableLabels, areaLabel, areasFrom, BEST_PINS, cameraFor, cameraForArea, dotsOf, MAX_AREAS, pinLabel, pinLook, pinsToDraw, viewportFrom, type MapPin, type MapView } from './discoverMap';
+import { AREA_ZOOM, CLOSE_ZOOM, readableLabels, areaFromViewport, areaLabel, areasFrom, BEST_PINS, cameraFor, cameraForArea, dotsOf, MAX_AREAS, pinLabel, pinLook, pinsToDraw, movedFrom, viewportFrom, type MapPin, type MapView } from './discoverMap';
 
 const pin = (over: Partial<MapPin>): MapPin => ({
   id: 'x', handle: 'x', name: 'X', logo: null, place: 'Brunswick, Melbourne', latitude: -37.8, longitude: 144.96, score: null, position: null, rankers: 3, ...over,
@@ -90,6 +90,23 @@ const me = { latitude: 40.7261, longitude: -73.9807 };
 assert.deepEqual(cameraForArea({ kind: 'point', latitude: 40.72, longitude: -73.99, radiusKm: 10, source: 'me' }, me), { ...me, zoom: near.zoom });
 assert.equal(cameraForArea({ kind: 'point', latitude: 40.72, longitude: -73.99, radiusKm: 10, source: 'map' }, me)!.latitude, empty.latitude);
 
+// --- Search this area: the map's view as an area ---
+const viewArea = areaFromViewport({ latitude: 40.7209, longitude: -73.988, latitudeDelta: 0.1, longitudeDelta: 0.1, zoom: 11 });
+assert.deepEqual([viewArea.latitude, viewArea.longitude, viewArea.source], [40.721, -73.988, 'map']);
+assert.equal(viewArea.radiusKm, 7, '5.55 km up, 4.21 km across at 40.7 N');
+assert.equal(areaFromViewport({ latitude: 0, longitude: 0, latitudeDelta: 0.0001, longitudeDelta: 0.0001, zoom: 20 }).radiusKm, 0.5);
+assert.equal(areaFromViewport({ latitude: 0, longitude: 0, latitudeDelta: 90, longitudeDelta: 180, zoom: 1 }).radiusKm, 200);
+
+// --- offered again after half a zoom step or a sixth of the view, not a nudge ---
+const view = { latitude: 40.72, longitude: -73.99, latitudeDelta: 0.06, longitudeDelta: 0.04, zoom: 13 };
+const at = { latitude: 40.72, longitude: -73.99, zoom: 13 };
+assert.equal(movedFrom(null, view), true, 'nothing yet: any move');
+assert.equal(movedFrom(at, view), false);
+assert.equal(movedFrom(at, { ...view, latitude: 40.725 }), false, 'a nudge');
+assert.equal(movedFrom(at, { ...view, latitude: 40.735 }), true, 'a quarter of the view up');
+assert.equal(movedFrom(at, { ...view, zoom: 12.4 }), true, 'zoomed out');
+assert.equal(movedFrom({ ...at, longitude: 179.999 }, { ...view, longitude: -179.999 }), false, 'across the antimeridian is close');
+
 console.log('discoverMap: ok');
 
 // --- dots: every bar in the map's own layer, a plain dot; the score (or -1) feeds an area's best ---
@@ -164,3 +181,6 @@ assert.equal(areasFrom(Array.from({ length: 100 }, (_, i) => cluster(i, 5, 2)), 
 assert.deepEqual(areasFrom([cluster(1, 9, 2)], { bounds: [5, 5, 6, 6], zoom: 9 }), [], 'out of view');
 assert.deepEqual(areasFrom([cluster(1, 9, 2)], { bounds: [0, 0, 3, 3], zoom: AREA_ZOOM }), [], 'up close there are no areas');
 assert.equal(areasFrom([cluster(1, 9, 2)], { bounds: [0, 0, 3, 3], zoom: AREA_ZOOM - 1 }).length, 1);
+
+// Across the antimeridian (native MapLibre reports east < west) the span is the short way round.
+assert.equal(Math.round(viewportFrom({ lat: -17, lng: 180 }, [179, -18, -179, -16], 8).longitudeDelta), 2);
