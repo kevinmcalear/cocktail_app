@@ -16,7 +16,7 @@ import { PAGE_COPY } from '@/lib/pageVisibility';
 import { useBarFeature, useBarFeatures } from '@/hooks/useBarFeature';
 import { useCanManageStaff, useEffectiveRole } from '@/hooks/useViewAs';
 import { BACK_BAR_SHOWN } from '@/lib/backBar';
-import { canSwitchFeatures, SWITCHES } from '@/lib/venueFeatureList';
+import { canSwitchFeatures, SWITCH_KEYS } from '@/lib/venueFeatures';
 
 const plural = (n: number, one: string, many = `${one}s`) => `${n} ${n === 1 ? one : many}`;
 
@@ -136,7 +136,7 @@ export function VenueSettingsLinks({ barId }: { barId: string }) {
   const admin = canSwitchFeatures(useEffectiveRole(barId));
   // Each link goes with its section's switch (lib/venueFeatures.ts).
   const has = useBarFeatures(barId);
-  const on = SWITCHES.filter((f) => has(f.key)).length;
+  const on = SWITCH_KEYS.filter((k) => has(k)).length;
   const go = (page: string) => () => router.push(`/settings/bar/${barId}/${page}` as Href);
   return (
     <SettingsSection title="More settings">
@@ -152,7 +152,7 @@ export function VenueSettingsLinks({ barId }: { barId: string }) {
       <RowDivider />
       {admin ? (
         <>
-          <SettingsRow icon="switch.2" label="Features" detail="Tonight, Prep, Study and the rest: what your team sees" value={on ? `${on} of ${SWITCHES.length} on` : 'None on'} onPress={go('features')} />
+          <SettingsRow icon="switch.2" label="Features" detail="Tonight, Prep, Study and the rest: what your team sees" value={on ? `${on} of ${SWITCH_KEYS.length} on` : 'None on'} onPress={go('features')} />
           <RowDivider />
         </>
       ) : null}

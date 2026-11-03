@@ -3,7 +3,7 @@ import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { useActiveVenue } from '@/hooks/useActiveVenue';
 import { useMode } from '@/hooks/useMode';
 import { supabase } from '@/lib/supabase';
-import { featureShown, isFeatureKey, readFeatures, venueHome, type VenueFeatureKey } from '@/lib/venueFeatures';
+import { featureShown, readFeatures, venueHome, type VenueFeatureKey } from '@/lib/venueFeatures';
 
 export const venueFeaturesKey = (barId: string | null) => ['venue-features', barId] as const;
 
@@ -49,8 +49,6 @@ export function useVenueFeatures() {
   const has = (key: VenueFeatureKey) => (mode === 'home' ? featureShown(key, null) : !!list && featureShown(key, list));
   return {
     ready: mode === 'home' || (venue ? data !== undefined : !isLoading),
-    /** The venue's switches that are on (the ones this build knows); none at home. */
-    on: (list ?? []).filter(isFeatureKey),
     has,
     home: venueHome(has),
   };

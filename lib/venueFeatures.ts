@@ -40,9 +40,13 @@ export const FEATURE_KEYS = Object.keys(AT_HOME) as VenueFeatureKey[];
  */
 export const ALWAYS_ON: readonly VenueFeatureKey[] = [];
 
-/** A key this build knows. */
-const KEYS = new Set<string>(FEATURE_KEYS);
-export const isFeatureKey = (k: string): k is VenueFeatureKey => KEYS.has(k);
+/** The keys Features lists a switch for. */
+export const SWITCH_KEYS = FEATURE_KEYS.filter((k) => !ALWAYS_ON.includes(k));
+
+/** Who may switch features: Admins (level 40, lib/roles.ts), the only role bars_update lets write them. */
+export function canSwitchFeatures(role: number): boolean {
+  return role >= 40;
+}
 
 /**
  * The stored switches, as stored: keys this build doesn't know are kept (a
@@ -70,17 +74,12 @@ export function readFeatures(row: { enabled_features?: unknown } | null | undefi
   return parseFeatures(row?.enabled_features);
 }
 
-/** At home there's no venue to ask: each feature is what home mode always had. */
-export function featureAtHome(key: VenueFeatureKey): boolean {
-  return AT_HOME[key];
-}
-
 /**
  * Whether a section shows where you are: at a venue (`on` is its stored list)
  * its switches or ALWAYS_ON; at home (`on` null) `atHome`.
  */
 export function featureShown(key: VenueFeatureKey, on: readonly string[] | null): boolean {
-  if (on === null) return featureAtHome(key);
+  if (on === null) return AT_HOME[key];
   return ALWAYS_ON.includes(key) || on.includes(key);
 }
 

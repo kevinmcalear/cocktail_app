@@ -1,4 +1,4 @@
-import { ALWAYS_ON, FEATURE_KEYS, isFeatureKey, isMissingColumn, type DbError, type VenueFeatureKey } from './venueFeatures';
+import { FEATURE_KEYS, SWITCH_KEYS, isMissingColumn, type DbError, type VenueFeatureKey } from './venueFeatures';
 
 /**
  * What the Features screen shows and writes (lib/venueFeatures.ts has what every
@@ -51,7 +51,10 @@ export const VENUE_FEATURES = FEATURE_KEYS.map((key) => ({
 }));
 
 /** The switches Features lists. */
-export const SWITCHES = VENUE_FEATURES.filter((f) => !ALWAYS_ON.includes(f.key));
+export const SWITCHES = VENUE_FEATURES.filter((f) => SWITCH_KEYS.includes(f.key));
+
+/** A key this build knows. */
+const isFeatureKey = (k: string): k is VenueFeatureKey => (FEATURE_KEYS as readonly string[]).includes(k);
 
 /** What Features says when a switch didn't save. */
 export function featureSaveMessage(error: DbError): string {
@@ -62,9 +65,4 @@ export function featureSaveMessage(error: DbError): string {
 export function withFeature(on: readonly string[], key: VenueFeatureKey, enabled: boolean): string[] {
   const known = FEATURE_KEYS.filter((k) => (k === key ? enabled : on.includes(k)));
   return [...known, ...on.filter((k) => !isFeatureKey(k))];
-}
-
-/** Who may switch features: Admins (level 40, lib/roles.ts), the only role bars_update lets write them. */
-export function canSwitchFeatures(role: number): boolean {
-  return role >= 40;
 }

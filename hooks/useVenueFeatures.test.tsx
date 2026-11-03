@@ -79,7 +79,6 @@ test('the switches read back, unknown keys kept but not counted, Advanced from i
   expect(result.current.has('tonight')).toBe(true);
   expect(result.current.home).toBe('/');
   expect(result.current.has('advanced')).toBe(false);
-  expect(result.current.on).toEqual(['tonight']);
   expect(client.getQueryData(venueFeaturesKey('rye'))).toEqual(['tonight', 'disco', 'advanced']);
 });
 
@@ -87,7 +86,6 @@ test('a read that fails never throws or retries: the column missing means none',
   mockRead = { data: null, error: { code: '42703' } };
   const { result } = await renderHook(() => useVenueFeatures(), { wrapper: wrapper(newClient()) });
   await waitFor(() => expect(result.current.ready).toBe(true));
-  expect(result.current.on).toEqual([]);
   expect(mockReads).toBe(1);
 });
 

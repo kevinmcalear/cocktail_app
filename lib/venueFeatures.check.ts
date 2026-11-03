@@ -5,7 +5,7 @@ import { globSync, readdirSync, readFileSync } from 'node:fs';
 
 import { shownTabs, TABS } from './tabs';
 import { featureSaveMessage, SWITCHES, VENUE_FEATURES, withFeature } from './venueFeatureList';
-import { ALWAYS_ON, featureAtHome, featureShown, isMissingColumn, parseFeatures, readFeatures, venueHome, type VenueFeatureKey } from './venueFeatures';
+import { ALWAYS_ON, featureShown, isMissingColumn, parseFeatures, readFeatures, venueHome, type VenueFeatureKey } from './venueFeatures';
 
 const on = (...keys: VenueFeatureKey[]) => (k: VenueFeatureKey) => keys.includes(k);
 
@@ -15,8 +15,8 @@ assert.deepEqual(parseFeatures(['prep', 'nightclub', 3, 'tonight']), ['prep', 'n
 assert.deepEqual(withFeature(['nightclub', 'study'], 'tonight', true), ['tonight', 'study', 'nightclub'], 'a key a newer app added stays');
 assert.deepEqual(withFeature(['nightclub', 'study'], 'study', false), ['nightclub']);
 assert.deepEqual(withFeature(['tonight', 'study'], 'tonight', false), ['study']);
-assert.equal(featureAtHome('prep'), false, 'home never had Prep');
-assert.equal(featureAtHome('tonight'), true, 'home keeps its Tonight');
+assert.equal(featureShown('prep', null), false, 'home never had Prep');
+assert.equal(featureShown('tonight', null), true, 'home keeps its Tonight');
 assert.equal(featureShown('history', null), true, 'at home: atHome');
 assert.equal(featureShown('history', []), false, 'at a venue: off until switched on');
 assert.equal(featureShown('history', ['history']), true);
