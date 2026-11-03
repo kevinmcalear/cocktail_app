@@ -62,7 +62,7 @@ export function StaffLists({ t, barId, wide }: { t: Staff; barId: string; wide: 
 /** Below this window width the grid drops to two columns (Prod-desk-today: the side column leaves less room). */
 const TWO_COLUMNS = 1100;
 
-/** The lead list's drinks, four to a row (two below 1100 px), each a small drawing and its name (Prod-desk-today). */
+/** The lead list's drinks, four to a row (two below 1100 px), each a small drawing and its name, which wraps rather than cuts off (Prod-desk-today). */
 function DrinkGrid({ block }: { block: TonightBlock }) {
   const ds = useDs();
   const router = useRouter();
@@ -75,9 +75,9 @@ function DrinkGrid({ block }: { block: TonightBlock }) {
     <View role="list" onLayout={(e) => setWidth(e.nativeEvent.layout.width)} style={[styles.grid, { borderTopColor: ds.c.line }]}>
       {cell
         ? drinks.map((d) => (
-            <PressableScale key={d.id} role="link" accessibilityLabel={d.name} onPress={() => router.push(itemHref(categoryOf(d.kind), d.id) as Href)} style={[styles.cell, { width: cell, borderBottomColor: ds.c.line }]}>
+            <PressableScale key={d.rowId} role="link" accessibilityLabel={d.name} onPress={() => router.push(itemHref(categoryOf(d.kind), d.id) as Href)} style={[styles.cell, { width: cell, borderBottomColor: ds.c.line }]}>
               <DrinkDrawingFor itemId={d.id} size="row" pour={false} />
-              <DsText variant="headline" numberOfLines={1} style={[styles.flex, { fontFamily: displayFaces[ds.displayFace].regular }]}>
+              <DsText variant="headline" style={[styles.flex, { fontFamily: displayFaces[ds.displayFace].regular }]}>
                 {d.name}
               </DsText>
             </PressableScale>
@@ -160,7 +160,7 @@ function ServiceRows({ t }: { t: Staff }) {
   return (
     <View role="list">
       {t.service.map((d, i) => (
-        <PressableScale key={d.id} role="link" accessibilityLabel={[d.name, d.sub].filter(Boolean).join('. ')} onPress={() => router.push(itemHref(categoryOf(d.kind), d.id) as Href)} style={[styles.learn, { borderTopColor: i ? ds.c.line : 'transparent' }]}>
+        <PressableScale key={d.rowId} role="link" accessibilityLabel={[d.name, d.sub].filter(Boolean).join('. ')} onPress={() => router.push(itemHref(categoryOf(d.kind), d.id) as Href)} style={[styles.learn, { borderTopColor: i ? ds.c.line : 'transparent' }]}>
           <DrinkDrawingFor itemId={d.id} size="row" pour={false} />
           <View style={styles.flex}>
             <DsText variant="headline" numberOfLines={1} style={{ fontFamily: displayFaces[ds.displayFace].regular }}>

@@ -42,7 +42,7 @@ const HOUR = 3_600_000;
  */
 export function useStaffTonight(barId: string) {
   const { menus, blocks: listed, isLoading } = useTonight(barId);
-  // A drink listed twice on a menu shows and counts once: its first place wins (so rows key by drink id).
+  // A drink listed twice on a menu shows and counts once: its first row wins (rows key by their menu_drinks id).
   const blocks = useMemo(
     () =>
       listed.map((b) => {
@@ -129,7 +129,7 @@ export function useStaffTonight(barId: string) {
     // Off once its take-off time has passed; until then it says when it comes off.
     const offAt = off.find((o) => o.id === d.id)?.offAt ?? null;
     const gone = offAt != null && Date.parse(offAt) <= now.getTime();
-    return { id: d.id, kind: d.kind, name: d.name, off: gone, sub: gone ? 'Off tonight' : serveLine([served.get(d.id), word, offAt && offAtLine(offAt).replace(/^C/, 'c')]) };
+    return { id: d.id, rowId: d.rowId, kind: d.kind, name: d.name, off: gone, sub: gone ? 'Off tonight' : serveLine([served.get(d.id), word, offAt && offAtLine(offAt).replace(/^C/, 'c')]) };
   });
   const learn = [
     ...fresh.map(({ drink, list }) => ({ id: drink.id, kind: drink.kind, name: drink.name, sub: `New on ${list} · a ${runThroughMinutes(drink.line)}-minute run-through`, href: `/study/tonight?drink=${drink.id}` })),
