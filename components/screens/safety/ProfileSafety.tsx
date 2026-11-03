@@ -1,6 +1,6 @@
 import { useRouter, type Href } from 'expo-router';
-import { useState, type ReactNode } from 'react';
-import { StyleSheet, View } from 'react-native';
+import { useRef, useState, type ReactNode } from 'react';
+import { Platform, StyleSheet, View } from 'react-native';
 
 import { Body, Button, Caption, GlassButton, Headline, PressableScale, sheetIsDialog, useBreakpoint, useDs, type IconName } from '@/components/ds';
 import { ClaimDialog } from '@/components/screens/claim/ClaimDialogLazy';
@@ -41,6 +41,8 @@ export function ProfileSafety({ profile, share }: { profile: Profile; share?: bo
   const hiding = useHideBarToggle(profile.id, profile.display_name);
   const shareIt = useShareLink(`${siteOrigin()}/p/${profile.handle}`, profile.display_name, 'profile');
   const shareLabel = profile.kind === 'person' ? 'Share profile' : 'Share';
+  // iOS can't show its share sheet while More is still closing: Share waits for the sheet's onDismiss.
+  const afterMenu = useRef<(() => void) | null>(null);
   // Not on my own profile, or on a private one (only its owners see those).
   if (!myId || userId === myId || !profile.is_public) return share ? <GlassButton accessibilityLabel={shareLabel} icon="square.and.arrow.up" onPress={() => void shareIt()} /> : null;
   const name = `@${profile.handle}`;
@@ -51,16 +53,27 @@ export function ProfileSafety({ profile, share }: { profile: Profile; share?: bo
   return (
     <>
       <GlassButton accessibilityLabel={`More for ${name}: ${does}`} icon="ellipsis" onPress={() => setSheet('menu')} />
-      {sheet === 'menu' ? (
-        <MenuSheet visible onClose={() => setSheet(null)} title={profile.display_name} subtitle={name}>
+      {/* Stays mounted so it can finish closing before Share opens. */}
+      <MenuSheet
+        visible={sheet === 'menu'}
+        onClose={() => setSheet(null)}
+        onDismiss={() => {
+          const next = afterMenu.current;
+          afterMenu.current = null;
+          next?.();
+        }}
+        title={profile.display_name}
+        subtitle={name}
+      >
           {share ? (
             <Button
               label={shareLabel}
               icon="square.and.arrow.up"
               variant="secondary"
               onPress={() => {
+                if (Platform.OS === 'ios') afterMenu.current = () => void shareIt();
                 setSheet(null);
-                void shareIt();
+                if (Platform.OS !== 'ios') void shareIt();
               }}
             />
           ) : null}
@@ -79,7 +92,6 @@ export function ProfileSafety({ profile, share }: { profile: Profile; share?: bo
           <Button label={`Report ${name}`} icon="flag" variant="secondary" onPress={() => setSheet('report')} />
           {canBlock ? <Button label={`Block ${name}`} variant="secondary" onPress={() => setSheet('block')} /> : null}
         </MenuSheet>
-      ) : null}
       {sheet === 'claim' ? <ClaimDialog profileRef={profile.id} name={profile.display_name} onClose={() => setSheet(null)} /> : null}
       {sheet === 'report' ? (
         <ReportSheet subject={name} targets={[{ label: name, target: { kind: 'profile', profileId: profile.id } }]} onClose={() => setSheet(null)} />

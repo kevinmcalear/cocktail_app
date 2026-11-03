@@ -26,6 +26,9 @@ export interface ItemActions {
   adminFix?: () => void;
 }
 
+/** Whether More would hold anything, so a bar with nothing in it keeps no room for it. */
+export const hasMore = (a: ItemActions, signedIn: boolean) => !!(a.onEdit || a.save || a.onShare || a.flavorMap || a.adminFix || (a.report && signedIn));
+
 /**
  * The page's one button on the right, …, and its sheet: Edit, Save, Share,
  * the flavor map, Report and Fix as admin, whichever the viewer has, for every role, on every
