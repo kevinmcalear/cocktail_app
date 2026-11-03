@@ -24,7 +24,6 @@ import { DrinksEmpty } from '@/components/screens/drinks/DrinksEmpty';
 import { DrinksPanes } from '@/components/screens/drinks/DrinksPanes';
 import { NearResults } from '@/components/search/NearResults';
 import { SearchField } from '@/components/search/SearchField';
-import { SwapSheet } from '@/components/screens/drinks/SwapSheet';
 import { space } from '@/constants/tokens';
 import { useDrinksFirstRow } from '@/hooks/useDrinksSplit';
 import { useOpenSearch } from '@/hooks/useSearchFrom';
@@ -39,6 +38,8 @@ import type { SearchItem } from '@/types/search';
 // The staff list drags to reorder, with gesture and animation code the rest of
 // Drinks doesn't need: it loads when Classics is picked.
 const StaffList = lazy(() => import('@/components/screens/drinks/StaffList').then((m) => ({ default: m.StaffList })));
+// Swap a bottle's sheet loads when it's first opened.
+const SwapSheet = lazy(() => import('@/components/screens/drinks/SwapSheet').then((m) => ({ default: m.SwapSheet })));
 
 const NO_IDS: string[] = [];
 const EVERYWHERE = { area: { kind: 'anywhere' }, kinds: ['drink', 'bar', 'person', 'ingredient'] } as const;
@@ -187,7 +188,11 @@ export function StaffDrinks({ beside = false }: { beside?: boolean }) {
         />
       )}
       <RoundOpened />
-      {swap && activeId ? <SwapSheet barId={activeId} onClose={() => setSwap(false)} /> : null}
+      {swap && activeId ? (
+        <Suspense fallback={null}>
+          <SwapSheet barId={activeId} onClose={() => setSwap(false)} />
+        </Suspense>
+      ) : null}
       {active ? <BottlePhotoSheet visible={snapping} target={{ kind: 'venue', barId: active.id, name: active.name, canEdit }} onClose={() => setSnapping(false)} /> : null}
     </View>
   );
