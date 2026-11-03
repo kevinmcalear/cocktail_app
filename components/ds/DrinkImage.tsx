@@ -76,8 +76,9 @@ export function DrinkImage({ source, generated, glass, itemId, accessibilityLabe
   const cutout = isPng(uri);
   // No drawing yet (or still loading): the bare glass, drawn as the drawings are, not a small line icon (i-glass-pic).
   const bare = useMemo(() => bareGlassSketch(glass), [glass]);
+  // In dark its thin chalk lines vanish into the ground: it sits on the night tile (ds.c.tilePaper), as ingredient thumbnails do.
   const glassIcon = (
-    <View style={styles.fill}>
+    <View style={[styles.fill, ds.scheme === 'dark' ? { backgroundColor: ds.c.tilePaper } : null]}>
       <SketchDrawing inputs={bare} seed={glass || 'Coupe'} detail={sketchDetail ?? (thumb ? 'thumb' : 'full')} lazy={thumb || sketchDetail === 'thumb'} />
     </View>
   );
