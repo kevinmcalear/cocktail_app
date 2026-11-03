@@ -5,7 +5,7 @@ import { Body, Button, Caption, Chip, Field, useDs } from '@/components/ds';
 import { MenuSheet } from '@/components/screens/menus/MenuSheet';
 import { space } from '@/constants/tokens';
 import type { ShelfItem } from '@/hooks/useHomeBar';
-import { SECTIONS } from '@/lib/barSections';
+import { SECTIONS } from '@/lib/barSectionWords';
 import type { ShelfSort } from '@/lib/pantry';
 
 import { SectionActions, SectionHead, SectionIcon, ShelfTile } from './BarSections';
