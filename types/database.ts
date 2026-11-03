@@ -7902,6 +7902,7 @@ export type Database = {
       }
       drink_allergens: { Args: { p_item_id: string }; Returns: Json }
       drink_cost: { Args: { p_bar: string; p_item: string }; Returns: Json }
+      drink_lineage: { Args: { p_item_id: string }; Returns: Json }
       drink_list_dates: {
         Args: { p_item_ids: string[] }
         Returns: {
