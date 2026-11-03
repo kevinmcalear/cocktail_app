@@ -15,12 +15,11 @@ import { useEffect } from "react";
 import { backbar } from "@/constants/tokens";
 import '@/lib/reanimatedSetup';
 
-import { DialogHost } from '@/components/DialogHost';
+import { DialogHost, ViewAsBanner } from '@/components/nav/RootHosts';
 import { ToastHost } from '@/components/ds/Toast';
 import { APP_FONTS, FIRST_PAINT_FONTS, LATER_FONTS } from '@/components/ds/fonts';
 import { ObservabilityProvider } from '@/components/ObservabilityProvider';
 import { OfflineBanner } from '@/components/OfflineBanner';
-import { ViewAsBanner } from '@/components/ViewAsBanner';
 import { AuthProvider, useAuth } from "@/ctx/AuthContext";
 import { BarUnitSync } from '@/hooks/useBarUnitSync';
 import { useColorScheme } from "@/hooks/use-color-scheme";
