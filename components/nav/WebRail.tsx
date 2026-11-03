@@ -42,7 +42,7 @@ function RailItem({ place, note, warn, current, onPress }: { place: Place; note?
 /**
  * The tablet rail (768 to 1199 wide), as canvas board nav-tablet draws it:
  * the logo (the venue menu, as on a phone), Search, the four tabs with
- * labels, the bar's Menus, House-made, Team and Bar settings, Home's Shelf and Menus (the sidebar's three groups, split by a hairline), New (an outlined circle), and you at the
+ * labels, the place you're in (the bar's Menus, House-made, Team and Bar settings, or Home's Shelf and Menus, never both; the logo switches), split by a hairline, New (an outlined circle), and you at the
  * foot. The page beside it gets the rest of the width.
  */
 export function WebRail({ current, go, searching, onSearch, onNew }: SideNavProps) {
@@ -50,7 +50,7 @@ export function WebRail({ current, go, searching, onSearch, onNew }: SideNavProp
   // An iPad's status bar and home indicator; 0 on the web.
   const insets = useSafeAreaInsets();
   const router = useRouter();
-  const { venue, tabs, bar, homePlaces } = useSidePlaces();
+  const { venue, tabs, places } = useSidePlaces();
   const notes = useSideNotes(venue?.id ?? null);
   const name = shortPersonName(useUserDisplayName());
   const line = footerLine(venue ? { name: venue.name, role: roleLabel(venue.roleLevel) } : null, null);
@@ -63,9 +63,9 @@ export function WebRail({ current, go, searching, onSearch, onNew }: SideNavProp
       <View style={styles.search}>
         <GlassButton icon="magnifyingglass" accessibilityLabel="Search" color={searching ? ds.accentText : undefined} onPress={onSearch} />
       </View>
-      {/* Three groups, as the sidebar: tabs, the bar's, Home's. A short window scrolls them. */}
+      {/* Two groups, as the sidebar: the tabs and the place you're in. A short window scrolls them. */}
       <View style={[styles.items, styles.scroll]}>
-        {[tabs, bar, homePlaces].map((group, i) =>
+        {[tabs, places].map((group, i) =>
           group.length ? (
             <View key={i} style={[styles.group, i > 0 && { borderTopWidth: StyleSheet.hairlineWidth, borderTopColor: ds.c.line }]}>
               {group.map((p) => (

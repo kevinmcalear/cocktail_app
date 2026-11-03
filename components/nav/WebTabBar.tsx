@@ -9,7 +9,8 @@ import { space } from '@/constants/tokens';
 import { useBottomSearchFocus } from '@/hooks/useBottomBar';
 import { useIsWideWeb } from '@/hooks/useIsWideWeb';
 import { useOpenSearch } from '@/hooks/useSearchFrom';
-import { androidBarShown, TABS, type Tab, type TabName } from '@/lib/tabs';
+import { useVenueFeatures } from '@/hooks/useVenueFeatures';
+import { androidBarShown, shownTabs, TABS, type Tab, type TabName } from '@/lib/tabs';
 
 export type WebTab = Tab & { icon: IconName };
 
@@ -17,6 +18,12 @@ const ICONS: Record<TabName, IconName> = { tonight: 'place.tonight', drinks: 'pl
 
 /** The four tabs with their icons, for the phone pill, the tablet rail and the sidebar (lib/tabs.ts). */
 export const WEB_TABS: readonly WebTab[] = TABS.map((t) => ({ ...t, icon: ICONS[t.name] }));
+
+/** The tabs shown where you are, with their icons: without Tonight at a venue that hasn't switched it on. */
+export function useWebTabs(): readonly WebTab[] {
+  const shown = shownTabs(useVenueFeatures().has).map((t) => t.name);
+  return WEB_TABS.filter((t) => shown.includes(t.name));
+}
 
 // The board's pill and search circle are both 64 tall.
 export const WEB_TAB_BAR_HEIGHT = 64;
@@ -88,6 +95,7 @@ export function WebTabBar({ state, emitter, navigateToTab }: BottomTabBarProps) 
   const ds = useDs();
   const insets = useSafeAreaInsets();
   const openSearch = useOpenSearch();
+  const tabs = useWebTabs();
   const current = state.routes[state.index]?.name;
   // While a bottom search field has focus (Discover's sheet) it takes the bar's place.
   const searching = useBottomSearchFocus((s) => s.focused);
@@ -104,7 +112,7 @@ export function WebTabBar({ state, emitter, navigateToTab }: BottomTabBarProps) 
     <View style={[styles.wrap, { bottom: insets.bottom + space.md }]}>
       <GlassSurface style={styles.tabs}>
         <View role="tablist" style={styles.row}>
-          {WEB_TABS.map((t) => {
+          {tabs.map((t) => {
             const selected = current === t.route;
             const color = selected ? ds.accentText : ds.c.muted;
             return (

@@ -5,6 +5,14 @@ import { renderWithProviders } from '@/jest.setup';
 import { drinkSeed, seedDrink } from '@/lib/drinkSeeds';
 
 import { DrinkLoading } from './DrinkLoading';
+import { ItemLoading } from './LoadingBar';
+
+const mockOptions: { headerShown?: boolean; unstable_headerLeftItems?: () => unknown[] } = {};
+jest.mock('expo-router', () => ({
+  useNavigation: () => ({ setOptions: (o: object) => Object.assign(mockOptions, o), canGoBack: () => false }),
+  useSegments: () => [],
+  router: { replace: jest.fn() },
+}));
 
 // The pager draws its pages once it knows its width.
 const layOut = () =>
@@ -27,4 +35,10 @@ test('with no row, just the page ground', async () => {
   await renderWithProviders(<DrinkLoading seed={null} />);
   expect(screen.getByLabelText('Loading drink')).toBeTruthy();
   expect(screen.queryByRole('button')).toBeNull();
+});
+
+test('Back shows while it loads (Kevin, 3 Nov)', async () => {
+  await renderWithProviders(<ItemLoading seed={null} />);
+  expect(mockOptions.headerShown).toBe(true);
+  expect(mockOptions.unstable_headerLeftItems?.()).toHaveLength(1);
 });

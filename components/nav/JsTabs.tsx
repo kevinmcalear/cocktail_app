@@ -11,7 +11,10 @@ import { WebTabBar } from './WebTabBar';
  * The tabs drawn in JS: all of the web (NativeTabs has no web implementation),
  * and a native iPad wide enough for the side nav. The same four tabs as the
  * phone: phone-width web gets the glass tab bar with its search circle, which
- * pushes /search on the tab's stack; wide screens hide the bar, use the side
+ * pushes /search on the tab's stack. At a venue that hasn't switched Tonight
+ * on, the bar and the side nav leave it out (useWebTabs) and its route sends
+ * you to Drinks; the screen stays registered, or / would have nothing to
+ * render. Wide screens hide the bar, use the side
  * nav in the root layout and search in the ⌘K palette. iOS's search tab,
  * (search), has no place here.
  */

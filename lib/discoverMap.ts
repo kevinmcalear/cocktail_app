@@ -10,7 +10,7 @@ import { withAlpha } from './color';
 import { themeColours } from './theme';
 import { pinName } from './discoverMatch';
 import { formatScore } from './ranking';
-import type { Area } from './nearMe';
+import { roundCoord, type Area } from './nearMe';
 
 /**
  * OpenFreeMap: free, no key, OpenStreetMap data. Muted base maps so the pins
@@ -346,7 +346,8 @@ export interface Camera {
 
 /** A viewport from a map's centre and its [west, south, east, north] bounds, as MapLibre reports them. */
 export function viewportFrom(center: { lat: number; lng: number }, [west, south, east, north]: readonly [number, number, number, number], zoom: number): Viewport {
-  return { latitude: center.lat, longitude: center.lng, latitudeDelta: north - south, longitudeDelta: east - west, zoom };
+  // Across the antimeridian native MapLibre reports east < west (179 to -179): the span is 2 degrees, not -358.
+  return { latitude: center.lat, longitude: center.lng, latitudeDelta: north - south, longitudeDelta: east >= west ? east - west : east - west + 360, zoom };
 }
 
 const KM_PER_DEG = 111.045;
@@ -384,4 +385,25 @@ export function cameraForArea(area: Area, me?: { latitude: number; longitude: nu
     { latitude: area.latitude - dLat, longitude: area.longitude },
     { latitude: area.latitude + dLat, longitude: area.longitude },
   ]);
+}
+
+/**
+ * Whether the map has moved far enough from where its bars are for (the last
+ * "Search this area", or where it opened) to offer searching again: half a
+ * zoom step, or a sixth of the view across. No `from` counts any move.
+ */
+export function movedFrom(from: Camera | null, v: Viewport): boolean {
+  if (!from) return true;
+  if (Math.abs(v.zoom - from.zoom) >= 0.5) return true;
+  // Across the antimeridian, 179 to -179 is two degrees, not 358.
+  const dLng = ((v.longitude - from.longitude + 540) % 360) - 180;
+  return Math.abs(v.latitude - from.latitude) > Math.abs(v.latitudeDelta) / 6 || Math.abs(dLng) > Math.abs(v.longitudeDelta) / 6;
+}
+
+/** "Search this area": the area the map shows, a circle from its centre to its corners (half a km to 200 km). */
+export function areaFromViewport(v: Viewport): Extract<Area, { kind: 'point' }> {
+  const halfLatKm = (Math.abs(v.latitudeDelta) * KM_PER_DEG) / 2;
+  const halfLngKm = (Math.abs(v.longitudeDelta) * KM_PER_DEG * Math.cos((v.latitude * Math.PI) / 180)) / 2;
+  const radiusKm = Math.min(Math.max(Math.hypot(halfLatKm, halfLngKm), 0.5), 200);
+  return { kind: 'point', latitude: roundCoord(v.latitude), longitude: roundCoord(v.longitude), radiusKm: Math.round(radiusKm * 10) / 10, source: 'map' };
 }

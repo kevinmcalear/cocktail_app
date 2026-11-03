@@ -12,6 +12,7 @@ import { IconSymbol } from '@/components/ui/icon-symbol';
 
 import { PairChip } from './PairChip';
 import { usePrefetchCocktail } from '@/hooks/useCocktails';
+import { useVenueFeature } from '@/hooks/useVenueFeatures';
 
 const FIRST = 3;
 
@@ -22,6 +23,7 @@ const FIRST = 3;
  */
 export function PairsWith({ itemId, name }: { itemId: string; name: string }) {
   const router = useRouter();
+  const flavorMap = useVenueFeature('flavorMap');
   const { data: pairs = [] } = usePairings([itemId], { limit: 8 });
   const [open, setOpen] = useState<string | null>(null);
   const picked = pairs.find((p) => p.id === open) ?? null;
@@ -47,12 +49,14 @@ export function PairsWith({ itemId, name }: { itemId: string; name: string }) {
           />
         ))}
       </View>
-      <Button
-        label="Open the flavor map"
-        variant="secondary"
-        icon="sparkles"
-        onPress={() => router.push({ pathname: '/flavor-map', params: { with: itemId } })}
-      />
+      {flavorMap ? (
+        <Button
+          label="Open the flavor map"
+          variant="secondary"
+          icon="sparkles"
+          onPress={() => router.push({ pathname: '/flavor-map', params: { with: itemId } })}
+        />
+      ) : null}
     </Surface>
     {/* The tapped pairing's drinks are their own card under it (decided on the canvas). */}
     {picked ? <PairDrinks key={picked.id} a={itemId} b={picked.id} title={`${picked.name} and ${name}`} total={picked.together[0]} /> : null}

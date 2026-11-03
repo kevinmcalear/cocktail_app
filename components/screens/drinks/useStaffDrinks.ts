@@ -11,9 +11,10 @@ import { usePricedItemIds } from '@/hooks/usePricing';
 import { useSearchCatalog } from '@/hooks/useSearchCatalog';
 import { useBarRiffs, useStaffList } from '@/hooks/useStaffList';
 import { useTonight } from '@/hooks/useTonight';
+import { useVenueFeature } from '@/hooks/useVenueFeatures';
 import { usePrepFacts, useVenueShelves } from '@/hooks/useVenueShelves';
 import { venueContextIds } from '@/lib/barContextFilter';
-import { CAPSULE_SHOW, capsuleChips, capsuleOf, onNowSub, serviceTag, type StaffCapsule } from '@/lib/drinksTab';
+import { CAPSULE_SHOW, capsuleChips, capsuleOf, onNowSub, serviceTag, STAFF_CAPSULES, type StaffCapsule } from '@/lib/drinksTab';
 import type { ItemCategory } from '@/lib/itemRoutes';
 import { BATCHED_STYLES, DRINK_CATEGORIES, filterGroups, itemIdOf, menuDrinks, parseShow, PREP_GROUPS, TYPE_FILTERS, type Show } from '@/lib/drinksFilters';
 import { groupMenus, menuDateLine } from '@/lib/menus';
@@ -32,7 +33,9 @@ export function useStaffDrinks(beside: boolean) {
   const { active, isLoading: venuesLoading } = useActiveVenue();
   const activeId = active?.id ?? null;
   const { view: params, setView } = useDrinksView(beside);
-  const show = parseShow(params.show, !!activeId || venuesLoading);
+  // More drink filters (lib/venueFeatures.ts): without them, Drinks is one capsule.
+  const extras = useVenueFeature('libraryExtras');
+  const show = parseShow(params.show, !!activeId || venuesLoading, extras);
   const capsule = capsuleOf(show);
   const contextIds = useMemo(() => venueContextIds(activeId, venuesLoading), [activeId, venuesLoading]);
   const { items, isLoading, error } = useSearchCatalog(contextIds);
@@ -93,7 +96,7 @@ export function useStaffDrinks(beside: boolean) {
   const inView = lists[show].filter((i) => !kind || prepFacts[i.id]?.group === kind.group);
   const { lineOf } = useRowLines({ show, rndMenus: byMenu.rndMenus, prepLine: (id) => prepFacts[id]?.line ?? null, needsOf: kit.needsOf });
   const count = (value: Show) => (value === 'staff' ? classicRows(staff.data ?? [], linked.data ?? []).length : lists[value].length);
-  const groups = filterGroups(!!activeId, canCost);
+  const groups = filterGroups(!!activeId, canCost, extras);
 
   // The On now card: the menu on now that started first (the bar's main list), and what comes after it.
   const tonight = useTonight(activeId);
@@ -136,6 +139,7 @@ export function useStaffDrinks(beside: boolean) {
     setView,
     show,
     capsule,
+    capsules: extras ? STAFF_CAPSULES : STAFF_CAPSULES.filter((c) => c.value === 'drinks'),
     pickCapsule: (c: StaffCapsule) => pick(CAPSULE_SHOW[c]),
     pick,
     chips: capsuleChips(groups, capsule),

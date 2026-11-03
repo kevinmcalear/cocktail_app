@@ -21,7 +21,9 @@ jest.mock('@/hooks/useMode', () => ({ useMode: () => ({ mode: mockMode, setMode:
 const mockVenue = { id: 'caretakers', name: 'Caretakers', logoUrl: null, accent: null, displayFace: 'redaction', groundTint: null, roleLevel: 40 };
 
 const mockOther = { ...mockVenue, id: 'pale', name: 'Pale Moth', roleLevel: 30 };
-jest.mock('@/hooks/useActiveVenue', () => ({ useActiveVenue: () => ({ active: mockVenue, venues: [mockVenue, mockOther], enterVenue: mockEnterVenue }) }));
+let mockActive: typeof mockVenue | null = mockVenue;
+let mockLoading = false;
+jest.mock('@/hooks/useActiveVenue', () => ({ useActiveVenue: () => ({ active: mockActive, venues: mockActive ? [mockVenue, mockOther] : [], enterVenue: mockEnterVenue, isLoading: mockLoading }) }));
 jest.mock('@/hooks/useHomeBar', () => ({ useShelf: () => ({ data: ['a', 'b', 'c'] }) }));
 jest.mock('@/components/ui/UserAvatar', () => ({ CurrentUserAvatar: () => null, useUserDisplayName: () => 'Kevin McAlear' }));
 let mockRole = 40;
@@ -39,6 +41,12 @@ jest.mock('@/hooks/useSearchMine', () => ({ useSearchMine: () => ({ venueId: 'ca
 // The notes beside the rows: one menu on now, no house-made low.
 jest.mock('@/hooks/useMenus', () => ({ useVenueMenus: () => ({ data: [{ id: 'm1', name: 'Autumn', barId: 'caretakers', kind: 'menu', startsAt: '2020-01-01T00:00:00Z', endsAt: null, itemIds: [] }] }) }));
 jest.mock('@/hooks/usePrepList', () => ({ usePrepData: () => ({ data: undefined }) }));
+// The venue's switches (lib/venueFeatures.ts): all on unless a test turns some off.
+let mockOff: string[] = [];
+jest.mock('@/hooks/useVenueFeatures', () => ({
+  useVenueFeatures: () => ({ ready: true, on: [], has: (k: string) => !mockOff.includes(k), home: mockOff.includes('tonight') ? '/drinks' : '/' }),
+  useVenueFeature: (k: string) => !mockOff.includes(k),
+}));
 const mockPush = jest.fn();
 
 // The keyboard test lends the sidebar a document; take it back once every render has unmounted.
@@ -52,6 +60,17 @@ beforeEach(() => {
   mockRole = 40;
   mockCaps = ['edit_drinks', 'brand'];
   mockMode = 'venue';
+  mockOff = [];
+  mockActive = mockVenue;
+  mockLoading = false;
+  mockSetMode.mockClear();
+});
+
+test('a venue with Tonight and Prep switched off: three tabs and no House-made, nothing in their place', async () => {
+  mockPathname = '/drinks';
+  mockOff = ['tonight', 'prep'];
+  await renderWithProviders(<WebSideNav />);
+  expect(links()).toEqual(['Drinks', 'Discover', 'You', 'Autumn, on now', 'Team', 'Bar settings', 'You: Kevin M., Admin at Caretakers']);
 });
 
 test('venue mode lists search, the four tabs and the venue pages, marking the current one', async () => {
@@ -59,9 +78,9 @@ test('venue mode lists search, the four tabs and the venue pages, marking the cu
   mockPathname = '/drinks';
   await renderWithProviders(<WebSideNav />);
 
-  // Board Prod-desk: the four tabs, the bar's group (the menu on now, House-made, Team, Bar settings), Home's Shelf and Menus, and you at the foot.
-  // Every person and role has the same tabs (tabs A, 31 Oct); the rest opens from Bar settings.
-  expect(links()).toEqual(['Tonight', 'Drinks', 'Discover', 'You', 'Autumn, on now', 'House-made', 'Team', 'Bar settings', 'Shelf, 3', 'Menus', 'You: Kevin M., Admin at Caretakers']);
+  // Board Prod-desk: the four tabs, the bar's group (the menu on now, House-made, Team, Bar settings), and you at the foot.
+  // Only the place you're in: no Home group under the bar's. Every person and role has the same tabs (tabs A, 31 Oct).
+  expect(links()).toEqual(['Tonight', 'Drinks', 'Discover', 'You', 'Autumn, on now', 'House-made', 'Team', 'Bar settings', 'You: Kevin M., Admin at Caretakers']);
   expect(screen.getByRole('link', { name: 'Drinks', selected: true })).toBeTruthy();
   expect(screen.getByRole('link', { name: 'Tonight', selected: false })).toBeTruthy();
 
@@ -71,23 +90,36 @@ test('venue mode lists search, the four tabs and the venue pages, marking the cu
   expect(mockPush).toHaveBeenLastCalledWith('/menus/all');
   await fireEvent.press(screen.getByRole('link', { name: 'Bar settings' }));
   expect(mockPush).toHaveBeenLastCalledWith('/settings/bar/caretakers');
-  // Home's Menus is the same page in home mode, so a bar switches first.
-  await fireEvent.press(screen.getByRole('link', { name: 'Menus' }));
-  expect(mockSetMode).toHaveBeenLastCalledWith('home');
-  expect(mockPush).toHaveBeenLastCalledWith('/menus/all');
   // You is a tab, and the foot opens it too.
   await fireEvent.press(screen.getByRole('link', { name: 'You: Kevin M., Admin at Caretakers' }));
   expect(mockNavigate).toHaveBeenLastCalledWith('/you');
 });
 
-test('the two group headings are where you switch place; no mark row tops the sidebar', async () => {
+test('the place chip is where you switch place; no mark row tops the sidebar', async () => {
   await renderWithProviders(<WebSideNav />);
-  // Board C7/C8: the bar's heading and Home's open the places menu (VenueSwitcher's, tested on its own).
+  // Board C7/C8: the one chip, the bar's, opens the places menu (VenueSwitcher's, tested on its own). Home is in that menu, not under the bar.
   expect(screen.getByRole('button', { name: 'Caretakers. Switch place' })).toBeTruthy();
-  expect(screen.getByRole('button', { name: 'Home. Switch place' })).toBeTruthy();
+  expect(screen.queryByRole('button', { name: 'Home. Switch place' })).toBeNull();
   // Search is the first control: nothing (no mark, no switcher) sits above it.
   expect(screen.getAllByRole('button')[0].props.accessibilityLabel).toBe('Search');
   expect(screen.queryByRole('radio', { name: 'Pale Moth, Bartender' })).toBeNull();
+});
+
+test("on no bar's team, Home is the place even in venue mode; its Menus switches to home first", async () => {
+  mockActive = null;
+  await renderWithProviders(<WebSideNav />);
+  expect(links()).toEqual(['Tonight', 'Drinks', 'Discover', 'You', 'Shelf, 3', 'Menus', 'You: Kevin M., Home bar · 3 bottles']);
+  await fireEvent.press(screen.getByRole('link', { name: 'Menus' }));
+  expect(mockSetMode).toHaveBeenLastCalledWith('home');
+});
+
+test('while the bar is loading, no place chip or group shows, so it never names the wrong place', async () => {
+  mockActive = null;
+  mockLoading = true;
+  await renderWithProviders(<WebSideNav />);
+  expect(screen.queryByRole('button', { name: /Switch place/ })).toBeNull();
+  expect(links().slice(0, 4)).toEqual(['Tonight', 'Drinks', 'Discover', 'You']);
+  expect(screen.queryByRole('link', { name: /Shelf/ })).toBeNull();
 });
 
 test('a drink opened cold lights the tab its stack is in', async () => {
@@ -136,8 +168,13 @@ test('home mode lists the same four tabs and navigates to their routes', async (
   mockPathname = '/discover';
   await renderWithProviders(<WebSideNav />);
 
-  // No bar group at home: Home's Shelf and Menus; the foot says your shelf.
+  // No bar group at home: Home's Shelf and Menus under the Home chip; the foot says your shelf.
   expect(links()).toEqual(['Tonight', 'Drinks', 'Discover', 'You', 'Shelf, 3', 'Menus', 'You: Kevin M., Home bar · 3 bottles']);
+  expect(screen.getByRole('button', { name: 'Home. Switch place' })).toBeTruthy();
+  expect(screen.queryByRole('button', { name: 'Caretakers. Switch place' })).toBeNull();
+  await fireEvent.press(screen.getByRole('link', { name: 'Menus' }));
+  expect(mockPush).toHaveBeenLastCalledWith('/menus/all');
+  expect(mockSetMode).not.toHaveBeenCalled();
   expect(screen.getByRole('link', { name: 'Discover', selected: true })).toBeTruthy();
 
   await fireEvent.press(screen.getByRole('link', { name: 'Discover' }));
