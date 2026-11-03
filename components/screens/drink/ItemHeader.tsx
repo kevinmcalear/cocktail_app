@@ -1,4 +1,4 @@
-import { useNavigation } from 'expo-router';
+import { useNavigation, useRouter } from 'expo-router';
 import type { NativeStackHeaderItem, NativeStackNavigationOptions } from 'expo-router/native-stack';
 import { isValidElement, useLayoutEffect, useRef, type ComponentProps, type ReactNode } from 'react';
 import { StyleSheet, View } from 'react-native';
@@ -39,7 +39,10 @@ interface ItemHeaderProps {
  */
 export function useItemHeader({ name, on, pane, controls }: ItemHeaderProps) {
   const navigation = useNavigation();
+  const router = useRouter();
   const ds = useDs();
+  // The first page on its tab's stack, opened from a page above the tabs (a menu, /menus/[id]): the system draws no Back, though the app has somewhere to go back to.
+  const firstOnStack = navigation.getState?.()?.index === 0;
 
   // setOptions renders the stack, and so this page: options change only with what they show, and tap through to the latest handlers.
   const latest = useRef(controls);
@@ -70,6 +73,9 @@ export function useItemHeader({ name, on, pane, controls }: ItemHeaderProps) {
           title: name,
           headerBackVisible: true,
           headerBackButtonDisplayMode: 'minimal',
+          ...(firstOnStack && router.canGoBack()
+            ? { unstable_headerLeftItems: () => [{ type: 'button', label: 'Back', icon: { type: 'sfSymbol', name: 'chevron.left' }, tintColor: ds.c.ink, onPress: () => router.back() }] }
+            : null),
           headerUserInterfaceStyle: ds.scheme,
           // The page draws the board's own backing once it slides under the bar, not iOS 26's edge blur over the sky.
           scrollEdgeEffects: { top: 'hidden' },
@@ -78,7 +84,7 @@ export function useItemHeader({ name, on, pane, controls }: ItemHeaderProps) {
         };
     navigation.setOptions(options);
     // eslint-disable-next-line react-hooks/exhaustive-deps -- by value: see `latest` and `moreKey`.
-  }, [navigation, pane, on, name, ds.scheme, ds.c.ink, save?.saved, save?.icon, save?.label[0], save?.label[1], !!onShare, !!onEdit, editLabel, moreKey]);
+  }, [navigation, firstOnStack, pane, on, name, ds.scheme, ds.c.ink, save?.saved, save?.icon, save?.label[0], save?.label[1], !!onShare, !!onEdit, editLabel, moreKey]);
 
   // Editing in place takes over the same screen: it draws its own top, so the bar goes with this page.
   useLayoutEffect(() => {

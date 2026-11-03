@@ -20,10 +20,13 @@ export interface PagerPlace {
 
 /**
  * The drink's place on the menu, in the menu's own order (section by section,
- * as the page lists them). A drink listed twice takes its first place. Null
- * when the drink isn't on it (a stale link), so the page shows no pager.
+ * as the page lists them). A drink listed twice takes its first place. The
+ * count is over every drink the viewer sees listed; ‹ and › skip to the
+ * nearest one they can open (`canOpen`: a guest can't open a bar's
+ * unpublished drink, though it is listed). Null when the drink isn't on it (a
+ * stale link), so the page shows no pager.
  */
-export function pagerPlace(menuName: string, drinks: readonly PagerDrink[], itemId: string): PagerPlace | null {
+export function pagerPlace(menuName: string, drinks: readonly PagerDrink[], itemId: string, canOpen: (d: PagerDrink) => boolean = () => true): PagerPlace | null {
   // One stop per drink: a drink in two sections is still one page.
   const seen = new Set<string>();
   const order = drinks.filter((d) => (seen.has(d.id) ? false : (seen.add(d.id), true)));
@@ -33,8 +36,8 @@ export function pagerPlace(menuName: string, drinks: readonly PagerDrink[], item
     label: `${menuName} · ${index + 1} of ${order.length}`,
     index,
     total: order.length,
-    prev: order[index - 1] ?? null,
-    next: order[index + 1] ?? null,
+    prev: order.slice(0, index).reverse().find(canOpen) ?? null,
+    next: order.slice(index + 1).find(canOpen) ?? null,
   };
 }
 

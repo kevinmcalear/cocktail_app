@@ -73,6 +73,10 @@ out = liveList({
 });
 assert.equal(out.lastChange, 'today 4pm · bees for jack');
 
+// A drink put on as the menu was set up (before it went on) isn't a change: no Last change yet.
+out = liveList({ ...base, sections: [{ id: 's', name: 'Shaken', rows: [view('bees')] }], rows: [row('bees', { onFrom: '2026-09-30T16:00:00Z' })], ended: [], endedDrinks: new Map(), may: true });
+assert.equal(out.lastChange, null);
+
 // A seasonal list keeps each drink's cost; a drink planned for later does on either.
 const costed = { ...view('bees'), sub: '19% cost' };
 out = liveList({
@@ -86,6 +90,11 @@ out = liveList({
 });
 assert.equal(out.main[0].rows[0].sub, '19% cost');
 assert.equal(out.coming?.rows[0].sub, '21% cost');
+
+// A living list keeps the cost too (Menu-who-creator); a row with no cost says how long it has been on.
+out = liveList({ ...base, sections: [{ id: 's', name: 'Shaken', rows: [costed, view('jack')] }], rows: [row('bees'), row('jack')], ended: [], endedDrinks: new Map(), may: true });
+assert.equal(out.main[0].rows[0].sub, '19% cost');
+assert.match(out.main[0].rows[1].sub ?? '', /^since /);
 
 // A bartender's asks (Menu-l-ask): their draft first, in pencil, then a swap they asked for; the drink it takes off stays on and says so.
 const ask = (o: Partial<ListAsk>): ListAsk => ({ id: 'a', menuId: 'm', itemId: null, drink: null, offItemId: null, sectionId: 's', at: null, price: null, askedAt: null, createdBy: 'me', createdAt: '2026-11-01T14:00:00Z', ...o });

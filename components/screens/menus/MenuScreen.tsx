@@ -5,7 +5,6 @@ import { FlatList, StyleSheet, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import { BackbarTheme, Body, Button, Caption, GlassButton, useBreakpoint, useDs, useGutter } from '@/components/ds';
-import { Crumbs } from '@/components/nav/PageFrame';
 import { DrawingBar } from '@/components/ds/DrawingBar';
 import { DRAWN_LIST_WINDOW } from '@/components/ds/SketchDrawing';
 import { layout, menuCover, space } from '@/constants/tokens';
@@ -34,10 +33,11 @@ import { MenuMoreSheet } from './MenuMoreSheet';
 import { ShareMenuSheet } from './ShareMenuSheet';
 import { DailyListPage } from './page/DailyListPage';
 import { MenuPageAfter, MenuPageBanner, MenuPageGroup } from './page/MenuPageGroup';
-import { MenuPageHead } from './page/MenuPageHead';
+import { MenuScreenHead } from './page/MenuScreenHead';
+import { MenuDeskColumns } from './desk/MenuDesk';
 import { MenuPageRow, type PageRowView } from './page/MenuPageRow';
 import { moreExtras, menuPageModel, splitGroup, type GroupAction } from './page/menuPageModel';
-import { MenuSpecInPlace } from './page/MenuSpecInPlace';
+import { MenuSpecInPlace, OpenDrinkLink } from './page/MenuSpecInPlace';
 import { RowChanges, useRowActs, type ChangeTarget } from './page/RowChanges';
 import { useLiveSections } from './page/useLiveSections';
 import { useMenuPageActions, type PageSheet } from './page/useMenuPageActions';
@@ -179,64 +179,44 @@ function MenuPageBody({ menu, shelf, cover, now }: PageProps & { cover: string |
   // Waiting changes, Undo, Back on and Coming up show their buttons; any other row shows Swap and Take off once held.
   const alwaysActs = (id: string | undefined, row: PageRowView) => id === 'waiting' || id === 'coming' || !!row.struck || !!row.offTonight;
   const toggle = (key: string) => setOpen((o) => (o === key ? null : key));
+  const inPlace = (item: Item) => changeable && !!item.row?.acts?.length && !alwaysActs(item.sectionId, item.row);
+
+  const rowOf = (item: Item) =>
+    item.head ? (
+      <View style={styles.sectionHead}>
+        <SectionHead name={item.head.name} count={item.head.count} />
+      </View>
+    ) : item.row ? (
+      <MenuPageRow
+        row={item.row}
+        picked={besideId === item.row.drink.id}
+        open={bartender || changeable ? open === item.key : undefined}
+        chevron={bartender}
+        showActs={(changeable || (bartender && current)) && (open === item.key || alwaysActs(item.sectionId, item.row))}
+        onAct={(kind) =>
+          kind === 'swap' || kind === 'takeOff'
+            ? setChanging({ kind, view: item.row!, sectionId: item.row!.listRow?.sectionId ?? item.sectionId! })
+            : acts.act(kind, item.row!, item.sectionId!)
+        }
+        // A tap opens the drink (Menu-drink); a bartender's opens the spec in place, and on a live list the team's shows Swap and Take off (Menu-l-swap), each with the way on to the drink.
+        onPress={() => (bartender || inPlace(item) ? (toggle(item.key), sidebar && item.row!.drink.kind === 'cocktail' && setPicked(item.row!.drink.id)) : openDrink(item.row!.drink))}
+      >
+        {open !== item.key ? null : bartender ? <MenuSpecInPlace itemId={item.row.drink.id} barId={menu.barId} onOpen={() => openDrink(item.row!.drink)} /> : inPlace(item) && !sidebar ? <OpenDrinkLink onOpen={() => openDrink(item.row!.drink)} /> : null}
+      </MenuPageRow>
+    ) : null;
 
   const list = (
     <FlatList
       // A menu can run to dozens of drinks: rows mount as they scroll into view.
-      data={items}
+      data={sidebar ? [] : items}
       keyExtractor={(i) => i.key}
       windowSize={DRAWN_LIST_WINDOW}
       style={styles.screen}
       contentContainerStyle={{ paddingBottom: insets.bottom + (draft && team ? 140 : space.xxxl) }}
-      renderItem={({ item }) => (
-        <View style={column}>
-          {item.head ? (
-            <View style={styles.sectionHead}>
-              <SectionHead name={item.head.name} count={item.head.count} />
-            </View>
-          ) : item.row ? (
-            <MenuPageRow
-              row={item.row}
-              picked={besideId === item.row.drink.id}
-              open={bartender || changeable ? open === item.key : undefined}
-              chevron={bartender}
-              showActs={(changeable || (bartender && current)) && (open === item.key || alwaysActs(item.sectionId, item.row))}
-              onAct={(kind) =>
-                kind === 'swap' || kind === 'takeOff'
-                  ? setChanging({ kind, view: item.row!, sectionId: item.row!.listRow?.sectionId ?? item.sectionId! })
-                  : acts.act(kind, item.row!, item.sectionId!)
-              }
-              // Every row opens its drink (Menu-drink); a bartender's opens the spec in place first (Menu-who-bartender).
-              onPress={() => (bartender ? toggle(item.key) : openDrink(item.row!.drink))}
-              // On a live list the menu team hold a drink for Swap and Take off (Menu-l-swap).
-              onLongPress={changeable && item.row.acts?.length && !alwaysActs(item.sectionId, item.row) ? () => toggle(item.key) : undefined}
-            >
-              {bartender && open === item.key ? <MenuSpecInPlace itemId={item.row.drink.id} barId={menu.barId} onOpen={() => openDrink(item.row!.drink)} /> : null}
-            </MenuPageRow>
-          ) : null}
-        </View>
-      )}
+      renderItem={({ item }) => <View style={column}>{rowOf(item)}</View>}
       ListHeaderComponent={
         <View style={[column, styles.head]}>
-          {sidebar ? <Crumbs trail={[home ? { label: 'Drinks', href: '/drinks' } : { label: 'Menus', href: '/menus/all' }]} /> : null}
-          <MenuPageHead
-            heroIds={drinks.slice(0, 3).map((d) => d.id)}
-            coverUrl={cover}
-            coverCredit={cover ? menu.coverCredit : null}
-            name={menu.name}
-            ink={model.ink}
-            quiet={model.quiet}
-            tag={model.tag}
-            eyebrow={model.eyebrow}
-            description={menu.description}
-            onBack={sidebar ? null : back}
-            onShare={lens.lens === 'home' ? null : share}
-            // Edit is the one action for the menu team; a draft's is Publish and a home menu's Share, so theirs is a glass pencil.
-            onEdit={(team && draft) || lens.lens === 'home' ? () => go(`/menus/${menu.id}/edit`) : null}
-            pill={lens.lens === 'home' ? { label: 'Share', onPress: share } : team && !draft && status !== 'previous' ? { label: 'Edit', onPress: () => go(`/menus/${menu.id}/edit`) } : null}
-            bleed={gutter}
-            top={sidebar ? 0 : insets.top}
-          />
+          <MenuScreenHead menu={menu} model={model} desk={sidebar} cover={cover} home={lens.lens === 'home'} team={team} draft={draft} past={status === 'previous'} gutter={gutter} top={sidebar ? 0 : insets.top} onBack={back} onShare={share} onEdit={() => go(`/menus/${menu.id}/edit`)} />
           {model.banner ? (
             <MenuPageBanner text={model.banner.text} aside={model.banner.aside} warn={model.banner.warn} onPress={model.banner.toNow && live ? () => go(`/menus/${live.id}`) : undefined} />
           ) : null}
@@ -254,6 +234,7 @@ function MenuPageBody({ menu, shelf, cover, now }: PageProps & { cover: string |
             ).map(withPress)}
           />
           {!drinks.length ? <Body tone="muted">No drinks on this menu yet.</Body> : null}
+          {sidebar ? <MenuDeskColumns items={items} render={rowOf} /> : null}
         </View>
       }
       ListFooterComponent={model.after ? <MenuPageAfter note={model.after} style={column} /> : undefined}
@@ -265,7 +246,7 @@ function MenuPageBody({ menu, shelf, cover, now }: PageProps & { cover: string |
       {list}
       {besideId ? (
         <Suspense fallback={null}>
-          <MenuDrinkPane itemId={besideId} place={place} onPick={(id) => drinks.find((d) => d.id === id && openDrink(d))} />
+          <MenuDrinkPane drink={drinks.find((d) => d.id === besideId)!} barName={venues.find((v) => v.id === menu.barId)?.name ?? null} place={place} onPick={(id) => drinks.find((d) => d.id === id && openDrink(d))} />
         </Suspense>
       ) : null}
       {draft && team ? (

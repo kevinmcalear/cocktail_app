@@ -44,8 +44,6 @@ interface MenuPageRowProps {
   row: PageRowView;
   /** Nothing to open: the row stays a plain row (a drink kept private). */
   onPress?: () => void;
-  /** The menu team on a live list: holding a drink shows its Swap and Take off (Menu-l-swap), as a tap opens it. */
-  onLongPress?: () => void;
   /** The drink open beside the menu on a desktop (Menu-desk): the row sits on a soft fill. */
   picked?: boolean;
   /** A bartender's spec, or the menu team's actions, open under the row. */
@@ -67,7 +65,7 @@ interface MenuPageRowProps {
  * spec in place, the menu team's on a live list its Swap and Take off
  * (Menu-l-swap).
  */
-export function MenuPageRow({ row, onPress, onLongPress, picked, open, showActs, onAct, chevron, trailing, children }: MenuPageRowProps) {
+export function MenuPageRow({ row, onPress, picked, open, showActs, onAct, chevron, trailing, children }: MenuPageRowProps) {
   const ds = useDs();
   const amber = readableAccent(STATUS.warning, ds.c.ground);
   const green = readableAccent(STATUS.success, ds.c.ground);
@@ -84,9 +82,7 @@ export function MenuPageRow({ row, onPress, onLongPress, picked, open, showActs,
           aria-expanded={open}
           aria-current={picked || undefined}
           accessibilityLabel={label}
-          accessibilityHint={onLongPress ? 'Hold for Swap and Take off' : undefined}
           onPress={onPress}
-          onLongPress={onLongPress}
           disabled={!onPress}
           style={[styles.row, trailing ? styles.grow : null, picked && [styles.picked, { backgroundColor: ds.c.raised }]]}
         >

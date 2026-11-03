@@ -22,6 +22,7 @@ export function useMenuPager(menuId: string | null, bar: string | null, itemId: 
   const editions = useMenuEditions(bar ? profile.data?.id : null);
   const edition = bar ? editions.data?.find((e) => e.id === menuId) : undefined;
   // Only the drinks a guest can open (the same ones the guest menu lets them tap).
+  // A guest pages only through the drinks they can open (the ones the guest menu lets them tap), counted among all it lists.
   const loaded = useMenuEditionDrinks(edition?.drinks ?? []);
   if (!menuId) return null;
   if (bar) {
@@ -29,8 +30,8 @@ export function useMenuPager(menuId: string | null, bar: string | null, itemId: 
     const readable = new Set(loaded.data.map((d) => d.id));
     // The guest page lists by section, each where its first drink sits (lib/menuEditions editionSections).
     const sections = [...new Set(edition.drinks.map((d) => d.section?.trim() || 'Cocktails'))];
-    const drinks: PagerDrink[] = sections.flatMap((s) => edition.drinks.filter((d) => readable.has(d.id) && (d.section?.trim() || 'Cocktails') === s).map((d) => ({ id: d.id, name: d.name, kind: 'cocktail' })));
-    return pagerPlace(edition.name, drinks, itemId);
+    const drinks: PagerDrink[] = sections.flatMap((s) => edition.drinks.filter((d) => (d.section?.trim() || 'Cocktails') === s).map((d) => ({ id: d.id, name: d.name, kind: 'cocktail' })));
+    return pagerPlace(edition.name, drinks, itemId, (d) => readable.has(d.id));
   }
   const menu = team.data;
   if (!menu) return null;

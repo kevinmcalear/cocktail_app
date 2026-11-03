@@ -3,9 +3,8 @@ import { StatusBar } from 'expo-status-bar';
 import { useState, type ComponentProps } from 'react';
 import { Linking, StyleSheet, View } from 'react-native';
 
-import { BackbarTheme, Button, PressableScale, Tag } from '@/components/ds';
+import { BackbarTheme, Button } from '@/components/ds';
 import { WebHead } from '@/components/WebHead';
-import { space } from '@/constants/tokens';
 import { useSignedIn } from '@/ctx/AuthContext';
 import { useActiveVenue } from '@/hooks/useActiveVenue';
 import { useMenuLens } from '@/hooks/useMenuLens';
@@ -19,7 +18,6 @@ import { screenBelow } from '@/lib/screenBelow';
 import { shareOrCopy } from '@/lib/shareLink';
 import { siteOrigin } from '@/lib/venueLink';
 
-import { SaveMenuButton } from '../kept/SaveMenuButton';
 import { GuestMenuPage } from '../menus/page/GuestMenuPage';
 import { loadFailure, PublicMissing } from '../published/PublicShell';
 
@@ -58,13 +56,6 @@ export function MenuEditionScreen({ profileRef, editionId }: { profileRef: strin
   const below = () => screenBelow(navigation.getState(), { id: profileRef, edition: editionId });
   // Nothing under it (opened from a link): Back goes to the bar's page.
   const back = () => (below() ? router.back() : router.replace(barHref));
-  // Opened from the bar's Menus tab, From goes back to that page rather than stacking a second copy.
-  const toBar = () => {
-    const under = below();
-    const id = under?.params.id;
-    if (under?.name === 'p/[id]/index' && typeof id === 'string' && [bar.id, bar.handle, profileRef].includes(id)) router.back();
-    else router.push(barHref);
-  };
   const menu = editionMenu(edition, editionSections(edition, drinks), bar.bar_id ?? bar.id);
   // Tonight, the bar's daily list (Menu-l-tonight): today's date, when it was written, the new drinks marked.
   const daily = edition.list_type === 'daily' && !past;
@@ -88,14 +79,6 @@ export function MenuEditionScreen({ profileRef, editionId }: { profileRef: strin
         onShare={() => void shareOrCopy(`${siteOrigin()}${barHref}/menus/${edition.id}`, edition.name, 'menu')}
         // The drink opens in its menu: "Autumn · 4 of 8" and the pager (Menu-pager).
         rowPress={(row) => (readable.has(row.drink.id) ? () => router.push(`${drinkPageHref(row.drink.id, signedIn)}?${inMenuQuery(edition.id, bar.handle || bar.id)}` as Href) : null)}
-        under={
-          <View style={styles.under}>
-            <PressableScale role="link" accessibilityLabel={`From ${bar.display_name}, open their profile`} onPress={toBar} style={styles.start}>
-              <Tag label={`From ${bar.display_name}`} tone="accent" />
-            </PressableScale>
-            <SaveMenuButton editionId={edition.id} drinkIds={edition.drinks.map((d) => d.id)} fromVenue={edition.from_venue} />
-          </View>
-        }
         footer={
           source ? (
             <View style={styles.start}>
@@ -124,5 +107,4 @@ function BarGuestMenuPage(props: Omit<ComponentProps<typeof GuestMenuPage>, 'len
 
 const styles = StyleSheet.create({
   start: { alignSelf: 'flex-start' },
-  under: { gap: space.sm },
 });

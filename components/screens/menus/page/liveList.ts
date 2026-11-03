@@ -192,7 +192,8 @@ export function liveList({ sections, sectionIds, rows, ended, endedDrinks, may, 
       out.push({
         ...view,
         flag: row.state === 'going' ? { label: row.offAt ? `Off ${day(row.offAt)}` : 'Coming off', tone: 'quiet' } : fresh ? { label: 'New', tone: 'green' } : view.flag,
-        sub: living && since && !bartender ? (fresh ? 'since today' : `since ${day(since)}`) : view.sub,
+        // The Drink Creator's cost stays on every row, a living list's too (Menu-who-creator); a row with no cost says how long it has been on.
+        sub: view.sub ?? (living && since && !bartender ? (fresh ? 'since today' : `since ${day(since)}`) : null),
         listRow: row,
         acts:
           row.state === 'going'
@@ -256,7 +257,10 @@ export function liveList({ sections, sectionIds, rows, ended, endedDrinks, may, 
       }),
     // A drink swapped out reads with the one that took its place, above.
     ...ended.filter((e) => !swappedIn(e)).map((e) => ({ at: e.cameOff, text: `${endedDrinks.get(e.itemId)?.name ?? 'A drink'} off` })),
-  ].sort((a, b) => b.at.localeCompare(a.at));
+  ]
+    // Drinks put on as the menu was set up aren't a change: only what changed after it went on (Menu-who-admin draws no Last change until then).
+    .filter((c) => !listStart || Date.parse(c.at) > Date.parse(listStart))
+    .sort((a, b) => b.at.localeCompare(a.at));
   const last = changes[0];
   const lastChange = last ? `${sameDay(last.at, now) ? `today ${time(last.at)}` : day(last.at)} · ${last.text}` : null;
 
