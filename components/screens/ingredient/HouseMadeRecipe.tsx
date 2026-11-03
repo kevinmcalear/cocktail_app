@@ -1,7 +1,8 @@
 import { useRouter } from 'expo-router';
 import { Linking, StyleSheet, View } from 'react-native';
 
-import { Caption, DsText, SpecRow, TextLink } from '@/components/ds';
+import { Caption, DsText, TextLink } from '@/components/ds';
+import { SpecRow } from '@/components/ds/SpecRow';
 import { space } from '@/constants/tokens';
 import type { PrepStep } from '@/hooks/usePrepCard';
 import type { BatchSize } from '@/lib/prepParts';

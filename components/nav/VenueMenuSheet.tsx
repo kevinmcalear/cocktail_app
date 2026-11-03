@@ -2,7 +2,8 @@ import { useRouter, type Href } from 'expo-router';
 import { useRef, useState, type ComponentRef } from 'react';
 import { StyleSheet, View } from 'react-native';
 
-import { Body, DsText, PopoverMenu, PressableScale, useDs, usePopover, type IconName } from '@/components/ds';
+import { Body, DsText, PressableScale, useDs, type IconName } from '@/components/ds';
+import { PopoverMenu, usePopover } from '@/components/ds/PopoverMenu';
 import { MenuSheet } from '@/components/screens/menus/MenuSheet';
 import { IconSymbol } from '@/components/ui/icon-symbol';
 import { font, layout, radius, space } from '@/constants/tokens';
