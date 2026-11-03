@@ -8,15 +8,15 @@ import { useItemSketch } from '@/hooks/useItemSketch';
 import { useReducedMotion } from '@/hooks/useReducedMotion';
 import { whenIdle } from '@/lib/idleQueue';
 import { inBarGlassCached } from '@/lib/sketch/barGlass';
-import { glowScene, nightScene, onlyStages, withoutStages } from '@/lib/sketch/passes';
+import { glowScene, onlyStages, withoutStages } from '@/lib/sketch/passes';
 import type { Scene } from '@/lib/sketch/scene';
 import { sceneToSvg } from '@/lib/sketch/svg';
 import { BARE_GLASS } from '@/lib/sketch/bareGlass';
-import { liquidOf, type SketchInputs } from '@/lib/sketch/types';
+import type { SketchInputs } from '@/lib/sketch/types';
 
 import { useDrawingGlasses } from './drawingGlasses';
 import { PourLevel } from './PourLevel';
-import { sceneFor } from './SketchDrawing';
+import { nightOf, sceneFor } from './SketchDrawing';
 import { useDs } from './theme';
 
 export type DrawingSize = 'hero' | 'middle' | 'tile' | 'menuRow' | 'row';
@@ -45,7 +45,7 @@ function build(inputs: SketchInputs, seed: string, thumb: boolean, night: boolea
   let layers = byKey.get(key);
   if (!layers) {
     const scene = sceneFor(inputs, seed, thumb ? 'thumb' : 'full');
-    const painted = night ? nightScene(scene, liquidOf(inputs).hex) : scene;
+    const painted = night ? nightOf(scene, inputs) : scene;
     const glow = night ? uri(glowScene(painted)) : null;
     // A drawing that doesn't pour is one picture; only a pouring one needs the liquid apart from the pencil.
     layers = pour
