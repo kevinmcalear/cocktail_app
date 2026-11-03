@@ -7,7 +7,7 @@ import { PopoverMenu, usePopover } from '@/components/ds/PopoverMenu';
 import { MenuSheet } from '@/components/screens/menus/MenuSheet';
 import { IconSymbol } from '@/components/ui/icon-symbol';
 import { font, layout, radius, space } from '@/constants/tokens';
-import { RoundPlacesNote, RoundSheetBlock } from '@/components/screens/firstRound/RoundElsewhere';
+import { RoundPlacesNote, RoundSheetBlock } from '@/components/screens/firstRound/RoundSheet';
 import { useMode } from '@/hooks/useMode';
 import { roleLabel } from '@/lib/roles';
 
