@@ -48,7 +48,6 @@ import { useMenuPageActions, type PageSheet } from './page/useMenuPageActions';
 
 // The desktop's drink beside the menu loads with it, not with every menu page (Menu-desk).
 const MenuDrinkPane = lazy(() => import('./pager/MenuDrinkPane').then((m) => ({ default: m.MenuDrinkPane })));
-
 const day = (iso: string) => dayMonth(new Date(iso), { weekday: 'short', month: 'short' });
 type Item = { key: string; head?: { name: string; count: number }; row?: PageRowView; sectionId?: string };
 
