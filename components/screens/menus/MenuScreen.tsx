@@ -31,9 +31,10 @@ import { SectionHead } from './SectionHead';
 import { MenuMoreSheet } from './MenuMoreSheet';
 import { ShareMenuSheet } from './ShareMenuSheet';
 import { DailyListPage } from './page/DailyListPage';
-import { MenuPageAfter, MenuPageBanner, MenuPageGroup } from './page/MenuPageGroup';
+import { MenuPageAfter, MenuPageGroup } from './page/MenuPageGroup';
+import { MenuPageBanner } from './page/MenuPageBanner';
 import { menuBarTools, MenuScreenHead } from './page/MenuScreenHead';
-import { MenuTopBar } from './page/MenuTopBar';
+import { MenuPinnedBar } from './page/MenuPinnedBar';
 import { MenuDeskColumns } from './desk/MenuDesk';
 import { MenuPageRow, type PageRowView } from './page/MenuPageRow';
 import { menuPageModel, type GroupAction } from './page/menuPageModel';
@@ -255,7 +256,7 @@ function MenuPageBody({ menu, shelf, cover, now }: PageProps & { cover: string |
       {/* Back stays put on a phone, the page scrolling under it; past the hero the bar takes a backing and the name (Kevin, 3 Nov; #1164). */}
       {sidebar ? null : (
         <View pointerEvents="box-none" style={styles.pinned}>
-          <MenuTopBar name={menu.name} onBack={back} {...barTools} onMedia={!!cover && ds.scheme === 'dark' && !collapsed} collapsed={collapsed ? { title: menu.name } : null} top={insets.top} gutter={gutter} />
+          <MenuPinnedBar name={menu.name} onBack={back} {...barTools} onMedia={!!cover && ds.scheme === 'dark' && !collapsed} collapsed={collapsed ? { title: menu.name } : null} top={insets.top} gutter={gutter} />
         </View>
       )}
       {/* The desktop's Swap and Take off open beside the list, over the change log (Menu-l-desk). */}

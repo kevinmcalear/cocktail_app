@@ -1,8 +1,11 @@
 import { StyleSheet, View } from 'react-native';
 
-import { Caption, DsText, GlassButton, PressableScale, useDs } from '@/components/ds';
+import type { StyleProp, ViewStyle } from 'react-native';
+import type { ReactNode } from 'react';
+
+import { Caption, GlassButton, PressableScale } from '@/components/ds';
 import { ItemMoreMenu } from '@/components/screens/drink/ItemMoreMenu';
-import { displayFaces, font, space } from '@/constants/tokens';
+import { font, space } from '@/constants/tokens';
 
 /** Share and Edit sit in the page's one …, never beside it (Kevin's C12, 3 Nov: "All into the dot menu"). */
 export interface MenuBarTools {
@@ -20,11 +23,11 @@ interface MenuTopBarProps extends MenuBarTools {
   label?: { text: string; onPress: () => void };
   /** Glass over a dark cover photo. */
   onMedia?: boolean;
-  /** Scrolled past the top (the collapsed header): the bar gets the page's ground and the menu's name beside Back. */
-  collapsed?: { title: string } | null;
   top: number;
-  /** Pinned over a page: the page's side margin, so the backing runs to the screen's edges. */
-  gutter?: number;
+  /** Between Back and the …: the pinned bar's collapsed title (MenuPinnedBar). */
+  children?: ReactNode;
+  /** The pinned bar's side margin and backing. */
+  wrap?: StyleProp<ViewStyle>;
 }
 
 /**
@@ -34,10 +37,9 @@ interface MenuTopBarProps extends MenuBarTools {
  * item pages do, #1164); scrolled past the hero it takes a backing and the
  * menu's name.
  */
-export function MenuTopBar({ name, onBack, label, onShare, onEdit, onMore, onMedia, collapsed, top, gutter = 0 }: MenuTopBarProps) {
-  const ds = useDs();
+export function MenuTopBar({ name, onBack, label, onShare, onEdit, onMore, onMedia, top, children, wrap }: MenuTopBarProps) {
   return (
-    <View pointerEvents="box-none" style={[styles.wrap, { paddingTop: top + space.lg, paddingHorizontal: gutter }, collapsed ? [styles.backed, { backgroundColor: ds.c.ground, borderBottomColor: ds.c.line }] : null]}>
+    <View pointerEvents="box-none" style={[styles.wrap, { paddingTop: top + space.lg }, wrap]}>
       {onBack ? (
         <GlassButton icon="chevron.left" accessibilityLabel="Back" onPress={onBack} onMedia={onMedia} />
       ) : label ? (
@@ -49,13 +51,7 @@ export function MenuTopBar({ name, onBack, label, onShare, onEdit, onMore, onMed
       ) : (
         <View />
       )}
-      <View style={styles.title} pointerEvents="none">
-        {collapsed ? (
-          <DsText variant="headline" numberOfLines={1} style={{ fontFamily: displayFaces[ds.displayFace].regular }}>
-            {collapsed.title}
-          </DsText>
-        ) : null}
-      </View>
+      <View style={styles.title} pointerEvents="none">{children}</View>
       {onMore ? (
         <GlassButton icon="ellipsis" accessibilityLabel="More" onPress={onMore} onMedia={onMedia} />
       ) : (
@@ -67,7 +63,6 @@ export function MenuTopBar({ name, onBack, label, onShare, onEdit, onMore, onMed
 
 const styles = StyleSheet.create({
   wrap: { flexDirection: 'row', alignItems: 'center', gap: space.md },
-  backed: { paddingBottom: space.sm, borderBottomWidth: StyleSheet.hairlineWidth },
   title: { flex: 1, minWidth: 0 },
   caps: { letterSpacing: 1.2, ...font.medium },
 });

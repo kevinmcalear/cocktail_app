@@ -9,7 +9,7 @@ import type { MenuLensData } from '@/hooks/useMenuLens';
 import type { MenuDetail } from '@/types/menus';
 
 import { SectionHead } from '../SectionHead';
-import { MenuPageBanner } from './MenuPageGroup';
+import { MenuPageBanner } from './MenuPageBanner';
 import { MenuPageHead } from './MenuPageHead';
 import { MenuPageRow, type PageRowView } from './MenuPageRow';
 import { menuPageModel, type MenuPageModel } from './menuPageModel';
