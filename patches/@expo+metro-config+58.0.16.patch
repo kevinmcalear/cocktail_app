@@ -1,11 +1,17 @@
 diff --git a/node_modules/@expo/metro-config/build/serializer/chunking/createLegacyChunkingStrategy.js b/node_modules/@expo/metro-config/build/serializer/chunking/createLegacyChunkingStrategy.js
-index 2e3ff4b..a86816a 100644
+index 2e3ff4b..d1eb140 100644
 --- a/node_modules/@expo/metro-config/build/serializer/chunking/createLegacyChunkingStrategy.js
 +++ b/node_modules/@expo/metro-config/build/serializer/chunking/createLegacyChunkingStrategy.js
-@@ -8,6 +8,12 @@ Object.defineProperty(exports, "createLegacyChunkingStrategy", {
+@@ -8,6 +8,18 @@ Object.defineProperty(exports, "createLegacyChunkingStrategy", {
          return createLegacyChunkingStrategy;
      }
  });
++Object.defineProperty(exports, "dropParentCopies", {
++    enumerable: true,
++    get: function() {
++        return dropParentCopies;
++    }
++});
 +Object.defineProperty(exports, "extractCommonChunk", {
 +    enumerable: true,
 +    get: function() {
@@ -15,7 +21,15 @@ index 2e3ff4b..a86816a 100644
  function _isResolvedDependency() {
      const data = require("@expo/metro/metro/lib/isResolvedDependency");
      _isResolvedDependency = function() {
-@@ -118,25 +124,62 @@ function removeEntryDepsFromAsyncChunks(entryChunk, chunks) {
+@@ -45,6 +57,7 @@ function createLegacyChunkingStrategy(context) {
+                     chunks.add(commonChunk);
+                 }
+                 deduplicateAgainstKnownChunks(chunks, entryChunk, commonChunk);
++                dropParentCopies(chunks, graph, options);
+                 removeEmptyChunks(chunks);
+                 if (commonChunk) {
+                     (0, _chunkingStrategy.createRuntimeChunk)(entryChunk, chunks, strategy);
+@@ -118,25 +131,62 @@ function removeEntryDepsFromAsyncChunks(entryChunk, chunks) {
          }
      }
  }
@@ -93,3 +107,48 @@ index 2e3ff4b..a86816a 100644
      // If common dependencies were found, extract them to the shared chunk.
      if (commonDependencies.size) {
          return new _Chunk.Chunk('/__common.js', commonDependencies, graph, options, strategy, false, true);
+@@ -156,6 +206,44 @@ function deduplicateAgainstKnownChunks(chunks, entryChunk, commonChunk) {
+         }
+     }
+ }
++// Patched (patches/@expo+metro-config+58.0.16.patch): a lazy chunk (a screen's sheet, editor
++// or map) carried its own copy of every module the chunk that imports it already holds,
++// because only the common chunk deduplicated. A module leaves a lazy chunk when every chunk
++// that imports it with import() has the module: the importer is running when the import
++// starts, so the module is defined by then (Metro's registry is shared by all chunks).
++// Chunks are checked in order against live deps, so two chunks that import each other can
++// never both drop a module. Routes keep their copies (the router loads them too).
++// Checked by scripts/commonChunk.check.ts.
++function dropParentCopies(chunks, graph, options) {
++    const path = require("path");
++    const importers = new Map();
++    const owner = new Map();
++    for (const chunk of chunks){
++        if (!chunk.sealed && chunk.isAsync) for (const entry of chunk.entries)owner.set(entry.path, chunk);
++    }
++    for (const chunk of chunks){
++        for (const module of chunk.deps){
++            for (const dependency of module.dependencies?.values() ?? []){
++                const target = dependency.data?.data?.asyncType && owner.get(dependency.absolutePath);
++                if (target && target !== chunk) {
++                    if (!importers.has(target)) importers.set(target, new Set());
++                    importers.get(target).add(chunk);
++                }
++            }
++        }
++    }
++    const routerRoot = graph.transformOptions?.customTransformOptions?.routerRoot;
++    const appDir = typeof routerRoot === 'string' ? path.join(options.projectRoot, decodeURI(routerRoot)) + path.sep : null;
++    const isRoute = (chunk)=>appDir != null && [
++            ...chunk.entries
++        ].some((m)=>m.path.startsWith(appDir));
++    for (const [chunk, parents] of importers){
++        if (chunk.sealed || chunk.isEntry || isRoute(chunk)) continue;
++        for (const dep of chunk.deps){
++            if (!chunk.entries.has(dep) && [...parents].every((p)=>p.deps.has(dep))) chunk.deps.delete(dep);
++        }
++    }
++}
+ function removeEmptyChunks(chunks) {
+     for (const chunk of chunks){
+         if (!chunk.sealed && !chunk.isEntry && chunk.deps.size === 0) {

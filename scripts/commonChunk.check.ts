@@ -2,12 +2,13 @@
 // (patches/@expo+metro-config+58.0.16.patch): the common chunk every web page
 // loads takes a module only when the root layout or at least 20 route chunks
 // use it (lazy chunks don't count), or two routes use a module on its
-// ALWAYS_COMMON list (the technique data). This fails if an upgrade drops the patch.
+// ALWAYS_COMMON list (the technique data); and a lazy chunk drops the modules every chunk
+// that imports it already has. This fails if an upgrade drops the patch.
 // Run: npm run test:unit
 import assert from 'node:assert/strict';
 
 // @ts-expect-error internal build file, no types
-import { extractCommonChunk } from '@expo/metro-config/build/serializer/chunking/createLegacyChunkingStrategy';
+import { dropParentCopies, extractCommonChunk } from '@expo/metro-config/build/serializer/chunking/createLegacyChunkingStrategy';
 
 type FakeModule = { path: string };
 type FakeChunk = { sealed: boolean; isAsync: boolean; entries: Set<FakeModule>; deps: Set<FakeModule> };
@@ -46,5 +47,26 @@ assert.ok(common.deps.has(theme), 'a module the root layout and one route use go
 assert.ok(!common.deps.has(drinkScreen), 'a module only 2 routes use stays out of it');
 assert.ok(routeChunks[0].deps.has(drinkScreen) && routeChunks[1].deps.has(drinkScreen), '...and each of those routes keeps a copy');
 assert.ok(routeChunks.every((c) => !c.deps.has(react)), 'a module in the common chunk leaves the route chunks');
+
+// A lazy chunk drops what every chunk that imports it already has; routes and shared entries stay.
+type Dep = { data: { data: { asyncType: string } }; absolutePath: string };
+type Mod = FakeModule & { dependencies: Map<string, Dep> };
+const withImports = (name: string, ...targets: FakeModule[]): Mod => ({
+  ...mod(name),
+  dependencies: new Map(targets.map((t) => [t.path, { data: { data: { asyncType: 'async' } }, absolutePath: t.path }])),
+});
+const lazyEntry = mod('components/Sheet.tsx');
+const lazyEntryB = mod('components/Map.tsx');
+const owner = withImports('app/owner.tsx', lazyEntry, lazyEntryB);
+const other = withImports('app/other.tsx', lazyEntryB);
+const shared = mod('components/shared.tsx');
+const sheet: FakeChunk = { sealed: false, isAsync: true, entries: new Set([lazyEntry]), deps: new Set([lazyEntry, shared, drinkScreen]) };
+const map: FakeChunk = { sealed: false, isAsync: true, entries: new Set([lazyEntryB]), deps: new Set([lazyEntryB, shared, drinkScreen]) };
+const ownerChunk: FakeChunk = { sealed: false, isAsync: true, entries: new Set([owner]), deps: new Set([owner, shared, drinkScreen]) };
+const otherChunk: FakeChunk = { sealed: false, isAsync: true, entries: new Set([other]), deps: new Set([other, shared]) };
+dropParentCopies(new Set([ownerChunk, otherChunk, sheet, map]), graph, options);
+assert.ok(!sheet.deps.has(shared) && !sheet.deps.has(drinkScreen) && sheet.deps.has(lazyEntry), 'a lazy chunk drops what its only importer has, and keeps its own entry');
+assert.ok(map.deps.has(shared) === false && map.deps.has(drinkScreen), 'a module one of its importers lacks stays in the lazy chunk');
+assert.ok(ownerChunk.deps.has(shared) && ownerChunk.deps.has(drinkScreen), 'a route keeps its copies');
 
 console.log('commonChunk.check: ok');
