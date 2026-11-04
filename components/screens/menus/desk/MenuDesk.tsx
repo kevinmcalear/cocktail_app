@@ -18,7 +18,6 @@ import { useWebNav, WEB_RAIL_WIDTH, WEB_SIDEBAR_WIDTH } from "@/hooks/useIsWideW
 
 import { MenuSky, MenuTrio } from "../page/MenuBandLazy";
 import type { MenuInk } from "../page/MenuDrawing";
-import type { Act, ActKind } from "../page/liveList";
 
 const TONE: Record<"green" | "amber" | "quiet", TagTone> = {
   green: "success",
@@ -196,39 +195,6 @@ export function MenuDeskColumns<T extends { key: string; head?: unknown }>({
   );
 }
 
-/**
- * A row on a live list chosen on the desktop (Menu-l-desk): on a soft fill,
- * with Swap, Take off and Off tonight under it, the one open beside the list
- * pressed.
- */
-export function DeskChosenRow({ acts, pressed, name, onAct, children }: { acts: Act[]; pressed: ActKind | null; name: string; onAct: (kind: ActKind) => void; children: ReactNode }) {
-  const ds = useDs();
-  return (
-    <View style={[styles.chosen, { backgroundColor: ds.c.raised }]}>
-      {children}
-      <View style={styles.acts}>
-        {acts.map((a) => {
-          const on = a.kind === pressed;
-          return (
-            <PressableScale
-              key={a.kind + a.label}
-              role="button"
-              aria-pressed={on}
-              accessibilityLabel={`${a.label} ${name}`}
-              onPress={() => onAct(a.kind)}
-              style={[styles.act, on ? { backgroundColor: ds.c.surface, borderColor: ds.c.ink, borderWidth: 1.5 } : { borderColor: ds.c.lineStrong, borderWidth: StyleSheet.hairlineWidth }]}
-            >
-              <DsText variant="label" style={font.semiBold}>
-                {a.label}
-              </DsText>
-            </PressableScale>
-          );
-        })}
-      </View>
-    </View>
-  );
-}
-
 const styles = StyleSheet.create({
   sky: { position: "absolute", top: 0, height: SKY_H },
   bar: {
@@ -259,7 +225,4 @@ const styles = StyleSheet.create({
   caps: { letterSpacing: 1.2, flexShrink: 1, ...font.medium },
   columns: { flexDirection: "row", gap: space.xxxl },
   column: { flex: 1, minWidth: 0 },
-  chosen: { borderRadius: radius.control, marginHorizontal: -space.sm, paddingHorizontal: space.sm },
-  acts: { flexDirection: "row", flexWrap: "wrap", gap: space.sm, paddingLeft: 56 + space.md, paddingBottom: space.md },
-  act: { minHeight: 34, paddingHorizontal: space.md + 2, borderRadius: radius.pill, alignItems: "center", justifyContent: "center" },
 });

@@ -32,8 +32,8 @@ export function MenuSpecInPlace({ itemId, barId, onOpen }: { itemId: string; bar
   );
 }
 
-/** Under a row opened in place (the spec, or Swap and Take off on a live list): the way on to the drink's page. */
-export function OpenDrinkLink({ onOpen }: { onOpen: () => void }) {
+/** Under a bartender's spec opened in place: the way on to the drink's page. */
+function OpenDrinkLink({ onOpen }: { onOpen: () => void }) {
   return (
     <PressableScale role="link" accessibilityLabel="Open the drink" onPress={onOpen} style={styles.open}>
       <Caption style={font.semiBold}>Open the drink ›</Caption>
