@@ -56,7 +56,12 @@ export function EditPhone(props: EditViewProps) {
             onShare={null}
             bleed={gutter}
             top={insets.top}
-            over={<CoverButtons editor={editor} onMedia={!!menu.coverUrl && ds.scheme === 'dark'} />}
+            over={
+              // With no cover or drawings the head is short: the buttons go under it, clear of Back.
+              <View style={menu.coverUrl || drinks.length ? styles.over : styles.under}>
+                <CoverButtons editor={editor} onMedia={!!menu.coverUrl && ds.scheme === 'dark'} />
+              </View>
+            }
           />
           <EditGroup editor={editor} look={look} onDates={onDates ?? (() => {})} />
         </View>
@@ -88,6 +93,9 @@ export function EditPhone(props: EditViewProps) {
 const COLLAPSE_AT = 200;
 
 const styles = StyleSheet.create({
+  // Above the phone's credit line, which sits at the cover's foot on the right.
+  over: { position: 'absolute', left: 0, bottom: space.xxxl, flexDirection: 'row', gap: space.sm },
+  under: { flexDirection: 'row', gap: space.sm, marginBottom: space.md },
   screen: { flex: 1 },
   head: { gap: space.lg },
   dock: { position: 'absolute' },
