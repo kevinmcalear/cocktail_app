@@ -45,7 +45,6 @@ export function MenuScreenHead({ menu, model, desk, cover, home, team, draft, pa
         description={menu.description}
         pills={pills}
         onMore={home ? onMore : undefined}
-        bleed={gutter}
       />
     );
   }
