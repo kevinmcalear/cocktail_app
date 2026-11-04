@@ -132,12 +132,39 @@ export function useCreateMenu() {
   });
 }
 
-/** Puts a menu on now or on a date, ending the menus it replaces then (schedule_menu). */
+/**
+ * Puts a menu on now or on a date, ending the menus it replaces then
+ * (schedule_menu). schedule_menu clears ends_at, so an end the menu already
+ * has (a draft's planned end, Ends in the editor) is written back after it.
+ */
 export function useScheduleMenu() {
   const invalidate = useInvalidateMenus();
   return useMutation({
-    mutationFn: ({ menuId, startsAt, replaceIds }: { menuId: string; startsAt: string | null; replaceIds: string[] }) =>
-      rpc('schedule_menu', { p_menu_id: menuId, p_starts_at: startsAt, p_replace_menu_ids: replaceIds }),
+    mutationFn: async ({ menuId, startsAt, replaceIds, endsAt }: { menuId: string; startsAt: string | null; replaceIds: string[]; endsAt?: string | null }) => {
+      await rpc('schedule_menu', { p_menu_id: menuId, p_starts_at: startsAt, p_replace_menu_ids: replaceIds });
+      if (!endsAt) return;
+      const { error } = await supabase.from('menus').update({ ends_at: endsAt }).eq('id', menuId);
+      // The menu is on by now; say so rather than ask for a second go-live.
+      if (error) throw new Error('It’s on, but its end date didn’t save. Set it again in Ends.');
+    },
+    // Settled, not success: a failed end write still leaves the menu on.
+    onSettled: invalidate,
+    onError: () => {},
+  });
+}
+
+/**
+ * When a menu comes off: a dated menu's ends_at, a draft's planned_ends_at
+ * (useScheduleMenu carries it to ends_at when the menu goes on). Null: no end date. The menu team may update its
+ * menus (menus_update); menus_dates_check refuses an end before the start.
+ */
+export function useSetMenuEnd() {
+  const invalidate = useInvalidateMenus();
+  return useMutation({
+    mutationFn: async ({ menuId, endsAt, dated }: { menuId: string; endsAt: string | null; dated: boolean }) => {
+      const { error } = await supabase.from('menus').update(dated ? { ends_at: endsAt } : { planned_ends_at: endsAt }).eq('id', menuId);
+      if (error) throw readable(error);
+    },
     onSuccess: invalidate,
     onError: () => {},
   });

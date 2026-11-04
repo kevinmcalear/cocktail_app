@@ -1,9 +1,7 @@
-import { useRouter, type Href } from 'expo-router';
 import { StyleSheet, View } from 'react-native';
 
-import { Body, Caption, PressableScale, Segmented, useDs } from '@/components/ds';
-import { IconSymbol } from '@/components/ui/icon-symbol';
-import { font, layout, partyHues, radius, space } from '@/constants/tokens';
+import { Caption, PressableScale, Segmented, useDs } from '@/components/ds';
+import { partyHues, radius, space } from '@/constants/tokens';
 import type { RunParty } from '@/lib/runSheet';
 
 export type Step = 'serves' | 'specs' | 'who' | 'sheet';
@@ -68,34 +66,6 @@ export function OwnerChip({ look, need, onPress }: { look: PartyLook; need: stri
   );
 }
 
-/** The menu page's way in, for people who can edit the menu (board 0), and the editor's. `before`: the editor saves first, so every drink is on it. */
-export function RunSheetLink({ menuId, before }: { menuId: string; before?: () => Promise<boolean> }) {
-  const ds = useDs();
-  const router = useRouter();
-  return (
-    <PressableScale
-      role="link"
-      accessibilityLabel="Run sheet: serves, swaps, who brings what, PDF"
-      onPress={async () => {
-        if (!before || (await before())) router.push(`/menus/${menuId}/run-sheet` as Href);
-      }}
-      style={[styles.link, { backgroundColor: ds.c.surface, borderColor: ds.accentText }]}
-    >
-      <View style={[styles.linkIcon, { backgroundColor: ds.c.raised }]}>
-        <IconSymbol name="doc.text" size={22} color={ds.accentText} />
-      </View>
-      <View style={{ flex: 1 }}>
-        <Body style={styles.strong}>Run sheet</Body>
-        <Caption tone="muted">Serves, swaps, who brings what, PDF</Caption>
-      </View>
-      <IconSymbol name="chevron.right" size={18} color={ds.c.muted} />
-    </PressableScale>
-  );
-}
-
 const styles = StyleSheet.create({
   chip: { flexDirection: 'row', alignItems: 'center', gap: space.xs + 2, minHeight: 32, paddingHorizontal: space.sm + 2, borderRadius: radius.pill, borderWidth: 1 },
-  link: { flexDirection: 'row', alignItems: 'center', gap: space.md, padding: space.lg, borderRadius: radius.card, borderWidth: 1, borderCurve: 'continuous', marginBottom: space.lg, minHeight: layout.minTapTarget },
-  linkIcon: { width: 44, height: 44, borderRadius: radius.control, alignItems: 'center', justifyContent: 'center' },
-  strong: { ...font.semiBold },
 });

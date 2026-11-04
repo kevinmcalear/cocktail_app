@@ -4,7 +4,7 @@ import { useMenuDrinkHandoff } from '@/store/useMenuDrinkHandoff';
 import { savePayload, type MenuLayout } from '@/lib/menuLayout';
 import type { MenuDetail, MenuDrink } from '@/types/menus';
 
-import { saveStatus } from './EditorParts';
+import { saveStatus } from './edit/EditTools';
 import { useLayoutEditor } from './useLayoutEditor';
 
 const drink = (id: string): MenuDrink => ({ id, name: id, kind: 'cocktail', line: '', price: null, imageUrl: null, isSketch: false, glass: null });

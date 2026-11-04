@@ -45,6 +45,8 @@ interface MenuPageHeadProps {
   top?: number;
   /** The page pins the bar over its scroll (a phone's menu page), so the head draws none. */
   pinned?: boolean;
+  /** Under the hero, placed by the editor: its Change cover and Remove (Menu-who-creator-edit). */
+  over?: ReactNode;
   children?: ReactNode;
 }
 
@@ -53,13 +55,14 @@ interface MenuPageHeadProps {
  * cover photo, or nothing yet), glass Back and the one … (Edit, Share), then the tag and
  * eyebrow, the name and its line (Menu-page).
  */
-export function MenuPageHead({ heroIds, coverUrl, coverCredit, name, ink, quiet, tag, eyebrow, description, onBack, onShare, onEdit, onMore, label, bleed, top = 0, pinned, children }: MenuPageHeadProps) {
+export function MenuPageHead({ heroIds, coverUrl, coverCredit, name, ink, quiet, tag, eyebrow, description, onBack, onShare, onEdit, onMore, label, bleed, top = 0, pinned, over, children }: MenuPageHeadProps) {
   const ds = useDs();
   const wide = useBreakpoint() !== 'phone';
   const photo = !!coverUrl;
   const drawn = !photo && heroIds.length > 0;
   return (
     <View>
+      <View>
       {photo ? (
         <Suspense fallback={<View style={{ height: PHOTO_H }} />}>
           <MenuCover url={coverUrl} name={name} height={PHOTO_H} bleed={bleed} />
@@ -77,6 +80,8 @@ export function MenuPageHead({ heroIds, coverUrl, coverCredit, name, ink, quiet,
       ) : (
         <View style={{ height: 112 + top }} />
       )}
+      {over}
+      </View>
       {/* Pinned: the page draws the bar over its scroll instead, so Back stays put (MenuScreen). */}
       {pinned ? null : (
         <View style={[styles.bar, { marginHorizontal: 0 }]}>
