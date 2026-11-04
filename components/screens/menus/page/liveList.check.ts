@@ -5,7 +5,8 @@ import type { EndedRun, ListRow } from '@/hooks/useLivingList';
 import type { MenuDrink } from '@/types/menus';
 
 import { liveList, runRange } from './liveList';
-import { splitGroup, type ModelGroupRow } from './menuPageModel';
+import type { ModelGroupRow } from './menuPageModel';
+import { splitGroup } from './menuPageSplit';
 import type { PageRowView } from './MenuPageRow';
 
 const drink = (id: string): MenuDrink => ({ id, name: id, kind: 'cocktail', line: '', price: null, imageUrl: null, isSketch: false, glass: null });

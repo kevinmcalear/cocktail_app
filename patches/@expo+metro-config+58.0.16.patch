@@ -15,7 +15,7 @@ index 2e3ff4b..a86816a 100644
  function _isResolvedDependency() {
      const data = require("@expo/metro/metro/lib/isResolvedDependency");
      _isResolvedDependency = function() {
-@@ -118,25 +124,57 @@ function removeEntryDepsFromAsyncChunks(entryChunk, chunks) {
+@@ -118,25 +124,62 @@ function removeEntryDepsFromAsyncChunks(entryChunk, chunks) {
          }
      }
  }
@@ -32,10 +32,15 @@ index 2e3ff4b..a86816a 100644
 +// and losing one route that reaches it copies it into every other user (25 chunks,
 +// +2.7 MB of web JS). Listed here so it stays in one place on purpose; the upgrade
 +// is a shared chunk per group of routes (Expo's granular chunking) instead of a list.
++// The last three are what useHomeBar pulls in: 20 routes reached them until the menu page
++// stopped importing useMyBar, and the 19th copied them into 30 chunks (+225 KB).
 +const ALWAYS_COMMON = [
 +    'lib/techniques/index.ts',
 +    'lib/techniques/data/',
-+    'components/search/NearPicks.tsx'
++    'components/search/NearPicks.tsx',
++    'lib/techniques/labNames.ts',
++    'lib/barSections.ts',
++    'hooks/useCreateIngredient.ts'
 +];
  function extractCommonChunk(chunks, graph, options, strategy) {
 -    const toCompare = [
