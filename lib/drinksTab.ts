@@ -5,6 +5,7 @@ import { plural } from './menus';
 import type { BuyLine } from './prep';
 import { formatQuantity, toQuantity, type Quantity } from './quantity';
 import type { Batch } from './stock';
+import { dayMonth } from './dayMonth';
 
 /**
  * The Drinks tab's pure parts (Prod-phone drinks and shelf, Sta-drinks,
@@ -67,7 +68,7 @@ export function serviceTag(allergens: readonly string[]): string | null {
 
 /** The On now card's line under the menu's name: "8 drinks · Winter on 1 Dec". */
 export function onNowSub(count: number, next: { name: string; startsAt: string | null } | null, locale?: string): string {
-  const on = next?.startsAt ? `${next.name} on ${new Date(next.startsAt).toLocaleDateString(locale, { day: 'numeric', month: 'short' })}` : null;
+  const on = next?.startsAt ? `${next.name} on ${dayMonth(new Date(next.startsAt), { month: 'short' }, locale)}` : null;
   return [plural(count, 'drink'), on].filter(Boolean).join(' · ');
 }
 

@@ -117,5 +117,19 @@ export function nightScene(scene: Scene, liquid: string, bare = false): Scene {
   });
 }
 
+/** The parts that glow at night, in the order they come in: the drink, then its garnish. */
+export const GLOW_STAGES = ['liquid', 'garnish'] as const satisfies readonly StageName[];
+
 /** Just the drink and its garnish, for night's soft glow behind the drawing. */
-export const glowScene = (night: Scene) => onlyStages(night, ['liquid', 'garnish']);
+export const glowScene = (night: Scene) => onlyStages(night, GLOW_STAGES);
+
+/**
+ * The glow of a drawing that moves, one scene per part, so each comes in with
+ * its own stage (AnimatedSketch): the garnish never glows before it lands. A
+ * part that isn't drawn has no glow.
+ */
+export const glowParts = (night: Scene) =>
+  GLOW_STAGES.flatMap((stage) => {
+    const scene = onlyStages(night, [stage]);
+    return scene.els.length ? [{ stage, scene }] : [];
+  });

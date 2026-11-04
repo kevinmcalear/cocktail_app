@@ -3,9 +3,8 @@ import { StatusBar } from 'expo-status-bar';
 import { useState, type ComponentProps } from 'react';
 import { Linking, StyleSheet, View } from 'react-native';
 
-import { BackbarTheme, Button, PressableScale, Tag } from '@/components/ds';
+import { BackbarTheme, Button } from '@/components/ds';
 import { WebHead } from '@/components/WebHead';
-import { space } from '@/constants/tokens';
 import { useSignedIn } from '@/ctx/AuthContext';
 import { useActiveVenue } from '@/hooks/useActiveVenue';
 import { useMenuLens } from '@/hooks/useMenuLens';
@@ -13,13 +12,15 @@ import { usePhotoTone } from '@/hooks/usePhotoTone';
 import { useMenuEditionDrinks, useMenuEditions, useProfile } from '@/hooks/useProfiles';
 import { drinkPageHref } from '@/lib/itemRoutes';
 import { barDay, clockAt, DAILY_AFTER, dailyLead, dayText } from '@/lib/dailyList';
+import { inMenuQuery } from '@/lib/menuPager';
 import { editionDates, editionMenu, editionMenuDrinks, editionSections, menuRange, menuState } from '@/lib/menuEditions';
 import { screenBelow } from '@/lib/screenBelow';
 import { shareOrCopy } from '@/lib/shareLink';
 import { siteOrigin } from '@/lib/venueLink';
+import type { MenuDrink } from '@/types/menus';
 
-import { SaveMenuButton } from '../kept/SaveMenuButton';
 import { GuestMenuPage } from '../menus/page/GuestMenuPage';
+import { NotPublishedSheet } from '../menus/page/NotPublishedSheet';
 import { loadFailure, PublicMissing } from '../published/PublicShell';
 
 /**
@@ -41,6 +42,8 @@ export function MenuEditionScreen({ profileRef, editionId }: { profileRef: strin
   const loaded = useMenuEditionDrinks(edition?.drinks ?? []);
   // ponytail: a guest's own day, not the bar's (get_menu_editions doesn't send the bar's time zone).
   const [today] = useState(() => barDay(Date.now()));
+  // A drink the bar hasn't published: a small card instead of a page (Kevin, 3 Nov).
+  const [notYet, setNotYet] = useState<MenuDrink | null>(null);
   if (!profile.data || !edition) return <PublicMissing loading={profile.isPending || (!!profile.data && editions.isPending)} what="menu" failed={loadFailure(profile, editions)} />;
 
   const bar = profile.data;
@@ -57,13 +60,6 @@ export function MenuEditionScreen({ profileRef, editionId }: { profileRef: strin
   const below = () => screenBelow(navigation.getState(), { id: profileRef, edition: editionId });
   // Nothing under it (opened from a link): Back goes to the bar's page.
   const back = () => (below() ? router.back() : router.replace(barHref));
-  // Opened from the bar's Menus tab, From goes back to that page rather than stacking a second copy.
-  const toBar = () => {
-    const under = below();
-    const id = under?.params.id;
-    if (under?.name === 'p/[id]/index' && typeof id === 'string' && [bar.id, bar.handle, profileRef].includes(id)) router.back();
-    else router.push(barHref);
-  };
   const menu = editionMenu(edition, editionSections(edition, drinks), bar.bar_id ?? bar.id);
   // Tonight, the bar's daily list (Menu-l-tonight): today's date, when it was written, the new drinks marked.
   const daily = edition.list_type === 'daily' && !past;
@@ -85,15 +81,8 @@ export function MenuEditionScreen({ profileRef, editionId }: { profileRef: strin
         onToNow={now ? () => router.replace(`/p/${bar.handle || bar.id}/menus/${now.id}` as Href) : undefined}
         onBack={back}
         onShare={() => void shareOrCopy(`${siteOrigin()}${barHref}/menus/${edition.id}`, edition.name, 'menu')}
-        rowPress={(row) => (readable.has(row.drink.id) ? () => router.push(drinkPageHref(row.drink.id, signedIn) as Href) : null)}
-        under={
-          <View style={styles.under}>
-            <PressableScale role="link" accessibilityLabel={`From ${bar.display_name}, open their profile`} onPress={toBar} style={styles.start}>
-              <Tag label={`From ${bar.display_name}`} tone="accent" />
-            </PressableScale>
-            <SaveMenuButton editionId={edition.id} drinkIds={edition.drinks.map((d) => d.id)} fromVenue={edition.from_venue} />
-          </View>
-        }
+        // The drink opens in its menu: "Autumn · 4 of 8" and the pager (Menu-pager).
+        rowPress={(row) => (readable.has(row.drink.id) ? () => router.push(`${drinkPageHref(row.drink.id, signedIn)}?${inMenuQuery(edition.id, bar.handle || bar.id)}` as Href) : () => setNotYet(row.drink))}
         footer={
           source ? (
             <View style={styles.start}>
@@ -102,6 +91,7 @@ export function MenuEditionScreen({ profileRef, editionId }: { profileRef: strin
           ) : null
         }
       />
+      {notYet ? <NotPublishedSheet drink={notYet} barName={bar.display_name ?? edition.name} onClose={() => setNotYet(null)} /> : null}
     </>
   );
 }
@@ -122,5 +112,4 @@ function BarGuestMenuPage(props: Omit<ComponentProps<typeof GuestMenuPage>, 'len
 
 const styles = StyleSheet.create({
   start: { alignSelf: 'flex-start' },
-  under: { gap: space.sm },
 });

@@ -20,6 +20,8 @@ type PageProps = {
   up?: { label: string; href: Href };
   /** The wide page's width: Kit's list with the open thing beside it. */
   wide?: boolean;
+  /** Beside Back: the page's one … (a kit thing's page, KitPage). */
+  trailing?: ReactNode;
 };
 
 /** Inside another page (setup's Kit tabs): just the content, under that page's own title. */
@@ -39,7 +41,7 @@ export function VenueSubPage(props: PageProps) {
   );
 }
 
-function Page({ barId, title, intro, children, crumb, up, wide }: PageProps) {
+function Page({ barId, title, intro, children, crumb, up, wide, trailing }: PageProps) {
   const ds = useDs();
   const router = useRouter();
   const frame = usePageFrame(wide ? 'wide' : 'text');
@@ -61,7 +63,7 @@ function Page({ barId, title, intro, children, crumb, up, wide }: PageProps) {
       >
         <View style={[frame.column, styles.readable]}>
           {/* On wide web the sidebar is the way around: the "Venue settings" crumb, no Back. */}
-          <SubPageHead title={title} crumbs={crumb ? crumbs : undefined} onBack={() => (router.canGoBack() ? router.back() : router.replace(back))} />
+          <SubPageHead title={title} crumbs={crumb ? crumbs : undefined} onBack={() => (router.canGoBack() ? router.back() : router.replace(back))} trailing={trailing} />
           {intro ? <Body tone="muted">{intro}</Body> : null}
           {children}
         </View>

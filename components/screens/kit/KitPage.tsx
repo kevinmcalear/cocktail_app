@@ -1,8 +1,9 @@
 import { useLocalSearchParams, useRouter, type Href } from 'expo-router';
-import type { ReactNode } from 'react';
+import { createContext, type ReactNode } from 'react';
 import { StyleSheet, View } from 'react-native';
 
 import { Body, Surface } from '@/components/ds';
+import { ItemMoreMenu } from '@/components/screens/drink/ItemMoreMenu';
 import { VenueSubPage } from '@/components/screens/venue/VenueSubPage';
 import { space } from '@/constants/tokens';
 import { useIsWideWeb } from '@/hooks/useIsWideWeb';
@@ -52,23 +53,30 @@ interface KitPageProps {
   list: ReactNode;
   /** Its page (KitItemPage). */
   item?: ReactNode;
+  /** Opens the open thing's Add sheet from its first question: Edit, in its … (Kevin's C12, 3 Nov). */
+  onEdit?: () => void;
   loading?: boolean;
   /** The list didn't load: the open thing isn't known to be gone. */
   failed?: boolean;
 }
+
+/** The open thing's …, for KitItemPage's head when it sits beside the list (a phone page has it in its top row). */
+export const KitItemMore = createContext<ReactNode>(null);
 
 /**
  * Kit › Glassware, Ice or Tools (Kit and ice, steps 1 and 2): the list, and
  * the thing opened from it. On a phone the opened thing is a page of its own
  * that goes back to the list; on a wide screen it sits beside the list.
  */
-export function KitPage({ barId, kind, title, intro, openId, openName, list, item, loading, failed }: KitPageProps) {
+export function KitPage({ barId, kind, title, intro, openId, openName, list, item, onEdit, loading, failed }: KitPageProps) {
   const wide = useIsWideWeb();
   const listHref = kitListHref(barId, kind);
   const gone = loading || item ? null : <Body tone="muted">{failed ? 'Couldn’t load it. Check your connection and try again.' : 'That’s not in the kit any more.'}</Body>;
+  // Edit sits in the …, never on its own (board Keep-phone, the glass page).
+  const more = item && onEdit && openName ? <ItemMoreMenu name={openName} onEdit={onEdit} editLabel={`Edit ${openName}`} /> : null;
   if (openId && !wide) {
     return (
-      <VenueSubPage barId={barId} title={openName ?? title} up={{ label: title, href: listHref }}>
+      <VenueSubPage barId={barId} title={openName ?? title} up={{ label: title, href: listHref }} trailing={more}>
         {item ?? gone}
       </VenueSubPage>
     );
@@ -78,7 +86,9 @@ export function KitPage({ barId, kind, title, intro, openId, openName, list, ite
       {openId ? (
         <View style={styles.split}>
           <View style={styles.list}>{list}</View>
-          <Surface style={styles.item}>{item ?? gone}</Surface>
+          <Surface style={styles.item}>
+            <KitItemMore value={more}>{item ?? gone}</KitItemMore>
+          </Surface>
         </View>
       ) : (
         list

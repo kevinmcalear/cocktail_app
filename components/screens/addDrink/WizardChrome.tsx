@@ -66,9 +66,9 @@ export function WizardNotice({ children, action }: { children: string; action?: 
 }
 
 /** "WHAT GOES IN?" style labels: small capitals with air between the letters. */
-export function Eyebrow({ children }: { children: string }) {
+export function Eyebrow({ children, heading }: { children: string; /** It heads a section (the editor's Steps, How it goes out), for screen readers. */ heading?: boolean }) {
   return (
-    <Caption tone="muted" style={styles.eyebrow} numberOfLines={1}>
+    <Caption tone="muted" style={styles.eyebrow} numberOfLines={1} role={heading ? 'heading' : undefined}>
       {children.toUpperCase()}
     </Caption>
   );

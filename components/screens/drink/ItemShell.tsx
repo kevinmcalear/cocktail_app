@@ -12,6 +12,7 @@ import { ScrollSky } from '@/components/ds/ScrollSky';
 import { useFabUnderToast } from '@/components/ds/Toast';
 import { useTabBarInset } from '@/components/nav/WebTabBar';
 import { layout, space } from '@/constants/tokens';
+import { useSignedIn } from '@/ctx/AuthContext';
 import { useIsWideWeb } from '@/hooks/useIsWideWeb';
 import { TITLE_ROOM, titleSpot, type PhotoRoom } from '@/lib/photoTitle';
 import { backWord } from '@/lib/tabs';
@@ -20,7 +21,7 @@ import { COLUMNS_FROM, DrinkColumns } from './DrinkColumns';
 import { FADE, phoneHeroHeight } from './DrinkHero';
 import { DockedDrawing, DOCKED, DrawingSpace, DrinkSky, DrinkSkyCap, drawingRoom } from './DrawingHero';
 import { iosBarRoom, IosBarName, NATIVE_DOCK_LEFT, useItemHeader, type Controls } from './ItemHeader';
-import { ItemMoreMenu, type ItemActions } from './ItemMoreMenu';
+import { hasMore, ItemMoreMenu, type ItemActions } from './ItemMoreMenu';
 import { MATERIAL_DOCK, MaterialBar, MaterialPage, useItemTones } from './MaterialBar';
 import { backWidth, BarBacking, PageControls } from './PageControls';
 import { TitleOnPhoto } from './ItemTitle';
@@ -109,19 +110,21 @@ export function ItemShell({ name, pane, photo, art, size, liquid, title, action,
   const materialBar = Platform.OS === 'android' && !columns && !pane;
   // One button on the right, …, holding Edit, Save, Share and the rest, in every bar (iOS's, Android's, the web's). `k` is what it shows, for iOS's bar to compare.
   // iOS's bar draws it again only when `k` changes, so its taps go through `live` to the latest handlers (a slug or a user that loads later).
+  const signedIn = useSignedIn();
   const live = useRef(actions);
   useLayoutEffect(() => {
     live.current = actions;
   });
-  const k = [!!actions.onEdit, actions.editLabel, actions.save?.saved, actions.save?.label[0], actions.save?.icon, !!actions.onShare, actions.report?.itemId, !!actions.adminFix].join('|');
+  const k = [!!actions.onEdit, actions.editLabel, actions.save?.saved, actions.save?.label[0], actions.save?.icon, !!actions.onShare, !!actions.flavorMap, actions.report?.itemId, !!actions.adminFix].join('|');
   const relayed: ItemActions = {
     ...actions,
     onEdit: actions.onEdit && (() => live.current.onEdit?.()),
     onShare: actions.onShare && (() => live.current.onShare?.()),
+    flavorMap: actions.flavorMap && (() => live.current.flavorMap?.()),
     adminFix: actions.adminFix && (() => live.current.adminFix?.()),
     save: actions.save && { ...actions.save, onToggle: () => live.current.save?.onToggle() },
   };
-  const controls: Controls = { more: <ItemMoreMenu name={name} k={k} {...relayed} /> };
+  const controls: Controls = { more: hasMore(actions, signedIn) ? <ItemMoreMenu name={name} k={k} {...relayed} /> : null };
   useItemHeader({ name, on: nativeBar, pane, controls });
   const barHeight = use(HeaderHeightContext) ?? 0;
   // Where it goes, from the page under this one, where there's room for a label (desktop boards).

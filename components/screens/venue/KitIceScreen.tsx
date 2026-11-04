@@ -65,6 +65,7 @@ export function KitIceScreen({ barId, openId }: { barId: string; openId?: string
         loading={isLoading}
         failed={!!error}
         list={list}
+        onEdit={opened && canEdit ? () => setSheet({ ice: opened, startAt: 0 }) : undefined}
         item={opened ? <IcePage barId={barId} ice={opened} canEdit={canEdit} onChange={(startAt) => setSheet({ ice: opened, startAt })} /> : null}
       />
       <IceSheet
@@ -97,7 +98,6 @@ function IcePage({ barId, ice, canEdit, onChange }: { barId: string; ice: VenueI
         { label: 'Looks like', value: iceLooksLine(ice), onChange: canEdit ? () => onChange(0) : undefined },
         { label: 'Where it comes from', value: from || 'Not said yet', onChange: canEdit ? () => onChange(1) : undefined },
       ]}
-      onEdit={canEdit ? () => onChange(0) : undefined}
       onRemove={canEdit ? () => remove.mutate(ice.id, { onSuccess: close }) : undefined}
       removing={remove.isPending}
       error={remove.error ? ((remove.error as { code?: string }).code === '23503' ? remove.error.message : 'Couldn’t remove it. Check your connection and try again.') : null}

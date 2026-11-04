@@ -9,16 +9,17 @@ import type { MenuLensData } from '@/hooks/useMenuLens';
 import type { MenuDetail } from '@/types/menus';
 
 import { SectionHead } from '../SectionHead';
-import { MenuPageBanner } from './MenuPageGroup';
+import { MenuPageBanner } from './MenuPageBanner';
 import { MenuPageHead } from './MenuPageHead';
 import { MenuPageRow, type PageRowView } from './MenuPageRow';
 import { menuPageModel, type MenuPageModel } from './menuPageModel';
+import { dayMonth } from '@/lib/dayMonth';
 
 type Item = { key: string; head?: { name: string; count: number }; row?: PageRowView };
 
 const COLUMN = 760;
 
-const day = (iso: string) => new Date(iso).toLocaleDateString(undefined, { weekday: 'short', day: 'numeric', month: 'short' });
+const day = (iso: string) => dayMonth(new Date(iso), { weekday: 'short', month: 'short' });
 
 /**
  * A menu for someone with no job at the bar: a guest on a bar's public link,
@@ -132,7 +133,6 @@ export function GuestMenuPage({
               onBack={onBack}
               onShare={onShare}
               label={label}
-              pill={null}
               bleed={wide ? Math.max(gutter, (width - COLUMN) / 2 + gutter) : gutter}
               top={insets.top}
             />

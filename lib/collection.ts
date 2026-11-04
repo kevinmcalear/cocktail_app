@@ -1,3 +1,5 @@
+import { dayMonth } from './dayMonth';
+
 /**
  * Collection: the drinks a home bartender saved (the bookmark on a drink, or
  * Collect on a bar's), split into the ones they can still open (published,
@@ -61,7 +63,7 @@ export function dayLabel(day: string, now: number, locale?: string): string {
   const [y, m, d] = day.split('-').map(Number);
   const date = new Date(y, m - 1, d);
   const sameYear = y === new Date(now).getFullYear();
-  return date.toLocaleDateString(locale, { weekday: 'short', day: 'numeric', month: 'short', ...(sameYear ? {} : { year: 'numeric' }) });
+  return dayMonth(date, { weekday: 'short', month: 'short', ...(sameYear ? {} : { year: 'numeric' as const }) }, locale);
 }
 
 /** "You had it on Sat 27 Sep", or null when they haven't said. */

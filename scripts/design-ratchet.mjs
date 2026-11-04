@@ -27,7 +27,7 @@ const RULES = [
   ['Literal[value=/^(?:rgba?|hsla?)\\(/i]', 'Raw rgb/hsl colour: use a colour from useDs() or constants/tokens.ts.'],
   [`Property[key.name="fontSize"][value.raw=${RAW_NUMBER}]`, 'Raw font size: use a text style (constants/tokens.ts type).'],
   [`JSXAttribute[name.name="fontSize"] > JSXExpressionContainer > Literal[raw=${RAW_NUMBER}]`, 'Raw font size: use a text style (constants/tokens.ts type).'],
-  // Type (31 Oct 2026): Redaction for names, the system font for the rest, no mono, nothing under 13.
+  // Type (3 Nov 2026): Instrument Serif for names, Geist for the rest, Geist Mono for capitals, nothing under 13.
   ['Property[key.name="fontSize"] > BinaryExpression[operator="-"]', 'A font size taken down from a text style can fall under 13 pt: use the smaller style.'],
   ['Property[key.name="fontFamily"][value.type="Literal"]', 'Raw font family: spread a `font` style or use `fontFamilies` from constants/tokens.ts.'],
   ['JSXAttribute[name.name="fontFamily"] > Literal', 'Raw font family: use `systemFont` or `fontFamilies` from constants/tokens.ts.'],

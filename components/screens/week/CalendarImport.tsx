@@ -6,9 +6,10 @@ import { Choice } from '@/components/screens/menus/MenuSheet';
 import { radius, space } from '@/constants/tokens';
 import { useAddCalendar, useCalendarSources, usePreviewCalendar, useRemoveCalendar, type FoundEvent } from '@/hooks/useWeek';
 import { EVENT_KINDS } from '@/lib/week';
+import { dayMonth } from '@/lib/dayMonth';
 
 const kindName = (k: FoundEvent['kind']) => EVENT_KINDS.find((e) => e.kind === k)?.label ?? 'Event';
-const when = (iso: string) => new Date(iso).toLocaleString(undefined, { weekday: 'short', day: 'numeric', month: 'short', hour: 'numeric', minute: '2-digit' });
+const when = (iso: string) => dayMonth(new Date(iso), { weekday: 'short', month: 'short', time: true });
 const host = (url: string) => {
   try {
     return new URL(url).hostname.replace(/^www\./, '');

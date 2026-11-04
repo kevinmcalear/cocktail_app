@@ -7,7 +7,7 @@ import { FormScrollContainer } from '@/components/recipe/FormScrollContainer';
 import { menuCover, radius, space } from '@/constants/tokens';
 
 import { MenuPageHead } from '../page/MenuPageHead';
-import { MenuTopBar } from '../page/MenuTopBar';
+import { MenuPinnedBar } from '../page/MenuPinnedBar';
 import { CoverButtons, EditAfter, EditGroup, EditSections } from './EditParts';
 import { EditTools, saveProblem } from './EditTools';
 import type { EditViewProps } from './MenuEditScreen';
@@ -54,7 +54,6 @@ export function EditPhone(props: EditViewProps) {
             description={editor.menu.description}
             onBack={null}
             onShare={null}
-            pill={null}
             bleed={gutter}
             top={insets.top}
             over={<CoverButtons editor={editor} onMedia={!!menu.coverUrl && ds.scheme === 'dark'} />}
@@ -67,7 +66,7 @@ export function EditPhone(props: EditViewProps) {
         </View>
       </FormScrollContainer>
       <View pointerEvents="box-none" style={styles.pinned}>
-        <MenuTopBar onBack={editor.leave} onShare={null} pill={null} onMedia={!!menu.coverUrl && ds.scheme === 'dark' && !collapsed} collapsed={collapsed ? { title: menu.name.trim() || 'Untitled menu' } : null} top={insets.top} gutter={gutter} />
+        <MenuPinnedBar name={menu.name.trim() || 'Untitled menu'} onBack={editor.leave} onShare={null} onMedia={!!menu.coverUrl && ds.scheme === 'dark' && !collapsed} collapsed={collapsed ? { title: menu.name.trim() || 'Untitled menu' } : null} top={insets.top} gutter={gutter} />
       </View>
       <View onLayout={(e) => setBarHeight(e.nativeEvent.layout.height)} style={[styles.dock, { left: gutter, right: gutter, bottom: insets.bottom + space.lg }]}>
         {problem ? (

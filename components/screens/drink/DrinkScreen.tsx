@@ -167,7 +167,8 @@ function Page({ item, canEdit, adminFix = false, onEdit, pane, openBatch, visito
         onShare: share,
         onEdit: canEdit && !preview ? onEdit : undefined,
         editLabel: 'Edit drink',
-        report: preview ? null : { itemId: item.id },
+        // Not for the bar's own team (Employee and up, View as applied): they fix their drinks, they don't report them.
+        report: preview || (realTeam !== null && role >= 20) ? null : { itemId: item.id },
         adminFix: adminFix && !preview ? onEdit : undefined,
       }}
     >

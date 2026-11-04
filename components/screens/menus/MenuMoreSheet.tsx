@@ -19,8 +19,8 @@ interface MenuMoreSheetProps {
   onClose: () => void;
   /** A home menu's night and guests, moved here when Shopping list took its place on the page. */
   onNight?: () => void;
-  /** A living list has no Edit on its page, so it opens here. */
-  onEdit?: () => void;
+  /** What the board keeps off the page for this person: an Admin's Run sheet, a living list's bar page. */
+  extras?: { label: string; onPress: () => void }[];
 }
 
 /**
@@ -28,7 +28,7 @@ interface MenuMoreSheetProps {
  * file a venue's draft under R&D (or back), delete it. A home menu also sets
  * its date and guests here.
  */
-export function MenuMoreSheet({ menu, status, visible, onClose, onNight, onEdit }: MenuMoreSheetProps) {
+export function MenuMoreSheet({ menu, status, visible, onClose, onNight, extras = [] }: MenuMoreSheetProps) {
   const router = useRouter();
   const create = useCreateMenu();
   const end = useEndMenu();
@@ -127,7 +127,18 @@ export function MenuMoreSheet({ menu, status, visible, onClose, onNight, onEdit 
           }}
         />
       ) : null}
-      {onEdit ? <Button label="Edit the list" icon="pencil" variant="secondary" onPress={onEdit} disabled={busy} /> : null}
+      {extras.map((x) => (
+        <Button
+          key={x.label}
+          label={x.label}
+          variant="secondary"
+          onPress={() => {
+            onClose();
+            x.onPress();
+          }}
+          disabled={busy}
+        />
+      ))}
       <Button label="Duplicate as a new draft" icon="doc.on.doc" variant="secondary" onPress={duplicate} disabled={busy} />
       {rnd ? null : status === 'on' || status === 'upcoming' ? (
         <Button label={status === 'on' ? 'Take it off now' : 'Unschedule'} icon="xmark" variant="secondary" onPress={takeOff} disabled={busy} />

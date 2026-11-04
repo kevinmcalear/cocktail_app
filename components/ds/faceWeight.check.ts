@@ -11,7 +11,7 @@ for (const [key, face] of Object.entries(displayFaces)) {
   assert.deepEqual(faceWeightReset(face.regular, undefined), { fontWeight: '400' }, label);
   assert.deepEqual(faceWeightReset(face.italic, undefined), { fontWeight: '400' }, `${label} italic`);
 }
-assert.deepEqual(faceWeightReset(fontFamilies.nameBold, undefined), { fontWeight: '400' });
+assert.deepEqual(faceWeightReset(fontFamilies.nameItalic, undefined), { fontWeight: '400' });
 // The system font keeps the variant's weight.
 assert.equal(faceWeightReset(systemFont, undefined), undefined);
 assert.equal(faceWeightReset(undefined, undefined), undefined);

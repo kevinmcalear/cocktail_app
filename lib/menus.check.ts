@@ -221,7 +221,7 @@ assert.equal(sentenceLine(ingredientLine(['gin', 'dry vermouth', 'Campari'])), '
   if (!('error' in late)) assert.equal(new Date(late.plannedEndsAt!).getDate(), 31, 'a night from 1am ends that morning');
   const run = venuePlan({ kind: 'run', date: '2026-12-01', time: '' });
   if (!('error' in run)) assert.equal(run.plannedEndsAt, null);
-  assert.match(nightLine(new Date(2026, 9, 31, 18).toISOString(), 'en-US'), /^Saturday, October 31, from 6 pm$/);
+  assert.match(nightLine(new Date(2026, 9, 31, 18).toISOString(), 'en-US'), /^Saturday 31 October, from 6 pm$/);
 }
 
 // --- New menu's name ideas and quick picks ---

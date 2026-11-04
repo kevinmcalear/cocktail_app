@@ -1,7 +1,7 @@
 import type { ReactNode } from 'react';
 import { ScrollView, StyleSheet, View } from 'react-native';
 
-import { Caption, Display, PencilState, useDs } from '@/components/ds';
+import { Caption, Head, PencilState, useDs } from '@/components/ds';
 import { ListNote, OutlineRows, SavedChip, SectionLabel } from '@/components/ds/ListGroup';
 import { usePageColumn } from '@/components/nav/pageColumn';
 import { useTabBarInset } from '@/components/nav/WebTabBar';
@@ -23,7 +23,7 @@ function StatePage({ name, children }: { name: string; children: ReactNode }) {
         <View style={[column, styles.body]}>
           <View>
             <Caption tone="muted">{name}</Caption>
-            <Display aria-level={1}>You</Display>
+            <Head aria-level={1}>You</Head>
           </View>
           {children}
         </View>

@@ -9,6 +9,7 @@ import { usePendingClaims, useReviewClaim, type ClaimForReview, type ClaimReview
 import { claimantWho } from '@/lib/claimVerification';
 
 import { BarClaimCard } from './BarClaimReview';
+import { dayMonth } from '@/lib/dayMonth';
 
 /** Review errors in words. The database's own messages (P0001) are already written for people. */
 function reviewError(error: unknown): string {
@@ -98,7 +99,7 @@ function ClaimCard({ claim, busy, onOpen, onReview }: { claim: ClaimForReview; b
   return (
     <Surface style={styles.card}>
       <View role="listitem" style={styles.cardBody}>
-        <Caption tone="muted">{new Date(claim.created_at).toLocaleDateString()}</Caption>
+        <Caption tone="muted">{dayMonth(new Date(claim.created_at), { month: 'short', year: 'numeric' })}</Caption>
         <Body>
           {`${who} wants to claim `}
           <DsText role="link" style={styles.link} onPress={onOpen}>

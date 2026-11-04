@@ -88,6 +88,7 @@ export function GlasswareScreen({ barId, openId }: { barId: string; openId?: str
         loading={isLoading || pageLoading}
         failed={!!error}
         list={list}
+        onEdit={opened && canEdit ? () => setSheet({ glass: opened, startAt: 0 }) : undefined}
         item={
           opened ? (
             <GlassPage
@@ -179,7 +180,6 @@ function GlassPage({ barId, pageId, glass, others, canEdit, venueName, justDrawn
             ]
           : []),
       ]}
-      onEdit={change(0)}
       onRemove={canEdit ? () => remove.mutate(glass.id, { onSuccess: close }) : undefined}
       removing={remove.isPending}
       error={save.error || remove.error ? FAILED : null}

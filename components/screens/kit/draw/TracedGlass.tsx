@@ -11,6 +11,7 @@ import { confirmAsync } from '@/lib/dialogs';
 import { aboutMl, mmText } from '@/lib/drawGlass';
 import { holdsMl } from '@/lib/glassTrace';
 import type { KitFact } from '../KitItemPage';
+import { dayMonth } from '@/lib/dayMonth';
 
 // A glass drawn from its own photo, opened (Draw my glass, step 6): its size
 // and where each number came from, the drinks drawn in it, sharing it with
@@ -86,7 +87,7 @@ export function ShareGlass({ glass, home, venueName, canEdit }: { glass: BarGlas
           <Caption tone="muted">In review</Caption>
         </View>
         <Caption tone="muted">
-          {`Sent ${new Date(share.created_at).toLocaleDateString(undefined, { day: 'numeric', month: 'short' })}. Once it’s checked it shows in the catalog as “${name}”${home ? '' : `, drawn from ${venueName}’s photo`}. Until then only ${home ? 'you see' : `${venueName} sees`} it.`}
+          {`Sent ${dayMonth(new Date(share.created_at), { month: 'short' })}. Once it’s checked it shows in the catalog as “${name}”${home ? '' : `, drawn from ${venueName}’s photo`}. Until then only ${home ? 'you see' : `${venueName} sees`} it.`}
         </Caption>
         {canEdit ? <Button label={set.isPending ? 'Stopping…' : 'Stop sharing'} variant="secondary" disabled={set.isPending} onPress={() => set.mutate(false)} style={styles.start} /> : null}
       </>

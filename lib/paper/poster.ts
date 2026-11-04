@@ -163,5 +163,5 @@ export function topThreePoster(input: TopThreeInput, size: PosterSize): PaperPag
 
   els.push(footer(w, h, muted));
   const rows = entries.map((e, i) => `${i + 1}, ${[e.bar, e.maker && `by ${e.maker}`].filter(Boolean).join(' ') || 'unnamed'}, ${e.score.toFixed(1)}`);
-  return { w, h, ground: posterPaper[night ? 'night' : 'day'], displayFace: 'redaction', els, alt: `${title}: ${rows.join('; ')}` };
+  return { w, h, ground: posterPaper[night ? 'night' : 'day'], displayFace: 'instrument', els, alt: `${title}: ${rows.join('; ')}` };
 }

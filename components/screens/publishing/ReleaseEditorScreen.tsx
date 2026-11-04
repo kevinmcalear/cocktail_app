@@ -15,6 +15,7 @@ import { dayStart, RELEASE_STATUS_LABEL, releaseProblems, releaseStatus, ymd } f
 
 import { ReleaseDrinks } from './ReleaseDrinks';
 import { releaseHref } from './ReleaseList';
+import { dayMonth } from '@/lib/dayMonth';
 
 /** Make or change one of a venue's releases: its name, date and drinks, and when it goes public. */
 export function ReleaseEditorScreen({ barId, releaseId }: { barId: string; releaseId: string }) {
@@ -97,7 +98,7 @@ function ReleaseForm({ barId, existing, drinks, hasProfile }: ReleaseFormProps) 
   // A live release can't hold a private drink, so the database refuses to save one that does.
   const canSave = !!name.trim() && !!start && !busy && !(status === 'live' && problems.length);
   const canPublish = !problems.length && !busy;
-  const dateLabel = start?.toLocaleDateString(undefined, { weekday: 'short', day: 'numeric', month: 'short' });
+  const dateLabel = (start ? dayMonth(start, { weekday: 'short', month: 'short' }) : undefined);
 
   /** Save, and optionally set when it goes public (null: back to a draft). */
   const run = async (publishedAt?: string | null) => {
@@ -134,7 +135,7 @@ function ReleaseForm({ barId, existing, drinks, hasProfile }: ReleaseFormProps) 
       <Title>{existing?.name ?? 'New release'}</Title>
       <Caption tone="muted">
         {status === 'scheduled' && existing?.publishedAt
-          ? `Scheduled: goes public ${new Date(existing.publishedAt).toLocaleString(undefined, { weekday: 'short', day: 'numeric', month: 'short', hour: 'numeric', minute: '2-digit' })}`
+          ? `Scheduled: goes public ${dayMonth(new Date(existing.publishedAt), { weekday: 'short', month: 'short', time: true })}`
           : status === 'hidden'
             ? 'A moderator hid this release. It stays down until they restore it.'
             : RELEASE_STATUS_LABEL[status]}

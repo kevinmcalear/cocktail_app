@@ -3,7 +3,7 @@ import { StyleSheet, View } from 'react-native';
 import Svg, { Circle, G, Line, Text as SvgText } from 'react-native-svg';
 
 import { PressableScale, useDs } from '@/components/ds';
-import { layout, systemFont, type } from '@/constants/tokens';
+import { fontFamilies, layout, systemFont, type } from '@/constants/tokens';
 import { centreLines, layoutLabels, mapSizeFor, placePairs, RINGS, type MapPair } from '@/lib/flavorMap';
 
 /**
@@ -40,7 +40,7 @@ export function RingMap({ pairs, centre, onPick }: { pairs: readonly MapPair[]; 
           {placed.map((p) => {
             const label = labels.get(p.id);
             if (!label || label.hidden) return null;
-            const props = { x: label.x, y: label.y, textAnchor: label.anchor, fontWeight: p.ring === 0 ? ('600' as const) : ('400' as const), ...labelFont };
+            const props = { x: label.x, y: label.y, textAnchor: label.anchor, ...labelFont, fontFamily: p.ring === 0 ? fontFamilies.sansSemiBold : systemFont };
             return (
               <G key={`n-${p.id}`}>
                 <SvgText {...props} stroke={ds.c.ground} strokeWidth={4} strokeLinejoin="round" fill={ds.c.ground}>
@@ -60,8 +60,8 @@ export function RingMap({ pairs, centre, onPick }: { pairs: readonly MapPair[]; 
               y={c + 5 + line.dy}
               fill={ds.accentFill.text}
               textAnchor="middle"
-              fontWeight="600"
               {...labelFont}
+              fontFamily={fontFamilies.sansSemiBold}
             >
               {line.text}
             </SvgText>

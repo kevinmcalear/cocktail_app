@@ -4,9 +4,10 @@ import assert from 'node:assert/strict';
 import { PREP_ACTIONS } from '../scale';
 import { baseHasFat, pickFoam } from './foamPicker';
 import {
-  canMake, EQUIPMENT, equipmentMatches, formatDose, groupForAction, GROUPS, scaleParts, searchTechniques, technicalIngredientFor,
-  TECHNICAL_INGREDIENTS, techniqueById, TECHNIQUES, unlocks,
+  canMake, EQUIPMENT, equipmentMatches, formatDose, groupForAction, GROUPS, scaleParts, searchTechniques, techniqueById, TECHNIQUES, unlocks,
 } from './index';
+import { technicalIngredientFor, TECHNICAL_INGREDIENTS } from './ingredients';
+import { isLabName, labIdFor } from './labNames';
 import { sourceOf } from './sourceBook';
 
 const near = (a: number, b: number) => assert.ok(Math.abs(a - b) < 0.02, `expected ${b}, got ${a}`);
@@ -124,3 +125,7 @@ assert.ok(!baseHasFat('Ginger syrup and lemon'));
 assert.ok(pickFoam({ kind: 'shaken', fat: false, strong: false, diet: 'no-soy' }).ruledOut.some((r) => r.agent.id === 'versawhip'));
 
 console.log('techniques.check: ok');
+
+// The light name index (labNames) agrees with the full list.
+for (const i of TECHNICAL_INGREDIENTS) for (const n of i.names) assert.equal(labIdFor(n), i.id, `${n} indexes to ${i.id}`);
+assert.ok(isLabName('Xanthan Gum') && !isLabName('Gin'));

@@ -1,7 +1,7 @@
 import { type ColorValue, Platform, type StyleProp, type ViewStyle } from 'react-native';
 import Svg, { Path, Text } from 'react-native-svg';
 
-import { systemFont } from '@/constants/tokens';
+import { fontFamilies } from '@/constants/tokens';
 import { useServiceDay } from '@/hooks/useServiceDay';
 
 import { GLYPHS, ICON_FILL, ICON_STROKE, type GlyphName } from './glyphs';
@@ -13,8 +13,9 @@ import { GLYPHS, ICON_FILL, ICON_STROKE, type GlyphName } from './glyphs';
  * Decorative: say what it does on the control that holds it.
  */
 export function IconSymbol({ name, size = 24, color, on, style }: { name: GlyphName; size?: number; color: ColorValue; on?: boolean; style?: StyleProp<ViewStyle> }) {
-  // Android's back is an arrow, not the iOS chevron (every chevron.left in the app is a back button).
-  const glyph = GLYPHS[name === 'chevron.left' && Platform.OS === 'android' ? 'arrow.left' : name];
+  // Android's own: back is an arrow, not the iOS chevron (every chevron.left in the app is a back button),
+  // and the overflow's dots stand up (Kevin's C12, 3 Nov: "Android vertical icon").
+  const glyph = GLYPHS[Platform.OS === 'android' ? (ANDROID[name] ?? name) : name];
   const fill = (on || glyph.on) && glyph.f;
   return (
     <Svg width={size} height={size} viewBox="0 0 24 24" fill="none" style={style} aria-hidden>
@@ -25,6 +26,7 @@ export function IconSymbol({ name, size = 24, color, on, style }: { name: GlyphN
   );
 }
 
+const ANDROID: Partial<Record<GlyphName, GlyphName>> = { 'chevron.left': 'arrow.left', ellipsis: 'ellipsis.vertical' };
 
 /** The day's size in the glyph's 24-unit box: the board's 7.5, a touch bigger to read at tab size. */
 const DAY_UNITS = 8;
@@ -33,7 +35,7 @@ const DAY_UNITS = 8;
 function ServiceDay({ color }: { color: ColorValue }) {
   const day = useServiceDay();
   return day ? (
-    <Text x={12} y={18} textAnchor="middle" fontFamily={systemFont} fontWeight="600" fontSize={DAY_UNITS} fill={color}>
+    <Text x={12} y={18} textAnchor="middle" fontFamily={fontFamilies.sansSemiBold} fontSize={DAY_UNITS} fill={color}>
       {String(day)}
     </Text>
   ) : null;

@@ -21,8 +21,11 @@ interface SegmentedProps<T extends string> {
    * The page's own switch (Drinks, House-made, Bottles) is SegmentedCapsule.
    */
   variant?: 'underline' | 'pill' | 'ink' | 'quiet';
-  /** Segments share the full width instead of hugging their labels. Underlined, that's a bar page's tabs: 15 on 20, centred (ppl-bar-top). */
-  stretch?: boolean;
+  /**
+   * Segments share the full width instead of hugging their labels. Underlined, that's a bar page's tabs: 15 on 20, centred (ppl-bar-top).
+   * 'fit': each as wide as its label plus an equal share of what's left, so a long label ("After tonight") isn't cut in a narrow sheet.
+   */
+  stretch?: boolean | 'fit';
   /** Underline: the picked tab is underlined in the accent, not ink (ppl-bar-top). */
   accent?: boolean;
   /** A choice between values (radios) rather than tabs: a rounded box, unpicked labels muted (ppl-settings, ppl-what-people-see). */
@@ -53,7 +56,7 @@ export function Segmented<T extends string>({ options, value, onChange, accessib
             {...a11y}
             accessibilityLabel={o.label}
             onPress={() => onChange(o.value)}
-            style={pill ? [styles.segment, choice ? styles.boxSegment : null, quiet ? styles.quietSegment : null, stretch ? styles.flex : null, { backgroundColor: fill }] : [styles.tab, stretch ? styles.tabStretch : null, { borderBottomColor: line }]}
+            style={pill ? [styles.segment, choice ? styles.boxSegment : null, quiet ? styles.quietSegment : null, stretch ? (stretch === 'fit' ? styles.fit : styles.flex) : null, { backgroundColor: fill }] : [styles.tab, stretch ? styles.tabStretch : null, { borderBottomColor: line }]}
           >
             <DsText
               variant={quiet ? 'caption' : 'body'}
@@ -83,6 +86,7 @@ const styles = StyleSheet.create({
   boxSegment: { borderRadius: radius.control - 3 },
   segment: { minHeight: layout.minTapTarget - space.xs, paddingHorizontal: space.lg + space.xs, borderRadius: radius.pill, alignItems: 'center', justifyContent: 'center' },
   flex: { flex: 1, minWidth: 0, paddingHorizontal: space.xs },
+  fit: { flexGrow: 1, flexShrink: 1, flexBasis: 'auto', minWidth: 0, paddingHorizontal: space.sm },
   quiet: { padding: 2, gap: 2, borderWidth: 0, borderRadius: radius.control },
   quietSegment: { minHeight: 36, paddingHorizontal: space.xs, borderRadius: radius.control - 2 },
   // The control's labels a step under body, as drawn (15 on 24).

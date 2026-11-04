@@ -1,5 +1,6 @@
 import { useLocalSearchParams } from 'expo-router';
 
+import { InMenu } from '@/components/screens/menus/pager/InMenu';
 import { PublishedDrinkScreen } from '@/components/screens/published/PublishedDrinkScreen';
 import { DrinkingAgeGate } from '@/components/screens/safety/DrinkingAgeGate';
 
@@ -12,7 +13,10 @@ export default function PublishedDrinkRoute() {
   const { id, release } = useLocalSearchParams<{ id: string; release?: string }>();
   return (
     <DrinkingAgeGate>
-      <PublishedDrinkScreen id={id} releaseId={release ?? null} />
+      {/* Opened from a bar's menu (?menu=&bar=), the menu's pager (Menu-pager). */}
+      <InMenu itemId={id}>
+        <PublishedDrinkScreen id={id} releaseId={release ?? null} />
+      </InMenu>
     </DrinkingAgeGate>
   );
 }

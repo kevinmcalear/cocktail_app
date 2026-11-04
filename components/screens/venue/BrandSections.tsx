@@ -54,7 +54,7 @@ export function LogoRow({ venue, logoUrl, busy, onPick, onRemoveBackground, onRe
         {logoUrl ? (
           <LogoImage uri={logoUrl} size={LOGO} radius={radius.control} style={[styles.logo, { borderColor: ds.c.line }]} onLoad={(s) => setSize({ url: logoUrl, ...s })} />
         ) : (
-          <VenueMark venue={{ ...venue, logoUrl: null, displayFace: 'redaction', groundTint: null, roleLevel: 40 }} size={LOGO} />
+          <VenueMark venue={{ ...venue, logoUrl: null, displayFace: 'instrument', groundTint: null, roleLevel: 40 }} size={LOGO} />
         )}
         <View style={styles.flex}>
           <Body numberOfLines={1}>{logoUrl ? fileName(logoUrl) : 'No logo yet'}</Body>

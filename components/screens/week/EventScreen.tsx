@@ -2,8 +2,9 @@ import { useRouter, type Href } from 'expo-router';
 import { useState } from 'react';
 import { Alert, Linking, Platform, ScrollView, StyleSheet, View } from 'react-native';
 
-import { Body, BrandProvider, Button, Caption, DsText, GlassButton, PressableScale, TextLink, useDisplayFaces, useDs } from '@/components/ds';
+import { Body, BrandProvider, Button, Caption, DsText, PressableScale, TextLink, useDisplayFaces, useDs } from '@/components/ds';
 import { PageHeader, usePageColumn } from '@/components/nav/Page';
+import { ItemMoreMenu } from '@/components/screens/drink/ItemMoreMenu';
 import { font, radius, space } from '@/constants/tokens';
 import { useCapabilities } from '@/hooks/useCapabilities';
 import { useVenueMenus } from '@/hooks/useMenus';
@@ -12,7 +13,7 @@ import { faceFromDb, usableGroundTint } from '@/lib/brand';
 import { menuStatus } from '@/lib/menus';
 import { isHexColor } from '@/lib/color';
 import { isApplePlatform } from '@/lib/platformKeys';
-import { shareLink } from '@/lib/shareLink';
+import { shareOrCopy } from '@/lib/shareLink';
 import { siteOrigin } from '@/lib/venueLink';
 import { directionsUrl, kindLabel, timeLine, type WeekItem } from '@/lib/week';
 
@@ -20,6 +21,7 @@ import { EventDrinks } from './EventDrinks';
 import { EventSheet } from './EventSheet';
 import { EventStaff } from './EventStaff';
 import { useDotColor } from './WeekParts';
+import { dayMonth } from '@/lib/dayMonth';
 
 /**
  * One event, as guests see it: the bars, when, whether the house menu is still
@@ -51,7 +53,6 @@ function EventPage({ id }: { id: string }) {
   const { data: menus = [] } = useVenueMenus(canEdit ? (event?.barId ?? undefined) : undefined);
   const remove = useDeleteEvent();
   const [editing, setEditing] = useState(false);
-  const [shared, setShared] = useState<'copied' | 'failed' | null>(null);
   const barPlace = useBarPlace(event?.barProfileId);
   const directions = directionsUrl(barPlace.data, Platform.OS === 'ios' || (Platform.OS === 'web' && isApplePlatform()));
   const [now] = useState(() => Date.now());
@@ -70,19 +71,12 @@ function EventPage({ id }: { id: string }) {
   }
 
   const starts = new Date(event.startsAt);
-  const short = starts.toLocaleDateString(undefined, { weekday: 'short', day: 'numeric', month: 'short' });
+  const short = dayMonth(starts, { weekday: 'short', month: 'short' });
   const day = starts.toDateString() === new Date(now).toDateString() ? `Tonight, ${short}` : short;
   const place = [event.barName ? `At ${event.barName}` : null, event.ticketUrl ? null : 'walk-ins only', event.houseMenuOn === false ? 'house menu off' : 'house menu still on', event.isPublic ? null : 'team only']
     .filter(Boolean)
     .join(' · ');
   const link = `${siteOrigin()}/e/${event.id}`;
-  const share = async () => {
-    try {
-      setShared((await shareLink(link, event.name, 'event')) === 'copied' ? 'copied' : null);
-    } catch {
-      setShared('failed');
-    }
-  };
   const confirmDelete = () => {
     const go = () => remove.mutate(event.id, { onSuccess: back });
     if (Platform.OS === 'web') {
@@ -109,10 +103,8 @@ function EventPage({ id }: { id: string }) {
             </View>
           }
           action={
-            <View style={styles.top}>
-              {canEdit && draft.data ? <Button label="Edit" variant="secondary" icon="pencil" onPress={() => setEditing(true)} /> : null}
-              <GlassButton icon="square.and.arrow.up" accessibilityLabel={shared === 'copied' ? 'Link copied' : 'Share'} onPress={share} />
-            </View>
+            // Edit and Share in the one … (Kevin's C12, 3 Nov: "All into the dot menu").
+            <ItemMoreMenu name={event.name} onEdit={canEdit && draft.data ? () => setEditing(true) : undefined} editLabel={`Edit ${event.name}`} onShare={() => void shareOrCopy(link, event.name, 'event')} />
           }
         />
         <Body style={styles.when}>{[day, timeLine(event)].filter(Boolean).join(' · ')}</Body>
@@ -135,7 +127,6 @@ function EventPage({ id }: { id: string }) {
         <EventDrinks event={event} />
         {canEdit && event.menuId ? <TextLink label="Open the menu" onPress={() => router.push(`/menus/${event.menuId}` as Href)} /> : null}
         <EventStaff event={event} canEdit={canEdit} />
-        {shared === 'failed' ? <Caption tone="muted">{link}</Caption> : null}
         {canEdit ? <Button label="Delete event" variant="danger" onPress={confirmDelete} disabled={remove.isPending} style={styles.delete} /> : null}
       </ScrollView>
       {editing && draft.data && event.barId ? (
@@ -183,7 +174,6 @@ const styles = StyleSheet.create({
   screen: { flex: 1 },
   body: { gap: space.sm, paddingBottom: space.xxxl },
   above: { gap: space.sm },
-  top: { flexDirection: 'row', alignItems: 'center', gap: space.sm },
   when: { ...font.semiBold },
   flex: { flex: 1 },
   marks: { flexDirection: 'row' },
