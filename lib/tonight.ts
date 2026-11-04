@@ -6,6 +6,7 @@ import { isGarnishUnit } from './garnish';
 import type { MakeLine } from './prep';
 import { resolvePresentationIngredient, sortRecipesByOrder } from './recipeUtils';
 import type { PresentationRecipe } from './spec';
+import { dayMonth } from './dayMonth';
 
 /** The service day ends at 6 the next morning (as useServiceDate counts it). */
 export function serviceEnd(now: Date): Date {
@@ -43,9 +44,12 @@ export function recipeNames(recipes: readonly PresentationRecipe[] | null | unde
 /** "Comes off at 11pm". */
 export const offAtLine = (offAt: string | null) => (offAt ? `Comes off at ${new Date(offAt).toLocaleTimeString(undefined, { hour: 'numeric', minute: '2-digit' })}` : 'Off tonight');
 
-/** "Saturday 1 November", and "doors at 6pm" while the bar is closed and opens later today. */
+/**
+ * "Saturday 1 November", and "doors at 6pm" while the bar is closed and opens
+ * later today, day before month in every locale (lib/dayMonth).
+ */
 export function tonightEyebrow(date: Date, opens: string | null, locale?: string): string {
-  const day = date.toLocaleDateString(locale, { weekday: 'long', day: 'numeric', month: 'long' });
+  const day = dayMonth(date, { weekday: 'long', month: 'long' }, locale);
   // hoursStatus says "opens 6pm" today, "opens 6pm Thu" another day: only today's is doors.
   const today = opens && /^opens \S+$/.test(opens) ? `doors at ${opens.slice('opens '.length)}` : null;
   return [day, today].filter(Boolean).join(' · ');

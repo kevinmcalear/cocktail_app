@@ -7,7 +7,7 @@ import { layout, space } from '@/constants/tokens';
 import { useActiveVenue, type Venue } from '@/hooks/useActiveVenue';
 import { useMode } from '@/hooks/useMode';
 
-import { VenueMenu } from './VenueMenuLazy';
+import { PlaceSheet, VenueMenu } from './VenueMenuLazy';
 import { HomeMark, VenueMark } from './VenueMarks';
 
 /** What the switcher says to screen readers: the mark carries no name. */
@@ -24,14 +24,21 @@ export function useVenueMenu() {
 
 /**
  * The logo in the corner of every phone screen (board Prod-place): the venue's mark (or the house at home) and a
- * small chevron in a glass pill, no name. `flat` drops the pill, for the tablet rail. `chevron={false}`: Android's
- * search bar draws the mark on its own (Prod-and).
+ * small chevron in a glass pill, no name. On phones it opens the place sheet (PlaceSheet): every page of the place
+ * you're in, with Switch inside it. `flat` drops the pill and hangs the places menu from the mark instead, for the
+ * tablet rail, whose own rows are the place's pages. `chevron={false}`: Android's search bar draws the mark on its
+ * own (Prod-and).
  */
 export function VenueSwitcher({ size = 34, chevron = true, flat = false }: { size?: number; chevron?: boolean; flat?: boolean }) {
   const ds = useDs();
   const { active } = useActiveVenue();
   const home = useMode().mode === 'home';
-  const { button, open, expanded, menu } = useVenueMenu();
+  const popover = useVenueMenu();
+  const [sheet, setSheet] = useState(false);
+  const { button } = popover;
+  const open = flat ? popover.open : () => setSheet(true);
+  const expanded = flat ? popover.expanded : sheet;
+  const menu = flat ? popover.menu : sheet ? <PlaceSheet onClose={() => setSheet(false)} /> : null;
   const face = (
     <>
       {home ? <HomeMark size={size} /> : <VenueMark venue={active} size={size} />}

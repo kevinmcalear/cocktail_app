@@ -253,20 +253,3 @@ export function useSavedMenus() {
     },
   });
 }
-
-/** Save a bar's menu to Collection, or let it go. */
-export function useSaveBarMenu() {
-  const qc = useQueryClient();
-  return useMutation({
-    mutationFn: async ({ editionId, save, fromVenue = false }: { editionId: string; save: boolean; fromVenue?: boolean }) => {
-      // A venue's own menu is saved by its menu id (from_venue on the bar page).
-      const column = fromVenue ? 'menu_id' : 'edition_id';
-      const { error } = save
-        ? await supabase.from('saved_menu_editions').upsert({ [column]: editionId }, { onConflict: `user_id,${column}`, ignoreDuplicates: true })
-        : await supabase.from('saved_menu_editions').delete().eq(column, editionId);
-      if (error) throw new Error(error.message);
-    },
-    onSettled: () => qc.invalidateQueries({ queryKey: ['saved-menus'] }),
-    onError: () => {},
-  });
-}

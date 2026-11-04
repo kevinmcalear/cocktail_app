@@ -1,5 +1,6 @@
 import { Stack, useLocalSearchParams } from 'expo-router';
 
+import { BarFeatureGate } from '@/components/bar/BarFeatureGate';
 import { VenueBrandProvider } from '@/components/nav/VenueBrandProvider';
 import { CalendarsScreen } from '@/components/screens/calendars/CalendarsScreen';
 
@@ -9,7 +10,11 @@ export default function CalendarsRoute() {
   return (
     <VenueBrandProvider barId={id}>
       <Stack.Screen options={{ headerShown: false }} />
-      {id ? <CalendarsScreen barId={id} /> : null}
+      {id ? (
+        <BarFeatureGate barId={id} feature="tonight">
+          <CalendarsScreen barId={id} />
+        </BarFeatureGate>
+      ) : null}
     </VenueBrandProvider>
   );
 }

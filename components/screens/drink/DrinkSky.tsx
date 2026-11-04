@@ -1,5 +1,5 @@
 import { LinearGradient } from 'expo-linear-gradient';
-import { StyleSheet } from 'react-native';
+import { StyleSheet, View } from 'react-native';
 
 import { useDs } from '@/components/ds';
 import { useItemSketch } from '@/hooks/useItemSketch';
@@ -18,6 +18,13 @@ export function DrinkSky({ liquid, tall }: { liquid: string | null; tall?: boole
   const sky = drinkSky(liquid, ds.scheme, ds.c.ground, tall);
   const height = sky.stops[2];
   return <LinearGradient colors={sky.colors} locations={sky.stops.map((s) => s / height) as [number, number, number]} style={[styles.sky, { height }]} />;
+}
+
+/** The sky's top edge, for ScrollSky's pull: its first colour. */
+export function DrinkSkyCap({ liquid }: { liquid: string | null }) {
+  const ds = useDs();
+  if (!liquid) return null;
+  return <View style={[StyleSheet.absoluteFill, { backgroundColor: drinkSky(liquid, ds.scheme, ds.c.ground).colors[0] }]} />;
 }
 
 /** A drink's liquid colour for its sky: the drawing's own (a preview's, else the stored one). */

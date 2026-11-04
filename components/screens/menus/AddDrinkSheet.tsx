@@ -50,8 +50,8 @@ export function LibraryRow({ drink, note, added, onAdd }: { drink: MenuDrink; no
           <IconSymbol name="checkmark" size={18} color={ds.accentText} />
         </View>
       ) : onAdd ? (
-        <PressableScale accessibilityLabel={`Add ${drink.name}`} onPress={onAdd} style={[styles.add, { backgroundColor: ds.c.raised }]}>
-          <IconSymbol name="plus" size={18} color={ds.c.ink} />
+        <PressableScale accessibilityLabel={`Add ${drink.name}`} onPress={onAdd} style={[styles.add, { backgroundColor: ds.accentFill.fill }]}>
+          <IconSymbol name="plus" size={18} color={ds.accentFill.text} />
         </PressableScale>
       ) : null}
     </View>

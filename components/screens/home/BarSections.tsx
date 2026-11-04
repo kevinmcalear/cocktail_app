@@ -10,7 +10,7 @@ import type { ShelfItem } from '@/hooks/useHomeBar';
 import { useRunningLow } from '@/hooks/useShoppingList';
 import { madeLine, type BarSection } from '@/lib/barSections';
 import { SECTIONS } from '@/lib/barSectionWords';
-import { prepUseBy } from '@/lib/myBarText';
+import { FILL_LABEL, prepUseBy } from '@/lib/myBarText';
 import { itemHref } from '@/lib/itemRoutes';
 import { EQUIPMENT, EQUIPMENT_KINDS, equipmentById } from '@/lib/techniques';
 
@@ -101,12 +101,13 @@ export function ShelfTile({ item, meta, metaTone = 'muted', editing, onRemove, o
   const router = useRouter();
   const open = use(OpenShelfItem);
   const low = useRunningLow().has(item.id);
-  const line = low ? 'Running low · on your list' : meta === undefined ? usedLine(item.uses) : meta;
+  const level = meta === undefined ? item.fillLevel : null;
+  const line = low ? 'Running low · on your list' : level ? FILL_LABEL[level] : meta === undefined ? usedLine(item.uses) : meta;
   return (
     <BarTile
       name={item.name}
       meta={line}
-      metaTone={low ? 'accent' : metaTone}
+      metaTone={low || level === 'low' ? 'accent' : metaTone}
       low={low}
       picture={<IngredientDrawing id={item.id} name={item.name} lazy />}
       role={editing ? 'button' : 'link'}

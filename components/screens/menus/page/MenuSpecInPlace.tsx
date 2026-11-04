@@ -27,10 +27,17 @@ export function MenuSpecInPlace({ itemId, barId, onOpen }: { itemId: string; bar
       ) : (
         <SpecCard itemId={itemId} barId={barId} lines={lines} maker verb={methodVerb(methods)} />
       )}
-      <PressableScale role="link" accessibilityLabel="Open the drink" onPress={onOpen} style={styles.open}>
-        <Caption style={font.semiBold}>Open the drink ›</Caption>
-      </PressableScale>
+      <OpenDrinkLink onOpen={onOpen} />
     </View>
+  );
+}
+
+/** Under a row opened in place (the spec, or Swap and Take off on a live list): the way on to the drink's page. */
+export function OpenDrinkLink({ onOpen }: { onOpen: () => void }) {
+  return (
+    <PressableScale role="link" accessibilityLabel="Open the drink" onPress={onOpen} style={styles.open}>
+      <Caption style={font.semiBold}>Open the drink ›</Caption>
+    </PressableScale>
   );
 }
 

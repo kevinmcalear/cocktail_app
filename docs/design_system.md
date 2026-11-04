@@ -28,17 +28,21 @@ The written rules behind the Back Bar look. What each screen should be is drawn 
 
 | Style | Size | Face |
 |---|---|---|
-| Display (drink name on its page) | 56 | Redaction, or the venue's face |
+| Display (drink name on its page) | 56 | Instrument Serif, or the venue's face |
+| Head (a main tab's name: Tonight, Drinks, Discover, You) | 40 | Display face |
 | Title (screen titles) | 34 | Display face |
-| Headline | 20 | Geist 600 |
-| Body | 17 | Geist 400 |
-| Spec (measurements) | 17 | Geist Mono 500, tabular numbers |
-| Label (chips, scope and tab labels, doses, compact `sm` buttons) | 15 | Geist 500 |
-| Caption | 13 | Geist 500 |
+| Headline | 20 | System 600 |
+| Body | 17 | System 400 |
+| Spec (measurements) | 17 | System 500, tabular numbers |
+| Label (chips, scope and tab labels, doses, compact `sm` buttons) | 15 | System 500 |
+| Caption | 13 | System 500 |
+
+- Faces (Kevin, 3 Nov 2026: "the board's fonts"): Instrument Serif (or the venue's face) for names and titles, Geist for body text, Geist Mono for eyebrows and labels set in capitals (`DsText` picks it for any non-name text with `textTransform: 'uppercase'`). This replaced the 31 Oct pick of Redaction and the system font. All three are SIL OFL, from `@expo-google-fonts`, loaded at runtime by `expo-font` (`components/ds/fonts.ts`; the web loads WOFF2 copies and Geist's semibold and the italic after first data). Redaction stays embedded in the native build (`app.json`) but nothing loads it. Sizes, weights and spacing are the canvas's.
+- Dates put the day before the month in every locale ("Tuesday 3 November", "since 1 Oct"): new code uses `dayMonth` (`lib/dayMonth.ts`), not `toLocaleDateString`'s own order. Tonight, Drinks and the menu lines use it; older screens still to move are listed in the PR that added it.
 
 - Nothing below 13 pt. Uppercase labels get letter spacing and still stay at 13 or more.
 - Where the canvas draws 15 px (a chip, a scope or tab label, a dose, a compact button), use `variant="label"` (15/20), not 13 or 17. A dose keeps its mono face on top of it.
-- Venue faces for names (Settings › Theme, one per style): Redaction (the app's own), Newsreader (Book), IM Fell English (Worn), Imbue (Deco), Besley (Tavern), Bricolage Grotesque (Modern), Belleza (Poster) and Big Shoulders (Sign), all SIL OFL. All but Redaction load only when a venue on screen uses one (`components/ds/faces.ts`); until then they draw in Redaction. Names take a face through `nameStyle` (its scale, spacing and capitals, and a line tall enough for its letters on iOS). A new face needs a `venue_display_face` value, its measured ascender and descent in `displayFaces` (`constants/tokens.ts`, checked by `components/ds/displayClip.check.ts`), and a WOFF2 for the web with its OFL text. Body and spec faces are fixed.
+- Venue faces for names (Settings › Theme, one per style): Instrument Serif (the app's own, the column's default `instrument_serif`), Newsreader (Book), IM Fell English (Worn), Imbue (Deco), Besley (Tavern), Bricolage Grotesque (Modern), Belleza (Poster) and Big Shoulders (Sign), all SIL OFL. All but Instrument Serif load only when a venue on screen uses one (`components/ds/faces.ts`); until then they draw in Instrument Serif. Names take a face through `nameStyle` (its scale, spacing and capitals, and a line tall enough for its letters on iOS). A new face needs a `venue_display_face` value, its measured ascender and descent in `displayFaces` (`constants/tokens.ts`, checked by `components/ds/displayClip.check.ts`), and a WOFF2 for the web with its OFL text. Body and spec faces are fixed.
 - Respect Dynamic Type: sizes scale, layouts wrap rather than clip.
 
 ## Shape and space
@@ -106,7 +110,7 @@ One set, the bar kit (whole-app canvas, Shell page, nav-icons), drawn the same o
 
 **Toasts** confirm a change and can carry one action, like Undo: `useToast().show({ title, detail, action })` (`components/ds/Toast.tsx`, mounted once at the root). A glass pill floats above the bottom edge (bottom centre on the web, `lift` clears a screen's own bottom bar), is announced as a status, and goes after five seconds, a swipe or a tap; Reduce Motion fades it. A plain "Saved" with no action can stay on `toastDone` (`lib/toast.ts`).
 
-Four tabs, the same for every person, mode and role: Tonight, Drinks, Discover and You (`lib/tabs.ts`, tabs A, 31 Oct 2026); the mode changes what a tab shows (venue Tonight is the night, home Tonight is My Bar until its lane; venue Drinks is the bar's drinks, house-made and bottles, home Drinks is your drinks, shelf and menus). Each tab holds its own stack: pages in `app/(tabs)/(1-tonight,2-drinks,3-discover,4-you)/` (a drink, Prep, Study) push on the tab they're opened from, and each tab's first page lives in its own group so its path always switches tabs. Search sits beside the tabs (the circle on iOS and phone-width web, a search bar on top on Android, ⌘K on wide web). Each page's header has the place button top left (switches between your bars and home) and the + (Add) top right; Android's Add is a plain FAB instead. Old paths (/library, /collection, /bar, /profile, /menus, /new) redirect; /bar opens Drinks' Shelf.
+Four tabs: Tonight, Drinks, Discover and You (`lib/tabs.ts`, tabs A, 31 Oct 2026). A venue whose Admin hasn't switched Tonight on in Features has the other three, and opens on Drinks (`lib/venueFeatures.ts`, 3 Nov 2026); the role never changes the tabs. The mode changes what a tab shows (venue Tonight is the night, home Tonight is My Bar until its lane; venue Drinks is the bar's drinks, house-made and bottles, home Drinks is your drinks, shelf and menus). Each tab holds its own stack: pages in `app/(tabs)/(1-tonight,2-drinks,3-discover,4-you)/` (a drink, Prep, Study) push on the tab they're opened from, and each tab's first page lives in its own group so its path always switches tabs. Search sits beside the tabs (the circle on iOS and phone-width web, a search bar on top on Android, ⌘K on wide web). Each page's header has the place button top left (switches between your bars and home) and the + (Add) top right; Android's Add is a plain FAB instead. Old paths (/library, /collection, /bar, /profile, /menus, /new) redirect; /bar opens Drinks' Shelf.
 
 ## Permissions in the UI
 

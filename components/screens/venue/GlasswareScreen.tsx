@@ -14,7 +14,7 @@ import { useCapabilities } from '@/hooks/useCapabilities';
 import { useDropdowns } from '@/hooks/useDropdowns';
 import { glassModelSize } from '@/hooks/useGlassModels';
 import { useIsWideWeb } from '@/hooks/useIsWideWeb';
-import { useBarAdvanced } from '@/hooks/useAdvancedOptions';
+import { useBarFeature } from '@/hooks/useBarFeature';
 import { GLASS_TYPE_LABEL, glassCapacity } from '@/lib/glassware';
 import { kitLine, kitSourceLine } from '@/lib/venueKit';
 import { useVenueSetup } from '@/store/useVenueSetup';
@@ -88,6 +88,7 @@ export function GlasswareScreen({ barId, openId }: { barId: string; openId?: str
         loading={isLoading || pageLoading}
         failed={!!error}
         list={list}
+        onEdit={opened && canEdit ? () => setSheet({ glass: opened, startAt: 0 }) : undefined}
         item={
           opened ? (
             <GlassPage
@@ -144,7 +145,7 @@ function GlassPage({ barId, pageId, glass, others, canEdit, venueName, justDrawn
   const remove = useDeleteBarGlass(barId);
   const change = (at: 0 | 1 | 2) => (canEdit ? () => onChange(at) : undefined);
   const [washOpen, setWashOpen] = useState(false);
-  const advanced = useBarAdvanced(barId);
+  const advanced = useBarFeature(barId, 'advanced');
   const size = (glass.model && glassModelSize(glass.model)) ?? glassCapacity(glass, items, barId);
   const sameType = others.filter((g) => g.glass === glass.glass);
   const type = GLASS_TYPE_LABEL[glass.glass];
@@ -179,7 +180,6 @@ function GlassPage({ barId, pageId, glass, others, canEdit, venueName, justDrawn
             ]
           : []),
       ]}
-      onEdit={change(0)}
       onRemove={canEdit ? () => remove.mutate(glass.id, { onSuccess: close }) : undefined}
       removing={remove.isPending}
       error={save.error || remove.error ? FAILED : null}

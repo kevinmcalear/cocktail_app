@@ -15,14 +15,14 @@ interface Brand {
   groundTint?: string;
 }
 
-const BrandContext = createContext<Brand>({ accent: DEFAULT_ACCENT, displayFace: 'redaction' });
+const BrandContext = createContext<Brand>({ accent: DEFAULT_ACCENT, displayFace: 'instrument' });
 const SchemeContext = createContext<BackbarScheme | null>(null);
 
 /** The active venue's accent and display face. Step 2 feeds this from `bars`. */
 /** `groundTint` null is no tint (a preview of Neutral); left out, it's the parent's. */
 export function BrandProvider({ accent, displayFace, groundTint, children }: Partial<Omit<Brand, 'groundTint'>> & { groundTint?: string | null; children: ReactNode }) {
   const parent = useContext(BrandContext);
-  // A face that loads on demand shows as Redaction until its file is in.
+  // A face that loads on demand shows as Instrument Serif until its file is in.
   const face = useLoadedFace(displayFace ?? parent.displayFace);
   const value = useMemo(
     () => ({

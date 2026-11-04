@@ -11,10 +11,12 @@ import { useUserId } from '@/ctx/AuthContext';
 import { useActiveVenue } from '@/hooks/useActiveVenue';
 import { useCapabilities, useCapabilityOpensAt } from '@/hooks/useCapabilities';
 import { useVenueMenus } from '@/hooks/useMenus';
+import { useVenueFeature } from '@/hooks/useVenueFeatures';
 import { useMode } from '@/hooks/useMode';
 import { roleLabel } from '@/lib/roles';
 
 import { MenuGroupList } from './MenuGroupList';
+import { MenuRowFrame } from './MenuRows';
 import { NewMenuSheet } from './NewMenuSheet';
 
 /**
@@ -28,8 +30,9 @@ export function MenusScreen() {
   const router = useRouter();
   const insets = useSafeAreaInsets();
   const column = usePageColumn();
-  // Back from a venue's menus goes to its first tab, Tonight.
-  const first = 'Tonight';
+  // Back from a venue's menus goes to its first tab: Tonight, or Drinks where Tonight is switched off.
+  const tonight = useVenueFeature('tonight');
+  const first = tonight ? 'Tonight' : 'Drinks';
   const userId = useUserId();
   const { active, isLoading: venuesLoading } = useActiveVenue();
   const home = useMode().mode === 'home';
@@ -57,10 +60,10 @@ export function MenusScreen() {
               {(barId ? (active?.name ?? '') : 'At home').toUpperCase()}
             </Caption>
           }
-          onBack={() => (router.canGoBack() ? router.back() : router.navigate(barId ? '/' : '/drinks'))}
+          onBack={() => (router.canGoBack() ? router.back() : router.navigate(barId && tonight ? '/' : '/drinks'))}
           backLabel={barId ? `Back to ${first}` : 'Back'}
           backText={barId ? first : 'Drinks'}
-          crumbs={[barId ? { label: first, href: '/' } : { label: 'Drinks', href: '/drinks' }]}
+          crumbs={[barId && tonight ? { label: first, href: '/' } : { label: 'Drinks', href: '/drinks' }]}
           actionOnTop
           action={canCreate ? <GlassButton icon="plus" accessibilityLabel="New menu" onPress={() => setCreating(true)} /> : null}
         />
@@ -83,6 +86,8 @@ export function MenusScreen() {
           pastShown={PAST_SHOWN}
           onAllPast={() => router.push('/menus/past')}
         />
+        {/* Every drink the bar has listed, with its runs and Bring back (Menu-l-drinks). */}
+        {barId && canBuild && menus.length ? <MenuRowFrame ruled label="Our drinks" onPress={() => router.push('/menus/drinks')} thumb={null} name="Our drinks" line="Every drink with its runs; past ones can come back" /> : null}
       </ScrollView>
       {creating && canCreate ? <NewMenuSheet visible onClose={() => setCreating(false)} menus={menus} now={now} /> : null}
     </View>

@@ -8,6 +8,7 @@ import { useDropdowns } from '@/hooks/useDropdowns';
 import { withNear, type MaybeNear } from '@/hooks/useSearchNear';
 import { chunk } from '@/lib/commandSearchGrid';
 import { likeExactly, searchByName } from '@/lib/drinkWizard';
+import { LAB_NAMES } from '@/lib/techniques/labNames';
 import { barSection, type BarSection } from '@/lib/barSections';
 import { kindsCovered } from '@/lib/myBarAdd';
 import { heroPicture, type ItemImageLink } from '@/lib/itemImages';
@@ -15,7 +16,6 @@ import { sortMatches, type MatchRow } from '@/lib/barMatches';
 import { specNoteText, type ServedBar } from '@/lib/servedAt';
 import { capitalizeFirst } from '@/lib/stringUtils';
 import { PANTRY, PANTRY_WATER } from '@/lib/pantry';
-import { TECHNICAL_INGREDIENTS } from '@/lib/techniques/ingredients';
 import { supabase } from '@/lib/supabase';
 
 export interface BarItem {
@@ -86,11 +86,15 @@ export interface ShelfItem extends BarItem {
   hasRecipe?: boolean;
   /** When it went on the shelf (for a house prep: when you made it). */
   addedAt?: string | null;
+  /** How much is left, as the person said (Drinks board: Full, Half left, Running low); null when they haven't. */
+  fillLevel?: FillLevel | null;
   /** Where My Bar lists it. */
   section: BarSection;
   /** A bottle (`product`): the kinds it's a bottle of, its own and that one's ("London dry gin", "Gin"), as ids. */
   kindIds?: string[];
 }
+
+export type FillLevel = 'full' | 'half' | 'low';
 
 /** A search result for the add sheet, with the section it goes in and what it is ("Liqueur", "Italy"). */
 export interface FoundItem extends BarItem {
@@ -156,7 +160,7 @@ async function searchBar(query: string): Promise<FoundItem[]> {
     const like = likeExactly(query);
     // A lab ingredient goes by several names ("pectinex" is "Pectinase" in the catalog): look for them all.
     const q = query.toLowerCase();
-    const aliases = TECHNICAL_INGREDIENTS.find((t) => t.names.some((n) => n.startsWith(q)))?.names.filter((n) => !n.includes(q)) ?? [];
+    const aliases = Object.values(LAB_NAMES).find((names) => names.some((n) => n.startsWith(q)))?.filter((n) => !n.includes(q)) ?? [];
     const [starts, has, also] = await Promise.all([
       read(`${like}%`, 50),
       read(`%${like}%`, 150),
@@ -548,10 +552,11 @@ export function useBarDrinks(enabled = true) {
 async function readShelf(ids: string[]): Promise<Omit<ShelfItem, 'uses' | 'section'>[]> {
   const [rows, added] = await Promise.all([
     readItems(ids, SHELF_SELECT),
-    supabase.from('home_bar_items').select('item_id, added_at'),
+    supabase.from('home_bar_items').select('item_id, added_at, fill_level'),
   ]);
   if (added.error) throw added.error;
-  const addedAt = new Map((added.data ?? []).map((r: { item_id: string; added_at: string }) => [r.item_id, r.added_at]));
+  const addedAt = new Map((added.data ?? []).map((r) => [r.item_id, r.added_at]));
+  const fills = new Map((added.data ?? []).map((r) => [r.item_id, r.fill_level as FillLevel | null]));
   const kindIds = [...new Set(rows.map((r) => r.generic_id).filter((id): id is string => !!id))];
   const kindRows = kindIds.length ? await readItems(kindIds, 'id, name, generic_id') : [];
   const kinds = new Map(kindRows.map((k) => [k.id, k.name]));
@@ -572,7 +577,26 @@ async function readShelf(ids: string[]): Promise<Omit<ShelfItem, 'uses' | 'secti
     role: r.ingredient_role ?? null,
     hasRecipe: !!r.recipes?.length,
     addedAt: addedAt.get(r.id) ?? null,
+    fillLevel: fills.get(r.id) ?? null,
   }));
+}
+
+/** Say how much is left in a bottle (null clears it). The tiles and the bottle sheet change at once. */
+export function useSetFillLevel() {
+  const client = useQueryClient();
+  const key = [...SHELF_KEY, 'items'];
+  return useMutation({
+    mutationFn: async ({ itemId, level }: { itemId: string; level: FillLevel | null }) => {
+      const { error } = await supabase.from('home_bar_items').update({ fill_level: level }).eq('item_id', itemId);
+      if (error) throw error;
+    },
+    onMutate: async ({ itemId, level }) => {
+      await client.cancelQueries({ queryKey: key });
+      client.setQueriesData<Omit<ShelfItem, 'uses' | 'section'>[]>({ queryKey: key }, (rows) => rows?.map((r) => (r.id === itemId ? { ...r, fillLevel: level } : r)));
+    },
+    // A failed write is put right by the refetch below, so one bottle's failure can't undo another's change.
+    onSettled: () => client.invalidateQueries({ queryKey: key }),
+  });
 }
 
 /** My Bar: the shelf, what it makes, and what one more bottle would unlock. */

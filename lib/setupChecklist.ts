@@ -75,5 +75,5 @@ export const setupStepDone = (run: { done: readonly string[]; finished?: boolean
  * (Instrument Serif unless picked), so the font alone only counts once it's changed.
  */
 export function lookSet(brand: { logo_url: string | null; primary_color: string | null; display_face: string | null }, run?: { done: readonly string[] }): boolean {
-  return !!run?.done.includes('look') || !!brand.logo_url || !!brand.primary_color || faceFromDb(brand.display_face) !== 'redaction';
+  return !!run?.done.includes('look') || !!brand.logo_url || !!brand.primary_color || faceFromDb(brand.display_face) !== 'instrument';
 }

@@ -4,7 +4,7 @@ import { StyleSheet, View } from 'react-native';
 import { Caption, Chip, DsText, PressableScale, Title, useBreakpoint, useDs } from '@/components/ds';
 import { PopoverMenu, usePopover } from '@/components/ds/PopoverMenu';
 import { IconSymbol } from '@/components/ui/icon-symbol';
-import { radius, space } from '@/constants/tokens';
+import { font, radius, space } from '@/constants/tokens';
 import { withAlpha } from '@/lib/color';
 
 export interface StageTile<K extends string> {
@@ -133,7 +133,7 @@ const styles = StyleSheet.create({
   strip: { flexDirection: 'row', alignItems: 'center', gap: space.xs },
   stripDesk: { gap: space.sm },
   cell: { flex: 1, minWidth: 0, paddingVertical: space.sm + 2, paddingHorizontal: space.md, borderRadius: radius.control, borderWidth: 1 },
-  label: { fontWeight: '500' },
+  label: { ...font.medium },
   pills: { flexDirection: 'row', gap: space.xs + 2 },
   sort: { flexDirection: 'row', alignItems: 'center', gap: space.xs, minHeight: 44 },
   head: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', gap: space.md, minHeight: 44 },

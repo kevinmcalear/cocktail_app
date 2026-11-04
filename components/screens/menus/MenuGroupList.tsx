@@ -1,9 +1,11 @@
+import { useRouter } from 'expo-router';
 import type { ReactNode } from 'react';
 import { StyleSheet, View } from 'react-native';
 
 import { Caption, LockedSection, useDs } from '@/components/ds';
 import { font, radius, space, STATUS } from '@/constants/tokens';
 import { readableAccent } from '@/lib/color';
+import { menuDrinks } from '@/lib/drinksFilters';
 import { groupMenus, plural } from '@/lib/menus';
 import type { MenuSummary } from '@/types/menus';
 
@@ -50,8 +52,11 @@ interface MenuGroupListProps {
  * and Past as lines. The Menus screen and Collection's Menus both draw this.
  */
 export function MenuGroupList({ menus, now, canBuild, opensAt = 'Drink Creator', note, pastShown, onAllPast }: MenuGroupListProps) {
+  const router = useRouter();
   const g = groupMenus(menus, now);
   const home = menus.every((m) => !m.barId);
+  // Ideas in progress (Menu-d-list): a bar's R&D drinks on no menu yet, the Drinks tab's R&D view.
+  const ideas = home || !g.rnd.length ? 0 : menuDrinks(menus, now, null).rnd.length;
   // The first menu gets the card: what's on, else the next one.
   const lead = g.on.length ? g.on : g.upcoming.slice(0, 1);
   const comingUp = g.on.length ? g.upcoming : g.upcoming.slice(1);
@@ -98,6 +103,7 @@ export function MenuGroupList({ menus, now, canBuild, opensAt = 'Drink Creator',
       ) : null}
       {g.rnd.length && canBuild ? (
         <MenuGroup title="R&D">
+          {ideas ? <MenuRowFrame ruled label={`Ideas in progress, ${plural(ideas, 'drink')}`} onPress={() => router.push('/drinks?show=rnd')} thumb={null} name="Ideas in progress" line={`${plural(ideas, 'drink')} · never on a menu`} /> : null}
           {g.rnd.map((m) => (
             <MenuListRow key={m.id} menu={m} now={now} note={note?.(m)} ruled />
           ))}

@@ -18,22 +18,12 @@ import { useVenueSetup } from '@/store/useVenueSetup';
 import { HomeMark, useSwitchTo, VenueMark } from './VenueMarks';
 
 /**
- * Switching place, as board Prod-place (C8) draws it: a menu hung from the mark with your places in it, the one
- * you're in checked: each venue (with your role there), then Home (your shelf and menus). Nothing else lives here;
- * a venue's pages are in the sidebar, Bar settings and Tonight. Someone on no venue's team gets "Run a bar? Set it up"
- * at the end (Q35b, 26 Oct 2026).
+ * The places you can switch to, as board Prod-place (C8) draws them: each venue (with your role there), then Home
+ * (your shelf and menus), the one you're in checked; then "Join a bar with a link", and for someone on no venue's
+ * team "Run a bar? Set it up" (Q35b, 26 Oct 2026). The sidebar's chip and the rail hang them from the mark
+ * (VenueMenu); the phone's place sheet from its Switch (PlaceSheet).
  */
-export function VenueMenu({ target, onClose }: { target: { current: ComponentRef<typeof View> | null }; onClose: () => void }) {
-  // Opened from the button it hangs from: measure it once, on mount.
-  const popover = usePopover();
-  const { open } = popover;
-  useEffect(() => {
-    open(target.current);
-  }, []); // eslint-disable-line react-hooks/exhaustive-deps
-  const close = () => {
-    popover.close();
-    onClose();
-  };
+export function usePlaceSections(): PopoverSection[] {
   const ds = useDs();
   const router = useRouter();
   const { active, venues, isLoading } = useActiveVenue();
@@ -66,6 +56,20 @@ export function VenueMenu({ target, onClose }: { target: { current: ComponentRef
       ...(setUp ? [{ label: 'Run a bar? Set it up', trailing: <IconSymbol name="building.2" size={20} color={ds.c.ink} />, onPress: () => router.push((started ?? '/venue-setup?step=find') as never) }] : []),
     ],
   };
-  const sections = [places, more];
-  return <PopoverMenu anchor={popover.anchor} label="Your places" sections={sections} onClose={close} />;
+  return [places, more];
+}
+
+/** The places menu hung from a mark: the sidebar's place chip and the tablet rail's logo (usePlaceSections). */
+export function VenueMenu({ target, onClose }: { target: { current: ComponentRef<typeof View> | null }; onClose: () => void }) {
+  // Opened from the button it hangs from: measure it once, on mount.
+  const popover = usePopover();
+  const { open } = popover;
+  useEffect(() => {
+    open(target.current);
+  }, []); // eslint-disable-line react-hooks/exhaustive-deps
+  const close = () => {
+    popover.close();
+    onClose();
+  };
+  return <PopoverMenu anchor={popover.anchor} label="Your places" sections={usePlaceSections()} onClose={close} />;
 }

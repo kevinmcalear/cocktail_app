@@ -5,7 +5,7 @@
 
 import { equipmentById } from './equipment';
 import { TECHNIQUES } from './index';
-import { technicalIngredientFor, TECHNICAL_INGREDIENTS } from './ingredients';
+import { LAB_TITLES, labIdFor } from './labNames';
 import { actionFor, waysToMake } from './makeIt';
 import type { Technique } from './types';
 
@@ -23,16 +23,16 @@ export interface AwayProject {
 
 /** The technical ingredients a technique's parts call for, by id ("Gelatin (170 bloom)" counts as gelatin). */
 export function labNeeds(t: Technique): string[] {
-  const ids = (t.parts ?? []).flatMap((p) => technicalIngredientFor(p.name.replace(/\s*\(.*\)\s*$/, ''))?.id ?? []);
+  const ids = (t.parts ?? []).flatMap((p) => labIdFor(p.name.replace(/\s*\(.*\)\s*$/, '')) ?? []);
   return [...new Set(ids)];
 }
 
 /** Technical ingredient ids among the names on your shelf. */
 export function labFromNames(names: readonly string[]): Set<string> {
-  return new Set(names.flatMap((n) => technicalIngredientFor(n)?.id ?? []));
+  return new Set(names.flatMap((n) => labIdFor(n) ?? []));
 }
 
-const labName = (id: string) => TECHNICAL_INGREDIENTS.find((i) => i.id === id)?.name ?? id;
+const labName = (id: string) => LAB_TITLES[id as keyof typeof LAB_TITLES] ?? id;
 
 /**
  * What you can make, most involved first (the ones that use what you've

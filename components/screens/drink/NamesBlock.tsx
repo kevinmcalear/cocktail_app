@@ -1,7 +1,7 @@
 import { StyleSheet, View } from 'react-native';
 
 import { Body, Caption, DsText, PalateFlower } from '@/components/ds';
-import { space } from '@/constants/tokens';
+import { font, space } from '@/constants/tokens';
 import { useFlavorBaseline, useItemFlavor, useMyTaste } from '@/hooks/useFlavor';
 import { meet, meetingWords } from '@/lib/palate';
 
@@ -60,5 +60,5 @@ const styles = StyleSheet.create({
   block: { gap: space.lg },
   fit: { flexDirection: 'row', alignItems: 'center', gap: space.lg },
   words: { flex: 1, gap: space.xs },
-  like: { fontWeight: '600' },
+  like: { ...font.semiBold },
 });

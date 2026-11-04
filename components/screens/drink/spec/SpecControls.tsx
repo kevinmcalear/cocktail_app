@@ -1,7 +1,8 @@
 import { useRef, type ComponentRef } from 'react';
 import { StyleSheet, View } from 'react-native';
 
-import { DsText, PressableScale, Segmented, useDs } from '@/components/ds';
+import { DsText, PressableScale, useDs } from '@/components/ds';
+import { SegmentedCapsule } from '@/components/ds/SegmentedCapsule';
 import { PopoverMenu, usePopover } from '@/components/ds/PopoverMenu';
 import { IconSymbol } from '@/components/ui/icon-symbol';
 import { font, layout, radius, space } from '@/constants/tokens';
@@ -52,7 +53,8 @@ export function SpecControls({ view, onView, makes, sizes, picked, onPick, more 
   ];
   return (
     <View style={styles.row}>
-      <Segmented options={SPEC_VIEWS} value={view} onChange={onView} accessibilityLabel="Show the spec as" variant="pill" />
+      {/* The capsule every spec board draws: the picked side a raised white pill on a tinted track. */}
+      <SegmentedCapsule options={SPEC_VIEWS} value={view} onChange={onView} accessibilityLabel="Show the spec as" hug />
       <View ref={pill} collapsable={false}>
         <PressableScale
           role="button"

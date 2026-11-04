@@ -11,6 +11,7 @@ import type { MenuPicture, MenuSummary } from '@/types/menus';
 
 import { MenuVisual } from './MenuVisual';
 import { MenuBand, MenuStrip } from './page/MenuBandLazy';
+import { dayMonth } from '@/lib/dayMonth';
 
 export const menuHref = (id: string) => `/menus/${id}` as const;
 
@@ -222,7 +223,7 @@ export function MenuListRow({ menu, now, note, ruled }: { menu: MenuSummary; now
 /** A past menu: a plain divided line, its name in the display face and its dates and count in mono. */
 export function MenuPastLine({ menu }: { menu: MenuSummary }) {
   const router = useRouter();
-  const short = (iso: string) => new Date(iso).toLocaleDateString(undefined, { day: 'numeric', month: 'short' });
+  const short = (iso: string) => dayMonth(new Date(iso), { month: 'short' });
   const dates = menu.endsAt ? (menu.startsAt ? `${short(menu.startsAt)} to ${short(menu.endsAt)}` : `off since ${short(menu.endsAt)}`) : '';
   const count = plural(new Set(menu.itemIds).size, 'drink');
   return (

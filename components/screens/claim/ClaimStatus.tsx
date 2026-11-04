@@ -8,6 +8,7 @@ import { useWithdrawClaim } from '@/hooks/useBarClaims';
 import type { Profile, ProfileClaim } from '@/hooks/useProfiles';
 import { OUR_INSTAGRAM, REVIEW_REASON, claimPlace, claimProblem, pageInstagram, spacedCode } from '@/lib/claimVerification';
 import { instagramUrl } from '@/lib/profiles';
+import { dayMonth } from '@/lib/dayMonth';
 
 /** The claim's six digits, big enough to read out across a bar. */
 function CodeCard({ code }: { code: string }) {
@@ -63,7 +64,7 @@ export function ClaimPending({ claim, profile }: { claim: ProfileClaim; profile:
         </Caption>
       ) : null}
       <View style={styles.footer}>
-        <Caption tone="muted">{`Sent ${new Date(claim.created_at).toLocaleDateString()}`}</Caption>
+        <Caption tone="muted">{`Sent ${dayMonth(new Date(claim.created_at), { month: 'short', year: 'numeric' })}`}</Caption>
         <Button
           label={withdraw.isPending ? 'Withdrawing…' : 'Withdraw claim'}
           variant="ghost"

@@ -8,6 +8,7 @@ import { TonightSetupBanner } from '@/components/screens/venueSetup/SetupBanner'
 import { TonightWeek } from '@/components/screens/week/TonightWeek';
 import { displayFaces, space } from '@/constants/tokens';
 import { categoryOf, type TonightBlock } from '@/hooks/useTonight';
+import { useVenueFeature } from '@/hooks/useVenueFeatures';
 import { itemHref } from '@/lib/itemRoutes';
 import { plural } from '@/lib/menus';
 
@@ -107,7 +108,9 @@ export function StaffSide({ t, barId, wide, handover }: { t: Staff; barId: strin
   const parts = ORDER[t.phase].filter((p) => !(wide && p === 'service'));
   const after = t.phase === 'after';
   const router = useRouter();
-  const openLearn = () => router.push('/learn' as Href);
+  // Learn is the Techniques switch's; the rows under it (a new drink's run-through) Study's (useStaffTonight).
+  const techniques = useVenueFeature('techniques');
+  const openLearn = techniques ? () => router.push('/learn' as Href) : undefined;
   return (
     <View style={styles.side}>
       {after ? <TonightSetupBanner barId={barId} /> : null}
@@ -127,17 +130,17 @@ export function StaffSide({ t, barId, wide, handover }: { t: Staff; barId: strin
             return <NeedsYou key={p} t={t} />;
           case 'learn':
             // All opens Learn (Kept-learn): techniques, kit and pairings. Admins see Needs you here instead (Prod-today-staff), so Learn only with something new.
-            return t.learn.length || !t.admin ? (
-              <TonightSection key={p} title="Learn" aside="All" onAside={openLearn}>
+            return t.learn.length || (!t.admin && openLearn) ? (
+              <TonightSection key={p} title="Learn" aside={openLearn ? 'All' : null} onAside={openLearn}>
                 {t.learn.length ? (
                   <View role="list">
                     {t.learn.map((row, i) => (
                       <LearnRow key={`${row.id}-${i}`} {...row} first={i === 0} />
                     ))}
                   </View>
-                ) : (
+                ) : openLearn ? (
                   <NoteCard icon="book" text="Techniques, kit and pairings" onPress={openLearn} />
-                )}
+                ) : null}
               </TonightSection>
             ) : null;
           case 'shift':

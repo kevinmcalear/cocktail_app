@@ -34,7 +34,7 @@ import { applyMenuPaste, type PlacedGroup } from '@/lib/paste';
 import { useMenuDrinkHandoff } from '@/store/useMenuDrinkHandoff';
 import type { MenuDetail, MenuDrink } from '@/types/menus';
 
-export type EditorSheet = { kind: 'add'; key: string } | { kind: 'section'; key: string } | { kind: 'paste'; key: string | null } | { kind: 'golive' } | { kind: 'share' } | null;
+export type EditorSheet = { kind: 'add'; key: string } | { kind: 'section'; key: string } | { kind: 'paste'; key: string | null } | { kind: 'golive' } | { kind: 'share' } | { kind: 'night' } | { kind: 'ends' } | { kind: 'row'; key: string; drinkId: string } | null;
 
 /** How long after the last change the builder saves (b27: no save button). */
 const AUTOSAVE_MS = 800;

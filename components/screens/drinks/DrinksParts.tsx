@@ -1,7 +1,7 @@
 import type { ReactNode } from 'react';
 import { StyleSheet, View } from 'react-native';
 
-import { Caption, Display, DrinkImage, DsText, IngredientThumb, PencilState, PressableScale, Tag, useDs } from '@/components/ds';
+import { Caption, DrinkImage, DsText, Head, IngredientThumb, PencilState, PressableScale, Tag, useDs } from '@/components/ds';
 import { SegmentedCapsule } from '@/components/ds/SegmentedCapsule';
 import { DrinkDrawing } from '@/components/ds/DrinkDrawing';
 import { OutlineRows, RowName, SavedChip } from '@/components/ds/ListGroup';
@@ -17,7 +17,8 @@ import { liquidOf } from '@/lib/sketch/types';
  * The Drinks tab's head (Prod-phone drinks, Sta-drinks): the tab's own top
  * row (the place button and Add; Android's search bar), the bar's name (or
  * Home) over Drinks, the capsule, and with no signal "Whole spec book on this
- * phone" under it. `bleed`: the list's side padding, which the top row runs past.
+ * phone" under it; no capsule when there's only one (a bar without More drink
+ * filters, lib/venueFeatures.ts). `bleed`: the list's side padding, which the top row runs past.
  */
 export function DrinksHead<T extends string>({
   eyebrow,
@@ -43,10 +44,10 @@ export function DrinksHead<T extends string>({
         <Caption tone="muted" style={styles.caps}>
           {eyebrow}
         </Caption>
-        <Display aria-level={1}>Drinks</Display>
+        <Head aria-level={1}>Drinks</Head>
       </View>
       {offline ? <SavedChip text={offline} /> : null}
-      <SegmentedCapsule options={capsules} value={value} onChange={onChange} accessibilityLabel={capsules.map((c) => c.label).join(', ')} />
+      {capsules.length > 1 ? <SegmentedCapsule options={capsules} value={value} onChange={onChange} accessibilityLabel={capsules.map((c) => c.label).join(', ')} /> : null}
     </View>
   );
 }
@@ -146,16 +147,16 @@ export function OnNowCard({ eyebrow, name, sub, ids, onPress }: { eyebrow: strin
   return (
     <PressableScale role="link" accessibilityLabel={`${name}. ${eyebrow}. ${sub}. Opens the menu.`} onPress={onPress} style={[styles.onNow, { backgroundColor: tint ? withAlpha(tint, ds.scheme === 'dark' ? 0.24 : 0.16) : ds.c.surface }]}>
       <View style={styles.onNowWords}>
-        <View style={styles.live}>
+        <View style={[styles.live, styles.onNowEyebrow]}>
           <View style={[styles.dot, { backgroundColor: palateHues[ds.scheme].green }]} />
           <Caption tone="muted" style={styles.caps} numberOfLines={2}>
             {eyebrow}
           </Caption>
         </View>
-        <DsText variant="title" style={face} numberOfLines={2}>
+        <DsText variant="title" style={[face, styles.onNowName]} numberOfLines={2}>
           {name}
         </DsText>
-        <Caption tone="muted" numberOfLines={2}>
+        <Caption tone="muted" style={styles.onNowName} numberOfLines={2}>
           {sub}
         </Caption>
       </View>
@@ -199,7 +200,8 @@ export function DrinksLoading() {
 
 const styles = StyleSheet.create({
   head: { gap: space.md, paddingBottom: space.sm },
-  title: { gap: space.xs },
+  // The name sits 18 above the capsules, as Prod-drinks draws it (the head's gap and this).
+  title: { gap: space.xs, paddingBottom: space.xs + 2 },
   caps: { textTransform: 'uppercase', letterSpacing: 1.2 },
   rows: { gap: space.xs },
   row: { flexDirection: 'row', alignItems: 'center', gap: space.md, minHeight: 64, borderRadius: radius.control, paddingHorizontal: space.sm, marginHorizontal: -space.sm },
@@ -208,7 +210,10 @@ const styles = StyleSheet.create({
   words: { flex: 1, minWidth: 0, gap: 2 },
   end: { textAlign: 'right' },
   onNow: { flexDirection: 'row', alignItems: 'center', minHeight: 168, borderRadius: radius.card + space.xs, borderCurve: 'continuous', overflow: 'hidden', padding: space.lg + 2 },
-  onNowWords: { flex: 1, minWidth: 0, maxWidth: '50%', gap: space.xs },
+  // The eyebrow runs wider than the name so "On now · since 1 Oct" stays on one line, as Prod-drinks draws it; the name and its line keep left of the drawings.
+  onNowWords: { flex: 1, minWidth: 0, gap: space.xs, zIndex: 1 },
+  onNowEyebrow: { maxWidth: '72%' },
+  onNowName: { maxWidth: '55%' },
   live: { flexDirection: 'row', alignItems: 'flex-start', gap: space.xs + 2 },
   dot: { width: 8, height: 8, marginTop: 5, borderRadius: radius.pill },
   // Three drawings at the card's right, the middle one larger, tucked together and cut by the card's edge.

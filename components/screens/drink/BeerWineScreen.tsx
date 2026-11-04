@@ -24,7 +24,7 @@ import { AllergyLine } from './AllergyLine';
 import { ApprovalNotice } from './ApprovalNotice';
 import { DrinkHero } from './DrinkHero';
 import { DrinkArt, drawingSize } from './DrawingHero';
-import { DrinkLoading } from './DrinkLoading';
+import { ItemLoading } from './LoadingBar';
 import { ItemShell } from './ItemShell';
 import { ItemTitle } from './ItemTitle';
 import { PalateFit } from './NamesBlock';
@@ -48,7 +48,7 @@ export function BeerWineScreen({ kind: kindName }: { kind: DrinkKind }) {
 
   // Not yours to read (another bar's drink): its public page, if it's published.
   if ((error as { code?: string } | null)?.code === 'PGRST116' && safeId) return <Redirect href={`/d/${safeId}`} />;
-  if (isPending) return <DrinkLoading />;
+  if (isPending) return <ItemLoading />;
   if (!item) {
     return (
       <BackbarTheme>
@@ -155,9 +155,11 @@ function BeerWinePage({ kind, item, favorite, onToggleFavorite, canEdit, onEdit 
           {staff ? <RowGroup title="Pour it" rows={pourIt} /> : null}
         </View>
       )}
-      controls={{
+      actions={{
         save: { saved: favorite, onToggle: onToggleFavorite, label: ['Add to favorites', 'Remove from favorites'], icon: 'heart' },
         onShare: () => void shareOrCopy(drinkUrl(slug ?? item.id), item.name, 'drink'),
+        // Not for the bar's own team (View as applied): they fix it, they don't report it.
+        report: teamRole !== null && viewing >= 20 ? null : { itemId: item.id },
         onEdit: canEdit ? onEdit : undefined,
         editLabel: `Edit ${kind}`,
       }}

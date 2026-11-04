@@ -20,7 +20,7 @@ const ROW: VenueBrandRow = {
   logo_url: null,
   primary_color: '#D0643B',
   secondary_color: null,
-  display_face: 'redaction',
+  display_face: 'instrument',
   ground_tint: null,
   short_name: null,
   icon_url: null,

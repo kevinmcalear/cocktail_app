@@ -32,8 +32,7 @@ export const dropSlot = { dataSet: { dropSlot: '' } } as object;
  * library row or a menu row drags into any section that takes it, a dashed slot
  * showing where it lands. The browser's own drag and drop, listened for on the
  * builder's root; rows and sections only carry data attributes. Native (an iPad
- * at desktop width) keeps the grip drag within a section, and Move to another
- * section.
+ * at desktop width) keeps the handle drag within a section.
  */
 export function useMenuDrag(editor: LayoutEditor): [root: React.RefObject<React.ComponentRef<typeof View> | null>, drag: MenuDrag] {
   // The builder's root: drags are listened for here, once.
@@ -64,8 +63,10 @@ export function useMenuDrag(editor: LayoutEditor): [root: React.RefObject<React.
 
     // react-native-web has no draggable prop: set it as the pointer goes down.
     const down = (e: PointerEvent) => {
+      // A press in a row's price fields selects text; it never picks the row up.
+      // A row picked up before stays draggable, so put it down again.
       const src = source(e);
-      if (src) src.draggable = true;
+      if (src) src.draggable = !(e.target as HTMLElement | null)?.closest?.('input, textarea');
     };
     const start = (e: DragEvent) => {
       const src = source(e);

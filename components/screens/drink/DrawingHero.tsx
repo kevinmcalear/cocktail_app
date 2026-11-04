@@ -33,7 +33,7 @@ export function drawingRoom(top: number, size: number) {
 export const drawingSize = (maker: boolean) => (maker ? drawing.heroStaff : drawing.hero);
 
 // The sky lives in its own file so a page with the sky and no docked drawing (the first round's drink) leaves Reanimated out.
-export { DrinkSky, useSkyColour } from './DrinkSky';
+export { DrinkSky, DrinkSkyCap, useSkyColour } from './DrinkSky';
 
 /**
  * The drawing over the page (Dock, decided 29 Oct): at rest it sits centred

@@ -6,7 +6,7 @@ import type { SearchBarCommands } from 'react-native-screens';
 
 import { DockFade, GlassButton, useDs, useGutter } from '@/components/ds';
 import { ScreenHeader, ScreenHeaderSpacer } from '@/components/nav/ScreenHeader';
-import { WEB_TABS } from '@/components/nav/WebTabBar';
+import { useWebTabs } from '@/components/nav/WebTabBar';
 import { layout, space } from '@/constants/tokens';
 import { useAuth } from '@/ctx/AuthContext';
 import { SEARCH_TAB } from '@/hooks/useBottomBar';
@@ -45,10 +45,12 @@ export interface SearchTabState {
 /**
  * Over the bottom field: where it searches ("Little Rye ⌄", a menu of the
  * venue or your drinks, This area from Discover, and Everywhere), then the
- * type chips once you type. One row on a band of the ground, edge to edge, so it scrolls off the
- * screen's side rather than against an edge, with the results passing under it
- * (search-typing, decided 23 Oct 2026). `camera`: iOS 26's system field
- * can't hold the camera, so it leads this row instead.
+ * type chips once you type. One row, edge to edge, so it scrolls off the
+ * screen's side rather than against an edge. Clear behind its glass, as the
+ * field is, so the results pass under it and show through (Kevin, 3 Nov: the
+ * band of the ground made the glass read as solid black and cut the list off
+ * above it). `camera`: iOS 26's system field can't hold the camera, so it
+ * leads this row instead.
  */
 export function PlaceRow({ query, scope, setScope, mine, area, show, setShow, counts, camera }: Pick<SearchTabState, 'query' | 'scope' | 'setScope' | 'mine' | 'area' | 'show' | 'setShow' | 'counts'> & { camera?: boolean }) {
   const gutter = useGutter();
@@ -56,7 +58,7 @@ export function PlaceRow({ query, scope, setScope, mine, area, show, setShow, co
   // At a venue on Everywhere: Can make, between the place and the type chips; on, the type chips leave (QA Q37).
   const canMake = query && scope === 'everywhere' && !!mine.venueId;
   return (
-    <ScrollView horizontal showsHorizontalScrollIndicator={false} keyboardShouldPersistTaps="handled" style={[styles.placeRow, { backgroundColor: ds.c.ground }]} contentContainerStyle={[styles.placeChips, { paddingHorizontal: gutter }]}>
+    <ScrollView horizontal showsHorizontalScrollIndicator={false} keyboardShouldPersistTaps="handled" style={styles.placeRow} contentContainerStyle={[styles.placeChips, { paddingHorizontal: gutter }]}>
       {camera ? <GlassButton icon="camera" color={ds.c.ink} size={layout.minTapTarget} accessibilityLabel="Snap a menu or bottle" onPress={() => useBringIn.getState().openSheet()} /> : null}
       <ScopeToken options={scopeOptions(mine.label, area?.label ?? null)} scope={scope} onScope={setScope} />
       {canMake ? <CanMakeChip show={show} onShow={setShow} count={counts.canmake} /> : null}
@@ -146,8 +148,8 @@ export function SystemBottomSearch({ query, setQuery, scope, setScope, mine, are
       </ScrollView>
       {/* KeyboardAvoidingView moves the row in step with the keyboard and the field on it. */}
       <KeyboardAvoidingView behavior="padding" style={styles.systemDock}>
+        {/* No fade behind it: the system field is clear glass over the results, and the row matches it. */}
         <View style={[styles.systemRow, { paddingBottom: keyboard ? SYSTEM_FIELD : insets.bottom }]}>
-          <DockFade />
           <PlaceRow query={query} scope={scope} setScope={setScope} mine={mine} area={area} show={show} setShow={setShow} counts={counts} camera={!!session} />
         </View>
       </KeyboardAvoidingView>
@@ -232,7 +234,8 @@ function BackToTab() {
   const ds = useDs();
   const router = useRouter();
   const from = useSearchFrom((s) => s.from);
-  const tab = WEB_TABS.find((t) => t.name === from) ?? WEB_TABS[0];
+  const tabs = useWebTabs();
+  const tab = tabs.find((t) => t.name === from) ?? tabs[0];
   const back = () => (router.canGoBack() ? router.back() : router.navigate(tab.path));
   return <GlassButton icon={tab.icon} color={ds.accentText} size={FIELD} accessibilityLabel={`Back to ${tab.label}`} onPress={back} />;
 }
@@ -266,7 +269,6 @@ const styles = StyleSheet.create({
   systemRow: { paddingTop: space.lg, pointerEvents: 'box-none' },
   fieldRow: { flexDirection: 'row', alignItems: 'center', gap: space.sm },
   field: { flex: 1, minWidth: 0 },
-  // A band of the ground behind the chips, so rows passing under them don't read through (Search · typing).
   placeRow: { flexGrow: 0 },
   placeChips: { flexDirection: 'row', alignItems: 'center', gap: space.sm, paddingVertical: space.xs },
 });

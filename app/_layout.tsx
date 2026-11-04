@@ -260,7 +260,7 @@ function RootLayout() {
   const [fontsLoaded] = useFonts(Platform.OS === 'web' ? FIRST_PAINT_FONTS : APP_FONTS);
   useEffect(() => {
     if (Platform.OS !== 'web') return;
-    // Redaction's italic and bold, and the main screens' code: once the first
+    // The italic and Geist's semibold, and the main screens' code: once the first
     // screen's data is in and the network has been quiet for a second, so a
     // slow connection fetches that first (RAIL load). Starting at 4 s whatever
     // the data was doing put a megabyte of code beside Discover's requests.

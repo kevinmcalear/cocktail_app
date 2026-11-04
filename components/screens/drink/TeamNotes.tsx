@@ -11,6 +11,7 @@ import { useEffectiveRole } from '@/hooks/useViewAs';
 import { plainDbMessage } from '@/lib/dbError';
 
 import { ReportAction } from '../safety/ReportAction';
+import { dayMonth } from '@/lib/dayMonth';
 
 interface TeamNotesProps {
   itemId: string;
@@ -39,7 +40,7 @@ export function TeamNotes({ itemId, barId, currentVersion }: TeamNotesProps) {
   const remove = useDeleteComment(itemId);
   const [draft, setDraft] = useState('');
   if (!canRead) return null;
-  const when = (iso: string) => new Date(iso).toLocaleDateString(undefined, { day: 'numeric', month: 'short' });
+  const when = (iso: string) => dayMonth(new Date(iso), { month: 'short' });
 
   return (
     <View style={styles.block}>

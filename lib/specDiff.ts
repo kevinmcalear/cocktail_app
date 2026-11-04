@@ -5,6 +5,7 @@
  */
 
 import { barMl, ML_PER_OZ } from './drinkMath';
+import { dayMonth } from './dayMonth';
 
 export interface SnapshotLine {
   ingredient_item_id: string | null;
@@ -76,6 +77,6 @@ export function specDiff(prev: Snapshot | null, next: Snapshot): string[] {
 
 /** "11 Aug · Theo P." */
 export function versionLine(createdAt: string, by: string | null): string {
-  const date = new Date(createdAt).toLocaleDateString(undefined, { day: 'numeric', month: 'short' });
+  const date = dayMonth(new Date(createdAt), { month: 'short' });
   return [date, by].filter(Boolean).join(' · ');
 }

@@ -172,3 +172,6 @@ export function foundLine(item: { section: keyof typeof SECTION_WORD; kind?: str
   const parts = [item.kind || null, country].filter(Boolean);
   return parts.length ? parts.join(' · ') : SECTION_WORD[item.section];
 }
+
+/** What a bottle's fill level says on its tile and in its sheet (Drinks board). */
+export const FILL_LABEL = { full: 'Full', half: 'Half left', low: 'Running low' } as const;

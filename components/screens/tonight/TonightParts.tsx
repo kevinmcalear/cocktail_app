@@ -2,7 +2,7 @@ import { LinearGradient } from 'expo-linear-gradient';
 import type { ReactNode } from 'react';
 import { StyleSheet, View } from 'react-native';
 
-import { Caption, Display, DrinkDrawingFor, DsText, PressableScale, TextLink, useDs, type IconName } from '@/components/ds';
+import { Caption, DrinkDrawingFor, Head, DsText, PressableScale, TextLink, useDs, type IconName } from '@/components/ds';
 import { IconSymbol } from '@/components/ui/icon-symbol';
 import { displayFaces, palateHues, radius, space } from '@/constants/tokens';
 import { useItemSketch } from '@/hooks/useItemSketch';
@@ -12,7 +12,7 @@ import { liquidOf } from '@/lib/sketch/types';
 /** How far down the sky reaches before it is the page's ground. */
 const SKY = 440;
 
-/** The page's date line in small capitals, and Tonight in the display face (Prod-today boards); Discover's head too. */
+/** A main tab's head (Prod-today, Prod-drinks, Prod-discover): the eyebrow in small capitals, and the tab's name in the display face at 40. */
 export function TonightHead({ eyebrow, title = 'Tonight', onEyebrow, eyebrowLabel }: { eyebrow: string; title?: string; onEyebrow?: () => void; eyebrowLabel?: string }) {
   const line = (
     <Caption tone="muted" style={styles.caps}>
@@ -28,7 +28,7 @@ export function TonightHead({ eyebrow, title = 'Tonight', onEyebrow, eyebrowLabe
       ) : (
         line
       )}
-      <Display aria-level={1}>{title}</Display>
+      <Head aria-level={1}>{title}</Head>
     </View>
   );
 }
@@ -56,9 +56,10 @@ function useDrinkTint(itemId: string): string | null {
 
 /**
  * The sky over the top of the page: the hero drinks' colours left to right,
- * fading into the ground. Behind everything; it scrolls with the page.
+ * fading into the ground. Behind the page in a ScrollSky; it scrolls with the page.
+ * `cap`: its top edge only, unfaded, for ScrollSky's pull.
  */
-export function TonightSky({ ids }: { ids: readonly string[] }) {
+export function TonightSky({ ids, cap }: { ids: readonly string[]; cap?: boolean }) {
   const ds = useDs();
   const a = useDrinkTint(ids[0] ?? '');
   const b = useDrinkTint(ids[1] ?? '');
@@ -68,9 +69,9 @@ export function TonightSky({ ids }: { ids: readonly string[] }) {
   const strength = ds.scheme === 'dark' ? 0.22 : 0.16;
   const colors = (tints.length === 1 ? [tints[0], tints[0]] : tints).map((t) => withAlpha(t, strength)) as [string, string, ...string[]];
   return (
-    <View pointerEvents="none" style={styles.sky}>
+    <View pointerEvents="none" style={[styles.sky, cap && { backgroundColor: ds.c.ground }]}>
       <LinearGradient colors={colors} start={{ x: 0, y: 0 }} end={{ x: 1, y: 0 }} style={StyleSheet.absoluteFill} />
-      <LinearGradient colors={[withAlpha(ds.c.ground, 0), ds.c.ground]} style={StyleSheet.absoluteFill} />
+      {cap ? null : <LinearGradient colors={[withAlpha(ds.c.ground, 0), ds.c.ground]} style={StyleSheet.absoluteFill} />}
     </View>
   );
 }
@@ -84,7 +85,7 @@ export function ListHead({ eyebrow, name, onPress }: { eyebrow: string; name: st
         {eyebrow}
       </Caption>
       <View style={styles.listName}>
-        <DsText variant="title" style={{ fontFamily: displayFaces[ds.displayFace].regular }} numberOfLines={1}>
+        <DsText variant="listHead" style={{ fontFamily: displayFaces[ds.displayFace].regular }} numberOfLines={1}>
           {name}
         </DsText>
         <IconSymbol name="chevron.down" size={18} color={ds.c.ink} />
@@ -141,7 +142,7 @@ export function TonightSection({ title, aside, onAside, children }: { title: str
 }
 
 const styles = StyleSheet.create({
-  head: { gap: space.xs, paddingBottom: space.md },
+  head: { gap: space.xs, paddingBottom: space.lg },
   caps: { textTransform: 'uppercase', letterSpacing: 1.2 },
   label: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', gap: space.md },
   sky: { position: 'absolute', left: 0, right: 0, top: 0, height: SKY },

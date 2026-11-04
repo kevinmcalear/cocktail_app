@@ -7,6 +7,7 @@ import { UserAvatar } from '@/components/ui/UserAvatar';
 import { font, space } from '@/constants/tokens';
 import { useDrinkHistory } from '@/hooks/useDrinkHistory';
 import { useLineage } from '@/hooks/useLineage';
+import { useVenueFeature } from '@/hooks/useVenueFeatures';
 import { historyFor } from '@/lib/drinkHistory';
 import { joinNames, shortNames, yearLabel, type CreditProfile, type LineageDrink } from '@/lib/lineage';
 import type { SpecLine } from '@/lib/spec';
@@ -89,6 +90,7 @@ interface BackstoryProps {
 export function Backstory({ itemId, lines = [], classicName, onRiff = null, story = null, title = 'Backstory' }: BackstoryProps) {
   const ds = useDs();
   const router = useRouter();
+  const history = useVenueFeature('history');
   const { data } = useLineage(itemId);
   const drink = data?.drink ?? null;
   const ancestors = data?.ancestors ?? [];
@@ -125,7 +127,7 @@ export function Backstory({ itemId, lines = [], classicName, onRiff = null, stor
           <FactRow
             label="Family"
             accessibilityLabel={`Family: ${steps.map((s) => [s.name, s.year].filter(Boolean).join(', ')).join('; ')}; then this drink.${inTree ? ' Open the family tree' : ''}`}
-            onPress={inTree ? () => router.push({ pathname: '/history', params: { focus: focus ?? drink!.id } }) : undefined}
+            onPress={inTree && history ? () => router.push({ pathname: '/history', params: { focus: focus ?? drink!.id } }) : undefined}
           >
             <Body tone="muted">
               {steps.map((s) => (

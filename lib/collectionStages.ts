@@ -12,6 +12,7 @@ import type { HadDrink, HadVenue } from './hadDrinks';
 import type { MadeTally } from './madeIt';
 import { homeReach, type HomeReach, type ShelfMatch } from './shelfReach';
 import type { AwayGroup } from './toMake';
+import { dayMonth } from './dayMonth';
 
 export type DrinkStage = 'had' | 'make' | 'made';
 
@@ -25,7 +26,7 @@ export function gapLabel(you: number, bar: number): string {
 export function dayShort(day: string, now: number, locale?: string): string {
   const [y, m, d] = day.slice(0, 10).split('-').map(Number);
   const sameYear = y === new Date(now).getFullYear();
-  return new Date(y, m - 1, d).toLocaleDateString(locale, { day: 'numeric', month: 'short', ...(sameYear ? {} : { year: 'numeric' }) });
+  return dayMonth(new Date(y, m - 1, d), { month: 'short', ...(sameYear ? {} : { year: 'numeric' as const }) }, locale);
 }
 
 // --- Had out ---

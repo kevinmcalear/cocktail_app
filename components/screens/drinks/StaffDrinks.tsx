@@ -22,14 +22,14 @@ import { FirstRoundCard, RoundOpened } from '@/components/screens/firstRound/Fir
 import { FilterRow } from '@/components/screens/drinks/FilterRow';
 import { DrinksEmpty } from '@/components/screens/drinks/DrinksEmpty';
 import { DrinksPanes } from '@/components/screens/drinks/DrinksPanes';
-import { NearResults } from '@/components/search/NearResults';
+import { NearResults } from '@/components/search/NearResultsLazy';
 import { SearchField } from '@/components/search/SearchField';
 import { space } from '@/constants/tokens';
 import { useDrinksFirstRow } from '@/components/screens/drinks/firstRow';
 import { useOpenSearch } from '@/hooks/useSearchFrom';
 import { useDrinkLists } from '@/hooks/useDiscover';
 import { usePrefetchCocktail } from '@/hooks/useCocktails';
-import { CAPSULE_SHOW, STAFF_CAPSULES } from '@/lib/drinksTab';
+import { CAPSULE_SHOW } from '@/lib/drinksTab';
 import { itemHref, newDrinkHref, type ItemCategory } from '@/lib/itemRoutes';
 import { capitalize } from '@/lib/stringUtils';
 import { matchesQuery } from '@/lib/publicDrinks';
@@ -113,7 +113,7 @@ export function StaffDrinks({ beside = false }: { beside?: boolean }) {
       <WebHead>
         <title>Drinks</title>
       </WebHead>
-      <DrinksHead eyebrow={active?.name ?? ' '} capsules={STAFF_CAPSULES} value={capsule} onChange={d.pickCapsule} offline={offline ? 'Whole spec book on this phone' : null} bleed={panes ? space.xl : gutter} />
+      <DrinksHead eyebrow={active?.name ?? ' '} capsules={d.capsules} value={capsule} onChange={d.pickCapsule} offline={offline ? 'Whole spec book on this phone' : null} bleed={panes ? space.xl : gutter} />
       {!phone && !staffView ? <SearchField query={find} onQuery={setFind} placeholder="Search your drinks" /> : null}
       {activeId ? (<><ResumeCard barId={activeId} /><DrinksSetup barId={activeId} /></>) : null}
       <FirstRoundCard />

@@ -18,15 +18,16 @@ import type { MenuDetail, MenuDrink } from '@/types/menus';
 import { GuestMenuPage } from '../menus/page/GuestMenuPage';
 import { ReportSheet } from '../safety/ReportSheetLazy';
 import { loadFailure, PublicMissing } from './PublicShell';
+import { dayMonth } from '@/lib/dayMonth';
 
 /** A friend is a guest with nothing to add: useMenuLens's reads are all a bar's, and stay off this public page. */
-const FRIEND: MenuLensData = { lens: 'guest', notes: {}, allergens: new Map(), mine: new Map(), cost: new Map(), costs: false, averageCost: null, rows: [] };
+const FRIEND: MenuLensData = { lens: 'guest', notes: {}, allergens: new Map(), mine: new Map(), cost: new Map(), costs: false, averageCost: null, rows: [], prep: false };
 
 /** "Sat 31 Oct", the night the menu is for (a date with no time zone). */
 export function menuNight(day: string, locale = 'en-GB'): string {
   const [y, m, d] = day.split('-').map(Number);
   const date = new Date(y, m - 1, d);
-  return `${date.toLocaleDateString(locale, { weekday: 'short' })} ${date.toLocaleDateString(locale, { day: 'numeric', month: 'short' })}`;
+  return dayMonth(date, { weekday: 'short', month: 'short' }, locale);
 }
 
 /** A drink on the menu that isn't public: it holds its place, with no name. */

@@ -15,14 +15,16 @@ import { useCapabilities } from '@/hooks/useCapabilities';
 import { useShelf, useShelfEdit } from '@/hooks/useHomeBar';
 import type { IngredientBottle } from '@/hooks/useIngredients';
 import { useMode } from '@/hooks/useMode';
+import { usePairings } from '@/hooks/usePairings';
 import { useItemPrep, usePrepSources, usePrepUsedIn } from '@/hooks/usePrepCard';
+import { useVenueFeature } from '@/hooks/useVenueFeatures';
 import { useEffectiveRole } from '@/hooks/useViewAs';
 import { labelDate, useByDate as expiry } from '@/lib/makeSteps';
 import { ingredientHeroPictures, shownIngredientPicture, type IngredientPicture } from '@/lib/ingredientPicture';
 import { readNoteRecipe } from '@/lib/noteRecipe';
 import { batchSizes } from '@/lib/prepParts';
 import { ingredientUrl, shareOrCopy } from '@/lib/shareLink';
-import { technicalIngredientFor } from '@/lib/techniques';
+import { isLabName } from '@/lib/techniques/labNames';
 
 import { DrinkHero } from '../drink/DrinkHero';
 import { ItemShell } from '../drink/ItemShell';
@@ -99,6 +101,9 @@ function IngredientPage({ ingredient, lines, drinks, bottles, pictures: batchPic
   const shelfEdit = useShelfEdit();
   const onShelf = !!shelf?.includes(ingredient.id);
   const toggleShelf = () => (!userId ? router.push('/auth/login') : onShelf ? shelfEdit.remove.mutate(ingredient.id) : shelfEdit.add.mutate(ingredient.id));
+  // Pairs with's own query: with pairings there's a map to open, from the … (Kevin's C12, 3 Nov).
+  const paired = (usePairings([ingredient.id], { limit: 8 }).data?.length ?? 0) > 0;
+  const flavorMapOn = useVenueFeature('flavorMap');
 
   const prep = card?.prep ?? null;
   // Opened from a label's code (Bet-labels "Scanned: its page"): that batch's day, use-by and where it goes, first.
@@ -127,7 +132,7 @@ function IngredientPage({ ingredient, lines, drinks, bottles, pictures: batchPic
   // The bar's team (Employee and up) get the allergen line and Behind the bar; everyone else the lists as before.
   const team = isPrep && !!ingredient.bar_id && venueRole >= 20;
   // A technical ingredient (xanthan) reads like the technique library, with where to buy it.
-  const technical = !isPrep && !!technicalIngredientFor(ingredient.name);
+  const technical = !isPrep && isLabName(ingredient.name);
   const bottleTiles = useBottleTiles(ingredient);
   // A bottle's Kind of is the third fact, linking up the family (board Item-page).
   const kindFact = !isPrep && bottleTiles.length && ingredient.generic ? [{ label: 'Kind of', value: ingredient.generic.name, onPress: () => router.push(`/ingredient/${ingredient.generic!.id}` as never) }] : [];
@@ -190,9 +195,12 @@ function IngredientPage({ ingredient, lines, drinks, bottles, pictures: batchPic
       action={action}
       body={body}
       fab={fab}
-      controls={{
+      actions={{
         save: { saved: onShelf, onToggle: toggleShelf, label: ['Save to your bar', 'Take off your bar'] },
         onShare: () => void shareOrCopy(ingredientUrl(ingredient.id), ingredient.name, 'ingredient'),
+        flavorMap: paired && flavorMapOn ? () => router.push({ pathname: '/flavor-map', params: { with: ingredient.id } }) : undefined,
+        // Not for the bar's own team (View as applied): they fix it, they don't report it.
+        report: ingredient.bar_id && venueRole >= 20 ? null : { itemId: ingredient.id },
         onEdit: offerEdit ? onEdit : undefined,
         editLabel: `Edit ${ingredient.name}`,
       }}

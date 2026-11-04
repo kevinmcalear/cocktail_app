@@ -5,6 +5,7 @@
 // list_on_day and menu_days date them.
 // ponytail: a night that runs past midnight changes day at midnight, as the
 // database does; a list written at 1am belongs to the new day.
+import { dayMonth } from './dayMonth';
 
 const DAY_MS = 86_400_000;
 
@@ -33,7 +34,7 @@ function daysBetween(from: string, to: string): number {
 
 /** "Sun 1 Nov" (weekday) or "1 Nov", in the reader's locale; the date is the bar's, so it's printed in UTC. */
 export function dayText(day: string, { weekday = true, locale }: { weekday?: boolean; locale?: string } = {}): string {
-  return new Date(`${day}T12:00:00Z`).toLocaleDateString(locale, { timeZone: 'UTC', day: 'numeric', month: 'short', ...(weekday ? { weekday: 'short' } : {}) });
+  return dayMonth(new Date(`${day}T12:00:00Z`), { month: 'short', timeZone: 'UTC', ...(weekday ? { weekday: 'short' as const } : {}) }, locale);
 }
 
 /** A drink's time on the list: from when it went on to when it came off (null: still on). */
