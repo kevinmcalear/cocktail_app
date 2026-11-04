@@ -1,10 +1,8 @@
-import { LinearGradient } from 'expo-linear-gradient';
 import { QueryClientContext } from '@tanstack/react-query';
 import { useContext, type ReactNode } from 'react';
 import { Platform, Pressable, StyleSheet, View } from 'react-native';
 import Animated, { interpolate, useAnimatedStyle, type SharedValue } from 'react-native-reanimated';
 
-import { useDs } from '@/components/ds';
 // The web loads it (and its Reanimated) when the hero first draws, not with every page.
 import { AnimatedSketch } from '@/components/ds/AnimatedSketchLazy';
 // By path, not the ds barrel: through the barrel its Reanimated pour lands in the web's every-page chunk (check-web-chunks).
@@ -12,8 +10,7 @@ import { DrinkDrawing, DrinkDrawingFor } from '@/components/ds/DrinkDrawing';
 import { drawing, layout, space } from '@/constants/tokens';
 import { useItemSketch } from '@/hooks/useItemSketch';
 import { useReducedMotion } from '@/hooks/useReducedMotion';
-import { drinkSky } from '@/lib/sky';
-import { liquidOf, type SketchInputs } from '@/lib/sketch/types';
+import type { SketchInputs } from '@/lib/sketch/types';
 
 /** The docked glyph, beside Back (board Draw-scroll, dock; And-page draws 36). */
 export const DOCKED = Platform.OS === 'android' ? 36 : 34;
@@ -35,33 +32,8 @@ export function drawingRoom(top: number, size: number) {
 /** The size the drawing rests at: makers get the smaller one, so the spec stays above the fold (decision drawing-sizes). */
 export const drawingSize = (maker: boolean) => (maker ? drawing.heroStaff : drawing.hero);
 
-/**
- * The soft sky behind a drawing (lib/sky.ts): the item's own colour at the
- * top of the page, gone by the title. It scrolls with the page. `tall`: the
- * desktop's longer stops.
- */
-export function DrinkSky({ liquid, tall }: { liquid: string | null; tall?: boolean }) {
-  const ds = useDs();
-  // No colour known yet (or an ingredient drawn without one): plain paper, never a guessed hue.
-  if (!liquid) return null;
-  const sky = drinkSky(liquid, ds.scheme, ds.c.ground, tall);
-  const height = sky.stops[2];
-  return <LinearGradient colors={sky.colors} locations={sky.stops.map((s) => s / height) as [number, number, number]} style={[styles.sky, { height }]} />;
-}
-
-/** The sky's top edge, for ScrollSky's pull: its first colour. */
-export function DrinkSkyCap({ liquid }: { liquid: string | null }) {
-  const ds = useDs();
-  if (!liquid) return null;
-  return <View style={[StyleSheet.absoluteFill, { backgroundColor: drinkSky(liquid, ds.scheme, ds.c.ground).colors[0] }]} />;
-}
-
-/** A drink's liquid colour for its sky: the drawing's own (a preview's, else the stored one). */
-export function useSkyColour(itemId: string | null, sketch?: SketchInputs | null): string | null {
-  const stored = useItemSketch(sketch ? null : itemId).data;
-  const inputs = sketch ?? stored;
-  return inputs ? liquidOf(inputs).hex : null;
-}
+// The sky lives in its own file so a page with the sky and no docked drawing (the first round's drink) leaves Reanimated out.
+export { DrinkSky, DrinkSkyCap, useSkyColour } from './DrinkSky';
 
 /**
  * The drawing over the page (Dock, decided 29 Oct): at rest it sits centred
@@ -145,7 +117,6 @@ export function DrawingSpace({ top, size, onReplay }: { top: number; size: numbe
 }
 
 const styles = StyleSheet.create({
-  sky: { position: 'absolute', top: 0, left: 0, right: 0, pointerEvents: 'none' },
   dock: { position: 'absolute', top: 0, left: 0, transformOrigin: 'left top', pointerEvents: 'none' },
   art: { overflow: 'hidden' },
 });

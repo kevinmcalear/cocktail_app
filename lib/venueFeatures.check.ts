@@ -120,6 +120,8 @@ const INSIDE = [
   /^components\/screens\/ingredient\/edit\/EditSections\.tsx$/,
   // Its Prep action only runs from the Prep list row, which menuPageModel shows with useMenuLens's `prep`.
   /^components\/screens\/menus\/MenuScreen\.tsx$/,
+  // Its Log a batch falls back to /prep only when tonight has no house-made; the round itself is the new bartender's own page.
+  /^components\/screens\/firstRound\/StaffRoundScreen\.tsx$/,
 ];
 for (const file of globSync('{app,components,hooks}/**/*.{ts,tsx}').sort()) {
   if (/\.(test|check)\.tsx?$/.test(file) || listed.has(file) || INSIDE.some((r) => r.test(file))) continue;

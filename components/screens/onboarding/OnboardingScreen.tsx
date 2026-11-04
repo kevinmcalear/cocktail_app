@@ -9,6 +9,7 @@ import { useFinishOnboarding, useSaveOnboardingName, useSaveWorkplace } from '@/
 import { useMyProfile } from '@/hooks/useMyProfile';
 import { useFindNamesakes, useMyPersonClaim } from '@/hooks/useProfiles';
 import { inviteJobTitle, needsOnboarding, nextStep, splitName, stepProgress, type OnboardingStep, type StepChoice } from '@/lib/onboarding';
+import { roundKind } from '@/lib/firstRound';
 import { useAppMode } from '@/store/useAppMode';
 
 import { BringStep } from './BringStep';
@@ -204,9 +205,8 @@ export function OnboardingScreen() {
       <InviteWelcome
         invite={invite}
         onJoined={() => {
-          setJoined(invite);
-          enterVenue(invite.bar_id);
-          setChosen('name');
+          setJoined(invite); enterVenue(invite.bar_id); setChosen('name');
+          if (roundKind(invite.role_level) === 'staff') setLanding('/first-round'); // Your first round (board Kept-onboard); makers land on Tonight
         }}
         onDeclined={() => setChosen('name')}
       />

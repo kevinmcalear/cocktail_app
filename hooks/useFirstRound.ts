@@ -5,7 +5,7 @@ import { create } from 'zustand';
 import { useAuth } from '@/ctx/AuthContext';
 import { useActiveVenue } from '@/hooks/useActiveVenue';
 import { useMode } from '@/hooks/useMode';
-import { markDone, readRound, roundKind, roundView, seeDone, seeOpened, skipAll, startRound, type FirstRound, type RoundTab, type StepKey } from '@/lib/firstRound';
+import { markDone, markRead, readRound, roundKind, roundView, seeDone, seeOpened, skipAll, startRound, type FirstRound, type RoundTab, type StepKey } from '@/lib/firstRound';
 import { supabase } from '@/lib/supabase';
 
 /**
@@ -70,6 +70,8 @@ export function useFirstRound() {
     showEverything: useCallback(() => write((r) => skipAll(r, new Date().toISOString())), [write]),
     seeOpened: useCallback((tab: RoundTab) => write((r) => seeOpened(r, tab)), [write]),
     seeDone: useCallback(() => write(seeDone), [write]),
+    /** Staff: one drink or house-made read (lib/firstRound markRead). */
+    read: useCallback((id: string, lists?: { menu?: readonly string[]; houseMade?: readonly string[] }) => write((r) => markRead(r, id, lists)), [write]),
     replay: useCallback(() => {
       if (!userId) return;
       const next = startRound(new Date().toISOString());
@@ -79,15 +81,14 @@ export function useFirstRound() {
   };
 }
 
-/** Marks a step done when its tab is opened (Discover; Menus for staff), while it's the step that's up. */
+/** Marks a maker's Discover step done when its tab is opened, while it's the step that's up. */
 export function useRoundVisit(tab: RoundTab) {
   const { active, current, done } = useFirstRound();
-  const key = active && current?.opens === tab ? current.key : null;
-  // Opening Menus does a staff member's step; a maker's Menus step is putting a drink on one.
-  const counts = key === 'open_menu' || key === 'discover';
+  // A maker's Menus step is putting a drink on one, not opening it.
+  const key = active && current?.opens === tab && current.key === 'discover' ? current.key : null;
   useFocusEffect(
     useCallback(() => {
-      if (key && counts) done(key);
-    }, [key, counts, done])
+      if (key) done(key);
+    }, [key, done])
   );
 }

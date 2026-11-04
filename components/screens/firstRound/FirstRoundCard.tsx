@@ -6,11 +6,8 @@ import { IconSymbol } from '@/components/ui/icon-symbol';
 import { font, radius, space } from '@/constants/tokens';
 import { useFirstRound } from '@/hooks/useFirstRound';
 import { useVenueMenus } from '@/hooks/useMenus';
-import { useMyProfile } from '@/hooks/useMyProfile';
-import { useMyMadeDrinks } from '@/hooks/useProfiles';
 import { useTabBarInset } from '@/components/nav/WebTabBar';
-import { onAMenu, OPENED_COPY, yourMenuStep } from '@/lib/firstRound';
-import { menuStatus } from '@/lib/menus';
+import { onAMenu, OPENED_COPY } from '@/lib/firstRound';
 
 import { FirstCocktailChoices } from './FirstCocktailChoices';
 import { nextLine, progressLine, RoundBars, RoundStepList, useRoundGo } from './RoundParts';
@@ -28,17 +25,15 @@ function CloseButton({ label, onPress }: { label: string; onPress: () => void })
  * The first round at the top of the Library (whole-app canvas, Onboarding,
  * "First round and Features"): the steps with the one that's up, then a
  * one-line strip once a step is done, then a quiet "That's the round". A
- * maker's "put it on a menu" counts as soon as a menu here has a drink.
+ * maker's "put it on a menu" counts as soon as a menu here has a drink. A
+ * bartender's round is its own page (Your first round): the strip opens it.
  */
 export function FirstRoundCard() {
   const ds = useDs();
   const round = useFirstRound();
   const go = useRoundGo();
   const [open, setOpen] = useState<boolean | null>(null);
-  const [now] = useState(() => Date.now());
-  const menus = useVenueMenus(round.active && (round.current?.key === 'menu' || round.current?.key === 'open_menu') ? (round.venue?.id ?? null) : null).data;
-  const profileId = useMyProfile().data?.id;
-  const mine = useMyMadeDrinks(profileId, round.active && round.current?.key === 'open_menu' && !!profileId).data;
+  const menus = useVenueMenus(round.active && round.current?.key === 'menu' ? (round.venue?.id ?? null) : null).data;
   const markMenu = !!menus && round.current?.key === 'menu' && onAMenu(round.round, menus.filter((m) => m.barId === round.venue?.id));
   const { done } = round;
   useEffect(() => {
@@ -55,21 +50,20 @@ export function FirstRoundCard() {
         <CloseButton label="Dismiss" onPress={round.seeDone} />
         <View role="status" style={styles.doneText}>
           <Body style={styles.strong}>That’s the round</Body>
-          <Caption tone="muted">Menus and Discover are open.</Caption>
+          <Caption tone="muted">{round.kind === 'make' ? 'Menus and Discover are open.' : 'The menu, specs and prep are on Tonight.'}</Caption>
         </View>
       </Surface>
     );
   }
   if (!round.active || !round.current) return null;
 
-  const full = open ?? round.doneCount === 0;
-  // "3 of its drinks are yours" on a staff member's first step (find-yourself step 7).
-  const yours = menus && mine ? yourMenuStep(menus.filter((m) => m.barId === venue.id).map((m) => ({ ...m, status: menuStatus(m, now) })), new Set(mine.map((d) => d.id))) : null;
-  const steps = yours ? round.steps.map((s) => (s.key === 'open_menu' ? { ...s, ...yours } : s)) : round.steps;
-  const current = steps.find((s) => s.key === round.current?.key) ?? round.current;
+  const make = round.kind === 'make';
+  const full = make && (open ?? round.doneCount === 0);
+  const current = round.current;
   if (!full) {
+    // A bartender's strip opens Your first round; a maker's opens the steps here.
     return (
-      <PressableScale role="button" accessibilityLabel={`${progressLine(round.doneCount, round.total)}. ${nextLine(current)}. Show the steps`} onPress={() => setOpen(true)}>
+      <PressableScale role={make ? 'button' : 'link'} accessibilityLabel={`${progressLine(round.doneCount, round.total)}. ${nextLine(current)}. ${make ? 'Show the steps' : 'Open your first round'}`} onPress={() => (make ? setOpen(true) : go(current))}>
         <Surface raised style={[frame, styles.strip]}>
           <View style={styles.grow}>
             <Caption tone="muted">{progressLine(round.doneCount, round.total)}</Caption>
@@ -81,18 +75,17 @@ export function FirstRoundCard() {
     );
   }
 
-  const make = round.kind === 'make';
   const firstCocktail = round.current.key === 'house_spec';
   return (
     <Surface raised style={frame}>
       <CloseButton label="Hide the first round for now" onPress={() => setOpen(false)} />
       <View style={styles.intro}>
-        <Caption tone="muted">{make ? 'Your first round' : `Welcome to ${venue.name}`}</Caption>
-        <Headline role="heading">{make ? 'Three things, about two minutes' : 'Two things, about a minute'}</Headline>
-        <Caption tone="muted">{make ? 'Each one opens a bit more of the app. Skip any time.' : `Every spec ${venue.name} pours is here. Skip any time.`}</Caption>
+        <Caption tone="muted">Your first round</Caption>
+        <Headline role="heading">Three things, about two minutes</Headline>
+        <Caption tone="muted">Each one opens a bit more of the app. Skip any time.</Caption>
       </View>
       <RoundStepList
-        steps={steps}
+        steps={round.steps}
         currentKey={round.current.key}
         onSkip={() => round.current && round.done(round.current.key)}
         choices={firstCocktail ? <FirstCocktailChoices onPick={(start) => go(round.current, start)} /> : null}

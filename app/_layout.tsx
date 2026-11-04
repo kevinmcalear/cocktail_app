@@ -1,8 +1,4 @@
-import {
-    DarkTheme,
-    DefaultTheme,
-    ThemeProvider,
-} from "expo-router/react-navigation";
+import { DarkTheme, DefaultTheme, ThemeProvider } from "expo-router/react-navigation";
 import { PersistQueryClientProvider } from '@tanstack/react-query-persist-client';
 import { Stack, usePathname, useRouter, useSegments } from "expo-router";
 import { loadAsync, useFonts } from 'expo-font';
@@ -190,6 +186,9 @@ function RootLayoutNav() {
             <Stack.Screen name="bring-in/index" options={{ headerShown: false }} />
             <Stack.Screen name="bring-in/done" options={{ headerShown: false }} />
             <Stack.Screen name="drafts" options={{ headerShown: false }} />
+            <Stack.Screen name="first-round/index" options={{ headerShown: false }} />
+            <Stack.Screen name="first-round/drink" options={{ headerShown: false }} />
+            <Stack.Screen name="first-round/ready" options={{ headerShown: false }} />
             <Stack.Screen name="p/[id]/index" options={{ headerShown: false }} />
             <Stack.Screen name="p/[id]/menus/[edition]" options={{ headerShown: false }} />
             <Stack.Screen name="p/[id]/claim" options={{ headerShown: false }} />
