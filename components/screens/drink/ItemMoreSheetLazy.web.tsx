@@ -2,7 +2,15 @@ import { lazy, Suspense, useState, type ComponentProps } from 'react';
 
 import type { ItemMoreSheet as Sheet } from './ItemMoreSheet';
 
-const Lazy = lazy(() => import('./ItemMoreSheet').then((m) => ({ default: m.ItemMoreSheet })));
+const load = () => import('./ItemMoreSheet');
+// Offline, or a tab older than the last deploy: try once more, then the … does nothing rather than the page's error screen.
+// ponytail: a failed load stays failed until a reload; a retry on the next tap would need a fresh lazy().
+const Lazy = lazy(() =>
+  load()
+    .catch(load)
+    .then((m) => ({ default: m.ItemMoreSheet }))
+    .catch(() => ({ default: (() => null) as unknown as typeof Sheet })),
+);
 
 /**
  * On the web the … sheet (its rows, header and scroll) loads when the … is
