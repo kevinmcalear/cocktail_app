@@ -14,14 +14,14 @@ const CREST = 68;
 const SKY = 420;
 
 /**
- * The door's words. The link is one link for everyone, so a signed-out door
- * doesn't know who shared it (reading an Admin's name with no account would be
- * a new public read): it says it without a name.
+ * The door's words. The link is one link for everyone, so the door names the
+ * bar that asked, not the person who shared it (Kevin, 3 Nov 2026: C13); "The
+ * team" when the bar has no name.
  */
 export function joinLines(bar: string, web: boolean) {
   return {
     title: `Join ${bar}`,
-    body: 'The team asked you on. You’ll see tonight’s menu, the specs and the prep list.',
+    body: `${bar.trim() || 'The team'} asked you on. You’ll see tonight’s menu, the specs and the prep list.`,
     note: web ? 'Works in your browser. Add it to your home screen for one tap.' : 'You join as a Bartender. An Admin can change that.',
   };
 }
