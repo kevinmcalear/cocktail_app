@@ -13,5 +13,6 @@ export function useItemBack() {
   const navigation = useNavigation();
   const group = (useSegments() as string[])[1];
   const home = group === '(search)' ? '/search' : (TABS.find((t) => t.route === group)?.path ?? '/');
-  return () => (navigation.canGoBack() ? navigation.goBack() : router.replace(home as Href));
+  // Opened from a page above the tabs (a menu, /menus/[id]), the tab's stack has nothing under it but the app does.
+  return () => (navigation.canGoBack() ? navigation.goBack() : router.canGoBack() ? router.back() : router.replace(home as Href));
 }

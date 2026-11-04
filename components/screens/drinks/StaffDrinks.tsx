@@ -22,7 +22,7 @@ import { FirstRoundCard, RoundOpened } from '@/components/screens/firstRound/Fir
 import { FilterRow } from '@/components/screens/drinks/FilterRow';
 import { DrinksEmpty } from '@/components/screens/drinks/DrinksEmpty';
 import { DrinksPanes } from '@/components/screens/drinks/DrinksPanes';
-import { NearResults } from '@/components/search/NearResults';
+import { NearResults } from '@/components/search/NearResultsLazy';
 import { SearchField } from '@/components/search/SearchField';
 import { space } from '@/constants/tokens';
 import { useDrinksFirstRow } from '@/components/screens/drinks/firstRow';

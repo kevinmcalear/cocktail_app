@@ -1,12 +1,12 @@
 import { lazy, Suspense, type ReactNode } from 'react';
 import { StyleSheet, View } from 'react-native';
 
-import { Caption, Display, DsText, GlassButton, PressableScale, Tag, useBreakpoint, useDs, type TagTone } from '@/components/ds';
-import { ItemMoreMenu } from '@/components/screens/drink/ItemMoreMenu';
-import { font, menuCover, radius, space } from '@/constants/tokens';
+import { Caption, Display, DsText, Tag, useBreakpoint, useDs, type TagTone } from '@/components/ds';
+import { displayFaces, font, menuCover, radius, space } from '@/constants/tokens';
 
 import { MenuSky, MenuTrio } from './MenuBandLazy';
 import type { MenuInk } from './MenuDrawing';
+import { MenuTopBar } from './MenuTopBar';
 
 // The drink page's hero and its viewer load only for a menu with a cover: a home menu never has one.
 const MenuCover = lazy(() => import('./MenuCover'));
@@ -36,12 +36,15 @@ interface MenuPageHeadProps {
   /** Share and Edit sit in the page's one …, never beside it (Kevin's C12, 3 Nov: "All into the dot menu"). */
   onShare: (() => void) | null;
   onEdit?: (() => void) | null;
+  onMore?: (() => void) | null;
   /** In Back's place on a page with no way back (a friend's shared menu): it goes home. */
   label?: { text: string; onPress: () => void };
   /** The page's side margin: the hero runs out to the edges. */
   bleed: number;
   /** The status bar's height: the sky runs up under it. */
   top?: number;
+  /** The page pins the bar over its scroll (a phone's menu page), so the head draws none. */
+  pinned?: boolean;
   children?: ReactNode;
 }
 
@@ -50,7 +53,7 @@ interface MenuPageHeadProps {
  * cover photo, or nothing yet), glass Back and the one … (Edit, Share), then the tag and
  * eyebrow, the name and its line (Menu-page).
  */
-export function MenuPageHead({ heroIds, coverUrl, coverCredit, name, ink, quiet, tag, eyebrow, description, onBack, onShare, onEdit, label, bleed, top = 0, children }: MenuPageHeadProps) {
+export function MenuPageHead({ heroIds, coverUrl, coverCredit, name, ink, quiet, tag, eyebrow, description, onBack, onShare, onEdit, onMore, label, bleed, top = 0, pinned, children }: MenuPageHeadProps) {
   const ds = useDs();
   const wide = useBreakpoint() !== 'phone';
   const photo = !!coverUrl;
@@ -74,18 +77,12 @@ export function MenuPageHead({ heroIds, coverUrl, coverCredit, name, ink, quiet,
       ) : (
         <View style={{ height: 112 + top }} />
       )}
-      <View style={[styles.bar, { top: top + space.lg }]}>
-        {onBack ? <GlassButton icon="chevron.left" accessibilityLabel="Back" onPress={onBack} onMedia={photo && ds.scheme === 'dark'} /> : label ? (
-          <PressableScale role="link" accessibilityLabel={label.text} onPress={label.onPress}>
-            <Caption tone="muted" style={styles.caps}>
-              {label.text.toUpperCase()}
-            </Caption>
-          </PressableScale>
-        ) : (
-          <View />
-        )}
-        <ItemMoreMenu name={name} onEdit={onEdit ?? undefined} editLabel={`Edit ${name}`} onShare={onShare ?? undefined} scheme={photo && ds.scheme === 'dark' ? 'dark' : undefined} />
-      </View>
+      {/* Pinned: the page draws the bar over its scroll instead, so Back stays put (MenuScreen). */}
+      {pinned ? null : (
+        <View style={[styles.bar, { marginHorizontal: 0 }]}>
+          <MenuTopBar name={name} onBack={onBack} label={label} onShare={onShare} onEdit={onEdit} onMore={onMore} onMedia={photo && ds.scheme === 'dark'} top={top} />
+        </View>
+      )}
       <View style={[styles.title, photo && { marginTop: space.lg }]}>
         <View style={styles.eyebrowRow}>
           {tag ? <Tag label={tag.label} tone={TONE[tag.tone]} /> : null}
@@ -95,7 +92,8 @@ export function MenuPageHead({ heroIds, coverUrl, coverCredit, name, ink, quiet,
         </View>
         <Display>{name}</Display>
         {description ? (
-          <DsText variant="headline" italic tone="muted">
+          // The menu's line in the display face's italic, under its name (Menu-page).
+          <DsText variant="headline" tone="muted" style={[font.regular, { fontFamily: displayFaces[ds.displayFace].italic }]}>
             {description}
           </DsText>
         ) : null}
@@ -108,7 +106,7 @@ export function MenuPageHead({ heroIds, coverUrl, coverCredit, name, ink, quiet,
 const styles = StyleSheet.create({
   credit: { position: 'absolute', top: PHOTO_H - space.xl, right: 0, maxWidth: '60%' },
   creditOn: { top: PHOTO_H - space.xxxl - space.lg, paddingHorizontal: space.sm, paddingVertical: space.xs / 2, borderRadius: radius.control },
-  bar: { position: 'absolute', top: space.lg, left: 0, right: 0, flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' },
+  bar: { position: 'absolute', top: 0, left: 0, right: 0 },
   title: { gap: space.xs },
   eyebrowRow: { flexDirection: 'row', alignItems: 'center', gap: space.sm, flexWrap: 'wrap' },
   caps: { letterSpacing: 1.2, ...font.medium },

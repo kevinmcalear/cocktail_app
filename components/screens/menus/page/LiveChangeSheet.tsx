@@ -1,9 +1,9 @@
-import { useState } from 'react';
-import { StyleSheet, View } from 'react-native';
+import { useState, type ReactNode } from 'react';
+import { ScrollView, StyleSheet, View } from 'react-native';
 
-import { Body, Button, Caption, DateField, Headline, PressableScale, Segmented, Switch, useDs } from '@/components/ds';
+import { Body, Button, Caption, DateField, DsText, GlassButton, Headline, PressableScale, Segmented, Switch, useDs } from '@/components/ds';
 import { IconSymbol } from '@/components/ui/icon-symbol';
-import { displayFaces, font, radius, space } from '@/constants/tokens';
+import { displayFaces, font, layout, radius, space } from '@/constants/tokens';
 import { useBarClock } from '@/hooks/useLivingList';
 import { useRepertoire } from '@/hooks/useRepertoire';
 import { afterTonight, type BarClock } from '@/lib/barHours';
@@ -15,23 +15,23 @@ import { runRange } from './liveList';
 import { MenuDrawing } from './MenuDrawing';
 import { dayMonth } from '@/lib/dayMonth';
 
-type When = 'now' | 'tonight' | 'date';
-const WHENS = [
+export type When = 'now' | 'tonight' | 'date';
+export const WHENS = [
   { value: 'now', label: 'Now' },
   { value: 'tonight', label: 'After tonight' },
   { value: 'date', label: 'On a date' },
 ] as const;
 
 const pad = (n: number) => String(n).padStart(2, '0');
-const ymd = (d: Date) => `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}`;
+export const ymd = (d: Date) => `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}`;
 
 /** When the change lands: null now; once the bar closes tonight; or the start of a picked day. */
-function changeAt(when: When, day: string, now: number, clock: BarClock | null | undefined): string | null {
+export function changeAt(when: When, day: string, now: number, clock: BarClock | null | undefined): string | null {
   if (when === 'now') return null;
   return (when === 'tonight' ? afterTonight(clock?.hours, new Date(now), clock?.timezone) : new Date(`${day}T00:00`)).toISOString();
 }
 
-interface LiveChangeSheetProps {
+export interface LiveChangeSheetProps {
   /** swap: pick what goes on in its place. takeOff: it just comes off. */
   kind: 'swap' | 'takeOff';
   drink: MenuDrink;
@@ -49,6 +49,8 @@ interface LiveChangeSheetProps {
   asking?: boolean;
   onConfirm: (to: MenuDrink | null, at: string | null, opts: { tell: boolean; draft: boolean }) => void;
   onClose: () => void;
+  /** The desktop (Menu-l-desk): beside the list instead of a sheet, with `after` (the change log) under it. */
+  pane?: { after: ReactNode };
 }
 
 /**
@@ -57,7 +59,7 @@ interface LiveChangeSheetProps {
  * first, then Find a drink); when, now, after tonight or on a date; and Tell
  * the team, on by default. A bartender asks instead (Menu-l-ask).
  */
-export function LiveChangeSheet({ kind, drink, where, barId, wentOn, onFind, found, busy, asking = false, onConfirm, onClose }: LiveChangeSheetProps) {
+export function LiveChangeSheet({ kind, drink, where, barId, wentOn, onFind, found, busy, asking = false, onConfirm, onClose, pane }: LiveChangeSheetProps) {
   const ds = useDs();
   const [now] = useState(() => Date.now());
   const [when, setWhen] = useState<When>('now');
@@ -86,70 +88,121 @@ export function LiveChangeSheet({ kind, drink, where, barId, wentOn, onFind, fou
   const pastOf = (id: string) => past.find((p) => p.drink.id === id);
   const run = wentOn ? `: ${runRange(wentOn, at ?? new Date(now).toISOString(), true)}` : '';
 
-  return (
-    <MenuSheet
-      visible
-      onClose={onClose}
-      eyebrow={where}
-      title={kind === 'swap' ? `Swap ${drink.name}` : `Take off ${drink.name}`}
-      footer={
-        <View style={styles.footer}>
-          <Button label={busy ? 'Saving…' : cta} variant="ink" size="lg" disabled={blocked} onPress={() => confirm(false)} style={styles.stretch} />
-          {asking ? <Button label="Keep as a draft" variant="ghost" disabled={blocked} onPress={() => confirm(true)} style={styles.stretch} /> : null}
-          <Caption tone="muted" align="center">
-            {note}
-          </Caption>
-        </View>
-      }
-    >
-      <View style={styles.body}>
-        <View style={[styles.notice, { backgroundColor: ds.c.raised }]}>
-          <IconSymbol name="clock" size={18} color={ds.c.ink} />
-          <Body style={styles.grow}>{`${drink.name} comes off and keeps its run${run}.`}</Body>
-        </View>
-        {kind === 'swap' ? (
-          <View role="radiogroup" aria-label="Put on instead">
-            <Caption tone="muted" style={styles.label}>
-              Put on instead
-            </Caption>
-            {offers.map((d) => {
-              const on = d.id === to?.id;
-              const before = pastOf(d.id);
-              const last = before?.dates[0];
-              const lastOn = last?.startsOn && last.endsOn ? runRange(last.startsOn, last.endsOn) : (last?.listName ?? 'the list');
-              const meta = [before ? `Past · last on ${lastOn}` : 'Not on a list yet', printedPrice(d) ?? 'no price yet'].join(' · ');
-              return (
-                <PressableScale key={d.id} role="radio" aria-checked={on} accessibilityLabel={d.name} onPress={() => setPicked(d.id)} style={[styles.pick, { borderTopColor: ds.c.lineStrong }]}>
-                  <MenuDrawing itemId={d.id} size="row" ink="colour" fallback={{ imageUrl: d.imageUrl, glass: d.glass }} />
-                  <View style={styles.grow}>
-                    <Headline style={{ fontFamily: displayFaces[ds.displayFace].regular }}>{d.name}</Headline>
-                    <Caption tone="muted">{meta}</Caption>
-                  </View>
-                  <View style={[styles.ring, { borderColor: on ? ds.c.ink : ds.c.muted }]}>{on ? <View style={[styles.dot, { backgroundColor: ds.c.ink }]} /> : null}</View>
-                </PressableScale>
-              );
-            })}
-            <PressableScale role="button" accessibilityLabel="Find a drink" onPress={onFind} style={[styles.pick, { borderTopColor: ds.c.lineStrong, borderBottomColor: ds.c.lineStrong, borderBottomWidth: StyleSheet.hairlineWidth }]}>
-              <View style={[styles.search, { backgroundColor: ds.c.raised }]}>
-                <IconSymbol name="magnifyingglass" size={18} color={ds.c.ink} />
-              </View>
-              <View style={styles.grow}>
-                <Headline style={{ fontFamily: displayFaces[ds.displayFace].regular }}>Find a drink</Headline>
-                <Caption tone="muted">Any drink, ours or a classic</Caption>
-              </View>
-            </PressableScale>
-          </View>
-        ) : null}
-        <Segmented options={WHENS} value={when} onChange={setWhen} accessibilityLabel="When" variant="pill" stretch />
-        {when === 'date' ? <DateField label="On" value={day} onChange={setDay} min={ymd(new Date(now + 86_400_000))} /> : null}
-        {asking ? null : (
-          <View style={[styles.tell, { backgroundColor: ds.c.raised }]}>
-            <Body style={styles.grow}>Tell the team</Body>
-            <Switch value={tell} onValueChange={setTell} label="Tell the team" />
-          </View>
-        )}
+  const title = kind === 'swap' ? `Swap ${drink.name}` : `Take off ${drink.name}`;
+  const footer = (
+    <View style={styles.footer}>
+      <Button label={busy ? 'Saving…' : cta} variant="ink" size="lg" disabled={blocked} onPress={() => confirm(false)} style={styles.stretch} />
+      {asking ? <Button label="Keep as a draft" variant="ghost" disabled={blocked} onPress={() => confirm(true)} style={styles.stretch} /> : null}
+      <Caption tone="muted" align="center">
+        {note}
+      </Caption>
+    </View>
+  );
+  const body = (
+    <View style={styles.body}>
+      <View style={[styles.notice, { backgroundColor: ds.c.raised }]}>
+        <IconSymbol name="clock" size={18} color={ds.c.ink} />
+        <Body style={styles.grow}>{`${drink.name} comes off and keeps its run${run}.`}</Body>
       </View>
+      {kind === 'swap' ? (
+        <View role="radiogroup" aria-label="Put on instead">
+          <Caption tone="muted" style={styles.label}>
+            Put on instead
+          </Caption>
+          {offers.map((d) => {
+            const on = d.id === to?.id;
+            const before = pastOf(d.id);
+            const last = before?.dates[0];
+            const lastOn = last?.startsOn && last.endsOn ? runRange(last.startsOn, last.endsOn) : (last?.listName ?? 'the list');
+            const meta = [before ? `Past · last on ${lastOn}` : 'Not on a list yet', printedPrice(d) ?? 'no price yet'].join(' · ');
+            return (
+              <PressableScale key={d.id} role="radio" aria-checked={on} accessibilityLabel={d.name} onPress={() => setPicked(d.id)} style={[styles.pick, { borderTopColor: ds.c.lineStrong }]}>
+                <MenuDrawing itemId={d.id} size="row" ink="colour" fallback={{ imageUrl: d.imageUrl, glass: d.glass }} />
+                <View style={styles.grow}>
+                  <Headline style={{ fontFamily: displayFaces[ds.displayFace].regular }}>{d.name}</Headline>
+                  <Caption tone="muted">{meta}</Caption>
+                </View>
+                <View style={[styles.ring, { borderColor: on ? ds.c.ink : ds.c.muted }]}>{on ? <View style={[styles.dot, { backgroundColor: ds.c.ink }]} /> : null}</View>
+              </PressableScale>
+            );
+          })}
+          <PressableScale role="button" accessibilityLabel="Find a drink" onPress={onFind} style={[styles.pick, { borderTopColor: ds.c.lineStrong, borderBottomColor: ds.c.lineStrong, borderBottomWidth: StyleSheet.hairlineWidth }]}>
+            <View style={[styles.search, { backgroundColor: ds.c.raised }]}>
+              <IconSymbol name="magnifyingglass" size={18} color={ds.c.ink} />
+            </View>
+            <View style={styles.grow}>
+              <Headline style={{ fontFamily: displayFaces[ds.displayFace].regular }}>Find a drink</Headline>
+              <Caption tone="muted">Any drink, ours or a classic</Caption>
+            </View>
+          </PressableScale>
+        </View>
+      ) : null}
+      <Segmented options={WHENS} value={when} onChange={setWhen} accessibilityLabel="When" variant="pill" stretch="fit" />
+      {when === 'date' ? <DateField label="On" value={day} onChange={setDay} min={ymd(new Date(now + 86_400_000))} /> : null}
+      {asking ? null : (
+        <View style={[styles.tell, { backgroundColor: ds.c.raised }]}>
+          <Body style={styles.grow}>Tell the team</Body>
+          <Switch value={tell} onValueChange={setTell} label="Tell the team" />
+        </View>
+      )}
+    </View>
+  );
+  if (pane) {
+    return (
+      <ScrollView style={[styles.pane, { borderLeftColor: ds.c.line, backgroundColor: ds.c.ground }]} contentContainerStyle={styles.paneBody} role="region" aria-label={title}>
+        <View style={styles.paneHead}>
+          <Caption tone="muted" style={[styles.caps, styles.grow]}>
+            {where.toUpperCase()}
+          </Caption>
+          <GlassButton icon="xmark" accessibilityLabel="Close" onPress={onClose} />
+        </View>
+        <DsText variant="title" style={{ fontFamily: displayFaces[ds.displayFace].regular }}>
+          {title}
+        </DsText>
+        {body}
+        {footer}
+        {pane.after}
+      </ScrollView>
+    );
+  }
+  return (
+    <MenuSheet visible onClose={onClose} eyebrow={where} title={title} footer={footer}>
+      {body}
     </MenuSheet>
+  );
+}
+
+/** Every change to a living list since it went on, dated, and who made it (Menu-l-desk). Three, then All. */
+export function ChangeLog({ menuName, changes }: { menuName: string; changes: { at: string; when: string; text: string; by: string | null }[] }) {
+  const ds = useDs();
+  const [all, setAll] = useState(false);
+  if (!changes.length) return null;
+  return (
+    <View style={styles.log}>
+      <View style={styles.paneHead}>
+        <Caption tone="muted" style={[styles.caps, styles.grow]}>
+          {`Changes to ${menuName}`.toUpperCase()}
+        </Caption>
+        {changes.length > 3 ? (
+          <PressableScale role="button" accessibilityLabel={all ? 'Fewer changes' : 'All changes'} onPress={() => setAll((a) => !a)}>
+            <Caption tone="muted" style={styles.caps}>
+              {all ? 'FEWER' : 'ALL ›'}
+            </Caption>
+          </PressableScale>
+        ) : null}
+      </View>
+      {(all ? changes : changes.slice(0, 3)).map((c) => (
+        <View key={`${c.at}-${c.text}`} style={[styles.logRow, { borderTopColor: ds.c.line }]}>
+          <Caption tone="muted" style={styles.logWhen}>
+            {c.when}
+          </Caption>
+          <Body style={styles.grow}>
+            {c.text}
+            {c.by ? <Body tone="muted">{` · ${c.by}`}</Body> : null}
+          </Body>
+        </View>
+      ))}
+    </View>
   );
 }
 
@@ -165,4 +218,11 @@ const styles = StyleSheet.create({
   footer: { gap: space.sm, alignItems: 'center' },
   tell: { flexDirection: 'row', alignItems: 'center', gap: space.md, paddingHorizontal: space.lg, paddingVertical: space.sm, borderRadius: radius.card },
   stretch: { alignSelf: 'stretch' },
+  pane: { width: layout.listPaneDesk + 60, flexGrow: 0, flexShrink: 0, borderLeftWidth: StyleSheet.hairlineWidth },
+  paneBody: { paddingHorizontal: space.xxl, paddingVertical: space.lg, gap: space.lg },
+  paneHead: { flexDirection: 'row', alignItems: 'center', gap: space.sm },
+  caps: { letterSpacing: 1.5, ...font.medium },
+  log: { paddingTop: space.md },
+  logRow: { flexDirection: 'row', gap: space.lg, paddingVertical: space.sm, borderTopWidth: StyleSheet.hairlineWidth },
+  logWhen: { width: 104, fontVariant: ['tabular-nums'] },
 });

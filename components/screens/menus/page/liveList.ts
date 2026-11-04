@@ -192,7 +192,8 @@ export function liveList({ sections, sectionIds, rows, ended, endedDrinks, may, 
       out.push({
         ...view,
         flag: row.state === 'going' ? { label: row.offAt ? `Off ${day(row.offAt)}` : 'Coming off', tone: 'quiet' } : fresh ? { label: 'New', tone: 'green' } : view.flag,
-        sub: living && since && !bartender ? (fresh ? 'since today' : `since ${day(since)}`) : view.sub,
+        // The Drink Creator's cost stays on every row, a living list's too (Menu-who-creator); a row with no cost says how long it has been on.
+        sub: view.sub ?? (living && since && !bartender ? (fresh ? 'since today' : `since ${day(since)}`) : null),
         listRow: row,
         acts:
           row.state === 'going'
@@ -252,11 +253,14 @@ export function liveList({ sections, sectionIds, rows, ended, endedDrinks, may, 
       .filter((r) => (r.state === 'on' || r.state === 'going') && r.onFrom && Date.parse(r.onFrom) <= now)
       .map((r) => {
         const out = r.replacesItemId ? nameOfDrink(r.replacesItemId) : null;
-        return { at: r.onFrom!, text: `${nameOfDrink(r.itemId) ?? 'A drink'} ${out ? `for ${out}` : 'on'}` };
+        return { at: r.onFrom!, text: `${nameOfDrink(r.itemId) ?? 'A drink'} ${out ? `for ${out}` : 'on'}`, by: nameOf(r.addedBy) };
       }),
     // A drink swapped out reads with the one that took its place, above.
-    ...ended.filter((e) => !swappedIn(e)).map((e) => ({ at: e.cameOff, text: `${endedDrinks.get(e.itemId)?.name ?? 'A drink'} off` })),
-  ].sort((a, b) => b.at.localeCompare(a.at));
+    ...ended.filter((e) => !swappedIn(e)).map((e) => ({ at: e.cameOff, text: `${endedDrinks.get(e.itemId)?.name ?? 'A drink'} off`, ran: `ran ${day(e.wentOn)} to ${day(e.cameOff)}`, by: nameOf(e.takenOffBy) })),
+  ]
+    // Drinks put on as the menu was set up aren't a change: only what changed after it went on (Menu-who-admin draws no Last change until then).
+    .filter((c) => !listStart || Date.parse(c.at) > Date.parse(listStart))
+    .sort((a, b) => b.at.localeCompare(a.at));
   const last = changes[0];
   const lastChange = last ? `${sameDay(last.at, now) ? `today ${time(last.at)}` : day(last.at)} · ${last.text}` : null;
 
@@ -265,5 +269,7 @@ export function liveList({ sections, sectionIds, rows, ended, endedDrinks, may, 
     main,
     coming: coming.length ? { id: 'coming', name: 'Coming up', rows: coming } : null,
     lastChange,
+    // Every change since it went on, newest first: the desktop's change log beside a swap (Menu-l-desk).
+    changes: changes.map((c) => ({ ...c, text: 'ran' in c && c.ran ? `${c.text}, ${c.ran}` : c.text, when: sameDay(c.at, now) ? `today ${time(c.at)}` : day(c.at) })),
   };
 }

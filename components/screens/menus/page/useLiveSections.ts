@@ -45,8 +45,8 @@ export function useLiveSections({
   const ended = useEndedRuns(on ? menu.id : null).data ?? [];
   const asks = useListAsks(on ? menu.id : null).data ?? [];
   const off = useOffTonight(on ? menu.barId : null).data ?? [];
-  // Names: who asked, and for a bartender who approves (the banner's "Alex or Kim").
-  const members = useBarMembers(on && (bartender || asks.length > 0 || rows.some((r) => r.state.startsWith('waiting'))) ? menu.barId : null).data ?? [];
+  // Names: who asked, who changed a living list (its change log), and for a bartender who approves (the banner's "Alex or Kim").
+  const members = useBarMembers(on && (bartender || living || asks.length > 0 || rows.some((r) => r.state.startsWith('waiting'))) ? menu.barId : null).data ?? [];
   // Team · told at: the last change told today (Menu-l-swapped).
   const [today] = useState(() => new Date(new Date().setHours(0, 0, 0, 0)).toISOString());
   const told = useListNotices(on && !bartender ? menu.barId : null, today).data?.find((n) => n.menuId === menu.id);
@@ -61,7 +61,7 @@ export function useLiveSections({
   const approvers = members.filter((m) => m.role_level >= CREATOR && m.user_id !== userId).map((m) => first(m.user_id)).filter((n): n is string => !!n);
   const few = approvers.slice(0, 3);
   const approvedBy = few.length > 1 ? `${few.slice(0, -1).join(', ')} or ${few[few.length - 1]}` : (few[0] ?? null);
-  if (!on) return { lead: null, main: sections, coming: null, lastChange: null, ended, toldAt: null, approvedBy: null };
+  if (!on) return { lead: null, main: sections, coming: null, lastChange: null, changes: [], ended, toldAt: null, approvedBy: null };
   return {
     ...liveList({
       sections,

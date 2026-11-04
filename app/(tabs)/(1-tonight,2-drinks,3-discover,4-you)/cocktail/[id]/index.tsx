@@ -12,6 +12,7 @@ import { ItemLoading } from "@/components/screens/drink/LoadingBar";
 import type { OpenOn } from "@/components/screens/drink/edit/DrinkEditScreen";
 import { CouldNotLoad } from "@/components/screens/safety/NotAvailable";
 import { VisitorDrink } from "@/components/screens/drink/VisitorDrink";
+import { InMenu } from "@/components/screens/menus/pager/InMenu";
 
 // Editing in place only loads when someone edits, which keeps its gesture code off the web's first load.
 const DrinkEditScreen = lazy(() => import("@/components/screens/drink/edit/DrinkEditScreen").then((m) => ({ default: m.DrinkEditScreen })));
@@ -53,21 +54,32 @@ export default function CocktailDetailsScreen() {
         setIsEditing(true);
     };
 
-    // Not yours to read (another bar's drink): signed in, the in-app page from what the bar published; else its public page.
-    if ((error as { code?: string } | null)?.code === "PGRST116") return signedIn ? <VisitorDrink id={id as string} /> : <Redirect href={`/d/${id}`} />;
+    // Not yours to read (another bar's drink): signed in, the in-app page from what the bar published (in its menu's pager when opened from one); else its public page.
+    if ((error as { code?: string } | null)?.code === "PGRST116") return signedIn ? (
+        <InMenu itemId={id}>
+            <VisitorDrink id={id as string} />
+        </InMenu>
+    ) : (
+        <Redirect href={`/d/${id}`} />
+    );
     if (error) return <CouldNotLoad what="drink" failed={{ retry: () => void refetch() }} />;
     // The drink page reads it; Edit turns the same page into editing in place (DrinkEditScreen).
+    // Opened from a menu (?menu=), the page carries the menu's pager (Menu-pager); editing doesn't, so a swipe can't page away from it.
     if (!isEditing) {
-        return cocktail ? (
-            <DrinkScreen
-                item={cocktail}
-                canEdit={editAccess === "edit"}
-                adminFix={editAccess === "admin"}
-                onEdit={() => editOn()}
-                openBatch={batch === "1"}
-            />
-        ) : (
-            <ItemLoading seed={query.isPlaceholderData ? query.data : null} />
+        return (
+            <InMenu itemId={id}>
+                {cocktail ? (
+                    <DrinkScreen
+                        item={cocktail}
+                        canEdit={editAccess === "edit"}
+                        adminFix={editAccess === "admin"}
+                        onEdit={() => editOn()}
+                        openBatch={batch === "1"}
+                    />
+                ) : (
+                    <ItemLoading seed={query.isPlaceholderData ? query.data : null} />
+                )}
+            </InMenu>
         );
     }
 

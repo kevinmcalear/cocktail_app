@@ -1,5 +1,14 @@
-import { BeerWineScreen } from '@/components/screens/drink/KindRoutesLazy';
+import { useLocalSearchParams } from 'expo-router';
 
+import { BeerWineScreen } from '@/components/screens/drink/KindRoutesLazy';
+import { InMenu } from '@/components/screens/menus/pager/InMenu';
+
+/** Opened from a menu (?menu=), the page carries the menu's pager (Menu-pager). */
 export default function BeerDetailsScreen() {
-  return <BeerWineScreen kind="beer" />;
+  const { id } = useLocalSearchParams<{ id: string }>();
+  return (
+    <InMenu itemId={id}>
+      <BeerWineScreen kind="beer" />
+    </InMenu>
+  );
 }

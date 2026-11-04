@@ -5,7 +5,8 @@ import type { EndedRun, ListRow } from '@/hooks/useLivingList';
 import type { MenuDrink } from '@/types/menus';
 
 import { liveList, runRange } from './liveList';
-import { splitGroup, type ModelGroupRow } from './menuPageModel';
+import type { ModelGroupRow } from './menuPageModel';
+import { splitGroup } from './menuPageSplit';
 import type { PageRowView } from './MenuPageRow';
 
 const drink = (id: string): MenuDrink => ({ id, name: id, kind: 'cocktail', line: '', price: null, imageUrl: null, isSketch: false, glass: null });
@@ -72,6 +73,12 @@ out = liveList({
   may: true,
 });
 assert.equal(out.lastChange, 'today 4pm · bees for jack');
+// The desktop's change log has it once (the swapped-out drink reads with its swap), dated.
+assert.deepEqual(out.changes.map((c) => [c.when, c.text]), [['today 4pm', 'bees for jack']]);
+
+// A drink put on as the menu was set up (before it went on) isn't a change: no Last change yet.
+out = liveList({ ...base, sections: [{ id: 's', name: 'Shaken', rows: [view('bees')] }], rows: [row('bees', { onFrom: '2026-09-30T16:00:00Z' })], ended: [], endedDrinks: new Map(), may: true });
+assert.equal(out.lastChange, null);
 
 // A seasonal list keeps each drink's cost; a drink planned for later does on either.
 const costed = { ...view('bees'), sub: '19% cost' };
@@ -86,6 +93,11 @@ out = liveList({
 });
 assert.equal(out.main[0].rows[0].sub, '19% cost');
 assert.equal(out.coming?.rows[0].sub, '21% cost');
+
+// A living list keeps the cost too (Menu-who-creator); a row with no cost says how long it has been on.
+out = liveList({ ...base, sections: [{ id: 's', name: 'Shaken', rows: [costed, view('jack')] }], rows: [row('bees'), row('jack')], ended: [], endedDrinks: new Map(), may: true });
+assert.equal(out.main[0].rows[0].sub, '19% cost');
+assert.match(out.main[0].rows[1].sub ?? '', /^since /);
 
 // A bartender's asks (Menu-l-ask): their draft first, in pencil, then a swap they asked for; the drink it takes off stays on and says so.
 const ask = (o: Partial<ListAsk>): ListAsk => ({ id: 'a', menuId: 'm', itemId: null, drink: null, offItemId: null, sectionId: 's', at: null, price: null, askedAt: null, createdBy: 'me', createdAt: '2026-11-01T14:00:00Z', ...o });
@@ -121,12 +133,12 @@ assert.equal(runRange('2026-09-01', '2026-09-30'), '1 to 30 Sep');
 assert.ok(runRange('2026-10-01', '2026-11-01', true).endsWith(' 2026'));
 assert.ok(!runRange('2026-11-01T15:00:00Z', '2026-11-01T18:00:00Z').includes(' to ')); // On and off the same day: one date
 
-// Rows the board keeps off the top go after the drinks: an Admin's Run sheet, and on a living list the bar page and End too.
+// Rows the board keeps off the top go after the drinks: an Admin's Run sheet, and on a living list End too (the bar page row stays, Menu-who-admin).
 const grp = (...actions: ModelGroupRow['action'][]): ModelGroupRow[] => actions.map((action) => ({ label: String(action), value: '', action }));
 const all = grp('dates', 'costing', 'runSheet', 'barPage', 'end');
 assert.deepEqual(splitGroup(all, false, true).map((g) => g.map((r) => r.action)), [['dates', 'costing', 'barPage', 'end'], ['runSheet']]);
-assert.deepEqual(splitGroup(all, true, true).map((g) => g.map((r) => r.action)), [['dates', 'costing'], ['runSheet', 'barPage', 'end']]);
+assert.deepEqual(splitGroup(all, true, true).map((g) => g.map((r) => r.action)), [['dates', 'costing', 'barPage'], ['runSheet', 'end']]);
 assert.deepEqual(splitGroup(all, false, false)[1], []); // a creator's Run sheet stays where Menu-page draws it, until the list is living
-assert.deepEqual(splitGroup(all, true, false)[1].map((r) => r.action), ['runSheet', 'barPage', 'end']);
+assert.deepEqual(splitGroup(all, true, false)[1].map((r) => r.action), ['runSheet', 'end']);
 
 console.log('liveList ok');
