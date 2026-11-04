@@ -2,7 +2,7 @@ import { useQuery } from '@tanstack/react-query';
 
 import { fetchPublished, type PublishedDrink } from '@/hooks/usePublished';
 import { resolveShareKey } from '@/hooks/useShareSlug';
-import type { IngredientName } from '@/lib/publicDrink';
+import type { IngredientName } from '@/lib/ingredientsLine';
 import { jsonAs, supabase } from '@/lib/supabase';
 
 /** A home menu someone shared, as anyone reads it: /m/<id> or /m/<slug>. */
