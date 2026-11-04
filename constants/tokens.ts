@@ -322,6 +322,10 @@ export const layout = {
   listPane: 360,
   /** Drinks' list beside the drink on a desktop, from 1200 (board Keep-desk; Kevin, 1 Nov). */
   listPaneDesk: 460,
+  /** The pane beside a menu page on a desktop: a drink, or a swap (Menu-desk, Menu-l-desk). */
+  menuPaneDesk: 520,
+  /** The narrowest a menu row's column may be on a desktop before the page runs one column (Menu-desk: about 390 drawn). */
+  menuColumnMin: 340,
   /** Screens and components past this many lines get split (enforced by check:design). */
   maxScreenLines: 300,
 } as const;

@@ -1,4 +1,4 @@
-import { useRef, type ComponentRef } from 'react';
+import { useEffect, useRef, type ComponentRef } from 'react';
 import { Platform, StyleSheet, View } from 'react-native';
 
 import { PressableScale, useDs } from '@/components/ds';
@@ -23,7 +23,13 @@ export function RowMoreMenu({ name, acts, onAct }: { name: string; acts: Act[]; 
   const button = useRef<ComponentRef<typeof View>>(null);
   // iOS can't put up a sheet while the menu's own Modal is still going: Swap's sheet waits for it.
   // ponytail: a fixed wait; PopoverMenu unmounts its Modal, so there is no onDismiss to wait on.
-  const pick = (kind: ActKind) => (Platform.OS === 'ios' ? setTimeout(() => onAct(kind), 350) : onAct(kind));
+  // Only the acts that put up a sheet wait; Off tonight and the rest act at once.
+  const timer = useRef<ReturnType<typeof setTimeout>>(undefined);
+  useEffect(() => () => clearTimeout(timer.current), []);
+  const pick = (kind: ActKind) => {
+    if (Platform.OS === 'ios' && (kind === 'swap' || kind === 'takeOff')) timer.current = setTimeout(() => onAct(kind), 350);
+    else onAct(kind);
+  };
   return (
     <View ref={button} collapsable={false}>
       <PressableScale role="button" aria-haspopup="menu" aria-expanded={!!menu.anchor} accessibilityLabel={`More for ${name}`} onPress={() => menu.open(button.current)} style={styles.button}>

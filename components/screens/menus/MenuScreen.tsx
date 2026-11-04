@@ -204,9 +204,9 @@ function MenuPageBody({ menu, shelf, cover, now }: PageProps & { cover: string |
         picked={sidebar && (changing ? changing.view.drink.id === item.row.drink.id : besideId === item.row.drink.id)}
         open={bartender ? open === item.key : undefined}
         chevron={bartender}
-        more={actsOn && item.row.acts?.length ? <RowMoreMenu name={item.row.drink.name} acts={item.row.acts} onAct={act(item)} /> : undefined}
+        more={!actsOn ? undefined : item.row.acts?.length ? <RowMoreMenu name={item.row.drink.name} acts={item.row.acts} onAct={act(item)} /> : <View style={styles.moreSlot} />}
         // A tap opens the drink (Menu-drink; on the desktop a cocktail shows beside the list); a bartender's opens the spec in place.
-        onPress={() => (bartender ? (toggle(item.key), sidebar && item.row!.drink.kind === 'cocktail' && setPicked(item.row!.drink.id)) : (setChanging(null), openDrink(item.row!.drink)))}
+        onPress={() => (setChanging(null), bartender ? (toggle(item.key), sidebar && item.row!.drink.kind === 'cocktail' && setPicked(item.row!.drink.id)) : openDrink(item.row!.drink))}
       >
         {bartender && open === item.key ? <MenuSpecInPlace itemId={item.row.drink.id} barId={menu.barId} onOpen={() => openDrink(item.row!.drink)} /> : null}
       </MenuPageRow>
@@ -289,6 +289,7 @@ const styles = StyleSheet.create({
   head: { gap: space.lg, paddingBottom: space.lg },
   sectionHead: { paddingTop: space.xl, paddingBottom: space.sm },
   bottom: { position: 'absolute', left: 0, right: 0, bottom: 0, paddingTop: space.md, gap: space.sm, alignItems: 'center' },
-  bottomBeside: { right: layout.listPaneDesk + 60 },
+  moreSlot: { width: layout.minTapTarget, height: layout.minTapTarget },
+  bottomBeside: { right: layout.menuPaneDesk },
   publish: { alignSelf: 'stretch' },
 });

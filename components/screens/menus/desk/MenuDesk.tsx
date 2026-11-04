@@ -28,7 +28,7 @@ const SKY_H = 360;
 /** The menu's margins on the board (Menu-l-desk: 72 left, 56 right of the 960 beside the pane). */
 const DESK_PAD = { left: space.xxxl + space.xl, right: space.xxxl + space.sm };
 /** Two columns of rows once each can be about as wide as the board's (Menu-desk: two of about 390). */
-const TWO_COLUMNS = 2 * 340 + space.xxxl;
+const TWO_COLUMNS = 2 * layout.menuColumnMin + space.xxxl;
 
 /**
  * The menu's column on the desktop (Menu-desk, Menu-l-desk): it fills the
@@ -39,7 +39,7 @@ export function useDeskColumn() {
   const { width } = useWindowDimensions();
   const nav = useWebNav();
   const gutter = useGutter();
-  const room = width - (nav === "sidebar" ? WEB_SIDEBAR_WIDTH : WEB_RAIL_WIDTH) - (layout.listPaneDesk + 60);
+  const room = width - (nav === "sidebar" ? WEB_SIDEBAR_WIDTH : WEB_RAIL_WIDTH) - layout.menuPaneDesk;
   const board = room >= 900;
   return { paddingLeft: board ? DESK_PAD.left : gutter, paddingRight: board ? DESK_PAD.right : gutter, width: "100%" } as const;
 }
@@ -162,7 +162,7 @@ export function MenuDeskColumns<T extends { key: string; head?: unknown }>({
   items: T[];
   render: (item: T) => ReactNode;
 }) {
-  const [width, setWidth] = useState<number | null>(null);
+  const [width, setWidth] = useState<number | null>(null); // one column until measured
   const groups: T[][] = [];
   for (const item of items) {
     if (item.head || !groups.length) groups.push([]);
@@ -170,7 +170,7 @@ export function MenuDeskColumns<T extends { key: string; head?: unknown }>({
   }
   let top: T[] = [];
   let columns: T[][];
-  if (width !== null && width < TWO_COLUMNS) columns = [items];
+  if (width === null || width < TWO_COLUMNS) columns = [items];
   else if (groups.length === 1) {
     top = groups[0][0]?.head ? [groups[0][0]] : [];
     const rows = groups[0].slice(top.length);

@@ -75,7 +75,7 @@ export function MenuPageRow({ row, onPress, picked, open, chevron, trailing, mor
   const side = trailing ?? more;
   return (
     <View style={[styles.wrap, { borderTopColor: ds.c.lineStrong }]}>
-      <View style={side ? styles.withTrailing : undefined}>
+      <View style={[side ? styles.withTrailing : null, picked && [styles.picked, { backgroundColor: ds.c.raised }]]}>
         <PressableScale
           role={onPress ? 'button' : undefined}
           aria-expanded={open}
@@ -83,7 +83,7 @@ export function MenuPageRow({ row, onPress, picked, open, chevron, trailing, mor
           accessibilityLabel={label}
           onPress={onPress}
           disabled={!onPress}
-          style={[styles.row, side ? styles.grow : null, picked && [styles.picked, { backgroundColor: ds.c.raised }]]}
+          style={[styles.row, side ? styles.grow : null]}
         >
         <View style={row.struck ? styles.struckPic : undefined}>
           <MenuDrawing itemId={drink.id} size="menuRow" ink={row.ink} fallback={{ imageUrl: drink.imageUrl, glass: drink.glass }} />
@@ -154,7 +154,7 @@ const styles = StyleSheet.create({
   text: { flex: 1, gap: 2 },
   nameRow: { flexDirection: 'row', alignItems: 'center', gap: space.sm, flexWrap: 'wrap' },
   name: { flexShrink: 1 },
-  picked: { borderRadius: radius.control, marginHorizontal: -space.sm, paddingHorizontal: space.sm },
+  picked: { borderRadius: radius.control, marginHorizontal: -space.sm, paddingHorizontal: space.sm }, // the whole row, its … too
   struck: { textDecorationLine: 'line-through' },
   struckPic: { opacity: 0.5 },
   flag: { paddingHorizontal: space.xs + 2, paddingVertical: 1, borderRadius: radius.mark },
