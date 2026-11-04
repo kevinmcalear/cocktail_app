@@ -3,7 +3,7 @@
 // re-exports that file onto every page's first load (B13).
 import { publishedMenuDrink } from '@/hooks/useMenus';
 import { fetchPublished } from '@/hooks/usePublished';
-import { ingredientsLine, type IngredientName } from '@/lib/publicDrink';
+import { ingredientsLine, type IngredientName } from '@/lib/ingredientsLine';
 import { supabase } from '@/lib/supabase';
 import type { MenuDrink } from '@/types/menus';
 

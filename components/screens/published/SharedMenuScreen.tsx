@@ -10,7 +10,7 @@ import { publishedMenuDrink } from '@/hooks/useMenus';
 import { useSharedMenu, type SharedMenuPage } from '@/hooks/useSharedMenu';
 import { drinkPageHref } from '@/lib/itemRoutes';
 import { isPrivateDrink, PRIVATE_DRINK } from '@/lib/menus';
-import { ingredientsLine } from '@/lib/publicDrink';
+import { ingredientsLine } from '@/lib/ingredientsLine';
 import { shareOrCopy } from '@/lib/shareLink';
 import { siteOrigin } from '@/lib/venueLink';
 import type { MenuDetail, MenuDrink } from '@/types/menus';
