@@ -218,7 +218,7 @@ const styles = StyleSheet.create({
   footer: { gap: space.sm, alignItems: 'center' },
   tell: { flexDirection: 'row', alignItems: 'center', gap: space.md, paddingHorizontal: space.lg, paddingVertical: space.sm, borderRadius: radius.card },
   stretch: { alignSelf: 'stretch' },
-  pane: { width: layout.listPaneDesk + 60, flexGrow: 0, flexShrink: 0, borderLeftWidth: StyleSheet.hairlineWidth },
+  pane: { width: layout.menuPaneDesk, flexGrow: 0, flexShrink: 0, borderLeftWidth: StyleSheet.hairlineWidth },
   paneBody: { paddingHorizontal: space.xxl, paddingVertical: space.lg, gap: space.lg },
   paneHead: { flexDirection: 'row', alignItems: 'center', gap: space.sm },
   caps: { letterSpacing: 1.5, ...font.medium },

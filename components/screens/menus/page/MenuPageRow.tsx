@@ -8,7 +8,7 @@ import type { ListRow } from '@/hooks/useLivingList';
 import { readableAccent, withAlpha } from '@/lib/color';
 import type { MenuDrink } from '@/types/menus';
 
-import type { Act, ActKind } from './liveList';
+import type { Act } from './liveList';
 import { MenuDrawing, type MenuInk } from './MenuDrawing';
 
 export interface PageRowView {
@@ -30,7 +30,7 @@ export interface PageRowView {
   struck?: boolean;
   /** Off for tonight: its name quieter, its picture faded. */
   faded?: boolean;
-  /** The menu team's buttons under the row (Swap, Take off, Approve, Undo). */
+  /** What the viewer can do to the row (Swap, Take off, Approve, Undo): its … menu (RowMoreMenu). */
   acts?: Act[];
   /** Its place on the living list, for the acts. */
   listRow?: ListRow;
@@ -46,11 +46,10 @@ interface MenuPageRowProps {
   onPress?: () => void;
   /** The drink open beside the menu on a desktop (Menu-desk): the row sits on a soft fill. */
   picked?: boolean;
-  /** A bartender's spec, or the menu team's actions, open under the row. */
+  /** A bartender's spec open under the row. */
   open?: boolean;
-  /** Show the row's acts (a tapped row on a live list, or a change waiting). */
-  showActs?: boolean;
-  onAct?: (kind: ActKind) => void;
+  /** After the price, beside the row and not inside its tap: the row's … (RowMoreMenu, Kevin 4 Nov). */
+  more?: React.ReactNode;
   /** The chevron that says the row opens in place (a bartender's spec). */
   chevron?: boolean;
   /** In place of the price, beside the row and not inside its tap: the daily list's switch (Menu-l-tonight-staff). */
@@ -62,10 +61,10 @@ interface MenuPageRowProps {
  * A drink on a menu page, as a ruled row: its drawing, its name in the
  * bar's face, what's in it, the price at the end, and what the person
  * looking adds (Menu-page rows). Tap opens it; a bartender's tap opens the
- * spec in place, the menu team's on a live list its Swap and Take off
- * (Menu-l-swap).
+ * spec in place. What the viewer can change (Swap, Take off) is in the row's
+ * …, never pills under it (Kevin, 4 Nov).
  */
-export function MenuPageRow({ row, onPress, picked, open, showActs, onAct, chevron, trailing, children }: MenuPageRowProps) {
+export function MenuPageRow({ row, onPress, picked, open, chevron, trailing, more, children }: MenuPageRowProps) {
   const ds = useDs();
   const amber = readableAccent(STATUS.warning, ds.c.ground);
   const green = readableAccent(STATUS.success, ds.c.ground);
@@ -73,10 +72,10 @@ export function MenuPageRow({ row, onPress, picked, open, showActs, onAct, chevr
   const flagBg = { green: withAlpha(STATUS.success, 0.16), amber: withAlpha(STATUS.warning, 0.18), quiet: ds.c.raised };
   const { drink } = row;
   const label = [drink.name, row.struck ? 'taken off today' : null, row.line, row.end, row.flag?.label, row.chips ? row.chips.join(', ') || 'No allergens' : null].filter(Boolean).join(', ');
-  const acts = showActs && row.acts?.length ? row.acts : null;
+  const side = trailing ?? more;
   return (
     <View style={[styles.wrap, { borderTopColor: ds.c.lineStrong }]}>
-      <View style={trailing ? styles.withTrailing : undefined}>
+      <View style={[side ? styles.withTrailing : null, picked && [styles.picked, { backgroundColor: ds.c.raised }]]}>
         <PressableScale
           role={onPress ? 'button' : undefined}
           aria-expanded={open}
@@ -84,7 +83,7 @@ export function MenuPageRow({ row, onPress, picked, open, showActs, onAct, chevr
           accessibilityLabel={label}
           onPress={onPress}
           disabled={!onPress}
-          style={[styles.row, trailing ? styles.grow : null, picked && [styles.picked, { backgroundColor: ds.c.raised }]]}
+          style={[styles.row, side ? styles.grow : null]}
         >
         <View style={row.struck ? styles.struckPic : undefined}>
           <MenuDrawing itemId={drink.id} size="menuRow" ink={row.ink} fallback={{ imageUrl: drink.imageUrl, glass: drink.glass }} />
@@ -142,29 +141,8 @@ export function MenuPageRow({ row, onPress, picked, open, showActs, onAct, chevr
           {chevron ? <IconSymbol name={open ? 'chevron.up' : 'chevron.down'} size={14} color={ds.c.muted} /> : null}
         </View>
         </PressableScale>
-        {trailing ? <View style={styles.trailing}>{trailing}</View> : null}
+        {trailing ? <View style={styles.trailing}>{trailing}</View> : more}
       </View>
-      {acts ? (
-        <View style={styles.acts}>
-          {acts.map((a, i) => {
-            // The first is the tonal one (Swap, Approve, Ask to put it on); a quiet row's (Undo, Withdraw, Keep it on, Back on) are outlined.
-            const tonal = i === 0 && a.kind !== 'undo' && a.kind !== 'keep' && a.kind !== 'backOn' && a.label !== 'Withdraw';
-            return (
-              <PressableScale
-                key={a.kind + a.label}
-                role="button"
-                accessibilityLabel={`${a.label} ${drink.name}`}
-                onPress={() => onAct?.(a.kind)}
-                style={[styles.act, tonal ? { backgroundColor: ds.c.raised } : { borderColor: ds.c.lineStrong, borderWidth: StyleSheet.hairlineWidth }]}
-              >
-                <DsText variant="label" style={font.semiBold}>
-                  {a.label}
-                </DsText>
-              </PressableScale>
-            );
-          })}
-        </View>
-      ) : null}
       {children}
     </View>
   );
@@ -176,7 +154,7 @@ const styles = StyleSheet.create({
   text: { flex: 1, gap: 2 },
   nameRow: { flexDirection: 'row', alignItems: 'center', gap: space.sm, flexWrap: 'wrap' },
   name: { flexShrink: 1 },
-  picked: { borderRadius: radius.control, marginHorizontal: -space.sm, paddingHorizontal: space.sm },
+  picked: { borderRadius: radius.control, marginHorizontal: -space.sm, paddingHorizontal: space.sm }, // the whole row, its … too
   struck: { textDecorationLine: 'line-through' },
   struckPic: { opacity: 0.5 },
   flag: { paddingHorizontal: space.xs + 2, paddingVertical: 1, borderRadius: radius.mark },
@@ -188,6 +166,4 @@ const styles = StyleSheet.create({
   withTrailing: { flexDirection: 'row', alignItems: 'center', gap: space.md },
   grow: { flex: 1 },
   trailing: { paddingVertical: space.md },
-  acts: { flexDirection: 'row', flexWrap: 'wrap', gap: space.sm, paddingLeft: 56 + space.md, paddingBottom: space.md },
-  act: { minHeight: 36, paddingHorizontal: space.md + 2, borderRadius: radius.pill, alignItems: 'center', justifyContent: 'center' },
 });

@@ -115,7 +115,7 @@ function Step({ label, name, onPress }: { label: string; name: string | undefine
 }
 
 const styles = StyleSheet.create({
-  pane: { width: layout.listPaneDesk + 60, flexShrink: 0, borderLeftWidth: StyleSheet.hairlineWidth },
+  pane: { width: layout.menuPaneDesk, flexShrink: 0, borderLeftWidth: StyleSheet.hairlineWidth },
   head: { flexDirection: 'row', alignItems: 'center', gap: space.xs, paddingHorizontal: space.xl, paddingTop: space.lg },
   caps: { letterSpacing: 1.5, ...font.medium },
   grow: { flex: 1 },

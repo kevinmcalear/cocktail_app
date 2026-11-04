@@ -35,13 +35,15 @@ import { MenuPageAfter, MenuPageGroup } from './page/MenuPageGroup';
 import { MenuPageBanner } from './page/MenuPageBanner';
 import { menuBarTools, MenuScreenHead } from './page/MenuScreenHead';
 import { MenuPinnedBar } from './page/MenuPinnedBar';
-import { MenuDeskColumns } from './desk/MenuDesk';
+import { MenuDeskColumns, useDeskColumn } from './desk/MenuDesk';
 import { MenuPageRow, type PageRowView } from './page/MenuPageRow';
 import { menuPageModel, type GroupAction } from './page/menuPageModel';
 import { moreExtras, splitGroup } from './page/menuPageSplit';
-import { MenuSpecInPlace, OpenDrinkLink } from './page/MenuSpecInPlace';
+import { MenuSpecInPlace } from './page/MenuSpecInPlace';
 import { ChangeLog } from './page/LiveChangeSheet';
+import type { ActKind } from './page/liveList';
 import { RowChanges, useRowActs, type ChangeTarget } from './page/RowChanges';
+import { RowMoreMenu } from './page/RowMoreMenu';
 import { useLiveSections } from './page/useLiveSections';
 import { dayMonth } from '@/lib/dayMonth';
 import { useMenuPageActions, type PageSheet } from './page/useMenuPageActions';
@@ -181,11 +183,15 @@ function MenuPageBody({ menu, shelf, cover, now }: PageProps & { cover: string |
   // Rows the board doesn't draw on this page (an Admin's Run sheet; a living list's run sheet and End) are in More, never piled under the drinks.
   const [topRows, moreRows] = splitGroup(model.group, living, lens.lens === 'admin');
   const withPress = <R extends { action: GroupAction }>(r: R) => ({ ...r, onPress: r.action ? actions[r.action] : undefined });
-  const column = { paddingHorizontal: gutter, maxWidth: wide ? menuCover.column : undefined, width: '100%', alignSelf: sidebar ? 'flex-start' : 'center' } as const;
-  // Waiting changes, Undo, Back on and Coming up show their buttons; any other row shows Swap and Take off once held.
-  const alwaysActs = (id: string | undefined, row: PageRowView) => id === 'waiting' || id === 'coming' || !!row.struck || !!row.offTonight;
+  // The desktop's menu fills the window up to the pane beside it (Menu-desk, Menu-l-desk); elsewhere it's one centred column.
+  const deskColumn = useDeskColumn();
+  const column = sidebar ? deskColumn : ({ paddingHorizontal: gutter, maxWidth: wide ? menuCover.column : undefined, width: '100%', alignSelf: 'center' } as const);
+  // Every row the viewer may change has its … (Swap, Take off, Off tonight, Approve, Undo), never pills under it (Kevin, 4 Nov).
+  const actsOn = changeable || (bartender && current);
   const toggle = (key: string) => setOpen((o) => (o === key ? null : key));
-  const inPlace = (item: Item) => changeable && !!item.row?.acts?.length && !alwaysActs(item.sectionId, item.row);
+  // Swap and Take off open in a sheet, or on the desktop beside the list over the change log (Menu-l-desk), the row on a soft fill.
+  const change = (kind: 'swap' | 'takeOff', view: PageRowView, sectionId: string) => setChanging({ kind, view, sectionId: view.listRow?.sectionId ?? sectionId });
+  const act = (item: Item) => (kind: ActKind) => (kind === 'swap' || kind === 'takeOff' ? change(kind, item.row!, item.sectionId!) : acts.act(kind, item.row!, item.sectionId!));
 
   const rowOf = (item: Item) =>
     item.head ? (
@@ -195,19 +201,14 @@ function MenuPageBody({ menu, shelf, cover, now }: PageProps & { cover: string |
     ) : item.row ? (
       <MenuPageRow
         row={item.row}
-        picked={besideId === item.row.drink.id}
-        open={bartender || changeable ? open === item.key : undefined}
+        picked={sidebar && (changing ? changing.view.drink.id === item.row.drink.id : besideId === item.row.drink.id)}
+        open={bartender ? open === item.key : undefined}
         chevron={bartender}
-        showActs={(changeable || (bartender && current)) && (open === item.key || alwaysActs(item.sectionId, item.row))}
-        onAct={(kind) =>
-          kind === 'swap' || kind === 'takeOff'
-            ? setChanging({ kind, view: item.row!, sectionId: item.row!.listRow?.sectionId ?? item.sectionId! })
-            : acts.act(kind, item.row!, item.sectionId!)
-        }
-        // A tap opens the drink (Menu-drink); a bartender's opens the spec in place, and on a live list the team's shows Swap and Take off (Menu-l-swap), each with the way on to the drink (on the desktop the pane is that way for a cocktail; a beer or wine keeps the link).
-        onPress={() => (bartender || inPlace(item) ? (toggle(item.key), sidebar && item.row!.drink.kind === 'cocktail' && setPicked(item.row!.drink.id)) : openDrink(item.row!.drink))}
+        more={!actsOn ? undefined : item.row.acts?.length ? <RowMoreMenu name={item.row.drink.name} acts={item.row.acts} onAct={act(item)} /> : <View style={styles.moreSlot} />}
+        // A tap opens the drink (Menu-drink; on the desktop a cocktail shows beside the list); a bartender's opens the spec in place.
+        onPress={() => (setChanging(null), bartender ? (toggle(item.key), sidebar && item.row!.drink.kind === 'cocktail' && setPicked(item.row!.drink.id)) : openDrink(item.row!.drink))}
       >
-        {open !== item.key ? null : bartender ? <MenuSpecInPlace itemId={item.row.drink.id} barId={menu.barId} onOpen={() => openDrink(item.row!.drink)} /> : inPlace(item) && (!sidebar || item.row.drink.kind !== 'cocktail') ? <OpenDrinkLink onOpen={() => openDrink(item.row!.drink)} /> : null}
+        {bartender && open === item.key ? <MenuSpecInPlace itemId={item.row.drink.id} barId={menu.barId} onOpen={() => openDrink(item.row!.drink)} /> : null}
       </MenuPageRow>
     ) : null;
 
@@ -253,14 +254,10 @@ function MenuPageBody({ menu, shelf, cover, now }: PageProps & { cover: string |
     <View style={[styles.screen, sidebar && styles.split, { backgroundColor: ds.c.ground }]}>
       {list}
       {/* Back stays put on a phone, the page scrolling under it; past the hero the bar takes a backing and the name (Kevin, 3 Nov; #1164). */}
-      {sidebar ? null : (
-        <View pointerEvents="box-none" style={styles.pinned}>
-          <MenuPinnedBar name={menu.name} onBack={back} {...barTools} onMedia={!!cover && ds.scheme === 'dark' && !collapsed} collapsed={collapsed ? { title: menu.name } : null} top={insets.top} gutter={gutter} />
-        </View>
-      )}
+      {sidebar ? null : <View pointerEvents="box-none" style={styles.pinned}><MenuPinnedBar name={menu.name} onBack={back} {...barTools} onMedia={!!cover && ds.scheme === 'dark' && !collapsed} collapsed={collapsed ? { title: menu.name } : null} top={insets.top} gutter={gutter} /></View>}
       {/* The desktop's Swap and Take off open beside the list, over the change log (Menu-l-desk). */}
       {sidebar && changing ? (
-        <RowChanges menu={menu} target={changing} ended={listView.ended} acts={acts} onClose={() => setChanging(null)} pane={{ after: <ChangeLog menuName={menu.name} changes={listView.changes} /> }} />
+        <RowChanges key={`${changing.view.drink.id}-${changing.kind}`} menu={menu} target={changing} ended={listView.ended} acts={acts} onClose={() => setChanging(null)} pane={{ after: <ChangeLog menuName={menu.name} changes={listView.changes} /> }} />
       ) : besideId ? (
         <Suspense fallback={null}>
           <MenuDrinkPane drink={drinks.find((d) => d.id === besideId)!} barName={venues.find((v) => v.id === menu.barId)?.name ?? null} place={place} menuId={menu.id} onPick={(id) => { const d = drinks.find((x) => x.id === id); if (d) openDrink(d); }} />
@@ -269,9 +266,7 @@ function MenuPageBody({ menu, shelf, cover, now }: PageProps & { cover: string |
       {draft && team ? (
         <View style={[styles.bottom, (besideId || changing) && sidebar && styles.bottomBeside, { paddingBottom: insets.bottom + space.md, paddingHorizontal: gutter, backgroundColor: ds.c.ground }]}>
           <Button label="Publish" variant="ink" size="lg" onPress={() => setSheet('publish')} style={styles.publish} />
-          <Caption tone="muted" align="center">
-            Only your team can see a draft
-          </Caption>
+          <Caption tone="muted" align="center">Only your team can see a draft</Caption>
         </View>
       ) : null}
       {changing && !sidebar ? <RowChanges menu={menu} target={changing} ended={listView.ended} acts={acts} onClose={() => setChanging(null)} /> : null}
@@ -294,6 +289,7 @@ const styles = StyleSheet.create({
   head: { gap: space.lg, paddingBottom: space.lg },
   sectionHead: { paddingTop: space.xl, paddingBottom: space.sm },
   bottom: { position: 'absolute', left: 0, right: 0, bottom: 0, paddingTop: space.md, gap: space.sm, alignItems: 'center' },
-  bottomBeside: { right: layout.listPaneDesk + 60 },
+  moreSlot: { width: layout.minTapTarget, height: layout.minTapTarget },
+  bottomBeside: { right: layout.menuPaneDesk },
   publish: { alignSelf: 'stretch' },
 });
