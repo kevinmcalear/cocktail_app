@@ -98,7 +98,7 @@ describe('AddDrinkWizard', () => {
     expect(useDrinkWizardStore.getState().kept.home.draft.lines.map((l) => [l.name, l.amount, l.unit])).toEqual([['Gin', '30', 'ml'], ['Campari', '30', 'ml']]);
   });
 
-  test('ingredients: the unit switch, remove and undo, kept on the device as they change', async () => {
+  test('ingredients: the unit switch (ml or oz sticks), remove and undo, kept on the device as they change', async () => {
     useDrinkWizardStore.getState().patch('home', {
       name: 'House Negroni',
       lines: [
@@ -133,6 +133,15 @@ describe('AddDrinkWizard', () => {
     const kept = useDrinkWizardStore.getState().kept.home;
     expect(kept.draft.name).toBe('House Negroni');
     expect(kept.draft.lines.map((l) => [l.id, l.amount, l.unit])).toEqual([['gin', '30', 'ml'], ['campari', '', 'oz']]);
+
+    // oz is yours now: the next line starts in it; a dash is for its line only (Mat, 4 Nov).
+    expect(useSettingsStore.getState().units).toBe('oz');
+    await fireEvent.press(screen.getByRole('button', { name: 'Unit: oz' }));
+    await fireEvent.press(screen.getByRole('radio', { name: 'dash' }));
+    await fireEvent.press(screen.getByRole('button', { name: 'Done with Campari' }));
+    await fireEvent.changeText(screen.getByLabelText('Add another ingredient'), 'gin');
+    await fireEvent.press(screen.getByRole('button', { name: 'Gin' }));
+    expect(useDrinkWizardStore.getState().kept.home.draft.lines.map((l) => [l.name, l.unit])).toEqual([['Gin', 'ml'], ['Campari', 'dash'], ['Gin', 'oz']]);
   });
 
   test('the method in its sheet, then Save saves once', async () => {

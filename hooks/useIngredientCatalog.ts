@@ -1,4 +1,4 @@
-import { useQuery, type Query, type QueryClient } from '@tanstack/react-query';
+import { useQuery, useQueryClient, type Query, type QueryClient } from '@tanstack/react-query';
 import { useMemo } from 'react';
 import { create } from 'zustand';
 
@@ -58,6 +58,33 @@ async function downloadShared(signal: AbortSignal): Promise<CatalogRow[]> {
   }
 }
 
+/** The download behind a day-old saved catalog, so pickers opening together start one. */
+let refreshing: Promise<void> | null = null;
+/** Bumped when a saved bottle goes into the loaded catalog, so a download begun before it doesn't drop it. */
+let patched = 0;
+
+/**
+ * A new copy of the shared catalog while the pickers read the saved one:
+ * swapped in and saved when it lands. A failure keeps the saved one, and the
+ * next picker to open tries again.
+ */
+function refreshShared(client: QueryClient) {
+  if (refreshing) return;
+  const since = patched;
+  refreshing = downloadShared(new AbortController().signal)
+    .then((rows) => {
+      // A bottle saved meanwhile is in the loaded list, maybe not in this download: keep that one; the next picker downloads again.
+      if (patched !== since) return;
+      const fresh: Shared = { savedAt: Date.now(), rows };
+      client.setQueryData<Shared>(SHARED_KEY, fresh);
+      return saveCatalog(packCatalog(rows, fresh.savedAt));
+    })
+    .catch(() => undefined)
+    .finally(() => {
+      refreshing = null;
+    });
+}
+
 let merged: { shared: CatalogRow[]; own: CatalogRow[]; rows: CatalogRow[] } | undefined;
 
 /** Shared and own as one name-sorted list, the same array for every picker (lib/ingredientNames indexes each array once). */
@@ -68,12 +95,14 @@ function wholeList(shared: CatalogRow[], own: CatalogRow[]): CatalogRow[] {
 
 /**
  * Every ingredient you can pick (~20,000), just what pickers and matching
- * read (CATALOG_COLUMNS): the shared catalog, saved on the device for a day
- * (lib/catalogFile.ts) so a picker opens at once after the first time, plus
- * the venues' own and yours, read each time (a few hundred). `rows` is both
- * in name order, undefined until both are here.
+ * read (CATALOG_COLUMNS): the shared catalog, saved on the device (lib/catalogFile.ts)
+ * so a picker opens at once after the first time, and downloaded again
+ * behind it once it's a day old, plus the venues' own and yours (a few
+ * hundred), saved too and read again each time. `rows` is both in name
+ * order, undefined until both are here.
  */
 export function useIngredientCatalog(enabled = true) {
+  const client = useQueryClient();
   const shared = useQuery({
     queryKey: SHARED_KEY,
     enabled,
@@ -81,8 +110,20 @@ export function useIngredientCatalog(enabled = true) {
     // Fresh until a day after it was downloaded, however recently the file was read.
     staleTime: (q: Query<Shared>) => (q.state.data ? q.state.data.savedAt + CATALOG_FRESH_MS - q.state.dataUpdatedAt : 0),
     queryFn: async ({ signal }): Promise<Shared> => {
+      // Loaded and a day old (or the last download failed): search it while a new one downloads, without reading the file again.
+      const held = client.getQueryData<Shared>(SHARED_KEY);
+      if (held) {
+        if (Date.now() - held.savedAt >= CATALOG_FRESH_MS) refreshShared(client);
+        return held;
+      }
       const file = unpackCatalog(await readSavedCatalog());
-      if (file && Date.now() - file.savedAt < CATALOG_FRESH_MS) return file;
+      if (file) {
+        // A day old, it's still what the pickers search while the new one downloads (Mat, 4 Nov: waiting on it read as a slow search).
+        if (Date.now() - file.savedAt >= CATALOG_FRESH_MS) refreshShared(client);
+        // A copy downloaded since this read began is newer than the file it hasn't saved over yet.
+        const loaded = client.getQueryData<Shared>(SHARED_KEY);
+        return loaded && loaded.savedAt > file.savedAt ? loaded : file;
+      }
       const rows = await downloadShared(signal);
       const savedAt = Date.now();
       void saveCatalog(packCatalog(rows, savedAt));
@@ -92,7 +133,8 @@ export function useIngredientCatalog(enabled = true) {
   const own = useQuery({
     queryKey: OWN_KEY,
     enabled,
-    meta: { persist: false },
+    // Saved in a file (lib/queryCachePersist.ts), so a picker searches at once and reads them again behind it.
+    meta: { persist: true },
     queryFn: async ({ signal }) =>
       (
         await allRowsById<CatalogRow>((after, size) => {
@@ -120,14 +162,17 @@ export async function patchSharedCatalog(client: QueryClient, ids: string[], rea
   if (!data) return;
   const rows = await read();
   if (!rows) return;
+  // A download that landed during the read is the list to patch.
+  const base = client.getQueryData<Shared>(SHARED_KEY) ?? data;
+  patched++;
   const next = ids.reduce((list, id) => {
     const found = rows.find((r) => r.id === id);
     if (!found) return withRow(list, id, null);
     const { created_by, origin_bar_profile_id, ...row } = found;
     return withRow(list, id, row.bar_id || created_by || origin_bar_profile_id ? null : row);
-  }, data.rows);
-  if (client.getQueryData(SHARED_KEY)) client.setQueryData<Shared>(SHARED_KEY, { ...data, rows: next });
-  await saveCatalog(packCatalog(next, data.savedAt));
+  }, base.rows);
+  if (client.getQueryData(SHARED_KEY)) client.setQueryData<Shared>(SHARED_KEY, { ...base, rows: next });
+  await saveCatalog(packCatalog(next, base.savedAt));
 }
 
 /**

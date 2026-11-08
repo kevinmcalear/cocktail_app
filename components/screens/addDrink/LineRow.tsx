@@ -9,6 +9,7 @@ import { convertPour, FINISH_UNITS, QUICK_UNITS, stepAmount, type WizardLine } f
 import { prepSummary, toFinishSummary } from '@/lib/prepKinds';
 import { tidyAmount } from '@/lib/specDefaults';
 import { techniqueById } from '@/lib/techniques';
+import { rememberLineUnit } from '@/store/useSettingsStore';
 
 import { HeldTag, useHeldStyle } from './CombineTag';
 import { WizardChip } from './WizardChrome';
@@ -47,6 +48,7 @@ interface LineRowProps {
   moveTo?: string | null;
   /** Just before remove: the bottle that puts it on the back bar or your shelf (StockToggle); null for a line without one. */
   stock?: ReactNode;
+  sticky?: boolean; // A drink's line: ml or oz picked here becomes yours (a house-made batch's doesn't).
 }
 
 /**
@@ -59,7 +61,7 @@ interface LineRowProps {
  * On a phone the controls sit under the name, and the bottle and remove
  * beside it; on a wider screen they all share its line, on the right.
  */
-export function LineRow({ line, onChange, onRemove, onSwap, onEditPrep, units: unitList = LINE_UNITS, detail, below, grip, onMove, lifted, dropTarget, combineWith, moveTo, stock }: LineRowProps) {
+export function LineRow({ line, onChange, onRemove, onSwap, onEditPrep, units: unitList = LINE_UNITS, detail, below, grip, onMove, lifted, dropTarget, combineWith, moveTo, stock, sticky }: LineRowProps) {
   const ds = useDs();
   const held = useHeldStyle(lifted, combineWith, dropTarget);
   // A phone stacks the name over the controls. Explicit, not flexWrap: Yoga on iOS shrank the name to "Rye wh…" beside them instead of wrapping (Eddie, 16 Oct).
@@ -225,6 +227,8 @@ export function LineRow({ line, onChange, onRemove, onSwap, onEditPrep, units: u
                 const n = parseFloat(tidyAmount(line.amount));
                 const pour = Number.isFinite(n) ? convertPour(n, line.unit, u) : null;
                 onChange({ ...(u === 'top' || u === 'grated' ? { unit: u, amount: '' } : pour?.unit === u ? pour : { unit: u }), ...(u === 'float' ? { float: false } : null) });
+                // ml or oz becomes yours: the next line and the next drink start in it.
+                if (sticky) rememberLineUnit(u);
                 setUnits(false);
               }}
             />

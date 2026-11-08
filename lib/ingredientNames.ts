@@ -38,6 +38,8 @@ interface NameIndex<T> {
   keys: string[];
   /** Each key's words, made the first time a search asks. */
   words?: string[][];
+  /** Each key said in the singular, made the first time nearIngredient asks. */
+  singulars?: string[];
   /** The first shared row with each key. */
   shared: Map<string, T>;
   byId: Map<string, T>;
@@ -66,6 +68,7 @@ function indexOf<T extends IngredientRow>(rows: readonly T[]): NameIndex<T> {
 }
 
 const wordsOf = <T extends IngredientRow>(index: NameIndex<T>) => (index.words ??= index.keys.map((k) => k.split(' ')));
+const singular = (k: string) => k.replace(/(ies)$/, 'y').replace(/(?<![s])s$/, '');
 
 function aliasOf(aliases: readonly IngredientAlias[], key: string): string | undefined {
   let byKey = ALIASES.get(aliases);
@@ -129,15 +132,17 @@ export function nearIngredient<T extends IngredientRow>(name: string, rows: read
   const key = ingredientKey(name);
   if (key.length < 5 || sameIngredient(name, rows, aliases)) return null;
   const max = key.length < 9 ? 1 : 2;
-  const singular = (k: string) => k.replace(/(ies)$/, 'y').replace(/(?<![s])s$/, '');
-  const { keys } = indexOf(rows);
+  // Each name's singular once per list, not 20,000 of them on every letter.
+  const index = indexOf(rows);
+  const singulars = (index.singulars ??= index.keys.map(singular));
+  const one = singular(key);
   let best: { row: T; d: number } | null = null;
   for (let i = 0; i < rows.length; i++) {
     const r = rows[i];
     if (r.bar_id || r.hide_from_search) continue;
-    const k = keys[i];
-    const d = singular(k) === singular(key) ? 0 : distance(k, key, max);
+    const d = singulars[i] === one ? 0 : distance(index.keys[i], key, max);
     if (d <= max && (!best || d < best.d)) best = { row: r, d };
+    if (best?.d === 0) break;
   }
   return best?.row ?? null;
 }
