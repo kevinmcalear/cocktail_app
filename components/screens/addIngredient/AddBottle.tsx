@@ -193,7 +193,7 @@ export function AddBottle({ barId = null, initialName, embedded, onClose, onSave
         stepKey="bottle"
         direction={1}
         eyebrow="A bottle you buy"
-        title={filled && typed && (target || photo || newOne) ? (target?.name ?? capitalizeFirsts(typed)) : 'What’s the bottle?'}
+        title={filled && typed ? (target?.name ?? capitalizeFirsts(typed)) : 'What’s the bottle?'}
         onHardwareBack={() => {
           leave();
           return true;
