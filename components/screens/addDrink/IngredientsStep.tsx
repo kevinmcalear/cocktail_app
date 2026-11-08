@@ -2,6 +2,7 @@ import { useRef, useState, type ReactNode } from 'react';
 import { Platform, StyleSheet, View } from 'react-native';
 
 import { Body, Button, Caption, useDs } from '@/components/ds';
+import { DragRow } from '@/components/ds/DragRow';
 import { radius, space } from '@/constants/tokens';
 import { useExpiring } from '@/hooks/useExpiring';
 import { linePrep, perDrinkLines } from '@/lib/batchLines';
@@ -20,7 +21,6 @@ import { nameFor } from '@/lib/techniques/template';
 import { getPreferredUnit } from '@/store/useSettingsStore';
 
 import type { TrailItem } from './Trail';
-import { DragRow, SpecRows } from './DragRow';
 import type { DraftLineParts } from './DraftLine';
 import { NudgeCard } from './NudgeCard';
 import { BalanceCard } from './GoesWith';
@@ -30,6 +30,7 @@ import { LineChoices, unmatched } from './LineChoices';
 import { LineRow } from './LineRow';
 import { PasteSpecPanel } from './PasteSpecPanel';
 import { SalineHint } from './SalineHint';
+import { SpecRows } from './SpecRows';
 import type { LineStock } from './StockToggle';
 import { useCombineDrop } from './useCombineDrop';
 import { useMakePrep } from './useMakePrep';

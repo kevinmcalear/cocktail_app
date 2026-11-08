@@ -1,6 +1,6 @@
 import assert from 'node:assert/strict';
 
-import { dragSlot, dropIndex, gapShift } from './dropIndex';
+import { dragSlot, dropIndex, gapShift, slotOffset } from './dropIndex';
 
 const rows = [60, 80, 60, 100];
 assert.equal(dropIndex(0, 10, rows), 0, 'a nudge stays put');
@@ -29,3 +29,8 @@ assert.equal(dragSlot(0, -15, rows, 1).slot, 0, 'back up past its top quarter sl
 assert.deepEqual([0, 1, 2, 3].map((i) => gapShift(i, 0, 2, 60)), [0, -60, -60, 0]);
 assert.deepEqual([0, 1, 2, 3].map((i) => gapShift(i, 3, 1, 100)), [0, 100, 100, 0]);
 assert.deepEqual([0, 1, 2, 3].map((i) => gapShift(i, 1, 1, 80)), [0, 0, 0, 0], 'still in its own place');
+
+// Let go, a row eases to its slot: past the rows it passed, down positive (rows 60, 80, 60, 100).
+assert.equal(slotOffset(0, 2, rows), 140, 'down past two rows');
+assert.equal(slotOffset(3, 1, rows), -140, 'up past two rows');
+assert.equal(slotOffset(1, 1, rows), 0, 'its own place');

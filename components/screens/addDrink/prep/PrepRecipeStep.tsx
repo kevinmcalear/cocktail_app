@@ -2,6 +2,7 @@ import { useState, type ReactNode } from 'react';
 import { StyleSheet, TextInput, View } from 'react-native';
 
 import { Body, Caption, IngredientThumb, PressableScale, Spec, useDs } from '@/components/ds';
+import { DragGrip, DragList } from '@/components/ds/DragList';
 import { IconSymbol } from '@/components/ui/icon-symbol';
 import { Choice } from '@/components/screens/batch/BatchParts';
 import { font, layout, radius, space, type } from '@/constants/tokens';
@@ -99,8 +100,7 @@ export function PrepRecipeStep({ draft, view, set, ingredients, aliases, inDrink
       <Shares draft={draft} />
       {/* A bottle keeps its label's capitals (Bacardí Carta Blanca); a plain base reads in lower case (the white rum). */}
       <Caption tone="muted">{base ? `Everything follows the ${base.name === draft.madeFrom?.name ? base.name : base.name.toLowerCase()}.` : 'Add what goes in.'}</Caption>
-      <View role="list">
-        {draft.lines.map((l, i) => {
+      <DragList label="What goes in" data={draft.lines} keyOf={(l) => l.key} onReorder={(lines) => set({ lines })} renderRow={(l, { index: i, lifted, grip, move }) => {
           const isBase = l.key === draft.baseKey;
           const amount = amounts[i].amount;
           const shown = amount !== null ? formatQuantity(toQuantity(amount, l.unit) ?? { kind: 'count', value: amount, unit: l.unit || 'each' }) : '';
@@ -145,6 +145,7 @@ export function PrepRecipeStep({ draft, view, set, ingredients, aliases, inDrink
           ) : (
             <View key={l.key} role="listitem" style={[styles.item, { borderBottomColor: ds.c.line }]}>
               <View style={styles.line}>
+                {grip(<DragGrip name={l.name} onMove={move} lifted={lifted} />)}
                 <IngredientThumb id={l.id} name={l.name} size={36} />
                 <View style={styles.name}>
                   <PressableScale
@@ -214,8 +215,7 @@ export function PrepRecipeStep({ draft, view, set, ingredients, aliases, inDrink
               {below?.(l)}
             </View>
           );
-        })}
-      </View>
+        }} />
       {waiting ? <Caption tone="accent">{waiting}</Caption> : null}
       <IngredientSearch {...search} label="Add an ingredient" onPick={(p) => set({ lines: [...draft.lines, { key: `n${Date.now().toString(36)}`, id: p.id, name: p.name, parts: null, unit: prepUnit(p.name), amount: '' }] })} onMake={makeNew} />
       {onMake ? <Caption tone="muted">Any line here can be made in-house too: it steps in one more level.</Caption> : null}
@@ -267,7 +267,8 @@ const styles = StyleSheet.create({
   stack: { gap: space.md },
   item: { borderBottomWidth: StyleSheet.hairlineWidth },
   line: { flexDirection: 'row', alignItems: 'center', gap: space.sm, minHeight: layout.minTapTarget + space.lg },
-  units: { flexDirection: 'row', flexWrap: 'wrap', gap: space.xs + 2, paddingLeft: 36 + space.sm, paddingBottom: space.sm },
+  // Under the name: past the grip and the thumb.
+  units: { flexDirection: 'row', flexWrap: 'wrap', gap: space.xs + 2, paddingLeft: space.xl - space.xs + space.sm + 36 + space.sm, paddingBottom: space.sm },
   pill: { flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: space.xs, minWidth: 52, minHeight: layout.minTapTarget, paddingHorizontal: space.sm, borderRadius: radius.pill, borderWidth: 1 },
   swap: { paddingVertical: space.md, borderBottomWidth: StyleSheet.hairlineWidth },
   name: { flex: 1, justifyContent: 'center', paddingVertical: space.xs },

@@ -25,6 +25,7 @@ import { IceLooks } from './IceLooks';
 import { IconSet } from './IconSet';
 import { KitDrawings } from './KitDrawings';
 import { LogoMarks } from './LogoMarks';
+import { DragDemo } from './DragDemo';
 import { SheetDemo } from './SheetDemo';
 import { DrawingSizes, PencilStates, SpecPieces } from './SharedPieces';
 import { IMAGES, PENICILLIN } from './samples';
@@ -111,6 +112,10 @@ export function GallerySections() {
         <SheetDemo />
         <Button label="Show a toast" variant="secondary" onPress={() => toast.show({ title: 'Penicillin now uses Fernhill', detail: 'The old spec is in its history.', action: { label: 'Undo', onPress: () => {} } })} />
         <Button label="Show an error toast" variant="secondary" onPress={() => toast.show({ title: 'Couldn’t save the rota', detail: 'It’s back as it was.', tone: 'error', action: { label: 'Try again', onPress: () => toast.show({ title: 'Rota saved' }) } })} />
+      </Section>
+
+      <Section title="Drag to reorder">
+        <DragDemo />
       </Section>
 
       <Section title="Tags and tabs">

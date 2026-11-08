@@ -54,3 +54,10 @@ export function gapShift(i: number, from: number, slot: number, gap: number): nu
   if (i === from) return 0;
   return (i > from ? -gap : 0) + ((i < from ? i : i - 1) >= slot ? gap : 0);
 }
+
+/** How far row `from` moves to sit in `slot` (dragSlot's, its new index): the rows it passes, summed, down positive. */
+export function slotOffset(from: number, slot: number, heights: readonly number[]): number {
+  if (slot === from) return 0;
+  const passed = slot > from ? heights.slice(from + 1, slot + 1) : heights.slice(slot, from);
+  return (slot > from ? 1 : -1) * passed.reduce((a, h) => a + h, 0);
+}

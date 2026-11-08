@@ -1,10 +1,9 @@
-import { useState } from 'react';
-import { Platform, StyleSheet, View } from 'react-native';
+import { useState, type ReactNode } from 'react';
+import { StyleSheet, View } from 'react-native';
 
 import { Button, Caption, DrinkImage, Headline, PressableScale, Spec, useDs } from '@/components/ds';
-import { dragGripStyle } from '@/components/recipe/FormScrollContainer';
-import { IconSymbol } from '@/components/ui/icon-symbol';
-import { displayFaces, layout, space } from '@/constants/tokens';
+import { DragGrip } from '@/components/ds/DragList';
+import { displayFaces, space } from '@/constants/tokens';
 import type { ClassicRow } from '@/lib/staffList';
 
 export interface StaffRowProps {
@@ -19,9 +18,9 @@ export interface StaffRowProps {
   /** Drink Creators and up: the grip, and its controls. */
   canEdit: boolean;
   /** Lifted while being dragged. */
-  active?: boolean;
-  /** Starts a drag (react-native-draggable-flatlist). A Not ranked row dragged above the line is ranked. */
-  drag?: () => void;
+  lifted?: boolean;
+  /** Wraps the grip (DragList): hold it and drag. A Not ranked row dragged above the line is ranked. */
+  grip?: (node: ReactNode) => ReactNode;
   onMove?: (by: -1 | 1) => void;
   first?: boolean;
   last?: boolean;
@@ -34,19 +33,20 @@ export interface StaffRowProps {
 /**
  * One drink on the staff list: its place, its picture (a photo, else its
  * drawing) and its name in the venue's display face, as All and On the menu
- * show them (tf-071), where it stands with the menus, and for editors a grip on the right (no up and down chevrons: drag
- * works on the web too). Hold the grip and drag to move it; tap it for buttons
- * that do the same, and screen readers get Move up and Move down as actions.
+ * show them (tf-071), where it stands with the menus, and for editors the
+ * grip on the left, as every list has it (Kevin, 4 Nov). Hold the grip and
+ * drag to move it; tap it for buttons that do the same, and screen readers
+ * get Move up and Move down as actions.
  */
-export function StaffRow({ pick, place, status, onOpen, onPressIn, canEdit, active, drag, onMove, first, last, onUnrank, onRank, onRemove }: StaffRowProps) {
+export function StaffRow({ pick, place, status, onOpen, onPressIn, canEdit, lifted, grip = (node) => node, onMove, first, last, onUnrank, onRank, onRemove }: StaffRowProps) {
   const ds = useDs();
   const [open, setOpen] = useState(false);
-  const web = Platform.OS === 'web';
   const caption = pick.classicName && pick.classicName !== pick.name ? pick.classicName : null;
   const label = [place ? `${place}.` : null, pick.name, caption, status].filter(Boolean).join(' ');
   return (
-    <View style={[styles.wrap, { borderBottomColor: ds.c.line, backgroundColor: active ? ds.c.raised : ds.c.ground }]}>
+    <View style={[styles.wrap, { borderBottomColor: lifted ? 'transparent' : ds.c.line }]}>
       <View style={styles.row}>
+        {canEdit ? grip(<DragGrip name={pick.name} label={`Move ${pick.name}`} hint="Drag to move it, or tap for buttons" onMove={onMove} onPress={() => setOpen(!open)} expanded={open} lifted={lifted} />) : null}
         <PressableScale accessibilityLabel={`${label}, open`} onPressIn={onPressIn} onPress={onOpen} style={styles.main}>
           <Spec color={place === 1 ? ds.accentText : ds.c.muted} style={styles.place}>
             {place ?? ''}
@@ -60,23 +60,6 @@ export function StaffRow({ pick, place, status, onOpen, onPressIn, canEdit, acti
           </View>
           <Caption tone="muted">{status}</Caption>
         </PressableScale>
-        {canEdit ? (
-          <PressableScale
-            accessibilityLabel={`Move ${pick.name}`}
-            accessibilityHint={drag ? 'Drag to move it, or tap for buttons' : undefined}
-            aria-expanded={open}
-            accessibilityActions={drag && onMove ? [{ name: 'moveUp', label: 'Move up' }, { name: 'moveDown', label: 'Move down' }] : undefined}
-            onAccessibilityAction={(e) => onMove?.(e.nativeEvent.actionName === 'moveUp' ? -1 : 1)}
-            // Hold, then drag: a quick tap (or Enter) opens the buttons instead.
-            // Web holds for less, since a mouse press is deliberate.
-            onLongPress={drag}
-            delayLongPress={web ? 150 : 300}
-            onPress={() => setOpen(!open)}
-            style={[styles.grip, drag && dragGripStyle]}
-          >
-            <IconSymbol name={drag ? 'line.3.horizontal' : 'ellipsis'} size={20} color={ds.c.muted} />
-          </PressableScale>
-        ) : null}
       </View>
       {open && canEdit ? (
         <View style={styles.controls}>
@@ -98,6 +81,5 @@ const styles = StyleSheet.create({
   place: { width: 22 },
   thumb: { width: 48 },
   name: { flex: 1, gap: 2 },
-  grip: { width: layout.minTapTarget, height: layout.minTapTarget, alignItems: 'center', justifyContent: 'center' },
-  controls: { flexDirection: 'row', flexWrap: 'wrap', gap: space.sm, paddingBottom: space.md, paddingLeft: 22 + 48 + space.md * 2 },
+  controls: { flexDirection: 'row', flexWrap: 'wrap', gap: space.sm, paddingBottom: space.md, paddingLeft: 22 + 48 + space.md * 2 + space.xl + space.xs },
 });

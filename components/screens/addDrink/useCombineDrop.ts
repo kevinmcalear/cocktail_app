@@ -5,7 +5,7 @@ import { Platform } from 'react-native';
 import { useDragMergeDwell } from '@/hooks/useDragMergeDwell';
 import { combinable, combineLines } from '@/lib/batchLines';
 import { dropEntry, linePart, partEntries, slotPart, toggleLine, type PartEntry } from '@/lib/drinkParts';
-import { dragSlot, dropIndex, gapShift } from '@/lib/dropIndex';
+import { dragSlot, dropIndex, gapShift, slotOffset } from '@/lib/dropIndex';
 import type { StepProps, WizardLine } from '@/lib/drinkWizard';
 
 /**
@@ -25,7 +25,7 @@ import type { StepProps, WizardLine } from '@/lib/drinkWizard';
 export function useCombineDrop({ draft, set, enabled, onCombined, parted }: StepProps & { enabled: boolean; onCombined: (line: WizardLine) => void; parted?: boolean }) {
   const dwell = useDragMergeDwell(enabled);
   // The row being held, where its gap is and how tall: for the pop-up's "Tempus Fugit + Red miso" and the rows sliding aside.
-  const [held, setHeld] = useState<{ from: number; slot: number; gap: number } | null>(null);
+  const [held, setHeld] = useState<{ from: number; slot: number; gap: number; land: number } | null>(null);
   // The same, read between renders: a drag reports every frame.
   const heldRef = useRef(held);
   const lines = draft.lines;
@@ -57,13 +57,14 @@ export function useCombineDrop({ draft, set, enabled, onCombined, parted }: Step
     if (was?.from !== from || was.slot !== at.slot) {
       // A tick as a row slides aside, as iOS lists do.
       if (was && Platform.OS !== 'web') void Haptics.selectionAsync();
-      heldRef.current = { from, slot: at.slot, gap: rows[from] ?? 0 };
+      heldRef.current = { from, slot: at.slot, gap: rows[from] ?? 0, land: slotOffset(from, at.slot, rows) };
       setHeld(heldRef.current);
     }
     // Only a line it can combine with lights up; anything else, a heading too, is a plain move.
     const self = lineAt(from);
     const onto = at.over === null ? null : lineAt(at.over);
     dwell.hover(self !== null && onto !== null && combinable(lines, self, onto) ? onto : null);
+    return heldRef.current?.land;
   };
   const onDrop = (from: number, dy: number) => {
     const to = heldRef.current?.from === from ? heldRef.current.slot : dropIndex(from, dy, rowHeights());

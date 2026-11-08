@@ -1,8 +1,7 @@
 import { Platform, StyleSheet, View } from 'react-native';
-import DraggableFlatList, { NestableDraggableFlatList, ScaleDecorator, type RenderItemParams } from 'react-native-draggable-flatlist';
 
 import { Body, Caption, Headline, PressableScale, Tag, useDs } from '@/components/ds';
-import { dragGripStyle, gripOnly, supportsNestableDrag } from '@/components/recipe/FormScrollContainer';
+import { DragGrip, DragList, type DragRowState } from '@/components/ds/DragList';
 import { IconSymbol } from '@/components/ui/icon-symbol';
 import { font, layout, radius, space, type } from '@/constants/tokens';
 import type { PrepFields } from '@/lib/prepCardForm';
@@ -12,8 +11,6 @@ import { GrowingField } from '../../drink/edit/EditParts';
 
 type Step = PrepFields['steps'][number];
 
-const GRIP = 32;
-const List = supportsNestableDrag ? NestableDraggableFlatList : DraggableFlatList;
 const web = Platform.OS === 'web';
 const NO_OUTLINE = web ? ({ outlineStyle: 'none' } as object) : null;
 
@@ -42,14 +39,11 @@ interface MethodEditProps {
 export function MethodEdit({ steps, onChange, summary, heading = 'Method', placeholder = 'Stir the honey into the hot water', tools }: MethodEditProps) {
   const ds = useDs();
   const set = (key: string, body: string) => onChange(steps.map((s) => (s.key === key ? { ...s, body } : s)));
-  const renderItem = ({ item, drag, isActive, getIndex }: RenderItemParams<Step>) => {
-    const i = getIndex() ?? 0;
+  const renderItem = (item: Step, { index: i, lifted, grip, move }: DragRowState) => {
     return (
-      <ScaleDecorator>
-        <View style={[styles.row, { borderBottomColor: ds.c.line, backgroundColor: isActive ? ds.c.raised : ds.c.ground }]}>
-          <PressableScale role="button" accessibilityLabel={`Reorder step ${i + 1}`} onLongPress={web ? undefined : drag} onPressIn={web ? drag : undefined} style={[styles.grip, dragGripStyle]}>
-            <IconSymbol name="line.3.horizontal" size={18} color={ds.c.muted} />
-          </PressableScale>
+      <>
+        <View style={[styles.row, { borderBottomColor: ds.c.line }]}>
+          {grip(<DragGrip name={`step ${i + 1}`} label={`Reorder step ${i + 1}`} onMove={move} lifted={lifted} />)}
           <View style={[styles.number, { backgroundColor: ds.c.raised }]}>
             <Caption>{String(i + 1)}</Caption>
           </View>
@@ -77,7 +71,7 @@ export function MethodEdit({ steps, onChange, summary, heading = 'Method', place
             <IconSymbol name="xmark" size={16} color={ds.c.muted} />
           </PressableScale>
         </View>
-      </ScaleDecorator>
+      </>
     );
   };
 
@@ -87,7 +81,7 @@ export function MethodEdit({ steps, onChange, summary, heading = 'Method', place
         <Headline role="heading">{heading}</Headline>
         {summary ? <Caption tone="muted">{summary}</Caption> : null}
       </View>
-      <List data={steps} keyExtractor={(s) => s.key} renderItem={renderItem} onDragEnd={({ data }) => onChange(data)} activationDistance={8} dragHitSlop={gripOnly(GRIP)} />
+      <DragList label={heading} data={steps} keyOf={(s) => s.key} onReorder={onChange} renderRow={renderItem} />
       <PressableScale role="button" accessibilityLabel="Add a step to the method" onPress={() => onChange([...steps, newStepField()])} style={[styles.add, { borderColor: ds.c.lineStrong }]}>
         <IconSymbol name="plus" size={18} color={ds.accentText} />
         <Body style={styles.medium}>Add a step</Body>
@@ -100,7 +94,6 @@ const styles = StyleSheet.create({
   section: { gap: space.sm },
   head: { flexDirection: 'row', alignItems: 'baseline', justifyContent: 'space-between', gap: space.md },
   row: { flexDirection: 'row', alignItems: 'flex-start', gap: space.sm, paddingVertical: space.sm, borderBottomWidth: StyleSheet.hairlineWidth },
-  grip: { width: GRIP, height: layout.minTapTarget, alignItems: 'center', justifyContent: 'center' },
   number: { width: 26, height: 26, marginTop: space.sm, borderRadius: radius.pill, alignItems: 'center', justifyContent: 'center' },
   flex: { flex: 1, minWidth: 0, gap: 2 },
   body: { ...type.body, ...font.regular, borderRadius: radius.control, padding: space.sm, textAlignVertical: 'top' },

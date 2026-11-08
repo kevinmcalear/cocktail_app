@@ -1,9 +1,10 @@
 import { useRouter } from 'expo-router';
 import { useMemo, useState, type ReactElement } from 'react';
 import { StyleSheet, View, type StyleProp, type ViewStyle } from 'react-native';
-import DraggableFlatList, { type RenderItemParams } from 'react-native-draggable-flatlist';
 
 import { Body, Button, Caption, Field, useDs } from '@/components/ds';
+import { DragList, type DragRowState } from '@/components/ds/DragList';
+import { DragScrollView } from '@/components/ds/dragScroll';
 import { font, space } from '@/constants/tokens';
 import { useDrinkLists } from '@/hooks/useDiscover';
 import { useBarRiffs, useStaffList, useStaffListEdit, type StaffPick } from '@/hooks/useStaffList';
@@ -19,8 +20,6 @@ const NO_PICKS: StaffPick[] = [];
 /** The "Not ranked yet" line, as a row of the dragged list: drag a drink above it to rank it. */
 type Row = ClassicRow | { itemId: typeof NOT_RANKED };
 const LINE: Row = { itemId: NOT_RANKED };
-/** Rows in the first paint: a phone screen under the header (plus the Not ranked line). */
-const FIRST_PAINT = 12;
 
 /**
  * Classics in Drinks: the staff list, the drinks everyone here should know, most
@@ -28,8 +27,7 @@ const FIRST_PAINT = 12;
  * drink here linked to a classic under Not ranked yet (E50). Everyone at the venue reads it; Drink
  * Creators and up drag to reorder, add and remove (bar_also_makes, "Also makes", through
  * set_staff_list_order). It is the screen's scroll view, with the screen's
- * header above it: nested in another scroll view, its drag gesture takes
- * every vertical swipe on Android and the page stops scrolling.
+ * header above it, so a held row scrolls the page near its edges.
  */
 export function StaffList({ barId, canEdit, onNow, past, header, contentContainerStyle }: {
   barId: string;
@@ -66,16 +64,11 @@ export function StaffList({ barId, canEdit, onNow, past, header, contentContaine
   };
   // Ranked, the Not ranked line, then the rest: one list, so a Not ranked drink drags into the ranking.
   const saved: Row[] = order.unranked.length ? [...order.ranked, LINE, ...order.unranked] : order.ranked;
-  // A drop that leaves the ranking as it was (a move under the line, which stays A to Z) saves nothing,
-  // and the list only lets go of where it dropped the rows when their order changes: show the drop
-  // for one render, then the saved order again, so the rows go back where they were.
-  const [held, setHeld] = useState<Row[] | null>(null);
-  const data = held ?? saved;
+  const data = saved;
+  // A drop that leaves the ranking as it was (a move under the line, which stays A to Z) saves nothing, and the rows stay put.
   const dropped = (rows: Row[]) => {
     const next = rankedAbove(rows.map((r) => r.itemId));
-    if (next.join() !== ids.join()) return reorder(next);
-    setHeld(rows);
-    requestAnimationFrame(() => setHeld(null));
+    if (next.join() !== ids.join()) reorder(next);
   };
   const remove = (pick: ClassicRow) => {
     // Close the gap first, so the places stay 1, 2, 3.
@@ -93,25 +86,24 @@ export function StaffList({ barId, canEdit, onNow, past, header, contentContaine
     onRemove: pick.onList ? () => remove(pick) : undefined,
   });
 
-  const renderItem = ({ item, drag, isActive, getIndex }: RenderItemParams<Row>) => {
+  const renderItem = (item: Row, { index: i, lifted, grip }: DragRowState) => {
     if (!('name' in item)) return <CutLine label={`Not ranked yet · ${order.unranked.length}`} quiet />;
-    const i = getIndex() ?? 0;
     if (i > ids.length) {
-      return <StaffRow {...row(item, null)} active={isActive} drag={drag} onRank={full ? undefined : () => reorder(ranked(ids, item.itemId))} />;
+      return <StaffRow {...row(item, null)} lifted={lifted} grip={grip} onRank={full ? undefined : () => reorder(ranked(ids, item.itemId))} />;
     }
     const cut = CUTS.find((c) => c === i + 1);
     return (
       <View>
         <StaffRow
           {...row(item, i + 1)}
-          active={isActive}
-          drag={drag}
+          lifted={lifted}
+          grip={grip}
           onMove={(by) => reorder(moved(ids, item.itemId, by))}
           first={i === 0}
           last={i === ids.length - 1}
           onUnrank={() => reorder(unranked(ids, item.itemId))}
         />
-        {cut && !isActive ? <CutLine label={`Top ${cut}`} /> : null}
+        {cut && !lifted ? <CutLine label={`Top ${cut}`} /> : null}
       </View>
     );
   };
@@ -154,25 +146,12 @@ export function StaffList({ barId, canEdit, onNow, past, header, contentContaine
   );
 
   return (
-    <DraggableFlatList
-      data={data}
-      keyExtractor={(p) => p.itemId}
-      renderItem={renderItem}
-      onDragEnd={({ data: rows }) => dropped(rows)}
-      ListHeaderComponent={top}
-      ListFooterComponent={bottom}
-      contentContainerStyle={contentContainerStyle}
-      // The list's wrapper must fill the screen, or on web it grows to its
-      // content and the screen clips it, so it never scrolls.
-      containerStyle={styles.fill}
-      // The first screen paints, the rest mount in one batch right after, and the
-      // default window (21 screens) keeps them all mounted, so a drag never lands
-      // on an unrendered row. ponytail: fine for a bar's few hundred linked drinks;
-      // past that, page the Not ranked yet rows.
-      initialNumToRender={FIRST_PAINT + 1}
-      maxToRenderPerBatch={Math.max(STAFF_LIST_MAX, data.length)}
-      activationDistance={10}
-    />
+    // ponytail: every row is rendered, as the old list kept them all mounted for the drag; fine for a bar's few hundred linked drinks, past that page the Not ranked yet rows.
+    <DragScrollView style={styles.fill} contentContainerStyle={contentContainerStyle}>
+      {top}
+      <DragList label="Classics" data={data} keyOf={(p) => p.itemId} still={(r) => !('name' in r)} onReorder={dropped} renderRow={renderItem} />
+      {bottom}
+    </DragScrollView>
   );
 }
 

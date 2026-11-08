@@ -1,11 +1,10 @@
 import { useRouter, type Href } from 'expo-router';
 import { createContext, useContext, type ReactNode } from 'react';
-import { StyleSheet, View } from 'react-native';
+import { ScrollView, StyleSheet, View } from 'react-native';
 
 import { BackbarTheme, Body, useDs, useGutter } from '@/components/ds';
 import { SubPageHead, usePageFrame } from '@/components/nav/PageFrame';
 import { useTabBarInset } from '@/components/nav/WebTabBar';
-import { FormScrollContainer } from '@/components/recipe/FormScrollContainer';
 import { WebHead } from '@/components/WebHead';
 import { space } from '@/constants/tokens';
 
@@ -55,8 +54,8 @@ function Page({ barId, title, intro, children, crumb, up, wide, trailing }: Page
       <WebHead>
         <title>{title}</title>
       </WebHead>
-      {/* A drag list inside (an ice recipe's steps) needs the nestable container on a phone. */}
-      <FormScrollContainer
+      {/* ponytail: a plain ScrollView, so the venue pages' web chunks stay free of Reanimated; an ice recipe's steps still drag, without edge scrolling. A DragScrollView here would add it. */}
+      <ScrollView
         style={styles.screen}
         contentContainerStyle={{ paddingTop: frame.top, paddingBottom: tabBarInset + space.xxxl, paddingHorizontal: gutter }}
         keyboardShouldPersistTaps="handled"
@@ -67,7 +66,7 @@ function Page({ barId, title, intro, children, crumb, up, wide, trailing }: Page
           {intro ? <Body tone="muted">{intro}</Body> : null}
           {children}
         </View>
-      </FormScrollContainer>
+      </ScrollView>
     </View>
   );
 }

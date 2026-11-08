@@ -1,9 +1,10 @@
 import { Stack } from 'expo-router';
 import { useState } from 'react';
-import { ScrollView, StyleSheet, View } from 'react-native';
+import { StyleSheet, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import { BackbarTheme, Body, BrandProvider, Caption, PressableScale, Title, useBreakpoint, useDs, useGutter } from '@/components/ds';
+import { DragScrollView } from '@/components/ds/dragScroll';
 import { GallerySections } from '@/components/ds/gallery/GallerySections';
 import { backbar, layout, radius, SAMPLE_BRANDS, space, type BackbarScheme } from '@/constants/tokens';
 
@@ -68,7 +69,7 @@ export default function Gallery() {
           scheme={scheme}
           setScheme={setScheme}
         />
-        <ScrollView style={{ backgroundColor: backbar[scheme].ground }} contentContainerStyle={[styles.columns, { paddingHorizontal: wide ? gutter : 0, paddingBottom: insets.bottom + space.xxxl }]}>
+        <DragScrollView style={{ backgroundColor: backbar[scheme].ground }} contentContainerStyle={[styles.columns, { paddingHorizontal: wide ? gutter : 0, paddingBottom: insets.bottom + space.xxxl }]}>
           {wide ? (
             <>
               <Column scheme="dark" />
@@ -77,7 +78,7 @@ export default function Gallery() {
           ) : (
             <Column scheme={scheme} />
           )}
-        </ScrollView>
+        </DragScrollView>
       </BrandProvider>
     </BackbarTheme>
   );

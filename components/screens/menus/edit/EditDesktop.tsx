@@ -4,7 +4,7 @@ import { ScrollView, StyleSheet, TextInput, useWindowDimensions, View } from 're
 
 import { Caption, DsText, Field, GlassButton, Tag, useDs, type TagTone } from '@/components/ds';
 import { usePopover } from '@/components/ds/PopoverMenu';
-import { FormScrollContainer } from '@/components/recipe/FormScrollContainer';
+import { DragScrollView } from '@/components/ds/dragScroll';
 import { displayFaces, font, layout, radius, space, type } from '@/constants/tokens';
 import { useActiveVenue } from '@/hooks/useActiveVenue';
 import { itemHref } from '@/lib/itemRoutes';
@@ -63,7 +63,7 @@ export function EditDesktop(props: EditViewProps) {
       </View>
       <View style={styles.columns}>
         <EditLibrary editor={editor} drag={drag} venueName={look.venueName} />
-        <FormScrollContainer style={styles.flex} contentContainerStyle={styles.main}>
+        <DragScrollView style={styles.flex} contentContainerStyle={styles.main}>
           <View style={styles.title}>
             <View style={styles.eyebrow}>
               {look.tag ? <Tag label={look.tag.label} tone={TONE[look.tag.tone]} /> : null}
@@ -93,7 +93,7 @@ export function EditDesktop(props: EditViewProps) {
             <EditSections editor={editor} ink={look.ink} drag={drag} width={twoUp ? '50%' : '100%'} />
           </View>
           <EditAfter editor={editor} />
-        </FormScrollContainer>
+        </DragScrollView>
         <Aside {...{ editor, look, onDates }} />
       </View>
       <EditMoreMenu editor={editor} anchor={more.anchor} onClose={more.close} />

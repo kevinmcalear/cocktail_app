@@ -4,7 +4,7 @@ import { GestureHandlerRootView } from 'react-native-gesture-handler';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import { useDs, useGutter } from '@/components/ds';
-import { FormScrollContainer } from '@/components/recipe/FormScrollContainer';
+import { DragScrollView } from '@/components/ds/dragScroll';
 import { layout, space } from '@/constants/tokens';
 
 import { KeyboardScreen } from '../WizardFrame';
@@ -28,9 +28,9 @@ export function NestedPrep(props: Omit<PrepBuilderProps, 'name'> & { name: strin
       <GestureHandlerRootView style={[styles.flex, { backgroundColor: ds.c.ground }]}>
         <KeyboardScreen testID="nested-prep">
           {(statusBar) => (
-            <FormScrollContainer keyboardShouldPersistTaps="handled" contentContainerStyle={[styles.body, { paddingTop: statusBar + space.sm, paddingBottom: insets.bottom + space.xxl, paddingHorizontal: gutter }]}>
+            <DragScrollView keyboardShouldPersistTaps="handled" contentContainerStyle={[styles.body, { paddingTop: statusBar + space.sm, paddingBottom: insets.bottom + space.xxl, paddingHorizontal: gutter }]}>
               <PrepCard {...props} page backRef={back} />
-            </FormScrollContainer>
+            </DragScrollView>
           )}
         </KeyboardScreen>
       </GestureHandlerRootView>

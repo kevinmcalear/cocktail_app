@@ -1,8 +1,8 @@
+import type { ReactNode } from 'react';
 import { StyleSheet, View } from 'react-native';
-import DraggableFlatList, { NestableDraggableFlatList, type RenderItemParams } from 'react-native-draggable-flatlist';
 
 import { Caption, DsText, PressableScale, useDs } from '@/components/ds';
-import { gripOnly, supportsNestableDrag } from '@/components/recipe/FormScrollContainer';
+import { DragList, type DragRowState } from '@/components/ds/DragList';
 import { IconSymbol } from '@/components/ui/icon-symbol';
 import { font, space, STATUS } from '@/constants/tokens';
 import { readableAccent } from '@/lib/color';
@@ -14,7 +14,7 @@ import type { MenuInk } from '../page/MenuDrawing';
 import type { RowPricing } from '../RowPrice';
 import { UnfinishedDrinks } from '../UnfinishedDrinks';
 import { dropSection } from '../useMenuDrag';
-import { DropSlot, EditRow, HANDLE } from './EditRow';
+import { DropSlot, EditRow } from './EditRow';
 
 interface EditSectionProps {
   section: Section;
@@ -37,8 +37,8 @@ interface EditSectionProps {
   drag?: { at: number | null; dragging: string | null };
 }
 
-const noDrag = () => {};
-const List = supportsNestableDrag ? NestableDraggableFlatList : DraggableFlatList;
+/** The desktop's rows: the browser's drag and drop moves them, so no grip drag. */
+const still = (node: ReactNode) => node;
 
 /**
  * One section of the menu being edited in place: the page's small-capitals
@@ -50,8 +50,7 @@ export function EditSection({ section, barId, ink, made, onSettings, onAdd, onRe
   const ds = useDs();
   const count = section.drinks.length;
   const line = sectionLine(section);
-  const renderItem = ({ item, drag, isActive, getIndex }: RenderItemParams<MenuDrink>) => {
-    const i = getIndex() ?? 0;
+  const renderItem = (item: MenuDrink, { index: i, lifted, grip }: Pick<DragRowState, 'index' | 'lifted' | 'grip'>) => {
     return (
       <EditRow
         drink={item}
@@ -59,8 +58,8 @@ export function EditSection({ section, barId, ink, made, onSettings, onAdd, onRe
         count={count}
         ink={ink}
         isNew={made.includes(item.id)}
-        active={isActive}
-        drag={web ? noDrag : drag}
+        lifted={lifted}
+        grip={grip}
         onRemove={() => onRemove(item.id)}
         onMove={onMove}
         onOpen={() => onOpen(item)}
@@ -88,16 +87,10 @@ export function EditSection({ section, barId, ink, made, onSettings, onAdd, onRe
           {line.text}
         </Caption>
       ) : null}
-      {count ? (
-        <List
-          data={section.drinks}
-          keyExtractor={(d) => d.id}
-          renderItem={renderItem}
-          onDragEnd={({ data }) => onReorder(data)}
-          scrollEnabled={false}
-          activationDistance={10}
-          dragHitSlop={gripOnly(HANDLE)}
-        />
+      {web ? (
+        section.drinks.map((d, index) => <View key={d.id}>{renderItem(d, { index, lifted: false, grip: still })}</View>)
+      ) : count ? (
+        <DragList label={section.name || 'Section'} data={section.drinks} keyOf={(d) => d.id} onReorder={onReorder} renderRow={renderItem} />
       ) : null}
       {web && !count && web.at === 0 ? <DropSlot /> : null}
       <UnfinishedDrinks barId={barId} sectionKey={section.key} />

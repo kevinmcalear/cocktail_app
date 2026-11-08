@@ -19,12 +19,6 @@ jest.mock('../../drink/edit/EditLines', () => {
 jest.mock('./EditSections', () => ({ ...jest.requireActual('./EditSections'), WhereEdit: () => null, WhoSees: () => null }));
 jest.mock('./PrepSections', () => ({ ...jest.requireActual('./PrepSections'), PrepCost: () => null }));
 jest.mock('./BottleSections', () => ({ ...jest.requireActual('./BottleSections'), BottlePrice: () => null }));
-// The drag list renders its rows in a plain column here (its gestures don't run in Jest).
-jest.mock('react-native-draggable-flatlist', () => {
-  const { View } = jest.requireActual<typeof import('react-native')>('react-native');
-  const List = ({ data, renderItem }: { data: unknown[]; renderItem: (p: { item: unknown; drag: () => void; isActive: boolean; getIndex: () => number }) => React.ReactNode }) => <View>{data.map((item, i) => <View key={i}>{renderItem({ item, drag: () => undefined, isActive: false, getIndex: () => i })}</View>)}</View>;
-  return { __esModule: true, default: List, NestableDraggableFlatList: List, ScaleDecorator: ({ children }: { children: React.ReactNode }) => children };
-});
 jest.mock('@/components/ds/IngredientDrawing', () => ({ IngredientDrawing: () => null }));
 
 const FORM: IngredientForm = {
