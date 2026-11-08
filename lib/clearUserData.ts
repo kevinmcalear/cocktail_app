@@ -10,6 +10,7 @@ import { clearSavedSpecBooks } from '@/lib/specBookFile';
 import { useAppMode } from '@/store/useAppMode';
 import { useBeerWineWizardStore } from '@/store/useBeerWineWizardStore';
 import { useBringIn } from '@/store/useBringIn';
+import type { WizardStore } from '@/store/createWizardStore';
 import { useDraftSyncStore } from '@/store/useDraftSyncStore';
 import { useDrinkWizardStore } from '@/store/useDrinkWizardStore';
 import { useLastPlace } from '@/store/useLastPlace';
@@ -18,6 +19,16 @@ import { useOfflineEdits } from '@/store/useOfflineEdits';
 import { useRecentActivityStore } from '@/store/useRecentActivityStore';
 import { useRecentSearches } from '@/store/useRecentSearches';
 import { useVenueSetup } from '@/store/useVenueSetup';
+
+/**
+ * A wizard's drafts, once its store has read the device's copy: a read still
+ * going would land the last person's drafts back over the clear (and the sync
+ * would send them to the next account). Rehydrate settles even when the read fails.
+ */
+async function clearDrafts<D extends object, S extends string>(store: WizardStore<D, S>): Promise<void> {
+  if (!store.persist.hasHydrated()) await store.persist.rehydrate();
+  store.setState({ kept: {}, cleared: [] });
+}
 
 /**
  * Forgets everything the signed-out user left on this device: cached query
@@ -38,8 +49,6 @@ export async function clearUserData(): Promise<void> {
   useRecentSearches.setState({ terms: [] });
   useLastPlace.getState().clear();
   useAppMode.getState().forgetVenue();
-  useDrinkWizardStore.setState({ kept: {}, cleared: [] });
-  useBeerWineWizardStore.setState({ kept: {}, cleared: [] });
   useDraftSyncStore.setState({ seen: [] });
   // Glasses held for a venue's page stay: they're the venue's list, not the person's, and only someone with
   // Prep there puts them on the page. Signing out used to lose them for good.
@@ -49,6 +58,8 @@ export async function clearUserData(): Promise<void> {
   useOfflineEdits.setState({ edits: {} });
   useBringIn.setState({ reviews: {}, reviewing: null, later: [] });
   await Promise.all([
+    clearDrafts(useDrinkWizardStore),
+    clearDrafts(useBeerWineWizardStore),
     asyncStoragePersister.removeClient(),
     savedQueryFiles.clear(),
     clearSavedSpecBooks(),

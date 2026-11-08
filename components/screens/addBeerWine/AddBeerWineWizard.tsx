@@ -9,12 +9,13 @@ import { IconSymbol } from '@/components/ui/icon-symbol';
 import { radius, space, STATUS } from '@/constants/tokens';
 import { useBeerWineWaiting, useCreateBeerWine } from '@/hooks/useCreateBeerWine';
 import { useSameNameDrink } from '@/hooks/useSameNameDrink';
-import { BEER_WINE_COPY, drawnSoFar, EMPTY_BEER_WINE, filledBeerWine, fullDescription, stepEyebrow, stepsFor, takenWords, type BeerWineDraft, type BeerWineStep } from '@/lib/beerWineWizard';
+import { beerWinePlace, EMPTY_BEER_WINE, filledBeerWine, type BeerWineDraft, type BeerWineStep } from '@/lib/beerWineDraft';
+import { BEER_WINE_COPY, drawnSoFar, fullDescription, stepEyebrow, stepsFor, takenWords } from '@/lib/beerWineWizard';
 import { readableAccent } from '@/lib/color';
 import { plainDbMessage } from '@/lib/dbError';
 import { DRINK_KINDS, type DrinkKind } from '@/lib/drinkKinds';
 import { nameKey, sameName } from '@/lib/sameName';
-import { beerWinePlace, useBeerWineWizardStore } from '@/store/useBeerWineWizardStore';
+import { useBeerWineWizardStore } from '@/store/useBeerWineWizardStore';
 
 import { Prompt } from '../addDrink/Prompt';
 import { LeaveCard } from '../addDrink/prep/LeaveCard';
@@ -82,7 +83,7 @@ function Wizard({ kind, barId = null, initialName, embedded, onClose, onSaved, c
   const same = useSameNameDrink({ barId, mine: !barId, name: draft.name, kind });
   const taken = same.data && sameName(same.data.name, draft.name) && draft.differentFrom !== nameKey(draft.name) ? same.data : null;
   // A draft that is only this name has nothing worth keeping once the one that exists is open.
-  const onlyName = JSON.stringify({ ...draft, name: '', differentFrom: null }) === JSON.stringify({ ...EMPTY_BEER_WINE, differentFrom: null });
+  const onlyName = JSON.stringify({ ...draft, id: undefined, name: '', differentFrom: null }) === JSON.stringify({ ...EMPTY_BEER_WINE, differentFrom: null });
   const openIt = () => {
     if (taken) {
       if (onlyName) clear(place);

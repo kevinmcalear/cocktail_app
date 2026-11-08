@@ -67,6 +67,14 @@ assert.equal(beerWineBar('wine:bar-1'), 'bar-1');
   assert.deepEqual(m.kept['beer:home'].draft.photo, photo);
 }
 
+// A different beer started in its place elsewhere doesn't take this phone's photo.
+{
+  const photo = { uri: 'file:///pils.jpg', mimeType: 'image/jpeg' };
+  const m = mergeDrafts({ 'beer:home': b('Pils', 1, { id: 'a', photo }) }, { 'beer:home': b('Guinness', 2, { id: 'b' }) }, { seen: ['beer:home'], cleared: [] }, BEER_WINE_DRAFTS);
+  assert.equal(m.kept['beer:home'].draft.name, 'Guinness');
+  assert.equal(m.kept['beer:home'].draft.photo, null);
+}
+
 // Started on the web, it arrives; saved or dropped elsewhere (Don't keep it), it goes.
 {
   const m = mergeDrafts({ 'wine:bar-1': b('Gone', 3) }, { 'beer:home': b('From the web', 5) }, { seen: ['wine:bar-1'], cleared: [] }, BEER_WINE_DRAFTS);

@@ -11,8 +11,6 @@ import type { DrinkKind } from './drinkKinds';
 import { variantsOf, type GlassVariant } from './sketch/geometry';
 import type { SketchInputs } from './sketch/types';
 
-export { BEER_WINE_STEPS, EMPTY_BEER_WINE, filledBeerWine, type BeerWineDraft, type BeerWineStep, type DraftPhoto } from './beerWineDraft';
-
 /** The steps for a place: the price only means something on a venue's list. */
 export const stepsFor = (atVenue: boolean): readonly BeerWineStep[] => BEER_WINE_STEPS.filter((s) => s !== 'price' || atVenue);
 

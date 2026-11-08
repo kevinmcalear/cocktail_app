@@ -16,6 +16,8 @@ export interface DraftPhoto {
 }
 
 export interface BeerWineDraft {
+  /** Stamped on the first change (store/useBeerWineWizardStore): the same draft on every device. */
+  id?: string;
   name: string;
   maker: string;
   /** A style chip ("IPA", "Red"): saved as that category when the catalog has it, and it draws the colour. */

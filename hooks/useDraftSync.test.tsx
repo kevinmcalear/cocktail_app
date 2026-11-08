@@ -81,6 +81,19 @@ test('a beer kept on this phone only, before syncing, goes to the account on the
   await unmount();
 });
 
+test('a beer an older version read into the drink wizard goes from it, and arrives in its own', async () => {
+  const beer = { draft: { ...EMPTY_BEER_WINE, name: '' }, step: 'name', updatedAt: 3 };
+  // ponytail: cast because an older version kept it under the drink's type; the shape is the point of the test.
+  useDrinkWizardStore.setState({ kept: { 'beer:home': beer as never } });
+  useDraftSyncStore.setState({ seen: ['beer:home'] });
+  mockRows = [{ slot: 'beer:home', draft_data: { ...beer, draft: { ...beer.draft, name: 'Pils' } } }];
+  const { unmount } = await renderHook(() => useDraftSync(), { wrapper });
+  await waitFor(() => expect(useBeerWineWizardStore.getState().kept['beer:home']?.draft.name).toBe('Pils'));
+  expect(useDrinkWizardStore.getState().kept['beer:home']).toBeUndefined();
+  expect(mockUpserts).toHaveLength(0);
+  await unmount();
+});
+
 test("the account's beer or wine arrives in its own wizard, a drink in the drink's; dropping it takes it out of the account", async () => {
   mockRows = [
     { slot: 'wine:bar-1', draft_data: { draft: { ...EMPTY_BEER_WINE, name: 'Gravner' }, step: 'name', updatedAt: 9 } },

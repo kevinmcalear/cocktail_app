@@ -6,6 +6,7 @@ import { beerWineBar, isBeerWineSlot, type BeerWineDraft, type BeerWineStep } fr
 import type { WizardDraft, WizardStep } from '@/lib/drinkWizard';
 import { BEER_WINE_DRAFTS, DRINK_DRAFTS, forAccount, mergeDrafts, type DraftRules, type KeptDraft } from '@/lib/draftSync';
 import { jsonAs, supabase } from '@/lib/supabase';
+import { slotStart } from '@/lib/wizardSlots';
 import type { Json } from '@/types/db';
 import { useBeerWineWizardStore } from '@/store/useBeerWineWizardStore';
 import type { WizardStore } from '@/store/createWizardStore';
@@ -99,7 +100,9 @@ function syncer<D extends object, S extends string>(w: Wizard<D, S>) {
   /** What the account has, into this device; then what it lacks, up. */
   function merge(userId: string, data: Account) {
     return whenHydrated(() => {
-      const { kept, cleared } = w.store.getState();
+      const { cleared } = w.store.getState();
+      // Another wizard's slot here came in through an older version, which read every row as its own: it goes.
+      const kept = Object.fromEntries(Object.entries(w.store.getState().kept).filter(([slot]) => w.owns(slot)));
       const account = Object.fromEntries(Object.entries(data.drafts).filter(([slot]) => w.owns(slot))) as Record<string, KeptDraft<D, S>>;
       const sentSince = [...sentAt].filter(([, t]) => t >= data.at).map(([slot]) => slot);
       const seen = useDraftSyncStore.getState().seen.filter(w.owns);
@@ -129,7 +132,7 @@ function syncer<D extends object, S extends string>(w: Wizard<D, S>) {
         // Cleared first: a slot started over and typed in again is taken out, then sent, in that order.
         void forget(userId).then(() => {
           const { kept } = w.store.getState();
-          for (const slot of slots) if (kept[slot] && w.rules.filled(kept[slot].draft)) void push(userId, slot, kept[slot]).catch(() => {});
+          for (const slot of slots) if (w.owns(slot) && kept[slot] && w.rules.filled(kept[slot].draft)) void push(userId, slot, kept[slot]).catch(() => {});
         });
       }, SETTLE_MS);
     });
@@ -143,7 +146,7 @@ function syncer<D extends object, S extends string>(w: Wizard<D, S>) {
 }
 
 const drinkBar = (slot: string) => {
-  const place = slot.split('|')[0];
+  const { place } = slotStart(slot);
   return place === 'home' ? null : place;
 };
 

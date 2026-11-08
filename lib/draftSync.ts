@@ -28,6 +28,13 @@ export const DRINK_DRAFTS: DraftRules<WizardDraft> = { filled: hasContent, local
 // A draft kept by an older version may lack a field: filled out first.
 export const BEER_WINE_DRAFTS: DraftRules<BeerWineDraft> = { filled: (d) => filledBeerWine({ ...EMPTY_BEER_WINE, ...d }), local: ['photo'] };
 
+/** Two copies of one draft, by the id its first change gave it; one kept before ids can't be told apart, so counts as the same. */
+function sameDraft(a: object, b: object): boolean {
+  const idA = (a as { id?: unknown }).id;
+  const idB = (b as { id?: unknown }).id;
+  return !idA || !idB || idA === idB;
+}
+
 /** A draft as the account keeps it: no photos. */
 export function forAccount<D extends object, S extends string>(k: KeptDraft<D, S>, rules: DraftRules<D>): KeptDraft<D, S> {
   const draft = Object.fromEntries(Object.entries(k.draft).filter(([field]) => !rules.local.includes(field as keyof D))) as D;
@@ -62,7 +69,8 @@ export function mergeDrafts<D extends object, S extends string>(
       kept[slot] = here;
       if (rules.filled(here.draft)) push.push(slot);
     } else if (there.updatedAt > here.updatedAt) {
-      const files = Object.fromEntries(rules.local.map((field) => [field, here.draft[field]]));
+      // This device's photos stay with the same draft only, never one started in its place elsewhere.
+      const files = sameDraft(here.draft, there.draft) ? Object.fromEntries(rules.local.map((field) => [field, here.draft[field]])) : {};
       kept[slot] = { ...there, draft: { ...there.draft, ...files } };
     } else {
       kept[slot] = here;
