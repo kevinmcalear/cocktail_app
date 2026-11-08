@@ -6,6 +6,7 @@ import { useDragMergeDwell } from '@/hooks/useDragMergeDwell';
 import { combinable, combineLines } from '@/lib/batchLines';
 import { dropEntry, linePart, partEntries, slotPart, toggleLine, type PartEntry } from '@/lib/drinkParts';
 import { dragSlot, dropIndex, gapShift, slotOffset } from '@/lib/dropIndex';
+import { easeBack } from '@/components/ds/DragList';
 import type { StepProps, WizardLine } from '@/lib/drinkWizard';
 
 /**
@@ -79,6 +80,11 @@ export function useCombineDrop({ draft, set, enabled, onCombined, parted }: Step
     set({ lines: merged });
     onCombined(line);
   };
+  // Taken away before it was let go: no pop-up, and the rows go back.
+  const onCancel = (from: number) => {
+    dwell.hover(null);
+    easeBack(heldRef, setHeld, from);
+  };
   const target = dwell.mergeTargetIndex;
   const heldLine = held ? lineAt(held.from) : null;
   const landsIn = held && parts ? slotPart(entries, held.from, held.slot) : null;
@@ -87,6 +93,7 @@ export function useCombineDrop({ draft, set, enabled, onCombined, parted }: Step
     entries,
     onMove,
     onDrop,
+    onCancel,
     /** The arrow keys and a screen reader's actions: a line one row up or down, into the next part past its heading. */
     step: (row: number, by: -1 | 1) => place(row, row + by),
     height: (e: PartEntry, h: number) => void (heights.current[idOf(e)] = h),

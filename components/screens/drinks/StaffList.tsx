@@ -65,10 +65,10 @@ export function StaffList({ barId, canEdit, onNow, past, header, contentContaine
   // Ranked, the Not ranked line, then the rest: one list, so a Not ranked drink drags into the ranking.
   const saved: Row[] = order.unranked.length ? [...order.ranked, LINE, ...order.unranked] : order.ranked;
   const data = saved;
-  // A drop that leaves the ranking as it was (a move under the line, which stays A to Z) saves nothing, and the rows stay put.
+  // A move that leaves the ranking as it was (under the line, which stays A to Z) saves nothing: DragList shows no gap for it and the row goes back to its place.
+  const changes = (rows: Row[]) => rankedAbove(rows.map((r) => r.itemId)).join() !== ids.join();
   const dropped = (rows: Row[]) => {
-    const next = rankedAbove(rows.map((r) => r.itemId));
-    if (next.join() !== ids.join()) reorder(next);
+    if (changes(rows)) reorder(rankedAbove(rows.map((r) => r.itemId)));
   };
   const remove = (pick: ClassicRow) => {
     // Close the gap first, so the places stay 1, 2, 3.
@@ -149,7 +149,7 @@ export function StaffList({ barId, canEdit, onNow, past, header, contentContaine
     // ponytail: every row is rendered, as the old list kept them all mounted for the drag; fine for a bar's few hundred linked drinks, past that page the Not ranked yet rows.
     <DragScrollView style={styles.fill} contentContainerStyle={contentContainerStyle}>
       {top}
-      <DragList label="Classics" data={data} keyOf={(p) => p.itemId} still={(r) => !('name' in r)} onReorder={dropped} renderRow={renderItem} />
+      <DragList label="Classics" data={data} keyOf={(p) => p.itemId} still={(r) => !('name' in r)} onReorder={dropped} accept={changes} renderRow={renderItem} />
       {bottom}
     </DragScrollView>
   );

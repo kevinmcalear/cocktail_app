@@ -23,6 +23,8 @@ export interface DragRowProps {
   onDrop: (from: number, d: number) => void;
   /** Follows the drag, for where it would land (lib/dropIndex dragSlot) and holding one row over another to combine; returns how far its slot is from its place, where it eases when let go. */
   onMove?: (from: number, d: number) => number | void;
+  /** Picked up, then taken away before it was let go (Android's back swipe, a system gesture): the others go back to their places. */
+  onCancel?: (from: number) => void;
   onHeight: (size: number) => void;
   /** Folds to a short card while held (a spec line, to its name); on a phone a hold anywhere on the row picks it up. */
   fold?: boolean;
@@ -46,7 +48,7 @@ export interface DragRowProps {
  * so it works inside any ScrollView and inside a native Modal (with its own
  * GestureRoot). Most lists use DragList, which does the sums.
  */
-export function DragRow({ index, onDrop, onMove, onHeight, fold, shift = null, flat, card, axis = 'y', children }: DragRowProps) {
+export function DragRow({ index, onDrop, onMove, onCancel, onHeight, fold, shift = null, flat, card, axis = 'y', children }: DragRowProps) {
   const ds = useDs();
   const x = axis === 'x';
   const scroll = useDragScroll();
@@ -103,6 +105,10 @@ export function DragRow({ index, onDrop, onMove, onHeight, fold, shift = null, f
   const end = () => {
     scroll?.end();
     setActive(false);
+  };
+  const cancel = () => {
+    onCancel?.(index);
+    end();
   };
   const drop = (d: number) => {
     onDrop(index, d);
@@ -168,7 +174,7 @@ export function DragRow({ index, onDrop, onMove, onHeight, fold, shift = null, f
         scroll.delta.set(0);
         scroll.held.set(false);
       }
-      scheduleOnRN(end);
+      scheduleOnRN(cancel);
     });
   const follow = useAnimatedStyle(() => {
     const along = finger.get() + (lifted.get() ? rode() + lift() : 0);

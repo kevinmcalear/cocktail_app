@@ -24,8 +24,10 @@ export function dropIndex(from: number, dy: number, heights: readonly number[]):
  * middle half is for dropping on it (a batch): `over` is that row, else null,
  * and its own place never counts. `slot` is where the gap was before this
  * move, so a row that just slid doesn't slide back under a still finger.
+ * `edge` is how far past a row it slides: 3/4 where rows combine (a spec's
+ * lines), 1/2 in a list that only reorders (DragList), as iOS lists do.
  */
-export function dragSlot(from: number, dy: number, heights: readonly number[], slot: number): { slot: number; over: number | null } {
+export function dragSlot(from: number, dy: number, heights: readonly number[], slot: number, edge = 3 / 4): { slot: number; over: number | null } {
   const gap = heights[from] ?? 0;
   const rest = heights.map((_, i) => i).filter((i) => i !== from);
   const centre = heights.slice(0, from).reduce((a, h) => a + h, 0) + gap / 2 + dy;
@@ -40,7 +42,7 @@ export function dragSlot(from: number, dy: number, heights: readonly number[], s
   let at = Math.max(0, Math.min(slot, rest.length));
   for (let pass = 0; pass <= rest.length * 2; pass++) {
     const t = tops(at);
-    const k = rest.findIndex((i, k) => (k >= at ? centre > t[k] + ((heights[i] ?? 0) * 3) / 4 : centre < t[k] + (heights[i] ?? 0) / 4));
+    const k = rest.findIndex((i, k) => (k >= at ? centre > t[k] + (heights[i] ?? 0) * edge : centre < t[k] + (heights[i] ?? 0) * (1 - edge)));
     if (k < 0) break;
     at = k >= at ? k + 1 : k;
   }

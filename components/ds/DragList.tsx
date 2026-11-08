@@ -2,7 +2,7 @@ import * as Haptics from 'expo-haptics';
 import { createContext, use, useRef, useState, type ReactNode } from 'react';
 import { AccessibilityInfo, Platform, StyleSheet, Text, View, type StyleProp, type ViewStyle } from 'react-native';
 
-import { layout, radius, space } from '@/constants/tokens';
+import { layout, lift as LIFT, radius, space } from '@/constants/tokens';
 import { dragSlot, dropIndex, gapShift, slotOffset } from '@/lib/dropIndex';
 
 import { DragRow, GRIP_SLOP } from './DragRow';
@@ -30,10 +30,12 @@ export interface DragRowState {
  * DragScrollView around it the page scrolls; let go, it eases into its slot
  * and `onReorder` has the new order. The arrow keys on a focused grip, and a
  * screen reader's Move up and Move down, move a row one place. A `still` row
- * (a line between rows) slides aside but never lifts. Every row is rendered,
+ * (a line between rows) slides aside but never lifts. A move `accept` turns
+ * down (one that changes nothing that's saved) shows no gap, and the row goes
+ * back to its place. Every row is rendered,
  * so it suits a page's list (a few hundred rows at most), not an endless feed.
  */
-export function DragList<T>({ data, keyOf, onReorder, renderRow, still, label, axis = 'y', card = true, style }: { data: readonly T[]; keyOf: (item: T) => string; onReorder: (next: T[], from: number, to: number) => void; renderRow: (item: T, row: DragRowState) => ReactNode; still?: (item: T) => boolean; label?: string; axis?: 'x' | 'y'; /** Off when the row draws its own lifted look (a photo). */ card?: boolean; style?: StyleProp<ViewStyle> }) {
+export function DragList<T>({ data, keyOf, onReorder, accept, renderRow, still, label, axis = 'y', card = true, style }: { data: readonly T[]; keyOf: (item: T) => string; onReorder: (next: T[], from: number, to: number) => void; accept?: (next: T[]) => boolean; renderRow: (item: T, row: DragRowState) => ReactNode; still?: (item: T) => boolean; label?: string; axis?: 'x' | 'y'; /** Off when the row draws its own lifted look (a photo). */ card?: boolean; style?: StyleProp<ViewStyle> }) {
   // Each row's size, by its key: where a dragged one lands.
   const sizes = useRef<Record<string, number>>({});
   // The held row, where its gap is, how tall, and how far its slot is from its place.
@@ -41,17 +43,22 @@ export function DragList<T>({ data, keyOf, onReorder, renderRow, still, label, a
   // The same, read between renders: a drag reports every frame.
   const heldRef = useRef(held);
   const all = () => data.map((item) => sizes.current[keyOf(item)] ?? 0);
-  const put = (from: number, to: number) => {
-    if (to < 0 || to >= data.length || to === from || still?.(data[from])) return;
+  const moved = (from: number, to: number) => {
     const next = [...data];
     const [item] = next.splice(from, 1);
     next.splice(to, 0, item);
-    onReorder(next, from, to);
+    return next;
+  };
+  const put = (from: number, to: number) => {
+    if (to < 0 || to >= data.length || to === from || still?.(data[from])) return;
+    onReorder(moved(from, to), from, to);
   };
   const onMove = (from: number, d: number) => {
     const was = heldRef.current;
     const rows = all();
-    const { slot } = dragSlot(from, d, rows, was?.from === from ? was.slot : from);
+    // Nothing combines here, so a row slides once the held one's middle passes its own.
+    const at = dragSlot(from, d, rows, was?.from === from ? was.slot : from, 1 / 2).slot;
+    const slot = accept && at !== from && !accept(moved(from, at)) ? from : at;
     if (was?.from === from && was.slot === slot) return was.land;
     // A tick as a row slides aside, as iOS lists do.
     if (was && !web) void Haptics.selectionAsync();
@@ -79,6 +86,7 @@ export function DragList<T>({ data, keyOf, onReorder, renderRow, still, label, a
               card={card}
               shift={held ? gapShift(i, held.from, held.slot, held.gap) : null}
               onMove={fixed ? undefined : onMove}
+              onCancel={(from) => easeBack(heldRef, setHeld, from)}
               onDrop={fixed ? () => {} : onDrop}
               onHeight={(h) => void (sizes.current[key] = h)}
             >
@@ -89,6 +97,25 @@ export function DragList<T>({ data, keyOf, onReorder, renderRow, still, label, a
       </View>
     </Announcer>
   );
+}
+
+/**
+ * A drag taken away before it was let go (DragRow's onCancel): the rows ease
+ * back to their places, then the list forgets it. For DragList and the spec's
+ * useCombineDrop, which keep the held row the same way.
+ */
+export function easeBack<H extends { from: number; slot: number; land: number }>(ref: { current: H | null }, set: (held: H | null) => void, from: number) {
+  const was = ref.current;
+  if (was?.from !== from) return;
+  const rest = { ...was, slot: from, land: 0 };
+  ref.current = rest;
+  set(rest);
+  setTimeout(() => {
+    // Unless another row was picked up meanwhile.
+    if (ref.current !== rest) return;
+    ref.current = null;
+    set(null);
+  }, LIFT.ms.slide);
 }
 
 const AnnounceContext = createContext<((text: string) => void) | null>(null);

@@ -197,7 +197,7 @@ export function IngredientsStep({ draft, set, ingredients, loading, aliases = []
             const l = draft.lines[i];
             const place = { dropTarget: combine.target === i ? combine.holding : null, combineWith: combine.combineWith(i), moveTo: combine.moveTo ? partName(combine.moveTo) : null, onMove: (by: -1 | 1) => combine.step(row, by), detail: lineDetail?.(l) };
             return (
-              <DragRow key={l.key} index={row} fold onDrop={combine.onDrop} onMove={combine.onMove} shift={combine.shift(row)} flat={combine.combineWith(i) !== null} onHeight={(h) => combine.height({ line: i }, h)}>
+              <DragRow key={l.key} index={row} fold onDrop={combine.onDrop} onMove={combine.onMove} onCancel={combine.onCancel} shift={combine.shift(row)} flat={combine.combineWith(i) !== null} onHeight={(h) => combine.height({ line: i }, h)}>
                 {(grip, lifted) =>
                   // The lines keep their size while the next one is searched: folding them read as squeezed (Eddie, 16 Oct).
                   l.key === swapKey ? (

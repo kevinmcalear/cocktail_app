@@ -34,3 +34,13 @@ assert.deepEqual([0, 1, 2, 3].map((i) => gapShift(i, 1, 1, 80)), [0, 0, 0, 0], '
 assert.equal(slotOffset(0, 2, rows), 140, 'down past two rows');
 assert.equal(slotOffset(3, 1, rows), -140, 'up past two rows');
 assert.equal(slotOffset(1, 1, rows), 0, 'its own place');
+
+// A list that only reorders (DragList, edge 1/2): a row slides once the held one's middle passes its own.
+// The reviewer's menu: rows about 85 tall, a drag of 175 passes two of them (at 3/4 it needed 191).
+const menu = [85, 85, 85, 85];
+assert.equal(dragSlot(0, 175, menu, 0, 1 / 2).slot, 2, 'two rows down at 175');
+assert.equal(dragSlot(0, 175, menu, 0).slot, 1, 'a spec line still waits for three quarters');
+assert.equal(dragSlot(0, 80, menu, 0, 1 / 2).slot, 0, 'not yet past the first middle');
+assert.equal(dragSlot(0, 90, menu, 0, 1 / 2).slot, 1, 'past the first middle');
+assert.equal(dragSlot(0, 150, menu, 2, 1 / 2).slot, 2, 'a row that slid stays under a still finger');
+assert.equal(dragSlot(3, -175, menu, 3, 1 / 2).slot, 1, 'two rows up at 175');
