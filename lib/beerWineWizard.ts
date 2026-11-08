@@ -7,6 +7,7 @@
 import { DRINK_COLORS, SKETCH_VERSION } from '../supabase/functions/_shared/sketchRules';
 
 import type { DrinkKind } from './drinkKinds';
+import { variantsOf, type GlassVariant } from './sketch/geometry';
 import type { SketchInputs } from './sketch/types';
 
 export const BEER_WINE_STEPS = ['name', 'maker', 'style', 'strength', 'glass', 'notes', 'price', 'review'] as const;
@@ -63,6 +64,8 @@ export interface BeerWineDraft {
   /** Where it's from ("Portland, USA"), filled from the catalog. */
   origin: string | null;
   photo: DraftPhoto | null;
+  /** "It's a different one" was said for this name (its nameKey): the name-taken card stays away for it. */
+  differentFrom: string | null;
 }
 
 export const EMPTY_BEER_WINE: BeerWineDraft = {
@@ -77,7 +80,12 @@ export const EMPTY_BEER_WINE: BeerWineDraft = {
   price: '',
   origin: null,
   photo: null,
+  differentFrom: null,
 };
+
+/** Anything typed or picked: closing asks "Leave it for now?" and keeps it, and Add lists it (Kevin, 8 Nov). */
+export const filledBeerWine = (d: BeerWineDraft) =>
+  !!(d.name.trim() || d.maker.trim() || d.style || d.region || d.abv || d.photo || d.tasting.length || d.description.trim() || d.price.trim());
 
 interface Style {
   name: string;
@@ -133,10 +141,46 @@ export const REGIONS: Record<DrinkKind, readonly string[]> = {
   wine: ['France', 'Italy', 'Spain', 'USA - California', 'Australia', 'New Zealand', 'Argentina', 'Chile', 'South Africa'],
 };
 
+/** Six words to tap, as the Add-beer board draws them; wine's six in the same spirit (its review shows Dry, Earthy). */
 export const TASTING: Record<DrinkKind, readonly string[]> = {
-  beer: ['Crisp', 'Hoppy', 'Malty', 'Roasty', 'Fruity', 'Hazy', 'Sour', 'Bitter', 'Light', 'Rich', 'Dry', 'Smooth'],
-  wine: ['Dry', 'Fruity', 'Crisp', 'Bold', 'Light', 'Oaky', 'Earthy', 'Mineral', 'Sweet', 'Tannic', 'Juicy', 'Floral'],
+  beer: ['Crisp', 'Hoppy', 'Malty', 'Bitter', 'Light', 'Fruity'],
+  wine: ['Dry', 'Fruity', 'Crisp', 'Earthy', 'Light', 'Bold'],
 };
+
+/** Over each step (Add-beer): "Beer · 2 of 7", and "Beer · review" on the last. */
+export function stepEyebrow(kind: DrinkKind, step: BeerWineStep, steps: readonly BeerWineStep[]): string {
+  const asked = steps.filter((s) => s !== 'review');
+  const label = kind === 'beer' ? 'Beer' : 'Wine';
+  return step === 'review' ? `${label} · review` : `${label} · ${asked.indexOf(step) + 1} of ${asked.length}`;
+}
+
+/** The glass step's chips: the style's usual glass first ("Pilsner glass · usual"), then the rest. */
+export function glassChoices(kind: DrinkKind, style: string | null): { key: string; label: string }[] {
+  const usual = styleOf(kind, style)?.variant ?? null;
+  // "Pilsner" alone reads as the style: the glass says it's a glass.
+  const named = (v: GlassVariant) => (v.label === 'Pilsner' ? 'Pilsner glass' : v.label);
+  const all = variantsOf(glassFor(kind, style));
+  const first = all.find((v) => v.key === usual) ?? all[0];
+  return [first, ...all.filter((v) => v !== first)].map((v) => ({ key: v.key, label: v === first && usual ? `${named(v)} · usual` : named(v) }));
+}
+
+/**
+ * The name-taken card (Add-beer, Name taken): "Pilsner Urquell is already on
+ * the list / Added in September, on the Autumn menu. Open that one, or name
+ * this one so they're told apart (a vintage, a size)." At home it's your shelf.
+ */
+export function takenWords(name: string, atBar: boolean, savedAt: string | null | undefined, menu: string | null): { title: string; body: string } {
+  const month = savedAt ? new Date(savedAt).toLocaleString('en-US', { month: 'long' }) : null;
+  const on = menu ? `on the ${/\bmenu$/i.test(menu.trim()) ? menu.trim() : `${menu.trim()} menu`}` : null;
+  const added = month ? [`Added in ${month}`, on].filter(Boolean).join(', ') : on ? `It’s ${on}` : null;
+  return {
+    title: `${name} is already ${atBar ? 'on the list' : 'on your shelf'}`,
+    body: [added ? `${added}.` : null, 'Open that one, or name this one so they’re told apart (a vintage, a size).'].filter(Boolean).join(' '),
+  };
+}
+
+/** A price as typed: a beer's is a number; a wine's can say how it's sold ("18 a glass · 72 a bottle", Add-wine). */
+export const cleanPrice = (kind: DrinkKind, typed: string) => (kind === 'beer' ? typed.replace(/[^0-9.,]/g, '') : typed);
 
 /** "Crisp, hoppy and dry." */
 export function tastingLine(words: readonly string[]): string {
@@ -176,16 +220,18 @@ export function beerWineSketch(kind: DrinkKind, d: Pick<BeerWineDraft, 'style' |
   };
 }
 
+/** The wizard's glass (Add-beer): a bare glass (alpha 0, lib/sketch/paint.ts) until a style fills it with its colour. */
+export function drawnSoFar(kind: DrinkKind, d: Pick<BeerWineDraft, 'style' | 'glassVariant'>): SketchInputs {
+  const inputs = beerWineSketch(kind, d);
+  return d.style ? inputs : { ...inputs, liquid: { ...inputs.liquid, alpha: 0 }, foam: null, fizz: false, garnish: null };
+}
+
 /** A saved beer or wine's drawing, as its page shows it with no photo: the style from its tags, the glass it was saved with. */
 export const savedSketch = (kind: DrinkKind, tags: readonly string[], variant: string | null) =>
   beerWineSketch(kind, { style: STYLES[kind].find((x) => tags.includes(x.name))?.name ?? null, glassVariant: variant });
 
-/** Strengths offered as chips, the style's usual one first. */
-export function strengthChips(kind: DrinkKind, style: string | null): number[] {
-  const usual = styleOf(kind, style)?.abv;
-  const base = kind === 'beer' ? [4.2, 4.8, 5, 5.5, 6.5, 8] : [11, 12, 12.5, 13, 13.5, 14.5];
-  return usual ? [usual, ...base.filter((n) => n !== usual)] : base;
-}
+/** Where Less strong and Stronger start from with nothing typed: the style's usual strength, else a middling one. */
+export const startingAbv = (kind: DrinkKind, style: string | null) => styleOf(kind, style)?.abv ?? (kind === 'beer' ? 5 : 12.5);
 
 /** One tap of − or + on the ABV: tenths for beer and wine alike, from the style's usual when empty. */
 export function stepAbv(abv: string, dir: 1 | -1, start: number): string {
