@@ -32,8 +32,11 @@ Claude usage is the scarce resource here, not CI minutes (the repo is public, so
 - **Don't watch CI.** No `sleep`, `until` or repeated `gh pr checks` loops. Open the PR, call the ccd_pr tools once, and let the app's CI monitor wake the session when checks finish.
 - **Check locally only what you touched:** `npm run typecheck` and the tests nearest your change. Leave the full suite to CI. Run `npm run test:security` (it starts Supabase) only when the change touches `supabase/` or a file those tests read.
 - **Subagents default to Sonnet** (`CLAUDE_CODE_SUBAGENT_MODEL` in `.claude/settings.json`). Use them for searching, reading and data gathering. Pass `model: "opus"` only for a subagent that writes tricky code or makes a judgment call.
-- **One session per piece of work, not per fix.** Related fixes to the same PR or screen go in the same session. When a session passes about 300k tokens of context, write a short handoff and start fresh rather than carrying the history.
-- **Screenshots are expensive.** Prefer `read_page` / `get_page_text` to check text and structure; take one screenshot for the PR at the end.
+- **One session per piece of work, not per fix.** Related fixes to the same PR or screen go in the same session.
+- **Hand off at about 40% context.** Write the handoff note in the notes folder and ask Kevin to start the fresh session from it, rather than carrying or compacting the history (Kevin, 8 Nov 2026).
+- **Facts live in files, not chat.** Every decision of Kevin's (quoted), PR state, merge, OTA and open question goes into the session's notes folder as it happens. Never keep them only in chat or in a temporary shared folder.
+- **Kevin talks to each coordinator directly.** No top session relays reports. Reports are about three lines: what merged or shipped, what needs Kevin, weekly usage %, plus a link to the notes file.
+- **Never cut reviews, screenshots or device checks to save tokens.** Save by keeping sessions short and letting agents do the heavy reading. Prefer `read_page` / `get_page_text` to check text and structure while working, and take the full screenshot set for the PR.
 - **Store builds only for native changes.** A JS-only change ships with `eas update`; run `eas build` only when native config, a native dependency or the app version changes.
 
 ## Enforced by CI
