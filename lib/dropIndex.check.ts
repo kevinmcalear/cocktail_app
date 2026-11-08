@@ -1,6 +1,6 @@
 import assert from 'node:assert/strict';
 
-import { dragSlot, dropIndex, gapShift } from './dropIndex';
+import { dragSlot, dropIndex, gapShift, slotOffset } from './dropIndex';
 
 const rows = [60, 80, 60, 100];
 assert.equal(dropIndex(0, 10, rows), 0, 'a nudge stays put');
@@ -29,3 +29,18 @@ assert.equal(dragSlot(0, -15, rows, 1).slot, 0, 'back up past its top quarter sl
 assert.deepEqual([0, 1, 2, 3].map((i) => gapShift(i, 0, 2, 60)), [0, -60, -60, 0]);
 assert.deepEqual([0, 1, 2, 3].map((i) => gapShift(i, 3, 1, 100)), [0, 100, 100, 0]);
 assert.deepEqual([0, 1, 2, 3].map((i) => gapShift(i, 1, 1, 80)), [0, 0, 0, 0], 'still in its own place');
+
+// Let go, a row eases to its slot: past the rows it passed, down positive (rows 60, 80, 60, 100).
+assert.equal(slotOffset(0, 2, rows), 140, 'down past two rows');
+assert.equal(slotOffset(3, 1, rows), -140, 'up past two rows');
+assert.equal(slotOffset(1, 1, rows), 0, 'its own place');
+
+// A list that only reorders (DragList, edge 1/2): a row slides once the held one's middle passes its own.
+// The reviewer's menu: rows about 85 tall, a drag of 175 passes two of them (at 3/4 it needed 191).
+const menu = [85, 85, 85, 85];
+assert.equal(dragSlot(0, 175, menu, 0, 1 / 2).slot, 2, 'two rows down at 175');
+assert.equal(dragSlot(0, 175, menu, 0).slot, 1, 'a spec line still waits for three quarters');
+assert.equal(dragSlot(0, 80, menu, 0, 1 / 2).slot, 0, 'not yet past the first middle');
+assert.equal(dragSlot(0, 90, menu, 0, 1 / 2).slot, 1, 'past the first middle');
+assert.equal(dragSlot(0, 150, menu, 2, 1 / 2).slot, 2, 'a row that slid stays under a still finger');
+assert.equal(dragSlot(3, -175, menu, 3, 1 / 2).slot, 1, 'two rows up at 175');

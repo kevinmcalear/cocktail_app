@@ -4,7 +4,7 @@ import { Platform, StyleSheet, TextInput, useWindowDimensions, View } from 'reac
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import { BackbarTheme, BrandProvider, Button, Caption, GlassButton, PressableScale, useBreakpoint, useDs, useGutter } from '@/components/ds';
-import { FormScrollContainer } from '@/components/recipe/FormScrollContainer';
+import { DragScrollView } from '@/components/ds/dragScroll';
 import { ToolsSheet } from '@/components/tools/ToolsSheet';
 import { IconSymbol } from '@/components/ui/icon-symbol';
 import { Skeleton, SkeletonLines } from '@/components/ui/Skeleton';
@@ -235,7 +235,7 @@ export function EditPage({ editor, id, onExit, openOn, inSheet }: { editor: Drin
   return (
     <View style={[styles.screen, { backgroundColor: ds.c.ground }]}>
       {wide ? (
-        <FormScrollContainer keyboardShouldPersistTaps="handled" contentContainerStyle={[styles.wide, { paddingTop: insets.top + space.xl }]}>
+        <DragScrollView keyboardShouldPersistTaps="handled" contentContainerStyle={[styles.wide, { paddingTop: insets.top + space.xl }]}>
           <View style={styles.right}>
             {toolbar}
             {words}
@@ -243,14 +243,14 @@ export function EditPage({ editor, id, onExit, openOn, inSheet }: { editor: Drin
             <Button label="Discard changes and leave" variant="ghost" onPress={() => void leave()} />
           </View>
           {roomy && cocktail ? <PhonePreview editor={editor} saved={cocktail} /> : null}
-        </FormScrollContainer>
+        </DragScrollView>
       ) : (
         <>
           <View style={{ paddingTop: top + space.sm, paddingHorizontal: gutter, paddingBottom: space.sm }}>{toolbar}</View>
-          <FormScrollContainer keyboardShouldPersistTaps="handled" contentContainerStyle={[styles.phoneBody, { paddingHorizontal: gutter, paddingBottom: insets.bottom + space.xxl }]}>
+          <DragScrollView keyboardShouldPersistTaps="handled" contentContainerStyle={[styles.phoneBody, { paddingHorizontal: gutter, paddingBottom: insets.bottom + space.xxl }]}>
             {words}
             {body}
-          </FormScrollContainer>
+          </DragScrollView>
         </>
       )}
 

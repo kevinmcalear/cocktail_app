@@ -401,6 +401,25 @@ export const pulse = { low: 0.45, ms: 900 } as const;
 export type SpringName = keyof typeof springs;
 
 /**
+ * A row picked up to drag it (components/ds/DragRow; drag options 1B, 2C,
+ * 3B, Kevin 27 Oct): it grows a little, leans the way it moves and rests a
+ * little leant, sits over the others on a shadow (elevation on Android), the
+ * others ease aside to show its slot, and let go it eases into it.
+ */
+export const lift = {
+  scale: 1.03,
+  /** Degrees: while held, as it moves (per point a second), and at most. Reduce Motion: none. */
+  lean: { rest: 1.2, perSpeed: 0.03, max: 7 },
+  /** The held card's edge. */
+  border: 1.5,
+  shadow: { shadowColor: backbar.dark.ground, shadowOffset: { width: 0, height: 14 }, shadowOpacity: 0.45, shadowRadius: 22, elevation: 8 },
+  /** Ms: picking it up, the others easing aside, and easing into its slot. */
+  ms: { pick: 120, slide: 200, land: 180 },
+  /** On a touch screen a row lifts after this hold, so a swipe over it still scrolls. */
+  holdMs: 200,
+} as const;
+
+/**
  * Status colours for fills, dots and borders. `warning` is only 2:1 on the
  * light ground, so amber text and small icons need a darker shade. Text on a
  * status fill should be black (`#000`), not white.

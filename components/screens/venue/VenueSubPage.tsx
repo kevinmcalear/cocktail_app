@@ -1,11 +1,10 @@
 import { useRouter, type Href } from 'expo-router';
-import { createContext, useContext, type ReactNode } from 'react';
-import { StyleSheet, View } from 'react-native';
+import { createContext, useContext, type ComponentProps, type ComponentType, type ReactNode } from 'react';
+import { ScrollView, StyleSheet, View } from 'react-native';
 
 import { BackbarTheme, Body, useDs, useGutter } from '@/components/ds';
 import { SubPageHead, usePageFrame } from '@/components/nav/PageFrame';
 import { useTabBarInset } from '@/components/nav/WebTabBar';
-import { FormScrollContainer } from '@/components/recipe/FormScrollContainer';
 import { WebHead } from '@/components/WebHead';
 import { space } from '@/constants/tokens';
 
@@ -22,6 +21,14 @@ type PageProps = {
   wide?: boolean;
   /** Beside Back: the page's one … (a kit thing's page, KitPage). */
   trailing?: ReactNode;
+  /**
+   * The page's scroller. A page with a drag list (an ice recipe's steps)
+   * passes DragScrollView, so a held row near the edge scrolls the page. It's
+   * passed in, not imported here: on the web Reanimated is copied into every
+   * route chunk that imports it (~600 KB each), and the other venue pages have
+   * nothing to drag.
+   */
+  scroller?: ComponentType<ComponentProps<typeof ScrollView>>;
 };
 
 /** Inside another page (setup's Kit tabs): just the content, under that page's own title. */
@@ -41,7 +48,7 @@ export function VenueSubPage(props: PageProps) {
   );
 }
 
-function Page({ barId, title, intro, children, crumb, up, wide, trailing }: PageProps) {
+function Page({ barId, title, intro, children, crumb, up, wide, trailing, scroller: Scroll = ScrollView }: PageProps) {
   const ds = useDs();
   const router = useRouter();
   const frame = usePageFrame(wide ? 'wide' : 'text');
@@ -55,8 +62,7 @@ function Page({ barId, title, intro, children, crumb, up, wide, trailing }: Page
       <WebHead>
         <title>{title}</title>
       </WebHead>
-      {/* A drag list inside (an ice recipe's steps) needs the nestable container on a phone. */}
-      <FormScrollContainer
+      <Scroll
         style={styles.screen}
         contentContainerStyle={{ paddingTop: frame.top, paddingBottom: tabBarInset + space.xxxl, paddingHorizontal: gutter }}
         keyboardShouldPersistTaps="handled"
@@ -67,7 +73,7 @@ function Page({ barId, title, intro, children, crumb, up, wide, trailing }: Page
           {intro ? <Body tone="muted">{intro}</Body> : null}
           {children}
         </View>
-      </FormScrollContainer>
+      </Scroll>
     </View>
   );
 }

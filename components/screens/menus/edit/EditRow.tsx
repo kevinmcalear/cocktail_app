@@ -1,9 +1,8 @@
-import { useState } from 'react';
-import { Platform, StyleSheet, View } from 'react-native';
-import { ScaleDecorator } from 'react-native-draggable-flatlist';
+import { useState, type ReactNode } from 'react';
+import { StyleSheet, View } from 'react-native';
 
 import { Caption, Headline, PressableScale, Tag, useDs } from '@/components/ds';
-import { dragGripStyle } from '@/components/recipe/FormScrollContainer';
+import { DragGrip } from '@/components/ds/DragList';
 import { IconSymbol } from '@/components/ui/icon-symbol';
 import { displayFaces, font, layout, radius, space } from '@/constants/tokens';
 import { formatPrice, printedPrice } from '@/lib/menus';
@@ -13,8 +12,6 @@ import { MenuDrawing, type MenuInk } from '../page/MenuDrawing';
 import { PriceEditor, type RowPricing } from '../RowPrice';
 import { dragSource, dropRow, dropSlot } from '../useMenuDrag';
 
-/** The handle's width: only a touch there starts a drag (gripOnly, on the left as drawn). */
-export const HANDLE = 28;
 /** The row's price box (Menu-page, edit: 64 wide). */
 const PRICE_W = 64;
 
@@ -25,8 +22,10 @@ interface EditRowProps {
   ink: MenuInk;
   /** Made from this menu just now: a New tag after its name. */
   isNew?: boolean;
-  active: boolean;
-  drag: () => void;
+  /** Being dragged (DragList). */
+  lifted: boolean;
+  /** Wraps the grip: DragList's, or none on the desktop, where the browser's drag and drop moves the row. */
+  grip: (node: ReactNode) => ReactNode;
   onRemove: () => void;
   onMove: (from: number, to: number) => void;
   /** Tap the drink: its menu (Move to another section, Open the drink, Move to top, Delete drink). */
@@ -57,40 +56,23 @@ export function DropSlot() {
  * drags it; on the web its arrow keys move it too. Tapping the drink opens its
  * menu (RowMenuSheet).
  */
-export function EditRow({ drink, index: i, count, ink, isNew, active, drag, onRemove, onMove, onOpen, pricing, alsoOn, web: dnd }: EditRowProps) {
+export function EditRow({ drink, index: i, count, ink, isNew, lifted, grip, onRemove, onMove, onOpen, pricing, alsoOn, web: dnd }: EditRowProps) {
   const ds = useDs();
-  const web = Platform.OS === 'web';
   const [open, setPricing] = useState(false);
   const price = pricing ? printedPrice(drink) : null;
   const own = !!formatPrice(drink.menuPrice);
-  const onKeyDown = (e: { key: string; preventDefault: () => void }) => {
-    const to = e.key === 'ArrowUp' ? i - 1 : e.key === 'ArrowDown' ? i + 1 : null;
-    if (to === null) return;
-    e.preventDefault();
-    if (to >= 0 && to < count) onMove(i, to);
+  const step = (by: -1 | 1) => {
+    if (i + by >= 0 && i + by < count) onMove(i, i + by);
   };
   return (
-    <ScaleDecorator activeScale={1.02}>
+    <>
       {dnd?.slot === 'before' ? <DropSlot /> : null}
       <View
         {...(dnd ? dragSource(drink.id, dnd.from) : {})}
-        style={[styles.wrap, { borderTopColor: ds.c.lineStrong }, active && [styles.lifted, { backgroundColor: ds.c.raised }], dnd?.dragging && styles.held]}
+        style={[styles.wrap, { borderTopColor: lifted ? 'transparent' : ds.c.lineStrong }, dnd?.dragging && styles.held]}
       >
         <View {...(dnd ? dropRow : {})} style={styles.row}>
-          <PressableScale
-            accessibilityLabel={`Reorder ${drink.name}`}
-            accessibilityHint={web ? 'Drag, or press the up and down arrow keys, to move it' : 'Drag, or use the actions to move it up or down'}
-            accessibilityActions={[{ name: 'moveUp', label: 'Move up' }, { name: 'moveDown', label: 'Move down' }]}
-            onAccessibilityAction={(e) => onMove(i, e.nativeEvent.actionName === 'moveUp' ? i - 1 : i + 1)}
-            onLongPress={web ? undefined : drag}
-            onPressIn={web ? drag : undefined}
-            // @ts-expect-error onKeyDown is web-only (react-native-web)
-            onKeyDown={onKeyDown}
-            disabled={active}
-            style={[styles.handle, dragGripStyle]}
-          >
-            <IconSymbol name="line.3.horizontal" size={18} color={ds.c.muted} />
-          </PressableScale>
+          {grip(<DragGrip name={drink.name} onMove={step} lifted={lifted} />)}
           <PressableScale role="button" accessibilityLabel={`${drink.name}: move, open, delete`} aria-haspopup="menu" onPress={onOpen} style={styles.body}>
           <MenuDrawing itemId={drink.id} size="row" ink={ink} fallback={{ imageUrl: drink.imageUrl, glass: drink.glass }} />
           <View style={styles.text}>
@@ -128,16 +110,14 @@ export function EditRow({ drink, index: i, count, ink, isNew, active, drag, onRe
         {open && pricing ? <PriceEditor drink={drink} alsoOn={alsoOn} pricing={pricing} onClose={() => setPricing(false)} /> : null}
       </View>
       {dnd?.slot === 'after' ? <DropSlot /> : null}
-    </ScaleDecorator>
+    </>
   );
 }
 
 const styles = StyleSheet.create({
   wrap: { borderTopWidth: StyleSheet.hairlineWidth },
   row: { flexDirection: 'row', alignItems: 'center', gap: space.md, paddingVertical: space.sm + 4 },
-  lifted: { borderRadius: radius.control, borderTopColor: 'transparent' },
   held: { opacity: 0.4 },
-  handle: { width: HANDLE, height: layout.minTapTarget, marginRight: -space.xs, alignItems: 'center', justifyContent: 'center' },
   body: { flex: 1, flexDirection: 'row', alignItems: 'center', gap: space.md, minWidth: 0 },
   text: { flex: 1, gap: 2, minWidth: 0 },
   nameRow: { flexDirection: 'row', alignItems: 'center', gap: space.sm, flexWrap: 'wrap' },

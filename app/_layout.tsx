@@ -120,7 +120,7 @@ function RootLayoutNav() {
             height: 100%;
           }
           #root { display: flex; flex-direction: column; }
-          a, button, [role="button"], [role="link"] {
+          a, button:not([data-drag-grip]), [role="button"]:not([data-drag-grip]), [role="link"] {
             cursor: pointer !important;
           }
         `}} />

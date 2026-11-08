@@ -74,6 +74,18 @@ export function Eyebrow({ children, heading }: { children: string; /** It heads 
   );
 }
 
+/** The drink desk's rows: a label on the left and its choices beside it, as the board lays out method, glass, ice and finish. */
+export function DeskRow({ label, children }: { label: string; children: ReactNode }) {
+  return (
+    <View style={styles.row}>
+      <View style={styles.rowLabel}>
+        <Eyebrow>{label}</Eyebrow>
+      </View>
+      <View style={[styles.flex, styles.rowBody]}>{children}</View>
+    </View>
+  );
+}
+
 interface FooterProps {
   /** "Next: method", or the save on the last step. */
   nextLabel: string;
@@ -118,4 +130,7 @@ const styles = StyleSheet.create({
   buttons: { flexDirection: 'row', gap: space.md },
   flex: { flex: 1 },
   compact: { minWidth: 220 },
+  row: { flexDirection: 'row', gap: space.md },
+  rowLabel: { width: 100, paddingTop: space.sm },
+  rowBody: { gap: space.lg },
 });

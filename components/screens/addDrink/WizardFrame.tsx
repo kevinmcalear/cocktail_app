@@ -4,6 +4,7 @@ import Animated, { useAnimatedStyle, useReducedMotion, useSharedValue, withSprin
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import { Caption, Title, useBreakpoint, useDs, useGutter } from '@/components/ds';
+import { DragScrollView } from '@/components/ds/dragScroll';
 import { WebHead } from '@/components/WebHead';
 import { space, springs } from '@/constants/tokens';
 import { useIsWideWeb } from '@/hooks/useIsWideWeb';
@@ -172,19 +173,19 @@ export function WizardFrame({ testID, pageTitle, embedded, overNav, band, stepKe
         {(statusBar) => (
           <View style={[styles.column, page && styles.pageColumn, besideNav && styles.left, column && !page && { paddingTop: embedded ? space.lg : statusBar + space.lg, paddingHorizontal: gutter }, over && { paddingTop: statusBar + space.sm }, { paddingBottom: page ? 0 : bottom }]}>
             {page ? (
-              <ScrollView ref={scroller} keyboardShouldPersistTaps="handled" style={styles.flex} contentContainerStyle={[styles.page, { paddingHorizontal: gutter }]}>
+              <DragScrollView ref={scroller} keyboardShouldPersistTaps="handled" style={styles.flex} contentContainerStyle={[styles.page, { paddingHorizontal: gutter }]}>
                 {band({ top: space.lg, side: space.lg, rounded: true, folded: false })}
                 <SlideIn key={stepKey} direction={direction}>
                   <Heading eyebrow={eyebrow} title={title} intro={intro} aside={aside} />
                   {children}
                   <FooterInline.Provider value>{footer}</FooterInline.Provider>
                 </SlideIn>
-              </ScrollView>
+              </DragScrollView>
             ) : (
               <>
                 {/* Each piece goes to null in place while a search takes over, so the step (and its focused field) stays mounted. */}
                 {over ? null : band({ top: column ? space.lg : statusBar + space.sm, side: column ? space.lg : gutter, rounded: column, folded: typing && !column })}
-                <ScrollView
+                <DragScrollView
                   ref={scroller}
                   keyboardShouldPersistTaps="handled"
                   onScroll={onScroll}
@@ -196,7 +197,7 @@ export function WizardFrame({ testID, pageTitle, embedded, overNav, band, stepKe
                     {over ? null : <Heading eyebrow={eyebrow} title={title} intro={intro} aside={aside} />}
                     {children}
                   </SlideIn>
-                </ScrollView>
+                </DragScrollView>
                 {over ? null : <View style={{ paddingHorizontal: side }}>{footer}</View>}
               </>
             )}

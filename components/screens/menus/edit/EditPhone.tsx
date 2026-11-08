@@ -3,7 +3,7 @@ import { StyleSheet, View, type NativeScrollEvent, type NativeSyntheticEvent } f
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import { Caption, GlassSurface, useBreakpoint, useDs, useGutter } from '@/components/ds';
-import { FormScrollContainer } from '@/components/recipe/FormScrollContainer';
+import { DragScrollView } from '@/components/ds/dragScroll';
 import { menuCover, radius, space } from '@/constants/tokens';
 
 import { MenuPageHead } from '../page/MenuPageHead';
@@ -34,8 +34,7 @@ export function EditPhone(props: EditViewProps) {
   const column = { paddingHorizontal: gutter, maxWidth: wide ? menuCover.column : undefined, width: '100%', alignSelf: 'center' } as const;
   return (
     <View style={[styles.screen, { backgroundColor: ds.c.ground }]}>
-      <FormScrollContainer
-        // ponytail: on a phone the drag lists' container keeps onScroll for itself, so the bar changes when a scroll settles; a live change wants the container's scroll offset (outerScrollOffset).
+      <DragScrollView
         onScroll={track}
         onScrollEndDrag={track}
         onMomentumScrollEnd={track}
@@ -69,7 +68,7 @@ export function EditPhone(props: EditViewProps) {
           <EditSections editor={editor} ink={look.ink} />
           <EditAfter editor={editor} />
         </View>
-      </FormScrollContainer>
+      </DragScrollView>
       <View pointerEvents="box-none" style={styles.pinned}>
         <MenuPinnedBar name={menu.name.trim() || 'Untitled menu'} onBack={editor.leave} onShare={null} onMedia={!!menu.coverUrl && ds.scheme === 'dark' && !collapsed} collapsed={collapsed ? { title: menu.name.trim() || 'Untitled menu' } : null} top={insets.top} gutter={gutter} />
       </View>

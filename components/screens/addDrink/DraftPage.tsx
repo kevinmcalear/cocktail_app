@@ -4,7 +4,7 @@ import { ScrollView, StyleSheet, View, type TextInput } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import { Caption, GlassButton, PressableScale, TextLink, useBreakpoint, useDs, useGutter } from '@/components/ds';
-import { FormScrollContainer } from '@/components/recipe/FormScrollContainer';
+import { DragScrollView } from '@/components/ds/dragScroll';
 import { IconSymbol } from '@/components/ui/icon-symbol';
 import { WebHead } from '@/components/WebHead';
 import { layout, radius, space } from '@/constants/tokens';
@@ -81,7 +81,7 @@ export function DraftPage({ lead, ...p }: DrinkDeskProps & { lead?: ReactNode })
           const top = statusBar + space.md;
           return (
             <>
-              <FormScrollContainer
+              <DragScrollView
                 ref={scroller}
                 keyboardShouldPersistTaps="handled"
                 onScroll={onScroll}
@@ -160,7 +160,7 @@ export function DraftPage({ lead, ...p }: DrinkDeskProps & { lead?: ReactNode })
                     </>
                   )}
                 </View>
-              </FormScrollContainer>
+              </DragScrollView>
               {over ? null : (
                 <View style={[styles.bar, { top, left: gutter, right: gutter }]}>
                   <GlassButton icon="chevron.left" accessibilityLabel={`Back to ${menu ?? 'where you were'}. Your draft is kept`} onPress={p.onClose} />

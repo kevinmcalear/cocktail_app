@@ -1,17 +1,14 @@
-import { useRef, useState, type ReactNode } from 'react';
+import { useState, type ReactNode } from 'react';
 import { StyleSheet, View } from 'react-native';
 
 import { Body, Button, Caption, Chip, Field, PressableScale, useDs } from '@/components/ds';
-import { dragGripStyle } from '@/components/recipe/FormScrollContainer';
+import { DragGrip, DragList, type DragRowState } from '@/components/ds/DragList';
 import type { GlyphName } from '@/components/ui/glyphs';
 import { IconSymbol } from '@/components/ui/icon-symbol';
 import { font, layout, radius, space } from '@/constants/tokens';
-import { dropIndex } from '@/lib/dropIndex';
 import { timerFromText } from '@/lib/makeSteps';
 import { keepsText, leadText, STORES, type PrepDraft } from '@/lib/prepKinds';
 import { timerLabel } from '@/lib/scale';
-
-import { DragRow, GripDots } from '../DragRow';
 
 interface StepRow {
   key: string;
@@ -26,8 +23,6 @@ const pill = (seconds: number) => (seconds >= DAY && seconds % DAY === 0 ? `${se
 
 const KEEPS = [3 * 24, 7 * 24, 14 * 24, 21 * 24, 28 * 24, 56 * 24, 26 * 7 * 24];
 const LEADS = [20, 60, 24 * 60, 2 * 24 * 60, 3 * 24 * 60, 7 * 24 * 60];
-/** The grip column (dots and number): only a touch there starts a drag, so the page still scrolls over the steps. */
-const GRIP = layout.minTapTarget + space.lg;
 
 type Tile = 'keeps' | 'store' | 'start';
 
@@ -60,73 +55,46 @@ export function PrepMethodStep({ draft, set, phrase }: { draft: PrepDraft; set: 
     set({ steps: next.filter((s) => s.body.trim()).map((s) => ({ body: s.body, timer_seconds: s.timer })) });
   };
   const write = (key: string, body: string) => changeSteps(steps.map((s) => (s.key === key ? { ...s, body, timer: timerFromText(body) ?? s.timer } : s)));
-  const move = (from: number, to: number) => {
-    if (to < 0 || to >= steps.length) return;
-    const next = [...steps];
-    const [s] = next.splice(from, 1);
-    next.splice(to, 0, s);
-    changeSteps(next);
-  };
   const keeps = KEEPS.includes(draft.keepsHours ?? -1) || draft.keepsHours === null ? KEEPS : [...KEEPS, draft.keepsHours].sort((a, b) => a - b);
   const stores: string[] = STORES.includes(draft.storage as (typeof STORES)[number]) || !draft.storage ? [...STORES] : [...STORES, draft.storage];
   const leads = LEADS.includes(draft.leadMinutes ?? -1) || draft.leadMinutes === null ? LEADS : [...LEADS, draft.leadMinutes].sort((a, b) => a - b);
   const keepsNow = keepsText(draft);
 
-  // Each row's height, for where a dragged step lands.
-  const heights = useRef<Record<string, number>>({});
-  const drop = (from: number, dy: number) => move(from, dropIndex(from, dy, steps.map((x) => heights.current[x.key] ?? 0)));
-
-  const renderStep = (s: StepRow, i: number) => (
-    <DragRow key={s.key} index={i} onDrop={drop} onHeight={(h) => (heights.current[s.key] = h)}>
-      {(grip, isActive) => (
-        <View role="listitem" style={[styles.step, { borderBottomColor: ds.c.line, backgroundColor: isActive ? ds.c.raised : ds.c.ground }]}>
-          {grip(
-            <PressableScale
-              role="button"
-              accessibilityLabel={`Move step ${i + 1}. Drag, or use the arrow keys`}
-              // @ts-expect-error onKeyDown is web-only (react-native-web)
-              onKeyDown={(e: { key: string; preventDefault: () => void }) => {
-                const to = e.key === 'ArrowUp' ? i - 1 : e.key === 'ArrowDown' ? i + 1 : null;
-                if (to === null) return;
-                e.preventDefault();
-                move(i, to);
-              }}
-              style={[styles.grip, dragGripStyle]}
-            >
-              <GripDots />
-              <View style={[styles.number, { backgroundColor: ds.c.raised }]}>
-                <Caption>{String(i + 1)}</Caption>
-              </View>
-            </PressableScale>
-          )}
-          <View style={styles.flex}>
-            {editing === s.key ? (
-              <View style={styles.editing}>
-                <View style={styles.flex}>
-                  <Field label={`Step ${i + 1}`} hideLabel value={s.body} onChangeText={(body) => write(s.key, body)} placeholder="What to do" multiline autoFocus />
-                </View>
-                <PressableScale accessibilityLabel={`Done with step ${i + 1}`} onPress={() => setEditing(null)} style={styles.remove}>
-                  <IconSymbol name="checkmark" size={18} color={ds.c.ink} />
-                </PressableScale>
-                <PressableScale accessibilityLabel={`Remove step ${i + 1}`} onPress={() => changeSteps(steps.filter((x) => x.key !== s.key))} style={styles.remove}>
-                  <IconSymbol name="trash" size={18} color={ds.c.muted} />
-                </PressableScale>
-              </View>
-            ) : (
-              <PressableScale role="button" accessibilityLabel={`Step ${i + 1}: ${s.body || 'empty'}. Change it`} onPress={() => setEditing(s.key)} style={styles.text}>
-                <Body tone={s.body ? 'ink' : 'muted'}>{s.body || 'What to do'}</Body>
-                {s.timer ? (
-                  <View style={[styles.pill, { borderColor: ds.c.lineStrong }]}>
-                    <IconSymbol name="clock" size={13} color={ds.c.ink} />
-                    <Caption style={styles.pillText}>{pill(s.timer)}</Caption>
-                  </View>
-                ) : null}
-              </PressableScale>
-            )}
+  const renderStep = (s: StepRow, { index: i, lifted, grip, move }: DragRowState) => (
+    <View style={[styles.step, { borderBottomColor: ds.c.line }]}>
+      {grip(
+        <DragGrip name={`step ${i + 1}`} label={`Move step ${i + 1}`} onMove={move} lifted={lifted}>
+          <View style={[styles.number, { backgroundColor: ds.c.raised }]}>
+            <Caption>{String(i + 1)}</Caption>
           </View>
-        </View>
+        </DragGrip>
       )}
-    </DragRow>
+      <View style={styles.flex}>
+        {editing === s.key ? (
+          <View style={styles.editing}>
+            <View style={styles.flex}>
+              <Field label={`Step ${i + 1}`} hideLabel value={s.body} onChangeText={(body) => write(s.key, body)} placeholder="What to do" multiline autoFocus />
+            </View>
+            <PressableScale accessibilityLabel={`Done with step ${i + 1}`} onPress={() => setEditing(null)} style={styles.remove}>
+              <IconSymbol name="checkmark" size={18} color={ds.c.ink} />
+            </PressableScale>
+            <PressableScale accessibilityLabel={`Remove step ${i + 1}`} onPress={() => changeSteps(steps.filter((x) => x.key !== s.key))} style={styles.remove}>
+              <IconSymbol name="trash" size={18} color={ds.c.muted} />
+            </PressableScale>
+          </View>
+        ) : (
+          <PressableScale role="button" accessibilityLabel={`Step ${i + 1}: ${s.body || 'empty'}. Change it`} onPress={() => setEditing(s.key)} style={styles.text}>
+            <Body tone={s.body ? 'ink' : 'muted'}>{s.body || 'What to do'}</Body>
+            {s.timer ? (
+              <View style={[styles.pill, { borderColor: ds.c.lineStrong }]}>
+                <IconSymbol name="clock" size={13} color={ds.c.ink} />
+                <Caption style={styles.pillText}>{pill(s.timer)}</Caption>
+              </View>
+            ) : null}
+          </PressableScale>
+        )}
+      </View>
+    </View>
   );
 
   const tiles: { id: Tile; label: string; value: string }[] = [
@@ -163,9 +131,7 @@ export function PrepMethodStep({ draft, set, phrase }: { draft: PrepDraft; set: 
           </PressableScale>
         ))}
       </View>
-      <View role="list" aria-label="Steps">
-        {steps.map(renderStep)}
-      </View>
+      <DragList label="Steps" data={steps} keyOf={(x) => x.key} onReorder={changeSteps} renderRow={renderStep} />
       <Button
         label="Add a step"
         variant="secondary"
@@ -228,7 +194,6 @@ function Choices({ label, children }: { label: string; children: ReactNode }) {
 const styles = StyleSheet.create({
   stack: { gap: space.lg },
   step: { flexDirection: 'row', alignItems: 'flex-start', gap: space.sm, paddingVertical: space.sm, borderBottomWidth: StyleSheet.hairlineWidth },
-  grip: { width: GRIP, minHeight: layout.minTapTarget, flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: space.md },
   number: { width: 24, height: 24, borderRadius: radius.pill, alignItems: 'center', justifyContent: 'center' },
   flex: { flex: 1 },
   text: { minHeight: layout.minTapTarget, justifyContent: 'center', gap: space.xs, paddingVertical: space.xs },

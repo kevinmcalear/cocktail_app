@@ -5,7 +5,7 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import { CategoryPickerModal, type CategoryPickerHandle } from '@/components/CategoryPickerModal';
 import { Button, Caption, Chip, Field, GlassButton, Headline, useBreakpoint, useDs, useGutter } from '@/components/ds';
-import { FormScrollContainer } from '@/components/recipe/FormScrollContainer';
+import { DragScrollView } from '@/components/ds/dragScroll';
 import { CouldNotLoad } from '@/components/screens/safety/NotAvailable';
 import { displayFaces, font, radius, space, type } from '@/constants/tokens';
 import { useBeerWineDraftEditor } from '@/hooks/useBeerWineDraftEditor';
@@ -173,7 +173,7 @@ function BeerWineEditPage({ editor, onExit }: { editor: Editor; onExit: () => vo
   return (
     <View style={[styles.screen, { backgroundColor: ds.c.ground }]}>
       {wide ? (
-        <FormScrollContainer keyboardShouldPersistTaps="handled" contentContainerStyle={[styles.wide, { paddingTop: insets.top + space.xl }]}>
+        <DragScrollView keyboardShouldPersistTaps="handled" contentContainerStyle={[styles.wide, { paddingTop: insets.top + space.xl }]}>
           <View style={styles.left}>
             <View style={styles.card}>{hero(440)}</View>
           </View>
@@ -182,13 +182,13 @@ function BeerWineEditPage({ editor, onExit }: { editor: Editor; onExit: () => vo
             {body}
             <Button label="Discard changes and leave" variant="ghost" onPress={() => void leave()} />
           </View>
-        </FormScrollContainer>
+        </DragScrollView>
       ) : (
         <>
-          <FormScrollContainer keyboardShouldPersistTaps="handled" contentContainerStyle={{ paddingBottom: insets.bottom + 120 }}>
+          <DragScrollView keyboardShouldPersistTaps="handled" contentContainerStyle={{ paddingBottom: insets.bottom + 120 }}>
             {hero(PHONE_HERO + top)}
             <View style={[styles.phoneBody, { paddingHorizontal: gutter }]}>{body}</View>
-          </FormScrollContainer>
+          </DragScrollView>
           <View style={[styles.top, { top: top + space.sm, left: gutter, right: gutter }]}>{toolbar}</View>
           <View style={[styles.bottom, { bottom: insets.bottom + space.md, left: gutter, right: gutter }]}>
             <EditBottomBar onPhoto={() => void editor.pickImage()} onMore={() => setSheet('more')} moreHint={`More: photos, who can see this ${noun}, discard${draft ? ', publish, delete' : ''}`} />

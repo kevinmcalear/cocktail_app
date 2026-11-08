@@ -3,7 +3,7 @@ import { StyleSheet, View } from 'react-native';
 import Animated, { useAnimatedStyle, useSharedValue, withTiming } from 'react-native-reanimated';
 
 import { Body, Caption, useDs } from '@/components/ds';
-import { backbar, font, radius, space } from '@/constants/tokens';
+import { backbar, font, lift, radius, space } from '@/constants/tokens';
 import { withAlpha } from '@/lib/color';
 
 /** The tag's point, down at the card. */
@@ -57,7 +57,7 @@ export function useHeldStyle(lifted?: boolean, combineWith?: string | null, drop
 
 const styles = StyleSheet.create({
   // Being dragged: a card of its own, a little in from the edges, with a line round it (the accent when letting go combines).
-  lifted: { borderWidth: 1.5, borderBottomWidth: 1.5, borderRadius: radius.control, marginHorizontal: space.sm, paddingVertical: space.sm, paddingHorizontal: space.sm, alignSelf: 'stretch', shadowColor: backbar.dark.ground, shadowOffset: { width: 0, height: 14 }, shadowOpacity: 0.45, shadowRadius: 22, elevation: 8 },
+  lifted: { borderWidth: lift.border, borderBottomWidth: lift.border, borderRadius: radius.control, marginHorizontal: space.sm, paddingVertical: space.sm, paddingHorizontal: space.sm, alignSelf: 'stretch', ...lift.shadow },
   // Lit up to drop on, as drawn: a dashed accent edge a little wider than the row.
   target: { borderWidth: 1.5, borderStyle: 'dashed', borderRadius: radius.control, marginHorizontal: -space.sm, paddingHorizontal: space.sm },
   wrap: { position: 'absolute', left: 0, right: 0, bottom: '100%', marginBottom: space.xs, alignItems: 'center', pointerEvents: 'none' },

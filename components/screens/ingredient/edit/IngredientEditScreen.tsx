@@ -5,7 +5,7 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import { GlassButton, useBreakpoint, useDs, useGutter } from '@/components/ds';
 import { Crumbs, type Crumb } from '@/components/nav/PageFrame';
-import { FormScrollContainer } from '@/components/recipe/FormScrollContainer';
+import { DragScrollView } from '@/components/ds/dragScroll';
 import { usePrepCalc } from '@/components/tools/ToolsSheet';
 import { radius, space } from '@/constants/tokens';
 import { useActiveVenue } from '@/hooks/useActiveVenue';
@@ -164,7 +164,7 @@ function Page({ edit, savedId, onExit, inSheet }: { edit: IngredientEdit; savedI
   return (
     <View style={[styles.screen, { backgroundColor: ds.c.ground }]}>
       {wide ? (
-        <FormScrollContainer keyboardShouldPersistTaps="handled" contentContainerStyle={{ paddingHorizontal: gutter, paddingTop: top + space.lg, paddingBottom: space.xxxl, gap: space.lg }}>
+        <DragScrollView keyboardShouldPersistTaps="handled" contentContainerStyle={{ paddingHorizontal: gutter, paddingTop: top + space.lg, paddingBottom: space.xxxl, gap: space.lg }}>
           <View style={styles.headRow}>
             <Crumbs trail={savedId ? [...trail, { label: name, href: `/ingredient/${savedId}` as Href }] : trail} />
             <View style={styles.flex}>{toolbar}</View>
@@ -176,13 +176,13 @@ function Page({ edit, savedId, onExit, inSheet }: { edit: IngredientEdit; savedI
             </View>
             <View style={styles.main}>{body}</View>
           </View>
-        </FormScrollContainer>
+        </DragScrollView>
       ) : (
         <>
-          <FormScrollContainer keyboardShouldPersistTaps="handled" contentContainerStyle={{ paddingBottom: insets.bottom + 120 }}>
+          <DragScrollView keyboardShouldPersistTaps="handled" contentContainerStyle={{ paddingBottom: insets.bottom + 120 }}>
             {hero(PHONE_HERO + top)}
             <View style={[styles.phoneBody, { backgroundColor: ds.c.ground, paddingHorizontal: gutter }]}>{body}</View>
-          </FormScrollContainer>
+          </DragScrollView>
           <View style={[styles.float, { top: top + space.sm, left: gutter, right: gutter }]}>{toolbar}</View>
           <View style={[styles.float, { bottom: insets.bottom + space.md, left: gutter, right: gutter }]}>
             {isPrep ? (

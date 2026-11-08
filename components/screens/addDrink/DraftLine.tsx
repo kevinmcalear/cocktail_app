@@ -2,13 +2,13 @@ import { useState, type ReactNode } from 'react';
 import { StyleSheet, View } from 'react-native';
 
 import { Body, Caption, DsText, PressableScale, useDs } from '@/components/ds';
+import { DragGrip } from '@/components/ds/DragList';
 import { font, layout, radius, space, STATUS, type } from '@/constants/tokens';
 import { readableAccent, withAlpha } from '@/lib/color';
 import type { WizardLine } from '@/lib/drinkWizard';
 import { isLooseSalt } from '@/lib/unitGuess';
 
 import { HeldTag, useHeldStyle } from './CombineTag';
-import { LineGrip } from './DragRow';
 import { unmatched } from './LineChoices';
 import { Prompt } from './Prompt';
 
@@ -86,7 +86,7 @@ export function DraftLine({ line, row, write, hint, grip, onMove, lifted, dropTa
         <HeldTag name={line.name} lifted={lifted} combineWith={combineWith} moveTo={moveTo} />
         <View style={styles.row}>
           {/* The grip keeps its place in the tree, so the drag holding it carries on as the line folds. */}
-          {grip?.(<LineGrip name={line.name} onMove={onMove} />)}
+          {grip?.(<DragGrip name={line.name} onMove={onMove} lifted={lifted} />)}
           <PressableScale role="button" accessibilityLabel={`${said}${fresh ? ', a house-made to write' : ''}. Edit`} onPress={() => setOpen(true)} style={styles.line}>
             <View style={styles.amount}>
               <Body style={[styles.figure, { color: missing ? amber : ds.c.ink }]}>{top ? 'Top' : missing ? '?' : line.amount}</Body>

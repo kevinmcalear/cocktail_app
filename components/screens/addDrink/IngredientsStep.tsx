@@ -2,6 +2,7 @@ import { useRef, useState, type ReactNode } from 'react';
 import { Platform, StyleSheet, View } from 'react-native';
 
 import { Body, Button, Caption, useDs } from '@/components/ds';
+import { DragRow } from '@/components/ds/DragRow';
 import { radius, space } from '@/constants/tokens';
 import { useExpiring } from '@/hooks/useExpiring';
 import { linePrep, perDrinkLines } from '@/lib/batchLines';
@@ -20,7 +21,6 @@ import { nameFor } from '@/lib/techniques/template';
 import { getPreferredUnit } from '@/store/useSettingsStore';
 
 import type { TrailItem } from './Trail';
-import { DragRow, SpecRows } from './DragRow';
 import type { DraftLineParts } from './DraftLine';
 import { NudgeCard } from './NudgeCard';
 import { BalanceCard } from './GoesWith';
@@ -30,6 +30,7 @@ import { LineChoices, unmatched } from './LineChoices';
 import { LineRow } from './LineRow';
 import { PasteSpecPanel } from './PasteSpecPanel';
 import { SalineHint } from './SalineHint';
+import { SpecRows } from './SpecRows';
 import type { LineStock } from './StockToggle';
 import { useCombineDrop } from './useCombineDrop';
 import { useMakePrep } from './useMakePrep';
@@ -196,7 +197,7 @@ export function IngredientsStep({ draft, set, ingredients, loading, aliases = []
             const l = draft.lines[i];
             const place = { dropTarget: combine.target === i ? combine.holding : null, combineWith: combine.combineWith(i), moveTo: combine.moveTo ? partName(combine.moveTo) : null, onMove: (by: -1 | 1) => combine.step(row, by), detail: lineDetail?.(l) };
             return (
-              <DragRow key={l.key} index={row} fold onDrop={combine.onDrop} onMove={combine.onMove} shift={combine.shift(row)} flat={combine.combineWith(i) !== null} onHeight={(h) => combine.height({ line: i }, h)}>
+              <DragRow key={l.key} index={row} fold onDrop={combine.onDrop} onMove={combine.onMove} onCancel={combine.onCancel} shift={combine.shift(row)} flat={combine.combineWith(i) !== null} onHeight={(h) => combine.height({ line: i }, h)}>
                 {(grip, lifted) =>
                   // The lines keep their size while the next one is searched: folding them read as squeezed (Eddie, 16 Oct).
                   l.key === swapKey ? (

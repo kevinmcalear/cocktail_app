@@ -18,8 +18,6 @@ jest.mock('expo-router', () => ({ useRouter: () => ({ push: mockPush }) }));
 jest.mock('@/components/ds/DrawnSketch', () => ({ DrawnSketch: () => null }));
 jest.mock('@/hooks/useSuggestedPrice', () => ({ useSuggestedPrice: () => null }));
 jest.mock('../page/MenuDrawing', () => ({ MenuDrawing: () => null }));
-// The plain drag list: the nested one (native, inside the editor's scroll container) loops under Jest's gesture mocks.
-jest.mock('@/components/recipe/FormScrollContainer', () => ({ ...jest.requireActual('@/components/recipe/FormScrollContainer'), supportsNestableDrag: false }));
 
 const drink = (id: string, name: string): MenuDrink => ({ id, name, kind: 'cocktail', line: '', price: '12', imageUrl: null, isSketch: false, glass: null });
 const section: Section = { key: 's1', id: 's1', name: 'Stirred', minItems: 0, maxItems: null, allowedTypes: [], drinks: [drink('a', 'Americano'), drink('b', 'Pellican'), drink('c', 'Dirty Martini')] };

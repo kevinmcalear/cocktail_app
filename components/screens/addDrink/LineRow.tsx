@@ -2,6 +2,7 @@ import { useState, type ReactNode } from 'react';
 import { Platform, StyleSheet, TextInput, View } from 'react-native';
 
 import { Body, Caption, DsText, IngredientThumb, PressableScale, useBreakpoint, useDs } from '@/components/ds';
+import { DragGrip } from '@/components/ds/DragList';
 import { IconSymbol } from '@/components/ui/icon-symbol';
 import { font, layout, radius, space, type } from '@/constants/tokens';
 import { convertPour, FINISH_UNITS, QUICK_UNITS, stepAmount, type WizardLine } from '@/lib/drinkWizard';
@@ -10,7 +11,6 @@ import { tidyAmount } from '@/lib/specDefaults';
 import { techniqueById } from '@/lib/techniques';
 
 import { HeldTag, useHeldStyle } from './CombineTag';
-import { LineGrip } from './DragRow';
 import { WizardChip } from './WizardChrome';
 
 /** A spec line's units: the pours, then the finishes (a sprig, grated), so the editor's spec can garnish too (Eddie tf-062). */
@@ -99,7 +99,7 @@ export function LineRow({ line, onChange, onRemove, onSwap, onEditPrep, units: u
     >
       <HeldTag name={line.name} lifted={lifted} combineWith={combineWith} moveTo={moveTo} />
       <View style={styles.row}>
-        {grip?.(<LineGrip name={line.name} onMove={onMove} />)}
+        {grip?.(<DragGrip name={line.name} onMove={onMove} lifted={lifted} />)}
         <IngredientThumb id={line.id} name={line.name} size={lifted ? 32 : 40} />
         {/* Lifted, the line folds to its name and pour, so the lines under it show (Kevin, 27 Oct); what letting go does is the tag above it. The grip keeps its place in the tree, so the drag holding it carries on. */}
         {lifted ? (
