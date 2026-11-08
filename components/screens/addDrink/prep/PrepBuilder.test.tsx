@@ -7,7 +7,7 @@ import { PrepBuilder } from './PrepBuilder';
 
 // The paper band's View as pill reads the signed-in person's prefs; off here.
 jest.mock('@/components/ViewAsBanner', () => ({ ViewAsPill: () => null }));
-jest.mock('@/hooks/useNearIngredients', () => ({ useNearIngredients: () => [] }));
+jest.mock('@/hooks/useNearIngredients', () => ({ useNearIngredients: () => [], useNearIngredientsChecked: () => ({ near: [], checking: false }) }));
 jest.mock('@/hooks/useKit', () => ({ useKit: () => ({ owned: [], kit: new Set(), toggle: jest.fn() }) }));
 const mockAdd = jest.fn();
 jest.mock('@/hooks/useBarKit', () => ({ useMakingKit: () => ({ kit: new Set(['whipper']), where: 'My Bar', add: mockAdd }) }));

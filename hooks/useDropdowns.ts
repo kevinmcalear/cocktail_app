@@ -171,7 +171,8 @@ export function useIngredientExtras(enabled: boolean) {
   return useQuery({
     queryKey: dropdownKeys.ingredientExtras,
     enabled,
-    meta: { persist: false },
+    // Saved in a file, as the catalog's own rows are: a picker knows "1:1 sugar syrup" is Simple Syrup before the network answers.
+    meta: { persist: true },
     queryFn: async () => {
       // A page at a time: the server sends 1,000 rows at most, and there are thousands of aliases
       // (one past the first 1,000 left "Del Maguey Vida mezcal" a new bottle in a pasted spec).

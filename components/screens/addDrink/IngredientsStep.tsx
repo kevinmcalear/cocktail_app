@@ -18,6 +18,7 @@ import { capitalizeFirst } from '@/lib/stringUtils';
 import type { Technique } from '@/lib/techniques';
 import { looksMadeInHouse } from '@/lib/techniques/makeIt';
 import { nameFor } from '@/lib/techniques/template';
+import { rememberLineUnit } from '@/store/rememberLineUnit';
 import { getPreferredUnit } from '@/store/useSettingsStore';
 
 import type { TrailItem } from './Trail';
@@ -117,8 +118,9 @@ export function IngredientsStep({ draft, set, ingredients, loading, aliases = []
     prep.house(line, nameFor(t, { base: line.name, adjunct }), t.id, ask);
   };
 
-  // A pour typed with the name ("30 pommeau") is the line's; otherwise it starts at a likely one.
+  // A pour typed with the name ("30 pommeau") is the line's, else it starts at a likely one; "1 oz lemon" makes oz yours, as a unit picked on a line does.
   const lineFor = (pick: WizardPick, pour?: TypedPour): WizardLine => {
+    if (forDrink) rememberLineUnit(pour?.unit);
     const guess = pour ? typedUnit(pick.name, pour.unit, getPreferredUnit()) : guessUnit(pick.name, getPreferredUnit());
     // A house recipe is never topped (lib/unitGuess.ts prepUnit).
     const unit = !forDrink && guess === 'top' ? getPreferredUnit() : guess;
@@ -233,7 +235,7 @@ export function IngredientsStep({ draft, set, ingredients, loading, aliases = []
                       onChange={(c) => change(l.key, c)}
                       onRemove={() => remove(l)}
                       onSwap={() => setSwapKey(l.key)}
-                      onEditPrep={() => prep.edit(l)}
+                      onEditPrep={() => prep.edit(l)} sticky={forDrink}
                       below={
                         <>
                           {lineBelow?.(l)}

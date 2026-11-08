@@ -1,6 +1,7 @@
 import assert from 'node:assert/strict';
 import { splitAmount } from './splitAmount';
 import { amountText, DEFAULT_UNIT, followBarUnit, isKnownUnit, overIce, savedUnit, unitLabel, RECIPE_UNITS } from './units';
+import { stickyUnit } from './stickyUnit';
 
 assert.equal(DEFAULT_UNIT, 'ml');
 assert.ok(RECIPE_UNITS.some((u) => u.value === 'ml'));
@@ -50,3 +51,13 @@ assert.deepEqual(followBarUnit({ units: null, checked: true }, 'cl'), { units: n
 assert.equal(savedUnit('ml'), null);
 assert.equal(savedUnit('oz'), 'oz');
 assert.equal(savedUnit(undefined), null);
+
+// ml or oz picked on a line sticks for the next lines and drinks; a dash, tbsp or cl doesn't, and your own unit again changes nothing.
+assert.equal(stickyUnit('oz', 'ml'), 'oz');
+assert.equal(stickyUnit('ml', 'oz'), 'ml');
+assert.equal(stickyUnit('ml', 'cl'), null);
+assert.equal(stickyUnit('oz', 'oz'), null);
+assert.equal(stickyUnit('tbsp', 'ml'), null);
+assert.equal(stickyUnit('dash', 'oz'), null);
+assert.equal(stickyUnit('cl', 'ml'), null);
+assert.equal(stickyUnit(null, 'ml'), null);
