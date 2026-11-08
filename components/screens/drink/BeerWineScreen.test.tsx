@@ -19,7 +19,7 @@ const lager = {
   name: 'Little Rye Lager',
   brand_maker: 'Bellwoods',
   abv: 4.8,
-  price: 9,
+  price: '9.5',
   description: 'Crisp and bready.',
   notes: 'Pour it in the pint, not the stein.',
   bar_id: null,
@@ -44,6 +44,7 @@ jest.mock('@/hooks/useActiveVenue', () => ({ useActiveVenue: () => ({ venues: []
 jest.mock('@/hooks/useTrackRecent', () => ({ useTrackRecent: () => undefined, recentEntry: () => null }));
 jest.mock('@/hooks/useViewAs', () => ({ useCanEditItem: () => true, useEffectiveRole: () => 10 }));
 jest.mock('@/hooks/useTeamRole', () => ({ useTeamRole: () => null }));
+jest.mock('@/hooks/usePricing', () => ({ useShownCurrency: () => 'USD' }));
 jest.mock('@/hooks/useFlavor', () => ({ useItemFlavor: () => ({ data: null }), useMyTaste: () => ({ data: null }), useFlavorBaseline: () => ({ data: null }) }));
 
 test('a beer reads like a drink page: its style, maker, then tastes and the facts a menu gives', async () => {
@@ -53,7 +54,7 @@ test('a beer reads like a drink page: its style, maker, then tastes and the fact
   expect(screen.getByText('Beer · Lager')).toBeTruthy();
   expect(screen.getByText('Bellwoods')).toBeTruthy();
   expect(screen.getByLabelText('Strength: 4.8%')).toBeTruthy();
-  expect(screen.getByLabelText('Pour: $9')).toBeTruthy();
+  expect(screen.getByLabelText('Pour: $9.50')).toBeTruthy();
   expect(screen.getByText('Crisp and bready.')).toBeTruthy();
   expect(screen.getByText('Pour it in the pint, not the stein.')).toBeTruthy();
 

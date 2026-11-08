@@ -137,7 +137,7 @@ function Wizard({ kind, barId = null, initialName, embedded, onClose, onSaved, c
           if (warnings.length) Alert.alert('Saved, with one thing to fix', warnings.join('\n\n'));
           onSaved(id);
         },
-        onError: (e) => Alert.alert(`Couldn’t save the ${config.label.toLowerCase()}`, `${plainDbMessage(e) ?? e.message} Your draft is kept on this phone.`),
+        onError: (e) => Alert.alert(`Couldn’t save the ${config.label.toLowerCase()}`, `${plainDbMessage(e) ?? e.message} Your draft is kept on this device.`),
       }
     );
     if (queued) {

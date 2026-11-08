@@ -1,20 +1,36 @@
 /**
- * Keeping the drink wizard's drafts in the account as well as on the device
+ * Keeping the add wizards' drafts in the account as well as on the device
  * (make-anything-steps-3, step 9; hooks/useDraftSync does the reads and
- * writes). Pure: what a device keeps after reading the account's drafts,
- * and what it sends back.
+ * writes): a drink's, and a beer's or wine's (Kevin, 8 Nov: "Sync them too").
+ * Pure: what a device keeps after reading the account's drafts, and what it
+ * sends back.
  */
+import { EMPTY_BEER_WINE, filledBeerWine, type BeerWineDraft } from './beerWineDraft';
 import { hasContent, type WizardDraft, type WizardStep } from './drinkWizard';
 
-export interface KeptDraft {
-  draft: WizardDraft;
-  step: WizardStep;
+export interface KeptDraft<D extends object = WizardDraft, S extends string = WizardStep> {
+  draft: D;
+  step: S;
   updatedAt: number;
 }
 
-/** A draft as the account keeps it: no photos, which are files on the device they were picked on. */
-export function forAccount(k: KeptDraft): KeptDraft {
-  const { photos: _photos, ...draft } = k.draft;
+/**
+ * What syncing needs to know of a wizard's drafts: when one is worth
+ * keeping, and its fields that are files on the device they were picked on
+ * (never sent; the account's newer copy keeps this device's).
+ */
+export interface DraftRules<D extends object> {
+  filled: (draft: D) => boolean;
+  local: readonly (keyof D)[];
+}
+
+export const DRINK_DRAFTS: DraftRules<WizardDraft> = { filled: hasContent, local: ['photos'] };
+// A draft kept by an older version may lack a field: filled out first.
+export const BEER_WINE_DRAFTS: DraftRules<BeerWineDraft> = { filled: (d) => filledBeerWine({ ...EMPTY_BEER_WINE, ...d }), local: ['photo'] };
+
+/** A draft as the account keeps it: no photos. */
+export function forAccount<D extends object, S extends string>(k: KeptDraft<D, S>, rules: DraftRules<D>): KeptDraft<D, S> {
+  const draft = Object.fromEntries(Object.entries(k.draft).filter(([field]) => !rules.local.includes(field as keyof D))) as D;
   return { ...k, draft };
 }
 
@@ -24,18 +40,19 @@ export function forAccount(k: KeptDraft): KeptDraft {
  * device had seen there, was saved or started over elsewhere and goes; one
  * cleared here but not yet gone from the account stays gone, unless the
  * account's is newer. `push` is what the account lacks or has older: new
- * here, or changed while offline.
+ * here (a draft kept before syncing began, too), or changed while offline.
  * ponytail: "newer" is each device's clock; skew decides a tie between two
  * devices edited minutes apart. A server-stamped version is the upgrade.
  */
-export function mergeDrafts(
-  device: Record<string, KeptDraft>,
-  account: Record<string, KeptDraft>,
-  { seen, cleared, sentSince = [] }: { seen: readonly string[]; cleared: readonly { place: string; at: number }[]; sentSince?: readonly string[] }
-): { kept: Record<string, KeptDraft>; push: string[]; seen: string[] } {
+export function mergeDrafts<D extends object, S extends string>(
+  device: Record<string, KeptDraft<D, S>>,
+  account: Record<string, KeptDraft<D, S>>,
+  { seen, cleared, sentSince = [] }: { seen: readonly string[]; cleared: readonly { place: string; at: number }[]; sentSince?: readonly string[] },
+  rules: DraftRules<D>
+): { kept: Record<string, KeptDraft<D, S>>; push: string[]; seen: string[] } {
   // Cleared here: the account's copy stays out only if it's no newer than what was cleared (another device may have started a new one in that slot).
-  const gone = (slot: string, there: KeptDraft) => cleared.some((c) => c.place === slot && there.updatedAt <= c.at);
-  const kept: Record<string, KeptDraft> = {};
+  const gone = (slot: string, there: KeptDraft<D, S>) => cleared.some((c) => c.place === slot && there.updatedAt <= c.at);
+  const kept: Record<string, KeptDraft<D, S>> = {};
   const push: string[] = [];
   for (const [slot, here] of Object.entries(device)) {
     const there = account[slot];
@@ -43,9 +60,11 @@ export function mergeDrafts(
       // Sent after this read began: the read just doesn't have it yet.
       if (seen.includes(slot) && !sentSince.includes(slot)) continue;
       kept[slot] = here;
-      if (hasContent(here.draft)) push.push(slot);
-    } else if (there.updatedAt > here.updatedAt) kept[slot] = { ...there, draft: { ...there.draft, photos: here.draft.photos } };
-    else {
+      if (rules.filled(here.draft)) push.push(slot);
+    } else if (there.updatedAt > here.updatedAt) {
+      const files = Object.fromEntries(rules.local.map((field) => [field, here.draft[field]]));
+      kept[slot] = { ...there, draft: { ...there.draft, ...files } };
+    } else {
       kept[slot] = here;
       if (here.updatedAt > there.updatedAt) push.push(slot);
     }

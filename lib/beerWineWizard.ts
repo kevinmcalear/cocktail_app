@@ -1,17 +1,17 @@
 /**
  * The add-beer and add-wine wizard's draft and rules: one step per screen, a
- * plain-JSON draft kept on the device until it's saved, and the quick choices
- * each step offers. Screens: components/screens/addBeerWine; saving:
+ * plain-JSON draft (lib/beerWineDraft) kept until it's saved, and the quick
+ * choices each step offers. Screens: components/screens/addBeerWine; saving:
  * hooks/useCreateBeerWine.ts.
  */
 import { DRINK_COLORS, SKETCH_VERSION } from '../supabase/functions/_shared/sketchRules';
 
+import { BEER_WINE_STEPS, type BeerWineDraft, type BeerWineStep } from './beerWineDraft';
 import type { DrinkKind } from './drinkKinds';
 import { variantsOf, type GlassVariant } from './sketch/geometry';
 import type { SketchInputs } from './sketch/types';
 
-export const BEER_WINE_STEPS = ['name', 'maker', 'style', 'strength', 'glass', 'notes', 'price', 'review'] as const;
-export type BeerWineStep = (typeof BEER_WINE_STEPS)[number];
+export { BEER_WINE_STEPS, EMPTY_BEER_WINE, filledBeerWine, type BeerWineDraft, type BeerWineStep, type DraftPhoto } from './beerWineDraft';
 
 /** The steps for a place: the price only means something on a venue's list. */
 export const stepsFor = (atVenue: boolean): readonly BeerWineStep[] => BEER_WINE_STEPS.filter((s) => s !== 'price' || atVenue);
@@ -39,53 +39,6 @@ export const BEER_WINE_COPY: Record<DrinkKind, Record<BeerWineStep, Copy>> = {
     review: { title: 'Look right?', short: 'Review', optional: false },
   },
 };
-
-/** A local photo picked or taken in the wizard, uploaded when it's saved. */
-export interface DraftPhoto {
-  uri: string;
-  mimeType: string;
-}
-
-export interface BeerWineDraft {
-  name: string;
-  maker: string;
-  /** A style chip ("IPA", "Red"): saved as that category when the catalog has it, and it draws the colour. */
-  style: string | null;
-  /** A region chip ("Belgium", "France"), saved as its category. */
-  region: string | null;
-  /** ABV in percent, as typed. */
-  abv: string;
-  /** How the glass is drawn ('beer_tulip'); null is the style's usual glass. */
-  glassVariant: string | null;
-  /** Tasting words, in the order tapped; they lead the description. */
-  tasting: string[];
-  description: string;
-  price: string;
-  /** Where it's from ("Portland, USA"), filled from the catalog. */
-  origin: string | null;
-  photo: DraftPhoto | null;
-  /** "It's a different one" was said for this name (its nameKey): the name-taken card stays away for it. */
-  differentFrom: string | null;
-}
-
-export const EMPTY_BEER_WINE: BeerWineDraft = {
-  name: '',
-  maker: '',
-  style: null,
-  region: null,
-  abv: '',
-  glassVariant: null,
-  tasting: [],
-  description: '',
-  price: '',
-  origin: null,
-  photo: null,
-  differentFrom: null,
-};
-
-/** Anything typed or picked: closing asks "Leave it for now?" and keeps it, and Add lists it (Kevin, 8 Nov). */
-export const filledBeerWine = (d: BeerWineDraft) =>
-  !!(d.name.trim() || d.maker.trim() || d.style || d.region || d.abv || d.photo || d.tasting.length || d.description.trim() || d.price.trim());
 
 interface Style {
   name: string;
