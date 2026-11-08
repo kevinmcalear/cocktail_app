@@ -1,4 +1,5 @@
-import { keepPreviousData, useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
+import { keepPreviousData, useMutation, useMutationState, useQuery, useQueryClient } from '@tanstack/react-query';
+import { Alert } from 'react-native';
 
 import { imageIdFor, setItemImages } from '@/components/drink/drinkImages';
 import { pickerResult, usePickerTerm } from '@/hooks/useDiscover';
@@ -9,8 +10,11 @@ import { plainDbMessage } from '@/lib/dbError';
 import { DRINK_KINDS, type DrinkKind } from '@/lib/drinkKinds';
 import { likeExactly } from '@/lib/drinkWizard';
 import { formatPrice } from '@/lib/menus';
+import { nameKey } from '@/lib/sameName';
 import { capitalizeFirsts } from '@/lib/stringUtils';
 import { supabase } from '@/lib/supabase';
+import { toastDone } from '@/lib/toast';
+import { beerWinePlace, useBeerWineWizardStore } from '@/store/useBeerWineWizardStore';
 import { useRecentActivityStore } from '@/store/useRecentActivityStore';
 
 export interface CreateBeerWineInput {
@@ -18,6 +22,8 @@ export interface CreateBeerWineInput {
   draft: BeerWineDraft;
   /** The venue it's added at; null for one at home. */
   barId: string | null;
+  /** Saved with no signal (Save on this phone): it waits for signal, and says so when it's in, wherever you are by then. */
+  queued?: boolean;
 }
 
 const number = (s: string) => {
@@ -32,9 +38,23 @@ const number = (s: string) => {
  * extras: if they don't stick the item is still saved, and the caller hears
  * what didn't.
  */
+const CREATE_BEER_WINE = ['create-beer-wine'];
+
+/** A save from this place still waiting for signal: saving it again would add it twice. */
+export function useBeerWineWaiting(place: string) {
+  return useMutationState({
+    filters: { mutationKey: CREATE_BEER_WINE, status: 'pending' },
+    select: (m) => {
+      const v = m.state.variables as CreateBeerWineInput | undefined;
+      return v ? beerWinePlace(v.kind, v.barId) : null;
+    },
+  }).includes(place);
+}
+
 export function useCreateBeerWine() {
   const qc = useQueryClient();
   return useMutation({
+    mutationKey: CREATE_BEER_WINE,
     mutationFn: async ({ kind, draft, barId }: CreateBeerWineInput): Promise<{ id: string; warnings: string[] }> => {
       const config = DRINK_KINDS[kind];
       const warnings: string[] = [];
@@ -80,12 +100,27 @@ export function useCreateBeerWine() {
 
       useRecentActivityStore.getState().push(recentEntry(kind, id, capitalizeFirsts(draft.name), { barId }));
       void qc.invalidateQueries({ queryKey: [config.listQueryKey] });
+      // So a second save of this name sees it taken at once, not after the name check's 30 s.
+      void qc.invalidateQueries({ queryKey: ['same-name-drink'] });
       if (barId) void qc.invalidateQueries({ queryKey: ['bar', barId] });
       return { id, warnings };
     },
-    onSuccess: (_, { barId }) => track('drink_created', { at_bar: !!barId, on_menu: false }),
-    // The wizard says what went wrong itself, and keeps the draft.
-    onError: () => {},
+    onSuccess: ({ warnings }, { kind, draft, barId, queued }) => {
+      track('drink_created', { at_bar: !!barId, on_menu: false });
+      // Here, not on the screen: a save that waited for signal lands after the wizard has closed.
+      // ponytail: a wait cut short by closing the app loses the save, not the draft, which Add still lists; register it with setMutationDefaults to resume it after a relaunch.
+      // Only the draft that was saved: one started since in the same place stays.
+      const store = useBeerWineWizardStore.getState();
+      const place = beerWinePlace(kind, barId);
+      if (nameKey(store.kept[place]?.draft.name ?? '') === nameKey(draft.name)) store.clear(place);
+      if (!queued) return;
+      toastDone(`${DRINK_KINDS[kind].label} saved`, capitalizeFirsts(draft.name));
+      if (warnings.length) Alert.alert('Saved, with one thing to fix', warnings.join('\n\n'));
+    },
+    // The wizard says what went wrong itself and keeps the draft; a save that waited for signal lands after it closed, so that one is said here.
+    onError: (e, { kind, draft, queued }) => {
+      if (queued) Alert.alert(`Couldn’t save ${capitalizeFirsts(draft.name) || `the ${kind}`}`, `${plainDbMessage(e) ?? e.message} It’s still in Add, under Pick up where you left off.`);
+    },
   });
 }
 
