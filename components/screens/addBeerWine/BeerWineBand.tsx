@@ -1,3 +1,4 @@
+import type { ReactNode } from 'react';
 import { StyleSheet, View } from 'react-native';
 
 import { DsText, GlassButton } from '@/components/ds';
@@ -15,8 +16,9 @@ const ART = 120;
  * close (and a back arrow beside it after the first step), its kind as the title, and its glass, drawn grey when empty, filling
  * and recolouring as the steps are answered. While typing on a phone it
  * folds to the X and the title, so the field and the keyboard both fit.
+ * A bottle you buy (Add-bottle) wears it too, with its bottle as `art`.
  */
-export function BeerWineBand({ place, title, inputs, seed, onClose, onBack }: { place: BandPlace; title: string; inputs: SketchInputs; seed: string; onClose: () => void; onBack?: () => void }) {
+export function BeerWineBand({ place, title, inputs, seed, art, artLabel, onClose, onBack }: { place: BandPlace; title: string; onClose: () => void; onBack?: () => void } & ({ inputs: SketchInputs; seed: string; art?: undefined; artLabel?: undefined } | { art: ReactNode; artLabel: string; inputs?: undefined; seed?: undefined })) {
   return (
     <View style={[styles.band, { paddingTop: place.top, paddingHorizontal: place.side }]}>
       <View style={styles.top}>
@@ -31,8 +33,8 @@ export function BeerWineBand({ place, title, inputs, seed, onClose, onBack }: { 
         <View style={styles.side} />
       </View>
       {place.folded ? null : (
-        <View style={styles.art} aria-label={`Drawing of the ${title.toLowerCase()} so far`}>
-          <SketchDrawing inputs={inputs} seed={seed} detail="full" />
+        <View style={styles.art} aria-label={artLabel ?? `Drawing of the ${title.toLowerCase()} so far`}>
+          {inputs ? <SketchDrawing inputs={inputs} seed={seed} detail="full" /> : art}
         </View>
       )}
     </View>

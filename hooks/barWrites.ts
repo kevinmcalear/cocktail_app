@@ -5,7 +5,9 @@
 // those hooks' own imports.
 import type { QueryKey } from '@tanstack/react-query';
 
+import { existingIngredientId } from '@/lib/ingredientNames';
 import { BAR_WRITE } from '@/lib/offlineWrites';
+import { DROPDOWNS_QUERY_KEY } from '@/lib/queryDefaults';
 import type { RotaChange } from '@/lib/rota';
 import { supabase } from '@/lib/supabase';
 
@@ -132,6 +134,41 @@ async function sendHandover(w: HandoverWrite) {
   check(await supabase.from('handover_notes').upsert({ bar_id: w.barId, close_date: w.closeDate, user_id: w.userId, read_at: w.readAt, ...handoverColumns(w.words) }, { onConflict: 'bar_id,close_date,user_id' }));
 }
 
+export interface BottleWrite {
+  /** Made on the phone: the new bottle's id, so a resend finds it there. */
+  id: string;
+  /** The venue's back bar, or null for your own shelf. */
+  barId: string | null;
+  /** One already here (the shared catalog's, or the venue's own): only put on the back bar or the shelf. */
+  existing: boolean;
+  name: string;
+  maker: string | null;
+  abv: number | null;
+  genericId: string | null;
+}
+
+/**
+ * A bottle you buy (Add-bottle): a new one is saved (at a venue as the
+ * venue's own, which puts it on its back bar), one already here goes on the
+ * back bar's stock list; at home either goes on your shelf. Each step is
+ * skipped if already there, so sending twice is the same.
+ */
+async function sendBottle(w: BottleWrite) {
+  let id = w.id;
+  let existing = w.existing;
+  if (!existing) {
+    const row = { id, item_type: 'ingredient' as const, ingredient_role: 'product' as const, name: w.name, brand_maker: w.maker, abv: w.abv, generic_id: w.genericId, bar_id: w.barId };
+    const { error } = await supabase.from('items').upsert(row, { onConflict: 'id', ignoreDuplicates: true });
+    // The shared catalog already has it by this name or another (the database says which): that one goes on the shelf.
+    const already = existingIngredientId(error);
+    if (already) [id, existing] = [already, true];
+    else check({ error });
+  }
+  if (existing && w.barId) check(await supabase.from('back_bar_items').upsert({ bar_id: w.barId, item_id: id, source: 'back_bar' }, { onConflict: 'bar_id,item_id', ignoreDuplicates: true }));
+  if (!w.barId) check(await supabase.from('home_bar_items').upsert({ item_id: id }, { onConflict: 'user_id,item_id', ignoreDuplicates: true }));
+  return id;
+}
+
 export const BAR_WRITES = {
   offTonight: {
     key: [BAR_WRITE, 'off-tonight'],
@@ -167,5 +204,11 @@ export const BAR_WRITES = {
     key: [BAR_WRITE, 'handover'],
     send: sendHandover,
     refresh: (w: HandoverWrite): QueryKey[] => [['handover', w.barId]],
+  },
+  bottle: {
+    key: [BAR_WRITE, 'bottle'],
+    send: sendBottle,
+    // The ingredient lists (hooks/useDropdowns INGREDIENTS_KEY), the back bar's stock list and the shelf (hooks/useHomeBar SHELF_KEY).
+    refresh: (w: BottleWrite): QueryKey[] => [[...DROPDOWNS_QUERY_KEY, 'ingredients'], ['ingredients'], ['back-bar-items', w.barId], ['venue-can-make', w.barId], ['home-bar'], ['bar', w.barId]],
   },
 } as const;

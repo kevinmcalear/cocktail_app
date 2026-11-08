@@ -10,7 +10,6 @@ import { useDictation } from '@/hooks/useDictation';
 import { addIntent, clipLine } from '@/lib/addIntent';
 import { UNREAD_CLIP } from '@/lib/clipboardPeek';
 import { isLink } from '@/lib/bringIn';
-import { withAlpha } from '@/lib/color';
 
 import { NewDrafts } from './NewDrafts';
 import { useAddActions, useClipboardOffer } from './useAddActions';
@@ -21,8 +20,8 @@ const NO_OUTLINE = Platform.OS === 'web' ? ({ outlineStyle: 'none' } as object) 
  * Add (Prod-add-B, Kevin's pick 31 Oct 2026): one field first (a name, a
  * link or a description), what you just copied as one tap, then Snap and
  * Choose a photo or PDF, then what you left unfinished. A name opens a draft
- * in pencil; everything else is read by Bring in. `onMore` opens the
- * rest of what can be started (a bottle, beer, wine, a house-made, a menu).
+ * in pencil; everything else is read by Bring in. Its last row, Something
+ * else (Add-entry), opens New: a bottle, beer, wine, a house-made, a menu.
  */
 /** A button's place in the window (measureInWindow): what Add grows out of. */
 export type Frame = { x: number; y: number; width: number; height: number };
@@ -142,11 +141,16 @@ function AddBody({ onClose, onMore, listen }: { onClose: () => void; onMore: () 
         onImport={() => go('/bring-in' as Href)}
         onDrafts={() => go('/drafts' as Href)}
       />
+      {/* Add-entry: the last row, titled, opens New. */}
       <PressableScale role="button" accessibilityLabel="Something else: a bottle, beer, wine, a house-made or a menu" onPress={onMore} style={styles.more}>
-        <Caption tone="muted" style={styles.flex}>
-          A bottle, beer, wine, a house-made or a menu
-        </Caption>
-        <IconSymbol name="chevron.right" size={14} color={withAlpha(ds.c.muted, 0.8)} />
+        <View style={[styles.plus, { backgroundColor: ds.c.raised }]}>
+          <IconSymbol name="plus" size={18} color={ds.c.ink} />
+        </View>
+        <View style={styles.flex}>
+          <Body style={{ ...font.semiBold }}>Something else</Body>
+          <Caption tone="muted">A bottle, beer, wine, a house-made or a menu</Caption>
+        </View>
+        <IconSymbol name="chevron.right" size={14} color={ds.c.muted} />
       </PressableScale>
     </View>
   );
@@ -166,5 +170,6 @@ const styles = StyleSheet.create({
   clip: { flexDirection: 'row', alignItems: 'center', gap: space.md, borderRadius: radius.control + 4, paddingVertical: space.md, paddingHorizontal: space.lg },
   buttons: { gap: space.sm + 2, marginTop: space.xs },
   flex: { flex: 1 },
-  more: { flexDirection: 'row', alignItems: 'center', gap: space.xs, minHeight: layout.minTapTarget },
+  more: { flexDirection: 'row', alignItems: 'center', gap: space.md, minHeight: 60, paddingVertical: space.sm },
+  plus: { width: 40, height: 40, borderRadius: radius.control, alignItems: 'center', justifyContent: 'center' },
 });
