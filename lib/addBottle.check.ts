@@ -1,6 +1,6 @@
 import assert from 'node:assert/strict';
 
-import { abvNumber, bottleFacts, bottleMatches, kindHelp, notABottleWords, ownBottle, savedDetail, takenWords } from './addBottle';
+import { abvError, abvNumber, bottleFacts, bottleMatches, kindHelp, notABottleWords, ownBottle, savedDetail, takenWords } from './addBottle';
 
 const rows = [
   { id: 'l10', name: 'Laphroaig 10', ingredient_role: 'product', brand_maker: 'Laphroaig', generic_id: 'islay' },
@@ -43,6 +43,17 @@ assert.equal(savedDetail(false, null), 'It’s on your shelf.');
 assert.equal(abvNumber('40,5'), 40.5);
 assert.equal(abvNumber(''), null);
 assert.equal(abvNumber('140'), null);
+assert.equal(abvNumber('.5'), 0.5);
+assert.equal(abvNumber('40.'), 40);
+assert.equal(abvNumber('100'), 100);
+assert.equal(abvNumber('.'), null);
+assert.equal(abvNumber(','), null);
+assert.equal(abvNumber('40.5.1'), null);
+// A strength that isn't one says so and blocks Save, rather than saving the bottle with none (review of #1181).
+assert.equal(abvError(''), null);
+assert.equal(abvError('43'), null);
+assert.ok(abvError('400'));
+assert.ok(abvError('.'));
 
 assert.equal(notABottleWords('Simple Syrup', 'prep').body, 'It’s a house-made, not a bottle you buy. Open it, or give this bottle a name that tells them apart.');
 assert.equal(notABottleWords('Gin', 'generic').title, 'Gin is already here');

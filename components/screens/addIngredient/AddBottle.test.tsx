@@ -1,6 +1,8 @@
 import { fireEvent, screen } from '@testing-library/react-native';
 
 import { renderWithProviders } from '@/jest.setup';
+import { savedDetail } from '@/lib/addBottle';
+import { useToastStore } from '@/store/useToastStore';
 
 import { AddBottle } from './AddBottle';
 
@@ -71,6 +73,32 @@ describe('AddBottle', () => {
       expect.objectContaining({ barId: 'bar-1', existing: false, name: 'Tanqueray No. Ten Gin', maker: 'Tanqueray', abv: 47.3, genericId: 'gin', queued: false }),
       expect.anything()
     );
+  });
+
+  // Review of #1181: 400 saved the bottle with no strength, silently.
+  test('a strength that is not one says so, and Save waits for it', async () => {
+    await renderWithProviders(<AddBottle barId="bar-1" onClose={jest.fn()} onSaved={jest.fn()} onMake={jest.fn()} />);
+    await laidOut();
+    await fireEvent.changeText(screen.getByLabelText('Name'), 'Buffalo Trace');
+    await fireEvent.changeText(screen.getByLabelText('How strong, % ABV'), '400');
+    expect(screen.getByText('A strength is a percent from 0 to 100, like 40 or 40.5.')).toBeTruthy();
+    expect(screen.getByRole('button', { name: 'Save the bottle', disabled: true })).toBeTruthy();
+    await fireEvent.changeText(screen.getByLabelText('How strong, % ABV'), '40');
+    expect(screen.queryByText('A strength is a percent from 0 to 100, like 40 or 40.5.')).toBeNull();
+    await fireEvent.press(saveButton());
+    expect(mockSave).toHaveBeenCalledWith(expect.objectContaining({ abv: 40 }), expect.anything());
+  });
+
+  test('a new one the database already has, shared under another id, is that bottle', async () => {
+    const onSaved = jest.fn();
+    // The database says Laphroaig 10 (by a spelling the screen didn't match).
+    mockSave.mockImplementation((_w, { onSuccess }) => onSuccess('l10'));
+    await renderWithProviders(<AddBottle barId="bar-1" onClose={jest.fn()} onSaved={onSaved} onMake={jest.fn()} />);
+    await laidOut();
+    await fireEvent.changeText(screen.getByLabelText('Name'), 'Buffalo Trace');
+    await fireEvent.press(saveButton());
+    expect(onSaved).toHaveBeenCalledWith({ id: 'l10', name: 'Laphroaig 10' }, true);
+    expect(useToastStore.getState().toast?.detail).toBe(savedDetail(true, 'Islay Scotch'));
   });
 
   test('Is it this one? A catalog pick fills in the maker, strength and kind, and goes on the back bar', async () => {

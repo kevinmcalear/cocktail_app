@@ -11,6 +11,8 @@ import { Eyebrow } from '../addDrink/WizardChrome';
 interface Props {
   maker: string;
   abv: string;
+  /** A strength that isn't one, said under its field (Save waits for it). */
+  abvError: string | null;
   kind: string | null;
   kindHelp: string | null;
   /** The catalog's bottle: its facts are the catalog's, shown, not typed. */
@@ -30,7 +32,7 @@ interface Props {
  * kind of, which can be changed (it says which drinks can use it), then the
  * label photo kept with it. A pick from the catalog shows the catalog's.
  */
-export function BottleFields({ maker, abv, kind, kindHelp, fixed, onMaker, onAbv, onKind, usualAbv, photo, reading, onRemovePhoto }: Props) {
+export function BottleFields({ maker, abv, abvError, kind, kindHelp, fixed, onMaker, onAbv, onKind, usualAbv, photo, reading, onRemovePhoto }: Props) {
   return (
     <View style={styles.stack}>
       <Labelled label="Who makes it">
@@ -40,7 +42,7 @@ export function BottleFields({ maker, abv, kind, kindHelp, fixed, onMaker, onAbv
         {fixed ? (
           <Fact value={abv} label="How strong, % ABV" />
         ) : (
-          <Field label="How strong, % ABV" hideLabel placeholder={`e.g. ${usualAbv ?? 40}`} value={abv} onChangeText={(v) => onAbv(v.replace(/[^0-9.,]/g, ''))} keyboardType="decimal-pad" maxLength={5} />
+          <Field label="How strong, % ABV" hideLabel placeholder={`e.g. ${usualAbv ?? 40}`} value={abv} error={abvError ?? undefined} aria-invalid={!!abvError} onChangeText={(v) => onAbv(v.replace(/[^0-9.,]/g, ''))} keyboardType="decimal-pad" maxLength={5} />
         )}
       </Labelled>
       <Labelled label="A kind of">

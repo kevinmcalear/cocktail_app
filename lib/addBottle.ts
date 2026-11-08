@@ -75,8 +75,15 @@ export function savedDetail(atBar: boolean, kind: string | null): string {
   return kind ? `${where}, and any drink that calls for ${kindWords(kind)} can use it.` : `${where}.`;
 }
 
-/** ABV as typed ("40", "40,5") to a number, or null. */
+/** ABV as typed ("40", "40,5", ".5") to a number, or null when it isn't one from 0 to 100. */
 export function abvNumber(s: string): number | null {
-  const n = parseFloat(s.replace(',', '.'));
-  return Number.isFinite(n) && n >= 0 && n <= 100 ? n : null;
+  const t = s.trim();
+  if (!/^(\d+([.,]\d*)?|[.,]\d+)$/.test(t)) return null;
+  const n = Number(t.replace(',', '.'));
+  return n <= 100 ? n : null;
+}
+
+/** What's wrong with a strength as typed, said under the field (it blocks Save): nothing when it's empty or fine. */
+export function abvError(s: string): string | null {
+  return s.trim() && abvNumber(s) === null ? 'A strength is a percent from 0 to 100, like 40 or 40.5.' : null;
 }

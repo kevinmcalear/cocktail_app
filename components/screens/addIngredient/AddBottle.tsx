@@ -8,7 +8,7 @@ import { useDropdowns } from '@/hooks/useDropdowns';
 import { useNearIngredientsChecked } from '@/hooks/useNearIngredients';
 import { useReadLabel } from '@/hooks/useReadLabel';
 import { useBottleHere, useBottleStrengths, useSaveBottle } from '@/hooks/useSaveBottle';
-import { abvNumber, bottleMatches, kindHelp, notABottleWords, ownBottle, savedDetail, takenWords, type BottleRow } from '@/lib/addBottle';
+import { abvError, abvNumber, bottleMatches, kindHelp, notABottleWords, ownBottle, savedDetail, takenWords, type BottleRow } from '@/lib/addBottle';
 import { readableAccent } from '@/lib/color';
 import { plainDbMessage } from '@/lib/dbError';
 import { confirmDiscardChanges } from '@/lib/dialogs';
@@ -99,8 +99,10 @@ export function AddBottle({ barId = null, initialName, embedded, onClose, onSave
   const strength = target ? strengths[target.id] : null;
   const shown = target ? { maker: target.brand_maker ?? '', abv: strength === null || strength === undefined ? '' : String(strength) } : { maker, abv };
   const dirty = !!(typed || maker.trim() || abv || photo);
+  // A new bottle's strength as typed, if it isn't one (400, "."): said under the field, and Save waits, rather than saving it with none.
+  const badAbv = target ? null : abvError(abv);
   // Not before the catalog is in: a name it has must not be saved as a second one.
-  const canSave = !!typed && !!dropdowns?.ingredients && !here && !other && !save.isPending;
+  const canSave = !!typed && !!dropdowns?.ingredients && !here && !other && !badAbv && !save.isPending;
 
   const leave = () => void confirmDiscardChanges(dirty).then((go) => go && onClose());
   useEffect(() => {
@@ -152,8 +154,10 @@ export function AddBottle({ barId = null, initialName, embedded, onClose, onSave
     save.mutate(write, {
       onSuccess: (id) => {
         if (queued) return;
-        toast.show({ title: 'Bottle saved', detail: savedDetail(!!barId, kindPick?.name ?? null) });
-        onSaved({ id, name: write.name }, write.existing);
+        // Another id: the database had it already, shared (by a spelling this screen didn't know), so it's that bottle, with its own kind.
+        const shared = id === write.id ? null : (byId.get(id) ?? { id, name: write.name });
+        toast.show({ title: 'Bottle saved', detail: savedDetail(!!barId, shared ? kindOf(shared) : (kindPick?.name ?? null)) });
+        onSaved({ id, name: shared?.name ?? write.name }, write.existing || !!shared);
       },
       onError: (e) => Alert.alert('Couldn’t save the bottle', plainDbMessage(e) ?? e.message),
     });
@@ -215,6 +219,7 @@ export function AddBottle({ barId = null, initialName, embedded, onClose, onSave
               <BottleFields
                 maker={shown.maker}
                 abv={shown.abv}
+                abvError={badAbv}
                 kind={kindPick?.name ?? null}
                 kindHelp={kindHelp(kindPick?.name ?? null, target ? 'catalog' : (kind?.from ?? 'name'))}
                 fixed={!!target}

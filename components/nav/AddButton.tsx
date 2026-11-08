@@ -1,5 +1,5 @@
 import { Suspense, useRef, useState, type ComponentRef } from 'react';
-import { Platform, StyleSheet, useWindowDimensions, View } from 'react-native';
+import { StyleSheet, useWindowDimensions, View } from 'react-native';
 
 import { Button, PressableScale, useDs } from '@/components/ds';
 import { useFabUnderToast } from '@/components/ds/Toast';
@@ -30,9 +30,9 @@ export function AddSheets({ onClose, listen, from, more: startMore }: { onClose:
       setShown(true);
     }, 350);
   };
-  // Android's back arrow (and its back gesture) on New goes back to Add when New came from it.
-  const back = Platform.OS === 'android' && !startMore ? () => setOpen('add') : onClose;
-  return <Suspense fallback={null}>{open === 'add' ? <AddSheet visible={shown} onClose={onClose} onMore={more} listen={listen} from={from} /> : <CreateSheet visible onClose={back} />}</Suspense>;
+  // Android's back arrow on New goes back to Add when New came from it; its rows, scrim, swipe and the system's back close both.
+  const back = startMore ? undefined : () => setOpen('add');
+  return <Suspense fallback={null}>{open === 'add' ? <AddSheet visible={shown} onClose={onClose} onMore={more} listen={listen} from={from} /> : <CreateSheet visible onClose={onClose} onBack={back} />}</Suspense>;
 }
 
 /** Add's sheets, opened by a button. Android's FAB opens its FAB menu first (AddFab). */

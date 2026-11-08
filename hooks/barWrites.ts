@@ -3,7 +3,7 @@
 // relaunch, when the screen that made it is long gone. Kept apart from the
 // screens' hooks so lib/react-query.ts can register them without importing
 // those hooks' own imports.
-import type { QueryKey } from '@tanstack/react-query';
+import type { QueryClient, QueryKey } from '@tanstack/react-query';
 
 import { existingIngredientId } from '@/lib/ingredientNames';
 import { BAR_WRITE } from '@/lib/offlineWrites';
@@ -145,13 +145,17 @@ export interface BottleWrite {
   maker: string | null;
   abv: number | null;
   genericId: string | null;
+  /** The label photo, kept as a new bottle's picture once it's in. */
+  photo: string | null;
+  /** Saved with no signal (Save on this phone): it says so when it's in, wherever you are by then. */
+  queued: boolean;
 }
 
 /**
  * A bottle you buy (Add-bottle): a new one is saved (at a venue as the
- * venue's own, which puts it on its back bar), one already here goes on the
- * back bar's stock list; at home either goes on your shelf. Each step is
- * skipped if already there, so sending twice is the same.
+ * venue's own); at a venue either goes on the back bar's stock list (so both
+ * say since when), at home on your shelf. Each step is skipped if already
+ * there, so sending twice is the same.
  */
 async function sendBottle(w: BottleWrite) {
   let id = w.id;
@@ -164,7 +168,7 @@ async function sendBottle(w: BottleWrite) {
     if (already) [id, existing] = [already, true];
     else check({ error });
   }
-  if (existing && w.barId) check(await supabase.from('back_bar_items').upsert({ bar_id: w.barId, item_id: id, source: 'back_bar' }, { onConflict: 'bar_id,item_id', ignoreDuplicates: true }));
+  if (w.barId) check(await supabase.from('back_bar_items').upsert({ bar_id: w.barId, item_id: id, source: 'back_bar' }, { onConflict: 'bar_id,item_id', ignoreDuplicates: true }));
   if (!w.barId) check(await supabase.from('home_bar_items').upsert({ item_id: id }, { onConflict: 'user_id,item_id', ignoreDuplicates: true }));
   return id;
 }
@@ -210,5 +214,9 @@ export const BAR_WRITES = {
     send: sendBottle,
     // The ingredient lists (hooks/useDropdowns INGREDIENTS_KEY), the back bar's stock list and the shelf (hooks/useHomeBar SHELF_KEY).
     refresh: (w: BottleWrite): QueryKey[] => [[...DROPDOWNS_QUERY_KEY, 'ingredients'], ['ingredients'], ['back-bar-items', w.barId], ['venue-can-make', w.barId], ['home-bar'], ['bar', w.barId]],
+    // Run from the write itself (lib/react-query.ts), so a save that waited on the phone through a relaunch still gets its
+    // label photo, recents, toast and lists. Loaded once it's in: the photo upload is big, and this file is in every page's first load.
+    saved: (qc: QueryClient, id: string, w: BottleWrite) => import('@/hooks/bottleSaved').then((m) => m.bottleSaved(qc, id, w)),
+    failed: (e: Error, w: BottleWrite) => import('@/hooks/bottleSaved').then((m) => m.bottleFailed(e, w)),
   },
 } as const;
