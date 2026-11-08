@@ -13,7 +13,7 @@ import { Eyebrow, WizardChip } from './WizardChrome';
 const NO_OUTLINE = Platform.OS === 'web' ? ({ outlineStyle: 'none' } as object) : null;
 
 /** A wizard's first step: the name, big, in the venue's display face, with "Start over" for a kept draft. */
-export function BigName({ value, onChange, onDone, resumed, onStartOver, placeholder = 'Name', inputRef, hint = true }: { value: string; onChange: (name: string) => void; onDone: () => void; resumed: boolean; onStartOver: () => void; placeholder?: string; inputRef?: Ref<ComponentRef<typeof TextInput>>; /** The steps' line under the name; the draft page has no steps. */ hint?: boolean }) {
+export function BigName({ value, onChange, onDone, resumed, onStartOver, placeholder = 'Name', inputRef, hint = true, autoFocus = !value }: { value: string; onChange: (name: string) => void; onDone: () => void; resumed: boolean; onStartOver: () => void; placeholder?: string; inputRef?: Ref<ComponentRef<typeof TextInput>>; /** The steps' line under the name; the draft page has no steps. */ hint?: boolean; /** Take the cursor as it mounts; by default when there's no name yet. */ autoFocus?: boolean }) {
   const ds = useDs();
   // The underline is the field (no box, no browser focus ring); it darkens to ink while typing.
   const [focused, setFocused] = useState(false);
@@ -27,7 +27,7 @@ export function BigName({ value, onChange, onDone, resumed, onStartOver, placeho
         onChangeText={(name) => onChange(capitalizeAsYouType(name))}
         onSubmitEditing={onDone}
         returnKeyType="next"
-        autoFocus={!value}
+        autoFocus={autoFocus}
         placeholder={placeholder}
         placeholderTextColor={ds.c.faint}
         aria-label="Name"

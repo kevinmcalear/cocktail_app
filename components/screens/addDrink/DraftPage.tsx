@@ -1,5 +1,5 @@
 import { LinearGradient } from 'expo-linear-gradient';
-import { useRef, type ComponentRef, type ReactNode } from 'react';
+import { useRef, useState, type ComponentRef, type ReactNode } from 'react';
 import { ScrollView, StyleSheet, View, type TextInput } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
@@ -53,6 +53,10 @@ export function DraftPage({ lead, ...p }: DrinkDeskProps & { lead?: ReactNode })
   const nameRef = useRef<ComponentRef<typeof TextInput>>(null);
   const scroller = useRef<ComponentRef<typeof ScrollView>>(null);
   const { over, takeover, onScroll } = useSearchTakeover(scroller, useBreakpoint() === 'phone');
+  // The name takes the cursor when the page opens, not again: the search's takeover drops it and
+  // mounts it afresh after a pick, and its autoFocus pulled the keyboard up to an empty name.
+  const [searched, setSearched] = useState(false);
+  if (over && !searched) setSearched(true);
   const venue = useVenueLines({ draft, set, barId, venueName: p.venueName, ingredients: p.ingredients, coreIds: p.coreIds });
   const same = draft.sameAs ?? null;
   const asking = !!p.atBar && same?.id !== p.atBar.id;
@@ -101,14 +105,14 @@ export function DraftPage({ lead, ...p }: DrinkDeskProps & { lead?: ReactNode })
                       <Eyebrow>{eyebrow}</Eyebrow>
                       {same?.as === 'version' ? (
                         <View style={styles.version}>
-                          <BracketField name={same.name} value={same.word ?? ''} onChange={(w) => picks.word(draft, w)} label={`What’s different about this ${same.name}`} autoFocus={!same.word} />
+                          <BracketField name={same.name} value={same.word ?? ''} onChange={(w) => picks.word(draft, w)} label={`What’s different about this ${same.name}`} autoFocus={!searched && !same.word} />
                           {p.atBar && p.atBar.id !== same.id ? <TakenWord bar={same.bar} name={draft.name} /> : null}
                           <View style={styles.start}>
                             <TextLink label="Not a version" tone="ink" onPress={() => picks.undo(draft)} />
                           </View>
                         </View>
                       ) : (
-                        <BigName hint={false} inputRef={nameRef} value={draft.name} onChange={(name) => set({ name })} onDone={() => {}} resumed={p.resumed} onStartOver={p.onStartOver} />
+                        <BigName hint={false} inputRef={nameRef} autoFocus={!searched && !draft.name} value={draft.name} onChange={(name) => set({ name })} onDone={() => {}} resumed={p.resumed} onStartOver={p.onStartOver} />
                       )}
                       {same?.as === 'different' ? <ApartHint done={!nameWaits(draft, null)} words={`Give it a name that tells it apart from ${theirs(same.bar, same.name)}.`} /> : null}
                       {p.atBar && asking ? (
