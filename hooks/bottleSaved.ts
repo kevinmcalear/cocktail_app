@@ -27,8 +27,3 @@ export async function bottleSaved(qc: QueryClient, id: string, w: BottleWrite) {
     .then(({ saveIngredientPicture }) => saveIngredientPicture(qc, id, 'photo', photo))
     .catch(() => Alert.alert('The label photo didn’t save', 'The bottle is saved. Add the photo again on its page.'));
 }
-
-/** The screen says what went wrong itself and keeps what's typed; a save that waited for signal lands after it closed, so that one is said here. */
-export function bottleFailed(e: Error, w: BottleWrite) {
-  if (w.queued) Alert.alert(`Couldn’t save ${w.name}`, e.message);
-}

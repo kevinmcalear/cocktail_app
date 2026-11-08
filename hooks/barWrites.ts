@@ -4,6 +4,7 @@
 // screens' hooks so lib/react-query.ts can register them without importing
 // those hooks' own imports.
 import type { QueryClient, QueryKey } from '@tanstack/react-query';
+import { Alert } from 'react-native';
 
 import { existingIngredientId } from '@/lib/ingredientNames';
 import { BAR_WRITE } from '@/lib/offlineWrites';
@@ -159,13 +160,12 @@ export interface BottleWrite {
  */
 async function sendBottle(w: BottleWrite) {
   let id = w.id;
-  let existing = w.existing;
-  if (!existing) {
+  if (!w.existing) {
     const row = { id, item_type: 'ingredient' as const, ingredient_role: 'product' as const, name: w.name, brand_maker: w.maker, abv: w.abv, generic_id: w.genericId, bar_id: w.barId };
     const { error } = await supabase.from('items').upsert(row, { onConflict: 'id', ignoreDuplicates: true });
     // The shared catalog already has it by this name or another (the database says which): that one goes on the shelf.
     const already = existingIngredientId(error);
-    if (already) [id, existing] = [already, true];
+    if (already) id = already;
     else check({ error });
   }
   if (w.barId) check(await supabase.from('back_bar_items').upsert({ bar_id: w.barId, item_id: id, source: 'back_bar' }, { onConflict: 'bar_id,item_id', ignoreDuplicates: true }));
@@ -216,7 +216,15 @@ export const BAR_WRITES = {
     refresh: (w: BottleWrite): QueryKey[] => [[...DROPDOWNS_QUERY_KEY, 'ingredients'], ['ingredients'], ['back-bar-items', w.barId], ['venue-can-make', w.barId], ['home-bar'], ['bar', w.barId]],
     // Run from the write itself (lib/react-query.ts), so a save that waited on the phone through a relaunch still gets its
     // label photo, recents, toast and lists. Loaded once it's in: the photo upload is big, and this file is in every page's first load.
-    saved: (qc: QueryClient, id: string, w: BottleWrite) => import('@/hooks/bottleSaved').then((m) => m.bottleSaved(qc, id, w)),
-    failed: (e: Error, w: BottleWrite) => import('@/hooks/bottleSaved').then((m) => m.bottleFailed(e, w)),
+    // A chunk that fails to load (a deploy since) mustn't turn a saved bottle into a failed save: then only its photo is lost, and it says so.
+    saved: (qc: QueryClient, id: string, w: BottleWrite) =>
+      import('@/hooks/bottleSaved').then(
+        (m) => m.bottleSaved(qc, id, w),
+        () => void (w.photo && Alert.alert('The label photo didn’t save', 'The bottle is saved. Add the photo again on its page.')),
+      ),
+    // Only one that waited for signal is said here; the screen says the rest.
+    failed: async (e: Error, w: BottleWrite) => {
+      if (w.queued) Alert.alert(`Couldn’t save ${w.name}`, e.message);
+    },
   },
 } as const;
