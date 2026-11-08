@@ -131,7 +131,7 @@ function Snap({ kind, photo, reading, onSnap, onRemove }: { kind: DrinkKind; pho
   );
 }
 
-/** One from the shared catalog: its glass, its name, "Pilsner Urquell · Pilsner · Pilsen, Czechia", Use it. */
+/** One from the shared catalog: its glass, its name, "Pilsner Urquell · Pilsner · Pilsen, Czechia", Yes, this one. */
 function Found({ kind, bottle, onPress }: { kind: DrinkKind; bottle: CatalogBottle; onPress: () => void }) {
   const ds = useDs();
   const style = STYLES[kind].find((s) => bottle.categories.includes(s.name))?.name ?? guessStyle(kind, `${bottle.name} ${bottle.description ?? ''}`);
@@ -148,7 +148,7 @@ function Found({ kind, bottle, onPress }: { kind: DrinkKind; bottle: CatalogBott
         {facts ? <Caption tone="muted">{facts}</Caption> : null}
       </View>
       <Caption tone="accent" style={styles.use}>
-        Use it
+        Yes, this one
       </Caption>
     </PressableScale>
   );

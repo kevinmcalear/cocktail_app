@@ -119,7 +119,7 @@ function BeerWinePage({ kind, item, favorite, onToggleFavorite, canEdit, onEdit 
   const sketch = savedSketch(kind, tags, (item as { sketch_variant?: string | null }).sketch_variant ?? null);
   const abv = formatAbv(item.abv);
   const glass = dropdowns?.glassware.find((g) => g.id === item.glassware_id)?.name ?? null;
-  const pour = [item.serve_ml ? `${item.serve_ml} ml` : null, item.price != null ? `$${item.price}` : null].filter(Boolean).join(' · ');
+  const pour = [item.serve_ml ? `${item.serve_ml} ml` : null, item.price != null ? (/^\d+(\.\d+)?$/.test(String(item.price).trim()) ? `$${String(item.price).trim()}` : String(item.price).trim()) : null].filter(Boolean).join(' · ');
   const facts = [
     abv ? { label: 'Strength', value: abv } : null,
     pour ? { label: kind === 'wine' ? 'Glass' : 'Pour', value: pour } : null,

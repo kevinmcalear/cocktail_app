@@ -95,7 +95,7 @@ export function StrengthStep({ kind, draft, set, onDone }: BeerWineStepProps) {
       <Labelled label="Usual strengths">
         <View style={styles.chips}>
           <WizardChip kind="button" label="Less strong" onPress={() => set({ abv: stepAbv(draft.abv, -1, start) })} />
-          {usual ? <WizardChip kind="radio" label={`${usual.abv}% · usual for ${usual.name.toLowerCase()}`} selected={draft.abv === String(usual.abv)} onPress={() => set({ abv: String(usual.abv) })} /> : null}
+          {usual ? <WizardChip kind="radio" label={`${usual.abv}% · usual for ${sentence(usual.name)}`} selected={draft.abv === String(usual.abv)} onPress={() => set({ abv: String(usual.abv) })} /> : null}
           <WizardChip kind="button" label="Stronger" onPress={() => set({ abv: stepAbv(draft.abv, 1, start) })} />
         </View>
       </Labelled>
@@ -162,3 +162,6 @@ const styles = StyleSheet.create({
   group: { gap: space.sm },
   chips: { flexDirection: 'row', flexWrap: 'wrap', gap: space.sm },
 });
+
+/** "Pale Ale" reads "Pale ale"; an acronym (IPA) stays as it is. */
+const sentence = (s: string) => (s === s.toUpperCase() ? s : s.charAt(0).toUpperCase() + s.slice(1).toLowerCase());

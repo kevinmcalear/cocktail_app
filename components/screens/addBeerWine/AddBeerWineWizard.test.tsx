@@ -70,6 +70,11 @@ describe('AddBeerWineWizard', () => {
     // Kevin, 8 Nov: the main button alone, no Later.
     expect(screen.queryByRole('button', { name: 'Later' })).toBeNull();
     expect(screen.queryByRole('button', { name: 'Skip' })).toBeNull();
+    // Step 1 has only the X; later steps add a back arrow (Kevin, 8 Nov) that keeps what was typed.
+    expect(screen.queryByRole('button', { name: 'Back' })).toBeNull();
+    await next();
+    await fireEvent.press(screen.getByRole('button', { name: 'Back' }));
+    expect(screen.getByLabelText('Name').props.value).toBe('House Red');
     await next();
     await fireEvent.changeText(screen.getByLabelText('Producer'), 'Tempier');
     await fireEvent.press(screen.getByRole('radio', { name: 'France' }));
@@ -79,7 +84,7 @@ describe('AddBeerWineWizard', () => {
     await next();
 
     // The style's usual strength sits between Less strong and Stronger, which walk tenths from it.
-    await fireEvent.press(screen.getByRole('radio', { name: '13.5% · usual for red' }));
+    await fireEvent.press(screen.getByRole('radio', { name: '13.5% · usual for Red' }));
     await fireEvent.press(screen.getByRole('button', { name: 'Stronger' }));
     expect(screen.getByLabelText('Strength, percent ABV').props.value).toBe('13.6');
     await next();
@@ -120,12 +125,19 @@ describe('AddBeerWineWizard', () => {
     expect(screen.getByText('Pilsner Urquell is already on the list')).toBeTruthy();
     expect(screen.getByRole('button', { name: 'Next: brewery' })).toBeDisabled();
 
-    await fireEvent.press(screen.getByRole('button', { name: 'Open Pilsner Urquell. Your draft is kept' }));
-    expect(mockReplace).toHaveBeenCalledWith('/beer/pils-1');
-
     await fireEvent.press(screen.getByRole('button', { name: 'It’s a different one' }));
     expect(screen.queryByText('Pilsner Urquell is already on the list')).toBeNull();
     expect(screen.getByRole('button', { name: 'Next: brewery' })).toBeEnabled();
+  });
+
+  test('opening the one that exists drops a draft that was only its name', async () => {
+    mockTaken = { id: 'pils-1', name: 'Pilsner Urquell', barId: 'bar-1', line: '', menu: 'Autumn', imageUrl: null, glass: null, savedAt: '2026-09-14T12:00:00Z', classic: null, spec: [] };
+    await renderWithProviders(<AddBeerWineWizard kind="beer" barId="bar-1" onClose={jest.fn()} onSaved={mockSaved} />);
+    await laidOut('add-beer');
+    await fireEvent.changeText(screen.getByLabelText('Name'), 'Pilsner Urquell');
+    await fireEvent.press(screen.getByRole('button', { name: 'Open Pilsner Urquell' }));
+    expect(mockReplace).toHaveBeenCalledWith('/beer/pils-1');
+    expect(useBeerWineWizardStore.getState().kept['beer:bar-1']).toBeUndefined();
   });
 
   test('closing with anything typed asks first and keeps the draft', async () => {

@@ -100,6 +100,8 @@ export function useCreateBeerWine() {
 
       useRecentActivityStore.getState().push(recentEntry(kind, id, capitalizeFirsts(draft.name), { barId }));
       void qc.invalidateQueries({ queryKey: [config.listQueryKey] });
+      // So a second save of this name sees it taken at once, not after the name check's 30 s.
+      void qc.invalidateQueries({ queryKey: ['same-name-drink'] });
       if (barId) void qc.invalidateQueries({ queryKey: ['bar', barId] });
       return { id, warnings };
     },

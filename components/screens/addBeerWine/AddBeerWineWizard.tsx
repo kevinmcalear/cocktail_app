@@ -81,13 +81,21 @@ function Wizard({ kind, barId = null, initialName, embedded, onClose, onSaved, c
   // Checked against the name as it is now, so the last name's answer doesn't linger while the new one is asked.
   const same = useSameNameDrink({ barId, mine: !barId, name: draft.name, kind });
   const taken = same.data && sameName(same.data.name, draft.name) && draft.differentFrom !== nameKey(draft.name) ? same.data : null;
+  // A draft that is only this name has nothing worth keeping once the one that exists is open.
+  const onlyName = JSON.stringify({ ...draft, name: '', differentFrom: null }) === JSON.stringify({ ...EMPTY_BEER_WINE, differentFrom: null });
+  const openIt = () => {
+    if (taken) {
+      if (onlyName) clear(place);
+      router.replace(`/${kind}/${taken.id}` as Href);
+    }
+  };
   const takenCard = taken ? (
     <Prompt
       warn
       icon="exclamationmark.triangle"
       {...takenWords(taken.name, !!barId, taken.savedAt, taken.menu)}
       actions={[
-        { label: 'Open it', onPress: () => router.replace(`/${kind}/${taken.id}` as Href), accessibilityLabel: `Open ${taken.name}. Your draft is kept` },
+        { label: 'Open it', onPress: openIt, accessibilityLabel: `Open ${taken.name}${onlyName ? '' : '. Your draft is kept'}` },
         { label: 'It’s a different one', onPress: () => set({ differentFrom: nameKey(draft.name) }) },
       ]}
     />
@@ -98,6 +106,8 @@ function Wizard({ kind, barId = null, initialName, embedded, onClose, onSaved, c
     setStoredStep(place, to);
   };
   const close = () => {
+    // Escape on the web dialog comes here again: it answers Keep going.
+    if (leaving) return setLeaving(false);
     if (!filledBeerWine(draft)) return onClose();
     // The card sits at the bottom: on a phone the keyboard would hide it.
     Keyboard.dismiss();
@@ -169,6 +179,8 @@ function Wizard({ kind, barId = null, initialName, embedded, onClose, onSaved, c
         const rows = steps.filter((s) => s !== 'review' && s !== 'glass');
         return (
           <View style={styles.review}>
+            {/* Above the rows: with the name taken, Save is off and the reason must be in view. */}
+            {takenCard}
             <ListGroup>
               {rows.map((s, i) => (
                 <ListRow key={s} first={i === 0} title={copy[s].short} value={value[s] || 'Add'} warn={!value[s]} onPress={() => go(s)} />
@@ -178,7 +190,6 @@ function Wizard({ kind, barId = null, initialName, embedded, onClose, onSaved, c
               <IconSymbol name="camera.fill" size={16} color={ds.c.ink} />
               <Caption style={styles.flex}>{draft.photo ? 'Its photo is saved with it.' : 'You can add photos on its page.'}</Caption>
             </View>
-            {takenCard}
           </View>
         );
       }
@@ -194,7 +205,7 @@ function Wizard({ kind, barId = null, initialName, embedded, onClose, onSaved, c
         pageTitle={`Add a ${kind}`}
         embedded={embedded}
         overNav
-        band={(p) => <BeerWineBand place={p} title={config.label} inputs={inputs} seed={kind} onClose={close} />}
+        band={(p) => <BeerWineBand place={p} title={config.label} inputs={inputs} seed={kind} onClose={close} onBack={at > 0 ? () => go(steps[at - 1]) : undefined} />}
         stepKey={step}
         direction={direction}
         eyebrow={stepEyebrow(kind, step, steps)}

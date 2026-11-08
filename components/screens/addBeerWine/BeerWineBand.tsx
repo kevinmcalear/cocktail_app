@@ -16,15 +16,16 @@ const ART = 120;
  * and recolouring as the steps are answered. While typing on a phone it
  * folds to the X and the title, so the field and the keyboard both fit.
  */
-export function BeerWineBand({ place, title, inputs, seed, onClose }: { place: BandPlace; title: string; inputs: SketchInputs; seed: string; onClose: () => void }) {
+export function BeerWineBand({ place, title, inputs, seed, onClose, onBack }: { place: BandPlace; title: string; inputs: SketchInputs; seed: string; onClose: () => void; onBack?: () => void }) {
   return (
     <View style={[styles.band, { paddingTop: place.top, paddingHorizontal: place.side }]}>
       <View style={styles.top}>
-        <GlassButton icon="xmark" accessibilityLabel="Close" onPress={onClose} />
+        {/* Kevin, 8 Nov: a back arrow on every step after the first (the board draws only the X). */}
+        {onBack ? <GlassButton icon="chevron.left" accessibilityLabel="Back" onPress={onBack} /> : <GlassButton icon="xmark" accessibilityLabel="Close" onPress={onClose} />}
         <DsText variant="body" tone="muted" role="heading" style={styles.title}>
           {title}
         </DsText>
-        <View style={styles.balance} />
+        {onBack ? <GlassButton icon="xmark" accessibilityLabel="Close" onPress={onClose} /> : <View style={styles.balance} />}
       </View>
       {place.folded ? null : (
         <View style={styles.art} aria-label={`Drawing of the ${title.toLowerCase()} so far`}>
