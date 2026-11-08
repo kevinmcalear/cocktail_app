@@ -34,17 +34,19 @@ export function SheetGrow({ from, grown, size, drag, bottom, corner, fill, width
 }) {
   const ds = useDs();
   const { width: windowWidth, height: windowHeight } = useWindowDimensions();
-  // Where the card is at `grown`, in the window, and where the panel rests; null until the panel is laid out.
-  const frames = () => {
+  // Where the card is at `g`, in the window, and where the panel rests; null until the panel is laid out.
+  // Each style reads grown and size itself: a style follows only the shared values its own worklet reads,
+  // so one reached through this helper alone stayed where it started.
+  const frames = (g: number, { w, h }: { w: number; h: number }) => {
     'worklet';
-    const { w, h } = size.get();
     if (!w || !h) return null;
     const to = { x: (windowWidth - w) / 2, y: windowHeight - bottom - h, width: w, height: h };
-    return { to, at: growFrame(from, to, corner, windowWidth, windowHeight, grown.get()) };
+    return { to, at: growFrame(from, to, corner, windowWidth, windowHeight, g) };
   };
   // In the flow where the sheet sits (so the keyboard lifts it), moved to the grow frame.
   const card = useAnimatedStyle(() => {
-    const f = frames();
+    const g = grown.get();
+    const f = frames(g, size.get());
     if (!f) return { opacity: 0, height: 0 };
     const { at } = f;
     return {
@@ -52,14 +54,14 @@ export function SheetGrow({ from, grown, size, drag, bottom, corner, fill, width
       width: at.width,
       height: at.height,
       borderRadius: at.borderRadius,
-      shadowOpacity: interpolate(grown.get(), [0.8, 1], [0.2, 0], Extrapolation.CLAMP),
+      shadowOpacity: interpolate(g, [0.8, 1], [0.2, 0], Extrapolation.CLAMP),
       transform: [{ translateX: at.left - (windowWidth - at.width) / 2 }, { translateY: at.top - (windowHeight - bottom - at.height) + drag.get() }],
     };
   });
-  const clip = useAnimatedStyle(() => ({ borderRadius: frames()?.at.borderRadius ?? corner }));
+  const clip = useAnimatedStyle(() => ({ borderRadius: frames(grown.get(), size.get())?.at.borderRadius ?? corner }));
   // The panel stays where it rests while the card opens over it.
   const place = useAnimatedStyle(() => {
-    const f = frames();
+    const f = frames(grown.get(), size.get());
     return f ? { transform: [{ translateX: f.to.x - f.at.left }, { translateY: f.to.y - f.at.top }] } : {};
   });
   // A quarter strength at the board's step 2.
