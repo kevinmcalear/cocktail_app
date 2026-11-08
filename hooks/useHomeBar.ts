@@ -16,7 +16,11 @@ import { sortMatches, type MatchRow } from '@/lib/barMatches';
 import { specNoteText, type ServedBar } from '@/lib/servedAt';
 import { capitalizeFirst } from '@/lib/stringUtils';
 import { PANTRY, PANTRY_WATER } from '@/lib/pantry';
+import { SHELF_KEY, useShelf } from '@/hooks/useShelf';
 import { supabase } from '@/lib/supabase';
+
+// The shelf on its own, so screens that only need to know what's on it don't load the rest of this file.
+export { SHELF_KEY, useShelf } from '@/hooks/useShelf';
 
 export interface BarItem {
   id: string;
@@ -107,7 +111,6 @@ export interface FoundItem extends BarItem {
   of?: string;
 }
 
-export const SHELF_KEY = ['home-bar'];
 const NONE: string[] = [];
 const ITEM_SELECT = 'id, name, item_type, glassware_id, item_images(angle, sort_order, is_generated, images(url))';
 const SHELF_SELECT = `${ITEM_SELECT}, brand_maker, abv, generic_id, ingredient_role, recipes:app_recipe_presentation!recipe_item_id(id)`;
@@ -128,21 +131,6 @@ async function foundItems(rows: ItemRow[]): Promise<FoundItem[]> {
     origin: r.origin ?? null,
     role: r.ingredient_role ?? null,
   }));
-}
-
-/** The bottles on the signed-in person's shelf (item ids, newest first). */
-export function useShelf() {
-  return useQuery({
-    queryKey: SHELF_KEY,
-    queryFn: async (): Promise<string[]> => {
-      const { data, error } = await supabase
-        .from('home_bar_items')
-        .select('item_id')
-        .order('added_at', { ascending: false });
-      if (error) throw error;
-      return (data ?? []).map((r: { item_id: string }) => r.item_id);
-    },
-  });
 }
 
 /** The catalog's ingredients for what was typed, as Add to your bar lists them. */

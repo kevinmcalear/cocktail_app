@@ -3,11 +3,10 @@ import { useMemo } from 'react';
 import { Alert } from 'react-native';
 
 import { BAR_WRITES, type BottleWrite } from '@/hooks/barWrites';
-import { saveIngredientPicture } from '@/hooks/ingredientPicture';
 import { useBackBarParts } from '@/hooks/useBackBar';
 import { useSwapSource } from '@/hooks/useBulk';
 import { refreshIngredients } from '@/hooks/useDropdowns';
-import { useShelf } from '@/hooks/useHomeBar';
+import { useShelf } from '@/hooks/useShelf';
 import { recentEntry } from '@/hooks/useTrackRecent';
 import { supabase } from '@/lib/supabase';
 import { toastDone } from '@/lib/toast';
@@ -84,7 +83,9 @@ export function useSaveBottle() {
       // ponytail: a photo waiting with a save cut short by closing the app is lost (the bottle isn't); keep the file and resend it if that matters.
       // Only a bottle made here: one the database said was already shared keeps its own picture.
       if (w.photo && !w.existing && id === w.id) {
-        await saveIngredientPicture(qc, id, 'photo', w.photo).catch(() => Alert.alert('The label photo didn’t save', 'The bottle is saved. Add the photo again on its page.'));
+        // Loaded only for a photo: the upload code is big, and shared with other pages' first load once enough screens import it.
+        const save = import('@/hooks/ingredientPicture').then(({ saveIngredientPicture }) => saveIngredientPicture(qc, id, 'photo', w.photo!));
+        await save.catch(() => Alert.alert('The label photo didn’t save', 'The bottle is saved. Add the photo again on its page.'));
       }
     },
     onSettled: (_id, _error, w) => {
