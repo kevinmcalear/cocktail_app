@@ -1,7 +1,8 @@
-import { lazy, Suspense, useEffect, useRef, useState, type ComponentRef, type ReactNode } from 'react';
+import { lazy, Suspense, useEffect, useRef, useState, type ComponentRef } from 'react';
 import { ScrollView, StyleSheet, View, type TextInput } from 'react-native';
 
 import { Button, Caption, TextLink, useDs } from '@/components/ds';
+import { DragScrollView } from '@/components/ds/dragScroll';
 import { TellUs } from '@/components/feedback/TellUs';
 import { WebHead } from '@/components/WebHead';
 import { layout, space } from '@/constants/tokens';
@@ -42,7 +43,7 @@ import { StartFromClassic } from './StartFromClassic';
 import type { LineStock } from './StockToggle';
 import { BigName, NotesStep } from './TextSteps';
 import { useDeskLines } from './useDeskLines';
-import { Eyebrow, WizardChip } from './WizardChrome';
+import { DeskRow as Row, Eyebrow, WizardChip } from './WizardChrome';
 
 const PhoneFrame = lazy(() => import('../drink/edit/PhonePreview').then((m) => ({ default: m.PhoneFrame }))); // The drink page, only once a desktop opens this.
 
@@ -178,7 +179,8 @@ export function DrinkDesk(p: DrinkDeskProps) {
         </Caption>
       </View>
       <View style={styles.body}>
-        <ScrollView style={styles.left} contentContainerStyle={styles.form} keyboardShouldPersistTaps="handled">
+        {/* A held spec line near its top or bottom scrolls the column. */}
+        <DragScrollView style={styles.left} contentContainerStyle={styles.form} keyboardShouldPersistTaps="handled">
           {same?.as === 'version' ? (
             <View style={styles.version}>
               <BracketField name={same.name} value={same.word ?? ''} onChange={(w) => picks.word(draft, w)} label={`What’s different about this ${same.name}`} autoFocus={!same.word} />
@@ -254,7 +256,7 @@ export function DrinkDesk(p: DrinkDeskProps) {
           <PublishStep draft={draft} set={set} barId={barId} />
           <Eyebrow>Photos</Eyebrow>
           <ReviewPhotos photos={draft.photos ?? {}} onChange={(photos) => set({ photos })} sketch={draftSketchInputs(sketchLook(draft, p.barVariants, p.barIceKinds))} seed={draft.id ?? 'new-drink'} />
-        </ScrollView>
+        </DragScrollView>
         <ScrollView style={[styles.rail, { backgroundColor: ds.c.surface, borderLeftColor: ds.c.line }]} contentContainerStyle={styles.railBody}>
           <Suspense fallback={null}><PhoneFrame item={draftPreviewItem(draft, barId, p.ingredients)} photo={draft.photos?.hero} sketch={sketch} /></Suspense>
           <DeskColour draft={draft} inputs={sketch} seed={draft.id ?? 'new-drink'} onTint={(tint) => set({ tint })} />
@@ -269,28 +271,13 @@ export function DrinkDesk(p: DrinkDeskProps) {
   );
 }
 
-/** A label on the left and its choices beside it, as the board lays out method, glass, ice and finish. */
-function Row({ label, children }: { label: string; children: ReactNode }) {
-  return (
-    <View style={styles.row}>
-      <View style={styles.rowLabel}>
-        <Eyebrow>{label}</Eyebrow>
-      </View>
-      <View style={[styles.flex, styles.rowBody]}>{children}</View>
-    </View>
-  );
-}
-
 const styles = StyleSheet.create({
   screen: { flex: 1 },
   header: { flexDirection: 'row', alignItems: 'center', gap: space.lg, paddingHorizontal: space.xxl, paddingVertical: space.lg, borderBottomWidth: StyleSheet.hairlineWidth },
   flex: { flex: 1 },
-  rowBody: { gap: space.lg },
   body: { flex: 1, flexDirection: 'row' },
   left: { flex: 1, maxWidth: 760 },
   form: { paddingHorizontal: space.xxl, paddingTop: space.xl, paddingBottom: space.xxxl, gap: space.lg },
-  row: { flexDirection: 'row', gap: space.md },
-  rowLabel: { width: 100, paddingTop: space.sm },
   chips: { flexDirection: 'row', flexWrap: 'wrap', gap: space.sm },
   version: { gap: space.sm },
   undo: { alignSelf: 'flex-start' },

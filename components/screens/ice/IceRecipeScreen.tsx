@@ -2,6 +2,7 @@ import { useState } from 'react';
 import { StyleSheet, View } from 'react-native';
 
 import { Body, Button, Caption, Headline, Surface, useDs } from '@/components/ds';
+import { DragScrollView } from '@/components/ds/dragScroll';
 import { IconSymbol } from '@/components/ui/icon-symbol';
 import { radius, space } from '@/constants/tokens';
 import { useActiveVenue } from '@/hooks/useActiveVenue';
@@ -76,7 +77,7 @@ export function IceRecipeScreen({ barId, iceId }: { barId: string; iceId: string
   const values = keepsValues(f);
   const toolsStep = sheet && typeof sheet === 'object' ? f.steps.findIndex((s) => s.key === sheet.tools) : -1;
   return (
-    <VenueSubPage barId={barId} title={title}>
+    <VenueSubPage barId={barId} title={title} scroller={DragScrollView}>
       {edit.template ? (
         <View style={[styles.note, { backgroundColor: ds.c.raised }]}>
           <IconSymbol name="info.circle" size={16} color={ds.c.muted} />
