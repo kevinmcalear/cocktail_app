@@ -11,7 +11,7 @@ import { LineRow } from './LineRow';
 // Pairings come from the database; these tests are about the field.
 // The paper band's View as pill reads the signed-in person's prefs; off here.
 jest.mock('@/components/ViewAsBanner', () => ({ ViewAsPill: () => null }));
-jest.mock('@/hooks/useNearIngredients', () => ({ useNearIngredients: () => [] }));
+jest.mock('@/hooks/useNearIngredients', () => ({ useNearIngredients: () => [], useNearIngredientsChecked: () => ({ near: [], checking: false }) }));
 jest.mock('@/hooks/usePairings', () => ({ usePairings: () => ({ data: [] }) }));
 jest.mock('@/hooks/useClosestClassic', () => ({ useClosestClassic: () => ({ data: null }), useCloseClassics: () => ({ data: [] }) }));
 jest.mock('@/hooks/useDiscover', () => ({ useDrinkLists: () => ({ data: [] }) }));

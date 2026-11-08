@@ -6,7 +6,7 @@ import type { SortableRecipeItem } from '@/lib/recipeItem';
 import { EditLines } from './EditLines';
 
 // The search reads the database for near names and use counts; these tests are about the lines.
-jest.mock('@/hooks/useNearIngredients', () => ({ useNearIngredients: () => [] }));
+jest.mock('@/hooks/useNearIngredients', () => ({ useNearIngredients: () => [], useNearIngredientsChecked: () => ({ near: [], checking: false }) }));
 jest.mock('@/hooks/useActiveVenue', () => ({ useActiveVenue: () => ({ venues: [] }) }));
 jest.mock('@/hooks/useKit', () => ({ useKit: () => ({ owned: [], kit: new Set(), toggle: jest.fn() }) }));
 jest.mock('@/hooks/useBarKit', () => ({ useMakingKit: () => ({ kit: new Set(), where: 'My Bar', add: jest.fn() }) }));

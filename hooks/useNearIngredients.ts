@@ -1,8 +1,10 @@
-import { useMemo } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 
 import { useSearchNear } from '@/hooks/useSearchNear';
 
 const INGREDIENT = ['ingredient'] as const;
+/** How long after the last letter a picker waits on the database before saying "not there" anyway (slow or no network). */
+const NEAR_WAIT_MS = 1500;
 
 type Row = { id: string; name: string | null; hide_from_search?: boolean | null };
 
@@ -14,10 +16,27 @@ type Row = { id: string; name: string | null; hide_from_search?: boolean | null 
  * from search or not in the list are left out. Off with `skip` (the name is
  * one already).
  */
-export function useNearIngredients<T extends Row>(query: string, rows: readonly T[], { skip = false, shown = [], first = null, limit = 3 }: { skip?: boolean; shown?: readonly T[]; first?: T | null; limit?: number } = {}): T[] {
-  const { data: hits } = useSearchNear(query, { kinds: INGREDIENT, enabled: !skip });
+export function useNearIngredients<T extends Row>(query: string, rows: readonly T[], options: NearOptions<T> = {}): T[] {
+  return useNearIngredientsChecked(query, rows, options).near;
+}
+
+type NearOptions<T> = { skip?: boolean; shown?: readonly T[]; first?: T | null; limit?: number };
+
+/**
+ * useNearIngredients, and `checking` while the database hasn't answered for
+ * what's typed (NEAR_WAIT_MS at most), so a picker says "Looking…", not
+ * "No bottle by that name", before it knows (Mat, 4 Nov).
+ */
+export function useNearIngredientsChecked<T extends Row>(query: string, rows: readonly T[], { skip = false, shown = [], first = null, limit = 3 }: NearOptions<T> = {}): { near: T[]; checking: boolean } {
+  const { data: hits, asking } = useSearchNear(query, { kinds: INGREDIENT, enabled: !skip });
   const byId = useMemo(() => new Map(rows.map((r) => [r.id, r])), [rows]);
-  if (skip) return [];
+  const [gaveUp, setGaveUp] = useState<string | null>(null);
+  useEffect(() => {
+    if (!asking) return;
+    const t = setTimeout(() => setGaveUp(query), NEAR_WAIT_MS);
+    return () => clearTimeout(t);
+  }, [asking, query]);
+  if (skip) return { near: [], checking: false };
   const seen = new Set(shown.map((r) => r.id));
   const out: T[] = [];
   for (const r of [first, ...(hits ?? []).map((h) => byId.get(h.id))]) {
@@ -25,5 +44,5 @@ export function useNearIngredients<T extends Row>(query: string, rows: readonly 
     seen.add(r.id);
     out.push(r);
   }
-  return out.slice(0, limit);
+  return { near: out.slice(0, limit), checking: !!asking && gaveUp !== query };
 }

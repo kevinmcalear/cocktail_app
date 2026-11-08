@@ -11,7 +11,7 @@ import { WizardFrame } from './WizardFrame';
 // A phone: the takeover is only there (Q16).
 jest.mock('@/components/ds', () => ({ ...jest.requireActual('@/components/ds'), useBreakpoint: () => 'phone' }));
 jest.mock('@/components/ViewAsBanner', () => ({ ViewAsPill: () => null }));
-jest.mock('@/hooks/useNearIngredients', () => ({ useNearIngredients: () => [] }));
+jest.mock('@/hooks/useNearIngredients', () => ({ useNearIngredients: () => [], useNearIngredientsChecked: () => ({ near: [], checking: false }) }));
 jest.mock('@/hooks/usePairings', () => ({ usePairings: () => ({ data: [] }) }));
 jest.mock('@/hooks/useClosestClassic', () => ({ useClosestClassic: () => ({ data: null }) }));
 jest.mock('@/hooks/useDiscover', () => ({ useDrinkLists: () => ({ data: [] }) }));

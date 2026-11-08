@@ -7,7 +7,7 @@ import { IngredientsStep } from './IngredientsStep';
 
 // Pairings come from the database; these tests are about the line.
 jest.mock('@/components/ViewAsBanner', () => ({ ViewAsPill: () => null }));
-jest.mock('@/hooks/useNearIngredients', () => ({ useNearIngredients: () => [] }));
+jest.mock('@/hooks/useNearIngredients', () => ({ useNearIngredients: () => [], useNearIngredientsChecked: () => ({ near: [], checking: false }) }));
 jest.mock('@/hooks/usePairings', () => ({ usePairings: () => ({ data: [] }) }));
 jest.mock('@/hooks/useClosestClassic', () => ({ useClosestClassic: () => ({ data: null }), useCloseClassics: () => ({ data: [] }) }));
 jest.mock('@/hooks/useDiscover', () => ({ useDrinkLists: () => ({ data: [] }) }));

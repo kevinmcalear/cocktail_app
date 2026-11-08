@@ -5,7 +5,7 @@ import { Body, Button, Caption, PressableScale, useDs } from '@/components/ds';
 import { IconSymbol } from '@/components/ui/icon-symbol';
 import { font, layout, radius, space, type } from '@/constants/tokens';
 import { NearPicks } from '@/components/search/NearPicks';
-import { useNearIngredients } from '@/hooks/useNearIngredients';
+import { useNearIngredientsChecked } from '@/hooks/useNearIngredients';
 import { typedUnit, type WizardPick } from '@/lib/drinkWizard';
 import { bottlesOfKind, closestIngredients, nearIngredient, sameIngredient, searchIngredients, type IngredientAlias } from '@/lib/ingredientNames';
 import { readHouse, type HouseReading } from '@/lib/makeItHouse';
@@ -114,8 +114,10 @@ export function IngredientSearch(props: IngredientSearchProps) {
   const exact = !!sameIngredient(query, ingredients, aliases) || results.some((r) => (r.name ?? '').trim().toLowerCase() === q.toLowerCase());
   const have = backBar ?? shelf;
   // "chartruse": Green Chartreuse, the ones you have first; under "Did you mean", or last when something matched (NearPicks).
-  const near = useNearIngredients(query, ingredients, { skip: exact || !q, shown: results, first: exact ? null : nearIngredient(query, ingredients, aliases) }).sort((a, b) => Number(!!have?.has(b.id)) - Number(!!have?.has(a.id)));
-  const closest = results.length || near.length || exact || loading ? [] : closestIngredients(query, ingredients, { coreIds });
+  const { near: close, checking } = useNearIngredientsChecked(query, ingredients, { skip: exact || !q, shown: results, first: exact ? null : nearIngredient(query, ingredients, aliases) });
+  const near = close.sort((a, b) => Number(!!have?.has(b.id)) - Number(!!have?.has(a.id)));
+  // Nothing matched: "not there" and the closest wait on the database's close names (Mat, 4 Nov), "Looking…" meanwhile.
+  const closest = results.length || near.length || exact || loading || checking ? [] : closestIngredients(query, ingredients, { coreIds });
   // A kind with bottles (mezcal): the plain one, then its brands; other names with the word in them come after both.
   const typed = brands && q ? sameIngredient(query, ingredients, aliases) : null;
   const bottles = typed ? bottlesOfKind(typed, ingredients, have) : [];
@@ -256,7 +258,7 @@ export function IngredientSearch(props: IngredientSearchProps) {
               Nothing called that yet. Closest:
             </Caption>
           ) : !results.length && !near.length && !exact && !loading && allowNew ? (
-            <Caption tone="muted" style={styles.label}>{nameFirst ? 'Nothing by that name yet.' : 'No bottle by that name.'}</Caption>
+            <Caption tone="muted" style={styles.label}>{checking ? 'Looking…' : nameFirst ? 'Nothing by that name yet.' : 'No bottle by that name.'}</Caption>
           ) : null}
           {closest.map((r) => found(r))}
           {lead ? makeRow : null}

@@ -12,14 +12,17 @@ const ANYWHERE: Area = { kind: 'anywhere' };
  * Close names the database has for a search (public.search_near): the drinks
  * bars pour and bars in the area, people, and ingredients when asked. Needs
  * an account, as the drinks list does; three letters or more. Plain JSON.
+ * `asking`: what's typed hasn't had its answer yet (the pause after typing, or
+ * the database still working), so a picker doesn't say "not there" too soon.
  */
 export function useSearchNear(query: string, { area = ANYWHERE, kinds, enabled = true }: { area?: Area; kinds: readonly NearKind[]; enabled?: boolean }) {
   const signedIn = useSignedIn();
   const q = useDebounced(query.trim(), 250);
   const where = areaParams(area);
-  return useQuery({
+  const on = enabled && signedIn && kinds.length > 0;
+  const result = useQuery({
     queryKey: ['search-near', q, kinds, where],
-    enabled: enabled && signedIn && q.length >= 3 && kinds.length > 0,
+    enabled: on && q.length >= 3,
     staleTime: 60_000,
     queryFn: async ({ signal }): Promise<NearHit[]> => {
       const { data, error } = await supabase.rpc('search_near', { p_query: q, p_kinds: [...kinds], ...where, p_limit: 8 }).abortSignal(signal);
@@ -29,6 +32,7 @@ export function useSearchNear(query: string, { area = ANYWHERE, kinds, enabled =
       return ((data ?? []) as NearRow[]).map(fromRow).filter((h): h is NearHit => h !== null);
     },
   });
+  return { ...result, asking: on && query.trim().length >= 3 && (q !== query.trim() || result.isFetching) };
 }
 
 /** "Yes, that's it": keeps what was typed as another spelling of the drink (public.save_spelling). */

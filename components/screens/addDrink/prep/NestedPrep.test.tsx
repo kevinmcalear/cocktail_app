@@ -5,7 +5,7 @@ import { renderWithProviders } from '@/jest.setup';
 import { NestedPrep } from './NestedPrep';
 
 jest.mock('@/components/ViewAsBanner', () => ({ ViewAsPill: () => null }));
-jest.mock('@/hooks/useNearIngredients', () => ({ useNearIngredients: () => [] }));
+jest.mock('@/hooks/useNearIngredients', () => ({ useNearIngredients: () => [], useNearIngredientsChecked: () => ({ near: [], checking: false }) }));
 jest.mock('@/hooks/useKit', () => ({ useKit: () => ({ owned: [], kit: new Set(), toggle: jest.fn() }) }));
 jest.mock('@/hooks/useBarKit', () => ({ useMakingKit: () => ({ kit: new Set(), where: 'My Bar', add: jest.fn() }) }));
 jest.mock('@/hooks/usePrepCard', () => ({
