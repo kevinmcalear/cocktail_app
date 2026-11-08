@@ -1,6 +1,7 @@
 import assert from 'node:assert/strict';
 import { splitAmount } from './splitAmount';
-import { amountText, DEFAULT_UNIT, followBarUnit, isKnownUnit, overIce, savedUnit, stickyUnit, unitLabel, RECIPE_UNITS } from './units';
+import { amountText, DEFAULT_UNIT, followBarUnit, isKnownUnit, overIce, savedUnit, unitLabel, RECIPE_UNITS } from './units';
+import { stickyUnit } from './stickyUnit';
 
 assert.equal(DEFAULT_UNIT, 'ml');
 assert.ok(RECIPE_UNITS.some((u) => u.value === 'ml'));

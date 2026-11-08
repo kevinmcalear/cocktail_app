@@ -1,9 +1,9 @@
 import { useQuery, useQueryClient, type Query, type QueryClient } from '@tanstack/react-query';
 import { useMemo } from 'react';
-import { create } from 'zustand';
 
 import { allRowsById, byName, mergeByName, withRow } from '@/lib/allRows';
 import { readSavedCatalog, saveCatalog } from '@/lib/catalogFile';
+import { useDownloading } from '@/lib/catalogProgress';
 import { CATALOG_COLUMNS, CATALOG_FRESH_MS, CATALOG_RANGES, packCatalog, toItems, unpackCatalog, type CatalogRow } from '@/lib/matchCatalog';
 import { DROPDOWNS_QUERY_KEY } from '@/lib/queryDefaults';
 import { supabase } from '@/lib/supabase';
@@ -19,70 +19,13 @@ const OWN_KEY = [...DROPDOWNS_QUERY_KEY, 'ingredients', 'own'] as const;
 
 type Shared = { savedAt: number; rows: CatalogRow[] };
 
-/** How many of the shared catalog's ranges have arrived while it downloads (null when it isn't), for the Reading screen's progress. */
-const useDownloading = create<{ ranges: number | null }>(() => ({ ranges: null }));
-
-/**
- * Every shared ingredient (no venue's, nobody's own, none from a bar's page:
- * who sees those depends on who's looking, so one copy suits everyone): the
- * id ranges side by side, each a page at a time. Stops when nobody waits on
- * it any more (`signal`), and all of it stops when one range fails.
- */
-async function downloadShared(signal: AbortSignal): Promise<CatalogRow[]> {
-  useDownloading.setState({ ranges: 0 });
-  const stop = new AbortController();
-  signal.addEventListener('abort', () => stop.abort());
-  try {
-    const parts = await Promise.all(
-      CATALOG_RANGES.map(({ lo, hi }) =>
-        allRowsById<CatalogRow>((after, size) => {
-          let page = supabase.from('app_item_presentation').select(CATALOG_COLUMNS).eq('item_type', 'ingredient').is('bar_id', null).is('created_by', null).is('origin_bar_profile_id', null).gte('id', lo);
-          if (hi) page = page.lt('id', hi);
-          if (after) page = page.gt('id', after);
-          return page.order('id').limit(size).abortSignal(stop.signal);
-        }).then(
-          (rows) => {
-            useDownloading.setState((s) => ({ ranges: (s.ranges ?? 0) + 1 }));
-            return rows;
-          },
-          (error: unknown) => {
-            stop.abort();
-            throw error;
-          }
-        )
-      )
-    );
-    return parts.flat().sort(byName);
-  } finally {
-    useDownloading.setState({ ranges: null });
-  }
-}
-
-/** The download behind a day-old saved catalog, so pickers opening together start one. */
-let refreshing: Promise<void> | null = null;
 /** Bumped when a saved bottle goes into the loaded catalog, so a download begun before it doesn't drop it. */
 let patched = 0;
 
-/**
- * A new copy of the shared catalog while the pickers read the saved one:
- * swapped in and saved when it lands. A failure keeps the saved one, and the
- * next picker to open tries again.
- */
-function refreshShared(client: QueryClient) {
-  if (refreshing) return;
-  const since = patched;
-  refreshing = downloadShared(new AbortController().signal)
-    .then((rows) => {
-      // A bottle saved meanwhile is in the loaded list, maybe not in this download: keep that one; the next picker downloads again.
-      if (patched !== since) return;
-      const fresh: Shared = { savedAt: Date.now(), rows };
-      client.setQueryData<Shared>(SHARED_KEY, fresh);
-      return saveCatalog(packCatalog(rows, fresh.savedAt));
-    })
-    .catch(() => undefined)
-    .finally(() => {
-      refreshing = null;
-    });
+/** The background download is its own chunk: pages that only read a saved catalog (a public drink) never load it. */
+async function refresh(client: QueryClient) {
+  const { refreshShared } = await import('@/lib/catalogDownload');
+  refreshShared(client, SHARED_KEY, () => patched);
 }
 
 let merged: { shared: CatalogRow[]; own: CatalogRow[]; rows: CatalogRow[] } | undefined;
@@ -113,18 +56,18 @@ export function useIngredientCatalog(enabled = true) {
       // Loaded and a day old (or the last download failed): search it while a new one downloads, without reading the file again.
       const held = client.getQueryData<Shared>(SHARED_KEY);
       if (held) {
-        if (Date.now() - held.savedAt >= CATALOG_FRESH_MS) refreshShared(client);
+        if (Date.now() - held.savedAt >= CATALOG_FRESH_MS) void refresh(client);
         return held;
       }
       const file = unpackCatalog(await readSavedCatalog());
       if (file) {
         // A day old, it's still what the pickers search while the new one downloads (Mat, 4 Nov: waiting on it read as a slow search).
-        if (Date.now() - file.savedAt >= CATALOG_FRESH_MS) refreshShared(client);
+        if (Date.now() - file.savedAt >= CATALOG_FRESH_MS) void refresh(client);
         // A copy downloaded since this read began is newer than the file it hasn't saved over yet.
         const loaded = client.getQueryData<Shared>(SHARED_KEY);
         return loaded && loaded.savedAt > file.savedAt ? loaded : file;
       }
-      const rows = await downloadShared(signal);
+      const rows = await (await import('@/lib/catalogDownload')).downloadShared(signal);
       const savedAt = Date.now();
       void saveCatalog(packCatalog(rows, savedAt));
       return { savedAt, rows };

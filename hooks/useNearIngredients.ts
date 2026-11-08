@@ -31,6 +31,8 @@ export function useNearIngredientsChecked<T extends Row>(query: string, rows: re
   const { data: hits, asking } = useSearchNear(query, { kinds: INGREDIENT, enabled: !skip });
   const byId = useMemo(() => new Map(rows.map((r) => [r.id, r])), [rows]);
   const [gaveUp, setGaveUp] = useState<string | null>(null);
+  // A new query clears the last one's give-up, so typing the same miss again says "Looking…" again.
+  if (gaveUp !== null && gaveUp !== query) setGaveUp(null);
   useEffect(() => {
     if (!asking) return;
     const t = setTimeout(() => setGaveUp(query), NEAR_WAIT_MS);

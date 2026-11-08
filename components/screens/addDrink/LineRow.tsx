@@ -9,7 +9,7 @@ import { convertPour, FINISH_UNITS, QUICK_UNITS, stepAmount, type WizardLine } f
 import { prepSummary, toFinishSummary } from '@/lib/prepKinds';
 import { tidyAmount } from '@/lib/specDefaults';
 import { techniqueById } from '@/lib/techniques';
-import { rememberLineUnit } from '@/store/useSettingsStore';
+import { rememberLineUnit } from '@/store/rememberLineUnit';
 
 import { HeldTag, useHeldStyle } from './CombineTag';
 import { WizardChip } from './WizardChrome';

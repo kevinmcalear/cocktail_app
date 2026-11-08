@@ -1,5 +1,5 @@
 import type { MapsApp } from '@/lib/directions';
-import { DEFAULT_UNIT, followBarUnit, savedUnit, stickyUnit } from '@/lib/units';
+import { DEFAULT_UNIT, followBarUnit, savedUnit } from '@/lib/units';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { create } from 'zustand';
 import { createJSONStorage, persist } from 'zustand/middleware';
@@ -111,15 +111,4 @@ export function useUnits(): { unit: string; specUnit: SpecUnit } {
 /** Read preferred unit outside React (merge, handoff defaults). */
 export function getPreferredUnit(): string {
     return unitIn(useSettingsStore.getState());
-}
-
-/**
- * A unit picked on a spec line, or typed with a pour ("1 oz lemon"): ml or oz
- * becomes your own Units (lib/units stickyUnit), so the next line and the next
- * drink start in it, as the drink page's switch does. Lines already written keep theirs.
- */
-export function rememberLineUnit(unit: string | null | undefined): void {
-    const s = useSettingsStore.getState();
-    const next = stickyUnit(unit, unitIn(s));
-    if (next) s.setUnits(next);
 }
