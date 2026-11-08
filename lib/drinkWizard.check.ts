@@ -10,7 +10,7 @@ import {
   newDraftId, COMMON_METHODS, FINISH_CHIPS, FINISH_UNITS, finishLabel, finishStart, STEP_COPY, parseYear, savedNotice,
 } from './drinkWizard';
 import { draftSketchInputs } from './sketch/draft';
-import { RECIPE_UNITS } from './units';
+import { amountText, RECIPE_UNITS } from './units';
 
 const rows = [
   { id: 'i1', name: 'Large Cube' },
@@ -53,6 +53,11 @@ assert.equal(guessUnit('Gin', 'oz'), 'oz');
 for (const u of QUICK_UNITS) assert.ok(RECIPE_UNITS.some((r) => r.value === u), `${u} is a recipe unit`);
 assert.equal(nextUnit(QUICK_UNITS.at(-1)!), QUICK_UNITS[0], 'the unit cycles round');
 assert.equal(nextUnit('splash'), 'ml', 'an odd unit cycles from the start');
+// tbsp is a spec line's unit like tsp (Mat, 4 Nov): offered, stepped in halves, kept as typed, read as "1.5 tbsp".
+assert.ok((QUICK_UNITS as readonly string[]).includes('tbsp') && nextUnit('tsp') === 'tbsp', 'a spec line offers tbsp, after tsp');
+assert.equal(stepAmount('1', 'tbsp', 1), '1.5');
+assert.deepEqual(convertPour(2, 'tbsp', 'ml'), { amount: '2', unit: 'tbsp' }, 'only ml, cl and oz convert');
+assert.equal(amountText('1.5', 'tbsp'), '1.5 tbsp');
 for (const c of GARNISH_CHIPS) assert.ok(RECIPE_UNITS.some((r) => r.value === c.unit), `${c.label}: ${c.unit} is a recipe unit`);
 
 // The stepper walks the bar's measures, and clears below the smallest.

@@ -67,6 +67,7 @@ const ENTRY: Record<VenueFeatureKey, readonly string[]> = {
     'components/backbar/WhereItLives.tsx',
     'components/screens/make/useMakeSpot.ts',
     'components/screens/ingredient/edit/IngredientEditScreen.tsx',
+    'app/settings/bar/[id]/suppliers.tsx',
   ],
   prep: ['app/(tabs)/(1-tonight,2-drinks,3-discover,4-you)/prep.tsx', 'components/nav/sidePlaces.ts', 'hooks/useMenuLens.ts', 'components/screens/ingredient/BehindTheBar.tsx', 'components/screens/menus/page/useMenuPageActions.ts'],
   study: ['app/(tabs)/(1-tonight,2-drinks,3-discover,4-you)/test.tsx', 'app/study/[deck].tsx', 'components/bar/VenueSettingsLinks.tsx', 'components/screens/tonight/useStaffTonight.ts'],
