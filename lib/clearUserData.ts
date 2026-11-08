@@ -4,12 +4,13 @@ import { ACCOUNT_ALLERGIES_KEY } from '@/lib/myAllergies';
 import { STUDY_PILE_KEY } from '@/hooks/useStudyPile';
 import { AI_CONSENT_KEY } from '@/lib/aiConsent';
 import { dropUnsentWrites, isUserQuery } from '@/lib/authCache';
-import { loadBeerWineDrafts } from '@/lib/beerWineDrafts';
 import { deviceStore } from '@/lib/deviceStore';
 import { asyncStoragePersister, queryClient, savedQueryFiles } from '@/lib/react-query';
 import { clearSavedSpecBooks } from '@/lib/specBookFile';
 import { useAppMode } from '@/store/useAppMode';
+import { useBeerWineWizardStore } from '@/store/useBeerWineWizardStore';
 import { useBringIn } from '@/store/useBringIn';
+import type { WizardStore } from '@/store/createWizardStore';
 import { useDraftSyncStore } from '@/store/useDraftSyncStore';
 import { useDrinkWizardStore } from '@/store/useDrinkWizardStore';
 import { useLastPlace } from '@/store/useLastPlace';
@@ -20,19 +21,13 @@ import { useRecentSearches } from '@/store/useRecentSearches';
 import { useVenueSetup } from '@/store/useVenueSetup';
 
 /**
- * A persisted store that has read the device's copy. One first made now (on
- * the web, lib/beerWineDrafts) is still reading it, and that copy would land back
- * over a clear; rehydrate settles even when the read fails.
+ * A wizard's drafts, once its store has read the device's copy: a read still
+ * going would land the last person's drafts back over the clear (and the sync
+ * would send them to the next account). Rehydrate settles even when the read fails.
  */
-async function hydrated(store: { persist: { hasHydrated: () => boolean; rehydrate: () => Promise<void> | void } }): Promise<void> {
+async function clearDrafts<D extends object, S extends string>(store: WizardStore<D, S>): Promise<void> {
   if (!store.persist.hasHydrated()) await store.persist.rehydrate();
-}
-
-/** The beer and wine drafts (lib/beerWineDrafts: loaded on the web, not imported). */
-async function clearBeerWineDrafts(): Promise<void> {
-  const store = await loadBeerWineDrafts();
-  await hydrated(store);
-  store.setState({ kept: {} });
+  store.setState({ kept: {}, cleared: [] });
 }
 
 /**
@@ -54,7 +49,6 @@ export async function clearUserData(): Promise<void> {
   useRecentSearches.setState({ terms: [] });
   useLastPlace.getState().clear();
   useAppMode.getState().forgetVenue();
-  useDrinkWizardStore.setState({ kept: {}, cleared: [] });
   useDraftSyncStore.setState({ seen: [] });
   // Glasses held for a venue's page stay: they're the venue's list, not the person's, and only someone with
   // Prep there puts them on the page. Signing out used to lose them for good.
@@ -64,7 +58,8 @@ export async function clearUserData(): Promise<void> {
   useOfflineEdits.setState({ edits: {} });
   useBringIn.setState({ reviews: {}, reviewing: null, later: [] });
   await Promise.all([
-    clearBeerWineDrafts(),
+    clearDrafts(useDrinkWizardStore),
+    clearDrafts(useBeerWineWizardStore),
     asyncStoragePersister.removeClient(),
     savedQueryFiles.clear(),
     clearSavedSpecBooks(),

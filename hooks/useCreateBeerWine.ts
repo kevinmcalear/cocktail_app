@@ -5,7 +5,8 @@ import { imageIdFor, setItemImages } from '@/components/drink/drinkImages';
 import { pickerResult, usePickerTerm } from '@/hooks/useDiscover';
 import { recentEntry } from '@/hooks/useTrackRecent';
 import { track } from '@/lib/analytics';
-import { beerWineSketch, fullDescription, type BeerWineDraft, type CatalogBottle } from '@/lib/beerWineWizard';
+import { beerWinePlace, type BeerWineDraft } from '@/lib/beerWineDraft';
+import { beerWineSketch, fullDescription, type CatalogBottle } from '@/lib/beerWineWizard';
 import { plainDbMessage } from '@/lib/dbError';
 import { DRINK_KINDS, type DrinkKind } from '@/lib/drinkKinds';
 import { likeExactly } from '@/lib/drinkWizard';
@@ -14,7 +15,7 @@ import { nameKey } from '@/lib/sameName';
 import { capitalizeFirsts } from '@/lib/stringUtils';
 import { supabase } from '@/lib/supabase';
 import { toastDone } from '@/lib/toast';
-import { beerWinePlace, useBeerWineWizardStore } from '@/store/useBeerWineWizardStore';
+import { useBeerWineWizardStore } from '@/store/useBeerWineWizardStore';
 import { useRecentActivityStore } from '@/store/useRecentActivityStore';
 
 export interface CreateBeerWineInput {

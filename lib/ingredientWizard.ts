@@ -6,7 +6,7 @@
  */
 import { ruleFor } from '../supabase/functions/_shared/flavor';
 
-import type { DraftPhoto } from './beerWineWizard';
+import type { DraftPhoto } from './beerWineDraft';
 import type { WizardLine, WizardPick } from './drinkWizard';
 import { ingredientKey } from './ingredientNames';
 

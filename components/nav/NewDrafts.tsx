@@ -7,13 +7,13 @@ import { font, radius, space } from '@/constants/tokens';
 import { useAuth, useUserId } from '@/ctx/AuthContext';
 import { useDrafts } from '@/hooks/useDrafts';
 import { useMenuSectionPlace } from '@/hooks/useDrinkDesk';
-import { EMPTY_BEER_WINE, filledBeerWine } from '@/lib/beerWineWizard';
+import { beerWinePlace, EMPTY_BEER_WINE, filledBeerWine } from '@/lib/beerWineDraft';
 import type { DrinkKind } from '@/lib/drinkKinds';
 import { hasContent, type WizardDraft } from '@/lib/drinkWizard';
 import { fileTitle, tally, waitingFor, whenWords } from '@/lib/importReview';
 import { recipesToFinish } from '@/lib/prepMath';
 import { slotStart } from '@/lib/wizardSlots';
-import { beerWinePlace, useBeerWineWizardStore } from '@/store/useBeerWineWizardStore';
+import { useBeerWineWizardStore } from '@/store/useBeerWineWizardStore';
 import { useBringIn } from '@/store/useBringIn';
 import { useDraftSyncStore } from '@/store/useDraftSyncStore';
 import { isReviewSlot, useDrinkWizardStore, wizardPlace } from '@/store/useDrinkWizardStore';
@@ -21,16 +21,18 @@ import { isReviewSlot, useDrinkWizardStore, wizardPlace } from '@/store/useDrink
 /**
  * Pick up where you left off, at the bottom of Add (Prod-add-B): an import
  * left to check here, then each drink started here and not saved, newest
- * first, with the recipes still to finish inside it, then the older editor's
- * drafts. A tap goes straight back to it. Signed in, drinks are kept in the
- * account too (hooks/useDraftSync), so another phone or the web lists them.
+ * first, with the recipes still to finish inside it, then a beer or wine left
+ * for now, then the older editor's drafts. A tap goes straight back to it.
+ * Signed in, they're all kept in the account too (hooks/useDraftSync), so
+ * another phone or the web lists them.
  */
 export function NewDrafts({ barId, onOpen, onOpenKind, onImport, onDrafts }: { barId: string | null; onOpen: (params: Record<string, string>) => void; /** A beer or wine left for now: its wizard picks up where it was. */ onOpenKind: (kind: DrinkKind) => void; onImport: () => void; onDrafts: () => void }) {
   const kept = useDrinkWizardStore((s) => s.kept);
   const keptBeerWine = useBeerWineWizardStore((s) => s.kept);
   const beerWine = (['beer', 'wine'] as const).flatMap((kind) => {
-    const k = keptBeerWine[beerWinePlace(kind, barId)];
-    return k && filledBeerWine({ ...EMPTY_BEER_WINE, ...k.draft }) ? [{ kind, name: k.draft.name.trim() }] : [];
+    const slot = beerWinePlace(kind, barId);
+    const k = keptBeerWine[slot];
+    return k && filledBeerWine({ ...EMPTY_BEER_WINE, ...k.draft }) ? [{ kind, slot, name: k.draft.name.trim() }] : [];
   });
   const signedIn = !!useAuth().session;
   const userId = useUserId();
@@ -46,6 +48,7 @@ export function NewDrafts({ barId, onOpen, onOpenKind, onImport, onDrafts }: { b
     .sort(([, a], [, b]) => b.updatedAt - a.updatedAt);
   if (!drafts.length && !beerWine.length && !review && !older) return null;
   const t = review ? tally(review) : null;
+  const synced = [...drafts.map(([slot]) => slot), ...beerWine.map((b) => b.slot)];
   return (
     <View style={styles.list}>
       <Caption tone="muted" role="heading" style={styles.head}>
@@ -66,13 +69,14 @@ export function NewDrafts({ barId, onOpen, onOpenKind, onImport, onDrafts }: { b
         <DraftRow key={slot} slot={slot} draft={k.draft} barId={barId} onOpen={onOpen} />
       ))}
       {beerWine.map((b) => (
-        <PickRow key={b.kind} icon={b.kind === 'beer' ? 'mug.fill' : 'wineglass'} title={b.name || `Untitled ${b.kind}`} sub={`A ${b.kind}, kept on this phone`} onPress={() => onOpenKind(b.kind)} />
+        <PickRow key={b.kind} icon={b.kind === 'beer' ? 'mug.fill' : 'wineglass'} title={b.name || `Untitled ${b.kind}`} sub={`A ${b.kind}, in pencil`} onPress={() => onOpenKind(b.kind)} />
       ))}
       {older ? <PickRow icon="square.on.square" title="Drafts" sub={`${older} from the older editor`} onPress={onDrafts} /> : null}
       {/* Said only once each has reached the account. */}
-      {signedIn && drafts.length > 0 && drafts.every(([slot]) => seen.includes(slot)) ? (
-        // A beer or wine left for now stays on this phone (its row says so): the account line is the drinks'.
-        <Caption tone="muted" style={styles.kept}>{`${beerWine.length ? 'Drinks are kept' : 'Kept'} in your account, so your other phone and the web see them too.`}</Caption>
+      {signedIn && synced.length > 0 && synced.every((slot) => seen.includes(slot)) ? (
+        <Caption tone="muted" style={styles.kept}>
+          Kept in your account, so your other phone and the web see them too.
+        </Caption>
       ) : null}
     </View>
   );
