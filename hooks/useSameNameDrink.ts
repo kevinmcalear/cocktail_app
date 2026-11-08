@@ -4,6 +4,7 @@ import { useUserId } from '@/ctx/AuthContext';
 import { useDebounced } from '@/hooks/useDiscover';
 import { MENU_DRINK_COLUMNS, toMenuDrink, type MenuItemRow } from '@/hooks/useMenus';
 import { dayShort } from '@/lib/collectionStages';
+import type { DrinkKind } from '@/lib/drinkKinds';
 import { ingredientLine, readingName, sentenceLine } from '@/lib/menus';
 import { nameKey, nameLike, sameName } from '@/lib/sameName';
 import { supabase } from '@/lib/supabase';
@@ -24,6 +25,8 @@ export interface SameNameDrink {
   glassName?: string | null;
   /** When it was saved (items.created_at), as the card says it: "12 Oct". */
   saved?: string | null;
+  /** items.created_at as stored, for a card that says the month ("Added in September"). */
+  savedAt?: string | null;
   /** The classic it's a version of (what it's based on as a riff, when that's a catalog drink). */
   classic: { id: string; name: string } | null;
   /** Its spec lines, in order, as stored. */
@@ -60,7 +63,7 @@ const CANDIDATES = 500;
  * `checking` is true while that answer is still to come for the name as
  * typed (not once it fails or waits offline), so nothing goes past it.
  */
-export function useSameNameDrink({ barId, creditedTo, mine, name }: { barId?: string | null; creditedTo?: string | null; mine?: boolean; name: string }) {
+export function useSameNameDrink({ barId, creditedTo, mine, name, kind = 'cocktail' }: { barId?: string | null; creditedTo?: string | null; mine?: boolean; name: string; /** A beer or a wine checks its own kind (Add-beer, Name taken). */ kind?: 'cocktail' | DrinkKind }) {
   const userId = useUserId();
   const settled = useDebounced(name, 300);
   const key = nameKey(settled);
@@ -72,12 +75,12 @@ export function useSameNameDrink({ barId, creditedTo, mine, name }: { barId?: st
         ? { column: 'created_by' as const, id: userId }
         : null;
   const query = useQuery({
-    queryKey: ['same-name-drink', scope?.column, scope?.id, key, userId],
+    queryKey: ['same-name-drink', scope?.column, scope?.id, key, userId, kind],
     enabled: !!scope && !!key && !!userId,
     staleTime: 30_000,
     queryFn: async (): Promise<SameNameDrink | null> => {
       const pattern = nameLike(settled)!;
-      let ask = supabase.from('items').select('id, name').eq(scope!.column, scope!.id).eq('item_type', 'cocktail').ilike('name', pattern);
+      let ask = supabase.from('items').select('id, name').eq(scope!.column, scope!.id).eq('item_type', kind).ilike('name', pattern);
       // Yours at home: a drink you added at a venue is the venue's, so a bar drink can share a name with one you made at home.
       if (scope!.column === 'created_by') ask = ask.is('bar_id', null);
       const { data, error } = await ask.limit(CANDIDATES);
@@ -120,6 +123,7 @@ async function readDrink(id: string): Promise<SameNameDrink | null> {
     glass: drink.glass,
     glassName: (Array.isArray(row.glass) ? row.glass[0] : row.glass)?.name ?? null,
     saved: row.created_at ? dayShort(row.created_at, Date.now()) : null,
+    savedAt: row.created_at,
     classic: riff?.is_catalog ? { id: riff.id, name: riff.name } : null,
     spec: spec.flatMap((l) => (l.ingredient ? [{ id: l.ingredient.id, name: l.ingredient.name, amount: l.amount, unit: l.unit }] : [])),
   };

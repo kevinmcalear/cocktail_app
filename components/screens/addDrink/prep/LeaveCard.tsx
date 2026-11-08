@@ -10,7 +10,7 @@ import { radius, space } from '@/constants/tokens';
  * sheet would open behind on the web or stack on on iOS. What's done is
  * kept; a recipe just started can also go.
  */
-export function LeaveCard({ where, step, drink, onLeave, onStay, onDrop }: { where: string; step: string; drink: string; onLeave: () => void; onStay: () => void; onDrop?: () => void }) {
+export function LeaveCard({ where, step, drink, body, onLeave, onStay, onDrop }: { where: string; step: string; drink: string; /** Where it's kept, said for something that isn't inside a drink (a beer, a wine). */ body?: string; onLeave: () => void; onStay: () => void; onDrop?: () => void }) {
   const ds = useDs();
   return (
     <Appear kind="fade" duration={200} style={[styles.overlay, { backgroundColor: ds.c.scrim }]}>
@@ -18,7 +18,7 @@ export function LeaveCard({ where, step, drink, onLeave, onStay, onDrop }: { whe
       <View role="alertdialog" aria-modal aria-label="Leave it for now?" style={[styles.card, { backgroundColor: ds.c.surface, borderColor: ds.c.lineStrong }]}>
         <Caption tone="muted">{`${where} · ${step}`.toUpperCase()}</Caption>
         <Headline role="heading">Leave it for now?</Headline>
-        <Body tone="muted">{`What you’ve done is kept. ${drink} shows it as Recipe to finish, and New lists ${drink} under Drafts, with the way back.`}</Body>
+        <Body tone="muted">{body ?? `What you’ve done is kept. ${drink} shows it as Recipe to finish, and New lists ${drink} under Drafts, with the way back.`}</Body>
         <View style={styles.buttons}>
           <Button label="Leave it for now" variant="ink" onPress={onLeave} />
           <Button label="Keep going" variant="secondary" onPress={onStay} />
