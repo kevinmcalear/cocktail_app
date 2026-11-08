@@ -85,6 +85,17 @@ describe('the draft page', () => {
     expect(screen.getByRole('button', { name: /^Method: / })).toBeTruthy();
   });
 
+  test('with no name yet, adding an ingredient leaves the cursor off the name', async () => {
+    await renderWithProviders(<AddDrinkWizard onClose={jest.fn()} onSaved={mockSaved} />);
+    await laidOut();
+    expect(screen.getByLabelText('Name').props.autoFocus).toBe(true);
+    await fireEvent(screen.getByLabelText('Add an ingredient'), 'focus');
+    await fireEvent.changeText(screen.getByLabelText('Add an ingredient'), 'gin');
+    await fireEvent.press(screen.getByRole('button', { name: 'Gin' }));
+    expect(screen.getByRole('button', { name: /Gin\. Edit$/ })).toBeTruthy();
+    expect(screen.getByLabelText('Name').props.autoFocus).toBe(false);
+  });
+
   test('the Colour row picks the drawing’s colour, and goes when a photo takes its place', async () => {
     useDrinkWizardStore.getState().patch('home', { name: 'House Negroni' });
     await renderWithProviders(<AddDrinkWizard onClose={jest.fn()} onSaved={mockSaved} />);

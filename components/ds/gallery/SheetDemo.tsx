@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useRef, useState, type ComponentRef } from 'react';
 import { StyleSheet, View } from 'react-native';
 
 import { space } from '@/constants/tokens';
@@ -10,15 +10,31 @@ import { Sheet, useSheetClose } from '../Sheet';
 import { Body, Caption, Title } from '../Text';
 import { SheetScrollView } from '../useSheetDrag';
 
-/** The gallery's sheets: a short one with a field (rubber band, keyboard) and a long scrolling one (scroll hands over to the drag). */
+type Frame = { x: number; y: number; width: number; height: number };
+
+/** The gallery's sheets: a short one with a field (rubber band, keyboard), a long scrolling one (scroll hands over to the drag), and one that grows out of its button as Add does. */
 export function SheetDemo() {
-  const [open, setOpen] = useState<'short' | 'long' | 'flow' | null>(null);
+  const [open, setOpen] = useState<'short' | 'long' | 'flow' | 'grow' | null>(null);
+  const [from, setFrom] = useState<Frame | null>(null);
+  const growButton = useRef<ComponentRef<typeof View>>(null);
   const [step, setStep] = useState(1);
   const close = () => setOpen(null);
   return (
     <View style={styles.row}>
       <Button label="Short sheet" variant="secondary" onPress={() => setOpen('short')} />
       <Button label="Long sheet" variant="secondary" onPress={() => setOpen('long')} />
+      <View ref={growButton} collapsable={false}>
+        <Button
+          label="Grows from here"
+          variant="secondary"
+          onPress={() =>
+            growButton.current?.measureInWindow((x: number, y: number, width: number, height: number) => {
+              setFrom({ x, y, width, height });
+              setOpen('grow');
+            })
+          }
+        />
+      </View>
       <Button label="Whole flow" variant="secondary" onPress={() => {
           setStep(1);
           setOpen('flow');
@@ -43,6 +59,15 @@ export function SheetDemo() {
         <View style={styles.body}>
           <Title>Short sheet</Title>
           <Body tone="muted">Drag down anywhere to close it; pull it up and it gives a little.</Body>
+          <Field label="A field" placeholder="Opens the keyboard" />
+          <Done />
+        </View>
+      </Sheet>
+      {/* from: a phone's sheet grows out of the button (Prod-motion-sheet), as Add does from the +. */}
+      <Sheet visible={open === 'grow'} onClose={close} accessibilityLabel="Grows from here" from={from} floating keyboard>
+        <View style={styles.body}>
+          <Title>Grows from here</Title>
+          <Body tone="muted">The sheet itself grows out of the button and settles, as Add does from the +. Its words never squash.</Body>
           <Field label="A field" placeholder="Opens the keyboard" />
           <Done />
         </View>

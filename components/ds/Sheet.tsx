@@ -1,4 +1,4 @@
-import { useEffect, useEffectEvent, useState, type ReactNode } from 'react';
+import { useEffect, useEffectEvent, useRef, useState, type ReactNode } from 'react';
 import { KeyboardAvoidingView, Modal, Platform, Pressable, StyleSheet, useWindowDimensions, View, type ColorValue, type StyleProp, type ViewStyle } from 'react-native';
 import { GestureDetector, GestureHandlerRootView } from 'react-native-gesture-handler';
 import Animated, { Easing, Extrapolation, interpolate, useAnimatedStyle, useReducedMotion, useSharedValue, withSpring, withTiming } from 'react-native-reanimated';
@@ -104,6 +104,19 @@ function SmallSheet({ visible, onClose, accessibilityLabel, children, style, gro
   // Gone once it has animated out: the Modal stays up until then.
   const [gone, setGone] = useState(!visible);
   if (visible && gone) setGone(false);
+  // Growing starts once the Modal is on screen and the panel has its size, so it starts at the +, not part-way.
+  const ready = useRef({ shown: false, measured: false, started: false });
+  const startGrow = () => {
+    const r = ready.current;
+    if (!grow || !r.shown || !r.measured || r.started) return;
+    r.started = true;
+    grown.set(0);
+    grown.set(withSpring(1, springs.glide));
+  };
+  const goneNow = () => {
+    ready.current = { shown: false, measured: false, started: false };
+    setGone(true);
+  };
 
   const backdrop = useSharedValue(0);
   const offset = useSharedValue(slide ? windowHeight : 0);
@@ -125,7 +138,7 @@ function SmallSheet({ visible, onClose, accessibilityLabel, children, style, gro
 
   // Ours to close (backdrop, drag, back): out first, then tell the parent.
   const closed = () => {
-    setGone(true);
+    goneNow();
     onClose();
   };
   const guard = useDiscardGuard(dirty);
@@ -151,8 +164,8 @@ function SmallSheet({ visible, onClose, accessibilityLabel, children, style, gro
     backdrop.set(withTiming(1, FADE_IN));
     if (grow) {
       offset.set(0);
-      grown.set(0);
-      grown.set(withSpring(1, springs.glide));
+      // At the + until it starts (a sheet given `from` after it mounted starts at 1).
+      if (!ready.current.started) grown.set(0);
     } else if (slide) offset.set(withSpring(0, springs.glide));
     else {
       offset.set(0);
@@ -161,20 +174,34 @@ function SmallSheet({ visible, onClose, accessibilityLabel, children, style, gro
   }, [visible, gone, slide, grow, grown, backdrop, offset, opacity, drag]);
 
   // The parent closed it (a Save, a Cancel): out, then the Modal goes.
-  const hide = useEffectEvent(() => leave(() => setGone(true)));
+  const hide = useEffectEvent(() => leave(goneNow));
   useEffect(() => {
     if (!visible && !gone) hide();
   }, [visible, gone]);
 
+  const shown = () => {
+    ready.current.shown = true;
+    startGrow();
+    onShow?.();
+  };
+
   // The backdrop lightens as the sheet is pulled down; it still never moves.
   const backdropStyle = useAnimatedStyle(() => ({ opacity: backdrop.get() * dragShade(drag.get(), height.get()) }));
-  // Growing, the card below stands in for the panel until it has nearly arrived.
-  const panelStyle = useAnimatedStyle(() => ({ opacity: opacity.get() * interpolate(grown.get(), [0.7, 1], [0, 1], Extrapolation.CLAMP), transform: [{ translateY: offset.get() + drag.get() }] }));
+  // Growing, the panel fades in as the card it sits in (SheetGrow) opens over it, and the card carries the drag.
+  // Both shapes set the same keys: a key one drops would keep its last value (a sheet given `from` after it mounted).
+  const panelStyle = useAnimatedStyle(() => ({
+    opacity: grow ? interpolate(grown.get(), [0.3, 0.8], [0, 1], Extrapolation.CLAMP) : opacity.get(),
+    transform: [{ translateY: grow ? 0 : offset.get() + drag.get() }],
+  }));
 
   const placed = [styles.place, sheetFrame.scrim];
   // The caller's own colour and width, if it set them (RN 0.88 types flatten only for animated styles).
   const own = StyleSheet.flatten(style as never) as ViewStyle | null | undefined;
   const fill: ColorValue = own?.backgroundColor ?? (ground ? ds.c.ground : ds.c.surface);
+  // Growing, the panel lays out at its resting width inside a card that starts small, so nothing in it is a share of the card.
+  const growWidth = inset ? windowWidth - inset * 2 : Math.min(windowWidth, typeof own?.maxWidth === 'number' ? own.maxWidth : styles.panel.maxWidth);
+  // ponytail: 92% of the window, not of the room over the keyboard; only Add grows, and it is short. Measure the room if a tall sheet grows.
+  const growFit = grow ? { width: growWidth, marginBottom: 0, maxHeight: typeof own?.maxHeight === 'number' ? own.maxHeight : windowHeight * 0.92 } : null;
   const panel = (
     <Animated.View
       role="dialog"
@@ -185,6 +212,8 @@ function SmallSheet({ visible, onClose, accessibilityLabel, children, style, gro
       onLayout={(e) => {
         height.set(e.nativeEvent.layout.height);
         box.set({ w: e.nativeEvent.layout.width, h: e.nativeEvent.layout.height });
+        ready.current.measured = true;
+        startGrow();
       }}
       style={[
         styles.panel,
@@ -193,6 +222,7 @@ function SmallSheet({ visible, onClose, accessibilityLabel, children, style, gro
         sheetFrame.panel,
         { backgroundColor: fill, borderColor: ds.c.lineStrong },
         style,
+        growFit,
         panelStyle,
       ]}
     >
@@ -210,24 +240,29 @@ function SmallSheet({ visible, onClose, accessibilityLabel, children, style, gro
 
   // Phones: a drag anywhere on the panel moves it. Just below the screen's
   // edge, moving with it, the sheet's colour carries on: what shows when it's pulled up past the top.
-  const dragged = sheetIsDialog || inset ? (
-    sheetIsDialog ? panel : <GestureDetector gesture={pan}>{panel}</GestureDetector>
-  ) : (
-    <>
-      <Animated.View style={[styles.stretch, { backgroundColor: fill, maxWidth: own?.maxWidth ?? styles.panel.maxWidth }, panelStyle]} />
-      <GestureDetector gesture={pan}>{panel}</GestureDetector>
-    </>
-  );
+  const moved = sheetIsDialog ? panel : <GestureDetector gesture={pan}>{panel}</GestureDetector>;
+  const dragged =
+    grow && from ? (
+      <SheetGrow from={from} grown={grown} size={box} drag={drag} bottom={inset} corner={inset ? FLOATING_RADIUS : radius.sheet} fill={fill} width={growWidth}>
+        {moved}
+      </SheetGrow>
+    ) : sheetIsDialog || inset ? (
+      moved
+    ) : (
+      <>
+        <Animated.View style={[styles.stretch, { backgroundColor: fill, maxWidth: own?.maxWidth ?? styles.panel.maxWidth }, panelStyle]} />
+        <GestureDetector gesture={pan}>{panel}</GestureDetector>
+      </>
+    );
 
   return (
-    <Modal visible={visible || !gone} transparent animationType="none" onRequestClose={dismiss} onShow={onShow} onDismiss={onDismiss}>
+    <Modal visible={visible || !gone} transparent animationType="none" onRequestClose={dismiss} onShow={shown} onDismiss={onDismiss}>
       {/* Android: gestures in a Modal need their own root. */}
       <GestureHandlerRootView style={styles.flex}>
         <CloseContext value={dismiss}>
           <Animated.View style={[StyleSheet.absoluteFill, { backgroundColor: ds.c.scrim }, backdropStyle]}>
             <Pressable accessibilityLabel="Close" style={StyleSheet.absoluteFill} onPress={dismiss} />
           </Animated.View>
-          {grow && from ? <SheetGrow from={from} grown={grown} size={box} opacity={opacity} drag={drag} bottom={inset} corner={inset ? FLOATING_RADIUS : radius.sheet} fill={fill} /> : null}
           {keyboard ? (
             // Web gets no behaviour: there the dialog sits in the middle anyway.
             <KeyboardAvoidingView behavior={Platform.select({ ios: 'padding', android: 'height' })} keyboardVerticalOffset={keyboardOffset} style={placed}>
