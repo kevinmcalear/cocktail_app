@@ -3,9 +3,8 @@ import { StyleSheet, View } from 'react-native';
 
 import { Caption, Field } from '@/components/ds';
 import { space } from '@/constants/tokens';
-import {
-  beerWineSketch, cleanPrice, glassChoices, REGIONS, startingAbv, stepAbv, STYLES, styleOf, TASTING, type BeerWineDraft,
-} from '@/lib/beerWineWizard';
+import { type BeerWineDraft } from '@/lib/beerWineDraft';
+import { beerWineSketch, cleanPrice, glassChoices, REGIONS, startingAbv, stepAbv, STYLES, styleOf, TASTING } from '@/lib/beerWineWizard';
 import type { DrinkKind } from '@/lib/drinkKinds';
 
 import { Eyebrow, WizardChip } from '../addDrink/WizardChrome';

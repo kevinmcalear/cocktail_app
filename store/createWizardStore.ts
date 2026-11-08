@@ -79,3 +79,6 @@ export function createWizardStore<D extends object, S extends string>(
 }
 
 export const wizardPlace = (barId: string | null | undefined) => barId || 'home';
+
+/** A wizard's store, as hooks/useDraftSync keeps it in the account. */
+export type WizardStore<D extends object, S extends string> = ReturnType<typeof createWizardStore<D, S>>;

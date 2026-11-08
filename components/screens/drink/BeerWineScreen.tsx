@@ -8,6 +8,7 @@ import { useActiveVenue } from '@/hooks/useActiveVenue';
 import { useDropdowns } from '@/hooks/useDropdowns';
 import { useFavorites } from '@/hooks/useFavorites';
 import { useMode } from '@/hooks/useMode';
+import { useShownCurrency } from '@/hooks/usePricing';
 import { useShareSlug } from '@/hooks/useShareSlug';
 import { useTeamRole } from '@/hooks/useTeamRole';
 import { recentEntry, useTrackRecent } from '@/hooks/useTrackRecent';
@@ -16,6 +17,7 @@ import { savedSketch } from '@/lib/beerWineWizard';
 import { formatAbv } from '@/lib/drinkMath';
 import { bareItemId, DRINK_KINDS, type DrinkKind } from '@/lib/drinkKinds';
 import { glassOver, heroPicture, orderedPictures, type ItemImageLink } from '@/lib/itemImages';
+import { formatAmount, priceMinor } from '@/lib/money';
 import { photoRooms } from '@/lib/photoTitle';
 import { drinkUrl, shareOrCopy } from '@/lib/shareLink';
 import { liquidOf } from '@/lib/sketch/types';
@@ -107,6 +109,7 @@ function BeerWinePage({ kind, item, favorite, onToggleFavorite, canEdit, onEdit 
   const home = useMode().mode === 'home';
   const teamRole = useTeamRole(item.bar_id);
   const viewing = useEffectiveRole(item.bar_id);
+  const currency = useShownCurrency(item.bar_id);
   // The bar's own team, in venue mode, at Employee or up (View as applied): allergens and Pour it.
   const staff = !home && teamRole !== null && viewing >= 20;
 
@@ -119,7 +122,10 @@ function BeerWinePage({ kind, item, favorite, onToggleFavorite, canEdit, onEdit 
   const sketch = savedSketch(kind, tags, (item as { sketch_variant?: string | null }).sketch_variant ?? null);
   const abv = formatAbv(item.abv);
   const glass = dropdowns?.glassware.find((g) => g.id === item.glassware_id)?.name ?? null;
-  const pour = [item.serve_ml ? `${item.serve_ml} ml` : null, item.price != null ? (/^\d+(\.\d+)?$/.test(String(item.price).trim()) ? `$${String(item.price).trim()}` : String(item.price).trim()) : null].filter(Boolean).join(' · ');
+  // A number alone is money, shown as every drink's price is ("$9.50"); a wine's "18 a glass · 72 a bottle" stays as typed.
+  const typed = item.price != null ? String(item.price).trim() : '';
+  const minor = /^\d+(\.\d+)?$/.test(typed) ? priceMinor(typed, currency) : null;
+  const pour = [item.serve_ml ? `${item.serve_ml} ml` : null, minor != null ? formatAmount(minor, currency) : typed || null].filter(Boolean).join(' · ');
   const facts = [
     abv ? { label: 'Strength', value: abv } : null,
     pour ? { label: kind === 'wine' ? 'Glass' : 'Pour', value: pour } : null,

@@ -1,9 +1,7 @@
 import assert from 'node:assert/strict';
 
-import {
-  BEER_WINE_COPY, beerWineSketch, savedSketch, EMPTY_BEER_WINE, fillFromCatalog, fillFromLabel, fullDescription, guessStyle, REGIONS, stepAbv, stepsFor, startingAbv,
-  STYLES, tastingLine, stepEyebrow, glassChoices, cleanPrice, takenWords, drawnSoFar,
-} from './beerWineWizard';
+import { EMPTY_BEER_WINE } from './beerWineDraft';
+import { BEER_WINE_COPY, beerWineSketch, savedSketch, fillFromCatalog, fillFromLabel, fullDescription, guessStyle, REGIONS, stepAbv, stepsFor, startingAbv, STYLES, tastingLine, stepEyebrow, glassChoices, cleanPrice, takenWords, drawnSoFar } from './beerWineWizard';
 import { variantsOf } from './sketch/geometry';
 import { readSketchInputs } from './sketch/types';
 
