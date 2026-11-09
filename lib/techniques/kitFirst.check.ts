@@ -18,8 +18,11 @@ assert.equal(needsText(['centrifuge', 'scale-fine']).startsWith('Needs a '), tru
 const ways = waysByKit('infusion', new Set(['whipper', 'sous-vide']));
 assert.deepEqual(ways.have.map((w) => w.id), ['cold', 'sous-vide', 'nitrous']);
 assert.ok(ways.need.some((w) => w.id === 'vacuum'));
-// Syrups' ways are recipes: always there.
-assert.equal(waysByKit('syrup', new Set()).need.length, 0);
+// A syrup's ways (board Add-house): Mix needs no kit, so it's always there; sous vide and rotovap wait for theirs.
+assert.deepEqual(waysByKit('syrup', new Set()).have.map((w) => w.id), ['mix']);
+assert.deepEqual(waysByKit('syrup', new Set()).need.map((w) => w.id), ['sous-vide', 'rotovap']);
+// A shrub's ways are recipes: always there.
+assert.equal(waysByKit('shrub', new Set()).need.length, 0);
 // A vegan wash needs a thermometer: a wash starts as a fat wash, and as vegan only when that's the way picked.
 assert.equal(kitFirstWay('wash', new Set())?.id, 'fat');
 // With no fine scale or centrifuge, a clarified juice starts with agar freeze-thaw.

@@ -3,21 +3,6 @@ import { StyleSheet, TextInput, View } from 'react-native';
 
 import { Caption, useDs } from '@/components/ds';
 import { font, radius, space, type } from '@/constants/tokens';
-import type { PrepDraft } from '@/lib/prepKinds';
-import { prepShares } from '@/lib/prepShares';
-
-/** Each line's share of the recipe as one segmented bar, in the colours it's drawn in. */
-export function Shares({ draft }: { draft: PrepDraft }) {
-  const shares = prepShares(draft);
-  if (shares.length < 2) return null;
-  return (
-    <View aria-label={`In it: ${shares.map((s) => `${s.name} ${Math.round(s.share * 100)}%`).join(', ')}`} style={styles.shares}>
-      {shares.map((s) => (
-        <View key={s.key} style={[styles.share, { flexGrow: s.share, backgroundColor: s.hex }]} />
-      ))}
-    </View>
-  );
-}
 
 /** A small number field (parts, or a line's own amount). */
 export function NumberField({ label, value, onChange, suffix, placeholder }: { label: string; value: string; onChange: (v: number) => void; suffix?: string; placeholder?: string }) {
@@ -46,8 +31,6 @@ export function NumberField({ label, value, onChange, suffix, placeholder }: { l
 }
 
 const styles = StyleSheet.create({
-  shares: { flexDirection: 'row', gap: 2, height: space.sm, borderRadius: radius.mark, overflow: 'hidden' },
-  share: { flexBasis: 0 },
   box: { flexDirection: 'row', alignItems: 'center', borderRadius: radius.pill, minHeight: 40, paddingHorizontal: space.xs },
   input: { minWidth: 56, maxWidth: 80, textAlign: 'center', paddingVertical: space.xs },
   suffix: { paddingRight: space.sm },

@@ -4,7 +4,6 @@ import { Alert } from 'react-native';
 import { createPrep } from '@/hooks/usePrepCard';
 import { SHELF_KEY } from '@/hooks/useShelf';
 import { plainDbMessage } from '@/lib/dbError';
-import { houseMadePlace } from '@/lib/houseMadeDraft';
 import type { PrepDraft } from '@/lib/prepKinds';
 import { capitalizeFirst } from '@/lib/stringUtils';
 import { supabase } from '@/lib/supabase';
@@ -15,6 +14,8 @@ export interface SaveHouseMadeInput {
   name: string;
   prep: PrepDraft;
   barId: string | null;
+  /** The draft's slot (lib/houseMadeDraft houseMadeSlot): cleared once it's in. */
+  slot: string;
   /** When the kept draft last changed: it's cleared once this is in only if nothing changed since (a draft picked up again while it waited stays). */
   keptAt?: number;
   /** Add to your bar's Make it in house: it goes on your bar too, offline as well. */
@@ -25,12 +26,12 @@ export interface SaveHouseMadeInput {
 
 const SAVE_HOUSE_MADE = ['save-house-made'];
 
-/** A save from this place still waiting for signal: saving it again would add it twice. */
-export function useHouseMadeWaiting(barId: string | null) {
+/** This draft's save still waiting for signal: saving it again would add it twice. */
+export function useHouseMadeWaiting(slot: string) {
   return useMutationState({
     filters: { mutationKey: SAVE_HOUSE_MADE, status: 'pending' },
-    select: (m) => (m.state.variables as SaveHouseMadeInput | undefined)?.barId ?? null,
-  }).some((b) => b === barId);
+    select: (m) => (m.state.variables as SaveHouseMadeInput | undefined)?.slot ?? null,
+  }).some((s) => s === slot);
 }
 
 /**
@@ -51,13 +52,12 @@ export function useSaveHouseMade() {
       }
       return made;
     },
-    onSuccess: ({ warnings }, { name, barId, keptAt, queued }) => {
+    onSuccess: ({ warnings }, { name, slot, keptAt, queued }) => {
       // Here, not on the screen: a save that waited for signal lands after the steps have closed.
       // ponytail: a wait cut short by closing the app loses the save, not the draft, which is still listed; setMutationDefaults would resume it.
       const store = useHouseMadeWizardStore.getState();
-      const place = houseMadePlace(barId);
-      const kept = store.kept[place];
-      if (kept && (keptAt === undefined || kept.updatedAt <= keptAt)) store.clear(place);
+      const kept = store.kept[slot];
+      if (kept && (keptAt === undefined || kept.updatedAt <= keptAt)) store.clear(slot);
       void qc.invalidateQueries({ queryKey: ['same-name-prep'] });
       if (!queued) return;
       toastDone('Recipe saved', capitalizeFirst(name.trim()));

@@ -11,7 +11,7 @@ import { useShelfLives } from '@/hooks/useShelfLives';
 import { useTonight } from '@/hooks/useTonight';
 import { useTonightPrep } from '@/hooks/useTonightPrep';
 import { fridgeRows, lowLine } from '@/lib/drinksTab';
-import { EMPTY_HOUSE_MADE, filledHouseMade, houseMadePlace, RECIPE_STEPS } from '@/lib/houseMadeDraft';
+import { houseMadesAt, RECIPE_STEPS } from '@/lib/houseMadeDraft';
 import { itemHref } from '@/lib/itemRoutes';
 import { useHouseMadeWizardStore } from '@/store/useHouseMadeWizardStore';
 
@@ -45,22 +45,24 @@ export function HouseMadeTop({ barId, nameOf }: { barId: string; nameOf: (id: st
   const lastDay = (id: string) => fridge.find((f) => f.id === id)?.madeDay ?? null;
   const open = (id: string) => () => router.push(itemHref('Ingredient', id) as Href);
   // Something you make, left for now (Add-house: "House-made lists it under Drafts with the way back").
-  const kept = useHouseMadeWizardStore((s) => s.kept[houseMadePlace(barId)]);
-  const draft = kept && filledHouseMade({ ...EMPTY_HOUSE_MADE, ...kept.draft }) ? kept : null;
-  if (!low.length && !fridge.length && !draft) return null;
+  const drafts = houseMadesAt(useHouseMadeWizardStore((s) => s.kept), barId);
+  if (!low.length && !fridge.length && !drafts.length) return null;
   return (
     <View style={styles.top}>
-      {draft ? (
+      {drafts.length ? (
         <View style={styles.section}>
           <SectionLabel title="Drafts" />
           <ListGroup>
-            <ListRow
-              first
-              icon="pencil"
-              title={draft.draft.name?.trim() || 'Something you make'}
-              detail={`Something you make · ${RECIPE_STEPS.indexOf(draft.step) + 1} of ${RECIPE_STEPS.length}`}
-              onPress={() => router.push({ pathname: '/make-recipe', params: { barId } })}
-            />
+            {drafts.map(([slot, d], i) => (
+              <ListRow
+                key={slot}
+                first={i === 0}
+                icon="pencil"
+                title={d.draft.name?.trim() || 'Something you make'}
+                detail={`Something you make · ${RECIPE_STEPS.indexOf(d.step) + 1} of ${RECIPE_STEPS.length}`}
+                onPress={() => router.push({ pathname: '/make-recipe', params: { barId, slot } })}
+              />
+            ))}
           </ListGroup>
         </View>
       ) : null}

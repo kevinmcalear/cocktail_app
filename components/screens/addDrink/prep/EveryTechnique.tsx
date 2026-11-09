@@ -1,8 +1,8 @@
 import { useState } from 'react';
 import { ScrollView, StyleSheet, View } from 'react-native';
 
-import { Body, Caption, Chip, DsText, Field, PressableScale, useDs } from '@/components/ds';
-import { font, layout, radius, space } from '@/constants/tokens';
+import { Body, Caption, Chip, Field, PressableScale, useDs } from '@/components/ds';
+import { layout, radius, space } from '@/constants/tokens';
 import { equipmentById, GROUPS, searchTechniques, TECHNIQUES, type Technique, type TechniqueGroup } from '@/lib/techniques';
 import { byKit, needsText } from '@/lib/techniques/kitFirst';
 import { waysToMake } from '@/lib/techniques/makeIt';
@@ -94,10 +94,10 @@ export function EveryTechnique({ name, selected, kit, onPick, onAdd, onWrite }: 
  * name and grade, how long, and the kit it takes ("Nothing special"); one
  * the kit doesn't cover is dimmed, says what it needs and offers I have this.
  */
-export function TechniqueRow({ t, label, kit, on, onPress, onAdd }: { t: Technique; label?: string; kit: ReadonlySet<string> | null; on: boolean; onPress: () => void; onAdd: ((equipmentIds: string[]) => void) | null }) {
+export function TechniqueRow({ t, label, equipment = t.equipment, sub, kit, on, onPress, onAdd }: { t: Technique; label?: string; /** The kit it needs, when not the technique's (a syrup's Mix needs none). */ equipment?: readonly string[]; /** What it says under its name (How?'s rows: how it's made); else its time and kit. */ sub?: string; kit: ReadonlySet<string> | null; on: boolean; onPress: () => void; onAdd: ((equipmentIds: string[]) => void) | null }) {
   const ds = useDs();
-  const missing = kit ? t.equipment.filter((id) => !kit.has(id)) : [];
-  const tools = t.equipment.map((id) => equipmentById(id)?.name ?? id).join(', ') || 'Nothing special';
+  const missing = kit ? equipment.filter((id) => !kit.has(id)) : [];
+  const tools = equipment.map((id) => equipmentById(id)?.name ?? id).join(', ') || 'Nothing special';
   const needs = missing.length ? needsText(missing) : null;
   const name = label ?? t.name;
   return (
@@ -105,19 +105,12 @@ export function TechniqueRow({ t, label, kit, on, onPress, onAdd }: { t: Techniq
       <PressableScale
         role="radio"
         aria-checked={on}
-        accessibilityLabel={[name, t.time, needs ?? tools, `How sure the sources are: ${t.grade}`].join('. ')}
+        accessibilityLabel={[name, t.time, needs ?? tools, sub && !needs ? sub : null].filter(Boolean).join('. ')}
         onPress={onPress}
         style={[styles.row, missing.length && !on ? styles.dim : null, { backgroundColor: ds.c.raised, borderColor: on ? ds.accentText : 'transparent' }]}
       >
-        <View style={styles.head}>
-          <Body style={styles.flex}>{name}</Body>
-          <View aria-hidden style={[styles.grade, { borderColor: ds.c.lineStrong }]}>
-            <DsText variant="caption" style={styles.mono}>
-              {t.grade}
-            </DsText>
-          </View>
-        </View>
-        <Caption tone="muted">{`${t.time} · ${needs ?? tools}`}</Caption>
+        <Body>{name}</Body>
+        <Caption tone="muted">{sub ?? `${t.time} · ${needs ?? tools}`}</Caption>
       </PressableScale>
       {missing.length && onAdd ? (
         <PressableScale role="button" onPress={() => onAdd(missing)} accessibilityLabel={`I have this: add ${missing.map((id) => equipmentById(id)?.name ?? id).join(' and ')} to your kit`} style={styles.have}>
@@ -134,10 +127,6 @@ const styles = StyleSheet.create({
   rowWrap: { flexDirection: 'row', alignItems: 'center', gap: space.sm },
   dim: { opacity: 0.6 },
   row: { flex: 1, gap: space.xs, paddingHorizontal: space.md, paddingVertical: space.md, borderRadius: radius.control, borderWidth: 2 },
-  head: { flexDirection: 'row', alignItems: 'center', gap: space.sm },
-  flex: { flex: 1 },
-  grade: { paddingHorizontal: space.xs + 2, borderRadius: radius.mark + 2, borderWidth: 1 },
-  mono: { ...font.figuresMedium },
   have: { minHeight: layout.minTapTarget, justifyContent: 'center', paddingHorizontal: space.xs },
   write: { minHeight: layout.minTapTarget, justifyContent: 'center', alignSelf: 'flex-start' },
 });

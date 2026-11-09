@@ -110,7 +110,7 @@ function Builder({ name: started, drinkName, initial, first, combinedFrom, inDri
   const [name, setName] = useState(started);
   const nameField = useRef<ComponentRef<typeof TextInput>>(null);
   const combined = !!combinedFrom?.length;
-  const { draft, current, changed, setDraft, view, setView, fromCatalog, pickKind, pickTechnique, phrase, named, slotsOpen } = usePrepDraft({ name: started, nameNow: name, initial, picked, technique, combined, bar }, () => {
+  const { draft, current, changed, setDraft, view, setView, fromCatalog, pickKind, pickTechnique, phrase, named, slotsOpen } = usePrepDraft({ name: started, nameNow: name, initial, picked, technique, combined, bar, measured: page }, () => {
     if (step === 'kind') setStep('recipe');
   });
   const at = STEPS.indexOf(step);
@@ -173,6 +173,7 @@ function Builder({ name: started, drinkName, initial, first, combinedFrom, inDri
   const takenCard = taken ? (
     <Prompt
       warn
+      ink
       icon="exclamationmark.triangle"
       title={taken.title}
       body={taken.body}
@@ -256,7 +257,6 @@ function Builder({ name: started, drinkName, initial, first, combinedFrom, inDri
                 setTapped(true);
                 pickTechnique(id);
               }}
-              onChangeAmount={() => go('recipe')}
               bar={bar}
             />
           )}

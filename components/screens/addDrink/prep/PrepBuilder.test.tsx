@@ -61,7 +61,9 @@ describe('PrepBuilder', () => {
     expect(screen.getByText('HOW? YOUR KIT FIRST')).toBeTruthy();
     expect(screen.getByText('Your kit is in My Bar. The rest stay here, dimmed, in case you have it.')).toBeTruthy();
     expect(screen.getByRole('radio', { name: /^Rapid nitrous infusion\. 2 min\. / })).toBeTruthy();
-    expect(screen.getByText('Needs kit you haven’t added')).toBeTruthy();
+    // Each way that needs kit says so on its own row (board Add-house), with no grades.
+    expect(screen.getAllByText('Needs kit you haven’t added').length).toBeGreaterThan(0);
+    expect(screen.queryByText('A')).toBeNull();
     await fireEvent.press(screen.getByRole('button', { name: /^I have this: add Sous vide circulator/ }));
     expect(mockAdd).toHaveBeenCalledWith(['sous-vide']);
     await fireEvent.press(screen.getByRole('button', { name: 'Every technique' }));
@@ -179,12 +181,10 @@ describe('PrepBuilder', () => {
     expect(screen.getByText('1 of 3')).toBeTruthy();
     expect(screen.getByRole('link', { name: 'Up to Daiquiri' })).toBeTruthy();
     expect(screen.getByRole('radio', { name: /^Cold\. 3 days · Jar, fine strainer · brighter fruit/, checked: true })).toBeTruthy();
-    expect(screen.getByText('300 g pineapple')).toBeTruthy();
-    expect(screen.getByText('300 g white sugar, 300 g apple cider vinegar, 2 whole fresno chili')).toBeTruthy();
+    // No amounts box on What is it (Kevin, 9 Nov: "Build as drawn"): what goes in is the next step.
+    expect(screen.queryByText('300 g pineapple')).toBeNull();
     await fireEvent.press(screen.getByRole('radio', { name: /^Oleo shrub/ }));
     expect(screen.getByRole('radio', { name: /^Oleo shrub/, checked: true })).toBeTruthy();
-    await fireEvent.press(screen.getByRole('button', { name: 'All steps' }));
-    expect(screen.getByText('1. Muddle the fruit, and any citrus peel, with the sugar.')).toBeTruthy();
 
     await fireEvent.press(screen.getByRole('button', { name: 'Next: what goes in' }));
     expect(screen.getByText('2 of 3')).toBeTruthy();

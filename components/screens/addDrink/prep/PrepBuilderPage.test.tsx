@@ -35,10 +35,24 @@ describe('PrepBuilder on its own page', () => {
     expect(screen.getByRole('radio', { name: 'Syrup', checked: true })).toBeTruthy();
     expect(screen.getByText('From the name')).toBeTruthy();
     expect(onKeep).toHaveBeenLastCalledWith(expect.objectContaining({ kind: 'syrup' }), 'Honey syrup', 'kind');
+    // A syrup's ways as drawn (Kevin, 9 Nov: "Build as drawn"): Mix, Sous vide, Rotovap, kit first, the rest dimmed with I have this.
+    expect(screen.getByText('HOW? YOUR KIT FIRST')).toBeTruthy();
+    expect(screen.getByRole('radio', { name: /^Mix\./, checked: true })).toBeTruthy();
+    expect(screen.getByText('Warm the water, stir until it dissolves')).toBeTruthy();
+    expect(screen.getByRole('radio', { name: /^Sous vide\./ })).toBeTruthy();
+    expect(screen.getByRole('radio', { name: /^Rotovap\./ })).toBeTruthy();
+    expect(screen.getAllByText('Needs kit you haven’t added')).toHaveLength(2);
+    expect(screen.getAllByRole('button', { name: /^I have this/ })).toHaveLength(2);
+    expect(screen.queryByText(/FOR/)).toBeNull();
     // The main button alone (Kevin, 8 Nov: "Later on close").
     expect(screen.queryByRole('button', { name: 'Later' })).toBeNull();
     await fireEvent.press(screen.getByRole('button', { name: 'Next: what goes in' }));
     expect(screen.getByText('HONEY SYRUP · 2 OF 3')).toBeTruthy();
+    // What goes in opens As measured (board Add-house, 2); Makes about opens how it's reached; no colour bar or caption under it.
+    expect(screen.getByRole('radio', { name: 'As measured', checked: true })).toBeTruthy();
+    expect(screen.queryByText(/is a guess from the weights/)).toBeNull();
+    await fireEvent.press(screen.getByRole('button', { name: /^Makes about/ }));
+    expect(screen.getByText('A guess from the weights. Log your first batch and it uses the real number.')).toBeTruthy();
     // Close asks first, and what's written is kept.
     await fireEvent.press(screen.getByRole('button', { name: 'Close' }));
     expect(screen.getByText('Leave it for now?')).toBeTruthy();
@@ -62,5 +76,11 @@ describe('PrepBuilder on its own page', () => {
     await fireEvent.press(screen.getByRole('button', { name: 'Open Honey syrup' }));
     expect(onOpen).toHaveBeenCalled();
     expect(screen.getByRole('button', { name: 'Rename this one' })).toBeTruthy();
+  });
+
+  test('at a bar the kit is in Settings › Kit, as drawn', async () => {
+    await renderWithProviders(<PrepBuilder page name="Pine syrup" drinkName="" above={[]} ingredients={[]} bar={{ id: 'b1', name: 'Caretaker’s' }} onDone={jest.fn()} onClose={jest.fn()} />);
+    await laidOut();
+    expect(screen.getByText('Your kit is in Settings › Kit. The rest stay here, dimmed, in case you have it.')).toBeTruthy();
   });
 });

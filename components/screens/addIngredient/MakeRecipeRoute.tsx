@@ -14,7 +14,8 @@ import { takenPrepWords, useSameNamePrep } from '@/hooks/useSameNamePrep';
 import { useHouseMadeWaiting, useSaveHouseMade } from '@/hooks/useSaveHouseMade';
 import { readableAccent } from '@/lib/color';
 import { plainDbMessage } from '@/lib/dbError';
-import { houseMadePlace } from '@/lib/houseMadeDraft';
+import { newDraftId } from '@/lib/drinkWizard';
+import { houseMadeBar, houseMadesAt, houseMadeSlot, isHouseMadeSlot } from '@/lib/houseMadeDraft';
 import { prepYield } from '@/lib/prepKinds';
 import { nameKey } from '@/lib/sameName';
 import { useHouseMadeWizardStore } from '@/store/useHouseMadeWizardStore';
@@ -44,13 +45,12 @@ function MakeRecipe() {
   const router = useRouter();
   const ds = useDs();
   const toast = useToast();
-  const { barId: barParam, name: nameParam, shelf } = useLocalSearchParams<{ barId?: string; name?: string; shelf?: string }>();
+  const { barId: barParam, name: nameParam, shelf, slot: slotParam } = useLocalSearchParams<{ barId?: string; name?: string; shelf?: string; slot?: string }>();
   const barId = barParam || null;
   const venue = useActiveVenue().venues.find((v) => v.id === barId) ?? null;
   const dropdowns = useDropdowns({ ingredients: true }).data;
   const save = useSaveHouseMade();
   const offline = useNetInfo().isConnected === false;
-  const waiting = useHouseMadeWaiting(barId);
   const canLog = !!useCapabilities(barId).data?.includes('specs');
   const logNow = useLogBatchNow(barId ?? '');
   const desktop = useBreakpoint() === 'desktop';
@@ -58,17 +58,22 @@ function MakeRecipe() {
   // The dialog's Escape and scrim close as the X does, asking Leave it for now.
   const closeRef = useRef<(() => void) | null>(null);
 
-  const place = houseMadePlace(barId);
   const patch = useHouseMadeWizardStore((s) => s.patch);
   const setStep = useHouseMadeWizardStore((s) => s.setStep);
   const clear = useHouseMadeWizardStore((s) => s.clear);
-  // Picked up where it was left: read once, so the steps start from it and then own it. A name passed in (Make "Fig leaf oil")
-  // starts that one instead.
-  // ponytail: one draft per place, so writing in the new one replaces one left before; a slot per name (as a drink's) if that bites.
-  const [kept] = useState(() => {
-    const k = useHouseMadeWizardStore.getState().kept[place] ?? null;
-    return k && (!nameParam?.trim() || nameKey(k.draft.name) === nameKey(nameParam)) ? k : null;
+  // Each one left for now keeps its own slot, so starting another never writes over it (review of #1183). Picked up: the
+  // slot it was listed under; a name passed in (Make "Fig leaf oil") picks up the one left by that name; else a new one.
+  const [slot] = useState(() => {
+    const all = useHouseMadeWizardStore.getState().kept;
+    // From the address: only a house-made's slot at this place (another kind's would be synced as that kind).
+    const asked = slotParam && isHouseMadeSlot(slotParam) && houseMadeBar(slotParam) === barId ? slotParam : null;
+    if (asked && all[asked]) return asked;
+    const same = nameParam?.trim() ? houseMadesAt(all, barId).find(([, k]) => nameKey(k.draft.name) === nameKey(nameParam)) : undefined;
+    return same?.[0] ?? asked ?? houseMadeSlot(barId, newDraftId());
   });
+  // Read once, so the steps start from it and then own it.
+  const [kept] = useState(() => useHouseMadeWizardStore.getState().kept[slot] ?? null);
+  const waiting = useHouseMadeWaiting(slot);
   const [typedName, setTypedName] = useState(kept?.draft.name ?? nameParam ?? '');
   const wrote = useRef(false);
   // One save at a time: a quick second tap lands before the screen knows it's saving.
@@ -85,7 +90,8 @@ function MakeRecipe() {
     const logBatch = () => (barId && canLog && makes ? logNow(id, name, { amount: makes, unit: 'ml' })() : router.push(`/ingredient/${id}/make` as Href));
     toast.show({ title: 'Recipe saved', detail: barId ? 'It’s on House-made; log a batch when you make it.' : 'Log a batch when you make it.', action: { label: 'Log batch', onPress: logBatch } });
     if (shelf) return goBack();
-    router.replace(`/ingredient/${id}` as Href);
+    // Its page with the Done rows (board Add-house, Done: Makes, Keeps, Used in).
+    router.replace(`/ingredient/${id}?saved=1` as Href);
   };
 
   const label = waiting && !save.isPending ? 'Saves when you’re back' : save.isPending && !offline ? 'Saving…' : offline ? 'Save on this phone' : 'Save it';
@@ -105,17 +111,20 @@ function MakeRecipe() {
       taken={card}
       checking={same.checking}
       saveLabel={label}
-      saving={save.isPending && !offline}
+      // Saved on this phone and picked up again before it's in: the button says so and can't be pressed (review of #1183).
+      saving={(save.isPending && !offline) || waiting}
       notice={offline ? <Caption color={readableAccent(STATUS.warning, ds.c.ground)}>You’re offline. It’s kept on this phone and saves when you’re back.</Caption> : undefined}
       onName={setTypedName}
       onKeep={(prep, name, step) => {
+        // The slot goes in the address once something is kept: a reload on the web picks this one up.
+        if (!wrote.current && slotParam !== slot) router.setParams({ slot });
         wrote.current = true;
-        patch(place, { name, prep });
-        setStep(place, step);
+        patch(slot, { name, prep });
+        setStep(slot, step);
       }}
       onDrop={() => {
-        // Only this one goes: one left before stays until something is written here.
-        if (kept || wrote.current) clear(place);
+        // Only this one goes.
+        clear(slot);
         goBack();
       }}
       onClose={goBack}
@@ -123,9 +132,9 @@ function MakeRecipe() {
         if (saving.current || waiting) return;
         saving.current = true;
         const queued = offline;
-        const keptAt = useHouseMadeWizardStore.getState().kept[place]?.updatedAt;
+        const keptAt = useHouseMadeWizardStore.getState().kept[slot]?.updatedAt;
         save.mutate(
-          { name: n, prep, barId, keptAt, queued, shelf: !!shelf },
+          { name: n, prep, barId, slot, keptAt, queued, shelf: !!shelf },
           {
             onSuccess: ({ id, name, warnings }) => {
               if (queued) return;

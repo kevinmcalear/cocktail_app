@@ -6,6 +6,7 @@ import { IconSymbol } from '@/components/ui/icon-symbol';
 import { radius, space } from '@/constants/tokens';
 import type { ItemPrep } from '@/hooks/usePrepCard';
 import { useVenueFeature } from '@/hooks/useVenueFeatures';
+import { formatQuantity, toQuantity } from '@/lib/quantity';
 import { leadTimeLabel, shelfLifeLabel } from '@/lib/scale';
 import { groupForAction } from '@/lib/techniques';
 
@@ -76,6 +77,21 @@ export function prepFacts(prep: ItemPrep | null | undefined): Fact[] {
     // A short note reads whole ("Fridge, sealed", Desk-item-ginger); a long one says where, and the label and Where it lives carry the rest.
     prep.storage && { label: 'Store', value: prep.storage.length <= 24 ? prep.storage : prep.storage.split(/[,;(]/)[0].trim() || prep.storage },
     leadTimeLabel(prep.lead_time_minutes, prep.lead_time_note) && { label: 'Takes', value: leadTimeLabel(prep.lead_time_minutes, prep.lead_time_note)! },
+  ].filter((f): f is Fact => !!f);
+}
+
+/**
+ * Just saved from Something you make (board Add-house, "Done: its page"):
+ * Makes, Keeps (with where) and Used in, as the board draws them.
+ */
+export function savedPrepFacts(prep: ItemPrep | null | undefined, usedIn: number): Fact[] {
+  const q = prep?.yield_amount ? toQuantity(prep.yield_amount, prep.yield_unit ?? 'ml') : null;
+  const keeps = shelfLifeLabel(prep?.shelf_life_hours ?? null);
+  const where = prep?.storage ? (/fridge/i.test(prep.storage) ? 'in the fridge' : /freezer/i.test(prep.storage) ? 'in the freezer' : prep.storage.split(/[,;(]/)[0].trim().toLowerCase()) : null;
+  return [
+    q && { label: 'Makes', value: `About ${formatQuantity(q)}` },
+    keeps && { label: 'Keeps', value: [keeps, where].filter(Boolean).join(', ') },
+    { label: 'Used in', value: usedIn ? `${usedIn} ${usedIn === 1 ? 'drink' : 'drinks'}` : 'Nothing yet' },
   ].filter((f): f is Fact => !!f);
 }
 

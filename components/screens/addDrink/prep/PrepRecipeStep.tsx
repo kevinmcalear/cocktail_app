@@ -17,7 +17,7 @@ import { prepUnit } from '@/lib/unitGuess';
 import { IngredientSearch, type CatalogIngredient } from '../IngredientSearch';
 import { WizardChip } from '../WizardChrome';
 import { InDrink, type InDrinkPour } from './InDrink';
-import { NumberField, Shares } from './RecipeBits';
+import { NumberField } from './RecipeBits';
 
 interface PrepRecipeStepProps {
   draft: PrepDraft;
@@ -61,6 +61,7 @@ export function PrepRecipeStep({ draft, view, set, ingredients, aliases, inDrink
   const [noteKey, setNoteKey] = useState<string | null>(null);
   const [unitKey, setUnitKey] = useState<string | null>(null);
   const [allergensOpen, setAllergensOpen] = useState(false);
+  const [makesOpen, setMakesOpen] = useState(false);
   const amounts = prepAmounts(draft);
   const base = draft.lines.find((l) => l.key === draft.baseKey);
   const makes = prepYield(draft);
@@ -98,7 +99,6 @@ export function PrepRecipeStep({ draft, view, set, ingredients, aliases, inDrink
 
   return (
     <View style={styles.stack}>
-      <Shares draft={draft} />
       {/* A bottle keeps its label's capitals (Bacardí Carta Blanca); a plain base reads in lower case (the white rum). */}
       <Caption tone="muted">{base ? `Everything follows the ${base.name === draft.madeFrom?.name ? base.name : base.name.toLowerCase()}.` : 'Add what goes in.'}</Caption>
       <DragList label="What goes in" data={draft.lines} keyOf={(l) => l.key} onReorder={(lines) => set({ lines })} renderRow={(l, { index: i, lifted, grip, move }) => {
@@ -222,9 +222,11 @@ export function PrepRecipeStep({ draft, view, set, ingredients, aliases, inDrink
       {/* Board Add-house, 2: what it makes and its allergens as one group of rows. */}
       <SectionLabel title="What it makes" />
       <ListGroup>
-        <ListRow first title="Makes about" value={makes ? formatQuantity({ kind: 'ml', value: makes, unit: 'ml' }) : 'Set by your first batch'} />
+        {/* "750 ml >" (board Add-house, 2): it opens how the number is reached. */}
+        <ListRow first title="Makes about" value={makes ? formatQuantity({ kind: 'ml', value: makes, unit: 'ml' }) : 'Set by your first batch'} expanded={makesOpen} onPress={() => setMakesOpen(!makesOpen)} />
         <ListRow title="Allergens" value={contains ? contains[0].toUpperCase() + contains.slice(1) : draft.allergensSet ? 'None' : 'None found'} expanded={allergensOpen} onPress={() => setAllergensOpen(!allergensOpen)} />
       </ListGroup>
+      {makesOpen ? <ListNote icon="info.circle" text="A guess from the weights. Log your first batch and it uses the real number." /> : null}
       {inDrink ? (
         <View style={styles.facts}>
           <InDrink pour={inDrink} draft={draft} makes={makes} />
@@ -250,7 +252,6 @@ export function PrepRecipeStep({ draft, view, set, ingredients, aliases, inDrink
           })}
         </View>
       ) : null}
-      <Caption tone="muted">“Makes about” is a guess from the weights. Log your first batch and it uses the real number.</Caption>
       {onMake ? <ListNote icon="info.circle" text="Any line can be made in-house too: tap it, and it opens one level in." /> : null}
     </View>
   );

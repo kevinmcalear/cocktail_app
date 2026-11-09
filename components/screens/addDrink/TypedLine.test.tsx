@@ -69,7 +69,7 @@ describe('typing a line the way you’d write it', () => {
     await laidOut();
     expect(latest().lines.map((l) => l.id)).toEqual(['bacardi']);
     expect(screen.getByText('What are you making?')).toBeTruthy();
-    expect(screen.getByRole('radio', { name: /^Wash, /, checked: true })).toBeTruthy();
+    expect(screen.getByRole('radio', { name: 'Wash', checked: true })).toBeTruthy();
     expect(screen.getByRole('radio', { name: /^Fat wash\. Overnight\. Nothing special/, checked: true })).toBeTruthy();
     // Under the lines, it waits to be answered.
     expect(screen.getByText('You wrote coconut fat-washed. Make the Bacardí Carta Blanca that way?')).toBeTruthy();
