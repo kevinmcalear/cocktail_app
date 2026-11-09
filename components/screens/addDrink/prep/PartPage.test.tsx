@@ -56,6 +56,36 @@ describe('Made in parts', () => {
     expect(juice.prep.lines.map((l: { name: string; bottle?: boolean }) => [l.name, !!l.bottle])).toContainEqual(['Ginger shrub', true]);
   });
 
+  test('a part whose name says nothing about how it’s made starts empty; Add “X” leaves a line To make, and its card makes it one more level in', async () => {
+    const onKeep = jest.fn();
+    await renderWithProviders(<PrepBuilder page name="Penicillin batch" initial={batch()} startAt="recipe" drinkName="" above={[]} ingredients={[]} bar={{ id: 'b1', name: 'Caretaker’s' }} onKeep={onKeep} onDone={jest.fn()} onClose={jest.fn()} />);
+    await laidOut();
+    await fireEvent.changeText(screen.getByLabelText('Add an ingredient'), 'Rvwa batch');
+    await fireEvent.press(screen.getByRole('button', { name: /^Make “Rvwa batch” here/ }));
+    await partLaidOut();
+    await fireEvent.changeText(screen.getByLabelText('Add an ingredient'), 'Fresh ginger juice');
+    await fireEvent.press(screen.getByRole('button', { name: /^Make “Fresh ginger juice” here/ }));
+    await partLaidOut();
+    // Frame 3: no lines guessed from the words of its name ("Fresh", "Ginger", "Juice"), and nothing kept on its line yet.
+    expect(screen.getByText('HOUSE-MADE · A PART OF RVWA BATCH')).toBeTruthy();
+    expect(screen.queryByRole('button', { name: /\. Swap it$/ })).toBeNull();
+    expect(screen.getByRole('button', { name: /^Done: Fresh ginger juice goes in/ })).toBeDisabled();
+    // Back from an untouched part leaves Rvwa batch as it was.
+    await fireEvent.press(screen.getByRole('button', { name: /^Back/ }));
+    await partLaidOut();
+    expect(screen.getByText('HOUSE-MADE · A PART OF PENICILLIN BATCH')).toBeTruthy();
+    expect(screen.queryByText(/Fresh ginger juice/)).toBeNull();
+    // The name alone: a line To make, and the card offers to make it here.
+    await fireEvent.changeText(screen.getByLabelText('Add an ingredient'), 'fresh ginger juice');
+    await fireEvent.press(screen.getByRole('button', { name: /^Add “Fresh ginger juice”$/ }));
+    expect(screen.getByText('To make')).toBeTruthy();
+    expect(screen.getByText('Fresh ginger juice isn’t one of yours yet.')).toBeTruthy();
+    await fireEvent.press(screen.getByRole('button', { name: /^Make Fresh ginger juice here/ }));
+    await partLaidOut();
+    expect(screen.getByText('HOUSE-MADE · A PART OF RVWA BATCH')).toBeTruthy();
+    expect(screen.getByText('Three levels is the most.')).toBeTruthy();
+  });
+
   test('a part named like one you have: Use yours first, and the line uses it', async () => {
     mockSame.mockReturnValue({ id: 'gj', name: 'Fresh ginger juice', here: true, drinks: 2, made: '2026-10-03T12:00:00Z' });
     const onKeep = jest.fn();
@@ -83,5 +113,14 @@ describe('Made in parts', () => {
     await fireEvent.press(screen.getByRole('button', { name: /^Make “Honey-ginger syrup” here/ }));
     expect(screen.getByText('Honey-ginger syrup · a part, opened under its line')).toBeTruthy();
     expect(screen.getByText('PENICILLIN BATCH · 2 OF 3')).toBeTruthy();
+    // A part inside it opens under its own line too (the part's search comes before the batch's), and only the innermost part has a Close.
+    await fireEvent.changeText(screen.getAllByLabelText('Add an ingredient')[0], 'Fresh ginger juice');
+    await fireEvent.press(screen.getByRole('button', { name: /^Make “Fresh ginger juice” here/ }));
+    expect(screen.getByText('Fresh ginger juice · a part, opened under its line')).toBeTruthy();
+    expect(screen.getAllByRole('button', { name: 'Close the part' })).toHaveLength(1);
+    // Empty, it closes as Back does: the line goes, and the outer part has its Close again.
+    await fireEvent.press(screen.getByRole('button', { name: 'Close the part' }));
+    expect(screen.queryByText('Fresh ginger juice · a part, opened under its line')).toBeNull();
+    expect(screen.getAllByRole('button', { name: 'Close the part' })).toHaveLength(1);
   });
 });

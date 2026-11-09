@@ -21,7 +21,8 @@
 -- A name is never quietly changed (board Add-house, Name taken). At a venue a
 -- name the venue already has is refused, and a shared ingredient's name makes
 -- the venue's own version of it, linked to it. At home a taken name is
--- refused.
+-- refused. Two of the same name in one save are refused too, and so is a
+-- fourth level (the app's limit: the house-made, a part, a part of a part).
 --
 -- p_bar: the venue, or null at home.
 -- p_preps: [{ name, lines, card, steps, made_from, base, allergens }], the
@@ -52,6 +53,8 @@ DECLARE
     v_index integer;
     v_at integer;
     v_allergen text;
+    v_keys text[] := '{}';
+    v_levels integer[] := '{}';
 BEGIN
     IF auth.uid() IS NULL THEN
         RAISE EXCEPTION 'Sign in to save it.' USING ERRCODE = '42501';
@@ -67,6 +70,10 @@ BEGIN
     FOR v_prep IN SELECT * FROM jsonb_array_elements(p_preps) LOOP
         v_name := btrim(COALESCE(v_prep ->> 'name', ''));
         IF v_name = '' THEN RAISE EXCEPTION 'Every house-made needs a name.'; END IF;
+        IF public.ingredient_key(v_name) = ANY (v_keys) THEN
+            RAISE EXCEPTION 'Two of these are called %. Name one so they''re told apart.', v_name;
+        END IF;
+        v_keys := v_keys || public.ingredient_key(v_name);
         IF p_bar IS NOT NULL AND EXISTS (
             SELECT 1 FROM public.items i
              WHERE i.item_type = 'ingredient' AND i.bar_id = p_bar
@@ -105,6 +112,11 @@ BEGIN
                 IF (v_line ->> 'part')::integer + 1 <= v_index THEN RAISE EXCEPTION 'A part points at nothing.'; END IF;
                 v_line_id := v_ids[(v_line ->> 'part')::integer + 1];
                 IF v_line_id IS NULL THEN RAISE EXCEPTION 'A part points at nothing.'; END IF;
+                -- Three levels at most, as the app draws it (MOST_LEVELS in lib/houseMadeParts.ts).
+                v_levels[(v_line ->> 'part')::integer + 1] := COALESCE(v_levels[v_index], 1) + 1;
+                IF v_levels[(v_line ->> 'part')::integer + 1] > 3 THEN
+                    RAISE EXCEPTION 'Three levels is the most. A part that needs its own parts opens on its own page.';
+                END IF;
             ELSIF v_line ->> 'id' ~* v_uuid THEN
                 v_line_id := (v_line ->> 'id')::uuid;
             ELSE

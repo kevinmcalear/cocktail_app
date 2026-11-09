@@ -91,9 +91,9 @@ function MakeRecipe() {
   const saved = (id: string, name: string, makes: number | null, together: number) => {
     // Log batch: one batch at the bar, where the recipe says what it makes; otherwise its Make mode.
     const logBatch = () => (barId && canLog && makes ? logNow(id, name, { amount: makes, unit: 'ml' })() : router.push(`/ingredient/${id}/make` as Href));
-    // Board Add-parts, 4: "Saved 3 house-mades. Each is on House-made with its own page and Used in."
+    // Board Add-parts, 4: "Saved 3 house-mades. Each is on House-made with its own page and Used in." Green, as drawn; b1's Log batch stays.
     const title = together > 1 ? savedTogether(together) : 'Recipe saved';
-    toast.show({ title, detail: together > 1 ? PARTS_SAVED : barId ? 'It’s on House-made; log a batch when you make it.' : 'Log a batch when you make it.', action: { label: 'Log batch', onPress: logBatch } });
+    toast.show({ title, detail: together > 1 ? PARTS_SAVED : barId ? 'It’s on House-made; log a batch when you make it.' : 'Log a batch when you make it.', tone: 'success', action: { label: 'Log batch', onPress: logBatch } });
     if (shelf) return goBack();
     // Its page with the Done rows (board Add-house, Done: Makes, Keeps, Used in).
     router.replace(`/ingredient/${id}?saved=1` as Href);

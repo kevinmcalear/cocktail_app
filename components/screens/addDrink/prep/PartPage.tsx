@@ -71,7 +71,7 @@ export function PartPage(p: PartPageProps) {
   const [name, setName] = useState(p.name);
   const [renaming, setRenaming] = useState(false);
   const [open, setOpen] = useState<'kind' | 'method' | 'makes' | 'keeps' | null>(null);
-  const { draft, changed, setDraft, view, pickKind, pickTechnique, phrase, version, named, slotsOpen } = usePrepDraft({ name: p.name, nameNow: name, initial: p.initial, bar: p.bar, measured: true });
+  const { draft, changed, setDraft, view, pickKind, pickTechnique, phrase, version, named, slotsOpen } = usePrepDraft({ name: p.name, nameNow: name, initial: p.initial, bar: p.bar, measured: true, blank: true });
   const shown = name.trim() || p.name;
   const inside = useInside(draft, setDraft, shown);
   const trail = trailInto(p.above, p.onClose, shown);
@@ -97,8 +97,8 @@ export function PartPage(p: PartPageProps) {
     // eslint-disable-next-line react-hooks/exhaustive-deps -- kept when what it keeps changes
   }, [draft, name, free]);
   const words = taken ? takenPartWords(taken, p.bar?.name ?? null) : null;
-  // A line that isn't one of yours yet and sounds made (Add-parts, 2: "To make").
-  const toMake = last ? undefined : draft.lines.find((l) => !l.id && !l.prep && !l.slot && !l.bottle && l.name.trim() && looksMadeInHouse(l.name));
+  // A line that isn't one of yours yet: added by its name alone, or it sounds made (Add-parts, 2: "To make").
+  const toMake = last ? undefined : draft.lines.find((l) => !l.id && !l.prep && !l.slot && !l.bottle && l.name.trim() && (l.toMake || looksMadeInHouse(l.name)));
   const done = () => p.onDone(withFacts(draft), shown);
   const canDone = named && !slotsOpen && !!shown.trim() && !taken;
 
@@ -174,10 +174,14 @@ export function PartPage(p: PartPageProps) {
         <Body>{`${shown} · a part, opened under its line`}</Body>
         <Caption tone="muted">{`Its lines, the same as a page of its own.${toMake ? ` ${toMake.name} opens one more level in, here.` : ''}`}</Caption>
         {body}
-        <View style={styles.buttons}>
-          {toMake ? <Button label={`Make ${toMake.name} here`} onPress={() => inside.open(toMake.key)} /> : null}
-          <Button label="Close the part" variant={toMake ? 'secondary' : 'primary'} disabled={!canDone} onPress={done} />
-        </View>
+        {/* One Close at a time, the innermost part's: an outer one closed first would leave the inner part a bare name. */}
+        {nested ? null : (
+          <View style={styles.buttons}>
+            {toMake ? <Button label={`Make ${toMake.name} here`} onPress={() => inside.open(toMake.key)} /> : null}
+            {/* Not done yet (no lines, its name taken): closing it is the phone's Back, and what's done stays on its line. */}
+            <Button label="Close the part" variant={toMake ? 'secondary' : 'primary'} onPress={canDone ? done : p.onClose} />
+          </View>
+        )}
       </View>
     );
   }

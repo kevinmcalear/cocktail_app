@@ -71,6 +71,7 @@ before(async () => {
   ids.honey = await item('Honey');
   ids.water = await item('Water');
   ids.taken = await item('Taken juice');
+  ids.other = (await db.query('INSERT INTO public.bars (name) VALUES ($1) RETURNING id', [`house-mades other ${run}`])).rows[0].id;
   ids.shared = (await db.query("INSERT INTO public.items (name, item_type) VALUES ($1, 'ingredient') RETURNING id", [named('Shared cordial')])).rows[0].id;
 });
 
@@ -79,7 +80,7 @@ after(async () => {
   await db.query(`DELETE FROM public.recipes WHERE recipe_item_id IN (${mine})`, [ids.bar, run]);
   await db.query(`DELETE FROM public.items WHERE id IN (${mine}) AND generic_id IS NOT NULL`, [ids.bar, run]);
   await db.query(`DELETE FROM public.items WHERE id IN (${mine})`, [ids.bar, run]);
-  await db.query('DELETE FROM public.bars WHERE id = $1', [ids.bar]);
+  await db.query('DELETE FROM public.bars WHERE id = ANY($1)', [[ids.bar, ids.other]]);
   for (const u of Object.values(users)) await service.auth.admin.deleteUser(u.id);
   await db.end();
 });
@@ -158,5 +159,28 @@ describe('save_house_mades', () => {
     const signedOut = await anon.rpc('save_house_mades', { p_bar: ids.bar, p_preps: [{ name: named('Anon syrup'), lines: [], card: CARD, steps: [] }] });
     assert.ok(signedOut.error);
     assert.deepEqual(await rowsNamed(['Anon syrup']), []);
+    // A manager here can't save at a bar they aren't part of.
+    const elsewhere = await users.manager.client.rpc('save_house_mades', { p_bar: ids.other, p_preps: [{ name: named('Elsewhere syrup'), lines: [], card: CARD, steps: [] }] });
+    assert.ok(elsewhere.error);
+    assert.deepEqual(await rowsNamed(['Elsewhere syrup']), []);
+  });
+
+  test('two of the same name in one save are refused by name, and nothing is kept', async () => {
+    const preps = [
+      { name: named('Twin batch'), lines: [{ part: 1, amount: 100, unit: 'ml' }], card: CARD, steps: [] },
+      { name: named('Twin batch'), lines: [], card: CARD, steps: [] },
+    ];
+    const { error } = await users.manager.client.rpc('save_house_mades', { p_bar: ids.bar, p_preps: preps });
+    assert.ok(error);
+    assert.match(error.message, /Two of these are called/);
+    assert.deepEqual(await rowsNamed(['Twin batch']), []);
+  });
+
+  test('three levels is the most: a fourth is refused, and nothing is kept', async () => {
+    const level = (n, next) => ({ name: named(`Level ${n}`), lines: next ? [{ part: n, amount: 10, unit: 'ml' }] : [], card: CARD, steps: [] });
+    const { error } = await users.manager.client.rpc('save_house_mades', { p_bar: ids.bar, p_preps: [level(1, true), level(2, true), level(3, true), level(4, false)] });
+    assert.ok(error);
+    assert.match(error.message, /Three levels is the most/);
+    assert.deepEqual(await rowsNamed(['Level 1', 'Level 2', 'Level 3', 'Level 4']), []);
   });
 });

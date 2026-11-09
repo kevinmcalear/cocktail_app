@@ -133,8 +133,8 @@ export function PrepRecipeStep({ draft, view, set, ingredients, aliases, inDrink
                 label={l.slot ? `Pick the ${l.slot}` : `Swap ${l.name} for…`}
                 autoFocus
                 onCancel={() => setSwapKey(null)}
-                onPick={(p) => {
-                  change(l.key, { id: p.id, name: p.name, slot: undefined, prep: undefined });
+                onPick={(p, _, isNew) => {
+                  change(l.key, { id: p.id, name: p.name, slot: undefined, prep: undefined, bottle: undefined, toMake: (parts && isNew) || undefined });
                   setSwapKey(null);
                 }}
                 onMake={
@@ -170,7 +170,7 @@ export function PrepRecipeStep({ draft, view, set, ingredients, aliases, inDrink
                   >
                     <Body numberOfLines={3} tone={l.slot ? 'accent' : undefined}>{l.slot ? `Pick the ${l.slot}` : l.name}</Body>
                     {openKey === l.key ? <Caption tone="accent">Open</Caption> : l.prep ? <Caption tone="accent">{l.prep.at ? `Recipe to finish · ${toFinishSummary(l.prep)}` : `${parts ? (hasPart(l.prep) ? 'Has a part' : 'New') : 'House-made'} · ${prepSummary(l.prep)}`}</Caption> : null}
-                    {parts && openKey !== l.key && !l.prep && !l.id && !l.slot && !l.bottle && looksMadeInHouse(l.name) ? <Caption tone="accent">To make</Caption> : null}
+                    {parts && openKey !== l.key && !l.prep && !l.id && !l.slot && !l.bottle && (l.toMake || looksMadeInHouse(l.name)) ? <Caption tone="accent">To make</Caption> : null}
                     {isBase ? <Caption tone="accent">{view === 'amounts' ? 'The base' : 'The base, everything follows it'}</Caption> : l.removed ? <Caption tone="muted">Taken out before bottling</Caption> : view === 'amounts' && l.parts !== null && base?.parts ? <Caption tone="muted">{partsText(l.parts, base.parts)}</Caption> : null}
                   </PressableScale>
                   {l.slot ? null : noteKey === l.key ? (
@@ -233,7 +233,7 @@ export function PrepRecipeStep({ draft, view, set, ingredients, aliases, inDrink
           );
         }} />
       {waiting ? <Caption tone="accent">{waiting}</Caption> : null}
-      <IngredientSearch {...search} label="Add an ingredient" parts={parts} captions={parts} onPick={(p) => addLine({ id: p.id, name: p.name })} onMake={makeNew} onBottle={parts ? (name) => addLine({ name, bottle: true }) : undefined} />
+      <IngredientSearch {...search} label="Add an ingredient" parts={parts} captions={parts} onPick={(p, _, isNew) => addLine({ id: p.id, name: p.name, toMake: (parts && isNew) || undefined })} onMake={makeNew} onBottle={parts ? (name) => addLine({ name, bottle: true }) : undefined} />
       {flat ? null : (
         <>
       {/* Board Add-house, 2: what it makes and its allergens as one group of rows. */}

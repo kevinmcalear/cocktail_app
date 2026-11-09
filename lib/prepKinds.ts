@@ -47,6 +47,8 @@ export interface PrepDraftLine {
   prep?: PrepDraft;
   /** Added as a bottle (Add-parts, 1: "Add X as a bottle"): a new name saved as something you buy. */
   bottle?: boolean;
+  /** Added by its name alone in a part's search (Add-parts, 2): not one of yours yet, so it's tagged To make. */
+  toMake?: boolean;
 }
 
 export interface PrepDraftStep {
