@@ -189,7 +189,7 @@ describe('PrepBuilder', () => {
     await fireEvent.press(screen.getByRole('button', { name: 'Next: what goes in' }));
     expect(screen.getByText('2 of 3')).toBeTruthy();
     expect(screen.getByText('OLEO SHRUB · EQUAL PARTS BY WEIGHT')).toBeTruthy();
-    await fireEvent.press(screen.getByRole('link', { name: /^Allergens\. None found/ }));
+    await fireEvent.press(screen.getByRole('button', { name: /^Allergens\. None found/ }));
     await fireEvent.press(screen.getByRole('checkbox', { name: 'Sulphites' }));
     // The chili starts with the canvas's note (make-create-prep-recipe); it can still be changed.
     await fireEvent.press(screen.getByRole('button', { name: 'Note on Fresno chili: Sliced, seeds in for more heat. Change it' }));
@@ -198,7 +198,7 @@ describe('PrepBuilder', () => {
     expect(screen.getByText('Suggested for an oleo shrub. Tap one to change it.')).toBeTruthy();
     expect(screen.getByText('Start from a step or write your own. A time you write becomes a timer when you make it.')).toBeTruthy();
     expect(screen.getByText('1 day')).toBeTruthy();
-    await fireEvent.press(screen.getByRole('link', { name: /^Store\. Fridge/ }));
+    await fireEvent.press(screen.getByRole('button', { name: /^Store\. Fridge/ }));
     await fireEvent.press(screen.getByRole('radio', { name: 'Freezer' }));
     await fireEvent.press(screen.getByRole('button', { name: 'Add it to Daiquiri' }));
     const prep = onDone.mock.calls[0][0];

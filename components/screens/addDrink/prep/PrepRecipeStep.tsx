@@ -223,7 +223,7 @@ export function PrepRecipeStep({ draft, view, set, ingredients, aliases, inDrink
       <SectionLabel title="What it makes" />
       <ListGroup>
         <ListRow first title="Makes about" value={makes ? formatQuantity({ kind: 'ml', value: makes, unit: 'ml' }) : 'Set by your first batch'} />
-        <ListRow title="Allergens" value={contains ? contains[0].toUpperCase() + contains.slice(1) : draft.allergensSet ? 'None' : 'None found'} onPress={() => setAllergensOpen(!allergensOpen)} />
+        <ListRow title="Allergens" value={contains ? contains[0].toUpperCase() + contains.slice(1) : draft.allergensSet ? 'None' : 'None found'} expanded={allergensOpen} onPress={() => setAllergensOpen(!allergensOpen)} />
       </ListGroup>
       {inDrink ? (
         <View style={styles.facts}>

@@ -70,6 +70,10 @@ export interface PrepBuilderProps {
   onDrop?: () => void;
   /** Its own page: the name is taken here (Add-house, Name taken): a card under the name, Open it or Rename this one, and Next waits. */
   taken?: { title: string; body: string; onOpen: () => void; openLabel: string } | null;
+  /** Its own page: the name is still being checked; Next waits on the first step. */
+  checking?: boolean;
+  /** Its own page: the name as it's typed, for that check. */
+  onName?: (name: string) => void;
   /** Its own page: the last step's button ("Save it", "Save on this phone") and a note above it. */
   saveLabel?: string;
   saving?: boolean;
@@ -100,7 +104,7 @@ export function PrepBuilder(props: PrepBuilderProps) {
   );
 }
 
-function Builder({ name: started, drinkName, initial, first, combinedFrom, inDrink, picked, technique, ingredients, aliases, onDone, onLater, onClose, bar = null, above, backRef, startAt, page, onKeep, onDrop, taken, saveLabel, saving = false, notice, embedded, closeRef }: PrepBuilderProps & { name: string; backRef: RefObject<() => void> }) {
+function Builder({ name: started, drinkName, initial, first, combinedFrom, inDrink, picked, technique, ingredients, aliases, onDone, onLater, onClose, bar = null, above, backRef, startAt, page, onKeep, onDrop, taken, checking, onName, saveLabel, saving = false, notice, embedded, closeRef }: PrepBuilderProps & { name: string; backRef: RefObject<() => void> }) {
   const [step, setStep] = useState<Step>(startAt ?? (!first && (initial || technique) ? 'recipe' : 'kind'));
   const [direction, setDirection] = useState<1 | -1>(1);
   const [name, setName] = useState(started);
@@ -120,7 +124,9 @@ function Builder({ name: started, drinkName, initial, first, combinedFrom, inDri
   const keep = onLater && !combined ? () => onLater({ ...withFacts(current()), at: step }, shown) : null;
   // A finished recipe opened again keeps a change made below it (a recipe inside it, picked up and left); otherwise it stays as it was.
   // On its own page (Kevin, 8 Nov: "Later on close") what's written is already kept: closing asks first, and with nothing written just goes.
-  const filled = !!name.trim() || changed() || !!initial;
+  // Written: typed or picked here, or picked up from before. A name passed in and nothing else is not.
+  const [typed, setTyped] = useState(false);
+  const filled = typed || changed() || !!initial;
   const leave = page ? (filled ? onClose : (onDrop ?? onClose)) : (keep ?? (() => (changed() ? onDone(withFacts(current()), shown) : onClose())));
   const [asking, setAsking] = useState(false);
   const ask = () => {
@@ -129,37 +135,57 @@ function Builder({ name: started, drinkName, initial, first, combinedFrom, inDri
     if (page ? filled : keep) setAsking(true);
     else leave();
   };
-  useEffect(() => {
-    if (closeRef) closeRef.current = ask;
-  });
   // A kind is picked: tapped, said by the name, or there from the start (Kevin, 8 Nov: the kit question waits for one).
   const [tapped, setTapped] = useState(!!(initial || technique || combined || !page));
-  const chosen = tapped || !!guessKind(name);
+  const [byName, setByName] = useState(!!guessKind(started));
+  const chosen = tapped || byName;
   // Its own page keeps each change as it's made, with the step it's on.
   useEffect(() => {
-    if (page && onKeep && (name.trim() || changed())) onKeep(withFacts(draft), name.trim(), step);
+    if (page && onKeep && (typed || changed())) onKeep(withFacts(draft), name.trim(), step);
     // eslint-disable-next-line react-hooks/exhaustive-deps -- kept when what it keeps changes
   }, [draft, name, step]);
   const back = () => (at > 0 ? go(STEPS[at - 1]) : ask());
   const next = () => (step === 'method' ? onDone(withFacts(draft), shown) : go(STEPS[at + 1]));
-  const ready = named && (step === 'kind' || !slotsOpen) && !(page && taken);
+  const ready = named && (step === 'kind' || !slotsOpen) && !(page && (taken || (step === 'kind' && checking)));
   const trail = trailInto(above ?? [{ label: drinkName || 'Your drink' }], leave, shown);
   // A line of this recipe being made in-house too, one level down (make-anything-steps-2, step 8).
   const inside = useInside(draft, setDraft, name.trim() || started);
   // The level showing takes Android's back: this one, unless a level below it is open.
   useEffect(() => {
-    if (!inside.props) backRef.current = back;
+    if (inside.props) return;
+    backRef.current = back;
+    // The web dialog's Escape and scrim: the level showing asks.
+    if (closeRef) closeRef.current = ask;
   });
 
   // The name says a kind ("…syrup"): it's picked as it's typed, until one is tapped.
   const typeName = (n: string) => {
     setName(n);
+    setTyped(true);
+    onName?.(n);
     const said = guessKind(n);
-    if (!tapped && said && said !== guessKind(name)) pickKind(said, undefined, n);
+    if (tapped || !said) return;
+    setByName(true);
+    if (said !== guessKind(name) || !byName) pickKind(said, undefined, n);
   };
 
+  // Board Add-house, Name taken: under the name; on a later step (a check that came back late) over the button it holds.
+  const takenCard = taken ? (
+    <Prompt
+      warn
+      icon="exclamationmark.triangle"
+      title={taken.title}
+      body={taken.body}
+      actions={[
+        { label: 'Open it', onPress: taken.onOpen, accessibilityLabel: taken.openLabel },
+        // On a later step the name is on the first: back there, then into the name.
+        { label: 'Rename this one', onPress: () => (step === 'kind' ? nameField.current?.focus() : go('kind')) },
+      ]}
+    />
+  ) : null;
+
   const intro = 'Start from a step or write your own. A time you write becomes a timer when you make it.';
-  if (inside.props) return <Builder key={inside.line!.key} {...inside.props} ingredients={ingredients} aliases={aliases} bar={bar} above={trail} backRef={backRef} />;
+  if (inside.props) return <Builder key={inside.line!.key} {...inside.props} ingredients={ingredients} aliases={aliases} bar={bar} above={trail} backRef={backRef} embedded={embedded} closeRef={closeRef} />;
   const from = combinedFrom?.length ? `From ${combinedFrom.slice(0, -1).join(', ')} and ${combinedFrom.at(-1)}` : null;
   return (
     <View style={styles.root}>
@@ -205,7 +231,7 @@ function Builder({ name: started, drinkName, initial, first, combinedFrom, inDri
           skipLabel={keep ? 'Later' : 'Skip'}
           canNext={ready && !!name.trim()}
           saving={saving}
-          notice={step === 'method' ? notice : undefined}
+          notice={page && taken && step !== 'kind' ? takenCard : step === 'method' ? notice : undefined}
           onSkip={keep ?? (() => go('recipe'))}
           onNext={next}
         />
@@ -215,16 +241,7 @@ function Builder({ name: started, drinkName, initial, first, combinedFrom, inDri
         <View style={styles.stack}>
           <Field ref={nameField} label="Name" value={name} onChangeText={typeName} placeholder="e.g. Honey-ginger syrup, Fat-washed rye" maxLength={80} returnKeyType="done" />
           {page && taken ? (
-            <Prompt
-              warn
-              icon="exclamationmark.triangle"
-              title={taken.title}
-              body={taken.body}
-              actions={[
-                { label: 'Open it', onPress: taken.onOpen, accessibilityLabel: taken.openLabel },
-                { label: 'Rename this one', onPress: () => nameField.current?.focus() },
-              ]}
-            />
+            takenCard
           ) : (
             <PrepKindStep
               name={shown}

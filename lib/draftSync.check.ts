@@ -95,5 +95,6 @@ assert.equal(houseMadeBar('house:home'), null);
 assert.equal(houseMadeBar('house:bar-1'), 'bar-1');
 assert.equal(HOUSE_MADE_DRAFTS.filled(EMPTY_HOUSE_MADE), false, 'nothing typed is not kept');
 assert.equal(HOUSE_MADE_DRAFTS.filled({ name: 'Honey-ginger syrup', prep: null }), true);
+assert.equal(HOUSE_MADE_DRAFTS.filled({ name: ' ', prep: null }), false, 'no name: kept on the phone only (an older app reads it as a drink)');
 
 console.log('draftSync checks passed');

@@ -10,13 +10,13 @@ import { STATUS } from '@/constants/tokens';
 import { useActiveVenue } from '@/hooks/useActiveVenue';
 import { useCapabilities } from '@/hooks/useCapabilities';
 import { useDropdowns } from '@/hooks/useDropdowns';
-import { useShelfEdit } from '@/hooks/useHomeBar';
 import { takenPrepWords, useSameNamePrep } from '@/hooks/useSameNamePrep';
 import { useHouseMadeWaiting, useSaveHouseMade } from '@/hooks/useSaveHouseMade';
 import { readableAccent } from '@/lib/color';
 import { plainDbMessage } from '@/lib/dbError';
 import { houseMadePlace } from '@/lib/houseMadeDraft';
 import { prepYield } from '@/lib/prepKinds';
+import { nameKey } from '@/lib/sameName';
 import { useHouseMadeWizardStore } from '@/store/useHouseMadeWizardStore';
 
 import { PrepBuilder } from '../addDrink/prep/PrepBuilder';
@@ -49,7 +49,6 @@ function MakeRecipe() {
   const venue = useActiveVenue().venues.find((v) => v.id === barId) ?? null;
   const dropdowns = useDropdowns({ ingredients: true }).data;
   const save = useSaveHouseMade();
-  const { add } = useShelfEdit();
   const offline = useNetInfo().isConnected === false;
   const waiting = useHouseMadeWaiting(barId);
   const canLog = !!useCapabilities(barId).data?.includes('specs');
@@ -63,15 +62,21 @@ function MakeRecipe() {
   const patch = useHouseMadeWizardStore((s) => s.patch);
   const setStep = useHouseMadeWizardStore((s) => s.setStep);
   const clear = useHouseMadeWizardStore((s) => s.clear);
-  // Picked up where it was left: read once, so the steps start from it and then own it.
-  const [kept] = useState(() => useHouseMadeWizardStore.getState().kept[place] ?? null);
-  const nameNow = useHouseMadeWizardStore((s) => s.kept[place]?.draft.name) ?? kept?.draft.name ?? nameParam ?? '';
+  // Picked up where it was left: read once, so the steps start from it and then own it. A name passed in (Make "Fig leaf oil")
+  // starts that one instead.
+  // ponytail: one draft per place, so writing in the new one replaces one left before; a slot per name (as a drink's) if that bites.
+  const [kept] = useState(() => {
+    const k = useHouseMadeWizardStore.getState().kept[place] ?? null;
+    return k && (!nameParam?.trim() || nameKey(k.draft.name) === nameKey(nameParam)) ? k : null;
+  });
+  const [typedName, setTypedName] = useState(kept?.draft.name ?? nameParam ?? '');
+  const wrote = useRef(false);
   // One save at a time: a quick second tap lands before the screen knows it's saving.
   const saving = useRef(false);
   const goBack = () => (router.canGoBack() ? router.back() : router.replace('/'));
 
   // Board Add-house, Name taken: one card at a bar and at home, never a quiet "My …" (Add-house-notes, pick 5).
-  const same = useSameNamePrep({ barId, name: nameNow });
+  const same = useSameNamePrep({ barId, name: typedName });
   const taken = same.data;
   const card = taken ? { ...takenPrepWords(taken, venue?.name ?? null), onOpen: () => router.replace(`/ingredient/${taken.id}` as Href), openLabel: `Open ${taken.name}. Your draft is kept` } : null;
 
@@ -79,10 +84,7 @@ function MakeRecipe() {
     // Log batch: one batch at the bar, where the recipe says what it makes; otherwise its Make mode.
     const logBatch = () => (barId && canLog && makes ? logNow(id, name, { amount: makes, unit: 'ml' })() : router.push(`/ingredient/${id}/make` as Href));
     toast.show({ title: 'Recipe saved', detail: barId ? 'It’s on House-made; log a batch when you make it.' : 'Log a batch when you make it.', action: { label: 'Log batch', onPress: logBatch } });
-    if (shelf) {
-      add.mutate(id);
-      return goBack();
-    }
+    if (shelf) return goBack();
     router.replace(`/ingredient/${id}` as Href);
   };
 
@@ -101,15 +103,19 @@ function MakeRecipe() {
       ingredients={dropdowns?.ingredients ?? []}
       aliases={dropdowns?.ingredientAliases}
       taken={card}
+      checking={same.checking}
       saveLabel={label}
       saving={save.isPending && !offline}
       notice={offline ? <Caption color={readableAccent(STATUS.warning, ds.c.ground)}>You’re offline. It’s kept on this phone and saves when you’re back.</Caption> : undefined}
+      onName={setTypedName}
       onKeep={(prep, name, step) => {
+        wrote.current = true;
         patch(place, { name, prep });
         setStep(place, step);
       }}
       onDrop={() => {
-        clear(place);
+        // Only this one goes: one left before stays until something is written here.
+        if (kept || wrote.current) clear(place);
         goBack();
       }}
       onClose={goBack}
@@ -117,9 +123,9 @@ function MakeRecipe() {
         if (saving.current || waiting) return;
         saving.current = true;
         const queued = offline;
-        const draftId = useHouseMadeWizardStore.getState().kept[place]?.draft.id;
+        const keptAt = useHouseMadeWizardStore.getState().kept[place]?.updatedAt;
         save.mutate(
-          { name: n, prep, barId, draftId, queued },
+          { name: n, prep, barId, keptAt, queued, shelf: !!shelf },
           {
             onSuccess: ({ id, name, warnings }) => {
               if (queued) return;

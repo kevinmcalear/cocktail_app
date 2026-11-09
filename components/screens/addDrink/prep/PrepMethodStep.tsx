@@ -148,7 +148,7 @@ export function PrepMethodStep({ draft, set, phrase }: { draft: PrepDraft; set: 
       <SectionLabel title="Keeps" />
       <ListGroup>
         {tiles.map((t, i) => (
-          <ListRow key={t.id} first={i === 0} title={t.label} value={t.value} onPress={() => setOpen(open === t.id ? null : t.id)} />
+          <ListRow key={t.id} first={i === 0} title={t.label} value={t.value} expanded={open === t.id} onPress={() => setOpen(open === t.id ? null : t.id)} />
         ))}
       </ListGroup>
       {open === 'keeps' ? (

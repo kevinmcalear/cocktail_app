@@ -11,7 +11,7 @@ import { useShelfLives } from '@/hooks/useShelfLives';
 import { useTonight } from '@/hooks/useTonight';
 import { useTonightPrep } from '@/hooks/useTonightPrep';
 import { fridgeRows, lowLine } from '@/lib/drinksTab';
-import { filledHouseMade, houseMadePlace } from '@/lib/houseMadeDraft';
+import { EMPTY_HOUSE_MADE, filledHouseMade, houseMadePlace } from '@/lib/houseMadeDraft';
 import { RECIPE_STEPS } from '@/lib/prepKinds';
 import { itemHref } from '@/lib/itemRoutes';
 import { useHouseMadeWizardStore } from '@/store/useHouseMadeWizardStore';
@@ -47,7 +47,7 @@ export function HouseMadeTop({ barId, nameOf }: { barId: string; nameOf: (id: st
   const open = (id: string) => () => router.push(itemHref('Ingredient', id) as Href);
   // Something you make, left for now (Add-house: "House-made lists it under Drafts with the way back").
   const kept = useHouseMadeWizardStore((s) => s.kept[houseMadePlace(barId)]);
-  const draft = kept && filledHouseMade(kept.draft) ? kept : null;
+  const draft = kept && filledHouseMade({ ...EMPTY_HOUSE_MADE, ...kept.draft }) ? kept : null;
   if (!low.length && !fridge.length && !draft) return null;
   return (
     <View style={styles.top}>
@@ -58,7 +58,7 @@ export function HouseMadeTop({ barId, nameOf }: { barId: string; nameOf: (id: st
             <ListRow
               first
               icon="pencil"
-              title={draft.draft.name.trim() || 'Something you make'}
+              title={draft.draft.name?.trim() || 'Something you make'}
               detail={`Something you make · ${RECIPE_STEPS.indexOf(draft.step) + 1} of ${RECIPE_STEPS.length}`}
               onPress={() => router.push({ pathname: '/make-recipe', params: { barId } })}
             />
