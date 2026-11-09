@@ -65,6 +65,8 @@ export function MenuSheet({ visible, onClose, onDismiss, title, subtitle, eyebro
   const arrow = !!back && Platform.OS === 'android';
   // The close before the title: Android's back arrow, or a centred title's X on phones.
   const closeFirst = arrow || (!!centred && !sheetIsDialog);
+  // The web's centred dialog (Add-entry, Web: New) draws its title in the display face; the phone sheets use the body face.
+  const serif = !!centred && sheetIsDialog;
   const balance = centred ? <View style={styles.side} /> : null;
   const ds = useDs();
   const insets = useSafeAreaInsets();
@@ -100,7 +102,7 @@ export function MenuSheet({ visible, onClose, onDismiss, title, subtitle, eyebro
                   {eyebrow.toUpperCase()}
                 </Caption>
               ) : null}
-              {plain ? (
+              {plain && !serif ? (
                 <Headline role="heading" align={align} numberOfLines={aside ? 1 : undefined}>
                   {title}
                 </Headline>
