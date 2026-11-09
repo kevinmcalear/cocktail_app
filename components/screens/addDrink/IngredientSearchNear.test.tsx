@@ -14,7 +14,7 @@ jest.mock('@/hooks/useSearchNear', () => ({
 }));
 jest.mock('@/hooks/usePairings', () => ({ usePairings: () => ({ data: [] }) }));
 jest.mock('@/hooks/useClosestClassic', () => ({ useClosestClassic: () => ({ data: null }), useCloseClassics: () => ({ data: [] }) }));
-jest.mock('@/hooks/useDiscover', () => ({ useDrinkLists: () => ({ data: [] }) }));
+jest.mock('@/hooks/useDiscover', () => ({ useDebounced: <T,>(v: T) => v, useDrinkLists: () => ({ data: [] }) }));
 jest.mock('@/hooks/useStartFromClassic', () => ({ useStartFromClassic: () => ({ mutate: jest.fn(), isPending: false }) }));
 jest.mock('@/hooks/useActiveVenue', () => ({ useActiveVenue: () => ({ venues: [] }) }));
 jest.mock('@/hooks/useKit', () => ({ useKit: () => ({ owned: [], kit: new Set(), toggle: jest.fn() }) }));
