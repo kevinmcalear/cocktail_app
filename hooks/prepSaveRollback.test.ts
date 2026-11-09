@@ -1,9 +1,13 @@
-import type { QueryClient } from '@tanstack/react-query';
+import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
+import { renderHook } from '@testing-library/react-native';
+import { createElement, type ReactNode } from 'react';
 
+import { useCreateIngredient } from '@/hooks/useCreateIngredient';
 import { createPrep } from '@/hooks/usePrepCard';
+import { EMPTY_INGREDIENT } from '@/lib/ingredientWizard';
 import { startPrep } from '@/lib/prepKinds';
 
-// Bring in's save (createPrep): every new items row, and what a failed save deletes again.
+// Saves that add a house-made and its recipe (Bring in's createPrep, the ingredient wizard's): every new items row, and what a failed save deletes again.
 const mockAdded: { id: string; name: string }[] = [];
 const mockDeleted: string[][] = [];
 jest.mock('@/hooks/useDropdowns', () => ({ refreshIngredients: async () => {} }));
@@ -37,6 +41,11 @@ jest.mock('@/lib/supabase', () => {
   };
 });
 
+beforeEach(() => {
+  mockAdded.length = 0;
+  mockDeleted.length = 0;
+});
+
 test('a save that fails takes away the ingredients it added for names typed on a line, with the prep (review of #1183)', async () => {
   const prep = startPrep('syrup', 'Ginger syrup');
   prep.lines.push({ key: 'g', id: null, name: 'Fresh ginger juice', parts: 0.2, unit: 'g', amount: '' });
@@ -44,5 +53,16 @@ test('a save that fails takes away the ingredients it added for names typed on a
   await expect(createPrep(qc, { name: 'Ginger syrup', prep, barId: 'bar-1' })).rejects.toEqual({ message: 'recipes refused' });
   expect(mockAdded.map((r) => r.name)).toEqual(['Ginger syrup', 'Sugar', 'Water', 'Fresh ginger juice']);
   // Everything this save added goes again: the prep and the three ingredients it made for its lines.
+  expect(mockDeleted).toEqual([mockAdded.map((r) => r.id)]);
+});
+
+test('the ingredient wizard’s save that fails takes away the ingredients it added too', async () => {
+  // No garbage-collection timers left behind, so Jest exits.
+  const client = new QueryClient({ defaultOptions: { mutations: { gcTime: Infinity }, queries: { gcTime: Infinity } } });
+  const wrapper = ({ children }: { children: ReactNode }) => createElement(QueryClientProvider, { client }, children);
+  const { result } = await renderHook(() => useCreateIngredient(), { wrapper });
+  const lines = [{ key: 'a', id: null, name: 'Fresh ginger juice', amount: '100', unit: 'ml' }];
+  await expect(result.current.mutateAsync({ draft: { ...EMPTY_INGREDIENT, name: 'Ginger syrup', role: 'prep', lines }, barId: 'bar-1' })).rejects.toEqual({ message: 'recipes refused' });
+  expect(mockAdded.map((r) => r.name)).toEqual(['Ginger syrup', 'Fresh ginger juice']);
   expect(mockDeleted).toEqual([mockAdded.map((r) => r.id)]);
 });

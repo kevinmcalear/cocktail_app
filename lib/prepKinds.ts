@@ -618,17 +618,22 @@ export function withMethod(d: PrepDraft, t: TechniqueBatch, card: TechniqueCard,
   return withFacts({ ...d, way, ...techniqueMethod(t, card) });
 }
 
-/** A kind picked for lines that were combined: the kind's method and keep, with the lines as they were. */
+/** A kind picked for lines that were combined or written: the kind's method and keep, with the lines as they were (and allergens set by hand for them). */
 export function keepLines(fresh: PrepDraft, from: PrepDraft): PrepDraft {
-  return withFacts({ ...fresh, lines: from.lines, baseKey: from.baseKey, baseAmount: from.baseAmount, madeFrom: from.madeFrom });
+  const set = from.allergensSet ? { allergens: from.allergens, allergensSet: true } : {};
+  return withFacts({ ...fresh, lines: from.lines, baseKey: from.baseKey, baseAmount: from.baseAmount, madeFrom: from.madeFrom, ...set });
 }
 
-/** A line as it reads, without its key: what a maker's change shows against. */
-const lineAsWritten = (l: PrepDraftLine) => [l.name.trim().toLowerCase(), l.id, l.parts, l.unit, l.amount, l.slot ?? null, l.note ?? null, !!l.removed, !!l.prep, !!l.bottle];
+/** What goes in, as a start: its lines, which one is the base, and how much of it. */
+export type PrepStartLines = Pick<PrepDraft, 'lines' | 'baseKey' | 'baseAmount'>;
 
-/** The same lines, keys aside: a kind's start is the same start each time it's made. */
-export function sameLines(a: PrepDraftLine[], b: PrepDraftLine[]): boolean {
-  return a.length === b.length && a.every((l, i) => JSON.stringify(lineAsWritten(l)) === JSON.stringify(lineAsWritten(b[i])));
+/** A line as it reads, without its key: what a maker's change shows against. */
+const lineAsWritten = (l: PrepDraftLine) => JSON.stringify([l.name.trim().toLowerCase(), l.id, l.parts, l.unit, l.amount, l.slot ?? null, l.note ?? null, !!l.removed, !!l.prep, !!l.bottle, !!l.toMake]);
+const baseAt = (d: PrepStartLines) => d.lines.findIndex((l) => l.key === d.baseKey);
+
+/** The same start, keys aside: the same lines, the same base and the same batch. A kind's start is the same each time it's made. */
+export function sameStart(a: PrepStartLines, b: PrepStartLines): boolean {
+  return a.lines.length === b.lines.length && baseAt(a) === baseAt(b) && a.baseAmount === b.baseAmount && a.lines.every((l, i) => lineAsWritten(l) === lineAsWritten(b.lines[i]));
 }
 
 /** Units a line of a recipe is measured in, as it goes in (make-anything-steps-2, step 5). */

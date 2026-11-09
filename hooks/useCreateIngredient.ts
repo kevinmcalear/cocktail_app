@@ -55,16 +55,18 @@ export function useCreateIngredient() {
 
       const lines = draft.role === 'prep' ? draft.lines : [];
       const made = new Map<string, string>();
+      // Ingredients added here for names typed on a line go again with it if the recipe fails (review of #1183).
+      const created: string[] = [];
       if (lines.length) {
         try {
           const rows = [];
           for (const [i, l] of lines.entries()) {
-            rows.push({ recipe_item_id: id, ingredient_item_id: await ensureIngredient(l, barId, made), amount: number(l.amount), unit: l.unit || null, sort_order: i });
+            rows.push({ recipe_item_id: id, ingredient_item_id: await ensureIngredient(l, barId, made, created), amount: number(l.amount), unit: l.unit || null, sort_order: i });
           }
           const { error: recipeError } = await supabase.from('recipes').insert(rows);
           if (recipeError) throw recipeError;
         } catch (e) {
-          await supabase.from('items').delete().eq('id', id);
+          await supabase.from('items').delete().in('id', [id, ...created]);
           throw e;
         }
       }
