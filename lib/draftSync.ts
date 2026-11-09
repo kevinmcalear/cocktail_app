@@ -7,6 +7,7 @@
  */
 import { EMPTY_BEER_WINE, filledBeerWine, type BeerWineDraft } from './beerWineDraft';
 import { hasContent, type WizardDraft, type WizardStep } from './drinkWizard';
+import { EMPTY_HOUSE_MADE, filledHouseMade, type HouseMadeDraft } from './houseMadeDraft';
 
 export interface KeptDraft<D extends object = WizardDraft, S extends string = WizardStep> {
   draft: D;
@@ -27,6 +28,8 @@ export interface DraftRules<D extends object> {
 export const DRINK_DRAFTS: DraftRules<WizardDraft> = { filled: hasContent, local: ['photos'] };
 // A draft kept by an older version may lack a field: filled out first.
 export const BEER_WINE_DRAFTS: DraftRules<BeerWineDraft> = { filled: (d) => filledBeerWine({ ...EMPTY_BEER_WINE, ...d }), local: ['photo'] };
+// Something you make (Add-house: "on this phone and the web"): nothing in it is a file.
+export const HOUSE_MADE_DRAFTS: DraftRules<HouseMadeDraft> = { filled: (d) => filledHouseMade({ ...EMPTY_HOUSE_MADE, ...d }), local: [] };
 
 /** Two copies of one draft, by the id its first change gave it; one kept before ids can't be told apart, so counts as the same. */
 function sameDraft(a: object, b: object): boolean {

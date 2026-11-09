@@ -9,6 +9,7 @@ import { asyncStoragePersister, queryClient, savedQueryFiles } from '@/lib/react
 import { clearSavedSpecBooks } from '@/lib/specBookFile';
 import { useAppMode } from '@/store/useAppMode';
 import { useBeerWineWizardStore } from '@/store/useBeerWineWizardStore';
+import { useHouseMadeWizardStore } from '@/store/useHouseMadeWizardStore';
 import { useBringIn } from '@/store/useBringIn';
 import type { WizardStore } from '@/store/createWizardStore';
 import { useDraftSyncStore } from '@/store/useDraftSyncStore';
@@ -60,6 +61,7 @@ export async function clearUserData(): Promise<void> {
   await Promise.all([
     clearDrafts(useDrinkWizardStore),
     clearDrafts(useBeerWineWizardStore),
+    clearDrafts(useHouseMadeWizardStore),
     asyncStoragePersister.removeClient(),
     savedQueryFiles.clear(),
     clearSavedSpecBooks(),

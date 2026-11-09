@@ -4,13 +4,15 @@ import { useEffect } from 'react';
 import { useAuth } from '@/ctx/AuthContext';
 import { beerWineBar, isBeerWineSlot, type BeerWineDraft, type BeerWineStep } from '@/lib/beerWineDraft';
 import type { WizardDraft, WizardStep } from '@/lib/drinkWizard';
-import { BEER_WINE_DRAFTS, DRINK_DRAFTS, forAccount, mergeDrafts, type DraftRules, type KeptDraft } from '@/lib/draftSync';
+import { houseMadeBar, isHouseMadeSlot, type HouseMadeDraft, type HouseMadeStep } from '@/lib/houseMadeDraft';
+import { BEER_WINE_DRAFTS, DRINK_DRAFTS, HOUSE_MADE_DRAFTS, forAccount, mergeDrafts, type DraftRules, type KeptDraft } from '@/lib/draftSync';
 import { jsonAs, supabase } from '@/lib/supabase';
 import { slotStart } from '@/lib/wizardSlots';
 import type { Json } from '@/types/db';
 import { useBeerWineWizardStore } from '@/store/useBeerWineWizardStore';
 import type { WizardStore } from '@/store/createWizardStore';
 import { useDraftSyncStore } from '@/store/useDraftSyncStore';
+import { useHouseMadeWizardStore } from '@/store/useHouseMadeWizardStore';
 import { isReviewSlot, moveImportsOut, useDrinkWizardStore } from '@/store/useDrinkWizardStore';
 
 /**
@@ -152,14 +154,15 @@ const drinkBar = (slot: string) => {
 
 const WIZARDS = [
   // An import's drink being checked waits in its review, which is on this device only. Another device's import left in a plain slot comes back here as its own draft too.
-  syncer<WizardDraft, WizardStep>({ store: useDrinkWizardStore, rules: DRINK_DRAFTS, owns: (slot) => !isBeerWineSlot(slot), barOf: drinkBar, deviceOnly: isReviewSlot, settled: moveImportsOut }),
+  syncer<WizardDraft, WizardStep>({ store: useDrinkWizardStore, rules: DRINK_DRAFTS, owns: (slot) => !isBeerWineSlot(slot) && !isHouseMadeSlot(slot), barOf: drinkBar, deviceOnly: isReviewSlot, settled: moveImportsOut }),
   syncer<BeerWineDraft, BeerWineStep>({ store: useBeerWineWizardStore, rules: BEER_WINE_DRAFTS, owns: isBeerWineSlot, barOf: beerWineBar }),
+  syncer<HouseMadeDraft, HouseMadeStep>({ store: useHouseMadeWizardStore, rules: HOUSE_MADE_DRAFTS, owns: isHouseMadeSlot, barOf: houseMadeBar }),
 ];
 
 /**
  * Drafts in your account (make-anything-steps-3, step 9: "Kept in your
  * account, so your other phone and the web see it too"). Signed in, every
- * drink, beer or wine half made in a wizard is kept in the account as well
+ * drink, beer, wine or house-made half made in a wizard is kept in the account as well
  * as on the device: read back when the app opens or comes back to the
  * front, and sent a moment after each change. Mounted once, at the root.
  * ponytail: a draft changed on two devices while both were offline keeps the

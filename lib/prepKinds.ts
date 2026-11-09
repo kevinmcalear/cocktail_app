@@ -119,6 +119,21 @@ export const PREP_KINDS: PrepKind[] = [
 /** What is it, as the board draws it (make-anything-steps-1, step 4): rich syrup and oleo saccharum are ways of a syrup. */
 export const KIND_TILES: PrepKindId[] = ['batch', 'infusion', 'syrup', 'cordial', 'shrub', 'wash', 'clarified', 'distillate', 'super', 'other'];
 
+/**
+ * What it is shows these five, then More (Kevin, 8 Nov: "Five + More"): the
+ * kinds made most, by the names of every house-made in the app on 9 Nov
+ * (guessKind: infusion 624, syrup 423, cordial 273, distillate 173,
+ * clarified 102; then shrub 73, batch 20).
+ */
+export const MOST_MADE_KINDS: PrepKindId[] = ['infusion', 'syrup', 'cordial', 'distillate', 'clarified'];
+
+/** The kinds What it is shows, in the board's order: the five, the one picked and the one the name says; every kind once More is open. */
+export function shownKinds(picked: PrepKindId | null, named: PrepKindId | null, more: boolean): PrepKindId[] {
+  if (more) return KIND_TILES;
+  const show = new Set([...MOST_MADE_KINDS, picked, named].filter((k): k is PrepKindId => !!k).map(tileOf));
+  return KIND_TILES.filter((k) => show.has(k));
+}
+
 /** The tile a kind is picked under: a rich syrup is a syrup. */
 export const tileOf = (kind: PrepKindId): PrepKindId => (kind === 'rich' || kind === 'oleo' ? 'syrup' : kind);
 

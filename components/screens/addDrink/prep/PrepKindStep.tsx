@@ -1,13 +1,15 @@
 import { useState } from 'react';
 import { StyleSheet, View } from 'react-native';
 
-import { Body, Caption, DsText, PressableScale, Spec, useBreakpoint, useDs } from '@/components/ds';
+import { Body, Caption, DsText, PressableScale, Spec, useDs } from '@/components/ds';
+import { ListNote } from '@/components/ds/ListGroup';
 import { font, layout, radius, space } from '@/constants/tokens';
 import { useMakingKit } from '@/hooks/useBarKit';
-import { guessKind, keepsText, KIND_TILES, KIND_WAYS, PREP_KINDS, prepAmounts, tileOf, wayOf, waysByKit, type PrepDraft, type PrepKindId, type PrepWay } from '@/lib/prepKinds';
+import { guessKind, keepsText, KIND_WAYS, PREP_KINDS, prepAmounts, shownKinds, tileOf, wayOf, waysByKit, type PrepDraft, type PrepKindId, type PrepWay } from '@/lib/prepKinds';
 import { formatQuantity, toQuantity } from '@/lib/quantity';
 import { techniqueById } from '@/lib/techniques';
 
+import { Eyebrow, WizardChip } from '../WizardChrome';
 import { EveryTechnique, TechniqueRow } from './EveryTechnique';
 
 interface PrepKindStepProps {
@@ -21,6 +23,8 @@ interface PrepKindStepProps {
   onChangeAmount: () => void;
   /** The venue the drink is for, whose Kit the ways are checked against; null at home. */
   bar?: { id: string; name: string } | null;
+  /** A kind is picked (tapped, or the name says one): until then nothing is selected and the ways wait. */
+  chosen?: boolean;
 }
 
 /**
@@ -33,10 +37,8 @@ interface PrepKindStepProps {
  * library. A way that fills the method says so. Under them, what the picked
  * way takes and how it keeps.
  */
-export function PrepKindStep({ name, draft, combined, onKind, onTechnique, onChangeAmount, bar = null }: PrepKindStepProps) {
-  const ds = useDs();
+export function PrepKindStep({ name, draft, combined, onKind, onTechnique, onChangeAmount, bar = null, chosen = true }: PrepKindStepProps) {
   const { kit, where, add } = useMakingKit(bar);
-  const columns = useBreakpoint() === 'phone' ? 2 : 3;
   const guess = guessKind(name);
   const named = guess ? tileOf(guess) : null;
   // A technique the kinds don't list (a foam) is Something else.
@@ -53,39 +55,42 @@ export function PrepKindStep({ name, draft, combined, onKind, onTechnique, onCha
     return t ? <TechniqueRow key={w.id} t={t} label={w.label} kit={kit} on={way?.id === w.id} onPress={() => onKind(picked, w.id)} onAdd={add} /> : null;
   };
 
+  const [more, setMore] = useState(false);
+  const kindName = (id: PrepKindId) => PREP_KINDS.find((x) => x.id === id)!;
+  const shown = PREP_KINDS.find((k) => k.id === draft.kind) ?? kindName(picked);
+  const hint = !chosen ? 'Pick what it is, or name it and we’ll suggest one.' : combined ? null : `${shown.name}: ${shown.ratio.charAt(0).toLowerCase()}${shown.ratio.slice(1)}.${picked === named ? ' Picked from the name; tap another to change it.' : ''}`;
+
   return (
     <View style={styles.stack}>
-      <View role="radiogroup" accessibilityLabel="What kind it is" style={styles.grid}>
-        {KIND_TILES.map((id) => {
-          const k = PREP_KINDS.find((x) => x.id === id)!;
-          const on = k.id === picked;
+      <View style={styles.label}>
+        <Eyebrow>What it is</Eyebrow>
+        {chosen && named && picked === named ? <Caption tone="accent">From the name</Caption> : null}
+      </View>
+      {/* Five kinds and More (Kevin, 8 Nov: "Five + More"); the one picked and the one the name says always show. */}
+      <View role="radiogroup" accessibilityLabel="What it is" style={styles.chips}>
+        {shownKinds(chosen ? picked : null, named, more).map((id) => {
+          const k = kindName(id);
           return (
-            <PressableScale
-              key={k.id}
-              role="radio"
-              aria-checked={on}
-              accessibilityLabel={`${k.name}, ${k.ratio}${k.id === named ? ', from the name' : ''}`}
+            <WizardChip
+              key={id}
+              label={k.name}
+              selected={chosen && id === picked}
               onPress={() => {
                 setEvery(false);
-                onKind(k.id);
+                onKind(id);
               }}
-              // A short last row widens to fill it: the board's eight kinds leave no gap.
-              style={[styles.kind, { flexBasis: `${100 / columns - 4}%`, flexGrow: 1, backgroundColor: ds.c.surface, borderColor: on ? ds.accentText : 'transparent' }]}
-            >
-              <View style={styles.row}>
-                <Body>{k.name}</Body>
-                {k.id === named ? <Caption tone="accent">from the name</Caption> : null}
-              </View>
-              <Caption tone="muted">{k.ratio}</Caption>
-            </PressableScale>
+            />
           );
         })}
+        {more ? null : <WizardChip label="More" kind="button" dashed onPress={() => setMore(true)} />}
       </View>
+      {hint ? <Caption tone="muted">{hint}</Caption> : null}
+      {/* The kit question waits for a kind (Kevin, 8 Nov). */}
+      {chosen ? null : <ListNote icon="flask" text="Ways to make it show once you pick what it is, your kit first." />}
 
-      {kindWays && picked !== 'other' ? (
+      {chosen && kindWays && picked !== 'other' ? (
         <View style={styles.stack}>
-          <Caption tone="muted">{byKit ? 'How? With your kit' : 'How?'}</Caption>
-          {byKit ? <Caption tone="muted">{`Your kit is on ${where}. Ways it covers come first; the rest stay here, dimmed, in case you have the kit and haven’t added it.`}</Caption> : null}
+          <Eyebrow>{byKit ? 'How? Your kit first' : 'How?'}</Eyebrow>
           <View role="radiogroup" accessibilityLabel="Way to make it" style={styles.stack}>
             {byKit
               ? byKit.have.map(kitRow)
@@ -103,6 +108,7 @@ export function PrepKindStep({ name, draft, combined, onKind, onTechnique, onCha
             {byKit?.need.length ? <Caption tone="muted">Needs kit you haven’t added</Caption> : null}
             {byKit?.need.map(kitRow)}
           </View>
+          {byKit ? <Caption tone="muted">{`Your kit is in ${where}. The rest stay here, dimmed, in case you have it.`}</Caption> : null}
           {way?.fills ? <Caption tone="muted">{`${way.name} fills in the method: ${way.fills}.`}</Caption> : null}
           {byKit && !every ? (
             <PressableScale role="button" onPress={() => setEvery(true)} accessibilityLabel="Every technique" style={styles.all}>
@@ -111,7 +117,7 @@ export function PrepKindStep({ name, draft, combined, onKind, onTechnique, onCha
           ) : null}
         </View>
       ) : null}
-      {all ? (
+      {chosen && all ? (
         <View style={styles.stack}>
           <Caption tone="muted">{picked === 'other' ? 'Something else: every technique' : 'Every technique'}</Caption>
           <EveryTechnique name={name} selected={draft.technique ?? null} kit={kit} onPick={onTechnique} onAdd={add} onWrite={() => onKind('other')} />
@@ -119,7 +125,7 @@ export function PrepKindStep({ name, draft, combined, onKind, onTechnique, onCha
       ) : null}
       {combined ? <Caption tone="muted">Dropping two lines together starts as Batch. Naming it changes the suggestion; you pick.</Caption> : null}
 
-      {draft.kind !== 'other' || draft.technique ? <Amounts draft={draft} how={way?.how ?? null} onChange={onChangeAmount} /> : null}
+      {chosen && (draft.kind !== 'other' || draft.technique) ? <Amounts draft={draft} how={way?.how ?? null} onChange={onChangeAmount} /> : null}
     </View>
   );
 }
@@ -202,9 +208,8 @@ function Amounts({ draft, how, onChange }: { draft: PrepDraft; how: string | nul
 
 const styles = StyleSheet.create({
   stack: { gap: space.sm },
-  grid: { flexDirection: 'row', flexWrap: 'wrap', gap: space.sm, justifyContent: 'space-between' },
-  kind: { minHeight: layout.minTapTarget + space.lg, borderRadius: radius.control, borderWidth: 2, paddingHorizontal: space.md - 2, paddingVertical: space.sm, justifyContent: 'center', gap: 2 },
-  row: { flexDirection: 'row', alignItems: 'baseline', columnGap: space.sm, flexWrap: 'wrap' },
+  label: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', gap: space.sm },
+  chips: { flexDirection: 'row', flexWrap: 'wrap', gap: space.sm },
   flex: { flex: 1 },
   way: { gap: space.xs, paddingHorizontal: space.md, paddingVertical: space.md, borderRadius: radius.control, borderWidth: 2 },
   wayHead: { flexDirection: 'row', alignItems: 'center', gap: space.sm },

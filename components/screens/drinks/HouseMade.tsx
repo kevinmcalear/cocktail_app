@@ -11,7 +11,10 @@ import { useShelfLives } from '@/hooks/useShelfLives';
 import { useTonight } from '@/hooks/useTonight';
 import { useTonightPrep } from '@/hooks/useTonightPrep';
 import { fridgeRows, lowLine } from '@/lib/drinksTab';
+import { filledHouseMade, houseMadePlace } from '@/lib/houseMadeDraft';
+import { RECIPE_STEPS } from '@/lib/prepKinds';
 import { itemHref } from '@/lib/itemRoutes';
+import { useHouseMadeWizardStore } from '@/store/useHouseMadeWizardStore';
 
 /** A batch's day colour (the kitchen's day dots), or a hollow ring when it hasn't been made. */
 function DayMark({ day }: { day: number | null }) {
@@ -25,6 +28,7 @@ function DayMark({ day }: { day: number | null }) {
  * each one's newest batch in its day colour with its use-by, "Use today" and
  * "Throw out" (past it) in amber. Both need Prep or Specs (useTonightPrep); without them, or with
  * nothing to show, the section stays out and the house-made list follows.
+ * Above them, Drafts: something you make left for now, with the way back.
  */
 export function HouseMadeTop({ barId, nameOf }: { barId: string; nameOf: (id: string) => string | null }) {
   const router = useRouter();
@@ -41,9 +45,26 @@ export function HouseMadeTop({ barId, nameOf }: { barId: string; nameOf: (id: st
   const low = canPrep ? (prep?.make ?? []) : [];
   const lastDay = (id: string) => fridge.find((f) => f.id === id)?.madeDay ?? null;
   const open = (id: string) => () => router.push(itemHref('Ingredient', id) as Href);
-  if (!low.length && !fridge.length) return null;
+  // Something you make, left for now (Add-house: "House-made lists it under Drafts with the way back").
+  const kept = useHouseMadeWizardStore((s) => s.kept[houseMadePlace(barId)]);
+  const draft = kept && filledHouseMade(kept.draft) ? kept : null;
+  if (!low.length && !fridge.length && !draft) return null;
   return (
     <View style={styles.top}>
+      {draft ? (
+        <View style={styles.section}>
+          <SectionLabel title="Drafts" />
+          <ListGroup>
+            <ListRow
+              first
+              icon="pencil"
+              title={draft.draft.name.trim() || 'Something you make'}
+              detail={`Something you make · ${RECIPE_STEPS.indexOf(draft.step) + 1} of ${RECIPE_STEPS.length}`}
+              onPress={() => router.push({ pathname: '/make-recipe', params: { barId } })}
+            />
+          </ListGroup>
+        </View>
+      ) : null}
       {low.length ? (
         <View style={styles.section}>
           <SectionLabel title="Low" />

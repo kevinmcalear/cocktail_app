@@ -79,9 +79,11 @@ export function usePrepDraft({ name: started, initial, picked, technique, combin
    * sous vide) keeps what goes in and takes the technique's steps; a new
    * kind starts its own parts, except for lines that were combined. A wash,
    * a clarified juice or a distillate starts from its technique's parts: the
-   * way picked, else the first one the kit covers.
+   * way picked, else the first one the kit covers. `typed` is the name as
+   * just typed, for a kind the name says before the next render has it.
    */
-  const pickKind = (kind: PrepKindId, wayId?: string) => {
+  const pickKind = (kind: PrepKindId, wayId?: string, typed?: string) => {
+    const as = typed?.trim() || name;
     const way = KIND_WAYS[kind]?.find((w) => w.id === wayId);
     const k = way?.kind ?? kind;
     const t = way?.fills ? techniqueById(way.technique) : null;
@@ -89,10 +91,10 @@ export function usePrepDraft({ name: started, initial, picked, technique, combin
     // Its own parts: a wash, a clarified juice, a distillate (the way picked, else the kit's first), or an oil or tincture.
     const ownWay = keep ? null : FROM_TECHNIQUE.includes(k) ? (way ?? kitFirstWay(k, kit)) : way?.own ? way : null;
     const own = ownWay ? techniqueById(ownWay.technique) : null;
-    if (own) return restart(prepFromTechnique(own, name, prepCardFor(own), picked));
+    if (own) return restart(prepFromTechnique(own, as, prepCardFor(own), picked));
     // The same kind made another way: what goes in stays, unless it was an oil's or a tincture's own.
     if (t && draft.kind === k && !wayOf(draft)?.own) return restart(method(draft));
-    const fresh = startPrep(k, name, way?.id);
+    const fresh = startPrep(k, as, way?.id);
     restart(method(keep ? keepLines(fresh, draft) : fresh));
   };
   const pickTechnique = (id: string) => {

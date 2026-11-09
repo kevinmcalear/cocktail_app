@@ -3,6 +3,7 @@ import { StyleSheet, TextInput, View } from 'react-native';
 
 import { Body, Caption, IngredientThumb, PressableScale, Spec, useDs } from '@/components/ds';
 import { DragGrip, DragList } from '@/components/ds/DragList';
+import { ListGroup, ListNote, ListRow, SectionLabel } from '@/components/ds/ListGroup';
 import { IconSymbol } from '@/components/ui/icon-symbol';
 import { Choice } from '@/components/screens/batch/BatchParts';
 import { font, layout, radius, space, type } from '@/constants/tokens';
@@ -218,27 +219,18 @@ export function PrepRecipeStep({ draft, view, set, ingredients, aliases, inDrink
         }} />
       {waiting ? <Caption tone="accent">{waiting}</Caption> : null}
       <IngredientSearch {...search} label="Add an ingredient" onPick={(p) => set({ lines: [...draft.lines, { key: `n${Date.now().toString(36)}`, id: p.id, name: p.name, parts: null, unit: prepUnit(p.name), amount: '' }] })} onMake={makeNew} />
-      {onMake ? <Caption tone="muted">Any line here can be made in-house too: it steps in one more level.</Caption> : null}
-      <View style={styles.facts}>
-        <View style={[styles.fact, { backgroundColor: ds.c.raised }]}>
-          <Caption tone="muted">Makes about</Caption>
-          <Body>{makes ? formatQuantity({ kind: 'ml', value: makes, unit: 'ml' }) : 'Set by your first batch'}</Body>
+      {/* Board Add-house, 2: what it makes and its allergens as one group of rows. */}
+      <SectionLabel title="What it makes" />
+      <ListGroup>
+        <ListRow first title="Makes about" value={makes ? formatQuantity({ kind: 'ml', value: makes, unit: 'ml' }) : 'Set by your first batch'} />
+        <ListRow title="Allergens" value={contains ? contains[0].toUpperCase() + contains.slice(1) : draft.allergensSet ? 'None' : 'None found'} onPress={() => setAllergensOpen(!allergensOpen)} />
+      </ListGroup>
+      {inDrink ? (
+        <View style={styles.facts}>
+          <InDrink pour={inDrink} draft={draft} makes={makes} />
         </View>
-        {inDrink ? <InDrink pour={inDrink} draft={draft} makes={makes} /> : null}
-      </View>
+      ) : null}
       {inDrink ? <InDrink pour={inDrink} draft={draft} makes={makes} caption /> : null}
-      <View style={styles.facts}>
-        <PressableScale
-          role="button"
-          aria-expanded={allergensOpen}
-          accessibilityLabel={`Allergens: ${contains || 'none'}. ${draft.allergensSet ? 'Change them' : 'Set them'}`}
-          onPress={() => setAllergensOpen(!allergensOpen)}
-          style={[styles.fact, { backgroundColor: ds.c.raised }]}
-        >
-          <Caption tone="muted">Allergens</Caption>
-          <Body>{`${contains ? contains[0].toUpperCase() + contains.slice(1) : 'None'} · ${draft.allergensSet ? 'tap to change' : 'tap to set'}`}</Body>
-        </PressableScale>
-      </View>
       {allergensOpen ? (
         <View role="group" accessibilityLabel="Allergens in it" style={styles.toggles}>
           {ALLERGENS.map((a) => {
@@ -259,6 +251,7 @@ export function PrepRecipeStep({ draft, view, set, ingredients, aliases, inDrink
         </View>
       ) : null}
       <Caption tone="muted">“Makes about” is a guess from the weights. Log your first batch and it uses the real number.</Caption>
+      {onMake ? <ListNote icon="info.circle" text="Any line can be made in-house too: tap it, and it opens one level in." /> : null}
     </View>
   );
 }
@@ -282,5 +275,4 @@ const styles = StyleSheet.create({
   own: { flexDirection: 'row', alignItems: 'center', gap: space.xs },
   unit: { minWidth: layout.minTapTarget, minHeight: layout.minTapTarget, alignItems: 'center', justifyContent: 'center' },
   facts: { flexDirection: 'row', gap: space.sm },
-  fact: { flex: 1, borderRadius: radius.control, padding: space.md, gap: 2 },
 });

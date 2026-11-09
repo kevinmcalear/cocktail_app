@@ -3,6 +3,7 @@ import { StyleSheet, View } from 'react-native';
 
 import { Body, Button, Caption, Chip, Field, PressableScale, useDs } from '@/components/ds';
 import { DragGrip, DragList, type DragRowState } from '@/components/ds/DragList';
+import { ListGroup, ListRow, SectionLabel } from '@/components/ds/ListGroup';
 import type { GlyphName } from '@/components/ui/glyphs';
 import { IconSymbol } from '@/components/ui/icon-symbol';
 import { font, layout, radius, space } from '@/constants/tokens';
@@ -42,7 +43,7 @@ const STARTERS: { label: string; icon: GlyphName; body: string }[] = [
  * the steps as text rows, each led by its grip (dots and number: drag it, or
  * arrow keys on the web, to move the step) with its timer as a pill with a
  * clock. Tap a step to change it; a time written in it ("for 2 hours")
- * becomes its timer. Then Keeps, Store and Start as three tiles, suggested
+ * becomes its timer. Then Keeps, Store and Start as three rows, suggested
  * for the kind: tap one for its choices. A technique's safety notes come first.
  */
 export function PrepMethodStep({ draft, set, phrase }: { draft: PrepDraft; set: (change: Partial<PrepDraft>) => void; phrase: string | null }) {
@@ -143,21 +144,13 @@ export function PrepMethodStep({ draft, set, phrase }: { draft: PrepDraft; set: 
         }}
         style={styles.add}
       />
-      <View style={styles.tiles}>
-        {tiles.map((t) => (
-          <PressableScale
-            key={t.id}
-            role="button"
-            aria-expanded={open === t.id}
-            accessibilityLabel={`${t.label}: ${t.value}. Change it`}
-            onPress={() => setOpen(open === t.id ? null : t.id)}
-            style={[styles.tile, { backgroundColor: ds.c.raised, borderColor: open === t.id ? ds.accentText : 'transparent' }]}
-          >
-            <Caption tone="muted">{t.label}</Caption>
-            <Body numberOfLines={2}>{t.value}</Body>
-          </PressableScale>
+      {/* Board Add-house, 3: Keeps, Store and Start as one group of rows; tap one for its choices. */}
+      <SectionLabel title="Keeps" />
+      <ListGroup>
+        {tiles.map((t, i) => (
+          <ListRow key={t.id} first={i === 0} title={t.label} value={t.value} onPress={() => setOpen(open === t.id ? null : t.id)} />
         ))}
-      </View>
+      </ListGroup>
       {open === 'keeps' ? (
         <Choices label="Keeps">
           {draft.keepsMinutes ? <Chip label={keepsText({ keepsHours: null, keepsMinutes: draft.keepsMinutes }) ?? ''} selected onPress={() => set({ keepsMinutes: null })} /> : null}
@@ -202,8 +195,6 @@ const styles = StyleSheet.create({
   editing: { flexDirection: 'row', alignItems: 'flex-start', gap: space.xs },
   remove: { minWidth: layout.minTapTarget, minHeight: layout.minTapTarget, alignItems: 'center', justifyContent: 'center' },
   add: { alignSelf: 'flex-start' },
-  tiles: { flexDirection: 'row', gap: space.sm },
-  tile: { flex: 1, gap: 2, padding: space.md, borderRadius: radius.control, borderWidth: 2 },
   chips: { flexDirection: 'row', flexWrap: 'wrap', gap: space.sm },
   starter: { flexDirection: 'row', alignItems: 'center', gap: space.xs + 2, minHeight: layout.minTapTarget - 8, paddingHorizontal: space.md, borderRadius: radius.pill, borderWidth: 1 },
   watch: { borderRadius: radius.control, padding: space.md, gap: space.xs },

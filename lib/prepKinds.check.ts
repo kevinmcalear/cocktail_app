@@ -1,7 +1,7 @@
 // Checks for lib/prepKinds.ts. Run: npm run test:unit
 import assert from 'node:assert/strict';
 
-import { recipesToFinish, stepToFinish, toFinishSummary, flavourWords, guessKind, keepLines, keepsText, KIND_TILES, kindOfTechnique, leadText, openSlots, partsText, PREP_KINDS, prepAmounts, prepFromCatalog, prepFromTechnique, prepPhrase, prepSummary, prepYield, recipeEyebrow, slotMessage, sourceSite, startPrep, tileOf, wayOf, withFacts, withMethod } from './prepKinds';
+import { recipesToFinish, stepToFinish, toFinishSummary, flavourWords, guessKind, keepLines, keepsText, KIND_TILES, kindOfTechnique, MOST_MADE_KINDS, shownKinds, leadText, openSlots, partsText, PREP_KINDS, prepAmounts, prepFromCatalog, prepFromTechnique, prepPhrase, prepSummary, prepYield, recipeEyebrow, slotMessage, sourceSite, startPrep, tileOf, wayOf, withFacts, withMethod } from './prepKinds';
 import { techniqueById } from './techniques';
 import { prepCardFor } from './techniques/makeIt';
 import { nameFor, nameParts, prepFacts, slotIngredient } from './techniques/template';
@@ -302,3 +302,11 @@ console.log('prepKinds technique checks passed');
     { name: 'Shrub', at: 'nothing written yet', depth: 0 },
   ]);
 }
+
+// What it is: five kinds and More (Kevin, 8 Nov), in the board's order; the one picked or named always shows.
+assert.equal(MOST_MADE_KINDS.length, 5);
+assert.deepEqual(shownKinds(null, null, false), ['infusion', 'syrup', 'cordial', 'clarified', 'distillate']);
+assert.deepEqual(shownKinds('batch', null, false), ['batch', 'infusion', 'syrup', 'cordial', 'clarified', 'distillate'], 'a batch from two lines combined shows');
+assert.deepEqual(shownKinds(null, 'rich', false), ['infusion', 'syrup', 'cordial', 'clarified', 'distillate'], 'a rich syrup is under Syrup');
+assert.ok(shownKinds(null, 'shrub', false).includes('shrub'), 'the name says shrub: it shows');
+assert.deepEqual(shownKinds(null, null, true), KIND_TILES);
