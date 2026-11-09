@@ -251,4 +251,16 @@ describe('PrepBuilder', () => {
     expect(onDone.mock.calls[0][0].kind).toBe('syrup');
     expect(onDone.mock.calls[0][0].lines.map((l: { name: string }) => l.name)).toEqual(['Pineapple', 'White sugar', 'Apple cider vinegar']);
   });
+  test('Something else on a name that says nothing about how it is made starts with no lines; none are guessed from its words', async () => {
+    await open('Qz fresh ginger juice');
+    await fireEvent.press(screen.getByRole('button', { name: 'More' }));
+    await fireEvent.press(screen.getByRole('radio', { name: 'Something else' }));
+    // No lines yet must not stop the first step going on.
+    expect(screen.getByRole('button', { name: /^Next/ })).toBeEnabled();
+    await fireEvent.press(screen.getByRole('button', { name: 'Skip' }));
+    for (const word of ['Qz', 'Fresh', 'Ginger', 'Juice']) expect(screen.queryByText(word)).toBeNull();
+    expect(startPrep('other', 'Qz fresh ginger juice').lines).toEqual([]);
+    // A name with a kind still starts from it.
+    expect(startPrep('syrup', 'Honey syrup').lines.length).toBeGreaterThan(0);
+  });
 });
