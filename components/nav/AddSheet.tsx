@@ -138,6 +138,7 @@ function AddBody({ onClose, onMore, listen }: { onClose: () => void; onMore: () 
         barId={add.place.barId}
         onOpen={(params) => go({ pathname: '/add-cocktail', params })}
         onOpenKind={(kind) => go({ pathname: kind === 'beer' ? '/add-beer' : '/add-wine', params: add.place.barId ? { barId: add.place.barId } : {} })}
+        onOpenHouse={(slot) => go({ pathname: '/make-recipe', params: { slot, ...(add.place.barId ? { barId: add.place.barId } : {}) } })}
         onImport={() => go('/bring-in' as Href)}
         onDrafts={() => go('/drafts' as Href)}
       />

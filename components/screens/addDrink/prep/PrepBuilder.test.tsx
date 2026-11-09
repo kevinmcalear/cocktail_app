@@ -46,7 +46,7 @@ const open = async (name: string, onDone = jest.fn(), onLater?: () => void) => {
 describe('PrepBuilder', () => {
   test('a technique name is picked under its kind, with its way lit; Skip goes on to the recipe', async () => {
     await open('Coconut fat washed white rum');
-    expect(screen.getByRole('radio', { name: /^Wash, /, checked: true })).toBeTruthy();
+    expect(screen.getByRole('radio', { name: 'Wash', checked: true })).toBeTruthy();
     expect(screen.getByRole('radio', { name: /^Fat wash\. Overnight\. Nothing special/, checked: true })).toBeTruthy();
     expect(screen.getByText('Fat fills in the method: mix, rest, freeze, strain.')).toBeTruthy();
     await fireEvent.press(screen.getByRole('button', { name: 'Skip' }));
@@ -58,15 +58,21 @@ describe('PrepBuilder', () => {
 
   test('How? puts the kit first, dims the rest with I have this, and Every technique opens the library', async () => {
     await open('Miso banana liqueur');
-    expect(screen.getByText('How? With your kit')).toBeTruthy();
+    expect(screen.getByText('HOW? YOUR KIT FIRST')).toBeTruthy();
+    expect(screen.getByText('Your kit is in My Bar. The rest stay here, dimmed, in case you have it.')).toBeTruthy();
     expect(screen.getByRole('radio', { name: /^Rapid nitrous infusion\. 2 min\. / })).toBeTruthy();
-    expect(screen.getByText('Needs kit you haven’t added')).toBeTruthy();
+    // Each way that needs kit says so on its own row (board Add-house), with no grades.
+    expect(screen.getAllByText('Needs kit you haven’t added').length).toBeGreaterThan(0);
+    expect(screen.queryByText('A')).toBeNull();
     await fireEvent.press(screen.getByRole('button', { name: /^I have this: add Sous vide circulator/ }));
     expect(mockAdd).toHaveBeenCalledWith(['sous-vide']);
     await fireEvent.press(screen.getByRole('button', { name: 'Every technique' }));
     expect(screen.getByText('Search techniques')).toBeTruthy();
     // Something else is every technique; picking one there starts from it.
-    await fireEvent.press(screen.getByRole('radio', { name: /^Something else, / }));
+    // Five kinds and More (Kevin, 8 Nov); More shows the rest.
+    expect(screen.queryByRole('radio', { name: 'Something else' })).toBeNull();
+    await fireEvent.press(screen.getByRole('button', { name: 'More' }));
+    await fireEvent.press(screen.getByRole('radio', { name: 'Something else' }));
     expect(screen.getByText('Something else: every technique')).toBeTruthy();
     await fireEvent.press(screen.getByRole('radio', { name: /^Tepache\. / }));
     expect(screen.getByRole('radio', { name: /^Tepache\. /, checked: true })).toBeTruthy();
@@ -143,23 +149,9 @@ describe('PrepBuilder', () => {
     expect(onClose).not.toHaveBeenCalled();
   });
 
-  test('on its own page (New › Something you make): your recipes, and Save it', async () => {
-    const onDone = jest.fn();
-    await renderWithProviders(<PrepBuilder page name="" drinkName="" above={[]} ingredients={[]} onDone={onDone} onClose={jest.fn()} />);
-    await laidOut();
-    expect(screen.getByRole('button', { name: 'Back to Your recipes' })).toBeTruthy();
-    expect(screen.getByText('SOMETHING YOU MAKE')).toBeTruthy();
-    await fireEvent.changeText(screen.getByLabelText('Name'), 'Honey syrup');
-    await fireEvent.press(screen.getByRole('radio', { name: /^Syrup, / }));
-    await fireEvent.press(screen.getByRole('button', { name: 'Next: what goes in' }));
-    await fireEvent.press(screen.getByRole('button', { name: 'Next: how it’s made' }));
-    await fireEvent.press(screen.getByRole('button', { name: 'Save it' }));
-    expect(onDone).toHaveBeenCalledWith(expect.objectContaining({ kind: 'syrup' }), 'Honey syrup');
-  });
-
   test('a clarified juice is its own kind, made the first way the kit covers', async () => {
     await open('Clarified grapefruit');
-    expect(screen.getByRole('radio', { name: /^Clarified, /, checked: true })).toBeTruthy();
+    expect(screen.getByRole('radio', { name: 'Clarified', checked: true })).toBeTruthy();
     expect(screen.getByRole('radio', { name: /^Agar freeze-thaw\. 1 to 2 days\. Nothing special/ })).toBeTruthy();
   });
 
@@ -189,17 +181,15 @@ describe('PrepBuilder', () => {
     expect(screen.getByText('1 of 3')).toBeTruthy();
     expect(screen.getByRole('link', { name: 'Up to Daiquiri' })).toBeTruthy();
     expect(screen.getByRole('radio', { name: /^Cold\. 3 days · Jar, fine strainer · brighter fruit/, checked: true })).toBeTruthy();
-    expect(screen.getByText('300 g pineapple')).toBeTruthy();
-    expect(screen.getByText('300 g white sugar, 300 g apple cider vinegar, 2 whole fresno chili')).toBeTruthy();
+    // No amounts box on What is it (Kevin, 9 Nov: "Build as drawn"): what goes in is the next step.
+    expect(screen.queryByText('300 g pineapple')).toBeNull();
     await fireEvent.press(screen.getByRole('radio', { name: /^Oleo shrub/ }));
     expect(screen.getByRole('radio', { name: /^Oleo shrub/, checked: true })).toBeTruthy();
-    await fireEvent.press(screen.getByRole('button', { name: 'All steps' }));
-    expect(screen.getByText('1. Muddle the fruit, and any citrus peel, with the sugar.')).toBeTruthy();
 
     await fireEvent.press(screen.getByRole('button', { name: 'Next: what goes in' }));
     expect(screen.getByText('2 of 3')).toBeTruthy();
     expect(screen.getByText('OLEO SHRUB · EQUAL PARTS BY WEIGHT')).toBeTruthy();
-    await fireEvent.press(screen.getByRole('button', { name: /^Allergens: none/ }));
+    await fireEvent.press(screen.getByRole('button', { name: /^Allergens\. None found/ }));
     await fireEvent.press(screen.getByRole('checkbox', { name: 'Sulphites' }));
     // The chili starts with the canvas's note (make-create-prep-recipe); it can still be changed.
     await fireEvent.press(screen.getByRole('button', { name: 'Note on Fresno chili: Sliced, seeds in for more heat. Change it' }));
@@ -208,7 +198,7 @@ describe('PrepBuilder', () => {
     expect(screen.getByText('Suggested for an oleo shrub. Tap one to change it.')).toBeTruthy();
     expect(screen.getByText('Start from a step or write your own. A time you write becomes a timer when you make it.')).toBeTruthy();
     expect(screen.getByText('1 day')).toBeTruthy();
-    await fireEvent.press(screen.getByRole('button', { name: /^Store: Fridge/ }));
+    await fireEvent.press(screen.getByRole('button', { name: /^Store\. Fridge/ }));
     await fireEvent.press(screen.getByRole('radio', { name: 'Freezer' }));
     await fireEvent.press(screen.getByRole('button', { name: 'Add it to Daiquiri' }));
     const prep = onDone.mock.calls[0][0];
@@ -254,7 +244,7 @@ describe('PrepBuilder', () => {
     const onDone = jest.fn();
     await renderWithProviders(<PrepBuilder name="Pineapple shrub" drinkName="Daiquiri" initial={startPrep('shrub', 'Pineapple shrub')} first ingredients={[]} onDone={onDone} onClose={jest.fn()} />);
     await laidOut();
-    await fireEvent.press(screen.getByRole('radio', { name: /^Syrup, / }));
+    await fireEvent.press(screen.getByRole('radio', { name: 'Syrup' }));
     await fireEvent.press(screen.getByRole('button', { name: 'Next: what goes in' }));
     await fireEvent.press(screen.getByRole('button', { name: 'Next: how it’s made' }));
     await fireEvent.press(screen.getByRole('button', { name: 'Add it to Daiquiri' }));

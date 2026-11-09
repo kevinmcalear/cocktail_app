@@ -87,7 +87,9 @@ describe('IngredientsStep', () => {
     await fireEvent.press(screen.getByRole('button', { name: 'Make “Pineapple chili shrub” in-house' }));
     await laidOut();
 
-    expect(screen.getByRole('radio', { name: 'Shrub, Fruit, sugar, vinegar, from the name', checked: true })).toBeTruthy();
+    expect(screen.getByRole('radio', { name: 'Shrub', checked: true })).toBeTruthy();
+    expect(screen.getByText('From the name')).toBeTruthy();
+    expect(screen.getByText('Shrub: fruit, sugar, vinegar. Picked from the name; tap another to change it.')).toBeTruthy();
     await fireEvent.press(screen.getByRole('button', { name: 'Next: what goes in' }));
     expect(screen.getByText('Pineapple')).toBeTruthy();
     expect(screen.getByText('The base, everything follows it')).toBeTruthy();
@@ -231,11 +233,12 @@ describe('IngredientsStep', () => {
     await laidOut();
     expect(screen.getByText('What are you making?')).toBeTruthy();
     expect(screen.getByText('FROM TEMPUS FUGIT CRÈME DE BANANE AND RED MISO')).toBeTruthy();
-    expect(screen.getByRole('radio', { name: /^Batch, .*from the name/, checked: true })).toBeTruthy();
+    expect(screen.getByRole('radio', { name: 'Batch', checked: true })).toBeTruthy();
+    expect(screen.getByText('From the name')).toBeTruthy();
     expect(screen.getByText('Dropping two lines together starts as Batch. Naming it changes the suggestion; you pick.')).toBeTruthy();
 
     await fireEvent.changeText(screen.getByLabelText('Name'), 'Miso banana liqueur');
-    expect(screen.getByRole('radio', { name: 'Infusion, A spirit plus a flavour, from the name' })).toBeTruthy();
+    expect(screen.getByRole('radio', { name: 'Infusion, suggested' })).toBeTruthy();
     await fireEvent.press(screen.getByRole('radio', { name: /^Infusion/ }));
     await fireEvent.press(screen.getByRole('radio', { name: /^Sous vide infusion\. 1 to 3 hours\. Needs a sous vide circulator/ }));
     expect(screen.getByText('Sous vide fills in the method: seal, water bath, strain.')).toBeTruthy();

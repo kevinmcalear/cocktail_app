@@ -2,7 +2,8 @@ import assert from 'node:assert/strict';
 
 import { beerWineBar, beerWinePlace, EMPTY_BEER_WINE, isBeerWineSlot, type BeerWineDraft, type BeerWineStep } from './beerWineDraft';
 import { EMPTY_DRAFT } from './drinkWizard';
-import { BEER_WINE_DRAFTS, DRINK_DRAFTS, forAccount, mergeDrafts, type KeptDraft } from './draftSync';
+import { EMPTY_HOUSE_MADE, houseMadeBar, houseMadePlace, houseMadesAt, houseMadeSlot, isHouseMadeSlot } from './houseMadeDraft';
+import { BEER_WINE_DRAFTS, DRINK_DRAFTS, HOUSE_MADE_DRAFTS, forAccount, mergeDrafts, type KeptDraft } from './draftSync';
 
 const k = (name: string, updatedAt: number, extra: Partial<KeptDraft['draft']> = {}): KeptDraft => ({ draft: { ...EMPTY_DRAFT, name, ...extra }, step: 'ingredients', updatedAt });
 
@@ -85,4 +86,25 @@ assert.equal(beerWineBar('wine:bar-1'), 'bar-1');
 // An empty one isn't sent; one kept by an older version, with a field missing, still counts when filled.
 assert.deepEqual(mergeDrafts({ 'beer:home': b('', 3) }, {}, { seen: [], cleared: [] }, BEER_WINE_DRAFTS).push, []);
 assert.ok(BEER_WINE_DRAFTS.filled({ name: 'Old shape' } as BeerWineDraft));
+// --- something you make (Add-house: "on this phone and the web") ---
+assert.equal(houseMadePlace(null), 'house:home');
+assert.equal(houseMadePlace('bar-1'), 'house:bar-1');
+assert.ok(isHouseMadeSlot('house:bar-1') && !isHouseMadeSlot('beer:home') && !isHouseMadeSlot('home|name:house: punch'));
+assert.ok(!isBeerWineSlot('house:home'));
+assert.equal(houseMadeBar('house:home'), null);
+assert.equal(houseMadeBar('house:bar-1'), 'bar-1');
+// A slot each (no draft writes over another): 'house:<place>:<id>'.
+assert.equal(houseMadeSlot('bar-1', 'd1'), 'house:bar-1:d1');
+assert.equal(houseMadeBar('house:bar-1:d1'), 'bar-1');
+assert.equal(houseMadeBar('house:home:d2'), null);
+{
+  const hm = (name: string, updatedAt: number) => ({ draft: { name, prep: null }, step: 'kind' as const, updatedAt });
+  const kept = { 'house:home:a': hm('Honey syrup', 1), 'house:home:b': hm('Fig leaf oil', 2), 'house:home:c': hm('', 3), 'house:bar-1:d': hm('Pine syrup', 4) };
+  assert.deepEqual(houseMadesAt(kept, null).map(([slot]) => slot), ['house:home:b', 'house:home:a'], 'both kept, newest first; an empty one is not listed');
+  assert.deepEqual(houseMadesAt(kept, 'bar-1').map(([slot]) => slot), ['house:bar-1:d']);
+}
+assert.equal(HOUSE_MADE_DRAFTS.filled(EMPTY_HOUSE_MADE), false, 'nothing typed is not kept');
+assert.equal(HOUSE_MADE_DRAFTS.filled({ name: 'Honey-ginger syrup', prep: null }), true);
+assert.equal(HOUSE_MADE_DRAFTS.filled({ name: ' ', prep: null }), false, 'no name: kept on the phone only (an older app reads it as a drink)');
+
 console.log('draftSync checks passed');

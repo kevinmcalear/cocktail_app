@@ -17,11 +17,12 @@ const ART = 120;
  * close (and a back arrow beside it after the first step), its kind as the title, and its glass, drawn grey when empty, filling
  * and recolouring as the steps are answered. While typing on a phone it
  * folds to the X and the title, so the field and the keyboard both fit.
- * A bottle you buy (Add-bottle) wears it too, with its bottle as `art`.
+ * A bottle you buy (Add-bottle) wears it too, with its bottle as `art`;
+ * Something you make (Add-house) with none, as drawn.
  * In the web's dialog (Add-bottle and Add-beer, Web) the X is top right and
  * there is no title: the back arrow has the left to itself.
  */
-export function BeerWineBand({ place, title, inputs, seed, art, artLabel, onClose, onBack }: { place: BandPlace; title: string; onClose: () => void; onBack?: () => void } & ({ inputs: SketchInputs; seed: string; art?: undefined; artLabel?: undefined } | { art: ReactNode; artLabel: string; inputs?: undefined; seed?: undefined })) {
+export function BeerWineBand({ place, title, inputs, seed, art, artLabel, onClose, onBack }: { place: BandPlace; title: string; onClose: () => void; onBack?: () => void } & ({ inputs: SketchInputs; seed: string; art?: undefined; artLabel?: undefined } | { art: ReactNode; artLabel: string; inputs?: undefined; seed?: undefined } | { inputs?: undefined; seed?: undefined; art?: undefined; artLabel?: undefined })) {
   const dialog = useInSheet() && sheetIsDialog;
   const close = <GlassButton icon="xmark" accessibilityLabel="Close" onPress={onClose} />;
   const back = onBack ? <GlassButton icon="chevron.left" accessibilityLabel="Back" onPress={onBack} /> : null;
@@ -45,7 +46,7 @@ export function BeerWineBand({ place, title, inputs, seed, art, artLabel, onClos
           <View style={styles.side} />
         </View>
       )}
-      {place.folded ? null : (
+      {place.folded || (!inputs && !art) ? null : (
         <View style={styles.art} aria-label={artLabel ?? `Drawing of the ${title.toLowerCase()} so far`}>
           {inputs ? <SketchDrawing inputs={inputs} seed={seed} detail="full" /> : art}
         </View>

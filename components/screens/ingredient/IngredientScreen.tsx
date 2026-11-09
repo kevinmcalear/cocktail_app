@@ -34,7 +34,7 @@ import { FactRows } from '../drink/RowGroup';
 import { BehindTheBar } from './BehindTheBar';
 import { ForTheBar } from './ForTheBar';
 import { HouseMadeRecipe, type PrepLine } from './HouseMadeRecipe';
-import { prepFacts } from './IngredientBits';
+import { prepFacts, savedPrepFacts } from './IngredientBits';
 import { NoteBar, NoteRecipe, useNoteChoice } from './NoteRecipe';
 import { PrepUsedIn } from './PrepUsedIn';
 
@@ -89,7 +89,7 @@ function IngredientPage({ ingredient, lines, drinks, bottles, pictures: batchPic
   const canEditPrep = ingredient.bar_id ? !!capabilities?.includes('prep') || canEdit : canEdit;
   const router = useRouter();
   // Opened from a house-made it goes into: that one leads Used in and the credit (Back is named for it by the stack).
-  const from = useLocalSearchParams<{ from?: string }>().from ?? null;
+  const { from = null, saved } = useLocalSearchParams<{ from?: string; saved?: string }>();
   const toast = useToast();
   // Log batch is for staff who make specs at that bar.
   const { data: logCaps } = useCapabilities(logBar);
@@ -136,7 +136,9 @@ function IngredientPage({ ingredient, lines, drinks, bottles, pictures: batchPic
   const bottleTiles = useBottleTiles(ingredient);
   // A bottle's Kind of is the third fact, linking up the family (board Item-page).
   const kindFact = !isPrep && bottleTiles.length && ingredient.generic ? [{ label: 'Kind of', value: ingredient.generic.name, onPress: () => router.push(`/ingredient/${ingredient.generic!.id}` as never) }] : [];
-  const facts = [...(isPrep ? prepFacts(prep) : bottleTiles), ...kindFact].map((f) => ({ ...f, value: String(f.value) }));
+  // Just saved from Something you make: the Done rows the board draws (Kevin, 9 Nov: "Build as drawn").
+  const prepRows = saved && isPrep ? savedPrepFacts(prep, drinks.length) : prepFacts(prep);
+  const facts = [...(isPrep ? prepRows : bottleTiles), ...kindFact].map((f) => ({ ...f, value: String(f.value) }));
   if (scanned) facts.unshift(...scannedFacts(scanned, scanned.madeBy ? makers[scanned.madeBy] : undefined, prep?.shelf_life_hours ?? null, drinks));
   // Anyone who can read a prep's recipe can edit it: when other drinks use it, or it isn't
   // theirs to change, the editor asks at Save (prep-prep-edit-shared, AskAtSave).

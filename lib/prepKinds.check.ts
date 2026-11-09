@@ -1,7 +1,7 @@
 // Checks for lib/prepKinds.ts. Run: npm run test:unit
 import assert from 'node:assert/strict';
 
-import { recipesToFinish, stepToFinish, toFinishSummary, flavourWords, guessKind, keepLines, keepsText, KIND_TILES, kindOfTechnique, leadText, openSlots, partsText, PREP_KINDS, prepAmounts, prepFromCatalog, prepFromTechnique, prepPhrase, prepSummary, prepYield, recipeEyebrow, slotMessage, sourceSite, startPrep, tileOf, wayOf, withFacts, withMethod } from './prepKinds';
+import { recipesToFinish, stepToFinish, toFinishSummary, flavourWords, guessKind, keepLines, keepsText, KIND_TILES, kindOfTechnique, MOST_MADE_KINDS, shownKinds, leadText, openSlots, partsText, PREP_KINDS, prepAmounts, prepFromCatalog, prepFromTechnique, prepPhrase, prepSummary, prepYield, recipeEyebrow, slotMessage, sourceSite, startPrep, tileOf, wayOf, waysByKit, withFacts, withMethod } from './prepKinds';
 import { techniqueById } from './techniques';
 import { prepCardFor } from './techniques/makeIt';
 import { nameFor, nameParts, prepFacts, slotIngredient } from './techniques/template';
@@ -51,9 +51,13 @@ assert.match(oleo.steps[0].body, /^Muddle/);
 // The ways and how they read: a shrub is cold unless picked otherwise.
 assert.equal(wayOf(shrub)?.id, 'cold');
 assert.equal(wayOf({ kind: 'shrub', hot: true }), wayOf({ kind: 'shrub', way: 'hot' }), 'a draft kept before ways still reads hot');
-// Rich syrup and oleo saccharum are ways of a syrup: the kind is the way.
-assert.equal(wayOf(startPrep('syrup', 'Simple syrup'))?.id, 'simple');
-assert.equal(wayOf(startPrep('rich', 'Rich syrup'))?.id, 'rich');
+// A syrup's ways are Mix, Sous vide, Rotovap (board Add-house), kit first; a rich syrup keeps its kind whichever way.
+assert.equal(wayOf(startPrep('syrup', 'Simple syrup'))?.id, 'mix');
+assert.equal(wayOf(startPrep('rich', 'Rich syrup'))?.id, 'mix');
+assert.equal(prepPhrase(startPrep('rich', 'Rich syrup')), 'a rich syrup');
+assert.equal(prepPhrase(startPrep('syrup', 'Pine syrup', 'sous-vide')), 'a sous vide syrup');
+assert.match(startPrep('syrup', 'Pine syrup', 'sous-vide').steps[0].body, /^Seal/);
+assert.deepEqual(waysByKit('syrup', new Set(['sous-vide'])).need.map((w) => w.id), ['rotovap'], 'Mix needs no kit; the rotovap waits, dimmed');
 assert.equal(tileOf('oleo'), 'syrup');
 assert.deepEqual(KIND_TILES, ['batch', 'infusion', 'syrup', 'cordial', 'shrub', 'wash', 'clarified', 'distillate', 'super', 'other'], 'as the board draws them');
 assert.ok(KIND_TILES.every((k) => PREP_KINDS.some((p) => p.id === k)));
@@ -302,3 +306,11 @@ console.log('prepKinds technique checks passed');
     { name: 'Shrub', at: 'nothing written yet', depth: 0 },
   ]);
 }
+
+// What it is: five kinds and More (Kevin, 8 Nov), in the board's order; the one picked or named always shows.
+assert.equal(MOST_MADE_KINDS.length, 5);
+assert.deepEqual(shownKinds(null, null, false), ['infusion', 'syrup', 'cordial', 'clarified', 'distillate']);
+assert.deepEqual(shownKinds('batch', null, false), ['batch', 'infusion', 'syrup', 'cordial', 'clarified', 'distillate'], 'a batch from two lines combined shows');
+assert.deepEqual(shownKinds(null, 'rich', false), ['infusion', 'syrup', 'cordial', 'clarified', 'distillate'], 'a rich syrup is under Syrup');
+assert.ok(shownKinds(null, 'shrub', false).includes('shrub'), 'the name says shrub: it shows');
+assert.deepEqual(shownKinds(null, null, true), KIND_TILES);

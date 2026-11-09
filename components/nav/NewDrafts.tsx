@@ -10,23 +10,25 @@ import { useMenuSectionPlace } from '@/hooks/useDrinkDesk';
 import { beerWinePlace, EMPTY_BEER_WINE, filledBeerWine } from '@/lib/beerWineDraft';
 import type { DrinkKind } from '@/lib/drinkKinds';
 import { hasContent, type WizardDraft } from '@/lib/drinkWizard';
+import { houseMadesAt } from '@/lib/houseMadeDraft';
 import { fileTitle, tally, waitingFor, whenWords } from '@/lib/importReview';
 import { recipesToFinish } from '@/lib/prepMath';
 import { slotStart } from '@/lib/wizardSlots';
 import { useBeerWineWizardStore } from '@/store/useBeerWineWizardStore';
 import { useBringIn } from '@/store/useBringIn';
 import { useDraftSyncStore } from '@/store/useDraftSyncStore';
+import { useHouseMadeWizardStore } from '@/store/useHouseMadeWizardStore';
 import { isReviewSlot, useDrinkWizardStore, wizardPlace } from '@/store/useDrinkWizardStore';
 
 /**
  * Pick up where you left off, at the bottom of Add (Prod-add-B): an import
  * left to check here, then each drink started here and not saved, newest
- * first, with the recipes still to finish inside it, then a beer or wine left
- * for now, then the older editor's drafts. A tap goes straight back to it.
+ * first, with the recipes still to finish inside it, then a beer, wine or house-made
+ * left for now, then the older editor's drafts. A tap goes straight back to it.
  * Signed in, they're all kept in the account too (hooks/useDraftSync), so
  * another phone or the web lists them.
  */
-export function NewDrafts({ barId, onOpen, onOpenKind, onImport, onDrafts }: { barId: string | null; onOpen: (params: Record<string, string>) => void; /** A beer or wine left for now: its wizard picks up where it was. */ onOpenKind: (kind: DrinkKind) => void; onImport: () => void; onDrafts: () => void }) {
+export function NewDrafts({ barId, onOpen, onOpenKind, onOpenHouse, onImport, onDrafts }: { barId: string | null; onOpen: (params: Record<string, string>) => void; /** A beer or wine left for now: its wizard picks up where it was. */ onOpenKind: (kind: DrinkKind) => void; /** A house-made left for now, by its slot. */ onOpenHouse: (slot: string) => void; onImport: () => void; onDrafts: () => void }) {
   const kept = useDrinkWizardStore((s) => s.kept);
   const keptBeerWine = useBeerWineWizardStore((s) => s.kept);
   const beerWine = (['beer', 'wine'] as const).flatMap((kind) => {
@@ -34,6 +36,7 @@ export function NewDrafts({ barId, onOpen, onOpenKind, onImport, onDrafts }: { b
     const k = keptBeerWine[slot];
     return k && filledBeerWine({ ...EMPTY_BEER_WINE, ...k.draft }) ? [{ kind, slot, name: k.draft.name.trim() }] : [];
   });
+  const house = houseMadesAt(useHouseMadeWizardStore((s) => s.kept), barId);
   const signedIn = !!useAuth().session;
   const userId = useUserId();
   const seen = useDraftSyncStore((s) => s.seen);
@@ -46,9 +49,9 @@ export function NewDrafts({ barId, onOpen, onOpenKind, onImport, onDrafts }: { b
   const drafts = Object.entries(kept)
     .filter(([slot, k]) => slotStart(slot).place === place && !isReviewSlot(slot) && hasContent(k.draft))
     .sort(([, a], [, b]) => b.updatedAt - a.updatedAt);
-  if (!drafts.length && !beerWine.length && !review && !older) return null;
+  if (!drafts.length && !beerWine.length && !house.length && !review && !older) return null;
   const t = review ? tally(review) : null;
-  const synced = [...drafts.map(([slot]) => slot), ...beerWine.map((b) => b.slot)];
+  const synced = [...drafts.map(([slot]) => slot), ...beerWine.map((b) => b.slot), ...house.map(([slot]) => slot)];
   return (
     <View style={styles.list}>
       <Caption tone="muted" role="heading" style={styles.head}>
@@ -70,6 +73,9 @@ export function NewDrafts({ barId, onOpen, onOpenKind, onImport, onDrafts }: { b
       ))}
       {beerWine.map((b) => (
         <PickRow key={b.kind} icon={b.kind === 'beer' ? 'mug.fill' : 'wineglass'} title={b.name || `Untitled ${b.kind}`} sub={`A ${b.kind}, in pencil`} onPress={() => onOpenKind(b.kind)} />
+      ))}
+      {house.map(([slot, k]) => (
+        <PickRow key={slot} icon="flask" title={k.draft.name.trim() || 'Something you make'} sub="Something you make, in pencil" onPress={() => onOpenHouse(slot)} />
       ))}
       {older ? <PickRow icon="square.on.square" title="Drafts" sub={`${older} from the older editor`} onPress={onDrafts} /> : null}
       {/* Said only once each has reached the account. */}

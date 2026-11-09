@@ -21,6 +21,8 @@ interface PromptProps {
   warn?: boolean;
   /** The first is the tinted one, the rest plain. */
   actions?: readonly PromptAction[];
+  /** The first action dark, not tinted (board Add-house, Name taken: "Open it"). */
+  ink?: boolean;
   /** "+ Simple syrup": one tap adds it. */
   chips?: readonly PromptAction[];
   /** An X that puts it away for this draft. */
@@ -33,7 +35,7 @@ interface PromptProps {
  * on its own screen, said once where the gap is. Icon, a line, a reason,
  * then one-tap answers. Any of them can be put away.
  */
-export function Prompt({ title, body, icon = 'sparkles', warn, actions = [], chips = [], onDismiss, children }: PromptProps) {
+export function Prompt({ title, body, icon = 'sparkles', warn, actions = [], ink: dark, chips = [], onDismiss, children }: PromptProps) {
   const ds = useDs();
   const amber = readableAccent(STATUS.warning, ds.c.ground);
   const ink = warn ? amber : ds.accentText;
@@ -72,9 +74,9 @@ export function Prompt({ title, body, icon = 'sparkles', warn, actions = [], chi
               accessibilityLabel={a.accessibilityLabel ?? a.label}
               disabled={a.disabled}
               onPress={a.onPress}
-              style={[styles.act, { backgroundColor: i ? ds.c.raised : ds.accentFill.fill, opacity: a.disabled ? 0.5 : 1 }]}
+              style={[styles.act, { backgroundColor: i ? ds.c.raised : dark ? ds.c.ink : ds.accentFill.fill, opacity: a.disabled ? 0.5 : 1 }]}
             >
-              <DsText variant="label" color={i ? ds.c.ink : ds.accentFill.text} style={styles.actLabel}>
+              <DsText variant="label" color={i ? ds.c.ink : dark ? ds.c.ground : ds.accentFill.text} style={styles.actLabel}>
                 {a.label}
               </DsText>
             </PressableScale>

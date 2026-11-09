@@ -11,6 +11,7 @@
  * Keeps are always the safer number when sources differ.
  */
 import type { Allergen } from './allergens';
+import { RECIPE_STEPS, type RecipeStep } from './houseMadeDraft';
 import { guessKind, withFacts } from './prepMath';
 import { asLike, keepFor, nameParts, partsFor, slotIngredient, splitName } from './techniques/template';
 import { techniqueById } from './techniques';
@@ -51,9 +52,8 @@ export interface PrepDraftStep {
   timer_seconds: number | null;
 }
 
-/** The three steps of a recipe made in-house, in order (make-anything-steps-1 and 2, steps 4 to 6). */
-export const RECIPE_STEPS = ['kind', 'recipe', 'method'] as const;
-export type RecipeStep = (typeof RECIPE_STEPS)[number];
+// The three steps live with the draft (lib/houseMadeDraft), so the Drinks tab's Drafts row counts them without loading the kinds.
+export { RECIPE_STEPS, type RecipeStep };
 export interface PrepDraft {
   kind: PrepKindId;
   /** Left for later at this step (make-anything-steps-3, step 9): a recipe to finish, picked up where it was left. */
@@ -119,6 +119,21 @@ export const PREP_KINDS: PrepKind[] = [
 /** What is it, as the board draws it (make-anything-steps-1, step 4): rich syrup and oleo saccharum are ways of a syrup. */
 export const KIND_TILES: PrepKindId[] = ['batch', 'infusion', 'syrup', 'cordial', 'shrub', 'wash', 'clarified', 'distillate', 'super', 'other'];
 
+/**
+ * What it is shows these five, then More (Kevin, 8 Nov: "Five + More"): the
+ * kinds made most, by the names of every house-made in the app on 9 Nov
+ * (guessKind: infusion 624, syrup 423, cordial 273, distillate 173,
+ * clarified 102; then shrub 73, batch 20).
+ */
+export const MOST_MADE_KINDS: PrepKindId[] = ['infusion', 'syrup', 'cordial', 'distillate', 'clarified'];
+
+/** The kinds What it is shows, in the board's order: the five, the one picked and the one the name says; every kind once More is open. */
+export function shownKinds(picked: PrepKindId | null, named: PrepKindId | null, more: boolean): PrepKindId[] {
+  if (more) return KIND_TILES;
+  const show = new Set([...MOST_MADE_KINDS, picked, named].filter((k): k is PrepKindId => !!k).map(tileOf));
+  return KIND_TILES.filter((k) => show.has(k));
+}
+
 /** The tile a kind is picked under: a rich syrup is a syrup. */
 export const tileOf = (kind: PrepKindId): PrepKindId => (kind === 'rich' || kind === 'oleo' ? 'syrup' : kind);
 
@@ -143,6 +158,8 @@ export interface PrepWay {
   fills?: string;
   /** A way that is its own kind (a rich syrup under Syrup). */
   kind?: PrepKindId;
+  /** The kit it needs, when not its technique's: a syrup's Mix needs none, so it's never dimmed. Set, its kind's ways go kit first. */
+  equipment?: string[];
   /** Its row in How?, when the technique's own name doesn't fit ("Fat wash", not "Fat washing"). */
   label?: string;
   /** Made from its technique's own parts (an oil is herbs and oil, not a spirit and a flavour): picking it starts what goes in again, unless lines were combined. */
@@ -151,10 +168,12 @@ export interface PrepWay {
   words?: string;
 }
 
+// As the Add-house board draws them (Kevin, 9 Nov: "Build as drawn"): your kit first, the rest dimmed with I have this.
+// How sweet it is (1:1, 2:1) is in what goes in, and a rich syrup or an oleo saccharum keeps its kind whichever way it's made.
 const SYRUP_WAYS: PrepWay[] = [
-  { id: 'simple', name: 'Simple', kind: 'syrup', time: '20 min', kit: ['Pan'], note: '1 : 1', how: 'Sugar dissolved in as much water, warm, never boiled.', technique: 'syrup-by-weight' },
-  { id: 'rich', name: 'Rich', kind: 'rich', time: '20 min', kit: ['Pan'], note: '2 : 1, keeps longer', how: 'Twice the sugar to the water, warm, never boiled.', technique: 'syrup-by-weight' },
-  { id: 'oleo', name: 'Oleo saccharum', kind: 'oleo', time: 'A few hours', kit: ['Muddler'], note: 'peels and sugar, no water', how: 'The peels are muddled with the sugar until their oil turns it to syrup.', technique: 'syrup-by-weight' },
+  { id: 'mix', name: 'Mix', time: '20 min', kit: ['Pan'], equipment: [], note: 'Warm the water, stir until it dissolves', how: 'Sugar dissolved in the water, warm, never boiled.', technique: 'syrup-by-weight' },
+  { id: 'sous-vide', name: 'Sous vide', time: 'Hours', kit: [], equipment: ['sous-vide'], note: 'Seal, water bath, strain', how: 'It’s sealed in a bag and held in a water bath until the sugar dissolves, then strained.', technique: 'sous-vide-infusion' },
+  { id: 'rotovap', name: 'Rotovap', time: 'Hours', kit: [], equipment: ['rotovap'], note: 'Distil the flavour, then sweeten it', how: 'The flavour is distilled under vacuum at low heat, then the sugar is dissolved into it.', technique: 'rotovap' },
 ];
 
 export const KIND_WAYS: Partial<Record<PrepKindId, PrepWay[]>> = {
@@ -204,16 +223,25 @@ export const FROM_TECHNIQUE: PrepKindId[] = ['wash', 'clarified', 'distillate'];
  */
 export function waysByKit(kind: PrepKindId, kit: ReadonlySet<string> | null): { have: PrepWay[]; need: PrepWay[] } {
   const ways = KIND_WAYS[kind] ?? [];
-  if (!ways.every((w) => w.fills)) return { have: ways, need: [] };
-  const split = byKit(ways.map((w) => ({ w, equipment: techniqueById(w.technique)?.equipment ?? [] })), kit);
+  if (!kitFirstKind(kind)) return { have: ways, need: [] };
+  const split = byKit(ways.map((w) => ({ w, equipment: wayEquipment(w) })), kit);
   return { have: split.have.map((x) => x.w), need: split.need.map((x) => x.w) };
 }
+
+/** A kind whose ways go kit first: each is one of the library's techniques, or says the kit it needs (a syrup's). */
+export const kitFirstKind = (kind: PrepKindId) => !!KIND_WAYS[kind]?.every((w) => w.fills || w.equipment);
+
+/** The kit a way needs. */
+export const wayEquipment = (w: PrepWay): string[] => w.equipment ?? techniqueById(w.technique)?.equipment ?? [];
 
 /** The way a kind starts as: the first the kit covers, else its first. */
 export function kitFirstWay(kind: PrepKindId, kit: ReadonlySet<string> | null): PrepWay | undefined {
   const { have, need } = waysByKit(kind, kit);
   return have[0] ?? need[0];
 }
+
+/** A way said after the kind ("a cold shrub"); a way that is its own kind, or a syrup's Mix (how a syrup is made anyway), isn't. */
+const saysWay = (way: PrepWay | null): way is PrepWay => !!way && !way.kind && way.id !== 'mix';
 
 /** The way a draft is made, when its kind has ways: a shrub or an infusion without one is cold. */
 export function wayOf(d: Pick<PrepDraft, 'kind' | 'way' | 'hot' | 'technique'>): PrepWay | null {
@@ -238,7 +266,7 @@ export function prepPhrase(d: Pick<PrepDraft, 'kind' | 'way' | 'hot' | 'techniqu
   if ((d.technique && !way) || d.kind === 'other') return null;
   const kind = PREP_KINDS.find((k) => k.id === d.kind)?.name.toLowerCase() ?? '';
   if (way?.words) return way.words;
-  const words = way && !way.kind ? (way.id === 'oleo' ? way.name.toLowerCase() : `${way.name.toLowerCase()} ${kind}`) : kind;
+  const words = saysWay(way) ? (way.id === 'oleo' ? way.name.toLowerCase() : `${way.name.toLowerCase()} ${kind}`) : kind;
   return `${/^[aeiou]/.test(words) ? 'an' : 'a'} ${words}`;
 }
 
@@ -257,7 +285,7 @@ export function stepToFinish(d: PrepDraft): RecipeStep {
 export function prepSummary(d: PrepDraft, techniqueName?: string | null): string {
   const way = wayOf(d);
   const kind = PREP_KINDS.find((k) => k.id === d.kind)?.name;
-  const head = d.kind === 'other' ? (techniqueName ?? null) : way && !way.kind ? `${kind}, ${way.name.toLowerCase()}` : kind;
+  const head = d.kind === 'other' ? (techniqueName ?? null) : saysWay(way) ? `${kind}, ${way.name.toLowerCase()}` : kind;
   const names = d.lines.filter((l) => !l.slot && l.name.trim()).map((l, i) => (i ? l.name.toLowerCase() : l.name));
   const steps = d.steps.length ? `${d.steps.length} ${d.steps.length === 1 ? 'step' : 'steps'}` : null;
   return [head, names.join(', ') || null, steps].filter(Boolean).join(' · ');
@@ -272,7 +300,7 @@ export function recipeEyebrow(d: PrepDraft): string | null {
   const way = wayOf(d);
   if ((d.technique && !way) || d.kind === 'other') return null;
   const kind = PREP_KINDS.find((k) => k.id === d.kind)?.name ?? '';
-  const head = way && !way.kind ? (way.id === 'oleo' ? way.name : `${kind}, ${way.name.toLowerCase()}`) : kind;
+  const head = saysWay(way) ? (way.id === 'oleo' ? way.name : `${kind}, ${way.name.toLowerCase()}`) : kind;
   const parted = d.lines.filter((l) => l.parts !== null && !l.slot);
   // Parts of the base: flavours "to taste" beside a spirit still to pick aren't equal parts of anything.
   const equal = parted.length > 1 && parted.some((l) => l.key === d.baseKey) && parted.every((l) => l.parts === parted[0].parts && l.unit === parted[0].unit);
@@ -334,11 +362,15 @@ export function startPrep(kind: PrepKindId, name: string, way?: string): PrepDra
     case 'syrup':
     case 'rich': {
       const rich = kind === 'rich';
-      return draft([line('Sugar', rich ? 2 : 1, 'g', 0.62), line('Water', 1, 'ml', 1)], rich ? 1000 : 500, [
-        s('Combine the sugar and water in a pan over low heat.'),
-        s('Stir until every crystal has dissolved and it’s clear. Take it off before it simmers.'),
-        s('Cool, bottle, label with the date and keep in the fridge.'),
-      ], rich ? 8 * WEEK : 4 * WEEK, fridge, 20, ['Syrup']);
+      const label = s('Cool, bottle, label with the date and keep in the fridge.');
+      // ponytail: sous vide and rotovap steps say what happens, not a temperature or a time: no source here gives one for a syrup; the maker writes theirs.
+      const steps =
+        way === 'sous-vide'
+          ? [s('Seal the sugar, the water and any flavour in a bag.'), s('Hold it in a water bath until the sugar has dissolved and the flavour has come through.'), s('Strain, then cool, bottle, label with the date and keep in the fridge.')]
+          : way === 'rotovap'
+            ? [s('Distil the flavour under vacuum at low heat.'), s('Stir the sugar into the distillate until it dissolves. No heat.'), label]
+            : [s('Combine the sugar and water in a pan over low heat.'), s('Stir until every crystal has dissolved and it’s clear. Take it off before it simmers.'), label];
+      return draft([line('Sugar', rich ? 2 : 1, 'g', 0.62), line('Water', 1, 'ml', 1)], rich ? 1000 : 500, steps, rich ? 8 * WEEK : 4 * WEEK, fridge, 20, ['Syrup']);
     }
     case 'shrub':
       return draft([flavour ? line(flavour, 1, 'g', 0.6) : slotLine('Fruit', 'fruit', 1, 'g', 0.6), line('White sugar', 1, 'g', 0.62), line('Apple cider vinegar', 1, 'g', 1), ...extras], 300, shrubWay === 'oleo'

@@ -5,20 +5,20 @@ import { Sheet } from '@/components/ds';
 
 /**
  * The web on a wide window (Add-beer, Web 1 of 7; Add-bottle, Web; Add-entry,
- * Web): an add wizard in a 600 dialog in the middle of the window, over the
+ * Web; Add-house, Web): an add wizard in a 600 (or 640) dialog in the middle of the window, over the
  * page it was opened from with the sidebar dimmed. A ds Sheet, so it sits
  * over the whole window; its route is see-through (app/_layout.tsx) and the
  * tab under it keeps showing (MountOnFocus). Escape, the backdrop and a drag
  * close it as its X does, through the wizard (Leave it for now, Discard changes).
  */
-export function WizardDialog({ label, onClose, children }: { label: string; onClose: () => void; children: ReactNode }) {
+export function WizardDialog({ label, onClose, width = 600, children }: { label: string; onClose: () => void; /** Something you make is 640 (Add-house, Web). */ width?: number; children: ReactNode }) {
   return (
-    <Sheet visible accessibilityLabel={label} onClose={onClose} askClose={onClose} ground style={styles.dialog}>
+    <Sheet visible accessibilityLabel={label} onClose={onClose} askClose={onClose} ground style={[styles.dialog, { maxWidth: width }]}>
       {children}
     </Sheet>
   );
 }
 
 const styles = StyleSheet.create({
-  dialog: { maxWidth: 600, height: '100%', maxHeight: 860 },
+  dialog: { height: '100%', maxHeight: 860 },
 });

@@ -49,11 +49,13 @@ export interface ListRowProps {
   /** A small button at the end of the row: Log batch, Export. */
   end?: ReactNode;
   onPress?: () => void;
+  /** It opens choices in place, not a page: a button, said open or shut. */
+  expanded?: boolean;
   first?: boolean;
 }
 
 /** One row of a ListGroup. It opens something, so it ends in a chevron, unless it has its own button. */
-export function ListRow({ title, detail, value, warn, icon, lead, end, onPress, first }: ListRowProps) {
+export function ListRow({ title, detail, value, warn, icon, lead, end, onPress, expanded, first }: ListRowProps) {
   const ds = useDs();
   const line = { borderTopColor: first ? 'transparent' : ds.c.line };
   const words = (
@@ -74,7 +76,7 @@ export function ListRow({ title, detail, value, warn, icon, lead, end, onPress, 
   );
   return onPress && !end ? (
     <View role="listitem">
-      <PressableScale role="link" accessibilityLabel={[title, detail, value].filter(Boolean).join('. ')} onPress={onPress} style={[styles.row, line]}>
+      <PressableScale role={expanded === undefined ? 'link' : 'button'} aria-expanded={expanded} accessibilityLabel={[title, detail, value].filter(Boolean).join('. ')} onPress={onPress} style={[styles.row, line]}>
         {words}
       </PressableScale>
     </View>

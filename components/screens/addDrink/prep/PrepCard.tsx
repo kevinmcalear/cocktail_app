@@ -53,7 +53,7 @@ export function PrepCard({ name: started, venueName, initial, first, combinedFro
     <>
       <Field label="Name" value={name} onChangeText={setName} maxLength={80} returnKeyType="done" />
       <Eyebrow>What is it</Eyebrow>
-      <PrepKindStep name={shown} draft={draft} combined={combined} onKind={pickKind} onTechnique={pickTechnique} onChangeAmount={() => {}} bar={bar} />
+      <PrepKindStep name={shown} draft={draft} combined={combined} onKind={pickKind} onTechnique={pickTechnique} bar={bar} />
     </>
   );
   return (
