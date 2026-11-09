@@ -1,7 +1,7 @@
 // Checks for lib/prepKinds.ts. Run: npm run test:unit
 import assert from 'node:assert/strict';
 
-import { recipesToFinish, stepToFinish, toFinishSummary, flavourWords, guessKind, keepLines, keepsText, KIND_TILES, kindOfTechnique, MOST_MADE_KINDS, shownKinds, leadText, openSlots, partsText, PREP_KINDS, prepAmounts, prepFromCatalog, prepFromTechnique, prepPhrase, prepSummary, prepYield, recipeEyebrow, slotMessage, sourceSite, startPrep, tileOf, wayOf, waysByKit, withFacts, withMethod } from './prepKinds';
+import { recipesToFinish, stepToFinish, toFinishSummary, flavourWords, guessKind, keepLines, keepsText, KIND_TILES, kindOfTechnique, MOST_MADE_KINDS, shownKinds, leadText, openSlots, partsText, PREP_KINDS, prepAmounts, prepFromCatalog, prepFromTechnique, prepPhrase, prepSummary, prepYield, recipeEyebrow, sameLines, slotMessage, sourceSite, startPrep, tileOf, wayOf, waysByKit, withFacts, withMethod } from './prepKinds';
 import { techniqueById } from './techniques';
 import { prepCardFor } from './techniques/makeIt';
 import { nameFor, nameParts, prepFacts, slotIngredient } from './techniques/template';
@@ -287,6 +287,16 @@ assert.equal(sourceSite('http://blog.khymos.org/x?y=1'), 'blog.khymos.org');
   assert.match(syrup.steps[0].body, /sugar and water/);
 }
 console.log('prepKinds technique checks passed');
+
+// A kind's start is the same each time, keys aside; a line the maker added or changed is not (review of #1183).
+{
+  const a = startPrep('shrub', 'Pineapple shrub');
+  assert.ok(sameLines(a.lines, startPrep('shrub', 'Pineapple shrub').lines));
+  assert.ok(sameLines(a.lines, startPrep('shrub', 'Pineapple shrub', 'hot').lines), 'a shrub made hot goes in as it does cold');
+  assert.ok(!sameLines(a.lines, startPrep('syrup', 'Pineapple shrub').lines));
+  assert.ok(!sameLines([...a.lines, { key: 'x', id: null, name: 'Fresh ginger', parts: 0.2, unit: 'g', amount: '' }], a.lines));
+  assert.ok(!sameLines(a.lines.map((l, i) => (i ? l : { ...l, id: 'pineapple' })), a.lines), 'a line picked from your bar is written');
+}
 
 // A batch named for its drink starts with one line to pick, not the name's words.
 {

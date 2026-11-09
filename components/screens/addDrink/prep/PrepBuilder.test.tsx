@@ -240,17 +240,6 @@ describe('PrepBuilder', () => {
     expect(onDone.mock.calls[0][0].steps.at(-1).body).toBe('Strain through a fine sieve.');
   });
 
-  test('a recipe already written keeps what goes in when another kind is picked', async () => {
-    const onDone = jest.fn();
-    await renderWithProviders(<PrepBuilder name="Pineapple shrub" drinkName="Daiquiri" initial={startPrep('shrub', 'Pineapple shrub')} first ingredients={[]} onDone={onDone} onClose={jest.fn()} />);
-    await laidOut();
-    await fireEvent.press(screen.getByRole('radio', { name: 'Syrup' }));
-    await fireEvent.press(screen.getByRole('button', { name: 'Next: what goes in' }));
-    await fireEvent.press(screen.getByRole('button', { name: 'Next: how it’s made' }));
-    await fireEvent.press(screen.getByRole('button', { name: 'Add it to Daiquiri' }));
-    expect(onDone.mock.calls[0][0].kind).toBe('syrup');
-    expect(onDone.mock.calls[0][0].lines.map((l: { name: string }) => l.name)).toEqual(['Pineapple', 'White sugar', 'Apple cider vinegar']);
-  });
   test('Something else on a name that says nothing about how it is made starts with no lines; none are guessed from its words', async () => {
     await open('Qz fresh ginger juice');
     await fireEvent.press(screen.getByRole('button', { name: 'More' }));

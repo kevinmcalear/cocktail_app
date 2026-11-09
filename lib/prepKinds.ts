@@ -623,6 +623,14 @@ export function keepLines(fresh: PrepDraft, from: PrepDraft): PrepDraft {
   return withFacts({ ...fresh, lines: from.lines, baseKey: from.baseKey, baseAmount: from.baseAmount, madeFrom: from.madeFrom });
 }
 
+/** A line as it reads, without its key: what a maker's change shows against. */
+const lineAsWritten = (l: PrepDraftLine) => [l.name.trim().toLowerCase(), l.id, l.parts, l.unit, l.amount, l.slot ?? null, l.note ?? null, !!l.removed, !!l.prep, !!l.bottle];
+
+/** The same lines, keys aside: a kind's start is the same start each time it's made. */
+export function sameLines(a: PrepDraftLine[], b: PrepDraftLine[]): boolean {
+  return a.length === b.length && a.every((l, i) => JSON.stringify(lineAsWritten(l)) === JSON.stringify(lineAsWritten(b[i])));
+}
+
 /** Units a line of a recipe is measured in, as it goes in (make-anything-steps-2, step 5). */
 export const MEASURE_UNITS = ['ml', 'g', 'kg', 'tsp', 'tbsp', 'bsp', 'dash', 'drop', 'each', 'pinch'] as const;
 
