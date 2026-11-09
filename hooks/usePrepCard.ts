@@ -431,23 +431,18 @@ export function useCatalogRecipe(name: string | null | undefined) {
 }
 
 /**
- * Something you make, saved from its own page (New › Something you make,
- * make-anything-steps-3, step 11): a house prep row of its own, its recipe,
- * method and keeping, and any recipe made in-house inside it as a prep of
- * its own. A name that's taken becomes your version at home ("My Honey
- * syrup", as the drink's save does); at a venue it says so. If anything
- * fails, the rows this save made go again.
+ * A house prep brought in from a menu (Bring in, useImportReview): a prep
+ * row of its own, its recipe, method and keeping, and any recipe made
+ * in-house inside it as a prep of its own. A name that's taken becomes your
+ * version at home ("My Honey syrup", as the drink's save does); at a venue
+ * it says so. If anything fails, the rows this save made go again.
+ * Something you make (New) saves through save_house_mades
+ * (hooks/useSaveHouseMade), all its parts in one call.
  */
 export interface CreatePrepInput {
   name: string;
   prep: PrepDraft;
   barId: string | null;
-  /**
-   * Something you make (Add-house): the name is never quietly changed. At
-   * home a name already taken is refused, not saved as "My …"; at a bar a
-   * shared ingredient's name makes the venue's own version of it.
-   */
-  exact?: boolean;
 }
 
 export function useCreatePrep() {
@@ -456,22 +451,18 @@ export function useCreatePrep() {
 }
 
 /** A new house-made with its recipe, and any line made in-house in it. */
-export async function createPrep(qc: QueryClient, { name, prep, barId, exact }: CreatePrepInput): Promise<{ id: string; name: string; warnings: string[] }> {
+export async function createPrep(qc: QueryClient, { name, prep, barId }: CreatePrepInput): Promise<{ id: string; name: string; warnings: string[] }> {
   const made = new Map<string, string>();
   const warnings: string[] = [];
   const rows: string[] = [];
   const insert = (row: { name: string; generic_id?: string }) => supabase.from('items').insert({ ...row, item_type: 'ingredient', bar_id: barId, ingredient_role: 'prep' }).select('id').single();
   // A new prep row, or the one that already has the name (`isNew` false: it keeps its own recipe).
-  const prepRow = async (raw: string, exactName = false): Promise<{ id: string; isNew: boolean; name: string }> => {
+  const prepRow = async (raw: string): Promise<{ id: string; isNew: boolean; name: string }> => {
     const n = capitalizeFirst(raw.trim());
     let saved = n;
     let { data, error } = await insert({ name: n });
     const taken = existingIngredientId(error);
-    if (taken && exactName) {
-      // Never renamed (Add-house): a venue makes its own version of a shared one; at home the name is taken.
-      if (!barId) throw new Error(`${n} is already an ingredient. Name this one so they’re told apart.`);
-      ({ data, error } = await insert({ name: n, generic_id: taken }));
-    } else if (taken && !barId) {
+    if (taken && !barId) {
       saved = `My ${n}`;
       ({ data, error } = await insert({ name: saved, generic_id: taken }));
     } else if (taken) return { id: taken, isNew: false, name: n };
@@ -481,7 +472,7 @@ export async function createPrep(qc: QueryClient, { name, prep, barId, exact }: 
     rows.push(data.id as string);
     return { id: data.id as string, isNew: true, name: saved };
   };
-  const top = await prepRow(name, exact);
+  const top = await prepRow(name);
   if (!top.isNew) throw new Error(`${capitalizeFirst(name.trim())} is already ${barId ? 'here' : 'yours'}. Search for it instead.`);
   const ensure = (pick: { id: string | null; name: string }) => ensureIngredient(pick, barId, made);
   const own = async (pick: { id: string | null; name: string }) => {

@@ -14,7 +14,7 @@ import type { InDrinkPour } from './InDrink';
  * with nothing kept, puts the lines back as they were.
  */
 export function useInside(draft: PrepDraft, setDraft: (d: PrepDraft) => void, here: string) {
-  const [inside, setInside] = useState<{ key: string; before?: PrepDraftLine[] } | null>(null);
+  const [inside, setInside] = useState<{ key: string; before?: PrepDraftLine[]; kept?: boolean } | null>(null);
   const line = inside ? (draft.lines.find((l) => l.key === inside.key) ?? null) : null;
   const put = (prep: PrepDraft, name: string) => {
     if (!line) return;
@@ -27,6 +27,18 @@ export function useInside(draft: PrepDraft, setDraft: (d: PrepDraft) => void, he
     line,
     /** Open a line's recipe; `before` is the lines as they were when it was just added or renamed. */
     open: (key: string, before?: PrepDraftLine[]) => setInside({ key, before }),
+    /** A part's flat page (Add-parts, 2): each change goes on the line as it's made, so the draft keeps it; the level stays open. */
+    keep: (prep: PrepDraft, name: string) => {
+      if (!line) return;
+      setDraft({ ...draft, lines: draft.lines.map((l) => (l.key === line.key ? { ...l, id: null, name, prep, slot: undefined, bottle: undefined } : l)) });
+      if (!inside?.kept) setInside({ ...inside!, kept: true });
+    },
+    /** A part's name taken (Add-parts, 6), Use yours: the line uses the one already here, and the level closes. */
+    use: (id: string, name: string) => {
+      if (!line) return;
+      setDraft({ ...draft, lines: draft.lines.map((l) => (l.key === line.key ? { ...l, id, name, prep: undefined, slot: undefined } : l)) });
+      setInside(null);
+    },
     /** What the level below gets: its name, recipe so far, and what this recipe takes of it. */
     props: line
       ? {
@@ -38,7 +50,7 @@ export function useInside(draft: PrepDraft, setDraft: (d: PrepDraft) => void, he
           onDone: (prep: PrepDraft, name: string) => put({ ...prep, at: undefined }, name),
           onLater: (prep: PrepDraft, name: string) => put(prep, name),
           onClose: () => {
-            if (inside?.before) setDraft({ ...draft, lines: inside.before });
+            if (inside?.before && !inside.kept) setDraft({ ...draft, lines: inside.before });
             setInside(null);
           },
         }
