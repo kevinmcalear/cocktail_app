@@ -43,6 +43,10 @@ describe('Made in parts', () => {
     await fireEvent.changeText(screen.getByLabelText('Add an ingredient'), 'Ginger shrub');
     expect(screen.queryByRole('button', { name: /^Make “Ginger shrub”/ })).toBeNull();
     await fireEvent.press(screen.getByRole('button', { name: /^Add “Ginger shrub”, a bottle/ }));
+    // The third level can't make a part, so a name alone there isn't tagged To make.
+    await fireEvent.changeText(screen.getByLabelText('Add an ingredient'), 'Pine syrup');
+    await fireEvent.press(screen.getByRole('button', { name: /^Add “Pine syrup”$/ }));
+    expect(screen.queryByText('To make')).toBeNull();
     // Done goes back a level at a time, and the draft keeps the parts on their lines.
     await fireEvent.press(screen.getByRole('button', { name: /^Done: Fresh ginger juice goes in/ }));
     await partLaidOut();
