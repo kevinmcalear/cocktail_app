@@ -47,18 +47,22 @@ function DialogCard({ dialog }: { dialog: Dialog }) {
     const onKey = (event: KeyboardEvent) => {
       if (event.key === 'Enter') press(primary);
     };
-    // Escape on its way up, and kept from the sheet that asked (Sheet.web, a wizard's dialog): a Modal closes on Escape's
-    // keyup, and with this one gone by then the sheet would take it as its own close and ask again.
+    // Escape is the dialog's alone: caught first, kept from the page's own Escape (an editor's leave would ask
+    // again), and so is the keyup after it, or the sheet that asked (a Modal closes on Escape's keyup) would.
     const onEscape = (event: KeyboardEvent) => {
       if (event.key !== 'Escape') return;
       event.stopPropagation();
+      const swallow = (up: KeyboardEvent) => {
+        if (up.key === 'Escape') up.stopPropagation();
+      };
+      window.addEventListener('keyup', swallow, { capture: true, once: true });
       dismiss();
     };
     window.addEventListener('keydown', onKey);
-    window.addEventListener('keyup', onEscape, true);
+    window.addEventListener('keydown', onEscape, true);
     return () => {
       window.removeEventListener('keydown', onKey);
-      window.removeEventListener('keyup', onEscape, true);
+      window.removeEventListener('keydown', onEscape, true);
     };
   });
 

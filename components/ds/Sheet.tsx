@@ -49,7 +49,7 @@ export interface SheetProps {
    * "Discard changes?" first, and it stays open unless they say Discard.
    */
   dirty?: boolean;
-  /** Its content decides how it closes (an add wizard's Leave it for now): the backdrop, back, Escape and a drag ask this instead, in place of `dirty`. FlowSheet doesn't read it. */ askClose?: () => void;
+  /** Its content decides how it closes (an add wizard's Leave it for now): the backdrop, back, Escape and a drag ask this instead, in place of `dirty`. */ askClose?: () => void;
   /**
    * small (the default): our sheet, for pickers, menus and short forms.
    * flow: a whole flow (Add, Rank it, Theme). The system's own sheet on

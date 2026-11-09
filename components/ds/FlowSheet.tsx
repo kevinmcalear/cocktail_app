@@ -15,12 +15,12 @@ import { ToastHost } from './Toast';
  * has nothing to do here. iOS has its own (FlowSheet.ios.tsx); the web's flow
  * is the centred dialog (Sheet.web.tsx).
  */
-export function FlowSheet({ visible, onClose, accessibilityLabel, children, style, ground, header, keyboard, keyboardOffset = 0, onShow, onDismiss, dirty }: SheetProps) {
+export function FlowSheet({ visible, onClose, accessibilityLabel, children, style, ground, header, keyboard, keyboardOffset = 0, onShow, onDismiss, dirty, askClose }: SheetProps) {
   const ds = useDs();
   const insets = useSafeAreaInsets();
-  // Unsaved changes: back and the flow's own X ask "Discard changes?" first.
+  // Unsaved changes: back and the flow's own X ask "Discard changes?" first. Or its content decides (askClose).
   const guard = useDiscardGuard(dirty);
-  const close = () => guard(onClose);
+  const close = askClose ?? (() => guard(onClose));
   const body = (
     <View role="dialog" aria-label={accessibilityLabel} style={[styles.flex, style]}>
       {header}

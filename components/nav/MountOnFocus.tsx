@@ -1,9 +1,9 @@
-import { useIsFocused, useRootNavigationState } from 'expo-router';
+import { useIsFocused } from 'expo-router';
 import { useEffect, useState, type ReactNode } from 'react';
 import { Platform } from 'react-native';
 import { Freeze } from 'react-freeze';
 
-import { isSeeThrough } from './seeThrough';
+import { useUnderSeeThrough } from './useUnderSeeThrough';
 
 /**
  * Renders a tab's screen only once the tab has been opened, then keeps it, so
@@ -16,9 +16,9 @@ import { isSeeThrough } from './seeThrough';
  * re-renders from context and store changes until you come back, when it
  * catches up in one render. It freezes a tick after the blur, like
  * react-native-screens' DelayedFreeze, so the blur renders first.
- * Under a see-through route (a create wizard's dialog, seeThrough.ts) the
+ * Under a create wizard's dialog on a wide window (useUnderSeeThrough) the
  * page still shows, so it neither freezes nor waits for a focus to mount: a
- * link straight to /add-beer opens over Tonight.
+ * link straight to /add-beer opens over the tab.
  * ponytail: not on iOS and Android. NativeTabs (no freeze option) switches
  * tabs natively before JS hears of it, and a frozen tab is display: none until
  * React unfreezes it, so you'd come back to a blank tab for a moment. Its
@@ -41,19 +41,4 @@ export function MountOnFocus({ children }: { children: ReactNode }) {
   }, [shown]);
   if (!opened && !shown) return null;
   return <Freeze freeze={!shown && frozen}>{children}</Freeze>;
-}
-
-/** A navigator's state, as far as finding the route in focus goes. */
-type Nav = { index?: number; routes: { name: string; state?: unknown }[] };
-
-/** On the web: a see-through route (seeThrough.ts) is where you are, so the page under it shows. */
-function useUnderSeeThrough(): boolean {
-  // The root's state nests each navigator's in the route showing it: walk down the routes in focus.
-  let state: Nav | undefined = useRootNavigationState();
-  while (Platform.OS === 'web' && state) {
-    const route = state.routes[state.index ?? state.routes.length - 1];
-    if (isSeeThrough(route?.name)) return true;
-    state = route?.state as Nav | undefined;
-  }
-  return false;
 }

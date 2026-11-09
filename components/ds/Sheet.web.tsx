@@ -105,7 +105,8 @@ export function Sheet({ visible, onClose, accessibilityLabel, children, style, g
     <Modal visible={visible || !gone} transparent animationType="none" onRequestClose={close} onShow={onShow} onDismiss={onDismiss}>
       <CloseContext value={close}>
         <View style={[StyleSheet.absoluteFill, { backgroundColor: ds.c.scrim }, fade, opacity]}>
-          <Pressable accessibilityLabel="Close" style={StyleSheet.absoluteFill} onPress={close} />
+          {/* Out of the tab order: the Modal's focus trap would land on this window-sized button first. */}
+          <Pressable accessibilityLabel="Close" style={StyleSheet.absoluteFill} onPress={close} tabIndex={-1} />
         </View>
         <View style={[styles.place, sheetFrame.scrim, full ? styles.bare : null]}>
           <View
