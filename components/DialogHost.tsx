@@ -45,11 +45,21 @@ function DialogCard({ dialog }: { dialog: Dialog }) {
 
   useEffect(() => {
     const onKey = (event: KeyboardEvent) => {
-      if (event.key === 'Escape') dismiss();
       if (event.key === 'Enter') press(primary);
     };
+    // Escape on its way up, and kept from the sheet that asked (Sheet.web, a wizard's dialog): a Modal closes on Escape's
+    // keyup, and with this one gone by then the sheet would take it as its own close and ask again.
+    const onEscape = (event: KeyboardEvent) => {
+      if (event.key !== 'Escape') return;
+      event.stopPropagation();
+      dismiss();
+    };
     window.addEventListener('keydown', onKey);
-    return () => window.removeEventListener('keydown', onKey);
+    window.addEventListener('keyup', onEscape, true);
+    return () => {
+      window.removeEventListener('keydown', onKey);
+      window.removeEventListener('keyup', onEscape, true);
+    };
   });
 
   const ordered = cancel ? [cancel, ...actions] : actions;

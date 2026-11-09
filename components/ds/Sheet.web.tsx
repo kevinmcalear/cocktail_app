@@ -26,7 +26,7 @@ export { useSheetClose } from './sheetClose';
  * load Reanimated or Gesture Handler. A finger drags it down to close it
  * (webSheetDrag), as on native.
  */
-export function Sheet({ visible, onClose, accessibilityLabel, children, style, ground, header, onShow, onDismiss, kind, dirty, fullAtPhoneWidth }: SheetProps) {
+export function Sheet({ visible, onClose, accessibilityLabel, children, style, ground, header, onShow, onDismiss, kind, dirty, askClose, fullAtPhoneWidth }: SheetProps) {
   const ds = useDs();
   const full = useWindowDimensions().width < PHONE_WIDTH && !!fullAtPhoneWidth;
   const reduceMotion = useReducedMotion();
@@ -56,10 +56,10 @@ export function Sheet({ visible, onClose, accessibilityLabel, children, style, g
     }, leaveMs);
   };
   const guard = useDiscardGuard(dirty);
-  const close = () => guard(() => dismiss());
-  // Unsaved changes: a drag that would close it settles back and asks instead.
+  const close = askClose ?? (() => guard(() => dismiss()));
+  // Unsaved changes, or its content closes it: a drag that would close it settles back and asks instead.
   const held = () => {
-    if (!dirty) return false;
+    if (!dirty && !askClose) return false;
     close();
     return true;
   };

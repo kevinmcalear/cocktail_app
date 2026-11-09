@@ -49,6 +49,7 @@ export interface SheetProps {
    * "Discard changes?" first, and it stays open unless they say Discard.
    */
   dirty?: boolean;
+  /** Its content decides how it closes (an add wizard's Leave it for now): the backdrop, back, Escape and a drag ask this instead, in place of `dirty`. FlowSheet doesn't read it. */ askClose?: () => void;
   /**
    * small (the default): our sheet, for pickers, menus and short forms.
    * flow: a whole flow (Add, Rank it, Theme). The system's own sheet on
@@ -91,7 +92,7 @@ export function Sheet(props: SheetProps) {
   return props.kind === 'flow' && !sheetIsDialog ? <FlowSheet {...props} /> : <SmallSheet {...props} />;
 }
 
-function SmallSheet({ visible, onClose, accessibilityLabel, children, style, ground, header, keyboard, keyboardOffset = 0, onShow, onDismiss, dirty, from, floating }: SheetProps) {
+function SmallSheet({ visible, onClose, accessibilityLabel, children, style, ground, header, keyboard, keyboardOffset = 0, onShow, onDismiss, dirty, askClose, from, floating }: SheetProps) {
   const ds = useDs();
   const reduceMotion = useReducedMotion();
   const grow = !!from && !sheetIsDialog && !reduceMotion;
@@ -142,14 +143,14 @@ function SmallSheet({ visible, onClose, accessibilityLabel, children, style, gro
     onClose();
   };
   const guard = useDiscardGuard(dirty);
-  const dismiss = () => guard(() => leave(closed));
+  const dismiss = askClose ?? (() => guard(() => leave(closed)));
   const { height, pan, scroll } = useSheetDrag({
     drag,
     enabled: !sheetIsDialog,
     onClose: (velocity) => {
       'worklet';
-      // Unsaved changes: back up into place, then ask.
-      if (dirty) {
+      // Unsaved changes, or its content closes it: back up into place, then ask.
+      if (dirty || askClose) {
         drag.set(withSpring(0, springs.glide));
         scheduleOnRN(dismiss);
       } else leave(closed, velocity);
