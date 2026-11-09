@@ -11,6 +11,7 @@
  * Keeps are always the safer number when sources differ.
  */
 import type { Allergen } from './allergens';
+import { RECIPE_STEPS, type RecipeStep } from './houseMadeDraft';
 import { guessKind, withFacts } from './prepMath';
 import { asLike, keepFor, nameParts, partsFor, slotIngredient, splitName } from './techniques/template';
 import { techniqueById } from './techniques';
@@ -51,9 +52,8 @@ export interface PrepDraftStep {
   timer_seconds: number | null;
 }
 
-/** The three steps of a recipe made in-house, in order (make-anything-steps-1 and 2, steps 4 to 6). */
-export const RECIPE_STEPS = ['kind', 'recipe', 'method'] as const;
-export type RecipeStep = (typeof RECIPE_STEPS)[number];
+// The three steps live with the draft (lib/houseMadeDraft), so the Drinks tab's Drafts row counts them without loading the kinds.
+export { RECIPE_STEPS, type RecipeStep };
 export interface PrepDraft {
   kind: PrepKindId;
   /** Left for later at this step (make-anything-steps-3, step 9): a recipe to finish, picked up where it was left. */

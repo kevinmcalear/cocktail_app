@@ -11,8 +11,7 @@ import { useShelfLives } from '@/hooks/useShelfLives';
 import { useTonight } from '@/hooks/useTonight';
 import { useTonightPrep } from '@/hooks/useTonightPrep';
 import { fridgeRows, lowLine } from '@/lib/drinksTab';
-import { EMPTY_HOUSE_MADE, filledHouseMade, houseMadePlace } from '@/lib/houseMadeDraft';
-import { RECIPE_STEPS } from '@/lib/prepKinds';
+import { EMPTY_HOUSE_MADE, filledHouseMade, houseMadePlace, RECIPE_STEPS } from '@/lib/houseMadeDraft';
 import { itemHref } from '@/lib/itemRoutes';
 import { useHouseMadeWizardStore } from '@/store/useHouseMadeWizardStore';
 

@@ -4,7 +4,11 @@
  * the name as typed and the recipe so far. Kept apart from the recipe steps'
  * rules (lib/prepKinds), so the sync, which every page mounts, stays small.
  */
-import type { PrepDraft, RecipeStep } from './prepKinds';
+import type { PrepDraft } from './prepKinds';
+
+/** The three steps of a recipe made in-house, in order (make-anything-steps-1 and 2, steps 4 to 6). */
+export const RECIPE_STEPS = ['kind', 'recipe', 'method'] as const;
+export type RecipeStep = (typeof RECIPE_STEPS)[number];
 
 export interface HouseMadeDraft {
   /** Stamped on the first change: the same draft on every device. */
