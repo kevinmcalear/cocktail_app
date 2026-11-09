@@ -87,7 +87,7 @@ export function useCreateIngredient() {
  * (usePrepCard's useAdoptNoteRecipe). ponytail: the add-drink wizard's save
  * (useCreateDrink) still has the same lookup inline, with its own bookkeeping.
  */
-export async function ensureIngredient(pick: WizardPick, barId: string | null, made: Map<string, string>): Promise<string> {
+export async function ensureIngredient(pick: WizardPick, barId: string | null, made: Map<string, string>, created?: string[]): Promise<string> {
   if (pick.id) return pick.id;
   const key = pick.name.trim().replace(/\s+/g, ' ').toLowerCase();
   const known = made.get(key);
@@ -106,6 +106,8 @@ export async function ensureIngredient(pick: WizardPick, barId: string | null, m
   if (existing) return existing;
   if (error || !data) throw error ?? new Error(`Couldn’t add ${pick.name}.`);
   made.set(key, data.id);
+  // Only the ones this call added, so a save that fails can take them away again (`made` holds finds too).
+  created?.push(data.id);
   return data.id;
 }
 
