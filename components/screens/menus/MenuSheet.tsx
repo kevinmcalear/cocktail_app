@@ -37,6 +37,8 @@ interface MenuSheetProps {
   form?: boolean;
   /** A menu of places or actions (New, Switch to): the title in the body face, as the canvas draws those. */
   plain?: boolean;
+  /** The title and subtitle in the middle, balanced (Add-entry, New): the X on the left on phones, top right in the web's dialog. */
+  centred?: boolean;
   /**
    * The children are the body's own list: a FlatList scrolling on
    * SheetScrollView, padded with menuSheetBody. Long lists (a venue's whole
@@ -59,12 +61,16 @@ interface MenuSheetProps {
  * A titled sheet with a scrolling body and an optional footer, on the app's
  * one Sheet (components/ds/Sheet): springs up on phones, a dialog on the web.
  */
-export function MenuSheet({ visible, onClose, onDismiss, title, subtitle, eyebrow, leading, aside, children, footer, onShow, check, save, plain, form, list, done, kind, back }: MenuSheetProps) {
+export function MenuSheet({ visible, onClose, onDismiss, title, subtitle, eyebrow, leading, aside, children, footer, onShow, check, save, plain, centred, form, list, done, kind, back }: MenuSheetProps) {
   const arrow = !!back && Platform.OS === 'android';
+  // The close before the title: Android's back arrow, or a centred title's X on phones.
+  const closeFirst = arrow || (!!centred && !sheetIsDialog);
+  const balance = centred ? <View style={styles.side} /> : null;
   const ds = useDs();
   const insets = useSafeAreaInsets();
   // The arrow slides the sheet away like any close, then goes back instead.
   const backing = useRef(false);
+  const align = centred ? 'center' : undefined;
   const closed = () => (backing.current && back ? ((backing.current = false), back()) : onClose());
   return (
     // The negative keyboard offset lets the keyboard cover the footer's home-indicator padding instead of leaving a gap.
@@ -85,8 +91,8 @@ export function MenuSheet({ visible, onClose, onDismiss, title, subtitle, eyebro
         ) : save || form ? (
           <FormHeader title={title} save={save} />
         ) : (
-          <View style={[styles.header, aside ? styles.centred : null]}>
-            {arrow ? <SheetCloseButton back onPress={() => (backing.current = true)} /> : null}
+          <View style={[styles.header, aside || centred ? styles.centred : null]}>
+            {closeFirst ? <SheetCloseButton back={arrow} onPress={arrow ? () => (backing.current = true) : undefined} /> : balance}
             {leading}
             <View style={styles.flex}>
               {eyebrow ? (
@@ -95,16 +101,16 @@ export function MenuSheet({ visible, onClose, onDismiss, title, subtitle, eyebro
                 </Caption>
               ) : null}
               {plain ? (
-                <Headline role="heading" numberOfLines={aside ? 1 : undefined}>
+                <Headline role="heading" align={align} numberOfLines={aside ? 1 : undefined}>
                   {title}
                 </Headline>
               ) : (
-                <Title numberOfLines={aside ? 1 : undefined}>{title}</Title>
+                <Title align={align} numberOfLines={aside ? 1 : undefined}>{title}</Title>
               )}
-              {subtitle ? <Caption tone="muted">{subtitle}</Caption> : null}
+              {subtitle ? <Caption tone="muted" align={align}>{subtitle}</Caption> : null}
             </View>
             {aside}
-            {arrow ? null : <SheetCloseButton done={done} />}
+            {closeFirst ? balance : <SheetCloseButton done={done} />}
           </View>
         )
       }
@@ -257,6 +263,7 @@ const styles = StyleSheet.create({
   dialog: { paddingTop: space.md },
   header: { flexDirection: 'row', alignItems: 'flex-start', gap: space.md, paddingHorizontal: space.xl, paddingTop: space.md },
   centred: { alignItems: 'center' },
+  side: { width: layout.minTapTarget }, // As wide as the X, on the side without it.
   form: { alignItems: 'center', paddingHorizontal: space.md },
   checkHeader: { paddingHorizontal: space.lg },
   checkDialog: { maxWidth: 520 },

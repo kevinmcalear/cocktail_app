@@ -8,6 +8,18 @@ import { isSeeThrough } from './seeThrough';
 /** A navigator's state, as far as finding the route in focus goes. */
 type Nav = { index?: number; routes: { name: string; state?: unknown }[] };
 
+/** A create wizard (seeThrough.ts) is the route in focus, at any width: what's under it is out of reach (JsTabs). */
+export function useSeeThroughOpen(): boolean {
+  // The root's state nests each navigator's in the route showing it: walk down the routes in focus.
+  let state: Nav | undefined = useRootNavigationState();
+  while (state) {
+    const route = state.routes[state.index ?? state.routes.length - 1];
+    if (isSeeThrough(route?.name)) return true;
+    state = route?.state as Nav | undefined;
+  }
+  return false;
+}
+
 /**
  * A wide window with a create wizard's dialog open (seeThrough.ts): the page
  * under it shows, so MountOnFocus keeps it mounted and unfrozen. Narrower,
@@ -16,12 +28,5 @@ type Nav = { index?: number; routes: { name: string; state?: unknown }[] };
  */
 export function useUnderSeeThrough(): boolean {
   const desktop = useWindowDimensions().width >= layout.breakpoints.desktop;
-  // The root's state nests each navigator's in the route showing it: walk down the routes in focus.
-  let state: Nav | undefined = useRootNavigationState();
-  while (desktop && state) {
-    const route = state.routes[state.index ?? state.routes.length - 1];
-    if (isSeeThrough(route?.name)) return true;
-    state = route?.state as Nav | undefined;
-  }
-  return false;
+  return useSeeThroughOpen() && desktop;
 }

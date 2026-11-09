@@ -28,7 +28,7 @@ const PRESENT_MS = 350;
  * the system's: SwiftUI lifts the sheet's content over it, so `keyboard` and
  * `keyboardOffset` have nothing to do here.
  */
-export function FlowSheet({ visible, onClose, accessibilityLabel, children, style, ground, header, onShow, onDismiss, part, dirty, askClose }: SheetProps) {
+export function FlowSheet({ visible, onClose, accessibilityLabel, children, style, ground, header, onShow, onDismiss, part, dirty }: SheetProps) {
   const ds = useDs();
   const fill = ground ? ds.c.ground : ds.c.surface;
   const { detents, rest } = flowDetents(part);
@@ -59,9 +59,9 @@ export function FlowSheet({ visible, onClose, accessibilityLabel, children, styl
   useEffect(() => {
     if (visible) ours.current = false;
   }, [visible]);
-  // Unsaved changes: a swipe down is held off (interactiveDismissDisabled) and the flow's own X asks "Discard changes?" first. Or its content decides (askClose).
+  // Unsaved changes: a swipe down is held off (interactiveDismissDisabled) and the flow's own X asks "Discard changes?" first.
   const guard = useDiscardGuard(dirty);
-  const guardedClose = askClose ?? (() => guard(close));
+  const guardedClose = () => guard(close);
 
   return (
     <Host style={styles.host} pointerEvents="none">
@@ -84,7 +84,7 @@ export function FlowSheet({ visible, onClose, accessibilityLabel, children, styl
             presentationDragIndicator('visible'),
             presentationBackground(fill),
             preferredColorScheme(ds.scheme),
-            interactiveDismissDisabled(!!dirty || !!askClose),
+            interactiveDismissDisabled(!!dirty),
           ]}
         >
           <RNHostView>

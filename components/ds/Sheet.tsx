@@ -43,13 +43,10 @@ export interface SheetProps {
   onShow?: () => void;
   /** iOS: once the sheet is fully gone (to open another modal after it). */
   onDismiss?: () => void;
-  /**
-   * Unsaved changes in it: closing it any way but the caller's own Done (a
-   * swipe or drag down, the backdrop, back, Escape, its X or Cancel) asks
-   * "Discard changes?" first, and it stays open unless they say Discard.
-   */
+  /** Unsaved changes in it: closing it any way but the caller's own Done (a swipe or drag down, the backdrop, back, Escape, its X or Cancel) asks "Discard changes?" first, and it stays open unless they say Discard. */
   dirty?: boolean;
-  /** Its content decides how it closes (an add wizard's Leave it for now): the backdrop, back, Escape and a drag ask this instead, in place of `dirty`. */ askClose?: () => void;
+  /** The web only (Sheet.web.tsx): its content decides how it closes (an add wizard's Leave it for now), in place of `dirty`. */
+  askClose?: () => void;
   /**
    * small (the default): our sheet, for pickers, menus and short forms.
    * flow: a whole flow (Add, Rank it, Theme). The system's own sheet on
@@ -92,7 +89,7 @@ export function Sheet(props: SheetProps) {
   return props.kind === 'flow' && !sheetIsDialog ? <FlowSheet {...props} /> : <SmallSheet {...props} />;
 }
 
-function SmallSheet({ visible, onClose, accessibilityLabel, children, style, ground, header, keyboard, keyboardOffset = 0, onShow, onDismiss, dirty, askClose, from, floating }: SheetProps) {
+function SmallSheet({ visible, onClose, accessibilityLabel, children, style, ground, header, keyboard, keyboardOffset = 0, onShow, onDismiss, dirty, from, floating }: SheetProps) {
   const ds = useDs();
   const reduceMotion = useReducedMotion();
   const grow = !!from && !sheetIsDialog && !reduceMotion;
@@ -143,14 +140,14 @@ function SmallSheet({ visible, onClose, accessibilityLabel, children, style, gro
     onClose();
   };
   const guard = useDiscardGuard(dirty);
-  const dismiss = askClose ?? (() => guard(() => leave(closed)));
+  const dismiss = () => guard(() => leave(closed));
   const { height, pan, scroll } = useSheetDrag({
     drag,
     enabled: !sheetIsDialog,
     onClose: (velocity) => {
       'worklet';
-      // Unsaved changes, or its content closes it: back up into place, then ask.
-      if (dirty || askClose) {
+      // Unsaved changes: back up into place, then ask.
+      if (dirty) {
         drag.set(withSpring(0, springs.glide));
         scheduleOnRN(dismiss);
       } else leave(closed, velocity);

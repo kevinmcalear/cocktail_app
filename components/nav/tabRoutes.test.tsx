@@ -2,6 +2,7 @@ import { router, Stack, Tabs } from 'expo-router';
 import { act, renderRouter } from 'expo-router/testing-library';
 import { Text } from 'react-native';
 
+import { useStartTabUnder } from '@/components/nav/useStartTabUnder';
 import { TABS } from '@/lib/tabs';
 
 // The shell's route shape (app/(tabs)): each tab's first page in its own group,
@@ -14,23 +15,36 @@ function page(name: string) {
   };
 }
 
-function open(url: string) {
+// Tonight's first page; `home` is the start when Tonight is switched off ((1-tonight)/index.tsx).
+function tonight(home: string | null) {
+  return function Tonight() {
+    useStartTabUnder(home);
+    return <Text>tonight</Text>;
+  };
+}
+
+function open(url: string, home: string | null = null) {
   return renderRouter(
     {
-      _layout: () => <Stack screenOptions={{ headerShown: false }} />,
-      '(tabs)/_layout': () => (
-        <Tabs>
-          {[...TABS.map((t) => t.route), '(search)'].map((name) => (
-            <Tabs.Screen key={name} name={name} />
-          ))}
-        </Tabs>
-      ),
+      _layout: { unstable_settings: { anchor: '(tabs)' }, default: () => <Stack screenOptions={{ headerShown: false }} /> },
+      // As app/(tabs)/_layout.tsx: under a page outside the tabs, the first tab.
+      '(tabs)/_layout': {
+        unstable_settings: { anchor: TABS[0].route },
+        default: () => (
+          <Tabs>
+            {[...TABS.map((t) => t.route), '(search)'].map((name) => (
+              <Tabs.Screen key={name} name={name} />
+            ))}
+          </Tabs>
+        ),
+      },
+      'add-beer': page('a beer'),
       [`${SHARED}/_layout`]: {
         unstable_settings: { '1-tonight': { anchor: 'index' }, '2-drinks': { anchor: 'drinks' }, '3-discover': { anchor: 'discover' }, '4-you': { anchor: 'you' } },
         default: () => <Stack screenOptions={{ headerShown: false }} />,
       },
       // In the order the app's folder lists them, so a link's tie between groups breaks as it does in the app.
-      '(tabs)/(1-tonight)/index': page('tonight'),
+      '(tabs)/(1-tonight)/index': tonight(home),
       [`${SHARED}/cocktail/[id]/index`]: page('drink'),
       [`${SHARED}/beer/[id]/index`]: page('beer'),
       [`${SHARED}/ingredient/[id]/index`]: page('ingredient'),
@@ -141,4 +155,19 @@ it("opens a beer from iPhone's search tab on the search tab", async () => {
   expect(r.getSegments()).toEqual(['(tabs)', '(search)', 'beer', '[id]']);
   await act(async () => router.back());
   expect(r.getSegments()).toEqual(['(tabs)', '(search)']);
+});
+
+// A link straight to a create wizard: its dialog sits over the tab the app opens on, and its X lands there.
+it('opens a cold link to a create wizard over the first tab, and closing it lands there', async () => {
+  const r = await open('/add-beer');
+  expect(r.getSegments()).toEqual(['add-beer']);
+  await act(async () => router.back());
+  expect(r.getPathname()).toBe('/');
+});
+
+it('with Tonight switched off, the tabs under that wizard move to Drinks and it stays open', async () => {
+  const r = await open('/add-beer', '/drinks');
+  expect(r.getSegments()).toEqual(['add-beer']);
+  await act(async () => router.back());
+  expect(r.getPathname()).toBe('/drinks');
 });

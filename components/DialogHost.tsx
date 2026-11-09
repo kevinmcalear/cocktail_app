@@ -1,5 +1,5 @@
 import { useEffect } from 'react';
-import { Modal, Platform, Pressable, StyleSheet, View } from 'react-native';
+import { Modal, Platform, StyleSheet, View } from 'react-native';
 import type { AlertButton } from 'react-native';
 
 import { Body, Button, Headline, useDs } from '@/components/ds';
@@ -45,17 +45,15 @@ function DialogCard({ dialog }: { dialog: Dialog }) {
 
   useEffect(() => {
     const onKey = (event: KeyboardEvent) => {
-      if (event.key === 'Enter') press(primary);
+      // A button in focus answers Enter itself (Tab to Keep editing, Enter keeps editing).
+      if (event.key === 'Enter' && !(event.target instanceof Element && event.target.closest('[role="button"]'))) press(primary);
     };
     // Escape is the dialog's alone: caught first, kept from the page's own Escape (an editor's leave would ask
     // again), and so is the keyup after it, or the sheet that asked (a Modal closes on Escape's keyup) would.
     const onEscape = (event: KeyboardEvent) => {
       if (event.key !== 'Escape') return;
       event.stopPropagation();
-      const swallow = (up: KeyboardEvent) => {
-        if (up.key === 'Escape') up.stopPropagation();
-      };
-      window.addEventListener('keyup', swallow, { capture: true, once: true });
+      swallowKeyup('Escape');
       dismiss();
     };
     window.addEventListener('keydown', onKey);
@@ -73,8 +71,11 @@ function DialogCard({ dialog }: { dialog: Dialog }) {
 
   return (
     <Appear kind="fade" duration={200} style={[styles.overlay, { backgroundColor: ds.c.scrim }]}>
-      <Pressable accessibilityLabel="Close dialog" style={StyleSheet.absoluteFill} onPress={dismiss} />
+      {/* A plain view, not a button: the Modal's focus trap focuses the first thing that takes focus, so it lands
+          on the card and Enter is its main action (the window's Enter, above), never this window-sized backdrop. */}
+      <View aria-hidden style={StyleSheet.absoluteFill} onStartShouldSetResponder={() => true} onResponderRelease={dismiss} />
       <View
+        tabIndex={-1}
         role="alertdialog"
         aria-modal
         aria-label={dialog.title}
@@ -90,6 +91,30 @@ function DialogCard({ dialog }: { dialog: Dialog }) {
       </View>
     </Appear>
   );
+}
+
+/**
+ * Keeps the next `key` keyup from the page. Given up on a window blur or the
+ * next key pressed (not a held key's repeat), so a keyup lost to another
+ * window never swallows a later one.
+ */
+function swallowKeyup(key: string) {
+  const swallow = (up: KeyboardEvent) => {
+    if (up.key !== key) return;
+    up.stopPropagation();
+    stop();
+  };
+  const next = (down: KeyboardEvent) => {
+    if (!down.repeat) stop();
+  };
+  const stop = () => {
+    window.removeEventListener('keyup', swallow, true);
+    window.removeEventListener('keydown', next, true);
+    window.removeEventListener('blur', stop);
+  };
+  window.addEventListener('keyup', swallow, true);
+  window.addEventListener('keydown', next, true);
+  window.addEventListener('blur', stop);
 }
 
 const styles = StyleSheet.create({

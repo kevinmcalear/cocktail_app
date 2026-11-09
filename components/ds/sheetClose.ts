@@ -12,3 +12,6 @@ export function useSheetClose(): () => void {
   if (!close) throw new Error('useSheetClose is for buttons inside a Sheet');
   return close;
 }
+
+/** Inside a Sheet (on the web, its dialog): a control that sits differently there. */
+export const useInSheet = () => use(CloseContext) !== null;

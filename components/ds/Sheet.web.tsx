@@ -1,5 +1,5 @@
 import { useEffect, useEffectEvent, useRef, useState } from 'react';
-import { Modal, Pressable, StyleSheet, useWindowDimensions, View } from 'react-native';
+import { Modal, StyleSheet, useWindowDimensions, View } from 'react-native';
 
 import { useReducedMotion } from '@/hooks/useReducedMotion';
 
@@ -105,8 +105,8 @@ export function Sheet({ visible, onClose, accessibilityLabel, children, style, g
     <Modal visible={visible || !gone} transparent animationType="none" onRequestClose={close} onShow={onShow} onDismiss={onDismiss}>
       <CloseContext value={close}>
         <View style={[StyleSheet.absoluteFill, { backgroundColor: ds.c.scrim }, fade, opacity]}>
-          {/* Out of the tab order: the Modal's focus trap would land on this window-sized button first. */}
-          <Pressable accessibilityLabel="Close" style={StyleSheet.absoluteFill} onPress={close} tabIndex={-1} />
+          {/* A plain view, not a button: the Modal's focus trap focuses the first (or, going back, last) thing that takes focus, even out of the tab order. */}
+          <View aria-hidden style={StyleSheet.absoluteFill} onStartShouldSetResponder={() => true} onResponderRelease={close} />
         </View>
         <View style={[styles.place, sheetFrame.scrim, full ? styles.bare : null]}>
           <View
