@@ -2,14 +2,6 @@ import { AppTabs } from '@/components/nav/AppTabs';
 import { useAuth } from '@/ctx/AuthContext';
 import { useClaimReturn } from '@/lib/claimReturn';
 import { needsOnboarding } from '@/lib/onboarding';
-import { TABS } from '@/lib/tabs';
-
-/**
- * Under a page opened by a link from outside the tabs (a create wizard's
- * dialog, Settings), the tabs start where the app opens: the first tab, `/`,
- * which sends a venue without Tonight on to Drinks ((1-tonight)/index.tsx).
- */
-export const unstable_settings = { anchor: TABS[0].route };
 
 /**
  * The tabs: native tabs on iPhone and Android (AppTabs.tsx), and the JS tabs

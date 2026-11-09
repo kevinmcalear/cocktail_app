@@ -3,7 +3,11 @@ import { act, renderRouter } from 'expo-router/testing-library';
 import { Text } from 'react-native';
 
 import { useStartTabUnder } from '@/components/nav/useStartTabUnder';
-import { TABS } from '@/lib/tabs';
+import { TABS, type Tab } from '@/lib/tabs';
+
+// Where the app opens (useVenueFeatures' `home`): Drinks when Tonight is switched off.
+let mockStart: Tab['path'] = '/';
+jest.mock('@/hooks/useVenueFeatures', () => ({ useVenueFeatures: () => ({ ready: true, home: mockStart }) }));
 
 // The shell's route shape (app/(tabs)): each tab's first page in its own group,
 // and the pages every tab can push in the shared group with its stack.
@@ -15,44 +19,41 @@ function page(name: string) {
   };
 }
 
-// Tonight's first page; `home` is the start when Tonight is switched off ((1-tonight)/index.tsx).
-function tonight(home: string | null) {
-  return function Tonight() {
-    useStartTabUnder(home);
-    return <Text>tonight</Text>;
+// A tab's first page, moving the tabs to the start under a cold link (useStartTabUnder).
+function first(name: string, path: Tab['path']) {
+  return function First() {
+    useStartTabUnder(path);
+    return <Text>{name}</Text>;
   };
 }
 
-function open(url: string, home: string | null = null) {
+function open(url: string, home: Tab['path'] = '/') {
+  mockStart = home;
   return renderRouter(
     {
       _layout: { unstable_settings: { anchor: '(tabs)' }, default: () => <Stack screenOptions={{ headerShown: false }} /> },
-      // As app/(tabs)/_layout.tsx: under a page outside the tabs, the first tab.
-      '(tabs)/_layout': {
-        unstable_settings: { anchor: TABS[0].route },
-        default: () => (
-          <Tabs>
-            {[...TABS.map((t) => t.route), '(search)'].map((name) => (
-              <Tabs.Screen key={name} name={name} />
-            ))}
-          </Tabs>
-        ),
-      },
+      '(tabs)/_layout': () => (
+        <Tabs>
+          {[...TABS.map((t) => t.route), '(search)'].map((name) => (
+            <Tabs.Screen key={name} name={name} />
+          ))}
+        </Tabs>
+      ),
       'add-beer': page('a beer'),
       [`${SHARED}/_layout`]: {
         unstable_settings: { '1-tonight': { anchor: 'index' }, '2-drinks': { anchor: 'drinks' }, '3-discover': { anchor: 'discover' }, '4-you': { anchor: 'you' } },
         default: () => <Stack screenOptions={{ headerShown: false }} />,
       },
       // In the order the app's folder lists them, so a link's tie between groups breaks as it does in the app.
-      '(tabs)/(1-tonight)/index': tonight(home),
+      '(tabs)/(1-tonight)/index': first('tonight', '/'),
       [`${SHARED}/cocktail/[id]/index`]: page('drink'),
       [`${SHARED}/beer/[id]/index`]: page('beer'),
       [`${SHARED}/ingredient/[id]/index`]: page('ingredient'),
       [`${SHARED}/prep`]: page('prep'),
       [`${SHARED}/search`]: page('search page'),
-      '(tabs)/(2-drinks)/drinks': page('drinks'),
-      '(tabs)/(3-discover)/discover': page('discover'),
-      '(tabs)/(4-you)/you': page('you'),
+      '(tabs)/(2-drinks)/drinks': first('drinks', '/drinks'),
+      '(tabs)/(3-discover)/discover': first('discover', '/discover'),
+      '(tabs)/(4-you)/you': first('you', '/you'),
       '(tabs)/(search)/_layout': () => <Stack screenOptions={{ headerShown: false }} />,
       '(tabs)/(search)/index': page('search'),
       '(tabs)/(search)/cocktail/[id]/index': page('drink'),
@@ -175,4 +176,11 @@ it('with Tonight switched off, the tabs under that wizard move to Drinks and it 
   expect(r.getSegments()).toEqual(['add-beer']);
   await act(async () => router.back());
   expect(r.getPathname()).toBe('/drinks');
+});
+
+it('opens a wizard from a tab over that tab, and closing it lands there', async () => {
+  const r = await open('/you');
+  await act(async () => router.push('/add-beer'));
+  await act(async () => router.back());
+  expect(r.getPathname()).toBe('/you');
 });

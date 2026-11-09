@@ -5,6 +5,7 @@ import { StyleSheet, View } from 'react-native';
 import { DiscoverScreen } from '@/components/screens/home/DiscoverScreen';
 import { WantToGoMap } from '@/components/screens/home/WantToGoMapLazy';
 import { MountOnFocus } from '@/components/nav/MountOnFocus';
+import { useStartTabUnder } from '@/components/nav/useStartTabUnder';
 import { useRoundVisit } from '@/hooks/useFirstRound';
 
 /**
@@ -14,6 +15,7 @@ import { useRoundVisit } from '@/hooks/useFirstRound';
  * left them when you come back.
  */
 export default function DiscoverTab() {
+  useStartTabUnder('/discover');
   useRoundVisit('discover');
   const want = useLocalSearchParams<{ list?: string }>().list === 'want';
   // Discover mounts the first time it's shown, not just to sit under the map.
