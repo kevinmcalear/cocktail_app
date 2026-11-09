@@ -61,12 +61,14 @@ function LockedRow({ barId }: { barId: string }) {
 }
 
 /**
- * New: start a menu, a drink, something you make, a bottle you buy, a beer
- * or a wine, from Add's "A bottle, beer, wine, a house-made or a menu" (Add
- * itself takes names, links, photos and what you left unfinished).
- * The subtitle says where it's made. A dialog on desktop, like every other sheet.
+ * New (Add-entry): start a menu, a drink, something you make, a bottle you
+ * buy, a beer or a wine, from Add's last row, Something else, or Android's
+ * Add menu (Add itself takes names, links, photos and what you left
+ * unfinished). The subtitle says where it's made. A centred dialog on the
+ * web, like every other sheet; on Android its arrow does `onBack` (back to
+ * Add, when New came from it), and everything else closes it.
  */
-export function CreateSheet({ visible, onClose }: { visible: boolean; onClose: () => void }) {
+export function CreateSheet({ visible, onClose, onBack }: { visible: boolean; onClose: () => void; onBack?: () => void }) {
   const ds = useDs();
   const router = useRouter();
   const { setMode } = useMode();
@@ -90,12 +92,13 @@ export function CreateSheet({ visible, onClose }: { visible: boolean; onClose: (
     router.push('/add-cocktail');
   };
   return (
-    <MenuSheet visible={visible} onClose={onClose} title="New" subtitle={subtitle} plain>
+    <MenuSheet visible={visible} onClose={onClose} title="New" subtitle={subtitle} plain back={onBack ?? onClose}>
       <View>
-        {locked && venueId ? <LockedRow barId={venueId} /> : null}
         {made.map((c) => (
           <Row key={c.label} label={c.label} hint={venueId ? c.hint : c.homeHint} icon={c.symbol ? <IconSymbol name={c.symbol} size={20} color={ds.c.ink} /> : <CustomIcon name={c.icon} size={22} color={ds.c.ink} />} onPress={() => go(hrefOf(c))} />
         ))}
+        {/* Add-entry, a Bartender: Menu, then the locked row. */}
+        {locked && venueId ? <LockedRow barId={venueId} /> : null}
         {locked ? (
           <PressableScale role="link" accessibilityLabel="Make your own drink in your home bar" onPress={makeAtHome} style={styles.home}>
             <HomeMark size={24} />

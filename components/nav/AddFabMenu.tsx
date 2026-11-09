@@ -19,10 +19,12 @@ export interface FabFrame {
 /**
  * Android's Add (Prod-and, "Add · FAB menu", decided 31 Oct 2026): the
  * plain FAB opens Material 3's FAB menu over a dimmed page. Snap a menu or
- * bottle, Paste a link, Say it (where the device can), Type a drink, each a tonal pill stacked over the FAB,
- * which turns into a round close button. Say it and Type a drink open the Add sheet, Say it already listening.
+ * bottle, Paste a link, Say it (where the device can), Type a drink, and
+ * Something else (Add-entry: it opens New as a bottom sheet), each a tonal
+ * pill stacked over the FAB, which turns into a round close button. Say it
+ * and Type a drink open the Add sheet, Say it already listening.
  */
-export function AddFabMenu({ frame, onClose, onType, onSay }: { frame: FabFrame; onClose: () => void; onType: () => void; onSay: () => void }) {
+export function AddFabMenu({ frame, onClose, onType, onSay, onMore }: { frame: FabFrame; onClose: () => void; onType: () => void; onSay: () => void; onMore: () => void }) {
   const ds = useDs();
   const add = useAddActions(onClose);
   const [say] = useState(canDictate);
@@ -31,6 +33,7 @@ export function AddFabMenu({ frame, onClose, onType, onSay }: { frame: FabFrame;
     { label: 'Paste a link', icon: 'doc.on.clipboard', onPress: () => void add.paste() },
     ...(say ? [{ label: 'Say it', icon: 'mic' as const, onPress: onSay }] : []),
     { label: 'Type a drink', icon: 'pencil', onPress: onType },
+    { label: 'Something else', icon: 'plus', onPress: onMore },
   ];
   const container = withAlpha(ds.accentFill.fill, ds.scheme === 'dark' ? 0.32 : 0.28);
   return (

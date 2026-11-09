@@ -19,8 +19,8 @@ const LABEL = 'Add: name a drink, paste a link, describe it, or snap a menu, bot
  * Add over the page you're on, and from its last row the New sheet (a
  * bottle, beer, wine, a house-made or a menu). `onClose` once both have gone.
  */
-export function AddSheets({ onClose, listen, from }: { onClose: () => void; listen?: boolean; from?: Frame | null }) {
-  const [open, setOpen] = useState<'add' | 'more'>('add');
+export function AddSheets({ onClose, listen, from, more: startMore }: { onClose: () => void; listen?: boolean; from?: Frame | null; /** Straight to New (Android's Something else). */ more?: boolean }) {
+  const [open, setOpen] = useState<'add' | 'more'>(startMore ? 'more' : 'add');
   const [shown, setShown] = useState(true);
   // The second sheet waits for the first to have animated out.
   const more = () => {
@@ -30,15 +30,18 @@ export function AddSheets({ onClose, listen, from }: { onClose: () => void; list
       setShown(true);
     }, 350);
   };
-  return <Suspense fallback={null}>{open === 'add' ? <AddSheet visible={shown} onClose={onClose} onMore={more} listen={listen} from={from} /> : <CreateSheet visible onClose={onClose} />}</Suspense>;
+  // Android's back arrow on New goes back to Add when New came from it; its rows, scrim, swipe and the system's back close both.
+  const back = startMore ? undefined : () => setOpen('add');
+  return <Suspense fallback={null}>{open === 'add' ? <AddSheet visible={shown} onClose={onClose} onMore={more} listen={listen} from={from} /> : <CreateSheet visible onClose={onClose} onBack={back} />}</Suspense>;
 }
 
 /** Add's sheets, opened by a button. Android's FAB opens its FAB menu first (AddFab). */
 function useAdd() {
-  const [open, setOpen] = useState<{ say: boolean; from: Frame | null } | null>(null);
+  const [open, setOpen] = useState<{ say: boolean; from: Frame | null; more?: boolean } | null>(null);
   return {
     open: (say = false, from: Frame | null = null) => setOpen({ say, from }),
-    sheet: open ? <AddSheets onClose={() => setOpen(null)} listen={open.say} from={open.from} /> : null,
+    more: () => setOpen({ say: false, from: null, more: true }),
+    sheet: open ? <AddSheets onClose={() => setOpen(null)} listen={open.say} from={open.from} more={open.more} /> : null,
   };
 }
 
@@ -94,7 +97,8 @@ export function DeskAddButton() {
 /**
  * Android's Add: a plain Material 3 FAB, just the +, at the bottom right of a
  * tab's first page, over the bottom bar (Kevin's pick, android-add-fab; board
- * Prod-and). It opens the FAB menu (AddFabMenu), whose Type a drink opens the Add sheet.
+ * Prod-and). It opens the FAB menu (AddFabMenu), whose Type a drink opens the
+ * Add sheet and Something else the New sheet.
  */
 export function AddFab() {
   const ds = useDs();
@@ -127,6 +131,10 @@ export function AddFab() {
             onSay={() => {
               setMenu(null);
               add.open(true);
+            }}
+            onMore={() => {
+              setMenu(null);
+              add.more();
             }}
           />
         </Suspense>

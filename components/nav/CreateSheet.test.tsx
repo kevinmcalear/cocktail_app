@@ -1,4 +1,5 @@
-import { fireEvent, screen } from '@testing-library/react-native';
+import { fireEvent, screen, waitFor } from '@testing-library/react-native';
+import { Platform } from 'react-native';
 
 import { renderWithProviders } from '@/jest.setup';
 
@@ -46,4 +47,21 @@ test('without the right to add at the venue, drinks lock with the role that open
   await fireEvent.press(screen.getByRole('link', { name: 'Make your own drink in your home bar' }));
   expect(mockSetMode).toHaveBeenLastCalledWith('home');
   expect(mockPush).toHaveBeenLastCalledWith('/add-cocktail');
+});
+
+// Review of #1181: on Android a row (or the scrim) went back to Add, which opened over the page it had just pushed.
+test('on Android, the arrow goes back and a row closes', async () => {
+  jest.replaceProperty(Platform, 'OS', 'android');
+  mockMine = { venueId: 'bar', canAdd: true, label: 'Pale Moth' };
+  const onClose = jest.fn();
+  const onBack = jest.fn();
+  await renderWithProviders(<CreateSheet visible onClose={onClose} onBack={onBack} />);
+  await fireEvent.press(screen.getByRole('link', { name: /^A bottle you buy\./ }));
+  expect(onClose).toHaveBeenCalledTimes(1);
+  expect(onBack).not.toHaveBeenCalled();
+  expect(mockPush).toHaveBeenLastCalledWith('/add-ingredient?barId=bar');
+  onClose.mockReset();
+  await fireEvent.press(screen.getByRole('button', { name: 'Back' }));
+  await waitFor(() => expect(onBack).toHaveBeenCalledTimes(1));
+  expect(onClose).not.toHaveBeenCalled();
 });

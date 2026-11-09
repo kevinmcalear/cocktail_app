@@ -49,6 +49,15 @@ test('the link you copied is one tap', async () => {
   expect(mockStart).toHaveBeenLastCalledWith([{ files: [], text: 'https://www.instagram.com/reel/C9xAbcdefghijk', url: null }], { barId: 'bar' });
 });
 
+// Add-entry: the last row is titled, and opens New.
+test('Something else, at the end, opens New', async () => {
+  const onMore = jest.fn();
+  await renderWithProviders(<AddSheet visible onClose={jest.fn()} onMore={onMore} />);
+  expect(screen.getByText('Something else')).toBeTruthy();
+  await fireEvent.press(screen.getByRole('button', { name: 'Something else: a bottle, beer, wine, a house-made or a menu' }));
+  expect(onMore).toHaveBeenCalled();
+});
+
 // Eddie, 29 Oct: New drink kept taking him back to a PDF import he hadn't finished.
 test('an unfinished import waits at the bottom, apart from drinks being checked in it', async () => {
   const recipe = { name: 'Feijoa Smash', lines: [] } as never;

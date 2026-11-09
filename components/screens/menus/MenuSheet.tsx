@@ -1,4 +1,4 @@
-import type { ReactNode } from 'react';
+import { useRef, type ReactNode } from 'react';
 import { Platform, StyleSheet, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
@@ -47,20 +47,30 @@ interface MenuSheetProps {
   done?: boolean;
   /** A whole flow (Add, Rank it, Theme): the system's sheet on phones (Sheet's kind). Small sheets leave it out. */
   kind?: 'small' | 'flow';
+  /**
+   * Opened from another sheet or menu (New, from Add): Android has an arrow
+   * before the title, in place of the X, and the arrow alone does this once the
+   * sheet has gone. The scrim, a swipe and the system's back still close it (onClose).
+   */
+  back?: () => void;
 }
 
 /**
  * A titled sheet with a scrolling body and an optional footer, on the app's
  * one Sheet (components/ds/Sheet): springs up on phones, a dialog on the web.
  */
-export function MenuSheet({ visible, onClose, onDismiss, title, subtitle, eyebrow, leading, aside, children, footer, onShow, check, save, plain, form, list, done, kind }: MenuSheetProps) {
+export function MenuSheet({ visible, onClose, onDismiss, title, subtitle, eyebrow, leading, aside, children, footer, onShow, check, save, plain, form, list, done, kind, back }: MenuSheetProps) {
+  const arrow = !!back && Platform.OS === 'android';
   const ds = useDs();
   const insets = useSafeAreaInsets();
+  // The arrow slides the sheet away like any close, then goes back instead.
+  const backing = useRef(false);
+  const closed = () => (backing.current && back ? ((backing.current = false), back()) : onClose());
   return (
     // The negative keyboard offset lets the keyboard cover the footer's home-indicator padding instead of leaving a gap.
     <Sheet
       visible={visible}
-      onClose={onClose}
+      onClose={closed}
       onShow={onShow}
       onDismiss={onDismiss}
       accessibilityLabel={title}
@@ -76,6 +86,7 @@ export function MenuSheet({ visible, onClose, onDismiss, title, subtitle, eyebro
           <FormHeader title={title} save={save} />
         ) : (
           <View style={[styles.header, aside ? styles.centred : null]}>
+            {arrow ? <SheetCloseButton back onPress={() => (backing.current = true)} /> : null}
             {leading}
             <View style={styles.flex}>
               {eyebrow ? (
@@ -93,7 +104,7 @@ export function MenuSheet({ visible, onClose, onDismiss, title, subtitle, eyebro
               {subtitle ? <Caption tone="muted">{subtitle}</Caption> : null}
             </View>
             {aside}
-            <SheetCloseButton done={done} />
+            {arrow ? null : <SheetCloseButton done={done} />}
           </View>
         )
       }
@@ -111,10 +122,10 @@ export function MenuSheet({ visible, onClose, onDismiss, title, subtitle, eyebro
 }
 
 /** The X (or a tick, `done`): closes the sheet it's in the way a drag does, sliding it away first. */
-function SheetCloseButton({ done }: { done?: boolean }) {
+function SheetCloseButton({ done, back, onPress }: { done?: boolean; back?: boolean; onPress?: () => void }) {
   const close = useSheetClose();
   // A round glass button, as the canvas draws a sheet's close.
-  return <GlassButton icon={done ? 'checkmark' : 'xmark'} accessibilityLabel={done ? 'Done' : 'Close'} onPress={close} />;
+  return <GlassButton icon={back ? 'arrow.left' : done ? 'checkmark' : 'xmark'} accessibilityLabel={back ? 'Back' : done ? 'Done' : 'Close'} onPress={() => (onPress?.(), close())} />;
 }
 
 /** The X or back arrow, the title in the middle, and the round check that saves. */

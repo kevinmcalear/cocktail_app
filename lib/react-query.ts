@@ -177,9 +177,13 @@ queryClient.setMutationDefaults(['deleteCocktail'], { mutationFn: deleteCocktail
 // Behind-the-bar writes (hooks/barWrites.ts): they wait for signal, try again
 // on a dropped connection, and survive the app closing.
 for (const write of Object.values(BAR_WRITES)) {
+  // What a write does once it's in, or refused (a bottle's label photo, its toast): from its variables, so a restored one does it too.
+  const after = write as { saved?: (qc: QueryClient, data: unknown, v: unknown) => Promise<void>; failed?: (e: Error, v: unknown) => Promise<void> };
   queryClient.setMutationDefaults(write.key, {
     mutationFn: write.send as (v: unknown) => Promise<unknown>,
     retry: retryBarWrite,
+    onSuccess: after.saved && ((data, v) => after.saved!(queryClient, data, v)),
+    onError: after.failed && ((e, v) => void after.failed!(e as Error, v).catch(() => undefined)),
     onSettled: (_data, _error, v) => {
       for (const queryKey of (write.refresh as (v: unknown) => QueryKey[])(v)) void queryClient.invalidateQueries({ queryKey });
     },

@@ -3,9 +3,12 @@
 // relaunch, when the screen that made it is long gone. Kept apart from the
 // screens' hooks so lib/react-query.ts can register them without importing
 // those hooks' own imports.
-import type { QueryKey } from '@tanstack/react-query';
+import type { QueryClient, QueryKey } from '@tanstack/react-query';
+import { Alert } from 'react-native';
 
+import { existingIngredientId } from '@/lib/ingredientNames';
 import { BAR_WRITE } from '@/lib/offlineWrites';
+import { DROPDOWNS_QUERY_KEY } from '@/lib/queryDefaults';
 import type { RotaChange } from '@/lib/rota';
 import { supabase } from '@/lib/supabase';
 
@@ -132,6 +135,44 @@ async function sendHandover(w: HandoverWrite) {
   check(await supabase.from('handover_notes').upsert({ bar_id: w.barId, close_date: w.closeDate, user_id: w.userId, read_at: w.readAt, ...handoverColumns(w.words) }, { onConflict: 'bar_id,close_date,user_id' }));
 }
 
+export interface BottleWrite {
+  /** Made on the phone: the new bottle's id, so a resend finds it there. */
+  id: string;
+  /** The venue's back bar, or null for your own shelf. */
+  barId: string | null;
+  /** One already here (the shared catalog's, or the venue's own): only put on the back bar or the shelf. */
+  existing: boolean;
+  name: string;
+  maker: string | null;
+  abv: number | null;
+  genericId: string | null;
+  /** The label photo, kept as a new bottle's picture once it's in. */
+  photo: string | null;
+  /** Saved with no signal (Save on this phone): it says so when it's in, wherever you are by then. */
+  queued: boolean;
+}
+
+/**
+ * A bottle you buy (Add-bottle): a new one is saved (at a venue as the
+ * venue's own); at a venue either goes on the back bar's stock list (so both
+ * say since when), at home on your shelf. Each step is skipped if already
+ * there, so sending twice is the same.
+ */
+async function sendBottle(w: BottleWrite) {
+  let id = w.id;
+  if (!w.existing) {
+    const row = { id, item_type: 'ingredient' as const, ingredient_role: 'product' as const, name: w.name, brand_maker: w.maker, abv: w.abv, generic_id: w.genericId, bar_id: w.barId };
+    const { error } = await supabase.from('items').upsert(row, { onConflict: 'id', ignoreDuplicates: true });
+    // The shared catalog already has it by this name or another (the database says which): that one goes on the shelf.
+    const already = existingIngredientId(error);
+    if (already) id = already;
+    else check({ error });
+  }
+  if (w.barId) check(await supabase.from('back_bar_items').upsert({ bar_id: w.barId, item_id: id, source: 'back_bar' }, { onConflict: 'bar_id,item_id', ignoreDuplicates: true }));
+  if (!w.barId) check(await supabase.from('home_bar_items').upsert({ item_id: id }, { onConflict: 'user_id,item_id', ignoreDuplicates: true }));
+  return id;
+}
+
 export const BAR_WRITES = {
   offTonight: {
     key: [BAR_WRITE, 'off-tonight'],
@@ -167,5 +208,23 @@ export const BAR_WRITES = {
     key: [BAR_WRITE, 'handover'],
     send: sendHandover,
     refresh: (w: HandoverWrite): QueryKey[] => [['handover', w.barId]],
+  },
+  bottle: {
+    key: [BAR_WRITE, 'bottle'],
+    send: sendBottle,
+    // The ingredient lists (hooks/useDropdowns INGREDIENTS_KEY), the back bar's stock list and the shelf (hooks/useHomeBar SHELF_KEY).
+    refresh: (w: BottleWrite): QueryKey[] => [[...DROPDOWNS_QUERY_KEY, 'ingredients'], ['ingredients'], ['back-bar-items', w.barId], ['venue-can-make', w.barId], ['home-bar'], ['bar', w.barId]],
+    // Run from the write itself (lib/react-query.ts), so a save that waited on the phone through a relaunch still gets its
+    // label photo, recents, toast and lists. Loaded once it's in: the photo upload is big, and this file is in every page's first load.
+    // A chunk that fails to load (a deploy since) mustn't turn a saved bottle into a failed save: then only its photo is lost, and it says so.
+    saved: (qc: QueryClient, id: string, w: BottleWrite) =>
+      import('@/hooks/bottleSaved').then(
+        (m) => m.bottleSaved(qc, id, w),
+        () => void (w.photo && Alert.alert('The label photo didn’t save', 'The bottle is saved. Add the photo again on its page.')),
+      ),
+    // Only one that waited for signal is said here; the screen says the rest.
+    failed: async (e: Error, w: BottleWrite) => {
+      if (w.queued) Alert.alert(`Couldn’t save ${w.name}`, e.message);
+    },
   },
 } as const;

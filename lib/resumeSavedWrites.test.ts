@@ -15,7 +15,13 @@ const mockSend = () => {
 
 jest.mock('@react-native-community/netinfo', () => jest.requireActual('@react-native-community/netinfo/jest/netinfo-mock'));
 jest.mock('@/hooks/useCocktails', () => ({ updateCocktailFn: () => mockSend(), deleteCocktailFn: () => mockSend() }));
-jest.mock('@/hooks/barWrites', () => ({ BAR_WRITES: { zoneCount: { key: ['bar-write', 'zone-count'], send: () => mockSend(), refresh: () => [] } } }));
+const mockSaved = jest.fn(() => Promise.resolve());
+jest.mock('@/hooks/barWrites', () => ({
+  BAR_WRITES: {
+    zoneCount: { key: ['bar-write', 'zone-count'], send: () => mockSend(), refresh: () => [] },
+    bottle: { key: ['bar-write', 'bottle'], send: () => mockSend().then(() => 'drink'), refresh: () => [], saved: (...a: unknown[]) => mockSaved(...(a as [])) },
+  },
+}));
 
 /** The persisted cache blob, as the app's persister would save it. */
 function memoryPersister(): Persister & { saved: () => PersistedClient | undefined } {
@@ -74,6 +80,15 @@ test('a count made behind the bar with no signal is sent after a relaunch', asyn
   await writeOfflineThenRelaunch(['bar-write', 'zone-count']);
   await resumeSavedWrites();
   expect(sent).toBe(1);
+});
+
+// Review of #1181: a bottle saved on the phone, then the app quit, came in with no label photo, toast or recents.
+test('a bottle saved offline does what follows a save (its photo, its toast) after a relaunch too', async () => {
+  mockSaved.mockClear();
+  await writeOfflineThenRelaunch(['bar-write', 'bottle']);
+  await resumeSavedWrites();
+  expect(sent).toBe(1);
+  expect(mockSaved).toHaveBeenCalledWith(queryClient, 'drink', { id: 'drink' });
 });
 
 test('a write that starts waiting is saved at once, not at the next throttled save', async () => {

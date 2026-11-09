@@ -1,6 +1,6 @@
 import { lazy, Suspense, useEffect, type ComponentType } from 'react';
 
-type Props = { visible: boolean; onClose: () => void };
+type Props = { visible: boolean; onClose: () => void; onBack?: () => void };
 
 /** A failed load (offline, or an old chunk after a deploy) closes again, and the next tap retries. */
 function Closes({ onClose }: Props) {
