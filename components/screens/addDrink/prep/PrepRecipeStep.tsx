@@ -99,8 +99,6 @@ export function PrepRecipeStep({ draft, view, set, ingredients, aliases, inDrink
 
   return (
     <View style={styles.stack}>
-      {/* A bottle keeps its label's capitals (Bacardí Carta Blanca); a plain base reads in lower case (the white rum). */}
-      <Caption tone="muted">{base ? `Everything follows the ${base.name === draft.madeFrom?.name ? base.name : base.name.toLowerCase()}.` : 'Add what goes in.'}</Caption>
       <DragList label="What goes in" data={draft.lines} keyOf={(l) => l.key} onReorder={(lines) => set({ lines })} renderRow={(l, { index: i, lifted, grip, move }) => {
           const isBase = l.key === draft.baseKey;
           const amount = amounts[i].amount;
